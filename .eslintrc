@@ -1,0 +1,35 @@
+{
+  "env": {
+    "node": true,
+    "browser": true,
+    "es2021": true
+  },
+  "root": true,
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": 12,
+    "sourceType": "module",
+    "project": "./tsconfig.json"
+  },
+  "plugins": ["@typescript-eslint"],
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "next", 
+    "next/core-web-vitals", 
+    "prettier"
+  ],
+  "rules": {
+    "no-console": ["warn"],
+    "no-eval": ["error"],
+    "no-ex-assign": ["error"],
+    "no-constant-condition": ["off"],
+    "@typescript-eslint/ban-ts-comment": ["off"],
+    "@typescript-eslint/explicit-module-boundary-types": ["off"],
+    "@typescript-eslint/no-explicit-any": ["off"],
+    "@typescript-eslint/no-floating-promises": ["error"],
+    "@typescript-eslint/no-non-null-assertion": ["off"],
+    "@typescript-eslint/no-require-imports": ["warn"],
+    "jsx-a11y/alt-text": ["off"]
+  }
+}

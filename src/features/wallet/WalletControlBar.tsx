@@ -65,7 +65,7 @@ function AccountDropdown() {
         <SolidButton {...buttonProps} classes=" px-3 py-0.5" color="white">
           <Identicon address={address} size={26} />
           <div className="flex flex-col mx-3 items-start">
-            <div className="text-xs">{connector.name}</div>
+            <div className="text-xs text-gray-500">{connector.name}</div>
             <div className="text-xs">{shortenAddress(address, true)}</div>
           </div>
           <Icon src={ChevronDown} size={14} />

@@ -12,7 +12,7 @@ export function Footer() {
   return (
     <footer className="pt-5 pb-7 opacity-80">
       <div className="flex flex-col sm:flex-row sm:justify-between items-center gap-6 sm:gap-0">
-        <div className="flex items-center">
+        <div className="flex items-center pt-2">
           <div className="flex scale-90 sm:scale-100">
             <Image src={Hyperlane} width={50} height={50} alt="" />
           </div>

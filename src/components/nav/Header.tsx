@@ -14,11 +14,11 @@ export function Header() {
   };
 
   return (
-    <header className="pt-4 pb-3 sm:pt-5 sm:pb-3 w-full">
+    <header className="pt-4 pb-3 sm:pt-5 w-full">
       <div className="flex items-center justify-between">
         <Link href="/" className="flex items-center">
           <div className="flex items-center scale-90 sm:scale-100">
-            <Image src={Logo} width={22} alt="" />
+            <Image src={Logo} width={20} alt="" />
             <Image src={Name} width={110} alt="Hyperlane" className="mt-0.5 ml-2" />
             <Image src={Bridge} width={104} alt="Bridge" className="mt-0.5 ml-2" />
           </div>

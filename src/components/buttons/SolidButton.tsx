@@ -1,21 +1,17 @@
 import { PropsWithChildren, ReactElement } from 'react';
 
 interface ButtonProps {
-  size?: 'xs' | 's' | 'm' | 'l' | 'xl';
   type?: 'submit' | 'reset' | 'button';
-  onClick?: () => void;
-  color?: 'white' | 'blue' | 'green' | 'red'; // defaults to blue
-  classes?: string;
+  color?: 'white' | 'blue' | 'green' | 'red' | 'gray'; // defaults to blue
   bold?: boolean;
-  disabled?: boolean;
+  classes?: string;
   icon?: ReactElement;
-  title?: string;
-  passThruProps?: any;
 }
 
-export function SolidButton(props: PropsWithChildren<ButtonProps>) {
+export function SolidButton(
+  props: PropsWithChildren<ButtonProps & React.HTMLProps<HTMLButtonElement>>,
+) {
   const {
-    size,
     type,
     onClick,
     color: _color,
@@ -24,12 +20,11 @@ export function SolidButton(props: PropsWithChildren<ButtonProps>) {
     icon,
     disabled,
     title,
-    passThruProps,
+    ...passThruProps
   } = props;
   const color = _color ?? 'blue';
 
-  const base = 'flex items-center justify-center rounded-full transition-all duration-1000';
-  const sizing = sizeToClasses(size);
+  const base = 'flex items-center justify-center rounded-md transition-all duration-700';
   let baseColors, onHover, onActive;
   if (color === 'blue') {
     baseColors = 'bg-blue-500 text-white';
@@ -47,10 +42,14 @@ export function SolidButton(props: PropsWithChildren<ButtonProps>) {
     baseColors = 'bg-white text-black';
     onHover = 'hover:bg-gray-100';
     onActive = 'active:bg-gray-200';
+  } else if (color === 'gray') {
+    baseColors = 'bg-gray-100 text-blue-500';
+    onHover = 'hover:bg-gray-200';
+    onActive = 'active:bg-gray-300';
   }
   const onDisabled = 'disabled:bg-gray-300 disabled:text-gray-500';
   const weight = bold ? 'font-semibold' : '';
-  const allClasses = `${base} ${sizing} ${baseColors} ${onHover} ${onDisabled} ${onActive} ${weight} ${classes}`;
+  const allClasses = `${base} ${baseColors} ${onHover} ${onDisabled} ${onActive} ${weight} ${classes}`;
 
   return (
     <button
@@ -71,12 +70,4 @@ export function SolidButton(props: PropsWithChildren<ButtonProps>) {
       )}
     </button>
   );
-}
-
-function sizeToClasses(size?: string) {
-  if (size === 'xs') return 'h-7 px-4 py-1';
-  if (size === 's') return 'h-7 px-4 py-1';
-  if (size === 'l') return 'h-10 px-5 py-1 text-lg';
-  if (size === 'xl') return 'w-40 h-11 px-5 py-1.5 text-xl';
-  return 'px-5 py-1 h-9';
 }

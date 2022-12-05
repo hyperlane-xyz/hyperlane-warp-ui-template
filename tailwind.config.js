@@ -2,7 +2,6 @@
 
 const defaultTheme = require('tailwindcss/defaultTheme')
 
-
 module.exports = {
   content: ['./src/**/*.{js,ts,jsx,tsx}'],
   theme: {
@@ -90,10 +89,10 @@ module.exports = {
       },
       borderRadius: {
         none: '0',
-        sm: '0.2rem',
-        DEFAULT: '0.3rem',
-        md: '0.4rem',
-        lg: '0.5rem',
+        sm: '0.25rem',
+        DEFAULT: '0.35rem',
+        md: '0.45rem',
+        lg: '0.55rem',
         full: '9999px',
       },
       blur: {

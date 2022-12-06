@@ -937,6 +937,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@headlessui/react@npm:^1.7.4":
+  version: 1.7.4
+  resolution: "@headlessui/react@npm:1.7.4"
+  dependencies:
+    client-only: ^0.0.1
+  peerDependencies:
+    react: ^16 || ^17 || ^18
+    react-dom: ^16 || ^17 || ^18
+  checksum: cd7192aa0748d715ed0da94435f217a1a618894a09df722c8b6ac0967c0c2f93b4c1e6b29c4993a3303dc453b20b05323d2a37239408740391989a64b7dce38c
+  languageName: node
+  linkType: hard
+
 "@humanwhocodes/config-array@npm:^0.11.6":
   version: 0.11.7
   resolution: "@humanwhocodes/config-array@npm:0.11.7"
@@ -1002,6 +1014,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@hyperlane-xyz/token-bridge@workspace:."
   dependencies:
+    "@headlessui/react": ^1.7.4
     "@hyperlane-xyz/sdk": ^0.5.5
     "@metamask/jazzicon": "https://github.com/jmrossy/jazzicon#7a8df28974b4e81129bfbe3cab76308b889032a6"
     "@rainbow-me/rainbowkit": ^0.8.0
@@ -1023,7 +1036,6 @@ __metadata:
     postcss: ^8.4.19
     prettier: ^2.8.0
     react: ^18.2.0
-    react-accessible-dropdown-menu-hook: ^3.2.0
     react-dom: ^18.2.0
     react-toastify: ^9.1.1
     tailwindcss: ^3.2.4
@@ -2954,7 +2966,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"client-only@npm:0.0.1":
+"client-only@npm:0.0.1, client-only@npm:^0.0.1":
   version: 0.0.1
   resolution: "client-only@npm:0.0.1"
   checksum: 0c16bf660dadb90610553c1d8946a7fdfb81d624adea073b8440b7d795d5b5b08beb3c950c6a2cf16279365a3265158a236876d92bce16423c485c322d7dfaf8
@@ -6366,13 +6378,6 @@ __metadata:
   dependencies:
     safe-buffer: ^5.1.0
   checksum: d779499376bd4cbb435ef3ab9a957006c8682f343f14089ed5f27764e4645114196e75b7f6abf1cbd84fd247c0cb0651698444df8c9bf30e62120fbbc52269d6
-  languageName: node
-  linkType: hard
-
-"react-accessible-dropdown-menu-hook@npm:^3.2.0":
-  version: 3.2.0
-  resolution: "react-accessible-dropdown-menu-hook@npm:3.2.0"
-  checksum: 207abf127d12f07e2bd25164023264f74fe1216eeb8cbbe084ce54cb1f0e60f1792120d84172a04f22710a96d12e58cf74a930dab6be333f82d33d3e39185c6d
   languageName: node
   linkType: hard
 

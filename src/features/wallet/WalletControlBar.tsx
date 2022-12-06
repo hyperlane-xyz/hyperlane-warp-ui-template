@@ -1,6 +1,7 @@
+import { Menu, Transition } from '@headlessui/react';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
 import Image from 'next/image';
-import useDropdownMenu from 'react-accessible-dropdown-menu-hook';
+import { Fragment } from 'react';
 import { toast } from 'react-toastify';
 import { useAccount, useDisconnect, useNetwork } from 'wagmi';
 
@@ -26,8 +27,6 @@ export function WalletControlBar() {
   return (
     <div className="flex justify-center items-stretch py-1.5 px-1.5 space-x-1.5 bg-white shadow-md rounded-md">
       <AccountDropdown />
-      {/* <OptionsDropdown /> */}
-      {/* <ChainDropdown /> */}
     </div>
   );
 }
@@ -40,10 +39,7 @@ function AccountDropdown() {
 
   const isAccountReady = !!(address && isConnected && connector);
 
-  const { buttonProps, itemProps, isOpen, setIsOpen } = useDropdownMenu(2);
-
   const onClickDisconnect = async () => {
-    setIsOpen(false);
     try {
       if (!disconnectAsync) throw new Error('Disconnect function is null');
       await disconnectAsync();
@@ -54,22 +50,21 @@ function AccountDropdown() {
   };
 
   const onClickCopy = async () => {
-    setIsOpen(false);
     if (!address) return;
     await tryClipboardSet(address);
   };
 
   return (
-    <div className="relative">
+    <Menu as="div" className="relative">
       {isAccountReady ? (
-        <SolidButton {...buttonProps} classes=" px-3 py-0.5" color="white">
+        <Menu.Button className="px-3 py-0.5 flex items-center justify-center rounded-sm hover:bg-gray-100 active:bg-gray-200 transition-all duration-500">
           <Identicon address={address} size={26} />
           <div className="flex flex-col mx-3 items-start">
             <div className="text-xs text-gray-500">{connector.name}</div>
             <div className="text-xs">{shortenAddress(address, true)}</div>
           </div>
           <Icon src={ChevronDown} size={14} />
-        </SolidButton>
+        </Menu.Button>
       ) : (
         <SolidButton
           classes="py-1.5 px-2.5"
@@ -81,26 +76,40 @@ function AccountDropdown() {
         </SolidButton>
       )}
 
-      <div className={`${styles.dropdownContainer} ${!isOpen && 'hidden'} -right-1.5`} role="menu">
-        {chain?.name && chain.id && (
-          <div className="px-2.5 pt-1 pb-3 mb-2 border-b border-gray-200">
-            <label className="text-sm text-gray-500">Connected to:</label>
-            <div className="mt-1 flex items-center">
-              <ChainIcon chainId={chain.id} size={15} />
-              <div className="ml-2 text-sm">{chain.name}</div>
+      <Transition
+        as={Fragment}
+        enter="transition ease-out duration-200"
+        enterFrom="transform opacity-0 scale-95"
+        enterTo="transform opacity-100 scale-100"
+        leave="transition ease-in duration-100"
+        leaveFrom="transform opacity-100 scale-100"
+        leaveTo="transform opacity-0 scale-95"
+      >
+        <Menu.Items className="absolute -right-1.5 mt-3 pt-3 pb-2 w-44 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+          {chain?.name && chain.id && (
+            <div className="px-5 pb-3 mb-2 border-b border-gray-200">
+              <label className="text-sm text-gray-500">Connected to:</label>
+              <div className="mt-1.5 flex items-center">
+                <ChainIcon chainId={chain.id} size={15} />
+                <div className="ml-2 text-sm">{chain.name}</div>
+              </div>
             </div>
-          </div>
-        )}
-        <a {...itemProps[0]} className={styles.dropdownOption} onClick={onClickCopy}>
-          <Icon src={CopyStack} alt="Copy" size={15} />
-          <div className="ml-2">Copy Address</div>
-        </a>
-        <a {...itemProps[1]} className={styles.dropdownOption} onClick={onClickDisconnect}>
-          <Icon src={Logout} alt="Logout" size={20} />
-          <div className="ml-2">Disconnect</div>
-        </a>
-      </div>
-    </div>
+          )}
+          <Menu.Item>
+            <button className={styles.dropdownOption} onClick={onClickCopy}>
+              <Icon src={CopyStack} alt="Copy" size={15} />
+              <div className="ml-2">Copy Address</div>
+            </button>
+          </Menu.Item>
+          <Menu.Item>
+            <button className={styles.dropdownOption} onClick={onClickDisconnect}>
+              <Icon src={Logout} alt="Logout" size={20} />
+              <div className="ml-2">Disconnect</div>
+            </button>
+          </Menu.Item>
+        </Menu.Items>
+      </Transition>
+    </Menu>
   );
 }
 
@@ -113,7 +122,6 @@ function Icon({ src, alt, size }: { src: any; alt?: string; size?: number }) {
 }
 
 const styles = {
-  dropdownContainer: 'dropdown-menu w-44 mt-3 bg-white',
   dropdownOption:
-    'flex items-center cursor-pointer p-2 mt-1 rounded-sm text-sm hover:bg-gray-100 active:bg-gray-200 transition-all duration-500',
+    'w-full flex items-center px-5 py-2 mt-1 text-sm hover:bg-gray-100 active:bg-gray-200 transition-all duration-500',
 };

@@ -32,14 +32,19 @@ function InfoCard() {
           href={links.docs}
           target="_blank"
           rel="noopener noreferrer"
-          className="ml-2 px-3 py-1.5 flex items-center bg-gray-100 hover:bg-gray-200 active:bg-gray-300 text-sm text-blue-500 rounded-md"
+          className="ml-2 px-3 py-1.5 flex items-center bg-gray-100 hover:bg-gray-200 active:bg-gray-300 text-sm text-blue-500 rounded-md transition-all"
         >
           <Image src={InfoCircle} width={16} alt="" />
           <span className="ml-2">Learn More</span>
         </a>
       </div>
       <div className="absolute right-3 top-3 invert">
-        <IconButton imgSrc={XCircle} onClick={() => setShow(false)} title="Hide tip" />
+        <IconButton
+          imgSrc={XCircle}
+          onClick={() => setShow(false)}
+          title="Hide tip"
+          classes="hover:rotate-90"
+        />
       </div>
     </div>
   );

@@ -177,23 +177,6 @@ Common animations
   }
 }
 
-/* 
-Dropdowns
-=========
-*/
-
-.dropdown-menu {
-  position: absolute;
-  z-index: 100;
-  text-align: left;
-  padding: 0.5rem 0.6rem;
-  border: 1px solid #f1f1f1;
-  border-radius: 0.4rem;
-  /* box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); */
-  transition: transform 0.2s ease, opacity 0.2s ease, visibility 0s linear 0.2s;
-  will-change: transform;
-}
-
 /*
 Toasts
 ======

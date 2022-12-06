@@ -1,6 +1,5 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import useDropdownMenu from 'react-accessible-dropdown-menu-hook';
 
 import { WalletControlBar } from '../../features/wallet/WalletControlBar';
 import Bridge from '../../images/logos/hyperlane-bridge.png';
@@ -8,11 +7,6 @@ import Logo from '../../images/logos/hyperlane-logo.svg';
 import Name from '../../images/logos/hyperlane-name.svg';
 
 export function Header() {
-  const { buttonProps, itemProps, isOpen, setIsOpen } = useDropdownMenu(4);
-  const closeDropdown = () => {
-    setIsOpen(false);
-  };
-
   return (
     <header className="pt-4 pb-3 sm:pt-5 w-full">
       <div className="flex items-center justify-between">

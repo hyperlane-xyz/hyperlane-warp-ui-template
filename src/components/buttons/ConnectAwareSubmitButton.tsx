@@ -8,12 +8,11 @@ import { useTimeout } from '../../utils/timeout';
 import { SolidButton } from './SolidButton';
 
 interface Props {
-  connectText: string;
+  text: string;
+  classes?: string;
 }
 
-export function ConnectAwareSubmitButton<FormValues = any>(props: Props) {
-  const { connectText } = props;
-
+export function ConnectAwareSubmitButton<FormValues = any>({ text, classes }: Props) {
   const { address, isConnected, connector } = useAccount();
   const { openConnectModal } = useConnectModal();
 
@@ -25,7 +24,7 @@ export function ConnectAwareSubmitButton<FormValues = any>(props: Props) {
   const firstError = `${Object.values(errors)[0]}` || 'Unknown error';
 
   const color = hasError ? 'red' : 'blue';
-  const text = hasError ? firstError : isAccountReady ? connectText : 'Connect Wallet';
+  const content = hasError ? firstError : isAccountReady ? text : 'Connect Wallet';
   const type = isAccountReady ? 'submit' : 'button';
   const onClick = isAccountReady ? undefined : openConnectModal;
 
@@ -39,8 +38,8 @@ export function ConnectAwareSubmitButton<FormValues = any>(props: Props) {
   useTimeout(clearErrors, 3000);
 
   return (
-    <SolidButton size="m" type={type} color={color} onClick={onClick}>
-      {text}
+    <SolidButton type={type} color={color} onClick={onClick} classes={classes}>
+      {content}
     </SolidButton>
   );
 }

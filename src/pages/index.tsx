@@ -3,16 +3,16 @@ import Image from 'next/image';
 import { useState } from 'react';
 
 import { IconButton } from '../components/buttons/IconButton';
-import { Card } from '../components/layout/Card';
 import { links } from '../consts/links';
+import { TransferTokenForm } from '../features/transfer/transferTokenForm';
 import InfoCircle from '../images/icons/info-circle.svg';
 import XCircle from '../images/icons/x-circle.svg';
 
 const Home: NextPage = () => {
   return (
-    <div>
+    <div className="space-y-6">
       <InfoCard />
-      <Card classes="w-144 mt-6">Hi!</Card>
+      <TransferTokenForm />
     </div>
   );
 };
@@ -21,7 +21,7 @@ function InfoCard() {
   const [show, setShow] = useState(true);
   if (!show) return null;
   return (
-    <div className="relative p-4 w-144 bg-blue-500 shadow rounded opacity-95">
+    <div className="relative p-4 w-144 bg-blue-500 shadow-lg rounded opacity-95">
       <h2 className="text-white text-lg">Bridge Tokens Permissionlessly with Hyperlane!</h2>
       <div className="flex items-end justify-between">
         <p className="text-white mt-1.5 text-sm max-w-[70%]">

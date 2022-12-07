@@ -8,7 +8,7 @@ import Name from '../../images/logos/hyperlane-name.svg';
 
 export function Header() {
   return (
-    <header className="pt-4 pb-3 sm:pt-5 w-full">
+    <header className="pt-3 pb-2 w-full">
       <div className="flex items-center justify-between">
         <Link href="/" className="flex items-center">
           <div className="flex items-center scale-90 sm:scale-100">

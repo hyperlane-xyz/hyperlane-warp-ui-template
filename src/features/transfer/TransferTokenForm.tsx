@@ -6,6 +6,7 @@ import { IconButton } from '../../components/buttons/IconButton';
 import { HyperlaneChevron, HyperlaneWideChevron } from '../../components/icons/HyperlaneChevron';
 import { ChainSelectField } from '../../components/input/ChainSelectField';
 import { TextField } from '../../components/input/TextField';
+import { TokenSelectField } from '../../components/input/TokenSelectField';
 import { Card } from '../../components/layout/Card';
 import { chainIdToChain } from '../../consts/chains';
 import GearIcon from '../../images/icons/gear.svg';
@@ -97,7 +98,7 @@ export function TransferTokenForm() {
               >
                 ERC-20 Token
               </label>
-              <TextField name="tokenAddress" placeholder="0x123456..." classes="w-full" />
+              <TokenSelectField name="tokenAddress" />
             </div>
             <div className="flex-1">
               <label htmlFor="amount" className="block uppercase text-sm text-gray-500 pl-0.5">

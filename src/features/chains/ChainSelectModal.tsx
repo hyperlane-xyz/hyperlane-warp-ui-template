@@ -1,7 +1,7 @@
+import { ChainIcon } from '../../components/icons/ChainIcon';
+import { Modal } from '../../components/layout/Modal';
 import { mainnetChains, testnetChains } from '../../consts/chains';
 import { getChainDisplayName } from '../../utils/chains';
-import { ChainIcon } from '../icons/ChainIcon';
-import { Modal } from '../layout/Modal';
 
 export function ChainSelectModal({
   isOpen,

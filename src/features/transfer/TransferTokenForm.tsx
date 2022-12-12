@@ -4,15 +4,15 @@ import { chain } from 'wagmi';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
 import { IconButton } from '../../components/buttons/IconButton';
 import { HyperlaneChevron, HyperlaneWideChevron } from '../../components/icons/HyperlaneChevron';
-import { ChainSelectField } from '../../components/input/ChainSelectField';
 import { TextField } from '../../components/input/TextField';
-import { TokenSelectField } from '../../components/input/TokenSelectField';
 import { Card } from '../../components/layout/Card';
 import { chainIdToChain } from '../../consts/chains';
 import GearIcon from '../../images/icons/gear.svg';
 import SwapIcon from '../../images/icons/swap.svg';
 import { Color } from '../../styles/Color';
 import { isValidAddress } from '../../utils/addresses';
+import { ChainSelectField } from '../chains/ChainSelectField';
+import { TokenSelectField } from '../tokens/TokenSelectField';
 
 import { TransferFormValues } from './types';
 
@@ -98,7 +98,7 @@ export function TransferTokenForm() {
               >
                 ERC-20 Token
               </label>
-              <TokenSelectField name="tokenAddress" />
+              <TokenSelectField name="tokenAddress" chainFieldName="sourceChainId" />
             </div>
             <div className="flex-1">
               <label htmlFor="amount" className="block uppercase text-sm text-gray-500 pl-0.5">

@@ -1,14 +1,13 @@
-import { Field } from 'formik';
-import { ComponentProps } from 'react';
+import { Field, FieldAttributes } from 'formik';
 
 import { useIsSsr } from '../../utils/ssr';
 
-type Props = ComponentProps<typeof Field> & {
-  placeholder;
-  options: Array<{ value: string; display: string }>;
-};
-
-export function SelectField(props: Props) {
+export function SelectField(
+  props: FieldAttributes<{
+    placeholder;
+    options: Array<{ value: string; display: string }>;
+  }>,
+) {
   // To silence hydration error due to differing options on server
   const isSSr = useIsSsr();
   if (isSSr) return null;

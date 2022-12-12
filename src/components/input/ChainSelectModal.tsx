@@ -7,7 +7,22 @@ import { getChainDisplayName } from '../../utils/chains';
 import { IconButton } from '../buttons/IconButton';
 import { ChainIcon } from '../icons/ChainIcon';
 
-export function ChainSelectModal({ isOpen, close }: { isOpen: boolean; close: () => void }) {
+export function ChainSelectModal({
+  isOpen,
+  close,
+  onSelect,
+}: {
+  isOpen: boolean;
+  close: () => void;
+  onSelect: (chainId: number) => void;
+}) {
+  const onSelectChain = (chainId: number) => {
+    return () => {
+      onSelect(chainId);
+      close();
+    };
+  };
+
   return (
     <Transition appear show={isOpen} as={Fragment}>
       <Dialog as="div" className="relative z-30" onClose={close}>
@@ -45,6 +60,7 @@ export function ChainSelectModal({ isOpen, close }: { isOpen: boolean; close: ()
                       <button
                         key={c.name}
                         className="py-1.5 px-2 text-sm flex items-center rounded hover:bg-gray-100 active:bg-gray-200 transition-all duration-200"
+                        onClick={onSelectChain(c.id)}
                       >
                         <ChainIcon chainId={c.id} size={16} background={false} />
                         <span className="ml-2">{getChainDisplayName(c.id, true)}</span>
@@ -57,6 +73,7 @@ export function ChainSelectModal({ isOpen, close }: { isOpen: boolean; close: ()
                       <button
                         key={c.name}
                         className="py-1.5 px-2 text-sm flex items-center rounded hover:bg-gray-100 active:bg-gray-200 transition-all duration-200"
+                        onClick={onSelectChain(c.id)}
                       >
                         <ChainIcon chainId={c.id} size={16} background={false} />
                         <span className="ml-2">{getChainDisplayName(c.id, true)}</span>

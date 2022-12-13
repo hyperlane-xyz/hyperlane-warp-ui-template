@@ -28,7 +28,7 @@ export function ChainSelectField({ name, label, onChange }: Props) {
     <div className="flex flex-col items-center">
       <div className="flex flex-col items-center justify-center rounded-full bg-gray-100 h-[6.5rem] w-[6.5rem] p-1.5">
         <div className="flex items-end h-12">
-          <ChainIcon chainId={field.value} size={36} />
+          <ChainIcon chainId={field.value} size={34} />
         </div>
         <label htmlFor={name} className="mt-2.5 text-sm text-gray-500 uppercase">
           {label}

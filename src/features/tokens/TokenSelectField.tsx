@@ -7,21 +7,24 @@ import ChevronIcon from '../../images/icons/chevron-down.svg';
 import { TransferFormValues } from '../transfer/types';
 
 import { TokenSelectModal } from './TokenSelectModal';
+import { ListedToken } from './types';
 
 type Props = {
   name: string;
   chainFieldName: string;
-  onChange?: (tokenAddress: Address) => void;
 };
 
-export function TokenSelectField({ name, chainFieldName, onChange }: Props) {
+export function TokenSelectField({ name, chainFieldName }: Props) {
   const { values } = useFormikContext<TransferFormValues>();
   const [field, , helpers] = useField<Address>(name);
   const sourceChainId = values[chainFieldName] as number;
 
-  const handleChange = (newTokenAddress: Address) => {
-    helpers.setValue(newTokenAddress);
-    if (onChange) onChange(newTokenAddress);
+  // Keep local state for token details, but let formik manage field value
+  const [token, setToken] = useState<ListedToken | null>(null);
+
+  const handleChange = (newToken: ListedToken) => {
+    helpers.setValue(newToken.address);
+    setToken(newToken);
   };
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -35,8 +38,8 @@ export function TokenSelectField({ name, chainFieldName, onChange }: Props) {
         onClick={() => setIsModalOpen(true)}
       >
         <div className="flex items-center">
-          <TokenIcon tokenAddress={field.value} size={20} />
-          <span className="ml-3">{field.value || 'Select Token'}</span>
+          <TokenIcon tokenAddress={field.value} chainId={sourceChainId} size={20} />
+          <span className="ml-3">{token?.symbol || 'Select Token'}</span>
         </div>
         <Image src={ChevronIcon} width={12} height={8} alt="" />
       </button>

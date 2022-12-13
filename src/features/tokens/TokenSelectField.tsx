@@ -20,7 +20,7 @@ export function TokenSelectField({ name, chainFieldName }: Props) {
   const sourceChainId = values[chainFieldName] as number;
 
   // Keep local state for token details, but let formik manage field value
-  const [token, setToken] = useState<ListedToken | null>(null);
+  const [token, setToken] = useState<ListedToken | undefined>(undefined);
 
   const handleChange = (newToken: ListedToken) => {
     helpers.setValue(newToken.address);
@@ -38,7 +38,7 @@ export function TokenSelectField({ name, chainFieldName }: Props) {
         onClick={() => setIsModalOpen(true)}
       >
         <div className="flex items-center">
-          <TokenIcon tokenAddress={field.value} chainId={sourceChainId} size={20} />
+          <TokenIcon token={token} size={20} />
           <span className="ml-3">{token?.symbol || 'Select Token'}</span>
         </div>
         <Image src={ChevronIcon} width={12} height={8} alt="" />

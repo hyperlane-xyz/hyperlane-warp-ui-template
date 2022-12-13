@@ -39,6 +39,16 @@ const nextConfig = {
     ]
   },
 
+  // TODO consider restricting image sources
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "**",
+      },
+    ],
+  },
+
   env: {
     NEXT_PUBLIC_VERSION: version,
   },

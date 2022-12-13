@@ -1,23 +1,30 @@
-import { useField } from 'formik';
+import { useField, useFormikContext } from 'formik';
 import Image from 'next/image';
 import { useState } from 'react';
 
+import { TokenIcon } from '../../components/icons/TokenIcon';
 import ChevronIcon from '../../images/icons/chevron-down.svg';
-import { TokenIcon } from '../icons/TokenIcon';
+import { TransferFormValues } from '../transfer/types';
 
 import { TokenSelectModal } from './TokenSelectModal';
+import { ListedToken } from './types';
 
 type Props = {
   name: string;
-  onChange?: (tokenAddress: Address) => void;
+  chainFieldName: string;
 };
 
-export function TokenSelectField({ name, onChange }: Props) {
+export function TokenSelectField({ name, chainFieldName }: Props) {
+  const { values } = useFormikContext<TransferFormValues>();
   const [field, , helpers] = useField<Address>(name);
+  const sourceChainId = values[chainFieldName] as number;
 
-  const handleChange = (newTokenAddress: Address) => {
-    helpers.setValue(newTokenAddress);
-    if (onChange) onChange(newTokenAddress);
+  // Keep local state for token details, but let formik manage field value
+  const [token, setToken] = useState<ListedToken | undefined>(undefined);
+
+  const handleChange = (newToken: ListedToken) => {
+    helpers.setValue(newToken.address);
+    setToken(newToken);
   };
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -31,8 +38,8 @@ export function TokenSelectField({ name, onChange }: Props) {
         onClick={() => setIsModalOpen(true)}
       >
         <div className="flex items-center">
-          <TokenIcon tokenAddress={field.value} size={20} />
-          <span className="ml-2">{field.value || 'Select Token'}</span>
+          <TokenIcon token={token} size={20} />
+          <span className="ml-3">{token?.symbol || 'Select Token'}</span>
         </div>
         <Image src={ChevronIcon} width={12} height={8} alt="" />
       </button>
@@ -40,6 +47,7 @@ export function TokenSelectField({ name, onChange }: Props) {
         isOpen={isModalOpen}
         close={() => setIsModalOpen(false)}
         onSelect={handleChange}
+        sourceChainId={sourceChainId}
       />
     </>
   );

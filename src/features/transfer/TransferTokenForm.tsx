@@ -56,7 +56,7 @@ export function TransferTokenForm() {
   };
 
   return (
-    <Card classes="w-[35rem] relative">
+    <Card classes="w-[33.5rem] relative">
       <div className="absolute left-0 right-0 -top-24 flex justify-center overflow-hidden z-10">
         <HyperlaneWideChevron direction="s" height="100%" width="100" />
       </div>
@@ -77,7 +77,7 @@ export function TransferTokenForm() {
         validateOnChange={false}
         validateOnBlur={false}
       >
-        <Form className="flex flex-col items-stretch w-full mt-3 space-y-5">
+        <Form className="flex flex-col items-stretch w-full mt-2 space-y-4">
           <div className="flex items-center justify-center space-x-10">
             <ChainSelectField name="sourceChainId" label="From" />
             <div className="flex flex-col items-center">
@@ -90,7 +90,7 @@ export function TransferTokenForm() {
             </div>
             <ChainSelectField name="destinationChainId" label="To" />
           </div>
-          <div className="flex justify-between space-x-5">
+          <div className="flex justify-between space-x-4">
             <div className="flex-1">
               <label
                 htmlFor="tokenAddress"

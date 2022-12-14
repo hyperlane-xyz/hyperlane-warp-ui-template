@@ -21,7 +21,7 @@ function InfoCard() {
   const [show, setShow] = useState(true);
   if (!show) return null;
   return (
-    <div className="relative px-4 py-3 w-[35rem] bg-blue-500 shadow-lg rounded opacity-95">
+    <div className="relative px-3 py-3 w-[33.5rem] bg-blue-500 shadow-lg rounded opacity-95">
       <h2 className="text-white text-lg">Bridge Tokens Permissionlessly with Hyperlane!</h2>
       <div className="flex items-end justify-between">
         <p className="text-white mt-1.5 text-sm max-w-[70%]">

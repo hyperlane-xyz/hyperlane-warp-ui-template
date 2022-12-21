@@ -1,84 +1,65 @@
 import Image from 'next/image';
 import { memo } from 'react';
-import { chain } from 'wagmi';
 
-import {
-  alfajoresChain,
-  auroraTestnetChain,
-  avalancheChain,
-  bscChain,
-  bscTestnetChain,
-  celoMainnetChain,
-  fujiTestnetChain,
-  moonbaseAlphaChain,
-  moonbeamChain,
-} from '../../consts/chains';
+import { chainMetadata } from '@hyperlane-xyz/sdk';
+import ArbitrumMono from '@hyperlane-xyz/sdk/logos/black/arbitrum.svg';
+import AvalancheMono from '@hyperlane-xyz/sdk/logos/black/avalanche.svg';
+import BscMono from '@hyperlane-xyz/sdk/logos/black/bsc.svg';
+import CeloMono from '@hyperlane-xyz/sdk/logos/black/celo.svg';
+import EthereumMono from '@hyperlane-xyz/sdk/logos/black/ethereum.svg';
+import MoonbeamMono from '@hyperlane-xyz/sdk/logos/black/moonbeam.svg';
+import OptimismMono from '@hyperlane-xyz/sdk/logos/black/optimism.svg';
+import PolygonMono from '@hyperlane-xyz/sdk/logos/black/polygon.svg';
+import ArbitrumColor from '@hyperlane-xyz/sdk/logos/color/arbitrum.svg';
+import AvalancheColor from '@hyperlane-xyz/sdk/logos/color/avalanche.svg';
+import BscColor from '@hyperlane-xyz/sdk/logos/color/bsc.svg';
+import CeloColor from '@hyperlane-xyz/sdk/logos/color/celo.svg';
+import EthereumColor from '@hyperlane-xyz/sdk/logos/color/ethereum.svg';
+import MoonbeamColor from '@hyperlane-xyz/sdk/logos/color/moonbeam.svg';
+import OptimismColor from '@hyperlane-xyz/sdk/logos/color/optimism.svg';
+import PolygonColor from '@hyperlane-xyz/sdk/logos/color/polygon.svg';
+
 import QuestionMark from '../../images/icons/question-mark.svg';
-import ArbitrumColor from '../../images/logos/chains-color/arbitrum.svg';
-import AvalancheColor from '../../images/logos/chains-color/avalanche.svg';
-import BscColor from '../../images/logos/chains-color/bsc.svg';
-import CeloColor from '../../images/logos/chains-color/celo.svg';
-import EthereumColor from '../../images/logos/chains-color/ethereum.svg';
-import MoonbeamColor from '../../images/logos/chains-color/moonbeam.png';
-import OptimismColor from '../../images/logos/chains-color/optimism.svg';
-import PolygonColor from '../../images/logos/chains-color/polygon.svg';
-import ArbitrumMono from '../../images/logos/chains-mono/arbitrum.svg';
-import AvalancheMono from '../../images/logos/chains-mono/avalanche.svg';
-import BscMono from '../../images/logos/chains-mono/bsc.svg';
-import CeloMono from '../../images/logos/chains-mono/celo.svg';
-import EthereumMono from '../../images/logos/chains-mono/ethereum.svg';
-import MoonbeamMono from '../../images/logos/chains-mono/moonbeam.svg';
-import Near from '../../images/logos/chains-mono/near.svg';
-import OptimismMono from '../../images/logos/chains-mono/optimism.svg';
-import PolygonMono from '../../images/logos/chains-mono/polygon.svg';
 import { getChainDisplayName } from '../../utils/chains';
 
 // Keep up to date as new chains are added or
 // icon will fallback to default
 const CHAIN_TO_MONOCHROME_ICON = {
-  // Prod chains
-  [chain.mainnet.id]: EthereumMono,
-  [chain.arbitrum.id]: ArbitrumMono,
-  [chain.optimism.id]: OptimismMono,
-  [chain.polygon.id]: PolygonMono,
-  [avalancheChain.id]: AvalancheMono,
-  [bscChain.id]: BscMono,
-  [celoMainnetChain.id]: CeloMono,
-  [moonbeamChain.id]: MoonbeamMono,
-
-  // Test chains
-  [chain.goerli.id]: EthereumMono,
-  [chain.arbitrumGoerli.id]: ArbitrumMono,
-  [chain.optimismGoerli.id]: OptimismMono,
-  [chain.polygonMumbai.id]: PolygonMono,
-  [fujiTestnetChain.id]: AvalancheMono,
-  [bscTestnetChain.id]: BscMono,
-  [alfajoresChain.id]: CeloMono,
-  [auroraTestnetChain.id]: Near,
-  [moonbaseAlphaChain.id]: MoonbeamMono,
+  [chainMetadata.alfajores.id]: CeloMono,
+  [chainMetadata.arbitrum.id]: ArbitrumMono,
+  [chainMetadata.arbitrumgoerli.id]: ArbitrumMono,
+  [chainMetadata.avalanche.id]: AvalancheMono,
+  [chainMetadata.bsc.id]: BscMono,
+  [chainMetadata.bsctestnet.id]: BscMono,
+  [chainMetadata.celo.id]: CeloMono,
+  [chainMetadata.ethereum.id]: EthereumMono,
+  [chainMetadata.fuji.id]: AvalancheMono,
+  [chainMetadata.goerli.id]: EthereumMono,
+  [chainMetadata.moonbasealpha.id]: MoonbeamMono,
+  [chainMetadata.moonbeam.id]: MoonbeamMono,
+  [chainMetadata.mumbai.id]: PolygonMono,
+  [chainMetadata.optimism.id]: OptimismMono,
+  [chainMetadata.optimismgoerli.id]: OptimismMono,
+  [chainMetadata.polygon.id]: PolygonMono,
 };
 
 const CHAIN_TO_COLOR_ICON = {
-  // Prod chains
-  [chain.mainnet.id]: EthereumColor,
-  [chain.arbitrum.id]: ArbitrumColor,
-  [chain.optimism.id]: OptimismColor,
-  [chain.polygon.id]: PolygonColor,
-  [avalancheChain.id]: AvalancheColor,
-  [bscChain.id]: BscColor,
-  [celoMainnetChain.id]: CeloColor,
-  [moonbeamChain.id]: MoonbeamColor,
-
-  // Test chains
-  [chain.goerli.id]: EthereumColor,
-  [chain.arbitrumGoerli.id]: ArbitrumColor,
-  [chain.optimismGoerli.id]: OptimismColor,
-  [chain.polygonMumbai.id]: PolygonColor,
-  [fujiTestnetChain.id]: AvalancheColor,
-  [bscTestnetChain.id]: BscColor,
-  [alfajoresChain.id]: CeloColor,
-  [auroraTestnetChain.id]: Near,
-  [moonbaseAlphaChain.id]: MoonbeamColor,
+  [chainMetadata.alfajores.id]: CeloColor,
+  [chainMetadata.arbitrum.id]: ArbitrumColor,
+  [chainMetadata.arbitrumgoerli.id]: ArbitrumColor,
+  [chainMetadata.avalanche.id]: AvalancheColor,
+  [chainMetadata.bsc.id]: BscColor,
+  [chainMetadata.bsctestnet.id]: BscColor,
+  [chainMetadata.celo.id]: CeloColor,
+  [chainMetadata.ethereum.id]: EthereumColor,
+  [chainMetadata.fuji.id]: AvalancheColor,
+  [chainMetadata.goerli.id]: EthereumColor,
+  [chainMetadata.moonbasealpha.id]: MoonbeamColor,
+  [chainMetadata.moonbeam.id]: MoonbeamColor,
+  [chainMetadata.mumbai.id]: PolygonColor,
+  [chainMetadata.optimism.id]: OptimismColor,
+  [chainMetadata.optimismgoerli.id]: OptimismColor,
+  [chainMetadata.polygon.id]: PolygonColor,
 };
 
 interface Props {

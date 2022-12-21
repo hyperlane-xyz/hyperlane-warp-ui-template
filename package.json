@@ -1,11 +1,11 @@
 {
   "name": "@hyperlane-xyz/token-bridge",
   "description": "An interchain web app for bridging tokens with Hyperlane",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "author": "J M Rossy",
   "dependencies": {
     "@headlessui/react": "^1.7.4",
-    "@hyperlane-xyz/sdk": "^0.5.5",
+    "@hyperlane-xyz/sdk": "^1.0.0-beta2",
     "@metamask/jazzicon": "https://github.com/jmrossy/jazzicon#7a8df28974b4e81129bfbe3cab76308b889032a6",
     "@rainbow-me/rainbowkit": "^0.8.0",
     "@tanstack/react-query": "^4.19.1",

@@ -1,6 +1,7 @@
+import { mainnetChainsMetadata, testnetChainsMetadata } from '@hyperlane-xyz/sdk';
+
 import { ChainIcon } from '../../components/icons/ChainIcon';
 import { Modal } from '../../components/layout/Modal';
-import { mainnetChains, testnetChains } from '../../consts/chains';
 import { getChainDisplayName } from '../../utils/chains';
 
 export function ChainSelectModal({
@@ -24,7 +25,7 @@ export function ChainSelectModal({
       <div className="mt-1 flex justify-between">
         <div className="flex flex-col space-y-0.5 relative -left-2">
           <h4 className="py-1.5 px-2 text-sm text-gray-500 uppercase">Mainnet</h4>
-          {mainnetChains.map((c) => (
+          {mainnetChainsMetadata.map((c) => (
             <button
               key={c.name}
               className="py-1.5 px-2 text-sm flex items-center rounded hover:bg-gray-100 active:bg-gray-200 transition-all duration-200"
@@ -37,7 +38,7 @@ export function ChainSelectModal({
         </div>
         <div className="flex flex-col space-y-0.5 pr-3">
           <h4 className="py-1.5 px-2 text-sm text-gray-500 uppercase">Testnet</h4>
-          {testnetChains.map((c) => (
+          {testnetChainsMetadata.map((c) => (
             <button
               key={c.name}
               className="py-1.5 px-2 text-sm flex items-center rounded hover:bg-gray-100 active:bg-gray-200 transition-all duration-200"

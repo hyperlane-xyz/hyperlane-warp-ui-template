@@ -1,6 +1,7 @@
 import { BigNumber, providers } from 'ethers';
 
-import { chainIdToChain, chainIdToExplorerApi } from '../consts/chains';
+import { chainIdToMetadata } from '@hyperlane-xyz/sdk';
+
 import { config } from '../consts/config';
 
 import { logger } from './logger';
@@ -14,25 +15,15 @@ export interface ExplorerQueryResponse<R> {
 }
 
 export function getExplorerUrl(chainId: number) {
-  if (!chainId) return null;
-
-  const chain = chainIdToChain[chainId];
-  if (!chain?.blockExplorers) return null;
-
-  if (chain.blockExplorers.etherscan) {
-    return chain.blockExplorers.etherscan.url;
-  }
-  if (chain.blockExplorers.default) {
-    return chain.blockExplorers.default.url;
-  }
-  return null;
+  const chain = chainIdToMetadata[chainId];
+  if (!chain?.blockExplorers?.length) return null;
+  return chain.blockExplorers[0].url;
 }
 
 export function getExplorerApiUrl(chainId: number) {
-  if (chainIdToExplorerApi[chainId]) {
-    return chainIdToExplorerApi[chainId];
-  }
-  return getExplorerUrl(chainId);
+  const chain = chainIdToMetadata[chainId];
+  if (!chain?.blockExplorers?.length) return null;
+  return chain.blockExplorers[0].apiUrl || chain.blockExplorers[0].url;
 }
 
 export function getTxExplorerUrl(chainId: number, hash?: string) {

@@ -1,26 +1,19 @@
-import { chain } from 'wagmi';
+import { ChainName, Chains, Mainnets, chainIdToMetadata } from '@hyperlane-xyz/sdk';
 
-import { ChainName, Chains, Mainnets } from '@hyperlane-xyz/sdk';
-
-import { bscChain, chainIdToChain, chainIdToName, moonbaseAlphaChain } from '../consts/chains';
 import { Environment } from '../consts/environments';
 
 import { logger } from './logger';
-import { toTitleCase } from './string';
 
 export function getChainDisplayName(chainId?: number, shortName = false) {
-  if (!chainId) return 'Unknown';
-  if (shortName && chainId === bscChain.id) return 'Binance';
-  if (shortName && chainId === moonbaseAlphaChain.id) return 'Moonbase';
-  if (shortName && chainId === chain.optimismGoerli.id) return 'Opt. Goerli';
-  if (shortName && chainId === chain.arbitrumGoerli.id) return 'Arb. Goerli';
-  return toTitleCase(chainIdToChain[chainId]?.name || 'Unknown');
+  if (!chainId || !chainIdToMetadata[chainId]) return 'Unknown';
+  const metadata = chainIdToMetadata[chainId];
+  return shortName ? metadata.displayNameShort || metadata.displayName : metadata.displayName;
 }
 
 export function getChainEnvironment(chain: number | string) {
   let chainName: ChainName;
-  if (typeof chain === 'number' && chainIdToName[chain]) {
-    chainName = chainIdToName[chain];
+  if (typeof chain === 'number' && chainIdToMetadata[chain]) {
+    chainName = chainIdToMetadata[chain].name;
   } else if (typeof chain === 'string' && Object.keys(Chains).includes(chain)) {
     chainName = chain as ChainName;
   } else {
@@ -28,5 +21,5 @@ export function getChainEnvironment(chain: number | string) {
     return Environment.Mainnet;
   }
 
-  return Mainnets.includes(chainName) ? Environment.Mainnet : Environment.Testnet2;
+  return Mainnets.includes(chainName) ? Environment.Mainnet : Environment.Testnet3;
 }

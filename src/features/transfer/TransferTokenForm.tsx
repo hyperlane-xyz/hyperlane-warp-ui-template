@@ -1,12 +1,13 @@
 import { Form, Formik, useFormikContext } from 'formik';
 import { chain } from 'wagmi';
 
+import { chainIdToMetadata } from '@hyperlane-xyz/sdk';
+
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
 import { IconButton } from '../../components/buttons/IconButton';
 import { HyperlaneChevron, HyperlaneWideChevron } from '../../components/icons/HyperlaneChevron';
 import { TextField } from '../../components/input/TextField';
 import { Card } from '../../components/layout/Card';
-import { chainIdToChain } from '../../consts/chains';
 import GearIcon from '../../images/icons/gear.svg';
 import SwapIcon from '../../images/icons/swap.svg';
 import { Color } from '../../styles/Color';
@@ -36,10 +37,10 @@ export function TransferTokenForm() {
     tokenAddress,
     recipientAddress,
   }: TransferFormValues) => {
-    if (!sourceChainId || !chainIdToChain[sourceChainId]) {
+    if (!sourceChainId || !chainIdToMetadata[sourceChainId]) {
       return { sourceChainId: 'Invalid source chain' };
     }
-    if (!destinationChainId || !chainIdToChain[destinationChainId]) {
+    if (!destinationChainId || !chainIdToMetadata[destinationChainId]) {
       return { destinationChainId: 'Invalid destination chain' };
     }
     // TODO check balance

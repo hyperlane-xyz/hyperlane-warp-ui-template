@@ -1,7 +1,6 @@
 import { Form, Formik, useFormikContext } from 'formik';
-import { chain } from 'wagmi';
 
-import { chainIdToMetadata } from '@hyperlane-xyz/sdk';
+import { chainIdToMetadata, chainMetadata } from '@hyperlane-xyz/sdk';
 
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
 import { IconButton } from '../../components/buttons/IconButton';
@@ -18,8 +17,8 @@ import { TokenSelectField } from '../tokens/TokenSelectField';
 import { TransferFormValues } from './types';
 
 const initialValues: TransferFormValues = {
-  sourceChainId: chain.mainnet.id,
-  destinationChainId: chain.polygon.id,
+  sourceChainId: chainMetadata.goerli.id,
+  destinationChainId: chainMetadata.alfajores.id,
   amount: '',
   tokenAddress: '',
   recipientAddress: '',

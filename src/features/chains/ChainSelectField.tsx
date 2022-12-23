@@ -12,9 +12,10 @@ type Props = {
   name: string;
   label: string;
   onChange?: (chainId: number) => void;
+  disabled?: boolean;
 };
 
-export function ChainSelectField({ name, label, onChange }: Props) {
+export function ChainSelectField({ name, label, onChange, disabled }: Props) {
   const [field, , helpers] = useField<number>(name);
 
   const handleChange = (newChainId: number) => {
@@ -23,6 +24,10 @@ export function ChainSelectField({ name, label, onChange }: Props) {
   };
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const onClick = () => {
+    if (!disabled) setIsModalOpen(true);
+  };
 
   return (
     <div className="flex flex-col items-center">
@@ -37,8 +42,8 @@ export function ChainSelectField({ name, label, onChange }: Props) {
       <button
         type="button"
         name={field.name}
-        className="w-36 px-2.5 py-2 relative -top-1.5 flex items-center justify-between text-sm bg-white hover:bg-gray-50 active:bg-gray-100 rounded border border-gray-400 focus:border-blue-500 focus:outline-none transition-colors duration-500"
-        onClick={() => setIsModalOpen(true)}
+        className={`${styles.base} ${disabled ? styles.disabled : styles.enabled}`}
+        onClick={onClick}
       >
         <div className="flex items-center">
           <ChainIcon chainId={field.value} size={14} />
@@ -54,3 +59,9 @@ export function ChainSelectField({ name, label, onChange }: Props) {
     </div>
   );
 }
+
+const styles = {
+  base: 'w-36 px-2.5 py-2 relative -top-1.5 flex items-center justify-between text-sm bg-white rounded border border-gray-400 outline-none transition-colors duration-500',
+  enabled: 'hover:bg-gray-50 active:bg-gray-100 focus:border-blue-500',
+  disabled: 'bg-gray-150 cursor-default',
+};

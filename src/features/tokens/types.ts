@@ -4,5 +4,6 @@ export interface ListedToken {
   name: string;
   symbol: string;
   decimals: number;
-  logoURI: string | undefined;
+  logoURI?: string;
+  hypCollateralAddresses?: string[];
 }

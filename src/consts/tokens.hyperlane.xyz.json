@@ -1,0 +1,24 @@
+{
+  "name": "Hyperlane Default Tokens",
+  "timestamp": "2022-12-23T12:00:00.000Z",
+  "version": {
+    "major": 1,
+    "minor": 0,
+    "patch": 0
+  },
+  "tags": {},
+  "logoURI": "https://www.hyperlane.xyz/logo-blue.png",
+  "keywords": ["hyperlane", "default"],
+  "tokens": [
+    {
+      "chainId": 5,
+      "address": "0xb4fbf271143f4fbf7b91a5ded31805e42b2208d6",
+      "name": "Weth",
+      "symbol": "WETH",
+      "decimals": 18,
+      "hypCollateralAddresses": [
+        "0x50EA04269efD47dFA3844e5cCA5d3e66dA5A122F"
+      ]
+    }
+  ]
+}

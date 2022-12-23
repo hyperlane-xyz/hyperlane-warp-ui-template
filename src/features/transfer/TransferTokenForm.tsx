@@ -11,8 +11,11 @@ import GearIcon from '../../images/icons/gear.svg';
 import SwapIcon from '../../images/icons/swap.svg';
 import { Color } from '../../styles/Color';
 import { isValidAddress } from '../../utils/addresses';
+import { fromWeiRounded } from '../../utils/amount';
+import { getChainEnvironment } from '../../utils/chains';
 import { ChainSelectField } from '../chains/ChainSelectField';
 import { TokenSelectField } from '../tokens/TokenSelectField';
+import { useTokenBalance } from '../tokens/useTokenBalance';
 
 import { TransferFormValues } from './types';
 
@@ -41,6 +44,9 @@ export function TransferTokenForm() {
     }
     if (!destinationChainId || !chainIdToMetadata[destinationChainId]) {
       return { destinationChainId: 'Invalid destination chain' };
+    }
+    if (getChainEnvironment(sourceChainId) !== getChainEnvironment(destinationChainId)) {
+      return { destinationChainId: 'Invalid chain combination' };
     }
     // TODO check balance
     if (!amount) {
@@ -101,9 +107,12 @@ export function TransferTokenForm() {
               <TokenSelectField name="tokenAddress" chainFieldName="sourceChainId" />
             </div>
             <div className="flex-1">
-              <label htmlFor="amount" className="block uppercase text-sm text-gray-500 pl-0.5">
-                Amount
-              </label>
+              <div className="flex justify-between pr-1">
+                <label htmlFor="amount" className="block uppercase text-sm text-gray-500 pl-0.5">
+                  Amount
+                </label>
+                <TokenBalance />
+              </div>
               <TextField name="amount" placeholder="0.00" classes="w-full" />
             </div>
           </div>
@@ -141,5 +150,22 @@ function SwapChainsButton() {
       classes="hover:rotate-180"
       onClick={onClick}
     />
+  );
+}
+
+export function TokenBalance() {
+  const { values, setFieldValue } = useFormikContext<TransferFormValues>();
+  const { balance } = useTokenBalance(values.sourceChainId, values.tokenAddress);
+  const onClick = () => {
+    if (balance) setFieldValue('amount', balance);
+  };
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`text-xs text-gray-500 ${
+        !balance && 'opacity-0 cursor-default'
+      } transition-all duration-300`}
+    >{`Balance: ${fromWeiRounded(balance)}`}</button>
   );
 }

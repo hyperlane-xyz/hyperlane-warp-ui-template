@@ -45,7 +45,7 @@ export function toWei(value: NumberT | null | undefined): BigNumber {
   }
 }
 
-export function parseAmount(value: NumberT | null | undefined): BigNumber | null {
+export function tryParseAmount(value: NumberT | null | undefined): BigNumber | null {
   try {
     if (!value) return null;
     const parsed = new BigNumber(value);

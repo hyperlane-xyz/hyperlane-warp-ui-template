@@ -16,7 +16,7 @@ type Props = {
 };
 
 export function TokenSelectField({ name, chainFieldName, disabled }: Props) {
-  const { values } = useFormikContext<TransferFormValues>();
+  const { values, setFieldValue } = useFormikContext<TransferFormValues>();
   const [field, , helpers] = useField<Address>(name);
   const sourceChainId = values[chainFieldName] as number;
 
@@ -24,7 +24,10 @@ export function TokenSelectField({ name, chainFieldName, disabled }: Props) {
   const [token, setToken] = useState<ListedToken | undefined>(undefined);
 
   const handleChange = (newToken: ListedToken) => {
+    // Set the token address value in formik state
     helpers.setValue(newToken.address);
+    // And also set the collateral address
+    setFieldValue('hypCollateralAddress', newToken.hypCollateralAddresses[0]);
     setToken(newToken);
   };
 

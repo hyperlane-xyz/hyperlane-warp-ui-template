@@ -1,2 +1,2 @@
-export const MIN_ROUNDED_VALUE = 0.0001;
-export const DISPLAY_DECIMALS = 4;
+export const MIN_ROUNDED_VALUE = 0.00001;
+export const DISPLAY_DECIMALS = 5;

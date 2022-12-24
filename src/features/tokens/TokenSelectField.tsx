@@ -12,10 +12,11 @@ import { ListedToken } from './types';
 type Props = {
   name: string;
   chainFieldName: string;
+  disabled?: boolean;
 };
 
-export function TokenSelectField({ name, chainFieldName }: Props) {
-  const { values } = useFormikContext<TransferFormValues>();
+export function TokenSelectField({ name, chainFieldName, disabled }: Props) {
+  const { values, setFieldValue } = useFormikContext<TransferFormValues>();
   const [field, , helpers] = useField<Address>(name);
   const sourceChainId = values[chainFieldName] as number;
 
@@ -23,19 +24,26 @@ export function TokenSelectField({ name, chainFieldName }: Props) {
   const [token, setToken] = useState<ListedToken | undefined>(undefined);
 
   const handleChange = (newToken: ListedToken) => {
+    // Set the token address value in formik state
     helpers.setValue(newToken.address);
+    // And also set the collateral address
+    setFieldValue('hypCollateralAddress', newToken.hypCollateralAddresses[0]);
     setToken(newToken);
   };
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const onClick = () => {
+    if (!disabled) setIsModalOpen(true);
+  };
 
   return (
     <>
       <button
         type="button"
         name={field.name}
-        className="mt-1.5 w-full px-2.5 py-2 flex items-center justify-between text-sm bg-white hover:bg-gray-50 active:bg-gray-100 rounded border border-gray-400 focus:border-blue-500 focus:outline-none transition-colors duration-500"
-        onClick={() => setIsModalOpen(true)}
+        className={`${styles.base} ${disabled ? styles.disabled : styles.enabled}`}
+        onClick={onClick}
       >
         <div className="flex items-center">
           <TokenIcon token={token} size={20} />
@@ -52,3 +60,9 @@ export function TokenSelectField({ name, chainFieldName }: Props) {
     </>
   );
 }
+
+const styles = {
+  base: 'mt-1.5 w-full px-2.5 py-2 flex items-center justify-between text-sm bg-white rounded border border-gray-400 outline-none transition-colors duration-500',
+  enabled: 'hover:bg-gray-50 active:bg-gray-100 focus:border-blue-500',
+  disabled: 'bg-gray-150 cursor-default',
+};

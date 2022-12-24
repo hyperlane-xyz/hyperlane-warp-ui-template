@@ -40,7 +40,7 @@ export function Modal({
               <Dialog.Panel
                 className={`w-full ${
                   width || 'max-w-xs'
-                } max-h-[90vh] transform overflow-auto rounded-md bg-white px-5 py-5 text-left shadow-lg transition-all`}
+                } max-h-[90vh] transform overflow-auto rounded-md bg-white px-4 py-4 text-left shadow-lg transition-all`}
               >
                 <Dialog.Title as="h3" className="text text-gray-700">
                   {title}
@@ -50,7 +50,7 @@ export function Modal({
                   <IconButton
                     imgSrc={XCircle}
                     onClick={close}
-                    title="Hide tip"
+                    title="Close"
                     classes="hover:rotate-90"
                   />
                 </div>

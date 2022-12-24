@@ -1,8 +1,10 @@
 import { useMemo } from 'react';
 
 import { TokenIcon } from '../../components/icons/TokenIcon';
-// Using Uniswap's default list for now, may revisit
-import UniswapTokens from '../../consts/tokens.uniswap.org.json';
+// Uniswap's list has a diverse set of 500+ popular tokens
+// import UniswapTokens from '../../consts/tokens.uniswap.org.json';
+// Import your custom list here
+import SyntheticTokenList from '../../consts/tokens.hyperlane.xyz.json';
 
 import { ListedToken } from './types';
 
@@ -18,7 +20,7 @@ export default function TokenList({
 }) {
   const tokens = useMemo(
     () =>
-      UniswapTokens.tokens.filter((t) => {
+      SyntheticTokenList.tokens.filter((t) => {
         const q = searchQuery?.trim().toLowerCase();
         const chainFilter = t.chainId === sourceChainId;
         if (!q) return chainFilter;
@@ -34,7 +36,7 @@ export default function TokenList({
   );
 
   return (
-    <div className="divide-y divide-gray-200">
+    <div className="flex flex-col items-stretch divide-y divide-gray-200">
       {tokens.map((t) => (
         <button
           className="-mx-2 py-2 px-2 flex items-center rounded hover:bg-gray-100 active:bg-gray-200 transition-all duration-250"

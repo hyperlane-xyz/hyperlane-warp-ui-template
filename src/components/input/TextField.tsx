@@ -17,6 +17,7 @@ export function TextInput({ onChange, classes, ...props }: InputProps) {
   return (
     <input
       type="text"
+      autoComplete="off"
       onChange={handleChange}
       className={`${defaultInputClasses} ${classes}`}
       {...props}
@@ -25,4 +26,4 @@ export function TextInput({ onChange, classes, ...props }: InputProps) {
 }
 
 const defaultInputClasses =
-  'mt-1.5 px-2.5 py-2 text-sm rounded border border-gray-400 focus:border-blue-500 outline-none transition-all duration-300';
+  'mt-1.5 px-2.5 py-2 text-sm rounded border border-gray-400 focus:border-blue-500 disabled:bg-gray-150 outline-none transition-all duration-300';

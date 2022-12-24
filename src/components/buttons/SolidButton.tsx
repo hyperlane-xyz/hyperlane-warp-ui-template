@@ -61,7 +61,7 @@ export function SolidButton(
       {...passThruProps}
     >
       {icon ? (
-        <div className="flex items-center justify-center">
+        <div className="flex items-center justify-center space-x-1">
           {props.icon}
           {props.children}
         </div>

@@ -18,6 +18,7 @@ module.exports = {
       colors: {
         black: '#010101',
         white: '#ffffff',
+        gray: {...defaultTheme.colors.gray, 150: '#EBEDF0'},
         blue: {
           50: '#E9F0F7',
           100: '#CCDEEC',
@@ -64,18 +65,6 @@ module.exports = {
           800: '#17462E',
           900: '#0F2F1E',
         },
-        slate: {
-          50: '#879CA2',
-          100: '#789097',
-          200: '#6B848B',
-          300: '#60767D',
-          400: '#55696E',
-          500: '#4A5B60',
-          600: '#3F4D52',
-          700: '#344043',
-          800: '#293235',
-          900: '#1E2427',
-        },
       },
       fontSize: {
         md: '0.95rem',
@@ -100,6 +89,10 @@ module.exports = {
       },
       animation: {
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;',
+      },
+      transitionProperty: {
+        'height': 'height, max-height',
+        'spacing': 'margin, padding',
       }
     },
   },

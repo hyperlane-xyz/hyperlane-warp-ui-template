@@ -25,7 +25,7 @@ export function WalletControlBar() {
   }
 
   return (
-    <div className="flex justify-center items-stretch py-1.5 px-1.5 space-x-1.5 bg-white shadow-md rounded-md">
+    <div className="flex justify-center items-stretch py-1 px-1 bg-white shadow-md rounded-md">
       <AccountDropdown />
     </div>
   );

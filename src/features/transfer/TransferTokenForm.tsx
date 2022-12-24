@@ -1,7 +1,5 @@
-import { sendTransaction } from '@wagmi/core';
 import { Form, Formik, useFormikContext } from 'formik';
 import { useState } from 'react';
-import { toast } from 'react-toastify';
 
 import { chainIdToMetadata, chainMetadata } from '@hyperlane-xyz/sdk';
 
@@ -16,17 +14,16 @@ import GearIcon from '../../images/icons/gear.svg';
 import SwapIcon from '../../images/icons/swap.svg';
 import { Color } from '../../styles/Color';
 import { isValidAddress } from '../../utils/addresses';
-import { fromWeiRounded, toWei, tryParseAmount } from '../../utils/amount';
+import { fromWeiRounded, tryParseAmount } from '../../utils/amount';
 import { getChainDisplayName, getChainEnvironment } from '../../utils/chains';
 import { logger } from '../../utils/logger';
 import { ChainSelectField } from '../chains/ChainSelectField';
-import { getErc20Contract } from '../contracts/erc20';
-import { getProvider } from '../providers';
 import { TokenSelectField } from '../tokens/TokenSelectField';
 import { useTokenBalance } from '../tokens/useTokenBalance';
 
 import { TransferTransactionsModal } from './TransferTransactionsModal';
 import { TransferFormValues } from './types';
+import { useApproveAndTransfer } from './useApproveAndTransfer';
 
 const initialValues: TransferFormValues = {
   sourceChainId: chainMetadata.goerli.id,
@@ -40,8 +37,15 @@ const initialValues: TransferFormValues = {
 export function TransferTokenForm() {
   // Flag for if form is in input vs review mode
   const [isReview, setIsReview] = useState(false);
-  // Flag for showing the tx loading modal
-  const [showTxModal, setShowTxModal] = useState(false);
+
+  const onSubmitForm = (values: TransferFormValues) => {
+    logger.debug('Reviewing transfer form values:', JSON.stringify(values));
+    setIsReview(true);
+  };
+
+  const onClickEdit = () => {
+    setIsReview(false);
+  };
 
   const validateForm = ({
     sourceChainId,
@@ -77,48 +81,11 @@ export function TransferTokenForm() {
     return {};
   };
 
-  const onSubmitForm = (values: TransferFormValues) => {
-    logger.debug('Reviewing transfer form values:', JSON.stringify(values));
-    setIsReview(true);
-  };
-
-  const onClickEdit = () => {
+  const onDoneTransactions = () => {
     setIsReview(false);
+    // TODO consider clearing form inputs
   };
-
-  // TODO move this logic into separate file
-  const onClickConfirm = async (values: TransferFormValues) => {
-    logger.debug('Attempting approve and transfer transactions');
-    const {
-      amount,
-      sourceChainId,
-      // destinationChainId,
-      // recipientAddress,
-      tokenAddress,
-      hypCollateralAddress,
-    } = values;
-    setShowTxModal(true);
-    // TODO more validation here, including checking for existence of remote token and ensuring # synthetics == 1
-    const provider = getProvider(sourceChainId);
-    const erc20 = getErc20Contract(tokenAddress, provider);
-    const weiAmount = toWei(amount).toString();
-    const approveTxRequest = await erc20.populateTransaction.approve(
-      hypCollateralAddress,
-      weiAmount,
-    );
-    // Not using wagmi's prepare + send pattern because we're sending two transactions here
-    const { wait } = await sendTransaction({
-      chainId: sourceChainId,
-      request: approveTxRequest,
-      mode: 'recklesslyUnprepared',
-    });
-    // TODO use wait here based on chain confirmations #
-    const txReceipt = await wait(1);
-    logger.debug('Approve transaction confirmed, hash:', txReceipt.transactionHash);
-    toast.success('Approve transaction sent! Attempting transfer...');
-    // TODO call remoteTransfer
-    setShowTxModal(false);
-  };
+  const { showTxModal, hideModal, triggerTransactions } = useApproveAndTransfer(onDoneTransactions);
 
   return (
     <Card classes="w-[33.5rem] relative">
@@ -237,7 +204,7 @@ export function TransferTokenForm() {
                   <SolidButton
                     type="button"
                     color="blue"
-                    onClick={() => onClickConfirm(values)}
+                    onClick={() => triggerTransactions(values)}
                     classes="flex-1 px-3 py-1.5"
                   >
                     {`Send to ${getChainDisplayName(values.destinationChainId)}`}
@@ -245,7 +212,7 @@ export function TransferTokenForm() {
                 </div>
               )}
             </Form>
-            <TransferTransactionsModal isOpen={showTxModal} close={() => setShowTxModal(false)} />
+            <TransferTransactionsModal isOpen={showTxModal} close={hideModal} />
           </>
         )}
       </Formik>
@@ -304,8 +271,16 @@ function ReviewDetails({ visible }: { visible: boolean }) {
     >
       <label className="mt-4 block uppercase text-sm text-gray-500 pl-0.5">Transactions</label>
       <div className="mt-1.5 px-2.5 py-2 rounded border border-gray-400 bg-gray-150 text-sm break-all">
-        {/* TODO tx details here */}
-        {JSON.stringify(values)}
+        <h4>Transaction 1: Approve Transfer</h4>
+        <div className="mt-1.5 ml-1.5 pl-2 border-l border-gray-300 space-y-1.5 text-xs">
+          <p>{`Token Address: ${values.tokenAddress}`}</p>
+          <p>{`Collateral Address: ${values.hypCollateralAddress}`}</p>
+        </div>
+        <h4 className="mt-2">Transaction 2: Transfer Remote</h4>
+        <div className="mt-1.5 ml-1.5 pl-2 border-l border-gray-300 space-y-1.5 text-xs">
+          <p>{`Remote Token: ${'TODO'}`}</p>
+          <p>{`Remote Balance: ${'TODO'}`}</p>
+        </div>
       </div>
     </div>
   );

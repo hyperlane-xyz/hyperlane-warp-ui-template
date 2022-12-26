@@ -21,6 +21,7 @@ const securityHeaders = [
     key: 'Referrer-Policy',
     value: 'strict-origin-when-cross-origin',
   },
+  // Note, causes a problem for firefox: https://github.com/MetaMask/metamask-extension/issues/3133
   {
     key: 'Content-Security-Policy',
     value: `default-src 'self'; script-src 'self'${

@@ -1,9 +1,18 @@
-import { useQuery } from '@tanstack/react-query';
+import { QueryClient, useQuery } from '@tanstack/react-query';
 import { useAccount } from 'wagmi';
 
 import { logger } from '../../utils/logger';
 import { getErc20Contract } from '../contracts/erc20';
 import { getProvider } from '../providers';
+
+export function getTokenBalanceKey(
+  chainId: number,
+  tokenAddress: Address,
+  isConnected: boolean,
+  accountAddress?: Address,
+) {
+  return ['tokenBalance', chainId, tokenAddress, accountAddress, isConnected];
+}
 
 export function useTokenBalance(chainId: number, tokenAddress: Address) {
   const { address: accountAddress, isConnected } = useAccount();
@@ -13,7 +22,7 @@ export function useTokenBalance(chainId: number, tokenAddress: Address) {
     isError: hasError,
     data: balance,
   } = useQuery(
-    ['tokenBalance', chainId, tokenAddress, accountAddress, isConnected],
+    getTokenBalanceKey(chainId, tokenAddress, isConnected, accountAddress),
     () => {
       if (!chainId || !tokenAddress || !accountAddress || !isConnected) return null;
       return fetchTokenBalance(chainId, tokenAddress, accountAddress);
@@ -22,6 +31,18 @@ export function useTokenBalance(chainId: number, tokenAddress: Address) {
   );
 
   return { isFetching, hasError, balance };
+}
+
+export function getCachedTokenBalance(
+  queryClient: QueryClient,
+  chainId: number,
+  tokenAddress: Address,
+  isConnected: boolean,
+  accountAddress?: Address,
+) {
+  return queryClient.getQueryData(
+    getTokenBalanceKey(chainId, tokenAddress, isConnected, accountAddress),
+  ) as string | undefined;
 }
 
 async function fetchTokenBalance(chainId: number, tokenAddress: Address, accountAddress: Address) {

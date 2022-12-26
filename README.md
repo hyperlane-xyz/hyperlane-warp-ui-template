@@ -8,7 +8,7 @@ An interchain web app for bridging tokens with Hyperlane.
 # Install dependencies
 yarn
 
-# Build source and generate types
+# Build Next project
 yarn build
 ```
 
@@ -22,11 +22,25 @@ yarn dev
 ## Test
 
 ```sh
-# Run all unit tests
-yarn test
-
 # Lint check code
 yarn lint
+
+# Check code types
+yarn typecheck
+```
+
+## Format
+
+```sh
+# Format code using Prettier
+yarn prettier
+```
+
+## Clean / Reset
+
+```sh
+# Delete build artifacts to start fresh 
+yarn clean
 ```
 
 ## Learn more

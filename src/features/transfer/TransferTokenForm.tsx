@@ -1,5 +1,7 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { Form, Formik, useFormikContext } from 'formik';
 import { useState } from 'react';
+import { useAccount } from 'wagmi';
 
 import { chainIdToMetadata, chainMetadata } from '@hyperlane-xyz/sdk';
 
@@ -10,6 +12,7 @@ import { ChevronIcon } from '../../components/icons/Chevron';
 import { HyperlaneChevron, HyperlaneWideChevron } from '../../components/icons/HyperlaneChevron';
 import { TextField } from '../../components/input/TextField';
 import { Card } from '../../components/layout/Card';
+import { config } from '../../consts/config';
 import GearIcon from '../../images/icons/gear.svg';
 import SwapIcon from '../../images/icons/swap.svg';
 import { Color } from '../../styles/Color';
@@ -19,7 +22,7 @@ import { getChainDisplayName, getChainEnvironment } from '../../utils/chains';
 import { logger } from '../../utils/logger';
 import { ChainSelectField } from '../chains/ChainSelectField';
 import { TokenSelectField } from '../tokens/TokenSelectField';
-import { useTokenBalance } from '../tokens/useTokenBalance';
+import { getCachedTokenBalance, useTokenBalance } from '../tokens/useTokenBalance';
 
 import { TransferTransactionsModal } from './TransferTransactionsModal';
 import { TransferFormValues } from './types';
@@ -47,6 +50,8 @@ export function TransferTokenForm() {
     setIsReview(false);
   };
 
+  const queryClient = useQueryClient();
+  const { address: accountAddress, isConnected } = useAccount();
   const validateForm = ({
     sourceChainId,
     destinationChainId,
@@ -64,11 +69,6 @@ export function TransferTokenForm() {
     if (getChainEnvironment(sourceChainId) !== getChainEnvironment(destinationChainId)) {
       return { destinationChainId: 'Invalid chain combination' };
     }
-    // TODO check balance and check non-zero
-    const parsedAmount = tryParseAmount(amount);
-    if (!parsedAmount || parsedAmount.lte(0)) {
-      return { amount: 'Invalid amount' };
-    }
     if (!isValidAddress(recipientAddress)) {
       return { recipientAddress: 'Invalid recipient' };
     }
@@ -77,6 +77,20 @@ export function TransferTokenForm() {
     }
     if (!isValidAddress(hypCollateralAddress)) {
       return { tokenAddress: 'Invalid collateral token' };
+    }
+    const parsedAmount = tryParseAmount(amount);
+    if (!parsedAmount || parsedAmount.lte(0)) {
+      return { amount: 'Invalid amount' };
+    }
+    const cachedBalance = getCachedTokenBalance(
+      queryClient,
+      sourceChainId,
+      tokenAddress,
+      isConnected,
+      accountAddress,
+    );
+    if (cachedBalance && parsedAmount.gt(cachedBalance) && !config.debug) {
+      return { amount: 'Insufficient balance' };
     }
     return {};
   };
@@ -110,59 +124,56 @@ export function TransferTokenForm() {
         validateOnBlur={false}
       >
         {({ values }) => (
-          <>
-            <Form className="flex flex-col items-stretch w-full mt-2">
-              <div className="flex items-center justify-center space-x-10">
-                <ChainSelectField name="sourceChainId" label="From" disabled={isReview} />
-                <div className="flex flex-col items-center">
-                  <div className="flex mb-6 space-x-1.5">
-                    <HyperlaneChevron
-                      width="17"
-                      height="100%"
-                      direction="e"
-                      color={Color.lightGray}
-                    />
-                    <HyperlaneChevron
-                      width="17"
-                      height="100%"
-                      direction="e"
-                      color={Color.lightGray}
-                    />
-                    <HyperlaneChevron
-                      width="17"
-                      height="100%"
-                      direction="e"
-                      color={Color.lightGray}
-                    />
-                  </div>
-                  <SwapChainsButton disabled={isReview} />
-                </div>
-                <ChainSelectField name="destinationChainId" label="To" disabled={isReview} />
-              </div>
-              <div className="mt-3 flex justify-between space-x-4">
-                <div className="flex-1">
-                  <label
-                    htmlFor="tokenAddress"
-                    className="block uppercase text-sm text-gray-500 pl-0.5"
-                  >
-                    ERC-20 Token
-                  </label>
-                  <TokenSelectField
-                    name="tokenAddress"
-                    chainFieldName="sourceChainId"
-                    disabled={isReview}
+          <Form className="flex flex-col items-stretch w-full mt-2">
+            <div className="flex items-center justify-center space-x-10">
+              <ChainSelectField name="sourceChainId" label="From" disabled={isReview} />
+              <div className="flex flex-col items-center">
+                <div className="flex mb-6 space-x-1.5">
+                  <HyperlaneChevron
+                    width="17"
+                    height="100%"
+                    direction="e"
+                    color={Color.lightGray}
+                  />
+                  <HyperlaneChevron
+                    width="17"
+                    height="100%"
+                    direction="e"
+                    color={Color.lightGray}
+                  />
+                  <HyperlaneChevron
+                    width="17"
+                    height="100%"
+                    direction="e"
+                    color={Color.lightGray}
                   />
                 </div>
-                <div className="flex-1">
-                  <div className="flex justify-between pr-1">
-                    <label
-                      htmlFor="amount"
-                      className="block uppercase text-sm text-gray-500 pl-0.5"
-                    >
-                      Amount
-                    </label>
-                    <TokenBalance disabled={isReview} />
-                  </div>
+                <SwapChainsButton disabled={isReview} />
+              </div>
+              <ChainSelectField name="destinationChainId" label="To" disabled={isReview} />
+            </div>
+            <div className="mt-3 flex justify-between space-x-4">
+              <div className="flex-1">
+                <label
+                  htmlFor="tokenAddress"
+                  className="block uppercase text-sm text-gray-500 pl-0.5"
+                >
+                  ERC-20 Token
+                </label>
+                <TokenSelectField
+                  name="tokenAddress"
+                  chainFieldName="sourceChainId"
+                  disabled={isReview}
+                />
+              </div>
+              <div className="flex-1">
+                <div className="flex justify-between pr-1">
+                  <label htmlFor="amount" className="block uppercase text-sm text-gray-500 pl-0.5">
+                    Amount
+                  </label>
+                  <TokenBalance />
+                </div>
+                <div className="relative w-full">
                   <TextField
                     name="amount"
                     placeholder="0.00"
@@ -171,51 +182,55 @@ export function TransferTokenForm() {
                     step="any"
                     disabled={isReview}
                   />
+                  <MaxButton disabled={isReview} />
                 </div>
               </div>
-              <div className="mt-4">
-                <label
-                  htmlFor="recipientAddress"
-                  className="block uppercase text-sm text-gray-500 pl-0.5"
-                >
-                  Recipient Address
-                </label>
+            </div>
+            <div className="mt-4">
+              <label
+                htmlFor="recipientAddress"
+                className="block uppercase text-sm text-gray-500 pl-0.5"
+              >
+                Recipient Address
+              </label>
+              <div className="relative w-full">
                 <TextField
                   name="recipientAddress"
                   placeholder="0x123456..."
                   classes="w-full"
                   disabled={isReview}
                 />
+                <SelfButton disabled={isReview} />
               </div>
-              <ReviewDetails visible={isReview} />
-              {!isReview ? (
-                <ConnectAwareSubmitButton text="Continue" classes="mt-4 px-3 py-1.5" />
-              ) : (
-                <div className="mt-4 flex items-center justify-between space-x-4">
-                  <SolidButton
-                    type="button"
-                    color="gray"
-                    onClick={onClickEdit}
-                    classes="px-6 py-1.5"
-                    icon={<ChevronIcon direction="w" width={13} color={Color.primaryBlue} />}
-                  >
-                    <span>Edit</span>
-                  </SolidButton>
-                  <SolidButton
-                    type="button"
-                    color="blue"
-                    onClick={() => triggerTransactions(values)}
-                    classes="flex-1 px-3 py-1.5"
-                  >
-                    {`Send to ${getChainDisplayName(values.destinationChainId)}`}
-                  </SolidButton>
-                </div>
-              )}
-            </Form>
-            <TransferTransactionsModal isOpen={showTxModal} close={hideModal} />
-          </>
+            </div>
+            <ReviewDetails visible={isReview} />
+            {!isReview ? (
+              <ConnectAwareSubmitButton text="Continue" classes="mt-4 px-3 py-1.5" />
+            ) : (
+              <div className="mt-4 flex items-center justify-between space-x-4">
+                <SolidButton
+                  type="button"
+                  color="gray"
+                  onClick={onClickEdit}
+                  classes="px-6 py-1.5"
+                  icon={<ChevronIcon direction="w" width={13} color={Color.primaryBlue} />}
+                >
+                  <span>Edit</span>
+                </SolidButton>
+                <SolidButton
+                  type="button"
+                  color="blue"
+                  onClick={() => triggerTransactions(values)}
+                  classes="flex-1 px-3 py-1.5"
+                >
+                  {`Send to ${getChainDisplayName(values.destinationChainId)}`}
+                </SolidButton>
+              </div>
+            )}
+          </Form>
         )}
       </Formik>
+      <TransferTransactionsModal isOpen={showTxModal} close={hideModal} />
     </Card>
   );
 }
@@ -243,7 +258,14 @@ function SwapChainsButton({ disabled }: { disabled?: boolean }) {
   );
 }
 
-function TokenBalance({ disabled }: { disabled?: boolean }) {
+function TokenBalance() {
+  const { values } = useFormikContext<TransferFormValues>();
+  const { balance } = useTokenBalance(values.sourceChainId, values.tokenAddress);
+  const rounded = fromWeiRounded(balance);
+  return <div className="text-xs text-gray-500">{`Balance: ${rounded}`}</div>;
+}
+
+function MaxButton({ disabled }: { disabled?: boolean }) {
   const { values, setFieldValue } = useFormikContext<TransferFormValues>();
   const { balance } = useTokenBalance(values.sourceChainId, values.tokenAddress);
   const rounded = fromWeiRounded(balance);
@@ -251,13 +273,34 @@ function TokenBalance({ disabled }: { disabled?: boolean }) {
     if (balance && !disabled) setFieldValue('amount', rounded);
   };
   return (
-    <button
+    <SolidButton
       type="button"
       onClick={onClick}
-      className={`text-xs text-gray-500 ${
-        !balance && 'opacity-0 cursor-default'
-      } transition-all duration-300`}
-    >{`Balance: ${rounded}`}</button>
+      color="gray"
+      disabled={disabled}
+      classes="text-xs rounded-sm absolute right-0.5 top-2 bottom-0.5 px-2"
+    >
+      MAX
+    </SolidButton>
+  );
+}
+
+function SelfButton({ disabled }: { disabled?: boolean }) {
+  const { address } = useAccount();
+  const { setFieldValue } = useFormikContext<TransferFormValues>();
+  const onClick = () => {
+    if (address && !disabled) setFieldValue('recipientAddress', address);
+  };
+  return (
+    <SolidButton
+      type="button"
+      onClick={onClick}
+      color="gray"
+      disabled={disabled}
+      classes="text-xs rounded-sm absolute right-0.5 top-2 bottom-0.5 px-1.5"
+    >
+      SELF
+    </SolidButton>
   );
 }
 

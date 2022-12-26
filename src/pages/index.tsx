@@ -10,7 +10,7 @@ import XCircle from '../images/icons/x-circle.svg';
 
 const Home: NextPage = () => {
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <InfoCard />
       <TransferTokenForm />
     </div>
@@ -25,8 +25,8 @@ function InfoCard() {
       <h2 className="text-white text-lg">Bridge Tokens Permissionlessly with Hyperlane!</h2>
       <div className="flex items-end justify-between">
         <p className="text-white mt-1.5 text-sm max-w-[70%]">
-          Send tokens across chains in seconds or make tokens interchain-ready with just a few
-          clicks.
+          Send tokens across chains in seconds or make tokens interchain-ready with just a few lines
+          of code.
         </p>
         <a
           href={links.docs}

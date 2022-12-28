@@ -8,8 +8,9 @@ import { toWei } from '../../utils/amount';
 import { logger } from '../../utils/logger';
 import { sleep } from '../../utils/timeout';
 import { getErc20Contract } from '../contracts/erc20';
-import { getHypErc20CollateralContract } from '../contracts/hypErc20';
+import { getHypErc20CollateralContract, getHypErc20Contract } from '../contracts/hypErc20';
 import { getProvider } from '../providers';
+import { RouteType, getTokenRoute } from '../tokens/routes';
 
 import { TransferFormValues } from './types';
 
@@ -19,28 +20,25 @@ enum Stage {
   Transfer = 'transfer',
 }
 
-export function useApproveAndTransfer(onDone?: () => void) {
-  // Flag for showing the tx loading modal
-  const [showTxModal, setShowTxModal] = useState(false);
-
-  const hideModal = () => setShowTxModal(false);
+// Note, this doesn't use wagmi's prepare + send pattern because we're potentially sending two transactions
+export function useTokenTransfer(onDone?: () => void) {
+  const [isLoading, setIsLoading] = useState(false);
+  const dismissIsLoading = () => setIsLoading(false);
 
   // TODO implement cancel callback for when modal is closed?
   const triggerTransactions = useCallback(
     async (values: TransferFormValues) => {
       logger.debug('Attempting approve and transfer transactions');
-      setShowTxModal(true);
+      setIsLoading(true);
       let stage: Stage = Stage.Prepare;
 
       try {
-        const {
-          amount,
-          sourceChainId,
-          destinationChainId,
-          recipientAddress,
-          tokenAddress,
-          hypCollateralAddress,
-        } = values;
+        const { amount, sourceChainId, destinationChainId, recipientAddress, tokenAddress } =
+          values;
+
+        const tokenRoute = getTokenRoute(sourceChainId, destinationChainId, tokenAddress);
+        if (!tokenRoute) throw new Error('No token route found between chains');
+        const isNativeToRemote = tokenRoute.type === RouteType.NativeToRemote;
 
         await switchNetwork({
           chainId: sourceChainId,
@@ -52,29 +50,30 @@ export function useApproveAndTransfer(onDone?: () => void) {
         const weiAmount = toWei(amount).toString();
         const provider = getProvider(sourceChainId);
 
-        // TODO more validation here, including checking for existence of remote token and ensuring # synthetics == 1
-        const erc20 = getErc20Contract(tokenAddress, provider);
-        const approveTxRequest = await erc20.populateTransaction.approve(
-          hypCollateralAddress,
-          weiAmount,
-        );
+        if (isNativeToRemote) {
+          stage = Stage.Approve;
+          const erc20 = getErc20Contract(tokenAddress, provider);
+          const approveTxRequest = await erc20.populateTransaction.approve(
+            tokenRoute.hypCollateralAddress,
+            weiAmount,
+          );
 
-        stage = Stage.Approve;
-
-        // Not using wagmi's prepare + send pattern because we're sending two transactions here
-        const { wait: approveWait } = await sendTransaction({
-          chainId: sourceChainId,
-          request: approveTxRequest,
-          mode: 'recklesslyUnprepared',
-        });
-        const approveTxReceipt = await approveWait(1);
-        logger.debug('Approve transaction confirmed, hash:', approveTxReceipt.transactionHash);
-        toast.success('Approve transaction sent! Attempting transfer...');
+          const { wait: approveWait } = await sendTransaction({
+            chainId: sourceChainId,
+            request: approveTxRequest,
+            mode: 'recklesslyUnprepared',
+          });
+          const approveTxReceipt = await approveWait(1);
+          logger.debug('Approve transaction confirmed, hash:', approveTxReceipt.transactionHash);
+          toast.success('Approve transaction sent! Attempting transfer...');
+        }
 
         stage = Stage.Transfer;
 
-        const hypErc20Collateral = getHypErc20CollateralContract(hypCollateralAddress, provider);
-        const transferTxRequest = await hypErc20Collateral.populateTransaction.transferRemote(
+        const hypErc20 = isNativeToRemote
+          ? getHypErc20CollateralContract(tokenRoute.hypCollateralAddress, provider)
+          : getHypErc20Contract(tokenRoute.sourceTokenAddress, provider);
+        const transferTxRequest = await hypErc20.populateTransaction.transferRemote(
           destinationChainId,
           utils.addressToBytes32(recipientAddress),
           weiAmount,
@@ -98,15 +97,15 @@ export function useApproveAndTransfer(onDone?: () => void) {
         }
       }
 
-      setShowTxModal(false);
+      setIsLoading(false);
       if (onDone) onDone();
     },
-    [setShowTxModal, onDone],
+    [setIsLoading, onDone],
   );
 
   return {
-    showTxModal,
-    hideModal,
+    isLoading,
+    dismissIsLoading,
     triggerTransactions,
   };
 }

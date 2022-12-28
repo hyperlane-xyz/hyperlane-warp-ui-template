@@ -1,24 +1,22 @@
-import { useField, useFormikContext } from 'formik';
+import { useField } from 'formik';
 import Image from 'next/image';
 import { useState } from 'react';
 
 import { TokenIcon } from '../../components/icons/TokenIcon';
 import ChevronIcon from '../../images/icons/chevron-down.svg';
-import { TransferFormValues } from '../transfer/types';
 
-import { TokenSelectModal } from './TokenSelectModal';
+import { TokenListModal } from './TokenListModal';
 import { ListedToken } from './types';
 
 type Props = {
   name: string;
-  chainFieldName: string;
+  sourceChainId: number;
+  destinationChainId: number;
   disabled?: boolean;
 };
 
-export function TokenSelectField({ name, chainFieldName, disabled }: Props) {
-  const { values, setFieldValue } = useFormikContext<TransferFormValues>();
+export function TokenSelectField({ name, sourceChainId, destinationChainId, disabled }: Props) {
   const [field, , helpers] = useField<Address>(name);
-  const sourceChainId = values[chainFieldName] as number;
 
   // Keep local state for token details, but let formik manage field value
   const [token, setToken] = useState<ListedToken | undefined>(undefined);
@@ -26,8 +24,6 @@ export function TokenSelectField({ name, chainFieldName, disabled }: Props) {
   const handleChange = (newToken: ListedToken) => {
     // Set the token address value in formik state
     helpers.setValue(newToken.address);
-    // And also set the collateral address
-    setFieldValue('hypCollateralAddress', newToken.hypCollateralAddresses[0]);
     setToken(newToken);
   };
 
@@ -51,11 +47,12 @@ export function TokenSelectField({ name, chainFieldName, disabled }: Props) {
         </div>
         <Image src={ChevronIcon} width={12} height={8} alt="" />
       </button>
-      <TokenSelectModal
+      <TokenListModal
         isOpen={isModalOpen}
         close={() => setIsModalOpen(false)}
         onSelect={handleChange}
         sourceChainId={sourceChainId}
+        destinationChainId={destinationChainId}
       />
     </>
   );

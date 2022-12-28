@@ -17,7 +17,12 @@
       "symbol": "WETH",
       "decimals": 18,
       "logoURI": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png",
-      "hypCollateralAddresses": ["0x50EA04269efD47dFA3844e5cCA5d3e66dA5A122F"]
+      "hypCollateralAddress": "0x50EA04269efD47dFA3844e5cCA5d3e66dA5A122F",
+      "hypTokenAddresses": [
+        { "chainId": 44787, "address": "0xb3A59670082474611E8e9ed932508B70D91EF756" },
+        { "chainId": 43113, "address": "0x18c8817f9639561203cbdf2deead3042f3cd756c" },
+        { "chainId": 1287, "address": "0x046f340cB3425fDd3b586a5f0055A9b2DffD92ea" }
+      ]
     }
   ]
 }

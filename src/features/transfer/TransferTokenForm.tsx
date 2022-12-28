@@ -311,7 +311,6 @@ function SelfButton({ disabled }: { disabled?: boolean }) {
   );
 }
 
-// TODO change for diff route types
 function ReviewDetails({ visible }: { visible: boolean }) {
   const {
     values: { sourceChainId, destinationChainId, tokenAddress },

@@ -22,18 +22,22 @@ import { getChainDisplayName, getChainEnvironment } from '../../utils/chains';
 import { logger } from '../../utils/logger';
 import { ChainSelectField } from '../chains/ChainSelectField';
 import { TokenSelectField } from '../tokens/TokenSelectField';
-import { getCachedTokenBalance, useTokenBalance } from '../tokens/useTokenBalance';
+import { RouteType, getTokenRoute } from '../tokens/routes';
+import {
+  getCachedTokenBalance,
+  useAccountTokenBalance,
+  useTokenBalance,
+} from '../tokens/useTokenBalance';
 
 import { TransferTransactionsModal } from './TransferTransactionsModal';
 import { TransferFormValues } from './types';
-import { useApproveAndTransfer } from './useApproveAndTransfer';
+import { useTokenTransfer } from './useTokenTransfer';
 
 const initialValues: TransferFormValues = {
   sourceChainId: chainMetadata.goerli.id,
   destinationChainId: chainMetadata.alfajores.id,
   amount: '',
   tokenAddress: '',
-  hypCollateralAddress: '',
   recipientAddress: '',
 };
 
@@ -51,15 +55,15 @@ export function TransferTokenForm() {
   };
 
   const queryClient = useQueryClient();
-  const { address: accountAddress, isConnected } = useAccount();
+  const { address: accountAddress } = useAccount();
   const validateForm = ({
     sourceChainId,
     destinationChainId,
     amount,
     tokenAddress,
-    hypCollateralAddress,
     recipientAddress,
   }: TransferFormValues) => {
+    // Check chains
     if (!sourceChainId || !chainIdToMetadata[sourceChainId]) {
       return { sourceChainId: 'Invalid source chain' };
     }
@@ -69,15 +73,14 @@ export function TransferTokenForm() {
     if (getChainEnvironment(sourceChainId) !== getChainEnvironment(destinationChainId)) {
       return { destinationChainId: 'Invalid chain combination' };
     }
+    // Check addresses
     if (!isValidAddress(recipientAddress)) {
       return { recipientAddress: 'Invalid recipient' };
     }
     if (!isValidAddress(tokenAddress)) {
       return { tokenAddress: 'Invalid token' };
     }
-    if (!isValidAddress(hypCollateralAddress)) {
-      return { tokenAddress: 'Invalid collateral token' };
-    }
+    // Check amount
     const parsedAmount = tryParseAmount(amount);
     if (!parsedAmount || parsedAmount.lte(0)) {
       return { amount: 'Invalid amount' };
@@ -86,7 +89,6 @@ export function TransferTokenForm() {
       queryClient,
       sourceChainId,
       tokenAddress,
-      isConnected,
       accountAddress,
     );
     if (cachedBalance && parsedAmount.gt(cachedBalance) && !config.debug) {
@@ -97,9 +99,13 @@ export function TransferTokenForm() {
 
   const onDoneTransactions = () => {
     setIsReview(false);
-    // TODO consider clearing form inputs
+    // Consider clearing form inputs here
   };
-  const { showTxModal, hideModal, triggerTransactions } = useApproveAndTransfer(onDoneTransactions);
+  const {
+    isLoading: isTransferLoading,
+    dismissIsLoading,
+    triggerTransactions,
+  } = useTokenTransfer(onDoneTransactions);
 
   return (
     <Card classes="w-[33.5rem] relative">
@@ -162,7 +168,8 @@ export function TransferTokenForm() {
                 </label>
                 <TokenSelectField
                   name="tokenAddress"
-                  chainFieldName="sourceChainId"
+                  sourceChainId={values.sourceChainId}
+                  destinationChainId={values.destinationChainId}
                   disabled={isReview}
                 />
               </div>
@@ -230,7 +237,7 @@ export function TransferTokenForm() {
           </Form>
         )}
       </Formik>
-      <TransferTransactionsModal isOpen={showTxModal} close={hideModal} />
+      <TransferTransactionsModal isOpen={isTransferLoading} close={dismissIsLoading} />
     </Card>
   );
 }
@@ -260,14 +267,14 @@ function SwapChainsButton({ disabled }: { disabled?: boolean }) {
 
 function TokenBalance() {
   const { values } = useFormikContext<TransferFormValues>();
-  const { balance } = useTokenBalance(values.sourceChainId, values.tokenAddress);
+  const { balance } = useAccountTokenBalance(values.sourceChainId, values.tokenAddress);
   const rounded = fromWeiRounded(balance);
   return <div className="text-xs text-gray-500">{`Balance: ${rounded}`}</div>;
 }
 
 function MaxButton({ disabled }: { disabled?: boolean }) {
   const { values, setFieldValue } = useFormikContext<TransferFormValues>();
-  const { balance } = useTokenBalance(values.sourceChainId, values.tokenAddress);
+  const { balance } = useAccountTokenBalance(values.sourceChainId, values.tokenAddress);
   const rounded = fromWeiRounded(balance);
   const onClick = () => {
     if (balance && !disabled) setFieldValue('amount', rounded);
@@ -304,8 +311,17 @@ function SelfButton({ disabled }: { disabled?: boolean }) {
   );
 }
 
+// TODO change for diff route types
 function ReviewDetails({ visible }: { visible: boolean }) {
-  const { values } = useFormikContext<TransferFormValues>();
+  const {
+    values: { sourceChainId, destinationChainId, tokenAddress },
+  } = useFormikContext<TransferFormValues>();
+  const route = getTokenRoute(sourceChainId, destinationChainId, tokenAddress);
+  const requiresApprove = route?.type === RouteType.NativeToRemote;
+  const backToNative = route?.type === RouteType.RemoteToNative;
+  const destTokenAddress = backToNative ? route?.nativeTokenAddress : route?.destTokenAddress || '';
+  const { isLoading, balance } = useTokenBalance(destinationChainId, destTokenAddress);
+  const roundedBalance = fromWeiRounded(balance);
   return (
     <div
       className={`${
@@ -313,16 +329,24 @@ function ReviewDetails({ visible }: { visible: boolean }) {
       } overflow-hidden transition-all`}
     >
       <label className="mt-4 block uppercase text-sm text-gray-500 pl-0.5">Transactions</label>
-      <div className="mt-1.5 px-2.5 py-2 rounded border border-gray-400 bg-gray-150 text-sm break-all">
-        <h4>Transaction 1: Approve Transfer</h4>
-        <div className="mt-1.5 ml-1.5 pl-2 border-l border-gray-300 space-y-1.5 text-xs">
-          <p>{`Token Address: ${values.tokenAddress}`}</p>
-          <p>{`Collateral Address: ${values.hypCollateralAddress}`}</p>
-        </div>
-        <h4 className="mt-2">Transaction 2: Transfer Remote</h4>
-        <div className="mt-1.5 ml-1.5 pl-2 border-l border-gray-300 space-y-1.5 text-xs">
-          <p>{`Remote Token: ${'TODO'}`}</p>
-          <p>{`Remote Balance: ${'TODO'}`}</p>
+      <div className="mt-1.5 px-2.5 py-2 space-y-2 rounded border border-gray-400 bg-gray-150 text-sm break-all">
+        {requiresApprove && (
+          <div>
+            <h4>Transaction 1: Approve Transfer</h4>
+            <div className="mt-1.5 ml-1.5 pl-2 border-l border-gray-300 space-y-1.5 text-xs">
+              <p>{`Token Address: ${tokenAddress}`}</p>
+              <p>{`Collateral Address: ${route?.hypCollateralAddress}`}</p>
+            </div>
+          </div>
+        )}
+        <div>
+          <h4>{`Transaction${requiresApprove ? ' 2' : ''}: Transfer Remote`}</h4>
+          <div className="mt-1.5 ml-1.5 pl-2 border-l border-gray-300 space-y-1.5 text-xs">
+            <p>{`Remote Token: ${
+              backToNative ? route?.nativeTokenAddress : route?.destTokenAddress
+            }`}</p>
+            <p>{`Remote Balance: ${isLoading ? 'Loading...' : roundedBalance}`}</p>
+          </div>
         </div>
       </div>
     </div>

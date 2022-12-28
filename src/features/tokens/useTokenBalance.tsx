@@ -8,41 +8,42 @@ import { getProvider } from '../providers';
 export function getTokenBalanceKey(
   chainId: number,
   tokenAddress: Address,
-  isConnected: boolean,
   accountAddress?: Address,
 ) {
-  return ['tokenBalance', chainId, tokenAddress, accountAddress, isConnected];
+  return ['tokenBalance', chainId, tokenAddress, accountAddress];
 }
 
-export function useTokenBalance(chainId: number, tokenAddress: Address) {
-  const { address: accountAddress, isConnected } = useAccount();
+export function useAccountTokenBalance(chainId: number, tokenAddress: Address) {
+  const { address: accountAddress } = useAccount();
+  return useTokenBalance(chainId, tokenAddress, accountAddress);
+}
 
+export function useTokenBalance(chainId: number, tokenAddress: Address, accountAddress?: Address) {
   const {
-    isLoading: isFetching,
+    isLoading,
     isError: hasError,
     data: balance,
   } = useQuery(
-    getTokenBalanceKey(chainId, tokenAddress, isConnected, accountAddress),
+    getTokenBalanceKey(chainId, tokenAddress, accountAddress),
     () => {
-      if (!chainId || !tokenAddress || !accountAddress || !isConnected) return null;
+      if (!chainId || !tokenAddress || !accountAddress) return null;
       return fetchTokenBalance(chainId, tokenAddress, accountAddress);
     },
     { retry: false },
   );
 
-  return { isFetching, hasError, balance };
+  return { isLoading, hasError, balance };
 }
 
 export function getCachedTokenBalance(
   queryClient: QueryClient,
   chainId: number,
   tokenAddress: Address,
-  isConnected: boolean,
   accountAddress?: Address,
 ) {
-  return queryClient.getQueryData(
-    getTokenBalanceKey(chainId, tokenAddress, isConnected, accountAddress),
-  ) as string | undefined;
+  return queryClient.getQueryData(getTokenBalanceKey(chainId, tokenAddress, accountAddress)) as
+    | string
+    | undefined;
 }
 
 async function fetchTokenBalance(chainId: number, tokenAddress: Address, accountAddress: Address) {

@@ -3,6 +3,5 @@ export interface TransferFormValues {
   destinationChainId: number;
   amount: string;
   tokenAddress: Address;
-  hypCollateralAddress: Address;
   recipientAddress: Address;
 }

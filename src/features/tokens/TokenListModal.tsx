@@ -34,7 +34,12 @@ export function TokenListModal({
   };
 
   return (
-    <Modal isOpen={isOpen} title="Select Token" close={onClose} width="max-w-lg min-h-[24rem]">
+    <Modal
+      isOpen={isOpen}
+      title="Select Token"
+      close={onClose}
+      width="max-w-100 sm:max-w-[31rem] min-h-[24rem]"
+    >
       <TextInput
         value={search}
         onChange={setSearch}

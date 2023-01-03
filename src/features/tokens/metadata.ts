@@ -16,14 +16,3 @@ export function getTokenHypCollateralAddress(chainId: number, tokenAddress: Addr
   const address = tokenMetadata?.hypCollateralAddress || '';
   return isValidAddress(address) ? address : null;
 }
-
-export function getTokenRemoteHypAddress(
-  sourceChainId: number,
-  destinationChainId: number,
-  tokenAddress: Address,
-) {
-  const tokenMetadata = getTokenMetadata(sourceChainId, tokenAddress);
-  const addresses = tokenMetadata?.hypTokenAddresses || [];
-  const address = addresses.find((t) => t.chainId === destinationChainId)?.address || '';
-  return isValidAddress(address) ? address : null;
-}

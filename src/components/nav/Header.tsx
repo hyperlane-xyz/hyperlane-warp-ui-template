@@ -10,12 +10,10 @@ export function Header() {
   return (
     <header className="pt-3 pb-2 w-full">
       <div className="flex items-center justify-between">
-        <Link href="/" className="flex items-center">
-          <div className="flex items-center scale-90 sm:scale-100">
-            <Image src={Logo} width={20} alt="" />
-            <Image src={Name} width={110} alt="Hyperlane" className="mt-0.5 ml-2" />
-            <Image src={Bridge} width={104} alt="Bridge" className="mt-0.5 ml-2" />
-          </div>
+        <Link href="/" className="flex items-center max-w-[6rem] sm:max-w-none">
+          <Image src={Logo} width={20} alt="" />
+          <Image src={Name} width={110} alt="Hyperlane" className="mt-0.5 ml-2" />
+          <Image src={Bridge} width={104} alt="Bridge" className="mt-0.5 ml-2" />
         </Link>
         <WalletControlBar />
       </div>

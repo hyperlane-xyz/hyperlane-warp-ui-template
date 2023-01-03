@@ -5,8 +5,8 @@
   "author": "J M Rossy",
   "dependencies": {
     "@headlessui/react": "^1.7.7",
-    "@hyperlane-xyz/hyperlane-token": "^1.0.0-beta3",
-    "@hyperlane-xyz/sdk": "^1.0.0-beta3",
+    "@hyperlane-xyz/hyperlane-token": "^1.0.0-beta6",
+    "@hyperlane-xyz/sdk": "^1.0.0-beta6",
     "@metamask/jazzicon": "https://github.com/jmrossy/jazzicon#7a8df28974b4e81129bfbe3cab76308b889032a6",
     "@rainbow-me/rainbowkit": "^0.8.1",
     "@tanstack/react-query": "^4.20.4",
@@ -18,7 +18,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-toastify": "^9.1.1",
-    "wagmi": "^0.9.5"
+    "wagmi": "^0.10.4"
   },
   "devDependencies": {
     "@trivago/prettier-plugin-sort-imports": "^4.0.0",

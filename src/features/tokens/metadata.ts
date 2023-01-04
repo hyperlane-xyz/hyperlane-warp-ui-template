@@ -1,4 +1,4 @@
-import SyntheticTokenList from '../../consts/tokens.hyperlane.xyz.json';
+import SyntheticTokenList from '../../consts/tokens.json';
 import { areAddressesEqual, isValidAddress } from '../../utils/addresses';
 
 export function getAllTokens() {

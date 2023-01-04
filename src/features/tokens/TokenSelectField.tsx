@@ -6,16 +6,24 @@ import { TokenIcon } from '../../components/icons/TokenIcon';
 import ChevronIcon from '../../images/icons/chevron-down.svg';
 
 import { TokenListModal } from './TokenListModal';
+import { RoutesMap } from './routes';
 import { ListedToken } from './types';
 
 type Props = {
   name: string;
   sourceChainId: number;
   destinationChainId: number;
+  tokenRoutes: RoutesMap;
   disabled?: boolean;
 };
 
-export function TokenSelectField({ name, sourceChainId, destinationChainId, disabled }: Props) {
+export function TokenSelectField({
+  name,
+  sourceChainId,
+  destinationChainId,
+  tokenRoutes,
+  disabled,
+}: Props) {
   const [field, , helpers] = useField<Address>(name);
 
   // Keep local state for token details, but let formik manage field value
@@ -53,6 +61,7 @@ export function TokenSelectField({ name, sourceChainId, destinationChainId, disa
         onSelect={handleChange}
         sourceChainId={sourceChainId}
         destinationChainId={destinationChainId}
+        tokenRoutes={tokenRoutes}
       />
     </>
   );

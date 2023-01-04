@@ -10,7 +10,7 @@ import { sleep } from '../../utils/timeout';
 import { getErc20Contract } from '../contracts/erc20';
 import { getHypErc20CollateralContract, getHypErc20Contract } from '../contracts/hypErc20';
 import { getProvider } from '../providers';
-import { RouteType, getTokenRoute } from '../tokens/routes';
+import { RouteType, RoutesMap, getTokenRoute } from '../tokens/routes';
 
 import { TransferFormValues } from './types';
 
@@ -27,7 +27,7 @@ export function useTokenTransfer(onDone?: () => void) {
 
   // TODO implement cancel callback for when modal is closed?
   const triggerTransactions = useCallback(
-    async (values: TransferFormValues) => {
+    async (values: TransferFormValues, tokenRoutes: RoutesMap) => {
       logger.debug('Attempting approve and transfer transactions');
       setIsLoading(true);
       let stage: Stage = Stage.Prepare;
@@ -36,7 +36,12 @@ export function useTokenTransfer(onDone?: () => void) {
         const { amount, sourceChainId, destinationChainId, recipientAddress, tokenAddress } =
           values;
 
-        const tokenRoute = getTokenRoute(sourceChainId, destinationChainId, tokenAddress);
+        const tokenRoute = getTokenRoute(
+          sourceChainId,
+          destinationChainId,
+          tokenAddress,
+          tokenRoutes,
+        );
         if (!tokenRoute) throw new Error('No token route found between chains');
         const isNativeToRemote = tokenRoute.type === RouteType.NativeToRemote;
 

@@ -20,7 +20,7 @@ import { getChainDisplayName, getChainEnvironment } from '../../utils/chains';
 import { logger } from '../../utils/logger';
 import { ChainSelectField } from '../chains/ChainSelectField';
 import { TokenSelectField } from '../tokens/TokenSelectField';
-import { RouteType, getTokenRoute } from '../tokens/routes';
+import { RouteType, RoutesMap, getTokenRoute } from '../tokens/routes';
 import {
   getCachedTokenBalance,
   useAccountTokenBalance,
@@ -39,7 +39,7 @@ const initialValues: TransferFormValues = {
   recipientAddress: '',
 };
 
-export function TransferTokenForm() {
+export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
   // Flag for if form is in input vs review mode
   const [isReview, setIsReview] = useState(false);
 
@@ -145,6 +145,7 @@ export function TransferTokenForm() {
                 name="tokenAddress"
                 sourceChainId={values.sourceChainId}
                 destinationChainId={values.destinationChainId}
+                tokenRoutes={tokenRoutes}
                 disabled={isReview}
               />
             </div>
@@ -185,7 +186,7 @@ export function TransferTokenForm() {
               <SelfButton disabled={isReview} />
             </div>
           </div>
-          <ReviewDetails visible={isReview} />
+          <ReviewDetails visible={isReview} tokenRoutes={tokenRoutes} />
           {!isReview ? (
             <ConnectAwareSubmitButton text="Continue" classes="mt-4 px-3 py-1.5" />
           ) : (
@@ -202,7 +203,7 @@ export function TransferTokenForm() {
               <SolidButton
                 type="button"
                 color="blue"
-                onClick={() => triggerTransactions(values)}
+                onClick={() => triggerTransactions(values, tokenRoutes)}
                 classes="flex-1 px-3 py-1.5"
               >
                 {`Send to ${getChainDisplayName(values.destinationChainId)}`}
@@ -285,11 +286,11 @@ function SelfButton({ disabled }: { disabled?: boolean }) {
   );
 }
 
-function ReviewDetails({ visible }: { visible: boolean }) {
+function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes: RoutesMap }) {
   const {
     values: { sourceChainId, destinationChainId, tokenAddress },
   } = useFormikContext<TransferFormValues>();
-  const route = getTokenRoute(sourceChainId, destinationChainId, tokenAddress);
+  const route = getTokenRoute(sourceChainId, destinationChainId, tokenAddress, tokenRoutes);
   const requiresApprove = route?.type === RouteType.NativeToRemote;
   const backToNative = route?.type === RouteType.RemoteToNative;
   const destTokenAddress = backToNative ? route?.nativeTokenAddress : route?.destTokenAddress || '';

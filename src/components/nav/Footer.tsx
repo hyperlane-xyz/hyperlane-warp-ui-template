@@ -2,9 +2,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { links } from '../../consts/links';
+import Logo from '../../images/logos/app-logo.svg';
 import Discord from '../../images/logos/discord.svg';
 import Github from '../../images/logos/github.svg';
-import Hyperlane from '../../images/logos/hyperlane-logo.svg';
 import Medium from '../../images/logos/medium.svg';
 import Twitter from '../../images/logos/twitter.svg';
 
@@ -14,7 +14,7 @@ export function Footer() {
       <div className="flex flex-row justify-between items-center gap-6 sm:gap-0">
         <div className="flex items-center pt-2">
           <div className="flex">
-            <Image src={Hyperlane} width={48} height={48} alt="" />
+            <Image src={Logo} width={48} height={48} alt="" />
           </div>
           <div className="hidden sm:flex flex-col ml-3">
             <p className="text-sm font-light leading-5">

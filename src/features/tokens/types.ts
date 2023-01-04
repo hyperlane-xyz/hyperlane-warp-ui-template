@@ -6,8 +6,8 @@ export interface ListedToken {
   decimals: number;
   logoURI?: string;
   hypCollateralAddress: Address;
-  hypTokenAddresses: Array<{
-    chainId: number;
-    address: Address;
-  }>;
+}
+
+export interface ListedTokenWithHypTokens extends ListedToken {
+  hypTokens: Array<{ chainId: number; address: Address }>;
 }

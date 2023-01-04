@@ -5,7 +5,7 @@ import { TextInput } from '../../components/input/TextField';
 import { Modal } from '../../components/layout/Modal';
 
 import { getAllTokens } from './metadata';
-import { hasTokenRoute } from './routes';
+import { RoutesMap, hasTokenRoute } from './routes';
 import { ListedToken } from './types';
 
 export function TokenListModal({
@@ -14,12 +14,14 @@ export function TokenListModal({
   onSelect,
   sourceChainId,
   destinationChainId,
+  tokenRoutes,
 }: {
   isOpen: boolean;
   close: () => void;
   onSelect: (token: ListedToken) => void;
   sourceChainId: number;
   destinationChainId: number;
+  tokenRoutes: RoutesMap;
 }) {
   const [search, setSearch] = useState('');
 
@@ -34,7 +36,12 @@ export function TokenListModal({
   };
 
   return (
-    <Modal isOpen={isOpen} title="Select Token" close={onClose} width="max-w-lg min-h-[24rem]">
+    <Modal
+      isOpen={isOpen}
+      title="Select Token"
+      close={onClose}
+      width="max-w-100 sm:max-w-[31rem] min-h-[24rem]"
+    >
       <TextInput
         value={search}
         onChange={setSearch}
@@ -46,6 +53,7 @@ export function TokenListModal({
       <TokenList
         sourceChainId={sourceChainId}
         destinationChainId={destinationChainId}
+        tokenRoutes={tokenRoutes}
         searchQuery={search}
         onSelect={onSelectAndClose}
       />
@@ -56,18 +64,20 @@ export function TokenListModal({
 export function TokenList({
   sourceChainId,
   destinationChainId,
+  tokenRoutes,
   searchQuery,
   onSelect,
 }: {
   sourceChainId: number;
   destinationChainId: number;
+  tokenRoutes: RoutesMap;
   searchQuery: string;
   onSelect: (token: ListedToken) => void;
 }) {
   const tokens = useMemo(() => {
     return getAllTokens().filter((t) => {
       const q = searchQuery?.trim().toLowerCase();
-      const hasRoute = hasTokenRoute(sourceChainId, destinationChainId, t.address);
+      const hasRoute = hasTokenRoute(sourceChainId, destinationChainId, t.address, tokenRoutes);
       if (!q) return hasRoute;
       else
         return (
@@ -77,7 +87,7 @@ export function TokenList({
             t.address.toLowerCase().includes(q))
         );
     });
-  }, [searchQuery, sourceChainId, destinationChainId]);
+  }, [searchQuery, sourceChainId, destinationChainId, tokenRoutes]);
 
   return (
     <div className="flex flex-col items-stretch divide-y divide-gray-200">

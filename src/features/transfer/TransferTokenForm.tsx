@@ -9,11 +9,9 @@ import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareS
 import { IconButton } from '../../components/buttons/IconButton';
 import { SolidButton } from '../../components/buttons/SolidButton';
 import { ChevronIcon } from '../../components/icons/Chevron';
-import { HyperlaneChevron, HyperlaneWideChevron } from '../../components/icons/HyperlaneChevron';
+import { HyperlaneChevron } from '../../components/icons/HyperlaneChevron';
 import { TextField } from '../../components/input/TextField';
-import { Card } from '../../components/layout/Card';
 import { config } from '../../consts/config';
-import GearIcon from '../../images/icons/gear.svg';
 import SwapIcon from '../../images/icons/swap.svg';
 import { Color } from '../../styles/Color';
 import { isValidAddress } from '../../utils/addresses';
@@ -22,7 +20,7 @@ import { getChainDisplayName, getChainEnvironment } from '../../utils/chains';
 import { logger } from '../../utils/logger';
 import { ChainSelectField } from '../chains/ChainSelectField';
 import { TokenSelectField } from '../tokens/TokenSelectField';
-import { RouteType, getTokenRoute } from '../tokens/routes';
+import { RouteType, RoutesMap, getTokenRoute } from '../tokens/routes';
 import {
   getCachedTokenBalance,
   useAccountTokenBalance,
@@ -41,7 +39,7 @@ const initialValues: TransferFormValues = {
   recipientAddress: '',
 };
 
-export function TransferTokenForm() {
+export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
   // Flag for if form is in input vs review mode
   const [isReview, setIsReview] = useState(false);
 
@@ -108,137 +106,114 @@ export function TransferTokenForm() {
   } = useTokenTransfer(onDoneTransactions);
 
   return (
-    <Card classes="w-[33.5rem] relative">
-      <div className="absolute left-0 right-0 -top-24 flex justify-center overflow-hidden z-10">
-        <HyperlaneWideChevron direction="s" height="100%" width="100" />
-      </div>
-      <div className="relative flex items-start justify-between z-20">
-        <h2 className="pl-0.5 text-lg">Send Tokens</h2>
-        <IconButton
-          imgSrc={GearIcon}
-          width={20}
-          height={20}
-          title="Settings"
-          classes="hover:rotate-90"
-        />
-      </div>
-      <Formik<TransferFormValues>
-        initialValues={initialValues}
-        onSubmit={onSubmitForm}
-        validate={validateForm}
-        validateOnChange={false}
-        validateOnBlur={false}
-      >
-        {({ values }) => (
-          <Form className="flex flex-col items-stretch w-full mt-2">
-            <div className="flex items-center justify-center space-x-10">
-              <ChainSelectField name="sourceChainId" label="From" disabled={isReview} />
-              <div className="flex flex-col items-center">
-                <div className="flex mb-6 space-x-1.5">
-                  <HyperlaneChevron
-                    width="17"
-                    height="100%"
-                    direction="e"
-                    color={Color.lightGray}
-                  />
-                  <HyperlaneChevron
-                    width="17"
-                    height="100%"
-                    direction="e"
-                    color={Color.lightGray}
-                  />
-                  <HyperlaneChevron
-                    width="17"
-                    height="100%"
-                    direction="e"
-                    color={Color.lightGray}
-                  />
-                </div>
-                <SwapChainsButton disabled={isReview} />
-              </div>
-              <ChainSelectField name="destinationChainId" label="To" disabled={isReview} />
-            </div>
-            <div className="mt-3 flex justify-between space-x-4">
-              <div className="flex-1">
-                <label
-                  htmlFor="tokenAddress"
-                  className="block uppercase text-sm text-gray-500 pl-0.5"
-                >
-                  ERC-20 Token
-                </label>
-                <TokenSelectField
-                  name="tokenAddress"
-                  sourceChainId={values.sourceChainId}
-                  destinationChainId={values.destinationChainId}
-                  disabled={isReview}
+    <Formik<TransferFormValues>
+      initialValues={initialValues}
+      onSubmit={onSubmitForm}
+      validate={validateForm}
+      validateOnChange={false}
+      validateOnBlur={false}
+    >
+      {({ values }) => (
+        <Form className="flex flex-col items-stretch w-full mt-2">
+          <div className="flex items-center justify-center space-x-7 sm:space-x-10">
+            <ChainSelectField name="sourceChainId" label="From" disabled={isReview} />
+            <div className="flex flex-col items-center">
+              <div className="flex mb-6 sm:space-x-1.5">
+                <HyperlaneChevron
+                  width="17"
+                  height="100%"
+                  direction="e"
+                  color={Color.lightGray}
+                  classes="hidden sm:block"
                 />
+                <HyperlaneChevron width="17" height="100%" direction="e" color={Color.lightGray} />
+                <HyperlaneChevron width="17" height="100%" direction="e" color={Color.lightGray} />
               </div>
-              <div className="flex-1">
-                <div className="flex justify-between pr-1">
-                  <label htmlFor="amount" className="block uppercase text-sm text-gray-500 pl-0.5">
-                    Amount
-                  </label>
-                  <TokenBalance />
-                </div>
-                <div className="relative w-full">
-                  <TextField
-                    name="amount"
-                    placeholder="0.00"
-                    classes="w-full"
-                    type="number"
-                    step="any"
-                    disabled={isReview}
-                  />
-                  <MaxButton disabled={isReview} />
-                </div>
-              </div>
+              <SwapChainsButton disabled={isReview} />
             </div>
-            <div className="mt-4">
+            <ChainSelectField name="destinationChainId" label="To" disabled={isReview} />
+          </div>
+          <div className="mt-3 flex justify-between space-x-4">
+            <div className="flex-1">
               <label
-                htmlFor="recipientAddress"
+                htmlFor="tokenAddress"
                 className="block uppercase text-sm text-gray-500 pl-0.5"
               >
-                Recipient Address
+                ERC-20 Token
               </label>
+              <TokenSelectField
+                name="tokenAddress"
+                sourceChainId={values.sourceChainId}
+                destinationChainId={values.destinationChainId}
+                tokenRoutes={tokenRoutes}
+                disabled={isReview}
+              />
+            </div>
+            <div className="flex-1">
+              <div className="flex justify-between pr-1">
+                <label htmlFor="amount" className="block uppercase text-sm text-gray-500 pl-0.5">
+                  Amount
+                </label>
+                <TokenBalance />
+              </div>
               <div className="relative w-full">
                 <TextField
-                  name="recipientAddress"
-                  placeholder="0x123456..."
+                  name="amount"
+                  placeholder="0.00"
                   classes="w-full"
+                  type="number"
+                  step="any"
                   disabled={isReview}
                 />
-                <SelfButton disabled={isReview} />
+                <MaxButton disabled={isReview} />
               </div>
             </div>
-            <ReviewDetails visible={isReview} />
-            {!isReview ? (
-              <ConnectAwareSubmitButton text="Continue" classes="mt-4 px-3 py-1.5" />
-            ) : (
-              <div className="mt-4 flex items-center justify-between space-x-4">
-                <SolidButton
-                  type="button"
-                  color="gray"
-                  onClick={onClickEdit}
-                  classes="px-6 py-1.5"
-                  icon={<ChevronIcon direction="w" width={13} color={Color.primaryBlue} />}
-                >
-                  <span>Edit</span>
-                </SolidButton>
-                <SolidButton
-                  type="button"
-                  color="blue"
-                  onClick={() => triggerTransactions(values)}
-                  classes="flex-1 px-3 py-1.5"
-                >
-                  {`Send to ${getChainDisplayName(values.destinationChainId)}`}
-                </SolidButton>
-              </div>
-            )}
-          </Form>
-        )}
-      </Formik>
-      <TransferTransactionsModal isOpen={isTransferLoading} close={dismissIsLoading} />
-    </Card>
+          </div>
+          <div className="mt-4">
+            <label
+              htmlFor="recipientAddress"
+              className="block uppercase text-sm text-gray-500 pl-0.5"
+            >
+              Recipient Address
+            </label>
+            <div className="relative w-full">
+              <TextField
+                name="recipientAddress"
+                placeholder="0x123456..."
+                classes="w-full"
+                disabled={isReview}
+              />
+              <SelfButton disabled={isReview} />
+            </div>
+          </div>
+          <ReviewDetails visible={isReview} tokenRoutes={tokenRoutes} />
+          {!isReview ? (
+            <ConnectAwareSubmitButton text="Continue" classes="mt-4 px-3 py-1.5" />
+          ) : (
+            <div className="mt-4 flex items-center justify-between space-x-4">
+              <SolidButton
+                type="button"
+                color="gray"
+                onClick={onClickEdit}
+                classes="px-6 py-1.5"
+                icon={<ChevronIcon direction="w" width={13} color={Color.primaryBlue} />}
+              >
+                <span>Edit</span>
+              </SolidButton>
+              <SolidButton
+                type="button"
+                color="blue"
+                onClick={() => triggerTransactions(values, tokenRoutes)}
+                classes="flex-1 px-3 py-1.5"
+              >
+                {`Send to ${getChainDisplayName(values.destinationChainId)}`}
+              </SolidButton>
+            </div>
+          )}
+          <TransferTransactionsModal isOpen={isTransferLoading} close={dismissIsLoading} />
+        </Form>
+      )}
+    </Formik>
   );
 }
 
@@ -311,11 +286,11 @@ function SelfButton({ disabled }: { disabled?: boolean }) {
   );
 }
 
-function ReviewDetails({ visible }: { visible: boolean }) {
+function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes: RoutesMap }) {
   const {
     values: { sourceChainId, destinationChainId, tokenAddress },
   } = useFormikContext<TransferFormValues>();
-  const route = getTokenRoute(sourceChainId, destinationChainId, tokenAddress);
+  const route = getTokenRoute(sourceChainId, destinationChainId, tokenAddress, tokenRoutes);
   const requiresApprove = route?.type === RouteType.NativeToRemote;
   const backToNative = route?.type === RouteType.RemoteToNative;
   const destTokenAddress = backToNative ? route?.nativeTokenAddress : route?.destTokenAddress || '';

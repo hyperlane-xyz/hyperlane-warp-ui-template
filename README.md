@@ -2,7 +2,13 @@
 
 An interchain web app for bridging tokens with Hyperlane.
 
-## Setup
+## Customization
+
+See [CUSTOMIZE.md](./CUSTOMIZE.md) for details about adjusting the tokens and branding of this app.
+
+## Development
+
+### Setup
 
 ```sh
 # Install dependencies
@@ -12,14 +18,14 @@ yarn
 yarn build
 ```
 
-## Development
+### Run
 
 ```sh
 # Start the Next dev server
 yarn dev
 ```
 
-## Test
+### Test
 
 ```sh
 # Lint check code
@@ -29,19 +35,23 @@ yarn lint
 yarn typecheck
 ```
 
-## Format
+### Format
 
 ```sh
 # Format code using Prettier
 yarn prettier
 ```
 
-## Clean / Reset
+### Clean / Reset
 
 ```sh
 # Delete build artifacts to start fresh 
 yarn clean
 ```
+
+## Deployment
+
+The recommended hosting solution for this Next.JS app is to create a project on Vercel.
 
 ## Learn more
 

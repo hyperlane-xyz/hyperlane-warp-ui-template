@@ -5,13 +5,11 @@ const explorerApiKeys = JSON.parse(process?.env?.EXPLORER_API_KEYS || '{}');
 interface Config {
   debug: boolean;
   version: string | null;
-  url: string;
   explorerApiKeys: Record<string, string>;
 }
 
 export const config: Config = Object.freeze({
   debug: isDevMode,
   version,
-  url: 'https://bridge.hyperlane.xyz',
   explorerApiKeys,
 });

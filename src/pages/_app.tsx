@@ -30,7 +30,7 @@ import { useIsSsr } from '../utils/ssr';
 const { chains, provider } = configureChains(Object.values(wagmiChainMetadata), [publicProvider()]);
 
 const connectorConfig = {
-  appName: 'Hyperlane Token Bridge',
+  appName: 'Hyperlane Warp Template',
   chains,
 };
 
@@ -70,7 +70,7 @@ const reactQueryClient = new QueryClient({
   },
 });
 
-export default function App({ Component, router, pageProps }: AppProps) {
+export default function App({ Component, pageProps }: AppProps) {
   // Disable app SSR for now as it's not needed and
   // complicates graphql integration
   const isSsr = useIsSsr();
@@ -90,7 +90,7 @@ export default function App({ Component, router, pageProps }: AppProps) {
           })}
         >
           <QueryClientProvider client={reactQueryClient}>
-            <AppLayout pathName={router.pathname}>
+            <AppLayout>
               <Component {...pageProps} />
             </AppLayout>
           </QueryClientProvider>

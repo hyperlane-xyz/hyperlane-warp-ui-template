@@ -1,6 +1,14 @@
-# Hyperlane Token Bridge App
+# Hyperlane Warp Route UI Template
 
-An interchain web app for bridging tokens with Hyperlane.
+This repo contains an example web interface for a interchain tokens built with [Hyperlane Warp Route](https://docs.hyperlane.xyz/hyperlane-docs). Warp is a framework to permisionlessly bridge tokens to any chain.
+
+## Architecture
+
+This app is built with Next+React, Wagmi, RainbowKit, and the Hyperlane SDK.
+
+- The index page is located at `./src/pages/index.tsx`
+- The primary features are implemented in `./src/features/`
+- Constants that you may want to change are in `./src/consts/`, see the following Customization section for details.
 
 ## Customization
 

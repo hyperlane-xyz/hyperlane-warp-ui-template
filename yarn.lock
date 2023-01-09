@@ -1023,9 +1023,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/token-bridge@workspace:.":
+"@hyperlane-xyz/utils@npm:1.0.0-beta6":
+  version: 1.0.0-beta6
+  resolution: "@hyperlane-xyz/utils@npm:1.0.0-beta6"
+  dependencies:
+    ethers: ^5.7.2
+  checksum: 4fba04e2f46e92323bc2f3492d09357838fa0596ebac0678b61c9cf7dfe8238ae5e65bb0ce97f3488d32d528bd399863d61610ab7f4a3ab4fca249474af5008c
+  languageName: node
+  linkType: hard
+
+"@hyperlane-xyz/warp-ui-template@workspace:.":
   version: 0.0.0-use.local
-  resolution: "@hyperlane-xyz/token-bridge@workspace:."
+  resolution: "@hyperlane-xyz/warp-ui-template@workspace:."
   dependencies:
     "@headlessui/react": ^1.7.7
     "@hyperlane-xyz/hyperlane-token": ^1.0.0-beta6
@@ -1059,15 +1068,6 @@ __metadata:
     wagmi: ^0.10.4
   languageName: unknown
   linkType: soft
-
-"@hyperlane-xyz/utils@npm:1.0.0-beta6":
-  version: 1.0.0-beta6
-  resolution: "@hyperlane-xyz/utils@npm:1.0.0-beta6"
-  dependencies:
-    ethers: ^5.7.2
-  checksum: 4fba04e2f46e92323bc2f3492d09357838fa0596ebac0678b61c9cf7dfe8238ae5e65bb0ce97f3488d32d528bd399863d61610ab7f4a3ab4fca249474af5008c
-  languageName: node
-  linkType: hard
 
 "@jridgewell/gen-mapping@npm:^0.1.0":
   version: 0.1.1

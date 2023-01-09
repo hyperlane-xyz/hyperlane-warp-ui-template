@@ -1,6 +1,6 @@
 {
-  "name": "@hyperlane-xyz/token-bridge",
-  "description": "An interchain web app for bridging tokens with Hyperlane",
+  "name": "@hyperlane-xyz/warp-ui-template",
+  "description": "A web app template for building Hyperlane Warp Route UIs",
   "version": "1.0.0",
   "author": "J M Rossy",
   "dependencies": {
@@ -44,7 +44,7 @@
   "private": true,
   "repository": {
     "type": "git",
-    "url": "https://github.com/hyperlane-xyz/hyperlane-token-bridge"
+    "url": "https://github.com/hyperlane-xyz/hyperlane-warp-ui-template"
   },
   "scripts": {
     "clean": "rm -rf dist cache .next",

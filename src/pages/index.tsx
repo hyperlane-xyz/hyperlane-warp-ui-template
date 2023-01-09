@@ -22,14 +22,14 @@ function InfoCard() {
   if (!show) return null;
   return (
     <div className="relative px-3 py-3 w-100 sm:w-[31rem] bg-blue-500 shadow-lg rounded opacity-95">
-      <h2 className="text-white sm:text-lg">Bridge Tokens Permissionlessly with Hyperlane!</h2>
+      <h2 className="text-white sm:text-lg">Bridge Tokens with Hyperlane Warp Routes!</h2>
       <div className="flex items-end justify-between">
         <p className="text-white mt-1.5 text-xs sm:text-sm max-w-[70%]">
-          Send tokens across chains in seconds or make tokens interchain-ready with just a few lines
-          of code.
+          Warp Routes make it easy to permisionlessly take your tokens interchain. Fork this
+          template to get started!
         </p>
         <a
-          href={links.docs}
+          href={links.github}
           target="_blank"
           rel="noopener noreferrer"
           className="ml-2 px-3 py-1.5 flex items-center bg-gray-100 hover:bg-gray-200 active:bg-gray-300 text-xs sm:text-sm text-blue-500 rounded-md transition-all"

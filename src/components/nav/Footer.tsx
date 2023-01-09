@@ -14,7 +14,7 @@ export function Footer() {
       <div className="flex flex-row justify-between items-center gap-6 sm:gap-0">
         <div className="flex items-center pt-2">
           <div className="flex">
-            <Image src={Logo} width={48} height={48} alt="" />
+            <Image src={Logo} width={45} height={45} alt="" />
           </div>
           <div className="hidden sm:flex flex-col ml-3">
             <p className="text-sm font-light leading-5">

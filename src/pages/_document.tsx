@@ -15,24 +15,27 @@ export default function Document() {
         <meta name="msapplication-TileColor" content="#025aa1" />
         <meta name="theme-color" content="#ffffff" />
 
-        <meta name="application-name" content="Hyperlane Token Bridge" />
-        <meta name="keywords" content="Hyperlane Token Bridge Interchain App" />
+        <meta name="application-name" content="Hyperlane Warp Template UI" />
+        <meta
+          name="keywords"
+          content="Hyperlane Warp Route Template UI Token Bridge Interchain App"
+        />
         <meta
           name="description"
-          content="An interchain web app for bridging tokens with Hyperlane"
+          content="A web app template for building Hyperlane Warp Route UIs"
         />
 
         <meta name="HandheldFriendly" content="true" />
-        <meta name="apple-mobile-web-app-title" content="Hyperlane Token Bridge" />
+        <meta name="apple-mobile-web-app-title" content="Hyperlane Warp Template UI" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
 
-        <meta property="og:url" content="https://bridge.hyperlane.xyz" />
-        <meta property="og:title" content="Hyperlane Token Bridge" />
+        <meta property="og:url" content="https://warp.hyperlane.xyz" />
+        <meta property="og:title" content="Hyperlane Warp Template UI" />
         <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://bridge.hyperlane.xyz/icon.png" />
+        <meta property="og:image" content="https://warp.hyperlane.xyz/icon.png" />
         <meta
           property="og:description"
-          content="An interchain web app for bridging tokens with Hyperlane"
+          content="A web app template for building Hyperlane Warp Route UIs"
         />
       </Head>
       <body className="text-black">

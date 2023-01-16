@@ -8,13 +8,23 @@ This app requires a token list to function. The token list is located at `./src/
 
 The list should use the [Uniswap Token List](https://tokenlists.org) standard with one exception. The tokens must each also include a `hypCollateralAddress` value with the address of the desired hypCollateralERC20 contract.
 
+## RPC Providers
+
+By default, the app uses public RPC providers based on the Hyperlane SDK's default settings.
+This can be changed in '`./src/features/providers.ts`.
+
+## Tip Card Content
+
+The content of the tip card above the form can be customized in `./src/components/tip/TipCard.tsx`
+Or it can be hidden entirely with the `showTipBox` setting in `./src/consts/config.ts`
+
 ## Branding
 
 ### Metadata
 
 The HTML metadata tags are located in `./src/pages/_document.tsx`
 
-### In-app Images
+### Title / Name Images
 
 The logo images you should change are:
 
@@ -26,6 +36,10 @@ These are images are primarily used in the header and footer files:
 
 - `./src/components/nav/Header.tsx`
 - `./src/components/nav/Footer.tsx`
+
+### Social links
+
+The links used in the footer can be found here: `./src/consts/links.ts`
 
 ### Public assets / Favicons
 
@@ -43,7 +57,3 @@ To update the color scheme, make changes in the Tailwind config and Color consts
 
 - `./tailwind.config.js`
 - `./src/styles/Color.ts`
-
-### Social links
-
-The links used in the footer can be found here: `./src/consts/links.ts`

@@ -154,7 +154,7 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
                 <label htmlFor="amount" className="block uppercase text-sm text-gray-500 pl-0.5">
                   Amount
                 </label>
-                <TokenBalance />
+                <SelfTokenBalance tokenRoutes={tokenRoutes} />
               </div>
               <div className="relative w-full">
                 <TextField
@@ -165,17 +165,20 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
                   step="any"
                   disabled={isReview}
                 />
-                <MaxButton disabled={isReview} />
+                <MaxButton disabled={isReview} tokenRoutes={tokenRoutes} />
               </div>
             </div>
           </div>
           <div className="mt-4">
-            <label
-              htmlFor="recipientAddress"
-              className="block uppercase text-sm text-gray-500 pl-0.5"
-            >
-              Recipient Address
-            </label>
+            <div className="flex justify-between pr-1">
+              <label
+                htmlFor="recipientAddress"
+                className="block uppercase text-sm text-gray-500 pl-0.5"
+              >
+                Recipient Address
+              </label>
+              <RecipientTokenBalance tokenRoutes={tokenRoutes} />
+            </div>
             <div className="relative w-full">
               <TextField
                 name="recipientAddress"
@@ -240,19 +243,46 @@ function SwapChainsButton({ disabled }: { disabled?: boolean }) {
   );
 }
 
-function TokenBalance() {
-  const { values } = useFormikContext<TransferFormValues>();
-  const { balance } = useAccountTokenBalance(values.sourceChainId, values.tokenAddress);
+function TokenBalance({ label, balance }: { label: string; balance?: string | null }) {
   const rounded = fromWeiRounded(balance);
-  return <div className="text-xs text-gray-500">{`Balance: ${rounded}`}</div>;
+  return <div className="text-xs text-gray-500">{`${label}: ${rounded}`}</div>;
 }
 
-function MaxButton({ disabled }: { disabled?: boolean }) {
-  const { values, setFieldValue } = useFormikContext<TransferFormValues>();
-  const { balance } = useAccountTokenBalance(values.sourceChainId, values.tokenAddress);
-  const rounded = fromWeiRounded(balance);
+function useSelfTokenBalance(tokenRoutes) {
+  const { values } = useFormikContext<TransferFormValues>();
+  const { sourceChainId, destinationChainId, tokenAddress } = values;
+  const route = getTokenRoute(sourceChainId, destinationChainId, tokenAddress, tokenRoutes);
+  const addressForBalance = !route
+    ? ''
+    : route.nativeChainId === sourceChainId
+    ? tokenAddress
+    : route.sourceTokenAddress;
+  return useAccountTokenBalance(sourceChainId, addressForBalance);
+}
+
+function SelfTokenBalance({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
+  const { balance } = useSelfTokenBalance(tokenRoutes);
+  return <TokenBalance label="My balance" balance={balance} />;
+}
+
+function RecipientTokenBalance({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
+  const { values } = useFormikContext<TransferFormValues>();
+  const { sourceChainId, destinationChainId, tokenAddress } = values;
+  const route = getTokenRoute(sourceChainId, destinationChainId, tokenAddress, tokenRoutes);
+  const addressForBalance = !route
+    ? ''
+    : route.nativeChainId === destinationChainId
+    ? tokenAddress
+    : route.destTokenAddress;
+  const { balance } = useAccountTokenBalance(destinationChainId, addressForBalance);
+  return <TokenBalance label="Remote balance" balance={balance} />;
+}
+
+function MaxButton({ tokenRoutes, disabled }: { tokenRoutes: RoutesMap; disabled?: boolean }) {
+  const { setFieldValue } = useFormikContext<TransferFormValues>();
+  const { balance } = useSelfTokenBalance(tokenRoutes);
   const onClick = () => {
-    if (balance && !disabled) setFieldValue('amount', rounded);
+    if (balance && !disabled) setFieldValue('amount', fromWeiRounded(balance));
   };
   return (
     <SolidButton

@@ -18,6 +18,7 @@ export enum RouteType {
 
 export interface Route {
   type: RouteType;
+  nativeChainId: number;
   nativeTokenAddress: Address;
   hypCollateralAddress: Address;
   sourceTokenAddress: Address;
@@ -48,6 +49,7 @@ function computeTokenRoutes(tokens: ListedTokenWithHypTokens[]) {
       const { chainId: remoteChainId, address: hypTokenAddress } = hypToken;
 
       const commonRouteProps = {
+        nativeChainId,
         nativeTokenAddress,
         hypCollateralAddress,
       };

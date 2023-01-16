@@ -15,17 +15,13 @@ import { config } from '../../consts/config';
 import SwapIcon from '../../images/icons/swap.svg';
 import { Color } from '../../styles/Color';
 import { isValidAddress } from '../../utils/addresses';
-import { fromWeiRounded, tryParseAmount } from '../../utils/amount';
+import { fromWeiRounded, toWei, tryParseAmount } from '../../utils/amount';
 import { getChainDisplayName, getChainEnvironment } from '../../utils/chains';
 import { logger } from '../../utils/logger';
 import { ChainSelectField } from '../chains/ChainSelectField';
 import { TokenSelectField } from '../tokens/TokenSelectField';
 import { RouteType, RoutesMap, getTokenRoute } from '../tokens/routes';
-import {
-  getCachedTokenBalance,
-  useAccountTokenBalance,
-  useTokenBalance,
-} from '../tokens/useTokenBalance';
+import { getCachedTokenBalance, useAccountTokenBalance } from '../tokens/useTokenBalance';
 
 import { TransferTransactionsModal } from './TransferTransactionsModal';
 import { TransferFormValues } from './types';
@@ -213,7 +209,11 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
               </SolidButton>
             </div>
           )}
-          <TransferTransactionsModal isOpen={isTransferLoading} close={dismissIsLoading} />
+          <TransferTransactionsModal
+            isOpen={isTransferLoading}
+            close={dismissIsLoading}
+            tokenRoutes={tokenRoutes}
+          />
         </Form>
       )}
     </Formik>
@@ -318,14 +318,11 @@ function SelfButton({ disabled }: { disabled?: boolean }) {
 
 function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes: RoutesMap }) {
   const {
-    values: { sourceChainId, destinationChainId, tokenAddress },
+    values: { amount, sourceChainId, destinationChainId, tokenAddress },
   } = useFormikContext<TransferFormValues>();
+  const weiAmount = toWei(amount).toString();
   const route = getTokenRoute(sourceChainId, destinationChainId, tokenAddress, tokenRoutes);
   const requiresApprove = route?.type === RouteType.NativeToRemote;
-  const backToNative = route?.type === RouteType.RemoteToNative;
-  const destTokenAddress = backToNative ? route?.nativeTokenAddress : route?.destTokenAddress || '';
-  const { isLoading, balance } = useTokenBalance(destinationChainId, destTokenAddress);
-  const roundedBalance = fromWeiRounded(balance);
   return (
     <div
       className={`${
@@ -346,10 +343,8 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
         <div>
           <h4>{`Transaction${requiresApprove ? ' 2' : ''}: Transfer Remote`}</h4>
           <div className="mt-1.5 ml-1.5 pl-2 border-l border-gray-300 space-y-1.5 text-xs">
-            <p>{`Remote Token: ${
-              backToNative ? route?.nativeTokenAddress : route?.destTokenAddress
-            }`}</p>
-            <p>{`Remote Balance: ${isLoading ? 'Loading...' : roundedBalance}`}</p>
+            <p>{`Remote Token: ${route?.destTokenAddress}`}</p>
+            <p>{`Amount (wei): ${weiAmount}`}</p>
           </div>
         </div>
       </div>

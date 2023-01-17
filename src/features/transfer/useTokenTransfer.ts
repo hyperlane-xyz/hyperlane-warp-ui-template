@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 
 import { utils } from '@hyperlane-xyz/utils';
 
+import { toastTxSuccess } from '../../components/toast/TxSuccessToast';
 import { toWei } from '../../utils/amount';
 import { logger } from '../../utils/logger';
 import { sleep } from '../../utils/timeout';
@@ -70,7 +71,11 @@ export function useTokenTransfer(onDone?: () => void) {
           });
           const approveTxReceipt = await approveWait(1);
           logger.debug('Approve transaction confirmed, hash:', approveTxReceipt.transactionHash);
-          toast.success('Approve transaction sent! Attempting transfer...');
+          toastTxSuccess(
+            'Approve transaction sent!',
+            approveTxReceipt.transactionHash,
+            sourceChainId,
+          );
         }
 
         stage = Stage.Transfer;
@@ -91,7 +96,11 @@ export function useTokenTransfer(onDone?: () => void) {
         });
         const transferTxReceipt = await transferWait(1);
         logger.debug('Transfer transaction confirmed, hash:', transferTxReceipt.transactionHash);
-        toast.success('Remote transfer has been started!');
+        toastTxSuccess(
+          'Remote transfer started!',
+          transferTxReceipt.transactionHash,
+          sourceChainId,
+        );
       } catch (error) {
         logger.error(`Error at stage ${stage} `, error);
         if (JSON.stringify(error).includes('ChainMismatchError')) {

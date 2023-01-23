@@ -4,9 +4,9 @@ import { useState } from 'react';
 
 import { ChainIcon } from '../../components/icons/ChainIcon';
 import ChevronIcon from '../../images/icons/chevron-down.svg';
-import { getChainDisplayName } from '../../utils/chains';
 
 import { ChainSelectModal } from './ChainSelectModal';
+import { getChainDisplayName } from './metadata';
 
 type Props = {
   name: string;

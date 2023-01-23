@@ -19,8 +19,8 @@ import MoonbeamColor from '@hyperlane-xyz/sdk/logos/color/moonbeam.svg';
 import OptimismColor from '@hyperlane-xyz/sdk/logos/color/optimism.svg';
 import PolygonColor from '@hyperlane-xyz/sdk/logos/color/polygon.svg';
 
+import { getChainDisplayName } from '../../features/chains/metadata';
 import QuestionMark from '../../images/icons/question-mark.svg';
-import { getChainDisplayName } from '../../utils/chains';
 
 // Keep up to date as new chains are added or
 // icon will fallback to default

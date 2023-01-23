@@ -3,7 +3,7 @@ import { Form, Formik, useFormikContext } from 'formik';
 import { useState } from 'react';
 import { useAccount } from 'wagmi';
 
-import { chainIdToMetadata, chainMetadata } from '@hyperlane-xyz/sdk';
+import { chainMetadata } from '@hyperlane-xyz/sdk';
 
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
 import { IconButton } from '../../components/buttons/IconButton';
@@ -16,9 +16,9 @@ import SwapIcon from '../../images/icons/swap.svg';
 import { Color } from '../../styles/Color';
 import { isValidAddress } from '../../utils/addresses';
 import { fromWeiRounded, toWei, tryParseAmount } from '../../utils/amount';
-import { getChainDisplayName, getChainEnvironment } from '../../utils/chains';
 import { logger } from '../../utils/logger';
 import { ChainSelectField } from '../chains/ChainSelectField';
+import { getChainDisplayName } from '../chains/metadata';
 import { TokenSelectField } from '../tokens/TokenSelectField';
 import { RouteType, RoutesMap, getTokenRoute } from '../tokens/routes';
 import { getCachedTokenBalance, useAccountTokenBalance } from '../tokens/useTokenBalance';
@@ -58,14 +58,11 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
     recipientAddress,
   }: TransferFormValues) => {
     // Check chains
-    if (!sourceChainId || !chainIdToMetadata[sourceChainId]) {
+    if (!sourceChainId) {
       return { sourceChainId: 'Invalid source chain' };
     }
-    if (!destinationChainId || !chainIdToMetadata[destinationChainId]) {
+    if (!destinationChainId) {
       return { destinationChainId: 'Invalid destination chain' };
-    }
-    if (getChainEnvironment(sourceChainId) !== getChainEnvironment(destinationChainId)) {
-      return { destinationChainId: 'Invalid chain combination' };
     }
     // Check addresses
     if (!isValidAddress(recipientAddress)) {

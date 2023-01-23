@@ -1,8 +1,7 @@
 import { BigNumber, providers } from 'ethers';
 
-import { chainIdToMetadata } from '@hyperlane-xyz/sdk';
-
 import { config } from '../consts/config';
+import { getChainExplorerUrl } from '../features/chains/metadata';
 
 import { logger } from './logger';
 import { retryAsync } from './retry';
@@ -14,26 +13,14 @@ export interface ExplorerQueryResponse<R> {
   result: R;
 }
 
-export function getExplorerUrl(chainId: number) {
-  const chain = chainIdToMetadata[chainId];
-  if (!chain?.blockExplorers?.length) return null;
-  return chain.blockExplorers[0].url;
-}
-
-export function getExplorerApiUrl(chainId: number) {
-  const chain = chainIdToMetadata[chainId];
-  if (!chain?.blockExplorers?.length) return null;
-  return chain.blockExplorers[0].apiUrl || chain.blockExplorers[0].url;
-}
-
 export function getTxExplorerUrl(chainId: number, hash?: string) {
-  const baseUrl = getExplorerUrl(chainId);
+  const baseUrl = getChainExplorerUrl(chainId);
   if (!hash || !baseUrl) return null;
   return `${baseUrl}/tx/${hash}`;
 }
 
 export async function queryExplorer<P>(chainId: number, path: string, useKey = true) {
-  const baseUrl = getExplorerApiUrl(chainId);
+  const baseUrl = getChainExplorerUrl(chainId, true);
   if (!baseUrl) throw new Error(`No URL found for explorer for chain ${chainId}`);
 
   let url = `${baseUrl}/${path}`;

@@ -2,7 +2,8 @@ import { mainnetChainsMetadata, testnetChainsMetadata } from '@hyperlane-xyz/sdk
 
 import { ChainIcon } from '../../components/icons/ChainIcon';
 import { Modal } from '../../components/layout/Modal';
-import { getChainDisplayName } from '../../utils/chains';
+
+import { getChainDisplayName } from './metadata';
 
 export function ChainSelectModal({
   isOpen,

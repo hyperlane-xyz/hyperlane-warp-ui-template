@@ -5,5 +5,6 @@ import { chainConnectionConfigs, chainIdToMetadata } from '@hyperlane-xyz/sdk';
 export function getProvider(chainId: number) {
   const chainName = chainIdToMetadata[chainId]?.name;
   if (!chainName) throw new Error(`No metadata found for chain: ${chainId}`);
+  // TODO support custom chains here
   return chainConnectionConfigs[chainName].provider;
 }

@@ -5,17 +5,18 @@ import { useState } from 'react';
 import { ChainIcon } from '../../components/icons/ChainIcon';
 import ChevronIcon from '../../images/icons/chevron-down.svg';
 
-import { ChainSelectModal } from './ChainSelectModal';
+import { ChainSelectListModal } from './ChainSelectModal';
 import { getChainDisplayName } from './metadata';
 
 type Props = {
   name: string;
   label: string;
+  chainIds: number[];
   onChange?: (chainId: number) => void;
   disabled?: boolean;
 };
 
-export function ChainSelectField({ name, label, onChange, disabled }: Props) {
+export function ChainSelectField({ name, label, chainIds, onChange, disabled }: Props) {
   const [field, , helpers] = useField<number>(name);
 
   const handleChange = (newChainId: number) => {
@@ -51,9 +52,10 @@ export function ChainSelectField({ name, label, onChange, disabled }: Props) {
         </div>
         <Image src={ChevronIcon} width={12} height={8} alt="" />
       </button>
-      <ChainSelectModal
+      <ChainSelectListModal
         isOpen={isModalOpen}
         close={() => setIsModalOpen(false)}
+        chainIds={chainIds}
         onSelect={handleChange}
       />
     </div>

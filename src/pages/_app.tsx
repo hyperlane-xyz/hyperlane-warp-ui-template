@@ -18,16 +18,15 @@ import 'react-toastify/dist/ReactToastify.css';
 import { WagmiConfig, configureChains, createClient as createWagmiClient } from 'wagmi';
 import { publicProvider } from 'wagmi/providers/public';
 
-import { wagmiChainMetadata } from '@hyperlane-xyz/sdk';
-
 import { ErrorBoundary } from '../components/errors/ErrorBoundary';
 import { AppLayout } from '../components/layout/AppLayout';
+import { getWagmiChainConfig } from '../features/chains/metadata';
 import { Color } from '../styles/Color';
 import '../styles/fonts.css';
 import '../styles/globals.css';
 import { useIsSsr } from '../utils/ssr';
 
-const { chains, provider } = configureChains(Object.values(wagmiChainMetadata), [publicProvider()]);
+const { chains, provider } = configureChains(getWagmiChainConfig(), [publicProvider()]);
 
 const connectorConfig = {
   appName: 'Hyperlane Warp Template',

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 
-import { chainIdToMetadata } from '@hyperlane-xyz/sdk';
 import { utils } from '@hyperlane-xyz/utils';
 
 import { areAddressesEqual, isValidAddress, normalizeAddress } from '../../utils/addresses';
@@ -33,7 +33,7 @@ function computeTokenRoutes(tokens: ListedTokenWithHypTokens[]) {
   const tokenRoutes: RoutesMap = {};
 
   // Instantiate map structure
-  const allChainIds = Object.keys(chainIdToMetadata);
+  const allChainIds = getChainsFromTokens(tokens);
   for (const source of allChainIds) {
     tokenRoutes[source] = {};
     for (const dest of allChainIds) {
@@ -88,6 +88,17 @@ function computeTokenRoutes(tokens: ListedTokenWithHypTokens[]) {
   return tokenRoutes;
 }
 
+function getChainsFromTokens(tokens: ListedTokenWithHypTokens[]) {
+  const chains = new Set<number>();
+  for (const token of tokens) {
+    chains.add(token.chainId);
+    for (const remoteToken of token.hypTokens) {
+      chains.add(remoteToken.chainId);
+    }
+  }
+  return Array.from(chains);
+}
+
 export function getTokenRoutes(
   sourceChainId: number,
   destinationChainId: number,
@@ -140,8 +151,8 @@ export function useTokenRoutes() {
         // TODO parallelization here would be good, either with RPC batching or just promise.all, but
         // avoiding it for now due to limitations of public RPC providers
         for (const chainId of domains) {
-          const hypTokenBytes = await collateralContract.routers(chainId);
-          const hypTokenAddr = utils.bytes32ToAddress(hypTokenBytes);
+          const hypTokenAddrBytes = await collateralContract.routers(chainId);
+          const hypTokenAddr = utils.bytes32ToAddress(hypTokenAddrBytes);
           hypTokens.push({ chainId, address: normalizeAddress(hypTokenAddr) });
         }
         tokens.push({ ...token, hypTokens });
@@ -153,4 +164,8 @@ export function useTokenRoutes() {
   );
 
   return { isLoading, hasError, tokenRoutes };
+}
+
+export function useRouteChains(tokenRoutes: RoutesMap): number[] {
+  return useMemo(() => Object.keys(tokenRoutes).map((chainId) => parseInt(chainId)), [tokenRoutes]);
 }

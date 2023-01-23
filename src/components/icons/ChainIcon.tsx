@@ -19,6 +19,7 @@ import MoonbeamColor from '@hyperlane-xyz/sdk/logos/color/moonbeam.svg';
 import OptimismColor from '@hyperlane-xyz/sdk/logos/color/optimism.svg';
 import PolygonColor from '@hyperlane-xyz/sdk/logos/color/polygon.svg';
 
+import { chainIdToCustomConfig } from '../../consts/chains';
 import { getChainDisplayName } from '../../features/chains/metadata';
 import QuestionMark from '../../images/icons/question-mark.svg';
 
@@ -71,7 +72,8 @@ interface Props {
 
 function _ChainIcon({ chainId, size = 32, color = true, background = false }: Props) {
   const iconSet = color ? CHAIN_TO_COLOR_ICON : CHAIN_TO_MONOCHROME_ICON;
-  const imageSrc = (chainId && iconSet[chainId]) || QuestionMark;
+  const imageSrc =
+    (chainId && (iconSet[chainId] || chainIdToCustomConfig[chainId]?.logoImgSrc)) || QuestionMark;
 
   if (background) {
     return (

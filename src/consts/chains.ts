@@ -2,6 +2,7 @@ import { ChainMetadata } from '@hyperlane-xyz/sdk';
 
 export type CustomChainMetadata = Omit<ChainMetadata, 'name'> & {
   name: string;
+  logoImgSrc: string;
 };
 
 // Add custom configs here as needed
@@ -26,5 +27,6 @@ export const chainIdToCustomConfig: Record<number, CustomChainMetadata> = {
   //     reorgPeriod: 1,
   //     estimateBlockTime: 10,
   //   },
-  // }
+  //   logoImgSrc: '/logo.svg',
+  // },
 };

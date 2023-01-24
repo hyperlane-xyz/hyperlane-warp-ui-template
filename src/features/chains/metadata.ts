@@ -2,7 +2,19 @@ import type { Chain as WagmiChain } from '@wagmi/chains';
 
 import { ChainMetadata, chainIdToMetadata, objMap, wagmiChainMetadata } from '@hyperlane-xyz/sdk';
 
-import { chainIdToCustomConfig } from '../../consts/chains';
+import CustomChainConfig from '../../consts/chains.json';
+
+export type CustomChainMetadata = Omit<ChainMetadata, 'name'> & {
+  name: string;
+  logoImgSrc: string;
+};
+
+export const chainIdToCustomConfig = Object.values(CustomChainConfig).reduce<
+  Record<number, CustomChainMetadata>
+>((result, config) => {
+  result[config.id] = config as CustomChainMetadata;
+  return result;
+}, {});
 
 export function getChainMetadata(chainId: number): ChainMetadata {
   if (chainIdToCustomConfig[chainId]) return chainIdToCustomConfig[chainId] as ChainMetadata;

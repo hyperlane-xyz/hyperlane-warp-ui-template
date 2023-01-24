@@ -1,6 +1,6 @@
 import { toast } from 'react-toastify';
 
-import { chainIdToMetadata } from '@hyperlane-xyz/sdk';
+import { getChainExplorerUrl } from '../../features/chains/metadata';
 
 export function toastTxSuccess(msg: string, txHash: string, chainId: number) {
   toast.success(<TxSuccessToast msg={msg} txHash={txHash} chainId={chainId} />, {
@@ -17,7 +17,7 @@ export function TxSuccessToast({
   txHash: string;
   chainId: number;
 }) {
-  const explorerBaseUrl = chainIdToMetadata[chainId]?.blockExplorers[0].url;
+  const explorerBaseUrl = getChainExplorerUrl(chainId);
   const url = explorerBaseUrl ? `${explorerBaseUrl}/tx/${txHash}` : '';
   return (
     <div>

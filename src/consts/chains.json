@@ -1,0 +1,23 @@
+{
+  "mycustomchain": {
+    "id": 1234,
+    "name": "mycustomchain",
+    "displayName": "My Chain",
+    "nativeToken": { "name": "Ether", "symbol": "ETH", "decimals": 18 },
+    "publicRpcUrls": [{ "http": "https://mycustomchain-rpc.com" }],
+    "blockExplorers": [
+      {
+        "name": "MyCustomScan",
+        "url": "https://mycustomchain-scan.com",
+        "apiUrl": "https://api.mycustomchain-scan.com",
+        "family": "etherscan"
+      }
+    ],
+    "blocks": {
+      "confirmations": 1,
+      "reorgPeriod": 1,
+      "estimateBlockTime": 10
+    },
+    "logoImgSrc": "/logo.svg"
+  }
+}

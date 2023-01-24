@@ -1,9 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { Form, Formik, useFormikContext } from 'formik';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useAccount } from 'wagmi';
-
-import { chainIdToMetadata, chainMetadata } from '@hyperlane-xyz/sdk';
 
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
 import { IconButton } from '../../components/buttons/IconButton';
@@ -16,26 +14,30 @@ import SwapIcon from '../../images/icons/swap.svg';
 import { Color } from '../../styles/Color';
 import { isValidAddress } from '../../utils/addresses';
 import { fromWeiRounded, toWei, tryParseAmount } from '../../utils/amount';
-import { getChainDisplayName, getChainEnvironment } from '../../utils/chains';
 import { logger } from '../../utils/logger';
 import { ChainSelectField } from '../chains/ChainSelectField';
+import { getChainDisplayName } from '../chains/metadata';
 import { TokenSelectField } from '../tokens/TokenSelectField';
-import { RouteType, RoutesMap, getTokenRoute } from '../tokens/routes';
+import { RouteType, RoutesMap, getTokenRoute, useRouteChains } from '../tokens/routes';
 import { getCachedTokenBalance, useAccountTokenBalance } from '../tokens/useTokenBalance';
 
 import { TransferTransactionsModal } from './TransferTransactionsModal';
 import { TransferFormValues } from './types';
 import { useTokenTransfer } from './useTokenTransfer';
 
-const initialValues: TransferFormValues = {
-  sourceChainId: chainMetadata.goerli.id,
-  destinationChainId: chainMetadata.alfajores.id,
-  amount: '',
-  tokenAddress: '',
-  recipientAddress: '',
-};
-
 export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
+  const chainIds = useRouteChains(tokenRoutes);
+  const initialValues: TransferFormValues = useMemo(
+    () => ({
+      sourceChainId: chainIds[0],
+      destinationChainId: chainIds[1],
+      amount: '',
+      tokenAddress: '',
+      recipientAddress: '',
+    }),
+    [chainIds],
+  );
+
   // Flag for if form is in input vs review mode
   const [isReview, setIsReview] = useState(false);
 
@@ -57,28 +59,12 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
     tokenAddress,
     recipientAddress,
   }: TransferFormValues) => {
-    // Check chains
-    if (!sourceChainId || !chainIdToMetadata[sourceChainId]) {
-      return { sourceChainId: 'Invalid source chain' };
-    }
-    if (!destinationChainId || !chainIdToMetadata[destinationChainId]) {
-      return { destinationChainId: 'Invalid destination chain' };
-    }
-    if (getChainEnvironment(sourceChainId) !== getChainEnvironment(destinationChainId)) {
-      return { destinationChainId: 'Invalid chain combination' };
-    }
-    // Check addresses
-    if (!isValidAddress(recipientAddress)) {
-      return { recipientAddress: 'Invalid recipient' };
-    }
-    if (!isValidAddress(tokenAddress)) {
-      return { tokenAddress: 'Invalid token' };
-    }
-    // Check amount
+    if (!sourceChainId) return { sourceChainId: 'Invalid source chain' };
+    if (!destinationChainId) return { destinationChainId: 'Invalid destination chain' };
+    if (!isValidAddress(recipientAddress)) return { recipientAddress: 'Invalid recipient' };
+    if (!isValidAddress(tokenAddress)) return { tokenAddress: 'Invalid token' };
     const parsedAmount = tryParseAmount(amount);
-    if (!parsedAmount || parsedAmount.lte(0)) {
-      return { amount: 'Invalid amount' };
-    }
+    if (!parsedAmount || parsedAmount.lte(0)) return { amount: 'Invalid amount' };
     const cachedBalance = getCachedTokenBalance(
       queryClient,
       sourceChainId,
@@ -112,7 +98,12 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
       {({ values }) => (
         <Form className="flex flex-col items-stretch w-full mt-2">
           <div className="flex items-center justify-center space-x-7 sm:space-x-10">
-            <ChainSelectField name="sourceChainId" label="From" disabled={isReview} />
+            <ChainSelectField
+              name="sourceChainId"
+              label="From"
+              chainIds={chainIds}
+              disabled={isReview}
+            />
             <div className="flex flex-col items-center">
               <div className="flex mb-6 sm:space-x-1.5">
                 <HyperlaneChevron
@@ -127,7 +118,12 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
               </div>
               <SwapChainsButton disabled={isReview} />
             </div>
-            <ChainSelectField name="destinationChainId" label="To" disabled={isReview} />
+            <ChainSelectField
+              name="destinationChainId"
+              label="To"
+              chainIds={chainIds}
+              disabled={isReview}
+            />
           </div>
           <div className="mt-3 flex justify-between space-x-4">
             <div className="flex-1">

@@ -983,52 +983,52 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/core@npm:1.0.0":
-  version: 1.0.0
-  resolution: "@hyperlane-xyz/core@npm:1.0.0"
+"@hyperlane-xyz/core@npm:1.0.1-beta0":
+  version: 1.0.1-beta0
+  resolution: "@hyperlane-xyz/core@npm:1.0.1-beta0"
   dependencies:
-    "@hyperlane-xyz/utils": 1.0.0
+    "@hyperlane-xyz/utils": 1.0.1-beta0
     "@openzeppelin/contracts": ^4.8.0
     "@openzeppelin/contracts-upgradeable": ^4.8.0
-  checksum: 4a2bfcd87b3bdb868051ea24378db0d70449266ac9601e75da2842b8f0887e6715b6d42fdcef6bf604a2524c4e43bfdb90c1b41deb767a31afed18e8804c46b7
+  checksum: c2940686c462a2780f84f27d3e34c7788b542ac4792c36e2f88d433dd6f6dc2830da9ac5c6f07bf99969e09b815a9b562d235895cd7ccd42fa4e02dcaa00b76a
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/hyperlane-token@npm:^1.0.0":
-  version: 1.0.0
-  resolution: "@hyperlane-xyz/hyperlane-token@npm:1.0.0"
+"@hyperlane-xyz/hyperlane-token@npm:^1.0.1-beta0":
+  version: 1.0.1-beta0
+  resolution: "@hyperlane-xyz/hyperlane-token@npm:1.0.1-beta0"
   dependencies:
-    "@hyperlane-xyz/core": 1.0.0
-    "@hyperlane-xyz/sdk": 1.0.0
-    "@hyperlane-xyz/utils": 1.0.0
+    "@hyperlane-xyz/core": 1.0.1-beta0
+    "@hyperlane-xyz/sdk": 1.0.1-beta0
+    "@hyperlane-xyz/utils": 1.0.1-beta0
     "@openzeppelin/contracts-upgradeable": ^4.8.0
     ethers: ^5.7.2
-  checksum: 59dc3bd87be61bb2a2295b766c7ba8c73e62e9f39acf2cb313a5dd54b306bf46e14ccf4c611259f7a578d3b2e58c7a3ce63bdd7210aa044947cf4791bc2aa5e2
+  checksum: 75252bf83bacaaab895e6f74ade8fb002c83c53fc182d61d1d39478da5c86aef544e18c16287046c77cd8b119ca3bec0b93dca9b6abdaecbe5173df223641c3f
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/sdk@npm:1.0.0, @hyperlane-xyz/sdk@npm:^1.0.0":
-  version: 1.0.0
-  resolution: "@hyperlane-xyz/sdk@npm:1.0.0"
+"@hyperlane-xyz/sdk@npm:1.0.1-beta0, @hyperlane-xyz/sdk@npm:^1.0.1-beta0":
+  version: 1.0.1-beta0
+  resolution: "@hyperlane-xyz/sdk@npm:1.0.1-beta0"
   dependencies:
     "@hyperlane-xyz/celo-ethers-provider": ^0.1.1
-    "@hyperlane-xyz/core": 1.0.0
-    "@hyperlane-xyz/utils": 1.0.0
+    "@hyperlane-xyz/core": 1.0.1-beta0
+    "@hyperlane-xyz/utils": 1.0.1-beta0
     "@wagmi/chains": ^0.1.3
     coingecko-api: ^1.0.10
     cross-fetch: ^3.1.5
     debug: ^4.3.4
     ethers: ^5.7.2
-  checksum: 93c878ba85fde204d9d4c6e19c6d467a7dd232253cb5b03e7a5b52a6121962c1a6592b9431e6af92242b763c38eac45978ddec9dfd5d6bd4557fb565a14cd81b
+  checksum: aa85ced1fc4f0ab57d0373ce3c8a59a175573064f50cb20a4d6b7fe61a070c381e222c735a8872880d760bd960be24644acadf579e7adee3c00a19ba3fb56946
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/utils@npm:1.0.0":
-  version: 1.0.0
-  resolution: "@hyperlane-xyz/utils@npm:1.0.0"
+"@hyperlane-xyz/utils@npm:1.0.1-beta0":
+  version: 1.0.1-beta0
+  resolution: "@hyperlane-xyz/utils@npm:1.0.1-beta0"
   dependencies:
     ethers: ^5.7.2
-  checksum: f19440f507d8219e62b5792211459233c478ee72daa5109a502bd66eb611bdc09e55c5b67f32f3b46a89307c7f70e672acaf58a4018adb4f343a5eb566cd1dcd
+  checksum: a87ac6cd90673bbfd5b17dbb68f8fb7626ad16af63315e1080817a87d6c8dfa58d10c69720a5840bf5926942072fa1b9b696ffd4325c007a30bef46cd048402b
   languageName: node
   linkType: hard
 
@@ -1037,8 +1037,8 @@ __metadata:
   resolution: "@hyperlane-xyz/warp-ui-template@workspace:."
   dependencies:
     "@headlessui/react": ^1.7.7
-    "@hyperlane-xyz/hyperlane-token": ^1.0.0
-    "@hyperlane-xyz/sdk": ^1.0.0
+    "@hyperlane-xyz/hyperlane-token": ^1.0.1-beta0
+    "@hyperlane-xyz/sdk": ^1.0.1-beta0
     "@metamask/jazzicon": "https://github.com/jmrossy/jazzicon#7a8df28974b4e81129bfbe3cab76308b889032a6"
     "@rainbow-me/rainbowkit": ^0.8.1
     "@tanstack/react-query": ^4.20.4

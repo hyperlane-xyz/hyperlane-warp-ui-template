@@ -19,7 +19,7 @@ _This section is only relevant if you want to include chains not already support
 
 By default, the app will use only the chains that are included in the Hyperlane SDK and connected to the tokens you specify in the token list (see above).
 
-To add support for additional chains, fill in the required chain metadata in `./src/consts/chains.ts`. You can also use the `chainIdToCustomConfig` object there to override any default chain configs set in the SDK.
+To add support for additional chains, fill in the required chain metadata in `./src/consts/chains.json`. You can also use this file to override any default chain configs set in the SDK. It uses the same schema as the `warp-route-chain-config.json` config used to deploy Warp Routes from the token repo, with one exception: the chains config here expects a `logoImgSrc` field.
 
 ## Tip Card Content
 

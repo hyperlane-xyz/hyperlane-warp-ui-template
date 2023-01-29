@@ -22,6 +22,7 @@ enum Stage {
 }
 
 // Note, this doesn't use wagmi's prepare + send pattern because we're potentially sending two transactions
+// See https://github.com/wagmi-dev/wagmi/discussions/1564
 export function useTokenTransfer(onDone?: () => void) {
   const [isLoading, setIsLoading] = useState(false);
   const dismissIsLoading = () => setIsLoading(false);
@@ -67,7 +68,7 @@ export function useTokenTransfer(onDone?: () => void) {
           const { wait: approveWait } = await sendTransaction({
             chainId: sourceChainId,
             request: approveTxRequest,
-            mode: 'recklesslyUnprepared',
+            mode: 'recklesslyUnprepared', // See note above function
           });
           const approveTxReceipt = await approveWait(1);
           logger.debug('Approve transaction confirmed, hash:', approveTxReceipt.transactionHash);
@@ -83,16 +84,20 @@ export function useTokenTransfer(onDone?: () => void) {
         const hypErc20 = isNativeToRemote
           ? getHypErc20CollateralContract(tokenRoute.hypCollateralAddress, provider)
           : getHypErc20Contract(tokenRoute.sourceTokenAddress, provider);
+        const gasPayment = await hypErc20.quoteGasPayment(destinationChainId);
         const transferTxRequest = await hypErc20.populateTransaction.transferRemote(
           destinationChainId,
           utils.addressToBytes32(recipientAddress),
           weiAmount,
+          {
+            value: gasPayment,
+          },
         );
 
         const { wait: transferWait } = await sendTransaction({
           chainId: sourceChainId,
           request: transferTxRequest,
-          mode: 'recklesslyUnprepared',
+          mode: 'recklesslyUnprepared', // See note above function
         });
         const transferTxReceipt = await transferWait(1);
         logger.debug('Transfer transaction confirmed, hash:', transferTxReceipt.transactionHash);

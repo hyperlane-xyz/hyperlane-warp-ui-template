@@ -5,8 +5,8 @@
   "author": "J M Rossy",
   "dependencies": {
     "@headlessui/react": "^1.7.7",
-    "@hyperlane-xyz/hyperlane-token": "^1.0.1-beta0",
-    "@hyperlane-xyz/sdk": "^1.0.1-beta0",
+    "@hyperlane-xyz/hyperlane-token": "^1.1.1",
+    "@hyperlane-xyz/sdk": "^1.1.1",
     "@metamask/jazzicon": "https://github.com/jmrossy/jazzicon#7a8df28974b4e81129bfbe3cab76308b889032a6",
     "@rainbow-me/rainbowkit": "^0.8.1",
     "@tanstack/react-query": "^4.20.4",

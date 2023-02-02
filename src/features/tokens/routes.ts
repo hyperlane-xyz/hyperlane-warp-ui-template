@@ -152,16 +152,15 @@ export function useTokenRoutes() {
         const domains = await collateralContract.domains();
         logger.info(`Found ${domains.length} connected domains:`, domains);
 
-        const hypTokens: Array<{ chainId: number; address: Address }> = [];
-        // TODO parallelization here would be good, either with RPC batching or just promise.all, but
-        // avoiding it for now due to limitations of public RPC providers
-        for (const chainId of domains) {
-          logger.info(`Getting domain router address for:`, chainId);
-          const hypTokenAddrBytes = await collateralContract.routers(chainId);
-          const hypTokenAddr = utils.bytes32ToAddress(hypTokenAddrBytes);
-          logger.info(`Address found:`, hypTokenAddr);
-          hypTokens.push({ chainId, address: normalizeAddress(hypTokenAddr) });
-        }
+        logger.info('Getting domain router address');
+        const hypTokenByteAddressesP = domains.map((d) => collateralContract.routers(d));
+        const hypTokenByteAddresses = await Promise.all(hypTokenByteAddressesP);
+        const hypTokenAddresses = hypTokenByteAddresses.map((b) => utils.bytes32ToAddress(b));
+        logger.info(`Addresses found:`, hypTokenAddresses);
+        const hypTokens = hypTokenAddresses.map((addr, i) => ({
+          chainId: domains[i],
+          address: normalizeAddress(addr),
+        }));
         tokens.push({ ...token, hypTokens });
       }
 

@@ -7,7 +7,7 @@
     "@headlessui/react": "^1.7.8",
     "@hyperlane-xyz/hyperlane-token": "^1.1.3",
     "@hyperlane-xyz/sdk": "^1.1.3",
-    "@hyperlane-xyz/widgets": "^1.0.0-beta3",
+    "@hyperlane-xyz/widgets": "^1.0.0",
     "@metamask/jazzicon": "https://github.com/jmrossy/jazzicon#7a8df28974b4e81129bfbe3cab76308b889032a6",
     "@rainbow-me/rainbowkit": "^0.8.1",
     "@tanstack/react-query": "^4.24.4",

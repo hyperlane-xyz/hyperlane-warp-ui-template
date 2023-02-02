@@ -5,8 +5,9 @@ import { Fragment } from 'react';
 import { toast } from 'react-toastify';
 import { useAccount, useDisconnect, useNetwork } from 'wagmi';
 
+import { ChainLogo } from '@hyperlane-xyz/widgets';
+
 import { SolidButton } from '../../components/buttons/SolidButton';
-import { ChainIcon } from '../../components/icons/ChainIcon';
 import { Identicon } from '../../components/icons/Identicon';
 import ChevronDown from '../../images/icons/chevron-down.svg';
 import CopyStack from '../../images/icons/copy-stack.svg';
@@ -90,7 +91,7 @@ function AccountDropdown() {
             <div className="px-5 pb-3 mb-2 border-b border-gray-200">
               <label className="text-sm text-gray-500">Connected to:</label>
               <div className="mt-1.5 flex items-center">
-                <ChainIcon chainId={chain.id} size={15} />
+                <ChainLogo chainId={chain.id} size={15} />
                 <div className="ml-2 text-sm">{chain.name}</div>
               </div>
             </div>

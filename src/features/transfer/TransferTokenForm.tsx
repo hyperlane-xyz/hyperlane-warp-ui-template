@@ -3,11 +3,12 @@ import { Form, Formik, useFormikContext } from 'formik';
 import { useMemo, useState } from 'react';
 import { useAccount } from 'wagmi';
 
+import { WideChevron } from '@hyperlane-xyz/widgets';
+
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
 import { IconButton } from '../../components/buttons/IconButton';
 import { SolidButton } from '../../components/buttons/SolidButton';
 import { ChevronIcon } from '../../components/icons/Chevron';
-import { HyperlaneChevron } from '../../components/icons/HyperlaneChevron';
 import { TextField } from '../../components/input/TextField';
 import { config } from '../../consts/config';
 import SwapIcon from '../../images/icons/swap.svg';
@@ -106,15 +107,28 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
             />
             <div className="flex flex-col items-center">
               <div className="flex mb-6 sm:space-x-1.5">
-                <HyperlaneChevron
+                <WideChevron
                   width="17"
                   height="100%"
                   direction="e"
                   color={Color.lightGray}
                   classes="hidden sm:block"
+                  rounded={true}
                 />
-                <HyperlaneChevron width="17" height="100%" direction="e" color={Color.lightGray} />
-                <HyperlaneChevron width="17" height="100%" direction="e" color={Color.lightGray} />
+                <WideChevron
+                  width="17"
+                  height="100%"
+                  direction="e"
+                  color={Color.lightGray}
+                  rounded={true}
+                />
+                <WideChevron
+                  width="17"
+                  height="100%"
+                  direction="e"
+                  color={Color.lightGray}
+                  rounded={true}
+                />
               </div>
               <SwapChainsButton disabled={isReview} />
             </div>

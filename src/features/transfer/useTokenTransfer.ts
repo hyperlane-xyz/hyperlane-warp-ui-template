@@ -7,6 +7,7 @@ import { utils } from '@hyperlane-xyz/utils';
 import { toastTxSuccess } from '../../components/toast/TxSuccessToast';
 import { toWei } from '../../utils/amount';
 import { logger } from '../../utils/logger';
+import { sleep } from '../../utils/timeout';
 import { getErc20Contract } from '../contracts/erc20';
 import { getHypErc20CollateralContract, getHypErc20Contract } from '../contracts/hypErc20';
 import { getProvider } from '../providers';
@@ -51,6 +52,9 @@ export function useTokenTransfer(onStart?: () => void, onDone?: () => void) {
         await switchNetwork({
           chainId: sourceChainId,
         });
+
+        // https://github.com/wagmi-dev/wagmi/issues/1565
+        await sleep(1500);
 
         const weiAmount = toWei(amount).toString();
         const provider = getProvider(sourceChainId);

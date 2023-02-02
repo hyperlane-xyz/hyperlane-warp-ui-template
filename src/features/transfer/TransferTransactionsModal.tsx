@@ -6,6 +6,8 @@ import { MessageStatus, MessageTimeline, useMessageTimeline } from '@hyperlane-x
 
 import { Spinner } from '../../components/animation/Spinner';
 import { Modal } from '../../components/layout/Modal';
+import { links } from '../../consts/links';
+import { trimLeading0x } from '../../utils/addresses';
 import { RouteType, RoutesMap, getTokenRoute } from '../tokens/routes';
 
 import { TransferFormValues } from './types';
@@ -96,6 +98,16 @@ function Timeline({
         <div className="mt-5 text-sm text-center text-gray-500">
           Please connect wallet to proceed
         </div>
+      )}
+      {message && (
+        <a
+          className="mt-4 text-gray-500 underline underline-offset-2"
+          href={`${links.explorer}/message/${trimLeading0x(message.id)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Open Transaction in Hyperlane Explorer
+        </a>
       )}
     </div>
   );

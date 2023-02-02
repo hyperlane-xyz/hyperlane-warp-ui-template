@@ -470,7 +470,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@coinbase/wallet-sdk@npm:^3.5.4":
+"@coinbase/wallet-sdk@npm:^3.5.4, @coinbase/wallet-sdk@npm:^3.6.0":
   version: 3.6.3
   resolution: "@coinbase/wallet-sdk@npm:3.6.3"
   dependencies:
@@ -1102,7 +1102,7 @@ __metadata:
     tailwindcss: ^3.2.4
     ts-node: ^10.9.1
     typescript: ^4.9.5
-    wagmi: ^0.11.3
+    wagmi: 0.10.4
   languageName: unknown
   linkType: soft
 
@@ -1217,22 +1217,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lit-labs/ssr-dom-shim@npm:^1.0.0":
-  version: 1.0.0
-  resolution: "@lit-labs/ssr-dom-shim@npm:1.0.0"
-  checksum: ccba6675ad631c6f7360af4e12e328e88d877a52ec992ae9254a1be9902ef699b7916d851b073803dd91244d0f709de2c0539a7db643889cfe341ff6e1a74eb5
-  languageName: node
-  linkType: hard
-
-"@lit/reactive-element@npm:^1.3.0, @lit/reactive-element@npm:^1.6.0":
-  version: 1.6.1
-  resolution: "@lit/reactive-element@npm:1.6.1"
-  dependencies:
-    "@lit-labs/ssr-dom-shim": ^1.0.0
-  checksum: fab0bcfdade9c26af2ad5115fb564bcf8ba0732a3a8be86c157851c2771e3fdc65ab38f2cd60fa121946058bf6e487461fd217f87b01f96e88ee7a95d5d866ba
-  languageName: node
-  linkType: hard
-
 "@metamask/jazzicon@https://github.com/jmrossy/jazzicon#7a8df28974b4e81129bfbe3cab76308b889032a6":
   version: 2.1.0
   resolution: "@metamask/jazzicon@https://github.com/jmrossy/jazzicon.git#commit=7a8df28974b4e81129bfbe3cab76308b889032a6"
@@ -1246,91 +1230,6 @@ __metadata:
   version: 2.0.0
   resolution: "@metamask/safe-event-emitter@npm:2.0.0"
   checksum: 8b717ac5d53df0027c05509f03d0534700b5898dd1c3a53fb2dc4c0499ca5971b14aae67f522d09eb9f509e77f50afa95fdb3eda1afbff8b071c18a3d2905e93
-  languageName: node
-  linkType: hard
-
-"@motionone/animation@npm:^10.15.1":
-  version: 10.15.1
-  resolution: "@motionone/animation@npm:10.15.1"
-  dependencies:
-    "@motionone/easing": ^10.15.1
-    "@motionone/types": ^10.15.1
-    "@motionone/utils": ^10.15.1
-    tslib: ^2.3.1
-  checksum: 75b7a1e6c47c27073a578eb5559ea0a6e7075862c72e1eb1598403c8c2725f596a95b0369514c9e72f3c7439a9845c468b85a14d4e500df48e09d01b0739d4a7
-  languageName: node
-  linkType: hard
-
-"@motionone/dom@npm:^10.15.5":
-  version: 10.15.5
-  resolution: "@motionone/dom@npm:10.15.5"
-  dependencies:
-    "@motionone/animation": ^10.15.1
-    "@motionone/generators": ^10.15.1
-    "@motionone/types": ^10.15.1
-    "@motionone/utils": ^10.15.1
-    hey-listen: ^1.0.8
-    tslib: ^2.3.1
-  checksum: 2453fe3df6a2b4b339d075bcd598bda1eee1926ba0ad881edfd154362b0992c91f31c08d83c469c7e8cb8bf8ebc0ed5530972673cf5c74d99e46e3772cf5f1cb
-  languageName: node
-  linkType: hard
-
-"@motionone/easing@npm:^10.15.1":
-  version: 10.15.1
-  resolution: "@motionone/easing@npm:10.15.1"
-  dependencies:
-    "@motionone/utils": ^10.15.1
-    tslib: ^2.3.1
-  checksum: cf7cfcf9917525d892334c58282425aafc69d9ab9004c190bfa7cf91317a680e8143f227adc79557424e7f26cdf8478dcbb2ae467e744cebc58195d6f0b8153a
-  languageName: node
-  linkType: hard
-
-"@motionone/generators@npm:^10.15.1":
-  version: 10.15.1
-  resolution: "@motionone/generators@npm:10.15.1"
-  dependencies:
-    "@motionone/types": ^10.15.1
-    "@motionone/utils": ^10.15.1
-    tslib: ^2.3.1
-  checksum: 0eb6797a64d536bb5c26628343d6594a2ebc45c3c447b8ce442b4ac3a41be847b860ac009bda7968fc7d339d2ee49b18bfe36306c5dd99cf17c7d84c82de93f3
-  languageName: node
-  linkType: hard
-
-"@motionone/svelte@npm:^10.15.5":
-  version: 10.15.5
-  resolution: "@motionone/svelte@npm:10.15.5"
-  dependencies:
-    "@motionone/dom": ^10.15.5
-    tslib: ^2.3.1
-  checksum: 17c7cf75f9c2635b1f11204fc4944a62b6febe19d9ffca50b15b45019e98d74cb9c7b9c1a780d8dbd945d8f397ebc3ff97a765d16cad7aae99d1ec979c3aa5ad
-  languageName: node
-  linkType: hard
-
-"@motionone/types@npm:^10.15.1":
-  version: 10.15.1
-  resolution: "@motionone/types@npm:10.15.1"
-  checksum: 98091f7dca257508d94d1080678c433da39a814e8e58aaa742212bf6c2a5b5e2120a6251a06e3ea522219ce6d1b6eb6aa2cab224b803fe52789033d8398ef0aa
-  languageName: node
-  linkType: hard
-
-"@motionone/utils@npm:^10.15.1":
-  version: 10.15.1
-  resolution: "@motionone/utils@npm:10.15.1"
-  dependencies:
-    "@motionone/types": ^10.15.1
-    hey-listen: ^1.0.8
-    tslib: ^2.3.1
-  checksum: 6ef13cd6637ec87c340e5536f849f8c40d30cc90139a3856d11cd70d78e3740f8815b0e63564fefd23c05a060da7a0ea5395390549606ed8801a7b832b74e04e
-  languageName: node
-  linkType: hard
-
-"@motionone/vue@npm:^10.15.5":
-  version: 10.15.5
-  resolution: "@motionone/vue@npm:10.15.5"
-  dependencies:
-    "@motionone/dom": ^10.15.5
-    tslib: ^2.3.1
-  checksum: c87c019edfa1224aed7f2edf3f0f764829eeebbc6efefeca2235a5cabbd1553b7516376c744a39e1f7e6b13a7699bceac02c7cb59091d4d1019d5e9dd11c8cf2
   languageName: node
   linkType: hard
 
@@ -2039,13 +1938,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/trusted-types@npm:^2.0.2":
-  version: 2.0.2
-  resolution: "@types/trusted-types@npm:2.0.2"
-  checksum: 3371eef5f1c50e1c3c07a127c1207b262ba65b83dd167a1c460fc1b135a3fb0c97b9f508efebd383f239cc5dd5b7169093686a692a501fde9c3f7208657d9b0d
-  languageName: node
-  linkType: hard
-
 "@types/ws@npm:^7.4.4":
   version: 7.4.7
   resolution: "@types/ws@npm:7.4.7"
@@ -2282,15 +2174,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@wagmi/chains@npm:0.2.5":
-  version: 0.2.5
-  resolution: "@wagmi/chains@npm:0.2.5"
-  peerDependencies:
-    typescript: ">=4.9.4"
-  peerDependenciesMeta:
-    typescript:
-      optional: true
-  checksum: 9fe23d3f973dc0c07c284051aedb37308a95790af0df88eb5ec44323dc2cbbffaa0a297d3f7a0bfe2ad3e8d6631e0096df56863dccf5e91bba5eb2d5554e68cd
+"@wagmi/chains@npm:0.1.7":
+  version: 0.1.7
+  resolution: "@wagmi/chains@npm:0.1.7"
+  checksum: 2e277140e3fb953d1ac940dccc825610880b98feefba3e5207c57ebab2359077fcedd2dad73c6a3068d0dfca8b75cf698a6529284f989c0139d180edbe173f23
   languageName: node
   linkType: hard
 
@@ -2301,46 +2188,46 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@wagmi/connectors@npm:0.2.3":
-  version: 0.2.3
-  resolution: "@wagmi/connectors@npm:0.2.3"
+"@wagmi/connectors@npm:0.1.3":
+  version: 0.1.3
+  resolution: "@wagmi/connectors@npm:0.1.3"
   dependencies:
     "@coinbase/wallet-sdk": ^3.5.4
     "@ledgerhq/connect-kit-loader": ^1.0.1
     "@walletconnect/ethereum-provider": ^1.8.0
-    "@walletconnect/universal-provider": ^2.3.3
-    "@web3modal/standalone": ^2.0.0
-    abitype: ^0.3.0
+    "@walletconnect/qrcode-modal": ^1.8.0
+    "@walletconnect/universal-provider": ^2.1.4
+    abitype: ^0.1.8
     eventemitter3: ^4.0.7
   peerDependencies:
-    "@wagmi/core": ">=0.9.x"
-    ethers: ">=5.5.1"
-    typescript: ">=4.9.4"
+    "@wagmi/core": 0.8.x
+    ethers: ^5.0.0
   peerDependenciesMeta:
     "@wagmi/core":
       optional: true
-    typescript:
-      optional: true
-  checksum: 92d57b26b1c8e9cf0ffb77707a13aa5d6037722815743dd5ea44e51f593ba9185dbdd3344e7ea21fca4350796ca00142b5e202791128c99cdae9c04cc928fd1f
+  checksum: d3d204784fefc7bb12b4fdfffd0c676d2855ca10724bd84c821b8cd77c1e16cfdd320c267f98e73145e6b8ec7e4044024c535634e668b4ccfb768d7c78089b55
   languageName: node
   linkType: hard
 
-"@wagmi/core@npm:0.9.3":
-  version: 0.9.3
-  resolution: "@wagmi/core@npm:0.9.3"
+"@wagmi/core@npm:0.8.10":
+  version: 0.8.10
+  resolution: "@wagmi/core@npm:0.8.10"
   dependencies:
-    "@wagmi/chains": 0.2.5
-    "@wagmi/connectors": 0.2.3
-    abitype: ^0.3.0
+    "@wagmi/chains": 0.1.7
+    "@wagmi/connectors": 0.1.3
+    abitype: ^0.2.5
     eventemitter3: ^4.0.7
-    zustand: ^4.3.1
+    zustand: ^4.1.4
   peerDependencies:
+    "@coinbase/wallet-sdk": ">=3.6.0"
+    "@walletconnect/ethereum-provider": ">=1.7.5"
     ethers: ">=5.5.1"
-    typescript: ">=4.9.4"
   peerDependenciesMeta:
-    typescript:
+    "@coinbase/wallet-sdk":
       optional: true
-  checksum: da7c11cdd20401e1f9f60b373a7f1c8932267a78b31700ea71f2404792d1381acd6c6589a1cf0acab94de0f612e2a8477e7098a4069f4d539de71b2fe49c1073
+    "@walletconnect/ethereum-provider":
+      optional: true
+  checksum: c13d61e496b0f0810c071c1cb9aa3710ebfc8576ea4f746079554b43602e301bd6f33d70815a8128d9cbc646926b606c09c29a662e6d4f53e93d05e5792ccce4
   languageName: node
   linkType: hard
 
@@ -2765,7 +2652,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@walletconnect/universal-provider@npm:^2.3.3":
+"@walletconnect/universal-provider@npm:^2.1.4":
   version: 2.3.3
   resolution: "@walletconnect/universal-provider@npm:2.3.3"
   dependencies:
@@ -2857,38 +2744,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@web3modal/core@npm:2.1.0":
-  version: 2.1.0
-  resolution: "@web3modal/core@npm:2.1.0"
-  dependencies:
-    buffer: 6.0.3
-    valtio: 1.9.0
-  checksum: c7d76e5626df5946f9a98ee339073d498a71b8111ee90f1c1955e21cd70fa90d39e70c7b5d7a134421ec870e1e7e361bbc1463bbc2616bec8a539e163ce569b9
-  languageName: node
-  linkType: hard
-
-"@web3modal/standalone@npm:^2.0.0":
-  version: 2.1.0
-  resolution: "@web3modal/standalone@npm:2.1.0"
-  dependencies:
-    "@web3modal/core": 2.1.0
-    "@web3modal/ui": 2.1.0
-  checksum: c69d9a8887df22944cc08aacbd88b96f5d8aeb43246172a5e7b09f445c51c42ab7a0162bea3feafc736c8ae26f4a041808151c83afc8a6fdafbcd2b3ac4dccc1
-  languageName: node
-  linkType: hard
-
-"@web3modal/ui@npm:2.1.0":
-  version: 2.1.0
-  resolution: "@web3modal/ui@npm:2.1.0"
-  dependencies:
-    "@web3modal/core": 2.1.0
-    lit: 2.6.1
-    motion: 10.15.5
-    qrcode: 1.5.1
-  checksum: 6ee4a6b61ca436d0e51e935f2b62ca985c4b2b5c793ce5a5d39dc32fbbfa175be1493ebb0456907a67d3c6ed8b7c23a32589018f6e14706400cc3e753c4a7308
-  languageName: node
-  linkType: hard
-
 "JSONStream@npm:^1.3.5":
   version: 1.3.5
   resolution: "JSONStream@npm:1.3.5"
@@ -2908,16 +2763,25 @@ __metadata:
   languageName: node
   linkType: hard
 
-"abitype@npm:^0.3.0":
-  version: 0.3.0
-  resolution: "abitype@npm:0.3.0"
+"abitype@npm:^0.1.8":
+  version: 0.1.8
+  resolution: "abitype@npm:0.1.8"
   peerDependencies:
-    typescript: ">=4.9.4"
+    typescript: ">=4.7.4"
+  checksum: 75db603ca20adaafd66c1097ab190cde333868ce5d5328b670574bd7e99dea92d1857eb5ff24405e4828c7cdaa0fec88142a4cff7883523b8ea2b8c328e8be45
+  languageName: node
+  linkType: hard
+
+"abitype@npm:^0.2.5":
+  version: 0.2.5
+  resolution: "abitype@npm:0.2.5"
+  peerDependencies:
+    typescript: ">=4.7.4"
     zod: ">=3.19.1"
   peerDependenciesMeta:
     zod:
       optional: true
-  checksum: d7f604d917d0ffddc0a7865c24db78585d257202500a70b99c63da659fe299148778fcb78b31e9dbc2d213d69475880702cb05be22eaa0a49e22c73672dd97e1
+  checksum: 46d2060d3b89ef49a88059fa0251eadf744f013246b1682f867d1657f695075da7d736caa61e6b427613e508cd691bbed5794321bd7e5862e6a46dd18e7aad3e
   languageName: node
   linkType: hard
 
@@ -3584,16 +3448,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"buffer@npm:6.0.3, buffer@npm:^6.0.3, buffer@npm:~6.0.3":
-  version: 6.0.3
-  resolution: "buffer@npm:6.0.3"
-  dependencies:
-    base64-js: ^1.3.1
-    ieee754: ^1.2.1
-  checksum: 5ad23293d9a731e4318e420025800b42bf0d264004c0286c8cc010af7a270c7a0f6522e84f54b9ad65cbd6db20b8badbfd8d2ebf4f80fa03dab093b89e68c3f9
-  languageName: node
-  linkType: hard
-
 "buffer@npm:^5.4.3":
   version: 5.7.1
   resolution: "buffer@npm:5.7.1"
@@ -3601,6 +3455,16 @@ __metadata:
     base64-js: ^1.3.1
     ieee754: ^1.1.13
   checksum: e2cf8429e1c4c7b8cbd30834ac09bd61da46ce35f5c22a78e6c2f04497d6d25541b16881e30a019c6fd3154150650ccee27a308eff3e26229d788bbdeb08ab84
+  languageName: node
+  linkType: hard
+
+"buffer@npm:^6.0.3, buffer@npm:~6.0.3":
+  version: 6.0.3
+  resolution: "buffer@npm:6.0.3"
+  dependencies:
+    base64-js: ^1.3.1
+    ieee754: ^1.2.1
+  checksum: 5ad23293d9a731e4318e420025800b42bf0d264004c0286c8cc010af7a270c7a0f6522e84f54b9ad65cbd6db20b8badbfd8d2ebf4f80fa03dab093b89e68c3f9
   languageName: node
   linkType: hard
 
@@ -5602,13 +5466,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"hey-listen@npm:^1.0.8":
-  version: 1.0.8
-  resolution: "hey-listen@npm:1.0.8"
-  checksum: 6bad60b367688f5348e25e7ca3276a74b59ac5a09b0455e6ff8ab7d4a9e38cd2116c708a7dcd8a954d27253ce1d8717ec891d175723ea739885b828cf44e4072
-  languageName: node
-  linkType: hard
-
 "hmac-drbg@npm:^1.0.1":
   version: 1.0.1
   resolution: "hmac-drbg@npm:1.0.1"
@@ -6264,36 +6121,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lit-element@npm:^3.2.0":
-  version: 3.2.2
-  resolution: "lit-element@npm:3.2.2"
-  dependencies:
-    "@lit/reactive-element": ^1.3.0
-    lit-html: ^2.2.0
-  checksum: e1df57c02ad5ae4c42b49a5066b3b623bccf7fa6610bbc3f65bc22cbbe1546ecd6a7f717b1f01863929262f416c4b8b7a39ff166114215f93cc22f4e5b3825c3
-  languageName: node
-  linkType: hard
-
-"lit-html@npm:^2.2.0, lit-html@npm:^2.6.0":
-  version: 2.6.1
-  resolution: "lit-html@npm:2.6.1"
-  dependencies:
-    "@types/trusted-types": ^2.0.2
-  checksum: 32291eb5bcaa7fcc1d433522a9a62c3c3d240e49bb8c57ccea5c10014823d94f62f17e2d5361781cb6ee0b3c9078ef839de6164d5374371d650471904515e48e
-  languageName: node
-  linkType: hard
-
-"lit@npm:2.6.1":
-  version: 2.6.1
-  resolution: "lit@npm:2.6.1"
-  dependencies:
-    "@lit/reactive-element": ^1.6.0
-    lit-element: ^3.2.0
-    lit-html: ^2.6.0
-  checksum: 74f2813152a48f195784f01b6b4ff7e4e7d8fa90ac272b725d1953fa3e1d6c9dca60b77da435f34144fcdd38705480889a8ea986835676932a8559c897cea517
-  languageName: node
-  linkType: hard
-
 "locate-path@npm:^2.0.0":
   version: 2.0.0
   resolution: "locate-path@npm:2.0.0"
@@ -6644,20 +6471,6 @@ __metadata:
     _mocha: bin/_mocha
     mocha: bin/mocha.js
   checksum: 406c45eab122ffd6ea2003c2f108b2bc35ba036225eee78e0c784b6fa2c7f34e2b13f1dbacef55a4fdf523255d76e4f22d1b5aacda2394bd11666febec17c719
-  languageName: node
-  linkType: hard
-
-"motion@npm:10.15.5":
-  version: 10.15.5
-  resolution: "motion@npm:10.15.5"
-  dependencies:
-    "@motionone/animation": ^10.15.1
-    "@motionone/dom": ^10.15.5
-    "@motionone/svelte": ^10.15.5
-    "@motionone/types": ^10.15.1
-    "@motionone/utils": ^10.15.1
-    "@motionone/vue": ^10.15.5
-  checksum: 43e7883d95da6e4949b2e5ca01732bce28214f4978bf940511a3fbd8e00943ab7c00fcb28f3f1ce1ed099a404016f784243330be161c4805958deaf60d1b0571
   languageName: node
   linkType: hard
 
@@ -7448,13 +7261,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"proxy-compare@npm:2.4.0":
-  version: 2.4.0
-  resolution: "proxy-compare@npm:2.4.0"
-  checksum: ff8952db96980ad7123a1368aa6fed6b1eb390c22758152805bb5e1d4511fb50e798c19deb93feaa3b22f103a758c38d265ae34e4769d4e1748ee59795dfa6b2
-  languageName: node
-  linkType: hard
-
 "punycode@npm:^2.1.0":
   version: 2.1.1
   resolution: "punycode@npm:2.1.1"
@@ -7490,20 +7296,6 @@ __metadata:
   bin:
     qrcode: bin/qrcode
   checksum: a0857713d4390937900a2789d5a065700f7cf78cd760e773bf8524c0e907ff629db19c9bdd4210aac55b8eef53ec1c7bcaa2acf01f340ef049c53098388a45a0
-  languageName: node
-  linkType: hard
-
-"qrcode@npm:1.5.1":
-  version: 1.5.1
-  resolution: "qrcode@npm:1.5.1"
-  dependencies:
-    dijkstrajs: ^1.0.1
-    encode-utf8: ^1.0.3
-    pngjs: ^5.0.0
-    yargs: ^15.3.1
-  bin:
-    qrcode: bin/qrcode
-  checksum: 842f899d95caaad2ac507408b5498be3197e1df16bc6b537b20069d2cb1330e4588b50f672ce4a9ccf01338f7c97b5732ff9b5caaa6eb2338187d3c25a973e79
   languageName: node
   linkType: hard
 
@@ -8549,13 +8341,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tslib@npm:^2.3.1":
-  version: 2.5.0
-  resolution: "tslib@npm:2.5.0"
-  checksum: ae3ed5f9ce29932d049908ebfdf21b3a003a85653a9a140d614da6b767a93ef94f460e52c3d787f0e4f383546981713f165037dc2274df212ea9f8a4541004e1
-  languageName: node
-  linkType: hard
-
 "tsutils@npm:^3.21.0":
   version: 3.21.0
   resolution: "tsutils@npm:3.21.0"
@@ -8791,39 +8576,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"valtio@npm:1.9.0":
-  version: 1.9.0
-  resolution: "valtio@npm:1.9.0"
+"wagmi@npm:0.10.4":
+  version: 0.10.4
+  resolution: "wagmi@npm:0.10.4"
   dependencies:
-    proxy-compare: 2.4.0
-    use-sync-external-store: 1.2.0
-  peerDependencies:
-    react: ">=16.8"
-  peerDependenciesMeta:
-    react:
-      optional: true
-  checksum: baf07b9130d6fc27b542b0a06a02a788c3cf85bbe4709a765655ac4a66ade016681ff368e0434aceb98925c80747928530842a939f23a1f916b3f81c2b2a1a65
-  languageName: node
-  linkType: hard
-
-"wagmi@npm:^0.11.3":
-  version: 0.11.3
-  resolution: "wagmi@npm:0.11.3"
-  dependencies:
+    "@coinbase/wallet-sdk": ^3.6.0
     "@tanstack/query-sync-storage-persister": ^4.14.5
     "@tanstack/react-query": ^4.14.5
     "@tanstack/react-query-persist-client": ^4.14.5
-    "@wagmi/core": 0.9.3
-    abitype: ^0.3.0
+    "@wagmi/core": 0.8.10
+    "@walletconnect/ethereum-provider": ^1.8.0
+    abitype: ^0.2.5
     use-sync-external-store: ^1.2.0
   peerDependencies:
     ethers: ">=5.5.1"
     react: ">=17.0.0"
-    typescript: ">=4.9.4"
-  peerDependenciesMeta:
-    typescript:
-      optional: true
-  checksum: add3a260d715102cf4bc10262ac9b2257bd86f65c39ec168bebddc73d64f81613a8de74972f667bd7b05fccb1a08f1bfdcd921a38123bc7c4ded7a1db0cd0a53
+  checksum: ae754a3912e0ee213df9fcc6caf341f6a85934e19095caccf92ae62087390364f4532e7c0d2f19b723af5e6a2ed3e44c4435ff5a137e5ab059a69e6d6b1374f9
   languageName: node
   linkType: hard
 
@@ -9159,7 +8927,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"zustand@npm:^4.3.1":
+"zustand@npm:^4.1.4":
   version: 4.3.2
   resolution: "zustand@npm:4.3.2"
   dependencies:

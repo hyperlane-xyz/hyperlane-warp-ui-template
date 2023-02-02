@@ -19,7 +19,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-toastify": "^9.1.1",
-    "wagmi": "^0.11.3"
+    "wagmi": "0.10.4"
   },
   "devDependencies": {
     "@trivago/prettier-plugin-sort-imports": "^4.0.0",

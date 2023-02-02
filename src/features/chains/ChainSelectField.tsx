@@ -2,7 +2,8 @@ import { useField } from 'formik';
 import Image from 'next/image';
 import { useState } from 'react';
 
-import { ChainIcon } from '../../components/icons/ChainIcon';
+import { ChainLogo } from '@hyperlane-xyz/widgets';
+
 import ChevronIcon from '../../images/icons/chevron-down.svg';
 
 import { ChainSelectListModal } from './ChainSelectModal';
@@ -32,11 +33,11 @@ export function ChainSelectField({ name, label, chainIds, onChange, disabled }: 
 
   return (
     <div className="flex flex-col items-center">
-      <div className="flex flex-col items-center justify-center rounded-full bg-gray-100 h-[6rem] w-[6rem] p-1.5">
+      <div className="flex flex-col items-center justify-center rounded-full bg-gray-100 h-[5.5rem] w-[5.5rem] p-1.5">
         <div className="flex items-end h-11">
-          <ChainIcon chainId={field.value} size={32} />
+          <ChainLogo chainId={field.value} size={34} />
         </div>
-        <label htmlFor={name} className="mt-2.5 text-sm text-gray-500 uppercase">
+        <label htmlFor={name} className="mt-2 mb-1 text-sm text-gray-500 uppercase">
           {label}
         </label>
       </div>
@@ -47,7 +48,7 @@ export function ChainSelectField({ name, label, chainIds, onChange, disabled }: 
         onClick={onClick}
       >
         <div className="flex items-center">
-          <ChainIcon chainId={field.value} size={14} />
+          <ChainLogo chainId={field.value} size={14} />
           <span className="ml-2">{getChainDisplayName(field.value, true)}</span>
         </div>
         <Image src={ChevronIcon} width={12} height={8} alt="" />

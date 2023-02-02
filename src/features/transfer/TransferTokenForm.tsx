@@ -3,11 +3,12 @@ import { Form, Formik, useFormikContext } from 'formik';
 import { useMemo, useState } from 'react';
 import { useAccount } from 'wagmi';
 
+import { WideChevron } from '@hyperlane-xyz/widgets';
+
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
 import { IconButton } from '../../components/buttons/IconButton';
 import { SolidButton } from '../../components/buttons/SolidButton';
 import { ChevronIcon } from '../../components/icons/Chevron';
-import { HyperlaneChevron } from '../../components/icons/HyperlaneChevron';
 import { TextField } from '../../components/input/TextField';
 import { config } from '../../consts/config';
 import SwapIcon from '../../images/icons/swap.svg';
@@ -40,6 +41,8 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
 
   // Flag for if form is in input vs review mode
   const [isReview, setIsReview] = useState(false);
+  // Flag for if loading modal is open (visible)
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const onSubmitForm = (values: TransferFormValues) => {
     logger.debug('Reviewing transfer form values:', JSON.stringify(values));
@@ -77,15 +80,17 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
     return {};
   };
 
+  const onStartTransactions = () => {
+    setIsModalOpen(true);
+  };
   const onDoneTransactions = () => {
     setIsReview(false);
     // Consider clearing form inputs here
   };
-  const {
-    isLoading: isTransferLoading,
-    dismissIsLoading,
-    triggerTransactions,
-  } = useTokenTransfer(onDoneTransactions);
+  const { triggerTransactions, originTxHash } = useTokenTransfer(
+    onStartTransactions,
+    onDoneTransactions,
+  );
 
   return (
     <Formik<TransferFormValues>
@@ -106,15 +111,28 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
             />
             <div className="flex flex-col items-center">
               <div className="flex mb-6 sm:space-x-1.5">
-                <HyperlaneChevron
+                <WideChevron
                   width="17"
                   height="100%"
                   direction="e"
                   color={Color.lightGray}
                   classes="hidden sm:block"
+                  rounded={true}
                 />
-                <HyperlaneChevron width="17" height="100%" direction="e" color={Color.lightGray} />
-                <HyperlaneChevron width="17" height="100%" direction="e" color={Color.lightGray} />
+                <WideChevron
+                  width="17"
+                  height="100%"
+                  direction="e"
+                  color={Color.lightGray}
+                  rounded={true}
+                />
+                <WideChevron
+                  width="17"
+                  height="100%"
+                  direction="e"
+                  color={Color.lightGray}
+                  rounded={true}
+                />
               </div>
               <SwapChainsButton disabled={isReview} />
             </div>
@@ -206,9 +224,10 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
             </div>
           )}
           <TransferTransactionsModal
-            isOpen={isTransferLoading}
-            close={dismissIsLoading}
+            isOpen={isModalOpen}
+            close={() => setIsModalOpen(false)}
             tokenRoutes={tokenRoutes}
+            originTxHash={originTxHash}
           />
         </Form>
       )}

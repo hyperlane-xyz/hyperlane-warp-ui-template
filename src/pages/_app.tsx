@@ -18,6 +18,8 @@ import 'react-toastify/dist/ReactToastify.css';
 import { WagmiConfig, configureChains, createClient as createWagmiClient } from 'wagmi';
 import { publicProvider } from 'wagmi/providers/public';
 
+import '@hyperlane-xyz/widgets/styles.css';
+
 import { ErrorBoundary } from '../components/errors/ErrorBoundary';
 import { AppLayout } from '../components/layout/AppLayout';
 import { getWagmiChainConfig } from '../features/chains/metadata';

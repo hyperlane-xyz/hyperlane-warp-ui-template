@@ -7,7 +7,6 @@ import { utils } from '@hyperlane-xyz/utils';
 import { toastTxSuccess } from '../../components/toast/TxSuccessToast';
 import { toWei } from '../../utils/amount';
 import { logger } from '../../utils/logger';
-import { sleep } from '../../utils/timeout';
 import { getErc20Contract } from '../contracts/erc20';
 import { getHypErc20CollateralContract, getHypErc20Contract } from '../contracts/hypErc20';
 import { getProvider } from '../providers';
@@ -22,15 +21,18 @@ enum Stage {
 }
 
 // Note, this doesn't use wagmi's prepare + send pattern because we're potentially sending two transactions
-export function useTokenTransfer(onDone?: () => void) {
+export function useTokenTransfer(onStart?: () => void, onDone?: () => void) {
   const [isLoading, setIsLoading] = useState(false);
-  const dismissIsLoading = () => setIsLoading(false);
+
+  const [originTxHash, setOriginTxHash] = useState<string | null>(null);
 
   // TODO implement cancel callback for when modal is closed?
   const triggerTransactions = useCallback(
     async (values: TransferFormValues, tokenRoutes: RoutesMap) => {
       logger.debug('Attempting approve and transfer transactions');
+      setOriginTxHash(null);
       setIsLoading(true);
+      if (onStart) onStart();
       let stage: Stage = Stage.Prepare;
 
       try {
@@ -49,9 +51,6 @@ export function useTokenTransfer(onDone?: () => void) {
         await switchNetwork({
           chainId: sourceChainId,
         });
-
-        // https://github.com/wagmi-dev/wagmi/issues/1565
-        await sleep(1500);
 
         const weiAmount = toWei(amount).toString();
         const provider = getProvider(sourceChainId);
@@ -94,13 +93,10 @@ export function useTokenTransfer(onDone?: () => void) {
           request: transferTxRequest,
           mode: 'recklesslyUnprepared',
         });
-        const transferTxReceipt = await transferWait(1);
-        logger.debug('Transfer transaction confirmed, hash:', transferTxReceipt.transactionHash);
-        toastTxSuccess(
-          'Remote transfer started!',
-          transferTxReceipt.transactionHash,
-          sourceChainId,
-        );
+        const { transactionHash } = await transferWait(1);
+        setOriginTxHash(transactionHash);
+        logger.debug('Transfer transaction confirmed, hash:', transactionHash);
+        toastTxSuccess('Remote transfer started!', transactionHash, sourceChainId);
       } catch (error) {
         logger.error(`Error at stage ${stage} `, error);
         if (JSON.stringify(error).includes('ChainMismatchError')) {
@@ -114,13 +110,13 @@ export function useTokenTransfer(onDone?: () => void) {
       setIsLoading(false);
       if (onDone) onDone();
     },
-    [setIsLoading, onDone],
+    [setIsLoading, onStart, onDone],
   );
 
   return {
     isLoading,
-    dismissIsLoading,
     triggerTransactions,
+    originTxHash,
   };
 }
 

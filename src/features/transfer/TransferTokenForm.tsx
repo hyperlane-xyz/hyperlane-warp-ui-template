@@ -41,6 +41,8 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
 
   // Flag for if form is in input vs review mode
   const [isReview, setIsReview] = useState(false);
+  // Flag for if loading modal is open (visible)
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const onSubmitForm = (values: TransferFormValues) => {
     logger.debug('Reviewing transfer form values:', JSON.stringify(values));
@@ -78,15 +80,17 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
     return {};
   };
 
+  const onStartTransactions = () => {
+    setIsModalOpen(true);
+  };
   const onDoneTransactions = () => {
     setIsReview(false);
     // Consider clearing form inputs here
   };
-  const {
-    isLoading: isTransferLoading,
-    dismissIsLoading,
-    triggerTransactions,
-  } = useTokenTransfer(onDoneTransactions);
+  const { triggerTransactions, originTxHash } = useTokenTransfer(
+    onStartTransactions,
+    onDoneTransactions,
+  );
 
   return (
     <Formik<TransferFormValues>
@@ -220,9 +224,10 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
             </div>
           )}
           <TransferTransactionsModal
-            isOpen={isTransferLoading}
-            close={dismissIsLoading}
+            isOpen={isModalOpen}
+            close={() => setIsModalOpen(false)}
             tokenRoutes={tokenRoutes}
+            originTxHash={originTxHash}
           />
         </Form>
       )}

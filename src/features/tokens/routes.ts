@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { utils } from '@hyperlane-xyz/utils';
 
 import { areAddressesEqual, isValidAddress, normalizeAddress } from '../../utils/addresses';
+import { logger } from '../../utils/logger';
 import { getHypErc20CollateralContract } from '../contracts/hypErc20';
 import { getProvider } from '../providers';
 
@@ -138,21 +139,27 @@ export function useTokenRoutes() {
   } = useQuery(
     ['token-routes'],
     async () => {
+      logger.info('Searching for token routes');
       const tokens: ListedTokenWithHypTokens[] = [];
       for (const token of getAllTokens()) {
+        logger.info('Inspecting token:', token.symbol);
         const provider = getProvider(token.chainId);
         const collateralContract = getHypErc20CollateralContract(
           token.hypCollateralAddress,
           provider,
         );
+        logger.info('Fetching connected domains');
         const domains = await collateralContract.domains();
+        logger.info(`Found ${domains.length} connected domains:`, domains);
 
         const hypTokens: Array<{ chainId: number; address: Address }> = [];
         // TODO parallelization here would be good, either with RPC batching or just promise.all, but
         // avoiding it for now due to limitations of public RPC providers
         for (const chainId of domains) {
+          logger.info(`Getting domain router address for:`, chainId);
           const hypTokenAddrBytes = await collateralContract.routers(chainId);
           const hypTokenAddr = utils.bytes32ToAddress(hypTokenAddrBytes);
+          logger.info(`Address found:`, hypTokenAddr);
           hypTokens.push({ chainId, address: normalizeAddress(hypTokenAddr) });
         }
         tokens.push({ ...token, hypTokens });

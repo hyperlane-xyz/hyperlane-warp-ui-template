@@ -1,6 +1,7 @@
 import { sendTransaction, switchNetwork } from '@wagmi/core';
 import { useCallback, useState } from 'react';
 import { toast } from 'react-toastify';
+import { useChainId } from 'wagmi';
 
 import { utils } from '@hyperlane-xyz/utils';
 
@@ -22,10 +23,13 @@ enum Stage {
 }
 
 // Note, this doesn't use wagmi's prepare + send pattern because we're potentially sending two transactions
+// See https://github.com/wagmi-dev/wagmi/discussions/1564
 export function useTokenTransfer(onStart?: () => void, onDone?: () => void) {
   const [isLoading, setIsLoading] = useState(false);
 
   const [originTxHash, setOriginTxHash] = useState<string | null>(null);
+
+  const chainId = useChainId();
 
   // TODO implement cancel callback for when modal is closed?
   const triggerTransactions = useCallback(
@@ -49,12 +53,13 @@ export function useTokenTransfer(onStart?: () => void, onDone?: () => void) {
         if (!tokenRoute) throw new Error('No token route found between chains');
         const isNativeToRemote = tokenRoute.type === RouteType.NativeToRemote;
 
-        await switchNetwork({
-          chainId: sourceChainId,
-        });
-
-        // https://github.com/wagmi-dev/wagmi/issues/1565
-        await sleep(1500);
+        if (sourceChainId !== chainId) {
+          await switchNetwork({
+            chainId: sourceChainId,
+          });
+          // https://github.com/wagmi-dev/wagmi/issues/1565
+          await sleep(1500);
+        }
 
         const weiAmount = toWei(amount).toString();
         const provider = getProvider(sourceChainId);
@@ -70,7 +75,7 @@ export function useTokenTransfer(onStart?: () => void, onDone?: () => void) {
           const { wait: approveWait } = await sendTransaction({
             chainId: sourceChainId,
             request: approveTxRequest,
-            mode: 'recklesslyUnprepared',
+            mode: 'recklesslyUnprepared', // See note above function
           });
           const approveTxReceipt = await approveWait(1);
           logger.debug('Approve transaction confirmed, hash:', approveTxReceipt.transactionHash);
@@ -86,16 +91,20 @@ export function useTokenTransfer(onStart?: () => void, onDone?: () => void) {
         const hypErc20 = isNativeToRemote
           ? getHypErc20CollateralContract(tokenRoute.hypCollateralAddress, provider)
           : getHypErc20Contract(tokenRoute.sourceTokenAddress, provider);
+        const gasPayment = await hypErc20.quoteGasPayment(destinationChainId);
         const transferTxRequest = await hypErc20.populateTransaction.transferRemote(
           destinationChainId,
           utils.addressToBytes32(recipientAddress),
           weiAmount,
+          {
+            value: gasPayment,
+          },
         );
 
         const { wait: transferWait } = await sendTransaction({
           chainId: sourceChainId,
           request: transferTxRequest,
-          mode: 'recklesslyUnprepared',
+          mode: 'recklesslyUnprepared', // See note above function
         });
         const { transactionHash } = await transferWait(1);
         setOriginTxHash(transactionHash);
@@ -114,7 +123,7 @@ export function useTokenTransfer(onStart?: () => void, onDone?: () => void) {
       setIsLoading(false);
       if (onDone) onDone();
     },
-    [setIsLoading, onStart, onDone],
+    [setIsLoading, onStart, onDone, chainId],
   );
 
   return {

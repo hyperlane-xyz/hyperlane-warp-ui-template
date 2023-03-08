@@ -1,6 +1,6 @@
 {
   "mycustomchain": {
-    "id": 1234,
+    "chainId": 1234,
     "name": "mycustomchain",
     "displayName": "My Chain",
     "nativeToken": { "name": "Ether", "symbol": "ETH", "decimals": 18 },

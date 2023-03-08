@@ -1,71 +1,61 @@
 import type { Chain as WagmiChain } from '@wagmi/core';
 
-import { ChainMetadata, chainIdToMetadata, objMap } from '@hyperlane-xyz/sdk';
+import {
+  ChainMetadata,
+  chainIdToMetadata,
+  chainMetadataToWagmiChain,
+  objMap,
+} from '@hyperlane-xyz/sdk';
 
 import CustomChainConfig from '../../consts/chains.json';
 
-export type CustomChainMetadata = Omit<ChainMetadata, 'name'> & {
-  name: string;
+export type CustomChainMetadata = ChainMetadata & {
   logoImgSrc: string;
 };
 
 export const chainIdToCustomConfig = Object.values(CustomChainConfig).reduce<
   Record<number, CustomChainMetadata>
 >((result, config) => {
-  result[config.id] = config as CustomChainMetadata;
+  result[config.chainId] = config as CustomChainMetadata;
   return result;
 }, {});
 
+// TODO use MultiProvider here
 export function getChainMetadata(chainId: number): ChainMetadata {
-  if (chainIdToCustomConfig[chainId]) return chainIdToCustomConfig[chainId] as ChainMetadata;
+  if (chainIdToCustomConfig[chainId]) return chainIdToCustomConfig[chainId];
   else if (chainIdToMetadata[chainId]) return chainIdToMetadata[chainId];
   else throw new Error(`No metadata found for chain ${chainId}`);
 }
 
+// TODO use MultiProvider here
 export function getChainRpcUrl(chainId: number): string {
   const metadata = getChainMetadata(chainId);
   const first = metadata.publicRpcUrls[0];
   return first.http;
 }
 
-export function getChainExplorerUrl(chainId: number, apiUrl = false): string {
+// TODO use MultiProvider here
+export function getChainExplorerUrl(chainId: number, apiUrl = false): string | null {
   const metadata = getChainMetadata(chainId);
-  const first = metadata.blockExplorers[0];
+  const first = metadata.blockExplorers?.[0];
+  if (!first) return null;
   return apiUrl ? first.apiUrl || first.url : first.url;
 }
 
+// TODO use MultiProvider here
 export function getChainDisplayName(chainId?: number, shortName = false): string {
   if (!chainId) return 'Unknown';
   const metadata = getChainMetadata(chainId);
-  return shortName ? metadata.displayNameShort || metadata.displayName : metadata.displayName;
+  const displayName = shortName
+    ? metadata.displayNameShort || metadata.displayName
+    : metadata.displayName;
+  return displayName || metadata.name;
 }
 
 // Metadata formatted for use in Wagmi config
 export function getWagmiChainConfig(): WagmiChain[] {
   return Object.values({
-    ...objMap(chainIdToMetadata, toWagmiConfig),
-    ...objMap(chainIdToCustomConfig as Record<string, ChainMetadata>, toWagmiConfig),
+    ...objMap(chainIdToMetadata, (_: any, m: ChainMetadata) => chainMetadataToWagmiChain(m)),
+    ...objMap(chainIdToCustomConfig, (_: any, m: ChainMetadata) => chainMetadataToWagmiChain(m)),
   });
-}
-
-// TODO move to SDK
-function toWagmiConfig(_: any, metadata: ChainMetadata): WagmiChain {
-  return {
-    id: metadata.id,
-    name: metadata.displayName,
-    network: metadata.name as string,
-    nativeCurrency: metadata.nativeToken,
-    rpcUrls: {
-      default: { http: [metadata.publicRpcUrls[0].http] },
-      public: { http: [metadata.publicRpcUrls[0].http] },
-    },
-    blockExplorers: metadata.blockExplorers.length
-      ? {
-          default: {
-            name: metadata.blockExplorers[0].name,
-            url: metadata.blockExplorers[0].url,
-          },
-        }
-      : undefined,
-  };
 }

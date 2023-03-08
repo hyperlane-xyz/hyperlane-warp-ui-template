@@ -1,6 +1,7 @@
 import { sendTransaction, switchNetwork } from '@wagmi/core';
 import { useCallback, useState } from 'react';
 import { toast } from 'react-toastify';
+import { useChainId } from 'wagmi';
 
 import { utils } from '@hyperlane-xyz/utils';
 
@@ -28,6 +29,8 @@ export function useTokenTransfer(onStart?: () => void, onDone?: () => void) {
 
   const [originTxHash, setOriginTxHash] = useState<string | null>(null);
 
+  const chainId = useChainId();
+
   // TODO implement cancel callback for when modal is closed?
   const triggerTransactions = useCallback(
     async (values: TransferFormValues, tokenRoutes: RoutesMap) => {
@@ -50,12 +53,13 @@ export function useTokenTransfer(onStart?: () => void, onDone?: () => void) {
         if (!tokenRoute) throw new Error('No token route found between chains');
         const isNativeToRemote = tokenRoute.type === RouteType.NativeToRemote;
 
-        await switchNetwork({
-          chainId: sourceChainId,
-        });
-
-        // https://github.com/wagmi-dev/wagmi/issues/1565
-        await sleep(1500);
+        if (sourceChainId !== chainId) {
+          await switchNetwork({
+            chainId: sourceChainId,
+          });
+          // https://github.com/wagmi-dev/wagmi/issues/1565
+          await sleep(1500);
+        }
 
         const weiAmount = toWei(amount).toString();
         const provider = getProvider(sourceChainId);
@@ -119,7 +123,7 @@ export function useTokenTransfer(onStart?: () => void, onDone?: () => void) {
       setIsLoading(false);
       if (onDone) onDone();
     },
-    [setIsLoading, onStart, onDone],
+    [setIsLoading, onStart, onDone, chainId],
   );
 
   return {

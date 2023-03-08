@@ -228,3 +228,8 @@ Toasts
   --toastify-color-progress-warning: var(--toastify-color-warning);
   --toastify-color-progress-error: var(--toastify-color-error);
 }
+
+/* TODO move to widget lib */
+.timeline-container > div {
+  width: 100%
+}

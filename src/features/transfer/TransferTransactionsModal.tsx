@@ -77,7 +77,7 @@ function Timeline({
     originTxHash: originTxHash || undefined,
   });
   return (
-    <div className="mt-4 mb-2 w-full flex flex-col justify-center items-center">
+    <div className="mt-4 mb-2 w-full flex flex-col justify-center items-center timeline-container">
       <MessageTimeline
         status={message?.status || MessageStatus.Pending}
         stage={stage}

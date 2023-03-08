@@ -1,4 +1,5 @@
-import { ChainIcon } from '../../components/icons/ChainIcon';
+import { ChainLogo } from '@hyperlane-xyz/widgets';
+
 import { Modal } from '../../components/layout/Modal';
 
 import { getChainDisplayName, getChainMetadata } from './metadata';
@@ -32,7 +33,7 @@ export function ChainSelectListModal({
             className="py-1.5 px-2 text-sm flex items-center rounded hover:bg-gray-100 active:bg-gray-200 transition-all duration-200"
             onClick={onSelectChain(c.id)}
           >
-            <ChainIcon chainId={c.id} size={16} background={false} />
+            <ChainLogo chainId={c.id} size={16} background={false} />
             <span className="ml-2">{getChainDisplayName(c.id, true)}</span>
           </button>
         ))}
@@ -69,7 +70,7 @@ export function ChainSelectListModal({
 //               className="py-1.5 px-2 text-sm flex items-center rounded hover:bg-gray-100 active:bg-gray-200 transition-all duration-200"
 //               onClick={onSelectChain(c.id)}
 //             >
-//               <ChainIcon chainId={c.id} size={16} background={false} />
+//               <ChainLogo chainId={c.id} size={16} background={false} />
 //               <span className="ml-2">{getChainDisplayName(c.id, true)}</span>
 //             </button>
 //           ))}
@@ -82,7 +83,7 @@ export function ChainSelectListModal({
 //               className="py-1.5 px-2 text-sm flex items-center rounded hover:bg-gray-100 active:bg-gray-200 transition-all duration-200"
 //               onClick={onSelectChain(c.id)}
 //             >
-//               <ChainIcon chainId={c.id} size={16} background={false} />
+//               <ChainLogo chainId={c.id} size={16} background={false} />
 //               <span className="ml-2">{getChainDisplayName(c.id, true)}</span>
 //             </button>
 //           ))}

@@ -1,6 +1,6 @@
-import type { Chain as WagmiChain } from '@wagmi/chains';
+import type { Chain as WagmiChain } from '@wagmi/core';
 
-import { ChainMetadata, chainIdToMetadata, objMap, wagmiChainMetadata } from '@hyperlane-xyz/sdk';
+import { ChainMetadata, chainIdToMetadata, objMap } from '@hyperlane-xyz/sdk';
 
 import CustomChainConfig from '../../consts/chains.json';
 
@@ -41,9 +41,9 @@ export function getChainDisplayName(chainId?: number, shortName = false): string
 }
 
 // Metadata formatted for use in Wagmi config
-export function getWagmiChainConfig() {
+export function getWagmiChainConfig(): WagmiChain[] {
   return Object.values({
-    ...wagmiChainMetadata,
+    ...objMap(chainIdToMetadata, toWagmiConfig),
     ...objMap(chainIdToCustomConfig as Record<string, ChainMetadata>, toWagmiConfig),
   });
 }
@@ -55,7 +55,10 @@ function toWagmiConfig(_: any, metadata: ChainMetadata): WagmiChain {
     name: metadata.displayName,
     network: metadata.name as string,
     nativeCurrency: metadata.nativeToken,
-    rpcUrls: { default: { http: [metadata.publicRpcUrls[0].http] } },
+    rpcUrls: {
+      default: { http: [metadata.publicRpcUrls[0].http] },
+      public: { http: [metadata.publicRpcUrls[0].http] },
+    },
     blockExplorers: metadata.blockExplorers.length
       ? {
           default: {

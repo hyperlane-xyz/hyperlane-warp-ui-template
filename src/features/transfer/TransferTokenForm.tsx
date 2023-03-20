@@ -335,8 +335,9 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
   const {
     values: { amount, sourceChainId, destinationChainId, tokenAddress },
   } = useFormikContext<TransferFormValues>();
-  const weiAmount = toWei(amount).toString();
+
   const route = getTokenRoute(sourceChainId, destinationChainId, tokenAddress, tokenRoutes);
+  const weiAmount = toWei(amount, route?.decimals).toString();
   const requiresApprove = route?.type === RouteType.NativeToRemote;
   return (
     <div

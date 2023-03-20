@@ -974,51 +974,52 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/core@npm:1.2.0":
-  version: 1.2.0
-  resolution: "@hyperlane-xyz/core@npm:1.2.0"
+"@hyperlane-xyz/core@npm:1.2.3":
+  version: 1.2.3
+  resolution: "@hyperlane-xyz/core@npm:1.2.3"
   dependencies:
-    "@hyperlane-xyz/utils": 1.2.0
+    "@hyperlane-xyz/utils": 1.2.3
     "@openzeppelin/contracts": ^4.8.0
     "@openzeppelin/contracts-upgradeable": ^4.8.0
-  checksum: be76b1dd90f8bf8b9f2c53a60f7a56ed6eead6e9a1336879795677fddb75e6fd1d092e6c24af0a7e972b35cfff3eb9056229c5df7a852bfbff9e84e6a8fcb9bc
+  checksum: c7e8f5c37d2e6874b6ca5f16024a4ea8b413393a2a4bb770a467ca7cc031b51a89fbe6989598c171de38acafcd2e990525be0274f793742faafc832a0db359fa
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/hyperlane-token@npm:^1.2.0":
-  version: 1.2.0
-  resolution: "@hyperlane-xyz/hyperlane-token@npm:1.2.0"
+"@hyperlane-xyz/hyperlane-token@npm:^1.2.3":
+  version: 1.2.3
+  resolution: "@hyperlane-xyz/hyperlane-token@npm:1.2.3"
   dependencies:
-    "@hyperlane-xyz/core": 1.2.0
-    "@hyperlane-xyz/sdk": 1.2.0
-    "@hyperlane-xyz/utils": 1.2.0
+    "@hyperlane-xyz/core": 1.2.3
+    "@hyperlane-xyz/sdk": 1.2.3
+    "@hyperlane-xyz/utils": 1.2.3
     "@openzeppelin/contracts-upgradeable": ^4.8.0
     ethers: ^5.7.2
-  checksum: f00d8f1cd2291fe4bf7c07d7dee103fda169c531d6551defe54754cf6a40189279e904ca434cd60a348af764b4d998f7f985ce5884be5c84d760e1089a0ceaed
+  checksum: e9fc7a5f399073f5e177ba0f55cf50da835d6562aae8e35d675d0f83255b23d8d7ff1b71e6522c1ece82d59c281358190fb96e582a85166ae19625ed6c6385c1
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/sdk@npm:1.2.0, @hyperlane-xyz/sdk@npm:^1.2.0":
-  version: 1.2.0
-  resolution: "@hyperlane-xyz/sdk@npm:1.2.0"
+"@hyperlane-xyz/sdk@npm:1.2.3, @hyperlane-xyz/sdk@npm:^1.2.3":
+  version: 1.2.3
+  resolution: "@hyperlane-xyz/sdk@npm:1.2.3"
   dependencies:
-    "@hyperlane-xyz/core": 1.2.0
-    "@hyperlane-xyz/utils": 1.2.0
+    "@hyperlane-xyz/core": 1.2.3
+    "@hyperlane-xyz/utils": 1.2.3
     "@wagmi/chains": ^0.2.6
     coingecko-api: ^1.0.10
     cross-fetch: ^3.1.5
     debug: ^4.3.4
     ethers: ^5.7.2
-  checksum: 16d0eeb2f48c656106f4e2fa9101b1ae1382cb04c31571fcc41f167c84bc5d9343d769fd1ce9fd27e7e9b41bc60b3ab4a72742664f129947932e6ef147d6ce72
+    zod: ^3.21.2
+  checksum: a1afc8bdfe64916fdc6623c1df06bbe1393359fe6b29cefe3f25bb5ded16108e1bac037da9a29df7f0d61cc84940e571d148e41c7fd8539964a87e9a95c03c35
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/utils@npm:1.2.0":
-  version: 1.2.0
-  resolution: "@hyperlane-xyz/utils@npm:1.2.0"
+"@hyperlane-xyz/utils@npm:1.2.3":
+  version: 1.2.3
+  resolution: "@hyperlane-xyz/utils@npm:1.2.3"
   dependencies:
     ethers: ^5.7.2
-  checksum: 320e59e36a9349a8fa57c3bbc85faadbe5b591cd345165e9571511a51a38bcb07dd85026fdaf997db7bcaf1eeae8cc1c12962cf3154c2efcb570cd7df5b9bb7c
+  checksum: 14222632d7ef2419f6b698afa0c4c466302dd0eb6f97d3c9031b7d42c033418547bf4092d480cc4346331f0233d4076caae75b86ffa2b7beed79741a146d3325
   languageName: node
   linkType: hard
 
@@ -1027,8 +1028,8 @@ __metadata:
   resolution: "@hyperlane-xyz/warp-ui-template@workspace:."
   dependencies:
     "@headlessui/react": ^1.7.8
-    "@hyperlane-xyz/hyperlane-token": ^1.2.0
-    "@hyperlane-xyz/sdk": ^1.2.0
+    "@hyperlane-xyz/hyperlane-token": ^1.2.3
+    "@hyperlane-xyz/sdk": ^1.2.3
     "@hyperlane-xyz/widgets": ^1.2.0
     "@metamask/jazzicon": "https://github.com/jmrossy/jazzicon#7a8df28974b4e81129bfbe3cab76308b889032a6"
     "@rainbow-me/rainbowkit": ^0.8.1
@@ -9146,6 +9147,13 @@ __metadata:
   version: 0.1.0
   resolution: "yocto-queue@npm:0.1.0"
   checksum: f77b3d8d00310def622123df93d4ee654fc6a0096182af8bd60679ddcdfb3474c56c6c7190817c84a2785648cdee9d721c0154eb45698c62176c322fb46fc700
+  languageName: node
+  linkType: hard
+
+"zod@npm:^3.21.2":
+  version: 3.21.4
+  resolution: "zod@npm:3.21.4"
+  checksum: f185ba87342ff16f7a06686767c2b2a7af41110c7edf7c1974095d8db7a73792696bcb4a00853de0d2edeb34a5b2ea6a55871bc864227dace682a0a28de33e1f
   languageName: node
   linkType: hard
 

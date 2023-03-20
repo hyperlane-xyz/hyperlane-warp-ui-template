@@ -24,6 +24,7 @@ export interface Route {
   hypCollateralAddress: Address;
   sourceTokenAddress: Address;
   destTokenAddress: Address;
+  decimals: number;
 }
 
 // Source chain to destination chain to Route
@@ -46,7 +47,12 @@ function computeTokenRoutes(tokens: ListedTokenWithHypTokens[]) {
   // Compute all possible routes, in both directions
   for (const token of tokens) {
     for (const hypToken of token.hypTokens) {
-      const { chainId: nativeChainId, address: nativeTokenAddress, hypCollateralAddress } = token;
+      const {
+        chainId: nativeChainId,
+        address: nativeTokenAddress,
+        hypCollateralAddress,
+        decimals,
+      } = token;
       const { chainId: remoteChainId, address: hypTokenAddress } = hypToken;
 
       const commonRouteProps = {
@@ -59,12 +65,14 @@ function computeTokenRoutes(tokens: ListedTokenWithHypTokens[]) {
         ...commonRouteProps,
         sourceTokenAddress: hypCollateralAddress,
         destTokenAddress: hypTokenAddress,
+        decimals,
       });
       tokenRoutes[remoteChainId][nativeChainId].push({
         type: RouteType.RemoteToNative,
         ...commonRouteProps,
         sourceTokenAddress: hypTokenAddress,
         destTokenAddress: hypCollateralAddress,
+        decimals,
       });
 
       for (const otherHypToken of token.hypTokens) {
@@ -76,12 +84,14 @@ function computeTokenRoutes(tokens: ListedTokenWithHypTokens[]) {
           ...commonRouteProps,
           sourceTokenAddress: hypTokenAddress,
           destTokenAddress: otherHypTokenAddress,
+          decimals,
         });
         tokenRoutes[otherRemoteChainId][remoteChainId].push({
           type: RouteType.RemoteToRemote,
           ...commonRouteProps,
           sourceTokenAddress: otherHypTokenAddress,
           destTokenAddress: hypTokenAddress,
+          decimals,
         });
       }
     }

@@ -31,15 +31,15 @@ export function fromWeiRounded(value: NumberT | null | undefined, roundDownIfSma
   return amount.toFixed(DISPLAY_DECIMALS).toString();
 }
 
-export function toWei(value: NumberT | null | undefined): BigNumber {
+export function toWei(value: NumberT | null | undefined, decimals = 18): BigNumber {
   if (!value) return new BigNumber(0);
   const valueString = value.toString().trim();
   const components = valueString.split('.');
   if (components.length === 1) {
-    return new BigNumber(parseUnits(valueString).toString());
+    return new BigNumber(parseUnits(valueString, decimals).toString());
   } else if (components.length === 2) {
     const trimmedFraction = components[1].substring(0);
-    return new BigNumber(parseUnits(`${components[0]}.${trimmedFraction}`).toString());
+    return new BigNumber(parseUnits(`${components[0]}.${trimmedFraction}`, decimals).toString());
   } else {
     throw new Error(`Cannot convert ${valueString} to wei`);
   }

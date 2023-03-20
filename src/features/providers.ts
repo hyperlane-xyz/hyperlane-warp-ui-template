@@ -6,7 +6,7 @@ const providerCache = {};
 
 // This uses public RPC URLs from the chain configs in the SDK and/or custom settings
 // Can be freely changed to use other providers/urls as needed
-export function getProvider(chainId: number) {
+export function getProvider(chainId: number): providers.JsonRpcProvider {
   if (providerCache[chainId]) return providerCache[chainId];
   const rpcUrl = getChainRpcUrl(chainId);
   const provider = new providers.JsonRpcProvider(rpcUrl, chainId);

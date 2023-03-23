@@ -82,7 +82,7 @@ function Timeline({
         status={message?.status || MessageStatus.Pending}
         stage={stage}
         timings={timings}
-        timestampSent={message?.originTransaction.timestamp}
+        timestampSent={message?.origin?.timestamp}
         hideDescriptions={true}
       />
       {isAccountReady ? (

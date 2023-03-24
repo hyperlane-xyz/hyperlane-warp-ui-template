@@ -12,25 +12,23 @@ import {
 import CustomChainConfig from '../../consts/chains.json';
 import { logger } from '../../utils/logger';
 
-export const chainMetadataExtensionSchema = z.object({
+export const ChainMetadataExtensionSchema = z.object({
   logoImgSrc: z.string(),
 });
-export type CustomChainMetadata = ChainMetadata & z.infer<typeof chainMetadataExtensionSchema>;
-export const chainConfigSchema = ChainMetadataSchema.merge(chainMetadataExtensionSchema);
+export type CustomChainMetadata = ChainMetadata & z.infer<typeof ChainMetadataExtensionSchema>;
+export const ChainConfigSchema = z.record(ChainMetadataSchema.merge(ChainMetadataExtensionSchema));
 
 let chainConfigs: ChainMap<ChainMetadata | CustomChainMetadata>;
 
 export function getChainConfigs() {
   if (!chainConfigs) {
-    chainConfigs = { ...chainMetadata };
-    for (const c of Object.values(CustomChainConfig)) {
-      const result = chainConfigSchema.safeParse(c);
-      if (!result.success) {
-        logger.error('Invalid token config', result.error.toString());
-        throw new Error(`Invalid chain config for ${c.name}: ${result.error.toString()}`);
-      }
-      chainConfigs[c.name] = c as CustomChainMetadata;
+    const result = ChainConfigSchema.safeParse(CustomChainConfig);
+    if (!result.success) {
+      logger.error('Invalid chain config', result.error);
+      throw new Error(`Invalid chain config: ${result.error.toString()}`);
     }
+    const customChainConfigs = result.data as ChainMap<CustomChainMetadata>;
+    chainConfigs = { ...chainMetadata, ...customChainConfigs };
   }
   return chainConfigs;
 }

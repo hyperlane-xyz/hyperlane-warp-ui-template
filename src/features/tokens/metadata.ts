@@ -29,7 +29,7 @@ export function getAllTokens() {
   if (!tokens) {
     const result = TokenListSchema.safeParse(SyntheticTokenList);
     if (!result.success) {
-      logger.error('Invalid token config', result.error.toString());
+      logger.error('Invalid token config', result.error);
       throw new Error(`Invalid token config: ${result.error.toString()}`);
     }
     tokens = result.data.tokens;

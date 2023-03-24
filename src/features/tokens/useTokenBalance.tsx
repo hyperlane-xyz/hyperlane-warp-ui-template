@@ -3,7 +3,7 @@ import { useAccount } from 'wagmi';
 
 import { logger } from '../../utils/logger';
 import { getErc20Contract } from '../contracts/erc20';
-import { getProvider } from '../providers';
+import { getProvider } from '../multiProvider';
 
 export function getTokenBalanceKey(
   chainId: number,

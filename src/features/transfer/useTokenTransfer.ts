@@ -11,7 +11,7 @@ import { logger } from '../../utils/logger';
 import { sleep } from '../../utils/timeout';
 import { getErc20Contract } from '../contracts/erc20';
 import { getHypErc20CollateralContract, getHypErc20Contract } from '../contracts/hypErc20';
-import { getProvider } from '../providers';
+import { getProvider } from '../multiProvider';
 import { RouteType, RoutesMap, getTokenRoute } from '../tokens/routes';
 
 import { TransferFormValues } from './types';

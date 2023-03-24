@@ -7,7 +7,7 @@ import { ChainLogo } from '@hyperlane-xyz/widgets';
 import ChevronIcon from '../../images/icons/chevron-down.svg';
 
 import { ChainSelectListModal } from './ChainSelectModal';
-import { getChainDisplayName } from './metadata';
+import { getChainDisplayName } from './utils';
 
 type Props = {
   name: string;

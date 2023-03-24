@@ -7,7 +7,7 @@ import { areAddressesEqual, isValidAddress, normalizeAddress } from '../../utils
 import { logger } from '../../utils/logger';
 import { getErc20Contract } from '../contracts/erc20';
 import { getHypErc20CollateralContract } from '../contracts/hypErc20';
-import { getProvider } from '../providers';
+import { getProvider } from '../multiProvider';
 
 import { getAllTokens } from './metadata';
 import { ListedTokenWithHypTokens } from './types';

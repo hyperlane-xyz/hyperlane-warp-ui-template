@@ -35,10 +35,10 @@ export function TransferTokenCard() {
           </div>
         )}
         {routesError && (
-          <div className="my-32 flex flex-col items-center">
+          <div className="my-32 flex flex-col items-center text-center">
             <h3 className="text-red-500">Error searching for token routes.</h3>
             <div className="mt-3 text-sm text-red-500">
-              Please ensure synthetic token list is valid.
+              Please ensure chain and token configs are valid.
             </div>
             <div className="mt-4 text-xs text-gray-500">{routesError.toString()}</div>
           </div>

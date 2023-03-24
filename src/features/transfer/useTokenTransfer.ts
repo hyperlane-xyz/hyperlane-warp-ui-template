@@ -61,7 +61,7 @@ export function useTokenTransfer(onStart?: () => void, onDone?: () => void) {
           await sleep(1500);
         }
 
-        const weiAmount = toWei(amount).toString();
+        const weiAmount = toWei(amount, tokenRoute.decimals).toString();
         const provider = getProvider(sourceChainId);
 
         if (isNativeToRemote) {

@@ -5,6 +5,7 @@ import { utils } from '@hyperlane-xyz/utils';
 
 import { areAddressesEqual, isValidAddress, normalizeAddress } from '../../utils/addresses';
 import { logger } from '../../utils/logger';
+import { getErc20Contract } from '../contracts/erc20';
 import { getHypErc20CollateralContract } from '../contracts/hypErc20';
 import { getProvider } from '../providers';
 
@@ -24,6 +25,7 @@ export interface Route {
   hypCollateralAddress: Address;
   sourceTokenAddress: Address;
   destTokenAddress: Address;
+  decimals: number;
 }
 
 // Source chain to destination chain to Route
@@ -46,7 +48,12 @@ function computeTokenRoutes(tokens: ListedTokenWithHypTokens[]) {
   // Compute all possible routes, in both directions
   for (const token of tokens) {
     for (const hypToken of token.hypTokens) {
-      const { chainId: nativeChainId, address: nativeTokenAddress, hypCollateralAddress } = token;
+      const {
+        chainId: nativeChainId,
+        address: nativeTokenAddress,
+        hypCollateralAddress,
+        decimals,
+      } = token;
       const { chainId: remoteChainId, address: hypTokenAddress } = hypToken;
 
       const commonRouteProps = {
@@ -59,12 +66,14 @@ function computeTokenRoutes(tokens: ListedTokenWithHypTokens[]) {
         ...commonRouteProps,
         sourceTokenAddress: hypCollateralAddress,
         destTokenAddress: hypTokenAddress,
+        decimals,
       });
       tokenRoutes[remoteChainId][nativeChainId].push({
         type: RouteType.RemoteToNative,
         ...commonRouteProps,
         sourceTokenAddress: hypTokenAddress,
         destTokenAddress: hypCollateralAddress,
+        decimals,
       });
 
       for (const otherHypToken of token.hypTokens) {
@@ -76,12 +85,14 @@ function computeTokenRoutes(tokens: ListedTokenWithHypTokens[]) {
           ...commonRouteProps,
           sourceTokenAddress: hypTokenAddress,
           destTokenAddress: otherHypTokenAddress,
+          decimals,
         });
         tokenRoutes[otherRemoteChainId][remoteChainId].push({
           type: RouteType.RemoteToRemote,
           ...commonRouteProps,
           sourceTokenAddress: otherHypTokenAddress,
           destTokenAddress: hypTokenAddress,
+          decimals,
         });
       }
     }
@@ -134,27 +145,43 @@ export function hasTokenRoute(
 export function useTokenRoutes() {
   const {
     isLoading,
-    isError: hasError,
     data: tokenRoutes,
+    error,
   } = useQuery(
     ['token-routes'],
     async () => {
       logger.info('Searching for token routes');
       const tokens: ListedTokenWithHypTokens[] = [];
       for (const token of getAllTokens()) {
-        logger.info('Inspecting token:', token.symbol);
-        const provider = getProvider(token.chainId);
-        const collateralContract = getHypErc20CollateralContract(
-          token.hypCollateralAddress,
-          provider,
-        );
+        const { chainId, symbol, decimals, hypCollateralAddress } = token;
+        logger.info('Inspecting token:', symbol);
+        const provider = getProvider(chainId);
+        const collateralContract = getHypErc20CollateralContract(hypCollateralAddress, provider);
+
+        logger.info('Validating token metadata');
+        const wrappedTokenAddr = await collateralContract.wrappedToken();
+        const erc20 = getErc20Contract(wrappedTokenAddr, getProvider(chainId));
+        const decimalsOnChain = await erc20.decimals();
+        if (decimals !== decimalsOnChain) {
+          throw new Error(
+            `Token config decimals ${decimals} does not match contract decimals ${decimalsOnChain}`,
+          );
+        }
+        const symbolOnChain = await erc20.symbol();
+        if (symbol !== symbolOnChain) {
+          throw new Error(
+            `Token config symbol ${symbol} does not match contract decimals ${symbolOnChain}`,
+          );
+        }
+
         logger.info('Fetching connected domains');
         const domains = await collateralContract.domains();
         logger.info(`Found ${domains.length} connected domains:`, domains);
 
         logger.info('Getting domain router address');
-        const hypTokenByteAddressesP = domains.map((d) => collateralContract.routers(d));
-        const hypTokenByteAddresses = await Promise.all(hypTokenByteAddressesP);
+        const hypTokenByteAddresses = await Promise.all(
+          domains.map((d) => collateralContract.routers(d)),
+        );
         const hypTokenAddresses = hypTokenByteAddresses.map((b) => utils.bytes32ToAddress(b));
         logger.info(`Addresses found:`, hypTokenAddresses);
         const hypTokens = hypTokenAddresses.map((addr, i) => ({
@@ -169,7 +196,7 @@ export function useTokenRoutes() {
     { retry: false },
   );
 
-  return { isLoading, hasError, tokenRoutes };
+  return { isLoading, error, tokenRoutes };
 }
 
 export function useRouteChains(tokenRoutes: RoutesMap): number[] {

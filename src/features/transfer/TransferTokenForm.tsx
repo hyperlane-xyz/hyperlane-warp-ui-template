@@ -17,7 +17,7 @@ import { isValidAddress } from '../../utils/addresses';
 import { fromWeiRounded, toWei, tryParseAmount } from '../../utils/amount';
 import { logger } from '../../utils/logger';
 import { ChainSelectField } from '../chains/ChainSelectField';
-import { getChainDisplayName } from '../chains/metadata';
+import { getChainDisplayName } from '../chains/utils';
 import { TokenSelectField } from '../tokens/TokenSelectField';
 import { RouteType, RoutesMap, getTokenRoute, useRouteChains } from '../tokens/routes';
 import { getCachedTokenBalance, useAccountTokenBalance } from '../tokens/useTokenBalance';

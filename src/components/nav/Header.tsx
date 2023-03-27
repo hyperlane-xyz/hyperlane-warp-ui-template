@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
+import { TransactionStatusBar } from '../../features/transactions/TransactionStatusBar';
 import { WalletControlBar } from '../../features/wallet/WalletControlBar';
 import Logo from '../../images/logos/app-logo.svg';
 import Name from '../../images/logos/app-name.svg';
@@ -15,7 +16,10 @@ export function Header() {
           <Image src={Name} width={110} alt="" className="hidden sm:block mt-0.5 ml-2" />
           <Image src={Title} width={185} alt="" className="mt-0.5 ml-2 pb-px" />
         </Link>
-        <WalletControlBar />
+        <div className="flex flex-col-reverse md:flex-row gap-8">
+          <TransactionStatusBar />
+          <WalletControlBar />
+        </div>
       </div>
     </header>
   );

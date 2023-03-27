@@ -23,6 +23,9 @@ enum Stage {
 }
 
 // Note, this doesn't use wagmi's prepare + send pattern because we're potentially sending two transactions
+// The prepare hooks are recommended to use pre-click downtime to run async calls, but since the flow
+// may require two serial txs, the prepare hooks aren't useful and complicate hook architecture considerably.
+// See https://github.com/hyperlane-xyz/hyperlane-warp-ui-template/issues/19
 // See https://github.com/wagmi-dev/wagmi/discussions/1564
 export function useTokenTransfer(onStart?: () => void, onDone?: () => void) {
   const [isLoading, setIsLoading] = useState(false);
@@ -57,7 +60,7 @@ export function useTokenTransfer(onStart?: () => void, onDone?: () => void) {
           await switchNetwork({
             chainId: sourceChainId,
           });
-          // https://github.com/wagmi-dev/wagmi/issues/1565
+          // Some wallets seem to require a brief pause after switch
           await sleep(1500);
         }
 

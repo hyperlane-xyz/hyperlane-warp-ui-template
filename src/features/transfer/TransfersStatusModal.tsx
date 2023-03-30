@@ -1,63 +1,79 @@
-import { useFormikContext } from 'formik';
+import { useState } from 'react';
 import { useAccount } from 'wagmi';
 
 import { chainIdToMetadata } from '@hyperlane-xyz/sdk';
 import { MessageStatus, MessageTimeline, useMessageTimeline } from '@hyperlane-xyz/widgets';
 
 import { Spinner } from '../../components/animation/Spinner';
+import { IconButton } from '../../components/buttons/IconButton';
+import { ChevronIcon } from '../../components/icons/Chevron';
 import { Modal } from '../../components/layout/Modal';
 import { links } from '../../consts/links';
 import { trimLeading0x } from '../../utils/addresses';
-import { RouteType, RoutesMap, getTokenRoute } from '../tokens/routes';
+import { RouteType } from '../tokens/routes';
 
-import { TransferFormValues } from './types';
+import { TransferContext } from './types';
 
-export function TransferTransactionsModal({
+export function TransfersStatusModal({
   isOpen,
   close,
-  tokenRoutes,
-  originTxHash,
+  transfers,
 }: {
   isOpen: boolean;
   close: () => void;
-  tokenRoutes: RoutesMap;
-  originTxHash: string | null;
+  transfers: TransferContext[];
 }) {
   const { address, isConnected, connector } = useAccount();
   const isAccountReady = !!(address && isConnected && connector);
   const connectorName = connector?.name || 'wallet';
 
-  const {
-    values: { sourceChainId, destinationChainId, tokenAddress },
-  } = useFormikContext<TransferFormValues>();
-  const route = getTokenRoute(sourceChainId, destinationChainId, tokenAddress, tokenRoutes);
+  const [index, setIndex] = useState(0);
+
+  // TODO
+  const { params, route, status, originTxHash, msgId } = transfers[index] || {};
+  const { amount, destinationChainId, recipientAddress, sourceChainId, tokenAddress } =
+    params || {};
+
   const requiresApprove = route?.type === RouteType.NativeToRemote;
 
-  const isPermisionlessRoute = !(
+  const isPermissionlessRoute = !(
     chainIdToMetadata[sourceChainId] && chainIdToMetadata[destinationChainId]
   );
 
   return (
-    <Modal
-      isOpen={isOpen}
-      title="Token Transfer"
-      close={close}
-      width={isPermisionlessRoute ? 'max-w-xs' : 'max-w-lg'}
-    >
-      {isPermisionlessRoute ? (
-        <BasicSpinner
-          isAccountReady={isAccountReady}
-          requiresApprove={requiresApprove}
-          connectorName={connectorName}
-        />
-      ) : (
-        <Timeline
-          isAccountReady={isAccountReady}
-          requiresApprove={requiresApprove}
-          connectorName={connectorName}
-          originTxHash={originTxHash}
-        />
-      )}
+    <Modal isOpen={isOpen} close={close} title="Transfers" width="max-w-lg">
+      <div className="relative">
+        <IconButton
+          onClick={() => setIndex(index - 1)}
+          disabled={index <= 0}
+          classes="absolute -bottom-2 left-0"
+          title="Previous Transfer"
+        >
+          <ChevronIcon direction="w" width={16} height={16} classes="opacity-70" />
+        </IconButton>
+        <IconButton
+          onClick={() => setIndex(index + 1)}
+          disabled={index >= transfers.length - 1}
+          classes="absolute -bottom-2 right-0"
+          title="Next Transfer"
+        >
+          <ChevronIcon direction="e" width={16} height={16} classes="opacity-70" />
+        </IconButton>
+        {isPermissionlessRoute ? (
+          <BasicSpinner
+            isAccountReady={isAccountReady}
+            requiresApprove={requiresApprove}
+            connectorName={connectorName}
+          />
+        ) : (
+          <Timeline
+            isAccountReady={isAccountReady}
+            requiresApprove={requiresApprove}
+            connectorName={connectorName}
+            originTxHash={undefined} //TODO
+          />
+        )}
+      </div>
     </Modal>
   );
 }
@@ -71,7 +87,7 @@ function Timeline({
   isAccountReady: boolean;
   requiresApprove: boolean;
   connectorName: string;
-  originTxHash: string | null;
+  originTxHash?: string | null;
 }) {
   const { stage, timings, message } = useMessageTimeline({
     originTxHash: originTxHash || undefined,

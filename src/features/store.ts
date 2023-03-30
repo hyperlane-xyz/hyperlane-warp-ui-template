@@ -1,26 +1,33 @@
 import { create } from 'zustand';
 
-import type { TransactionContext } from './transactions/types';
+import type { TransferContext, TransferStatus } from './transfer/types';
 
 // Keeping everything here for now as state is simple
 // Will refactor into slices as necessary
 interface AppState {
-  transactions: TransactionContext[];
-  addTransaction: (t: TransactionContext) => void;
-  updateTransaction: (i: number, t: TransactionContext) => void;
+  transfers: TransferContext[];
+  addTransfer: (t: TransferContext) => void;
+  updateTransferStatus: (
+    i: number,
+    s: TransferStatus,
+    options?: { msgId?: string; originTxHash?: string },
+  ) => void;
 }
 
 export const useStore = create<AppState>()((set) => ({
-  transactions: [],
-  addTransaction: (t: TransactionContext) => {
-    set((state) => ({ transactions: [...state.transactions, t] }));
+  transfers: [],
+  addTransfer: (t) => {
+    set((state) => ({ transfers: [...state.transfers, t] }));
   },
-  updateTransaction: (i, t: TransactionContext) => {
+  updateTransferStatus: (i, s, options) => {
     set((state) => {
-      const txs = [...state.transactions];
-      txs[i] = t;
+      if (i >= state.transfers.length) return state;
+      const txs = [...state.transfers];
+      txs[i].status = s;
+      txs[i].msgId = options?.msgId;
+      txs[i].originTxHash = options?.originTxHash;
       return {
-        transactions: txs,
+        transfers: txs,
       };
     });
   },

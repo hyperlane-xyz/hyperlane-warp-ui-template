@@ -12,9 +12,10 @@ import { sleep } from '../../utils/timeout';
 import { getErc20Contract } from '../contracts/erc20';
 import { getHypErc20CollateralContract, getHypErc20Contract } from '../contracts/hypErc20';
 import { getProvider } from '../multiProvider';
+import { useStore } from '../store';
 import { RouteType, RoutesMap, getTokenRoute } from '../tokens/routes';
 
-import { TransferFormValues } from './types';
+import { TransferFormValues, TransferStatus } from './types';
 
 enum Stage {
   Prepare = 'prepare',
@@ -27,20 +28,23 @@ enum Stage {
 // may require two serial txs, the prepare hooks aren't useful and complicate hook architecture considerably.
 // See https://github.com/hyperlane-xyz/hyperlane-warp-ui-template/issues/19
 // See https://github.com/wagmi-dev/wagmi/discussions/1564
-export function useTokenTransfer(onStart?: () => void, onDone?: () => void) {
-  const [isLoading, setIsLoading] = useState(false);
+export function useTokenTransfer(onDone?: () => void) {
+  const { transfers, addTransfer, updateTransferStatus } = useStore((s) => ({
+    transfers: s.transfers,
+    addTransfer: s.addTransfer,
+    updateTransferStatus: s.updateTransferStatus,
+  }));
+  const transferIndex = transfers.length;
 
-  const [originTxHash, setOriginTxHash] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const chainId = useChainId();
 
   // TODO implement cancel callback for when modal is closed?
   const triggerTransactions = useCallback(
     async (values: TransferFormValues, tokenRoutes: RoutesMap) => {
-      logger.debug('Attempting approve and transfer transactions');
-      setOriginTxHash(null);
+      logger.debug('Preparing transfer transaction(s)');
       setIsLoading(true);
-      if (onStart) onStart();
       let stage: Stage = Stage.Prepare;
 
       try {
@@ -54,7 +58,16 @@ export function useTokenTransfer(onStart?: () => void, onDone?: () => void) {
           tokenRoutes,
         );
         if (!tokenRoute) throw new Error('No token route found between chains');
+
         const isNativeToRemote = tokenRoute.type === RouteType.NativeToRemote;
+        const weiAmount = toWei(amount, tokenRoute.decimals).toString();
+        const provider = getProvider(sourceChainId);
+
+        addTransfer({
+          status: TransferStatus.Preparing,
+          route: tokenRoute,
+          params: values,
+        });
 
         if (sourceChainId !== chainId) {
           await switchNetwork({
@@ -63,9 +76,6 @@ export function useTokenTransfer(onStart?: () => void, onDone?: () => void) {
           // Some wallets seem to require a brief pause after switch
           await sleep(1500);
         }
-
-        const weiAmount = toWei(amount, tokenRoute.decimals).toString();
-        const provider = getProvider(sourceChainId);
 
         if (isNativeToRemote) {
           stage = Stage.Approve;
@@ -104,17 +114,25 @@ export function useTokenTransfer(onStart?: () => void, onDone?: () => void) {
           },
         );
 
-        const { wait: transferWait } = await sendTransaction({
+        updateTransferStatus(transferIndex, TransferStatus.Signing);
+
+        const { wait: transferWait, hash: originTxHash } = await sendTransaction({
           chainId: sourceChainId,
           request: transferTxRequest,
           mode: 'recklesslyUnprepared', // See note above function
         });
-        const { transactionHash } = await transferWait(1);
-        setOriginTxHash(transactionHash);
-        logger.debug('Transfer transaction confirmed, hash:', transactionHash);
-        toastTxSuccess('Remote transfer started!', transactionHash, sourceChainId);
+        // TODO get message ID from tx receipt or by from utils.formatMessage
+        updateTransferStatus(transferIndex, TransferStatus.Pending, { originTxHash });
+
+        // Wait for tx to have at least one confirmation
+        await transferWait(1);
+        updateTransferStatus(transferIndex, TransferStatus.Confirmed);
+
+        logger.debug('Transfer transaction confirmed, hash:', originTxHash);
+        toastTxSuccess('Remote transfer started!', originTxHash, sourceChainId);
       } catch (error) {
         logger.error(`Error at stage ${stage} `, error);
+        updateTransferStatus(transferIndex, TransferStatus.Failed);
         if (JSON.stringify(error).includes('ChainMismatchError')) {
           // Wagmi switchNetwork call helps prevent this but isn't foolproof
           toast.error('Wallet must be connected to source chain');
@@ -126,13 +144,12 @@ export function useTokenTransfer(onStart?: () => void, onDone?: () => void) {
       setIsLoading(false);
       if (onDone) onDone();
     },
-    [setIsLoading, onStart, onDone, chainId],
+    [setIsLoading, onDone, chainId, addTransfer, updateTransferStatus, transferIndex],
   );
 
   return {
     isLoading,
     triggerTransactions,
-    originTxHash,
   };
 }
 

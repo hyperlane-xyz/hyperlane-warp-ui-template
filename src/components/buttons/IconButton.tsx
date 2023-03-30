@@ -29,7 +29,7 @@ export function IconButton(props: PropsWithChildren<IconButtonProps>) {
 
   const base = 'flex items-center justify-center transition-all';
   const onHover = 'hover:opacity-70';
-  const onDisabled = 'disabled:opacity-50';
+  const onDisabled = 'disabled:opacity-30 disabled:cursor-default';
   const onActive = 'active:opacity-60';
   const allClasses = `${base} ${onHover} ${onDisabled} ${onActive} ${classes}`;
 
@@ -42,7 +42,9 @@ export function IconButton(props: PropsWithChildren<IconButtonProps>) {
       className={allClasses}
       {...passThruProps}
     >
-      <Image src={imgSrc} alt={title?.substring(0, 4) || ''} width={width} height={height} />
+      {imgSrc && (
+        <Image src={imgSrc} alt={title?.substring(0, 4) || ''} width={width} height={height} />
+      )}
       {children}
     </button>
   );

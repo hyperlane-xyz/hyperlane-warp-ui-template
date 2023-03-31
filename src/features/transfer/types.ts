@@ -10,9 +10,13 @@ export interface TransferFormValues {
 
 export enum TransferStatus {
   Preparing = 'preparing',
-  Signing = 'signing',
-  Pending = 'pending',
-  Confirmed = 'confirmed',
+  CreatingApprove = 'creating-approve',
+  SigningApprove = 'signing-approve',
+  ConfirmingApprove = 'confirming-approve',
+  CreatingTransfer = 'creating-transfer',
+  SigningTransfer = 'signing-transfer',
+  ConfirmingTransfer = 'confirming-transfer',
+  ConfirmedTransfer = 'confirmed-transfer',
   Delivered = 'delivered',
   Failed = 'failed',
 }

@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAccount } from 'wagmi';
 
 import SendIcon from '../../images/icons/send.svg';
@@ -15,7 +15,14 @@ export function TransfersStatusBar() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const transfers = useStore((s) => s.transfers);
+
+  // Auto-show modal when new transfer is added
+  useEffect(() => {
+    setIsModalOpen(true);
+  }, [transfers.length]);
+
   if (!transfers.length || !address || !isConnected) return null;
+
   const totalTxs = transfers.length;
   const pendingTxs = transfers.filter(
     (tx) => ![TransferStatus.Delivered, TransferStatus.Failed].includes(tx.status),

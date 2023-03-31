@@ -24,8 +24,8 @@ export const useStore = create<AppState>()((set) => ({
       if (i >= state.transfers.length) return state;
       const txs = [...state.transfers];
       txs[i].status = s;
-      txs[i].msgId = options?.msgId;
-      txs[i].originTxHash = options?.originTxHash;
+      txs[i].msgId ||= options?.msgId;
+      txs[i].originTxHash ||= options?.originTxHash;
       return {
         transfers: txs,
       };

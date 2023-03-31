@@ -9,7 +9,7 @@
       {
         "name": "MyCustomScan",
         "url": "https://mycustomchain-scan.com",
-        "apiUrl": "https://api.mycustomchain-scan.com",
+        "apiUrl": "https://api.mycustomchain-scan.com/api",
         "family": "etherscan"
       }
     ],

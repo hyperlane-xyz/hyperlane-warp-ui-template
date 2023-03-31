@@ -26,7 +26,7 @@ export function WalletControlBar() {
   }
 
   return (
-    <div className="flex justify-center items-stretch py-1 px-1 bg-white shadow-md rounded-md">
+    <div className="flex justify-center py-1 px-1 bg-white shadow-md rounded-md">
       <AccountDropdown />
     </div>
   );
@@ -58,7 +58,7 @@ function AccountDropdown() {
   return (
     <Menu as="div" className="relative">
       {isAccountReady ? (
-        <Menu.Button className="px-3 py-0.5 flex items-center justify-center rounded-sm hover:bg-gray-100 active:bg-gray-200 transition-all duration-500">
+        <Menu.Button className="px-2 py-0.5 flex items-center justify-center rounded-sm hover:bg-gray-100 active:bg-gray-200 transition-all duration-500">
           <Identicon address={address} size={26} />
           <div className="flex flex-col mx-3 items-start">
             <div className="text-xs text-gray-500">{connector.name}</div>

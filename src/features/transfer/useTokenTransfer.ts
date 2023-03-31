@@ -1,8 +1,10 @@
 import { sendTransaction, switchNetwork } from '@wagmi/core';
+import { providers } from 'ethers';
 import { useCallback, useState } from 'react';
 import { toast } from 'react-toastify';
 import { useChainId } from 'wagmi';
 
+import { HyperlaneCore } from '@hyperlane-xyz/sdk';
 import { utils } from '@hyperlane-xyz/utils';
 
 import { toastTxSuccess } from '../../components/toast/TxSuccessToast';
@@ -11,34 +13,35 @@ import { logger } from '../../utils/logger';
 import { sleep } from '../../utils/timeout';
 import { getErc20Contract } from '../contracts/erc20';
 import { getHypErc20CollateralContract, getHypErc20Contract } from '../contracts/hypErc20';
-import { getProvider } from '../multiProvider';
+import { getMultiProvider, getProvider } from '../multiProvider';
+import { useStore } from '../store';
 import { RouteType, RoutesMap, getTokenRoute } from '../tokens/routes';
 
-import { TransferFormValues } from './types';
-
-enum Stage {
-  Prepare = 'prepare',
-  Approve = 'approve',
-  Transfer = 'transfer',
-}
+import { TransferFormValues, TransferStatus } from './types';
 
 // Note, this doesn't use wagmi's prepare + send pattern because we're potentially sending two transactions
+// The prepare hooks are recommended to use pre-click downtime to run async calls, but since the flow
+// may require two serial txs, the prepare hooks aren't useful and complicate hook architecture considerably.
+// See https://github.com/hyperlane-xyz/hyperlane-warp-ui-template/issues/19
 // See https://github.com/wagmi-dev/wagmi/discussions/1564
-export function useTokenTransfer(onStart?: () => void, onDone?: () => void) {
-  const [isLoading, setIsLoading] = useState(false);
+export function useTokenTransfer(onDone?: () => void) {
+  const { transfers, addTransfer, updateTransferStatus } = useStore((s) => ({
+    transfers: s.transfers,
+    addTransfer: s.addTransfer,
+    updateTransferStatus: s.updateTransferStatus,
+  }));
+  const transferIndex = transfers.length;
 
-  const [originTxHash, setOriginTxHash] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const chainId = useChainId();
 
   // TODO implement cancel callback for when modal is closed?
   const triggerTransactions = useCallback(
     async (values: TransferFormValues, tokenRoutes: RoutesMap) => {
-      logger.debug('Attempting approve and transfer transactions');
-      setOriginTxHash(null);
+      logger.debug('Preparing transfer transaction(s)');
       setIsLoading(true);
-      if (onStart) onStart();
-      let stage: Stage = Stage.Prepare;
+      let status: TransferStatus = TransferStatus.Preparing;
 
       try {
         const { amount, sourceChainId, destinationChainId, recipientAddress, tokenAddress } =
@@ -51,32 +54,41 @@ export function useTokenTransfer(onStart?: () => void, onDone?: () => void) {
           tokenRoutes,
         );
         if (!tokenRoute) throw new Error('No token route found between chains');
+
         const isNativeToRemote = tokenRoute.type === RouteType.NativeToRemote;
+        const weiAmount = toWei(amount, tokenRoute.decimals).toString();
+        const provider = getProvider(sourceChainId);
+
+        addTransfer({
+          status,
+          route: tokenRoute,
+          params: values,
+        });
 
         if (sourceChainId !== chainId) {
           await switchNetwork({
             chainId: sourceChainId,
           });
-          // https://github.com/wagmi-dev/wagmi/issues/1565
+          // Some wallets seem to require a brief pause after switch
           await sleep(1500);
         }
 
-        const weiAmount = toWei(amount, tokenRoute.decimals).toString();
-        const provider = getProvider(sourceChainId);
-
         if (isNativeToRemote) {
-          stage = Stage.Approve;
+          updateTransferStatus(transferIndex, (status = TransferStatus.CreatingApprove));
           const erc20 = getErc20Contract(tokenAddress, provider);
           const approveTxRequest = await erc20.populateTransaction.approve(
             tokenRoute.hypCollateralAddress,
             weiAmount,
           );
 
+          updateTransferStatus(transferIndex, (status = TransferStatus.SigningApprove));
           const { wait: approveWait } = await sendTransaction({
             chainId: sourceChainId,
             request: approveTxRequest,
             mode: 'recklesslyUnprepared', // See note above function
           });
+
+          updateTransferStatus(transferIndex, (status = TransferStatus.ConfirmingApprove));
           const approveTxReceipt = await approveWait(1);
           logger.debug('Approve transaction confirmed, hash:', approveTxReceipt.transactionHash);
           toastTxSuccess(
@@ -86,8 +98,7 @@ export function useTokenTransfer(onStart?: () => void, onDone?: () => void) {
           );
         }
 
-        stage = Stage.Transfer;
-
+        updateTransferStatus(transferIndex, (status = TransferStatus.CreatingTransfer));
         const hypErc20 = isNativeToRemote
           ? getHypErc20CollateralContract(tokenRoute.hypCollateralAddress, provider)
           : getHypErc20Contract(tokenRoute.sourceTokenAddress, provider);
@@ -101,40 +112,71 @@ export function useTokenTransfer(onStart?: () => void, onDone?: () => void) {
           },
         );
 
-        const { wait: transferWait } = await sendTransaction({
+        updateTransferStatus(transferIndex, (status = TransferStatus.SigningTransfer));
+        const { wait: transferWait, hash: originTxHash } = await sendTransaction({
           chainId: sourceChainId,
           request: transferTxRequest,
           mode: 'recklesslyUnprepared', // See note above function
         });
-        const { transactionHash } = await transferWait(1);
-        setOriginTxHash(transactionHash);
-        logger.debug('Transfer transaction confirmed, hash:', transactionHash);
-        toastTxSuccess('Remote transfer started!', transactionHash, sourceChainId);
+
+        updateTransferStatus(transferIndex, (status = TransferStatus.ConfirmingTransfer));
+        const transferReceipt = await transferWait(1);
+        const msgId = tryGetMsgIdFromTransferReceipt(transferReceipt);
+
+        updateTransferStatus(transferIndex, (status = TransferStatus.ConfirmedTransfer), {
+          originTxHash,
+          msgId,
+        });
+        logger.debug('Transfer transaction confirmed, hash:', originTxHash);
+        toastTxSuccess('Remote transfer started!', originTxHash, sourceChainId);
       } catch (error) {
-        logger.error(`Error at stage ${stage} `, error);
+        logger.error(`Error at stage ${status} `, error);
+        updateTransferStatus(transferIndex, TransferStatus.Failed);
         if (JSON.stringify(error).includes('ChainMismatchError')) {
           // Wagmi switchNetwork call helps prevent this but isn't foolproof
           toast.error('Wallet must be connected to source chain');
         } else {
-          toast.error(errorMessages[stage]);
+          toast.error(errorMessages[status] || 'Unable to transfer tokens.');
         }
       }
 
       setIsLoading(false);
       if (onDone) onDone();
     },
-    [setIsLoading, onStart, onDone, chainId],
+    [setIsLoading, onDone, chainId, addTransfer, updateTransferStatus, transferIndex],
   );
 
   return {
     isLoading,
     triggerTransactions,
-    originTxHash,
   };
 }
 
-const errorMessages: Record<Stage, string> = {
-  [Stage.Prepare]: 'Error while preparing the transactions.',
-  [Stage.Approve]: 'Error while approving the collateral token.',
-  [Stage.Transfer]: 'Error while making remote transfer.',
+function tryGetMsgIdFromTransferReceipt(receipt: providers.TransactionReceipt) {
+  try {
+    // TODO replace with static getDispatchedMessages call after next SDK release
+    const core = HyperlaneCore.fromEnvironment('mainnet', getMultiProvider());
+    const messages = core.getDispatchedMessages(receipt);
+    if (messages.length) {
+      const msgId = messages[0].id;
+      logger.debug('Message id found in logs', msgId);
+      return msgId;
+    } else {
+      logger.warn('No messages found in logs');
+      return undefined;
+    }
+  } catch (error) {
+    logger.error('Could not get msgId from transfer receipt', error);
+    return undefined;
+  }
+}
+
+const errorMessages: Partial<Record<TransferStatus, string>> = {
+  [TransferStatus.Preparing]: 'Error while preparing the transactions.',
+  [TransferStatus.CreatingApprove]: 'Error while creating the approve transaction.',
+  [TransferStatus.SigningApprove]: 'Error while signing the approve transaction.',
+  [TransferStatus.ConfirmingApprove]: 'Error while confirming the approve transaction.',
+  [TransferStatus.CreatingTransfer]: 'Error while creating the transfer transaction.',
+  [TransferStatus.SigningTransfer]: 'Error while signing the transfer transaction.',
+  [TransferStatus.ConfirmingTransfer]: 'Error while confirming the transfer transaction.',
 };

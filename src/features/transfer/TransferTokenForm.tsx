@@ -1,4 +1,4 @@
-import { useQueryClient } from '@tanstack/react-query';
+import { QueryClient, useQueryClient } from '@tanstack/react-query';
 import { Form, Formik, useFormikContext } from 'formik';
 import { useMemo, useState } from 'react';
 import { useAccount } from 'wagmi';
@@ -22,7 +22,6 @@ import { TokenSelectField } from '../tokens/TokenSelectField';
 import { RouteType, RoutesMap, getTokenRoute, useRouteChains } from '../tokens/routes';
 import { getCachedTokenBalance, useAccountTokenBalance } from '../tokens/useTokenBalance';
 
-import { TransferTransactionsModal } from './TransferTransactionsModal';
 import { TransferFormValues } from './types';
 import { useTokenTransfer } from './useTokenTransfer';
 
@@ -41,8 +40,6 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
 
   // Flag for if form is in input vs review mode
   const [isReview, setIsReview] = useState(false);
-  // Flag for if loading modal is open (visible)
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const onSubmitForm = (values: TransferFormValues) => {
     logger.debug('Reviewing transfer form values:', JSON.stringify(values));
@@ -55,48 +52,20 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
 
   const queryClient = useQueryClient();
   const { address: accountAddress } = useAccount();
-  const validateForm = ({
-    sourceChainId,
-    destinationChainId,
-    amount,
-    tokenAddress,
-    recipientAddress,
-  }: TransferFormValues) => {
-    if (!sourceChainId) return { sourceChainId: 'Invalid source chain' };
-    if (!destinationChainId) return { destinationChainId: 'Invalid destination chain' };
-    if (!isValidAddress(recipientAddress)) return { recipientAddress: 'Invalid recipient' };
-    if (!isValidAddress(tokenAddress)) return { tokenAddress: 'Invalid token' };
-    const parsedAmount = tryParseAmount(amount);
-    if (!parsedAmount || parsedAmount.lte(0)) return { amount: 'Invalid amount' };
-    const cachedBalance = getCachedTokenBalance(
-      queryClient,
-      sourceChainId,
-      tokenAddress,
-      accountAddress,
-    );
-    if (cachedBalance && parsedAmount.gt(cachedBalance) && !config.debug) {
-      return { amount: 'Insufficient balance' };
-    }
-    return {};
-  };
+  const validate = (values: TransferFormValues) =>
+    validateFormValues(values, queryClient, accountAddress);
 
-  const onStartTransactions = () => {
-    setIsModalOpen(true);
-  };
   const onDoneTransactions = () => {
     setIsReview(false);
     // Consider clearing form inputs here
   };
-  const { triggerTransactions, originTxHash } = useTokenTransfer(
-    onStartTransactions,
-    onDoneTransactions,
-  );
+  const { triggerTransactions } = useTokenTransfer(onDoneTransactions);
 
   return (
     <Formik<TransferFormValues>
       initialValues={initialValues}
       onSubmit={onSubmitForm}
-      validate={validateForm}
+      validate={validate}
       validateOnChange={false}
       validateOnBlur={false}
     >
@@ -223,12 +192,6 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
               </SolidButton>
             </div>
           )}
-          <TransferTransactionsModal
-            isOpen={isModalOpen}
-            close={() => setIsModalOpen(false)}
-            tokenRoutes={tokenRoutes}
-            originTxHash={originTxHash}
-          />
         </Form>
       )}
     </Formik>
@@ -366,4 +329,27 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
       </div>
     </div>
   );
+}
+
+function validateFormValues(
+  { sourceChainId, destinationChainId, amount, tokenAddress, recipientAddress }: TransferFormValues,
+  queryClient: QueryClient,
+  accountAddress?: string,
+) {
+  if (!sourceChainId) return { sourceChainId: 'Invalid source chain' };
+  if (!destinationChainId) return { destinationChainId: 'Invalid destination chain' };
+  if (!isValidAddress(recipientAddress)) return { recipientAddress: 'Invalid recipient' };
+  if (!isValidAddress(tokenAddress)) return { tokenAddress: 'Invalid token' };
+  const parsedAmount = tryParseAmount(amount);
+  if (!parsedAmount || parsedAmount.lte(0)) return { amount: 'Invalid amount' };
+  const cachedBalance = getCachedTokenBalance(
+    queryClient,
+    sourceChainId,
+    tokenAddress,
+    accountAddress,
+  );
+  if (cachedBalance && parsedAmount.gt(cachedBalance) && !config.debug) {
+    return { amount: 'Insufficient balance' };
+  }
+  return {};
 }

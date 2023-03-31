@@ -22,6 +22,7 @@ import '@hyperlane-xyz/widgets/styles.css';
 
 import { ErrorBoundary } from '../components/errors/ErrorBoundary';
 import { AppLayout } from '../components/layout/AppLayout';
+import { config } from '../consts/config';
 import { getWagmiChainConfig } from '../features/chains/metadata';
 import { Color } from '../styles/Color';
 import '../styles/fonts.css';
@@ -33,6 +34,7 @@ const { chains, provider } = configureChains(getWagmiChainConfig(), [publicProvi
 const connectorConfig = {
   appName: 'Hyperlane Warp Template',
   chains,
+  projectId: config.walletConnectProjectId,
 };
 
 const connectors = connectorsForWallets([
@@ -58,7 +60,7 @@ const connectors = connectorsForWallets([
 ]);
 
 const wagmiClient = createWagmiClient({
-  autoConnect: false, // TODO
+  autoConnect: true,
   provider,
   connectors,
 });

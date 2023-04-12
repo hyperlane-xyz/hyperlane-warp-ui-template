@@ -13,7 +13,7 @@ import CustomChainConfig from '../../consts/chains.json';
 import { logger } from '../../utils/logger';
 
 export const ChainMetadataExtensionSchema = z.object({
-  logoImgSrc: z.string(),
+  logoURI: z.string().optional(),
 });
 export type CustomChainMetadata = ChainMetadata & z.infer<typeof ChainMetadataExtensionSchema>;
 export const ChainConfigSchema = z.record(ChainMetadataSchema.merge(ChainMetadataExtensionSchema));

@@ -51,7 +51,7 @@ export function TokenSelectField({
       >
         <div className="flex items-center">
           <TokenIcon token={token} size={20} />
-          <span className="ml-3">{token?.symbol || 'Select Token'}</span>
+          <span className="ml-2">{token?.symbol || 'Select Token'}</span>
         </div>
         <Image src={ChevronIcon} width={12} height={8} alt="" />
       </button>

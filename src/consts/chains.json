@@ -18,6 +18,6 @@
       "reorgPeriod": 1,
       "estimateBlockTime": 10
     },
-    "logoImgSrc": "/logo.svg"
+    "logoURI": "/logo.svg"
   }
 }

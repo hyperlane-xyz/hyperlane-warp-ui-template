@@ -14,7 +14,7 @@ interface Props {
 function _TokenIcon({ token, size = 32 }: Props) {
   const imageSrc = isValidHttpsUrl(token?.logoURI) ? token!.logoURI : null;
   const title = token?.symbol || '';
-  const character = title ? title.charAt(0).toUpperCase() : '?';
+  const character = title ? title.charAt(0).toUpperCase() : '';
 
   const bgColor = getBackgroundColor(token && !imageSrc ? token.address : undefined);
   const fontSize = Math.floor(size / 2);

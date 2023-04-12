@@ -10,7 +10,7 @@ import { getHypErc20CollateralContract } from '../contracts/hypErc20';
 import { getProvider } from '../multiProvider';
 
 import { getAllTokens } from './metadata';
-import { ListedTokenWithHypTokens } from './types';
+import { ListedToken, ListedTokenWithHypTokens } from './types';
 
 export enum RouteType {
   NativeToRemote = 'nativeToRemote',
@@ -30,6 +30,70 @@ export interface Route {
 
 // Source chain to destination chain to Route
 export type RoutesMap = Record<number, Record<number, Route[]>>;
+
+export function useTokenRoutes() {
+  const {
+    isLoading,
+    data: tokenRoutes,
+    error,
+  } = useQuery(
+    ['token-routes'],
+    async () => {
+      logger.info('Searching for token routes');
+      const tokens: ListedTokenWithHypTokens[] = [];
+      for (const token of getAllTokens()) {
+        // Consider parallelizing here but concerned about RPC rate limits
+        const tokenWithHypTokens = await fetchRemoteTokensForCollateralToken(token);
+        tokens.push(tokenWithHypTokens);
+      }
+      return computeTokenRoutes(tokens);
+    },
+    { retry: false },
+  );
+
+  return { isLoading, error, tokenRoutes };
+}
+
+async function fetchRemoteTokensForCollateralToken(
+  token: ListedToken,
+): Promise<ListedTokenWithHypTokens> {
+  const { chainId, symbol, decimals, hypCollateralAddress } = token;
+  logger.info('Inspecting token:', symbol);
+  const provider = getProvider(chainId);
+  const collateralContract = getHypErc20CollateralContract(hypCollateralAddress, provider);
+
+  logger.info('Validating token metadata');
+  const wrappedTokenAddr = await collateralContract.wrappedToken();
+  const erc20 = getErc20Contract(wrappedTokenAddr, getProvider(chainId));
+  const decimalsOnChain = await erc20.decimals();
+  if (decimals !== decimalsOnChain) {
+    throw new Error(
+      `Token config decimals ${decimals} does not match contract decimals ${decimalsOnChain}`,
+    );
+  }
+  const symbolOnChain = await erc20.symbol();
+  if (symbol !== symbolOnChain) {
+    throw new Error(
+      `Token config symbol ${symbol} does not match contract decimals ${symbolOnChain}`,
+    );
+  }
+
+  logger.info('Fetching connected domains');
+  const domains = await collateralContract.domains();
+  logger.info(`Found ${domains.length} connected domains:`, domains);
+
+  logger.info('Getting domain router address');
+  const hypTokenByteAddresses = await Promise.all(
+    domains.map((d) => collateralContract.routers(d)),
+  );
+  const hypTokenAddresses = hypTokenByteAddresses.map((b) => utils.bytes32ToAddress(b));
+  logger.info(`Addresses found:`, hypTokenAddresses);
+  const hypTokens = hypTokenAddresses.map((addr, i) => ({
+    chainId: domains[i],
+    address: normalizeAddress(addr),
+  }));
+  return { ...token, hypTokens };
+}
 
 // Process token list to populates routesCache with all possible token routes (e.g. router pairs)
 function computeTokenRoutes(tokens: ListedTokenWithHypTokens[]) {
@@ -142,63 +206,15 @@ export function hasTokenRoute(
   return !!getTokenRoute(sourceChainId, destinationChainId, nativeTokenAddress, tokenRoutes);
 }
 
-export function useTokenRoutes() {
-  const {
-    isLoading,
-    data: tokenRoutes,
-    error,
-  } = useQuery(
-    ['token-routes'],
-    async () => {
-      logger.info('Searching for token routes');
-      const tokens: ListedTokenWithHypTokens[] = [];
-      for (const token of getAllTokens()) {
-        const { chainId, symbol, decimals, hypCollateralAddress } = token;
-        logger.info('Inspecting token:', symbol);
-        const provider = getProvider(chainId);
-        const collateralContract = getHypErc20CollateralContract(hypCollateralAddress, provider);
-
-        logger.info('Validating token metadata');
-        const wrappedTokenAddr = await collateralContract.wrappedToken();
-        const erc20 = getErc20Contract(wrappedTokenAddr, getProvider(chainId));
-        const decimalsOnChain = await erc20.decimals();
-        if (decimals !== decimalsOnChain) {
-          throw new Error(
-            `Token config decimals ${decimals} does not match contract decimals ${decimalsOnChain}`,
-          );
-        }
-        const symbolOnChain = await erc20.symbol();
-        if (symbol !== symbolOnChain) {
-          throw new Error(
-            `Token config symbol ${symbol} does not match contract decimals ${symbolOnChain}`,
-          );
-        }
-
-        logger.info('Fetching connected domains');
-        const domains = await collateralContract.domains();
-        logger.info(`Found ${domains.length} connected domains:`, domains);
-
-        logger.info('Getting domain router address');
-        const hypTokenByteAddresses = await Promise.all(
-          domains.map((d) => collateralContract.routers(d)),
-        );
-        const hypTokenAddresses = hypTokenByteAddresses.map((b) => utils.bytes32ToAddress(b));
-        logger.info(`Addresses found:`, hypTokenAddresses);
-        const hypTokens = hypTokenAddresses.map((addr, i) => ({
-          chainId: domains[i],
-          address: normalizeAddress(addr),
-        }));
-        tokens.push({ ...token, hypTokens });
-      }
-
-      return computeTokenRoutes(tokens);
-    },
-    { retry: false },
-  );
-
-  return { isLoading, error, tokenRoutes };
-}
-
 export function useRouteChains(tokenRoutes: RoutesMap): number[] {
-  return useMemo(() => Object.keys(tokenRoutes).map((chainId) => parseInt(chainId)), [tokenRoutes]);
+  return useMemo(() => {
+    const allChainIds = Object.keys(tokenRoutes).map((chainId) => parseInt(chainId));
+    const collateralChainIds = getAllTokens().map((t) => t.chainId);
+    return allChainIds.sort((c1, c2) => {
+      // Surface collateral chains first
+      if (collateralChainIds.includes(c1) && !collateralChainIds.includes(c2)) return -1;
+      else if (!collateralChainIds.includes(c1) && collateralChainIds.includes(c2)) return 1;
+      else return c1 - c2;
+    });
+  }, [tokenRoutes]);
 }

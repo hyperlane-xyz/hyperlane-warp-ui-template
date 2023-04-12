@@ -12,8 +12,8 @@ const TokenSchema = z.object({
   address: z.string(),
   name: z.string(),
   symbol: z.string(),
-  decimals: z.number(),
-  logoURI: z.string(),
+  decimals: z.number().positive(),
+  logoURI: z.string().optional(),
   hypCollateralAddress: z.string(),
 });
 

@@ -7,7 +7,7 @@ import ChevronIcon from '../../images/icons/chevron-down.svg';
 
 import { TokenListModal } from './TokenListModal';
 import { RoutesMap } from './routes';
-import { ListedToken } from './types';
+import { TokenMetadata } from './types';
 
 type Props = {
   name: string;
@@ -27,9 +27,9 @@ export function TokenSelectField({
   const [field, , helpers] = useField<Address>(name);
 
   // Keep local state for token details, but let formik manage field value
-  const [token, setToken] = useState<ListedToken | undefined>(undefined);
+  const [token, setToken] = useState<TokenMetadata | undefined>(undefined);
 
-  const handleChange = (newToken: ListedToken) => {
+  const handleChange = (newToken: TokenMetadata) => {
     // Set the token address value in formik state
     helpers.setValue(newToken.address);
     setToken(newToken);

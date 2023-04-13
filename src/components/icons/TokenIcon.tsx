@@ -2,12 +2,12 @@ import { BigNumber } from 'ethers';
 import Image from 'next/image';
 import { memo } from 'react';
 
-import { ListedToken } from '../../features/tokens/types';
+import { TokenMetadata } from '../../features/tokens/types';
 import { isValidHttpsUrl } from '../../utils/url';
 import { ErrorBoundary } from '../errors/ErrorBoundary';
 
 interface Props {
-  token?: ListedToken;
+  token?: TokenMetadata;
   size?: number;
 }
 

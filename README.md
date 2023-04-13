@@ -1,6 +1,6 @@
 # Hyperlane Warp Route UI Template
 
-This repo contains an example web interface for a interchain tokens built with [Hyperlane Warp Route](https://docs.hyperlane.xyz/hyperlane-docs). Warp is a framework to permisionlessly bridge tokens to any chain.
+This repo contains an example web interface for a interchain tokens built with [Hyperlane Warp Route](https://docs.hyperlane.xyz/docs/apis-and-sdks/warp-api). Warp is a framework to permisionlessly bridge tokens to any chain.
 
 ## Architecture
 
@@ -63,4 +63,4 @@ The recommended hosting solution for this Next.JS app is to create a project on 
 
 ## Learn more
 
-For more information, see the [Hyperlane documentation](https://docs.hyperlane.xyz/hyperlane-docs/).
+For more information, see the [Hyperlane documentation](https://docs.hyperlane.xyz/docs/apis-and-sdks/warp-api).

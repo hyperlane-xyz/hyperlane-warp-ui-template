@@ -6,7 +6,7 @@ import { Modal } from '../../components/layout/Modal';
 
 import { getAllTokens } from './metadata';
 import { RoutesMap, hasTokenRoute } from './routes';
-import { ListedToken } from './types';
+import { TokenMetadata } from './types';
 
 export function TokenListModal({
   isOpen,
@@ -18,7 +18,7 @@ export function TokenListModal({
 }: {
   isOpen: boolean;
   close: () => void;
-  onSelect: (token: ListedToken) => void;
+  onSelect: (token: TokenMetadata) => void;
   sourceChainId: number;
   destinationChainId: number;
   tokenRoutes: RoutesMap;
@@ -30,7 +30,7 @@ export function TokenListModal({
     setSearch('');
   };
 
-  const onSelectAndClose = (token: ListedToken) => {
+  const onSelectAndClose = (token: TokenMetadata) => {
     onSelect(token);
     onClose();
   };
@@ -72,7 +72,7 @@ export function TokenList({
   destinationChainId: number;
   tokenRoutes: RoutesMap;
   searchQuery: string;
-  onSelect: (token: ListedToken) => void;
+  onSelect: (token: TokenMetadata) => void;
 }) {
   const tokens = useMemo(() => {
     return getAllTokens().filter((t) => {

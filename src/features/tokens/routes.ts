@@ -10,7 +10,7 @@ import { getHypErc20CollateralContract } from '../contracts/hypErc20';
 import { getProvider } from '../multiProvider';
 
 import { getAllTokens } from './metadata';
-import { ListedToken, ListedTokenWithHypTokens } from './types';
+import { TokenMetadata, TokenMetadataWithHypTokens } from './types';
 
 export enum RouteType {
   NativeToRemote = 'nativeToRemote',
@@ -40,7 +40,7 @@ export function useTokenRoutes() {
     ['token-routes'],
     async () => {
       logger.info('Searching for token routes');
-      const tokens: ListedTokenWithHypTokens[] = [];
+      const tokens: TokenMetadataWithHypTokens[] = [];
       for (const token of getAllTokens()) {
         // Consider parallelizing here but concerned about RPC rate limits
         const tokenWithHypTokens = await fetchRemoteTokensForCollateralToken(token);
@@ -55,8 +55,8 @@ export function useTokenRoutes() {
 }
 
 async function fetchRemoteTokensForCollateralToken(
-  token: ListedToken,
-): Promise<ListedTokenWithHypTokens> {
+  token: TokenMetadata,
+): Promise<TokenMetadataWithHypTokens> {
   const { chainId, symbol, decimals, hypCollateralAddress } = token;
   logger.info('Inspecting token:', symbol);
   const provider = getProvider(chainId);
@@ -96,7 +96,7 @@ async function fetchRemoteTokensForCollateralToken(
 }
 
 // Process token list to populates routesCache with all possible token routes (e.g. router pairs)
-function computeTokenRoutes(tokens: ListedTokenWithHypTokens[]) {
+function computeTokenRoutes(tokens: TokenMetadataWithHypTokens[]) {
   const tokenRoutes: RoutesMap = {};
 
   // Instantiate map structure
@@ -164,7 +164,7 @@ function computeTokenRoutes(tokens: ListedTokenWithHypTokens[]) {
   return tokenRoutes;
 }
 
-function getChainsFromTokens(tokens: ListedTokenWithHypTokens[]) {
+function getChainsFromTokens(tokens: TokenMetadataWithHypTokens[]) {
   const chains = new Set<number>();
   for (const token of tokens) {
     chains.add(token.chainId);

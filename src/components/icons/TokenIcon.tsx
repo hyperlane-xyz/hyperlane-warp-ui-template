@@ -2,17 +2,17 @@ import { BigNumber } from 'ethers';
 import Image from 'next/image';
 import { memo } from 'react';
 
-import { ListedToken } from '../../features/tokens/types';
-import { isValidHttpsUrl } from '../../utils/url';
+import { TokenMetadata } from '../../features/tokens/types';
+import { isValidUrl } from '../../utils/url';
 import { ErrorBoundary } from '../errors/ErrorBoundary';
 
 interface Props {
-  token?: ListedToken;
+  token?: TokenMetadata;
   size?: number;
 }
 
 function _TokenIcon({ token, size = 32 }: Props) {
-  const imageSrc = isValidHttpsUrl(token?.logoURI) ? token!.logoURI : null;
+  const imageSrc = isValidUrl(token?.logoURI) ? token!.logoURI : null;
   const title = token?.symbol || '';
   const character = title ? title.charAt(0).toUpperCase() : '';
 

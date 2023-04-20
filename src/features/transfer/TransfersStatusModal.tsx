@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAccount } from 'wagmi';
 
-import { chainIdToMetadata } from '@hyperlane-xyz/sdk';
 import { MessageStatus, MessageTimeline, useMessageTimeline } from '@hyperlane-xyz/widgets';
 
 import { Spinner } from '../../components/animation/Spinner';
@@ -9,6 +8,9 @@ import { IconButton } from '../../components/buttons/IconButton';
 import { ChevronIcon } from '../../components/icons/Chevron';
 import { Modal } from '../../components/layout/Modal';
 import { links } from '../../consts/links';
+import { toBase64 } from '../../utils/base64';
+import { hasPermissionlessChain, isPermissionlessChain } from '../chains/utils';
+import { getMultiProvider } from '../multiProvider';
 import { useStore } from '../store';
 
 import { TransferContext, TransferStatus } from './types';
@@ -35,9 +37,7 @@ export function TransfersStatusModal({
   const { params, status, originTxHash, msgId } = transfers[index] || {};
   const { destinationChainId, sourceChainId } = params || {};
 
-  const isPermissionlessRoute = !(
-    chainIdToMetadata[sourceChainId] && chainIdToMetadata[destinationChainId]
-  );
+  const isPermissionlessRoute = hasPermissionlessChain([sourceChainId, destinationChainId]);
 
   let statusDescription = '...';
   if (!isAccountReady) statusDescription = 'Please connect wallet to continue';
@@ -61,6 +61,8 @@ export function TransfersStatusModal({
     statusDescription = 'Delivery complete, transfer successful!';
   else if (status === TransferStatus.Failed)
     statusDescription = 'Transfer failed, please try again.';
+
+  const explorerLink = getHypExplorerLink(sourceChainId, msgId);
 
   return (
     <Modal isOpen={isOpen} close={close} title="Token Transfers" width="max-w-lg">
@@ -94,10 +96,10 @@ export function TransfersStatusModal({
         >
           {statusDescription}
         </div>
-        {msgId && (
+        {explorerLink && (
           <a
             className="block mt-3 text-xs text-gray-600 text-center underline underline-offset-2 hover:opacity-80 active:opacity-70"
-            href={`${links.explorer}/message/${msgId}`}
+            href={explorerLink}
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -154,4 +156,18 @@ function BasicSpinner() {
       <Spinner />
     </div>
   );
+}
+
+function getHypExplorerLink(sourceChainId: number, msgId?: string) {
+  if (!sourceChainId || !msgId) return null;
+  const baseLink = `${links.explorer}/message/${msgId}`;
+  if (isPermissionlessChain(sourceChainId)) {
+    const chainConfig = getMultiProvider().getChainMetadata(sourceChainId);
+    const serializedConfig = toBase64([chainConfig]);
+    if (serializedConfig) {
+      const params = new URLSearchParams({ chains: serializedConfig });
+      return `${baseLink}?${params.toString()}`;
+    }
+  }
+  return baseLink;
 }

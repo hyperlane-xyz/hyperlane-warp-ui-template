@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { useAccount } from 'wagmi';
 
@@ -8,6 +9,9 @@ import { IconButton } from '../../components/buttons/IconButton';
 import { ChevronIcon } from '../../components/icons/Chevron';
 import { Modal } from '../../components/layout/Modal';
 import { links } from '../../consts/links';
+import CheckmarkCircleIcon from '../../images/icons/checkmark-circle.svg';
+import EnvelopeHeartIcon from '../../images/icons/envelope-heart.svg';
+import ErrorCircleIcon from '../../images/icons/error-circle.svg';
 import { toBase64 } from '../../utils/base64';
 import { hasPermissionlessChain, isPermissionlessChain } from '../chains/utils';
 import { getMultiProvider } from '../multiProvider';
@@ -56,7 +60,11 @@ export function TransfersStatusModal({
   else if (status === TransferStatus.ConfirmingTransfer)
     statusDescription = 'Confirming transfer transaction...';
   else if (status === TransferStatus.ConfirmedTransfer)
-    statusDescription = 'Transfer transaction confirmed, delivering message...';
+    if (!isPermissionlessRoute)
+      statusDescription = 'Transfer transaction confirmed, delivering message...';
+    else
+      statusDescription =
+        'Transfer confirmed, the funds will arrive when the message is delivered.';
   else if (status === TransferStatus.Delivered)
     statusDescription = 'Delivery complete, transfer successful!';
   else if (status === TransferStatus.Failed)
@@ -85,7 +93,7 @@ export function TransfersStatusModal({
         </IconButton>
         {/* TODO Timeline does not support PI messages yet */}
         {isPermissionlessRoute ? (
-          <BasicSpinner />
+          <BasicSpinner transferStatus={status} />
         ) : (
           <Timeline transferStatus={status} transferIndex={index} originTxHash={originTxHash} />
         )}
@@ -150,12 +158,36 @@ function Timeline({
   );
 }
 
-function BasicSpinner() {
-  return (
-    <div className="py-4 flex flex-col justify-center items-center">
-      <Spinner />
-    </div>
-  );
+function BasicSpinner({ transferStatus }: { transferStatus: TransferStatus }) {
+  let content;
+  if (transferStatus === TransferStatus.Delivered) {
+    content = (
+      <Image
+        src={CheckmarkCircleIcon}
+        alt="Delivered"
+        width={80}
+        height={80}
+        className="opacity-80"
+      />
+    );
+  } else if (transferStatus === TransferStatus.ConfirmedTransfer) {
+    content = (
+      <Image
+        src={EnvelopeHeartIcon}
+        alt="Delivering"
+        width={80}
+        height={80}
+        className="opacity-80"
+      />
+    );
+  } else if (transferStatus === TransferStatus.Failed) {
+    content = (
+      <Image src={ErrorCircleIcon} alt="Failed" width={86} height={86} className="opacity-80" />
+    );
+  } else {
+    content = <Spinner />;
+  }
+  return <div className="py-4 flex flex-col justify-center items-center">{content}</div>;
 }
 
 function getHypExplorerLink(sourceChainId: number, msgId?: string) {

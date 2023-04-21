@@ -11,8 +11,8 @@ import { TokenMetadata } from './types';
 
 type Props = {
   name: string;
-  sourceChainId: number;
-  destinationChainId: number;
+  sourceChainId: ChainId;
+  destinationChainId: ChainId;
   tokenRoutes: RoutesMap;
   disabled?: boolean;
 };

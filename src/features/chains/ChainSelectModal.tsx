@@ -13,10 +13,10 @@ export function ChainSelectListModal({
 }: {
   isOpen: boolean;
   close: () => void;
-  chainIds: number[];
-  onSelect: (chainId: number) => void;
+  chainIds: ChainId[];
+  onSelect: (chainId: ChainId) => void;
 }) {
-  const onSelectChain = (chainId: number) => {
+  const onSelectChain = (chainId: ChainId) => {
     return () => {
       onSelect(chainId);
       close();

@@ -1,8 +1,8 @@
 import type { Route } from '../tokens/routes';
 
 export interface TransferFormValues {
-  sourceChainId: number;
-  destinationChainId: number;
+  sourceChainId: ChainId;
+  destinationChainId: ChainId;
   amount: string;
   tokenAddress: Address;
   recipientAddress: Address;

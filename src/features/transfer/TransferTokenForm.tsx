@@ -232,7 +232,7 @@ function useSelfTokenBalance(tokenRoutes) {
   const route = getTokenRoute(sourceChainId, destinationChainId, tokenAddress, tokenRoutes);
   const addressForBalance = !route
     ? ''
-    : route.nativeChainId === sourceChainId
+    : route.baseChainId === sourceChainId
     ? tokenAddress
     : route.sourceTokenAddress;
   return useAccountTokenBalance(sourceChainId, addressForBalance);
@@ -249,7 +249,7 @@ function RecipientTokenBalance({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
   const route = getTokenRoute(sourceChainId, destinationChainId, tokenAddress, tokenRoutes);
   const addressForBalance = !route
     ? ''
-    : route.nativeChainId === destinationChainId
+    : route.baseChainId === destinationChainId
     ? tokenAddress
     : route.destTokenAddress;
   const { balance } = useAccountTokenBalance(destinationChainId, addressForBalance);
@@ -301,7 +301,7 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
 
   const route = getTokenRoute(sourceChainId, destinationChainId, tokenAddress, tokenRoutes);
   const weiAmount = toWei(amount, route?.decimals).toString();
-  const requiresApprove = route?.type === RouteType.NativeToRemote;
+  const requiresApprove = route?.type === RouteType.BaseToRemote;
   return (
     <div
       className={`${
@@ -315,7 +315,7 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
             <h4>Transaction 1: Approve Transfer</h4>
             <div className="mt-1.5 ml-1.5 pl-2 border-l border-gray-300 space-y-1.5 text-xs">
               <p>{`Token Address: ${tokenAddress}`}</p>
-              <p>{`Collateral Address: ${route?.hypCollateralAddress}`}</p>
+              <p>{`Collateral Address: ${route?.hypWrapperAddress}`}</p>
             </div>
           </div>
         )}

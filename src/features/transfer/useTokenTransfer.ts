@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react';
 import { toast } from 'react-toastify';
 import { useChainId } from 'wagmi';
 
+import { TokenType } from '@hyperlane-xyz/hyperlane-token';
 import { HyperlaneCore } from '@hyperlane-xyz/sdk';
 import { utils } from '@hyperlane-xyz/utils';
 
@@ -12,10 +13,11 @@ import { toWei } from '../../utils/amount';
 import { logger } from '../../utils/logger';
 import { sleep } from '../../utils/timeout';
 import { getErc20Contract } from '../contracts/erc20';
-import { getHypErc20CollateralContract, getHypErc20Contract } from '../contracts/hypErc20';
+import { getHypWrapperContract } from '../contracts/hypErc20';
 import { getMultiProvider, getProvider } from '../multiProvider';
 import { useStore } from '../store';
 import { RouteType, RoutesMap, getTokenRoute } from '../tokens/routes';
+import { isNativeToken } from '../tokens/utils';
 
 import { TransferFormValues, TransferStatus } from './types';
 
@@ -55,7 +57,9 @@ export function useTokenTransfer(onDone?: () => void) {
         );
         if (!tokenRoute) throw new Error('No token route found between chains');
 
-        const isNativeToRemote = tokenRoute.type === RouteType.NativeToRemote;
+        const isBaseToRemote = tokenRoute.type === RouteType.BaseToRemote;
+        const isTokenNative = isNativeToken(tokenAddress);
+        const isApproveRequired = !isTokenNative && isBaseToRemote;
         const weiAmount = toWei(amount, tokenRoute.decimals).toString();
         const provider = getProvider(sourceChainId);
 
@@ -73,11 +77,11 @@ export function useTokenTransfer(onDone?: () => void) {
           await sleep(1500);
         }
 
-        if (isNativeToRemote) {
+        if (isApproveRequired) {
           updateTransferStatus(transferIndex, (status = TransferStatus.CreatingApprove));
           const erc20 = getErc20Contract(tokenAddress, provider);
           const approveTxRequest = await erc20.populateTransaction.approve(
-            tokenRoute.hypCollateralAddress,
+            tokenRoute.hypWrapperAddress,
             weiAmount,
           );
 
@@ -99,11 +103,18 @@ export function useTokenTransfer(onDone?: () => void) {
         }
 
         updateTransferStatus(transferIndex, (status = TransferStatus.CreatingTransfer));
-        const hypErc20 = isNativeToRemote
-          ? getHypErc20CollateralContract(tokenRoute.hypCollateralAddress, provider)
-          : getHypErc20Contract(tokenRoute.sourceTokenAddress, provider);
-        const gasPayment = await hypErc20.quoteGasPayment(destinationChainId);
-        const transferTxRequest = await hypErc20.populateTransaction.transferRemote(
+        const contractType: TokenType = !isBaseToRemote
+          ? TokenType.synthetic
+          : isTokenNative
+          ? TokenType.native
+          : TokenType.collateral;
+        const hypWrapperContract = getHypWrapperContract(
+          contractType,
+          tokenRoute.sourceTokenAddress,
+          provider,
+        );
+        const gasPayment = await hypWrapperContract.quoteGasPayment(destinationChainId);
+        const transferTxRequest = await hypWrapperContract.populateTransaction.transferRemote(
           destinationChainId,
           utils.addressToBytes32(recipientAddress),
           weiAmount,

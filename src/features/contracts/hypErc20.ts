@@ -1,17 +1,46 @@
 import { Signer, providers } from 'ethers';
 
-import { HypERC20Collateral__factory, HypERC20__factory } from '@hyperlane-xyz/hyperlane-token';
+import {
+  HypERC20Collateral__factory,
+  HypERC20__factory,
+  HypNative__factory,
+  TokenType,
+} from '@hyperlane-xyz/hyperlane-token';
 
-export function getHypErc20CollateralContract(
+// Get the connected HypERC20Collateral, HypNative, or HypERC20 contract
+export function getHypWrapperContract(
+  type: TokenType,
+  contractAddress: Address,
+  signerOrProvider: Signer | providers.Provider,
+) {
+  if (type === TokenType.collateral) {
+    return getHypErc20CollateralContract(contractAddress, signerOrProvider);
+  } else if (type === TokenType.native) {
+    return getHypNativeContract(contractAddress, signerOrProvider);
+  } else if (type === TokenType.synthetic) {
+    return getHypErc20Contract(contractAddress, signerOrProvider);
+  } else {
+    throw new Error(`Unsupported token type: ${type}}`);
+  }
+}
+
+function getHypErc20CollateralContract(
   contractAddress: Address,
   signerOrProvider: Signer | providers.Provider,
 ) {
   return HypERC20Collateral__factory.connect(contractAddress, signerOrProvider);
 }
 
-export function getHypErc20Contract(
+function getHypErc20Contract(
   contractAddress: Address,
   signerOrProvider: Signer | providers.Provider,
 ) {
   return HypERC20__factory.connect(contractAddress, signerOrProvider);
+}
+
+function getHypNativeContract(
+  contractAddress: Address,
+  signerOrProvider: Signer | providers.Provider,
+) {
+  return HypNative__factory.connect(contractAddress, signerOrProvider);
 }

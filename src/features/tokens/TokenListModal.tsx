@@ -19,8 +19,8 @@ export function TokenListModal({
   isOpen: boolean;
   close: () => void;
   onSelect: (token: TokenMetadata) => void;
-  sourceChainId: number;
-  destinationChainId: number;
+  sourceChainId: ChainId;
+  destinationChainId: ChainId;
   tokenRoutes: RoutesMap;
 }) {
   const [search, setSearch] = useState('');
@@ -68,8 +68,8 @@ export function TokenList({
   searchQuery,
   onSelect,
 }: {
-  sourceChainId: number;
-  destinationChainId: number;
+  sourceChainId: ChainId;
+  destinationChainId: ChainId;
   tokenRoutes: RoutesMap;
   searchQuery: string;
   onSelect: (token: TokenMetadata) => void;

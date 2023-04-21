@@ -190,7 +190,7 @@ function BasicSpinner({ transferStatus }: { transferStatus: TransferStatus }) {
   return <div className="py-4 flex flex-col justify-center items-center">{content}</div>;
 }
 
-function getHypExplorerLink(sourceChainId: number, msgId?: string) {
+function getHypExplorerLink(sourceChainId: ChainId, msgId?: string) {
   if (!sourceChainId || !msgId) return null;
   const baseLink = `${links.explorer}/message/${msgId}`;
   if (isPermissionlessChain(sourceChainId)) {

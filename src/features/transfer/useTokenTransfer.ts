@@ -13,7 +13,7 @@ import { toWei } from '../../utils/amount';
 import { logger } from '../../utils/logger';
 import { sleep } from '../../utils/timeout';
 import { getErc20Contract } from '../contracts/erc20';
-import { getHypWrapperContract } from '../contracts/hypErc20';
+import { getTokenRouterContract } from '../contracts/hypErc20';
 import { getMultiProvider, getProvider } from '../multiProvider';
 import { useStore } from '../store';
 import { RouteType, RoutesMap, getTokenRoute } from '../tokens/routes';
@@ -46,11 +46,11 @@ export function useTokenTransfer(onDone?: () => void) {
       let status: TransferStatus = TransferStatus.Preparing;
 
       try {
-        const { amount, sourceChainId, destinationChainId, recipientAddress, tokenAddress } =
+        const { amount, originChainId, destinationChainId, recipientAddress, tokenAddress } =
           values;
 
         const tokenRoute = getTokenRoute(
-          sourceChainId,
+          originChainId,
           destinationChainId,
           tokenAddress,
           tokenRoutes,
@@ -61,7 +61,7 @@ export function useTokenTransfer(onDone?: () => void) {
         const isTokenNative = isNativeToken(tokenAddress);
         const isApproveRequired = !isTokenNative && isBaseToRemote;
         const weiAmount = toWei(amount, tokenRoute.decimals).toString();
-        const provider = getProvider(sourceChainId);
+        const provider = getProvider(originChainId);
 
         addTransfer({
           status,
@@ -69,9 +69,9 @@ export function useTokenTransfer(onDone?: () => void) {
           params: values,
         });
 
-        if (sourceChainId !== chainId) {
+        if (originChainId !== chainId) {
           await switchNetwork({
-            chainId: sourceChainId,
+            chainId: originChainId,
           });
           // Some wallets seem to require a brief pause after switch
           await sleep(1500);
@@ -81,13 +81,13 @@ export function useTokenTransfer(onDone?: () => void) {
           updateTransferStatus(transferIndex, (status = TransferStatus.CreatingApprove));
           const erc20 = getErc20Contract(tokenAddress, provider);
           const approveTxRequest = await erc20.populateTransaction.approve(
-            tokenRoute.hypWrapperAddress,
+            tokenRoute.tokenRouterAddress,
             weiAmount,
           );
 
           updateTransferStatus(transferIndex, (status = TransferStatus.SigningApprove));
           const { wait: approveWait } = await sendTransaction({
-            chainId: sourceChainId,
+            chainId: originChainId,
             request: approveTxRequest,
             mode: 'recklesslyUnprepared', // See note above function
           });
@@ -98,7 +98,7 @@ export function useTokenTransfer(onDone?: () => void) {
           toastTxSuccess(
             'Approve transaction sent!',
             approveTxReceipt.transactionHash,
-            sourceChainId,
+            originChainId,
           );
         }
 
@@ -108,13 +108,13 @@ export function useTokenTransfer(onDone?: () => void) {
           : isTokenNative
           ? TokenType.native
           : TokenType.collateral;
-        const hypWrapperContract = getHypWrapperContract(
+        const tokenRouterContract = getTokenRouterContract(
           contractType,
-          tokenRoute.sourceTokenAddress,
+          tokenRoute.originTokenAddress,
           provider,
         );
-        const gasPayment = await hypWrapperContract.quoteGasPayment(destinationChainId);
-        const transferTxRequest = await hypWrapperContract.populateTransaction.transferRemote(
+        const gasPayment = await tokenRouterContract.quoteGasPayment(destinationChainId);
+        const transferTxRequest = await tokenRouterContract.populateTransaction.transferRemote(
           destinationChainId,
           utils.addressToBytes32(recipientAddress),
           weiAmount,
@@ -125,7 +125,7 @@ export function useTokenTransfer(onDone?: () => void) {
 
         updateTransferStatus(transferIndex, (status = TransferStatus.SigningTransfer));
         const { wait: transferWait, hash: originTxHash } = await sendTransaction({
-          chainId: sourceChainId,
+          chainId: originChainId,
           request: transferTxRequest,
           mode: 'recklesslyUnprepared', // See note above function
         });
@@ -139,13 +139,13 @@ export function useTokenTransfer(onDone?: () => void) {
           msgId,
         });
         logger.debug('Transfer transaction confirmed, hash:', originTxHash);
-        toastTxSuccess('Remote transfer started!', originTxHash, sourceChainId);
+        toastTxSuccess('Remote transfer started!', originTxHash, originChainId);
       } catch (error) {
         logger.error(`Error at stage ${status} `, error);
         updateTransferStatus(transferIndex, TransferStatus.Failed);
         if (JSON.stringify(error).includes('ChainMismatchError')) {
           // Wagmi switchNetwork call helps prevent this but isn't foolproof
-          toast.error('Wallet must be connected to source chain');
+          toast.error('Wallet must be connected to origin chain');
         } else {
           toast.error(errorMessages[status] || 'Unable to transfer tokens.');
         }

@@ -39,9 +39,9 @@ export function TransfersStatusModal({
   }, [isOpen, transfers.length]);
 
   const { params, status, originTxHash, msgId } = transfers[index] || {};
-  const { destinationChainId, sourceChainId } = params || {};
+  const { destinationChainId, originChainId } = params || {};
 
-  const isPermissionlessRoute = hasPermissionlessChain([sourceChainId, destinationChainId]);
+  const isPermissionlessRoute = hasPermissionlessChain([originChainId, destinationChainId]);
 
   let statusDescription = '...';
   if (!isAccountReady) statusDescription = 'Please connect wallet to continue';
@@ -70,7 +70,7 @@ export function TransfersStatusModal({
   else if (status === TransferStatus.Failed)
     statusDescription = 'Transfer failed, please try again.';
 
-  const explorerLink = getHypExplorerLink(sourceChainId, msgId);
+  const explorerLink = getHypExplorerLink(originChainId, msgId);
 
   return (
     <Modal isOpen={isOpen} close={close} title="Token Transfers" width="max-w-lg">
@@ -190,11 +190,11 @@ function BasicSpinner({ transferStatus }: { transferStatus: TransferStatus }) {
   return <div className="py-4 flex flex-col justify-center items-center">{content}</div>;
 }
 
-function getHypExplorerLink(sourceChainId: ChainId, msgId?: string) {
-  if (!sourceChainId || !msgId) return null;
+function getHypExplorerLink(originChainId: ChainId, msgId?: string) {
+  if (!originChainId || !msgId) return null;
   const baseLink = `${links.explorer}/message/${msgId}`;
-  if (isPermissionlessChain(sourceChainId)) {
-    const chainConfig = getMultiProvider().getChainMetadata(sourceChainId);
+  if (isPermissionlessChain(originChainId)) {
+    const chainConfig = getMultiProvider().getChainMetadata(originChainId);
     const serializedConfig = toBase64([chainConfig]);
     if (serializedConfig) {
       const params = new URLSearchParams({ chains: serializedConfig });

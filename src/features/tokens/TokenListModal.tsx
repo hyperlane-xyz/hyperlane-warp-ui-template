@@ -12,14 +12,14 @@ export function TokenListModal({
   isOpen,
   close,
   onSelect,
-  sourceChainId,
+  originChainId,
   destinationChainId,
   tokenRoutes,
 }: {
   isOpen: boolean;
   close: () => void;
   onSelect: (token: TokenMetadata) => void;
-  sourceChainId: ChainId;
+  originChainId: ChainId;
   destinationChainId: ChainId;
   tokenRoutes: RoutesMap;
 }) {
@@ -51,7 +51,7 @@ export function TokenListModal({
         autoComplete="off"
       />
       <TokenList
-        sourceChainId={sourceChainId}
+        originChainId={originChainId}
         destinationChainId={destinationChainId}
         tokenRoutes={tokenRoutes}
         searchQuery={search}
@@ -62,13 +62,13 @@ export function TokenListModal({
 }
 
 export function TokenList({
-  sourceChainId,
+  originChainId,
   destinationChainId,
   tokenRoutes,
   searchQuery,
   onSelect,
 }: {
-  sourceChainId: ChainId;
+  originChainId: ChainId;
   destinationChainId: ChainId;
   tokenRoutes: RoutesMap;
   searchQuery: string;
@@ -77,7 +77,7 @@ export function TokenList({
   const tokens = useMemo(() => {
     return getAllTokens().filter((t) => {
       const q = searchQuery?.trim().toLowerCase();
-      const hasRoute = hasTokenRoute(sourceChainId, destinationChainId, t.address, tokenRoutes);
+      const hasRoute = hasTokenRoute(originChainId, destinationChainId, t.address, tokenRoutes);
       if (!q) return hasRoute;
       else
         return (
@@ -87,7 +87,7 @@ export function TokenList({
             t.address.toLowerCase().includes(q))
         );
     });
-  }, [searchQuery, sourceChainId, destinationChainId, tokenRoutes]);
+  }, [searchQuery, originChainId, destinationChainId, tokenRoutes]);
 
   return (
     <div className="flex flex-col items-stretch divide-y divide-gray-200">

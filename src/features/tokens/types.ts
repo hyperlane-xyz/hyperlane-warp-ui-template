@@ -14,6 +14,11 @@ type CommonTokenFields = z.infer<typeof commonTokenFields>;
 
 /**
  * Types for the developer-provided config
+ * Seems redundant with the *Metadata types below but these are
+ * necessary to enable a more flexible and intuitive schema for the config
+ * E.g. allow literal strings for 'type' field
+ * or allow omitting 'address' for NativeTokenConfig
+ *
  * See src/consts/tokens.ts
  */
 
@@ -28,6 +33,7 @@ const CollateralTokenSchema = commonTokenFields.extend({
 });
 
 interface CollateralTokenConfig extends BaseTokenConfig {
+  // Typescript does not allow literal value value 'collateral' even if it matches the enum's value
   type: TokenType.collateral | 'collateral';
   address: Address;
   hypCollateralAddress: Address;
@@ -48,13 +54,15 @@ export type WarpTokenConfig = Array<CollateralTokenConfig | NativeTokenConfig>;
 
 /**
  * Types for use in the app after processing config
- * Necessary to allow more flexibility with the config
+ * Seems redundant with the *Config types above but these are
+ * more restrictive and consistent (see comment above)
+ *
  * See src/features/tokens/metadata.ts
  */
 interface BaseTokenMetadata extends CommonTokenFields {
   type: TokenType;
   address: Address;
-  hypWrapperAddress: Address; // Shared name for hypCollateralAddr and hypNativeAddr
+  tokenRouterAddress: Address; // Shared name for hypCollateralAddr and hypNativeAddr
 }
 
 interface CollateralTokenMetadata extends BaseTokenMetadata {

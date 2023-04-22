@@ -8,7 +8,7 @@ import {
 } from '@hyperlane-xyz/hyperlane-token';
 
 // Get the connected HypERC20Collateral, HypNative, or HypERC20 contract
-export function getHypWrapperContract(
+export function getTokenRouterContract(
   type: TokenType,
   contractAddress: Address,
   signerOrProvider: Signer | providers.Provider,

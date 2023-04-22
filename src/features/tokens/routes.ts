@@ -7,7 +7,7 @@ import { utils } from '@hyperlane-xyz/utils';
 import { areAddressesEqual, isValidAddress, normalizeAddress } from '../../utils/addresses';
 import { logger } from '../../utils/logger';
 import { getErc20Contract } from '../contracts/erc20';
-import { getHypWrapperContract } from '../contracts/hypErc20';
+import { getTokenRouterContract } from '../contracts/hypErc20';
 import { getProvider } from '../multiProvider';
 
 import { getAllTokens } from './metadata';
@@ -23,13 +23,13 @@ export interface Route {
   type: RouteType;
   baseChainId: ChainId;
   baseTokenAddress: Address;
-  hypWrapperAddress: Address;
-  sourceTokenAddress: Address;
+  tokenRouterAddress: Address;
+  originTokenAddress: Address;
   destTokenAddress: Address;
   decimals: number;
 }
 
-// Source chain to destination chain to Route
+// Origin chain to destination chain to Route
 export type RoutesMap = Record<ChainId, Record<ChainId, Route[]>>;
 
 export function useTokenRoutes() {
@@ -58,14 +58,14 @@ export function useTokenRoutes() {
 async function fetchRemoteTokensForCollateralToken(
   token: TokenMetadata,
 ): Promise<TokenMetadataWithHypTokens> {
-  const { type, chainId, symbol, decimals, hypWrapperAddress } = token;
+  const { type, chainId, symbol, decimals, tokenRouterAddress } = token;
   logger.info('Inspecting token:', symbol);
   const provider = getProvider(chainId);
-  const wrapperContract = getHypWrapperContract(type, hypWrapperAddress, provider);
+  const tokenRouterContract = getTokenRouterContract(type, tokenRouterAddress, provider);
 
   if (type === TokenType.collateral) {
     logger.info('Validating token metadata');
-    const collateralContract = wrapperContract as HypERC20Collateral;
+    const collateralContract = tokenRouterContract as HypERC20Collateral;
     const wrappedTokenAddr = await collateralContract.wrappedToken();
     const erc20 = getErc20Contract(wrappedTokenAddr, getProvider(chainId));
     const decimalsOnChain = await erc20.decimals();
@@ -83,12 +83,14 @@ async function fetchRemoteTokensForCollateralToken(
   }
 
   logger.info('Fetching connected domains');
-  const domains = await wrapperContract.domains();
+  const domains = await tokenRouterContract.domains();
   logger.info(`Found ${domains.length} connected domains:`, domains);
 
   logger.info('Getting domain router address');
-  const hypTokenByteAddresses = await Promise.all(domains.map((d) => wrapperContract.routers(d)));
-  const hypTokenAddresses = hypTokenByteAddresses.map((b) => utils.bytes32ToAddress(b));
+  const hypTokenAddressesAsBytes32 = await Promise.all(
+    domains.map((d) => tokenRouterContract.routers(d)),
+  );
+  const hypTokenAddresses = hypTokenAddressesAsBytes32.map((b) => utils.bytes32ToAddress(b));
   logger.info(`Addresses found:`, hypTokenAddresses);
   const hypTokens = hypTokenAddresses.map((addr, i) => ({
     chainId: domains[i],
@@ -103,11 +105,11 @@ function computeTokenRoutes(tokens: TokenMetadataWithHypTokens[]) {
 
   // Instantiate map structure
   const allChainIds = getChainsFromTokens(tokens);
-  for (const source of allChainIds) {
-    tokenRoutes[source] = {};
+  for (const origin of allChainIds) {
+    tokenRoutes[origin] = {};
     for (const dest of allChainIds) {
-      if (source === dest) continue;
-      tokenRoutes[source][dest] = [];
+      if (origin === dest) continue;
+      tokenRoutes[origin][dest] = [];
     }
   }
 
@@ -117,7 +119,7 @@ function computeTokenRoutes(tokens: TokenMetadataWithHypTokens[]) {
       const {
         chainId: baseChainId,
         address: baseTokenAddress,
-        hypWrapperAddress,
+        tokenRouterAddress,
         decimals,
       } = token;
       const { chainId: remoteChainId, address: hypTokenAddress } = hypToken;
@@ -125,20 +127,20 @@ function computeTokenRoutes(tokens: TokenMetadataWithHypTokens[]) {
       const commonRouteProps = {
         baseChainId: baseChainId,
         baseTokenAddress,
-        hypWrapperAddress,
+        tokenRouterAddress,
       };
       tokenRoutes[baseChainId][remoteChainId].push({
         type: RouteType.BaseToRemote,
         ...commonRouteProps,
-        sourceTokenAddress: hypWrapperAddress,
+        originTokenAddress: tokenRouterAddress,
         destTokenAddress: hypTokenAddress,
         decimals,
       });
       tokenRoutes[remoteChainId][baseChainId].push({
         type: RouteType.RemoteToBase,
         ...commonRouteProps,
-        sourceTokenAddress: hypTokenAddress,
-        destTokenAddress: hypWrapperAddress,
+        originTokenAddress: hypTokenAddress,
+        destTokenAddress: tokenRouterAddress,
         decimals,
       });
 
@@ -149,14 +151,14 @@ function computeTokenRoutes(tokens: TokenMetadataWithHypTokens[]) {
         tokenRoutes[remoteChainId][otherRemoteChainId].push({
           type: RouteType.RemoteToRemote,
           ...commonRouteProps,
-          sourceTokenAddress: hypTokenAddress,
+          originTokenAddress: hypTokenAddress,
           destTokenAddress: otherHypTokenAddress,
           decimals,
         });
         tokenRoutes[otherRemoteChainId][remoteChainId].push({
           type: RouteType.RemoteToRemote,
           ...commonRouteProps,
-          sourceTokenAddress: otherHypTokenAddress,
+          originTokenAddress: otherHypTokenAddress,
           destTokenAddress: hypTokenAddress,
           decimals,
         });
@@ -178,34 +180,34 @@ function getChainsFromTokens(tokens: TokenMetadataWithHypTokens[]) {
 }
 
 export function getTokenRoutes(
-  sourceChainId: ChainId,
+  originChainId: ChainId,
   destinationChainId: ChainId,
   tokenRoutes: RoutesMap,
 ): Route[] {
-  return tokenRoutes[sourceChainId]?.[destinationChainId] || [];
+  return tokenRoutes[originChainId]?.[destinationChainId] || [];
 }
 
 export function getTokenRoute(
-  sourceChainId: ChainId,
+  originChainId: ChainId,
   destinationChainId: ChainId,
   baseTokenAddress: Address,
   tokenRoutes: RoutesMap,
 ): Route | null {
   if (!isValidAddress(baseTokenAddress)) return null;
   return (
-    getTokenRoutes(sourceChainId, destinationChainId, tokenRoutes).find((r) =>
+    getTokenRoutes(originChainId, destinationChainId, tokenRoutes).find((r) =>
       areAddressesEqual(baseTokenAddress, r.baseTokenAddress),
     ) || null
   );
 }
 
 export function hasTokenRoute(
-  sourceChainId: ChainId,
+  originChainId: ChainId,
   destinationChainId: ChainId,
   baseTokenAddress: Address,
   tokenRoutes: RoutesMap,
 ): boolean {
-  return !!getTokenRoute(sourceChainId, destinationChainId, baseTokenAddress, tokenRoutes);
+  return !!getTokenRoute(originChainId, destinationChainId, baseTokenAddress, tokenRoutes);
 }
 
 export function useRouteChains(tokenRoutes: RoutesMap): ChainId[] {

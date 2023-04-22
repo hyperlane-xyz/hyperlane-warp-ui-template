@@ -31,14 +31,14 @@ function parseTokenConfigs(configList: WarpTokenConfig): TokenMetadata[] {
       tokenMetadata.push({
         ...commonFields,
         type: TokenType.collateral,
-        hypWrapperAddress: token.hypCollateralAddress,
+        tokenRouterAddress: token.hypCollateralAddress,
         address: token.address,
       });
     } else if (type == TokenType.native) {
       tokenMetadata.push({
         ...commonFields,
         type: TokenType.native,
-        hypWrapperAddress: token.hypNativeAddress,
+        tokenRouterAddress: token.hypNativeAddress,
         // Note, using 0x000... address to help identify native tokens
         address: ethers.constants.AddressZero,
       });

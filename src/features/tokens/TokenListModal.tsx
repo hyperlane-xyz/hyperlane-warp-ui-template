@@ -7,20 +7,21 @@ import { Modal } from '../../components/layout/Modal';
 import { getAllTokens } from './metadata';
 import { RoutesMap, hasTokenRoute } from './routes';
 import { TokenMetadata } from './types';
+import { isNativeToken } from './utils';
 
 export function TokenListModal({
   isOpen,
   close,
   onSelect,
-  sourceChainId,
+  originChainId,
   destinationChainId,
   tokenRoutes,
 }: {
   isOpen: boolean;
   close: () => void;
   onSelect: (token: TokenMetadata) => void;
-  sourceChainId: number;
-  destinationChainId: number;
+  originChainId: ChainId;
+  destinationChainId: ChainId;
   tokenRoutes: RoutesMap;
 }) {
   const [search, setSearch] = useState('');
@@ -51,7 +52,7 @@ export function TokenListModal({
         autoComplete="off"
       />
       <TokenList
-        sourceChainId={sourceChainId}
+        originChainId={originChainId}
         destinationChainId={destinationChainId}
         tokenRoutes={tokenRoutes}
         searchQuery={search}
@@ -62,14 +63,14 @@ export function TokenListModal({
 }
 
 export function TokenList({
-  sourceChainId,
+  originChainId,
   destinationChainId,
   tokenRoutes,
   searchQuery,
   onSelect,
 }: {
-  sourceChainId: number;
-  destinationChainId: number;
+  originChainId: ChainId;
+  destinationChainId: ChainId;
   tokenRoutes: RoutesMap;
   searchQuery: string;
   onSelect: (token: TokenMetadata) => void;
@@ -77,7 +78,7 @@ export function TokenList({
   const tokens = useMemo(() => {
     return getAllTokens().filter((t) => {
       const q = searchQuery?.trim().toLowerCase();
-      const hasRoute = hasTokenRoute(sourceChainId, destinationChainId, t.address, tokenRoutes);
+      const hasRoute = hasTokenRoute(originChainId, destinationChainId, t.address, tokenRoutes);
       if (!q) return hasRoute;
       else
         return (
@@ -87,7 +88,7 @@ export function TokenList({
             t.address.toLowerCase().includes(q))
         );
     });
-  }, [searchQuery, sourceChainId, destinationChainId, tokenRoutes]);
+  }, [searchQuery, originChainId, destinationChainId, tokenRoutes]);
 
   return (
     <div className="flex flex-col items-stretch divide-y divide-gray-200">
@@ -105,7 +106,9 @@ export function TokenList({
               <div className="text-xs text-gray-500 w-14 truncate">{t.name || 'Unknown'}</div>
             </div>
             <div className="ml-3 text-left">
-              <div className="text-xs">{`Address: ${t.address}`}</div>
+              <div className="text-xs">
+                {isNativeToken(t.address) ? 'Native chain token' : `Address: ${t.address}`}
+              </div>
               <div className=" mt-0.5 text-xs">{`Decimals: ${t.decimals}`}</div>
             </div>
           </button>

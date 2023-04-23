@@ -1,35 +1,36 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
+import { HypERC20Collateral, TokenType } from '@hyperlane-xyz/hyperlane-token';
 import { utils } from '@hyperlane-xyz/utils';
 
 import { areAddressesEqual, isValidAddress, normalizeAddress } from '../../utils/addresses';
 import { logger } from '../../utils/logger';
 import { getErc20Contract } from '../contracts/erc20';
-import { getHypErc20CollateralContract } from '../contracts/hypErc20';
+import { getTokenRouterContract } from '../contracts/hypErc20';
 import { getProvider } from '../multiProvider';
 
 import { getAllTokens } from './metadata';
 import { TokenMetadata, TokenMetadataWithHypTokens } from './types';
 
 export enum RouteType {
-  NativeToRemote = 'nativeToRemote',
-  RemoteToRemote = 'remoteToRemote',
-  RemoteToNative = 'remoteToNative',
+  BaseToSynthetic = 'baseToSynthetic',
+  SyntheticToSynthetic = 'syntheticToSynthetic',
+  SyntheticToBase = 'syntheticToBase',
 }
 
 export interface Route {
   type: RouteType;
-  nativeChainId: number;
-  nativeTokenAddress: Address;
-  hypCollateralAddress: Address;
-  sourceTokenAddress: Address;
+  baseChainId: ChainId;
+  baseTokenAddress: Address;
+  tokenRouterAddress: Address;
+  originTokenAddress: Address;
   destTokenAddress: Address;
   decimals: number;
 }
 
-// Source chain to destination chain to Route
-export type RoutesMap = Record<number, Record<number, Route[]>>;
+// Origin chain to destination chain to Route
+export type RoutesMap = Record<ChainId, Record<ChainId, Route[]>>;
 
 export function useTokenRoutes() {
   const {
@@ -57,36 +58,39 @@ export function useTokenRoutes() {
 async function fetchRemoteTokensForCollateralToken(
   token: TokenMetadata,
 ): Promise<TokenMetadataWithHypTokens> {
-  const { chainId, symbol, decimals, hypCollateralAddress } = token;
+  const { type, chainId, symbol, decimals, tokenRouterAddress } = token;
   logger.info('Inspecting token:', symbol);
   const provider = getProvider(chainId);
-  const collateralContract = getHypErc20CollateralContract(hypCollateralAddress, provider);
+  const tokenRouterContract = getTokenRouterContract(type, tokenRouterAddress, provider);
 
-  logger.info('Validating token metadata');
-  const wrappedTokenAddr = await collateralContract.wrappedToken();
-  const erc20 = getErc20Contract(wrappedTokenAddr, getProvider(chainId));
-  const decimalsOnChain = await erc20.decimals();
-  if (decimals !== decimalsOnChain) {
-    throw new Error(
-      `Token config decimals ${decimals} does not match contract decimals ${decimalsOnChain}`,
-    );
-  }
-  const symbolOnChain = await erc20.symbol();
-  if (symbol !== symbolOnChain) {
-    throw new Error(
-      `Token config symbol ${symbol} does not match contract decimals ${symbolOnChain}`,
-    );
+  if (type === TokenType.collateral) {
+    logger.info('Validating token metadata');
+    const collateralContract = tokenRouterContract as HypERC20Collateral;
+    const wrappedTokenAddr = await collateralContract.wrappedToken();
+    const erc20 = getErc20Contract(wrappedTokenAddr, getProvider(chainId));
+    const decimalsOnChain = await erc20.decimals();
+    if (decimals !== decimalsOnChain) {
+      throw new Error(
+        `Token config decimals ${decimals} does not match contract decimals ${decimalsOnChain}`,
+      );
+    }
+    const symbolOnChain = await erc20.symbol();
+    if (symbol !== symbolOnChain) {
+      throw new Error(
+        `Token config symbol ${symbol} does not match contract decimals ${symbolOnChain}`,
+      );
+    }
   }
 
   logger.info('Fetching connected domains');
-  const domains = await collateralContract.domains();
+  const domains = await tokenRouterContract.domains();
   logger.info(`Found ${domains.length} connected domains:`, domains);
 
   logger.info('Getting domain router address');
-  const hypTokenByteAddresses = await Promise.all(
-    domains.map((d) => collateralContract.routers(d)),
+  const hypTokenAddressesAsBytes32 = await Promise.all(
+    domains.map((d) => tokenRouterContract.routers(d)),
   );
-  const hypTokenAddresses = hypTokenByteAddresses.map((b) => utils.bytes32ToAddress(b));
+  const hypTokenAddresses = hypTokenAddressesAsBytes32.map((b) => utils.bytes32ToAddress(b));
   logger.info(`Addresses found:`, hypTokenAddresses);
   const hypTokens = hypTokenAddresses.map((addr, i) => ({
     chainId: domains[i],
@@ -101,11 +105,11 @@ function computeTokenRoutes(tokens: TokenMetadataWithHypTokens[]) {
 
   // Instantiate map structure
   const allChainIds = getChainsFromTokens(tokens);
-  for (const source of allChainIds) {
-    tokenRoutes[source] = {};
+  for (const origin of allChainIds) {
+    tokenRoutes[origin] = {};
     for (const dest of allChainIds) {
-      if (source === dest) continue;
-      tokenRoutes[source][dest] = [];
+      if (origin === dest) continue;
+      tokenRoutes[origin][dest] = [];
     }
   }
 
@@ -113,48 +117,48 @@ function computeTokenRoutes(tokens: TokenMetadataWithHypTokens[]) {
   for (const token of tokens) {
     for (const hypToken of token.hypTokens) {
       const {
-        chainId: nativeChainId,
-        address: nativeTokenAddress,
-        hypCollateralAddress,
+        chainId: baseChainId,
+        address: baseTokenAddress,
+        tokenRouterAddress,
         decimals,
       } = token;
-      const { chainId: remoteChainId, address: hypTokenAddress } = hypToken;
+      const { chainId: syntheticChainId, address: hypTokenAddress } = hypToken;
 
       const commonRouteProps = {
-        nativeChainId,
-        nativeTokenAddress,
-        hypCollateralAddress,
+        baseChainId: baseChainId,
+        baseTokenAddress,
+        tokenRouterAddress,
       };
-      tokenRoutes[nativeChainId][remoteChainId].push({
-        type: RouteType.NativeToRemote,
+      tokenRoutes[baseChainId][syntheticChainId].push({
+        type: RouteType.BaseToSynthetic,
         ...commonRouteProps,
-        sourceTokenAddress: hypCollateralAddress,
+        originTokenAddress: tokenRouterAddress,
         destTokenAddress: hypTokenAddress,
         decimals,
       });
-      tokenRoutes[remoteChainId][nativeChainId].push({
-        type: RouteType.RemoteToNative,
+      tokenRoutes[syntheticChainId][baseChainId].push({
+        type: RouteType.SyntheticToBase,
         ...commonRouteProps,
-        sourceTokenAddress: hypTokenAddress,
-        destTokenAddress: hypCollateralAddress,
+        originTokenAddress: hypTokenAddress,
+        destTokenAddress: tokenRouterAddress,
         decimals,
       });
 
       for (const otherHypToken of token.hypTokens) {
         // Skip if it's same hypToken as parent loop
-        if (otherHypToken.chainId === remoteChainId) continue;
-        const { chainId: otherRemoteChainId, address: otherHypTokenAddress } = otherHypToken;
-        tokenRoutes[remoteChainId][otherRemoteChainId].push({
-          type: RouteType.RemoteToRemote,
+        if (otherHypToken.chainId === syntheticChainId) continue;
+        const { chainId: otherSynChainId, address: otherHypTokenAddress } = otherHypToken;
+        tokenRoutes[syntheticChainId][otherSynChainId].push({
+          type: RouteType.SyntheticToSynthetic,
           ...commonRouteProps,
-          sourceTokenAddress: hypTokenAddress,
+          originTokenAddress: hypTokenAddress,
           destTokenAddress: otherHypTokenAddress,
           decimals,
         });
-        tokenRoutes[otherRemoteChainId][remoteChainId].push({
-          type: RouteType.RemoteToRemote,
+        tokenRoutes[otherSynChainId][syntheticChainId].push({
+          type: RouteType.SyntheticToSynthetic,
           ...commonRouteProps,
-          sourceTokenAddress: otherHypTokenAddress,
+          originTokenAddress: otherHypTokenAddress,
           destTokenAddress: hypTokenAddress,
           decimals,
         });
@@ -168,45 +172,45 @@ function getChainsFromTokens(tokens: TokenMetadataWithHypTokens[]) {
   const chains = new Set<number>();
   for (const token of tokens) {
     chains.add(token.chainId);
-    for (const remoteToken of token.hypTokens) {
-      chains.add(remoteToken.chainId);
+    for (const hypToken of token.hypTokens) {
+      chains.add(hypToken.chainId);
     }
   }
   return Array.from(chains);
 }
 
 export function getTokenRoutes(
-  sourceChainId: number,
-  destinationChainId: number,
+  originChainId: ChainId,
+  destinationChainId: ChainId,
   tokenRoutes: RoutesMap,
 ): Route[] {
-  return tokenRoutes[sourceChainId]?.[destinationChainId] || [];
+  return tokenRoutes[originChainId]?.[destinationChainId] || [];
 }
 
 export function getTokenRoute(
-  sourceChainId: number,
-  destinationChainId: number,
-  nativeTokenAddress: Address,
+  originChainId: ChainId,
+  destinationChainId: ChainId,
+  baseTokenAddress: Address,
   tokenRoutes: RoutesMap,
 ): Route | null {
-  if (!isValidAddress(nativeTokenAddress)) return null;
+  if (!isValidAddress(baseTokenAddress)) return null;
   return (
-    getTokenRoutes(sourceChainId, destinationChainId, tokenRoutes).find((r) =>
-      areAddressesEqual(nativeTokenAddress, r.nativeTokenAddress),
+    getTokenRoutes(originChainId, destinationChainId, tokenRoutes).find((r) =>
+      areAddressesEqual(baseTokenAddress, r.baseTokenAddress),
     ) || null
   );
 }
 
 export function hasTokenRoute(
-  sourceChainId: number,
-  destinationChainId: number,
-  nativeTokenAddress: Address,
+  originChainId: ChainId,
+  destinationChainId: ChainId,
+  baseTokenAddress: Address,
   tokenRoutes: RoutesMap,
 ): boolean {
-  return !!getTokenRoute(sourceChainId, destinationChainId, nativeTokenAddress, tokenRoutes);
+  return !!getTokenRoute(originChainId, destinationChainId, baseTokenAddress, tokenRoutes);
 }
 
-export function useRouteChains(tokenRoutes: RoutesMap): number[] {
+export function useRouteChains(tokenRoutes: RoutesMap): ChainId[] {
   return useMemo(() => {
     const allChainIds = Object.keys(tokenRoutes).map((chainId) => parseInt(chainId));
     const collateralChainIds = getAllTokens().map((t) => t.chainId);

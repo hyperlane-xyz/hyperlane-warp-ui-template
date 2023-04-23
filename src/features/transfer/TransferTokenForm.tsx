@@ -19,17 +19,17 @@ import { logger } from '../../utils/logger';
 import { ChainSelectField } from '../chains/ChainSelectField';
 import { getChainDisplayName } from '../chains/utils';
 import { TokenSelectField } from '../tokens/TokenSelectField';
-import { RouteType, RoutesMap, getTokenRoute, useRouteChains } from '../tokens/routes';
+import { RoutesMap, getTokenRoute, useRouteChains } from '../tokens/routes';
 import { getCachedTokenBalance, useAccountTokenBalance } from '../tokens/useTokenBalance';
 
 import { TransferFormValues } from './types';
-import { useTokenTransfer } from './useTokenTransfer';
+import { isTransferApproveRequired, useTokenTransfer } from './useTokenTransfer';
 
 export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
   const chainIds = useRouteChains(tokenRoutes);
   const initialValues: TransferFormValues = useMemo(
     () => ({
-      sourceChainId: chainIds[0],
+      originChainId: chainIds[0],
       destinationChainId: chainIds[1],
       amount: '',
       tokenAddress: '',
@@ -73,7 +73,7 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
         <Form className="flex flex-col items-stretch w-full mt-2">
           <div className="flex items-center justify-center space-x-7 sm:space-x-10">
             <ChainSelectField
-              name="sourceChainId"
+              name="originChainId"
               label="From"
               chainIds={chainIds}
               disabled={isReview}
@@ -122,7 +122,7 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
               </label>
               <TokenSelectField
                 name="tokenAddress"
-                sourceChainId={values.sourceChainId}
+                originChainId={values.originChainId}
                 destinationChainId={values.destinationChainId}
                 tokenRoutes={tokenRoutes}
                 disabled={isReview}
@@ -200,12 +200,12 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
 
 function SwapChainsButton({ disabled }: { disabled?: boolean }) {
   const { values, setFieldValue } = useFormikContext<TransferFormValues>();
-  const { sourceChainId, destinationChainId } = values;
+  const { originChainId, destinationChainId } = values;
 
   const onClick = () => {
     if (disabled) return;
-    setFieldValue('sourceChainId', destinationChainId);
-    setFieldValue('destinationChainId', sourceChainId);
+    setFieldValue('originChainId', destinationChainId);
+    setFieldValue('destinationChainId', originChainId);
   };
 
   return (
@@ -228,14 +228,14 @@ function TokenBalance({ label, balance }: { label: string; balance?: string | nu
 
 function useSelfTokenBalance(tokenRoutes) {
   const { values } = useFormikContext<TransferFormValues>();
-  const { sourceChainId, destinationChainId, tokenAddress } = values;
-  const route = getTokenRoute(sourceChainId, destinationChainId, tokenAddress, tokenRoutes);
+  const { originChainId, destinationChainId, tokenAddress } = values;
+  const route = getTokenRoute(originChainId, destinationChainId, tokenAddress, tokenRoutes);
   const addressForBalance = !route
     ? ''
-    : route.nativeChainId === sourceChainId
+    : route.baseChainId === originChainId
     ? tokenAddress
-    : route.sourceTokenAddress;
-  return useAccountTokenBalance(sourceChainId, addressForBalance);
+    : route.originTokenAddress;
+  return useAccountTokenBalance(originChainId, addressForBalance);
 }
 
 function SelfTokenBalance({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
@@ -245,11 +245,11 @@ function SelfTokenBalance({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
 
 function RecipientTokenBalance({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
   const { values } = useFormikContext<TransferFormValues>();
-  const { sourceChainId, destinationChainId, tokenAddress } = values;
-  const route = getTokenRoute(sourceChainId, destinationChainId, tokenAddress, tokenRoutes);
+  const { originChainId, destinationChainId, tokenAddress } = values;
+  const route = getTokenRoute(originChainId, destinationChainId, tokenAddress, tokenRoutes);
   const addressForBalance = !route
     ? ''
-    : route.nativeChainId === destinationChainId
+    : route.baseChainId === destinationChainId
     ? tokenAddress
     : route.destTokenAddress;
   const { balance } = useAccountTokenBalance(destinationChainId, addressForBalance);
@@ -296,12 +296,12 @@ function SelfButton({ disabled }: { disabled?: boolean }) {
 
 function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes: RoutesMap }) {
   const {
-    values: { amount, sourceChainId, destinationChainId, tokenAddress },
+    values: { amount, originChainId, destinationChainId, tokenAddress },
   } = useFormikContext<TransferFormValues>();
 
-  const route = getTokenRoute(sourceChainId, destinationChainId, tokenAddress, tokenRoutes);
+  const route = getTokenRoute(originChainId, destinationChainId, tokenAddress, tokenRoutes);
   const weiAmount = toWei(amount, route?.decimals).toString();
-  const requiresApprove = route?.type === RouteType.NativeToRemote;
+  const isApproveRequired = route && isTransferApproveRequired(route, tokenAddress);
   return (
     <div
       className={`${
@@ -310,17 +310,17 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
     >
       <label className="mt-4 block uppercase text-sm text-gray-500 pl-0.5">Transactions</label>
       <div className="mt-1.5 px-2.5 py-2 space-y-2 rounded border border-gray-400 bg-gray-150 text-sm break-all">
-        {requiresApprove && (
+        {isApproveRequired && (
           <div>
             <h4>Transaction 1: Approve Transfer</h4>
             <div className="mt-1.5 ml-1.5 pl-2 border-l border-gray-300 space-y-1.5 text-xs">
               <p>{`Token Address: ${tokenAddress}`}</p>
-              <p>{`Collateral Address: ${route?.hypCollateralAddress}`}</p>
+              <p>{`Collateral Address: ${route?.tokenRouterAddress}`}</p>
             </div>
           </div>
         )}
         <div>
-          <h4>{`Transaction${requiresApprove ? ' 2' : ''}: Transfer Remote`}</h4>
+          <h4>{`Transaction${isApproveRequired ? ' 2' : ''}: Transfer Remote`}</h4>
           <div className="mt-1.5 ml-1.5 pl-2 border-l border-gray-300 space-y-1.5 text-xs">
             <p>{`Remote Token: ${route?.destTokenAddress}`}</p>
             <p>{`Amount (wei): ${weiAmount}`}</p>
@@ -332,11 +332,11 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
 }
 
 function validateFormValues(
-  { sourceChainId, destinationChainId, amount, tokenAddress, recipientAddress }: TransferFormValues,
+  { originChainId, destinationChainId, amount, tokenAddress, recipientAddress }: TransferFormValues,
   queryClient: QueryClient,
   accountAddress?: string,
 ) {
-  if (!sourceChainId) return { sourceChainId: 'Invalid source chain' };
+  if (!originChainId) return { originChainId: 'Invalid origin chain' };
   if (!destinationChainId) return { destinationChainId: 'Invalid destination chain' };
   if (!isValidAddress(recipientAddress)) return { recipientAddress: 'Invalid recipient' };
   if (!isValidAddress(tokenAddress)) return { tokenAddress: 'Invalid token' };
@@ -344,7 +344,7 @@ function validateFormValues(
   if (!parsedAmount || parsedAmount.lte(0)) return { amount: 'Invalid amount' };
   const cachedBalance = getCachedTokenBalance(
     queryClient,
-    sourceChainId,
+    originChainId,
     tokenAddress,
     accountAddress,
   );

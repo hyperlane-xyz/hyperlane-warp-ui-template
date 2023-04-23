@@ -12,15 +12,15 @@ import { getChainDisplayName } from './utils';
 type Props = {
   name: string;
   label: string;
-  chainIds: number[];
-  onChange?: (chainId: number) => void;
+  chainIds: ChainId[];
+  onChange?: (chainId: ChainId) => void;
   disabled?: boolean;
 };
 
 export function ChainSelectField({ name, label, chainIds, onChange, disabled }: Props) {
   const [field, , helpers] = useField<number>(name);
 
-  const handleChange = (newChainId: number) => {
+  const handleChange = (newChainId: ChainId) => {
     helpers.setValue(newChainId);
     if (onChange) onChange(newChainId);
   };

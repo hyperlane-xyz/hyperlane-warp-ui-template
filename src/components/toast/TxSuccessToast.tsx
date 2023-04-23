@@ -2,7 +2,7 @@ import { toast } from 'react-toastify';
 
 import { getMultiProvider } from '../../features/multiProvider';
 
-export function toastTxSuccess(msg: string, txHash: string, chainId: number) {
+export function toastTxSuccess(msg: string, txHash: string, chainId: ChainId) {
   toast.success(<TxSuccessToast msg={msg} txHash={txHash} chainId={chainId} />, {
     autoClose: 12000,
   });
@@ -15,7 +15,7 @@ export function TxSuccessToast({
 }: {
   msg: string;
   txHash: string;
-  chainId: number;
+  chainId: ChainId;
 }) {
   const url = getMultiProvider().tryGetExplorerTxUrl(chainId, { hash: txHash });
   return (

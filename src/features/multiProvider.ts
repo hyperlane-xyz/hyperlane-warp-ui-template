@@ -11,6 +11,6 @@ export function getMultiProvider() {
   return multiProvider;
 }
 
-export function getProvider(chainId: number) {
+export function getProvider(chainId: ChainId) {
   return getMultiProvider().getProvider(chainId);
 }

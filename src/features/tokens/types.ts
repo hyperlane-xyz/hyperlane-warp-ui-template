@@ -78,7 +78,7 @@ interface NativeTokenMetadata extends BaseTokenMetadata {
 export type TokenMetadata = CollateralTokenMetadata | NativeTokenMetadata;
 
 /**
- * Extended types including remote hyp token addresses
+ * Extended types including synthetic hyp token addresses
  */
 interface HypTokens {
   hypTokens: Array<{ chainId: ChainId; address: Address }>;

@@ -14,9 +14,9 @@ import { getAllTokens } from './metadata';
 import { TokenMetadata, TokenMetadataWithHypTokens } from './types';
 
 export enum RouteType {
-  BaseToRemote = 'baseToRemote',
-  RemoteToRemote = 'remoteToRemote',
-  RemoteToBase = 'remoteToBase',
+  BaseToSynthetic = 'baseToSynthetic',
+  SyntheticToSynthetic = 'syntheticToSynthetic',
+  SyntheticToBase = 'syntheticToBase',
 }
 
 export interface Route {
@@ -122,22 +122,22 @@ function computeTokenRoutes(tokens: TokenMetadataWithHypTokens[]) {
         tokenRouterAddress,
         decimals,
       } = token;
-      const { chainId: remoteChainId, address: hypTokenAddress } = hypToken;
+      const { chainId: syntheticChainId, address: hypTokenAddress } = hypToken;
 
       const commonRouteProps = {
         baseChainId: baseChainId,
         baseTokenAddress,
         tokenRouterAddress,
       };
-      tokenRoutes[baseChainId][remoteChainId].push({
-        type: RouteType.BaseToRemote,
+      tokenRoutes[baseChainId][syntheticChainId].push({
+        type: RouteType.BaseToSynthetic,
         ...commonRouteProps,
         originTokenAddress: tokenRouterAddress,
         destTokenAddress: hypTokenAddress,
         decimals,
       });
-      tokenRoutes[remoteChainId][baseChainId].push({
-        type: RouteType.RemoteToBase,
+      tokenRoutes[syntheticChainId][baseChainId].push({
+        type: RouteType.SyntheticToBase,
         ...commonRouteProps,
         originTokenAddress: hypTokenAddress,
         destTokenAddress: tokenRouterAddress,
@@ -146,17 +146,17 @@ function computeTokenRoutes(tokens: TokenMetadataWithHypTokens[]) {
 
       for (const otherHypToken of token.hypTokens) {
         // Skip if it's same hypToken as parent loop
-        if (otherHypToken.chainId === remoteChainId) continue;
-        const { chainId: otherRemoteChainId, address: otherHypTokenAddress } = otherHypToken;
-        tokenRoutes[remoteChainId][otherRemoteChainId].push({
-          type: RouteType.RemoteToRemote,
+        if (otherHypToken.chainId === syntheticChainId) continue;
+        const { chainId: otherSynChainId, address: otherHypTokenAddress } = otherHypToken;
+        tokenRoutes[syntheticChainId][otherSynChainId].push({
+          type: RouteType.SyntheticToSynthetic,
           ...commonRouteProps,
           originTokenAddress: hypTokenAddress,
           destTokenAddress: otherHypTokenAddress,
           decimals,
         });
-        tokenRoutes[otherRemoteChainId][remoteChainId].push({
-          type: RouteType.RemoteToRemote,
+        tokenRoutes[otherSynChainId][syntheticChainId].push({
+          type: RouteType.SyntheticToSynthetic,
           ...commonRouteProps,
           originTokenAddress: otherHypTokenAddress,
           destTokenAddress: hypTokenAddress,
@@ -172,8 +172,8 @@ function getChainsFromTokens(tokens: TokenMetadataWithHypTokens[]) {
   const chains = new Set<number>();
   for (const token of tokens) {
     chains.add(token.chainId);
-    for (const remoteToken of token.hypTokens) {
-      chains.add(remoteToken.chainId);
+    for (const hypToken of token.hypTokens) {
+      chains.add(hypToken.chainId);
     }
   }
   return Array.from(chains);

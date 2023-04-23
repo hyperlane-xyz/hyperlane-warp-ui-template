@@ -57,9 +57,9 @@ export function useTokenTransfer(onDone?: () => void) {
         );
         if (!tokenRoute) throw new Error('No token route found between chains');
 
-        const isBaseToRemote = tokenRoute.type === RouteType.BaseToRemote;
+        const isBaseToSynthetic = tokenRoute.type === RouteType.BaseToSynthetic;
         const isTokenNative = isNativeToken(tokenAddress);
-        const isApproveRequired = !isTokenNative && isBaseToRemote;
+        const isApproveRequired = !isTokenNative && isBaseToSynthetic;
         const weiAmount = toWei(amount, tokenRoute.decimals).toString();
         const provider = getProvider(originChainId);
 
@@ -103,7 +103,7 @@ export function useTokenTransfer(onDone?: () => void) {
         }
 
         updateTransferStatus(transferIndex, (status = TransferStatus.CreatingTransfer));
-        const contractType: TokenType = !isBaseToRemote
+        const contractType: TokenType = !isBaseToSynthetic
           ? TokenType.synthetic
           : isTokenNative
           ? TokenType.native

@@ -301,7 +301,7 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
 
   const route = getTokenRoute(originChainId, destinationChainId, tokenAddress, tokenRoutes);
   const weiAmount = toWei(amount, route?.decimals).toString();
-  const requiresApprove = route?.type === RouteType.BaseToRemote;
+  const requiresApprove = route?.type === RouteType.BaseToSynthetic;
   return (
     <div
       className={`${

@@ -19,11 +19,11 @@ import { logger } from '../../utils/logger';
 import { ChainSelectField } from '../chains/ChainSelectField';
 import { getChainDisplayName } from '../chains/utils';
 import { TokenSelectField } from '../tokens/TokenSelectField';
-import { RouteType, RoutesMap, getTokenRoute, useRouteChains } from '../tokens/routes';
+import { RoutesMap, getTokenRoute, useRouteChains } from '../tokens/routes';
 import { getCachedTokenBalance, useAccountTokenBalance } from '../tokens/useTokenBalance';
 
 import { TransferFormValues } from './types';
-import { useTokenTransfer } from './useTokenTransfer';
+import { isTransferApproveRequired, useTokenTransfer } from './useTokenTransfer';
 
 export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
   const chainIds = useRouteChains(tokenRoutes);
@@ -301,7 +301,7 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
 
   const route = getTokenRoute(originChainId, destinationChainId, tokenAddress, tokenRoutes);
   const weiAmount = toWei(amount, route?.decimals).toString();
-  const requiresApprove = route?.type === RouteType.BaseToSynthetic;
+  const isApproveRequired = route && isTransferApproveRequired(route, tokenAddress);
   return (
     <div
       className={`${
@@ -310,7 +310,7 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
     >
       <label className="mt-4 block uppercase text-sm text-gray-500 pl-0.5">Transactions</label>
       <div className="mt-1.5 px-2.5 py-2 space-y-2 rounded border border-gray-400 bg-gray-150 text-sm break-all">
-        {requiresApprove && (
+        {isApproveRequired && (
           <div>
             <h4>Transaction 1: Approve Transfer</h4>
             <div className="mt-1.5 ml-1.5 pl-2 border-l border-gray-300 space-y-1.5 text-xs">
@@ -320,7 +320,7 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
           </div>
         )}
         <div>
-          <h4>{`Transaction${requiresApprove ? ' 2' : ''}: Transfer Remote`}</h4>
+          <h4>{`Transaction${isApproveRequired ? ' 2' : ''}: Transfer Remote`}</h4>
           <div className="mt-1.5 ml-1.5 pl-2 border-l border-gray-300 space-y-1.5 text-xs">
             <p>{`Remote Token: ${route?.destTokenAddress}`}</p>
             <p>{`Amount (wei): ${weiAmount}`}</p>

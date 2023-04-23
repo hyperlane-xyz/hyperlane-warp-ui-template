@@ -15,11 +15,11 @@ export const tokenList: WarpTokenConfig = [
   // Example native token
   // {
   //   type: 'native',
-  //   chainId: 5,
-  //   hypNativeAddress: '0x145de8760021c4ac6676376691b78038d3DE9097',
-  //   name: 'ether',
+  //   chainId: 11155111,
+  //   name: 'Ether',
   //   symbol: 'ETH',
   //   decimals: 18,
+  //   hypNativeAddress: '0xEa44A29da87B5464774978e6A4F4072A4c048949',
   //   logoURI: '/logos/weth.png',
   // },
 ];

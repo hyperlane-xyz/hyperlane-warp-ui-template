@@ -25,14 +25,14 @@ export function useTokenBalance(chainId: ChainId, tokenAddress: Address, account
     isLoading,
     isError: hasError,
     data: balance,
-  } = useQuery(
-    getTokenBalanceKey(chainId, tokenAddress, accountAddress),
-    () => {
+  } = useQuery({
+    queryKey: getTokenBalanceKey(chainId, tokenAddress, accountAddress),
+    queryFn: () => {
       if (!chainId || !tokenAddress || !accountAddress) return null;
       return fetchTokenBalance(chainId, tokenAddress, accountAddress);
     },
-    { retry: false },
-  );
+    refetchInterval: 7500,
+  });
 
   return { isLoading, hasError, balance };
 }
@@ -53,6 +53,7 @@ async function fetchTokenBalance(chainId: ChainId, tokenAddress: Address, accoun
     logger.debug(`Fetching balance for account ${accountAddress} native token on chain ${chainId}`);
     const provider = getProvider(chainId);
     const balance = await provider.getBalance(accountAddress);
+    logger.debug(`Native token balance: ${balance.toString()}`);
     return balance.toString();
   } else {
     logger.debug(
@@ -60,6 +61,7 @@ async function fetchTokenBalance(chainId: ChainId, tokenAddress: Address, accoun
     );
     const erc20 = getErc20Contract(tokenAddress, getProvider(chainId));
     const balance = await erc20.balanceOf(accountAddress);
+    logger.debug(`Token balance: ${balance.toString()}`);
     return balance.toString();
   }
 }

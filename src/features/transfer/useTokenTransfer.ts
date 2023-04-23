@@ -1,4 +1,5 @@
 import { sendTransaction, switchNetwork } from '@wagmi/core';
+import BigNumber from 'bignumber.js';
 import { providers } from 'ethers';
 import { useCallback, useState } from 'react';
 import { toast } from 'react-toastify';
@@ -16,7 +17,7 @@ import { getErc20Contract } from '../contracts/erc20';
 import { getTokenRouterContract } from '../contracts/hypErc20';
 import { getMultiProvider, getProvider } from '../multiProvider';
 import { useStore } from '../store';
-import { RouteType, RoutesMap, getTokenRoute } from '../tokens/routes';
+import { Route, RouteType, RoutesMap, getTokenRoute } from '../tokens/routes';
 import { isNativeToken } from '../tokens/utils';
 
 import { TransferFormValues, TransferStatus } from './types';
@@ -59,7 +60,6 @@ export function useTokenTransfer(onDone?: () => void) {
 
         const isBaseToSynthetic = tokenRoute.type === RouteType.BaseToSynthetic;
         const isTokenNative = isNativeToken(tokenAddress);
-        const isApproveRequired = !isTokenNative && isBaseToSynthetic;
         const weiAmount = toWei(amount, tokenRoute.decimals).toString();
         const provider = getProvider(originChainId);
 
@@ -77,7 +77,7 @@ export function useTokenTransfer(onDone?: () => void) {
           await sleep(1500);
         }
 
-        if (isApproveRequired) {
+        if (isTransferApproveRequired(tokenRoute, tokenAddress)) {
           updateTransferStatus(transferIndex, (status = TransferStatus.CreatingApprove));
           const erc20 = getErc20Contract(tokenAddress, provider);
           const approveTxRequest = await erc20.populateTransaction.approve(
@@ -114,12 +114,14 @@ export function useTokenTransfer(onDone?: () => void) {
           provider,
         );
         const gasPayment = await tokenRouterContract.quoteGasPayment(destinationChainId);
+        // TODO remove when router is fixed
+        const paddedGasPayment = new BigNumber(gasPayment.toString()).multipliedBy(1.5).toFixed(0);
         const transferTxRequest = await tokenRouterContract.populateTransaction.transferRemote(
           destinationChainId,
           utils.addressToBytes32(recipientAddress),
           weiAmount,
           {
-            value: gasPayment,
+            value: paddedGasPayment,
           },
         );
 
@@ -161,6 +163,10 @@ export function useTokenTransfer(onDone?: () => void) {
     isLoading,
     triggerTransactions,
   };
+}
+
+export function isTransferApproveRequired(route: Route, tokenAddress: string) {
+  return !isNativeToken(tokenAddress) && route.type === RouteType.BaseToSynthetic;
 }
 
 function tryGetMsgIdFromTransferReceipt(receipt: providers.TransactionReceipt) {

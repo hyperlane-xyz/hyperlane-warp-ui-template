@@ -7,6 +7,7 @@ import { Modal } from '../../components/layout/Modal';
 import { getAllTokens } from './metadata';
 import { RoutesMap, hasTokenRoute } from './routes';
 import { TokenMetadata } from './types';
+import { isNativeToken } from './utils';
 
 export function TokenListModal({
   isOpen,
@@ -105,7 +106,9 @@ export function TokenList({
               <div className="text-xs text-gray-500 w-14 truncate">{t.name || 'Unknown'}</div>
             </div>
             <div className="ml-3 text-left">
-              <div className="text-xs">{`Address: ${t.address}`}</div>
+              <div className="text-xs">
+                {isNativeToken(t.address) ? 'Native chain token' : `Address: ${t.address}`}
+              </div>
               <div className=" mt-0.5 text-xs">{`Decimals: ${t.decimals}`}</div>
             </div>
           </button>

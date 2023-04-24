@@ -1,5 +1,4 @@
 import { sendTransaction, switchNetwork } from '@wagmi/core';
-import BigNumber from 'bignumber.js';
 import { providers } from 'ethers';
 import { useCallback, useState } from 'react';
 import { toast } from 'react-toastify';
@@ -114,14 +113,13 @@ export function useTokenTransfer(onDone?: () => void) {
           provider,
         );
         const gasPayment = await tokenRouterContract.quoteGasPayment(destinationChainId);
-        // TODO remove when router is fixed
-        const paddedGasPayment = new BigNumber(gasPayment.toString()).multipliedBy(1.5).toFixed(0);
+        const msgValue = contractType === TokenType.native ? gasPayment.add(weiAmount) : gasPayment;
         const transferTxRequest = await tokenRouterContract.populateTransaction.transferRemote(
           destinationChainId,
           utils.addressToBytes32(recipientAddress),
           weiAmount,
           {
-            value: paddedGasPayment,
+            value: msgValue,
           },
         );
 

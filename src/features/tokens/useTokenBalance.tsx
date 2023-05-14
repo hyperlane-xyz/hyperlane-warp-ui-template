@@ -2,7 +2,7 @@ import { QueryClient, useQuery } from '@tanstack/react-query';
 import { useAccount } from 'wagmi';
 
 import { logger } from '../../utils/logger';
-import { getErc20Contract } from '../contracts/erc20';
+import { getErc20Contract } from '../contracts/token';
 import { getProvider } from '../multiProvider';
 
 import { isNativeToken } from './utils';

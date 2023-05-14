@@ -7,7 +7,7 @@ const commonTokenFields = z.object({
   chainId: z.number().positive(),
   name: z.string(),
   symbol: z.string(),
-  decimals: z.number().positive(),
+  decimals: z.number().nonnegative(), // decimals = 0 when convert balanceOf ERC721
   logoURI: z.string().optional(),
 });
 type CommonTokenFields = z.infer<typeof commonTokenFields>;
@@ -30,6 +30,7 @@ const CollateralTokenSchema = commonTokenFields.extend({
   type: z.literal(TokenType.collateral),
   address: z.string(),
   hypCollateralAddress: z.string(),
+  isERC721: z.boolean(),
 });
 
 interface CollateralTokenConfig extends BaseTokenConfig {
@@ -37,6 +38,7 @@ interface CollateralTokenConfig extends BaseTokenConfig {
   type: TokenType.collateral | 'collateral';
   address: Address;
   hypCollateralAddress: Address;
+  isERC721: boolean | false;
 }
 
 const NativeTokenSchema = commonTokenFields.extend({
@@ -50,7 +52,7 @@ interface NativeTokenConfig extends BaseTokenConfig {
 }
 
 export const WarpTokenConfigSchema = z.array(CollateralTokenSchema.or(NativeTokenSchema));
-export type WarpTokenConfig = Array<CollateralTokenConfig | NativeTokenConfig>;
+export type WarpTokenConfig = Array< CollateralTokenConfig | NativeTokenConfig>;
 
 /**
  * Types for use in the app after processing config
@@ -67,6 +69,7 @@ interface BaseTokenMetadata extends CommonTokenFields {
 
 interface CollateralTokenMetadata extends BaseTokenMetadata {
   type: TokenType.collateral;
+  isERC721: boolean | false;
 }
 
 type ZeroAddress = `${typeof ethers.constants.AddressZero}`;

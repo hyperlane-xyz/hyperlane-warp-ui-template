@@ -8,6 +8,7 @@ import ChevronIcon from '../../images/icons/chevron-down.svg';
 import { TokenListModal } from './TokenListModal';
 import { RoutesMap } from './routes';
 import { TokenMetadata } from './types';
+import { TokenType } from '@hyperlane-xyz/hyperlane-token';
 
 type Props = {
   name: string;
@@ -15,6 +16,7 @@ type Props = {
   destinationChainId: ChainId;
   tokenRoutes: RoutesMap;
   disabled?: boolean;
+  setIsERC721: (data: boolean) => void;
 };
 
 export function TokenSelectField({
@@ -23,6 +25,7 @@ export function TokenSelectField({
   destinationChainId,
   tokenRoutes,
   disabled,
+  setIsERC721
 }: Props) {
   const [field, , helpers] = useField<Address>(name);
 
@@ -33,6 +36,7 @@ export function TokenSelectField({
     // Set the token address value in formik state
     helpers.setValue(newToken.address);
     setToken(newToken);
+    setIsERC721(newToken.type === TokenType.collateral ? newToken.isERC721 : false)
   };
 
   const [isModalOpen, setIsModalOpen] = useState(false);

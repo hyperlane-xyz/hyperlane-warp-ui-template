@@ -1,13 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { HypERC20Collateral, TokenType } from '@hyperlane-xyz/hyperlane-token';
+import { HypERC20Collateral, HypERC721Collateral, TokenType } from '@hyperlane-xyz/hyperlane-token';
 import { utils } from '@hyperlane-xyz/utils';
 
 import { areAddressesEqual, isValidAddress, normalizeAddress } from '../../utils/addresses';
 import { logger } from '../../utils/logger';
-import { getErc20Contract } from '../contracts/erc20';
-import { getTokenRouterContract } from '../contracts/hypErc20';
+import { getErc20Contract, getErc721Contract } from '../contracts/token';
+import { getTokenRouterContract } from '../contracts/hypToken';
 import { getProvider } from '../multiProvider';
 
 import { getAllTokens } from './metadata';
@@ -27,6 +27,7 @@ export interface Route {
   originTokenAddress: Address;
   destTokenAddress: Address;
   decimals: number;
+  isERC721: boolean;
 }
 
 // Origin chain to destination chain to Route
@@ -58,27 +59,46 @@ export function useTokenRoutes() {
 async function fetchRemoteTokensForCollateralToken(
   token: TokenMetadata,
 ): Promise<TokenMetadataWithHypTokens> {
-  const { type, chainId, symbol, decimals, tokenRouterAddress } = token;
-  logger.info('Inspecting token:', symbol);
+  const { type, chainId, name, symbol, decimals, tokenRouterAddress } = token;
+  const isERC721 =
+      type === TokenType.collateral ? token.isERC721 : false
+  logger.info('Inspecting token:', name);
   const provider = getProvider(chainId);
-  const tokenRouterContract = getTokenRouterContract(type, tokenRouterAddress, provider);
-
+  const tokenRouterContract = getTokenRouterContract(type, tokenRouterAddress, provider, isERC721);
   if (type === TokenType.collateral) {
     logger.info('Validating token metadata');
-    const collateralContract = tokenRouterContract as HypERC20Collateral;
-    const wrappedTokenAddr = await collateralContract.wrappedToken();
-    const erc20 = getErc20Contract(wrappedTokenAddr, getProvider(chainId));
-    const decimalsOnChain = await erc20.decimals();
-    if (decimals !== decimalsOnChain) {
-      throw new Error(
-        `Token config decimals ${decimals} does not match contract decimals ${decimalsOnChain}`,
-      );
-    }
-    const symbolOnChain = await erc20.symbol();
-    if (symbol !== symbolOnChain) {
-      throw new Error(
-        `Token config symbol ${symbol} does not match contract decimals ${symbolOnChain}`,
-      );
+    if (isERC721) {
+      const collateralContract = tokenRouterContract as HypERC721Collateral;
+      const wrappedTokenAddr = await collateralContract.wrappedToken();
+      const erc721 = getErc721Contract(wrappedTokenAddr, getProvider(chainId));
+      const nameOnChain = await erc721.name();
+      if (name !== nameOnChain) {
+        throw new Error(
+          `Token config name ${name} does not match contract decimals ${nameOnChain}`,
+        );
+      }
+      const symbolOnChain = await erc721.symbol();
+      if (symbol !== symbolOnChain) {
+        throw new Error(
+          `Token config symbol ${symbol} does not match contract decimals ${symbolOnChain}`,
+        );
+      }
+    } else {
+      const collateralContract = tokenRouterContract as HypERC20Collateral;
+      const wrappedTokenAddr = await collateralContract.wrappedToken();
+      const erc20 = getErc20Contract(wrappedTokenAddr, getProvider(chainId));
+      const decimalsOnChain = await erc20.decimals();
+      if (decimals !== decimalsOnChain) {
+        throw new Error(
+          `Token config decimals ${decimals} does not match contract decimals ${decimalsOnChain}`,
+        );
+      }
+      const symbolOnChain = await erc20.symbol();
+      if (symbol !== symbolOnChain) {
+        throw new Error(
+          `Token config symbol ${symbol} does not match contract decimals ${symbolOnChain}`,
+        );
+      }
     }
   }
 
@@ -122,6 +142,8 @@ function computeTokenRoutes(tokens: TokenMetadataWithHypTokens[]) {
         tokenRouterAddress,
         decimals,
       } = token;
+      const isERC721 =
+        token.type === TokenType.collateral ? token.isERC721 : false
       const { chainId: syntheticChainId, address: hypTokenAddress } = hypToken;
 
       const commonRouteProps = {
@@ -135,6 +157,7 @@ function computeTokenRoutes(tokens: TokenMetadataWithHypTokens[]) {
         originTokenAddress: tokenRouterAddress,
         destTokenAddress: hypTokenAddress,
         decimals,
+        isERC721,
       });
       tokenRoutes[syntheticChainId][baseChainId].push({
         type: RouteType.SyntheticToBase,
@@ -142,6 +165,7 @@ function computeTokenRoutes(tokens: TokenMetadataWithHypTokens[]) {
         originTokenAddress: hypTokenAddress,
         destTokenAddress: tokenRouterAddress,
         decimals,
+        isERC721,
       });
 
       for (const otherHypToken of token.hypTokens) {
@@ -154,6 +178,7 @@ function computeTokenRoutes(tokens: TokenMetadataWithHypTokens[]) {
           originTokenAddress: hypTokenAddress,
           destTokenAddress: otherHypTokenAddress,
           decimals,
+          isERC721
         });
         tokenRoutes[otherSynChainId][syntheticChainId].push({
           type: RouteType.SyntheticToSynthetic,
@@ -161,6 +186,7 @@ function computeTokenRoutes(tokens: TokenMetadataWithHypTokens[]) {
           originTokenAddress: otherHypTokenAddress,
           destTokenAddress: hypTokenAddress,
           decimals,
+          isERC721
         });
       }
     }

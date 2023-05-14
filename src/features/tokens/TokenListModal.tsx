@@ -1,3 +1,4 @@
+import { TokenType } from '@hyperlane-xyz/hyperlane-token';
 import { useMemo, useState } from 'react';
 
 import { TokenIcon } from '../../components/icons/TokenIcon';
@@ -81,6 +82,15 @@ export function TokenList({
       const hasRoute = hasTokenRoute(originChainId, destinationChainId, t.address, tokenRoutes);
       if (!q) return hasRoute;
       else
+        if(t.type === TokenType.collateral) {
+          return (
+            hasRoute &&
+            (t.name.toLowerCase().includes(q) ||
+              t.symbol.toLowerCase().includes(q) ||
+              t.address.toLowerCase().includes(q)) ||
+              t.isERC721
+          );
+        }
         return (
           hasRoute &&
           (t.name.toLowerCase().includes(q) ||
@@ -95,21 +105,24 @@ export function TokenList({
       {tokens.length ? (
         tokens.map((t) => (
           <button
-            className="-mx-2 py-2 px-2 flex items-center rounded hover:bg-gray-100 active:bg-gray-200 transition-all duration-250"
+            className="-mx-2 py-2 px-2 rounded hover:bg-gray-100 active:bg-gray-200 transition-all duration-250"
             key={`${t.chainId}-${t.address}`}
             type="button"
             onClick={() => onSelect(t)}
           >
-            <TokenIcon token={t} size={30} />
-            <div className="ml-3 text-left">
-              <div className="text-sm w-14 truncate">{t.symbol || 'Unknown'}</div>
-              <div className="text-xs text-gray-500 w-14 truncate">{t.name || 'Unknown'}</div>
-            </div>
-            <div className="ml-3 text-left">
-              <div className="text-xs">
-                {isNativeToken(t.address) ? 'Native chain token' : `Address: ${t.address}`}
+            <div className='text-gray-500 text-xs text-left'>{ t.type === TokenType.native ? "Native" : t.isERC721 ? "ERC721" : "ERC20"}</div>
+            <div className='flex items-center'>
+              <TokenIcon token={t} size={30} />
+              <div className="ml-3 text-left">
+                <div className="text-sm w-14 truncate">{t.symbol || 'Unknown'}</div>
+                <div className="text-xs text-gray-500 w-14 truncate">{t.name || 'Unknown'}</div>
               </div>
-              <div className=" mt-0.5 text-xs">{`Decimals: ${t.decimals}`}</div>
+              <div className="ml-3 text-left">
+                <div className="text-xs">
+                  {isNativeToken(t.address) ? 'Native chain token' : `Address: ${t.address}`}
+                </div>
+                <div className=" mt-0.5 text-xs">{`Decimals: ${t.decimals}`}</div>
+              </div>
             </div>
           </button>
         ))

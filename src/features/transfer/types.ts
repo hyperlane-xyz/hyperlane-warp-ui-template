@@ -8,6 +8,14 @@ export interface TransferFormValues {
   recipientAddress: Address;
 }
 
+export interface ERC721TransferFormValues {
+  originChainId: ChainId;
+  destinationChainId: ChainId;
+  tokenId: string;
+  tokenAddress: Address;
+  recipientAddress: Address;
+}
+
 export enum TransferStatus {
   Preparing = 'preparing',
   CreatingApprove = 'creating-approve',
@@ -24,7 +32,7 @@ export enum TransferStatus {
 export interface TransferContext {
   status: TransferStatus;
   route: Route;
-  params: TransferFormValues;
+  params: TransferFormValues | ERC721TransferFormValues;
   originTxHash?: string;
   msgId?: string;
 }

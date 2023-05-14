@@ -11,6 +11,17 @@ export const tokenList: WarpTokenConfig = [
     symbol: 'WETH',
     decimals: 18,
     logoURI: '/logos/weth.png', // See public/logos/
+    isERC721: false,
+  },
+  {
+    type: "collateral",
+    chainId: 5,
+    address: "0xd03483b978461b3162CE9e4c80835b9E81E07018",
+    hypCollateralAddress: "0x1d30DD33886dE2914D610aDE55C55f5d145743AC",
+    name: "MyToken",
+    symbol: "MTK",
+    decimals: 0,
+    isERC721: true,
   },
   // Example native token
   // {

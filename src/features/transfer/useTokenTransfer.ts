@@ -26,144 +26,6 @@ import { TransferFormValues, ERC721TransferFormValues, TransferStatus } from './
 // may require two serial txs, the prepare hooks aren't useful and complicate hook architecture considerably.
 // See https://github.com/hyperlane-xyz/hyperlane-warp-ui-template/issues/19
 // See https://github.com/wagmi-dev/wagmi/discussions/1564
-export function useERC721Transfer(onDone?: () => void) {
-  const { transfers, addTransfer, updateTransferStatus } = useStore((s) => ({
-    transfers: s.transfers,
-    addTransfer: s.addTransfer,
-    updateTransferStatus: s.updateTransferStatus,
-  }));
-  const transferIndex = transfers.length;
-
-  const [isLoading, setIsLoading] = useState(false);
-
-  const chainId = useChainId();
-
-  // TODO implement cancel callback for when modal is closed?
-  const triggerTransactions = useCallback(
-    async (values: TransferFormValues, tokenRoutes: RoutesMap) => {
-      logger.debug('Preparing transfer transaction(s)');
-      setIsLoading(true);
-      let status: TransferStatus = TransferStatus.Preparing;
-      const erc721Values = convertToERC721TransferFormValues(values);
-      try {
-        const { tokenId, originChainId, destinationChainId, recipientAddress, tokenAddress } =
-        erc721Values;
-
-        const tokenRoute = getTokenRoute(
-          originChainId,
-          destinationChainId,
-          tokenAddress,
-          tokenRoutes,
-        );
-        if (!tokenRoute) throw new Error('No token route found between chains');
-
-        const isBaseToSynthetic = tokenRoute.type === RouteType.BaseToSynthetic;
-
-        const provider = getProvider(originChainId);
-
-        addTransfer({
-          status,
-          route: tokenRoute,
-          params: values,
-        });
-
-        if (originChainId !== chainId) {
-          await switchNetwork({
-            chainId: originChainId,
-          });
-          // Some wallets seem to require a brief pause after switch
-          await sleep(1500);
-        }
-
-        if (isTransferApproveRequired(tokenRoute, tokenAddress)) {
-          updateTransferStatus(transferIndex, (status = TransferStatus.CreatingApprove));
-          const erc721 = getErc721Contract(tokenAddress, provider);
-          const approveTxRequest = await erc721.populateTransaction.approve(
-            tokenRoute.tokenRouterAddress,
-            tokenId,
-          );
-
-          updateTransferStatus(transferIndex, (status = TransferStatus.SigningApprove));
-          const { wait: approveWait } = await sendTransaction({
-            chainId: originChainId,
-            request: approveTxRequest,
-            mode: 'recklesslyUnprepared', // See note above function
-          });
-
-          updateTransferStatus(transferIndex, (status = TransferStatus.ConfirmingApprove));
-          const approveTxReceipt = await approveWait(1);
-          logger.debug('Approve transaction confirmed, hash:', approveTxReceipt.transactionHash);
-          toastTxSuccess(
-            'Approve transaction sent!',
-            approveTxReceipt.transactionHash,
-            originChainId,
-          );
-        }
-
-        updateTransferStatus(transferIndex, (status = TransferStatus.CreatingTransfer));
-        const contractType: TokenType = !isBaseToSynthetic
-          ? TokenType.synthetic
-          : TokenType.collateral;
-        console.log({contractType})
-        const tokenRouterContract = getTokenRouterContract(
-          contractType,
-          tokenRoute.originTokenAddress,
-          provider,
-          true
-        );
-        console.log({tokenRouterContract}, {destinationChainId})
-        const gasPayment = await tokenRouterContract.quoteGasPayment(destinationChainId);
-        const msgValue = gasPayment;
-        console.log({msgValue})
-        const transferTxRequest = await tokenRouterContract.populateTransaction.transferRemote(
-          destinationChainId,
-          utils.addressToBytes32(recipientAddress),
-          tokenId,
-          {
-            value: msgValue,
-          },
-        );
-        console.log({transferTxRequest})
-
-        updateTransferStatus(transferIndex, (status = TransferStatus.SigningTransfer));
-        const { wait: transferWait, hash: originTxHash } = await sendTransaction({
-          chainId: originChainId,
-          request: transferTxRequest,
-          mode: 'recklesslyUnprepared', // See note above function
-        });
-
-        updateTransferStatus(transferIndex, (status = TransferStatus.ConfirmingTransfer));
-        const transferReceipt = await transferWait(1);
-        const msgId = tryGetMsgIdFromTransferReceipt(transferReceipt);
-
-        updateTransferStatus(transferIndex, (status = TransferStatus.ConfirmedTransfer), {
-          originTxHash,
-          msgId,
-        });
-        logger.debug('Transfer transaction confirmed, hash:', originTxHash);
-        toastTxSuccess('Remote transfer started!', originTxHash, originChainId);
-      } catch (error) {
-        logger.error(`Error at stage ${status} `, error);
-        updateTransferStatus(transferIndex, TransferStatus.Failed);
-        if (JSON.stringify(error).includes('ChainMismatchError')) {
-          // Wagmi switchNetwork call helps prevent this but isn't foolproof
-          toast.error('Wallet must be connected to origin chain');
-        } else {
-          toast.error(errorMessages[status] || 'Unable to transfer tokens.');
-        }
-      }
-
-      setIsLoading(false);
-      if (onDone) onDone();
-    },
-    [setIsLoading, onDone, chainId, addTransfer, updateTransferStatus, transferIndex],
-  );
-
-  return {
-    isLoading,
-    triggerTransactions,
-  };
-}
 
 export function useTokenTransfer(onDone?: () => void) {
   const { transfers, addTransfer, updateTransferStatus } = useStore((s) => ({
@@ -179,11 +41,10 @@ export function useTokenTransfer(onDone?: () => void) {
 
   // TODO implement cancel callback for when modal is closed?
   const triggerTransactions = useCallback(
-    async (values: TransferFormValues, tokenRoutes: RoutesMap) => {
+    async (values: TransferFormValues, tokenRoutes: RoutesMap, isERC721: boolean) => {
       logger.debug('Preparing transfer transaction(s)');
       setIsLoading(true);
       let status: TransferStatus = TransferStatus.Preparing;
-
       try {
         const { amount, originChainId, destinationChainId, recipientAddress, tokenAddress } =
           values;
@@ -198,7 +59,9 @@ export function useTokenTransfer(onDone?: () => void) {
 
         const isBaseToSynthetic = tokenRoute.type === RouteType.BaseToSynthetic;
         const isTokenNative = isNativeToken(tokenAddress);
-        const weiAmount = toWei(amount, tokenRoute.decimals).toString();
+        const sendValue =
+          isERC721 ? amount : toWei(amount, tokenRoute.decimals).toString();
+
         const provider = getProvider(originChainId);
 
         addTransfer({
@@ -217,10 +80,10 @@ export function useTokenTransfer(onDone?: () => void) {
 
         if (isTransferApproveRequired(tokenRoute, tokenAddress)) {
           updateTransferStatus(transferIndex, (status = TransferStatus.CreatingApprove));
-          const erc20 = getErc20Contract(tokenAddress, provider);
-          const approveTxRequest = await erc20.populateTransaction.approve(
+          const tokenContract = isERC721 ? getErc721Contract(tokenAddress, provider) : getErc20Contract(tokenAddress, provider);
+          const approveTxRequest = await tokenContract.populateTransaction.approve(
             tokenRoute.tokenRouterAddress,
-            weiAmount,
+            sendValue,
           );
 
           updateTransferStatus(transferIndex, (status = TransferStatus.SigningApprove));
@@ -253,11 +116,11 @@ export function useTokenTransfer(onDone?: () => void) {
           false
         );
         const gasPayment = await tokenRouterContract.quoteGasPayment(destinationChainId);
-        const msgValue = contractType === TokenType.native ? gasPayment.add(weiAmount) : gasPayment;
+        const msgValue = contractType === TokenType.native ? gasPayment.add(sendValue) : gasPayment;
         const transferTxRequest = await tokenRouterContract.populateTransaction.transferRemote(
           destinationChainId,
           utils.addressToBytes32(recipientAddress),
-          weiAmount,
+          sendValue,
           {
             value: msgValue,
           },
@@ -305,18 +168,6 @@ export function useTokenTransfer(onDone?: () => void) {
 
 export function isTransferApproveRequired(route: Route, tokenAddress: string) {
   return !isNativeToken(tokenAddress) && route.type === RouteType.BaseToSynthetic;
-}
-
-function convertToERC721TransferFormValues(
-  values: TransferFormValues
-): ERC721TransferFormValues {
-  return {
-    originChainId: values.originChainId,
-    destinationChainId: values.destinationChainId,
-    tokenId: values.amount,
-    tokenAddress: values.tokenAddress,
-    recipientAddress: values.recipientAddress,
-  };
 }
 
 function tryGetMsgIdFromTransferReceipt(receipt: providers.TransactionReceipt) {

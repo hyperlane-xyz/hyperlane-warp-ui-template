@@ -33,7 +33,7 @@ function parseTokenConfigs(configList: WarpTokenConfig): TokenMetadata[] {
         type: TokenType.collateral,
         tokenRouterAddress: token.hypCollateralAddress,
         address: token.address,
-        isERC721: token.isERC721
+        isERC721: !!token.isERC721
       });
     } else if (type == TokenType.native) {
       tokenMetadata.push({

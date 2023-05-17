@@ -23,8 +23,9 @@ import { RoutesMap, getTokenRoute, useRouteChains } from '../tokens/routes';
 import { getCachedTokenBalance, useAccountTokenBalance } from '../tokens/useTokenBalance';
 
 import { TransferFormValues } from './types';
-import { isTransferApproveRequired, useERC721Transfer, useTokenTransfer } from './useTokenTransfer';
+import { isTransferApproveRequired, useTokenTransfer } from './useTokenTransfer';
 import { STANDARD_TOKEN_DECIMALS } from '../../consts/values';
+import { SelectTokenIdField } from '../tokens/SelectTokenIdField';
 
 export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
   const chainIds = useRouteChains(tokenRoutes);
@@ -62,8 +63,7 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
     setIsReview(false);
     // Consider clearing form inputs here
   };
-  const tokenTransaction = useTokenTransfer(onDoneTransactions);
-  const ERC721Transaction = useERC721Transfer(onDoneTransactions);
+  const { triggerTransactions } = useTokenTransfer(onDoneTransactions);
   return (
     <Formik<TransferFormValues>
       initialValues={initialValues}
@@ -139,17 +139,21 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
                 </label>
                 <SelfTokenBalance tokenRoutes={tokenRoutes} />
               </div>
-              <div className="relative w-full">
-                <TextField
-                  name="amount"
-                  placeholder="0.00"
-                  classes="w-full"
-                  type="number"
-                  step="any"
-                  disabled={isReview}
-                />
-                {!isERC721 && <MaxButton disabled={isReview} tokenRoutes={tokenRoutes} />}
-              </div>
+              { isERC721 ?
+                <SelectTokenIdField name="amount"/>
+                :
+                <div className="relative w-full">
+                  <TextField
+                    name="amount"
+                    placeholder="0.00"
+                    classes="w-full"
+                    type="number"
+                    step="any"
+                    disabled={isReview}
+                  />
+                  <MaxButton disabled={isReview} tokenRoutes={tokenRoutes} />
+                </div>
+              }
             </div>
           </div>
           <div className="mt-4">
@@ -189,7 +193,7 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
               <SolidButton
                 type="button"
                 color="blue"
-                onClick={() => isERC721 ? ERC721Transaction.triggerTransactions(values, tokenRoutes) : tokenTransaction.triggerTransactions(values, tokenRoutes)}
+                onClick={() => triggerTransactions(values, tokenRoutes, isERC721)}
                 classes="flex-1 px-3 py-1.5"
               >
                 {`Send to ${getChainDisplayName(values.destinationChainId)}`}
@@ -226,13 +230,11 @@ function SwapChainsButton({ disabled }: { disabled?: boolean }) {
 }
 
 function TokenBalance({ label, balance, decimals }: { label: string; balance?: string | null; decimals?: number }) {
-  var value;
+  const value =
+    decimals === 0
+    ? fromWei(balance, decimals)
+    : fromWeiRounded(balance, decimals)
 
-  if (decimals === 0){
-    value = fromWei(balance, decimals)
-  } else {
-    value = fromWeiRounded(balance, decimals);
-  }
   return <div className="text-xs text-gray-500">{`${label}: ${value}`}</div>;
 }
 
@@ -366,19 +368,16 @@ function validateFormValues(
   if (!isValidAddress(recipientAddress)) return { recipientAddress: 'Invalid recipient' };
   if (!isValidAddress(tokenAddress)) return { tokenAddress: 'Invalid token' };
   const parsedAmount = tryParseAmount(amount);
-  if (isERC721) {
-    // TODO: Check owner of erc721
-  } else {
-    if (!parsedAmount || parsedAmount.lte(0)) return { amount: 'Invalid amount' };
-    const cachedBalance = getCachedTokenBalance(
-      queryClient,
-      originChainId,
-      tokenAddress,
-      accountAddress,
-    );
-    if (cachedBalance && parsedAmount.gt(cachedBalance) && !config.debug) {
-      return { amount: 'Insufficient balance' };
-    }
+
+  if (!parsedAmount || parsedAmount.lte(0)) return isERC721 ? { amount: 'Invalid TokenId' } : { amount: 'Invalid amount' };
+  const cachedBalance = getCachedTokenBalance(
+    queryClient,
+    originChainId,
+    tokenAddress,
+    accountAddress,
+  );
+  if (cachedBalance && parsedAmount.gt(cachedBalance) && !config.debug) {
+    return { amount: 'Insufficient balance' };
   }
 
   return {};

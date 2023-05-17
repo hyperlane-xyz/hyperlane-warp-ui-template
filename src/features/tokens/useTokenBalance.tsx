@@ -2,7 +2,7 @@ import { QueryClient, useQuery } from '@tanstack/react-query';
 import { useAccount } from 'wagmi';
 
 import { logger } from '../../utils/logger';
-import { getErc20Contract } from '../contracts/token';
+import { getErc20Contract, getErc721Contract } from '../contracts/token';
 import { getProvider } from '../multiProvider';
 
 import { isNativeToken } from './utils';
@@ -65,3 +65,13 @@ async function fetchTokenBalance(chainId: ChainId, tokenAddress: Address, accoun
     return balance.toString();
   }
 }
+
+// async function fetchListOfERC721TokenID(chainId: ChainId, tokenAddress: Address, accountAddress: Address, total: Number) {
+//   logger.debug(`Fetching list of tokenID for account ${accountAddress} on chain ${chainId}`);
+
+//   const erc721 = getErc721Contract(tokenAddress, getProvider(chainId));
+//   await erc721.balanceOf(accountAddress)
+//   const balance = await provider.getBalance(accountAddress);
+//   logger.debug(`Native token balance: ${balance.toString()}`);
+//   return balance.toString();
+// }

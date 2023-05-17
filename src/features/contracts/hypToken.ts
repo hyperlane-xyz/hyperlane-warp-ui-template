@@ -14,20 +14,18 @@ export function getTokenRouterContract(
   type: TokenType,
   contractAddress: Address,
   signerOrProvider: Signer | providers.Provider,
-  isERC721: boolean | false,
+  isERC721: boolean,
 ) {
   if (type === TokenType.collateral) {
-    if (isERC721) {
-      return getHypErc721CollateralContract(contractAddress, signerOrProvider);
-    }
-    return getHypErc20CollateralContract(contractAddress, signerOrProvider);
+    return isERC721
+      ? getHypErc721CollateralContract(contractAddress, signerOrProvider)
+      : getHypErc20CollateralContract(contractAddress, signerOrProvider);
   } else if (type === TokenType.native) {
     return getHypNativeContract(contractAddress, signerOrProvider);
   } else if (type === TokenType.synthetic) {
-    if (isERC721) {
-      return getHypErc721Contract(contractAddress, signerOrProvider);
-    }
-    return getHypErc20Contract(contractAddress, signerOrProvider);
+    return isERC721
+      ? getHypErc721Contract(contractAddress, signerOrProvider)
+      : getHypErc20Contract(contractAddress, signerOrProvider)
   } else {
     throw new Error(`Unsupported token type: ${type}}`);
   }

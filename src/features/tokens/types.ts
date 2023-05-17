@@ -30,7 +30,7 @@ const CollateralTokenSchema = commonTokenFields.extend({
   type: z.literal(TokenType.collateral),
   address: z.string(),
   hypCollateralAddress: z.string(),
-  isERC721: z.boolean(),
+  isERC721: z.boolean().optional(),
 });
 
 interface CollateralTokenConfig extends BaseTokenConfig {
@@ -38,7 +38,7 @@ interface CollateralTokenConfig extends BaseTokenConfig {
   type: TokenType.collateral | 'collateral';
   address: Address;
   hypCollateralAddress: Address;
-  isERC721: boolean | false;
+  isERC721?: boolean;
 }
 
 const NativeTokenSchema = commonTokenFields.extend({
@@ -69,7 +69,7 @@ interface BaseTokenMetadata extends CommonTokenFields {
 
 interface CollateralTokenMetadata extends BaseTokenMetadata {
   type: TokenType.collateral;
-  isERC721: boolean | false;
+  isERC721: boolean;
 }
 
 type ZeroAddress = `${typeof ethers.constants.AddressZero}`;

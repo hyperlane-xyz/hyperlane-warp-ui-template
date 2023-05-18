@@ -4,19 +4,27 @@ import { useState } from 'react';
 
 import ChevronIcon from '../../images/icons/chevron-down.svg';
 import { Modal } from '../../components/layout/Modal';
+import { useTokenIdBalance } from './useTokenBalance';
+import { useAccount } from 'wagmi';
+import { Spinner } from '../../components/animation/Spinner';
 
 type Props = {
   name: string;
+  chainId: ChainId;
+  tokenAddress: Address;
   disabled?: boolean;
 };
 
-export function SelectTokenIdField({ name, disabled }: Props) {
+export function SelectTokenIdField({ name, chainId, tokenAddress, disabled }: Props) {
   const [, , helpers] = useField<number>(name);
   const [tokenId, setTokenId] = useState<string | undefined>(undefined)
+  const { address } = useAccount();
   const handleChange = (newTokenId: string) => {
     helpers.setValue(parseInt(newTokenId));
     setTokenId(newTokenId)
   };
+
+  const { isLoading, tokenIds } = useTokenIdBalance(chainId, tokenAddress, address)
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -28,7 +36,7 @@ export function SelectTokenIdField({ name, disabled }: Props) {
     <div className="flex flex-col items-center">
       <button
         type="button"
-        className={`${styles.base}`}
+        className={styles.base}
         onClick={onClick}
       >
         <div className="flex items-center">
@@ -38,6 +46,8 @@ export function SelectTokenIdField({ name, disabled }: Props) {
       </button>
       <SelectTokenIdModal
         isOpen={isModalOpen}
+        tokenIds={tokenIds}
+        isLoading={isLoading}
         close={() => setIsModalOpen(false)}
         onSelect={handleChange}
       />
@@ -47,10 +57,14 @@ export function SelectTokenIdField({ name, disabled }: Props) {
 
 export function SelectTokenIdModal({
   isOpen,
+  tokenIds,
+  isLoading,
   close,
   onSelect,
 }: {
   isOpen: boolean;
+  tokenIds: string[] | null | undefined
+  isLoading: boolean
   close: () => void;
   onSelect: (tokenId: string) => void;
 }) {
@@ -61,21 +75,27 @@ export function SelectTokenIdModal({
     };
   };
 
-  // const multiProvider = getMultiProvider();
-  const chainMetadata = ["1","2","3","4"];
-
   return (
     <Modal isOpen={isOpen} title="Select TokenId" close={close}>
       <div className="mt-2 flex flex-col space-y-1">
-        {chainMetadata.map((id) => (
-          <button
-            key={id}
-            className="py-1.5 px-2 text-sm flex items-center rounded hover:bg-gray-100 active:bg-gray-200 transition-all duration-200"
-            onClick={onSelectTokenId(id)}
-          >
-            <span className="ml-2">{id}</span>
-          </button>
-        ))}
+        {isLoading ? (
+          <div className="my-24 flex flex-col items-center">
+            <Spinner />
+            <h3 className="mt-5 text-sm text-gray-500">Finding tokenIds</h3>
+          </div>
+        ) : (
+          tokenIds && tokenIds.length !== 0 ? tokenIds.map((id) => (
+            <button
+              key={id}
+              className="py-1.5 px-2 text-sm flex items-center rounded hover:bg-gray-100 active:bg-gray-200 transition-all duration-200"
+              onClick={onSelectTokenId(id)}
+            >
+              <span className="ml-2">{id}</span>
+            </button>
+          )) : (
+            <div className="py-1.5 px-2 text-sm text-gray-500 transition-all duration-200">No tokenIds found</div>
+          )
+        )}
       </div>
     </Modal>
   );

@@ -31,35 +31,35 @@ export function getTokenRouterContract(
   }
 }
 
-function getHypErc20CollateralContract(
+export function getHypErc20CollateralContract(
   contractAddress: Address,
   signerOrProvider: Signer | providers.Provider,
 ) {
   return HypERC20Collateral__factory.connect(contractAddress, signerOrProvider);
 }
 
-function getHypErc721CollateralContract(
+export function getHypErc721CollateralContract(
   contractAddress: Address,
   signerOrProvider: Signer | providers.Provider,
 ) {
   return HypERC721Collateral__factory.connect(contractAddress, signerOrProvider);
 }
 
-function getHypErc20Contract(
+export function getHypErc20Contract(
   contractAddress: Address,
   signerOrProvider: Signer | providers.Provider,
 ) {
   return HypERC20__factory.connect(contractAddress, signerOrProvider);
 }
 
-function getHypErc721Contract(
+export function getHypErc721Contract(
   contractAddress: Address,
   signerOrProvider: Signer | providers.Provider,
 ) {
   return HypERC721__factory.connect(contractAddress, signerOrProvider);
 }
 
-function getHypNativeContract(
+export function getHypNativeContract(
   contractAddress: Address,
   signerOrProvider: Signer | providers.Provider,
 ) {

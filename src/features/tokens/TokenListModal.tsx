@@ -82,21 +82,10 @@ export function TokenList({
       const hasRoute = hasTokenRoute(originChainId, destinationChainId, t.address, tokenRoutes);
       if (!q) return hasRoute;
       else
-        if(t.type === TokenType.collateral) {
-          return (
-            hasRoute &&
-            (t.name.toLowerCase().includes(q) ||
-              t.symbol.toLowerCase().includes(q) ||
-              t.address.toLowerCase().includes(q)) ||
-              t.isERC721
-          );
-        }
-        return (
-          hasRoute &&
-          (t.name.toLowerCase().includes(q) ||
-            t.symbol.toLowerCase().includes(q) ||
-            t.address.toLowerCase().includes(q))
-        );
+        return hasRoute &&
+        (t.name.toLowerCase().includes(q) ||
+          t.symbol.toLowerCase().includes(q) ||
+          t.address.toLowerCase().includes(q));
     });
   }, [searchQuery, originChainId, destinationChainId, tokenRoutes]);
 

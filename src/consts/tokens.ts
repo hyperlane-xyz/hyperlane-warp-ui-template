@@ -11,7 +11,6 @@ export const tokenList: WarpTokenConfig = [
     symbol: 'WETH',
     decimals: 18,
     logoURI: '/logos/weth.png', // See public/logos/
-    isERC721: false,
   },
   {
     type: "collateral",

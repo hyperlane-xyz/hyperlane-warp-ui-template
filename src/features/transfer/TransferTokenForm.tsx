@@ -140,7 +140,11 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
                 <SelfTokenBalance tokenRoutes={tokenRoutes} />
               </div>
               { isERC721 ?
-                <SelectTokenIdField name="amount"/>
+                <SelectTokenIdField
+                  name="amount"
+                  chainId={values.originChainId}
+                  tokenAddress={values.tokenAddress}
+                />
                 :
                 <div className="relative w-full">
                   <TextField

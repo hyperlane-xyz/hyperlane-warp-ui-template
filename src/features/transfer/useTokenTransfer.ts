@@ -19,7 +19,7 @@ import { useStore } from '../store';
 import { Route, RouteType, RoutesMap, getTokenRoute } from '../tokens/routes';
 import { isNativeToken } from '../tokens/utils';
 
-import { TransferFormValues, ERC721TransferFormValues, TransferStatus } from './types';
+import { TransferFormValues, TransferStatus } from './types';
 
 // Note, this doesn't use wagmi's prepare + send pattern because we're potentially sending two transactions
 // The prepare hooks are recommended to use pre-click downtime to run async calls, but since the flow

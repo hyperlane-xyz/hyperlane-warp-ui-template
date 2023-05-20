@@ -12,8 +12,8 @@ import { toastTxSuccess } from '../../components/toast/TxSuccessToast';
 import { toWei } from '../../utils/amount';
 import { logger } from '../../utils/logger';
 import { sleep } from '../../utils/timeout';
-import { getErc20Contract, getErc721Contract } from '../contracts/token';
 import { getTokenRouterContract } from '../contracts/hypToken';
+import { getErc20Contract, getErc721Contract } from '../contracts/token';
 import { getMultiProvider, getProvider } from '../multiProvider';
 import { useStore } from '../store';
 import { Route, RouteType, RoutesMap, getTokenRoute } from '../tokens/routes';
@@ -59,8 +59,7 @@ export function useTokenTransfer(onDone?: () => void) {
 
         const isBaseToSynthetic = tokenRoute.type === RouteType.BaseToSynthetic;
         const isTokenNative = isNativeToken(tokenAddress);
-        const sendValue =
-          isERC721 ? amount : toWei(amount, tokenRoute.decimals).toString();
+        const sendValue = isERC721 ? amount : toWei(amount, tokenRoute.decimals).toString();
 
         const provider = getProvider(originChainId);
 
@@ -80,7 +79,9 @@ export function useTokenTransfer(onDone?: () => void) {
 
         if (isTransferApproveRequired(tokenRoute, tokenAddress)) {
           updateTransferStatus(transferIndex, (status = TransferStatus.CreatingApprove));
-          const tokenContract = isERC721 ? getErc721Contract(tokenAddress, provider) : getErc20Contract(tokenAddress, provider);
+          const tokenContract = isERC721
+            ? getErc721Contract(tokenAddress, provider)
+            : getErc20Contract(tokenAddress, provider);
           const approveTxRequest = await tokenContract.populateTransaction.approve(
             tokenRoute.tokenRouterAddress,
             sendValue,
@@ -113,7 +114,7 @@ export function useTokenTransfer(onDone?: () => void) {
           contractType,
           tokenRoute.originTokenAddress,
           provider,
-          false
+          false,
         );
         const gasPayment = await tokenRouterContract.quoteGasPayment(destinationChainId);
         const msgValue = contractType === TokenType.native ? gasPayment.add(sendValue) : gasPayment;

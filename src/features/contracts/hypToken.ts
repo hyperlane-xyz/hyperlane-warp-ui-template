@@ -25,7 +25,7 @@ export function getTokenRouterContract(
   } else if (type === TokenType.synthetic) {
     return isERC721
       ? getHypErc721Contract(contractAddress, signerOrProvider)
-      : getHypErc20Contract(contractAddress, signerOrProvider)
+      : getHypErc20Contract(contractAddress, signerOrProvider);
   } else {
     throw new Error(`Unsupported token type: ${type}}`);
   }

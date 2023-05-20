@@ -52,7 +52,7 @@ interface NativeTokenConfig extends BaseTokenConfig {
 }
 
 export const WarpTokenConfigSchema = z.array(CollateralTokenSchema.or(NativeTokenSchema));
-export type WarpTokenConfig = Array< CollateralTokenConfig | NativeTokenConfig>;
+export type WarpTokenConfig = Array<CollateralTokenConfig | NativeTokenConfig>;
 
 /**
  * Types for use in the app after processing config

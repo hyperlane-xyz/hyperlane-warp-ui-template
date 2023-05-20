@@ -1,12 +1,13 @@
 import { useField } from 'formik';
 import Image from 'next/image';
 import { useState } from 'react';
-
-import ChevronIcon from '../../images/icons/chevron-down.svg';
-import { Modal } from '../../components/layout/Modal';
-import { useTokenIdBalance } from './useTokenBalance';
 import { useAccount } from 'wagmi';
+
 import { Spinner } from '../../components/animation/Spinner';
+import { Modal } from '../../components/layout/Modal';
+import ChevronIcon from '../../images/icons/chevron-down.svg';
+
+import { useTokenIdBalance } from './useTokenBalance';
 
 type Props = {
   name: string;
@@ -17,14 +18,14 @@ type Props = {
 
 export function SelectTokenIdField({ name, chainId, tokenAddress, disabled }: Props) {
   const [, , helpers] = useField<number>(name);
-  const [tokenId, setTokenId] = useState<string | undefined>(undefined)
+  const [tokenId, setTokenId] = useState<string | undefined>(undefined);
   const { address } = useAccount();
   const handleChange = (newTokenId: string) => {
     helpers.setValue(parseInt(newTokenId));
-    setTokenId(newTokenId)
+    setTokenId(newTokenId);
   };
 
-  const { isLoading, tokenIds } = useTokenIdBalance(chainId, tokenAddress, address)
+  const { isLoading, tokenIds } = useTokenIdBalance(chainId, tokenAddress, address);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -34,13 +35,11 @@ export function SelectTokenIdField({ name, chainId, tokenAddress, disabled }: Pr
 
   return (
     <div className="flex flex-col items-center">
-      <button
-        type="button"
-        className={styles.base}
-        onClick={onClick}
-      >
+      <button type="button" className={styles.base} onClick={onClick}>
         <div className="flex items-center">
-          <span className={`ml-2 ${!tokenId && "text-slate-400"}`}>{tokenId ? tokenId : "Select TokenId"}</span>
+          <span className={`ml-2 ${!tokenId && 'text-slate-400'}`}>
+            {tokenId ? tokenId : 'Select Token Id'}
+          </span>
         </div>
         <Image src={ChevronIcon} width={12} height={8} alt="" />
       </button>
@@ -63,8 +62,8 @@ export function SelectTokenIdModal({
   onSelect,
 }: {
   isOpen: boolean;
-  tokenIds: string[] | null | undefined
-  isLoading: boolean
+  tokenIds: string[] | null | undefined;
+  isLoading: boolean;
   close: () => void;
   onSelect: (tokenId: string) => void;
 }) {
@@ -76,15 +75,15 @@ export function SelectTokenIdModal({
   };
 
   return (
-    <Modal isOpen={isOpen} title="Select TokenId" close={close}>
+    <Modal isOpen={isOpen} title="Select Token Id" close={close}>
       <div className="mt-2 flex flex-col space-y-1">
         {isLoading ? (
           <div className="my-24 flex flex-col items-center">
             <Spinner />
-            <h3 className="mt-5 text-sm text-gray-500">Finding tokenIds</h3>
+            <h3 className="mt-5 text-sm text-gray-500">Finding token IDs</h3>
           </div>
-        ) : (
-          tokenIds && tokenIds.length !== 0 ? tokenIds.map((id) => (
+        ) : tokenIds && tokenIds.length !== 0 ? (
+          tokenIds.map((id) => (
             <button
               key={id}
               className="py-1.5 px-2 text-sm flex items-center rounded hover:bg-gray-100 active:bg-gray-200 transition-all duration-200"
@@ -92,9 +91,11 @@ export function SelectTokenIdModal({
             >
               <span className="ml-2">{id}</span>
             </button>
-          )) : (
-            <div className="py-1.5 px-2 text-sm text-gray-500 transition-all duration-200">No tokenIds found</div>
-          )
+          ))
+        ) : (
+          <div className="py-1.5 px-2 text-sm text-gray-500 transition-all duration-200">
+            No tokenIds found
+          </div>
         )}
       </div>
     </Modal>

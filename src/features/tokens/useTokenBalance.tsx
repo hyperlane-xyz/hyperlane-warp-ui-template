@@ -2,9 +2,9 @@ import { QueryClient, useQuery } from '@tanstack/react-query';
 import { useAccount } from 'wagmi';
 
 import { logger } from '../../utils/logger';
+import { getHypErc721Contract } from '../contracts/hypToken';
 import { getErc20Contract } from '../contracts/token';
 import { getProvider } from '../multiProvider';
-import { getHypErc721Contract } from '../contracts/hypToken';
 
 import { isNativeToken } from './utils';
 
@@ -16,11 +16,7 @@ export function getTokenBalanceKey(
   return ['tokenBalance', chainId, tokenAddress, accountAddress];
 }
 
-export function getTokenIdKey(
-  chainId: ChainId,
-  tokenAddress: Address,
-  accountAddress?: Address,
-) {
+export function getTokenIdKey(chainId: ChainId, tokenAddress: Address, accountAddress?: Address) {
   return ['tokenId', chainId, tokenAddress, accountAddress];
 }
 
@@ -46,10 +42,15 @@ export function useTokenBalance(chainId: ChainId, tokenAddress: Address, account
   return { isLoading, hasError, balance };
 }
 
-export function useTokenIdBalance(chainId: ChainId, tokenAddress: Address, accountAddress?: Address) {
+export function useTokenIdBalance(
+  chainId: ChainId,
+  tokenAddress: Address,
+  accountAddress?: Address,
+) {
   const {
     isLoading,
     isError: hasError,
+    error: error,
     data: tokenIds,
   } = useQuery({
     queryKey: getTokenIdKey(chainId, tokenAddress, accountAddress),
@@ -60,7 +61,7 @@ export function useTokenIdBalance(chainId: ChainId, tokenAddress: Address, accou
     refetchInterval: 7500,
   });
 
-  return { isLoading, hasError, tokenIds };
+  return { isLoading, hasError, error, tokenIds };
 }
 
 export function getCachedTokenBalance(
@@ -92,10 +93,15 @@ async function fetchTokenBalance(chainId: ChainId, tokenAddress: Address, accoun
   }
 }
 
-export async function fetchListOfERC721TokenId(chainId: ChainId, tokenAddress: Address, accountAddress: Address): Promise<string[]> {
+export async function fetchListOfERC721TokenId(
+  chainId: ChainId,
+  tokenAddress: Address,
+  accountAddress: Address,
+): Promise<string[]> {
   logger.debug(`Fetching list of tokenID for account ${accountAddress} on chain ${chainId}`);
 
   const hypERC721 = getHypErc721Contract(tokenAddress, getProvider(chainId));
+
   const balance = await hypERC721.balanceOf(accountAddress);
   const index = Array.from({ length: parseInt(balance.toString()) }, (_, index) => index);
   const promises: Promise<string>[] = index.map(async (id) => {
@@ -103,7 +109,22 @@ export async function fetchListOfERC721TokenId(chainId: ChainId, tokenAddress: A
 
     return response.toString();
   });
-  const result =  await Promise.all(promises);
+  const result = await Promise.all(promises);
   logger.debug(`TokenIds that the ${accountAddress} owns on chain ${chainId}: ${result} `);
   return result;
+}
+
+export async function isContractHaveTokenOfOwnerByIndex(
+  chainId: ChainId,
+  tokenAddress: Address,
+  accountAddress: Address,
+): Promise<boolean> {
+  const hypERC721 = getHypErc721Contract(tokenAddress, getProvider(chainId));
+  try {
+    await hypERC721.tokenOfOwnerByIndex(accountAddress, '0');
+
+    return true;
+  } catch (error) {
+    return false;
+  }
 }

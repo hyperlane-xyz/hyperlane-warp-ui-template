@@ -2,13 +2,14 @@ import { useField } from 'formik';
 import Image from 'next/image';
 import { useState } from 'react';
 
+import { TokenType } from '@hyperlane-xyz/hyperlane-token';
+
 import { TokenIcon } from '../../components/icons/TokenIcon';
 import ChevronIcon from '../../images/icons/chevron-down.svg';
 
 import { TokenListModal } from './TokenListModal';
 import { RoutesMap } from './routes';
 import { TokenMetadata } from './types';
-import { TokenType } from '@hyperlane-xyz/hyperlane-token';
 
 type Props = {
   name: string;
@@ -28,7 +29,7 @@ export function TokenSelectField({
   setIsERC721,
 }: Props) {
   const [field, , helpers] = useField<Address>(name);
-  const [, , amountHelpers] = useField("amount");
+  const [, , amountHelpers] = useField('amount');
 
   // Keep local state for token details, but let formik manage field value
   const [token, setToken] = useState<TokenMetadata | undefined>(undefined);
@@ -37,9 +38,9 @@ export function TokenSelectField({
     // Set the token address value in formik state
     helpers.setValue(newToken.address);
     // reset amount after change token
-    amountHelpers.setValue("")
+    amountHelpers.setValue('');
     setToken(newToken);
-    setIsERC721(newToken.type === TokenType.collateral ? newToken.isERC721 : false)
+    setIsERC721(newToken.type === TokenType.collateral ? newToken.isERC721 : false);
   };
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -58,7 +59,9 @@ export function TokenSelectField({
       >
         <div className="flex items-center">
           <TokenIcon token={token} size={20} />
-          <span className={`ml-2 ${!token?.symbol && "text-slate-400"}`}>{token?.symbol || 'Select Token'}</span>
+          <span className={`ml-2 ${!token?.symbol && 'text-slate-400'}`}>
+            {token?.symbol || 'Select Token'}
+          </span>
         </div>
         <Image src={ChevronIcon} width={12} height={8} alt="" />
       </button>

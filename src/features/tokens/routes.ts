@@ -6,8 +6,8 @@ import { utils } from '@hyperlane-xyz/utils';
 
 import { areAddressesEqual, isValidAddress, normalizeAddress } from '../../utils/addresses';
 import { logger } from '../../utils/logger';
-import { getErc20Contract, getErc721Contract } from '../contracts/token';
 import { getTokenRouterContract } from '../contracts/hypToken';
+import { getErc20Contract, getErc721Contract } from '../contracts/token';
 import { getProvider } from '../multiProvider';
 
 import { getAllTokens } from './metadata';
@@ -60,8 +60,7 @@ async function fetchRemoteTokensForCollateralToken(
   token: TokenMetadata,
 ): Promise<TokenMetadataWithHypTokens> {
   const { type, chainId, name, symbol, decimals, tokenRouterAddress } = token;
-  const isERC721 =
-      type === TokenType.collateral ? token.isERC721 : false
+  const isERC721 = type === TokenType.collateral ? token.isERC721 : false;
   logger.info('Inspecting token:', name);
   const provider = getProvider(chainId);
   const tokenRouterContract = getTokenRouterContract(type, tokenRouterAddress, provider, isERC721);
@@ -142,8 +141,7 @@ function computeTokenRoutes(tokens: TokenMetadataWithHypTokens[]) {
         tokenRouterAddress,
         decimals,
       } = token;
-      const isERC721 =
-        token.type === TokenType.collateral ? token.isERC721 : false
+      const isERC721 = token.type === TokenType.collateral ? token.isERC721 : false;
       const { chainId: syntheticChainId, address: hypTokenAddress } = hypToken;
 
       const commonRouteProps = {
@@ -178,7 +176,7 @@ function computeTokenRoutes(tokens: TokenMetadataWithHypTokens[]) {
           originTokenAddress: hypTokenAddress,
           destTokenAddress: otherHypTokenAddress,
           decimals,
-          isERC721
+          isERC721,
         });
         tokenRoutes[otherSynChainId][syntheticChainId].push({
           type: RouteType.SyntheticToSynthetic,
@@ -186,7 +184,7 @@ function computeTokenRoutes(tokens: TokenMetadataWithHypTokens[]) {
           originTokenAddress: otherHypTokenAddress,
           destTokenAddress: hypTokenAddress,
           decimals,
-          isERC721
+          isERC721,
         });
       }
     }

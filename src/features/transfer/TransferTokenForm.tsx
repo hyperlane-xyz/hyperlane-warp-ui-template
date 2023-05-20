@@ -11,6 +11,7 @@ import { SolidButton } from '../../components/buttons/SolidButton';
 import { ChevronIcon } from '../../components/icons/Chevron';
 import { TextField } from '../../components/input/TextField';
 import { config } from '../../consts/config';
+import { STANDARD_TOKEN_DECIMALS } from '../../consts/values';
 import SwapIcon from '../../images/icons/swap.svg';
 import { Color } from '../../styles/Color';
 import { isValidAddress } from '../../utils/addresses';
@@ -18,14 +19,13 @@ import { fromWei, fromWeiRounded, toWei, tryParseAmount } from '../../utils/amou
 import { logger } from '../../utils/logger';
 import { ChainSelectField } from '../chains/ChainSelectField';
 import { getChainDisplayName } from '../chains/utils';
+import SelectOrInputTokenIds from '../tokens/SelectOrInputTokenIds';
 import { TokenSelectField } from '../tokens/TokenSelectField';
 import { RoutesMap, getTokenRoute, useRouteChains } from '../tokens/routes';
 import { getCachedTokenBalance, useAccountTokenBalance } from '../tokens/useTokenBalance';
 
 import { TransferFormValues } from './types';
 import { isTransferApproveRequired, useTokenTransfer } from './useTokenTransfer';
-import { STANDARD_TOKEN_DECIMALS } from '../../consts/values';
-import { SelectTokenIdField } from '../tokens/SelectTokenIdField';
 
 export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
   const chainIds = useRouteChains(tokenRoutes);
@@ -64,6 +64,7 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
     // Consider clearing form inputs here
   };
   const { triggerTransactions } = useTokenTransfer(onDoneTransactions);
+
   return (
     <Formik<TransferFormValues>
       initialValues={initialValues}
@@ -135,17 +136,13 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
             <div className="flex-1">
               <div className="flex justify-between pr-1">
                 <label htmlFor="amount" className="block uppercase text-sm text-gray-500 pl-0.5">
-                  {isERC721 ? "TokenID" : "Amount"}
+                  {isERC721 ? 'TokenID' : 'Amount'}
                 </label>
                 <SelfTokenBalance tokenRoutes={tokenRoutes} />
               </div>
-              { isERC721 ?
-                <SelectTokenIdField
-                  name="amount"
-                  chainId={values.originChainId}
-                  tokenAddress={values.tokenAddress}
-                />
-                :
+              {isERC721 ? (
+                <SelectOrInputTokenIds />
+              ) : (
                 <div className="relative w-full">
                   <TextField
                     name="amount"
@@ -157,7 +154,7 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
                   />
                   <MaxButton disabled={isReview} tokenRoutes={tokenRoutes} />
                 </div>
-              }
+              )}
             </div>
           </div>
           <div className="mt-4">
@@ -233,11 +230,16 @@ function SwapChainsButton({ disabled }: { disabled?: boolean }) {
   );
 }
 
-function TokenBalance({ label, balance, decimals }: { label: string; balance?: string | null; decimals?: number }) {
-  const value =
-    decimals === 0
-    ? fromWei(balance, decimals)
-    : fromWeiRounded(balance, decimals)
+function TokenBalance({
+  label,
+  balance,
+  decimals,
+}: {
+  label: string;
+  balance?: string | null;
+  decimals?: number;
+}) {
+  const value = !decimals ? fromWei(balance, decimals) : fromWeiRounded(balance, decimals);
 
   return <div className="text-xs text-gray-500">{`${label}: ${value}`}</div>;
 }
@@ -251,19 +253,17 @@ function useSelfTokenBalance(tokenRoutes) {
     : route.baseChainId === originChainId
     ? tokenAddress
     : route.originTokenAddress;
-  const decimals = ! route
-    ? STANDARD_TOKEN_DECIMALS
-    : route.decimals
-  const { balance } = useAccountTokenBalance(originChainId, addressForBalance)
+  const decimals = !route ? STANDARD_TOKEN_DECIMALS : route.decimals;
+  const { balance } = useAccountTokenBalance(originChainId, addressForBalance);
   return {
     balance,
-    decimals
+    decimals,
   };
 }
 
 function SelfTokenBalance({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
   const { balance, decimals } = useSelfTokenBalance(tokenRoutes);
-  return <TokenBalance label="My balance" balance={balance} decimals={decimals}/>;
+  return <TokenBalance label="My balance" balance={balance} decimals={decimals} />;
 }
 
 function RecipientTokenBalance({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
@@ -276,7 +276,7 @@ function RecipientTokenBalance({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
     ? tokenAddress
     : route.destTokenAddress;
   const { balance } = useAccountTokenBalance(destinationChainId, addressForBalance);
-  return <TokenBalance label="Remote balance" balance={balance} />;
+  return <TokenBalance label="Remote balance" balance={balance} decimals={route?.decimals} />;
 }
 
 function MaxButton({ tokenRoutes, disabled }: { tokenRoutes: RoutesMap; disabled?: boolean }) {
@@ -323,9 +323,8 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
   } = useFormikContext<TransferFormValues>();
 
   const route = getTokenRoute(originChainId, destinationChainId, tokenAddress, tokenRoutes);
-  const isERC721 = route?.isERC721
-  const sendValue =
-    isERC721 ? amount.toString() : toWei(amount, route?.decimals).toString()
+  const isERC721 = route?.isERC721;
+  const sendValue = isERC721 ? amount.toString() : toWei(amount, route?.decimals).toString();
 
   const isApproveRequired = route && isTransferApproveRequired(route, tokenAddress);
   return (
@@ -349,11 +348,7 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
           <h4>{`Transaction${isApproveRequired ? ' 2' : ''}: Transfer Remote`}</h4>
           <div className="mt-1.5 ml-1.5 pl-2 border-l border-gray-300 space-y-1.5 text-xs">
             <p>{`Remote Token: ${route?.destTokenAddress}`}</p>
-            {
-              isERC721
-              ? <p>{`TokenID: ${sendValue}`}</p>
-              : <p>{`Amount (wei): ${sendValue}`}</p>
-            }
+            {isERC721 ? <p>{`TokenID: ${sendValue}`}</p> : <p>{`Amount (wei): ${sendValue}`}</p>}
           </div>
         </div>
       </div>
@@ -365,7 +360,7 @@ function validateFormValues(
   { originChainId, destinationChainId, amount, tokenAddress, recipientAddress }: TransferFormValues,
   queryClient: QueryClient,
   accountAddress?: string,
-  isERC721?: boolean
+  isERC721?: boolean,
 ) {
   if (!originChainId) return { originChainId: 'Invalid origin chain' };
   if (!destinationChainId) return { destinationChainId: 'Invalid destination chain' };
@@ -373,7 +368,8 @@ function validateFormValues(
   if (!isValidAddress(tokenAddress)) return { tokenAddress: 'Invalid token' };
   const parsedAmount = tryParseAmount(amount);
 
-  if (!parsedAmount || parsedAmount.lte(0)) return isERC721 ? { amount: 'Invalid TokenId' } : { amount: 'Invalid amount' };
+  if (!parsedAmount || parsedAmount.lte(0))
+    return isERC721 ? { amount: 'Invalid TokenId' } : { amount: 'Invalid amount' };
   const cachedBalance = getCachedTokenBalance(
     queryClient,
     originChainId,

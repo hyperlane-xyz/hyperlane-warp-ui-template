@@ -1,5 +1,6 @@
-import { TokenType } from '@hyperlane-xyz/hyperlane-token';
 import { useMemo, useState } from 'react';
+
+import { TokenType } from '@hyperlane-xyz/hyperlane-token';
 
 import { TokenIcon } from '../../components/icons/TokenIcon';
 import { TextInput } from '../../components/input/TextField';
@@ -82,10 +83,12 @@ export function TokenList({
       const hasRoute = hasTokenRoute(originChainId, destinationChainId, t.address, tokenRoutes);
       if (!q) return hasRoute;
       else
-        return hasRoute &&
-        (t.name.toLowerCase().includes(q) ||
-          t.symbol.toLowerCase().includes(q) ||
-          t.address.toLowerCase().includes(q));
+        return (
+          hasRoute &&
+          (t.name.toLowerCase().includes(q) ||
+            t.symbol.toLowerCase().includes(q) ||
+            t.address.toLowerCase().includes(q))
+        );
     });
   }, [searchQuery, originChainId, destinationChainId, tokenRoutes]);
 
@@ -99,8 +102,10 @@ export function TokenList({
             type="button"
             onClick={() => onSelect(t)}
           >
-            <div className='text-gray-500 text-xs text-left'>{ t.type === TokenType.native ? "Native" : t.isERC721 ? "ERC721" : "ERC20"}</div>
-            <div className='flex items-center'>
+            <div className="text-gray-500 text-xs text-left">
+              {t.type === TokenType.native ? 'Native' : t.isERC721 ? 'ERC721' : 'ERC20'}
+            </div>
+            <div className="flex items-center">
               <TokenIcon token={t} size={30} />
               <div className="ml-3 text-left">
                 <div className="text-sm w-14 truncate">{t.symbol || 'Unknown'}</div>

@@ -20,6 +20,14 @@ export function getTokenIdKey(chainId: ChainId, tokenAddress: Address, accountAd
   return ['tokenId', chainId, tokenAddress, accountAddress];
 }
 
+export function getIsContractHaveTokenOfOwnerByIndexKey(
+  chainId: ChainId,
+  tokenAddress: Address,
+  accountAddress?: Address,
+) {
+  return ['isContractHaveTokenOfOwnerByIndex', chainId, tokenAddress, accountAddress];
+}
+
 export function useAccountTokenBalance(chainId: ChainId, tokenAddress: Address) {
   const { address: accountAddress } = useAccount();
   return useTokenBalance(chainId, tokenAddress, accountAddress);
@@ -42,6 +50,26 @@ export function useTokenBalance(chainId: ChainId, tokenAddress: Address, account
   return { isLoading, hasError, balance };
 }
 
+export function useGetIsContractHaveTokenOfOwnerByIndex(
+  chainId: ChainId,
+  tokenAddress: Address,
+  accountAddress?: Address,
+) {
+  const {
+    isLoading,
+    isError: hasError,
+    data: isContractAllowToGetTokenIds,
+  } = useQuery({
+    queryKey: getIsContractHaveTokenOfOwnerByIndexKey(chainId, tokenAddress, accountAddress),
+    queryFn: () => {
+      if (!chainId || !tokenAddress || !accountAddress) return null;
+      return isContractHaveTokenOfOwnerByIndex(chainId, tokenAddress, accountAddress);
+    },
+  });
+
+  return { isLoading, hasError, isContractAllowToGetTokenIds };
+}
+
 export function useTokenIdBalance(
   chainId: ChainId,
   tokenAddress: Address,
@@ -50,7 +78,6 @@ export function useTokenIdBalance(
   const {
     isLoading,
     isError: hasError,
-    error: error,
     data: tokenIds,
   } = useQuery({
     queryKey: getTokenIdKey(chainId, tokenAddress, accountAddress),
@@ -61,7 +88,7 @@ export function useTokenIdBalance(
     refetchInterval: 7500,
   });
 
-  return { isLoading, hasError, error, tokenIds };
+  return { isLoading, hasError, tokenIds };
 }
 
 export function getCachedTokenBalance(

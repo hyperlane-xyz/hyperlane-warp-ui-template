@@ -94,7 +94,7 @@ export function SelectTokenIdModal({
           ))
         ) : (
           <div className="py-1.5 px-2 text-sm text-gray-500 transition-all duration-200">
-            No tokenIds found
+            No token ids found
           </div>
         )}
       </div>

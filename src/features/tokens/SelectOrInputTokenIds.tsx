@@ -5,7 +5,7 @@ import { TextField } from '../../components/input/TextField';
 import { TransferFormValues } from '../transfer/types';
 
 import { SelectTokenIdField } from './SelectTokenIdField';
-import { useGetIsContractHaveTokenOfOwnerByIndex } from './useTokenBalance';
+import { useContractSupportsTokenByOwner } from './useTokenBalance';
 
 export default function SelectOrInputTokenIds() {
   const { address } = useAccount();
@@ -13,7 +13,7 @@ export default function SelectOrInputTokenIds() {
     values: { originChainId, tokenAddress },
   } = useFormikContext<TransferFormValues>();
 
-  const { isContractAllowToGetTokenIds } = useGetIsContractHaveTokenOfOwnerByIndex(
+  const { isContractAllowToGetTokenIds } = useContractSupportsTokenByOwner(
     originChainId,
     tokenAddress,
     address,

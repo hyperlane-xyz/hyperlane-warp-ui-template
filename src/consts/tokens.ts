@@ -13,12 +13,12 @@ export const tokenList: WarpTokenConfig = [
     logoURI: '/logos/weth.png', // See public/logos/
   },
   {
-    type: "collateral",
+    type: 'collateral',
     chainId: 5,
-    address: "0xd03483b978461b3162CE9e4c80835b9E81E07018",
-    hypCollateralAddress: "0x1d30DD33886dE2914D610aDE55C55f5d145743AC",
-    name: "MyToken",
-    symbol: "MTK",
+    address: '0xd03483b978461b3162CE9e4c80835b9E81E07018',
+    hypCollateralAddress: '0x1d30DD33886dE2914D610aDE55C55f5d145743AC',
+    name: 'MyToken',
+    symbol: 'MTK',
     decimals: 0,
     isERC721: true,
   },

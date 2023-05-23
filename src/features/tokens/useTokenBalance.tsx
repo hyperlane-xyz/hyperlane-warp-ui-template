@@ -20,12 +20,12 @@ export function getTokenIdKey(chainId: ChainId, tokenAddress: Address, accountAd
   return ['tokenId', chainId, tokenAddress, accountAddress];
 }
 
-export function getIsContractHaveTokenOfOwnerByIndexKey(
+export function contractSupportsTokenByOwnerKey(
   chainId: ChainId,
   tokenAddress: Address,
   accountAddress?: Address,
 ) {
-  return ['isContractHaveTokenOfOwnerByIndex', chainId, tokenAddress, accountAddress];
+  return ['contractSupportsTokenByOwner', chainId, tokenAddress, accountAddress];
 }
 
 export function useAccountTokenBalance(chainId: ChainId, tokenAddress: Address) {
@@ -50,7 +50,7 @@ export function useTokenBalance(chainId: ChainId, tokenAddress: Address, account
   return { isLoading, hasError, balance };
 }
 
-export function useGetIsContractHaveTokenOfOwnerByIndex(
+export function useContractSupportsTokenByOwner(
   chainId: ChainId,
   tokenAddress: Address,
   accountAddress?: Address,
@@ -60,10 +60,10 @@ export function useGetIsContractHaveTokenOfOwnerByIndex(
     isError: hasError,
     data: isContractAllowToGetTokenIds,
   } = useQuery({
-    queryKey: getIsContractHaveTokenOfOwnerByIndexKey(chainId, tokenAddress, accountAddress),
+    queryKey: contractSupportsTokenByOwnerKey(chainId, tokenAddress, accountAddress),
     queryFn: () => {
       if (!chainId || !tokenAddress || !accountAddress) return null;
-      return isContractHaveTokenOfOwnerByIndex(chainId, tokenAddress, accountAddress);
+      return contractSupportsTokenByOwner(chainId, tokenAddress, accountAddress);
     },
   });
 
@@ -141,7 +141,7 @@ export async function fetchListOfERC721TokenId(
   return result;
 }
 
-export async function isContractHaveTokenOfOwnerByIndex(
+export async function contractSupportsTokenByOwner(
   chainId: ChainId,
   tokenAddress: Address,
   accountAddress: Address,

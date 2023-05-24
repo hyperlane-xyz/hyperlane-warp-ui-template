@@ -28,6 +28,10 @@ export function contractSupportsTokenByOwnerKey(
   return ['contractSupportsTokenByOwner', chainId, tokenAddress, accountAddress];
 }
 
+export function getOwnerOfKey(chainId: ChainId, tokenAddress: Address, tokenId: string) {
+  return ['ownerOf', chainId, tokenAddress, tokenId];
+}
+
 export function useAccountTokenBalance(chainId: ChainId, tokenAddress: Address) {
   const { address: accountAddress } = useAccount();
   return useTokenBalance(chainId, tokenAddress, accountAddress);
@@ -89,6 +93,33 @@ export function useTokenIdBalance(
   });
 
   return { isLoading, hasError, tokenIds };
+}
+
+export function useOwnerOfErc721(chainId: ChainId, tokenAddress: Address, tokenId: string) {
+  const {
+    isLoading,
+    isError: hasError,
+    data: owner,
+  } = useQuery({
+    queryKey: getOwnerOfKey(chainId, tokenAddress, tokenId),
+    queryFn: () => {
+      if (!chainId || !tokenAddress || !tokenId) return null;
+      return getERC721Owner(chainId, tokenAddress, tokenId);
+    },
+  });
+
+  return { isLoading, hasError, owner };
+}
+
+export function getCachedOwnerOf(
+  queryClient: QueryClient,
+  chainId: ChainId,
+  tokenAddress: Address,
+  tokenId: string,
+) {
+  return queryClient.getQueryData(getOwnerOfKey(chainId, tokenAddress, tokenId)) as
+    | string
+    | undefined;
 }
 
 export function getCachedTokenBalance(
@@ -153,5 +184,20 @@ export async function contractSupportsTokenByOwner(
     return true;
   } catch (error) {
     return false;
+  }
+}
+
+export async function getERC721Owner(
+  chainId: ChainId,
+  tokenAddress: Address,
+  tokenId: string,
+): Promise<string> {
+  const hypERC721 = getHypErc721Contract(tokenAddress, getProvider(chainId));
+  try {
+    const ownerAddress = await hypERC721.ownerOf(tokenId);
+
+    return ownerAddress;
+  } catch (error) {
+    return '';
   }
 }

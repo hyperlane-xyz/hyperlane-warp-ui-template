@@ -26,7 +26,6 @@ import {
   getCachedOwnerOf,
   getCachedTokenBalance,
   useAccountTokenBalance,
-  useOwnerOfErc721,
 } from '../tokens/useTokenBalance';
 
 import { TransferFormValues } from './types';
@@ -146,7 +145,7 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
                 <SelfTokenBalance tokenRoutes={tokenRoutes} />
               </div>
               {isERC721 ? (
-                <SelectOrInputTokenIds />
+                <SelectOrInputTokenIds disabled={isReview} />
               ) : (
                 <div className="relative w-full">
                   <TextField
@@ -251,7 +250,7 @@ function TokenBalance({
 
 function useSelfTokenBalance(tokenRoutes) {
   const { values } = useFormikContext<TransferFormValues>();
-  const { originChainId, destinationChainId, tokenAddress, amount } = values;
+  const { originChainId, destinationChainId, tokenAddress } = values;
   const route = getTokenRoute(originChainId, destinationChainId, tokenAddress, tokenRoutes);
   const addressForBalance = !route
     ? ''
@@ -260,7 +259,6 @@ function useSelfTokenBalance(tokenRoutes) {
     : route.originTokenAddress;
   const decimals = !route ? STANDARD_TOKEN_DECIMALS : route.decimals;
   const { balance } = useAccountTokenBalance(originChainId, addressForBalance);
-  useOwnerOfErc721(originChainId, tokenAddress, amount);
   return {
     balance,
     decimals,

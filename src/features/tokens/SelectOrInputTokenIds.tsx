@@ -5,9 +5,9 @@ import { TextField } from '../../components/input/TextField';
 import { TransferFormValues } from '../transfer/types';
 
 import { SelectTokenIdField } from './SelectTokenIdField';
-import { useContractSupportsTokenByOwner } from './useTokenBalance';
+import { useContractSupportsTokenByOwner, useOwnerOfErc721 } from './useTokenBalance';
 
-export default function SelectOrInputTokenIds() {
+export default function SelectOrInputTokenIds({ disabled }: { disabled: boolean }) {
   const { address } = useAccount();
   const {
     values: { originChainId, tokenAddress },
@@ -20,8 +20,24 @@ export default function SelectOrInputTokenIds() {
   );
 
   return isContractAllowToGetTokenIds ? (
-    <SelectTokenIdField name="amount" chainId={originChainId} tokenAddress={tokenAddress} />
+    <SelectTokenIdField
+      name="amount"
+      disabled={disabled}
+      chainId={originChainId}
+      tokenAddress={tokenAddress}
+    />
   ) : (
+    <InputTokenId disabled={disabled} />
+  );
+}
+
+function InputTokenId({ disabled }: { disabled: boolean }) {
+  const {
+    values: { originChainId, tokenAddress, amount },
+  } = useFormikContext<TransferFormValues>();
+  useOwnerOfErc721(originChainId, tokenAddress, amount);
+
+  return (
     <div className="relative w-full">
       <TextField
         name="amount"
@@ -29,6 +45,7 @@ export default function SelectOrInputTokenIds() {
         classes="w-full"
         type="number"
         step="any"
+        disabled={disabled}
       />
     </div>
   );

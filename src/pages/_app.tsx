@@ -7,6 +7,7 @@ import {
   ledgerWallet,
   metaMaskWallet,
   omniWallet,
+  phantomWallet,
   rainbowWallet,
   trustWallet,
   walletConnectWallet,
@@ -55,6 +56,7 @@ const connectors = connectorsForWallets([
       rainbowWallet(connectorConfig),
       trustWallet(connectorConfig),
       argentWallet(connectorConfig),
+      phantomWallet(connectorConfig),
     ],
   },
 ]);

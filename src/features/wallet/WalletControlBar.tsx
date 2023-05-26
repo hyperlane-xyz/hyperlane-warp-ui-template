@@ -1,7 +1,6 @@
 import { Menu, Transition } from '@headlessui/react';
-import { useConnectModal } from '@rainbow-me/rainbowkit';
 import Image from 'next/image';
-import { Fragment } from 'react';
+import { Fragment, useState } from 'react';
 import { toast } from 'react-toastify';
 import { useAccount, useDisconnect, useNetwork } from 'wagmi';
 
@@ -18,6 +17,8 @@ import { tryClipboardSet } from '../../utils/clipboard';
 import { logger } from '../../utils/logger';
 import { useIsSsr } from '../../utils/ssr';
 
+import { WalletEnvSelectionModal } from './WalletEnvSelectionModal';
+
 export function WalletControlBar() {
   const isSsr = useIsSsr();
   if (isSsr) {
@@ -33,9 +34,11 @@ export function WalletControlBar() {
 }
 
 function AccountDropdown() {
+  const [showEnvSelectModal, setShowEnvSelectModal] = useState(false);
+
   const { chain } = useNetwork();
   const { address, isConnected, connector } = useAccount();
-  const { openConnectModal } = useConnectModal();
+
   const { disconnectAsync } = useDisconnect();
 
   const isAccountReady = !!(address && isConnected && connector);
@@ -67,14 +70,20 @@ function AccountDropdown() {
           <Icon src={ChevronDown} size={14} />
         </Menu.Button>
       ) : (
-        <SolidButton
-          classes="py-1.5 px-2.5"
-          onClick={openConnectModal}
-          title="Choose wallet"
-          icon={<Image src={Wallet} alt="" width={16} height={16} />}
-        >
-          <div className="ml-1.5 text-white text-xs sm:text-sm">Connect Wallet</div>
-        </SolidButton>
+        <>
+          <SolidButton
+            classes="py-1.5 px-2.5"
+            onClick={() => setShowEnvSelectModal(true)}
+            title="Choose wallet"
+            icon={<Image src={Wallet} alt="" width={16} height={16} />}
+          >
+            <div className="ml-1.5 text-white text-xs sm:text-sm">Connect Wallet</div>
+          </SolidButton>
+          <WalletEnvSelectionModal
+            isOpen={showEnvSelectModal}
+            close={() => setShowEnvSelectModal(false)}
+          />
+        </>
       )}
 
       <Transition

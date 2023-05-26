@@ -122,6 +122,17 @@ export function getCachedOwnerOf(
     | undefined;
 }
 
+export function getCachedTokenIdBalance(
+  queryClient: QueryClient,
+  chainId: ChainId,
+  tokenAddress: Address,
+  accountAddress?: Address,
+) {
+  return queryClient.getQueryData(getTokenIdKey(chainId, tokenAddress, accountAddress)) as
+    | string[]
+    | undefined;
+}
+
 export function getCachedTokenBalance(
   queryClient: QueryClient,
   chainId: ChainId,

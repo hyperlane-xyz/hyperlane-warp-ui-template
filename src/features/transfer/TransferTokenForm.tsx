@@ -14,7 +14,7 @@ import { config } from '../../consts/config';
 import { STANDARD_TOKEN_DECIMALS } from '../../consts/values';
 import SwapIcon from '../../images/icons/swap.svg';
 import { Color } from '../../styles/Color';
-import { isValidAddress } from '../../utils/addresses';
+import { areAddressesEqual, isValidAddress } from '../../utils/addresses';
 import { fromWei, fromWeiRounded, toWei, tryParseAmount } from '../../utils/amount';
 import { logger } from '../../utils/logger';
 import { ChainSelectField } from '../chains/ChainSelectField';
@@ -25,6 +25,7 @@ import { RoutesMap, getTokenRoute, useRouteChains } from '../tokens/routes';
 import {
   getCachedOwnerOf,
   getCachedTokenBalance,
+  getCachedTokenIdBalance,
   useAccountTokenBalance,
 } from '../tokens/useTokenBalance';
 
@@ -374,12 +375,24 @@ function validateFormValues(
 
   if (!parsedAmount || parsedAmount.lte(0))
     return isERC721 ? { amount: 'Invalid Token Id' } : { amount: 'Invalid amount' };
+  // Validate erc721
+  // use when user input token id
+  const cachedOwnerOf = getCachedOwnerOf(queryClient, originChainId, tokenAddress, amount);
+  // use when user select token id
+  const cachedTokenIdBalance = getCachedTokenIdBalance(
+    queryClient,
+    originChainId,
+    tokenAddress,
+    accountAddress,
+  );
   if (
     isERC721 &&
-    accountAddress != getCachedOwnerOf(queryClient, originChainId, tokenAddress, amount)
+    ((cachedOwnerOf && accountAddress && !areAddressesEqual(accountAddress, cachedOwnerOf)) ||
+      !cachedTokenIdBalance?.includes(amount.toString()))
   ) {
     return { amount: 'Token ID not owned' };
   }
+  // Validate input token erc20 and native token
   const cachedBalance = getCachedTokenBalance(
     queryClient,
     originChainId,

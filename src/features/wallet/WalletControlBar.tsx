@@ -1,4 +1,5 @@
 import { Menu, Transition } from '@headlessui/react';
+import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import Image from 'next/image';
 import { Fragment, useState } from 'react';
 import { toast } from 'react-toastify';
@@ -57,6 +58,10 @@ function AccountDropdown() {
     if (!address) return;
     await tryClipboardSet(address);
   };
+
+  const { connection } = useConnection();
+  const { publicKey, sendTransaction } = useWallet();
+  console.log('publicKey', publicKey);
 
   return (
     <Menu as="div" className="relative">

@@ -1,4 +1,5 @@
-import { useConnectModal } from '@rainbow-me/rainbowkit';
+import { useConnectModal as useEvmodal } from '@rainbow-me/rainbowkit';
+import { useWalletModal as useSolanaModal } from '@solana/wallet-adapter-react-ui';
 import Image from 'next/image';
 import { PropsWithChildren } from 'react';
 
@@ -8,16 +9,18 @@ import { Modal } from '../../components/layout/Modal';
 import SolanaLogo from '../../images/logos/solana.svg';
 
 export function WalletEnvSelectionModal({ isOpen, close }: { isOpen: boolean; close: () => void }) {
-  const { openConnectModal } = useConnectModal();
+  const { openConnectModal: openEvmModal } = useEvmodal();
+
+  const { visible: solanaModalVisible, setVisible: setSolanaModalVisible } = useSolanaModal();
 
   const onClickEthereum = () => {
-    openConnectModal?.();
     close();
+    openEvmModal?.();
   };
 
   const onClickSolana = () => {
-    //TODO
     close();
+    setSolanaModalVisible(true);
   };
 
   return (
@@ -47,7 +50,7 @@ function EnvButton({
     >
       <Image src={imgSrc} width={34} height={34} alt="" />
       <div className="uppercase text-gray-800 tracking-wide">{children}</div>
-      <div className="text-sm text-gray-600">{`Connect to ${subTitle} compatible wallet`}</div>
+      <div className="text-sm text-gray-500">{`Connect to ${subTitle} compatible wallet`}</div>
     </button>
   );
 }

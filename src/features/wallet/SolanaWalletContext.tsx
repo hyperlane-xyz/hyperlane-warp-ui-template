@@ -1,4 +1,4 @@
-import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
+import { WalletAdapterNetwork, WalletError } from '@solana/wallet-adapter-base';
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 import '@solana/wallet-adapter-react-ui/styles.css';
@@ -7,10 +7,11 @@ import {
   PhantomWalletAdapter,
   SolflareWalletAdapter,
   TrustWalletAdapter,
-  UnsafeBurnerWalletAdapter,
 } from '@solana/wallet-adapter-wallets';
 import { clusterApiUrl } from '@solana/web3.js';
-import { PropsWithChildren, useMemo } from 'react';
+import { PropsWithChildren, useCallback, useMemo } from 'react';
+
+import { logger } from '../../utils/logger';
 
 export function SolanaWalletContext({ children }: PropsWithChildren<unknown>) {
   // TODO support multiple networks
@@ -22,15 +23,19 @@ export function SolanaWalletContext({ children }: PropsWithChildren<unknown>) {
       new SolflareWalletAdapter(),
       new TrustWalletAdapter(),
       new LedgerWalletAdapter(),
-      new UnsafeBurnerWalletAdapter(),
+      // new UnsafeBurnerWalletAdapter(),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [network],
   );
 
+  const onError = useCallback((error: WalletError) => {
+    logger.error('Error connecting to Solana wallet', error);
+  }, []);
+
   return (
     <ConnectionProvider endpoint={endpoint}>
-      <WalletProvider wallets={wallets} autoConnect>
+      <WalletProvider wallets={wallets} onError={onError} autoConnect>
         <WalletModalProvider>{children}</WalletModalProvider>
       </WalletProvider>
     </ConnectionProvider>

@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { HypERC20Collateral, TokenType } from '@hyperlane-xyz/hyperlane-token';
 import { utils } from '@hyperlane-xyz/utils';
 
-import { areAddressesEqual, isValidAddress, normalizeAddress } from '../../utils/addresses';
+import { areAddressesEqual, isValidEvmAddress, normalizeEvmAddress } from '../../utils/addresses';
 import { logger } from '../../utils/logger';
 import { getErc20Contract } from '../contracts/erc20';
 import { getTokenRouterContract } from '../contracts/hypErc20';
@@ -94,7 +94,7 @@ async function fetchRemoteTokensForCollateralToken(
   logger.info(`Addresses found:`, hypTokenAddresses);
   const hypTokens = hypTokenAddresses.map((addr, i) => ({
     chainId: domains[i],
-    address: normalizeAddress(addr),
+    address: normalizeEvmAddress(addr),
   }));
   return { ...token, hypTokens };
 }
@@ -193,7 +193,7 @@ export function getTokenRoute(
   baseTokenAddress: Address,
   tokenRoutes: RoutesMap,
 ): Route | null {
-  if (!isValidAddress(baseTokenAddress)) return null;
+  if (!isValidEvmAddress(baseTokenAddress)) return null;
   return (
     getTokenRoutes(originChainId, destinationChainId, tokenRoutes).find((r) =>
       areAddressesEqual(baseTokenAddress, r.baseTokenAddress),

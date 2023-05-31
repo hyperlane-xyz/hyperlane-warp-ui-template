@@ -11,7 +11,7 @@ import SolanaLogo from '../../images/logos/solana.svg';
 export function WalletEnvSelectionModal({ isOpen, close }: { isOpen: boolean; close: () => void }) {
   const { openConnectModal: openEvmModal } = useEvmodal();
 
-  const { visible: solanaModalVisible, setVisible: setSolanaModalVisible } = useSolanaModal();
+  const { setVisible: setSolanaModalVisible } = useSolanaModal();
 
   const onClickEthereum = () => {
     close();

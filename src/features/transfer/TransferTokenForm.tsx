@@ -13,7 +13,7 @@ import { TextField } from '../../components/input/TextField';
 import { config } from '../../consts/config';
 import SwapIcon from '../../images/icons/swap.svg';
 import { Color } from '../../styles/Color';
-import { isValidAddress } from '../../utils/addresses';
+import { isValidEvmAddress } from '../../utils/addresses';
 import { fromWeiRounded, toWei, tryParseAmount } from '../../utils/amount';
 import { logger } from '../../utils/logger';
 import { ChainSelectField } from '../chains/ChainSelectField';
@@ -338,8 +338,8 @@ function validateFormValues(
 ) {
   if (!originChainId) return { originChainId: 'Invalid origin chain' };
   if (!destinationChainId) return { destinationChainId: 'Invalid destination chain' };
-  if (!isValidAddress(recipientAddress)) return { recipientAddress: 'Invalid recipient' };
-  if (!isValidAddress(tokenAddress)) return { tokenAddress: 'Invalid token' };
+  if (!isValidEvmAddress(recipientAddress)) return { recipientAddress: 'Invalid recipient' };
+  if (!isValidEvmAddress(tokenAddress)) return { tokenAddress: 'Invalid token' };
   const parsedAmount = tryParseAmount(amount);
   if (!parsedAmount || parsedAmount.lte(0)) return { amount: 'Invalid amount' };
   const cachedBalance = getCachedTokenBalance(

@@ -1,9 +1,10 @@
 import { getAddress, isAddress } from '@ethersproject/address';
+import { PublicKey } from '@solana/web3.js';
 
 import { logger } from './logger';
 
 // Validates content and checksum
-export function isValidAddress(address: string) {
+export function isValidEvmAddress(address: string) {
   // Need to catch because ethers' isAddress throws in some cases (bad checksum)
   try {
     const isValid = address && isAddress(address);
@@ -16,42 +17,60 @@ export function isValidAddress(address: string) {
 
 // Faster then above and avoids exceptions but less thorough
 const addressRegex = /^0x[a-fA-F0-9]{40}$/;
-export function isValidAddressFast(address: string) {
+export function isValidEvmAddressFast(address: string) {
   return addressRegex.test(address);
 }
 
-export function validateAddress(address: string, context: string) {
+export function validateEvmAddress(address: string, context: string) {
   if (!address || !isAddress(address)) {
-    const errorMsg = `Invalid addresses for ${context}: ${address}`;
+    const errorMsg = `Invalid evm address for ${context}: ${address}`;
     logger.error(errorMsg);
     throw new Error(errorMsg);
   }
 }
 
-export function normalizeAddress(address: string) {
-  validateAddress(address, 'normalize');
-  return getAddress(address);
-}
-
-export function shortenAddress(address: string, capitalize?: boolean) {
+export function normalizeEvmAddress(address: string) {
   try {
-    const normalized = normalizeAddress(address);
-    const shortened =
-      normalized.substring(0, 5) + '...' + normalized.substring(normalized.length - 4);
-    return capitalize ? capitalizeAddress(shortened) : shortened;
+    return getAddress(address);
   } catch (error) {
-    logger.error('Unable to shorten invalid address', address, error);
-    return null;
+    logger.error('Error normalizing evm address', address, error);
+    return address;
   }
 }
 
-export function capitalizeAddress(address: string) {
-  return '0x' + address.substring(2).toUpperCase();
+export function normalizeSolAddress(address: string) {
+  try {
+    return new PublicKey(address).toBase58();
+  } catch (error) {
+    logger.error('Error normalizing sol address', address, error);
+    return address;
+  }
 }
 
+export function shortenAddress(address: string, capitalize?: boolean) {
+  if (!address) return '';
+  if (address.length < 8) return address;
+  let normalized;
+  if (isValidEvmAddressFast(address)) {
+    normalized = normalizeEvmAddress(address);
+  } else {
+    normalized = normalizeSolAddress(address);
+  }
+
+  const shortened =
+    normalized.substring(0, 5) + '...' + normalized.substring(normalized.length - 4);
+  return capitalize ? capitalizeAddress(shortened) : shortened;
+}
+
+export function capitalizeAddress(address: string) {
+  if (address.startsWith('0x')) return '0x' + address.substring(2).toUpperCase();
+  else return address.toUpperCase();
+}
+
+// TODO solana
 export function areAddressesEqual(a1: string, a2: string) {
-  validateAddress(a1, 'compare');
-  validateAddress(a2, 'compare');
+  validateEvmAddress(a1, 'compare');
+  validateEvmAddress(a2, 'compare');
   return getAddress(a1) === getAddress(a2);
 }
 

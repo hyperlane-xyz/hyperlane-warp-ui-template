@@ -3,19 +3,28 @@ import { useAccount } from 'wagmi';
 
 import { TextField } from '../../components/input/TextField';
 import { TransferFormValues } from '../transfer/types';
+import { getTokenRoute, RoutesMap } from './routes';
 
 import { SelectTokenIdField } from './SelectTokenIdField';
 import { useContractSupportsTokenByOwner, useOwnerOfErc721 } from './useTokenBalance';
 
-export default function SelectOrInputTokenIds({ disabled }: { disabled: boolean }) {
+export default function SelectOrInputTokenIds({ disabled, tokenRoutes }: { disabled: boolean, tokenRoutes: RoutesMap }) {
   const { address } = useAccount();
   const {
-    values: { originChainId, tokenAddress },
+    values: { originChainId, tokenAddress, destinationChainId },
   } = useFormikContext<TransferFormValues>();
+
+  const route = getTokenRoute(originChainId, destinationChainId, tokenAddress, tokenRoutes);
+
+  const currentTokenAddress = !route
+  ? ''
+  : route.baseChainId === originChainId
+  ? tokenAddress
+  : route.originTokenAddress;
 
   const { isContractAllowToGetTokenIds } = useContractSupportsTokenByOwner(
     originChainId,
-    tokenAddress,
+    currentTokenAddress,
     address,
   );
 
@@ -24,16 +33,16 @@ export default function SelectOrInputTokenIds({ disabled }: { disabled: boolean 
       name="amount"
       disabled={disabled}
       chainId={originChainId}
-      tokenAddress={tokenAddress}
+      tokenAddress={currentTokenAddress}
     />
   ) : (
-    <InputTokenId disabled={disabled} />
+    <InputTokenId disabled={disabled} tokenAddress={tokenAddress} />
   );
 }
 
-function InputTokenId({ disabled }: { disabled: boolean }) {
+function InputTokenId({ disabled, tokenAddress }: { disabled: boolean, tokenAddress: Address }) {
   const {
-    values: { originChainId, tokenAddress, amount },
+    values: { originChainId, amount },
   } = useFormikContext<TransferFormValues>();
   useOwnerOfErc721(originChainId, tokenAddress, amount);
 

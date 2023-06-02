@@ -62,7 +62,7 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
   const queryClient = useQueryClient();
   const { address: accountAddress } = useAccount();
   const validate = (values: TransferFormValues) =>
-    validateFormValues(values, queryClient, accountAddress, isERC721);
+    validateFormValues(values, tokenRoutes, queryClient, accountAddress, isERC721);
 
   const onDoneTransactions = () => {
     setIsReview(false);
@@ -146,7 +146,7 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
                 <SelfTokenBalance tokenRoutes={tokenRoutes} />
               </div>
               {isERC721 ? (
-                <SelectOrInputTokenIds disabled={isReview} />
+                <SelectOrInputTokenIds disabled={isReview} tokenRoutes={tokenRoutes} />
               ) : (
                 <div className="relative w-full">
                   <TextField
@@ -363,26 +363,35 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
 
 function validateFormValues(
   { originChainId, destinationChainId, amount, tokenAddress, recipientAddress }: TransferFormValues,
+  tokenRoutes: RoutesMap,
   queryClient: QueryClient,
   accountAddress?: string,
   isERC721?: boolean,
 ) {
+  const route = getTokenRoute(originChainId, destinationChainId, tokenAddress, tokenRoutes);
+
+  const currentTokenAddress = !route
+  ? ''
+  : route.baseChainId === originChainId
+  ? tokenAddress
+  : route.originTokenAddress;
+
   if (!originChainId) return { originChainId: 'Invalid origin chain' };
   if (!destinationChainId) return { destinationChainId: 'Invalid destination chain' };
   if (!isValidAddress(recipientAddress)) return { recipientAddress: 'Invalid recipient' };
-  if (!isValidAddress(tokenAddress)) return { tokenAddress: 'Invalid token' };
+  if (!isValidAddress(currentTokenAddress)) return { tokenAddress: 'Invalid token' };
   const parsedAmount = tryParseAmount(amount);
 
   if (!parsedAmount || parsedAmount.lte(0))
     return isERC721 ? { amount: 'Invalid Token Id' } : { amount: 'Invalid amount' };
   // Validate erc721
   // use when user input token id
-  const cachedOwnerOf = getCachedOwnerOf(queryClient, originChainId, tokenAddress, amount);
+  const cachedOwnerOf = getCachedOwnerOf(queryClient, originChainId, currentTokenAddress, amount);
   // use when user select token id
   const cachedTokenIdBalance = getCachedTokenIdBalance(
     queryClient,
     originChainId,
-    tokenAddress,
+    currentTokenAddress,
     accountAddress,
   );
   if (
@@ -396,7 +405,7 @@ function validateFormValues(
   const cachedBalance = getCachedTokenBalance(
     queryClient,
     originChainId,
-    tokenAddress,
+    currentTokenAddress,
     accountAddress,
   );
   if (!isERC721 && cachedBalance && parsedAmount.gt(cachedBalance) && !config.debug) {

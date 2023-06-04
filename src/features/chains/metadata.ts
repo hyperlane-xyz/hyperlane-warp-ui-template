@@ -8,9 +8,10 @@ import {
 } from '@hyperlane-xyz/sdk';
 
 import { chains } from '../../consts/chains';
+import { solanaChains } from '../../consts/solanaChains';
 import { logger } from '../../utils/logger';
 
-import { ChainConfigSchema, CustomChainMetadata } from './types';
+import { ChainConfigSchema, CustomChainMetadata, ProtocolType } from './types';
 
 let chainConfigs: ChainMap<ChainMetadata | CustomChainMetadata>;
 
@@ -22,12 +23,16 @@ export function getChainConfigs() {
       throw new Error(`Invalid chain config: ${result.error.toString()}`);
     }
     const customChainConfigs = result.data as ChainMap<CustomChainMetadata>;
-    chainConfigs = { ...chainMetadata, ...customChainConfigs };
+    chainConfigs = { ...chainMetadata, ...solanaChains, ...customChainConfigs };
   }
   return chainConfigs;
 }
 
 // Metadata formatted for use in Wagmi config
 export function getWagmiChainConfig(): WagmiChain[] {
-  return Object.values(getChainConfigs()).map(chainMetadataToWagmiChain);
+  const evmChains = Object.values(getChainConfigs()).filter(
+    // @ts-ignore TODO add optional protocol field to ChainMetadata in SDK
+    (c) => !c.protocol || c.protocol === ProtocolType.Ethereum,
+  );
+  return evmChains.map(chainMetadataToWagmiChain);
 }

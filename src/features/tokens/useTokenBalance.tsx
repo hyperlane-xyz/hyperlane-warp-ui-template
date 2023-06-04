@@ -8,28 +8,28 @@ import { getProvider } from '../multiProvider';
 import { isNativeToken } from './utils';
 
 export function getTokenBalanceKey(
-  chainId: ChainId,
+  caip2Id: Caip2Id,
   tokenAddress: Address,
   accountAddress?: Address,
 ) {
-  return ['tokenBalance', chainId, tokenAddress, accountAddress];
+  return ['tokenBalance', caip2Id, tokenAddress, accountAddress];
 }
 
-export function useAccountTokenBalance(chainId: ChainId, tokenAddress: Address) {
+export function useAccountTokenBalance(caip2Id: Caip2Id, tokenAddress: Address) {
   const { address: accountAddress } = useAccount();
-  return useTokenBalance(chainId, tokenAddress, accountAddress);
+  return useTokenBalance(caip2Id, tokenAddress, accountAddress);
 }
 
-export function useTokenBalance(chainId: ChainId, tokenAddress: Address, accountAddress?: Address) {
+export function useTokenBalance(caip2Id: Caip2Id, tokenAddress: Address, accountAddress?: Address) {
   const {
     isLoading,
     isError: hasError,
     data: balance,
   } = useQuery({
-    queryKey: getTokenBalanceKey(chainId, tokenAddress, accountAddress),
+    queryKey: getTokenBalanceKey(caip2Id, tokenAddress, accountAddress),
     queryFn: () => {
-      if (!chainId || !tokenAddress || !accountAddress) return null;
-      return fetchTokenBalance(chainId, tokenAddress, accountAddress);
+      if (!caip2Id || !tokenAddress || !accountAddress) return null;
+      return fetchTokenBalance(caip2Id, tokenAddress, accountAddress);
     },
     refetchInterval: 7500,
   });
@@ -39,27 +39,28 @@ export function useTokenBalance(chainId: ChainId, tokenAddress: Address, account
 
 export function getCachedTokenBalance(
   queryClient: QueryClient,
-  chainId: ChainId,
+  caip2Id: Caip2Id,
   tokenAddress: Address,
   accountAddress?: Address,
 ) {
-  return queryClient.getQueryData(getTokenBalanceKey(chainId, tokenAddress, accountAddress)) as
+  return queryClient.getQueryData(getTokenBalanceKey(caip2Id, tokenAddress, accountAddress)) as
     | string
     | undefined;
 }
 
-async function fetchTokenBalance(chainId: ChainId, tokenAddress: Address, accountAddress: Address) {
+// TODO solana support here
+async function fetchTokenBalance(caip2Id: Caip2Id, tokenAddress: Address, accountAddress: Address) {
   if (isNativeToken(tokenAddress)) {
-    logger.debug(`Fetching balance for account ${accountAddress} native token on chain ${chainId}`);
-    const provider = getProvider(chainId);
+    logger.debug(`Fetching balance for account ${accountAddress} native token on chain ${caip2Id}`);
+    const provider = getProvider(caip2Id);
     const balance = await provider.getBalance(accountAddress);
     logger.debug(`Native token balance: ${balance.toString()}`);
     return balance.toString();
   } else {
     logger.debug(
-      `Fetching balance for account ${accountAddress} token ${tokenAddress} on chain ${chainId}`,
+      `Fetching balance for account ${accountAddress} token ${tokenAddress} on chain ${caip2Id}`,
     );
-    const erc20 = getErc20Contract(tokenAddress, getProvider(chainId));
+    const erc20 = getErc20Contract(tokenAddress, getProvider(caip2Id));
     const balance = await erc20.balanceOf(accountAddress);
     logger.debug(`Token balance: ${balance.toString()}`);
     return balance.toString();

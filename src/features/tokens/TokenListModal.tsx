@@ -13,15 +13,15 @@ export function TokenListModal({
   isOpen,
   close,
   onSelect,
-  originChainId,
-  destinationChainId,
+  originCaip2Id,
+  destinationCaip2Id,
   tokenRoutes,
 }: {
   isOpen: boolean;
   close: () => void;
   onSelect: (token: TokenMetadata) => void;
-  originChainId: ChainId;
-  destinationChainId: ChainId;
+  originCaip2Id: Caip2Id;
+  destinationCaip2Id: Caip2Id;
   tokenRoutes: RoutesMap;
 }) {
   const [search, setSearch] = useState('');
@@ -52,8 +52,8 @@ export function TokenListModal({
         autoComplete="off"
       />
       <TokenList
-        originChainId={originChainId}
-        destinationChainId={destinationChainId}
+        originCaip2Id={originCaip2Id}
+        destinationCaip2Id={destinationCaip2Id}
         tokenRoutes={tokenRoutes}
         searchQuery={search}
         onSelect={onSelectAndClose}
@@ -63,14 +63,14 @@ export function TokenListModal({
 }
 
 export function TokenList({
-  originChainId,
-  destinationChainId,
+  originCaip2Id,
+  destinationCaip2Id,
   tokenRoutes,
   searchQuery,
   onSelect,
 }: {
-  originChainId: ChainId;
-  destinationChainId: ChainId;
+  originCaip2Id: Caip2Id;
+  destinationCaip2Id: Caip2Id;
   tokenRoutes: RoutesMap;
   searchQuery: string;
   onSelect: (token: TokenMetadata) => void;
@@ -78,7 +78,7 @@ export function TokenList({
   const tokens = useMemo(() => {
     return getAllTokens().filter((t) => {
       const q = searchQuery?.trim().toLowerCase();
-      const hasRoute = hasTokenRoute(originChainId, destinationChainId, t.address, tokenRoutes);
+      const hasRoute = hasTokenRoute(originCaip2Id, destinationCaip2Id, t.address, tokenRoutes);
       if (!q) return hasRoute;
       else
         return (
@@ -88,7 +88,7 @@ export function TokenList({
             t.address.toLowerCase().includes(q))
         );
     });
-  }, [searchQuery, originChainId, destinationChainId, tokenRoutes]);
+  }, [searchQuery, originCaip2Id, destinationCaip2Id, tokenRoutes]);
 
   return (
     <div className="flex flex-col items-stretch divide-y divide-gray-200">
@@ -96,7 +96,7 @@ export function TokenList({
         tokens.map((t) => (
           <button
             className="-mx-2 py-2 px-2 flex items-center rounded hover:bg-gray-100 active:bg-gray-200 transition-all duration-250"
-            key={`${t.chainId}-${t.address}`}
+            key={`${t.caip2Id}-${t.address}`}
             type="button"
             onClick={() => onSelect(t)}
           >

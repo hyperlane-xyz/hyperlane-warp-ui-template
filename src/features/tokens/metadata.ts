@@ -4,6 +4,8 @@ import { TokenType } from '@hyperlane-xyz/hyperlane-token';
 
 import { tokenList } from '../../consts/tokens';
 import { logger } from '../../utils/logger';
+import { getCaip2Id } from '../chains/caip2';
+import { ProtocolType } from '../chains/types';
 
 import { TokenMetadata, WarpTokenConfig, WarpTokenConfigSchema } from './types';
 
@@ -25,8 +27,9 @@ function parseTokenConfigs(configList: WarpTokenConfig): TokenMetadata[] {
   const parsedConfig = result.data;
   const tokenMetadata: TokenMetadata[] = [];
   for (const token of parsedConfig) {
-    const { type, chainId, name, symbol, decimals, logoURI } = token;
-    const commonFields = { chainId, name, symbol, decimals, logoURI };
+    const { type, protocol, chainId, name, symbol, decimals, logoURI } = token;
+    const caip2Id = getCaip2Id(protocol || ProtocolType.Ethereum, chainId);
+    const commonFields = { caip2Id, chainId, name, symbol, decimals, logoURI };
     if (type == TokenType.collateral) {
       tokenMetadata.push({
         ...commonFields,

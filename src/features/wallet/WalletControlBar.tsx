@@ -2,9 +2,8 @@ import { Menu, Transition } from '@headlessui/react';
 import Image from 'next/image';
 import { Fragment, useState } from 'react';
 
-import { ChainLogo } from '@hyperlane-xyz/widgets';
-
 import { SolidButton } from '../../components/buttons/SolidButton';
+import { ChainLogo } from '../../components/icons/ChainLogo';
 import { Identicon } from '../../components/icons/Identicon';
 import ChevronDown from '../../images/icons/chevron-down.svg';
 import Logout from '../../images/icons/logout.svg';
@@ -140,8 +139,8 @@ function AccountDropdown() {
                 <div className="mt-1.5 flex gap-4 flex-wrap">
                   {readyChains.map((c, i) => (
                     <div className="flex items-center" key={`chain-${i}`}>
-                      <ChainLogo chainId={c.chainId} size={15} />
-                      <div className="ml-2 text-sm">{c.chainName || 'Unknown'}</div>
+                      <ChainLogo caip2Id={c.caip2Id} size={15} />
+                      <div className="ml-2 text-sm">{c.chainDisplayName || 'Unknown'}</div>
                     </div>
                   ))}
                 </div>

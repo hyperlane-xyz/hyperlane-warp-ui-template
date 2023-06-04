@@ -26,16 +26,16 @@ import { TransferFormValues } from './types';
 import { isTransferApproveRequired, useTokenTransfer } from './useTokenTransfer';
 
 export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
-  const chainIds = useRouteChains(tokenRoutes);
+  const caip2Ids = useRouteChains(tokenRoutes);
   const initialValues: TransferFormValues = useMemo(
     () => ({
-      originChainId: chainIds[0],
-      destinationChainId: chainIds[1],
+      originCaip2Id: caip2Ids[0],
+      destinationCaip2Id: caip2Ids[1],
       amount: '',
       tokenAddress: '',
       recipientAddress: '',
     }),
-    [chainIds],
+    [caip2Ids],
   );
 
   // Flag for if form is in input vs review mode
@@ -75,7 +75,7 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
             <ChainSelectField
               name="originChainId"
               label="From"
-              chainIds={chainIds}
+              caip2Ids={caip2Ids}
               disabled={isReview}
             />
             <div className="flex flex-col items-center">
@@ -108,7 +108,7 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
             <ChainSelectField
               name="destinationChainId"
               label="To"
-              chainIds={chainIds}
+              caip2Ids={caip2Ids}
               disabled={isReview}
             />
           </div>
@@ -122,8 +122,8 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
               </label>
               <TokenSelectField
                 name="tokenAddress"
-                originChainId={values.originChainId}
-                destinationChainId={values.destinationChainId}
+                originCaip2Id={values.originCaip2Id}
+                destinationCaip2Id={values.destinationCaip2Id}
                 tokenRoutes={tokenRoutes}
                 disabled={isReview}
               />
@@ -188,7 +188,7 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
                 onClick={() => triggerTransactions(values, tokenRoutes)}
                 classes="flex-1 px-3 py-1.5"
               >
-                {`Send to ${getChainDisplayName(values.destinationChainId)}`}
+                {`Send to ${getChainDisplayName(values.destinationCaip2Id)}`}
               </SolidButton>
             </div>
           )}
@@ -200,12 +200,12 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
 
 function SwapChainsButton({ disabled }: { disabled?: boolean }) {
   const { values, setFieldValue } = useFormikContext<TransferFormValues>();
-  const { originChainId, destinationChainId } = values;
+  const { originCaip2Id, destinationCaip2Id } = values;
 
   const onClick = () => {
     if (disabled) return;
-    setFieldValue('originChainId', destinationChainId);
-    setFieldValue('destinationChainId', originChainId);
+    setFieldValue('originCaip2Id', destinationCaip2Id);
+    setFieldValue('destinationCaip2Id', originCaip2Id);
   };
 
   return (
@@ -221,38 +221,42 @@ function SwapChainsButton({ disabled }: { disabled?: boolean }) {
   );
 }
 
+// TODO solana support
 function TokenBalance({ label, balance }: { label: string; balance?: string | null }) {
   const rounded = fromWeiRounded(balance);
   return <div className="text-xs text-gray-500">{`${label}: ${rounded}`}</div>;
 }
 
+// TODO solana support
 function useSelfTokenBalance(tokenRoutes) {
   const { values } = useFormikContext<TransferFormValues>();
-  const { originChainId, destinationChainId, tokenAddress } = values;
-  const route = getTokenRoute(originChainId, destinationChainId, tokenAddress, tokenRoutes);
+  const { originCaip2Id, destinationCaip2Id, tokenAddress } = values;
+  const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenAddress, tokenRoutes);
   const addressForBalance = !route
     ? ''
-    : route.baseChainId === originChainId
+    : route.baseCaip2Id === originCaip2Id
     ? tokenAddress
     : route.originTokenAddress;
-  return useAccountTokenBalance(originChainId, addressForBalance);
+  return useAccountTokenBalance(originCaip2Id, addressForBalance);
 }
 
+// TODO solana support
 function SelfTokenBalance({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
   const { balance } = useSelfTokenBalance(tokenRoutes);
   return <TokenBalance label="My balance" balance={balance} />;
 }
 
+// TODO solana support
 function RecipientTokenBalance({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
   const { values } = useFormikContext<TransferFormValues>();
-  const { originChainId, destinationChainId, tokenAddress } = values;
-  const route = getTokenRoute(originChainId, destinationChainId, tokenAddress, tokenRoutes);
+  const { originCaip2Id, destinationCaip2Id, tokenAddress } = values;
+  const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenAddress, tokenRoutes);
   const addressForBalance = !route
     ? ''
-    : route.baseChainId === destinationChainId
+    : route.baseCaip2Id === destinationCaip2Id
     ? tokenAddress
     : route.destTokenAddress;
-  const { balance } = useAccountTokenBalance(destinationChainId, addressForBalance);
+  const { balance } = useAccountTokenBalance(destinationCaip2Id, addressForBalance);
   return <TokenBalance label="Remote balance" balance={balance} />;
 }
 
@@ -275,6 +279,7 @@ function MaxButton({ tokenRoutes, disabled }: { tokenRoutes: RoutesMap; disabled
   );
 }
 
+// TODO solana support (replace useAccount)
 function SelfButton({ disabled }: { disabled?: boolean }) {
   const { address } = useAccount();
   const { setFieldValue } = useFormikContext<TransferFormValues>();
@@ -294,12 +299,13 @@ function SelfButton({ disabled }: { disabled?: boolean }) {
   );
 }
 
+// TODO solana support (no approve)
 function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes: RoutesMap }) {
   const {
-    values: { amount, originChainId, destinationChainId, tokenAddress },
+    values: { amount, originCaip2Id, destinationCaip2Id, tokenAddress },
   } = useFormikContext<TransferFormValues>();
 
-  const route = getTokenRoute(originChainId, destinationChainId, tokenAddress, tokenRoutes);
+  const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenAddress, tokenRoutes);
   const weiAmount = toWei(amount, route?.decimals).toString();
   const isApproveRequired = route && isTransferApproveRequired(route, tokenAddress);
   return (
@@ -331,8 +337,15 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
   );
 }
 
+// TODO solana support
 function validateFormValues(
-  { originChainId, destinationChainId, amount, tokenAddress, recipientAddress }: TransferFormValues,
+  {
+    originCaip2Id: originChainId,
+    destinationCaip2Id: destinationChainId,
+    amount,
+    tokenAddress,
+    recipientAddress,
+  }: TransferFormValues,
   queryClient: QueryClient,
   accountAddress?: string,
 ) {

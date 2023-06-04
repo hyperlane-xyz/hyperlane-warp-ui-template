@@ -11,16 +11,16 @@ import { TokenMetadata } from './types';
 
 type Props = {
   name: string;
-  originChainId: ChainId;
-  destinationChainId: ChainId;
+  originCaip2Id: Caip2Id;
+  destinationCaip2Id: Caip2Id;
   tokenRoutes: RoutesMap;
   disabled?: boolean;
 };
 
 export function TokenSelectField({
   name,
-  originChainId,
-  destinationChainId,
+  originCaip2Id,
+  destinationCaip2Id,
   tokenRoutes,
   disabled,
 }: Props) {
@@ -59,8 +59,8 @@ export function TokenSelectField({
         isOpen={isModalOpen}
         close={() => setIsModalOpen(false)}
         onSelect={handleChange}
-        originChainId={originChainId}
-        destinationChainId={destinationChainId}
+        originCaip2Id={originCaip2Id}
+        destinationCaip2Id={destinationCaip2Id}
         tokenRoutes={tokenRoutes}
       />
     </>

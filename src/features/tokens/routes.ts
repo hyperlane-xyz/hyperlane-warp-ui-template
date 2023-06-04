@@ -6,9 +6,11 @@ import { utils } from '@hyperlane-xyz/utils';
 
 import { areAddressesEqual, isValidEvmAddress, normalizeEvmAddress } from '../../utils/addresses';
 import { logger } from '../../utils/logger';
+import { getCaip2Id } from '../chains/caip2';
+import { ProtocolType } from '../chains/types';
 import { getErc20Contract } from '../contracts/erc20';
 import { getTokenRouterContract } from '../contracts/hypErc20';
-import { getProvider } from '../multiProvider';
+import { getMultiProvider } from '../multiProvider';
 
 import { getAllTokens } from './metadata';
 import { TokenMetadata, TokenMetadataWithHypTokens } from './types';
@@ -21,7 +23,7 @@ export enum RouteType {
 
 export interface Route {
   type: RouteType;
-  baseChainId: ChainId;
+  baseCaip2Id: Caip2Id;
   baseTokenAddress: Address;
   tokenRouterAddress: Address;
   originTokenAddress: Address;
@@ -30,7 +32,7 @@ export interface Route {
 }
 
 // Origin chain to destination chain to Route
-export type RoutesMap = Record<ChainId, Record<ChainId, Route[]>>;
+export type RoutesMap = Record<Caip2Id, Record<Caip2Id, Route[]>>;
 
 export function useTokenRoutes() {
   const {
@@ -55,19 +57,21 @@ export function useTokenRoutes() {
   return { isLoading, error, tokenRoutes };
 }
 
+// TODO solana support here
 async function fetchRemoteTokensForCollateralToken(
   token: TokenMetadata,
 ): Promise<TokenMetadataWithHypTokens> {
   const { type, chainId, symbol, decimals, tokenRouterAddress } = token;
   logger.info('Inspecting token:', symbol);
-  const provider = getProvider(chainId);
+  const multiProvider = getMultiProvider();
+  const provider = multiProvider.getProvider(chainId);
   const tokenRouterContract = getTokenRouterContract(type, tokenRouterAddress, provider);
 
   if (type === TokenType.collateral) {
     logger.info('Validating token metadata');
     const collateralContract = tokenRouterContract as HypERC20Collateral;
     const wrappedTokenAddr = await collateralContract.wrappedToken();
-    const erc20 = getErc20Contract(wrappedTokenAddr, getProvider(chainId));
+    const erc20 = getErc20Contract(wrappedTokenAddr, provider);
     const decimalsOnChain = await erc20.decimals();
     if (decimals !== decimalsOnChain) {
       throw new Error(
@@ -92,10 +96,14 @@ async function fetchRemoteTokensForCollateralToken(
   );
   const hypTokenAddresses = hypTokenAddressesAsBytes32.map((b) => utils.bytes32ToAddress(b));
   logger.info(`Addresses found:`, hypTokenAddresses);
-  const hypTokens = hypTokenAddresses.map((addr, i) => ({
-    chainId: domains[i],
-    address: normalizeEvmAddress(addr),
-  }));
+  const hypTokens = hypTokenAddresses.map((addr, i) => {
+    const chainId = multiProvider.getChainId(domains[i]);
+    const caip2Id = getCaip2Id(ProtocolType.Ethereum, chainId);
+    return {
+      caip2Id,
+      address: normalizeEvmAddress(addr),
+    };
+  });
   return { ...token, hypTokens };
 }
 
@@ -117,26 +125,26 @@ function computeTokenRoutes(tokens: TokenMetadataWithHypTokens[]) {
   for (const token of tokens) {
     for (const hypToken of token.hypTokens) {
       const {
-        chainId: baseChainId,
+        caip2Id: baseCaip2Id,
         address: baseTokenAddress,
         tokenRouterAddress,
         decimals,
       } = token;
-      const { chainId: syntheticChainId, address: hypTokenAddress } = hypToken;
+      const { caip2Id: syntheticCaip2Id, address: hypTokenAddress } = hypToken;
 
       const commonRouteProps = {
-        baseChainId: baseChainId,
+        baseCaip2Id,
         baseTokenAddress,
         tokenRouterAddress,
       };
-      tokenRoutes[baseChainId][syntheticChainId].push({
+      tokenRoutes[baseCaip2Id][syntheticCaip2Id].push({
         type: RouteType.BaseToSynthetic,
         ...commonRouteProps,
         originTokenAddress: tokenRouterAddress,
         destTokenAddress: hypTokenAddress,
         decimals,
       });
-      tokenRoutes[syntheticChainId][baseChainId].push({
+      tokenRoutes[syntheticCaip2Id][baseCaip2Id].push({
         type: RouteType.SyntheticToBase,
         ...commonRouteProps,
         originTokenAddress: hypTokenAddress,
@@ -146,16 +154,16 @@ function computeTokenRoutes(tokens: TokenMetadataWithHypTokens[]) {
 
       for (const otherHypToken of token.hypTokens) {
         // Skip if it's same hypToken as parent loop
-        if (otherHypToken.chainId === syntheticChainId) continue;
-        const { chainId: otherSynChainId, address: otherHypTokenAddress } = otherHypToken;
-        tokenRoutes[syntheticChainId][otherSynChainId].push({
+        if (otherHypToken.caip2Id === syntheticCaip2Id) continue;
+        const { caip2Id: otherSynCaip2Id, address: otherHypTokenAddress } = otherHypToken;
+        tokenRoutes[syntheticCaip2Id][otherSynCaip2Id].push({
           type: RouteType.SyntheticToSynthetic,
           ...commonRouteProps,
           originTokenAddress: hypTokenAddress,
           destTokenAddress: otherHypTokenAddress,
           decimals,
         });
-        tokenRoutes[otherSynChainId][syntheticChainId].push({
+        tokenRoutes[otherSynCaip2Id][syntheticCaip2Id].push({
           type: RouteType.SyntheticToSynthetic,
           ...commonRouteProps,
           originTokenAddress: otherHypTokenAddress,
@@ -168,57 +176,57 @@ function computeTokenRoutes(tokens: TokenMetadataWithHypTokens[]) {
   return tokenRoutes;
 }
 
-function getChainsFromTokens(tokens: TokenMetadataWithHypTokens[]) {
-  const chains = new Set<number>();
+function getChainsFromTokens(tokens: TokenMetadataWithHypTokens[]): Caip2Id[] {
+  const chains = new Set<Caip2Id>();
   for (const token of tokens) {
-    chains.add(token.chainId);
+    chains.add(token.caip2Id);
     for (const hypToken of token.hypTokens) {
-      chains.add(hypToken.chainId);
+      chains.add(hypToken.caip2Id);
     }
   }
   return Array.from(chains);
 }
 
 export function getTokenRoutes(
-  originChainId: ChainId,
-  destinationChainId: ChainId,
+  originCaip2Id: Caip2Id,
+  destinationCaip2Id: Caip2Id,
   tokenRoutes: RoutesMap,
 ): Route[] {
-  return tokenRoutes[originChainId]?.[destinationChainId] || [];
+  return tokenRoutes[originCaip2Id]?.[destinationCaip2Id] || [];
 }
 
 export function getTokenRoute(
-  originChainId: ChainId,
-  destinationChainId: ChainId,
+  originCaip2Id: Caip2Id,
+  destinationCaip2Id: Caip2Id,
   baseTokenAddress: Address,
   tokenRoutes: RoutesMap,
 ): Route | null {
   if (!isValidEvmAddress(baseTokenAddress)) return null;
   return (
-    getTokenRoutes(originChainId, destinationChainId, tokenRoutes).find((r) =>
+    getTokenRoutes(originCaip2Id, destinationCaip2Id, tokenRoutes).find((r) =>
       areAddressesEqual(baseTokenAddress, r.baseTokenAddress),
     ) || null
   );
 }
 
 export function hasTokenRoute(
-  originChainId: ChainId,
-  destinationChainId: ChainId,
+  originCaip2Id: Caip2Id,
+  destinationCaip2Id: Caip2Id,
   baseTokenAddress: Address,
   tokenRoutes: RoutesMap,
 ): boolean {
-  return !!getTokenRoute(originChainId, destinationChainId, baseTokenAddress, tokenRoutes);
+  return !!getTokenRoute(originCaip2Id, destinationCaip2Id, baseTokenAddress, tokenRoutes);
 }
 
-export function useRouteChains(tokenRoutes: RoutesMap): ChainId[] {
+export function useRouteChains(tokenRoutes: RoutesMap): Caip2Id[] {
   return useMemo(() => {
-    const allChainIds = Object.keys(tokenRoutes).map((chainId) => parseInt(chainId));
-    const collateralChainIds = getAllTokens().map((t) => t.chainId);
-    return allChainIds.sort((c1, c2) => {
+    const allCaip2Ids = Object.keys(tokenRoutes) as Caip2Id[];
+    const collateralCaip2Ids = getAllTokens().map((t) => t.caip2Id);
+    return allCaip2Ids.sort((c1, c2) => {
       // Surface collateral chains first
-      if (collateralChainIds.includes(c1) && !collateralChainIds.includes(c2)) return -1;
-      else if (!collateralChainIds.includes(c1) && collateralChainIds.includes(c2)) return 1;
-      else return c1 - c2;
+      if (collateralCaip2Ids.includes(c1) && !collateralCaip2Ids.includes(c2)) return -1;
+      else if (!collateralCaip2Ids.includes(c1) && collateralCaip2Ids.includes(c2)) return 1;
+      else return c1 > c2 ? 1 : -1;
     });
   }, [tokenRoutes]);
 }

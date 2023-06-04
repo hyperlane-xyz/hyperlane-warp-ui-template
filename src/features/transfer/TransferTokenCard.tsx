@@ -3,9 +3,9 @@ import { WideChevron } from '@hyperlane-xyz/widgets';
 
 import { Spinner } from '../../components/animation/Spinner';
 import { Card } from '../../components/layout/Card';
+// import GearIcon from '../../images/icons/gear.svg';
 import { useTokenRoutes } from '../tokens/routes';
 
-// import GearIcon from '../../images/icons/gear.svg';
 import { TransferTokenForm } from './TransferTokenForm';
 
 export function TransferTokenCard() {

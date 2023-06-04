@@ -13,6 +13,7 @@ import CheckmarkCircleIcon from '../../images/icons/checkmark-circle.svg';
 import EnvelopeHeartIcon from '../../images/icons/envelope-heart.svg';
 import ErrorCircleIcon from '../../images/icons/error-circle.svg';
 import { toBase64 } from '../../utils/base64';
+import { parseCaip2Id } from '../chains/caip2';
 import { hasPermissionlessChain, isPermissionlessChain } from '../chains/utils';
 import { getMultiProvider } from '../multiProvider';
 import { useStore } from '../store';
@@ -39,9 +40,9 @@ export function TransfersStatusModal({
   }, [isOpen, transfers.length]);
 
   const { params, status, originTxHash, msgId } = transfers[index] || {};
-  const { destinationChainId, originChainId } = params || {};
+  const { destinationCaip2Id, originCaip2Id } = params || {};
 
-  const isPermissionlessRoute = hasPermissionlessChain([originChainId, destinationChainId]);
+  const isPermissionlessRoute = hasPermissionlessChain([destinationCaip2Id, originCaip2Id]);
 
   let statusDescription = '...';
   if (!isAccountReady) statusDescription = 'Please connect wallet to continue';
@@ -70,7 +71,7 @@ export function TransfersStatusModal({
   else if (status === TransferStatus.Failed)
     statusDescription = 'Transfer failed, please try again.';
 
-  const explorerLink = getHypExplorerLink(originChainId, msgId);
+  const explorerLink = getHypExplorerLink(originCaip2Id, msgId);
 
   return (
     <Modal isOpen={isOpen} close={close} title="Token Transfers" width="max-w-lg">
@@ -190,11 +191,13 @@ function BasicSpinner({ transferStatus }: { transferStatus: TransferStatus }) {
   return <div className="py-4 flex flex-col justify-center items-center">{content}</div>;
 }
 
-function getHypExplorerLink(originChainId: ChainId, msgId?: string) {
-  if (!originChainId || !msgId) return null;
+// TODO test with solana chain config, or disallow it
+function getHypExplorerLink(originCaip2Id: Caip2Id, msgId?: string) {
+  if (!originCaip2Id || !msgId) return null;
   const baseLink = `${links.explorer}/message/${msgId}`;
-  if (isPermissionlessChain(originChainId)) {
-    const chainConfig = getMultiProvider().getChainMetadata(originChainId);
+  if (isPermissionlessChain(originCaip2Id)) {
+    const { reference } = parseCaip2Id(originCaip2Id);
+    const chainConfig = getMultiProvider().getChainMetadata(reference);
     const serializedConfig = toBase64([chainConfig]);
     if (serializedConfig) {
       const params = new URLSearchParams({ chains: serializedConfig });

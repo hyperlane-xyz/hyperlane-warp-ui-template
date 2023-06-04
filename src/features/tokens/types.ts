@@ -3,14 +3,19 @@ import { z } from 'zod';
 
 import { TokenType } from '@hyperlane-xyz/hyperlane-token';
 
+import { ProtocolType } from '../chains/types';
+
 const commonTokenFields = z.object({
-  chainId: z.number().positive(),
-  name: z.string(),
-  symbol: z.string(),
+  chainId: z.number().positive().or(z.string().nonempty()),
+  protocol: z.nativeEnum(ProtocolType).optional(),
+  name: z.string().nonempty(),
+  symbol: z.string().nonempty(),
   decimals: z.number().positive(),
   logoURI: z.string().optional(),
 });
-type CommonTokenFields = z.infer<typeof commonTokenFields>;
+type CommonTokenFields = Omit<z.infer<typeof commonTokenFields>, 'protocol'> & {
+  protocol?: `${ProtocolType}`;
+};
 
 /**
  * Types for the developer-provided config
@@ -60,6 +65,7 @@ export type WarpTokenConfig = Array<CollateralTokenConfig | NativeTokenConfig>;
  * See src/features/tokens/metadata.ts
  */
 interface BaseTokenMetadata extends CommonTokenFields {
+  caip2Id: Caip2Id;
   type: TokenType;
   address: Address;
   tokenRouterAddress: Address; // Shared name for hypCollateralAddr and hypNativeAddr
@@ -81,7 +87,7 @@ export type TokenMetadata = CollateralTokenMetadata | NativeTokenMetadata;
  * Extended types including synthetic hyp token addresses
  */
 interface HypTokens {
-  hypTokens: Array<{ chainId: ChainId; address: Address }>;
+  hypTokens: Array<{ caip2Id: Caip2Id; address: Address }>;
 }
 
 type NativeTokenMetadataWithHypTokens = NativeTokenMetadata & HypTokens;

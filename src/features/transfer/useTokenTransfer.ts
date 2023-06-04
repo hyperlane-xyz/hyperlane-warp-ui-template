@@ -12,6 +12,7 @@ import { toastTxSuccess } from '../../components/toast/TxSuccessToast';
 import { toWei } from '../../utils/amount';
 import { logger } from '../../utils/logger';
 import { sleep } from '../../utils/timeout';
+import { parseCaip2Id } from '../chains/caip2';
 import { getErc20Contract } from '../contracts/erc20';
 import { getTokenRouterContract } from '../contracts/hypErc20';
 import { getMultiProvider, getProvider } from '../multiProvider';
@@ -21,6 +22,7 @@ import { isNativeToken } from '../tokens/utils';
 
 import { TransferFormValues, TransferStatus } from './types';
 
+// TODO solana support
 // Note, this doesn't use wagmi's prepare + send pattern because we're potentially sending two transactions
 // The prepare hooks are recommended to use pre-click downtime to run async calls, but since the flow
 // may require two serial txs, the prepare hooks aren't useful and complicate hook architecture considerably.
@@ -46,12 +48,14 @@ export function useTokenTransfer(onDone?: () => void) {
       let status: TransferStatus = TransferStatus.Preparing;
 
       try {
-        const { amount, originChainId, destinationChainId, recipientAddress, tokenAddress } =
+        const { amount, originCaip2Id, destinationCaip2Id, recipientAddress, tokenAddress } =
           values;
+        const originChainId = parseInt(parseCaip2Id(originCaip2Id).reference, 10);
+        const destinationChainId = parseInt(parseCaip2Id(destinationCaip2Id).reference, 10);
 
         const tokenRoute = getTokenRoute(
-          originChainId,
-          destinationChainId,
+          originCaip2Id,
+          destinationCaip2Id,
           tokenAddress,
           tokenRoutes,
         );
@@ -60,7 +64,7 @@ export function useTokenTransfer(onDone?: () => void) {
         const isBaseToSynthetic = tokenRoute.type === RouteType.BaseToSynthetic;
         const isTokenNative = isNativeToken(tokenAddress);
         const weiAmount = toWei(amount, tokenRoute.decimals).toString();
-        const provider = getProvider(originChainId);
+        const provider = getProvider(originCaip2Id);
 
         addTransfer({
           status,
@@ -97,7 +101,7 @@ export function useTokenTransfer(onDone?: () => void) {
           toastTxSuccess(
             'Approve transaction sent!',
             approveTxReceipt.transactionHash,
-            originChainId,
+            originCaip2Id,
           );
         }
 
@@ -139,7 +143,7 @@ export function useTokenTransfer(onDone?: () => void) {
           msgId,
         });
         logger.debug('Transfer transaction confirmed, hash:', originTxHash);
-        toastTxSuccess('Remote transfer started!', originTxHash, originChainId);
+        toastTxSuccess('Remote transfer started!', originTxHash, originCaip2Id);
       } catch (error) {
         logger.error(`Error at stage ${status} `, error);
         updateTransferStatus(transferIndex, TransferStatus.Failed);

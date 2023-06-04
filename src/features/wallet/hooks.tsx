@@ -7,27 +7,28 @@ import {
   useNetwork as useNetworkWagmi,
 } from 'wagmi';
 
+import { getSolanaChainName } from '../../consts/solanaChains';
 import { logger } from '../../utils/logger';
-
-import { ChainEnvironment } from './types';
+import { getCaip2Id } from '../chains/caip2';
+import { ProtocolType } from '../chains/types';
 
 interface AccountInfo {
-  env: ChainEnvironment;
+  env: ProtocolType;
   address?: Address;
   connectorName?: string;
   isReady: boolean;
 }
 
 export function useAccounts(): {
-  accounts: Record<ChainEnvironment, AccountInfo>;
+  accounts: Record<ProtocolType, AccountInfo>;
   readyAccounts: Array<AccountInfo>;
 } {
   // Evm
   const { address, isConnected, connector } = useAccountWagmi();
   const isEvmAccountReady = !!(address && isConnected && connector);
 
-  const evmAccountInfo = {
-    env: ChainEnvironment.Evm,
+  const evmAccountInfo: AccountInfo = {
+    env: ProtocolType.Ethereum,
     address: address ? `${address}` : undefined, // massage wagmi addr type
     connectorName: connector?.name,
     isReady: isEvmAccountReady,
@@ -43,8 +44,8 @@ export function useAccounts(): {
   const isSolAccountReady = !!(publicKey && wallet && connected);
   const solAddress = publicKey?.toBase58();
 
-  const solAccountInfo = {
-    env: ChainEnvironment.Solana,
+  const solAccountInfo: AccountInfo = {
+    env: ProtocolType.Sealevel,
     address: solAddress,
     connectorName: wallet?.adapter?.name,
     isReady: isSolAccountReady,
@@ -57,14 +58,14 @@ export function useAccounts(): {
 
   return {
     accounts: {
-      [ChainEnvironment.Evm]: evmAccountInfo,
-      [ChainEnvironment.Solana]: solAccountInfo,
+      [ProtocolType.Ethereum]: evmAccountInfo,
+      [ProtocolType.Sealevel]: solAccountInfo,
     },
     readyAccounts: [evmAccountInfo, solAccountInfo].filter((a) => a.isReady),
   };
 }
 
-export function useDisconnects(): Record<ChainEnvironment, () => Promise<void>> {
+export function useDisconnects(): Record<ProtocolType, () => Promise<void>> {
   // Evm
   const { disconnectAsync: disconnectEvm } = useDisconnectWagmi();
 
@@ -72,7 +73,7 @@ export function useDisconnects(): Record<ChainEnvironment, () => Promise<void>> 
   const { disconnect: disconnectSol } = useWalletSolana();
 
   const onClickDisconnect =
-    (env: ChainEnvironment, disconnectFn?: () => Promise<void> | void) => async () => {
+    (env: ProtocolType, disconnectFn?: () => Promise<void> | void) => async () => {
       try {
         if (!disconnectFn) throw new Error('Disconnect function is null');
         await disconnectFn();
@@ -83,39 +84,42 @@ export function useDisconnects(): Record<ChainEnvironment, () => Promise<void>> 
     };
 
   return {
-    [ChainEnvironment.Evm]: onClickDisconnect(ChainEnvironment.Evm, disconnectEvm),
-    [ChainEnvironment.Solana]: onClickDisconnect(ChainEnvironment.Solana, disconnectSol),
+    [ProtocolType.Ethereum]: onClickDisconnect(ProtocolType.Ethereum, disconnectEvm),
+    [ProtocolType.Sealevel]: onClickDisconnect(ProtocolType.Sealevel, disconnectSol),
   };
 }
 
 interface ChainInfo {
-  chainName?: string;
-  chainId?: number;
+  chainDisplayName?: string;
+  caip2Id?: Caip2Id;
 }
 
 export function useChains(): {
-  chains: Record<ChainEnvironment, ChainInfo>;
+  chains: Record<ProtocolType, ChainInfo>;
   readyChains: Array<ChainInfo>;
 } {
   // Evm
   const { chain } = useNetworkWagmi();
-  const evmChain = { chainName: chain?.name, chainId: chain?.id };
+  const evmChain: ChainInfo = {
+    chainDisplayName: chain?.name,
+    caip2Id: chain ? getCaip2Id(ProtocolType.Ethereum, chain.id) : undefined,
+  };
 
   // Solana
   const { connection } = useConnection();
-  const solChain = { chainName: getSolanaChainName(connection?.rpcEndpoint) };
+  const { name: solName, displayName: solDisplayName } = getSolanaChainName(
+    connection?.rpcEndpoint,
+  );
+  const solChain: ChainInfo = {
+    chainDisplayName: solDisplayName,
+    caip2Id: solName ? getCaip2Id(ProtocolType.Sealevel, solName) : undefined,
+  };
 
   return {
     chains: {
-      [ChainEnvironment.Evm]: evmChain,
-      [ChainEnvironment.Solana]: solChain,
+      [ProtocolType.Ethereum]: evmChain,
+      [ProtocolType.Sealevel]: solChain,
     },
-    readyChains: [evmChain, solChain].filter((c) => !!c.chainName),
+    readyChains: [evmChain, solChain].filter((c) => !!c.chainDisplayName),
   };
-}
-
-function getSolanaChainName(rpcEndpoint: string) {
-  if (rpcEndpoint?.includes('devnet')) return 'Sol Devnet';
-  if (rpcEndpoint?.includes('testnet')) return 'Sol Testnet';
-  return 'Solana';
 }

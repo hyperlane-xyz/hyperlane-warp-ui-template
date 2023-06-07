@@ -29,3 +29,7 @@ export function chunk<T extends Sliceable>(str: T, size: number) {
   }
   return R;
 }
+
+export function isNumeric(value: string | number) {
+  return typeof value === 'number' || /^\d+$/.test(value);
+}

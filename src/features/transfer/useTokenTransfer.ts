@@ -13,10 +13,9 @@ import { toWei } from '../../utils/amount';
 import { logger } from '../../utils/logger';
 import { sleep } from '../../utils/timeout';
 import { parseCaip2Id } from '../chains/caip2';
-import { getErc20Contract } from '../contracts/erc20';
-import { getTokenRouterContract } from '../contracts/hypErc20';
 import { getMultiProvider, getProvider } from '../multiProvider';
 import { useStore } from '../store';
+import { getErc20Contract, getTokenRouterContract } from '../tokens/contracts/evmContracts';
 import { Route, RouteType, RoutesMap, getTokenRoute } from '../tokens/routes';
 import { isNativeToken } from '../tokens/utils';
 

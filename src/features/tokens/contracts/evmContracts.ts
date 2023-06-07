@@ -1,5 +1,6 @@
 import { Signer, providers } from 'ethers';
 
+import { ERC20Upgradeable__factory } from '@hyperlane-xyz/core';
 import {
   HypERC20Collateral__factory,
   HypERC20__factory,
@@ -7,6 +8,7 @@ import {
   TokenType,
 } from '@hyperlane-xyz/hyperlane-token';
 
+// TODO remove?
 // Get the connected HypERC20Collateral, HypNative, or HypERC20 contract
 export function getTokenRouterContract(
   type: TokenType,
@@ -24,23 +26,30 @@ export function getTokenRouterContract(
   }
 }
 
-function getHypErc20CollateralContract(
+export function getHypErc20CollateralContract(
   contractAddress: Address,
   signerOrProvider: Signer | providers.Provider,
 ) {
   return HypERC20Collateral__factory.connect(contractAddress, signerOrProvider);
 }
 
-function getHypErc20Contract(
+export function getHypErc20Contract(
   contractAddress: Address,
   signerOrProvider: Signer | providers.Provider,
 ) {
   return HypERC20__factory.connect(contractAddress, signerOrProvider);
 }
 
-function getHypNativeContract(
+export function getHypNativeContract(
   contractAddress: Address,
   signerOrProvider: Signer | providers.Provider,
 ) {
   return HypNative__factory.connect(contractAddress, signerOrProvider);
+}
+
+export function getErc20Contract(
+  contractAddress: Address,
+  signerOrProvider: Signer | providers.Provider,
+) {
+  return ERC20Upgradeable__factory.connect(contractAddress, signerOrProvider);
 }

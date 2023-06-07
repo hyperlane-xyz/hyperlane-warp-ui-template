@@ -6,6 +6,7 @@ import { getMultiProvider } from '../multiProvider';
 import { parseCaip2Id } from './caip2';
 
 export function getChainDisplayName(id: Caip2Id, shortName = false) {
+  if (!id) return 'Unknown';
   const { reference } = parseCaip2Id(id);
   const metadata = getMultiProvider().tryGetChainMetadata(reference || 0);
   if (!metadata) return 'Unknown';
@@ -14,6 +15,7 @@ export function getChainDisplayName(id: Caip2Id, shortName = false) {
 }
 
 export function isPermissionlessChain(id: Caip2Id) {
+  if (!id) return true;
   const { reference } = parseCaip2Id(id);
   return !chainIdToMetadata[reference];
 }

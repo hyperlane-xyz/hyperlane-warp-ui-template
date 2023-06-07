@@ -13,9 +13,7 @@ const commonTokenFields = z.object({
   decimals: z.number().positive(),
   logoURI: z.string().optional(),
 });
-type CommonTokenFields = Omit<z.infer<typeof commonTokenFields>, 'protocol'> & {
-  protocol?: `${ProtocolType}`;
-};
+type CommonTokenFields = z.infer<typeof commonTokenFields>;
 
 /**
  * Types for the developer-provided config
@@ -27,7 +25,10 @@ type CommonTokenFields = Omit<z.infer<typeof commonTokenFields>, 'protocol'> & {
  * See src/consts/tokens.ts
  */
 
-interface BaseTokenConfig extends CommonTokenFields {
+type CommonFieldsWithLooseProtocol = Omit<CommonTokenFields, 'protocol'> & {
+  protocol?: `${ProtocolType}`;
+};
+interface BaseTokenConfig extends CommonFieldsWithLooseProtocol {
   type: `${TokenType}`; // use template literal to allow string values
 }
 

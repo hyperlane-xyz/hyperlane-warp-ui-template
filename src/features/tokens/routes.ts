@@ -1,17 +1,17 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { HypERC20Collateral, TokenType } from '@hyperlane-xyz/hyperlane-token';
-import { utils } from '@hyperlane-xyz/utils';
+import { TokenType } from '@hyperlane-xyz/hyperlane-token';
 
-import { areAddressesEqual, isValidEvmAddress, normalizeEvmAddress } from '../../utils/addresses';
+import { areAddressesEqual, isValidEvmAddress } from '../../utils/addresses';
 import { logger } from '../../utils/logger';
 import { getCaip2Id } from '../chains/caip2';
 import { ProtocolType } from '../chains/types';
-import { getErc20Contract } from '../contracts/erc20';
-import { getTokenRouterContract } from '../contracts/hypErc20';
-import { getMultiProvider } from '../multiProvider';
+import { getMultiProvider, getProvider } from '../multiProvider';
 
+import { EvmHypTokenCollateralAdapter, EvmTokenAdapter } from './adapters/EvmTokenContractAdapter';
+import { IHypTokenAdapter, ITokenAdapter } from './adapters/ITokenContractAdapter';
+import { getHypErc20CollateralContract } from './contracts/evmContracts';
 import { getAllTokens } from './metadata';
 import { TokenMetadata, TokenMetadataWithHypTokens } from './types';
 
@@ -46,7 +46,8 @@ export function useTokenRoutes() {
       const tokens: TokenMetadataWithHypTokens[] = [];
       for (const token of getAllTokens()) {
         // Consider parallelizing here but concerned about RPC rate limits
-        const tokenWithHypTokens = await fetchRemoteTokensForCollateralToken(token);
+        await validateTokenMetadata(token);
+        const tokenWithHypTokens = await fetchRemoteHypTokens(token);
         tokens.push(tokenWithHypTokens);
       }
       return computeTokenRoutes(tokens);
@@ -57,54 +58,75 @@ export function useTokenRoutes() {
   return { isLoading, error, tokenRoutes };
 }
 
-// TODO solana support here
-async function fetchRemoteTokensForCollateralToken(
-  token: TokenMetadata,
-): Promise<TokenMetadataWithHypTokens> {
-  const { type, chainId, symbol, decimals, tokenRouterAddress } = token;
-  logger.info('Inspecting token:', symbol);
-  const multiProvider = getMultiProvider();
-  const provider = multiProvider.getProvider(chainId);
-  const tokenRouterContract = getTokenRouterContract(type, tokenRouterAddress, provider);
+async function validateTokenMetadata(token: TokenMetadata) {
+  const {
+    type,
+    caip2Id,
+    symbol,
+    decimals,
+    tokenRouterAddress,
+    protocol = ProtocolType.Ethereum,
+  } = token;
 
-  if (type === TokenType.collateral) {
-    logger.info('Validating token metadata');
-    const collateralContract = tokenRouterContract as HypERC20Collateral;
+  // Native tokens cannot be queried for metadata
+  if (type !== TokenType.collateral) return;
+
+  logger.info(`Validating token ${symbol} on ${caip2Id}`);
+
+  let tokenAdapter: ITokenAdapter;
+  if (protocol === ProtocolType.Ethereum) {
+    const provider = getProvider(caip2Id);
+    const collateralContract = getHypErc20CollateralContract(tokenRouterAddress, provider);
     const wrappedTokenAddr = await collateralContract.wrappedToken();
-    const erc20 = getErc20Contract(wrappedTokenAddr, provider);
-    const decimalsOnChain = await erc20.decimals();
-    if (decimals !== decimalsOnChain) {
-      throw new Error(
-        `Token config decimals ${decimals} does not match contract decimals ${decimalsOnChain}`,
-      );
-    }
-    const symbolOnChain = await erc20.symbol();
-    if (symbol !== symbolOnChain) {
-      throw new Error(
-        `Token config symbol ${symbol} does not match contract decimals ${symbolOnChain}`,
-      );
-    }
+    tokenAdapter = new EvmTokenAdapter(provider, wrappedTokenAddr);
+  } else if (protocol === ProtocolType.Sealevel) {
+    // TODO solana support
+    return;
   }
 
-  logger.info('Fetching connected domains');
-  const domains = await tokenRouterContract.domains();
-  logger.info(`Found ${domains.length} connected domains:`, domains);
+  const { decimals: decimalsOnChain, symbol: symbolOnChain } = await tokenAdapter!.getMetadata();
+  if (decimals !== decimalsOnChain) {
+    throw new Error(
+      `Token config decimals ${decimals} does not match contract decimals ${decimalsOnChain}`,
+    );
+  }
+  if (symbol !== symbolOnChain) {
+    throw new Error(
+      `Token config symbol ${symbol} does not match contract decimals ${symbolOnChain}`,
+    );
+  }
+}
 
-  logger.info('Getting domain router address');
-  const hypTokenAddressesAsBytes32 = await Promise.all(
-    domains.map((d) => tokenRouterContract.routers(d)),
-  );
-  const hypTokenAddresses = hypTokenAddressesAsBytes32.map((b) => utils.bytes32ToAddress(b));
-  logger.info(`Addresses found:`, hypTokenAddresses);
-  const hypTokens = hypTokenAddresses.map((addr, i) => {
-    const chainId = multiProvider.getChainId(domains[i]);
+// TODO solana support here
+async function fetchRemoteHypTokens(
+  originToken: TokenMetadata,
+): Promise<TokenMetadataWithHypTokens> {
+  const { caip2Id, symbol, tokenRouterAddress, protocol = ProtocolType.Ethereum } = originToken;
+  logger.info(`Fetching remote tokens for ${symbol} on ${caip2Id}`);
+
+  const multiProvider = getMultiProvider();
+
+  let hypTokenAdapter: IHypTokenAdapter;
+  if (protocol === ProtocolType.Ethereum) {
+    const provider = getProvider(caip2Id);
+    hypTokenAdapter = new EvmHypTokenCollateralAdapter(provider, tokenRouterAddress);
+  } else if (protocol === ProtocolType.Sealevel) {
+    // TODO solana support
+    return { ...originToken, hypTokens: [] };
+  }
+
+  const remoteRouters = await hypTokenAdapter!.getAllRouters();
+  logger.info(`Router addresses found:`, remoteRouters);
+
+  const hypTokens = remoteRouters.map((router) => {
+    const chainId = multiProvider.getChainId(router.domain);
     const caip2Id = getCaip2Id(ProtocolType.Ethereum, chainId);
     return {
+      address: router.address,
       caip2Id,
-      address: normalizeEvmAddress(addr),
     };
   });
-  return { ...token, hypTokens };
+  return { ...originToken, hypTokens };
 }
 
 // Process token list to populates routesCache with all possible token routes (e.g. router pairs)

@@ -2,9 +2,9 @@ import { QueryClient, useQuery } from '@tanstack/react-query';
 import { useAccount } from 'wagmi';
 
 import { logger } from '../../utils/logger';
-import { getErc20Contract } from '../contracts/erc20';
 import { getProvider } from '../multiProvider';
 
+import { getErc20Contract } from './contracts/evmContracts';
 import { isNativeToken } from './utils';
 
 export function getTokenBalanceKey(

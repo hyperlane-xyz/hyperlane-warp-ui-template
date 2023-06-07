@@ -73,7 +73,7 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
         <Form className="flex flex-col items-stretch w-full mt-2">
           <div className="flex items-center justify-center space-x-7 sm:space-x-10">
             <ChainSelectField
-              name="originChainId"
+              name="originCaip2Id"
               label="From"
               caip2Ids={caip2Ids}
               disabled={isReview}
@@ -106,7 +106,7 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
               <SwapChainsButton disabled={isReview} />
             </div>
             <ChainSelectField
-              name="destinationChainId"
+              name="destinationCaip2Id"
               label="To"
               caip2Ids={caip2Ids}
               disabled={isReview}

@@ -5,6 +5,7 @@ import { ChainLogo as ChainLogoInner } from '@hyperlane-xyz/widgets';
 import { parseCaip2Id } from '../../features/chains/caip2';
 import { getChainDisplayName } from '../../features/chains/utils';
 import { logger } from '../../utils/logger';
+import { isNumeric } from '../../utils/string';
 
 type Props = Omit<ComponentProps<typeof ChainLogoInner>, 'chainId' | 'chainName'> & {
   caip2Id?: Caip2Id;
@@ -18,7 +19,7 @@ export function ChainLogo(props: Props) {
     try {
       const chainName = getChainDisplayName(caip2Id);
       const { reference } = parseCaip2Id(caip2Id);
-      if (typeof reference === 'number') return { chainId: reference, chainName };
+      if (isNumeric(reference)) return { chainId: parseInt(reference, 10), chainName };
       else throw new Error('TODO support non-number reference');
     } catch (error) {
       logger.error('Failed to parse caip2 id', error);

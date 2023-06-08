@@ -16,7 +16,7 @@ export const tokenList: WarpTokenConfig = [
     type: 'collateral',
     chainId: 5,
     address: '0xd03483b978461b3162CE9e4c80835b9E81E07018',
-    hypCollateralAddress: '0x1d30DD33886dE2914D610aDE55C55f5d145743AC',
+    hypCollateralAddress: '0x9a01dd4dD90dBc27a756Dce5B564D6468795ee14',
     name: 'MyToken',
     symbol: 'MTK',
     decimals: 0,

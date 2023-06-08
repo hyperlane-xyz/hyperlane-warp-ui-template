@@ -371,10 +371,10 @@ function validateFormValues(
   const route = getTokenRoute(originChainId, destinationChainId, tokenAddress, tokenRoutes);
 
   const currentTokenAddress = !route
-  ? ''
-  : route.baseChainId === originChainId
-  ? tokenAddress
-  : route.originTokenAddress;
+    ? ''
+    : route.baseChainId === originChainId
+    ? tokenAddress
+    : route.originTokenAddress;
 
   if (!originChainId) return { originChainId: 'Invalid origin chain' };
   if (!destinationChainId) return { destinationChainId: 'Invalid destination chain' };

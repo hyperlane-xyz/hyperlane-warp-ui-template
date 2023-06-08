@@ -5,9 +5,14 @@ import type { ERC20Upgradeable, HypERC20 } from '@hyperlane-xyz/hyperlane-token'
 import { utils } from '@hyperlane-xyz/utils';
 
 import { normalizeEvmAddress } from '../../../utils/addresses';
-import { getErc20Contract, getHypErc20CollateralContract } from '../contracts/evmContracts';
+import { isValidEvmAddress } from '../../../utils/addresses';
+import {
+  getErc20Contract,
+  getHypErc20CollateralContract,
+  getHypErc20Contract,
+} from '../contracts/evmContracts';
 
-import { IHypTokenAdapter, ITokenAdapter } from './ITokenContractAdapter';
+import { IHypTokenAdapter, ITokenAdapter } from './ITokenAdapter';
 
 type SignerOrProvider = Signer | providers.Provider;
 
@@ -16,6 +21,7 @@ export class EvmNativeTokenAdapter implements ITokenAdapter {
 
   async getBalance(address?: Address): Promise<string> {
     const balanceAddress = await this.resolveAddress(address);
+    if (!isValidEvmAddress(balanceAddress)) return '0';
     const balance = await this.signerOrProvider.getBalance(balanceAddress);
     return balance.toString();
   }
@@ -58,7 +64,7 @@ export class EvmTokenAdapter<T extends ERC20Upgradeable = ERC20Upgradeable>
   constructor(
     public readonly signerOrProvider: SignerOrProvider,
     public readonly contractAddress: Address,
-    // @ts-ignore Compiler not understanding that getErc20Contract is valid here
+    // @ts-ignore Compiler not understanding that factory is valid here
     contractFactory: (a: Address, s: SignerOrProvider) => T = getErc20Contract,
   ) {
     super(signerOrProvider);
@@ -104,9 +110,9 @@ export class EvmHypTokenAdapter<T extends HypERC20 = HypERC20>
   constructor(
     public readonly signerOrProvider: SignerOrProvider,
     public readonly contractAddress: Address,
-    contractFactory: (a: Address, s: SignerOrProvider) => T,
   ) {
-    super(signerOrProvider, contractAddress, contractFactory);
+    // @ts-ignore Compiler not understanding that factory is valid here
+    super(signerOrProvider, contractAddress, getHypErc20Contract);
   }
 
   getDomains(): Promise<DomainId[]> {
@@ -143,12 +149,12 @@ export class EvmHypTokenAdapter<T extends HypERC20 = HypERC20>
   }
 }
 
-export class EvmHypTokenCollateralAdapter extends EvmHypTokenAdapter implements IHypTokenAdapter {
+export class EvmHypCollateralAdapter extends EvmHypTokenAdapter implements IHypTokenAdapter {
   constructor(
     public readonly signerOrProvider: SignerOrProvider,
     public readonly contractAddress: Address,
   ) {
-    // @ts-ignore Workaround for lack of multiple inheritance in TS
+    // @ts-ignore Workaround for lack of TS multiple inheritance
     super(signerOrProvider, contractAddress, getHypErc20CollateralContract);
   }
 

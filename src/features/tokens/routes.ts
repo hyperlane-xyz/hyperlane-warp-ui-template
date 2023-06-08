@@ -9,8 +9,9 @@ import { getCaip2Id } from '../chains/caip2';
 import { ProtocolType } from '../chains/types';
 import { getMultiProvider, getProvider } from '../multiProvider';
 
-import { EvmHypTokenCollateralAdapter, EvmTokenAdapter } from './adapters/EvmTokenContractAdapter';
-import { IHypTokenAdapter, ITokenAdapter } from './adapters/ITokenContractAdapter';
+import { AdapterFactory } from './adapters/AdapterFactory';
+import { EvmTokenAdapter } from './adapters/EvmTokenAdapter';
+import { ITokenAdapter } from './adapters/ITokenAdapter';
 import { getHypErc20CollateralContract } from './contracts/evmContracts';
 import { getAllTokens } from './metadata';
 import { TokenMetadata, TokenMetadataWithHypTokens } from './types';
@@ -97,30 +98,21 @@ async function validateTokenMetadata(token: TokenMetadata) {
   }
 }
 
-// TODO solana support here
 async function fetchRemoteHypTokens(
   originToken: TokenMetadata,
 ): Promise<TokenMetadataWithHypTokens> {
   const { caip2Id, symbol, tokenRouterAddress, protocol = ProtocolType.Ethereum } = originToken;
   logger.info(`Fetching remote tokens for ${symbol} on ${caip2Id}`);
 
-  const multiProvider = getMultiProvider();
-
-  let hypTokenAdapter: IHypTokenAdapter;
-  if (protocol === ProtocolType.Ethereum) {
-    const provider = getProvider(caip2Id);
-    hypTokenAdapter = new EvmHypTokenCollateralAdapter(provider, tokenRouterAddress);
-  } else if (protocol === ProtocolType.Sealevel) {
-    // TODO solana support
-    return { ...originToken, hypTokens: [] };
-  }
+  const hypTokenAdapter = AdapterFactory.CollateralAdapterFromAddress(caip2Id, tokenRouterAddress);
 
   const remoteRouters = await hypTokenAdapter!.getAllRouters();
   logger.info(`Router addresses found:`, remoteRouters);
 
+  const multiProvider = getMultiProvider();
   const hypTokens = remoteRouters.map((router) => {
     const chainId = multiProvider.getChainId(router.domain);
-    const caip2Id = getCaip2Id(ProtocolType.Ethereum, chainId);
+    const caip2Id = getCaip2Id(protocol, chainId);
     return {
       address: router.address,
       caip2Id,

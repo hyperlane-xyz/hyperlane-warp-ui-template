@@ -20,7 +20,11 @@ import { ChainSelectField } from '../chains/ChainSelectField';
 import { getChainDisplayName } from '../chains/utils';
 import { TokenSelectField } from '../tokens/TokenSelectField';
 import { RoutesMap, getTokenRoute, useRouteChains } from '../tokens/routes';
-import { getCachedTokenBalance, useAccountTokenBalance } from '../tokens/useTokenBalance';
+import {
+  getCachedTokenBalance,
+  useAccountTokenBalance,
+  useTokenBalance,
+} from '../tokens/useTokenBalance';
 
 import { TransferFormValues } from './types';
 import { isTransferApproveRequired, useTokenTransfer } from './useTokenTransfer';
@@ -223,11 +227,11 @@ function SwapChainsButton({ disabled }: { disabled?: boolean }) {
 
 // TODO solana support
 function TokenBalance({ label, balance }: { label: string; balance?: string | null }) {
+  // TODO Handle varying decimal amounts?
   const rounded = fromWeiRounded(balance);
   return <div className="text-xs text-gray-500">{`${label}: ${rounded}`}</div>;
 }
 
-// TODO solana support
 function useSelfTokenBalance(tokenRoutes) {
   const { values } = useFormikContext<TransferFormValues>();
   const { originCaip2Id, destinationCaip2Id, tokenAddress } = values;
@@ -240,23 +244,21 @@ function useSelfTokenBalance(tokenRoutes) {
   return useAccountTokenBalance(originCaip2Id, addressForBalance);
 }
 
-// TODO solana support
 function SelfTokenBalance({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
   const { balance } = useSelfTokenBalance(tokenRoutes);
   return <TokenBalance label="My balance" balance={balance} />;
 }
 
-// TODO solana support
 function RecipientTokenBalance({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
   const { values } = useFormikContext<TransferFormValues>();
-  const { originCaip2Id, destinationCaip2Id, tokenAddress } = values;
+  const { originCaip2Id, destinationCaip2Id, tokenAddress, recipientAddress } = values;
   const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenAddress, tokenRoutes);
-  const addressForBalance = !route
+  const tokenAddrToCheck = !route
     ? ''
     : route.baseCaip2Id === destinationCaip2Id
     ? tokenAddress
     : route.destTokenAddress;
-  const { balance } = useAccountTokenBalance(destinationCaip2Id, addressForBalance);
+  const { balance } = useTokenBalance(destinationCaip2Id, tokenAddrToCheck, recipientAddress);
   return <TokenBalance label="Remote balance" balance={balance} />;
 }
 

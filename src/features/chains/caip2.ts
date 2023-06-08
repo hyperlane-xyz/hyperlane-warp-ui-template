@@ -31,3 +31,13 @@ export function parseCaip2Id(id: Caip2Id) {
   }
   return { protocol, reference };
 }
+
+export function getProtocolType(id: Caip2Id) {
+  const { protocol } = parseCaip2Id(id);
+  return protocol;
+}
+
+export function getChainReference(id: Caip2Id) {
+  const { reference } = parseCaip2Id(id);
+  return reference;
+}

@@ -1,11 +1,7 @@
 import { QueryClient, useQuery } from '@tanstack/react-query';
 import { useAccount } from 'wagmi';
 
-import { logger } from '../../utils/logger';
-import { getProvider } from '../multiProvider';
-
-import { getErc20Contract } from './contracts/evmContracts';
-import { isNativeToken } from './utils';
+import { AdapterFactory } from './adapters/AdapterFactory';
 
 export function getTokenBalanceKey(
   caip2Id: Caip2Id,
@@ -29,7 +25,8 @@ export function useTokenBalance(caip2Id: Caip2Id, tokenAddress: Address, account
     queryKey: getTokenBalanceKey(caip2Id, tokenAddress, accountAddress),
     queryFn: () => {
       if (!caip2Id || !tokenAddress || !accountAddress) return null;
-      return fetchTokenBalance(caip2Id, tokenAddress, accountAddress);
+      const adapter = AdapterFactory.TokenAdapterFromAddress(caip2Id, tokenAddress);
+      return adapter.getBalance(accountAddress);
     },
     refetchInterval: 7500,
   });
@@ -46,23 +43,4 @@ export function getCachedTokenBalance(
   return queryClient.getQueryData(getTokenBalanceKey(caip2Id, tokenAddress, accountAddress)) as
     | string
     | undefined;
-}
-
-// TODO solana support here
-async function fetchTokenBalance(caip2Id: Caip2Id, tokenAddress: Address, accountAddress: Address) {
-  if (isNativeToken(tokenAddress)) {
-    logger.debug(`Fetching balance for account ${accountAddress} native token on chain ${caip2Id}`);
-    const provider = getProvider(caip2Id);
-    const balance = await provider.getBalance(accountAddress);
-    logger.debug(`Native token balance: ${balance.toString()}`);
-    return balance.toString();
-  } else {
-    logger.debug(
-      `Fetching balance for account ${accountAddress} token ${tokenAddress} on chain ${caip2Id}`,
-    );
-    const erc20 = getErc20Contract(tokenAddress, getProvider(caip2Id));
-    const balance = await erc20.balanceOf(accountAddress);
-    logger.debug(`Token balance: ${balance.toString()}`);
-    return balance.toString();
-  }
 }

@@ -4,8 +4,7 @@ import { BigNumber, PopulatedTransaction, Signer, providers } from 'ethers';
 import type { ERC20Upgradeable, HypERC20 } from '@hyperlane-xyz/hyperlane-token';
 import { utils } from '@hyperlane-xyz/utils';
 
-import { normalizeEvmAddress } from '../../../utils/addresses';
-import { isValidEvmAddress } from '../../../utils/addresses';
+import { isValidEvmAddress, normalizeEvmAddress } from '../../../utils/addresses';
 import {
   getErc20Contract,
   getHypErc20CollateralContract,
@@ -77,9 +76,11 @@ export class EvmTokenAdapter<T extends ERC20Upgradeable = ERC20Upgradeable>
     return balance.toString();
   }
 
-  override async getMetadata(): Promise<{ decimals: number; symbol: string; name: string }> {
+  override async getMetadata(
+    isNft?: boolean,
+  ): Promise<{ decimals: number; symbol: string; name: string }> {
     const [decimals, symbol, name] = await Promise.all([
-      this.contract.decimals(),
+      !isNft ? this.contract.decimals() : 0,
       this.contract.symbol(),
       this.contract.name(),
     ]);

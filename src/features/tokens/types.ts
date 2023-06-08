@@ -10,7 +10,7 @@ const commonTokenFields = z.object({
   protocol: z.nativeEnum(ProtocolType).optional(),
   name: z.string().nonempty(),
   symbol: z.string().nonempty(),
-  decimals: z.number().positive(),
+  decimals: z.number().nonnegative(), // decimals == 0 for NFTs
   logoURI: z.string().optional(),
 });
 type CommonTokenFields = z.infer<typeof commonTokenFields>;
@@ -36,6 +36,7 @@ const CollateralTokenSchema = commonTokenFields.extend({
   type: z.literal(TokenType.collateral),
   address: z.string(),
   hypCollateralAddress: z.string(),
+  isNft: z.boolean().optional(),
 });
 
 interface CollateralTokenConfig extends BaseTokenConfig {
@@ -43,6 +44,7 @@ interface CollateralTokenConfig extends BaseTokenConfig {
   type: TokenType.collateral | 'collateral';
   address: Address;
   hypCollateralAddress: Address;
+  isNft?: boolean;
 }
 
 const NativeTokenSchema = commonTokenFields.extend({
@@ -70,6 +72,7 @@ interface BaseTokenMetadata extends CommonTokenFields {
   type: TokenType;
   address: Address;
   tokenRouterAddress: Address; // Shared name for hypCollateralAddr and hypNativeAddr
+  isNft?: boolean;
 }
 
 interface CollateralTokenMetadata extends BaseTokenMetadata {

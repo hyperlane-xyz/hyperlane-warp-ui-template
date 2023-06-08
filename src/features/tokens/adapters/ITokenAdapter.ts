@@ -1,6 +1,6 @@
 export interface ITokenAdapter {
   getBalance(address?: Address): Promise<string>;
-  getMetadata(): Promise<{ decimals: number; symbol: string; name: string }>;
+  getMetadata(isNft?: boolean): Promise<{ decimals: number; symbol: string; name: string }>;
   prepareApproveTx(recipient: Address, amountOrId: string | number): Promise<{ tx: any }>;
   prepareTransferTx(recipient: Address, amountOrId: string | number): Promise<{ tx: any }>;
 }

@@ -11,20 +11,24 @@ import { SolidButton } from '../../components/buttons/SolidButton';
 import { ChevronIcon } from '../../components/icons/Chevron';
 import { TextField } from '../../components/input/TextField';
 import { config } from '../../consts/config';
+import { STANDARD_TOKEN_DECIMALS } from '../../consts/values';
 import SwapIcon from '../../images/icons/swap.svg';
 import { Color } from '../../styles/Color';
-import { isValidEvmAddress } from '../../utils/addresses';
-import { fromWeiRounded, toWei, tryParseAmount } from '../../utils/amount';
+import { areAddressesEqual, isValidEvmAddress } from '../../utils/addresses';
+import { fromWei, fromWeiRounded, toWei, tryParseAmount } from '../../utils/amount';
 import { logger } from '../../utils/logger';
 import { ChainSelectField } from '../chains/ChainSelectField';
 import { getChainDisplayName } from '../chains/utils';
+import { SelectOrInputTokenIds } from '../tokens/SelectOrInputTokenIds';
 import { TokenSelectField } from '../tokens/TokenSelectField';
-import { RoutesMap, getTokenRoute, useRouteChains } from '../tokens/routes';
 import {
+  getCachedOwnerOf,
   getCachedTokenBalance,
+  getCachedTokenIdBalance,
   useAccountTokenBalance,
   useTokenBalance,
-} from '../tokens/useTokenBalance';
+} from '../tokens/balances';
+import { RoutesMap, getTokenRoute, useRouteChains } from '../tokens/routes';
 
 import { TransferFormValues } from './types';
 import { isTransferApproveRequired, useTokenTransfer } from './useTokenTransfer';
@@ -44,6 +48,8 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
 
   // Flag for if form is in input vs review mode
   const [isReview, setIsReview] = useState(false);
+  // Flag for check current type of token
+  const [isNft, setIsNft] = useState(false);
 
   const onSubmitForm = (values: TransferFormValues) => {
     logger.debug('Reviewing transfer form values:', JSON.stringify(values));
@@ -57,7 +63,7 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
   const queryClient = useQueryClient();
   const { address: accountAddress } = useAccount();
   const validate = (values: TransferFormValues) =>
-    validateFormValues(values, queryClient, accountAddress);
+    validateFormValues(values, tokenRoutes, queryClient, accountAddress, isNft);
 
   const onDoneTransactions = () => {
     setIsReview(false);
@@ -122,7 +128,7 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
                 htmlFor="tokenAddress"
                 className="block uppercase text-sm text-gray-500 pl-0.5"
               >
-                ERC-20 Token
+                Token
               </label>
               <TokenSelectField
                 name="tokenAddress"
@@ -130,6 +136,7 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
                 destinationCaip2Id={values.destinationCaip2Id}
                 tokenRoutes={tokenRoutes}
                 disabled={isReview}
+                setIsNft={setIsNft}
               />
             </div>
             <div className="flex-1">
@@ -139,17 +146,21 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
                 </label>
                 <SelfTokenBalance tokenRoutes={tokenRoutes} />
               </div>
-              <div className="relative w-full">
-                <TextField
-                  name="amount"
-                  placeholder="0.00"
-                  classes="w-full"
-                  type="number"
-                  step="any"
-                  disabled={isReview}
-                />
-                <MaxButton disabled={isReview} tokenRoutes={tokenRoutes} />
-              </div>
+              {isNft ? (
+                <SelectOrInputTokenIds disabled={isReview} tokenRoutes={tokenRoutes} />
+              ) : (
+                <div className="relative w-full">
+                  <TextField
+                    name="amount"
+                    placeholder="0.00"
+                    classes="w-full"
+                    type="number"
+                    step="any"
+                    disabled={isReview}
+                  />
+                  <MaxButton disabled={isReview} tokenRoutes={tokenRoutes} />
+                </div>
+              )}
             </div>
           </div>
           <div className="mt-4">
@@ -189,7 +200,7 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
               <SolidButton
                 type="button"
                 color="blue"
-                onClick={() => triggerTransactions(values, tokenRoutes)}
+                onClick={() => triggerTransactions(values, tokenRoutes, isNft)}
                 classes="flex-1 px-3 py-1.5"
               >
                 {`Send to ${getChainDisplayName(values.destinationCaip2Id)}`}
@@ -226,10 +237,17 @@ function SwapChainsButton({ disabled }: { disabled?: boolean }) {
 }
 
 // TODO solana support
-function TokenBalance({ label, balance }: { label: string; balance?: string | null }) {
-  // TODO Handle varying decimal amounts?
-  const rounded = fromWeiRounded(balance);
-  return <div className="text-xs text-gray-500">{`${label}: ${rounded}`}</div>;
+function TokenBalance({
+  label,
+  balance,
+  decimals,
+}: {
+  label: string;
+  balance?: string | null;
+  decimals?: number;
+}) {
+  const value = !decimals ? fromWei(balance, decimals) : fromWeiRounded(balance, decimals);
+  return <div className="text-xs text-gray-500">{`${label}: ${value}`}</div>;
 }
 
 function useSelfTokenBalance(tokenRoutes) {
@@ -241,12 +259,17 @@ function useSelfTokenBalance(tokenRoutes) {
     : route.baseCaip2Id === originCaip2Id
     ? tokenAddress
     : route.originTokenAddress;
-  return useAccountTokenBalance(originCaip2Id, addressForBalance);
+  const decimals = !route ? STANDARD_TOKEN_DECIMALS : route.decimals;
+  const { balance } = useAccountTokenBalance(originCaip2Id, addressForBalance);
+  return {
+    balance,
+    decimals,
+  };
 }
 
 function SelfTokenBalance({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
-  const { balance } = useSelfTokenBalance(tokenRoutes);
-  return <TokenBalance label="My balance" balance={balance} />;
+  const { balance, decimals } = useSelfTokenBalance(tokenRoutes);
+  return <TokenBalance label="My balance" balance={balance} decimals={decimals} />;
 }
 
 function RecipientTokenBalance({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
@@ -259,7 +282,7 @@ function RecipientTokenBalance({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
     ? tokenAddress
     : route.destTokenAddress;
   const { balance } = useTokenBalance(destinationCaip2Id, tokenAddrToCheck, recipientAddress);
-  return <TokenBalance label="Remote balance" balance={balance} />;
+  return <TokenBalance label="Remote balance" balance={balance} decimals={route?.decimals} />;
 }
 
 function MaxButton({ tokenRoutes, disabled }: { tokenRoutes: RoutesMap; disabled?: boolean }) {
@@ -308,8 +331,10 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
   } = useFormikContext<TransferFormValues>();
 
   const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenAddress, tokenRoutes);
-  const weiAmount = toWei(amount, route?.decimals).toString();
+  const isNft = !!route?.isNft;
+  const sendValue = isNft ? amount.toString() : toWei(amount, route?.decimals).toString();
   const isApproveRequired = route && isTransferApproveRequired(route, tokenAddress);
+
   return (
     <div
       className={`${
@@ -331,7 +356,7 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
           <h4>{`Transaction${isApproveRequired ? ' 2' : ''}: Transfer Remote`}</h4>
           <div className="mt-1.5 ml-1.5 pl-2 border-l border-gray-300 space-y-1.5 text-xs">
             <p>{`Remote Token: ${route?.destTokenAddress}`}</p>
-            <p>{`Amount (wei): ${weiAmount}`}</p>
+            {isNft ? <p>{`Token ID: ${sendValue}`}</p> : <p>{`Amount (wei): ${sendValue}`}</p>}
           </div>
         </div>
       </div>
@@ -348,23 +373,54 @@ function validateFormValues(
     tokenAddress,
     recipientAddress,
   }: TransferFormValues,
+  tokenRoutes: RoutesMap,
   queryClient: QueryClient,
   accountAddress?: string,
+  isNft?: boolean,
 ) {
+  const route = getTokenRoute(originChainId, destinationChainId, tokenAddress, tokenRoutes);
+
+  const currentTokenAddress = !route
+    ? ''
+    : route.baseCaip2Id === originChainId
+    ? tokenAddress
+    : route.originTokenAddress;
+
   if (!originChainId) return { originChainId: 'Invalid origin chain' };
   if (!destinationChainId) return { destinationChainId: 'Invalid destination chain' };
   if (!isValidEvmAddress(recipientAddress)) return { recipientAddress: 'Invalid recipient' };
-  if (!isValidEvmAddress(tokenAddress)) return { tokenAddress: 'Invalid token' };
+  if (!isValidEvmAddress(currentTokenAddress)) return { tokenAddress: 'Invalid token' };
   const parsedAmount = tryParseAmount(amount);
-  if (!parsedAmount || parsedAmount.lte(0)) return { amount: 'Invalid amount' };
-  const cachedBalance = getCachedTokenBalance(
-    queryClient,
-    originChainId,
-    tokenAddress,
-    accountAddress,
-  );
-  if (cachedBalance && parsedAmount.gt(cachedBalance) && !config.debug) {
-    return { amount: 'Insufficient balance' };
+  if (!parsedAmount || parsedAmount.lte(0))
+    return { amount: isNft ? 'Invalid Token Id' : 'Invalid amount' };
+
+  if (!isNft) {
+    // Validate balances for ERC20-like tokens
+    const cachedBalance = getCachedTokenBalance(
+      queryClient,
+      originChainId,
+      tokenAddress,
+      accountAddress,
+    );
+    if (cachedBalance && parsedAmount.gt(cachedBalance) && !config.debug) {
+      return { amount: 'Insufficient balance' };
+    }
+  } else {
+    // Validate balances for ERC721-like tokens
+    const cachedOwnerOf = getCachedOwnerOf(queryClient, originChainId, currentTokenAddress, amount);
+    const cachedTokenIdBalance = getCachedTokenIdBalance(
+      queryClient,
+      originChainId,
+      currentTokenAddress,
+      accountAddress,
+    );
+    if (
+      (cachedOwnerOf && accountAddress && !areAddressesEqual(accountAddress, cachedOwnerOf)) ||
+      !cachedTokenIdBalance?.includes(amount.toString())
+    ) {
+      return { amount: 'Token ID not owned' };
+    }
   }
+
   return {};
 }

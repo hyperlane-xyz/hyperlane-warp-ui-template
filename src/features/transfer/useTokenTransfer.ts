@@ -15,7 +15,11 @@ import { sleep } from '../../utils/timeout';
 import { parseCaip2Id } from '../chains/caip2';
 import { getMultiProvider, getProvider } from '../multiProvider';
 import { useStore } from '../store';
-import { getErc20Contract, getTokenRouterContract } from '../tokens/contracts/evmContracts';
+import {
+  getErc20Contract,
+  getErc721Contract,
+  getTokenRouterContract,
+} from '../tokens/contracts/evmContracts';
 import { Route, RouteType, RoutesMap, getTokenRoute } from '../tokens/routes';
 import { isNativeToken } from '../tokens/utils';
 
@@ -41,7 +45,7 @@ export function useTokenTransfer(onDone?: () => void) {
 
   // TODO implement cancel callback for when modal is closed?
   const triggerTransactions = useCallback(
-    async (values: TransferFormValues, tokenRoutes: RoutesMap) => {
+    async (values: TransferFormValues, tokenRoutes: RoutesMap, isNft: boolean) => {
       logger.debug('Preparing transfer transaction(s)');
       setIsLoading(true);
       let status: TransferStatus = TransferStatus.Preparing;
@@ -62,7 +66,7 @@ export function useTokenTransfer(onDone?: () => void) {
 
         const isBaseToSynthetic = tokenRoute.type === RouteType.BaseToSynthetic;
         const isTokenNative = isNativeToken(tokenAddress);
-        const weiAmount = toWei(amount, tokenRoute.decimals).toString();
+        const sendValue = isNft ? amount : toWei(amount, tokenRoute.decimals).toString();
         const provider = getProvider(originCaip2Id);
 
         addTransfer({
@@ -81,10 +85,12 @@ export function useTokenTransfer(onDone?: () => void) {
 
         if (isTransferApproveRequired(tokenRoute, tokenAddress)) {
           updateTransferStatus(transferIndex, (status = TransferStatus.CreatingApprove));
-          const erc20 = getErc20Contract(tokenAddress, provider);
-          const approveTxRequest = await erc20.populateTransaction.approve(
+          const tokenContract = isNft
+            ? getErc721Contract(tokenAddress, provider)
+            : getErc20Contract(tokenAddress, provider);
+          const approveTxRequest = await tokenContract.populateTransaction.approve(
             tokenRoute.tokenRouterAddress,
-            weiAmount,
+            sendValue,
           );
 
           updateTransferStatus(transferIndex, (status = TransferStatus.SigningApprove));
@@ -114,13 +120,14 @@ export function useTokenTransfer(onDone?: () => void) {
           contractType,
           tokenRoute.originTokenAddress,
           provider,
+          isNft,
         );
         const gasPayment = await tokenRouterContract.quoteGasPayment(destinationChainId);
-        const msgValue = contractType === TokenType.native ? gasPayment.add(weiAmount) : gasPayment;
+        const msgValue = contractType === TokenType.native ? gasPayment.add(sendValue) : gasPayment;
         const transferTxRequest = await tokenRouterContract.populateTransaction.transferRemote(
           destinationChainId,
           utils.addressToBytes32(recipientAddress),
-          weiAmount,
+          sendValue,
           {
             value: msgValue,
           },

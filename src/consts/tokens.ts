@@ -12,6 +12,19 @@ export const tokenList: WarpTokenConfig = [
     decimals: 18,
     logoURI: '/logos/weth.png', // See public/logos/
   },
+
+  // Example NFT (ERC721) token
+  {
+    type: 'collateral',
+    chainId: 5,
+    address: '0xd03483b978461b3162CE9e4c80835b9E81E07018',
+    hypCollateralAddress: '0x9a01dd4dD90dBc27a756Dce5B564D6468795ee14',
+    name: 'MyToken',
+    symbol: 'MTK',
+    decimals: 0,
+    isNft: true,
+  },
+
   // Example native token for an EVM chain
   // {
   //   type: 'native',
@@ -22,6 +35,7 @@ export const tokenList: WarpTokenConfig = [
   //   hypNativeAddress: '0xEa44A29da87B5464774978e6A4F4072A4c048949',
   //   logoURI: '/logos/weth.png',
   // },
+
   // Example collateral token for a Sealevel (Solana) chain
   // {
   //   type: 'collateral',
@@ -33,6 +47,7 @@ export const tokenList: WarpTokenConfig = [
   //   symbol: 'USDC',
   //   decimals: 6,
   // },
+
   // Example native token for a Sealevel (Solana) chain
   // {
   //   type: 'native',

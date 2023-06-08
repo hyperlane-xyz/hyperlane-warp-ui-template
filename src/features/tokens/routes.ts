@@ -30,6 +30,7 @@ export interface Route {
   originTokenAddress: Address;
   destTokenAddress: Address;
   decimals: number;
+  isNft: boolean;
 }
 
 // Origin chain to destination chain to Route
@@ -66,6 +67,7 @@ async function validateTokenMetadata(token: TokenMetadata) {
     symbol,
     decimals,
     tokenRouterAddress,
+    isNft,
     protocol = ProtocolType.Ethereum,
   } = token;
 
@@ -85,7 +87,9 @@ async function validateTokenMetadata(token: TokenMetadata) {
     return;
   }
 
-  const { decimals: decimalsOnChain, symbol: symbolOnChain } = await tokenAdapter!.getMetadata();
+  const { decimals: decimalsOnChain, symbol: symbolOnChain } = await tokenAdapter!.getMetadata(
+    isNft,
+  );
   if (decimals !== decimalsOnChain) {
     throw new Error(
       `Token config decimals ${decimals} does not match contract decimals ${decimalsOnChain}`,
@@ -143,6 +147,7 @@ function computeTokenRoutes(tokens: TokenMetadataWithHypTokens[]) {
         address: baseTokenAddress,
         tokenRouterAddress,
         decimals,
+        isNft,
       } = token;
       const { caip2Id: syntheticCaip2Id, address: hypTokenAddress } = hypToken;
 
@@ -150,6 +155,7 @@ function computeTokenRoutes(tokens: TokenMetadataWithHypTokens[]) {
         baseCaip2Id,
         baseTokenAddress,
         tokenRouterAddress,
+        isNft: !!isNft,
       };
       tokenRoutes[baseCaip2Id][syntheticCaip2Id].push({
         type: RouteType.BaseToSynthetic,

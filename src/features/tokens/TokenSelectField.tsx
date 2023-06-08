@@ -15,6 +15,7 @@ type Props = {
   destinationCaip2Id: Caip2Id;
   tokenRoutes: RoutesMap;
   disabled?: boolean;
+  setIsNft: (value: boolean) => void;
 };
 
 export function TokenSelectField({
@@ -23,16 +24,21 @@ export function TokenSelectField({
   destinationCaip2Id,
   tokenRoutes,
   disabled,
+  setIsNft,
 }: Props) {
   const [field, , helpers] = useField<Address>(name);
 
   // Keep local state for token details, but let formik manage field value
   const [token, setToken] = useState<TokenMetadata | undefined>(undefined);
+  const [, , amountHelpers] = useField('amount');
 
   const handleChange = (newToken: TokenMetadata) => {
     // Set the token address value in formik state
     helpers.setValue(newToken.address);
+    // reset amount after change token
+    amountHelpers.setValue('');
     setToken(newToken);
+    setIsNft(!!newToken.isNft);
   };
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -51,7 +57,9 @@ export function TokenSelectField({
       >
         <div className="flex items-center">
           <TokenIcon token={token} size={20} />
-          <span className="ml-2">{token?.symbol || 'Select Token'}</span>
+          <span className={`ml-2 ${!token?.symbol && 'text-slate-400'}`}>
+            {token?.symbol || 'Select Token'}
+          </span>
         </div>
         <Image src={ChevronIcon} width={12} height={8} alt="" />
       </button>

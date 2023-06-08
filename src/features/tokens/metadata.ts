@@ -36,6 +36,7 @@ function parseTokenConfigs(configList: WarpTokenConfig): TokenMetadata[] {
         type: TokenType.collateral,
         tokenRouterAddress: token.hypCollateralAddress,
         address: token.address,
+        isNft: !!token.isNft,
       });
     } else if (type == TokenType.native) {
       tokenMetadata.push({

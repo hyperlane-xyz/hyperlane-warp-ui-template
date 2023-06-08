@@ -22,11 +22,8 @@ export function SelectOrInputTokenIds({
 
   const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenAddress, tokenRoutes);
 
-  const currentTokenAddress = !route
-    ? ''
-    : route.baseCaip2Id === originCaip2Id
-    ? tokenAddress
-    : route.originTokenAddress;
+  const currentTokenAddress =
+    route?.baseCaip2Id === originCaip2Id ? tokenAddress : route?.originTokenAddress ?? '';
 
   const { isContractAllowToGetTokenIds } = useContractSupportsTokenByOwner(
     originCaip2Id,

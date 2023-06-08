@@ -254,13 +254,10 @@ function useSelfTokenBalance(tokenRoutes) {
   const { values } = useFormikContext<TransferFormValues>();
   const { originCaip2Id, destinationCaip2Id, tokenAddress } = values;
   const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenAddress, tokenRoutes);
-  const addressForBalance = !route
-    ? ''
-    : route.baseCaip2Id === originCaip2Id
-    ? tokenAddress
-    : route.originTokenAddress;
-  const decimals = !route ? STANDARD_TOKEN_DECIMALS : route.decimals;
-  const { balance } = useAccountTokenBalance(originCaip2Id, addressForBalance);
+  const tokenAddrToCheck =
+    route?.baseCaip2Id === originCaip2Id ? tokenAddress : route?.originTokenAddress ?? '';
+  const decimals = route?.decimals ?? STANDARD_TOKEN_DECIMALS;
+  const { balance } = useAccountTokenBalance(originCaip2Id, tokenAddrToCheck);
   return {
     balance,
     decimals,
@@ -276,11 +273,8 @@ function RecipientTokenBalance({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
   const { values } = useFormikContext<TransferFormValues>();
   const { originCaip2Id, destinationCaip2Id, tokenAddress, recipientAddress } = values;
   const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenAddress, tokenRoutes);
-  const tokenAddrToCheck = !route
-    ? ''
-    : route.baseCaip2Id === destinationCaip2Id
-    ? tokenAddress
-    : route.destTokenAddress;
+  const tokenAddrToCheck =
+    route?.baseCaip2Id === destinationCaip2Id ? tokenAddress : route?.destTokenAddress ?? '';
   const { balance } = useTokenBalance(destinationCaip2Id, tokenAddrToCheck, recipientAddress);
   return <TokenBalance label="Remote balance" balance={balance} decimals={route?.decimals} />;
 }
@@ -366,28 +360,19 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
 
 // TODO solana support
 function validateFormValues(
-  {
-    originCaip2Id: originChainId,
-    destinationCaip2Id: destinationChainId,
-    amount,
-    tokenAddress,
-    recipientAddress,
-  }: TransferFormValues,
+  { originCaip2Id, destinationCaip2Id, amount, tokenAddress, recipientAddress }: TransferFormValues,
   tokenRoutes: RoutesMap,
   queryClient: QueryClient,
   accountAddress?: string,
   isNft?: boolean,
 ) {
-  const route = getTokenRoute(originChainId, destinationChainId, tokenAddress, tokenRoutes);
+  const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenAddress, tokenRoutes);
 
-  const currentTokenAddress = !route
-    ? ''
-    : route.baseCaip2Id === originChainId
-    ? tokenAddress
-    : route.originTokenAddress;
+  const currentTokenAddress =
+    route?.baseCaip2Id === originCaip2Id ? tokenAddress : route?.originTokenAddress ?? '';
 
-  if (!originChainId) return { originChainId: 'Invalid origin chain' };
-  if (!destinationChainId) return { destinationChainId: 'Invalid destination chain' };
+  if (!originCaip2Id) return { originCaip2Id: 'Invalid origin chain' };
+  if (!destinationCaip2Id) return { destinationCaip2Id: 'Invalid destination chain' };
   if (!isValidEvmAddress(recipientAddress)) return { recipientAddress: 'Invalid recipient' };
   if (!isValidEvmAddress(currentTokenAddress)) return { tokenAddress: 'Invalid token' };
   const parsedAmount = tryParseAmount(amount);
@@ -398,7 +383,7 @@ function validateFormValues(
     // Validate balances for ERC20-like tokens
     const cachedBalance = getCachedTokenBalance(
       queryClient,
-      originChainId,
+      originCaip2Id,
       tokenAddress,
       accountAddress,
     );
@@ -407,10 +392,10 @@ function validateFormValues(
     }
   } else {
     // Validate balances for ERC721-like tokens
-    const cachedOwnerOf = getCachedOwnerOf(queryClient, originChainId, currentTokenAddress, amount);
+    const cachedOwnerOf = getCachedOwnerOf(queryClient, originCaip2Id, currentTokenAddress, amount);
     const cachedTokenIdBalance = getCachedTokenIdBalance(
       queryClient,
-      originChainId,
+      originCaip2Id,
       currentTokenAddress,
       accountAddress,
     );

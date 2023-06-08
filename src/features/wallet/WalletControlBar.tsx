@@ -13,7 +13,7 @@ import { tryClipboardSet } from '../../utils/clipboard';
 import { useIsSsr } from '../../utils/ssr';
 
 import { WalletEnvSelectionModal } from './WalletEnvSelectionModal';
-import { useAccounts, useChains, useDisconnects } from './hooks';
+import { useAccounts, useActiveChains, useDisconnects } from './hooks';
 
 export function WalletControlBar() {
   const isSsr = useIsSsr();
@@ -32,7 +32,7 @@ export function WalletControlBar() {
 function AccountDropdown() {
   const [showEnvSelectModal, setShowEnvSelectModal] = useState(false);
 
-  const { readyChains } = useChains();
+  const { readyChains } = useActiveChains();
   const { readyAccounts } = useAccounts();
   const disconnects = useDisconnects();
   const numReady = readyAccounts.length;

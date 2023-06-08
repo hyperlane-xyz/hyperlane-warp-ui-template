@@ -8,31 +8,7 @@ import {
   HypERC721Collateral__factory,
   HypERC721__factory,
   HypNative__factory,
-  TokenType,
 } from '@hyperlane-xyz/hyperlane-token';
-
-// TODO remove?
-// Get the connected HypERC20Collateral, HypERC721Collateral, HypNative, HypERC20, HypERC721 contract
-export function getTokenRouterContract(
-  type: TokenType,
-  contractAddress: Address,
-  signerOrProvider: Signer | providers.Provider,
-  isNft,
-) {
-  if (type === TokenType.collateral) {
-    return isNft
-      ? getHypErc721CollateralContract(contractAddress, signerOrProvider)
-      : getHypErc20CollateralContract(contractAddress, signerOrProvider);
-  } else if (type === TokenType.native) {
-    return getHypNativeContract(contractAddress, signerOrProvider);
-  } else if (type === TokenType.synthetic) {
-    return isNft
-      ? getHypErc721Contract(contractAddress, signerOrProvider)
-      : getHypErc20Contract(contractAddress, signerOrProvider);
-  } else {
-    throw new Error(`Unsupported token type: ${type}}`);
-  }
-}
 
 export function getHypErc20CollateralContract(
   contractAddress: Address,

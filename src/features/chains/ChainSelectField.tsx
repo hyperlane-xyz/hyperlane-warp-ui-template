@@ -1,9 +1,10 @@
-import { useField } from 'formik';
+import { useField, useFormikContext } from 'formik';
 import Image from 'next/image';
 import { useState } from 'react';
 
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import ChevronIcon from '../../images/icons/chevron-down.svg';
+import { TransferFormValues } from '../transfer/types';
 
 import { ChainSelectListModal } from './ChainSelectModal';
 import { getChainDisplayName } from './utils';
@@ -18,9 +19,13 @@ type Props = {
 
 export function ChainSelectField({ name, label, caip2Ids, onChange, disabled }: Props) {
   const [field, , helpers] = useField<Caip2Id>(name);
+  const { setFieldValue } = useFormikContext<TransferFormValues>();
 
   const handleChange = (newChainId: Caip2Id) => {
     helpers.setValue(newChainId);
+    // Reset token and amount on chain change
+    setFieldValue('tokenAddress', '');
+    setFieldValue('amount', '');
     if (onChange) onChange(newChainId);
   };
 

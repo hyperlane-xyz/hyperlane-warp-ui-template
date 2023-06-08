@@ -1,7 +1,8 @@
 import { ethers } from 'ethers';
 
-import { utils } from '@hyperlane-xyz/utils';
+import { areAddressesEqual } from '../../utils/addresses';
 
+// TODO Solana support
 export function isNativeToken(tokenAddress: Address) {
-  return utils.eqAddress(tokenAddress, ethers.constants.AddressZero);
+  return areAddressesEqual(tokenAddress, ethers.constants.AddressZero);
 }

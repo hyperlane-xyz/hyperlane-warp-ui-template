@@ -1,36 +1,26 @@
 import { sendTransaction, switchNetwork } from '@wagmi/core';
-import { providers } from 'ethers';
+import { BigNumber, providers } from 'ethers';
 import { useCallback, useState } from 'react';
 import { toast } from 'react-toastify';
-import { useChainId } from 'wagmi';
 
-import { TokenType } from '@hyperlane-xyz/hyperlane-token';
 import { HyperlaneCore } from '@hyperlane-xyz/sdk';
-import { utils } from '@hyperlane-xyz/utils';
 
 import { toastTxSuccess } from '../../components/toast/TxSuccessToast';
 import { toWei } from '../../utils/amount';
 import { logger } from '../../utils/logger';
 import { sleep } from '../../utils/timeout';
-import { parseCaip2Id } from '../chains/caip2';
-import { getMultiProvider, getProvider } from '../multiProvider';
+import { getEthereumChainId, getProtocolType } from '../chains/caip2';
+import { ProtocolType } from '../chains/types';
+import { getMultiProvider } from '../multiProvider';
 import { useStore } from '../store';
-import {
-  getErc20Contract,
-  getErc721Contract,
-  getTokenRouterContract,
-} from '../tokens/contracts/evmContracts';
+import { AdapterFactory } from '../tokens/adapters/AdapterFactory';
+import { IHypTokenAdapter } from '../tokens/adapters/ITokenAdapter';
 import { Route, RouteType, RoutesMap, getTokenRoute } from '../tokens/routes';
 import { isNativeToken } from '../tokens/utils';
+import { ActiveChainInfo, useActiveChains } from '../wallet/hooks';
 
 import { TransferFormValues, TransferStatus } from './types';
 
-// TODO solana support
-// Note, this doesn't use wagmi's prepare + send pattern because we're potentially sending two transactions
-// The prepare hooks are recommended to use pre-click downtime to run async calls, but since the flow
-// may require two serial txs, the prepare hooks aren't useful and complicate hook architecture considerably.
-// See https://github.com/hyperlane-xyz/hyperlane-warp-ui-template/issues/19
-// See https://github.com/wagmi-dev/wagmi/discussions/1564
 export function useTokenTransfer(onDone?: () => void) {
   const { transfers, addTransfer, updateTransferStatus } = useStore((s) => ({
     transfers: s.transfers,
@@ -41,21 +31,18 @@ export function useTokenTransfer(onDone?: () => void) {
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const chainId = useChainId();
+  const activeChains = useActiveChains();
 
   // TODO implement cancel callback for when modal is closed?
   const triggerTransactions = useCallback(
-    async (values: TransferFormValues, tokenRoutes: RoutesMap, isNft: boolean) => {
+    async (values: TransferFormValues, tokenRoutes: RoutesMap) => {
       logger.debug('Preparing transfer transaction(s)');
       setIsLoading(true);
       let status: TransferStatus = TransferStatus.Preparing;
 
       try {
-        const { amount, originCaip2Id, destinationCaip2Id, recipientAddress, tokenAddress } =
-          values;
-        const originChainId = parseInt(parseCaip2Id(originCaip2Id).reference, 10);
-        const destinationChainId = parseInt(parseCaip2Id(destinationCaip2Id).reference, 10);
-
+        const { originCaip2Id, destinationCaip2Id, tokenAddress } = values;
+        const originProtocol = getProtocolType(originCaip2Id);
         const tokenRoute = getTokenRoute(
           originCaip2Id,
           destinationCaip2Id,
@@ -64,92 +51,40 @@ export function useTokenTransfer(onDone?: () => void) {
         );
         if (!tokenRoute) throw new Error('No token route found between chains');
 
-        const isBaseToSynthetic = tokenRoute.type === RouteType.BaseToSynthetic;
-        const isTokenNative = isNativeToken(tokenAddress);
-        const sendValue = isNft ? amount : toWei(amount, tokenRoute.decimals).toString();
-        const provider = getProvider(originCaip2Id);
-
         addTransfer({
           status,
           route: tokenRoute,
           params: values,
         });
 
-        if (originChainId !== chainId) {
-          await switchNetwork({
-            chainId: originChainId,
-          });
-          // Some wallets seem to require a brief pause after switch
-          await sleep(1500);
-        }
-
-        if (isTransferApproveRequired(tokenRoute, tokenAddress)) {
-          updateTransferStatus(transferIndex, (status = TransferStatus.CreatingApprove));
-          const tokenContract = isNft
-            ? getErc721Contract(tokenAddress, provider)
-            : getErc20Contract(tokenAddress, provider);
-          const approveTxRequest = await tokenContract.populateTransaction.approve(
-            tokenRoute.tokenRouterAddress,
-            sendValue,
-          );
-
-          updateTransferStatus(transferIndex, (status = TransferStatus.SigningApprove));
-          const { wait: approveWait } = await sendTransaction({
-            chainId: originChainId,
-            request: approveTxRequest,
-            mode: 'recklesslyUnprepared', // See note above function
-          });
-
-          updateTransferStatus(transferIndex, (status = TransferStatus.ConfirmingApprove));
-          const approveTxReceipt = await approveWait(1);
-          logger.debug('Approve transaction confirmed, hash:', approveTxReceipt.transactionHash);
-          toastTxSuccess(
-            'Approve transaction sent!',
-            approveTxReceipt.transactionHash,
-            originCaip2Id,
-          );
-        }
-
-        updateTransferStatus(transferIndex, (status = TransferStatus.CreatingTransfer));
-        const contractType: TokenType = !isBaseToSynthetic
-          ? TokenType.synthetic
-          : isTokenNative
-          ? TokenType.native
-          : TokenType.collateral;
-        const tokenRouterContract = getTokenRouterContract(
-          contractType,
-          tokenRoute.originTokenAddress,
-          provider,
-          isNft,
-        );
-        const gasPayment = await tokenRouterContract.quoteGasPayment(destinationChainId);
-        const msgValue = contractType === TokenType.native ? gasPayment.add(sendValue) : gasPayment;
-        const transferTxRequest = await tokenRouterContract.populateTransaction.transferRemote(
-          destinationChainId,
-          utils.addressToBytes32(recipientAddress),
-          sendValue,
-          {
-            value: msgValue,
+        let transferTxHash: string;
+        let msgId: string | undefined;
+        const triggerParams: TriggerTransferParams = {
+          values,
+          tokenRoute,
+          activeChain: activeChains.chains[originProtocol],
+          updateStatus: (s: TransferStatus) => {
+            status = s;
+            updateTransferStatus(transferIndex, s);
           },
-        );
-
-        updateTransferStatus(transferIndex, (status = TransferStatus.SigningTransfer));
-        const { wait: transferWait, hash: originTxHash } = await sendTransaction({
-          chainId: originChainId,
-          request: transferTxRequest,
-          mode: 'recklesslyUnprepared', // See note above function
-        });
-
-        updateTransferStatus(transferIndex, (status = TransferStatus.ConfirmingTransfer));
-        const transferReceipt = await transferWait(1);
-        const msgId = tryGetMsgIdFromTransferReceipt(transferReceipt);
+        };
+        if (originProtocol === ProtocolType.Ethereum) {
+          const result = await triggerEvmTransfer(triggerParams);
+          ({ transferTxHash, msgId } = result);
+        } else if (originProtocol === ProtocolType.Sealevel) {
+          const result = await triggerSealevelTransfer(triggerParams);
+          ({ transferTxHash, msgId } = result);
+        } else {
+          throw new Error(`Unsupported protocol type: ${originProtocol}`);
+        }
 
         updateTransferStatus(transferIndex, (status = TransferStatus.ConfirmedTransfer), {
-          originTxHash,
+          originTxHash: transferTxHash,
           msgId,
         });
-        logger.debug('Transfer transaction confirmed, hash:', originTxHash);
-        toastTxSuccess('Remote transfer started!', originTxHash, originCaip2Id);
+
+        logger.debug('Transfer transaction confirmed, hash:', transferTxHash);
+        toastTxSuccess('Remote transfer started!', transferTxHash, originCaip2Id);
       } catch (error) {
         logger.error(`Error at stage ${status} `, error);
         updateTransferStatus(transferIndex, TransferStatus.Failed);
@@ -164,7 +99,7 @@ export function useTokenTransfer(onDone?: () => void) {
       setIsLoading(false);
       if (onDone) onDone();
     },
-    [setIsLoading, onDone, chainId, addTransfer, updateTransferStatus, transferIndex],
+    [transferIndex, activeChains, setIsLoading, addTransfer, updateTransferStatus, onDone],
   );
 
   return {
@@ -173,15 +108,118 @@ export function useTokenTransfer(onDone?: () => void) {
   };
 }
 
+interface TriggerTransferParams {
+  values: TransferFormValues;
+  tokenRoute: Route;
+  activeChain: ActiveChainInfo;
+  updateStatus: (s: TransferStatus) => void;
+}
+
+// Note, this doesn't use wagmi's prepare + send pattern because we're potentially sending two transactions
+// The prepare hooks are recommended to use pre-click downtime to run async calls, but since the flow
+// may require two serial txs, the prepare hooks aren't useful and complicate hook architecture considerably.
+// See https://github.com/hyperlane-xyz/hyperlane-warp-ui-template/issues/19
+// See https://github.com/wagmi-dev/wagmi/discussions/1564
+async function triggerEvmTransfer({
+  values,
+  tokenRoute,
+  activeChain,
+  updateStatus,
+}: TriggerTransferParams) {
+  const { amount, originCaip2Id, destinationCaip2Id, recipientAddress, tokenAddress } = values;
+  const { type: routeType, tokenRouterAddress, originTokenAddress, decimals, isNft } = tokenRoute;
+  const sendValue = isNft ? amount : toWei(amount, decimals).toString();
+  const originChainId = getEthereumChainId(originCaip2Id);
+  const destinationChainId = getEthereumChainId(destinationCaip2Id);
+  const activeChainId = activeChain?.caip2Id ? getEthereumChainId(activeChain.caip2Id) : undefined;
+  const destinationDomainId = getMultiProvider().getDomainId(destinationChainId);
+
+  if (activeChainId && originChainId !== activeChainId) {
+    await switchNetwork({
+      chainId: originChainId,
+    });
+    // Some wallets seem to require a brief pause after switch
+    await sleep(1500);
+  }
+
+  if (isTransferApproveRequired(tokenRoute, tokenAddress)) {
+    updateStatus(TransferStatus.CreatingApprove);
+    const tokenAdapter = AdapterFactory.TokenAdapterFromAddress(originCaip2Id, tokenAddress);
+    const { tx: approveTxRequest } = await tokenAdapter.prepareApproveTx(
+      tokenRouterAddress,
+      sendValue,
+    );
+
+    updateStatus(TransferStatus.SigningApprove);
+    const { wait: approveWait } = await sendTransaction({
+      chainId: originChainId,
+      request: approveTxRequest,
+      mode: 'recklesslyUnprepared', // See note above function
+    });
+
+    updateStatus(TransferStatus.ConfirmingApprove);
+    const approveTxReceipt = await approveWait(1);
+    logger.debug('Approve transaction confirmed, hash:', approveTxReceipt.transactionHash);
+    toastTxSuccess('Approve transaction sent!', approveTxReceipt.transactionHash, originCaip2Id);
+  }
+
+  updateStatus(TransferStatus.CreatingTransfer);
+
+  let hypTokenAdapter: IHypTokenAdapter;
+  if (routeType === RouteType.BaseToSynthetic) {
+    hypTokenAdapter = AdapterFactory.CollateralAdapterFromAddress(
+      originCaip2Id,
+      originTokenAddress,
+    );
+  } else {
+    hypTokenAdapter = AdapterFactory.HypTokenAdapterFromAddress(originCaip2Id, originTokenAddress);
+  }
+
+  const gasPayment = await hypTokenAdapter.quoteGasPayment(destinationDomainId);
+  logger.debug('Quoted gas payment', gasPayment);
+  // If sending native tokens (e.g. Eth), the gasPayment must be added to the tx value and sent together
+  const txValue =
+    routeType === RouteType.BaseToSynthetic && isNativeToken(tokenAddress)
+      ? BigNumber.from(gasPayment).add(sendValue)
+      : gasPayment;
+  const { tx: transferTxRequest } = await hypTokenAdapter.prepareTransferRemoteTx(
+    destinationDomainId,
+    recipientAddress,
+    sendValue,
+    txValue.toString(),
+  );
+
+  updateStatus(TransferStatus.SigningTransfer);
+  const { wait: transferWait, hash: transferTxHash } = await sendTransaction({
+    chainId: originChainId,
+    request: transferTxRequest,
+    mode: 'recklesslyUnprepared', // See note above function
+  });
+
+  updateStatus(TransferStatus.ConfirmingTransfer);
+  const transferReceipt = await transferWait(1);
+  const msgId = tryGetMsgIdFromTransferReceipt(transferReceipt);
+
+  return { transferTxHash, msgId };
+}
+
+async function triggerSealevelTransfer({
+  values,
+  tokenRoute,
+  activeChain,
+  updateStatus,
+}: TriggerTransferParams) {
+  if ('TODO solana') throw new Error('TODO solana');
+  return { transferTxHash: '', msgId: '' };
+}
+
 export function isTransferApproveRequired(route: Route, tokenAddress: string) {
   return !isNativeToken(tokenAddress) && route.type === RouteType.BaseToSynthetic;
 }
 
 function tryGetMsgIdFromTransferReceipt(receipt: providers.TransactionReceipt) {
   try {
-    // TODO replace with static getDispatchedMessages call after next SDK release
-    const core = HyperlaneCore.fromEnvironment('mainnet', getMultiProvider());
-    const messages = core.getDispatchedMessages(receipt);
+    const messages = HyperlaneCore.getDispatchedMessages(receipt);
     if (messages.length) {
       const msgId = messages[0].id;
       logger.debug('Message id found in logs', msgId);

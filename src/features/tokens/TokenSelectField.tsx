@@ -1,9 +1,10 @@
-import { useField } from 'formik';
+import { useField, useFormikContext } from 'formik';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { TokenIcon } from '../../components/icons/TokenIcon';
 import ChevronIcon from '../../images/icons/chevron-down.svg';
+import { TransferFormValues } from '../transfer/types';
 
 import { TokenListModal } from './TokenListModal';
 import { RoutesMap } from './routes';
@@ -27,17 +28,28 @@ export function TokenSelectField({
   setIsNft,
 }: Props) {
   const [field, , helpers] = useField<Address>(name);
+  const { setFieldValue } = useFormikContext<TransferFormValues>();
 
   // Keep local state for token details, but let formik manage field value
   const [token, setToken] = useState<TokenMetadata | undefined>(undefined);
-  const [, , amountHelpers] = useField('amount');
+
+  // Keep local state in sync with formik state
+  useEffect(() => {
+    if (!field.value) setToken(undefined);
+    else if (field.value !== token?.address) {
+      setToken(undefined);
+      helpers.setValue('');
+    }
+  }, [token, field.value, helpers]);
 
   const handleChange = (newToken: TokenMetadata) => {
     // Set the token address value in formik state
     helpers.setValue(newToken.address);
     // reset amount after change token
-    amountHelpers.setValue('');
+    setFieldValue('amount', '');
+    // Update local state
     setToken(newToken);
+    // Update nft state in parent
     setIsNft(!!newToken.isNft);
   };
 

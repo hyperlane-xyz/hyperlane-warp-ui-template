@@ -89,18 +89,18 @@ export function useDisconnects(): Record<ProtocolType, () => Promise<void>> {
   };
 }
 
-interface ChainInfo {
+export interface ActiveChainInfo {
   chainDisplayName?: string;
   caip2Id?: Caip2Id;
 }
 
-export function useChains(): {
-  chains: Record<ProtocolType, ChainInfo>;
-  readyChains: Array<ChainInfo>;
+export function useActiveChains(): {
+  chains: Record<ProtocolType, ActiveChainInfo>;
+  readyChains: Array<ActiveChainInfo>;
 } {
   // Evm
   const { chain } = useNetworkWagmi();
-  const evmChain: ChainInfo = {
+  const evmChain: ActiveChainInfo = {
     chainDisplayName: chain?.name,
     caip2Id: chain ? getCaip2Id(ProtocolType.Ethereum, chain.id) : undefined,
   };
@@ -110,7 +110,7 @@ export function useChains(): {
   const { name: solName, displayName: solDisplayName } = getSolanaChainName(
     connection?.rpcEndpoint,
   );
-  const solChain: ChainInfo = {
+  const solChain: ActiveChainInfo = {
     chainDisplayName: solDisplayName,
     caip2Id: solName ? getCaip2Id(ProtocolType.Sealevel, solName) : undefined,
   };

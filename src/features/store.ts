@@ -4,7 +4,7 @@ import type { TransferContext, TransferStatus } from './transfer/types';
 
 // Keeping everything here for now as state is simple
 // Will refactor into slices as necessary
-interface AppState {
+export interface AppState {
   transfers: TransferContext[];
   addTransfer: (t: TransferContext) => void;
   updateTransferStatus: (

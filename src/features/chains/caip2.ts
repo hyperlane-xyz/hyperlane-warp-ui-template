@@ -41,3 +41,11 @@ export function getChainReference(id: Caip2Id) {
   const { reference } = parseCaip2Id(id);
   return reference;
 }
+
+export function getEthereumChainId(id: Caip2Id): number {
+  const { protocol, reference } = parseCaip2Id(id);
+  if (protocol !== ProtocolType.Ethereum) {
+    throw new Error(`Protocol type must be ethereum: ${id}`);
+  }
+  return parseInt(reference, 10);
+}

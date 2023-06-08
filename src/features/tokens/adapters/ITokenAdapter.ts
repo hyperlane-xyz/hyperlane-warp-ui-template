@@ -14,5 +14,6 @@ export interface IHypTokenAdapter extends ITokenAdapter {
     destination: DomainId,
     recipient: Address,
     amountOrId: string | number,
+    txValue?: string,
   ): Promise<{ tx: any }>;
 }

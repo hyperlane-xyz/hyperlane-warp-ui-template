@@ -63,7 +63,7 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
   const queryClient = useQueryClient();
   const { address: accountAddress } = useAccount();
   const validate = (values: TransferFormValues) =>
-    validateFormValues(values, tokenRoutes, queryClient, accountAddress, isNft);
+    validateFormValues(values, tokenRoutes, queryClient, accountAddress);
 
   const onDoneTransactions = () => {
     setIsReview(false);
@@ -200,7 +200,7 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
               <SolidButton
                 type="button"
                 color="blue"
-                onClick={() => triggerTransactions(values, tokenRoutes, isNft)}
+                onClick={() => triggerTransactions(values, tokenRoutes)}
                 classes="flex-1 px-3 py-1.5"
               >
                 {`Send to ${getChainDisplayName(values.destinationCaip2Id)}`}
@@ -364,9 +364,9 @@ function validateFormValues(
   tokenRoutes: RoutesMap,
   queryClient: QueryClient,
   accountAddress?: string,
-  isNft?: boolean,
 ) {
   const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenAddress, tokenRoutes);
+  const isNft = !!route?.isNft;
 
   const currentTokenAddress =
     route?.baseCaip2Id === originCaip2Id ? tokenAddress : route?.originTokenAddress ?? '';

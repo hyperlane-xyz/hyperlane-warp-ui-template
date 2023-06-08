@@ -15,6 +15,7 @@ import { IHypTokenAdapter, ITokenAdapter } from './ITokenAdapter';
 
 type SignerOrProvider = Signer | providers.Provider;
 
+// Interacts with native currencies
 export class EvmNativeTokenAdapter implements ITokenAdapter {
   constructor(public readonly signerOrProvider: SignerOrProvider) {}
 
@@ -54,6 +55,7 @@ export class EvmNativeTokenAdapter implements ITokenAdapter {
   }
 }
 
+// Interacts with ERC20/721 contracts
 export class EvmTokenAdapter<T extends ERC20Upgradeable = ERC20Upgradeable>
   extends EvmNativeTokenAdapter
   implements ITokenAdapter
@@ -104,6 +106,7 @@ export class EvmTokenAdapter<T extends ERC20Upgradeable = ERC20Upgradeable>
   }
 }
 
+// Interacts with HypToken contracts
 export class EvmHypTokenAdapter<T extends HypERC20 = HypERC20>
   extends EvmTokenAdapter<T>
   implements IHypTokenAdapter
@@ -140,16 +143,19 @@ export class EvmHypTokenAdapter<T extends HypERC20 = HypERC20>
     destination: DomainId,
     recipient: Address,
     amountOrId: string | number,
+    txValue?: string,
   ): Promise<{ tx: PopulatedTransaction }> {
     const tx = await this.contract.populateTransaction.transferRemote(
       destination,
-      recipient,
+      utils.addressToBytes32(recipient),
       amountOrId,
+      { value: txValue },
     );
     return { tx };
   }
 }
 
+// Interacts with HypCollateral and HypNative contracts
 export class EvmHypCollateralAdapter extends EvmHypTokenAdapter implements IHypTokenAdapter {
   constructor(
     public readonly signerOrProvider: SignerOrProvider,

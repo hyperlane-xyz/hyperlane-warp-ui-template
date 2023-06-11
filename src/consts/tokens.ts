@@ -13,7 +13,7 @@ export const tokenList: WarpTokenConfig = [
     logoURI: '/logos/weth.png', // See public/logos/
   },
 
-  // Example NFT (ERC721) token
+  // Example NFT (ERC721) token for an EVM chain
   {
     type: 'collateral',
     chainId: 5,
@@ -41,7 +41,7 @@ export const tokenList: WarpTokenConfig = [
   //   type: 'collateral',
   //   protocol: 'sealevel',
   //   chainId: 1399811149,
-  //   address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+  //   address: '00000000000000000000000000000000000000000000',
   //   hypCollateralAddress: 'TODO',
   //   name: 'USD Coin',
   //   symbol: 'USDC',
@@ -49,14 +49,14 @@ export const tokenList: WarpTokenConfig = [
   // },
 
   // Example native token for a Sealevel (Solana) chain
-  // {
-  //   type: 'native',
-  //   protocol: 'sealevel',
-  //   chainId: 1399811149,
-  //   hypNativeAddress: 'TODO',
-  //   name: 'Sol',
-  //   symbol: 'SOL',
-  //   decimals: 9,
-  //   logoURI: '/logos/solana.svg',
-  // },
+  {
+    type: 'native',
+    protocol: 'sealevel',
+    chainId: 1399811149,
+    hypNativeAddress: '00000000000000000000000000000000000000000000',
+    name: 'Sol',
+    symbol: 'SOL',
+    decimals: 9,
+    logoURI: '/logos/solana.svg',
+  },
 ];

@@ -1,8 +1,23 @@
+export interface TransferParams {
+  amountOrId: string | number;
+  recipient: Address;
+
+  // Solana-specific params
+  // Included here optionally to keep Adapter types simple
+  fromTokenAccount?: Address;
+  fromAccountOwner?: Address;
+}
+
+export interface TransferRemoteParams extends TransferParams {
+  destination: DomainId;
+  txValue?: string;
+}
+
 export interface ITokenAdapter {
   getBalance(address?: Address): Promise<string>;
   getMetadata(isNft?: boolean): Promise<{ decimals: number; symbol: string; name: string }>;
-  prepareApproveTx(recipient: Address, amountOrId: string | number): Promise<{ tx: any }>;
-  prepareTransferTx(recipient: Address, amountOrId: string | number): Promise<{ tx: any }>;
+  prepareApproveTx(TransferParams: TransferParams): unknown | Promise<unknown>;
+  prepareTransferTx(TransferParams: TransferParams): unknown | Promise<unknown>;
 }
 
 export interface IHypTokenAdapter extends ITokenAdapter {
@@ -10,10 +25,5 @@ export interface IHypTokenAdapter extends ITokenAdapter {
   getRouterAddress(domain: DomainId): Promise<Address>;
   getAllRouters(): Promise<Array<{ domain: DomainId; address: Address }>>;
   quoteGasPayment(destination: DomainId): Promise<string>;
-  prepareTransferRemoteTx(
-    destination: DomainId,
-    recipient: Address,
-    amountOrId: string | number,
-    txValue?: string,
-  ): Promise<{ tx: any }>;
+  prepareTransferRemoteTx(TransferParams: TransferRemoteParams): unknown | Promise<unknown>;
 }

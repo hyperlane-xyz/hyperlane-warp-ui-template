@@ -11,7 +11,12 @@ import {
   getHypErc20Contract,
 } from '../contracts/evmContracts';
 
-import { IHypTokenAdapter, ITokenAdapter } from './ITokenAdapter';
+import {
+  IHypTokenAdapter,
+  ITokenAdapter,
+  TransferParams,
+  TransferRemoteParams,
+} from './ITokenAdapter';
 
 type SignerOrProvider = Signer | providers.Provider;
 
@@ -30,19 +35,16 @@ export class EvmNativeTokenAdapter implements ITokenAdapter {
     throw new Error('Metadata not available to native tokens');
   }
 
-  async prepareApproveTx(
-    _recipient: Address,
-    _amountOrId: string | number,
-  ): Promise<{ tx: PopulatedTransaction }> {
+  async prepareApproveTx(_params: TransferParams): Promise<PopulatedTransaction> {
     throw new Error('Approve not required for native tokens');
   }
 
-  async prepareTransferTx(
-    recipient: Address,
-    amountOrId: string | number,
-  ): Promise<{ tx: PopulatedTransaction }> {
+  async prepareTransferTx({
+    amountOrId,
+    recipient,
+  }: TransferParams): Promise<PopulatedTransaction> {
     const value = BigNumber.from(amountOrId);
-    return { tx: { value, to: recipient } };
+    return { value, to: recipient };
   }
 
   protected resolveAddress(address?: Address): Address | Promise<Address> {
@@ -89,20 +91,18 @@ export class EvmTokenAdapter<T extends ERC20Upgradeable = ERC20Upgradeable>
     return { decimals, symbol, name };
   }
 
-  override async prepareApproveTx(
-    recipient: Address,
-    amountOrId: string | number,
-  ): Promise<{ tx: PopulatedTransaction }> {
-    const tx = await this.contract.populateTransaction.approve(recipient, amountOrId);
-    return { tx };
+  override prepareApproveTx({
+    amountOrId,
+    recipient,
+  }: TransferParams): Promise<PopulatedTransaction> {
+    return this.contract.populateTransaction.approve(recipient, amountOrId);
   }
 
-  override async prepareTransferTx(
-    recipient: Address,
-    amountOrId: string | number,
-  ): Promise<{ tx: PopulatedTransaction }> {
-    const tx = await this.contract.populateTransaction.transfer(recipient, amountOrId);
-    return { tx };
+  override prepareTransferTx({
+    amountOrId,
+    recipient,
+  }: TransferParams): Promise<PopulatedTransaction> {
+    return this.contract.populateTransaction.transfer(recipient, amountOrId);
   }
 }
 
@@ -139,19 +139,18 @@ export class EvmHypTokenAdapter<T extends HypERC20 = HypERC20>
     return gasPayment.toString();
   }
 
-  async prepareTransferRemoteTx(
-    destination: DomainId,
-    recipient: Address,
-    amountOrId: string | number,
-    txValue?: string,
-  ): Promise<{ tx: PopulatedTransaction }> {
-    const tx = await this.contract.populateTransaction.transferRemote(
+  prepareTransferRemoteTx({
+    amountOrId,
+    destination,
+    recipient,
+    txValue,
+  }: TransferRemoteParams): Promise<PopulatedTransaction> {
+    return this.contract.populateTransaction.transferRemote(
       destination,
       utils.addressToBytes32(recipient),
       amountOrId,
       { value: txValue },
     );
-    return { tx };
   }
 }
 
@@ -165,21 +164,15 @@ export class EvmHypCollateralAdapter extends EvmHypTokenAdapter implements IHypT
     super(signerOrProvider, contractAddress, getHypErc20CollateralContract);
   }
 
-  override async getMetadata(): Promise<{ decimals: number; symbol: string; name: string }> {
+  override getMetadata(): Promise<{ decimals: number; symbol: string; name: string }> {
     throw new Error('Metadata not available for HypCollateral/HypNative contract.');
   }
 
-  override async prepareApproveTx(
-    _recipient: Address,
-    _amountOrId: string | number,
-  ): Promise<{ tx: PopulatedTransaction }> {
+  override prepareApproveTx(_params: TransferParams): Promise<PopulatedTransaction> {
     throw new Error('Approve not applicable to HypCollateral/HypNative contract.');
   }
 
-  override async prepareTransferTx(
-    _recipient: Address,
-    _amountOrId: string | number,
-  ): Promise<{ tx: PopulatedTransaction }> {
+  override prepareTransferTx(_params: TransferParams): Promise<PopulatedTransaction> {
     throw new Error('Local transfer not supported for HypCollateral/HypNative contract.');
   }
 }

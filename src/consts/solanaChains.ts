@@ -1,3 +1,5 @@
+import type { Cluster } from '@solana/web3.js';
+
 import { ChainMap, ExplorerFamily } from '@hyperlane-xyz/sdk';
 
 import { CustomChainMetadata } from '../features/chains/types';
@@ -60,10 +62,18 @@ export const solanaChains: ChainMap<CustomChainMetadata> = {
   },
 };
 
+// For general use in UI
 export function getSolanaChainName(rpcEndpoint: string) {
   if (!rpcEndpoint) return {};
   if (rpcEndpoint?.includes('devnet')) return { name: 'solanadevnet', displayName: 'Sol Devnet' };
   if (rpcEndpoint?.includes('testnet'))
     return { name: 'solanatestnet', displayName: 'Sol Testnet' };
   return { name: 'solanamainnet', displayName: 'Solana' };
+}
+
+// For use in when interacting with solana/web3.js Connection class
+export function getSolanaClusterName(chainName: string): Cluster {
+  if (chainName?.includes('devnet')) return 'devnet';
+  if (chainName?.includes('testnet')) return 'testnet';
+  return 'mainnet-beta';
 }

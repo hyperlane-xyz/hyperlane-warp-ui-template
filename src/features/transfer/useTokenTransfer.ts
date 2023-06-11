@@ -1,5 +1,5 @@
 import { sendTransaction, switchNetwork } from '@wagmi/core';
-import { BigNumber, providers } from 'ethers';
+import { BigNumber, PopulatedTransaction, providers } from 'ethers';
 import { useCallback, useState } from 'react';
 import { toast } from 'react-toastify';
 
@@ -128,7 +128,7 @@ async function triggerEvmTransfer({
 }: TriggerTransferParams) {
   const { amount, originCaip2Id, destinationCaip2Id, recipientAddress, tokenAddress } = values;
   const { type: routeType, tokenRouterAddress, originTokenAddress, decimals, isNft } = tokenRoute;
-  const sendValue = isNft ? amount : toWei(amount, decimals).toString();
+  const amountOrId = isNft ? amount : toWei(amount, decimals).toString();
   const originChainId = getEthereumChainId(originCaip2Id);
   const destinationChainId = getEthereumChainId(destinationCaip2Id);
   const activeChainId = activeChain?.caip2Id ? getEthereumChainId(activeChain.caip2Id) : undefined;
@@ -145,10 +145,10 @@ async function triggerEvmTransfer({
   if (isTransferApproveRequired(tokenRoute, tokenAddress)) {
     updateStatus(TransferStatus.CreatingApprove);
     const tokenAdapter = AdapterFactory.TokenAdapterFromAddress(originCaip2Id, tokenAddress);
-    const { tx: approveTxRequest } = await tokenAdapter.prepareApproveTx(
-      tokenRouterAddress,
-      sendValue,
-    );
+    const approveTxRequest = (await tokenAdapter.prepareApproveTx({
+      amountOrId,
+      recipient: tokenRouterAddress,
+    })) as PopulatedTransaction;
 
     updateStatus(TransferStatus.SigningApprove);
     const { wait: approveWait } = await sendTransaction({
@@ -180,14 +180,14 @@ async function triggerEvmTransfer({
   // If sending native tokens (e.g. Eth), the gasPayment must be added to the tx value and sent together
   const txValue =
     routeType === RouteType.BaseToSynthetic && isNativeToken(tokenAddress)
-      ? BigNumber.from(gasPayment).add(sendValue)
+      ? BigNumber.from(gasPayment).add(amountOrId)
       : gasPayment;
-  const { tx: transferTxRequest } = await hypTokenAdapter.prepareTransferRemoteTx(
-    destinationDomainId,
-    recipientAddress,
-    sendValue,
-    txValue.toString(),
-  );
+  const transferTxRequest = (await hypTokenAdapter.prepareTransferRemoteTx({
+    amountOrId,
+    recipient: recipientAddress,
+    destination: destinationDomainId,
+    txValue: txValue.toString(),
+  })) as PopulatedTransaction;
 
   updateStatus(TransferStatus.SigningTransfer);
   const { wait: transferWait, hash: transferTxHash } = await sendTransaction({

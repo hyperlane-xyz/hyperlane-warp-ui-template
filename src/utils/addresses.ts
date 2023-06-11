@@ -74,6 +74,11 @@ export function areAddressesEqual(a1: string, a2: string) {
   return getAddress(a1) === getAddress(a2);
 }
 
+const zeroishRegex = /^(0x)?0*$/;
+export function isZeroishAddress(address: string) {
+  return zeroishRegex.test(address);
+}
+
 export function trimLeading0x(input: string) {
   return input.startsWith('0x') ? input.substring(2) : input;
 }

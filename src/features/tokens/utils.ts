@@ -1,8 +1,5 @@
-import { ethers } from 'ethers';
+import { isZeroishAddress } from '../../utils/addresses';
 
-import { areAddressesEqual } from '../../utils/addresses';
-
-// TODO Solana support
 export function isNativeToken(tokenAddress: Address) {
-  return areAddressesEqual(tokenAddress, ethers.constants.AddressZero);
+  return isZeroishAddress(tokenAddress);
 }

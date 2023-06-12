@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 import { TokenType } from '@hyperlane-xyz/hyperlane-token';
 
-import { areAddressesEqual, isValidEvmAddress } from '../../utils/addresses';
+import { areAddressesEqual, isValidAddress } from '../../utils/addresses';
 import { logger } from '../../utils/logger';
 import { getCaip2Id } from '../chains/caip2';
 import { ProtocolType } from '../chains/types';
@@ -221,7 +221,7 @@ export function getTokenRoute(
   baseTokenAddress: Address,
   tokenRoutes: RoutesMap,
 ): Route | null {
-  if (!isValidEvmAddress(baseTokenAddress)) return null;
+  if (!isValidAddress(baseTokenAddress)) return null;
   return (
     getTokenRoutes(originCaip2Id, destinationCaip2Id, tokenRoutes).find((r) =>
       areAddressesEqual(baseTokenAddress, r.baseTokenAddress),

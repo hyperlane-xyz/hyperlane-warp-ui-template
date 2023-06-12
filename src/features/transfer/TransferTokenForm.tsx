@@ -14,10 +14,11 @@ import { config } from '../../consts/config';
 import { STANDARD_TOKEN_DECIMALS } from '../../consts/values';
 import SwapIcon from '../../images/icons/swap.svg';
 import { Color } from '../../styles/Color';
-import { areAddressesEqual, isValidEvmAddress } from '../../utils/addresses';
+import { areAddressesEqual, isValidAddress } from '../../utils/addresses';
 import { fromWei, fromWeiRounded, toWei, tryParseAmount } from '../../utils/amount';
 import { logger } from '../../utils/logger';
 import { ChainSelectField } from '../chains/ChainSelectField';
+import { getProtocolType } from '../chains/caip2';
 import { getChainDisplayName } from '../chains/utils';
 import { SelectOrInputTokenIds } from '../tokens/SelectOrInputTokenIds';
 import { TokenSelectField } from '../tokens/TokenSelectField';
@@ -373,8 +374,11 @@ function validateFormValues(
 
   if (!originCaip2Id) return { originCaip2Id: 'Invalid origin chain' };
   if (!destinationCaip2Id) return { destinationCaip2Id: 'Invalid destination chain' };
-  if (!isValidEvmAddress(recipientAddress)) return { recipientAddress: 'Invalid recipient' };
-  if (!isValidEvmAddress(currentTokenAddress)) return { tokenAddress: 'Invalid token' };
+
+  const protocol = getProtocolType(originCaip2Id);
+  if (!isValidAddress(recipientAddress, protocol)) return { recipientAddress: 'Invalid recipient' };
+  if (!isValidAddress(currentTokenAddress, protocol)) return { tokenAddress: 'Invalid token' };
+
   const parsedAmount = tryParseAmount(amount);
   if (!parsedAmount || parsedAmount.lte(0))
     return { amount: isNft ? 'Invalid Token Id' : 'Invalid amount' };

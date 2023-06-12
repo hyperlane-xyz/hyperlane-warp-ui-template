@@ -6,11 +6,11 @@ import { isNumeric } from '../utils/string';
 
 import { parseCaip2Id } from './chains/caip2';
 import { getChainConfigs } from './chains/metadata';
-import { ProtocolType } from './chains/types';
+import { CustomChainMetadata, ProtocolType } from './chains/types';
 
 // A ProtocolType-aware MultiProvider
 class MultiProtocolMultiProvider extends MultiProvider {
-  override tryGetChainMetadata(chainNameOrId: ChainName | number): ChainMetadata | null {
+  override tryGetChainMetadata(chainNameOrId: ChainName | number): CustomChainMetadata | null {
     let chainMetadata: ChainMetadata | undefined;
     if (isNumeric(chainNameOrId)) {
       chainMetadata = Object.values(this.metadata).find(
@@ -37,7 +37,7 @@ class MultiProtocolMultiProvider extends MultiProvider {
   }
 }
 
-let multiProvider: MultiProvider;
+let multiProvider: MultiProtocolMultiProvider;
 
 export function getMultiProvider() {
   if (!multiProvider) {

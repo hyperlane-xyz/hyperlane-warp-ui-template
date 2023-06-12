@@ -2,6 +2,8 @@ import { BigNumber } from 'ethers';
 import Image from 'next/image';
 import { memo } from 'react';
 
+import { Circle } from '@hyperlane-xyz/widgets';
+
 import { TokenMetadata } from '../../features/tokens/types';
 import { isValidUrl } from '../../utils/url';
 import { ErrorBoundary } from '../errors/ErrorBoundary';
@@ -16,15 +18,12 @@ function _TokenIcon({ token, size = 32 }: Props) {
   const title = token?.symbol || '';
   const character = title ? title.charAt(0).toUpperCase() : '';
 
-  const bgColor = getBackgroundColor(token && !imageSrc ? token.address : undefined);
+  const bgColorSeed =
+    token && !imageSrc ? BigNumber.from(token.address?.substring(0, 4)).toNumber() % 5 : undefined;
   const fontSize = Math.floor(size / 2);
 
   return (
-    <div
-      style={{ width: `${size}px`, height: `${size}px` }}
-      className={`flex items-center justify-center rounded-full ${bgColor} transition-all overflow-hidden`}
-      title={title}
-    >
+    <Circle size={size} bgColorSeed={bgColorSeed} title={title}>
       {imageSrc ? (
         <ErrorBoundary hideError={true}>
           <Image src={imageSrc} alt="" width={size} height={size} />
@@ -32,28 +31,8 @@ function _TokenIcon({ token, size = 32 }: Props) {
       ) : (
         <div className={`text-[${fontSize}px]`}>{character}</div>
       )}
-    </div>
+    </Circle>
   );
-}
-
-// TODO de-dupe with https://github.com/hyperlane-xyz/hyperlane-widgets/blob/main/src/icons/ChainLogo.tsx
-function getBackgroundColor(address?: Address) {
-  if (!address) return 'bg-gray-200';
-  const seed = BigNumber.from(address.substring(0, 4)).toNumber() % 5;
-  switch (seed) {
-    case 0:
-      return 'bg-blue-100';
-    case 1:
-      return 'bg-pink-200';
-    case 2:
-      return 'bg-green-100';
-    case 3:
-      return 'bg-orange-200';
-    case 4:
-      return 'bg-violet-200';
-    default:
-      return 'bg-gray-200';
-  }
 }
 
 export const TokenIcon = memo(_TokenIcon);

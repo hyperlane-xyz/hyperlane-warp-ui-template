@@ -1,9 +1,11 @@
+import Image from 'next/image';
 import { ComponentProps, useMemo } from 'react';
 
 import { ChainLogo as ChainLogoInner } from '@hyperlane-xyz/widgets';
 
 import { parseCaip2Id } from '../../features/chains/caip2';
 import { getChainDisplayName } from '../../features/chains/utils';
+import { getMultiProvider } from '../../features/multiProvider';
 import { logger } from '../../utils/logger';
 import { isNumeric } from '../../utils/string';
 
@@ -13,18 +15,28 @@ type Props = Omit<ComponentProps<typeof ChainLogoInner>, 'chainId' | 'chainName'
 
 export function ChainLogo(props: Props) {
   const { caip2Id, ...rest } = props;
-  // TODO update widget lib to support custom logos
-  const { chainId, chainName } = useMemo(() => {
+  const { chainId, chainName, icon } = useMemo(() => {
     if (!caip2Id) return {};
     try {
-      const chainName = getChainDisplayName(caip2Id);
       const { reference } = parseCaip2Id(caip2Id);
-      if (isNumeric(reference)) return { chainId: parseInt(reference, 10), chainName };
-      else throw new Error('TODO support non-number reference');
+      const chainId = isNumeric(reference) ? parseInt(reference, 10) : undefined;
+      const chainName = getChainDisplayName(caip2Id);
+      const logoUri = getMultiProvider().tryGetChainMetadata(reference)?.logoURI;
+      const icon = logoUri
+        ? (props: { width: number; height: number; title?: string }) => (
+            <Image src={logoUri} alt="" {...props} />
+          )
+        : undefined;
+      return {
+        chainId,
+        chainName,
+        icon,
+      };
     } catch (error) {
       logger.error('Failed to parse caip2 id', error);
-      return { chainId: undefined, chainName: undefined };
+      return {};
     }
   }, [caip2Id]);
-  return <ChainLogoInner {...rest} chainId={chainId} chainName={chainName} />;
+
+  return <ChainLogoInner {...rest} chainId={chainId} chainName={chainName} icon={icon} />;
 }

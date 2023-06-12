@@ -914,7 +914,7 @@ __metadata:
     "@headlessui/react": ^1.7.14
     "@hyperlane-xyz/hyperlane-token": ^1.3.4
     "@hyperlane-xyz/sdk": ^1.3.4
-    "@hyperlane-xyz/widgets": ^1.3.4
+    "@hyperlane-xyz/widgets": ^1.3.5-beta0
     "@metamask/jazzicon": "https://github.com/jmrossy/jazzicon#7a8df28974b4e81129bfbe3cab76308b889032a6"
     "@rainbow-me/rainbowkit": 0.12.14
     "@solana/spl-token": ^0.3.8
@@ -953,14 +953,14 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@hyperlane-xyz/widgets@npm:^1.3.4":
-  version: 1.3.4
-  resolution: "@hyperlane-xyz/widgets@npm:1.3.4"
+"@hyperlane-xyz/widgets@npm:^1.3.5-beta0":
+  version: 1.3.5-beta0
+  resolution: "@hyperlane-xyz/widgets@npm:1.3.5-beta0"
   peerDependencies:
     "@hyperlane-xyz/sdk": ^1.3.4
     react: ^18
     react-dom: ^18
-  checksum: 16a7447e9c0d767b2dabcb56f5450e3c376e1d6d58116228a052c7e1dd2442264dd7c2ac8bbd43ccd7c5601dd62ff664b58ec8e91cedbacfcff2573ce568d961
+  checksum: c2e0b83037a7175d76f01630fab9d51a324aab8b1829097c39212ad342292653197d248b9001979826b6a1e4b9418129f4a806181138eaf675970896aebd02de
   languageName: node
   linkType: hard
 

@@ -16,6 +16,7 @@ export function getTokenBalanceKey(
 }
 
 export function useAccountTokenBalance(caip2Id: Caip2Id, tokenAddress: Address) {
+  // TODO solana support
   const { address: accountAddress } = useAccount();
   return useTokenBalance(caip2Id, tokenAddress, accountAddress);
 }

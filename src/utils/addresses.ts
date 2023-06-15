@@ -22,6 +22,7 @@ export function isSealevelAddress(address: string) {
 }
 
 export function getAddressProtocolType(address: string) {
+  if (!address) return undefined;
   if (isEvmAddress(address)) {
     return ProtocolType.Ethereum;
   } else if (isSealevelAddress(address)) {

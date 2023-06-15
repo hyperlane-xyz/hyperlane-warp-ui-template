@@ -26,6 +26,7 @@ export const solanaChains: ChainMap<CustomChainMetadata> = {
       reorgPeriod: 1,
       estimateBlockTime: 1,
     },
+    mailbox: 'TODO',
     logoURI: '/logos/solana.svg',
   },
   solanatestnet: {
@@ -42,6 +43,7 @@ export const solanaChains: ChainMap<CustomChainMetadata> = {
       reorgPeriod: 1,
       estimateBlockTime: 1,
     },
+    mailbox: '692KZJaoe2KRcD6uhCQDLLXnLNA5ZLnfvdqjE4aX9iu1',
     logoURI: '/logos/solana.svg',
   },
   solanadevnet: {
@@ -58,6 +60,7 @@ export const solanaChains: ChainMap<CustomChainMetadata> = {
       reorgPeriod: 1,
       estimateBlockTime: 1,
     },
+    mailbox: 'TODO',
     logoURI: '/logos/solana.svg',
   },
 };

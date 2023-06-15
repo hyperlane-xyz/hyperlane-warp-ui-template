@@ -37,6 +37,7 @@ const CollateralTokenSchema = commonTokenFields.extend({
   address: z.string(),
   hypCollateralAddress: z.string(),
   isNft: z.boolean().optional(),
+  isSpl2022: z.boolean().optional(), // Only required if using a 2022 version SPL Token on a Sealevel chain
 });
 
 interface CollateralTokenConfig extends BaseTokenConfig {
@@ -45,6 +46,7 @@ interface CollateralTokenConfig extends BaseTokenConfig {
   address: Address;
   hypCollateralAddress: Address;
   isNft?: boolean;
+  isSpl2022?: boolean;
 }
 
 const NativeTokenSchema = commonTokenFields.extend({
@@ -77,6 +79,7 @@ interface BaseTokenMetadata extends CommonTokenFields {
 
 interface CollateralTokenMetadata extends BaseTokenMetadata {
   type: TokenType.collateral;
+  isSpl2022?: boolean;
 }
 
 type ZeroAddress = `${typeof ethers.constants.AddressZero}`;

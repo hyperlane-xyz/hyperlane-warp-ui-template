@@ -1,8 +1,8 @@
 import { QueryClient, useQuery } from '@tanstack/react-query';
-import { useAccount } from 'wagmi';
 
 import { logger } from '../../utils/logger';
 import { getProvider } from '../multiProvider';
+import { useAccountForChain } from '../wallet/hooks';
 
 import { AdapterFactory } from './adapters/AdapterFactory';
 import { getHypErc721Contract } from './contracts/evmContracts';
@@ -16,9 +16,8 @@ export function getTokenBalanceKey(
 }
 
 export function useAccountTokenBalance(caip2Id: Caip2Id, tokenAddress: Address) {
-  // TODO solana support
-  const { address: accountAddress } = useAccount();
-  return useTokenBalance(caip2Id, tokenAddress, accountAddress);
+  const account = useAccountForChain(caip2Id);
+  return useTokenBalance(caip2Id, tokenAddress, account?.address);
 }
 
 export function useTokenBalance(caip2Id: Caip2Id, tokenAddress: Address, accountAddress?: Address) {

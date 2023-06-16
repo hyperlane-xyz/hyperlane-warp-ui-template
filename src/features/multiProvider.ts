@@ -22,6 +22,10 @@ class MultiProtocolMultiProvider extends MultiProvider {
     return chainMetadata || null;
   }
 
+  override getChainMetadata(chainNameOrId: ChainName | number): CustomChainMetadata {
+    return super.getChainMetadata(chainNameOrId) as CustomChainMetadata;
+  }
+
   override tryGetProvider(chainNameOrId: ChainName | number): providers.Provider | null {
     const metadata = this.tryGetChainMetadata(chainNameOrId);
     // @ts-ignore TODO add optional protocol field to ChainMetadata in SDK

@@ -1,4 +1,3 @@
-import { ethers } from 'ethers';
 import { z } from 'zod';
 
 import { TokenType } from '@hyperlane-xyz/hyperlane-token';
@@ -82,10 +81,8 @@ interface CollateralTokenMetadata extends BaseTokenMetadata {
   isSpl2022?: boolean;
 }
 
-type ZeroAddress = `${typeof ethers.constants.AddressZero}`;
 interface NativeTokenMetadata extends BaseTokenMetadata {
   type: TokenType.native;
-  address: ZeroAddress;
 }
 
 export type TokenMetadata = CollateralTokenMetadata | NativeTokenMetadata;

@@ -15,8 +15,8 @@ import { getMultiProvider } from '../multiProvider';
 import { useStore } from '../store';
 import { AdapterFactory } from '../tokens/adapters/AdapterFactory';
 import { IHypTokenAdapter } from '../tokens/adapters/ITokenAdapter';
+import { isNativeToken } from '../tokens/native';
 import { Route, RouteType, RoutesMap, getTokenRoute } from '../tokens/routes';
-import { isNativeToken } from '../tokens/utils';
 import { ActiveChainInfo, useActiveChains } from '../wallet/hooks';
 
 import { TransferFormValues, TransferStatus } from './types';
@@ -214,7 +214,11 @@ async function triggerSealevelTransfer({
 }
 
 export function isTransferApproveRequired(route: Route, tokenAddress: string) {
-  return !isNativeToken(tokenAddress) && route.type === RouteType.BaseToSynthetic;
+  return (
+    !isNativeToken(tokenAddress) &&
+    route.type === RouteType.BaseToSynthetic &&
+    getProtocolType(route.originCaip2Id) === ProtocolType.Ethereum
+  );
 }
 
 function tryGetMsgIdFromTransferReceipt(receipt: providers.TransactionReceipt) {

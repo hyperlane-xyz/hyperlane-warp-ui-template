@@ -2,7 +2,7 @@ import { getSolanaClusterName } from '../../../consts/solanaChains';
 import { parseCaip2Id } from '../../chains/caip2';
 import { ProtocolType } from '../../chains/types';
 import { getProvider } from '../../multiProvider';
-import { isNativeToken } from '../utils';
+import { isNativeToken } from '../native';
 
 import {
   EvmHypCollateralAdapter,
@@ -31,7 +31,7 @@ export class AdapterFactory {
       if (isNativeToken(address)) {
         return new SealevelNativeTokenAdapter(cluster);
       } else {
-        return new SealevelTokenAdapter(cluster);
+        return new SealevelTokenAdapter(cluster, address);
       }
     } else {
       throw new Error(`Unsupported protocol: ${protocol}`);
@@ -45,7 +45,7 @@ export class AdapterFactory {
       return new EvmHypTokenAdapter(provider, address);
     } else if (protocol === ProtocolType.Sealevel) {
       const cluster = getSolanaClusterName(reference);
-      return new SealevelHypTokenAdapter(cluster);
+      return new SealevelHypTokenAdapter(cluster, address);
     } else {
       throw new Error(`Unsupported protocol: ${protocol}`);
     }
@@ -58,7 +58,7 @@ export class AdapterFactory {
       return new EvmHypCollateralAdapter(provider, address);
     } else if (protocol === ProtocolType.Sealevel) {
       const cluster = getSolanaClusterName(reference);
-      return new SealevelHypTokenAdapter(cluster);
+      return new SealevelHypTokenAdapter(cluster, address);
     } else {
       throw new Error(`Unsupported protocol: ${protocol}`);
     }

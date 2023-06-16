@@ -7,6 +7,11 @@ export enum ProtocolType {
   Sealevel = 'sealevel',
 }
 
+export const ProtocolSmallestUnit = {
+  [ProtocolType.Ethereum]: 'wei',
+  [ProtocolType.Sealevel]: 'lamports',
+};
+
 export const ChainMetadataExtensionSchema = z.object({
   // Extended chain metadata for multi-env support
   // TODO move to SDK (see https://github.com/hyperlane-xyz/hyperlane-monorepo/pull/2203)

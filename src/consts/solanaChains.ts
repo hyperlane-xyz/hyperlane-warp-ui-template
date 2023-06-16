@@ -34,7 +34,7 @@ export const solanaChains: ChainMap<CustomChainMetadata> = {
     chainId: 13998111450,
     domainId: 13998111450, // TODO
     name: 'solanatestnet',
-    displayName: 'Sol Devnet',
+    displayName: 'Sol Testnet',
     nativeToken: { name: 'Sol', symbol: 'SOL', decimals: 9 },
     publicRpcUrls: [{ http: 'https://api.testnet.solana.com' }],
     blockExplorers: [],
@@ -43,13 +43,13 @@ export const solanaChains: ChainMap<CustomChainMetadata> = {
       reorgPeriod: 1,
       estimateBlockTime: 1,
     },
-    mailbox: '692KZJaoe2KRcD6uhCQDLLXnLNA5ZLnfvdqjE4aX9iu1',
+    mailbox: 'TODO',
     logoURI: '/logos/solana.svg',
   },
   solanadevnet: {
     protocol: 'sealevel',
     chainId: 1399811151,
-    domainId: 1399811151, // TODO
+    domainId: 13375, // TODO change after next deployment
     name: 'solanadevnet',
     displayName: 'Sol Devnet',
     nativeToken: { name: 'Sol', symbol: 'SOL', decimals: 9 },
@@ -60,7 +60,25 @@ export const solanaChains: ChainMap<CustomChainMetadata> = {
       reorgPeriod: 1,
       estimateBlockTime: 1,
     },
-    mailbox: 'TODO',
+    mailbox: '692KZJaoe2KRcD6uhCQDLLXnLNA5ZLnfvdqjE4aX9iu1',
+    logoURI: '/logos/solana.svg',
+  },
+  // TODO remove
+  solanadevnet2: {
+    protocol: 'sealevel',
+    chainId: 1399811152,
+    domainId: 13376, // TODO change after next deployment
+    name: 'solanadevnet2',
+    displayName: 'Sol Devnet2',
+    nativeToken: { name: 'Sol', symbol: 'SOL', decimals: 9 },
+    publicRpcUrls: [{ http: 'https://api.devnet.solana.com' }],
+    blockExplorers: [],
+    blocks: {
+      confirmations: 1,
+      reorgPeriod: 1,
+      estimateBlockTime: 1,
+    },
+    mailbox: '692KZJaoe2KRcD6uhCQDLLXnLNA5ZLnfvdqjE4aX9iu1',
     logoURI: '/logos/solana.svg',
   },
 };

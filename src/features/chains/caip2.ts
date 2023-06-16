@@ -1,3 +1,6 @@
+import { logger } from '../../utils/logger';
+import { isNumeric } from '../../utils/string';
+
 import { ProtocolType } from './types';
 
 // Based on https://chainagnostic.org/CAIPs/caip-2
@@ -13,7 +16,7 @@ export function getCaip2Id(protocol: ProtocolType, reference: string | number): 
   }
   if (
     protocol === ProtocolType.Sealevel &&
-    !reference // TODO decide what these should be (strings or nums)
+    (typeof reference !== 'string' || isNumeric(reference))
   ) {
     throw new Error(`Invalid solana chain reference: ${reference}`);
   }
@@ -32,14 +35,32 @@ export function parseCaip2Id(id: Caip2Id) {
   return { protocol, reference };
 }
 
+export function tryParseCaip2Id(id: Caip2Id) {
+  if (!id) return undefined;
+  try {
+    return parseCaip2Id(id);
+  } catch (err) {
+    logger.error('Error parsing caip2 id', err);
+    return undefined;
+  }
+}
+
 export function getProtocolType(id: Caip2Id) {
   const { protocol } = parseCaip2Id(id);
   return protocol;
 }
 
+export function tryGetProtocolType(id: Caip2Id) {
+  return tryParseCaip2Id(id)?.protocol;
+}
+
 export function getChainReference(id: Caip2Id) {
   const { reference } = parseCaip2Id(id);
   return reference;
+}
+
+export function tryGetChainReference(id: Caip2Id) {
+  return tryParseCaip2Id(id)?.reference;
 }
 
 export function getEthereumChainId(id: Caip2Id): number {

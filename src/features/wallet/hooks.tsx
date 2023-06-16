@@ -1,4 +1,6 @@
+import { useConnectModal as useEvmodal } from '@rainbow-me/rainbowkit';
 import { useConnection, useWallet as useWalletSolana } from '@solana/wallet-adapter-react';
+import { useWalletModal as useSolanaModal } from '@solana/wallet-adapter-react-ui';
 import { useEffect } from 'react';
 import { toast } from 'react-toastify';
 import {
@@ -9,11 +11,11 @@ import {
 
 import { getSolanaChainName } from '../../consts/solanaChains';
 import { logger } from '../../utils/logger';
-import { getCaip2Id } from '../chains/caip2';
+import { getCaip2Id, tryGetProtocolType } from '../chains/caip2';
 import { ProtocolType } from '../chains/types';
 
 interface AccountInfo {
-  env: ProtocolType;
+  protocol: ProtocolType;
   address?: Address;
   connectorName?: string;
   isReady: boolean;
@@ -28,7 +30,7 @@ export function useAccounts(): {
   const isEvmAccountReady = !!(address && isConnected && connector);
 
   const evmAccountInfo: AccountInfo = {
-    env: ProtocolType.Ethereum,
+    protocol: ProtocolType.Ethereum,
     address: address ? `${address}` : undefined, // massage wagmi addr type
     connectorName: connector?.name,
     isReady: isEvmAccountReady,
@@ -36,7 +38,6 @@ export function useAccounts(): {
 
   useEffect(() => {
     if (isEvmAccountReady) logger.debug('Evm account ready:', address);
-    else logger.debug('Evm account not yet ready:', address);
   }, [address, isEvmAccountReady]);
 
   // Solana
@@ -45,7 +46,7 @@ export function useAccounts(): {
   const solAddress = publicKey?.toBase58();
 
   const solAccountInfo: AccountInfo = {
-    env: ProtocolType.Sealevel,
+    protocol: ProtocolType.Sealevel,
     address: solAddress,
     connectorName: wallet?.adapter?.name,
     isReady: isSolAccountReady,
@@ -53,7 +54,6 @@ export function useAccounts(): {
 
   useEffect(() => {
     if (isSolAccountReady) logger.debug('Solana account ready:', solAddress);
-    else logger.debug('Sol account not yet ready:', solAddress);
   }, [solAddress, isSolAccountReady]);
 
   return {
@@ -65,7 +65,29 @@ export function useAccounts(): {
   };
 }
 
-export function useDisconnects(): Record<ProtocolType, () => Promise<void>> {
+export function useAccountForChain(caip2Id: Caip2Id): AccountInfo | undefined {
+  const { accounts } = useAccounts();
+  const protocol = tryGetProtocolType(caip2Id);
+  if (!protocol) return undefined;
+  return accounts[protocol];
+}
+
+export function useConnectFns(): Record<ProtocolType, () => void> {
+  // Evm
+  const { openConnectModal: openEvmModal } = useEvmodal();
+  const onConnectEthereum = () => openEvmModal?.();
+
+  // Solana
+  const { setVisible: setSolanaModalVisible } = useSolanaModal();
+  const onConnectSolana = () => setSolanaModalVisible(true);
+
+  return {
+    [ProtocolType.Ethereum]: onConnectEthereum,
+    [ProtocolType.Sealevel]: onConnectSolana,
+  };
+}
+
+export function useDisconnectFns(): Record<ProtocolType, () => Promise<void>> {
   // Evm
   const { disconnectAsync: disconnectEvm } = useDisconnectWagmi();
 

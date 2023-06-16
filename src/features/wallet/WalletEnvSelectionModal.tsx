@@ -1,5 +1,3 @@
-import { useConnectModal as useEvmodal } from '@rainbow-me/rainbowkit';
-import { useWalletModal as useSolanaModal } from '@solana/wallet-adapter-react-ui';
 import Image from 'next/image';
 import { PropsWithChildren } from 'react';
 
@@ -7,29 +5,34 @@ import EthereumLogo from '@hyperlane-xyz/sdk/logos/color/ethereum.svg';
 
 import { Modal } from '../../components/layout/Modal';
 import SolanaLogo from '../../images/logos/solana.svg';
+import { ProtocolType } from '../chains/types';
+
+import { useConnectFns } from './hooks';
 
 export function WalletEnvSelectionModal({ isOpen, close }: { isOpen: boolean; close: () => void }) {
-  const { openConnectModal: openEvmModal } = useEvmodal();
+  const connectFns = useConnectFns();
 
-  const { setVisible: setSolanaModalVisible } = useSolanaModal();
-
-  const onClickEthereum = () => {
+  const onClickEnv = (env: ProtocolType) => () => {
     close();
-    openEvmModal?.();
-  };
-
-  const onClickSolana = () => {
-    close();
-    setSolanaModalVisible(true);
+    const connectFn = connectFns[env];
+    if (connectFn) connectFn();
   };
 
   return (
     <Modal title="Select Wallet Environment" isOpen={isOpen} close={close} width="max-w-sm">
       <div className="pt-4 pb-2 flex flex-col space-y-2.5">
-        <EnvButton onClick={onClickEthereum} subTitle="an EVM" imgSrc={EthereumLogo}>
+        <EnvButton
+          onClick={onClickEnv(ProtocolType.Ethereum)}
+          subTitle="an EVM"
+          imgSrc={EthereumLogo}
+        >
           Ethereum
         </EnvButton>
-        <EnvButton onClick={onClickSolana} subTitle="a Solana" imgSrc={SolanaLogo}>
+        <EnvButton
+          onClick={onClickEnv(ProtocolType.Sealevel)}
+          subTitle="a Solana"
+          imgSrc={SolanaLogo}
+        >
           Solana
         </EnvButton>
       </div>

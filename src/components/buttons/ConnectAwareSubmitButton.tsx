@@ -1,22 +1,26 @@
-import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { useFormikContext } from 'formik';
 import { useCallback } from 'react';
-import { useAccount } from 'wagmi';
 
+import { tryGetProtocolType } from '../../features/chains/caip2';
+import { ProtocolType } from '../../features/chains/types';
+import { useAccountForChain, useConnectFns } from '../../features/wallet/hooks';
 import { useTimeout } from '../../utils/timeout';
 
 import { SolidButton } from './SolidButton';
 
 interface Props {
+  caip2Id: Caip2Id;
   text: string;
   classes?: string;
 }
 
-export function ConnectAwareSubmitButton<FormValues = any>({ text, classes }: Props) {
-  const { address, isConnected, connector } = useAccount();
-  const { openConnectModal } = useConnectModal();
+export function ConnectAwareSubmitButton<FormValues = any>({ caip2Id, text, classes }: Props) {
+  const protocol = tryGetProtocolType(caip2Id) || ProtocolType.Ethereum;
+  const connectFns = useConnectFns();
+  const connectFn = connectFns[protocol];
 
-  const isAccountReady = !!(address && isConnected && connector);
+  const account = useAccountForChain(caip2Id);
+  const isAccountReady = account?.isReady;
 
   const { errors, setErrors, touched, setTouched } = useFormikContext<FormValues>();
 
@@ -26,7 +30,7 @@ export function ConnectAwareSubmitButton<FormValues = any>({ text, classes }: Pr
   const color = hasError ? 'red' : 'blue';
   const content = hasError ? firstError : isAccountReady ? text : 'Connect Wallet';
   const type = isAccountReady ? 'submit' : 'button';
-  const onClick = isAccountReady ? undefined : openConnectModal;
+  const onClick = isAccountReady ? undefined : connectFn;
 
   // Automatically clear error state after a timeout
   const clearErrors = useCallback(() => {

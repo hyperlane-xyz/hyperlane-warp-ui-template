@@ -19,6 +19,7 @@ import { fromWei, fromWeiRounded, toWei, tryParseAmount } from '../../utils/amou
 import { logger } from '../../utils/logger';
 import { ChainSelectField } from '../chains/ChainSelectField';
 import { getProtocolType } from '../chains/caip2';
+import { ProtocolSmallestUnit } from '../chains/types';
 import { getChainDisplayName } from '../chains/utils';
 import { SelectOrInputTokenIds } from '../tokens/SelectOrInputTokenIds';
 import { TokenSelectField } from '../tokens/TokenSelectField';
@@ -30,6 +31,7 @@ import {
   useTokenBalance,
 } from '../tokens/balances';
 import { RoutesMap, getTokenRoute, useRouteChains } from '../tokens/routes';
+import { useAccountForChain } from '../wallet/hooks';
 
 import { TransferFormValues } from './types';
 import { isTransferApproveRequired, useTokenTransfer } from './useTokenTransfer';
@@ -186,7 +188,11 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
           </div>
           <ReviewDetails visible={isReview} tokenRoutes={tokenRoutes} />
           {!isReview ? (
-            <ConnectAwareSubmitButton text="Continue" classes="mt-4 px-3 py-1.5" />
+            <ConnectAwareSubmitButton
+              caip2Id={values.originCaip2Id}
+              text="Continue"
+              classes="mt-4 px-3 py-1.5"
+            />
           ) : (
             <div className="mt-4 flex items-center justify-between space-x-4">
               <SolidButton
@@ -237,7 +243,6 @@ function SwapChainsButton({ disabled }: { disabled?: boolean }) {
   );
 }
 
-// TODO solana support
 function TokenBalance({
   label,
   balance,
@@ -282,9 +287,9 @@ function RecipientTokenBalance({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
 
 function MaxButton({ tokenRoutes, disabled }: { tokenRoutes: RoutesMap; disabled?: boolean }) {
   const { setFieldValue } = useFormikContext<TransferFormValues>();
-  const { balance } = useSelfTokenBalance(tokenRoutes);
+  const { balance, decimals } = useSelfTokenBalance(tokenRoutes);
   const onClick = () => {
-    if (balance && !disabled) setFieldValue('amount', fromWeiRounded(balance));
+    if (balance && !disabled) setFieldValue('amount', fromWeiRounded(balance, decimals));
   };
   return (
     <SolidButton
@@ -299,10 +304,9 @@ function MaxButton({ tokenRoutes, disabled }: { tokenRoutes: RoutesMap; disabled
   );
 }
 
-// TODO solana support (replace useAccount)
 function SelfButton({ disabled }: { disabled?: boolean }) {
-  const { address } = useAccount();
-  const { setFieldValue } = useFormikContext<TransferFormValues>();
+  const { values, setFieldValue } = useFormikContext<TransferFormValues>();
+  const address = useAccountForChain(values.destinationCaip2Id)?.address;
   const onClick = () => {
     if (address && !disabled) setFieldValue('recipientAddress', address);
   };
@@ -319,7 +323,6 @@ function SelfButton({ disabled }: { disabled?: boolean }) {
   );
 }
 
-// TODO solana support (no approve)
 function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes: RoutesMap }) {
   const {
     values: { amount, originCaip2Id, destinationCaip2Id, tokenAddress },
@@ -329,6 +332,8 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
   const isNft = !!route?.isNft;
   const sendValue = isNft ? amount.toString() : toWei(amount, route?.decimals).toString();
   const isApproveRequired = route && isTransferApproveRequired(route, tokenAddress);
+  const originProtocol = getProtocolType(originCaip2Id);
+  const originUnitName = ProtocolSmallestUnit[originProtocol];
 
   return (
     <div
@@ -351,7 +356,11 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
           <h4>{`Transaction${isApproveRequired ? ' 2' : ''}: Transfer Remote`}</h4>
           <div className="mt-1.5 ml-1.5 pl-2 border-l border-gray-300 space-y-1.5 text-xs">
             <p>{`Remote Token: ${route?.destTokenAddress}`}</p>
-            {isNft ? <p>{`Token ID: ${sendValue}`}</p> : <p>{`Amount (wei): ${sendValue}`}</p>}
+            {isNft ? (
+              <p>{`Token ID: ${sendValue}`}</p>
+            ) : (
+              <p>{`Amount (${originUnitName}): ${sendValue}`}</p>
+            )}
           </div>
         </div>
       </div>
@@ -359,7 +368,6 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
   );
 }
 
-// TODO solana support
 function validateFormValues(
   { originCaip2Id, destinationCaip2Id, amount, tokenAddress, recipientAddress }: TransferFormValues,
   tokenRoutes: RoutesMap,
@@ -375,9 +383,12 @@ function validateFormValues(
   if (!originCaip2Id) return { originCaip2Id: 'Invalid origin chain' };
   if (!destinationCaip2Id) return { destinationCaip2Id: 'Invalid destination chain' };
 
-  const protocol = getProtocolType(originCaip2Id);
-  if (!isValidAddress(recipientAddress, protocol)) return { recipientAddress: 'Invalid recipient' };
-  if (!isValidAddress(currentTokenAddress, protocol)) return { tokenAddress: 'Invalid token' };
+  const originProtocol = getProtocolType(originCaip2Id);
+  const destProtocol = getProtocolType(destinationCaip2Id);
+  if (!isValidAddress(currentTokenAddress, originProtocol))
+    return { tokenAddress: 'Invalid token' };
+  if (!isValidAddress(recipientAddress, destProtocol))
+    return { recipientAddress: 'Invalid recipient' };
 
   const parsedAmount = tryParseAmount(amount);
   if (!parsedAmount || parsedAmount.lte(0))

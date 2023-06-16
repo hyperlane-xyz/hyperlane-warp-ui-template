@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 import { TokenType } from '@hyperlane-xyz/hyperlane-token';
 
-import { areAddressesEqual, isValidAddress } from '../../utils/addresses';
+import { areAddressesEqual } from '../../utils/addresses';
 import { logger } from '../../utils/logger';
 import { getCaip2Id } from '../chains/caip2';
 import { ProtocolType } from '../chains/types';
@@ -27,7 +27,9 @@ export interface Route {
   baseCaip2Id: Caip2Id;
   baseTokenAddress: Address;
   tokenRouterAddress: Address;
+  originCaip2Id: Caip2Id;
   originTokenAddress: Address;
+  destCaip2Id: Caip2Id;
   destTokenAddress: Address;
   decimals: number;
   isNft: boolean;
@@ -83,7 +85,7 @@ async function validateTokenMetadata(token: TokenMetadata) {
     const wrappedTokenAddr = await collateralContract.wrappedToken();
     tokenAdapter = new EvmTokenAdapter(provider, wrappedTokenAddr);
   } else if (protocol === ProtocolType.Sealevel) {
-    // TODO solana support
+    // TODO solana support when hyp tokens have metadata
     return;
   }
 
@@ -105,18 +107,23 @@ async function validateTokenMetadata(token: TokenMetadata) {
 async function fetchRemoteHypTokens(
   originToken: TokenMetadata,
 ): Promise<TokenMetadataWithHypTokens> {
-  const { caip2Id, symbol, tokenRouterAddress, protocol = ProtocolType.Ethereum } = originToken;
+  const { caip2Id, symbol, tokenRouterAddress } = originToken;
   logger.info(`Fetching remote tokens for ${symbol} on ${caip2Id}`);
 
   const hypTokenAdapter = AdapterFactory.CollateralAdapterFromAddress(caip2Id, tokenRouterAddress);
 
-  const remoteRouters = await hypTokenAdapter!.getAllRouters();
+  const remoteRouters = await hypTokenAdapter.getAllRouters();
   logger.info(`Router addresses found:`, remoteRouters);
 
   const multiProvider = getMultiProvider();
   const hypTokens = remoteRouters.map((router) => {
-    const chainId = multiProvider.getChainId(router.domain);
-    const caip2Id = getCaip2Id(protocol, chainId);
+    const destMetadata = multiProvider.getChainMetadata(router.domain);
+    const protocol: ProtocolType = (destMetadata.protocol as ProtocolType) || ProtocolType.Ethereum;
+    const reference =
+      protocol === ProtocolType.Ethereum
+        ? multiProvider.getChainId(router.domain)
+        : multiProvider.getChainName(router.domain);
+    const caip2Id = getCaip2Id(protocol, reference);
     return {
       address: router.address,
       caip2Id,
@@ -157,17 +164,21 @@ function computeTokenRoutes(tokens: TokenMetadataWithHypTokens[]) {
         tokenRouterAddress,
         isNft: !!isNft,
       };
-      tokenRoutes[baseCaip2Id][syntheticCaip2Id].push({
+      tokenRoutes[baseCaip2Id][syntheticCaip2Id]?.push({
         type: RouteType.BaseToSynthetic,
         ...commonRouteProps,
+        originCaip2Id: baseCaip2Id,
         originTokenAddress: tokenRouterAddress,
+        destCaip2Id: syntheticCaip2Id,
         destTokenAddress: hypTokenAddress,
         decimals,
       });
-      tokenRoutes[syntheticCaip2Id][baseCaip2Id].push({
+      tokenRoutes[syntheticCaip2Id][baseCaip2Id]?.push({
         type: RouteType.SyntheticToBase,
         ...commonRouteProps,
+        originCaip2Id: syntheticCaip2Id,
         originTokenAddress: hypTokenAddress,
+        destCaip2Id: baseCaip2Id,
         destTokenAddress: tokenRouterAddress,
         decimals,
       });
@@ -176,17 +187,21 @@ function computeTokenRoutes(tokens: TokenMetadataWithHypTokens[]) {
         // Skip if it's same hypToken as parent loop
         if (otherHypToken.caip2Id === syntheticCaip2Id) continue;
         const { caip2Id: otherSynCaip2Id, address: otherHypTokenAddress } = otherHypToken;
-        tokenRoutes[syntheticCaip2Id][otherSynCaip2Id].push({
+        tokenRoutes[syntheticCaip2Id][otherSynCaip2Id]?.push({
           type: RouteType.SyntheticToSynthetic,
           ...commonRouteProps,
+          originCaip2Id: syntheticCaip2Id,
           originTokenAddress: hypTokenAddress,
+          destCaip2Id: otherSynCaip2Id,
           destTokenAddress: otherHypTokenAddress,
           decimals,
         });
-        tokenRoutes[otherSynCaip2Id][syntheticCaip2Id].push({
+        tokenRoutes[otherSynCaip2Id][syntheticCaip2Id]?.push({
           type: RouteType.SyntheticToSynthetic,
           ...commonRouteProps,
+          originCaip2Id: otherSynCaip2Id,
           originTokenAddress: otherHypTokenAddress,
+          destCaip2Id: syntheticCaip2Id,
           destTokenAddress: hypTokenAddress,
           decimals,
         });
@@ -221,7 +236,7 @@ export function getTokenRoute(
   baseTokenAddress: Address,
   tokenRoutes: RoutesMap,
 ): Route | null {
-  if (!isValidAddress(baseTokenAddress)) return null;
+  if (!baseTokenAddress) return null;
   return (
     getTokenRoutes(originCaip2Id, destinationCaip2Id, tokenRoutes).find((r) =>
       areAddressesEqual(baseTokenAddress, r.baseTokenAddress),

@@ -1,6 +1,7 @@
 import { getAddress, isAddress } from '@ethersproject/address';
 import { PublicKey } from '@solana/web3.js';
 
+import { SOL_ZERO_ADDRESS } from '../consts/values';
 import { ProtocolType } from '../features/chains/types';
 
 import { logger } from './logger';
@@ -9,7 +10,7 @@ const EVM_ADDRESS_REGEX = /^0x[a-fA-F0-9]{40}$/;
 const SEALEVEL_ADDRESS_REGEX = /^[a-zA-Z0-9]{44}$/;
 
 const EVM_TX_HASH_REGEX = /^0x([A-Fa-f0-9]{64})$/;
-const SEALEVEL_TX_HASH_REGEX = /^[a-zA-Z0-9]{88}$/;
+const SEALEVEL_TX_HASH_REGEX = /^[a-zA-Z1-9]{88}$/;
 
 const ZEROISH_ADDRESS_REGEX = /^(0x)?0*$/;
 
@@ -65,7 +66,7 @@ export function isValidEvmAddress(address: string) {
 // Slower than isSealevelAddress above but actually validates content and checksum
 export function isValidSealevelAddress(address: string) {
   try {
-    const isValid = address && new PublicKey(address);
+    const isValid = address && (address === SOL_ZERO_ADDRESS || new PublicKey(address));
     return !!isValid;
   } catch (error) {
     logger.warn('Invalid Sealevel address', error, address);
@@ -78,6 +79,7 @@ export function isValidAddress(address: string, protocol?: ProtocolType) {
 }
 
 export function normalizeEvmAddress(address: string) {
+  if (isZeroishAddress(address)) return address;
   try {
     return getAddress(address);
   } catch (error) {
@@ -87,6 +89,7 @@ export function normalizeEvmAddress(address: string) {
 }
 
 export function normalizeSolAddress(address: string) {
+  if (isZeroishAddress(address)) return address;
   try {
     return new PublicKey(address).toBase58();
   } catch (error) {
@@ -107,13 +110,16 @@ export function areSolAddressesEqual(a1: string, a2: string) {
   return normalizeSolAddress(a1) === normalizeSolAddress(a2);
 }
 
-export function areAddressesEqual(a1: string, a2: string, protocol?: ProtocolType) {
+export function areAddressesEqual(a1: string, a2: string) {
+  const p1 = getAddressProtocolType(a1);
+  const p2 = getAddressProtocolType(a2);
+  if (p1 !== p2) return false;
   return routeAddressUtil(
     (_a1) => areEvmAddressesEqual(_a1, a2),
     (_a1) => areSolAddressesEqual(_a1, a2),
     false,
     a1,
-    protocol,
+    p1,
   );
 }
 

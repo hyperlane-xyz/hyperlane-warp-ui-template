@@ -7,9 +7,9 @@ import { TextInput } from '../../components/input/TextField';
 import { Modal } from '../../components/layout/Modal';
 
 import { getAllTokens } from './metadata';
+import { isNativeToken } from './native';
 import { RoutesMap, hasTokenRoute } from './routes';
 import { TokenMetadata } from './types';
-import { isNativeToken } from './utils';
 
 export function TokenListModal({
   isOpen,

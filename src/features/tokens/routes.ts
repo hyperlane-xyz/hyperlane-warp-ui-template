@@ -184,7 +184,7 @@ function computeTokenRoutes(tokens: TokenMetadataWithHypTokens[]) {
       });
 
       for (const otherHypToken of token.hypTokens) {
-        // Skip if it's same hypToken as parent loop
+        // Skip if it's same hypToken as parent loop (no route to self)
         if (otherHypToken.caip2Id === syntheticCaip2Id) continue;
         const { caip2Id: otherSynCaip2Id, address: otherHypTokenAddress } = otherHypToken;
         tokenRoutes[syntheticCaip2Id][otherSynCaip2Id]?.push({
@@ -194,15 +194,6 @@ function computeTokenRoutes(tokens: TokenMetadataWithHypTokens[]) {
           originTokenAddress: hypTokenAddress,
           destCaip2Id: otherSynCaip2Id,
           destTokenAddress: otherHypTokenAddress,
-          decimals,
-        });
-        tokenRoutes[otherSynCaip2Id][syntheticCaip2Id]?.push({
-          type: RouteType.SyntheticToSynthetic,
-          ...commonRouteProps,
-          originCaip2Id: otherSynCaip2Id,
-          originTokenAddress: otherHypTokenAddress,
-          destCaip2Id: syntheticCaip2Id,
-          destTokenAddress: hypTokenAddress,
           decimals,
         });
       }

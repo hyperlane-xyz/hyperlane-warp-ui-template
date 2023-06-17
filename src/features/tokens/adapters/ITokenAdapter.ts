@@ -6,6 +6,7 @@ export interface TransferParams {
   // Included here optionally to keep Adapter types simple
   fromTokenAccount?: Address;
   fromAccountOwner?: Address;
+  mailbox?: Address;
 }
 
 export interface TransferRemoteParams extends TransferParams {

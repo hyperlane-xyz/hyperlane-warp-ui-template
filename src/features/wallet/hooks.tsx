@@ -1,20 +1,32 @@
 import { useConnectModal as useEvmodal } from '@rainbow-me/rainbowkit';
-import { useConnection, useWallet as useWalletSolana } from '@solana/wallet-adapter-react';
+import { useConnection, useWallet as useSolanaWallet } from '@solana/wallet-adapter-react';
 import { useWalletModal as useSolanaModal } from '@solana/wallet-adapter-react-ui';
-import { useEffect } from 'react';
+import { Connection as SolConnection, clusterApiUrl } from '@solana/web3.js';
+import {
+  sendTransaction as sendEvmTransaction,
+  switchNetwork as switchEvmNetwork,
+} from '@wagmi/core';
+import { providers } from 'ethers';
+import { useCallback, useEffect, useMemo } from 'react';
 import { toast } from 'react-toastify';
 import {
-  useAccount as useAccountWagmi,
-  useDisconnect as useDisconnectWagmi,
-  useNetwork as useNetworkWagmi,
+  useAccount as useEvmAccount,
+  useDisconnect as useEvmDisconnect,
+  useNetwork as useEvmNetwork,
 } from 'wagmi';
 
-import { getSolanaChainName } from '../../consts/solanaChains';
+import { getSolanaChainName, getSolanaClusterName } from '../../consts/solanaChains';
 import { logger } from '../../utils/logger';
-import { getCaip2Id, tryGetProtocolType } from '../chains/caip2';
+import { sleep } from '../../utils/timeout';
+import {
+  getCaip2Id,
+  getChainReference,
+  getEthereumChainId,
+  tryGetProtocolType,
+} from '../chains/caip2';
 import { ProtocolType } from '../chains/types';
 
-interface AccountInfo {
+export interface AccountInfo {
   protocol: ProtocolType;
   address?: Address;
   connectorName?: string;
@@ -26,43 +38,59 @@ export function useAccounts(): {
   readyAccounts: Array<AccountInfo>;
 } {
   // Evm
-  const { address, isConnected, connector } = useAccountWagmi();
+  const { address, isConnected, connector } = useEvmAccount();
   const isEvmAccountReady = !!(address && isConnected && connector);
+  const evmConnectorName = connector?.name;
 
-  const evmAccountInfo: AccountInfo = {
-    protocol: ProtocolType.Ethereum,
-    address: address ? `${address}` : undefined, // massage wagmi addr type
-    connectorName: connector?.name,
-    isReady: isEvmAccountReady,
-  };
+  const evmAccountInfo: AccountInfo = useMemo(
+    () => ({
+      protocol: ProtocolType.Ethereum,
+      address: address ? `${address}` : undefined, // massage wagmi addr type
+      connectorName: evmConnectorName,
+      isReady: isEvmAccountReady,
+    }),
+    [address, evmConnectorName, isEvmAccountReady],
+  );
 
   useEffect(() => {
     if (isEvmAccountReady) logger.debug('Evm account ready:', address);
   }, [address, isEvmAccountReady]);
 
   // Solana
-  const { publicKey, connected, wallet } = useWalletSolana();
+  const { publicKey, connected, wallet } = useSolanaWallet();
   const isSolAccountReady = !!(publicKey && wallet && connected);
   const solAddress = publicKey?.toBase58();
+  const solConnectorName = wallet?.adapter?.name;
 
-  const solAccountInfo: AccountInfo = {
-    protocol: ProtocolType.Sealevel,
-    address: solAddress,
-    connectorName: wallet?.adapter?.name,
-    isReady: isSolAccountReady,
-  };
+  const solAccountInfo: AccountInfo = useMemo(
+    () => ({
+      protocol: ProtocolType.Sealevel,
+      address: solAddress,
+      connectorName: solConnectorName,
+      isReady: isSolAccountReady,
+    }),
+    [solAddress, solConnectorName, isSolAccountReady],
+  );
 
   useEffect(() => {
     if (isSolAccountReady) logger.debug('Solana account ready:', solAddress);
   }, [solAddress, isSolAccountReady]);
 
-  return {
-    accounts: {
-      [ProtocolType.Ethereum]: evmAccountInfo,
-      [ProtocolType.Sealevel]: solAccountInfo,
-    },
-    readyAccounts: [evmAccountInfo, solAccountInfo].filter((a) => a.isReady),
-  };
+  const readyAccounts = useMemo(
+    () => [evmAccountInfo, solAccountInfo].filter((a) => a.isReady),
+    [evmAccountInfo, solAccountInfo],
+  );
+
+  return useMemo(
+    () => ({
+      accounts: {
+        [ProtocolType.Ethereum]: evmAccountInfo,
+        [ProtocolType.Sealevel]: solAccountInfo,
+      },
+      readyAccounts,
+    }),
+    [evmAccountInfo, solAccountInfo, readyAccounts],
+  );
 }
 
 export function useAccountForChain(caip2Id: Caip2Id): AccountInfo | undefined {
@@ -75,24 +103,27 @@ export function useAccountForChain(caip2Id: Caip2Id): AccountInfo | undefined {
 export function useConnectFns(): Record<ProtocolType, () => void> {
   // Evm
   const { openConnectModal: openEvmModal } = useEvmodal();
-  const onConnectEthereum = () => openEvmModal?.();
+  const onConnectEthereum = useCallback(() => openEvmModal?.(), [openEvmModal]);
 
   // Solana
   const { setVisible: setSolanaModalVisible } = useSolanaModal();
-  const onConnectSolana = () => setSolanaModalVisible(true);
+  const onConnectSolana = useCallback(() => setSolanaModalVisible(true), [setSolanaModalVisible]);
 
-  return {
-    [ProtocolType.Ethereum]: onConnectEthereum,
-    [ProtocolType.Sealevel]: onConnectSolana,
-  };
+  return useMemo(
+    () => ({
+      [ProtocolType.Ethereum]: onConnectEthereum,
+      [ProtocolType.Sealevel]: onConnectSolana,
+    }),
+    [onConnectEthereum, onConnectSolana],
+  );
 }
 
 export function useDisconnectFns(): Record<ProtocolType, () => Promise<void>> {
   // Evm
-  const { disconnectAsync: disconnectEvm } = useDisconnectWagmi();
+  const { disconnectAsync: disconnectEvm } = useEvmDisconnect();
 
   // Solana
-  const { disconnect: disconnectSol } = useWalletSolana();
+  const { disconnect: disconnectSol } = useSolanaWallet();
 
   const onClickDisconnect =
     (env: ProtocolType, disconnectFn?: () => Promise<void> | void) => async () => {
@@ -105,10 +136,13 @@ export function useDisconnectFns(): Record<ProtocolType, () => Promise<void>> {
       }
     };
 
-  return {
-    [ProtocolType.Ethereum]: onClickDisconnect(ProtocolType.Ethereum, disconnectEvm),
-    [ProtocolType.Sealevel]: onClickDisconnect(ProtocolType.Sealevel, disconnectSol),
-  };
+  return useMemo(
+    () => ({
+      [ProtocolType.Ethereum]: onClickDisconnect(ProtocolType.Ethereum, disconnectEvm),
+      [ProtocolType.Sealevel]: onClickDisconnect(ProtocolType.Sealevel, disconnectSol),
+    }),
+    [disconnectEvm, disconnectSol],
+  );
 }
 
 export interface ActiveChainInfo {
@@ -121,27 +155,135 @@ export function useActiveChains(): {
   readyChains: Array<ActiveChainInfo>;
 } {
   // Evm
-  const { chain } = useNetworkWagmi();
-  const evmChain: ActiveChainInfo = {
-    chainDisplayName: chain?.name,
-    caip2Id: chain ? getCaip2Id(ProtocolType.Ethereum, chain.id) : undefined,
-  };
+  const { chain } = useEvmNetwork();
+  const evmChain: ActiveChainInfo = useMemo(
+    () => ({
+      chainDisplayName: chain?.name,
+      caip2Id: chain ? getCaip2Id(ProtocolType.Ethereum, chain.id) : undefined,
+    }),
+    [chain],
+  );
 
   // Solana
   const { connection } = useConnection();
   const { name: solName, displayName: solDisplayName } = getSolanaChainName(
     connection?.rpcEndpoint,
   );
-  const solChain: ActiveChainInfo = {
-    chainDisplayName: solDisplayName,
-    caip2Id: solName ? getCaip2Id(ProtocolType.Sealevel, solName) : undefined,
-  };
+  const solChain: ActiveChainInfo = useMemo(
+    () => ({
+      chainDisplayName: solDisplayName,
+      caip2Id: solName ? getCaip2Id(ProtocolType.Sealevel, solName) : undefined,
+    }),
+    [solDisplayName, solName],
+  );
 
-  return {
-    chains: {
-      [ProtocolType.Ethereum]: evmChain,
-      [ProtocolType.Sealevel]: solChain,
+  const readyChains = useMemo(
+    () => [evmChain, solChain].filter((c) => !!c.chainDisplayName),
+    [evmChain, solChain],
+  );
+
+  return useMemo(
+    () => ({
+      chains: {
+        [ProtocolType.Ethereum]: evmChain,
+        [ProtocolType.Sealevel]: solChain,
+      },
+      readyChains,
+    }),
+    [evmChain, solChain, readyChains],
+  );
+}
+
+export type SendTransactionFn<TxResp = any> = (params: {
+  tx: any;
+  caip2Id: Caip2Id;
+  activeCap2Id?: Caip2Id;
+}) => Promise<{ hash: string; confirm: () => Promise<TxResp> }>;
+
+export type SwitchNetworkFn = (caip2Id: Caip2Id) => Promise<void>;
+
+export function useTransactionFns(): Record<
+  ProtocolType,
+  {
+    sendTransaction: SendTransactionFn;
+    switchNetwork?: SwitchNetworkFn;
+  }
+> {
+  // Evm
+  const onSwitchEvmNetwork = useCallback(async (caip2Id: Caip2Id) => {
+    const chainId = getEthereumChainId(caip2Id);
+    await switchEvmNetwork({ chainId });
+    // Some wallets seem to require a brief pause after switch
+    await sleep(1500);
+  }, []);
+  // Note, this doesn't use wagmi's prepare + send pattern because we're potentially sending two transactions
+  // The prepare hooks are recommended to use pre-click downtime to run async calls, but since the flow
+  // may require two serial txs, the prepare hooks aren't useful and complicate hook architecture considerably.
+  // See https://github.com/hyperlane-xyz/hyperlane-warp-ui-template/issues/19
+  // See https://github.com/wagmi-dev/wagmi/discussions/1564
+  const onSendEvmTx = useCallback(
+    async ({
+      tx,
+      caip2Id,
+      activeCap2Id,
+    }: {
+      tx: any;
+      caip2Id: Caip2Id;
+      activeCap2Id?: Caip2Id;
+    }) => {
+      if (activeCap2Id && activeCap2Id !== caip2Id) await onSwitchEvmNetwork(caip2Id);
+      const chainId = getEthereumChainId(caip2Id);
+      const result = await sendEvmTransaction({
+        chainId,
+        request: tx as providers.TransactionRequest,
+        mode: 'recklesslyUnprepared',
+      });
+      const { hash, wait } = result;
+      return { hash, confirm: () => wait(1) };
     },
-    readyChains: [evmChain, solChain].filter((c) => !!c.chainDisplayName),
-  };
+    [onSwitchEvmNetwork],
+  );
+
+  // Solana
+  const { sendTransaction: sendSolTransaction } = useSolanaWallet();
+
+  const onSwitchSolNetwork = useCallback(async (caip2Id: Caip2Id) => {
+    throw new Error(`TODO support switching solana networks: ${caip2Id}}`);
+  }, []);
+
+  const onSendSolTx = useCallback(
+    async ({
+      tx,
+      caip2Id,
+      activeCap2Id,
+    }: {
+      tx: any;
+      caip2Id: Caip2Id;
+      activeCap2Id?: Caip2Id;
+    }) => {
+      if (activeCap2Id && activeCap2Id !== caip2Id) await onSwitchSolNetwork(caip2Id);
+      const reference = getChainReference(caip2Id);
+      const cluster = getSolanaClusterName(reference);
+      const connection = new SolConnection(clusterApiUrl(cluster), 'confirmed');
+      const {
+        context: { slot: minContextSlot },
+        value: { blockhash, lastValidBlockHeight },
+      } = await connection.getLatestBlockhashAndContext();
+
+      const signature = await sendSolTransaction(tx, connection, { minContextSlot });
+
+      const confirm = () =>
+        connection.confirmTransaction({ blockhash, lastValidBlockHeight, signature });
+      return { hash: signature, confirm };
+    },
+    [onSwitchSolNetwork, sendSolTransaction],
+  );
+
+  return useMemo(
+    () => ({
+      [ProtocolType.Ethereum]: { sendTransaction: onSendEvmTx, switchNetwork: onSwitchEvmNetwork },
+      [ProtocolType.Sealevel]: { sendTransaction: onSendSolTx, switchNetwork: onSwitchSolNetwork },
+    }),
+    [onSendEvmTx, onSendSolTx, onSwitchEvmNetwork, onSwitchSolNetwork],
+  );
 }

@@ -38,16 +38,16 @@ import { isTransferApproveRequired, useTokenTransfer } from './useTokenTransfer'
 
 export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
   const caip2Ids = useRouteChains(tokenRoutes);
-  const initialValues: TransferFormValues = useMemo(
-    () => ({
-      originCaip2Id: caip2Ids[0],
-      destinationCaip2Id: caip2Ids[1],
+  const initialValues: TransferFormValues = useMemo(() => {
+    const firstRoute = Object.values(tokenRoutes[caip2Ids[0]])[0][0];
+    return {
+      originCaip2Id: firstRoute.originCaip2Id,
+      destinationCaip2Id: firstRoute.destCaip2Id,
       amount: '',
       tokenAddress: '',
       recipientAddress: '',
-    }),
-    [caip2Ids],
-  );
+    };
+  }, [caip2Ids, tokenRoutes]);
 
   // Flag for if form is in input vs review mode
   const [isReview, setIsReview] = useState(false);

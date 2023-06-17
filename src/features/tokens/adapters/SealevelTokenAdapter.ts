@@ -1,15 +1,27 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { createTransferInstruction } from '@solana/spl-token';
+import { createTransferInstruction, getAssociatedTokenAddressSync } from '@solana/spl-token';
 import {
+  AccountMeta,
   Cluster,
   Connection,
+  Keypair,
   PublicKey,
   SystemProgram,
   Transaction,
+  TransactionInstruction,
   clusterApiUrl,
 } from '@solana/web3.js';
 import BigNumber from 'bignumber.js';
-import { deserializeUnchecked } from 'borsh';
+import { deserializeUnchecked, serialize } from 'borsh';
+
+import { SOL_SPL_NOOP_ADDRESS, SOL_TRANSFER_REMOTE_DATA_PREFIX } from '../../../consts/values';
+import {
+  AccountDataWrapper,
+  HyperlaneTokenDataSchema,
+  TransferRemoteInstruction,
+  TransferRemoteSchema,
+  TransferRemoteWrapper,
+} from '../contracts/sealevelSerialization';
 
 import {
   IHypTokenAdapter,
@@ -17,111 +29,6 @@ import {
   TransferParams,
   TransferRemoteParams,
 } from './ITokenAdapter';
-
-interface NativeTransferParams {
-  recipient: Address;
-  amountOrId: string | number;
-  fromAccount?: Address;
-}
-
-interface IAccountDataWrapper {
-  initialized: boolean;
-  data: IHyperlaneTokenData;
-}
-
-// Should match https://github.com/hyperlane-xyz/hyperlane-monorepo/blob/trevor/sealevel-validator-rebase/rust/sealevel/libraries/hyperlane-sealevel-token/src/accounts.rs#L21
-interface IHyperlaneTokenData {
-  /// The bump seed for this PDA.
-  bump: number;
-  /// The address of the mailbox contract.
-  mailbox: Address;
-  /// The Mailbox process authority specific to this program as the recipient.
-  mailbox_process_authority: Address;
-  /// The dispatch authority PDA's bump seed.
-  dispatch_authority_bump: number;
-  /// The decimals of the local token.
-  decimals: number;
-  /// The decimals of the remote token.
-  remote_decimals: number;
-  /// Access control owner.
-  owner: Address;
-  /// The interchain security module.
-  interchain_security_module: Address;
-  /// Remote routers.
-  remote_routers: any;
-  /// Plugin-specific data.
-  plugin_data: any;
-}
-
-class AccountDataWrapper {
-  initialized!: boolean;
-  data!: HyperlaneTokenData;
-  constructor(public readonly fields: IAccountDataWrapper) {
-    Object.assign(this, fields);
-  }
-}
-
-class HyperlaneTokenData {
-  bump!: number;
-  mailbox!: Uint8Array;
-  mailbox_pubkey!: PublicKey;
-  mailbox_process_authority!: Uint8Array;
-  mailbox_process_authority_pubkey!: PublicKey;
-  dispatch_authority_bump!: number;
-  decimals!: number;
-  remote_decimals!: number;
-  owner?: Uint8Array;
-  owner_pub_key?: PublicKey;
-  interchain_security_module?: Uint8Array;
-  interchain_security_module_pubkey?: PublicKey;
-  remote_routers?: Map<DomainId, Uint8Array>;
-  remote_router_pubkeys: Map<DomainId, PublicKey>;
-  constructor(public readonly fields: IHyperlaneTokenData) {
-    Object.assign(this, fields);
-    this.mailbox_pubkey = new PublicKey(this.mailbox);
-    this.mailbox_pubkey = new PublicKey(this.mailbox_process_authority);
-    this.owner_pub_key = this.owner ? new PublicKey(this.owner) : undefined;
-    this.interchain_security_module_pubkey = this.interchain_security_module
-      ? new PublicKey(this.interchain_security_module)
-      : undefined;
-    this.remote_router_pubkeys = new Map<number, PublicKey>();
-    if (this.remote_routers) {
-      for (const [k, v] of this.remote_routers.entries()) {
-        this.remote_router_pubkeys.set(k, new PublicKey(v));
-      }
-    }
-  }
-}
-
-const HyperlaneTokenDataSchema = new Map<any, any>([
-  [
-    AccountDataWrapper,
-    {
-      kind: 'struct',
-      fields: [
-        ['initialized', 'u8'],
-        ['data', HyperlaneTokenData],
-      ],
-    },
-  ],
-  [
-    HyperlaneTokenData,
-    {
-      kind: 'struct',
-      fields: [
-        ['bump', 'u8'],
-        ['mailbox', [32]],
-        ['mailbox_process_authority', [32]],
-        ['dispatch_authority_bump', 'u8'],
-        ['decimals', 'u8'],
-        ['remote_decimals', 'u8'],
-        ['owner', { kind: 'option', type: [32] }],
-        ['interchain_security_module', { kind: 'option', type: [32] }],
-        ['remote_routers', { kind: 'map', key: 'u32', value: [32] }],
-      ],
-    },
-  ],
-]);
 
 // Interacts with native currencies
 export class SealevelNativeTokenAdapter implements ITokenAdapter {
@@ -141,12 +48,12 @@ export class SealevelNativeTokenAdapter implements ITokenAdapter {
     throw new Error('Metadata not available to native tokens');
   }
 
-  prepareApproveTx(_params: NativeTransferParams): Transaction {
+  prepareApproveTx(_params: TransferParams): Transaction {
     throw new Error('Approve not required for native tokens');
   }
 
-  prepareTransferTx({ amountOrId, recipient, fromAccount }: NativeTransferParams): Transaction {
-    const fromPubkey = resolveAddress(fromAccount, this.signerAddress);
+  prepareTransferTx({ amountOrId, recipient, fromAccountOwner }: TransferParams): Transaction {
+    const fromPubkey = resolveAddress(fromAccountOwner, this.signerAddress);
     return new Transaction().add(
       SystemProgram.transfer({
         fromPubkey,
@@ -160,7 +67,7 @@ export class SealevelNativeTokenAdapter implements ITokenAdapter {
 // Interacts with SPL token programs
 export class SealevelTokenAdapter implements ITokenAdapter {
   public readonly connection: Connection;
-  public readonly tokenPda: PublicKey;
+  public readonly programIdPubKey: PublicKey;
 
   constructor(
     public readonly clusterName: Cluster,
@@ -168,12 +75,18 @@ export class SealevelTokenAdapter implements ITokenAdapter {
     public readonly signerAddress?: Address,
   ) {
     this.connection = new Connection(clusterApiUrl(clusterName), 'confirmed');
-    this.tokenPda = this.deriveTokenAccount();
+    this.programIdPubKey = new PublicKey(programId);
   }
 
-  async getBalance(tokenAccount: Address): Promise<string> {
+  async getBalance(owner: Address): Promise<string> {
+    if (owner) return '0'; // TODO fix
+    const tokenPubKey = getAssociatedTokenAddressSync(
+      new PublicKey(owner), // TODO use mint?
+      new PublicKey(owner),
+    );
+    // const tokenAccount = await getAccount(this.connection, associatedToken);
     // TODO consider fetching tokenAccount manually or moving to constructor params
-    const balance = await this.connection.getTokenAccountBalance(new PublicKey(tokenAccount));
+    const balance = await this.connection.getTokenAccountBalance(tokenPubKey);
     return balance.toString();
   }
 
@@ -193,48 +106,44 @@ export class SealevelTokenAdapter implements ITokenAdapter {
     fromTokenAccount,
   }: TransferParams): Transaction {
     if (!fromTokenAccount) throw new Error('No fromTokenAccount provided');
-    const fromWalletPk = resolveAddress(fromAccountOwner, this.signerAddress);
+    const fromWalletPubKey = resolveAddress(fromAccountOwner, this.signerAddress);
     return new Transaction().add(
       createTransferInstruction(
         new PublicKey(fromTokenAccount),
         new PublicKey(recipient),
-        fromWalletPk,
+        fromWalletPubKey,
         new BigNumber(amountOrId).toNumber(),
       ),
     );
-  }
-
-  // Should match https://github.com/hyperlane-xyz/hyperlane-monorepo/blob/trevor/sealevel-validator-rebase/rust/sealevel/libraries/hyperlane-sealevel-token/src/processor.rs#LL49C1-L53C30
-  deriveTokenAccount(): PublicKey {
-    const [pda] = PublicKey.findProgramAddressSync(
-      [
-        Buffer.from('hyperlane_message_recipient'),
-        Buffer.from('-'),
-        Buffer.from('handle'),
-        Buffer.from('-'),
-        Buffer.from('account_metas'),
-      ],
-      new PublicKey(this.programId),
-    );
-    return pda;
   }
 }
 
 // Interacts with SPL token programs
 export class SealevelHypTokenAdapter extends SealevelTokenAdapter implements IHypTokenAdapter {
+  constructor(
+    public readonly clusterName: Cluster,
+    public readonly programId: Address,
+    public readonly signerAddress?: Address,
+  ) {
+    super(clusterName, programId, signerAddress);
+  }
+
   async getDomains(): Promise<DomainId[]> {
-    // TODO Solana support
-    return [];
+    const routers = await this.getAllRouters();
+    return routers.map((router) => router.domain);
   }
 
   async getRouterAddress(domain: DomainId): Promise<Address> {
-    // TODO Solana support
-    return '';
+    const routers = await this.getAllRouters();
+    const addr = routers.find((router) => router.domain === domain)?.address;
+    if (!addr) throw new Error(`No router found for ${domain}`);
+    return addr;
   }
 
   async getAllRouters(): Promise<Array<{ domain: DomainId; address: Address }>> {
-    const accountInfo = await this.connection.getAccountInfo(this.tokenPda);
-    if (!accountInfo) throw new Error(`No account info found for ${this.tokenPda}}`);
+    const tokenPda = this.deriveHypTokenAccount();
+    const accountInfo = await this.connection.getAccountInfo(tokenPda);
+    if (!accountInfo) throw new Error(`No account info found for ${tokenPda}}`);
     const tokenData = deserializeUnchecked(
       HyperlaneTokenDataSchema,
       AccountDataWrapper,
@@ -252,13 +161,123 @@ export class SealevelHypTokenAdapter extends SealevelTokenAdapter implements IHy
     return '0';
   }
 
-  prepareTransferRemoteTx({
+  async prepareTransferRemoteTx({
     amountOrId,
     destination,
     recipient,
-    txValue,
+    fromAccountOwner,
+    mailbox,
   }: TransferRemoteParams): Promise<Transaction> {
-    throw new Error('TODO solana');
+    if (!mailbox) throw new Error('No mailbox provided');
+    const fromWalletPubKey = resolveAddress(fromAccountOwner, this.signerAddress);
+    const randomWallet = Keypair.generate();
+    const mailboxPubKey = new PublicKey(mailbox);
+
+    // 0.   [executable] The system program.
+    // 1.   [executable] The spl_noop program.
+    // 2.   [] The token PDA account.
+    // 3.   [executable] The mailbox program.
+    // 4.   [writeable] The mailbox outbox account.
+    // 5.   [] Message dispatch authority.
+    // 6.   [signer] The token sender and mailbox payer.
+    // 7.   [signer] Unique message account.
+    // 8.   [writeable] Message storage PDA.
+    // 9.   [executable] The system program.
+    // 10.  [writeable] The native token collateral PDA account.
+    const keys: Array<AccountMeta> = [
+      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+      { pubkey: new PublicKey(SOL_SPL_NOOP_ADDRESS), isSigner: false, isWritable: false },
+      { pubkey: this.deriveHypTokenAccount(), isSigner: false, isWritable: false },
+      { pubkey: mailboxPubKey, isSigner: false, isWritable: false },
+      { pubkey: this.deriveMailboxOutboxAccount(mailboxPubKey), isSigner: false, isWritable: true },
+      { pubkey: this.deriveMessageDispatchAuthorityAccount(), isSigner: false, isWritable: false },
+      { pubkey: fromWalletPubKey, isSigner: true, isWritable: false },
+      { pubkey: randomWallet.publicKey, isSigner: true, isWritable: false },
+      // prettier-ignore
+      { pubkey: this.deriveMsgStorageAccount(mailboxPubKey, randomWallet.publicKey), isSigner: false, isWritable: true, },
+      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+      { pubkey: this.deriveNativeTokenCollateralAccount(), isSigner: false, isWritable: true },
+    ];
+
+    const value = new TransferRemoteWrapper({
+      instruction: 1,
+      data: new TransferRemoteInstruction({
+        destination_domain: destination,
+        recipient: new PublicKey(recipient).toBytes(),
+        amount_or_id: new BigNumber(amountOrId).toNumber(),
+      }),
+    });
+    const serializedData = serialize(TransferRemoteSchema, value);
+
+    const transferRemoteInstruction = new TransactionInstruction({
+      keys,
+      programId: this.programIdPubKey,
+      data: Buffer.concat([
+        Buffer.from(SOL_TRANSFER_REMOTE_DATA_PREFIX),
+        Buffer.from(serializedData),
+      ]),
+    });
+
+    const recentBlockhash = (await this.connection.getLatestBlockhash('finalized')).blockhash;
+    const tx = new Transaction({
+      feePayer: fromWalletPubKey,
+      recentBlockhash,
+    }).add(transferRemoteInstruction);
+    tx.partialSign(randomWallet);
+    return tx;
+  }
+
+  // Should match https://github.com/hyperlane-xyz/hyperlane-monorepo/blob/trevor/sealevel-validator-rebase/rust/sealevel/libraries/hyperlane-sealevel-token/src/processor.rs#LL49C1-L53C30
+  deriveHypTokenAccount(): PublicKey {
+    const [pda] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from('hyperlane_message_recipient'),
+        Buffer.from('-'),
+        Buffer.from('handle'),
+        Buffer.from('-'),
+        Buffer.from('account_metas'),
+      ],
+      this.programIdPubKey,
+    );
+    return pda;
+  }
+
+  deriveMailboxOutboxAccount(mailbox: PublicKey): PublicKey {
+    const [pda] = PublicKey.findProgramAddressSync(
+      [Buffer.from('hyperlane'), Buffer.from('-'), Buffer.from('outbox')],
+      mailbox,
+    );
+    return pda;
+  }
+
+  deriveMessageDispatchAuthorityAccount(): PublicKey {
+    const [pda] = PublicKey.findProgramAddressSync(
+      [Buffer.from('hyperlane_dispatcher'), Buffer.from('-'), Buffer.from('dispatch_authority')],
+      this.programIdPubKey,
+    );
+    return pda;
+  }
+
+  deriveMsgStorageAccount(mailbox: PublicKey, randomWalletPubKey: PublicKey): PublicKey {
+    const [pda] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from('hyperlane'),
+        Buffer.from('-'),
+        Buffer.from('dispatched_message'),
+        Buffer.from('-'),
+        randomWalletPubKey.toBuffer(),
+      ],
+      mailbox,
+    );
+    return pda;
+  }
+
+  deriveNativeTokenCollateralAccount(): PublicKey {
+    const [pda] = PublicKey.findProgramAddressSync(
+      [Buffer.from('hyperlane_token'), Buffer.from('-'), Buffer.from('native_collateral')],
+      this.programIdPubKey,
+    );
+    return pda;
   }
 }
 
@@ -266,34 +285,4 @@ function resolveAddress(address1?: Address, address2?: Address): PublicKey {
   if (address1) return new PublicKey(address1);
   else if (address2) return new PublicKey(address2);
   else throw new Error('No address provided');
-}
-
-interface RpcResponse<R> {
-  id: number;
-  jsonrpc: '2.0';
-  result: {
-    context: {
-      slot: number;
-      apiVersion: string;
-    };
-    value: R;
-  };
-}
-
-let reqId = 1;
-// TODO remove?
-async function fetchChainData<R>(rpc: string, method: string, params: any[]) {
-  const response = (await fetch(rpc, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      jsonrpc: '2.0',
-      id: reqId++,
-      method,
-      params,
-    }),
-  }).then((res) => res.json())) as RpcResponse<R>;
-  return response.result.value;
 }

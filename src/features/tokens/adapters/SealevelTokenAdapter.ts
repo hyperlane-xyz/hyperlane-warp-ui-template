@@ -14,7 +14,7 @@ import {
 import BigNumber from 'bignumber.js';
 import { deserializeUnchecked, serialize } from 'borsh';
 
-import { SOL_SPL_NOOP_ADDRESS, SOL_TRANSFER_REMOTE_DATA_PREFIX } from '../../../consts/values';
+import { SOL_SPL_NOOP_ADDRESS } from '../../../consts/values';
 import {
   AccountDataWrapper,
   HyperlaneTokenDataSchema,
@@ -212,15 +212,14 @@ export class SealevelHypTokenAdapter extends SealevelTokenAdapter implements IHy
     const transferRemoteInstruction = new TransactionInstruction({
       keys,
       programId: this.programIdPubKey,
-      data: Buffer.concat([
-        Buffer.from(SOL_TRANSFER_REMOTE_DATA_PREFIX),
-        Buffer.from(serializedData),
-      ]),
+      data: Buffer.concat([Buffer.from([1, 1, 1, 1, 1, 1, 1, 1]), Buffer.from(serializedData)]),
     });
 
     const recentBlockhash = (await this.connection.getLatestBlockhash('finalized')).blockhash;
+    // @ts-ignore Workaround for bug in the web3 lib, sometimes uses recentBlockhash and sometimes uses blockhash
     const tx = new Transaction({
       feePayer: fromWalletPubKey,
+      blockhash: recentBlockhash,
       recentBlockhash,
     }).add(transferRemoteInstruction);
     tx.partialSign(randomWallet);
@@ -242,6 +241,7 @@ export class SealevelHypTokenAdapter extends SealevelTokenAdapter implements IHy
     return pda;
   }
 
+  // https://github.com/hyperlane-xyz/hyperlane-monorepo/blob/trevor/sealevel-validator-rebase/rust/sealevel/programs/mailbox/src/pda_seeds.rs#L19
   deriveMailboxOutboxAccount(mailbox: PublicKey): PublicKey {
     const [pda] = PublicKey.findProgramAddressSync(
       [Buffer.from('hyperlane'), Buffer.from('-'), Buffer.from('outbox')],
@@ -250,6 +250,7 @@ export class SealevelHypTokenAdapter extends SealevelTokenAdapter implements IHy
     return pda;
   }
 
+  // https://github.com/hyperlane-xyz/hyperlane-monorepo/blob/trevor/sealevel-validator-rebase/rust/sealevel/programs/mailbox/src/pda_seeds.rs#L57
   deriveMessageDispatchAuthorityAccount(): PublicKey {
     const [pda] = PublicKey.findProgramAddressSync(
       [Buffer.from('hyperlane_dispatcher'), Buffer.from('-'), Buffer.from('dispatch_authority')],
@@ -258,6 +259,7 @@ export class SealevelHypTokenAdapter extends SealevelTokenAdapter implements IHy
     return pda;
   }
 
+  // https://github.com/hyperlane-xyz/hyperlane-monorepo/blob/trevor/sealevel-validator-rebase/rust/sealevel/programs/mailbox/src/pda_seeds.rs#L33-L37
   deriveMsgStorageAccount(mailbox: PublicKey, randomWalletPubKey: PublicKey): PublicKey {
     const [pda] = PublicKey.findProgramAddressSync(
       [
@@ -272,6 +274,7 @@ export class SealevelHypTokenAdapter extends SealevelTokenAdapter implements IHy
     return pda;
   }
 
+  // https://github.com/hyperlane-xyz/hyperlane-monorepo/blob/trevor/sealevel-validator-rebase/rust/sealevel/programs/hyperlane-sealevel-token-native/src/plugin.rs#L26
   deriveNativeTokenCollateralAccount(): PublicKey {
     const [pda] = PublicKey.findProgramAddressSync(
       [Buffer.from('hyperlane_token'), Buffer.from('-'), Buffer.from('native_collateral')],

@@ -53,7 +53,7 @@ export const tokenList: WarpTokenConfig = [
     type: 'native',
     protocol: 'sealevel',
     chainId: 1399811151,
-    hypNativeAddress: 'CGn8yNtSD3aTTqJfYhUb6s1aVTN75NzwtsFKo1e83aga',
+    hypNativeAddress: '8dAgevgBAnhvxoB5mWNUfmXi6H8WLC3ZaP8poaRHkzaR',
     name: 'Sol',
     symbol: 'SOL',
     decimals: 9,

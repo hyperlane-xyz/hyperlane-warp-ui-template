@@ -122,11 +122,29 @@ async function executeTransfer({
       params: values,
     });
 
+    const { type: routeType, originRouterAddress, baseTokenAddress } = tokenRoute;
+    let hypTokenAdapter: IHypTokenAdapter;
+    // TODO may need to pass in isSpl2022 here for Sealevel
+    if (routeType === RouteType.BaseToSynthetic) {
+      hypTokenAdapter = AdapterFactory.HypCollateralAdapterFromAddress(
+        originCaip2Id,
+        originRouterAddress,
+        baseTokenAddress,
+      );
+    } else {
+      hypTokenAdapter = AdapterFactory.HypSyntheticAdapterFromAddress(
+        originCaip2Id,
+        originRouterAddress,
+        baseTokenAddress,
+      );
+    }
+
     const triggerParams: ExecuteTransferParams<any> = {
       amountOrId,
       destinationDomainId,
       recipientAddress,
       tokenRoute,
+      hypTokenAdapter,
       activeAccount: activeAccounts.accounts[originProtocol],
       activeChain: activeChains.chains[originProtocol],
       updateStatus: (s: TransferStatus) => {
@@ -175,6 +193,7 @@ interface ExecuteTransferParams<TxResp> {
   destinationDomainId: DomainId;
   recipientAddress: Address;
   tokenRoute: Route;
+  hypTokenAdapter: IHypTokenAdapter;
   activeAccount: AccountInfo;
   activeChain: ActiveChainInfo;
   updateStatus: (s: TransferStatus) => void;
@@ -187,24 +206,19 @@ async function executeEvmTransfer({
   destinationDomainId,
   recipientAddress,
   tokenRoute,
+  hypTokenAdapter,
   activeChain,
   updateStatus,
   sendTransaction,
 }: ExecuteTransferParams<providers.TransactionReceipt>) {
-  const {
-    type: routeType,
-    tokenRouterAddress,
-    originTokenAddress,
-    originCaip2Id,
-    baseTokenAddress,
-  } = tokenRoute;
+  const { type: routeType, baseRouterAddress, originCaip2Id, baseTokenAddress } = tokenRoute;
 
   if (isTransferApproveRequired(tokenRoute, baseTokenAddress)) {
     updateStatus(TransferStatus.CreatingApprove);
     const tokenAdapter = AdapterFactory.TokenAdapterFromAddress(originCaip2Id, baseTokenAddress);
     const approveTxRequest = (await tokenAdapter.prepareApproveTx({
       amountOrId,
-      recipient: tokenRouterAddress,
+      recipient: baseRouterAddress,
     })) as EvmTransaction;
 
     updateStatus(TransferStatus.SigningApprove);
@@ -221,16 +235,6 @@ async function executeEvmTransfer({
   }
 
   updateStatus(TransferStatus.CreatingTransfer);
-
-  let hypTokenAdapter: IHypTokenAdapter;
-  if (routeType === RouteType.BaseToSynthetic) {
-    hypTokenAdapter = AdapterFactory.CollateralAdapterFromAddress(
-      originCaip2Id,
-      originTokenAddress,
-    );
-  } else {
-    hypTokenAdapter = AdapterFactory.HypTokenAdapterFromAddress(originCaip2Id, originTokenAddress);
-  }
 
   const gasPayment = await hypTokenAdapter.quoteGasPayment(destinationDomainId);
   logger.debug('Quoted gas payment', gasPayment);
@@ -265,29 +269,16 @@ async function executeSealevelTransfer({
   destinationDomainId,
   recipientAddress,
   tokenRoute,
+  hypTokenAdapter,
   activeAccount,
   activeChain,
   updateStatus,
   sendTransaction,
   originMailbox,
 }: ExecuteTransferParams<void>) {
-  const { /*type: routeType,*/ originTokenAddress, originCaip2Id } = tokenRoute;
+  const { originCaip2Id } = tokenRoute;
 
   updateStatus(TransferStatus.CreatingTransfer);
-
-  const hypTokenAdapter = AdapterFactory.CollateralAdapterFromAddress(
-    originCaip2Id,
-    originTokenAddress,
-  );
-  // let hypTokenAdapter: IHypTokenAdapter
-  // if (routeType === RouteType.BaseToSynthetic) {
-  //   hypTokenAdapter = AdapterFactory.CollateralAdapterFromAddress(
-  //     originCaip2Id,
-  //     originTokenAddress,
-  //   );
-  // } else {
-  //   throw new Error('TODO solana');
-  // }
 
   // TODO solana enable gas payments?
   // const gasPayment = await hypTokenAdapter.quoteGasPayment(destinationDomainId);

@@ -106,8 +106,8 @@ export class EvmTokenAdapter<T extends ERC20Upgradeable = ERC20Upgradeable>
   }
 }
 
-// Interacts with HypToken contracts
-export class EvmHypTokenAdapter<T extends HypERC20 = HypERC20>
+// Interacts with Hyp Synthetic token contracts (aka 'HypTokens')
+export class EvmHypSyntheticAdapter<T extends HypERC20 = HypERC20>
   extends EvmTokenAdapter<T>
   implements IHypTokenAdapter
 {
@@ -155,7 +155,7 @@ export class EvmHypTokenAdapter<T extends HypERC20 = HypERC20>
 }
 
 // Interacts with HypCollateral and HypNative contracts
-export class EvmHypCollateralAdapter extends EvmHypTokenAdapter implements IHypTokenAdapter {
+export class EvmHypCollateralAdapter extends EvmHypSyntheticAdapter implements IHypTokenAdapter {
   constructor(
     public readonly signerOrProvider: SignerOrProvider,
     public readonly contractAddress: Address,

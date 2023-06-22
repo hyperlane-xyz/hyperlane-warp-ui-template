@@ -1,6 +1,7 @@
 import { Menu, Transition } from '@headlessui/react';
 import Image from 'next/image';
 import { Fragment, useState } from 'react';
+import { toast } from 'react-toastify';
 
 import { SolidButton } from '../../components/buttons/SolidButton';
 import { ChainLogo } from '../../components/icons/ChainLogo';
@@ -40,6 +41,7 @@ function AccountDropdown() {
   const onClickCopy = (value?: string) => async () => {
     if (!value) return;
     await tryClipboardSet(value);
+    toast.success('Address copied to clipboard', { autoClose: 2000 });
   };
 
   const onClickDisconnect = async () => {

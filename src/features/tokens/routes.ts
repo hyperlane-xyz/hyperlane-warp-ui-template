@@ -25,12 +25,12 @@ export enum RouteType {
 export interface Route {
   type: RouteType;
   baseCaip2Id: Caip2Id;
-  baseTokenAddress: Address;
-  tokenRouterAddress: Address;
+  baseTokenAddress: Address; // i.e. the underlying 'collateralized' token
+  baseRouterAddress: Address;
   originCaip2Id: Caip2Id;
-  originTokenAddress: Address;
+  originRouterAddress: Address;
   destCaip2Id: Caip2Id;
-  destTokenAddress: Address;
+  destRouterAddress: Address;
   decimals: number;
   isNft: boolean;
 }
@@ -107,10 +107,14 @@ async function validateTokenMetadata(token: TokenMetadata) {
 async function fetchRemoteHypTokens(
   originToken: TokenMetadata,
 ): Promise<TokenMetadataWithHypTokens> {
-  const { caip2Id, symbol, tokenRouterAddress } = originToken;
+  const { caip2Id, symbol, address, tokenRouterAddress } = originToken;
   logger.info(`Fetching remote tokens for ${symbol} on ${caip2Id}`);
 
-  const hypTokenAdapter = AdapterFactory.CollateralAdapterFromAddress(caip2Id, tokenRouterAddress);
+  const hypTokenAdapter = AdapterFactory.HypCollateralAdapterFromAddress(
+    caip2Id,
+    tokenRouterAddress,
+    address,
+  );
 
   const remoteRouters = await hypTokenAdapter.getAllRouters();
   logger.info(`Router addresses found:`, remoteRouters);
@@ -156,30 +160,30 @@ function computeTokenRoutes(tokens: TokenMetadataWithHypTokens[]) {
         decimals,
         isNft,
       } = token;
-      const { caip2Id: syntheticCaip2Id, address: hypTokenAddress } = hypToken;
+      const { caip2Id: syntheticCaip2Id, address: syntheticRouterAddress } = hypToken;
 
       const commonRouteProps = {
         baseCaip2Id,
         baseTokenAddress,
-        tokenRouterAddress,
+        baseRouterAddress: tokenRouterAddress,
         isNft: !!isNft,
       };
       tokenRoutes[baseCaip2Id][syntheticCaip2Id]?.push({
         type: RouteType.BaseToSynthetic,
         ...commonRouteProps,
         originCaip2Id: baseCaip2Id,
-        originTokenAddress: tokenRouterAddress,
+        originRouterAddress: tokenRouterAddress,
         destCaip2Id: syntheticCaip2Id,
-        destTokenAddress: hypTokenAddress,
+        destRouterAddress: syntheticRouterAddress,
         decimals,
       });
       tokenRoutes[syntheticCaip2Id][baseCaip2Id]?.push({
         type: RouteType.SyntheticToBase,
         ...commonRouteProps,
         originCaip2Id: syntheticCaip2Id,
-        originTokenAddress: hypTokenAddress,
+        originRouterAddress: syntheticRouterAddress,
         destCaip2Id: baseCaip2Id,
-        destTokenAddress: tokenRouterAddress,
+        destRouterAddress: tokenRouterAddress,
         decimals,
       });
 
@@ -191,9 +195,9 @@ function computeTokenRoutes(tokens: TokenMetadataWithHypTokens[]) {
           type: RouteType.SyntheticToSynthetic,
           ...commonRouteProps,
           originCaip2Id: syntheticCaip2Id,
-          originTokenAddress: hypTokenAddress,
+          originRouterAddress: syntheticRouterAddress,
           destCaip2Id: otherSynCaip2Id,
-          destTokenAddress: otherHypTokenAddress,
+          destRouterAddress: otherHypTokenAddress,
           decimals,
         });
       }

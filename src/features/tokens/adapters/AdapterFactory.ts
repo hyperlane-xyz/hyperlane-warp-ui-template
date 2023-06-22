@@ -1,3 +1,6 @@
+import { Cluster } from '@solana/web3.js';
+import { providers } from 'ethers';
+
 import { getSolanaClusterName } from '../../../consts/solanaChains';
 import { parseCaip2Id } from '../../chains/caip2';
 import { ProtocolType } from '../../chains/types';
@@ -6,59 +9,92 @@ import { isNativeToken } from '../native';
 
 import {
   EvmHypCollateralAdapter,
-  EvmHypTokenAdapter,
+  EvmHypSyntheticAdapter,
   EvmNativeTokenAdapter,
   EvmTokenAdapter,
 } from './EvmTokenAdapter';
 import {
-  SealevelHypTokenAdapter,
+  SealevelHypCollateralAdapter,
+  SealevelHypNativeAdapter,
+  SealevelHypSyntheticAdapter,
   SealevelNativeTokenAdapter,
   SealevelTokenAdapter,
 } from './SealevelTokenAdapter';
 
 export class AdapterFactory {
-  static TokenAdapterFromAddress(caip2Id: Caip2Id, address: Address) {
+  static TokenAdapterFromAddress(caip2Id: Caip2Id, routerAddress: Address) {
     const { protocol, reference } = parseCaip2Id(caip2Id);
     if (protocol == ProtocolType.Ethereum) {
       const provider = getProvider(caip2Id);
-      if (isNativeToken(address)) {
+      if (isNativeToken(routerAddress)) {
         return new EvmNativeTokenAdapter(provider);
       } else {
-        return new EvmTokenAdapter(provider, address);
+        return new EvmTokenAdapter(provider, routerAddress);
       }
     } else if (protocol === ProtocolType.Sealevel) {
       const cluster = getSolanaClusterName(reference);
-      if (isNativeToken(address)) {
+      if (isNativeToken(routerAddress)) {
         return new SealevelNativeTokenAdapter(cluster);
       } else {
-        return new SealevelTokenAdapter(cluster, address);
+        return new SealevelTokenAdapter(cluster, routerAddress);
       }
     } else {
       throw new Error(`Unsupported protocol: ${protocol}`);
     }
   }
 
-  static HypTokenAdapterFromAddress(caip2Id: Caip2Id, address: Address) {
-    const { protocol, reference } = parseCaip2Id(caip2Id);
-    if (protocol == ProtocolType.Ethereum) {
-      const provider = getProvider(caip2Id);
-      return new EvmHypTokenAdapter(provider, address);
-    } else if (protocol === ProtocolType.Sealevel) {
-      const cluster = getSolanaClusterName(reference);
-      return new SealevelHypTokenAdapter(cluster, address);
-    } else {
-      throw new Error(`Unsupported protocol: ${protocol}`);
-    }
+  static HypCollateralAdapterFromAddress(
+    caip2Id: Caip2Id,
+    routerAddress: Address,
+    tokenAddress: Address,
+    isSpl2022?: boolean,
+  ) {
+    return AdapterFactory.selectHypAdapter(
+      caip2Id,
+      routerAddress,
+      tokenAddress,
+      EvmHypCollateralAdapter,
+      isNativeToken(tokenAddress) ? SealevelHypNativeAdapter : SealevelHypCollateralAdapter,
+      isSpl2022,
+    );
   }
 
-  static CollateralAdapterFromAddress(caip2Id: Caip2Id, address: Address) {
+  static HypSyntheticAdapterFromAddress(
+    caip2Id: Caip2Id,
+    routerAddress: Address,
+    tokenAddress: Address,
+    isSpl2022?: boolean,
+  ) {
+    return AdapterFactory.selectHypAdapter(
+      caip2Id,
+      routerAddress,
+      tokenAddress,
+      EvmHypSyntheticAdapter,
+      SealevelHypSyntheticAdapter,
+      isSpl2022,
+    );
+  }
+
+  protected static selectHypAdapter<E, S>(
+    caip2Id: Caip2Id,
+    routerAddress: Address,
+    tokenAddress: Address,
+    EvmAdapter: new (provider: providers.Provider, routerAddress: Address) => E,
+    SealevelAdapter: new (
+      cluster: Cluster,
+      routerAddress: Address,
+      tokenAddress: Address,
+      isSpl2022?: boolean,
+    ) => S,
+    isSpl2022?: boolean,
+  ) {
     const { protocol, reference } = parseCaip2Id(caip2Id);
     if (protocol == ProtocolType.Ethereum) {
       const provider = getProvider(caip2Id);
-      return new EvmHypCollateralAdapter(provider, address);
+      return new EvmAdapter(provider, routerAddress);
     } else if (protocol === ProtocolType.Sealevel) {
       const cluster = getSolanaClusterName(reference);
-      return new SealevelHypTokenAdapter(cluster, address);
+      return new SealevelAdapter(cluster, routerAddress, tokenAddress, isSpl2022);
     } else {
       throw new Error(`Unsupported protocol: ${protocol}`);
     }

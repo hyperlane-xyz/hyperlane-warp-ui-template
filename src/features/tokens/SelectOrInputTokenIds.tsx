@@ -22,7 +22,7 @@ export function SelectOrInputTokenIds({
   const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenAddress, tokenRoutes);
 
   const currentTokenAddress =
-    route?.baseCaip2Id === originCaip2Id ? tokenAddress : route?.originTokenAddress ?? '';
+    route?.baseCaip2Id === originCaip2Id ? tokenAddress : route?.originRouterAddress ?? '';
 
   const address = useAccountForChain(originCaip2Id)?.address;
   const { isContractAllowToGetTokenIds } = useContractSupportsTokenByOwner(

@@ -260,7 +260,7 @@ function useSelfTokenBalance(tokenRoutes) {
   const { originCaip2Id, destinationCaip2Id, tokenAddress } = values;
   const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenAddress, tokenRoutes);
   const tokenAddrToCheck =
-    route?.baseCaip2Id === originCaip2Id ? tokenAddress : route?.originTokenAddress ?? '';
+    route?.baseCaip2Id === originCaip2Id ? tokenAddress : route?.originRouterAddress ?? '';
   const decimals = route?.decimals ?? STANDARD_TOKEN_DECIMALS;
   const { balance } = useAccountTokenBalance(originCaip2Id, tokenAddrToCheck);
   return {
@@ -279,7 +279,7 @@ function RecipientTokenBalance({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
   const { originCaip2Id, destinationCaip2Id, tokenAddress, recipientAddress } = values;
   const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenAddress, tokenRoutes);
   const tokenAddrToCheck =
-    route?.baseCaip2Id === destinationCaip2Id ? tokenAddress : route?.destTokenAddress ?? '';
+    route?.baseCaip2Id === destinationCaip2Id ? tokenAddress : route?.destRouterAddress ?? '';
   const { balance } = useTokenBalance(destinationCaip2Id, tokenAddrToCheck, recipientAddress);
   return <TokenBalance label="Remote balance" balance={balance} decimals={route?.decimals} />;
 }
@@ -347,14 +347,14 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
             <h4>Transaction 1: Approve Transfer</h4>
             <div className="mt-1.5 ml-1.5 pl-2 border-l border-gray-300 space-y-1.5 text-xs">
               <p>{`Token Address: ${tokenAddress}`}</p>
-              <p>{`Collateral Address: ${route?.tokenRouterAddress}`}</p>
+              <p>{`Collateral Address: ${route?.baseRouterAddress}`}</p>
             </div>
           </div>
         )}
         <div>
           <h4>{`Transaction${isApproveRequired ? ' 2' : ''}: Transfer Remote`}</h4>
           <div className="mt-1.5 ml-1.5 pl-2 border-l border-gray-300 space-y-1.5 text-xs">
-            <p>{`Remote Token: ${route?.destTokenAddress}`}</p>
+            <p>{`Remote Token: ${route?.destRouterAddress}`}</p>
             {isNft ? (
               <p>{`Token ID: ${sendValue}`}</p>
             ) : (
@@ -377,7 +377,7 @@ function validateFormValues(
   const isNft = !!route?.isNft;
 
   const currentTokenAddress =
-    route?.baseCaip2Id === originCaip2Id ? tokenAddress : route?.originTokenAddress ?? '';
+    route?.baseCaip2Id === originCaip2Id ? tokenAddress : route?.originRouterAddress ?? '';
 
   if (!originCaip2Id) return { originCaip2Id: 'Invalid origin chain' };
   if (!destinationCaip2Id) return { destinationCaip2Id: 'Invalid destination chain' };

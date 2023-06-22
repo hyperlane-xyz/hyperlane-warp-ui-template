@@ -72,7 +72,7 @@ interface BaseTokenMetadata extends CommonTokenFields {
   caip2Id: Caip2Id;
   type: TokenType;
   address: Address;
-  tokenRouterAddress: Address; // Shared name for hypCollateralAddr and hypNativeAddr
+  tokenRouterAddress: Address; // Shared name for hypCollateralAddr or hypNativeAddr
   isNft?: boolean;
 }
 

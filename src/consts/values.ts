@@ -4,3 +4,4 @@ export const STANDARD_TOKEN_DECIMALS = 18;
 export const SOL_ZERO_ADDRESS = '00000000000000000000000000000000000000000000';
 // Strangely, this is not included in any of the Solana packages
 export const SOL_SPL_NOOP_ADDRESS = 'noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV';
+export const SOL_PLACEHOLDER_ADDRESS = '1nc1nerator11111111111111111111111111111111';

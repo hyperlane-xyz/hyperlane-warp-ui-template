@@ -1,6 +1,5 @@
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
-import { useAccount } from 'wagmi';
 
 import { MessageStatus, MessageTimeline, useMessageTimeline } from '@hyperlane-xyz/widgets';
 
@@ -17,6 +16,7 @@ import { parseCaip2Id } from '../chains/caip2';
 import { hasPermissionlessChain, isPermissionlessChain } from '../chains/utils';
 import { getMultiProvider } from '../multiProvider';
 import { useStore } from '../store';
+import { useAccountForChain } from '../wallet/hooks';
 
 import { TransferContext, TransferStatus } from './types';
 
@@ -29,10 +29,6 @@ export function TransfersStatusModal({
   close: () => void;
   transfers: TransferContext[];
 }) {
-  const { address, isConnected, connector } = useAccount();
-  const isAccountReady = !!(address && isConnected && connector);
-  const connectorName = connector?.name || 'wallet';
-
   const [index, setIndex] = useState(0);
   // Auto update index to newest transfer when opening
   useEffect(() => {
@@ -41,6 +37,11 @@ export function TransfersStatusModal({
 
   const { params, status, originTxHash, msgId } = transfers[index] || {};
   const { destinationCaip2Id, originCaip2Id } = params || {};
+
+  const account = useAccountForChain(originCaip2Id);
+
+  const isAccountReady = !!account?.isReady;
+  const connectorName = account?.connectorName || 'wallet';
 
   const isPermissionlessRoute = hasPermissionlessChain([destinationCaip2Id, originCaip2Id]);
 

@@ -1,11 +1,11 @@
 import { useField } from 'formik';
 import Image from 'next/image';
 import { useState } from 'react';
-import { useAccount } from 'wagmi';
 
 import { Spinner } from '../../components/animation/Spinner';
 import { Modal } from '../../components/layout/Modal';
 import ChevronIcon from '../../images/icons/chevron-down.svg';
+import { useAccountForChain } from '../wallet/hooks';
 
 import { useTokenIdBalance } from './balances';
 
@@ -19,12 +19,12 @@ type Props = {
 export function SelectTokenIdField({ name, caip2Id, tokenAddress, disabled }: Props) {
   const [, , helpers] = useField<number>(name);
   const [tokenId, setTokenId] = useState<string | undefined>(undefined);
-  const { address } = useAccount();
   const handleChange = (newTokenId: string) => {
     helpers.setValue(parseInt(newTokenId));
     setTokenId(newTokenId);
   };
 
+  const address = useAccountForChain(caip2Id)?.address;
   const { isLoading, tokenIds } = useTokenIdBalance(caip2Id, tokenAddress, address);
 
   const [isModalOpen, setIsModalOpen] = useState(false);

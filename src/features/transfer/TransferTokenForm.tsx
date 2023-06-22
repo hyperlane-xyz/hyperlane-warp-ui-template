@@ -1,7 +1,6 @@
 import { QueryClient, useQueryClient } from '@tanstack/react-query';
 import { Form, Formik, useFormikContext } from 'formik';
 import { useMemo, useState } from 'react';
-import { useAccount } from 'wagmi';
 
 import { WideChevron } from '@hyperlane-xyz/widgets';
 
@@ -19,7 +18,7 @@ import { fromWei, fromWeiRounded, toWei, tryParseAmount } from '../../utils/amou
 import { logger } from '../../utils/logger';
 import { ChainSelectField } from '../chains/ChainSelectField';
 import { getProtocolType } from '../chains/caip2';
-import { ProtocolSmallestUnit } from '../chains/types';
+import { ProtocolSmallestUnit, ProtocolType } from '../chains/types';
 import { getChainDisplayName } from '../chains/utils';
 import { SelectOrInputTokenIds } from '../tokens/SelectOrInputTokenIds';
 import { TokenSelectField } from '../tokens/TokenSelectField';
@@ -31,7 +30,7 @@ import {
   useTokenBalance,
 } from '../tokens/balances';
 import { RoutesMap, getTokenRoute, useRouteChains } from '../tokens/routes';
-import { useAccountForChain } from '../wallet/hooks';
+import { AccountInfo, useAccountForChain, useAccounts } from '../wallet/hooks';
 
 import { TransferFormValues } from './types';
 import { isTransferApproveRequired, useTokenTransfer } from './useTokenTransfer';
@@ -64,9 +63,9 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
   };
 
   const queryClient = useQueryClient();
-  const { address: accountAddress } = useAccount();
+  const { accounts } = useAccounts();
   const validate = (values: TransferFormValues) =>
-    validateFormValues(values, tokenRoutes, queryClient, accountAddress);
+    validateFormValues(values, tokenRoutes, queryClient, accounts);
 
   const onDoneTransactions = () => {
     setIsReview(false);
@@ -372,7 +371,7 @@ function validateFormValues(
   { originCaip2Id, destinationCaip2Id, amount, tokenAddress, recipientAddress }: TransferFormValues,
   tokenRoutes: RoutesMap,
   queryClient: QueryClient,
-  accountAddress?: string,
+  accounts: Record<ProtocolType, AccountInfo>,
 ) {
   const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenAddress, tokenRoutes);
   const isNft = !!route?.isNft;
@@ -389,6 +388,8 @@ function validateFormValues(
     return { tokenAddress: 'Invalid token' };
   if (!isValidAddress(recipientAddress, destProtocol))
     return { recipientAddress: 'Invalid recipient' };
+
+  const accountAddress = accounts[originProtocol]?.address;
 
   const parsedAmount = tryParseAmount(amount);
   if (!parsedAmount || parsedAmount.lte(0))

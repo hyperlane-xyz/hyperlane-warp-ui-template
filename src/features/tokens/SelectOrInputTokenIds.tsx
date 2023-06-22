@@ -1,8 +1,8 @@
 import { useFormikContext } from 'formik';
-import { useAccount } from 'wagmi';
 
 import { TextField } from '../../components/input/TextField';
 import { TransferFormValues } from '../transfer/types';
+import { useAccountForChain } from '../wallet/hooks';
 
 import { SelectTokenIdField } from './SelectTokenIdField';
 import { useContractSupportsTokenByOwner, useOwnerOfErc721 } from './balances';
@@ -15,7 +15,6 @@ export function SelectOrInputTokenIds({
   disabled: boolean;
   tokenRoutes: RoutesMap;
 }) {
-  const { address } = useAccount();
   const {
     values: { originCaip2Id, tokenAddress, destinationCaip2Id },
   } = useFormikContext<TransferFormValues>();
@@ -25,6 +24,7 @@ export function SelectOrInputTokenIds({
   const currentTokenAddress =
     route?.baseCaip2Id === originCaip2Id ? tokenAddress : route?.originTokenAddress ?? '';
 
+  const address = useAccountForChain(originCaip2Id)?.address;
   const { isContractAllowToGetTokenIds } = useContractSupportsTokenByOwner(
     originCaip2Id,
     currentTokenAddress,

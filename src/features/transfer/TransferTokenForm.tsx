@@ -53,19 +53,15 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
   // Flag for check current type of token
   const [isNft, setIsNft] = useState(false);
 
-  const onSubmitForm = (values: TransferFormValues) => {
-    logger.debug('Reviewing transfer form values:', JSON.stringify(values));
-    setIsReview(true);
-  };
-
-  const onClickEdit = () => {
-    setIsReview(false);
-  };
-
   const queryClient = useQueryClient();
   const { accounts } = useAccounts();
   const validate = (values: TransferFormValues) =>
     validateFormValues(values, tokenRoutes, queryClient, accounts);
+
+  const onSubmitForm = (values: TransferFormValues) => {
+    logger.debug('Reviewing transfer form values:', JSON.stringify(values));
+    setIsReview(true);
+  };
 
   const onDoneTransactions = () => {
     setIsReview(false);
@@ -81,140 +77,21 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
       validateOnChange={false}
       validateOnBlur={false}
     >
-      {({ values }) => (
-        <Form className="flex flex-col items-stretch w-full mt-2">
-          <div className="flex items-center justify-center space-x-7 sm:space-x-10">
-            <ChainSelectField
-              name="originCaip2Id"
-              label="From"
-              caip2Ids={caip2Ids}
-              disabled={isReview}
-            />
-            <div className="flex flex-col items-center">
-              <div className="flex mb-6 sm:space-x-1.5">
-                <WideChevron
-                  width="17"
-                  height="100%"
-                  direction="e"
-                  color={Color.lightGray}
-                  classes="hidden sm:block"
-                  rounded={true}
-                />
-                <WideChevron
-                  width="17"
-                  height="100%"
-                  direction="e"
-                  color={Color.lightGray}
-                  rounded={true}
-                />
-                <WideChevron
-                  width="17"
-                  height="100%"
-                  direction="e"
-                  color={Color.lightGray}
-                  rounded={true}
-                />
-              </div>
-              <SwapChainsButton disabled={isReview} />
-            </div>
-            <ChainSelectField
-              name="destinationCaip2Id"
-              label="To"
-              caip2Ids={caip2Ids}
-              disabled={isReview}
-            />
-          </div>
-          <div className="mt-3 flex justify-between space-x-4">
-            <div className="flex-1">
-              <label
-                htmlFor="tokenAddress"
-                className="block uppercase text-sm text-gray-500 pl-0.5"
-              >
-                Token
-              </label>
-              <TokenSelectField
-                name="tokenAddress"
-                originCaip2Id={values.originCaip2Id}
-                destinationCaip2Id={values.destinationCaip2Id}
-                tokenRoutes={tokenRoutes}
-                disabled={isReview}
-                setIsNft={setIsNft}
-              />
-            </div>
-            <div className="flex-1">
-              <div className="flex justify-between pr-1">
-                <label htmlFor="amount" className="block uppercase text-sm text-gray-500 pl-0.5">
-                  Amount
-                </label>
-                <SelfTokenBalance tokenRoutes={tokenRoutes} />
-              </div>
-              {isNft ? (
-                <SelectOrInputTokenIds disabled={isReview} tokenRoutes={tokenRoutes} />
-              ) : (
-                <div className="relative w-full">
-                  <TextField
-                    name="amount"
-                    placeholder="0.00"
-                    classes="w-full"
-                    type="number"
-                    step="any"
-                    disabled={isReview}
-                  />
-                  <MaxButton disabled={isReview} tokenRoutes={tokenRoutes} />
-                </div>
-              )}
-            </div>
-          </div>
-          <div className="mt-4">
-            <div className="flex justify-between pr-1">
-              <label
-                htmlFor="recipientAddress"
-                className="block uppercase text-sm text-gray-500 pl-0.5"
-              >
-                Recipient Address
-              </label>
-              <RecipientTokenBalance tokenRoutes={tokenRoutes} />
-            </div>
-            <div className="relative w-full">
-              <TextField
-                name="recipientAddress"
-                placeholder="0x123456..."
-                classes="w-full"
-                disabled={isReview}
-              />
-              <SelfButton disabled={isReview} />
-            </div>
-          </div>
-          <ReviewDetails visible={isReview} tokenRoutes={tokenRoutes} />
-          {!isReview ? (
-            <ConnectAwareSubmitButton
-              caip2Id={values.originCaip2Id}
-              text="Continue"
-              classes="mt-4 px-3 py-1.5"
-            />
-          ) : (
-            <div className="mt-4 flex items-center justify-between space-x-4">
-              <SolidButton
-                type="button"
-                color="gray"
-                onClick={onClickEdit}
-                classes="px-6 py-1.5"
-                icon={<ChevronIcon direction="w" width={13} color={Color.primaryBlue} />}
-              >
-                <span>Edit</span>
-              </SolidButton>
-              <SolidButton
-                type="button"
-                color="blue"
-                onClick={() => triggerTransactions(values, tokenRoutes)}
-                classes="flex-1 px-3 py-1.5"
-              >
-                {`Send to ${getChainDisplayName(values.destinationCaip2Id)}`}
-              </SolidButton>
-            </div>
-          )}
-        </Form>
-      )}
+      <Form className="flex flex-col items-stretch w-full mt-2">
+        <ChainSelectSection caip2Ids={caip2Ids} isReview={isReview} />
+        <div className="mt-3 flex justify-between space-x-4">
+          <TokenSection tokenRoutes={tokenRoutes} setIsNft={setIsNft} isReview={isReview} />
+          <AmountSection tokenRoutes={tokenRoutes} isNft={isNft} isReview={isReview} />
+        </div>
+        <RecipientSection tokenRoutes={tokenRoutes} isReview={isReview} />
+        <ReviewDetails visible={isReview} tokenRoutes={tokenRoutes} />
+        <ButtonSection
+          tokenRoutes={tokenRoutes}
+          isReview={isReview}
+          setIsReview={setIsReview}
+          triggerTransactions={triggerTransactions}
+        />
+      </Form>
     </Formik>
   );
 }
@@ -242,6 +119,105 @@ function SwapChainsButton({ disabled }: { disabled?: boolean }) {
   );
 }
 
+function ChainSelectSection({ caip2Ids, isReview }: { caip2Ids: Caip2Id[]; isReview: boolean }) {
+  const ChevronIcon = ({ classes }: { classes?: string }) => (
+    <WideChevron
+      width="17"
+      height="100%"
+      direction="e"
+      color={Color.lightGray}
+      classes={classes}
+      rounded={true}
+    />
+  );
+
+  return (
+    <div className="flex items-center justify-center space-x-7 sm:space-x-10">
+      <ChainSelectField name="originCaip2Id" label="From" caip2Ids={caip2Ids} disabled={isReview} />
+      <div className="flex flex-col items-center">
+        <div className="flex mb-6 sm:space-x-1.5">
+          <ChevronIcon classes="hidden sm:block" />
+          <ChevronIcon />
+          <ChevronIcon />
+        </div>
+        <SwapChainsButton disabled={isReview} />
+      </div>
+      <ChainSelectField
+        name="destinationCaip2Id"
+        label="To"
+        caip2Ids={caip2Ids}
+        disabled={isReview}
+      />
+    </div>
+  );
+}
+
+function TokenSection({
+  tokenRoutes,
+  setIsNft,
+  isReview,
+}: {
+  tokenRoutes: RoutesMap;
+  setIsNft: (b: boolean) => void;
+  isReview: boolean;
+}) {
+  const { values } = useFormikContext<TransferFormValues>();
+
+  return (
+    <div className="flex-1">
+      <label htmlFor="tokenAddress" className="block uppercase text-sm text-gray-500 pl-0.5">
+        Token
+      </label>
+      <TokenSelectField
+        name="tokenAddress"
+        originCaip2Id={values.originCaip2Id}
+        destinationCaip2Id={values.destinationCaip2Id}
+        tokenRoutes={tokenRoutes}
+        disabled={isReview}
+        setIsNft={setIsNft}
+      />
+    </div>
+  );
+}
+
+function AmountSection({
+  tokenRoutes,
+  isNft,
+  isReview,
+}: {
+  tokenRoutes: RoutesMap;
+  isNft: boolean;
+  isReview: boolean;
+}) {
+  const { balance, decimals } = useSelfTokenBalance(tokenRoutes);
+
+  return (
+    <div className="flex-1">
+      <div className="flex justify-between pr-1">
+        <label htmlFor="amount" className="block uppercase text-sm text-gray-500 pl-0.5">
+          Amount
+        </label>
+        <TokenBalance label="My balance" balance={balance} decimals={decimals} />
+      </div>
+      {isNft ? (
+        <SelectOrInputTokenIds disabled={isReview} tokenRoutes={tokenRoutes} />
+      ) : (
+        <div className="relative w-full">
+          <TextField
+            name="amount"
+            placeholder="0.00"
+            classes="w-full"
+            type="number"
+            step="any"
+            disabled={isReview}
+          />
+          <MaxButton disabled={isReview} balance={balance} decimals={decimals} />
+        </div>
+      )}
+    </div>
+  );
+}
+
 function TokenBalance({
   label,
   balance,
@@ -253,6 +229,80 @@ function TokenBalance({
 }) {
   const value = !decimals ? fromWei(balance, decimals) : fromWeiRounded(balance, decimals);
   return <div className="text-xs text-gray-500">{`${label}: ${value}`}</div>;
+}
+
+function RecipientSection({
+  tokenRoutes,
+  isReview,
+}: {
+  tokenRoutes: RoutesMap;
+  isReview: boolean;
+}) {
+  return (
+    <div className="mt-4">
+      <div className="flex justify-between pr-1">
+        <label htmlFor="recipientAddress" className="block uppercase text-sm text-gray-500 pl-0.5">
+          Recipient Address
+        </label>
+        <RecipientTokenBalance tokenRoutes={tokenRoutes} />
+      </div>
+      <div className="relative w-full">
+        <TextField
+          name="recipientAddress"
+          placeholder="0x123456..."
+          classes="w-full"
+          disabled={isReview}
+        />
+        <SelfButton disabled={isReview} />
+      </div>
+    </div>
+  );
+}
+
+function ButtonSection({
+  tokenRoutes,
+  isReview,
+  setIsReview,
+  triggerTransactions,
+}: {
+  tokenRoutes: RoutesMap;
+  isReview: boolean;
+  setIsReview: (b: boolean) => void;
+  triggerTransactions: (values: TransferFormValues, tokenRoutes: RoutesMap) => Promise<void>;
+}) {
+  const { values } = useFormikContext<TransferFormValues>();
+
+  if (!isReview) {
+    return (
+      <ConnectAwareSubmitButton
+        caip2Id={values.originCaip2Id}
+        text="Continue"
+        classes="mt-4 px-3 py-1.5"
+      />
+    );
+  }
+
+  return (
+    <div className="mt-4 flex items-center justify-between space-x-4">
+      <SolidButton
+        type="button"
+        color="gray"
+        onClick={() => setIsReview(false)}
+        classes="px-6 py-1.5"
+        icon={<ChevronIcon direction="w" width={13} color={Color.primaryBlue} />}
+      >
+        <span>Edit</span>
+      </SolidButton>
+      <SolidButton
+        type="button"
+        color="blue"
+        onClick={() => triggerTransactions(values, tokenRoutes)}
+        classes="flex-1 px-3 py-1.5"
+      >
+        {`Send to ${getChainDisplayName(values.destinationCaip2Id)}`}
+      </SolidButton>
+    </div>
+  );
 }
 
 function useSelfTokenBalance(tokenRoutes) {
@@ -269,11 +319,6 @@ function useSelfTokenBalance(tokenRoutes) {
   };
 }
 
-function SelfTokenBalance({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
-  const { balance, decimals } = useSelfTokenBalance(tokenRoutes);
-  return <TokenBalance label="My balance" balance={balance} decimals={decimals} />;
-}
-
 function RecipientTokenBalance({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
   const { values } = useFormikContext<TransferFormValues>();
   const { originCaip2Id, destinationCaip2Id, tokenAddress, recipientAddress } = values;
@@ -284,9 +329,16 @@ function RecipientTokenBalance({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
   return <TokenBalance label="Remote balance" balance={balance} decimals={route?.decimals} />;
 }
 
-function MaxButton({ tokenRoutes, disabled }: { tokenRoutes: RoutesMap; disabled?: boolean }) {
+function MaxButton({
+  balance,
+  decimals,
+  disabled,
+}: {
+  balance?: string | null;
+  decimals?: number;
+  disabled?: boolean;
+}) {
   const { setFieldValue } = useFormikContext<TransferFormValues>();
-  const { balance, decimals } = useSelfTokenBalance(tokenRoutes);
   const onClick = () => {
     if (balance && !disabled) setFieldValue('amount', fromWeiRounded(balance, decimals));
   };

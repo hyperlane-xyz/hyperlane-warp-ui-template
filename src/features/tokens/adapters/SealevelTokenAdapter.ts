@@ -88,7 +88,6 @@ export class SealevelTokenAdapter implements ITokenAdapter {
   // TODO cleanup
   async getBalance(owner: Address): Promise<string> {
     const tokenPubKey = this.deriveAssociatedTokenAccount(new PublicKey(owner));
-    console.log('tokenPubKey', tokenPubKey.toBase58());
     // const allAccounts = await this.connection.getParsedTokenAccountsByOwner(new PublicKey(owner), {
     //   mint: this.programIdPubKey,
     // });
@@ -132,8 +131,8 @@ export class SealevelTokenAdapter implements ITokenAdapter {
   deriveAssociatedTokenAccount(owner: PublicKey): PublicKey {
     return getAssociatedTokenAddressSync(
       this.tokenProgramPubKey,
-      new PublicKey(owner),
-      false,
+      owner,
+      true,
       this.getTokenProgramId(),
     );
   }
@@ -367,10 +366,18 @@ export class SealevelHypSyntheticAdapter extends SealevelHypNativeAdapter {
       /// 9. [executable] The spl_token_2022 program.
       { pubkey: TOKEN_2022_PROGRAM_ID, isSigner: false, isWritable: false },
       /// 10. [writeable] The mint / mint authority PDA account.
-      { pubkey: this.tokenProgramPubKey, isSigner: false, isWritable: true },
+      { pubkey: this.deriveMintAuthorityAccount(), isSigner: false, isWritable: true },
       /// 11. [writeable] The token sender's associated token account, from which tokens will be burned.
       { pubkey: this.deriveAssociatedTokenAccount(sender), isSigner: false, isWritable: true },
     ];
+  }
+
+  deriveMintAuthorityAccount(): PublicKey {
+    const [pda] = PublicKey.findProgramAddressSync(
+      [Buffer.from('hyperlane_token'), Buffer.from('-'), Buffer.from('mint')],
+      this.warpProgramPubKey,
+    );
+    return pda;
   }
 }
 

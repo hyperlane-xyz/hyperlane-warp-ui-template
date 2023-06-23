@@ -189,7 +189,13 @@ function AmountSection({
   isNft: boolean;
   isReview: boolean;
 }) {
-  const { balance, decimals } = useSelfTokenBalance(tokenRoutes);
+  const { values } = useFormikContext<TransferFormValues>();
+  const { originCaip2Id, destinationCaip2Id, tokenAddress } = values;
+  const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenAddress, tokenRoutes);
+  const tokenAddrToCheck =
+    route?.baseCaip2Id === originCaip2Id ? tokenAddress : route?.originRouterAddress ?? '';
+  const decimals = route?.decimals ?? STANDARD_TOKEN_DECIMALS;
+  const { balance } = useAccountTokenBalance(originCaip2Id, tokenAddrToCheck);
 
   return (
     <div className="flex-1">
@@ -218,19 +224,6 @@ function AmountSection({
   );
 }
 
-function TokenBalance({
-  label,
-  balance,
-  decimals,
-}: {
-  label: string;
-  balance?: string | null;
-  decimals?: number;
-}) {
-  const value = !decimals ? fromWei(balance, decimals) : fromWeiRounded(balance, decimals);
-  return <div className="text-xs text-gray-500">{`${label}: ${value}`}</div>;
-}
-
 function RecipientSection({
   tokenRoutes,
   isReview,
@@ -238,13 +231,20 @@ function RecipientSection({
   tokenRoutes: RoutesMap;
   isReview: boolean;
 }) {
+  const { values } = useFormikContext<TransferFormValues>();
+  const { originCaip2Id, destinationCaip2Id, tokenAddress, recipientAddress } = values;
+  const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenAddress, tokenRoutes);
+  const tokenAddrToCheck =
+    route?.baseCaip2Id === destinationCaip2Id ? tokenAddress : route?.destRouterAddress ?? '';
+  const { balance } = useTokenBalance(destinationCaip2Id, tokenAddrToCheck, recipientAddress);
+
   return (
     <div className="mt-4">
       <div className="flex justify-between pr-1">
         <label htmlFor="recipientAddress" className="block uppercase text-sm text-gray-500 pl-0.5">
           Recipient Address
         </label>
-        <RecipientTokenBalance tokenRoutes={tokenRoutes} />
+        <TokenBalance label="Remote balance" balance={balance} decimals={route?.decimals} />
       </div>
       <div className="relative w-full">
         <TextField
@@ -257,6 +257,19 @@ function RecipientSection({
       </div>
     </div>
   );
+}
+
+function TokenBalance({
+  label,
+  balance,
+  decimals,
+}: {
+  label: string;
+  balance?: string | null;
+  decimals?: number;
+}) {
+  const value = !decimals ? fromWei(balance, decimals) : fromWeiRounded(balance, decimals);
+  return <div className="text-xs text-gray-500">{`${label}: ${value}`}</div>;
 }
 
 function ButtonSection({
@@ -303,30 +316,6 @@ function ButtonSection({
       </SolidButton>
     </div>
   );
-}
-
-function useSelfTokenBalance(tokenRoutes) {
-  const { values } = useFormikContext<TransferFormValues>();
-  const { originCaip2Id, destinationCaip2Id, tokenAddress } = values;
-  const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenAddress, tokenRoutes);
-  const tokenAddrToCheck =
-    route?.baseCaip2Id === originCaip2Id ? tokenAddress : route?.originRouterAddress ?? '';
-  const decimals = route?.decimals ?? STANDARD_TOKEN_DECIMALS;
-  const { balance } = useAccountTokenBalance(originCaip2Id, tokenAddrToCheck);
-  return {
-    balance,
-    decimals,
-  };
-}
-
-function RecipientTokenBalance({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
-  const { values } = useFormikContext<TransferFormValues>();
-  const { originCaip2Id, destinationCaip2Id, tokenAddress, recipientAddress } = values;
-  const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenAddress, tokenRoutes);
-  const tokenAddrToCheck =
-    route?.baseCaip2Id === destinationCaip2Id ? tokenAddress : route?.destRouterAddress ?? '';
-  const { balance } = useTokenBalance(destinationCaip2Id, tokenAddrToCheck, recipientAddress);
-  return <TokenBalance label="Remote balance" balance={balance} decimals={route?.decimals} />;
 }
 
 function MaxButton({

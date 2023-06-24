@@ -1,4 +1,3 @@
-import { BigNumber } from 'ethers';
 import Image from 'next/image';
 import { memo } from 'react';
 
@@ -18,8 +17,7 @@ function _TokenIcon({ token, size = 32 }: Props) {
   const title = token?.symbol || '';
   const character = title ? title.charAt(0).toUpperCase() : '';
 
-  const bgColorSeed =
-    token && !imageSrc ? BigNumber.from(token.address?.substring(0, 4)).toNumber() % 5 : undefined;
+  const bgColorSeed = token && !imageSrc ? (Buffer.from(token.address).at(0) || 0) % 5 : undefined;
   const fontSize = Math.floor(size / 2);
 
   return (

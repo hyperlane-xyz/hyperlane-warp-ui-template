@@ -5,7 +5,7 @@ import { TokenType } from '@hyperlane-xyz/hyperlane-token';
 
 import { areAddressesEqual } from '../../utils/addresses';
 import { logger } from '../../utils/logger';
-import { getCaip2Id } from '../chains/caip2';
+import { getCaip2Id, getProtocolType } from '../chains/caip2';
 import { ProtocolType } from '../chains/types';
 import { getMultiProvider, getProvider } from '../multiProvider';
 
@@ -63,21 +63,14 @@ export function useTokenRoutes() {
 }
 
 async function validateTokenMetadata(token: TokenMetadata) {
-  const {
-    type,
-    caip2Id,
-    symbol,
-    decimals,
-    tokenRouterAddress,
-    isNft,
-    protocol = ProtocolType.Ethereum,
-  } = token;
+  const { type, caip2Id, symbol, decimals, tokenRouterAddress, isNft } = token;
 
   // Native tokens cannot be queried for metadata
   if (type !== TokenType.collateral) return;
 
   logger.info(`Validating token ${symbol} on ${caip2Id}`);
 
+  const protocol = getProtocolType(caip2Id);
   let tokenAdapter: ITokenAdapter;
   if (protocol === ProtocolType.Ethereum) {
     const provider = getProvider(caip2Id);

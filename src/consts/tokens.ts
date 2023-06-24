@@ -36,18 +36,6 @@ export const tokenList: WarpTokenConfig = [
   //   logoURI: '/logos/weth.png',
   // },
 
-  // Example collateral token for a Sealevel (Solana) chain
-  // {
-  //   type: 'collateral',
-  //   protocol: 'sealevel',
-  //   chainId: 1399811149,
-  //   address: '00000000000000000000000000000000000000000000',
-  //   hypCollateralAddress: 'TODO',
-  //   name: 'USD Coin',
-  //   symbol: 'USDC',
-  //   decimals: 6,
-  // },
-
   // Example native token for a Sealevel (Solana) chain
   {
     type: 'native',
@@ -58,5 +46,18 @@ export const tokenList: WarpTokenConfig = [
     symbol: 'SOL',
     decimals: 9,
     logoURI: '/logos/solana.svg',
+  },
+
+  // Example collateral token for a Sealevel (Solana) chain
+  {
+    type: 'collateral',
+    protocol: 'sealevel',
+    chainId: 1399811151,
+    address: 'Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr',
+    hypCollateralAddress: 'A9QY6ZQ3t1T3Pk58gTx1vsSeH2B2AywwK2V7SpH2w2cC',
+    name: 'dUSDC',
+    symbol: 'dUSDC',
+    decimals: 6,
+    isSpl2022: false,
   },
 ];

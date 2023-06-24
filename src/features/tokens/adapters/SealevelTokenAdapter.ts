@@ -85,16 +85,11 @@ export class SealevelTokenAdapter implements ITokenAdapter {
     this.tokenProgramPubKey = new PublicKey(tokenProgramId);
   }
 
-  // TODO cleanup
   async getBalance(owner: Address): Promise<string> {
     const tokenPubKey = this.deriveAssociatedTokenAccount(new PublicKey(owner));
-    // const allAccounts = await this.connection.getParsedTokenAccountsByOwner(new PublicKey(owner), {
-    //   mint: this.programIdPubKey,
-    // });
-    // console.log('all accs', allAccounts);
-    // const tokenAccount = await getAccount(this.connection, associatedToken);
-    const balance = await this.connection.getTokenAccountBalance(tokenPubKey);
-    return balance.toString();
+    const response = await this.connection.getTokenAccountBalance(tokenPubKey);
+    const { amount } = response.value;
+    return amount;
   }
 
   async getMetadata(isNft?: boolean): Promise<{ decimals: number; symbol: string; name: string }> {
@@ -125,7 +120,7 @@ export class SealevelTokenAdapter implements ITokenAdapter {
   }
 
   getTokenProgramId(): PublicKey {
-    return this.isSpl2022 ? TOKEN_PROGRAM_ID : TOKEN_2022_PROGRAM_ID;
+    return this.isSpl2022 ? TOKEN_2022_PROGRAM_ID : TOKEN_PROGRAM_ID;
   }
 
   deriveAssociatedTokenAccount(owner: PublicKey): PublicKey {
@@ -332,8 +327,11 @@ export class SealevelHypCollateralAdapter extends SealevelHypNativeAdapter {
     mailbox: PublicKey,
     randomWallet: PublicKey,
   ): Array<AccountMeta> {
+    const commonKeys = super
+      .getTransferInstructionKeyList(sender, mailbox, randomWallet)
+      .slice(0, 9);
     return [
-      ...super.getTransferInstructionKeyList(sender, mailbox, randomWallet),
+      ...commonKeys,
       /// 9.   [executable] The SPL token program for the mint.
       { pubkey: this.getTokenProgramId(), isSigner: false, isWritable: false },
       /// 10.  [writeable] The mint.
@@ -361,8 +359,11 @@ export class SealevelHypSyntheticAdapter extends SealevelHypNativeAdapter {
     mailbox: PublicKey,
     randomWallet: PublicKey,
   ): Array<AccountMeta> {
+    const commonKeys = super
+      .getTransferInstructionKeyList(sender, mailbox, randomWallet)
+      .slice(0, 9);
     return [
-      ...super.getTransferInstructionKeyList(sender, mailbox, randomWallet),
+      ...commonKeys,
       /// 9. [executable] The spl_token_2022 program.
       { pubkey: TOKEN_2022_PROGRAM_ID, isSigner: false, isWritable: false },
       /// 10. [writeable] The mint / mint authority PDA account.

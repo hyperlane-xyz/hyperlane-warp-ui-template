@@ -110,7 +110,7 @@ export function TokenList({
               </div>
               <div className="ml-3 text-left">
                 <div className="text-xs">
-                  {isNativeToken(t.address) ? 'Native chain token' : `Address: ${t.address}`}
+                  {isNativeToken(t.address) ? 'Native chain token' : t.address}
                 </div>
                 <div className=" mt-0.5 text-xs flex space-x-1">
                   <span>{`Decimals: ${t.decimals}`}</span>

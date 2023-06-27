@@ -5,9 +5,8 @@ import { useState } from 'react';
 import { Spinner } from '../../components/animation/Spinner';
 import { Modal } from '../../components/layout/Modal';
 import ChevronIcon from '../../images/icons/chevron-down.svg';
-import { useAccountForChain } from '../wallet/hooks';
 
-import { useTokenIdBalance } from './balances';
+import { useOriginTokenIdBalance } from './balances';
 
 type Props = {
   name: string;
@@ -24,8 +23,7 @@ export function SelectTokenIdField({ name, caip2Id, tokenAddress, disabled }: Pr
     setTokenId(newTokenId);
   };
 
-  const address = useAccountForChain(caip2Id)?.address;
-  const { isLoading, tokenIds } = useTokenIdBalance(caip2Id, tokenAddress, address);
+  const { isLoading, tokenIds } = useOriginTokenIdBalance(caip2Id, tokenAddress);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 

@@ -26,15 +26,15 @@ export const tokenList: WarpTokenConfig = [
   },
 
   // Example native token for an EVM chain
-  // {
-  //   type: 'native',
-  //   chainId: 11155111,
-  //   name: 'Ether',
-  //   symbol: 'ETH',
-  //   decimals: 18,
-  //   hypNativeAddress: '0xEa44A29da87B5464774978e6A4F4072A4c048949',
-  //   logoURI: '/logos/weth.png',
-  // },
+  {
+    type: 'native',
+    chainId: 11155111,
+    name: 'Ether',
+    symbol: 'ETH',
+    decimals: 18,
+    hypNativeAddress: '0xEa44A29da87B5464774978e6A4F4072A4c048949',
+    logoURI: '/logos/weth.png',
+  },
 
   // Example native token for a Sealevel (Solana) chain
   {

@@ -5,8 +5,9 @@ import { TransferFormValues } from '../transfer/types';
 import { useAccountForChain } from '../wallet/hooks';
 
 import { SelectTokenIdField } from './SelectTokenIdField';
-import { useContractSupportsTokenByOwner, useOwnerOfErc721 } from './balances';
-import { RoutesMap, getTokenRoute } from './routes';
+import { useContractSupportsTokenByOwner, useIsSenderNftOwner } from './balances';
+import { RoutesMap } from './routes/types';
+import { getTokenRoute } from './routes/utils';
 
 export function SelectOrInputTokenIds({
   disabled,
@@ -47,7 +48,7 @@ function InputTokenId({ disabled, tokenAddress }: { disabled: boolean; tokenAddr
   const {
     values: { originCaip2Id, amount },
   } = useFormikContext<TransferFormValues>();
-  useOwnerOfErc721(originCaip2Id, tokenAddress, amount);
+  useIsSenderNftOwner(originCaip2Id, tokenAddress, amount);
 
   return (
     <div className="relative w-full">

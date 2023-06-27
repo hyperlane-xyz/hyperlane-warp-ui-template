@@ -1,4 +1,3 @@
-import { QueryClient, useQueryClient } from '@tanstack/react-query';
 import { Form, Formik, useFormikContext } from 'formik';
 import { useMemo, useState } from 'react';
 
@@ -9,65 +8,44 @@ import { IconButton } from '../../components/buttons/IconButton';
 import { SolidButton } from '../../components/buttons/SolidButton';
 import { ChevronIcon } from '../../components/icons/Chevron';
 import { TextField } from '../../components/input/TextField';
-import { config } from '../../consts/config';
-import { STANDARD_TOKEN_DECIMALS } from '../../consts/values';
 import SwapIcon from '../../images/icons/swap.svg';
 import { Color } from '../../styles/Color';
-import { areAddressesEqual, isValidAddress } from '../../utils/addresses';
+import { isValidAddress } from '../../utils/addresses';
 import { fromWei, fromWeiRounded, toWei, tryParseAmount } from '../../utils/amount';
 import { logger } from '../../utils/logger';
 import { ChainSelectField } from '../chains/ChainSelectField';
 import { getProtocolType } from '../chains/caip2';
-import { ProtocolSmallestUnit, ProtocolType } from '../chains/types';
+import { ProtocolSmallestUnit } from '../chains/types';
 import { getChainDisplayName } from '../chains/utils';
+import { AppState, useStore } from '../store';
 import { SelectOrInputTokenIds } from '../tokens/SelectOrInputTokenIds';
 import { TokenSelectField } from '../tokens/TokenSelectField';
-import {
-  getCachedOwnerOf,
-  getCachedTokenBalance,
-  getCachedTokenIdBalance,
-  useAccountTokenBalance,
-  useTokenBalance,
-} from '../tokens/balances';
-import { RoutesMap, getTokenRoute, useRouteChains } from '../tokens/routes';
-import { AccountInfo, useAccountForChain, useAccounts } from '../wallet/hooks';
+import { useDestinationBalance, useOriginBalance } from '../tokens/balances';
+import { useRouteChains } from '../tokens/routes/hooks';
+import { RoutesMap } from '../tokens/routes/types';
+import { getTokenRoute } from '../tokens/routes/utils';
+import { useAccountForChain } from '../wallet/hooks';
 
 import { TransferFormValues } from './types';
 import { isTransferApproveRequired, useTokenTransfer } from './useTokenTransfer';
 
 export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
   const caip2Ids = useRouteChains(tokenRoutes);
-  const initialValues: TransferFormValues = useMemo(() => {
-    const firstRoute = Object.values(tokenRoutes[caip2Ids[0]])[0][0];
-    return {
-      originCaip2Id: firstRoute.originCaip2Id,
-      destinationCaip2Id: firstRoute.destCaip2Id,
-      amount: '',
-      tokenAddress: '',
-      recipientAddress: '',
-    };
-  }, [caip2Ids, tokenRoutes]);
+  const initialValues = useFormInitialValues(caip2Ids, tokenRoutes);
 
   // Flag for if form is in input vs review mode
   const [isReview, setIsReview] = useState(false);
   // Flag for check current type of token
   const [isNft, setIsNft] = useState(false);
 
-  const queryClient = useQueryClient();
-  const { accounts } = useAccounts();
+  const balances = useStore((state) => state.balances);
   const validate = (values: TransferFormValues) =>
-    validateFormValues(values, tokenRoutes, queryClient, accounts);
+    validateFormValues(values, tokenRoutes, balances);
 
   const onSubmitForm = (values: TransferFormValues) => {
     logger.debug('Reviewing transfer form values:', JSON.stringify(values));
     setIsReview(true);
   };
-
-  const onDoneTransactions = () => {
-    setIsReview(false);
-    // Consider clearing form inputs here
-  };
-  const { triggerTransactions } = useTokenTransfer(onDoneTransactions);
 
   return (
     <Formik<TransferFormValues>
@@ -85,12 +63,7 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
         </div>
         <RecipientSection tokenRoutes={tokenRoutes} isReview={isReview} />
         <ReviewDetails visible={isReview} tokenRoutes={tokenRoutes} />
-        <ButtonSection
-          tokenRoutes={tokenRoutes}
-          isReview={isReview}
-          setIsReview={setIsReview}
-          triggerTransactions={triggerTransactions}
-        />
+        <ButtonSection tokenRoutes={tokenRoutes} isReview={isReview} setIsReview={setIsReview} />
       </Form>
     </Formik>
   );
@@ -190,12 +163,7 @@ function AmountSection({
   isReview: boolean;
 }) {
   const { values } = useFormikContext<TransferFormValues>();
-  const { originCaip2Id, destinationCaip2Id, tokenAddress } = values;
-  const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenAddress, tokenRoutes);
-  const tokenAddrToCheck =
-    route?.baseCaip2Id === originCaip2Id ? tokenAddress : route?.originRouterAddress ?? '';
-  const decimals = route?.decimals ?? STANDARD_TOKEN_DECIMALS;
-  const { balance } = useAccountTokenBalance(originCaip2Id, tokenAddrToCheck);
+  const { balance, decimals } = useOriginBalance(values, tokenRoutes);
 
   return (
     <div className="flex-1">
@@ -232,11 +200,7 @@ function RecipientSection({
   isReview: boolean;
 }) {
   const { values } = useFormikContext<TransferFormValues>();
-  const { originCaip2Id, destinationCaip2Id, tokenAddress, recipientAddress } = values;
-  const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenAddress, tokenRoutes);
-  const tokenAddrToCheck =
-    route?.baseCaip2Id === destinationCaip2Id ? tokenAddress : route?.destRouterAddress ?? '';
-  const { balance } = useTokenBalance(destinationCaip2Id, tokenAddrToCheck, recipientAddress);
+  const { balance, decimals } = useDestinationBalance(values, tokenRoutes);
 
   return (
     <div className="mt-4">
@@ -244,7 +208,7 @@ function RecipientSection({
         <label htmlFor="recipientAddress" className="block uppercase text-sm text-gray-500 pl-0.5">
           Recipient Address
         </label>
-        <TokenBalance label="Remote balance" balance={balance} decimals={route?.decimals} />
+        <TokenBalance label="Remote balance" balance={balance} decimals={decimals} />
       </div>
       <div className="relative w-full">
         <TextField
@@ -276,14 +240,18 @@ function ButtonSection({
   tokenRoutes,
   isReview,
   setIsReview,
-  triggerTransactions,
 }: {
   tokenRoutes: RoutesMap;
   isReview: boolean;
   setIsReview: (b: boolean) => void;
-  triggerTransactions: (values: TransferFormValues, tokenRoutes: RoutesMap) => Promise<void>;
 }) {
-  const { values } = useFormikContext<TransferFormValues>();
+  const { values, resetForm } = useFormikContext<TransferFormValues>();
+
+  const onDoneTransactions = () => {
+    setIsReview(false);
+    resetForm();
+  };
+  const { triggerTransactions } = useTokenTransfer(onDoneTransactions);
 
   if (!isReview) {
     return (
@@ -409,60 +377,55 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
 }
 
 function validateFormValues(
-  { originCaip2Id, destinationCaip2Id, amount, tokenAddress, recipientAddress }: TransferFormValues,
+  values: TransferFormValues,
   tokenRoutes: RoutesMap,
-  queryClient: QueryClient,
-  accounts: Record<ProtocolType, AccountInfo>,
+  balances: AppState['balances'],
 ) {
+  const { originCaip2Id, destinationCaip2Id, amount, tokenAddress, recipientAddress } = values;
   const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenAddress, tokenRoutes);
-  const isNft = !!route?.isNft;
-
-  const currentTokenAddress =
-    route?.baseCaip2Id === originCaip2Id ? tokenAddress : route?.originRouterAddress ?? '';
+  if (!route) return { destinationCaip2Id: 'No route found for chains/token' };
 
   if (!originCaip2Id) return { originCaip2Id: 'Invalid origin chain' };
   if (!destinationCaip2Id) return { destinationCaip2Id: 'Invalid destination chain' };
 
-  const originProtocol = getProtocolType(originCaip2Id);
+  if (!isValidAddress(tokenAddress)) return { tokenAddress: 'Invalid token' };
+
   const destProtocol = getProtocolType(destinationCaip2Id);
-  if (!isValidAddress(currentTokenAddress, originProtocol))
-    return { tokenAddress: 'Invalid token' };
   if (!isValidAddress(recipientAddress, destProtocol))
     return { recipientAddress: 'Invalid recipient' };
 
-  const accountAddress = accounts[originProtocol]?.address;
-
+  const isNft = !!route.isNft;
   const parsedAmount = tryParseAmount(amount);
   if (!parsedAmount || parsedAmount.lte(0))
     return { amount: isNft ? 'Invalid Token Id' : 'Invalid amount' };
+  const sendValue = isNft ? parsedAmount : toWei(parsedAmount, route?.decimals);
 
   if (!isNft) {
     // Validate balances for ERC20-like tokens
-    const cachedBalance = getCachedTokenBalance(
-      queryClient,
-      originCaip2Id,
-      tokenAddress,
-      accountAddress,
-    );
-    if (cachedBalance && parsedAmount.gt(cachedBalance) && !config.debug) {
-      return { amount: 'Insufficient balance' };
-    }
+    if (sendValue.gt(balances.senderBalance)) return { amount: 'Insufficient balance' };
   } else {
     // Validate balances for ERC721-like tokens
-    const cachedOwnerOf = getCachedOwnerOf(queryClient, originCaip2Id, currentTokenAddress, amount);
-    const cachedTokenIdBalance = getCachedTokenIdBalance(
-      queryClient,
-      originCaip2Id,
-      currentTokenAddress,
-      accountAddress,
-    );
-    if (
-      (cachedOwnerOf && accountAddress && !areAddressesEqual(accountAddress, cachedOwnerOf)) ||
-      !cachedTokenIdBalance?.includes(amount.toString())
-    ) {
+    const { isSenderNftOwner, senderNftIds } = balances;
+    const nftId = sendValue.toString();
+    if (isSenderNftOwner === false || (senderNftIds && !senderNftIds.includes(nftId))) {
       return { amount: 'Token ID not owned' };
     }
   }
 
   return {};
+}
+
+function useFormInitialValues(caip2Ids: Caip2Id[], tokenRoutes: RoutesMap): TransferFormValues {
+  return useMemo(() => {
+    const firstRoute = Object.values(tokenRoutes[caip2Ids[0]]).filter(
+      (routes) => routes.length,
+    )[0][0];
+    return {
+      originCaip2Id: firstRoute.originCaip2Id,
+      destinationCaip2Id: firstRoute.destCaip2Id,
+      amount: '',
+      tokenAddress: '',
+      recipientAddress: '',
+    };
+  }, [caip2Ids, tokenRoutes]);
 }

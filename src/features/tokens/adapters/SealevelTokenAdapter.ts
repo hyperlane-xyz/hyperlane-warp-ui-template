@@ -135,6 +135,7 @@ export class SealevelTokenAdapter implements ITokenAdapter {
 
 // Interacts with Hyp Native token programs
 export class SealevelHypNativeAdapter extends SealevelTokenAdapter implements IHypTokenAdapter {
+  public readonly wrappedNative: SealevelNativeTokenAdapter;
   public readonly warpProgramPubKey: PublicKey;
 
   constructor(
@@ -151,6 +152,17 @@ export class SealevelHypNativeAdapter extends SealevelTokenAdapter implements IH
       signerAddress,
     );
     this.warpProgramPubKey = new PublicKey(warpRouteProgramId);
+    this.wrappedNative = new SealevelNativeTokenAdapter(clusterName, signerAddress);
+  }
+
+  override async getBalance(owner: Address): Promise<string> {
+    return this.wrappedNative.getBalance(owner);
+  }
+
+  override async getMetadata(
+    isNft?: boolean,
+  ): Promise<{ decimals: number; symbol: string; name: string }> {
+    return this.wrappedNative.getMetadata();
   }
 
   async getDomains(): Promise<DomainId[]> {
@@ -371,6 +383,14 @@ export class SealevelHypSyntheticAdapter extends SealevelHypNativeAdapter {
       /// 11. [writeable] The token sender's associated token account, from which tokens will be burned.
       { pubkey: this.deriveAssociatedTokenAccount(sender), isSigner: false, isWritable: true },
     ];
+  }
+
+  // TODO fix
+  override async getBalance(owner: Address): Promise<string> {
+    const tokenPubKey = this.deriveAssociatedTokenAccount(new PublicKey(owner));
+    const response = await this.connection.getTokenAccountBalance(tokenPubKey);
+    const { amount } = response.value;
+    return amount;
   }
 
   deriveMintAuthorityAccount(): PublicKey {

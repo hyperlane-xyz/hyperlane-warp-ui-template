@@ -1,80 +1,109 @@
-import { QueryClient, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
+import { useEffect } from 'react';
 
+import { areAddressesEqual, isValidAddress } from '../../utils/addresses';
 import { logger } from '../../utils/logger';
+import { getProtocolType } from '../chains/caip2';
 import { getProvider } from '../multiProvider';
+import { useStore } from '../store';
+import { TransferFormValues } from '../transfer/types';
 import { useAccountForChain } from '../wallet/hooks';
 
 import { AdapterFactory } from './adapters/AdapterFactory';
 import { getHypErc721Contract } from './contracts/evmContracts';
+import { RoutesMap } from './routes/types';
+import { getTokenRoute } from './routes/utils';
 
-export function getTokenBalanceKey(
-  caip2Id: Caip2Id,
-  tokenAddress: Address,
-  accountAddress?: Address,
+export function useOriginBalance(
+  { originCaip2Id, destinationCaip2Id, tokenAddress }: TransferFormValues,
+  tokenRoutes: RoutesMap,
 ) {
-  return ['tokenBalance', caip2Id, tokenAddress, accountAddress];
-}
+  const address = useAccountForChain(originCaip2Id)?.address;
+  const setSenderBalance = useStore((state) => state.setSenderBalance);
 
-export function useAccountTokenBalance(caip2Id: Caip2Id, tokenAddress: Address) {
-  const account = useAccountForChain(caip2Id);
-  return useTokenBalance(caip2Id, tokenAddress, account?.address);
-}
-
-export function useTokenBalance(caip2Id: Caip2Id, tokenAddress: Address, accountAddress?: Address) {
   const {
     isLoading,
     isError: hasError,
-    data: balance,
+    data,
   } = useQuery({
-    queryKey: getTokenBalanceKey(caip2Id, tokenAddress, accountAddress),
-    queryFn: () => {
-      if (!caip2Id || !tokenAddress || !accountAddress) return null;
-      const adapter = AdapterFactory.TokenAdapterFromAddress(caip2Id, tokenAddress);
-      return adapter.getBalance(accountAddress);
+    queryKey: [
+      'useOriginBalance',
+      address,
+      originCaip2Id,
+      destinationCaip2Id,
+      tokenAddress,
+      tokenRoutes,
+    ],
+    queryFn: async () => {
+      const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenAddress, tokenRoutes);
+      const protocol = getProtocolType(originCaip2Id);
+      if (!route || !address || !isValidAddress(address, protocol)) return null;
+      const adapter = AdapterFactory.TokenAdapterFromRouteOrigin(route);
+      const balance = await adapter.getBalance(address);
+      return { balance, decimals: route.decimals };
     },
-    refetchInterval: 7500,
+    refetchInterval: 5000,
   });
 
-  return { isLoading, hasError, balance };
+  useEffect(() => {
+    setSenderBalance(data?.balance || '0');
+  }, [data?.balance, setSenderBalance]);
+
+  return { isLoading, hasError, balance: data?.balance, decimals: data?.decimals };
 }
 
-export function getCachedTokenBalance(
-  queryClient: QueryClient,
-  caip2Id: Caip2Id,
-  tokenAddress: Address,
-  accountAddress?: Address,
+export function useDestinationBalance(
+  { originCaip2Id, destinationCaip2Id, tokenAddress, recipientAddress }: TransferFormValues,
+  tokenRoutes: RoutesMap,
 ) {
-  return queryClient.getQueryData(getTokenBalanceKey(caip2Id, tokenAddress, accountAddress)) as
-    | string
-    | undefined;
-}
+  const {
+    isLoading,
+    isError: hasError,
+    data,
+  } = useQuery({
+    queryKey: [
+      'useDestinationBalance',
+      recipientAddress,
+      originCaip2Id,
+      destinationCaip2Id,
+      tokenAddress,
+      tokenRoutes,
+    ],
+    queryFn: async () => {
+      const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenAddress, tokenRoutes);
+      const protocol = getProtocolType(destinationCaip2Id);
+      if (!route || !recipientAddress || !isValidAddress(recipientAddress, protocol)) return null;
+      const adapter = AdapterFactory.TokenAdapterFromRouteDestination(route);
+      const balance = await adapter.getBalance(recipientAddress);
+      return { balance, decimals: route.decimals };
+    },
+    refetchInterval: 5000,
+  });
 
-export function getTokenBalanceIdKey(
-  caip2Id: Caip2Id,
-  tokenAddress: Address,
-  accountAddress?: Address,
-) {
-  return ['tokenIdBalance', caip2Id, tokenAddress, accountAddress];
+  return { isLoading, hasError, balance: data?.balance, decimals: data?.decimals };
 }
 
 // TODO solana support
-export function useTokenIdBalance(
-  caip2Id: Caip2Id,
-  tokenAddress: Address,
-  accountAddress?: Address,
-) {
+export function useOriginTokenIdBalance(caip2Id: Caip2Id, tokenAddress: Address) {
+  const accountAddress = useAccountForChain(caip2Id)?.address;
+  const setSenderNftIds = useStore((state) => state.setSenderNftIds);
+
   const {
     isLoading,
     isError: hasError,
     data: tokenIds,
   } = useQuery({
-    queryKey: getTokenBalanceIdKey(caip2Id, tokenAddress, accountAddress),
+    queryKey: ['useOriginTokenIdBalance', caip2Id, tokenAddress, accountAddress],
     queryFn: () => {
       if (!caip2Id || !tokenAddress || !accountAddress) return null;
       return fetchListOfERC721TokenId(caip2Id, tokenAddress, accountAddress);
     },
-    refetchInterval: 7500,
+    refetchInterval: 5000,
   });
+
+  useEffect(() => {
+    setSenderNftIds(tokenIds && Array.isArray(tokenIds) ? tokenIds : null);
+  }, [tokenIds, setSenderNftIds]);
 
   return { isLoading, hasError, tokenIds };
 }
@@ -101,25 +130,6 @@ export async function fetchListOfERC721TokenId(
   return result;
 }
 
-export function getCachedTokenIdBalance(
-  queryClient: QueryClient,
-  caip2Id: Caip2Id,
-  tokenAddress: Address,
-  accountAddress?: Address,
-) {
-  return queryClient.getQueryData(getTokenBalanceIdKey(caip2Id, tokenAddress, accountAddress)) as
-    | string[]
-    | undefined;
-}
-
-export function getContractSupportsTokenByOwnerKey(
-  caip2Id: Caip2Id,
-  tokenAddress: Address,
-  accountAddress?: Address,
-) {
-  return ['contractSupportsTokenByOwner', caip2Id, tokenAddress, accountAddress];
-}
-
 // TODO solana support
 export function useContractSupportsTokenByOwner(
   caip2Id: Caip2Id,
@@ -131,7 +141,7 @@ export function useContractSupportsTokenByOwner(
     isError: hasError,
     data: isContractAllowToGetTokenIds,
   } = useQuery({
-    queryKey: getContractSupportsTokenByOwnerKey(caip2Id, tokenAddress, accountAddress),
+    queryKey: ['useContractSupportsTokenByOwner', caip2Id, tokenAddress, accountAddress],
     queryFn: () => {
       if (!caip2Id || !tokenAddress || !accountAddress) return null;
       return contractSupportsTokenByOwner(caip2Id, tokenAddress, accountAddress);
@@ -142,7 +152,7 @@ export function useContractSupportsTokenByOwner(
 }
 
 // TODO solana support
-export async function contractSupportsTokenByOwner(
+async function contractSupportsTokenByOwner(
   caip2Id: Caip2Id,
   tokenAddress: Address,
   accountAddress: Address,
@@ -156,29 +166,33 @@ export async function contractSupportsTokenByOwner(
   }
 }
 
-export function getOwnerOfKey(caip2Id: Caip2Id, tokenAddress: Address, tokenId: string) {
-  return ['ownerOf', caip2Id, tokenAddress, tokenId];
-}
-
 // TODO solana support
-export function useOwnerOfErc721(caip2Id: Caip2Id, tokenAddress: Address, tokenId: string) {
+export function useIsSenderNftOwner(caip2Id: Caip2Id, tokenAddress: Address, tokenId: string) {
+  const senderAddress = useAccountForChain(caip2Id)?.address;
+  const setIsSenderNftOwner = useStore((state) => state.setIsSenderNftOwner);
+
   const {
     isLoading,
     isError: hasError,
     data: owner,
   } = useQuery({
-    queryKey: getOwnerOfKey(caip2Id, tokenAddress, tokenId),
+    queryKey: ['useOwnerOfErc721', caip2Id, tokenAddress, tokenId],
     queryFn: () => {
       if (!caip2Id || !tokenAddress || !tokenId) return null;
       return fetchERC721Owner(caip2Id, tokenAddress, tokenId);
     },
   });
 
+  useEffect(() => {
+    if (!senderAddress || !owner) setIsSenderNftOwner(null);
+    else setIsSenderNftOwner(areAddressesEqual(senderAddress, owner));
+  }, [owner, senderAddress, setIsSenderNftOwner]);
+
   return { isLoading, hasError, owner };
 }
 
 // TODO solana support
-export async function fetchERC721Owner(
+async function fetchERC721Owner(
   caip2Id: Caip2Id,
   tokenAddress: Address,
   tokenId: string,
@@ -190,15 +204,4 @@ export async function fetchERC721Owner(
   } catch (error) {
     return '';
   }
-}
-
-export function getCachedOwnerOf(
-  queryClient: QueryClient,
-  caip2Id: Caip2Id,
-  tokenAddress: Address,
-  tokenId: string,
-) {
-  return queryClient.getQueryData(getOwnerOfKey(caip2Id, tokenAddress, tokenId)) as
-    | string
-    | undefined;
 }

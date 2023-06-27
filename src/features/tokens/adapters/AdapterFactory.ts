@@ -6,6 +6,7 @@ import { parseCaip2Id } from '../../chains/caip2';
 import { ProtocolType } from '../../chains/types';
 import { getProvider } from '../../multiProvider';
 import { isNativeToken } from '../native';
+import { Route, RouteType } from '../routes/types';
 
 import {
   EvmHypCollateralAdapter,
@@ -22,22 +23,18 @@ import {
 } from './SealevelTokenAdapter';
 
 export class AdapterFactory {
-  static TokenAdapterFromAddress(caip2Id: Caip2Id, routerAddress: Address) {
+  static TokenAdapterFromAddress(caip2Id: Caip2Id, address: Address) {
     const { protocol, reference } = parseCaip2Id(caip2Id);
     if (protocol == ProtocolType.Ethereum) {
       const provider = getProvider(caip2Id);
-      if (isNativeToken(routerAddress)) {
-        return new EvmNativeTokenAdapter(provider);
-      } else {
-        return new EvmTokenAdapter(provider, routerAddress);
-      }
+      return isNativeToken(address)
+        ? new EvmNativeTokenAdapter(provider)
+        : new EvmTokenAdapter(provider, address);
     } else if (protocol === ProtocolType.Sealevel) {
       const cluster = getSolanaClusterName(reference);
-      if (isNativeToken(routerAddress)) {
-        return new SealevelNativeTokenAdapter(cluster);
-      } else {
-        return new SealevelTokenAdapter(cluster, routerAddress);
-      }
+      return isNativeToken(address)
+        ? new SealevelNativeTokenAdapter(cluster)
+        : new SealevelTokenAdapter(cluster, address);
     } else {
       throw new Error(`Unsupported protocol: ${protocol}`);
     }
@@ -73,6 +70,56 @@ export class AdapterFactory {
       SealevelHypSyntheticAdapter,
       isSpl2022,
     );
+  }
+
+  static TokenAdapterFromRouteOrigin(route: Route, isSpl2022?: boolean) {
+    const { type, originCaip2Id, originRouterAddress, baseTokenAddress } = route;
+    if (type === RouteType.BaseToSynthetic) {
+      return AdapterFactory.selectHypAdapter(
+        originCaip2Id,
+        originRouterAddress,
+        baseTokenAddress,
+        EvmHypCollateralAdapter,
+        isNativeToken(baseTokenAddress) ? SealevelHypNativeAdapter : SealevelHypCollateralAdapter,
+        isSpl2022,
+      );
+    } else if (type === RouteType.SyntheticToBase || type === RouteType.SyntheticToSynthetic) {
+      return AdapterFactory.selectHypAdapter(
+        originCaip2Id,
+        originRouterAddress,
+        baseTokenAddress,
+        EvmHypSyntheticAdapter,
+        SealevelHypSyntheticAdapter,
+        isSpl2022,
+      );
+    } else {
+      throw new Error(`Unsupported route type: ${type}`);
+    }
+  }
+
+  static TokenAdapterFromRouteDestination(route: Route, isSpl2022?: boolean) {
+    const { type, destCaip2Id, destRouterAddress, baseTokenAddress } = route;
+    if (type === RouteType.SyntheticToBase) {
+      return AdapterFactory.selectHypAdapter(
+        destCaip2Id,
+        destRouterAddress,
+        baseTokenAddress,
+        EvmHypCollateralAdapter,
+        isNativeToken(baseTokenAddress) ? SealevelHypNativeAdapter : SealevelHypCollateralAdapter,
+        isSpl2022,
+      );
+    } else if (type === RouteType.BaseToSynthetic || type === RouteType.SyntheticToSynthetic) {
+      return AdapterFactory.selectHypAdapter(
+        destCaip2Id,
+        destRouterAddress,
+        baseTokenAddress,
+        EvmHypSyntheticAdapter,
+        SealevelHypSyntheticAdapter,
+        isSpl2022,
+      );
+    } else {
+      throw new Error(`Unsupported route type: ${type}`);
+    }
   }
 
   protected static selectHypAdapter<E, S>(

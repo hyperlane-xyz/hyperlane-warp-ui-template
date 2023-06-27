@@ -3,40 +3,18 @@ import { useMemo } from 'react';
 
 import { TokenType } from '@hyperlane-xyz/hyperlane-token';
 
-import { areAddressesEqual } from '../../utils/addresses';
-import { logger } from '../../utils/logger';
-import { getCaip2Id, getProtocolType } from '../chains/caip2';
-import { ProtocolType } from '../chains/types';
-import { getMultiProvider, getProvider } from '../multiProvider';
+import { logger } from '../../../utils/logger';
+import { getCaip2Id, getProtocolType } from '../../chains/caip2';
+import { ProtocolType } from '../../chains/types';
+import { getMultiProvider, getProvider } from '../../multiProvider';
+import { AdapterFactory } from '../adapters/AdapterFactory';
+import { EvmTokenAdapter } from '../adapters/EvmTokenAdapter';
+import { ITokenAdapter } from '../adapters/ITokenAdapter';
+import { getHypErc20CollateralContract } from '../contracts/evmContracts';
+import { getAllTokens } from '../metadata';
+import { TokenMetadata, TokenMetadataWithHypTokens } from '../types';
 
-import { AdapterFactory } from './adapters/AdapterFactory';
-import { EvmTokenAdapter } from './adapters/EvmTokenAdapter';
-import { ITokenAdapter } from './adapters/ITokenAdapter';
-import { getHypErc20CollateralContract } from './contracts/evmContracts';
-import { getAllTokens } from './metadata';
-import { TokenMetadata, TokenMetadataWithHypTokens } from './types';
-
-export enum RouteType {
-  BaseToSynthetic = 'baseToSynthetic',
-  SyntheticToSynthetic = 'syntheticToSynthetic',
-  SyntheticToBase = 'syntheticToBase',
-}
-
-export interface Route {
-  type: RouteType;
-  baseCaip2Id: Caip2Id;
-  baseTokenAddress: Address; // i.e. the underlying 'collateralized' token
-  baseRouterAddress: Address;
-  originCaip2Id: Caip2Id;
-  originRouterAddress: Address;
-  destCaip2Id: Caip2Id;
-  destRouterAddress: Address;
-  decimals: number;
-  isNft: boolean;
-}
-
-// Origin chain to destination chain to Route
-export type RoutesMap = Record<Caip2Id, Record<Caip2Id, Route[]>>;
+import { RouteType, RoutesMap } from './types';
 
 export function useTokenRoutes() {
   const {
@@ -208,37 +186,6 @@ function getChainsFromTokens(tokens: TokenMetadataWithHypTokens[]): Caip2Id[] {
     }
   }
   return Array.from(chains);
-}
-
-export function getTokenRoutes(
-  originCaip2Id: Caip2Id,
-  destinationCaip2Id: Caip2Id,
-  tokenRoutes: RoutesMap,
-): Route[] {
-  return tokenRoutes[originCaip2Id]?.[destinationCaip2Id] || [];
-}
-
-export function getTokenRoute(
-  originCaip2Id: Caip2Id,
-  destinationCaip2Id: Caip2Id,
-  baseTokenAddress: Address,
-  tokenRoutes: RoutesMap,
-): Route | null {
-  if (!baseTokenAddress) return null;
-  return (
-    getTokenRoutes(originCaip2Id, destinationCaip2Id, tokenRoutes).find((r) =>
-      areAddressesEqual(baseTokenAddress, r.baseTokenAddress),
-    ) || null
-  );
-}
-
-export function hasTokenRoute(
-  originCaip2Id: Caip2Id,
-  destinationCaip2Id: Caip2Id,
-  baseTokenAddress: Address,
-  tokenRoutes: RoutesMap,
-): boolean {
-  return !!getTokenRoute(originCaip2Id, destinationCaip2Id, baseTokenAddress, tokenRoutes);
 }
 
 export function useRouteChains(tokenRoutes: RoutesMap): Caip2Id[] {

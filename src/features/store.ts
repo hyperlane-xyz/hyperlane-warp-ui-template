@@ -12,6 +12,14 @@ export interface AppState {
     s: TransferStatus,
     options?: { msgId?: string; originTxHash?: string },
   ) => void;
+  balances: {
+    senderBalance: string;
+    senderNftIds: string[] | null; // null means unknown
+    isSenderNftOwner: boolean | null;
+  };
+  setSenderBalance: (b: string) => void;
+  setSenderNftIds: (ids: string[] | null) => void;
+  setIsSenderNftOwner: (isOwner: boolean | null) => void;
 }
 
 export const useStore = create<AppState>()((set) => ({
@@ -30,5 +38,19 @@ export const useStore = create<AppState>()((set) => ({
         transfers: txs,
       };
     });
+  },
+  balances: {
+    senderBalance: '0',
+    senderNftIds: null,
+    isSenderNftOwner: false,
+  },
+  setSenderBalance: (senderBalance) => {
+    set((state) => ({ balances: { ...state.balances, senderBalance } }));
+  },
+  setSenderNftIds: (senderNftIds) => {
+    set((state) => ({ balances: { ...state.balances, senderNftIds } }));
+  },
+  setIsSenderNftOwner: (isSenderNftOwner) => {
+    set((state) => ({ balances: { ...state.balances, isSenderNftOwner } }));
   },
 }));

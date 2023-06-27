@@ -8,7 +8,8 @@ import { Modal } from '../../components/layout/Modal';
 
 import { getAllTokens } from './metadata';
 import { isNativeToken } from './native';
-import { RoutesMap, hasTokenRoute } from './routes';
+import { RoutesMap } from './routes/types';
+import { hasTokenRoute } from './routes/utils';
 import { TokenMetadata } from './types';
 
 export function TokenListModal({

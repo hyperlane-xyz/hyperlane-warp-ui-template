@@ -15,7 +15,8 @@ import { AppState, useStore } from '../store';
 import { AdapterFactory } from '../tokens/adapters/AdapterFactory';
 import { IHypTokenAdapter } from '../tokens/adapters/ITokenAdapter';
 import { isNativeToken } from '../tokens/native';
-import { Route, RouteType, RoutesMap, getTokenRoute } from '../tokens/routes';
+import { Route, RouteType, RoutesMap } from '../tokens/routes/types';
+import { getTokenRoute } from '../tokens/routes/utils';
 import {
   AccountInfo,
   ActiveChainInfo,

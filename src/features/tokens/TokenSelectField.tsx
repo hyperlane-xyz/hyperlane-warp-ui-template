@@ -7,7 +7,7 @@ import ChevronIcon from '../../images/icons/chevron-down.svg';
 import { TransferFormValues } from '../transfer/types';
 
 import { TokenListModal } from './TokenListModal';
-import { RoutesMap } from './routes';
+import { RoutesMap } from './routes/types';
 import { TokenMetadata } from './types';
 
 type Props = {

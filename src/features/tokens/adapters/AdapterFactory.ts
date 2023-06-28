@@ -72,7 +72,7 @@ export class AdapterFactory {
     );
   }
 
-  static TokenAdapterFromRouteOrigin(route: Route, isSpl2022?: boolean) {
+  static HypTokenAdapterFromRouteOrigin(route: Route) {
     const { type, originCaip2Id, originRouterAddress, baseTokenAddress } = route;
     if (type === RouteType.BaseToSynthetic) {
       return AdapterFactory.selectHypAdapter(
@@ -81,7 +81,7 @@ export class AdapterFactory {
         baseTokenAddress,
         EvmHypCollateralAdapter,
         isNativeToken(baseTokenAddress) ? SealevelHypNativeAdapter : SealevelHypCollateralAdapter,
-        isSpl2022,
+        route.isSpl2022,
       );
     } else if (type === RouteType.SyntheticToBase || type === RouteType.SyntheticToSynthetic) {
       return AdapterFactory.selectHypAdapter(
@@ -90,14 +90,14 @@ export class AdapterFactory {
         baseTokenAddress,
         EvmHypSyntheticAdapter,
         SealevelHypSyntheticAdapter,
-        isSpl2022,
+        route.isSpl2022,
       );
     } else {
       throw new Error(`Unsupported route type: ${type}`);
     }
   }
 
-  static TokenAdapterFromRouteDestination(route: Route, isSpl2022?: boolean) {
+  static HypTokenAdapterFromRouteDest(route: Route) {
     const { type, destCaip2Id, destRouterAddress, baseTokenAddress } = route;
     if (type === RouteType.SyntheticToBase) {
       return AdapterFactory.selectHypAdapter(
@@ -106,7 +106,7 @@ export class AdapterFactory {
         baseTokenAddress,
         EvmHypCollateralAdapter,
         isNativeToken(baseTokenAddress) ? SealevelHypNativeAdapter : SealevelHypCollateralAdapter,
-        isSpl2022,
+        route.isSpl2022,
       );
     } else if (type === RouteType.BaseToSynthetic || type === RouteType.SyntheticToSynthetic) {
       return AdapterFactory.selectHypAdapter(
@@ -115,7 +115,7 @@ export class AdapterFactory {
         baseTokenAddress,
         EvmHypSyntheticAdapter,
         SealevelHypSyntheticAdapter,
-        isSpl2022,
+        route.isSpl2022,
       );
     } else {
       throw new Error(`Unsupported route type: ${type}`);

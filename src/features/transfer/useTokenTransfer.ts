@@ -123,22 +123,7 @@ async function executeTransfer({
       params: values,
     });
 
-    const { type: routeType, originRouterAddress, baseTokenAddress } = tokenRoute;
-    let hypTokenAdapter: IHypTokenAdapter;
-    // TODO may need to pass in isSpl2022 here for Sealevel
-    if (routeType === RouteType.BaseToSynthetic) {
-      hypTokenAdapter = AdapterFactory.HypCollateralAdapterFromAddress(
-        originCaip2Id,
-        originRouterAddress,
-        baseTokenAddress,
-      );
-    } else {
-      hypTokenAdapter = AdapterFactory.HypSyntheticAdapterFromAddress(
-        originCaip2Id,
-        originRouterAddress,
-        baseTokenAddress,
-      );
-    }
+    const hypTokenAdapter = AdapterFactory.HypTokenAdapterFromRouteOrigin(tokenRoute);
 
     const triggerParams: ExecuteTransferParams<any> = {
       amountOrId,

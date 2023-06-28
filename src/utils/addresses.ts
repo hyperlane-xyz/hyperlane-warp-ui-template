@@ -1,6 +1,8 @@
 import { getAddress, isAddress } from '@ethersproject/address';
 import { PublicKey } from '@solana/web3.js';
 
+import { utils } from '@hyperlane-xyz/utils';
+
 import { SOL_ZERO_ADDRESS } from '../consts/values';
 import { ProtocolType } from '../features/chains/types';
 
@@ -157,6 +159,19 @@ export function shortenAddress(address: string, capitalize?: boolean) {
 export function capitalizeAddress(address: string) {
   if (address.startsWith('0x')) return '0x' + address.substring(2).toUpperCase();
   else return address.toUpperCase();
+}
+
+export function EvmAdressToBytes(address: string): Uint8Array {
+  const addrBytes32 = utils.addressToBytes32(address);
+  return Buffer.from(addrBytes32.substring(2), 'hex');
+}
+
+export function SolAddressToBytes(address: string): Uint8Array {
+  return new PublicKey(address).toBytes();
+}
+
+export function addressToBytes(address: string, protocol?: ProtocolType) {
+  return routeAddressUtil(EvmAdressToBytes, SolAddressToBytes, new Uint8Array(), address, protocol);
 }
 
 export function trimLeading0x(input: string) {

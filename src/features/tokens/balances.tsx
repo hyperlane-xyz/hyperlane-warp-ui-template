@@ -38,7 +38,7 @@ export function useOriginBalance(
       const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenAddress, tokenRoutes);
       const protocol = getProtocolType(originCaip2Id);
       if (!route || !address || !isValidAddress(address, protocol)) return null;
-      const adapter = AdapterFactory.TokenAdapterFromRouteOrigin(route);
+      const adapter = AdapterFactory.HypTokenAdapterFromRouteOrigin(route);
       const balance = await adapter.getBalance(address);
       return { balance, decimals: route.decimals };
     },
@@ -73,7 +73,7 @@ export function useDestinationBalance(
       const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenAddress, tokenRoutes);
       const protocol = getProtocolType(destinationCaip2Id);
       if (!route || !recipientAddress || !isValidAddress(recipientAddress, protocol)) return null;
-      const adapter = AdapterFactory.TokenAdapterFromRouteDestination(route);
+      const adapter = AdapterFactory.HypTokenAdapterFromRouteDest(route);
       const balance = await adapter.getBalance(recipientAddress);
       return { balance, decimals: route.decimals };
     },

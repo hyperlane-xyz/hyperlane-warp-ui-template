@@ -245,11 +245,11 @@ function ButtonSection({
   isReview: boolean;
   setIsReview: (b: boolean) => void;
 }) {
-  const { values, resetForm } = useFormikContext<TransferFormValues>();
+  const { values } = useFormikContext<TransferFormValues>();
 
   const onDoneTransactions = () => {
     setIsReview(false);
-    resetForm();
+    // resetForm();
   };
   const { triggerTransactions } = useTokenTransfer(onDoneTransactions);
 

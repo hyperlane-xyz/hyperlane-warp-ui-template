@@ -248,6 +248,7 @@ export function useTransactionFns(): Record<
   const { sendTransaction: sendSolTransaction } = useSolanaWallet();
 
   const onSwitchSolNetwork = useCallback(async (caip2Id: Caip2Id) => {
+    toast.error('Solana wallet must be connected to origin chain');
     throw new Error(`TODO support switching solana networks: ${caip2Id}}`);
   }, []);
 

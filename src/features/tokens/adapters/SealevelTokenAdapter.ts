@@ -20,7 +20,7 @@ import BigNumber from 'bignumber.js';
 import { deserializeUnchecked, serialize } from 'borsh';
 
 import { SOL_PLACEHOLDER_ADDRESS, SOL_SPL_NOOP_ADDRESS } from '../../../consts/values';
-import { isZeroishAddress } from '../../../utils/addresses';
+import { addressToBytes, isZeroishAddress } from '../../../utils/addresses';
 import {
   AccountDataWrapper,
   HyperlaneTokenDataSchema,
@@ -88,8 +88,7 @@ export class SealevelTokenAdapter implements ITokenAdapter {
   async getBalance(owner: Address): Promise<string> {
     const tokenPubKey = this.deriveAssociatedTokenAccount(new PublicKey(owner));
     const response = await this.connection.getTokenAccountBalance(tokenPubKey);
-    const { amount } = response.value;
-    return amount;
+    return response.value.amount;
   }
 
   async getMetadata(isNft?: boolean): Promise<{ decimals: number; symbol: string; name: string }> {
@@ -251,7 +250,7 @@ export class SealevelHypNativeAdapter extends SealevelTokenAdapter implements IH
       instruction: 1,
       data: new TransferRemoteInstruction({
         destination_domain: destination,
-        recipient: new PublicKey(recipient).toBytes(),
+        recipient: addressToBytes(recipient),
         amount_or_id: new BigNumber(amountOrId).toNumber(),
       }),
     });
@@ -385,12 +384,10 @@ export class SealevelHypSyntheticAdapter extends SealevelHypNativeAdapter {
     ];
   }
 
-  // TODO fix
   override async getBalance(owner: Address): Promise<string> {
     const tokenPubKey = this.deriveAssociatedTokenAccount(new PublicKey(owner));
     const response = await this.connection.getTokenAccountBalance(tokenPubKey);
-    const { amount } = response.value;
-    return amount;
+    return response.value.amount;
   }
 
   deriveMintAuthorityAccount(): PublicKey {
@@ -399,6 +396,15 @@ export class SealevelHypSyntheticAdapter extends SealevelHypNativeAdapter {
       this.warpProgramPubKey,
     );
     return pda;
+  }
+
+  override deriveAssociatedTokenAccount(owner: PublicKey): PublicKey {
+    return getAssociatedTokenAddressSync(
+      this.deriveMintAuthorityAccount(),
+      new PublicKey(owner),
+      true,
+      TOKEN_2022_PROGRAM_ID,
+    );
   }
 }
 

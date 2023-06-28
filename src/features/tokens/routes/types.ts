@@ -15,6 +15,7 @@ export interface Route {
   destRouterAddress: Address;
   decimals: number;
   isNft: boolean;
+  isSpl2022: boolean;
 }
 
 export type RoutesMap = Record<Caip2Id, Record<Caip2Id, Route[]>>;

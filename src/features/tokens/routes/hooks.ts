@@ -125,12 +125,14 @@ function computeTokenRoutes(tokens: TokenMetadataWithHypTokens[]) {
   for (const token of tokens) {
     for (const hypToken of token.hypTokens) {
       const {
+        type: tokenType,
         caip2Id: baseCaip2Id,
         address: baseTokenAddress,
         tokenRouterAddress,
         decimals,
         isNft,
       } = token;
+      const isSpl2022 = !!(tokenType === TokenType.collateral && token.isSpl2022);
       const { caip2Id: syntheticCaip2Id, address: syntheticRouterAddress } = hypToken;
 
       const commonRouteProps = {
@@ -138,6 +140,7 @@ function computeTokenRoutes(tokens: TokenMetadataWithHypTokens[]) {
         baseTokenAddress,
         baseRouterAddress: tokenRouterAddress,
         isNft: !!isNft,
+        isSpl2022,
       };
       tokenRoutes[baseCaip2Id][syntheticCaip2Id]?.push({
         type: RouteType.BaseToSynthetic,

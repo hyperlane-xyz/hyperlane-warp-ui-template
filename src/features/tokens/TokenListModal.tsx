@@ -94,7 +94,7 @@ export function TokenList({
   }, [searchQuery, originCaip2Id, destinationCaip2Id, tokenRoutes]);
 
   return (
-    <div className="flex flex-col items-stretch divide-y divide-gray-200">
+    <div className="flex flex-col items-stretch divide-y divide-gray-100">
       {tokens.length ? (
         tokens.map((t) => (
           <button

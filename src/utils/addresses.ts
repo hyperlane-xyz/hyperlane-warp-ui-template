@@ -9,7 +9,7 @@ import { ProtocolType } from '../features/chains/types';
 import { logger } from './logger';
 
 const EVM_ADDRESS_REGEX = /^0x[a-fA-F0-9]{40}$/;
-const SEALEVEL_ADDRESS_REGEX = /^[a-zA-Z0-9]{44}$/;
+const SEALEVEL_ADDRESS_REGEX = /^[a-zA-Z0-9]{36,44}$/;
 
 const EVM_TX_HASH_REGEX = /^0x([A-Fa-f0-9]{64})$/;
 const SEALEVEL_TX_HASH_REGEX = /^[a-zA-Z1-9]{88}$/;
@@ -172,6 +172,24 @@ export function SolAddressToBytes(address: string): Uint8Array {
 
 export function addressToBytes(address: string, protocol?: ProtocolType) {
   return routeAddressUtil(EvmAdressToBytes, SolAddressToBytes, new Uint8Array(), address, protocol);
+}
+
+export function addressToByteHexString(address: string, protocol?: ProtocolType) {
+  return '0x' + Buffer.from(addressToBytes(address, protocol)).toString('hex');
+}
+
+export function convertToProtocolAddress(address: string, protocol: ProtocolType) {
+  const currentProtocol = getAddressProtocolType(address);
+  if (currentProtocol === protocol) return address;
+  if (currentProtocol === ProtocolType.Ethereum && protocol === ProtocolType.Sealevel) {
+    return new PublicKey(addressToBytes(address, ProtocolType.Ethereum)).toBase58();
+  } else if (currentProtocol === ProtocolType.Sealevel && protocol === ProtocolType.Ethereum) {
+    return utils.bytes32ToAddress(
+      Buffer.from(addressToBytes(address, ProtocolType.Sealevel)).toString('hex'),
+    );
+  } else {
+    throw new Error(`Unsupported protocol combination ${currentProtocol} -> ${protocol}`);
+  }
 }
 
 export function trimLeading0x(input: string) {

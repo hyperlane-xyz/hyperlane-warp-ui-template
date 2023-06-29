@@ -2,6 +2,7 @@ import { Cluster } from '@solana/web3.js';
 import { providers } from 'ethers';
 
 import { getSolanaClusterName } from '../../../consts/solanaChains';
+import { convertToProtocolAddress } from '../../../utils/addresses';
 import { parseCaip2Id } from '../../chains/caip2';
 import { ProtocolType } from '../../chains/types';
 import { getProvider } from '../../multiProvider';
@@ -138,10 +139,15 @@ export class AdapterFactory {
     const { protocol, reference } = parseCaip2Id(caip2Id);
     if (protocol == ProtocolType.Ethereum) {
       const provider = getProvider(caip2Id);
-      return new EvmAdapter(provider, routerAddress);
+      return new EvmAdapter(provider, convertToProtocolAddress(routerAddress, protocol));
     } else if (protocol === ProtocolType.Sealevel) {
       const cluster = getSolanaClusterName(reference);
-      return new SealevelAdapter(cluster, routerAddress, tokenAddress, isSpl2022);
+      return new SealevelAdapter(
+        cluster,
+        convertToProtocolAddress(routerAddress, protocol),
+        convertToProtocolAddress(tokenAddress, protocol),
+        isSpl2022,
+      );
     } else {
       throw new Error(`Unsupported protocol: ${protocol}`);
     }

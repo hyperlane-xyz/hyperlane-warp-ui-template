@@ -4,7 +4,11 @@ import { BigNumber, PopulatedTransaction, Signer, providers } from 'ethers';
 import type { ERC20Upgradeable, HypERC20 } from '@hyperlane-xyz/hyperlane-token';
 import { utils } from '@hyperlane-xyz/utils';
 
-import { isValidEvmAddress, normalizeEvmAddress } from '../../../utils/addresses';
+import {
+  addressToByteHexString,
+  isValidEvmAddress,
+  normalizeEvmAddress,
+} from '../../../utils/addresses';
 import {
   getErc20Contract,
   getHypErc20CollateralContract,
@@ -145,12 +149,10 @@ export class EvmHypSyntheticAdapter<T extends HypERC20 = HypERC20>
     recipient,
     txValue,
   }: TransferRemoteParams): Promise<PopulatedTransaction> {
-    return this.contract.populateTransaction.transferRemote(
-      destination,
-      utils.addressToBytes32(recipient),
-      amountOrId,
-      { value: txValue },
-    );
+    const recipBytes32 = utils.addressToBytes32(addressToByteHexString(recipient));
+    return this.contract.populateTransaction.transferRemote(destination, recipBytes32, amountOrId, {
+      value: txValue,
+    });
   }
 }
 

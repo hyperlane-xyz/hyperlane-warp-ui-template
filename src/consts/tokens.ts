@@ -15,13 +15,13 @@ export const tokenList: WarpTokenConfig = [
 
   // Example NFT (ERC721) token for an EVM chain
   {
-    type: 'collateral',
     chainId: 5,
-    address: '0xd03483b978461b3162CE9e4c80835b9E81E07018',
-    hypCollateralAddress: '0x9a01dd4dD90dBc27a756Dce5B564D6468795ee14',
-    name: 'MyToken',
-    symbol: 'MTK',
+    name: 'Test721',
+    symbol: 'TEST721',
     decimals: 0,
+    type: 'collateral',
+    address: '0x77566D540d1E207dFf8DA205ed78750F9a1e7c55',
+    hypCollateralAddress: '0xDcbc0faAA269Cf649AC8950838664BB7B355BD6B',
     isNft: true,
   },
 

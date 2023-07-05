@@ -1,8 +1,11 @@
 import { z } from 'zod';
 
 import { TokenType } from '@hyperlane-xyz/hyperlane-token';
+import { ERC20Metadata } from '@hyperlane-xyz/hyperlane-token/dist/config';
 
 import { ProtocolType } from '../chains/types';
+
+export type MinimumTokenMetadata = Omit<ERC20Metadata, 'totalSupply'>;
 
 const commonTokenFields = z.object({
   chainId: z.number().positive().or(z.string().nonempty()),

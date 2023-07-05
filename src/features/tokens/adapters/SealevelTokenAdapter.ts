@@ -28,6 +28,7 @@ import {
   TransferRemoteSchema,
   TransferRemoteWrapper,
 } from '../contracts/sealevelSerialization';
+import { MinimumTokenMetadata } from '../types';
 
 import {
   IHypTokenAdapter,
@@ -50,7 +51,7 @@ export class SealevelNativeTokenAdapter implements ITokenAdapter {
     return balance.toString();
   }
 
-  async getMetadata(): Promise<{ decimals: number; symbol: string; name: string }> {
+  async getMetadata(): Promise<MinimumTokenMetadata> {
     throw new Error('Metadata not available to native tokens');
   }
 
@@ -91,7 +92,7 @@ export class SealevelTokenAdapter implements ITokenAdapter {
     return response.value.amount;
   }
 
-  async getMetadata(isNft?: boolean): Promise<{ decimals: number; symbol: string; name: string }> {
+  async getMetadata(isNft?: boolean): Promise<MinimumTokenMetadata> {
     // TODO solana support
     return { decimals: 9, symbol: 'SPL', name: 'SPL Token' };
   }
@@ -158,9 +159,7 @@ export class SealevelHypNativeAdapter extends SealevelTokenAdapter implements IH
     return this.wrappedNative.getBalance(owner);
   }
 
-  override async getMetadata(
-    isNft?: boolean,
-  ): Promise<{ decimals: number; symbol: string; name: string }> {
+  override async getMetadata(isNft?: boolean): Promise<MinimumTokenMetadata> {
     return this.wrappedNative.getMetadata();
   }
 

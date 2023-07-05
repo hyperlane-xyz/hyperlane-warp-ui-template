@@ -14,6 +14,7 @@ import {
   getHypErc20CollateralContract,
   getHypErc20Contract,
 } from '../contracts/evmContracts';
+import { MinimumTokenMetadata } from '../types';
 
 import {
   IHypTokenAdapter,
@@ -35,7 +36,7 @@ export class EvmNativeTokenAdapter implements ITokenAdapter {
     return balance.toString();
   }
 
-  async getMetadata(): Promise<{ decimals: number; symbol: string; name: string }> {
+  async getMetadata(): Promise<MinimumTokenMetadata> {
     // TODO get metadata from chainMetadata config
     throw new Error('Metadata not available to native tokens');
   }
@@ -85,9 +86,7 @@ export class EvmTokenAdapter<T extends ERC20Upgradeable = ERC20Upgradeable>
     return balance.toString();
   }
 
-  override async getMetadata(
-    isNft?: boolean,
-  ): Promise<{ decimals: number; symbol: string; name: string }> {
+  override async getMetadata(isNft?: boolean): Promise<MinimumTokenMetadata> {
     const [decimals, symbol, name] = await Promise.all([
       !isNft ? this.contract.decimals() : 0,
       this.contract.symbol(),
@@ -167,7 +166,7 @@ export class EvmHypCollateralAdapter extends EvmHypSyntheticAdapter implements I
     super(signerOrProvider, contractAddress, getHypErc20CollateralContract);
   }
 
-  override getMetadata(): Promise<{ decimals: number; symbol: string; name: string }> {
+  override getMetadata(): Promise<MinimumTokenMetadata> {
     // TODO pass through metadata from wrapped token or chainMetadata config
     throw new Error('Metadata not available for HypCollateral/HypNative contract.');
   }

@@ -202,7 +202,7 @@ async function executeEvmTransfer({
   if (isTransferApproveRequired(tokenRoute, baseTokenAddress)) {
     updateStatus(TransferStatus.CreatingApprove);
     const tokenAdapter = AdapterFactory.TokenAdapterFromAddress(originCaip2Id, baseTokenAddress);
-    const approveTxRequest = (await tokenAdapter.prepareApproveTx({
+    const approveTxRequest = (await tokenAdapter.populateApproveTx({
       amountOrId,
       recipient: baseRouterAddress,
     })) as EvmTransaction;
@@ -229,7 +229,7 @@ async function executeEvmTransfer({
     routeType === RouteType.BaseToSynthetic && isNativeToken(baseTokenAddress)
       ? BigNumber.from(gasPayment).add(amountOrId)
       : gasPayment;
-  const transferTxRequest = (await hypTokenAdapter.prepareTransferRemoteTx({
+  const transferTxRequest = (await hypTokenAdapter.populateTransferRemoteTx({
     amountOrId,
     recipient: recipientAddress,
     destination: destinationDomainId,
@@ -270,7 +270,7 @@ async function executeSealevelTransfer({
   // const gasPayment = await hypTokenAdapter.quoteGasPayment(destinationDomainId);
   // logger.debug('Quoted gas payment', gasPayment);
 
-  const transferTxRequest = (await hypTokenAdapter.prepareTransferRemoteTx({
+  const transferTxRequest = (await hypTokenAdapter.populateTransferRemoteTx({
     amountOrId,
     destination: destinationDomainId,
     recipient: recipientAddress,

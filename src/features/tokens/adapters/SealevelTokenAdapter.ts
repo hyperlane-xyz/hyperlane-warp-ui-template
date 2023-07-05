@@ -54,11 +54,11 @@ export class SealevelNativeTokenAdapter implements ITokenAdapter {
     throw new Error('Metadata not available to native tokens');
   }
 
-  prepareApproveTx(_params: TransferParams): Transaction {
+  populateApproveTx(_params: TransferParams): Transaction {
     throw new Error('Approve not required for native tokens');
   }
 
-  prepareTransferTx({ amountOrId, recipient, fromAccountOwner }: TransferParams): Transaction {
+  populateTransferTx({ amountOrId, recipient, fromAccountOwner }: TransferParams): Transaction {
     const fromPubkey = resolveAddress(fromAccountOwner, this.signerAddress);
     return new Transaction().add(
       SystemProgram.transfer({
@@ -96,11 +96,11 @@ export class SealevelTokenAdapter implements ITokenAdapter {
     return { decimals: 9, symbol: 'SPL', name: 'SPL Token' };
   }
 
-  prepareApproveTx(_params: TransferParams): Promise<Transaction> {
+  populateApproveTx(_params: TransferParams): Promise<Transaction> {
     throw new Error('Approve not required for sealevel tokens');
   }
 
-  prepareTransferTx({
+  populateTransferTx({
     amountOrId,
     recipient,
     fromAccountOwner,
@@ -229,7 +229,7 @@ export class SealevelHypNativeAdapter extends SealevelTokenAdapter implements IH
     ];
   }
 
-  async prepareTransferRemoteTx({
+  async populateTransferRemoteTx({
     amountOrId,
     destination,
     recipient,
@@ -259,6 +259,8 @@ export class SealevelHypNativeAdapter extends SealevelTokenAdapter implements IH
     const transferRemoteInstruction = new TransactionInstruction({
       keys,
       programId: this.warpProgramPubKey,
+      // Array of 1s is an arbitrary 8 byte "discriminator"
+      // https://github.com/hyperlane-xyz/issues/issues/462#issuecomment-1587859359
       data: Buffer.concat([Buffer.from([1, 1, 1, 1, 1, 1, 1, 1]), Buffer.from(serializedData)]),
     });
 

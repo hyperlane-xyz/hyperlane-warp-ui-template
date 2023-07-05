@@ -36,14 +36,15 @@ export class EvmNativeTokenAdapter implements ITokenAdapter {
   }
 
   async getMetadata(): Promise<{ decimals: number; symbol: string; name: string }> {
+    // TODO get metadata from chainMetadata config
     throw new Error('Metadata not available to native tokens');
   }
 
-  async prepareApproveTx(_params: TransferParams): Promise<PopulatedTransaction> {
+  async populateApproveTx(_params: TransferParams): Promise<PopulatedTransaction> {
     throw new Error('Approve not required for native tokens');
   }
 
-  async prepareTransferTx({
+  async populateTransferTx({
     amountOrId,
     recipient,
   }: TransferParams): Promise<PopulatedTransaction> {
@@ -95,14 +96,14 @@ export class EvmTokenAdapter<T extends ERC20Upgradeable = ERC20Upgradeable>
     return { decimals, symbol, name };
   }
 
-  override prepareApproveTx({
+  override populateApproveTx({
     amountOrId,
     recipient,
   }: TransferParams): Promise<PopulatedTransaction> {
     return this.contract.populateTransaction.approve(recipient, amountOrId);
   }
 
-  override prepareTransferTx({
+  override populateTransferTx({
     amountOrId,
     recipient,
   }: TransferParams): Promise<PopulatedTransaction> {
@@ -143,7 +144,7 @@ export class EvmHypSyntheticAdapter<T extends HypERC20 = HypERC20>
     return gasPayment.toString();
   }
 
-  prepareTransferRemoteTx({
+  populateTransferRemoteTx({
     amountOrId,
     destination,
     recipient,
@@ -167,14 +168,15 @@ export class EvmHypCollateralAdapter extends EvmHypSyntheticAdapter implements I
   }
 
   override getMetadata(): Promise<{ decimals: number; symbol: string; name: string }> {
+    // TODO pass through metadata from wrapped token or chainMetadata config
     throw new Error('Metadata not available for HypCollateral/HypNative contract.');
   }
 
-  override prepareApproveTx(_params: TransferParams): Promise<PopulatedTransaction> {
+  override populateApproveTx(_params: TransferParams): Promise<PopulatedTransaction> {
     throw new Error('Approve not applicable to HypCollateral/HypNative contract.');
   }
 
-  override prepareTransferTx(_params: TransferParams): Promise<PopulatedTransaction> {
+  override populateTransferTx(_params: TransferParams): Promise<PopulatedTransaction> {
     throw new Error('Local transfer not supported for HypCollateral/HypNative contract.');
   }
 }

@@ -17,8 +17,8 @@ export interface TransferRemoteParams extends TransferParams {
 export interface ITokenAdapter {
   getBalance(address?: Address): Promise<string>;
   getMetadata(isNft?: boolean): Promise<{ decimals: number; symbol: string; name: string }>;
-  prepareApproveTx(TransferParams: TransferParams): unknown | Promise<unknown>;
-  prepareTransferTx(TransferParams: TransferParams): unknown | Promise<unknown>;
+  populateApproveTx(TransferParams: TransferParams): unknown | Promise<unknown>;
+  populateTransferTx(TransferParams: TransferParams): unknown | Promise<unknown>;
 }
 
 export interface IHypTokenAdapter extends ITokenAdapter {
@@ -26,5 +26,5 @@ export interface IHypTokenAdapter extends ITokenAdapter {
   getRouterAddress(domain: DomainId): Promise<Address>;
   getAllRouters(): Promise<Array<{ domain: DomainId; address: Address }>>;
   quoteGasPayment(destination: DomainId): Promise<string>;
-  prepareTransferRemoteTx(TransferParams: TransferRemoteParams): unknown | Promise<unknown>;
+  populateTransferRemoteTx(TransferParams: TransferRemoteParams): unknown | Promise<unknown>;
 }

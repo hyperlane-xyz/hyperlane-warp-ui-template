@@ -9,7 +9,7 @@ import { getChainConfigs } from './chains/metadata';
 import { CustomChainMetadata, ProtocolType } from './chains/types';
 
 // A ProtocolType-aware MultiProvider
-class MultiProtocolMultiProvider extends MultiProvider {
+class MultiProtocolProvider extends MultiProvider {
   override tryGetChainMetadata(chainNameOrId: ChainName | number): CustomChainMetadata | null {
     let chainMetadata: ChainMetadata | undefined;
     if (isNumeric(chainNameOrId)) {
@@ -41,11 +41,11 @@ class MultiProtocolMultiProvider extends MultiProvider {
   }
 }
 
-let multiProvider: MultiProtocolMultiProvider;
+let multiProvider: MultiProtocolProvider;
 
 export function getMultiProvider() {
   if (!multiProvider) {
-    multiProvider = new MultiProtocolMultiProvider(getChainConfigs());
+    multiProvider = new MultiProtocolProvider(getChainConfigs());
   }
   return multiProvider;
 }

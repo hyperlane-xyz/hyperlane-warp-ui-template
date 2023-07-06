@@ -49,15 +49,15 @@ export const tokenList: WarpTokenConfig = [
   },
 
   // Example collateral token for a Sealevel (Solana) chain
-  {
-    type: 'collateral',
-    protocol: 'sealevel',
-    chainId: 1399811151,
-    address: 'Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr',
-    hypCollateralAddress: 'A9QY6ZQ3t1T3Pk58gTx1vsSeH2B2AywwK2V7SpH2w2cC',
-    name: 'dUSDC',
-    symbol: 'dUSDC',
-    decimals: 6,
-    isSpl2022: false,
-  },
+  // {
+  //   type: 'collateral',
+  //   protocol: 'sealevel',
+  //   chainId: 1399811151,
+  //   address: 'Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr',
+  //   hypCollateralAddress: 'A9QY6ZQ3t1T3Pk58gTx1vsSeH2B2AywwK2V7SpH2w2cC',
+  //   name: 'dUSDC',
+  //   symbol: 'dUSDC',
+  //   decimals: 6,
+  //   isSpl2022: false,
+  // },
 ];

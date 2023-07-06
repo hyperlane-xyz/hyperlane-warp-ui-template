@@ -15,6 +15,7 @@ import {
   EvmNativeTokenAdapter,
   EvmTokenAdapter,
 } from './EvmTokenAdapter';
+import { IHypTokenAdapter } from './ITokenAdapter';
 import {
   SealevelHypCollateralAdapter,
   SealevelHypNativeAdapter,
@@ -123,17 +124,17 @@ export class AdapterFactory {
     }
   }
 
-  protected static selectHypAdapter<E, S>(
+  protected static selectHypAdapter<E>(
     caip2Id: Caip2Id,
     routerAddress: Address,
     tokenAddress: Address,
-    EvmAdapter: new (provider: providers.Provider, routerAddress: Address) => E,
+    EvmAdapter: new (provider: providers.Provider, routerAddress: Address) => IHypTokenAdapter,
     SealevelAdapter: new (
       cluster: Cluster,
       routerAddress: Address,
       tokenAddress: Address,
       isSpl2022?: boolean,
-    ) => S,
+    ) => IHypTokenAdapter,
     isSpl2022?: boolean,
   ) {
     const { protocol, reference } = parseCaip2Id(caip2Id);

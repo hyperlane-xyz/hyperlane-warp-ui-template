@@ -24,7 +24,6 @@ export function SolanaWalletContext({ children }: PropsWithChildren<unknown>) {
       new SolflareWalletAdapter(),
       new TrustWalletAdapter(),
       new LedgerWalletAdapter(),
-      // new UnsafeBurnerWalletAdapter(),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [network],

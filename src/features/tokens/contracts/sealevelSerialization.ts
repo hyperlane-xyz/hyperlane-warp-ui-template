@@ -88,6 +88,16 @@ export const HyperlaneTokenDataSchema = new Map<any, any>([
  * Transfer Remote Borsh Schema
  */
 
+// Should match Instruction in https://github.com/hyperlane-xyz/hyperlane-monorepo/blob/trevor/sealevel-validator-rebase/rust/sealevel/libraries/hyperlane-sealevel-token/src/instruction.rs
+export enum HypTokenInstruction {
+  Init,
+  TransferRemote,
+  EnrollRemoteRouter,
+  EnrollRemoteRouters,
+  SetInterchainSecurityModule,
+  TransferOwnership,
+}
+
 export class TransferRemoteWrapper {
   instruction!: number;
   data!: TransferRemoteInstruction;

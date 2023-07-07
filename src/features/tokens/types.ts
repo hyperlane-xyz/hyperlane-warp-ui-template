@@ -1,13 +1,18 @@
-import { ethers } from 'ethers';
 import { z } from 'zod';
 
 import { TokenType } from '@hyperlane-xyz/hyperlane-token';
+import { ERC20Metadata } from '@hyperlane-xyz/hyperlane-token/dist/config';
+
+import { ProtocolType } from '../chains/types';
+
+export type MinimumTokenMetadata = Omit<ERC20Metadata, 'totalSupply'>;
 
 const commonTokenFields = z.object({
-  chainId: z.number().positive(),
-  name: z.string(),
-  symbol: z.string(),
-  decimals: z.number().positive(),
+  chainId: z.number().positive().or(z.string().nonempty()),
+  protocol: z.nativeEnum(ProtocolType).optional(),
+  name: z.string().nonempty(),
+  symbol: z.string().nonempty(),
+  decimals: z.number().nonnegative(), // decimals == 0 for NFTs
   logoURI: z.string().optional(),
 });
 type CommonTokenFields = z.infer<typeof commonTokenFields>;
@@ -22,7 +27,10 @@ type CommonTokenFields = z.infer<typeof commonTokenFields>;
  * See src/consts/tokens.ts
  */
 
-interface BaseTokenConfig extends CommonTokenFields {
+type CommonFieldsWithLooseProtocol = Omit<CommonTokenFields, 'protocol'> & {
+  protocol?: `${ProtocolType}`;
+};
+interface BaseTokenConfig extends CommonFieldsWithLooseProtocol {
   type: `${TokenType}`; // use template literal to allow string values
 }
 
@@ -30,6 +38,8 @@ const CollateralTokenSchema = commonTokenFields.extend({
   type: z.literal(TokenType.collateral),
   address: z.string(),
   hypCollateralAddress: z.string(),
+  isNft: z.boolean().optional(),
+  isSpl2022: z.boolean().optional(), // Only required if using a 2022 version SPL Token on a Sealevel chain
 });
 
 interface CollateralTokenConfig extends BaseTokenConfig {
@@ -37,6 +47,8 @@ interface CollateralTokenConfig extends BaseTokenConfig {
   type: TokenType.collateral | 'collateral';
   address: Address;
   hypCollateralAddress: Address;
+  isNft?: boolean;
+  isSpl2022?: boolean;
 }
 
 const NativeTokenSchema = commonTokenFields.extend({
@@ -60,19 +72,20 @@ export type WarpTokenConfig = Array<CollateralTokenConfig | NativeTokenConfig>;
  * See src/features/tokens/metadata.ts
  */
 interface BaseTokenMetadata extends CommonTokenFields {
+  caip2Id: Caip2Id;
   type: TokenType;
   address: Address;
-  tokenRouterAddress: Address; // Shared name for hypCollateralAddr and hypNativeAddr
+  tokenRouterAddress: Address; // Shared name for hypCollateralAddr or hypNativeAddr
+  isNft?: boolean;
 }
 
 interface CollateralTokenMetadata extends BaseTokenMetadata {
   type: TokenType.collateral;
+  isSpl2022?: boolean;
 }
 
-type ZeroAddress = `${typeof ethers.constants.AddressZero}`;
 interface NativeTokenMetadata extends BaseTokenMetadata {
   type: TokenType.native;
-  address: ZeroAddress;
 }
 
 export type TokenMetadata = CollateralTokenMetadata | NativeTokenMetadata;
@@ -81,7 +94,7 @@ export type TokenMetadata = CollateralTokenMetadata | NativeTokenMetadata;
  * Extended types including synthetic hyp token addresses
  */
 interface HypTokens {
-  hypTokens: Array<{ chainId: ChainId; address: Address }>;
+  hypTokens: Array<{ caip2Id: Caip2Id; address: Address }>;
 }
 
 type NativeTokenMetadataWithHypTokens = NativeTokenMetadata & HypTokens;

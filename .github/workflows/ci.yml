@@ -52,6 +52,8 @@ jobs:
 
       - name: build
         run: yarn run build
+        env:
+          NEXT_PUBLIC_WALLET_CONNECT_ID: ${{ secrets.NEXT_PUBLIC_WALLET_CONNECT_ID }}
 
   prettier:
     runs-on: ubuntu-latest

@@ -1,38 +1,56 @@
-import { useField } from 'formik';
+import { useField, useFormikContext } from 'formik';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { TokenIcon } from '../../components/icons/TokenIcon';
 import ChevronIcon from '../../images/icons/chevron-down.svg';
+import { TransferFormValues } from '../transfer/types';
 
 import { TokenListModal } from './TokenListModal';
-import { RoutesMap } from './routes';
+import { RoutesMap } from './routes/types';
 import { TokenMetadata } from './types';
 
 type Props = {
   name: string;
-  originChainId: ChainId;
-  destinationChainId: ChainId;
+  originCaip2Id: Caip2Id;
+  destinationCaip2Id: Caip2Id;
   tokenRoutes: RoutesMap;
   disabled?: boolean;
+  setIsNft: (value: boolean) => void;
 };
 
 export function TokenSelectField({
   name,
-  originChainId,
-  destinationChainId,
+  originCaip2Id,
+  destinationCaip2Id,
   tokenRoutes,
   disabled,
+  setIsNft,
 }: Props) {
   const [field, , helpers] = useField<Address>(name);
+  const { setFieldValue } = useFormikContext<TransferFormValues>();
 
   // Keep local state for token details, but let formik manage field value
   const [token, setToken] = useState<TokenMetadata | undefined>(undefined);
 
+  // Keep local state in sync with formik state
+  useEffect(() => {
+    if (!field.value) setToken(undefined);
+    else if (field.value !== token?.address) {
+      setToken(undefined);
+      helpers.setValue('');
+    }
+  }, [token, field.value, helpers]);
+
   const handleChange = (newToken: TokenMetadata) => {
     // Set the token address value in formik state
     helpers.setValue(newToken.address);
+    // reset amount after change token
+    setFieldValue('amount', '');
+    // Update local state
     setToken(newToken);
+    // Update nft state in parent
+    setIsNft(!!newToken.isNft);
   };
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -51,7 +69,9 @@ export function TokenSelectField({
       >
         <div className="flex items-center">
           <TokenIcon token={token} size={20} />
-          <span className="ml-2">{token?.symbol || 'Select Token'}</span>
+          <span className={`ml-2 ${!token?.symbol && 'text-slate-400'}`}>
+            {token?.symbol || 'Select Token'}
+          </span>
         </div>
         <Image src={ChevronIcon} width={12} height={8} alt="" />
       </button>
@@ -59,8 +79,8 @@ export function TokenSelectField({
         isOpen={isModalOpen}
         close={() => setIsModalOpen(false)}
         onSelect={handleChange}
-        originChainId={originChainId}
-        destinationChainId={destinationChainId}
+        originCaip2Id={originCaip2Id}
+        destinationCaip2Id={destinationCaip2Id}
         tokenRoutes={tokenRoutes}
       />
     </>

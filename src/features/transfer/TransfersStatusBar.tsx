@@ -1,6 +1,5 @@
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
-import { useAccount } from 'wagmi';
 
 import SendIcon from '../../images/icons/send.svg';
 import { useStore } from '../store';
@@ -10,8 +9,6 @@ import { TransferStatus } from './types';
 
 // Component that displays the status of pending and complete transactions
 export function TransfersStatusBar() {
-  const { address, isConnected } = useAccount();
-
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const transfers = useStore((s) => s.transfers);
@@ -21,7 +18,7 @@ export function TransfersStatusBar() {
     setIsModalOpen(true);
   }, [transfers.length]);
 
-  if (!transfers.length || !address || !isConnected) return null;
+  if (!transfers.length) return null;
 
   const totalTxs = transfers.length;
   const pendingTxs = transfers.filter(

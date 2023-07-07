@@ -4,11 +4,12 @@ import { ChainMap, ExplorerFamily } from '@hyperlane-xyz/sdk';
 
 import { CustomChainMetadata } from '../features/chains/types';
 
+// TODO move to SDK
 export const solanaChains: ChainMap<CustomChainMetadata> = {
   solanamainnet: {
     protocol: 'sealevel',
     chainId: 1399811149, // https://www.alchemy.com/chain-connect/chain/solana
-    domainId: 1399811149, // TODO
+    domainId: 1399811149,
     name: 'solanamainnet',
     displayName: 'Solana',
     nativeToken: { name: 'Sol', symbol: 'SOL', decimals: 9 },
@@ -32,7 +33,7 @@ export const solanaChains: ChainMap<CustomChainMetadata> = {
   solanatestnet: {
     protocol: 'sealevel',
     chainId: 13998111450,
-    domainId: 13998111450, // TODO
+    domainId: 13998111450,
     name: 'solanatestnet',
     displayName: 'Sol Testnet',
     nativeToken: { name: 'Sol', symbol: 'SOL', decimals: 9 },
@@ -49,7 +50,7 @@ export const solanaChains: ChainMap<CustomChainMetadata> = {
   solanadevnet: {
     protocol: 'sealevel',
     chainId: 1399811151,
-    domainId: 13375, // TODO change after next deployment
+    domainId: 1399811151,
     name: 'solanadevnet',
     displayName: 'Sol Devnet',
     nativeToken: { name: 'Sol', symbol: 'SOL', decimals: 9 },
@@ -60,26 +61,25 @@ export const solanaChains: ChainMap<CustomChainMetadata> = {
       reorgPeriod: 1,
       estimateBlockTime: 1,
     },
-    mailbox: '692KZJaoe2KRcD6uhCQDLLXnLNA5ZLnfvdqjE4aX9iu1',
+    mailbox: '4v25Dz9RccqUrTzmfHzJMsjd1iVoNrWzeJ4o6GYuJrVn',
     logoURI: '/logos/solana.svg',
   },
-  // TODO remove
-  solanadevnet2: {
+  zbctestnet: {
     protocol: 'sealevel',
-    chainId: 1399811152,
-    domainId: 13376, // TODO change after next deployment
-    name: 'solanadevnet2',
-    displayName: 'Sol Devnet2',
+    chainId: 2053254516,
+    domainId: 2053254516,
+    name: 'zbctestnet',
+    displayName: 'Zbc Testnet',
     nativeToken: { name: 'Sol', symbol: 'SOL', decimals: 9 },
-    publicRpcUrls: [{ http: 'https://api.devnet.solana.com' }],
+    publicRpcUrls: [{ http: 'https://api.zebec.eclipsenetwork.xyz:8899' }],
     blockExplorers: [],
     blocks: {
       confirmations: 1,
       reorgPeriod: 1,
       estimateBlockTime: 1,
     },
-    mailbox: 'AWgqPcY1vjHRoFLHNgs15fdvy4bqEakHmYXW78B8GgYk',
-    logoURI: '/logos/solana.svg',
+    mailbox: '4hW22NXtJ2AXrEVbeAmxjhvxWPSNvfTfAphKXdRBZUco',
+    logoURI: '/logos/zebec.png',
   },
 };
 

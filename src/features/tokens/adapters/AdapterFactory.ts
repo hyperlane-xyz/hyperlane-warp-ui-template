@@ -1,11 +1,10 @@
-import { Cluster } from '@solana/web3.js';
+import { Connection } from '@solana/web3.js';
 import { providers } from 'ethers';
 
-import { getSolanaClusterName } from '../../../consts/solanaChains';
 import { convertToProtocolAddress } from '../../../utils/addresses';
 import { parseCaip2Id } from '../../chains/caip2';
 import { ProtocolType } from '../../chains/types';
-import { getProvider } from '../../multiProvider';
+import { getMultiProvider, getProvider } from '../../multiProvider';
 import { isNativeToken } from '../native';
 import { Route, RouteType } from '../routes/types';
 
@@ -33,10 +32,11 @@ export class AdapterFactory {
         ? new EvmNativeTokenAdapter(provider)
         : new EvmTokenAdapter(provider, address);
     } else if (protocol === ProtocolType.Sealevel) {
-      const cluster = getSolanaClusterName(reference);
+      const rpcUrl = getMultiProvider().getRpcUrl(reference);
+      const connection = new Connection(rpcUrl, 'confirmed');
       return isNativeToken(address)
-        ? new SealevelNativeTokenAdapter(cluster)
-        : new SealevelTokenAdapter(cluster, address);
+        ? new SealevelNativeTokenAdapter(connection)
+        : new SealevelTokenAdapter(connection, address);
     } else {
       throw new Error(`Unsupported protocol: ${protocol}`);
     }
@@ -124,13 +124,13 @@ export class AdapterFactory {
     }
   }
 
-  protected static selectHypAdapter<E>(
+  protected static selectHypAdapter(
     caip2Id: Caip2Id,
     routerAddress: Address,
     tokenAddress: Address,
     EvmAdapter: new (provider: providers.Provider, routerAddress: Address) => IHypTokenAdapter,
     SealevelAdapter: new (
-      cluster: Cluster,
+      connection: Connection,
       routerAddress: Address,
       tokenAddress: Address,
       isSpl2022?: boolean,
@@ -142,9 +142,10 @@ export class AdapterFactory {
       const provider = getProvider(caip2Id);
       return new EvmAdapter(provider, convertToProtocolAddress(routerAddress, protocol));
     } else if (protocol === ProtocolType.Sealevel) {
-      const cluster = getSolanaClusterName(reference);
+      const rpcUrl = getMultiProvider().getRpcUrl(reference);
+      const connection = new Connection(rpcUrl, 'confirmed');
       return new SealevelAdapter(
-        cluster,
+        connection,
         convertToProtocolAddress(routerAddress, protocol),
         convertToProtocolAddress(tokenAddress, protocol),
         isSpl2022,

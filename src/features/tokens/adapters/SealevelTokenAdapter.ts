@@ -7,14 +7,12 @@ import {
 } from '@solana/spl-token';
 import {
   AccountMeta,
-  Cluster,
   Connection,
   Keypair,
   PublicKey,
   SystemProgram,
   Transaction,
   TransactionInstruction,
-  clusterApiUrl,
 } from '@solana/web3.js';
 import BigNumber from 'bignumber.js';
 import { deserializeUnchecked, serialize } from 'borsh';
@@ -40,11 +38,7 @@ import {
 
 // Interacts with native currencies
 export class SealevelNativeTokenAdapter implements ITokenAdapter {
-  public readonly connection: Connection;
-
-  constructor(public readonly clusterName: Cluster, public readonly signerAddress?: Address) {
-    this.connection = new Connection(clusterApiUrl(clusterName), 'confirmed');
-  }
+  constructor(public readonly connection: Connection, public readonly signerAddress?: Address) {}
 
   async getBalance(address?: Address): Promise<string> {
     const pubKey = resolveAddress(address, this.signerAddress);
@@ -74,16 +68,14 @@ export class SealevelNativeTokenAdapter implements ITokenAdapter {
 
 // Interacts with SPL token programs
 export class SealevelTokenAdapter implements ITokenAdapter {
-  public readonly connection: Connection;
   public readonly tokenProgramPubKey: PublicKey;
 
   constructor(
-    public readonly clusterName: Cluster,
+    public readonly connection: Connection,
     public readonly tokenProgramId: Address,
     public readonly isSpl2022: boolean = false,
     public readonly signerAddress?: Address,
   ) {
-    this.connection = new Connection(clusterApiUrl(clusterName), 'confirmed');
     this.tokenProgramPubKey = new PublicKey(tokenProgramId);
   }
 
@@ -141,13 +133,17 @@ export abstract class SealevelHypTokenAdapter
   public readonly warpProgramPubKey: PublicKey;
 
   constructor(
-    public readonly clusterName: Cluster,
+    public readonly connection: Connection,
     public readonly warpRouteProgramId: Address,
     public readonly tokenProgramId: Address,
     public readonly isSpl2022: boolean = false,
     public readonly signerAddress?: Address,
   ) {
-    super(clusterName, warpRouteProgramId, isSpl2022, signerAddress);
+    // Pass in placeholder address to avoid errors for native token addresses (which as represented here as 0s)
+    const superTokenProgramId = isZeroishAddress(tokenProgramId)
+      ? SystemProgram.programId.toBase58()
+      : tokenProgramId;
+    super(connection, superTokenProgramId, isSpl2022, signerAddress);
     this.warpProgramPubKey = new PublicKey(warpRouteProgramId);
   }
 
@@ -312,20 +308,14 @@ export class SealevelHypNativeAdapter extends SealevelHypTokenAdapter {
   public readonly wrappedNative: SealevelNativeTokenAdapter;
 
   constructor(
-    public readonly clusterName: Cluster,
+    public readonly connection: Connection,
     public readonly warpRouteProgramId: Address,
     public readonly tokenProgramId: Address,
     public readonly isSpl2022: boolean = false,
     public readonly signerAddress?: Address,
   ) {
-    super(
-      clusterName,
-      warpRouteProgramId,
-      isZeroishAddress(tokenProgramId) ? SystemProgram.programId.toBase58() : tokenProgramId,
-      isSpl2022,
-      signerAddress,
-    );
-    this.wrappedNative = new SealevelNativeTokenAdapter(clusterName, signerAddress);
+    super(connection, warpRouteProgramId, tokenProgramId, isSpl2022, signerAddress);
+    this.wrappedNative = new SealevelNativeTokenAdapter(connection, signerAddress);
   }
 
   override async getBalance(owner: Address): Promise<string> {

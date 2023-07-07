@@ -77,6 +77,10 @@ function SwapChainsButton({ disabled }: { disabled?: boolean }) {
     if (disabled) return;
     setFieldValue('originCaip2Id', destinationCaip2Id);
     setFieldValue('destinationCaip2Id', originCaip2Id);
+    // Reset other fields on chain change
+    setFieldValue('tokenAddress', '');
+    setFieldValue('recipientAddress', '');
+    setFieldValue('amount', '');
   };
 
   return (

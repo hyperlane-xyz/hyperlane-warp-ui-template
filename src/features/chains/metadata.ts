@@ -1,19 +1,22 @@
 import type { Chain as WagmiChain } from '@wagmi/core';
+import { z } from 'zod';
 
 import {
   ChainMap,
   ChainMetadata,
+  ChainMetadataWithArtifacts,
+  ChainMetadataWithArtifactsSchema,
+  ProtocolType,
   chainMetadata,
   chainMetadataToWagmiChain,
 } from '@hyperlane-xyz/sdk';
 
 import { chains } from '../../consts/chains';
-import { solanaChains } from '../../consts/solanaChains';
 import { logger } from '../../utils/logger';
 
-import { ChainConfigSchema, CustomChainMetadata, ProtocolType } from './types';
+let chainConfigs: ChainMap<ChainMetadata | ChainMetadataWithArtifacts>;
 
-let chainConfigs: ChainMap<ChainMetadata | CustomChainMetadata>;
+export const ChainConfigSchema = z.record(ChainMetadataWithArtifactsSchema);
 
 export function getChainConfigs() {
   if (!chainConfigs) {
@@ -22,8 +25,8 @@ export function getChainConfigs() {
       logger.error('Invalid chain config', result.error);
       throw new Error(`Invalid chain config: ${result.error.toString()}`);
     }
-    const customChainConfigs = result.data as ChainMap<CustomChainMetadata>;
-    chainConfigs = { ...chainMetadata, ...solanaChains, ...customChainConfigs };
+    const customChainConfigs = result.data as ChainMap<ChainMetadataWithArtifacts>;
+    chainConfigs = { ...chainMetadata, ...customChainConfigs };
   }
   return chainConfigs;
 }
@@ -31,7 +34,6 @@ export function getChainConfigs() {
 // Metadata formatted for use in Wagmi config
 export function getWagmiChainConfig(): WagmiChain[] {
   const evmChains = Object.values(getChainConfigs()).filter(
-    // @ts-ignore TODO add optional protocol field to ChainMetadata in SDK
     (c) => !c.protocol || c.protocol === ProtocolType.Ethereum,
   );
   return evmChains.map(chainMetadataToWagmiChain);

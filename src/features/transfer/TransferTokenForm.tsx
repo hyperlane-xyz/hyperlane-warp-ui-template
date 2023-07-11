@@ -1,6 +1,7 @@
 import { Form, Formik, useFormikContext } from 'formik';
 import { useMemo, useState } from 'react';
 
+import { ProtocolSmallestUnit } from '@hyperlane-xyz/sdk';
 import { WideChevron } from '@hyperlane-xyz/widgets';
 
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
@@ -15,7 +16,6 @@ import { fromWei, fromWeiRounded, toWei, tryParseAmount } from '../../utils/amou
 import { logger } from '../../utils/logger';
 import { ChainSelectField } from '../chains/ChainSelectField';
 import { getProtocolType } from '../chains/caip2';
-import { ProtocolSmallestUnit } from '../chains/types';
 import { getChainDisplayName } from '../chains/utils';
 import { AppState, useStore } from '../store';
 import { SelectOrInputTokenIds } from '../tokens/SelectOrInputTokenIds';

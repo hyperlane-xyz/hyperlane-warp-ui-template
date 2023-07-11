@@ -2,10 +2,10 @@ import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { TokenType } from '@hyperlane-xyz/hyperlane-token';
+import { ProtocolType } from '@hyperlane-xyz/sdk';
 
 import { logger } from '../../../utils/logger';
 import { getCaip2Id, getProtocolType } from '../../chains/caip2';
-import { ProtocolType } from '../../chains/types';
 import { getMultiProvider, getProvider } from '../../multiProvider';
 import { AdapterFactory } from '../adapters/AdapterFactory';
 import { EvmTokenAdapter } from '../adapters/EvmTokenAdapter';
@@ -94,11 +94,7 @@ async function fetchRemoteHypTokens(
   const hypTokens = remoteRouters.map((router) => {
     const destMetadata = multiProvider.getChainMetadata(router.domain);
     const protocol: ProtocolType = (destMetadata.protocol as ProtocolType) || ProtocolType.Ethereum;
-    const reference =
-      protocol === ProtocolType.Ethereum
-        ? multiProvider.getChainId(router.domain)
-        : multiProvider.getChainName(router.domain);
-    const caip2Id = getCaip2Id(protocol, reference);
+    const caip2Id = getCaip2Id(protocol, multiProvider.getChainId(router.domain));
     return {
       address: router.address,
       caip2Id,

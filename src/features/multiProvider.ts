@@ -1,16 +1,21 @@
 import { Signer, providers } from 'ethers';
 
-import { ChainMetadata, ChainName, MultiProvider } from '@hyperlane-xyz/sdk';
+import {
+  ChainMetadata,
+  ChainName,
+  HyperlaneDeploymentArtifacts,
+  MultiProvider,
+  ProtocolType,
+} from '@hyperlane-xyz/sdk';
 
 import { isNumeric } from '../utils/string';
 
 import { parseCaip2Id } from './chains/caip2';
 import { getChainConfigs } from './chains/metadata';
-import { CustomChainMetadata, ProtocolType } from './chains/types';
 
 // A ProtocolType-aware MultiProvider
 class MultiProtocolProvider extends MultiProvider {
-  override tryGetChainMetadata(chainNameOrId: ChainName | number): CustomChainMetadata | null {
+  override tryGetChainMetadata(chainNameOrId: ChainName | number): ChainMetadata | null {
     let chainMetadata: ChainMetadata | undefined;
     if (isNumeric(chainNameOrId)) {
       chainMetadata = Object.values(this.metadata).find(
@@ -22,20 +27,20 @@ class MultiProtocolProvider extends MultiProvider {
     return chainMetadata || null;
   }
 
-  override getChainMetadata(chainNameOrId: ChainName | number): CustomChainMetadata {
-    return super.getChainMetadata(chainNameOrId) as CustomChainMetadata;
+  // Custom chains include deployment artifacts so this gets metadata type with optional contract addresses
+  getChainMetadataWithArtifacts(chainNameOrId: ChainName | number) {
+    const metadata = super.getChainMetadata(chainNameOrId);
+    return metadata as ChainMetadata & Partial<HyperlaneDeploymentArtifacts>;
   }
 
   override tryGetProvider(chainNameOrId: ChainName | number): providers.Provider | null {
     const metadata = this.tryGetChainMetadata(chainNameOrId);
-    // @ts-ignore TODO add optional protocol field to ChainMetadata in SDK
     if (metadata?.protocol && metadata.protocol !== ProtocolType.Ethereum) return null;
     return super.tryGetProvider(chainNameOrId);
   }
 
   override tryGetSigner(chainNameOrId: ChainName | number): Signer | null {
     const metadata = this.tryGetChainMetadata(chainNameOrId);
-    // @ts-ignore TODO add optional protocol field to ChainMetadata in SDK
     if (metadata?.protocol && metadata.protocol !== ProtocolType.Ethereum) return null;
     return super.tryGetSigner(chainNameOrId);
   }

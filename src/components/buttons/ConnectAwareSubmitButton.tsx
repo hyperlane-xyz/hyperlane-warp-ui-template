@@ -1,8 +1,9 @@
 import { useFormikContext } from 'formik';
 import { useCallback } from 'react';
 
+import { ProtocolType } from '@hyperlane-xyz/sdk';
+
 import { tryGetProtocolType } from '../../features/chains/caip2';
-import { ProtocolType } from '../../features/chains/types';
 import { useAccountForChain, useConnectFns } from '../../features/wallet/hooks';
 import { useTimeout } from '../../utils/timeout';
 

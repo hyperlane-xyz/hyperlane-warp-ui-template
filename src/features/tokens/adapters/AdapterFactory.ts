@@ -1,9 +1,10 @@
 import { Connection } from '@solana/web3.js';
 import { providers } from 'ethers';
 
+import { ProtocolType } from '@hyperlane-xyz/sdk';
+
 import { convertToProtocolAddress } from '../../../utils/addresses';
 import { parseCaip2Id } from '../../chains/caip2';
-import { ProtocolType } from '../../chains/types';
 import { getMultiProvider, getProvider } from '../../multiProvider';
 import { isNativeToken } from '../native';
 import { Route, RouteType } from '../routes/types';

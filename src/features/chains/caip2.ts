@@ -1,24 +1,14 @@
-import { logger } from '../../utils/logger';
-import { isNumeric } from '../../utils/string';
+import { ProtocolType } from '@hyperlane-xyz/sdk';
 
-import { ProtocolType } from './types';
+import { logger } from '../../utils/logger';
 
 // Based on https://chainagnostic.org/CAIPs/caip-2
 export function getCaip2Id(protocol: ProtocolType, reference: string | number): Caip2Id {
   if (!Object.values(ProtocolType).includes(protocol)) {
     throw new Error(`Invalid chain environment: ${protocol}`);
   }
-  if (!reference) {
-    throw new Error(`Reference required: ${reference}`);
-  }
-  if (protocol === ProtocolType.Ethereum && (typeof reference !== 'number' || reference < 0)) {
-    throw new Error(`Invalid evm chain reference (id): ${reference}`);
-  }
-  if (
-    protocol === ProtocolType.Sealevel &&
-    (typeof reference !== 'string' || isNumeric(reference))
-  ) {
-    throw new Error(`Invalid solana chain reference: ${reference}`);
+  if (typeof reference !== 'number' || reference <= 0) {
+    throw new Error(`Invalid chain reference: ${reference}`);
   }
   return `${protocol}:${reference}`;
 }

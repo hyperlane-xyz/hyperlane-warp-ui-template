@@ -1,4 +1,4 @@
-import { chainIdToMetadata } from '@hyperlane-xyz/sdk';
+import { ProtocolType, chainIdToMetadata } from '@hyperlane-xyz/sdk';
 
 import { toTitleCase } from '../../utils/string';
 import { getMultiProvider } from '../multiProvider';
@@ -16,10 +16,18 @@ export function getChainDisplayName(id: Caip2Id, shortName = false) {
 
 export function isPermissionlessChain(id: Caip2Id) {
   if (!id) return true;
-  const { reference } = parseCaip2Id(id);
-  return !chainIdToMetadata[reference];
+  const { protocol, reference } = parseCaip2Id(id);
+  return protocol !== ProtocolType.Ethereum || !chainIdToMetadata[reference];
 }
 
 export function hasPermissionlessChain(ids: Caip2Id[]) {
   return !ids.every((c) => !isPermissionlessChain(c));
+}
+
+export function getChainByRpcEndpoint(endpoint?: string) {
+  if (!endpoint) return undefined;
+  const allMetadata = Object.values(getMultiProvider().metadata);
+  return allMetadata.find(
+    (m) => !!m.rpcUrls.find((rpc) => rpc.http.toLowerCase().includes(endpoint.toLowerCase())),
+  );
 }

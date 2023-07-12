@@ -856,36 +856,36 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/core@npm:1.4.0":
-  version: 1.4.0
-  resolution: "@hyperlane-xyz/core@npm:1.4.0"
+"@hyperlane-xyz/core@npm:1.4.1":
+  version: 1.4.1
+  resolution: "@hyperlane-xyz/core@npm:1.4.1"
   dependencies:
-    "@hyperlane-xyz/utils": 1.4.0
+    "@hyperlane-xyz/utils": 1.4.1
     "@openzeppelin/contracts": ^4.8.0
     "@openzeppelin/contracts-upgradeable": ^4.8.0
-  checksum: 46f431e4becd655e725ccab48429840128deba19a74bac13747cf50542fc22ee0d7e941d190f77bad5009a982d0ef4241ff17d6704ddd02ba47fa4a9253a6c35
+  checksum: 76471f2446c9539888a8120d72f2ec2e0a548026956aca45f4f96bb4aaa28fc68a501b2ca29e3faca053aa33ee2fe92afc3175573f9e12cc8698b9f11aa83454
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/hyperlane-token@npm:^1.4.0":
-  version: 1.4.0
-  resolution: "@hyperlane-xyz/hyperlane-token@npm:1.4.0"
+"@hyperlane-xyz/hyperlane-token@npm:^1.4.1":
+  version: 1.4.1
+  resolution: "@hyperlane-xyz/hyperlane-token@npm:1.4.1"
   dependencies:
-    "@hyperlane-xyz/core": 1.4.0
-    "@hyperlane-xyz/sdk": 1.4.0
-    "@hyperlane-xyz/utils": 1.4.0
+    "@hyperlane-xyz/core": 1.4.1
+    "@hyperlane-xyz/sdk": 1.4.1
+    "@hyperlane-xyz/utils": 1.4.1
     "@openzeppelin/contracts-upgradeable": ^4.8.0
     ethers: ^5.7.2
-  checksum: 7e80acf27fe5424659ef1904c269955626d895153c78f93d5282c296aef2f5b16bd6e7e4411a0271de79b9e2a8f995b230593834019cbe99e6ed9ad92c4a1fff
+  checksum: e1bbe74190a543ab70fb59e054983b22520227d9fc72cab554a2f092a3b6bb1f5b6255367941993cfffd64977ad25a28d7d5fbc7da79536fa156f70213c292b8
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/sdk@npm:1.4.0, @hyperlane-xyz/sdk@npm:^1.4.0":
-  version: 1.4.0
-  resolution: "@hyperlane-xyz/sdk@npm:1.4.0"
+"@hyperlane-xyz/sdk@npm:1.4.1, @hyperlane-xyz/sdk@npm:^1.4.1":
+  version: 1.4.1
+  resolution: "@hyperlane-xyz/sdk@npm:1.4.1"
   dependencies:
-    "@hyperlane-xyz/core": 1.4.0
-    "@hyperlane-xyz/utils": 1.4.0
+    "@hyperlane-xyz/core": 1.4.1
+    "@hyperlane-xyz/utils": 1.4.1
     "@types/coingecko-api": ^1.0.10
     "@types/debug": ^4.1.7
     "@wagmi/chains": ^0.2.6
@@ -894,16 +894,16 @@ __metadata:
     debug: ^4.3.4
     ethers: ^5.7.2
     zod: ^3.21.2
-  checksum: 50aee754c0dd71806d5f2d5ef3b5f1dfe9a3080ed6f5db11d6457aa2aadd3607b88d0d9467aef0fa624828841105f1af37cc109c04f00e7f2eb897def0656ba2
+  checksum: 108d19dbc050cb6693660344bd239a7b0f4f89bda0c6ab47d47dbac7f633553200a251b6b1897c232cdb572b8b6b2c3e5b446904d98cdb7e08ca7389e6bae7a4
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/utils@npm:1.4.0":
-  version: 1.4.0
-  resolution: "@hyperlane-xyz/utils@npm:1.4.0"
+"@hyperlane-xyz/utils@npm:1.4.1":
+  version: 1.4.1
+  resolution: "@hyperlane-xyz/utils@npm:1.4.1"
   dependencies:
     ethers: ^5.7.2
-  checksum: f346975f1bc47739209d975dd67da5d048ba15ac246d69ffa882143a8898b628f03e2d807895c1f2bad28a2c6675857e7dd74b4329a8090730cdf33482b71271
+  checksum: 04897ef9f1681348d68b8a8c75cdfd0d50b7c7702739d316e287f552652e36c5845abd0cbf767188e7438b419d98ccba0b9aa7b0ef6e972e67c0e1f0b13289ef
   languageName: node
   linkType: hard
 
@@ -912,9 +912,9 @@ __metadata:
   resolution: "@hyperlane-xyz/warp-ui-template@workspace:."
   dependencies:
     "@headlessui/react": ^1.7.14
-    "@hyperlane-xyz/hyperlane-token": ^1.4.0
-    "@hyperlane-xyz/sdk": ^1.4.0
-    "@hyperlane-xyz/widgets": ^1.4.0
+    "@hyperlane-xyz/hyperlane-token": ^1.4.1
+    "@hyperlane-xyz/sdk": ^1.4.1
+    "@hyperlane-xyz/widgets": ^1.4.1
     "@metamask/jazzicon": "https://github.com/jmrossy/jazzicon#7a8df28974b4e81129bfbe3cab76308b889032a6"
     "@rainbow-me/rainbowkit": 0.12.16
     "@solana/spl-token": ^0.3.8
@@ -953,14 +953,14 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@hyperlane-xyz/widgets@npm:^1.4.0":
-  version: 1.4.0
-  resolution: "@hyperlane-xyz/widgets@npm:1.4.0"
+"@hyperlane-xyz/widgets@npm:^1.4.1":
+  version: 1.4.1
+  resolution: "@hyperlane-xyz/widgets@npm:1.4.1"
   peerDependencies:
     "@hyperlane-xyz/sdk": ^1.4
     react: ^18
     react-dom: ^18
-  checksum: ccd620cf074e0c62b90b9dde25fc3f9fa4e458907857b6ec7aa86005195bf1cde7bd1528d59ba62a712adf381d54f5c4209196a27653283de4b3610e20719d48
+  checksum: ca96f2a426a76e82763c64e821d3c5809b2eb25acfbdddee2df4c123511492aca8406c21f161139787b335c9743f0a2dc242920b5335c3bad55be605c8defb5c
   languageName: node
   linkType: hard
 

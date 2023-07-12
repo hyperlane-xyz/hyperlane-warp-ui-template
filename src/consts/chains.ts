@@ -55,9 +55,9 @@ export const chains: ChainMap<ChainMetadataWithArtifacts> = {
   },
   zbctestnet: {
     ...zbctestnet,
-    rpcUrls: [{ http: 'https://api.zebec.eclipsenetwork.xyz:8899' }],
     mailbox: '4hW22NXtJ2AXrEVbeAmxjhvxWPSNvfTfAphKXdRBZUco',
     interchainGasPaymaster: '',
     validatorAnnounce: '',
+    logoURI: '/logos/zebec.png',
   },
 };

@@ -1,10 +1,9 @@
 import { TokenType } from '@hyperlane-xyz/hyperlane-token';
+import { ProtocolType } from '@hyperlane-xyz/sdk';
 
 import { tokenList } from '../../consts/tokens';
 import { logger } from '../../utils/logger';
 import { getCaip2Id } from '../chains/caip2';
-import { ProtocolType } from '../chains/types';
-import { getMultiProvider } from '../multiProvider';
 
 import { getNativeTokenAddress } from './native';
 import { TokenMetadata, WarpTokenConfig, WarpTokenConfigSchema } from './types';
@@ -25,7 +24,6 @@ function parseTokenConfigs(configList: WarpTokenConfig): TokenMetadata[] {
     throw new Error(`Invalid token config: ${result.error.toString()}`);
   }
 
-  const multiProvider = getMultiProvider();
   const parsedConfig = result.data;
   const tokenMetadata: TokenMetadata[] = [];
   for (const token of parsedConfig) {
@@ -38,9 +36,7 @@ function parseTokenConfigs(configList: WarpTokenConfig): TokenMetadata[] {
       decimals,
       logoURI,
     } = token;
-    const reference =
-      protocol === ProtocolType.Ethereum ? chainId : multiProvider.getChainName(chainId);
-    const caip2Id = getCaip2Id(protocol, reference);
+    const caip2Id = getCaip2Id(protocol, chainId);
     const commonFields = { caip2Id, chainId, name, symbol, decimals, logoURI };
     if (type == TokenType.collateral) {
       tokenMetadata.push({

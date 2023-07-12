@@ -1,11 +1,9 @@
-import Image from 'next/image';
 import { PropsWithChildren } from 'react';
 
-import EthereumLogo from '@hyperlane-xyz/sdk/logos/color/ethereum.svg';
+import { ProtocolType, chainMetadata } from '@hyperlane-xyz/sdk';
+import { ChainLogo } from '@hyperlane-xyz/widgets';
 
 import { Modal } from '../../components/layout/Modal';
-import SolanaLogo from '../../images/logos/solana.svg';
-import { ProtocolType } from '../chains/types';
 
 import { useConnectFns } from './hooks';
 
@@ -24,14 +22,14 @@ export function WalletEnvSelectionModal({ isOpen, close }: { isOpen: boolean; cl
         <EnvButton
           onClick={onClickEnv(ProtocolType.Ethereum)}
           subTitle="an EVM"
-          imgSrc={EthereumLogo}
+          logoChainId={chainMetadata.ethereum.chainId}
         >
           Ethereum
         </EnvButton>
         <EnvButton
           onClick={onClickEnv(ProtocolType.Sealevel)}
           subTitle="a Solana"
-          imgSrc={SolanaLogo}
+          logoChainId={chainMetadata.solanadevnet.chainId}
         >
           Solana
         </EnvButton>
@@ -43,15 +41,15 @@ export function WalletEnvSelectionModal({ isOpen, close }: { isOpen: boolean; cl
 function EnvButton({
   onClick,
   subTitle,
-  imgSrc,
+  logoChainId,
   children,
-}: PropsWithChildren<{ subTitle: string; imgSrc: any; onClick?: () => void }>) {
+}: PropsWithChildren<{ subTitle: string; logoChainId: number; onClick?: () => void }>) {
   return (
     <button
       onClick={onClick}
       className="w-full py-6 space-y-2.5 flex flex-col items-center rounded-lg border border-gray-200 hover:bg-gray-100 hover:border-gray-200 active:bg-gray-200 transition-all"
     >
-      <Image src={imgSrc} width={34} height={34} alt="" />
+      <ChainLogo chainId={logoChainId} size={34} />
       <div className="uppercase text-gray-800 tracking-wide">{children}</div>
       <div className="text-sm text-gray-500">{`Connect to ${subTitle} compatible wallet`}</div>
     </button>

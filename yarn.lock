@@ -856,36 +856,36 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/core@npm:1.3.4":
-  version: 1.3.4
-  resolution: "@hyperlane-xyz/core@npm:1.3.4"
+"@hyperlane-xyz/core@npm:1.4.1":
+  version: 1.4.1
+  resolution: "@hyperlane-xyz/core@npm:1.4.1"
   dependencies:
-    "@hyperlane-xyz/utils": 1.3.4
+    "@hyperlane-xyz/utils": 1.4.1
     "@openzeppelin/contracts": ^4.8.0
     "@openzeppelin/contracts-upgradeable": ^4.8.0
-  checksum: aaea49039a37dc093fb785ba79480be28a41b62936dd2910ac25fbe07e8275ea6a1f8f477e0872c8d5880dede24e2fb5bce5f0153626a36113de18578e4032f7
+  checksum: 76471f2446c9539888a8120d72f2ec2e0a548026956aca45f4f96bb4aaa28fc68a501b2ca29e3faca053aa33ee2fe92afc3175573f9e12cc8698b9f11aa83454
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/hyperlane-token@npm:^1.3.4":
-  version: 1.3.4
-  resolution: "@hyperlane-xyz/hyperlane-token@npm:1.3.4"
+"@hyperlane-xyz/hyperlane-token@npm:^1.4.1":
+  version: 1.4.1
+  resolution: "@hyperlane-xyz/hyperlane-token@npm:1.4.1"
   dependencies:
-    "@hyperlane-xyz/core": 1.3.4
-    "@hyperlane-xyz/sdk": 1.3.4
-    "@hyperlane-xyz/utils": 1.3.4
+    "@hyperlane-xyz/core": 1.4.1
+    "@hyperlane-xyz/sdk": 1.4.1
+    "@hyperlane-xyz/utils": 1.4.1
     "@openzeppelin/contracts-upgradeable": ^4.8.0
     ethers: ^5.7.2
-  checksum: 3dfa26bcc23783ae430f8b16fe15f5e15c5e3f2de633f9002c8210e6011fdb7a1612dbcbb05f22e5ab1ed4575d254a2c55d39e6d1b11e2deb161c6803c9f0fc5
+  checksum: e1bbe74190a543ab70fb59e054983b22520227d9fc72cab554a2f092a3b6bb1f5b6255367941993cfffd64977ad25a28d7d5fbc7da79536fa156f70213c292b8
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/sdk@npm:1.3.4, @hyperlane-xyz/sdk@npm:^1.3.4":
-  version: 1.3.4
-  resolution: "@hyperlane-xyz/sdk@npm:1.3.4"
+"@hyperlane-xyz/sdk@npm:1.4.1, @hyperlane-xyz/sdk@npm:^1.4.1":
+  version: 1.4.1
+  resolution: "@hyperlane-xyz/sdk@npm:1.4.1"
   dependencies:
-    "@hyperlane-xyz/core": 1.3.4
-    "@hyperlane-xyz/utils": 1.3.4
+    "@hyperlane-xyz/core": 1.4.1
+    "@hyperlane-xyz/utils": 1.4.1
     "@types/coingecko-api": ^1.0.10
     "@types/debug": ^4.1.7
     "@wagmi/chains": ^0.2.6
@@ -894,16 +894,16 @@ __metadata:
     debug: ^4.3.4
     ethers: ^5.7.2
     zod: ^3.21.2
-  checksum: c881b51ea1e0aada4cf12a485a0b614ee0fbb6095941c63ec0ba7bc41a59b29e7a05498ab8ac3e89a50430b2973218dece6f2cbd09fd8697bead49be99b3663a
+  checksum: 108d19dbc050cb6693660344bd239a7b0f4f89bda0c6ab47d47dbac7f633553200a251b6b1897c232cdb572b8b6b2c3e5b446904d98cdb7e08ca7389e6bae7a4
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/utils@npm:1.3.4":
-  version: 1.3.4
-  resolution: "@hyperlane-xyz/utils@npm:1.3.4"
+"@hyperlane-xyz/utils@npm:1.4.1":
+  version: 1.4.1
+  resolution: "@hyperlane-xyz/utils@npm:1.4.1"
   dependencies:
     ethers: ^5.7.2
-  checksum: 7bed3465604dd3e20d31ebc2b4d101cfe6a934df9d0625a11e9fb5dfa39dbd009c1fc4ad269a32662d4c4a3abadacf5195f53462be021494ba15896036a53f7a
+  checksum: 04897ef9f1681348d68b8a8c75cdfd0d50b7c7702739d316e287f552652e36c5845abd0cbf767188e7438b419d98ccba0b9aa7b0ef6e972e67c0e1f0b13289ef
   languageName: node
   linkType: hard
 
@@ -912,9 +912,9 @@ __metadata:
   resolution: "@hyperlane-xyz/warp-ui-template@workspace:."
   dependencies:
     "@headlessui/react": ^1.7.14
-    "@hyperlane-xyz/hyperlane-token": ^1.3.4
-    "@hyperlane-xyz/sdk": ^1.3.4
-    "@hyperlane-xyz/widgets": ^1.3.5-beta0
+    "@hyperlane-xyz/hyperlane-token": ^1.4.1
+    "@hyperlane-xyz/sdk": ^1.4.1
+    "@hyperlane-xyz/widgets": ^1.4.1
     "@metamask/jazzicon": "https://github.com/jmrossy/jazzicon#7a8df28974b4e81129bfbe3cab76308b889032a6"
     "@rainbow-me/rainbowkit": 0.12.16
     "@solana/spl-token": ^0.3.8
@@ -953,14 +953,14 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@hyperlane-xyz/widgets@npm:^1.3.5-beta0":
-  version: 1.3.5-beta0
-  resolution: "@hyperlane-xyz/widgets@npm:1.3.5-beta0"
+"@hyperlane-xyz/widgets@npm:^1.4.1":
+  version: 1.4.1
+  resolution: "@hyperlane-xyz/widgets@npm:1.4.1"
   peerDependencies:
-    "@hyperlane-xyz/sdk": ^1.3.4
+    "@hyperlane-xyz/sdk": ^1.4
     react: ^18
     react-dom: ^18
-  checksum: c2e0b83037a7175d76f01630fab9d51a324aab8b1829097c39212ad342292653197d248b9001979826b6a1e4b9418129f4a806181138eaf675970896aebd02de
+  checksum: ca96f2a426a76e82763c64e821d3c5809b2eb25acfbdddee2df4c123511492aca8406c21f161139787b335c9743f0a2dc242920b5335c3bad55be605c8defb5c
   languageName: node
   linkType: hard
 

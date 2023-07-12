@@ -1,10 +1,10 @@
 import { getAddress, isAddress } from '@ethersproject/address';
 import { PublicKey } from '@solana/web3.js';
 
+import { ProtocolType } from '@hyperlane-xyz/sdk';
 import { utils } from '@hyperlane-xyz/utils';
 
 import { SOL_ZERO_ADDRESS } from '../consts/values';
-import { ProtocolType } from '../features/chains/types';
 
 import { logger } from './logger';
 

@@ -3,13 +3,12 @@ import { BigNumber, PopulatedTransaction as EvmTransaction, providers } from 'et
 import { useCallback, useState } from 'react';
 import { toast } from 'react-toastify';
 
-import { HyperlaneCore } from '@hyperlane-xyz/sdk';
+import { HyperlaneCore, ProtocolType } from '@hyperlane-xyz/sdk';
 
 import { toastTxSuccess } from '../../components/toast/TxSuccessToast';
 import { toWei } from '../../utils/amount';
 import { logger } from '../../utils/logger';
 import { getProtocolType, parseCaip2Id } from '../chains/caip2';
-import { ProtocolType } from '../chains/types';
 import { getMultiProvider } from '../multiProvider';
 import { AppState, useStore } from '../store';
 import { AdapterFactory } from '../tokens/adapters/AdapterFactory';
@@ -109,7 +108,7 @@ async function executeTransfer({
 
     const multiProvider = getMultiProvider();
     const destinationDomainId = multiProvider.getDomainId(destReference);
-    const originMetadata = multiProvider.getChainMetadata(originReference);
+    const originMetadata = multiProvider.getChainMetadataWithArtifacts(originReference);
     const originMailbox = originMetadata.mailbox;
 
     const tokenRoute = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenAddress, tokenRoutes);

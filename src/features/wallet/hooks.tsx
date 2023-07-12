@@ -1,7 +1,7 @@
 import { useConnectModal as useEvmodal } from '@rainbow-me/rainbowkit';
 import { useConnection, useWallet as useSolanaWallet } from '@solana/wallet-adapter-react';
 import { useWalletModal as useSolanaModal } from '@solana/wallet-adapter-react-ui';
-import { Connection as SolConnection, clusterApiUrl } from '@solana/web3.js';
+import { Connection } from '@solana/web3.js';
 import {
   sendTransaction as sendEvmTransaction,
   switchNetwork as switchEvmNetwork,
@@ -15,7 +15,8 @@ import {
   useNetwork as useEvmNetwork,
 } from 'wagmi';
 
-import { getSolanaChainName, getSolanaClusterName } from '../../consts/solanaChains';
+import { ProtocolType } from '@hyperlane-xyz/sdk';
+
 import { logger } from '../../utils/logger';
 import { sleep } from '../../utils/timeout';
 import {
@@ -24,7 +25,8 @@ import {
   getEthereumChainId,
   tryGetProtocolType,
 } from '../chains/caip2';
-import { ProtocolType } from '../chains/types';
+import { getChainByRpcEndpoint } from '../chains/utils';
+import { getMultiProvider } from '../multiProvider';
 
 export interface AccountInfo {
   protocol: ProtocolType;
@@ -86,6 +88,7 @@ export function useAccounts(): {
       accounts: {
         [ProtocolType.Ethereum]: evmAccountInfo,
         [ProtocolType.Sealevel]: solAccountInfo,
+        [ProtocolType.Fuel]: { protocol: ProtocolType.Fuel, isReady: false },
       },
       readyAccounts,
     }),
@@ -113,6 +116,7 @@ export function useConnectFns(): Record<ProtocolType, () => void> {
     () => ({
       [ProtocolType.Ethereum]: onConnectEthereum,
       [ProtocolType.Sealevel]: onConnectSolana,
+      [ProtocolType.Fuel]: () => alert('TODO'),
     }),
     [onConnectEthereum, onConnectSolana],
   );
@@ -140,6 +144,9 @@ export function useDisconnectFns(): Record<ProtocolType, () => Promise<void>> {
     () => ({
       [ProtocolType.Ethereum]: onClickDisconnect(ProtocolType.Ethereum, disconnectEvm),
       [ProtocolType.Sealevel]: onClickDisconnect(ProtocolType.Sealevel, disconnectSol),
+      [ProtocolType.Fuel]: onClickDisconnect(ProtocolType.Sealevel, () => {
+        'TODO';
+      }),
     }),
     [disconnectEvm, disconnectSol],
   );
@@ -166,16 +173,16 @@ export function useActiveChains(): {
 
   // Solana
   const { connection } = useConnection();
-  const { name: solName, displayName: solDisplayName } = getSolanaChainName(
-    connection?.rpcEndpoint,
-  );
-  const solChain: ActiveChainInfo = useMemo(
-    () => ({
-      chainDisplayName: solDisplayName,
-      caip2Id: solName ? getCaip2Id(ProtocolType.Sealevel, solName) : undefined,
-    }),
-    [solDisplayName, solName],
-  );
+  const connectionEndpoint = connection?.rpcEndpoint;
+
+  const solChain: ActiveChainInfo = useMemo(() => {
+    const metadata = getChainByRpcEndpoint(connectionEndpoint);
+    if (!metadata) return {};
+    return {
+      chainDisplayName: metadata.displayName,
+      caip2Id: getCaip2Id(ProtocolType.Sealevel, metadata.chainId),
+    };
+  }, [connectionEndpoint]);
 
   const readyChains = useMemo(
     () => [evmChain, solChain].filter((c) => !!c.chainDisplayName),
@@ -187,6 +194,7 @@ export function useActiveChains(): {
       chains: {
         [ProtocolType.Ethereum]: evmChain,
         [ProtocolType.Sealevel]: solChain,
+        [ProtocolType.Fuel]: {},
       },
       readyChains,
     }),
@@ -248,9 +256,7 @@ export function useTransactionFns(): Record<
   const { sendTransaction: sendSolTransaction } = useSolanaWallet();
 
   const onSwitchSolNetwork = useCallback(async (caip2Id: Caip2Id) => {
-    toast.error(`Solana wallet must be connected to origin chain ${caip2Id}}`);
-    // TODO re-enable when devnet->devnet transfers are no longer needed
-    // throw new Error(`Auto network switching not supported for Solana`);
+    toast.warn(`Solana wallet must be connected to origin chain ${caip2Id}}`);
   }, []);
 
   const onSendSolTx = useCallback(
@@ -264,9 +270,8 @@ export function useTransactionFns(): Record<
       activeCap2Id?: Caip2Id;
     }) => {
       if (activeCap2Id && activeCap2Id !== caip2Id) await onSwitchSolNetwork(caip2Id);
-      const reference = getChainReference(caip2Id);
-      const cluster = getSolanaClusterName(reference);
-      const connection = new SolConnection(clusterApiUrl(cluster), 'confirmed');
+      const rpcUrl = getMultiProvider().getRpcUrl(getChainReference(caip2Id));
+      const connection = new Connection(rpcUrl, 'confirmed');
       const {
         context: { slot: minContextSlot },
         value: { blockhash, lastValidBlockHeight },
@@ -285,6 +290,10 @@ export function useTransactionFns(): Record<
     () => ({
       [ProtocolType.Ethereum]: { sendTransaction: onSendEvmTx, switchNetwork: onSwitchEvmNetwork },
       [ProtocolType.Sealevel]: { sendTransaction: onSendSolTx, switchNetwork: onSwitchSolNetwork },
+      [ProtocolType.Fuel]: {
+        sendTransaction: () => alert('TODO') as any,
+        switchNetwork: () => alert('TODO') as any,
+      },
     }),
     [onSendEvmTx, onSendSolTx, onSwitchEvmNetwork, onSwitchSolNetwork],
   );

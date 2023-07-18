@@ -1,5 +1,6 @@
 import type { Route } from '../tokens/routes/types';
 
+
 export interface TransferFormValues {
   originCaip2Id: Caip2Id;
   destinationCaip2Id: Caip2Id;
@@ -27,10 +28,5 @@ export interface TransferContext {
   params: TransferFormValues;
   originTxHash?: string;
   msgId?: string;
-  amount?: string;
-  tokenAddress?: string;
-  recipientAddress?: string;
-  originChainTxHash?: string;
   date?: number;
-  chains?: string[];
 }

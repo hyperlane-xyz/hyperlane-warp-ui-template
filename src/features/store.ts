@@ -1,4 +1,5 @@
-import { create } from 'zustand';
+import { StateCreator, create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
 
 import type { TransferContext, TransferStatus } from './transfer/types';
 
@@ -22,7 +23,9 @@ export interface AppState {
   setIsSenderNftOwner: (isOwner: boolean | null) => void;
 }
 
-export const useStore = create<AppState>()((set) => ({
+type PersistStateCreator = StateCreator<AppState>;
+
+const persistState: PersistStateCreator = (set, get) => ({
   transfers: [],
   addTransfer: (t) => {
     set((state) => ({ transfers: [...state.transfers, t] }));
@@ -53,4 +56,11 @@ export const useStore = create<AppState>()((set) => ({
   setIsSenderNftOwner: (isSenderNftOwner) => {
     set((state) => ({ balances: { ...state.balances, isSenderNftOwner } }));
   },
-}));
+});
+
+export const useStore = create<AppState>()(
+  persist(persistState, {
+    name: 'app-state',
+    storage: createJSONStorage(() => localStorage),
+  }),
+);

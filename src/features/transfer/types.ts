@@ -27,4 +27,10 @@ export interface TransferContext {
   params: TransferFormValues;
   originTxHash?: string;
   msgId?: string;
+  amount?: string;
+  tokenAddress?: string;
+  recipientAddress?: string;
+  originChainTxHash?: string;
+  date?: number;
+  chains?: string[];
 }

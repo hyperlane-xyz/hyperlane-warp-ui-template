@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import { useMemo, useState } from 'react';
 
 import { TokenType } from '@hyperlane-xyz/hyperlane-token';
@@ -5,6 +6,7 @@ import { TokenType } from '@hyperlane-xyz/hyperlane-token';
 import { TokenIcon } from '../../components/icons/TokenIcon';
 import { TextInput } from '../../components/input/TextField';
 import { Modal } from '../../components/layout/Modal';
+import InfoIcon from '../../images/icons/info-circle.svg';
 
 import { getAllTokens } from './metadata';
 import { isNativeToken } from './native';
@@ -83,16 +85,12 @@ export function TokenList({
     return getAllTokens()
       .map((t) => {
         const hasRoute = hasTokenRoute(originCaip2Id, destinationCaip2Id, t.address, tokenRoutes);
-        return { ...t, disabled: hasRoute };
+        return { ...t, disabled: !hasRoute };
       })
       .sort((a, b) => {
-        if (!a.disabled && b.disabled) {
-          return 1;
-        } else if (a.disabled && !b.disabled) {
-          return -1;
-        } else {
-          return 0;
-        }
+        if (a.disabled && !b.disabled) return 1;
+        else if (!a.disabled && b.disabled) return -1;
+        else return 0;
       })
       .filter((t) => {
         if (!q) return t;
@@ -111,12 +109,12 @@ export function TokenList({
       {tokens.length ? (
         tokens.map((t) => (
           <button
-            className={`-mx-2 py-2 px-2 rounded  ${
-              t.disabled ? 'hover:bg-gray-200' : 'bg-gray-100 '
+            className={`-mx-2 py-2 px-2 rounded mb-2  ${
+              t.disabled ? 'bg-gray-300 text-gray-800' : 'hover:bg-gray-200'
             } transition-all duration-250`}
             key={`${t.caip2Id}-${t.address}`}
             type="button"
-            disabled={!t.disabled}
+            disabled={t.disabled}
             onClick={() => onSelect(t)}
           >
             <div className="flex items-center">
@@ -137,17 +135,14 @@ export function TokenList({
                   </span>
                 </div>
               </div>
-              {!t.disabled ? (
-                <a
-                  href="#"
+              {t.disabled && (
+                <Image
+                  src={InfoIcon}
+                  alt=""
                   className="transititext-primary text-primary hover:text-primary-600 focus:text-primary-600 active:text-primary-700 dark:text-primary-400 dark:hover:text-primary-500 dark:focus:text-primary-500 dark:active:text-primary-600 ml-auto mr-1 cursor-default border-black"
                   data-te-toggle="tooltip"
                   title={`Route not supported for ${originCaip2Id} to ${destinationCaip2Id}`}
-                >
-                  <div className="rounded-full bg-gray-300 w-6">i</div>
-                </a>
-              ) : (
-                <></>
+                />
               )}
             </div>
           </button>

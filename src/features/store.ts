@@ -25,7 +25,7 @@ export interface AppState {
 
 type PersistStateCreator = StateCreator<AppState>;
 
-const persistState: PersistStateCreator = (set, get) => ({
+const persistState: PersistStateCreator = (set) => ({
   transfers: [],
   addTransfer: (t) => {
     set((state) => ({ transfers: [...state.transfers, t] }));

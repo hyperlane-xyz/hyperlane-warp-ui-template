@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 import type { TransferContext, TransferStatus } from './transfer/types';
 
@@ -22,35 +23,43 @@ export interface AppState {
   setIsSenderNftOwner: (isOwner: boolean | null) => void;
 }
 
-export const useStore = create<AppState>()((set) => ({
-  transfers: [],
-  addTransfer: (t) => {
-    set((state) => ({ transfers: [...state.transfers, t] }));
-  },
-  updateTransferStatus: (i, s, options) => {
-    set((state) => {
-      if (i >= state.transfers.length) return state;
-      const txs = [...state.transfers];
-      txs[i].status = s;
-      txs[i].msgId ||= options?.msgId;
-      txs[i].originTxHash ||= options?.originTxHash;
-      return {
-        transfers: txs,
-      };
-    });
-  },
-  balances: {
-    senderBalance: '0',
-    senderNftIds: null,
-    isSenderNftOwner: false,
-  },
-  setSenderBalance: (senderBalance) => {
-    set((state) => ({ balances: { ...state.balances, senderBalance } }));
-  },
-  setSenderNftIds: (senderNftIds) => {
-    set((state) => ({ balances: { ...state.balances, senderNftIds } }));
-  },
-  setIsSenderNftOwner: (isSenderNftOwner) => {
-    set((state) => ({ balances: { ...state.balances, isSenderNftOwner } }));
-  },
-}));
+export const useStore = create<AppState>()(
+  persist(
+    (set) => ({
+      transfers: [],
+      addTransfer: (t) => {
+        set((state) => ({ transfers: [...state.transfers, t] }));
+      },
+      updateTransferStatus: (i, s, options) => {
+        set((state) => {
+          if (i >= state.transfers.length) return state;
+          const txs = [...state.transfers];
+          txs[i].status = s;
+          txs[i].msgId ||= options?.msgId;
+          txs[i].originTxHash ||= options?.originTxHash;
+          return {
+            transfers: txs,
+          };
+        });
+      },
+      balances: {
+        senderBalance: '0',
+        senderNftIds: null,
+        isSenderNftOwner: false,
+      },
+      setSenderBalance: (senderBalance) => {
+        set((state) => ({ balances: { ...state.balances, senderBalance } }));
+      },
+      setSenderNftIds: (senderNftIds) => {
+        set((state) => ({ balances: { ...state.balances, senderNftIds } }));
+      },
+      setIsSenderNftOwner: (isSenderNftOwner) => {
+        set((state) => ({ balances: { ...state.balances, isSenderNftOwner } }));
+      },
+    }),
+    {
+      name: 'app-state',
+      partialize: (state) => ({ transfers: state.transfers }),
+    },
+  ),
+);

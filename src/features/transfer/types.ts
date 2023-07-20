@@ -27,4 +27,5 @@ export interface TransferContext {
   params: TransferFormValues;
   originTxHash?: string;
   msgId?: string;
+  timestamp?: number;
 }

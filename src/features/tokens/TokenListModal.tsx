@@ -94,23 +94,21 @@ export function TokenList({
       })
       .filter((t) => {
         if (!q) return t;
-        else {
-          return (
-            t.name.toLowerCase().includes(q) ||
-            t.symbol.toLowerCase().includes(q) ||
-            t.address.toLowerCase().includes(q)
-          );
-        }
+        return (
+          t.name.toLowerCase().includes(q) ||
+          t.symbol.toLowerCase().includes(q) ||
+          t.address.toLowerCase().includes(q)
+        );
       });
   }, [searchQuery, originCaip2Id, destinationCaip2Id, tokenRoutes]);
 
   return (
-    <div className="flex flex-col items-stretch divide-y divide-gray-100">
+    <div className="flex flex-col items-stretch">
       {tokens.length ? (
         tokens.map((t) => (
           <button
             className={`-mx-2 py-2 px-2 rounded mb-2  ${
-              t.disabled ? 'bg-gray-300 text-gray-800' : 'hover:bg-gray-200'
+              t.disabled ? 'opacity-50' : 'hover:bg-gray-200'
             } transition-all duration-250`}
             key={`${t.caip2Id}-${t.address}`}
             type="button"
@@ -139,7 +137,7 @@ export function TokenList({
                 <Image
                   src={InfoIcon}
                   alt=""
-                  className="transititext-primary text-primary hover:text-primary-600 focus:text-primary-600 active:text-primary-700 dark:text-primary-400 dark:hover:text-primary-500 dark:focus:text-primary-500 dark:active:text-primary-600 ml-auto mr-1 cursor-default border-black"
+                  className="ml-auto mr-1"
                   data-te-toggle="tooltip"
                   title={`Route not supported for ${originCaip2Id} to ${destinationCaip2Id}`}
                 />

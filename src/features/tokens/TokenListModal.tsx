@@ -7,6 +7,7 @@ import { TokenIcon } from '../../components/icons/TokenIcon';
 import { TextInput } from '../../components/input/TextField';
 import { Modal } from '../../components/layout/Modal';
 import InfoIcon from '../../images/icons/info-circle.svg';
+import { getChainDisplayName } from '../chains/utils';
 
 import { getAllTokens } from './metadata';
 import { isNativeToken } from './native';
@@ -139,7 +140,9 @@ export function TokenList({
                   alt=""
                   className="ml-auto mr-1"
                   data-te-toggle="tooltip"
-                  title={`Route not supported for ${originCaip2Id} to ${destinationCaip2Id}`}
+                  title={`Route not supported for ${getChainDisplayName(
+                    originCaip2Id,
+                  )} to ${getChainDisplayName(destinationCaip2Id)}`}
                 />
               )}
             </div>

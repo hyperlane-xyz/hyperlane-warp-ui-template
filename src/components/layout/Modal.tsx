@@ -9,8 +9,15 @@ export function Modal({
   title,
   close,
   width,
+  padding,
   children,
-}: PropsWithChildren<{ isOpen: boolean; title: string; close: () => void; width?: string }>) {
+}: PropsWithChildren<{
+  isOpen: boolean;
+  title: string;
+  close: () => void;
+  width?: string;
+  padding?: string;
+}>) {
   return (
     <Transition appear show={isOpen} as={Fragment}>
       <Dialog as="div" className="relative z-30" onClose={close}>
@@ -40,7 +47,9 @@ export function Modal({
               <Dialog.Panel
                 className={`w-full ${
                   width || 'max-w-xs'
-                } max-h-[90vh] transform overflow-auto rounded-md bg-white px-4 py-4 text-left shadow-lg transition-all`}
+                } max-h-[90vh] transform overflow-auto rounded-md bg-white ${
+                  padding || 'px-4 py-4'
+                } text-left shadow-lg transition-all`}
               >
                 <Dialog.Title as="h3" className="text text-gray-700">
                   {title}

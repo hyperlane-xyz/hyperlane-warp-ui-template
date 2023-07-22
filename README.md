@@ -59,7 +59,7 @@ yarn clean
 
 ## Deployment
 
-The recommended hosting solution for this Next.JS app is to create a project on Vercel.
+The easiest hosting solution for this Next.JS app is to create a project on Vercel.
 
 ## Learn more
 

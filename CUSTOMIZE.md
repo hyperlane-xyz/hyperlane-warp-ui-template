@@ -2,24 +2,17 @@
 
 Find below instructions for customizing the token list and branding assets of this app.
 
-## Token List
+## Token Configs
 
-This app requires a token list to function. The token list is located at `./src/consts/tokens.ts`. The output of a warp route deployment using the [Hyperlane-Deploy](https://docs.hyperlane.xyz/docs/deploy/deploy-hyperlane) tools will work here.
+This app requires a token config list to function. The token list is located at `./src/consts/tokens.ts`. The output token artifacts of a warp route deployment using the [Hyperlane-Deploy](https://docs.hyperlane.xyz/docs/deploy/deploy-hyperlane) tools can be used here.
 
-## Permissionless Chain Support
-
-_This section is only relevant if you want to include chains not already supported by Hyperlane._
+## Chain Configs
 
 By default, the app will use only the chains that are included in the Hyperlane SDK and connected to the tokens you specify in the token list (see above).
 
-To add support for additional chains, fill in the required chain metadata in `./src/consts/chains.ts`. You can also use this file to override any default chain configs set in the SDK. The chains config using in the [Hyperlane-Deploy](https://docs.hyperlane.xyz/docs/deploy/deploy-hyperlane) tools will work here. You may also add an optional `logoURI` field to the each chain config.
+To add support for additional chains, or to modify the default properties of the SDK's chains (such as RPC URL), add the required chain metadata to `./src/consts/chains.ts`. The same chain config used in the [Hyperlane-Deploy](https://docs.hyperlane.xyz/docs/deploy/deploy-hyperlane) tools will work here. You may also add an optional `logoURI` field to a chain config to show a custom logo image in the app.
 
-## RPC Providers
-
-By default, the app uses public RPC providers based on the Hyperlane SDK's default settings.
-This can be changed in '`./src/features/providers.ts`.
-
-## Tip Card Content
+## Tip Card
 
 The content of the tip card above the form can be customized in `./src/components/tip/TipCard.tsx`
 Or it can be hidden entirely with the `showTipBox` setting in `./src/consts/config.ts`

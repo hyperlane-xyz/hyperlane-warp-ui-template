@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { MessageStatus, MessageTimeline, useMessageTimeline } from '@hyperlane-xyz/widgets';
 
 import { Spinner } from '../../components/animation/Spinner';
+import { ChainLogo } from '../../components/icons/ChainLogo';
 import { Modal } from '../../components/layout/Modal';
 import { links } from '../../consts/links';
 import CheckmarkCircleIcon from '../../images/icons/checkmark-circle.svg';
@@ -11,6 +12,7 @@ import EnvelopeHeartIcon from '../../images/icons/envelope-heart.svg';
 import ErrorCircleIcon from '../../images/icons/error-circle.svg';
 import LinkIcon from '../../images/icons/external-link-icon.svg';
 import { toBase64 } from '../../utils/base64';
+import { formatTimestamp } from '../../utils/date';
 import { parseCaip2Id } from '../chains/caip2';
 import { hasPermissionlessChain, isPermissionlessChain } from '../chains/utils';
 import { getMultiProvider } from '../multiProvider';
@@ -75,7 +77,14 @@ export function TransfersStatusModal({
 
   return (
     <Modal isOpen={isOpen} close={close} title="" padding="p-6" width="max-w-xl-1">
-      <div className="flex">HEADER</div>
+      <div className="flex flex-row items-center">
+        <ChainLogo caip2Id={originCaip2Id} size={22} />
+        <div className="flex items items-baseline">
+          <span className="text-black text-base font-normal ml-1">411.000</span>
+          <span className="text-black text-base font-normal ml-1">ETH</span>
+          <span className="text-black text-xs font-normal ml-1">(Native)</span>
+        </div>
+      </div>
       <div className="relative">
         {/* TODO Timeline does not support PI messages yet */}
         {isPermissionlessRoute ? (
@@ -91,7 +100,7 @@ export function TransfersStatusModal({
                   Time:
                 </span>
                 <span className="text-gray-350 text-xs leading-normal tracking-wider">
-                  {timestamp || '10:38pm July 1 2023'}
+                  {timestamp || formatTimestamp(new Date().getTime())}
                 </span>
               </div>
               <div className="flex mb-5 justify-between">

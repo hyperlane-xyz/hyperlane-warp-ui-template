@@ -9,6 +9,7 @@ import { links } from '../../consts/links';
 import CheckmarkCircleIcon from '../../images/icons/checkmark-circle.svg';
 import EnvelopeHeartIcon from '../../images/icons/envelope-heart.svg';
 import ErrorCircleIcon from '../../images/icons/error-circle.svg';
+import LinkIcon from '../../images/icons/external-link-icon.svg';
 import { toBase64 } from '../../utils/base64';
 import { parseCaip2Id } from '../chains/caip2';
 import { hasPermissionlessChain, isPermissionlessChain } from '../chains/utils';
@@ -93,43 +94,55 @@ export function TransfersStatusModal({
                   {timestamp || '10:38pm July 1 2023'}
                 </span>
               </div>
-              <div className="flex mb-5">
+              <div className="flex mb-5 justify-between">
                 <span className="text-gray-350 text-xs leading-normal tracking-wider mr-3">
                   From:
                 </span>
                 <span className="text-gray-350 text-xs leading-normal tracking-wider truncate w-48">
                   {params.recipientAddress}
                 </span>
+                <a href={'/'} target="_blank" rel="noopener noreferrer" className="flex ml-2.5">
+                  <Image src={LinkIcon} width={12} height={12} alt="" />
+                </a>
               </div>
-              <div className="flex mb-4">
+              <div className="flex mb-4 justify-between">
                 <span className="text-gray-350 text-xs leading-normal tracking-wider mr-7">
                   To:
                 </span>
                 <span className="text-gray-350 text-xs leading-normal tracking-wider truncate w-48">
                   {params.recipientAddress}
                 </span>
+                <a href={'/'} target="_blank" rel="noopener noreferrer" className="flex ml-2.5">
+                  <Image src={LinkIcon} width={12} height={12} alt="" />
+                </a>
               </div>
             </div>
           </div>
           <div className="flex w-1/2">
             <div className="flex flex-col">
-              <div className="flex mb-5">
+              <div className="flex mb-5 justify-between">
                 <span className="text-gray-350 text-xs leading-normal tracking-wider mr-7">
                   Token:
                 </span>
                 <span className="text-gray-350 text-xs leading-normal tracking-wider truncate w-48">
                   {tokenAddress}
                 </span>
+                <a href={'/'} target="_blank" rel="noopener noreferrer" className="flex ml-2.5">
+                  <Image src={LinkIcon} width={12} height={12} alt="" />
+                </a>
               </div>
-              <div className="flex mb-5">
+              <div className="flex mb-5 justify-between">
                 <span className="text-gray-350 text-xs leading-normal tracking-wider mr-3">
                   Origin Tx:
                 </span>
                 <span className="text-gray-350 text-xs leading-normal tracking-wider truncate w-48">
                   {originTxHash}
                 </span>
+                <a href={'/'} target="_blank" rel="noopener noreferrer" className="flex ml-2.5">
+                  <Image src={LinkIcon} width={12} height={12} alt="" />
+                </a>
               </div>
-              <div className="flex mb-4">
+              <div className="flex mb-4 justify-between">
                 <span className="text-gray-350 text-xs leading-normal tracking-wider">
                   {explorerLink && (
                     <a
@@ -142,6 +155,9 @@ export function TransfersStatusModal({
                     </a>
                   )}
                 </span>
+                <a href={'/'} target="_blank" rel="noopener noreferrer" className="flex ml-2.5">
+                  <Image src={LinkIcon} width={12} height={12} alt="" />
+                </a>
               </div>
             </div>
           </div>

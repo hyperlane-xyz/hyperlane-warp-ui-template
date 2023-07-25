@@ -12,12 +12,18 @@ import CheckmarkCircleIcon from '../../images/icons/checkmark-circle.svg';
 import EnvelopeHeartIcon from '../../images/icons/envelope-heart.svg';
 import ErrorCircleIcon from '../../images/icons/error-circle.svg';
 import LinkIcon from '../../images/icons/external-link-icon.svg';
+import { getAddressProtocolType } from '../../utils/addresses';
 import { toBase64 } from '../../utils/base64';
 import { formatTimestamp } from '../../utils/date';
 import { parseCaip2Id } from '../chains/caip2';
-import { hasPermissionlessChain, isPermissionlessChain } from '../chains/utils';
+import {
+  getChainDisplayName,
+  hasPermissionlessChain,
+  isPermissionlessChain,
+} from '../chains/utils';
 import { getMultiProvider } from '../multiProvider';
 import { useStore } from '../store';
+import { isNativeToken } from '../tokens/native';
 import { useAccountForChain } from '../wallet/hooks';
 
 import { TransferContext, TransferStatus } from './types';
@@ -37,7 +43,8 @@ export function TransfersStatusModal({
     if (isOpen) setIndex(transfers.length - 1);
   }, [isOpen, transfers.length]);
 
-  const { params, status, originTxHash, msgId, timestamp } = transfers[index] || {};
+  const { params, status, originTxHash, msgId, timestamp, activeAccountAddress, route } =
+    transfers[index] || {};
   const { destinationCaip2Id, originCaip2Id, tokenAddress, amount } = params || {};
 
   const account = useAccountForChain(originCaip2Id);
@@ -75,6 +82,7 @@ export function TransfersStatusModal({
     statusDescription = 'Transfer failed, please try again.';
 
   const explorerLink = getHypExplorerLink(originCaip2Id, msgId);
+  const date = timestamp ? formatTimestamp(timestamp) : formatTimestamp(new Date().getTime());
 
   return (
     <Modal isOpen={isOpen} close={close} title="" padding="p-6" width="max-w-xl-1">
@@ -83,21 +91,27 @@ export function TransfersStatusModal({
           <ChainLogo caip2Id={originCaip2Id} size={22} />
           <div className="flex items items-baseline">
             <span className="text-black text-base font-normal ml-1">{amount}</span>
-            <span className="text-black text-base font-normal ml-1">ETH</span>
-            <span className="text-black text-xs font-normal ml-1">(Native)</span>
+            <span className="text-black text-base font-normal ml-1">
+              {getAddressProtocolType(tokenAddress)}
+            </span>
+            <span className="text-black text-xs font-normal ml-1">
+              ({isNativeToken(tokenAddress) ? 'Native' : route.isNft ? 'NFT' : 'Token'})
+            </span>
           </div>
         </div>
         <div className="flex items-center">
           <div className="flex">
             <ChainLogo caip2Id={originCaip2Id} size={22} />
             <span className="text-gray-900 text-base font-normal tracking-wider ml-2">
-              Ethereum
+              {getChainDisplayName(originCaip2Id, true)}
             </span>
           </div>
           <Image className="mx-2.5" src={ArrowRightIcon} width={13} height={13} alt="" />
           <div className="flex">
             <ChainLogo caip2Id={destinationCaip2Id} size={22} />
-            <span className="text-gray-900 text-base font-normal tracking-wider ml-2">Polygon</span>
+            <span className="text-gray-900 text-base font-normal tracking-wider ml-2">
+              {getChainDisplayName(destinationCaip2Id, true)}
+            </span>
           </div>
         </div>
       </div>
@@ -125,7 +139,7 @@ export function TransfersStatusModal({
                     Time:
                   </span>
                   <span className="text-gray-350 text-xs leading-normal tracking-wider">
-                    {timestamp || formatTimestamp(new Date().getTime())}
+                    {date}
                   </span>
                 </div>
                 <div className="flex mb-5 justify-between">
@@ -133,11 +147,18 @@ export function TransfersStatusModal({
                     From:
                   </span>
                   <span className="text-gray-350 text-xs leading-normal tracking-wider truncate w-48">
-                    {params.recipientAddress}
+                    {activeAccountAddress}
                   </span>
-                  <a href={'/'} target="_blank" rel="noopener noreferrer" className="flex ml-2.5">
-                    <Image src={LinkIcon} width={12} height={12} alt="" />
-                  </a>
+                  {explorerLink && (
+                    <a
+                      href={explorerLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex ml-2.5"
+                    >
+                      <Image src={LinkIcon} width={12} height={12} alt="" />
+                    </a>
+                  )}
                 </div>
                 <div className="flex mb-4 justify-between">
                   <span className="text-gray-350 text-xs leading-normal tracking-wider mr-7">
@@ -146,9 +167,16 @@ export function TransfersStatusModal({
                   <span className="text-gray-350 text-xs leading-normal tracking-wider truncate w-48">
                     {params.recipientAddress}
                   </span>
-                  <a href={'/'} target="_blank" rel="noopener noreferrer" className="flex ml-2.5">
-                    <Image src={LinkIcon} width={12} height={12} alt="" />
-                  </a>
+                  {explorerLink && (
+                    <a
+                      href={explorerLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex ml-2.5"
+                    >
+                      <Image src={LinkIcon} width={12} height={12} alt="" />
+                    </a>
+                  )}
                 </div>
               </div>
             </div>
@@ -161,9 +189,16 @@ export function TransfersStatusModal({
                   <span className="text-gray-350 text-xs leading-normal tracking-wider truncate w-48">
                     {tokenAddress}
                   </span>
-                  <a href={'/'} target="_blank" rel="noopener noreferrer" className="flex ml-2.5">
-                    <Image src={LinkIcon} width={12} height={12} alt="" />
-                  </a>
+                  {explorerLink && (
+                    <a
+                      href={explorerLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex ml-2.5"
+                    >
+                      <Image src={LinkIcon} width={12} height={12} alt="" />
+                    </a>
+                  )}
                 </div>
                 <div className="flex mb-5 justify-between">
                   <span className="text-gray-350 text-xs leading-normal tracking-wider mr-3">
@@ -172,13 +207,20 @@ export function TransfersStatusModal({
                   <span className="text-gray-350 text-xs leading-normal tracking-wider truncate w-48">
                     {originTxHash}
                   </span>
-                  <a href={'/'} target="_blank" rel="noopener noreferrer" className="flex ml-2.5">
-                    <Image src={LinkIcon} width={12} height={12} alt="" />
-                  </a>
+                  {explorerLink && (
+                    <a
+                      href={explorerLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex ml-2.5"
+                    >
+                      <Image src={LinkIcon} width={12} height={12} alt="" />
+                    </a>
+                  )}
                 </div>
-                <div className="flex mb-4 justify-between">
-                  <span className="text-gray-350 text-xs leading-normal tracking-wider">
-                    {explorerLink && (
+                {explorerLink && (
+                  <div className="flex mb-4 justify-between">
+                    <span className="text-gray-350 text-xs leading-normal tracking-wider">
                       <a
                         className="text-gray-350 text-xs leading-normal tracking-wider underline underline-offset-2 hover:opacity-80 active:opacity-70"
                         href={explorerLink}
@@ -187,12 +229,17 @@ export function TransfersStatusModal({
                       >
                         View message details in Hyperlane Explorer
                       </a>
-                    )}
-                  </span>
-                  <a href={'/'} target="_blank" rel="noopener noreferrer" className="flex ml-2.5">
-                    <Image src={LinkIcon} width={12} height={12} alt="" />
-                  </a>
-                </div>
+                    </span>
+                    <a
+                      href={explorerLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex ml-2.5"
+                    >
+                      <Image src={LinkIcon} width={12} height={12} alt="" />
+                    </a>
+                  </div>
+                )}
               </div>
             </div>
           </div>

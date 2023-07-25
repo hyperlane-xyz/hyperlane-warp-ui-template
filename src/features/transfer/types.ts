@@ -28,4 +28,5 @@ export interface TransferContext {
   originTxHash?: string;
   msgId?: string;
   timestamp?: number;
+  activeAccountAddress: Address;
 }

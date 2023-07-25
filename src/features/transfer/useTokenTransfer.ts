@@ -115,8 +115,11 @@ async function executeTransfer({
     if (!tokenRoute) throw new Error('No token route found between chains');
 
     const amountOrId = tokenRoute.isNft ? amount : toWei(amount, tokenRoute.decimals).toString();
+    const activeAccountAddress = activeAccounts.accounts[originProtocol]?.address;
 
     addTransfer({
+      activeAccountAddress: activeAccountAddress || '',
+      timestamp: new Date().getTime(),
       status,
       route: tokenRoute,
       params: values,

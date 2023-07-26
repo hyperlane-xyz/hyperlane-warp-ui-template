@@ -4,26 +4,18 @@ import { useEffect, useState } from 'react';
 import { MessageStatus, MessageTimeline, useMessageTimeline } from '@hyperlane-xyz/widgets';
 
 import { Spinner } from '../../components/animation/Spinner';
-import { ChainLogo } from '../../components/icons/ChainLogo';
+import { IconButton } from '../../components/buttons/IconButton';
+import { ChevronIcon } from '../../components/icons/Chevron';
 import { Modal } from '../../components/layout/Modal';
 import { links } from '../../consts/links';
-import ArrowRightIcon from '../../images/icons/arrow-right.svg';
 import CheckmarkCircleIcon from '../../images/icons/checkmark-circle.svg';
 import EnvelopeHeartIcon from '../../images/icons/envelope-heart.svg';
 import ErrorCircleIcon from '../../images/icons/error-circle.svg';
-import LinkIcon from '../../images/icons/external-link-icon.svg';
-import { getAddressProtocolType } from '../../utils/addresses';
 import { toBase64 } from '../../utils/base64';
-import { formatTimestamp } from '../../utils/date';
 import { parseCaip2Id } from '../chains/caip2';
-import {
-  getChainDisplayName,
-  hasPermissionlessChain,
-  isPermissionlessChain,
-} from '../chains/utils';
+import { hasPermissionlessChain, isPermissionlessChain } from '../chains/utils';
 import { getMultiProvider } from '../multiProvider';
 import { useStore } from '../store';
-import { isNativeToken } from '../tokens/native';
 import { useAccountForChain } from '../wallet/hooks';
 
 import { TransferContext, TransferStatus } from './types';
@@ -43,9 +35,8 @@ export function TransfersStatusModal({
     if (isOpen) setIndex(transfers.length - 1);
   }, [isOpen, transfers.length]);
 
-  const { params, status, originTxHash, msgId, timestamp, activeAccountAddress, route } =
-    transfers[index] || {};
-  const { destinationCaip2Id, originCaip2Id, tokenAddress, amount } = params || {};
+  const { params, status, originTxHash, msgId } = transfers[index] || {};
+  const { destinationCaip2Id, originCaip2Id } = params || {};
 
   const account = useAccountForChain(originCaip2Id);
 
@@ -82,168 +73,52 @@ export function TransfersStatusModal({
     statusDescription = 'Transfer failed, please try again.';
 
   const explorerLink = getHypExplorerLink(originCaip2Id, msgId);
-  const date = timestamp ? formatTimestamp(timestamp) : formatTimestamp(new Date().getTime());
 
   return (
-    <Modal isOpen={isOpen} close={close} title="" padding="p-6" width="max-w-xl-1">
-      <div className="flex flex-row items-center justify-between">
-        <div className="flex">
-          <ChainLogo caip2Id={originCaip2Id} size={22} />
-          <div className="flex items items-baseline">
-            <span className="text-black text-base font-normal ml-1">{amount}</span>
-            <span className="text-black text-base font-normal ml-1">
-              {getAddressProtocolType(tokenAddress)}
-            </span>
-            <span className="text-black text-xs font-normal ml-1">
-              ({isNativeToken(tokenAddress) ? 'Native' : route.isNft ? 'NFT' : 'Token'})
-            </span>
-          </div>
-        </div>
-        <div className="flex items-center">
-          <div className="flex">
-            <ChainLogo caip2Id={originCaip2Id} size={22} />
-            <span className="text-gray-900 text-base font-normal tracking-wider ml-2">
-              {getChainDisplayName(originCaip2Id, true)}
-            </span>
-          </div>
-          <Image className="mx-2.5" src={ArrowRightIcon} width={13} height={13} alt="" />
-          <div className="flex">
-            <ChainLogo caip2Id={destinationCaip2Id} size={22} />
-            <span className="text-gray-900 text-base font-normal tracking-wider ml-2">
-              {getChainDisplayName(destinationCaip2Id, true)}
-            </span>
-          </div>
-        </div>
-      </div>
+    <Modal isOpen={isOpen} close={close} title="Token Transfers" width="max-w-lg">
       <div className="relative">
+        <IconButton
+          onClick={() => setIndex(index - 1)}
+          disabled={index <= 0}
+          classes="absolute bottom-0 left-0"
+          title="Previous Transfer"
+        >
+          <ChevronIcon direction="w" width={14} height={14} classes="opacity-70" />
+        </IconButton>
+        <IconButton
+          onClick={() => setIndex(index + 1)}
+          disabled={index >= transfers.length - 1}
+          classes="absolute bottom-0 right-0"
+          title="Next Transfer"
+        >
+          <ChevronIcon direction="e" width={14} height={14} classes="opacity-70" />
+        </IconButton>
         {/* TODO Timeline does not support PI messages yet */}
         {isPermissionlessRoute ? (
           <BasicSpinner transferStatus={status} />
         ) : (
           <Timeline transferStatus={status} transferIndex={index} originTxHash={originTxHash} />
         )}
-        {status !== TransferStatus.ConfirmedTransfer ? (
-          <div
-            className={`mt-5 text-sm text-center ${
-              status === TransferStatus.Failed ? 'text-red-600' : 'text-gray-600'
-            }`}
+        <div
+          className={`mt-5 text-sm text-center ${
+            status === TransferStatus.Failed ? 'text-red-600' : 'text-gray-600'
+          }`}
+        >
+          {statusDescription}
+        </div>
+        {explorerLink && (
+          <a
+            className="block mt-3 text-xs text-gray-600 text-center underline underline-offset-2 hover:opacity-80 active:opacity-70"
+            href={explorerLink}
+            target="_blank"
+            rel="noopener noreferrer"
           >
-            {statusDescription}
-          </div>
-        ) : (
-          <div className="flex">
-            <div className="flex w-1/2">
-              <div className="flex flex-col">
-                <div className="flex mb-5">
-                  <span className="text-gray-350 text-xs leading-normal tracking-wider mr-3">
-                    Time:
-                  </span>
-                  <span className="text-gray-350 text-xs leading-normal tracking-wider">
-                    {date}
-                  </span>
-                </div>
-                <div className="flex mb-5 justify-between">
-                  <span className="text-gray-350 text-xs leading-normal tracking-wider mr-3">
-                    From:
-                  </span>
-                  <span className="text-gray-350 text-xs leading-normal tracking-wider truncate w-48">
-                    {activeAccountAddress}
-                  </span>
-                  {explorerLink && (
-                    <a
-                      href={explorerLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex ml-2.5"
-                    >
-                      <Image src={LinkIcon} width={12} height={12} alt="" />
-                    </a>
-                  )}
-                </div>
-                <div className="flex mb-4 justify-between">
-                  <span className="text-gray-350 text-xs leading-normal tracking-wider mr-7">
-                    To:
-                  </span>
-                  <span className="text-gray-350 text-xs leading-normal tracking-wider truncate w-48">
-                    {params.recipientAddress}
-                  </span>
-                  {explorerLink && (
-                    <a
-                      href={explorerLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex ml-2.5"
-                    >
-                      <Image src={LinkIcon} width={12} height={12} alt="" />
-                    </a>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className="flex w-1/2">
-              <div className="flex flex-col">
-                <div className="flex mb-5 justify-between">
-                  <span className="text-gray-350 text-xs leading-normal tracking-wider mr-7">
-                    Token:
-                  </span>
-                  <span className="text-gray-350 text-xs leading-normal tracking-wider truncate w-48">
-                    {tokenAddress}
-                  </span>
-                  {explorerLink && (
-                    <a
-                      href={explorerLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex ml-2.5"
-                    >
-                      <Image src={LinkIcon} width={12} height={12} alt="" />
-                    </a>
-                  )}
-                </div>
-                <div className="flex mb-5 justify-between">
-                  <span className="text-gray-350 text-xs leading-normal tracking-wider mr-3">
-                    Origin Tx:
-                  </span>
-                  <span className="text-gray-350 text-xs leading-normal tracking-wider truncate w-48">
-                    {originTxHash}
-                  </span>
-                  {explorerLink && (
-                    <a
-                      href={explorerLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex ml-2.5"
-                    >
-                      <Image src={LinkIcon} width={12} height={12} alt="" />
-                    </a>
-                  )}
-                </div>
-                {explorerLink && (
-                  <div className="flex mb-4 justify-between">
-                    <span className="text-gray-350 text-xs leading-normal tracking-wider">
-                      <a
-                        className="text-gray-350 text-xs leading-normal tracking-wider underline underline-offset-2 hover:opacity-80 active:opacity-70"
-                        href={explorerLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        View message details in Hyperlane Explorer
-                      </a>
-                    </span>
-                    <a
-                      href={explorerLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex ml-2.5"
-                    >
-                      <Image src={LinkIcon} width={12} height={12} alt="" />
-                    </a>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+            Open transaction in Hyperlane Explorer
+          </a>
         )}
+        <div className="mt-5 text-center text-xs text-gray-500">{`Transfer ${index + 1} of ${
+          transfers.length
+        }`}</div>
       </div>
     </Modal>
   );
@@ -273,7 +148,7 @@ function Timeline({
   }, [transferIndex, messageStatus, updateTransferStatus]);
 
   return (
-    <div className="mt-4 mb-7 w-full flex flex-col justify-center items-center timeline-container">
+    <div className="mt-4 mb-2 w-full flex flex-col justify-center items-center timeline-container">
       <MessageTimeline
         status={messageStatus}
         stage={stage}

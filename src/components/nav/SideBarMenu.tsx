@@ -70,11 +70,10 @@ export function SideBarMenu({ isOpen, onClose }: { isOpen: boolean; onClose?: ()
             <span className="text-white text-lg font-medium tracking-wider">Connected Wallets</span>
           </div>
           <div className="mb-2 px-3.5 mt-2">
-            {readyAccounts.map((a, i) => (
+            {readyAccounts.map((a) => (
               <button
                 key={a.address}
                 className={`${styles.btn} border border-gray-300 rounded-md mb-2`}
-                onClick={() => {}}
               >
                 <div className="shrink-0">
                   <Identicon address={a.address} size={40} />
@@ -88,12 +87,12 @@ export function SideBarMenu({ isOpen, onClose }: { isOpen: boolean; onClose?: ()
               </button>
             ))}
 
-            <button className={styles.btn} onClick={() => {}}>
+            <button className={styles.btn}>
               <Icon src={Wallet} alt="" size={18} className="invert" />
               <div className="ml-2">Connect wallet</div>
             </button>
 
-            <button className={styles.btn} onClick={() => {}}>
+            <button className={styles.btn}>
               <Icon src={Logout} alt="" size={20} />
               <div className="ml-2">Disconnect all wallets</div>
             </button>
@@ -105,6 +104,7 @@ export function SideBarMenu({ isOpen, onClose }: { isOpen: boolean; onClose?: ()
             {transfers?.length > 0 &&
               transfers.map((t) => (
                 <button
+                  key={t.timestamp}
                   onClick={() => {
                     setSelectedTransfer(t);
                     setIsModalOpen(true);

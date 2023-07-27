@@ -7,6 +7,8 @@ import Logo from '../../images/logos/app-logo.svg';
 import Name from '../../images/logos/app-name.svg';
 import Title from '../../images/logos/app-title.svg';
 
+import { SideBarMenu } from './SideBarMenu';
+
 export function Header() {
   return (
     <header className="pt-3 pb-2 w-full">
@@ -19,6 +21,7 @@ export function Header() {
         <div className="flex flex-col items-end md:flex-row-reverse md:items-start gap-2">
           <WalletControlBar />
           <TransfersStatusBar />
+          <SideBarMenu isOpen={true} />
         </div>
       </div>
     </header>

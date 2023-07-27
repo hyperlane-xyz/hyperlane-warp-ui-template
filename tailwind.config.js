@@ -69,6 +69,7 @@ module.exports = {
       },
       fontSize: {
         md: '0.95rem',
+        thin: '0.625rem',
       },
       spacing: {
         88: '22rem',
@@ -98,6 +99,9 @@ module.exports = {
       maxWidth: {
         'xl-1': '39.5rem',
       },
+      height: {
+        '680': '42.5rem',
+      }
     },
   },
   plugins: [],

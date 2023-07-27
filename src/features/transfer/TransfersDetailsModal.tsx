@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import { useMemo } from 'react';
 
 import { MessageStatus, MessageTimeline, useMessageTimeline } from '@hyperlane-xyz/widgets';
 
@@ -18,11 +19,11 @@ import { TransferContext, TransferStatus } from './types';
 
 export function TransfersDetailsModal({
   isOpen,
-  close,
+  onClose,
   transfer,
 }: {
   isOpen: boolean;
-  close: () => void;
+  onClose: () => void;
   transfer: TransferContext;
 }) {
   const { params, status, originTxHash, msgId, timestamp, activeAccountAddress, route } =
@@ -43,11 +44,17 @@ export function TransfersDetailsModal({
     isPermissionlessRoute,
     isAccountReady,
   );
-  const date = timestamp ? formatTimestamp(timestamp) : formatTimestamp(new Date().getTime());
-  const token = getAllTokens().find((t) => t.address === tokenAddress);
+  const date = useMemo(
+    () => (timestamp ? formatTimestamp(timestamp) : formatTimestamp(new Date().getTime())),
+    [timestamp],
+  );
+  const token = useMemo(
+    () => getAllTokens().find((t) => t.address === tokenAddress),
+    [tokenAddress],
+  );
 
   return (
-    <Modal isOpen={isOpen} close={close} title="" padding="p-6" width="max-w-xl-1">
+    <Modal isOpen={isOpen} close={onClose} title="" padding="p-6" width="max-w-xl-1">
       <div className="flex flex-row items-center justify-between">
         <div className="flex">
           <ChainLogo caip2Id={originCaip2Id} size={22} />

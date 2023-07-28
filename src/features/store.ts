@@ -8,6 +8,7 @@ import type { TransferContext, TransferStatus } from './transfer/types';
 export interface AppState {
   transfers: TransferContext[];
   addTransfer: (t: TransferContext) => void;
+  resetTransfers: () => void;
   updateTransferStatus: (
     i: number,
     s: TransferStatus,
@@ -29,6 +30,9 @@ export const useStore = create<AppState>()(
       transfers: [],
       addTransfer: (t) => {
         set((state) => ({ transfers: [...state.transfers, t] }));
+      },
+      resetTransfers: () => {
+        set(() => ({ transfers: [] }));
       },
       updateTransferStatus: (i, s, options) => {
         set((state) => {

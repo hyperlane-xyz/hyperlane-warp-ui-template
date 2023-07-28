@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { getChainDisplayName } from '../../features/chains/utils';
 import { useStore } from '../../features/store';
@@ -12,10 +12,18 @@ import CollapseIcon from '../../images/icons/collapse-icon.svg';
 import ConfirmedIcon from '../../images/icons/confirmed-icon.svg';
 import DeliveredIcon from '../../images/icons/delivered-icon.svg';
 import Logout from '../../images/icons/logout.svg';
+import ResetIcon from '../../images/icons/reset-icon.svg';
 import WarningIcon from '../../images/icons/transfer-warning-status.svg';
 import Wallet from '../../images/icons/wallet.svg';
+import { SmallSpinner } from '../animation/ThinSpinner';
 import { ChainLogo } from '../icons/ChainLogo';
 import { Identicon } from '../icons/Identicon';
+
+const STATUSES_WITH_ICON = [
+  TransferStatus.Delivered,
+  TransferStatus.ConfirmedTransfer,
+  TransferStatus.Failed,
+];
 
 const getIconByTransferStatus = (status: TransferStatus) => {
   switch (status) {
@@ -23,6 +31,8 @@ const getIconByTransferStatus = (status: TransferStatus) => {
       return DeliveredIcon;
     case TransferStatus.ConfirmedTransfer:
       return ConfirmedIcon;
+    case TransferStatus.Failed:
+      return WarningIcon;
     default:
       return WarningIcon;
   }
@@ -33,7 +43,10 @@ export function SideBarMenu({ isOpen, onClose }: { isOpen: boolean; onClose?: ()
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTransfer, setSelectedTransfer] = useState<TransferContext | null>(null);
 
-  const transfers = useStore((s) => s.transfers);
+  const { transfers, resetTransfers } = useStore((s) => ({
+    transfers: s.transfers,
+    resetTransfers: s.resetTransfers,
+  }));
 
   const { readyAccounts } = useAccounts();
 
@@ -45,6 +58,11 @@ export function SideBarMenu({ isOpen, onClose }: { isOpen: boolean; onClose?: ()
     setIsMenuOpen(isOpen);
     if (!isOpen) onClose?.();
   };
+
+  const sortedTransfers = useMemo(
+    () => transfers.sort((a, b) => b.timestamp - a.timestamp) || [],
+    [transfers],
+  );
 
   return (
     <>
@@ -86,12 +104,10 @@ export function SideBarMenu({ isOpen, onClose }: { isOpen: boolean; onClose?: ()
                 </div>
               </button>
             ))}
-
             <button className={styles.btn}>
               <Icon src={Wallet} alt="" size={18} className="invert" />
               <div className="ml-2">Connect wallet</div>
             </button>
-
             <button className={styles.btn}>
               <Icon src={Logout} alt="" size={20} />
               <div className="ml-2">Disconnect all wallets</div>
@@ -101,8 +117,8 @@ export function SideBarMenu({ isOpen, onClose }: { isOpen: boolean; onClose?: ()
             <span className="text-white text-lg font-medium tracking-wider">Transfer History</span>
           </div>
           <div className="h-2/4 overflow-y-auto flex flex-col px-3.5">
-            {transfers?.length > 0 &&
-              transfers.map((t) => (
+            {sortedTransfers?.length > 0 &&
+              sortedTransfers.map((t) => (
                 <button
                   key={t.timestamp}
                   onClick={() => {
@@ -150,12 +166,28 @@ export function SideBarMenu({ isOpen, onClose }: { isOpen: boolean; onClose?: ()
                       </div>
                     </div>
                   </div>
-                  <div className="flex">
-                    <Image src={getIconByTransferStatus(t.status)} width={25} height={25} alt="" />
+                  <div className="flex w-6 h-6">
+                    {STATUSES_WITH_ICON.includes(t.status) ? (
+                      <Image
+                        src={getIconByTransferStatus(t.status)}
+                        width={25}
+                        height={25}
+                        alt=""
+                      />
+                    ) : (
+                      <SmallSpinner />
+                    )}
                   </div>
                 </button>
               ))}
           </div>
+          <button
+            onClick={resetTransfers}
+            className="flex flex-row items-center absolute bottom-6 left-7"
+          >
+            <Image className="mr-4" src={ResetIcon} width={17} height={17} alt="" />
+            <span className="text-gray-900 text-sm font-normal">Reset transaction history</span>
+          </button>
         </div>
       </div>
       {selectedTransfer && (

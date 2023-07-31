@@ -6,7 +6,7 @@ import EnvelopeHeartIcon from '../../../images/icons/envelope-heart.svg';
 import ErrorCircleIcon from '../../../images/icons/error-circle.svg';
 import { TransferStatus } from '../types';
 
-export function BasicSpinner({ transferStatus }: { transferStatus: TransferStatus }) {
+export function TransferStatusIcon({ transferStatus }: { transferStatus: TransferStatus }) {
   let content;
   if (transferStatus === TransferStatus.Delivered) {
     content = (

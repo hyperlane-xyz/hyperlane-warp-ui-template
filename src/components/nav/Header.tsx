@@ -1,13 +1,10 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { TransfersStatusBar } from '../../features/transfer/TransfersStatusBar';
 import { WalletControlBar } from '../../features/wallet/WalletControlBar';
 import Logo from '../../images/logos/app-logo.svg';
 import Name from '../../images/logos/app-name.svg';
 import Title from '../../images/logos/app-title.svg';
-
-import { SideBarMenu } from './SideBarMenu';
 
 export function Header() {
   return (
@@ -20,8 +17,6 @@ export function Header() {
         </Link>
         <div className="flex flex-col items-end md:flex-row-reverse md:items-start gap-2">
           <WalletControlBar />
-          <TransfersStatusBar />
-          <SideBarMenu isOpen={true} />
         </div>
       </div>
     </header>

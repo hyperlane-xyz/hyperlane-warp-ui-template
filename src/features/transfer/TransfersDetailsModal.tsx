@@ -8,13 +8,14 @@ import { Modal } from '../../components/layout/Modal';
 import ArrowRightIcon from '../../images/icons/arrow-right.svg';
 import LinkIcon from '../../images/icons/external-link-icon.svg';
 import { formatTimestamp } from '../../utils/date';
+import { getHypExplorerLink } from '../../utils/links';
+import { getTransferStatusLabel } from '../../utils/transfer';
 import { getChainDisplayName, hasPermissionlessChain } from '../chains/utils';
 import { getAllTokens } from '../tokens/metadata';
 import { isNativeToken } from '../tokens/native';
 import { useAccountForChain } from '../wallet/hooks';
 
-import { BasicSpinner } from './components/BasicSpinner';
-import { getHypExplorerLink, getTransferStatusLabel } from './helpers';
+import { TransferStatusIcon } from './components/TransferStatusIcon';
 import { TransferContext, TransferStatus } from './types';
 
 export function TransfersDetailsModal({
@@ -54,7 +55,14 @@ export function TransfersDetailsModal({
   );
 
   return (
-    <Modal isOpen={isOpen} close={onClose} title="" padding="p-6" width="max-w-xl-1">
+    <Modal
+      showCloseBtn={false}
+      isOpen={isOpen}
+      close={onClose}
+      title=""
+      padding="p-6"
+      width="max-w-xl-1"
+    >
       <div className="flex flex-row items-center justify-between">
         <div className="flex">
           <ChainLogo caip2Id={originCaip2Id} size={22} />
@@ -85,7 +93,7 @@ export function TransfersDetailsModal({
       <div className="relative">
         {/* TODO Timeline does not support PI messages yet */}
         {isPermissionlessRoute ? (
-          <BasicSpinner transferStatus={status} />
+          <TransferStatusIcon transferStatus={status} />
         ) : (
           <Timeline transferStatus={status} originTxHash={originTxHash} />
         )}
@@ -230,7 +238,7 @@ function Timeline({
   const messageStatus = isFailed ? MessageStatus.Failing : message?.status || MessageStatus.Pending;
 
   return (
-    <div className="mt-4 mb-7 w-full flex flex-col justify-center items-center timeline-container">
+    <div className="mt-4 mb-2 w-full flex flex-col justify-center items-center timeline-container">
       <MessageTimeline
         status={messageStatus}
         stage={stage}

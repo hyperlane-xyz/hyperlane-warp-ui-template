@@ -1,26 +1,4 @@
-import { links } from '../../consts/links';
-import { toBase64 } from '../../utils/base64';
-import { parseCaip2Id } from '../chains/caip2';
-import { isPermissionlessChain } from '../chains/utils';
-import { getMultiProvider } from '../multiProvider';
-
-import { TransferStatus } from './types';
-
-// TODO test with solana chain config, or disallow it
-export function getHypExplorerLink(originCaip2Id: Caip2Id, msgId?: string) {
-  if (!originCaip2Id || !msgId) return null;
-  const baseLink = `${links.explorer}/message/${msgId}`;
-  if (isPermissionlessChain(originCaip2Id)) {
-    const { reference } = parseCaip2Id(originCaip2Id);
-    const chainConfig = getMultiProvider().getChainMetadata(reference);
-    const serializedConfig = toBase64([chainConfig]);
-    if (serializedConfig) {
-      const params = new URLSearchParams({ chains: serializedConfig });
-      return `${baseLink}?${params.toString()}`;
-    }
-  }
-  return baseLink;
-}
+import { TransferStatus } from '../features/transfer/types';
 
 export function getTransferStatusLabel(
   status: TransferStatus,

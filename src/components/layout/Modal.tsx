@@ -11,12 +11,14 @@ export function Modal({
   width,
   padding,
   children,
+  showCloseBtn = true,
 }: PropsWithChildren<{
   isOpen: boolean;
   title: string;
   close: () => void;
   width?: string;
   padding?: string;
+  showCloseBtn?: boolean;
 }>) {
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -55,14 +57,16 @@ export function Modal({
                   {title}
                 </Dialog.Title>
                 {children}
-                <div className="absolute right-3 top-3">
-                  <IconButton
-                    imgSrc={XCircle}
-                    onClick={close}
-                    title="Close"
-                    classes="hover:rotate-90"
-                  />
-                </div>
+                {showCloseBtn && (
+                  <div className="absolute right-3 top-3">
+                    <IconButton
+                      imgSrc={XCircle}
+                      onClick={close}
+                      title="Close"
+                      classes="hover:rotate-90"
+                    />
+                  </div>
+                )}
               </Dialog.Panel>
             </Transition.Child>
           </div>

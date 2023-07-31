@@ -1,12 +1,10 @@
 import Image from 'next/image';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
+import { toast } from 'react-toastify';
 
-import { getChainDisplayName } from '../../features/chains/utils';
-import { useStore } from '../../features/store';
-import { isNativeToken } from '../../features/tokens/native';
-import { TransfersDetailsModal } from '../../features/transfer/TransfersDetailsModal';
-import { TransferContext, TransferStatus } from '../../features/transfer/types';
-import { useAccounts } from '../../features/wallet/hooks';
+import { SmallSpinner } from '../../components/animation/ThinSpinner';
+import { ChainLogo } from '../../components/icons/ChainLogo';
+import { Identicon } from '../../components/icons/Identicon';
 import ArrowRightIcon from '../../images/icons/arrow-right.svg';
 import CollapseIcon from '../../images/icons/collapse-icon.svg';
 import ConfirmedIcon from '../../images/icons/confirmed-icon.svg';
@@ -15,9 +13,14 @@ import Logout from '../../images/icons/logout.svg';
 import ResetIcon from '../../images/icons/reset-icon.svg';
 import WarningIcon from '../../images/icons/transfer-warning-status.svg';
 import Wallet from '../../images/icons/wallet.svg';
-import { SmallSpinner } from '../animation/ThinSpinner';
-import { ChainLogo } from '../icons/ChainLogo';
-import { Identicon } from '../icons/Identicon';
+import { tryClipboardSet } from '../../utils/clipboard';
+import { getChainDisplayName } from '../chains/utils';
+import { useStore } from '../store';
+import { isNativeToken } from '../tokens/native';
+import { TransfersDetailsModal } from '../transfer/TransfersDetailsModal';
+import { TransferContext, TransferStatus } from '../transfer/types';
+
+import { useAccounts, useDisconnectFns } from './hooks';
 
 const STATUSES_WITH_ICON = [
   TransferStatus.Delivered,
@@ -38,10 +41,17 @@ const getIconByTransferStatus = (status: TransferStatus) => {
   }
 };
 
-export function SideBarMenu({ isOpen, onClose }: { isOpen: boolean; onClose?: () => void }) {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+export function SideBarMenu({
+  onClose,
+  onConnectWalletHandler,
+}: {
+  onClose?: () => void;
+  onConnectWalletHandler: () => void;
+}) {
+  const [isMenuOpen, setIsMenuOpen] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTransfer, setSelectedTransfer] = useState<TransferContext | null>(null);
+  const disconnects = useDisconnectFns();
 
   const { transfers, resetTransfers } = useStore((s) => ({
     transfers: s.transfers,
@@ -50,13 +60,21 @@ export function SideBarMenu({ isOpen, onClose }: { isOpen: boolean; onClose?: ()
 
   const { readyAccounts } = useAccounts();
 
-  useEffect(() => {
-    setIsMenuOpen(isOpen);
-  }, [isOpen]);
-
   const handleToggleMenu = (isOpen: boolean) => {
     setIsMenuOpen(isOpen);
     if (!isOpen) onClose?.();
+  };
+
+  const onClickCopy = (value?: string) => async () => {
+    if (!value) return;
+    await tryClipboardSet(value);
+    toast.success('Address copied to clipboard', { autoClose: 2000 });
+  };
+
+  const onClickDisconnect = async () => {
+    for (const disconnectFn of Object.values(disconnects)) {
+      await disconnectFn();
+    }
   };
 
   const sortedTransfers = useMemo(
@@ -84,13 +102,16 @@ export function SideBarMenu({ isOpen, onClose }: { isOpen: boolean; onClose?: ()
           />
         </button>
         <div className="w-full h-full">
-          <div className="w-full rounded-t-md bg-blue-500 pt-3 pb-3 pl-5 pr-5">
-            <span className="text-white text-lg font-medium tracking-wider">Connected Wallets</span>
+          <div className="w-full rounded-t-md bg-blue-500 pt-2 pb-2 pl-3.5 pr-3.5">
+            <span className="text-white text-base font-medium tracking-wider">
+              Connected Wallets
+            </span>
           </div>
           <div className="mb-2 px-3.5 mt-2">
             {readyAccounts.map((a) => (
               <button
                 key={a.address}
+                onClick={onClickCopy(a.address)}
                 className={`${styles.btn} border border-gray-300 rounded-md mb-2`}
               >
                 <div className="shrink-0">
@@ -104,17 +125,19 @@ export function SideBarMenu({ isOpen, onClose }: { isOpen: boolean; onClose?: ()
                 </div>
               </button>
             ))}
-            <button className={styles.btn}>
+            <button onClick={onConnectWalletHandler} className={styles.btn}>
               <Icon src={Wallet} alt="" size={18} className="invert" />
               <div className="ml-2">Connect wallet</div>
             </button>
-            <button className={styles.btn}>
+            <button onClick={onClickDisconnect} className={styles.btn}>
               <Icon src={Logout} alt="" size={20} />
               <div className="ml-2">Disconnect all wallets</div>
             </button>
           </div>
-          <div className="w-full bg-blue-500 pt-3 pb-3 pl-5 pr-5 mb-3">
-            <span className="text-white text-lg font-medium tracking-wider">Transfer History</span>
+          <div className="w-full bg-blue-500 pt-2 pb-2 pl-3.5 pr-3.5 mb-3">
+            <span className="text-white text-base font-medium tracking-wider">
+              Transfer History
+            </span>
           </div>
           <div className="h-2/4 overflow-y-auto flex flex-col px-3.5">
             {sortedTransfers?.length > 0 &&

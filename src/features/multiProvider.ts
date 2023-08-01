@@ -10,7 +10,7 @@ import {
 
 import { isNumeric } from '../utils/string';
 
-import { parseCaip2Id } from './chains/caip2';
+import { parseCaip2Id } from './caip/chains';
 import { getChainConfigs } from './chains/metadata';
 
 // A ProtocolType-aware MultiProvider

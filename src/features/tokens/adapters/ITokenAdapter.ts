@@ -1,4 +1,4 @@
-import { MinimumTokenMetadata } from '../types';
+import { MinimalTokenMetadata } from '../types';
 
 export interface TransferParams {
   amountOrId: string | number;
@@ -18,7 +18,7 @@ export interface TransferRemoteParams extends TransferParams {
 
 export interface ITokenAdapter {
   getBalance(address?: Address): Promise<string>;
-  getMetadata(isNft?: boolean): Promise<MinimumTokenMetadata>;
+  getMetadata(isNft?: boolean): Promise<MinimalTokenMetadata>;
   populateApproveTx(TransferParams: TransferParams): unknown | Promise<unknown>;
   populateTransferTx(TransferParams: TransferParams): unknown | Promise<unknown>;
 }

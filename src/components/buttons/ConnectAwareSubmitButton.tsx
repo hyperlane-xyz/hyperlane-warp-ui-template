@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 
 import { ProtocolType } from '@hyperlane-xyz/sdk';
 
-import { tryGetProtocolType } from '../../features/chains/caip2';
+import { tryGetProtocolType } from '../../features/caip/chains';
 import { useAccountForChain, useConnectFns } from '../../features/wallet/hooks';
 import { useTimeout } from '../../utils/timeout';
 

@@ -4,9 +4,9 @@ import { providers } from 'ethers';
 import { ProtocolType } from '@hyperlane-xyz/sdk';
 
 import { convertToProtocolAddress } from '../../../utils/addresses';
-import { parseCaip2Id } from '../../chains/caip2';
+import { parseCaip2Id } from '../../caip/chains';
+import { AssetNamespace, getCaip2FromToken, isNativeToken, parseCaip19Id } from '../../caip/tokens';
 import { getMultiProvider, getProvider } from '../../multiProvider';
-import { isNativeToken } from '../native';
 import { Route, RouteType } from '../routes/types';
 
 import {
@@ -25,17 +25,18 @@ import {
 } from './SealevelTokenAdapter';
 
 export class AdapterFactory {
-  static TokenAdapterFromAddress(caip2Id: Caip2Id, address: Address) {
+  static TokenAdapterFromAddress(caip19Id: Caip19Id) {
+    const { address, caip2Id } = parseCaip19Id(caip19Id);
     const { protocol, reference } = parseCaip2Id(caip2Id);
     if (protocol == ProtocolType.Ethereum) {
       const provider = getProvider(caip2Id);
-      return isNativeToken(address)
+      return isNativeToken(caip19Id)
         ? new EvmNativeTokenAdapter(provider)
         : new EvmTokenAdapter(provider, address);
     } else if (protocol === ProtocolType.Sealevel) {
       const rpcUrl = getMultiProvider().getRpcUrl(reference);
       const connection = new Connection(rpcUrl, 'confirmed');
-      return isNativeToken(address)
+      return isNativeToken(caip19Id)
         ? new SealevelNativeTokenAdapter(connection)
         : new SealevelTokenAdapter(connection, address);
     } else {
@@ -43,57 +44,34 @@ export class AdapterFactory {
     }
   }
 
-  static HypCollateralAdapterFromAddress(
-    caip2Id: Caip2Id,
-    routerAddress: Address,
-    tokenAddress: Address,
-    isSpl2022?: boolean,
-  ) {
+  static HypCollateralAdapterFromAddress(caip19Id: Caip19Id, routerAddress: Address) {
+    const caip2Id = getCaip2FromToken(caip19Id);
     return AdapterFactory.selectHypAdapter(
       caip2Id,
       routerAddress,
-      tokenAddress,
+      caip19Id,
       EvmHypCollateralAdapter,
-      isNativeToken(tokenAddress) ? SealevelHypNativeAdapter : SealevelHypCollateralAdapter,
-      isSpl2022,
-    );
-  }
-
-  static HypSyntheticAdapterFromAddress(
-    caip2Id: Caip2Id,
-    routerAddress: Address,
-    tokenAddress: Address,
-    isSpl2022?: boolean,
-  ) {
-    return AdapterFactory.selectHypAdapter(
-      caip2Id,
-      routerAddress,
-      tokenAddress,
-      EvmHypSyntheticAdapter,
-      SealevelHypSyntheticAdapter,
-      isSpl2022,
+      isNativeToken(caip19Id) ? SealevelHypNativeAdapter : SealevelHypCollateralAdapter,
     );
   }
 
   static HypTokenAdapterFromRouteOrigin(route: Route) {
-    const { type, originCaip2Id, originRouterAddress, baseTokenAddress } = route;
+    const { type, originCaip2Id, originRouterAddress, baseCaip19Id } = route;
     if (type === RouteType.BaseToSynthetic) {
       return AdapterFactory.selectHypAdapter(
         originCaip2Id,
         originRouterAddress,
-        baseTokenAddress,
+        baseCaip19Id,
         EvmHypCollateralAdapter,
-        isNativeToken(baseTokenAddress) ? SealevelHypNativeAdapter : SealevelHypCollateralAdapter,
-        route.isSpl2022,
+        isNativeToken(baseCaip19Id) ? SealevelHypNativeAdapter : SealevelHypCollateralAdapter,
       );
     } else if (type === RouteType.SyntheticToBase || type === RouteType.SyntheticToSynthetic) {
       return AdapterFactory.selectHypAdapter(
         originCaip2Id,
         originRouterAddress,
-        baseTokenAddress,
+        baseCaip19Id,
         EvmHypSyntheticAdapter,
         SealevelHypSyntheticAdapter,
-        route.isSpl2022,
       );
     } else {
       throw new Error(`Unsupported route type: ${type}`);
@@ -101,24 +79,22 @@ export class AdapterFactory {
   }
 
   static HypTokenAdapterFromRouteDest(route: Route) {
-    const { type, destCaip2Id, destRouterAddress, baseTokenAddress } = route;
+    const { type, destCaip2Id, destRouterAddress, baseCaip19Id } = route;
     if (type === RouteType.SyntheticToBase) {
       return AdapterFactory.selectHypAdapter(
         destCaip2Id,
-        destRouterAddress,
-        baseTokenAddress,
+        baseCaip19Id,
+        baseCaip19Id,
         EvmHypCollateralAdapter,
-        isNativeToken(baseTokenAddress) ? SealevelHypNativeAdapter : SealevelHypCollateralAdapter,
-        route.isSpl2022,
+        isNativeToken(baseCaip19Id) ? SealevelHypNativeAdapter : SealevelHypCollateralAdapter,
       );
     } else if (type === RouteType.BaseToSynthetic || type === RouteType.SyntheticToSynthetic) {
       return AdapterFactory.selectHypAdapter(
         destCaip2Id,
         destRouterAddress,
-        baseTokenAddress,
+        baseCaip19Id,
         EvmHypSyntheticAdapter,
         SealevelHypSyntheticAdapter,
-        route.isSpl2022,
       );
     } else {
       throw new Error(`Unsupported route type: ${type}`);
@@ -128,7 +104,7 @@ export class AdapterFactory {
   protected static selectHypAdapter(
     caip2Id: Caip2Id,
     routerAddress: Address,
-    tokenAddress: Address,
+    baseCaip19Id: Caip19Id,
     EvmAdapter: new (provider: providers.Provider, routerAddress: Address) => IHypTokenAdapter,
     SealevelAdapter: new (
       connection: Connection,
@@ -136,9 +112,9 @@ export class AdapterFactory {
       tokenAddress: Address,
       isSpl2022?: boolean,
     ) => IHypTokenAdapter,
-    isSpl2022?: boolean,
   ) {
     const { protocol, reference } = parseCaip2Id(caip2Id);
+    const { address: baseTokenAddress, namespace } = parseCaip19Id(baseCaip19Id);
     if (protocol == ProtocolType.Ethereum) {
       const provider = getProvider(caip2Id);
       return new EvmAdapter(provider, convertToProtocolAddress(routerAddress, protocol));
@@ -148,8 +124,8 @@ export class AdapterFactory {
       return new SealevelAdapter(
         connection,
         convertToProtocolAddress(routerAddress, protocol),
-        convertToProtocolAddress(tokenAddress, protocol),
-        isSpl2022,
+        convertToProtocolAddress(baseTokenAddress, protocol),
+        namespace === AssetNamespace.spl2022,
       );
     } else {
       throw new Error(`Unsupported protocol: ${protocol}`);

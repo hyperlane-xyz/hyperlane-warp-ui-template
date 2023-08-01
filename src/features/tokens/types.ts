@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { ERC20Metadata, TokenType } from '@hyperlane-xyz/hyperlane-token';
 import { ProtocolType } from '@hyperlane-xyz/sdk';
 
-export type MinimumTokenMetadata = Omit<ERC20Metadata, 'totalSupply'>;
+export type MinimalTokenMetadata = Omit<ERC20Metadata, 'totalSupply'>;
 
 const commonTokenFields = z.object({
   chainId: z.number().positive().or(z.string().nonempty()),
@@ -64,22 +64,18 @@ export type WarpTokenConfig = Array<CollateralTokenConfig | NativeTokenConfig>;
 
 /**
  * Types for use in the app after processing config
- * Seems redundant with the *Config types above but these are
- * more restrictive and consistent (see comment above)
+ * Uses unambiguous CAIP IDs
  *
  * See src/features/tokens/metadata.ts
  */
 interface BaseTokenMetadata extends CommonTokenFields {
-  caip2Id: Caip2Id;
   type: TokenType;
-  address: Address;
-  tokenRouterAddress: Address; // Shared name for hypCollateralAddr or hypNativeAddr
-  isNft?: boolean;
+  caip19Id: Caip19Id;
+  routerAddress: Address; // Shared name for hypCollateralAddr or hypNativeAddr
 }
 
 interface CollateralTokenMetadata extends BaseTokenMetadata {
   type: TokenType.collateral;
-  isSpl2022?: boolean;
 }
 
 interface NativeTokenMetadata extends BaseTokenMetadata {
@@ -92,7 +88,7 @@ export type TokenMetadata = CollateralTokenMetadata | NativeTokenMetadata;
  * Extended types including synthetic hyp token addresses
  */
 interface HypTokens {
-  hypTokens: Array<{ caip2Id: Caip2Id; address: Address }>;
+  hypTokens: Array<Caip19Id>;
 }
 
 type NativeTokenMetadataWithHypTokens = NativeTokenMetadata & HypTokens;

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { toast } from 'react-toastify';
 
-import { parseCaip2Id } from '../../features/chains/caip2';
+import { parseCaip2Id } from '../../features/caip/chains';
 import { getMultiProvider } from '../../features/multiProvider';
 
 export function toastTxSuccess(msg: string, txHash: string, caip2Id: Caip2Id) {

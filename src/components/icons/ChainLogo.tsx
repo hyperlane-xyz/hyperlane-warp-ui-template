@@ -3,7 +3,7 @@ import { ComponentProps, useMemo } from 'react';
 
 import { ChainLogo as ChainLogoInner } from '@hyperlane-xyz/widgets';
 
-import { parseCaip2Id } from '../../features/chains/caip2';
+import { parseCaip2Id } from '../../features/caip/chains';
 import { getChainDisplayName } from '../../features/chains/utils';
 import { getMultiProvider } from '../../features/multiProvider';
 import { logger } from '../../utils/logger';

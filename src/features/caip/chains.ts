@@ -2,7 +2,8 @@ import { ProtocolType } from '@hyperlane-xyz/sdk';
 
 import { logger } from '../../utils/logger';
 
-// Based on https://chainagnostic.org/CAIPs/caip-2
+// Based mostly on https://chainagnostic.org/CAIPs/caip-2
+// But uses different naming for the protocol
 export function getCaip2Id(protocol: ProtocolType, reference: string | number): Caip2Id {
   if (!Object.values(ProtocolType).includes(protocol)) {
     throw new Error(`Invalid chain environment: ${protocol}`);

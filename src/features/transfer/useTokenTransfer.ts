@@ -8,12 +8,12 @@ import { HyperlaneCore, ProtocolType } from '@hyperlane-xyz/sdk';
 import { toastTxSuccess } from '../../components/toast/TxSuccessToast';
 import { toWei } from '../../utils/amount';
 import { logger } from '../../utils/logger';
-import { getProtocolType, parseCaip2Id } from '../chains/caip2';
+import { getProtocolType, parseCaip2Id } from '../caip/chains';
+import { isNativeToken, isNonFungibleToken } from '../caip/tokens';
 import { getMultiProvider } from '../multiProvider';
 import { AppState, useStore } from '../store';
 import { AdapterFactory } from '../tokens/adapters/AdapterFactory';
 import { IHypTokenAdapter } from '../tokens/adapters/ITokenAdapter';
-import { isNativeToken } from '../tokens/native';
 import { Route, RouteType, RoutesMap } from '../tokens/routes/types';
 import { getTokenRoute } from '../tokens/routes/utils';
 import {
@@ -102,7 +102,7 @@ async function executeTransfer({
   let status: TransferStatus = TransferStatus.Preparing;
 
   try {
-    const { originCaip2Id, destinationCaip2Id, tokenAddress, amount, recipientAddress } = values;
+    const { originCaip2Id, destinationCaip2Id, token, amount, recipientAddress } = values;
     const { protocol: originProtocol, reference: originReference } = parseCaip2Id(originCaip2Id);
     const { reference: destReference } = parseCaip2Id(destinationCaip2Id);
 
@@ -111,10 +111,11 @@ async function executeTransfer({
     const originMetadata = multiProvider.getChainMetadataWithArtifacts(originReference);
     const originMailbox = originMetadata.mailbox;
 
-    const tokenRoute = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenAddress, tokenRoutes);
+    const tokenRoute = getTokenRoute(originCaip2Id, destinationCaip2Id, token, tokenRoutes);
     if (!tokenRoute) throw new Error('No token route found between chains');
 
-    const amountOrId = tokenRoute.isNft ? amount : toWei(amount, tokenRoute.decimals).toString();
+    const isNft = isNonFungibleToken(token);
+    const amountOrId = isNft ? amount : toWei(amount, tokenRoute.decimals).toString();
 
     addTransfer({
       status,
@@ -196,11 +197,11 @@ async function executeEvmTransfer({
   updateStatus,
   sendTransaction,
 }: ExecuteTransferParams<providers.TransactionReceipt>) {
-  const { type: routeType, baseRouterAddress, originCaip2Id, baseTokenAddress } = tokenRoute;
+  const { type: routeType, baseRouterAddress, originCaip2Id, baseCaip19Id } = tokenRoute;
 
-  if (isTransferApproveRequired(tokenRoute, baseTokenAddress)) {
+  if (isTransferApproveRequired(tokenRoute, baseCaip19Id)) {
     updateStatus(TransferStatus.CreatingApprove);
-    const tokenAdapter = AdapterFactory.TokenAdapterFromAddress(originCaip2Id, baseTokenAddress);
+    const tokenAdapter = AdapterFactory.TokenAdapterFromAddress(baseCaip19Id);
     const approveTxRequest = (await tokenAdapter.populateApproveTx({
       amountOrId,
       recipient: baseRouterAddress,
@@ -225,7 +226,7 @@ async function executeEvmTransfer({
   logger.debug('Quoted gas payment', gasPayment);
   // If sending native tokens (e.g. Eth), the gasPayment must be added to the tx value and sent together
   const txValue =
-    routeType === RouteType.BaseToSynthetic && isNativeToken(baseTokenAddress)
+    routeType === RouteType.BaseToSynthetic && isNativeToken(baseCaip19Id)
       ? BigNumber.from(gasPayment).add(amountOrId)
       : gasPayment;
   const transferTxRequest = (await hypTokenAdapter.populateTransferRemoteTx({
@@ -291,9 +292,9 @@ async function executeSealevelTransfer({
   return { transferTxHash };
 }
 
-export function isTransferApproveRequired(route: Route, tokenAddress: string) {
+export function isTransferApproveRequired(route: Route, caip19Id: Caip19Id) {
   return (
-    !isNativeToken(tokenAddress) &&
+    !isNativeToken(caip19Id) &&
     route.type === RouteType.BaseToSynthetic &&
     getProtocolType(route.originCaip2Id) === ProtocolType.Ethereum
   );

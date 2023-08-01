@@ -39,6 +39,7 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
   const [isNft, setIsNft] = useState(false);
 
   const balances = useStore((state) => state.balances);
+
   const validate = (values: TransferFormValues) =>
     validateFormValues(values, tokenRoutes, balances);
 
@@ -253,9 +254,19 @@ function ButtonSection({
 
   const onDoneTransactions = () => {
     setIsReview(false);
+    setTransferLoading(false);
     // resetForm();
   };
   const { triggerTransactions } = useTokenTransfer(onDoneTransactions);
+
+  const { setTransferLoading } = useStore((s) => ({
+    setTransferLoading: s.setTransferLoading,
+  }));
+
+  const triggerTransactionsHandler = async () => {
+    setTransferLoading(true);
+    await triggerTransactions(values, tokenRoutes);
+  };
 
   if (!isReview) {
     return (
@@ -281,7 +292,7 @@ function ButtonSection({
       <SolidButton
         type="button"
         color="blue"
-        onClick={() => triggerTransactions(values, tokenRoutes)}
+        onClick={triggerTransactionsHandler}
         classes="flex-1 px-3 py-1.5"
       >
         {`Send to ${getChainDisplayName(values.destinationCaip2Id)}`}

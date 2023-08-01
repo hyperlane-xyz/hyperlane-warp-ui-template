@@ -40,7 +40,7 @@ export function WalletControlBar() {
         isOpen={showEnvSelectModal}
         close={() => setShowEnvSelectModal(false)}
       />
-      {numReady > 0 && <SideBarMenu onConnectWalletHandler={() => setShowEnvSelectModal(true)} />}
+      {numReady > 0 && <SideBarMenu onConnectWallet={() => setShowEnvSelectModal(true)} />}
     </div>
   );
 }

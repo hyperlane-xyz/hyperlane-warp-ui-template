@@ -22,6 +22,8 @@ export interface AppState {
   setSenderBalance: (b: string) => void;
   setSenderNftIds: (ids: string[] | null) => void;
   setIsSenderNftOwner: (isOwner: boolean | null) => void;
+  transferLoading: boolean;
+  setTransferLoading: (isLoading: boolean) => void;
 }
 
 export const useStore = create<AppState>()(
@@ -45,6 +47,10 @@ export const useStore = create<AppState>()(
             transfers: txs,
           };
         });
+      },
+      transferLoading: false,
+      setTransferLoading: (isLoading) => {
+        set(() => ({ transferLoading: isLoading }));
       },
       balances: {
         senderBalance: '0',

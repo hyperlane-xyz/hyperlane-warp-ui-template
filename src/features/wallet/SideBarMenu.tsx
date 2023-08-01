@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import { SmallSpinner } from '../../components/animation/ThinSpinner';
@@ -41,28 +41,31 @@ const getIconByTransferStatus = (status: TransferStatus) => {
   }
 };
 
-export function SideBarMenu({
-  onClose,
-  onConnectWalletHandler,
-}: {
-  onClose?: () => void;
-  onConnectWalletHandler: () => void;
-}) {
+export function SideBarMenu({ onConnectWallet }: { onConnectWallet: () => void }) {
   const [isMenuOpen, setIsMenuOpen] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTransfer, setSelectedTransfer] = useState<TransferContext | null>(null);
   const disconnects = useDisconnectFns();
+  const { readyAccounts } = useAccounts();
+  const didMountRef = useRef(false);
 
-  const { transfers, resetTransfers } = useStore((s) => ({
+  const { transfers, resetTransfers, transferLoading } = useStore((s) => ({
     transfers: s.transfers,
     resetTransfers: s.resetTransfers,
+    transferLoading: s.transferLoading,
   }));
 
-  const { readyAccounts } = useAccounts();
+  useEffect(() => {
+    if (!didMountRef.current) {
+      didMountRef.current = true;
+    } else if (transferLoading) {
+      setSelectedTransfer(transfers[transfers.length - 1]);
+      setIsModalOpen(true);
+    }
+  }, [transfers, transferLoading]);
 
   const handleToggleMenu = (isOpen: boolean) => {
     setIsMenuOpen(isOpen);
-    if (!isOpen) onClose?.();
   };
 
   const onClickCopy = (value?: string) => async () => {
@@ -78,7 +81,7 @@ export function SideBarMenu({
   };
 
   const sortedTransfers = useMemo(
-    () => transfers.sort((a, b) => b.timestamp - a.timestamp) || [],
+    () => [...transfers].sort((a, b) => b.timestamp - a.timestamp) || [],
     [transfers],
   );
 
@@ -125,7 +128,7 @@ export function SideBarMenu({
                 </div>
               </button>
             ))}
-            <button onClick={onConnectWalletHandler} className={styles.btn}>
+            <button onClick={onConnectWallet} className={styles.btn}>
               <Icon src={Wallet} alt="" size={18} className="invert" />
               <div className="ml-2">Connect wallet</div>
             </button>

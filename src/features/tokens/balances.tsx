@@ -16,7 +16,7 @@ import { RoutesMap } from './routes/types';
 import { getTokenRoute } from './routes/utils';
 
 export function useOriginBalance(
-  { originCaip2Id, destinationCaip2Id, token }: TransferFormValues,
+  { originCaip2Id, destinationCaip2Id, tokenCaip19Id }: TransferFormValues,
   tokenRoutes: RoutesMap,
 ) {
   const address = useAccountForChain(originCaip2Id)?.address;
@@ -27,9 +27,16 @@ export function useOriginBalance(
     isError: hasError,
     data,
   } = useQuery({
-    queryKey: ['useOriginBalance', address, originCaip2Id, destinationCaip2Id, token, tokenRoutes],
+    queryKey: [
+      'useOriginBalance',
+      address,
+      originCaip2Id,
+      destinationCaip2Id,
+      tokenCaip19Id,
+      tokenRoutes,
+    ],
     queryFn: async () => {
-      const route = getTokenRoute(originCaip2Id, destinationCaip2Id, token, tokenRoutes);
+      const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenCaip19Id, tokenRoutes);
       const protocol = getProtocolType(originCaip2Id);
       if (!route || !address || !isValidAddress(address, protocol)) return null;
       const adapter = AdapterFactory.HypTokenAdapterFromRouteOrigin(route);
@@ -47,7 +54,7 @@ export function useOriginBalance(
 }
 
 export function useDestinationBalance(
-  { originCaip2Id, destinationCaip2Id, token, recipientAddress }: TransferFormValues,
+  { originCaip2Id, destinationCaip2Id, tokenCaip19Id, recipientAddress }: TransferFormValues,
   tokenRoutes: RoutesMap,
 ) {
   const {
@@ -60,11 +67,11 @@ export function useDestinationBalance(
       recipientAddress,
       originCaip2Id,
       destinationCaip2Id,
-      token,
+      tokenCaip19Id,
       tokenRoutes,
     ],
     queryFn: async () => {
-      const route = getTokenRoute(originCaip2Id, destinationCaip2Id, token, tokenRoutes);
+      const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenCaip19Id, tokenRoutes);
       const protocol = getProtocolType(destinationCaip2Id);
       if (!route || !recipientAddress || !isValidAddress(recipientAddress, protocol)) return null;
       const adapter = AdapterFactory.HypTokenAdapterFromRouteDest(route);

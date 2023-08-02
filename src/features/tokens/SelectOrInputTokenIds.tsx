@@ -18,15 +18,15 @@ export function SelectOrInputTokenIds({
   tokenRoutes: RoutesMap;
 }) {
   const {
-    values: { originCaip2Id, token, destinationCaip2Id },
+    values: { originCaip2Id, tokenCaip19Id, destinationCaip2Id },
   } = useFormikContext<TransferFormValues>();
 
-  const route = getTokenRoute(originCaip2Id, destinationCaip2Id, token, tokenRoutes);
+  const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenCaip19Id, tokenRoutes);
 
   let activeToken = '' as Caip19Id;
   if (route?.type === RouteType.BaseToSynthetic) {
     // If the origin is the base chain, use the collateralized token for balance checking
-    activeToken = token;
+    activeToken = tokenCaip19Id;
   } else if (route) {
     // Otherwise, use the synthetic token for balance checking
     activeToken = getCaip19Id(

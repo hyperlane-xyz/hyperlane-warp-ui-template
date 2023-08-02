@@ -98,8 +98,9 @@ export function resolveAssetNamespace(
   isNft?: boolean,
   isSpl2022?: boolean,
 ) {
+  if (isNative) return AssetNamespace.native;
   if (protocol === ProtocolType.Ethereum) {
-    return isNft ? AssetNamespace.erc721 : isNative ? AssetNamespace.native : AssetNamespace.erc20;
+    return isNft ? AssetNamespace.erc721 : AssetNamespace.erc20;
   } else if (protocol === ProtocolType.Sealevel) {
     return isSpl2022 ? AssetNamespace.spl2022 : AssetNamespace.spl;
   } else {

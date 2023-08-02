@@ -102,7 +102,7 @@ async function executeTransfer({
   let status: TransferStatus = TransferStatus.Preparing;
 
   try {
-    const { originCaip2Id, destinationCaip2Id, token, amount, recipientAddress } = values;
+    const { originCaip2Id, destinationCaip2Id, tokenCaip19Id, amount, recipientAddress } = values;
     const { protocol: originProtocol, reference: originReference } = parseCaip2Id(originCaip2Id);
     const { reference: destReference } = parseCaip2Id(destinationCaip2Id);
 
@@ -111,10 +111,10 @@ async function executeTransfer({
     const originMetadata = multiProvider.getChainMetadataWithArtifacts(originReference);
     const originMailbox = originMetadata.mailbox;
 
-    const tokenRoute = getTokenRoute(originCaip2Id, destinationCaip2Id, token, tokenRoutes);
+    const tokenRoute = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenCaip19Id, tokenRoutes);
     if (!tokenRoute) throw new Error('No token route found between chains');
 
-    const isNft = isNonFungibleToken(token);
+    const isNft = isNonFungibleToken(tokenCaip19Id);
     const amountOrId = isNft ? amount : toWei(amount, tokenRoute.decimals).toString();
 
     addTransfer({

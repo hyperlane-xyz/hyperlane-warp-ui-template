@@ -79,7 +79,7 @@ function SwapChainsButton({ disabled }: { disabled?: boolean }) {
     setFieldValue('originCaip2Id', destinationCaip2Id);
     setFieldValue('destinationCaip2Id', originCaip2Id);
     // Reset other fields on chain change
-    setFieldValue('tokenAddress', '');
+    setFieldValue('tokenCaip19Id', '');
     setFieldValue('recipientAddress', '');
     setFieldValue('amount', '');
   };
@@ -143,11 +143,11 @@ function TokenSection({
 
   return (
     <div className="flex-1">
-      <label htmlFor="tokenAddress" className="block uppercase text-sm text-gray-500 pl-0.5">
+      <label htmlFor="tokenCaip19Id" className="block uppercase text-sm text-gray-500 pl-0.5">
         Token
       </label>
       <TokenSelectField
-        name="tokenAddress"
+        name="tokenCaip19Id"
         originCaip2Id={values.originCaip2Id}
         destinationCaip2Id={values.destinationCaip2Id}
         tokenRoutes={tokenRoutes}
@@ -338,7 +338,7 @@ function SelfButton({ disabled }: { disabled?: boolean }) {
 
 function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes: RoutesMap }) {
   const {
-    values: { amount, originCaip2Id, destinationCaip2Id, token },
+    values: { amount, originCaip2Id, destinationCaip2Id, tokenCaip19Id: token },
   } = useFormikContext<TransferFormValues>();
 
   const route = getTokenRoute(originCaip2Id, destinationCaip2Id, token, tokenRoutes);
@@ -386,22 +386,22 @@ function validateFormValues(
   tokenRoutes: RoutesMap,
   balances: AppState['balances'],
 ) {
-  const { originCaip2Id, destinationCaip2Id, amount, token, recipientAddress } = values;
-  const route = getTokenRoute(originCaip2Id, destinationCaip2Id, token, tokenRoutes);
+  const { originCaip2Id, destinationCaip2Id, amount, tokenCaip19Id, recipientAddress } = values;
+  const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenCaip19Id, tokenRoutes);
   if (!route) return { destinationCaip2Id: 'No route found for chains/token' };
 
   if (!originCaip2Id) return { originCaip2Id: 'Invalid origin chain' };
   if (!destinationCaip2Id) return { destinationCaip2Id: 'Invalid destination chain' };
 
-  if (!token) return { tokenAddress: 'Token required' };
-  const { address: tokenAddress } = parseCaip19Id(token);
-  if (!isValidAddress(tokenAddress)) return { tokenAddress: 'Invalid token' };
+  if (!tokenCaip19Id) return { tokenCaip19Id: 'Token required' };
+  const { address: tokenAddress } = parseCaip19Id(tokenCaip19Id);
+  if (!isValidAddress(tokenAddress)) return { tokenCaip19Id: 'Invalid token' };
 
   const destProtocol = getProtocolType(destinationCaip2Id);
   if (!isValidAddress(recipientAddress, destProtocol))
     return { recipientAddress: 'Invalid recipient' };
 
-  const isNft = isNonFungibleToken(token);
+  const isNft = isNonFungibleToken(tokenCaip19Id);
   const parsedAmount = tryParseAmount(amount);
   if (!parsedAmount || parsedAmount.lte(0))
     return { amount: isNft ? 'Invalid Token Id' : 'Invalid amount' };
@@ -431,7 +431,7 @@ function useFormInitialValues(caip2Ids: Caip2Id[], tokenRoutes: RoutesMap): Tran
       originCaip2Id: firstRoute.originCaip2Id,
       destinationCaip2Id: firstRoute.destCaip2Id,
       amount: '',
-      token: '' as Caip19Id,
+      tokenCaip19Id: '' as Caip19Id,
       recipientAddress: '',
     };
   }, [caip2Ids, tokenRoutes]);

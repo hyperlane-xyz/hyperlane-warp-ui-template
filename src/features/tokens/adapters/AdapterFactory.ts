@@ -83,7 +83,7 @@ export class AdapterFactory {
     if (type === RouteType.SyntheticToBase) {
       return AdapterFactory.selectHypAdapter(
         destCaip2Id,
-        baseCaip19Id,
+        destRouterAddress,
         baseCaip19Id,
         EvmHypCollateralAdapter,
         isNativeToken(baseCaip19Id) ? SealevelHypNativeAdapter : SealevelHypCollateralAdapter,

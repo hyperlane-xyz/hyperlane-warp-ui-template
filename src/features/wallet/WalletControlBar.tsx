@@ -1,9 +1,10 @@
-import { Menu } from '@headlessui/react';
 import Image from 'next/image';
 import { useState } from 'react';
 
 import { SolidButton } from '../../components/buttons/SolidButton';
+import { Identicon } from '../../components/icons/Identicon';
 import Wallet from '../../images/icons/wallet.svg';
+import { shortenAddress } from '../../utils/addresses';
 import { useIsSsr } from '../../utils/ssr';
 
 import { SideBarMenu } from './SideBarMenu';
@@ -12,6 +13,8 @@ import { useAccounts } from './hooks';
 
 export function WalletControlBar() {
   const [showEnvSelectModal, setShowEnvSelectModal] = useState(false);
+  const [isSideBarOpen, setIsSideBarOpen] = useState(false);
+
   const { readyAccounts } = useAccounts();
   const isSsr = useIsSsr();
 
@@ -24,8 +27,8 @@ export function WalletControlBar() {
 
   return (
     <div className="relative">
-      {numReady === 0 && (
-        <Menu as="div" className="relative">
+      <div className="relative">
+        {numReady === 0 && (
           <SolidButton
             classes="py-1.5 px-2.5"
             onClick={() => setShowEnvSelectModal(true)}
@@ -34,13 +37,39 @@ export function WalletControlBar() {
           >
             <div className="ml-1.5 text-white text-xs sm:text-sm">Connect Wallet</div>
           </SolidButton>
-        </Menu>
-      )}
+        )}
+
+        {numReady === 1 && (
+          <button
+            onClick={() => setIsSideBarOpen(true)}
+            className="px-2 py-0.5 flex items-center justify-center shadow-[0px_2px_4px_0px_rgba(0,0,0,0.10)] rounded-md bg-white hover:bg-gray-100 active:bg-gray-200 transition-all duration-500"
+          >
+            <Identicon address={readyAccounts[0].address} size={26} />
+            <div className="flex flex-col mx-3 items-start">
+              <div className="text-xs text-gray-500">
+                {readyAccounts[0].connectorName || 'Wallet'}
+              </div>
+              <div className="text-xs">
+                {readyAccounts[0].address
+                  ? shortenAddress(readyAccounts[0].address, true)
+                  : 'Unknown'}
+              </div>
+            </div>
+          </button>
+        )}
+      </div>
+
       <WalletEnvSelectionModal
         isOpen={showEnvSelectModal}
         close={() => setShowEnvSelectModal(false)}
       />
-      {numReady > 0 && <SideBarMenu onConnectWallet={() => setShowEnvSelectModal(true)} />}
+      {numReady > 0 && (
+        <SideBarMenu
+          onClose={() => setIsSideBarOpen(false)}
+          isOpen={isSideBarOpen}
+          onConnectWallet={() => setShowEnvSelectModal(true)}
+        />
+      )}
     </div>
   );
 }

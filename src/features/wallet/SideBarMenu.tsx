@@ -41,8 +41,16 @@ const getIconByTransferStatus = (status: TransferStatus) => {
   }
 };
 
-export function SideBarMenu({ onConnectWallet }: { onConnectWallet: () => void }) {
-  const [isMenuOpen, setIsMenuOpen] = useState(true);
+export function SideBarMenu({
+  onConnectWallet,
+  isOpen,
+  onClose,
+}: {
+  onConnectWallet: () => void;
+  isOpen: boolean;
+  onClose: () => void;
+}) {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTransfer, setSelectedTransfer] = useState<TransferContext | null>(null);
   const disconnects = useDisconnectFns();
@@ -64,9 +72,9 @@ export function SideBarMenu({ onConnectWallet }: { onConnectWallet: () => void }
     }
   }, [transfers, transferLoading]);
 
-  const handleToggleMenu = (isOpen: boolean) => {
+  useEffect(() => {
     setIsMenuOpen(isOpen);
-  };
+  }, [isOpen]);
 
   const onClickCopy = (value?: string) => async () => {
     if (!value) return;
@@ -89,24 +97,20 @@ export function SideBarMenu({ onConnectWallet }: { onConnectWallet: () => void }
     <>
       <div
         className={`fixed right-0 top-1.5 h-full w-96 bg-white bg-opacity-95 shadow-lg transform ease-in duration-100 transition-transform ${
-          isMenuOpen ? 'translate-x-0 z-10' : 'translate-x-full z-0'
+          isMenuOpen ? 'translate-x-0 z-50' : 'translate-x-full z-0'
         }`}
       >
-        <button
-          className="absolute bg-opacity-60 -translate-x-full left-0 top-0 h-full w-10 bg-white rounded-l-md flex items-center justify-center"
-          onClick={() => handleToggleMenu(!isMenuOpen)}
-        >
-          <Image
-            className={`${!isMenuOpen ? 'rotate-180' : ''}`}
-            src={CollapseIcon}
-            width={15}
-            height={24}
-            alt=""
-          />
-        </button>
+        {isMenuOpen && (
+          <button
+            className="absolute bg-opacity-60 -translate-x-full left-0 top-0 h-full w-10 bg-white rounded-l-md flex items-center justify-center"
+            onClick={() => onClose()}
+          >
+            <Image src={CollapseIcon} width={15} height={24} alt="" />
+          </button>
+        )}
         <div className="w-full h-full">
           <div className="w-full rounded-t-md bg-blue-500 pt-2 pb-2 pl-3.5 pr-3.5">
-            <span className="text-white text-base font-medium tracking-wider">
+            <span className="text-white text-base font-normal tracking-wider">
               Connected Wallets
             </span>
           </div>
@@ -138,7 +142,7 @@ export function SideBarMenu({ onConnectWallet }: { onConnectWallet: () => void }
             </button>
           </div>
           <div className="w-full bg-blue-500 pt-2 pb-2 pl-3.5 pr-3.5 mb-3">
-            <span className="text-white text-base font-medium tracking-wider">
+            <span className="text-white text-base font-normal tracking-wider">
               Transfer History
             </span>
           </div>
@@ -151,7 +155,7 @@ export function SideBarMenu({ onConnectWallet }: { onConnectWallet: () => void }
                     setSelectedTransfer(t);
                     setIsModalOpen(true);
                   }}
-                  className="flex justify-between items-center rounded-md border border-gray-300 p-3 mb-2.5 hover:bg-gray-100 active:bg-gray-200 transition-all duration-500"
+                  className="flex justify-between items-center rounded-md border border-gray-300 p-3 mb-3 hover:bg-gray-100 active:bg-gray-200 transition-all duration-500"
                 >
                   <div className="flex">
                     <div className="mr-2.5 flex flex-col items-center justify-center rounded-full bg-gray-100 h-[2.25rem] w-[2.25rem] p-1.5">
@@ -246,5 +250,5 @@ function Icon({
 }
 
 const styles = {
-  btn: 'w-full flex items-center px-3.5 py-2 text-sm hover:bg-gray-100 active:bg-gray-200 transition-all duration-500',
+  btn: 'w-full flex items-center px-3.5 py-2 text-sm hover:bg-gray-100 mb-2 active:bg-gray-200 transition-all duration-500',
 };

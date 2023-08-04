@@ -223,7 +223,10 @@ export function SideBarMenu({
       {selectedTransfer && (
         <TransfersDetailsModal
           isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
+          onClose={() => {
+            setIsModalOpen(false);
+            setSelectedTransfer(null);
+          }}
           transfer={selectedTransfer}
         />
       )}

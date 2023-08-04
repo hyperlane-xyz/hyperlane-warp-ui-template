@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { MessageStatus, MessageTimeline, useMessageTimeline } from '@hyperlane-xyz/widgets';
 
@@ -10,7 +10,9 @@ import LinkIcon from '../../images/icons/external-link-icon.svg';
 import { formatTimestamp } from '../../utils/date';
 import { getHypExplorerLink } from '../../utils/links';
 import { getTransferStatusLabel } from '../../utils/transfer';
+import { parseCaip2Id } from '../chains/caip2';
 import { getChainDisplayName, hasPermissionlessChain } from '../chains/utils';
+import { getMultiProvider } from '../multiProvider';
 import { getAllTokens } from '../tokens/metadata';
 import { isNativeToken } from '../tokens/native';
 import { useAccountForChain } from '../wallet/hooks';
@@ -27,11 +29,42 @@ export function TransfersDetailsModal({
   onClose: () => void;
   transfer: TransferContext;
 }) {
+  const [fromUrl, setFromUrl] = useState<string>('');
+  const [toUrl, setToUrl] = useState<string>('');
+  const [tokenUrl, setTokenUrl] = useState<string>('');
+  const [originTxUrl, setOriginTxUrl] = useState<string>('');
+
   const { params, status, originTxHash, msgId, timestamp, activeAccountAddress, route } =
     transfer || {};
-  const { destinationCaip2Id, originCaip2Id, tokenAddress, amount } = params || {};
+  const { destinationCaip2Id, originCaip2Id, tokenAddress, amount, recipientAddress } =
+    params || {};
 
   const account = useAccountForChain(originCaip2Id);
+  const provider = useMemo(() => getMultiProvider(), []);
+  const { reference } = parseCaip2Id(originCaip2Id);
+
+  useEffect(() => {
+    if (!transfer) return;
+    getFormUrls();
+  }, [transfer]);
+
+  const getFormUrls = async () => {
+    if (originTxHash) {
+      const originTx = provider.tryGetExplorerTxUrl(reference, { hash: originTxHash });
+      if (originTx) setOriginTxUrl(originTx);
+    }
+
+    const [fromUrl, toUrl, tokenUrl] = await Promise.all([
+      provider.tryGetExplorerAddressUrl(activeAccountAddress),
+      provider.tryGetExplorerAddressUrl(recipientAddress),
+      provider.tryGetExplorerAddressUrl(tokenAddress),
+    ]);
+
+    if (fromUrl) setFromUrl(fromUrl);
+    if (toUrl) setToUrl(toUrl);
+    if (tokenUrl) setTokenUrl(tokenUrl);
+    if (originTxUrl) setOriginTxUrl(originTxUrl);
+  };
 
   const isAccountReady = !!account?.isReady;
   const connectorName = account?.connectorName || 'wallet';
@@ -124,9 +157,9 @@ export function TransfersDetailsModal({
                   <span className="flex-1 text-gray-350 text-xs leading-normal tracking-wider truncate w-48">
                     {activeAccountAddress}
                   </span>
-                  {explorerLink && (
+                  {fromUrl && (
                     <a
-                      href={explorerLink}
+                      href={fromUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex ml-2.5"
@@ -140,11 +173,11 @@ export function TransfersDetailsModal({
                     To:
                   </span>
                   <span className="flex-1 text-gray-350 text-xs leading-normal tracking-wider truncate w-48">
-                    {params.recipientAddress}
+                    {recipientAddress}
                   </span>
-                  {explorerLink && (
+                  {toUrl && (
                     <a
-                      href={explorerLink}
+                      href={toUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex ml-2.5"
@@ -164,9 +197,9 @@ export function TransfersDetailsModal({
                   <span className="flex-1 text-gray-350 text-xs leading-normal tracking-wider truncate w-48">
                     {tokenAddress}
                   </span>
-                  {explorerLink && (
+                  {tokenUrl && (
                     <a
-                      href={explorerLink}
+                      href={tokenUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex ml-2.5"
@@ -182,9 +215,9 @@ export function TransfersDetailsModal({
                   <span className="flex-1 text-gray-350 text-xs leading-normal tracking-wider truncate w-44">
                     {originTxHash}
                   </span>
-                  {explorerLink && (
+                  {originTxUrl && (
                     <a
-                      href={explorerLink}
+                      href={originTxUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex ml-2.5"

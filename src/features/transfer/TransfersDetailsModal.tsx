@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { MessageStatus, MessageTimeline, useMessageTimeline } from '@hyperlane-xyz/widgets';
 
@@ -9,6 +9,7 @@ import ArrowRightIcon from '../../images/icons/arrow-right.svg';
 import LinkIcon from '../../images/icons/external-link-icon.svg';
 import { formatTimestamp } from '../../utils/date';
 import { getHypExplorerLink } from '../../utils/links';
+import { logger } from '../../utils/logger';
 import { getTransferStatusLabel } from '../../utils/transfer';
 import { parseCaip2Id } from '../chains/caip2';
 import { getChainDisplayName, hasPermissionlessChain } from '../chains/utils';
@@ -43,28 +44,31 @@ export function TransfersDetailsModal({
   const provider = useMemo(() => getMultiProvider(), []);
   const { reference } = parseCaip2Id(originCaip2Id);
 
+  const getFormUrls = useCallback(async () => {
+    try {
+      if (originTxHash) {
+        const originTx = await provider.tryGetExplorerTxUrl(reference, { hash: originTxHash });
+        if (originTx) setOriginTxUrl(originTx);
+      }
+
+      const [fromUrl, toUrl, tokenUrl] = await Promise.all([
+        provider.tryGetExplorerAddressUrl(activeAccountAddress),
+        provider.tryGetExplorerAddressUrl(recipientAddress),
+        provider.tryGetExplorerAddressUrl(tokenAddress),
+      ]);
+
+      if (fromUrl) setFromUrl(fromUrl);
+      if (toUrl) setToUrl(toUrl);
+      if (tokenUrl) setTokenUrl(tokenUrl);
+    } catch (error) {
+      logger.error('Error fetching URLs:', error);
+    }
+  }, [activeAccountAddress, originTxHash, provider, recipientAddress, reference, tokenAddress]);
+
   useEffect(() => {
     if (!transfer) return;
-    getFormUrls();
-  }, [transfer]);
-
-  const getFormUrls = async () => {
-    if (originTxHash) {
-      const originTx = provider.tryGetExplorerTxUrl(reference, { hash: originTxHash });
-      if (originTx) setOriginTxUrl(originTx);
-    }
-
-    const [fromUrl, toUrl, tokenUrl] = await Promise.all([
-      provider.tryGetExplorerAddressUrl(activeAccountAddress),
-      provider.tryGetExplorerAddressUrl(recipientAddress),
-      provider.tryGetExplorerAddressUrl(tokenAddress),
-    ]);
-
-    if (fromUrl) setFromUrl(fromUrl);
-    if (toUrl) setToUrl(toUrl);
-    if (tokenUrl) setTokenUrl(tokenUrl);
-    if (originTxUrl) setOriginTxUrl(originTxUrl);
-  };
+    getFormUrls().catch((err) => logger.error(err));
+  }, [transfer, getFormUrls]);
 
   const isAccountReady = !!account?.isReady;
   const connectorName = account?.connectorName || 'wallet';

@@ -63,8 +63,8 @@ export function TransfersDetailsModal({
       padding="p-6"
       width="max-w-xl-1"
     >
-      <div className="flex flex-row items-center justify-between">
-        <div className="flex">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+        <div className="flex mb-2.5 md:mb-0">
           <ChainLogo caip2Id={originCaip2Id} size={22} />
           <div className="flex items items-baseline">
             <span className="text-black text-base font-normal ml-1">{amount}</span>
@@ -106,11 +106,11 @@ export function TransfersDetailsModal({
             {statusDescription}
           </div>
         ) : (
-          <div className="flex">
-            <div className="flex w-1/2">
-              <div className="flex flex-col">
+          <div className="flex flex-col md:flex-row">
+            <div className="flex w-full md:w-1/2">
+              <div className="flex flex-col w-full md:w-min">
                 <div className="flex mb-5">
-                  <span className="text-gray-350 text-xs leading-normal tracking-wider mr-3">
+                  <span className="text-gray-350 text-xs leading-normal tracking-wider mr-2 md:mr-3">
                     Time:
                   </span>
                   <span className="text-gray-350 text-xs leading-normal tracking-wider">
@@ -118,10 +118,10 @@ export function TransfersDetailsModal({
                   </span>
                 </div>
                 <div className="flex mb-5 justify-between">
-                  <span className="text-gray-350 text-xs leading-normal tracking-wider mr-3">
+                  <span className="text-gray-350 text-xs leading-normal tracking-wider mr-2 md:mr-3">
                     From:
                   </span>
-                  <span className="text-gray-350 text-xs leading-normal tracking-wider truncate w-48">
+                  <span className="flex-1 text-gray-350 text-xs leading-normal tracking-wider truncate w-48">
                     {activeAccountAddress}
                   </span>
                   {explorerLink && (
@@ -136,10 +136,10 @@ export function TransfersDetailsModal({
                   )}
                 </div>
                 <div className="flex mb-4 justify-between">
-                  <span className="text-gray-350 text-xs leading-normal tracking-wider mr-7">
+                  <span className="text-gray-350 text-xs leading-normal tracking-wider mr-2 md:mr-7">
                     To:
                   </span>
-                  <span className="text-gray-350 text-xs leading-normal tracking-wider truncate w-48">
+                  <span className="flex-1 text-gray-350 text-xs leading-normal tracking-wider truncate w-48">
                     {params.recipientAddress}
                   </span>
                   {explorerLink && (
@@ -155,13 +155,13 @@ export function TransfersDetailsModal({
                 </div>
               </div>
             </div>
-            <div className="flex w-1/2">
-              <div className="flex flex-col">
+            <div className="flex w-full md:w-1/2">
+              <div className="flex flex-col w-full md:w-min">
                 <div className="flex mb-5 justify-between">
-                  <span className="text-gray-350 text-xs leading-normal tracking-wider mr-7">
+                  <span className="text-gray-350 text-xs leading-normal tracking-wider mr-2 md:mr-7">
                     Token:
                   </span>
-                  <span className="text-gray-350 text-xs leading-normal tracking-wider truncate w-48">
+                  <span className="flex-1 text-gray-350 text-xs leading-normal tracking-wider truncate w-48">
                     {tokenAddress}
                   </span>
                   {explorerLink && (
@@ -176,10 +176,10 @@ export function TransfersDetailsModal({
                   )}
                 </div>
                 <div className="flex mb-5 justify-between">
-                  <span className="text-gray-350 text-xs leading-normal tracking-wider mr-3">
+                  <span className="text-gray-350 text-xs leading-normal tracking-wider mr-2">
                     Origin Tx:
                   </span>
-                  <span className="text-gray-350 text-xs leading-normal tracking-wider truncate w-48">
+                  <span className="flex-1 text-gray-350 text-xs leading-normal tracking-wider truncate w-44">
                     {originTxHash}
                   </span>
                   {explorerLink && (

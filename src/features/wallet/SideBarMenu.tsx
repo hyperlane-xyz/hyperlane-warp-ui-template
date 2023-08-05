@@ -98,7 +98,7 @@ export function SideBarMenu({
   return (
     <>
       <div
-        className={`fixed right-0 top-1.5 h-full w-88 bg-white bg-opacity-95 shadow-lg transform ease-in duration-100 transition-transform ${
+        className={`fixed right-0 top-0 h-full w-88 bg-white bg-opacity-95 shadow-lg transform ease-in duration-100 transition-transform ${
           isMenuOpen ? 'translate-x-0 z-30' : 'translate-x-full z-0'
         }`}
       >
@@ -153,7 +153,7 @@ export function SideBarMenu({
                     setSelectedTransfer(t);
                     setIsModalOpen(true);
                   }}
-                  className="flex justify-between items-center rounded-md border border-gray-300 p-3 mb-3 hover:bg-gray-100 active:bg-gray-200 transition-all duration-500"
+                  className="flex justify-between items-center rounded-md border border-gray-300 px-2.5 py-2 mb-3 hover:bg-gray-100 active:bg-gray-200 transition-all duration-500"
                 >
                   <div className="flex">
                     <div className="mr-2.5 flex flex-col items-center justify-center rounded-full bg-gray-100 h-[2.25rem] w-[2.25rem] p-1.5">

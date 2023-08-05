@@ -99,9 +99,6 @@ module.exports = {
       maxWidth: {
         'xl-1': '39.5rem',
       },
-      height: {
-        '680': '42.5rem',
-      }
     },
   },
   plugins: [],

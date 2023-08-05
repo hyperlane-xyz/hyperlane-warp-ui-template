@@ -21,6 +21,13 @@ export enum TransferStatus {
   Failed = 'failed',
 }
 
+// Statuses considered not pending
+export const FinalTransferStatuses = [
+  TransferStatus.ConfirmedTransfer,
+  TransferStatus.Delivered,
+  TransferStatus.Failed,
+];
+
 export interface TransferContext {
   status: TransferStatus;
   route: Route;

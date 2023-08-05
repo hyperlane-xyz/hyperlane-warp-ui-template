@@ -42,7 +42,7 @@ export function WalletControlBar() {
         {numReady === 1 && (
           <button
             onClick={() => setIsSideBarOpen(true)}
-            className="px-2 py-0.5 flex items-center justify-center shadow-[0px_2px_4px_0px_rgba(0,0,0,0.10)] rounded-md bg-white hover:bg-gray-100 active:bg-gray-200 transition-all duration-500"
+            className="px-2.5 py-1 flex items-center justify-center shadow-[0px_2px_4px_0px_rgba(0,0,0,0.10)] rounded-md bg-white hover:bg-gray-100 active:bg-gray-200 transition-all duration-500"
           >
             <Identicon address={readyAccounts[0].address} size={26} />
             <div className="flex flex-col mx-3 items-start">
@@ -54,6 +54,24 @@ export function WalletControlBar() {
                   ? shortenAddress(readyAccounts[0].address, true)
                   : 'Unknown'}
               </div>
+            </div>
+          </button>
+        )}
+
+        {numReady > 1 && (
+          <button
+            onClick={() => setIsSideBarOpen(true)}
+            className="px-2.5 py-1 flex items-center justify-center shadow-[0px_2px_4px_0px_rgba(0,0,0,0.10)] rounded-md bg-white hover:bg-gray-100 active:bg-gray-200 transition-all duration-500"
+          >
+            <div
+              style={{ height: 26, width: 26 }}
+              className="bg-blue-500 text-white flex items-center justify-center rounded-full"
+            >
+              {numReady}
+            </div>
+            <div className="flex flex-col mx-3 items-start">
+              <div className="text-xs text-gray-500">Wallets</div>
+              <div className="text-xs">{`${numReady} Connected`}</div>
             </div>
           </button>
         )}

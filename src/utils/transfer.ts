@@ -1,4 +1,4 @@
-import { TransferStatus } from '../features/transfer/types';
+import { FinalTransferStatuses, TransferStatus } from '../features/transfer/types';
 
 export function getTransferStatusLabel(
   status: TransferStatus,
@@ -7,7 +7,8 @@ export function getTransferStatusLabel(
   isAccountReady: boolean,
 ) {
   let statusDescription = '...';
-  if (!isAccountReady) statusDescription = 'Please connect wallet to continue';
+  if (!isAccountReady && !FinalTransferStatuses.includes(status))
+    statusDescription = 'Please connect wallet to continue';
   else if (status === TransferStatus.Preparing)
     statusDescription = 'Preparing for token transfer...';
   else if (status === TransferStatus.CreatingApprove)

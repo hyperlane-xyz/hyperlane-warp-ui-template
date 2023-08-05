@@ -14,9 +14,11 @@ import ResetIcon from '../../images/icons/reset-icon.svg';
 import WarningIcon from '../../images/icons/transfer-warning-status.svg';
 import Wallet from '../../images/icons/wallet.svg';
 import { tryClipboardSet } from '../../utils/clipboard';
+import { toTitleCase } from '../../utils/string';
+import { getAssetNamespace } from '../caip/tokens';
 import { getChainDisplayName } from '../chains/utils';
 import { useStore } from '../store';
-import { isNativeToken } from '../tokens/native';
+import { getToken } from '../tokens/metadata';
 import { TransfersDetailsModal } from '../transfer/TransfersDetailsModal';
 import { TransferContext, TransferStatus } from '../transfer/types';
 
@@ -96,30 +98,28 @@ export function SideBarMenu({
   return (
     <>
       <div
-        className={`fixed right-0 top-1.5 h-full w-96 bg-white bg-opacity-95 shadow-lg transform ease-in duration-100 transition-transform ${
+        className={`fixed right-0 top-1.5 h-full w-88 bg-white bg-opacity-95 shadow-lg transform ease-in duration-100 transition-transform ${
           isMenuOpen ? 'translate-x-0 z-30' : 'translate-x-full z-0'
         }`}
       >
         {isMenuOpen && (
           <button
-            className="absolute bg-opacity-60 -translate-x-full left-0 top-0 h-full w-10 bg-white rounded-l-md flex items-center justify-center"
+            className="absolute flex items-center justify-center w-9 h-full -translate-x-full left-0 top-0 bg-white bg-opacity-60 hover:bg-opacity-80 rounded-l-md transition-all"
             onClick={() => onClose()}
           >
             <Image src={CollapseIcon} width={15} height={24} alt="" />
           </button>
         )}
         <div className="w-full h-full">
-          <div className="w-full rounded-t-md bg-blue-500 pt-2 pb-2 pl-3.5 pr-3.5">
-            <span className="text-white text-base font-normal tracking-wider">
-              Connected Wallets
-            </span>
+          <div className="w-full rounded-t-md bg-blue-500 py-2 px-3.5 text-white text-base font-normal tracking-wider">
+            Connected Wallets
           </div>
-          <div className="mb-2 px-3.5 mt-2">
+          <div className="my-3 px-3 space-y-3">
             {readyAccounts.map((a) => (
               <button
                 key={a.address}
                 onClick={onClickCopy(a.address)}
-                className={`${styles.btn} border border-gray-300 rounded-md mb-2`}
+                className={`${styles.btn} border border-gray-300 rounded-md`}
               >
                 <div className="shrink-0">
                   <Identicon address={a.address} size={40} />
@@ -141,10 +141,8 @@ export function SideBarMenu({
               <div className="ml-2">Disconnect all wallets</div>
             </button>
           </div>
-          <div className="w-full bg-blue-500 pt-2 pb-2 pl-3.5 pr-3.5 mb-3">
-            <span className="text-white text-base font-normal tracking-wider">
-              Transfer History
-            </span>
+          <div className="w-full bg-blue-500 py-2 px-3.5 mb-4 text-white text-base font-normal tracking-wider">
+            Transfer History
           </div>
           <div className="h-2/4 overflow-y-auto flex flex-col px-3.5">
             {sortedTransfers?.length > 0 &&
@@ -167,15 +165,11 @@ export function SideBarMenu({
                           <span className="text-gray-800 text-sm font-normal">
                             {t.params.amount}
                           </span>
-                          <span className="text-gray-800 text-sm font-normal ml-1">{'ETH'}</span>
+                          <span className="text-gray-800 text-sm font-normal ml-1">
+                            {getToken(t.params.tokenCaip19Id)?.symbol || ''}
+                          </span>
                           <span className="text-black text-xs font-normal ml-1">
-                            (
-                            {isNativeToken(t.params.tokenAddress)
-                              ? 'Native'
-                              : t.route.isNft
-                              ? 'NFT'
-                              : 'Token'}
-                            )
+                            ({toTitleCase(getAssetNamespace(t.params.tokenCaip19Id))})
                           </span>
                         </div>
                         <div className="mt-1 flex flex-row items-center">
@@ -253,5 +247,5 @@ function Icon({
 }
 
 const styles = {
-  btn: 'w-full flex items-center px-3.5 py-2 text-sm hover:bg-gray-100 mb-2 active:bg-gray-200 transition-all duration-500',
+  btn: 'w-full flex items-center px-2.5 py-2 text-sm hover:bg-gray-100 active:bg-gray-200 rounded transition-all duration-500',
 };

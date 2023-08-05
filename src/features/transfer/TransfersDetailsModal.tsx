@@ -10,12 +10,13 @@ import LinkIcon from '../../images/icons/external-link-icon.svg';
 import { formatTimestamp } from '../../utils/date';
 import { getHypExplorerLink } from '../../utils/links';
 import { logger } from '../../utils/logger';
+import { toTitleCase } from '../../utils/string';
 import { getTransferStatusLabel } from '../../utils/transfer';
-import { parseCaip2Id } from '../chains/caip2';
+import { parseCaip2Id } from '../caip/chains';
+import { AssetNamespace, parseCaip19Id } from '../caip/tokens';
 import { getChainDisplayName, hasPermissionlessChain } from '../chains/utils';
 import { getMultiProvider } from '../multiProvider';
-import { getAllTokens } from '../tokens/metadata';
-import { isNativeToken } from '../tokens/native';
+import { getToken } from '../tokens/metadata';
 import { useAccountForChain } from '../wallet/hooks';
 
 import { TransferStatusIcon } from './components/TransferStatusIcon';
@@ -35,35 +36,34 @@ export function TransfersDetailsModal({
   const [tokenUrl, setTokenUrl] = useState<string>('');
   const [originTxUrl, setOriginTxUrl] = useState<string>('');
 
-  const { params, status, originTxHash, msgId, timestamp, activeAccountAddress, route } =
-    transfer || {};
-  const { destinationCaip2Id, originCaip2Id, tokenAddress, amount, recipientAddress } =
+  const { params, status, originTxHash, msgId, timestamp, activeAccountAddress } = transfer || {};
+  const { destinationCaip2Id, originCaip2Id, tokenCaip19Id, amount, recipientAddress } =
     params || {};
 
   const account = useAccountForChain(originCaip2Id);
-  const provider = useMemo(() => getMultiProvider(), []);
-  const { reference } = parseCaip2Id(originCaip2Id);
+  const multiProvider = getMultiProvider();
+  const { reference: chain } = parseCaip2Id(originCaip2Id);
+  const { address: tokenAddress, namespace: tokenNamespace } = parseCaip19Id(tokenCaip19Id);
+  const isNative = tokenNamespace === AssetNamespace.native;
 
   const getFormUrls = useCallback(async () => {
     try {
       if (originTxHash) {
-        const originTx = await provider.tryGetExplorerTxUrl(reference, { hash: originTxHash });
+        const originTx = multiProvider.tryGetExplorerTxUrl(chain, { hash: originTxHash });
         if (originTx) setOriginTxUrl(originTx);
       }
-
       const [fromUrl, toUrl, tokenUrl] = await Promise.all([
-        provider.tryGetExplorerAddressUrl(activeAccountAddress),
-        provider.tryGetExplorerAddressUrl(recipientAddress),
-        provider.tryGetExplorerAddressUrl(tokenAddress),
+        multiProvider.tryGetExplorerAddressUrl(chain, activeAccountAddress),
+        multiProvider.tryGetExplorerAddressUrl(chain, recipientAddress),
+        multiProvider.tryGetExplorerAddressUrl(chain, tokenAddress),
       ]);
-
       if (fromUrl) setFromUrl(fromUrl);
       if (toUrl) setToUrl(toUrl);
       if (tokenUrl) setTokenUrl(tokenUrl);
     } catch (error) {
       logger.error('Error fetching URLs:', error);
     }
-  }, [activeAccountAddress, originTxHash, provider, recipientAddress, reference, tokenAddress]);
+  }, [activeAccountAddress, originTxHash, multiProvider, recipientAddress, chain, tokenAddress]);
 
   useEffect(() => {
     if (!transfer) return;
@@ -86,10 +86,7 @@ export function TransfersDetailsModal({
     () => (timestamp ? formatTimestamp(timestamp) : formatTimestamp(new Date().getTime())),
     [timestamp],
   );
-  const token = useMemo(
-    () => getAllTokens().find((t) => t.address === tokenAddress),
-    [tokenAddress],
-  );
+  const token = getToken(tokenCaip19Id);
 
   return (
     <Modal
@@ -97,17 +94,17 @@ export function TransfersDetailsModal({
       isOpen={isOpen}
       close={onClose}
       title=""
-      padding="p-6"
+      padding="p-4 md:p-6"
       width="max-w-xl-1"
     >
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-        <div className="flex mb-2.5 md:mb-0">
+      <div className="flex flex-row items-center justify-between">
+        <div className="flex">
           <ChainLogo caip2Id={originCaip2Id} size={22} />
           <div className="flex items items-baseline">
             <span className="text-black text-base font-normal ml-1">{amount}</span>
             <span className="text-black text-base font-normal ml-1">{token?.symbol || ''}</span>
             <span className="text-black text-xs font-normal ml-1">
-              ({isNativeToken(tokenAddress) ? 'Native' : route.isNft ? 'NFT' : 'Token'})
+              ({toTitleCase(tokenNamespace)})
             </span>
           </div>
         </div>
@@ -143,10 +140,10 @@ export function TransfersDetailsModal({
             {statusDescription}
           </div>
         ) : (
-          <div className="flex flex-col md:flex-row">
+          <div className="mt-6 flex flex-col md:flex-row">
             <div className="flex w-full md:w-1/2">
-              <div className="flex flex-col w-full md:w-min">
-                <div className="flex mb-5">
+              <div className="flex flex-col w-full md:w-min gap-4">
+                <div className="flex">
                   <span className="text-gray-350 text-xs leading-normal tracking-wider mr-2 md:mr-3">
                     Time:
                   </span>
@@ -154,7 +151,7 @@ export function TransfersDetailsModal({
                     {date}
                   </span>
                 </div>
-                <div className="flex mb-5 justify-between">
+                <div className="flex justify-between">
                   <span className="text-gray-350 text-xs leading-normal tracking-wider mr-2 md:mr-3">
                     From:
                   </span>
@@ -193,15 +190,15 @@ export function TransfersDetailsModal({
               </div>
             </div>
             <div className="flex w-full md:w-1/2">
-              <div className="flex flex-col w-full md:w-min">
-                <div className="flex mb-5 justify-between">
-                  <span className="text-gray-350 text-xs leading-normal tracking-wider mr-2 md:mr-7">
+              <div className="flex flex-col w-full md:w-min gap-4">
+                <div className="flex justify-between">
+                  <span className="text-gray-350 text-xs leading-normal tracking-wider mr-2">
                     Token:
                   </span>
                   <span className="flex-1 text-gray-350 text-xs leading-normal tracking-wider truncate w-48">
-                    {tokenAddress}
+                    {isNative ? 'Native currency' : tokenAddress}
                   </span>
-                  {tokenUrl && (
+                  {tokenUrl && !isNative && (
                     <a
                       href={tokenUrl}
                       target="_blank"
@@ -212,7 +209,7 @@ export function TransfersDetailsModal({
                     </a>
                   )}
                 </div>
-                <div className="flex mb-5 justify-between">
+                <div className="flex justify-between">
                   <span className="text-gray-350 text-xs leading-normal tracking-wider mr-2">
                     Origin Tx:
                   </span>
@@ -231,7 +228,7 @@ export function TransfersDetailsModal({
                   )}
                 </div>
                 {explorerLink && (
-                  <div className="flex mb-4 justify-between">
+                  <div className="flex justify-between">
                     <span className="text-gray-350 text-xs leading-normal tracking-wider">
                       <a
                         className="text-gray-350 text-xs leading-normal tracking-wider underline underline-offset-2 hover:opacity-80 active:opacity-70"
@@ -239,7 +236,7 @@ export function TransfersDetailsModal({
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        View message details in Hyperlane Explorer
+                        View message in Hyperlane Explorer
                       </a>
                     </span>
                     <a
@@ -275,7 +272,7 @@ function Timeline({
   const messageStatus = isFailed ? MessageStatus.Failing : message?.status || MessageStatus.Pending;
 
   return (
-    <div className="mt-4 mb-2 w-full flex flex-col justify-center items-center timeline-container">
+    <div className="mt-6 mb-2 w-full flex flex-col justify-center items-center timeline-container">
       <MessageTimeline
         status={messageStatus}
         stage={stage}

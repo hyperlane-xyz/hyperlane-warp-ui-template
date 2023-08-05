@@ -17,6 +17,10 @@ export function getAllTokens() {
   return tokens;
 }
 
+export function getToken(caip19Id: Caip19Id) {
+  return getAllTokens().find((t) => t.caip19Id === caip19Id);
+}
+
 function parseTokenConfigs(configList: WarpTokenConfig): TokenMetadata[] {
   const result = WarpTokenConfigSchema.safeParse(configList);
   if (!result.success) {

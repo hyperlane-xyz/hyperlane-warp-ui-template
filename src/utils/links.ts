@@ -1,5 +1,5 @@
 import { links } from '../consts/links';
-import { parseCaip2Id } from '../features/chains/caip2';
+import { parseCaip2Id } from '../features/caip/chains';
 import { isPermissionlessChain } from '../features/chains/utils';
 import { getMultiProvider } from '../features/multiProvider';
 

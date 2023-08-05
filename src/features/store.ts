@@ -1,7 +1,10 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-import type { TransferContext, TransferStatus } from './transfer/types';
+import { FinalTransferStatuses, TransferContext, TransferStatus } from './transfer/types';
+
+// Increment this when persist state has breaking changes
+const PERSIST_STATE_VERSION = 1;
 
 // Keeping everything here for now as state is simple
 // Will refactor into slices as necessary
@@ -19,6 +22,7 @@ export interface AppState {
     senderNftIds: string[] | null; // null means unknown
     isSenderNftOwner: boolean | null;
   };
+  failUnconfirmedTransfers: () => void;
   setSenderBalance: (b: string) => void;
   setSenderNftIds: (ids: string[] | null) => void;
   setIsSenderNftOwner: (isOwner: boolean | null) => void;
@@ -48,6 +52,13 @@ export const useStore = create<AppState>()(
           };
         });
       },
+      failUnconfirmedTransfers: () => {
+        set((state) => ({
+          transfers: state.transfers.map((t) =>
+            FinalTransferStatuses.includes(t.status) ? t : { ...t, status: TransferStatus.Failed },
+          ),
+        }));
+      },
       transferLoading: false,
       setTransferLoading: (isLoading) => {
         set(() => ({ transferLoading: isLoading }));
@@ -70,6 +81,10 @@ export const useStore = create<AppState>()(
     {
       name: 'app-state',
       partialize: (state) => ({ transfers: state.transfers }),
+      version: PERSIST_STATE_VERSION,
+      onRehydrateStorage: () => (state) => {
+        state?.failUnconfirmedTransfers();
+      },
     },
   ),
 );

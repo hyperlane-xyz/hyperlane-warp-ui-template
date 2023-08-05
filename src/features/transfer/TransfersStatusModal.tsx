@@ -12,7 +12,7 @@ import CheckmarkCircleIcon from '../../images/icons/checkmark-circle.svg';
 import EnvelopeHeartIcon from '../../images/icons/envelope-heart.svg';
 import ErrorCircleIcon from '../../images/icons/error-circle.svg';
 import { toBase64 } from '../../utils/base64';
-import { parseCaip2Id } from '../chains/caip2';
+import { parseCaip2Id } from '../caip/chains';
 import { hasPermissionlessChain, isPermissionlessChain } from '../chains/utils';
 import { getMultiProvider } from '../multiProvider';
 import { useStore } from '../store';

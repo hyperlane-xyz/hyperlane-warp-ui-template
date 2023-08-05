@@ -1,16 +1,14 @@
 import Image from 'next/image';
 import { useMemo, useState } from 'react';
 
-import { TokenType } from '@hyperlane-xyz/hyperlane-token';
-
 import { TokenIcon } from '../../components/icons/TokenIcon';
 import { TextInput } from '../../components/input/TextField';
 import { Modal } from '../../components/layout/Modal';
 import InfoIcon from '../../images/icons/info-circle.svg';
+import { getAssetNamespace, getTokenAddress, isNativeToken } from '../caip/tokens';
 import { getChainDisplayName } from '../chains/utils';
 
 import { getAllTokens } from './metadata';
-import { isNativeToken } from './native';
 import { RoutesMap } from './routes/types';
 import { hasTokenRoute } from './routes/utils';
 import { TokenMetadata } from './types';
@@ -85,7 +83,7 @@ export function TokenList({
     const q = searchQuery?.trim().toLowerCase();
     return getAllTokens()
       .map((t) => {
-        const hasRoute = hasTokenRoute(originCaip2Id, destinationCaip2Id, t.address, tokenRoutes);
+        const hasRoute = hasTokenRoute(originCaip2Id, destinationCaip2Id, t.caip19Id, tokenRoutes);
         return { ...t, disabled: !hasRoute };
       })
       .sort((a, b) => {
@@ -98,7 +96,7 @@ export function TokenList({
         return (
           t.name.toLowerCase().includes(q) ||
           t.symbol.toLowerCase().includes(q) ||
-          t.address.toLowerCase().includes(q)
+          t.caip19Id.toLowerCase().includes(q)
         );
       });
   }, [searchQuery, originCaip2Id, destinationCaip2Id, tokenRoutes]);
@@ -111,7 +109,7 @@ export function TokenList({
             className={`-mx-2 py-2 px-2 rounded mb-2  ${
               t.disabled ? 'opacity-50' : 'hover:bg-gray-200'
             } transition-all duration-250`}
-            key={`${t.caip2Id}-${t.address}`}
+            key={t.caip19Id}
             type="button"
             disabled={t.disabled}
             onClick={() => onSelect(t)}
@@ -124,14 +122,12 @@ export function TokenList({
               </div>
               <div className="ml-3 text-left">
                 <div className="text-xs">
-                  {isNativeToken(t.address) ? 'Native chain token' : t.address}
+                  {isNativeToken(t.caip19Id) ? 'Native chain token' : getTokenAddress(t.caip19Id)}
                 </div>
                 <div className=" mt-0.5 text-xs flex space-x-1">
                   <span>{`Decimals: ${t.decimals}`}</span>
                   <span>-</span>
-                  <span>
-                    {`Type: ${t.type === TokenType.native ? 'Native' : t.isNft ? 'NFT' : 'Token'}`}
-                  </span>
+                  <span>{`Type: ${getAssetNamespace(t.caip19Id)}`}</span>
                 </div>
               </div>
               {t.disabled && (

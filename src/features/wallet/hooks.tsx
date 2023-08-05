@@ -24,7 +24,7 @@ import {
   getChainReference,
   getEthereumChainId,
   tryGetProtocolType,
-} from '../chains/caip2';
+} from '../caip/chains';
 import { getChainByRpcEndpoint } from '../chains/utils';
 import { getMultiProvider } from '../multiProvider';
 
@@ -96,8 +96,9 @@ export function useAccounts(): {
   );
 }
 
-export function useAccountForChain(caip2Id: Caip2Id): AccountInfo | undefined {
+export function useAccountForChain(caip2Id?: Caip2Id): AccountInfo | undefined {
   const { accounts } = useAccounts();
+  if (!caip2Id) return undefined;
   const protocol = tryGetProtocolType(caip2Id);
   if (!protocol) return undefined;
   return accounts[protocol];

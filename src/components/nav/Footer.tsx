@@ -17,12 +17,10 @@ export function Footer() {
             <Image src={Logo} width={45} height={45} alt="" />
           </div>
           <div className="hidden sm:flex flex-col ml-3">
-            <p className="text-sm font-light leading-5">
-              <span className="text-base font-medium">Hyperlane</span> is the platform
+            <p className="leading-6">
+              Go interchain
               <br />
-              for developers building
-              <br />
-              the interchain universe.
+              with Hyperlane
             </p>
           </div>
         </div>

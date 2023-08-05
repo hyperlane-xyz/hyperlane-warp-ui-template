@@ -1,9 +1,8 @@
 import { ProtocolType, chainIdToMetadata } from '@hyperlane-xyz/sdk';
 
 import { toTitleCase } from '../../utils/string';
+import { parseCaip2Id } from '../caip/chains';
 import { getMultiProvider } from '../multiProvider';
-
-import { parseCaip2Id } from './caip2';
 
 export function getChainDisplayName(id: Caip2Id, shortName = false) {
   if (!id) return 'Unknown';

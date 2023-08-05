@@ -3,9 +3,9 @@ import { ProtocolType } from '@hyperlane-xyz/sdk';
 
 import { tokenList } from '../../consts/tokens';
 import { logger } from '../../utils/logger';
-import { getCaip2Id } from '../chains/caip2';
+import { getCaip2Id } from '../caip/chains';
+import { getCaip19Id, getNativeTokenAddress, resolveAssetNamespace } from '../caip/tokens';
 
-import { getNativeTokenAddress } from './native';
 import { TokenMetadata, WarpTokenConfig, WarpTokenConfigSchema } from './types';
 
 let tokens: TokenMetadata[];
@@ -27,33 +27,26 @@ function parseTokenConfigs(configList: WarpTokenConfig): TokenMetadata[] {
   const parsedConfig = result.data;
   const tokenMetadata: TokenMetadata[] = [];
   for (const token of parsedConfig) {
-    const {
-      type,
-      protocol = ProtocolType.Ethereum,
+    const { type, chainId, name, symbol, decimals, logoURI } = token;
+    const protocol = token.protocol || ProtocolType.Ethereum;
+    const caip2Id = getCaip2Id(protocol, chainId);
+    const isNft = type === TokenType.collateral && token.isNft;
+    const isSpl2022 = type === TokenType.collateral && token.isSpl2022;
+    const address = type === TokenType.collateral ? token.address : getNativeTokenAddress(protocol);
+    const routerAddress =
+      type === TokenType.collateral ? token.hypCollateralAddress : token.hypNativeAddress;
+    const namespace = resolveAssetNamespace(protocol, type == TokenType.native, isNft, isSpl2022);
+    const caip19Id = getCaip19Id(caip2Id, namespace, address);
+    tokenMetadata.push({
       chainId,
       name,
       symbol,
       decimals,
       logoURI,
-    } = token;
-    const caip2Id = getCaip2Id(protocol, chainId);
-    const commonFields = { caip2Id, chainId, name, symbol, decimals, logoURI };
-    if (type == TokenType.collateral) {
-      tokenMetadata.push({
-        ...commonFields,
-        type: TokenType.collateral,
-        tokenRouterAddress: token.hypCollateralAddress,
-        address: token.address,
-        isNft: !!token.isNft,
-      });
-    } else if (type == TokenType.native) {
-      tokenMetadata.push({
-        ...commonFields,
-        type: TokenType.native,
-        tokenRouterAddress: token.hypNativeAddress,
-        address: getNativeTokenAddress(protocol),
-      });
-    }
+      type,
+      caip19Id,
+      routerAddress,
+    });
   }
   return tokenMetadata;
 }

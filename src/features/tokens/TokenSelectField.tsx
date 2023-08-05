@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 
 import { TokenIcon } from '../../components/icons/TokenIcon';
 import ChevronIcon from '../../images/icons/chevron-down.svg';
+import { isNonFungibleToken } from '../caip/tokens';
 import { TransferFormValues } from '../transfer/types';
 
 import { TokenListModal } from './TokenListModal';
@@ -36,7 +37,7 @@ export function TokenSelectField({
   // Keep local state in sync with formik state
   useEffect(() => {
     if (!field.value) setToken(undefined);
-    else if (field.value !== token?.address) {
+    else if (field.value !== token?.caip19Id) {
       setToken(undefined);
       helpers.setValue('');
     }
@@ -44,13 +45,13 @@ export function TokenSelectField({
 
   const handleChange = (newToken: TokenMetadata) => {
     // Set the token address value in formik state
-    helpers.setValue(newToken.address);
+    helpers.setValue(newToken.caip19Id);
     // reset amount after change token
     setFieldValue('amount', '');
     // Update local state
     setToken(newToken);
     // Update nft state in parent
-    setIsNft(!!newToken.isNft);
+    setIsNft(!!isNonFungibleToken(newToken.caip19Id));
   };
 
   const [isModalOpen, setIsModalOpen] = useState(false);

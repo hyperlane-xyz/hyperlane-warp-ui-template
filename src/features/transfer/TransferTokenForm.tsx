@@ -14,8 +14,9 @@ import { Color } from '../../styles/Color';
 import { isValidAddress } from '../../utils/addresses';
 import { fromWei, fromWeiRounded, toWei, tryParseAmount } from '../../utils/amount';
 import { logger } from '../../utils/logger';
+import { getProtocolType } from '../caip/chains';
+import { getTokenAddress, isNonFungibleToken, parseCaip19Id } from '../caip/tokens';
 import { ChainSelectField } from '../chains/ChainSelectField';
-import { getProtocolType } from '../chains/caip2';
 import { getChainDisplayName } from '../chains/utils';
 import { AppState, useStore } from '../store';
 import { SelectOrInputTokenIds } from '../tokens/SelectOrInputTokenIds';
@@ -79,7 +80,7 @@ function SwapChainsButton({ disabled }: { disabled?: boolean }) {
     setFieldValue('originCaip2Id', destinationCaip2Id);
     setFieldValue('destinationCaip2Id', originCaip2Id);
     // Reset other fields on chain change
-    setFieldValue('tokenAddress', '');
+    setFieldValue('tokenCaip19Id', '');
     setFieldValue('recipientAddress', '');
     setFieldValue('amount', '');
   };
@@ -143,11 +144,11 @@ function TokenSection({
 
   return (
     <div className="flex-1">
-      <label htmlFor="tokenAddress" className="block uppercase text-sm text-gray-500 pl-0.5">
+      <label htmlFor="tokenCaip19Id" className="block uppercase text-sm text-gray-500 pl-0.5">
         Token
       </label>
       <TokenSelectField
-        name="tokenAddress"
+        name="tokenCaip19Id"
         originCaip2Id={values.originCaip2Id}
         destinationCaip2Id={values.destinationCaip2Id}
         tokenRoutes={tokenRoutes}
@@ -348,13 +349,13 @@ function SelfButton({ disabled }: { disabled?: boolean }) {
 
 function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes: RoutesMap }) {
   const {
-    values: { amount, originCaip2Id, destinationCaip2Id, tokenAddress },
+    values: { amount, originCaip2Id, destinationCaip2Id, tokenCaip19Id: token },
   } = useFormikContext<TransferFormValues>();
 
-  const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenAddress, tokenRoutes);
-  const isNft = !!route?.isNft;
+  const route = getTokenRoute(originCaip2Id, destinationCaip2Id, token, tokenRoutes);
+  const isNft = token && isNonFungibleToken(token);
   const sendValue = isNft ? amount.toString() : toWei(amount, route?.decimals).toString();
-  const isApproveRequired = route && isTransferApproveRequired(route, tokenAddress);
+  const isApproveRequired = route && isTransferApproveRequired(route, token);
   const originProtocol = getProtocolType(originCaip2Id);
   const originUnitName = ProtocolSmallestUnit[originProtocol];
 
@@ -370,7 +371,7 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
           <div>
             <h4>Transaction 1: Approve Transfer</h4>
             <div className="mt-1.5 ml-1.5 pl-2 border-l border-gray-300 space-y-1.5 text-xs">
-              <p>{`Token Address: ${tokenAddress}`}</p>
+              <p>{`Token Address: ${getTokenAddress(token)}`}</p>
               <p>{`Collateral Address: ${route?.baseRouterAddress}`}</p>
             </div>
           </div>
@@ -396,20 +397,22 @@ function validateFormValues(
   tokenRoutes: RoutesMap,
   balances: AppState['balances'],
 ) {
-  const { originCaip2Id, destinationCaip2Id, amount, tokenAddress, recipientAddress } = values;
-  const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenAddress, tokenRoutes);
+  const { originCaip2Id, destinationCaip2Id, amount, tokenCaip19Id, recipientAddress } = values;
+  const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenCaip19Id, tokenRoutes);
   if (!route) return { destinationCaip2Id: 'No route found for chains/token' };
 
   if (!originCaip2Id) return { originCaip2Id: 'Invalid origin chain' };
   if (!destinationCaip2Id) return { destinationCaip2Id: 'Invalid destination chain' };
 
-  if (!isValidAddress(tokenAddress)) return { tokenAddress: 'Invalid token' };
+  if (!tokenCaip19Id) return { tokenCaip19Id: 'Token required' };
+  const { address: tokenAddress } = parseCaip19Id(tokenCaip19Id);
+  if (!isValidAddress(tokenAddress)) return { tokenCaip19Id: 'Invalid token' };
 
   const destProtocol = getProtocolType(destinationCaip2Id);
   if (!isValidAddress(recipientAddress, destProtocol))
     return { recipientAddress: 'Invalid recipient' };
 
-  const isNft = !!route.isNft;
+  const isNft = isNonFungibleToken(tokenCaip19Id);
   const parsedAmount = tryParseAmount(amount);
   if (!parsedAmount || parsedAmount.lte(0))
     return { amount: isNft ? 'Invalid Token Id' : 'Invalid amount' };
@@ -439,7 +442,7 @@ function useFormInitialValues(caip2Ids: Caip2Id[], tokenRoutes: RoutesMap): Tran
       originCaip2Id: firstRoute.originCaip2Id,
       destinationCaip2Id: firstRoute.destCaip2Id,
       amount: '',
-      tokenAddress: '',
+      tokenCaip19Id: '' as Caip19Id,
       recipientAddress: '',
     };
   }, [caip2Ids, tokenRoutes]);

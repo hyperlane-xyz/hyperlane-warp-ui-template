@@ -18,7 +18,7 @@ module.exports = {
       colors: {
         black: '#010101',
         white: '#ffffff',
-        gray: {...defaultTheme.colors.gray, 150: '#EBEDF0'},
+        gray: {...defaultTheme.colors.gray, 150: '#EBEDF0', 250: '#404040', 350: '#6B6B6B'},
         blue: {
           50: '#E6EDF9',
           100: '#CDDCF4',
@@ -69,6 +69,7 @@ module.exports = {
       },
       fontSize: {
         md: '0.95rem',
+        thin: '0.625rem',
       },
       spacing: {
         88: '22rem',
@@ -94,7 +95,10 @@ module.exports = {
       transitionProperty: {
         'height': 'height, max-height',
         'spacing': 'margin, padding',
-      }
+      },
+      maxWidth: {
+        'xl-1': '39.5rem',
+      },
     },
   },
   plugins: [],

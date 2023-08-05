@@ -116,8 +116,11 @@ async function executeTransfer({
 
     const isNft = isNonFungibleToken(tokenCaip19Id);
     const amountOrId = isNft ? amount : toWei(amount, tokenRoute.decimals).toString();
+    const activeAccountAddress = activeAccounts.accounts[originProtocol]?.address || '';
 
     addTransfer({
+      activeAccountAddress,
+      timestamp: new Date().getTime(),
       status,
       route: tokenRoute,
       params: values,

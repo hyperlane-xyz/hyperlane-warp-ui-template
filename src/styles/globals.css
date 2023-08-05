@@ -228,3 +228,12 @@ Toasts
   --toastify-color-progress-warning: var(--toastify-color-warning);
   --toastify-color-progress-error: var(--toastify-color-error);
 }
+
+/*
+Timeline tweaks
+===============
+*/
+
+.timeline-container h4 {
+  font-size: clamp(0.75rem, 0.825rem, 0.9rem);
+}

@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import ChevronIcon from '../../images/icons/chevron-down.svg';
+import { RoutesMap } from '../tokens/routes/types';
 import { TransferFormValues } from '../transfer/types';
 
 import { ChainSelectListModal } from './ChainSelectModal';
@@ -15,9 +16,19 @@ type Props = {
   caip2Ids: Caip2Id[];
   onChange?: (id: Caip2Id) => void;
   disabled?: boolean;
+  selectedCaip2Id: Caip2Id;
+  tokenRoutes: RoutesMap;
 };
 
-export function ChainSelectField({ name, label, caip2Ids, onChange, disabled }: Props) {
+export function ChainSelectField({
+  name,
+  label,
+  caip2Ids,
+  onChange,
+  disabled,
+  selectedCaip2Id,
+  tokenRoutes,
+}: Props) {
   const [field, , helpers] = useField<Caip2Id>(name);
   const { setFieldValue } = useFormikContext<TransferFormValues>();
 
@@ -63,6 +74,8 @@ export function ChainSelectField({ name, label, caip2Ids, onChange, disabled }: 
         close={() => setIsModalOpen(false)}
         caip2Ids={caip2Ids}
         onSelect={handleChange}
+        selectedCaip2Id={selectedCaip2Id}
+        tokenRoutes={tokenRoutes}
       />
     </div>
   );

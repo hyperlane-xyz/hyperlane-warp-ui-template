@@ -58,7 +58,7 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
       validateOnBlur={false}
     >
       <Form className="flex flex-col items-stretch w-full mt-2">
-        <ChainSelectSection caip2Ids={caip2Ids} isReview={isReview} />
+        <ChainSelectSection tokenRoutes={tokenRoutes} caip2Ids={caip2Ids} isReview={isReview} />
         <div className="mt-3 flex justify-between space-x-4">
           <TokenSection tokenRoutes={tokenRoutes} setIsNft={setIsNft} isReview={isReview} />
           <AmountSection tokenRoutes={tokenRoutes} isNft={isNft} isReview={isReview} />
@@ -98,7 +98,17 @@ function SwapChainsButton({ disabled }: { disabled?: boolean }) {
   );
 }
 
-function ChainSelectSection({ caip2Ids, isReview }: { caip2Ids: Caip2Id[]; isReview: boolean }) {
+function ChainSelectSection({
+  caip2Ids,
+  isReview,
+  tokenRoutes,
+}: {
+  caip2Ids: Caip2Id[];
+  isReview: boolean;
+  tokenRoutes: RoutesMap;
+}) {
+  const { values } = useFormikContext<TransferFormValues>();
+  const { originCaip2Id, destinationCaip2Id } = values;
   const ChevronIcon = ({ classes }: { classes?: string }) => (
     <WideChevron
       width="17"
@@ -112,7 +122,14 @@ function ChainSelectSection({ caip2Ids, isReview }: { caip2Ids: Caip2Id[]; isRev
 
   return (
     <div className="flex items-center justify-center space-x-7 sm:space-x-10">
-      <ChainSelectField name="originCaip2Id" label="From" caip2Ids={caip2Ids} disabled={isReview} />
+      <ChainSelectField
+        selectedCaip2Id={destinationCaip2Id}
+        name="originCaip2Id"
+        label="From"
+        caip2Ids={caip2Ids}
+        disabled={isReview}
+        tokenRoutes={tokenRoutes}
+      />
       <div className="flex flex-col items-center">
         <div className="flex mb-6 sm:space-x-1.5">
           <ChevronIcon classes="hidden sm:block" />
@@ -123,9 +140,11 @@ function ChainSelectSection({ caip2Ids, isReview }: { caip2Ids: Caip2Id[]; isRev
       </div>
       <ChainSelectField
         name="destinationCaip2Id"
+        selectedCaip2Id={originCaip2Id}
         label="To"
         caip2Ids={caip2Ids}
         disabled={isReview}
+        tokenRoutes={tokenRoutes}
       />
     </div>
   );

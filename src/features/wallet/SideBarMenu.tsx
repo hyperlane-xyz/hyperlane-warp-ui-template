@@ -111,10 +111,10 @@ export function SideBarMenu({
           </button>
         )}
         <div className="w-full h-full">
-          <div className="w-full rounded-t-md bg-blue-500 py-2 px-3.5 text-white text-base font-normal tracking-wider">
+          <div className="w-full bg-blue-500 py-2 px-3.5 text-white tracking-wide rounded-t-sm">
             Connected Wallets
           </div>
-          <div className="my-3 px-3 space-y-3">
+          <div className="my-3 px-3 space-y-2.5">
             {readyAccounts.map((a) => (
               <button
                 key={a.address}
@@ -141,7 +141,7 @@ export function SideBarMenu({
               <div className="ml-2">Disconnect all wallets</div>
             </button>
           </div>
-          <div className="w-full bg-blue-500 py-2 px-3.5 mb-4 text-white text-base font-normal tracking-wider">
+          <div className="w-full bg-blue-500 py-2 px-3.5 mb-3.5 text-white tracking-wider rounded-t-sm">
             Transfer History
           </div>
           <div className="h-2/4 overflow-y-auto flex flex-col px-3.5">

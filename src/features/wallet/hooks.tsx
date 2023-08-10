@@ -242,12 +242,12 @@ export function useTransactionFns(): Record<
     }) => {
       if (activeCap2Id && activeCap2Id !== caip2Id) await onSwitchEvmNetwork(caip2Id);
       const chainId = getEthereumChainId(caip2Id);
-      const result = await sendEvmTransaction({
+      logger.debug(`Sending tx on chain ${caip2Id}`);
+      const { hash, wait } = await sendEvmTransaction({
         chainId,
         request: tx as providers.TransactionRequest,
         mode: 'recklesslyUnprepared',
       });
-      const { hash, wait } = result;
       return { hash, confirm: () => wait(1) };
     },
     [onSwitchEvmNetwork],
@@ -278,6 +278,7 @@ export function useTransactionFns(): Record<
         value: { blockhash, lastValidBlockHeight },
       } = await connection.getLatestBlockhashAndContext();
 
+      logger.debug(`Sending tx on chain ${caip2Id}`);
       const signature = await sendSolTransaction(tx, connection, { minContextSlot });
 
       const confirm = () =>

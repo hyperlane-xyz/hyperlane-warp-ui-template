@@ -54,13 +54,13 @@ export class SealevelNativeTokenAdapter implements ITokenAdapter {
     throw new Error('Approve not required for native tokens');
   }
 
-  populateTransferTx({ amountOrId, recipient, fromAccountOwner }: TransferParams): Transaction {
+  populateTransferTx({ weiAmountOrId, recipient, fromAccountOwner }: TransferParams): Transaction {
     const fromPubkey = resolveAddress(fromAccountOwner, this.signerAddress);
     return new Transaction().add(
       SystemProgram.transfer({
         fromPubkey,
         toPubkey: new PublicKey(recipient),
-        lamports: new BigNumber(amountOrId).toNumber(),
+        lamports: new BigNumber(weiAmountOrId).toNumber(),
       }),
     );
   }
@@ -95,7 +95,7 @@ export class SealevelTokenAdapter implements ITokenAdapter {
   }
 
   populateTransferTx({
-    amountOrId,
+    weiAmountOrId,
     recipient,
     fromAccountOwner,
     fromTokenAccount,
@@ -107,7 +107,7 @@ export class SealevelTokenAdapter implements ITokenAdapter {
         new PublicKey(fromTokenAccount),
         new PublicKey(recipient),
         fromWalletPubKey,
-        new BigNumber(amountOrId).toNumber(),
+        new BigNumber(weiAmountOrId).toNumber(),
       ),
     );
   }
@@ -181,7 +181,7 @@ export abstract class SealevelHypTokenAdapter
   }
 
   async populateTransferRemoteTx({
-    amountOrId,
+    weiAmountOrId,
     destination,
     recipient,
     fromAccountOwner,
@@ -202,7 +202,7 @@ export abstract class SealevelHypTokenAdapter
       data: new TransferRemoteInstruction({
         destination_domain: destination,
         recipient: addressToBytes(recipient),
-        amount_or_id: new BigNumber(amountOrId).toNumber(),
+        amount_or_id: new BigNumber(weiAmountOrId).toNumber(),
       }),
     });
     const serializedData = serialize(TransferRemoteSchema, value);

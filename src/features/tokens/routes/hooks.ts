@@ -1,11 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { TokenType } from '@hyperlane-xyz/hyperlane-token';
 import { ProtocolType } from '@hyperlane-xyz/sdk';
 
 import { logger } from '../../../utils/logger';
-import { getCaip2Id, getProtocolType } from '../../caip/chains';
+import { getCaip2Id } from '../../caip/chains';
 import {
   getCaip2FromToken,
   getCaip19Id,
@@ -13,12 +12,9 @@ import {
   parseCaip19Id,
   resolveAssetNamespace,
 } from '../../caip/tokens';
-import { getMultiProvider, getProvider } from '../../multiProvider';
+import { getMultiProvider } from '../../multiProvider';
 import { AdapterFactory } from '../adapters/AdapterFactory';
-import { EvmTokenAdapter } from '../adapters/EvmTokenAdapter';
-import { ITokenAdapter } from '../adapters/ITokenAdapter';
-import { getHypErc20CollateralContract } from '../contracts/evmContracts';
-import { getAllTokens } from '../metadata';
+import { getTokens, parseTokens } from '../metadata';
 import { TokenMetadata, TokenMetadataWithHypTokens } from '../types';
 
 import { RouteType, RoutesMap } from './types';
@@ -32,10 +28,10 @@ export function useTokenRoutes() {
     ['token-routes'],
     async () => {
       logger.info('Searching for token routes');
+      const parsedTokens = await parseTokens();
       const tokens: TokenMetadataWithHypTokens[] = [];
-      for (const token of getAllTokens()) {
+      for (const token of parsedTokens) {
         // Consider parallelizing here but concerned about RPC rate limits
-        await validateTokenMetadata(token);
         const tokenWithHypTokens = await fetchRemoteHypTokens(token);
         tokens.push(tokenWithHypTokens);
       }
@@ -45,43 +41,6 @@ export function useTokenRoutes() {
   );
 
   return { isLoading, error, tokenRoutes };
-}
-
-async function validateTokenMetadata(token: TokenMetadata) {
-  const { type, caip19Id, symbol, decimals, routerAddress } = token;
-  const caip2Id = getCaip2FromToken(caip19Id);
-  const isNft = isNonFungibleToken(caip19Id);
-
-  // Native tokens cannot be queried for metadata
-  if (type !== TokenType.collateral) return;
-
-  logger.info(`Validating token ${symbol} on ${caip2Id}`);
-
-  const protocol = getProtocolType(caip2Id);
-  let tokenAdapter: ITokenAdapter;
-  if (protocol === ProtocolType.Ethereum) {
-    const provider = getProvider(caip2Id);
-    const collateralContract = getHypErc20CollateralContract(routerAddress, provider);
-    const wrappedTokenAddr = await collateralContract.wrappedToken();
-    tokenAdapter = new EvmTokenAdapter(provider, wrappedTokenAddr);
-  } else if (protocol === ProtocolType.Sealevel) {
-    // TODO solana support when hyp tokens have metadata
-    return;
-  }
-
-  const { decimals: decimalsOnChain, symbol: symbolOnChain } = await tokenAdapter!.getMetadata(
-    isNft,
-  );
-  if (decimals !== decimalsOnChain) {
-    throw new Error(
-      `Token config decimals ${decimals} does not match contract decimals ${decimalsOnChain}`,
-    );
-  }
-  if (symbol !== symbolOnChain) {
-    throw new Error(
-      `Token config symbol ${symbol} does not match contract decimals ${symbolOnChain}`,
-    );
-  }
 }
 
 async function fetchRemoteHypTokens(
@@ -186,7 +145,7 @@ function getChainsFromTokens(tokens: TokenMetadataWithHypTokens[]): Caip2Id[] {
 export function useRouteChains(tokenRoutes: RoutesMap): Caip2Id[] {
   return useMemo(() => {
     const allCaip2Ids = Object.keys(tokenRoutes) as Caip2Id[];
-    const collateralCaip2Ids = getAllTokens().map((t) => getCaip2FromToken(t.caip19Id));
+    const collateralCaip2Ids = getTokens().map((t) => getCaip2FromToken(t.caip19Id));
     return allCaip2Ids.sort((c1, c2) => {
       // Surface collateral chains first
       if (collateralCaip2Ids.includes(c1) && !collateralCaip2Ids.includes(c2)) return -1;

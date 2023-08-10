@@ -1,7 +1,7 @@
 import { MinimalTokenMetadata } from '../types';
 
 export interface TransferParams {
-  amountOrId: string | number;
+  weiAmountOrId: string | number;
   recipient: Address;
 
   // Solana-specific params

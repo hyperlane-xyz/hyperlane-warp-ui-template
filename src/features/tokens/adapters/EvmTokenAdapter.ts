@@ -46,10 +46,10 @@ export class EvmNativeTokenAdapter implements ITokenAdapter {
   }
 
   async populateTransferTx({
-    amountOrId,
+    weiAmountOrId,
     recipient,
   }: TransferParams): Promise<PopulatedTransaction> {
-    const value = BigNumber.from(amountOrId);
+    const value = BigNumber.from(weiAmountOrId);
     return { value, to: recipient };
   }
 
@@ -96,17 +96,17 @@ export class EvmTokenAdapter<T extends ERC20Upgradeable = ERC20Upgradeable>
   }
 
   override populateApproveTx({
-    amountOrId,
+    weiAmountOrId,
     recipient,
   }: TransferParams): Promise<PopulatedTransaction> {
-    return this.contract.populateTransaction.approve(recipient, amountOrId);
+    return this.contract.populateTransaction.approve(recipient, weiAmountOrId);
   }
 
   override populateTransferTx({
-    amountOrId,
+    weiAmountOrId,
     recipient,
   }: TransferParams): Promise<PopulatedTransaction> {
-    return this.contract.populateTransaction.transfer(recipient, amountOrId);
+    return this.contract.populateTransaction.transfer(recipient, weiAmountOrId);
   }
 }
 
@@ -144,15 +144,20 @@ export class EvmHypSyntheticAdapter<T extends HypERC20 = HypERC20>
   }
 
   populateTransferRemoteTx({
-    amountOrId,
+    weiAmountOrId,
     destination,
     recipient,
     txValue,
   }: TransferRemoteParams): Promise<PopulatedTransaction> {
     const recipBytes32 = utils.addressToBytes32(addressToByteHexString(recipient));
-    return this.contract.populateTransaction.transferRemote(destination, recipBytes32, amountOrId, {
-      value: txValue,
-    });
+    return this.contract.populateTransaction.transferRemote(
+      destination,
+      recipBytes32,
+      weiAmountOrId,
+      {
+        value: txValue,
+      },
+    );
   }
 }
 

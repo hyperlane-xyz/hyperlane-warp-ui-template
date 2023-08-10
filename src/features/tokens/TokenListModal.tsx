@@ -4,11 +4,12 @@ import { useMemo, useState } from 'react';
 import { TokenIcon } from '../../components/icons/TokenIcon';
 import { TextInput } from '../../components/input/TextField';
 import { Modal } from '../../components/layout/Modal';
+import { config } from '../../consts/config';
 import InfoIcon from '../../images/icons/info-circle.svg';
 import { getAssetNamespace, getTokenAddress, isNativeToken } from '../caip/tokens';
 import { getChainDisplayName } from '../chains/utils';
 
-import { getAllTokens } from './metadata';
+import { getTokens } from './metadata';
 import { RoutesMap } from './routes/types';
 import { hasTokenRoute } from './routes/utils';
 import { TokenMetadata } from './types';
@@ -81,7 +82,7 @@ export function TokenList({
 }) {
   const tokens = useMemo(() => {
     const q = searchQuery?.trim().toLowerCase();
-    return getAllTokens()
+    return getTokens()
       .map((t) => {
         const hasRoute = hasTokenRoute(originCaip2Id, destinationCaip2Id, t.caip19Id, tokenRoutes);
         return { ...t, disabled: !hasRoute };
@@ -98,7 +99,8 @@ export function TokenList({
           t.symbol.toLowerCase().includes(q) ||
           t.caip19Id.toLowerCase().includes(q)
         );
-      });
+      })
+      .filter((t) => (config.showDisabledTokens ? true : !t.disabled));
   }, [searchQuery, originCaip2Id, destinationCaip2Id, tokenRoutes]);
 
   return (

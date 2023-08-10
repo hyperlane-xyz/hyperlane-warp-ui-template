@@ -8,6 +8,7 @@ interface Config {
   version: string | null; // Matches version number in package.json
   explorerApiKeys: Record<string, string>; // Optional map of API keys for block explorer
   showTipBox: boolean; // Show/Hide the blue tip box above the main form
+  showDisabledTokens: boolean; // Show/Hide invalid token options in the selection modal
   walletConnectProjectId: string;
 }
 
@@ -16,5 +17,6 @@ export const config: Config = Object.freeze({
   version,
   explorerApiKeys,
   showTipBox: true,
+  showDisabledTokens: true,
   walletConnectProjectId,
 });

@@ -42,13 +42,14 @@ async function parseTokenConfigs(configList: WarpTokenConfig): Promise<TokenMeta
     logger.error('Invalid token config', result.error);
     throw new Error(`Invalid token config: ${result.error.toString()}`);
   }
+  const multiProvider = getMultiProvider();
 
   const parsedConfig = result.data;
   const tokenMetadata: TokenMetadata[] = [];
   for (const config of parsedConfig) {
     const { type, chainId, logoURI } = config;
 
-    const protocol = config.protocol || ProtocolType.Ethereum;
+    const protocol = multiProvider.getChainMetadata(chainId).protocol || ProtocolType.Ethereum;
     const caip2Id = getCaip2Id(protocol, chainId);
     const isNative = type == TokenType.native;
     const isNft = type === TokenType.collateral && config.isNft;

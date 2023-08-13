@@ -35,7 +35,8 @@ export function fromWeiRounded(
     else return MIN_ROUNDED_VALUE.toString();
   }
 
-  return amount.toFixed(DISPLAY_DECIMALS).toString();
+  const displayDecimals = amount.gte(10000) ? 0 : DISPLAY_DECIMALS;
+  return amount.toFixed(displayDecimals).toString();
 }
 
 export function toWei(

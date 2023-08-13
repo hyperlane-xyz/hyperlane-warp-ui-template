@@ -192,6 +192,16 @@ export function convertToProtocolAddress(address: string, protocol: ProtocolType
   }
 }
 
+export function bytesToProtocolAddress(bytes: Buffer, toProtocol: ProtocolType) {
+  if (toProtocol === ProtocolType.Sealevel) {
+    return new PublicKey(bytes).toBase58();
+  } else if (toProtocol === ProtocolType.Ethereum) {
+    return utils.bytes32ToAddress(bytes.toString('hex'));
+  } else {
+    throw new Error(`Unsupported protocol for address ${toProtocol}`);
+  }
+}
+
 export function trimLeading0x(input: string) {
   return input.startsWith('0x') ? input.substring(2) : input;
 }

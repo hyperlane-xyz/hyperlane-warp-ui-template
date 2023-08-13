@@ -10,9 +10,10 @@ export interface Route {
   baseRouterAddress: Address;
   originCaip2Id: Caip2Id;
   originRouterAddress: Address;
+  originDecimals: number;
   destCaip2Id: Caip2Id;
   destRouterAddress: Address;
-  decimals: number;
+  destDecimals: number;
 }
 
 export type RoutesMap = Record<Caip2Id, Record<Caip2Id, Route[]>>;

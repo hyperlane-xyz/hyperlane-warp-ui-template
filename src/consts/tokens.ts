@@ -18,8 +18,13 @@ export const tokenList: WarpTokenConfig = [
 
   // solanadevnet
   {
-    type: 'native',
+    type: 'collateral',
     chainId: 1399811151,
-    hypNativeAddress: 'PJH5QAbxAqrrnSXfH3GHR8icua8CDFZmo97z91xmpvx',
+    address: 'Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr',
+    hypCollateralAddress: 'PJH5QAbxAqrrnSXfH3GHR8icua8CDFZmo97z91xmpvx',
+    name: 'dUSDC',
+    symbol: 'dUSDC',
+    decimals: 6,
+    isSpl2022: false,
   },
 ];

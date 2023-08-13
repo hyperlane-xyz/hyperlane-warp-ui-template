@@ -44,14 +44,27 @@ export class AdapterFactory {
     }
   }
 
-  static HypCollateralAdapterFromAddress(caip19Id: Caip19Id, routerAddress: Address) {
-    const caip2Id = getCaip2FromToken(caip19Id);
+  static HypCollateralAdapterFromAddress(baseCaip19Id: Caip19Id, routerAddress: Address) {
+    return AdapterFactory.selectHypAdapter(
+      getCaip2FromToken(baseCaip19Id),
+      routerAddress,
+      baseCaip19Id,
+      EvmHypCollateralAdapter,
+      isNativeToken(baseCaip19Id) ? SealevelHypNativeAdapter : SealevelHypCollateralAdapter,
+    );
+  }
+
+  static HypSyntheticTokenAdapterFromAddress(
+    baseCaip19Id: Caip19Id,
+    caip2Id: Caip2Id,
+    routerAddress: Address,
+  ) {
     return AdapterFactory.selectHypAdapter(
       caip2Id,
       routerAddress,
-      caip19Id,
-      EvmHypCollateralAdapter,
-      isNativeToken(caip19Id) ? SealevelHypNativeAdapter : SealevelHypCollateralAdapter,
+      baseCaip19Id,
+      EvmHypSyntheticAdapter,
+      SealevelHypSyntheticAdapter,
     );
   }
 

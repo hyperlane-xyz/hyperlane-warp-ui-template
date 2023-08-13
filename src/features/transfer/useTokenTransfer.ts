@@ -115,7 +115,7 @@ async function executeTransfer({
     if (!tokenRoute) throw new Error('No token route found between chains');
 
     const isNft = isNonFungibleToken(tokenCaip19Id);
-    const weiAmountOrId = isNft ? amount : toWei(amount, tokenRoute.decimals).toString();
+    const weiAmountOrId = isNft ? amount : toWei(amount, tokenRoute.originDecimals).toString();
     const activeAccountAddress = activeAccounts.accounts[originProtocol]?.address || '';
 
     addTransfer({

@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 
 import { ProtocolType } from '@hyperlane-xyz/sdk';
 
+import { areAddressesEqual, bytesToProtocolAddress } from '../../../utils/addresses';
 import { logger } from '../../../utils/logger';
 import { getCaip2Id } from '../../caip/chains';
 import {
@@ -32,7 +33,7 @@ export function useTokenRoutes() {
       const tokens: TokenMetadataWithHypTokens[] = [];
       for (const token of parsedTokens) {
         // Consider parallelizing here but concerned about RPC rate limits
-        const tokenWithHypTokens = await fetchRemoteHypTokens(token);
+        const tokenWithHypTokens = await fetchRemoteHypTokens(token, parsedTokens);
         tokens.push(tokenWithHypTokens);
       }
       return computeTokenRoutes(tokens);
@@ -44,26 +45,43 @@ export function useTokenRoutes() {
 }
 
 async function fetchRemoteHypTokens(
-  originToken: TokenMetadata,
+  baseToken: TokenMetadata,
+  allTokens: TokenMetadata[],
 ): Promise<TokenMetadataWithHypTokens> {
-  const { symbol, caip19Id, routerAddress } = originToken;
-  const isNft = isNonFungibleToken(caip19Id);
-  logger.info(`Fetching remote tokens for symbol ${symbol} (${caip19Id})`);
+  const { symbol: baseSymbol, caip19Id: baseCaip19Id, routerAddress: baseRouter } = baseToken;
+  const isNft = isNonFungibleToken(baseCaip19Id);
+  logger.info(`Fetching remote tokens for symbol ${baseSymbol} (${baseCaip19Id})`);
 
-  const hypTokenAdapter = AdapterFactory.HypCollateralAdapterFromAddress(caip19Id, routerAddress);
+  const baseAdapter = AdapterFactory.HypCollateralAdapterFromAddress(baseCaip19Id, baseRouter);
 
-  const remoteRouters = await hypTokenAdapter.getAllRouters();
+  const remoteRouters = await baseAdapter.getAllRouters();
   logger.info(`Router addresses found:`, remoteRouters);
 
   const multiProvider = getMultiProvider();
-  const hypTokens = remoteRouters.map((router) => {
-    const destMetadata = multiProvider.getChainMetadata(router.domain);
-    const protocol = destMetadata.protocol || ProtocolType.Ethereum;
-    const caip2Id = getCaip2Id(protocol, multiProvider.getChainId(router.domain));
-    const namespace = resolveAssetNamespace(protocol, false, isNft, true);
-    return getCaip19Id(caip2Id, namespace, router.address);
-  });
-  return { ...originToken, hypTokens };
+  const hypTokens = await Promise.all(
+    remoteRouters.map(async (router) => {
+      const destMetadata = multiProvider.getChainMetadata(router.domain);
+      const protocol = destMetadata.protocol || ProtocolType.Ethereum;
+      const caip2Id = getCaip2Id(protocol, multiProvider.getChainId(router.domain));
+      const namespace = resolveAssetNamespace(protocol, false, isNft, true);
+      const formattedAddress = bytesToProtocolAddress(router.address, protocol);
+      const caip19Id = getCaip19Id(caip2Id, namespace, formattedAddress);
+      // Attempt to find the decimals from the token list
+      const routerMetadata = allTokens.find((token) =>
+        areAddressesEqual(formattedAddress, token.routerAddress),
+      );
+      if (routerMetadata) return { caip19Id, decimals: routerMetadata.decimals };
+      // Otherwise try to query the contract
+      const remoteAdapter = AdapterFactory.HypSyntheticTokenAdapterFromAddress(
+        baseCaip19Id,
+        caip2Id,
+        formattedAddress,
+      );
+      const metadata = await remoteAdapter.getMetadata();
+      return { caip19Id, decimals: metadata.decimals };
+    }),
+  );
+  return { ...baseToken, hypTokens };
 }
 
 // Process token list to populates routesCache with all possible token routes (e.g. router pairs)
@@ -83,10 +101,16 @@ function computeTokenRoutes(tokens: TokenMetadataWithHypTokens[]) {
   // Compute all possible routes, in both directions
   for (const token of tokens) {
     for (const hypToken of token.hypTokens) {
-      const { caip19Id: baseCaip19Id, routerAddress: baseRouterAddress, decimals } = token;
+      const {
+        caip19Id: baseCaip19Id,
+        routerAddress: baseRouterAddress,
+        decimals: baseDecimals,
+      } = token;
       const baseCaip2Id = getCaip2FromToken(baseCaip19Id);
-      const { caip2Id: syntheticCaip2Id, address: syntheticRouterAddress } =
-        parseCaip19Id(hypToken);
+      const { caip2Id: syntheticCaip2Id, address: syntheticRouterAddress } = parseCaip19Id(
+        hypToken.caip19Id,
+      );
+      const syntheticDecimals = hypToken.decimals;
 
       const commonRouteProps = {
         baseCaip19Id,
@@ -97,33 +121,37 @@ function computeTokenRoutes(tokens: TokenMetadataWithHypTokens[]) {
         ...commonRouteProps,
         originCaip2Id: baseCaip2Id,
         originRouterAddress: baseRouterAddress,
+        originDecimals: baseDecimals,
         destCaip2Id: syntheticCaip2Id,
         destRouterAddress: syntheticRouterAddress,
-        decimals,
+        destDecimals: syntheticDecimals,
       });
       tokenRoutes[syntheticCaip2Id][baseCaip2Id]?.push({
         type: RouteType.SyntheticToBase,
         ...commonRouteProps,
         originCaip2Id: syntheticCaip2Id,
         originRouterAddress: syntheticRouterAddress,
+        originDecimals: syntheticDecimals,
         destCaip2Id: baseCaip2Id,
         destRouterAddress: baseRouterAddress,
-        decimals,
+        destDecimals: baseDecimals,
       });
 
       for (const otherHypToken of token.hypTokens) {
         // Skip if it's same hypToken as parent loop (no route to self)
         if (otherHypToken === hypToken) continue;
-        const { caip2Id: otherSynCaip2Id, address: otherHypTokenAddress } =
-          parseCaip19Id(otherHypToken);
+        const { caip2Id: otherSynCaip2Id, address: otherHypTokenAddress } = parseCaip19Id(
+          otherHypToken.caip19Id,
+        );
         tokenRoutes[syntheticCaip2Id][otherSynCaip2Id]?.push({
           type: RouteType.SyntheticToSynthetic,
           ...commonRouteProps,
           originCaip2Id: syntheticCaip2Id,
           originRouterAddress: syntheticRouterAddress,
+          originDecimals: syntheticDecimals,
           destCaip2Id: otherSynCaip2Id,
           destRouterAddress: otherHypTokenAddress,
-          decimals,
+          destDecimals: otherHypToken.decimals,
         });
       }
     }
@@ -136,7 +164,7 @@ function getChainsFromTokens(tokens: TokenMetadataWithHypTokens[]): Caip2Id[] {
   for (const token of tokens) {
     chains.add(getCaip2FromToken(token.caip19Id));
     for (const hypToken of token.hypTokens) {
-      chains.add(getCaip2FromToken(hypToken));
+      chains.add(getCaip2FromToken(hypToken.caip19Id));
     }
   }
   return Array.from(chains);

@@ -25,8 +25,8 @@ export interface ITokenAdapter {
 
 export interface IHypTokenAdapter extends ITokenAdapter {
   getDomains(): Promise<DomainId[]>;
-  getRouterAddress(domain: DomainId): Promise<Address>;
-  getAllRouters(): Promise<Array<{ domain: DomainId; address: Address }>>;
+  getRouterAddress(domain: DomainId): Promise<Buffer>;
+  getAllRouters(): Promise<Array<{ domain: DomainId; address: Buffer }>>;
   quoteGasPayment(destination: DomainId): Promise<string>;
   populateTransferRemoteTx(TransferParams: TransferRemoteParams): unknown | Promise<unknown>;
 }

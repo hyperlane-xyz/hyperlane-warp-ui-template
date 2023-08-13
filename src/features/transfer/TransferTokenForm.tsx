@@ -354,7 +354,7 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
 
   const route = getTokenRoute(originCaip2Id, destinationCaip2Id, token, tokenRoutes);
   const isNft = token && isNonFungibleToken(token);
-  const sendValue = isNft ? amount.toString() : toWei(amount, route?.decimals).toString();
+  const sendValue = isNft ? amount.toString() : toWei(amount, route?.originDecimals).toString();
   const isApproveRequired = route && isTransferApproveRequired(route, token);
   const originProtocol = getProtocolType(originCaip2Id);
   const originUnitName = ProtocolSmallestUnit[originProtocol];
@@ -416,7 +416,7 @@ function validateFormValues(
   const parsedAmount = tryParseAmount(amount);
   if (!parsedAmount || parsedAmount.lte(0))
     return { amount: isNft ? 'Invalid Token Id' : 'Invalid amount' };
-  const sendValue = isNft ? parsedAmount : toWei(parsedAmount, route?.decimals);
+  const sendValue = isNft ? parsedAmount : toWei(parsedAmount, route?.originDecimals);
 
   if (!isNft) {
     // Validate balances for ERC20-like tokens

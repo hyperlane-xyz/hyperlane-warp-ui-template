@@ -22,6 +22,7 @@ import { addressToBytes, isZeroishAddress } from '../../../utils/addresses';
 import {
   AccountDataWrapper,
   HypTokenInstruction,
+  HyperlaneTokenData,
   HyperlaneTokenDataSchema,
   TransferRemoteInstruction,
   TransferRemoteSchema,
@@ -147,31 +148,42 @@ export abstract class SealevelHypTokenAdapter
     this.warpProgramPubKey = new PublicKey(warpRouteProgramId);
   }
 
+  async getTokenAccountData(): Promise<HyperlaneTokenData> {
+    const tokenPda = this.deriveHypTokenAccount();
+    const accountInfo = await this.connection.getAccountInfo(tokenPda);
+    if (!accountInfo) throw new Error(`No account info found for ${tokenPda}`);
+    const wrappedData = deserializeUnchecked(
+      HyperlaneTokenDataSchema,
+      AccountDataWrapper,
+      accountInfo.data,
+    );
+    return wrappedData.data;
+  }
+
+  override async getMetadata(): Promise<MinimalTokenMetadata> {
+    const tokenData = await this.getTokenAccountData();
+    // TODO full token metadata support
+    return { decimals: tokenData.decimals, symbol: 'HYP', name: 'Unknown Hyp Token' };
+  }
+
   async getDomains(): Promise<DomainId[]> {
     const routers = await this.getAllRouters();
     return routers.map((router) => router.domain);
   }
 
-  async getRouterAddress(domain: DomainId): Promise<Address> {
+  async getRouterAddress(domain: DomainId): Promise<Buffer> {
     const routers = await this.getAllRouters();
     const addr = routers.find((router) => router.domain === domain)?.address;
     if (!addr) throw new Error(`No router found for ${domain}`);
     return addr;
   }
 
-  async getAllRouters(): Promise<Array<{ domain: DomainId; address: Address }>> {
-    const tokenPda = this.deriveHypTokenAccount();
-    const accountInfo = await this.connection.getAccountInfo(tokenPda);
-    if (!accountInfo) throw new Error(`No account info found for ${tokenPda}}`);
-    const tokenData = deserializeUnchecked(
-      HyperlaneTokenDataSchema,
-      AccountDataWrapper,
-      accountInfo.data,
-    );
-    const domainToPubKey = tokenData.data.remote_router_pubkeys;
+  async getAllRouters(): Promise<Array<{ domain: DomainId; address: Buffer }>> {
+    const tokenData = await this.getTokenAccountData();
+    const domainToPubKey = tokenData.remote_router_pubkeys;
     return Array.from(domainToPubKey.entries()).map(([domain, pubKey]) => ({
       domain,
-      address: pubKey.toBase58(),
+      address: pubKey.toBuffer(),
     }));
   }
 

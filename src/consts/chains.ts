@@ -1,10 +1,5 @@
-import { ChainMap, ChainMetadataWithArtifacts } from '@hyperlane-xyz/sdk';
-import {
-  solana,
-  solanadevnet,
-  solanatestnet,
-  zbctestnet,
-} from '@hyperlane-xyz/sdk/dist/consts/chainMetadata';
+import { ChainMap, ChainMetadataWithArtifacts, ProtocolType } from '@hyperlane-xyz/sdk';
+import { solana, solanadevnet, solanatestnet } from '@hyperlane-xyz/sdk/dist/consts/chainMetadata';
 
 // A map of chain names to ChainMetadata
 export const chains: ChainMap<ChainMetadataWithArtifacts> = {
@@ -53,11 +48,25 @@ export const chains: ChainMap<ChainMetadataWithArtifacts> = {
     interchainGasPaymaster: '',
     validatorAnnounce: '',
   },
-  zbctestnet: {
-    ...zbctestnet,
-    mailbox: '4hW22NXtJ2AXrEVbeAmxjhvxWPSNvfTfAphKXdRBZUco',
-    interchainGasPaymaster: '',
-    validatorAnnounce: '',
-    logoURI: '/logos/zebec.png',
+  proteustestnet: {
+    chainId: 88002,
+    domainId: 88002,
+    name: 'proteustestnet',
+    protocol: ProtocolType.Ethereum,
+    displayName: 'Proteus Testnet',
+    displayNameShort: 'Proteus',
+    nativeToken: {
+      name: 'Zebec',
+      symbol: 'ZBC',
+      decimals: 18,
+    },
+    rpcUrls: [
+      {
+        http: 'https://api.proteus.nautchain.xyz/solana',
+      },
+    ],
+    mailbox: '0x918D3924Fad8F71551D9081172e9Bb169745461e',
+    interchainGasPaymaster: '0x06b62A9F5AEcc1E601D0E02732b4E1D0705DE7Db',
+    validatorAnnounce: '0xEEea93d0d0287c71e47B3f62AFB0a92b9E8429a1',
   },
 };

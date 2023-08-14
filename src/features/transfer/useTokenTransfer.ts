@@ -6,7 +6,7 @@ import { toast } from 'react-toastify';
 import { HyperlaneCore, ProtocolType } from '@hyperlane-xyz/sdk';
 
 import { toastTxSuccess } from '../../components/toast/TxSuccessToast';
-import { toWei } from '../../utils/amount';
+import { convertDecimals, toWei } from '../../utils/amount';
 import { logger } from '../../utils/logger';
 import { getProtocolType, parseCaip2Id } from '../caip/chains';
 import { isNativeToken, isNonFungibleToken } from '../caip/tokens';
@@ -26,6 +26,8 @@ import {
 } from '../wallet/hooks';
 
 import { TransferContext, TransferFormValues, TransferStatus } from './types';
+
+const COLLATERAL_CONTRACT_BALANCE_INSUFFICIENT_ERROR = 'Collateral contract balance insufficient';
 
 export function useTokenTransfer(onDone?: () => void) {
   const { transfers, addTransfer, updateTransferStatus } = useStore((s) => ({
@@ -127,7 +129,7 @@ async function executeTransfer({
     });
 
     // Come back here
-    await ensureSufficientCollateral(tokenRoute, weiAmountOrId, isNft);
+    await ensureSufficientCollateral(tokenRoutes, tokenRoute, weiAmountOrId, isNft);
 
     const hypTokenAdapter = AdapterFactory.HypTokenAdapterFromRouteOrigin(tokenRoute);
 
@@ -183,13 +185,43 @@ async function executeTransfer({
 // In certain cases, like when a synthetic token has >1 collateral tokens
 // it's possible that the collateral contract balance is insufficient to
 // cover the remote transfer. This ensures the balance is sufficient or throws.
-async function ensureSufficientCollateral(route: Route, weiAmount: string, isNft?: boolean) {
-  if (route.type !== RouteType.SyntheticToBase || isNft) return;
-  const adapter = AdapterFactory.TokenAdapterFromAddress(route.baseCaip19Id);
-  logger.debug('Checking collateral balance for token', route.baseCaip19Id);
-  const balance = await adapter.getBalance(route.baseRouterAddress);
-  if (BigNumber.from(balance).lt(weiAmount)) {
-    throw new Error('Collateral contract has insufficient balance');
+async function ensureSufficientCollateral(
+  tokenRoutes: RoutesMap,
+  route: Route,
+  weiAmount: string,
+  isNft?: boolean,
+) {
+  if (isNft) return;
+
+  // NOTE: this is a hack to accommodate destination balances, specifically the case
+  // when the destination is a Sealevel chain and is a non-synthetic warp route.
+  // This only really works with the specific setup of tokens.ts.
+
+  // This searches for the route where the origin chain is destinationCaip2Id
+  // and the destination chain is originCaip2Id and where the origin is a base token.
+  const targetBaseCaip19Id = tokenRoutes[route.destCaip2Id][route.originCaip2Id].find((r) =>
+    r.baseCaip19Id.startsWith(route.destCaip2Id),
+  )!.baseCaip19Id;
+  const targetRoute = getTokenRoute(
+    route.destCaip2Id,
+    route.originCaip2Id,
+    targetBaseCaip19Id,
+    tokenRoutes,
+  );
+  if (!targetRoute) return;
+
+  const adapter = AdapterFactory.HypTokenAdapterFromRouteOrigin(targetRoute);
+  const destinationBalance = await adapter.getBalance(targetRoute.baseRouterAddress);
+
+  const destinationBalanceInOriginDecimals = convertDecimals(
+    route.destDecimals,
+    route.originDecimals,
+    destinationBalance,
+  );
+
+  if (destinationBalanceInOriginDecimals.lt(weiAmount)) {
+    toast.error(COLLATERAL_CONTRACT_BALANCE_INSUFFICIENT_ERROR);
+    throw new Error(COLLATERAL_CONTRACT_BALANCE_INSUFFICIENT_ERROR);
   }
 }
 

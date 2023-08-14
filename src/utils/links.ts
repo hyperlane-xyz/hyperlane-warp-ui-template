@@ -7,6 +7,9 @@ import { toBase64 } from './base64';
 
 // TODO test with solana chain config, or disallow it
 export function getHypExplorerLink(originCaip2Id: Caip2Id, msgId?: string) {
+  // TODO Disabling this for eclipse for now
+  if ('true') return null;
+
   if (!originCaip2Id || !msgId) return null;
   const baseLink = `${links.explorer}/message/${msgId}`;
   if (isPermissionlessChain(originCaip2Id)) {

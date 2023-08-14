@@ -1,5 +1,7 @@
+import BigNumber from 'bignumber.js';
 import { Form, Formik, useFormikContext } from 'formik';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'react-toastify';
 
 import { ProtocolSmallestUnit } from '@hyperlane-xyz/sdk';
 import { WideChevron } from '@hyperlane-xyz/widgets';
@@ -208,6 +210,29 @@ function RecipientSection({
   const { values } = useFormikContext<TransferFormValues>();
   const { balance, decimals } = useDestinationBalance(values, tokenRoutes);
 
+  // TODO hacking in a crude way to detect transfer completions by triggering
+  // toast on recipientAddress balance increase. This is not ideal because it
+  // could confuse unrelated balance changes for message delivery and it
+  // doesn't update the store state yet
+  const recipientAddress = values.recipientAddress;
+  const prevRecipientBalance = useRef<{ balance?: string; recipientAddress?: string }>({
+    balance: '',
+    recipientAddress: '',
+  });
+  useEffect(() => {
+    if (
+      recipientAddress &&
+      balance &&
+      prevRecipientBalance.current.balance &&
+      prevRecipientBalance.current.recipientAddress === recipientAddress &&
+      new BigNumber(balance).gt(prevRecipientBalance.current.balance)
+    ) {
+      toast.success('Recipient has received funds, transfer complete!');
+    } else {
+      prevRecipientBalance.current = { balance, recipientAddress };
+    }
+  }, [balance, recipientAddress, prevRecipientBalance]);
+
   return (
     <div className="mt-4">
       <div className="flex justify-between pr-1">
@@ -332,7 +357,10 @@ function SelfButton({ disabled }: { disabled?: boolean }) {
   const { values, setFieldValue } = useFormikContext<TransferFormValues>();
   const address = useAccountForChain(values.destinationCaip2Id)?.address;
   const onClick = () => {
-    if (address && !disabled) setFieldValue('recipientAddress', address);
+    if (disabled) return;
+    if (address) setFieldValue('recipientAddress', address);
+    else
+      toast.warn(`No wallet connected for chain ${getChainDisplayName(values.destinationCaip2Id)}`);
   };
   return (
     <SolidButton

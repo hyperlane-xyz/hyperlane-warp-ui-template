@@ -12,7 +12,7 @@ import { getHypExplorerLink } from '../../utils/links';
 import { logger } from '../../utils/logger';
 import { toTitleCase } from '../../utils/string';
 import { getTransferStatusLabel } from '../../utils/transfer';
-import { parseCaip2Id } from '../caip/chains';
+import { getChainReference } from '../caip/chains';
 import { AssetNamespace, parseCaip19Id } from '../caip/tokens';
 import { getChainDisplayName, hasPermissionlessChain } from '../chains/utils';
 import { getMultiProvider } from '../multiProvider';
@@ -42,20 +42,21 @@ export function TransfersDetailsModal({
 
   const account = useAccountForChain(originCaip2Id);
   const multiProvider = getMultiProvider();
-  const { reference: chain } = parseCaip2Id(originCaip2Id);
+  const originChain = getChainReference(originCaip2Id);
+  const destChain = getChainReference(destinationCaip2Id);
   const { address: tokenAddress, namespace: tokenNamespace } = parseCaip19Id(tokenCaip19Id);
   const isNative = tokenNamespace === AssetNamespace.native;
 
   const getFormUrls = useCallback(async () => {
     try {
       if (originTxHash) {
-        const originTx = multiProvider.tryGetExplorerTxUrl(chain, { hash: originTxHash });
+        const originTx = multiProvider.tryGetExplorerTxUrl(originChain, { hash: originTxHash });
         if (originTx) setOriginTxUrl(originTx);
       }
       const [fromUrl, toUrl, tokenUrl] = await Promise.all([
-        multiProvider.tryGetExplorerAddressUrl(chain, activeAccountAddress),
-        multiProvider.tryGetExplorerAddressUrl(chain, recipientAddress),
-        multiProvider.tryGetExplorerAddressUrl(chain, tokenAddress),
+        multiProvider.tryGetExplorerAddressUrl(originChain, activeAccountAddress),
+        multiProvider.tryGetExplorerAddressUrl(destChain, recipientAddress),
+        multiProvider.tryGetExplorerAddressUrl(originChain, tokenAddress),
       ]);
       if (fromUrl) setFromUrl(fromUrl);
       if (toUrl) setToUrl(toUrl);
@@ -63,7 +64,15 @@ export function TransfersDetailsModal({
     } catch (error) {
       logger.error('Error fetching URLs:', error);
     }
-  }, [activeAccountAddress, originTxHash, multiProvider, recipientAddress, chain, tokenAddress]);
+  }, [
+    activeAccountAddress,
+    originTxHash,
+    multiProvider,
+    recipientAddress,
+    originChain,
+    destChain,
+    tokenAddress,
+  ]);
 
   useEffect(() => {
     if (!transfer) return;

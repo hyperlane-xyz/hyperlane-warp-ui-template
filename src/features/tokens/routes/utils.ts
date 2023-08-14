@@ -26,5 +26,8 @@ export function hasTokenRoute(
   caip19Id: Caip19Id,
   tokenRoutes: RoutesMap,
 ): boolean {
-  return !!getTokenRoute(originCaip2Id, destinationCaip2Id, caip19Id, tokenRoutes);
+  const tokenRoute = getTokenRoute(originCaip2Id, destinationCaip2Id, caip19Id, tokenRoutes);
+  // This will break things if there are other warp routes configured!
+  // This only looks for routes in which the origin is the base token.
+  return !!tokenRoute && caip19Id.startsWith(originCaip2Id);
 }

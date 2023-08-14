@@ -126,6 +126,7 @@ async function executeTransfer({
       params: values,
     });
 
+    // Come back here
     await ensureSufficientCollateral(tokenRoute, weiAmountOrId, isNft);
 
     const hypTokenAdapter = AdapterFactory.HypTokenAdapterFromRouteOrigin(tokenRoute);

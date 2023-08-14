@@ -75,3 +75,18 @@ export function areAmountsNearlyEqual(amountInWei1: BigNumber, amountInWei2: Num
   // Is difference btwn amount and balance less than min amount shown for token
   return amountInWei1.minus(amountInWei2).abs().lt(minValueWei);
 }
+
+export function convertDecimals(fromDecimals: number, toDecimals: number, value: NumberT) {
+  const amount = new BigNumber(value);
+
+  if (fromDecimals === toDecimals) return amount;
+  else if (fromDecimals > toDecimals) {
+    const difference = fromDecimals - toDecimals;
+    return amount.div(new BigNumber(10).pow(difference)).integerValue(BigNumber.ROUND_FLOOR);
+  }
+  // fromDecimals < toDecimals
+  else {
+    const difference = toDecimals - fromDecimals;
+    return amount.times(new BigNumber(10).pow(difference));
+  }
+}

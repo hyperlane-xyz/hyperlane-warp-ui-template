@@ -18,9 +18,9 @@ export function Footer() {
           </div>
           <div className="hidden sm:flex flex-col ml-3">
             <p className="leading-6">
-              Go interchain
+              Bridge ZBC with the Nautilus Chain Bridge
               <br />
-              with Hyperlane
+              Build with <Link href="https://www.hyperlane.xyz">Hyperlane</Link>
             </p>
           </div>
         </div>

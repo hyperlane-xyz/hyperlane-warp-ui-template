@@ -7,6 +7,9 @@ export const tokenList: WarpTokenConfig = [
     chainId: 97,
     address: '0x64544969ed7ebf5f083679233325356ebe738930',
     hypCollateralAddress: '0x31b5234A896FbC4b3e2F7237592D054716762131',
+    symbol: 'ZBC',
+    name: 'Zebec',
+    decimals: 18,
   },
 
   // proteustestnet
@@ -14,6 +17,9 @@ export const tokenList: WarpTokenConfig = [
     type: 'native',
     chainId: 88002,
     hypNativeAddress: '0x34A9af13c5555BAD0783C220911b9ef59CfDBCEf',
+    symbol: 'ZBC',
+    name: 'Zebec',
+    decimals: 18,
   },
 
   // solanadevnet
@@ -22,8 +28,8 @@ export const tokenList: WarpTokenConfig = [
     chainId: 1399811151,
     address: 'Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr',
     hypCollateralAddress: 'PJH5QAbxAqrrnSXfH3GHR8icua8CDFZmo97z91xmpvx',
-    name: 'dUSDC',
-    symbol: 'dUSDC',
+    name: 'Zebec',
+    symbol: 'ZBC',
     decimals: 6,
     isSpl2022: false,
   },

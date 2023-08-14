@@ -71,12 +71,27 @@ export function useDestinationBalance(
       tokenRoutes,
     ],
     queryFn: async () => {
-      const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenCaip19Id, tokenRoutes);
+      // NOTE: this is a hack to accommodate destination balances, specifically the case
+      // when the destination is a Sealevel chain and is a non-synthetic warp route.
+      // This only really works with the specific setup of tokens.ts.
+
+      // This searches for the route where the origin chain is destinationCaip2Id
+      // and the destination chain is originCaip2Id and where the origin is a base token.
+      const targetBaseCaip19Id = tokenRoutes[destinationCaip2Id][originCaip2Id].find((r) =>
+        r.baseCaip19Id.startsWith(destinationCaip2Id),
+      )!.baseCaip19Id;
+      const route = getTokenRoute(
+        destinationCaip2Id,
+        originCaip2Id,
+        targetBaseCaip19Id,
+        tokenRoutes,
+      );
       const protocol = getProtocolType(destinationCaip2Id);
       if (!route || !recipientAddress || !isValidAddress(recipientAddress, protocol)) return null;
-      const adapter = AdapterFactory.HypTokenAdapterFromRouteDest(route);
+
+      const adapter = AdapterFactory.HypTokenAdapterFromRouteOrigin(route);
       const balance = await adapter.getBalance(recipientAddress);
-      return { balance, decimals: route.destDecimals };
+      return { balance, decimals: route.originDecimals };
     },
     refetchInterval: 5000,
   });

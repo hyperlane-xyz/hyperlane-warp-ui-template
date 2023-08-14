@@ -224,6 +224,7 @@ async function ensureSufficientCollateral(
       toast.error(COLLATERAL_CONTRACT_BALANCE_INSUFFICIENT_ERROR);
       throw new Error(COLLATERAL_CONTRACT_BALANCE_INSUFFICIENT_ERROR);
     }
+    // eslint-disable-next-line no-empty
   } catch (error) {}
 }
 

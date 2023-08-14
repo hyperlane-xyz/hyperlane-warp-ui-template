@@ -211,18 +211,20 @@ async function ensureSufficientCollateral(
   if (!targetRoute) return;
 
   const adapter = AdapterFactory.HypTokenAdapterFromRouteOrigin(targetRoute);
-  const destinationBalance = await adapter.getBalance(targetRoute.baseRouterAddress);
+  try {
+    const destinationBalance = await adapter.getBalance(targetRoute.baseRouterAddress);
 
-  const destinationBalanceInOriginDecimals = convertDecimals(
-    route.destDecimals,
-    route.originDecimals,
-    destinationBalance,
-  );
+    const destinationBalanceInOriginDecimals = convertDecimals(
+      route.destDecimals,
+      route.originDecimals,
+      destinationBalance,
+    );
 
-  if (destinationBalanceInOriginDecimals.lt(weiAmount)) {
-    toast.error(COLLATERAL_CONTRACT_BALANCE_INSUFFICIENT_ERROR);
-    throw new Error(COLLATERAL_CONTRACT_BALANCE_INSUFFICIENT_ERROR);
-  }
+    if (destinationBalanceInOriginDecimals.lt(weiAmount)) {
+      toast.error(COLLATERAL_CONTRACT_BALANCE_INSUFFICIENT_ERROR);
+      throw new Error(COLLATERAL_CONTRACT_BALANCE_INSUFFICIENT_ERROR);
+    }
+  } catch (error) {}
 }
 
 interface ExecuteTransferParams<TxResp> {

@@ -44,6 +44,30 @@ class MultiProtocolProvider extends MultiProvider {
     if (metadata?.protocol && metadata.protocol !== ProtocolType.Ethereum) return null;
     return super.tryGetSigner(chainNameOrId);
   }
+
+  override async tryGetExplorerAddressUrl(
+    chainNameOrId: ChainName | number,
+    address?: string,
+  ): Promise<string | null> {
+    const url = await super.tryGetExplorerAddressUrl(chainNameOrId, address);
+    // TODO hacking fix for solana explorer url here
+    if (this.getChainName(chainNameOrId) === 'solanadevnet') {
+      return `${url}?cluster=devnet`;
+    }
+    return url;
+  }
+
+  override tryGetExplorerTxUrl(
+    chainNameOrId: ChainName | number,
+    response: { hash: string },
+  ): string | null {
+    const url = super.tryGetExplorerTxUrl(chainNameOrId, response);
+    // TODO hacking fix for solana explorer url here
+    if (this.getChainName(chainNameOrId) === 'solanadevnet') {
+      return `${url}?cluster=devnet`;
+    }
+    return url;
+  }
 }
 
 let multiProvider: MultiProtocolProvider;

@@ -1,4 +1,9 @@
-import { ChainMap, ChainMetadataWithArtifacts, ProtocolType } from '@hyperlane-xyz/sdk';
+import {
+  ChainMap,
+  ChainMetadataWithArtifacts,
+  ExplorerFamily,
+  ProtocolType,
+} from '@hyperlane-xyz/sdk';
 import { solana, solanadevnet, solanatestnet } from '@hyperlane-xyz/sdk/dist/consts/chainMetadata';
 
 // A map of chain names to ChainMetadata
@@ -44,6 +49,14 @@ export const chains: ChainMap<ChainMetadataWithArtifacts> = {
   },
   solanadevnet: {
     ...solanadevnet,
+    blockExplorers: [
+      {
+        name: 'Solana Explorer',
+        url: 'https://explorer.solana.com',
+        apiUrl: 'https://explorer.solana.com',
+        family: ExplorerFamily.Other,
+      },
+    ],
     mailbox: '4v25Dz9RccqUrTzmfHzJMsjd1iVoNrWzeJ4o6GYuJrVn',
     interchainGasPaymaster: '',
     validatorAnnounce: '',
@@ -63,6 +76,14 @@ export const chains: ChainMap<ChainMetadataWithArtifacts> = {
     rpcUrls: [
       {
         http: 'https://api.proteus.nautchain.xyz/solana',
+      },
+    ],
+    blockExplorers: [
+      {
+        name: 'Proteus Explorer',
+        url: 'https://proteus.nautscan.com/proteus',
+        apiUrl: 'https://proteus.nautscan.com/proteus',
+        family: ExplorerFamily.Other,
       },
     ],
     mailbox: '0x918D3924Fad8F71551D9081172e9Bb169745461e',

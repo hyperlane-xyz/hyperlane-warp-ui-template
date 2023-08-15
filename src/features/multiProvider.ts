@@ -62,9 +62,15 @@ class MultiProtocolProvider extends MultiProvider {
     response: { hash: string },
   ): string | null {
     const url = super.tryGetExplorerTxUrl(chainNameOrId, response);
+    if (!url) return null;
+
+    const chainName = this.getChainName(chainNameOrId);
     // TODO hacking fix for solana explorer url here
-    if (this.getChainName(chainNameOrId) === 'solanadevnet') {
+    if (chainName === 'solanadevnet') {
       return `${url}?cluster=devnet`;
+    } else if (chainName === 'nautilus' || chainName === 'proteustestnet') {
+      // TODO hacking fix for nautilus explorer url here
+      return url.replaceAll('/tx/', '/transaction/');
     }
     return url;
   }

@@ -6,7 +6,7 @@ export const tokenList: WarpTokenConfig = [
     type: 'collateral',
     chainId: 56,
     address: '0x37a56cdcD83Dce2868f721De58cB3830C44C6303',
-    hypCollateralAddress: '0x69B42169AbD9D2C073f12768a1B358bcD79be1e8',
+    hypCollateralAddress: '0xC27980812E2E66491FD457D488509b7E04144b98',
     symbol: 'ZBC',
     name: 'Zebec',
     decimals: 9,
@@ -16,7 +16,7 @@ export const tokenList: WarpTokenConfig = [
   {
     type: 'native',
     chainId: 22222,
-    hypNativeAddress: '0x09edd60B833685FDd6dda49f160F43ED9E49C321',
+    hypNativeAddress: '0x4501bBE6e731A4bC5c60C03A77435b2f6d5e9Fe7',
     symbol: 'ZBC',
     name: 'Zebec',
     decimals: 18,
@@ -26,8 +26,8 @@ export const tokenList: WarpTokenConfig = [
   {
     type: 'collateral',
     chainId: 1399811149,
-    address: 'zebeczgi5fSEtbpfQKVZKCJ3WgYXxjkMUkNNx7fLKAF',
-    hypCollateralAddress: 'FTbMPUDfbejo8MRze4Mom4hM7HC2yb7KaHFzRTdLCoG7',
+    address: 'wzbcJyhGhQDLTV1S99apZiiBdE4jmYfbw99saMMdP59',
+    hypCollateralAddress: 'EJqwFjvVJSAxH8Ur2PYuMfdvoJeutjmH6GkoEFQ4MdSa',
     name: 'Zebec',
     symbol: 'ZBC',
     decimals: 9,

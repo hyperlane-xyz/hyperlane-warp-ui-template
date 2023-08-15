@@ -18,7 +18,7 @@ export function Footer() {
           </div>
           <div className="hidden sm:flex flex-col ml-3">
             <p className="leading-6">
-              Bridge ZBC with the Nautilus Chain Bridge
+              Bridge ZBC with the Nautilus Chain Bridge.
               <br />
               Build with <Link href="https://www.hyperlane.xyz">Hyperlane</Link>
             </p>

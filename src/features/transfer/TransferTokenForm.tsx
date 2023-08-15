@@ -11,6 +11,7 @@ import { IconButton } from '../../components/buttons/IconButton';
 import { SolidButton } from '../../components/buttons/SolidButton';
 import { ChevronIcon } from '../../components/icons/Chevron';
 import { TextField } from '../../components/input/TextField';
+import { config } from '../../consts/config';
 import SwapIcon from '../../images/icons/swap.svg';
 import { Color } from '../../styles/Color';
 import { isValidAddress } from '../../utils/addresses';
@@ -455,6 +456,12 @@ function validateFormValues(
     const nftId = sendValue.toString();
     if (isSenderNftOwner === false || (senderNftIds && !senderNftIds.includes(nftId))) {
       return { amount: 'Token ID not owned' };
+    }
+  }
+
+  if (config.withdrawalWhitelist) {
+    if (!config.withdrawalWhitelist.split(',').includes(destinationCaip2Id)) {
+      return { destinationCaip2Id: 'Bridge is in deposit-only mode' };
     }
   }
 

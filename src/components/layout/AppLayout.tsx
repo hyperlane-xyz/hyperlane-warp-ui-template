@@ -10,7 +10,7 @@ export function AppLayout({ children }: PropsWithChildren) {
       <Head>
         {/* https://nextjs.org/docs/messages/no-document-viewport-meta */}
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Hyperlane Warp Route Template UI</title>
+        <title>Nautilus Bridge</title>
       </Head>
       <div id="app-content" className="h-full min-h-screen w-full min-w-screen">
         <div className="max-w-screen-xl mx-auto flex flex-col justify-between min-h-screen px-4">

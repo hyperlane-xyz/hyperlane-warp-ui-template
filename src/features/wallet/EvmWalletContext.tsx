@@ -65,7 +65,7 @@ export function EvmWalletContext({ children }: PropsWithChildren<unknown>) {
           borderRadius: 'small',
           fontStack: 'system',
         })}
-        initialChain={88002}
+        initialChain={22222}
       >
         {children}
       </RainbowKitProvider>

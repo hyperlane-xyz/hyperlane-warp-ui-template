@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { areAddressesEqual, isValidAddress } from '../../utils/addresses';
 import { logger } from '../../utils/logger';
 import { getProtocolType } from '../caip/chains';
-import { parseCaip19Id, tryGetChainIdFromToken } from '../caip/tokens';
+import { getChainIdFromToken, parseCaip19Id, tryGetChainIdFromToken } from '../caip/tokens';
 import { getProvider } from '../multiProvider';
 import { useStore } from '../store';
 import { TransferFormValues } from '../transfer/types';
@@ -77,9 +77,9 @@ export function useDestinationBalance(
 
       // This searches for the route where the origin chain is destinationCaip2Id
       // and the destination chain is originCaip2Id and where the origin is a base token.
-      const targetBaseCaip19Id = tokenRoutes[destinationCaip2Id][originCaip2Id].find((r) =>
-        r.baseCaip19Id.startsWith(destinationCaip2Id),
-      )!.baseCaip19Id;
+      const targetBaseCaip19Id = tokenRoutes[destinationCaip2Id][originCaip2Id].find(
+        (r) => getChainIdFromToken(r.baseTokenCaip19Id) === destinationCaip2Id,
+      )!.baseTokenCaip19Id;
       const route = getTokenRoute(
         destinationCaip2Id,
         originCaip2Id,

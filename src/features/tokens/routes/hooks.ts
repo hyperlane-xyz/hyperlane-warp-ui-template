@@ -111,7 +111,7 @@ function computeTokenRoutes(tokens: TokenMetadataWithHypTokens[]) {
         routerAddress: baseRouterAddress,
         decimals: baseDecimals,
       } = token;
-      const baseCaip2Id = getChainIdFromToken(baseTokenCaip19Id);
+      const baseChainCaip2Id = getChainIdFromToken(baseTokenCaip19Id);
       const { chainCaip2Id: syntheticCaip2Id, address: syntheticRouterAddress } = parseCaip19Id(
         hypToken.tokenCaip19Id,
       );
@@ -121,23 +121,23 @@ function computeTokenRoutes(tokens: TokenMetadataWithHypTokens[]) {
         baseTokenCaip19Id,
         baseRouterAddress,
       };
-      tokenRoutes[baseCaip2Id][syntheticCaip2Id]?.push({
+      tokenRoutes[baseChainCaip2Id][syntheticCaip2Id]?.push({
         type: RouteType.BaseToSynthetic,
         ...commonRouteProps,
-        originCaip2Id: baseCaip2Id,
+        originCaip2Id: baseChainCaip2Id,
         originRouterAddress: baseRouterAddress,
         originDecimals: baseDecimals,
         destCaip2Id: syntheticCaip2Id,
         destRouterAddress: syntheticRouterAddress,
         destDecimals: syntheticDecimals,
       });
-      tokenRoutes[syntheticCaip2Id][baseCaip2Id]?.push({
+      tokenRoutes[syntheticCaip2Id][baseChainCaip2Id]?.push({
         type: RouteType.SyntheticToBase,
         ...commonRouteProps,
         originCaip2Id: syntheticCaip2Id,
         originRouterAddress: syntheticRouterAddress,
         originDecimals: syntheticDecimals,
-        destCaip2Id: baseCaip2Id,
+        destCaip2Id: baseChainCaip2Id,
         destRouterAddress: baseRouterAddress,
         destDecimals: baseDecimals,
       });

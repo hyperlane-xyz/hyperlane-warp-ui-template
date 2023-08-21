@@ -16,6 +16,7 @@ import { WagmiConfig, configureChains, createClient } from 'wagmi';
 import { publicProvider } from 'wagmi/providers/public';
 
 import { config } from '../../consts/config';
+import { tokenList } from '../../consts/tokens';
 import { Color } from '../../styles/Color';
 import { getWagmiChainConfig } from '../chains/metadata';
 
@@ -65,6 +66,7 @@ export function EvmWalletContext({ children }: PropsWithChildren<unknown>) {
           borderRadius: 'small',
           fontStack: 'system',
         })}
+        initialChain={tokenList[0]?.chainId}
       >
         {children}
       </RainbowKitProvider>

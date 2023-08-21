@@ -6,7 +6,7 @@ import { ProtocolType } from '@hyperlane-xyz/sdk';
 export type MinimalTokenMetadata = Omit<ERC20Metadata, 'totalSupply'>;
 
 const commonTokenFields = z.object({
-  chainId: z.number().positive().or(z.string()),
+  chainId: z.number().positive(),
   name: z.string().optional(),
   symbol: z.string().optional(),
   decimals: z.number().nonnegative().optional(), // decimals == 0 for NFTs

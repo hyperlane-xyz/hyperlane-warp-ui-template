@@ -364,6 +364,19 @@ export class SealevelHypNativeAdapter extends SealevelHypTokenAdapter {
 
 // Interacts with Hyp Collateral token programs
 export class SealevelHypCollateralAdapter extends SealevelHypTokenAdapter {
+  override async getBalance(owner: Address): Promise<string> {
+    // Special case where the owner is the warp route program ID.
+    // This is because collateral warp routes don't hold escrowed collateral
+    // tokens in their associated token account - instead, they hold them in
+    // the escrow account.
+    if (owner === this.warpRouteProgramId) {
+      const collateralAccount = this.deriveEscrowAccount();
+      const response = await this.connection.getTokenAccountBalance(collateralAccount);
+      return response.value.amount;
+    }
+    return super.getBalance(owner);
+  }
+
   override getTransferInstructionKeyList(
     sender: PublicKey,
     mailbox: PublicKey,

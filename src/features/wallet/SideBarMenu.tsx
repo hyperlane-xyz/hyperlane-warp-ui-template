@@ -110,11 +110,11 @@ export function SideBarMenu({
             <Image src={CollapseIcon} width={15} height={24} alt="" />
           </button>
         )}
-        <div className="w-full h-full">
-          <div className="w-full bg-blue-500 py-2 px-3.5 text-white tracking-wide rounded-t-sm">
+        <div className="w-full h-full flex flex-col overflow-y-auto">
+          <div className="w-full rounded-t-md bg-blue-500 py-2 px-3.5 text-white text-base font-normal tracking-wider">
             Connected Wallets
           </div>
-          <div className="my-3 px-3 space-y-2.5">
+          <div className="my-3 px-3 space-y-3">
             {readyAccounts.map((a) => (
               <button
                 key={a.address}
@@ -141,77 +141,78 @@ export function SideBarMenu({
               <div className="ml-2">Disconnect all wallets</div>
             </button>
           </div>
-          <div className="w-full bg-blue-500 py-2 px-3.5 mb-3.5 text-white tracking-wider rounded-t-sm">
+          <div className="w-full bg-blue-500 py-2 px-3.5 mb-4 text-white text-base font-normal tracking-wider">
             Transfer History
           </div>
-          <div className="h-2/4 overflow-y-auto flex flex-col px-3.5">
-            {sortedTransfers?.length > 0 &&
-              sortedTransfers.map((t) => (
-                <button
-                  key={t.timestamp}
-                  onClick={() => {
-                    setSelectedTransfer(t);
-                    setIsModalOpen(true);
-                  }}
-                  className="flex justify-between items-center rounded-md border border-gray-300 px-2.5 py-2 mb-3 hover:bg-gray-100 active:bg-gray-200 transition-all duration-500"
-                >
-                  <div className="flex">
-                    <div className="mr-2.5 flex flex-col items-center justify-center rounded-full bg-gray-100 h-[2.25rem] w-[2.25rem] p-1.5">
-                      <ChainLogo caip2Id={t.params.originCaip2Id} size={20} />
-                    </div>
-                    <div className="flex flex-col">
+          <div className="flex grow flex-col px-3.5">
+            <div className="grow flex flex-col w-full">
+              {sortedTransfers?.length > 0 &&
+                sortedTransfers.map((t) => (
+                  <button
+                    key={t.timestamp}
+                    onClick={() => {
+                      setSelectedTransfer(t);
+                      setIsModalOpen(true);
+                    }}
+                    className="flex justify-between items-center rounded-md border border-gray-300 px-2.5 py-2 mb-3 hover:bg-gray-100 active:bg-gray-200 transition-all duration-500"
+                  >
+                    <div className="flex">
+                      <div className="mr-2.5 flex flex-col items-center justify-center rounded-full bg-gray-100 h-[2.25rem] w-[2.25rem] p-1.5">
+                        <ChainLogo caip2Id={t.params.originCaip2Id} size={20} />
+                      </div>
                       <div className="flex flex-col">
-                        <div className="flex items items-baseline">
-                          <span className="text-gray-800 text-sm font-normal">
-                            {t.params.amount}
-                          </span>
-                          <span className="text-gray-800 text-sm font-normal ml-1">
-                            {getToken(t.params.tokenCaip19Id)?.symbol || ''}
-                          </span>
-                          <span className="text-black text-xs font-normal ml-1">
-                            ({toTitleCase(getAssetNamespace(t.params.tokenCaip19Id))})
-                          </span>
-                        </div>
-                        <div className="mt-1 flex flex-row items-center">
-                          <span className="text-thin text-gray-900 font-normal tracking-wide">
-                            {getChainDisplayName(t.params.originCaip2Id, true)}
-                          </span>
-                          <Image
-                            className="mx-1"
-                            src={ArrowRightIcon}
-                            width={10}
-                            height={10}
-                            alt=""
-                          />
-                          <span className="text-thin text-gray-900 font-normal tracking-wide">
-                            {getChainDisplayName(t.params.destinationCaip2Id, true)}
-                          </span>
+                        <div className="flex flex-col">
+                          <div className="flex items items-baseline">
+                            <span className="text-gray-800 text-sm font-normal">
+                              {t.params.amount}
+                            </span>
+                            <span className="text-gray-800 text-sm font-normal ml-1">
+                              {getToken(t.params.tokenCaip19Id)?.symbol || ''}
+                            </span>
+                            <span className="text-black text-xs font-normal ml-1">
+                              ({toTitleCase(getAssetNamespace(t.params.tokenCaip19Id))})
+                            </span>
+                          </div>
+                          <div className="mt-1 flex flex-row items-center">
+                            <span className="text-thin text-gray-900 font-normal tracking-wide">
+                              {getChainDisplayName(t.params.originCaip2Id, true)}
+                            </span>
+                            <Image
+                              className="mx-1"
+                              src={ArrowRightIcon}
+                              width={10}
+                              height={10}
+                              alt=""
+                            />
+                            <span className="text-thin text-gray-900 font-normal tracking-wide">
+                              {getChainDisplayName(t.params.destinationCaip2Id, true)}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="flex w-6 h-6">
-                    {STATUSES_WITH_ICON.includes(t.status) ? (
-                      <Image
-                        src={getIconByTransferStatus(t.status)}
-                        width={25}
-                        height={25}
-                        alt=""
-                      />
-                    ) : (
-                      <SmallSpinner />
-                    )}
-                  </div>
-                </button>
-              ))}
+                    <div className="flex w-6 h-6">
+                      {STATUSES_WITH_ICON.includes(t.status) ? (
+                        <Image
+                          src={getIconByTransferStatus(t.status)}
+                          width={25}
+                          height={25}
+                          alt=""
+                        />
+                      ) : (
+                        <SmallSpinner />
+                      )}
+                    </div>
+                  </button>
+                ))}
+            </div>
+            {sortedTransfers?.length > 0 && (
+              <button onClick={resetTransfers} className="flex flex-row items-center my-6">
+                <Image className="mr-4" src={ResetIcon} width={17} height={17} alt="" />
+                <span className="text-gray-900 text-sm font-normal">Reset transaction history</span>
+              </button>
+            )}
           </div>
-          <button
-            onClick={resetTransfers}
-            className="flex flex-row items-center absolute bottom-6 left-7"
-          >
-            <Image className="mr-4" src={ResetIcon} width={17} height={17} alt="" />
-            <span className="text-gray-900 text-sm font-normal">Reset transaction history</span>
-          </button>
         </div>
       </div>
       {selectedTransfer && (

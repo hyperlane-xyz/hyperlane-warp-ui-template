@@ -8,6 +8,7 @@ import {
   ProtocolType,
 } from '@hyperlane-xyz/sdk';
 
+import { solanaChainToClusterName } from '../consts/chains';
 import { isNumeric } from '../utils/string';
 
 import { parseCaip2Id } from './caip/chains';
@@ -43,6 +44,38 @@ class MultiProtocolProvider extends MultiProvider {
     const metadata = this.tryGetChainMetadata(chainNameOrId);
     if (metadata?.protocol && metadata.protocol !== ProtocolType.Ethereum) return null;
     return super.tryGetSigner(chainNameOrId);
+  }
+
+  // TODO Add special-case handling to to SDK
+  override async tryGetExplorerAddressUrl(
+    chainNameOrId: ChainName | number,
+    address?: string,
+  ): Promise<string | null> {
+    const url = await super.tryGetExplorerAddressUrl(chainNameOrId, address);
+    if (!url) return null;
+    const metadata = this.getChainMetadata(chainNameOrId);
+    const chainName = metadata.name;
+    if (metadata.protocol === ProtocolType.Sealevel && solanaChainToClusterName[chainName]) {
+      return `${url}?cluster=${solanaChainToClusterName[chainName]}`;
+    }
+    return url;
+  }
+
+  // TODO Add special-case handling to to SDK
+  override tryGetExplorerTxUrl(
+    chainNameOrId: ChainName | number,
+    response: { hash: string },
+  ): string | null {
+    const url = super.tryGetExplorerTxUrl(chainNameOrId, response);
+    if (!url) return null;
+    const metadata = this.getChainMetadata(chainNameOrId);
+    const chainName = metadata.name;
+    if (metadata.protocol === ProtocolType.Sealevel && solanaChainToClusterName[chainName]) {
+      return `${url}?cluster=${solanaChainToClusterName[chainName]}`;
+    } else if (chainName === 'nautilus' || chainName === 'proteustestnet') {
+      return url.replaceAll('/tx/', '/transaction/');
+    }
+    return url;
   }
 }
 

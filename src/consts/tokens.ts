@@ -13,18 +13,6 @@ export const tokenList: WarpTokenConfig = [
     logoURI: '/logos/weth.png', // See public/logos/
   },
 
-  // Example NFT (ERC721) token for an EVM chain
-  {
-    chainId: 5,
-    name: 'Test721',
-    symbol: 'TEST721',
-    decimals: 0,
-    type: 'collateral',
-    address: '0x77566D540d1E207dFf8DA205ed78750F9a1e7c55',
-    hypCollateralAddress: '0xDcbc0faAA269Cf649AC8950838664BB7B355BD6B',
-    isNft: true,
-  },
-
   // Example native token for an EVM chain
   {
     type: 'native',
@@ -36,28 +24,15 @@ export const tokenList: WarpTokenConfig = [
     logoURI: '/logos/weth.png',
   },
 
-  // Example native token for a Sealevel (Solana) chain
+  // Example NFT (ERC721) token for an EVM chain
   {
-    type: 'native',
-    protocol: 'sealevel',
-    chainId: 1399811151,
-    hypNativeAddress: '3s6afZYk3EmjsZQ33N9yPTdSk4cY5CKeQ5wtoBcWjFUn',
-    name: 'Sol',
-    symbol: 'SOL',
-    decimals: 9,
-    logoURI: '/logos/solana.svg',
-  },
-
-  // Example collateral token for a Sealevel (Solana) chain
-  {
+    chainId: 5,
+    name: 'Test721',
+    symbol: 'TEST721',
+    decimals: 0,
     type: 'collateral',
-    protocol: 'sealevel',
-    chainId: 1399811151,
-    address: 'Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr',
-    hypCollateralAddress: 'Hsb2PdnUvd7VvZJ1svS8TrVLfsRDdDTWoHK5r2RwGZBS',
-    name: 'dUSDC',
-    symbol: 'dUSDC',
-    decimals: 6,
-    isSpl2022: false,
+    address: '0x77566D540d1E207dFf8DA205ed78750F9a1e7c55',
+    hypCollateralAddress: '0xDcbc0faAA269Cf649AC8950838664BB7B355BD6B',
+    isNft: true,
   },
 ];

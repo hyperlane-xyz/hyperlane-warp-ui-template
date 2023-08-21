@@ -66,6 +66,7 @@ async function fetchRemoteHypTokens(
       const namespace = resolveAssetNamespace(protocol, false, isNft, true);
       const formattedAddress = bytesToProtocolAddress(router.address, protocol);
       const caip19Id = getCaip19Id(caip2Id, namespace, formattedAddress);
+      if (isNft) return { caip19Id, decimals: 0 };
       // Attempt to find the decimals from the token list
       const routerMetadata = allTokens.find((token) =>
         areAddressesEqual(formattedAddress, token.routerAddress),

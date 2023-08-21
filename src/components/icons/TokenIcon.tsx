@@ -20,7 +20,9 @@ function _TokenIcon({ token, size = 32 }: Props) {
   const fontSize = Math.floor(size / 2);
 
   const bgColorSeed =
-    token && !imageSrc ? (Buffer.from(getTokenAddress(token.caip19Id)).at(0) || 0) % 5 : undefined;
+    token && !imageSrc
+      ? (Buffer.from(getTokenAddress(token.tokenCaip19Id)).at(0) || 0) % 5
+      : undefined;
 
   return (
     <Circle size={size} bgColorSeed={bgColorSeed} title={title}>

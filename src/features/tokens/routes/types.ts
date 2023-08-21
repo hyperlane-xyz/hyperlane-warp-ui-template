@@ -6,14 +6,14 @@ export enum RouteType {
 
 export interface Route {
   type: RouteType;
-  baseCaip19Id: Caip19Id; // i.e. the underlying 'collateralized' token
+  baseTokenCaip19Id: TokenCaip19Id; // i.e. the underlying 'collateralized' token
   baseRouterAddress: Address;
-  originCaip2Id: Caip2Id;
+  originCaip2Id: ChainCaip2Id;
   originRouterAddress: Address;
   originDecimals: number;
-  destCaip2Id: Caip2Id;
+  destCaip2Id: ChainCaip2Id;
   destRouterAddress: Address;
   destDecimals: number;
 }
 
-export type RoutesMap = Record<Caip2Id, Record<Caip2Id, Route[]>>;
+export type RoutesMap = Record<ChainCaip2Id, Record<ChainCaip2Id, Route[]>>;

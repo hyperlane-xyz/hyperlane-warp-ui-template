@@ -69,7 +69,7 @@ export type WarpTokenConfig = Array<CollateralTokenConfig | NativeTokenConfig>;
  */
 interface BaseTokenMetadata extends MinimalTokenMetadata {
   type: TokenType;
-  caip19Id: Caip19Id;
+  tokenCaip19Id: TokenCaip19Id;
   routerAddress: Address; // Shared name for hypCollateralAddr or hypNativeAddr
   logoURI?: string;
 }
@@ -88,7 +88,7 @@ export type TokenMetadata = CollateralTokenMetadata | NativeTokenMetadata;
  * Extended types including synthetic hyp token addresses
  */
 interface HypTokens {
-  hypTokens: Array<{ caip19Id: Caip19Id; decimals: number }>;
+  hypTokens: Array<{ tokenCaip19Id: TokenCaip19Id; decimals: number }>;
 }
 
 type NativeTokenMetadataWithHypTokens = NativeTokenMetadata & HypTokens;

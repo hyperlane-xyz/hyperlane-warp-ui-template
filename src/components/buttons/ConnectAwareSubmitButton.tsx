@@ -10,17 +10,17 @@ import { useTimeout } from '../../utils/timeout';
 import { SolidButton } from './SolidButton';
 
 interface Props {
-  caip2Id: Caip2Id;
+  chainCaip2Id: ChainCaip2Id;
   text: string;
   classes?: string;
 }
 
-export function ConnectAwareSubmitButton<FormValues = any>({ caip2Id, text, classes }: Props) {
-  const protocol = tryGetProtocolType(caip2Id) || ProtocolType.Ethereum;
+export function ConnectAwareSubmitButton<FormValues = any>({ chainCaip2Id, text, classes }: Props) {
+  const protocol = tryGetProtocolType(chainCaip2Id) || ProtocolType.Ethereum;
   const connectFns = useConnectFns();
   const connectFn = connectFns[protocol];
 
-  const account = useAccountForChain(caip2Id);
+  const account = useAccountForChain(chainCaip2Id);
   const isAccountReady = account?.isReady;
 
   const { errors, setErrors, touched, setTouched } = useFormikContext<FormValues>();

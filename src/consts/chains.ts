@@ -101,6 +101,7 @@ export const chains: ChainMap<ChainMetadataWithArtifacts> = {
     name: 'nautilus',
     protocol: ProtocolType.Ethereum,
     displayName: 'Nautilus',
+    logoURI: 'https://www.nautchain.xyz/media/nuatchain_media_kit/naut_sq.png',
     nativeToken: {
       name: 'Zebec',
       symbol: 'ZBC',

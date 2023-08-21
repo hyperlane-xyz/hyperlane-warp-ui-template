@@ -13,8 +13,8 @@ import { TokenMetadata } from './types';
 
 type Props = {
   name: string;
-  originCaip2Id: Caip2Id;
-  destinationCaip2Id: Caip2Id;
+  originCaip2Id: ChainCaip2Id;
+  destinationCaip2Id: ChainCaip2Id;
   tokenRoutes: RoutesMap;
   disabled?: boolean;
   setIsNft: (value: boolean) => void;
@@ -37,7 +37,7 @@ export function TokenSelectField({
   // Keep local state in sync with formik state
   useEffect(() => {
     if (!field.value) setToken(undefined);
-    else if (field.value !== token?.caip19Id) {
+    else if (field.value !== token?.tokenCaip19Id) {
       setToken(undefined);
       helpers.setValue('');
     }
@@ -45,13 +45,13 @@ export function TokenSelectField({
 
   const handleChange = (newToken: TokenMetadata) => {
     // Set the token address value in formik state
-    helpers.setValue(newToken.caip19Id);
+    helpers.setValue(newToken.tokenCaip19Id);
     // reset amount after change token
     setFieldValue('amount', '');
     // Update local state
     setToken(newToken);
     // Update nft state in parent
-    setIsNft(!!isNonFungibleToken(newToken.caip19Id));
+    setIsNft(!!isNonFungibleToken(newToken.tokenCaip19Id));
   };
 
   const [isModalOpen, setIsModalOpen] = useState(false);

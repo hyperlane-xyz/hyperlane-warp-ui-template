@@ -1,9 +1,9 @@
 import type { Route } from '../tokens/routes/types';
 
 export interface TransferFormValues {
-  originCaip2Id: Caip2Id;
-  destinationCaip2Id: Caip2Id;
-  tokenCaip19Id: Caip19Id;
+  originCaip2Id: ChainCaip2Id;
+  destinationCaip2Id: ChainCaip2Id;
+  tokenCaip19Id: TokenCaip19Id;
   amount: string;
   recipientAddress: Address;
 }

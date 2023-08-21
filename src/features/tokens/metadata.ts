@@ -23,8 +23,8 @@ export function getTokens() {
   return tokens || [];
 }
 
-export function getToken(caip19Id: Caip19Id) {
-  return getTokens().find((t) => t.caip19Id === caip19Id);
+export function getToken(tokenCaip19Id: TokenCaip19Id) {
+  return getTokens().find((t) => t.tokenCaip19Id === tokenCaip19Id);
 }
 
 export async function parseTokens() {
@@ -50,7 +50,7 @@ async function parseTokenConfigs(configList: WarpTokenConfig): Promise<TokenMeta
     const { type, chainId, logoURI } = config;
 
     const protocol = multiProvider.getChainMetadata(chainId).protocol || ProtocolType.Ethereum;
-    const caip2Id = getCaip2Id(protocol, chainId);
+    const chainCaip2Id = getCaip2Id(protocol, chainId);
     const isNative = type == TokenType.native;
     const isNft = type === TokenType.collateral && config.isNft;
     const isSpl2022 = type === TokenType.collateral && config.isSpl2022;
@@ -59,7 +59,7 @@ async function parseTokenConfigs(configList: WarpTokenConfig): Promise<TokenMeta
     const routerAddress =
       type === TokenType.collateral ? config.hypCollateralAddress : config.hypNativeAddress;
     const namespace = resolveAssetNamespace(protocol, isNative, isNft, isSpl2022);
-    const caip19Id = getCaip19Id(caip2Id, namespace, address);
+    const tokenCaip19Id = getCaip19Id(chainCaip2Id, namespace, address);
 
     const { name, symbol, decimals } = await fetchNameAndDecimals(
       config,
@@ -74,7 +74,7 @@ async function parseTokenConfigs(configList: WarpTokenConfig): Promise<TokenMeta
       decimals,
       logoURI,
       type,
-      caip19Id,
+      tokenCaip19Id,
       routerAddress,
     });
   }

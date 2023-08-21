@@ -1,33 +1,35 @@
+import { getChainIdFromToken } from '../../caip/tokens';
+
 import { Route, RoutesMap } from './types';
 
 export function getTokenRoutes(
-  originCaip2Id: Caip2Id,
-  destinationCaip2Id: Caip2Id,
+  originCaip2Id: ChainCaip2Id,
+  destinationCaip2Id: ChainCaip2Id,
   tokenRoutes: RoutesMap,
 ): Route[] {
   return tokenRoutes[originCaip2Id]?.[destinationCaip2Id] || [];
 }
 
 export function getTokenRoute(
-  originCaip2Id: Caip2Id,
-  destinationCaip2Id: Caip2Id,
-  caip19Id: Caip19Id,
+  originCaip2Id: ChainCaip2Id,
+  destinationCaip2Id: ChainCaip2Id,
+  tokenCaip19Id: TokenCaip19Id,
   tokenRoutes: RoutesMap,
 ): Route | undefined {
-  if (!caip19Id) return undefined;
+  if (!tokenCaip19Id) return undefined;
   return getTokenRoutes(originCaip2Id, destinationCaip2Id, tokenRoutes).find(
-    (r) => r.baseCaip19Id === caip19Id,
+    (r) => r.baseTokenCaip19Id === tokenCaip19Id,
   );
 }
 
 export function hasTokenRoute(
-  originCaip2Id: Caip2Id,
-  destinationCaip2Id: Caip2Id,
-  caip19Id: Caip19Id,
+  originCaip2Id: ChainCaip2Id,
+  destinationCaip2Id: ChainCaip2Id,
+  tokenCaip19Id: TokenCaip19Id,
   tokenRoutes: RoutesMap,
 ): boolean {
-  const tokenRoute = getTokenRoute(originCaip2Id, destinationCaip2Id, caip19Id, tokenRoutes);
+  const tokenRoute = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenCaip19Id, tokenRoutes);
   // This will break things if there are other warp routes configured!
   // This only looks for routes in which the origin is the base token.
-  return !!tokenRoute && caip19Id.startsWith(originCaip2Id);
+  return !!tokenRoute && getChainIdFromToken(tokenCaip19Id) === originCaip2Id;
 }

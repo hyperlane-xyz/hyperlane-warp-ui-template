@@ -4,7 +4,7 @@ import { logger } from '../../utils/logger';
 
 // Based mostly on https://chainagnostic.org/CAIPs/caip-2
 // But uses different naming for the protocol
-export function getCaip2Id(protocol: ProtocolType, reference: string | number): Caip2Id {
+export function getCaip2Id(protocol: ProtocolType, reference: string | number): ChainCaip2Id {
   if (!Object.values(ProtocolType).includes(protocol)) {
     throw new Error(`Invalid chain environment: ${protocol}`);
   }
@@ -14,7 +14,7 @@ export function getCaip2Id(protocol: ProtocolType, reference: string | number): 
   return `${protocol}:${reference}`;
 }
 
-export function parseCaip2Id(id: Caip2Id) {
+export function parseCaip2Id(id: ChainCaip2Id) {
   const [_protocol, reference] = id.split(':');
   const protocol = _protocol as ProtocolType;
   if (!Object.values(ProtocolType).includes(protocol)) {
@@ -26,7 +26,7 @@ export function parseCaip2Id(id: Caip2Id) {
   return { protocol, reference };
 }
 
-export function tryParseCaip2Id(id: Caip2Id) {
+export function tryParseCaip2Id(id: ChainCaip2Id) {
   if (!id) return undefined;
   try {
     return parseCaip2Id(id);
@@ -36,25 +36,25 @@ export function tryParseCaip2Id(id: Caip2Id) {
   }
 }
 
-export function getProtocolType(id: Caip2Id) {
+export function getProtocolType(id: ChainCaip2Id) {
   const { protocol } = parseCaip2Id(id);
   return protocol;
 }
 
-export function tryGetProtocolType(id: Caip2Id) {
+export function tryGetProtocolType(id: ChainCaip2Id) {
   return tryParseCaip2Id(id)?.protocol;
 }
 
-export function getChainReference(id: Caip2Id) {
+export function getChainReference(id: ChainCaip2Id) {
   const { reference } = parseCaip2Id(id);
   return reference;
 }
 
-export function tryGetChainReference(id: Caip2Id) {
+export function tryGetChainReference(id: ChainCaip2Id) {
   return tryParseCaip2Id(id)?.reference;
 }
 
-export function getEthereumChainId(id: Caip2Id): number {
+export function getEthereumChainId(id: ChainCaip2Id): number {
   const { protocol, reference } = parseCaip2Id(id);
   if (protocol !== ProtocolType.Ethereum) {
     throw new Error(`Protocol type must be ethereum: ${id}`);

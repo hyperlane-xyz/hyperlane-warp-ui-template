@@ -108,7 +108,7 @@ export function TransfersDetailsModal({
     >
       <div className="flex flex-row items-center justify-between">
         <div className="flex">
-          <ChainLogo caip2Id={originCaip2Id} size={22} />
+          <ChainLogo chainCaip2Id={originCaip2Id} size={22} />
           <div className="flex items items-baseline">
             <span className="text-black text-base font-normal ml-1">{amount}</span>
             <span className="text-black text-base font-normal ml-1">{token?.symbol || ''}</span>
@@ -119,14 +119,14 @@ export function TransfersDetailsModal({
         </div>
         <div className="flex items-center">
           <div className="flex">
-            <ChainLogo caip2Id={originCaip2Id} size={22} />
+            <ChainLogo chainCaip2Id={originCaip2Id} size={22} />
             <span className="text-gray-900 text-base font-normal tracking-wider ml-2">
               {getChainDisplayName(originCaip2Id, true)}
             </span>
           </div>
           <Image className="mx-2.5" src={ArrowRightIcon} width={13} height={13} alt="" />
           <div className="flex">
-            <ChainLogo caip2Id={destinationCaip2Id} size={22} />
+            <ChainLogo chainCaip2Id={destinationCaip2Id} size={22} />
             <span className="text-gray-900 text-base font-normal tracking-wider ml-2">
               {getChainDisplayName(destinationCaip2Id, true)}
             </span>

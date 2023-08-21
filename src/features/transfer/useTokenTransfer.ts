@@ -184,8 +184,8 @@ async function executeTransfer({
 // cover the remote transfer. This ensures the balance is sufficient or throws.
 async function ensureSufficientCollateral(route: Route, weiAmount: string, isNft?: boolean) {
   if (route.type !== RouteType.SyntheticToBase || isNft) return;
-  const adapter = AdapterFactory.TokenAdapterFromAddress(route.baseCaip19Id);
-  logger.debug('Checking collateral balance for token', route.baseCaip19Id);
+  const adapter = AdapterFactory.TokenAdapterFromAddress(route.baseTokenCaip19Id);
+  logger.debug('Checking collateral balance for token', route.baseTokenCaip19Id);
   const balance = await adapter.getBalance(route.baseRouterAddress);
   if (BigNumber.from(balance).lt(weiAmount)) {
     throw new Error('Collateral contract has insufficient balance');
@@ -215,11 +215,11 @@ async function executeEvmTransfer({
   updateStatus,
   sendTransaction,
 }: ExecuteTransferParams<providers.TransactionReceipt>) {
-  const { type: routeType, baseRouterAddress, originCaip2Id, baseCaip19Id } = tokenRoute;
+  const { type: routeType, baseRouterAddress, originCaip2Id, baseTokenCaip19Id } = tokenRoute;
 
-  if (isTransferApproveRequired(tokenRoute, baseCaip19Id)) {
+  if (isTransferApproveRequired(tokenRoute, baseTokenCaip19Id)) {
     updateStatus(TransferStatus.CreatingApprove);
-    const tokenAdapter = AdapterFactory.TokenAdapterFromAddress(baseCaip19Id);
+    const tokenAdapter = AdapterFactory.TokenAdapterFromAddress(baseTokenCaip19Id);
     const approveTxRequest = (await tokenAdapter.populateApproveTx({
       weiAmountOrId,
       recipient: baseRouterAddress,
@@ -228,8 +228,8 @@ async function executeEvmTransfer({
     updateStatus(TransferStatus.SigningApprove);
     const { confirm: confirmApprove } = await sendTransaction({
       tx: approveTxRequest,
-      caip2Id: originCaip2Id,
-      activeCap2Id: activeChain.caip2Id,
+      chainCaip2Id: originCaip2Id,
+      activeCap2Id: activeChain.chainCaip2Id,
     });
 
     updateStatus(TransferStatus.ConfirmingApprove);
@@ -244,7 +244,7 @@ async function executeEvmTransfer({
   logger.debug('Quoted gas payment', gasPayment);
   // If sending native tokens (e.g. Eth), the gasPayment must be added to the tx value and sent together
   const txValue =
-    routeType === RouteType.BaseToSynthetic && isNativeToken(baseCaip19Id)
+    routeType === RouteType.BaseToSynthetic && isNativeToken(baseTokenCaip19Id)
       ? BigNumber.from(gasPayment).add(weiAmountOrId)
       : gasPayment;
   const transferTxRequest = (await hypTokenAdapter.populateTransferRemoteTx({
@@ -257,8 +257,8 @@ async function executeEvmTransfer({
   updateStatus(TransferStatus.SigningTransfer);
   const { hash: transferTxHash, confirm: confirmTransfer } = await sendTransaction({
     tx: transferTxRequest,
-    caip2Id: originCaip2Id,
-    activeCap2Id: activeChain.caip2Id,
+    chainCaip2Id: originCaip2Id,
+    activeCap2Id: activeChain.chainCaip2Id,
   });
 
   updateStatus(TransferStatus.ConfirmingTransfer);
@@ -300,8 +300,8 @@ async function executeSealevelTransfer({
 
   const { hash: transferTxHash, confirm: confirmTransfer } = await sendTransaction({
     tx: transferTxRequest,
-    caip2Id: originCaip2Id,
-    activeCap2Id: activeChain.caip2Id,
+    chainCaip2Id: originCaip2Id,
+    activeCap2Id: activeChain.chainCaip2Id,
   });
 
   updateStatus(TransferStatus.ConfirmingTransfer);
@@ -310,9 +310,9 @@ async function executeSealevelTransfer({
   return { transferTxHash };
 }
 
-export function isTransferApproveRequired(route: Route, caip19Id: Caip19Id) {
+export function isTransferApproveRequired(route: Route, tokenCaip19Id: TokenCaip19Id) {
   return (
-    !isNativeToken(caip19Id) &&
+    !isNativeToken(tokenCaip19Id) &&
     route.type === RouteType.BaseToSynthetic &&
     getProtocolType(route.originCaip2Id) === ProtocolType.Ethereum
   );

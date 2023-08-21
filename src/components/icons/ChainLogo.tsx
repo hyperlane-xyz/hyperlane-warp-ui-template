@@ -10,17 +10,17 @@ import { logger } from '../../utils/logger';
 import { isNumeric } from '../../utils/string';
 
 type Props = Omit<ComponentProps<typeof ChainLogoInner>, 'chainId' | 'chainName'> & {
-  caip2Id?: Caip2Id;
+  chainCaip2Id?: ChainCaip2Id;
 };
 
 export function ChainLogo(props: Props) {
-  const { caip2Id, ...rest } = props;
+  const { chainCaip2Id, ...rest } = props;
   const { chainId, chainName, icon } = useMemo(() => {
-    if (!caip2Id) return {};
+    if (!chainCaip2Id) return {};
     try {
-      const { reference } = parseCaip2Id(caip2Id);
+      const { reference } = parseCaip2Id(chainCaip2Id);
       const chainId = isNumeric(reference) ? parseInt(reference, 10) : undefined;
-      const chainName = getChainDisplayName(caip2Id);
+      const chainName = getChainDisplayName(chainCaip2Id);
       const logoUri = getMultiProvider().tryGetChainMetadata(reference)?.logoURI;
       const icon = logoUri
         ? (props: { width: number; height: number; title?: string }) => (
@@ -36,7 +36,7 @@ export function ChainLogo(props: Props) {
       logger.error('Failed to parse caip2 id', error);
       return {};
     }
-  }, [caip2Id]);
+  }, [chainCaip2Id]);
 
   return <ChainLogoInner {...rest} chainId={chainId} chainName={chainName} icon={icon} />;
 }

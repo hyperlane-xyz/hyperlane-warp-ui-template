@@ -34,8 +34,8 @@ import { TransferFormValues } from './types';
 import { isTransferApproveRequired, useTokenTransfer } from './useTokenTransfer';
 
 export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
-  const caip2Ids = useRouteChains(tokenRoutes);
-  const initialValues = useFormInitialValues(caip2Ids, tokenRoutes);
+  const chainCaip2Ids = useRouteChains(tokenRoutes);
+  const initialValues = useFormInitialValues(chainCaip2Ids, tokenRoutes);
 
   // Flag for if form is in input vs review mode
   const [isReview, setIsReview] = useState(false);
@@ -61,7 +61,7 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
       validateOnBlur={false}
     >
       <Form className="flex flex-col items-stretch w-full mt-2">
-        <ChainSelectSection caip2Ids={caip2Ids} isReview={isReview} />
+        <ChainSelectSection chainCaip2Ids={chainCaip2Ids} isReview={isReview} />
         <div className="mt-3 flex justify-between space-x-4">
           <TokenSection tokenRoutes={tokenRoutes} setIsNft={setIsNft} isReview={isReview} />
           <AmountSection tokenRoutes={tokenRoutes} isNft={isNft} isReview={isReview} />
@@ -101,7 +101,13 @@ function SwapChainsButton({ disabled }: { disabled?: boolean }) {
   );
 }
 
-function ChainSelectSection({ caip2Ids, isReview }: { caip2Ids: Caip2Id[]; isReview: boolean }) {
+function ChainSelectSection({
+  chainCaip2Ids,
+  isReview,
+}: {
+  chainCaip2Ids: ChainCaip2Id[];
+  isReview: boolean;
+}) {
   const ChevronIcon = ({ classes }: { classes?: string }) => (
     <WideChevron
       width="17"
@@ -115,7 +121,12 @@ function ChainSelectSection({ caip2Ids, isReview }: { caip2Ids: Caip2Id[]; isRev
 
   return (
     <div className="flex items-center justify-center space-x-7 sm:space-x-10">
-      <ChainSelectField name="originCaip2Id" label="From" caip2Ids={caip2Ids} disabled={isReview} />
+      <ChainSelectField
+        name="originCaip2Id"
+        label="From"
+        chainCaip2Ids={chainCaip2Ids}
+        disabled={isReview}
+      />
       <div className="flex flex-col items-center">
         <div className="flex mb-6 sm:space-x-1.5">
           <ChevronIcon classes="hidden sm:block" />
@@ -127,7 +138,7 @@ function ChainSelectSection({ caip2Ids, isReview }: { caip2Ids: Caip2Id[]; isRev
       <ChainSelectField
         name="destinationCaip2Id"
         label="To"
-        caip2Ids={caip2Ids}
+        chainCaip2Ids={chainCaip2Ids}
         disabled={isReview}
       />
     </div>
@@ -297,7 +308,7 @@ function ButtonSection({
   if (!isReview) {
     return (
       <ConnectAwareSubmitButton
-        caip2Id={values.originCaip2Id}
+        chainCaip2Id={values.originCaip2Id}
         text="Continue"
         classes="mt-4 px-3 py-1.5"
       />
@@ -468,17 +479,20 @@ function validateFormValues(
   return {};
 }
 
-function useFormInitialValues(caip2Ids: Caip2Id[], tokenRoutes: RoutesMap): TransferFormValues {
+function useFormInitialValues(
+  chainCaip2Ids: ChainCaip2Id[],
+  tokenRoutes: RoutesMap,
+): TransferFormValues {
   return useMemo(() => {
-    const firstRoute = Object.values(tokenRoutes[caip2Ids[0]]).filter(
+    const firstRoute = Object.values(tokenRoutes[chainCaip2Ids[0]]).filter(
       (routes) => routes.length,
     )[0][0];
     return {
       originCaip2Id: firstRoute.originCaip2Id,
       destinationCaip2Id: firstRoute.destCaip2Id,
       amount: '',
-      tokenCaip19Id: '' as Caip19Id,
+      tokenCaip19Id: '' as TokenCaip19Id,
       recipientAddress: '',
     };
-  }, [caip2Ids, tokenRoutes]);
+  }, [chainCaip2Ids, tokenRoutes]);
 }

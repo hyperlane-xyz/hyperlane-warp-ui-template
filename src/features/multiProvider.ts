@@ -88,7 +88,7 @@ export function getMultiProvider() {
   return multiProvider;
 }
 
-export function getProvider(id: Caip2Id) {
+export function getProvider(id: ChainCaip2Id) {
   const { reference } = parseCaip2Id(id);
   return getMultiProvider().getProvider(reference);
 }

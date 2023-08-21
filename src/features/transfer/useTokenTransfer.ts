@@ -115,7 +115,7 @@ async function executeTransfer({
     if (!tokenRoute) throw new Error('No token route found between chains');
 
     const isNft = isNonFungibleToken(tokenCaip19Id);
-    const amountOrId = isNft ? amount : toWei(amount, tokenRoute.decimals).toString();
+    const weiAmountOrId = isNft ? amount : toWei(amount, tokenRoute.originDecimals).toString();
     const activeAccountAddress = activeAccounts.accounts[originProtocol]?.address || '';
 
     addTransfer({
@@ -126,10 +126,12 @@ async function executeTransfer({
       params: values,
     });
 
+    await ensureSufficientCollateral(tokenRoute, weiAmountOrId, isNft);
+
     const hypTokenAdapter = AdapterFactory.HypTokenAdapterFromRouteOrigin(tokenRoute);
 
     const triggerParams: ExecuteTransferParams<any> = {
-      amountOrId,
+      weiAmountOrId,
       destinationDomainId,
       recipientAddress,
       tokenRoute,
@@ -177,8 +179,21 @@ async function executeTransfer({
   if (onDone) onDone();
 }
 
+// In certain cases, like when a synthetic token has >1 collateral tokens
+// it's possible that the collateral contract balance is insufficient to
+// cover the remote transfer. This ensures the balance is sufficient or throws.
+async function ensureSufficientCollateral(route: Route, weiAmount: string, isNft?: boolean) {
+  if (route.type !== RouteType.SyntheticToBase || isNft) return;
+  const adapter = AdapterFactory.TokenAdapterFromAddress(route.baseCaip19Id);
+  logger.debug('Checking collateral balance for token', route.baseCaip19Id);
+  const balance = await adapter.getBalance(route.baseRouterAddress);
+  if (BigNumber.from(balance).lt(weiAmount)) {
+    throw new Error('Collateral contract has insufficient balance');
+  }
+}
+
 interface ExecuteTransferParams<TxResp> {
-  amountOrId: string;
+  weiAmountOrId: string;
   destinationDomainId: DomainId;
   recipientAddress: Address;
   tokenRoute: Route;
@@ -191,7 +206,7 @@ interface ExecuteTransferParams<TxResp> {
 }
 
 async function executeEvmTransfer({
-  amountOrId,
+  weiAmountOrId,
   destinationDomainId,
   recipientAddress,
   tokenRoute,
@@ -206,7 +221,7 @@ async function executeEvmTransfer({
     updateStatus(TransferStatus.CreatingApprove);
     const tokenAdapter = AdapterFactory.TokenAdapterFromAddress(baseCaip19Id);
     const approveTxRequest = (await tokenAdapter.populateApproveTx({
-      amountOrId,
+      weiAmountOrId,
       recipient: baseRouterAddress,
     })) as EvmTransaction;
 
@@ -230,10 +245,10 @@ async function executeEvmTransfer({
   // If sending native tokens (e.g. Eth), the gasPayment must be added to the tx value and sent together
   const txValue =
     routeType === RouteType.BaseToSynthetic && isNativeToken(baseCaip19Id)
-      ? BigNumber.from(gasPayment).add(amountOrId)
+      ? BigNumber.from(gasPayment).add(weiAmountOrId)
       : gasPayment;
   const transferTxRequest = (await hypTokenAdapter.populateTransferRemoteTx({
-    amountOrId,
+    weiAmountOrId,
     recipient: recipientAddress,
     destination: destinationDomainId,
     txValue: txValue.toString(),
@@ -254,7 +269,7 @@ async function executeEvmTransfer({
 }
 
 async function executeSealevelTransfer({
-  amountOrId,
+  weiAmountOrId,
   destinationDomainId,
   recipientAddress,
   tokenRoute,
@@ -274,7 +289,7 @@ async function executeSealevelTransfer({
   // logger.debug('Quoted gas payment', gasPayment);
 
   const transferTxRequest = (await hypTokenAdapter.populateTransferRemoteTx({
-    amountOrId,
+    weiAmountOrId,
     destination: destinationDomainId,
     recipient: recipientAddress,
     fromAccountOwner: activeAccount.address,

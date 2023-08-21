@@ -1,10 +1,5 @@
-import { ChainMap, ChainMetadataWithArtifacts } from '@hyperlane-xyz/sdk';
-import {
-  solana,
-  solanadevnet,
-  solanatestnet,
-  zbctestnet,
-} from '@hyperlane-xyz/sdk/dist/consts/chainMetadata';
+import { ChainMap, ChainMetadataWithArtifacts, ExplorerFamily } from '@hyperlane-xyz/sdk';
+import { solana, solanadevnet, solanatestnet } from '@hyperlane-xyz/sdk/dist/consts/chainMetadata';
 
 // A map of chain names to ChainMetadata
 export const chains: ChainMap<ChainMetadataWithArtifacts> = {
@@ -37,27 +32,56 @@ export const chains: ChainMap<ChainMetadataWithArtifacts> = {
   // Including configs for some Solana chains by default
   solana: {
     ...solana,
+    rpcUrls: [
+      {
+        http: process.env.NEXT_PUBLIC_SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com',
+      },
+    ],
+    // TODO move up to SDK
+    blockExplorers: [
+      {
+        name: 'Solana Explorer',
+        url: 'https://explorer.solana.com',
+        apiUrl: 'https://explorer.solana.com',
+        family: ExplorerFamily.Other,
+      },
+    ],
     mailbox: 'TODO',
     interchainGasPaymaster: '',
     validatorAnnounce: '',
   },
   solanatestnet: {
     ...solanatestnet,
+    blockExplorers: [
+      {
+        name: 'Solana Explorer',
+        url: 'https://explorer.solana.com',
+        apiUrl: 'https://explorer.solana.com',
+        family: ExplorerFamily.Other,
+      },
+    ],
     mailbox: 'TODO',
     interchainGasPaymaster: '',
     validatorAnnounce: '',
   },
   solanadevnet: {
     ...solanadevnet,
+    blockExplorers: [
+      {
+        name: 'Solana Explorer',
+        url: 'https://explorer.solana.com',
+        apiUrl: 'https://explorer.solana.com',
+        family: ExplorerFamily.Other,
+      },
+    ],
     mailbox: '4v25Dz9RccqUrTzmfHzJMsjd1iVoNrWzeJ4o6GYuJrVn',
     interchainGasPaymaster: '',
     validatorAnnounce: '',
   },
-  zbctestnet: {
-    ...zbctestnet,
-    mailbox: '4hW22NXtJ2AXrEVbeAmxjhvxWPSNvfTfAphKXdRBZUco',
-    interchainGasPaymaster: '',
-    validatorAnnounce: '',
-    logoURI: '/logos/zebec.png',
-  },
+};
+
+export const solanaChainToClusterName = {
+  solana: 'mainnet-beta',
+  solanatestnet: 'testnet',
+  solanadevnet: 'devnet',
 };

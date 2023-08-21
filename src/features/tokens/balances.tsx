@@ -41,7 +41,7 @@ export function useOriginBalance(
       if (!route || !address || !isValidAddress(address, protocol)) return null;
       const adapter = AdapterFactory.HypTokenAdapterFromRouteOrigin(route);
       const balance = await adapter.getBalance(address);
-      return { balance, decimals: route.decimals };
+      return { balance, decimals: route.originDecimals };
     },
     refetchInterval: 5000,
   });
@@ -76,7 +76,7 @@ export function useDestinationBalance(
       if (!route || !recipientAddress || !isValidAddress(recipientAddress, protocol)) return null;
       const adapter = AdapterFactory.HypTokenAdapterFromRouteDest(route);
       const balance = await adapter.getBalance(recipientAddress);
-      return { balance, decimals: route.decimals };
+      return { balance, decimals: route.destDecimals };
     },
     refetchInterval: 5000,
   });

@@ -6,11 +6,10 @@ import { ProtocolType } from '@hyperlane-xyz/sdk';
 export type MinimalTokenMetadata = Omit<ERC20Metadata, 'totalSupply'>;
 
 const commonTokenFields = z.object({
-  chainId: z.number().positive().or(z.string().nonempty()),
-  protocol: z.nativeEnum(ProtocolType).optional(),
-  name: z.string().nonempty(),
-  symbol: z.string().nonempty(),
-  decimals: z.number().nonnegative(), // decimals == 0 for NFTs
+  chainId: z.number().positive(),
+  name: z.string().optional(),
+  symbol: z.string().optional(),
+  decimals: z.number().nonnegative().optional(), // decimals == 0 for NFTs
   logoURI: z.string().optional(),
 });
 type CommonTokenFields = z.infer<typeof commonTokenFields>;
@@ -68,10 +67,11 @@ export type WarpTokenConfig = Array<CollateralTokenConfig | NativeTokenConfig>;
  *
  * See src/features/tokens/metadata.ts
  */
-interface BaseTokenMetadata extends CommonTokenFields {
+interface BaseTokenMetadata extends MinimalTokenMetadata {
   type: TokenType;
   caip19Id: Caip19Id;
   routerAddress: Address; // Shared name for hypCollateralAddr or hypNativeAddr
+  logoURI?: string;
 }
 
 interface CollateralTokenMetadata extends BaseTokenMetadata {
@@ -88,7 +88,7 @@ export type TokenMetadata = CollateralTokenMetadata | NativeTokenMetadata;
  * Extended types including synthetic hyp token addresses
  */
 interface HypTokens {
-  hypTokens: Array<Caip19Id>;
+  hypTokens: Array<{ caip19Id: Caip19Id; decimals: number }>;
 }
 
 type NativeTokenMetadataWithHypTokens = NativeTokenMetadata & HypTokens;

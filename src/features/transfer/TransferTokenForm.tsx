@@ -1,5 +1,7 @@
+import BigNumber from 'bignumber.js';
 import { Form, Formik, useFormikContext } from 'formik';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'react-toastify';
 
 import { ProtocolSmallestUnit } from '@hyperlane-xyz/sdk';
 import { WideChevron } from '@hyperlane-xyz/widgets';
@@ -9,6 +11,7 @@ import { IconButton } from '../../components/buttons/IconButton';
 import { SolidButton } from '../../components/buttons/SolidButton';
 import { ChevronIcon } from '../../components/icons/Chevron';
 import { TextField } from '../../components/input/TextField';
+import { config } from '../../consts/config';
 import SwapIcon from '../../images/icons/swap.svg';
 import { Color } from '../../styles/Color';
 import { isValidAddress } from '../../utils/addresses';
@@ -208,6 +211,28 @@ function RecipientSection({
   const { values } = useFormikContext<TransferFormValues>();
   const { balance, decimals } = useDestinationBalance(values, tokenRoutes);
 
+  // A crude way to detect transfer completions by triggering
+  // toast on recipientAddress balance increase. This is not ideal because it
+  // could confuse unrelated balance changes for message delivery
+  // TODO replace with a polling worker that queries the hyperlane explorer
+  const recipientAddress = values.recipientAddress;
+  const prevRecipientBalance = useRef<{ balance?: string; recipientAddress?: string }>({
+    balance: '',
+    recipientAddress: '',
+  });
+  useEffect(() => {
+    if (
+      recipientAddress &&
+      balance &&
+      prevRecipientBalance.current.balance &&
+      prevRecipientBalance.current.recipientAddress === recipientAddress &&
+      new BigNumber(balance).gt(prevRecipientBalance.current.balance)
+    ) {
+      toast.success('Recipient has received funds, transfer complete!');
+    }
+    prevRecipientBalance.current = { balance, recipientAddress };
+  }, [balance, recipientAddress, prevRecipientBalance]);
+
   return (
     <div className="mt-4">
       <div className="flex justify-between pr-1">
@@ -332,7 +357,10 @@ function SelfButton({ disabled }: { disabled?: boolean }) {
   const { values, setFieldValue } = useFormikContext<TransferFormValues>();
   const address = useAccountForChain(values.destinationCaip2Id)?.address;
   const onClick = () => {
-    if (address && !disabled) setFieldValue('recipientAddress', address);
+    if (disabled) return;
+    if (address) setFieldValue('recipientAddress', address);
+    else
+      toast.warn(`No wallet connected for chain ${getChainDisplayName(values.destinationCaip2Id)}`);
   };
   return (
     <SolidButton
@@ -354,7 +382,7 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
 
   const route = getTokenRoute(originCaip2Id, destinationCaip2Id, token, tokenRoutes);
   const isNft = token && isNonFungibleToken(token);
-  const sendValue = isNft ? amount.toString() : toWei(amount, route?.decimals).toString();
+  const sendValue = isNft ? amount.toString() : toWei(amount, route?.originDecimals).toString();
   const isApproveRequired = route && isTransferApproveRequired(route, token);
   const originProtocol = getProtocolType(originCaip2Id);
   const originUnitName = ProtocolSmallestUnit[originProtocol];
@@ -416,7 +444,7 @@ function validateFormValues(
   const parsedAmount = tryParseAmount(amount);
   if (!parsedAmount || parsedAmount.lte(0))
     return { amount: isNft ? 'Invalid Token Id' : 'Invalid amount' };
-  const sendValue = isNft ? parsedAmount : toWei(parsedAmount, route?.decimals);
+  const sendValue = isNft ? parsedAmount : toWei(parsedAmount, route?.originDecimals);
 
   if (!isNft) {
     // Validate balances for ERC20-like tokens
@@ -428,6 +456,13 @@ function validateFormValues(
     if (isSenderNftOwner === false || (senderNftIds && !senderNftIds.includes(nftId))) {
       return { amount: 'Token ID not owned' };
     }
+  }
+
+  if (
+    config.withdrawalWhitelist &&
+    !config.withdrawalWhitelist.split(',').includes(destinationCaip2Id)
+  ) {
+    return { destinationCaip2Id: 'Bridge is in deposit-only mode' };
   }
 
   return {};

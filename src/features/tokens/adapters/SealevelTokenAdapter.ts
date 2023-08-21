@@ -22,6 +22,7 @@ import { addressToBytes, isZeroishAddress } from '../../../utils/addresses';
 import {
   AccountDataWrapper,
   HypTokenInstruction,
+  HyperlaneTokenData,
   HyperlaneTokenDataSchema,
   TransferRemoteInstruction,
   TransferRemoteSchema,
@@ -54,13 +55,13 @@ export class SealevelNativeTokenAdapter implements ITokenAdapter {
     throw new Error('Approve not required for native tokens');
   }
 
-  populateTransferTx({ amountOrId, recipient, fromAccountOwner }: TransferParams): Transaction {
+  populateTransferTx({ weiAmountOrId, recipient, fromAccountOwner }: TransferParams): Transaction {
     const fromPubkey = resolveAddress(fromAccountOwner, this.signerAddress);
     return new Transaction().add(
       SystemProgram.transfer({
         fromPubkey,
         toPubkey: new PublicKey(recipient),
-        lamports: new BigNumber(amountOrId).toNumber(),
+        lamports: new BigNumber(weiAmountOrId).toNumber(),
       }),
     );
   }
@@ -95,7 +96,7 @@ export class SealevelTokenAdapter implements ITokenAdapter {
   }
 
   populateTransferTx({
-    amountOrId,
+    weiAmountOrId,
     recipient,
     fromAccountOwner,
     fromTokenAccount,
@@ -107,7 +108,7 @@ export class SealevelTokenAdapter implements ITokenAdapter {
         new PublicKey(fromTokenAccount),
         new PublicKey(recipient),
         fromWalletPubKey,
-        new BigNumber(amountOrId).toNumber(),
+        new BigNumber(weiAmountOrId).toNumber(),
       ),
     );
   }
@@ -147,31 +148,42 @@ export abstract class SealevelHypTokenAdapter
     this.warpProgramPubKey = new PublicKey(warpRouteProgramId);
   }
 
+  async getTokenAccountData(): Promise<HyperlaneTokenData> {
+    const tokenPda = this.deriveHypTokenAccount();
+    const accountInfo = await this.connection.getAccountInfo(tokenPda);
+    if (!accountInfo) throw new Error(`No account info found for ${tokenPda}`);
+    const wrappedData = deserializeUnchecked(
+      HyperlaneTokenDataSchema,
+      AccountDataWrapper,
+      accountInfo.data,
+    );
+    return wrappedData.data;
+  }
+
+  override async getMetadata(): Promise<MinimalTokenMetadata> {
+    const tokenData = await this.getTokenAccountData();
+    // TODO full token metadata support
+    return { decimals: tokenData.decimals, symbol: 'HYP', name: 'Unknown Hyp Token' };
+  }
+
   async getDomains(): Promise<DomainId[]> {
     const routers = await this.getAllRouters();
     return routers.map((router) => router.domain);
   }
 
-  async getRouterAddress(domain: DomainId): Promise<Address> {
+  async getRouterAddress(domain: DomainId): Promise<Buffer> {
     const routers = await this.getAllRouters();
     const addr = routers.find((router) => router.domain === domain)?.address;
     if (!addr) throw new Error(`No router found for ${domain}`);
     return addr;
   }
 
-  async getAllRouters(): Promise<Array<{ domain: DomainId; address: Address }>> {
-    const tokenPda = this.deriveHypTokenAccount();
-    const accountInfo = await this.connection.getAccountInfo(tokenPda);
-    if (!accountInfo) throw new Error(`No account info found for ${tokenPda}}`);
-    const tokenData = deserializeUnchecked(
-      HyperlaneTokenDataSchema,
-      AccountDataWrapper,
-      accountInfo.data,
-    );
-    const domainToPubKey = tokenData.data.remote_router_pubkeys;
+  async getAllRouters(): Promise<Array<{ domain: DomainId; address: Buffer }>> {
+    const tokenData = await this.getTokenAccountData();
+    const domainToPubKey = tokenData.remote_router_pubkeys;
     return Array.from(domainToPubKey.entries()).map(([domain, pubKey]) => ({
       domain,
-      address: pubKey.toBase58(),
+      address: pubKey.toBuffer(),
     }));
   }
 
@@ -181,7 +193,7 @@ export abstract class SealevelHypTokenAdapter
   }
 
   async populateTransferRemoteTx({
-    amountOrId,
+    weiAmountOrId,
     destination,
     recipient,
     fromAccountOwner,
@@ -202,7 +214,7 @@ export abstract class SealevelHypTokenAdapter
       data: new TransferRemoteInstruction({
         destination_domain: destination,
         recipient: addressToBytes(recipient),
-        amount_or_id: new BigNumber(amountOrId).toNumber(),
+        amount_or_id: new BigNumber(weiAmountOrId).toNumber(),
       }),
     });
     const serializedData = serialize(TransferRemoteSchema, value);
@@ -352,6 +364,19 @@ export class SealevelHypNativeAdapter extends SealevelHypTokenAdapter {
 
 // Interacts with Hyp Collateral token programs
 export class SealevelHypCollateralAdapter extends SealevelHypTokenAdapter {
+  override async getBalance(owner: Address): Promise<string> {
+    // Special case where the owner is the warp route program ID.
+    // This is because collateral warp routes don't hold escrowed collateral
+    // tokens in their associated token account - instead, they hold them in
+    // the escrow account.
+    if (owner === this.warpRouteProgramId) {
+      const collateralAccount = this.deriveEscrowAccount();
+      const response = await this.connection.getTokenAccountBalance(collateralAccount);
+      return response.value.amount;
+    }
+    return super.getBalance(owner);
+  }
+
   override getTransferInstructionKeyList(
     sender: PublicKey,
     mailbox: PublicKey,

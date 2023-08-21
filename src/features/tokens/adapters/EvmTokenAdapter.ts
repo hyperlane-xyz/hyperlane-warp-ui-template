@@ -4,11 +4,7 @@ import { BigNumber, PopulatedTransaction, Signer, providers } from 'ethers';
 import type { ERC20Upgradeable, HypERC20 } from '@hyperlane-xyz/hyperlane-token';
 import { utils } from '@hyperlane-xyz/utils';
 
-import {
-  addressToByteHexString,
-  isValidEvmAddress,
-  normalizeEvmAddress,
-} from '../../../utils/addresses';
+import { addressToByteHexString, isValidEvmAddress, trimLeading0x } from '../../../utils/addresses';
 import {
   getErc20Contract,
   getHypErc20CollateralContract,
@@ -46,10 +42,10 @@ export class EvmNativeTokenAdapter implements ITokenAdapter {
   }
 
   async populateTransferTx({
-    amountOrId,
+    weiAmountOrId,
     recipient,
   }: TransferParams): Promise<PopulatedTransaction> {
-    const value = BigNumber.from(amountOrId);
+    const value = BigNumber.from(weiAmountOrId);
     return { value, to: recipient };
   }
 
@@ -96,17 +92,17 @@ export class EvmTokenAdapter<T extends ERC20Upgradeable = ERC20Upgradeable>
   }
 
   override populateApproveTx({
-    amountOrId,
+    weiAmountOrId,
     recipient,
   }: TransferParams): Promise<PopulatedTransaction> {
-    return this.contract.populateTransaction.approve(recipient, amountOrId);
+    return this.contract.populateTransaction.approve(recipient, weiAmountOrId);
   }
 
   override populateTransferTx({
-    amountOrId,
+    weiAmountOrId,
     recipient,
   }: TransferParams): Promise<PopulatedTransaction> {
-    return this.contract.populateTransaction.transfer(recipient, amountOrId);
+    return this.contract.populateTransaction.transfer(recipient, weiAmountOrId);
   }
 }
 
@@ -127,14 +123,20 @@ export class EvmHypSyntheticAdapter<T extends HypERC20 = HypERC20>
     return this.contract.domains();
   }
 
-  async getRouterAddress(domain: DomainId): Promise<Address> {
+  async getRouterAddress(domain: DomainId): Promise<Buffer> {
     const routerAddressesAsBytes32 = await this.contract.routers(domain);
-    return normalizeEvmAddress(utils.bytes32ToAddress(routerAddressesAsBytes32));
+    // Evm addresses will be padded with 12 bytes
+    if (routerAddressesAsBytes32.startsWith('0x000000000000000000000000')) {
+      return Buffer.from(trimLeading0x(utils.bytes32ToAddress(routerAddressesAsBytes32)), 'hex');
+      // Otherwise leave the address unchanged
+    } else {
+      return Buffer.from(trimLeading0x(routerAddressesAsBytes32), 'hex');
+    }
   }
 
-  async getAllRouters(): Promise<Array<{ domain: DomainId; address: Address }>> {
+  async getAllRouters(): Promise<Array<{ domain: DomainId; address: Buffer }>> {
     const domains = await this.getDomains();
-    const routers: Address[] = await Promise.all(domains.map((d) => this.getRouterAddress(d)));
+    const routers: Buffer[] = await Promise.all(domains.map((d) => this.getRouterAddress(d)));
     return domains.map((d, i) => ({ domain: d, address: routers[i] }));
   }
 
@@ -144,15 +146,20 @@ export class EvmHypSyntheticAdapter<T extends HypERC20 = HypERC20>
   }
 
   populateTransferRemoteTx({
-    amountOrId,
+    weiAmountOrId,
     destination,
     recipient,
     txValue,
   }: TransferRemoteParams): Promise<PopulatedTransaction> {
     const recipBytes32 = utils.addressToBytes32(addressToByteHexString(recipient));
-    return this.contract.populateTransaction.transferRemote(destination, recipBytes32, amountOrId, {
-      value: txValue,
-    });
+    return this.contract.populateTransaction.transferRemote(
+      destination,
+      recipBytes32,
+      weiAmountOrId,
+      {
+        value: txValue,
+      },
+    );
   }
 }
 

@@ -34,6 +34,14 @@ export class HyperlaneTokenData {
   /// The interchain security module.
   interchain_security_module?: Uint8Array;
   interchain_security_module_pubkey?: PublicKey;
+  // The interchain gas paymaster
+  interchain_gas_paymaster?: {
+    address: Uint8Array;
+    type: number;
+  };
+  interchain_gas_paymaster_pubkey?: PublicKey;
+  // Gas amounts by destination
+  destination_gas?: Map<DomainId, bigint>;
   /// Remote routers.
   remote_routers?: Map<DomainId, Uint8Array>;
   remote_router_pubkeys: Map<DomainId, PublicKey>;
@@ -44,6 +52,9 @@ export class HyperlaneTokenData {
     this.owner_pub_key = this.owner ? new PublicKey(this.owner) : undefined;
     this.interchain_security_module_pubkey = this.interchain_security_module
       ? new PublicKey(this.interchain_security_module)
+      : undefined;
+    this.interchain_gas_paymaster_pubkey = this.interchain_gas_paymaster?.address
+      ? new PublicKey(this.interchain_gas_paymaster.address)
       : undefined;
     this.remote_router_pubkeys = new Map<number, PublicKey>();
     if (this.remote_routers) {
@@ -78,6 +89,21 @@ export const HyperlaneTokenDataSchema = new Map<any, any>([
         ['remote_decimals', 'u8'],
         ['owner', { kind: 'option', type: [32] }],
         ['interchain_security_module', { kind: 'option', type: [32] }],
+        [
+          'interchain_gas_paymaster',
+          {
+            kind: 'option',
+            type: {
+              kind: 'struct',
+              fields: [
+                ['address', [32]],
+                ['type', 'u8'],
+              ],
+            },
+          },
+        ],
+        // ['interchain_gas_paymaster_type', { kind: 'option', type: 'u8' }],
+        ['destination_gas', { kind: 'map', key: 'u32', value: 'u64' }],
         ['remote_routers', { kind: 'map', key: 'u32', value: [32] }],
       ],
     },

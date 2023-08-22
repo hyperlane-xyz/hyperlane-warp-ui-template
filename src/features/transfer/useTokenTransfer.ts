@@ -27,8 +27,6 @@ import {
 
 import { TransferContext, TransferFormValues, TransferStatus } from './types';
 
-const COLLATERAL_CONTRACT_BALANCE_INSUFFICIENT_ERROR = 'Collateral contract balance insufficient';
-
 export function useTokenTransfer(onDone?: () => void) {
   const { transfers, addTransfer, updateTransferStatus } = useStore((s) => ({
     transfers: s.transfers,

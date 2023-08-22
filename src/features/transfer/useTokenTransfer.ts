@@ -14,8 +14,8 @@ import { getMultiProvider } from '../multiProvider';
 import { AppState, useStore } from '../store';
 import { AdapterFactory } from '../tokens/adapters/AdapterFactory';
 import { IHypTokenAdapter } from '../tokens/adapters/ITokenAdapter';
-import { Route, RouteType, RoutesMap } from '../tokens/routes/types';
-import { getTokenRoute } from '../tokens/routes/utils';
+import { Route, RoutesMap } from '../tokens/routes/types';
+import { getTokenRoute, isRouteFromCollateral, isRouteToCollateral } from '../tokens/routes/utils';
 import {
   AccountInfo,
   ActiveChainInfo,
@@ -184,44 +184,19 @@ async function executeTransfer({
 // In certain cases, like when a synthetic token has >1 collateral tokens
 // it's possible that the collateral contract balance is insufficient to
 // cover the remote transfer. This ensures the balance is sufficient or throws.
-async function ensureSufficientCollateral(
-  tokenRoutes: RoutesMap,
-  route: Route,
-  weiAmount: string,
-  isNft?: boolean,
-) {
-  if (isNft) return;
-
-  // NOTE: this is a hack to accommodate destination balances, specifically the case
-  // when the destination is a Sealevel chain and is a non-synthetic warp route.
-  // This only really works with the specific setup of tokens.ts.
-
-  // This searches for the route where the origin chain is destinationCaip2Id
-  // and the destination chain is originCaip2Id and where the origin is a base token.
-  const targetBaseCaip19Id = tokenRoutes[route.destCaip2Id][route.originCaip2Id].find((r) =>
-    r.baseTokenCaip19Id.startsWith(route.destCaip2Id),
-  )!.baseTokenCaip19Id;
-  const targetRoute = getTokenRoute(
-    route.destCaip2Id,
-    route.originCaip2Id,
-    targetBaseCaip19Id,
-    tokenRoutes,
-  );
-  if (!targetRoute) return;
-
-  const adapter = AdapterFactory.HypTokenAdapterFromRouteOrigin(targetRoute);
-
-  const destinationBalance = await adapter.getBalance(targetRoute.baseRouterAddress);
-
+async function ensureSufficientCollateral(route: Route, weiAmount: string, isNft?: boolean) {
+  if (!isRouteToCollateral(route) || isNft) return;
+  logger.debug('Ensuring collateral balance for route', route);
+  const adapter = AdapterFactory.HypTokenAdapterFromRouteDest(route);
+  const destinationBalance = await adapter.getBalance(route.destRouterAddress);
   const destinationBalanceInOriginDecimals = convertDecimals(
     route.destDecimals,
     route.originDecimals,
     destinationBalance,
   );
-
   if (destinationBalanceInOriginDecimals.lt(weiAmount)) {
-    toast.error(COLLATERAL_CONTRACT_BALANCE_INSUFFICIENT_ERROR);
-    throw new Error(COLLATERAL_CONTRACT_BALANCE_INSUFFICIENT_ERROR);
+    toast.error('Collateral contract balance insufficient for transfer');
+    throw new Error('Insufficient collateral balance');
   }
 }
 
@@ -248,7 +223,7 @@ async function executeEvmTransfer({
   updateStatus,
   sendTransaction,
 }: ExecuteTransferParams<providers.TransactionReceipt>) {
-  const { type: routeType, baseRouterAddress, originCaip2Id, baseTokenCaip19Id } = tokenRoute;
+  const { baseRouterAddress, originCaip2Id, baseTokenCaip19Id } = tokenRoute;
 
   if (isTransferApproveRequired(tokenRoute, baseTokenCaip19Id)) {
     updateStatus(TransferStatus.CreatingApprove);
@@ -277,7 +252,7 @@ async function executeEvmTransfer({
   logger.debug('Quoted gas payment', gasPayment);
   // If sending native tokens (e.g. Eth), the gasPayment must be added to the tx value and sent together
   const txValue =
-    routeType === RouteType.BaseToSynthetic && isNativeToken(baseTokenCaip19Id)
+    isRouteFromCollateral(tokenRoute) && isNativeToken(baseTokenCaip19Id)
       ? BigNumber.from(gasPayment).add(weiAmountOrId)
       : gasPayment;
   const transferTxRequest = (await hypTokenAdapter.populateTransferRemoteTx({
@@ -346,7 +321,7 @@ async function executeSealevelTransfer({
 export function isTransferApproveRequired(route: Route, tokenCaip19Id: TokenCaip19Id) {
   return (
     !isNativeToken(tokenCaip19Id) &&
-    route.type === RouteType.BaseToSynthetic &&
+    isRouteFromCollateral(route) &&
     getProtocolType(route.originCaip2Id) === ProtocolType.Ethereum
   );
 }

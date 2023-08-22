@@ -1,6 +1,6 @@
 import { getChainIdFromToken } from '../../caip/tokens';
 
-import { Route, RoutesMap } from './types';
+import { Route, RouteType, RoutesMap } from './types';
 
 export function getTokenRoutes(
   originCaip2Id: ChainCaip2Id,
@@ -32,4 +32,30 @@ export function hasTokenRoute(
   // This will break things if there are other warp routes configured!
   // This only looks for routes in which the origin is the base token.
   return !!tokenRoute && getChainIdFromToken(tokenCaip19Id) === originCaip2Id;
+}
+
+export function isRouteToCollateral(route: Route) {
+  return (
+    route.type === RouteType.CollateralToCollateral ||
+    route.type === RouteType.SyntheticToCollateral
+  );
+}
+
+export function isRouteFromCollateral(route: Route) {
+  return (
+    route.type === RouteType.CollateralToCollateral ||
+    route.type === RouteType.CollateralToSynthetic
+  );
+}
+
+export function isRouteToSynthetic(route: Route) {
+  return (
+    route.type === RouteType.CollateralToSynthetic || route.type === RouteType.SyntheticToSynthetic
+  );
+}
+
+export function isRouteFromSynthetic(route: Route) {
+  return (
+    route.type === RouteType.SyntheticToCollateral || route.type === RouteType.SyntheticToSynthetic
+  );
 }

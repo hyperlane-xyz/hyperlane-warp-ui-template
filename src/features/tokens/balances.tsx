@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { areAddressesEqual, isValidAddress } from '../../utils/addresses';
 import { logger } from '../../utils/logger';
 import { getProtocolType } from '../caip/chains';
-import { getChainIdFromToken, parseCaip19Id, tryGetChainIdFromToken } from '../caip/tokens';
+import { parseCaip19Id, tryGetChainIdFromToken } from '../caip/tokens';
 import { getProvider } from '../multiProvider';
 import { useStore } from '../store';
 import { TransferFormValues } from '../transfer/types';
@@ -71,27 +71,12 @@ export function useDestinationBalance(
       tokenRoutes,
     ],
     queryFn: async () => {
-      // NOTE: this is a hack to accommodate destination balances, specifically the case
-      // when the destination is a Sealevel chain and is a non-synthetic warp route.
-      // This only really works with the specific setup of tokens.ts.
-
-      // This searches for the route where the origin chain is destinationCaip2Id
-      // and the destination chain is originCaip2Id and where the origin is a base token.
-      const targetBaseCaip19Id = tokenRoutes[destinationCaip2Id][originCaip2Id].find(
-        (r) => getChainIdFromToken(r.baseTokenCaip19Id) === destinationCaip2Id,
-      )!.baseTokenCaip19Id;
-      const route = getTokenRoute(
-        destinationCaip2Id,
-        originCaip2Id,
-        targetBaseCaip19Id,
-        tokenRoutes,
-      );
+      const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenCaip19Id, tokenRoutes);
       const protocol = getProtocolType(destinationCaip2Id);
       if (!route || !recipientAddress || !isValidAddress(recipientAddress, protocol)) return null;
-
-      const adapter = AdapterFactory.HypTokenAdapterFromRouteOrigin(route);
+      const adapter = AdapterFactory.HypTokenAdapterFromRouteDest(route);
       const balance = await adapter.getBalance(recipientAddress);
-      return { balance, decimals: route.originDecimals };
+      return { balance, decimals: route.destDecimals };
     },
     refetchInterval: 5000,
   });

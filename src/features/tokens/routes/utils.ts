@@ -1,5 +1,3 @@
-import { getChainIdFromToken } from '../../caip/tokens';
-
 import { Route, RouteType, RoutesMap } from './types';
 
 export function getTokenRoutes(
@@ -28,10 +26,7 @@ export function hasTokenRoute(
   tokenCaip19Id: TokenCaip19Id,
   tokenRoutes: RoutesMap,
 ): boolean {
-  const tokenRoute = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenCaip19Id, tokenRoutes);
-  // This will break things if there are other warp routes configured!
-  // This only looks for routes in which the origin is the base token.
-  return !!tokenRoute && getChainIdFromToken(tokenCaip19Id) === originCaip2Id;
+  return !!getTokenRoute(originCaip2Id, destinationCaip2Id, tokenCaip19Id, tokenRoutes);
 }
 
 export function isRouteToCollateral(route: Route) {

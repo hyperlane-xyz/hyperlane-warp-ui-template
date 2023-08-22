@@ -103,20 +103,21 @@ export class AdapterFactory {
   }
 
   static HypTokenAdapterFromRouteDest(route: Route) {
-    const { type, destCaip2Id, destRouterAddress, baseTokenCaip19Id } = route;
+    const { type, destCaip2Id, destRouterAddress, destTokenCaip19Id, baseTokenCaip19Id } = route;
+    const tokenCaip19Id = destTokenCaip19Id || baseTokenCaip19Id;
     if (isRouteToCollateral(route)) {
       return AdapterFactory.selectHypAdapter(
         destCaip2Id,
         destRouterAddress,
-        baseTokenCaip19Id,
+        tokenCaip19Id,
         EvmHypCollateralAdapter,
-        isNativeToken(baseTokenCaip19Id) ? SealevelHypNativeAdapter : SealevelHypCollateralAdapter,
+        isNativeToken(tokenCaip19Id) ? SealevelHypNativeAdapter : SealevelHypCollateralAdapter,
       );
     } else if (isRouteToSynthetic(route)) {
       return AdapterFactory.selectHypAdapter(
         destCaip2Id,
         destRouterAddress,
-        baseTokenCaip19Id,
+        tokenCaip19Id,
         EvmHypSyntheticAdapter,
         SealevelHypSyntheticAdapter,
       );

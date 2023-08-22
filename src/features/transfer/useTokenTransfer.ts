@@ -6,7 +6,7 @@ import { toast } from 'react-toastify';
 import { HyperlaneCore, ProtocolType } from '@hyperlane-xyz/sdk';
 
 import { toastTxSuccess } from '../../components/toast/TxSuccessToast';
-import { toWei } from '../../utils/amount';
+import { convertDecimals, toWei } from '../../utils/amount';
 import { logger } from '../../utils/logger';
 import { getProtocolType, parseCaip2Id } from '../caip/chains';
 import { isNativeToken, isNonFungibleToken } from '../caip/tokens';
@@ -184,11 +184,17 @@ async function executeTransfer({
 // cover the remote transfer. This ensures the balance is sufficient or throws.
 async function ensureSufficientCollateral(route: Route, weiAmount: string, isNft?: boolean) {
   if (!isRouteToCollateral(route) || isNft) return;
-  const adapter = AdapterFactory.TokenAdapterFromAddress(route.baseTokenCaip19Id);
-  logger.debug('Checking collateral balance for token', route.baseTokenCaip19Id);
-  const balance = await adapter.getBalance(route.baseRouterAddress);
-  if (BigNumber.from(balance).lt(weiAmount)) {
-    throw new Error('Collateral contract has insufficient balance');
+  logger.debug('Ensuring collateral balance for route', route);
+  const adapter = AdapterFactory.HypTokenAdapterFromRouteDest(route);
+  const destinationBalance = await adapter.getBalance(route.destRouterAddress);
+  const destinationBalanceInOriginDecimals = convertDecimals(
+    route.destDecimals,
+    route.originDecimals,
+    destinationBalance,
+  );
+  if (destinationBalanceInOriginDecimals.lt(weiAmount)) {
+    toast.error('Collateral contract balance insufficient for transfer');
+    throw new Error('Insufficient collateral balance');
   }
 }
 

@@ -23,11 +23,13 @@ describe('computeTokenRoutes', () => {
         hypTokens: [
           {
             decimals: 18,
-            tokenCaip19Id: 'ethereum:11155111/erc20:0xDcbc0faAA269Cf649AC8950838664BB7B355BD6B',
+            chain: 'ethereum:11155111',
+            router: '0xDcbc0faAA269Cf649AC8950838664BB7B355BD6B',
           },
           {
             decimals: 18,
-            tokenCaip19Id: 'ethereum:44787/erc20:0xDcbc0faAA269Cf649AC8950838664BB7B355BD6B',
+            chain: 'ethereum:44787',
+            router: '0xEcbc0faAA269Cf649AC8950838664BB7B355BD6C',
           },
         ],
       },
@@ -56,7 +58,7 @@ describe('computeTokenRoutes', () => {
             originRouterAddress: '0x145de8760021c4ac6676376691b78038d3DE9097',
             originDecimals: 18,
             destCaip2Id: 'ethereum:44787',
-            destRouterAddress: '0xDcbc0faAA269Cf649AC8950838664BB7B355BD6B',
+            destRouterAddress: '0xEcbc0faAA269Cf649AC8950838664BB7B355BD6C',
             destDecimals: 18,
           },
         ],
@@ -84,7 +86,7 @@ describe('computeTokenRoutes', () => {
             originRouterAddress: '0xDcbc0faAA269Cf649AC8950838664BB7B355BD6B',
             originDecimals: 18,
             destCaip2Id: 'ethereum:44787',
-            destRouterAddress: '0xDcbc0faAA269Cf649AC8950838664BB7B355BD6B',
+            destRouterAddress: '0xEcbc0faAA269Cf649AC8950838664BB7B355BD6C',
             destDecimals: 18,
           },
         ],
@@ -96,7 +98,7 @@ describe('computeTokenRoutes', () => {
             baseTokenCaip19Id: 'ethereum:5/erc20:0xb4fbf271143f4fbf7b91a5ded31805e42b2208d6',
             baseRouterAddress: '0x145de8760021c4ac6676376691b78038d3DE9097',
             originCaip2Id: 'ethereum:44787',
-            originRouterAddress: '0xDcbc0faAA269Cf649AC8950838664BB7B355BD6B',
+            originRouterAddress: '0xEcbc0faAA269Cf649AC8950838664BB7B355BD6C',
             originDecimals: 18,
             destCaip2Id: 'ethereum:5',
             destRouterAddress: '0x145de8760021c4ac6676376691b78038d3DE9097',
@@ -109,7 +111,7 @@ describe('computeTokenRoutes', () => {
             baseTokenCaip19Id: 'ethereum:5/erc20:0xb4fbf271143f4fbf7b91a5ded31805e42b2208d6',
             baseRouterAddress: '0x145de8760021c4ac6676376691b78038d3DE9097',
             originCaip2Id: 'ethereum:44787',
-            originRouterAddress: '0xDcbc0faAA269Cf649AC8950838664BB7B355BD6B',
+            originRouterAddress: '0xEcbc0faAA269Cf649AC8950838664BB7B355BD6C',
             originDecimals: 18,
             destCaip2Id: 'ethereum:11155111',
             destRouterAddress: '0xDcbc0faAA269Cf649AC8950838664BB7B355BD6B',
@@ -132,11 +134,13 @@ describe('computeTokenRoutes', () => {
         hypTokens: [
           {
             decimals: 18,
-            tokenCaip19Id: 'ethereum:11155111/erc20:0xDcbc0faAA269Cf649AC8950838664BB7B355BD6B',
+            chain: 'ethereum:11155111',
+            router: '0xDcbc0faAA269Cf649AC8950838664BB7B355BD6B',
           },
           {
             decimals: 6,
-            tokenCaip19Id: 'sealevel:1399811151/native:PJH5QAbxAqrrnSXfH3GHR8icua8CDFZmo97z91xmpvx',
+            chain: 'sealevel:1399811151',
+            router: 'PJH5QAbxAqrrnSXfH3GHR8icua8CDFZmo97z91xmpvx',
           },
         ],
       },
@@ -150,11 +154,13 @@ describe('computeTokenRoutes', () => {
         hypTokens: [
           {
             decimals: 18,
-            tokenCaip19Id: 'ethereum:11155111/erc20:0xDcbc0faAA269Cf649AC8950838664BB7B355BD6B',
+            chain: 'ethereum:11155111',
+            router: '0xDcbc0faAA269Cf649AC8950838664BB7B355BD6B',
           },
           {
             decimals: 18,
-            tokenCaip19Id: 'ethereum:5/erc20:0x145de8760021c4ac6676376691b78038d3DE9097',
+            chain: 'ethereum:5',
+            router: '0x145de8760021c4ac6676376691b78038d3DE9097',
           },
         ],
       },
@@ -185,6 +191,8 @@ describe('computeTokenRoutes', () => {
             destCaip2Id: 'sealevel:1399811151',
             destRouterAddress: 'PJH5QAbxAqrrnSXfH3GHR8icua8CDFZmo97z91xmpvx',
             destDecimals: 6,
+            destTokenCaip19Id:
+              'sealevel:1399811151/native:00000000000000000000000000000000000000000000',
           },
         ],
       },
@@ -230,6 +238,7 @@ describe('computeTokenRoutes', () => {
             destCaip2Id: 'ethereum:5',
             destRouterAddress: '0x145de8760021c4ac6676376691b78038d3DE9097',
             destDecimals: 18,
+            destTokenCaip19Id: 'ethereum:5/erc20:0xb4fbf271143f4fbf7b91a5ded31805e42b2208d6',
           },
         ],
         'ethereum:11155111': [

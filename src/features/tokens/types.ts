@@ -88,7 +88,7 @@ export type TokenMetadata = CollateralTokenMetadata | NativeTokenMetadata;
  * Extended types including synthetic hyp token addresses
  */
 interface HypTokens {
-  hypTokens: Array<{ tokenCaip19Id: TokenCaip19Id; decimals: number }>;
+  hypTokens: Array<{ chain: ChainCaip2Id; router: Address; decimals: number }>;
 }
 
 type NativeTokenMetadataWithHypTokens = NativeTokenMetadata & HypTokens;

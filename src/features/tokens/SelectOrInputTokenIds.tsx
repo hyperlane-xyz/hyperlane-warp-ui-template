@@ -23,8 +23,8 @@ export function SelectOrInputTokenIds({
 
   const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenCaip19Id, tokenRoutes);
 
-  let activeToken = '' as Caip19Id;
-  if (route?.type === RouteType.BaseToSynthetic) {
+  let activeToken = '' as TokenCaip19Id;
+  if (route?.type === RouteType.CollateralToSynthetic) {
     // If the origin is the base chain, use the collateralized token for balance checking
     activeToken = tokenCaip19Id;
   } else if (route) {
@@ -43,17 +43,23 @@ export function SelectOrInputTokenIds({
   );
 
   return isContractAllowToGetTokenIds ? (
-    <SelectTokenIdField name="amount" disabled={disabled} caip19Id={activeToken} />
+    <SelectTokenIdField name="amount" disabled={disabled} tokenCaip19Id={activeToken} />
   ) : (
-    <InputTokenId disabled={disabled} caip19Id={activeToken} />
+    <InputTokenId disabled={disabled} tokenCaip19Id={activeToken} />
   );
 }
 
-function InputTokenId({ disabled, caip19Id }: { disabled: boolean; caip19Id: Caip19Id }) {
+function InputTokenId({
+  disabled,
+  tokenCaip19Id,
+}: {
+  disabled: boolean;
+  tokenCaip19Id: TokenCaip19Id;
+}) {
   const {
     values: { amount },
   } = useFormikContext<TransferFormValues>();
-  useIsSenderNftOwner(caip19Id, amount);
+  useIsSenderNftOwner(tokenCaip19Id, amount);
 
   return (
     <div className="relative w-full">

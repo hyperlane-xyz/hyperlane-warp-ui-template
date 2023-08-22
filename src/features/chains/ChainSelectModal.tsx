@@ -6,17 +6,17 @@ import { getChainDisplayName } from './utils';
 export function ChainSelectListModal({
   isOpen,
   close,
-  caip2Ids,
+  chainCaip2Ids,
   onSelect,
 }: {
   isOpen: boolean;
   close: () => void;
-  caip2Ids: Caip2Id[];
-  onSelect: (caip2Id: Caip2Id) => void;
+  chainCaip2Ids: ChainCaip2Id[];
+  onSelect: (chainCaip2Id: ChainCaip2Id) => void;
 }) {
-  const onSelectChain = (caip2Id: Caip2Id) => {
+  const onSelectChain = (chainCaip2Id: ChainCaip2Id) => {
     return () => {
-      onSelect(caip2Id);
+      onSelect(chainCaip2Id);
       close();
     };
   };
@@ -24,13 +24,13 @@ export function ChainSelectListModal({
   return (
     <Modal isOpen={isOpen} title="Select Chain" close={close}>
       <div className="mt-2 flex flex-col space-y-1">
-        {caip2Ids.map((c) => (
+        {chainCaip2Ids.map((c) => (
           <button
             key={c}
             className="py-1.5 px-2 text-sm flex items-center rounded hover:bg-gray-100 active:bg-gray-200 transition-all duration-200"
             onClick={onSelectChain(c)}
           >
-            <ChainLogo caip2Id={c} size={16} background={false} />
+            <ChainLogo chainCaip2Id={c} size={16} background={false} />
             <span className="ml-2">{getChainDisplayName(c, true)}</span>
           </button>
         ))}

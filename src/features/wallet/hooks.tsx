@@ -96,10 +96,10 @@ export function useAccounts(): {
   );
 }
 
-export function useAccountForChain(caip2Id?: Caip2Id): AccountInfo | undefined {
+export function useAccountForChain(chainCaip2Id?: ChainCaip2Id): AccountInfo | undefined {
   const { accounts } = useAccounts();
-  if (!caip2Id) return undefined;
-  const protocol = tryGetProtocolType(caip2Id);
+  if (!chainCaip2Id) return undefined;
+  const protocol = tryGetProtocolType(chainCaip2Id);
   if (!protocol) return undefined;
   return accounts[protocol];
 }
@@ -155,7 +155,7 @@ export function useDisconnectFns(): Record<ProtocolType, () => Promise<void>> {
 
 export interface ActiveChainInfo {
   chainDisplayName?: string;
-  caip2Id?: Caip2Id;
+  chainCaip2Id?: ChainCaip2Id;
 }
 
 export function useActiveChains(): {
@@ -167,7 +167,7 @@ export function useActiveChains(): {
   const evmChain: ActiveChainInfo = useMemo(
     () => ({
       chainDisplayName: chain?.name,
-      caip2Id: chain ? getCaip2Id(ProtocolType.Ethereum, chain.id) : undefined,
+      chainCaip2Id: chain ? getCaip2Id(ProtocolType.Ethereum, chain.id) : undefined,
     }),
     [chain],
   );
@@ -181,7 +181,7 @@ export function useActiveChains(): {
     if (!metadata) return {};
     return {
       chainDisplayName: metadata.displayName,
-      caip2Id: getCaip2Id(ProtocolType.Sealevel, metadata.chainId),
+      chainCaip2Id: getCaip2Id(ProtocolType.Sealevel, metadata.chainId),
     };
   }, [connectionEndpoint]);
 
@@ -205,11 +205,11 @@ export function useActiveChains(): {
 
 export type SendTransactionFn<TxResp = any> = (params: {
   tx: any;
-  caip2Id: Caip2Id;
-  activeCap2Id?: Caip2Id;
+  chainCaip2Id: ChainCaip2Id;
+  activeCap2Id?: ChainCaip2Id;
 }) => Promise<{ hash: string; confirm: () => Promise<TxResp> }>;
 
-export type SwitchNetworkFn = (caip2Id: Caip2Id) => Promise<void>;
+export type SwitchNetworkFn = (chainCaip2Id: ChainCaip2Id) => Promise<void>;
 
 export function useTransactionFns(): Record<
   ProtocolType,
@@ -219,8 +219,8 @@ export function useTransactionFns(): Record<
   }
 > {
   // Evm
-  const onSwitchEvmNetwork = useCallback(async (caip2Id: Caip2Id) => {
-    const chainId = getEthereumChainId(caip2Id);
+  const onSwitchEvmNetwork = useCallback(async (chainCaip2Id: ChainCaip2Id) => {
+    const chainId = getEthereumChainId(chainCaip2Id);
     await switchEvmNetwork({ chainId });
     // Some wallets seem to require a brief pause after switch
     await sleep(1500);
@@ -233,16 +233,16 @@ export function useTransactionFns(): Record<
   const onSendEvmTx = useCallback(
     async ({
       tx,
-      caip2Id,
+      chainCaip2Id,
       activeCap2Id,
     }: {
       tx: any;
-      caip2Id: Caip2Id;
-      activeCap2Id?: Caip2Id;
+      chainCaip2Id: ChainCaip2Id;
+      activeCap2Id?: ChainCaip2Id;
     }) => {
-      if (activeCap2Id && activeCap2Id !== caip2Id) await onSwitchEvmNetwork(caip2Id);
-      const chainId = getEthereumChainId(caip2Id);
-      logger.debug(`Sending tx on chain ${caip2Id}`);
+      if (activeCap2Id && activeCap2Id !== chainCaip2Id) await onSwitchEvmNetwork(chainCaip2Id);
+      const chainId = getEthereumChainId(chainCaip2Id);
+      logger.debug(`Sending tx on chain ${chainCaip2Id}`);
       const { hash, wait } = await sendEvmTransaction({
         chainId,
         request: tx as providers.TransactionRequest,
@@ -256,29 +256,29 @@ export function useTransactionFns(): Record<
   // Solana
   const { sendTransaction: sendSolTransaction } = useSolanaWallet();
 
-  const onSwitchSolNetwork = useCallback(async (caip2Id: Caip2Id) => {
-    toast.warn(`Solana wallet must be connected to origin chain ${caip2Id}}`);
+  const onSwitchSolNetwork = useCallback(async (chainCaip2Id: ChainCaip2Id) => {
+    toast.warn(`Solana wallet must be connected to origin chain ${chainCaip2Id}}`);
   }, []);
 
   const onSendSolTx = useCallback(
     async ({
       tx,
-      caip2Id,
+      chainCaip2Id,
       activeCap2Id,
     }: {
       tx: any;
-      caip2Id: Caip2Id;
-      activeCap2Id?: Caip2Id;
+      chainCaip2Id: ChainCaip2Id;
+      activeCap2Id?: ChainCaip2Id;
     }) => {
-      if (activeCap2Id && activeCap2Id !== caip2Id) await onSwitchSolNetwork(caip2Id);
-      const rpcUrl = getMultiProvider().getRpcUrl(getChainReference(caip2Id));
+      if (activeCap2Id && activeCap2Id !== chainCaip2Id) await onSwitchSolNetwork(chainCaip2Id);
+      const rpcUrl = getMultiProvider().getRpcUrl(getChainReference(chainCaip2Id));
       const connection = new Connection(rpcUrl, 'confirmed');
       const {
         context: { slot: minContextSlot },
         value: { blockhash, lastValidBlockHeight },
       } = await connection.getLatestBlockhashAndContext();
 
-      logger.debug(`Sending tx on chain ${caip2Id}`);
+      logger.debug(`Sending tx on chain ${chainCaip2Id}`);
       const signature = await sendSolTransaction(tx, connection, { minContextSlot });
 
       const confirm = () =>

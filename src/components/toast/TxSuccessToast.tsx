@@ -4,8 +4,8 @@ import { toast } from 'react-toastify';
 import { parseCaip2Id } from '../../features/caip/chains';
 import { getMultiProvider } from '../../features/multiProvider';
 
-export function toastTxSuccess(msg: string, txHash: string, caip2Id: Caip2Id) {
-  toast.success(<TxSuccessToast msg={msg} txHash={txHash} caip2Id={caip2Id} />, {
+export function toastTxSuccess(msg: string, txHash: string, chainCaip2Id: ChainCaip2Id) {
+  toast.success(<TxSuccessToast msg={msg} txHash={txHash} chainCaip2Id={chainCaip2Id} />, {
     autoClose: 12000,
   });
 }
@@ -13,16 +13,16 @@ export function toastTxSuccess(msg: string, txHash: string, caip2Id: Caip2Id) {
 export function TxSuccessToast({
   msg,
   txHash,
-  caip2Id,
+  chainCaip2Id,
 }: {
   msg: string;
   txHash: string;
-  caip2Id: Caip2Id;
+  chainCaip2Id: ChainCaip2Id;
 }) {
   const url = useMemo(() => {
-    const { reference } = parseCaip2Id(caip2Id);
+    const { reference } = parseCaip2Id(chainCaip2Id);
     return getMultiProvider().tryGetExplorerTxUrl(reference, { hash: txHash });
-  }, [caip2Id, txHash]);
+  }, [chainCaip2Id, txHash]);
 
   return (
     <div>

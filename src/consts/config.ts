@@ -10,7 +10,7 @@ interface Config {
   explorerApiKeys: Record<string, string>; // Optional map of API keys for block explorer
   showTipBox: boolean; // Show/Hide the blue tip box above the main form
   showDisabledTokens: boolean; // Show/Hide invalid token options in the selection modal
-  walletConnectProjectId: string;
+  walletConnectProjectId: string; // Project ID provided by walletconnect
   withdrawalWhitelist: string; // comma-separated list of CAIP2 domains to which transfers are supported
 }
 

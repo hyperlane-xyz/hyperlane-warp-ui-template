@@ -158,7 +158,7 @@ export function SideBarMenu({
                   >
                     <div className="flex">
                       <div className="mr-2.5 flex flex-col items-center justify-center rounded-full bg-gray-100 h-[2.25rem] w-[2.25rem] p-1.5">
-                        <ChainLogo caip2Id={t.params.originCaip2Id} size={20} />
+                        <ChainLogo chainCaip2Id={t.params.originCaip2Id} size={20} />
                       </div>
                       <div className="flex flex-col">
                         <div className="flex flex-col">

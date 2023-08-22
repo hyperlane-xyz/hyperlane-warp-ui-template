@@ -42,12 +42,29 @@ export const chains: ChainMap<ChainMetadataWithArtifacts> = {
         http: process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? 'https://api.mainnet-beta.solana.com',
       },
     ],
+    // TODO move up to SDK
+    blockExplorers: [
+      {
+        name: 'Solana Explorer',
+        url: 'https://explorer.solana.com',
+        apiUrl: 'https://explorer.solana.com',
+        family: ExplorerFamily.Other,
+      },
+    ],
     mailbox: 'Ge9atjAc3Ltu91VTbNpJDCjZ9CFxFyck4h3YBcTF9XPq',
     interchainGasPaymaster: '',
     validatorAnnounce: '',
   },
   solanatestnet: {
     ...solanatestnet,
+    blockExplorers: [
+      {
+        name: 'Solana Explorer',
+        url: 'https://explorer.solana.com',
+        apiUrl: 'https://explorer.solana.com',
+        family: ExplorerFamily.Other,
+      },
+    ],
     mailbox: 'TODO',
     interchainGasPaymaster: '',
     validatorAnnounce: '',
@@ -121,4 +138,10 @@ export const chains: ChainMap<ChainMetadataWithArtifacts> = {
     interchainGasPaymaster: '0x3a464f746D23Ab22155710f44dB16dcA53e0775E',
     validatorAnnounce: '0x23ce76645EC601148fa451e751eeB75785b97A00',
   },
+};
+
+export const solanaChainToClusterName = {
+  solana: 'mainnet-beta',
+  solanatestnet: 'testnet',
+  solanadevnet: 'devnet',
 };

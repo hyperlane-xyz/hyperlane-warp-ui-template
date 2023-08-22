@@ -8,6 +8,7 @@ import {
   ProtocolType,
 } from '@hyperlane-xyz/sdk';
 
+import { solanaChainToClusterName } from '../consts/chains';
 import { isNumeric } from '../utils/string';
 
 import { parseCaip2Id } from './caip/chains';
@@ -45,31 +46,33 @@ class MultiProtocolProvider extends MultiProvider {
     return super.tryGetSigner(chainNameOrId);
   }
 
+  // TODO Add special-case handling to to SDK
   override async tryGetExplorerAddressUrl(
     chainNameOrId: ChainName | number,
     address?: string,
   ): Promise<string | null> {
     const url = await super.tryGetExplorerAddressUrl(chainNameOrId, address);
-    // TODO hacking fix for solana explorer url here
-    if (this.getChainName(chainNameOrId) === 'solanadevnet') {
-      return `${url}?cluster=devnet`;
+    if (!url) return null;
+    const metadata = this.getChainMetadata(chainNameOrId);
+    const chainName = metadata.name;
+    if (metadata.protocol === ProtocolType.Sealevel && solanaChainToClusterName[chainName]) {
+      return `${url}?cluster=${solanaChainToClusterName[chainName]}`;
     }
     return url;
   }
 
+  // TODO Add special-case handling to to SDK
   override tryGetExplorerTxUrl(
     chainNameOrId: ChainName | number,
     response: { hash: string },
   ): string | null {
     const url = super.tryGetExplorerTxUrl(chainNameOrId, response);
     if (!url) return null;
-
-    const chainName = this.getChainName(chainNameOrId);
-    // TODO hacking fix for solana explorer url here
-    if (chainName === 'solanadevnet') {
-      return `${url}?cluster=devnet`;
+    const metadata = this.getChainMetadata(chainNameOrId);
+    const chainName = metadata.name;
+    if (metadata.protocol === ProtocolType.Sealevel && solanaChainToClusterName[chainName]) {
+      return `${url}?cluster=${solanaChainToClusterName[chainName]}`;
     } else if (chainName === 'nautilus' || chainName === 'proteustestnet') {
-      // TODO hacking fix for nautilus explorer url here
       return url.replaceAll('/tx/', '/transaction/');
     }
     return url;
@@ -85,7 +88,7 @@ export function getMultiProvider() {
   return multiProvider;
 }
 
-export function getProvider(id: Caip2Id) {
+export function getProvider(id: ChainCaip2Id) {
   const { reference } = parseCaip2Id(id);
   return getMultiProvider().getProvider(reference);
 }

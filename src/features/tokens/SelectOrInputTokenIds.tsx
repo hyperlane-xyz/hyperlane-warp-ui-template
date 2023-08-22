@@ -24,7 +24,7 @@ export function SelectOrInputTokenIds({
   const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenCaip19Id, tokenRoutes);
 
   let activeToken = '' as TokenCaip19Id;
-  if (route?.type === RouteType.BaseToSynthetic) {
+  if (route?.type === RouteType.CollateralToSynthetic) {
     // If the origin is the base chain, use the collateralized token for balance checking
     activeToken = tokenCaip19Id;
   } else if (route) {

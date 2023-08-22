@@ -14,8 +14,8 @@ import { getMultiProvider } from '../multiProvider';
 import { AppState, useStore } from '../store';
 import { AdapterFactory } from '../tokens/adapters/AdapterFactory';
 import { IHypTokenAdapter } from '../tokens/adapters/ITokenAdapter';
-import { Route, RouteType, RoutesMap } from '../tokens/routes/types';
-import { getTokenRoute } from '../tokens/routes/utils';
+import { Route, RoutesMap } from '../tokens/routes/types';
+import { getTokenRoute, isRouteFromCollateral, isRouteToCollateral } from '../tokens/routes/utils';
 import {
   AccountInfo,
   ActiveChainInfo,
@@ -183,7 +183,7 @@ async function executeTransfer({
 // it's possible that the collateral contract balance is insufficient to
 // cover the remote transfer. This ensures the balance is sufficient or throws.
 async function ensureSufficientCollateral(route: Route, weiAmount: string, isNft?: boolean) {
-  if (route.type !== RouteType.SyntheticToBase || isNft) return;
+  if (!isRouteToCollateral(route) || isNft) return;
   const adapter = AdapterFactory.TokenAdapterFromAddress(route.baseTokenCaip19Id);
   logger.debug('Checking collateral balance for token', route.baseTokenCaip19Id);
   const balance = await adapter.getBalance(route.baseRouterAddress);
@@ -215,7 +215,7 @@ async function executeEvmTransfer({
   updateStatus,
   sendTransaction,
 }: ExecuteTransferParams<providers.TransactionReceipt>) {
-  const { type: routeType, baseRouterAddress, originCaip2Id, baseTokenCaip19Id } = tokenRoute;
+  const { baseRouterAddress, originCaip2Id, baseTokenCaip19Id } = tokenRoute;
 
   if (isTransferApproveRequired(tokenRoute, baseTokenCaip19Id)) {
     updateStatus(TransferStatus.CreatingApprove);
@@ -244,7 +244,7 @@ async function executeEvmTransfer({
   logger.debug('Quoted gas payment', gasPayment);
   // If sending native tokens (e.g. Eth), the gasPayment must be added to the tx value and sent together
   const txValue =
-    routeType === RouteType.BaseToSynthetic && isNativeToken(baseTokenCaip19Id)
+    isRouteFromCollateral(tokenRoute) && isNativeToken(baseTokenCaip19Id)
       ? BigNumber.from(gasPayment).add(weiAmountOrId)
       : gasPayment;
   const transferTxRequest = (await hypTokenAdapter.populateTransferRemoteTx({
@@ -313,7 +313,7 @@ async function executeSealevelTransfer({
 export function isTransferApproveRequired(route: Route, tokenCaip19Id: TokenCaip19Id) {
   return (
     !isNativeToken(tokenCaip19Id) &&
-    route.type === RouteType.BaseToSynthetic &&
+    isRouteFromCollateral(route) &&
     getProtocolType(route.originCaip2Id) === ProtocolType.Ethereum
   );
 }

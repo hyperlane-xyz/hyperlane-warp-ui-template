@@ -1,7 +1,8 @@
 export enum RouteType {
-  BaseToSynthetic = 'baseToSynthetic',
+  CollateralToCollateral = 'collateralToCollateral',
+  CollateralToSynthetic = 'collateralToSynthetic',
   SyntheticToSynthetic = 'syntheticToSynthetic',
-  SyntheticToBase = 'syntheticToBase',
+  SyntheticToCollateral = 'syntheticToCollateral',
 }
 
 export interface Route {

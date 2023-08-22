@@ -39,7 +39,7 @@ export const chains: ChainMap<ChainMetadataWithArtifacts> = {
     ...solana,
     rpcUrls: [
       {
-        http: process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? 'https://api.mainnet-beta.solana.com',
+        http: process.env.NEXT_PUBLIC_SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com',
       },
     ],
     // TODO move up to SDK

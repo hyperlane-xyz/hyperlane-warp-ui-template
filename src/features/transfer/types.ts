@@ -1,3 +1,5 @@
+import { ApiMessage, MessageStage, StageTimings } from '@hyperlane-xyz/widgets';
+
 import type { Route } from '../tokens/routes/types';
 
 export interface TransferFormValues {
@@ -30,10 +32,17 @@ export const FinalTransferStatuses = [
 
 export interface TransferContext {
   status: TransferStatus;
+  statusParams?: TransferStatusParams;
   route: Route;
   params: TransferFormValues;
   originTxHash?: string;
   msgId?: string;
   timestamp: number;
   activeAccountAddress: Address;
+}
+
+export interface TransferStatusParams {
+  stage: MessageStage;
+  timings: StageTimings;
+  message: ApiMessage | null;
 }

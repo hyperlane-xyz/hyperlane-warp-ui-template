@@ -55,6 +55,8 @@ export function SideBarMenu({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTransfer, setSelectedTransfer] = useState<TransferContext | null>(null);
+  const [selectedTransferIndex, setSelectedTransferIndex] = useState<number | null>(null);
+
   const disconnects = useDisconnectFns();
   const { readyAccounts } = useAccounts();
   const didMountRef = useRef(false);
@@ -70,6 +72,7 @@ export function SideBarMenu({
       didMountRef.current = true;
     } else if (transferLoading) {
       setSelectedTransfer(transfers[transfers.length - 1]);
+      setSelectedTransferIndex(transfers.length - 1);
       setIsModalOpen(true);
     }
   }, [transfers, transferLoading]);
@@ -147,11 +150,15 @@ export function SideBarMenu({
           <div className="flex grow flex-col px-3.5">
             <div className="grow flex flex-col w-full">
               {sortedTransfers?.length > 0 &&
-                sortedTransfers.map((t) => (
+                sortedTransfers.map((t, i) => (
                   <button
                     key={t.timestamp}
                     onClick={() => {
+                      const transferIndex = transfers.findIndex(
+                        (transfer) => transfer.timestamp === t.timestamp,
+                      );
                       setSelectedTransfer(t);
+                      setSelectedTransferIndex(transferIndex);
                       setIsModalOpen(true);
                     }}
                     className="flex justify-between items-center rounded-md border border-gray-300 px-2.5 py-2 mb-3 hover:bg-gray-100 active:bg-gray-200 transition-all duration-500"
@@ -215,14 +222,14 @@ export function SideBarMenu({
           </div>
         </div>
       </div>
-      {selectedTransfer && (
+      {selectedTransferIndex !== null && selectedTransfer && (
         <TransfersDetailsModal
           isOpen={isModalOpen}
           onClose={() => {
             setIsModalOpen(false);
-            setSelectedTransfer(null);
           }}
           transfer={selectedTransfer}
+          transferIndex={selectedTransferIndex}
         />
       )}
     </>

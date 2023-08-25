@@ -16,6 +16,7 @@ import { getChainReference } from '../caip/chains';
 import { AssetNamespace, parseCaip19Id } from '../caip/tokens';
 import { getChainDisplayName, hasPermissionlessChain } from '../chains/utils';
 import { getMultiProvider } from '../multiProvider';
+import { useStore } from '../store';
 import { getToken } from '../tokens/metadata';
 import { useAccountForChain } from '../wallet/hooks';
 
@@ -26,10 +27,12 @@ export function TransfersDetailsModal({
   isOpen,
   onClose,
   transfer,
+  transferIndex,
 }: {
   isOpen: boolean;
   onClose: () => void;
   transfer: TransferContext;
+  transferIndex: number;
 }) {
   const [fromUrl, setFromUrl] = useState<string>('');
   const [toUrl, setToUrl] = useState<string>('');
@@ -138,7 +141,12 @@ export function TransfersDetailsModal({
         {isPermissionlessRoute ? (
           <TransferStatusIcon transferStatus={status} />
         ) : (
-          <Timeline transferStatus={status} originTxHash={originTxHash} />
+          <Timeline
+            transferStatus={status}
+            transferIndex={transferIndex}
+            originTxHash={originTxHash}
+            transfer={transfer}
+          />
         )}
         {status !== TransferStatus.ConfirmedTransfer && status !== TransferStatus.Delivered ? (
           <div
@@ -270,23 +278,47 @@ export function TransfersDetailsModal({
 function Timeline({
   transferStatus,
   originTxHash,
+  transferIndex,
+  transfer,
 }: {
   transferStatus: TransferStatus;
   originTxHash?: string;
+  transferIndex: number;
+  transfer: TransferContext;
 }) {
   const isFailed = transferStatus === TransferStatus.Failed;
   const { stage, timings, message } = useMessageTimeline({
     originTxHash: isFailed ? undefined : originTxHash,
   });
-  const messageStatus = isFailed ? MessageStatus.Failing : message?.status || MessageStatus.Pending;
+
+  const messageStatus = isFailed
+    ? MessageStatus.Failing
+    : transfer.statusParams?.message?.status || message?.status || MessageStatus.Pending;
+
+  // TODO move this so it runs even if timeline isn't open
+  const { updateTransferStatus, updateTransferStatusParams } = useStore((s) => ({
+    updateTransferStatus: s.updateTransferStatus,
+    updateTransferStatusParams: s.updateTransferStatusParams,
+  }));
+
+  useEffect(() => {
+    if (messageStatus === MessageStatus.Delivered) {
+      updateTransferStatus(transferIndex, TransferStatus.Delivered);
+      if (!transfer.statusParams) {
+        updateTransferStatusParams(transferIndex, { stage, timings, message });
+      }
+    }
+  }, [transferIndex, messageStatus, updateTransferStatus]);
 
   return (
     <div className="mt-6 mb-2 w-full flex flex-col justify-center items-center timeline-container">
       <MessageTimeline
         status={messageStatus}
-        stage={stage}
-        timings={timings}
-        timestampSent={message?.origin?.timestamp}
+        stage={transfer.statusParams?.stage || stage}
+        timings={transfer.statusParams?.timings || timings}
+        timestampSent={
+          transfer.statusParams?.message?.origin?.timestamp || message?.origin?.timestamp
+        }
         hideDescriptions={true}
       />
     </div>

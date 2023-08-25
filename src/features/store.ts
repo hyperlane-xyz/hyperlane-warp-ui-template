@@ -1,7 +1,12 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-import { FinalTransferStatuses, TransferContext, TransferStatus } from './transfer/types';
+import {
+  FinalTransferStatuses,
+  TransferContext,
+  TransferStatus,
+  TransferStatusParams,
+} from './transfer/types';
 
 // Increment this when persist state has breaking changes
 const PERSIST_STATE_VERSION = 1;
@@ -28,6 +33,7 @@ export interface AppState {
   setIsSenderNftOwner: (isOwner: boolean | null) => void;
   transferLoading: boolean;
   setTransferLoading: (isLoading: boolean) => void;
+  updateTransferStatusParams: (i: number, params: TransferStatusParams) => void;
 }
 
 export const useStore = create<AppState>()(
@@ -47,6 +53,16 @@ export const useStore = create<AppState>()(
           txs[i].status = s;
           txs[i].msgId ||= options?.msgId;
           txs[i].originTxHash ||= options?.originTxHash;
+          return {
+            transfers: txs,
+          };
+        });
+      },
+      updateTransferStatusParams: (i, params) => {
+        set((state) => {
+          if (i >= state.transfers.length) return state;
+          const txs = [...state.transfers];
+          txs[i].statusParams ||= params;
           return {
             transfers: txs,
           };

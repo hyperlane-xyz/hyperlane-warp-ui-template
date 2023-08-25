@@ -11,6 +11,7 @@ import { formatTimestamp } from '../../utils/date';
 import { getHypExplorerLink } from '../../utils/links';
 import { logger } from '../../utils/logger';
 import { toTitleCase } from '../../utils/string';
+import { useTimeout } from '../../utils/timeout';
 import { getTransferStatusLabel } from '../../utils/transfer';
 import { getChainReference } from '../caip/chains';
 import { AssetNamespace, parseCaip19Id } from '../caip/tokens';
@@ -97,6 +98,8 @@ export function TransfersDetailsModal({
   );
   const token = getToken(tokenCaip19Id);
 
+  const showSignWarning = useSignIssueWarning(status);
+
   return (
     <Modal
       showCloseBtn={false}
@@ -141,13 +144,20 @@ export function TransfersDetailsModal({
           <Timeline transferStatus={status} originTxHash={originTxHash} />
         )}
         {status !== TransferStatus.ConfirmedTransfer && status !== TransferStatus.Delivered ? (
-          <div
-            className={`mt-5 text-sm text-center ${
-              status === TransferStatus.Failed ? 'text-red-600' : 'text-gray-600'
-            }`}
-          >
-            {statusDescription}
-          </div>
+          <>
+            <div
+              className={`mt-5 text-sm text-center ${
+                status === TransferStatus.Failed ? 'text-red-600' : 'text-gray-600'
+              }`}
+            >
+              {statusDescription}
+            </div>
+            {showSignWarning && (
+              <div className="mt-3 text-sm text-center text-gray-600">
+                If your wallet does not show a transaction request, please try the transfer again.
+              </div>
+            )}
+          </>
         ) : (
           <div className="mt-6 flex flex-col md:flex-row">
             <div className="flex w-full md:w-1/2">
@@ -291,4 +301,15 @@ function Timeline({
       />
     </div>
   );
+}
+
+// TODO: Remove this once we have a better solution for wagmi signing issue
+// https://github.com/wagmi-dev/wagmi/discussions/2928
+function useSignIssueWarning(status: TransferStatus) {
+  const [showWarning, setShowWarning] = useState(false);
+  const warningCallback = useCallback(() => {
+    if (status === TransferStatus.SigningTransfer) setShowWarning(true);
+  }, [status, setShowWarning]);
+  useTimeout(warningCallback, 15_000);
+  return showWarning;
 }

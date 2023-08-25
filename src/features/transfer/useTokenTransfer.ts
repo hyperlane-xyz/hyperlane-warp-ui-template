@@ -8,12 +8,13 @@ import { HyperlaneCore, ProtocolType } from '@hyperlane-xyz/sdk';
 import { toastTxSuccess } from '../../components/toast/TxSuccessToast';
 import { convertDecimals, toWei } from '../../utils/amount';
 import { logger } from '../../utils/logger';
-import { getProtocolType, parseCaip2Id } from '../caip/chains';
+import { parseCaip2Id } from '../caip/chains';
 import { isNativeToken, isNonFungibleToken } from '../caip/tokens';
 import { getMultiProvider } from '../multiProvider';
 import { AppState, useStore } from '../store';
 import { AdapterFactory } from '../tokens/adapters/AdapterFactory';
 import { IHypTokenAdapter } from '../tokens/adapters/ITokenAdapter';
+import { isApproveRequired } from '../tokens/approval';
 import { Route, RoutesMap } from '../tokens/routes/types';
 import { getTokenRoute, isRouteFromCollateral, isRouteToCollateral } from '../tokens/routes/utils';
 import {
@@ -217,13 +218,18 @@ async function executeEvmTransfer({
   recipientAddress,
   tokenRoute,
   hypTokenAdapter,
+  activeAccount,
   activeChain,
   updateStatus,
   sendTransaction,
 }: ExecuteTransferParams<providers.TransactionReceipt>) {
   const { baseRouterAddress, originCaip2Id, baseTokenCaip19Id } = tokenRoute;
 
-  if (isTransferApproveRequired(tokenRoute, baseTokenCaip19Id)) {
+  const isApproveTxRequired =
+    activeAccount.address &&
+    (await isApproveRequired(tokenRoute, baseTokenCaip19Id, weiAmountOrId, activeAccount.address));
+
+  if (isApproveTxRequired) {
     updateStatus(TransferStatus.CreatingApprove);
     const tokenAdapter = AdapterFactory.TokenAdapterFromAddress(baseTokenCaip19Id);
     const approveTxRequest = (await tokenAdapter.populateApproveTx({
@@ -314,14 +320,6 @@ async function executeSealevelTransfer({
   await confirmTransfer();
 
   return { transferTxHash };
-}
-
-export function isTransferApproveRequired(route: Route, tokenCaip19Id: TokenCaip19Id) {
-  return (
-    !isNativeToken(tokenCaip19Id) &&
-    isRouteFromCollateral(route) &&
-    getProtocolType(route.originCaip2Id) === ProtocolType.Ethereum
-  );
 }
 
 function tryGetMsgIdFromEvmTransferReceipt(receipt: providers.TransactionReceipt) {

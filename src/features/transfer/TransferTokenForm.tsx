@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 import { ProtocolSmallestUnit } from '@hyperlane-xyz/sdk';
 import { WideChevron } from '@hyperlane-xyz/widgets';
 
+import { SmallSpinner } from '../../components/animation/SmallSpinner';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
 import { IconButton } from '../../components/buttons/IconButton';
 import { SolidButton } from '../../components/buttons/SolidButton';
@@ -24,6 +25,7 @@ import { getChainDisplayName } from '../chains/utils';
 import { AppState, useStore } from '../store';
 import { SelectOrInputTokenIds } from '../tokens/SelectOrInputTokenIds';
 import { TokenSelectField } from '../tokens/TokenSelectField';
+import { useIsApproveRequired } from '../tokens/approval';
 import { useDestinationBalance, useOriginBalance } from '../tokens/balances';
 import { useRouteChains } from '../tokens/routes/hooks';
 import { RoutesMap } from '../tokens/routes/types';
@@ -31,7 +33,7 @@ import { getTokenRoute } from '../tokens/routes/utils';
 import { useAccountForChain } from '../wallet/hooks';
 
 import { TransferFormValues } from './types';
-import { isTransferApproveRequired, useTokenTransfer } from './useTokenTransfer';
+import { useTokenTransfer } from './useTokenTransfer';
 
 export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
   const chainCaip2Ids = useRouteChains(tokenRoutes);
@@ -394,7 +396,7 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
   const route = getTokenRoute(originCaip2Id, destinationCaip2Id, token, tokenRoutes);
   const isNft = token && isNonFungibleToken(token);
   const sendValue = isNft ? amount.toString() : toWei(amount, route?.originDecimals).toString();
-  const isApproveRequired = route && isTransferApproveRequired(route, token);
+  const { isLoading, isApproveRequired } = useIsApproveRequired(route!, token, sendValue, visible);
   const originProtocol = getProtocolType(originCaip2Id);
   const originUnitName = ProtocolSmallestUnit[originProtocol];
 
@@ -405,28 +407,34 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
       } overflow-hidden transition-all`}
     >
       <label className="mt-4 block uppercase text-sm text-gray-500 pl-0.5">Transactions</label>
-      <div className="mt-1.5 px-2.5 py-2 space-y-2 rounded border border-gray-400 bg-gray-150 text-sm break-all">
-        {isApproveRequired && (
+      {isLoading ? (
+        <div className="py-6 flex items-center justify-center">
+          <SmallSpinner />
+        </div>
+      ) : (
+        <div className="mt-1.5 px-2.5 py-2 space-y-2 rounded border border-gray-400 bg-gray-150 text-sm break-all">
+          {isApproveRequired && (
+            <div>
+              <h4>Transaction 1: Approve Transfer</h4>
+              <div className="mt-1.5 ml-1.5 pl-2 border-l border-gray-300 space-y-1.5 text-xs">
+                <p>{`Token Address: ${getTokenAddress(token)}`}</p>
+                <p>{`Collateral Address: ${route?.baseRouterAddress}`}</p>
+              </div>
+            </div>
+          )}
           <div>
-            <h4>Transaction 1: Approve Transfer</h4>
+            <h4>{`Transaction${isApproveRequired ? ' 2' : ''}: Transfer Remote`}</h4>
             <div className="mt-1.5 ml-1.5 pl-2 border-l border-gray-300 space-y-1.5 text-xs">
-              <p>{`Token Address: ${getTokenAddress(token)}`}</p>
-              <p>{`Collateral Address: ${route?.baseRouterAddress}`}</p>
+              <p>{`Remote Token: ${route?.destRouterAddress}`}</p>
+              {isNft ? (
+                <p>{`Token ID: ${sendValue}`}</p>
+              ) : (
+                <p>{`Amount (${originUnitName}): ${sendValue}`}</p>
+              )}
             </div>
           </div>
-        )}
-        <div>
-          <h4>{`Transaction${isApproveRequired ? ' 2' : ''}: Transfer Remote`}</h4>
-          <div className="mt-1.5 ml-1.5 pl-2 border-l border-gray-300 space-y-1.5 text-xs">
-            <p>{`Remote Token: ${route?.destRouterAddress}`}</p>
-            {isNft ? (
-              <p>{`Token ID: ${sendValue}`}</p>
-            ) : (
-              <p>{`Amount (${originUnitName}): ${sendValue}`}</p>
-            )}
-          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

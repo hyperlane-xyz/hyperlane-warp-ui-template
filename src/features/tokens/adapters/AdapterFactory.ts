@@ -12,7 +12,13 @@ import {
   parseCaip19Id,
 } from '../../caip/tokens';
 import { getMultiProvider, getProvider } from '../../multiProvider';
-import { Route, RouteType } from '../routes/types';
+import { Route } from '../routes/types';
+import {
+  isRouteFromCollateral,
+  isRouteFromSynthetic,
+  isRouteToCollateral,
+  isRouteToSynthetic,
+} from '../routes/utils';
 
 import {
   EvmHypCollateralAdapter,
@@ -75,7 +81,7 @@ export class AdapterFactory {
 
   static HypTokenAdapterFromRouteOrigin(route: Route) {
     const { type, originCaip2Id, originRouterAddress, baseTokenCaip19Id } = route;
-    if (type === RouteType.BaseToSynthetic) {
+    if (isRouteFromCollateral(route)) {
       return AdapterFactory.selectHypAdapter(
         originCaip2Id,
         originRouterAddress,
@@ -83,7 +89,7 @@ export class AdapterFactory {
         EvmHypCollateralAdapter,
         isNativeToken(baseTokenCaip19Id) ? SealevelHypNativeAdapter : SealevelHypCollateralAdapter,
       );
-    } else if (type === RouteType.SyntheticToBase || type === RouteType.SyntheticToSynthetic) {
+    } else if (isRouteFromSynthetic(route)) {
       return AdapterFactory.selectHypAdapter(
         originCaip2Id,
         originRouterAddress,
@@ -97,20 +103,21 @@ export class AdapterFactory {
   }
 
   static HypTokenAdapterFromRouteDest(route: Route) {
-    const { type, destCaip2Id, destRouterAddress, baseTokenCaip19Id } = route;
-    if (type === RouteType.SyntheticToBase) {
+    const { type, destCaip2Id, destRouterAddress, destTokenCaip19Id, baseTokenCaip19Id } = route;
+    const tokenCaip19Id = destTokenCaip19Id || baseTokenCaip19Id;
+    if (isRouteToCollateral(route)) {
       return AdapterFactory.selectHypAdapter(
         destCaip2Id,
         destRouterAddress,
-        baseTokenCaip19Id,
+        tokenCaip19Id,
         EvmHypCollateralAdapter,
-        isNativeToken(baseTokenCaip19Id) ? SealevelHypNativeAdapter : SealevelHypCollateralAdapter,
+        isNativeToken(tokenCaip19Id) ? SealevelHypNativeAdapter : SealevelHypCollateralAdapter,
       );
-    } else if (type === RouteType.BaseToSynthetic || type === RouteType.SyntheticToSynthetic) {
+    } else if (isRouteToSynthetic(route)) {
       return AdapterFactory.selectHypAdapter(
         destCaip2Id,
         destRouterAddress,
-        baseTokenCaip19Id,
+        tokenCaip19Id,
         EvmHypSyntheticAdapter,
         SealevelHypSyntheticAdapter,
       );

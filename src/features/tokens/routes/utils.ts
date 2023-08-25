@@ -1,4 +1,4 @@
-import { Route, RoutesMap } from './types';
+import { Route, RouteType, RoutesMap } from './types';
 
 export function getTokenRoutes(
   originCaip2Id: ChainCaip2Id,
@@ -27,4 +27,30 @@ export function hasTokenRoute(
   tokenRoutes: RoutesMap,
 ): boolean {
   return !!getTokenRoute(originCaip2Id, destinationCaip2Id, tokenCaip19Id, tokenRoutes);
+}
+
+export function isRouteToCollateral(route: Route) {
+  return (
+    route.type === RouteType.CollateralToCollateral ||
+    route.type === RouteType.SyntheticToCollateral
+  );
+}
+
+export function isRouteFromCollateral(route: Route) {
+  return (
+    route.type === RouteType.CollateralToCollateral ||
+    route.type === RouteType.CollateralToSynthetic
+  );
+}
+
+export function isRouteToSynthetic(route: Route) {
+  return (
+    route.type === RouteType.CollateralToSynthetic || route.type === RouteType.SyntheticToSynthetic
+  );
+}
+
+export function isRouteFromSynthetic(route: Route) {
+  return (
+    route.type === RouteType.SyntheticToCollateral || route.type === RouteType.SyntheticToSynthetic
+  );
 }

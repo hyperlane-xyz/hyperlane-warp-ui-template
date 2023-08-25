@@ -2,7 +2,7 @@ import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 
-import { SmallSpinner } from '../../components/animation/ThinSpinner';
+import { SmallSpinner } from '../../components/animation/SmallSpinner';
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import { Identicon } from '../../components/icons/Identicon';
 import ArrowRightIcon from '../../images/icons/arrow-right.svg';

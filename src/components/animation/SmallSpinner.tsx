@@ -11,7 +11,7 @@ function _SmallSpinner() {
       <circle
         className="opacity-25"
         stroke="currentColor"
-        stroke-width="4"
+        strokeWidth="4"
         cx="12"
         cy="12"
         r="10"

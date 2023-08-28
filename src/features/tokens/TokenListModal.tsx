@@ -25,8 +25,8 @@ export function TokenListModal({
   isOpen: boolean;
   close: () => void;
   onSelect: (token: TokenMetadata) => void;
-  originCaip2Id: Caip2Id;
-  destinationCaip2Id: Caip2Id;
+  originCaip2Id: ChainCaip2Id;
+  destinationCaip2Id: ChainCaip2Id;
   tokenRoutes: RoutesMap;
 }) {
   const [search, setSearch] = useState('');
@@ -74,8 +74,8 @@ export function TokenList({
   searchQuery,
   onSelect,
 }: {
-  originCaip2Id: Caip2Id;
-  destinationCaip2Id: Caip2Id;
+  originCaip2Id: ChainCaip2Id;
+  destinationCaip2Id: ChainCaip2Id;
   tokenRoutes: RoutesMap;
   searchQuery: string;
   onSelect: (token: TokenMetadata) => void;
@@ -84,7 +84,12 @@ export function TokenList({
     const q = searchQuery?.trim().toLowerCase();
     return getTokens()
       .map((t) => {
-        const hasRoute = hasTokenRoute(originCaip2Id, destinationCaip2Id, t.caip19Id, tokenRoutes);
+        const hasRoute = hasTokenRoute(
+          originCaip2Id,
+          destinationCaip2Id,
+          t.tokenCaip19Id,
+          tokenRoutes,
+        );
         return { ...t, disabled: !hasRoute };
       })
       .sort((a, b) => {
@@ -97,7 +102,7 @@ export function TokenList({
         return (
           t.name.toLowerCase().includes(q) ||
           t.symbol.toLowerCase().includes(q) ||
-          t.caip19Id.toLowerCase().includes(q)
+          t.tokenCaip19Id.toLowerCase().includes(q)
         );
       })
       .filter((t) => (config.showDisabledTokens ? true : !t.disabled));
@@ -111,7 +116,7 @@ export function TokenList({
             className={`-mx-2 py-2 px-2 rounded mb-2  ${
               t.disabled ? 'opacity-50' : 'hover:bg-gray-200'
             } transition-all duration-250`}
-            key={t.caip19Id}
+            key={t.tokenCaip19Id}
             type="button"
             disabled={t.disabled}
             onClick={() => onSelect(t)}
@@ -124,12 +129,14 @@ export function TokenList({
               </div>
               <div className="ml-3 text-left">
                 <div className="text-xs">
-                  {isNativeToken(t.caip19Id) ? 'Native chain token' : getTokenAddress(t.caip19Id)}
+                  {isNativeToken(t.tokenCaip19Id)
+                    ? 'Native chain token'
+                    : getTokenAddress(t.tokenCaip19Id)}
                 </div>
                 <div className=" mt-0.5 text-xs flex space-x-1">
                   <span>{`Decimals: ${t.decimals}`}</span>
                   <span>-</span>
-                  <span>{`Type: ${getAssetNamespace(t.caip19Id)}`}</span>
+                  <span>{`Type: ${getAssetNamespace(t.tokenCaip19Id)}`}</span>
                 </div>
               </div>
               {t.disabled && (

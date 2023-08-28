@@ -10,11 +10,11 @@ import { useOriginTokenIdBalance } from './balances';
 
 type Props = {
   name: string;
-  caip19Id: Caip19Id;
+  tokenCaip19Id: TokenCaip19Id;
   disabled?: boolean;
 };
 
-export function SelectTokenIdField({ name, caip19Id, disabled }: Props) {
+export function SelectTokenIdField({ name, tokenCaip19Id, disabled }: Props) {
   const [, , helpers] = useField<number>(name);
   const [tokenId, setTokenId] = useState<string | undefined>(undefined);
   const handleChange = (newTokenId: string) => {
@@ -22,7 +22,7 @@ export function SelectTokenIdField({ name, caip19Id, disabled }: Props) {
     setTokenId(newTokenId);
   };
 
-  const { isLoading, tokenIds } = useOriginTokenIdBalance(caip19Id);
+  const { isLoading, tokenIds } = useOriginTokenIdBalance(tokenCaip19Id);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 

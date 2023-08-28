@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 import { ProtocolSmallestUnit } from '@hyperlane-xyz/sdk';
 import { WideChevron } from '@hyperlane-xyz/widgets';
 
+import { SmallSpinner } from '../../components/animation/SmallSpinner';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
 import { IconButton } from '../../components/buttons/IconButton';
 import { SolidButton } from '../../components/buttons/SolidButton';
@@ -24,6 +25,7 @@ import { getChainDisplayName } from '../chains/utils';
 import { AppState, useStore } from '../store';
 import { SelectOrInputTokenIds } from '../tokens/SelectOrInputTokenIds';
 import { TokenSelectField } from '../tokens/TokenSelectField';
+import { useIsApproveRequired } from '../tokens/approval';
 import { useDestinationBalance, useOriginBalance } from '../tokens/balances';
 import { useRouteChains } from '../tokens/routes/hooks';
 import { RoutesMap } from '../tokens/routes/types';
@@ -31,11 +33,11 @@ import { getTokenRoute } from '../tokens/routes/utils';
 import { useAccountForChain } from '../wallet/hooks';
 
 import { TransferFormValues } from './types';
-import { isTransferApproveRequired, useTokenTransfer } from './useTokenTransfer';
+import { useTokenTransfer } from './useTokenTransfer';
 
 export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
-  const caip2Ids = useRouteChains(tokenRoutes);
-  const initialValues = useFormInitialValues(caip2Ids, tokenRoutes);
+  const chainCaip2Ids = useRouteChains(tokenRoutes);
+  const initialValues = useFormInitialValues(chainCaip2Ids, tokenRoutes);
 
   // Flag for if form is in input vs review mode
   const [isReview, setIsReview] = useState(false);
@@ -61,7 +63,7 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
       validateOnBlur={false}
     >
       <Form className="flex flex-col items-stretch w-full mt-2">
-        <ChainSelectSection caip2Ids={caip2Ids} isReview={isReview} />
+        <ChainSelectSection chainCaip2Ids={chainCaip2Ids} isReview={isReview} />
         <div className="mt-3 flex justify-between space-x-4">
           <TokenSection tokenRoutes={tokenRoutes} setIsNft={setIsNft} isReview={isReview} />
           <AmountSection tokenRoutes={tokenRoutes} isNft={isNft} isReview={isReview} />
@@ -101,7 +103,13 @@ function SwapChainsButton({ disabled }: { disabled?: boolean }) {
   );
 }
 
-function ChainSelectSection({ caip2Ids, isReview }: { caip2Ids: Caip2Id[]; isReview: boolean }) {
+function ChainSelectSection({
+  chainCaip2Ids,
+  isReview,
+}: {
+  chainCaip2Ids: ChainCaip2Id[];
+  isReview: boolean;
+}) {
   const ChevronIcon = ({ classes }: { classes?: string }) => (
     <WideChevron
       width="17"
@@ -115,7 +123,12 @@ function ChainSelectSection({ caip2Ids, isReview }: { caip2Ids: Caip2Id[]; isRev
 
   return (
     <div className="flex items-center justify-center space-x-7 sm:space-x-10">
-      <ChainSelectField name="originCaip2Id" label="From" caip2Ids={caip2Ids} disabled={isReview} />
+      <ChainSelectField
+        name="originCaip2Id"
+        label="From"
+        chainCaip2Ids={chainCaip2Ids}
+        disabled={isReview}
+      />
       <div className="flex flex-col items-center">
         <div className="flex mb-6 sm:space-x-1.5">
           <ChevronIcon classes="hidden sm:block" />
@@ -127,7 +140,7 @@ function ChainSelectSection({ caip2Ids, isReview }: { caip2Ids: Caip2Id[]; isRev
       <ChainSelectField
         name="destinationCaip2Id"
         label="To"
-        caip2Ids={caip2Ids}
+        chainCaip2Ids={chainCaip2Ids}
         disabled={isReview}
       />
     </div>
@@ -211,10 +224,10 @@ function RecipientSection({
   const { values } = useFormikContext<TransferFormValues>();
   const { balance, decimals } = useDestinationBalance(values, tokenRoutes);
 
-  // TODO hacking in a crude way to detect transfer completions by triggering
+  // A crude way to detect transfer completions by triggering
   // toast on recipientAddress balance increase. This is not ideal because it
-  // could confuse unrelated balance changes for message delivery and it
-  // doesn't update the store state yet
+  // could confuse unrelated balance changes for message delivery
+  // TODO replace with a polling worker that queries the hyperlane explorer
   const recipientAddress = values.recipientAddress;
   const prevRecipientBalance = useRef<{ balance?: string; recipientAddress?: string }>({
     balance: '',
@@ -229,9 +242,8 @@ function RecipientSection({
       new BigNumber(balance).gt(prevRecipientBalance.current.balance)
     ) {
       toast.success('Recipient has received funds, transfer complete!');
-    } else {
-      prevRecipientBalance.current = { balance, recipientAddress };
     }
+    prevRecipientBalance.current = { balance, recipientAddress };
   }, [balance, recipientAddress, prevRecipientBalance]);
 
   return (
@@ -298,7 +310,7 @@ function ButtonSection({
   if (!isReview) {
     return (
       <ConnectAwareSubmitButton
-        caip2Id={values.originCaip2Id}
+        chainCaip2Id={values.originCaip2Id}
         text="Continue"
         classes="mt-4 px-3 py-1.5"
       />
@@ -384,7 +396,7 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
   const route = getTokenRoute(originCaip2Id, destinationCaip2Id, token, tokenRoutes);
   const isNft = token && isNonFungibleToken(token);
   const sendValue = isNft ? amount.toString() : toWei(amount, route?.originDecimals).toString();
-  const isApproveRequired = route && isTransferApproveRequired(route, token);
+  const { isLoading, isApproveRequired } = useIsApproveRequired(route!, token, sendValue, visible);
   const originProtocol = getProtocolType(originCaip2Id);
   const originUnitName = ProtocolSmallestUnit[originProtocol];
 
@@ -395,28 +407,34 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
       } overflow-hidden transition-all`}
     >
       <label className="mt-4 block uppercase text-sm text-gray-500 pl-0.5">Transactions</label>
-      <div className="mt-1.5 px-2.5 py-2 space-y-2 rounded border border-gray-400 bg-gray-150 text-sm break-all">
-        {isApproveRequired && (
+      {isLoading ? (
+        <div className="py-6 flex items-center justify-center">
+          <SmallSpinner />
+        </div>
+      ) : (
+        <div className="mt-1.5 px-2.5 py-2 space-y-2 rounded border border-gray-400 bg-gray-150 text-sm break-all">
+          {isApproveRequired && (
+            <div>
+              <h4>Transaction 1: Approve Transfer</h4>
+              <div className="mt-1.5 ml-1.5 pl-2 border-l border-gray-300 space-y-1.5 text-xs">
+                <p>{`Token Address: ${getTokenAddress(token)}`}</p>
+                <p>{`Collateral Address: ${route?.baseRouterAddress}`}</p>
+              </div>
+            </div>
+          )}
           <div>
-            <h4>Transaction 1: Approve Transfer</h4>
+            <h4>{`Transaction${isApproveRequired ? ' 2' : ''}: Transfer Remote`}</h4>
             <div className="mt-1.5 ml-1.5 pl-2 border-l border-gray-300 space-y-1.5 text-xs">
-              <p>{`Token Address: ${getTokenAddress(token)}`}</p>
-              <p>{`Collateral Address: ${route?.baseRouterAddress}`}</p>
+              <p>{`Remote Token: ${route?.destRouterAddress}`}</p>
+              {isNft ? (
+                <p>{`Token ID: ${sendValue}`}</p>
+              ) : (
+                <p>{`Amount (${originUnitName}): ${sendValue}`}</p>
+              )}
             </div>
           </div>
-        )}
-        <div>
-          <h4>{`Transaction${isApproveRequired ? ' 2' : ''}: Transfer Remote`}</h4>
-          <div className="mt-1.5 ml-1.5 pl-2 border-l border-gray-300 space-y-1.5 text-xs">
-            <p>{`Remote Token: ${route?.destRouterAddress}`}</p>
-            {isNft ? (
-              <p>{`Token ID: ${sendValue}`}</p>
-            ) : (
-              <p>{`Amount (${originUnitName}): ${sendValue}`}</p>
-            )}
-          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -459,26 +477,30 @@ function validateFormValues(
     }
   }
 
-  if (config.withdrawalWhitelist) {
-    if (!config.withdrawalWhitelist.split(',').includes(destinationCaip2Id)) {
-      return { destinationCaip2Id: 'Bridge is in deposit-only mode' };
-    }
+  if (
+    config.withdrawalWhitelist &&
+    !config.withdrawalWhitelist.split(',').includes(destinationCaip2Id)
+  ) {
+    return { destinationCaip2Id: 'Bridge is in deposit-only mode' };
   }
 
   return {};
 }
 
-function useFormInitialValues(caip2Ids: Caip2Id[], tokenRoutes: RoutesMap): TransferFormValues {
+function useFormInitialValues(
+  chainCaip2Ids: ChainCaip2Id[],
+  tokenRoutes: RoutesMap,
+): TransferFormValues {
   return useMemo(() => {
-    const firstRoute = Object.values(tokenRoutes[caip2Ids[0]]).filter(
+    const firstRoute = Object.values(tokenRoutes[chainCaip2Ids[0]]).filter(
       (routes) => routes.length,
     )[0][0];
     return {
       originCaip2Id: firstRoute.destCaip2Id,
       destinationCaip2Id: firstRoute.originCaip2Id,
       amount: '',
-      tokenCaip19Id: '' as Caip19Id,
+      tokenCaip19Id: '' as TokenCaip19Id,
       recipientAddress: '',
     };
-  }, [caip2Ids, tokenRoutes]);
+  }, [chainCaip2Ids, tokenRoutes]);
 }

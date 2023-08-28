@@ -1,19 +1,24 @@
 export enum RouteType {
-  BaseToSynthetic = 'baseToSynthetic',
+  CollateralToCollateral = 'collateralToCollateral',
+  CollateralToSynthetic = 'collateralToSynthetic',
   SyntheticToSynthetic = 'syntheticToSynthetic',
-  SyntheticToBase = 'syntheticToBase',
+  SyntheticToCollateral = 'syntheticToCollateral',
 }
 
 export interface Route {
   type: RouteType;
-  baseCaip19Id: Caip19Id; // i.e. the underlying 'collateralized' token
+  // The underlying 'collateralized' token:
+  baseTokenCaip19Id: TokenCaip19Id;
   baseRouterAddress: Address;
-  originCaip2Id: Caip2Id;
+  originCaip2Id: ChainCaip2Id;
   originRouterAddress: Address;
   originDecimals: number;
-  destCaip2Id: Caip2Id;
+  destCaip2Id: ChainCaip2Id;
   destRouterAddress: Address;
   destDecimals: number;
+  // The underlying token on the destination chain
+  // Only set for CollateralToCollateral routes (b.c. sealevel need it)
+  destTokenCaip19Id?: TokenCaip19Id;
 }
 
-export type RoutesMap = Record<Caip2Id, Record<Caip2Id, Route[]>>;
+export type RoutesMap = Record<ChainCaip2Id, Record<ChainCaip2Id, Route[]>>;

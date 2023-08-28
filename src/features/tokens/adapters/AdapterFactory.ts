@@ -5,9 +5,20 @@ import { ProtocolType } from '@hyperlane-xyz/sdk';
 
 import { convertToProtocolAddress } from '../../../utils/addresses';
 import { parseCaip2Id } from '../../caip/chains';
-import { AssetNamespace, getCaip2FromToken, isNativeToken, parseCaip19Id } from '../../caip/tokens';
+import {
+  AssetNamespace,
+  getChainIdFromToken,
+  isNativeToken,
+  parseCaip19Id,
+} from '../../caip/tokens';
 import { getMultiProvider, getProvider } from '../../multiProvider';
-import { Route, RouteType } from '../routes/types';
+import { Route } from '../routes/types';
+import {
+  isRouteFromCollateral,
+  isRouteFromSynthetic,
+  isRouteToCollateral,
+  isRouteToSynthetic,
+} from '../routes/utils';
 
 import {
   EvmHypCollateralAdapter,
@@ -25,18 +36,18 @@ import {
 } from './SealevelTokenAdapter';
 
 export class AdapterFactory {
-  static TokenAdapterFromAddress(caip19Id: Caip19Id) {
-    const { address, caip2Id } = parseCaip19Id(caip19Id);
-    const { protocol, reference } = parseCaip2Id(caip2Id);
+  static TokenAdapterFromAddress(tokenCaip19Id: TokenCaip19Id) {
+    const { address, chainCaip2Id } = parseCaip19Id(tokenCaip19Id);
+    const { protocol, reference } = parseCaip2Id(chainCaip2Id);
     if (protocol == ProtocolType.Ethereum) {
-      const provider = getProvider(caip2Id);
-      return isNativeToken(caip19Id)
+      const provider = getProvider(chainCaip2Id);
+      return isNativeToken(tokenCaip19Id)
         ? new EvmNativeTokenAdapter(provider)
         : new EvmTokenAdapter(provider, address);
     } else if (protocol === ProtocolType.Sealevel) {
       const rpcUrl = getMultiProvider().getRpcUrl(reference);
       const connection = new Connection(rpcUrl, 'confirmed');
-      return isNativeToken(caip19Id)
+      return isNativeToken(tokenCaip19Id)
         ? new SealevelNativeTokenAdapter(connection)
         : new SealevelTokenAdapter(connection, address);
     } else {
@@ -44,45 +55,45 @@ export class AdapterFactory {
     }
   }
 
-  static HypCollateralAdapterFromAddress(baseCaip19Id: Caip19Id, routerAddress: Address) {
+  static HypCollateralAdapterFromAddress(baseTokenCaip19Id: TokenCaip19Id, routerAddress: Address) {
     return AdapterFactory.selectHypAdapter(
-      getCaip2FromToken(baseCaip19Id),
+      getChainIdFromToken(baseTokenCaip19Id),
       routerAddress,
-      baseCaip19Id,
+      baseTokenCaip19Id,
       EvmHypCollateralAdapter,
-      isNativeToken(baseCaip19Id) ? SealevelHypNativeAdapter : SealevelHypCollateralAdapter,
+      isNativeToken(baseTokenCaip19Id) ? SealevelHypNativeAdapter : SealevelHypCollateralAdapter,
     );
   }
 
   static HypSyntheticTokenAdapterFromAddress(
-    baseCaip19Id: Caip19Id,
-    caip2Id: Caip2Id,
+    baseTokenCaip19Id: TokenCaip19Id,
+    chainCaip2Id: ChainCaip2Id,
     routerAddress: Address,
   ) {
     return AdapterFactory.selectHypAdapter(
-      caip2Id,
+      chainCaip2Id,
       routerAddress,
-      baseCaip19Id,
+      baseTokenCaip19Id,
       EvmHypSyntheticAdapter,
       SealevelHypSyntheticAdapter,
     );
   }
 
   static HypTokenAdapterFromRouteOrigin(route: Route) {
-    const { type, originCaip2Id, originRouterAddress, baseCaip19Id } = route;
-    if (type === RouteType.BaseToSynthetic) {
+    const { type, originCaip2Id, originRouterAddress, baseTokenCaip19Id } = route;
+    if (isRouteFromCollateral(route)) {
       return AdapterFactory.selectHypAdapter(
         originCaip2Id,
         originRouterAddress,
-        baseCaip19Id,
+        baseTokenCaip19Id,
         EvmHypCollateralAdapter,
-        isNativeToken(baseCaip19Id) ? SealevelHypNativeAdapter : SealevelHypCollateralAdapter,
+        isNativeToken(baseTokenCaip19Id) ? SealevelHypNativeAdapter : SealevelHypCollateralAdapter,
       );
-    } else if (type === RouteType.SyntheticToBase || type === RouteType.SyntheticToSynthetic) {
+    } else if (isRouteFromSynthetic(route)) {
       return AdapterFactory.selectHypAdapter(
         originCaip2Id,
         originRouterAddress,
-        baseCaip19Id,
+        baseTokenCaip19Id,
         EvmHypSyntheticAdapter,
         SealevelHypSyntheticAdapter,
       );
@@ -92,20 +103,21 @@ export class AdapterFactory {
   }
 
   static HypTokenAdapterFromRouteDest(route: Route) {
-    const { type, destCaip2Id, destRouterAddress, baseCaip19Id } = route;
-    if (type === RouteType.SyntheticToBase) {
+    const { type, destCaip2Id, destRouterAddress, destTokenCaip19Id, baseTokenCaip19Id } = route;
+    const tokenCaip19Id = destTokenCaip19Id || baseTokenCaip19Id;
+    if (isRouteToCollateral(route)) {
       return AdapterFactory.selectHypAdapter(
         destCaip2Id,
         destRouterAddress,
-        baseCaip19Id,
+        tokenCaip19Id,
         EvmHypCollateralAdapter,
-        isNativeToken(baseCaip19Id) ? SealevelHypNativeAdapter : SealevelHypCollateralAdapter,
+        isNativeToken(tokenCaip19Id) ? SealevelHypNativeAdapter : SealevelHypCollateralAdapter,
       );
-    } else if (type === RouteType.BaseToSynthetic || type === RouteType.SyntheticToSynthetic) {
+    } else if (isRouteToSynthetic(route)) {
       return AdapterFactory.selectHypAdapter(
         destCaip2Id,
         destRouterAddress,
-        baseCaip19Id,
+        tokenCaip19Id,
         EvmHypSyntheticAdapter,
         SealevelHypSyntheticAdapter,
       );
@@ -115,9 +127,9 @@ export class AdapterFactory {
   }
 
   protected static selectHypAdapter(
-    caip2Id: Caip2Id,
+    chainCaip2Id: ChainCaip2Id,
     routerAddress: Address,
-    baseCaip19Id: Caip19Id,
+    baseTokenCaip19Id: TokenCaip19Id,
     EvmAdapter: new (provider: providers.Provider, routerAddress: Address) => IHypTokenAdapter,
     SealevelAdapter: new (
       connection: Connection,
@@ -126,10 +138,10 @@ export class AdapterFactory {
       isSpl2022?: boolean,
     ) => IHypTokenAdapter,
   ) {
-    const { protocol, reference } = parseCaip2Id(caip2Id);
-    const { address: baseTokenAddress, namespace } = parseCaip19Id(baseCaip19Id);
+    const { protocol, reference } = parseCaip2Id(chainCaip2Id);
+    const { address: baseTokenAddress, namespace } = parseCaip19Id(baseTokenCaip19Id);
     if (protocol == ProtocolType.Ethereum) {
-      const provider = getProvider(caip2Id);
+      const provider = getProvider(chainCaip2Id);
       return new EvmAdapter(provider, convertToProtocolAddress(routerAddress, protocol));
     } else if (protocol === ProtocolType.Sealevel) {
       const rpcUrl = getMultiProvider().getRpcUrl(reference);

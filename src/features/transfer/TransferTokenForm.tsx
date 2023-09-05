@@ -276,8 +276,8 @@ function TokenBalance({
   balance?: string | null;
   decimals?: number;
 }) {
-  const value = !decimals ? fromWei(balance, decimals) : fromWeiRounded(balance, decimals);
-  return <div className="text-xs text-gray-500">{`${label}: ${value}`}</div>;
+  const value = !decimals ? fromWei(balance, decimals) : fromWeiRounded(balance, decimals, false);
+  return <div className="text-xs text-gray-500 text-right">{`${label}: ${value}`}</div>;
 }
 
 function ButtonSection({

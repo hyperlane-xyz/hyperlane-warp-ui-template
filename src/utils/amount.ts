@@ -49,7 +49,6 @@ export function toWei(
   // and not in scientific notation.
   const valueBN = new BigNumber(value);
   const valueString = valueBN.toString(10).trim();
-  console.log('valueString', value, typeof value, valueBN, valueString);
   const components = valueString.split('.');
   if (components.length === 1) {
     return new BigNumber(parseUnits(valueString, decimals).toString());

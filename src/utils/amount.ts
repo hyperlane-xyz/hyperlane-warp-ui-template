@@ -32,7 +32,7 @@ export function fromWeiRounded(
   // If amount is less than min value
   if (amount.lt(MIN_ROUNDED_VALUE)) {
     if (roundDownIfSmall) return '0';
-    else return MIN_ROUNDED_VALUE.toString();
+    return amount.toString(10);
   }
 
   const displayDecimals = amount.gte(10000) ? 2 : DISPLAY_DECIMALS;
@@ -44,7 +44,11 @@ export function toWei(
   decimals = STANDARD_TOKEN_DECIMALS,
 ): BigNumber {
   if (!value) return new BigNumber(0);
-  const valueString = value.toString().trim();
+  // First convert to a BigNumber, and then call `toString` with the
+  // explicit radix 10 such that the result is formatted as a base-10 string
+  // and not in scientific notation.
+  const valueBN = new BigNumber(value);
+  const valueString = valueBN.toString(10).trim();
   const components = valueString.split('.');
   if (components.length === 1) {
     return new BigNumber(parseUnits(valueString, decimals).toString());

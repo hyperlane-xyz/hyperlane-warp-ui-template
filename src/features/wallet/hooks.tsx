@@ -1,4 +1,4 @@
-import { useConnectModal as useEvmodal } from '@rainbow-me/rainbowkit';
+import { useConnectModal as useEvmModal } from '@rainbow-me/rainbowkit';
 import { useConnection, useWallet as useSolanaWallet } from '@solana/wallet-adapter-react';
 import { useWalletModal as useSolanaModal } from '@solana/wallet-adapter-react-ui';
 import { Connection } from '@solana/web3.js';
@@ -106,7 +106,7 @@ export function useAccountForChain(chainCaip2Id?: ChainCaip2Id): AccountInfo | u
 
 export function useConnectFns(): Record<ProtocolType, () => void> {
   // Evm
-  const { openConnectModal: openEvmModal } = useEvmodal();
+  const { openConnectModal: openEvmModal } = useEvmModal();
   const onConnectEthereum = useCallback(() => openEvmModal?.(), [openEvmModal]);
 
   // Solana

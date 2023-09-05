@@ -32,7 +32,7 @@ export function fromWeiRounded(
   // If amount is less than min value
   if (amount.lt(MIN_ROUNDED_VALUE)) {
     if (roundDownIfSmall) return '0';
-    else return MIN_ROUNDED_VALUE.toString();
+    return amount.toString(10);
   }
 
   const displayDecimals = amount.gte(10000) ? 2 : DISPLAY_DECIMALS;

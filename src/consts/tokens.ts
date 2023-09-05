@@ -46,6 +46,7 @@ export const tokenList: WarpTokenConfig = [
     address: '0x2170ed0880ac9a755fd29b2688956bd959f933f8',
     hypCollateralAddress: '0x2a6822dc5639b3fe70de6b65b9ff872e554162fa',
     isNft: false,
+    logoURI: '/logos/weth.png',
   },
   {
     chainId: 56,
@@ -56,6 +57,7 @@ export const tokenList: WarpTokenConfig = [
     address: '0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d',
     hypCollateralAddress: '0x6937a62f93a56D2AE9392Fa1649b830ca37F3ea4',
     isNft: false,
+    logoURI: '/logos/USDC.svg',
   },
   {
     chainId: 56,
@@ -66,6 +68,7 @@ export const tokenList: WarpTokenConfig = [
     address: '0x55d398326f99059ff775485246999027b3197955',
     hypCollateralAddress: '0xb7d36720a16A1F9Cfc1f7910Ac49f03965401a36',
     isNft: false,
+    logoURI: '/logos/tether.svg',
   },
   {
     chainId: 56,
@@ -76,6 +79,7 @@ export const tokenList: WarpTokenConfig = [
     address: '0x7130d2a12b9bcbfae4f2634d864a1ee1ce3ead9c',
     hypCollateralAddress: '0xB3545006A532E8C23ebC4e33d5ab2232Cafc35Ad',
     isNft: false,
+    logoURI: '/logos/bitcoin.svg',
   },
   {
     chainId: 56,
@@ -86,5 +90,6 @@ export const tokenList: WarpTokenConfig = [
     address: '0xd7518e8cfd7448201155bbbedeed88888e3575ae',
     hypCollateralAddress: '0x807D2C6c3d64873Cc729dfC65fB717C3E05e682f',
     isNft: false,
+    logoURI: '/logos/POSE.jpg',
   },
 ];

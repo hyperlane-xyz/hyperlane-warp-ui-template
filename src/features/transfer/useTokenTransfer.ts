@@ -3,17 +3,17 @@ import { BigNumber, PopulatedTransaction as EvmTransaction, providers } from 'et
 import { useCallback, useState } from 'react';
 import { toast } from 'react-toastify';
 
-import { HyperlaneCore, ProtocolType } from '@hyperlane-xyz/sdk';
+import { IHypTokenAdapter } from '@hyperlane-xyz/hyperlane-token';
+import { HyperlaneCore } from '@hyperlane-xyz/sdk';
+import { ProtocolType, convertDecimals, toWei } from '@hyperlane-xyz/utils';
 
 import { toastTxSuccess } from '../../components/toast/TxSuccessToast';
-import { convertDecimals, toWei } from '../../utils/amount';
 import { logger } from '../../utils/logger';
 import { parseCaip2Id } from '../caip/chains';
 import { isNativeToken, isNonFungibleToken } from '../caip/tokens';
 import { getMultiProvider } from '../multiProvider';
 import { AppState, useStore } from '../store';
-import { AdapterFactory } from '../tokens/adapters/AdapterFactory';
-import { IHypTokenAdapter } from '../tokens/adapters/ITokenAdapter';
+import { AdapterFactory } from '../tokens/AdapterFactory';
 import { isApproveRequired } from '../tokens/approval';
 import { Route, RoutesMap } from '../tokens/routes/types';
 import { getTokenRoute, isRouteFromCollateral, isRouteToCollateral } from '../tokens/routes/utils';
@@ -109,7 +109,7 @@ async function executeTransfer({
 
     const multiProvider = getMultiProvider();
     const destinationDomainId = multiProvider.getDomainId(destReference);
-    const originMetadata = multiProvider.getChainMetadataWithArtifacts(originReference);
+    const originMetadata = multiProvider.getChainMetadata(originReference);
     const originMailbox = originMetadata.mailbox;
 
     const tokenRoute = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenCaip19Id, tokenRoutes);

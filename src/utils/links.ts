@@ -1,9 +1,9 @@
+import { toBase64 } from '@hyperlane-xyz/utils';
+
 import { links } from '../consts/links';
 import { parseCaip2Id } from '../features/caip/chains';
 import { isPermissionlessChain } from '../features/chains/utils';
 import { getMultiProvider } from '../features/multiProvider';
-
-import { toBase64 } from './base64';
 
 // TODO test with solana chain config, or disallow it
 export function getHypExplorerLink(originCaip2Id: ChainCaip2Id, msgId?: string) {

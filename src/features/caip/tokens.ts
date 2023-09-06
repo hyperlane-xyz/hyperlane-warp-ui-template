@@ -1,9 +1,8 @@
 import { ethers } from 'ethers';
 
-import { ProtocolType } from '@hyperlane-xyz/sdk';
+import { ProtocolType, isValidAddress, isZeroishAddress } from '@hyperlane-xyz/utils';
 
 import { SOL_ZERO_ADDRESS } from '../../consts/values';
-import { isValidAddress } from '../../utils/addresses';
 import { logger } from '../../utils/logger';
 
 export enum AssetNamespace {
@@ -25,7 +24,7 @@ export function getCaip19Id(
   if (!Object.values(AssetNamespace).includes(namespace)) {
     throw new Error(`Invalid asset namespace: ${namespace}`);
   }
-  if (!isValidAddress(address)) {
+  if (!isValidAddress(address) && !isZeroishAddress(address)) {
     throw new Error(`Invalid address: ${address}`);
   }
   return `${chainCaip2Id}/${namespace}:${address}${tokenId ? `/${tokenId}` : ''}`;

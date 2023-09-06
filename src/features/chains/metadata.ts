@@ -4,19 +4,18 @@ import { z } from 'zod';
 import {
   ChainMap,
   ChainMetadata,
-  ChainMetadataWithArtifacts,
-  ChainMetadataWithArtifactsSchema,
-  ProtocolType,
+  ChainMetadataSchema,
   chainMetadata,
   chainMetadataToWagmiChain,
 } from '@hyperlane-xyz/sdk';
+import { ProtocolType } from '@hyperlane-xyz/utils';
 
 import { chains } from '../../consts/chains';
 import { logger } from '../../utils/logger';
 
-let chainConfigs: ChainMap<ChainMetadata | ChainMetadataWithArtifacts>;
+let chainConfigs: ChainMap<ChainMetadata & { mailbox?: Address }>;
 
-export const ChainConfigSchema = z.record(ChainMetadataWithArtifactsSchema);
+export const ChainConfigSchema = z.record(ChainMetadataSchema);
 
 export function getChainConfigs() {
   if (!chainConfigs) {
@@ -25,7 +24,7 @@ export function getChainConfigs() {
       logger.error('Invalid chain config', result.error);
       throw new Error(`Invalid chain config: ${result.error.toString()}`);
     }
-    const customChainConfigs = result.data as ChainMap<ChainMetadataWithArtifacts>;
+    const customChainConfigs = result.data as ChainMap<ChainMetadata & { mailbox?: Address }>;
     chainConfigs = { ...chainMetadata, ...customChainConfigs };
   }
   return chainConfigs;

@@ -1,5 +1,5 @@
-import { TokenType } from '@hyperlane-xyz/hyperlane-token';
-import { ProtocolType } from '@hyperlane-xyz/sdk';
+import { EvmTokenAdapter, ITokenAdapter, TokenType } from '@hyperlane-xyz/hyperlane-token';
+import { ProtocolType } from '@hyperlane-xyz/utils';
 
 import { tokenList } from '../../consts/tokens';
 import { logger } from '../../utils/logger';
@@ -7,8 +7,6 @@ import { getCaip2Id } from '../caip/chains';
 import { getCaip19Id, getNativeTokenAddress, resolveAssetNamespace } from '../caip/tokens';
 import { getMultiProvider } from '../multiProvider';
 
-import { EvmTokenAdapter } from './adapters/EvmTokenAdapter';
-import { ITokenAdapter } from './adapters/ITokenAdapter';
 import { getHypErc20CollateralContract } from './contracts/evmContracts';
 import {
   MinimalTokenMetadata,
@@ -105,7 +103,7 @@ async function fetchNameAndDecimals(
     // Fetch the data from the contract
     let tokenAdapter: ITokenAdapter;
     if (protocol === ProtocolType.Ethereum) {
-      const provider = multiProvider.getProvider(chainId);
+      const provider = multiProvider.getEthersV5Provider(chainId);
       const collateralContract = getHypErc20CollateralContract(routerAddress, provider);
       const wrappedTokenAddr = await collateralContract.wrappedToken();
       tokenAdapter = new EvmTokenAdapter(provider, wrappedTokenAddr);

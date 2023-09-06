@@ -15,10 +15,9 @@ import {
   useNetwork as useEvmNetwork,
 } from 'wagmi';
 
-import { ProtocolType } from '@hyperlane-xyz/sdk';
+import { ProtocolType, sleep } from '@hyperlane-xyz/utils';
 
 import { logger } from '../../utils/logger';
-import { sleep } from '../../utils/timeout';
 import {
   getCaip2Id,
   getChainReference,

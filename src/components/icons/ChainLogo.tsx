@@ -1,13 +1,13 @@
 import Image from 'next/image';
 import { ComponentProps, useMemo } from 'react';
 
+import { isNumeric } from '@hyperlane-xyz/utils';
 import { ChainLogo as ChainLogoInner } from '@hyperlane-xyz/widgets';
 
 import { parseCaip2Id } from '../../features/caip/chains';
 import { getChainDisplayName } from '../../features/chains/utils';
 import { getMultiProvider } from '../../features/multiProvider';
 import { logger } from '../../utils/logger';
-import { isNumeric } from '../../utils/string';
 
 type Props = Omit<ComponentProps<typeof ChainLogoInner>, 'chainId' | 'chainName'> & {
   chainCaip2Id?: ChainCaip2Id;

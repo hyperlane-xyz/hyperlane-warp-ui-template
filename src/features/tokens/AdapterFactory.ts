@@ -1,52 +1,43 @@
 import { Connection } from '@solana/web3.js';
 import { providers } from 'ethers';
 
-import { ProtocolType } from '@hyperlane-xyz/sdk';
-
-import { convertToProtocolAddress } from '../../../utils/addresses';
-import { parseCaip2Id } from '../../caip/chains';
-import {
-  AssetNamespace,
-  getChainIdFromToken,
-  isNativeToken,
-  parseCaip19Id,
-} from '../../caip/tokens';
-import { getMultiProvider, getProvider } from '../../multiProvider';
-import { Route } from '../routes/types';
-import {
-  isRouteFromCollateral,
-  isRouteFromSynthetic,
-  isRouteToCollateral,
-  isRouteToSynthetic,
-} from '../routes/utils';
-
 import {
   EvmHypCollateralAdapter,
   EvmHypSyntheticAdapter,
   EvmNativeTokenAdapter,
   EvmTokenAdapter,
-} from './EvmTokenAdapter';
-import { IHypTokenAdapter } from './ITokenAdapter';
-import {
+  IHypTokenAdapter,
   SealevelHypCollateralAdapter,
   SealevelHypNativeAdapter,
   SealevelHypSyntheticAdapter,
   SealevelNativeTokenAdapter,
   SealevelTokenAdapter,
-} from './SealevelTokenAdapter';
+} from '@hyperlane-xyz/hyperlane-token';
+import { ProtocolType, convertToProtocolAddress } from '@hyperlane-xyz/utils';
+
+import { parseCaip2Id } from '../caip/chains';
+import { AssetNamespace, getChainIdFromToken, isNativeToken, parseCaip19Id } from '../caip/tokens';
+import { getEvmProvider, getSealevelProvider } from '../multiProvider';
+
+import { Route } from './routes/types';
+import {
+  isRouteFromCollateral,
+  isRouteFromSynthetic,
+  isRouteToCollateral,
+  isRouteToSynthetic,
+} from './routes/utils';
 
 export class AdapterFactory {
   static TokenAdapterFromAddress(tokenCaip19Id: TokenCaip19Id) {
     const { address, chainCaip2Id } = parseCaip19Id(tokenCaip19Id);
-    const { protocol, reference } = parseCaip2Id(chainCaip2Id);
+    const { protocol } = parseCaip2Id(chainCaip2Id);
     if (protocol == ProtocolType.Ethereum) {
-      const provider = getProvider(chainCaip2Id);
+      const provider = getEvmProvider(chainCaip2Id);
       return isNativeToken(tokenCaip19Id)
         ? new EvmNativeTokenAdapter(provider)
         : new EvmTokenAdapter(provider, address);
     } else if (protocol === ProtocolType.Sealevel) {
-      const rpcUrl = getMultiProvider().getRpcUrl(reference);
-      const connection = new Connection(rpcUrl, 'confirmed');
+      const connection = getSealevelProvider(chainCaip2Id);
       return isNativeToken(tokenCaip19Id)
         ? new SealevelNativeTokenAdapter(connection)
         : new SealevelTokenAdapter(connection, address);
@@ -138,14 +129,13 @@ export class AdapterFactory {
       isSpl2022?: boolean,
     ) => IHypTokenAdapter,
   ) {
-    const { protocol, reference } = parseCaip2Id(chainCaip2Id);
+    const { protocol } = parseCaip2Id(chainCaip2Id);
     const { address: baseTokenAddress, namespace } = parseCaip19Id(baseTokenCaip19Id);
     if (protocol == ProtocolType.Ethereum) {
-      const provider = getProvider(chainCaip2Id);
+      const provider = getEvmProvider(chainCaip2Id);
       return new EvmAdapter(provider, convertToProtocolAddress(routerAddress, protocol));
     } else if (protocol === ProtocolType.Sealevel) {
-      const rpcUrl = getMultiProvider().getRpcUrl(reference);
-      const connection = new Connection(rpcUrl, 'confirmed');
+      const connection = getSealevelProvider(chainCaip2Id);
       return new SealevelAdapter(
         connection,
         convertToProtocolAddress(routerAddress, protocol),

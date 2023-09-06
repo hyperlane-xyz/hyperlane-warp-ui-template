@@ -1,6 +1,6 @@
-import { ProtocolType, chainIdToMetadata } from '@hyperlane-xyz/sdk';
+import { chainIdToMetadata } from '@hyperlane-xyz/sdk';
+import { ProtocolType, toTitleCase } from '@hyperlane-xyz/utils';
 
-import { toTitleCase } from '../../utils/string';
 import { parseCaip2Id } from '../caip/chains';
 import { getMultiProvider } from '../multiProvider';
 

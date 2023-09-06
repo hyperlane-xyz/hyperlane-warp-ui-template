@@ -72,8 +72,8 @@ export const tokenList: WarpTokenConfig = [
   },
   {
     chainId: 56,
-    name: 'BTCB Token', // May be worth overriding this to "Bitcoin"
-    symbol: 'BTCB', // Also same for this and "BTC"
+    name: 'BTCB Token',
+    symbol: 'BTCB',
     decimals: 18,
     type: 'collateral',
     address: '0x7130d2a12b9bcbfae4f2634d864a1ee1ce3ead9c',
@@ -81,15 +81,20 @@ export const tokenList: WarpTokenConfig = [
     isNft: false,
     logoURI: '/logos/bitcoin.svg',
   },
-  {
-    chainId: 56,
-    name: 'PoseiSwap Token',
-    symbol: 'POSE',
-    decimals: 18,
-    type: 'collateral',
-    address: '0xd7518e8cfd7448201155bbbedeed88888e3575ae',
-    hypCollateralAddress: '0x807D2C6c3d64873Cc729dfC65fB717C3E05e682f',
-    isNft: false,
-    logoURI: '/logos/POSE.jpg',
-  },
+
+  // POSE not enabled for now, apparently they already created a
+  // version of POSE on Nautilus & details of bridging need to be
+  // ironed out.
+
+  // {
+  //   chainId: 56,
+  //   name: 'PoseiSwap Token',
+  //   symbol: 'POSE',
+  //   decimals: 18,
+  //   type: 'collateral',
+  //   address: '0xd7518e8cfd7448201155bbbedeed88888e3575ae',
+  //   hypCollateralAddress: '0x807D2C6c3d64873Cc729dfC65fB717C3E05e682f',
+  //   isNft: false,
+  //   logoURI: '/logos/POSE.jpg',
+  // },
 ];

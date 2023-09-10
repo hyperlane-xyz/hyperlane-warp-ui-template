@@ -15,7 +15,9 @@ import { logger } from '../../utils/logger';
 
 let chainConfigs: ChainMap<ChainMetadata & { mailbox?: Address }>;
 
-export const ChainConfigSchema = z.record(ChainMetadataSchema);
+export const ChainConfigSchema = z.record(
+  ChainMetadataSchema.extend({ mailbox: z.string().optional() }),
+);
 
 export function getChainConfigs() {
   if (!chainConfigs) {

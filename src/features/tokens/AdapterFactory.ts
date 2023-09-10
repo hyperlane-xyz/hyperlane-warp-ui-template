@@ -1,6 +1,3 @@
-import { Connection } from '@solana/web3.js';
-import { providers } from 'ethers';
-
 import {
   EvmHypCollateralAdapter,
   EvmHypSyntheticAdapter,
@@ -13,11 +10,12 @@ import {
   SealevelNativeTokenAdapter,
   SealevelTokenAdapter,
 } from '@hyperlane-xyz/hyperlane-token';
-import { ProtocolType, convertToProtocolAddress } from '@hyperlane-xyz/utils';
+import { ChainName, MultiProtocolProvider } from '@hyperlane-xyz/sdk';
+import { Address, ProtocolType, convertToProtocolAddress } from '@hyperlane-xyz/utils';
 
 import { parseCaip2Id } from '../caip/chains';
 import { AssetNamespace, getChainIdFromToken, isNativeToken, parseCaip19Id } from '../caip/tokens';
-import { getEvmProvider, getSealevelProvider } from '../multiProvider';
+import { getMultiProvider } from '../multiProvider';
 
 import { Route } from './routes/types';
 import {
@@ -30,17 +28,17 @@ import {
 export class AdapterFactory {
   static TokenAdapterFromAddress(tokenCaip19Id: TokenCaip19Id) {
     const { address, chainCaip2Id } = parseCaip19Id(tokenCaip19Id);
-    const { protocol } = parseCaip2Id(chainCaip2Id);
+    const { protocol, reference: chainId } = parseCaip2Id(chainCaip2Id);
+    const multiProvider = getMultiProvider();
+    const chainName = multiProvider.getChainMetadata(chainId).name;
     if (protocol == ProtocolType.Ethereum) {
-      const provider = getEvmProvider(chainCaip2Id);
       return isNativeToken(tokenCaip19Id)
-        ? new EvmNativeTokenAdapter(provider)
-        : new EvmTokenAdapter(provider, address);
+        ? new EvmNativeTokenAdapter(chainName, multiProvider)
+        : new EvmTokenAdapter(chainName, multiProvider, { token: address });
     } else if (protocol === ProtocolType.Sealevel) {
-      const connection = getSealevelProvider(chainCaip2Id);
       return isNativeToken(tokenCaip19Id)
-        ? new SealevelNativeTokenAdapter(connection)
-        : new SealevelTokenAdapter(connection, address);
+        ? new SealevelNativeTokenAdapter(chainName, multiProvider)
+        : new SealevelTokenAdapter(chainName, multiProvider, { token: address });
     } else {
       throw new Error(`Unsupported protocol: ${protocol}`);
     }
@@ -121,25 +119,36 @@ export class AdapterFactory {
     chainCaip2Id: ChainCaip2Id,
     routerAddress: Address,
     baseTokenCaip19Id: TokenCaip19Id,
-    EvmAdapter: new (provider: providers.Provider, routerAddress: Address) => IHypTokenAdapter,
+    EvmAdapter: new (
+      chainName: ChainName,
+      mp: MultiProtocolProvider,
+      addresses: { token: Address },
+    ) => IHypTokenAdapter,
     SealevelAdapter: new (
-      connection: Connection,
-      routerAddress: Address,
-      tokenAddress: Address,
+      chainName: ChainName,
+      mp: MultiProtocolProvider,
+      addresses: { token: Address; warp: Address; mailbox: Address },
       isSpl2022?: boolean,
     ) => IHypTokenAdapter,
   ) {
-    const { protocol } = parseCaip2Id(chainCaip2Id);
+    const { protocol, reference: chainId } = parseCaip2Id(chainCaip2Id);
     const { address: baseTokenAddress, namespace } = parseCaip19Id(baseTokenCaip19Id);
+    const multiProvider = getMultiProvider();
+    const { name: chainName, mailbox } = multiProvider.getChainMetadata(chainId);
     if (protocol == ProtocolType.Ethereum) {
-      const provider = getEvmProvider(chainCaip2Id);
-      return new EvmAdapter(provider, convertToProtocolAddress(routerAddress, protocol));
+      return new EvmAdapter(chainName, multiProvider, {
+        token: convertToProtocolAddress(routerAddress, protocol),
+      });
     } else if (protocol === ProtocolType.Sealevel) {
-      const connection = getSealevelProvider(chainCaip2Id);
+      if (!mailbox) throw new Error('Mailbox address required for sealevel hyp adapter');
       return new SealevelAdapter(
-        connection,
-        convertToProtocolAddress(routerAddress, protocol),
-        convertToProtocolAddress(baseTokenAddress, protocol),
+        chainName,
+        multiProvider,
+        {
+          token: convertToProtocolAddress(baseTokenAddress, protocol),
+          warp: convertToProtocolAddress(routerAddress, protocol),
+          mailbox,
+        },
         namespace === AssetNamespace.spl2022,
       );
     } else {

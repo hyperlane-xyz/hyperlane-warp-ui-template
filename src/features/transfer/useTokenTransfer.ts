@@ -104,13 +104,9 @@ async function executeTransfer({
 
   try {
     const { originCaip2Id, destinationCaip2Id, tokenCaip19Id, amount, recipientAddress } = values;
-    const { protocol: originProtocol, reference: originReference } = parseCaip2Id(originCaip2Id);
+    const { protocol: originProtocol } = parseCaip2Id(originCaip2Id);
     const { reference: destReference } = parseCaip2Id(destinationCaip2Id);
-
-    const multiProvider = getMultiProvider();
-    const destinationDomainId = multiProvider.getDomainId(destReference);
-    const originMetadata = multiProvider.getChainMetadata(originReference);
-    const originMailbox = originMetadata.mailbox;
+    const destinationDomainId = getMultiProvider().getDomainId(destReference);
 
     const tokenRoute = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenCaip19Id, tokenRoutes);
     if (!tokenRoute) throw new Error('No token route found between chains');
@@ -144,7 +140,6 @@ async function executeTransfer({
         updateTransferStatus(transferIndex, s);
       },
       sendTransaction: transactionFns[originProtocol].sendTransaction,
-      originMailbox,
     };
     let transferTxHash: string;
     let msgId: string | undefined;
@@ -209,7 +204,6 @@ interface ExecuteTransferParams<TxResp> {
   activeChain: ActiveChainInfo;
   updateStatus: (s: TransferStatus) => void;
   sendTransaction: SendTransactionFn<TxResp>;
-  originMailbox?: Address;
 }
 
 async function executeEvmTransfer({
@@ -290,7 +284,6 @@ async function executeSealevelTransfer({
   activeChain,
   updateStatus,
   sendTransaction,
-  originMailbox,
 }: ExecuteTransferParams<void>) {
   const { originCaip2Id } = tokenRoute;
 
@@ -305,7 +298,6 @@ async function executeSealevelTransfer({
     destination: destinationDomainId,
     recipient: recipientAddress,
     fromAccountOwner: activeAccount.address,
-    mailbox: originMailbox,
   })) as SolTransaction;
 
   updateStatus(TransferStatus.SigningTransfer);

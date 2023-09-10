@@ -92,11 +92,13 @@ async function fetchNameAndDecimals(
   }
 
   const multiProvider = getMultiProvider();
+  const chainMetadata = multiProvider.getChainMetadata(chainId);
+
   if (type === TokenType.native) {
     // Use the native token config that may be in the chain metadata
-    const metadata = multiProvider.getChainMetadata(chainId).nativeToken;
-    if (!metadata) throw new Error('Name, symbol, or decimals is missing for native token');
-    return metadata;
+    const tokenMetadata = chainMetadata.nativeToken;
+    if (!tokenMetadata) throw new Error('Name, symbol, or decimals is missing for native token');
+    return tokenMetadata;
   }
 
   if (type === TokenType.collateral) {
@@ -106,7 +108,9 @@ async function fetchNameAndDecimals(
       const provider = multiProvider.getEthersV5Provider(chainId);
       const collateralContract = getHypErc20CollateralContract(routerAddress, provider);
       const wrappedTokenAddr = await collateralContract.wrappedToken();
-      tokenAdapter = new EvmTokenAdapter(provider, wrappedTokenAddr);
+      tokenAdapter = new EvmTokenAdapter(chainMetadata.name, multiProvider, {
+        token: wrappedTokenAddr,
+      });
     } else {
       // TODO solana support when hyp tokens have metadata
       throw new Error('Name, symbol, and decimals is required for non-EVM token configs');

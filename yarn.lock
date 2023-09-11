@@ -1312,38 +1312,38 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/core@npm:1.5.1-beta0":
-  version: 1.5.1-beta0
-  resolution: "@hyperlane-xyz/core@npm:1.5.1-beta0"
+"@hyperlane-xyz/core@npm:1.5.1-beta1":
+  version: 1.5.1-beta1
+  resolution: "@hyperlane-xyz/core@npm:1.5.1-beta1"
   dependencies:
     "@eth-optimism/contracts": ^0.6.0
-    "@hyperlane-xyz/utils": 1.5.1-beta0
+    "@hyperlane-xyz/utils": 1.5.1-beta1
     "@openzeppelin/contracts": ^4.8.0
     "@openzeppelin/contracts-upgradeable": ^4.8.0
-  checksum: a282d61e3c9bf5b8b8326024985b184898399b348339137e361780c2f10658e7398b5702383de96bb2f28c56f1baa6c2bc3f171fbc68fe69c8104c8fd4401fb9
+  checksum: 54dad63db55118e658d76fad34c234695367159b848d94384c321f9e22a30fbcfd51cff9bcc8dbfb749e1d9746a41c8029258d05dce13a45afe124f72cdec486
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/hyperlane-token@npm:^1.5.1-beta0":
-  version: 1.5.1-beta0
-  resolution: "@hyperlane-xyz/hyperlane-token@npm:1.5.1-beta0"
+"@hyperlane-xyz/hyperlane-token@npm:^1.5.1-beta1":
+  version: 1.5.1-beta1
+  resolution: "@hyperlane-xyz/hyperlane-token@npm:1.5.1-beta1"
   dependencies:
-    "@hyperlane-xyz/core": 1.5.1-beta0
-    "@hyperlane-xyz/sdk": 1.5.1-beta0
-    "@hyperlane-xyz/utils": 1.5.1-beta0
+    "@hyperlane-xyz/core": 1.5.1-beta1
+    "@hyperlane-xyz/sdk": 1.5.1-beta1
+    "@hyperlane-xyz/utils": 1.5.1-beta1
     "@openzeppelin/contracts-upgradeable": ^4.8.0
     "@solana/spl-token": ^0.3.8
     ethers: ^5.7.2
-  checksum: 399240b64c61664b35ce4926d5a4d8335be58aad8fc343afac3207ff1d31eaedbc9d2d4cf96bf3a792c45485219fd26bf7ef612da7b1a15c4a4c89b20f742d8c
+  checksum: 1db51bc7209af46ab65ae2f69923d257cd8221cda2d0ba23d25103362f9d40e9bc1e7c27442c0a26b70855beb0b9a2ced7a3b816f6357566b45e361fe8c54aa6
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/sdk@npm:1.5.1-beta0, @hyperlane-xyz/sdk@npm:^1.5.1-beta0":
-  version: 1.5.1-beta0
-  resolution: "@hyperlane-xyz/sdk@npm:1.5.1-beta0"
+"@hyperlane-xyz/sdk@npm:1.5.1-beta1, @hyperlane-xyz/sdk@npm:^1.5.1-beta1":
+  version: 1.5.1-beta1
+  resolution: "@hyperlane-xyz/sdk@npm:1.5.1-beta1"
   dependencies:
-    "@hyperlane-xyz/core": 1.5.1-beta0
-    "@hyperlane-xyz/utils": 1.5.1-beta0
+    "@hyperlane-xyz/core": 1.5.1-beta1
+    "@hyperlane-xyz/utils": 1.5.1-beta1
     "@solana/web3.js": ^1.78.0
     "@types/coingecko-api": ^1.0.10
     "@types/debug": ^4.1.7
@@ -1354,18 +1354,18 @@ __metadata:
     ethers: ^5.7.2
     viem: ^1.3.1
     zod: ^3.21.2
-  checksum: df6b9c64015dd018472d34be9183e57ee81b6b29531010584978b4a316e7706eb73bd5c6b4803c10969e708408b9b7315803dce15b49e04253adb7f5531fe8e4
+  checksum: 0d9a919f7beded87adcd63b33df498eb9c74d7c5f131c95522d3dbd4011a21b2b4b06079a843eb979ed8f6341b41fce225ded39d3d341804f1b10a20873eda50
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/utils@npm:1.5.1-beta0, @hyperlane-xyz/utils@npm:^1.5.1-beta0":
-  version: 1.5.1-beta0
-  resolution: "@hyperlane-xyz/utils@npm:1.5.1-beta0"
+"@hyperlane-xyz/utils@npm:1.5.1-beta1, @hyperlane-xyz/utils@npm:^1.5.1-beta1":
+  version: 1.5.1-beta1
+  resolution: "@hyperlane-xyz/utils@npm:1.5.1-beta1"
   dependencies:
     "@solana/web3.js": ^1.78.0
     bignumber.js: ^9.1.1
     ethers: ^5.7.2
-  checksum: cda5280820f2b1424543dee89e294f829d531c63f8f5fe95e8fbbc5b4804ed5eec3eb524f32a1a6bfd05f613854f25b99cf9fd082c3ca733f5096516bd3f2c84
+  checksum: afd96ab543dc5cff5a7440530465fa869cb00a21b58c061a735ee4fab1e4db08771a9cce45a682a39730620889f2891c57ff0e0369711f30a8149b1b424f5127
   languageName: node
   linkType: hard
 
@@ -1374,9 +1374,9 @@ __metadata:
   resolution: "@hyperlane-xyz/warp-ui-template@workspace:."
   dependencies:
     "@headlessui/react": ^1.7.14
-    "@hyperlane-xyz/hyperlane-token": ^1.5.1-beta0
-    "@hyperlane-xyz/sdk": ^1.5.1-beta0
-    "@hyperlane-xyz/utils": ^1.5.1-beta0
+    "@hyperlane-xyz/hyperlane-token": ^1.5.1-beta1
+    "@hyperlane-xyz/sdk": ^1.5.1-beta1
+    "@hyperlane-xyz/utils": ^1.5.1-beta1
     "@hyperlane-xyz/widgets": ^1.5.0
     "@metamask/jazzicon": "https://github.com/jmrossy/jazzicon#7a8df28974b4e81129bfbe3cab76308b889032a6"
     "@rainbow-me/rainbowkit": 0.12.16

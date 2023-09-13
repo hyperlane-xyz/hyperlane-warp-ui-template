@@ -2,6 +2,8 @@ import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 
+import { toTitleCase } from '@hyperlane-xyz/utils';
+
 import { SmallSpinner } from '../../components/animation/SmallSpinner';
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import { Identicon } from '../../components/icons/Identicon';
@@ -14,7 +16,6 @@ import ResetIcon from '../../images/icons/reset-icon.svg';
 import WarningIcon from '../../images/icons/transfer-warning-status.svg';
 import Wallet from '../../images/icons/wallet.svg';
 import { tryClipboardSet } from '../../utils/clipboard';
-import { toTitleCase } from '../../utils/string';
 import { getAssetNamespace } from '../caip/tokens';
 import { getChainDisplayName } from '../chains/utils';
 import { useStore } from '../store';

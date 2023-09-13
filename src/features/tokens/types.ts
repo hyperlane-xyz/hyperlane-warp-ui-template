@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { ERC20Metadata, TokenType } from '@hyperlane-xyz/hyperlane-token';
-import { ProtocolType } from '@hyperlane-xyz/sdk';
+import { ProtocolType } from '@hyperlane-xyz/utils';
 
 export type MinimalTokenMetadata = Omit<ERC20Metadata, 'totalSupply'>;
 

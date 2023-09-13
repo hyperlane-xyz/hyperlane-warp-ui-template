@@ -1,8 +1,7 @@
-import { ChainMap, ChainMetadataWithArtifacts, ExplorerFamily } from '@hyperlane-xyz/sdk';
-import { solana, solanadevnet, solanatestnet } from '@hyperlane-xyz/sdk/dist/consts/chainMetadata';
+import { ChainMap, ChainMetadata, chainMetadata } from '@hyperlane-xyz/sdk';
 
 // A map of chain names to ChainMetadata
-export const chains: ChainMap<ChainMetadataWithArtifacts> = {
+export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
   // ----------- Add your chains here -----------------
   // Chains already in the SDK need not be included here. Example custom chain:
   // mycustomchain: {
@@ -31,57 +30,20 @@ export const chains: ChainMap<ChainMetadataWithArtifacts> = {
 
   // Including configs for some Solana chains by default
   solana: {
-    ...solana,
+    ...chainMetadata.solana,
     rpcUrls: [
       {
         http: process.env.NEXT_PUBLIC_SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com',
       },
     ],
-    // TODO move up to SDK
-    blockExplorers: [
-      {
-        name: 'Solana Explorer',
-        url: 'https://explorer.solana.com',
-        apiUrl: 'https://explorer.solana.com',
-        family: ExplorerFamily.Other,
-      },
-    ],
     mailbox: 'TODO',
-    interchainGasPaymaster: '',
-    validatorAnnounce: '',
   },
   solanatestnet: {
-    ...solanatestnet,
-    blockExplorers: [
-      {
-        name: 'Solana Explorer',
-        url: 'https://explorer.solana.com',
-        apiUrl: 'https://explorer.solana.com',
-        family: ExplorerFamily.Other,
-      },
-    ],
+    ...chainMetadata.solanatestnet,
     mailbox: 'TODO',
-    interchainGasPaymaster: '',
-    validatorAnnounce: '',
   },
   solanadevnet: {
-    ...solanadevnet,
-    blockExplorers: [
-      {
-        name: 'Solana Explorer',
-        url: 'https://explorer.solana.com',
-        apiUrl: 'https://explorer.solana.com',
-        family: ExplorerFamily.Other,
-      },
-    ],
+    ...chainMetadata.solanadevnet,
     mailbox: '4v25Dz9RccqUrTzmfHzJMsjd1iVoNrWzeJ4o6GYuJrVn',
-    interchainGasPaymaster: '',
-    validatorAnnounce: '',
   },
-};
-
-export const solanaChainToClusterName = {
-  solana: 'mainnet-beta',
-  solanatestnet: 'testnet',
-  solanadevnet: 'devnet',
 };

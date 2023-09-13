@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { toTitleCase } from '@hyperlane-xyz/utils';
 import { MessageStatus, MessageTimeline, useMessageTimeline } from '@hyperlane-xyz/widgets';
 
 import { ChainLogo } from '../../components/icons/ChainLogo';
@@ -10,7 +11,6 @@ import LinkIcon from '../../images/icons/external-link-icon.svg';
 import { formatTimestamp } from '../../utils/date';
 import { getHypExplorerLink } from '../../utils/links';
 import { logger } from '../../utils/logger';
-import { toTitleCase } from '../../utils/string';
 import { useTimeout } from '../../utils/timeout';
 import { getTransferStatusLabel } from '../../utils/transfer';
 import { getChainReference } from '../caip/chains';

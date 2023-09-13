@@ -1,11 +1,10 @@
-import { ProtocolType } from '@hyperlane-xyz/sdk';
+import { ProtocolType, bytesToProtocolAddress, eqAddress } from '@hyperlane-xyz/utils';
 
-import { areAddressesEqual, bytesToProtocolAddress } from '../../../utils/addresses';
 import { logger } from '../../../utils/logger';
 import { getCaip2Id } from '../../caip/chains';
 import { getChainIdFromToken, isNonFungibleToken } from '../../caip/tokens';
 import { getMultiProvider } from '../../multiProvider';
-import { AdapterFactory } from '../adapters/AdapterFactory';
+import { AdapterFactory } from '../AdapterFactory';
 import { TokenMetadata, TokenMetadataWithHypTokens } from '../types';
 
 import { RouteType, RoutesMap } from './types';
@@ -37,7 +36,7 @@ export async function fetchRemoteHypTokens(
       if (isNft) return { chain, router: formattedAddress, decimals: 0 };
       // Attempt to find the decimals from the token list
       const routerMetadata = allTokens.find((token) =>
-        areAddressesEqual(formattedAddress, token.routerAddress),
+        eqAddress(formattedAddress, token.routerAddress),
       );
       if (routerMetadata)
         return { chain, router: formattedAddress, decimals: routerMetadata.decimals };
@@ -155,5 +154,5 @@ function getChainsFromTokens(tokens: TokenMetadataWithHypTokens[]): ChainCaip2Id
 }
 
 function findTokenByRouter(tokens: TokenMetadataWithHypTokens[], router: Address) {
-  return tokens.find((t) => areAddressesEqual(t.routerAddress, router));
+  return tokens.find((t) => eqAddress(t.routerAddress, router));
 }

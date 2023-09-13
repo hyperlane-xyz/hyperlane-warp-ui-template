@@ -35,31 +35,4 @@ export const tokenList: WarpTokenConfig = [
     hypCollateralAddress: '0xDcbc0faAA269Cf649AC8950838664BB7B355BD6B',
     isNft: true,
   },
-
-  // proteus
-  {
-    type: 'native',
-    chainId: 88002,
-    hypNativeAddress: '0xd77b139de9cb97e891c1715929fcd03ae5867269',
-    name: 'Zebec',
-    symbol: 'wZBC',
-    decimals: 18,
-    logoURI: '/logos/zebec.png',
-  },
-
-  // solanadevnet
-  {
-    type: 'collateral',
-    chainId: 1399811151,
-    // address: '84DAG9VX5CvefQrBUGh9Gp66kmkat2voaM4MB2YwpGW1',
-    // hypCollateralAddress: 'Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr',
-
-    address: 'Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr',
-    hypCollateralAddress: '84DAG9VX5CvefQrBUGh9Gp66kmkat2voaM4MB2YwpGW1',
-    name: 'Zebec',
-    symbol: 'wZBC',
-    decimals: 6,
-    isSpl2022: false,
-    logoURI: '/logos/zebec.png',
-  },
 ];

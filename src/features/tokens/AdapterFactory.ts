@@ -33,11 +33,11 @@ export class AdapterFactory {
     const chainName = multiProvider.getChainMetadata(chainId).name;
     if (protocol == ProtocolType.Ethereum) {
       return isNativeToken(tokenCaip19Id)
-        ? new EvmNativeTokenAdapter(chainName, multiProvider)
+        ? new EvmNativeTokenAdapter(chainName, multiProvider, {})
         : new EvmTokenAdapter(chainName, multiProvider, { token: address });
     } else if (protocol === ProtocolType.Sealevel) {
       return isNativeToken(tokenCaip19Id)
-        ? new SealevelNativeTokenAdapter(chainName, multiProvider)
+        ? new SealevelNativeTokenAdapter(chainName, multiProvider, {})
         : new SealevelTokenAdapter(chainName, multiProvider, { token: address });
     } else {
       throw new Error(`Unsupported protocol: ${protocol}`);
@@ -127,7 +127,7 @@ export class AdapterFactory {
     SealevelAdapter: new (
       chainName: ChainName,
       mp: MultiProtocolProvider,
-      addresses: { token: Address; warp: Address; mailbox: Address },
+      addresses: { token: Address; warpRouter: Address; mailbox: Address },
       isSpl2022?: boolean,
     ) => IHypTokenAdapter,
   ) {
@@ -146,7 +146,7 @@ export class AdapterFactory {
         multiProvider,
         {
           token: convertToProtocolAddress(baseTokenAddress, protocol),
-          warp: convertToProtocolAddress(routerAddress, protocol),
+          warpRouter: convertToProtocolAddress(routerAddress, protocol),
           mailbox,
         },
         namespace === AssetNamespace.spl2022,

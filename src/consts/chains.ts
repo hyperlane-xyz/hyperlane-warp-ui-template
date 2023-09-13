@@ -1,5 +1,4 @@
-import { ChainMap, ChainMetadata, ExplorerFamily, chainMetadata } from '@hyperlane-xyz/sdk';
-import { ProtocolType } from '@hyperlane-xyz/utils';
+import { ChainMap, ChainMetadata, chainMetadata } from '@hyperlane-xyz/sdk';
 
 // A map of chain names to ChainMetadata
 export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
@@ -46,37 +45,5 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
   solanadevnet: {
     ...chainMetadata.solanadevnet,
     mailbox: '4v25Dz9RccqUrTzmfHzJMsjd1iVoNrWzeJ4o6GYuJrVn',
-  },
-  sepolia: {
-    ...chainMetadata.sepolia,
-    rpcUrls: [{ http: 'https://gateway.tenderly.co/public/sepolia' }],
-  },
-
-  proteustestnet: {
-    chainId: 88002,
-    domainId: 88002,
-    name: 'proteustestnet',
-    protocol: ProtocolType.Ethereum,
-    displayName: 'Proteus Testnet',
-    displayNameShort: 'Proteus',
-    nativeToken: {
-      name: 'Zebec',
-      symbol: 'ZBC',
-      decimals: 18,
-    },
-    rpcUrls: [
-      {
-        http: 'https://api.proteus.nautchain.xyz/solana',
-      },
-    ],
-    blockExplorers: [
-      {
-        name: 'Proteus Explorer',
-        url: 'https://proteus.nautscan.com/proteus',
-        apiUrl: 'https://proteus.nautscan.com/proteus',
-        family: ExplorerFamily.Other,
-      },
-    ],
-    mailbox: '0x918D3924Fad8F71551D9081172e9Bb169745461e',
   },
 };

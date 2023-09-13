@@ -1,12 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { ProtocolType } from '@hyperlane-xyz/sdk';
+import { ProtocolType, eqAddress } from '@hyperlane-xyz/utils';
 
-import { areAddressesEqual } from '../../utils/addresses';
 import { logger } from '../../utils/logger';
 import { getProtocolType } from '../caip/chains';
 import { getTokenAddress, isNativeToken, isNonFungibleToken } from '../caip/tokens';
-import { getProvider } from '../multiProvider';
+import { getEvmProvider } from '../multiProvider';
 import { useAccountForChain } from '../wallet/hooks';
 
 import { getErc20Contract, getErc721Contract } from './contracts/evmContracts';
@@ -51,13 +50,13 @@ export async function isApproveRequired(
     return false;
   }
   const spender = route.baseRouterAddress;
-  const provider = getProvider(route.originCaip2Id);
+  const provider = getEvmProvider(route.originCaip2Id);
   const tokenAddress = getTokenAddress(tokenCaip19Id);
   let isRequired: boolean;
   if (isNonFungibleToken(tokenCaip19Id)) {
     const contract = getErc721Contract(tokenAddress, provider);
     const approvedAddress = await contract.getApproved(amount);
-    isRequired = !areAddressesEqual(approvedAddress, spender);
+    isRequired = !eqAddress(approvedAddress, spender);
   } else {
     const contract = getErc20Contract(tokenAddress, provider);
     const allowance = await contract.allowance(owner, spender);

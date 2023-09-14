@@ -1,13 +1,14 @@
 {
   "name": "@hyperlane-xyz/warp-ui-template",
   "description": "A web app template for building Hyperlane Warp Route UIs",
-  "version": "1.4.1",
+  "version": "1.5.1",
   "author": "J M Rossy",
   "dependencies": {
     "@headlessui/react": "^1.7.14",
-    "@hyperlane-xyz/hyperlane-token": "^1.4.1",
-    "@hyperlane-xyz/sdk": "^1.4.1",
-    "@hyperlane-xyz/widgets": "^1.4.1",
+    "@hyperlane-xyz/hyperlane-token": "^1.5.1",
+    "@hyperlane-xyz/sdk": "^1.5.1",
+    "@hyperlane-xyz/utils": "^1.5.1",
+    "@hyperlane-xyz/widgets": "^1.5.0",
     "@metamask/jazzicon": "https://github.com/jmrossy/jazzicon#7a8df28974b4e81129bfbe3cab76308b889032a6",
     "@rainbow-me/rainbowkit": "0.12.16",
     "@solana/spl-token": "^0.3.8",
@@ -46,7 +47,7 @@
     "prettier": "^2.8.8",
     "tailwindcss": "^3.3.2",
     "ts-node": "^10.9.1",
-    "typescript": "^5.0.4"
+    "typescript": "^5.1.6"
   },
   "homepage": "https://www.hyperlane.xyz",
   "license": "Apache-2.0",

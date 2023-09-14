@@ -1,10 +1,11 @@
 import Image from 'next/image';
 import { useState } from 'react';
 
+import { shortenAddress } from '@hyperlane-xyz/utils';
+
 import { SolidButton } from '../../components/buttons/SolidButton';
 import { Identicon } from '../../components/icons/Identicon';
 import Wallet from '../../images/icons/wallet.svg';
-import { shortenAddress } from '../../utils/addresses';
 import { useIsSsr } from '../../utils/ssr';
 
 import { SideBarMenu } from './SideBarMenu';

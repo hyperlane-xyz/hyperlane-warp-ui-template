@@ -1,16 +1,17 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
 
-import { areAddressesEqual, isValidAddress } from '../../utils/addresses';
+import { eqAddress, isValidAddress } from '@hyperlane-xyz/utils';
+
 import { logger } from '../../utils/logger';
 import { getProtocolType } from '../caip/chains';
 import { parseCaip19Id, tryGetChainIdFromToken } from '../caip/tokens';
-import { getProvider } from '../multiProvider';
+import { getEvmProvider } from '../multiProvider';
 import { useStore } from '../store';
 import { TransferFormValues } from '../transfer/types';
 import { useAccountForChain } from '../wallet/hooks';
 
-import { AdapterFactory } from './adapters/AdapterFactory';
+import { AdapterFactory } from './AdapterFactory';
 import { getHypErc721Contract } from './contracts/evmContracts';
 import { RoutesMap } from './routes/types';
 import { getTokenRoute } from './routes/utils';
@@ -118,7 +119,7 @@ export async function fetchListOfERC721TokenId(
   const { chainCaip2Id, address: tokenAddress } = parseCaip19Id(tokenCaip19Id);
   logger.debug(`Fetching list of tokenID for account ${accountAddress} on chain ${chainCaip2Id}`);
 
-  const hypERC721 = getHypErc721Contract(tokenAddress, getProvider(chainCaip2Id));
+  const hypERC721 = getHypErc721Contract(tokenAddress, getEvmProvider(chainCaip2Id));
 
   const balance = await hypERC721.balanceOf(accountAddress);
   const index = Array.from({ length: parseInt(balance.toString()) }, (_, index) => index);
@@ -158,7 +159,7 @@ async function contractSupportsTokenByOwner(
   accountAddress: Address,
 ): Promise<boolean> {
   const { chainCaip2Id, address: tokenAddress } = parseCaip19Id(tokenCaip19Id);
-  const hypERC721 = getHypErc721Contract(tokenAddress, getProvider(chainCaip2Id));
+  const hypERC721 = getHypErc721Contract(tokenAddress, getEvmProvider(chainCaip2Id));
   try {
     await hypERC721.tokenOfOwnerByIndex(accountAddress, '0');
     return true;
@@ -187,7 +188,7 @@ export function useIsSenderNftOwner(tokenCaip19Id: TokenCaip19Id, tokenId: strin
 
   useEffect(() => {
     if (!senderAddress || !owner) setIsSenderNftOwner(null);
-    else setIsSenderNftOwner(areAddressesEqual(senderAddress, owner));
+    else setIsSenderNftOwner(eqAddress(senderAddress, owner));
   }, [owner, senderAddress, setIsSenderNftOwner]);
 
   return { isLoading, hasError, owner };
@@ -196,7 +197,7 @@ export function useIsSenderNftOwner(tokenCaip19Id: TokenCaip19Id, tokenId: strin
 // TODO solana support
 async function fetchERC721Owner(tokenCaip19Id: TokenCaip19Id, tokenId: string): Promise<string> {
   const { chainCaip2Id, address: tokenAddress } = parseCaip19Id(tokenCaip19Id);
-  const hypERC721 = getHypErc721Contract(tokenAddress, getProvider(chainCaip2Id));
+  const hypERC721 = getHypErc721Contract(tokenAddress, getEvmProvider(chainCaip2Id));
   try {
     const ownerAddress = await hypERC721.ownerOf(tokenId);
     return ownerAddress;

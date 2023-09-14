@@ -3,7 +3,14 @@ import { Form, Formik, useFormikContext } from 'formik';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 
-import { ProtocolSmallestUnit } from '@hyperlane-xyz/sdk';
+import {
+  ProtocolSmallestUnit,
+  fromWei,
+  fromWeiRounded,
+  isValidAddress,
+  toWei,
+  tryParseAmount,
+} from '@hyperlane-xyz/utils';
 import { WideChevron } from '@hyperlane-xyz/widgets';
 
 import { SmallSpinner } from '../../components/animation/SmallSpinner';
@@ -15,8 +22,6 @@ import { TextField } from '../../components/input/TextField';
 import { config } from '../../consts/config';
 import SwapIcon from '../../images/icons/swap.svg';
 import { Color } from '../../styles/Color';
-import { isValidAddress } from '../../utils/addresses';
-import { fromWei, fromWeiRounded, toWei, tryParseAmount } from '../../utils/amount';
 import { logger } from '../../utils/logger';
 import { getProtocolType } from '../caip/chains';
 import { getTokenAddress, isNonFungibleToken, parseCaip19Id } from '../caip/tokens';

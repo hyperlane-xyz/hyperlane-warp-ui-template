@@ -1,13 +1,8 @@
-import {
-  ChainMap,
-  ChainMetadataWithArtifacts,
-  ExplorerFamily,
-  ProtocolType,
-} from '@hyperlane-xyz/sdk';
-import { solana, solanadevnet, solanatestnet } from '@hyperlane-xyz/sdk/dist/consts/chainMetadata';
+import { ChainMap, ChainMetadata, ExplorerFamily, chainMetadata } from '@hyperlane-xyz/sdk';
+import { ProtocolType } from '@hyperlane-xyz/utils';
 
 // A map of chain names to ChainMetadata
-export const chains: ChainMap<ChainMetadataWithArtifacts> = {
+export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
   // ----------- Add your chains here -----------------
   // Chains already in the SDK need not be included here. Example custom chain:
   // mycustomchain: {
@@ -36,52 +31,21 @@ export const chains: ChainMap<ChainMetadataWithArtifacts> = {
 
   // Including configs for some Solana chains by default
   solana: {
-    ...solana,
+    ...chainMetadata.solana,
     rpcUrls: [
       {
         http: process.env.NEXT_PUBLIC_SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com',
       },
     ],
-    // TODO move up to SDK
-    blockExplorers: [
-      {
-        name: 'Solana Explorer',
-        url: 'https://explorer.solana.com',
-        apiUrl: 'https://explorer.solana.com',
-        family: ExplorerFamily.Other,
-      },
-    ],
     mailbox: 'Ge9atjAc3Ltu91VTbNpJDCjZ9CFxFyck4h3YBcTF9XPq',
-    interchainGasPaymaster: '',
-    validatorAnnounce: '',
   },
   solanatestnet: {
-    ...solanatestnet,
-    blockExplorers: [
-      {
-        name: 'Solana Explorer',
-        url: 'https://explorer.solana.com',
-        apiUrl: 'https://explorer.solana.com',
-        family: ExplorerFamily.Other,
-      },
-    ],
+    ...chainMetadata.solanatestnet,
     mailbox: 'TODO',
-    interchainGasPaymaster: '',
-    validatorAnnounce: '',
   },
   solanadevnet: {
-    ...solanadevnet,
-    blockExplorers: [
-      {
-        name: 'Solana Explorer',
-        url: 'https://explorer.solana.com',
-        apiUrl: 'https://explorer.solana.com',
-        family: ExplorerFamily.Other,
-      },
-    ],
+    ...chainMetadata.solanadevnet,
     mailbox: '4v25Dz9RccqUrTzmfHzJMsjd1iVoNrWzeJ4o6GYuJrVn',
-    interchainGasPaymaster: '',
-    validatorAnnounce: '',
   },
   proteustestnet: {
     chainId: 88002,
@@ -109,8 +73,6 @@ export const chains: ChainMap<ChainMetadataWithArtifacts> = {
       },
     ],
     mailbox: '0x918D3924Fad8F71551D9081172e9Bb169745461e',
-    interchainGasPaymaster: '0x06b62A9F5AEcc1E601D0E02732b4E1D0705DE7Db',
-    validatorAnnounce: '0xEEea93d0d0287c71e47B3f62AFB0a92b9E8429a1',
   },
   nautilus: {
     chainId: 22222,
@@ -135,13 +97,5 @@ export const chains: ChainMap<ChainMetadataWithArtifacts> = {
       estimateBlockTime: 1,
     },
     mailbox: '0xF59557dfacDc5a1cb8A36Af43aA4819a6A891e88',
-    interchainGasPaymaster: '0x3a464f746D23Ab22155710f44dB16dcA53e0775E',
-    validatorAnnounce: '0x23ce76645EC601148fa451e751eeB75785b97A00',
   },
-};
-
-export const solanaChainToClusterName = {
-  solana: 'mainnet-beta',
-  solanatestnet: 'testnet',
-  solanadevnet: 'devnet',
 };

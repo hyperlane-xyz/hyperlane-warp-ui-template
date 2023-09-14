@@ -1,6 +1,7 @@
 import { PropsWithChildren } from 'react';
 
-import { ProtocolType, chainMetadata } from '@hyperlane-xyz/sdk';
+import { chainMetadata } from '@hyperlane-xyz/sdk';
+import { ProtocolType } from '@hyperlane-xyz/utils';
 import { ChainLogo } from '@hyperlane-xyz/widgets';
 
 import { Modal } from '../../components/layout/Modal';

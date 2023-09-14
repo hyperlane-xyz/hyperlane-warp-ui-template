@@ -1,4 +1,4 @@
-import { ProtocolType } from '@hyperlane-xyz/sdk';
+import { ProtocolType } from '@hyperlane-xyz/utils';
 
 import { logger } from '../../utils/logger';
 

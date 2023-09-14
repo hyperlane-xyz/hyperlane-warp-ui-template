@@ -3,17 +3,17 @@ import { BigNumber, PopulatedTransaction as EvmTransaction, providers } from 'et
 import { useCallback, useState } from 'react';
 import { toast } from 'react-toastify';
 
-import { HyperlaneCore, ProtocolType } from '@hyperlane-xyz/sdk';
+import { IHypTokenAdapter } from '@hyperlane-xyz/hyperlane-token';
+import { HyperlaneCore } from '@hyperlane-xyz/sdk';
+import { ProtocolType, convertDecimals, toWei } from '@hyperlane-xyz/utils';
 
 import { toastTxSuccess } from '../../components/toast/TxSuccessToast';
-import { convertDecimals, toWei } from '../../utils/amount';
 import { logger } from '../../utils/logger';
 import { parseCaip2Id } from '../caip/chains';
 import { isNativeToken, isNonFungibleToken } from '../caip/tokens';
 import { getMultiProvider } from '../multiProvider';
 import { AppState, useStore } from '../store';
-import { AdapterFactory } from '../tokens/adapters/AdapterFactory';
-import { IHypTokenAdapter } from '../tokens/adapters/ITokenAdapter';
+import { AdapterFactory } from '../tokens/AdapterFactory';
 import { isApproveRequired } from '../tokens/approval';
 import { Route, RoutesMap } from '../tokens/routes/types';
 import { getTokenRoute, isRouteFromCollateral, isRouteToCollateral } from '../tokens/routes/utils';
@@ -104,13 +104,9 @@ async function executeTransfer({
 
   try {
     const { originCaip2Id, destinationCaip2Id, tokenCaip19Id, amount, recipientAddress } = values;
-    const { protocol: originProtocol, reference: originReference } = parseCaip2Id(originCaip2Id);
+    const { protocol: originProtocol } = parseCaip2Id(originCaip2Id);
     const { reference: destReference } = parseCaip2Id(destinationCaip2Id);
-
-    const multiProvider = getMultiProvider();
-    const destinationDomainId = multiProvider.getDomainId(destReference);
-    const originMetadata = multiProvider.getChainMetadataWithArtifacts(originReference);
-    const originMailbox = originMetadata.mailbox;
+    const destinationDomainId = getMultiProvider().getDomainId(destReference);
 
     const tokenRoute = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenCaip19Id, tokenRoutes);
     if (!tokenRoute) throw new Error('No token route found between chains');
@@ -144,7 +140,6 @@ async function executeTransfer({
         updateTransferStatus(transferIndex, s);
       },
       sendTransaction: transactionFns[originProtocol].sendTransaction,
-      originMailbox,
     };
     let transferTxHash: string;
     let msgId: string | undefined;
@@ -209,7 +204,6 @@ interface ExecuteTransferParams<TxResp> {
   activeChain: ActiveChainInfo;
   updateStatus: (s: TransferStatus) => void;
   sendTransaction: SendTransactionFn<TxResp>;
-  originMailbox?: Address;
 }
 
 async function executeEvmTransfer({
@@ -290,7 +284,6 @@ async function executeSealevelTransfer({
   activeChain,
   updateStatus,
   sendTransaction,
-  originMailbox,
 }: ExecuteTransferParams<void>) {
   const { originCaip2Id } = tokenRoute;
 
@@ -305,7 +298,6 @@ async function executeSealevelTransfer({
     destination: destinationDomainId,
     recipient: recipientAddress,
     fromAccountOwner: activeAccount.address,
-    mailbox: originMailbox,
   })) as SolTransaction;
 
   updateStatus(TransferStatus.SigningTransfer);

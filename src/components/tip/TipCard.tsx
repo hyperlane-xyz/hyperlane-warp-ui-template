@@ -13,7 +13,7 @@ export function TipCard() {
       <div className="flex items-end justify-between">
         <p className="text-white mt-1.5 text-xs sm:text-sm">
           Currently, you can bridge from BSC and Solana to Nautilus. Transfers originating Nautilus
-          are expected to go live September 1st.
+          are expected to go live soon.
         </p>
       </div>
       <div className="absolute right-3 top-3 invert">

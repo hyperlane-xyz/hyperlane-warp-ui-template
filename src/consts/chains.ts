@@ -1,4 +1,9 @@
-import { ChainMap, ChainMetadataWithArtifacts, ExplorerFamily } from '@hyperlane-xyz/sdk';
+import {
+  ChainMap,
+  ChainMetadataWithArtifacts,
+  ExplorerFamily,
+  ProtocolType,
+} from '@hyperlane-xyz/sdk';
 import { solana, solanadevnet, solanatestnet } from '@hyperlane-xyz/sdk/dist/consts/chainMetadata';
 
 // A map of chain names to ChainMetadata
@@ -76,6 +81,19 @@ export const chains: ChainMap<ChainMetadataWithArtifacts> = {
     ],
     mailbox: '4v25Dz9RccqUrTzmfHzJMsjd1iVoNrWzeJ4o6GYuJrVn',
     interchainGasPaymaster: '',
+    validatorAnnounce: '',
+  },
+  a8: {
+    name: 'a8',
+    protocol: ProtocolType.Ethereum,
+    chainId: 2863311531,
+    rpcUrls: [
+      {
+        http: 'https://rpc-testnet.ancient8.gg/',
+      },
+    ],
+    interchainGasPaymaster: '0x498c7ae2D9D246Cb7b16AB618d73724844481726',
+    mailbox: '0x47c9e7463Fb858EF1e03A4166dD83dDA831d859c',
     validatorAnnounce: '',
   },
 };

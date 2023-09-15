@@ -29,6 +29,7 @@ export function getToken(tokenCaip19Id: TokenCaip19Id) {
 
 export async function parseTokens() {
   if (!tokens) {
+    // @ts-ignore
     tokens = await parseTokenConfigs(tokenList);
   }
   return tokens;

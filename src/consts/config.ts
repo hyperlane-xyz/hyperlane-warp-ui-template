@@ -8,7 +8,7 @@ interface Config {
   debug: boolean; // Enables some debug features in the app
   version: string | null; // Matches version number in package.json
   explorerApiKeys: Record<string, string>; // Optional map of API keys for block explorer
-  showTipBox: boolean; // Show/Hide the blue tip box above the main form
+  showTipBox: boolean; // Show/Hide the blue tip box above the transfer form
   showDisabledTokens: boolean; // Show/Hide invalid token options in the selection modal
   walletConnectProjectId: string; // Project ID provided by walletconnect
   withdrawalWhitelist: string; // comma-separated list of CAIP2 domains to which transfers are supported

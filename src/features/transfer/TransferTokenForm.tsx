@@ -482,12 +482,12 @@ function validateFormValues(
     }
   }
 
-  if (
-    config.withdrawalWhitelist &&
-    !config.withdrawalWhitelist.split(',').includes(destinationCaip2Id)
-  ) {
-    return { destinationCaip2Id: 'Bridge is in deposit-only mode' };
-  }
+  // if (
+  //   config.withdrawalWhitelist &&
+  //   !config.withdrawalWhitelist.split(',').includes(destinationCaip2Id)
+  // ) {
+  //   return { destinationCaip2Id: 'Bridge is in deposit-only mode' };
+  // }
 
   if (
     config.transferBlacklist &&

@@ -3,9 +3,15 @@ import { BigNumber, PopulatedTransaction as EvmTransaction, providers } from 'et
 import { useCallback, useState } from 'react';
 import { toast } from 'react-toastify';
 
-import { IHypTokenAdapter } from '@hyperlane-xyz/hyperlane-token';
+import { IHypTokenAdapter, ITokenAdapter } from '@hyperlane-xyz/hyperlane-token';
 import { HyperlaneCore } from '@hyperlane-xyz/sdk';
-import { ProtocolType, convertDecimals, toWei } from '@hyperlane-xyz/utils';
+import {
+  ProtocolType,
+  convertDecimals,
+  fromWei,
+  fromWeiRounded,
+  toWei,
+} from '@hyperlane-xyz/utils';
 
 import { toastTxSuccess } from '../../components/toast/TxSuccessToast';
 import { logger } from '../../utils/logger';
@@ -104,7 +110,7 @@ async function executeTransfer({
 
   try {
     const { originCaip2Id, destinationCaip2Id, tokenCaip19Id, amount, recipientAddress } = values;
-    const { protocol: originProtocol } = parseCaip2Id(originCaip2Id);
+    const { protocol: originProtocol, reference: originReference } = parseCaip2Id(originCaip2Id);
     const { reference: destReference } = parseCaip2Id(destinationCaip2Id);
     const destinationDomainId = getMultiProvider().getDomainId(destReference);
 
@@ -126,6 +132,9 @@ async function executeTransfer({
     await ensureSufficientCollateral(tokenRoute, weiAmountOrId, isNft);
 
     const hypTokenAdapter = AdapterFactory.HypTokenAdapterFromRouteOrigin(tokenRoute);
+    const originNativeTokenAdapter = AdapterFactory.TokenAdapterFromAddress(
+      `${originProtocol}:${originReference}/native:0x0000000000000000000000000000000000000000`,
+    );
 
     const triggerParams: ExecuteTransferParams<any> = {
       weiAmountOrId,
@@ -133,6 +142,7 @@ async function executeTransfer({
       recipientAddress,
       tokenRoute,
       hypTokenAdapter,
+      originNativeTokenAdapter,
       activeAccount: activeAccounts.accounts[originProtocol],
       activeChain: activeChains.chains[originProtocol],
       updateStatus: (s: TransferStatus) => {
@@ -200,6 +210,7 @@ interface ExecuteTransferParams<TxResp> {
   recipientAddress: Address;
   tokenRoute: Route;
   hypTokenAdapter: IHypTokenAdapter;
+  originNativeTokenAdapter: ITokenAdapter;
   activeAccount: AccountInfo;
   activeChain: ActiveChainInfo;
   updateStatus: (s: TransferStatus) => void;
@@ -212,6 +223,7 @@ async function executeEvmTransfer({
   recipientAddress,
   tokenRoute,
   hypTokenAdapter,
+  originNativeTokenAdapter,
   activeAccount,
   activeChain,
   updateStatus,
@@ -249,10 +261,44 @@ async function executeEvmTransfer({
   const gasPayment = await hypTokenAdapter.quoteGasPayment(destinationDomainId);
   logger.debug('Quoted gas payment', gasPayment);
   // If sending native tokens (e.g. Eth), the gasPayment must be added to the tx value and sent together
-  const txValue =
-    isRouteFromCollateral(tokenRoute) && isNativeToken(baseTokenCaip19Id)
-      ? BigNumber.from(gasPayment).add(weiAmountOrId)
-      : gasPayment;
+  const isWarpingNativeToken =
+    isRouteFromCollateral(tokenRoute) && isNativeToken(baseTokenCaip19Id);
+  const txValue = isWarpingNativeToken ? BigNumber.from(gasPayment).add(weiAmountOrId) : gasPayment;
+
+  if (activeAccount.address) {
+    const originNativeBalance = await originNativeTokenAdapter.getBalance(activeAccount.address);
+
+    // Note this doesn't consider gas fees on the origin chain that are
+    // also required by the tx.
+    if (BigNumber.from(originNativeBalance).lte(txValue)) {
+      const { reference: originReference } = parseCaip2Id(originCaip2Id);
+      // getMetadata() throws for Native tokens, so we rely on the multiprovider instead
+      const { symbol: originNativeTokenSymbol, decimals: originNativeTokenDecimals } =
+        getMultiProvider().getChainMetadata(originReference).nativeToken || {};
+
+      const prettyNativeTokenString = (amount: string) => {
+        const prettyAmount = !originNativeTokenDecimals
+          ? fromWei(amount, originNativeTokenDecimals)
+          : fromWeiRounded(amount, originNativeTokenDecimals, false);
+
+        return `${prettyAmount}${originNativeTokenSymbol ? ` ${originNativeTokenSymbol}` : ''}`;
+      };
+
+      const prettyGasPayment = prettyNativeTokenString(gasPayment);
+      const prettyBalance = prettyNativeTokenString(originNativeBalance);
+
+      let toastError: string;
+      if (isWarpingNativeToken) {
+        const prettyTxValue = prettyNativeTokenString(txValue.toString());
+        toastError = `Native token balance insufficient to cover destination gas fees. Please add more native tokens, or bridge fewer tokens. Destination gas fees: ${prettyGasPayment}. Total required balance, including bridged tokens: ${prettyTxValue}. Current balance: ${prettyBalance}.`;
+      } else {
+        toastError = `Native token balance insufficient to cover destination gas fees. Please add more native tokens. Destination gas fees required: ${prettyGasPayment}. Current balance: ${prettyBalance}`;
+      }
+      toast.error(toastError, { autoClose: false });
+      throw new Error('Insufficient native token balance for interchain gas payment');
+    }
+  }
+
   const transferTxRequest = (await hypTokenAdapter.populateTransferRemoteTx({
     weiAmountOrId,
     recipient: recipientAddress,

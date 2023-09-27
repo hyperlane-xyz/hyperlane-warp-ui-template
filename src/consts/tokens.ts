@@ -81,20 +81,15 @@ export const tokenList: WarpTokenConfig = [
     isNft: false,
     logoURI: '/logos/bitcoin.svg',
   },
-
-  // POSE not enabled for now, apparently they already created a
-  // version of POSE on Nautilus & details of bridging need to be
-  // ironed out.
-
-  // {
-  //   chainId: 56,
-  //   name: 'PoseiSwap Token',
-  //   symbol: 'POSE',
-  //   decimals: 18,
-  //   type: 'collateral',
-  //   address: '0xd7518e8cfd7448201155bbbedeed88888e3575ae',
-  //   hypCollateralAddress: '0x807D2C6c3d64873Cc729dfC65fB717C3E05e682f',
-  //   isNft: false,
-  //   logoURI: '/logos/POSE.jpg',
-  // },
+  {
+    chainId: 22222,
+    name: 'PoseiSwap Token',
+    symbol: 'POSE',
+    decimals: 18,
+    type: 'collateral',
+    address: '0xB883935B47B0508b479CEE642DB4b9E2de387920',
+    hypCollateralAddress: '0x79B1257BDBCaeF98Da685A7c225b6e61a119Cb7a',
+    isNft: false,
+    logoURI: '/logos/POSE.jpg',
+  },
 ];

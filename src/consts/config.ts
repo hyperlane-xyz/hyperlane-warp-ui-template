@@ -20,7 +20,7 @@ export const config: Config = Object.freeze({
   debug: isDevMode,
   version,
   explorerApiKeys,
-  showTipBox: !!withdrawalWhitelist,
+  showTipBox: false, // !!withdrawalWhitelist,
   showDisabledTokens: false,
   walletConnectProjectId,
   withdrawalWhitelist,

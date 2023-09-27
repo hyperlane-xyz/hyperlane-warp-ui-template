@@ -489,6 +489,13 @@ function validateFormValues(
     return { destinationCaip2Id: 'Bridge is in deposit-only mode' };
   }
 
+  if (
+    config.transferBlacklist &&
+    config.transferBlacklist.split(',').includes(`${originCaip2Id}-${destinationCaip2Id}`)
+  ) {
+    return { destinationCaip2Id: 'Route is not currently allowed' };
+  }
+
   return {};
 }
 

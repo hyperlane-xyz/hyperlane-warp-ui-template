@@ -19,6 +19,7 @@ import { IconButton } from '../../components/buttons/IconButton';
 import { SolidButton } from '../../components/buttons/SolidButton';
 import { ChevronIcon } from '../../components/icons/Chevron';
 import { TextField } from '../../components/input/TextField';
+import { toastIgpDetails } from '../../components/toast/IgpDetailsToast';
 import { config } from '../../consts/config';
 import SwapIcon from '../../images/icons/swap.svg';
 import { Color } from '../../styles/Color';
@@ -34,10 +35,11 @@ import { useIsApproveRequired } from '../tokens/approval';
 import { useDestinationBalance, useOriginBalance } from '../tokens/balances';
 import { useRouteChains } from '../tokens/routes/hooks';
 import { RoutesMap } from '../tokens/routes/types';
-import { getTokenRoute } from '../tokens/routes/utils';
+import { getTokenRoute, isRouteFromNative } from '../tokens/routes/utils';
 import { useAccountForChain } from '../wallet/hooks';
 
 import { TransferFormValues } from './types';
+import { useIgpQuote } from './useIgpQuote';
 import { useTokenTransfer } from './useTokenTransfer';
 
 export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
@@ -49,10 +51,13 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
   // Flag for check current type of token
   const [isNft, setIsNft] = useState(false);
 
-  const balances = useStore((state) => state.balances);
+  const { balances, igpQuote } = useStore((state) => ({
+    balances: state.balances,
+    igpQuote: state.igpQuote,
+  }));
 
   const validate = (values: TransferFormValues) =>
-    validateFormValues(values, tokenRoutes, balances);
+    validateFormValues(values, tokenRoutes, balances, igpQuote);
 
   const onSubmitForm = (values: TransferFormValues) => {
     logger.debug('Reviewing transfer form values:', JSON.stringify(values));
@@ -190,7 +195,7 @@ function AmountSection({
   isReview: boolean;
 }) {
   const { values } = useFormikContext<TransferFormValues>();
-  const { balance, decimals } = useOriginBalance(values, tokenRoutes);
+  const { tokenBalance, tokenDecimals } = useOriginBalance(values, tokenRoutes);
 
   return (
     <div className="flex-1">
@@ -198,7 +203,7 @@ function AmountSection({
         <label htmlFor="amount" className="block uppercase text-sm text-gray-500 pl-0.5">
           Amount
         </label>
-        <TokenBalance label="My balance" balance={balance} decimals={decimals} />
+        <TokenBalance label="My balance" balance={tokenBalance} decimals={tokenDecimals} />
       </div>
       {isNft ? (
         <SelectOrInputTokenIds disabled={isReview} tokenRoutes={tokenRoutes} />
@@ -212,7 +217,7 @@ function AmountSection({
             step="any"
             disabled={isReview}
           />
-          <MaxButton disabled={isReview} balance={balance} decimals={decimals} />
+          <MaxButton disabled={isReview} balance={tokenBalance} decimals={tokenDecimals} />
         </div>
       )}
     </div>
@@ -401,9 +406,17 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
   const route = getTokenRoute(originCaip2Id, destinationCaip2Id, token, tokenRoutes);
   const isNft = token && isNonFungibleToken(token);
   const sendValue = isNft ? amount.toString() : toWei(amount, route?.originDecimals).toString();
-  const { isLoading, isApproveRequired } = useIsApproveRequired(route!, token, sendValue, visible);
-  const originProtocol = getProtocolType(originCaip2Id);
-  const originUnitName = ProtocolSmallestUnit[originProtocol];
+  const originUnitName = ProtocolSmallestUnit[getProtocolType(originCaip2Id)];
+
+  const { isLoading: isApproveLoading, isApproveRequired } = useIsApproveRequired(
+    token,
+    sendValue,
+    route,
+    visible,
+  );
+  const { isLoading: isQuoteLoading, igpQuote } = useIgpQuote(route);
+
+  const isLoading = isApproveLoading || isQuoteLoading;
 
   return (
     <div
@@ -430,11 +443,26 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
           <div>
             <h4>{`Transaction${isApproveRequired ? ' 2' : ''}: Transfer Remote`}</h4>
             <div className="mt-1.5 ml-1.5 pl-2 border-l border-gray-300 space-y-1.5 text-xs">
-              <p>{`Remote Token: ${route?.destRouterAddress}`}</p>
+              <p className="flex">
+                <span className="min-w-[7rem]">Remote Token</span>
+                <span>{route?.destRouterAddress}</span>
+              </p>
               {isNft ? (
-                <p>{`Token ID: ${sendValue}`}</p>
+                <p className="flex">
+                  <span className="min-w-[7rem]">Token ID</span>
+                  <span>{sendValue}</span>
+                </p>
               ) : (
-                <p>{`Amount (${originUnitName}): ${sendValue}`}</p>
+                <>
+                  <p className="flex">
+                    <span className="min-w-[7rem]">{`Amount (${originUnitName})`}</span>
+                    <span>{sendValue}</span>
+                  </p>
+                  <p className="flex">
+                    <span className="min-w-[7rem]">{`Interchain Gas (${originUnitName})`}</span>
+                    <span>{igpQuote?.weiAmount || '0'}</span>
+                  </p>
+                </>
               )}
             </div>
           </div>
@@ -448,6 +476,7 @@ function validateFormValues(
   values: TransferFormValues,
   tokenRoutes: RoutesMap,
   balances: AppState['balances'],
+  igpQuote: AppState['igpQuote'],
 ) {
   const { originCaip2Id, destinationCaip2Id, amount, tokenCaip19Id, recipientAddress } = values;
   const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenCaip19Id, tokenRoutes);
@@ -472,7 +501,16 @@ function validateFormValues(
 
   if (!isNft) {
     // Validate balances for ERC20-like tokens
-    if (sendValue.gt(balances.senderBalance)) return { amount: 'Insufficient balance' };
+    if (sendValue.gt(balances.senderTokenBalance)) return { amount: 'Insufficient balance' };
+    // Ensure balances can cover IGP fees
+    const igpWeiAmount = new BigNumber(igpQuote?.weiAmount || 0);
+    const requiredNativeBalance = isRouteFromNative(route)
+      ? sendValue.plus(igpWeiAmount)
+      : igpWeiAmount;
+    if (requiredNativeBalance.gt(balances.senderNativeBalance)) {
+      toastIgpDetails();
+      return { amount: 'Insufficient native token for gas' };
+    }
   } else {
     // Validate balances for ERC721-like tokens
     const { isSenderNftOwner, senderNftIds } = balances;

@@ -405,7 +405,7 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
 
   const route = getTokenRoute(originCaip2Id, destinationCaip2Id, token, tokenRoutes);
   const isNft = token && isNonFungibleToken(token);
-  const sendValue = isNft ? amount.toString() : toWei(amount, route?.originDecimals).toString();
+  const sendValue = isNft ? amount.toString() : toWei(amount, route?.originDecimals).toFixed(0);
   const originUnitName = ProtocolSmallestUnit[getProtocolType(originCaip2Id)];
 
   const { isLoading: isApproveLoading, isApproveRequired } = useIsApproveRequired(

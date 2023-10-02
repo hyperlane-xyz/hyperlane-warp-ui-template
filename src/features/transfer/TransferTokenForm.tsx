@@ -28,11 +28,13 @@ import { getProtocolType } from '../caip/chains';
 import { getTokenAddress, isNonFungibleToken, parseCaip19Id } from '../caip/tokens';
 import { ChainSelectField } from '../chains/ChainSelectField';
 import { getChainDisplayName } from '../chains/utils';
+import { getChainMetadata } from '../multiProvider';
 import { AppState, useStore } from '../store';
 import { SelectOrInputTokenIds } from '../tokens/SelectOrInputTokenIds';
 import { TokenSelectField } from '../tokens/TokenSelectField';
 import { useIsApproveRequired } from '../tokens/approval';
 import { useDestinationBalance, useOriginBalance } from '../tokens/balances';
+import { getToken } from '../tokens/metadata';
 import { useRouteChains } from '../tokens/routes/hooks';
 import { RoutesMap } from '../tokens/routes/types';
 import { getTokenRoute, isRouteFromNative } from '../tokens/routes/utils';
@@ -400,16 +402,18 @@ function SelfButton({ disabled }: { disabled?: boolean }) {
 
 function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes: RoutesMap }) {
   const {
-    values: { amount, originCaip2Id, destinationCaip2Id, tokenCaip19Id: token },
+    values: { amount, originCaip2Id, destinationCaip2Id, tokenCaip19Id },
   } = useFormikContext<TransferFormValues>();
 
-  const route = getTokenRoute(originCaip2Id, destinationCaip2Id, token, tokenRoutes);
-  const isNft = token && isNonFungibleToken(token);
+  const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenCaip19Id, tokenRoutes);
+  const isNft = tokenCaip19Id && isNonFungibleToken(tokenCaip19Id);
   const sendValue = isNft ? amount.toString() : toWei(amount, route?.originDecimals).toFixed(0);
   const originUnitName = ProtocolSmallestUnit[getProtocolType(originCaip2Id)];
+  const originTokenSymbol = getToken(tokenCaip19Id)?.symbol || '';
+  const originNativeTokenSymbol = getChainMetadata(originCaip2Id)?.nativeToken?.symbol || '';
 
   const { isLoading: isApproveLoading, isApproveRequired } = useIsApproveRequired(
-    token,
+    tokenCaip19Id,
     sendValue,
     route,
     visible,
@@ -435,7 +439,7 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
             <div>
               <h4>Transaction 1: Approve Transfer</h4>
               <div className="mt-1.5 ml-1.5 pl-2 border-l border-gray-300 space-y-1.5 text-xs">
-                <p>{`Token Address: ${getTokenAddress(token)}`}</p>
+                <p>{`Token Address: ${getTokenAddress(tokenCaip19Id)}`}</p>
                 <p>{`Collateral Address: ${route?.baseRouterAddress}`}</p>
               </div>
             </div>
@@ -456,11 +460,11 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
                 <>
                   <p className="flex">
                     <span className="min-w-[7rem]">{`Amount (${originUnitName})`}</span>
-                    <span>{sendValue}</span>
+                    <span>{`${sendValue} ${originTokenSymbol}`}</span>
                   </p>
                   <p className="flex">
                     <span className="min-w-[7rem]">{`Interchain Gas (${originUnitName})`}</span>
-                    <span>{igpQuote?.weiAmount || '0'}</span>
+                    <span>{`${igpQuote?.weiAmount || '0'} ${originNativeTokenSymbol}`}</span>
                   </p>
                 </>
               )}

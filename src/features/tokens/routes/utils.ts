@@ -1,3 +1,5 @@
+import { isNativeToken } from '../../caip/tokens';
+
 import { Route, RouteType, RoutesMap } from './types';
 
 export function getTokenRoutes(
@@ -53,4 +55,8 @@ export function isRouteFromSynthetic(route: Route) {
   return (
     route.type === RouteType.SyntheticToCollateral || route.type === RouteType.SyntheticToSynthetic
   );
+}
+
+export function isRouteFromNative(route: Route) {
+  return isRouteFromCollateral(route) && isNativeToken(route.baseTokenCaip19Id);
 }

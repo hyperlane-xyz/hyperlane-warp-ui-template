@@ -8,7 +8,7 @@ export const tokenList: WarpTokenConfig = [
     address: '0x37a56cdcD83Dce2868f721De58cB3830C44C6303',
     hypCollateralAddress: '0xC27980812E2E66491FD457D488509b7E04144b98',
     name: 'Zebec',
-    symbol: 'wZBC',
+    symbol: 'ZBC',
     decimals: 9,
     logoURI: '/logos/zebec.png',
   },
@@ -19,7 +19,7 @@ export const tokenList: WarpTokenConfig = [
     chainId: 22222,
     hypNativeAddress: '0x4501bBE6e731A4bC5c60C03A77435b2f6d5e9Fe7',
     name: 'Zebec',
-    symbol: 'wZBC',
+    symbol: 'ZBC',
     decimals: 18,
     logoURI: '/logos/zebec.png',
   },
@@ -81,20 +81,15 @@ export const tokenList: WarpTokenConfig = [
     isNft: false,
     logoURI: '/logos/bitcoin.svg',
   },
-
-  // POSE not enabled for now, apparently they already created a
-  // version of POSE on Nautilus & details of bridging need to be
-  // ironed out.
-
-  // {
-  //   chainId: 56,
-  //   name: 'PoseiSwap Token',
-  //   symbol: 'POSE',
-  //   decimals: 18,
-  //   type: 'collateral',
-  //   address: '0xd7518e8cfd7448201155bbbedeed88888e3575ae',
-  //   hypCollateralAddress: '0x807D2C6c3d64873Cc729dfC65fB717C3E05e682f',
-  //   isNft: false,
-  //   logoURI: '/logos/POSE.jpg',
-  // },
+  {
+    chainId: 22222,
+    name: 'PoseiSwap Token',
+    symbol: 'POSE',
+    decimals: 18,
+    type: 'collateral',
+    address: '0xB883935B47B0508b479CEE642DB4b9E2de387920',
+    hypCollateralAddress: '0x79B1257BDBCaeF98Da685A7c225b6e61a119Cb7a',
+    isNft: false,
+    logoURI: '/logos/POSE.jpg',
+  },
 ];

@@ -14,14 +14,14 @@ import { useAccountForChain } from '../wallet/hooks';
 import { AdapterFactory } from './AdapterFactory';
 import { getHypErc721Contract } from './contracts/evmContracts';
 import { RoutesMap } from './routes/types';
-import { getTokenRoute } from './routes/utils';
+import { getTokenRoute, isRouteFromNative } from './routes/utils';
 
 export function useOriginBalance(
   { originCaip2Id, destinationCaip2Id, tokenCaip19Id }: TransferFormValues,
   tokenRoutes: RoutesMap,
 ) {
   const address = useAccountForChain(originCaip2Id)?.address;
-  const setSenderBalance = useStore((state) => state.setSenderBalance);
+  const setSenderBalances = useStore((state) => state.setSenderBalances);
 
   const {
     isLoading,
@@ -40,18 +40,33 @@ export function useOriginBalance(
       const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenCaip19Id, tokenRoutes);
       const protocol = getProtocolType(originCaip2Id);
       if (!route || !address || !isValidAddress(address, protocol)) return null;
-      const adapter = AdapterFactory.HypTokenAdapterFromRouteOrigin(route);
-      const balance = await adapter.getBalance(address);
-      return { balance, decimals: route.originDecimals };
+      const tokenAdapter = AdapterFactory.HypTokenAdapterFromRouteOrigin(route);
+      const tokenBalance = await tokenAdapter.getBalance(address);
+
+      let nativeBalance;
+      if (isRouteFromNative(route)) {
+        nativeBalance = tokenBalance;
+      } else {
+        const nativeAdapter = AdapterFactory.NativeAdapterFromChain(originCaip2Id);
+        nativeBalance = await nativeAdapter.getBalance(address);
+      }
+
+      return { tokenBalance, tokenDecimals: route.originDecimals, nativeBalance };
     },
     refetchInterval: 5000,
   });
 
   useEffect(() => {
-    setSenderBalance(data?.balance || '0');
-  }, [data?.balance, setSenderBalance]);
+    setSenderBalances(data?.tokenBalance || '0', data?.nativeBalance || '0');
+  }, [data, setSenderBalances]);
 
-  return { isLoading, hasError, balance: data?.balance, decimals: data?.decimals };
+  return {
+    isLoading,
+    hasError,
+    tokenBalance: data?.tokenBalance,
+    tokenDecimals: data?.tokenDecimals,
+    nativeBalance: data?.nativeBalance,
+  };
 }
 
 export function useDestinationBalance(

@@ -17,17 +17,30 @@ export interface AppState {
     s: TransferStatus,
     options?: { msgId?: string; originTxHash?: string },
   ) => void;
+  failUnconfirmedTransfers: () => void;
+  transferLoading: boolean;
+  setTransferLoading: (isLoading: boolean) => void;
   balances: {
-    senderBalance: string;
+    senderTokenBalance: string;
+    senderNativeBalance: string;
     senderNftIds: string[] | null; // null means unknown
     isSenderNftOwner: boolean | null;
   };
-  failUnconfirmedTransfers: () => void;
-  setSenderBalance: (b: string) => void;
+  setSenderBalances: (tokenBalance: string, nativeBalance: string) => void;
   setSenderNftIds: (ids: string[] | null) => void;
   setIsSenderNftOwner: (isOwner: boolean | null) => void;
-  transferLoading: boolean;
-  setTransferLoading: (isLoading: boolean) => void;
+  igpQuote: {
+    weiAmount: string;
+    originCaip2Id: ChainCaip2Id;
+    destinationCaip2Id: ChainCaip2Id;
+  } | null;
+  setIgpQuote: (
+    quote: {
+      weiAmount: string;
+      originCaip2Id: ChainCaip2Id;
+      destinationCaip2Id: ChainCaip2Id;
+    } | null,
+  ) => void;
 }
 
 export const useStore = create<AppState>()(
@@ -64,18 +77,25 @@ export const useStore = create<AppState>()(
         set(() => ({ transferLoading: isLoading }));
       },
       balances: {
-        senderBalance: '0',
+        senderTokenBalance: '0',
+        senderNativeBalance: '0',
         senderNftIds: null,
         isSenderNftOwner: false,
       },
-      setSenderBalance: (senderBalance) => {
-        set((state) => ({ balances: { ...state.balances, senderBalance } }));
+      setSenderBalances: (senderTokenBalance, senderNativeBalance) => {
+        set((state) => ({
+          balances: { ...state.balances, senderTokenBalance, senderNativeBalance },
+        }));
       },
       setSenderNftIds: (senderNftIds) => {
         set((state) => ({ balances: { ...state.balances, senderNftIds } }));
       },
       setIsSenderNftOwner: (isSenderNftOwner) => {
         set((state) => ({ balances: { ...state.balances, isSenderNftOwner } }));
+      },
+      igpQuote: null,
+      setIgpQuote: (quote) => {
+        set(() => ({ igpQuote: quote }));
       },
     }),
     {

@@ -26,3 +26,7 @@ export function getSealevelProvider(id: ChainCaip2Id) {
   if (protocol !== ProtocolType.Sealevel) throw new Error('Expected Sealevel chain for provider');
   return getMultiProvider().getSolanaWeb3Provider(reference);
 }
+
+export function getChainMetadata(id: ChainCaip2Id) {
+  return getMultiProvider().getChainMetadata(parseCaip2Id(id).reference);
+}

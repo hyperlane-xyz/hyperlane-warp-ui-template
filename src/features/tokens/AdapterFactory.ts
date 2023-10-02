@@ -26,6 +26,19 @@ import {
 } from './routes/utils';
 
 export class AdapterFactory {
+  static NativeAdapterFromChain(chainCaip2Id: ChainCaip2Id) {
+    const { protocol, reference: chainId } = parseCaip2Id(chainCaip2Id);
+    const multiProvider = getMultiProvider();
+    const chainName = multiProvider.getChainMetadata(chainId).name;
+    if (protocol == ProtocolType.Ethereum) {
+      return new EvmNativeTokenAdapter(chainName, multiProvider, {});
+    } else if (protocol === ProtocolType.Sealevel) {
+      return new SealevelNativeTokenAdapter(chainName, multiProvider, {});
+    } else {
+      throw new Error(`Unsupported protocol: ${protocol}`);
+    }
+  }
+
   static TokenAdapterFromAddress(tokenCaip19Id: TokenCaip19Id) {
     const { address, chainCaip2Id } = parseCaip19Id(tokenCaip19Id);
     const { protocol, reference: chainId } = parseCaip2Id(chainCaip2Id);

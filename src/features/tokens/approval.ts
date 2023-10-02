@@ -13,9 +13,9 @@ import { Route } from './routes/types';
 import { isRouteFromCollateral } from './routes/utils';
 
 export function useIsApproveRequired(
-  route: Route,
   tokenCaip19Id: TokenCaip19Id,
   amount: string,
+  route?: Route,
   enabled = true,
 ) {
   const owner = useAccountForChain(route?.originCaip2Id)?.address;

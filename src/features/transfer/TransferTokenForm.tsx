@@ -550,8 +550,8 @@ function useFormInitialValues(
       (routes) => routes.length,
     )[0][0];
     return {
-      originCaip2Id: firstRoute.originCaip2Id,
-      destinationCaip2Id: firstRoute.destCaip2Id,
+      originCaip2Id: firstRoute.destCaip2Id,
+      destinationCaip2Id: firstRoute.originCaip2Id,
       amount: '',
       tokenCaip19Id: '' as TokenCaip19Id,
       recipientAddress: '',

@@ -1324,7 +1324,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/hyperlane-token@npm:^1.5.1":
+"@hyperlane-xyz/hyperlane-token@npm:^1.5.1-beta2":
   version: 1.5.1
   resolution: "@hyperlane-xyz/hyperlane-token@npm:1.5.1"
   dependencies:
@@ -1374,7 +1374,7 @@ __metadata:
   resolution: "@hyperlane-xyz/warp-ui-template@workspace:."
   dependencies:
     "@headlessui/react": ^1.7.14
-    "@hyperlane-xyz/hyperlane-token": ^1.5.1
+    "@hyperlane-xyz/hyperlane-token": ^1.5.1-beta2
     "@hyperlane-xyz/sdk": ^1.5.1
     "@hyperlane-xyz/utils": ^1.5.1
     "@hyperlane-xyz/widgets": ^1.5.0

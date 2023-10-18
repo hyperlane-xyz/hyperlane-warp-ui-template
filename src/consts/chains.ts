@@ -1,4 +1,4 @@
-import { ChainMap, ChainMetadata, chainMetadata } from '@hyperlane-xyz/sdk';
+import { ChainMap, ChainMetadata } from '@hyperlane-xyz/sdk';
 
 // A map of chain names to ChainMetadata
 export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
@@ -27,23 +27,22 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
   //   },
   //   logoURI: '/logo.svg',
   // },
-
-  // Including configs for some Solana chains by default
-  solana: {
-    ...chainMetadata.solana,
-    rpcUrls: [
-      {
-        http: process.env.NEXT_PUBLIC_SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com',
-      },
-    ],
-    mailbox: 'TODO',
-  },
-  solanatestnet: {
-    ...chainMetadata.solanatestnet,
-    mailbox: 'TODO',
-  },
-  solanadevnet: {
-    ...chainMetadata.solanadevnet,
-    mailbox: '4v25Dz9RccqUrTzmfHzJMsjd1iVoNrWzeJ4o6GYuJrVn',
-  },
+  // // Including configs for some Solana chains by default
+  // solana: {
+  //   ...chainMetadata.solana,
+  //   rpcUrls: [
+  //     {
+  //       http: process.env.NEXT_PUBLIC_SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com',
+  //     },
+  //   ],
+  //   mailbox: 'TODO',
+  // },
+  // solanatestnet: {
+  //   ...chainMetadata.solanatestnet,
+  //   mailbox: 'TODO',
+  // },
+  // solanadevnet: {
+  //   ...chainMetadata.solanadevnet,
+  //   mailbox: '4v25Dz9RccqUrTzmfHzJMsjd1iVoNrWzeJ4o6GYuJrVn',
+  // },
 };

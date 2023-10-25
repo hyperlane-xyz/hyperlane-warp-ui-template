@@ -19,6 +19,7 @@ function addressToSeed(address: string) {
 function _Identicon({ address, size: _size }: Props) {
   const size = _size ?? 34;
 
+  // TODO better handling of non-evm addresses here
   if (!address || !isValidAddressEvm(address)) {
     return <Circle size={size} classes="bg-blue-500" title="" />;
   }

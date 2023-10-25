@@ -237,3 +237,12 @@ Timeline tweaks
 .timeline-container h4 {
   font-size: clamp(0.75rem, 0.825rem, 0.9rem);
 }
+
+
+/*
+Fixes for cosmos chain selection modal
+====================================
+*/
+div[data-floating-ui-portal] > div {
+  z-index: 10000
+}

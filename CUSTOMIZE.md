@@ -19,6 +19,10 @@ Or it can be hidden entirely with the `showTipBox` setting in `./src/consts/conf
 
 ## Branding
 
+## App name
+
+The values to describe the app itself (e.g. to WalletConnect) are in `./src/consts/app.ts`
+
 ### Metadata
 
 The HTML metadata tags are located in `./src/pages/_document.tsx`

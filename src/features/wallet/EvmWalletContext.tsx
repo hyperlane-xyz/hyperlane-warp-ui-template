@@ -15,6 +15,7 @@ import { PropsWithChildren } from 'react';
 import { WagmiConfig, configureChains, createClient } from 'wagmi';
 import { publicProvider } from 'wagmi/providers/public';
 
+import { APP_NAME } from '../../consts/app';
 import { config } from '../../consts/config';
 import { tokenList } from '../../consts/tokens';
 import { Color } from '../../styles/Color';
@@ -23,7 +24,7 @@ import { getWagmiChainConfig } from '../chains/metadata';
 const { chains, provider } = configureChains(getWagmiChainConfig(), [publicProvider()]);
 
 const connectorConfig = {
-  appName: 'Hyperlane Warp Template',
+  appName: APP_NAME,
   chains,
   projectId: config.walletConnectProjectId,
 };

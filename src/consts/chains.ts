@@ -1,4 +1,5 @@
 import { ChainMap, ChainMetadata, chainMetadata } from '@hyperlane-xyz/sdk';
+import { ProtocolType } from '@hyperlane-xyz/utils';
 
 // A map of chain names to ChainMetadata
 export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
@@ -45,5 +46,20 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
   solanadevnet: {
     ...chainMetadata.solanadevnet,
     mailbox: '4v25Dz9RccqUrTzmfHzJMsjd1iVoNrWzeJ4o6GYuJrVn',
+  },
+  neutron: {
+    protocol: ProtocolType.Cosmos,
+    // TODO Fake ID, must change
+    chainId: 1234567890,
+    domainId: 1234567890,
+    name: 'neutron',
+    displayName: 'Neutron',
+    nativeToken: {
+      name: 'Neutron',
+      symbol: 'ntrn',
+      decimals: 6,
+    },
+    rpcUrls: [{ http: 'https://api.mainnet-beta.solana.com' }],
+    blockExplorers: [],
   },
 };

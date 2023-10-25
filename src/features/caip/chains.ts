@@ -8,7 +8,11 @@ export function getCaip2Id(protocol: ProtocolType, reference: string | number): 
   if (!Object.values(ProtocolType).includes(protocol)) {
     throw new Error(`Invalid chain environment: ${protocol}`);
   }
-  if (typeof reference !== 'number' || reference <= 0) {
+  if (
+    ([ProtocolType.Ethereum, ProtocolType.Sealevel].includes(protocol) &&
+      (typeof reference !== 'number' || reference <= 0)) ||
+    (protocol === ProtocolType.Cosmos && typeof reference !== 'string')
+  ) {
     throw new Error(`Invalid chain reference: ${reference}`);
   }
   return `${protocol}:${reference}`;

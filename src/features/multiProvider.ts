@@ -1,8 +1,6 @@
 import { MultiProtocolProvider } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 
-import '../consts/chains';
-
 import { parseCaip2Id } from './caip/chains';
 import { getChainConfigs } from './chains/metadata';
 

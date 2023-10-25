@@ -1,3 +1,4 @@
+import type { AssetList, Chain as CosmosChain } from '@chain-registry/types';
 import type { Chain as WagmiChain } from '@wagmi/core';
 import { z } from 'zod';
 
@@ -38,4 +39,56 @@ export function getWagmiChainConfig(): WagmiChain[] {
     (c) => !c.protocol || c.protocol === ProtocolType.Ethereum,
   );
   return evmChains.map(chainMetadataToWagmiChain);
+}
+
+export function getCosmosKitConfig(): { chains: CosmosChain[]; assets: AssetList[] } {
+  const cosmosChains = Object.values(getChainConfigs()).filter(
+    // TODO add protocol type
+    (c) => c.protocol === ProtocolType.Cosmos,
+  );
+  const chains = cosmosChains.map((c) => ({
+    chain_name: c.name,
+    status: 'live',
+    network_type: c.isTestnet ? 'testnet' : 'mainnet',
+    pretty_name: c.displayName || c.name,
+    chain_id: 'neutron-1',
+    // TODO add these fields to ChainMetadata
+    bech32_prefix: 'neutron',
+    slip44: 118,
+  }));
+  const assets = cosmosChains.map((c) => ({
+    chain_name: c.name,
+    assets: [
+      {
+        description: 'The native token of Neutron chain.',
+        denom_units: [
+          {
+            denom: 'untrn',
+            exponent: 0,
+          },
+          {
+            denom: 'ntrn',
+            exponent: 6,
+          },
+        ],
+        base: 'untrn',
+        name: 'Neutron',
+        display: 'ntrn',
+        symbol: 'NTRN',
+      },
+    ],
+  }));
+
+  return { chains, assets };
+}
+
+// TODO this assumes a single cosmos chain per app instance.
+// This is useful because the wallet hooks currently assume one connection per wallet
+// but in Cosmos-land connections are per-chain.
+let cosmosChainName: string;
+export function getCosmosChainName() {
+  if (!cosmosChainName) {
+    cosmosChainName = getCosmosKitConfig().chains[0].chain_name;
+  }
+  return cosmosChainName;
 }

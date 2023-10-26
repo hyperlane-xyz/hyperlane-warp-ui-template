@@ -83,6 +83,7 @@
   "types": "dist/src/index.d.ts",
   "resolutions": {
     "ethers": "^5.7",
-    "zustand": "^4.4"
+    "zustand": "^4.4",
+    "bn.js": "^5.2"
   }
 }

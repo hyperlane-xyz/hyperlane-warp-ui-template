@@ -163,7 +163,7 @@ export function useDisconnectFns(): Record<ProtocolType, () => Promise<void>> {
       [ProtocolType.Ethereum]: onClickDisconnect(ProtocolType.Ethereum, disconnectEvm),
       [ProtocolType.Sealevel]: onClickDisconnect(ProtocolType.Sealevel, disconnectSol),
       [ProtocolType.Cosmos]: onClickDisconnect(ProtocolType.Cosmos, disconnectCosmos),
-      [ProtocolType.Fuel]: onClickDisconnect(ProtocolType.Sealevel, () => {
+      [ProtocolType.Fuel]: onClickDisconnect(ProtocolType.Fuel, () => {
         'TODO';
       }),
     }),
@@ -343,14 +343,12 @@ export function useTransactionFns(): Record<
       if (activeCap2Id && activeCap2Id !== chainCaip2Id) await onSwitchCosmNetwork(chainCaip2Id);
       logger.debug(`Sending tx on chain ${chainCaip2Id}`);
       const client = await getSigningCosmWasmClient();
-      const response = await client.signAndBroadcast(cosmAddress, [tx], 'auto');
+      const result = await client.executeMultiple(cosmAddress, [tx], 'auto');
       const confirm = async () => {
-        if (response.code === 0) return response;
-        throw new Error(
-          `Cosmos tx ${response.transactionHash} failed: ${JSON.stringify(response.msgResponses)}`,
-        );
+        if (result.transactionHash) return result;
+        throw new Error(`Cosmos tx ${result.transactionHash} failed: ${JSON.stringify(result)}`);
       };
-      return { hash: response.transactionHash, confirm };
+      return { hash: result.transactionHash, confirm };
     },
     [onSwitchCosmNetwork, cosmAddress, getSigningCosmWasmClient],
   );

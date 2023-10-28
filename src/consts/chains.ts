@@ -71,7 +71,7 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
     domainId: 33333,
     bech32Prefix: 'dual',
     slip44: 118,
-    rpcUrls: [{ http: 'http://54.149.31.83:26657' }],
+    rpcUrls: [{ http: 'http://54.149.31.83:26657' }, { http: 'http://54.149.31.83:1317' }],
     nativeToken: {
       name: 'Neutron',
       symbol: 'NTRN',

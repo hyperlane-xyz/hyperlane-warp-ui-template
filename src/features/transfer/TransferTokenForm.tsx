@@ -5,9 +5,11 @@ import { toast } from 'react-toastify';
 
 import {
   ProtocolSmallestUnit,
+  ProtocolType,
   fromWei,
   fromWeiRounded,
   isValidAddress,
+  isZeroishAddress,
   toWei,
   tryParseAmount,
 } from '@hyperlane-xyz/utils';
@@ -76,7 +78,7 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
     >
       <Form className="flex flex-col items-stretch w-full mt-2">
         <ChainSelectSection chainCaip2Ids={chainCaip2Ids} isReview={isReview} />
-        <div className="mt-3 flex justify-between space-x-4">
+        <div className="mt-3 flex justify-between items-end space-x-4">
           <TokenSection tokenRoutes={tokenRoutes} setIsNft={setIsNft} isReview={isReview} />
           <AmountSection tokenRoutes={tokenRoutes} isNft={isNft} isReview={isReview} />
         </div>
@@ -408,7 +410,11 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
   const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenCaip19Id, tokenRoutes);
   const isNft = tokenCaip19Id && isNonFungibleToken(tokenCaip19Id);
   const sendValue = isNft ? amount.toString() : toWei(amount, route?.originDecimals).toFixed(0);
-  const originUnitName = ProtocolSmallestUnit[getProtocolType(originCaip2Id)];
+  const originProtocol = getProtocolType(originCaip2Id);
+  const originUnitName =
+    originProtocol !== ProtocolType.Cosmos
+      ? `(${ProtocolSmallestUnit[getProtocolType(originCaip2Id)]})`
+      : '';
   const originTokenSymbol = getToken(tokenCaip19Id)?.symbol || '';
   const originNativeTokenSymbol = getChainMetadata(originCaip2Id)?.nativeToken?.symbol || '';
 
@@ -459,11 +465,11 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
               ) : (
                 <>
                   <p className="flex">
-                    <span className="min-w-[7rem]">{`Amount (${originUnitName})`}</span>
+                    <span className="min-w-[7rem]">{`Amount ${originUnitName}`}</span>
                     <span>{`${sendValue} ${originTokenSymbol}`}</span>
                   </p>
                   <p className="flex">
-                    <span className="min-w-[7rem]">{`Interchain Gas (${originUnitName})`}</span>
+                    <span className="min-w-[7rem]">{`Interchain Gas ${originUnitName}`}</span>
                     <span>{`${igpQuote?.weiAmount || '0'} ${originNativeTokenSymbol}`}</span>
                   </p>
                 </>
@@ -491,7 +497,8 @@ function validateFormValues(
 
   if (!tokenCaip19Id) return { tokenCaip19Id: 'Token required' };
   const { address: tokenAddress } = parseCaip19Id(tokenCaip19Id);
-  if (!isValidAddress(tokenAddress)) return { tokenCaip19Id: 'Invalid token' };
+  if (!isZeroishAddress(tokenAddress) && !isValidAddress(tokenAddress))
+    return { tokenCaip19Id: 'Invalid token' };
 
   const destProtocol = getProtocolType(destinationCaip2Id);
   if (!isValidAddress(recipientAddress, destProtocol))

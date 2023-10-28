@@ -1,7 +1,8 @@
 import {
   ChainName,
-  CwHypNativeTokenAdapter,
-  CwHypTokenAdapter,
+  CwHypCollateralAdapter,
+  CwHypNativeAdapter,
+  CwHypSyntheticAdapter,
   CwNativeTokenAdapter,
   CwTokenAdapter,
   EvmHypCollateralAdapter,
@@ -40,8 +41,7 @@ export class AdapterFactory {
     } else if (protocol === ProtocolType.Sealevel) {
       return new SealevelNativeTokenAdapter(chainName, multiProvider, {});
     } else if (protocol === ProtocolType.Cosmos) {
-      // TODO cosmos don't assume denom is token
-      return new CwNativeTokenAdapter(chainName, multiProvider, 'token');
+      return new CwNativeTokenAdapter(chainName, multiProvider, {});
     } else {
       throw new Error(`Unsupported protocol: ${protocol}`);
     }
@@ -63,8 +63,7 @@ export class AdapterFactory {
         : new SealevelTokenAdapter(chainName, multiProvider, { token: address });
     } else if (protocol === ProtocolType.Cosmos) {
       return isNative
-        ? // TODO cosmos don't assume denom is token
-          new CwNativeTokenAdapter(chainName, multiProvider, 'token')
+        ? new CwNativeTokenAdapter(chainName, multiProvider, {})
         : new CwTokenAdapter(chainName, multiProvider, { token: address });
     } else {
       throw new Error(`Unsupported protocol: ${protocol}`);
@@ -79,9 +78,7 @@ export class AdapterFactory {
       baseTokenCaip19Id,
       EvmHypCollateralAdapter,
       isNative ? SealevelHypNativeAdapter : SealevelHypCollateralAdapter,
-      // TODO cosmos add collateral token support here
-      // @ts-ignore fix type below
-      CwHypNativeTokenAdapter,
+      isNative ? CwHypNativeAdapter : CwHypCollateralAdapter,
     );
   }
 
@@ -96,22 +93,21 @@ export class AdapterFactory {
       baseTokenCaip19Id,
       EvmHypSyntheticAdapter,
       SealevelHypSyntheticAdapter,
-      // TODO cosmos rename to CwHypSyntheticAdapter for consistency
-      CwHypTokenAdapter,
+      CwHypSyntheticAdapter,
     );
   }
 
   static HypTokenAdapterFromRouteOrigin(route: Route) {
     const { type, originCaip2Id, originRouterAddress, baseTokenCaip19Id } = route;
+    const isNative = isNativeToken(baseTokenCaip19Id);
     if (isRouteFromCollateral(route)) {
       return AdapterFactory.selectHypAdapter(
         originCaip2Id,
         originRouterAddress,
         baseTokenCaip19Id,
         EvmHypCollateralAdapter,
-        isNativeToken(baseTokenCaip19Id) ? SealevelHypNativeAdapter : SealevelHypCollateralAdapter,
-        // TODO cosmos collateral support here
-        CwHypTokenAdapter,
+        isNative ? SealevelHypNativeAdapter : SealevelHypCollateralAdapter,
+        isNative ? CwHypNativeAdapter : CwHypCollateralAdapter,
       );
     } else if (isRouteFromSynthetic(route)) {
       return AdapterFactory.selectHypAdapter(
@@ -120,7 +116,7 @@ export class AdapterFactory {
         baseTokenCaip19Id,
         EvmHypSyntheticAdapter,
         SealevelHypSyntheticAdapter,
-        CwHypTokenAdapter,
+        CwHypSyntheticAdapter,
       );
     } else {
       throw new Error(`Unsupported route type: ${type}`);
@@ -130,15 +126,15 @@ export class AdapterFactory {
   static HypTokenAdapterFromRouteDest(route: Route) {
     const { type, destCaip2Id, destRouterAddress, destTokenCaip19Id, baseTokenCaip19Id } = route;
     const tokenCaip19Id = destTokenCaip19Id || baseTokenCaip19Id;
+    const isNative = isNativeToken(baseTokenCaip19Id);
     if (isRouteToCollateral(route)) {
       return AdapterFactory.selectHypAdapter(
         destCaip2Id,
         destRouterAddress,
         tokenCaip19Id,
         EvmHypCollateralAdapter,
-        isNativeToken(tokenCaip19Id) ? SealevelHypNativeAdapter : SealevelHypCollateralAdapter,
-        // TODO cosmos collateral support here
-        CwHypTokenAdapter,
+        isNative ? SealevelHypNativeAdapter : SealevelHypCollateralAdapter,
+        isNative ? CwHypNativeAdapter : CwHypCollateralAdapter,
       );
     } else if (isRouteToSynthetic(route)) {
       return AdapterFactory.selectHypAdapter(
@@ -147,8 +143,7 @@ export class AdapterFactory {
         tokenCaip19Id,
         EvmHypSyntheticAdapter,
         SealevelHypSyntheticAdapter,
-        // TODO cosmos collateral support here
-        CwHypTokenAdapter,
+        CwHypSyntheticAdapter,
       );
     } else {
       throw new Error(`Unsupported route type: ${type}`);
@@ -173,8 +168,8 @@ export class AdapterFactory {
     CosmosAdapter: new (
       chainName: ChainName,
       mp: MultiProtocolProvider,
-      // TODO cosmos rename router to warpRouter for consistency
-      addresses: { token: Address; router: Address },
+      addresses: any,
+      denom?: string,
     ) => IHypTokenAdapter,
   ) {
     const { protocol, reference: chainId } = parseCaip2Id(chainCaip2Id);
@@ -200,11 +195,8 @@ export class AdapterFactory {
     } else if (protocol === ProtocolType.Cosmos) {
       if (!bech32Prefix) throw new Error('Bech32 prefix required for cosmos hyp adapter');
       return new CosmosAdapter(chainName, multiProvider, {
-        // TODO cosmos handle address conversion
         token: convertToProtocolAddress(baseTokenAddress, protocol, bech32Prefix),
-        router: convertToProtocolAddress(routerAddress, protocol, bech32Prefix),
-        // token: isNativeToken(baseTokenCaip19Id) ? '' : baseTokenAddress,
-        // router: routerAddress,
+        warpRouter: convertToProtocolAddress(routerAddress, protocol, bech32Prefix),
       });
     } else {
       throw new Error(`Unsupported protocol: ${protocol}`);

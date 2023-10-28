@@ -1,4 +1,5 @@
 import { ChakraProvider, extendTheme } from '@chakra-ui/react';
+import { GasPrice } from '@cosmjs/stargate';
 import { wallets as cosmostationWallets } from '@cosmos-kit/cosmostation';
 import { wallets as keplrWallets } from '@cosmos-kit/keplr';
 import { ChainProvider } from '@cosmos-kit/react';
@@ -37,7 +38,14 @@ export function CosmosWalletContext({ children }: PropsWithChildren<unknown>) {
             },
           },
         }}
-        signerOptions={{}}
+        signerOptions={{
+          signingCosmwasm: () => {
+            return {
+              // TODO cosmos get gas price from registry or RPC
+              gasPrice: GasPrice.fromString('0.025token'),
+            };
+          },
+        }}
         modalTheme={{ defaultTheme: 'light' }}
       >
         {children}

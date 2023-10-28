@@ -54,28 +54,79 @@ export function getCosmosKitConfig(): { chains: CosmosChain[]; assets: AssetList
     chain_id: c.chainId as string,
     bech32_prefix: c.bech32Prefix!,
     slip44: c.slip44!,
+    apis: {
+      rpc: [
+        {
+          address: c.rpcUrls[0].http,
+          provider: c.displayName || c.name,
+        },
+      ],
+      rest: [
+        {
+          address: c.rpcUrls[1].http,
+          provider: c.displayName || c.name,
+        },
+      ],
+    },
+    fees: {
+      fee_tokens: [
+        {
+          denom: 'token',
+        },
+      ],
+    },
+    staking: {
+      staking_tokens: [
+        {
+          denom: 'stake',
+        },
+      ],
+    },
   }));
+  // TODO cosmos cleanup
   const assets = cosmosChains.map((c) => {
     if (!c.nativeToken) throw new Error(`Missing native token for ${c.name}`);
     return {
       chain_name: c.name,
       assets: [
         {
-          description: 'The native token of Neutron chain.',
+          description: `The native token of ${c.displayName || c.name} chain.`,
           denom_units: [
+            // {
+            //   denom: `u${c.nativeToken.symbol}`,
+            //   exponent: 0,
+            // },
             {
-              denom: `u${c.nativeToken.symbol}`,
-              exponent: 0,
-            },
-            {
-              denom: c.nativeToken.symbol,
+              denom: 'token',
               exponent: c.nativeToken.decimals,
             },
           ],
-          base: `u${c.nativeToken.symbol}`,
-          name: c.nativeToken.name,
-          display: c.nativeToken.symbol,
-          symbol: c.nativeToken.symbol,
+          // base: `u${c.nativeToken.symbol}`,
+          // name: c.nativeToken.name,
+          // display: c.nativeToken.symbol,
+          // symbol: c.nativeToken.symbol,
+          base: 'token',
+          name: 'token',
+          display: 'token',
+          symbol: 'token',
+        },
+        {
+          description: `The native token of ${c.displayName || c.name} chain.`,
+          denom_units: [
+            // {
+            //   denom: `u${c.nativeToken.symbol}`,
+            //   exponent: 0,
+            // },
+            {
+              denom: 'stake',
+              exponent: c.nativeToken.decimals,
+            },
+          ],
+          // base: `u${c.nativeToken.symbol}`,
+          base: 'stake',
+          name: 'stake',
+          display: 'stake',
+          symbol: 'stake',
         },
       ],
     };

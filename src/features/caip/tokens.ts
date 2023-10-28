@@ -2,7 +2,7 @@ import { ethers } from 'ethers';
 
 import { ProtocolType, isValidAddress, isZeroishAddress } from '@hyperlane-xyz/utils';
 
-import { SOL_ZERO_ADDRESS } from '../../consts/values';
+import { COSMOS_ZERO_ADDRESS, SOL_ZERO_ADDRESS } from '../../consts/values';
 import { logger } from '../../utils/logger';
 
 export enum AssetNamespace {
@@ -81,6 +81,8 @@ export function getNativeTokenAddress(protocol: ProtocolType): Address {
     return ethers.constants.AddressZero;
   } else if (protocol === ProtocolType.Sealevel) {
     return SOL_ZERO_ADDRESS;
+  } else if (protocol === ProtocolType.Cosmos) {
+    return COSMOS_ZERO_ADDRESS;
   } else {
     throw new Error(`Unsupported protocol: ${protocol}`);
   }

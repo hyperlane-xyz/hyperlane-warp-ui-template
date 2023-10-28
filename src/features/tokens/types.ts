@@ -1,12 +1,12 @@
 import { z } from 'zod';
 
-import { ERC20Metadata, TokenType } from '@hyperlane-xyz/hyperlane-token';
+import { ERC20Metadata, TokenType } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 
 export type MinimalTokenMetadata = Omit<ERC20Metadata, 'totalSupply'>;
 
 const commonTokenFields = z.object({
-  chainId: z.number().positive(),
+  chainId: z.union([z.number().positive(), z.string()]),
   name: z.string().optional(),
   symbol: z.string().optional(),
   decimals: z.number().nonnegative().optional(), // decimals == 0 for NFTs

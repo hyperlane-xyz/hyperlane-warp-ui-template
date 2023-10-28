@@ -8,7 +8,7 @@ import {
   HypERC721Collateral__factory,
   HypERC721__factory,
   HypNative__factory,
-} from '@hyperlane-xyz/hyperlane-token';
+} from '@hyperlane-xyz/core';
 
 export function getHypErc20CollateralContract(
   contractAddress: Address,

@@ -3,8 +3,7 @@ import { BigNumber, PopulatedTransaction as EvmTransaction, providers } from 'et
 import { useCallback, useState } from 'react';
 import { toast } from 'react-toastify';
 
-import { IHypTokenAdapter } from '@hyperlane-xyz/hyperlane-token';
-import { HyperlaneCore } from '@hyperlane-xyz/sdk';
+import { HyperlaneCore, IHypTokenAdapter } from '@hyperlane-xyz/sdk';
 import { ProtocolType, convertDecimals, toWei } from '@hyperlane-xyz/utils';
 
 import { toastTxSuccess } from '../../components/toast/TxSuccessToast';
@@ -148,6 +147,9 @@ async function executeTransfer({
       ({ transferTxHash, msgId } = result);
     } else if (originProtocol === ProtocolType.Sealevel) {
       const result = await executeSealevelTransfer(triggerParams);
+      ({ transferTxHash } = result);
+    } else if (originProtocol === ProtocolType.Cosmos) {
+      const result = await executeCosmWasmTransfer(triggerParams);
       ({ transferTxHash } = result);
     } else {
       throw new Error(`Unsupported protocol type: ${originProtocol}`);
@@ -304,6 +306,39 @@ async function executeSealevelTransfer({
   const { hash: transferTxHash, confirm: confirmTransfer } = await sendTransaction({
     tx: transferTxRequest,
     chainCaip2Id: originCaip2Id,
+    activeCap2Id: activeChain.chainCaip2Id,
+  });
+
+  updateStatus(TransferStatus.ConfirmingTransfer);
+  await confirmTransfer();
+
+  return { transferTxHash };
+}
+
+async function executeCosmWasmTransfer({
+  weiAmountOrId,
+  destinationDomainId,
+  recipientAddress,
+  tokenRoute,
+  hypTokenAdapter,
+  activeChain,
+  updateStatus,
+  sendTransaction,
+}: ExecuteTransferParams<providers.TransactionReceipt>) {
+  updateStatus(TransferStatus.CreatingTransfer);
+
+  const transferTxRequest = (await hypTokenAdapter.populateTransferRemoteTx({
+    weiAmountOrId,
+    recipient: recipientAddress,
+    destination: destinationDomainId,
+    // TODO cosmos quote real interchain gas payment
+    txValue: '2500000',
+  })) as EvmTransaction;
+
+  updateStatus(TransferStatus.SigningTransfer);
+  const { hash: transferTxHash, confirm: confirmTransfer } = await sendTransaction({
+    tx: transferTxRequest,
+    chainCaip2Id: tokenRoute.originCaip2Id,
     activeCap2Id: activeChain.chainCaip2Id,
   });
 

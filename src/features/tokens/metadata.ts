@@ -1,4 +1,4 @@
-import { EvmTokenAdapter, ITokenAdapter, TokenType } from '@hyperlane-xyz/hyperlane-token';
+import { EvmTokenAdapter, ITokenAdapter, TokenType } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 
 import { tokenList } from '../../consts/tokens';

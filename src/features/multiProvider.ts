@@ -25,6 +25,12 @@ export function getSealevelProvider(id: ChainCaip2Id) {
   return getMultiProvider().getSolanaWeb3Provider(reference);
 }
 
+export function getCosmJsWasmProvider(id: ChainCaip2Id) {
+  const { reference, protocol } = parseCaip2Id(id);
+  if (protocol !== ProtocolType.Cosmos) throw new Error('Expected Cosmos chain for provider');
+  return getMultiProvider().getCosmJsWasmProvider(reference);
+}
+
 export function getChainMetadata(id: ChainCaip2Id) {
   return getMultiProvider().getChainMetadata(parseCaip2Id(id).reference);
 }

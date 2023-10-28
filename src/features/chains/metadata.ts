@@ -17,7 +17,7 @@ import { logger } from '../../utils/logger';
 let chainConfigs: ChainMap<ChainMetadata & { mailbox?: Address }>;
 
 export const ChainConfigSchema = z.record(
-  ChainMetadataSchema.extend({ mailbox: z.string().optional() }),
+  ChainMetadataSchema.and(z.object({ mailbox: z.string().optional() })),
 );
 
 export function getChainConfigs() {
@@ -51,33 +51,35 @@ export function getCosmosKitConfig(): { chains: CosmosChain[]; assets: AssetList
     status: 'live',
     network_type: c.isTestnet ? 'testnet' : 'mainnet',
     pretty_name: c.displayName || c.name,
-    chain_id: 'neutron-1',
-    // TODO add these fields to ChainMetadata
-    bech32_prefix: 'neutron',
-    slip44: 118,
+    chain_id: c.chainId as string,
+    bech32_prefix: c.bech32Prefix!,
+    slip44: c.slip44!,
   }));
-  const assets = cosmosChains.map((c) => ({
-    chain_name: c.name,
-    assets: [
-      {
-        description: 'The native token of Neutron chain.',
-        denom_units: [
-          {
-            denom: 'untrn',
-            exponent: 0,
-          },
-          {
-            denom: 'ntrn',
-            exponent: 6,
-          },
-        ],
-        base: 'untrn',
-        name: 'Neutron',
-        display: 'ntrn',
-        symbol: 'NTRN',
-      },
-    ],
-  }));
+  const assets = cosmosChains.map((c) => {
+    if (!c.nativeToken) throw new Error(`Missing native token for ${c.name}`);
+    return {
+      chain_name: c.name,
+      assets: [
+        {
+          description: 'The native token of Neutron chain.',
+          denom_units: [
+            {
+              denom: `u${c.nativeToken.symbol}`,
+              exponent: 0,
+            },
+            {
+              denom: c.nativeToken.symbol,
+              exponent: c.nativeToken.decimals,
+            },
+          ],
+          base: `u${c.nativeToken.symbol}`,
+          name: c.nativeToken.name,
+          display: c.nativeToken.symbol,
+          symbol: c.nativeToken.symbol,
+        },
+      ],
+    };
+  });
 
   return { chains, assets };
 }

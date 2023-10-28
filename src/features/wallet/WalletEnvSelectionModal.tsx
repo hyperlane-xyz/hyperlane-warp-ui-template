@@ -55,17 +55,21 @@ function EnvButton({
   children,
 }: PropsWithChildren<{
   subTitle: string;
-  logoChainId?: number;
+  logoChainId?: number | string;
   logo?: React.ReactElement;
   onClick?: () => void;
 }>) {
-  if (!logo && !logoChainId) throw new Error('Either logo or logoChainId must be provided');
+  if (!logo) {
+    if (!logoChainId) throw new Error('Either logo or logoChainId must be provided');
+    if (typeof logoChainId !== 'number') throw new Error('logoChainId must be a number');
+    logo = <ChainLogo chainId={logoChainId} size={34} />;
+  }
   return (
     <button
       onClick={onClick}
       className="w-full py-3.5 space-y-2.5 flex flex-col items-center rounded-lg border border-gray-200 hover:bg-gray-100 hover:border-gray-200 active:bg-gray-200 transition-all"
     >
-      {logo || <ChainLogo chainId={logoChainId} size={34} />}
+      {logo}
       <div className="uppercase text-gray-800 tracking-wide">{children}</div>
       <div className="text-sm text-gray-500">{`Connect to ${subTitle} compatible wallet`}</div>
     </button>

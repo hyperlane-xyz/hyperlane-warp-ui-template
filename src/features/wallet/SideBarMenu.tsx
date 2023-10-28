@@ -129,7 +129,9 @@ export function SideBarMenu({
                   <div className="text-gray-800 text-sm font-normal">
                     {a.connectorName || 'Wallet'}
                   </div>
-                  <div className="text-xs truncate w-64">{a.address ? a.address : 'Unknown'}</div>
+                  <div className="text-xs text-left truncate w-64">
+                    {a.address ? a.address : 'Unknown'}
+                  </div>
                 </div>
               </button>
             ))}

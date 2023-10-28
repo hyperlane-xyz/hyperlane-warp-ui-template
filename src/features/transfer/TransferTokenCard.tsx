@@ -12,13 +12,13 @@ export function TransferTokenCard() {
   const { tokenRoutes, isLoading, error: routesError } = useTokenRoutes();
 
   return (
-    <Card classes="w-100 sm:w-[31rem] relative">
+    <Card className="w-100 sm:w-[31rem]">
       <>
-        <div className="absolute left-0 right-0 -top-32 xs:-top-24 flex justify-center overflow-hidden z-10">
+        <div className="absolute left-0 right-0 -top-36 xs:-top-[6.5rem] flex justify-center overflow-hidden z-10">
           <WideChevron direction="s" height="100%" width="100" rounded={true} />
         </div>
         <div className="relative flex items-start justify-between z-20">
-          <h2 className="pl-0.5 text-lg">Send Tokens</h2>
+          <h2 className="pl-0.5 text-lg text-blue-500">Send Tokens</h2>
           {/* <IconButton
           imgSrc={GearIcon}
           width={20}

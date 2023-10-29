@@ -9,7 +9,7 @@ import { useStore } from '../store';
 import { AdapterFactory } from '../tokens/AdapterFactory';
 import { Route } from '../tokens/routes/types';
 
-const NON_EVM_IGP_QUOTE = '10000';
+const NON_EVM_IGP_QUOTE = '100';
 
 export function useIgpQuote(route?: Route, enabled = true) {
   const setIgpQuote = useStore((state) => state.setIgpQuote);

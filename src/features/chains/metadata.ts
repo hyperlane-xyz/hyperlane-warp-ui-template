@@ -118,7 +118,7 @@ export function getCosmosKitConfig(): { chains: CosmosChain[]; assets: AssetList
             //   exponent: 0,
             // },
             {
-              denom: 'stake',
+              denom: 'token',
               exponent: c.nativeToken.decimals,
             },
           ],

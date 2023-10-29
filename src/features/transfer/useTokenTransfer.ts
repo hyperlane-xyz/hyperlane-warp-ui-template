@@ -122,7 +122,7 @@ async function executeTransfer({
       params: values,
     });
 
-    await ensureSufficientCollateral(tokenRoute, weiAmountOrId, isNft);
+    // await ensureSufficientCollateral(tokenRoute, weiAmountOrId, isNft);
 
     const hypTokenAdapter = AdapterFactory.HypTokenAdapterFromRouteOrigin(tokenRoute);
 
@@ -332,7 +332,7 @@ async function executeCosmWasmTransfer({
     recipient: recipientAddress,
     destination: destinationDomainId,
     // TODO cosmos quote real interchain gas payment
-    txValue: '2500000',
+    txValue: '25000',
   })) as EvmTransaction;
 
   updateStatus(TransferStatus.SigningTransfer);

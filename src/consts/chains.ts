@@ -63,15 +63,18 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
   //   rpcUrls: [{ http: 'https://api.mainnet-beta.solana.com' }],
   //   blockExplorers: [],
   // },
-  dualitydevnet: {
+  neutron: {
     protocol: ProtocolType.Cosmos,
-    name: 'dualitydevnet',
-    chainId: 'duality-devnet',
-    displayName: 'Duality',
-    domainId: 33333,
-    bech32Prefix: 'dual',
+    name: 'neutron',
+    chainId: 'neutron-1',
+    displayName: 'Neutron',
+    domainId: 1853125230,
+    bech32Prefix: 'neutron',
     slip44: 118,
-    rpcUrls: [{ http: 'http://54.149.31.83:26657' }, { http: 'http://54.149.31.83:1317' }],
+    rpcUrls: [
+      { http: 'https://rpc-kralum.neutron-1.neutron.org' },
+      { http: 'grpc-kralum.neutron-1.neutron.org:80' },
+    ],
     nativeToken: {
       name: 'Neutron',
       symbol: 'NTRN',
@@ -79,5 +82,25 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
     },
     isTestnet: true,
     logoURI: '/logos/neutron.svg',
+  },
+  mantapacific: {
+    protocol: ProtocolType.Ethereum,
+    domainId: 169,
+    chainId: 169,
+    name: 'mantapacific',
+    displayName: 'Manta Pacific',
+    displayNameShort: 'Manta',
+    nativeToken: {
+      name: 'Ether',
+      symbol: 'ETH',
+      decimals: 18,
+    },
+    blocks: {
+      confirmations: 1,
+      reorgPeriod: 0,
+      estimateBlockTime: 3,
+    },
+    rpcUrls: [{ http: 'https://pacific-rpc.manta.network/http' }],
+    isTestnet: false,
   },
 };

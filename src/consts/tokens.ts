@@ -38,12 +38,13 @@ export const tokenList: WarpTokenConfig = [
 
   // Neutron token
   {
-    type: 'native',
+    type: 'collateral',
     chainId: 'duality-devnet',
     name: 'Neutron',
-    symbol: 'NTRN',
+    symbol: 'IBC',
     decimals: 6,
-    hypNativeAddress: 'dual1nzkcccxw00u9egqfuuq2ue23hjj6kxmfvmc5y0r7wchk5e6nypns6768kk',
+    address: "ibc/B5CB286F69D48B2C4F6F8D8CF59011C40590DCF8A91617A5FBA9FF0A7B21307F",
+    hypCollateralAddress: 'dual1nzkcccxw00u9egqfuuq2ue23hjj6kxmfvmc5y0r7wchk5e6nypns6768kk',
     logoURI: '/logos/neutron.svg',
   },
 ];

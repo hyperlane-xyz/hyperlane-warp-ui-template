@@ -13,7 +13,7 @@ export function AppLayout({ children }: PropsWithChildren) {
       <Head>
         {/* https://nextjs.org/docs/messages/no-document-viewport-meta */}
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Hyperlane Warp Route Template UI</title>
+        <title>Hyperlane Nexus Bridge</title>
       </Head>
       <div
         style={styles.container}

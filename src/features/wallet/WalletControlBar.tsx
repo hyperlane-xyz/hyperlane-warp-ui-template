@@ -31,50 +31,49 @@ export function WalletControlBar() {
       <div className="relative">
         {numReady === 0 && (
           <SolidButton
-            classes="py-1.5 px-2.5"
+            classes="py-2 px-3"
             onClick={() => setShowEnvSelectModal(true)}
             title="Choose wallet"
             icon={<Image src={Wallet} alt="" width={16} height={16} />}
+            color="white"
           >
-            <div className="ml-1.5 text-white text-xs sm:text-sm">Connect Wallet</div>
+            <div className="ml-1.5 text-xs sm:text-sm">Connect Wallet</div>
           </SolidButton>
         )}
 
         {numReady === 1 && (
-          <button
-            onClick={() => setIsSideBarOpen(true)}
-            className="px-2.5 py-1 flex items-center justify-center shadow-[0px_2px_4px_0px_rgba(0,0,0,0.10)] rounded-md bg-white hover:bg-gray-100 active:bg-gray-200 transition-all duration-500"
-          >
-            <Identicon address={readyAccounts[0].address} size={26} />
-            <div className="flex flex-col mx-3 items-start">
-              <div className="text-xs text-gray-500">
-                {readyAccounts[0].connectorName || 'Wallet'}
-              </div>
-              <div className="text-xs">
-                {readyAccounts[0].address
-                  ? shortenAddress(readyAccounts[0].address, true)
-                  : 'Unknown'}
+          <SolidButton onClick={() => setIsSideBarOpen(true)} classes="px-2.5 py-1" color="white">
+            <div className="flex items-center justify-center">
+              <Identicon address={readyAccounts[0].address} size={26} />
+              <div className="flex flex-col mx-3 items-start">
+                <div className="text-xs text-gray-500">
+                  {readyAccounts[0].connectorName || 'Wallet'}
+                </div>
+                <div className="text-xs">
+                  {readyAccounts[0].address
+                    ? shortenAddress(readyAccounts[0].address, true)
+                    : 'Unknown'}
+                </div>
               </div>
             </div>
-          </button>
+          </SolidButton>
         )}
 
         {numReady > 1 && (
-          <button
-            onClick={() => setIsSideBarOpen(true)}
-            className="px-2.5 py-1 flex items-center justify-center shadow-[0px_2px_4px_0px_rgba(0,0,0,0.10)] rounded-md bg-white hover:bg-gray-100 active:bg-gray-200 transition-all duration-500"
-          >
-            <div
-              style={{ height: 26, width: 26 }}
-              className="bg-blue-500 text-white flex items-center justify-center rounded-full"
-            >
-              {numReady}
+          <SolidButton onClick={() => setIsSideBarOpen(true)} classes="px-2.5 py-1" color="white">
+            <div className="flex items-center justify-center">
+              <div
+                style={{ height: 26, width: 26 }}
+                className="bg-pink-500 text-white flex items-center justify-center rounded-full"
+              >
+                {numReady}
+              </div>
+              <div className="flex flex-col mx-3 items-start">
+                <div className="text-xs text-gray-500">Wallets</div>
+                <div className="text-xs">{`${numReady} Connected`}</div>
+              </div>
             </div>
-            <div className="flex flex-col mx-3 items-start">
-              <div className="text-xs text-gray-500">Wallets</div>
-              <div className="text-xs">{`${numReady} Connected`}</div>
-            </div>
-          </button>
+          </SolidButton>
         )}
       </div>
 

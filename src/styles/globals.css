@@ -35,24 +35,6 @@ select:focus {
 }
 
 /*
-Background 
-==========
-*/
-#app-content::before {
-  content: '';
-  position: fixed;
-  z-index: -1;
-  display: block;
-  width: 100vw;
-  height: 100vh;
-  background-color: #f3f4f6;
-  background-image: url('/background-texture.png');
-  background-size: cover;
-  background-repeat: no-repeat;
-  background-position: center top;
-}
-
-/*
 Text and shadows
 ================
 */

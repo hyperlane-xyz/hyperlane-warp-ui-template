@@ -373,7 +373,7 @@ function MaxButton({
       onClick={onClick}
       color="gray"
       disabled={disabled}
-      classes="text-xs rounded-sm absolute right-0.5 top-2 bottom-0.5 px-2"
+      classes="text-xs absolute right-0.5 top-2 bottom-0.5 px-2"
     >
       MAX
     </SolidButton>
@@ -395,7 +395,7 @@ function SelfButton({ disabled }: { disabled?: boolean }) {
       onClick={onClick}
       color="gray"
       disabled={disabled}
-      classes="text-xs rounded-sm absolute right-0.5 top-2 bottom-0.5 px-1.5"
+      classes="text-xs absolute right-0.5 top-2 bottom-0.5 px-2"
     >
       SELF
     </SolidButton>

@@ -136,7 +136,7 @@ export function SideBarMenu({
               </button>
             ))}
             <button onClick={onConnectWallet} className={styles.btn}>
-              <Icon src={Wallet} alt="" size={18} className="invert" />
+              <Icon src={Wallet} alt="" size={18} />
               <div className="ml-2">Connect wallet</div>
             </button>
             <button onClick={onClickDisconnect} className={styles.btn}>

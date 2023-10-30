@@ -2,7 +2,7 @@ import { PropsWithChildren, ReactElement } from 'react';
 
 interface ButtonProps {
   type?: 'submit' | 'reset' | 'button';
-  color?: 'white' | 'blue' | 'green' | 'red' | 'gray'; // defaults to blue
+  color?: 'white' | 'blue' | 'green' | 'red' | 'gray' | 'pink'; // defaults to blue
   bold?: boolean;
   classes?: string;
   icon?: ReactElement;
@@ -24,12 +24,16 @@ export function SolidButton(
   } = props;
   const color = _color ?? 'blue';
 
-  const base = 'flex items-center justify-center rounded-md transition-all duration-500';
+  const base = 'flex items-center justify-center rounded-full transition-all duration-500';
   let baseColors, onHover, onActive;
   if (color === 'blue') {
     baseColors = 'bg-blue-500 text-white';
     onHover = 'hover:bg-blue-600';
     onActive = 'active:bg-blue-700';
+  } else if (color === 'pink') {
+    baseColors = 'bg-pink-500 text-white';
+    onHover = 'hover:bg-pink-600';
+    onActive = 'active:bg-pink-700';
   } else if (color === 'green') {
     baseColors = 'bg-green-500 text-white';
     onHover = 'hover:bg-green-600';
@@ -40,8 +44,8 @@ export function SolidButton(
     onActive = 'active:bg-red-400';
   } else if (color === 'white') {
     baseColors = 'bg-white text-black';
-    onHover = 'hover:bg-gray-100';
-    onActive = 'active:bg-gray-200';
+    onHover = 'hover:bg-blue-100';
+    onActive = 'active:bg-blue-200';
   } else if (color === 'gray') {
     baseColors = 'bg-gray-100 text-blue-500';
     onHover = 'hover:bg-gray-200';

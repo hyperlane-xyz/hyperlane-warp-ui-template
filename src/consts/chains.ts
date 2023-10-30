@@ -1,5 +1,4 @@
 import { ChainMap, ChainMetadata, chainMetadata } from '@hyperlane-xyz/sdk';
-import { ProtocolType } from '@hyperlane-xyz/utils';
 
 // A map of chain names to ChainMetadata
 export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
@@ -46,45 +45,5 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
   solanadevnet: {
     ...chainMetadata.solanadevnet,
     mailbox: '4v25Dz9RccqUrTzmfHzJMsjd1iVoNrWzeJ4o6GYuJrVn',
-  },
-  neutron: {
-    protocol: ProtocolType.Cosmos,
-    name: 'neutron',
-    chainId: 'neutron-1',
-    displayName: 'Neutron',
-    domainId: 1853125230,
-    bech32Prefix: 'neutron',
-    slip44: 118,
-    rpcUrls: [
-      { http: 'https://rpc-kralum.neutron-1.neutron.org' },
-      { http: 'grpc-kralum.neutron-1.neutron.org:80' },
-    ],
-    nativeToken: {
-      name: 'Neutron',
-      symbol: 'NTRN',
-      decimals: 6,
-    },
-    isTestnet: true,
-    logoURI: '/logos/neutron.svg',
-  },
-  mantapacific: {
-    protocol: ProtocolType.Ethereum,
-    domainId: 169,
-    chainId: 169,
-    name: 'mantapacific',
-    displayName: 'Manta Pacific',
-    displayNameShort: 'Manta',
-    nativeToken: {
-      name: 'Ether',
-      symbol: 'ETH',
-      decimals: 18,
-    },
-    blocks: {
-      confirmations: 1,
-      reorgPeriod: 0,
-      estimateBlockTime: 3,
-    },
-    rpcUrls: [{ http: 'https://pacific-rpc.manta.network/http' }],
-    isTestnet: false,
   },
 };

@@ -3,8 +3,7 @@ import Link from 'next/link';
 
 import { WalletControlBar } from '../../features/wallet/WalletControlBar';
 import Logo from '../../images/logos/app-logo.svg';
-import Name from '../../images/logos/app-name.svg';
-import Title from '../../images/logos/app-title.svg';
+import Name from '../../images/logos/hyperlane-white.svg';
 
 export function Header() {
   return (
@@ -13,7 +12,9 @@ export function Header() {
         <Link href="/" className="py-2 flex items-center">
           <Image src={Logo} width={24} alt="" />
           <Image src={Name} width={130} alt="" className="hidden sm:block mt-0.5 ml-2" />
-          <Image src={Title} width={210} alt="" className="mt-0.5 ml-2 pb-px" />
+          <h1 className="ml-2 pt-0.5 text-2xl text-white font-bold uppercase tracking-wide">
+            Nexus
+          </h1>
         </Link>
         <div className="flex flex-col items-end md:flex-row-reverse md:items-start gap-2">
           <WalletControlBar />

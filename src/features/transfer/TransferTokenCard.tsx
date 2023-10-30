@@ -3,6 +3,7 @@ import { WideChevron } from '@hyperlane-xyz/widgets';
 
 import { Spinner } from '../../components/animation/Spinner';
 import { Card } from '../../components/layout/Card';
+import { Color } from '../../styles/Color';
 // import GearIcon from '../../images/icons/gear.svg';
 import { useTokenRoutes } from '../tokens/routes/hooks';
 
@@ -15,10 +16,16 @@ export function TransferTokenCard() {
     <Card className="w-100 sm:w-[31rem]">
       <>
         <div className="absolute left-0 right-0 -top-36 xs:-top-[6.5rem] flex justify-center overflow-hidden z-10">
-          <WideChevron direction="s" height="100%" width="100" rounded={true} />
+          <WideChevron
+            direction="s"
+            height="100%"
+            width="100"
+            rounded={true}
+            color={Color.primaryMint}
+          />
         </div>
         <div className="relative flex items-start justify-between z-20">
-          <h2 className="pl-0.5 text-lg text-blue-500">Send Tokens</h2>
+          {/* <h2 className="pl-0.5 text-lg">Send Tokens</h2> */}
           {/* <IconButton
           imgSrc={GearIcon}
           width={20}

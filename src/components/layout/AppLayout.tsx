@@ -18,13 +18,13 @@ export function AppLayout({ children }: PropsWithChildren) {
       <div
         style={styles.container}
         id="app-content"
-        className="relative flex flex-col justify-between h-full min-h-screen w-full min-w-screen bg-blue-500"
+        className="relative flex flex-col justify-between h-full min-h-screen w-full min-w-screen bg-[#15171a]"
       >
         <div className="hidden md:flex absolute left-[8%] top-[15%]">
           <Image src={Planet1} alt="Planet 1" width={200} priority={false} quality={50}></Image>
         </div>
         <div className="hidden md:flex absolute right-[8%] bottom-1/4">
-          <Image src={Planet2} alt="Planet 2" width={300} priority={false} quality={50}></Image>
+          <Image src={Planet2} alt="Planet 2" width={220} priority={false} quality={50}></Image>
         </div>
         <Header />
         <div className="px-4 mx-auto grow flex items-center max-w-screen-xl">

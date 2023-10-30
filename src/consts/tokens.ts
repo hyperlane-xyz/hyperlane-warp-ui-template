@@ -44,7 +44,7 @@ export const tokenList: WarpTokenConfig = [
     symbol: 'ATOM',
     decimals: 6,
     address: 'ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9',
-    hypCollateralAddress: 'neutron1jakqxhdq7qmhrp8rdt4qnzkke957kd6vzp02q64kdakchl4sz02q0pcryu',
+    hypCollateralAddress: 'neutron1kduejjvqak5xd6csctxnndgmv6uc86ca0l7jn6cpxzjjr2hm8tws9nej4g',
     logoURI: '/logos/neutron.svg',
   },
 ];

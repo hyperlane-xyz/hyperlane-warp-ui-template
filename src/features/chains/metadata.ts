@@ -43,7 +43,6 @@ export function getWagmiChainConfig(): WagmiChain[] {
 
 export function getCosmosKitConfig(): { chains: CosmosChain[]; assets: AssetList[] } {
   const cosmosChains = Object.values(getChainConfigs()).filter(
-    // TODO add protocol type
     (c) => c.protocol === ProtocolType.Cosmos,
   );
   const chains = cosmosChains.map((c) => ({
@@ -83,7 +82,7 @@ export function getCosmosKitConfig(): { chains: CosmosChain[]; assets: AssetList
       ],
     },
   }));
-  // TODO cosmos cleanup
+  // TODO cosmos cleanup here
   const assets = cosmosChains.map((c) => {
     if (!c.nativeToken) throw new Error(`Missing native token for ${c.name}`);
     return {
@@ -113,16 +112,11 @@ export function getCosmosKitConfig(): { chains: CosmosChain[]; assets: AssetList
         {
           description: `The native token of ${c.displayName || c.name} chain.`,
           denom_units: [
-            // {
-            //   denom: `u${c.nativeToken.symbol}`,
-            //   exponent: 0,
-            // },
             {
-              denom: 'stake',
+              denom: 'token',
               exponent: c.nativeToken.decimals,
             },
           ],
-          // base: `u${c.nativeToken.symbol}`,
           base: 'stake',
           name: 'stake',
           display: 'stake',

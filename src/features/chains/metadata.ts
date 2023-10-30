@@ -135,7 +135,7 @@ export function getCosmosKitConfig(): { chains: CosmosChain[]; assets: AssetList
 let cosmosChainName: string;
 export function getCosmosChainName() {
   if (!cosmosChainName) {
-    cosmosChainName = getCosmosKitConfig().chains[0].chain_name;
+    cosmosChainName = getCosmosKitConfig()?.chains?.[0]?.chain_name || 'cosmoshub';
   }
   return cosmosChainName;
 }

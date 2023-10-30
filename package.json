@@ -4,10 +4,19 @@
   "version": "1.5.3",
   "author": "J M Rossy",
   "dependencies": {
+    "@chakra-ui/next-js": "^2.1.5",
+    "@chakra-ui/react": "^2.8.1",
+    "@cosmjs/cosmwasm-stargate": "^0.31.3",
+    "@cosmjs/stargate": "^0.31.3",
+    "@cosmos-kit/core": "^2.7.2",
+    "@cosmos-kit/cosmostation": "^2.4.4",
+    "@cosmos-kit/keplr": "^2.4.4",
+    "@cosmos-kit/react": "^2.5.3",
+    "@emotion/react": "^11.11.1",
+    "@emotion/styled": "^11.11.0",
     "@headlessui/react": "^1.7.14",
-    "@hyperlane-xyz/hyperlane-token": "^1.5.3",
-    "@hyperlane-xyz/sdk": "^1.5.3",
-    "@hyperlane-xyz/utils": "^1.5.3",
+    "@hyperlane-xyz/sdk": "^3.1.0-beta0",
+    "@hyperlane-xyz/utils": "^3.1.0-beta0",
     "@hyperlane-xyz/widgets": "^1.5.0",
     "@metamask/jazzicon": "https://github.com/jmrossy/jazzicon#7a8df28974b4e81129bfbe3cab76308b889032a6",
     "@rainbow-me/rainbowkit": "0.12.16",
@@ -20,8 +29,10 @@
     "@tanstack/react-query": "^4.29.7",
     "bignumber.js": "^9.0.2",
     "buffer": "^6.0.3",
+    "cosmjs-types": "^0.9.0",
     "ethers": "^5.7.2",
     "formik": "^2.2.9",
+    "framer-motion": "^10.16.4",
     "next": "^13.2.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -70,6 +81,8 @@
   },
   "types": "dist/src/index.d.ts",
   "resolutions": {
-    "ethers": "^5.7"
+    "ethers": "^5.7",
+    "zustand": "^4.4",
+    "bn.js": "^5.2"
   }
 }

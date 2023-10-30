@@ -1,8 +1,6 @@
 import { MultiProtocolProvider } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 
-import '../consts/chains';
-
 import { parseCaip2Id } from './caip/chains';
 import { getChainConfigs } from './chains/metadata';
 
@@ -25,6 +23,12 @@ export function getSealevelProvider(id: ChainCaip2Id) {
   const { reference, protocol } = parseCaip2Id(id);
   if (protocol !== ProtocolType.Sealevel) throw new Error('Expected Sealevel chain for provider');
   return getMultiProvider().getSolanaWeb3Provider(reference);
+}
+
+export function getCosmJsWasmProvider(id: ChainCaip2Id) {
+  const { reference, protocol } = parseCaip2Id(id);
+  if (protocol !== ProtocolType.Cosmos) throw new Error('Expected Cosmos chain for provider');
+  return getMultiProvider().getCosmJsWasmProvider(reference);
 }
 
 export function getChainMetadata(id: ChainCaip2Id) {

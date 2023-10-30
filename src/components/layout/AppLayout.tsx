@@ -27,7 +27,7 @@ export function AppLayout({ children }: PropsWithChildren) {
           <Image src={Planet2} alt="Planet 2" width={300} priority={false} quality={50}></Image>
         </div>
         <Header />
-        <div className="px-4 mx-auto grow max-w-screen-xl">
+        <div className="px-4 mx-auto grow flex items-center max-w-screen-xl">
           <main className="w-full flex-1 my-4 flex items-center justify-center">{children}</main>
         </div>
         <Footer />

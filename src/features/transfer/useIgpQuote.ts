@@ -3,13 +3,17 @@ import { useEffect } from 'react';
 
 import { ProtocolType } from '@hyperlane-xyz/utils';
 
+import { COSM_IGP_QUOTE, SOL_IGP_QUOTE } from '../../consts/values';
 import { getChainReference, getProtocolType } from '../caip/chains';
 import { getMultiProvider } from '../multiProvider';
 import { useStore } from '../store';
 import { AdapterFactory } from '../tokens/AdapterFactory';
 import { Route } from '../tokens/routes/types';
 
-const NON_EVM_IGP_QUOTE = '10000';
+const DEFAULT_IGP_QUOTES = {
+  [ProtocolType.Sealevel]: SOL_IGP_QUOTE,
+  [ProtocolType.Cosmos]: COSM_IGP_QUOTE,
+};
 
 export function useIgpQuote(route?: Route, enabled = true) {
   const setIgpQuote = useStore((state) => state.setIgpQuote);
@@ -24,9 +28,10 @@ export function useIgpQuote(route?: Route, enabled = true) {
       if (!route) return null;
 
       const originProtocol = getProtocolType(route.originCaip2Id);
-      if (originProtocol !== ProtocolType.Ethereum)
+
+      if (DEFAULT_IGP_QUOTES[originProtocol])
         return {
-          weiAmount: NON_EVM_IGP_QUOTE,
+          weiAmount: DEFAULT_IGP_QUOTES[originProtocol],
           originCaip2Id: route.originCaip2Id,
           destinationCaip2Id: route.destCaip2Id,
         };

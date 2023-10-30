@@ -1,4 +1,4 @@
-import { TokenType } from '@hyperlane-xyz/hyperlane-token';
+import { TokenType } from '@hyperlane-xyz/sdk';
 
 import { SOL_ZERO_ADDRESS } from '../../../consts/values';
 

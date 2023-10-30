@@ -7,6 +7,7 @@ import '@hyperlane-xyz/widgets/styles.css';
 
 import { ErrorBoundary } from '../components/errors/ErrorBoundary';
 import { AppLayout } from '../components/layout/AppLayout';
+import { CosmosWalletContext } from '../features/wallet/CosmosWalletContext';
 import { EvmWalletContext } from '../features/wallet/EvmWalletContext';
 import { SolanaWalletContext } from '../features/wallet/SolanaWalletContext';
 import '../styles/fonts.css';
@@ -33,12 +34,14 @@ export default function App({ Component, pageProps }: AppProps) {
     <ErrorBoundary>
       <EvmWalletContext>
         <SolanaWalletContext>
-          <QueryClientProvider client={reactQueryClient}>
-            <AppLayout>
-              <Component {...pageProps} />
-            </AppLayout>
-          </QueryClientProvider>
-          <ToastContainer transition={Zoom} position={toast.POSITION.BOTTOM_RIGHT} limit={2} />
+          <CosmosWalletContext>
+            <QueryClientProvider client={reactQueryClient}>
+              <AppLayout>
+                <Component {...pageProps} />
+              </AppLayout>
+            </QueryClientProvider>
+            <ToastContainer transition={Zoom} position={toast.POSITION.BOTTOM_RIGHT} limit={2} />
+          </CosmosWalletContext>
         </SolanaWalletContext>
       </EvmWalletContext>
     </ErrorBoundary>

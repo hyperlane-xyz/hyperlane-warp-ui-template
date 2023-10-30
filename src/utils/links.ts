@@ -5,7 +5,7 @@ import { parseCaip2Id } from '../features/caip/chains';
 import { isPermissionlessChain } from '../features/chains/utils';
 import { getMultiProvider } from '../features/multiProvider';
 
-// TODO test with solana chain config, or disallow it
+// TODO test with cosmos chain config, or disallow it
 export function getHypExplorerLink(originCaip2Id: ChainCaip2Id, msgId?: string) {
   if (!originCaip2Id || !msgId) return null;
   const baseLink = `${links.explorer}/message/${msgId}`;

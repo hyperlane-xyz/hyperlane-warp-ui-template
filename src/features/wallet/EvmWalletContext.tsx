@@ -11,19 +11,23 @@ import {
   trustWallet,
   walletConnectWallet,
 } from '@rainbow-me/rainbowkit/wallets';
-import { PropsWithChildren } from 'react';
+import { PropsWithChildren, useMemo } from 'react';
 import { WagmiConfig, configureChains, createClient } from 'wagmi';
 import { publicProvider } from 'wagmi/providers/public';
 
+import { ProtocolType } from '@hyperlane-xyz/utils';
+
+import { APP_NAME } from '../../consts/app';
 import { config } from '../../consts/config';
 import { tokenList } from '../../consts/tokens';
 import { Color } from '../../styles/Color';
 import { getWagmiChainConfig } from '../chains/metadata';
+import { getMultiProvider } from '../multiProvider';
 
 const { chains, provider } = configureChains(getWagmiChainConfig(), [publicProvider()]);
 
 const connectorConfig = {
-  appName: 'Hyperlane Warp Template',
+  appName: APP_NAME,
   chains,
   projectId: config.walletConnectProjectId,
 };
@@ -57,6 +61,13 @@ const wagmiClient = createClient({
 });
 
 export function EvmWalletContext({ children }: PropsWithChildren<unknown>) {
+  const initialChain = useMemo(() => {
+    const multiProvider = getMultiProvider();
+    return tokenList.filter(
+      (token) =>
+        multiProvider.tryGetChainMetadata(token.chainId)?.protocol === ProtocolType.Ethereum,
+    )?.[0]?.chainId as number;
+  }, []);
   return (
     <WagmiConfig client={wagmiClient}>
       <RainbowKitProvider
@@ -66,7 +77,7 @@ export function EvmWalletContext({ children }: PropsWithChildren<unknown>) {
           borderRadius: 'small',
           fontStack: 'system',
         })}
-        initialChain={tokenList[0]?.chainId}
+        initialChain={initialChain}
       >
         {children}
       </RainbowKitProvider>

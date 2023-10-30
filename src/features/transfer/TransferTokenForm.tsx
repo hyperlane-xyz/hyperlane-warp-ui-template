@@ -338,13 +338,13 @@ function ButtonSection({
         color="gray"
         onClick={() => setIsReview(false)}
         classes="px-6 py-1.5"
-        icon={<ChevronIcon direction="w" width={13} color={Color.primaryBlue} />}
+        icon={<ChevronIcon direction="w" width={13} color={Color.primaryMint} />}
       >
         <span>Edit</span>
       </SolidButton>
       <SolidButton
         type="button"
-        color="blue"
+        color="mint"
         onClick={triggerTransactionsHandler}
         classes="flex-1 px-3 py-1.5"
       >
@@ -409,7 +409,7 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
 
   const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenCaip19Id, tokenRoutes);
   const isNft = tokenCaip19Id && isNonFungibleToken(tokenCaip19Id);
-  const sendValue = isNft ? amount.toString() : toWei(amount, route?.originDecimals).toFixed(0);
+  const sendValueWei = isNft ? amount.toString() : toWei(amount, route?.originDecimals).toFixed(0);
   const originProtocol = getProtocolType(originCaip2Id);
   const originUnitName =
     originProtocol !== ProtocolType.Cosmos
@@ -420,7 +420,7 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
 
   const { isLoading: isApproveLoading, isApproveRequired } = useIsApproveRequired(
     tokenCaip19Id,
-    sendValue,
+    sendValueWei,
     route,
     visible,
   );
@@ -460,17 +460,17 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
               {isNft ? (
                 <p className="flex">
                   <span className="min-w-[7rem]">Token ID</span>
-                  <span>{sendValue}</span>
+                  <span>{sendValueWei}</span>
                 </p>
               ) : (
                 <>
                   <p className="flex">
                     <span className="min-w-[7rem]">{`Amount ${originUnitName}`}</span>
-                    <span>{`${sendValue} ${originTokenSymbol}`}</span>
+                    <span>{`${sendValueWei} u${originTokenSymbol}`}</span>
                   </p>
                   <p className="flex">
                     <span className="min-w-[7rem]">{`Interchain Gas ${originUnitName}`}</span>
-                    <span>{`${igpQuote?.weiAmount || '0'} ${originNativeTokenSymbol}`}</span>
+                    <span>{`${igpQuote?.weiAmount || '0'} u${originNativeTokenSymbol}`}</span>
                   </p>
                 </>
               )}

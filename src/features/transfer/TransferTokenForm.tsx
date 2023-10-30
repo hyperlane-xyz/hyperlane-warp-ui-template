@@ -33,7 +33,7 @@ import { getChainDisplayName } from '../chains/utils';
 import { getChainMetadata } from '../multiProvider';
 import { AppState, useStore } from '../store';
 import { SelectOrInputTokenIds } from '../tokens/SelectOrInputTokenIds';
-import { TokenSelectField } from '../tokens/TokenSelectField';
+import { AutomaticTokenField } from '../tokens/TokenSelectField';
 import { useIsApproveRequired } from '../tokens/approval';
 import { useDestinationBalance, useOriginBalance } from '../tokens/balances';
 import { getToken } from '../tokens/metadata';
@@ -177,7 +177,7 @@ function TokenSection({
       <label htmlFor="tokenCaip19Id" className="block uppercase text-sm text-gray-500 pl-0.5">
         Token
       </label>
-      <TokenSelectField
+      <AutomaticTokenField
         name="tokenCaip19Id"
         originCaip2Id={values.originCaip2Id}
         destinationCaip2Id={values.destinationCaip2Id}
@@ -560,7 +560,7 @@ function useFormInitialValues(
       originCaip2Id: firstRoute.originCaip2Id,
       destinationCaip2Id: firstRoute.destCaip2Id,
       amount: '',
-      tokenCaip19Id: '' as TokenCaip19Id,
+      tokenCaip19Id: firstRoute.baseTokenCaip19Id,
       recipientAddress: '',
     };
   }, [chainCaip2Ids, tokenRoutes]);

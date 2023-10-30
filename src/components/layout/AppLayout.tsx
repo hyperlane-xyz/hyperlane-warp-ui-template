@@ -41,6 +41,6 @@ const styles = {
     backgroundImage: 'url(/backgrounds/lines-bg-top.svg)',
     backgroundSize: '94vw',
     backgroundRepeat: 'no-repeat',
-    backgroundPosition: 'center 60px',
+    backgroundPosition: 'center 80px',
   },
 };

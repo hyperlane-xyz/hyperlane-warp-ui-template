@@ -8,7 +8,7 @@ import { ProtocolType, convertDecimals, toWei } from '@hyperlane-xyz/utils';
 
 import { toastTxSuccess } from '../../components/toast/TxSuccessToast';
 import { logger } from '../../utils/logger';
-import { parseCaip2Id } from '../caip/chains';
+import { getProtocolType, parseCaip2Id } from '../caip/chains';
 import { isNonFungibleToken } from '../caip/tokens';
 import { getMultiProvider } from '../multiProvider';
 import { AppState, useStore } from '../store';
@@ -122,7 +122,7 @@ async function executeTransfer({
       params: values,
     });
 
-    // await ensureSufficientCollateral(tokenRoute, weiAmountOrId, isNft);
+    await ensureSufficientCollateral(tokenRoute, weiAmountOrId, isNft);
 
     const hypTokenAdapter = AdapterFactory.HypTokenAdapterFromRouteOrigin(tokenRoute);
 
@@ -180,8 +180,16 @@ async function executeTransfer({
 // In certain cases, like when a synthetic token has >1 collateral tokens
 // it's possible that the collateral contract balance is insufficient to
 // cover the remote transfer. This ensures the balance is sufficient or throws.
-export async function ensureSufficientCollateral(route: Route, weiAmount: string, isNft?: boolean) {
+async function ensureSufficientCollateral(route: Route, weiAmount: string, isNft?: boolean) {
   if (!isRouteToCollateral(route) || isNft) return;
+
+  // TODO cosmos support here
+  if (
+    getProtocolType(route.originCaip2Id) === ProtocolType.Cosmos ||
+    getProtocolType(route.destCaip2Id) === ProtocolType.Cosmos
+  )
+    return;
+
   logger.debug('Ensuring collateral balance for route', route);
   const adapter = AdapterFactory.HypTokenAdapterFromRouteDest(route);
   const destinationBalance = await adapter.getBalance(route.destRouterAddress);

@@ -47,22 +47,6 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
     ...chainMetadata.solanadevnet,
     mailbox: '4v25Dz9RccqUrTzmfHzJMsjd1iVoNrWzeJ4o6GYuJrVn',
   },
-  // neutron: {
-  //   protocol: ProtocolType.Cosmos,
-  //   chainId: 'neut',
-  //   domainId: 1234567890,
-  //   name: 'neutron',
-  //   displayName: 'Neutron',
-  //   nativeToken: {
-  //     name: 'Neutron',
-  //     symbol: 'ntrn',
-  //     decimals: 6,
-  //   },
-  //   bech32Prefix: 'neutron',
-  //   slip44: 118,
-  //   rpcUrls: [{ http: 'https://api.mainnet-beta.solana.com' }],
-  //   blockExplorers: [],
-  // },
   neutron: {
     protocol: ProtocolType.Cosmos,
     name: 'neutron',

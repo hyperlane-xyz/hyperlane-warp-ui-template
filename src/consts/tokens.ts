@@ -40,11 +40,11 @@ export const tokenList: WarpTokenConfig = [
   {
     type: 'collateral',
     chainId: 'neutron-1',
-    name: 'Neutron',
-    symbol: 'ATOM',
+    name: 'TIA',
+    symbol: 'TIA',
     decimals: 6,
-    address: 'ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9',
-    hypCollateralAddress: 'neutron1kduejjvqak5xd6csctxnndgmv6uc86ca0l7jn6cpxzjjr2hm8tws9nej4g',
+    address: 'ibc/773B4D0A3CD667B2275D5A4A7A2F0909C0BA0F4059C0B9181E680DDF4965DCC7',
+    hypCollateralAddress: 'neutron1ch7x3xgpnj62weyes8vfada35zff6z59kt2psqhnx9gjnt2ttqdqtva3pa',
     logoURI: '/logos/neutron.svg',
   },
 ];

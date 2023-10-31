@@ -145,7 +145,9 @@ export function useDisconnectFns(): Record<ProtocolType, () => Promise<void>> {
   const { disconnect: disconnectSol } = useSolanaWallet();
 
   // Cosmos
-  const { disconnect: disconnectCosmos } = useCosmosChain(getCosmosChainName());
+  const { disconnect: disconnectCosmos, address: addressCosmos } = useCosmosChain(
+    getCosmosChainName(),
+  );
 
   const onClickDisconnect =
     (env: ProtocolType, disconnectFn?: () => Promise<void> | void) => async () => {
@@ -162,12 +164,14 @@ export function useDisconnectFns(): Record<ProtocolType, () => Promise<void>> {
     () => ({
       [ProtocolType.Ethereum]: onClickDisconnect(ProtocolType.Ethereum, disconnectEvm),
       [ProtocolType.Sealevel]: onClickDisconnect(ProtocolType.Sealevel, disconnectSol),
-      [ProtocolType.Cosmos]: onClickDisconnect(ProtocolType.Cosmos, disconnectCosmos),
+      [ProtocolType.Cosmos]: onClickDisconnect(ProtocolType.Cosmos, async () => {
+        if (addressCosmos) await disconnectCosmos();
+      }),
       [ProtocolType.Fuel]: onClickDisconnect(ProtocolType.Fuel, () => {
         'TODO';
       }),
     }),
-    [disconnectEvm, disconnectSol, disconnectCosmos],
+    [disconnectEvm, disconnectSol, disconnectCosmos, addressCosmos],
   );
 }
 

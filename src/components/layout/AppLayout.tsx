@@ -18,7 +18,7 @@ export function AppLayout({ children }: PropsWithChildren) {
       <div
         style={styles.container}
         id="app-content"
-        className="relative flex flex-col justify-between h-full min-h-screen w-full min-w-screen bg-[#15171a]"
+        className="relative flex flex-col justify-between h-full min-h-screen w-full min-w-screen bg-black2"
       >
         <div className="hidden md:flex absolute left-[8%] top-[15%]">
           <Image src={Planet1} alt="Planet 1" width={200} priority={false} quality={50}></Image>

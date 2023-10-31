@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { toTitleCase } from '@hyperlane-xyz/utils';
+import { ProtocolType, toTitleCase } from '@hyperlane-xyz/utils';
 import { MessageStatus, MessageTimeline, useMessageTimeline } from '@hyperlane-xyz/widgets';
 
 import { ChainLogo } from '../../components/icons/ChainLogo';
@@ -13,7 +13,7 @@ import { getHypExplorerLink } from '../../utils/links';
 import { logger } from '../../utils/logger';
 import { useTimeout } from '../../utils/timeout';
 import { getTransferStatusLabel } from '../../utils/transfer';
-import { getChainReference } from '../caip/chains';
+import { getChainReference, parseCaip2Id } from '../caip/chains';
 import { AssetNamespace, parseCaip19Id } from '../caip/tokens';
 import { getChainDisplayName, hasPermissionlessChain } from '../chains/utils';
 import { getMultiProvider } from '../multiProvider';
@@ -43,7 +43,7 @@ export function TransfersDetailsModal({
 
   const account = useAccountForChain(originCaip2Id);
   const multiProvider = getMultiProvider();
-  const originChain = getChainReference(originCaip2Id);
+  const { protocol: originProtocol, reference: originChain } = parseCaip2Id(originCaip2Id);
   const destChain = getChainReference(destinationCaip2Id);
   const { address: tokenAddress, namespace: tokenNamespace } = parseCaip19Id(tokenCaip19Id);
   const isNative = tokenNamespace === AssetNamespace.native;
@@ -59,9 +59,13 @@ export function TransfersDetailsModal({
         multiProvider.tryGetExplorerAddressUrl(destChain, recipientAddress),
         multiProvider.tryGetExplorerAddressUrl(originChain, tokenAddress),
       ]);
-      if (fromUrl) setFromUrl(fromUrl);
-      if (toUrl) setToUrl(toUrl);
-      if (tokenUrl) setTokenUrl(tokenUrl);
+      // TODO cosmos fix double slash problem in ChainMetadataManager
+      // Occurs when baseUrl has not other path (e.g. for manta explorer)
+      if (fromUrl) setFromUrl(fromUrl.replace(/\/{2}/g, '/'));
+      if (toUrl) setToUrl(toUrl.replace(/\/{2}/g, '/'));
+      // TODO cosmos support for ibc address
+      if (tokenUrl && originProtocol !== ProtocolType.Cosmos)
+        setTokenUrl(tokenUrl.replace(/\/{2}/g, '/'));
     } catch (error) {
       logger.error('Error fetching URLs:', error);
     }
@@ -71,6 +75,7 @@ export function TransfersDetailsModal({
     multiProvider,
     recipientAddress,
     originChain,
+    originProtocol,
     destChain,
     tokenAddress,
   ]);

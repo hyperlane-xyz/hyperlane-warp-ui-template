@@ -1,4 +1,4 @@
-import { ChainMap, ChainMetadata, chainMetadata } from '@hyperlane-xyz/sdk';
+import { ChainMap, ChainMetadata, ExplorerFamily, chainMetadata } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 
 // A map of chain names to ChainMetadata
@@ -64,6 +64,15 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
       symbol: 'NTRN',
       decimals: 6,
     },
+    blockExplorers: [
+      {
+        name: 'MintScan',
+        url: 'https://www.mintscan.io/neutron',
+        // TODO API not supported, using url to meet validation requirements
+        apiUrl: 'https://www.mintscan.io/neutron',
+        family: ExplorerFamily.Other,
+      },
+    ],
     isTestnet: true,
     logoURI: '/logos/neutron.svg',
   },
@@ -85,6 +94,13 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
       estimateBlockTime: 3,
     },
     rpcUrls: [{ http: 'https://pacific-rpc.manta.network/http' }],
-    isTestnet: false,
+    blockExplorers: [
+      {
+        name: 'Manta Explorer',
+        url: 'https://pacific-explorer.manta.network',
+        apiUrl: 'https://manta-pacific.calderaexplorer.xyz/api',
+        family: ExplorerFamily.Blockscout,
+      },
+    ],
   },
 };

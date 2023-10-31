@@ -340,7 +340,7 @@ async function executeCosmWasmTransfer({
     recipient: recipientAddress,
     destination: destinationDomainId,
     // TODO cosmos quote real interchain gas payment
-    txValue: '150000',
+    txValue: '1',
   })) as EvmTransaction;
 
   updateStatus(TransferStatus.SigningTransfer);

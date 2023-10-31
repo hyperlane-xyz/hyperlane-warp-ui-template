@@ -27,7 +27,12 @@ import SwapIcon from '../../images/icons/swap.svg';
 import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
 import { getProtocolType } from '../caip/chains';
-import { getTokenAddress, isNonFungibleToken, parseCaip19Id } from '../caip/tokens';
+import {
+  getChainIdFromToken,
+  getTokenAddress,
+  isNonFungibleToken,
+  parseCaip19Id,
+} from '../caip/tokens';
 import { ChainSelectField } from '../chains/ChainSelectField';
 import { getChainDisplayName } from '../chains/utils';
 import { getChainMetadata } from '../multiProvider';
@@ -415,8 +420,13 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
     originProtocol !== ProtocolType.Cosmos
       ? `(${ProtocolSmallestUnit[getProtocolType(originCaip2Id)]})`
       : '';
-  const originTokenSymbol = getToken(tokenCaip19Id)?.symbol || '';
-  const originNativeTokenSymbol = getChainMetadata(originCaip2Id)?.nativeToken?.symbol || '';
+  const tokenProtocol = getProtocolType(getChainIdFromToken(tokenCaip19Id));
+  let originTokenSymbol = getToken(tokenCaip19Id)?.symbol || '';
+  if (originTokenSymbol && tokenProtocol === ProtocolType.Cosmos)
+    originTokenSymbol = `u${originTokenSymbol}`;
+  let originNativeTokenSymbol = getChainMetadata(originCaip2Id)?.nativeToken?.symbol || '';
+  if (originNativeTokenSymbol && originProtocol === ProtocolType.Cosmos)
+    originNativeTokenSymbol = `u${originNativeTokenSymbol}`;
 
   const { isLoading: isApproveLoading, isApproveRequired } = useIsApproveRequired(
     tokenCaip19Id,
@@ -466,11 +476,11 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
                 <>
                   <p className="flex">
                     <span className="min-w-[7rem]">{`Amount ${originUnitName}`}</span>
-                    <span>{`${sendValueWei} u${originTokenSymbol}`}</span>
+                    <span>{`${sendValueWei} ${originTokenSymbol}`}</span>
                   </p>
                   <p className="flex">
                     <span className="min-w-[7rem]">{`Interchain Gas ${originUnitName}`}</span>
-                    <span>{`${igpQuote?.weiAmount || '0'} u${originNativeTokenSymbol}`}</span>
+                    <span>{`${igpQuote?.weiAmount || '0'} ${originNativeTokenSymbol}`}</span>
                   </p>
                 </>
               )}

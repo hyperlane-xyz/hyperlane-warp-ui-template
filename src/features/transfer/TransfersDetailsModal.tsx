@@ -59,13 +59,10 @@ export function TransfersDetailsModal({
         multiProvider.tryGetExplorerAddressUrl(destChain, recipientAddress),
         multiProvider.tryGetExplorerAddressUrl(originChain, tokenAddress),
       ]);
-      // TODO cosmos fix double slash problem in ChainMetadataManager
-      // Occurs when baseUrl has not other path (e.g. for manta explorer)
-      if (fromUrl) setFromUrl(fromUrl.replace(/\/{2}/g, '/'));
-      if (toUrl) setToUrl(toUrl.replace(/\/{2}/g, '/'));
+      if (fromUrl) setFromUrl(fixDoubleSlash(fromUrl));
+      if (toUrl) setToUrl(fixDoubleSlash(toUrl));
       // TODO cosmos support for ibc address
-      if (tokenUrl && originProtocol !== ProtocolType.Cosmos)
-        setTokenUrl(tokenUrl.replace(/\/{2}/g, '/'));
+      if (tokenUrl && originProtocol !== ProtocolType.Cosmos) setTokenUrl(fixDoubleSlash(tokenUrl));
     } catch (error) {
       logger.error('Error fetching URLs:', error);
     }
@@ -317,4 +314,10 @@ function useSignIssueWarning(status: TransferStatus) {
   }, [status, setShowWarning]);
   useTimeout(warningCallback, 15_000);
   return showWarning;
+}
+
+// TODO cosmos fix double slash problem in ChainMetadataManager
+// Occurs when baseUrl has not other path (e.g. for manta explorer)
+function fixDoubleSlash(url: string) {
+  return url.replace(/([^:]\/)\/+/g, '$1');
 }

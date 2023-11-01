@@ -9,40 +9,19 @@ import { ChainLogo } from '../../components/icons/ChainLogo';
 import { Identicon } from '../../components/icons/Identicon';
 import ArrowRightIcon from '../../images/icons/arrow-right.svg';
 import CollapseIcon from '../../images/icons/collapse-icon.svg';
-import ConfirmedIcon from '../../images/icons/confirmed-icon.svg';
-import DeliveredIcon from '../../images/icons/delivered-icon.svg';
 import Logout from '../../images/icons/logout.svg';
 import ResetIcon from '../../images/icons/reset-icon.svg';
-import WarningIcon from '../../images/icons/transfer-warning-status.svg';
 import Wallet from '../../images/icons/wallet.svg';
 import { tryClipboardSet } from '../../utils/clipboard';
+import { STATUSES_WITH_ICON, getIconByTransferStatus } from '../../utils/transfer';
 import { getAssetNamespace } from '../caip/tokens';
 import { getChainDisplayName } from '../chains/utils';
 import { useStore } from '../store';
 import { getToken } from '../tokens/metadata';
 import { TransfersDetailsModal } from '../transfer/TransfersDetailsModal';
-import { TransferContext, TransferStatus } from '../transfer/types';
+import { TransferContext } from '../transfer/types';
 
 import { useAccounts, useDisconnectFns } from './hooks';
-
-const STATUSES_WITH_ICON = [
-  TransferStatus.Delivered,
-  TransferStatus.ConfirmedTransfer,
-  TransferStatus.Failed,
-];
-
-const getIconByTransferStatus = (status: TransferStatus) => {
-  switch (status) {
-    case TransferStatus.Delivered:
-      return DeliveredIcon;
-    case TransferStatus.ConfirmedTransfer:
-      return ConfirmedIcon;
-    case TransferStatus.Failed:
-      return WarningIcon;
-    default:
-      return WarningIcon;
-  }
-};
 
 export function SideBarMenu({
   onConnectWallet,
@@ -120,7 +99,7 @@ export function SideBarMenu({
               <button
                 key={a.address}
                 onClick={onClickCopy(a.address)}
-                className={`${styles.btn} border border-gray-300 rounded-md`}
+                className={`${styles.btn} border border-gray-200 rounded-xl`}
               >
                 <div className="shrink-0">
                   <Identicon address={a.address} size={40} />
@@ -157,7 +136,7 @@ export function SideBarMenu({
                       setSelectedTransfer(t);
                       setIsModalOpen(true);
                     }}
-                    className="flex justify-between items-center rounded-md border border-gray-300 px-2.5 py-2 mb-3 hover:bg-gray-100 active:bg-gray-200 transition-all duration-500"
+                    className="flex justify-between items-center rounded-xl border border-gray-200 px-2.5 py-2 mb-2.5 hover:bg-gray-200 active:bg-gray-300 transition-all duration-500"
                   >
                     <div className="flex">
                       <div className="mr-2.5 flex flex-col items-center justify-center rounded-full bg-gray-100 h-[2.25rem] w-[2.25rem] p-1.5">
@@ -251,5 +230,5 @@ function Icon({
 }
 
 const styles = {
-  btn: 'w-full flex items-center px-2.5 py-2 text-sm hover:bg-gray-100 active:bg-gray-200 rounded transition-all duration-500',
+  btn: 'w-full flex items-center px-2.5 py-2 text-sm hover:bg-gray-200 active:bg-gray-300 rounded transition-all duration-500',
 };

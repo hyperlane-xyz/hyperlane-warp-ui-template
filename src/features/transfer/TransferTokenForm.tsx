@@ -13,13 +13,13 @@ import {
   toWei,
   tryParseAmount,
 } from '@hyperlane-xyz/utils';
-import { WideChevron } from '@hyperlane-xyz/widgets';
 
 import { SmallSpinner } from '../../components/animation/SmallSpinner';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
 import { IconButton } from '../../components/buttons/IconButton';
 import { SolidButton } from '../../components/buttons/SolidButton';
 import { ChevronIcon } from '../../components/icons/Chevron';
+import { WideChevron } from '../../components/icons/WideChevron';
 import { TextField } from '../../components/input/TextField';
 import { toastIgpDetails } from '../../components/toast/IgpDetailsToast';
 import { config } from '../../consts/config';
@@ -129,17 +129,6 @@ function ChainSelectSection({
   chainCaip2Ids: ChainCaip2Id[];
   isReview: boolean;
 }) {
-  const ChevronIcon = ({ classes }: { classes?: string }) => (
-    <WideChevron
-      width="17"
-      height="100%"
-      direction="e"
-      color={Color.lightGray}
-      classes={classes}
-      rounded={true}
-    />
-  );
-
   return (
     <div className="flex items-center justify-center space-x-7 sm:space-x-10">
       <ChainSelectField
@@ -150,9 +139,9 @@ function ChainSelectSection({
       />
       <div className="flex flex-col items-center">
         <div className="flex mb-6 sm:space-x-1.5">
-          <ChevronIcon classes="hidden sm:block" />
-          <ChevronIcon />
-          <ChevronIcon />
+          <WideChevron classes="hidden sm:block" />
+          <WideChevron />
+          <WideChevron />
         </div>
         <SwapChainsButton disabled={isReview} />
       </div>

@@ -1,4 +1,11 @@
-import { FinalTransferStatuses, TransferStatus } from '../features/transfer/types';
+import {
+  FinalTransferStatuses,
+  SentTransferStatuses,
+  TransferStatus,
+} from '../features/transfer/types';
+import ConfirmedIcon from '../images/icons/confirmed-icon.svg';
+import DeliveredIcon from '../images/icons/delivered-icon.svg';
+import ErrorCircleIcon from '../images/icons/error-circle.svg';
 
 export function getTransferStatusLabel(
   status: TransferStatus,
@@ -35,4 +42,31 @@ export function getTransferStatusLabel(
     statusDescription = 'Transfer failed, please try again.';
 
   return statusDescription;
+}
+
+export function isTransferSent(status: TransferStatus) {
+  return SentTransferStatuses.includes(status);
+}
+
+export function isTransferFailed(status: TransferStatus) {
+  return status === TransferStatus.Failed;
+}
+
+export const STATUSES_WITH_ICON = [
+  TransferStatus.Delivered,
+  TransferStatus.ConfirmedTransfer,
+  TransferStatus.Failed,
+];
+
+export function getIconByTransferStatus(status: TransferStatus) {
+  switch (status) {
+    case TransferStatus.Delivered:
+      return DeliveredIcon;
+    case TransferStatus.ConfirmedTransfer:
+      return ConfirmedIcon;
+    case TransferStatus.Failed:
+      return ErrorCircleIcon;
+    default:
+      return ErrorCircleIcon;
+  }
 }

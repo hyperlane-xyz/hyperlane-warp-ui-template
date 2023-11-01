@@ -49,7 +49,7 @@ export function Modal({
               <Dialog.Panel
                 className={`w-full ${
                   width || 'max-w-xs'
-                } max-h-[90vh] transform overflow-auto rounded-md bg-white ${
+                } max-h-[90vh] transform overflow-auto rounded-2xl bg-white ${
                   padding || 'px-4 py-4'
                 } text-left shadow-lg transition-all`}
               >

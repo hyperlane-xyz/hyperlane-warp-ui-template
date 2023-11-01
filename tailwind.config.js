@@ -67,9 +67,11 @@ module.exports = {
           800: '#6B185C',
           900: '#400E37',
         },
-        // Neutron teal
+        // Neutron mint/teal
         mint: {
-          200: '##2e5c5',
+          50: '#e5faf4',
+          100: '#b3f1e0',
+          200: '#88e9ce',
           300: '#5ce1bc',
           400: '#47ddb3',
           500: '#31D99C',

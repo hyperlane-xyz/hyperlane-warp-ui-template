@@ -102,5 +102,6 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
         family: ExplorerFamily.Blockscout,
       },
     ],
+    logoURI: './logos/manta.svg',
   },
 };

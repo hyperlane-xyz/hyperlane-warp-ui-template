@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { ProtocolType, toTitleCase } from '@hyperlane-xyz/utils';
+import { toTitleCase } from '@hyperlane-xyz/utils';
 import { MessageStatus, MessageTimeline, useMessageTimeline } from '@hyperlane-xyz/widgets';
 
 import { ChainLogo } from '../../components/icons/ChainLogo';
@@ -13,7 +13,7 @@ import { getHypExplorerLink } from '../../utils/links';
 import { logger } from '../../utils/logger';
 import { useTimeout } from '../../utils/timeout';
 import { getTransferStatusLabel } from '../../utils/transfer';
-import { getChainReference, parseCaip2Id } from '../caip/chains';
+import { getChainReference } from '../caip/chains';
 import { AssetNamespace, parseCaip19Id } from '../caip/tokens';
 import { getChainDisplayName, hasPermissionlessChain } from '../chains/utils';
 import { getMultiProvider } from '../multiProvider';
@@ -34,7 +34,7 @@ export function TransfersDetailsModal({
 }) {
   const [fromUrl, setFromUrl] = useState<string>('');
   const [toUrl, setToUrl] = useState<string>('');
-  const [tokenUrl, setTokenUrl] = useState<string>('');
+  const [tokenUrl /*setTokenUrl*/] = useState<string>('');
   const [originTxUrl, setOriginTxUrl] = useState<string>('');
 
   const { params, status, originTxHash, msgId, timestamp, activeAccountAddress } = transfer || {};
@@ -43,7 +43,7 @@ export function TransfersDetailsModal({
 
   const account = useAccountForChain(originCaip2Id);
   const multiProvider = getMultiProvider();
-  const { protocol: originProtocol, reference: originChain } = parseCaip2Id(originCaip2Id);
+  const originChain = getChainReference(originCaip2Id);
   const destChain = getChainReference(destinationCaip2Id);
   const { address: tokenAddress, namespace: tokenNamespace } = parseCaip19Id(tokenCaip19Id);
   const isNative = tokenNamespace === AssetNamespace.native;
@@ -52,17 +52,17 @@ export function TransfersDetailsModal({
     try {
       if (originTxHash) {
         const originTx = multiProvider.tryGetExplorerTxUrl(originChain, { hash: originTxHash });
-        if (originTx) setOriginTxUrl(originTx);
+        if (originTx) setOriginTxUrl(fixDoubleSlash(originTx));
       }
-      const [fromUrl, toUrl, tokenUrl] = await Promise.all([
+      const [fromUrl, toUrl /*tokenUrl*/] = await Promise.all([
         multiProvider.tryGetExplorerAddressUrl(originChain, activeAccountAddress),
         multiProvider.tryGetExplorerAddressUrl(destChain, recipientAddress),
-        multiProvider.tryGetExplorerAddressUrl(originChain, tokenAddress),
+        // multiProvider.tryGetExplorerAddressUrl(originChain, tokenAddress),
       ]);
       if (fromUrl) setFromUrl(fixDoubleSlash(fromUrl));
       if (toUrl) setToUrl(fixDoubleSlash(toUrl));
       // TODO cosmos support for ibc address
-      if (tokenUrl && originProtocol !== ProtocolType.Cosmos) setTokenUrl(fixDoubleSlash(tokenUrl));
+      // if (tokenUrl) setTokenUrl(fixDoubleSlash(tokenUrl));
     } catch (error) {
       logger.error('Error fetching URLs:', error);
     }
@@ -72,9 +72,8 @@ export function TransfersDetailsModal({
     multiProvider,
     recipientAddress,
     originChain,
-    originProtocol,
     destChain,
-    tokenAddress,
+    // tokenAddress,
   ]);
 
   useEffect(() => {

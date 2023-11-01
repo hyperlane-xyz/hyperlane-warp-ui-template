@@ -14,6 +14,7 @@ interface Config {
   walletConnectProjectId: string; // Project ID provided by walletconnect
   withdrawalWhitelist: string; // comma-separated list of CAIP2 chain IDs to which transfers are supported
   transferBlacklist: string; // comma-separated list of routes between which transfers are disabled. Expects Caip2Id-Caip2Id (e.g. ethereum:1-sealevel:1399811149)
+  enableExplorerLink: boolean;
 }
 
 export const config: Config = Object.freeze({
@@ -25,4 +26,5 @@ export const config: Config = Object.freeze({
   walletConnectProjectId,
   withdrawalWhitelist,
   transferBlacklist,
+  enableExplorerLink: false,
 });

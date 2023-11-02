@@ -9,6 +9,7 @@ import { getMultiProvider } from '../multiProvider';
 
 import { getHypErc20CollateralContract } from './contracts/evmContracts';
 import {
+  IbcTokenTypes,
   MinimalTokenMetadata,
   TokenMetadata,
   WarpTokenConfig,
@@ -30,6 +31,10 @@ export async function parseTokens() {
     tokens = await parseTokenConfigs(tokenList);
   }
   return tokens;
+}
+
+export function isIbcToken(token: TokenMetadata) {
+  return Object.values(IbcTokenTypes).includes(token.type as IbcTokenTypes);
 }
 
 // Converts the more user-friendly config format into a validated, extended format
@@ -55,7 +60,11 @@ async function parseTokenConfigs(configList: WarpTokenConfig): Promise<TokenMeta
     const address =
       type === TokenType.collateral ? config.address : getNativeTokenAddress(protocol);
     const routerAddress =
-      type === TokenType.collateral ? config.hypCollateralAddress : config.hypNativeAddress;
+      type === TokenType.collateral
+        ? config.hypCollateralAddress
+        : type === TokenType.native
+        ? config.hypNativeAddress
+        : '';
     const namespace = resolveAssetNamespace(protocol, isNative, isNft, isSpl2022);
     const tokenCaip19Id = getCaip19Id(chainCaip2Id, namespace, address);
 

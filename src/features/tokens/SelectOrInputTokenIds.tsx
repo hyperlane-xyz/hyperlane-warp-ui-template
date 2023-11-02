@@ -27,7 +27,7 @@ export function SelectOrInputTokenIds({
   if (route?.type === RouteType.CollateralToSynthetic) {
     // If the origin is the base chain, use the collateralized token for balance checking
     activeToken = tokenCaip19Id;
-  } else if (route) {
+  } else if (route && route?.type !== RouteType.IbcNativeToIbcNative) {
     // Otherwise, use the synthetic token for balance checking
     activeToken = getCaip19Id(
       route.originCaip2Id,

@@ -25,6 +25,7 @@ import { getMultiProvider } from '../multiProvider';
 
 import { Route } from './routes/types';
 import {
+  isIbcRoute,
   isRouteFromCollateral,
   isRouteFromSynthetic,
   isRouteToCollateral,
@@ -118,6 +119,8 @@ export class AdapterFactory {
         SealevelHypSyntheticAdapter,
         CwHypSyntheticAdapter,
       );
+    } else if (isIbcRoute(route)) {
+      return new TODO();
     } else {
       throw new Error(`Unsupported route type: ${type}`);
     }
@@ -145,6 +148,8 @@ export class AdapterFactory {
         SealevelHypSyntheticAdapter,
         CwHypSyntheticAdapter,
       );
+    } else if (isIbcRoute(route)) {
+      return new TODO();
     } else {
       throw new Error(`Unsupported route type: ${type}`);
     }

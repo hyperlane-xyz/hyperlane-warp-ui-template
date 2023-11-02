@@ -1,4 +1,4 @@
-import { useField, useFormikContext } from 'formik';
+import { useFormikContext } from 'formik';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
@@ -30,24 +30,22 @@ export function TokenSelectField({
   disabled,
   setIsNft,
 }: Props) {
-  const [field, , helpers] = useField<Address>(name);
-  const { setFieldValue } = useFormikContext<TransferFormValues>();
-
+  const { values, setFieldValue } = useFormikContext<TransferFormValues>();
   // Keep local state for token details, but let formik manage field value
   const [token, setToken] = useState<TokenMetadata | undefined>(undefined);
 
   // Keep local state in sync with formik state
   useEffect(() => {
-    if (!field.value) setToken(undefined);
-    else if (field.value !== token?.tokenCaip19Id) {
+    if (!values[name]) setToken(undefined);
+    else if (values[name] !== token?.tokenCaip19Id) {
       setToken(undefined);
-      helpers.setValue('');
+      setFieldValue(name, '');
     }
-  }, [token, field.value, helpers]);
+  }, [name, token, values, setFieldValue]);
 
   const handleChange = (newToken: TokenMetadata) => {
     // Set the token address value in formik state
-    helpers.setValue(newToken.tokenCaip19Id);
+    setFieldValue(name, newToken.tokenCaip19Id);
     // reset amount after change token
     setFieldValue('amount', '');
     // Update local state
@@ -84,10 +82,19 @@ export function AutomaticTokenField({
   destinationCaip2Id,
   tokenRoutes,
 }: Props) {
-  const routes = getTokenRoutes(originCaip2Id, destinationCaip2Id, tokenRoutes);
-  const tokenCaip19Id = routes.length ? routes[0].baseTokenCaip19Id : undefined;
-  const token = tokenCaip19Id ? getToken(tokenCaip19Id) : undefined;
-  return <TokenButton token={token} name={name} disabled={true} />;
+  const { setFieldValue } = useFormikContext<TransferFormValues>();
+  // Keep local state for token details, but let formik manage field value
+  const [token, setToken] = useState<TokenMetadata | undefined>(undefined);
+
+  // Derive token state from origin and dest
+  useEffect(() => {
+    const routes = getTokenRoutes(originCaip2Id, destinationCaip2Id, tokenRoutes);
+    const tokenCaip19Id = routes.length ? routes[0].baseTokenCaip19Id : undefined;
+    setFieldValue(name, tokenCaip19Id);
+    setToken(tokenCaip19Id ? getToken(tokenCaip19Id) : undefined);
+  }, [name, originCaip2Id, destinationCaip2Id, tokenRoutes, setFieldValue]);
+
+  return <TokenButton token={token} name={name} disabled={true} isAutomatic={true} />;
 }
 
 function TokenButton({
@@ -95,13 +102,13 @@ function TokenButton({
   name,
   disabled,
   onClick,
-  showChevron,
+  isAutomatic,
 }: {
   token?: TokenMetadata;
   name: string;
   disabled?: boolean;
   onClick?: () => void;
-  showChevron?: boolean;
+  isAutomatic?: boolean;
 }) {
   return (
     <button
@@ -111,18 +118,18 @@ function TokenButton({
       onClick={onClick}
     >
       <div className="flex items-center">
-        <TokenIcon token={token} size={20} />
+        {token && <TokenIcon token={token} size={20} />}
         <span className={`ml-2 ${!token?.symbol && 'text-slate-400'}`}>
-          {token?.symbol || 'Select Token'}
+          {token?.symbol || (isAutomatic ? 'No routes available' : 'Select Token')}
         </span>
       </div>
-      {showChevron && <Image src={ChevronIcon} width={12} height={8} alt="" />}
+      {!isAutomatic && <Image src={ChevronIcon} width={12} height={8} alt="" />}
     </button>
   );
 }
 
 const styles = {
-  base: 'mt-1.5 w-full px-2.5 py-2 flex items-center justify-between text-sm bg-white rounded-full border border-mint-300 outline-none transition-colors duration-500',
+  base: 'mt-1.5 w-full px-2.5 py-2 flex items-center justify-between text-sm rounded-full border border-mint-300 outline-none transition-colors duration-500',
   enabled: 'hover:bg-gray-50 active:bg-gray-100 focus:border-mint-500',
-  disabled: 'bg-gray-150 cursor-default',
+  disabled: 'bg-gray-100 cursor-default',
 };

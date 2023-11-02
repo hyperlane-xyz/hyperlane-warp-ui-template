@@ -26,12 +26,12 @@ import { config } from '../../consts/config';
 import SwapIcon from '../../images/icons/swap.svg';
 import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
-import { getProtocolType } from '../caip/chains';
+import { getProtocolType, tryGetProtocolType } from '../caip/chains';
 import {
-  getChainIdFromToken,
   getTokenAddress,
   isNonFungibleToken,
   parseCaip19Id,
+  tryGetChainIdFromToken,
 } from '../caip/tokens';
 import { ChainSelectField } from '../chains/ChainSelectField';
 import { getChainDisplayName } from '../chains/utils';
@@ -409,7 +409,7 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
     originProtocol !== ProtocolType.Cosmos
       ? `(${ProtocolSmallestUnit[getProtocolType(originCaip2Id)]})`
       : '';
-  const tokenProtocol = getProtocolType(getChainIdFromToken(tokenCaip19Id));
+  const tokenProtocol = tryGetProtocolType(tryGetChainIdFromToken(tokenCaip19Id));
   let originTokenSymbol = getToken(tokenCaip19Id)?.symbol || '';
   if (originTokenSymbol && tokenProtocol === ProtocolType.Cosmos)
     originTokenSymbol = `u${originTokenSymbol}`;
@@ -445,17 +445,21 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
               <h4>Transaction 1: Approve Transfer</h4>
               <div className="mt-1.5 ml-1.5 pl-2 border-l border-gray-300 space-y-1.5 text-xs">
                 <p>{`Token Address: ${getTokenAddress(tokenCaip19Id)}`}</p>
-                <p>{`Collateral Address: ${route?.baseRouterAddress}`}</p>
+                {route?.baseRouterAddress && (
+                  <p>{`Collateral Address: ${route.baseRouterAddress}`}</p>
+                )}
               </div>
             </div>
           )}
           <div>
             <h4>{`Transaction${isApproveRequired ? ' 2' : ''}: Transfer Remote`}</h4>
             <div className="mt-1.5 ml-1.5 pl-2 border-l border-gray-300 space-y-1.5 text-xs">
-              <p className="flex">
-                <span className="min-w-[7rem]">Remote Token</span>
-                <span>{route?.destRouterAddress}</span>
-              </p>
+              {route?.destRouterAddress && (
+                <p className="flex">
+                  <span className="min-w-[7rem]">Remote Token</span>
+                  <span>{route.destRouterAddress}</span>
+                </p>
+              )}
               {isNft ? (
                 <p className="flex">
                   <span className="min-w-[7rem]">Token ID</span>

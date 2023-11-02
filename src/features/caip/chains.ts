@@ -30,7 +30,7 @@ export function parseCaip2Id(id: ChainCaip2Id) {
   return { protocol, reference };
 }
 
-export function tryParseCaip2Id(id: ChainCaip2Id) {
+export function tryParseCaip2Id(id?: ChainCaip2Id) {
   if (!id) return undefined;
   try {
     return parseCaip2Id(id);
@@ -45,7 +45,7 @@ export function getProtocolType(id: ChainCaip2Id) {
   return protocol;
 }
 
-export function tryGetProtocolType(id: ChainCaip2Id) {
+export function tryGetProtocolType(id?: ChainCaip2Id) {
   return tryParseCaip2Id(id)?.protocol;
 }
 
@@ -54,7 +54,7 @@ export function getChainReference(id: ChainCaip2Id) {
   return reference;
 }
 
-export function tryGetChainReference(id: ChainCaip2Id) {
+export function tryGetChainReference(id?: ChainCaip2Id) {
   return tryParseCaip2Id(id)?.reference;
 }
 

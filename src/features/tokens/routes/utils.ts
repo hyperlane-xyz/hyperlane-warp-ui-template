@@ -1,6 +1,8 @@
+import { utils as ethersUtils } from 'ethers';
+
 import { isNativeToken } from '../../caip/tokens';
 
-import { Route, RouteType, RoutesMap } from './types';
+import { IbcRoute, Route, RouteType, RoutesMap } from './types';
 
 export function getTokenRoutes(
   originCaip2Id: ChainCaip2Id,
@@ -59,4 +61,18 @@ export function isRouteFromSynthetic(route: Route) {
 
 export function isRouteFromNative(route: Route) {
   return isRouteFromCollateral(route) && isNativeToken(route.baseTokenCaip19Id);
+}
+
+export function isIbcRoute(route: Route): route is IbcRoute {
+  return route.type === RouteType.IbcNativeToIbcNative;
+}
+
+export function mergeRoutes(routes: RoutesMap, newRoutes: Route[]) {
+  const mergedRoutes = ethersUtils.deepCopy(routes);
+  for (const route of newRoutes) {
+    mergedRoutes[route.originCaip2Id] ||= {};
+    mergedRoutes[route.originCaip2Id][route.destCaip2Id] ||= [];
+    mergedRoutes[route.originCaip2Id][route.destCaip2Id].push(route);
+  }
+  return mergedRoutes;
 }

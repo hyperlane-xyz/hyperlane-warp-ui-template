@@ -123,11 +123,11 @@ export function TokenList({
           >
             <div className="flex items-center">
               <TokenIcon token={t} size={30} />
-              <div className="ml-3 text-left">
+              <div className="ml-2 text-left">
                 <div className="text-sm w-14 truncate">{t.symbol || 'Unknown'}</div>
                 <div className="text-xs text-gray-500 w-14 truncate">{t.name || 'Unknown'}</div>
               </div>
-              <div className="ml-3 text-left">
+              <div className="ml-2 text-left">
                 <div className="text-xs">
                   {isNativeToken(t.tokenCaip19Id)
                     ? 'Native chain token'

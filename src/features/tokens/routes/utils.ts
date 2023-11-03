@@ -64,7 +64,7 @@ export function isRouteFromNative(route: Route) {
 }
 
 export function isIbcRoute(route: Route): route is IbcRoute {
-  return route.type === RouteType.IbcNativeToIbcNative;
+  return route.type === RouteType.IbcNativeToHypNative;
 }
 
 export function mergeRoutes(routes: RoutesMap, newRoutes: Route[]) {

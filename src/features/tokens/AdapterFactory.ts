@@ -23,6 +23,7 @@ import { parseCaip2Id } from '../caip/chains';
 import { AssetNamespace, getChainIdFromToken, isNativeToken, parseCaip19Id } from '../caip/tokens';
 import { getMultiProvider } from '../multiProvider';
 
+import { CosmNativeTokenAdapter } from './CosmNativeTokenAdapter';
 import { Route } from './routes/types';
 import {
   isIbcRoute,
@@ -33,7 +34,7 @@ import {
 } from './routes/utils';
 
 export class AdapterFactory {
-  static NativeAdapterFromChain(chainCaip2Id: ChainCaip2Id) {
+  static NativeAdapterFromChain(chainCaip2Id: ChainCaip2Id, useCosmNative = false) {
     const { protocol, reference: chainId } = parseCaip2Id(chainCaip2Id);
     const multiProvider = getMultiProvider();
     const chainName = multiProvider.getChainMetadata(chainId).name;
@@ -42,7 +43,9 @@ export class AdapterFactory {
     } else if (protocol === ProtocolType.Sealevel) {
       return new SealevelNativeTokenAdapter(chainName, multiProvider, {});
     } else if (protocol === ProtocolType.Cosmos) {
-      return new CwNativeTokenAdapter(chainName, multiProvider, {});
+      return useCosmNative
+        ? new CosmNativeTokenAdapter(chainName, multiProvider, {})
+        : new CwNativeTokenAdapter(chainName, multiProvider, {});
     } else {
       throw new Error(`Unsupported protocol: ${protocol}`);
     }
@@ -119,8 +122,17 @@ export class AdapterFactory {
         SealevelHypSyntheticAdapter,
         CwHypSyntheticAdapter,
       );
-    } else if (isIbcRoute(route)) {
-      return new TODO();
+      // TODO cosmos
+      // } else if (isIbcRoute(route)) {
+      //   const chainId = getChainReference(route.originCaip2Id);
+      //   const multiProvider = getMultiProvider();
+      //   // TODO cosmos denom here?
+      //   return new CosmNativeTokenAdapter(
+      //     multiProvider.getChainName(chainId),
+      //     multiProvider,
+      //     {},
+      //     'utia',
+      //   );
     } else {
       throw new Error(`Unsupported route type: ${type}`);
     }
@@ -139,7 +151,7 @@ export class AdapterFactory {
         isNative ? SealevelHypNativeAdapter : SealevelHypCollateralAdapter,
         isNative ? CwHypNativeAdapter : CwHypCollateralAdapter,
       );
-    } else if (isRouteToSynthetic(route)) {
+    } else if (isRouteToSynthetic(route) || isIbcRoute(route)) {
       return AdapterFactory.selectHypAdapter(
         destCaip2Id,
         destRouterAddress,
@@ -148,8 +160,6 @@ export class AdapterFactory {
         SealevelHypSyntheticAdapter,
         CwHypSyntheticAdapter,
       );
-    } else if (isIbcRoute(route)) {
-      return new TODO();
     } else {
       throw new Error(`Unsupported route type: ${type}`);
     }

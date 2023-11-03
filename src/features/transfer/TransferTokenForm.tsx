@@ -45,7 +45,7 @@ import { getToken } from '../tokens/metadata';
 import { useRouteChains } from '../tokens/routes/hooks';
 import { RoutesMap } from '../tokens/routes/types';
 import { getTokenRoute, isRouteFromNative } from '../tokens/routes/utils';
-import { useAccountForChain } from '../wallet/hooks';
+import { useAccountAddressForChain } from '../wallet/hooks';
 
 import { TransferFormValues } from './types';
 import { useIgpQuote } from './useIgpQuote';
@@ -376,7 +376,7 @@ function MaxButton({
 
 function SelfButton({ disabled }: { disabled?: boolean }) {
   const { values, setFieldValue } = useFormikContext<TransferFormValues>();
-  const address = useAccountForChain(values.destinationCaip2Id)?.address;
+  const address = useAccountAddressForChain(values.destinationCaip2Id);
   const onClick = () => {
     if (disabled) return;
     if (address) setFieldValue('recipientAddress', address);

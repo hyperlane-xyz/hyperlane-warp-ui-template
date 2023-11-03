@@ -17,9 +17,9 @@ import { isApproveRequired } from '../tokens/approval';
 import { Route, RoutesMap } from '../tokens/routes/types';
 import { getTokenRoute, isRouteFromNative, isRouteToCollateral } from '../tokens/routes/utils';
 import {
-  AccountInfo,
   ActiveChainInfo,
   SendTransactionFn,
+  getAccountAddressForChain,
   useAccounts,
   useActiveChains,
   useTransactionFns,
@@ -112,7 +112,11 @@ async function executeTransfer({
 
     const isNft = isNonFungibleToken(tokenCaip19Id);
     const weiAmountOrId = isNft ? amount : toWei(amount, tokenRoute.originDecimals).toFixed(0);
-    const activeAccountAddress = activeAccounts.accounts[originProtocol]?.address || '';
+    const activeAccountAddress = getAccountAddressForChain(
+      originCaip2Id,
+      activeAccounts.accounts[originProtocol],
+    );
+    if (!activeAccountAddress) throw new Error('No active account found for origin chain');
 
     addTransfer({
       activeAccountAddress,
@@ -132,7 +136,7 @@ async function executeTransfer({
       recipientAddress,
       tokenRoute,
       hypTokenAdapter,
-      activeAccount: activeAccounts.accounts[originProtocol],
+      activeAccountAddress,
       activeChain: activeChains.chains[originProtocol],
       updateStatus: (s: TransferStatus) => {
         status = s;
@@ -210,7 +214,7 @@ interface ExecuteTransferParams<TxResp> {
   recipientAddress: Address;
   tokenRoute: Route;
   hypTokenAdapter: IHypTokenAdapter;
-  activeAccount: AccountInfo;
+  activeAccountAddress: Address;
   activeChain: ActiveChainInfo;
   updateStatus: (s: TransferStatus) => void;
   sendTransaction: SendTransactionFn<TxResp>;
@@ -222,7 +226,7 @@ async function executeEvmTransfer({
   recipientAddress,
   tokenRoute,
   hypTokenAdapter,
-  activeAccount,
+  activeAccountAddress,
   activeChain,
   updateStatus,
   sendTransaction,
@@ -230,8 +234,8 @@ async function executeEvmTransfer({
   const { baseRouterAddress, originCaip2Id, baseTokenCaip19Id } = tokenRoute;
 
   const isApproveTxRequired =
-    activeAccount.address &&
-    (await isApproveRequired(tokenRoute, baseTokenCaip19Id, weiAmountOrId, activeAccount.address));
+    activeAccountAddress &&
+    (await isApproveRequired(tokenRoute, baseTokenCaip19Id, weiAmountOrId, activeAccountAddress));
 
   if (isApproveTxRequired) {
     updateStatus(TransferStatus.CreatingApprove);
@@ -289,7 +293,7 @@ async function executeSealevelTransfer({
   recipientAddress,
   tokenRoute,
   hypTokenAdapter,
-  activeAccount,
+  activeAccountAddress,
   activeChain,
   updateStatus,
   sendTransaction,
@@ -306,7 +310,7 @@ async function executeSealevelTransfer({
     weiAmountOrId,
     destination: destinationDomainId,
     recipient: recipientAddress,
-    fromAccountOwner: activeAccount.address,
+    fromAccountOwner: activeAccountAddress,
   })) as SolTransaction;
 
   updateStatus(TransferStatus.SigningTransfer);

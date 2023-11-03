@@ -6,7 +6,7 @@ import { logger } from '../../utils/logger';
 import { getProtocolType } from '../caip/chains';
 import { getTokenAddress, isNativeToken, isNonFungibleToken } from '../caip/tokens';
 import { getEvmProvider } from '../multiProvider';
-import { useAccountForChain } from '../wallet/hooks';
+import { useAccountAddressForChain } from '../wallet/hooks';
 
 import { getErc20Contract, getErc721Contract } from './contracts/evmContracts';
 import { Route } from './routes/types';
@@ -18,7 +18,7 @@ export function useIsApproveRequired(
   route?: Route,
   enabled = true,
 ) {
-  const owner = useAccountForChain(route?.originCaip2Id)?.address;
+  const owner = useAccountAddressForChain(route?.originCaip2Id);
 
   const {
     isLoading,

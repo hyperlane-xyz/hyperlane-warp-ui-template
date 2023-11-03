@@ -1,4 +1,4 @@
-import { useChain as useCosmosChain } from '@cosmos-kit/react';
+import { useChain as useCosmosChain, useWalletClient as useCosmosWallet } from '@cosmos-kit/react';
 import { useConnectModal as useEvmModal } from '@rainbow-me/rainbowkit';
 import { useConnection, useWallet as useSolanaWallet } from '@solana/wallet-adapter-react';
 import { useWalletModal as useSolanaModal } from '@solana/wallet-adapter-react-ui';
@@ -8,7 +8,7 @@ import {
   switchNetwork as switchEvmNetwork,
 } from '@wagmi/core';
 import { providers } from 'ethers';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 import {
   useAccount as useEvmAccount,
@@ -18,6 +18,7 @@ import {
 
 import { ProtocolType, sleep } from '@hyperlane-xyz/utils';
 
+import { PLACEHOLDER_COSMOS_CHAIN } from '../../consts/values';
 import { logger } from '../../utils/logger';
 import {
   getCaip2Id,
@@ -25,13 +26,20 @@ import {
   getEthereumChainId,
   tryGetProtocolType,
 } from '../caip/chains';
-import { getCosmosChainName } from '../chains/metadata';
+import { getCosmosChainNames } from '../chains/metadata';
 import { getChainByRpcEndpoint } from '../chains/utils';
 import { getChainMetadata, getMultiProvider } from '../multiProvider';
 
+interface ChainAddress {
+  address: string;
+  chainCaip2Id?: ChainCaip2Id;
+}
+
 export interface AccountInfo {
   protocol: ProtocolType;
-  address?: Address;
+  // This needs to be an array instead of a single address b.c.
+  // Cosmos wallets have different addresses per chain
+  addresses: Array<ChainAddress>;
   connectorName?: string;
   isReady: boolean;
 }
@@ -41,18 +49,22 @@ export function useAccounts(): {
   readyAccounts: Array<AccountInfo>;
 } {
   // Evm
-  const { address, isConnected, connector } = useEvmAccount();
-  const isEvmAccountReady = !!(address && isConnected && connector);
-  const evmConnectorName = connector?.name;
+  const {
+    address: evmAddress,
+    isConnected: isEvmConnected,
+    connector: evmConnector,
+  } = useEvmAccount();
+  const isEvmAccountReady = !!(evmAddress && isEvmConnected && evmConnector);
+  const evmConnectorName = evmConnector?.name;
 
   const evmAccountInfo: AccountInfo = useMemo(
     () => ({
       protocol: ProtocolType.Ethereum,
-      address: address ? `${address}` : undefined, // massage wagmi addr type
+      addresses: evmAddress ? [{ address: `${evmAddress}` }] : [],
       connectorName: evmConnectorName,
       isReady: isEvmAccountReady,
     }),
-    [address, evmConnectorName, isEvmAccountReady],
+    [evmAddress, evmConnectorName, isEvmAccountReady],
   );
 
   // Solana
@@ -64,7 +76,7 @@ export function useAccounts(): {
   const solAccountInfo: AccountInfo = useMemo(
     () => ({
       protocol: ProtocolType.Sealevel,
-      address: solAddress,
+      addresses: solAddress ? [{ address: solAddress }] : [],
       connectorName: solConnectorName,
       isReady: isSolAccountReady,
     }),
@@ -72,21 +84,42 @@ export function useAccounts(): {
   );
 
   // Cosmos
-  const {
-    address: cosmAddress,
-    wallet: cosmWallet,
-    isWalletConnected: isCosmAccountReady,
-  } = useCosmosChain(getCosmosChainName());
+  const { wallet: cosmWallet, isWalletConnected: isCosmAccountReady } =
+    useCosmosChain(PLACEHOLDER_COSMOS_CHAIN);
+  const { status: cosmWalletStatus, client: cosmWalletClient } = useCosmosWallet();
+  const [cosmAccounts, setCosmAccounts] = useState<Array<ChainAddress>>([]);
+
+  useEffect(() => {
+    if (cosmWalletStatus !== 'Done' || !cosmWalletClient) return;
+    const multiProvider = getMultiProvider();
+    const cosmChainNames = getCosmosChainNames();
+    const cosmChainCaip2Ids = cosmChainNames.map((c) =>
+      getCaip2Id(ProtocolType.Cosmos, multiProvider.getChainId(c)),
+    );
+    cosmWalletClient.enable?.(cosmChainNames).catch((err) => logger.error(err));
+    const cosmosAccountPromises = cosmChainNames.map((c) => cosmWalletClient.getAccount?.(c));
+    Promise.all(cosmosAccountPromises)
+      .then((cosmosAccounts) => {
+        setCosmAccounts(
+          cosmosAccounts
+            .map((a, i) => ({ address: a?.address, chainCaip2Id: cosmChainCaip2Ids[i] }))
+            .filter((a) => !!a.address) as Array<ChainAddress>,
+        );
+      })
+      .catch((err) => logger.error(err));
+  }, [cosmWalletStatus, cosmWalletClient]);
+
   const cosmAccountInfo: AccountInfo = useMemo(
     () => ({
       protocol: ProtocolType.Cosmos,
-      address: cosmAddress,
+      addresses: cosmAccounts,
       connectorName: cosmWallet?.prettyName,
       isReady: isCosmAccountReady,
     }),
-    [cosmAddress, cosmWallet, isCosmAccountReady],
+    [cosmAccounts, cosmWallet, isCosmAccountReady],
   );
 
+  // Filtered ready accounts
   const readyAccounts = useMemo(
     () => [evmAccountInfo, solAccountInfo, cosmAccountInfo].filter((a) => a.isReady),
     [evmAccountInfo, solAccountInfo, cosmAccountInfo],
@@ -98,7 +131,7 @@ export function useAccounts(): {
         [ProtocolType.Ethereum]: evmAccountInfo,
         [ProtocolType.Sealevel]: solAccountInfo,
         [ProtocolType.Cosmos]: cosmAccountInfo,
-        [ProtocolType.Fuel]: { protocol: ProtocolType.Fuel, isReady: false },
+        [ProtocolType.Fuel]: { protocol: ProtocolType.Fuel, isReady: false, addresses: [] },
       },
       readyAccounts,
     }),
@@ -114,6 +147,23 @@ export function useAccountForChain(chainCaip2Id?: ChainCaip2Id): AccountInfo | u
   return accounts[protocol];
 }
 
+export function useAccountAddressForChain(chainCaip2Id?: ChainCaip2Id): Address | undefined {
+  return getAccountAddressForChain(chainCaip2Id, useAccountForChain(chainCaip2Id));
+}
+
+export function getAccountAddressForChain(
+  chainCaip2Id?: ChainCaip2Id,
+  account?: AccountInfo,
+): Address | undefined {
+  if (!chainCaip2Id || !account?.addresses.length) return undefined;
+  // Return the address for the chain if it exists, otherwise return the first address
+  // We fallback to first because only cosmos has the notion of per-chain addresses
+  return (
+    account.addresses.find((a) => a.chainCaip2Id === chainCaip2Id)?.address ||
+    account.addresses[0].address
+  );
+}
+
 export function useConnectFns(): Record<ProtocolType, () => void> {
   // Evm
   const { openConnectModal: openEvmModal } = useEvmModal();
@@ -124,7 +174,7 @@ export function useConnectFns(): Record<ProtocolType, () => void> {
   const onConnectSolana = useCallback(() => setSolanaModalVisible(true), [setSolanaModalVisible]);
 
   // Cosmos
-  const { connect: onConnectCosmos } = useCosmosChain(getCosmosChainName());
+  const { openView: onConnectCosmos } = useCosmosChain(PLACEHOLDER_COSMOS_CHAIN);
 
   return useMemo(
     () => ({
@@ -145,9 +195,8 @@ export function useDisconnectFns(): Record<ProtocolType, () => Promise<void>> {
   const { disconnect: disconnectSol } = useSolanaWallet();
 
   // Cosmos
-  const { disconnect: disconnectCosmos, address: addressCosmos } = useCosmosChain(
-    getCosmosChainName(),
-  );
+  const { disconnect: disconnectCosmos, address: addressCosmos } =
+    useCosmosChain(PLACEHOLDER_COSMOS_CHAIN);
 
   const onClickDisconnect =
     (env: ProtocolType, disconnectFn?: () => Promise<void> | void) => async () => {
@@ -209,16 +258,7 @@ export function useActiveChains(): {
   }, [connectionEndpoint]);
 
   // Cosmos
-  const { chain: cosmosChainDetails } = useCosmosChain(getCosmosChainName());
-  const cosmChain: ActiveChainInfo = useMemo(
-    () => ({
-      chainDisplayName: cosmosChainDetails?.pretty_name,
-      chainCaip2Id: cosmosChainDetails
-        ? getCaip2Id(ProtocolType.Cosmos, cosmosChainDetails.chain_id)
-        : undefined,
-    }),
-    [cosmosChainDetails],
-  );
+  const cosmChain = useMemo(() => ({} as ActiveChainInfo), []);
 
   const readyChains = useMemo(
     () => [evmChain, solChain, cosmChain].filter((c) => !!c.chainDisplayName),
@@ -326,7 +366,9 @@ export function useTransactionFns(): Record<
   );
 
   // Cosmos
-  const { address: cosmAddress, getSigningCosmWasmClient } = useCosmosChain(getCosmosChainName());
+  // TODO cosmos fix
+  const { address: cosmAddress, getSigningCosmWasmClient } =
+    useCosmosChain(PLACEHOLDER_COSMOS_CHAIN);
 
   const onSwitchCosmNetwork = useCallback(async (chainCaip2Id: ChainCaip2Id) => {
     const chainName = getChainMetadata(chainCaip2Id).displayName;

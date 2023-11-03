@@ -3,7 +3,7 @@ import { useFormikContext } from 'formik';
 import { TextField } from '../../components/input/TextField';
 import { AssetNamespace, getCaip19Id } from '../caip/tokens';
 import { TransferFormValues } from '../transfer/types';
-import { useAccountForChain } from '../wallet/hooks';
+import { useAccountAddressForChain } from '../wallet/hooks';
 
 import { SelectTokenIdField } from './SelectTokenIdField';
 import { useContractSupportsTokenByOwner, useIsSenderNftOwner } from './balances';
@@ -27,7 +27,7 @@ export function SelectOrInputTokenIds({
   if (route?.type === RouteType.CollateralToSynthetic) {
     // If the origin is the base chain, use the collateralized token for balance checking
     activeToken = tokenCaip19Id;
-  } else if (route && route?.type !== RouteType.IbcNativeToIbcNative) {
+  } else if (route && route?.type !== RouteType.IbcNativeToHypNative) {
     // Otherwise, use the synthetic token for balance checking
     activeToken = getCaip19Id(
       route.originCaip2Id,
@@ -36,7 +36,7 @@ export function SelectOrInputTokenIds({
     );
   }
 
-  const accountAddress = useAccountForChain(originCaip2Id)?.address;
+  const accountAddress = useAccountAddressForChain(originCaip2Id);
   const { isContractAllowToGetTokenIds } = useContractSupportsTokenByOwner(
     activeToken,
     accountAddress,

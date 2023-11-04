@@ -367,8 +367,11 @@ export function useTransactionFns(): Record<
 
   // Cosmos
   // TODO cosmos fix
-  const { address: cosmAddress, getSigningCosmWasmClient } =
-    useCosmosChain(PLACEHOLDER_COSMOS_CHAIN);
+  const {
+    address: cosmAddress,
+    getSigningCosmWasmClient,
+    getSigningStargateClient,
+  } = useCosmosChain('celestia');
 
   const onSwitchCosmNetwork = useCallback(async (chainCaip2Id: ChainCaip2Id) => {
     const chainName = getChainMetadata(chainCaip2Id).displayName;
@@ -385,11 +388,23 @@ export function useTransactionFns(): Record<
       chainCaip2Id: ChainCaip2Id;
       activeCap2Id?: ChainCaip2Id;
     }) => {
+      console.log('onsendcosmtx');
       if (!cosmAddress) throw new Error('Cosmos wallet not connected');
       if (activeCap2Id && activeCap2Id !== chainCaip2Id) await onSwitchCosmNetwork(chainCaip2Id);
       logger.debug(`Sending tx on chain ${chainCaip2Id}`);
-      const client = await getSigningCosmWasmClient();
-      const result = await client.executeMultiple(cosmAddress, [tx], 'auto');
+      const client = await getSigningStargateClient();
+      const result = await client.sendIbcTokens(
+        cosmAddress,
+        cosmAddress,
+        tx.value.token,
+        tx.value.sourcePort,
+        tx.value.sourceChannel,
+        undefined,
+        new Date().getTime() + 60000,
+        'auto',
+        tx.memo,
+      );
+      // const result = await client.signAndBroadcast(cosmAddress, [tx], 'auto');
       const confirm = async () => {
         if (result.transactionHash) return result;
         throw new Error(`Cosmos tx ${result.transactionHash} failed: ${JSON.stringify(result)}`);

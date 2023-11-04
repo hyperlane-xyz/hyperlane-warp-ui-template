@@ -19,7 +19,7 @@ import {
 } from '@hyperlane-xyz/sdk';
 import { Address, ProtocolType, convertToProtocolAddress } from '@hyperlane-xyz/utils';
 
-import { parseCaip2Id } from '../caip/chains';
+import { getChainReference, parseCaip2Id } from '../caip/chains';
 import { AssetNamespace, getChainIdFromToken, isNativeToken, parseCaip19Id } from '../caip/tokens';
 import { getMultiProvider } from '../multiProvider';
 
@@ -123,16 +123,17 @@ export class AdapterFactory {
         CwHypSyntheticAdapter,
       );
       // TODO cosmos
-      // } else if (isIbcRoute(route)) {
-      //   const chainId = getChainReference(route.originCaip2Id);
-      //   const multiProvider = getMultiProvider();
-      //   // TODO cosmos denom here?
-      //   return new CosmNativeTokenAdapter(
-      //     multiProvider.getChainName(chainId),
-      //     multiProvider,
-      //     {},
-      //     'utia',
-      //   );
+    } else if (isIbcRoute(route)) {
+      console.log(route);
+      const chainId = getChainReference(route.originCaip2Id);
+      const multiProvider = getMultiProvider();
+      // TODO cosmos denom here?
+      return new CosmNativeTokenAdapter(
+        multiProvider.getChainName(chainId),
+        multiProvider,
+        {},
+        'utia',
+      );
     } else {
       throw new Error(`Unsupported route type: ${type}`);
     }

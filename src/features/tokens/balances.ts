@@ -49,9 +49,14 @@ export function useOriginBalance(
       if (isRouteFromNative(route)) {
         nativeBalance = tokenBalance;
       } else {
-        const nativeAdapter = AdapterFactory.NativeAdapterFromChain(originCaip2Id);
+        const nativeAdapter = AdapterFactory.NativeAdapterFromChain(
+          originCaip2Id,
+          isIbcRoute(route),
+        );
         nativeBalance = await nativeAdapter.getBalance(address);
       }
+
+      console.log(tokenBalance.toString(), nativeBalance);
 
       return { tokenBalance, tokenDecimals: route.originDecimals, nativeBalance };
     },
@@ -59,6 +64,7 @@ export function useOriginBalance(
   });
 
   useEffect(() => {
+    console.log('Set sender balances', data);
     setSenderBalances(data?.tokenBalance || '0', data?.nativeBalance || '0');
   }, [data, setSenderBalances]);
 

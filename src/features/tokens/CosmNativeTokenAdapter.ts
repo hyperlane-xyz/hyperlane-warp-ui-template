@@ -45,27 +45,32 @@ export class CosmNativeTokenAdapter extends BaseCosmosAdapter implements ITokenA
     throw new Error('Approve not required for native tokens');
   }
 
-  async populateTransferTx(transferParams: TransferParams): Promise<MsgTransferEncodeObject> {
+  // @ts-ignore
+  async populateTransferTx(
+    transferParams: TransferParams,
+    memo: any,
+  ): Promise<MsgTransferEncodeObject> {
+    const provider = await this.getProvider();
+    const revisionHeight = await provider.getHeight();
+    console.log('populate', this.chainName);
     const transfer: MsgTransfer = {
-      sourcePort: '',
-      sourceChannel: '',
+      sourcePort: 'transfer',
+      sourceChannel: 'channel-8',
       token: {
         denom: this.ibcDenom,
         amount: transferParams.weiAmountOrId.toString(),
       },
-      sender: '',
-      receiver: '',
-      timeoutHeight: {
-        revisionNumber: 0n,
-        revisionHeight: 0n,
-      },
-      timeoutTimestamp: 0n,
-      memo: '',
+      sender: 'celestia1dwnrgwsf5c9vqjxsax04pdm0mx007yrrvqukv3',
+      receiver: 'celestia1dwnrgwsf5c9vqjxsax04pdm0mx007yrrvqukv3',
+      // @ts-ignore
+      timeoutHeight: undefined,
+      timeoutTimestamp: BigInt(new Date().getTime() + 60000),
     };
     return {
       typeUrl: '/ibc.applications.transfer.v1.MsgTransfer',
       //@ts-ignore mismatched bigint/number types aren't a problem
       value: transfer,
+      memo,
     };
   }
 }

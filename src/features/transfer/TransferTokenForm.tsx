@@ -514,6 +514,8 @@ function validateFormValues(
   const sendValue = isNft ? parsedAmount : toWei(parsedAmount, route?.originDecimals);
 
   if (!isNft) {
+    console.log(sendValue.toString(), balances);
+
     // Validate balances for ERC20-like tokens
     if (sendValue.gt(balances.senderTokenBalance)) return { amount: 'Insufficient balance' };
     // Ensure balances can cover IGP fees

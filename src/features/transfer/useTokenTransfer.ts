@@ -3,7 +3,7 @@ import { BigNumber, PopulatedTransaction as EvmTransaction, providers } from 'et
 import { useCallback, useState } from 'react';
 import { toast } from 'react-toastify';
 
-import { HyperlaneCore, IHypTokenAdapter } from '@hyperlane-xyz/sdk';
+import { CwHypCollateralAdapter, HyperlaneCore, IHypTokenAdapter } from '@hyperlane-xyz/sdk';
 import { ProtocolType, convertDecimals, toWei } from '@hyperlane-xyz/utils';
 
 import { toastTxSuccess } from '../../components/toast/TxSuccessToast';
@@ -13,9 +13,15 @@ import { isNonFungibleToken } from '../caip/tokens';
 import { getMultiProvider } from '../multiProvider';
 import { AppState, useStore } from '../store';
 import { AdapterFactory } from '../tokens/AdapterFactory';
+import { CosmNativeTokenAdapter } from '../tokens/CosmNativeTokenAdapter';
 import { isApproveRequired } from '../tokens/approval';
 import { Route, RoutesMap } from '../tokens/routes/types';
-import { getTokenRoute, isRouteFromNative, isRouteToCollateral } from '../tokens/routes/utils';
+import {
+  getTokenRoute,
+  isIbcRoute,
+  isRouteFromNative,
+  isRouteToCollateral,
+} from '../tokens/routes/utils';
 import {
   ActiveChainInfo,
   SendTransactionFn,
@@ -153,6 +159,7 @@ async function executeTransfer({
       const result = await executeSealevelTransfer(triggerParams);
       ({ transferTxHash } = result);
     } else if (originProtocol === ProtocolType.Cosmos) {
+      console.log('execute cosmos transfer');
       const result = await executeCosmWasmTransfer(triggerParams);
       ({ transferTxHash } = result);
     } else {
@@ -338,18 +345,40 @@ async function executeCosmWasmTransfer({
   sendTransaction,
 }: ExecuteTransferParams<providers.TransactionReceipt>) {
   updateStatus(TransferStatus.CreatingTransfer);
+  let tx;
+  console.log('executeCosmWasmTransfer');
+  if (isIbcRoute(tokenRoute)) {
+    const warpAdapter = AdapterFactory.HypCollateralAdapterFromAddress(
+      `cosmos:neutron/ibcDenom:ibc/773B4D0A3CD667B2275D5A4A7A2F0909C0BA0F4059C0B9181E680DDF4965DCC7`,
+      tokenRoute.originRouterAddress,
+    ) as CwHypCollateralAdapter;
 
-  const transferTxRequest = (await hypTokenAdapter.populateTransferRemoteTx({
-    weiAmountOrId,
-    recipient: recipientAddress,
-    destination: destinationDomainId,
-    // TODO cosmos quote real interchain gas payment
-    txValue: '1',
-  })) as EvmTransaction;
+    const warpTransfer = await warpAdapter.populateTransferRemoteTx({
+      weiAmountOrId,
+      recipient: recipientAddress,
+      destination: destinationDomainId,
+      txValue: undefined,
+    });
+
+    const ibcAdapter = hypTokenAdapter as unknown as CosmNativeTokenAdapter;
+
+    tx = await ibcAdapter.populateTransferTx(
+      { weiAmountOrId, recipient: recipientAddress },
+      { wasm: warpTransfer },
+    );
+  } else {
+    tx = (await hypTokenAdapter.populateTransferRemoteTx({
+      weiAmountOrId,
+      recipient: recipientAddress,
+      destination: destinationDomainId,
+      // TODO cosmos quote real interchain gas payment
+      txValue: '1',
+    })) as EvmTransaction;
+  }
 
   updateStatus(TransferStatus.SigningTransfer);
   const { hash: transferTxHash, confirm: confirmTransfer } = await sendTransaction({
-    tx: transferTxRequest,
+    tx,
     chainCaip2Id: tokenRoute.originCaip2Id,
     activeCap2Id: activeChain.chainCaip2Id,
   });

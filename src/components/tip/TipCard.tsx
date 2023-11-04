@@ -12,7 +12,7 @@ export function TipCard() {
   if (!show) return null;
   return (
     <Card className="w-100 sm:w-[31rem]">
-      <h2 className="text-blue-500 sm:text-lg">Bridge Celestia's TIA with Nexus!</h2>
+      <h2 className="text-blue-500 sm:text-lg">Bridge Celestia&apos;s TIA with Nexus!</h2>
       <div className="flex items-end justify-between">
         <p className="mt-1 text-xs sm:text-sm max-w-[70%]">
           Nexus is the interface for navigating the modular world.

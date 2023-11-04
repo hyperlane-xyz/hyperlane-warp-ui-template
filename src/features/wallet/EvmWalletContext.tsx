@@ -68,7 +68,7 @@ export function EvmWalletContext({ children }: PropsWithChildren<unknown>) {
       (tokenList.filter(
         (token) =>
           multiProvider.tryGetChainMetadata(token.chainId)?.protocol === ProtocolType.Ethereum,
-      )?.[0]?.chainId as number) || chainMetadata.arbitrum.chainId
+      )?.[0]?.chainId || chainMetadata.arbitrum.chainId) as number
     );
   }, []);
   return (

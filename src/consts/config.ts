@@ -21,7 +21,7 @@ export const config: Config = Object.freeze({
   debug: isDevMode,
   version,
   explorerApiKeys,
-  showTipBox: false,
+  showTipBox: true,
   showDisabledTokens: true,
   walletConnectProjectId,
   withdrawalWhitelist,

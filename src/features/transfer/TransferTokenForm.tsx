@@ -43,7 +43,7 @@ import { useIsApproveRequired } from '../tokens/approval';
 import { useDestinationBalance, useOriginBalance } from '../tokens/balances';
 import { getToken } from '../tokens/metadata';
 import { useRouteChains } from '../tokens/routes/hooks';
-import { RoutesMap } from '../tokens/routes/types';
+import { HypRoute, RoutesMap } from '../tokens/routes/types';
 import { getTokenRoute, isRouteFromNative } from '../tokens/routes/utils';
 import { useAccountAddressForChain } from '../wallet/hooks';
 
@@ -401,7 +401,13 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
     values: { amount, originCaip2Id, destinationCaip2Id, tokenCaip19Id },
   } = useFormikContext<TransferFormValues>();
 
-  const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenCaip19Id, tokenRoutes);
+  // TODO cosmos better handling of cosmos route details here (remove cast)
+  const route = getTokenRoute(
+    originCaip2Id,
+    destinationCaip2Id,
+    tokenCaip19Id,
+    tokenRoutes,
+  ) as HypRoute;
   const isNft = tokenCaip19Id && isNonFungibleToken(tokenCaip19Id);
   const sendValueWei = isNft ? amount.toString() : toWei(amount, route?.originDecimals).toFixed(0);
   const originProtocol = getProtocolType(originCaip2Id);

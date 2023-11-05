@@ -10,7 +10,7 @@ import { useAccountAddressForChain } from '../wallet/hooks';
 
 import { getErc20Contract, getErc721Contract } from './contracts/evmContracts';
 import { Route } from './routes/types';
-import { isRouteFromCollateral } from './routes/utils';
+import { isHypRoute, isRouteFromCollateral } from './routes/utils';
 
 export function useIsApproveRequired(
   tokenCaip19Id: TokenCaip19Id,
@@ -45,6 +45,7 @@ export async function isApproveRequired(
   if (
     isNativeToken(tokenCaip19Id) ||
     !isRouteFromCollateral(route) ||
+    !isHypRoute(route) ||
     getProtocolType(route.originCaip2Id) !== ProtocolType.Ethereum
   ) {
     return false;

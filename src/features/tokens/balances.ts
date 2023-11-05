@@ -14,7 +14,7 @@ import { useAccountAddressForChain } from '../wallet/hooks';
 import { AdapterFactory } from './AdapterFactory';
 import { getHypErc721Contract } from './contracts/evmContracts';
 import { RoutesMap } from './routes/types';
-import { getTokenRoute, isIbcRoute, isRouteFromNative } from './routes/utils';
+import { getTokenRoute, isIbcOnlyRoute, isIbcRoute, isRouteFromNative } from './routes/utils';
 
 export function useOriginBalance(
   { originCaip2Id, destinationCaip2Id, tokenCaip19Id }: TransferFormValues,
@@ -41,12 +41,12 @@ export function useOriginBalance(
       const protocol = getProtocolType(originCaip2Id);
       if (!route || !address || !isValidAddress(address, protocol)) return null;
       const tokenAdapter = isIbcRoute(route)
-        ? AdapterFactory.NativeAdapterFromChain(originCaip2Id, true)
+        ? AdapterFactory.NativeAdapterFromRoute(route, 'origin')
         : AdapterFactory.HypTokenAdapterFromRouteOrigin(route);
       const tokenBalance = await tokenAdapter.getBalance(address);
 
       let nativeBalance;
-      if (isRouteFromNative(route)) {
+      if (isRouteFromNative(route) || isIbcRoute(route)) {
         nativeBalance = tokenBalance;
       } else {
         const nativeAdapter = AdapterFactory.NativeAdapterFromChain(originCaip2Id);
@@ -92,8 +92,10 @@ export function useDestinationBalance(
       const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenCaip19Id, tokenRoutes);
       const protocol = getProtocolType(destinationCaip2Id);
       if (!route || !recipientAddress || !isValidAddress(recipientAddress, protocol)) return null;
-      const adapter = AdapterFactory.HypTokenAdapterFromRouteDest(route);
-      const balance = await adapter.getBalance(recipientAddress);
+      const tokenAdapter = isIbcOnlyRoute(route)
+        ? AdapterFactory.NativeAdapterFromRoute(route, 'destination')
+        : AdapterFactory.HypTokenAdapterFromRouteDest(route);
+      const balance = await tokenAdapter.getBalance(recipientAddress);
       return { balance, decimals: route.destDecimals };
     },
     refetchInterval: 5000,

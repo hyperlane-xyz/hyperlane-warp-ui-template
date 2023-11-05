@@ -8,7 +8,7 @@ import { useAccountAddressForChain } from '../wallet/hooks';
 import { SelectTokenIdField } from './SelectTokenIdField';
 import { useContractSupportsTokenByOwner, useIsSenderNftOwner } from './balances';
 import { RouteType, RoutesMap } from './routes/types';
-import { getTokenRoute } from './routes/utils';
+import { getTokenRoute, isHypRoute } from './routes/utils';
 
 export function SelectOrInputTokenIds({
   disabled,
@@ -27,7 +27,7 @@ export function SelectOrInputTokenIds({
   if (route?.type === RouteType.CollateralToSynthetic) {
     // If the origin is the base chain, use the collateralized token for balance checking
     activeToken = tokenCaip19Id;
-  } else if (route && route?.type !== RouteType.IbcNativeToHypNative) {
+  } else if (route && isHypRoute(route)) {
     // Otherwise, use the synthetic token for balance checking
     activeToken = getCaip19Id(
       route.originCaip2Id,

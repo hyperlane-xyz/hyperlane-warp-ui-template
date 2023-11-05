@@ -15,7 +15,12 @@ import { AppState, useStore } from '../store';
 import { AdapterFactory } from '../tokens/AdapterFactory';
 import { isApproveRequired } from '../tokens/approval';
 import { Route, RoutesMap } from '../tokens/routes/types';
-import { getTokenRoute, isRouteFromNative, isRouteToCollateral } from '../tokens/routes/utils';
+import {
+  getTokenRoute,
+  isHypRoute,
+  isRouteFromNative,
+  isRouteToCollateral,
+} from '../tokens/routes/utils';
 import {
   ActiveChainInfo,
   SendTransactionFn,
@@ -128,6 +133,7 @@ async function executeTransfer({
 
     await ensureSufficientCollateral(tokenRoute, weiAmountOrId, isNft);
 
+    // TODO cosmos ibc support
     const hypTokenAdapter = AdapterFactory.HypTokenAdapterFromRouteOrigin(tokenRoute);
 
     const triggerParams: ExecuteTransferParams<any> = {
@@ -190,7 +196,8 @@ async function ensureSufficientCollateral(route: Route, weiAmount: string, isNft
   // TODO cosmos support here
   if (
     getProtocolType(route.originCaip2Id) === ProtocolType.Cosmos ||
-    getProtocolType(route.destCaip2Id) === ProtocolType.Cosmos
+    getProtocolType(route.destCaip2Id) === ProtocolType.Cosmos ||
+    !isHypRoute(route)
   )
     return;
 
@@ -231,6 +238,7 @@ async function executeEvmTransfer({
   updateStatus,
   sendTransaction,
 }: ExecuteTransferParams<providers.TransactionReceipt>) {
+  if (!isHypRoute(tokenRoute)) throw new Error('Unsupported route type');
   const { baseRouterAddress, originCaip2Id, baseTokenCaip19Id } = tokenRoute;
 
   const isApproveTxRequired =

@@ -3,19 +3,17 @@ export enum RouteType {
   CollateralToSynthetic = 'collateralToSynthetic',
   SyntheticToSynthetic = 'syntheticToSynthetic',
   SyntheticToCollateral = 'syntheticToCollateral',
-  IbcNativeToHypNative = 'IbcNativeToHypNative',
+  IbcNativeToIbcNative = 'ibcNativeToIbcNative',
+  IbcNativeToHypNative = 'ibcNativeToHypNative',
 }
 
 interface BaseRoute {
   type: RouteType;
   // The underlying 'collateralized' token:
   baseTokenCaip19Id: TokenCaip19Id;
-  baseRouterAddress: Address;
   originCaip2Id: ChainCaip2Id;
-  originRouterAddress: Address;
   originDecimals: number;
   destCaip2Id: ChainCaip2Id;
-  destRouterAddress: Address;
   destDecimals: number;
   // The underlying token on the destination chain
   // Only set for CollateralToCollateral routes (b.c. sealevel needs it)
@@ -28,12 +26,27 @@ export interface HypRoute extends BaseRoute {
     | RouteType.CollateralToSynthetic
     | RouteType.SyntheticToCollateral
     | RouteType.SyntheticToSynthetic;
+  baseRouterAddress: Address;
+  originRouterAddress: Address;
+  destRouterAddress: Address;
 }
 
-export interface IbcRoute extends BaseRoute {
+interface BaseIbcRoute extends BaseRoute {
+  ibcDenom: string;
+  sourcePort: string;
+  sourceChannel: string;
+}
+
+export interface IbcRoute extends BaseIbcRoute {
+  type: RouteType.IbcNativeToIbcNative;
+}
+
+export interface IbcToHypRoute extends BaseIbcRoute {
   type: RouteType.IbcNativeToHypNative;
+  intermediateRouterAddress: Address;
+  destRouterAddress: Address;
 }
 
-export type Route = HypRoute | IbcRoute;
+export type Route = HypRoute | IbcRoute | IbcToHypRoute;
 
 export type RoutesMap = Record<ChainCaip2Id, Record<ChainCaip2Id, Route[]>>;

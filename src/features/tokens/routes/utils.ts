@@ -2,7 +2,7 @@ import { utils as ethersUtils } from 'ethers';
 
 import { isNativeToken } from '../../caip/tokens';
 
-import { IbcRoute, Route, RouteType, RoutesMap } from './types';
+import { HypRoute, IbcRoute, IbcToHypRoute, Route, RouteType, RoutesMap } from './types';
 
 export function getTokenRoutes(
   originCaip2Id: ChainCaip2Id,
@@ -63,8 +63,20 @@ export function isRouteFromNative(route: Route) {
   return isRouteFromCollateral(route) && isNativeToken(route.baseTokenCaip19Id);
 }
 
-export function isIbcRoute(route: Route): route is IbcRoute {
-  return route.type === RouteType.IbcNativeToHypNative;
+export function isHypRoute(route: Route): route is HypRoute {
+  return !isIbcRoute(route);
+}
+
+export function isIbcRoute(route: Route): route is IbcRoute | IbcToHypRoute {
+  return (
+    route.type === RouteType.IbcNativeToIbcNative || route.type === RouteType.IbcNativeToHypNative
+  );
+}
+
+// Differs from isIbcRoute above in that it it's only true for routes that
+// Never interact with Hyperlane routers at all
+export function isIbcOnlyRoute(route: Route): route is IbcRoute {
+  return route.type === RouteType.IbcNativeToIbcNative;
 }
 
 export function mergeRoutes(routes: RoutesMap, newRoutes: Route[]) {

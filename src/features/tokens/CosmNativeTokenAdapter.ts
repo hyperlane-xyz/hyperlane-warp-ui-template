@@ -25,14 +25,20 @@ export class CosmNativeTokenAdapter extends BaseCosmosAdapter implements ITokenA
     public readonly chainName: string,
     public readonly multiProvider: MultiProtocolProvider,
     public readonly addresses: Record<string, Address>,
-    public readonly ibcDenom: string = 'utia', // TODO cosmos update to be generic
+    public readonly properties: {
+      ibcDenom: string;
+      sourcePort: string;
+      sourceChannel: string;
+    },
   ) {
+    if (!properties.ibcDenom || !properties.sourcePort || !properties.sourceChannel)
+      throw new Error('Missing properties for CosmNativeTokenAdapter');
     super(chainName, multiProvider, addresses);
   }
 
   async getBalance(address: string): Promise<string> {
     const provider = await this.getProvider();
-    const coin = await provider.getBalance(address, this.ibcDenom);
+    const coin = await provider.getBalance(address, this.properties.ibcDenom);
     return coin.amount;
   }
 
@@ -46,15 +52,17 @@ export class CosmNativeTokenAdapter extends BaseCosmosAdapter implements ITokenA
   }
 
   async populateTransferTx(transferParams: TransferParams): Promise<MsgTransferEncodeObject> {
+    if (!transferParams.fromAccountOwner)
+      throw new Error('fromAccountOwner is required for ibc transfers');
     const transfer: MsgTransfer = {
-      sourcePort: '',
-      sourceChannel: '',
+      sourcePort: this.properties.sourcePort,
+      sourceChannel: this.properties.sourceChannel,
       token: {
-        denom: this.ibcDenom,
+        denom: this.properties.ibcDenom,
         amount: transferParams.weiAmountOrId.toString(),
       },
-      sender: '',
-      receiver: '',
+      sender: transferParams.fromAccountOwner,
+      receiver: transferParams.recipient,
       timeoutHeight: {
         revisionNumber: 0n,
         revisionHeight: 0n,

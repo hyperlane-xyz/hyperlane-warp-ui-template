@@ -15,6 +15,7 @@ import { PropsWithChildren, useMemo } from 'react';
 import { WagmiConfig, configureChains, createClient } from 'wagmi';
 import { publicProvider } from 'wagmi/providers/public';
 
+import { chainMetadata } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 
 import { APP_NAME } from '../../consts/app';
@@ -63,10 +64,12 @@ const wagmiClient = createClient({
 export function EvmWalletContext({ children }: PropsWithChildren<unknown>) {
   const initialChain = useMemo(() => {
     const multiProvider = getMultiProvider();
-    return tokenList.filter(
-      (token) =>
-        multiProvider.tryGetChainMetadata(token.chainId)?.protocol === ProtocolType.Ethereum,
-    )?.[0]?.chainId as number;
+    return (
+      (tokenList.filter(
+        (token) =>
+          multiProvider.tryGetChainMetadata(token.chainId)?.protocol === ProtocolType.Ethereum,
+      )?.[0]?.chainId || chainMetadata.arbitrum.chainId) as number
+    );
   }, []);
   return (
     <WagmiConfig client={wagmiClient}>

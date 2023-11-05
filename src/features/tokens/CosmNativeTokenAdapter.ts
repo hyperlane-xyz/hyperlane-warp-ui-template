@@ -4,6 +4,7 @@ import { MsgTransfer } from 'cosmjs-types/ibc/applications/transfer/v1/tx';
 import {
   BaseAppAdapter,
   CosmJsProvider,
+  CwHypCollateralAdapter,
   ITokenAdapter,
   MinimalTokenMetadata,
   MultiProtocolProvider,
@@ -51,7 +52,10 @@ export class CosmNativeTokenAdapter extends BaseCosmosAdapter implements ITokenA
     throw new Error('Approve not required for native tokens');
   }
 
-  async populateTransferTx(transferParams: TransferParams): Promise<MsgTransferEncodeObject> {
+  async populateTransferTx(
+    transferParams: TransferParams,
+    memo = '',
+  ): Promise<MsgTransferEncodeObject> {
     if (!transferParams.fromAccountOwner)
       throw new Error('fromAccountOwner is required for ibc transfers');
     const transfer: MsgTransfer = {
@@ -68,12 +72,46 @@ export class CosmNativeTokenAdapter extends BaseCosmosAdapter implements ITokenA
         revisionHeight: 0n,
       },
       timeoutTimestamp: 0n,
-      memo: '',
+      memo,
     };
     return {
       typeUrl: '/ibc.applications.transfer.v1.MsgTransfer',
       //@ts-ignore mismatched bigint/number types aren't a problem
       value: transfer,
     };
+  }
+}
+
+export class CosmNativeToHypTokenAdapter extends CosmNativeTokenAdapter implements ITokenAdapter {
+  constructor(
+    public readonly chainName: string,
+    public readonly multiProvider: MultiProtocolProvider,
+    public readonly addresses: {
+      intermediateTokenAddress: Address;
+      intermediateRouterAddress: Address;
+      destRouterAddress: Address;
+    },
+    public readonly properties: CosmNativeTokenAdapter['properties'] & { destDomainId: DomainId },
+  ) {
+    super(chainName, multiProvider, addresses, properties);
+  }
+
+  async populateTransferTx(transferParams: TransferParams): Promise<MsgTransferEncodeObject> {
+    const cwAdapter = new CwHypCollateralAdapter(this.chainName, this.multiProvider, {
+      token: this.addresses.intermediateTokenAddress,
+      warpRouter: this.addresses.intermediateRouterAddress,
+    });
+    const transfer = await cwAdapter.populateTransferRemoteTx({
+      ...transferParams,
+      destination: this.properties.destDomainId,
+      // TODO cosmos quote real interchain gas payment
+      txValue: '1',
+    });
+    const memo = JSON.stringify(transfer);
+    console.log(memo);
+    return super.populateTransferTx(
+      { ...transferParams, recipient: this.addresses.intermediateRouterAddress },
+      memo,
+    );
   }
 }

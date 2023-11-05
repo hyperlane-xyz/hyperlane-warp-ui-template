@@ -43,6 +43,7 @@ export interface IbcRoute extends BaseIbcRoute {
 
 export interface IbcToHypRoute extends BaseIbcRoute {
   type: RouteType.IbcNativeToHypNative;
+  intermediateTokenAddress: Address;
   intermediateRouterAddress: Address;
   destRouterAddress: Address;
 }

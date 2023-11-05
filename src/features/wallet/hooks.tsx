@@ -1,3 +1,4 @@
+import { DeliverTxResponse, ExecuteResult } from '@cosmjs/cosmwasm-stargate';
 import { useChain as useCosmosChain, useWalletClient as useCosmosWallet } from '@cosmos-kit/react';
 import { useConnectModal as useEvmModal } from '@rainbow-me/rainbowkit';
 import { useConnection, useWallet as useSolanaWallet } from '@solana/wallet-adapter-react';
@@ -366,9 +367,14 @@ export function useTransactionFns(): Record<
   );
 
   // Cosmos
-  // TODO cosmos fix
-  const { address: cosmAddress, getSigningCosmWasmClient } =
-    useCosmosChain(PLACEHOLDER_COSMOS_CHAIN);
+  // TODO cosmos we need a way to get the signing clients via another hook, this one can't
+  // be easily changed dynamically based on the form fields
+  const {
+    address: cosmAddress,
+    getSigningCosmWasmClient,
+    getSigningStargateClient,
+  } = useCosmosChain(PLACEHOLDER_COSMOS_CHAIN);
+  console.log('===cosmAddress', cosmAddress);
 
   const onSwitchCosmNetwork = useCallback(async (chainCaip2Id: ChainCaip2Id) => {
     const chainName = getChainMetadata(chainCaip2Id).displayName;
@@ -381,22 +387,36 @@ export function useTransactionFns(): Record<
       chainCaip2Id,
       activeCap2Id,
     }: {
-      tx: any;
+      tx: { type: 'cosmwasm' | 'stargate'; request: any };
       chainCaip2Id: ChainCaip2Id;
       activeCap2Id?: ChainCaip2Id;
     }) => {
       if (!cosmAddress) throw new Error('Cosmos wallet not connected');
       if (activeCap2Id && activeCap2Id !== chainCaip2Id) await onSwitchCosmNetwork(chainCaip2Id);
-      logger.debug(`Sending tx on chain ${chainCaip2Id}`);
-      const client = await getSigningCosmWasmClient();
-      const result = await client.executeMultiple(cosmAddress, [tx], 'auto');
-      const confirm = async () => {
+      logger.debug(`Sending ${tx.type} tx on chain ${chainCaip2Id}`);
+      let result: ExecuteResult | DeliverTxResponse;
+      let confirm: () => Promise<any>;
+      if (tx.type === 'cosmwasm') {
+        const client = await getSigningCosmWasmClient();
+        result = await client.executeMultiple(cosmAddress, [tx.request], 'auto');
+        confirm = async () => {
+          if (result.transactionHash) return result;
+          throw new Error(`Cosmos tx ${result.transactionHash} failed: ${JSON.stringify(result)}`);
+        };
+      } else if (tx.type === 'stargate') {
+        const client = await getSigningStargateClient();
+        result = await client.signAndBroadcast(cosmAddress, [tx.request], 'auto');
+      } else {
+        throw new Error('Invalid cosmos tx type');
+      }
+
+      confirm = async () => {
         if (result.transactionHash) return result;
         throw new Error(`Cosmos tx ${result.transactionHash} failed: ${JSON.stringify(result)}`);
       };
       return { hash: result.transactionHash, confirm };
     },
-    [onSwitchCosmNetwork, cosmAddress, getSigningCosmWasmClient],
+    [onSwitchCosmNetwork, cosmAddress, getSigningCosmWasmClient, getSigningStargateClient],
   );
 
   return useMemo(

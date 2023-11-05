@@ -23,6 +23,9 @@ export const ibcRoutes: Array<IbcRoute | IbcToHypRoute> = [
     ibcDenom: 'utia',
     sourcePort: 'transfer',
     sourceChannel: 'channel-8',
+    // IBC wrapped token on Neutron
+    intermediateTokenAddress:
+      'ibc/773B4D0A3CD667B2275D5A4A7A2F0909C0BA0F4059C0B9181E680DDF4965DCC7',
     // Router on Neutron
     intermediateRouterAddress: 'neutron1ch7x3xgpnj62weyes8vfada35zff6z59kt2psqhnx9gjnt2ttqdqtva3pa',
     // Router on Manta

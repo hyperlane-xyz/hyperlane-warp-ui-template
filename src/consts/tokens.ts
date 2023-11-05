@@ -36,7 +36,7 @@ export const tokenList: WarpTokenConfig = [
   //   isNft: true,
   // },
 
-  // TIA on Neutron token
+  // TIA on Neutron to Manta
   {
     type: 'collateral',
     chainId: 'neutron-1',
@@ -57,6 +57,8 @@ export const tokenList: WarpTokenConfig = [
     decimals: 6,
     logoURI: '/logos/celestia.png',
   },
+
+  // TIA on Neutron to Arbitrum
   {
     type: 'collateral',
     chainId: 'neutron-1',

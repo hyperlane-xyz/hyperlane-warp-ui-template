@@ -1,5 +1,9 @@
 import { DeliverTxResponse, ExecuteResult } from '@cosmjs/cosmwasm-stargate';
-import { useChain as useCosmosChain, useWalletClient as useCosmosWallet } from '@cosmos-kit/react';
+import {
+  useChain as useCosmosChain,
+  useChains as useCosmosChains,
+  useWalletClient as useCosmosWallet,
+} from '@cosmos-kit/react';
 import { useConnectModal as useEvmModal } from '@rainbow-me/rainbowkit';
 import { useConnection, useWallet as useSolanaWallet } from '@solana/wallet-adapter-react';
 import { useWalletModal as useSolanaModal } from '@solana/wallet-adapter-react-ui';
@@ -367,14 +371,7 @@ export function useTransactionFns(): Record<
   );
 
   // Cosmos
-  // TODO cosmos we need a way to get the signing clients via another hook, this one can't
-  // be easily changed dynamically based on the form fields
-  const {
-    address: cosmAddress,
-    getSigningCosmWasmClient,
-    getSigningStargateClient,
-  } = useCosmosChain(PLACEHOLDER_COSMOS_CHAIN);
-  console.log('===cosmAddress', cosmAddress);
+  const cosmosChainToContext = useCosmosChains(getCosmosChainNames());
 
   const onSwitchCosmNetwork = useCallback(async (chainCaip2Id: ChainCaip2Id) => {
     const chainName = getChainMetadata(chainCaip2Id).displayName;
@@ -391,21 +388,24 @@ export function useTransactionFns(): Record<
       chainCaip2Id: ChainCaip2Id;
       activeCap2Id?: ChainCaip2Id;
     }) => {
-      if (!cosmAddress) throw new Error('Cosmos wallet not connected');
+      const chainName = getChainMetadata(chainCaip2Id).name;
+      const chainContext = cosmosChainToContext[chainName];
+      if (!chainContext?.address) throw new Error(`Cosmos wallet not connected for ${chainName}`);
       if (activeCap2Id && activeCap2Id !== chainCaip2Id) await onSwitchCosmNetwork(chainCaip2Id);
       logger.debug(`Sending ${tx.type} tx on chain ${chainCaip2Id}`);
+      const { getSigningCosmWasmClient, getSigningStargateClient } = chainContext;
       let result: ExecuteResult | DeliverTxResponse;
       let confirm: () => Promise<any>;
       if (tx.type === 'cosmwasm') {
         const client = await getSigningCosmWasmClient();
-        result = await client.executeMultiple(cosmAddress, [tx.request], 'auto');
+        result = await client.executeMultiple(chainContext.address, [tx.request], 'auto');
         confirm = async () => {
           if (result.transactionHash) return result;
           throw new Error(`Cosmos tx ${result.transactionHash} failed: ${JSON.stringify(result)}`);
         };
       } else if (tx.type === 'stargate') {
         const client = await getSigningStargateClient();
-        result = await client.signAndBroadcast(cosmAddress, [tx.request], 'auto');
+        result = await client.signAndBroadcast(chainContext.address, [tx.request], 'auto');
       } else {
         throw new Error('Invalid cosmos tx type');
       }
@@ -416,7 +416,7 @@ export function useTransactionFns(): Record<
       };
       return { hash: result.transactionHash, confirm };
     },
-    [onSwitchCosmNetwork, cosmAddress, getSigningCosmWasmClient, getSigningStargateClient],
+    [onSwitchCosmNetwork, cosmosChainToContext],
   );
 
   return useMemo(

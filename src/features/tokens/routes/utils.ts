@@ -79,6 +79,10 @@ export function isIbcOnlyRoute(route: Route): route is IbcRoute {
   return route.type === RouteType.IbcNativeToIbcNative;
 }
 
+export function isIbcToHypRoute(route: Route): route is IbcToHypRoute {
+  return route.type === RouteType.IbcNativeToHypNative;
+}
+
 export function mergeRoutes(routes: RoutesMap, newRoutes: Route[]) {
   const mergedRoutes = ethersUtils.deepCopy(routes);
   for (const route of newRoutes) {

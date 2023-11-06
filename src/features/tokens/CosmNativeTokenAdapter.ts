@@ -1,8 +1,9 @@
 import { MsgTransferEncodeObject } from '@cosmjs/stargate';
-import { MsgTransfer } from 'cosmjs-types/ibc/applications/transfer/v1/tx';
+import Long from 'long';
 
 import {
   BaseAppAdapter,
+  ChainName,
   CosmJsProvider,
   CwHypCollateralAdapter,
   ITokenAdapter,
@@ -11,6 +12,8 @@ import {
   TransferParams,
 } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
+
+const COSMOS_IBC_TRANSFER_TIMEOUT = 60_000; // 1 minute
 
 // TODO cosmos move everything in this file to the SDK
 export class BaseCosmosAdapter extends BaseAppAdapter {
@@ -23,7 +26,7 @@ export class BaseCosmosAdapter extends BaseAppAdapter {
 
 export class CosmNativeTokenAdapter extends BaseCosmosAdapter implements ITokenAdapter {
   constructor(
-    public readonly chainName: string,
+    public readonly chainName: ChainName,
     public readonly multiProvider: MultiProtocolProvider,
     public readonly addresses: Record<string, Address>,
     public readonly properties: {
@@ -52,13 +55,16 @@ export class CosmNativeTokenAdapter extends BaseCosmosAdapter implements ITokenA
     throw new Error('Approve not required for native tokens');
   }
 
+  // TODO cosmos consider refactoring this into a new method b.c. the other adapter
+  // transfer methods are for local chain transfers, not remote ones
   async populateTransferTx(
     transferParams: TransferParams,
     memo = '',
   ): Promise<MsgTransferEncodeObject> {
     if (!transferParams.fromAccountOwner)
       throw new Error('fromAccountOwner is required for ibc transfers');
-    const transfer: MsgTransfer = {
+
+    const value = {
       sourcePort: this.properties.sourcePort,
       sourceChannel: this.properties.sourceChannel,
       token: {
@@ -67,48 +73,60 @@ export class CosmNativeTokenAdapter extends BaseCosmosAdapter implements ITokenA
       },
       sender: transferParams.fromAccountOwner,
       receiver: transferParams.recipient,
-      timeoutHeight: {
-        revisionNumber: 0n,
-        revisionHeight: 0n,
-      },
-      timeoutTimestamp: 0n,
+      // Represented as nano-seconds
+      timeoutTimestamp: Long.fromNumber(
+        new Date().getTime() + COSMOS_IBC_TRANSFER_TIMEOUT,
+      ).multiply(1_000_000),
       memo,
     };
     return {
       typeUrl: '/ibc.applications.transfer.v1.MsgTransfer',
-      //@ts-ignore mismatched bigint/number types aren't a problem
-      value: transfer,
+      value,
     };
   }
 }
 
 export class CosmNativeToHypTokenAdapter extends CosmNativeTokenAdapter implements ITokenAdapter {
   constructor(
-    public readonly chainName: string,
+    public readonly chainName: ChainName,
     public readonly multiProvider: MultiProtocolProvider,
     public readonly addresses: {
-      intermediateTokenAddress: Address;
       intermediateRouterAddress: Address;
-      destRouterAddress: Address;
+      destinationRouterAddress: Address;
     },
-    public readonly properties: CosmNativeTokenAdapter['properties'] & { destDomainId: DomainId },
+    public readonly properties: CosmNativeTokenAdapter['properties'] & {
+      derivedIbcDenom: string;
+      intermediateChainName: ChainName;
+      destinationDomainId: DomainId;
+    },
   ) {
     super(chainName, multiProvider, addresses, properties);
   }
 
   async populateTransferTx(transferParams: TransferParams): Promise<MsgTransferEncodeObject> {
-    const cwAdapter = new CwHypCollateralAdapter(this.chainName, this.multiProvider, {
-      token: this.addresses.intermediateTokenAddress,
-      warpRouter: this.addresses.intermediateRouterAddress,
-    });
+    const cwAdapter = new CwHypCollateralAdapter(
+      this.properties.intermediateChainName,
+      this.multiProvider,
+      {
+        token: this.properties.derivedIbcDenom,
+        warpRouter: this.addresses.intermediateRouterAddress,
+      },
+      this.properties.ibcDenom,
+    );
     const transfer = await cwAdapter.populateTransferRemoteTx({
       ...transferParams,
-      destination: this.properties.destDomainId,
+      destination: this.properties.destinationDomainId,
       // TODO cosmos quote real interchain gas payment
       txValue: '1',
     });
-    const memo = JSON.stringify(transfer);
-    console.log(memo);
+    const cwMemo = {
+      wasm: {
+        contract: transfer.contractAddress,
+        msg: transfer.msg,
+        funds: transfer.funds,
+      },
+    };
+    const memo = JSON.stringify(cwMemo);
     return super.populateTransferTx(
       { ...transferParams, recipient: this.addresses.intermediateRouterAddress },
       memo,

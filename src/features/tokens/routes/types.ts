@@ -32,9 +32,10 @@ export interface HypRoute extends BaseRoute {
 }
 
 interface BaseIbcRoute extends BaseRoute {
-  ibcDenom: string;
+  originIbcDenom: string;
   sourcePort: string;
   sourceChannel: string;
+  derivedIbcDenom: string;
 }
 
 export interface IbcRoute extends BaseIbcRoute {
@@ -43,7 +44,7 @@ export interface IbcRoute extends BaseIbcRoute {
 
 export interface IbcToHypRoute extends BaseIbcRoute {
   type: RouteType.IbcNativeToHypNative;
-  intermediateTokenAddress: Address;
+  intermediateCaip2Id: ChainCaip2Id;
   intermediateRouterAddress: Address;
   destRouterAddress: Address;
 }

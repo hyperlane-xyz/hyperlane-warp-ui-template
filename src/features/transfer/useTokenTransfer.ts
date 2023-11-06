@@ -9,9 +9,9 @@ import { ProtocolType, toWei } from '@hyperlane-xyz/utils';
 
 import { toastTxSuccess } from '../../components/toast/TxSuccessToast';
 import { logger } from '../../utils/logger';
-import { getChainReference, parseCaip2Id } from '../caip/chains';
+import { parseCaip2Id } from '../caip/chains';
 import { isNonFungibleToken } from '../caip/tokens';
-import { getMultiProvider } from '../multiProvider';
+import { getChainMetadata, getMultiProvider } from '../multiProvider';
 import { AppState, useStore } from '../store';
 import { AdapterFactory } from '../tokens/AdapterFactory';
 import {
@@ -376,11 +376,10 @@ async function executeIbcTransfer({
   if (!isIbcRoute(tokenRoute)) throw new Error('Unsupported route type');
   updateStatus(TransferStatus.CreatingTransfer);
 
-  const chainId = getChainReference(tokenRoute.originCaip2Id);
   const multiProvider = getMultiProvider();
-  const chainName = multiProvider.getChainMetadata(chainId).name;
+  const chainName = getChainMetadata(tokenRoute.originCaip2Id).name;
   const adapterProperties = {
-    ibcDenom: tokenRoute.ibcDenom,
+    ibcDenom: tokenRoute.originIbcDenom,
     sourcePort: tokenRoute.sourcePort,
     sourceChannel: tokenRoute.sourceChannel,
   };
@@ -389,15 +388,20 @@ async function executeIbcTransfer({
   if (isIbcOnlyRoute(tokenRoute)) {
     adapter = new CosmNativeTokenAdapter(chainName, multiProvider, {}, adapterProperties);
   } else {
+    const intermediateChainName = getChainMetadata(tokenRoute.intermediateCaip2Id).name;
     adapter = new CosmNativeToHypTokenAdapter(
       chainName,
       multiProvider,
       {
-        intermediateTokenAddress: tokenRoute.intermediateTokenAddress,
         intermediateRouterAddress: tokenRoute.intermediateRouterAddress,
-        destRouterAddress: tokenRoute.destRouterAddress,
+        destinationRouterAddress: tokenRoute.destRouterAddress,
       },
-      { ...adapterProperties, destDomainId: destinationDomainId },
+      {
+        ...adapterProperties,
+        derivedIbcDenom: tokenRoute.derivedIbcDenom,
+        destinationDomainId,
+        intermediateChainName,
+      },
     );
   }
 

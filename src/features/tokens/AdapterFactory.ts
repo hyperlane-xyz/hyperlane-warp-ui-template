@@ -29,6 +29,7 @@ import { Route } from './routes/types';
 import {
   isHypRoute,
   isIbcRoute,
+  isIbcToHypRoute,
   isRouteFromCollateral,
   isRouteFromSynthetic,
   isRouteToCollateral,
@@ -63,7 +64,7 @@ export class AdapterFactory {
     if (isIbcRoute(route)) {
       useCosmNative = true;
       adapterProperties = {
-        ibcDenom: route.ibcDenom,
+        ibcDenom: source === 'origin' ? route.originIbcDenom : route.derivedIbcDenom,
         sourcePort: route.sourcePort,
         sourceChannel: route.sourceChannel,
       };
@@ -156,11 +157,11 @@ export class AdapterFactory {
   }
 
   static HypTokenAdapterFromRouteDest(route: Route): IHypTokenAdapter {
-    if (!isHypRoute(route)) throw new Error('Route is not a hyp route');
+    if (!isHypRoute(route) && !isIbcToHypRoute(route)) throw new Error('Route is not a hyp route');
     const { type, destCaip2Id, destRouterAddress, destTokenCaip19Id, baseTokenCaip19Id } = route;
     const tokenCaip19Id = destTokenCaip19Id || baseTokenCaip19Id;
     const isNative = isNativeToken(baseTokenCaip19Id);
-    if (isRouteToCollateral(route)) {
+    if (isRouteToCollateral(route) || isIbcToHypRoute(route)) {
       return AdapterFactory.selectHypAdapter(
         destCaip2Id,
         destRouterAddress,
@@ -227,6 +228,7 @@ export class AdapterFactory {
       );
     } else if (protocol === ProtocolType.Cosmos) {
       if (!bech32Prefix) throw new Error('Bech32 prefix required for cosmos hyp adapter');
+      // TODO cosmos provide correct denom here
       return new CosmosAdapter(chainName, multiProvider, {
         token: convertToProtocolAddress(baseTokenAddress, protocol, bech32Prefix),
         warpRouter: convertToProtocolAddress(routerAddress, protocol, bech32Prefix),

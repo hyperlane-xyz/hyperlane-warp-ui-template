@@ -54,8 +54,7 @@ export class CosmNativeTokenAdapter extends BaseCosmosAdapter implements ITokenA
     throw new Error('Approve not required for native tokens');
   }
 
-  // TODO cosmos consider refactoring this into a new method b.c. the other adapter
-  // transfer methods are for local chain transfers, not remote ones
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async populateTransferTx(_transferParams: TransferParams): Promise<MsgTransferEncodeObject> {
     throw new Error('TODO not yet implemented');
   }
@@ -80,6 +79,8 @@ export class CosmIbcTokenAdapter extends CosmNativeTokenAdapter implements IHypT
   getDomains(): Promise<Domain[]> {
     throw new Error('Method not applicable to IBC adapters');
   }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   getRouterAddress(_domain: Domain): Promise<Buffer> {
     throw new Error('Method not applicable to IBC adapters');
   }
@@ -91,12 +92,12 @@ export class CosmIbcTokenAdapter extends CosmNativeTokenAdapter implements IHypT
   > {
     throw new Error('Method not applicable to IBC adapters');
   }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   quoteGasPayment(_destination: Domain): Promise<string> {
     throw new Error('Method not applicable to IBC adapters');
   }
 
-  // TODO cosmos consider refactoring this into a new method b.c. the other adapter
-  // transfer methods are for local chain transfers, not remote ones
   async populateTransferRemoteTx(
     transferParams: TransferRemoteParams,
     memo = '',

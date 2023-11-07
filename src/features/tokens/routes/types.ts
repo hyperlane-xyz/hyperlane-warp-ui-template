@@ -4,7 +4,7 @@ export enum RouteType {
   SyntheticToSynthetic = 'syntheticToSynthetic',
   SyntheticToCollateral = 'syntheticToCollateral',
   IbcNativeToIbcNative = 'ibcNativeToIbcNative',
-  IbcNativeToHypNative = 'ibcNativeToHypNative',
+  IbcNativeToHypSynthetic = 'ibcNativeToHypSynthetic',
 }
 
 interface BaseRoute {
@@ -20,7 +20,7 @@ interface BaseRoute {
   destTokenCaip19Id?: TokenCaip19Id;
 }
 
-export interface HypRoute extends BaseRoute {
+export interface WarpRoute extends BaseRoute {
   type:
     | RouteType.CollateralToCollateral
     | RouteType.CollateralToSynthetic
@@ -42,13 +42,13 @@ export interface IbcRoute extends BaseIbcRoute {
   type: RouteType.IbcNativeToIbcNative;
 }
 
-export interface IbcToHypRoute extends BaseIbcRoute {
-  type: RouteType.IbcNativeToHypNative;
+export interface IbcToWarpRoute extends BaseIbcRoute {
+  type: RouteType.IbcNativeToHypSynthetic;
   intermediateCaip2Id: ChainCaip2Id;
   intermediateRouterAddress: Address;
   destRouterAddress: Address;
 }
 
-export type Route = HypRoute | IbcRoute | IbcToHypRoute;
+export type Route = WarpRoute | IbcRoute | IbcToWarpRoute;
 
 export type RoutesMap = Record<ChainCaip2Id, Record<ChainCaip2Id, Route[]>>;

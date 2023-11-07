@@ -43,7 +43,7 @@ import { useIsApproveRequired } from '../tokens/approval';
 import { useDestinationBalance, useOriginBalance } from '../tokens/balances';
 import { getToken } from '../tokens/metadata';
 import { useRouteChains } from '../tokens/routes/hooks';
-import { HypRoute, RoutesMap } from '../tokens/routes/types';
+import { RoutesMap, WarpRoute } from '../tokens/routes/types';
 import { getTokenRoute, isRouteFromNative } from '../tokens/routes/utils';
 import { useAccountAddressForChain } from '../wallet/hooks';
 
@@ -407,7 +407,7 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
     destinationCaip2Id,
     tokenCaip19Id,
     tokenRoutes,
-  ) as HypRoute;
+  ) as WarpRoute;
   const isNft = tokenCaip19Id && isNonFungibleToken(tokenCaip19Id);
   const sendValueWei = isNft ? amount.toString() : toWei(amount, route?.originDecimals).toFixed(0);
   const originProtocol = getProtocolType(originCaip2Id);

@@ -9,7 +9,7 @@ import { getProtocolType } from '../caip/chains';
 import { isNonFungibleToken } from '../caip/tokens';
 import { AdapterFactory } from '../tokens/AdapterFactory';
 import { Route } from '../tokens/routes/types';
-import { isHypRoute, isRouteToCollateral } from '../tokens/routes/utils';
+import { isRouteToCollateral, isWarpRoute } from '../tokens/routes/utils';
 
 // In certain cases, like when a synthetic token has >1 collateral tokens
 // it's possible that the collateral contract balance is insufficient to
@@ -21,7 +21,7 @@ export async function ensureSufficientCollateral(route: Route, weiAmount: string
   if (
     getProtocolType(route.originCaip2Id) === ProtocolType.Cosmos ||
     getProtocolType(route.destCaip2Id) === ProtocolType.Cosmos ||
-    !isHypRoute(route)
+    !isWarpRoute(route)
   )
     return;
 

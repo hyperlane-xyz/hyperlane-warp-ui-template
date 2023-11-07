@@ -27,13 +27,13 @@ import { getMultiProvider } from '../multiProvider';
 import { CosmNativeTokenAdapter } from './CosmNativeTokenAdapter';
 import { Route } from './routes/types';
 import {
-  isHypRoute,
   isIbcRoute,
-  isIbcToHypRoute,
+  isIbcToWarpRoute,
   isRouteFromCollateral,
   isRouteFromSynthetic,
   isRouteToCollateral,
   isRouteToSynthetic,
+  isWarpRoute,
 } from './routes/utils';
 
 export class AdapterFactory {
@@ -130,7 +130,7 @@ export class AdapterFactory {
   }
 
   static HypTokenAdapterFromRouteOrigin(route: Route): IHypTokenAdapter {
-    if (!isHypRoute(route)) throw new Error('Route is not a hyp route');
+    if (!isWarpRoute(route)) throw new Error('Route is not a hyp route');
     const { type, originCaip2Id, originRouterAddress, baseTokenCaip19Id } = route;
     const isNative = isNativeToken(baseTokenCaip19Id);
     if (isRouteFromCollateral(route)) {
@@ -157,11 +157,12 @@ export class AdapterFactory {
   }
 
   static HypTokenAdapterFromRouteDest(route: Route): IHypTokenAdapter {
-    if (!isHypRoute(route) && !isIbcToHypRoute(route)) throw new Error('Route is not a hyp route');
+    if (!isWarpRoute(route) && !isIbcToWarpRoute(route))
+      throw new Error('Route is not a hyp route');
     const { type, destCaip2Id, destRouterAddress, destTokenCaip19Id, baseTokenCaip19Id } = route;
     const tokenCaip19Id = destTokenCaip19Id || baseTokenCaip19Id;
     const isNative = isNativeToken(baseTokenCaip19Id);
-    if (isRouteToCollateral(route) || isIbcToHypRoute(route)) {
+    if (isRouteToCollateral(route) || isIbcToWarpRoute(route)) {
       return AdapterFactory.selectHypAdapter(
         destCaip2Id,
         destRouterAddress,

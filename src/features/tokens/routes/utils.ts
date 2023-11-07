@@ -2,7 +2,7 @@ import { utils as ethersUtils } from 'ethers';
 
 import { isNativeToken } from '../../caip/tokens';
 
-import { HypRoute, IbcRoute, IbcToHypRoute, Route, RouteType, RoutesMap } from './types';
+import { IbcRoute, IbcToWarpRoute, Route, RouteType, RoutesMap, WarpRoute } from './types';
 
 export function getTokenRoutes(
   originCaip2Id: ChainCaip2Id,
@@ -63,13 +63,14 @@ export function isRouteFromNative(route: Route) {
   return isRouteFromCollateral(route) && isNativeToken(route.baseTokenCaip19Id);
 }
 
-export function isHypRoute(route: Route): route is HypRoute {
+export function isWarpRoute(route: Route): route is WarpRoute {
   return !isIbcRoute(route);
 }
 
-export function isIbcRoute(route: Route): route is IbcRoute | IbcToHypRoute {
+export function isIbcRoute(route: Route): route is IbcRoute | IbcToWarpRoute {
   return (
-    route.type === RouteType.IbcNativeToIbcNative || route.type === RouteType.IbcNativeToHypNative
+    route.type === RouteType.IbcNativeToIbcNative ||
+    route.type === RouteType.IbcNativeToHypSynthetic
   );
 }
 
@@ -79,8 +80,8 @@ export function isIbcOnlyRoute(route: Route): route is IbcRoute {
   return route.type === RouteType.IbcNativeToIbcNative;
 }
 
-export function isIbcToHypRoute(route: Route): route is IbcToHypRoute {
-  return route.type === RouteType.IbcNativeToHypNative;
+export function isIbcToWarpRoute(route: Route): route is IbcToWarpRoute {
+  return route.type === RouteType.IbcNativeToHypSynthetic;
 }
 
 export function mergeRoutes(routes: RoutesMap, newRoutes: Route[]) {

@@ -22,10 +22,10 @@ import { isApproveRequired } from '../tokens/approval';
 import { Route, RoutesMap } from '../tokens/routes/types';
 import {
   getTokenRoute,
-  isHypRoute,
   isIbcOnlyRoute,
   isIbcRoute,
   isRouteFromNative,
+  isWarpRoute,
 } from '../tokens/routes/utils';
 import {
   ActiveChainInfo,
@@ -156,7 +156,7 @@ async function executeTransfer({
 
     let transferTxHash: string;
     let msgId: string | undefined;
-    if (isHypRoute(tokenRoute)) {
+    if (isWarpRoute(tokenRoute)) {
       ({ transferTxHash, msgId } = await executeHypTransfer(executeParams));
     } else if (isIbcRoute(tokenRoute)) {
       ({ transferTxHash } = await executeIbcTransfer(executeParams));
@@ -233,7 +233,7 @@ async function executeEvmTransfer({
   updateStatus,
   sendTransaction,
 }: ExecuteHypTransferParams<providers.TransactionReceipt>) {
-  if (!isHypRoute(tokenRoute)) throw new Error('Unsupported route type');
+  if (!isWarpRoute(tokenRoute)) throw new Error('Unsupported route type');
   const { baseRouterAddress, originCaip2Id, baseTokenCaip19Id } = tokenRoute;
 
   const isApproveTxRequired =

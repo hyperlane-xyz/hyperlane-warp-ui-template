@@ -7,6 +7,7 @@ import { HyperlaneCore, IHypTokenAdapter } from '@hyperlane-xyz/sdk';
 import { ProtocolType, convertDecimals, toWei } from '@hyperlane-xyz/utils';
 
 import { toastTxSuccess } from '../../components/toast/TxSuccessToast';
+import { COSM_IGP_QUOTE } from '../../consts/values';
 import { logger } from '../../utils/logger';
 import { getProtocolType, parseCaip2Id } from '../caip/chains';
 import { isNonFungibleToken } from '../caip/tokens';
@@ -339,8 +340,7 @@ async function executeCosmWasmTransfer({
     weiAmountOrId,
     recipient: recipientAddress,
     destination: destinationDomainId,
-    // TODO cosmos quote real interchain gas payment
-    txValue: '1',
+    txValue: COSM_IGP_QUOTE,
   })) as EvmTransaction;
 
   updateStatus(TransferStatus.SigningTransfer);

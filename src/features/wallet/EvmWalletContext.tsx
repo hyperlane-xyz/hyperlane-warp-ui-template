@@ -64,12 +64,10 @@ const wagmiClient = createClient({
 export function EvmWalletContext({ children }: PropsWithChildren<unknown>) {
   const initialChain = useMemo(() => {
     const multiProvider = getMultiProvider();
-    return (
-      (tokenList.filter(
-        (token) =>
-          multiProvider.tryGetChainMetadata(token.chainId)?.protocol === ProtocolType.Ethereum,
-      )?.[0]?.chainId || chainMetadata.arbitrum.chainId) as number
-    );
+    return (tokenList.filter(
+      (token) =>
+        multiProvider.tryGetChainMetadata(token.chainId)?.protocol === ProtocolType.Ethereum,
+    )?.[0]?.chainId || chainMetadata.arbitrum.chainId) as number;
   }, []);
   return (
     <WagmiConfig client={wagmiClient}>

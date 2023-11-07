@@ -61,7 +61,7 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
     ],
     nativeToken: {
       name: 'Neutron',
-      symbol: 'NTRN',
+      symbol: 'TIA',
       decimals: 6,
     },
     blockExplorers: [

@@ -2988,31 +2988,32 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/core@npm:3.1.0-beta0":
-  version: 3.1.0-beta0
-  resolution: "@hyperlane-xyz/core@npm:3.1.0-beta0"
+"@hyperlane-xyz/core@npm:3.1.0-beta2":
+  version: 3.1.0-beta2
+  resolution: "@hyperlane-xyz/core@npm:3.1.0-beta2"
   dependencies:
     "@eth-optimism/contracts": ^0.6.0
-    "@hyperlane-xyz/utils": 3.1.0-beta0
+    "@hyperlane-xyz/utils": 3.1.0-beta2
     "@openzeppelin/contracts": ^4.8.0
     "@openzeppelin/contracts-upgradeable": ^4.8.0
-  checksum: f9cfe922cefb4a91cfa067ac0d2db6f381a4ffbb2ca261b9bc5f3f9e961df0c0fc56d8e00ee9eee34126f0b83d2a6784329b6c9080f68855022a60003de3ab84
+  checksum: bdf397dcae70bc0617ea883c18542217f58b973a48c2032640707f63def5fab419cf9215b4651f8bfa49637fafa58a6410cda5bce6435f82b9c0bc48022df8a8
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/sdk@npm:^3.1.0-beta0":
-  version: 3.1.0-beta0
-  resolution: "@hyperlane-xyz/sdk@npm:3.1.0-beta0"
+"@hyperlane-xyz/sdk@npm:^3.1.0-beta2":
+  version: 3.1.0-beta2
+  resolution: "@hyperlane-xyz/sdk@npm:3.1.0-beta2"
   dependencies:
     "@cosmjs/cosmwasm-stargate": ^0.31.3
     "@cosmjs/stargate": ^0.31.3
-    "@hyperlane-xyz/core": 3.1.0-beta0
-    "@hyperlane-xyz/utils": 3.1.0-beta0
+    "@hyperlane-xyz/core": 3.1.0-beta2
+    "@hyperlane-xyz/utils": 3.1.0-beta2
     "@solana/spl-token": ^0.3.8
     "@solana/web3.js": ^1.78.0
     "@types/coingecko-api": ^1.0.10
     "@types/debug": ^4.1.7
     "@wagmi/chains": ^0.2.6
+    bignumber.js: ^9.1.1
     coingecko-api: ^1.0.10
     cosmjs-types: ^0.9.0
     cross-fetch: ^3.1.5
@@ -3020,19 +3021,19 @@ __metadata:
     ethers: ^5.7.2
     viem: ^1.3.1
     zod: ^3.21.2
-  checksum: 8324f4270b91361f3642442c38dee9813ddbade1121d52e0b079523bc682ef9c9a9314c350ba9789cabd2d78067b2965d95010208e4a4f882b87e759da2688bd
+  checksum: 87334039d45a6fdac0171f524c84e1bf04b7887852d0b7643cd84dadb374cca4a1d371eec507b48b9022673b782e89e04d89a8570a5a18cf7f03c4165e8dbbae
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/utils@npm:3.1.0-beta0, @hyperlane-xyz/utils@npm:^3.1.0-beta0":
-  version: 3.1.0-beta0
-  resolution: "@hyperlane-xyz/utils@npm:3.1.0-beta0"
+"@hyperlane-xyz/utils@npm:3.1.0-beta2, @hyperlane-xyz/utils@npm:^3.1.0-beta2":
+  version: 3.1.0-beta2
+  resolution: "@hyperlane-xyz/utils@npm:3.1.0-beta2"
   dependencies:
     "@cosmjs/encoding": ^0.31.3
     "@solana/web3.js": ^1.78.0
     bignumber.js: ^9.1.1
     ethers: ^5.7.2
-  checksum: 0e43505b0091301e65a09bbbbfbdb1967719d37db3b7afc7d55935e300790e351e396a931ff44b24fb902e4d68e74f81bd6c207185a58f3197be4c92ed10f9f1
+  checksum: 1634cd58bfff877934f50e38a748ed9e0c211e3eb9db0d00ef4a34510635f29f3af39aa43694ecc1dc63268599f2735520376fe35069db1105c9b44aabaa5a73
   languageName: node
   linkType: hard
 
@@ -3052,8 +3053,8 @@ __metadata:
     "@emotion/react": ^11.11.1
     "@emotion/styled": ^11.11.0
     "@headlessui/react": ^1.7.14
-    "@hyperlane-xyz/sdk": ^3.1.0-beta0
-    "@hyperlane-xyz/utils": ^3.1.0-beta0
+    "@hyperlane-xyz/sdk": ^3.1.0-beta2
+    "@hyperlane-xyz/utils": ^3.1.0-beta2
     "@hyperlane-xyz/widgets": ^1.5.0
     "@metamask/jazzicon": "https://github.com/jmrossy/jazzicon#7a8df28974b4e81129bfbe3cab76308b889032a6"
     "@rainbow-me/rainbowkit": 0.12.16

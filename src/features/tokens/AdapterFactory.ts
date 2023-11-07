@@ -194,10 +194,15 @@ export class AdapterFactory {
       );
     } else if (protocol === ProtocolType.Cosmos) {
       if (!bech32Prefix) throw new Error('Bech32 prefix required for cosmos hyp adapter');
-      return new CosmosAdapter(chainName, multiProvider, {
-        token: convertToProtocolAddress(baseTokenAddress, protocol, bech32Prefix),
-        warpRouter: convertToProtocolAddress(routerAddress, protocol, bech32Prefix),
-      });
+      return new CosmosAdapter(
+        chainName,
+        multiProvider,
+        {
+          token: convertToProtocolAddress(baseTokenAddress, protocol, bech32Prefix),
+          warpRouter: convertToProtocolAddress(routerAddress, protocol, bech32Prefix),
+        },
+        baseTokenAddress,
+      );
     } else {
       throw new Error(`Unsupported protocol: ${protocol}`);
     }

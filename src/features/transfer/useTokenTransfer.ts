@@ -344,8 +344,7 @@ async function executeCosmWasmTransfer({
     weiAmountOrId,
     recipient: recipientAddress,
     destination: destinationDomainId,
-    // TODO cosmos quote real interchain gas payment
-    txValue: '1',
+    txValue: COSM_IGP_QUOTE,
   })) as EvmTransaction;
 
   updateStatus(TransferStatus.SigningTransfer);

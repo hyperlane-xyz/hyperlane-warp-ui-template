@@ -6,12 +6,14 @@ import {
   ChainName,
   CosmJsProvider,
   CwHypCollateralAdapter,
+  IHypTokenAdapter,
   ITokenAdapter,
   MinimalTokenMetadata,
   MultiProtocolProvider,
   TransferParams,
+  TransferRemoteParams,
 } from '@hyperlane-xyz/sdk';
-import { ProtocolType } from '@hyperlane-xyz/utils';
+import { Domain, ProtocolType } from '@hyperlane-xyz/utils';
 
 const COSMOS_IBC_TRANSFER_TIMEOUT = 60_000; // 1 minute
 
@@ -31,12 +33,9 @@ export class CosmNativeTokenAdapter extends BaseCosmosAdapter implements ITokenA
     public readonly addresses: Record<string, Address>,
     public readonly properties: {
       ibcDenom: string;
-      sourcePort: string;
-      sourceChannel: string;
     },
   ) {
-    if (!properties.ibcDenom || !properties.sourcePort || !properties.sourceChannel)
-      throw new Error('Missing properties for CosmNativeTokenAdapter');
+    if (!properties.ibcDenom) throw new Error('Missing properties for CosmNativeTokenAdapter');
     super(chainName, multiProvider, addresses);
   }
 
@@ -57,8 +56,49 @@ export class CosmNativeTokenAdapter extends BaseCosmosAdapter implements ITokenA
 
   // TODO cosmos consider refactoring this into a new method b.c. the other adapter
   // transfer methods are for local chain transfers, not remote ones
-  async populateTransferTx(
-    transferParams: TransferParams,
+  async populateTransferTx(_transferParams: TransferParams): Promise<MsgTransferEncodeObject> {
+    throw new Error('TODO not yet implemented');
+  }
+}
+
+export class CosmIbcTokenAdapter extends CosmNativeTokenAdapter implements IHypTokenAdapter {
+  constructor(
+    public readonly chainName: ChainName,
+    public readonly multiProvider: MultiProtocolProvider,
+    public readonly addresses: Record<string, Address>,
+    public readonly properties: {
+      ibcDenom: string;
+      sourcePort: string;
+      sourceChannel: string;
+    },
+  ) {
+    if (!properties.ibcDenom || !properties.sourcePort || !properties.sourceChannel)
+      throw new Error('Missing properties for CosmNativeIbcTokenAdapter');
+    super(chainName, multiProvider, addresses, properties);
+  }
+
+  getDomains(): Promise<Domain[]> {
+    throw new Error('Method not applicable to IBC adapters');
+  }
+  getRouterAddress(_domain: Domain): Promise<Buffer> {
+    throw new Error('Method not applicable to IBC adapters');
+  }
+  getAllRouters(): Promise<
+    Array<{
+      domain: Domain;
+      address: Buffer;
+    }>
+  > {
+    throw new Error('Method not applicable to IBC adapters');
+  }
+  quoteGasPayment(_destination: Domain): Promise<string> {
+    throw new Error('Method not applicable to IBC adapters');
+  }
+
+  // TODO cosmos consider refactoring this into a new method b.c. the other adapter
+  // transfer methods are for local chain transfers, not remote ones
+  async populateTransferRemoteTx(
+    transferParams: TransferRemoteParams,
     memo = '',
   ): Promise<MsgTransferEncodeObject> {
     if (!transferParams.fromAccountOwner)
@@ -86,7 +126,7 @@ export class CosmNativeTokenAdapter extends BaseCosmosAdapter implements ITokenA
   }
 }
 
-export class CosmNativeToHypTokenAdapter extends CosmNativeTokenAdapter implements ITokenAdapter {
+export class CosmIbcToWarpTokenAdapter extends CosmIbcTokenAdapter implements IHypTokenAdapter {
   constructor(
     public readonly chainName: ChainName,
     public readonly multiProvider: MultiProtocolProvider,
@@ -94,16 +134,17 @@ export class CosmNativeToHypTokenAdapter extends CosmNativeTokenAdapter implemen
       intermediateRouterAddress: Address;
       destinationRouterAddress: Address;
     },
-    public readonly properties: CosmNativeTokenAdapter['properties'] & {
+    public readonly properties: CosmIbcTokenAdapter['properties'] & {
       derivedIbcDenom: string;
       intermediateChainName: ChainName;
-      destinationDomainId: DomainId;
     },
   ) {
     super(chainName, multiProvider, addresses, properties);
   }
 
-  async populateTransferTx(transferParams: TransferParams): Promise<MsgTransferEncodeObject> {
+  async populateTransferRemoteTx(
+    transferParams: TransferRemoteParams,
+  ): Promise<MsgTransferEncodeObject> {
     const cwAdapter = new CwHypCollateralAdapter(
       this.properties.intermediateChainName,
       this.multiProvider,
@@ -113,12 +154,7 @@ export class CosmNativeToHypTokenAdapter extends CosmNativeTokenAdapter implemen
       },
       this.properties.ibcDenom,
     );
-    const transfer = await cwAdapter.populateTransferRemoteTx({
-      ...transferParams,
-      destination: this.properties.destinationDomainId,
-      // TODO cosmos quote real interchain gas payment
-      txValue: '1',
-    });
+    const transfer = await cwAdapter.populateTransferRemoteTx(transferParams);
     const cwMemo = {
       wasm: {
         contract: transfer.contractAddress,
@@ -127,7 +163,7 @@ export class CosmNativeToHypTokenAdapter extends CosmNativeTokenAdapter implemen
       },
     };
     const memo = JSON.stringify(cwMemo);
-    return super.populateTransferTx(
+    return super.populateTransferRemoteTx(
       { ...transferParams, recipient: this.addresses.intermediateRouterAddress },
       memo,
     );

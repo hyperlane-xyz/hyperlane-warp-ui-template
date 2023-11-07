@@ -4,20 +4,18 @@ import { BigNumber, PopulatedTransaction as EvmTransaction, providers } from 'et
 import { useCallback, useState } from 'react';
 import { toast } from 'react-toastify';
 
-import { IHypTokenAdapter, ITokenAdapter } from '@hyperlane-xyz/sdk';
+import { IHypTokenAdapter } from '@hyperlane-xyz/sdk';
 import { ProtocolType, toWei } from '@hyperlane-xyz/utils';
 
 import { toastTxSuccess } from '../../components/toast/TxSuccessToast';
+import { COSM_IGP_QUOTE } from '../../consts/values';
 import { logger } from '../../utils/logger';
 import { parseCaip2Id } from '../caip/chains';
 import { isNonFungibleToken } from '../caip/tokens';
 import { getChainMetadata, getMultiProvider } from '../multiProvider';
 import { AppState, useStore } from '../store';
 import { AdapterFactory } from '../tokens/AdapterFactory';
-import {
-  CosmNativeToHypTokenAdapter,
-  CosmNativeTokenAdapter,
-} from '../tokens/CosmNativeTokenAdapter';
+import { CosmIbcToWarpTokenAdapter, CosmIbcTokenAdapter } from '../tokens/CosmNativeTokenAdapter';
 import { isApproveRequired } from '../tokens/approval';
 import { Route, RoutesMap } from '../tokens/routes/types';
 import {
@@ -384,12 +382,12 @@ async function executeIbcTransfer({
     sourceChannel: tokenRoute.sourceChannel,
   };
 
-  let adapter: ITokenAdapter;
+  let adapter: IHypTokenAdapter;
   if (isIbcOnlyRoute(tokenRoute)) {
-    adapter = new CosmNativeTokenAdapter(chainName, multiProvider, {}, adapterProperties);
+    adapter = new CosmIbcTokenAdapter(chainName, multiProvider, {}, adapterProperties);
   } else {
     const intermediateChainName = getChainMetadata(tokenRoute.intermediateCaip2Id).name;
-    adapter = new CosmNativeToHypTokenAdapter(
+    adapter = new CosmIbcToWarpTokenAdapter(
       chainName,
       multiProvider,
       {
@@ -399,16 +397,17 @@ async function executeIbcTransfer({
       {
         ...adapterProperties,
         derivedIbcDenom: tokenRoute.derivedIbcDenom,
-        destinationDomainId,
         intermediateChainName,
       },
     );
   }
 
-  const transferTxRequest = (await adapter.populateTransferTx({
+  const transferTxRequest = (await adapter.populateTransferRemoteTx({
     weiAmountOrId,
     recipient: recipientAddress,
     fromAccountOwner: activeAccountAddress,
+    destination: destinationDomainId,
+    txValue: COSM_IGP_QUOTE,
   })) as MsgTransferEncodeObject;
 
   updateStatus(TransferStatus.SigningTransfer);

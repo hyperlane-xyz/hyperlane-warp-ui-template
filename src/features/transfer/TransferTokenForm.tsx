@@ -416,12 +416,13 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
       ? `(${ProtocolSmallestUnit[getProtocolType(originCaip2Id)]})`
       : '';
   const tokenProtocol = tryGetProtocolType(tryGetChainIdFromToken(tokenCaip19Id));
+
   let originTokenSymbol = getToken(tokenCaip19Id)?.symbol || '';
-  if (originTokenSymbol && tokenProtocol === ProtocolType.Cosmos)
-    originTokenSymbol = `u${originTokenSymbol}`;
-  let originNativeTokenSymbol = getChainMetadata(originCaip2Id)?.nativeToken?.symbol || '';
-  if (originNativeTokenSymbol && originProtocol === ProtocolType.Cosmos)
-    originNativeTokenSymbol = `u${originNativeTokenSymbol}`;
+  let originGasTokenSymbol = getChainMetadata(originCaip2Id)?.nativeToken?.symbol || '';
+  if (tokenProtocol === ProtocolType.Cosmos) {
+    originTokenSymbol = originTokenSymbol ? `u${originTokenSymbol}` : '';
+    originGasTokenSymbol = originTokenSymbol;
+  }
 
   const { isLoading: isApproveLoading, isApproveRequired } = useIsApproveRequired(
     tokenCaip19Id,
@@ -479,7 +480,7 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
                   </p>
                   <p className="flex">
                     <span className="min-w-[7rem]">{`Interchain Gas ${originUnitName}`}</span>
-                    <span>{`${igpQuote?.weiAmount || '0'} ${originNativeTokenSymbol}`}</span>
+                    <span>{`${igpQuote?.weiAmount || '0'} ${originGasTokenSymbol}`}</span>
                   </p>
                 </>
               )}

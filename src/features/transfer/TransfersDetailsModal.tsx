@@ -272,7 +272,7 @@ function useSignIssueWarning(status: TransferStatus) {
   const warningCallback = useCallback(() => {
     if (status === TransferStatus.SigningTransfer) setShowWarning(true);
   }, [status, setShowWarning]);
-  useTimeout(warningCallback, 15_000);
+  useTimeout(warningCallback, 20_000);
   return showWarning;
 }
 

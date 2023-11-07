@@ -67,59 +67,11 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
     logoURI: '/logos/cosmos.svg',
   },
   neutron: {
-    protocol: ProtocolType.Cosmos,
-    name: 'neutron',
-    chainId: 'neutron-1',
-    displayName: 'Neutron',
-    domainId: 1853125230,
-    bech32Prefix: 'neutron',
-    slip44: 118,
-    rpcUrls: [
-      { http: 'https://rpc-kralum.neutron-1.neutron.org' },
-      { http: 'grpc-kralum.neutron-1.neutron.org:80' },
-    ],
-    nativeToken: {
-      name: 'Neutron',
-      symbol: 'TIA',
-      decimals: 6,
-    },
-    blockExplorers: [
-      {
-        name: 'MintScan',
-        url: 'https://www.mintscan.io/neutron',
-        // TODO API not supported, using url to meet validation requirements
-        apiUrl: 'https://www.mintscan.io/neutron',
-        family: ExplorerFamily.Other,
-      },
-    ],
+    ...chainMetadata.neutron,
     logoURI: '/logos/neutron.svg',
   },
   mantapacific: {
-    protocol: ProtocolType.Ethereum,
-    domainId: 169,
-    chainId: 169,
-    name: 'mantapacific',
-    displayName: 'Manta Pacific',
-    displayNameShort: 'Manta',
-    nativeToken: {
-      name: 'Ether',
-      symbol: 'ETH',
-      decimals: 18,
-    },
-    blocks: {
-      confirmations: 1,
-      reorgPeriod: 0,
-      estimateBlockTime: 3,
-    },
-    rpcUrls: [{ http: 'https://pacific-rpc.manta.network/http' }],
-    blockExplorers: [
-      {
-        name: 'Manta Explorer',
-        url: 'https://pacific-explorer.manta.network',
-        apiUrl: 'https://manta-pacific.calderaexplorer.xyz/api',
-        family: ExplorerFamily.Blockscout,
-      },
-    ],
+    ...chainMetadata.mantapacific,
     logoURI: '/logos/manta.svg',
   },
   celestia: {

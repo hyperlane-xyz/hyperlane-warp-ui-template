@@ -4,7 +4,11 @@ import { BigNumber, PopulatedTransaction as EvmTransaction, providers } from 'et
 import { useCallback, useState } from 'react';
 import { toast } from 'react-toastify';
 
-import { IHypTokenAdapter } from '@hyperlane-xyz/sdk';
+import {
+  CosmIbcToWarpTokenAdapter,
+  CosmIbcTokenAdapter,
+  IHypTokenAdapter,
+} from '@hyperlane-xyz/sdk';
 import { ProtocolType, toWei } from '@hyperlane-xyz/utils';
 
 import { toastTxSuccess } from '../../components/toast/TxSuccessToast';
@@ -15,7 +19,6 @@ import { isNonFungibleToken } from '../caip/tokens';
 import { getChainMetadata, getMultiProvider } from '../multiProvider';
 import { AppState, useStore } from '../store';
 import { AdapterFactory } from '../tokens/AdapterFactory';
-import { CosmIbcToWarpTokenAdapter, CosmIbcTokenAdapter } from '../tokens/CosmNativeTokenAdapter';
 import { isApproveRequired } from '../tokens/approval';
 import { Route, RoutesMap } from '../tokens/routes/types';
 import {

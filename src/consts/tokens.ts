@@ -48,16 +48,6 @@ export const tokenList: WarpTokenConfig = [
     logoURI: '/logos/celestia.png',
   },
 
-  // Native TIA
-  {
-    type: 'ibc-native',
-    chainId: 'celestia',
-    name: 'TIA',
-    symbol: 'TIA',
-    decimals: 6,
-    logoURI: '/logos/celestia.png',
-  },
-
   // TIA on Neutron to Arbitrum
   {
     type: 'collateral',
@@ -68,5 +58,15 @@ export const tokenList: WarpTokenConfig = [
     address: 'ibc/773B4D0A3CD667B2275D5A4A7A2F0909C0BA0F4059C0B9181E680DDF4965DCC7',
     hypCollateralAddress: 'neutron1jyyjd3x0jhgswgm6nnctxvzla8ypx50tew3ayxxwkrjfxhvje6kqzvzudq',
     logoURI: '/logos/celestia_logo.png',
+  },
+
+  // Native TIA
+  {
+    type: 'ibc-native',
+    chainId: 'celestia',
+    name: 'TIA',
+    symbol: 'TIA',
+    decimals: 6,
+    logoURI: '/logos/celestia.png',
   },
 ];

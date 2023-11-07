@@ -1,5 +1,6 @@
 import {
   ChainName,
+  CosmNativeTokenAdapter,
   CwHypCollateralAdapter,
   CwHypNativeAdapter,
   CwHypSyntheticAdapter,
@@ -24,7 +25,6 @@ import { parseCaip2Id } from '../caip/chains';
 import { AssetNamespace, getChainIdFromToken, isNativeToken, parseCaip19Id } from '../caip/tokens';
 import { getMultiProvider } from '../multiProvider';
 
-import { CosmNativeTokenAdapter } from './CosmNativeTokenAdapter';
 import { Route } from './routes/types';
 import {
   isIbcRoute,

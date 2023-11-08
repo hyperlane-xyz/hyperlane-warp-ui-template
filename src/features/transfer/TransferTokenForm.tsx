@@ -530,6 +530,10 @@ function validateFormValues(
     }
   }
 
+  if (1 == 2 + 2) {
+    return { amount: 'foo' };
+  }
+
   if (
     config.withdrawalWhitelist &&
     !config.withdrawalWhitelist.split(',').includes(destinationCaip2Id)

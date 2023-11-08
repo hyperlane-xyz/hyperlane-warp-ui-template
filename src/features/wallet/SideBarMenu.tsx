@@ -7,6 +7,7 @@ import { toTitleCase } from '@hyperlane-xyz/utils';
 import { SmallSpinner } from '../../components/animation/SmallSpinner';
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import { Identicon } from '../../components/icons/Identicon';
+import { PLACEHOLDER_COSMOS_CHAIN } from '../../consts/values';
 import ArrowRightIcon from '../../images/icons/arrow-right.svg';
 import CollapseIcon from '../../images/icons/collapse-icon.svg';
 import Logout from '../../images/icons/logout.svg';
@@ -95,25 +96,30 @@ export function SideBarMenu({
             Connected Wallets
           </div>
           <div className="my-3 px-3 space-y-3">
-            {readyAccounts.map((a) => (
-              <button
-                key={a.address}
-                onClick={onClickCopy(a.address)}
-                className={`${styles.btn} border border-gray-200 rounded-xl`}
-              >
-                <div className="shrink-0">
-                  <Identicon address={a.address} size={40} />
-                </div>
-                <div className="flex flex-col mx-3 items-start">
-                  <div className="text-gray-800 text-sm font-normal">
-                    {a.connectorName || 'Wallet'}
-                  </div>
-                  <div className="text-xs text-left truncate w-64">
-                    {a.address ? a.address : 'Unknown'}
-                  </div>
-                </div>
-              </button>
-            ))}
+            {readyAccounts.map((acc) =>
+              acc.addresses.map((addr) => {
+                if (addr?.chainCaip2Id?.includes(PLACEHOLDER_COSMOS_CHAIN)) return null;
+                return (
+                  <button
+                    key={addr.address}
+                    onClick={onClickCopy(addr.address)}
+                    className={`${styles.btn} border border-gray-200 rounded-xl`}
+                  >
+                    <div className="shrink-0">
+                      <Identicon address={addr.address} size={40} />
+                    </div>
+                    <div className="flex flex-col mx-3 items-start">
+                      <div className="text-gray-800 text-sm font-normal">
+                        {acc.connectorName || 'Wallet'}
+                      </div>
+                      <div className="text-xs text-left truncate w-64">
+                        {addr.address ? addr.address : 'Unknown'}
+                      </div>
+                    </div>
+                  </button>
+                );
+              }),
+            )}
             <button onClick={onConnectWallet} className={styles.btn}>
               <Icon src={Wallet} alt="" size={18} />
               <div className="ml-2">Connect wallet</div>

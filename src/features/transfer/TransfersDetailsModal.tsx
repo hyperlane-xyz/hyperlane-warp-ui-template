@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { toTitleCase } from '@hyperlane-xyz/utils';
+import { isZeroishAddress, toTitleCase } from '@hyperlane-xyz/utils';
 import { MessageStatus, MessageTimeline, useMessageTimeline } from '@hyperlane-xyz/widgets';
 
 import { Spinner } from '../../components/animation/Spinner';
@@ -53,7 +53,7 @@ export function TransfersDetailsModal({
   const originChain = getChainReference(originCaip2Id);
   const destChain = getChainReference(destinationCaip2Id);
   const { address: tokenAddress, namespace: tokenNamespace } = parseCaip19Id(tokenCaip19Id);
-  const isNative = tokenNamespace === AssetNamespace.native;
+  const isNative = tokenNamespace === AssetNamespace.native || isZeroishAddress(tokenAddress);
 
   const getFormUrls = useCallback(async () => {
     try {
@@ -170,14 +170,12 @@ export function TransfersDetailsModal({
       </div>
 
       {isFinal ? (
-        <div className="mt-4 flex flex-col space-y-4">
+        <div className="mt-5 flex flex-col space-y-4">
           <TransferProperty name="Sender Address" value={activeAccountAddress} url={fromUrl} />
           <TransferProperty name="Recipient Address" value={recipientAddress} url={toUrl} />
-          <TransferProperty
-            name="Token Address"
-            value={isNative ? 'Native currency' : tokenAddress}
-            url={tokenUrl}
-          />
+          {!isNative && (
+            <TransferProperty name="Token Address" value={tokenAddress} url={tokenUrl} />
+          )}
           {originTxHash && (
             <TransferProperty
               name="Origin Transaction Hash"
@@ -274,7 +272,7 @@ function useSignIssueWarning(status: TransferStatus) {
   const warningCallback = useCallback(() => {
     if (status === TransferStatus.SigningTransfer) setShowWarning(true);
   }, [status, setShowWarning]);
-  useTimeout(warningCallback, 15_000);
+  useTimeout(warningCallback, 20_000);
   return showWarning;
 }
 

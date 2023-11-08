@@ -26,12 +26,12 @@ import { config } from '../../consts/config';
 import SwapIcon from '../../images/icons/swap.svg';
 import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
-import { getProtocolType } from '../caip/chains';
+import { getProtocolType, tryGetProtocolType } from '../caip/chains';
 import {
-  getChainIdFromToken,
   getTokenAddress,
   isNonFungibleToken,
   parseCaip19Id,
+  tryGetChainIdFromToken,
 } from '../caip/tokens';
 import { ChainSelectField } from '../chains/ChainSelectField';
 import { getChainDisplayName } from '../chains/utils';
@@ -43,9 +43,9 @@ import { useIsApproveRequired } from '../tokens/approval';
 import { useDestinationBalance, useOriginBalance } from '../tokens/balances';
 import { getToken } from '../tokens/metadata';
 import { useRouteChains } from '../tokens/routes/hooks';
-import { RoutesMap } from '../tokens/routes/types';
+import { RoutesMap, WarpRoute } from '../tokens/routes/types';
 import { getTokenRoute, isRouteFromNative } from '../tokens/routes/utils';
-import { useAccountForChain } from '../wallet/hooks';
+import { useAccountAddressForChain } from '../wallet/hooks';
 
 import { TransferFormValues } from './types';
 import { useIgpQuote } from './useIgpQuote';
@@ -376,7 +376,7 @@ function MaxButton({
 
 function SelfButton({ disabled }: { disabled?: boolean }) {
   const { values, setFieldValue } = useFormikContext<TransferFormValues>();
-  const address = useAccountForChain(values.destinationCaip2Id)?.address;
+  const address = useAccountAddressForChain(values.destinationCaip2Id);
   const onClick = () => {
     if (disabled) return;
     if (address) setFieldValue('recipientAddress', address);
@@ -401,7 +401,13 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
     values: { amount, originCaip2Id, destinationCaip2Id, tokenCaip19Id },
   } = useFormikContext<TransferFormValues>();
 
-  const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenCaip19Id, tokenRoutes);
+  // TODO cosmos better handling of cosmos route details here (remove cast)
+  const route = getTokenRoute(
+    originCaip2Id,
+    destinationCaip2Id,
+    tokenCaip19Id,
+    tokenRoutes,
+  ) as WarpRoute;
   const isNft = tokenCaip19Id && isNonFungibleToken(tokenCaip19Id);
   const sendValueWei = isNft ? amount.toString() : toWei(amount, route?.originDecimals).toFixed(0);
   const originProtocol = getProtocolType(originCaip2Id);
@@ -409,13 +415,14 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
     originProtocol !== ProtocolType.Cosmos
       ? `(${ProtocolSmallestUnit[getProtocolType(originCaip2Id)]})`
       : '';
-  const tokenProtocol = getProtocolType(getChainIdFromToken(tokenCaip19Id));
+  const tokenProtocol = tryGetProtocolType(tryGetChainIdFromToken(tokenCaip19Id));
+
   let originTokenSymbol = getToken(tokenCaip19Id)?.symbol || '';
-  if (originTokenSymbol && tokenProtocol === ProtocolType.Cosmos)
-    originTokenSymbol = `u${originTokenSymbol}`;
-  let originNativeTokenSymbol = getChainMetadata(originCaip2Id)?.nativeToken?.symbol || '';
-  if (originNativeTokenSymbol && originProtocol === ProtocolType.Cosmos)
-    originNativeTokenSymbol = `u${originNativeTokenSymbol}`;
+  let originGasTokenSymbol = getChainMetadata(originCaip2Id)?.nativeToken?.symbol || '';
+  if (tokenProtocol === ProtocolType.Cosmos) {
+    originTokenSymbol = originTokenSymbol ? `u${originTokenSymbol}` : '';
+    originGasTokenSymbol = originTokenSymbol;
+  }
 
   const { isLoading: isApproveLoading, isApproveRequired } = useIsApproveRequired(
     tokenCaip19Id,
@@ -445,17 +452,21 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
               <h4>Transaction 1: Approve Transfer</h4>
               <div className="mt-1.5 ml-1.5 pl-2 border-l border-gray-300 space-y-1.5 text-xs">
                 <p>{`Token Address: ${getTokenAddress(tokenCaip19Id)}`}</p>
-                <p>{`Collateral Address: ${route?.baseRouterAddress}`}</p>
+                {route?.baseRouterAddress && (
+                  <p>{`Collateral Address: ${route.baseRouterAddress}`}</p>
+                )}
               </div>
             </div>
           )}
           <div>
             <h4>{`Transaction${isApproveRequired ? ' 2' : ''}: Transfer Remote`}</h4>
             <div className="mt-1.5 ml-1.5 pl-2 border-l border-gray-300 space-y-1.5 text-xs">
-              <p className="flex">
-                <span className="min-w-[7rem]">Remote Token</span>
-                <span>{route?.destRouterAddress}</span>
-              </p>
+              {route?.destRouterAddress && (
+                <p className="flex">
+                  <span className="min-w-[7rem]">Remote Token</span>
+                  <span>{route.destRouterAddress}</span>
+                </p>
+              )}
               {isNft ? (
                 <p className="flex">
                   <span className="min-w-[7rem]">Token ID</span>
@@ -469,7 +480,7 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
                   </p>
                   <p className="flex">
                     <span className="min-w-[7rem]">{`Interchain Gas ${originUnitName}`}</span>
-                    <span>{`${igpQuote?.weiAmount || '0'} ${originNativeTokenSymbol}`}</span>
+                    <span>{`${igpQuote?.weiAmount || '0'} ${originGasTokenSymbol}`}</span>
                   </p>
                 </>
               )}

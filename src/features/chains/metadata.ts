@@ -6,6 +6,7 @@ import {
   ChainMap,
   ChainMetadata,
   ChainMetadataSchema,
+  ChainName,
   chainMetadata,
   chainMetadataToWagmiChain,
 } from '@hyperlane-xyz/sdk';
@@ -129,13 +130,8 @@ export function getCosmosKitConfig(): { chains: CosmosChain[]; assets: AssetList
   return { chains, assets };
 }
 
-// TODO this assumes a single cosmos chain per app instance.
-// This is useful because the wallet hooks currently assume one connection per wallet
-// but in Cosmos-land connections are per-chain.
-let cosmosChainName: string;
-export function getCosmosChainName() {
-  if (!cosmosChainName) {
-    cosmosChainName = getCosmosKitConfig()?.chains?.[0]?.chain_name || 'cosmoshub';
-  }
-  return cosmosChainName;
+export function getCosmosChainNames(): ChainName[] {
+  return Object.values(getChainConfigs())
+    .filter((c) => c.protocol === ProtocolType.Cosmos)
+    .map((c) => c.name);
 }

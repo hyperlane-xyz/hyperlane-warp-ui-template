@@ -9,18 +9,18 @@ import { parseCaip19Id, tryGetChainIdFromToken } from '../caip/tokens';
 import { getEvmProvider } from '../multiProvider';
 import { useStore } from '../store';
 import { TransferFormValues } from '../transfer/types';
-import { useAccountForChain } from '../wallet/hooks';
+import { useAccountAddressForChain } from '../wallet/hooks';
 
 import { AdapterFactory } from './AdapterFactory';
 import { getHypErc721Contract } from './contracts/evmContracts';
 import { RoutesMap } from './routes/types';
-import { getTokenRoute, isRouteFromNative } from './routes/utils';
+import { getTokenRoute, isIbcOnlyRoute, isIbcRoute, isRouteFromNative } from './routes/utils';
 
 export function useOriginBalance(
   { originCaip2Id, destinationCaip2Id, tokenCaip19Id }: TransferFormValues,
   tokenRoutes: RoutesMap,
 ) {
-  const address = useAccountForChain(originCaip2Id)?.address;
+  const address = useAccountAddressForChain(originCaip2Id);
   const setSenderBalances = useStore((state) => state.setSenderBalances);
 
   const {
@@ -40,11 +40,13 @@ export function useOriginBalance(
       const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenCaip19Id, tokenRoutes);
       const protocol = getProtocolType(originCaip2Id);
       if (!route || !address || !isValidAddress(address, protocol)) return null;
-      const tokenAdapter = AdapterFactory.HypTokenAdapterFromRouteOrigin(route);
+      const tokenAdapter = isIbcRoute(route)
+        ? AdapterFactory.NativeAdapterFromRoute(route, 'origin')
+        : AdapterFactory.HypTokenAdapterFromRouteOrigin(route);
       const tokenBalance = await tokenAdapter.getBalance(address);
 
       let nativeBalance;
-      if (isRouteFromNative(route)) {
+      if (isRouteFromNative(route) || isIbcRoute(route)) {
         nativeBalance = tokenBalance;
       } else {
         const nativeAdapter = AdapterFactory.NativeAdapterFromChain(originCaip2Id);
@@ -90,8 +92,10 @@ export function useDestinationBalance(
       const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenCaip19Id, tokenRoutes);
       const protocol = getProtocolType(destinationCaip2Id);
       if (!route || !recipientAddress || !isValidAddress(recipientAddress, protocol)) return null;
-      const adapter = AdapterFactory.HypTokenAdapterFromRouteDest(route);
-      const balance = await adapter.getBalance(recipientAddress);
+      const tokenAdapter = isIbcOnlyRoute(route)
+        ? AdapterFactory.NativeAdapterFromRoute(route, 'destination')
+        : AdapterFactory.HypTokenAdapterFromRouteDest(route);
+      const balance = await tokenAdapter.getBalance(recipientAddress);
       return { balance, decimals: route.destDecimals };
     },
     refetchInterval: 5000,
@@ -103,7 +107,7 @@ export function useDestinationBalance(
 // TODO solana support
 export function useOriginTokenIdBalance(tokenCaip19Id: TokenCaip19Id) {
   const chainCaip2Id = tryGetChainIdFromToken(tokenCaip19Id);
-  const accountAddress = useAccountForChain(chainCaip2Id)?.address;
+  const accountAddress = useAccountAddressForChain(chainCaip2Id);
   const setSenderNftIds = useStore((state) => state.setSenderNftIds);
 
   const {
@@ -186,7 +190,7 @@ async function contractSupportsTokenByOwner(
 // TODO solana support
 export function useIsSenderNftOwner(tokenCaip19Id: TokenCaip19Id, tokenId: string) {
   const chainCaip2Id = tryGetChainIdFromToken(tokenCaip19Id);
-  const senderAddress = useAccountForChain(chainCaip2Id)?.address;
+  const senderAddress = useAccountAddressForChain(chainCaip2Id);
   const setIsSenderNftOwner = useStore((state) => state.setIsSenderNftOwner);
 
   const {

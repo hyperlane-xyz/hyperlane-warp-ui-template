@@ -1,5 +1,6 @@
 import {
   ChainName,
+  CosmNativeTokenAdapter,
   CwHypCollateralAdapter,
   CwHypNativeAdapter,
   CwHypSyntheticAdapter,
@@ -10,6 +11,7 @@ import {
   EvmNativeTokenAdapter,
   EvmTokenAdapter,
   IHypTokenAdapter,
+  ITokenAdapter,
   MultiProtocolProvider,
   SealevelHypCollateralAdapter,
   SealevelHypNativeAdapter,
@@ -25,14 +27,21 @@ import { getMultiProvider } from '../multiProvider';
 
 import { Route } from './routes/types';
 import {
+  isIbcRoute,
+  isIbcToWarpRoute,
   isRouteFromCollateral,
   isRouteFromSynthetic,
   isRouteToCollateral,
   isRouteToSynthetic,
+  isWarpRoute,
 } from './routes/utils';
 
 export class AdapterFactory {
-  static NativeAdapterFromChain(chainCaip2Id: ChainCaip2Id) {
+  static NativeAdapterFromChain(
+    chainCaip2Id: ChainCaip2Id,
+    useCosmNative = false,
+    adapterProperties?: any,
+  ): ITokenAdapter {
     const { protocol, reference: chainId } = parseCaip2Id(chainCaip2Id);
     const multiProvider = getMultiProvider();
     const chainName = multiProvider.getChainMetadata(chainId).name;
@@ -41,13 +50,33 @@ export class AdapterFactory {
     } else if (protocol === ProtocolType.Sealevel) {
       return new SealevelNativeTokenAdapter(chainName, multiProvider, {});
     } else if (protocol === ProtocolType.Cosmos) {
-      return new CwNativeTokenAdapter(chainName, multiProvider, {});
+      return useCosmNative
+        ? new CosmNativeTokenAdapter(chainName, multiProvider, {}, adapterProperties)
+        : new CwNativeTokenAdapter(chainName, multiProvider, {});
     } else {
       throw new Error(`Unsupported protocol: ${protocol}`);
     }
   }
 
-  static TokenAdapterFromAddress(tokenCaip19Id: TokenCaip19Id) {
+  static NativeAdapterFromRoute(route: Route, source: 'origin' | 'destination'): ITokenAdapter {
+    let useCosmNative = false;
+    let adapterProperties: any = undefined;
+    if (isIbcRoute(route)) {
+      useCosmNative = true;
+      adapterProperties = {
+        ibcDenom: source === 'origin' ? route.originIbcDenom : route.derivedIbcDenom,
+        sourcePort: route.sourcePort,
+        sourceChannel: route.sourceChannel,
+      };
+    }
+    return AdapterFactory.NativeAdapterFromChain(
+      source === 'origin' ? route.originCaip2Id : route.destCaip2Id,
+      useCosmNative,
+      adapterProperties,
+    );
+  }
+
+  static TokenAdapterFromAddress(tokenCaip19Id: TokenCaip19Id): ITokenAdapter {
     const { address, chainCaip2Id } = parseCaip19Id(tokenCaip19Id);
     const { protocol, reference: chainId } = parseCaip2Id(chainCaip2Id);
     const multiProvider = getMultiProvider();
@@ -70,7 +99,10 @@ export class AdapterFactory {
     }
   }
 
-  static HypCollateralAdapterFromAddress(baseTokenCaip19Id: TokenCaip19Id, routerAddress: Address) {
+  static HypCollateralAdapterFromAddress(
+    baseTokenCaip19Id: TokenCaip19Id,
+    routerAddress: Address,
+  ): IHypTokenAdapter {
     const isNative = isNativeToken(baseTokenCaip19Id);
     return AdapterFactory.selectHypAdapter(
       getChainIdFromToken(baseTokenCaip19Id),
@@ -86,7 +118,7 @@ export class AdapterFactory {
     baseTokenCaip19Id: TokenCaip19Id,
     chainCaip2Id: ChainCaip2Id,
     routerAddress: Address,
-  ) {
+  ): IHypTokenAdapter {
     return AdapterFactory.selectHypAdapter(
       chainCaip2Id,
       routerAddress,
@@ -97,7 +129,8 @@ export class AdapterFactory {
     );
   }
 
-  static HypTokenAdapterFromRouteOrigin(route: Route) {
+  static HypTokenAdapterFromRouteOrigin(route: Route): IHypTokenAdapter {
+    if (!isWarpRoute(route)) throw new Error('Route is not a hyp route');
     const { type, originCaip2Id, originRouterAddress, baseTokenCaip19Id } = route;
     const isNative = isNativeToken(baseTokenCaip19Id);
     if (isRouteFromCollateral(route)) {
@@ -123,11 +156,13 @@ export class AdapterFactory {
     }
   }
 
-  static HypTokenAdapterFromRouteDest(route: Route) {
+  static HypTokenAdapterFromRouteDest(route: Route): IHypTokenAdapter {
+    if (!isWarpRoute(route) && !isIbcToWarpRoute(route))
+      throw new Error('Route is not a hyp route');
     const { type, destCaip2Id, destRouterAddress, destTokenCaip19Id, baseTokenCaip19Id } = route;
     const tokenCaip19Id = destTokenCaip19Id || baseTokenCaip19Id;
     const isNative = isNativeToken(baseTokenCaip19Id);
-    if (isRouteToCollateral(route)) {
+    if (isRouteToCollateral(route) || isIbcToWarpRoute(route)) {
       return AdapterFactory.selectHypAdapter(
         destCaip2Id,
         destRouterAddress,
@@ -171,7 +206,7 @@ export class AdapterFactory {
       addresses: any,
       denom?: string,
     ) => IHypTokenAdapter,
-  ) {
+  ): IHypTokenAdapter {
     const { protocol, reference: chainId } = parseCaip2Id(chainCaip2Id);
     const { address: baseTokenAddress, namespace } = parseCaip19Id(baseTokenCaip19Id);
     const multiProvider = getMultiProvider();

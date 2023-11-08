@@ -46,6 +46,12 @@ export function CosmosWalletContext({ children }: PropsWithChildren<unknown>) {
               gasPrice: GasPrice.fromString('0.025token'),
             };
           },
+          signingStargate: () => {
+            return {
+              // TODO cosmos get gas price from registry or RPC
+              gasPrice: GasPrice.fromString('0.2tia'),
+            };
+          },
         }}
         modalTheme={{ defaultTheme: 'light' }}
       >

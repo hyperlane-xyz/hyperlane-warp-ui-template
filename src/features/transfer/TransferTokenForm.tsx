@@ -501,10 +501,6 @@ function validateFormValues(
   balances: AppState['balances'],
   igpQuote: AppState['igpQuote'],
 ) {
-  return {
-    amount:
-      'Nexus is undergoing maintenance. Please try again later. If you have already sent funds, they will be processed as soon as possible.',
-  };
   const { originCaip2Id, destinationCaip2Id, amount, tokenCaip19Id, recipientAddress } = values;
   const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenCaip19Id, tokenRoutes);
   if (!route) return { destinationCaip2Id: 'No route found for chains/token' };

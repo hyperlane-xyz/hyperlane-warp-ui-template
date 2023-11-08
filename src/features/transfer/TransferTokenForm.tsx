@@ -517,8 +517,26 @@ function validateFormValues(
     const requiredNativeBalance = isRouteFromNative(route)
       ? sendValue.plus(igpWeiAmount)
       : igpWeiAmount;
+
+    const nativeDecimals = getChainMetadata(originCaip2Id)?.nativeToken?.decimals || 18;
+    const igpAmountPretty = fromWei(igpWeiAmount.toString(), nativeDecimals);
+
+    const originProtocol = getProtocolType(originCaip2Id);
+    // Hardcode case of Cosmos which where Neutron is assumed to be the
+    // only case for now.
+    if (originProtocol === ProtocolType.Cosmos) {
+      // Assume that only TIA is being bridged out of Neutron and
+      // that the IGP fee is in TIA
+      const requiredTiaBalance = sendValue.plus(igpWeiAmount);
+
+      if (requiredTiaBalance.gt(balances.senderTokenBalance)) {
+        toastIgpDetails(igpAmountPretty, 'TIA');
+        return { amount: 'Insufficient TIA for gas' };
+      }
+    }
+
     if (requiredNativeBalance.gt(balances.senderNativeBalance)) {
-      toastIgpDetails();
+      toastIgpDetails(igpAmountPretty);
       return { amount: 'Insufficient native token for gas' };
     }
   } else {

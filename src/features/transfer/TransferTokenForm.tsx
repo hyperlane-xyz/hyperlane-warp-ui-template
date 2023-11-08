@@ -522,7 +522,7 @@ function validateFormValues(
     const igpAmountPretty = fromWei(igpWeiAmount, nativeDecimals);
 
     const originProtocol = getProtocolType(originCaip2Id);
-    // Hardcode case of Cosmos which where Neutron is assumed to be the
+    // Hardcode case of Cosmos, where Neutron is assumed to be the
     // only case for now.
     if (originProtocol === ProtocolType.Cosmos) {
       // Assume that only TIA is being bridged out of Neutron and

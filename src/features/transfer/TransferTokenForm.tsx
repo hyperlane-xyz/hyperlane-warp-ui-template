@@ -44,7 +44,7 @@ import { useDestinationBalance, useOriginBalance } from '../tokens/balances';
 import { getToken } from '../tokens/metadata';
 import { useRouteChains } from '../tokens/routes/hooks';
 import { RoutesMap, WarpRoute } from '../tokens/routes/types';
-import { getTokenRoute, isRouteFromNative } from '../tokens/routes/utils';
+import { getTokenRoute, isIbcOnlyRoute, isRouteFromNative } from '../tokens/routes/utils';
 import { useAccountAddressForChain } from '../wallet/hooks';
 
 import { TransferFormValues } from './types';
@@ -431,6 +431,7 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
     visible,
   );
   const { isLoading: isQuoteLoading, igpQuote } = useIgpQuote(route);
+  const showIgpQuote = route && !isIbcOnlyRoute(route);
 
   const isLoading = isApproveLoading || isQuoteLoading;
 
@@ -478,10 +479,12 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
                     <span className="min-w-[7rem]">{`Amount ${originUnitName}`}</span>
                     <span>{`${sendValueWei} ${originTokenSymbol}`}</span>
                   </p>
-                  <p className="flex">
-                    <span className="min-w-[7rem]">{`Interchain Gas ${originUnitName}`}</span>
-                    <span>{`${igpQuote?.weiAmount || '0'} ${originGasTokenSymbol}`}</span>
-                  </p>
+                  {showIgpQuote && (
+                    <p className="flex">
+                      <span className="min-w-[7rem]">{`Interchain Gas ${originUnitName}`}</span>
+                      <span>{`${igpQuote?.weiAmount || '0'} ${originGasTokenSymbol}`}</span>
+                    </p>
+                  )}
                 </>
               )}
             </div>

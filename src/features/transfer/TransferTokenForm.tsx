@@ -519,7 +519,7 @@ function validateFormValues(
       : igpWeiAmount;
 
     const nativeDecimals = getChainMetadata(originCaip2Id)?.nativeToken?.decimals || 18;
-    const igpAmountPretty = fromWei(igpWeiAmount.toString(), nativeDecimals);
+    const igpAmountPretty = fromWei(igpWeiAmount, nativeDecimals);
 
     const originProtocol = getProtocolType(originCaip2Id);
     // Hardcode case of Cosmos which where Neutron is assumed to be the

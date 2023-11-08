@@ -2,7 +2,7 @@ import { toast } from 'react-toastify';
 
 import { links } from '../../consts/links';
 
-export function toastIgpDetails(igpFee: number, tokenName: string = 'native token') {
+export function toastIgpDetails(igpFee: number, tokenName = 'native token') {
   toast.error(<IgpDetailsToast tokenName={tokenName} igpFee={igpFee} />, {
     autoClose: 5000,
   });

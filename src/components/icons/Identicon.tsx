@@ -21,7 +21,7 @@ function _Identicon({ address, size: _size }: Props) {
 
   // TODO better handling of non-evm addresses here
   if (!address || !isValidAddressEvm(address)) {
-    return <Circle size={size} classes="bg-mint-500" title="" />;
+    return <Circle size={size} classes="bg-blue-500" title="" />;
   }
 
   const jazziconResult = jazzicon(size, addressToSeed(address));

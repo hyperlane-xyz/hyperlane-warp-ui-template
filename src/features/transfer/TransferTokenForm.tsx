@@ -38,7 +38,7 @@ import { getChainDisplayName } from '../chains/utils';
 import { getChainMetadata } from '../multiProvider';
 import { AppState, useStore } from '../store';
 import { SelectOrInputTokenIds } from '../tokens/SelectOrInputTokenIds';
-import { AutomaticTokenField } from '../tokens/TokenSelectField';
+import { AutomaticTokenField, TokenSelectField } from '../tokens/TokenSelectField';
 import { useIsApproveRequired } from '../tokens/approval';
 import { useDestinationBalance, useOriginBalance } from '../tokens/balances';
 import { getToken } from '../tokens/metadata';
@@ -104,9 +104,9 @@ function SwapChainsButton({ disabled }: { disabled?: boolean }) {
     setFieldValue('originCaip2Id', destinationCaip2Id);
     setFieldValue('destinationCaip2Id', originCaip2Id);
     // Reset other fields on chain change
-    // setFieldValue('tokenCaip19Id', '');
     setFieldValue('recipientAddress', '');
     setFieldValue('amount', '');
+    if (!config.enableAutoTokenSelection) setFieldValue('tokenCaip19Id', '');
   };
 
   return (
@@ -171,14 +171,25 @@ function TokenSection({
       <label htmlFor="tokenCaip19Id" className="block uppercase text-sm text-gray-500 pl-0.5">
         Token
       </label>
-      <AutomaticTokenField
-        name="tokenCaip19Id"
-        originCaip2Id={values.originCaip2Id}
-        destinationCaip2Id={values.destinationCaip2Id}
-        tokenRoutes={tokenRoutes}
-        disabled={isReview}
-        setIsNft={setIsNft}
-      />
+      {config.enableAutoTokenSelection ? (
+        <AutomaticTokenField
+          name="tokenCaip19Id"
+          originCaip2Id={values.originCaip2Id}
+          destinationCaip2Id={values.destinationCaip2Id}
+          tokenRoutes={tokenRoutes}
+          disabled={isReview}
+          setIsNft={setIsNft}
+        />
+      ) : (
+        <TokenSelectField
+          name="tokenCaip19Id"
+          originCaip2Id={values.originCaip2Id}
+          destinationCaip2Id={values.destinationCaip2Id}
+          tokenRoutes={tokenRoutes}
+          disabled={isReview}
+          setIsNft={setIsNft}
+        />
+      )}
     </div>
   );
 }
@@ -332,13 +343,13 @@ function ButtonSection({
         color="gray"
         onClick={() => setIsReview(false)}
         classes="px-6 py-1.5"
-        icon={<ChevronIcon direction="w" width={13} color={Color.primaryMint} />}
+        icon={<ChevronIcon direction="w" width={13} color={Color.primaryBlue} />}
       >
         <span>Edit</span>
       </SolidButton>
       <SolidButton
         type="button"
-        color="mint"
+        color="pink"
         onClick={triggerTransactionsHandler}
         classes="flex-1 px-3 py-1.5"
       >

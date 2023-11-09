@@ -1,4 +1,4 @@
-import { ChainMap, ChainMetadata, ExplorerFamily, chainMetadata } from '@hyperlane-xyz/sdk';
+import { ChainMap, ChainMetadata, chainMetadata } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 
 // A map of chain names to ChainMetadata
@@ -65,41 +65,5 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
       decimals: 6,
     },
     logoURI: '/logos/cosmos.svg',
-  },
-  neutron: {
-    ...chainMetadata.neutron,
-    logoURI: '/logos/neutron.svg',
-  },
-  mantapacific: {
-    ...chainMetadata.mantapacific,
-    logoURI: '/logos/manta.svg',
-  },
-  celestia: {
-    protocol: ProtocolType.Cosmos,
-    domainId: 123456789, // TODO not a real domain id
-    chainId: 'celestia',
-    name: 'celestia',
-    displayName: 'Celestia',
-    bech32Prefix: 'celestia',
-    slip44: 118,
-    nativeToken: {
-      name: 'Tia',
-      symbol: 'TIA',
-      decimals: 6,
-    },
-    rpcUrls: [
-      { http: 'https://public-celestia-rpc.numia.xyz' },
-      { http: 'https://public-celestia-lcd.numia.xyz' },
-    ],
-    blockExplorers: [
-      {
-        name: 'MintScan',
-        url: 'https://www.mintscan.io/celestia',
-        // TODO API not supported, using url to meet validation requirements
-        apiUrl: 'https://www.mintscan.io/celestia',
-        family: ExplorerFamily.Other,
-      },
-    ],
-    logoURI: '/logos/celestia.png',
   },
 };

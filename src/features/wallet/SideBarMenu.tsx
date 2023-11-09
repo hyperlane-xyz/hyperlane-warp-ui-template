@@ -92,7 +92,7 @@ export function SideBarMenu({
           </button>
         )}
         <div className="w-full h-full flex flex-col overflow-y-auto">
-          <div className="w-full rounded-t-md bg-mint-600 py-2 px-3.5 text-white text-base font-normal tracking-wider">
+          <div className="w-full rounded-t-md bg-blue-500 py-2 px-3.5 text-white text-base font-normal tracking-wider">
             Connected Wallets
           </div>
           <div className="my-3 px-3 space-y-3">
@@ -129,7 +129,7 @@ export function SideBarMenu({
               <div className="ml-2">Disconnect all wallets</div>
             </button>
           </div>
-          <div className="w-full bg-mint-600 py-2 px-3.5 mb-4 text-white text-base font-normal tracking-wider">
+          <div className="w-full bg-blue-500 py-2 px-3.5 mb-4 text-white text-base font-normal tracking-wider">
             Transfer History
           </div>
           <div className="flex grow flex-col px-3.5">
@@ -195,7 +195,7 @@ export function SideBarMenu({
                 ))}
             </div>
             {sortedTransfers?.length > 0 && (
-              <button onClick={resetTransfers} className="flex flex-row items-center my-6">
+              <button onClick={resetTransfers} className="my-5 mx-2 flex flex-row items-center">
                 <Image className="mr-4" src={ResetIcon} width={17} height={17} alt="" />
                 <span className="text-gray-900 text-sm font-normal">Reset transaction history</span>
               </button>

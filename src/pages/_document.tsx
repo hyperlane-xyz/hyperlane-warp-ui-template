@@ -10,32 +10,32 @@ export default function Document() {
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
         <link rel="manifest" href="/site.webmanifest" />
-        <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#31D99C" />
+        <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#025aa1" />
         <link rel="shortcut icon" href="/favicon.ico" />
-        <meta name="msapplication-TileColor" content="#31D99C" />
+        <meta name="msapplication-TileColor" content="#025aa1" />
         <meta name="theme-color" content="#ffffff" />
 
-        <meta name="application-name" content="Hyperlane Nexus Bridge" />
+        <meta name="application-name" content="Hyperlane Warp Template UI" />
         <meta
           name="keywords"
-          content="Hyperlane Neutron Manta Nexus Warp Route Token Bridge Interchain App"
+          content="Hyperlane Warp Route Template UI Token Bridge Interchain App"
         />
         <meta
           name="description"
-          content="A token bridge built on Hyperlane Warp Routes connecting the Neutron and Manta blockchains."
+          content="A web app template for building Hyperlane Warp Route UIs"
         />
 
         <meta name="HandheldFriendly" content="true" />
-        <meta name="apple-mobile-web-app-title" content="Hyperlane Nexus" />
+        <meta name="apple-mobile-web-app-title" content="Hyperlane Warp Template UI" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
 
         <meta property="og:url" content="https://hyperlane.xyz" />
-        <meta property="og:title" content="Hyperlane Nexus" />
+        <meta property="og:title" content="Hyperlane Warp Template UI" />
         <meta property="og:type" content="website" />
         <meta property="og:image" content="https://hyperlane.xyz/logo.png" />
         <meta
           property="og:description"
-          content="A token bridge built on Hyperlane Warp Routes connecting the Neutron and Manta blockchains"
+          content="A web app template for building Hyperlane Warp Route UIs"
         />
       </Head>
       <body className="text-black">

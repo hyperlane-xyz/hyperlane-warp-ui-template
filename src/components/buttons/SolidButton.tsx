@@ -51,7 +51,7 @@ export function SolidButton(
     onHover = 'hover:bg-blue-100';
     onActive = 'active:bg-blue-200';
   } else if (color === 'gray') {
-    baseColors = 'bg-gray-100 text-mint-700';
+    baseColors = 'bg-gray-100 text-blue-500';
     onHover = 'hover:bg-gray-200';
     onActive = 'active:bg-gray-300';
   }

@@ -28,5 +28,5 @@ export const config: Config = Object.freeze({
   withdrawalWhitelist,
   transferBlacklist,
   enableExplorerLink: false,
-  enableAutoTokenSelection: false,
+  enableAutoTokenSelection: true,
 });

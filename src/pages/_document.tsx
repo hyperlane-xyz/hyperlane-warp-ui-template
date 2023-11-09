@@ -29,7 +29,7 @@ export default function Document() {
         <meta name="apple-mobile-web-app-title" content="Hyperlane Nexus" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
 
-        <meta property="og:url" content="https://hyperlane.xyz" />
+        <meta property="og:url" content="https://usenexus.org" />
         <meta property="og:title" content="Hyperlane Nexus" />
         <meta property="og:type" content="website" />
         <meta property="og:image" content="https://hyperlane.xyz/logo.png" />

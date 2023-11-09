@@ -195,7 +195,7 @@ export function SideBarMenu({
                 ))}
             </div>
             {sortedTransfers?.length > 0 && (
-              <button onClick={resetTransfers} className="flex flex-row items-center my-6">
+              <button onClick={resetTransfers} className="my-5 mx-2 flex flex-row items-center">
                 <Image className="mr-4" src={ResetIcon} width={17} height={17} alt="" />
                 <span className="text-gray-900 text-sm font-normal">Reset transaction history</span>
               </button>

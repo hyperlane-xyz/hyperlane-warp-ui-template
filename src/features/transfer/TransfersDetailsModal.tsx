@@ -41,7 +41,6 @@ export function TransfersDetailsModal({
 }) {
   const [fromUrl, setFromUrl] = useState<string>('');
   const [toUrl, setToUrl] = useState<string>('');
-  const [tokenUrl /*setTokenUrl*/] = useState<string>('');
   const [originTxUrl, setOriginTxUrl] = useState<string>('');
 
   const { params, status, originTxHash, msgId, timestamp, activeAccountAddress } = transfer || {};
@@ -61,27 +60,16 @@ export function TransfersDetailsModal({
         const originTxUrl = multiProvider.tryGetExplorerTxUrl(originChain, { hash: originTxHash });
         if (originTxUrl) setOriginTxUrl(fixDoubleSlash(originTxUrl));
       }
-      const [fromUrl, toUrl /*tokenUrl*/] = await Promise.all([
+      const [fromUrl, toUrl] = await Promise.all([
         multiProvider.tryGetExplorerAddressUrl(originChain, activeAccountAddress),
         multiProvider.tryGetExplorerAddressUrl(destChain, recipientAddress),
-        // multiProvider.tryGetExplorerAddressUrl(originChain, tokenAddress),
       ]);
       if (fromUrl) setFromUrl(fixDoubleSlash(fromUrl));
       if (toUrl) setToUrl(fixDoubleSlash(toUrl));
-      // TODO cosmos support for ibc address
-      // if (tokenUrl) setTokenUrl(fixDoubleSlash(tokenUrl));
     } catch (error) {
       logger.error('Error fetching URLs:', error);
     }
-  }, [
-    activeAccountAddress,
-    originTxHash,
-    multiProvider,
-    recipientAddress,
-    originChain,
-    destChain,
-    // tokenAddress,
-  ]);
+  }, [activeAccountAddress, originTxHash, multiProvider, recipientAddress, originChain, destChain]);
 
   useEffect(() => {
     if (!transfer) return;
@@ -173,9 +161,7 @@ export function TransfersDetailsModal({
         <div className="mt-5 flex flex-col space-y-4">
           <TransferProperty name="Sender Address" value={activeAccountAddress} url={fromUrl} />
           <TransferProperty name="Recipient Address" value={recipientAddress} url={toUrl} />
-          {!isNative && (
-            <TransferProperty name="Token Address" value={tokenAddress} url={tokenUrl} />
-          )}
+          {!isNative && <TransferProperty name="Token Address" value={tokenAddress} />}
           {originTxHash && (
             <TransferProperty
               name="Origin Transaction Hash"

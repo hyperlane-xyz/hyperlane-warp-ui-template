@@ -54,7 +54,7 @@ export async function fetchRemoteHypTokens(
 }
 
 // Process token list to populates routesCache with all possible token routes (e.g. router pairs)
-export function computeTokenRoutes(tokens: TokenMetadataWithHypTokens[]) {
+export function computeTokenRoutes(tokens: TokenMetadataWithHypTokens[]): RoutesMap {
   const tokenRoutes: RoutesMap = {};
 
   // Instantiate map structure

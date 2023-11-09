@@ -29,10 +29,10 @@ export default function Document() {
         <meta name="apple-mobile-web-app-title" content="Hyperlane Warp Template UI" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
 
-        <meta property="og:url" content="https://warp.hyperlane.xyz" />
+        <meta property="og:url" content="https://hyperlane.xyz" />
         <meta property="og:title" content="Hyperlane Warp Template UI" />
         <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://warp.hyperlane.xyz/icon.png" />
+        <meta property="og:image" content="https://hyperlane.xyz/logo.png" />
         <meta
           property="og:description"
           content="A web app template for building Hyperlane Warp Route UIs"

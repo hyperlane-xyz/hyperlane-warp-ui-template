@@ -51,7 +51,7 @@ export function parseCaip19Id(id: TokenCaip19Id) {
   }
 }
 
-export function tryParseCaip19Id(id: TokenCaip19Id) {
+export function tryParseCaip19Id(id?: TokenCaip19Id) {
   if (!id) return undefined;
   try {
     return parseCaip19Id(id);
@@ -65,7 +65,7 @@ export function getChainIdFromToken(id: TokenCaip19Id): ChainCaip2Id {
   return parseCaip19Id(id).chainCaip2Id;
 }
 
-export function tryGetChainIdFromToken(id: TokenCaip19Id): ChainCaip2Id | undefined {
+export function tryGetChainIdFromToken(id?: TokenCaip19Id): ChainCaip2Id | undefined {
   return tryParseCaip19Id(id)?.chainCaip2Id;
 }
 

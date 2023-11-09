@@ -7,42 +7,22 @@ import { toTitleCase } from '@hyperlane-xyz/utils';
 import { SmallSpinner } from '../../components/animation/SmallSpinner';
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import { Identicon } from '../../components/icons/Identicon';
+import { PLACEHOLDER_COSMOS_CHAIN } from '../../consts/values';
 import ArrowRightIcon from '../../images/icons/arrow-right.svg';
 import CollapseIcon from '../../images/icons/collapse-icon.svg';
-import ConfirmedIcon from '../../images/icons/confirmed-icon.svg';
-import DeliveredIcon from '../../images/icons/delivered-icon.svg';
 import Logout from '../../images/icons/logout.svg';
 import ResetIcon from '../../images/icons/reset-icon.svg';
-import WarningIcon from '../../images/icons/transfer-warning-status.svg';
 import Wallet from '../../images/icons/wallet.svg';
 import { tryClipboardSet } from '../../utils/clipboard';
+import { STATUSES_WITH_ICON, getIconByTransferStatus } from '../../utils/transfer';
 import { getAssetNamespace } from '../caip/tokens';
 import { getChainDisplayName } from '../chains/utils';
 import { useStore } from '../store';
 import { getToken } from '../tokens/metadata';
 import { TransfersDetailsModal } from '../transfer/TransfersDetailsModal';
-import { TransferContext, TransferStatus } from '../transfer/types';
+import { TransferContext } from '../transfer/types';
 
 import { useAccounts, useDisconnectFns } from './hooks';
-
-const STATUSES_WITH_ICON = [
-  TransferStatus.Delivered,
-  TransferStatus.ConfirmedTransfer,
-  TransferStatus.Failed,
-];
-
-const getIconByTransferStatus = (status: TransferStatus) => {
-  switch (status) {
-    case TransferStatus.Delivered:
-      return DeliveredIcon;
-    case TransferStatus.ConfirmedTransfer:
-      return ConfirmedIcon;
-    case TransferStatus.Failed:
-      return WarningIcon;
-    default:
-      return WarningIcon;
-  }
-};
 
 export function SideBarMenu({
   onConnectWallet,
@@ -116,25 +96,30 @@ export function SideBarMenu({
             Connected Wallets
           </div>
           <div className="my-3 px-3 space-y-3">
-            {readyAccounts.map((a) => (
-              <button
-                key={a.address}
-                onClick={onClickCopy(a.address)}
-                className={`${styles.btn} border border-gray-300 rounded-md`}
-              >
-                <div className="shrink-0">
-                  <Identicon address={a.address} size={40} />
-                </div>
-                <div className="flex flex-col mx-3 items-start">
-                  <div className="text-gray-800 text-sm font-normal">
-                    {a.connectorName || 'Wallet'}
-                  </div>
-                  <div className="text-xs text-left truncate w-64">
-                    {a.address ? a.address : 'Unknown'}
-                  </div>
-                </div>
-              </button>
-            ))}
+            {readyAccounts.map((acc) =>
+              acc.addresses.map((addr) => {
+                if (addr?.chainCaip2Id?.includes(PLACEHOLDER_COSMOS_CHAIN)) return null;
+                return (
+                  <button
+                    key={addr.address}
+                    onClick={onClickCopy(addr.address)}
+                    className={`${styles.btn} border border-gray-200 rounded-xl`}
+                  >
+                    <div className="shrink-0">
+                      <Identicon address={addr.address} size={40} />
+                    </div>
+                    <div className="flex flex-col mx-3 items-start">
+                      <div className="text-gray-800 text-sm font-normal">
+                        {acc.connectorName || 'Wallet'}
+                      </div>
+                      <div className="text-xs text-left truncate w-64">
+                        {addr.address ? addr.address : 'Unknown'}
+                      </div>
+                    </div>
+                  </button>
+                );
+              }),
+            )}
             <button onClick={onConnectWallet} className={styles.btn}>
               <Icon src={Wallet} alt="" size={18} />
               <div className="ml-2">Connect wallet</div>
@@ -157,7 +142,7 @@ export function SideBarMenu({
                       setSelectedTransfer(t);
                       setIsModalOpen(true);
                     }}
-                    className="flex justify-between items-center rounded-md border border-gray-300 px-2.5 py-2 mb-3 hover:bg-gray-100 active:bg-gray-200 transition-all duration-500"
+                    className="flex justify-between items-center rounded-xl border border-gray-200 px-2.5 py-2 mb-2.5 hover:bg-gray-200 active:bg-gray-300 transition-all duration-500"
                   >
                     <div className="flex">
                       <div className="mr-2.5 flex flex-col items-center justify-center rounded-full bg-gray-100 h-[2.25rem] w-[2.25rem] p-1.5">
@@ -210,7 +195,7 @@ export function SideBarMenu({
                 ))}
             </div>
             {sortedTransfers?.length > 0 && (
-              <button onClick={resetTransfers} className="flex flex-row items-center my-6">
+              <button onClick={resetTransfers} className="my-5 mx-2 flex flex-row items-center">
                 <Image className="mr-4" src={ResetIcon} width={17} height={17} alt="" />
                 <span className="text-gray-900 text-sm font-normal">Reset transaction history</span>
               </button>
@@ -251,5 +236,5 @@ function Icon({
 }
 
 const styles = {
-  btn: 'w-full flex items-center px-2.5 py-2 text-sm hover:bg-gray-100 active:bg-gray-200 rounded transition-all duration-500',
+  btn: 'w-full flex items-center px-2.5 py-2 text-sm hover:bg-gray-200 active:bg-gray-300 rounded transition-all duration-500',
 };

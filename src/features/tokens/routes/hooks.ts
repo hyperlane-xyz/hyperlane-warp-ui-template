@@ -1,13 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
+import { ibcRoutes } from '../../../consts/ibcRoutes';
 import { logger } from '../../../utils/logger';
 import { getChainIdFromToken } from '../../caip/tokens';
-import { getTokens, parseTokens } from '../metadata';
+import { getTokens, isIbcToken, parseTokens } from '../metadata';
 import { TokenMetadataWithHypTokens } from '../types';
 
 import { computeTokenRoutes, fetchRemoteHypTokens } from './fetch';
 import { RoutesMap } from './types';
+import { mergeRoutes } from './utils';
 
 export function useTokenRoutes() {
   const {
@@ -21,11 +23,20 @@ export function useTokenRoutes() {
       const parsedTokens = await parseTokens();
       const tokens: TokenMetadataWithHypTokens[] = [];
       for (const token of parsedTokens) {
+        // Skip querying of IBC tokens
+        if (isIbcToken(token)) continue;
         // Consider parallelizing here but concerned about RPC rate limits
         const tokenWithHypTokens = await fetchRemoteHypTokens(token, parsedTokens);
         tokens.push(tokenWithHypTokens);
       }
-      return computeTokenRoutes(tokens);
+      let routes = computeTokenRoutes(tokens);
+
+      if (ibcRoutes) {
+        logger.info('Found ibc route configs, adding to route map');
+        routes = mergeRoutes(routes, ibcRoutes);
+      }
+
+      return routes;
     },
     { retry: false },
   );

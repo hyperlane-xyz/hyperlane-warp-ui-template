@@ -5,6 +5,13 @@ import { ProtocolType } from '@hyperlane-xyz/utils';
 
 export type MinimalTokenMetadata = Omit<ERC20Metadata, 'totalSupply'>;
 
+// Extend SDK's TokenType enum to allow for IBC token routes
+export enum IbcTokenTypes {
+  IbcNative = 'ibc-native',
+}
+type ExtendedTokenType = TokenType | IbcTokenTypes;
+
+// Define common fields for all token types
 const commonTokenFields = z.object({
   chainId: z.union([z.number().positive(), z.string()]),
   name: z.string().optional(),
@@ -28,7 +35,7 @@ type CommonFieldsWithLooseProtocol = Omit<CommonTokenFields, 'protocol'> & {
   protocol?: `${ProtocolType}`;
 };
 interface BaseTokenConfig extends CommonFieldsWithLooseProtocol {
-  type: `${TokenType}`; // use template literal to allow string values
+  type: `${ExtendedTokenType}`; // use template literal to allow string values
 }
 
 const CollateralTokenSchema = commonTokenFields.extend({
@@ -58,8 +65,20 @@ interface NativeTokenConfig extends BaseTokenConfig {
   hypNativeAddress: Address;
 }
 
-export const WarpTokenConfigSchema = z.array(CollateralTokenSchema.or(NativeTokenSchema));
-export type WarpTokenConfig = Array<CollateralTokenConfig | NativeTokenConfig>;
+const IbcNativeTokenSchema = commonTokenFields.extend({
+  type: z.literal(IbcTokenTypes.IbcNative),
+});
+
+interface IbcNativeTokenConfig extends BaseTokenConfig {
+  type: IbcTokenTypes.IbcNative | 'ibc-native';
+}
+
+export const WarpTokenConfigSchema = z.array(
+  CollateralTokenSchema.or(NativeTokenSchema).or(IbcNativeTokenSchema),
+);
+export type WarpTokenConfig = Array<
+  CollateralTokenConfig | NativeTokenConfig | IbcNativeTokenConfig
+>;
 
 /**
  * Types for use in the app after processing config
@@ -68,7 +87,7 @@ export type WarpTokenConfig = Array<CollateralTokenConfig | NativeTokenConfig>;
  * See src/features/tokens/metadata.ts
  */
 interface BaseTokenMetadata extends MinimalTokenMetadata {
-  type: TokenType;
+  type: ExtendedTokenType;
   tokenCaip19Id: TokenCaip19Id;
   routerAddress: Address; // Shared name for hypCollateralAddr or hypNativeAddr
   logoURI?: string;
@@ -82,7 +101,11 @@ interface NativeTokenMetadata extends BaseTokenMetadata {
   type: TokenType.native;
 }
 
-export type TokenMetadata = CollateralTokenMetadata | NativeTokenMetadata;
+interface IbcNativeTokenMetadata extends BaseTokenMetadata {
+  type: IbcTokenTypes.IbcNative;
+}
+
+export type TokenMetadata = CollateralTokenMetadata | NativeTokenMetadata | IbcNativeTokenMetadata;
 
 /**
  * Extended types including synthetic hyp token addresses
@@ -93,6 +116,8 @@ interface HypTokens {
 
 type NativeTokenMetadataWithHypTokens = NativeTokenMetadata & HypTokens;
 type CollateralTokenMetadataWithHypTokens = CollateralTokenMetadata & HypTokens;
+type IbcNativeTokenMetadataWithHypTokens = IbcNativeTokenMetadata & HypTokens;
 export type TokenMetadataWithHypTokens =
   | CollateralTokenMetadataWithHypTokens
-  | NativeTokenMetadataWithHypTokens;
+  | NativeTokenMetadataWithHypTokens
+  | IbcNativeTokenMetadataWithHypTokens;

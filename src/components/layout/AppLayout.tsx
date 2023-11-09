@@ -13,7 +13,7 @@ export function AppLayout({ children }: PropsWithChildren) {
       <Head>
         {/* https://nextjs.org/docs/messages/no-document-viewport-meta */}
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Hyperlane Warp Route Template UI</title>
+        <title>Hyperlane Nexus Bridge</title>
       </Head>
       <div
         style={styles.container}
@@ -24,10 +24,10 @@ export function AppLayout({ children }: PropsWithChildren) {
           <Image src={Planet1} alt="Planet 1" width={200} priority={false} quality={50}></Image>
         </div>
         <div className="hidden md:flex absolute right-[8%] bottom-1/4">
-          <Image src={Planet2} alt="Planet 2" width={300} priority={false} quality={50}></Image>
+          <Image src={Planet2} alt="Planet 2" width={220} priority={false} quality={50}></Image>
         </div>
         <Header />
-        <div className="px-4 mx-auto grow flex items-center max-w-screen-xl">
+        <div className="sm:px-4 mx-auto grow flex items-center max-w-screen-xl">
           <main className="w-full flex-1 my-4 flex items-center justify-center">{children}</main>
         </div>
         <Footer />
@@ -41,6 +41,6 @@ const styles = {
     backgroundImage: 'url(/backgrounds/lines-bg-top.svg)',
     backgroundSize: '94vw',
     backgroundRepeat: 'no-repeat',
-    backgroundPosition: 'center 60px',
+    backgroundPosition: 'center 80px',
   },
 };

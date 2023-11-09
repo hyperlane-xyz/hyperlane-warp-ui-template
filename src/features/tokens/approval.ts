@@ -6,11 +6,11 @@ import { logger } from '../../utils/logger';
 import { getProtocolType } from '../caip/chains';
 import { getTokenAddress, isNativeToken, isNonFungibleToken } from '../caip/tokens';
 import { getEvmProvider } from '../multiProvider';
-import { useAccountForChain } from '../wallet/hooks';
+import { useAccountAddressForChain } from '../wallet/hooks';
 
 import { getErc20Contract, getErc721Contract } from './contracts/evmContracts';
 import { Route } from './routes/types';
-import { isRouteFromCollateral } from './routes/utils';
+import { isRouteFromCollateral, isWarpRoute } from './routes/utils';
 
 export function useIsApproveRequired(
   tokenCaip19Id: TokenCaip19Id,
@@ -18,7 +18,7 @@ export function useIsApproveRequired(
   route?: Route,
   enabled = true,
 ) {
-  const owner = useAccountForChain(route?.originCaip2Id)?.address;
+  const owner = useAccountAddressForChain(route?.originCaip2Id);
 
   const {
     isLoading,
@@ -45,6 +45,7 @@ export async function isApproveRequired(
   if (
     isNativeToken(tokenCaip19Id) ||
     !isRouteFromCollateral(route) ||
+    !isWarpRoute(route) ||
     getProtocolType(route.originCaip2Id) !== ProtocolType.Ethereum
   ) {
     return false;

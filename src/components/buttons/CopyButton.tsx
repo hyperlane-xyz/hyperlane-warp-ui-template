@@ -9,7 +9,7 @@ interface Props {
   width: number;
   height: number;
   copyValue: string;
-  classes: string;
+  classes?: string;
 }
 
 export function CopyButton({ width, height, copyValue, classes }: Props) {

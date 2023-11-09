@@ -1,31 +1,44 @@
+import { MsgTransferEncodeObject } from '@cosmjs/stargate';
 import type { Transaction as SolTransaction } from '@solana/web3.js';
 import { BigNumber, PopulatedTransaction as EvmTransaction, providers } from 'ethers';
 import { useCallback, useState } from 'react';
 import { toast } from 'react-toastify';
 
-import { HyperlaneCore, IHypTokenAdapter } from '@hyperlane-xyz/sdk';
-import { ProtocolType, convertDecimals, toWei } from '@hyperlane-xyz/utils';
+import {
+  CosmIbcToWarpTokenAdapter,
+  CosmIbcTokenAdapter,
+  IHypTokenAdapter,
+} from '@hyperlane-xyz/sdk';
+import { ProtocolType, toWei } from '@hyperlane-xyz/utils';
 
 import { toastTxSuccess } from '../../components/toast/TxSuccessToast';
+import { COSM_IGP_QUOTE } from '../../consts/values';
 import { logger } from '../../utils/logger';
-import { getProtocolType, parseCaip2Id } from '../caip/chains';
+import { parseCaip2Id } from '../caip/chains';
 import { isNonFungibleToken } from '../caip/tokens';
-import { getMultiProvider } from '../multiProvider';
+import { getChainMetadata, getMultiProvider } from '../multiProvider';
 import { AppState, useStore } from '../store';
 import { AdapterFactory } from '../tokens/AdapterFactory';
 import { isApproveRequired } from '../tokens/approval';
 import { Route, RoutesMap } from '../tokens/routes/types';
-import { getTokenRoute, isRouteFromNative, isRouteToCollateral } from '../tokens/routes/utils';
 import {
-  AccountInfo,
+  getTokenRoute,
+  isIbcOnlyRoute,
+  isIbcRoute,
+  isRouteFromNative,
+  isWarpRoute,
+} from '../tokens/routes/utils';
+import {
   ActiveChainInfo,
   SendTransactionFn,
+  getAccountAddressForChain,
   useAccounts,
   useActiveChains,
   useTransactionFns,
 } from '../wallet/hooks';
 
 import { TransferContext, TransferFormValues, TransferStatus } from './types';
+import { ensureSufficientCollateral, tryGetMsgIdFromEvmTransferReceipt } from './utils';
 
 export function useTokenTransfer(onDone?: () => void) {
   const { transfers, addTransfer, updateTransferStatus } = useStore((s) => ({
@@ -112,7 +125,12 @@ async function executeTransfer({
 
     const isNft = isNonFungibleToken(tokenCaip19Id);
     const weiAmountOrId = isNft ? amount : toWei(amount, tokenRoute.originDecimals).toFixed(0);
-    const activeAccountAddress = activeAccounts.accounts[originProtocol]?.address || '';
+    const activeAccountAddress = getAccountAddressForChain(
+      originCaip2Id,
+      activeAccounts.accounts[originProtocol],
+    );
+    if (!activeAccountAddress) throw new Error('No active account found for origin chain');
+    const activeChain = activeChains.chains[originProtocol];
 
     addTransfer({
       activeAccountAddress,
@@ -122,37 +140,29 @@ async function executeTransfer({
       params: values,
     });
 
-    await ensureSufficientCollateral(tokenRoute, weiAmountOrId, isNft);
-
-    const hypTokenAdapter = AdapterFactory.HypTokenAdapterFromRouteOrigin(tokenRoute);
-
-    const triggerParams: ExecuteTransferParams<any> = {
+    const executeParams: ExecuteTransferParams<any> = {
       weiAmountOrId,
+      originProtocol,
       destinationDomainId,
       recipientAddress,
       tokenRoute,
-      hypTokenAdapter,
-      activeAccount: activeAccounts.accounts[originProtocol],
-      activeChain: activeChains.chains[originProtocol],
+      activeAccountAddress,
+      activeChain,
       updateStatus: (s: TransferStatus) => {
         status = s;
         updateTransferStatus(transferIndex, s);
       },
       sendTransaction: transactionFns[originProtocol].sendTransaction,
     };
+
     let transferTxHash: string;
     let msgId: string | undefined;
-    if (originProtocol === ProtocolType.Ethereum) {
-      const result = await executeEvmTransfer(triggerParams);
-      ({ transferTxHash, msgId } = result);
-    } else if (originProtocol === ProtocolType.Sealevel) {
-      const result = await executeSealevelTransfer(triggerParams);
-      ({ transferTxHash } = result);
-    } else if (originProtocol === ProtocolType.Cosmos) {
-      const result = await executeCosmWasmTransfer(triggerParams);
-      ({ transferTxHash } = result);
+    if (isWarpRoute(tokenRoute)) {
+      ({ transferTxHash, msgId } = await executeHypTransfer(executeParams));
+    } else if (isIbcRoute(tokenRoute)) {
+      ({ transferTxHash } = await executeIbcTransfer(executeParams));
     } else {
-      throw new Error(`Unsupported protocol type: ${originProtocol}`);
+      throw new Error('Unsupported route type');
     }
 
     updateTransferStatus(transferIndex, (status = TransferStatus.ConfirmedTransfer), {
@@ -177,43 +187,40 @@ async function executeTransfer({
   if (onDone) onDone();
 }
 
-// In certain cases, like when a synthetic token has >1 collateral tokens
-// it's possible that the collateral contract balance is insufficient to
-// cover the remote transfer. This ensures the balance is sufficient or throws.
-async function ensureSufficientCollateral(route: Route, weiAmount: string, isNft?: boolean) {
-  if (!isRouteToCollateral(route) || isNft) return;
-
-  // TODO cosmos support here
-  if (
-    getProtocolType(route.originCaip2Id) === ProtocolType.Cosmos ||
-    getProtocolType(route.destCaip2Id) === ProtocolType.Cosmos
-  )
-    return;
-
-  logger.debug('Ensuring collateral balance for route', route);
-  const adapter = AdapterFactory.HypTokenAdapterFromRouteDest(route);
-  const destinationBalance = await adapter.getBalance(route.destRouterAddress);
-  const destinationBalanceInOriginDecimals = convertDecimals(
-    route.destDecimals,
-    route.originDecimals,
-    destinationBalance,
-  );
-  if (destinationBalanceInOriginDecimals.lt(weiAmount)) {
-    toast.error('Collateral contract balance insufficient for transfer');
-    throw new Error('Insufficient collateral balance');
-  }
-}
-
 interface ExecuteTransferParams<TxResp> {
   weiAmountOrId: string;
+  originProtocol: ProtocolType;
   destinationDomainId: DomainId;
   recipientAddress: Address;
   tokenRoute: Route;
-  hypTokenAdapter: IHypTokenAdapter;
-  activeAccount: AccountInfo;
+  activeAccountAddress: Address;
   activeChain: ActiveChainInfo;
   updateStatus: (s: TransferStatus) => void;
   sendTransaction: SendTransactionFn<TxResp>;
+}
+
+interface ExecuteHypTransferParams<TxResp> extends ExecuteTransferParams<TxResp> {
+  hypTokenAdapter: IHypTokenAdapter;
+}
+
+async function executeHypTransfer(params: ExecuteTransferParams<any>) {
+  const { tokenRoute, weiAmountOrId, originProtocol } = params;
+  const hypTokenAdapter = AdapterFactory.HypTokenAdapterFromRouteOrigin(tokenRoute);
+  const paramsWithAdapter = { ...params, hypTokenAdapter };
+
+  await ensureSufficientCollateral(tokenRoute, weiAmountOrId);
+
+  let result: { transferTxHash: string; msgId?: string };
+  if (originProtocol === ProtocolType.Ethereum) {
+    result = await executeEvmTransfer(paramsWithAdapter);
+  } else if (originProtocol === ProtocolType.Sealevel) {
+    result = await executeSealevelTransfer(paramsWithAdapter);
+  } else if (originProtocol === ProtocolType.Cosmos) {
+    result = await executeCosmWasmTransfer(paramsWithAdapter);
+  } else {
+    throw new Error(`Unsupported protocol type: ${originProtocol}`);
+  }
+  return result;
 }
 
 async function executeEvmTransfer({
@@ -222,16 +229,17 @@ async function executeEvmTransfer({
   recipientAddress,
   tokenRoute,
   hypTokenAdapter,
-  activeAccount,
+  activeAccountAddress,
   activeChain,
   updateStatus,
   sendTransaction,
-}: ExecuteTransferParams<providers.TransactionReceipt>) {
+}: ExecuteHypTransferParams<providers.TransactionReceipt>) {
+  if (!isWarpRoute(tokenRoute)) throw new Error('Unsupported route type');
   const { baseRouterAddress, originCaip2Id, baseTokenCaip19Id } = tokenRoute;
 
   const isApproveTxRequired =
-    activeAccount.address &&
-    (await isApproveRequired(tokenRoute, baseTokenCaip19Id, weiAmountOrId, activeAccount.address));
+    activeAccountAddress &&
+    (await isApproveRequired(tokenRoute, baseTokenCaip19Id, weiAmountOrId, activeAccountAddress));
 
   if (isApproveTxRequired) {
     updateStatus(TransferStatus.CreatingApprove);
@@ -289,11 +297,11 @@ async function executeSealevelTransfer({
   recipientAddress,
   tokenRoute,
   hypTokenAdapter,
-  activeAccount,
+  activeAccountAddress,
   activeChain,
   updateStatus,
   sendTransaction,
-}: ExecuteTransferParams<void>) {
+}: ExecuteHypTransferParams<void>) {
   const { originCaip2Id } = tokenRoute;
 
   updateStatus(TransferStatus.CreatingTransfer);
@@ -306,7 +314,7 @@ async function executeSealevelTransfer({
     weiAmountOrId,
     destination: destinationDomainId,
     recipient: recipientAddress,
-    fromAccountOwner: activeAccount.address,
+    fromAccountOwner: activeAccountAddress,
   })) as SolTransaction;
 
   updateStatus(TransferStatus.SigningTransfer);
@@ -332,20 +340,19 @@ async function executeCosmWasmTransfer({
   activeChain,
   updateStatus,
   sendTransaction,
-}: ExecuteTransferParams<providers.TransactionReceipt>) {
+}: ExecuteHypTransferParams<providers.TransactionReceipt>) {
   updateStatus(TransferStatus.CreatingTransfer);
 
   const transferTxRequest = (await hypTokenAdapter.populateTransferRemoteTx({
     weiAmountOrId,
     recipient: recipientAddress,
     destination: destinationDomainId,
-    // TODO cosmos quote real interchain gas payment
-    txValue: '25000',
+    txValue: COSM_IGP_QUOTE,
   })) as EvmTransaction;
 
   updateStatus(TransferStatus.SigningTransfer);
   const { hash: transferTxHash, confirm: confirmTransfer } = await sendTransaction({
-    tx: transferTxRequest,
+    tx: { type: 'cosmwasm', request: transferTxRequest },
     chainCaip2Id: tokenRoute.originCaip2Id,
     activeCap2Id: activeChain.chainCaip2Id,
   });
@@ -356,21 +363,66 @@ async function executeCosmWasmTransfer({
   return { transferTxHash };
 }
 
-function tryGetMsgIdFromEvmTransferReceipt(receipt: providers.TransactionReceipt) {
-  try {
-    const messages = HyperlaneCore.getDispatchedMessages(receipt);
-    if (messages.length) {
-      const msgId = messages[0].id;
-      logger.debug('Message id found in logs', msgId);
-      return msgId;
-    } else {
-      logger.warn('No messages found in logs');
-      return undefined;
-    }
-  } catch (error) {
-    logger.error('Could not get msgId from transfer receipt', error);
-    return undefined;
+async function executeIbcTransfer({
+  weiAmountOrId,
+  destinationDomainId,
+  recipientAddress,
+  tokenRoute,
+  activeChain,
+  activeAccountAddress,
+  updateStatus,
+  sendTransaction,
+}: ExecuteTransferParams<providers.TransactionReceipt>) {
+  if (!isIbcRoute(tokenRoute)) throw new Error('Unsupported route type');
+  updateStatus(TransferStatus.CreatingTransfer);
+
+  const multiProvider = getMultiProvider();
+  const chainName = getChainMetadata(tokenRoute.originCaip2Id).name;
+  const adapterProperties = {
+    ibcDenom: tokenRoute.originIbcDenom,
+    sourcePort: tokenRoute.sourcePort,
+    sourceChannel: tokenRoute.sourceChannel,
+  };
+
+  let adapter: IHypTokenAdapter;
+  if (isIbcOnlyRoute(tokenRoute)) {
+    adapter = new CosmIbcTokenAdapter(chainName, multiProvider, {}, adapterProperties);
+  } else {
+    const intermediateChainName = getChainMetadata(tokenRoute.intermediateCaip2Id).name;
+    adapter = new CosmIbcToWarpTokenAdapter(
+      chainName,
+      multiProvider,
+      {
+        intermediateRouterAddress: tokenRoute.intermediateRouterAddress,
+        destinationRouterAddress: tokenRoute.destRouterAddress,
+      },
+      {
+        ...adapterProperties,
+        derivedIbcDenom: tokenRoute.derivedIbcDenom,
+        intermediateChainName,
+      },
+    );
   }
+
+  const transferTxRequest = (await adapter.populateTransferRemoteTx({
+    weiAmountOrId,
+    recipient: recipientAddress,
+    fromAccountOwner: activeAccountAddress,
+    destination: destinationDomainId,
+    txValue: COSM_IGP_QUOTE,
+  })) as MsgTransferEncodeObject;
+
+  updateStatus(TransferStatus.SigningTransfer);
+  const { hash: transferTxHash, confirm: confirmTransfer } = await sendTransaction({
+    tx: { type: 'stargate', request: transferTxRequest },
+    chainCaip2Id: tokenRoute.originCaip2Id,
+    activeCap2Id: activeChain.chainCaip2Id,
+  });
+
+  updateStatus(TransferStatus.ConfirmingTransfer);
+  await confirmTransfer();
+
+  return { transferTxHash };
 }
 
 const errorMessages: Partial<Record<TransferStatus, string>> = {

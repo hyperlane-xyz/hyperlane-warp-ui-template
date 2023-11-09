@@ -17,6 +17,7 @@ module.exports = {
     extend: {
       colors: {
         black: '#010101',
+        black2: '#15171a',
         white: '#ffffff',
         gray: {...defaultTheme.colors.gray, 150: '#EBEDF0', 250: '#404040', 350: '#6B6B6B'},
         blue: {
@@ -65,6 +66,18 @@ module.exports = {
           700: '#952281',
           800: '#6B185C',
           900: '#400E37',
+        },
+        // Neutron mint/teal
+        mint: {
+          50: '#e5faf4',
+          100: '#b3f1e0',
+          200: '#88e9ce',
+          300: '#5ce1bc',
+          400: '#47ddb3',
+          500: '#31D99C',
+          600: '#25cb9d',
+          700: '#21b68c',
+          800: '#1ea07b'
         }
       },
       fontSize: {

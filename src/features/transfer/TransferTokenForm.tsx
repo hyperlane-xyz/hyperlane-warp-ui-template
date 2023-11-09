@@ -510,9 +510,11 @@ function validateFormValues(
 
   if (!tokenCaip19Id) return { tokenCaip19Id: 'Token required' };
   const { address: tokenAddress } = parseCaip19Id(tokenCaip19Id);
-  if (!isZeroishAddress(tokenAddress) && !isValidAddress(tokenAddress))
+  const tokenMetadata = getToken(tokenCaip19Id);
+  if (!tokenMetadata || (!isZeroishAddress(tokenAddress) && !isValidAddress(tokenAddress)))
     return { tokenCaip19Id: 'Invalid token' };
 
+  const originProtocol = getProtocolType(originCaip2Id);
   const destProtocol = getProtocolType(destinationCaip2Id);
   if (!isValidAddress(recipientAddress, destProtocol))
     return { recipientAddress: 'Invalid recipient' };
@@ -528,30 +530,22 @@ function validateFormValues(
     if (sendValue.gt(balances.senderTokenBalance)) return { amount: 'Insufficient balance' };
     // Ensure balances can cover IGP fees
     const igpWeiAmount = new BigNumber(igpQuote?.weiAmount || 0);
-    const requiredNativeBalance = isRouteFromNative(route)
-      ? sendValue.plus(igpWeiAmount)
-      : igpWeiAmount;
+    const requiredNativeBalance =
+      isRouteFromNative(route) || originProtocol === ProtocolType.Cosmos
+        ? sendValue.plus(igpWeiAmount)
+        : igpWeiAmount;
 
-    const nativeDecimals = getChainMetadata(originCaip2Id)?.nativeToken?.decimals || 18;
+    const nativeToken = getChainMetadata(originCaip2Id)?.nativeToken;
+    const nativeDecimals = nativeToken?.decimals || 18;
+    const gasTokenSymbol =
+      originProtocol === ProtocolType.Cosmos
+        ? tokenMetadata.symbol
+        : nativeToken?.symbol || 'native token';
     const igpAmountPretty = fromWei(igpWeiAmount, nativeDecimals);
-
-    const originProtocol = getProtocolType(originCaip2Id);
-    // Hardcode case of Cosmos, where Neutron is assumed to be the
-    // only case for now.
-    if (originProtocol === ProtocolType.Cosmos) {
-      // Assume that only TIA is being bridged out of Neutron and
-      // that the IGP fee is in TIA
-      const requiredTiaBalance = sendValue.plus(igpWeiAmount);
-
-      if (requiredTiaBalance.gt(balances.senderTokenBalance)) {
-        toastIgpDetails(igpAmountPretty, 'TIA');
-        return { amount: 'Insufficient TIA for gas' };
-      }
-    }
 
     if (requiredNativeBalance.gt(balances.senderNativeBalance)) {
       toastIgpDetails(igpAmountPretty);
-      return { amount: 'Insufficient native token for gas' };
+      return { amount: `Insufficient ${gasTokenSymbol} for gas` };
     }
   } else {
     // Validate balances for ERC721-like tokens

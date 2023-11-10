@@ -543,7 +543,13 @@ function validateFormValues(
     if (sendValue.gt(balances.senderTokenBalance)) return { amount: 'Insufficient balance' };
     // Ensure balances can cover IGP fees
     const igpWeiAmount = new BigNumber(igpQuote?.weiAmount || 0);
-    const requiredNativeBalance =
+    // If the route is from a Cosmos chain, we charge fees in the sending token.
+    // Otherwise, we charge fees in the native token of the sending chain.
+    const userIgpTokenBalance =
+      originProtocol === ProtocolType.Cosmos
+        ? balances.senderTokenBalance
+        : balances.senderNativeBalance;
+    const requiredIgpTokenBalance =
       isRouteFromNative(route) || originProtocol === ProtocolType.Cosmos
         ? sendValue.plus(igpWeiAmount)
         : igpWeiAmount;
@@ -556,7 +562,7 @@ function validateFormValues(
         : nativeToken?.symbol || 'native token';
     const igpAmountPretty = fromWei(igpWeiAmount, nativeDecimals);
 
-    if (requiredNativeBalance.gt(balances.senderNativeBalance)) {
+    if (requiredIgpTokenBalance.gt(userIgpTokenBalance)) {
       toastIgpDetails(igpAmountPretty);
       return { amount: `Insufficient ${gasTokenSymbol} for gas` };
     }

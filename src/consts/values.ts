@@ -1,6 +1,3 @@
-export const MIN_ROUNDED_VALUE = 0.00001;
-export const DISPLAY_DECIMALS = 4;
-export const STANDARD_TOKEN_DECIMALS = 18;
 export const SOL_ZERO_ADDRESS = '00000000000000000000000000000000000000000000';
 export const COSMOS_ZERO_ADDRESS = 'cosmos100000000000000000000000000000000000000';
 // Strangely, this is not included in any of the Solana packages

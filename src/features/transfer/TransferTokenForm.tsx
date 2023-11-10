@@ -295,7 +295,7 @@ function TokenBalance({
   balance?: string | null;
   decimals?: number;
 }) {
-  const value = !decimals ? fromWei(balance, decimals) : fromWeiRounded(balance, decimals, false);
+  const value = !decimals ? fromWei(balance, decimals) : fromWeiRounded(balance, decimals);
   return <div className="text-xs text-gray-500 text-right">{`${label}: ${value}`}</div>;
 }
 
@@ -420,7 +420,7 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
     tokenRoutes,
   ) as WarpRoute;
   const isNft = tokenCaip19Id && isNonFungibleToken(tokenCaip19Id);
-  const sendValueWei = isNft ? amount.toString() : toWei(amount, route?.originDecimals).toFixed(0);
+  const sendValueWei = isNft ? amount.toString() : toWei(amount, route?.originDecimals);
   const originProtocol = getProtocolType(originCaip2Id);
   const originUnitName =
     originProtocol !== ProtocolType.Cosmos
@@ -534,7 +534,9 @@ function validateFormValues(
   const parsedAmount = tryParseAmount(amount);
   if (!parsedAmount || parsedAmount.lte(0))
     return { amount: isNft ? 'Invalid Token Id' : 'Invalid amount' };
-  const sendValue = isNft ? parsedAmount : toWei(parsedAmount, route?.originDecimals);
+  const sendValue = isNft
+    ? parsedAmount
+    : new BigNumber(toWei(parsedAmount, route?.originDecimals));
 
   if (!isNft) {
     // Validate balances for ERC20-like tokens

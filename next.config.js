@@ -26,7 +26,7 @@ const securityHeaders = [
     key: 'Content-Security-Policy',
     value: `default-src 'self'; script-src 'self'${
       isDev ? " 'unsafe-eval'" : ''
-    }; connect-src *; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://*.googleapis.com; font-src 'self' data:; base-uri 'self'; form-action 'self'; frame-src 'self' https://*.solflare.com https://*.walletconnect.com;`,
+    }; connect-src *; img-src 'self' data: https://*.walletconnect.com; style-src 'self' 'unsafe-inline' https://*.googleapis.com; font-src 'self' data:; base-uri 'self'; form-action 'self'; frame-src 'self' https://*.solflare.com https://*.walletconnect.com;`,
   },
 ]
 

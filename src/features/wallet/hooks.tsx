@@ -1,9 +1,5 @@
 import { DeliverTxResponse, ExecuteResult } from '@cosmjs/cosmwasm-stargate';
-import {
-  useChain as useCosmosChain,
-  useChains as useCosmosChains,
-  useWalletClient as useCosmosWallet,
-} from '@cosmos-kit/react';
+import { useChain as useCosmosChain, useChains as useCosmosChains } from '@cosmos-kit/react';
 import { useConnectModal as useEvmModal } from '@rainbow-me/rainbowkit';
 import { useConnection, useWallet as useSolanaWallet } from '@solana/wallet-adapter-react';
 import { useWalletModal as useSolanaModal } from '@solana/wallet-adapter-react-ui';
@@ -13,7 +9,7 @@ import {
   switchNetwork as switchEvmNetwork,
 } from '@wagmi/core';
 import { providers } from 'ethers';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { toast } from 'react-toastify';
 import {
   useAccount as useEvmAccount,
@@ -89,40 +85,26 @@ export function useAccounts(): {
   );
 
   // Cosmos
-  const { wallet: cosmWallet, isWalletConnected: isCosmAccountReady } =
-    useCosmosChain(PLACEHOLDER_COSMOS_CHAIN);
-  const { status: cosmWalletStatus, client: cosmWalletClient } = useCosmosWallet();
-  const [cosmAccounts, setCosmAccounts] = useState<Array<ChainAddress>>([]);
-
-  useEffect(() => {
-    if (cosmWalletStatus !== 'Done' || !cosmWalletClient) return;
+  const cosmosChainToContext = useCosmosChains(getCosmosChainNames());
+  const cosmAccountInfo: AccountInfo = useMemo(() => {
+    const cosmAddresses: Array<ChainAddress> = [];
+    let cosmConnectorName: string | undefined = undefined;
+    let isCosmAccountReady = false;
     const multiProvider = getMultiProvider();
-    const cosmChainNames = getCosmosChainNames();
-    const cosmChainCaip2Ids = cosmChainNames.map((c) =>
-      getCaip2Id(ProtocolType.Cosmos, multiProvider.getChainId(c)),
-    );
-    cosmWalletClient.enable?.(cosmChainNames).catch((err) => logger.error(err));
-    const cosmosAccountPromises = cosmChainNames.map((c) => cosmWalletClient.getAccount?.(c));
-    Promise.all(cosmosAccountPromises)
-      .then((cosmosAccounts) => {
-        setCosmAccounts(
-          cosmosAccounts
-            .map((a, i) => ({ address: a?.address, chainCaip2Id: cosmChainCaip2Ids[i] }))
-            .filter((a) => !!a.address) as Array<ChainAddress>,
-        );
-      })
-      .catch((err) => logger.error(err));
-  }, [cosmWalletStatus, cosmWalletClient]);
-
-  const cosmAccountInfo: AccountInfo = useMemo(
-    () => ({
+    for (const [chainName, context] of Object.entries(cosmosChainToContext)) {
+      if (!context.address) continue;
+      const caip2Id = getCaip2Id(ProtocolType.Cosmos, multiProvider.getChainId(chainName));
+      cosmAddresses.push({ address: context.address, chainCaip2Id: caip2Id });
+      isCosmAccountReady = true;
+      cosmConnectorName ||= context.wallet?.prettyName;
+    }
+    return {
       protocol: ProtocolType.Cosmos,
-      addresses: cosmAccounts,
-      connectorName: cosmWallet?.prettyName,
+      addresses: cosmAddresses,
+      connectorName: cosmConnectorName,
       isReady: isCosmAccountReady,
-    }),
-    [cosmAccounts, cosmWallet, isCosmAccountReady],
-  );
+    };
+  }, [cosmosChainToContext]);
 
   // Filtered ready accounts
   const readyAccounts = useMemo(

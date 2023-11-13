@@ -1,3 +1,4 @@
+import BigNumber from 'bignumber.js';
 import { providers } from 'ethers';
 import { toast } from 'react-toastify';
 
@@ -33,7 +34,7 @@ export async function ensureSufficientCollateral(route: Route, weiAmount: string
     route.originDecimals,
     destinationBalance,
   );
-  if (destinationBalanceInOriginDecimals.lt(weiAmount)) {
+  if (new BigNumber(destinationBalanceInOriginDecimals).lt(weiAmount)) {
     toast.error('Collateral contract balance insufficient for transfer');
     throw new Error('Insufficient collateral balance');
   }

@@ -22,7 +22,7 @@ export default function Document() {
         />
         <meta
           name="description"
-          content="A token bridge built on Hyperlane Warp Routes connecting the Neutron and Manta blockchains."
+          content="Nexus is the interface for navigating the modular world. Bridge between any chains that are part of the expanding Modular universe. Built on Hyperlane."
         />
 
         <meta name="HandheldFriendly" content="true" />
@@ -35,7 +35,7 @@ export default function Document() {
         <meta property="og:image" content="https://hyperlane.xyz/logo.png" />
         <meta
           property="og:description"
-          content="A token bridge built on Hyperlane Warp Routes connecting the Neutron and Manta blockchains"
+          content="Nexus is the interface for navigating the modular world. Bridge between any chains that are part of the expanding Modular universe. Built on Hyperlane."
         />
       </Head>
       <body className="text-black">

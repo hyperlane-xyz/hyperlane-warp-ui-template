@@ -557,13 +557,12 @@ function validateFormValues(
     const nativeToken = getChainMetadata(originCaip2Id)?.nativeToken;
     const nativeDecimals = nativeToken?.decimals || 18;
     const gasTokenSymbol =
-      originProtocol === ProtocolType.Cosmos
-        ? tokenMetadata.symbol
-        : nativeToken?.symbol || 'native token';
+      (originProtocol === ProtocolType.Cosmos ? tokenMetadata.symbol : nativeToken?.symbol) ||
+      'native token';
     const igpAmountPretty = fromWei(igpWeiAmount, nativeDecimals);
 
     if (requiredIgpTokenBalance.gt(userIgpTokenBalance)) {
-      toastIgpDetails(igpAmountPretty);
+      toastIgpDetails(igpAmountPretty, gasTokenSymbol);
       return { amount: `Insufficient ${gasTokenSymbol} for gas` };
     }
   } else {

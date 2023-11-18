@@ -491,7 +491,8 @@ function validateFormValues(
 
   if (!tokenCaip19Id) return { tokenCaip19Id: 'Token required' };
   const { address: tokenAddress } = parseCaip19Id(tokenCaip19Id);
-  if (!isValidAddress(tokenAddress)) return { tokenCaip19Id: 'Invalid token' };
+  console.log('tokenAddress', tokenAddress, 'tokenCaip19Id', tokenCaip19Id);
+  // if (!isValidAddress(tokenAddress)) return { tokenCaip19Id: 'Invalid token' };
 
   const destProtocol = getProtocolType(destinationCaip2Id);
   if (!isValidAddress(recipientAddress, destProtocol))

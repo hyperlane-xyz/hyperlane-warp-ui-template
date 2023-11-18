@@ -18,7 +18,7 @@ export function parseCaip2Id(id: ChainCaip2Id) {
   const [_protocol, reference] = id.split(':');
   const protocol = _protocol as ProtocolType;
   if (!Object.values(ProtocolType).includes(protocol)) {
-    throw new Error(`Invalid chain protocol type: ${id}`);
+    // throw new Error(`Invalid chain protocol type: ${id}`);
   }
   if (!reference) {
     throw new Error(`No reference found in caip2 id: ${id}`);

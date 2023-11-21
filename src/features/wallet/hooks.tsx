@@ -143,12 +143,12 @@ export function getAccountAddressForChain(
   account?: AccountInfo,
 ): Address | undefined {
   if (!chainCaip2Id || !account?.addresses.length) return undefined;
-  // Return the address for the chain if it exists, otherwise return the first address
-  // We fallback to first because only cosmos has the notion of per-chain addresses
-  return (
-    account.addresses.find((a) => a.chainCaip2Id === chainCaip2Id)?.address ||
-    account.addresses[0].address
-  );
+  if (account.protocol === ProtocolType.Cosmos) {
+    return account.addresses.find((a) => a.chainCaip2Id === chainCaip2Id)?.address;
+  } else {
+    // Use first because only cosmos has the notion of per-chain addresses
+    return account.addresses[0].address;
+  }
 }
 
 export function useConnectFns(): Record<ProtocolType, () => void> {

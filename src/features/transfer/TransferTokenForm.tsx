@@ -392,7 +392,11 @@ function SelfButton({ disabled }: { disabled?: boolean }) {
     if (disabled) return;
     if (address) setFieldValue('recipientAddress', address);
     else
-      toast.warn(`No wallet connected for chain ${getChainDisplayName(values.destinationCaip2Id)}`);
+      toast.warn(
+        `No account found for for chain ${getChainDisplayName(
+          values.destinationCaip2Id,
+        )}, is your wallet connected?`,
+      );
   };
   return (
     <SolidButton

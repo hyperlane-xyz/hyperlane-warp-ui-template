@@ -268,10 +268,10 @@ async function executeEvmTransfer({
   logger.debug('Quoted gas payment', gasPayment);
   // If sending native tokens (e.g. Eth), the gasPayment must be added to the tx value and sent together
   const txValue = isRouteFromNative(tokenRoute)
-    ? BigNumber.from(gasPayment).add(weiAmountOrId)
+    ? BigNumber.from(gasPayment).add(weiAmountOrId.toString())
     : gasPayment;
   const transferTxRequest = (await hypTokenAdapter.populateTransferRemoteTx({
-    weiAmountOrId,
+    weiAmountOrId: weiAmountOrId.toString(),
     recipient: recipientAddress,
     destination: destinationDomainId,
     txValue: txValue.toString(),

@@ -10,6 +10,13 @@ const createJestConfig = nextJest({
 const customJestConfig = {
   // Add more setup options before each test is run
   // setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  transform: {
+    // ... other transforms ...
+    "\\.yaml$": "jest-transform-yaml",
+  },
+  moduleFileExtensions: [
+      "ts", "txs", "jsx", "js", "json", "yaml"
+  ],
 }
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async

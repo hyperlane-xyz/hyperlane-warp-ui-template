@@ -4,13 +4,13 @@ Find below instructions for customizing the token list and branding assets of th
 
 ## Token Configs
 
-This app requires a token config list to function. The token list is located at `./src/consts/tokens.ts`. The output token artifacts of a warp route deployment using the [Hyperlane-Deploy](https://docs.hyperlane.xyz/docs/deploy/deploy-hyperlane) tools can be used here.
+This app requires a token config list to function. The token list is located in `./src/consts/`. Tokens can be configured using any of the token files there (`.ts`, `.json`, `.yaml`). The output token artifacts of a warp route deployment using the [Hyperlane CLI](https://www.npmjs.com/package/@hyperlane-xyz/cli) can be used here.
 
 ## Chain Configs
 
 By default, the app will use only the chains that are included in the Hyperlane SDK and connected to the tokens you specify in the token list (see above).
 
-To add support for additional chains, or to modify the default properties of the SDK's chains (such as RPC URL), add the required chain metadata to `./src/consts/chains.ts`. The same chain config used in the [Hyperlane-Deploy](https://docs.hyperlane.xyz/docs/deploy/deploy-hyperlane) tools will work here. You may also add an optional `logoURI` field to a chain config to show a custom logo image in the app.
+To add support for additional chains, or to modify the default properties of the SDK's chains (such as RPC URLs), add the required chain metadata to any of the chains files in `./src/consts/` (`.ts`, `.json`, `.yaml`). The same chain configs used in the [Hyperlane CLI](https://www.npmjs.com/package/@hyperlane-xyz/cli) will work here. You may also add an optional `logoURI` field to a chain config to show a custom logo image in the app.
 
 ## Tip Card
 

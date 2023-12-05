@@ -1,0 +1,14 @@
+# A list of Warp UI token configs
+# Tokens can be defined here, in tokens.json, or in tokens.ts
+# The input here is typically the output of the Hyperlane CLI warp deploy command
+---
+# Replace this [] with your token list
+[]
+# Example using a native token:
+# - type: native
+#   chainId: 11155111
+#   name: 'Ether'
+#   symbol: 'ETH'
+#   decimals: 18
+#   hypNativeAddress: '0xEa44A29da87B5464774978e6A4F4072A4c048949'
+#   logoURI: '/logos/weth.png'

@@ -12,8 +12,12 @@ import {
 } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 
-import { chains } from '../../consts/chains';
+import { chains as ChainsTS } from '../../consts/chains';
+import ChainsJson from '../../consts/chains.json';
+import ChainsYaml from '../../consts/chains.yaml';
 import { logger } from '../../utils/logger';
+
+import { cosmosDefaultChain } from './cosmosDefault';
 
 let chainConfigs: ChainMap<ChainMetadata & { mailbox?: Address }>;
 
@@ -23,7 +27,13 @@ export const ChainConfigSchema = z.record(
 
 export function getChainConfigs() {
   if (!chainConfigs) {
-    const result = ChainConfigSchema.safeParse(chains);
+    // Chains must include a cosmos chain or CosmosKit throws errors
+    const result = ChainConfigSchema.safeParse({
+      cosmoshub: cosmosDefaultChain,
+      ...ChainsJson,
+      ...ChainsYaml,
+      ...ChainsTS,
+    });
     if (!result.success) {
       logger.error('Invalid chain config', result.error);
       throw new Error(`Invalid chain config: ${result.error.toString()}`);

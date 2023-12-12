@@ -45,7 +45,7 @@ import { getToken } from '../tokens/metadata';
 import { useRouteChains } from '../tokens/routes/hooks';
 import { RoutesMap, WarpRoute } from '../tokens/routes/types';
 import { getTokenRoute, isIbcOnlyRoute, isRouteFromNative } from '../tokens/routes/utils';
-import { useAccountAddressForChain } from '../wallet/hooks';
+import { useAccountAddressForChain } from '../wallet/hooks/multiProtocol';
 
 import { TransferFormValues } from './types';
 import { useIgpQuote } from './useIgpQuote';

@@ -12,7 +12,7 @@ import { clusterApiUrl } from '@solana/web3.js';
 import { PropsWithChildren, useCallback, useMemo } from 'react';
 import { toast } from 'react-toastify';
 
-import { logger } from '../../utils/logger';
+import { logger } from '../../../utils/logger';
 
 export function SolanaWalletContext({ children }: PropsWithChildren<unknown>) {
   // TODO support multiple networks

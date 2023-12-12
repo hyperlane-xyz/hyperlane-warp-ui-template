@@ -10,7 +10,7 @@ import { useIsSsr } from '../../utils/ssr';
 
 import { SideBarMenu } from './SideBarMenu';
 import { WalletEnvSelectionModal } from './WalletEnvSelectionModal';
-import { useAccounts } from './hooks';
+import { useAccounts } from './hooks/multiProtocol';
 
 export function WalletControlBar() {
   const [showEnvSelectModal, setShowEnvSelectModal] = useState(false);

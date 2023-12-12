@@ -7,9 +7,9 @@ import '@hyperlane-xyz/widgets/styles.css';
 
 import { ErrorBoundary } from '../components/errors/ErrorBoundary';
 import { AppLayout } from '../components/layout/AppLayout';
-import { CosmosWalletContext } from '../features/wallet/CosmosWalletContext';
-import { EvmWalletContext } from '../features/wallet/EvmWalletContext';
-import { SolanaWalletContext } from '../features/wallet/SolanaWalletContext';
+import { CosmosWalletContext } from '../features/wallet/context/CosmosWalletContext';
+import { EvmWalletContext } from '../features/wallet/context/EvmWalletContext';
+import { SolanaWalletContext } from '../features/wallet/context/SolanaWalletContext';
 import '../styles/fonts.css';
 import '../styles/globals.css';
 import { useIsSsr } from '../utils/ssr';

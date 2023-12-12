@@ -1,6 +1,11 @@
 import { MsgTransferEncodeObject } from '@cosmjs/stargate';
 import type { Transaction as SolTransaction } from '@solana/web3.js';
-import { BigNumber, PopulatedTransaction as EvmTransaction, providers } from 'ethers';
+import {
+  SendTransactionArgs as ViemTransactionRequest,
+  WaitForTransactionResult as ViemViemTransactionReceipt,
+} from '@wagmi/core';
+import BigNumber from 'bignumber.js';
+import { PopulatedTransaction as Ethers5Transaction } from 'ethers';
 import { useCallback, useState } from 'react';
 import { toast } from 'react-toastify';
 
@@ -29,13 +34,13 @@ import {
   isWarpRoute,
 } from '../tokens/routes/utils';
 import {
-  ActiveChainInfo,
-  SendTransactionFn,
   getAccountAddressForChain,
   useAccounts,
   useActiveChains,
   useTransactionFns,
-} from '../wallet/hooks';
+} from '../wallet/hooks/multiProtocol';
+import { ActiveChainInfo, SendTransactionFn } from '../wallet/hooks/types';
+import { ethers5TxToViemTx } from '../wallet/utils';
 
 import { TransferContext, TransferFormValues, TransferStatus } from './types';
 import { ensureSufficientCollateral, tryGetMsgIdFromEvmTransferReceipt } from './utils';
@@ -140,7 +145,7 @@ async function executeTransfer({
       params: values,
     });
 
-    const executeParams: ExecuteTransferParams<any> = {
+    const executeParams: ExecuteTransferParams<any, any> = {
       weiAmountOrId,
       originProtocol,
       destinationDomainId,
@@ -187,7 +192,7 @@ async function executeTransfer({
   if (onDone) onDone();
 }
 
-interface ExecuteTransferParams<TxResp> {
+interface ExecuteTransferParams<TxReq, TxResp> {
   weiAmountOrId: string;
   originProtocol: ProtocolType;
   destinationDomainId: DomainId;
@@ -196,14 +201,14 @@ interface ExecuteTransferParams<TxResp> {
   activeAccountAddress: Address;
   activeChain: ActiveChainInfo;
   updateStatus: (s: TransferStatus) => void;
-  sendTransaction: SendTransactionFn<TxResp>;
+  sendTransaction: SendTransactionFn<TxReq, TxResp>;
 }
 
-interface ExecuteHypTransferParams<TxResp> extends ExecuteTransferParams<TxResp> {
+interface ExecuteHypTransferParams<TxReq, TxResp> extends ExecuteTransferParams<TxReq, TxResp> {
   hypTokenAdapter: IHypTokenAdapter;
 }
 
-async function executeHypTransfer(params: ExecuteTransferParams<any>) {
+async function executeHypTransfer(params: ExecuteTransferParams<any, any>) {
   const { tokenRoute, weiAmountOrId, originProtocol } = params;
   const hypTokenAdapter = AdapterFactory.HypTokenAdapterFromRouteOrigin(tokenRoute);
   const paramsWithAdapter = { ...params, hypTokenAdapter };
@@ -233,7 +238,7 @@ async function executeEvmTransfer({
   activeChain,
   updateStatus,
   sendTransaction,
-}: ExecuteHypTransferParams<providers.TransactionReceipt>) {
+}: ExecuteHypTransferParams<ViemTransactionRequest, ViemViemTransactionReceipt>) {
   if (!isWarpRoute(tokenRoute)) throw new Error('Unsupported route type');
   const { baseRouterAddress, originCaip2Id, baseTokenCaip19Id } = tokenRoute;
 
@@ -247,11 +252,11 @@ async function executeEvmTransfer({
     const approveTxRequest = (await tokenAdapter.populateApproveTx({
       weiAmountOrId,
       recipient: baseRouterAddress,
-    })) as EvmTransaction;
+    })) as Ethers5Transaction;
 
     updateStatus(TransferStatus.SigningApprove);
     const { confirm: confirmApprove } = await sendTransaction({
-      tx: approveTxRequest,
+      tx: ethers5TxToViemTx(approveTxRequest),
       chainCaip2Id: originCaip2Id,
       activeCap2Id: activeChain.chainCaip2Id,
     });
@@ -268,18 +273,18 @@ async function executeEvmTransfer({
   logger.debug('Quoted gas payment', gasPayment);
   // If sending native tokens (e.g. Eth), the gasPayment must be added to the tx value and sent together
   const txValue = isRouteFromNative(tokenRoute)
-    ? BigNumber.from(gasPayment).add(weiAmountOrId.toString())
+    ? BigNumber(gasPayment).plus(weiAmountOrId).toFixed(0)
     : gasPayment;
   const transferTxRequest = (await hypTokenAdapter.populateTransferRemoteTx({
     weiAmountOrId: weiAmountOrId.toString(),
     recipient: recipientAddress,
     destination: destinationDomainId,
-    txValue: txValue.toString(),
-  })) as EvmTransaction;
+    txValue,
+  })) as Ethers5Transaction;
 
   updateStatus(TransferStatus.SigningTransfer);
   const { hash: transferTxHash, confirm: confirmTransfer } = await sendTransaction({
-    tx: transferTxRequest,
+    tx: ethers5TxToViemTx(transferTxRequest),
     chainCaip2Id: originCaip2Id,
     activeCap2Id: activeChain.chainCaip2Id,
   });
@@ -301,7 +306,7 @@ async function executeSealevelTransfer({
   activeChain,
   updateStatus,
   sendTransaction,
-}: ExecuteHypTransferParams<void>) {
+}: ExecuteHypTransferParams<SolTransaction, void>) {
   const { originCaip2Id } = tokenRoute;
 
   updateStatus(TransferStatus.CreatingTransfer);
@@ -340,15 +345,15 @@ async function executeCosmWasmTransfer({
   activeChain,
   updateStatus,
   sendTransaction,
-}: ExecuteHypTransferParams<providers.TransactionReceipt>) {
+}: ExecuteHypTransferParams<any, void>) {
   updateStatus(TransferStatus.CreatingTransfer);
 
-  const transferTxRequest = (await hypTokenAdapter.populateTransferRemoteTx({
+  const transferTxRequest = await hypTokenAdapter.populateTransferRemoteTx({
     weiAmountOrId,
     recipient: recipientAddress,
     destination: destinationDomainId,
     txValue: COSM_IGP_QUOTE,
-  })) as EvmTransaction;
+  });
 
   updateStatus(TransferStatus.SigningTransfer);
   const { hash: transferTxHash, confirm: confirmTransfer } = await sendTransaction({
@@ -372,7 +377,7 @@ async function executeIbcTransfer({
   activeAccountAddress,
   updateStatus,
   sendTransaction,
-}: ExecuteTransferParams<providers.TransactionReceipt>) {
+}: ExecuteTransferParams<any, void>) {
   if (!isIbcRoute(tokenRoute)) throw new Error('Unsupported route type');
   updateStatus(TransferStatus.CreatingTransfer);
 

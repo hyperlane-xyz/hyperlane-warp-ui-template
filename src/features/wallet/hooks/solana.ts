@@ -1,6 +1,6 @@
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
-import { Connection, VersionedTransaction } from '@solana/web3.js';
+import { Connection, Transaction } from '@solana/web3.js';
 import { useCallback, useMemo } from 'react';
 import { toast } from 'react-toastify';
 
@@ -67,7 +67,7 @@ export function useSolTransactionFns(): ChainTransactionFns {
       chainCaip2Id,
       activeCap2Id,
     }: {
-      tx: VersionedTransaction;
+      tx: Transaction;
       chainCaip2Id: ChainCaip2Id;
       activeCap2Id?: ChainCaip2Id;
     }) => {

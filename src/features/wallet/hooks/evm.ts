@@ -57,7 +57,7 @@ export function useEvmTransactionFns(): ChainTransactionFns {
     const chainId = getEthereumChainId(chainCaip2Id);
     await switchNetwork({ chainId });
     // Some wallets seem to require a brief pause after switch
-    await sleep(1500);
+    await sleep(2000);
   }, []);
   // Note, this doesn't use wagmi's prepare + send pattern because we're potentially sending two transactions
   // The prepare hooks are recommended to use pre-click downtime to run async calls, but since the flow

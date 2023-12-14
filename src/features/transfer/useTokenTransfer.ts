@@ -40,7 +40,7 @@ import {
   useTransactionFns,
 } from '../wallet/hooks/multiProtocol';
 import { ActiveChainInfo, SendTransactionFn } from '../wallet/hooks/types';
-import { ethers5TxToViemTx } from '../wallet/utils';
+import { ethers5TxToWagmiTx } from '../wallet/utils';
 
 import { TransferContext, TransferFormValues, TransferStatus } from './types';
 import { ensureSufficientCollateral, tryGetMsgIdFromEvmTransferReceipt } from './utils';
@@ -256,7 +256,7 @@ async function executeEvmTransfer({
 
     updateStatus(TransferStatus.SigningApprove);
     const { confirm: confirmApprove } = await sendTransaction({
-      tx: ethers5TxToViemTx(approveTxRequest),
+      tx: ethers5TxToWagmiTx(approveTxRequest),
       chainCaip2Id: originCaip2Id,
       activeCap2Id: activeChain.chainCaip2Id,
     });
@@ -284,7 +284,7 @@ async function executeEvmTransfer({
 
   updateStatus(TransferStatus.SigningTransfer);
   const { hash: transferTxHash, confirm: confirmTransfer } = await sendTransaction({
-    tx: ethers5TxToViemTx(transferTxRequest),
+    tx: ethers5TxToWagmiTx(transferTxRequest),
     chainCaip2Id: originCaip2Id,
     activeCap2Id: activeChain.chainCaip2Id,
   });

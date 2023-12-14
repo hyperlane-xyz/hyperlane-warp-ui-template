@@ -1,7 +1,7 @@
 import { SendTransactionArgs as ViemTransactionRequest } from '@wagmi/core';
 import { PopulatedTransaction as Ethers5Transaction, BigNumber as EthersBN } from 'ethers';
 
-export function ethers5TxToViemTx(tx: Ethers5Transaction): ViemTransactionRequest {
+export function ethers5TxToWagmiTx(tx: Ethers5Transaction): ViemTransactionRequest {
   if (!tx.to) throw new Error('No tx recipient address specified');
   if (!tx.data) throw new Error('No tx data specified');
   return {

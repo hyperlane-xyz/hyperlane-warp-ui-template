@@ -3,8 +3,7 @@ import '@rainbow-me/rainbowkit/styles.css';
 import {
   argentWallet,
   coinbaseWallet,
-  injectedWallet,
-  ledgerWallet,
+  injectedWallet, // ledgerWallet,
   metaMaskWallet,
   omniWallet,
   rainbowWallet,
@@ -35,7 +34,7 @@ const connectors = connectorsForWallets([
       metaMaskWallet(connectorConfig),
       injectedWallet(connectorConfig),
       walletConnectWallet(connectorConfig),
-      ledgerWallet(connectorConfig),
+      // ledgerWallet(connectorConfig),
     ],
   },
   {

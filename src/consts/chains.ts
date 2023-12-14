@@ -47,6 +47,34 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
     ...chainMetadata.solanadevnet,
     mailbox: '4v25Dz9RccqUrTzmfHzJMsjd1iVoNrWzeJ4o6GYuJrVn',
   },
+  eclipsedevnet: {
+    protocol: ProtocolType.Sealevel,
+    chainId: 3131313,
+    domainId: 3131313,
+    name: 'eclipsedevnet',
+    displayName: 'Eclipse Devnet',
+    nativeToken: {
+      "name": "Eclipse",
+      "symbol": "ECLIPSE",
+      "decimals": 9
+    },
+    rpcUrls: [{ http: 'https://staging-rpc.dev2.eclipsenetwork.xyz' }],
+    blockExplorers: [
+      // {
+      //   name: 'Solana Explorer',
+      //   url: 'https://explorer.solana.com',
+      //   apiUrl: 'https://explorer.solana.com',
+      //   family: ExplorerFamily.Other,
+      // },
+    ],
+    blocks: {
+      confirmations: 1,
+      reorgPeriod: 0,
+      estimateBlockTime: 0.4,
+    },
+    isTestnet: true,
+    mailbox: 'AATtwuHptB6ruozdwc3XUFwGCuPfZL6jwPid955RoL6N',
+  },
   proteustestnet: {
     chainId: 88002,
     domainId: 88002,

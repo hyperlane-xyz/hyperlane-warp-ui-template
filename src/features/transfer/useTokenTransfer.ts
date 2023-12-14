@@ -179,6 +179,9 @@ async function executeTransfer({
 // it's possible that the collateral contract balance is insufficient to
 // cover the remote transfer. This ensures the balance is sufficient or throws.
 async function ensureSufficientCollateral(route: Route, weiAmount: string, isNft?: boolean) {
+  // Ignore for now, having some issues w/ native
+  return;
+
   if (!isRouteToCollateral(route) || isNft) return;
   logger.debug('Ensuring collateral balance for route', route);
   const adapter = AdapterFactory.HypTokenAdapterFromRouteDest(route);

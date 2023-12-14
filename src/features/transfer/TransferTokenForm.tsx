@@ -38,7 +38,7 @@ import { getChainDisplayName } from '../chains/utils';
 import { getChainMetadata } from '../multiProvider';
 import { AppState, useStore } from '../store';
 import { SelectOrInputTokenIds } from '../tokens/SelectOrInputTokenIds';
-import { AutomaticTokenField, TokenSelectField } from '../tokens/TokenSelectField';
+import { TokenSelectField } from '../tokens/TokenSelectField';
 import { useIsApproveRequired } from '../tokens/approval';
 import { useDestinationBalance, useOriginBalance } from '../tokens/balances';
 import { getToken } from '../tokens/metadata';
@@ -106,7 +106,7 @@ function SwapChainsButton({ disabled }: { disabled?: boolean }) {
     // Reset other fields on chain change
     setFieldValue('recipientAddress', '');
     setFieldValue('amount', '');
-    if (!config.enableAutoTokenSelection) setFieldValue('tokenCaip19Id', '');
+    setFieldValue('tokenCaip19Id', '');
   };
 
   return (
@@ -171,25 +171,14 @@ function TokenSection({
       <label htmlFor="tokenCaip19Id" className="block uppercase text-sm text-gray-500 pl-0.5">
         Token
       </label>
-      {config.enableAutoTokenSelection ? (
-        <AutomaticTokenField
-          name="tokenCaip19Id"
-          originCaip2Id={values.originCaip2Id}
-          destinationCaip2Id={values.destinationCaip2Id}
-          tokenRoutes={tokenRoutes}
-          disabled={isReview}
-          setIsNft={setIsNft}
-        />
-      ) : (
-        <TokenSelectField
-          name="tokenCaip19Id"
-          originCaip2Id={values.originCaip2Id}
-          destinationCaip2Id={values.destinationCaip2Id}
-          tokenRoutes={tokenRoutes}
-          disabled={isReview}
-          setIsNft={setIsNft}
-        />
-      )}
+      <TokenSelectField
+        name="tokenCaip19Id"
+        originCaip2Id={values.originCaip2Id}
+        destinationCaip2Id={values.destinationCaip2Id}
+        tokenRoutes={tokenRoutes}
+        disabled={isReview}
+        setIsNft={setIsNft}
+      />
     </div>
   );
 }

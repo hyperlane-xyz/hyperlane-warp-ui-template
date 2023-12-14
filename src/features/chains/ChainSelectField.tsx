@@ -3,7 +3,6 @@ import Image from 'next/image';
 import { useState } from 'react';
 
 import { ChainLogo } from '../../components/icons/ChainLogo';
-import { config } from '../../consts/config';
 import ChevronIcon from '../../images/icons/chevron-down.svg';
 import { TransferFormValues } from '../transfer/types';
 
@@ -27,7 +26,7 @@ export function ChainSelectField({ name, label, chainCaip2Ids, onChange, disable
     // Reset other fields on chain change
     setFieldValue('recipientAddress', '');
     setFieldValue('amount', '');
-    if (!config.enableAutoTokenSelection) setFieldValue('tokenCaip19Id', '');
+    setFieldValue('tokenCaip19Id', '');
     if (onChange) onChange(newChainId);
   };
 

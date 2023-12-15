@@ -57,7 +57,20 @@ export const tokenList: WarpTokenConfig = [
     decimals: 6,
     address: 'ibc/773B4D0A3CD667B2275D5A4A7A2F0909C0BA0F4059C0B9181E680DDF4965DCC7',
     hypCollateralAddress: 'neutron1jyyjd3x0jhgswgm6nnctxvzla8ypx50tew3ayxxwkrjfxhvje6kqzvzudq',
-    logoURI: '/logos/celestia_logo.png',
+    logoURI: '/logos/celestia.png',
+  },
+
+  // ECLIP on Neutron to Arbitrum
+  {
+    type: 'collateral',
+    chainId: 'neutron-1',
+    name: 'Eclipse Fi',
+    symbol: 'ECLIP',
+    decimals: 6,
+    address: 'factory/neutron10sr06r3qkhn7xzpw3339wuj77hu06mzna6uht0/eclip',
+    hypCollateralAddress: 'neutron1dvzvf870mx9uf65uqhx40yzx9gu4xlqqq2pnx362a0ndmustww3smumrf5',
+    igpTokenAddress: 'ibc/773B4D0A3CD667B2275D5A4A7A2F0909C0BA0F4059C0B9181E680DDF4965DCC7',
+    logoURI: '/logos/eclipsefi.svg',
   },
 
   // Native TIA

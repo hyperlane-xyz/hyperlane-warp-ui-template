@@ -41,7 +41,7 @@ import { SelectOrInputTokenIds } from '../tokens/SelectOrInputTokenIds';
 import { TokenSelectField } from '../tokens/TokenSelectField';
 import { useIsApproveRequired } from '../tokens/approval';
 import { useDestinationBalance, useOriginBalance } from '../tokens/balances';
-import { getToken } from '../tokens/metadata';
+import { findTokensByAddress, getToken } from '../tokens/metadata';
 import { useRouteChains } from '../tokens/routes/hooks';
 import { RoutesMap, WarpRoute } from '../tokens/routes/types';
 import { getTokenRoute, isIbcOnlyRoute, isRouteFromNative } from '../tokens/routes/utils';
@@ -421,11 +421,18 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
       : '';
   const tokenProtocol = tryGetProtocolType(tryGetChainIdFromToken(tokenCaip19Id));
 
-  let originTokenSymbol = getToken(tokenCaip19Id)?.symbol || '';
+  // TODO refactor all this logic into something more coherent.
+  // It's grown organically over time and is becoming unwieldy
+  const originToken = getToken(tokenCaip19Id);
+  let originTokenSymbol = originToken?.symbol || '';
   let originGasTokenSymbol = getChainMetadata(originCaip2Id)?.nativeToken?.symbol || '';
   if (tokenProtocol === ProtocolType.Cosmos) {
     originTokenSymbol = originTokenSymbol ? `u${originTokenSymbol}` : '';
     originGasTokenSymbol = originTokenSymbol;
+  }
+  if (originToken?.igpTokenAddress) {
+    const overrideSymbol = findTokensByAddress(originToken.igpTokenAddress)?.[0]?.symbol;
+    originGasTokenSymbol = overrideSymbol ? `u${overrideSymbol}` : originGasTokenSymbol;
   }
 
   const { isLoading: isApproveLoading, isApproveRequired } = useIsApproveRequired(

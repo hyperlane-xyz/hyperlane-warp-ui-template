@@ -2988,59 +2988,59 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/core@npm:3.3.0":
-  version: 3.3.0
-  resolution: "@hyperlane-xyz/core@npm:3.3.0"
+"@hyperlane-xyz/core@npm:3.4.0":
+  version: 3.4.0
+  resolution: "@hyperlane-xyz/core@npm:3.4.0"
   dependencies:
     "@eth-optimism/contracts": "npm:^0.6.0"
-    "@hyperlane-xyz/utils": "npm:3.3.0"
+    "@hyperlane-xyz/utils": "npm:3.4.0"
     "@openzeppelin/contracts": "npm:^4.9.3"
     "@openzeppelin/contracts-upgradeable": "npm:^v4.9.3"
   peerDependencies:
     "@ethersproject/abi": "*"
     "@ethersproject/providers": "*"
     "@types/sinon-chai": "*"
-  checksum: 43660097f03791041eca270a3336083d7e10855b4959abc14ad981db95f03eeaa87a1e50e535f33fed18db5167d6f8ee1ec70da4f0b1d608da412cc45ee77096
+  checksum: 1c1ce5c54a4a3b3769eff0145b60fa5bd480ec1559143ac9a726954e3b4da987b7b92b2aa9fa7ff0ec8098085d5896be3d53e00971971949c4cb76d6b474d5f2
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/sdk@npm:^3.3.0":
-  version: 3.3.0
-  resolution: "@hyperlane-xyz/sdk@npm:3.3.0"
+"@hyperlane-xyz/sdk@npm:^3.4.0":
+  version: 3.4.0
+  resolution: "@hyperlane-xyz/sdk@npm:3.4.0"
   dependencies:
     "@cosmjs/cosmwasm-stargate": "npm:^0.31.3"
     "@cosmjs/stargate": "npm:^0.31.3"
-    "@hyperlane-xyz/core": "npm:3.3.0"
-    "@hyperlane-xyz/utils": "npm:3.3.0"
+    "@hyperlane-xyz/core": "npm:3.4.0"
+    "@hyperlane-xyz/utils": "npm:3.4.0"
     "@solana/spl-token": "npm:^0.3.8"
     "@solana/web3.js": "npm:^1.78.0"
     "@types/coingecko-api": "npm:^1.0.10"
     "@types/debug": "npm:^4.1.7"
-    "@wagmi/chains": "npm:^0.2.6"
+    "@wagmi/chains": "npm:^1.8.0"
     bignumber.js: "npm:^9.1.1"
     coingecko-api: "npm:^1.0.10"
     cosmjs-types: "npm:^0.9.0"
     cross-fetch: "npm:^3.1.5"
     debug: "npm:^4.3.4"
     ethers: "npm:^5.7.2"
-    viem: "npm:^1.3.1"
+    viem: "npm:^1.20.0"
     zod: "npm:^3.21.2"
   peerDependencies:
     "@ethersproject/abi": "*"
     "@ethersproject/providers": "*"
-  checksum: 9ca26a2701ec6c98ff1e3feba3c3d45e581bed9ec4be3d25afb0ed2f5d8df9a733f272834323eb48241c34f3a7f4849c4e880a543ced18ef894eec9275d80a49
+  checksum: d0f07bc007112297f57f954a404b0c58dfb0f66a206e5263aa71ec70afb8f3c3c95bd96e32efcb2f257475e177201bdd24f622358ced7d49875f6166029acd49
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/utils@npm:3.3.0, @hyperlane-xyz/utils@npm:^3.3.0":
-  version: 3.3.0
-  resolution: "@hyperlane-xyz/utils@npm:3.3.0"
+"@hyperlane-xyz/utils@npm:3.4.0, @hyperlane-xyz/utils@npm:^3.4.0":
+  version: 3.4.0
+  resolution: "@hyperlane-xyz/utils@npm:3.4.0"
   dependencies:
     "@cosmjs/encoding": "npm:^0.31.3"
     "@solana/web3.js": "npm:^1.78.0"
     bignumber.js: "npm:^9.1.1"
     ethers: "npm:^5.7.2"
-  checksum: 7a43e9191309f8e0f8a14378adf878017a2c86aec92cc009dbf3905d2ada397aa6bb0ebb0b56cf168c5f66c1e7918cb0d3f95861dc34e3b151aca0bf875667a2
+  checksum: f19a994578648ffcaded5910b18ceb89734dfdf24f6acb531612bc5d2c700ceca94b3c313e6327dd3e0af5731887789d54f8e26bdf0db8470c0ef0ceb0aa33ed
   languageName: node
   linkType: hard
 
@@ -3060,8 +3060,8 @@ __metadata:
     "@emotion/react": "npm:^11.11.1"
     "@emotion/styled": "npm:^11.11.0"
     "@headlessui/react": "npm:^1.7.14"
-    "@hyperlane-xyz/sdk": "npm:^3.3.0"
-    "@hyperlane-xyz/utils": "npm:^3.3.0"
+    "@hyperlane-xyz/sdk": "npm:^3.4.0"
+    "@hyperlane-xyz/utils": "npm:^3.4.0"
     "@hyperlane-xyz/widgets": "npm:^3.1.4"
     "@metamask/jazzicon": "https://github.com/jmrossy/jazzicon#7a8df28974b4e81129bfbe3cab76308b889032a6"
     "@rainbow-me/rainbowkit": "npm:1.3.0"
@@ -3080,7 +3080,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": "npm:^5.59.7"
     "@typescript-eslint/parser": "npm:^5.59.7"
     autoprefixer: "npm:^10.4.14"
-    bignumber.js: "npm:^9.0.2"
+    bignumber.js: "npm:^9.1.1"
     buffer: "npm:^6.0.3"
     cosmjs-types: "npm:^0.9.0"
     eslint: "npm:^8.41.0"
@@ -3099,8 +3099,8 @@ __metadata:
     tailwindcss: "npm:^3.3.2"
     ts-node: "npm:^10.9.1"
     typescript: "npm:^5.1.6"
-    viem: "npm:1.19.13"
-    wagmi: "npm:^1.4.11"
+    viem: "npm:1.20.0"
+    wagmi: "npm:^1.4.12"
     yaml: "npm:^2.3.4"
     yaml-loader: "npm:^0.8.0"
     zod: "npm:^3.21.4"
@@ -3657,13 +3657,6 @@ __metadata:
     bignumber.js: "npm:^9.1.2"
     long: "npm:^5.2.3"
   checksum: 524d0bc887d38bc53ed94881a866e5272f4131859c1f8ca960506ca15603b7e4ed776a1133a708dc2eed7ba2c89afbb0286ab81b6d728d8d3fbb9c3999180977
-  languageName: node
-  linkType: hard
-
-"@ledgerhq/connect-kit-loader@npm:^1.1.0":
-  version: 1.1.2
-  resolution: "@ledgerhq/connect-kit-loader@npm:1.1.2"
-  checksum: 003a5b6183db0ab29f7d142fdb9b3cc92f62c2251c8003b1d5d659374442e1d3f9d651966ecac127c8dab7255a6fe9de8f12896b09a1a8273d1c05891699773a
   languageName: node
   linkType: hard
 
@@ -6299,24 +6292,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@wagmi/chains@npm:^0.2.6":
-  version: 0.2.22
-  resolution: "@wagmi/chains@npm:0.2.22"
+"@wagmi/chains@npm:^1.8.0":
+  version: 1.8.0
+  resolution: "@wagmi/chains@npm:1.8.0"
   peerDependencies:
-    typescript: ">=4.9.4"
+    typescript: ">=5.0.4"
   peerDependenciesMeta:
     typescript:
       optional: true
-  checksum: 018f798831988579501311b934959dc93e101328794de6048e9fd6a6496260907642039e119d9266458b6884a99a3582d2a4011d823e57980d0145bebc7743d0
+  checksum: 8248419554a90c0d514acfc46f3a6f2090a282ff546b2488705e81fcdfaf197590e67a1fc62539383b4dd22ccafe9f16018cadad27acee098dc9d87b82f173e4
   languageName: node
   linkType: hard
 
-"@wagmi/connectors@npm:3.1.9":
-  version: 3.1.9
-  resolution: "@wagmi/connectors@npm:3.1.9"
+"@wagmi/connectors@npm:3.1.10":
+  version: 3.1.10
+  resolution: "@wagmi/connectors@npm:3.1.10"
   dependencies:
     "@coinbase/wallet-sdk": "npm:^3.6.6"
-    "@ledgerhq/connect-kit-loader": "npm:^1.1.0"
     "@safe-global/safe-apps-provider": "npm:^0.18.1"
     "@safe-global/safe-apps-sdk": "npm:^8.1.0"
     "@walletconnect/ethereum-provider": "npm:2.10.6"
@@ -6331,15 +6323,15 @@ __metadata:
   peerDependenciesMeta:
     typescript:
       optional: true
-  checksum: a60864bb89bdb1e77ab0b8a4a2cbab2130d4b26a1a76619d05f6df87cf02f3a6d14eadcf1aae9c1a6b2544e3ed65b61e174b004a23302849d83abc610586a4f6
+  checksum: 9090ab70e19a3d2ae5e0770880661e25b652e7507bb64a807513b5f53274498303e8d41e80fac2ddab336036a90e4331c4572160113a7c4e69b522be8fb4f2b5
   languageName: node
   linkType: hard
 
-"@wagmi/core@npm:1.4.11":
-  version: 1.4.11
-  resolution: "@wagmi/core@npm:1.4.11"
+"@wagmi/core@npm:1.4.12":
+  version: 1.4.12
+  resolution: "@wagmi/core@npm:1.4.12"
   dependencies:
-    "@wagmi/connectors": "npm:3.1.9"
+    "@wagmi/connectors": "npm:3.1.10"
     abitype: "npm:0.8.7"
     eventemitter3: "npm:^4.0.7"
     zustand: "npm:^4.3.1"
@@ -6349,7 +6341,7 @@ __metadata:
   peerDependenciesMeta:
     typescript:
       optional: true
-  checksum: 923513a63942f0fa20dd01ba0326e07e361c713a714703e17d27c3446c9f6a546f38430cac9dfeb296d0c7b20749e59baed5bfbdc0ae8f3444503f59cf21b3bf
+  checksum: 1b815d7dbccc3d30928f79abc8608ba63e0d962ca516264084415b7d78c944e02ad42004f0acb21365ff97e1d74dbc118caea80ed97c03da1d4ac71048ae95fd
   languageName: node
   linkType: hard
 
@@ -7792,7 +7784,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"bignumber.js@npm:9.1.1, bignumber.js@npm:^9.0.1, bignumber.js@npm:^9.0.2, bignumber.js@npm:^9.1.1":
+"bignumber.js@npm:9.1.1, bignumber.js@npm:^9.0.1, bignumber.js@npm:^9.1.1":
   version: 9.1.1
   resolution: "bignumber.js@npm:9.1.1"
   checksum: 1f771bfa883a5863626e1e4274042065d5f975651eda556ecd28560f287c065004681226f826380792a22be116d7666499c3e3300b1a48b2a7bff66e8dde7aa8
@@ -15282,9 +15274,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"viem@npm:1.19.13":
-  version: 1.19.13
-  resolution: "viem@npm:1.19.13"
+"viem@npm:1.20.0":
+  version: 1.20.0
+  resolution: "viem@npm:1.20.0"
   dependencies:
     "@adraffy/ens-normalize": "npm:1.10.0"
     "@noble/curves": "npm:1.2.0"
@@ -15299,18 +15291,18 @@ __metadata:
   peerDependenciesMeta:
     typescript:
       optional: true
-  checksum: cab5050c60fb776577fd1556742dce151c71ea767f9d20daba6478d044c21487451e51a230d29a23580b5271817bec6eebac079db273606ab686f7430ec41c21
+  checksum: f6f232e1b75085b2088e842a44d3e574afd3e603420cf65181d6fb0dec7942d0c4f4d3cdae8f7a43ddb9942dcb185443b1d5b7daec8a009a3cbab9436bea2164
   languageName: node
   linkType: hard
 
-"wagmi@npm:^1.4.11":
-  version: 1.4.11
-  resolution: "wagmi@npm:1.4.11"
+"wagmi@npm:^1.4.12":
+  version: 1.4.12
+  resolution: "wagmi@npm:1.4.12"
   dependencies:
     "@tanstack/query-sync-storage-persister": "npm:^4.27.1"
     "@tanstack/react-query": "npm:^4.28.0"
     "@tanstack/react-query-persist-client": "npm:^4.28.0"
-    "@wagmi/core": "npm:1.4.11"
+    "@wagmi/core": "npm:1.4.12"
     abitype: "npm:0.8.7"
     use-sync-external-store: "npm:^1.2.0"
   peerDependencies:
@@ -15320,7 +15312,7 @@ __metadata:
   peerDependenciesMeta:
     typescript:
       optional: true
-  checksum: 1817ee3fca518836f2f2bd7b84e4158e11519fd0e03949098d7cd6236e65f7014c1d9557e495ff328a80d28dfda47398a08c7bff3b7a1c59acefa890ac661696
+  checksum: 6a92d33c8fd7a9eae982c7ba3ebf565e9a7318e32184af765b2d98bc54c08af1746ceabc7c367d0662c951df15cab67ec14eb3d213de03cdd11965742be4ca5c
   languageName: node
   linkType: hard
 

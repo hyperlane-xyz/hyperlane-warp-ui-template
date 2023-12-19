@@ -1,6 +1,6 @@
 import BigNumber from 'bignumber.js';
-import { providers } from 'ethers';
 import { toast } from 'react-toastify';
+import { TransactionReceipt } from 'viem';
 
 import { HyperlaneCore } from '@hyperlane-xyz/sdk';
 import { ProtocolType, convertDecimals } from '@hyperlane-xyz/utils';
@@ -40,8 +40,10 @@ export async function ensureSufficientCollateral(route: Route, weiAmount: string
   }
 }
 
-export function tryGetMsgIdFromEvmTransferReceipt(receipt: providers.TransactionReceipt) {
+export function tryGetMsgIdFromEvmTransferReceipt(receipt: TransactionReceipt) {
   try {
+    // TODO viem
+    // @ts-ignore
     const messages = HyperlaneCore.getDispatchedMessages(receipt);
     if (messages.length) {
       const msgId = messages[0].id;

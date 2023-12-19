@@ -26,7 +26,7 @@ import { AssetNamespace, parseCaip19Id } from '../caip/tokens';
 import { getChainDisplayName, hasPermissionlessChain } from '../chains/utils';
 import { getMultiProvider } from '../multiProvider';
 import { getToken } from '../tokens/metadata';
-import { useAccountForChain } from '../wallet/hooks';
+import { useAccountForChain } from '../wallet/hooks/multiProtocol';
 
 import { TransferContext, TransferStatus } from './types';
 

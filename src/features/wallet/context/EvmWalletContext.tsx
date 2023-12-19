@@ -12,23 +12,24 @@ import {
   walletConnectWallet,
 } from '@rainbow-me/rainbowkit/wallets';
 import { PropsWithChildren, useMemo } from 'react';
-import { WagmiConfig, configureChains, createClient } from 'wagmi';
+import { WagmiConfig, configureChains, createConfig } from 'wagmi';
 import { publicProvider } from 'wagmi/providers/public';
 
 import { ProtocolType } from '@hyperlane-xyz/utils';
 
-import { APP_NAME } from '../../consts/app';
-import { config } from '../../consts/config';
-import { tokenList } from '../../consts/tokens';
-import { Color } from '../../styles/Color';
-import { getWagmiChainConfig } from '../chains/metadata';
-import { getMultiProvider } from '../multiProvider';
+import { APP_NAME } from '../../../consts/app';
+import { config } from '../../../consts/config';
+import { tokenList } from '../../../consts/tokens';
+import { Color } from '../../../styles/Color';
+import { getWagmiChainConfig } from '../../chains/metadata';
+import { getMultiProvider } from '../../multiProvider';
 
-const { chains, provider } = configureChains(getWagmiChainConfig(), [publicProvider()]);
+const { chains, publicClient } = configureChains(getWagmiChainConfig(), [publicProvider()]);
 
 const connectorConfig = {
-  appName: APP_NAME,
   chains,
+  publicClient,
+  appName: APP_NAME,
   projectId: config.walletConnectProjectId,
 };
 
@@ -54,9 +55,9 @@ const connectors = connectorsForWallets([
   },
 ]);
 
-const wagmiClient = createClient({
+const wagmiConfig = createConfig({
   autoConnect: true,
-  provider,
+  publicClient,
   connectors,
 });
 
@@ -69,7 +70,7 @@ export function EvmWalletContext({ children }: PropsWithChildren<unknown>) {
     )?.[0]?.chainId as number;
   }, []);
   return (
-    <WagmiConfig client={wagmiClient}>
+    <WagmiConfig config={wagmiConfig}>
       <RainbowKitProvider
         chains={chains}
         theme={lightTheme({

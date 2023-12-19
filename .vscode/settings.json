@@ -38,4 +38,9 @@
   },
   "editor.tabSize": 2,
   "editor.detectIndentation": false,
+  "[typescript][typescriptreact]": {
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit"
+    }
+  },
 }

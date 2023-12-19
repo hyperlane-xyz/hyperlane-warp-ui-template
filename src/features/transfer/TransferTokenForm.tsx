@@ -45,7 +45,7 @@ import { getToken } from '../tokens/metadata';
 import { useRouteChains } from '../tokens/routes/hooks';
 import { RoutesMap, WarpRoute } from '../tokens/routes/types';
 import { getTokenRoute, isIbcOnlyRoute, isRouteFromNative } from '../tokens/routes/utils';
-import { useAccountAddressForChain } from '../wallet/hooks';
+import { useAccountAddressForChain } from '../wallet/hooks/multiProtocol';
 
 import { TransferFormValues } from './types';
 import { useIgpQuote } from './useIgpQuote';
@@ -343,7 +343,7 @@ function ButtonSection({
         color="gray"
         onClick={() => setIsReview(false)}
         classes="px-6 py-1.5"
-        icon={<ChevronIcon direction="w" width={13} color={Color.primaryBlue} />}
+        icon={<ChevronIcon direction="w" width={10} height={6} color={Color.primaryBlue} />}
       >
         <span>Edit</span>
       </SolidButton>

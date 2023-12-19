@@ -71,12 +71,14 @@ export function getCosmosKitConfig(): { chains: CosmosChain[]; assets: AssetList
           provider: c.displayName || c.name,
         },
       ],
-      rest: [
-        {
-          address: c.rpcUrls[1].http,
-          provider: c.displayName || c.name,
-        },
-      ],
+      rest: c.restUrls
+        ? [
+            {
+              address: c.restUrls[0].http,
+              provider: c.displayName || c.name,
+            },
+          ]
+        : [],
     },
     fees: {
       fee_tokens: [

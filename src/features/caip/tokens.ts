@@ -1,8 +1,6 @@
-import { ethers } from 'ethers';
-
 import { ProtocolType, isValidAddress, isZeroishAddress } from '@hyperlane-xyz/utils';
 
-import { COSMOS_ZERO_ADDRESS, SOL_ZERO_ADDRESS } from '../../consts/values';
+import { COSMOS_ZERO_ADDRESS, EVM_ZERO_ADDRESS, SOL_ZERO_ADDRESS } from '../../consts/values';
 import { logger } from '../../utils/logger';
 
 export enum AssetNamespace {
@@ -84,7 +82,7 @@ export function isNativeToken(id: TokenCaip19Id): boolean {
 
 export function getNativeTokenAddress(protocol: ProtocolType): Address {
   if (protocol === ProtocolType.Ethereum) {
-    return ethers.constants.AddressZero;
+    return EVM_ZERO_ADDRESS;
   } else if (protocol === ProtocolType.Sealevel) {
     return SOL_ZERO_ADDRESS;
   } else if (protocol === ProtocolType.Cosmos) {

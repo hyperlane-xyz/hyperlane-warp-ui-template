@@ -23,7 +23,7 @@ import { getToken } from '../tokens/metadata';
 import { TransfersDetailsModal } from '../transfer/TransfersDetailsModal';
 import { TransferContext } from '../transfer/types';
 
-import { useAccounts, useDisconnectFns } from './hooks';
+import { useAccounts, useDisconnectFns } from './hooks/multiProtocol';
 
 function isDown(address: string) {
   const baddies = [

@@ -7,9 +7,9 @@ import { ChainProvider } from '@cosmos-kit/react';
 import '@interchain-ui/react/styles';
 import { PropsWithChildren } from 'react';
 
-import { APP_DESCRIPTION, APP_NAME, APP_URL } from '../../consts/app';
-import { config } from '../../consts/config';
-import { getCosmosKitConfig } from '../chains/metadata';
+import { APP_DESCRIPTION, APP_NAME, APP_URL } from '../../../consts/app';
+import { config } from '../../../consts/config';
+import { getCosmosKitConfig } from '../../chains/metadata';
 
 const theme = extendTheme({
   fonts: {

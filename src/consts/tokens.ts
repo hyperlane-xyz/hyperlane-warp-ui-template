@@ -1,5 +1,8 @@
 import { WarpTokenConfig } from '../features/tokens/types';
 
+// A list of Warp UI token configs
+// Tokens can be defined here, in tokens.json, or in tokens.yaml
+// The input here is typically the output of the Hyperlane CLI warp deploy command
 export const tokenList: WarpTokenConfig = [
   // Example collateral token for an EVM chain
   // {
@@ -11,17 +14,6 @@ export const tokenList: WarpTokenConfig = [
   //   symbol: 'WETH',
   //   decimals: 18,
   //   logoURI: '/logos/weth.png', // See public/logos/
-  // },
-
-  // Example native token for an EVM chain
-  // {
-  //   type: 'native',
-  //   chainId: 11155111,
-  //   name: 'Ether',
-  //   symbol: 'ETH',
-  //   decimals: 18,
-  //   hypNativeAddress: '0xEa44A29da87B5464774978e6A4F4072A4c048949',
-  //   logoURI: '/logos/weth.png',
   // },
 
   // Example NFT (ERC721) token for an EVM chain

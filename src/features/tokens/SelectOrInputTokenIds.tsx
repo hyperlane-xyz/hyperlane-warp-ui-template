@@ -3,7 +3,7 @@ import { useFormikContext } from 'formik';
 import { TextField } from '../../components/input/TextField';
 import { AssetNamespace, getCaip19Id } from '../caip/tokens';
 import { TransferFormValues } from '../transfer/types';
-import { useAccountAddressForChain } from '../wallet/hooks';
+import { useAccountAddressForChain } from '../wallet/hooks/multiProtocol';
 
 import { SelectTokenIdField } from './SelectTokenIdField';
 import { useContractSupportsTokenByOwner, useIsSenderNftOwner } from './balances';

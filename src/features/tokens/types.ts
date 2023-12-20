@@ -18,6 +18,7 @@ const commonTokenFields = z.object({
   symbol: z.string().optional(),
   decimals: z.number().nonnegative().optional(), // decimals == 0 for NFTs
   logoURI: z.string().optional(),
+  igpTokenAddress: z.string().optional(),
 });
 type CommonTokenFields = z.infer<typeof commonTokenFields>;
 
@@ -90,6 +91,7 @@ interface BaseTokenMetadata extends MinimalTokenMetadata {
   type: ExtendedTokenType;
   tokenCaip19Id: TokenCaip19Id;
   routerAddress: Address; // Shared name for hypCollateralAddr or hypNativeAddr
+  igpTokenAddress?: Address;
   logoURI?: string;
 }
 

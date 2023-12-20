@@ -39,21 +39,20 @@ export function TokenSelectField({
   // Keep local state in sync with formik state
   useEffect(() => {
     const routes = getTokenRoutes(originCaip2Id, destinationCaip2Id, tokenRoutes);
+    let newFieldValue: TokenCaip19Id | undefined = undefined;
+    let newToken: TokenMetadata | undefined = undefined;
+    let newIsAutomatic = true;
     if (routes.length === 1) {
-      const tokenCaip19Id = routes[0].baseTokenCaip19Id;
-      setFieldValue(name, tokenCaip19Id);
-      setToken(getToken(tokenCaip19Id));
-      setIsAutomaticSelection(true);
+      newFieldValue = routes[0].baseTokenCaip19Id;
+      newToken = getToken(newFieldValue);
     } else if (routes.length > 1) {
-      const tokenCaip19Id = values[name] || routes[0].baseTokenCaip19Id;
-      setToken(getToken(tokenCaip19Id));
-      setFieldValue(name, tokenCaip19Id);
-      setIsAutomaticSelection(false);
-    } else {
-      setToken(undefined);
-      setFieldValue(name, '');
-      setIsAutomaticSelection(true);
+      newFieldValue = values[name] || routes[0].baseTokenCaip19Id;
+      newToken = getToken(newFieldValue!);
+      newIsAutomatic = false;
     }
+    setToken(newToken);
+    setFieldValue(name, newFieldValue || '');
+    setIsAutomaticSelection(newIsAutomatic);
   }, [name, token, values, originCaip2Id, destinationCaip2Id, tokenRoutes, setFieldValue]);
 
   const onSelectToken = (newToken: TokenMetadata) => {

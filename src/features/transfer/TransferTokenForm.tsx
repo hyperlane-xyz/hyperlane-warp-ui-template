@@ -38,10 +38,10 @@ import { getChainDisplayName } from '../chains/utils';
 import { getChainMetadata } from '../multiProvider';
 import { AppState, useStore } from '../store';
 import { SelectOrInputTokenIds } from '../tokens/SelectOrInputTokenIds';
-import { AutomaticTokenField, TokenSelectField } from '../tokens/TokenSelectField';
+import { TokenSelectField } from '../tokens/TokenSelectField';
 import { useIsApproveRequired } from '../tokens/approval';
 import { useDestinationBalance, useOriginBalance } from '../tokens/balances';
-import { getToken } from '../tokens/metadata';
+import { findTokensByAddress, getToken } from '../tokens/metadata';
 import { useRouteChains } from '../tokens/routes/hooks';
 import { RoutesMap, WarpRoute } from '../tokens/routes/types';
 import { getTokenRoute, isIbcOnlyRoute, isRouteFromNative } from '../tokens/routes/utils';
@@ -106,7 +106,7 @@ function SwapChainsButton({ disabled }: { disabled?: boolean }) {
     // Reset other fields on chain change
     setFieldValue('recipientAddress', '');
     setFieldValue('amount', '');
-    if (!config.enableAutoTokenSelection) setFieldValue('tokenCaip19Id', '');
+    setFieldValue('tokenCaip19Id', '');
   };
 
   return (
@@ -171,25 +171,14 @@ function TokenSection({
       <label htmlFor="tokenCaip19Id" className="block uppercase text-sm text-gray-500 pl-0.5">
         Token
       </label>
-      {config.enableAutoTokenSelection ? (
-        <AutomaticTokenField
-          name="tokenCaip19Id"
-          originCaip2Id={values.originCaip2Id}
-          destinationCaip2Id={values.destinationCaip2Id}
-          tokenRoutes={tokenRoutes}
-          disabled={isReview}
-          setIsNft={setIsNft}
-        />
-      ) : (
-        <TokenSelectField
-          name="tokenCaip19Id"
-          originCaip2Id={values.originCaip2Id}
-          destinationCaip2Id={values.destinationCaip2Id}
-          tokenRoutes={tokenRoutes}
-          disabled={isReview}
-          setIsNft={setIsNft}
-        />
-      )}
+      <TokenSelectField
+        name="tokenCaip19Id"
+        originCaip2Id={values.originCaip2Id}
+        destinationCaip2Id={values.destinationCaip2Id}
+        tokenRoutes={tokenRoutes}
+        disabled={isReview}
+        setIsNft={setIsNft}
+      />
     </div>
   );
 }
@@ -432,11 +421,18 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
       : '';
   const tokenProtocol = tryGetProtocolType(tryGetChainIdFromToken(tokenCaip19Id));
 
-  let originTokenSymbol = getToken(tokenCaip19Id)?.symbol || '';
+  // TODO refactor all this logic into something more coherent.
+  // It's grown organically over time and is becoming unwieldy
+  const originToken = getToken(tokenCaip19Id);
+  let originTokenSymbol = originToken?.symbol || '';
   let originGasTokenSymbol = getChainMetadata(originCaip2Id)?.nativeToken?.symbol || '';
   if (tokenProtocol === ProtocolType.Cosmos) {
     originTokenSymbol = originTokenSymbol ? `u${originTokenSymbol}` : '';
     originGasTokenSymbol = originTokenSymbol;
+  }
+  if (originToken?.igpTokenAddress) {
+    const overrideSymbol = findTokensByAddress(originToken.igpTokenAddress)?.[0]?.symbol;
+    originGasTokenSymbol = overrideSymbol ? `u${overrideSymbol}` : originGasTokenSymbol;
   }
 
   const { isLoading: isApproveLoading, isApproveRequired } = useIsApproveRequired(

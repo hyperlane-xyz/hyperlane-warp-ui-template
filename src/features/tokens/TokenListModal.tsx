@@ -82,30 +82,36 @@ export function TokenList({
 }) {
   const tokens = useMemo(() => {
     const q = searchQuery?.trim().toLowerCase();
-    return getTokens()
-      .map((t) => {
-        const hasRoute = hasTokenRoute(
-          originCaip2Id,
-          destinationCaip2Id,
-          t.tokenCaip19Id,
-          tokenRoutes,
-        );
-        return { ...t, disabled: !hasRoute };
-      })
-      .sort((a, b) => {
-        if (a.disabled && !b.disabled) return 1;
-        else if (!a.disabled && b.disabled) return -1;
-        else return 0;
-      })
-      .filter((t) => {
-        if (!q) return t;
-        return (
-          t.name.toLowerCase().includes(q) ||
-          t.symbol.toLowerCase().includes(q) ||
-          t.tokenCaip19Id.toLowerCase().includes(q)
-        );
-      })
-      .filter((t) => (config.showDisabledTokens ? true : !t.disabled));
+    return (
+      getTokens()
+        .map((t) => {
+          const hasRoute = hasTokenRoute(
+            originCaip2Id,
+            destinationCaip2Id,
+            t.tokenCaip19Id,
+            tokenRoutes,
+          );
+          return { ...t, disabled: !hasRoute };
+        })
+        .sort((a, b) => {
+          if (a.disabled && !b.disabled) return 1;
+          else if (!a.disabled && b.disabled) return -1;
+          else return 0;
+        })
+        // Remove duplicates
+        .filter((t, i, list) => i === list.findIndex((t2) => t2.tokenCaip19Id === t.tokenCaip19Id))
+        // Filter down to search query
+        .filter((t) => {
+          if (!q) return t;
+          return (
+            t.name.toLowerCase().includes(q) ||
+            t.symbol.toLowerCase().includes(q) ||
+            t.tokenCaip19Id.toLowerCase().includes(q)
+          );
+        })
+        // Hide/show disabled tokens
+        .filter((t) => (config.showDisabledTokens ? true : !t.disabled))
+    );
   }, [searchQuery, originCaip2Id, destinationCaip2Id, tokenRoutes]);
 
   return (
@@ -113,7 +119,7 @@ export function TokenList({
       {tokens.length ? (
         tokens.map((t) => (
           <button
-            className={`-mx-2 py-2 px-2 rounded mb-2  ${
+            className={`-mx-2 py-2 px-2 rounded mb-2 flex items-center ${
               t.disabled ? 'opacity-50' : 'hover:bg-gray-200'
             } transition-all duration-250`}
             key={t.tokenCaip19Id}
@@ -121,36 +127,36 @@ export function TokenList({
             disabled={t.disabled}
             onClick={() => onSelect(t)}
           >
-            <div className="flex items-center">
+            <div className="shrink-0">
               <TokenIcon token={t} size={30} />
-              <div className="ml-2 text-left">
-                <div className="text-sm w-14 truncate">{t.symbol || 'Unknown'}</div>
-                <div className="text-xs text-gray-500 w-14 truncate">{t.name || 'Unknown'}</div>
-              </div>
-              <div className="ml-2 text-left">
-                <div className="text-xs">
-                  {isNativeToken(t.tokenCaip19Id)
-                    ? 'Native chain token'
-                    : getTokenAddress(t.tokenCaip19Id)}
-                </div>
-                <div className=" mt-0.5 text-xs flex space-x-1">
-                  <span>{`Decimals: ${t.decimals}`}</span>
-                  <span>-</span>
-                  <span>{`Type: ${getAssetNamespace(t.tokenCaip19Id)}`}</span>
-                </div>
-              </div>
-              {t.disabled && (
-                <Image
-                  src={InfoIcon}
-                  alt=""
-                  className="ml-auto mr-1"
-                  data-te-toggle="tooltip"
-                  title={`Route not supported for ${getChainDisplayName(
-                    originCaip2Id,
-                  )} to ${getChainDisplayName(destinationCaip2Id)}`}
-                />
-              )}
             </div>
+            <div className="ml-2 text-left shrink-0">
+              <div className="text-sm w-14 truncate">{t.symbol || 'Unknown'}</div>
+              <div className="text-xs text-gray-500 w-14 truncate">{t.name || 'Unknown'}</div>
+            </div>
+            <div className="ml-2 text-left shrink min-w-0">
+              <div className="text-xs w-full truncate">
+                {isNativeToken(t.tokenCaip19Id)
+                  ? 'Native chain token'
+                  : getTokenAddress(t.tokenCaip19Id)}
+              </div>
+              <div className=" mt-0.5 text-xs flex space-x-1">
+                <span>{`Decimals: ${t.decimals}`}</span>
+                <span>-</span>
+                <span>{`Type: ${getAssetNamespace(t.tokenCaip19Id)}`}</span>
+              </div>
+            </div>
+            {t.disabled && (
+              <Image
+                src={InfoIcon}
+                alt=""
+                className="ml-auto mr-1"
+                data-te-toggle="tooltip"
+                title={`Route not supported for ${getChainDisplayName(
+                  originCaip2Id,
+                )} to ${getChainDisplayName(destinationCaip2Id)}`}
+              />
+            )}
           </button>
         ))
       ) : (

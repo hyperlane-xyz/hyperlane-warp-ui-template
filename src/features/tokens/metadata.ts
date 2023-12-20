@@ -28,6 +28,10 @@ export function getToken(tokenCaip19Id: TokenCaip19Id) {
   return getTokens().find((t) => t.tokenCaip19Id === tokenCaip19Id);
 }
 
+export function findTokensByAddress(address: Address) {
+  return getTokens().filter((t) => t.tokenCaip19Id.includes(address));
+}
+
 export async function parseTokens() {
   if (!tokens) {
     const tokenList = [...TokensJson, ...TokensYaml, ...TokensTS];
@@ -53,7 +57,7 @@ async function parseTokenConfigs(configList: WarpTokenConfig): Promise<TokenMeta
   const parsedConfig = result.data;
   const tokenMetadata: TokenMetadata[] = [];
   for (const config of parsedConfig) {
-    const { type, chainId, logoURI } = config;
+    const { type, chainId, logoURI, igpTokenAddress } = config;
 
     const protocol = multiProvider.getChainMetadata(chainId).protocol || ProtocolType.Ethereum;
     const chainCaip2Id = getCaip2Id(protocol, chainId);
@@ -86,6 +90,7 @@ async function parseTokenConfigs(configList: WarpTokenConfig): Promise<TokenMeta
       type,
       tokenCaip19Id,
       routerAddress,
+      igpTokenAddress,
     });
   }
   return tokenMetadata;

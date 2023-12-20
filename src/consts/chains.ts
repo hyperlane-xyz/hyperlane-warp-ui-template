@@ -67,4 +67,35 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
     ],
     logoURI: '/logos/celestia.png',
   },
+  viction: {
+    blockExplorers: [
+      {
+        family: ExplorerFamily.Other,
+        name: 'Vicscan',
+        url: 'https://www.vicscan.xyz',
+        apiUrl: 'https://www.vicscan.xyz',
+      },
+    ],
+    blocks: {
+      confirmations: 1,
+      estimateBlockTime: 2,
+      reorgPeriod: 0,
+    },
+    chainId: 88,
+    displayName: 'Viction',
+    domainId: 88,
+    name: 'viction',
+    nativeToken: {
+      decimals: 18,
+      name: 'Viction',
+      symbol: 'VIC',
+    },
+    protocol: ProtocolType.Ethereum,
+    rpcUrls: [
+      {
+        http: 'https://viction.blockpi.network/v1/rpc/public',
+      },
+    ],
+    logoURI: '/logos/viction.svg',
+  },
 };

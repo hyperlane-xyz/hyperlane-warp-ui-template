@@ -531,8 +531,20 @@ function validateFormValues(
 
   const originProtocol = getProtocolType(originCaip2Id);
   const destProtocol = getProtocolType(destinationCaip2Id);
+  // Ensure recip address is valid for the destination chain's protocol
   if (!isValidAddress(recipientAddress, destProtocol))
     return { recipientAddress: 'Invalid recipient' };
+  // Also ensure the address denom is correct if the dest protocol is Cosmos
+  if (destProtocol === ProtocolType.Cosmos) {
+    const destChainPrefix = getChainMetadata(destinationCaip2Id).bech32Prefix;
+    if (!destChainPrefix) {
+      toast.error(`No bech32 prefix found for chain ${destinationCaip2Id}`);
+      return { destinationCaip2Id: 'Invalid chain data' };
+    } else if (!recipientAddress.startsWith(destChainPrefix)) {
+      toast.error(`Recipient address prefix should be ${destChainPrefix}`);
+      return { recipientAddress: `Invalid recipient prefix` };
+    }
+  }
 
   const isNft = isNonFungibleToken(tokenCaip19Id);
   const parsedAmount = tryParseAmount(amount);

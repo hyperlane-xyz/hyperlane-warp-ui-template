@@ -72,7 +72,7 @@ export const tokenList: WarpTokenConfig = [
     address: 'factory/neutron10sr06r3qkhn7xzpw3339wuj77hu06mzna6uht0/eclip',
     hypCollateralAddress: 'neutron1dvzvf870mx9uf65uqhx40yzx9gu4xlqqq2pnx362a0ndmustww3smumrf5',
     igpTokenAddress: 'ibc/773B4D0A3CD667B2275D5A4A7A2F0909C0BA0F4059C0B9181E680DDF4965DCC7',
-    logoURI: '/logos/eclipsefi.svg',
+    logoURI: '/logos/ECLIP.png',
   },
 
   // // Ethereum Eth to Viction

@@ -15,7 +15,7 @@ export function TipCard() {
       <h2 className="text-blue-500 sm:text-lg">Bridging EclipseFi from Neutron? Make sure you have $TIA for gas.</h2>
       <div className="flex items-end justify-between">
         <p className="mt-1 text-xs sm:text-sm max-w-[70%]">
-          Bridging TIA to Manta? See the guide >>>
+          Bridging TIA to Manta? See the guide
         </p>
         <a
           href="https://web3godot.notion.site/Bridging-TIA-to-Manta-Pacific-0d8edccead804255a6f06d838b80d13d"

@@ -16,6 +16,7 @@ export function getMultiProvider() {
 export function getEvmProvider(id: ChainCaip2Id) {
   const { reference, protocol } = parseCaip2Id(id);
   if (protocol !== ProtocolType.Ethereum) throw new Error('Expected EVM chain for provider');
+  // TODO viem
   return getMultiProvider().getEthersV5Provider(reference);
 }
 

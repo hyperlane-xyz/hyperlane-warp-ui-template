@@ -7,7 +7,7 @@ import { ChainLogo } from '@hyperlane-xyz/widgets';
 
 import { Modal } from '../../components/layout/Modal';
 
-import { useConnectFns } from './hooks';
+import { useConnectFns } from './hooks/multiProtocol';
 
 export function WalletEnvSelectionModal({ isOpen, close }: { isOpen: boolean; close: () => void }) {
   const connectFns = useConnectFns();

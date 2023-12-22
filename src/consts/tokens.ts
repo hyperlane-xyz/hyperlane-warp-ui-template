@@ -1,5 +1,8 @@
 import { WarpTokenConfig } from '../features/tokens/types';
 
+// A list of Warp UI token configs
+// Tokens can be defined here, in tokens.json, or in tokens.yaml
+// The input here is typically the output of the Hyperlane CLI warp deploy command
 export const tokenList: WarpTokenConfig = [
   // Example collateral token for an EVM chain
   // {
@@ -11,17 +14,6 @@ export const tokenList: WarpTokenConfig = [
   //   symbol: 'WETH',
   //   decimals: 18,
   //   logoURI: '/logos/weth.png', // See public/logos/
-  // },
-
-  // Example native token for an EVM chain
-  // {
-  //   type: 'native',
-  //   chainId: 11155111,
-  //   name: 'Ether',
-  //   symbol: 'ETH',
-  //   decimals: 18,
-  //   hypNativeAddress: '0xEa44A29da87B5464774978e6A4F4072A4c048949',
-  //   logoURI: '/logos/weth.png',
   // },
 
   // Example NFT (ERC721) token for an EVM chain
@@ -69,4 +61,52 @@ export const tokenList: WarpTokenConfig = [
     decimals: 6,
     logoURI: '/logos/celestia.png',
   },
+
+  // ECLIP on Neutron to Arbitrum
+  {
+    type: 'collateral',
+    chainId: 'neutron-1',
+    name: 'Eclipse Fi',
+    symbol: 'ECLIP',
+    decimals: 6,
+    address: 'factory/neutron10sr06r3qkhn7xzpw3339wuj77hu06mzna6uht0/eclip',
+    hypCollateralAddress: 'neutron1dvzvf870mx9uf65uqhx40yzx9gu4xlqqq2pnx362a0ndmustww3smumrf5',
+    igpTokenAddress: 'ibc/773B4D0A3CD667B2275D5A4A7A2F0909C0BA0F4059C0B9181E680DDF4965DCC7',
+    logoURI: '/logos/eclipsefi.svg',
+  },
+
+  // // Ethereum Eth to Viction
+  // {
+  //   type: 'native',
+  //   chainId: 1,
+  //   name: 'Ether',
+  //   symbol: 'ETH',
+  //   decimals: 18,
+  //   hypNativeAddress: '0x15b5D6B614242B118AA404528A7f3E2Ad241e4A4',
+  //   logoURI: '/logos/weth.png',
+  // },
+
+  // // Ethereum USDC to Viction
+  // {
+  //   type: 'collateral',
+  //   chainId: 1,
+  //   name: 'USDC',
+  //   symbol: 'USDC',
+  //   decimals: 18,
+  //   address: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+  //   hypCollateralAddress: '0x31Dca7762930f56D81292f85E65c9D67575804fE',
+  //   logoURI: '/logos/usdc.svg',
+  // },
+
+  // // Ethereum USDT to Viction
+  // {
+  //   type: 'collateral',
+  //   chainId: 1,
+  //   name: 'USDT',
+  //   symbol: 'USDT',
+  //   decimals: 18,
+  //   address: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+  //   hypCollateralAddress: '0x4221a16A01F61c2b38A03C52d828a7041f6AAA49',
+  //   logoURI: '/logos/usdt.svg',
+  // },
 ];

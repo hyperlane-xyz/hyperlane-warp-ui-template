@@ -33,17 +33,29 @@ export function TokenSelectField({
   const { values, setFieldValue } = useFormikContext<TransferFormValues>();
   // Keep local state for token details, but let formik manage field value
   const [token, setToken] = useState<TokenMetadata | undefined>(undefined);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAutomaticSelection, setIsAutomaticSelection] = useState(false);
 
   // Keep local state in sync with formik state
   useEffect(() => {
-    if (!values[name]) setToken(undefined);
-    else if (values[name] !== token?.tokenCaip19Id) {
-      setToken(undefined);
-      setFieldValue(name, '');
+    const routes = getTokenRoutes(originCaip2Id, destinationCaip2Id, tokenRoutes);
+    let newFieldValue: TokenCaip19Id | undefined = undefined;
+    let newToken: TokenMetadata | undefined = undefined;
+    let newIsAutomatic = true;
+    if (routes.length === 1) {
+      newFieldValue = routes[0].baseTokenCaip19Id;
+      newToken = getToken(newFieldValue);
+    } else if (routes.length > 1) {
+      newFieldValue = values[name] || routes[0].baseTokenCaip19Id;
+      newToken = getToken(newFieldValue!);
+      newIsAutomatic = false;
     }
-  }, [name, token, values, setFieldValue]);
+    setToken(newToken);
+    setFieldValue(name, newFieldValue || '');
+    setIsAutomaticSelection(newIsAutomatic);
+  }, [name, token, values, originCaip2Id, destinationCaip2Id, tokenRoutes, setFieldValue]);
 
-  const handleChange = (newToken: TokenMetadata) => {
+  const onSelectToken = (newToken: TokenMetadata) => {
     // Set the token address value in formik state
     setFieldValue(name, newToken.tokenCaip19Id);
     // reset amount after change token
@@ -54,47 +66,29 @@ export function TokenSelectField({
     setIsNft(!!isNonFungibleToken(newToken.tokenCaip19Id));
   };
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const onClick = () => {
-    if (!disabled) setIsModalOpen(true);
+  const onClickField = () => {
+    if (!disabled && !isAutomaticSelection) setIsModalOpen(true);
   };
 
   return (
     <>
-      <TokenButton token={token} name={name} disabled={disabled} onClick={onClick} />
+      <TokenButton
+        token={token}
+        name={name}
+        disabled={isAutomaticSelection || disabled}
+        onClick={onClickField}
+        isAutomatic={isAutomaticSelection}
+      />
       <TokenListModal
         isOpen={isModalOpen}
         close={() => setIsModalOpen(false)}
-        onSelect={handleChange}
+        onSelect={onSelectToken}
         originCaip2Id={originCaip2Id}
         destinationCaip2Id={destinationCaip2Id}
         tokenRoutes={tokenRoutes}
       />
     </>
   );
-}
-
-// Use this instead when the token field should be auto-set based on the chain
-export function AutomaticTokenField({
-  name,
-  originCaip2Id,
-  destinationCaip2Id,
-  tokenRoutes,
-}: Props) {
-  const { setFieldValue } = useFormikContext<TransferFormValues>();
-  // Keep local state for token details, but let formik manage field value
-  const [token, setToken] = useState<TokenMetadata | undefined>(undefined);
-
-  // Derive token state from origin and dest
-  useEffect(() => {
-    const routes = getTokenRoutes(originCaip2Id, destinationCaip2Id, tokenRoutes);
-    const tokenCaip19Id = routes.length ? routes[0].baseTokenCaip19Id : undefined;
-    setFieldValue(name, tokenCaip19Id);
-    setToken(tokenCaip19Id ? getToken(tokenCaip19Id) : undefined);
-  }, [name, originCaip2Id, destinationCaip2Id, tokenRoutes, setFieldValue]);
-
-  return <TokenButton token={token} name={name} disabled={true} isAutomatic={true} />;
 }
 
 function TokenButton({

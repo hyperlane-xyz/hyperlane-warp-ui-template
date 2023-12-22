@@ -1,8 +1,6 @@
-import { ethers } from 'ethers';
-
 import { ProtocolType, isValidAddress, isZeroishAddress } from '@hyperlane-xyz/utils';
 
-import { COSMOS_ZERO_ADDRESS, SOL_ZERO_ADDRESS } from '../../consts/values';
+import { COSMOS_ZERO_ADDRESS, EVM_ZERO_ADDRESS, SOL_ZERO_ADDRESS } from '../../consts/values';
 import { logger } from '../../utils/logger';
 
 export enum AssetNamespace {
@@ -28,27 +26,38 @@ export function getCaip19Id(
   if (!isValidAddress(address) && !isZeroishAddress(address)) {
     throw new Error(`Invalid address: ${address}`);
   }
-  return `${chainCaip2Id}/${namespace}:${address}${tokenId ? `/${tokenId}` : ''}`;
+  // NOTE: deviation from CAIP-19 spec here by separating token id with : instead of /
+  // Doing this because cosmos addresses use / all over the place
+  // The CAIP standard doesn't specify how to handle ibc / token factory addresses
+  return `${chainCaip2Id}/${namespace}:${address}${tokenId ? `:${tokenId}` : ''}`;
 }
 
 export function parseCaip19Id(id: TokenCaip19Id) {
   const segments = id.split('/');
-  if (segments.length >= 2) {
-    const chainCaip2Id = segments[0] as ChainCaip2Id;
-    const isIBCDenom = segments[1] === `${AssetNamespace.ibcDenom}:ibc`;
+  if (segments.length < 2)
+    throw new Error(`Invalid caip19 id: ${id}. Must have at least 2 main segments`);
 
-    const [namespace, address] = isIBCDenom
-      ? [AssetNamespace.ibcDenom, `ibc/${segments[2]}`]
-      : (segments[1].split(':') as [AssetNamespace, Address]);
-
-    if (!chainCaip2Id || !namespace || !address) {
-      throw new Error(`Invalid caip19 id: ${id}`);
-    }
-    const tokenId = segments.length > 2 ? segments[2] : undefined;
-    return { chainCaip2Id, namespace, address, tokenId };
+  const chainCaip2Id = segments[0] as ChainCaip2Id;
+  const rest = segments.slice(1).join('/');
+  const tokenSegments = rest.split(':');
+  let namespace: AssetNamespace;
+  let address: Address;
+  let tokenId: string | undefined;
+  if (tokenSegments.length == 2) {
+    [namespace, address] = tokenSegments as [AssetNamespace, Address];
+  } else if (tokenSegments.length == 3) {
+    // NOTE: deviation from CAIP-19 spec here by separating token id with : instead of /
+    // Doing this because cosmos addresses use / all over the place
+    // The CAIP standard doesn't specify how to handle ibc / token factory addresses
+    [namespace, address, tokenId] = tokenSegments as [AssetNamespace, Address, string];
   } else {
-    throw new Error(`Invalid caip19 id: ${id}`);
+    throw new Error(`Invalid caip19 id: ${id}. Must have 2 or 3 token segment`);
   }
+
+  if (!chainCaip2Id || !namespace || !address)
+    throw new Error(`Invalid caip19 id: ${id}. Segment values missing`);
+
+  return { chainCaip2Id, namespace, address, tokenId };
 }
 
 export function tryParseCaip19Id(id?: TokenCaip19Id) {
@@ -84,7 +93,7 @@ export function isNativeToken(id: TokenCaip19Id): boolean {
 
 export function getNativeTokenAddress(protocol: ProtocolType): Address {
   if (protocol === ProtocolType.Ethereum) {
-    return ethers.constants.AddressZero;
+    return EVM_ZERO_ADDRESS;
   } else if (protocol === ProtocolType.Sealevel) {
     return SOL_ZERO_ADDRESS;
   } else if (protocol === ProtocolType.Cosmos) {

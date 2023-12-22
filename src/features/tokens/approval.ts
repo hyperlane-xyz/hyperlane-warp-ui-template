@@ -6,7 +6,7 @@ import { logger } from '../../utils/logger';
 import { getProtocolType } from '../caip/chains';
 import { getTokenAddress, isNativeToken, isNonFungibleToken } from '../caip/tokens';
 import { getEvmProvider } from '../multiProvider';
-import { useAccountAddressForChain } from '../wallet/hooks';
+import { useAccountAddressForChain } from '../wallet/hooks/multiProtocol';
 
 import { getErc20Contract, getErc721Contract } from './contracts/evmContracts';
 import { Route } from './routes/types';

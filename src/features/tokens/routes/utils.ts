@@ -1,4 +1,4 @@
-import { utils as ethersUtils } from 'ethers';
+import { deepCopy } from '@hyperlane-xyz/utils';
 
 import { isNativeToken } from '../../caip/tokens';
 
@@ -85,7 +85,7 @@ export function isIbcToWarpRoute(route: Route): route is IbcToWarpRoute {
 }
 
 export function mergeRoutes(routes: RoutesMap, newRoutes: Route[]) {
-  const mergedRoutes = ethersUtils.deepCopy(routes);
+  const mergedRoutes = deepCopy(routes);
   for (const route of newRoutes) {
     mergedRoutes[route.originCaip2Id] ||= {};
     mergedRoutes[route.originCaip2Id][route.destCaip2Id] ||= [];

@@ -26,13 +26,8 @@ import { config } from '../../consts/config';
 import SwapIcon from '../../images/icons/swap.svg';
 import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
-import { getProtocolType, tryGetProtocolType } from '../caip/chains';
-import {
-  getTokenAddress,
-  isNonFungibleToken,
-  parseCaip19Id,
-  tryGetChainIdFromToken,
-} from '../caip/tokens';
+import { getProtocolType } from '../caip/chains';
+import { getTokenAddress, isNonFungibleToken, parseCaip19Id } from '../caip/tokens';
 import { ChainSelectField } from '../chains/ChainSelectField';
 import { getChainDisplayName } from '../chains/utils';
 import { getChainMetadata } from '../multiProvider';
@@ -41,13 +36,13 @@ import { SelectOrInputTokenIds } from '../tokens/SelectOrInputTokenIds';
 import { TokenSelectField } from '../tokens/TokenSelectField';
 import { useIsApproveRequired } from '../tokens/approval';
 import { useDestinationBalance, useOriginBalance } from '../tokens/balances';
-import { findTokensByAddress, getToken } from '../tokens/metadata';
+import { getToken } from '../tokens/metadata';
 import { useRouteChains } from '../tokens/routes/hooks';
 import { RoutesMap, WarpRoute } from '../tokens/routes/types';
-import { getTokenRoute, isIbcOnlyRoute, isRouteFromNative } from '../tokens/routes/utils';
+import { getTokenRoute, isIbcOnlyRoute } from '../tokens/routes/utils';
 import { useAccountAddressForChain } from '../wallet/hooks/multiProtocol';
 
-import { TransferFormValues } from './types';
+import { IgpQuote, TransferFormValues } from './types';
 import { useIgpQuote } from './useIgpQuote';
 import { useTokenTransfer } from './useTokenTransfer';
 
@@ -405,7 +400,7 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
     values: { amount, originCaip2Id, destinationCaip2Id, tokenCaip19Id },
   } = useFormikContext<TransferFormValues>();
 
-  // TODO cosmos better handling of cosmos route details here (remove cast)
+  // TODO cosmos: Need better handling of IBC route type (remove cast)
   const route = getTokenRoute(
     originCaip2Id,
     destinationCaip2Id,
@@ -415,25 +410,12 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
   const isNft = tokenCaip19Id && isNonFungibleToken(tokenCaip19Id);
   const sendValueWei = isNft ? amount.toString() : toWei(amount, route?.originDecimals);
   const originProtocol = getProtocolType(originCaip2Id);
+  const originToken = getToken(tokenCaip19Id);
+  const originTokenSymbol = originToken?.symbol || '';
   const originUnitName =
     originProtocol !== ProtocolType.Cosmos
       ? `(${ProtocolSmallestUnit[getProtocolType(originCaip2Id)]})`
       : '';
-  const tokenProtocol = tryGetProtocolType(tryGetChainIdFromToken(tokenCaip19Id));
-
-  // TODO refactor all this logic into something more coherent.
-  // It's grown organically over time and is becoming unwieldy
-  const originToken = getToken(tokenCaip19Id);
-  let originTokenSymbol = originToken?.symbol || '';
-  let originGasTokenSymbol = getChainMetadata(originCaip2Id)?.nativeToken?.symbol || '';
-  if (tokenProtocol === ProtocolType.Cosmos) {
-    originTokenSymbol = originTokenSymbol ? `u${originTokenSymbol}` : '';
-    originGasTokenSymbol = originTokenSymbol;
-  }
-  if (originToken?.igpTokenAddress) {
-    const overrideSymbol = findTokensByAddress(originToken.igpTokenAddress)?.[0]?.symbol;
-    originGasTokenSymbol = overrideSymbol ? `u${overrideSymbol}` : originGasTokenSymbol;
-  }
 
   const { isLoading: isApproveLoading, isApproveRequired } = useIsApproveRequired(
     tokenCaip19Id,
@@ -493,7 +475,9 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
                   {showIgpQuote && (
                     <p className="flex">
                       <span className="min-w-[7rem]">{`Interchain Gas ${originUnitName}`}</span>
-                      <span>{`${igpQuote?.weiAmount || '0'} ${originGasTokenSymbol}`}</span>
+                      <span>{`${igpQuote?.weiAmount || '0'} ${
+                        igpQuote?.token?.symbol || ''
+                      }`}</span>
                     </p>
                   )}
                 </>
@@ -510,7 +494,7 @@ function validateFormValues(
   values: TransferFormValues,
   tokenRoutes: RoutesMap,
   balances: AppState['balances'],
-  igpQuote: AppState['igpQuote'],
+  igpQuote: IgpQuote,
 ) {
   const { originCaip2Id, destinationCaip2Id, amount, tokenCaip19Id, recipientAddress } = values;
   const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenCaip19Id, tokenRoutes);
@@ -554,18 +538,21 @@ function validateFormValues(
     // Validate balances for ERC20-like tokens
     if (sendValue.gt(balances.senderTokenBalance)) return { amount: 'Insufficient balance' };
     // Ensure balances can cover IGP fees
-    const igpWeiAmount = new BigNumber(igpQuote?.weiAmount || 0);
-    // If the route is from a Cosmos chain, we charge fees in the sending token.
-    // Otherwise, we charge fees in the native token of the sending chain.
-    const userIgpTokenBalance =
-      originProtocol === ProtocolType.Cosmos
-        ? balances.senderTokenBalance
-        : balances.senderNativeBalance;
+    if (!igpQuote?.weiAmount) return { amount: 'Interchain gas quote not ready' };
+    const igpWeiAmount = new BigNumber(igpQuote.weiAmount);
+    const { symbol: igpTokenSymbol, tokenCaip19Id: igpTokenCaip19Id } = igpQuote.token;
+
+    // TODO Need a way to get the right balances from the CAIP19id
+    const userIgpTokenBalance = balances[igpTokenCaip19Id];
+
+    // TODO Then fix this to compare the igp token with the send token
     const requiredIgpTokenBalance =
-      isRouteFromNative(route) || originProtocol === ProtocolType.Cosmos
+      route.o || originProtocol === ProtocolType.Cosmos
         ? sendValue.plus(igpWeiAmount)
         : igpWeiAmount;
 
+    // TODO Then clean this up to use the right token metadata
+    // May need to get the igp token decimals in the quote for this part
     const nativeToken = getChainMetadata(originCaip2Id)?.nativeToken;
     const nativeDecimals = nativeToken?.decimals || 18;
     const gasTokenSymbol =

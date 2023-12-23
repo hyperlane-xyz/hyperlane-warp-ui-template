@@ -35,3 +35,13 @@ export interface TransferContext {
   timestamp: number;
   activeAccountAddress: Address;
 }
+
+export interface IgpQuote {
+  weiAmount: string;
+  originCaip2Id: ChainCaip2Id;
+  destinationCaip2Id: ChainCaip2Id;
+  token: {
+    tokenCaip19Id: TokenCaip19Id;
+    symbol: string;
+  };
+}

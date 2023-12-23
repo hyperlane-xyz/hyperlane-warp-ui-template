@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-import { FinalTransferStatuses, TransferContext, TransferStatus } from './transfer/types';
+import { FinalTransferStatuses, IgpQuote, TransferContext, TransferStatus } from './transfer/types';
 
 // Increment this when persist state has breaking changes
 const PERSIST_STATE_VERSION = 1;
@@ -29,18 +29,8 @@ export interface AppState {
   setSenderBalances: (tokenBalance: string, nativeBalance: string) => void;
   setSenderNftIds: (ids: string[] | null) => void;
   setIsSenderNftOwner: (isOwner: boolean | null) => void;
-  igpQuote: {
-    weiAmount: string;
-    originCaip2Id: ChainCaip2Id;
-    destinationCaip2Id: ChainCaip2Id;
-  } | null;
-  setIgpQuote: (
-    quote: {
-      weiAmount: string;
-      originCaip2Id: ChainCaip2Id;
-      destinationCaip2Id: ChainCaip2Id;
-    } | null,
-  ) => void;
+  igpQuote: IgpQuote | null;
+  setIgpQuote: (quote: IgpQuote | null) => void;
 }
 
 export const useStore = create<AppState>()(

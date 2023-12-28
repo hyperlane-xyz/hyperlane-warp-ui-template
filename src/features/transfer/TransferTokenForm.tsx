@@ -8,10 +8,7 @@ import {
   ProtocolType,
   fromWei,
   fromWeiRounded,
-  isValidAddress,
-  isZeroishAddress,
   toWei,
-  tryParseAmount,
 } from '@hyperlane-xyz/utils';
 
 import { SmallSpinner } from '../../components/animation/SmallSpinner';
@@ -21,17 +18,14 @@ import { SolidButton } from '../../components/buttons/SolidButton';
 import { ChevronIcon } from '../../components/icons/Chevron';
 import { WideChevron } from '../../components/icons/WideChevron';
 import { TextField } from '../../components/input/TextField';
-import { toastIgpDetails } from '../../components/toast/IgpDetailsToast';
-import { config } from '../../consts/config';
 import SwapIcon from '../../images/icons/swap.svg';
 import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
 import { getProtocolType } from '../caip/chains';
-import { getTokenAddress, isNonFungibleToken, parseCaip19Id } from '../caip/tokens';
+import { getTokenAddress, isNonFungibleToken } from '../caip/tokens';
 import { ChainSelectField } from '../chains/ChainSelectField';
 import { getChainDisplayName } from '../chains/utils';
-import { getChainMetadata } from '../multiProvider';
-import { AppState, useStore } from '../store';
+import { useStore } from '../store';
 import { SelectOrInputTokenIds } from '../tokens/SelectOrInputTokenIds';
 import { TokenSelectField } from '../tokens/TokenSelectField';
 import { useIsApproveRequired } from '../tokens/approval';
@@ -40,15 +34,17 @@ import { getToken } from '../tokens/metadata';
 import { useRouteChains } from '../tokens/routes/hooks';
 import { RoutesMap, WarpRoute } from '../tokens/routes/types';
 import { getTokenRoute, isIbcOnlyRoute } from '../tokens/routes/utils';
-import { useAccountAddressForChain } from '../wallet/hooks/multiProtocol';
+import { useAccountAddressForChain, useAccounts } from '../wallet/hooks/multiProtocol';
 
-import { IgpQuote, TransferFormValues } from './types';
+import { TransferFormValues } from './types';
 import { useIgpQuote } from './useIgpQuote';
 import { useTokenTransfer } from './useTokenTransfer';
+import { validateFormValues } from './validateForm';
 
 export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
   const chainCaip2Ids = useRouteChains(tokenRoutes);
   const initialValues = useFormInitialValues(chainCaip2Ids, tokenRoutes);
+  const { accounts } = useAccounts();
 
   // Flag for if form is in input vs review mode
   const [isReview, setIsReview] = useState(false);
@@ -61,7 +57,7 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
   }));
 
   const validate = (values: TransferFormValues) =>
-    validateFormValues(values, tokenRoutes, balances, igpQuote);
+    validateFormValues(values, tokenRoutes, balances, igpQuote, accounts);
 
   const onSubmitForm = (values: TransferFormValues) => {
     logger.debug('Reviewing transfer form values:', JSON.stringify(values));
@@ -488,106 +484,6 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
       )}
     </div>
   );
-}
-
-function validateFormValues(
-  values: TransferFormValues,
-  tokenRoutes: RoutesMap,
-  balances: AppState['balances'],
-  igpQuote: IgpQuote,
-) {
-  const { originCaip2Id, destinationCaip2Id, amount, tokenCaip19Id, recipientAddress } = values;
-  const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenCaip19Id, tokenRoutes);
-  if (!route) return { destinationCaip2Id: 'No route found for chains/token' };
-
-  if (!originCaip2Id) return { originCaip2Id: 'Invalid origin chain' };
-  if (!destinationCaip2Id) return { destinationCaip2Id: 'Invalid destination chain' };
-
-  if (!tokenCaip19Id) return { tokenCaip19Id: 'Token required' };
-  const { address: tokenAddress } = parseCaip19Id(tokenCaip19Id);
-  const tokenMetadata = getToken(tokenCaip19Id);
-  if (!tokenMetadata || (!isZeroishAddress(tokenAddress) && !isValidAddress(tokenAddress)))
-    return { tokenCaip19Id: 'Invalid token' };
-
-  const originProtocol = getProtocolType(originCaip2Id);
-  const destProtocol = getProtocolType(destinationCaip2Id);
-  // Ensure recip address is valid for the destination chain's protocol
-  if (!isValidAddress(recipientAddress, destProtocol))
-    return { recipientAddress: 'Invalid recipient' };
-  // Also ensure the address denom is correct if the dest protocol is Cosmos
-  if (destProtocol === ProtocolType.Cosmos) {
-    const destChainPrefix = getChainMetadata(destinationCaip2Id).bech32Prefix;
-    if (!destChainPrefix) {
-      toast.error(`No bech32 prefix found for chain ${destinationCaip2Id}`);
-      return { destinationCaip2Id: 'Invalid chain data' };
-    } else if (!recipientAddress.startsWith(destChainPrefix)) {
-      toast.error(`Recipient address prefix should be ${destChainPrefix}`);
-      return { recipientAddress: `Invalid recipient prefix` };
-    }
-  }
-
-  const isNft = isNonFungibleToken(tokenCaip19Id);
-  const parsedAmount = tryParseAmount(amount);
-  if (!parsedAmount || parsedAmount.lte(0))
-    return { amount: isNft ? 'Invalid Token Id' : 'Invalid amount' };
-  const sendValue = isNft
-    ? parsedAmount
-    : new BigNumber(toWei(parsedAmount, route?.originDecimals));
-
-  if (!isNft) {
-    // Validate balances for ERC20-like tokens
-    if (sendValue.gt(balances.senderTokenBalance)) return { amount: 'Insufficient balance' };
-    // Ensure balances can cover IGP fees
-    if (!igpQuote?.weiAmount) return { amount: 'Interchain gas quote not ready' };
-    const igpWeiAmount = new BigNumber(igpQuote.weiAmount);
-    const { symbol: igpTokenSymbol, tokenCaip19Id: igpTokenCaip19Id } = igpQuote.token;
-
-    // TODO Need a way to get the right balances from the CAIP19id
-    const userIgpTokenBalance = balances[igpTokenCaip19Id];
-
-    // TODO Then fix this to compare the igp token with the send token
-    const requiredIgpTokenBalance =
-      route.o || originProtocol === ProtocolType.Cosmos
-        ? sendValue.plus(igpWeiAmount)
-        : igpWeiAmount;
-
-    // TODO Then clean this up to use the right token metadata
-    // May need to get the igp token decimals in the quote for this part
-    const nativeToken = getChainMetadata(originCaip2Id)?.nativeToken;
-    const nativeDecimals = nativeToken?.decimals || 18;
-    const gasTokenSymbol =
-      (originProtocol === ProtocolType.Cosmos ? tokenMetadata.symbol : nativeToken?.symbol) ||
-      'native token';
-    const igpAmountPretty = fromWei(igpWeiAmount, nativeDecimals);
-
-    if (requiredIgpTokenBalance.gt(userIgpTokenBalance)) {
-      toastIgpDetails(igpAmountPretty, gasTokenSymbol);
-      return { amount: `Insufficient ${gasTokenSymbol} for gas` };
-    }
-  } else {
-    // Validate balances for ERC721-like tokens
-    const { isSenderNftOwner, senderNftIds } = balances;
-    const nftId = sendValue.toString();
-    if (isSenderNftOwner === false || (senderNftIds && !senderNftIds.includes(nftId))) {
-      return { amount: 'Token ID not owned' };
-    }
-  }
-
-  if (
-    config.withdrawalWhitelist &&
-    !config.withdrawalWhitelist.split(',').includes(destinationCaip2Id)
-  ) {
-    return { destinationCaip2Id: 'Bridge is in deposit-only mode' };
-  }
-
-  if (
-    config.transferBlacklist &&
-    config.transferBlacklist.split(',').includes(`${originCaip2Id}-${destinationCaip2Id}`)
-  ) {
-    return { destinationCaip2Id: 'Route is not currently allowed' };
-  }
-
-  return {};
 }
 
 function useFormInitialValues(

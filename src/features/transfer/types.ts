@@ -43,5 +43,6 @@ export interface IgpQuote {
   token: {
     tokenCaip19Id: TokenCaip19Id;
     symbol: string;
+    decimals: number;
   };
 }

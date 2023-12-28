@@ -12,6 +12,7 @@ import {
 
 import { toastIgpDetails } from '../../components/toast/IgpDetailsToast';
 import { config } from '../../consts/config';
+import { logger } from '../../utils/logger';
 import { getProtocolType } from '../caip/chains';
 import { isNativeToken, isNonFungibleToken, parseCaip19Id } from '../caip/tokens';
 import { getChainMetadata } from '../multiProvider';
@@ -45,8 +46,6 @@ export async function validateFormValues(
   const tokenError = validateToken(tokenCaip19Id);
   if (tokenError) return tokenError;
 
-  // const originProtocol = getProtocolType(originCaip2Id);
-  // const destProtocol = getProtocolType(destinationCaip2Id);
   const recipientError = validateRecipient(recipientAddress, destinationCaip2Id);
   if (recipientError) return recipientError;
 
@@ -182,11 +181,11 @@ async function validateTokenBalances({
   } else if (isNativeToken(igpTokenCaip19Id)) {
     igpTokenBalance = balances.senderNativeBalance;
   } else {
-    const account = accounts[getProtocolType(route.originCaip2Id)];
-    const sender = getAccountAddressForChain(route.originCaip2Id, account);
-    if (!sender) return { amount: 'No sender address found' };
-    const adapter = AdapterFactory.TokenAdapterFromAddress(igpTokenCaip19Id);
-    igpTokenBalance = await adapter.getBalance(sender);
+    igpTokenBalance = await fetchSenderTokenBalance(
+      accounts,
+      route.originCaip2Id,
+      igpTokenCaip19Id,
+    );
   }
 
   const requiredIgpTokenBalance =
@@ -199,4 +198,25 @@ async function validateTokenBalances({
   }
 
   return null;
+}
+
+async function fetchSenderTokenBalance(
+  accounts: Record<ProtocolType, AccountInfo>,
+  originCaip2Id: ChainCaip2Id,
+  igpTokenCaip19Id: TokenCaip19Id,
+) {
+  try {
+    const account = accounts[getProtocolType(originCaip2Id)];
+    const sender = getAccountAddressForChain(originCaip2Id, account);
+    if (!sender) throw new Error('No sender address found');
+    // TODO this isn't working for neutron:eclipse-fi for some reason
+    // I believe the cwtokenadapter is incorrect
+    const adapter = AdapterFactory.TokenAdapterFromAddress(igpTokenCaip19Id);
+    const igpTokenBalance = await adapter.getBalance(sender);
+    return igpTokenBalance;
+  } catch (error) {
+    logger.error('Error fetching token balance during form validation', error);
+    toast.error('Error fetching balance for validation');
+    throw error;
+  }
 }

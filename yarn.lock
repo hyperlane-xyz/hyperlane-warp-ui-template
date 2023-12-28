@@ -3093,7 +3093,7 @@ __metadata:
     eslint: "npm:^8.41.0"
     eslint-config-next: "npm:^13.4.3"
     eslint-config-prettier: "npm:^8.8.0"
-    formik: "npm:^2.2.9"
+    formik: "npm:^2.4.5"
     framer-motion: "npm:^10.16.4"
     jest: "npm:^29.6.3"
     jest-transform-yaml: "npm:^1.1.2"
@@ -5891,6 +5891,16 @@ __metadata:
   dependencies:
     "@types/node": "npm:*"
   checksum: c3070ccdc9ca0f40df747bced1c96c71a61992d6f7c767e8fd24bb6a3c2de26e8b84135ede000b7e79db530a23e7e88dcd9db60eee6395d0f4ce1dae91369dd4
+  languageName: node
+  linkType: hard
+
+"@types/hoist-non-react-statics@npm:^3.3.1":
+  version: 3.3.5
+  resolution: "@types/hoist-non-react-statics@npm:3.3.5"
+  dependencies:
+    "@types/react": "npm:*"
+    hoist-non-react-statics: "npm:^3.3.0"
+  checksum: b645b062a20cce6ab1245ada8274051d8e2e0b2ee5c6bd58215281d0ec6dae2f26631af4e2e7c8abe238cdcee73fcaededc429eef569e70908f82d0cc0ea31d7
   languageName: node
   linkType: hard
 
@@ -9945,20 +9955,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"formik@npm:^2.2.9":
-  version: 2.2.9
-  resolution: "formik@npm:2.2.9"
+"formik@npm:^2.4.5":
+  version: 2.4.5
+  resolution: "formik@npm:2.4.5"
   dependencies:
+    "@types/hoist-non-react-statics": "npm:^3.3.1"
     deepmerge: "npm:^2.1.1"
     hoist-non-react-statics: "npm:^3.3.0"
     lodash: "npm:^4.17.21"
     lodash-es: "npm:^4.17.21"
     react-fast-compare: "npm:^2.0.1"
     tiny-warning: "npm:^1.0.2"
-    tslib: "npm:^1.10.0"
+    tslib: "npm:^2.0.0"
   peerDependencies:
     react: ">=16.8.0"
-  checksum: c7b4c6ee9cc8256302c56106fa4ff1a86b48774b26e5cdd4fe5a40d5ae2171ed7a02714cd36fa7fb05d8b86c5471643339a69d6e3f4234a963e70b9208cbee82
+  checksum: 223fb3e6b0a7803221c030364a015b9adb01b61f7aed7c64e28ef8341a3e7c94c7a70aef7ed9f65d03ac44e4e19972c1247fb0e39538e4e084833fd1fa3b11c4
   languageName: node
   linkType: hard
 
@@ -14893,7 +14904,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tslib@npm:1.14.1, tslib@npm:^1.10.0, tslib@npm:^1.8.1, tslib@npm:^1.9.0":
+"tslib@npm:1.14.1, tslib@npm:^1.8.1, tslib@npm:^1.9.0":
   version: 1.14.1
   resolution: "tslib@npm:1.14.1"
   checksum: 7dbf34e6f55c6492637adb81b555af5e3b4f9cc6b998fb440dac82d3b42bdc91560a35a5fb75e20e24a076c651438234da6743d139e4feabf0783f3cdfe1dddb

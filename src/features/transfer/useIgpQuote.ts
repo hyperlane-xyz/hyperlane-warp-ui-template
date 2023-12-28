@@ -54,16 +54,19 @@ export function useIgpQuote(route?: Route, enabled = true) {
       const baseTokenProtocol = getProtocolType(getChainIdFromToken(baseTokenCaip19Id));
       let igpTokenCaip19Id: TokenCaip19Id;
       let igpTokenSymbol: string;
+      let igpTokenDecimals: number;
       if (baseToken.igpTokenAddress) {
         // If the token has an explicit IGP token address set, use that
         const igpToken = findTokensByAddress(baseToken.igpTokenAddress)[0];
         igpTokenCaip19Id = igpToken.tokenCaip19Id;
         // Note this assumes the u prefix because only cosmos tokens use this case
         igpTokenSymbol = `u${igpToken.symbol}`;
+        igpTokenDecimals = igpToken.decimals;
       } else if (baseTokenProtocol === ProtocolType.Cosmos) {
         // If the protocol is cosmos, use the base token but with a u prefix
-        igpTokenCaip19Id = baseTokenCaip19Id;
+        igpTokenCaip19Id = baseToken.tokenCaip19Id;
         igpTokenSymbol = `u${baseToken.symbol}`;
+        igpTokenDecimals = baseToken.decimals;
       } else {
         // Otherwise use the plain old native token from the route origin
         const originNativeToken = getChainMetadata(originCaip2Id).nativeToken;
@@ -74,6 +77,7 @@ export function useIgpQuote(route?: Route, enabled = true) {
           getNativeTokenAddress(originProtocol),
         );
         igpTokenSymbol = originNativeToken.symbol;
+        igpTokenDecimals = originNativeToken.decimals;
       }
 
       return {
@@ -83,6 +87,7 @@ export function useIgpQuote(route?: Route, enabled = true) {
         token: {
           tokenCaip19Id: igpTokenCaip19Id,
           symbol: igpTokenSymbol,
+          decimals: igpTokenDecimals,
         },
       };
     },

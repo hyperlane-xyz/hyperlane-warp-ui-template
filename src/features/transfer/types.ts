@@ -36,7 +36,15 @@ export interface TransferContext {
   activeAccountAddress: Address;
 }
 
+export enum IgpTokenType {
+  NativeSeparate = 'native-separate', // Paying with origin chain native token
+  NativeCombined = 'native-combined', // Both igp fees and transfer token are native
+  TokenSeparate = 'token-separate', // Paying with a different non-native token
+  TokenCombined = 'token-combined', // Paying with the same token being transferred
+}
+
 export interface IgpQuote {
+  type: IgpTokenType;
   weiAmount: string;
   originCaip2Id: ChainCaip2Id;
   destinationCaip2Id: ChainCaip2Id;

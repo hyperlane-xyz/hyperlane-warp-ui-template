@@ -14,7 +14,7 @@ import { toastIgpDetails } from '../../components/toast/IgpDetailsToast';
 import { config } from '../../consts/config';
 import { logger } from '../../utils/logger';
 import { getProtocolType } from '../caip/chains';
-import { isNativeToken, isNonFungibleToken, parseCaip19Id } from '../caip/tokens';
+import { isNonFungibleToken, parseCaip19Id } from '../caip/tokens';
 import { getChainMetadata } from '../multiProvider';
 import { AppState } from '../store';
 import { AdapterFactory } from '../tokens/AdapterFactory';
@@ -24,7 +24,7 @@ import { getTokenRoute } from '../tokens/routes/utils';
 import { getAccountAddressForChain } from '../wallet/hooks/multiProtocol';
 import { AccountInfo } from '../wallet/hooks/types';
 
-import { IgpQuote, TransferFormValues } from './types';
+import { IgpQuote, IgpTokenType, TransferFormValues } from './types';
 
 type FormError = Partial<Record<keyof TransferFormValues, string>>;
 type Balances = AppState['balances'];
@@ -168,6 +168,7 @@ async function validateTokenBalances({
 
   // Next, ensure balances can cover IGP fees
   if (!igpQuote?.weiAmount) return { amount: 'Interchain gas quote not ready' };
+  const igpTokenType = igpQuote.type;
   const igpWeiAmount = new BigNumber(igpQuote.weiAmount);
   const {
     symbol: igpTokenSymbol,
@@ -176,20 +177,26 @@ async function validateTokenBalances({
   } = igpQuote.token;
 
   let igpTokenBalance: string;
-  if (igpTokenCaip19Id === route.baseTokenCaip19Id) {
-    igpTokenBalance = balances.senderTokenBalance;
-  } else if (isNativeToken(igpTokenCaip19Id)) {
+  if ([IgpTokenType.NativeCombined, IgpTokenType.NativeSeparate].includes(igpTokenType)) {
     igpTokenBalance = balances.senderNativeBalance;
-  } else {
+  } else if (igpTokenType === IgpTokenType.TokenCombined) {
+    igpTokenBalance = balances.senderTokenBalance;
+  } else if (igpTokenType === IgpTokenType.TokenSeparate) {
     igpTokenBalance = await fetchSenderTokenBalance(
       accounts,
       route.originCaip2Id,
       igpTokenCaip19Id,
     );
+  } else {
+    return { amount: 'Interchain gas quote not valid' };
   }
 
-  const requiredIgpTokenBalance =
-    igpTokenCaip19Id === route.baseTokenCaip19Id ? sendValue.plus(igpWeiAmount) : igpWeiAmount;
+  const requiredIgpTokenBalance = [
+    IgpTokenType.NativeCombined,
+    IgpTokenType.TokenCombined,
+  ].includes(igpTokenType)
+    ? sendValue.plus(igpWeiAmount)
+    : igpWeiAmount;
 
   if (requiredIgpTokenBalance.gt(igpTokenBalance)) {
     const igpAmountPretty = fromWei(igpWeiAmount, igpTokenDecimals);

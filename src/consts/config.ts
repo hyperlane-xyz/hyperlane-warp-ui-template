@@ -17,7 +17,6 @@ interface Config {
   withdrawalWhitelist: string; // comma-separated list of CAIP2 chain IDs to which transfers are supported
   transferBlacklist: string; // comma-separated list of routes between which transfers are disabled. Expects Caip2Id-Caip2Id (e.g. ethereum:1-sealevel:1399811149)
   enableExplorerLink: boolean; // Include a link to the hyperlane explorer in the transfer modal
-  enableAutoTokenSelection: boolean; // Automatically select the first valid for the token field
   addressBlacklist: string[]; // A list of addresses that are blacklisted and cannot be used in the app
 }
 
@@ -31,6 +30,5 @@ export const config: Config = Object.freeze({
   withdrawalWhitelist,
   transferBlacklist,
   enableExplorerLink: false,
-  enableAutoTokenSelection: false,
   addressBlacklist: ADDRESS_BLACKLIST.map((address) => address.toLowerCase()),
 });

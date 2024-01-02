@@ -25,6 +25,7 @@ import { parseCaip2Id } from '../caip/chains';
 import { AssetNamespace, getChainIdFromToken, isNativeToken, parseCaip19Id } from '../caip/tokens';
 import { getMultiProvider } from '../multiProvider';
 
+import { getToken } from './metadata';
 import { Route } from './routes/types';
 import {
   isIbcRoute,
@@ -204,13 +205,16 @@ export class AdapterFactory {
       chainName: ChainName,
       mp: MultiProtocolProvider,
       addresses: any,
-      denom?: string,
+      gasDenom?: string,
     ) => IHypTokenAdapter,
   ): IHypTokenAdapter {
     const { protocol, reference: chainId } = parseCaip2Id(chainCaip2Id);
     const { address: baseTokenAddress, namespace } = parseCaip19Id(baseTokenCaip19Id);
+    const tokenMetadata = getToken(baseTokenCaip19Id);
+    if (!tokenMetadata) throw new Error(`Token metadata not found for ${baseTokenCaip19Id}`);
     const multiProvider = getMultiProvider();
     const { name: chainName, mailbox, bech32Prefix } = multiProvider.getChainMetadata(chainId);
+
     if (protocol == ProtocolType.Ethereum) {
       return new EvmAdapter(chainName, multiProvider, {
         token: convertToProtocolAddress(routerAddress, protocol),
@@ -236,7 +240,7 @@ export class AdapterFactory {
           token: convertToProtocolAddress(baseTokenAddress, protocol, bech32Prefix),
           warpRouter: convertToProtocolAddress(routerAddress, protocol, bech32Prefix),
         },
-        baseTokenAddress,
+        tokenMetadata.igpTokenAddress || baseTokenAddress,
       );
     } else {
       throw new Error(`Unsupported protocol: ${protocol}`);

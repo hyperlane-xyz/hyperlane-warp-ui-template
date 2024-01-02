@@ -216,8 +216,6 @@ async function fetchSenderTokenBalance(
     const account = accounts[getProtocolType(originCaip2Id)];
     const sender = getAccountAddressForChain(originCaip2Id, account);
     if (!sender) throw new Error('No sender address found');
-    // TODO this isn't working for neutron:eclipse-fi for some reason
-    // I believe the cwtokenadapter is incorrect
     const adapter = AdapterFactory.TokenAdapterFromAddress(igpTokenCaip19Id);
     const igpTokenBalance = await adapter.getBalance(sender);
     return igpTokenBalance;

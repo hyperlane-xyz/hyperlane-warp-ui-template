@@ -45,6 +45,7 @@ export enum IgpTokenType {
 
 export interface IgpQuote {
   type: IgpTokenType;
+  amount: string;
   weiAmount: string;
   originCaip2Id: ChainCaip2Id;
   destinationCaip2Id: ChainCaip2Id;

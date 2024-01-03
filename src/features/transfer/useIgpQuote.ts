@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
 
 import { IHypTokenAdapter } from '@hyperlane-xyz/sdk';
-import { ProtocolType } from '@hyperlane-xyz/utils';
+import { ProtocolType, fromWei } from '@hyperlane-xyz/utils';
 
 import { COSM_IGP_QUOTE, SOL_IGP_QUOTE } from '../../consts/values';
 import { getChainReference, getProtocolType } from '../caip/chains';
@@ -74,7 +74,7 @@ export async function fetchIgpQuote(route: Route, adapter?: IHypTokenAdapter): P
     const igpToken = findTokensByAddress(baseToken.igpTokenAddress)[0];
     tokenCaip19Id = igpToken.tokenCaip19Id;
     // Note this assumes the u prefix because only cosmos tokens use this case
-    tokenSymbol = originProtocol === ProtocolType.Cosmos ? `u${igpToken.symbol}` : igpToken.symbol;
+    tokenSymbol = igpToken.symbol;
     tokenDecimals = igpToken.decimals;
   } else if (originProtocol === ProtocolType.Cosmos) {
     // TODO Handle case of an evm-based token warped to cosmos
@@ -82,7 +82,7 @@ export async function fetchIgpQuote(route: Route, adapter?: IHypTokenAdapter): P
     // If the protocol is cosmos, use the base token
     type = IgpTokenType.TokenCombined;
     tokenCaip19Id = baseToken.tokenCaip19Id;
-    tokenSymbol = `u${baseToken.symbol}`;
+    tokenSymbol = baseToken.symbol;
     tokenDecimals = baseToken.decimals;
   } else {
     // Otherwise use the plain old native token from the route origin
@@ -100,6 +100,7 @@ export async function fetchIgpQuote(route: Route, adapter?: IHypTokenAdapter): P
 
   return {
     type,
+    amount: fromWei(weiAmount, tokenDecimals),
     weiAmount,
     originCaip2Id,
     destinationCaip2Id,

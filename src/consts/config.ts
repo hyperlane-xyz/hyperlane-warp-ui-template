@@ -1,3 +1,5 @@
+import { ADDRESS_BLACKLIST } from './blacklist';
+
 const isDevMode = process?.env?.NODE_ENV === 'development';
 const version = process?.env?.NEXT_PUBLIC_VERSION ?? null;
 const explorerApiKeys = JSON.parse(process?.env?.EXPLORER_API_KEYS || '{}');
@@ -15,6 +17,7 @@ interface Config {
   withdrawalWhitelist: string; // comma-separated list of CAIP2 chain IDs to which transfers are supported
   transferBlacklist: string; // comma-separated list of routes between which transfers are disabled. Expects Caip2Id-Caip2Id (e.g. ethereum:1-sealevel:1399811149)
   enableExplorerLink: boolean; // Include a link to the hyperlane explorer in the transfer modal
+  addressBlacklist: string[]; // A list of addresses that are blacklisted and cannot be used in the app
 }
 
 export const config: Config = Object.freeze({
@@ -27,4 +30,5 @@ export const config: Config = Object.freeze({
   withdrawalWhitelist,
   transferBlacklist,
   enableExplorerLink: false,
+  addressBlacklist: ADDRESS_BLACKLIST.map((address) => address.toLowerCase()),
 });

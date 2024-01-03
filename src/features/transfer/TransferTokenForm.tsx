@@ -3,13 +3,7 @@ import { Form, Formik, useFormikContext } from 'formik';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 
-import {
-  ProtocolSmallestUnit,
-  ProtocolType,
-  fromWei,
-  fromWeiRounded,
-  toWei,
-} from '@hyperlane-xyz/utils';
+import { fromWei, fromWeiRounded, toWei } from '@hyperlane-xyz/utils';
 
 import { SmallSpinner } from '../../components/animation/SmallSpinner';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
@@ -21,7 +15,6 @@ import { TextField } from '../../components/input/TextField';
 import SwapIcon from '../../images/icons/swap.svg';
 import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
-import { getProtocolType } from '../caip/chains';
 import { getTokenAddress, isNonFungibleToken } from '../caip/tokens';
 import { ChainSelectField } from '../chains/ChainSelectField';
 import { getChainDisplayName } from '../chains/utils';
@@ -404,18 +397,13 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
     tokenRoutes,
   ) as WarpRoute;
   const isNft = tokenCaip19Id && isNonFungibleToken(tokenCaip19Id);
-  const sendValueWei = isNft ? amount.toString() : toWei(amount, route?.originDecimals);
-  const originProtocol = getProtocolType(originCaip2Id);
+  const amountWei = isNft ? amount.toString() : toWei(amount, route?.originDecimals);
   const originToken = getToken(tokenCaip19Id);
   const originTokenSymbol = originToken?.symbol || '';
-  const originUnitName =
-    originProtocol !== ProtocolType.Cosmos
-      ? `(${ProtocolSmallestUnit[getProtocolType(originCaip2Id)]})`
-      : '';
 
   const { isLoading: isApproveLoading, isApproveRequired } = useIsApproveRequired(
     tokenCaip19Id,
-    sendValueWei,
+    amountWei,
     route,
     visible,
   );
@@ -460,20 +448,18 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
               {isNft ? (
                 <p className="flex">
                   <span className="min-w-[7rem]">Token ID</span>
-                  <span>{sendValueWei}</span>
+                  <span>{amount}</span>
                 </p>
               ) : (
                 <>
                   <p className="flex">
-                    <span className="min-w-[7rem]">{`Amount ${originUnitName}`}</span>
-                    <span>{`${sendValueWei} ${originTokenSymbol}`}</span>
+                    <span className="min-w-[7rem]">Amount</span>
+                    <span>{`${amount} ${originTokenSymbol}`}</span>
                   </p>
                   {showIgpQuote && (
                     <p className="flex">
-                      <span className="min-w-[7rem]">{`Interchain Gas ${originUnitName}`}</span>
-                      <span>{`${igpQuote?.weiAmount || '0'} ${
-                        igpQuote?.token?.symbol || ''
-                      }`}</span>
+                      <span className="min-w-[7rem]">Interchain Gas</span>
+                      <span>{`${igpQuote?.amount || '0'} ${igpQuote?.token?.symbol || ''}`}</span>
                     </p>
                   )}
                 </>

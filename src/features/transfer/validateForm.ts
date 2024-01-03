@@ -3,7 +3,6 @@ import { toast } from 'react-toastify';
 
 import {
   ProtocolType,
-  fromWei,
   isValidAddress,
   isZeroishAddress,
   toWei,
@@ -168,13 +167,8 @@ async function validateTokenBalances({
 
   // Next, ensure balances can cover IGP fees
   if (!igpQuote?.weiAmount) return { amount: 'Interchain gas quote not ready' };
-  const igpTokenType = igpQuote.type;
-  const igpWeiAmount = new BigNumber(igpQuote.weiAmount);
-  const {
-    symbol: igpTokenSymbol,
-    tokenCaip19Id: igpTokenCaip19Id,
-    decimals: igpTokenDecimals,
-  } = igpQuote.token;
+  const { type: igpTokenType, amount: igpAmount, weiAmount: igpWeiAmount } = igpQuote;
+  const { symbol: igpTokenSymbol, tokenCaip19Id: igpTokenCaip19Id } = igpQuote.token;
 
   let igpTokenBalance: string;
   if ([IgpTokenType.NativeCombined, IgpTokenType.NativeSeparate].includes(igpTokenType)) {
@@ -196,11 +190,10 @@ async function validateTokenBalances({
     IgpTokenType.TokenCombined,
   ].includes(igpTokenType)
     ? sendValue.plus(igpWeiAmount)
-    : igpWeiAmount;
+    : BigNumber(igpWeiAmount);
 
   if (requiredIgpTokenBalance.gt(igpTokenBalance)) {
-    const igpAmountPretty = fromWei(igpWeiAmount, igpTokenDecimals);
-    toastIgpDetails(igpAmountPretty, igpTokenSymbol);
+    toastIgpDetails(igpAmount, igpTokenSymbol);
     return { amount: `Insufficient ${igpTokenSymbol} for gas` };
   }
 

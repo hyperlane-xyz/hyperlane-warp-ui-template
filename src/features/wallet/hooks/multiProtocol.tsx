@@ -3,6 +3,7 @@ import { toast } from 'react-toastify';
 
 import { ProtocolType } from '@hyperlane-xyz/utils';
 
+import { config } from '../../../consts/config';
 import { logger } from '../../../utils/logger';
 import { tryGetProtocolType } from '../../caip/chains';
 
@@ -42,6 +43,15 @@ export function useAccounts(): {
     () => [evmAccountInfo, solAccountInfo, cosmAccountInfo].filter((a) => a.isReady),
     [evmAccountInfo, solAccountInfo, cosmAccountInfo],
   );
+
+  // Check if any of the ready accounts are blacklisted
+  const readyAddresses = readyAccounts
+    .map((a) => a.addresses)
+    .flat()
+    .map((a) => a.address.toLowerCase());
+  if (readyAddresses.some((a) => config.addressBlacklist.includes(a))) {
+    throw new Error('Wallet address is blacklisted');
+  }
 
   return useMemo(
     () => ({

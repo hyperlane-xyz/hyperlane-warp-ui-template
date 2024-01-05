@@ -12,7 +12,12 @@ import { useStore } from '../store';
 import { AdapterFactory } from '../tokens/AdapterFactory';
 import { findTokensByAddress, getToken } from '../tokens/metadata';
 import { Route } from '../tokens/routes/types';
-import { isIbcOnlyRoute, isRouteFromCollateral, isRouteFromNative } from '../tokens/routes/utils';
+import {
+  isIbcOnlyRoute,
+  isIbcToWarpRoute,
+  isRouteFromCollateral,
+  isRouteFromNative,
+} from '../tokens/routes/utils';
 
 import { IgpQuote, IgpTokenType } from './types';
 
@@ -62,7 +67,7 @@ export async function fetchIgpQuote(route: Route, adapter?: IHypTokenAdapter): P
   }
 
   // Determine the IGP token
-  const isRouteFromBase = isRouteFromCollateral(route);
+  const isRouteFromBase = isRouteFromCollateral(route) || isIbcToWarpRoute(route);
   let type: IgpTokenType;
   let tokenCaip19Id: TokenCaip19Id;
   let tokenSymbol: string;

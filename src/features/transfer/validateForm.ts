@@ -19,7 +19,7 @@ import { AppState } from '../store';
 import { AdapterFactory } from '../tokens/AdapterFactory';
 import { getToken } from '../tokens/metadata';
 import { Route, RoutesMap } from '../tokens/routes/types';
-import { getTokenRoute } from '../tokens/routes/utils';
+import { getTokenRoute, isIbcOnlyRoute } from '../tokens/routes/utils';
 import { getAccountAddressForChain } from '../wallet/hooks/multiProtocol';
 import { AccountInfo } from '../wallet/hooks/types';
 
@@ -166,6 +166,9 @@ async function validateTokenBalances({
   if (sendValue.gt(balances.senderTokenBalance)) return { amount: 'Insufficient balance' };
 
   // Next, ensure balances can cover IGP fees
+  // But not for pure IBC routes because IGP is not used
+  if (isIbcOnlyRoute(route)) return null;
+
   if (!igpQuote?.weiAmount) return { amount: 'Interchain gas quote not ready' };
   const { type: igpTokenType, amount: igpAmount, weiAmount: igpWeiAmount } = igpQuote;
   const { symbol: igpTokenSymbol, tokenCaip19Id: igpTokenCaip19Id } = igpQuote.token;

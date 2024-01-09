@@ -12,8 +12,7 @@ export function TipCard() {
       <h2 className="text-white sm:text-lg"> ⚠️ Nautilus Bridge is in deposit-only mode.</h2>
       <div className="flex items-end justify-between">
         <p className="text-white mt-1.5 text-xs sm:text-sm">
-          Currently, you can bridge from BSC and Solana to Nautilus. Transfers originating Nautilus
-          are expected to go live soon.
+          Currently, bridge transfers to Nautilus must originate from BSC or Solana.
         </p>
       </div>
       <div className="absolute right-3 top-3 invert">

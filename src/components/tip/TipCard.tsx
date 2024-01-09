@@ -13,7 +13,7 @@ export function TipCard() {
   return (
     <Card className="w-100 sm:w-[31rem]">
       <h2 className="text-blue-500 sm:text-lg">
-        {`Bridging ECLIP from Neutron? You'll need $TIA for gas.`}
+        {`To bridge ECLIP from Neutron, you'll need $TIA for gas.`}
       </h2>
       <div className="mt-1 flex items-end justify-between">
         <p className="text-xs sm:text-sm max-w-[70%]">Bridging TIA to Manta? See the guide</p>

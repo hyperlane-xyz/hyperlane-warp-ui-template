@@ -3104,6 +3104,7 @@ __metadata:
     react-dom: "npm:^18.2.0"
     react-toastify: "npm:^9.1.3"
     tailwindcss: "npm:^3.3.2"
+    trackjs: "npm:^3.10.4"
     ts-node: "npm:^10.9.1"
     typescript: "npm:^5.3.3"
     viem: "npm:1.20.0"
@@ -14835,6 +14836,13 @@ __metadata:
   version: 0.0.3
   resolution: "tr46@npm:0.0.3"
   checksum: 8f1f5aa6cb232f9e1bdc86f485f916b7aa38caee8a778b378ffec0b70d9307873f253f5cbadbe2955ece2ac5c83d0dc14a77513166ccd0a0c7fe197e21396695
+  languageName: node
+  linkType: hard
+
+"trackjs@npm:^3.10.4":
+  version: 3.10.4
+  resolution: "trackjs@npm:3.10.4"
+  checksum: 438125338939f392848c78b666b79b695dccaeb29b58ba3330b4d389a787f68074d0d2c2138befc34f560f33049c4b3b7d4095c4b191fa143d8704645c5948e8
   languageName: node
   linkType: hard
 

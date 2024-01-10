@@ -16,10 +16,10 @@ import '../styles/fonts.css';
 import '../styles/globals.css';
 import { useIsSsr } from '../utils/ssr';
 
-if (!location.host.includes('localhost')) {
+if (typeof window !== 'undefined' && !window.location.host.includes('localhost')) {
   TrackJS.install({
     token: config.trackJsToken,
-    application: location.host,
+    application: window.location.host,
     dependencies: false,
     version: config.version,
   });

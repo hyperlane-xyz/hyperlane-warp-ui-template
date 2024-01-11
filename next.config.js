@@ -95,11 +95,6 @@ const nextConfig = {
   sentry: {
     hideSourceMaps: true,
     tunnelRoute: "/monitoring-tunnel",
-    bundleSizeOptimizations: {
-      excludeDebugStatements: true,
-      excludeReplayIframe: true,
-      excludeReplayShadowDom: true,
-    },
   },
 }
 

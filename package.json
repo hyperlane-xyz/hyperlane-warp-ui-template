@@ -45,6 +45,7 @@
     "zustand": "^4.3.9"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^14.0.4",
     "@trivago/prettier-plugin-sort-imports": "^4.1.1",
     "@types/jest": "^29.5.3",
     "@types/node": "^18.11.18",

@@ -4,7 +4,6 @@ const isDevMode = process?.env?.NODE_ENV === 'development';
 const version = process?.env?.NEXT_PUBLIC_VERSION || '0.0.0';
 const explorerApiKeys = JSON.parse(process?.env?.EXPLORER_API_KEYS || '{}');
 const walletConnectProjectId = process?.env?.NEXT_PUBLIC_WALLET_CONNECT_ID || '';
-const trackJsToken = process?.env?.NEXT_PUBLIC_TRACKJS_TOKEN || '';
 const withdrawalWhitelist = process?.env?.NEXT_PUBLIC_BLOCK_WITHDRAWAL_WHITELIST || '';
 const transferBlacklist = process?.env?.NEXT_PUBLIC_TRANSFER_BLACKLIST || '';
 
@@ -15,7 +14,6 @@ interface Config {
   showTipBox: boolean; // Show/Hide the blue tip box above the transfer form
   showDisabledTokens: boolean; // Show/Hide invalid token options in the selection modal
   walletConnectProjectId: string; // Project ID provided by walletconnect
-  trackJsToken: string; // TrackJS project token
   withdrawalWhitelist: string; // comma-separated list of CAIP2 chain IDs to which transfers are supported
   transferBlacklist: string; // comma-separated list of routes between which transfers are disabled. Expects Caip2Id-Caip2Id (e.g. ethereum:1-sealevel:1399811149)
   enableExplorerLink: boolean; // Include a link to the hyperlane explorer in the transfer modal
@@ -29,7 +27,6 @@ export const config: Config = Object.freeze({
   showTipBox: true,
   showDisabledTokens: true,
   walletConnectProjectId,
-  trackJsToken,
   withdrawalWhitelist,
   transferBlacklist,
   enableExplorerLink: false,

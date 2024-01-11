@@ -3,28 +3,17 @@ import { Analytics } from '@vercel/analytics/react';
 import type { AppProps } from 'next/app';
 import { ToastContainer, Zoom, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { TrackJS } from 'trackjs';
 
 import '@hyperlane-xyz/widgets/styles.css';
 
 import { ErrorBoundary } from '../components/errors/ErrorBoundary';
 import { AppLayout } from '../components/layout/AppLayout';
-import { config } from '../consts/config';
 import { CosmosWalletContext } from '../features/wallet/context/CosmosWalletContext';
 import { EvmWalletContext } from '../features/wallet/context/EvmWalletContext';
 import { SolanaWalletContext } from '../features/wallet/context/SolanaWalletContext';
 import '../styles/fonts.css';
 import '../styles/globals.css';
 import { useIsSsr } from '../utils/ssr';
-
-if (typeof window !== 'undefined' && !window.location.host.includes('localhost')) {
-  TrackJS.install({
-    token: config.trackJsToken,
-    application: window.location.host,
-    dependencies: false,
-    version: config.version,
-  });
-}
 
 const reactQueryClient = new QueryClient({
   defaultOptions: {

@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 
 const { version } = require('./package.json')
+const { withSentryConfig } = require("@sentry/nextjs");
 
 const isDev = process.env.NODE_ENV !== 'production'
 
@@ -8,7 +9,7 @@ const isDev = process.env.NODE_ENV !== 'production'
 const ENABLE_CSP_HEADER = true;
 const FRAME_SRC_HOSTS = ['https://*.walletconnect.com', 'https://*.walletconnect.org','https://*.solflare.com'];
 const STYLE_SRC_HOSTS = ['https://*.googleapis.com']
-const IMG_SRC_HOSTS = ['https://*.walletconnect.com', 'https://usage.trackjs.com', 'https://fault.trackjs.com'];
+const IMG_SRC_HOSTS = ['https://*.walletconnect.com'];
 const cspHeader = `
   default-src 'self';
   script-src 'self'${isDev ? " 'unsafe-eval'" : ''};
@@ -87,6 +88,27 @@ const nextConfig = {
 
   reactStrictMode: true,
   swcMinify: true,
+
+  sentry: {
+    hideSourceMaps: true,
+    tunnelRoute: "/monitoring-tunnel",
+    bundleSizeOptimizations: {
+      excludeDebugStatements: true,
+      excludeReplayIframe: true,
+      excludeReplayShadowDom: true,
+    },
+  },
 }
 
-module.exports = nextConfig
+const sentryWebpackPluginOptions = {
+  org: "jr-bt",
+  project: "warp-ui",
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  bundleSizeOptimizations: {
+    excludeDebugStatements: true,
+    excludeReplayIframe: true,
+    excludeReplayShadowDom: true,
+  },
+};
+
+module.exports = withSentryConfig(nextConfig, sentryWebpackPluginOptions);

@@ -1,4 +1,5 @@
-import { ChainMap, ChainMetadata } from '@hyperlane-xyz/sdk';
+import { ChainMap, ChainMetadata, Chains } from '@hyperlane-xyz/sdk';
+import { ProtocolType } from '@hyperlane-xyz/utils';
 
 // A map of chain names to ChainMetadata
 // Chains can be defined here, in chains.json, or in chains.yaml
@@ -28,4 +29,28 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
   //   },
   //   logoURI: '/logo.svg',
   // },
+  injective: {
+    blockExplorers: [],
+    blocks: {
+      confirmations: 1,
+      estimateBlockTime: 3,
+      reorgPeriod: 1,
+    },
+    chainId: 'injective-888',
+    domainId: 6909546,
+    displayName: 'Injective Testnet',
+    displayNameShort: 'Inj. Testnet',
+    name: Chains.injective,
+    nativeToken: {
+      decimals: 6,
+      name: 'Injective',
+      symbol: 'INJ',
+    },
+    bech32Prefix: 'inj',
+    slip44: 118,
+    protocol: ProtocolType.Cosmos,
+    // temporarily testnet
+    rpcUrls: [{ http: 'https://k8s.testnet.tm.injective.network/' }],
+    restUrls: [{ http: 'https://testnet.sentry.lcd.injective.network' }],
+  },
 };

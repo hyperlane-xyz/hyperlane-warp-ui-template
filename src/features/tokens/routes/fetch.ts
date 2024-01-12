@@ -41,13 +41,13 @@ export async function fetchRemoteHypTokens(
       if (routerMetadata)
         return { chain, router: formattedAddress, decimals: routerMetadata.decimals };
       // Otherwise try to query the contract
-      const remoteAdapter = AdapterFactory.HypSyntheticTokenAdapterFromAddress(
-        baseTokenCaip19Id,
-        chain,
-        formattedAddress,
-      );
-      const metadata = await remoteAdapter.getMetadata();
-      return { chain, router: formattedAddress, decimals: metadata.decimals };
+      // const remoteAdapter = AdapterFactory.HypSyntheticTokenAdapterFromAddress(
+      //   baseTokenCaip19Id,
+      //   chain,
+      //   formattedAddress,
+      // );
+      // const metadata = await remoteAdapter.getMetadata();
+      return { chain, router: formattedAddress, decimals: 6 };
     }),
   );
   return { ...baseToken, hypTokens };

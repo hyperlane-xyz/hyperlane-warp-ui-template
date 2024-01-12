@@ -357,6 +357,9 @@ async function executeCosmWasmTransfer({
 }: ExecuteHypTransferParams<any, void>) {
   updateStatus(TransferStatus.CreatingTransfer);
 
+  // @ts-ignore
+  hypTokenAdapter.gasDenom = 'inj';
+
   const transferTxRequest = await hypTokenAdapter.populateTransferRemoteTx({
     weiAmountOrId,
     recipient: recipientAddress,

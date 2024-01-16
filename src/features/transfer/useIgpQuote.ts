@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { IHypTokenAdapter } from '@hyperlane-xyz/sdk';
 import { ProtocolType, fromWei } from '@hyperlane-xyz/utils';
 
+import { useToastError } from '../../components/toast/useToastError';
 import { COSM_IGP_QUOTE, SOL_IGP_QUOTE } from '../../consts/values';
 import { getChainReference, getProtocolType } from '../caip/chains';
 import { AssetNamespace, getCaip19Id, getNativeTokenAddress } from '../caip/tokens';
@@ -29,11 +30,7 @@ const DEFAULT_IGP_QUOTES = {
 export function useIgpQuote(route?: Route) {
   const setIgpQuote = useStore((state) => state.setIgpQuote);
 
-  const {
-    isLoading,
-    isError: hasError,
-    data,
-  } = useQuery({
+  const { isLoading, isError, error, data } = useQuery({
     queryKey: ['useIgpQuote', route],
     queryFn: () => {
       if (!route || isIbcOnlyRoute(route)) return null;
@@ -45,7 +42,9 @@ export function useIgpQuote(route?: Route) {
     setIgpQuote(data || null);
   }, [data, setIgpQuote]);
 
-  return { isLoading, hasError, igpQuote: data };
+  useToastError(error, 'Error fetching IGP quote');
+
+  return { isLoading, isError, igpQuote: data };
 }
 
 export async function fetchIgpQuote(route: Route, adapter?: IHypTokenAdapter): Promise<IgpQuote> {

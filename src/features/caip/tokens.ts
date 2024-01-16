@@ -65,7 +65,7 @@ export function tryParseCaip19Id(id?: TokenCaip19Id) {
   try {
     return parseCaip19Id(id);
   } catch (err) {
-    logger.error('Error parsing caip2 id', err);
+    logger.error(`Error parsing caip2 id ${id}`, err);
     return undefined;
   }
 }

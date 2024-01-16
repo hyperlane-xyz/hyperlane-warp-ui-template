@@ -33,7 +33,7 @@ export function TransferTokenCard() {
           <div className="my-32 flex flex-col items-center text-center">
             <h3 className="text-red-500">Error searching for token routes.</h3>
             <div className="mt-3 text-sm text-red-500">
-              Please ensure chain and token configs are valid.
+              Please ensure token configs are valid and RPCs are healthy.
             </div>
             <div className="mt-4 text-xs text-gray-500">{routesError.toString()}</div>
           </div>

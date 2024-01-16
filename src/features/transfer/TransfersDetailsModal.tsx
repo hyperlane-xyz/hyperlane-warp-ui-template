@@ -54,7 +54,7 @@ export function TransfersDetailsModal({
   const { address: tokenAddress, namespace: tokenNamespace } = parseCaip19Id(tokenCaip19Id);
   const isNative = tokenNamespace === AssetNamespace.native || isZeroishAddress(tokenAddress);
 
-  const getFormUrls = useCallback(async () => {
+  const getMessageUrls = useCallback(async () => {
     try {
       if (originTxHash) {
         const originTxUrl = multiProvider.tryGetExplorerTxUrl(originChain, { hash: originTxHash });
@@ -73,8 +73,10 @@ export function TransfersDetailsModal({
 
   useEffect(() => {
     if (!transfer) return;
-    getFormUrls().catch((err) => logger.error(err));
-  }, [transfer, getFormUrls]);
+    getMessageUrls().catch((err) =>
+      logger.error('Error getting message URLs for details modal', err),
+    );
+  }, [transfer, getMessageUrls]);
 
   const isAccountReady = !!account?.isReady;
   const connectorName = account?.connectorName || 'wallet';

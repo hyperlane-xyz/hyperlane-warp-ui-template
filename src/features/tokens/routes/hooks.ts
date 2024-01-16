@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
+import { useToastError } from '../../../components/toast/useToastError';
 import { ibcRoutes } from '../../../consts/ibcRoutes';
 import { logger } from '../../../utils/logger';
 import { getChainIdFromToken } from '../../caip/tokens';
@@ -40,6 +41,8 @@ export function useTokenRoutes() {
     },
     { retry: false },
   );
+
+  useToastError(error, 'Error fetching token routes');
 
   return { isLoading, error, tokenRoutes };
 }

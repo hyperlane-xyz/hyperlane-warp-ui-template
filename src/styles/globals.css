@@ -43,33 +43,16 @@ Text and shadows
   text-shadow: 0 0 #010101;
 }
 
-/*
+/* 
 Scrollbar Overrides
 ===================
 */
 
-html {
-  --scrollbarBG: rgba(255, 255, 255, 0);
-  --thumbBG: #dddddd;
-}
 body {
   scroll-behavior: smooth;
   scrollbar-width: thin;
-  scrollbar-color: var(--thumbBG) var(--scrollbarBG);
 }
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-  background-color: var(--scrollbarBG);
-}
-::-webkit-scrollbar-track {
-  background-color: var(--scrollbarBG);
-}
-::-webkit-scrollbar-thumb {
-  background-color: var(--thumbBG);
-  border-radius: 6px;
-  border: 3px solid var(--scrollbarBG);
-}
+
 /* phones */
 @media only screen and (max-width: 767px) {
   ::-webkit-scrollbar {

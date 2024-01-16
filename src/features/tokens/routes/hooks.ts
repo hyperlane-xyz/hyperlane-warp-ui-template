@@ -21,7 +21,6 @@ export function useTokenRoutes() {
     ['token-routes'],
     async () => {
       logger.info('Searching for token routes');
-      throw new Error('Test Error');
       const parsedTokens = await parseTokens();
       const tokens: TokenMetadataWithHypTokens[] = [];
       for (const token of parsedTokens) {

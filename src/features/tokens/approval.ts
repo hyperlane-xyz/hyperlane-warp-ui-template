@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { ProtocolType, eqAddress } from '@hyperlane-xyz/utils';
 
+import { useToastError } from '../../components/toast/useToastError';
 import { logger } from '../../utils/logger';
 import { getProtocolType } from '../caip/chains';
 import { getTokenAddress, isNativeToken, isNonFungibleToken } from '../caip/tokens';
@@ -20,11 +21,7 @@ export function useIsApproveRequired(
 ) {
   const owner = useAccountAddressForChain(route?.originCaip2Id);
 
-  const {
-    isLoading,
-    isError: hasError,
-    data,
-  } = useQuery({
+  const { isLoading, isError, error, data } = useQuery({
     queryKey: ['useIsApproveRequired', route, tokenCaip19Id, owner, amount],
     queryFn: async () => {
       if (!route || !tokenCaip19Id || !owner || !amount) return false;
@@ -33,7 +30,9 @@ export function useIsApproveRequired(
     enabled,
   });
 
-  return { isLoading, hasError, isApproveRequired: !!data };
+  useToastError(error, 'Error fetching approval status');
+
+  return { isLoading, isError, isApproveRequired: !!data };
 }
 
 export async function isApproveRequired(

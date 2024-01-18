@@ -1,4 +1,4 @@
-import { ChainMap, ChainMetadata, Chains } from '@hyperlane-xyz/sdk';
+import { ChainMap, ChainMetadata } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 
 // A map of chain names to ChainMetadata
@@ -17,7 +17,7 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
     domainId: 6909546,
     displayName: 'Injective',
     displayNameShort: 'Injective',
-    name: Chains.injective,
+    name: 'injective',
     nativeToken: {
       decimals: 6,
       name: 'Injective',

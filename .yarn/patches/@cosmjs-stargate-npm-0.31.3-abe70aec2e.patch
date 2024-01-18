@@ -1,0 +1,51 @@
+diff --git a/build/signingstargateclient.js b/build/signingstargateclient.js
+index 4330b9ffa25cc892f641b5be890f603fb6b104f4..655245bc1d005a29d9c7d1b534a0d0868a7e7d74 100644
+--- a/build/signingstargateclient.js
++++ b/build/signingstargateclient.js
+@@ -105,6 +105,9 @@ class SigningStargateClient extends stargateclient_1.StargateClient {
+             throw new Error("Failed to retrieve account from signer");
+         }
+         const pubkey = (0, amino_1.encodeSecp256k1Pubkey)(accountFromSigner.pubkey);
++        if (signerAddress.startsWith('inj')) {
++            pubkey['typeUrl'] = '/injective.crypto.v1beta1.ethsecp256k1.PubKey';
++        }
+         const { sequence } = await this.getSequence(signerAddress);
+         const { gasInfo } = await this.forceGetQueryClient().tx.simulate(anyMsgs, memo, pubkey, sequence);
+         (0, utils_1.assertDefined)(gasInfo);
+@@ -246,6 +249,9 @@ class SigningStargateClient extends stargateclient_1.StargateClient {
+             throw new Error("Failed to retrieve account from signer");
+         }
+         const pubkey = (0, proto_signing_1.encodePubkey)((0, amino_1.encodeSecp256k1Pubkey)(accountFromSigner.pubkey));
++        if (signerAddress.startsWith('inj')) {
++            pubkey['typeUrl'] = '/injective.crypto.v1beta1.ethsecp256k1.PubKey';
++        }
+         const signMode = signing_1.SignMode.SIGN_MODE_LEGACY_AMINO_JSON;
+         const msgs = messages.map((msg) => this.aminoTypes.toAmino(msg));
+         const signDoc = (0, amino_1.makeSignDoc)(msgs, fee, chainId, memo, accountNumber, sequence);
+diff --git a/build/stargateclient.js b/build/stargateclient.js
+index 3268b131345dc87170f64b30cb1c6aea3aaef0e1..14d35857dace119f16465be58c8db1096141edd5 100644
+--- a/build/stargateclient.js
++++ b/build/stargateclient.js
+@@ -131,6 +131,10 @@ class StargateClient {
+     async getAccount(searchAddress) {
+         try {
+             const account = await this.forceGetQueryClient().auth.account(searchAddress);
++            if (searchAddress.startsWith('inj')) {
++                const m = await require('@injectivelabs/sdk-ts');
++                return m.injectiveAccountParser(account);
++            }
+             return account ? this.accountParser(account) : null;
+         }
+         catch (error) {
+diff --git a/package.json b/package.json
+index b2d808730b9bcfa42c983e3a17f7d72f276d51d6..00392b8336fa9f0accb4987f4d77ab100b109ae9 100644
+--- a/package.json
++++ b/package.json
+@@ -38,6 +38,7 @@
+     "pack-web": "yarn build-or-skip && webpack --mode development --config webpack.web.config.js"
+   },
+   "dependencies": {
++    "@injectivelabs/sdk-ts": "^1.14.4",
+     "@confio/ics23": "^0.6.8",
+     "@cosmjs/amino": "^0.31.3",
+     "@cosmjs/encoding": "^0.31.3",

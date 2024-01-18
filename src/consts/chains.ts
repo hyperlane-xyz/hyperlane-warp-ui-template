@@ -6,29 +6,6 @@ import { ProtocolType } from '@hyperlane-xyz/utils';
 // Chains already in the SDK need not be included here unless you want to override some fields
 // Schema here: https://github.com/hyperlane-xyz/hyperlane-monorepo/blob/main/typescript/sdk/src/metadata/chainMetadataTypes.ts
 export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
-  // mycustomchain: {
-  //   protocol: ProtocolType.Ethereum,
-  //   chainId: 1234,
-  //   domainId: 1234,
-  //   name: 'mycustomchain',
-  //   displayName: 'My Chain',
-  //   nativeToken: { name: 'Ether', symbol: 'ETH', decimals: 18 },
-  //   publicRpcUrls: [{ http: 'https://mycustomchain-rpc.com' }],
-  //   blockExplorers: [
-  //     {
-  //       name: 'MyCustomScan',
-  //       url: 'https://mycustomchain-scan.com',
-  //       apiUrl: 'https://api.mycustomchain-scan.com/api',
-  //       family: ExplorerFamily.Etherscan,
-  //     },
-  //   ],
-  //   blocks: {
-  //     confirmations: 1,
-  //     reorgPeriod: 1,
-  //     estimateBlockTime: 10,
-  //   },
-  //   logoURI: '/logo.svg',
-  // },
   injective: {
     blockExplorers: [],
     blocks: {
@@ -36,21 +13,20 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
       estimateBlockTime: 3,
       reorgPeriod: 1,
     },
-    chainId: 'injective-888',
+    chainId: 'injective-1',
     domainId: 6909546,
-    displayName: 'Injective Testnet',
-    displayNameShort: 'Inj. Testnet',
+    displayName: 'Injective',
+    displayNameShort: 'Injective',
     name: Chains.injective,
     nativeToken: {
       decimals: 6,
       name: 'Injective',
       symbol: 'INJ',
     },
+    protocol: ProtocolType.Cosmos,
     bech32Prefix: 'inj',
     slip44: 118,
-    protocol: ProtocolType.Cosmos,
-    // temporarily testnet
-    rpcUrls: [{ http: 'https://k8s.testnet.tm.injective.network/' }],
-    restUrls: [{ http: 'https://testnet.sentry.lcd.injective.network' }],
+    rpcUrls: [{ http: 'https://sentry.tm.injective.network:443' }],
+    restUrls: [{ http: 'https://sentry.lcd.injective.network:443' }],
   },
 };

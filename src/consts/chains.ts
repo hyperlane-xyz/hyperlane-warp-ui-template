@@ -7,12 +7,12 @@ import { ChainMap, ChainMetadata } from '@hyperlane-xyz/sdk';
 export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
   // mycustomchain: {
   //   protocol: ProtocolType.Ethereum,
-  //   chainId: 1234,
-  //   domainId: 1234,
+  //   chainId: 123123,
+  //   domainId: 123123,
   //   name: 'mycustomchain',
   //   displayName: 'My Chain',
   //   nativeToken: { name: 'Ether', symbol: 'ETH', decimals: 18 },
-  //   publicRpcUrls: [{ http: 'https://mycustomchain-rpc.com' }],
+  //   rpcUrls: [{ http: 'https://mycustomchain-rpc.com' }],
   //   blockExplorers: [
   //     {
   //       name: 'MyCustomScan',

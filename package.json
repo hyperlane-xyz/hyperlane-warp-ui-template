@@ -78,8 +78,9 @@
   },
   "scripts": {
     "clean": "rm -rf dist cache .next",
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "yarn build:configs && next dev",
+    "build": "yarn build:configs && next build",
+    "build:configs": "ts-node src/scripts/buildConfigs/index.ts",
     "typecheck": "tsc",
     "lint": "next lint",
     "start": "next start",

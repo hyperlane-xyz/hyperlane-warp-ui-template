@@ -84,7 +84,7 @@
     "typecheck": "tsc",
     "lint": "next lint",
     "start": "next start",
-    "test": "jest",
+    "test": "yarn build:configs && jest",
     "prettier": "prettier --write ./src"
   },
   "types": "dist/src/index.d.ts",

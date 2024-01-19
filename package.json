@@ -80,7 +80,7 @@
     "clean": "rm -rf dist cache .next",
     "dev": "yarn build:configs && next dev",
     "build": "yarn build:configs && next build",
-    "build:configs": "ts-node src/scripts/buildConfigs/index.ts",
+    "build:configs": "./src/scripts/buildConfigs/build.sh",
     "typecheck": "tsc",
     "lint": "next lint",
     "start": "next start",

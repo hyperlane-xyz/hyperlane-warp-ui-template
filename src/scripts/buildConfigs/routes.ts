@@ -16,7 +16,7 @@ export async function getRouteConfigs(context: WarpContext): Promise<RoutesMap> 
   for (const token of context.tokens) {
     // Skip querying of IBC tokens
     if (isIbcToken(token)) continue;
-    const tokenWithHypTokens = await fetchRemoteHypTokens(context, token, context.tokens);
+    const tokenWithHypTokens = await fetchRemoteHypTokens(context, token);
     processedTokens.push(tokenWithHypTokens);
   }
   let routes = computeTokenRoutes(processedTokens);
@@ -33,7 +33,6 @@ export async function getRouteConfigs(context: WarpContext): Promise<RoutesMap> 
 export async function fetchRemoteHypTokens(
   context: WarpContext,
   baseToken: TokenMetadata,
-  allTokens: TokenMetadata[],
 ): Promise<TokenMetadataWithHypTokens> {
   const {
     symbol: baseSymbol,
@@ -56,7 +55,7 @@ export async function fetchRemoteHypTokens(
       const formattedAddress = bytesToProtocolAddress(router.address, protocol);
       if (isNft) return { chain, router: formattedAddress, decimals: 0 };
       // Attempt to find the decimals from the token list
-      const routerMetadata = allTokens.find((token) =>
+      const routerMetadata = context.tokens.find((token) =>
         eqAddress(formattedAddress, token.routerAddress),
       );
       if (routerMetadata)

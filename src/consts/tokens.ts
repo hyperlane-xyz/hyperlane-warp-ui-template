@@ -24,14 +24,14 @@ export const tokenList: WarpTokenConfig = [
   //   logoURI: '/logos/zebec.png',
   // },
 
-  // solanadevnet to eclipse
+  // solanatestnet to eclipsetestnet
   {
     type: 'native',
-    chainId: 1399811151,
+    chainId: 1399811150,
     // address: 'wzbcJyhGhQDLTV1S99apZiiBdE4jmYfbw99saMMdP59',
-    hypNativeAddress: '62V5Sv2HeLZ4RqwxwYjaBQ7K9cqHbfert9pVtjfrxgYG',
-    name: 'Devnet SOL',
-    symbol: 'devSOL',
+    hypNativeAddress: 'DF99ZiHj8aN4ETbKmpMoMsRTSbm7gtL5j6sKKLC5mkTS',
+    name: 'Testnet SOL',
+    symbol: 'testSOL',
     decimals: 9,
     // isSpl2022: false,
     logoURI: '/logos/solana.svg',

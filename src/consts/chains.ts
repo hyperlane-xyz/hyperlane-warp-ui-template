@@ -1,6 +1,6 @@
-import { ChainMap, ChainMetadata, ExplorerFamily, chainMetadata } from '@hyperlane-xyz/sdk';
+import { ChainMap, ChainMetadata, ExplorerFamily } from '@hyperlane-xyz/sdk';
+import { chainMetadata, etherToken, solToken } from '@hyperlane-xyz/sdk/dist/consts/chainMetadata';
 import { ProtocolType } from '@hyperlane-xyz/utils';
-
 // A map of chain names to ChainMetadata
 export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
   // ----------- Add your chains here -----------------
@@ -40,40 +40,56 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
     mailbox: 'Ge9atjAc3Ltu91VTbNpJDCjZ9CFxFyck4h3YBcTF9XPq',
   },
   solanatestnet: {
-    ...chainMetadata.solanatestnet,
-    mailbox: 'TODO',
-  },
-  solanadevnet: {
-    ...chainMetadata.solanadevnet,
-    mailbox: '4v25Dz9RccqUrTzmfHzJMsjd1iVoNrWzeJ4o6GYuJrVn',
-  },
-  eclipsedevnet: {
-    protocol: ProtocolType.Sealevel,
-    chainId: 3131313,
-    domainId: 3131313,
-    name: 'eclipsedevnet',
-    displayName: 'Eclipse Devnet',
-    nativeToken: {
-      "name": "Eclipse",
-      "symbol": "ECLIPSE",
-      "decimals": 9
-    },
-    rpcUrls: [{ http: 'https://staging-rpc.dev2.eclipsenetwork.xyz' }],
     blockExplorers: [
-      // {
-      //   name: 'Solana Explorer',
-      //   url: 'https://explorer.solana.com',
-      //   apiUrl: 'https://explorer.solana.com',
-      //   family: ExplorerFamily.Other,
-      // },
+      {
+        apiUrl: 'https://explorer.solana.com',
+        family: ExplorerFamily.Other,
+        name: 'Solana Explorer',
+        url: 'https://explorer.solana.com',
+      },
     ],
     blocks: {
       confirmations: 1,
-      reorgPeriod: 0,
       estimateBlockTime: 0.4,
+      reorgPeriod: 0,
     },
+    chainId: 1399811150,
+    displayName: 'Solana Testnet',
+    displayNameShort: 'Sol Testnet',
+    domainId: 1399811150,
     isTestnet: true,
-    mailbox: 'AATtwuHptB6ruozdwc3XUFwGCuPfZL6jwPid955RoL6N',
+    name: 'solanatestnet',
+    nativeToken: solToken,
+    protocol: ProtocolType.Sealevel,
+    rpcUrls: [{ http: 'https://api.testnet.solana.com' }],
+    mailbox: '75HBBLae3ddeneJVrZeyrDfv6vb7SMC3aCpBucSXS5aR'
+  },
+  eclipsetestnet: {
+    blockExplorers: [
+      {
+        apiUrl: 'https://testnet.dev2.eclipsenetwork.xyz',
+        family: ExplorerFamily.Other,
+        name: 'Eclipse Testnet Explorer',
+        url: 'https://explorer.dev.eclipsenetwork.xyz/?cluster=testnet',
+      },
+    ],
+    blocks: {
+      confirmations: 1,
+      estimateBlockTime: 0.4,
+      reorgPeriod: 0,
+    },
+    chainId: 239092742,
+    displayName: 'Eclipse Testnet',
+    domainId: 239092742,
+    isTestnet: true,
+    name: 'eclipsetestnet',
+    nativeToken: {
+      ...etherToken,
+      decimals: 9,
+    },
+    protocol: ProtocolType.Sealevel,
+    rpcUrls: [{ http: 'https://testnet.dev2.eclipsenetwork.xyz' }],
+    mailbox: '75HBBLae3ddeneJVrZeyrDfv6vb7SMC3aCpBucSXS5aR'
   },
   proteustestnet: {
     chainId: 88002,

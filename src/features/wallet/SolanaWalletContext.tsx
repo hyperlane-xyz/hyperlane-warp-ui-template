@@ -16,7 +16,7 @@ import { logger } from '../../utils/logger';
 
 export function SolanaWalletContext({ children }: PropsWithChildren<unknown>) {
   // TODO support multiple networks
-  const network = WalletAdapterNetwork.Devnet;
+  const network = WalletAdapterNetwork.Testnet;
   const endpoint = useMemo(() => clusterApiUrl(network), [network]);
   const wallets = useMemo(
     () => [

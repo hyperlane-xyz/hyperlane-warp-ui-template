@@ -15,11 +15,11 @@ import { logger } from '../../utils/logger';
 import { getProtocolType } from '../caip/chains';
 import { isNonFungibleToken, parseCaip19Id } from '../caip/tokens';
 import { getChainMetadata } from '../multiProvider';
+import { Route, RoutesMap } from '../routes/types';
+import { getTokenRoute, isIbcOnlyRoute } from '../routes/utils';
 import { AppState } from '../store';
 import { AdapterFactory } from '../tokens/AdapterFactory';
 import { getToken } from '../tokens/metadata';
-import { Route, RoutesMap } from '../tokens/routes/types';
-import { getTokenRoute, isIbcOnlyRoute } from '../tokens/routes/utils';
 import { getAccountAddressForChain } from '../wallet/hooks/multiProtocol';
 import { AccountInfo } from '../wallet/hooks/types';
 

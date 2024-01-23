@@ -7,11 +7,11 @@ import { logger } from '../../utils/logger';
 import { getProtocolType } from '../caip/chains';
 import { getTokenAddress, isNativeToken, isNonFungibleToken } from '../caip/tokens';
 import { getEvmProvider } from '../multiProvider';
+import { Route } from '../routes/types';
+import { isRouteFromCollateral, isWarpRoute } from '../routes/utils';
 import { useAccountAddressForChain } from '../wallet/hooks/multiProtocol';
 
 import { getErc20Contract, getErc721Contract } from './contracts/evmContracts';
-import { Route } from './routes/types';
-import { isRouteFromCollateral, isWarpRoute } from './routes/utils';
 
 export function useIsApproveRequired(
   tokenCaip19Id: TokenCaip19Id,

@@ -1860,7 +1860,7 @@ __metadata:
 
 "@cosmjs/cosmwasm-stargate@patch:@cosmjs/cosmwasm-stargate@npm%3A0.31.3#~/.yarn/patches/@cosmjs-cosmwasm-stargate-npm-0.31.3-4b3bafffd4.patch":
   version: 0.31.3
-  resolution: "@cosmjs/cosmwasm-stargate@patch:@cosmjs/cosmwasm-stargate@npm%3A0.31.3#~/.yarn/patches/@cosmjs-cosmwasm-stargate-npm-0.31.3-4b3bafffd4.patch::version=0.31.3&hash=1e2f10"
+  resolution: "@cosmjs/cosmwasm-stargate@patch:@cosmjs/cosmwasm-stargate@npm%3A0.31.3#~/.yarn/patches/@cosmjs-cosmwasm-stargate-npm-0.31.3-4b3bafffd4.patch::version=0.31.3&hash=1f2ffa"
   dependencies:
     "@cosmjs/amino": "npm:^0.31.3"
     "@cosmjs/crypto": "npm:^0.31.3"
@@ -1873,7 +1873,7 @@ __metadata:
     cosmjs-types: "npm:^0.8.0"
     long: "npm:^4.0.0"
     pako: "npm:^2.0.2"
-  checksum: 9d5393554d40b5658a19768539660ddb96549de339274caee1cfad1784e5fa1f78cdb55ce161d755121e60493f172c8aa275ba448d865453b4771e04f8e8e079
+  checksum: e5797e52ba6104c51280edd1587948b3c089b5746f82816c7d778f1d728e2507b6d0242cd87e5839c5af2e1b5e04fb1b7187caf28bbc1fbe872cbbbef68cc0ad
   languageName: node
   linkType: hard
 

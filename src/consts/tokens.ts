@@ -33,7 +33,7 @@ export const tokenList: WarpTokenConfig = [
     chainId: 'injective-888',
     name: 'Injective Coin',
     symbol: 'INJ',
-    decimals: 6,
+    decimals: 18,
     hypNativeAddress: 'inj1wn32e0e07yytd4m03n8mynnp6qzgg75qmhsq88',
     logoURI: '/logos/injective.svg',
   },

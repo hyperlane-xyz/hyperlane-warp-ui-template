@@ -64,13 +64,13 @@ index 8f6305b0263886c5c31fab661c9235723ba1e6e9..a3c7f20135babd6dd7774e4f2ac7e79c
 +                    if (tag !== 24) {
 +                        break;
 +                    }
-+                    message.accountNumber = longToString(reader.uint64());
++                    message.accountNumber = reader.uint64().toString();
 +                    continue;
 +                case 4:
 +                    if (tag !== 32) {
 +                        break;
 +                    }
-+                    message.sequence = longToString(reader.uint64());
++                    message.sequence = reader.uint64().toString();
 +                    continue;
 +            }
 +            if ((tag & 7) === 4 || tag === 0) {
@@ -144,3 +144,37 @@ index 8f6305b0263886c5c31fab661c9235723ba1e6e9..a3c7f20135babd6dd7774e4f2ac7e79c
              return account ? (0, stargate_1.accountFromAny)(account) : null;
          }
          catch (error) {
+diff --git a/build/signingcosmwasmclient.js b/build/signingcosmwasmclient.js
+index 646bbe7e74343ec2584666ead1ae43fd4f0b3852..b9f86948eae6479d85b58e15205f570dda004afc 100644
+--- a/build/signingcosmwasmclient.js
++++ b/build/signingcosmwasmclient.js
+@@ -86,6 +86,9 @@ class SigningCosmWasmClient extends cosmwasmclient_1.CosmWasmClient {
+             throw new Error("Failed to retrieve account from signer");
+         }
+         const pubkey = (0, amino_1.encodeSecp256k1Pubkey)(accountFromSigner.pubkey);
++        if (signerAddress.startsWith('inj')) {
++            pubkey['typeUrl'] = '/injective.crypto.v1beta1.ethsecp256k1.PubKey';
++        }
+         const { sequence } = await this.getSequence(signerAddress);
+         const { gasInfo } = await this.forceGetQueryClient().tx.simulate(anyMsgs, memo, pubkey, sequence);
+         (0, utils_1.assertDefined)(gasInfo);
+@@ -110,7 +113,8 @@ class SigningCosmWasmClient extends cosmwasmclient_1.CosmWasmClient {
+             throw new Error(createDeliverTxResponseErrorMessage(result));
+         }
+         const parsedLogs = stargate_1.logs.parseRawLog(result.rawLog);
+-        const codeIdAttr = stargate_1.logs.findAttribute(parsedLogs, "store_code", "code_id");
++        const escapedCodeIdAttr = stargate_1.logs.findAttribute(parsedLogs, "cosmwasm.wasm.v1.EventCodeStored", "code_id");
++        const codeIdAttr = { value: escapedCodeIdAttr.value.replace(/\"/g, "") };
+         return {
+             checksum: (0, encoding_1.toHex)((0, crypto_1.sha256)(wasmCode)),
+             originalSize: wasmCode.length,
+@@ -393,6 +397,9 @@ class SigningCosmWasmClient extends cosmwasmclient_1.CosmWasmClient {
+             throw new Error("Failed to retrieve account from signer");
+         }
+         const pubkey = (0, proto_signing_1.encodePubkey)((0, amino_1.encodeSecp256k1Pubkey)(accountFromSigner.pubkey));
++        if (signerAddress.startsWith('inj')) {
++            pubkey['typeUrl'] = '/injective.crypto.v1beta1.ethsecp256k1.PubKey';
++        }
+         const signMode = signing_1.SignMode.SIGN_MODE_LEGACY_AMINO_JSON;
+         const msgs = messages.map((msg) => this.aminoTypes.toAmino(msg));
+         const signDoc = (0, amino_1.makeSignDoc)(msgs, fee, chainId, memo, accountNumber, sequence);

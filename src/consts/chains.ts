@@ -43,15 +43,16 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
     displayNameShort: 'Inj. Testnet',
     name: 'injectivetestnet',
     nativeToken: {
-      decimals: 6,
+      decimals: 18,
       name: 'Injective',
       symbol: 'INJ',
     },
     bech32Prefix: 'inj',
     slip44: 118,
     protocol: ProtocolType.Cosmos,
-    rpcUrls: [{ http: 'https://k8s.testnet.tm.injective.network' }],
+    rpcUrls: [{ http: 'https://testnet.tm.injective.network' }],
     restUrls: [{ http: 'https://testnet.sentry.lcd.injective.network' }],
     isTestnet: true,
+    logoURI: '/logos/injective.svg',
   },
 };

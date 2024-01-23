@@ -8,7 +8,7 @@ const withdrawalWhitelist = process?.env?.NEXT_PUBLIC_BLOCK_WITHDRAWAL_WHITELIST
 const transferBlacklist = process?.env?.NEXT_PUBLIC_TRANSFER_BLACKLIST || '';
 
 interface Config {
-  debug: boolean; // Enables some debug features in the app
+  isDevMode: boolean; // Enables some debug features in the app
   version: string; // Matches version number in package.json
   explorerApiKeys: Record<string, string>; // Optional map of API keys for block explorer
   showTipBox: boolean; // Show/Hide the blue tip box above the transfer form
@@ -21,7 +21,7 @@ interface Config {
 }
 
 export const config: Config = Object.freeze({
-  debug: isDevMode,
+  isDevMode,
   version,
   explorerApiKeys,
   showTipBox: true,

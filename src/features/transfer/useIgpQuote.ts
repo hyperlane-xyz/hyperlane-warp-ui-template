@@ -9,16 +9,16 @@ import { COSM_IGP_QUOTE, SOL_IGP_QUOTE } from '../../consts/values';
 import { getChainReference, getProtocolType } from '../caip/chains';
 import { AssetNamespace, getCaip19Id, getNativeTokenAddress } from '../caip/tokens';
 import { getChainMetadata, getMultiProvider } from '../multiProvider';
-import { useStore } from '../store';
-import { AdapterFactory } from '../tokens/AdapterFactory';
-import { findTokensByAddress, getToken } from '../tokens/metadata';
-import { Route } from '../tokens/routes/types';
+import { Route } from '../routes/types';
 import {
   isIbcOnlyRoute,
   isIbcToWarpRoute,
   isRouteFromCollateral,
   isRouteFromNative,
-} from '../tokens/routes/utils';
+} from '../routes/utils';
+import { useStore } from '../store';
+import { AdapterFactory } from '../tokens/AdapterFactory';
+import { findTokensByAddress, getToken } from '../tokens/metadata';
 
 import { IgpQuote, IgpTokenType } from './types';
 

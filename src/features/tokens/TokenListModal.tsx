@@ -8,10 +8,10 @@ import { config } from '../../consts/config';
 import InfoIcon from '../../images/icons/info-circle.svg';
 import { getAssetNamespace, getTokenAddress, isNativeToken } from '../caip/tokens';
 import { getChainDisplayName } from '../chains/utils';
+import { RoutesMap } from '../routes/types';
+import { hasTokenRoute } from '../routes/utils';
 
 import { getTokens } from './metadata';
-import { RoutesMap } from './routes/types';
-import { hasTokenRoute } from './routes/utils';
 import { TokenMetadata } from './types';
 
 export function TokenListModal({

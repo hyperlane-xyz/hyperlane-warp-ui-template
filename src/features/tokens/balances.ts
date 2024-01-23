@@ -8,14 +8,14 @@ import { logger } from '../../utils/logger';
 import { getProtocolType } from '../caip/chains';
 import { parseCaip19Id, tryGetChainIdFromToken } from '../caip/tokens';
 import { getEvmProvider } from '../multiProvider';
+import { RoutesMap } from '../routes/types';
+import { getTokenRoute, isIbcOnlyRoute, isIbcRoute, isRouteFromNative } from '../routes/utils';
 import { useStore } from '../store';
 import { TransferFormValues } from '../transfer/types';
 import { useAccountAddressForChain } from '../wallet/hooks/multiProtocol';
 
 import { AdapterFactory } from './AdapterFactory';
 import { getHypErc721Contract } from './contracts/evmContracts';
-import { RoutesMap } from './routes/types';
-import { getTokenRoute, isIbcOnlyRoute, isIbcRoute, isRouteFromNative } from './routes/utils';
 
 export function useOriginBalance(
   { originCaip2Id, destinationCaip2Id, tokenCaip19Id }: TransferFormValues,

@@ -22,11 +22,11 @@ import { logger } from '../../utils/logger';
 import { parseCaip2Id } from '../caip/chains';
 import { isNonFungibleToken } from '../caip/tokens';
 import { getChainMetadata, getMultiProvider } from '../multiProvider';
+import { Route, RoutesMap } from '../routes/types';
+import { getTokenRoute, isIbcOnlyRoute, isIbcRoute, isWarpRoute } from '../routes/utils';
 import { AppState, useStore } from '../store';
 import { AdapterFactory } from '../tokens/AdapterFactory';
 import { isApproveRequired } from '../tokens/approval';
-import { Route, RoutesMap } from '../tokens/routes/types';
-import { getTokenRoute, isIbcOnlyRoute, isIbcRoute, isWarpRoute } from '../tokens/routes/utils';
 import {
   getAccountAddressForChain,
   useAccounts,

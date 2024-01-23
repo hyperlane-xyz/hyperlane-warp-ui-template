@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "allowJs": true,
+    "allowImportingTsExtensions":true,
     "declaration": true,
     "declarationMap": true,
     "esModuleInterop": true,
@@ -27,7 +28,9 @@
   },
   "exclude": ["node_modules", "dist"],
   "include": ["next-env.d.ts", "./src/"],
+  "files": ["./src/global.d.ts"],
   "ts-node": {
+    "files": true,
     "compilerOptions": {
       "module": "commonjs"
     }

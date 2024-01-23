@@ -1,6 +1,4 @@
-import { deepCopy } from '@hyperlane-xyz/utils';
-
-import { isNativeToken } from '../../caip/tokens';
+import { isNativeToken } from '../caip/tokens';
 
 import { IbcRoute, IbcToWarpRoute, Route, RouteType, RoutesMap, WarpRoute } from './types';
 
@@ -82,14 +80,4 @@ export function isIbcOnlyRoute(route: Route): route is IbcRoute {
 
 export function isIbcToWarpRoute(route: Route): route is IbcToWarpRoute {
   return route.type === RouteType.IbcNativeToHypSynthetic;
-}
-
-export function mergeRoutes(routes: RoutesMap, newRoutes: Route[]) {
-  const mergedRoutes = deepCopy(routes);
-  for (const route of newRoutes) {
-    mergedRoutes[route.originCaip2Id] ||= {};
-    mergedRoutes[route.originCaip2Id][route.destCaip2Id] ||= [];
-    mergedRoutes[route.originCaip2Id][route.destCaip2Id].push(route);
-  }
-  return mergedRoutes;
 }

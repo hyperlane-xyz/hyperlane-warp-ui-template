@@ -15,8 +15,7 @@ coverage.json
 /out/
 
 # production
-/src/types/
-/src/deploy/output
+/src/context/*.json
 /artifacts
 /build
 /dist

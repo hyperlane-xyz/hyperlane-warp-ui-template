@@ -2,13 +2,13 @@ import { useFormikContext } from 'formik';
 
 import { TextField } from '../../components/input/TextField';
 import { AssetNamespace, getCaip19Id } from '../caip/tokens';
+import { RouteType, RoutesMap } from '../routes/types';
+import { getTokenRoute, isWarpRoute } from '../routes/utils';
 import { TransferFormValues } from '../transfer/types';
 import { useAccountAddressForChain } from '../wallet/hooks/multiProtocol';
 
 import { SelectTokenIdField } from './SelectTokenIdField';
 import { useContractSupportsTokenByOwner, useIsSenderNftOwner } from './balances';
-import { RouteType, RoutesMap } from './routes/types';
-import { getTokenRoute, isWarpRoute } from './routes/utils';
 
 export function SelectOrInputTokenIds({
   disabled,

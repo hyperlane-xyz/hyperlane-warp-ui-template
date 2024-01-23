@@ -1,4 +1,4 @@
-import type { Route } from '../tokens/routes/types';
+import type { Route } from '../routes/types';
 
 export interface TransferFormValues {
   originCaip2Id: ChainCaip2Id;

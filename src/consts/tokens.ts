@@ -35,6 +35,7 @@ export const tokenList: WarpTokenConfig = [
     symbol: 'INJ',
     decimals: 18,
     hypNativeAddress: 'inj1wn32e0e07yytd4m03n8mynnp6qzgg75qmhsq88',
+    igpTokenAddressOrDenom: 'inj',
     logoURI: '/logos/injective.svg',
   },
 ];

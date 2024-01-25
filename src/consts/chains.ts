@@ -1,4 +1,4 @@
-import { ChainMap, ChainMetadata } from '@hyperlane-xyz/sdk';
+import { ChainMap, ChainMetadata, ExplorerFamily } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 
 // A map of chain names to ChainMetadata
@@ -30,29 +30,58 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
   //   logoURI: '/logo.svg',
   // },
 
-  injectivetestnet: {
+  inevm: {
+    blockExplorers: [
+      {
+        apiUrl: 'https://inevm.calderaexplorer.xyz/api',
+        family: ExplorerFamily.Blockscout,
+        name: 'Caldera inEVM Explorer',
+        url: 'https://inevm.calderaexplorer.xyz',
+      },
+    ],
+    blocks: {
+      confirmations: 1,
+      estimateBlockTime: 3,
+      reorgPeriod: 0,
+    },
+    chainId: 2525,
+    domainId: 2525,
+    displayName: 'Injective EVM',
+    displayNameShort: 'inEVM',
+    name: 'inevm',
+    nativeToken: {
+      decimals: 18,
+      name: 'Injective',
+      symbol: 'INJ',
+    },
+    protocol: ProtocolType.Ethereum,
+    rpcUrls: [{ http: 'https://inevm.calderachain.xyz/http' }],
+    logoURI: '/logos/injective.svg',
+  },
+
+  injective: {
     blockExplorers: [],
     blocks: {
       confirmations: 1,
       estimateBlockTime: 3,
       reorgPeriod: 1,
     },
-    chainId: 'injective-888',
+    chainId: 'injective-1',
     domainId: 6909546,
-    displayName: 'Injective Testnet',
-    displayNameShort: 'Inj. Testnet',
-    name: 'injectivetestnet',
+    displayName: 'Injective',
+    displayNameShort: 'Injective',
+    name: 'injective',
     nativeToken: {
       decimals: 18,
       name: 'Injective',
       symbol: 'INJ',
     },
-    bech32Prefix: 'inj',
-    slip44: 118,
     protocol: ProtocolType.Cosmos,
-    rpcUrls: [{ http: 'https://testnet.tm.injective.network' }],
-    restUrls: [{ http: 'https://testnet.sentry.lcd.injective.network' }],
-    isTestnet: true,
+    slip44: 118,
+    bech32Prefix: 'inj',
+    grpcUrls: [{ http: 'grpc-injective-ia.cosmosia.notional.ventures:443' }],
+    rpcUrls: [{ http: 'https://rpc-injective-ia.cosmosia.notional.ventures' }],
+    restUrls: [{ http: 'https://injective-lcd.quickapi.com:443' }],
     logoURI: '/logos/injective.svg',
   },
 };

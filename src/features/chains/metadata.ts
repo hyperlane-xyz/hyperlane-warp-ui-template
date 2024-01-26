@@ -1,59 +1,21 @@
 import type { AssetList, Chain as CosmosChain } from '@chain-registry/types';
 import type { Chain as WagmiChain } from '@wagmi/core';
-import { z } from 'zod';
 
-import {
-  ChainMap,
-  ChainMetadata,
-  ChainMetadataSchema,
-  ChainName,
-  chainMetadata,
-  chainMetadataToWagmiChain,
-} from '@hyperlane-xyz/sdk';
+import { ChainName, chainMetadataToWagmiChain } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 
-import { chains as ChainsTS } from '../../consts/chains';
-import ChainsJson from '../../consts/chains.json';
-import ChainsYaml from '../../consts/chains.yaml';
-import { logger } from '../../utils/logger';
-
-import { cosmosDefaultChain } from './cosmosDefault';
-
-let chainConfigs: ChainMap<ChainMetadata & { mailbox?: Address }>;
-
-export const ChainConfigSchema = z.record(
-  ChainMetadataSchema.and(z.object({ mailbox: z.string().optional() })),
-);
-
-export function getChainConfigs() {
-  if (!chainConfigs) {
-    // Chains must include a cosmos chain or CosmosKit throws errors
-    const result = ChainConfigSchema.safeParse({
-      cosmoshub: cosmosDefaultChain,
-      ...ChainsJson,
-      ...ChainsYaml,
-      ...ChainsTS,
-    });
-    if (!result.success) {
-      logger.error('Invalid chain config', result.error);
-      throw new Error(`Invalid chain config: ${result.error.toString()}`);
-    }
-    const customChainConfigs = result.data as ChainMap<ChainMetadata & { mailbox?: Address }>;
-    chainConfigs = { ...chainMetadata, ...customChainConfigs };
-  }
-  return chainConfigs;
-}
+import { getWarpContext } from '../../context/context';
 
 // Metadata formatted for use in Wagmi config
 export function getWagmiChainConfig(): WagmiChain[] {
-  const evmChains = Object.values(getChainConfigs()).filter(
+  const evmChains = Object.values(getWarpContext().chains).filter(
     (c) => !c.protocol || c.protocol === ProtocolType.Ethereum,
   );
   return evmChains.map(chainMetadataToWagmiChain);
 }
 
 export function getCosmosKitConfig(): { chains: CosmosChain[]; assets: AssetList[] } {
-  const cosmosChains = Object.values(getChainConfigs()).filter(
+  const cosmosChains = Object.values(getWarpContext().chains).filter(
     (c) => c.protocol === ProtocolType.Cosmos,
   );
   const chains = cosmosChains.map((c) => ({
@@ -143,7 +105,7 @@ export function getCosmosKitConfig(): { chains: CosmosChain[]; assets: AssetList
 }
 
 export function getCosmosChainNames(): ChainName[] {
-  return Object.values(getChainConfigs())
+  return Object.values(getWarpContext().chains)
     .filter((c) => c.protocol === ProtocolType.Cosmos)
     .map((c) => c.name);
 }

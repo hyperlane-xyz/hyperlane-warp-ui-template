@@ -2,30 +2,25 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
 
 import { IHypTokenAdapter } from '@hyperlane-xyz/sdk';
-import { ProtocolType, fromWei } from '@hyperlane-xyz/utils';
+import { ProtocolType, fromWei, isAddress } from '@hyperlane-xyz/utils';
 
 import { useToastError } from '../../components/toast/useToastError';
-import { COSM_IGP_QUOTE, SOL_IGP_QUOTE } from '../../consts/values';
-import { getChainReference, getProtocolType } from '../caip/chains';
+import { DEFAULT_IGP_QUOTES } from '../../consts/igpQuotes';
+import { getChainReference, parseCaip2Id } from '../caip/chains';
 import { AssetNamespace, getCaip19Id, getNativeTokenAddress } from '../caip/tokens';
 import { getChainMetadata, getMultiProvider } from '../multiProvider';
-import { useStore } from '../store';
-import { AdapterFactory } from '../tokens/AdapterFactory';
-import { findTokensByAddress, getToken } from '../tokens/metadata';
-import { Route } from '../tokens/routes/types';
+import { Route } from '../routes/types';
 import {
   isIbcOnlyRoute,
   isIbcToWarpRoute,
   isRouteFromCollateral,
   isRouteFromNative,
-} from '../tokens/routes/utils';
+} from '../routes/utils';
+import { useStore } from '../store';
+import { AdapterFactory } from '../tokens/AdapterFactory';
+import { findTokensByAddress, getToken } from '../tokens/metadata';
 
 import { IgpQuote, IgpTokenType } from './types';
-
-const DEFAULT_IGP_QUOTES = {
-  [ProtocolType.Sealevel]: SOL_IGP_QUOTE,
-  [ProtocolType.Cosmos]: COSM_IGP_QUOTE,
-};
 
 export function useIgpQuote(route?: Route) {
   const setIgpQuote = useStore((state) => state.setIgpQuote);
@@ -49,14 +44,16 @@ export function useIgpQuote(route?: Route) {
 
 export async function fetchIgpQuote(route: Route, adapter?: IHypTokenAdapter): Promise<IgpQuote> {
   const { baseTokenCaip19Id, originCaip2Id, destCaip2Id: destinationCaip2Id } = route;
-  const originProtocol = getProtocolType(originCaip2Id);
+  const { protocol: originProtocol, reference: originChainId } = parseCaip2Id(originCaip2Id);
   const baseToken = getToken(baseTokenCaip19Id);
   if (!baseToken) throw new Error(`No base token found for ${baseTokenCaip19Id}`);
 
   let weiAmount: string;
-  if (DEFAULT_IGP_QUOTES[originProtocol]) {
-    // If a default is set for the origin protocol, use that
-    weiAmount = DEFAULT_IGP_QUOTES[originProtocol];
+  const defaultQuotes = DEFAULT_IGP_QUOTES[originProtocol];
+  if (typeof defaultQuotes === 'string') {
+    weiAmount = defaultQuotes;
+  } else if (defaultQuotes?.[originChainId]) {
+    weiAmount = defaultQuotes[originChainId];
   } else {
     // Otherwise, compute IGP quote via the adapter
     adapter ||= AdapterFactory.HypTokenAdapterFromRouteOrigin(route);
@@ -73,9 +70,13 @@ export async function fetchIgpQuote(route: Route, adapter?: IHypTokenAdapter): P
   let tokenDecimals: number;
   // If the token has an explicit IGP token address set, use that
   // Custom igpTokenAddress configs are supported only from the base (i.e. collateral) token is supported atm
-  if (isRouteFromBase && baseToken.igpTokenAddress) {
+  if (
+    isRouteFromBase &&
+    baseToken.igpTokenAddressOrDenom &&
+    isAddress(baseToken.igpTokenAddressOrDenom)
+  ) {
     type = IgpTokenType.TokenSeparate;
-    const igpToken = findTokensByAddress(baseToken.igpTokenAddress)[0];
+    const igpToken = findTokensByAddress(baseToken.igpTokenAddressOrDenom)[0];
     tokenCaip19Id = igpToken.tokenCaip19Id;
     // Note this assumes the u prefix because only cosmos tokens use this case
     tokenSymbol = igpToken.symbol;

@@ -5,12 +5,12 @@ import { useEffect, useState } from 'react';
 import { TokenIcon } from '../../components/icons/TokenIcon';
 import ChevronIcon from '../../images/icons/chevron-down.svg';
 import { isNonFungibleToken } from '../caip/tokens';
+import { RoutesMap } from '../routes/types';
+import { getTokenRoutes } from '../routes/utils';
 import { TransferFormValues } from '../transfer/types';
 
 import { TokenListModal } from './TokenListModal';
 import { getToken } from './metadata';
-import { RoutesMap } from './routes/types';
-import { getTokenRoutes } from './routes/utils';
 import { TokenMetadata } from './types';
 
 type Props = {

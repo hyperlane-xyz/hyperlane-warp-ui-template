@@ -1,8 +1,8 @@
 import { TokenType } from '@hyperlane-xyz/sdk';
 
-import { SOL_ZERO_ADDRESS } from '../../../consts/values';
+import { SOL_ZERO_ADDRESS } from '../../consts/values';
 
-import { computeTokenRoutes } from './fetch';
+import { computeTokenRoutes } from './routes';
 
 describe('computeTokenRoutes', () => {
   it('Handles empty list', () => {

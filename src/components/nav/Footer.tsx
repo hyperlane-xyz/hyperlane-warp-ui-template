@@ -30,7 +30,7 @@ export function Footer() {
         <Image className="z-0 w-full" src={FooterBg} alt="" />
       </div> */}
       <div className="relative z-10 px-8 pb-3 pt-2 sm:pt-0">
-        <div className="flex flex-col sm:flex-row gap-8 sm:gap-10 items-end justify-between">
+        <div className="flex flex-col sm:flex-row gap-6 sm:gap-10 items-center sm:items-end justify-between">
           <div className="py-1 flex items-center justify-center space-x-2">
             {/* <Image src={AppLogo} alt="" width={30} height={30} /> */}
             <div className="font-medium">Built with Hyperlane and Caldera</div>

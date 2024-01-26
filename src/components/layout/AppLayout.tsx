@@ -1,6 +1,7 @@
 import Head from 'next/head';
 import { PropsWithChildren } from 'react';
 
+import { APP_NAME } from '../../consts/app';
 import { Footer } from '../nav/Footer';
 import { Header } from '../nav/Header';
 
@@ -10,7 +11,7 @@ export function AppLayout({ children }: PropsWithChildren) {
       <Head>
         {/* https://nextjs.org/docs/messages/no-document-viewport-meta */}
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Hyperlane Nexus Bridge</title>
+        <title>{APP_NAME}</title>
       </Head>
       <div
         id="app-content"

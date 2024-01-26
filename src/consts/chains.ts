@@ -54,10 +54,9 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
       symbol: 'TIA',
       decimals: 6,
     },
-    rpcUrls: [
-      { http: 'https://public-celestia-rpc.numia.xyz' },
-      { http: 'https://public-celestia-lcd.numia.xyz' },
-    ],
+    grpcUrls: [{ http: 'https://grpc.celestia.nodestake.top' }],
+    restUrls: [{ http: 'https://public-celestia-lcd.numia.xyz' }],
+    rpcUrls: [{ http: 'https://public-celestia-rpc.numia.xyz' }],
     blockExplorers: [
       {
         name: 'MintScan',

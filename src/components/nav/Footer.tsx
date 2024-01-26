@@ -1,6 +1,8 @@
+import Image from 'next/image';
 import Link from 'next/link';
 
 import { links } from '../../consts/links';
+import HyperlaneLogo from '../../images/logos/hyperlane-symbol-black-pink.svg';
 import { Discord } from '../icons/Discord';
 import { Github } from '../icons/Github';
 import { Twitter } from '../icons/Twitter';
@@ -33,7 +35,18 @@ export function Footer() {
         <div className="flex flex-col sm:flex-row gap-6 sm:gap-10 items-center sm:items-end justify-between">
           <div className="py-1 flex items-center justify-center space-x-2">
             {/* <Image src={AppLogo} alt="" width={30} height={30} /> */}
-            <div className="font-medium">Built with Hyperlane and Caldera</div>
+            <div className="flex items-center font-medium space-x-1">
+              <span>Built with</span>
+              <Link href={links.about} className="flex items-center space-x-1" target="_blank">
+                <Image src={HyperlaneLogo} alt="" width={17} height={17} />
+                <span>Hyperlane</span>
+              </Link>
+              <span>and</span>
+              <Link href={links.caldera} className="flex items-center space-x-1" target="_blank">
+                <Image src="/logos/caldera.png" alt="" width={24} height={18} />
+                <span>Caldera</span>
+              </Link>
+            </div>
           </div>
           <nav className="flex text-md font-medium space-x-10">
             <ul className={`${styles.linkCol}`}>

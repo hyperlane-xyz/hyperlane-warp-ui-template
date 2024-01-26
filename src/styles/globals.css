@@ -40,7 +40,7 @@ Backgrounds
 */
 
 #app-content {
- background: url("/bg-home.jpg") no-repeat top;
+  background: url('/bg-home.jpg') no-repeat top;
 }
 
 /*

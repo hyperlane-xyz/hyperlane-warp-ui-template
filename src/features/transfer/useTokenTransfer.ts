@@ -17,7 +17,6 @@ import {
 import { ProtocolType, toWei } from '@hyperlane-xyz/utils';
 
 import { toastTxSuccess } from '../../components/toast/TxSuccessToast';
-import { COSM_IGP_QUOTE } from '../../consts/values';
 import { logger } from '../../utils/logger';
 import { parseCaip2Id } from '../caip/chains';
 import { isNonFungibleToken } from '../caip/tokens';
@@ -179,7 +178,7 @@ async function executeTransfer({
     logger.debug('Transfer transaction confirmed, hash:', transferTxHash);
     toastTxSuccess('Remote transfer started!', transferTxHash, originCaip2Id);
   } catch (error) {
-    logger.error(`Error at stage ${status} `, error);
+    logger.error(`Error at stage ${status}`, error);
     updateTransferStatus(transferIndex, TransferStatus.Failed);
     if (JSON.stringify(error).includes('ChainMismatchError')) {
       // Wagmi switchNetwork call helps prevent this but isn't foolproof
@@ -399,6 +398,7 @@ async function executeIbcTransfer({
   };
 
   let adapter: IHypTokenAdapter;
+  let txValue: string | undefined = undefined;
   if (isIbcOnlyRoute(tokenRoute)) {
     adapter = new CosmIbcTokenAdapter(chainName, multiProvider, {}, adapterProperties);
   } else {
@@ -416,6 +416,8 @@ async function executeIbcTransfer({
         intermediateChainName,
       },
     );
+    const igpQuote = await fetchIgpQuote(tokenRoute, adapter);
+    txValue = igpQuote.weiAmount;
   }
 
   const transferTxRequest = (await adapter.populateTransferRemoteTx({
@@ -423,9 +425,7 @@ async function executeIbcTransfer({
     recipient: recipientAddress,
     fromAccountOwner: activeAccountAddress,
     destination: destinationDomainId,
-    // TODO have this use fetchIgpQuote?
-    // Will be required if/when cosmos uses dynamic IGP fees
-    txValue: COSM_IGP_QUOTE,
+    txValue,
   })) as MsgTransferEncodeObject;
 
   updateStatus(TransferStatus.SigningTransfer);

@@ -10,7 +10,7 @@ export function getChainDisplayName(id: ChainCaip2Id, shortName = false) {
   const metadata = getMultiProvider().tryGetChainMetadata(reference || 0);
   if (!metadata) return 'Unknown';
   const displayName = shortName ? metadata.displayNameShort : metadata.displayName;
-  return toTitleCase(displayName || metadata.displayName || metadata.name);
+  return displayName || metadata.displayName || toTitleCase(metadata.name);
 }
 
 export function isPermissionlessChain(id: ChainCaip2Id) {

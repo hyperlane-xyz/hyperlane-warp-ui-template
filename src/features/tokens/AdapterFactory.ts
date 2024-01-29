@@ -240,7 +240,7 @@ export class AdapterFactory {
           token: convertToProtocolAddress(baseTokenAddress, protocol, bech32Prefix),
           warpRouter: convertToProtocolAddress(routerAddress, protocol, bech32Prefix),
         },
-        tokenMetadata.igpTokenAddress || baseTokenAddress,
+        tokenMetadata.igpTokenAddressOrDenom || baseTokenAddress,
       );
     } else {
       throw new Error(`Unsupported protocol: ${protocol}`);

@@ -77,6 +77,6 @@ export function Footer() {
 }
 
 const styles = {
-  linkCol: 'flex flex-col gap-2',
+  linkCol: 'flex flex-col gap-1.5',
   linkItem: 'flex items-center capitalize text-decoration-none hover:underline underline-offset-2',
 };

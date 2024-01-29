@@ -68,6 +68,7 @@ export class WarpRoute {
   getDestinationHypAdapter(): IHypTokenAdapter 
 
   getOriginProtocol(): ProtocolType 
+  getDestinationProtocol(): ProtocolType
 }
 
 export class WarpRouteManager {
@@ -88,20 +89,24 @@ export class WarpCore {
     routes: IRouteManager,
   }) 
 
+  // Takes the serialized representation of a complete warp config and returns a WarpCore instance
   static FromConfig(config:string): WarpCore
+
+  async getOriginBalance(route: Route, accountAddress:Address): TokenAmount
+  async getDestinationBalance(route: Route, accountAddress:Address): TokenAmount
 
   async getTransferGasQuote(route: Route, tokenAmount: TokenAmount): Promise<TokenAmount>  
   
   async validateTransfer(route: Route, tokenAmount: TokenAmount, 
-    recipient:Address): Promise<FormErrors | null>
+    recipient:Address): Promise<Record<string,string> | null>
 
-  async getTransferRemoteTxs(route: Route, tokenAmount: TokenAmount, recipient:Address
-    ): Promise{approveTx, transferTx}>
+  async getTransferRemoteTxs(route: Route, tokenAmount: TokenAmount,
+    recipient:Address): Promise<{approveTx, transferTx}>
 
   async getMessageId(route: Route, txReceipt): Promise<string> 
-
   async getTransferStatus(route: Route, messageId: string): Promise<MessageStatus> 
 
+  // Checks to ensure the destination chain's collateral is sufficient to cover the transfer
   async isDestinationCollateralSufficient(
     route: Route,
     tokenAmount: TokenAmount,
@@ -124,18 +129,18 @@ NOTES BELOW, FEEL FREE TO IGNORE
 Improvements:
 ==============
 Improve modularity & testability
-Make IBC vs Hyp routes substitutable
 Handle IGP business logic in single place
+Reduce protocol-specific tx crafting special casing
+Make IBC vs Hyp routes substitutable
 Kill concept of 'base tokens'
 Kill cluster of utils functions for routes & tokens
 Kill CAIP IDs and related utils
-Reduce protocol-specific tx crafting special casing
 Improve NFT vs non-NFT substitutability
 
 Non-goals:
 ==========
 Improve wallet hooks + integrations
-Improve UX
+Improve Warp UI UX
 
 Ideas:
 ======
@@ -163,10 +168,4 @@ Break into smaller classes, use dependency injection
 Validation
   -> takes input and returns errors based on warp context
   -> would need balances + gas quote + igp quote
-  
-Questions:
-==========
-How to replace Adapter Factory methods?
-  -> prefer to avoid route-based fetching
-  -> instead ask for adapter for given Chain and Token
 */

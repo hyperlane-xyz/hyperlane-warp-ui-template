@@ -28,13 +28,9 @@ const footerLinks3 = [
 export function Footer() {
   return (
     <footer className="text-gray-800 opacity-90 relative">
-      {/* <div className="relative w-full">
-        <Image className="z-0 w-full" src={FooterBg} alt="" />
-      </div> */}
       <div className="relative z-10 px-8 pb-3 pt-2 sm:pt-0">
         <div className="flex flex-col sm:flex-row gap-6 sm:gap-10 items-center sm:items-end justify-between">
           <div className="py-1 flex items-center justify-center space-x-2">
-            {/* <Image src={AppLogo} alt="" width={30} height={30} /> */}
             <div className="flex items-center font-medium space-x-1">
               <span>Built with</span>
               <Link href={links.about} className="flex items-center space-x-1" target="_blank">

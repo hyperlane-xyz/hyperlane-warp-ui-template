@@ -92,7 +92,6 @@ interface BaseTokenMetadata extends MinimalTokenMetadata {
   tokenCaip19Id: TokenCaip19Id;
   routerAddress: Address; // Shared name for hypCollateralAddr or hypNativeAddr
   igpTokenAddressOrDenom?: Address;
-  gasDenom?: string;
   logoURI?: string;
 }
 

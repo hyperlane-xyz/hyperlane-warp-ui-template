@@ -8,6 +8,7 @@ export const DEFAULT_IGP_QUOTES: Partial<
 > = {
   [ProtocolType.Sealevel]: '10000',
   [ProtocolType.Cosmos]: {
+    celestia: '270000', // 0.27 TIA
     'neutron-1': '270000', // 0.27 TIA
     'injective-1': '30000000000000000', // 0.03 INJ
   },

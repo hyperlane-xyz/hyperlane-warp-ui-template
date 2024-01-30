@@ -87,6 +87,17 @@ export const tokenList: WarpTokenConfig = [
     logoURI: '/logos/injective.svg',
   },
 
+  // INJ on inEVM
+  {
+    type: 'native',
+    chainId: 2525,
+    name: 'Injective Coin',
+    symbol: 'INJ',
+    decimals: 18,
+    hypNativeAddress: '0x26f32245fCF5Ad53159E875d5Cae62aEcf19c2d4',
+    logoURI: '/logos/injective.svg',
+  },
+
   // // Ethereum Eth to Viction
   // {
   //   type: 'native',

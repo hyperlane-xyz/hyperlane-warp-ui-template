@@ -49,10 +49,14 @@ export async function fetchRemoteHypTokens(
 
   const hypTokens = await Promise.all(
     remoteRouters.map(async (router) => {
-      const destMetadata = context.multiProvider.getChainMetadata(router.domain);
-      const protocol = destMetadata.protocol || ProtocolType.Ethereum;
+      const remoteMetadata = context.multiProvider.getChainMetadata(router.domain);
+      const protocol = remoteMetadata.protocol || ProtocolType.Ethereum;
       const chain = getCaip2Id(protocol, context.multiProvider.getChainId(router.domain));
-      const formattedAddress = bytesToProtocolAddress(router.address, protocol);
+      const formattedAddress = bytesToProtocolAddress(
+        router.address,
+        protocol,
+        remoteMetadata.bech32Prefix,
+      );
       if (isNft) return { chain, router: formattedAddress, decimals: 0 };
 
       const routerDecimals = await getRemoteRouterDecimals(

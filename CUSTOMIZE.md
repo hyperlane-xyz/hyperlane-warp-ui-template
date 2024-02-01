@@ -43,7 +43,6 @@ The links used in the footer can be found here: `./src/consts/links.ts`
 ### Public assets / Favicons
 
 The images and manifest files under `./public` should also be updated.
-The current collection was generated with [RealFaviconGenerator](https://realfavicongenerator.net)
 
 ### Fonts
 

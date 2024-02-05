@@ -34,82 +34,56 @@ export enum TokenStandard {
 }
 
 export class Token {
-  constructor({ protocol, chainName, standard, addressOrDenom, collateralizedAddressOrDenom, symbol, decimals, name, logoUri }) {}
+  constructor({
+     protocol, chainName, standard, addressOrDenom, collateralizedAddressOrDenom,
+     symbol, decimals, name, logoUri, connectedTokens
+  }) {}
 
   getAdapter(multiProvider): ITokenAdapter 
   getHypAdapter(multiProvider): IHypTokenAdapter  // throws if not supported by standard
 
-  isNft(): boolean 
+  getConnectedTokens(): Token[]
+  setConnectedTokens(tokens:Token[]): Token[]
+  addConnectedToken(token:Token): Token
+  removeConnectedToken(token:Token): Token
 
-  amount(amountWei): TokenAmount
+  amount(amount): TokenAmount
+
+  isNft(): boolean 
+  equals(token): boolean
 }
 
 export class TokenAmount {
-  constructor({ amountWei, token })
-  getWei(): bigint 
-  getUnits(): number
-  plus(amountWei): TokenAmount 
-  minus(amountWei): TokenAmount 
-}
-
-export class TokenManager() {
-  constructor({ multiProvider, tokens })
-  getToken(chain: HyperlaneChainId, addressOrDenom): Token
-  getTokensByAddress(addressOrDenom): Token[] 
-}
-
-export class WarpRoute {
-  constructor({ originChainName, originToken, destinationChainName, destinationToken })
-
-  getOriginAdapter(): ITokenAdapter 
-  getDestinationAdapter(): ITokenAdapter 
-
-  getOriginHypAdapter(): IHypTokenAdapter 
-  getDestinationHypAdapter(): IHypTokenAdapter 
-
-  getOriginProtocol(): ProtocolType 
-  getDestinationProtocol(): ProtocolType
-}
-
-export class WarpRouteManager {
-  constructor({ multiProvider, routes }) 
-
-  getRoutesFrom(origin: HyperlaneChainId): WarpRoute[]
-  getRoutesTo(destination: HyperlaneChainId): WarpRoute[] 
-
-  getRoute(origin, destination, originToken, destinationToken): WarpRoute
-  hasRoute(origin, destination, originToken, destinationToken): boolean 
+  constructor({ amount, token })
+  getAmount(): bigint 
+  getDecimalFormattedAmount(): number
+  plus(amount): TokenAmount 
+  minus(amount): TokenAmount 
+  equals(amount): boolean
 }
 
 export class WarpCore {
   constructor({
     // Note, there's no ChainManager here because MultiProvider extends ChainMetadataManager and serves that function
     multiProvider: MultiProtocolProvider<{ mailbox?: Address }>,
-    tokens: ITokenManager,
-    routes: IRouteManager,
+    tokens: Token[],
   }) 
 
   // Takes the serialized representation of a complete warp config and returns a WarpCore instance
-  static FromConfig(config:string): WarpCore
+  static FromConfig(config:string, multiProvider): WarpCore
 
-  async getOriginBalance(route: Route, accountAddress:Address): TokenAmount
-  async getDestinationBalance(route: Route, accountAddress:Address): TokenAmount
-
-  async getTransferGasQuote(route: Route, tokenAmount: TokenAmount): Promise<TokenAmount>  
+  async getTransferGasQuote(originTokenAmount: TokenAmount, destination: HyperlaneChainId): 
+    Promise<{originGas:TokenAmount, interchainGas:TokenAmount}>  
   
-  async validateTransfer(route: Route, tokenAmount: TokenAmount, 
+  async validateTransfer(originTokenAmount: TokenAmount, destination: HyperlaneChainId, 
     recipient:Address): Promise<Record<string,string> | null>
 
-  async getTransferRemoteTxs(route: Route, tokenAmount: TokenAmount,
+  async getTransferRemoteTxs(originTokenAmount: TokenAmount, destination: HyperlaneChainId, 
     recipient:Address): Promise<{approveTx, transferTx}>
-
-  async getMessageId(route: Route, txReceipt): Promise<string> 
-  async getTransferStatus(route: Route, messageId: string): Promise<MessageStatus> 
 
   // Checks to ensure the destination chain's collateral is sufficient to cover the transfer
   async isDestinationCollateralSufficient(
-    route: Route,
-    tokenAmount: TokenAmount,
+    originTokenAmount: TokenAmount, destination: HyperlaneChainId
   ): Promise<boolean>
 }
 
@@ -144,7 +118,7 @@ Improve Warp UI UX
 
 Ideas:
 ======
-Smarter Token class (and a child WarpToken?)
+Smarter Token class (and a child Token?)
 TokenManager
 Smart Chain class (and a child WarpChain?)
   -> these help avoid CAIP ids
@@ -169,3 +143,32 @@ Validation
   -> takes input and returns errors based on warp context
   -> would need balances + gas quote + igp quote
 */
+
+// export class TokenManager() {
+//   constructor({ multiProvider, tokens })
+//   getToken(chain: HyperlaneChainId, addressOrDenom): Token
+//   getTokensByAddress(addressOrDenom): Token[] 
+// }
+
+// export class WarpRoute {
+//   constructor({ originChainName, originToken, destinationChainName, destinationToken })
+
+//   getOriginAdapter(): ITokenAdapter 
+//   getDestinationAdapter(): ITokenAdapter 
+
+//   getOriginHypAdapter(): IHypTokenAdapter 
+//   getDestinationHypAdapter(): IHypTokenAdapter 
+
+//   getOriginProtocol(): ProtocolType 
+//   getDestinationProtocol(): ProtocolType
+// }
+
+// export class WarpRouteManager {
+//   constructor({ multiProvider, routes }) 
+
+//   getRoutesFrom(origin: HyperlaneChainId): WarpRoute[]
+//   getRoutesTo(destination: HyperlaneChainId): WarpRoute[] 
+
+//   getRoute(origin, destination, originToken, destinationToken): WarpRoute
+//   hasRoute(origin, destination, originToken, destinationToken): boolean 
+// }

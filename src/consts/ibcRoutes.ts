@@ -16,6 +16,20 @@ export const ibcRoutes: Array<IbcRoute | IbcToWarpRoute> = [
     derivedIbcDenom: 'ibc/773B4D0A3CD667B2275D5A4A7A2F0909C0BA0F4059C0B9181E680DDF4965DCC7',
   },
   {
+    type: RouteType.IbcNativeToIbcNative,
+    baseTokenCaip19Id:
+      'cosmos:neutron-1/ibcDenom:ibc/773B4D0A3CD667B2275D5A4A7A2F0909C0BA0F4059C0B9181E680DDF4965DCC7',
+    originCaip2Id: 'cosmos:neutron-1',
+    originDecimals: 6,
+    destCaip2Id: 'cosmos:celestia',
+    destDecimals: 6,
+    // IBC Tia on Neutron
+    originIbcDenom: 'ibc/773B4D0A3CD667B2275D5A4A7A2F0909C0BA0F4059C0B9181E680DDF4965DCC7',
+    sourcePort: 'transfer',
+    sourceChannel: 'channel-35',
+    derivedIbcDenom: 'utia',
+  },
+  {
     type: RouteType.IbcNativeToHypSynthetic,
     baseTokenCaip19Id: 'cosmos:celestia/ibcDenom:cosmos100000000000000000000000000000000000000',
     originCaip2Id: 'cosmos:celestia',

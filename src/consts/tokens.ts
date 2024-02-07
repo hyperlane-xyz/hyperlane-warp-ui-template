@@ -98,6 +98,30 @@ export const tokenList: WarpTokenConfig = [
     logoURI: '/logos/injective.svg',
   },
 
+  // Injective USDC
+  {
+    type: 'collateral',
+    chainId: 1,
+    name: 'USDC',
+    symbol: 'USDC',
+    decimals: 6,
+    address: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+    hypCollateralAddress: '0xED56728fb977b0bBdacf65bCdD5e17Bb7e84504f',
+    logoURI: '/logos/usdc.svg',
+  },
+
+  // Injective USDT
+  {
+    type: 'collateral',
+    chainId: 1,
+    name: 'USDT',
+    symbol: 'USDT',
+    decimals: 6,
+    address: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+    hypCollateralAddress: '0xab852e67bf03E74C89aF67C4BA97dd1088D3dA19',
+    logoURI: '/logos/usdt.svg',
+  },
+
   // // Ethereum Eth to Viction
   // {
   //   type: 'native',

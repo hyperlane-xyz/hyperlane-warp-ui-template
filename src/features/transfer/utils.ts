@@ -8,9 +8,9 @@ import { ProtocolType, convertDecimals } from '@hyperlane-xyz/utils';
 import { logger } from '../../utils/logger';
 import { getProtocolType } from '../caip/chains';
 import { isNonFungibleToken } from '../caip/tokens';
+import { Route } from '../routes/types';
+import { isRouteToCollateral, isWarpRoute } from '../routes/utils';
 import { AdapterFactory } from '../tokens/AdapterFactory';
-import { Route } from '../tokens/routes/types';
-import { isRouteToCollateral, isWarpRoute } from '../tokens/routes/utils';
 
 // In certain cases, like when a synthetic token has >1 collateral tokens
 // it's possible that the collateral contract balance is insufficient to

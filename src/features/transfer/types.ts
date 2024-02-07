@@ -1,4 +1,4 @@
-import type { Route } from '../tokens/routes/types';
+import type { Route } from '../routes/types';
 
 export interface TransferFormValues {
   originCaip2Id: ChainCaip2Id;
@@ -34,4 +34,24 @@ export interface TransferContext {
   msgId?: string;
   timestamp: number;
   activeAccountAddress: Address;
+}
+
+export enum IgpTokenType {
+  NativeSeparate = 'native-separate', // Paying with origin chain native token
+  NativeCombined = 'native-combined', // Both igp fees and transfer token are native
+  TokenSeparate = 'token-separate', // Paying with a different non-native token
+  TokenCombined = 'token-combined', // Paying with the same token being transferred
+}
+
+export interface IgpQuote {
+  type: IgpTokenType;
+  amount: string;
+  weiAmount: string;
+  originCaip2Id: ChainCaip2Id;
+  destinationCaip2Id: ChainCaip2Id;
+  token: {
+    tokenCaip19Id: TokenCaip19Id;
+    symbol: string;
+    decimals: number;
+  };
 }

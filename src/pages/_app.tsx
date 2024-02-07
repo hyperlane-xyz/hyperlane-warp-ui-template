@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Analytics } from '@vercel/analytics/react';
 import type { AppProps } from 'next/app';
 import { ToastContainer, Zoom, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -38,6 +39,7 @@ export default function App({ Component, pageProps }: AppProps) {
             <QueryClientProvider client={reactQueryClient}>
               <AppLayout>
                 <Component {...pageProps} />
+                <Analytics />
               </AppLayout>
             </QueryClientProvider>
             <ToastContainer transition={Zoom} position={toast.POSITION.BOTTOM_RIGHT} limit={2} />

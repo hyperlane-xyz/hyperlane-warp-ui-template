@@ -24,9 +24,7 @@ import { Address, ProtocolType, convertToProtocolAddress } from '@hyperlane-xyz/
 import { parseCaip2Id } from '../caip/chains';
 import { AssetNamespace, getChainIdFromToken, isNativeToken, parseCaip19Id } from '../caip/tokens';
 import { getMultiProvider } from '../multiProvider';
-
-import { getToken } from './metadata';
-import { Route } from './routes/types';
+import { Route } from '../routes/types';
 import {
   isIbcRoute,
   isIbcToWarpRoute,
@@ -35,7 +33,9 @@ import {
   isRouteToCollateral,
   isRouteToSynthetic,
   isWarpRoute,
-} from './routes/utils';
+} from '../routes/utils';
+
+import { getToken } from './metadata';
 
 export class AdapterFactory {
   static NativeAdapterFromChain(

@@ -3,18 +3,19 @@ import { useEffect } from 'react';
 
 import { eqAddress, isValidAddress } from '@hyperlane-xyz/utils';
 
+import { useToastError } from '../../components/toast/useToastError';
 import { logger } from '../../utils/logger';
 import { getProtocolType } from '../caip/chains';
 import { parseCaip19Id, tryGetChainIdFromToken } from '../caip/tokens';
 import { getEvmProvider } from '../multiProvider';
+import { RoutesMap } from '../routes/types';
+import { getTokenRoute, isIbcOnlyRoute, isIbcRoute, isRouteFromNative } from '../routes/utils';
 import { useStore } from '../store';
 import { TransferFormValues } from '../transfer/types';
 import { useAccountAddressForChain } from '../wallet/hooks/multiProtocol';
 
 import { AdapterFactory } from './AdapterFactory';
 import { getHypErc721Contract } from './contracts/evmContracts';
-import { RoutesMap } from './routes/types';
-import { getTokenRoute, isIbcOnlyRoute, isIbcRoute, isRouteFromNative } from './routes/utils';
 
 export function useOriginBalance(
   { originCaip2Id, destinationCaip2Id, tokenCaip19Id }: TransferFormValues,
@@ -23,11 +24,7 @@ export function useOriginBalance(
   const address = useAccountAddressForChain(originCaip2Id);
   const setSenderBalances = useStore((state) => state.setSenderBalances);
 
-  const {
-    isLoading,
-    isError: hasError,
-    data,
-  } = useQuery({
+  const { isLoading, isError, error, data } = useQuery({
     queryKey: [
       'useOriginBalance',
       address,
@@ -58,13 +55,15 @@ export function useOriginBalance(
     refetchInterval: 5000,
   });
 
+  useToastError(error, 'Error fetching origin balance');
+
   useEffect(() => {
     setSenderBalances(data?.tokenBalance || '0', data?.nativeBalance || '0');
   }, [data, setSenderBalances]);
 
   return {
     isLoading,
-    hasError,
+    isError,
     tokenBalance: data?.tokenBalance,
     tokenDecimals: data?.tokenDecimals,
     nativeBalance: data?.nativeBalance,
@@ -75,11 +74,7 @@ export function useDestinationBalance(
   { originCaip2Id, destinationCaip2Id, tokenCaip19Id, recipientAddress }: TransferFormValues,
   tokenRoutes: RoutesMap,
 ) {
-  const {
-    isLoading,
-    isError: hasError,
-    data,
-  } = useQuery({
+  const { isLoading, isError, error, data } = useQuery({
     queryKey: [
       'useDestinationBalance',
       recipientAddress,
@@ -101,7 +96,9 @@ export function useDestinationBalance(
     refetchInterval: 5000,
   });
 
-  return { isLoading, hasError, balance: data?.balance, decimals: data?.decimals };
+  useToastError(error, 'Error fetching destination balance');
+
+  return { isLoading, isError, balance: data?.balance, decimals: data?.decimals };
 }
 
 // TODO solana support
@@ -112,7 +109,8 @@ export function useOriginTokenIdBalance(tokenCaip19Id: TokenCaip19Id) {
 
   const {
     isLoading,
-    isError: hasError,
+    isError,
+    error,
     data: tokenIds,
   } = useQuery({
     queryKey: ['useOriginTokenIdBalance', tokenCaip19Id, accountAddress],
@@ -123,11 +121,13 @@ export function useOriginTokenIdBalance(tokenCaip19Id: TokenCaip19Id) {
     refetchInterval: 5000,
   });
 
+  useToastError(error, 'Error fetching origin token IDs');
+
   useEffect(() => {
     setSenderNftIds(tokenIds && Array.isArray(tokenIds) ? tokenIds : null);
   }, [tokenIds, setSenderNftIds]);
 
-  return { isLoading, hasError, tokenIds };
+  return { isLoading, isError, tokenIds };
 }
 
 // TODO solana support
@@ -159,7 +159,8 @@ export function useContractSupportsTokenByOwner(
 ) {
   const {
     isLoading,
-    isError: hasError,
+    isError,
+    error,
     data: isContractAllowToGetTokenIds,
   } = useQuery({
     queryKey: ['useContractSupportsTokenByOwner', tokenCaip19Id, accountAddress],
@@ -169,7 +170,9 @@ export function useContractSupportsTokenByOwner(
     },
   });
 
-  return { isLoading, hasError, isContractAllowToGetTokenIds };
+  useToastError(error, 'Error ERC721 contract details');
+
+  return { isLoading, isError, isContractAllowToGetTokenIds };
 }
 
 // TODO solana support
@@ -195,7 +198,8 @@ export function useIsSenderNftOwner(tokenCaip19Id: TokenCaip19Id, tokenId: strin
 
   const {
     isLoading,
-    isError: hasError,
+    isError,
+    error,
     data: owner,
   } = useQuery({
     queryKey: ['useOwnerOfErc721', tokenCaip19Id, tokenId],
@@ -205,12 +209,14 @@ export function useIsSenderNftOwner(tokenCaip19Id: TokenCaip19Id, tokenId: strin
     },
   });
 
+  useToastError(error, 'Error ERC721 owner');
+
   useEffect(() => {
     if (!senderAddress || !owner) setIsSenderNftOwner(null);
     else setIsSenderNftOwner(eqAddress(senderAddress, owner));
   }, [owner, senderAddress, setIsSenderNftOwner]);
 
-  return { isLoading, hasError, owner };
+  return { isLoading, isError, owner };
 }
 
 // TODO solana support

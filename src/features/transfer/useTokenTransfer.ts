@@ -22,17 +22,11 @@ import { logger } from '../../utils/logger';
 import { parseCaip2Id } from '../caip/chains';
 import { isNonFungibleToken } from '../caip/tokens';
 import { getChainMetadata, getMultiProvider } from '../multiProvider';
+import { Route, RoutesMap } from '../routes/types';
+import { getTokenRoute, isIbcOnlyRoute, isIbcRoute, isWarpRoute } from '../routes/utils';
 import { AppState, useStore } from '../store';
 import { AdapterFactory } from '../tokens/AdapterFactory';
 import { isApproveRequired } from '../tokens/approval';
-import { Route, RoutesMap } from '../tokens/routes/types';
-import {
-  getTokenRoute,
-  isIbcOnlyRoute,
-  isIbcRoute,
-  isRouteFromNative,
-  isWarpRoute,
-} from '../tokens/routes/utils';
 import {
   getAccountAddressForChain,
   useAccounts,
@@ -42,7 +36,14 @@ import {
 import { ActiveChainInfo, SendTransactionFn } from '../wallet/hooks/types';
 import { ethers5TxToWagmiTx } from '../wallet/utils';
 
-import { TransferContext, TransferFormValues, TransferStatus } from './types';
+import {
+  IgpQuote,
+  IgpTokenType,
+  TransferContext,
+  TransferFormValues,
+  TransferStatus,
+} from './types';
+import { fetchIgpQuote } from './useIgpQuote';
 import { ensureSufficientCollateral, tryGetMsgIdFromEvmTransferReceipt } from './utils';
 
 export function useTokenTransfer(onDone?: () => void) {
@@ -206,22 +207,29 @@ interface ExecuteTransferParams<TxReq, TxResp> {
 
 interface ExecuteHypTransferParams<TxReq, TxResp> extends ExecuteTransferParams<TxReq, TxResp> {
   hypTokenAdapter: IHypTokenAdapter;
+  igpQuote: IgpQuote;
 }
 
 async function executeHypTransfer(params: ExecuteTransferParams<any, any>) {
   const { tokenRoute, weiAmountOrId, originProtocol } = params;
   const hypTokenAdapter = AdapterFactory.HypTokenAdapterFromRouteOrigin(tokenRoute);
-  const paramsWithAdapter = { ...params, hypTokenAdapter };
 
   await ensureSufficientCollateral(tokenRoute, weiAmountOrId);
 
+  const igpQuote = await fetchIgpQuote(tokenRoute, hypTokenAdapter);
+  const hypTransferParams: ExecuteHypTransferParams<any, any> = {
+    ...params,
+    hypTokenAdapter,
+    igpQuote,
+  };
+
   let result: { transferTxHash: string; msgId?: string };
   if (originProtocol === ProtocolType.Ethereum) {
-    result = await executeEvmTransfer(paramsWithAdapter);
+    result = await executeEvmTransfer(hypTransferParams);
   } else if (originProtocol === ProtocolType.Sealevel) {
-    result = await executeSealevelTransfer(paramsWithAdapter);
+    result = await executeSealevelTransfer(hypTransferParams);
   } else if (originProtocol === ProtocolType.Cosmos) {
-    result = await executeCosmWasmTransfer(paramsWithAdapter);
+    result = await executeCosmWasmTransfer(hypTransferParams);
   } else {
     throw new Error(`Unsupported protocol type: ${originProtocol}`);
   }
@@ -234,6 +242,7 @@ async function executeEvmTransfer({
   recipientAddress,
   tokenRoute,
   hypTokenAdapter,
+  igpQuote,
   activeAccountAddress,
   activeChain,
   updateStatus,
@@ -269,12 +278,12 @@ async function executeEvmTransfer({
 
   updateStatus(TransferStatus.CreatingTransfer);
 
-  const gasPayment = await hypTokenAdapter.quoteGasPayment(destinationDomainId);
-  logger.debug('Quoted gas payment', gasPayment);
+  logger.debug('Quoted gas payment', igpQuote.weiAmount);
   // If sending native tokens (e.g. Eth), the gasPayment must be added to the tx value and sent together
-  const txValue = isRouteFromNative(tokenRoute)
-    ? BigNumber(gasPayment).plus(weiAmountOrId).toFixed(0)
-    : gasPayment;
+  const txValue =
+    igpQuote.type === IgpTokenType.NativeCombined
+      ? BigNumber(igpQuote.weiAmount).plus(weiAmountOrId).toFixed(0)
+      : igpQuote.weiAmount;
   const transferTxRequest = (await hypTokenAdapter.populateTransferRemoteTx({
     weiAmountOrId: weiAmountOrId.toString(),
     recipient: recipientAddress,
@@ -312,8 +321,7 @@ async function executeSealevelTransfer({
   updateStatus(TransferStatus.CreatingTransfer);
 
   // TODO solana enable gas payments?
-  // const gasPayment = await hypTokenAdapter.quoteGasPayment(destinationDomainId);
-  // logger.debug('Quoted gas payment', gasPayment);
+  // logger.debug('Quoted gas payment', igpQuote.weiAmount);
 
   const transferTxRequest = (await hypTokenAdapter.populateTransferRemoteTx({
     weiAmountOrId,
@@ -342,6 +350,7 @@ async function executeCosmWasmTransfer({
   recipientAddress,
   tokenRoute,
   hypTokenAdapter,
+  igpQuote,
   activeChain,
   updateStatus,
   sendTransaction,
@@ -352,7 +361,7 @@ async function executeCosmWasmTransfer({
     weiAmountOrId,
     recipient: recipientAddress,
     destination: destinationDomainId,
-    txValue: COSM_IGP_QUOTE,
+    txValue: igpQuote.weiAmount,
   });
 
   updateStatus(TransferStatus.SigningTransfer);
@@ -414,6 +423,8 @@ async function executeIbcTransfer({
     recipient: recipientAddress,
     fromAccountOwner: activeAccountAddress,
     destination: destinationDomainId,
+    // TODO have this use fetchIgpQuote?
+    // Will be required if/when cosmos uses dynamic IGP fees
     txValue: COSM_IGP_QUOTE,
   })) as MsgTransferEncodeObject;
 

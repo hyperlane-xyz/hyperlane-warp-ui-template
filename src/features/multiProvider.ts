@@ -1,16 +1,11 @@
-import { MultiProtocolProvider } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 
-import { parseCaip2Id } from './caip/chains';
-import { getChainConfigs } from './chains/metadata';
+import { getWarpContext } from '../context/context';
 
-let multiProvider: MultiProtocolProvider<{ mailbox?: Address }>;
+import { parseCaip2Id } from './caip/chains';
 
 export function getMultiProvider() {
-  if (!multiProvider) {
-    multiProvider = new MultiProtocolProvider<{ mailbox?: Address }>(getChainConfigs());
-  }
-  return multiProvider;
+  return getWarpContext().multiProvider;
 }
 
 export function getEvmProvider(id: ChainCaip2Id) {

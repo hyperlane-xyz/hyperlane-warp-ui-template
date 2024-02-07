@@ -1,17 +1,38 @@
-import { ProtocolType, bytesToProtocolAddress, eqAddress } from '@hyperlane-xyz/utils';
+import { ProtocolType, bytesToProtocolAddress, deepCopy, eqAddress } from '@hyperlane-xyz/utils';
 
-import { logger } from '../../../utils/logger';
-import { getCaip2Id } from '../../caip/chains';
-import { getChainIdFromToken, isNonFungibleToken } from '../../caip/tokens';
-import { getMultiProvider } from '../../multiProvider';
-import { AdapterFactory } from '../AdapterFactory';
-import { TokenMetadata, TokenMetadataWithHypTokens } from '../types';
+import { ibcRoutes } from '../../consts/ibcRoutes';
+import { WarpContext } from '../../context/context';
+import { getCaip2Id } from '../../features/caip/chains';
+import { getChainIdFromToken, isNonFungibleToken } from '../../features/caip/tokens';
+import { Route, RouteType, RoutesMap } from '../../features/routes/types';
+import { AdapterFactory } from '../../features/tokens/AdapterFactory';
+import { isIbcToken } from '../../features/tokens/metadata';
+import { TokenMetadata, TokenMetadataWithHypTokens } from '../../features/tokens/types';
+import { logger } from '../../utils/logger';
 
-import { RouteType, RoutesMap } from './types';
+export async function getRouteConfigs(context: WarpContext): Promise<RoutesMap> {
+  logger.info('Searching for token routes');
+  const processedTokens: TokenMetadataWithHypTokens[] = [];
+  for (const token of context.tokens) {
+    // Skip querying of IBC tokens
+    if (isIbcToken(token)) continue;
+    const tokenWithHypTokens = await fetchRemoteHypTokens(context, token);
+    processedTokens.push(tokenWithHypTokens);
+  }
+  let routes = computeTokenRoutes(processedTokens);
+
+  if (ibcRoutes) {
+    logger.info('Found ibc route configs, adding to route map');
+    routes = mergeRoutes(routes, ibcRoutes);
+  }
+
+  logger.info('Done searching for token routes');
+  return routes;
+}
 
 export async function fetchRemoteHypTokens(
+  context: WarpContext,
   baseToken: TokenMetadata,
-  allTokens: TokenMetadata[],
 ): Promise<TokenMetadataWithHypTokens> {
   const {
     symbol: baseSymbol,
@@ -24,18 +45,17 @@ export async function fetchRemoteHypTokens(
   const baseAdapter = AdapterFactory.HypCollateralAdapterFromAddress(baseTokenCaip19Id, baseRouter);
 
   const remoteRouters = await baseAdapter.getAllRouters();
-  logger.info(`Router addresses found:`, remoteRouters);
+  logger.info(`Router addresses found:`, remoteRouters.length);
 
-  const multiProvider = getMultiProvider();
   const hypTokens = await Promise.all(
     remoteRouters.map(async (router) => {
-      const destMetadata = multiProvider.getChainMetadata(router.domain);
+      const destMetadata = context.multiProvider.getChainMetadata(router.domain);
       const protocol = destMetadata.protocol || ProtocolType.Ethereum;
-      const chain = getCaip2Id(protocol, multiProvider.getChainId(router.domain));
+      const chain = getCaip2Id(protocol, context.multiProvider.getChainId(router.domain));
       const formattedAddress = bytesToProtocolAddress(router.address, protocol);
       if (isNft) return { chain, router: formattedAddress, decimals: 0 };
       // Attempt to find the decimals from the token list
-      const routerMetadata = allTokens.find((token) =>
+      const routerMetadata = context.tokens.find((token) =>
         eqAddress(formattedAddress, token.routerAddress),
       );
       if (routerMetadata)
@@ -155,4 +175,14 @@ function getChainsFromTokens(tokens: TokenMetadataWithHypTokens[]): ChainCaip2Id
 
 function findTokenByRouter(tokens: TokenMetadataWithHypTokens[], router: Address) {
   return tokens.find((t) => eqAddress(t.routerAddress, router));
+}
+
+export function mergeRoutes(routes: RoutesMap, newRoutes: Route[]) {
+  const mergedRoutes = deepCopy(routes);
+  for (const route of newRoutes) {
+    mergedRoutes[route.originCaip2Id] ||= {};
+    mergedRoutes[route.originCaip2Id][route.destCaip2Id] ||= [];
+    mergedRoutes[route.originCaip2Id][route.destCaip2Id].push(route);
+  }
+  return mergedRoutes;
 }

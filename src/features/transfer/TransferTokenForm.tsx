@@ -3,16 +3,7 @@ import { Form, Formik, useFormikContext } from 'formik';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 
-import {
-  ProtocolSmallestUnit,
-  ProtocolType,
-  fromWei,
-  fromWeiRounded,
-  isValidAddress,
-  isZeroishAddress,
-  toWei,
-  tryParseAmount,
-} from '@hyperlane-xyz/utils';
+import { fromWei, fromWeiRounded, toWei } from '@hyperlane-xyz/utils';
 
 import { SmallSpinner } from '../../components/animation/SmallSpinner';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
@@ -21,39 +12,32 @@ import { SolidButton } from '../../components/buttons/SolidButton';
 import { ChevronIcon } from '../../components/icons/Chevron';
 import { WideChevron } from '../../components/icons/WideChevron';
 import { TextField } from '../../components/input/TextField';
-import { toastIgpDetails } from '../../components/toast/IgpDetailsToast';
-import { config } from '../../consts/config';
 import SwapIcon from '../../images/icons/swap.svg';
 import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
-import { getProtocolType, tryGetProtocolType } from '../caip/chains';
-import {
-  getTokenAddress,
-  isNonFungibleToken,
-  parseCaip19Id,
-  tryGetChainIdFromToken,
-} from '../caip/tokens';
+import { getTokenAddress, isNonFungibleToken } from '../caip/tokens';
 import { ChainSelectField } from '../chains/ChainSelectField';
 import { getChainDisplayName } from '../chains/utils';
-import { getChainMetadata } from '../multiProvider';
-import { AppState, useStore } from '../store';
+import { useRouteChains } from '../routes/hooks';
+import { RoutesMap, WarpRoute } from '../routes/types';
+import { getTokenRoute, isIbcOnlyRoute } from '../routes/utils';
+import { useStore } from '../store';
 import { SelectOrInputTokenIds } from '../tokens/SelectOrInputTokenIds';
 import { TokenSelectField } from '../tokens/TokenSelectField';
 import { useIsApproveRequired } from '../tokens/approval';
 import { useDestinationBalance, useOriginBalance } from '../tokens/balances';
-import { findTokensByAddress, getToken } from '../tokens/metadata';
-import { useRouteChains } from '../tokens/routes/hooks';
-import { RoutesMap, WarpRoute } from '../tokens/routes/types';
-import { getTokenRoute, isIbcOnlyRoute, isRouteFromNative } from '../tokens/routes/utils';
-import { useAccountAddressForChain } from '../wallet/hooks/multiProtocol';
+import { getToken } from '../tokens/metadata';
+import { useAccountAddressForChain, useAccounts } from '../wallet/hooks/multiProtocol';
 
 import { TransferFormValues } from './types';
 import { useIgpQuote } from './useIgpQuote';
 import { useTokenTransfer } from './useTokenTransfer';
+import { validateFormValues } from './validateForm';
 
 export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
   const chainCaip2Ids = useRouteChains(tokenRoutes);
   const initialValues = useFormInitialValues(chainCaip2Ids, tokenRoutes);
+  const { accounts } = useAccounts();
 
   // Flag for if form is in input vs review mode
   const [isReview, setIsReview] = useState(false);
@@ -66,7 +50,7 @@ export function TransferTokenForm({ tokenRoutes }: { tokenRoutes: RoutesMap }) {
   }));
 
   const validate = (values: TransferFormValues) =>
-    validateFormValues(values, tokenRoutes, balances, igpQuote);
+    validateFormValues(values, tokenRoutes, balances, igpQuote, accounts);
 
   const onSubmitForm = (values: TransferFormValues) => {
     logger.debug('Reviewing transfer form values:', JSON.stringify(values));
@@ -405,7 +389,7 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
     values: { amount, originCaip2Id, destinationCaip2Id, tokenCaip19Id },
   } = useFormikContext<TransferFormValues>();
 
-  // TODO cosmos better handling of cosmos route details here (remove cast)
+  // TODO cosmos: Need better handling of IBC route type (remove cast)
   const route = getTokenRoute(
     originCaip2Id,
     destinationCaip2Id,
@@ -413,31 +397,13 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
     tokenRoutes,
   ) as WarpRoute;
   const isNft = tokenCaip19Id && isNonFungibleToken(tokenCaip19Id);
-  const sendValueWei = isNft ? amount.toString() : toWei(amount, route?.originDecimals);
-  const originProtocol = getProtocolType(originCaip2Id);
-  const originUnitName =
-    originProtocol !== ProtocolType.Cosmos
-      ? `(${ProtocolSmallestUnit[getProtocolType(originCaip2Id)]})`
-      : '';
-  const tokenProtocol = tryGetProtocolType(tryGetChainIdFromToken(tokenCaip19Id));
-
-  // TODO refactor all this logic into something more coherent.
-  // It's grown organically over time and is becoming unwieldy
+  const amountWei = isNft ? amount.toString() : toWei(amount, route?.originDecimals);
   const originToken = getToken(tokenCaip19Id);
-  let originTokenSymbol = originToken?.symbol || '';
-  let originGasTokenSymbol = getChainMetadata(originCaip2Id)?.nativeToken?.symbol || '';
-  if (tokenProtocol === ProtocolType.Cosmos) {
-    originTokenSymbol = originTokenSymbol ? `u${originTokenSymbol}` : '';
-    originGasTokenSymbol = originTokenSymbol;
-  }
-  if (originToken?.igpTokenAddress) {
-    const overrideSymbol = findTokensByAddress(originToken.igpTokenAddress)?.[0]?.symbol;
-    originGasTokenSymbol = overrideSymbol ? `u${overrideSymbol}` : originGasTokenSymbol;
-  }
+  const originTokenSymbol = originToken?.symbol || '';
 
   const { isLoading: isApproveLoading, isApproveRequired } = useIsApproveRequired(
     tokenCaip19Id,
-    sendValueWei,
+    amountWei,
     route,
     visible,
   );
@@ -482,18 +448,18 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
               {isNft ? (
                 <p className="flex">
                   <span className="min-w-[7rem]">Token ID</span>
-                  <span>{sendValueWei}</span>
+                  <span>{amount}</span>
                 </p>
               ) : (
                 <>
                   <p className="flex">
-                    <span className="min-w-[7rem]">{`Amount ${originUnitName}`}</span>
-                    <span>{`${sendValueWei} ${originTokenSymbol}`}</span>
+                    <span className="min-w-[7rem]">Amount</span>
+                    <span>{`${amount} ${originTokenSymbol}`}</span>
                   </p>
                   {showIgpQuote && (
                     <p className="flex">
-                      <span className="min-w-[7rem]">{`Interchain Gas ${originUnitName}`}</span>
-                      <span>{`${igpQuote?.weiAmount || '0'} ${originGasTokenSymbol}`}</span>
+                      <span className="min-w-[7rem]">Interchain Gas</span>
+                      <span>{`${igpQuote?.amount || '0'} ${igpQuote?.token?.symbol || ''}`}</span>
                     </p>
                   )}
                 </>
@@ -504,103 +470,6 @@ function ReviewDetails({ visible, tokenRoutes }: { visible: boolean; tokenRoutes
       )}
     </div>
   );
-}
-
-function validateFormValues(
-  values: TransferFormValues,
-  tokenRoutes: RoutesMap,
-  balances: AppState['balances'],
-  igpQuote: AppState['igpQuote'],
-) {
-  const { originCaip2Id, destinationCaip2Id, amount, tokenCaip19Id, recipientAddress } = values;
-  const route = getTokenRoute(originCaip2Id, destinationCaip2Id, tokenCaip19Id, tokenRoutes);
-  if (!route) return { destinationCaip2Id: 'No route found for chains/token' };
-
-  if (!originCaip2Id) return { originCaip2Id: 'Invalid origin chain' };
-  if (!destinationCaip2Id) return { destinationCaip2Id: 'Invalid destination chain' };
-
-  if (!tokenCaip19Id) return { tokenCaip19Id: 'Token required' };
-  const { address: tokenAddress } = parseCaip19Id(tokenCaip19Id);
-  const tokenMetadata = getToken(tokenCaip19Id);
-  if (!tokenMetadata || (!isZeroishAddress(tokenAddress) && !isValidAddress(tokenAddress)))
-    return { tokenCaip19Id: 'Invalid token' };
-
-  const originProtocol = getProtocolType(originCaip2Id);
-  const destProtocol = getProtocolType(destinationCaip2Id);
-  // Ensure recip address is valid for the destination chain's protocol
-  if (!isValidAddress(recipientAddress, destProtocol))
-    return { recipientAddress: 'Invalid recipient' };
-  // Also ensure the address denom is correct if the dest protocol is Cosmos
-  if (destProtocol === ProtocolType.Cosmos) {
-    const destChainPrefix = getChainMetadata(destinationCaip2Id).bech32Prefix;
-    if (!destChainPrefix) {
-      toast.error(`No bech32 prefix found for chain ${destinationCaip2Id}`);
-      return { destinationCaip2Id: 'Invalid chain data' };
-    } else if (!recipientAddress.startsWith(destChainPrefix)) {
-      toast.error(`Recipient address prefix should be ${destChainPrefix}`);
-      return { recipientAddress: `Invalid recipient prefix` };
-    }
-  }
-
-  const isNft = isNonFungibleToken(tokenCaip19Id);
-  const parsedAmount = tryParseAmount(amount);
-  if (!parsedAmount || parsedAmount.lte(0))
-    return { amount: isNft ? 'Invalid Token Id' : 'Invalid amount' };
-  const sendValue = isNft
-    ? parsedAmount
-    : new BigNumber(toWei(parsedAmount, route?.originDecimals));
-
-  if (!isNft) {
-    // Validate balances for ERC20-like tokens
-    if (sendValue.gt(balances.senderTokenBalance)) return { amount: 'Insufficient balance' };
-    // Ensure balances can cover IGP fees
-    const igpWeiAmount = new BigNumber(igpQuote?.weiAmount || 0);
-    // If the route is from a Cosmos chain, we charge fees in the sending token.
-    // Otherwise, we charge fees in the native token of the sending chain.
-    const userIgpTokenBalance =
-      originProtocol === ProtocolType.Cosmos
-        ? balances.senderTokenBalance
-        : balances.senderNativeBalance;
-    const requiredIgpTokenBalance =
-      isRouteFromNative(route) || originProtocol === ProtocolType.Cosmos
-        ? sendValue.plus(igpWeiAmount)
-        : igpWeiAmount;
-
-    const nativeToken = getChainMetadata(originCaip2Id)?.nativeToken;
-    const nativeDecimals = nativeToken?.decimals || 18;
-    const gasTokenSymbol =
-      (originProtocol === ProtocolType.Cosmos ? tokenMetadata.symbol : nativeToken?.symbol) ||
-      'native token';
-    const igpAmountPretty = fromWei(igpWeiAmount, nativeDecimals);
-
-    if (requiredIgpTokenBalance.gt(userIgpTokenBalance)) {
-      toastIgpDetails(igpAmountPretty, gasTokenSymbol);
-      return { amount: `Insufficient ${gasTokenSymbol} for gas` };
-    }
-  } else {
-    // Validate balances for ERC721-like tokens
-    const { isSenderNftOwner, senderNftIds } = balances;
-    const nftId = sendValue.toString();
-    if (isSenderNftOwner === false || (senderNftIds && !senderNftIds.includes(nftId))) {
-      return { amount: 'Token ID not owned' };
-    }
-  }
-
-  if (
-    config.withdrawalWhitelist &&
-    !config.withdrawalWhitelist.split(',').includes(destinationCaip2Id)
-  ) {
-    return { destinationCaip2Id: 'Bridge is in deposit-only mode' };
-  }
-
-  if (
-    config.transferBlacklist &&
-    config.transferBlacklist.split(',').includes(`${originCaip2Id}-${destinationCaip2Id}`)
-  ) {
-    return { destinationCaip2Id: 'Route is not currently allowed' };
-  }
-
-  return {};
 }
 
 function useFormInitialValues(

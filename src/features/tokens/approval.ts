@@ -2,15 +2,16 @@ import { useQuery } from '@tanstack/react-query';
 
 import { ProtocolType, eqAddress } from '@hyperlane-xyz/utils';
 
+import { useToastError } from '../../components/toast/useToastError';
 import { logger } from '../../utils/logger';
 import { getProtocolType } from '../caip/chains';
 import { getTokenAddress, isNativeToken, isNonFungibleToken } from '../caip/tokens';
 import { getEvmProvider } from '../multiProvider';
+import { Route } from '../routes/types';
+import { isRouteFromCollateral, isWarpRoute } from '../routes/utils';
 import { useAccountAddressForChain } from '../wallet/hooks/multiProtocol';
 
 import { getErc20Contract, getErc721Contract } from './contracts/evmContracts';
-import { Route } from './routes/types';
-import { isRouteFromCollateral, isWarpRoute } from './routes/utils';
 
 export function useIsApproveRequired(
   tokenCaip19Id: TokenCaip19Id,
@@ -20,11 +21,7 @@ export function useIsApproveRequired(
 ) {
   const owner = useAccountAddressForChain(route?.originCaip2Id);
 
-  const {
-    isLoading,
-    isError: hasError,
-    data,
-  } = useQuery({
+  const { isLoading, isError, error, data } = useQuery({
     queryKey: ['useIsApproveRequired', route, tokenCaip19Id, owner, amount],
     queryFn: async () => {
       if (!route || !tokenCaip19Id || !owner || !amount) return false;
@@ -33,7 +30,9 @@ export function useIsApproveRequired(
     enabled,
   });
 
-  return { isLoading, hasError, isApproveRequired: !!data };
+  useToastError(error, 'Error fetching approval status');
+
+  return { isLoading, isError, isApproveRequired: !!data };
 }
 
 export async function isApproveRequired(

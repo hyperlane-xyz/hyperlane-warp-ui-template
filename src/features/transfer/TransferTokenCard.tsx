@@ -1,15 +1,12 @@
 import { WideChevron } from '@hyperlane-xyz/widgets';
 
-import { Spinner } from '../../components/animation/Spinner';
 import { Card } from '../../components/layout/Card';
+import { getWarpContext } from '../../context/context';
 import { Color } from '../../styles/Color';
-import { useTokenRoutes } from '../tokens/routes/hooks';
 
 import { TransferTokenForm } from './TransferTokenForm';
 
 export function TransferTokenCard() {
-  const { tokenRoutes, isLoading, error: routesError } = useTokenRoutes();
-
   return (
     <Card className="w-100 sm:w-[31rem]">
       <>
@@ -22,22 +19,7 @@ export function TransferTokenCard() {
             color={Color.primaryMint}
           />
         </div>
-        {tokenRoutes && <TransferTokenForm tokenRoutes={tokenRoutes} />}
-        {isLoading && (
-          <div className="my-24 flex flex-col items-center">
-            <Spinner />
-            <h3 className="mt-5 text-sm text-gray-500">Finding token routes</h3>
-          </div>
-        )}
-        {routesError && (
-          <div className="my-32 flex flex-col items-center text-center">
-            <h3 className="text-red-500">Error searching for token routes.</h3>
-            <div className="mt-3 text-sm text-red-500">
-              Please ensure chain and token configs are valid.
-            </div>
-            <div className="mt-4 text-xs text-gray-500">{routesError.toString()}</div>
-          </div>
-        )}
+        <TransferTokenForm tokenRoutes={getWarpContext().routes} />
       </>
     </Card>
   );

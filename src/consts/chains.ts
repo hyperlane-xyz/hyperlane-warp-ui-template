@@ -55,9 +55,9 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
     protocol: ProtocolType.Cosmos,
     slip44: 118,
     bech32Prefix: 'inj',
-    grpcUrls: [{ http: 'grpc-injective-ia.cosmosia.notional.ventures:443' }],
-    rpcUrls: [{ http: 'https://rpc-injective-ia.cosmosia.notional.ventures' }],
-    restUrls: [{ http: 'https://injective-lcd.quickapi.com:443' }],
+    grpcUrls: [{ http: 'injective-grpc.polkachu.com:14390' }],
+    rpcUrls: [{ http: 'https://injective-rpc.polkachu.com' }],
+    restUrls: [{ http: 'https://injective-api.polkachu.com' }],
     logoURI: '/logos/injective.svg',
   },
 };

@@ -32,7 +32,7 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
     },
     protocol: ProtocolType.Ethereum,
     rpcUrls: [{ http: 'https://inevm.calderachain.xyz/http' }],
-    logoURI: '/logos/injective.svg',
+    logoURI: '/logos/inevm.svg',
   },
 
   injective: {

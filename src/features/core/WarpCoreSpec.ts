@@ -1,3 +1,4 @@
+import { ChainName } from "@hyperlane-xyz/sdk";
 
 type HyperlaneChainId = ChainName | ChainId | DomainId;
 

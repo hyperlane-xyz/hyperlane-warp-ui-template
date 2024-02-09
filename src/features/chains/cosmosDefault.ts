@@ -9,6 +9,7 @@ export const cosmosDefaultChain: ChainMetadata = {
   domainId: 1234, // TODO
   bech32Prefix: 'cosmos',
   slip44: 118,
+  grpcUrls: [{ http: 'grpc-cosmoshub-ia.cosmosia.notional.ventures:443' }],
   rpcUrls: [{ http: 'https://rpc-cosmoshub.blockapsis.com' }],
   restUrls: [{ http: 'https://lcd-cosmoshub.blockapsis.com' }],
   nativeToken: {

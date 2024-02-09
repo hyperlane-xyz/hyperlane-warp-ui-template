@@ -33,7 +33,7 @@ The logo images you should change are:
 
 - `./src/images/logos/app-logo.svg`
 - `./src/images/logos/app-name.svg`
-- `./src/images/logos/app-title.png`
+- `./src/images/logos/app-title.svg`
 
 These are images are primarily used in the header and footer files:
 
@@ -47,7 +47,6 @@ The links used in the footer can be found here: `./src/consts/links.ts`
 ### Public assets / Favicons
 
 The images and manifest files under `./public` should also be updated.
-The current collection was generated with [RealFaviconGenerator](https://realfavicongenerator.net)
 
 ### Fonts
 

@@ -49,7 +49,7 @@ async function parseTokenConfigs(
   const parsedConfig = result.data;
   const tokenMetadata: TokenMetadata[] = [];
   for (const config of parsedConfig) {
-    const { type, chainId, logoURI, igpTokenAddress } = config;
+    const { type, chainId, logoURI, igpTokenAddressOrDenom } = config;
 
     const protocol = multiProvider.getChainMetadata(chainId).protocol || ProtocolType.Ethereum;
     const chainCaip2Id = getCaip2Id(protocol, chainId);
@@ -83,7 +83,7 @@ async function parseTokenConfigs(
       type,
       tokenCaip19Id,
       routerAddress,
-      igpTokenAddress,
+      igpTokenAddressOrDenom,
     });
   }
   return tokenMetadata;

@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-declaration-merging */
 import {
+  ChainMetadata,
   ChainName,
   CosmIbcTokenAdapter,
   CosmNativeTokenAdapter,
@@ -26,6 +27,7 @@ import { ProtocolType } from '@hyperlane-xyz/utils';
 import { TokenAmount } from './TokenAmount';
 import {
   Numberish,
+  PROTOCOL_TO_NATIVE_STANDARD,
   TOKEN_MULTI_CHAIN_STANDARDS,
   TOKEN_NFT_STANDARDS,
   TokenStandard,
@@ -36,12 +38,12 @@ export interface TokenArgs {
   chainName: ChainName;
   standard: TokenStandard;
   addressOrDenom: Address | string;
-  collateralizedAddressOrDenom?: Address | string;
-  gasAddressOrDenom?: string;
+  collateralAddressOrDenom?: Address | string;
+  igpTokenAddressOrDenom?: string;
   decimals: number;
   symbol: string;
   name: string;
-  logoUri?: string;
+  logoURI?: string;
   connectedTokens?: Token[];
 
   // Cosmos specific:
@@ -56,6 +58,23 @@ export interface Token extends TokenArgs {}
 export class Token {
   constructor(public readonly args: TokenArgs) {
     Object.assign(this, args);
+  }
+
+  static FromChainMetadataNativeToken(chainMetadata: ChainMetadata): Token {
+    if (!chainMetadata.nativeToken)
+      throw new Error(`ChainMetadata for ${chainMetadata.name} missing nativeToken`);
+
+    const { protocol, name: chainName, nativeToken, logoURI } = chainMetadata;
+    return new Token({
+      protocol,
+      chainName,
+      standard: PROTOCOL_TO_NATIVE_STANDARD[protocol],
+      addressOrDenom: '',
+      decimals: nativeToken.decimals,
+      symbol: nativeToken.symbol,
+      name: nativeToken.name,
+      logoURI,
+    });
   }
 
   /**
@@ -110,8 +129,8 @@ export class Token {
       standard,
       chainName,
       addressOrDenom,
-      collateralizedAddressOrDenom,
-      gasAddressOrDenom,
+      collateralAddressOrDenom,
+      igpTokenAddressOrDenom,
       sourcePort,
       sourceChannel,
     } = this;
@@ -126,11 +145,11 @@ export class Token {
     let sealevelAddresses;
     if (protocol === ProtocolType.Sealevel) {
       if (!mailbox) throw new Error('mailbox required for Sealevel hyp tokens');
-      if (!collateralizedAddressOrDenom)
-        throw new Error('collateralizedAddressOrDenom required for Sealevel hyp tokens');
+      if (!collateralAddressOrDenom)
+        throw new Error('collateralAddressOrDenom required for Sealevel hyp tokens');
       sealevelAddresses = {
         warpRouter: addressOrDenom,
-        token: collateralizedAddressOrDenom,
+        token: collateralAddressOrDenom,
         mailbox,
       };
     }
@@ -150,25 +169,25 @@ export class Token {
         chainName,
         multiProvider,
         { warpRouter: addressOrDenom },
-        gasAddressOrDenom,
+        igpTokenAddressOrDenom,
       );
     } else if (standard === TokenStandard.CwHypCollateral) {
-      if (!collateralizedAddressOrDenom)
-        throw new Error('collateralizedAddressOrDenom required for CwHypCollateral');
+      if (!collateralAddressOrDenom)
+        throw new Error('collateralAddressOrDenom required for CwHypCollateral');
       return new CwHypCollateralAdapter(
         chainName,
         multiProvider,
-        { warpRouter: addressOrDenom, token: collateralizedAddressOrDenom },
-        gasAddressOrDenom,
+        { warpRouter: addressOrDenom, token: collateralAddressOrDenom },
+        igpTokenAddressOrDenom,
       );
     } else if (standard === TokenStandard.CwHypSynthetic) {
-      if (!collateralizedAddressOrDenom)
-        throw new Error('collateralizedAddressOrDenom required for CwHypSyntheticAdapter');
+      if (!collateralAddressOrDenom)
+        throw new Error('collateralAddressOrDenom required for CwHypSyntheticAdapter');
       return new CwHypSyntheticAdapter(
         chainName,
         multiProvider,
-        { warpRouter: addressOrDenom, token: collateralizedAddressOrDenom },
-        gasAddressOrDenom,
+        { warpRouter: addressOrDenom, token: collateralAddressOrDenom },
+        igpTokenAddressOrDenom,
       );
     } else if (standard === TokenStandard.CosmosIbc) {
       if (!sourcePort || !sourceChannel)
@@ -184,13 +203,13 @@ export class Token {
     }
   }
 
-  getConnectedTokens(): Token[] {
-    return this.connectedTokens || [];
-  }
-
-  setConnectedTokens(tokens: Token[]): Token[] {
-    this.connectedTokens = tokens;
-    return tokens;
+  /**
+   * Convenience method to create an adapter and return an account balance
+   */
+  async getBalance(multiProvider: MultiProtocolProvider, address: Address): Promise<TokenAmount> {
+    const adapter = this.getAdapter(multiProvider);
+    const balance = await adapter.getBalance(address);
+    return new TokenAmount(balance, this);
   }
 
   amount(amount: Numberish): TokenAmount {
@@ -205,6 +224,15 @@ export class Token {
     return TOKEN_MULTI_CHAIN_STANDARDS.includes(this.standard);
   }
 
+  getConnectedTokens(): Token[] {
+    return this.connectedTokens || [];
+  }
+
+  setConnectedTokens(tokens: Token[]): Token[] {
+    this.connectedTokens = tokens;
+    return tokens;
+  }
+
   equals(token: Token): boolean {
     return (
       this.protocol === token.protocol &&
@@ -212,8 +240,7 @@ export class Token {
       this.standard === token.standard &&
       this.decimals === token.decimals &&
       this.addressOrDenom.toLowerCase() === token.addressOrDenom.toLowerCase() &&
-      this.collateralizedAddressOrDenom?.toLowerCase() ===
-        token.collateralizedAddressOrDenom?.toLowerCase()
+      this.collateralAddressOrDenom?.toLowerCase() === token.collateralAddressOrDenom?.toLowerCase()
     );
   }
 }

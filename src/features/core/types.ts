@@ -1,4 +1,5 @@
 import { ChainName } from '@hyperlane-xyz/sdk';
+import { ProtocolType } from '@hyperlane-xyz/utils';
 
 export type HyperlaneChainId = ChainName | ChainId | DomainId;
 export type Numberish = number | string | bigint;
@@ -34,6 +35,9 @@ export enum TokenStandard {
   CwHypNative = 'CwHypNative',
   CwHypCollateral = 'CwHypCollateral',
   CwHypSynthetic = 'CwHypSynthetic',
+
+  // Fuel (TODO)
+  FuelNative = 'FuelNative',
 }
 
 export const TOKEN_NFT_STANDARDS = [
@@ -55,3 +59,15 @@ export const TOKEN_MULTI_CHAIN_STANDARDS = [
   TokenStandard.CwHypCollateral,
   TokenStandard.CwHypSynthetic,
 ];
+
+export const PROTOCOL_TO_NATIVE_STANDARD: Record<ProtocolType, TokenStandard> = {
+  [ProtocolType.Ethereum]: TokenStandard.EvmNative,
+  [ProtocolType.Cosmos]: TokenStandard.CosmosNative,
+  [ProtocolType.Sealevel]: TokenStandard.SealevelNative,
+  [ProtocolType.Fuel]: TokenStandard.FuelNative,
+};
+
+// Map of protocol to either quote constant or to a map of chain name to quote constant
+export type IgpQuoteConstants = Partial<
+  Record<ProtocolType, string | Record<string | number, string>>
+>;

@@ -36,7 +36,7 @@ export enum TokenStandard {
 
 export class Token {
   constructor({
-     protocol, chainName, standard, addressOrDenom, collateralizedAddressOrDenom,
+     protocol, chainName, standard, addressOrDenom, collateralAddressOrDenom,
      symbol, decimals, name, logoUri, connectedTokens
   }) {}
 

@@ -22,12 +22,13 @@ import {
   SealevelNativeTokenAdapter,
   SealevelTokenAdapter,
 } from '@hyperlane-xyz/sdk';
-import { ProtocolType } from '@hyperlane-xyz/utils';
+import { ProtocolType, eqAddress } from '@hyperlane-xyz/utils';
 
 import { TokenAmount } from './TokenAmount';
 import {
   Numberish,
   PROTOCOL_TO_NATIVE_STANDARD,
+  TOKEN_HYP_STANDARDS,
   TOKEN_MULTI_CHAIN_STANDARDS,
   TOKEN_NFT_STANDARDS,
   TokenStandard,
@@ -220,6 +221,10 @@ export class Token {
     return TOKEN_NFT_STANDARDS.includes(this.standard);
   }
 
+  isNative(): boolean {
+    return Object.values(PROTOCOL_TO_NATIVE_STANDARD).includes(this.standard);
+  }
+
   isMultiChainToken(): boolean {
     return TOKEN_MULTI_CHAIN_STANDARDS.includes(this.standard);
   }
@@ -233,6 +238,9 @@ export class Token {
     return tokens;
   }
 
+  /**
+   * Returns true if tokens refer to the same asset
+   */
   equals(token: Token): boolean {
     return (
       this.protocol === token.protocol &&
@@ -242,5 +250,18 @@ export class Token {
       this.addressOrDenom.toLowerCase() === token.addressOrDenom.toLowerCase() &&
       this.collateralAddressOrDenom?.toLowerCase() === token.collateralAddressOrDenom?.toLowerCase()
     );
+  }
+
+  /**
+   * Returns true if this tokens is hyp collateral contract for the given token
+   */
+  collateralizes(token: Token): boolean {
+    if (token.chainName !== this.chainName) return false;
+    if (!TOKEN_HYP_STANDARDS.includes(this.standard)) return false;
+    const isCollateralWrapper =
+      this.collateralAddressOrDenom &&
+      eqAddress(this.collateralAddressOrDenom, token.addressOrDenom);
+    const isNativeWrapper = !this.collateralAddressOrDenom && token.isNative();
+    return isCollateralWrapper || isNativeWrapper;
   }
 }

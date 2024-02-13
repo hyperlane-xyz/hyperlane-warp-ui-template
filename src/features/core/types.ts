@@ -47,18 +47,19 @@ export const TOKEN_NFT_STANDARDS = [
   // TODO solana here
 ];
 
-export const TOKEN_MULTI_CHAIN_STANDARDS = [
+export const TOKEN_HYP_STANDARDS = [
   TokenStandard.EvmHypNative,
   TokenStandard.EvmHypCollateral,
   TokenStandard.EvmHypSynthetic,
   TokenStandard.SealevelHypNative,
   TokenStandard.SealevelHypCollateral,
   TokenStandard.SealevelHypSynthetic,
-  TokenStandard.CosmosIbc,
   TokenStandard.CwHypNative,
   TokenStandard.CwHypCollateral,
   TokenStandard.CwHypSynthetic,
 ];
+
+export const TOKEN_MULTI_CHAIN_STANDARDS = [...TOKEN_HYP_STANDARDS, TokenStandard.CosmosIbc];
 
 export const PROTOCOL_TO_NATIVE_STANDARD: Record<ProtocolType, TokenStandard> = {
   [ProtocolType.Ethereum]: TokenStandard.EvmNative,
@@ -68,6 +69,10 @@ export const PROTOCOL_TO_NATIVE_STANDARD: Record<ProtocolType, TokenStandard> = 
 };
 
 // Map of protocol to either quote constant or to a map of chain name to quote constant
-export type IgpQuoteConstants = Partial<
-  Record<ProtocolType, string | Record<string | number, string>>
->;
+export type IgpQuoteConstants = Array<{
+  origin: ChainName;
+  destination: ChainName;
+  quote: string | number | bigint;
+}>;
+
+export type RouteBlacklist = Array<{ origin: ChainName; destination: ChainName }>;

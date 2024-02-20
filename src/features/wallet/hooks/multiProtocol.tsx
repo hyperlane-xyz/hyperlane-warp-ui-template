@@ -6,6 +6,7 @@ import { ProtocolType } from '@hyperlane-xyz/utils';
 import { config } from '../../../consts/config';
 import { logger } from '../../../utils/logger';
 import { tryGetProtocolType } from '../../caip/chains';
+import { getChainProtocol } from '../../chains/utils';
 
 import {
   useCosmosAccount,
@@ -80,12 +81,14 @@ export function useAccountAddressForChain(chainCaip2Id?: ChainCaip2Id): Address 
 }
 
 export function getAccountAddressForChain(
-  chainCaip2Id?: ChainCaip2Id,
-  account?: AccountInfo,
+  chainName?: ChainName,
+  accounts?: Record<ProtocolType, AccountInfo>,
 ): Address | undefined {
-  if (!chainCaip2Id || !account?.addresses.length) return undefined;
-  if (account.protocol === ProtocolType.Cosmos) {
-    return account.addresses.find((a) => a.chainCaip2Id === chainCaip2Id)?.address;
+  if (!chainName || !accounts) return undefined;
+  const protocol = getChainProtocol(chainName);
+  const account = accounts[protocol];
+  if (protocol === ProtocolType.Cosmos) {
+    return account.addresses.find((a) => a.chainName === chainName)?.address;
   } else {
     // Use first because only cosmos has the notion of per-chain addresses
     return account.addresses[0].address;

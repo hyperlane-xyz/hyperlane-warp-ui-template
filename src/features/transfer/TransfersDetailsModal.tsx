@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { isZeroishAddress, toTitleCase } from '@hyperlane-xyz/utils';
+import { toTitleCase } from '@hyperlane-xyz/utils';
 import { MessageStatus, MessageTimeline, useMessageTimeline } from '@hyperlane-xyz/widgets';
 
 import { Spinner } from '../../components/animation/Spinner';
@@ -10,6 +10,7 @@ import { ChainLogo } from '../../components/icons/ChainLogo';
 import { TokenIcon } from '../../components/icons/TokenIcon';
 import { WideChevron } from '../../components/icons/WideChevron';
 import { Modal } from '../../components/layout/Modal';
+import { getMultiProvider } from '../../context/context';
 import LinkIcon from '../../images/icons/external-link-icon.svg';
 import { formatTimestamp } from '../../utils/date';
 import { getHypExplorerLink } from '../../utils/links';
@@ -21,11 +22,7 @@ import {
   isTransferFailed,
   isTransferSent,
 } from '../../utils/transfer';
-import { getChainReference } from '../caip/chains';
-import { AssetNamespace, parseCaip19Id } from '../caip/tokens';
 import { getChainDisplayName, hasPermissionlessChain } from '../chains/utils';
-import { getMultiProvider } from '../multiProvider';
-import { getToken } from '../tokens/metadata';
 import { useAccountForChain } from '../wallet/hooks/multiProtocol';
 
 import { TransferContext, TransferStatus } from './types';
@@ -44,15 +41,11 @@ export function TransfersDetailsModal({
   const [originTxUrl, setOriginTxUrl] = useState<string>('');
 
   const { params, status, originTxHash, msgId, timestamp, activeAccountAddress } = transfer || {};
-  const { destinationCaip2Id, originCaip2Id, tokenCaip19Id, amount, recipientAddress } =
-    params || {};
+  // TODO stored value can't have whole token
+  const { destination, origin, token, amount, recipientAddress } = params || {};
 
-  const account = useAccountForChain(originCaip2Id);
+  const account = useAccountForChain(origin);
   const multiProvider = getMultiProvider();
-  const originChain = getChainReference(originCaip2Id);
-  const destChain = getChainReference(destinationCaip2Id);
-  const { address: tokenAddress, namespace: tokenNamespace } = parseCaip19Id(tokenCaip19Id);
-  const isNative = tokenNamespace === AssetNamespace.native || isZeroishAddress(tokenAddress);
 
   const getMessageUrls = useCallback(async () => {
     try {
@@ -80,9 +73,9 @@ export function TransfersDetailsModal({
 
   const isAccountReady = !!account?.isReady;
   const connectorName = account?.connectorName || 'wallet';
-  const token = getToken(tokenCaip19Id);
+  const token = getToken(token);
 
-  const isPermissionlessRoute = hasPermissionlessChain([destinationCaip2Id, originCaip2Id]);
+  const isPermissionlessRoute = hasPermissionlessChain([destination, origin]);
 
   const isSent = isTransferSent(status);
   const isFailed = isTransferFailed(status);
@@ -100,7 +93,7 @@ export function TransfersDetailsModal({
     [timestamp],
   );
 
-  const explorerLink = getHypExplorerLink(originCaip2Id, msgId);
+  const explorerLink = getHypExplorerLink(origin, msgId);
 
   return (
     <Modal
@@ -142,9 +135,9 @@ export function TransfersDetailsModal({
 
       <div className="mt-4 flex items-center justify-around">
         <div className="ml-2 flex flex-col items-center">
-          <ChainLogo chainCaip2Id={originCaip2Id} size={64} background={true} />
+          <ChainLogo chainCaip2Id={origin} size={64} background={true} />
           <span className="mt-1 font-medium tracking-wider">
-            {getChainDisplayName(originCaip2Id, true)}
+            {getChainDisplayName(origin, true)}
           </span>
         </div>
         <div className="flex mb-6 sm:space-x-1.5">
@@ -152,9 +145,9 @@ export function TransfersDetailsModal({
           <WideChevron />
         </div>
         <div className="mr-2 flex flex-col items-center">
-          <ChainLogo chainCaip2Id={destinationCaip2Id} size={64} background={true} />
+          <ChainLogo chainCaip2Id={destination} size={64} background={true} />
           <span className="mt-1 font-medium tracking-wider">
-            {getChainDisplayName(destinationCaip2Id, true)}
+            {getChainDisplayName(destination, true)}
           </span>
         </div>
       </div>

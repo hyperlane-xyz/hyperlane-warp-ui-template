@@ -78,13 +78,12 @@
   },
   "scripts": {
     "clean": "rm -rf dist cache .next",
-    "dev": "yarn build:configs && next dev",
-    "build": "yarn build:configs && next build",
-    "build:configs": "./src/scripts/buildConfigs/build.sh",
+    "dev": "next dev",
+    "build": "next build",
     "typecheck": "tsc",
     "lint": "next lint",
     "start": "next start",
-    "test": "yarn build:configs && jest",
+    "test": "jest",
     "prettier": "prettier --write ./src"
   },
   "types": "dist/src/index.d.ts",

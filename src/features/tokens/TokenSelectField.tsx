@@ -2,68 +2,46 @@ import { useFormikContext } from 'formik';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
+import { Token } from '@hyperlane-xyz/sdk';
+
 import { TokenIcon } from '../../components/icons/TokenIcon';
 import ChevronIcon from '../../images/icons/chevron-down.svg';
-import { isNonFungibleToken } from '../caip/tokens';
-import { RoutesMap } from '../routes/types';
-import { getTokenRoutes } from '../routes/utils';
 import { TransferFormValues } from '../transfer/types';
 
 import { TokenListModal } from './TokenListModal';
-import { getToken } from './metadata';
-import { TokenMetadata } from './types';
 
 type Props = {
   name: string;
-  originCaip2Id: ChainCaip2Id;
-  destinationCaip2Id: ChainCaip2Id;
-  tokenRoutes: RoutesMap;
+  origin: ChainName;
+  destination: ChainName;
   disabled?: boolean;
   setIsNft: (value: boolean) => void;
 };
 
-export function TokenSelectField({
-  name,
-  originCaip2Id,
-  destinationCaip2Id,
-  tokenRoutes,
-  disabled,
-  setIsNft,
-}: Props) {
+export function TokenSelectField({ name, origin, destination, disabled, setIsNft }: Props) {
   const { values, setFieldValue } = useFormikContext<TransferFormValues>();
-  // Keep local state for token details, but let formik manage field value
-  const [token, setToken] = useState<TokenMetadata | undefined>(undefined);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAutomaticSelection, setIsAutomaticSelection] = useState(false);
 
-  // Keep local state in sync with formik state
   useEffect(() => {
-    const routes = getTokenRoutes(originCaip2Id, destinationCaip2Id, tokenRoutes);
-    let newFieldValue: TokenCaip19Id | undefined = undefined;
-    let newToken: TokenMetadata | undefined = undefined;
+    let newFieldValue: Token | undefined = undefined;
     let newIsAutomatic = true;
     if (routes.length === 1) {
-      newFieldValue = routes[0].baseTokenCaip19Id;
-      newToken = getToken(newFieldValue);
+      newFieldValue = 'TODO';
     } else if (routes.length > 1) {
-      newFieldValue = values[name] || routes[0].baseTokenCaip19Id;
-      newToken = getToken(newFieldValue!);
+      newFieldValue = 'TODO';
       newIsAutomatic = false;
     }
-    setToken(newToken);
     setFieldValue(name, newFieldValue || '');
     setIsAutomaticSelection(newIsAutomatic);
-  }, [name, token, values, originCaip2Id, destinationCaip2Id, tokenRoutes, setFieldValue]);
+  }, [name, values, origin, destination, setFieldValue]);
 
-  const onSelectToken = (newToken: TokenMetadata) => {
+  const onSelectToken = (newToken: Token) => {
     // Set the token address value in formik state
-    setFieldValue(name, newToken.tokenCaip19Id);
-    // reset amount after change token
-    setFieldValue('amount', '');
-    // Update local state
-    setToken(newToken);
+    setFieldValue(name, newToken);
     // Update nft state in parent
-    setIsNft(!!isNonFungibleToken(newToken.tokenCaip19Id));
+    //TODO
+    setIsNft(false);
   };
 
   const onClickField = () => {
@@ -73,8 +51,7 @@ export function TokenSelectField({
   return (
     <>
       <TokenButton
-        token={token}
-        name={name}
+        token={values[name]}
         disabled={isAutomaticSelection || disabled}
         onClick={onClickField}
         isAutomatic={isAutomaticSelection}
@@ -83,9 +60,8 @@ export function TokenSelectField({
         isOpen={isModalOpen}
         close={() => setIsModalOpen(false)}
         onSelect={onSelectToken}
-        originCaip2Id={originCaip2Id}
-        destinationCaip2Id={destinationCaip2Id}
-        tokenRoutes={tokenRoutes}
+        origin={origin}
+        destination={destination}
       />
     </>
   );
@@ -93,13 +69,11 @@ export function TokenSelectField({
 
 function TokenButton({
   token,
-  name,
   disabled,
   onClick,
   isAutomatic,
 }: {
-  token?: TokenMetadata;
-  name: string;
+  token?: Token;
   disabled?: boolean;
   onClick?: () => void;
   isAutomatic?: boolean;
@@ -107,7 +81,6 @@ function TokenButton({
   return (
     <button
       type="button"
-      name={name}
       className={`${styles.base} ${disabled ? styles.disabled : styles.enabled}`}
       onClick={onClick}
     >

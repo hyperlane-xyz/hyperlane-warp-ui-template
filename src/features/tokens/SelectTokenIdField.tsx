@@ -2,19 +2,19 @@ import { useField } from 'formik';
 import Image from 'next/image';
 import { useState } from 'react';
 
+import { Token } from '@hyperlane-xyz/sdk';
+
 import { Spinner } from '../../components/animation/Spinner';
 import { Modal } from '../../components/layout/Modal';
 import ChevronIcon from '../../images/icons/chevron-down.svg';
 
-import { useOriginTokenIdBalance } from './balances';
-
 type Props = {
   name: string;
-  tokenCaip19Id: TokenCaip19Id;
+  token: Token;
   disabled?: boolean;
 };
 
-export function SelectTokenIdField({ name, tokenCaip19Id, disabled }: Props) {
+export function SelectTokenIdField({ name, disabled }: Props) {
   const [, , helpers] = useField<number>(name);
   const [tokenId, setTokenId] = useState<string | undefined>(undefined);
   const handleChange = (newTokenId: string) => {
@@ -22,7 +22,9 @@ export function SelectTokenIdField({ name, tokenCaip19Id, disabled }: Props) {
     setTokenId(newTokenId);
   };
 
-  const { isLoading, tokenIds } = useOriginTokenIdBalance(tokenCaip19Id);
+  // const { isLoading, tokenIds } = useOriginTokenIdBalance(tokenCaip19Id);
+  const isLoading = false;
+  const tokenIds = [];
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 

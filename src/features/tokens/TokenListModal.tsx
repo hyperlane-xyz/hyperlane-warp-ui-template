@@ -1,33 +1,27 @@
 import Image from 'next/image';
 import { useMemo, useState } from 'react';
 
+import { Token } from '@hyperlane-xyz/sdk';
+
 import { TokenIcon } from '../../components/icons/TokenIcon';
 import { TextInput } from '../../components/input/TextField';
 import { Modal } from '../../components/layout/Modal';
 import { config } from '../../consts/config';
 import InfoIcon from '../../images/icons/info-circle.svg';
-import { getAssetNamespace, getTokenAddress, isNativeToken } from '../caip/tokens';
 import { getChainDisplayName } from '../chains/utils';
-import { RoutesMap } from '../routes/types';
-import { hasTokenRoute } from '../routes/utils';
-
-import { getTokens } from './metadata';
-import { TokenMetadata } from './types';
 
 export function TokenListModal({
   isOpen,
   close,
   onSelect,
-  originCaip2Id,
-  destinationCaip2Id,
-  tokenRoutes,
+  origin,
+  destination,
 }: {
   isOpen: boolean;
   close: () => void;
-  onSelect: (token: TokenMetadata) => void;
-  originCaip2Id: ChainCaip2Id;
-  destinationCaip2Id: ChainCaip2Id;
-  tokenRoutes: RoutesMap;
+  onSelect: (token: Token) => void;
+  origin: ChainName;
+  destination: ChainName;
 }) {
   const [search, setSearch] = useState('');
 
@@ -36,7 +30,7 @@ export function TokenListModal({
     setSearch('');
   };
 
-  const onSelectAndClose = (token: TokenMetadata) => {
+  const onSelectAndClose = (token: Token) => {
     onSelect(token);
     onClose();
   };
@@ -57,9 +51,8 @@ export function TokenListModal({
         autoComplete="off"
       />
       <TokenList
-        originCaip2Id={originCaip2Id}
-        destinationCaip2Id={destinationCaip2Id}
-        tokenRoutes={tokenRoutes}
+        origin={origin}
+        destination={destination}
         searchQuery={search}
         onSelect={onSelectAndClose}
       />
@@ -68,29 +61,22 @@ export function TokenListModal({
 }
 
 export function TokenList({
-  originCaip2Id,
-  destinationCaip2Id,
-  tokenRoutes,
+  origin,
+  destination,
   searchQuery,
   onSelect,
 }: {
-  originCaip2Id: ChainCaip2Id;
-  destinationCaip2Id: ChainCaip2Id;
-  tokenRoutes: RoutesMap;
+  origin: ChainName;
+  destination: ChainName;
   searchQuery: string;
-  onSelect: (token: TokenMetadata) => void;
+  onSelect: (token: Token) => void;
 }) {
   const tokens = useMemo(() => {
     const q = searchQuery?.trim().toLowerCase();
     return (
       getTokens()
         .map((t) => {
-          const hasRoute = hasTokenRoute(
-            originCaip2Id,
-            destinationCaip2Id,
-            t.tokenCaip19Id,
-            tokenRoutes,
-          );
+          const hasRoute = hasTokenRoute(origin, destination, t.tokenCaip19Id, tokenRoutes);
           return { ...t, disabled: !hasRoute };
         })
         .sort((a, b) => {
@@ -112,7 +98,7 @@ export function TokenList({
         // Hide/show disabled tokens
         .filter((t) => (config.showDisabledTokens ? true : !t.disabled))
     );
-  }, [searchQuery, originCaip2Id, destinationCaip2Id, tokenRoutes]);
+  }, [searchQuery, origin, destination, tokenRoutes]);
 
   return (
     <div className="flex flex-col items-stretch">
@@ -153,8 +139,8 @@ export function TokenList({
                 className="ml-auto mr-1"
                 data-te-toggle="tooltip"
                 title={`Route not supported for ${getChainDisplayName(
-                  originCaip2Id,
-                )} to ${getChainDisplayName(destinationCaip2Id)}`}
+                  origin,
+                )} to ${getChainDisplayName(destination)}`}
               />
             )}
           </button>

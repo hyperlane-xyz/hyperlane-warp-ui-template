@@ -120,7 +120,13 @@ async function executeTransfer({
   let status: TransferStatus = TransferStatus.Preparing;
 
   try {
-    const { originCaip2Id, destinationCaip2Id, tokenCaip19Id, amount, recipientAddress } = values;
+    const {
+      origin: originCaip2Id,
+      destination: destinationCaip2Id,
+      token: tokenCaip19Id,
+      amount,
+      recipientAddress,
+    } = values;
     const { protocol: originProtocol } = parseCaip2Id(originCaip2Id);
     const { reference: destReference } = parseCaip2Id(destinationCaip2Id);
     const destinationDomainId = getMultiProvider().getDomainId(destReference);

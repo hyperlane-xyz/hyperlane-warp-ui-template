@@ -146,7 +146,7 @@ export function SideBarMenu({
                   >
                     <div className="flex">
                       <div className="mr-2.5 flex flex-col items-center justify-center rounded-full bg-gray-100 h-[2.25rem] w-[2.25rem] p-1.5">
-                        <ChainLogo chainCaip2Id={t.params.originCaip2Id} size={20} />
+                        <ChainLogo chainCaip2Id={t.params.origin} size={20} />
                       </div>
                       <div className="flex flex-col">
                         <div className="flex flex-col">
@@ -155,15 +155,15 @@ export function SideBarMenu({
                               {t.params.amount}
                             </span>
                             <span className="text-gray-800 text-sm font-normal ml-1">
-                              {getToken(t.params.tokenCaip19Id)?.symbol || ''}
+                              {getToken(t.params.token)?.symbol || ''}
                             </span>
                             <span className="text-black text-xs font-normal ml-1">
-                              ({toTitleCase(getAssetNamespace(t.params.tokenCaip19Id))})
+                              ({toTitleCase(getAssetNamespace(t.params.token))})
                             </span>
                           </div>
                           <div className="mt-1 flex flex-row items-center">
                             <span className="text-thin text-gray-900 font-normal tracking-wide">
-                              {getChainDisplayName(t.params.originCaip2Id, true)}
+                              {getChainDisplayName(t.params.origin, true)}
                             </span>
                             <Image
                               className="mx-1"
@@ -173,7 +173,7 @@ export function SideBarMenu({
                               alt=""
                             />
                             <span className="text-thin text-gray-900 font-normal tracking-wide">
-                              {getChainDisplayName(t.params.destinationCaip2Id, true)}
+                              {getChainDisplayName(t.params.destination, true)}
                             </span>
                           </div>
                         </div>

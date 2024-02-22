@@ -82,7 +82,7 @@ function SwapChainsButton({ disabled }: { disabled?: boolean }) {
     setFieldValue('destination', origin);
     // Reset other fields on chain change
     setFieldValue('token', undefined);
-    setFieldValue('recipientAddress', '');
+    setFieldValue('recipient', '');
   };
 
   return (
@@ -178,38 +178,38 @@ function RecipientSection({ isReview }: { isReview: boolean }) {
   const { balance } = useDestinationBalance(values);
 
   // A crude way to detect transfer completions by triggering
-  // toast on recipientAddress balance increase. This is not ideal because it
+  // toast on recipient balance increase. This is not ideal because it
   // could confuse unrelated balance changes for message delivery
   // TODO replace with a polling worker that queries the hyperlane explorer
-  const recipientAddress = values.recipientAddress;
-  const prevRecipientBalance = useRef<{ balance?: TokenAmount; recipientAddress?: string }>({
-    recipientAddress: '',
+  const recipient = values.recipient;
+  const prevRecipientBalance = useRef<{ balance?: TokenAmount; recipient?: string }>({
+    recipient: '',
   });
   useEffect(() => {
     if (
-      recipientAddress &&
+      recipient &&
       balance &&
       prevRecipientBalance.current.balance &&
-      prevRecipientBalance.current.recipientAddress === recipientAddress &&
+      prevRecipientBalance.current.recipient === recipient &&
       balance.equals(prevRecipientBalance.current.balance) &&
       balance.amount > prevRecipientBalance.current.balance.amount
     ) {
       toast.success('Recipient has received funds, transfer complete!');
     }
-    prevRecipientBalance.current = { balance, recipientAddress };
-  }, [balance, recipientAddress, prevRecipientBalance]);
+    prevRecipientBalance.current = { balance, recipient: recipient };
+  }, [balance, recipient, prevRecipientBalance]);
 
   return (
     <div className="mt-4">
       <div className="flex justify-between pr-1">
-        <label htmlFor="recipientAddress" className="block uppercase text-sm text-gray-500 pl-0.5">
+        <label htmlFor="recipient" className="block uppercase text-sm text-gray-500 pl-0.5">
           Recipient Address
         </label>
         <TokenBalance label="Remote balance" balance={balance} />
       </div>
       <div className="relative w-full">
         <TextField
-          name="recipientAddress"
+          name="recipient"
           placeholder="0x123456..."
           classes="w-full"
           disabled={isReview}
@@ -307,7 +307,7 @@ function SelfButton({ disabled }: { disabled?: boolean }) {
   const address = useAccountAddressForChain(values.destination);
   const onClick = () => {
     if (disabled) return;
-    if (address) setFieldValue('recipientAddress', address);
+    if (address) setFieldValue('recipient', address);
     else
       toast.warn(
         `No account found for for chain ${getChainDisplayName(
@@ -414,20 +414,15 @@ function useFormInitialValues(): TransferFormValues {
       destination: connectedToken.chainName,
       token: firstToken,
       amount: '',
-      recipientAddress: '',
+      recipient: '',
     };
   }, []);
 }
 
 function validateForm(values: TransferFormValues, accounts: Record<ProtocolType, AccountInfo>) {
-  const { origin, destination, token, amount, recipientAddress } = values;
+  const { origin, destination, token, amount, recipient } = values;
   if (!token) return { token: 'Token is required' };
   const amountWei = toWei(amount, token.decimals);
   const sender = getAccountAddressForChain(origin, accounts) || '';
-  return getWarpCore().validateTransfer(
-    token.amount(amountWei),
-    destination,
-    sender,
-    recipientAddress,
-  );
+  return getWarpCore().validateTransfer(token.amount(amountWei), destination, sender, recipient);
 }

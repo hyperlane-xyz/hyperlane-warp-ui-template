@@ -5,8 +5,7 @@ import { ProtocolType } from '@hyperlane-xyz/utils';
 
 import { config } from '../../../consts/config';
 import { logger } from '../../../utils/logger';
-import { tryGetProtocolType } from '../../caip/chains';
-import { getChainProtocol } from '../../chains/utils';
+import { getChainProtocol, tryGetChainProtocol } from '../../chains/utils';
 
 import {
   useCosmosAccount,
@@ -68,16 +67,16 @@ export function useAccounts(): {
   );
 }
 
-export function useAccountForChain(chainCaip2Id?: ChainCaip2Id): AccountInfo | undefined {
+export function useAccountForChain(chainName?: ChainName): AccountInfo | undefined {
   const { accounts } = useAccounts();
-  if (!chainCaip2Id) return undefined;
-  const protocol = tryGetProtocolType(chainCaip2Id);
+  if (!chainName) return undefined;
+  const protocol = tryGetChainProtocol(chainName);
   if (!protocol) return undefined;
   return accounts[protocol];
 }
 
-export function useAccountAddressForChain(chainCaip2Id?: ChainCaip2Id): Address | undefined {
-  return getAccountAddressForChain(chainCaip2Id, useAccountForChain(chainCaip2Id));
+export function useAccountAddressForChain(chainName?: ChainName): Address | undefined {
+  return getAccountAddressForChain(chainName, useAccounts().accounts);
 }
 
 export function getAccountAddressForChain(

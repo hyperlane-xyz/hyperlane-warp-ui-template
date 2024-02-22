@@ -1,19 +1,14 @@
-import { MsgTransferEncodeObject } from '@cosmjs/stargate';
 import { useCallback, useState } from 'react';
 import { toast } from 'react-toastify';
 
-import {
-  CosmIbcToWarpTokenAdapter,
-  CosmIbcTokenAdapter,
-  IHypTokenAdapter,
-} from '@hyperlane-xyz/sdk';
 import { WarpTxCategory } from '@hyperlane-xyz/sdk/dist/warp/types';
-import { toTitleCase, toWei } from '@hyperlane-xyz/utils';
+import { ProtocolType, toTitleCase, toWei } from '@hyperlane-xyz/utils';
 
 import { toastTxSuccess } from '../../components/toast/TxSuccessToast';
-import { getMultiProvider, getWarpCore } from '../../context/context';
+import { getWarpCore } from '../../context/context';
 import { logger } from '../../utils/logger';
 import { AppState, useStore } from '../store';
+import { getCosmosClientType } from '../wallet/hooks/cosmos';
 import {
   getAccountAddressForChain,
   useAccounts,
@@ -95,16 +90,17 @@ async function executeTransfer({
   updateTransferStatus(transferIndex, TransferStatus.Preparing);
 
   try {
-    const { origin, destination, token: originToken, amount, recipientAddress } = values;
+    const { origin, destination, token: originToken, amount, recipient } = values;
     const destinationToken = originToken?.getConnectedTokenForChain(destination);
     if (!originToken || !destinationToken) throw new Error('No token route found between chains');
-    const originProtocol = originToken.protocol;
 
+    const originProtocol = originToken.protocol;
     const isNft = originToken.isNft();
     const weiAmountOrId = isNft ? amount : toWei(amount, originToken.decimals);
     const tokenAmount = originToken.amount(weiAmountOrId);
-    const activeChain = activeChains.chains[originProtocol];
+
     const sendTransaction = transactionFns[originProtocol].sendTransaction;
+    const activeChain = activeChains.chains[originProtocol];
     const activeAccountAddress = getAccountAddressForChain(origin, activeAccounts.accounts);
     if (!activeAccountAddress) throw new Error('No active account found for origin chain');
 
@@ -120,14 +116,14 @@ async function executeTransfer({
     }
 
     addTransfer({
-      activeAccountAddress,
       timestamp: new Date().getTime(),
       status: TransferStatus.Preparing,
       origin,
       destination,
       originTokenAddressOrDenom: originToken.addressOrDenom,
       destTokenAddressOrDenom: destinationToken.addressOrDenom,
-      recipientAddress,
+      sender: activeAccountAddress,
+      recipient,
       amount,
     });
 
@@ -137,20 +133,21 @@ async function executeTransfer({
       tokenAmount,
       destination,
       activeAccountAddress,
-      recipientAddress,
+      recipient,
     );
 
-    // Send any necessary approvals first
+    const clientType =
+      originProtocol === ProtocolType.Cosmos ? getCosmosClientType(originToken) : undefined;
+
     const hashes: string[] = [];
     for (const tx of txs) {
       updateTransferStatus(transferIndex, txCategoryToStatuses[tx.category][0]);
-      // TODO fix sendTx type
-      // TODO use `ethers5TxToWagmiTx` in evm sender
-      // TODO   tx: { type: 'cosmwasm', request: transferTxRequest },
+      // TODO   tx: { type: 'cosmwasm'|'stargate', request: transferTxRequest },
       const { hash, confirm } = await sendTransaction({
         tx,
-        chain: origin,
-        activeChain: activeChain,
+        chainName: origin,
+        activeChainName: activeChain.chainName,
+        clientType,
       });
       updateTransferStatus(transferIndex, txCategoryToStatuses[tx.category][1]);
       const receipt = await confirm();
@@ -180,71 +177,6 @@ async function executeTransfer({
 
   setIsLoading(false);
   if (onDone) onDone();
-}
-
-async function executeIbcTransfer({
-  weiAmountOrId,
-  destinationDomainId,
-  recipientAddress,
-  tokenRoute,
-  activeChain,
-  activeAccountAddress,
-  updateStatus,
-  sendTransaction,
-}: ExecuteTransferParams<any, void>) {
-  if (!isIbcRoute(tokenRoute)) throw new Error('Unsupported route type');
-  updateStatus(TransferStatus.CreatingTransfer);
-
-  const multiProvider = getMultiProvider();
-  const chainName = getChainMetadata(tokenRoute.originCaip2Id).name;
-  const adapterProperties = {
-    ibcDenom: tokenRoute.originIbcDenom,
-    sourcePort: tokenRoute.sourcePort,
-    sourceChannel: tokenRoute.sourceChannel,
-  };
-
-  let adapter: IHypTokenAdapter;
-  let txValue: string | undefined = undefined;
-  if (isIbcOnlyRoute(tokenRoute)) {
-    adapter = new CosmIbcTokenAdapter(chainName, multiProvider, {}, adapterProperties);
-  } else {
-    const intermediateChainName = getChainMetadata(tokenRoute.intermediateCaip2Id).name;
-    adapter = new CosmIbcToWarpTokenAdapter(
-      chainName,
-      multiProvider,
-      {
-        intermediateRouterAddress: tokenRoute.intermediateRouterAddress,
-        destinationRouterAddress: tokenRoute.destRouterAddress,
-      },
-      {
-        ...adapterProperties,
-        derivedIbcDenom: tokenRoute.derivedIbcDenom,
-        intermediateChainName,
-      },
-    );
-    const igpQuote = await fetchIgpQuote(tokenRoute, adapter);
-    txValue = igpQuote.weiAmount;
-  }
-
-  const transferTxRequest = (await adapter.populateTransferRemoteTx({
-    weiAmountOrId,
-    recipient: recipientAddress,
-    fromAccountOwner: activeAccountAddress,
-    destination: destinationDomainId,
-    txValue,
-  })) as MsgTransferEncodeObject;
-
-  updateStatus(TransferStatus.SigningTransfer);
-  const { hash: transferTxHash, confirm: confirmTransfer } = await sendTransaction({
-    tx: { type: 'stargate', request: transferTxRequest },
-    chainCaip2Id: tokenRoute.originCaip2Id,
-    activeCap2Id: activeChain.chainCaip2Id,
-  });
-
-  updateStatus(TransferStatus.ConfirmingTransfer);
-  await confirmTransfer();
-
-  return { transferTxHash };
 }
 
 const errorMessages: Partial<Record<TransferStatus, string>> = {

@@ -5,7 +5,7 @@ export interface TransferFormValues {
   destination: ChainName;
   token: Token | undefined;
   amount: string;
-  recipientAddress: Address;
+  recipient: Address;
 }
 
 export enum TransferStatus {
@@ -32,9 +32,9 @@ export interface TransferContext {
   originTokenAddressOrDenom?: string;
   destTokenAddressOrDenom?: string;
   amount: string;
-  recipientAddress: Address;
+  sender: Address;
+  recipient: Address;
   originTxHash?: string;
   msgId?: string;
   timestamp: number;
-  activeAccountAddress: Address;
 }

@@ -36,21 +36,21 @@ export function useDestinationBalance({
   origin,
   destination,
   token,
-  recipientAddress,
+  recipient,
 }: TransferFormValues) {
   const { isLoading, isError, error, data } = useQuery({
-    queryKey: ['useDestinationBalance', recipientAddress, origin, destination, token],
+    queryKey: ['useDestinationBalance', recipient, origin, destination, token],
     queryFn: async () => {
       if (
         !origin ||
         !destination ||
         !token ||
-        !recipientAddress ||
-        !isValidAddress(recipientAddress, token.protocol)
+        !recipient ||
+        !isValidAddress(recipient, token.protocol)
       )
         return null;
 
-      return token.getBalance(getMultiProvider(), recipientAddress);
+      return token.getBalance(getMultiProvider(), recipient);
     },
     refetchInterval: 5000,
   });

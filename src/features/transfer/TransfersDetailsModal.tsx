@@ -10,7 +10,7 @@ import { ChainLogo } from '../../components/icons/ChainLogo';
 import { TokenIcon } from '../../components/icons/TokenIcon';
 import { WideChevron } from '../../components/icons/WideChevron';
 import { Modal } from '../../components/layout/Modal';
-import { getMultiProvider } from '../../context/context';
+import { getMultiProvider, getWarpCore } from '../../context/context';
 import LinkIcon from '../../images/icons/external-link-icon.svg';
 import { formatTimestamp } from '../../utils/date';
 import { getHypExplorerLink } from '../../utils/links';
@@ -40,9 +40,18 @@ export function TransfersDetailsModal({
   const [toUrl, setToUrl] = useState<string>('');
   const [originTxUrl, setOriginTxUrl] = useState<string>('');
 
-  const { params, status, originTxHash, msgId, timestamp, activeAccountAddress } = transfer || {};
-  // TODO stored value can't have whole token
-  const { destination, origin, token, amount, recipientAddress } = params || {};
+  const {
+    status,
+    origin,
+    destination,
+    amount,
+    sender,
+    recipient,
+    originTokenAddressOrDenom,
+    originTxHash,
+    msgId,
+    timestamp,
+  } = transfer || {};
 
   const account = useAccountForChain(origin);
   const multiProvider = getMultiProvider();
@@ -50,19 +59,19 @@ export function TransfersDetailsModal({
   const getMessageUrls = useCallback(async () => {
     try {
       if (originTxHash) {
-        const originTxUrl = multiProvider.tryGetExplorerTxUrl(originChain, { hash: originTxHash });
+        const originTxUrl = multiProvider.tryGetExplorerTxUrl(origin, { hash: originTxHash });
         if (originTxUrl) setOriginTxUrl(fixDoubleSlash(originTxUrl));
       }
       const [fromUrl, toUrl] = await Promise.all([
-        multiProvider.tryGetExplorerAddressUrl(originChain, activeAccountAddress),
-        multiProvider.tryGetExplorerAddressUrl(destChain, recipientAddress),
+        multiProvider.tryGetExplorerAddressUrl(origin, sender),
+        multiProvider.tryGetExplorerAddressUrl(destination, recipient),
       ]);
       if (fromUrl) setFromUrl(fixDoubleSlash(fromUrl));
       if (toUrl) setToUrl(fixDoubleSlash(toUrl));
     } catch (error) {
       logger.error('Error fetching URLs:', error);
     }
-  }, [activeAccountAddress, originTxHash, multiProvider, recipientAddress, originChain, destChain]);
+  }, [sender, recipient, originTxHash, multiProvider, origin, destination]);
 
   useEffect(() => {
     if (!transfer) return;
@@ -73,7 +82,9 @@ export function TransfersDetailsModal({
 
   const isAccountReady = !!account?.isReady;
   const connectorName = account?.connectorName || 'wallet';
-  const token = getToken(token);
+  // TODO confirm works for native tokens? Should findToken create for ALL unfound natives?
+  // If so, simplify getTransferQuote in WarpCore
+  const token = getWarpCore().findToken(origin, originTokenAddressOrDenom);
 
   const isPermissionlessRoute = hasPermissionlessChain([destination, origin]);
 
@@ -128,14 +139,18 @@ export function TransfersDetailsModal({
         <TokenIcon token={token} size={30} />
         <div className="ml-2 flex items items-baseline">
           <span className="text-xl font-medium">{amount}</span>
-          <span className="text-xl font-medium ml-1">{token?.symbol || ''}</span>
-          <span className="font-semibold ml-1">({toTitleCase(tokenNamespace)})</span>
+          {token && (
+            <>
+              <span className="text-xl font-medium ml-1">{token.symbol}</span>
+              <span className="font-semibold ml-1">({toTitleCase(token.standard)})</span>
+            </>
+          )}
         </div>
       </div>
 
       <div className="mt-4 flex items-center justify-around">
         <div className="ml-2 flex flex-col items-center">
-          <ChainLogo chainCaip2Id={origin} size={64} background={true} />
+          <ChainLogo chainName={origin} size={64} background={true} />
           <span className="mt-1 font-medium tracking-wider">
             {getChainDisplayName(origin, true)}
           </span>
@@ -145,7 +160,7 @@ export function TransfersDetailsModal({
           <WideChevron />
         </div>
         <div className="mr-2 flex flex-col items-center">
-          <ChainLogo chainCaip2Id={destination} size={64} background={true} />
+          <ChainLogo chainName={destination} size={64} background={true} />
           <span className="mt-1 font-medium tracking-wider">
             {getChainDisplayName(destination, true)}
           </span>
@@ -154,9 +169,11 @@ export function TransfersDetailsModal({
 
       {isFinal ? (
         <div className="mt-5 flex flex-col space-y-4">
-          <TransferProperty name="Sender Address" value={activeAccountAddress} url={fromUrl} />
-          <TransferProperty name="Recipient Address" value={recipientAddress} url={toUrl} />
-          {!isNative && <TransferProperty name="Token Address" value={tokenAddress} />}
+          <TransferProperty name="Sender Address" value={sender} url={fromUrl} />
+          <TransferProperty name="Recipient Address" value={recipient} url={toUrl} />
+          {token?.addressOrDenom && (
+            <TransferProperty name="Token Address" value={token.addressOrDenom} />
+          )}
           {originTxHash && (
             <TransferProperty
               name="Origin Transaction Hash"

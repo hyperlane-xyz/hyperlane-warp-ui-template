@@ -1,4 +1,4 @@
-import { chainMetadata } from '@hyperlane-xyz/sdk';
+import { ChainNameOrId, chainMetadata } from '@hyperlane-xyz/sdk';
 import { ProtocolType, toTitleCase } from '@hyperlane-xyz/utils';
 
 import { getMultiProvider } from '../../context/context';
@@ -28,18 +28,18 @@ export function getChainByRpcEndpoint(endpoint?: string) {
   );
 }
 
-export function tryGetChainMetadata(chain: ChainName) {
+export function tryGetChainMetadata(chain: ChainNameOrId) {
   return getMultiProvider().tryGetChainMetadata(chain);
 }
 
-export function getChainMetadata(chain: ChainName) {
+export function getChainMetadata(chain: ChainNameOrId) {
   return getMultiProvider().getChainMetadata(chain);
 }
 
-export function tryGetChainProtocol(chain: ChainName) {
+export function tryGetChainProtocol(chain: ChainNameOrId) {
   return tryGetChainMetadata(chain)?.protocol;
 }
 
-export function getChainProtocol(chain: ChainName) {
+export function getChainProtocol(chain: ChainNameOrId) {
   return getChainMetadata(chain).protocol;
 }

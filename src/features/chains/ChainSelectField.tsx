@@ -24,7 +24,7 @@ export function ChainSelectField({ name, label, chains, onChange, disabled }: Pr
   const handleChange = (newChainId: ChainName) => {
     helpers.setValue(newChainId);
     // Reset other fields on chain change
-    setFieldValue('recipientAddress', '');
+    setFieldValue('recipient', '');
     setFieldValue('amount', '');
     setFieldValue('token', '');
     if (onChange) onChange(newChainId);

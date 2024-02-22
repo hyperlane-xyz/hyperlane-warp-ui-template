@@ -10,7 +10,9 @@ export function ChainLogo(props: ComponentProps<typeof ChainLogoInner>) {
   const { chainId, chainDisplayName, icon } = useMemo(() => {
     if (!chainName) return {};
     const chainDisplayName = getChainDisplayName(chainName);
-    const logoUri = tryGetChainMetadata(chainName)?.logoURI;
+    const chainMetadata = tryGetChainMetadata(chainName);
+    const chainId = chainMetadata?.chainId;
+    const logoUri = chainMetadata?.logoURI;
     const icon = logoUri
       ? (props: { width: number; height: number; title?: string }) => (
           <Image src={logoUri} alt="" {...props} />

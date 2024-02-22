@@ -8,7 +8,7 @@ import { isValidUrl } from '../../utils/url';
 import { ErrorBoundary } from '../errors/ErrorBoundary';
 
 interface Props {
-  token?: Token;
+  token?: Token | null;
   size?: number;
 }
 

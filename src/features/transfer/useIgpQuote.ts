@@ -7,7 +7,7 @@ import { getWarpCore } from '../../context/context';
 
 export function useIgpQuote(token?: Token, destination?: ChainName) {
   const { isLoading, isError, error, data } = useQuery({
-    queryKey: ['useIgpQuote', token, destination],
+    queryKey: ['useIgpQuote', destination, token?.addressOrDenom],
     queryFn: () => {
       if (!token || !destination) return null;
       return getWarpCore().getTransferGasQuote(token, destination);

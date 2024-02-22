@@ -6,11 +6,11 @@ import TokensYaml from '../consts/tokens.yaml';
 import { validateZodResult } from '../utils/zod.ts';
 
 export function getWarpCoreConfig(): WarpCoreConfig {
-  const resultJson = WarpCoreConfigSchema.safeParse({ TokensJson });
+  const resultJson = WarpCoreConfigSchema.safeParse(TokensJson);
   const configJson = validateZodResult(resultJson, 'warp core json config');
-  const resultYaml = WarpCoreConfigSchema.safeParse({ TokensYaml });
+  const resultYaml = WarpCoreConfigSchema.safeParse(TokensYaml);
   const configYaml = validateZodResult(resultYaml, 'warp core yaml config');
-  const resultTs = WarpCoreConfigSchema.safeParse({ TokensTS });
+  const resultTs = WarpCoreConfigSchema.safeParse(TokensTS);
   const configTs = validateZodResult(resultTs, 'warp core typescript config');
 
   const tokens = [...configJson.tokens, ...configYaml.tokens, ...configTs.tokens];

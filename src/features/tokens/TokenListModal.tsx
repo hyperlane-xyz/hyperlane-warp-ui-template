@@ -128,7 +128,7 @@ export function TokenList({
               <div className=" mt-0.5 text-xs flex space-x-1">
                 <span>{`Decimals: ${t.token.decimals}`}</span>
                 <span>-</span>
-                <span>{`Type: ${t.token.standard}`}</span>
+                <span>{`Chain: ${getChainDisplayName(t.token.chainName)}`}</span>
               </div>
             </div>
             {t.disabled && (

@@ -87,10 +87,10 @@ export function getAccountAddressForChain(
   const protocol = getChainProtocol(chainName);
   const account = accounts[protocol];
   if (protocol === ProtocolType.Cosmos) {
-    return account.addresses.find((a) => a.chainName === chainName)?.address;
+    return account?.addresses.find((a) => a.chainName === chainName)?.address;
   } else {
     // Use first because only cosmos has the notion of per-chain addresses
-    return account.addresses[0].address;
+    return account?.addresses[0]?.address;
   }
 }
 

@@ -40,8 +40,7 @@ export function TokenSelectField({ name, origin, destination, disabled, setIsNft
     // Set the token address value in formik state
     setFieldValue(name, newToken);
     // Update nft state in parent
-    //TODO
-    setIsNft(false);
+    setIsNft(newToken.isNft());
   };
 
   const onClickField = () => {

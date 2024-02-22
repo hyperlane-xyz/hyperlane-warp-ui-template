@@ -10,7 +10,7 @@ export function useIsApproveRequired(token?: Token, amount?: string, enabled = t
   const owner = useAccountAddressForChain(token?.chainName);
 
   const { isLoading, isError, error, data } = useQuery({
-    queryKey: ['useIsApproveRequired', token, owner, amount],
+    queryKey: ['useIsApproveRequired', owner, amount, token?.addressOrDenom],
     queryFn: async () => {
       if (!token || !owner || !amount) return false;
       return getWarpCore().isApproveRequired(token.amount(amount), owner);

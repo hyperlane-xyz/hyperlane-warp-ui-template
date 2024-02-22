@@ -393,7 +393,9 @@ function ReviewDetails({ visible }: { visible: boolean }) {
                   </p>
                   <p className="flex">
                     <span className="min-w-[7rem]">Interchain Gas</span>
-                    <span>{`${igpQuote?.amount || '0'} ${igpQuote?.token?.symbol || ''}`}</span>
+                    <span>{`${igpQuote?.getDecimalFormattedAmount().toFixed(4) || '0'} ${
+                      igpQuote?.token?.symbol || ''
+                    }`}</span>
                   </p>
                 </>
               )}

@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { Token } from '@hyperlane-xyz/sdk';
 
 import { TokenIcon } from '../../components/icons/TokenIcon';
+import { getWarpCore } from '../../context/context';
 import ChevronIcon from '../../images/icons/chevron-down.svg';
 import { TransferFormValues } from '../transfer/types';
 
@@ -24,15 +25,14 @@ export function TokenSelectField({ name, origin, destination, disabled, setIsNft
   const [isAutomaticSelection, setIsAutomaticSelection] = useState(false);
 
   useEffect(() => {
+    const tokensWithRoute = getWarpCore().getTokensForRoute(origin, destination);
     let newFieldValue: Token | undefined = undefined;
-    let newIsAutomatic = true;
-    if (routes.length === 1) {
-      newFieldValue = 'TODO';
-    } else if (routes.length > 1) {
-      newFieldValue = 'TODO';
-      newIsAutomatic = false;
+    let newIsAutomatic = false;
+    if (tokensWithRoute.length === 1) {
+      newFieldValue = tokensWithRoute[0];
+      newIsAutomatic = true;
     }
-    setFieldValue(name, newFieldValue || '');
+    setFieldValue(name, newFieldValue);
     setIsAutomaticSelection(newIsAutomatic);
   }, [name, values, origin, destination, setFieldValue]);
 

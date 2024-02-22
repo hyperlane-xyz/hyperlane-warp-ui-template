@@ -10,10 +10,9 @@ export interface TransferFormValues {
 
 export enum TransferStatus {
   Preparing = 'preparing',
-  CreatingApprove = 'creating-approve',
+  CreatingTxs = 'creating-txs',
   SigningApprove = 'signing-approve',
   ConfirmingApprove = 'confirming-approve',
-  CreatingTransfer = 'creating-transfer',
   SigningTransfer = 'signing-transfer',
   ConfirmingTransfer = 'confirming-transfer',
   ConfirmedTransfer = 'confirmed-transfer',
@@ -28,8 +27,12 @@ export const FinalTransferStatuses = [...SentTransferStatuses, TransferStatus.Fa
 
 export interface TransferContext {
   status: TransferStatus;
-  route: Route;
-  params: TransferFormValues;
+  origin: ChainName;
+  destination: ChainName;
+  originTokenAddressOrDenom?: string;
+  destTokenAddressOrDenom?: string;
+  amount: string;
+  recipientAddress: Address;
   originTxHash?: string;
   msgId?: string;
   timestamp: number;

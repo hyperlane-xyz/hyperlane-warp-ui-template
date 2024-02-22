@@ -330,19 +330,20 @@ function SelfButton({ disabled }: { disabled?: boolean }) {
 
 function ReviewDetails({ visible }: { visible: boolean }) {
   const {
-    values: { amount, destination, token },
+    values: { amount, destination, token: originToken },
   } = useFormikContext<TransferFormValues>();
 
-  const isNft = token?.isNft();
-  const amountWei = isNft ? amount.toString() : toWei(amount, token?.decimals);
-  const originTokenSymbol = token?.symbol || '';
+  const destinationToken = originToken?.getConnectedTokenForChain(destination);
+  const isNft = originToken?.isNft();
+  const amountWei = isNft ? amount.toString() : toWei(amount, originToken?.decimals);
+  const originTokenSymbol = originToken?.symbol || '';
 
   const { isLoading: isApproveLoading, isApproveRequired } = useIsApproveRequired(
-    token,
+    originToken,
     amountWei,
     visible,
   );
-  const { isLoading: isQuoteLoading, igpQuote } = useIgpQuote(token, destination);
+  const { isLoading: isQuoteLoading, igpQuote } = useIgpQuote(originToken, destination);
 
   const isLoading = isApproveLoading || isQuoteLoading;
 
@@ -363,9 +364,9 @@ function ReviewDetails({ visible }: { visible: boolean }) {
             <div>
               <h4>Transaction 1: Approve Transfer</h4>
               <div className="mt-1.5 ml-1.5 pl-2 border-l border-gray-300 space-y-1.5 text-xs">
-                <p>{`Router Address: ${token?.addressOrDenom}`}</p>
-                {token?.collateralAddressOrDenom && (
-                  <p>{`Collateral Address: ${token.collateralAddressOrDenom}`}</p>
+                <p>{`Router Address: ${originToken?.addressOrDenom}`}</p>
+                {originToken?.collateralAddressOrDenom && (
+                  <p>{`Collateral Address: ${originToken.collateralAddressOrDenom}`}</p>
                 )}
               </div>
             </div>
@@ -373,10 +374,10 @@ function ReviewDetails({ visible }: { visible: boolean }) {
           <div>
             <h4>{`Transaction${isApproveRequired ? ' 2' : ''}: Transfer Remote`}</h4>
             <div className="mt-1.5 ml-1.5 pl-2 border-l border-gray-300 space-y-1.5 text-xs">
-              {route?.destRouterAddress && (
+              {destinationToken?.addressOrDenom && (
                 <p className="flex">
                   <span className="min-w-[7rem]">Remote Token</span>
-                  <span>{route.destRouterAddress}</span>
+                  <span>{destinationToken.addressOrDenom}</span>
                 </p>
               )}
               {isNft ? (

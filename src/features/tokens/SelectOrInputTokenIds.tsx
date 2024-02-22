@@ -27,7 +27,7 @@ export function SelectOrInputTokenIds({ disabled }: { disabled: boolean }) {
   );
 }
 
-function InputTokenId({ disabled }: { disabled: boolean; token: Token }) {
+function InputTokenId({ disabled }: { disabled: boolean; token?: Token }) {
   // const {
   //   values: { amount },
   // } = useFormikContext<TransferFormValues>();

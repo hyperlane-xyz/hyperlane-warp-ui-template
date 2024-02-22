@@ -10,7 +10,7 @@ import ChevronIcon from '../../images/icons/chevron-down.svg';
 
 type Props = {
   name: string;
-  token: Token;
+  token?: Token;
   disabled?: boolean;
 };
 

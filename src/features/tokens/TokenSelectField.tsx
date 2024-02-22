@@ -1,11 +1,11 @@
-import { useFormikContext } from 'formik';
+import { useField, useFormikContext } from 'formik';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
 import { Token } from '@hyperlane-xyz/sdk';
 
 import { TokenIcon } from '../../components/icons/TokenIcon';
-import { getWarpCore } from '../../context/context';
+import { getIndexForToken, getTokenByIndex, getWarpCore } from '../../context/context';
 import ChevronIcon from '../../images/icons/chevron-down.svg';
 import { TransferFormValues } from '../transfer/types';
 
@@ -13,32 +13,32 @@ import { TokenListModal } from './TokenListModal';
 
 type Props = {
   name: string;
-  origin: ChainName;
-  destination: ChainName;
   disabled?: boolean;
   setIsNft: (value: boolean) => void;
 };
 
-export function TokenSelectField({ name, origin, destination, disabled, setIsNft }: Props) {
-  const { values, setFieldValue } = useFormikContext<TransferFormValues>();
+export function TokenSelectField({ name, disabled, setIsNft }: Props) {
+  const { values } = useFormikContext<TransferFormValues>();
+  const [field, , helpers] = useField<number | undefined>(name);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAutomaticSelection, setIsAutomaticSelection] = useState(false);
 
   useEffect(() => {
+    const { origin, destination } = values;
     const tokensWithRoute = getWarpCore().getTokensForRoute(origin, destination);
-    let newFieldValue: Token | undefined = undefined;
+    let newFieldValue: number | undefined = undefined;
     let newIsAutomatic = false;
     if (tokensWithRoute.length === 1) {
-      newFieldValue = tokensWithRoute[0];
+      newFieldValue = getIndexForToken(tokensWithRoute[0]);
       newIsAutomatic = true;
     }
-    setFieldValue(name, newFieldValue);
+    helpers.setValue(newFieldValue);
     setIsAutomaticSelection(newIsAutomatic);
-  }, [name, values, origin, destination, setFieldValue]);
+  }, [values, helpers]);
 
   const onSelectToken = (newToken: Token) => {
     // Set the token address value in formik state
-    setFieldValue(name, newToken);
+    helpers.setValue(getIndexForToken(newToken));
     // Update nft state in parent
     setIsNft(newToken.isNft());
   };
@@ -50,7 +50,7 @@ export function TokenSelectField({ name, origin, destination, disabled, setIsNft
   return (
     <>
       <TokenButton
-        token={values[name]}
+        token={getTokenByIndex(field.value)}
         disabled={isAutomaticSelection || disabled}
         onClick={onClickField}
         isAutomatic={isAutomaticSelection}
@@ -59,8 +59,8 @@ export function TokenSelectField({ name, origin, destination, disabled, setIsNft
         isOpen={isModalOpen}
         close={() => setIsModalOpen(false)}
         onSelect={onSelectToken}
-        origin={origin}
-        destination={destination}
+        origin={values.origin}
+        destination={values.destination}
       />
     </>
   );

@@ -1,7 +1,5 @@
 import { useFormikContext } from 'formik';
 
-import { Token } from '@hyperlane-xyz/sdk';
-
 import { TextField } from '../../components/input/TextField';
 import { TransferFormValues } from '../transfer/types';
 
@@ -11,7 +9,7 @@ import { SelectTokenIdField } from './SelectTokenIdField';
 
 export function SelectOrInputTokenIds({ disabled }: { disabled: boolean }) {
   const {
-    values: { token },
+    values: { tokenIndex },
   } = useFormikContext<TransferFormValues>();
   // const accountAddress = useAccountAddressForChain(origin);
   // const { isContractAllowToGetTokenIds } = useContractSupportsTokenByOwner(
@@ -21,13 +19,13 @@ export function SelectOrInputTokenIds({ disabled }: { disabled: boolean }) {
   const isContractAllowToGetTokenIds = true;
 
   return isContractAllowToGetTokenIds ? (
-    <SelectTokenIdField name="amount" disabled={disabled} token={token} />
+    <SelectTokenIdField name="amount" disabled={disabled} tokenIndex={tokenIndex} />
   ) : (
-    <InputTokenId disabled={disabled} token={token} />
+    <InputTokenId disabled={disabled} tokenIndex={tokenIndex} />
   );
 }
 
-function InputTokenId({ disabled }: { disabled: boolean; token?: Token }) {
+function InputTokenId({ disabled }: { disabled: boolean; tokenIndex?: number }) {
   // const {
   //   values: { amount },
   // } = useFormikContext<TransferFormValues>();

@@ -26,7 +26,7 @@ export function ChainSelectField({ name, label, chains, onChange, disabled }: Pr
     // Reset other fields on chain change
     setFieldValue('recipient', '');
     setFieldValue('amount', '');
-    setFieldValue('token', undefined);
+    setFieldValue('tokenIndex', undefined);
     if (onChange) onChange(newChainId);
   };
 

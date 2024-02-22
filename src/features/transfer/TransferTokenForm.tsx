@@ -1,5 +1,5 @@
 import { Form, Formik, useFormikContext } from 'formik';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import { TokenAmount } from '@hyperlane-xyz/sdk';
@@ -12,7 +12,7 @@ import { SolidButton } from '../../components/buttons/SolidButton';
 import { ChevronIcon } from '../../components/icons/Chevron';
 import { WideChevron } from '../../components/icons/WideChevron';
 import { TextField } from '../../components/input/TextField';
-import { getTokens, getWarpCore } from '../../context/context';
+import { getIndexForToken, getTokenByIndex, getTokens, getWarpCore } from '../../context/context';
 import SwapIcon from '../../images/icons/swap.svg';
 import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
@@ -31,6 +31,7 @@ import {
 import { AccountInfo } from '../wallet/hooks/types';
 
 import { TransferFormValues } from './types';
+import { useRecipientBalanceWatcher } from './useBalanceWatcher';
 import { useIgpQuote } from './useIgpQuote';
 import { useTokenTransfer } from './useTokenTransfer';
 
@@ -81,7 +82,7 @@ function SwapChainsButton({ disabled }: { disabled?: boolean }) {
     setFieldValue('origin', destination);
     setFieldValue('destination', origin);
     // Reset other fields on chain change
-    setFieldValue('token', undefined);
+    setFieldValue('tokenIndex', undefined);
     setFieldValue('recipient', '');
   };
 
@@ -124,20 +125,12 @@ function TokenSection({
   setIsNft: (b: boolean) => void;
   isReview: boolean;
 }) {
-  const { values } = useFormikContext<TransferFormValues>();
-
   return (
     <div className="flex-1">
-      <label htmlFor="token" className="block uppercase text-sm text-gray-500 pl-0.5">
+      <label htmlFor="tokenIndex" className="block uppercase text-sm text-gray-500 pl-0.5">
         Token
       </label>
-      <TokenSelectField
-        name="token"
-        origin={values.origin}
-        destination={values.destination}
-        disabled={isReview}
-        setIsNft={setIsNft}
-      />
+      <TokenSelectField name="tokenIndex" disabled={isReview} setIsNft={setIsNft} />
     </div>
   );
 }
@@ -176,28 +169,7 @@ function AmountSection({ isNft, isReview }: { isNft: boolean; isReview: boolean 
 function RecipientSection({ isReview }: { isReview: boolean }) {
   const { values } = useFormikContext<TransferFormValues>();
   const { balance } = useDestinationBalance(values);
-
-  // A crude way to detect transfer completions by triggering
-  // toast on recipient balance increase. This is not ideal because it
-  // could confuse unrelated balance changes for message delivery
-  // TODO replace with a polling worker that queries the hyperlane explorer
-  const recipient = values.recipient;
-  const prevRecipientBalance = useRef<{ balance?: TokenAmount; recipient?: string }>({
-    recipient: '',
-  });
-  useEffect(() => {
-    if (
-      recipient &&
-      balance &&
-      prevRecipientBalance.current.balance &&
-      prevRecipientBalance.current.recipient === recipient &&
-      balance.equals(prevRecipientBalance.current.balance) &&
-      balance.amount > prevRecipientBalance.current.balance.amount
-    ) {
-      toast.success('Recipient has received funds, transfer complete!');
-    }
-    prevRecipientBalance.current = { balance, recipient: recipient };
-  }, [balance, recipient, prevRecipientBalance]);
+  useRecipientBalanceWatcher(values.recipient, balance);
 
   return (
     <div className="mt-4">
@@ -330,13 +302,14 @@ function SelfButton({ disabled }: { disabled?: boolean }) {
 
 function ReviewDetails({ visible }: { visible: boolean }) {
   const {
-    values: { amount, destination, token: originToken },
+    values: { amount, destination, tokenIndex },
   } = useFormikContext<TransferFormValues>();
-
+  const originToken = getTokenByIndex(tokenIndex);
+  const originTokenSymbol = originToken?.symbol || '';
   const destinationToken = originToken?.getConnectedTokenForChain(destination);
   const isNft = originToken?.isNft();
+
   const amountWei = isNft ? amount.toString() : toWei(amount, originToken?.decimals);
-  const originTokenSymbol = originToken?.symbol || '';
 
   const { isLoading: isApproveLoading, isApproveRequired } = useIsApproveRequired(
     originToken,
@@ -414,7 +387,7 @@ function useFormInitialValues(): TransferFormValues {
     return {
       origin: firstToken.chainName,
       destination: connectedToken.chainName,
-      token: firstToken,
+      tokenIndex: getIndexForToken(firstToken),
       amount: '',
       recipient: '',
     };
@@ -422,7 +395,8 @@ function useFormInitialValues(): TransferFormValues {
 }
 
 function validateForm(values: TransferFormValues, accounts: Record<ProtocolType, AccountInfo>) {
-  const { origin, destination, token, amount, recipient } = values;
+  const { origin, destination, tokenIndex, amount, recipient } = values;
+  const token = getTokenByIndex(tokenIndex);
   if (!token) return { token: 'Token is required' };
   const amountWei = toWei(amount, token.decimals);
   const sender = getAccountAddressForChain(origin, accounts) || '';

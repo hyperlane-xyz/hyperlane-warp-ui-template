@@ -2,8 +2,6 @@ import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 
-import { toTitleCase } from '@hyperlane-xyz/utils';
-
 import { SmallSpinner } from '../../components/animation/SmallSpinner';
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import { Identicon } from '../../components/icons/Identicon';
@@ -194,9 +192,6 @@ function TransferSummary({
             <div className="flex items items-baseline">
               <span className="text-gray-800 text-sm font-normal">{amount}</span>
               <span className="text-gray-800 text-sm font-normal ml-1">{token?.symbol || ''}</span>
-              <span className="text-black text-xs font-normal ml-1">
-                ({toTitleCase(token?.standard || '')})
-              </span>
             </div>
             <div className="mt-1 flex flex-row items-center">
               <span className="text-thin text-gray-900 font-normal tracking-wide">

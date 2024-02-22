@@ -2,15 +2,13 @@ import { useField } from 'formik';
 import Image from 'next/image';
 import { useState } from 'react';
 
-import { Token } from '@hyperlane-xyz/sdk';
-
 import { Spinner } from '../../components/animation/Spinner';
 import { Modal } from '../../components/layout/Modal';
 import ChevronIcon from '../../images/icons/chevron-down.svg';
 
 type Props = {
   name: string;
-  token?: Token;
+  tokenIndex?: number;
   disabled?: boolean;
 };
 

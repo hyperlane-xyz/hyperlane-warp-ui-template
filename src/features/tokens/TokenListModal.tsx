@@ -75,9 +75,10 @@ export function TokenList({
   const tokens = useMemo(() => {
     const q = searchQuery?.trim().toLowerCase();
     const warpCore = getWarpCore();
+    const multiChainTokens = warpCore.tokens.filter((t) => t.isMultiChainToken());
     const tokensWithRoute = warpCore.getTokensForRoute(origin, destination);
     return (
-      warpCore.tokens
+      multiChainTokens
         .map((t) => ({
           token: t,
           disabled: !tokensWithRoute.includes(t),

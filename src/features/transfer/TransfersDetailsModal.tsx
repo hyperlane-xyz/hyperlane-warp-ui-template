@@ -1,7 +1,6 @@
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { toTitleCase } from '@hyperlane-xyz/utils';
 import { MessageStatus, MessageTimeline, useMessageTimeline } from '@hyperlane-xyz/widgets';
 
 import { Spinner } from '../../components/animation/Spinner';
@@ -139,12 +138,7 @@ export function TransfersDetailsModal({
         <TokenIcon token={token} size={30} />
         <div className="ml-2 flex items items-baseline">
           <span className="text-xl font-medium">{amount}</span>
-          {token && (
-            <>
-              <span className="text-xl font-medium ml-1">{token.symbol}</span>
-              <span className="font-semibold ml-1">({toTitleCase(token.standard)})</span>
-            </>
-          )}
+          <span className="text-xl font-medium ml-1">{token?.symbol}</span>
         </div>
       </div>
 

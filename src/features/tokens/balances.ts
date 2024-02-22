@@ -4,7 +4,7 @@ import { Token } from '@hyperlane-xyz/sdk';
 import { isValidAddress } from '@hyperlane-xyz/utils';
 
 import { useToastError } from '../../components/toast/useToastError';
-import { getMultiProvider } from '../../context/context';
+import { getMultiProvider, getTokenByIndex } from '../../context/context';
 import { TransferFormValues } from '../transfer/types';
 import { useAccountAddressForChain } from '../wallet/hooks/multiProtocol';
 
@@ -13,7 +13,6 @@ export function useBalance(chain?: ChainName, token?: Token, address?: Address) 
     queryKey: ['useBalance', chain, address, token?.addressOrDenom],
     queryFn: () => {
       if (!chain || !token || !address || !isValidAddress(address, token.protocol)) return null;
-
       return token.getBalance(getMultiProvider(), address);
     },
     refetchInterval: 5000,
@@ -28,17 +27,19 @@ export function useBalance(chain?: ChainName, token?: Token, address?: Address) 
   };
 }
 
-export function useOriginBalance({ origin, token }: TransferFormValues) {
+export function useOriginBalance({ origin, tokenIndex }: TransferFormValues) {
   const address = useAccountAddressForChain(origin);
+  const token = getTokenByIndex(tokenIndex);
   return useBalance(origin, token, address);
 }
 
 export function useDestinationBalance({
   origin,
   destination,
-  token,
+  tokenIndex,
   recipient,
 }: TransferFormValues) {
-  const destinationToken = token?.getConnectedTokenForChain(destination);
+  const originToken = getTokenByIndex(tokenIndex);
+  const destinationToken = originToken?.getConnectedTokenForChain(destination);
   return useBalance(origin, destinationToken, recipient);
 }

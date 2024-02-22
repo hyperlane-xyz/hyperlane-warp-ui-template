@@ -1,4 +1,11 @@
-import { ChainMap, ChainMetadata, MultiProtocolProvider, WarpCore } from '@hyperlane-xyz/sdk';
+import {
+  ChainMap,
+  ChainMetadata,
+  MultiProtocolProvider,
+  Token,
+  WarpCore,
+} from '@hyperlane-xyz/sdk';
+import { isNullish } from '@hyperlane-xyz/utils';
 
 import { getChainConfigs } from './chains';
 import { getWarpCoreConfig } from './tokens';
@@ -40,4 +47,17 @@ export function getWarpCore() {
 
 export function getTokens() {
   return getWarpCore().tokens;
+}
+
+export function getTokenByIndex(tokenIndex?: number) {
+  const tokens = getTokens();
+  if (isNullish(tokenIndex) || tokenIndex >= tokens.length) return undefined;
+  return tokens[tokenIndex];
+}
+
+export function getIndexForToken(token?: Token): number | undefined {
+  if (!token) return undefined;
+  const index = getTokens().indexOf(token);
+  if (index >= 0) return index;
+  else return undefined;
 }

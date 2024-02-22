@@ -5,7 +5,7 @@ import { WarpTxCategory } from '@hyperlane-xyz/sdk/dist/warp/types';
 import { ProtocolType, toTitleCase, toWei } from '@hyperlane-xyz/utils';
 
 import { toastTxSuccess } from '../../components/toast/TxSuccessToast';
-import { getWarpCore } from '../../context/context';
+import { getTokenByIndex, getWarpCore } from '../../context/context';
 import { logger } from '../../utils/logger';
 import { AppState, useStore } from '../store';
 import { getCosmosClientType } from '../wallet/hooks/cosmos';
@@ -90,7 +90,8 @@ async function executeTransfer({
   updateTransferStatus(transferIndex, TransferStatus.Preparing);
 
   try {
-    const { origin, destination, token: originToken, amount, recipient } = values;
+    const { origin, destination, tokenIndex, amount, recipient } = values;
+    const originToken = getTokenByIndex(tokenIndex);
     const destinationToken = originToken?.getConnectedTokenForChain(destination);
     if (!originToken || !destinationToken) throw new Error('No token route found between chains');
 
@@ -108,7 +109,7 @@ async function executeTransfer({
 
     const isCollateralSufficient = await warpCore.isDestinationCollateralSufficient(
       tokenAmount,
-      origin,
+      destination,
     );
     if (!isCollateralSufficient) {
       toast.error('Insufficient collateral on destination for transfer');
@@ -142,9 +143,8 @@ async function executeTransfer({
     const hashes: string[] = [];
     for (const tx of txs) {
       updateTransferStatus(transferIndex, txCategoryToStatuses[tx.category][0]);
-      // TODO   tx: { type: 'cosmwasm'|'stargate', request: transferTxRequest },
       const { hash, confirm } = await sendTransaction({
-        tx,
+        tx: tx.transaction,
         chainName: origin,
         activeChainName: activeChain.chainName,
         clientType,

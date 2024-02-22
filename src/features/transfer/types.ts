@@ -1,9 +1,7 @@
-import { Token } from '@hyperlane-xyz/sdk';
-
 export interface TransferFormValues {
   origin: ChainName;
   destination: ChainName;
-  token: Token | undefined;
+  tokenIndex: number | undefined;
   amount: string;
   recipient: Address;
 }

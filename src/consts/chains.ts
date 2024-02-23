@@ -42,6 +42,7 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
       name: 'Tia',
       symbol: 'TIA',
       decimals: 6,
+      denom: 'utia',
     },
     grpcUrls: [{ http: 'https://grpc.celestia.nodestake.top' }],
     restUrls: [{ http: 'https://public-celestia-lcd.numia.xyz' }],

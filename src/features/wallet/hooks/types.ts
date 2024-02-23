@@ -2,7 +2,7 @@ import { ProtocolType } from '@hyperlane-xyz/utils';
 
 export interface ChainAddress {
   address: string;
-  chainCaip2Id?: ChainCaip2Id;
+  chainName?: ChainName;
 }
 
 export interface AccountInfo {
@@ -16,16 +16,17 @@ export interface AccountInfo {
 
 export interface ActiveChainInfo {
   chainDisplayName?: string;
-  chainCaip2Id?: ChainCaip2Id;
+  chainName?: ChainName;
 }
 
 export type SendTransactionFn<TxReq = any, TxResp = any> = (params: {
   tx: TxReq;
-  chainCaip2Id: ChainCaip2Id;
-  activeCap2Id?: ChainCaip2Id;
+  chainName: ChainName;
+  activeChainName?: ChainName;
+  clientType?: string;
 }) => Promise<{ hash: string; confirm: () => Promise<TxResp> }>;
 
-export type SwitchNetworkFn = (chainCaip2Id: ChainCaip2Id) => Promise<void>;
+export type SwitchNetworkFn = (chainName: ChainName) => Promise<void>;
 
 export interface ChainTransactionFns {
   sendTransaction: SendTransactionFn;

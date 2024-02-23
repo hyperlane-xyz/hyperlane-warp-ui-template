@@ -3,24 +3,24 @@ import { useCallback } from 'react';
 
 import { ProtocolType } from '@hyperlane-xyz/utils';
 
-import { tryGetProtocolType } from '../../features/caip/chains';
+import { tryGetChainProtocol } from '../../features/chains/utils';
 import { useAccountForChain, useConnectFns } from '../../features/wallet/hooks/multiProtocol';
 import { useTimeout } from '../../utils/timeout';
 
 import { SolidButton } from './SolidButton';
 
 interface Props {
-  chainCaip2Id: ChainCaip2Id;
+  chainName: ChainName;
   text: string;
   classes?: string;
 }
 
-export function ConnectAwareSubmitButton<FormValues = any>({ chainCaip2Id, text, classes }: Props) {
-  const protocol = tryGetProtocolType(chainCaip2Id) || ProtocolType.Ethereum;
+export function ConnectAwareSubmitButton<FormValues = any>({ chainName, text, classes }: Props) {
+  const protocol = tryGetChainProtocol(chainName) || ProtocolType.Ethereum;
   const connectFns = useConnectFns();
   const connectFn = connectFns[protocol];
 
-  const account = useAccountForChain(chainCaip2Id);
+  const account = useAccountForChain(chainName);
   const isAccountReady = account?.isReady;
 
   const { errors, setErrors, touched, setTouched } = useFormikContext<FormValues>();

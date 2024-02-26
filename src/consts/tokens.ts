@@ -32,7 +32,7 @@ export const tokenList: WarpTokenConfig = [
   {
     type: 'native',
     chainId: 11155111,
-    hypNativeAddress: '0x8C159cc81F396E474A0b201f770c9944885A537A',
+    hypNativeAddress: '0xd99eA1D8b9542D35252504DDd59EDe8C43FB15fd',
     name: 'Ether',
     symbol: 'ETH',
     decimals: 18,

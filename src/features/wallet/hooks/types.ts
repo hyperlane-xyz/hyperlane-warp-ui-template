@@ -1,3 +1,4 @@
+import { ProviderType } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 
 export interface ChainAddress {
@@ -23,7 +24,7 @@ export type SendTransactionFn<TxReq = any, TxResp = any> = (params: {
   tx: TxReq;
   chainName: ChainName;
   activeChainName?: ChainName;
-  clientType?: string;
+  providerType?: ProviderType;
 }) => Promise<{ hash: string; confirm: () => Promise<TxResp> }>;
 
 export type SwitchNetworkFn = (chainName: ChainName) => Promise<void>;

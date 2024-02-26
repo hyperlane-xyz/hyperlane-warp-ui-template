@@ -1,14 +1,14 @@
 import Image from 'next/image';
 import { memo } from 'react';
 
-import { Token } from '@hyperlane-xyz/sdk';
+import { IToken } from '@hyperlane-xyz/sdk';
 import { Circle } from '@hyperlane-xyz/widgets';
 
 import { isValidUrl } from '../../utils/url';
 import { ErrorBoundary } from '../errors/ErrorBoundary';
 
 interface Props {
-  token?: Token | null;
+  token?: IToken | null;
   size?: number;
 }
 

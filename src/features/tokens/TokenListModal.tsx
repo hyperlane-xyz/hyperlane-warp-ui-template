@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import { useMemo, useState } from 'react';
 
-import { Token } from '@hyperlane-xyz/sdk';
+import { IToken } from '@hyperlane-xyz/sdk';
 
 import { TokenIcon } from '../../components/icons/TokenIcon';
 import { TextInput } from '../../components/input/TextField';
@@ -20,7 +20,7 @@ export function TokenListModal({
 }: {
   isOpen: boolean;
   close: () => void;
-  onSelect: (token: Token) => void;
+  onSelect: (token: IToken) => void;
   origin: ChainName;
   destination: ChainName;
 }) {
@@ -31,7 +31,7 @@ export function TokenListModal({
     setSearch('');
   };
 
-  const onSelectAndClose = (token: Token) => {
+  const onSelectAndClose = (token: IToken) => {
     onSelect(token);
     onClose();
   };
@@ -70,7 +70,7 @@ export function TokenList({
   origin: ChainName;
   destination: ChainName;
   searchQuery: string;
-  onSelect: (token: Token) => void;
+  onSelect: (token: IToken) => void;
 }) {
   const tokens = useMemo(() => {
     const q = searchQuery?.trim().toLowerCase();

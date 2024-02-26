@@ -2,7 +2,7 @@ import { useField, useFormikContext } from 'formik';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
-import { Token } from '@hyperlane-xyz/sdk';
+import { IToken } from '@hyperlane-xyz/sdk';
 
 import { TokenIcon } from '../../components/icons/TokenIcon';
 import { getIndexForToken, getTokenByIndex, getWarpCore } from '../../context/context';
@@ -36,7 +36,7 @@ export function TokenSelectField({ name, disabled, setIsNft }: Props) {
     setIsAutomaticSelection(newIsAutomatic);
   }, [values, helpers]);
 
-  const onSelectToken = (newToken: Token) => {
+  const onSelectToken = (newToken: IToken) => {
     // Set the token address value in formik state
     helpers.setValue(getIndexForToken(newToken));
     // Update nft state in parent
@@ -72,7 +72,7 @@ function TokenButton({
   onClick,
   isAutomatic,
 }: {
-  token?: Token;
+  token?: IToken;
   disabled?: boolean;
   onClick?: () => void;
   isAutomatic?: boolean;

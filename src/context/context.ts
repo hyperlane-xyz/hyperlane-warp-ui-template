@@ -1,6 +1,7 @@
 import {
   ChainMap,
   ChainMetadata,
+  IToken,
   MultiProtocolProvider,
   Token,
   WarpCore,
@@ -55,9 +56,9 @@ export function getTokenByIndex(tokenIndex?: number) {
   return tokens[tokenIndex];
 }
 
-export function getIndexForToken(token?: Token): number | undefined {
+export function getIndexForToken(token?: IToken): number | undefined {
   if (!token) return undefined;
-  const index = getTokens().indexOf(token);
+  const index = getTokens().indexOf(token as Token);
   if (index >= 0) return index;
   else return undefined;
 }

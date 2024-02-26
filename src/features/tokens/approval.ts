@@ -1,12 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { Token } from '@hyperlane-xyz/sdk';
+import { IToken } from '@hyperlane-xyz/sdk';
 
 import { useToastError } from '../../components/toast/useToastError';
 import { getWarpCore } from '../../context/context';
 import { useAccountAddressForChain } from '../wallet/hooks/multiProtocol';
 
-export function useIsApproveRequired(token?: Token, amount?: string, enabled = true) {
+export function useIsApproveRequired(token?: IToken, amount?: string, enabled = true) {
   const owner = useAccountAddressForChain(token?.chainName);
 
   const { isLoading, isError, error, data } = useQuery({

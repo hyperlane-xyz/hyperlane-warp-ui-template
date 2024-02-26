@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { Token } from '@hyperlane-xyz/sdk';
+import { IToken } from '@hyperlane-xyz/sdk';
 import { isValidAddress } from '@hyperlane-xyz/utils';
 
 import { useToastError } from '../../components/toast/useToastError';
@@ -8,7 +8,7 @@ import { getMultiProvider, getTokenByIndex } from '../../context/context';
 import { TransferFormValues } from '../transfer/types';
 import { useAccountAddressForChain } from '../wallet/hooks/multiProtocol';
 
-export function useBalance(chain?: ChainName, token?: Token, address?: Address) {
+export function useBalance(chain?: ChainName, token?: IToken, address?: Address) {
   const { isLoading, isError, error, data } = useQuery({
     queryKey: ['useBalance', chain, address, token?.addressOrDenom],
     queryFn: () => {
@@ -40,6 +40,6 @@ export function useDestinationBalance({
   recipient,
 }: TransferFormValues) {
   const originToken = getTokenByIndex(tokenIndex);
-  const destinationToken = originToken?.getConnectedTokenForChain(destination);
-  return useBalance(origin, destinationToken, recipient);
+  const connection = originToken?.getConnectionForChain(destination);
+  return useBalance(origin, connection?.token, recipient);
 }

@@ -306,7 +306,8 @@ function ReviewDetails({ visible }: { visible: boolean }) {
   } = useFormikContext<TransferFormValues>();
   const originToken = getTokenByIndex(tokenIndex);
   const originTokenSymbol = originToken?.symbol || '';
-  const destinationToken = originToken?.getConnectedTokenForChain(destination);
+  const connection = originToken?.getConnectionForChain(destination);
+  const destinationToken = connection?.token;
   const isNft = originToken?.isNft();
 
   const amountWei = isNft ? amount.toString() : toWei(amount, originToken?.decimals);
@@ -382,11 +383,11 @@ function ReviewDetails({ visible }: { visible: boolean }) {
 
 function useFormInitialValues(): TransferFormValues {
   return useMemo(() => {
-    const firstToken = getTokens().filter((t) => t.connectedTokens?.length)[0];
-    const connectedToken = firstToken.connectedTokens![0];
+    const firstToken = getTokens()[0];
+    const connectedToken = firstToken.connections?.[0];
     return {
       origin: firstToken.chainName,
-      destination: connectedToken.chainName,
+      destination: connectedToken?.token?.chainName || '',
       tokenIndex: getIndexForToken(firstToken),
       amount: '',
       recipient: '',

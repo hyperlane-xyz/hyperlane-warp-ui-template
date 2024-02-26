@@ -3,7 +3,7 @@ import { useChain, useChains } from '@cosmos-kit/react';
 import { useCallback, useMemo } from 'react';
 import { toast } from 'react-toastify';
 
-import { TOKEN_COSMWASM_STANDARDS, Token } from '@hyperlane-xyz/sdk';
+import { ProviderType } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 
 import { PLACEHOLDER_COSMOS_CHAIN } from '../../../consts/values';
@@ -12,11 +12,6 @@ import { getCosmosChainNames } from '../../chains/metadata';
 import { getChainMetadata } from '../../chains/utils';
 
 import { AccountInfo, ActiveChainInfo, ChainAddress, ChainTransactionFns } from './types';
-
-export enum CosmosClientType {
-  Cosmwasm = 'cosmwasm',
-  Stargate = 'stargate',
-}
 
 export function useCosmosAccount(): AccountInfo {
   const chainToContext = useChains(getCosmosChainNames());
@@ -69,12 +64,12 @@ export function useCosmosTransactionFns(): ChainTransactionFns {
       tx,
       chainName,
       activeChainName,
-      clientType,
+      providerType,
     }: {
       tx: any;
       chainName: ChainName;
       activeChainName?: ChainName;
-      clientType?: string;
+      providerType?: ProviderType;
     }) => {
       const chainContext = chainToContext[chainName];
       if (!chainContext?.address) throw new Error(`Cosmos wallet not connected for ${chainName}`);
@@ -82,14 +77,14 @@ export function useCosmosTransactionFns(): ChainTransactionFns {
       logger.debug(`Sending ${tx.type} tx on chain ${chainName}`);
       const { getSigningCosmWasmClient, getSigningStargateClient } = chainContext;
       let result: ExecuteResult | DeliverTxResponse;
-      if (clientType === CosmosClientType.Cosmwasm) {
+      if (providerType === ProviderType.CosmJsWasm) {
         const client = await getSigningCosmWasmClient();
         result = await client.executeMultiple(chainContext.address, [tx], 'auto');
-      } else if (clientType === CosmosClientType.Stargate) {
+      } else if (providerType === ProviderType.CosmJs) {
         const client = await getSigningStargateClient();
         result = await client.signAndBroadcast(chainContext.address, [tx], 'auto');
       } else {
-        throw new Error(`Invalid cosmos client type ${clientType}`);
+        throw new Error(`Invalid cosmos provider type ${providerType}`);
       }
 
       const confirm = async () => {
@@ -102,10 +97,4 @@ export function useCosmosTransactionFns(): ChainTransactionFns {
   );
 
   return { sendTransaction: onSendTx, switchNetwork: onSwitchNetwork };
-}
-
-export function getCosmosClientType(originToken: Token) {
-  return TOKEN_COSMWASM_STANDARDS.includes(originToken.standard)
-    ? CosmosClientType.Cosmwasm
-    : CosmosClientType.Stargate;
 }

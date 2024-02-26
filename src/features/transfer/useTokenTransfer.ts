@@ -1,14 +1,13 @@
 import { useCallback, useState } from 'react';
 import { toast } from 'react-toastify';
 
-import { WarpTxCategory } from '@hyperlane-xyz/sdk/dist/warp/types';
-import { ProtocolType, toTitleCase, toWei } from '@hyperlane-xyz/utils';
+import { WarpTxCategory } from '@hyperlane-xyz/sdk';
+import { toTitleCase, toWei } from '@hyperlane-xyz/utils';
 
 import { toastTxSuccess } from '../../components/toast/TxSuccessToast';
 import { getTokenByIndex, getWarpCore } from '../../context/context';
 import { logger } from '../../utils/logger';
 import { AppState, useStore } from '../store';
-import { getCosmosClientType } from '../wallet/hooks/cosmos';
 import {
   getAccountAddressForChain,
   useAccounts,
@@ -87,13 +86,14 @@ async function executeTransfer({
 }) {
   logger.debug('Preparing transfer transaction(s)');
   setIsLoading(true);
-  updateTransferStatus(transferIndex, TransferStatus.Preparing);
+  let transferStatus: TransferStatus = TransferStatus.Preparing;
+  updateTransferStatus(transferIndex, transferStatus);
 
   try {
     const { origin, destination, tokenIndex, amount, recipient } = values;
     const originToken = getTokenByIndex(tokenIndex);
-    const destinationToken = originToken?.getConnectedTokenForChain(destination);
-    if (!originToken || !destinationToken) throw new Error('No token route found between chains');
+    const connection = originToken?.getConnectionForChain(destination);
+    if (!originToken || !connection) throw new Error('No token route found between chains');
 
     const originProtocol = originToken.protocol;
     const isNft = originToken.isNft();
@@ -122,13 +122,13 @@ async function executeTransfer({
       origin,
       destination,
       originTokenAddressOrDenom: originToken.addressOrDenom,
-      destTokenAddressOrDenom: destinationToken.addressOrDenom,
+      destTokenAddressOrDenom: connection.token.addressOrDenom,
       sender: activeAccountAddress,
       recipient,
       amount,
     });
 
-    updateTransferStatus(transferIndex, TransferStatus.CreatingTxs);
+    updateTransferStatus(transferIndex, (transferStatus = TransferStatus.CreatingTxs));
 
     const txs = await warpCore.getTransferRemoteTxs(
       tokenAmount,
@@ -137,19 +137,16 @@ async function executeTransfer({
       recipient,
     );
 
-    const clientType =
-      originProtocol === ProtocolType.Cosmos ? getCosmosClientType(originToken) : undefined;
-
     const hashes: string[] = [];
     for (const tx of txs) {
-      updateTransferStatus(transferIndex, txCategoryToStatuses[tx.category][0]);
+      updateTransferStatus(transferIndex, (transferStatus = txCategoryToStatuses[tx.category][0]));
       const { hash, confirm } = await sendTransaction({
         tx: tx.transaction,
         chainName: origin,
         activeChainName: activeChain.chainName,
-        clientType,
+        providerType: tx.type,
       });
-      updateTransferStatus(transferIndex, txCategoryToStatuses[tx.category][1]);
+      updateTransferStatus(transferIndex, (transferStatus = txCategoryToStatuses[tx.category][1]));
       const receipt = await confirm();
       const description = toTitleCase(tx.category);
       logger.debug(`${description} transaction confirmed, hash:`, receipt.transactionHash);
@@ -160,18 +157,18 @@ async function executeTransfer({
     // TODO
     // const msgId = tryGetMsgIdFromTransferReceipt(transferReceipt);
 
-    updateTransferStatus(transferIndex, TransferStatus.ConfirmedTransfer, {
+    updateTransferStatus(transferIndex, (transferStatus = TransferStatus.ConfirmedTransfer), {
       originTxHash: hashes.at(-1),
       msgId: '',
     });
   } catch (error) {
-    logger.error(`Error at stage ${status}`, error);
+    logger.error(`Error at stage ${transferStatus}`, error);
     updateTransferStatus(transferIndex, TransferStatus.Failed);
     if (JSON.stringify(error).includes('ChainMismatchError')) {
       // Wagmi switchNetwork call helps prevent this but isn't foolproof
       toast.error('Wallet must be connected to origin chain');
     } else {
-      toast.error(errorMessages[status] || 'Unable to transfer tokens.');
+      toast.error(errorMessages[transferStatus] || 'Unable to transfer tokens.');
     }
   }
 

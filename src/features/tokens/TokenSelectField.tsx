@@ -23,18 +23,28 @@ export function TokenSelectField({ name, disabled, setIsNft }: Props) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAutomaticSelection, setIsAutomaticSelection] = useState(false);
 
+  const { origin, destination } = values;
   useEffect(() => {
-    const { origin, destination } = values;
     const tokensWithRoute = getWarpCore().getTokensForRoute(origin, destination);
-    let newFieldValue: number | undefined = undefined;
-    let newIsAutomatic = false;
-    if (tokensWithRoute.length === 1) {
+    let newFieldValue: number | undefined;
+    let newIsAutomatic: boolean;
+    // No tokens available for this route
+    if (tokensWithRoute.length === 0) {
+      newFieldValue = undefined;
+      newIsAutomatic = true;
+    }
+    // Exactly one found
+    else if (tokensWithRoute.length === 1) {
       newFieldValue = getIndexForToken(tokensWithRoute[0]);
       newIsAutomatic = true;
+      // Multiple possibilities
+    } else {
+      newFieldValue = undefined;
+      newIsAutomatic = false;
     }
     helpers.setValue(newFieldValue);
     setIsAutomaticSelection(newIsAutomatic);
-  }, [values, helpers]);
+  }, [origin, destination, helpers]);
 
   const onSelectToken = (newToken: IToken) => {
     // Set the token address value in formik state

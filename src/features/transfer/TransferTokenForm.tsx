@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import { TokenAmount } from '@hyperlane-xyz/sdk';
-import { ProtocolType, toWei } from '@hyperlane-xyz/utils';
+import { ProtocolType, errorToString, toWei } from '@hyperlane-xyz/utils';
 
 import { SmallSpinner } from '../../components/animation/SmallSpinner';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
@@ -317,7 +317,7 @@ function ReviewDetails({ visible }: { visible: boolean }) {
     amountWei,
     visible,
   );
-  const { isLoading: isQuoteLoading, igpQuote } = useIgpQuote(originToken, destination);
+  const { isLoading: isQuoteLoading, igpQuote } = useIgpQuote(originToken, destination, visible);
 
   const isLoading = isApproveLoading || isQuoteLoading;
 
@@ -365,12 +365,14 @@ function ReviewDetails({ visible }: { visible: boolean }) {
                     <span className="min-w-[7rem]">Amount</span>
                     <span>{`${amount} ${originTokenSymbol}`}</span>
                   </p>
-                  <p className="flex">
-                    <span className="min-w-[7rem]">Interchain Gas</span>
-                    <span>{`${igpQuote?.getDecimalFormattedAmount().toFixed(4) || '0'} ${
-                      igpQuote?.token?.symbol || ''
-                    }`}</span>
-                  </p>
+                  {igpQuote && igpQuote.amount > 0n && (
+                    <p className="flex">
+                      <span className="min-w-[7rem]">Interchain Gas</span>
+                      <span>{`${igpQuote?.getDecimalFormattedAmount().toFixed(4) || '0'} ${
+                        igpQuote?.token?.symbol || ''
+                      }`}</span>
+                    </p>
+                  )}
                 </>
               )}
             </div>
@@ -395,11 +397,25 @@ function useFormInitialValues(): TransferFormValues {
   }, []);
 }
 
-function validateForm(values: TransferFormValues, accounts: Record<ProtocolType, AccountInfo>) {
-  const { origin, destination, tokenIndex, amount, recipient } = values;
-  const token = getTokenByIndex(tokenIndex);
-  if (!token) return { token: 'Token is required' };
-  const amountWei = toWei(amount, token.decimals);
-  const sender = getAccountAddressForChain(origin, accounts) || '';
-  return getWarpCore().validateTransfer(token.amount(amountWei), destination, sender, recipient);
+async function validateForm(
+  values: TransferFormValues,
+  accounts: Record<ProtocolType, AccountInfo>,
+) {
+  try {
+    const { origin, destination, tokenIndex, amount, recipient } = values;
+    const token = getTokenByIndex(tokenIndex);
+    if (!token) return { token: 'Token is required' };
+    const amountWei = toWei(amount, token.decimals);
+    const sender = getAccountAddressForChain(origin, accounts) || '';
+    const result = await getWarpCore().validateTransfer(
+      token.amount(amountWei),
+      destination,
+      sender,
+      recipient,
+    );
+    return result;
+  } catch (error) {
+    logger.error('Error validating form', error);
+    return { form: errorToString(error) };
+  }
 }

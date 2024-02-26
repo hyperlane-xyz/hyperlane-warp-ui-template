@@ -1,4 +1,4 @@
-import { Chains, TokenStandard, WarpCoreConfig } from '@hyperlane-xyz/sdk';
+import { Chains, TokenConnectionType, TokenStandard, WarpCoreConfig } from '@hyperlane-xyz/sdk';
 
 // A list of Warp UI token configs
 // Tokens can be defined here, in tokens.json, or in tokens.yaml
@@ -13,15 +13,41 @@ export const tokenConfigs: WarpCoreConfig = {
       symbol: 'TIA',
       decimals: 6,
       addressOrDenom: 'utia',
-      // TODO source channel
       logoURI: '/logos/celestia.png',
-      connectedTokens: [
-        'cosmos|neutron|ibc/773B4D0A3CD667B2275D5A4A7A2F0909C0BA0F4059C0B9181E680DDF4965DCC7',
-        // TODO two-hop to Arbitrum via Neutron
-        // TODO two-hop to Manta via Neutron
+      connections: [
+        {
+          token:
+            'cosmos|neutron|ibc/773B4D0A3CD667B2275D5A4A7A2F0909C0BA0F4059C0B9181E680DDF4965DCC7',
+          type: TokenConnectionType.Ibc,
+          sourcePort: 'transfer',
+          sourceChannel: 'channel-8',
+        },
+        {
+          token: 'ethereum|arbitrum|0xD56734d7f9979dD94FAE3d67C7e928234e71cD4C',
+          type: TokenConnectionType.IbcHyperlane,
+          sourcePort: 'transfer',
+          sourceChannel: 'channel-8',
+          intermediateChainName: 'neutron',
+          intermediateRouterAddress:
+            'neutron1jyyjd3x0jhgswgm6nnctxvzla8ypx50tew3ayxxwkrjfxhvje6kqzvzudq',
+          intermediateIbcDenom:
+            'ibc/773B4D0A3CD667B2275D5A4A7A2F0909C0BA0F4059C0B9181E680DDF4965DCC7',
+        },
+        {
+          token: 'ethereum|mantapacific|0x6Fae4D9935E2fcb11fC79a64e917fb2BF14DaFaa',
+          type: TokenConnectionType.IbcHyperlane,
+          sourcePort: 'transfer',
+          sourceChannel: 'channel-8',
+          intermediateChainName: 'neutron',
+          intermediateRouterAddress:
+            'neutron1ch7x3xgpnj62weyes8vfada35zff6z59kt2psqhnx9gjnt2ttqdqtva3pa',
+          intermediateIbcDenom:
+            'ibc/773B4D0A3CD667B2275D5A4A7A2F0909C0BA0F4059C0B9181E680DDF4965DCC7',
+        },
       ],
     },
-    // TIA from Celestia on Neutron
+
+    // TIA on Neutron from Celestia
     {
       chainName: Chains.neutron,
       standard: TokenStandard.CosmosIbc,
@@ -29,10 +55,17 @@ export const tokenConfigs: WarpCoreConfig = {
       symbol: 'TIA.n',
       decimals: 6,
       addressOrDenom: 'ibc/773B4D0A3CD667B2275D5A4A7A2F0909C0BA0F4059C0B9181E680DDF4965DCC7',
-      // TODO source channel
       logoURI: '/logos/celestia.png',
-      connectedTokens: ['cosmos|celestia|utia'],
+      connections: [
+        {
+          token: 'cosmos|celestia|utia',
+          type: TokenConnectionType.Ibc,
+          sourcePort: 'transfer',
+          sourceChannel: 'channel-35',
+        },
+      ],
     },
+
     // TIA on Neutron to Arbitrum
     {
       chainName: Chains.neutron,
@@ -44,8 +77,9 @@ export const tokenConfigs: WarpCoreConfig = {
       collateralAddressOrDenom:
         'ibc/773B4D0A3CD667B2275D5A4A7A2F0909C0BA0F4059C0B9181E680DDF4965DCC7',
       logoURI: '/logos/celestia.png',
-      connectedTokens: ['ethereum|arbitrum|0xD56734d7f9979dD94FAE3d67C7e928234e71cD4C'],
+      connections: [{ token: 'ethereum|arbitrum|0xD56734d7f9979dD94FAE3d67C7e928234e71cD4C' }],
     },
+
     // TIA on Neutron to Manta
     {
       chainName: Chains.neutron,
@@ -57,8 +91,9 @@ export const tokenConfigs: WarpCoreConfig = {
       collateralAddressOrDenom:
         'ibc/773B4D0A3CD667B2275D5A4A7A2F0909C0BA0F4059C0B9181E680DDF4965DCC7',
       logoURI: '/logos/celestia.png',
-      connectedTokens: ['ethereum|mantapacific|0x6Fae4D9935E2fcb11fC79a64e917fb2BF14DaFaa'],
+      connections: [{ token: 'ethereum|mantapacific|0x6Fae4D9935E2fcb11fC79a64e917fb2BF14DaFaa' }],
     },
+
     // ECLIP on Neutron
     {
       chainName: Chains.neutron,
@@ -71,9 +106,10 @@ export const tokenConfigs: WarpCoreConfig = {
       igpTokenAddressOrDenom:
         'ibc/773B4D0A3CD667B2275D5A4A7A2F0909C0BA0F4059C0B9181E680DDF4965DCC7',
       logoURI: '/logos/ECLIP.png',
-      connectedTokens: ['ethereum|arbitrum|0x93ca0d85837FF83158Cd14D65B169CdB223b1921'],
+      connections: [{ token: 'ethereum|arbitrum|0x93ca0d85837FF83158Cd14D65B169CdB223b1921' }],
     },
-    // TIA from Neutron on Arbitrum
+
+    // TIA on Arbitrum from Neutron
     {
       chainName: Chains.arbitrum,
       standard: TokenStandard.EvmHypSynthetic,
@@ -82,11 +118,15 @@ export const tokenConfigs: WarpCoreConfig = {
       decimals: 6,
       addressOrDenom: '0xD56734d7f9979dD94FAE3d67C7e928234e71cD4C',
       logoURI: '/logos/celestia.png',
-      connectedTokens: [
-        'cosmos|neutron|neutron1jyyjd3x0jhgswgm6nnctxvzla8ypx50tew3ayxxwkrjfxhvje6kqzvzudq',
+      connections: [
+        {
+          token:
+            'cosmos|neutron|neutron1jyyjd3x0jhgswgm6nnctxvzla8ypx50tew3ayxxwkrjfxhvje6kqzvzudq',
+        },
       ],
     },
-    // ECLIP from Neutron on Arbitrum
+
+    // ECLIP on Arbitrum from Neutron
     {
       chainName: Chains.arbitrum,
       standard: TokenStandard.EvmHypSynthetic,
@@ -95,11 +135,15 @@ export const tokenConfigs: WarpCoreConfig = {
       decimals: 6,
       addressOrDenom: '0x93ca0d85837FF83158Cd14D65B169CdB223b1921',
       logoURI: '/logos/celestia.png',
-      connectedTokens: [
-        'cosmos|neutron|neutron1dvzvf870mx9uf65uqhx40yzx9gu4xlqqq2pnx362a0ndmustww3smumrf5',
+      connections: [
+        {
+          token:
+            'cosmos|neutron|neutron1dvzvf870mx9uf65uqhx40yzx9gu4xlqqq2pnx362a0ndmustww3smumrf5',
+        },
       ],
     },
-    // TIA from Neutron on Manta
+
+    // TIA on Manta from Neutron
     {
       chainName: Chains.mantapacific,
       standard: TokenStandard.EvmHypSynthetic,
@@ -108,8 +152,11 @@ export const tokenConfigs: WarpCoreConfig = {
       decimals: 6,
       addressOrDenom: '0x6Fae4D9935E2fcb11fC79a64e917fb2BF14DaFaa',
       logoURI: '/logos/celestia.png',
-      connectedTokens: [
-        'cosmos|neutron|neutron1jyyjd3x0jhgswgm6nnctxvzla8ypx50tew3ayxxwkrjfxhvje6kqzvzudq',
+      connections: [
+        {
+          token:
+            'cosmos|neutron|neutron1jyyjd3x0jhgswgm6nnctxvzla8ypx50tew3ayxxwkrjfxhvje6kqzvzudq',
+        },
       ],
     },
   ],
@@ -119,10 +166,22 @@ export const tokenConfigs: WarpCoreConfig = {
         origin: Chains.neutron,
         destination: Chains.arbitrum,
         amount: 270000,
-        addressOrDenom: 'utia',
+        addressOrDenom: 'ibc/773B4D0A3CD667B2275D5A4A7A2F0909C0BA0F4059C0B9181E680DDF4965DCC7',
       },
       {
         origin: Chains.neutron,
+        destination: Chains.mantapacific,
+        amount: 270000,
+        addressOrDenom: 'ibc/773B4D0A3CD667B2275D5A4A7A2F0909C0BA0F4059C0B9181E680DDF4965DCC7',
+      },
+      {
+        origin: 'celestia',
+        destination: Chains.arbitrum,
+        amount: 270000,
+        addressOrDenom: 'utia',
+      },
+      {
+        origin: 'celestia',
         destination: Chains.mantapacific,
         amount: 270000,
         addressOrDenom: 'utia',

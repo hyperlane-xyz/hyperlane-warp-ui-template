@@ -2,5 +2,4 @@
 # Configs can be defined here, in tokens.json, or in tokens.ts
 # The input here is typically the output of the Hyperlane CLI warp deploy command
 ---
-tokens:
-  []
+tokens: []

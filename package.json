@@ -6,7 +6,7 @@
   "dependencies": {
     "@chakra-ui/next-js": "^2.1.5",
     "@chakra-ui/react": "^2.8.1",
-    "@cosmjs/cosmwasm-stargate": "^0.31.3",
+    "@cosmjs/cosmwasm-stargate": "patch:@cosmjs/cosmwasm-stargate@npm%3A0.31.3#~/.yarn/patches/@cosmjs-cosmwasm-stargate-npm-0.31.3-4b3bafffd4.patch",
     "@cosmjs/stargate": "^0.31.3",
     "@cosmos-kit/core": "^2.7.2",
     "@cosmos-kit/cosmostation": "^2.4.4",
@@ -88,6 +88,7 @@
   },
   "types": "dist/src/index.d.ts",
   "resolutions": {
+    "@cosmjs/cosmwasm-stargate@npm:^0.31.3": "patch:@cosmjs/cosmwasm-stargate@npm%3A0.31.3#~/.yarn/patches/@cosmjs-cosmwasm-stargate-npm-0.31.3-4b3bafffd4.patch",
     "axios": "0.27.2",
     "bn.js": "^5.2",
     "cosmjs-types": "0.9",

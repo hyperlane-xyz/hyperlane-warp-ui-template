@@ -186,6 +186,12 @@ export const tokenConfigs: WarpCoreConfig = {
         amount: 270000,
         addressOrDenom: 'utia',
       },
+      {
+        origin: Chains.injective,
+        destination: Chains.inevm,
+        amount: '30000000000000000', // 0.03 INJ
+        addressOrDenom: 'inj',
+      },
     ],
   },
 };

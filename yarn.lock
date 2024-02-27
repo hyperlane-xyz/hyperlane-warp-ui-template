@@ -2995,30 +2995,30 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/core@npm:3.7.0":
-  version: 3.7.0
-  resolution: "@hyperlane-xyz/core@npm:3.7.0"
+"@hyperlane-xyz/core@npm:3.8.0-beta0":
+  version: 3.8.0-beta0
+  resolution: "@hyperlane-xyz/core@npm:3.8.0-beta0"
   dependencies:
     "@eth-optimism/contracts": "npm:^0.6.0"
-    "@hyperlane-xyz/utils": "npm:3.7.0"
+    "@hyperlane-xyz/utils": "npm:3.8.0-beta0"
     "@openzeppelin/contracts": "npm:^4.9.3"
     "@openzeppelin/contracts-upgradeable": "npm:^v4.9.3"
   peerDependencies:
     "@ethersproject/abi": "*"
     "@ethersproject/providers": "*"
     "@types/sinon-chai": "*"
-  checksum: efa01d943dd5b67830bb7244291c8ba9849472e804dff589463de76d3c03e56bc8d62454b575a6621aa1b8b53cc0d1d3b752a83d34f4b328ecd85e1ff23230d5
+  checksum: ab41e4a20ec6980988022afc1854d9cf3047e8ef29628365160f67e48e846a0ef4403d17a678b7db9342ee2146c348eb54ae7a6b8b548f7e631d676b85dd1ece
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/sdk@npm:^3.7.0":
-  version: 3.7.0
-  resolution: "@hyperlane-xyz/sdk@npm:3.7.0"
+"@hyperlane-xyz/sdk@npm:^3.8.0-beta0":
+  version: 3.8.0-beta0
+  resolution: "@hyperlane-xyz/sdk@npm:3.8.0-beta0"
   dependencies:
     "@cosmjs/cosmwasm-stargate": "npm:^0.31.3"
     "@cosmjs/stargate": "npm:^0.31.3"
-    "@hyperlane-xyz/core": "npm:3.7.0"
-    "@hyperlane-xyz/utils": "npm:3.7.0"
+    "@hyperlane-xyz/core": "npm:3.8.0-beta0"
+    "@hyperlane-xyz/utils": "npm:3.8.0-beta0"
     "@solana/spl-token": "npm:^0.3.8"
     "@solana/web3.js": "npm:^1.78.0"
     "@types/coingecko-api": "npm:^1.0.10"
@@ -3035,19 +3035,19 @@ __metadata:
   peerDependencies:
     "@ethersproject/abi": "*"
     "@ethersproject/providers": "*"
-  checksum: b124a42f34502c4dad4127723d345158f592056d7e60e17d87c84bf81664ead20232ffaff66e6c21968dfd5693ba5122910fbcaa6b7db5b05fdd5d2051592835
+  checksum: 967ce263c79ef152acb9684491486ccf5182c7b34136006ec8520cf67dc300ae407201802103ded3425e46f93dc1d901ede6c85b381ad56d516c7383e688c68b
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/utils@npm:3.7.0, @hyperlane-xyz/utils@npm:^3.7.0":
-  version: 3.7.0
-  resolution: "@hyperlane-xyz/utils@npm:3.7.0"
+"@hyperlane-xyz/utils@npm:3.8.0-beta0, @hyperlane-xyz/utils@npm:^3.8.0-beta0":
+  version: 3.8.0-beta0
+  resolution: "@hyperlane-xyz/utils@npm:3.8.0-beta0"
   dependencies:
     "@cosmjs/encoding": "npm:^0.31.3"
     "@solana/web3.js": "npm:^1.78.0"
     bignumber.js: "npm:^9.1.1"
     ethers: "npm:^5.7.2"
-  checksum: c76f36913c572702b9dfe22fd868db6fed01c0da9485319e33e8d00a6b8a1bfdcecb5f61c8a3fd8ccbef0b36809e8055db62d75d0c6759d5e079ee330586bcd1
+  checksum: 4344b7a46a0db684a75689aed5ceefb321149b0a3e0110c50a8db987c223d9d70f57f32ff4a5bca2cde6dec2fe172db2bdee62689a1c9bea18065aa5339abf35
   languageName: node
   linkType: hard
 
@@ -3067,9 +3067,9 @@ __metadata:
     "@emotion/react": "npm:^11.11.1"
     "@emotion/styled": "npm:^11.11.0"
     "@headlessui/react": "npm:^1.7.14"
-    "@hyperlane-xyz/sdk": "npm:^3.7.0"
-    "@hyperlane-xyz/utils": "npm:^3.7.0"
-    "@hyperlane-xyz/widgets": "npm:^3.7.0"
+    "@hyperlane-xyz/sdk": "npm:^3.8.0-beta0"
+    "@hyperlane-xyz/utils": "npm:^3.8.0-beta0"
+    "@hyperlane-xyz/widgets": "npm:^3.8.0-beta0"
     "@metamask/jazzicon": "https://github.com/jmrossy/jazzicon#7a8df28974b4e81129bfbe3cab76308b889032a6"
     "@next/bundle-analyzer": "npm:^14.0.4"
     "@rainbow-me/rainbowkit": "npm:1.3.0"
@@ -3118,14 +3118,14 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@hyperlane-xyz/widgets@npm:^3.7.0":
-  version: 3.7.0
-  resolution: "@hyperlane-xyz/widgets@npm:3.7.0"
+"@hyperlane-xyz/widgets@npm:^3.8.0-beta0":
+  version: 3.8.0-beta0
+  resolution: "@hyperlane-xyz/widgets@npm:3.8.0-beta0"
   peerDependencies:
     "@hyperlane-xyz/sdk": ^3.1
     react: ^18
     react-dom: ^18
-  checksum: 5ddf7a7a5f599f1b340bbe4e981e0cb10dd8930cc616c566abb58210658acd2826386afd18e8789f8bb62fc19d14b69db87433adcc97c38ebda2c322cc7865a2
+  checksum: 1f8f2c0b9c1f3b20e1e70a76114959d7dfb0d2ba74cd7b2b9e531bb54dfe84d8e8a881ebd0816f5c042bf8199b1a1558306da5d65c0ce3a51cc23fb6e194adfb
   languageName: node
   linkType: hard
 

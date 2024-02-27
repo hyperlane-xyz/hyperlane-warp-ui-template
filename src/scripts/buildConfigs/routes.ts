@@ -49,28 +49,56 @@ export async function fetchRemoteHypTokens(
 
   const hypTokens = await Promise.all(
     remoteRouters.map(async (router) => {
-      const destMetadata = context.multiProvider.getChainMetadata(router.domain);
-      const protocol = destMetadata.protocol || ProtocolType.Ethereum;
+      const remoteMetadata = context.multiProvider.getChainMetadata(router.domain);
+      const protocol = remoteMetadata.protocol || ProtocolType.Ethereum;
       const chain = getCaip2Id(protocol, context.multiProvider.getChainId(router.domain));
-      const formattedAddress = bytesToProtocolAddress(router.address, protocol);
+      const formattedAddress = bytesToProtocolAddress(
+        router.address,
+        protocol,
+        remoteMetadata.bech32Prefix,
+      );
       if (isNft) return { chain, router: formattedAddress, decimals: 0 };
-      // Attempt to find the decimals from the token list
-      const routerMetadata = context.tokens.find((token) =>
-        eqAddress(formattedAddress, token.routerAddress),
-      );
-      if (routerMetadata)
-        return { chain, router: formattedAddress, decimals: routerMetadata.decimals };
-      // Otherwise try to query the contract
-      const remoteAdapter = AdapterFactory.HypSyntheticTokenAdapterFromAddress(
-        baseTokenCaip19Id,
-        chain,
+
+      const routerDecimals = await getRemoteRouterDecimals(
+        context,
         formattedAddress,
+        chain,
+        baseTokenCaip19Id,
+        baseToken.decimals,
       );
-      const metadata = await remoteAdapter.getMetadata();
-      return { chain, router: formattedAddress, decimals: metadata.decimals };
+      return { chain, router: formattedAddress, decimals: routerDecimals };
     }),
   );
   return { ...baseToken, hypTokens };
+}
+
+async function getRemoteRouterDecimals(
+  context: WarpContext,
+  router: Address,
+  chain: ChainCaip2Id,
+  baseToken: TokenCaip19Id,
+  originDecimals: number,
+) {
+  // Attempt to find the decimals from the token list
+  const routerMetadata = context.tokens.find((token) => eqAddress(router, token.routerAddress));
+  if (routerMetadata) return routerMetadata.decimals;
+
+  // Otherwise try to query the contract
+  try {
+    const remoteAdapter = AdapterFactory.HypSyntheticTokenAdapterFromAddress(
+      baseToken,
+      chain,
+      router,
+    );
+    const metadata = await remoteAdapter.getMetadata();
+    return metadata.decimals;
+  } catch (error) {
+    logger.warn(`Failed to get metadata for router ${router} on chain ${chain}`);
+  }
+
+  // Fallback to using origin router's decimals
+  logger.warn('Falling back to origin decimals', originDecimals);
+  return originDecimals;
 }
 
 // Process token list to populates routesCache with all possible token routes (e.g. router pairs)

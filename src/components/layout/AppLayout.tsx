@@ -2,6 +2,7 @@ import Head from 'next/head';
 import Image from 'next/image';
 import { PropsWithChildren } from 'react';
 
+import { APP_NAME } from '../../consts/app';
 import Planet1 from '../../images/planets/planet-1.webp';
 import Planet2 from '../../images/planets/planet-2.webp';
 import { Footer } from '../nav/Footer';
@@ -13,7 +14,7 @@ export function AppLayout({ children }: PropsWithChildren) {
       <Head>
         {/* https://nextjs.org/docs/messages/no-document-viewport-meta */}
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Hyperlane Nexus Bridge</title>
+        <title>{APP_NAME}</title>
       </Head>
       <div
         style={styles.container}

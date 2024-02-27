@@ -1,0 +1,180 @@
+diff --git a/build/cosmwasmclient.js b/build/cosmwasmclient.js
+index 8f6305b0263886c5c31fab661c9235723ba1e6e9..a3c7f20135babd6dd7774e4f2ac7e79cb0462db1 100644
+--- a/build/cosmwasmclient.js
++++ b/build/cosmwasmclient.js
+@@ -10,6 +10,112 @@ const utils_1 = require("@cosmjs/utils");
+ const abci_1 = require("cosmjs-types/cosmos/base/abci/v1beta1/abci");
+ const types_1 = require("cosmjs-types/cosmwasm/wasm/v1/types");
+ const modules_1 = require("./modules");
++
++/* Code copied in from injective SDK to avoid importing all 9Mb of the library */
++// node_modules/@injectivelabs/core-proto-ts/cjs/google/protobuf/any.js
++const minimal_1 = require("protobufjs/minimal");
++const Any = {
++    decode(input, length) {
++        const reader = input instanceof minimal_1.Reader ? input : minimal_1.Reader.create(input);
++        let end = length === undefined ? reader.len : reader.pos + length;
++        const message = { typeUrl: "", value: new Uint8Array(0) };
++        while (reader.pos < end) {
++            const tag = reader.uint32();
++            switch (tag >>> 3) {
++                case 1:
++                    if (tag !== 10) {
++                        break;
++                    }
++                    message.typeUrl = reader.string();
++                    continue;
++                case 2:
++                    if (tag !== 18) {
++                        break;
++                    }
++                    message.value = reader.bytes();
++                    continue;
++            }
++            if ((tag & 7) === 4 || tag === 0) {
++                break;
++            }
++            reader.skipType(tag & 7);
++        }
++        return message;
++    },
++  };
++  // node_modules/@injectivelabs/core-proto-ts/cjs/cosmos/auth/v1beta1/auth.js
++const BaseAccount = {
++    decode(input, length) {
++        const reader = input instanceof minimal_1.Reader ? input : minimal_1.Reader.create(input);
++        let end = length === undefined ? reader.len : reader.pos + length;
++        const message = { address: "", pubKey: undefined, accountNumber: "0", sequence: "0" };
++        while (reader.pos < end) {
++            const tag = reader.uint32();
++            switch (tag >>> 3) {
++                case 1:
++                    if (tag !== 10) {
++                        break;
++                    }
++                    message.address = reader.string();
++                    continue;
++                case 2:
++                    if (tag !== 18) {
++                        break;
++                    }
++                    message.pubKey = Any.decode(reader, reader.uint32());
++                    continue;
++                case 3:
++                    if (tag !== 24) {
++                        break;
++                    }
++                    message.accountNumber = reader.uint64().toString();
++                    continue;
++                case 4:
++                    if (tag !== 32) {
++                        break;
++                    }
++                    message.sequence = reader.uint64().toString();
++                    continue;
++            }
++            if ((tag & 7) === 4 || tag === 0) {
++                break;
++            }
++            reader.skipType(tag & 7);
++        }
++        return message;
++    },
++};
++// node_modules/@injectivelabs/core-proto-ts/cjs/injective/types/v1beta1/account.js
++const EthAccount = {
++    decode(input, length) {
++        const reader = input instanceof minimal_1.Reader ? input : minimal_1.Reader.create(input);
++        let end = length === undefined ? reader.len : reader.pos + length;
++        const message = { baseAccount: undefined, codeHash: new Uint8Array(0) };
++        while (reader.pos < end) {
++            const tag = reader.uint32();
++            switch (tag >>> 3) {
++                case 1:
++                    if (tag !== 10) {
++                        break;
++                    }
++                    message.baseAccount = BaseAccount.decode(reader, reader.uint32());
++                    continue;
++                case 2:
++                    if (tag !== 18) {
++                        break;
++                    }
++                    message.codeHash = reader.bytes();
++                    continue;
++            }
++            if ((tag & 7) === 4 || tag === 0) {
++                break;
++            }
++            reader.skipType(tag & 7);
++        }
++        return message;
++    },
++};
++
+ class CosmWasmClient {
+     /**
+      * Creates an instance by connecting to the given Tendermint RPC endpoint.
+@@ -78,9 +184,28 @@ class CosmWasmClient {
+         const status = await this.forceGetTmClient().status();
+         return status.syncInfo.latestBlockHeight;
+     }
++    decodeInjectiveAccount(injAccount){ 
++        const account = EthAccount.decode(injAccount.value);
++        const baseAccount = account.baseAccount;
++        const pubKey = baseAccount.pubKey;
++        return {
++            address: baseAccount.address,
++            pubkey: pubKey
++                ? {
++                    type: '/injective.crypto.v1beta1.ethsecp256k1.PubKey',
++                    value: Buffer.from(pubKey.value).toString('base64'),
++                }
++                : null,
++            accountNumber: parseInt(baseAccount.accountNumber, 10),
++            sequence: parseInt(baseAccount.sequence, 10),
++        };
++    }
+     async getAccount(searchAddress) {
+         try {
+             const account = await this.forceGetQueryClient().auth.account(searchAddress);
++            if (searchAddress.startsWith('inj')) {
++                return this.decodeInjectiveAccount(account);
++            }
+             return account ? (0, stargate_1.accountFromAny)(account) : null;
+         }
+         catch (error) {
+diff --git a/build/signingcosmwasmclient.js b/build/signingcosmwasmclient.js
+index 646bbe7e74343ec2584666ead1ae43fd4f0b3852..b9f86948eae6479d85b58e15205f570dda004afc 100644
+--- a/build/signingcosmwasmclient.js
++++ b/build/signingcosmwasmclient.js
+@@ -86,6 +86,9 @@ class SigningCosmWasmClient extends cosmwasmclient_1.CosmWasmClient {
+             throw new Error("Failed to retrieve account from signer");
+         }
+         const pubkey = (0, amino_1.encodeSecp256k1Pubkey)(accountFromSigner.pubkey);
++        if (signerAddress.startsWith('inj')) {
++            pubkey['typeUrl'] = '/injective.crypto.v1beta1.ethsecp256k1.PubKey';
++        }
+         const { sequence } = await this.getSequence(signerAddress);
+         const { gasInfo } = await this.forceGetQueryClient().tx.simulate(anyMsgs, memo, pubkey, sequence);
+         (0, utils_1.assertDefined)(gasInfo);
+@@ -110,7 +113,8 @@ class SigningCosmWasmClient extends cosmwasmclient_1.CosmWasmClient {
+             throw new Error(createDeliverTxResponseErrorMessage(result));
+         }
+         const parsedLogs = stargate_1.logs.parseRawLog(result.rawLog);
+-        const codeIdAttr = stargate_1.logs.findAttribute(parsedLogs, "store_code", "code_id");
++        const escapedCodeIdAttr = stargate_1.logs.findAttribute(parsedLogs, "cosmwasm.wasm.v1.EventCodeStored", "code_id");
++        const codeIdAttr = { value: escapedCodeIdAttr.value.replace(/\"/g, "") };
+         return {
+             checksum: (0, encoding_1.toHex)((0, crypto_1.sha256)(wasmCode)),
+             originalSize: wasmCode.length,
+@@ -393,6 +397,9 @@ class SigningCosmWasmClient extends cosmwasmclient_1.CosmWasmClient {
+             throw new Error("Failed to retrieve account from signer");
+         }
+         const pubkey = (0, proto_signing_1.encodePubkey)((0, amino_1.encodeSecp256k1Pubkey)(accountFromSigner.pubkey));
++        if (signerAddress.startsWith('inj')) {
++            pubkey['typeUrl'] = '/injective.crypto.v1beta1.ethsecp256k1.PubKey';
++        }
+         const signMode = signing_1.SignMode.SIGN_MODE_LEGACY_AMINO_JSON;
+         const msgs = messages.map((msg) => this.aminoTypes.toAmino(msg));
+         const signDoc = (0, amino_1.makeSignDoc)(msgs, fee, chainId, memo, accountNumber, sequence);

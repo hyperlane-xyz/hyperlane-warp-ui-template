@@ -18,14 +18,11 @@ export function getTransferStatusLabel(
     statusDescription = 'Please connect wallet to continue';
   else if (status === TransferStatus.Preparing)
     statusDescription = 'Preparing for token transfer...';
-  else if (status === TransferStatus.CreatingApprove)
-    statusDescription = 'Preparing approve transaction...';
+  else if (status === TransferStatus.CreatingTxs) statusDescription = 'Creating transactions...';
   else if (status === TransferStatus.SigningApprove)
     statusDescription = `Sign approve transaction in ${connectorName} to continue.`;
   else if (status === TransferStatus.ConfirmingApprove)
     statusDescription = 'Confirming approve transaction...';
-  else if (status === TransferStatus.CreatingTransfer)
-    statusDescription = 'Preparing transfer transaction...';
   else if (status === TransferStatus.SigningTransfer)
     statusDescription = `Sign transfer transaction in ${connectorName} to continue.`;
   else if (status === TransferStatus.ConfirmingTransfer)

@@ -5,3 +5,6 @@ export const COSMOS_ZERO_ADDRESS = 'cosmos10000000000000000000000000000000000000
 export const SOL_SPL_NOOP_ADDRESS = 'noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV';
 // Placeholder chain for use with cosmos-kit wallet hooks that require a chain name
 export const PLACEHOLDER_COSMOS_CHAIN = 'cosmoshub';
+// An estimate of the gas amount for a typical EVM token router transferRemote transaction
+// Computed by estimating on a few different chains and taking the average with a 50% padding
+export const EVM_TRANSFER_REMOTE_GAS_ESTIMATE = 100_000n; // TODO

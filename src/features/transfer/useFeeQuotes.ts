@@ -14,7 +14,7 @@ import { TransferFormValues } from './types';
 const FEE_QUOTE_REFRESH_INTERVAL = 10_000; // 10s
 
 export function useFeeQuotes(
-  { origin, destination, tokenIndex }: TransferFormValues,
+  { origin, destination, tokenIndex }: Partial<TransferFormValues>,
   enabled: boolean,
 ) {
   const sender = useAccountAddressForChain(origin);
@@ -27,7 +27,7 @@ export function useFeeQuotes(
 
   useToastError(error, 'Error fetching fee quotes');
 
-  return { isLoading, isError, igpQuote: data };
+  return { isLoading, isError, fees: data };
 }
 
 export async function fetchFeeQuotes({
@@ -35,65 +35,66 @@ export async function fetchFeeQuotes({
   tokenIndex,
   sender,
 }: {
-  destination: ChainName;
+  destination?: ChainName;
   tokenIndex?: number;
   sender?: Address;
 }): Promise<{ interchainQuote: TokenAmount; localQuote?: TokenAmount } | null> {
-  try {
-    const originToken = getTokenByIndex(tokenIndex);
-    if (!destination || !sender || !originToken) return null;
-    logger.debug('Fetching fee quotes');
+  const originToken = getTokenByIndex(tokenIndex);
+  if (!destination || !sender || !originToken) return null;
+  logger.debug('Fetching fee quotes');
 
-    const warpCore = getWarpCore();
-    const multiProvider = warpCore.multiProvider;
-    const originMetadata = multiProvider.getChainMetadata(originToken.chainName);
-    const originNativeToken = originMetadata.nativeToken;
-    const destinationMetadata = multiProvider.getChainMetadata(destination);
+  const warpCore = getWarpCore();
+  const multiProvider = warpCore.multiProvider;
+  const originMetadata = multiProvider.getChainMetadata(originToken.chainName);
+  const destinationMetadata = multiProvider.getChainMetadata(destination);
 
-    // First, get interchain gas quote (aka IGP quote)
-    const interchainQuote = await warpCore.getTransferGasQuote(originToken, destination);
+  // First, get interchain gas quote (aka IGP quote)
+  const interchainQuote = await warpCore.getTransferRemoteGasQuote(originToken, destination);
 
-    // If there's no native token, we can't represent local gas so stop here
-    if (!originNativeToken) return { interchainQuote };
+  // If there's no native token, we can't represent local gas so stop here
+  if (!originMetadata.nativeToken) return { interchainQuote };
 
-    // Get the local gas token. This assumes the chain's native token will pay for local gas
-    // This will need to be smarter if more complex scenarios on Cosmos are supported
-    const localGasToken = Token.FromChainMetadataNativeToken(originMetadata);
+  // Get the local gas token. This assumes the chain's native token will pay for local gas
+  // This will need to be smarter if more complex scenarios on Cosmos are supported
+  const localGasToken = Token.FromChainMetadataNativeToken(originMetadata);
 
-    // Form transactions to estimate local gas with
-    const recipient = convertToProtocolAddress(
-      sender,
-      destinationMetadata.protocol,
-      destinationMetadata.bech32Prefix,
+  // Form transactions to estimate local gas with
+  const recipient = convertToProtocolAddress(
+    sender,
+    destinationMetadata.protocol,
+    destinationMetadata.bech32Prefix,
+  );
+  const txs = await warpCore.getTransferRemoteTxs(
+    originToken.amount(1),
+    destination,
+    sender,
+    recipient,
+  );
+
+  let localQuote: TokenAmount;
+  if (txs.length === 1) {
+    // TODO get gas price in function
+    const gasFee = await multiProvider.estimateTransactionGas(originMetadata.name, txs[0], sender);
+    const provider = multiProvider.getEthersV5Provider(originMetadata.name);
+    // const gasPrice = BigInt((await provider.getGasPrice()).toString());
+    const feeData = await provider.getFeeData();
+    console.log(feeData);
+    const realPrice = BigInt(
+      feeData.maxPriorityFeePerGas?.add(feeData.maxFeePerGas || 0)?.toString() || 0,
     );
-    const txs = await warpCore.getTransferRemoteTxs(
-      originToken.amount(1),
-      destination,
-      sender,
-      recipient,
-    );
-
-    let localQuote: TokenAmount;
-    // Cannot estimate gas for multiple transactions so fall back to hard-coded default
-    if (txs.length === 1) {
-      // const todo = multiProvider.getGasEstimate(txs[0]);
-      // or maybe create wallet estimate wallet hooks?
-      localQuote = localGasToken.amount(1n);
-    } else if (originToken.protocol === ProtocolType.Ethereum) {
-      // For ethereum we assume the first transaction is an approval
-      // We use a hard-coded const as an estimate for the transferRemote gas
-      const gasPrice = 1n; // TODO
-      localQuote = localGasToken.amount(EVM_TRANSFER_REMOTE_GAS_ESTIMATE * gasPrice);
-    } else {
-      throw new Error('Cannot estimate local gas for multiple transactions');
-    }
-
-    return {
-      interchainQuote,
-      localQuote,
-    };
-  } catch (error) {
-    logger.error('Error fetching fee quotes', error);
-    return null;
+    localQuote = localGasToken.amount(gasFee * realPrice);
+  } else if (txs.length === 2 && originToken.protocol === ProtocolType.Ethereum) {
+    // For ethereum txs that require >1 tx, we assume the first is an approval
+    // We use a hard-coded const as an estimate for the transferRemote gas
+    const provider = multiProvider.getEthersV5Provider(originMetadata.name);
+    const gasPrice = BigInt((await provider.getGasPrice()).toString());
+    localQuote = localGasToken.amount(EVM_TRANSFER_REMOTE_GAS_ESTIMATE * gasPrice);
+  } else {
+    throw new Error('Cannot estimate local gas for multiple transactions');
   }
+
+  return {
+    interchainQuote,
+    localQuote,
+  };
 }

@@ -32,7 +32,7 @@ import { AccountInfo } from '../wallet/hooks/types';
 
 import { TransferFormValues } from './types';
 import { useRecipientBalanceWatcher } from './useBalanceWatcher';
-import { useIgpQuote } from './useIgpQuote';
+import { useFeeQuotes } from './useFeeQuotes';
 import { useTokenTransfer } from './useTokenTransfer';
 
 export function TransferTokenForm() {
@@ -301,9 +301,8 @@ function SelfButton({ disabled }: { disabled?: boolean }) {
 }
 
 function ReviewDetails({ visible }: { visible: boolean }) {
-  const {
-    values: { amount, destination, tokenIndex },
-  } = useFormikContext<TransferFormValues>();
+  const { values } = useFormikContext<TransferFormValues>();
+  const { amount, destination, tokenIndex } = values;
   const originToken = getTokenByIndex(tokenIndex);
   const originTokenSymbol = originToken?.symbol || '';
   const connection = originToken?.getConnectionForChain(destination);
@@ -317,7 +316,7 @@ function ReviewDetails({ visible }: { visible: boolean }) {
     amountWei,
     visible,
   );
-  const { isLoading: isQuoteLoading, igpQuote } = useIgpQuote(originToken, destination, visible);
+  const { isLoading: isQuoteLoading, fees } = useFeeQuotes(values, visible);
 
   const isLoading = isApproveLoading || isQuoteLoading;
 
@@ -365,12 +364,20 @@ function ReviewDetails({ visible }: { visible: boolean }) {
                     <span className="min-w-[7rem]">Amount</span>
                     <span>{`${amount} ${originTokenSymbol}`}</span>
                   </p>
-                  {igpQuote && igpQuote.amount > 0n && (
+                  {fees?.localQuote && fees.localQuote.amount > 0n && (
+                    <p className="flex">
+                      <span className="min-w-[7rem]">Local Gas (est.)</span>
+                      <span>{`${fees.localQuote.getDecimalFormattedAmount().toFixed(4) || '0'} ${
+                        fees.localQuote.token.symbol || ''
+                      }`}</span>
+                    </p>
+                  )}
+                  {fees?.interchainQuote && fees.interchainQuote.amount > 0n && (
                     <p className="flex">
                       <span className="min-w-[7rem]">Interchain Gas</span>
-                      <span>{`${igpQuote?.getDecimalFormattedAmount().toFixed(4) || '0'} ${
-                        igpQuote?.token?.symbol || ''
-                      }`}</span>
+                      <span>{`${
+                        fees.interchainQuote.getDecimalFormattedAmount().toFixed(4) || '0'
+                      } ${fees.interchainQuote.token.symbol || ''}`}</span>
                     </p>
                   )}
                 </>

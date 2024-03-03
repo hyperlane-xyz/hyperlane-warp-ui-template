@@ -30,6 +30,7 @@ export function useFeeQuotes(
   return { isLoading, isError, fees: data };
 }
 
+// TODO move logic to WarpCore
 export async function fetchFeeQuotes({
   destination,
   tokenIndex,
@@ -73,16 +74,8 @@ export async function fetchFeeQuotes({
 
   let localQuote: TokenAmount;
   if (txs.length === 1) {
-    // TODO get gas price in function
-    const gasFee = await multiProvider.estimateTransactionGas(originMetadata.name, txs[0], sender);
-    const provider = multiProvider.getEthersV5Provider(originMetadata.name);
-    // const gasPrice = BigInt((await provider.getGasPrice()).toString());
-    const feeData = await provider.getFeeData();
-    console.log(feeData);
-    const realPrice = BigInt(
-      feeData.maxPriorityFeePerGas?.add(feeData.maxFeePerGas || 0)?.toString() || 0,
-    );
-    localQuote = localGasToken.amount(gasFee * realPrice);
+    const gasFee = await multiProvider.estimateTransactionFee(originMetadata.name, txs[0], sender);
+    localQuote = localGasToken.amount(gasFee.fee);
   } else if (txs.length === 2 && originToken.protocol === ProtocolType.Ethereum) {
     // For ethereum txs that require >1 tx, we assume the first is an approval
     // We use a hard-coded const as an estimate for the transferRemote gas

@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import { TokenAmount } from '@hyperlane-xyz/sdk';
-import { ProtocolType, errorToString, timeout, toWei } from '@hyperlane-xyz/utils';
+import { ProtocolType, errorToString, isNullish, toWei } from '@hyperlane-xyz/utils';
 
 import { SmallSpinner } from '../../components/animation/SmallSpinner';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
@@ -30,9 +30,10 @@ import {
 } from '../wallet/hooks/multiProtocol';
 import { AccountInfo } from '../wallet/hooks/types';
 
+import { fetchMaxAmount } from './maxAmount';
 import { TransferFormValues } from './types';
 import { useRecipientBalanceWatcher } from './useBalanceWatcher';
-import { fetchFeeQuotes, useFeeQuotes } from './useFeeQuotes';
+import { useFeeQuotes } from './useFeeQuotes';
 import { useTokenTransfer } from './useTokenTransfer';
 
 export function TransferTokenForm() {
@@ -261,29 +262,9 @@ function MaxButton({ balance, disabled }: { balance?: TokenAmount; disabled?: bo
   const sender = useAccountAddressForChain(destination);
 
   const onClick = async () => {
-    if (!balance || disabled) return;
-    const originToken = balance.token;
-    // By default, the max is the full balance for chosen token
-    // But this attempts to fetch a fee quote and adjust the max as required
-    let maxAmount = balance;
-    try {
-      const feeQuote = await timeout(fetchFeeQuotes({ destination, tokenIndex, sender }), 1500);
-      const { localQuote, interchainQuote } = feeQuote || {};
-      if (originToken.equals(localQuote?.token) || originToken.collateralizes(localQuote?.token)) {
-        maxAmount = maxAmount.minus(localQuote!.amount);
-      }
-      if (
-        originToken.equals(interchainQuote?.token) ||
-        originToken.collateralizes(interchainQuote?.token)
-      ) {
-        maxAmount = maxAmount.minus(interchainQuote!.amount);
-      }
-    } catch (error) {
-      logger.warn('Error or timeout fetching fee quotes for max click', error);
-    }
-    const formatted =
-      maxAmount.amount <= 0n ? '0' : maxAmount.getDecimalFormattedAmount().toFixed(4);
-    setFieldValue('amount', formatted);
+    if (!balance || !sender || isNullish(tokenIndex) || disabled) return;
+    const maxAmount = await fetchMaxAmount(balance, destination, sender);
+    setFieldValue('amount', maxAmount.getDecimalFormattedAmount().toFixed(4));
   };
 
   return (

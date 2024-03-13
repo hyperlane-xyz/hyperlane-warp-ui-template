@@ -136,7 +136,7 @@ export const tokenConfigs: WarpCoreConfig = {
       symbol: 'ECLIP',
       decimals: 6,
       addressOrDenom: '0x93ca0d85837FF83158Cd14D65B169CdB223b1921',
-      logoURI: '/logos/celestia.png',
+      logoURI: '/logos/ECLIP.png',
       connections: [
         {
           token:

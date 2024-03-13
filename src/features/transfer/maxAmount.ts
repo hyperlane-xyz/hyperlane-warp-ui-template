@@ -24,7 +24,7 @@ export function useFetchMaxAmount() {
   return { fetchMaxAmount: mutation.mutateAsync, isLoading: mutation.isLoading };
 }
 
-export async function fetchMaxAmount({ accounts, balance, destination, origin }: FetchMaxParams) {
+async function fetchMaxAmount({ accounts, balance, destination, origin }: FetchMaxParams) {
   try {
     const { address, publicKey } = getAccountAddressAndPubKey(origin, accounts);
     if (!address) return balance;

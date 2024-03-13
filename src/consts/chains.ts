@@ -57,5 +57,8 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
       },
     ],
     logoURI: '/logos/celestia.png',
+    transactionOverrides: {
+      gasPrice: 0.1,
+    },
   },
 };

@@ -88,5 +88,13 @@ export const tokenConfigs: WarpCoreConfig = {
         addressOrDenom: 'inj',
       },
     ],
+    localFeeConstants: [
+      {
+        origin: Chains.injective,
+        destination: Chains.inevm,
+        amount: '1000000000000000', // 0.001 INJ
+        addressOrDenom: 'inj',
+      },
+    ],
   },
 };

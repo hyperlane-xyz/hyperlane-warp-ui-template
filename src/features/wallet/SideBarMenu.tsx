@@ -209,7 +209,7 @@ function TransferSummary({
         {STATUSES_WITH_ICON.includes(status) ? (
           <Image src={getIconByTransferStatus(status)} width={25} height={25} alt="" />
         ) : (
-          <SmallSpinner />
+          <SmallSpinner className="-ml-1 mr-3" />
         )}
       </div>
     </button>

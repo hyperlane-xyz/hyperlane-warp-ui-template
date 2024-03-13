@@ -319,7 +319,7 @@ export const tokenConfigs: WarpCoreConfig = {
     //#endregion
   ],
   options: {
-    igpQuoteConstants: [
+    interchainFeeConstants: [
       {
         origin: Chains.neutron,
         destination: Chains.arbitrum,
@@ -348,6 +348,14 @@ export const tokenConfigs: WarpCoreConfig = {
         origin: Chains.injective,
         destination: Chains.inevm,
         amount: '30000000000000000', // 0.03 INJ
+        addressOrDenom: 'inj',
+      },
+    ],
+    localFeeConstants: [
+      {
+        origin: Chains.injective,
+        destination: Chains.inevm,
+        amount: '1000000000000000', // 0.001 INJ
         addressOrDenom: 'inj',
       },
     ],

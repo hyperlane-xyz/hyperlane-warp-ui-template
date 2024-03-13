@@ -1,9 +1,10 @@
+import BigNumber from 'bignumber.js';
 import { Form, Formik, useFormikContext } from 'formik';
 import { useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import { TokenAmount } from '@hyperlane-xyz/sdk';
-import { ProtocolType, errorToString, toWei } from '@hyperlane-xyz/utils';
+import { ProtocolType, errorToString, isNullish, toWei } from '@hyperlane-xyz/utils';
 
 import { SmallSpinner } from '../../components/animation/SmallSpinner';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
@@ -24,15 +25,16 @@ import { TokenSelectField } from '../tokens/TokenSelectField';
 import { useIsApproveRequired } from '../tokens/approval';
 import { useDestinationBalance, useOriginBalance } from '../tokens/balances';
 import {
-  getAccountAddressForChain,
+  getAccountAddressAndPubKey,
   useAccountAddressForChain,
   useAccounts,
 } from '../wallet/hooks/multiProtocol';
 import { AccountInfo } from '../wallet/hooks/types';
 
+import { useFetchMaxAmount } from './maxAmount';
 import { TransferFormValues } from './types';
 import { useRecipientBalanceWatcher } from './useBalanceWatcher';
-import { useIgpQuote } from './useIgpQuote';
+import { useFeeQuotes } from './useFeeQuotes';
 import { useTokenTransfer } from './useTokenTransfer';
 
 export function TransferTokenForm() {
@@ -59,16 +61,22 @@ export function TransferTokenForm() {
       validateOnChange={false}
       validateOnBlur={false}
     >
-      <Form className="flex flex-col items-stretch w-full mt-2">
-        <ChainSelectSection isReview={isReview} />
-        <div className="mt-3 flex justify-between items-end space-x-4">
-          <TokenSection setIsNft={setIsNft} isReview={isReview} />
-          <AmountSection isNft={isNft} isReview={isReview} />
-        </div>
-        <RecipientSection isReview={isReview} />
-        <ReviewDetails visible={isReview} />
-        <ButtonSection isReview={isReview} setIsReview={setIsReview} />
-      </Form>
+      {({ isValidating }) => (
+        <Form className="flex flex-col items-stretch w-full mt-2">
+          <ChainSelectSection isReview={isReview} />
+          <div className="mt-3 flex justify-between items-end space-x-4">
+            <TokenSection setIsNft={setIsNft} isReview={isReview} />
+            <AmountSection isNft={isNft} isReview={isReview} />
+          </div>
+          <RecipientSection isReview={isReview} />
+          <ReviewDetails visible={isReview} />
+          <ButtonSection
+            isReview={isReview}
+            isValidating={isValidating}
+            setIsReview={setIsReview}
+          />
+        </Form>
+      )}
     </Formik>
   );
 }
@@ -199,9 +207,11 @@ function TokenBalance({ label, balance }: { label: string; balance?: TokenAmount
 
 function ButtonSection({
   isReview,
+  isValidating,
   setIsReview,
 }: {
   isReview: boolean;
+  isValidating: boolean;
   setIsReview: (b: boolean) => void;
 }) {
   const { values } = useFormikContext<TransferFormValues>();
@@ -226,7 +236,7 @@ function ButtonSection({
     return (
       <ConnectAwareSubmitButton
         chainName={values.origin}
-        text="Continue"
+        text={isValidating ? 'Validating...' : 'Continue'}
         classes="mt-4 px-3 py-1.5"
       />
     );
@@ -256,11 +266,19 @@ function ButtonSection({
 }
 
 function MaxButton({ balance, disabled }: { balance?: TokenAmount; disabled?: boolean }) {
-  const { setFieldValue } = useFormikContext<TransferFormValues>();
-  const onClick = () => {
-    if (!balance || disabled) return;
-    setFieldValue('amount', balance.getDecimalFormattedAmount().toFixed(4));
+  const { values, setFieldValue } = useFormikContext<TransferFormValues>();
+  const { origin, destination, tokenIndex } = values;
+  const { accounts } = useAccounts();
+  const { fetchMaxAmount, isLoading } = useFetchMaxAmount();
+
+  const onClick = async () => {
+    if (!balance || isNullish(tokenIndex) || disabled) return;
+    const maxAmount = await fetchMaxAmount({ balance, origin, destination, accounts });
+    const decimalsAmount = maxAmount.getDecimalFormattedAmount();
+    const roundedAmount = new BigNumber(decimalsAmount).toFixed(4, BigNumber.ROUND_FLOOR);
+    setFieldValue('amount', roundedAmount);
   };
+
   return (
     <SolidButton
       type="button"
@@ -269,7 +287,13 @@ function MaxButton({ balance, disabled }: { balance?: TokenAmount; disabled?: bo
       disabled={disabled}
       classes="text-xs absolute right-0.5 top-2 bottom-0.5 px-2"
     >
-      MAX
+      {isLoading ? (
+        <div className="flex items-center">
+          <SmallSpinner />
+        </div>
+      ) : (
+        'MAX'
+      )}
     </SolidButton>
   );
 }
@@ -301,9 +325,8 @@ function SelfButton({ disabled }: { disabled?: boolean }) {
 }
 
 function ReviewDetails({ visible }: { visible: boolean }) {
-  const {
-    values: { amount, destination, tokenIndex },
-  } = useFormikContext<TransferFormValues>();
+  const { values } = useFormikContext<TransferFormValues>();
+  const { amount, destination, tokenIndex } = values;
   const originToken = getTokenByIndex(tokenIndex);
   const originTokenSymbol = originToken?.symbol || '';
   const connection = originToken?.getConnectionForChain(destination);
@@ -317,7 +340,7 @@ function ReviewDetails({ visible }: { visible: boolean }) {
     amountWei,
     visible,
   );
-  const { isLoading: isQuoteLoading, igpQuote } = useIgpQuote(originToken, destination, visible);
+  const { isLoading: isQuoteLoading, fees } = useFeeQuotes(values, visible);
 
   const isLoading = isApproveLoading || isQuoteLoading;
 
@@ -328,57 +351,58 @@ function ReviewDetails({ visible }: { visible: boolean }) {
       } overflow-hidden transition-all`}
     >
       <label className="mt-4 block uppercase text-sm text-gray-500 pl-0.5">Transactions</label>
-      {isLoading ? (
-        <div className="py-6 flex items-center justify-center">
-          <SmallSpinner />
-        </div>
-      ) : (
-        <div className="mt-1.5 px-2.5 py-2 space-y-2 rounded border border-gray-400 bg-gray-150 text-sm break-all">
-          {isApproveRequired && (
+      <div className="mt-1.5 px-2.5 py-2 space-y-2 rounded border border-gray-400 bg-gray-150 text-sm break-all">
+        {isLoading ? (
+          <div className="py-6 flex items-center justify-center">
+            <SmallSpinner />
+          </div>
+        ) : (
+          <>
+            {isApproveRequired && (
+              <div>
+                <h4>Transaction 1: Approve Transfer</h4>
+                <div className="mt-1.5 ml-1.5 pl-2 border-l border-gray-300 space-y-1.5 text-xs">
+                  <p>{`Router Address: ${originToken?.addressOrDenom}`}</p>
+                  {originToken?.collateralAddressOrDenom && (
+                    <p>{`Collateral Address: ${originToken.collateralAddressOrDenom}`}</p>
+                  )}
+                </div>
+              </div>
+            )}
             <div>
-              <h4>Transaction 1: Approve Transfer</h4>
+              <h4>{`Transaction${isApproveRequired ? ' 2' : ''}: Transfer Remote`}</h4>
               <div className="mt-1.5 ml-1.5 pl-2 border-l border-gray-300 space-y-1.5 text-xs">
-                <p>{`Router Address: ${originToken?.addressOrDenom}`}</p>
-                {originToken?.collateralAddressOrDenom && (
-                  <p>{`Collateral Address: ${originToken.collateralAddressOrDenom}`}</p>
+                {destinationToken?.addressOrDenom && (
+                  <p className="flex">
+                    <span className="min-w-[7rem]">Remote Token</span>
+                    <span>{destinationToken.addressOrDenom}</span>
+                  </p>
+                )}
+                <p className="flex">
+                  <span className="min-w-[7rem]">{isNft ? 'Token ID' : 'Amount'}</span>
+                  <span>{`${amount} ${originTokenSymbol}`}</span>
+                </p>
+                {fees?.localQuote && fees.localQuote.amount > 0n && (
+                  <p className="flex">
+                    <span className="min-w-[7rem]">Local Gas (est.)</span>
+                    <span>{`${fees.localQuote.getDecimalFormattedAmount().toFixed(4) || '0'} ${
+                      fees.localQuote.token.symbol || ''
+                    }`}</span>
+                  </p>
+                )}
+                {fees?.interchainQuote && fees.interchainQuote.amount > 0n && (
+                  <p className="flex">
+                    <span className="min-w-[7rem]">Interchain Gas</span>
+                    <span>{`${fees.interchainQuote.getDecimalFormattedAmount().toFixed(4) || '0'} ${
+                      fees.interchainQuote.token.symbol || ''
+                    }`}</span>
+                  </p>
                 )}
               </div>
             </div>
-          )}
-          <div>
-            <h4>{`Transaction${isApproveRequired ? ' 2' : ''}: Transfer Remote`}</h4>
-            <div className="mt-1.5 ml-1.5 pl-2 border-l border-gray-300 space-y-1.5 text-xs">
-              {destinationToken?.addressOrDenom && (
-                <p className="flex">
-                  <span className="min-w-[7rem]">Remote Token</span>
-                  <span>{destinationToken.addressOrDenom}</span>
-                </p>
-              )}
-              {isNft ? (
-                <p className="flex">
-                  <span className="min-w-[7rem]">Token ID</span>
-                  <span>{amount}</span>
-                </p>
-              ) : (
-                <>
-                  <p className="flex">
-                    <span className="min-w-[7rem]">Amount</span>
-                    <span>{`${amount} ${originTokenSymbol}`}</span>
-                  </p>
-                  {igpQuote && igpQuote.amount > 0n && (
-                    <p className="flex">
-                      <span className="min-w-[7rem]">Interchain Gas</span>
-                      <span>{`${igpQuote?.getDecimalFormattedAmount().toFixed(4) || '0'} ${
-                        igpQuote?.token?.symbol || ''
-                      }`}</span>
-                    </p>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+          </>
+        )}
+      </div>
     </div>
   );
 }
@@ -406,13 +430,14 @@ async function validateForm(
     const token = getTokenByIndex(tokenIndex);
     if (!token) return { token: 'Token is required' };
     const amountWei = toWei(amount, token.decimals);
-    const sender = getAccountAddressForChain(origin, accounts) || '';
-    const result = await getWarpCore().validateTransfer(
-      token.amount(amountWei),
+    const { address, publicKey: senderPubKey } = getAccountAddressAndPubKey(origin, accounts);
+    const result = await getWarpCore().validateTransfer({
+      originTokenAmount: token.amount(amountWei),
       destination,
-      sender,
       recipient,
-    );
+      sender: address || '',
+      senderPubKey: await senderPubKey,
+    });
     return result;
   } catch (error) {
     logger.error('Error validating form', error);

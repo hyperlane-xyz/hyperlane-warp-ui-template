@@ -98,19 +98,19 @@ async function executeTransfer({
     const originProtocol = originToken.protocol;
     const isNft = originToken.isNft();
     const weiAmountOrId = isNft ? amount : toWei(amount, originToken.decimals);
-    const tokenAmount = originToken.amount(weiAmountOrId);
+    const originTokenAmount = originToken.amount(weiAmountOrId);
 
     const sendTransaction = transactionFns[originProtocol].sendTransaction;
     const activeChain = activeChains.chains[originProtocol];
-    const activeAccountAddress = getAccountAddressForChain(origin, activeAccounts.accounts);
-    if (!activeAccountAddress) throw new Error('No active account found for origin chain');
+    const sender = getAccountAddressForChain(origin, activeAccounts.accounts);
+    if (!sender) throw new Error('No active account found for origin chain');
 
     const warpCore = getWarpCore();
 
-    const isCollateralSufficient = await warpCore.isDestinationCollateralSufficient(
-      tokenAmount,
+    const isCollateralSufficient = await warpCore.isDestinationCollateralSufficient({
+      originTokenAmount,
       destination,
-    );
+    });
     if (!isCollateralSufficient) {
       toast.error('Insufficient collateral on destination for transfer');
       throw new Error('Insufficient destination collateral');
@@ -123,19 +123,19 @@ async function executeTransfer({
       destination,
       originTokenAddressOrDenom: originToken.addressOrDenom,
       destTokenAddressOrDenom: connection.token.addressOrDenom,
-      sender: activeAccountAddress,
+      sender,
       recipient,
       amount,
     });
 
     updateTransferStatus(transferIndex, (transferStatus = TransferStatus.CreatingTxs));
 
-    const txs = await warpCore.getTransferRemoteTxs(
-      tokenAmount,
+    const txs = await warpCore.getTransferRemoteTxs({
+      originTokenAmount,
       destination,
-      activeAccountAddress,
+      sender,
       recipient,
-    );
+    });
 
     const hashes: string[] = [];
     for (const tx of txs) {

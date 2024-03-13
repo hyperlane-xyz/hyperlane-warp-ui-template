@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { toast } from 'react-toastify';
 
-import { ProtocolType } from '@hyperlane-xyz/utils';
+import { HexString, ProtocolType } from '@hyperlane-xyz/utils';
 
 import { config } from '../../../consts/config';
 import { logger } from '../../../utils/logger';
@@ -72,7 +72,7 @@ export function useAccountForChain(chainName?: ChainName): AccountInfo | undefin
   if (!chainName) return undefined;
   const protocol = tryGetChainProtocol(chainName);
   if (!protocol) return undefined;
-  return accounts[protocol];
+  return accounts?.[protocol];
 }
 
 export function useAccountAddressForChain(chainName?: ChainName): Address | undefined {
@@ -92,6 +92,17 @@ export function getAccountAddressForChain(
     // Use first because only cosmos has the notion of per-chain addresses
     return account?.addresses[0]?.address;
   }
+}
+
+export function getAccountAddressAndPubKey(
+  chainName?: ChainName,
+  accounts?: Record<ProtocolType, AccountInfo>,
+): { address?: Address; publicKey?: Promise<HexString> } {
+  const address = getAccountAddressForChain(chainName, accounts);
+  if (!accounts || !chainName || !address) return {};
+  const protocol = getChainProtocol(chainName);
+  const publicKey = accounts[protocol]?.publicKey;
+  return { address, publicKey };
 }
 
 export function useConnectFns(): Record<ProtocolType, () => void> {

@@ -4,7 +4,7 @@ import { useCallback, useMemo } from 'react';
 import { toast } from 'react-toastify';
 
 import { ProviderType } from '@hyperlane-xyz/sdk';
-import { ProtocolType } from '@hyperlane-xyz/utils';
+import { HexString, ProtocolType } from '@hyperlane-xyz/utils';
 
 import { PLACEHOLDER_COSMOS_CHAIN } from '../../../consts/values';
 import { logger } from '../../../utils/logger';
@@ -16,20 +16,23 @@ import { AccountInfo, ActiveChainInfo, ChainAddress, ChainTransactionFns } from 
 export function useCosmosAccount(): AccountInfo {
   const chainToContext = useChains(getCosmosChainNames());
   return useMemo<AccountInfo>(() => {
-    const cosmAddresses: Array<ChainAddress> = [];
-    let cosmConnectorName: string | undefined = undefined;
-    let isCosmAccountReady = false;
+    const addresses: Array<ChainAddress> = [];
+    let publicKey: Promise<HexString> | undefined = undefined;
+    let connectorName: string | undefined = undefined;
+    let isReady = false;
     for (const [chainName, context] of Object.entries(chainToContext)) {
       if (!context.address) continue;
-      cosmAddresses.push({ address: context.address, chainName });
-      isCosmAccountReady = true;
-      cosmConnectorName ||= context.wallet?.prettyName;
+      addresses.push({ address: context.address, chainName });
+      publicKey = context.getAccount().then((acc) => Buffer.from(acc.pubkey).toString('hex'));
+      isReady = true;
+      connectorName ||= context.wallet?.prettyName;
     }
     return {
       protocol: ProtocolType.Cosmos,
-      addresses: cosmAddresses,
-      connectorName: cosmConnectorName,
-      isReady: isCosmAccountReady,
+      addresses,
+      publicKey,
+      connectorName,
+      isReady,
     };
   }, [chainToContext]);
 }

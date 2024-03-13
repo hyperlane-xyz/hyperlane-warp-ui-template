@@ -81,8 +81,6 @@ export function TransfersDetailsModal({
 
   const isAccountReady = !!account?.isReady;
   const connectorName = account?.connectorName || 'wallet';
-  // TODO confirm works for native tokens? Should findToken create for ALL unfound natives?
-  // If so, simplify getTransferQuote in WarpCore
   const token = getWarpCore().findToken(origin, originTokenAddressOrDenom);
 
   const isPermissionlessRoute = hasPermissionlessChain([destination, origin]);

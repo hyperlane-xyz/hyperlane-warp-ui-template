@@ -77,7 +77,7 @@ export function useCosmosTransactionFns(): ChainTransactionFns {
       const chainContext = chainToContext[chainName];
       if (!chainContext?.address) throw new Error(`Cosmos wallet not connected for ${chainName}`);
       if (activeChainName && activeChainName !== chainName) await onSwitchNetwork(chainName);
-      logger.debug(`Sending ${tx.type} tx on chain ${chainName}`);
+      logger.debug(`Sending tx on chain ${chainName}`);
       const { getSigningCosmWasmClient, getSigningStargateClient } = chainContext;
       let result: ExecuteResult | DeliverTxResponse;
       if (providerType === ProviderType.CosmJsWasm) {

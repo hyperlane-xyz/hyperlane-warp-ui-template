@@ -13,7 +13,7 @@ export function getWarpCoreConfig(): WarpCoreConfig {
   const resultTs = WarpCoreConfigSchema.safeParse(TokensTS);
   const configTs = validateZodResult(resultTs, 'warp core typescript config');
 
-  const tokens = [...configJson.tokens, ...configYaml.tokens, ...configTs.tokens];
-  const options = { ...configJson.options, ...configYaml.options, ...configTs.options };
+  const tokens = [...configTs.tokens, ...configJson.tokens, ...configYaml.tokens];
+  const options = { ...configTs.options, ...configJson.options, ...configYaml.options };
   return { tokens, options };
 }

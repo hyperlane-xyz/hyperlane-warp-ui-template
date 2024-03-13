@@ -20,7 +20,6 @@ export function SelectTokenIdField({ name, disabled }: Props) {
     setTokenId(newTokenId);
   };
 
-  // const { isLoading, tokenIds } = useOriginTokenIdBalance(tokenCaip19Id);
   const isLoading = false;
   const tokenIds = [];
 

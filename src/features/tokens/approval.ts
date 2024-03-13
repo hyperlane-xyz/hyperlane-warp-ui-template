@@ -13,7 +13,7 @@ export function useIsApproveRequired(token?: IToken, amount?: string, enabled = 
     queryKey: ['useIsApproveRequired', owner, amount, token?.addressOrDenom],
     queryFn: async () => {
       if (!token || !owner || !amount) return false;
-      return getWarpCore().isApproveRequired(token.amount(amount), owner);
+      return getWarpCore().isApproveRequired({ originTokenAmount: token.amount(amount), owner });
     },
     enabled,
   });

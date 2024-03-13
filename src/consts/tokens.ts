@@ -80,7 +80,7 @@ export const tokenConfigs: WarpCoreConfig = {
     },
   ],
   options: {
-    igpQuoteConstants: [
+    interchainFeeConstants: [
       {
         origin: Chains.injective,
         destination: Chains.inevm,

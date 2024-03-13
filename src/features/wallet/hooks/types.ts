@@ -1,5 +1,5 @@
 import { ProviderType } from '@hyperlane-xyz/sdk';
-import { ProtocolType } from '@hyperlane-xyz/utils';
+import { HexString, ProtocolType } from '@hyperlane-xyz/utils';
 
 export interface ChainAddress {
   address: string;
@@ -11,6 +11,9 @@ export interface AccountInfo {
   // This needs to be an array instead of a single address b.c.
   // Cosmos wallets have different addresses per chain
   addresses: Array<ChainAddress>;
+  // And another Cosmos exception, public keys are needed
+  // for tx simulation and gas estimation
+  publicKey?: Promise<HexString>;
   connectorName?: string;
   isReady: boolean;
 }

@@ -1,11 +1,11 @@
 import { useMemo } from 'react';
 import { toast } from 'react-toastify';
 
-import { ProtocolType } from '@hyperlane-xyz/utils';
+import { HexString, ProtocolType } from '@hyperlane-xyz/utils';
 
 import { config } from '../../../consts/config';
 import { logger } from '../../../utils/logger';
-import { tryGetProtocolType } from '../../caip/chains';
+import { getChainProtocol, tryGetChainProtocol } from '../../chains/utils';
 
 import {
   useCosmosAccount,
@@ -67,29 +67,42 @@ export function useAccounts(): {
   );
 }
 
-export function useAccountForChain(chainCaip2Id?: ChainCaip2Id): AccountInfo | undefined {
+export function useAccountForChain(chainName?: ChainName): AccountInfo | undefined {
   const { accounts } = useAccounts();
-  if (!chainCaip2Id) return undefined;
-  const protocol = tryGetProtocolType(chainCaip2Id);
+  if (!chainName) return undefined;
+  const protocol = tryGetChainProtocol(chainName);
   if (!protocol) return undefined;
-  return accounts[protocol];
+  return accounts?.[protocol];
 }
 
-export function useAccountAddressForChain(chainCaip2Id?: ChainCaip2Id): Address | undefined {
-  return getAccountAddressForChain(chainCaip2Id, useAccountForChain(chainCaip2Id));
+export function useAccountAddressForChain(chainName?: ChainName): Address | undefined {
+  return getAccountAddressForChain(chainName, useAccounts().accounts);
 }
 
 export function getAccountAddressForChain(
-  chainCaip2Id?: ChainCaip2Id,
-  account?: AccountInfo,
+  chainName?: ChainName,
+  accounts?: Record<ProtocolType, AccountInfo>,
 ): Address | undefined {
-  if (!chainCaip2Id || !account?.addresses.length) return undefined;
-  if (account.protocol === ProtocolType.Cosmos) {
-    return account.addresses.find((a) => a.chainCaip2Id === chainCaip2Id)?.address;
+  if (!chainName || !accounts) return undefined;
+  const protocol = getChainProtocol(chainName);
+  const account = accounts[protocol];
+  if (protocol === ProtocolType.Cosmos) {
+    return account?.addresses.find((a) => a.chainName === chainName)?.address;
   } else {
     // Use first because only cosmos has the notion of per-chain addresses
-    return account.addresses[0].address;
+    return account?.addresses[0]?.address;
   }
+}
+
+export function getAccountAddressAndPubKey(
+  chainName?: ChainName,
+  accounts?: Record<ProtocolType, AccountInfo>,
+): { address?: Address; publicKey?: Promise<HexString> } {
+  const address = getAccountAddressForChain(chainName, accounts);
+  if (!accounts || !chainName || !address) return {};
+  const protocol = getChainProtocol(chainName);
+  const publicKey = accounts[protocol]?.publicKey;
+  return { address, publicKey };
 }
 
 export function useConnectFns(): Record<ProtocolType, () => void> {

@@ -16,6 +16,7 @@ export const cosmosDefaultChain: ChainMetadata = {
     name: 'Atom',
     symbol: 'ATOM',
     decimals: 6,
+    denom: 'uatom',
   },
   logoURI: '/logos/cosmos.svg',
 };

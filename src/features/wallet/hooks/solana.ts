@@ -6,10 +6,9 @@ import { toast } from 'react-toastify';
 
 import { ProtocolType } from '@hyperlane-xyz/utils';
 
+import { getMultiProvider } from '../../../context/context';
 import { logger } from '../../../utils/logger';
-import { getCaip2Id, getChainReference } from '../../caip/chains';
 import { getChainByRpcEndpoint } from '../../chains/utils';
-import { getChainMetadata, getMultiProvider } from '../../multiProvider';
 
 import { AccountInfo, ActiveChainInfo, ChainTransactionFns } from './types';
 
@@ -48,7 +47,7 @@ export function useSolActiveChain(): ActiveChainInfo {
     if (!metadata) return {};
     return {
       chainDisplayName: metadata.displayName,
-      chainCaip2Id: getCaip2Id(ProtocolType.Sealevel, metadata.chainId),
+      chainName: metadata.name,
     };
   }, [connectionEndpoint]);
 }
@@ -56,30 +55,29 @@ export function useSolActiveChain(): ActiveChainInfo {
 export function useSolTransactionFns(): ChainTransactionFns {
   const { sendTransaction: sendSolTransaction } = useWallet();
 
-  const onSwitchNetwork = useCallback(async (chainCaip2Id: ChainCaip2Id) => {
-    const chainName = getChainMetadata(chainCaip2Id).displayName;
+  const onSwitchNetwork = useCallback(async (chainName: ChainName) => {
     toast.warn(`Solana wallet must be connected to origin chain ${chainName}}`);
   }, []);
 
   const onSendTx = useCallback(
     async ({
       tx,
-      chainCaip2Id,
-      activeCap2Id,
+      chainName,
+      activeChainName,
     }: {
       tx: Transaction;
-      chainCaip2Id: ChainCaip2Id;
-      activeCap2Id?: ChainCaip2Id;
+      chainName: ChainName;
+      activeChainName?: ChainName;
     }) => {
-      if (activeCap2Id && activeCap2Id !== chainCaip2Id) await onSwitchNetwork(chainCaip2Id);
-      const rpcUrl = getMultiProvider().getRpcUrl(getChainReference(chainCaip2Id));
+      if (activeChainName && activeChainName !== chainName) await onSwitchNetwork(chainName);
+      const rpcUrl = getMultiProvider().getRpcUrl(chainName);
       const connection = new Connection(rpcUrl, 'confirmed');
       const {
         context: { slot: minContextSlot },
         value: { blockhash, lastValidBlockHeight },
       } = await connection.getLatestBlockhashAndContext();
 
-      logger.debug(`Sending tx on chain ${chainCaip2Id}`);
+      logger.debug(`Sending tx on chain ${chainName}`);
       const signature = await sendSolTransaction(tx, connection, { minContextSlot });
 
       const confirm = () =>

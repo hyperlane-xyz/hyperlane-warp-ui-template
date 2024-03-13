@@ -1,17 +1,13 @@
 import { useConnectModal } from '@rainbow-me/rainbowkit';
-import {
-  SendTransactionArgs,
-  sendTransaction,
-  switchNetwork,
-  waitForTransaction,
-} from '@wagmi/core';
+import { sendTransaction, switchNetwork, waitForTransaction } from '@wagmi/core';
 import { useCallback, useMemo } from 'react';
 import { useAccount, useDisconnect, useNetwork } from 'wagmi';
 
 import { ProtocolType, sleep } from '@hyperlane-xyz/utils';
 
 import { logger } from '../../../utils/logger';
-import { getCaip2Id, getEthereumChainId } from '../../caip/chains';
+import { getChainMetadata, tryGetChainMetadata } from '../../chains/utils';
+import { ethers5TxToWagmiTx } from '../utils';
 
 import { AccountInfo, ActiveChainInfo, ChainTransactionFns } from './types';
 
@@ -46,15 +42,15 @@ export function useEvmActiveChain(): ActiveChainInfo {
   return useMemo<ActiveChainInfo>(
     () => ({
       chainDisplayName: chain?.name,
-      chainCaip2Id: chain ? getCaip2Id(ProtocolType.Ethereum, chain.id) : undefined,
+      chainName: chain ? tryGetChainMetadata(chain.id)?.name : undefined,
     }),
     [chain],
   );
 }
 
 export function useEvmTransactionFns(): ChainTransactionFns {
-  const onSwitchNetwork = useCallback(async (chainCaip2Id: ChainCaip2Id) => {
-    const chainId = getEthereumChainId(chainCaip2Id);
+  const onSwitchNetwork = useCallback(async (chainName: ChainName) => {
+    const chainId = getChainMetadata(chainName).chainId as number;
     await switchNetwork({ chainId });
     // Some wallets seem to require a brief pause after switch
     await sleep(2000);
@@ -67,19 +63,20 @@ export function useEvmTransactionFns(): ChainTransactionFns {
   const onSendTx = useCallback(
     async ({
       tx,
-      chainCaip2Id,
-      activeCap2Id,
+      chainName,
+      activeChainName,
     }: {
-      tx: SendTransactionArgs;
-      chainCaip2Id: ChainCaip2Id;
-      activeCap2Id?: ChainCaip2Id;
+      tx: any;
+      chainName: ChainName;
+      activeChainName?: ChainName;
     }) => {
-      if (activeCap2Id && activeCap2Id !== chainCaip2Id) await onSwitchNetwork(chainCaip2Id);
-      const chainId = getEthereumChainId(chainCaip2Id);
-      logger.debug(`Sending tx on chain ${chainCaip2Id}`);
+      if (activeChainName && activeChainName !== chainName) await onSwitchNetwork(chainName);
+      logger.debug(`Sending tx on chain ${chainName}`);
+      const chainId = getChainMetadata(chainName).chainId as number;
+      const wagmiTx = ethers5TxToWagmiTx(tx);
       const { hash } = await sendTransaction({
         chainId,
-        ...tx,
+        ...wagmiTx,
       });
       const confirm = () => waitForTransaction({ chainId, hash, confirmations: 1 });
       return { hash, confirm };

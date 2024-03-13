@@ -1,10 +1,10 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-import { FinalTransferStatuses, IgpQuote, TransferContext, TransferStatus } from './transfer/types';
+import { FinalTransferStatuses, TransferContext, TransferStatus } from './transfer/types';
 
 // Increment this when persist state has breaking changes
-const PERSIST_STATE_VERSION = 1;
+const PERSIST_STATE_VERSION = 2;
 
 // Keeping everything here for now as state is simple
 // Will refactor into slices as necessary
@@ -20,17 +20,6 @@ export interface AppState {
   failUnconfirmedTransfers: () => void;
   transferLoading: boolean;
   setTransferLoading: (isLoading: boolean) => void;
-  balances: {
-    senderTokenBalance: string;
-    senderNativeBalance: string;
-    senderNftIds: string[] | null; // null means unknown
-    isSenderNftOwner: boolean | null;
-  };
-  setSenderBalances: (tokenBalance: string, nativeBalance: string) => void;
-  setSenderNftIds: (ids: string[] | null) => void;
-  setIsSenderNftOwner: (isOwner: boolean | null) => void;
-  igpQuote: IgpQuote | null;
-  setIgpQuote: (quote: IgpQuote | null) => void;
 }
 
 export const useStore = create<AppState>()(
@@ -65,27 +54,6 @@ export const useStore = create<AppState>()(
       transferLoading: false,
       setTransferLoading: (isLoading) => {
         set(() => ({ transferLoading: isLoading }));
-      },
-      balances: {
-        senderTokenBalance: '0',
-        senderNativeBalance: '0',
-        senderNftIds: null,
-        isSenderNftOwner: false,
-      },
-      setSenderBalances: (senderTokenBalance, senderNativeBalance) => {
-        set((state) => ({
-          balances: { ...state.balances, senderTokenBalance, senderNativeBalance },
-        }));
-      },
-      setSenderNftIds: (senderNftIds) => {
-        set((state) => ({ balances: { ...state.balances, senderNftIds } }));
-      },
-      setIsSenderNftOwner: (isSenderNftOwner) => {
-        set((state) => ({ balances: { ...state.balances, isSenderNftOwner } }));
-      },
-      igpQuote: null,
-      setIgpQuote: (quote) => {
-        set(() => ({ igpQuote: quote }));
       },
     }),
     {

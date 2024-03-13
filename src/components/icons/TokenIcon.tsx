@@ -1,15 +1,14 @@
 import Image from 'next/image';
 import { memo } from 'react';
 
+import { IToken } from '@hyperlane-xyz/sdk';
 import { Circle } from '@hyperlane-xyz/widgets';
 
-import { getTokenAddress } from '../../features/caip/tokens';
-import { TokenMetadata } from '../../features/tokens/types';
 import { isValidUrl } from '../../utils/url';
 import { ErrorBoundary } from '../errors/ErrorBoundary';
 
 interface Props {
-  token?: TokenMetadata;
+  token?: IToken | null;
   size?: number;
 }
 
@@ -20,9 +19,7 @@ function _TokenIcon({ token, size = 32 }: Props) {
   const fontSize = Math.floor(size / 2);
 
   const bgColorSeed =
-    token && !imageSrc
-      ? (Buffer.from(getTokenAddress(token.tokenCaip19Id)).at(0) || 0) % 5
-      : undefined;
+    token && !imageSrc ? (Buffer.from(token.addressOrDenom).at(0) || 0) % 5 : undefined;
 
   return (
     <Circle size={size} bgColorSeed={bgColorSeed} title={title}>

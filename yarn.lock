@@ -3014,30 +3014,30 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/core@npm:3.6.1":
-  version: 3.6.1
-  resolution: "@hyperlane-xyz/core@npm:3.6.1"
+"@hyperlane-xyz/core@npm:3.8.0":
+  version: 3.8.0
+  resolution: "@hyperlane-xyz/core@npm:3.8.0"
   dependencies:
     "@eth-optimism/contracts": "npm:^0.6.0"
-    "@hyperlane-xyz/utils": "npm:3.6.1"
+    "@hyperlane-xyz/utils": "npm:3.8.0"
     "@openzeppelin/contracts": "npm:^4.9.3"
     "@openzeppelin/contracts-upgradeable": "npm:^v4.9.3"
   peerDependencies:
     "@ethersproject/abi": "*"
     "@ethersproject/providers": "*"
     "@types/sinon-chai": "*"
-  checksum: 15cf69663a6f80ef8c656f283a2af84c9be58cb2a84f88820cda5b6233157aaac69557b97983ad4138078b0dc0a77cb37f6bc992d4ba8bf4b5e512cbf942526f
+  checksum: f0f614bd1a1d8a755d8522409473b5cb3042304450e3ffb8ac96cd2756ca27b9a6f0a243608ffddf70a31af3b1e8dba0138154615c41424b2fb2e5baca52c963
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/sdk@npm:^3.6.1":
-  version: 3.6.1
-  resolution: "@hyperlane-xyz/sdk@npm:3.6.1"
+"@hyperlane-xyz/sdk@npm:^3.8.0":
+  version: 3.8.0
+  resolution: "@hyperlane-xyz/sdk@npm:3.8.0"
   dependencies:
     "@cosmjs/cosmwasm-stargate": "npm:^0.31.3"
     "@cosmjs/stargate": "npm:^0.31.3"
-    "@hyperlane-xyz/core": "npm:3.6.1"
-    "@hyperlane-xyz/utils": "npm:3.6.1"
+    "@hyperlane-xyz/core": "npm:3.8.0"
+    "@hyperlane-xyz/utils": "npm:3.8.0"
     "@solana/spl-token": "npm:^0.3.8"
     "@solana/web3.js": "npm:^1.78.0"
     "@types/coingecko-api": "npm:^1.0.10"
@@ -3054,19 +3054,19 @@ __metadata:
   peerDependencies:
     "@ethersproject/abi": "*"
     "@ethersproject/providers": "*"
-  checksum: 9c5b0cd9c44ff8f8193740cd895a87c84990d9466ffd695a35f1a0f71dafb8dee2ac294295df3be2849f520ef4ec236cc641f98eb93369a67d2727a75249c7cb
+  checksum: 5ca551b639a3a5a92266adbac9da973dd417e8a399797c2449b07af15c0f1f4659d1b98f4c1b834db999db476f66b832db4eac37efa1b9f50bc6c2530b2f98fd
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/utils@npm:3.6.1, @hyperlane-xyz/utils@npm:^3.6.1":
-  version: 3.6.1
-  resolution: "@hyperlane-xyz/utils@npm:3.6.1"
+"@hyperlane-xyz/utils@npm:3.8.0, @hyperlane-xyz/utils@npm:^3.8.0":
+  version: 3.8.0
+  resolution: "@hyperlane-xyz/utils@npm:3.8.0"
   dependencies:
     "@cosmjs/encoding": "npm:^0.31.3"
     "@solana/web3.js": "npm:^1.78.0"
     bignumber.js: "npm:^9.1.1"
     ethers: "npm:^5.7.2"
-  checksum: dca6656ba047fac0ab8e8e9cc4687cdc1784d2245efa57bf4826f35eac6fa0f2c6fb9834f1dc3b699ce3cb0b5ccfd02940d7eb3b574204d8c2b4f4778aa6d301
+  checksum: 9d313133d3cc0cdae605c96ffdcebb704a5951a75201bc23be8a2653fbad45e0a1fd4782f8d93ec0b5a01bddaa98999ef5f320cfbb6eef44e0de2176a8a4fb7b
   languageName: node
   linkType: hard
 
@@ -3086,9 +3086,9 @@ __metadata:
     "@emotion/react": "npm:^11.11.1"
     "@emotion/styled": "npm:^11.11.0"
     "@headlessui/react": "npm:^1.7.14"
-    "@hyperlane-xyz/sdk": "npm:^3.6.1"
-    "@hyperlane-xyz/utils": "npm:^3.6.1"
-    "@hyperlane-xyz/widgets": "npm:^3.1.4"
+    "@hyperlane-xyz/sdk": "npm:^3.8.0"
+    "@hyperlane-xyz/utils": "npm:^3.8.0"
+    "@hyperlane-xyz/widgets": "npm:^3.8.0"
     "@metamask/jazzicon": "https://github.com/jmrossy/jazzicon#7a8df28974b4e81129bfbe3cab76308b889032a6"
     "@next/bundle-analyzer": "npm:^14.0.4"
     "@rainbow-me/rainbowkit": "npm:1.3.0"
@@ -3137,14 +3137,14 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@hyperlane-xyz/widgets@npm:^3.1.4":
-  version: 3.1.4
-  resolution: "@hyperlane-xyz/widgets@npm:3.1.4"
+"@hyperlane-xyz/widgets@npm:^3.8.0":
+  version: 3.8.0
+  resolution: "@hyperlane-xyz/widgets@npm:3.8.0"
   peerDependencies:
     "@hyperlane-xyz/sdk": ^3.1
     react: ^18
     react-dom: ^18
-  checksum: 0183bdb11015d07bdd92be033e658dbcd614cece361654a00d63e3fe8c81c962d9f7fa0e9e51ab0affc59b1c0c94da7c433794ae0e7ca4a0e6d77f42f4a0744c
+  checksum: 2a36a90d43250c86084b05580909f316f13ed37a9416feea4e20411cd16ca42d430c5746636abfc9eb948199f888cf2f02b1e4d2a92dbc7fa4eee24af0f13579
   languageName: node
   linkType: hard
 
@@ -14056,17 +14056,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-fast-compare@npm:3.2.2":
+"react-fast-compare@npm:^3.2":
   version: 3.2.2
   resolution: "react-fast-compare@npm:3.2.2"
   checksum: a6826180ba75cefba1c8d3ac539735f9b627ca05d3d307fe155487f5d0228d376dac6c9708d04a283a7b9f9aee599b637446635b79c8c8753d0b4eece56c125c
-  languageName: node
-  linkType: hard
-
-"react-fast-compare@npm:^2.0.1":
-  version: 2.0.4
-  resolution: "react-fast-compare@npm:2.0.4"
-  checksum: e4e3218c0f5c29b88e9f184a12adb77b0a93a803dbd45cb98bbb754c8310dc74e6266c53dd70b90ba4d0939e0e1b8a182cb05d081bcab22507a0390fbcd768ac
   languageName: node
   linkType: hard
 

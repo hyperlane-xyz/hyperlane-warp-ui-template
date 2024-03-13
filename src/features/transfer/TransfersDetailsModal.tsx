@@ -1,7 +1,6 @@
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { isZeroishAddress, toTitleCase } from '@hyperlane-xyz/utils';
 import { MessageStatus, MessageTimeline, useMessageTimeline } from '@hyperlane-xyz/widgets';
 
 import { Spinner } from '../../components/animation/Spinner';
@@ -10,6 +9,7 @@ import { ChainLogo } from '../../components/icons/ChainLogo';
 import { TokenIcon } from '../../components/icons/TokenIcon';
 import { WideChevron } from '../../components/icons/WideChevron';
 import { Modal } from '../../components/layout/Modal';
+import { getMultiProvider, getWarpCore } from '../../context/context';
 import LinkIcon from '../../images/icons/external-link-icon.svg';
 import { formatTimestamp } from '../../utils/date';
 import { getHypExplorerLink } from '../../utils/links';
@@ -21,11 +21,7 @@ import {
   isTransferFailed,
   isTransferSent,
 } from '../../utils/transfer';
-import { getChainReference } from '../caip/chains';
-import { AssetNamespace, parseCaip19Id } from '../caip/tokens';
 import { getChainDisplayName, hasPermissionlessChain } from '../chains/utils';
-import { getMultiProvider } from '../multiProvider';
-import { getToken } from '../tokens/metadata';
 import { useAccountForChain } from '../wallet/hooks/multiProtocol';
 
 import { TransferContext, TransferStatus } from './types';
@@ -43,33 +39,38 @@ export function TransfersDetailsModal({
   const [toUrl, setToUrl] = useState<string>('');
   const [originTxUrl, setOriginTxUrl] = useState<string>('');
 
-  const { params, status, originTxHash, msgId, timestamp, activeAccountAddress } = transfer || {};
-  const { destinationCaip2Id, originCaip2Id, tokenCaip19Id, amount, recipientAddress } =
-    params || {};
+  const {
+    status,
+    origin,
+    destination,
+    amount,
+    sender,
+    recipient,
+    originTokenAddressOrDenom,
+    originTxHash,
+    msgId,
+    timestamp,
+  } = transfer || {};
 
-  const account = useAccountForChain(originCaip2Id);
+  const account = useAccountForChain(origin);
   const multiProvider = getMultiProvider();
-  const originChain = getChainReference(originCaip2Id);
-  const destChain = getChainReference(destinationCaip2Id);
-  const { address: tokenAddress, namespace: tokenNamespace } = parseCaip19Id(tokenCaip19Id);
-  const isNative = tokenNamespace === AssetNamespace.native || isZeroishAddress(tokenAddress);
 
   const getMessageUrls = useCallback(async () => {
     try {
       if (originTxHash) {
-        const originTxUrl = multiProvider.tryGetExplorerTxUrl(originChain, { hash: originTxHash });
+        const originTxUrl = multiProvider.tryGetExplorerTxUrl(origin, { hash: originTxHash });
         if (originTxUrl) setOriginTxUrl(fixDoubleSlash(originTxUrl));
       }
       const [fromUrl, toUrl] = await Promise.all([
-        multiProvider.tryGetExplorerAddressUrl(originChain, activeAccountAddress),
-        multiProvider.tryGetExplorerAddressUrl(destChain, recipientAddress),
+        multiProvider.tryGetExplorerAddressUrl(origin, sender),
+        multiProvider.tryGetExplorerAddressUrl(destination, recipient),
       ]);
       if (fromUrl) setFromUrl(fixDoubleSlash(fromUrl));
       if (toUrl) setToUrl(fixDoubleSlash(toUrl));
     } catch (error) {
       logger.error('Error fetching URLs:', error);
     }
-  }, [activeAccountAddress, originTxHash, multiProvider, recipientAddress, originChain, destChain]);
+  }, [sender, recipient, originTxHash, multiProvider, origin, destination]);
 
   useEffect(() => {
     if (!transfer) return;
@@ -80,9 +81,9 @@ export function TransfersDetailsModal({
 
   const isAccountReady = !!account?.isReady;
   const connectorName = account?.connectorName || 'wallet';
-  const token = getToken(tokenCaip19Id);
+  const token = getWarpCore().findToken(origin, originTokenAddressOrDenom);
 
-  const isPermissionlessRoute = hasPermissionlessChain([destinationCaip2Id, originCaip2Id]);
+  const isPermissionlessRoute = hasPermissionlessChain([destination, origin]);
 
   const isSent = isTransferSent(status);
   const isFailed = isTransferFailed(status);
@@ -100,7 +101,7 @@ export function TransfersDetailsModal({
     [timestamp],
   );
 
-  const explorerLink = getHypExplorerLink(originCaip2Id, msgId);
+  const explorerLink = getHypExplorerLink(origin, msgId);
 
   return (
     <Modal
@@ -135,16 +136,15 @@ export function TransfersDetailsModal({
         <TokenIcon token={token} size={30} />
         <div className="ml-2 flex items items-baseline">
           <span className="text-xl font-medium">{amount}</span>
-          <span className="text-xl font-medium ml-1">{token?.symbol || ''}</span>
-          <span className="font-semibold ml-1">({toTitleCase(tokenNamespace)})</span>
+          <span className="text-xl font-medium ml-1">{token?.symbol}</span>
         </div>
       </div>
 
       <div className="mt-4 flex items-center justify-around">
         <div className="ml-2 flex flex-col items-center">
-          <ChainLogo chainCaip2Id={originCaip2Id} size={64} background={true} />
+          <ChainLogo chainName={origin} size={64} background={true} />
           <span className="mt-1 font-medium tracking-wider">
-            {getChainDisplayName(originCaip2Id, true)}
+            {getChainDisplayName(origin, true)}
           </span>
         </div>
         <div className="flex mb-6 sm:space-x-1.5">
@@ -152,18 +152,20 @@ export function TransfersDetailsModal({
           <WideChevron />
         </div>
         <div className="mr-2 flex flex-col items-center">
-          <ChainLogo chainCaip2Id={destinationCaip2Id} size={64} background={true} />
+          <ChainLogo chainName={destination} size={64} background={true} />
           <span className="mt-1 font-medium tracking-wider">
-            {getChainDisplayName(destinationCaip2Id, true)}
+            {getChainDisplayName(destination, true)}
           </span>
         </div>
       </div>
 
       {isFinal ? (
         <div className="mt-5 flex flex-col space-y-4">
-          <TransferProperty name="Sender Address" value={activeAccountAddress} url={fromUrl} />
-          <TransferProperty name="Recipient Address" value={recipientAddress} url={toUrl} />
-          {!isNative && <TransferProperty name="Token Address" value={tokenAddress} />}
+          <TransferProperty name="Sender Address" value={sender} url={fromUrl} />
+          <TransferProperty name="Recipient Address" value={recipient} url={toUrl} />
+          {token?.addressOrDenom && (
+            <TransferProperty name="Token Address" value={token.addressOrDenom} />
+          )}
           {originTxHash && (
             <TransferProperty
               name="Origin Transaction Hash"

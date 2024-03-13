@@ -57,7 +57,6 @@ export function getCosmosKitConfig(): { chains: CosmosChain[]; assets: AssetList
       ],
     },
   }));
-  // TODO cosmos cleanup here
   const assets = cosmosChains.map((c) => {
     if (!c.nativeToken) throw new Error(`Missing native token for ${c.name}`);
     return {
@@ -66,19 +65,11 @@ export function getCosmosKitConfig(): { chains: CosmosChain[]; assets: AssetList
         {
           description: `The native token of ${c.displayName || c.name} chain.`,
           denom_units: [
-            // {
-            //   denom: `u${c.nativeToken.symbol}`,
-            //   exponent: 0,
-            // },
             {
               denom: 'token',
               exponent: c.nativeToken.decimals,
             },
           ],
-          // base: `u${c.nativeToken.symbol}`,
-          // name: c.nativeToken.name,
-          // display: c.nativeToken.symbol,
-          // symbol: c.nativeToken.symbol,
           base: 'token',
           name: 'token',
           display: 'token',

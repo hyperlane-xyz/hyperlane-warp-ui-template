@@ -1,4 +1,4 @@
-import { ChainMap, ChainMetadata, ExplorerFamily, chainMetadata } from '@hyperlane-xyz/sdk';
+import { ChainMap, ChainMetadata, ExplorerFamily } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 
 // A map of chain names to ChainMetadata
@@ -30,17 +30,6 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
   //   logoURI: '/logo.svg',
   // },
 
-  // Including configs for some Solana chains by default
-  neutron: {
-    ...chainMetadata.neutron,
-    logoURI: '/logos/neutron.svg',
-  },
-
-  mantapacific: {
-    ...chainMetadata.mantapacific,
-    logoURI: '/logos/manta.svg',
-  },
-
   celestia: {
     protocol: ProtocolType.Cosmos,
     domainId: 123456789, // TODO not a real domain id
@@ -53,6 +42,7 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
       name: 'Tia',
       symbol: 'TIA',
       decimals: 6,
+      denom: 'utia',
     },
     grpcUrls: [{ http: 'https://grpc.celestia.nodestake.top' }],
     restUrls: [{ http: 'https://public-celestia-lcd.numia.xyz' }],
@@ -67,92 +57,8 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
       },
     ],
     logoURI: '/logos/celestia.png',
-  },
-
-  viction: {
-    blockExplorers: [
-      {
-        family: ExplorerFamily.Other,
-        name: 'Vicscan',
-        url: 'https://www.vicscan.xyz',
-        apiUrl: 'https://www.vicscan.xyz',
-      },
-    ],
-    blocks: {
-      confirmations: 1,
-      estimateBlockTime: 2,
-      reorgPeriod: 0,
+    transactionOverrides: {
+      gasPrice: 0.1,
     },
-    chainId: 88,
-    displayName: 'Viction',
-    domainId: 88,
-    name: 'viction',
-    nativeToken: {
-      decimals: 18,
-      name: 'Viction',
-      symbol: 'VIC',
-    },
-    protocol: ProtocolType.Ethereum,
-    rpcUrls: [
-      {
-        http: 'https://viction.blockpi.network/v1/rpc/public',
-      },
-    ],
-    logoURI: '/logos/viction.svg',
-  },
-
-  inevm: {
-    blockExplorers: [
-      {
-        apiUrl: 'https://inevm.calderaexplorer.xyz/api',
-        family: ExplorerFamily.Blockscout,
-        name: 'Caldera inEVM Explorer',
-        url: 'https://inevm.calderaexplorer.xyz',
-      },
-    ],
-    blocks: {
-      confirmations: 1,
-      estimateBlockTime: 3,
-      reorgPeriod: 0,
-    },
-    chainId: 2525,
-    domainId: 2525,
-    displayName: 'Injective EVM',
-    displayNameShort: 'inEVM',
-    name: 'inevm',
-    nativeToken: {
-      decimals: 18,
-      name: 'Injective',
-      symbol: 'INJ',
-    },
-    protocol: ProtocolType.Ethereum,
-    rpcUrls: [{ http: 'https://inevm.calderachain.xyz/http' }],
-    logoURI: '/logos/inevm.svg',
-  },
-
-  injective: {
-    blockExplorers: [],
-    blocks: {
-      confirmations: 1,
-      estimateBlockTime: 3,
-      reorgPeriod: 1,
-    },
-    chainId: 'injective-1',
-    domainId: 6909546,
-    displayName: 'Injective',
-    displayNameShort: 'Injective',
-    name: 'injective',
-    nativeToken: {
-      decimals: 18,
-      name: 'Injective',
-      symbol: 'INJ',
-    },
-    protocol: ProtocolType.Cosmos,
-    slip44: 118,
-    bech32Prefix: 'inj',
-    grpcUrls: [{ http: 'grpc-injective-ia.cosmosia.notional.ventures:443' }],
-    rpcUrls: [{ http: 'https://rpc-injective-ia.cosmosia.notional.ventures' }],
-    restUrls: [{ http: 'https://injective-lcd.quickapi.com:443' }],
-    logoURI: '/logos/injective.svg',
   },
 };

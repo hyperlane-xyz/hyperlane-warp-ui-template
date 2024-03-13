@@ -1,8 +1,9 @@
-import { ProtocolType } from '@hyperlane-xyz/utils';
+import { ProviderType } from '@hyperlane-xyz/sdk';
+import { HexString, ProtocolType } from '@hyperlane-xyz/utils';
 
 export interface ChainAddress {
   address: string;
-  chainCaip2Id?: ChainCaip2Id;
+  chainName?: ChainName;
 }
 
 export interface AccountInfo {
@@ -10,22 +11,26 @@ export interface AccountInfo {
   // This needs to be an array instead of a single address b.c.
   // Cosmos wallets have different addresses per chain
   addresses: Array<ChainAddress>;
+  // And another Cosmos exception, public keys are needed
+  // for tx simulation and gas estimation
+  publicKey?: Promise<HexString>;
   connectorName?: string;
   isReady: boolean;
 }
 
 export interface ActiveChainInfo {
   chainDisplayName?: string;
-  chainCaip2Id?: ChainCaip2Id;
+  chainName?: ChainName;
 }
 
 export type SendTransactionFn<TxReq = any, TxResp = any> = (params: {
   tx: TxReq;
-  chainCaip2Id: ChainCaip2Id;
-  activeCap2Id?: ChainCaip2Id;
+  chainName: ChainName;
+  activeChainName?: ChainName;
+  providerType?: ProviderType;
 }) => Promise<{ hash: string; confirm: () => Promise<TxResp> }>;
 
-export type SwitchNetworkFn = (chainCaip2Id: ChainCaip2Id) => Promise<void>;
+export type SwitchNetworkFn = (chainName: ChainName) => Promise<void>;
 
 export interface ChainTransactionFns {
   sendTransaction: SendTransactionFn;

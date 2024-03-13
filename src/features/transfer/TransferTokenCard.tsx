@@ -1,7 +1,6 @@
 import { WideChevron } from '@hyperlane-xyz/widgets';
 
 import { Card } from '../../components/layout/Card';
-import { getWarpContext } from '../../context/context';
 import { Color } from '../../styles/Color';
 
 import { TransferTokenForm } from './TransferTokenForm';
@@ -19,7 +18,7 @@ export function TransferTokenCard() {
             color={Color.primaryMint}
           />
         </div>
-        <TransferTokenForm tokenRoutes={getWarpContext().routes} />
+        <TransferTokenForm />
       </>
     </Card>
   );

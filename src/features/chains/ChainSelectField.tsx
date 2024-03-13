@@ -12,21 +12,21 @@ import { getChainDisplayName } from './utils';
 type Props = {
   name: string;
   label: string;
-  chainCaip2Ids: ChainCaip2Id[];
-  onChange?: (id: ChainCaip2Id) => void;
+  chains: ChainName[];
+  onChange?: (id: ChainName) => void;
   disabled?: boolean;
 };
 
-export function ChainSelectField({ name, label, chainCaip2Ids, onChange, disabled }: Props) {
-  const [field, , helpers] = useField<ChainCaip2Id>(name);
+export function ChainSelectField({ name, label, chains, onChange, disabled }: Props) {
+  const [field, , helpers] = useField<ChainName>(name);
   const { setFieldValue } = useFormikContext<TransferFormValues>();
 
-  const handleChange = (newChainId: ChainCaip2Id) => {
+  const handleChange = (newChainId: ChainName) => {
     helpers.setValue(newChainId);
     // Reset other fields on chain change
-    setFieldValue('recipientAddress', '');
+    setFieldValue('recipient', '');
     setFieldValue('amount', '');
-    setFieldValue('tokenCaip19Id', '');
+    setFieldValue('tokenIndex', undefined);
     if (onChange) onChange(newChainId);
   };
 
@@ -40,7 +40,7 @@ export function ChainSelectField({ name, label, chainCaip2Ids, onChange, disable
     <div className="flex flex-col items-center">
       <div className="flex flex-col items-center justify-center rounded-full bg-gray-100 h-[5.5rem] w-[5.5rem] p-1.5">
         <div className="flex items-end h-11">
-          <ChainLogo chainCaip2Id={field.value} size={34} />
+          <ChainLogo chainName={field.value} size={34} />
         </div>
         <label htmlFor={name} className="mt-2 mb-1 text-sm text-gray-500 uppercase">
           {label}
@@ -53,7 +53,7 @@ export function ChainSelectField({ name, label, chainCaip2Ids, onChange, disable
         onClick={onClick}
       >
         <div className="flex items-center">
-          <ChainLogo chainCaip2Id={field.value} size={14} />
+          <ChainLogo chainName={field.value} size={14} />
           <span className="ml-2">{getChainDisplayName(field.value, true)}</span>
         </div>
         <Image src={ChevronIcon} width={12} height={8} alt="" />
@@ -61,7 +61,7 @@ export function ChainSelectField({ name, label, chainCaip2Ids, onChange, disable
       <ChainSelectListModal
         isOpen={isModalOpen}
         close={() => setIsModalOpen(false)}
-        chainCaip2Ids={chainCaip2Ids}
+        chains={chains}
         onSelect={handleChange}
       />
     </div>

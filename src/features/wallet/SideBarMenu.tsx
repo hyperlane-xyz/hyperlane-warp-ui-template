@@ -2,12 +2,11 @@ import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 
-import { toTitleCase } from '@hyperlane-xyz/utils';
-
 import { SmallSpinner } from '../../components/animation/SmallSpinner';
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import { Identicon } from '../../components/icons/Identicon';
 import { PLACEHOLDER_COSMOS_CHAIN } from '../../consts/values';
+import { getWarpCore } from '../../context/context';
 import ArrowRightIcon from '../../images/icons/arrow-right.svg';
 import CollapseIcon from '../../images/icons/collapse-icon.svg';
 import Logout from '../../images/icons/logout.svg';
@@ -15,14 +14,13 @@ import ResetIcon from '../../images/icons/reset-icon.svg';
 import Wallet from '../../images/icons/wallet.svg';
 import { tryClipboardSet } from '../../utils/clipboard';
 import { STATUSES_WITH_ICON, getIconByTransferStatus } from '../../utils/transfer';
-import { getAssetNamespace } from '../caip/tokens';
 import { getChainDisplayName } from '../chains/utils';
 import { useStore } from '../store';
-import { getToken } from '../tokens/metadata';
 import { TransfersDetailsModal } from '../transfer/TransfersDetailsModal';
 import { TransferContext } from '../transfer/types';
 
 import { useAccounts, useDisconnectFns } from './hooks/multiProtocol';
+import { AccountInfo } from './hooks/types';
 
 export function SideBarMenu({
   onConnectWallet,
@@ -59,12 +57,6 @@ export function SideBarMenu({
     setIsMenuOpen(isOpen);
   }, [isOpen]);
 
-  const onClickCopy = (value?: string) => async () => {
-    if (!value) return;
-    await tryClipboardSet(value);
-    toast.success('Address copied to clipboard', { autoClose: 2000 });
-  };
-
   const onClickDisconnect = async () => {
     for (const disconnectFn of Object.values(disconnects)) {
       await disconnectFn();
@@ -96,28 +88,10 @@ export function SideBarMenu({
             Connected Wallets
           </div>
           <div className="my-3 px-3 space-y-3">
-            {readyAccounts.map((acc) =>
-              acc.addresses.map((addr) => {
-                if (addr?.chainCaip2Id?.includes(PLACEHOLDER_COSMOS_CHAIN)) return null;
-                return (
-                  <button
-                    key={addr.address}
-                    onClick={onClickCopy(addr.address)}
-                    className={`${styles.btn} border border-gray-200 rounded-xl`}
-                  >
-                    <div className="shrink-0">
-                      <Identicon address={addr.address} size={40} />
-                    </div>
-                    <div className="flex flex-col mx-3 items-start">
-                      <div className="text-gray-800 text-sm font-normal">
-                        {acc.connectorName || 'Wallet'}
-                      </div>
-                      <div className="text-xs text-left truncate w-64">
-                        {addr.address ? addr.address : 'Unknown'}
-                      </div>
-                    </div>
-                  </button>
-                );
+            {readyAccounts.map((acc, i) =>
+              acc.addresses.map((addr, j) => {
+                if (addr?.chainName?.includes(PLACEHOLDER_COSMOS_CHAIN)) return null;
+                return <AccountSummary key={`${i}-${j}`} account={acc} address={addr.address} />;
               }),
             )}
             <button onClick={onConnectWallet} className={styles.btn}>
@@ -135,63 +109,15 @@ export function SideBarMenu({
           <div className="flex grow flex-col px-3.5">
             <div className="grow flex flex-col w-full">
               {sortedTransfers?.length > 0 &&
-                sortedTransfers.map((t) => (
-                  <button
-                    key={t.timestamp}
+                sortedTransfers.map((t, i) => (
+                  <TransferSummary
+                    key={i}
+                    transfer={t}
                     onClick={() => {
                       setSelectedTransfer(t);
                       setIsModalOpen(true);
                     }}
-                    className="flex justify-between items-center rounded-xl border border-gray-200 px-2.5 py-2 mb-2.5 hover:bg-gray-200 active:bg-gray-300 transition-all duration-500"
-                  >
-                    <div className="flex">
-                      <div className="mr-2.5 flex flex-col items-center justify-center rounded-full bg-gray-100 h-[2.25rem] w-[2.25rem] p-1.5">
-                        <ChainLogo chainCaip2Id={t.params.originCaip2Id} size={20} />
-                      </div>
-                      <div className="flex flex-col">
-                        <div className="flex flex-col">
-                          <div className="flex items items-baseline">
-                            <span className="text-gray-800 text-sm font-normal">
-                              {t.params.amount}
-                            </span>
-                            <span className="text-gray-800 text-sm font-normal ml-1">
-                              {getToken(t.params.tokenCaip19Id)?.symbol || ''}
-                            </span>
-                            <span className="text-black text-xs font-normal ml-1">
-                              ({toTitleCase(getAssetNamespace(t.params.tokenCaip19Id))})
-                            </span>
-                          </div>
-                          <div className="mt-1 flex flex-row items-center">
-                            <span className="text-thin text-gray-900 font-normal tracking-wide">
-                              {getChainDisplayName(t.params.originCaip2Id, true)}
-                            </span>
-                            <Image
-                              className="mx-1"
-                              src={ArrowRightIcon}
-                              width={10}
-                              height={10}
-                              alt=""
-                            />
-                            <span className="text-thin text-gray-900 font-normal tracking-wide">
-                              {getChainDisplayName(t.params.destinationCaip2Id, true)}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex w-6 h-6">
-                      {STATUSES_WITH_ICON.includes(t.status) ? (
-                        <Image
-                          src={getIconByTransferStatus(t.status)}
-                          width={25}
-                          height={25}
-                          alt=""
-                        />
-                      ) : (
-                        <SmallSpinner />
-                      )}
-                    </div>
-                  </button>
+                  />
                 ))}
             </div>
             {sortedTransfers?.length > 0 && (
@@ -214,6 +140,79 @@ export function SideBarMenu({
         />
       )}
     </>
+  );
+}
+
+function AccountSummary({ account, address }: { account: AccountInfo; address: Address }) {
+  const onClickCopy = async () => {
+    if (!address) return;
+    await tryClipboardSet(address);
+    toast.success('Address copied to clipboard', { autoClose: 2000 });
+  };
+
+  return (
+    <button
+      key={address}
+      onClick={onClickCopy}
+      className={`${styles.btn} border border-gray-200 rounded-xl`}
+    >
+      <div className="shrink-0">
+        <Identicon address={address} size={40} />
+      </div>
+      <div className="flex flex-col mx-3 items-start">
+        <div className="text-gray-800 text-sm font-normal">{account.connectorName || 'Wallet'}</div>
+        <div className="text-xs text-left truncate w-64">{address ? address : 'Unknown'}</div>
+      </div>
+    </button>
+  );
+}
+
+function TransferSummary({
+  transfer,
+  onClick,
+}: {
+  transfer: TransferContext;
+  onClick: () => void;
+}) {
+  const { amount, origin, destination, status, timestamp, originTokenAddressOrDenom } = transfer;
+  const token = getWarpCore().findToken(origin, originTokenAddressOrDenom);
+
+  return (
+    <button
+      key={timestamp}
+      onClick={onClick}
+      className="flex justify-between items-center rounded-xl border border-gray-200 px-2.5 py-2 mb-2.5 hover:bg-gray-200 active:bg-gray-300 transition-all duration-500"
+    >
+      <div className="flex">
+        <div className="mr-2.5 flex flex-col items-center justify-center rounded-full bg-gray-100 h-[2.25rem] w-[2.25rem] p-1.5">
+          <ChainLogo chainName={origin} size={20} />
+        </div>
+        <div className="flex flex-col">
+          <div className="flex flex-col">
+            <div className="flex items items-baseline">
+              <span className="text-gray-800 text-sm font-normal">{amount}</span>
+              <span className="text-gray-800 text-sm font-normal ml-1">{token?.symbol || ''}</span>
+            </div>
+            <div className="mt-1 flex flex-row items-center">
+              <span className="text-thin text-gray-900 font-normal tracking-wide">
+                {getChainDisplayName(origin, true)}
+              </span>
+              <Image className="mx-1" src={ArrowRightIcon} width={10} height={10} alt="" />
+              <span className="text-thin text-gray-900 font-normal tracking-wide">
+                {getChainDisplayName(destination, true)}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="flex w-6 h-6">
+        {STATUSES_WITH_ICON.includes(status) ? (
+          <Image src={getIconByTransferStatus(status)} width={25} height={25} alt="" />
+        ) : (
+          <SmallSpinner className="-ml-1 mr-3" />
+        )}
+      </div>
+    </button>
   );
 }
 

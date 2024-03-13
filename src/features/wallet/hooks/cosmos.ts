@@ -3,35 +3,36 @@ import { useChain, useChains } from '@cosmos-kit/react';
 import { useCallback, useMemo } from 'react';
 import { toast } from 'react-toastify';
 
-import { ProtocolType } from '@hyperlane-xyz/utils';
+import { ProviderType } from '@hyperlane-xyz/sdk';
+import { HexString, ProtocolType } from '@hyperlane-xyz/utils';
 
 import { PLACEHOLDER_COSMOS_CHAIN } from '../../../consts/values';
 import { logger } from '../../../utils/logger';
-import { getCaip2Id } from '../../caip/chains';
 import { getCosmosChainNames } from '../../chains/metadata';
-import { getChainMetadata, getMultiProvider } from '../../multiProvider';
+import { getChainMetadata } from '../../chains/utils';
 
 import { AccountInfo, ActiveChainInfo, ChainAddress, ChainTransactionFns } from './types';
 
 export function useCosmosAccount(): AccountInfo {
   const chainToContext = useChains(getCosmosChainNames());
   return useMemo<AccountInfo>(() => {
-    const cosmAddresses: Array<ChainAddress> = [];
-    let cosmConnectorName: string | undefined = undefined;
-    let isCosmAccountReady = false;
-    const multiProvider = getMultiProvider();
+    const addresses: Array<ChainAddress> = [];
+    let publicKey: Promise<HexString> | undefined = undefined;
+    let connectorName: string | undefined = undefined;
+    let isReady = false;
     for (const [chainName, context] of Object.entries(chainToContext)) {
       if (!context.address) continue;
-      const caip2Id = getCaip2Id(ProtocolType.Cosmos, multiProvider.getChainId(chainName));
-      cosmAddresses.push({ address: context.address, chainCaip2Id: caip2Id });
-      isCosmAccountReady = true;
-      cosmConnectorName ||= context.wallet?.prettyName;
+      addresses.push({ address: context.address, chainName });
+      publicKey = context.getAccount().then((acc) => Buffer.from(acc.pubkey).toString('hex'));
+      isReady = true;
+      connectorName ||= context.wallet?.prettyName;
     }
     return {
       protocol: ProtocolType.Cosmos,
-      addresses: cosmAddresses,
-      connectorName: cosmConnectorName,
-      isReady: isCosmAccountReady,
+      addresses,
+      publicKey,
+      connectorName,
+      isReady,
     };
   }, [chainToContext]);
 }
@@ -56,36 +57,37 @@ export function useCosmosActiveChain(): ActiveChainInfo {
 export function useCosmosTransactionFns(): ChainTransactionFns {
   const chainToContext = useChains(getCosmosChainNames());
 
-  const onSwitchNetwork = useCallback(async (chainCaip2Id: ChainCaip2Id) => {
-    const chainName = getChainMetadata(chainCaip2Id).displayName;
-    toast.warn(`Cosmos wallet must be connected to origin chain ${chainName}}`);
+  const onSwitchNetwork = useCallback(async (chainName: ChainName) => {
+    const displayName = getChainMetadata(chainName).displayName || chainName;
+    toast.warn(`Cosmos wallet must be connected to origin chain ${displayName}}`);
   }, []);
 
   const onSendTx = useCallback(
     async ({
       tx,
-      chainCaip2Id,
-      activeCap2Id,
+      chainName,
+      activeChainName,
+      providerType,
     }: {
-      tx: { type: 'cosmwasm' | 'stargate'; request: any };
-      chainCaip2Id: ChainCaip2Id;
-      activeCap2Id?: ChainCaip2Id;
+      tx: any;
+      chainName: ChainName;
+      activeChainName?: ChainName;
+      providerType?: ProviderType;
     }) => {
-      const chainName = getChainMetadata(chainCaip2Id).name;
       const chainContext = chainToContext[chainName];
       if (!chainContext?.address) throw new Error(`Cosmos wallet not connected for ${chainName}`);
-      if (activeCap2Id && activeCap2Id !== chainCaip2Id) await onSwitchNetwork(chainCaip2Id);
-      logger.debug(`Sending ${tx.type} tx on chain ${chainCaip2Id}`);
+      if (activeChainName && activeChainName !== chainName) await onSwitchNetwork(chainName);
+      logger.debug(`Sending tx on chain ${chainName}`);
       const { getSigningCosmWasmClient, getSigningStargateClient } = chainContext;
       let result: ExecuteResult | DeliverTxResponse;
-      if (tx.type === 'cosmwasm') {
+      if (providerType === ProviderType.CosmJsWasm) {
         const client = await getSigningCosmWasmClient();
-        result = await client.executeMultiple(chainContext.address, [tx.request], 'auto');
-      } else if (tx.type === 'stargate') {
+        result = await client.executeMultiple(chainContext.address, [tx], 'auto');
+      } else if (providerType === ProviderType.CosmJs) {
         const client = await getSigningStargateClient();
-        result = await client.signAndBroadcast(chainContext.address, [tx.request], 'auto');
+        result = await client.signAndBroadcast(chainContext.address, [tx], 'auto');
       } else {
-        throw new Error('Invalid cosmos tx type');
+        throw new Error(`Invalid cosmos provider type ${providerType}`);
       }
 
       const confirm = async () => {

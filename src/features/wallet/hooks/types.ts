@@ -1,4 +1,4 @@
-import { ProviderType } from '@hyperlane-xyz/sdk';
+import { TypedTransactionReceipt, WarpTypedTransaction } from '@hyperlane-xyz/sdk';
 import { HexString, ProtocolType } from '@hyperlane-xyz/utils';
 
 export interface ChainAddress {
@@ -23,11 +23,13 @@ export interface ActiveChainInfo {
   chainName?: ChainName;
 }
 
-export type SendTransactionFn<TxReq = any, TxResp = any> = (params: {
+export type SendTransactionFn<
+  TxReq extends WarpTypedTransaction = WarpTypedTransaction,
+  TxResp extends TypedTransactionReceipt = TypedTransactionReceipt,
+> = (params: {
   tx: TxReq;
   chainName: ChainName;
   activeChainName?: ChainName;
-  providerType?: ProviderType;
 }) => Promise<{ hash: string; confirm: () => Promise<TxResp> }>;
 
 export type SwitchNetworkFn = (chainName: ChainName) => Promise<void>;

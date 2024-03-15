@@ -3,6 +3,7 @@ import { sendTransaction, switchNetwork, waitForTransaction } from '@wagmi/core'
 import { useCallback, useMemo } from 'react';
 import { useAccount, useDisconnect, useNetwork } from 'wagmi';
 
+import { ProviderType, TypedTransactionReceipt, WarpTypedTransaction } from '@hyperlane-xyz/sdk';
 import { ProtocolType, sleep } from '@hyperlane-xyz/utils';
 
 import { logger } from '../../../utils/logger';
@@ -66,19 +67,24 @@ export function useEvmTransactionFns(): ChainTransactionFns {
       chainName,
       activeChainName,
     }: {
-      tx: any;
+      tx: WarpTypedTransaction;
       chainName: ChainName;
       activeChainName?: ChainName;
     }) => {
+      if (tx.type !== ProviderType.EthersV5) throw new Error(`Unsupported tx type: ${tx.type}`);
       if (activeChainName && activeChainName !== chainName) await onSwitchNetwork(chainName);
       logger.debug(`Sending tx on chain ${chainName}`);
       const chainId = getChainMetadata(chainName).chainId as number;
-      const wagmiTx = ethers5TxToWagmiTx(tx);
+      const wagmiTx = ethers5TxToWagmiTx(tx.transaction);
       const { hash } = await sendTransaction({
         chainId,
         ...wagmiTx,
       });
-      const confirm = () => waitForTransaction({ chainId, hash, confirmations: 1 });
+      const confirm = (): Promise<TypedTransactionReceipt> =>
+        waitForTransaction({ chainId, hash, confirmations: 1 }).then((r) => ({
+          type: ProviderType.Viem,
+          receipt: r,
+        }));
       return { hash, confirm };
     },
     [onSwitchNetwork],

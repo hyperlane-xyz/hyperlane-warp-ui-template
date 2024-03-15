@@ -1,10 +1,10 @@
-import { DeliverTxResponse, ExecuteResult } from '@cosmjs/cosmwasm-stargate';
+import { DeliverTxResponse, ExecuteResult, IndexedTx } from '@cosmjs/cosmwasm-stargate';
 import { useChain, useChains } from '@cosmos-kit/react';
 import { useCallback, useMemo } from 'react';
 import { toast } from 'react-toastify';
 
-import { ProviderType } from '@hyperlane-xyz/sdk';
-import { HexString, ProtocolType } from '@hyperlane-xyz/utils';
+import { ProviderType, TypedTransactionReceipt, WarpTypedTransaction } from '@hyperlane-xyz/sdk';
+import { HexString, ProtocolType, assert } from '@hyperlane-xyz/utils';
 
 import { PLACEHOLDER_COSMOS_CHAIN } from '../../../consts/values';
 import { logger } from '../../../utils/logger';
@@ -67,32 +67,38 @@ export function useCosmosTransactionFns(): ChainTransactionFns {
       tx,
       chainName,
       activeChainName,
-      providerType,
     }: {
-      tx: any;
+      tx: WarpTypedTransaction;
       chainName: ChainName;
       activeChainName?: ChainName;
-      providerType?: ProviderType;
     }) => {
       const chainContext = chainToContext[chainName];
       if (!chainContext?.address) throw new Error(`Cosmos wallet not connected for ${chainName}`);
+
       if (activeChainName && activeChainName !== chainName) await onSwitchNetwork(chainName);
+
       logger.debug(`Sending tx on chain ${chainName}`);
       const { getSigningCosmWasmClient, getSigningStargateClient } = chainContext;
       let result: ExecuteResult | DeliverTxResponse;
-      if (providerType === ProviderType.CosmJsWasm) {
+      let txDetails: IndexedTx | null;
+      if (tx.type === ProviderType.CosmJsWasm) {
         const client = await getSigningCosmWasmClient();
-        result = await client.executeMultiple(chainContext.address, [tx], 'auto');
-      } else if (providerType === ProviderType.CosmJs) {
+        result = await client.executeMultiple(chainContext.address, [tx.transaction], 'auto');
+        txDetails = await client.getTx(result.transactionHash);
+      } else if (tx.type === ProviderType.CosmJs) {
         const client = await getSigningStargateClient();
-        result = await client.signAndBroadcast(chainContext.address, [tx], 'auto');
+        result = await client.signAndBroadcast(chainContext.address, [tx.transaction], 'auto');
+        txDetails = await client.getTx(result.transactionHash);
       } else {
-        throw new Error(`Invalid cosmos provider type ${providerType}`);
+        throw new Error(`Invalid cosmos provider type ${tx.type}`);
       }
 
-      const confirm = async () => {
-        if (result.transactionHash) return result;
-        throw new Error(`Cosmos tx ${result.transactionHash} failed: ${JSON.stringify(result)}`);
+      const confirm = async (): Promise<TypedTransactionReceipt> => {
+        assert(txDetails, `Cosmos tx failed: ${JSON.stringify(result)}`);
+        return {
+          type: tx.type,
+          receipt: { ...txDetails, transactionHash: result.transactionHash },
+        };
       };
       return { hash: result.transactionHash, confirm };
     },

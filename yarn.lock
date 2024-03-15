@@ -2995,30 +2995,31 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/core@npm:3.8.0":
-  version: 3.8.0
-  resolution: "@hyperlane-xyz/core@npm:3.8.0"
+"@hyperlane-xyz/core@npm:3.8.1":
+  version: 3.8.1
+  resolution: "@hyperlane-xyz/core@npm:3.8.1"
   dependencies:
     "@eth-optimism/contracts": "npm:^0.6.0"
-    "@hyperlane-xyz/utils": "npm:3.8.0"
+    "@hyperlane-xyz/utils": "npm:3.8.1"
+    "@layerzerolabs/lz-evm-oapp-v2": "npm:2.0.2"
     "@openzeppelin/contracts": "npm:^4.9.3"
     "@openzeppelin/contracts-upgradeable": "npm:^v4.9.3"
   peerDependencies:
     "@ethersproject/abi": "*"
     "@ethersproject/providers": "*"
     "@types/sinon-chai": "*"
-  checksum: f0f614bd1a1d8a755d8522409473b5cb3042304450e3ffb8ac96cd2756ca27b9a6f0a243608ffddf70a31af3b1e8dba0138154615c41424b2fb2e5baca52c963
+  checksum: e3b8c9b73ea37f9680412eb0a2479bf0131647ff6089b9c2bc33f58104ffd1a5cbff4ac5f0a323cef03dbf5403910f68702172c8c8935ca239595dfedf75da6f
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/sdk@npm:^3.8.0":
-  version: 3.8.0
-  resolution: "@hyperlane-xyz/sdk@npm:3.8.0"
+"@hyperlane-xyz/sdk@npm:^3.8.1":
+  version: 3.8.1
+  resolution: "@hyperlane-xyz/sdk@npm:3.8.1"
   dependencies:
     "@cosmjs/cosmwasm-stargate": "npm:^0.31.3"
     "@cosmjs/stargate": "npm:^0.31.3"
-    "@hyperlane-xyz/core": "npm:3.8.0"
-    "@hyperlane-xyz/utils": "npm:3.8.0"
+    "@hyperlane-xyz/core": "npm:3.8.1"
+    "@hyperlane-xyz/utils": "npm:3.8.1"
     "@solana/spl-token": "npm:^0.3.8"
     "@solana/web3.js": "npm:^1.78.0"
     "@types/coingecko-api": "npm:^1.0.10"
@@ -3035,19 +3036,19 @@ __metadata:
   peerDependencies:
     "@ethersproject/abi": "*"
     "@ethersproject/providers": "*"
-  checksum: 5ca551b639a3a5a92266adbac9da973dd417e8a399797c2449b07af15c0f1f4659d1b98f4c1b834db999db476f66b832db4eac37efa1b9f50bc6c2530b2f98fd
+  checksum: e00ea9304eaee36bd47afaf7fe6d8b24f6cc297d2485235341e62349eca335d26a2732076609ed1b44d6ebf7449f394a934867137b8106fec986264265ee68f9
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/utils@npm:3.8.0, @hyperlane-xyz/utils@npm:^3.8.0":
-  version: 3.8.0
-  resolution: "@hyperlane-xyz/utils@npm:3.8.0"
+"@hyperlane-xyz/utils@npm:3.8.1, @hyperlane-xyz/utils@npm:^3.8.1":
+  version: 3.8.1
+  resolution: "@hyperlane-xyz/utils@npm:3.8.1"
   dependencies:
     "@cosmjs/encoding": "npm:^0.31.3"
     "@solana/web3.js": "npm:^1.78.0"
     bignumber.js: "npm:^9.1.1"
     ethers: "npm:^5.7.2"
-  checksum: 9d313133d3cc0cdae605c96ffdcebb704a5951a75201bc23be8a2653fbad45e0a1fd4782f8d93ec0b5a01bddaa98999ef5f320cfbb6eef44e0de2176a8a4fb7b
+  checksum: 2a19c76c0c9449ddeca2ebb406f6bc0678f5409687bc267c01f77eadb431c439e78889faedcfdc42d8c3762646e30bee60ecc030579d60482589707cf0751099
   languageName: node
   linkType: hard
 
@@ -3067,8 +3068,8 @@ __metadata:
     "@emotion/react": "npm:^11.11.1"
     "@emotion/styled": "npm:^11.11.0"
     "@headlessui/react": "npm:^1.7.14"
-    "@hyperlane-xyz/sdk": "npm:^3.8.0"
-    "@hyperlane-xyz/utils": "npm:^3.8.0"
+    "@hyperlane-xyz/sdk": "npm:^3.8.1"
+    "@hyperlane-xyz/utils": "npm:^3.8.1"
     "@hyperlane-xyz/widgets": "npm:^3.8.0"
     "@metamask/jazzicon": "https://github.com/jmrossy/jazzicon#7a8df28974b4e81129bfbe3cab76308b889032a6"
     "@next/bundle-analyzer": "npm:^14.0.4"
@@ -3655,6 +3656,63 @@ __metadata:
     bs58: "npm:^5.0.0"
     uuid: "npm:^8.3.2"
   checksum: 85d54eae6b92ccac890a3b6ca8b6bf41eb8187f9506d17da597930211b10aa98e6f55b6b6a8aff6541c3faae03067ce729f8318bac748da553c7b7c1b2d0ead2
+  languageName: node
+  linkType: hard
+
+"@layerzerolabs/lz-evm-messagelib-v2@npm:^2.0.2":
+  version: 2.1.22
+  resolution: "@layerzerolabs/lz-evm-messagelib-v2@npm:2.1.22"
+  peerDependencies:
+    "@arbitrum/nitro-contracts": ^1.1.0
+    "@axelar-network/axelar-gmp-sdk-solidity": ^5.6.3
+    "@chainlink/contracts-ccip": ^0.7.6
+    "@eth-optimism/contracts": ^0.6.0
+    "@layerzerolabs/lz-evm-protocol-v2": ^2.1.22
+    "@layerzerolabs/lz-evm-v1-0.7": ^2.1.22
+    "@openzeppelin/contracts": ^4.8.1 || ^5.0.0
+    "@openzeppelin/contracts-upgradeable": ^4.8.1 || ^5.0.0
+    hardhat-deploy: ^0.11.44
+    solidity-bytes-utils: ^0.8.0
+  peerDependenciesMeta:
+    "@arbitrum/nitro-contracts":
+      optional: true
+  checksum: 2de9fcf1687286b3b70e04c1260500258b3762f0ee7435a4535d115464995ad1de137ae5d695503a09a9e72a2aef42e0615bd8d529e1565367eaf0bd40ba8454
+  languageName: node
+  linkType: hard
+
+"@layerzerolabs/lz-evm-oapp-v2@npm:2.0.2":
+  version: 2.0.2
+  resolution: "@layerzerolabs/lz-evm-oapp-v2@npm:2.0.2"
+  dependencies:
+    "@layerzerolabs/lz-evm-messagelib-v2": "npm:^2.0.2"
+    "@layerzerolabs/lz-evm-protocol-v2": "npm:^2.0.2"
+    "@layerzerolabs/lz-evm-v1-0.7": "npm:^2.0.2"
+  peerDependencies:
+    solidity-bytes-utils: ^0.8.0
+  checksum: bc5a4bc5493f756931b150eefe6a6c31ffe8c691c418191d22eff044f8ca653043edc64dd746f30fc4b05f3230e667a6e3f5005ade7c324283bf8550bbaa32f5
+  languageName: node
+  linkType: hard
+
+"@layerzerolabs/lz-evm-protocol-v2@npm:^2.0.2":
+  version: 2.1.22
+  resolution: "@layerzerolabs/lz-evm-protocol-v2@npm:2.1.22"
+  peerDependencies:
+    "@openzeppelin/contracts": ^4.8.1 || ^5.0.0
+    "@openzeppelin/contracts-upgradeable": ^4.8.1 || ^5.0.0
+    hardhat-deploy: ^0.11.44
+    solidity-bytes-utils: ^0.8.0
+  checksum: 479d4df6f37985fa5354cabea0facfbd0a1292c1f0cc9b2ac82a51a971cd4f4f1f8dafd6933cdc55bf99e4dffb653056d5a687a8ba9265273d5f6d9e9e7df58a
+  languageName: node
+  linkType: hard
+
+"@layerzerolabs/lz-evm-v1-0.7@npm:^2.0.2":
+  version: 2.1.22
+  resolution: "@layerzerolabs/lz-evm-v1-0.7@npm:2.1.22"
+  peerDependencies:
+    "@openzeppelin/contracts": 3.4.2-solc-0.7 || ^3.4.2 || ^4.0.0 || ^5.0.0
+    "@openzeppelin/contracts-upgradeable": 3.4.2-solc-0.7 || ^3.4.2 || ^4.0.0 || ^5.0.0
+    hardhat-deploy: ^0.11.44
+  checksum: 087bbf540d4fee22da63a38471a5eeedbb505a18c2a2c339c9b05da6ddb355cf002e95704a9fb91d08288b4b6c2488afcb665eb188a3176b488e3d8ebae68243
   languageName: node
   linkType: hard
 

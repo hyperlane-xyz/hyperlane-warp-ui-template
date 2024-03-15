@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { toast } from 'react-toastify';
 
-import { WarpTxCategory } from '@hyperlane-xyz/sdk';
+import { TypedTransactionReceipt, WarpTxCategory } from '@hyperlane-xyz/sdk';
 import { toTitleCase, toWei } from '@hyperlane-xyz/utils';
 
 import { toastTxSuccess } from '../../components/toast/TxSuccessToast';
@@ -16,6 +16,7 @@ import {
 } from '../wallet/hooks/multiProtocol';
 
 import { TransferContext, TransferFormValues, TransferStatus } from './types';
+import { tryGetMsgIdFromTransferReceipt } from './utils';
 
 export function useTokenTransfer(onDone?: () => void) {
   const { transfers, addTransfer, updateTransferStatus } = useStore((s) => ({
@@ -138,28 +139,27 @@ async function executeTransfer({
     });
 
     const hashes: string[] = [];
+    let txReceipt: TypedTransactionReceipt | undefined = undefined;
     for (const tx of txs) {
       updateTransferStatus(transferIndex, (transferStatus = txCategoryToStatuses[tx.category][0]));
       const { hash, confirm } = await sendTransaction({
-        tx: tx.transaction,
+        tx,
         chainName: origin,
         activeChainName: activeChain.chainName,
-        providerType: tx.type,
       });
       updateTransferStatus(transferIndex, (transferStatus = txCategoryToStatuses[tx.category][1]));
-      const receipt = await confirm();
+      txReceipt = await confirm();
       const description = toTitleCase(tx.category);
-      logger.debug(`${description} transaction confirmed, hash:`, receipt.transactionHash);
-      toastTxSuccess(`${description} transaction sent!`, receipt.transactionHash, origin);
+      logger.debug(`${description} transaction confirmed, hash:`, hash);
+      toastTxSuccess(`${description} transaction sent!`, hash, origin);
       hashes.push(hash);
     }
 
-    // TODO
-    // const msgId = tryGetMsgIdFromTransferReceipt(transferReceipt);
+    const msgId = txReceipt ? tryGetMsgIdFromTransferReceipt(origin, txReceipt) : undefined;
 
     updateTransferStatus(transferIndex, (transferStatus = TransferStatus.ConfirmedTransfer), {
       originTxHash: hashes.at(-1),
-      msgId: '',
+      msgId,
     });
   } catch (error) {
     logger.error(`Error at stage ${transferStatus}`, error);

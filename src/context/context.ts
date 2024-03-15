@@ -62,3 +62,11 @@ export function getIndexForToken(token?: IToken): number | undefined {
   if (index >= 0) return index;
   else return undefined;
 }
+
+export function tryFindToken(chain: ChainName, addressOrDenom?: string): IToken | null {
+  try {
+    return getWarpCore().findToken(chain, addressOrDenom);
+  } catch (error) {
+    return null;
+  }
+}

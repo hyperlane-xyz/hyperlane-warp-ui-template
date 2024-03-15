@@ -164,7 +164,7 @@ export function TransfersDetailsModal({
           <TransferProperty name="Sender Address" value={sender} url={fromUrl} />
           <TransferProperty name="Recipient Address" value={recipient} url={toUrl} />
           {token?.addressOrDenom && (
-            <TransferProperty name="Token Address" value={token.addressOrDenom} />
+            <TransferProperty name="Token Address or Denom" value={token.addressOrDenom} />
           )}
           {originTxHash && (
             <TransferProperty
@@ -173,6 +173,7 @@ export function TransfersDetailsModal({
               url={originTxUrl}
             />
           )}
+          {msgId && <TransferProperty name="Message ID" value={msgId} />}
           {explorerLink && (
             <div className="flex justify-between">
               <span className="text-gray-350 text-xs leading-normal tracking-wider">

@@ -1,9 +1,10 @@
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
-import { Connection, Transaction } from '@solana/web3.js';
+import { Connection } from '@solana/web3.js';
 import { useCallback, useMemo } from 'react';
 import { toast } from 'react-toastify';
 
+import { ProviderType, TypedTransactionReceipt, WarpTypedTransaction } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 
 import { getMultiProvider } from '../../../context/context';
@@ -65,10 +66,11 @@ export function useSolTransactionFns(): ChainTransactionFns {
       chainName,
       activeChainName,
     }: {
-      tx: Transaction;
+      tx: WarpTypedTransaction;
       chainName: ChainName;
       activeChainName?: ChainName;
     }) => {
+      if (tx.type !== ProviderType.SolanaWeb3) throw new Error(`Unsupported tx type: ${tx.type}`);
       if (activeChainName && activeChainName !== chainName) await onSwitchNetwork(chainName);
       const rpcUrl = getMultiProvider().getRpcUrl(chainName);
       const connection = new Connection(rpcUrl, 'confirmed');
@@ -78,10 +80,17 @@ export function useSolTransactionFns(): ChainTransactionFns {
       } = await connection.getLatestBlockhashAndContext();
 
       logger.debug(`Sending tx on chain ${chainName}`);
-      const signature = await sendSolTransaction(tx, connection, { minContextSlot });
+      const signature = await sendSolTransaction(tx.transaction, connection, { minContextSlot });
 
-      const confirm = () =>
-        connection.confirmTransaction({ blockhash, lastValidBlockHeight, signature });
+      const confirm = (): Promise<TypedTransactionReceipt> =>
+        connection
+          .confirmTransaction({ blockhash, lastValidBlockHeight, signature })
+          .then(() => connection.getTransaction(signature))
+          .then((r) => ({
+            type: ProviderType.SolanaWeb3,
+            receipt: r!,
+          }));
+
       return { hash: signature, confirm };
     },
     [onSwitchNetwork, sendSolTransaction],

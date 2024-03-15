@@ -1,9 +1,10 @@
 import { useConnectModal } from '@rainbow-me/rainbowkit';
-import { sendTransaction, switchNetwork, waitForTransaction } from '@wagmi/core';
+import { getNetwork, sendTransaction, switchNetwork, waitForTransaction } from '@wagmi/core';
 import { useCallback, useMemo } from 'react';
 import { useAccount, useDisconnect, useNetwork } from 'wagmi';
 
-import { ProtocolType, sleep } from '@hyperlane-xyz/utils';
+import { ProviderType, TypedTransactionReceipt, WarpTypedTransaction } from '@hyperlane-xyz/sdk';
+import { ProtocolType, assert, sleep } from '@hyperlane-xyz/utils';
 
 import { logger } from '../../../utils/logger';
 import { getChainMetadata, tryGetChainMetadata } from '../../chains/utils';
@@ -66,19 +67,35 @@ export function useEvmTransactionFns(): ChainTransactionFns {
       chainName,
       activeChainName,
     }: {
-      tx: any;
+      tx: WarpTypedTransaction;
       chainName: ChainName;
       activeChainName?: ChainName;
     }) => {
+      if (tx.type !== ProviderType.EthersV5) throw new Error(`Unsupported tx type: ${tx.type}`);
+
+      // If the active chain is different from tx origin chain, try to switch network first
       if (activeChainName && activeChainName !== chainName) await onSwitchNetwork(chainName);
-      logger.debug(`Sending tx on chain ${chainName}`);
+
+      // Since the network switching is not foolproof, we also force a network check here
       const chainId = getChainMetadata(chainName).chainId as number;
-      const wagmiTx = ethers5TxToWagmiTx(tx);
+      logger.debug('Checking wallet current chain');
+      const latestNetwork = await getNetwork();
+      assert(
+        latestNetwork.chain?.id === chainId,
+        `Wallet not on chain ${chainName} (ChainMismatchError)`,
+      );
+
+      logger.debug(`Sending tx on chain ${chainName}`);
+      const wagmiTx = ethers5TxToWagmiTx(tx.transaction);
       const { hash } = await sendTransaction({
         chainId,
         ...wagmiTx,
       });
-      const confirm = () => waitForTransaction({ chainId, hash, confirmations: 1 });
+      const confirm = (): Promise<TypedTransactionReceipt> =>
+        waitForTransaction({ chainId, hash, confirmations: 1 }).then((r) => ({
+          type: ProviderType.Viem,
+          receipt: r,
+        }));
       return { hash, confirm };
     },
     [onSwitchNetwork],

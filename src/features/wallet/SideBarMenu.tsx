@@ -6,7 +6,7 @@ import { SmallSpinner } from '../../components/animation/SmallSpinner';
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import { Identicon } from '../../components/icons/Identicon';
 import { PLACEHOLDER_COSMOS_CHAIN } from '../../consts/values';
-import { getWarpCore } from '../../context/context';
+import { tryFindToken } from '../../context/context';
 import ArrowRightIcon from '../../images/icons/arrow-right.svg';
 import CollapseIcon from '../../images/icons/collapse-icon.svg';
 import Logout from '../../images/icons/logout.svg';
@@ -175,7 +175,7 @@ function TransferSummary({
   onClick: () => void;
 }) {
   const { amount, origin, destination, status, timestamp, originTokenAddressOrDenom } = transfer;
-  const token = getWarpCore().findToken(origin, originTokenAddressOrDenom);
+  const token = tryFindToken(origin, originTokenAddressOrDenom);
 
   return (
     <button

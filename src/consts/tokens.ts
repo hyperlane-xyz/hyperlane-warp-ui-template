@@ -162,7 +162,7 @@ export const tokenConfigs: WarpCoreConfig = {
       ],
     },
 
-    //#endregion
+    //#endregion NEUTRON
     //#region INJECTIVE
 
     // INJ on Injective to inEVM
@@ -239,84 +239,84 @@ export const tokenConfigs: WarpCoreConfig = {
       connections: [{ token: 'ethereum|ethereum|0xab852e67bf03E74C89aF67C4BA97dd1088D3dA19' }],
     },
 
-    //#endregion
+    //#endregion INJECTIVE
     //#region VICTION
 
     // ETH on Ethereum to Viction
-    // {
-    //   chainName: Chains.ethereum,
-    //   standard: TokenStandard.EvmHypNative,
-    //   name: 'Ethereum',
-    //   symbol: 'ETH',
-    //   decimals: 18,
-    //   addressOrDenom: '0x15b5D6B614242B118AA404528A7f3E2Ad241e4A4',
-    //   logoURI: '/logos/weth.png',
-    //   connections: [{ token: 'ethereum|viction|0x182e8d7c5f1b06201b102123fc7df0eaeb445a7b' }],
-    // },
+    {
+      chainName: Chains.ethereum,
+      standard: TokenStandard.EvmHypNative,
+      name: 'Ethereum',
+      symbol: 'ETH',
+      decimals: 18,
+      addressOrDenom: '0x15b5D6B614242B118AA404528A7f3E2Ad241e4A4',
+      logoURI: '/logos/weth.png',
+      connections: [{ token: 'ethereum|viction|0x182e8d7c5f1b06201b102123fc7df0eaeb445a7b' }],
+    },
 
     // ETH on Viction from Ethereum
-    // {
-    //   chainName: Chains.viction,
-    //   standard: TokenStandard.EvmHypSynthetic,
-    //   name: 'Ethereum',
-    //   symbol: 'ETH',
-    //   decimals: 18,
-    //   addressOrDenom: '0x182e8d7c5f1b06201b102123fc7df0eaeb445a7b',
-    //   logoURI: '/logos/weth.png',
-    //   connections: [{ token: 'ethereum|ethereum|0x15b5D6B614242B118AA404528A7f3E2Ad241e4A4' }],
-    // },
+    {
+      chainName: Chains.viction,
+      standard: TokenStandard.EvmHypSynthetic,
+      name: 'Ethereum',
+      symbol: 'ETH',
+      decimals: 18,
+      addressOrDenom: '0x182e8d7c5f1b06201b102123fc7df0eaeb445a7b',
+      logoURI: '/logos/weth.png',
+      connections: [{ token: 'ethereum|ethereum|0x15b5D6B614242B118AA404528A7f3E2Ad241e4A4' }],
+    },
 
     // USDC on Ethereum to Viction
-    // {
-    //   chainName: Chains.ethereum,
-    //   standard: TokenStandard.EvmHypCollateral,
-    //   name: 'USDC',
-    //   symbol: 'USDC',
-    //   decimals: 6,
-    //   addressOrDenom: '0x31Dca7762930f56D81292f85E65c9D67575804fE',
-    //   collateralAddressOrDenom: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
-    //   logoURI: '/logos/usdc.svg',
-    //   connections: [{ token: 'ethereum|viction|0xbda330ea8f3005c421c8088e638fbb64fa71b9e0' }],
-    // },
+    {
+      chainName: Chains.ethereum,
+      standard: TokenStandard.EvmHypCollateral,
+      name: 'USDC',
+      symbol: 'USDC',
+      decimals: 6,
+      addressOrDenom: '0x31Dca7762930f56D81292f85E65c9D67575804fE',
+      collateralAddressOrDenom: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+      logoURI: '/logos/usdc.svg',
+      connections: [{ token: 'ethereum|viction|0xbda330ea8f3005c421c8088e638fbb64fa71b9e0' }],
+    },
 
     // USDC on Viction from Ethereum
-    // {
-    //   chainName: Chains.viction,
-    //   standard: TokenStandard.EvmHypSynthetic,
-    //   name: 'USDC',
-    //   symbol: 'USDC',
-    //   decimals: 6,
-    //   addressOrDenom: '0xbda330ea8f3005c421c8088e638fbb64fa71b9e0',
-    //   logoURI: '/logos/usdc.svg',
-    //   connections: [{ token: 'ethereum|ethereum|0x31Dca7762930f56D81292f85E65c9D67575804fE' }],
-    // },
+    {
+      chainName: Chains.viction,
+      standard: TokenStandard.EvmHypSynthetic,
+      name: 'USDC',
+      symbol: 'USDC',
+      decimals: 6,
+      addressOrDenom: '0xbda330ea8f3005c421c8088e638fbb64fa71b9e0',
+      logoURI: '/logos/usdc.svg',
+      connections: [{ token: 'ethereum|ethereum|0x31Dca7762930f56D81292f85E65c9D67575804fE' }],
+    },
 
     // USDT on Ethereum to Viction
-    // {
-    //   chainName: Chains.ethereum,
-    //   standard: TokenStandard.EvmHypCollateral,
-    //   name: 'USDT',
-    //   symbol: 'USDT',
-    //   decimals: 6,
-    //   addressOrDenom: '0x4221a16A01F61c2b38A03C52d828a7041f6AAA49',
-    //   collateralAddressOrDenom: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
-    //   logoURI: '/logos/usdt.svg',
-    //   connections: [{ token: 'ethereum|viction|0x48083c69f5a42c6b69abbad48ae195bd36770ee2' }],
-    // },
+    {
+      chainName: Chains.ethereum,
+      standard: TokenStandard.EvmHypCollateral,
+      name: 'USDT',
+      symbol: 'USDT',
+      decimals: 6,
+      addressOrDenom: '0x4221a16A01F61c2b38A03C52d828a7041f6AAA49',
+      collateralAddressOrDenom: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+      logoURI: '/logos/usdt.svg',
+      connections: [{ token: 'ethereum|viction|0x48083c69f5a42c6b69abbad48ae195bd36770ee2' }],
+    },
 
     // USDT on Viction to Ethereum
-    // {
-    //   chainName: Chains.viction,
-    //   standard: TokenStandard.EvmHypSynthetic,
-    //   name: 'USDT',
-    //   symbol: 'USDT',
-    //   decimals: 6,
-    //   addressOrDenom: '0x48083c69f5a42c6b69abbad48ae195bd36770ee2',
-    //   logoURI: '/logos/usdt.svg',
-    //   connections: [{ token: 'ethereum|ethereum|0x4221a16A01F61c2b38A03C52d828a7041f6AAA49' }],
-    // },
+    {
+      chainName: Chains.viction,
+      standard: TokenStandard.EvmHypSynthetic,
+      name: 'USDT',
+      symbol: 'USDT',
+      decimals: 6,
+      addressOrDenom: '0x48083c69f5a42c6b69abbad48ae195bd36770ee2',
+      logoURI: '/logos/usdt.svg',
+      connections: [{ token: 'ethereum|ethereum|0x4221a16A01F61c2b38A03C52d828a7041f6AAA49' }],
+    },
 
-    //#endregion
+    //#endregion viction
   ],
   options: {
     interchainFeeConstants: [

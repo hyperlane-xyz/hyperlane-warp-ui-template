@@ -274,6 +274,7 @@ function MaxButton({ balance, disabled }: { balance?: TokenAmount; disabled?: bo
   const onClick = async () => {
     if (!balance || isNullish(tokenIndex) || disabled) return;
     const maxAmount = await fetchMaxAmount({ balance, origin, destination, accounts });
+    if (isNullish(maxAmount)) return;
     const decimalsAmount = maxAmount.getDecimalFormattedAmount();
     const roundedAmount = new BigNumber(decimalsAmount).toFixed(4, BigNumber.ROUND_FLOOR);
     setFieldValue('amount', roundedAmount);
@@ -421,6 +422,8 @@ function useFormInitialValues(): TransferFormValues {
   }, []);
 }
 
+const insufficientFundsErrMsg = /insufficient.funds/i;
+
 async function validateForm(
   values: TransferFormValues,
   accounts: Record<ProtocolType, AccountInfo>,
@@ -441,6 +444,10 @@ async function validateForm(
     return result;
   } catch (error) {
     logger.error('Error validating form', error);
-    return { form: errorToString(error) };
+    let errorMsg = errorToString(error, 40);
+    if (insufficientFundsErrMsg.test(errorMsg)) {
+      errorMsg = 'Insufficient funds for gas fees';
+    }
+    return { form: errorMsg };
   }
 }

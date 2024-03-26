@@ -40,7 +40,7 @@ export function ConnectAwareSubmitButton<FormValues = any>({ chainName, text, cl
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setErrors, setTouched, errors, touched]);
 
-  useTimeout(clearErrors, 3000);
+  useTimeout(clearErrors, 3500);
 
   return (
     <SolidButton type={type} color={color} onClick={onClick} classes={classes}>

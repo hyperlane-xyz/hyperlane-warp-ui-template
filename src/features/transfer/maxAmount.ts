@@ -1,14 +1,14 @@
 import { useMutation } from '@tanstack/react-query';
+import { toast } from 'react-toastify';
 
 import { TokenAmount } from '@hyperlane-xyz/sdk';
-import { ProtocolType, timeout } from '@hyperlane-xyz/utils';
+import { ProtocolType } from '@hyperlane-xyz/utils';
 
 import { getWarpCore } from '../../context/context';
 import { logger } from '../../utils/logger';
+import { getChainMetadata } from '../chains/utils';
 import { getAccountAddressAndPubKey } from '../wallet/hooks/multiProtocol';
 import { AccountInfo } from '../wallet/hooks/types';
-
-const MAX_FETCH_TIMEOUT = 3000; // 3 seconds
 
 interface FetchMaxParams {
   accounts: Record<ProtocolType, AccountInfo>;
@@ -28,18 +28,17 @@ async function fetchMaxAmount({ accounts, balance, destination, origin }: FetchM
   try {
     const { address, publicKey } = getAccountAddressAndPubKey(origin, accounts);
     if (!address) return balance;
-    const maxAmount = await timeout(
-      getWarpCore().getMaxTransferAmount({
-        balance,
-        destination,
-        sender: address,
-        senderPubKey: await publicKey,
-      }),
-      MAX_FETCH_TIMEOUT,
-    );
+    const maxAmount = await getWarpCore().getMaxTransferAmount({
+      balance,
+      destination,
+      sender: address,
+      senderPubKey: await publicKey,
+    });
     return maxAmount;
   } catch (error) {
-    logger.warn('Error or timeout fetching fee quotes for max amount', error);
-    return balance;
+    logger.warn('Error fetching fee quotes for max amount', error);
+    const chainName = getChainMetadata(origin).displayName;
+    toast.warn(`Cannot simulate transfer, ${chainName} native balance may be insufficient.`);
+    return undefined;
   }
 }

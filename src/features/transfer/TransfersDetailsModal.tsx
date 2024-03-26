@@ -117,7 +117,7 @@ export function TransfersDetailsModal({
           <h2 className="text-gray-600 font-medium">{date}</h2>
           <div className="flex items-center font-medium">
             {isSent ? (
-              <h3 className="text-blue-500">Sent</h3>
+              <h3 className="text-mint-500">Sent</h3>
             ) : (
               <h3 className="text-red-500">Failed</h3>
             )}
@@ -132,7 +132,7 @@ export function TransfersDetailsModal({
         </div>
       )}
 
-      <div className="mt-4 p-3 flex items-center justify-center w-full rounded-full bg-blue-200">
+      <div className="mt-4 p-3 flex items-center justify-center w-full rounded-full bg-mint-200">
         <TokenIcon token={token} size={30} />
         <div className="ml-2 flex items items-baseline">
           <span className="text-xl font-medium">{amount}</span>

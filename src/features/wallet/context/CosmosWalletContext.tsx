@@ -50,7 +50,7 @@ export function CosmosWalletContext({ children }: PropsWithChildren<unknown>) {
           signingStargate: () => {
             return {
               // TODO cosmos get gas price from registry or RPC
-              gasPrice: GasPrice.fromString('0.2tia'),
+              gasPrice: GasPrice.fromString('0.1tia'),
             };
           },
         }}

@@ -1,11 +1,13 @@
 const filters = [
   // Hyperlane custom set
-  "trap returned falsish for property", // Error from wallet lib
+  "trap returned falsish for property", // Error from cosmos wallet lib
+  "not established yet", // Same, bug with their WC integration ^
   "Refused to create a WebAssembly object", // CSP blocking wasm
   "call to WebAssembly.instantiate", // Same ^
   "Request rejected", // Unknown noise during Next.js init
   "WebSocket connection failed for host", // WalletConnect flakiness
   "Socket stalled when trying to connect", // Same ^
+  "Failed to publish payload", // Same ^
   // Some recommendations from https://docs.sentry.io/platforms/javascript/configuration/filtering
   "top.GLOBALS",
   "originalCreateNotification",
@@ -16,7 +18,7 @@ const filters = [
 
 export const sentryDefaultConfig = {
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
-  tracesSampleRate: 0.5,
+  tracesSampleRate: 0.1,
   maxBreadcrumbs: 1,
   sendClientReports: false,
   attachStacktrace: false,

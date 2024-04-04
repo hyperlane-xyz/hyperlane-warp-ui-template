@@ -11,11 +11,11 @@ export const tokenConfigs: WarpCoreConfig = {
       decimals: 6,
       chainName: 'ethereum',
       standard: TokenStandard.EvmHypCollateral,
-      addressOrDenom: '0x9f5cF636b4F2DC6D83c9d21c8911876C235DbC9f',
+      addressOrDenom: '0x8b4192B9Ad1fCa440A5808641261e5289e6de95D',
       collateralAddressOrDenom: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
       connections: [
         {
-          token: 'ethereum|ancient8|0xB3fCcD379ad66CED0c91028520C64226611A48c9',
+          token: 'ethereum|ancient8|0x97423A68BAe94b5De52d767a17aBCc54c157c0E5',
         },
       ],
     },
@@ -25,10 +25,10 @@ export const tokenConfigs: WarpCoreConfig = {
       decimals: 6,
       chainName: 'ancient8',
       standard: TokenStandard.EvmHypSynthetic,
-      addressOrDenom: '0xB3fCcD379ad66CED0c91028520C64226611A48c9',
+      addressOrDenom: '0x97423A68BAe94b5De52d767a17aBCc54c157c0E5',
       connections: [
         {
-          token: 'ethereum|ethereum|0x9f5cF636b4F2DC6D83c9d21c8911876C235DbC9f',
+          token: 'ethereum|ethereum|0x8b4192B9Ad1fCa440A5808641261e5289e6de95D',
         },
       ],
     },

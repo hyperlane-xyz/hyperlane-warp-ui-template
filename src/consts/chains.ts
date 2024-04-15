@@ -1,5 +1,10 @@
-import { ChainMap, ChainMetadata, ChainTechnicalStack, ExplorerFamily } from '@hyperlane-xyz/sdk';
-import { etherToken } from '@hyperlane-xyz/sdk/dist/consts/chainMetadata';
+import {
+  ChainMap,
+  ChainMetadata,
+  ChainTechnicalStack,
+  ExplorerFamily,
+  chainMetadata,
+} from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 
 // A map of chain names to ChainMetadata
@@ -50,7 +55,7 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
     domainId: 888888888,
     isTestnet: false,
     name: 'ancient8',
-    nativeToken: etherToken,
+    nativeToken: chainMetadata.ethereum.nativeToken!,
     gasCurrencyCoinGeckoId: 'ethereum',
     protocol: ProtocolType.Ethereum,
     rpcUrls: [{ http: 'https://rpc.ancient8.gg' }],

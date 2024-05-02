@@ -18,7 +18,7 @@ const filters = [
 
 export const sentryDefaultConfig = {
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
-  tracesSampleRate: 0.1,
+  tracesSampleRate: 0.01,
   maxBreadcrumbs: 1,
   sendClientReports: false,
   attachStacktrace: false,

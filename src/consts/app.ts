@@ -1,4 +1,4 @@
-export const APP_NAME = 'Hyperlane Warp UI Template';
-export const APP_DESCRIPTION = 'A DApp for Hyperlane Warp Route transfers';
-export const APP_URL = 'hyperlane-warp-template.vercel.app';
-export const APP_BRAND_COLOR = '#025aa1';
+export const APP_NAME = 'Injective Token Bridge';
+export const APP_DESCRIPTION = 'A token bridge for Injective powered by Hyperlane';
+export const APP_URL = 'https://inevmbridge.com';
+export const APP_BRAND_COLOR = '#0082FA';

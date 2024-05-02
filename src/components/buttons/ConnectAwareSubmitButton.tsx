@@ -28,7 +28,7 @@ export function ConnectAwareSubmitButton<FormValues = any>({ chainName, text, cl
   const hasError = Object.keys(touched).length > 0 && Object.keys(errors).length > 0;
   const firstError = `${Object.values(errors)[0]}` || 'Unknown error';
 
-  const color = hasError ? 'red' : 'pink';
+  const color = hasError ? 'red' : 'blue';
   const content = hasError ? firstError : isAccountReady ? text : 'Connect Wallet';
   const type = isAccountReady ? 'submit' : 'button';
   const onClick = isAccountReady ? undefined : connectFn;

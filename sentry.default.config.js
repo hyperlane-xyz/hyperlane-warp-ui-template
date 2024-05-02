@@ -7,6 +7,7 @@ const filters = [
   "Request rejected", // Unknown noise during Next.js init
   "WebSocket connection failed for host", // WalletConnect flakiness
   "Socket stalled when trying to connect", // Same ^
+  "Request expired. Please try again.", // Same^
   "Failed to publish payload", // Same ^
   // Some recommendations from https://docs.sentry.io/platforms/javascript/configuration/filtering
   "top.GLOBALS",

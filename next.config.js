@@ -59,7 +59,7 @@ const securityHeaders = [
 const nextConfig = {
   webpack(config) {
     config.module.rules.push({
-      test: /\.ya?ml$/,
+      test: /\.yaml$/,
       use: 'yaml-loader',
     });
     return config;

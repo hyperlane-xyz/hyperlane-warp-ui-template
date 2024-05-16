@@ -28,13 +28,15 @@ tokens:
     symbol: ETH
     decimals: 18
     addressOrDenom: "0x2C70E00A8E133022dE1845D72CC62034cC9ba3B8"
+    logoURI: '/logos/weth.png'
     connections:
-      - token: ethereum|sepolia|0x92EbCB027C86E69649d3e9e743D34DBBf1e11727
+      - token: { ethereum|sepolia|0x92EbCB027C86E69649d3e9e743D34DBBf1e11727 }
   - chainName: sepolia
     standard: EvmHypSynthetic
     name: Ether
     symbol: ETH
     decimals: 18
     addressOrDenom: "0x92EbCB027C86E69649d3e9e743D34DBBf1e11727"
+    logoURI: '/logos/weth.png'
     connections:
       - { token: ethereum|scrollsepolia|0x2C70E00A8E133022dE1845D72CC62034cC9ba3B8 }

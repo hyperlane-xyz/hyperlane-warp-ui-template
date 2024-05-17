@@ -18,3 +18,16 @@
 #   protocol: ethereum
 #   rpcUrls:
 #     - http: http://127.0.0.1:8555
+  scrollsepolia:
+    chainId: 534351
+    displayName: Scroll Sepolia
+    domainId: 534351
+    isTestnet: true
+    name: scrollsepolia
+    nativeToken:
+      decimals: 18
+      name: Ether
+      symbol: ETH
+    protocol: ethereum
+    rpcUrls:
+      - http: https://sepolia-rpc.scroll.io

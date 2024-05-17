@@ -1,0 +1,5 @@
+scrollsepolia:
+  type: native
+sepolia:
+  type: synthetic
+

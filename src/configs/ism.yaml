@@ -1,0 +1,8 @@
+scrollsepolia:
+  threshold: 1
+  validators:
+    - '0xbe18dbd758afb367180260b524e6d4bcd1cb6d05'
+sepolia:
+  threshold: 1
+  validators:
+    - '0xb22b65f202558adf86a8bb2847b76ae1036686a5'

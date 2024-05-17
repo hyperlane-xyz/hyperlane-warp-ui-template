@@ -1,0 +1,262 @@
+{
+  "$ref": "#/definitions/hyperlaneWarpCoreConfig",
+  "definitions": {
+    "hyperlaneWarpCoreConfig": {
+      "type": "object",
+      "properties": {
+        "tokens": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "chainName": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9]*$",
+                "description": "The name of the chain, must correspond to a chain in the multiProvider chainMetadata"
+              },
+              "standard": {
+                "type": "string",
+                "enum": [
+                  "ERC20",
+                  "ERC721",
+                  "EvmNative",
+                  "EvmHypNative",
+                  "EvmHypCollateral",
+                  "EvmHypXERC20Collateral",
+                  "EvmHypFiatCollateral",
+                  "EvmHypCollateralVault",
+                  "EvmHypSynthetic",
+                  "SealevelSpl",
+                  "SealevelSpl2022",
+                  "SealevelNative",
+                  "SealevelHypNative",
+                  "SealevelHypCollateral",
+                  "SealevelHypSynthetic",
+                  "CosmosIcs20",
+                  "CosmosIcs721",
+                  "CosmosNative",
+                  "CosmosIbc",
+                  "CW20",
+                  "CWNative",
+                  "CW721",
+                  "CwHypNative",
+                  "CwHypCollateral",
+                  "CwHypSynthetic"
+                ],
+                "description": "The type of token. See TokenStandard for valid values."
+              },
+              "decimals": {
+                "type": "integer",
+                "minimum": 0,
+                "exclusiveMaximum": 256,
+                "description": "The decimals value (e.g. 18 for Eth)"
+              },
+              "symbol": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The symbol of the token"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The name of the token"
+              },
+              "addressOrDenom": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The address or denom, or null for native tokens"
+              },
+              "collateralAddressOrDenom": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The address or denom of the collateralized token"
+              },
+              "igpTokenAddressOrDenom": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The address or denom of the token for IGP payments"
+              },
+              "logoURI": {
+                "type": "string",
+                "description": "The URI of the token logo"
+              },
+              "connections": {
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "const": "hyperlane"
+                            },
+                            "token": {
+                              "type": "string",
+                              "pattern": "^(.+)|(.+)|(.+)$"
+                            }
+                          },
+                          "required": [
+                            "token"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "const": "ibc"
+                            },
+                            "token": {
+                              "type": "string",
+                              "pattern": "^(.+)|(.+)|(.+)$"
+                            },
+                            "sourcePort": {
+                              "type": "string"
+                            },
+                            "sourceChannel": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "token",
+                            "sourcePort",
+                            "sourceChannel"
+                          ],
+                          "additionalProperties": false
+                        }
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "const": "ibc-hyperlane"
+                        },
+                        "token": {
+                          "type": "string",
+                          "pattern": "^(.+)|(.+)|(.+)$"
+                        },
+                        "sourcePort": {
+                          "type": "string"
+                        },
+                        "sourceChannel": {
+                          "type": "string"
+                        },
+                        "intermediateChainName": {
+                          "type": "string",
+                          "pattern": "^[a-z][a-z0-9]*$"
+                        },
+                        "intermediateIbcDenom": {
+                          "type": "string"
+                        },
+                        "intermediateRouterAddress": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "token",
+                        "sourcePort",
+                        "sourceChannel",
+                        "intermediateChainName",
+                        "intermediateIbcDenom",
+                        "intermediateRouterAddress"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ]
+                },
+                "description": "The list of token connections (e.g. warp or IBC)"
+              }
+            },
+            "required": [
+              "chainName",
+              "standard",
+              "decimals",
+              "symbol",
+              "name",
+              "addressOrDenom"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "options": {
+          "type": "object",
+          "properties": {
+            "localFeeConstants": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "origin": {
+                    "$ref": "#/definitions/hyperlaneWarpCoreConfig/properties/tokens/items/properties/connections/items/anyOf/1/properties/intermediateChainName"
+                  },
+                  "destination": {
+                    "$ref": "#/definitions/hyperlaneWarpCoreConfig/properties/tokens/items/properties/connections/items/anyOf/1/properties/intermediateChainName"
+                  },
+                  "amount": {
+                    "type": [
+                      "string",
+                      "number",
+                      "integer"
+                    ]
+                  },
+                  "addressOrDenom": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "origin",
+                  "destination",
+                  "amount"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "interchainFeeConstants": {
+              "$ref": "#/definitions/hyperlaneWarpCoreConfig/properties/options/properties/localFeeConstants"
+            },
+            "routeBlacklist": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "origin": {
+                    "$ref": "#/definitions/hyperlaneWarpCoreConfig/properties/tokens/items/properties/connections/items/anyOf/1/properties/intermediateChainName"
+                  },
+                  "destination": {
+                    "$ref": "#/definitions/hyperlaneWarpCoreConfig/properties/tokens/items/properties/connections/items/anyOf/1/properties/intermediateChainName"
+                  }
+                },
+                "required": [
+                  "origin",
+                  "destination"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "tokens"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

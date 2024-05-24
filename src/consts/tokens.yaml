@@ -1,24 +1,27 @@
-# A list of Warp UI token configs and other options for the WarpCore
-# Configs can be defined here, in tokens.json, or in tokens.ts
-# The input here is typically the output of the Hyperlane CLI warp deploy command
----
 tokens:
-  # Eth Mainnet HypNative token
-  - chainName: sepolia
-    standard: EvmHypNative
+  - chainName: blast
+    standard: EvmHypXERC20
+    name: Renzo Restaked ETH
+    symbol: ezETH
+    totalSupply: "84034563542140831711954"
     decimals: 18
-    symbol: ETH
-    name: Ether
-    addressOrDenom: '0x767C51a91CC9dEF2F24C35c340649411D6390320'
-    logoURI: '/logos/weth.png'
+    type: xERC20
+    token: "0x2416092f143378750bb29b79eD961ab195CcEea5"
+    owner: "0xa7ECcdb9Be08178f896c26b7BbD8C3D4E844d9Ba"
+    mailbox: "0x3a867fCfFeC2B790970eeBDC9023E75B0a172aa7"
+    addressOrDenom: "0xA34ceDf9068C5deE726C67A4e1DCfCc2D6E2A7fD"
     connections:
-      - { token: ethereum|alfajores|0x8bF6Ca2Dca1DF703Cb9144cef6A4d86abA7776C4 }
-  - chainName: alfajores
-    standard: EvmHypSynthetic
+      - token: ethereum|ethereum|0x8dfbEA2582F41c8C4Eb25252BbA392fd3c09449A
+  - chainName: ethereum
+    standard: EvmHypXERC20Lockbox
+    name: Renzo Restaked ETH
+    symbol: ezETH
+    totalSupply: "84034563542140831711954"
     decimals: 18
-    symbol: ETH
-    name: Ether
-    addressOrDenom: '0x8bF6Ca2Dca1DF703Cb9144cef6A4d86abA7776C4'
-    logoURI: '/logos/weth.png'
+    type: xERC20Lockbox
+    token: "0xC8140dA31E6bCa19b287cC35531c2212763C2059"
+    owner: "0xa7ECcdb9Be08178f896c26b7BbD8C3D4E844d9Ba"
+    mailbox: "0xc005dc82818d67AF737725bD4bf75435d065D239"
+    addressOrDenom: "0x8dfbEA2582F41c8C4Eb25252BbA392fd3c09449A"
     connections:
-      - { token: ethereum|sepolia|0x767C51a91CC9dEF2F24C35c340649411D6390320 }
+      - token: ethereum|blast|0xA34ceDf9068C5deE726C67A4e1DCfCc2D6E2A7fD

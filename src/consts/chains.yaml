@@ -4,17 +4,53 @@
 # Schema here: https://github.com/hyperlane-xyz/hyperlane-monorepo/blob/main/typescript/sdk/src/metadata/chainMetadataTypes.ts
 ---
 # Example using local anvil chain:
-# anvil1:
-#   chainId: 31337
-#   domainId: 31337
-#   name: anvil1
-#   protocol: ethereum
-#   rpcUrls:
-#     - http: http://127.0.0.1:8545
-# anvil2:
-#   chainId: 31338
-#   domainId: 31338
-#   name: anvil2
-#   protocol: ethereum
-#   rpcUrls:
-#     - http: http://127.0.0.1:8555
+blast:
+  blockExplorers:
+    - apiUrl: https://api.routescan.io/v2/network/mainnet/evm/81457/etherscan/api
+      family: routescan
+      name: Blast Explorer
+      url: https://blastexplorer.io
+  blocks:
+    confirmations: 1
+    estimateBlockTime: 2
+    reorgPeriod: 1
+  chainId: 81457
+  displayName: Blast
+  domainId: 81457
+  gasCurrencyCoinGeckoId: ethereum
+  name: blast
+  nativeToken:
+    decimals: 18
+    name: Ether
+    symbol: ETH
+  protocol: ethereum
+  rpcUrls:
+    - http: https://rpc.blast.io
+  technicalStack: other
+ethereum:
+  blockExplorers:
+    - apiUrl: https://api.etherscan.io/api
+      family: etherscan
+      name: Etherscan
+      url: https://etherscan.io
+    - apiUrl: https://eth.blockscout.com/api
+      family: blockscout
+      name: Blockscout
+      url: https://blockscout.com/eth/mainnet
+  blocks:
+    confirmations: 7
+    estimateBlockTime: 13
+    reorgPeriod: 14
+  chainId: 1
+  displayName: Ethereum
+  domainId: 1
+  gnosisSafeTransactionServiceUrl: https://safe-transaction-mainnet.safe.global/
+  name: ethereum
+  nativeToken:
+    decimals: 18
+    name: Ether
+    symbol: ETH
+  protocol: ethereum
+  rpcUrls:
+    - http: https://ethereum.publicnode.com
+    - http: https://cloudflare-eth.com

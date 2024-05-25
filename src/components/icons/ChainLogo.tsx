@@ -1,17 +1,28 @@
 import Image from 'next/image';
-import { ComponentProps, useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { ChainLogo as ChainLogoInner } from '@hyperlane-xyz/widgets';
 
-import { getChainDisplayName, tryGetChainMetadata } from '../../features/chains/utils';
+import { getRegistry } from '../../context/context';
+import { tryGetChainMetadata } from '../../features/chains/utils';
 
-export function ChainLogo(props: ComponentProps<typeof ChainLogoInner>) {
-  const { chainName, ...rest } = props;
-  const { chainId, chainDisplayName, icon } = useMemo(() => {
-    if (!chainName) return {};
-    const chainDisplayName = getChainDisplayName(chainName);
-    const chainMetadata = tryGetChainMetadata(chainName);
-    const chainId = chainMetadata?.chainId;
+export function ChainLogo({
+  chainId,
+  chainName,
+  background,
+  size,
+}: {
+  chainId?: ChainId;
+  chainName?: string;
+  background?: boolean;
+  size?: number;
+}) {
+  const registry = getRegistry();
+  const { name, icon } = useMemo(() => {
+    const chainNameOrId = chainName || chainId;
+    if (!chainNameOrId) return { name: '' };
+    const chainMetadata = tryGetChainMetadata(chainNameOrId);
+    const name = chainMetadata?.name || '';
     const logoUri = chainMetadata?.logoURI;
     const icon = logoUri
       ? (props: { width: number; height: number; title?: string }) => (
@@ -19,11 +30,20 @@ export function ChainLogo(props: ComponentProps<typeof ChainLogoInner>) {
         )
       : undefined;
     return {
-      chainId,
-      chainDisplayName,
+      name,
       icon,
     };
-  }, [chainName]);
+  }, [chainName, chainId]);
 
-  return <ChainLogoInner {...rest} chainId={chainId} chainName={chainDisplayName} icon={icon} />;
+  return (
+    <ChainLogoInner
+      chainName={name}
+      // TODO
+      // @ts-ignore update registry version in widget lib
+      registry={registry}
+      size={size}
+      background={background}
+      icon={icon}
+    />
+  );
 }

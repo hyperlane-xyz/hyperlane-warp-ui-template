@@ -1,9 +1,9 @@
 import { WarpCoreConfig } from '@hyperlane-xyz/sdk';
 
-// A list of Warp UI token configs
-// Tokens can be defined here, in tokens.json, or in tokens.yaml
+// A list of Warp Route token configs
+// These configs will be merged with the warp routes in the configured registry
 // The input here is typically the output of the Hyperlane CLI warp deploy command
-export const tokenConfigs: WarpCoreConfig = {
+export const warpRouteConfigs: WarpCoreConfig = {
   tokens: [],
   options: {},
 };

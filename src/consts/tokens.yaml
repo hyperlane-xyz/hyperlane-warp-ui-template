@@ -1,6 +1,7 @@
 tokens:
   - chainName: blast
-    standard: EvmHypXERC20
+    standard: EvmHypCollateral
+    logoURI: /logos/ezeth.svg
     name: Renzo Restaked ETH
     symbol: ezETH
     totalSupply: "84034563542140831711954"
@@ -13,7 +14,8 @@ tokens:
     connections:
       - token: ethereum|ethereum|0x8dfbEA2582F41c8C4Eb25252BbA392fd3c09449A
   - chainName: ethereum
-    standard: EvmHypXERC20Lockbox
+    standard: EvmHypCollateral
+    logoURI: /logos/ezeth.svg
     name: Renzo Restaked ETH
     symbol: ezETH
     totalSupply: "84034563542140831711954"

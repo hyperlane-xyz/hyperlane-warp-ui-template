@@ -15,6 +15,7 @@ blast:
     estimateBlockTime: 2
     reorgPeriod: 1
   chainId: 81457
+  logoURI: /logos/blast.svg
   displayName: Blast
   domainId: 81457
   gasCurrencyCoinGeckoId: ethereum

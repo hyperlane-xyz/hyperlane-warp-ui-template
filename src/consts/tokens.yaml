@@ -11,6 +11,7 @@ tokens:
     owner: '0xa7ECcdb9Be08178f896c26b7BbD8C3D4E844d9Ba'
     mailbox: '0x3a867fCfFeC2B790970eeBDC9023E75B0a172aa7'
     addressOrDenom: '0xA34ceDf9068C5deE726C67A4e1DCfCc2D6E2A7fD'
+    collateralAddressOrDenom: '0x2416092f143378750bb29b79eD961ab195CcEea5'
     connections:
       - token: ethereum|ethereum|0x8dfbEA2582F41c8C4Eb25252BbA392fd3c09449A
   - chainName: ethereum
@@ -25,5 +26,6 @@ tokens:
     owner: '0xa7ECcdb9Be08178f896c26b7BbD8C3D4E844d9Ba'
     mailbox: '0xc005dc82818d67AF737725bD4bf75435d065D239'
     addressOrDenom: '0x8dfbEA2582F41c8C4Eb25252BbA392fd3c09449A'
+    collateralAddressOrDenom: '0xbf5495Efe5DB9ce00f80364C8B423567e58d2110'
     connections:
       - token: ethereum|blast|0xA34ceDf9068C5deE726C67A4e1DCfCc2D6E2A7fD

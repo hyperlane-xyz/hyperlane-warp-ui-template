@@ -6,6 +6,6 @@ export const links = {
   docs: 'https://docs.hyperlane.xyz',
   gasDocs: 'https://docs.hyperlane.xyz/docs/protocol/interchain-gas-payments',
   chains: 'https://docs.hyperlane.xyz/docs/resources/domains',
-  twitter: 'https://twitter.com/hyperlane_xyz',
+  twitter: 'https://twitter.com/hyperlane',
   blog: 'https://medium.com/hyperlane',
 };

@@ -10,6 +10,6 @@ export const links = {
   chains: 'https://docs.hyperlane.xyz/docs/resources/domains',
   discord: 'https://discord.gg/hyperlane',
   github: 'https://github.com/hyperlane-xyz/hyperlane-warp-ui-template',
-  twitter: 'https://twitter.com/hyperlane_xyz',
+  twitter: 'https://twitter.com/hyperlane',
   caldera: 'https://www.caldera.xyz',
 };

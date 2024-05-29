@@ -5,6 +5,61 @@ import { Chains, TokenConnectionType, TokenStandard, WarpCoreConfig } from '@hyp
 // The input here is typically the output of the Hyperlane CLI warp deploy command
 export const tokenConfigs: WarpCoreConfig = {
   tokens: [
+    //#region OSMOSIS
+    // TIA Osmosis to Manta
+    {
+      chainName: 'osmosis',
+      standard: TokenStandard.CwHypCollateral,
+      decimals: 6,
+      symbol: 'TIA',
+      name: 'Celestia',
+      addressOrDenom: 'osmo1h4y9xjcvs8lrx4z8ha48uq9a338w74dpl2ly3tf74fzvugp2kj4q9l0jkw',
+      collateralAddressOrDenom:
+        'ibc/D79E7D83AB399BFFF93433E54FAA480C191248FC556924A2A8351AE2638B3877',
+      connections: [{ token: 'ethereum|mantapacific|0x88410F3D8135b4D23b98dC37C4652C6969a5B1a8' }],
+    },
+    // milkTIA Osmosis to Manta
+    {
+      chainName: 'osmosis',
+      standard: TokenStandard.CwHypCollateral,
+      decimals: 6,
+      symbol: 'milkTIA',
+      name: 'Celestia',
+      addressOrDenom: 'osmo17xuecsykqw2xcxwv8cau7uy4hgdwqt0u4qxflyc2yshhggpazfjs6kfqd3',
+      collateralAddressOrDenom:
+        'factory/osmo1f5vfcph2dvfeqcqkhetwv75fda69z7e5c2dldm3kvgj23crkv6wqcn47a0/umilkTIA',
+      connections: [{ token: 'ethereum|mantapacific|0x32474653127048d9fC20000e21dEd396b47968E8' }],
+    },
+    // TIA on Manta from Osmosis
+    {
+      chainName: 'mantapacific',
+      standard: TokenStandard.EvmHypSynthetic,
+      decimals: 6,
+      symbol: 'TIA',
+      name: 'Hyperlane Bridged TIA',
+      addressOrDenom: '0x88410F3D8135b4D23b98dC37C4652C6969a5B1a8',
+      connections: [
+        {
+          token: 'cosmos|osmosis|osmo1h4y9xjcvs8lrx4z8ha48uq9a338w74dpl2ly3tf74fzvugp2kj4q9l0jkw',
+        },
+      ],
+    },
+    // milkTIA on Manta from Osmosis
+    {
+      chainName: 'mantapacific',
+      standard: TokenStandard.EvmHypSynthetic,
+      decimals: 6,
+      symbol: 'milkTIA',
+      name: 'Hyperlane Bridged milkTIA',
+      addressOrDenom: '0x32474653127048d9fC20000e21dEd396b47968E8',
+      connections: [
+        {
+          token: 'cosmos|osmosis|osmo17xuecsykqw2xcxwv8cau7uy4hgdwqt0u4qxflyc2yshhggpazfjs6kfqd3',
+        },
+      ],
+    },
+
+    //#endregion OSMOSIS
     //#region NEUTRON
 
     // TIA Celestia to Neutron
@@ -353,6 +408,19 @@ export const tokenConfigs: WarpCoreConfig = {
   ],
   options: {
     interchainFeeConstants: [
+      {
+        origin: 'osmosis',
+        destination: Chains.mantapacific,
+        amount: 840000,
+        addressOrDenom: 'ibc/D79E7D83AB399BFFF93433E54FAA480C191248FC556924A2A8351AE2638B3877',
+      },
+      {
+        origin: 'osmosis',
+        destination: Chains.mantapacific,
+        amount: 840000,
+        addressOrDenom:
+          'factory/osmo1f5vfcph2dvfeqcqkhetwv75fda69z7e5c2dldm3kvgj23crkv6wqcn47a0/umilkTIA',
+      },
       {
         origin: Chains.neutron,
         destination: Chains.arbitrum,

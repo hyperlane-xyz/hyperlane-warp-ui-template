@@ -36,6 +36,38 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
   //   logoURI: '/logo.svg',
   // },
 
+  osmosis: {
+    protocol: ProtocolType.Cosmos,
+    name: 'osmosis',
+    chainId: 'osmosis-1',
+    domainId: 875,
+    displayName: 'Osmosis',
+    displayNameShort: 'Osmosis',
+    slip44: 118,
+    bech32Prefix: 'osmo',
+    rpcUrls: [{ http: 'https://rpc.osmosis.zone:443' }],
+    restUrls: [{ http: 'https://rest.osmosis.zone:443' }],
+    grpcUrls: [{ http: 'https://grpc.osmosis.zone:443' }],
+    nativeToken: {
+      name: 'Osmosis',
+      denom: 'uosmo',
+      symbol: 'OSMO',
+      decimals: 6,
+    },
+    blockExplorers: [
+      {
+        name: 'Mintscan',
+        url: 'https://www.mintscan.io/osmosis',
+        // TODO API not supported, using url to meet validation requirements
+        apiUrl: 'https://www.mintscan.io/osmosis',
+        family: ExplorerFamily.Other,
+      },
+    ],
+    transactionOverrides: {
+      gasPrice: 0.1,
+    },
+  },
+
   ancient8: {
     blockExplorers: [
       {

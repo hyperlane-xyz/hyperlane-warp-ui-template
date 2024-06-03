@@ -2,15 +2,23 @@
 
 Find below instructions for customizing the token list and branding assets of this app.
 
-## Token Configs
+## Registry
 
-This app requires a token config list to function. The token list is located in `./src/consts/`. Tokens can be configured using any of the token files there (`.ts`, `.json`, `.yaml`). The output token artifacts of a warp route deployment using the [Hyperlane CLI](https://www.npmjs.com/package/@hyperlane-xyz/cli) can be used here.
+By default, the app will use the canonical Hyperlane registry published on NPM. See `package.json` for the precise version.
 
-## Chain Configs
+To use custom chains or custom warp routes, you can either configure a different registry using the `NEXT_PUBLIC_REGISTRY_URL` environment variable or define them manually (see the next two sections).
 
-By default, the app will use only the chains that are included in the Hyperlane SDK and connected to the tokens you specify in the token list (see above).
+## Custom Warp Route Configs
 
-To add support for additional chains, or to modify the default properties of the SDK's chains (such as RPC URLs), add the required chain metadata to any of the chains files in `./src/consts/` (`.ts`, `.json`, `.yaml`). The same chain configs used in the [Hyperlane CLI](https://www.npmjs.com/package/@hyperlane-xyz/cli) will work here. You may also add an optional `logoURI` field to a chain config to show a custom logo image in the app.
+This app requires a set of warp route configs to function. The configs are located in `./src/consts/warpRoutes.yaml` and `./src/consts/warpRoutes.ts`. The output artifacts of a warp route deployment using the [Hyperlane CLI](https://www.npmjs.com/package/@hyperlane-xyz/cli) can be used here.
+
+In addition to defining your warp route configs, you can control which routes display in the UI via the `warpRoutesWhitelist.ts` file.
+
+## Custom Chain Configs
+
+By default, the app will use only the chains that are included in the configured registry and included in your warp routes.
+
+To add support for additional chains, or to override a chain's properties (such as RPC URLs), add chain metadata to either `./src/consts/chains.ts` or `./src/consts/chains.yaml`. The same chain configs used in the [Hyperlane CLI](https://www.npmjs.com/package/@hyperlane-xyz/cli) will work here. You may also add an optional `logoURI` field to a chain config to show a custom logo image in the app.
 
 ## Tip Card
 

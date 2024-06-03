@@ -13,7 +13,7 @@ export function assembleWarpCoreConfig(): WarpCoreConfig {
   const resultTs = WarpCoreConfigSchema.safeParse(WarpRoutesTs);
   const configTs = validateZodResult(resultTs, 'warp core typescript config');
 
-  const filteredWarpRouteConfigs = warpRouteWhitelist.length
+  const filteredWarpRouteConfigs = warpRouteWhitelist?.length
     ? filterToIds(warpRouteConfigs, warpRouteWhitelist)
     : warpRouteConfigs;
 

@@ -12,7 +12,7 @@ To use custom chains or custom warp routes, you can either configure a different
 
 This app requires a set of warp route configs to function. The configs are located in `./src/consts/warpRoutes.yaml` and `./src/consts/warpRoutes.ts`. The output artifacts of a warp route deployment using the [Hyperlane CLI](https://www.npmjs.com/package/@hyperlane-xyz/cli) can be used here.
 
-In addition to defining your warp route configs, you can control which routes display in the UI via the `warpRoutesWhitelist.ts` file.
+In addition to defining your warp route configs, you can control which routes display in the UI via the `warpRouteWhitelist.ts` file.
 
 ## Custom Chain Configs
 

@@ -18,32 +18,30 @@ export function ChainLogo({
   size?: number;
 }) {
   const registry = getRegistry();
-  const { name, icon } = useMemo(() => {
+  const { name, Icon: icon } = useMemo(() => {
     const chainNameOrId = chainName || chainId;
     if (!chainNameOrId) return { name: '' };
     const chainMetadata = tryGetChainMetadata(chainNameOrId);
     const name = chainMetadata?.name || '';
     const logoUri = chainMetadata?.logoURI;
-    const icon = logoUri
+    const Icon = logoUri
       ? (props: { width: number; height: number; title?: string }) => (
           <Image src={logoUri} alt="" {...props} />
         )
       : undefined;
     return {
       name,
-      icon,
+      Icon,
     };
   }, [chainName, chainId]);
 
   return (
     <ChainLogoInner
       chainName={name}
-      // TODO
-      // @ts-ignore update registry version in widget lib
       registry={registry}
       size={size}
       background={background}
-      icon={icon}
+      Icon={icon}
     />
   );
 }

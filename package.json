@@ -20,6 +20,8 @@
     "@hyperlane-xyz/utils": "^3.8.1",
     "@hyperlane-xyz/widgets": "^3.8.0",
     "@metamask/jazzicon": "https://github.com/jmrossy/jazzicon#7a8df28974b4e81129bfbe3cab76308b889032a6",
+    "@metamask/post-message-stream": "6.1.2",
+    "@metamask/providers": "10.2.1",
     "@rainbow-me/rainbowkit": "1.3.0",
     "@sentry/nextjs": "^7.93.0",
     "@solana/spl-token": "^0.3.8",

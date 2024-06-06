@@ -1,6 +1,6 @@
 import { warpRouteConfigs } from '@hyperlane-xyz/registry';
 import { WarpCoreConfig, WarpCoreConfigSchema } from '@hyperlane-xyz/sdk';
-import { objFilter } from '@hyperlane-xyz/utils';
+import { objFilter, objMerge } from '@hyperlane-xyz/utils';
 
 import { warpRouteWhitelist } from '../consts/warpRouteWhitelist.ts';
 import { warpRouteConfigs as WarpRoutesTs } from '../consts/warpRoutes.ts';
@@ -20,7 +20,7 @@ export function assembleWarpCoreConfig(): WarpCoreConfig {
   const configValues = Object.values(filteredWarpRouteConfigs);
 
   const configTokens = configValues.map((c) => c.tokens).flat();
-  const tokens = [...configTokens, ...configTs.tokens, ...configYaml.tokens];
+  const tokens = dedupeTokens([...configTokens, ...configTs.tokens, ...configYaml.tokens]);
 
   const configOptions = configValues.map((c) => c.options).flat();
   const combinedOptions = [...configOptions, configTs.options, configYaml.options];
@@ -40,4 +40,15 @@ function filterToIds(
   idWhitelist: string[],
 ): Record<string, WarpCoreConfig> {
   return objFilter(config, (id, c): c is WarpCoreConfig => idWhitelist.includes(id));
+}
+
+// Separate warp configs may contain duplicate definitions of the same token.
+// E.g. an IBC token that gets used for interchain gas in many different routes.
+function dedupeTokens(tokens: WarpCoreConfig['tokens']): WarpCoreConfig['tokens'] {
+  const idToToken: Record<string, WarpCoreConfig['tokens'][number]> = {};
+  for (const token of tokens) {
+    const id = `${token.chainName}|${token.addressOrDenom?.toLowerCase()}`;
+    idToToken[id] = objMerge(idToToken[id] || {}, token);
+  }
+  return Object.values(idToToken);
 }

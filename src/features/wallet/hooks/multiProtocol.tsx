@@ -59,7 +59,6 @@ export function useAccounts(): {
         [ProtocolType.Ethereum]: evmAccountInfo,
         [ProtocolType.Sealevel]: solAccountInfo,
         [ProtocolType.Cosmos]: cosmAccountInfo,
-        [ProtocolType.Fuel]: { protocol: ProtocolType.Fuel, isReady: false, addresses: [] },
       },
       readyAccounts,
     }),
@@ -115,7 +114,6 @@ export function useConnectFns(): Record<ProtocolType, () => void> {
       [ProtocolType.Ethereum]: onConnectEthereum,
       [ProtocolType.Sealevel]: onConnectSolana,
       [ProtocolType.Cosmos]: onConnectCosmos,
-      [ProtocolType.Fuel]: () => alert('TODO'),
     }),
     [onConnectEthereum, onConnectSolana, onConnectCosmos],
   );
@@ -142,9 +140,6 @@ export function useDisconnectFns(): Record<ProtocolType, () => Promise<void>> {
       [ProtocolType.Ethereum]: onClickDisconnect(ProtocolType.Ethereum, disconnectEvm),
       [ProtocolType.Sealevel]: onClickDisconnect(ProtocolType.Sealevel, disconnectSol),
       [ProtocolType.Cosmos]: onClickDisconnect(ProtocolType.Cosmos, disconnectCosmos),
-      [ProtocolType.Fuel]: onClickDisconnect(ProtocolType.Fuel, () => {
-        'TODO';
-      }),
     }),
     [disconnectEvm, disconnectSol, disconnectCosmos],
   );
@@ -169,7 +164,6 @@ export function useActiveChains(): {
         [ProtocolType.Ethereum]: evmChain,
         [ProtocolType.Sealevel]: solChain,
         [ProtocolType.Cosmos]: cosmChain,
-        [ProtocolType.Fuel]: {},
       },
       readyChains,
     }),
@@ -190,10 +184,6 @@ export function useTransactionFns(): Record<ProtocolType, ChainTransactionFns> {
       [ProtocolType.Ethereum]: { sendTransaction: onSendEvmTx, switchNetwork: onSwitchEvmNetwork },
       [ProtocolType.Sealevel]: { sendTransaction: onSendSolTx, switchNetwork: onSwitchSolNetwork },
       [ProtocolType.Cosmos]: { sendTransaction: onSendCosmTx, switchNetwork: onSwitchCosmNetwork },
-      [ProtocolType.Fuel]: {
-        sendTransaction: () => alert('TODO') as any,
-        switchNetwork: () => alert('TODO') as any,
-      },
     }),
     [
       onSendEvmTx,

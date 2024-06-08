@@ -2,7 +2,7 @@
 // If left empty, all warp routes in the configured registry will be included
 export const warpRouteWhitelist: Array<string> | undefined = [
   // Example:
-  'UDSC|ethereum-inevm',
-  'UDST|ethereum-inevm',
-  'INJ|injective-inevm',
+  'USDC/ethereum-inevm',
+  'USDT/ethereum-inevm',
+  'INJ/inevm-injective',
 ];

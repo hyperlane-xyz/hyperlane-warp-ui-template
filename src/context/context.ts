@@ -1,3 +1,4 @@
+import { IRegistry } from '@hyperlane-xyz/registry';
 import {
   ChainMap,
   ChainMetadata,
@@ -8,38 +9,39 @@ import {
 } from '@hyperlane-xyz/sdk';
 import { isNullish } from '@hyperlane-xyz/utils';
 
-import { getChainConfigs } from './chains';
-import { getWarpCoreConfig } from './tokens';
+import { assembleChainMetadata } from './chains';
+import { assembleWarpCoreConfig } from './warpCoreConfig';
 
 export interface WarpContext {
-  chains: ChainMap<ChainMetadata & { mailbox?: Address }>;
-  multiProvider: MultiProtocolProvider<{ mailbox?: Address }>;
+  registry: IRegistry;
+  chains: ChainMap<ChainMetadata>;
+  multiProvider: MultiProtocolProvider;
   warpCore: WarpCore;
 }
 
+// Note: This was initially static so it was simpler to keep it out of a state store.
+// Now it's somewhat dynamic based on env vars. If more flexibility is needed, it could be moved.
 let warpContext: WarpContext;
 
 export function getWarpContext() {
-  if (!warpContext) {
-    warpContext = initWarpContext();
-  }
   return warpContext;
 }
 
-export function setWarpContext(context: WarpContext) {
-  warpContext = context;
-}
-
-export function initWarpContext() {
-  const chains = getChainConfigs();
-  const multiProvider = new MultiProtocolProvider<{ mailbox?: Address }>(chains);
-  const coreConfig = getWarpCoreConfig();
+export async function initWarpContext() {
+  const { registry, chains } = await assembleChainMetadata();
+  const multiProvider = new MultiProtocolProvider(chains);
+  const coreConfig = await assembleWarpCoreConfig();
   const warpCore = WarpCore.FromConfig(multiProvider, coreConfig);
-  return { chains, multiProvider, warpCore };
+  warpContext = { registry, chains, multiProvider, warpCore };
+  return warpContext;
 }
 
 export function getMultiProvider() {
   return getWarpContext().multiProvider;
+}
+
+export function getRegistry() {
+  return getWarpContext().registry;
 }
 
 export function getWarpCore() {

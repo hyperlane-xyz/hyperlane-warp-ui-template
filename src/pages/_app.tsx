@@ -3,6 +3,7 @@ import { Analytics } from '@vercel/analytics/react';
 import type { AppProps } from 'next/app';
 import { ToastContainer, Zoom, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import 'src/vendor/inpage-metamask';
 
 import '@hyperlane-xyz/widgets/styles.css';
 

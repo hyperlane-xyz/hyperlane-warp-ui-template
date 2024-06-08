@@ -1,10 +1,4 @@
-import {
-  ChainMap,
-  ChainMetadata,
-  ChainTechnicalStack,
-  ExplorerFamily,
-  chainMetadata,
-} from '@hyperlane-xyz/sdk';
+import { ChainMap, ChainMetadata, ExplorerFamily } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 
 // A map of chain names to ChainMetadata
@@ -35,34 +29,6 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
   //   },
   //   logoURI: '/logo.svg',
   // },
-
-  ancient8: {
-    blockExplorers: [
-      {
-        apiUrl: 'https://scan.ancient8.gg/api',
-        family: ExplorerFamily.Blockscout,
-        name: 'Ancient8 Explorer',
-        url: 'https://scan.ancient8.gg',
-      },
-    ],
-    blocks: {
-      confirmations: 1,
-      estimateBlockTime: 2,
-      reorgPeriod: 0,
-    },
-    chainId: 888888888,
-    displayName: 'Ancient8',
-    domainId: 888888888,
-    isTestnet: false,
-    name: 'ancient8',
-    nativeToken: chainMetadata.ethereum.nativeToken!,
-    gasCurrencyCoinGeckoId: 'ethereum',
-    protocol: ProtocolType.Ethereum,
-    rpcUrls: [{ http: 'https://rpc.ancient8.gg' }],
-    technicalStack: ChainTechnicalStack.Other,
-    mailbox: '0x2f2aFaE1139Ce54feFC03593FeE8AB2aDF4a85A7',
-    logoURI: '/logos/ancient8.svg',
-  },
 
   celestia: {
     protocol: ProtocolType.Cosmos,

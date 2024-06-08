@@ -3,7 +3,7 @@ import '@rainbow-me/rainbowkit/styles.css';
 import {
   argentWallet,
   coinbaseWallet,
-  injectedWallet, // ledgerWallet,
+  injectedWallet,
   metaMaskWallet,
   omniWallet,
   rainbowWallet,

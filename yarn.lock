@@ -3789,13 +3789,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/registry@npm:2.0.1":
-  version: 2.0.1
-  resolution: "@hyperlane-xyz/registry@npm:2.0.1"
+"@hyperlane-xyz/registry@npm:2.1.0":
+  version: 2.1.0
+  resolution: "@hyperlane-xyz/registry@npm:2.1.0"
   dependencies:
     yaml: "npm:^2"
     zod: "npm:^3.21.2"
-  checksum: 12f3843b9c7f8eb52f88e6e49fba2cd18ee88f637b8ee8ee60f5c8722f304192a2b565a26b77d5df3e6c97da74d426a895a8474092433e14c2058ca0355f4da6
+  checksum: cfcd441dcbb4886a4ecd90dffaeb7a0fd81c0a126423b23cf100cd554470fe88ceb35b41271d779f0390c42293fd2c799742eeff6dd42ca42f3c799a8e88b96b
   languageName: node
   linkType: hard
 
@@ -3859,10 +3859,10 @@ __metadata:
     "@emotion/react": "npm:^11.11.1"
     "@emotion/styled": "npm:^11.11.0"
     "@headlessui/react": "npm:^1.7.14"
-    "@hyperlane-xyz/registry": "npm:2.0.1"
+    "@hyperlane-xyz/registry": "npm:2.1.0"
     "@hyperlane-xyz/sdk": "npm:3.13.0"
     "@hyperlane-xyz/utils": "npm:3.13.0"
-    "@hyperlane-xyz/widgets": "npm:3.13.0"
+    "@hyperlane-xyz/widgets": "npm:3.13.1"
     "@metamask/jazzicon": "https://github.com/jmrossy/jazzicon#7a8df28974b4e81129bfbe3cab76308b889032a6"
     "@metamask/post-message-stream": "npm:6.1.2"
     "@metamask/providers": "npm:10.2.1"
@@ -3913,13 +3913,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@hyperlane-xyz/widgets@npm:3.13.0":
-  version: 3.13.0
-  resolution: "@hyperlane-xyz/widgets@npm:3.13.0"
+"@hyperlane-xyz/widgets@npm:3.13.1":
+  version: 3.13.1
+  resolution: "@hyperlane-xyz/widgets@npm:3.13.1"
   peerDependencies:
     react: ^18
     react-dom: ^18
-  checksum: cc5b3b4ead410ba76988f4f052e282862d860b5bc08b6c3fceb9dea1950d3f811c2c90fc9bb5b9c264bfa49de88ba3ef18c05ee21d9f03e1385edc7826c8bb1c
+  checksum: 9d812685f2210db7dd7edd7cb181c3e2b5c95fd663ca81a42eedff47402911c2c984a10960a92c364d540104f867b63ea3d4a5cf5d3fa94f487643eb5d0a9614
   languageName: node
   linkType: hard
 

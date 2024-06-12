@@ -21,8 +21,6 @@ function useEvmConnectorName(accountInfo: AccountInfo | undefined) {
     if (keys.includes('isOkxWallet') || keys.includes('isOKExWallet')) {
       return 'OKX';
     }
-
-    return 'MetaMask';
   }
 
   return account.connector?.name;

@@ -18,7 +18,7 @@ export function ChainLogo({
   size?: number;
 }) {
   const registry = getRegistry();
-  const { name, Icon: icon } = useMemo(() => {
+  const { name, Icon } = useMemo(() => {
     const chainNameOrId = chainName || chainId;
     if (!chainNameOrId) return { name: '' };
     const chainMetadata = tryGetChainMetadata(chainNameOrId);
@@ -41,7 +41,7 @@ export function ChainLogo({
       registry={registry}
       size={size}
       background={background}
-      Icon={icon}
+      Icon={Icon}
     />
   );
 }

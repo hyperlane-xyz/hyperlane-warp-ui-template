@@ -56,7 +56,7 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
         family: ExplorerFamily.Other,
       },
     ],
-    logoURI: '/logos/celestia.png',
+    logoURI: '/logos/celestia.svg',
     transactionOverrides: {
       gasPrice: 0.1,
     },

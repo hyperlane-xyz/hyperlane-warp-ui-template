@@ -13,7 +13,7 @@ export const warpRouteConfigs: WarpCoreConfig = {
       symbol: 'TIA',
       decimals: 6,
       addressOrDenom: 'utia',
-      logoURI: '/logos/celestia.png',
+      logoURI: '/deployments/warp_routes/TIA/logo.svg',
       connections: [
         {
           token:
@@ -55,7 +55,7 @@ export const warpRouteConfigs: WarpCoreConfig = {
       symbol: 'TIA.n',
       decimals: 6,
       addressOrDenom: 'ibc/773B4D0A3CD667B2275D5A4A7A2F0909C0BA0F4059C0B9181E680DDF4965DCC7',
-      logoURI: '/logos/celestia.png',
+      logoURI: '/deployments/warp_routes/TIA/logo.svg',
       connections: [
         {
           token: 'cosmos|celestia|utia',

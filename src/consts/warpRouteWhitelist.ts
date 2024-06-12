@@ -4,7 +4,7 @@
 export const warpRouteWhitelist: Array<string> | undefined = [
   // TIA routes
   'TIA.n/arbitrum-neutron',
-  'TIA.n/manta-neutron',
+  'TIA.n/mantapacific-neutron',
 
   // ETH routes
   'ETH/ethereum-viction',

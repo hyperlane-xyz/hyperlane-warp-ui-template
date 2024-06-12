@@ -1,10 +1,10 @@
 import Image from 'next/image';
 import { PropsWithChildren } from 'react';
 
-import { chainMetadata } from '@hyperlane-xyz/sdk';
+import { ethereum, solana } from '@hyperlane-xyz/registry';
 import { ProtocolType } from '@hyperlane-xyz/utils';
-import { ChainLogo } from '@hyperlane-xyz/widgets';
 
+import { ChainLogo } from '../../components/icons/ChainLogo';
 import { Modal } from '../../components/layout/Modal';
 
 import { useConnectFns } from './hooks/multiProtocol';
@@ -24,14 +24,14 @@ export function WalletEnvSelectionModal({ isOpen, close }: { isOpen: boolean; cl
         <EnvButton
           onClick={onClickEnv(ProtocolType.Ethereum)}
           subTitle="an EVM"
-          logoChainId={chainMetadata.ethereum.chainId}
+          logoChainId={ethereum.chainId}
         >
           Ethereum
         </EnvButton>
         <EnvButton
           onClick={onClickEnv(ProtocolType.Sealevel)}
           subTitle="a Solana"
-          logoChainId={chainMetadata.solanadevnet.chainId}
+          logoChainId={solana.chainId}
         >
           Solana
         </EnvButton>

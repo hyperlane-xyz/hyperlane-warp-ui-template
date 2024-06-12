@@ -9,8 +9,8 @@ export function getHypExplorerLink(chain: ChainName, msgId?: string) {
   if (!config.enableExplorerLink || !chain || !msgId) return null;
   const baseLink = `${links.explorer}/message/${msgId}`;
   if (isPermissionlessChain(chain)) {
-    const chainConfig = getChainMetadata(chain);
-    const serializedConfig = toBase64([chainConfig]);
+    const chainMetadata = getChainMetadata(chain);
+    const serializedConfig = toBase64([chainMetadata]);
     if (serializedConfig) {
       const params = new URLSearchParams({ chains: serializedConfig });
       return `${baseLink}?${params.toString()}`;

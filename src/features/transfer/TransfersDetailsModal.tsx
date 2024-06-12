@@ -221,6 +221,7 @@ export function Timeline({
   const isFailed = transferStatus === TransferStatus.Failed;
   const { stage, timings, message } = useMessageTimeline({
     originTxHash: isFailed ? undefined : originTxHash,
+    multiProvider: getMultiProvider().toMultiProvider(),
   });
   const messageStatus = isFailed ? MessageStatus.Failing : message?.status || MessageStatus.Pending;
 

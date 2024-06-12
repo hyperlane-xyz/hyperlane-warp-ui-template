@@ -2,5 +2,34 @@
 # These configs will be merged with the warp routes in the configured registry
 # The input here is typically the output of the Hyperlane CLI warp deploy command
 ---
-tokens: []
+tokens:
+  - chainName: fuji
+    standard: EvmHypSynthetic
+    name: USDC
+    symbol: USDC
+    totalSupply: '100000000000000'
+    decimals: 6
+    isNft: false
+    type: synthetic
+    owner: '0x4444d38c385d0969C64c4C8f996D7536d16c28B9'
+    mailbox: '0x5b6CFf85442B851A8e6eaBd2A4E4507B5135B3B0'
+    addressOrDenom: '0x300e5cc36d5f08A33b9e6ec89e6B144c507D983F'
+    connections:
+      - token: ethereum|sepolia|0x6cC98e3dBB6F7A445bcaF9869E863eaB2FDeDb0B
+  - chainName: sepolia
+    standard: EvmHypCollateral
+    name: USDC
+    symbol: USDC
+    totalSupply: '100000000000000'
+    decimals: 6
+    isNft: false
+    type: collateralFiat
+    token: '0x1C00FcD1663A5201D9c6553e1e7BBbc63aBd9fd3'
+    owner: '0x4444d38c385d0969C64c4C8f996D7536d16c28B9'
+    mailbox: '0xfFAEF09B3cd11D9b20d1a19bECca54EEC2884766'
+    addressOrDenom: '0x6cC98e3dBB6F7A445bcaF9869E863eaB2FDeDb0B'
+    collateralAddressOrDenom: '0x1C00FcD1663A5201D9c6553e1e7BBbc63aBd9fd3'
+    connections:
+      - token: ethereum|fuji|0x300e5cc36d5f08A33b9e6ec89e6B144c507D983F
+
 options: {}

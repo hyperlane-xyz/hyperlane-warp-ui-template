@@ -11,6 +11,7 @@ import { useIsSsr } from '../../utils/ssr';
 import { SideBarMenu } from './SideBarMenu';
 import { WalletEnvSelectionModal } from './WalletEnvSelectionModal';
 import { useAccounts } from './hooks/multiProtocol';
+import { useConnectorName } from './hooks/useConnectorName';
 
 export function WalletControlBar() {
   const [showEnvSelectModal, setShowEnvSelectModal] = useState(false);
@@ -18,6 +19,7 @@ export function WalletControlBar() {
 
   const { readyAccounts } = useAccounts();
   const isSsr = useIsSsr();
+  const connectorName = useConnectorName(readyAccounts[0]);
 
   const numReady = readyAccounts.length;
 
@@ -46,9 +48,7 @@ export function WalletControlBar() {
             <div className="flex items-center justify-center">
               <Identicon address={readyAccounts[0].addresses[0]?.address} size={26} />
               <div className="flex flex-col mx-3 items-start">
-                <div className="text-xs text-gray-500">
-                  {readyAccounts[0].connectorName || 'Wallet'}
-                </div>
+                <div className="text-xs text-gray-500">{connectorName}</div>
                 <div className="text-xs">
                   {readyAccounts[0].addresses.length
                     ? shortenAddress(readyAccounts[0].addresses[0].address, true)

@@ -97,7 +97,12 @@ export function useCosmosTransactionFns(): ChainTransactionFns {
         assert(txDetails, `Cosmos tx failed: ${JSON.stringify(result)}`);
         return {
           type: tx.type,
-          receipt: { ...txDetails, transactionHash: result.transactionHash },
+          receipt: {
+            ...txDetails,
+            gasUsed: parseInt(txDetails.gasUsed.toString()),
+            gasWanted: parseInt(txDetails.gasWanted.toString()),
+            transactionHash: result.transactionHash,
+          },
         };
       };
       return { hash: result.transactionHash, confirm };

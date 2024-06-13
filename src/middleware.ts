@@ -27,23 +27,30 @@ const BLOCKED_COUNTRIES = [
   'SY', // Syria
 ];
 
-// const BLOCKED_REGIONS = [
-//   [
-//     'UA',
-//     [
-//       '43', // Crimea
-//       '14', // Donetsk
-//       '09', // Luhansk
-//     ],
-//   ],
-// ];
+const BLOCKED_REGIONS = [
+  {
+    country: 'UA', // Ukraine
+    regions: [
+      '43', // Crimea
+      '14', // Donetsk
+      '09', // Luhansk
+    ],
+  },
+];
 
 export function middleware(req: NextRequest) {
-  console.log(req.geo?.country, req.geo?.region);
+  const country = req.geo?.country;
+  const region = req.geo?.region;
 
-  const country = req.geo?.country || 'US';
+  if (country && BLOCKED_COUNTRIES.includes(country)) {
+    return NextResponse.redirect('/blocked');
+  }
 
-  if (BLOCKED_COUNTRIES.includes(country)) {
+  if (
+    country &&
+    region &&
+    BLOCKED_REGIONS.find((x) => x.country === country)?.regions.includes(region)
+  ) {
     return NextResponse.redirect('/blocked');
   }
 

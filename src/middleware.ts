@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+export const config = {
+  // doesn't make sense to run after we redirect there
+  matcher: ['/((?!blocked).*)'],
+};
+
 const BLOCKED_COUNTRIES = [
   'CU', // Cuba
   'KP', // North Korea

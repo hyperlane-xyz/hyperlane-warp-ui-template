@@ -47,5 +47,5 @@ export function middleware(req: NextRequest) {
     return NextResponse.redirect('/blocked');
   }
 
-  return NextResponse.next(req);
+  return NextResponse.next();
 }

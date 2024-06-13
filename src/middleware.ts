@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 export const config = {
-  // doesn't make sense to run after we redirect there
-  matcher: ['/((?!blocked).*)'],
+  matcher: ['/((?!blocked/_next/static/backgrounds/fonts/favicon).*)'],
 };
 
 const BLOCKED_COUNTRIES = [

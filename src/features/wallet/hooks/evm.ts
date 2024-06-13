@@ -2,6 +2,7 @@ import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { getNetwork, sendTransaction, switchNetwork, waitForTransaction } from '@wagmi/core';
 import { useCallback, useMemo } from 'react';
 import { useAccount, useDisconnect, useNetwork } from 'wagmi';
+import { InjectedConnector } from 'wagmi/connectors/injected';
 
 import { ProviderType, TypedTransactionReceipt, WarpTypedTransaction } from '@hyperlane-xyz/sdk';
 import { ProtocolType, assert, sleep } from '@hyperlane-xyz/utils';
@@ -102,4 +103,23 @@ export function useEvmTransactionFns(): ChainTransactionFns {
   );
 
   return { sendTransaction: onSendTx, switchNetwork: onSwitchNetwork };
+}
+
+export function useEvmConnectorName() {
+  const { connector } = useAccount();
+  const account = useEvmAccount();
+
+  if (connector instanceof InjectedConnector && account?.connectorName === connector.name) {
+    if (window.ethereum?.isOkxWallet || window.ethereum?.isOKExWallet) return 'OKX';
+    if (window.ethereum?.isBackpack) return 'Backpack';
+    if (window.ethereum?.isFrame) return 'Frame';
+    if (window.ethereum?.isPhantom) return 'Phantom';
+
+    const keys = Object.keys({ ...window.ethereum });
+    if (keys.includes('isOkxWallet') || keys.includes('isOKExWallet')) {
+      return 'OKX';
+    }
+  }
+
+  return connector?.name;
 }

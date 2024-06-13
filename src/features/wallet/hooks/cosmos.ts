@@ -107,3 +107,9 @@ export function useCosmosTransactionFns(): ChainTransactionFns {
 
   return { sendTransaction: onSendTx, switchNetwork: onSwitchNetwork };
 }
+
+export function useCosmosConnectorName() {
+  const account = useCosmosAccount();
+
+  return account.connectorName;
+}

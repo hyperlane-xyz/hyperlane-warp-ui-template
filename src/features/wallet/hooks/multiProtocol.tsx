@@ -11,6 +11,7 @@ import {
   useCosmosAccount,
   useCosmosActiveChain,
   useCosmosConnectFn,
+  useCosmosConnectorName,
   useCosmosDisconnectFn,
   useCosmosTransactionFns,
 } from './cosmos';
@@ -18,6 +19,7 @@ import {
   useEvmAccount,
   useEvmActiveChain,
   useEvmConnectFn,
+  useEvmConnectorName,
   useEvmDisconnectFn,
   useEvmTransactionFns,
 } from './evm';
@@ -27,6 +29,7 @@ import {
   useSolConnectFn,
   useSolDisconnectFn,
   useSolTransactionFns,
+  useSolanaConnectorName,
 } from './solana';
 import { AccountInfo, ActiveChainInfo, ChainTransactionFns } from './types';
 
@@ -194,4 +197,16 @@ export function useTransactionFns(): Record<ProtocolType, ChainTransactionFns> {
       onSwitchCosmNetwork,
     ],
   );
+}
+
+export function useConnectorNames() {
+  const evmConnectorName = useEvmConnectorName();
+  const solanaConnectorName = useSolanaConnectorName();
+  const cosmosConnectorName = useCosmosConnectorName();
+
+  return {
+    [ProtocolType.Ethereum]: evmConnectorName || 'Wallet',
+    [ProtocolType.Sealevel]: solanaConnectorName || 'Wallet',
+    [ProtocolType.Cosmos]: cosmosConnectorName || 'Wallet',
+  };
 }

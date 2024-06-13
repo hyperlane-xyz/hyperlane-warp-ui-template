@@ -98,3 +98,9 @@ export function useSolTransactionFns(): ChainTransactionFns {
 
   return { sendTransaction: onSendTx, switchNetwork: onSwitchNetwork };
 }
+
+export function useSolanaConnectorName() {
+  const account = useSolAccount();
+
+  return account.connectorName;
+}

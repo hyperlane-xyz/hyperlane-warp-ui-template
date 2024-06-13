@@ -12,8 +12,8 @@ function useEvmConnectorName(accountInfo: AccountInfo | undefined) {
     account.connector instanceof InjectedConnector &&
     accountInfo?.connectorName === account.connector.name
   ) {
-    if (window.ethereum?.isOkxWallet || window.ethereum?.isOKExWallet)
-      if (window.ethereum?.isBackpack) return 'Backpack';
+    if (window.ethereum?.isOkxWallet || window.ethereum?.isOKExWallet) return 'OKX';
+    if (window.ethereum?.isBackpack) return 'Backpack';
     if (window.ethereum?.isFrame) return 'Frame';
     if (window.ethereum?.isPhantom) return 'Phantom';
 

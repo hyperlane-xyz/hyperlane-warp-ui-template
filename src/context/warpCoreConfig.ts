@@ -13,7 +13,7 @@ export function assembleWarpCoreConfig(): WarpCoreConfig {
   const resultTs = WarpCoreConfigSchema.safeParse(WarpRoutesTs);
   const configTs = validateZodResult(resultTs, 'warp core typescript config');
 
-  const filteredWarpRouteConfigs = warpRouteWhitelist?.length
+  const filteredWarpRouteConfigs = warpRouteWhitelist
     ? filterToIds(warpRouteConfigs, warpRouteWhitelist)
     : warpRouteConfigs;
 
@@ -21,6 +21,11 @@ export function assembleWarpCoreConfig(): WarpCoreConfig {
 
   const configTokens = configValues.map((c) => c.tokens).flat();
   const tokens = dedupeTokens([...configTokens, ...configTs.tokens, ...configYaml.tokens]);
+
+  if (!tokens.length)
+    throw new Error(
+      'No warp route configs provided. Please check your registry, warp route whitelist, and custom route configs for issues.',
+    );
 
   const configOptions = configValues.map((c) => c.options).flat();
   const combinedOptions = [...configOptions, configTs.options, configYaml.options];

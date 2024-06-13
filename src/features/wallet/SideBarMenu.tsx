@@ -15,6 +15,7 @@ import Wallet from '../../images/icons/wallet.svg';
 import { tryClipboardSet } from '../../utils/clipboard';
 import { STATUSES_WITH_ICON, getIconByTransferStatus } from '../../utils/transfer';
 import { getChainDisplayName } from '../chains/utils';
+import { useSanctioned } from '../sanctions/hooks/useSanctioned';
 import { useStore } from '../store';
 import { TransfersDetailsModal } from '../transfer/TransfersDetailsModal';
 import { TransferContext } from '../transfer/types';
@@ -37,6 +38,7 @@ export function SideBarMenu({
   const disconnects = useDisconnectFns();
   const { readyAccounts } = useAccounts();
   const didMountRef = useRef(false);
+  const sanctioned = useSanctioned();
 
   const { transfers, resetTransfers, transferLoading } = useStore((s) => ({
     transfers: s.transfers,
@@ -107,24 +109,34 @@ export function SideBarMenu({
             Transfer History
           </div>
           <div className="flex grow flex-col px-3.5">
-            <div className="grow flex flex-col w-full">
-              {sortedTransfers?.length > 0 &&
-                sortedTransfers.map((t, i) => (
-                  <TransferSummary
-                    key={i}
-                    transfer={t}
-                    onClick={() => {
-                      setSelectedTransfer(t);
-                      setIsModalOpen(true);
-                    }}
-                  />
-                ))}
-            </div>
-            {sortedTransfers?.length > 0 && (
-              <button onClick={resetTransfers} className="my-5 mx-2 flex flex-row items-center">
-                <Image className="mr-4" src={ResetIcon} width={17} height={17} alt="" />
-                <span className="text-gray-900 text-sm font-normal">Reset transaction history</span>
-              </button>
+            {sanctioned ? (
+              <div className="text-gray-800 text-sm font-normal text-center">
+                <span>Unable to pull transaction history</span>
+              </div>
+            ) : (
+              <>
+                <div className="grow flex flex-col w-full">
+                  {sortedTransfers?.length > 0 &&
+                    sortedTransfers.map((t, i) => (
+                      <TransferSummary
+                        key={i}
+                        transfer={t}
+                        onClick={() => {
+                          setSelectedTransfer(t);
+                          setIsModalOpen(true);
+                        }}
+                      />
+                    ))}
+                </div>
+                {sortedTransfers?.length > 0 && (
+                  <button onClick={resetTransfers} className="my-5 mx-2 flex flex-row items-center">
+                    <Image className="mr-4" src={ResetIcon} width={17} height={17} alt="" />
+                    <span className="text-gray-900 text-sm font-normal">
+                      Reset transaction history
+                    </span>
+                  </button>
+                )}
+              </>
             )}
           </div>
         </div>

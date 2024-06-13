@@ -27,16 +27,16 @@ const BLOCKED_COUNTRIES = [
   'SY', // Syria
 ];
 
-const BLOCKED_REGIONS = [
-  [
-    'UA',
-    [
-      '43', // Crimea
-      '14', // Donetsk
-      '09', // Luhansk
-    ],
-  ],
-];
+// const BLOCKED_REGIONS = [
+//   [
+//     'UA',
+//     [
+//       '43', // Crimea
+//       '14', // Donetsk
+//       '09', // Luhansk
+//     ],
+//   ],
+// ];
 
 export function middleware(req: NextRequest) {
   console.log(req.geo?.country, req.geo?.region);

@@ -19,7 +19,7 @@ export function WalletEnvSelectionModal({ isOpen, close }: { isOpen: boolean; cl
       (accum, chainName) => {
         return {
           ...accum,
-          [wc.multiProvider.getChainMetadata(chainName).protocol]: true,
+          [wc.multiProvider.getProtocol(chainName)]: true,
         };
       },
       {

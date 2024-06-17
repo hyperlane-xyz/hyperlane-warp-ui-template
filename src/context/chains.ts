@@ -7,9 +7,10 @@ import { chains as ChainsTS } from '../consts/chains.ts';
 import ChainsYaml from '../consts/chains.yaml';
 import { config } from '../consts/config.ts';
 import { cosmosDefaultChain } from '../features/chains/cosmosDefault';
+import { tryParseJson } from '../utils/json.ts';
 import { logger } from '../utils/logger';
 
-const NEXT_PUBLIC_RPC_OVERRIDES = process.env['NEXT_PUBLIC_RPC_OVERRIDES'];
+const RPC_OVERRIDES = process.env['NEXT_PUBLIC_RPC_OVERRIDES'];
 
 export async function assembleChainMetadata() {
   // Chains must include a cosmos chain or CosmosKit throws errors
@@ -23,10 +24,8 @@ export async function assembleChainMetadata() {
     throw new Error(`Invalid chain config: ${result.error.toString()}`);
   }
 
-  const rpcOverrides = z
-    .record(RpcUrlSchema)
-    .safeParse(NEXT_PUBLIC_RPC_OVERRIDES ? JSON.parse(NEXT_PUBLIC_RPC_OVERRIDES) : {});
-  if (NEXT_PUBLIC_RPC_OVERRIDES && !rpcOverrides.success) {
+  const rpcOverrides = z.record(RpcUrlSchema).safeParse(tryParseJson(RPC_OVERRIDES ?? ''));
+  if (RPC_OVERRIDES && !rpcOverrides.success) {
     logger.warn('Invalid RPC overrides config', rpcOverrides.error);
   }
 

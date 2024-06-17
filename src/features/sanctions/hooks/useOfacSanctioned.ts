@@ -10,7 +10,7 @@ export const useOfacSanctioned = () => {
   const evmAddress = useEvmAccount().addresses[0]?.address;
 
   const sanctionedAddresses = useQuery<string[]>({
-    queryKey: ['ofac sanctioned', evmAddress],
+    queryKey: ['useOfacSanctioned', evmAddress],
     queryFn: () => fetch(OFAC_SANCTIONED_ADDRESSES_ENDPOINT).then((x) => x.json()),
     enabled: !!evmAddress,
   });

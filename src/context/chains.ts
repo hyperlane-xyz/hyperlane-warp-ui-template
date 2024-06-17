@@ -1,13 +1,15 @@
 import { z } from 'zod';
 
 import { GithubRegistry, chainMetadata } from '@hyperlane-xyz/registry';
-import { ChainMap, ChainMetadata, ChainMetadataSchema } from '@hyperlane-xyz/sdk';
+import { ChainMap, ChainMetadata, ChainMetadataSchema, RpcUrlSchema } from '@hyperlane-xyz/sdk';
 
 import { chains as ChainsTS } from '../consts/chains.ts';
 import ChainsYaml from '../consts/chains.yaml';
 import { config } from '../consts/config.ts';
 import { cosmosDefaultChain } from '../features/chains/cosmosDefault';
 import { logger } from '../utils/logger';
+
+const NEXT_PUBLIC_RPC_OVERRIDES = process.env['NEXT_PUBLIC_RPC_OVERRIDES'];
 
 export async function assembleChainMetadata() {
   // Chains must include a cosmos chain or CosmosKit throws errors
@@ -20,6 +22,14 @@ export async function assembleChainMetadata() {
     logger.warn('Invalid chain config', result.error);
     throw new Error(`Invalid chain config: ${result.error.toString()}`);
   }
+
+  const rpcOverrides = z
+    .record(RpcUrlSchema)
+    .safeParse(NEXT_PUBLIC_RPC_OVERRIDES ? JSON.parse(NEXT_PUBLIC_RPC_OVERRIDES) : {});
+  if (NEXT_PUBLIC_RPC_OVERRIDES && !rpcOverrides.success) {
+    logger.warn('Invalid RPC overrides config', rpcOverrides.error);
+  }
+
   const customChainMetadata = result.data as ChainMap<ChainMetadata>;
 
   const registry = new GithubRegistry({ uri: config.registryUrl });
@@ -34,6 +44,25 @@ export async function assembleChainMetadata() {
     await registry.listRegistryContent();
   }
 
-  const chains = { ...defaultChainMetadata, ...customChainMetadata };
+  const chains: ChainMap<ChainMetadata> = Object.entries({
+    ...defaultChainMetadata,
+    ...customChainMetadata,
+  }).reduce((accum, [name, chain]) => {
+    const privateRpc = rpcOverrides.success ? rpcOverrides.data[name] : null;
+    if (privateRpc) {
+      return {
+        ...accum,
+        [name]: {
+          ...chain,
+          rpurls: chain.rpcUrls,
+        },
+      };
+    }
+    return {
+      ...accum,
+      [name]: chain,
+    };
+  }, {});
+
   return { chains, registry };
 }

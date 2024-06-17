@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { isAddress, isAddressEqual } from 'viem';
+
+import { eqAddress } from '@hyperlane-xyz/utils';
 
 import { useEvmAccount } from '../../wallet/hooks/evm';
 
@@ -18,7 +19,6 @@ export const useOfacSanctioned = () => {
   return (
     !!sanctionedAddresses.data &&
     !!evmAddress &&
-    isAddress(evmAddress) &&
-    !!sanctionedAddresses.data.find((x) => isAddress(x) && isAddressEqual(x, evmAddress))
+    !!sanctionedAddresses.data.find((x) => eqAddress(x, evmAddress))
   );
 };

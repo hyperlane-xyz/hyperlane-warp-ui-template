@@ -7,11 +7,11 @@ import { useEvmAccount } from '../../wallet/hooks/evm';
 const OFAC_SANCTIONED_ADDRESSES_ENDPOINT =
   'https://raw.githubusercontent.com/0xB10C/ofac-sanctioned-digital-currency-addresses/lists/sanctioned_addresses_ETH.json';
 
-export const useOfacSanctioned = () => {
+export const useIsAccountOfacSanctioned = () => {
   const evmAddress = useEvmAccount().addresses[0]?.address;
 
   const sanctionedAddresses = useQuery<string[]>({
-    queryKey: ['useOfacSanctioned', evmAddress],
+    queryKey: ['useIsAccountOfacSanctioned', evmAddress],
     queryFn: () => fetch(OFAC_SANCTIONED_ADDRESSES_ENDPOINT).then((x) => x.json()),
     enabled: !!evmAddress,
   });

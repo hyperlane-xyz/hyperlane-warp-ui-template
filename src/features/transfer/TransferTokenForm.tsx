@@ -19,7 +19,7 @@ import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
 import { ChainSelectField } from '../chains/ChainSelectField';
 import { getChainDisplayName } from '../chains/utils';
-import { useSanctioned } from '../sanctions/hooks/useSanctioned';
+import { useIsAccountSanctioned } from '../sanctions/hooks/useIsAccountSanctioned';
 import { useStore } from '../store';
 import { SelectOrInputTokenIds } from '../tokens/SelectOrInputTokenIds';
 import { TokenSelectField } from '../tokens/TokenSelectField';
@@ -216,7 +216,7 @@ function ButtonSection({
   setIsReview: (b: boolean) => void;
 }) {
   const { values } = useFormikContext<TransferFormValues>();
-  const sanctioned = useSanctioned();
+  const isSanctioned = useIsAccountSanctioned();
 
   const onDoneTransactions = () => {
     setIsReview(false);
@@ -230,7 +230,7 @@ function ButtonSection({
   }));
 
   const triggerTransactionsHandler = async () => {
-    if (sanctioned) {
+    if (isSanctioned) {
       return;
     }
     setTransferLoading(true);

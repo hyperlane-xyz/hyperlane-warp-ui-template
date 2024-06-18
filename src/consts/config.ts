@@ -32,6 +32,6 @@ export const config: Config = Object.freeze({
   walletConnectProjectId,
   withdrawalWhitelist,
   transferBlacklist,
-  enableExplorerLink: false,
+  enableExplorerLink: true,
   addressBlacklist: ADDRESS_BLACKLIST.map((address) => address.toLowerCase()),
 });

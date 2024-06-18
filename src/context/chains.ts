@@ -47,12 +47,13 @@ export async function assembleChainMetadata() {
   }).reduce(
     (accum, [name, chain]) => ({
       ...accum,
-      [name]: rpcOverrides.success
-        ? {
-            ...chain,
-            rpcUrls: [rpcOverrides.data[name]],
-          }
-        : chain,
+      [name]:
+        rpcOverrides.success && rpcOverrides.data[name]
+          ? {
+              ...chain,
+              rpcUrls: [rpcOverrides.data[name]],
+            }
+          : chain,
     }),
     {} as ChainMap<ChainMetadata>,
   );

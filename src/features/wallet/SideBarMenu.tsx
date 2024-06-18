@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 
 import { SmallSpinner } from '../../components/animation/SmallSpinner';
 import { ChainLogo } from '../../components/icons/ChainLogo';
+import { WalletLogo } from '../../components/icons/WalletLogo';
 import { tryFindToken } from '../../context/context';
 import ArrowRightIcon from '../../images/icons/arrow-right.svg';
 import CollapseIcon from '../../images/icons/collapse-icon.svg';
@@ -148,7 +149,7 @@ function AccountSummary({ account }: { account: AccountInfo }) {
     toast.success('Address copied to clipboard', { autoClose: 2000 });
   };
 
-  const { name: walletName, logoAccent, logoUrl } = useWalletDetails()[account.protocol];
+  const walletDetails = useWalletDetails()[account.protocol];
 
   return (
     <button
@@ -158,17 +159,10 @@ function AccountSummary({ account }: { account: AccountInfo }) {
       }`}
     >
       <div className="shrink-0">
-        <Image
-          src={logoUrl || Wallet}
-          alt=""
-          width={42}
-          height={42}
-          style={{ backgroundColor: !logoUrl ? logoAccent : undefined }}
-          className="rounded-full p-0.5"
-        />
+        <WalletLogo walletDetails={walletDetails} size={42} />
       </div>
       <div className="flex flex-col mx-3 items-start">
-        <div className="text-gray-800 text-sm font-normal">{walletName || 'Wallet'}</div>
+        <div className="text-gray-800 text-sm font-normal">{walletDetails.name || 'Wallet'}</div>
         <div className="text-xs text-left truncate w-64">
           {onlyAddress || `${numAddresses} known addresses`}
         </div>

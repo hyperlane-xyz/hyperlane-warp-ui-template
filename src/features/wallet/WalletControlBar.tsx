@@ -1,25 +1,29 @@
 import Image from 'next/image';
 import { useState } from 'react';
 
-import { shortenAddress } from '@hyperlane-xyz/utils';
+import { ProtocolType, shortenAddress } from '@hyperlane-xyz/utils';
 
 import { SolidButton } from '../../components/buttons/SolidButton';
-import { Identicon } from '../../components/icons/Identicon';
+import { WalletLogo } from '../../components/icons/WalletLogo';
 import Wallet from '../../images/icons/wallet.svg';
 import { useIsSsr } from '../../utils/ssr';
 
 import { SideBarMenu } from './SideBarMenu';
 import { WalletEnvSelectionModal } from './WalletEnvSelectionModal';
-import { useAccounts } from './hooks/multiProtocol';
+import { useAccounts, useWalletDetails } from './hooks/multiProtocol';
 
 export function WalletControlBar() {
+  const isSsr = useIsSsr();
+
   const [showEnvSelectModal, setShowEnvSelectModal] = useState(false);
   const [isSideBarOpen, setIsSideBarOpen] = useState(false);
 
   const { readyAccounts } = useAccounts();
-  const isSsr = useIsSsr();
+  const walletDetails = useWalletDetails();
 
   const numReady = readyAccounts.length;
+  const firstAccount = readyAccounts[0];
+  const firstWallet = walletDetails[firstAccount?.protocol || ProtocolType.Ethereum];
 
   if (isSsr) {
     // https://github.com/wagmi-dev/wagmi/issues/542#issuecomment-1144178142
@@ -44,11 +48,9 @@ export function WalletControlBar() {
         {numReady === 1 && (
           <SolidButton onClick={() => setIsSideBarOpen(true)} classes="px-2.5 py-1" color="white">
             <div className="flex items-center justify-center">
-              <Identicon address={readyAccounts[0].addresses[0]?.address} size={26} />
+              <WalletLogo walletDetails={firstWallet} size={26} />
               <div className="flex flex-col mx-3 items-start">
-                <div className="text-xs text-gray-500">
-                  {readyAccounts[0].connectorName || 'Wallet'}
-                </div>
+                <div className="text-xs text-gray-500">{firstWallet.name || 'Wallet'}</div>
                 <div className="text-xs">
                   {readyAccounts[0].addresses.length
                     ? shortenAddress(readyAccounts[0].addresses[0].address, true)

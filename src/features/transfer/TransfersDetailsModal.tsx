@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { ProtocolType } from '@hyperlane-xyz/utils';
 import { MessageStatus, MessageTimeline, useMessageTimeline } from '@hyperlane-xyz/widgets';
 
 import { Spinner } from '../../components/animation/Spinner';
@@ -22,7 +23,7 @@ import {
   isTransferSent,
 } from '../../utils/transfer';
 import { getChainDisplayName, hasPermissionlessChain } from '../chains/utils';
-import { useAccountForChain } from '../wallet/hooks/multiProtocol';
+import { useAccountForChain, useWalletDetails } from '../wallet/hooks/multiProtocol';
 
 import { TransferContext, TransferStatus } from './types';
 
@@ -53,6 +54,8 @@ export function TransfersDetailsModal({
   } = transfer || {};
 
   const account = useAccountForChain(origin);
+  const walletDetails = useWalletDetails()[account?.protocol || ProtocolType.Ethereum];
+
   const multiProvider = getMultiProvider();
 
   const getMessageUrls = useCallback(async () => {
@@ -80,7 +83,7 @@ export function TransfersDetailsModal({
   }, [transfer, getMessageUrls]);
 
   const isAccountReady = !!account?.isReady;
-  const connectorName = account?.connectorName || 'wallet';
+  const connectorName = walletDetails.name || 'wallet';
   const token = getWarpCore().findToken(origin, originTokenAddressOrDenom);
 
   const isPermissionlessRoute = hasPermissionlessChain([destination, origin]);

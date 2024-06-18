@@ -3752,12 +3752,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/core@npm:3.15.0":
-  version: 3.15.0
-  resolution: "@hyperlane-xyz/core@npm:3.15.0"
+"@hyperlane-xyz/core@npm:3.15.1":
+  version: 3.15.1
+  resolution: "@hyperlane-xyz/core@npm:3.15.1"
   dependencies:
     "@eth-optimism/contracts": "npm:^0.6.0"
-    "@hyperlane-xyz/utils": "npm:3.15.0"
+    "@hyperlane-xyz/utils": "npm:3.15.1"
     "@layerzerolabs/lz-evm-oapp-v2": "npm:2.0.2"
     "@openzeppelin/contracts": "npm:^4.9.3"
     "@openzeppelin/contracts-upgradeable": "npm:^v4.9.3"
@@ -3766,7 +3766,7 @@ __metadata:
     "@ethersproject/abi": "*"
     "@ethersproject/providers": "*"
     "@types/sinon-chai": "*"
-  checksum: 462e7409750688bf9b747a21c239a176e26df9714ae306561dad37d45b242c3baedd67682c3556f32c3640815020b779ca3f392fecd4cce973cf6ba28326e933
+  checksum: bb9926b9c2efff024f4c6189af61c8086dac4f285271f08c16677ef2367a3f77bddfb52aa5cd30ffe363908bad95645ba9311076eae3ef7c4ad77098d851ebfa
   languageName: node
   linkType: hard
 
@@ -3780,15 +3780,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/sdk@npm:3.15.0":
-  version: 3.15.0
-  resolution: "@hyperlane-xyz/sdk@npm:3.15.0"
+"@hyperlane-xyz/sdk@npm:3.15.1":
+  version: 3.15.1
+  resolution: "@hyperlane-xyz/sdk@npm:3.15.1"
   dependencies:
     "@aws-sdk/client-s3": "npm:^3.74.0"
     "@cosmjs/cosmwasm-stargate": "npm:^0.31.3"
     "@cosmjs/stargate": "npm:^0.31.3"
-    "@hyperlane-xyz/core": "npm:3.15.0"
-    "@hyperlane-xyz/utils": "npm:3.15.0"
+    "@hyperlane-xyz/core": "npm:3.15.1"
+    "@hyperlane-xyz/utils": "npm:3.15.1"
     "@safe-global/api-kit": "npm:1.3.0"
     "@safe-global/protocol-kit": "npm:1.3.0"
     "@solana/spl-token": "npm:^0.3.8"
@@ -3806,13 +3806,13 @@ __metadata:
   peerDependencies:
     "@ethersproject/abi": "*"
     "@ethersproject/providers": "*"
-  checksum: d0a2026d5e9e1963b3f75494dd2188b4ddd752c71275e59bb0322ba829d393d21465acbbdbc9d5380a02465f5ba44bc2087ddc97a0cc505461e08c20e9718bcb
+  checksum: b12d62a1299177cfe950f3513a101469f8a31cc01d59d6462d9e761e23b9318d8fea242a538e7c024b4d5cb9a74d3684a3b39e13b9209f9cb886e7d258cc7add
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/utils@npm:3.15.0":
-  version: 3.15.0
-  resolution: "@hyperlane-xyz/utils@npm:3.15.0"
+"@hyperlane-xyz/utils@npm:3.15.1":
+  version: 3.15.1
+  resolution: "@hyperlane-xyz/utils@npm:3.15.1"
   dependencies:
     "@cosmjs/encoding": "npm:^0.31.3"
     "@solana/web3.js": "npm:^1.78.0"
@@ -3820,7 +3820,7 @@ __metadata:
     ethers: "npm:^5.7.2"
     pino: "npm:^8.19.0"
     yaml: "npm:^2.4.1"
-  checksum: f590226a68a83038abf694bc7bae0c0b91b93972be5c44eb13bfc1b2074579530330551074e47fc8ccf8f4d272b9814e107e05534f15706379e97c7e458dc43c
+  checksum: d812a920320cc920977d76e7edf475af9c21ac5303d2ea839f7e5afa1c678e6bd43fdcfd49c2fa729ff5aaf4713e0946cd732ce7ade85e144f40b1c0a569ee2e
   languageName: node
   linkType: hard
 
@@ -3841,8 +3841,8 @@ __metadata:
     "@emotion/styled": "npm:^11.11.0"
     "@headlessui/react": "npm:^1.7.14"
     "@hyperlane-xyz/registry": "npm:2.1.0"
-    "@hyperlane-xyz/sdk": "npm:3.15.0"
-    "@hyperlane-xyz/utils": "npm:3.15.0"
+    "@hyperlane-xyz/sdk": "npm:3.15.1"
+    "@hyperlane-xyz/utils": "npm:3.15.1"
     "@hyperlane-xyz/widgets": "npm:3.13.1"
     "@metamask/jazzicon": "https://github.com/jmrossy/jazzicon#7a8df28974b4e81129bfbe3cab76308b889032a6"
     "@metamask/post-message-stream": "npm:6.1.2"

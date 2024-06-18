@@ -11,22 +11,33 @@ import { getMultiProvider } from '../../../context/context';
 import { logger } from '../../../utils/logger';
 import { getChainByRpcEndpoint } from '../../chains/utils';
 
-import { AccountInfo, ActiveChainInfo, ChainTransactionFns } from './types';
+import { AccountInfo, ActiveChainInfo, ChainTransactionFns, WalletDetails } from './types';
 
 export function useSolAccount(): AccountInfo {
   const { publicKey, connected, wallet } = useWallet();
   const isReady = !!(publicKey && wallet && connected);
   const address = publicKey?.toBase58();
-  const connectorName = wallet?.adapter?.name;
 
   return useMemo<AccountInfo>(
     () => ({
       protocol: ProtocolType.Sealevel,
       addresses: address ? [{ address: address }] : [],
-      connectorName: connectorName,
       isReady: isReady,
     }),
-    [address, connectorName, isReady],
+    [address, isReady],
+  );
+}
+
+export function useSolWalletDetails() {
+  const { wallet } = useWallet();
+  const { name, icon } = wallet?.adapter || {};
+
+  return useMemo<WalletDetails>(
+    () => ({
+      name,
+      logoUrl: icon,
+    }),
+    [name, icon],
   );
 }
 

@@ -13,6 +13,7 @@ import {
   useCosmosConnectFn,
   useCosmosDisconnectFn,
   useCosmosTransactionFns,
+  useCosmosWalletDetails,
 } from './cosmos';
 import {
   useEvmAccount,
@@ -20,6 +21,7 @@ import {
   useEvmConnectFn,
   useEvmDisconnectFn,
   useEvmTransactionFns,
+  useEvmWalletDetails,
 } from './evm';
 import {
   useSolAccount,
@@ -27,8 +29,9 @@ import {
   useSolConnectFn,
   useSolDisconnectFn,
   useSolTransactionFns,
+  useSolWalletDetails,
 } from './solana';
-import { AccountInfo, ActiveChainInfo, ChainTransactionFns } from './types';
+import { AccountInfo, ActiveChainInfo, ChainTransactionFns, WalletDetails } from './types';
 
 export function useAccounts(): {
   accounts: Record<ProtocolType, AccountInfo>;
@@ -102,6 +105,21 @@ export function getAccountAddressAndPubKey(
   const protocol = getChainProtocol(chainName);
   const publicKey = accounts[protocol]?.publicKey;
   return { address, publicKey };
+}
+
+export function useWalletDetails(): Record<ProtocolType, WalletDetails> {
+  const evmWallet = useEvmWalletDetails();
+  const solWallet = useSolWalletDetails();
+  const cosmosWallet = useCosmosWalletDetails();
+
+  return useMemo(
+    () => ({
+      [ProtocolType.Ethereum]: evmWallet,
+      [ProtocolType.Sealevel]: solWallet,
+      [ProtocolType.Cosmos]: cosmosWallet,
+    }),
+    [evmWallet, solWallet, cosmosWallet],
+  );
 }
 
 export function useConnectFns(): Record<ProtocolType, () => void> {

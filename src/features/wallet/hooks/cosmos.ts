@@ -11,7 +11,13 @@ import { logger } from '../../../utils/logger';
 import { getCosmosChainNames } from '../../chains/metadata';
 import { getChainMetadata } from '../../chains/utils';
 
-import { AccountInfo, ActiveChainInfo, ChainAddress, ChainTransactionFns } from './types';
+import {
+  AccountInfo,
+  ActiveChainInfo,
+  ChainAddress,
+  ChainTransactionFns,
+  WalletDetails,
+} from './types';
 
 export function useCosmosAccount(): AccountInfo {
   const chainToContext = useChains(getCosmosChainNames());
@@ -31,10 +37,22 @@ export function useCosmosAccount(): AccountInfo {
       protocol: ProtocolType.Cosmos,
       addresses,
       publicKey,
-      connectorName,
       isReady,
     };
   }, [chainToContext]);
+}
+
+export function useCosmosWalletDetails() {
+  const { wallet } = useChain(PLACEHOLDER_COSMOS_CHAIN);
+  const { logo, prettyName } = wallet || {};
+
+  return useMemo<WalletDetails>(
+    () => ({
+      name: prettyName,
+      logoUrl: typeof logo === 'string' ? logo : undefined,
+    }),
+    [prettyName, logo],
+  );
 }
 
 export function useCosmosConnectFn(): () => void {

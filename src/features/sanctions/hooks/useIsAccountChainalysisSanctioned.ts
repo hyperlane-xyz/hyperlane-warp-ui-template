@@ -27,7 +27,7 @@ const ORACLE_ABI = [
 ] as const;
 const ORACLE_ADDRESS = '0x40C57923924B5c5c5455c48D93317139ADDaC8fb';
 
-export const useIsAccountChainalysisSanctioned = () => {
+export function useIsAccountChainalysisSanctioned() {
   const evmAddress = useEvmAccount().addresses[0]?.address;
 
   const sanctioned = useContractRead({
@@ -40,4 +40,4 @@ export const useIsAccountChainalysisSanctioned = () => {
   });
 
   return !!sanctioned.data;
-};
+}

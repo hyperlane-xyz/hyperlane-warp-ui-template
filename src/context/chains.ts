@@ -10,8 +10,6 @@ import { cosmosDefaultChain } from '../features/chains/cosmosDefault';
 import { tryParseJson } from '../utils/json.ts';
 import { logger } from '../utils/logger';
 
-const RPC_OVERRIDES = process.env['NEXT_PUBLIC_RPC_OVERRIDES'];
-
 export async function assembleChainMetadata() {
   // Chains must include a cosmos chain or CosmosKit throws errors
   const result = z.record(ChainMetadataSchema).safeParse({
@@ -24,8 +22,8 @@ export async function assembleChainMetadata() {
     throw new Error(`Invalid chain config: ${result.error.toString()}`);
   }
 
-  const rpcOverrides = z.record(RpcUrlSchema).safeParse(tryParseJson(RPC_OVERRIDES ?? ''));
-  if (RPC_OVERRIDES && !rpcOverrides.success) {
+  const rpcOverrides = z.record(RpcUrlSchema).safeParse(tryParseJson(config.rpcOverrides));
+  if (config.rpcOverrides && !rpcOverrides.success) {
     logger.warn('Invalid RPC overrides config', rpcOverrides.error);
   }
 
@@ -46,22 +44,18 @@ export async function assembleChainMetadata() {
   const chains: ChainMap<ChainMetadata> = Object.entries({
     ...defaultChainMetadata,
     ...customChainMetadata,
-  }).reduce((accum, [name, chain]) => {
-    const privateRpc = rpcOverrides.success ? rpcOverrides.data[name] : null;
-    if (privateRpc) {
-      return {
-        ...accum,
-        [name]: {
-          ...chain,
-          rpurls: chain.rpcUrls,
-        },
-      };
-    }
-    return {
+  }).reduce(
+    (accum, [name, chain]) => ({
       ...accum,
-      [name]: chain,
-    };
-  }, {});
+      [name]: rpcOverrides.success
+        ? {
+            ...chain,
+            rpcUrls: [rpcOverrides.data[name]],
+          }
+        : chain,
+    }),
+    {} as ChainMap<ChainMetadata>,
+  );
 
   return { chains, registry };
 }

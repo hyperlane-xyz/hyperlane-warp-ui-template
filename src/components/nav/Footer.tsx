@@ -29,7 +29,7 @@ export function Footer() {
           <div className="flex items-center justify-center">
             <div className="text-lg sm:text-xl font-medium ml-6 space-y-1 ">
               <div className="flex items-center font-medium space-x-1">
-                <span>Build with</span>
+                <span>Built with</span>
                 <Image src="/logos/everclear.png" alt="" width={130} height={18} />
                 <span> and </span>
                 <Image src="/logos/renzo.svg" alt="" width={24} height={18} />

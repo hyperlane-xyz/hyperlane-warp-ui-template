@@ -34,7 +34,6 @@ select:focus {
   outline: none;
 }
 
-
 /* 
 Backgrounds
 ============
@@ -44,7 +43,6 @@ Backgrounds
   background: url('/bg-home.jpg') no-repeat top;
   background-color: rgb(241 241 241);
 }
-
 
 /*
 Text and shadows

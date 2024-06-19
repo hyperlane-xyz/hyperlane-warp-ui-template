@@ -1,4 +1,5 @@
 import { useConnectModal } from '@rainbow-me/rainbowkit';
+import { useQuery } from '@tanstack/react-query';
 import { getNetwork, sendTransaction, switchNetwork, waitForTransaction } from '@wagmi/core';
 import { useCallback, useMemo } from 'react';
 import { useAccount, useDisconnect, useNetwork } from 'wagmi';
@@ -10,21 +11,52 @@ import { logger } from '../../../utils/logger';
 import { getChainMetadata, tryGetChainMetadata } from '../../chains/utils';
 import { ethers5TxToWagmiTx } from '../utils';
 
-import { AccountInfo, ActiveChainInfo, ChainTransactionFns } from './types';
+import { AccountInfo, ActiveChainInfo, ChainTransactionFns, WalletDetails } from './types';
 
 export function useEvmAccount(): AccountInfo {
   const { address, isConnected, connector } = useAccount();
   const isReady = !!(address && isConnected && connector);
-  const connectorName = connector?.name;
 
   return useMemo<AccountInfo>(
     () => ({
       protocol: ProtocolType.Ethereum,
       addresses: address ? [{ address: `${address}` }] : [],
-      connectorName: connectorName,
       isReady: isReady,
     }),
-    [address, connectorName, isReady],
+    [address, isReady],
+  );
+}
+
+export function useEvmWalletDetails() {
+  const { connector } = useAccount();
+  const name = connector?.name;
+  // @ts-ignore RainbowKit hooks on this extra useful info but it's not typed
+  const rainbowKitWalletDetails = connector?._wallets?.[0];
+
+  const { data } = useQuery({
+    queryKey: ['useEvmWalletDetails', name],
+    queryFn: async () => {
+      logger.debug('Fetching wallet details');
+      if (!rainbowKitWalletDetails) return null;
+      const { iconUrl, iconAccent: logoAccent } = rainbowKitWalletDetails;
+      let logoUrl: string | undefined = undefined;
+      if (typeof iconUrl === 'function') {
+        logoUrl = await iconUrl();
+      } else if (typeof iconUrl === 'string') {
+        logoUrl = iconUrl;
+      }
+      return { logoUrl, logoAccent };
+    },
+    staleTime: Infinity,
+  });
+
+  return useMemo<WalletDetails>(
+    () => ({
+      name,
+      logoUrl: data?.logoUrl,
+      logoAccent: data?.logoAccent,
+    }),
+    [name, data],
   );
 }
 

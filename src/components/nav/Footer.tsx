@@ -2,11 +2,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { links } from '../../consts/links';
-import FooterBg from '../../images/backgrounds/footer-bg.svg';
-import { Color } from '../../styles/Color';
 import { Discord } from '../icons/Discord';
 import { Github } from '../icons/Github';
-import { HyperlaneLogo } from '../icons/HyperlaneLogo';
 import { Medium } from '../icons/Medium';
 import { Twitter } from '../icons/Twitter';
 
@@ -26,19 +23,18 @@ const footerLinks3 = [
 
 export function Footer() {
   return (
-    <footer className="text-white relative">
-      <div className="relative w-full">
-        <Image className="z-0 w-full" src={FooterBg} alt="" />
-      </div>
-      <div className="relative z-10 px-8 pb-5 pt-2 sm:pt-0 bg-pink-500">
+    <footer className="relative">
+      <div className="relative z-10 px-8 pb-5 pt-2 sm:pt-0">
         <div className="flex flex-col sm:flex-row gap-8 sm:gap-10 items-center justify-between">
           <div className="flex items-center justify-center">
-            <div className="ml-2 w-12 sm:w-16 h-12 sm:h-16">
-              <HyperlaneLogo fill={Color.primaryWhite} />
-            </div>
             <div className="text-lg sm:text-xl font-medium ml-6 space-y-1 ">
-              <div>Go Interchain</div>
-              <div>With Hyperlane</div>
+              <div className="flex items-center font-medium space-x-1">
+                <span>Build with</span>
+                <Image src="/logos/everclear.png" alt="" width={130} height={18} />
+                <span> and </span>
+                <Image src="/logos/renzo.svg" alt="" width={24} height={18} />
+                <span>Renzo</span>
+              </div>
             </div>
           </div>
           <nav className="flex text-md font-medium">

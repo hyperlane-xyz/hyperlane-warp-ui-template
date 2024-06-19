@@ -15,10 +15,10 @@ const footerLinks1 = [
 ];
 
 const footerLinks3 = [
-  { title: 'Twitter', url: links.twitter, external: true, icon: <Twitter /> },
-  { title: 'Discord', url: links.discord, external: true, icon: <Discord /> },
-  { title: 'Github', url: links.github, external: true, icon: <Github /> },
-  { title: 'Blog', url: links.blog, external: true, icon: <Medium /> },
+  { title: 'Twitter', url: links.twitter, external: true, icon: <Twitter fill="#000" /> },
+  { title: 'Discord', url: links.discord, external: true, icon: <Discord fill="#000" /> },
+  { title: 'Github', url: links.github, external: true, icon: <Github fill="#000" /> },
+  { title: 'Blog', url: links.blog, external: true, icon: <Medium fill="#000" /> },
 ];
 
 export function Footer() {

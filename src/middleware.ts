@@ -44,7 +44,6 @@ const BLOCKED_REGIONS = [
 ];
 
 export function middleware(req: NextRequest) {
-  console.log('running middleware', req.url);
   const country = req.geo?.country;
   const region = req.geo?.region;
 

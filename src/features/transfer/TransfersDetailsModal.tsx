@@ -203,7 +203,7 @@ export function TransfersDetailsModal({
             {statusDescription}
           </div>
           {showSignWarning && (
-            <div className="mt-3 text-sm text-center text-gray-600">
+            <div className="mt-3 text-sm text-center text-pink-600 font-medium">
               If your wallet does not show a transaction request, please try the transfer again.
             </div>
           )}

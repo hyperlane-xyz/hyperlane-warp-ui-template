@@ -48,7 +48,7 @@ export function middleware(req: NextRequest) {
   const region = req.geo?.region;
 
   if (country && BLOCKED_COUNTRIES.includes(country)) {
-    return NextResponse.redirect('/blocked');
+    return NextResponse.redirect(new URL('/blocked', req.url));
   }
 
   if (
@@ -56,7 +56,7 @@ export function middleware(req: NextRequest) {
     region &&
     BLOCKED_REGIONS.find((x) => x.country === country)?.regions.includes(region)
   ) {
-    return NextResponse.redirect('/blocked');
+    return NextResponse.redirect(new URL('/blocked', req.url));
   }
 
   return NextResponse.next();

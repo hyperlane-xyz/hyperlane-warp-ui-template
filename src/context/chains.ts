@@ -1,12 +1,13 @@
 import { z } from 'zod';
 
 import { GithubRegistry, chainMetadata } from '@hyperlane-xyz/registry';
-import { ChainMap, ChainMetadata, ChainMetadataSchema } from '@hyperlane-xyz/sdk';
+import { ChainMap, ChainMetadata, ChainMetadataSchema, RpcUrlSchema } from '@hyperlane-xyz/sdk';
 
 import { chains as ChainsTS } from '../consts/chains.ts';
 import ChainsYaml from '../consts/chains.yaml';
 import { config } from '../consts/config.ts';
 import { cosmosDefaultChain } from '../features/chains/cosmosDefault';
+import { tryParseJson } from '../utils/json.ts';
 import { logger } from '../utils/logger';
 
 export async function assembleChainMetadata() {
@@ -20,6 +21,12 @@ export async function assembleChainMetadata() {
     logger.warn('Invalid chain config', result.error);
     throw new Error(`Invalid chain config: ${result.error.toString()}`);
   }
+
+  const rpcOverrides = z.record(RpcUrlSchema).safeParse(tryParseJson(config.rpcOverrides));
+  if (config.rpcOverrides && !rpcOverrides.success) {
+    logger.warn('Invalid RPC overrides config', rpcOverrides.error);
+  }
+
   const customChainMetadata = result.data as ChainMap<ChainMetadata>;
 
   const registry = new GithubRegistry({ uri: config.registryUrl });
@@ -34,6 +41,22 @@ export async function assembleChainMetadata() {
     await registry.listRegistryContent();
   }
 
-  const chains = { ...defaultChainMetadata, ...customChainMetadata };
+  const chains: ChainMap<ChainMetadata> = Object.entries({
+    ...defaultChainMetadata,
+    ...customChainMetadata,
+  }).reduce(
+    (accum, [name, chain]) => ({
+      ...accum,
+      [name]:
+        rpcOverrides.success && rpcOverrides.data[name]
+          ? {
+              ...chain,
+              rpcUrls: [rpcOverrides.data[name]],
+            }
+          : chain,
+    }),
+    {} as ChainMap<ChainMetadata>,
+  );
+
   return { chains, registry };
 }

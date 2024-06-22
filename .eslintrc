@@ -15,12 +15,12 @@
   "extends": [
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
-    "next", 
-    "next/core-web-vitals", 
+    "next",
+    "next/core-web-vitals",
     "prettier"
   ],
   "rules": {
-    "no-console": ["warn"],
+    "no-console": ["error"],
     "no-eval": ["error"],
     "no-ex-assign": ["error"],
     "no-constant-condition": ["off"],

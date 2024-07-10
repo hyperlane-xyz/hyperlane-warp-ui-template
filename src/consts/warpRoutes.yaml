@@ -4,6 +4,7 @@ tokens:
     standard: EvmHypXERC20
     decimals: 18
     symbol: ezETH
+    logoURI: https://renzo.hyperlane.xyz/logos/ezeth.svg
     name: Renzo Restaked ETH
     addressOrDenom: '0x1217441e6E8E960D065698317FE13594a5704f69'
     connections:
@@ -19,6 +20,7 @@ tokens:
     standard: EvmHypXERC20
     decimals: 18
     symbol: ezETH
+    logoURI: https://renzo.hyperlane.xyz/logos/ezeth.svg
     name: Renzo Restaked ETH
     addressOrDenom: '0xEF90AF9FCC831c5E2266285C4A1787201f96736a'
     connections:
@@ -34,6 +36,7 @@ tokens:
     standard: EvmHypXERC20
     decimals: 18
     symbol: ezETH
+    logoURI: https://renzo.hyperlane.xyz/logos/ezeth.svg
     name: Renzo Restaked ETH
     addressOrDenom: '0x4b36617B3D2cAb714a056090306A88Dd6DD4cCcf'
     connections:
@@ -49,6 +52,7 @@ tokens:
     standard: EvmHypXERC20
     decimals: 18
     symbol: ezETH
+    logoURI: https://renzo.hyperlane.xyz/logos/ezeth.svg
     name: Renzo Restaked ETH
     addressOrDenom: '0xB951c9b16603825C285bf59b14e983047d421Af5'
     connections:
@@ -64,6 +68,7 @@ tokens:
     standard: EvmHypXERC20
     decimals: 18
     symbol: ezETH
+    logoURI: https://renzo.hyperlane.xyz/logos/ezeth.svg
     name: Renzo Restaked ETH
     addressOrDenom: '0x9Ff085A556A498395B9edA690666E3BD34751024'
     connections:
@@ -79,6 +84,7 @@ tokens:
     standard: EvmHypXERC20
     decimals: 18
     symbol: ezETH
+    logoURI: https://renzo.hyperlane.xyz/logos/ezeth.svg
     name: Renzo Restaked ETH
     addressOrDenom: '0x477614191C3ccF8e10a6D1291dBAf098D17497BE'
     connections:
@@ -94,6 +100,7 @@ tokens:
     standard: EvmHypXERC20
     decimals: 18
     symbol: ezETH
+    logoURI: https://renzo.hyperlane.xyz/logos/ezeth.svg
     name: Renzo Restaked ETH
     addressOrDenom: '0x477614191C3ccF8e10a6D1291dBAf098D17497BE'
     connections:
@@ -109,6 +116,7 @@ tokens:
     standard: EvmHypXERC20Lockbox
     decimals: 18
     symbol: ezETH
+    logoURI: https://renzo.hyperlane.xyz/logos/ezeth.svg
     name: Renzo Restaked ETH
     addressOrDenom: '0x0B386cAe2851E954b52D10Aee4ba8CCDC11463E1'
     connections:
@@ -124,6 +132,7 @@ tokens:
     standard: EvmHypXERC20
     decimals: 18
     symbol: ezETH
+    logoURI: https://renzo.hyperlane.xyz/logos/ezeth.svg
     name: Renzo Restaked ETH
     addressOrDenom: '0xdFf621F952c23972dFD3A9E5d7B9f6339e9c078B'
     connections:

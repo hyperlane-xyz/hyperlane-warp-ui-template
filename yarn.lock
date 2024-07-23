@@ -2467,16 +2467,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ethereumjs/common@npm:2.6.5, @ethereumjs/common@npm:^2.6.4":
-  version: 2.6.5
-  resolution: "@ethereumjs/common@npm:2.6.5"
-  dependencies:
-    crc-32: "npm:^1.2.0"
-    ethereumjs-util: "npm:^7.1.5"
-  checksum: e931e16cafc908b086492ca5fcbb1820fff3edfb83cfd4ae48002517b3be0d1f7622c750874b3b347c122d06372e133ddae44ac129b5ba141f68808a79430135
-  languageName: node
-  linkType: hard
-
 "@ethereumjs/common@npm:^3.2.0":
   version: 3.2.0
   resolution: "@ethereumjs/common@npm:3.2.0"
@@ -2493,16 +2483,6 @@ __metadata:
   bin:
     rlp: bin/rlp
   checksum: bfdffd634ce72f3b17e3d085d071f2fe7ce9680aebdf10713d74b30afd80ef882d17f19ff7175fcb049431a56e800bd3558d3b028bd0d82341927edb303ab450
-  languageName: node
-  linkType: hard
-
-"@ethereumjs/tx@npm:3.5.2":
-  version: 3.5.2
-  resolution: "@ethereumjs/tx@npm:3.5.2"
-  dependencies:
-    "@ethereumjs/common": "npm:^2.6.4"
-    ethereumjs-util: "npm:^7.1.5"
-  checksum: 891e12738206229ac428685536844f7765e8547ae794462b1e406399445bf1f6f918af6ebc33ee5fa4a1340f14f48871a579f11c0e1d7c142ba0dd525bae5df5
   languageName: node
   linkType: hard
 
@@ -2527,6 +2507,17 @@ __metadata:
     ethereum-cryptography: "npm:^2.0.0"
     micro-ftch: "npm:^0.3.1"
   checksum: 3b4e8617988ec23b98f2f692bf4c8221b30123f661a237592b5f5078329574c6a226a18e0276d7b45e60ef5eb7db2a26d6e247e68208c65c4e24369ef76ade70
+  languageName: node
+  linkType: hard
+
+"@ethereumjs/util@npm:^8.1.0":
+  version: 8.1.0
+  resolution: "@ethereumjs/util@npm:8.1.0"
+  dependencies:
+    "@ethereumjs/rlp": "npm:^4.0.1"
+    ethereum-cryptography: "npm:^2.0.0"
+    micro-ftch: "npm:^0.3.1"
+  checksum: cc35338932e49b15e54ca6e548b32a1f48eed7d7e1d34ee743e4d3600dd616668bd50f70139e86c5c35f55aac35fba3b6cc4e6f679cf650aeba66bf93016200c
   languageName: node
   linkType: hard
 
@@ -3142,7 +3133,7 @@ __metadata:
     "@metamask/jazzicon": "https://github.com/jmrossy/jazzicon#7a8df28974b4e81129bfbe3cab76308b889032a6"
     "@metamask/post-message-stream": "npm:6.1.2"
     "@metamask/providers": "npm:10.2.1"
-    "@next/bundle-analyzer": "npm:^14.0.4"
+    "@next/bundle-analyzer": "npm:^14.2.5"
     "@rainbow-me/rainbowkit": "npm:1.3.0"
     "@sentry/nextjs": "npm:^7.118.0"
     "@solana/spl-token": "npm:^0.3.8"
@@ -6252,27 +6243,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/bn.js@npm:^5.1.0, @types/bn.js@npm:^5.1.1":
-  version: 5.1.5
-  resolution: "@types/bn.js@npm:5.1.5"
-  dependencies:
-    "@types/node": "npm:*"
-  checksum: 9719330c86aeae0a6a447c974cf0f853ba3660ede20de61f435b03d699e30e6d8b35bf71a8dc9fdc8317784438e83177644ba068ed653d0ae0106e1ecbfe289e
-  languageName: node
-  linkType: hard
-
-"@types/cacheable-request@npm:^6.0.1, @types/cacheable-request@npm:^6.0.2":
-  version: 6.0.3
-  resolution: "@types/cacheable-request@npm:6.0.3"
-  dependencies:
-    "@types/http-cache-semantics": "npm:*"
-    "@types/keyv": "npm:^3.1.4"
-    "@types/node": "npm:*"
-    "@types/responselike": "npm:^1.0.0"
-  checksum: 159f9fdb2a1b7175eef453ae2ced5ea04c0d2b9610cc9ccd9f9abb066d36dacb1f37acd879ace10ad7cbb649490723feb396fb7307004c9670be29636304b988
-  languageName: node
-  linkType: hard
-
 "@types/chrome@npm:^0.0.136":
   version: 0.0.136
   resolution: "@types/chrome@npm:0.0.136"
@@ -9138,6 +9108,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"crc-32@npm:^1.2.0":
+  version: 1.2.2
+  resolution: "crc-32@npm:1.2.2"
+  bin:
+    crc32: bin/crc32.njs
+  checksum: 824f696a5baaf617809aa9cd033313c8f94f12d15ebffa69f10202480396be44aef9831d900ab291638a8022ed91c360696dd5b1ba691eb3f34e60be8835b7c3
+  languageName: node
+  linkType: hard
+
 "crc@npm:^3.8.0":
   version: 3.8.0
   resolution: "crc@npm:3.8.0"
@@ -10287,61 +10266,6 @@ __metadata:
     jest-message-util: "npm:^29.6.3"
     jest-util: "npm:^29.6.3"
   checksum: 9fd6dde75d26e5f938a4dbdc80d2e4cc28498b8be074afd8a26bf38d5451a398ff61470182c5fb364a20dfbdbe053251369cee7bc59d196cddd905f0058384cf
-  languageName: node
-  linkType: hard
-
-"express@npm:^4.14.0":
-  version: 4.19.2
-  resolution: "express@npm:4.19.2"
-  dependencies:
-    accepts: "npm:~1.3.8"
-    array-flatten: "npm:1.1.1"
-    body-parser: "npm:1.20.2"
-    content-disposition: "npm:0.5.4"
-    content-type: "npm:~1.0.4"
-    cookie: "npm:0.6.0"
-    cookie-signature: "npm:1.0.6"
-    debug: "npm:2.6.9"
-    depd: "npm:2.0.0"
-    encodeurl: "npm:~1.0.2"
-    escape-html: "npm:~1.0.3"
-    etag: "npm:~1.8.1"
-    finalhandler: "npm:1.2.0"
-    fresh: "npm:0.5.2"
-    http-errors: "npm:2.0.0"
-    merge-descriptors: "npm:1.0.1"
-    methods: "npm:~1.1.2"
-    on-finished: "npm:2.4.1"
-    parseurl: "npm:~1.3.3"
-    path-to-regexp: "npm:0.1.7"
-    proxy-addr: "npm:~2.0.7"
-    qs: "npm:6.11.0"
-    range-parser: "npm:~1.2.1"
-    safe-buffer: "npm:5.2.1"
-    send: "npm:0.18.0"
-    serve-static: "npm:1.15.0"
-    setprototypeof: "npm:1.2.0"
-    statuses: "npm:2.0.1"
-    type-is: "npm:~1.6.18"
-    utils-merge: "npm:1.0.1"
-    vary: "npm:~1.1.2"
-  checksum: 3fcd792536f802c059789ef48db3851b87e78fba103423e524144d79af37da7952a2b8d4e1a007f423329c7377d686d9476ac42e7d9ea413b80345d495e30a3a
-  languageName: node
-  linkType: hard
-
-"ext@npm:^1.7.0":
-  version: 1.7.0
-  resolution: "ext@npm:1.7.0"
-  dependencies:
-    type: "npm:^2.7.2"
-  checksum: 666a135980b002df0e75c8ac6c389140cdc59ac953db62770479ee2856d58ce69d2f845e5f2586716350b725400f6945e51e9159573158c39f369984c72dcd84
-  languageName: node
-  linkType: hard
-
-"extend@npm:~3.0.2":
-  version: 3.0.2
-  resolution: "extend@npm:3.0.2"
-  checksum: 59e89e2dc798ec0f54b36d82f32a27d5f6472c53974f61ca098db5d4648430b725387b53449a34df38fd0392045434426b012f302b3cc049a6500ccf82877e4e
   languageName: node
   linkType: hard
 

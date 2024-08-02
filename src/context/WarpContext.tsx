@@ -8,7 +8,7 @@ import { initWarpContext } from './context';
 export function WarpContext({ children }: PropsWithChildren<unknown>) {
   const {
     data: warpContext,
-    isError,
+    error,
     isLoading,
   } = useQuery({
     queryKey: ['warpContext'],
@@ -20,11 +20,14 @@ export function WarpContext({ children }: PropsWithChildren<unknown>) {
     refetchOnReconnect: false,
   });
 
-  if (isError)
+  if (error) {
     // Fallback to outer error boundary
-    throw new Error(
-      'Failed to initialize warp context. Please check your registry URL and connection status.',
-    );
+    const message =
+      error instanceof Error
+        ? error.message
+        : 'Please check your registry URL and connection status.';
+    throw new Error(`Failed to initialize warp context. ${message}`);
+  }
 
   if (isLoading || !warpContext)
     return (

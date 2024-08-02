@@ -105,7 +105,11 @@ export function useCosmosTransactionFns(): ChainTransactionFns {
         txDetails = await client.getTx(result.transactionHash);
       } else if (tx.type === ProviderType.CosmJs) {
         const client = await getSigningStargateClient();
-        result = await client.signAndBroadcast(chainContext.address, [tx.transaction], 'auto');
+        // The fee param of 'auto' here stopped working for Neutron-based IBC transfers
+        // It seems the signAndBroadcast method uses a default fee multiplier of 1.4
+        // https://github.com/cosmos/cosmjs/blob/e819a1fc0e99a3e5320d8d6667a08d3b92e5e836/packages/stargate/src/signingstargateclient.ts#L115
+        // Bumping to 1.6 fixes the insufficient gas issue
+        result = await client.signAndBroadcast(chainContext.address, [tx.transaction], 1.6);
         txDetails = await client.getTx(result.transactionHash);
       } else {
         throw new Error(`Invalid cosmos provider type ${tx.type}`);

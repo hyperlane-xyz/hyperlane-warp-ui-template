@@ -6,7 +6,7 @@
   "dependencies": {
     "@chakra-ui/next-js": "^2.2.0",
     "@chakra-ui/react": "^2.8.2",
-    "@cosmjs/cosmwasm-stargate": "^0.32.4",
+    "@cosmjs/cosmwasm-stargate": "patch:@cosmjs/cosmwasm-stargate@npm%3A0.32.4#~/.yarn/patches/@cosmjs-cosmwasm-stargate-npm-0.32.4-f9dd51429c.patch",
     "@cosmjs/stargate": "^0.32.4",
     "@cosmos-kit/core": "^2.13.1",
     "@cosmos-kit/cosmostation": "^2.11.2",
@@ -92,7 +92,6 @@
   },
   "types": "dist/src/index.d.ts",
   "resolutions": {
-    "@cosmjs/cosmwasm-stargate@npm:^0.31.3": "patch:@cosmjs/cosmwasm-stargate@npm%3A0.31.3#~/.yarn/patches/@cosmjs-cosmwasm-stargate-npm-0.31.3-4b3bafffd4.patch",
     "axios": "0.27.2",
     "bn.js": "^5.2",
     "cosmjs-types": "0.9",
@@ -100,6 +99,8 @@
     "lit-html": "2.8.0",
     "react-fast-compare": "^3.2",
     "viem": "1.20.0",
-    "zustand": "^4.4"
+    "zustand": "^4.4",
+    "@cosmjs/cosmwasm-stargate@npm:^0.32.3": "patch:@cosmjs/cosmwasm-stargate@npm%3A0.32.4#~/.yarn/patches/@cosmjs-cosmwasm-stargate-npm-0.32.4-f9dd51429c.patch",
+    "@cosmjs/cosmwasm-stargate@npm:^0.32.4": "patch:@cosmjs/cosmwasm-stargate@npm%3A0.32.4#~/.yarn/patches/@cosmjs-cosmwasm-stargate-npm-0.32.4-f9dd51429c.patch"
   }
 }

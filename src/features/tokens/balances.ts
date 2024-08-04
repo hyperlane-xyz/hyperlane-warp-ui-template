@@ -41,5 +41,5 @@ export function useDestinationBalance({
 }: TransferFormValues) {
   const originToken = getTokenByIndex(tokenIndex);
   const connection = originToken?.getConnectionForChain(destination);
-  return useBalance(origin, connection?.token, recipient);
+  return useBalance(destination, connection?.token, recipient);
 }

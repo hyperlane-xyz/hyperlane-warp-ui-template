@@ -4,6 +4,7 @@ import type { AppProps } from 'next/app';
 import { ToastContainer, Zoom, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import 'src/vendor/inpage-metamask';
+import 'src/vendor/polyfill';
 
 import '@hyperlane-xyz/widgets/styles.css';
 

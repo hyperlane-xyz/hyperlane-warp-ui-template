@@ -254,13 +254,13 @@ function ButtonSection({
         color="gray"
         onClick={() => setIsReview(false)}
         classes="px-6 py-1.5"
-        icon={<ChevronIcon direction="w" width={10} height={6} color={Color.primaryBlue} />}
+        icon={<ChevronIcon direction="w" width={10} height={6} color={Color.primaryMint} />}
       >
         <span>Edit</span>
       </SolidButton>
       <SolidButton
         type="button"
-        color="pink"
+        color="mint"
         onClick={triggerTransactionsHandler}
         classes="flex-1 px-3 py-1.5"
       >

@@ -4,7 +4,6 @@ import {
   argentWallet,
   coinbaseWallet,
   injectedWallet,
-  ledgerWallet,
   metaMaskWallet,
   omniWallet,
   rainbowWallet,
@@ -41,7 +40,7 @@ function initWagmi() {
         metaMaskWallet(connectorConfig),
         injectedWallet(connectorConfig),
         walletConnectWallet(connectorConfig),
-        ledgerWallet(connectorConfig),
+        // ledgerWallet(connectorConfig),
       ],
     },
     {

@@ -13,6 +13,7 @@ import {
   useCosmosConnectFn,
   useCosmosDisconnectFn,
   useCosmosTransactionFns,
+  useCosmosWalletDetails,
 } from './cosmos';
 import {
   useEvmAccount,
@@ -20,6 +21,7 @@ import {
   useEvmConnectFn,
   useEvmDisconnectFn,
   useEvmTransactionFns,
+  useEvmWalletDetails,
 } from './evm';
 import {
   useSolAccount,
@@ -27,8 +29,9 @@ import {
   useSolConnectFn,
   useSolDisconnectFn,
   useSolTransactionFns,
+  useSolWalletDetails,
 } from './solana';
-import { AccountInfo, ActiveChainInfo, ChainTransactionFns } from './types';
+import { AccountInfo, ActiveChainInfo, ChainTransactionFns, WalletDetails } from './types';
 
 export function useAccounts(): {
   accounts: Record<ProtocolType, AccountInfo>;
@@ -59,7 +62,6 @@ export function useAccounts(): {
         [ProtocolType.Ethereum]: evmAccountInfo,
         [ProtocolType.Sealevel]: solAccountInfo,
         [ProtocolType.Cosmos]: cosmAccountInfo,
-        [ProtocolType.Fuel]: { protocol: ProtocolType.Fuel, isReady: false, addresses: [] },
       },
       readyAccounts,
     }),
@@ -105,6 +107,21 @@ export function getAccountAddressAndPubKey(
   return { address, publicKey };
 }
 
+export function useWalletDetails(): Record<ProtocolType, WalletDetails> {
+  const evmWallet = useEvmWalletDetails();
+  const solWallet = useSolWalletDetails();
+  const cosmosWallet = useCosmosWalletDetails();
+
+  return useMemo(
+    () => ({
+      [ProtocolType.Ethereum]: evmWallet,
+      [ProtocolType.Sealevel]: solWallet,
+      [ProtocolType.Cosmos]: cosmosWallet,
+    }),
+    [evmWallet, solWallet, cosmosWallet],
+  );
+}
+
 export function useConnectFns(): Record<ProtocolType, () => void> {
   const onConnectEthereum = useEvmConnectFn();
   const onConnectSolana = useSolConnectFn();
@@ -115,7 +132,6 @@ export function useConnectFns(): Record<ProtocolType, () => void> {
       [ProtocolType.Ethereum]: onConnectEthereum,
       [ProtocolType.Sealevel]: onConnectSolana,
       [ProtocolType.Cosmos]: onConnectCosmos,
-      [ProtocolType.Fuel]: () => alert('TODO'),
     }),
     [onConnectEthereum, onConnectSolana, onConnectCosmos],
   );
@@ -142,9 +158,6 @@ export function useDisconnectFns(): Record<ProtocolType, () => Promise<void>> {
       [ProtocolType.Ethereum]: onClickDisconnect(ProtocolType.Ethereum, disconnectEvm),
       [ProtocolType.Sealevel]: onClickDisconnect(ProtocolType.Sealevel, disconnectSol),
       [ProtocolType.Cosmos]: onClickDisconnect(ProtocolType.Cosmos, disconnectCosmos),
-      [ProtocolType.Fuel]: onClickDisconnect(ProtocolType.Fuel, () => {
-        'TODO';
-      }),
     }),
     [disconnectEvm, disconnectSol, disconnectCosmos],
   );
@@ -169,7 +182,6 @@ export function useActiveChains(): {
         [ProtocolType.Ethereum]: evmChain,
         [ProtocolType.Sealevel]: solChain,
         [ProtocolType.Cosmos]: cosmChain,
-        [ProtocolType.Fuel]: {},
       },
       readyChains,
     }),
@@ -190,10 +202,6 @@ export function useTransactionFns(): Record<ProtocolType, ChainTransactionFns> {
       [ProtocolType.Ethereum]: { sendTransaction: onSendEvmTx, switchNetwork: onSwitchEvmNetwork },
       [ProtocolType.Sealevel]: { sendTransaction: onSendSolTx, switchNetwork: onSwitchSolNetwork },
       [ProtocolType.Cosmos]: { sendTransaction: onSendCosmTx, switchNetwork: onSwitchCosmNetwork },
-      [ProtocolType.Fuel]: {
-        sendTransaction: () => alert('TODO') as any,
-        switchNetwork: () => alert('TODO') as any,
-      },
     }),
     [
       onSendEvmTx,

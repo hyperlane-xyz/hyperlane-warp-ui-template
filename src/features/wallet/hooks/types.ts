@@ -14,8 +14,13 @@ export interface AccountInfo {
   // And another Cosmos exception, public keys are needed
   // for tx simulation and gas estimation
   publicKey?: Promise<HexString>;
-  connectorName?: string;
   isReady: boolean;
+}
+
+export interface WalletDetails {
+  name?: string;
+  logoUrl?: string;
+  logoAccent?: string;
 }
 
 export interface ActiveChainInfo {

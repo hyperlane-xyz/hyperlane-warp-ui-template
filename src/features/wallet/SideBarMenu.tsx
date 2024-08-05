@@ -4,8 +4,7 @@ import { toast } from 'react-toastify';
 
 import { SmallSpinner } from '../../components/animation/SmallSpinner';
 import { ChainLogo } from '../../components/icons/ChainLogo';
-import { Identicon } from '../../components/icons/Identicon';
-import { PLACEHOLDER_COSMOS_CHAIN } from '../../consts/values';
+import { WalletLogo } from '../../components/icons/WalletLogo';
 import { tryFindToken } from '../../context/context';
 import ArrowRightIcon from '../../images/icons/arrow-right.svg';
 import CollapseIcon from '../../images/icons/collapse-icon.svg';
@@ -19,7 +18,7 @@ import { useStore } from '../store';
 import { TransfersDetailsModal } from '../transfer/TransfersDetailsModal';
 import { TransferContext } from '../transfer/types';
 
-import { useAccounts, useDisconnectFns } from './hooks/multiProtocol';
+import { useAccounts, useDisconnectFns, useWalletDetails } from './hooks/multiProtocol';
 import { AccountInfo } from './hooks/types';
 
 export function SideBarMenu({
@@ -88,12 +87,9 @@ export function SideBarMenu({
             Connected Wallets
           </div>
           <div className="my-3 px-3 space-y-3">
-            {readyAccounts.map((acc, i) =>
-              acc.addresses.map((addr, j) => {
-                if (addr?.chainName?.includes(PLACEHOLDER_COSMOS_CHAIN)) return null;
-                return <AccountSummary key={`${i}-${j}`} account={acc} address={addr.address} />;
-              }),
-            )}
+            {readyAccounts.map((acc, i) => (
+              <AccountSummary key={i} account={acc} />
+            ))}
             <button onClick={onConnectWallet} className={styles.btn}>
               <Icon src={Wallet} alt="" size={18} />
               <div className="ml-2">Connect wallet</div>
@@ -143,25 +139,33 @@ export function SideBarMenu({
   );
 }
 
-function AccountSummary({ account, address }: { account: AccountInfo; address: Address }) {
+function AccountSummary({ account }: { account: AccountInfo }) {
+  const numAddresses = account?.addresses?.length || 0;
+  const onlyAddress = numAddresses === 1 ? account.addresses[0].address : undefined;
+
   const onClickCopy = async () => {
-    if (!address) return;
-    await tryClipboardSet(address);
+    if (!onlyAddress) return;
+    await tryClipboardSet(account.addresses[0].address);
     toast.success('Address copied to clipboard', { autoClose: 2000 });
   };
 
+  const walletDetails = useWalletDetails()[account.protocol];
+
   return (
     <button
-      key={address}
       onClick={onClickCopy}
-      className={`${styles.btn} border border-gray-200 rounded-xl`}
+      className={`${styles.btn} border border-gray-200 rounded-xl ${
+        numAddresses > 1 && 'cursor-default'
+      }`}
     >
       <div className="shrink-0">
-        <Identicon address={address} size={40} />
+        <WalletLogo walletDetails={walletDetails} size={42} />
       </div>
       <div className="flex flex-col mx-3 items-start">
-        <div className="text-gray-800 text-sm font-normal">{account.connectorName || 'Wallet'}</div>
-        <div className="text-xs text-left truncate w-64">{address ? address : 'Unknown'}</div>
+        <div className="text-gray-800 text-sm font-normal">{walletDetails.name || 'Wallet'}</div>
+        <div className="text-xs text-left truncate w-64">
+          {onlyAddress || `${numAddresses} known addresses`}
+        </div>
       </div>
     </button>
   );

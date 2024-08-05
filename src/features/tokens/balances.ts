@@ -33,13 +33,8 @@ export function useOriginBalance({ origin, tokenIndex }: TransferFormValues) {
   return useBalance(origin, token, address);
 }
 
-export function useDestinationBalance({
-  origin,
-  destination,
-  tokenIndex,
-  recipient,
-}: TransferFormValues) {
+export function useDestinationBalance({ destination, tokenIndex, recipient }: TransferFormValues) {
   const originToken = getTokenByIndex(tokenIndex);
   const connection = originToken?.getConnectionForChain(destination);
-  return useBalance(origin, connection?.token, recipient);
+  return useBalance(destination, connection?.token, recipient);
 }

@@ -11,5 +11,6 @@ export const links = {
   discord: 'https://discord.gg/hyperlane',
   github: 'https://github.com/hyperlane-xyz/hyperlane-warp-ui-template',
   twitter: 'https://twitter.com/hyperlane',
+  blog: 'https://medium.com/hyperlane',
   caldera: 'https://www.caldera.xyz',
 };

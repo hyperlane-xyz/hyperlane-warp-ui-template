@@ -1,7 +1,3 @@
-export function isValidUrl(urlString: string | null | undefined): boolean {
-  return isValidRelativeUrl(urlString) || isValidHttpsUrl(urlString);
-}
-
 export function isValidRelativeUrl(urlString: string | null | undefined): boolean {
   try {
     return !!urlString && Boolean(new URL(urlString, document.baseURI));

@@ -1,16 +1,34 @@
 import Image from 'next/image';
-import { PropsWithChildren } from 'react';
+import { PropsWithChildren, useMemo } from 'react';
 
 import { ethereum, solana } from '@hyperlane-xyz/registry';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import { Modal } from '../../components/layout/Modal';
+import { getWarpCore } from '../../context/context';
 
 import { useConnectFns } from './hooks/multiProtocol';
 
 export function WalletEnvSelectionModal({ isOpen, close }: { isOpen: boolean; close: () => void }) {
   const connectFns = useConnectFns();
+  const protocolsEnabled = useMemo(() => {
+    const wc = getWarpCore();
+
+    return wc.getTokenChains().reduce(
+      (accum, chainName) => {
+        return {
+          ...accum,
+          [wc.multiProvider.getProtocol(chainName)]: true,
+        };
+      },
+      {
+        [ProtocolType.Ethereum]: false,
+        [ProtocolType.Cosmos]: false,
+        [ProtocolType.Sealevel]: false,
+      },
+    );
+  }, []);
 
   const onClickEnv = (env: ProtocolType) => () => {
     close();
@@ -21,27 +39,33 @@ export function WalletEnvSelectionModal({ isOpen, close }: { isOpen: boolean; cl
   return (
     <Modal title="Select Wallet Environment" isOpen={isOpen} close={close} width="max-w-sm">
       <div className="pt-4 pb-2 flex flex-col space-y-2.5">
-        <EnvButton
-          onClick={onClickEnv(ProtocolType.Ethereum)}
-          subTitle="an EVM"
-          logoChainId={ethereum.chainId}
-        >
-          Ethereum
-        </EnvButton>
-        <EnvButton
-          onClick={onClickEnv(ProtocolType.Sealevel)}
-          subTitle="a Solana"
-          logoChainId={solana.chainId}
-        >
-          Solana
-        </EnvButton>
-        <EnvButton
-          onClick={onClickEnv(ProtocolType.Cosmos)}
-          subTitle="a Cosmos"
-          logo={<Image src={'/logos/cosmos.svg'} width={34} height={34} alt="" />}
-        >
-          Cosmos
-        </EnvButton>
+        {protocolsEnabled[ProtocolType.Ethereum] && (
+          <EnvButton
+            onClick={onClickEnv(ProtocolType.Ethereum)}
+            subTitle="an EVM"
+            logoChainId={ethereum.chainId}
+          >
+            Ethereum
+          </EnvButton>
+        )}
+        {protocolsEnabled[ProtocolType.Sealevel] && (
+          <EnvButton
+            onClick={onClickEnv(ProtocolType.Sealevel)}
+            subTitle="a Solana"
+            logoChainId={solana.chainId}
+          >
+            Solana
+          </EnvButton>
+        )}
+        {protocolsEnabled[ProtocolType.Cosmos] && (
+          <EnvButton
+            onClick={onClickEnv(ProtocolType.Cosmos)}
+            subTitle="a Cosmos"
+            logo={<Image src={'/logos/cosmos.svg'} width={34} height={34} alt="" />}
+          >
+            Cosmos
+          </EnvButton>
+        )}
       </div>
     </Modal>
   );

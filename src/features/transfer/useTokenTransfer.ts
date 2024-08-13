@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { toast } from 'react-toastify';
 
-import { TypedTransactionReceipt, WarpTxCategory } from '@hyperlane-xyz/sdk';
+import { TokenStandard, TypedTransactionReceipt, WarpTxCategory } from '@hyperlane-xyz/sdk';
 import { toTitleCase, toWei } from '@hyperlane-xyz/utils';
 
 import { toastTxSuccess } from '../../components/toast/TxSuccessToast';
@@ -17,6 +17,8 @@ import {
 
 import { TransferContext, TransferFormValues, TransferStatus } from './types';
 import { tryGetMsgIdFromTransferReceipt } from './utils';
+
+const SKIP_DEST_BALANCE_CHECK_STANDARDS = [TokenStandard.EvmHypCollateralFiat];
 
 export function useTokenTransfer(onDone?: () => void) {
   const { transfers, addTransfer, updateTransferStatus } = useStore((s) => ({
@@ -108,10 +110,12 @@ async function executeTransfer({
 
     const warpCore = getWarpCore();
 
-    const isCollateralSufficient = await warpCore.isDestinationCollateralSufficient({
-      originTokenAmount,
-      destination,
-    });
+    const isCollateralSufficient = SKIP_DEST_BALANCE_CHECK_STANDARDS.includes(originToken.standard)
+      ? true
+      : await warpCore.isDestinationCollateralSufficient({
+          originTokenAmount,
+          destination,
+        });
     if (!isCollateralSufficient) {
       toast.error('Insufficient collateral on destination for transfer');
       throw new Error('Insufficient destination collateral');

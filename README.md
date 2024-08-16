@@ -18,6 +18,7 @@ See [CUSTOMIZE.md](./CUSTOMIZE.md) for details about adjusting the tokens and br
 
 ### Setup
 
+#### Build
 ```sh
 # Install dependencies
 yarn
@@ -26,11 +27,19 @@ yarn
 yarn build
 ```
 
+#### Configure
+
+You need WalletConnect Cloud `projectId` to run Hyperlane Warp Route UI successfully. 
+Sign up to [WalletConnect Cloud](https://cloud.walletconnect.com/), create 
+new project with AppKit and Next.js and copy `projectId` from there.
+
 ### Run
 
+You need to set up environment variable `NEXT_PUBLIC_WALLET_CONNECT_ID` to `projectId` you have got from WalletConnect
+Cloud.
 ```sh
 # Start the Next dev server
-yarn dev
+export NEXT_PUBLIC_WALLET_CONNECT_ID=<projectId>; yarn dev
 ```
 
 ### Test

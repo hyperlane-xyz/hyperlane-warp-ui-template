@@ -1,182 +1,172 @@
 # yaml-language-server: $schema=../schema.json
 tokens:
-  - addressOrDenom: '0xE00C6185a5c19219F1FFeD213b4406a254968c26'
-    chainName: arbitrum
-    collateralAddressOrDenom: '0x2416092f143378750bb29b79eD961ab195CcEea5'
-    connections:
-      - token: ethereum|optimism|0xF70a275314228201E83aa45e534DeD9A6F9e557D
-      - token: ethereum|base|0x368b502812E4b4Bb1AA9d9a12f1D7232d4edE61b
-      - token: ethereum|blast|0xf92bbaaeD0cA77e8D602A6e911128FBE17C0c2E2
-      - token: ethereum|bsc|0x368b502812E4b4Bb1AA9d9a12f1D7232d4edE61b
-      - token: ethereum|mode|0xf92bbaaeD0cA77e8D602A6e911128FBE17C0c2E2
-      - token: ethereum|linea|0xf92bbaaeD0cA77e8D602A6e911128FBE17C0c2E2
-      - token: ethereum|ethereum|0xf92bbaaeD0cA77e8D602A6e911128FBE17C0c2E2
-      - token: ethereum|fraxtal|0x368b502812E4b4Bb1AA9d9a12f1D7232d4edE61b
-      - token: ethereum|zircuit|0x29704F123b7e73B787D156EE1fa3Ea8333da0BE1
-    decimals: 18
-    logoURI: https://renzo.hyperlane.xyz/logos/ezeth.svg
-    name: Renzo Restaked ETH
+  - chainName: arbitrum
     standard: EvmHypXERC20
-    symbol: ezETH
-  - addressOrDenom: '0xF70a275314228201E83aa45e534DeD9A6F9e557D'
-    chainName: optimism
-    collateralAddressOrDenom: '0x2416092f143378750bb29b79eD961ab195CcEea5'
-    connections:
-      - token: ethereum|arbitrum|0xE00C6185a5c19219F1FFeD213b4406a254968c26
-      - token: ethereum|base|0x368b502812E4b4Bb1AA9d9a12f1D7232d4edE61b
-      - token: ethereum|blast|0xf92bbaaeD0cA77e8D602A6e911128FBE17C0c2E2
-      - token: ethereum|bsc|0x368b502812E4b4Bb1AA9d9a12f1D7232d4edE61b
-      - token: ethereum|mode|0xf92bbaaeD0cA77e8D602A6e911128FBE17C0c2E2
-      - token: ethereum|linea|0xf92bbaaeD0cA77e8D602A6e911128FBE17C0c2E2
-      - token: ethereum|ethereum|0xf92bbaaeD0cA77e8D602A6e911128FBE17C0c2E2
-      - token: ethereum|fraxtal|0x368b502812E4b4Bb1AA9d9a12f1D7232d4edE61b
-      - token: ethereum|zircuit|0x29704F123b7e73B787D156EE1fa3Ea8333da0BE1
     decimals: 18
-    logoURI: https://renzo.hyperlane.xyz/logos/ezeth.svg
+    symbol: ezETH
     name: Renzo Restaked ETH
+    addressOrDenom: "0xB26bBfC6d1F469C821Ea25099017862e7368F4E8"
+    collateralAddressOrDenom: "0x2416092f143378750bb29b79eD961ab195CcEea5"
+    connections:
+      - token: ethereum|optimism|0xacEB607CdF59EB8022Cc0699eEF3eCF246d149e2
+      - token: ethereum|base|0x2552516453368e42705D791F674b312b8b87CD9e
+      - token: ethereum|blast|0x486b39378f99f073A3043C6Aabe8666876A8F3C5
+      - token: ethereum|bsc|0xE00C6185a5c19219F1FFeD213b4406a254968c26
+      - token: ethereum|mode|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
+      - token: ethereum|linea|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
+      - token: ethereum|ethereum|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
+      - token: ethereum|fraxtal|0x3aE8635A4D581d40a6Edfb3f2ED480f9532994F5
+      - token: ethereum|zircuit|0x2552516453368e42705D791F674b312b8b87CD9e
+  - chainName: optimism
     standard: EvmHypXERC20
-    symbol: ezETH
-  - addressOrDenom: '0x368b502812E4b4Bb1AA9d9a12f1D7232d4edE61b'
-    chainName: base
-    collateralAddressOrDenom: '0x2416092f143378750bb29b79eD961ab195CcEea5'
-    connections:
-      - token: ethereum|arbitrum|0xE00C6185a5c19219F1FFeD213b4406a254968c26
-      - token: ethereum|optimism|0xF70a275314228201E83aa45e534DeD9A6F9e557D
-      - token: ethereum|blast|0xf92bbaaeD0cA77e8D602A6e911128FBE17C0c2E2
-      - token: ethereum|bsc|0x368b502812E4b4Bb1AA9d9a12f1D7232d4edE61b
-      - token: ethereum|mode|0xf92bbaaeD0cA77e8D602A6e911128FBE17C0c2E2
-      - token: ethereum|linea|0xf92bbaaeD0cA77e8D602A6e911128FBE17C0c2E2
-      - token: ethereum|ethereum|0xf92bbaaeD0cA77e8D602A6e911128FBE17C0c2E2
-      - token: ethereum|fraxtal|0x368b502812E4b4Bb1AA9d9a12f1D7232d4edE61b
-      - token: ethereum|zircuit|0x29704F123b7e73B787D156EE1fa3Ea8333da0BE1
     decimals: 18
-    logoURI: https://renzo.hyperlane.xyz/logos/ezeth.svg
+    symbol: ezETH
     name: Renzo Restaked ETH
+    addressOrDenom: "0xacEB607CdF59EB8022Cc0699eEF3eCF246d149e2"
+    collateralAddressOrDenom: "0x2416092f143378750bb29b79eD961ab195CcEea5"
+    connections:
+      - token: ethereum|arbitrum|0xB26bBfC6d1F469C821Ea25099017862e7368F4E8
+      - token: ethereum|base|0x2552516453368e42705D791F674b312b8b87CD9e
+      - token: ethereum|blast|0x486b39378f99f073A3043C6Aabe8666876A8F3C5
+      - token: ethereum|bsc|0xE00C6185a5c19219F1FFeD213b4406a254968c26
+      - token: ethereum|mode|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
+      - token: ethereum|linea|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
+      - token: ethereum|ethereum|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
+      - token: ethereum|fraxtal|0x3aE8635A4D581d40a6Edfb3f2ED480f9532994F5
+      - token: ethereum|zircuit|0x2552516453368e42705D791F674b312b8b87CD9e
+  - chainName: base
     standard: EvmHypXERC20
-    symbol: ezETH
-  - addressOrDenom: '0xf92bbaaeD0cA77e8D602A6e911128FBE17C0c2E2'
-    chainName: blast
-    collateralAddressOrDenom: '0x2416092f143378750bb29b79eD961ab195CcEea5'
-    connections:
-      - token: ethereum|arbitrum|0xE00C6185a5c19219F1FFeD213b4406a254968c26
-      - token: ethereum|optimism|0xF70a275314228201E83aa45e534DeD9A6F9e557D
-      - token: ethereum|base|0x368b502812E4b4Bb1AA9d9a12f1D7232d4edE61b
-      - token: ethereum|bsc|0x368b502812E4b4Bb1AA9d9a12f1D7232d4edE61b
-      - token: ethereum|mode|0xf92bbaaeD0cA77e8D602A6e911128FBE17C0c2E2
-      - token: ethereum|linea|0xf92bbaaeD0cA77e8D602A6e911128FBE17C0c2E2
-      - token: ethereum|ethereum|0xf92bbaaeD0cA77e8D602A6e911128FBE17C0c2E2
-      - token: ethereum|fraxtal|0x368b502812E4b4Bb1AA9d9a12f1D7232d4edE61b
-      - token: ethereum|zircuit|0x29704F123b7e73B787D156EE1fa3Ea8333da0BE1
     decimals: 18
-    logoURI: https://renzo.hyperlane.xyz/logos/ezeth.svg
+    symbol: ezETH
     name: Renzo Restaked ETH
+    addressOrDenom: "0x2552516453368e42705D791F674b312b8b87CD9e"
+    collateralAddressOrDenom: "0x2416092f143378750bb29b79eD961ab195CcEea5"
+    connections:
+      - token: ethereum|arbitrum|0xB26bBfC6d1F469C821Ea25099017862e7368F4E8
+      - token: ethereum|optimism|0xacEB607CdF59EB8022Cc0699eEF3eCF246d149e2
+      - token: ethereum|blast|0x486b39378f99f073A3043C6Aabe8666876A8F3C5
+      - token: ethereum|bsc|0xE00C6185a5c19219F1FFeD213b4406a254968c26
+      - token: ethereum|mode|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
+      - token: ethereum|linea|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
+      - token: ethereum|ethereum|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
+      - token: ethereum|fraxtal|0x3aE8635A4D581d40a6Edfb3f2ED480f9532994F5
+      - token: ethereum|zircuit|0x2552516453368e42705D791F674b312b8b87CD9e
+  - chainName: blast
     standard: EvmHypXERC20
-    symbol: ezETH
-  - addressOrDenom: '0x368b502812E4b4Bb1AA9d9a12f1D7232d4edE61b'
-    chainName: bsc
-    collateralAddressOrDenom: '0x2416092f143378750bb29b79eD961ab195CcEea5'
-    connections:
-      - token: ethereum|arbitrum|0xE00C6185a5c19219F1FFeD213b4406a254968c26
-      - token: ethereum|optimism|0xF70a275314228201E83aa45e534DeD9A6F9e557D
-      - token: ethereum|base|0x368b502812E4b4Bb1AA9d9a12f1D7232d4edE61b
-      - token: ethereum|blast|0xf92bbaaeD0cA77e8D602A6e911128FBE17C0c2E2
-      - token: ethereum|mode|0xf92bbaaeD0cA77e8D602A6e911128FBE17C0c2E2
-      - token: ethereum|linea|0xf92bbaaeD0cA77e8D602A6e911128FBE17C0c2E2
-      - token: ethereum|ethereum|0xf92bbaaeD0cA77e8D602A6e911128FBE17C0c2E2
-      - token: ethereum|fraxtal|0x368b502812E4b4Bb1AA9d9a12f1D7232d4edE61b
-      - token: ethereum|zircuit|0x29704F123b7e73B787D156EE1fa3Ea8333da0BE1
     decimals: 18
-    logoURI: https://renzo.hyperlane.xyz/logos/ezeth.svg
+    symbol: ezETH
     name: Renzo Restaked ETH
+    addressOrDenom: "0x486b39378f99f073A3043C6Aabe8666876A8F3C5"
+    collateralAddressOrDenom: "0x2416092f143378750bb29b79eD961ab195CcEea5"
+    connections:
+      - token: ethereum|arbitrum|0xB26bBfC6d1F469C821Ea25099017862e7368F4E8
+      - token: ethereum|optimism|0xacEB607CdF59EB8022Cc0699eEF3eCF246d149e2
+      - token: ethereum|base|0x2552516453368e42705D791F674b312b8b87CD9e
+      - token: ethereum|bsc|0xE00C6185a5c19219F1FFeD213b4406a254968c26
+      - token: ethereum|mode|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
+      - token: ethereum|linea|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
+      - token: ethereum|ethereum|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
+      - token: ethereum|fraxtal|0x3aE8635A4D581d40a6Edfb3f2ED480f9532994F5
+      - token: ethereum|zircuit|0x2552516453368e42705D791F674b312b8b87CD9e
+  - chainName: bsc
     standard: EvmHypXERC20
-    symbol: ezETH
-  - addressOrDenom: '0xf92bbaaeD0cA77e8D602A6e911128FBE17C0c2E2'
-    chainName: mode
-    collateralAddressOrDenom: '0x2416092f143378750bb29b79eD961ab195CcEea5'
-    connections:
-      - token: ethereum|arbitrum|0xE00C6185a5c19219F1FFeD213b4406a254968c26
-      - token: ethereum|optimism|0xF70a275314228201E83aa45e534DeD9A6F9e557D
-      - token: ethereum|base|0x368b502812E4b4Bb1AA9d9a12f1D7232d4edE61b
-      - token: ethereum|blast|0xf92bbaaeD0cA77e8D602A6e911128FBE17C0c2E2
-      - token: ethereum|bsc|0x368b502812E4b4Bb1AA9d9a12f1D7232d4edE61b
-      - token: ethereum|linea|0xf92bbaaeD0cA77e8D602A6e911128FBE17C0c2E2
-      - token: ethereum|ethereum|0xf92bbaaeD0cA77e8D602A6e911128FBE17C0c2E2
-      - token: ethereum|fraxtal|0x368b502812E4b4Bb1AA9d9a12f1D7232d4edE61b
-      - token: ethereum|zircuit|0x29704F123b7e73B787D156EE1fa3Ea8333da0BE1
     decimals: 18
-    logoURI: https://renzo.hyperlane.xyz/logos/ezeth.svg
+    symbol: ezETH
     name: Renzo Restaked ETH
+    addressOrDenom: "0xE00C6185a5c19219F1FFeD213b4406a254968c26"
+    collateralAddressOrDenom: "0x2416092f143378750bb29b79eD961ab195CcEea5"
+    connections:
+      - token: ethereum|arbitrum|0xB26bBfC6d1F469C821Ea25099017862e7368F4E8
+      - token: ethereum|optimism|0xacEB607CdF59EB8022Cc0699eEF3eCF246d149e2
+      - token: ethereum|base|0x2552516453368e42705D791F674b312b8b87CD9e
+      - token: ethereum|blast|0x486b39378f99f073A3043C6Aabe8666876A8F3C5
+      - token: ethereum|mode|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
+      - token: ethereum|linea|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
+      - token: ethereum|ethereum|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
+      - token: ethereum|fraxtal|0x3aE8635A4D581d40a6Edfb3f2ED480f9532994F5
+      - token: ethereum|zircuit|0x2552516453368e42705D791F674b312b8b87CD9e
+  - chainName: mode
     standard: EvmHypXERC20
-    symbol: ezETH
-  - addressOrDenom: '0xf92bbaaeD0cA77e8D602A6e911128FBE17C0c2E2'
-    chainName: linea
-    collateralAddressOrDenom: '0x2416092f143378750bb29b79eD961ab195CcEea5'
-    connections:
-      - token: ethereum|arbitrum|0xE00C6185a5c19219F1FFeD213b4406a254968c26
-      - token: ethereum|optimism|0xF70a275314228201E83aa45e534DeD9A6F9e557D
-      - token: ethereum|base|0x368b502812E4b4Bb1AA9d9a12f1D7232d4edE61b
-      - token: ethereum|blast|0xf92bbaaeD0cA77e8D602A6e911128FBE17C0c2E2
-      - token: ethereum|bsc|0x368b502812E4b4Bb1AA9d9a12f1D7232d4edE61b
-      - token: ethereum|mode|0xf92bbaaeD0cA77e8D602A6e911128FBE17C0c2E2
-      - token: ethereum|ethereum|0xf92bbaaeD0cA77e8D602A6e911128FBE17C0c2E2
-      - token: ethereum|fraxtal|0x368b502812E4b4Bb1AA9d9a12f1D7232d4edE61b
-      - token: ethereum|zircuit|0x29704F123b7e73B787D156EE1fa3Ea8333da0BE1
     decimals: 18
-    logoURI: https://renzo.hyperlane.xyz/logos/ezeth.svg
+    symbol: ezETH
     name: Renzo Restaked ETH
+    addressOrDenom: "0xC59336D8edDa9722B4f1Ec104007191Ec16f7087"
+    collateralAddressOrDenom: "0x2416092f143378750bb29b79eD961ab195CcEea5"
+    connections:
+      - token: ethereum|arbitrum|0xB26bBfC6d1F469C821Ea25099017862e7368F4E8
+      - token: ethereum|optimism|0xacEB607CdF59EB8022Cc0699eEF3eCF246d149e2
+      - token: ethereum|base|0x2552516453368e42705D791F674b312b8b87CD9e
+      - token: ethereum|blast|0x486b39378f99f073A3043C6Aabe8666876A8F3C5
+      - token: ethereum|bsc|0xE00C6185a5c19219F1FFeD213b4406a254968c26
+      - token: ethereum|linea|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
+      - token: ethereum|ethereum|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
+      - token: ethereum|fraxtal|0x3aE8635A4D581d40a6Edfb3f2ED480f9532994F5
+      - token: ethereum|zircuit|0x2552516453368e42705D791F674b312b8b87CD9e
+  - chainName: linea
     standard: EvmHypXERC20
-    symbol: ezETH
-  - addressOrDenom: '0xf92bbaaeD0cA77e8D602A6e911128FBE17C0c2E2'
-    chainName: ethereum
-    collateralAddressOrDenom: '0xC8140dA31E6bCa19b287cC35531c2212763C2059'
-    connections:
-      - token: ethereum|arbitrum|0xE00C6185a5c19219F1FFeD213b4406a254968c26
-      - token: ethereum|optimism|0xF70a275314228201E83aa45e534DeD9A6F9e557D
-      - token: ethereum|base|0x368b502812E4b4Bb1AA9d9a12f1D7232d4edE61b
-      - token: ethereum|blast|0xf92bbaaeD0cA77e8D602A6e911128FBE17C0c2E2
-      - token: ethereum|bsc|0x368b502812E4b4Bb1AA9d9a12f1D7232d4edE61b
-      - token: ethereum|mode|0xf92bbaaeD0cA77e8D602A6e911128FBE17C0c2E2
-      - token: ethereum|linea|0xf92bbaaeD0cA77e8D602A6e911128FBE17C0c2E2
-      - token: ethereum|fraxtal|0x368b502812E4b4Bb1AA9d9a12f1D7232d4edE61b
-      - token: ethereum|zircuit|0x29704F123b7e73B787D156EE1fa3Ea8333da0BE1
     decimals: 18
-    logoURI: https://renzo.hyperlane.xyz/logos/ezeth.svg
+    symbol: ezETH
     name: Renzo Restaked ETH
+    addressOrDenom: "0xC59336D8edDa9722B4f1Ec104007191Ec16f7087"
+    collateralAddressOrDenom: "0x2416092f143378750bb29b79eD961ab195CcEea5"
+    connections:
+      - token: ethereum|arbitrum|0xB26bBfC6d1F469C821Ea25099017862e7368F4E8
+      - token: ethereum|optimism|0xacEB607CdF59EB8022Cc0699eEF3eCF246d149e2
+      - token: ethereum|base|0x2552516453368e42705D791F674b312b8b87CD9e
+      - token: ethereum|blast|0x486b39378f99f073A3043C6Aabe8666876A8F3C5
+      - token: ethereum|bsc|0xE00C6185a5c19219F1FFeD213b4406a254968c26
+      - token: ethereum|mode|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
+      - token: ethereum|ethereum|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
+      - token: ethereum|fraxtal|0x3aE8635A4D581d40a6Edfb3f2ED480f9532994F5
+      - token: ethereum|zircuit|0x2552516453368e42705D791F674b312b8b87CD9e
+  - chainName: ethereum
     standard: EvmHypXERC20Lockbox
-    symbol: ezETH
-  - addressOrDenom: '0x368b502812E4b4Bb1AA9d9a12f1D7232d4edE61b'
-    chainName: fraxtal
-    collateralAddressOrDenom: '0x2416092f143378750bb29b79eD961ab195CcEea5'
-    connections:
-      - token: ethereum|arbitrum|0xE00C6185a5c19219F1FFeD213b4406a254968c26
-      - token: ethereum|optimism|0xF70a275314228201E83aa45e534DeD9A6F9e557D
-      - token: ethereum|base|0x368b502812E4b4Bb1AA9d9a12f1D7232d4edE61b
-      - token: ethereum|blast|0xf92bbaaeD0cA77e8D602A6e911128FBE17C0c2E2
-      - token: ethereum|bsc|0x368b502812E4b4Bb1AA9d9a12f1D7232d4edE61b
-      - token: ethereum|mode|0xf92bbaaeD0cA77e8D602A6e911128FBE17C0c2E2
-      - token: ethereum|linea|0xf92bbaaeD0cA77e8D602A6e911128FBE17C0c2E2
-      - token: ethereum|ethereum|0xf92bbaaeD0cA77e8D602A6e911128FBE17C0c2E2
-      - token: ethereum|zircuit|0x29704F123b7e73B787D156EE1fa3Ea8333da0BE1
     decimals: 18
-    logoURI: https://renzo.hyperlane.xyz/logos/ezeth.svg
-    name: Renzo Restaked ETH
-    standard: EvmHypXERC20
     symbol: ezETH
-  - addressOrDenom: '0x29704F123b7e73B787D156EE1fa3Ea8333da0BE1'
-    chainName: zircuit
-    collateralAddressOrDenom: '0x2416092f143378750bb29b79eD961ab195CcEea5'
+    name: Renzo Restaked ETH
+    addressOrDenom: "0xC59336D8edDa9722B4f1Ec104007191Ec16f7087"
+    collateralAddressOrDenom: "0xC8140dA31E6bCa19b287cC35531c2212763C2059"
     connections:
-      - token: ethereum|arbitrum|0xE00C6185a5c19219F1FFeD213b4406a254968c26
-      - token: ethereum|optimism|0xF70a275314228201E83aa45e534DeD9A6F9e557D
-      - token: ethereum|base|0x368b502812E4b4Bb1AA9d9a12f1D7232d4edE61b
-      - token: ethereum|blast|0xf92bbaaeD0cA77e8D602A6e911128FBE17C0c2E2
-      - token: ethereum|bsc|0x368b502812E4b4Bb1AA9d9a12f1D7232d4edE61b
-      - token: ethereum|mode|0xf92bbaaeD0cA77e8D602A6e911128FBE17C0c2E2
-      - token: ethereum|linea|0xf92bbaaeD0cA77e8D602A6e911128FBE17C0c2E2
-      - token: ethereum|ethereum|0xf92bbaaeD0cA77e8D602A6e911128FBE17C0c2E2
-      - token: ethereum|fraxtal|0x368b502812E4b4Bb1AA9d9a12f1D7232d4edE61b
-    decimals: 18
-    logoURI: https://renzo.hyperlane.xyz/logos/ezeth.svg
-    name: Renzo Restaked ETH
+      - token: ethereum|arbitrum|0xB26bBfC6d1F469C821Ea25099017862e7368F4E8
+      - token: ethereum|optimism|0xacEB607CdF59EB8022Cc0699eEF3eCF246d149e2
+      - token: ethereum|base|0x2552516453368e42705D791F674b312b8b87CD9e
+      - token: ethereum|blast|0x486b39378f99f073A3043C6Aabe8666876A8F3C5
+      - token: ethereum|bsc|0xE00C6185a5c19219F1FFeD213b4406a254968c26
+      - token: ethereum|mode|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
+      - token: ethereum|linea|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
+      - token: ethereum|fraxtal|0x3aE8635A4D581d40a6Edfb3f2ED480f9532994F5
+      - token: ethereum|zircuit|0x2552516453368e42705D791F674b312b8b87CD9e
+  - chainName: fraxtal
     standard: EvmHypXERC20
+    decimals: 18
     symbol: ezETH
+    name: Renzo Restaked ETH
+    addressOrDenom: "0x3aE8635A4D581d40a6Edfb3f2ED480f9532994F5"
+    collateralAddressOrDenom: "0x2416092f143378750bb29b79eD961ab195CcEea5"
+    connections:
+      - token: ethereum|arbitrum|0xB26bBfC6d1F469C821Ea25099017862e7368F4E8
+      - token: ethereum|optimism|0xacEB607CdF59EB8022Cc0699eEF3eCF246d149e2
+      - token: ethereum|base|0x2552516453368e42705D791F674b312b8b87CD9e
+      - token: ethereum|blast|0x486b39378f99f073A3043C6Aabe8666876A8F3C5
+      - token: ethereum|bsc|0xE00C6185a5c19219F1FFeD213b4406a254968c26
+      - token: ethereum|mode|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
+      - token: ethereum|linea|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
+      - token: ethereum|ethereum|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
+      - token: ethereum|zircuit|0x2552516453368e42705D791F674b312b8b87CD9e
+  - chainName: zircuit
+    standard: EvmHypXERC20
+    decimals: 18
+    symbol: ezETH
+    name: Renzo Restaked ETH
+    addressOrDenom: "0x2552516453368e42705D791F674b312b8b87CD9e"
+    collateralAddressOrDenom: "0x2416092f143378750bb29b79eD961ab195CcEea5"
+    connections:
+      - token: ethereum|arbitrum|0xB26bBfC6d1F469C821Ea25099017862e7368F4E8
+      - token: ethereum|optimism|0xacEB607CdF59EB8022Cc0699eEF3eCF246d149e2
+      - token: ethereum|base|0x2552516453368e42705D791F674b312b8b87CD9e
+      - token: ethereum|blast|0x486b39378f99f073A3043C6Aabe8666876A8F3C5
+      - token: ethereum|bsc|0xE00C6185a5c19219F1FFeD213b4406a254968c26
+      - token: ethereum|mode|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
+      - token: ethereum|linea|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
+      - token: ethereum|ethereum|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
+      - token: ethereum|fraxtal|0x3aE8635A4D581d40a6Edfb3f2ED480f9532994F5

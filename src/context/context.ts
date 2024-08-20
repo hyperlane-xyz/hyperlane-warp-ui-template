@@ -29,6 +29,10 @@ export function getWarpContext() {
 
 export async function initWarpContext() {
   const { registry, chains } = await assembleChainMetadata();
+  if (chains) {
+    // @ts-ignore
+    chains.solana.mailbox = '4rRZgaC1DaCqtWYLzg14ftuXKPuHe1nGEM6ZtNpim3Wz';
+  }
   const multiProvider = new MultiProtocolProvider(chains);
   const coreConfig = await assembleWarpCoreConfig();
   const warpCore = WarpCore.FromConfig(multiProvider, coreConfig);

@@ -16,7 +16,7 @@
     "@emotion/react": "^11.13.0",
     "@emotion/styled": "^11.13.0",
     "@headlessui/react": "^1.7.14",
-    "@hyperlane-xyz/registry": "2.4.0",
+    "@hyperlane-xyz/registry": "2.5.0",
     "@hyperlane-xyz/sdk": "5.0.0-beta.2",
     "@hyperlane-xyz/utils": "5.0.0-beta.2",
     "@hyperlane-xyz/widgets": "5.0.0-beta.2",

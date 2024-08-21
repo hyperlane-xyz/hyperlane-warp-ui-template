@@ -4,8 +4,8 @@
 // If set to a list (including an empty list), only the specified routes will be included
 export const warpRouteWhitelist: Array<string> | null = [
   // TIA routes
-  'TIA.n/arbitrum-neutron',
-  'TIA.n/mantapacific-neutron',
+  // 'TIA.n/arbitrum-neutron',
+  // 'TIA.n/mantapacific-neutron',
 
   // ETH routes
   'ETH/ethereum-viction',

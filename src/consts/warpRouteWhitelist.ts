@@ -11,7 +11,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'ETH/ethereum-viction',
 
   // ECLIP routes
-  'ECLIP/arbitrum-neutron',
+  // 'ECLIP/arbitrum-neutron',
 
   // USDC routes
   'USDC/ethereum-inevm',

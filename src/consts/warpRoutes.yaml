@@ -4,6 +4,7 @@ tokens:
     standard: EvmHypXERC20
     decimals: 18
     symbol: ezETH
+    logoURI: https://renzo.hyperlane.xyz/logos/ezeth.svg
     name: Renzo Restaked ETH
     addressOrDenom: '0xB26bBfC6d1F469C821Ea25099017862e7368F4E8'
     collateralAddressOrDenom: '0x2416092f143378750bb29b79eD961ab195CcEea5'
@@ -21,6 +22,7 @@ tokens:
     standard: EvmHypXERC20
     decimals: 18
     symbol: ezETH
+    logoURI: https://renzo.hyperlane.xyz/logos/ezeth.svg
     name: Renzo Restaked ETH
     addressOrDenom: '0xacEB607CdF59EB8022Cc0699eEF3eCF246d149e2'
     collateralAddressOrDenom: '0x2416092f143378750bb29b79eD961ab195CcEea5'
@@ -38,6 +40,7 @@ tokens:
     standard: EvmHypXERC20
     decimals: 18
     symbol: ezETH
+    logoURI: https://renzo.hyperlane.xyz/logos/ezeth.svg
     name: Renzo Restaked ETH
     addressOrDenom: '0x2552516453368e42705D791F674b312b8b87CD9e'
     collateralAddressOrDenom: '0x2416092f143378750bb29b79eD961ab195CcEea5'
@@ -55,6 +58,7 @@ tokens:
     standard: EvmHypXERC20
     decimals: 18
     symbol: ezETH
+    logoURI: https://renzo.hyperlane.xyz/logos/ezeth.svg
     name: Renzo Restaked ETH
     addressOrDenom: '0x486b39378f99f073A3043C6Aabe8666876A8F3C5'
     collateralAddressOrDenom: '0x2416092f143378750bb29b79eD961ab195CcEea5'
@@ -72,6 +76,7 @@ tokens:
     standard: EvmHypXERC20
     decimals: 18
     symbol: ezETH
+    logoURI: https://renzo.hyperlane.xyz/logos/ezeth.svg
     name: Renzo Restaked ETH
     addressOrDenom: '0xE00C6185a5c19219F1FFeD213b4406a254968c26'
     collateralAddressOrDenom: '0x2416092f143378750bb29b79eD961ab195CcEea5'
@@ -89,6 +94,7 @@ tokens:
     standard: EvmHypXERC20
     decimals: 18
     symbol: ezETH
+    logoURI: https://renzo.hyperlane.xyz/logos/ezeth.svg
     name: Renzo Restaked ETH
     addressOrDenom: '0xC59336D8edDa9722B4f1Ec104007191Ec16f7087'
     collateralAddressOrDenom: '0x2416092f143378750bb29b79eD961ab195CcEea5'
@@ -106,6 +112,7 @@ tokens:
     standard: EvmHypXERC20
     decimals: 18
     symbol: ezETH
+    logoURI: https://renzo.hyperlane.xyz/logos/ezeth.svg
     name: Renzo Restaked ETH
     addressOrDenom: '0xC59336D8edDa9722B4f1Ec104007191Ec16f7087'
     collateralAddressOrDenom: '0x2416092f143378750bb29b79eD961ab195CcEea5'
@@ -123,6 +130,7 @@ tokens:
     standard: EvmHypXERC20Lockbox
     decimals: 18
     symbol: ezETH
+    logoURI: https://renzo.hyperlane.xyz/logos/ezeth.svg
     name: Renzo Restaked ETH
     addressOrDenom: '0xC59336D8edDa9722B4f1Ec104007191Ec16f7087'
     collateralAddressOrDenom: '0xC8140dA31E6bCa19b287cC35531c2212763C2059'
@@ -140,6 +148,7 @@ tokens:
     standard: EvmHypXERC20
     decimals: 18
     symbol: ezETH
+    logoURI: https://renzo.hyperlane.xyz/logos/ezeth.svg
     name: Renzo Restaked ETH
     addressOrDenom: '0x3aE8635A4D581d40a6Edfb3f2ED480f9532994F5'
     collateralAddressOrDenom: '0x2416092f143378750bb29b79eD961ab195CcEea5'
@@ -157,6 +166,7 @@ tokens:
     standard: EvmHypXERC20
     decimals: 18
     symbol: ezETH
+    logoURI: https://renzo.hyperlane.xyz/logos/ezeth.svg
     name: Renzo Restaked ETH
     addressOrDenom: '0x2552516453368e42705D791F674b312b8b87CD9e'
     collateralAddressOrDenom: '0x2416092f143378750bb29b79eD961ab195CcEea5'

@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - main
+  # just for testing
+  pull_request:
+    branches:
+      - main
 
 jobs:
   create-merge-prs:
@@ -27,6 +31,9 @@ jobs:
           git checkout ${{ matrix.name }}
           git merge origin/main
           git checkout -b main-to-${{ matrix.name }}
+          echo "testing" > dummy_test_file.txt
+          git add dummy_test_file.txt
+          git commit -m "chore: merge main into ${{ matrix.name }}"
           git push -fu origin main-to-${{ matrix.name }}
 
       - name: Check and Create Pull Request

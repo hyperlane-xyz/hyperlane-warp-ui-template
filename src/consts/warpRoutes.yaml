@@ -2,5 +2,33 @@
 # These configs will be merged with the warp routes in the configured registry
 # The input here is typically the output of the Hyperlane CLI warp deploy command
 ---
-tokens: []
+tokens:
+  - addressOrDenom: "0x0ea232f95607e6d10B3021D38EE70875A35c7343"
+    chainName: arbitrum
+    connections:
+      - token: ethereum|base|0xfc727BF5fc6220D8FE40C69B4D220c96EE25c254
+      - token: ethereum|ethereum|0x7F2CD0022BA26438B699f266FA01F2Fb07c88c50
+    decimals: 18
+    name: deUSD
+    standard: EvmHypSynthetic
+    symbol: deUSD
+  - addressOrDenom: "0xfc727BF5fc6220D8FE40C69B4D220c96EE25c254"
+    chainName: base
+    connections:
+      - token: ethereum|arbitrum|0x0ea232f95607e6d10B3021D38EE70875A35c7343
+      - token: ethereum|ethereum|0x7F2CD0022BA26438B699f266FA01F2Fb07c88c50
+    decimals: 18
+    name: deUSD
+    standard: EvmHypSynthetic
+    symbol: deUSD
+  - addressOrDenom: "0x7F2CD0022BA26438B699f266FA01F2Fb07c88c50"
+    chainName: ethereum
+    collateralAddressOrDenom: "0x15700B564Ca08D9439C58cA5053166E8317aa138"
+    connections:
+      - token: ethereum|arbitrum|0x0ea232f95607e6d10B3021D38EE70875A35c7343
+      - token: ethereum|base|0xfc727BF5fc6220D8FE40C69B4D220c96EE25c254
+    decimals: 18
+    name: deUSD
+    standard: EvmHypCollateral
+    symbol: deUSD
 options: {}

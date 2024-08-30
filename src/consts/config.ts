@@ -4,6 +4,7 @@ const explorerApiKeys = JSON.parse(process?.env?.EXPLORER_API_KEYS || '{}');
 const walletConnectProjectId = process?.env?.NEXT_PUBLIC_WALLET_CONNECT_ID || '';
 const withdrawalWhitelist = process?.env?.NEXT_PUBLIC_BLOCK_WITHDRAWAL_WHITELIST || '';
 const transferBlacklist = process?.env?.NEXT_PUBLIC_TRANSFER_BLACKLIST || '';
+const destinationBlacklist = process?.env?.NEXT_PUBLIC_DESTINATION_BLACKLIST || '';
 
 interface Config {
   debug: boolean; // Enables some debug features in the app
@@ -14,6 +15,8 @@ interface Config {
   walletConnectProjectId: string; // Project ID provided by walletconnect
   withdrawalWhitelist: string; // comma-separated list of CAIP2 chain IDs to which transfers are supported
   transferBlacklist: string; // comma-separated list of routes between which transfers are disabled. Expects Caip2Id-Caip2Id (e.g. ethereum:1-sealevel:1399811149)
+  // This is slightly redundant with the transfer blacklist above but we want to block transfers INTO nautilus but not out, which is different
+  destinationBlacklist: string; // comma-separated list of CAIP2 chain IDs to which transfers are disabled
 }
 
 export const config: Config = Object.freeze({
@@ -25,4 +28,5 @@ export const config: Config = Object.freeze({
   walletConnectProjectId,
   withdrawalWhitelist,
   transferBlacklist,
+  destinationBlacklist,
 });

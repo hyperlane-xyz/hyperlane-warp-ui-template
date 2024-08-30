@@ -538,6 +538,13 @@ function validateFormValues(
     return { destinationCaip2Id: 'Route is not currently allowed' };
   }
 
+  if (
+    config.destinationBlacklist &&
+    config.destinationBlacklist.split(',').includes(destinationCaip2Id)
+  ) {
+    return { destinationCaip2Id: 'Transfers to this chain are not allowed' };
+  }
+
   return {};
 }
 

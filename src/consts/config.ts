@@ -27,7 +27,7 @@ export const config: Config = Object.freeze({
   version,
   registryUrl,
   explorerApiKeys,
-  showTipBox: false,
+  showTipBox: true,
   showDisabledTokens: true,
   walletConnectProjectId,
   withdrawalWhitelist,

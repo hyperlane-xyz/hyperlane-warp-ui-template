@@ -1,7 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { WalletControlBar } from '../../features/wallet/WalletControlBar';
 import Title from '../../images/logos/app-title.svg';
 
 export function Header() {
@@ -11,9 +10,6 @@ export function Header() {
         <Link href="/" className="py-2 flex items-center">
           <Image src={Title} width={185} alt="" className="mt-0.5 ml-2 pb-px" />
         </Link>
-        <div className="flex flex-col items-end md:flex-row-reverse md:items-start gap-2">
-          <WalletControlBar />
-        </div>
       </div>
     </header>
   );

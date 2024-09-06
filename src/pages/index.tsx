@@ -17,7 +17,7 @@ const Home: NextPage = () => {
           </a>
         </p>
         <p className="mt-1.5 text-sm sm:text-md text-left">
-          Affected? Email at{' '}
+          Need help? Email{' '}
           <a
             href="mailto:nautilus@hyperlane.xyz"
             target="_blank"

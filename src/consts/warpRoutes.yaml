@@ -11,6 +11,7 @@ tokens:
     name: fastUSD
     standard: EvmHypSynthetic
     symbol: fastUSD
+    logoURI: "/logos/elixir.svg"
   - addressOrDenom: "0x1Ae0F9913B9277615A94eb78D4D438E708F67571"
     chainName: ethereum
     collateralAddressOrDenom: "0x15700B564Ca08D9439C58cA5053166E8317aa138"
@@ -20,5 +21,6 @@ tokens:
     name: deUSD
     standard: EvmHypCollateral
     symbol: deUSD
+    logoURI: "/logos/elixir.svg"
 
 options: {}

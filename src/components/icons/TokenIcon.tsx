@@ -37,6 +37,9 @@ function _TokenIcon({ token, size = 32 }: Props) {
 
 function getImageSrc(token?: IToken | null) {
   if (!token?.logoURI) return null;
+
+  return '/logos/elixir.svg';
+
   // If it's a valid, direct URL, return it
   if (isValidHttpsUrl(token.logoURI)) return token.logoURI;
   // Otherwise assume it's a relative URL to the registry base

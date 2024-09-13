@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { GithubRegistry, chainMetadata } from '@hyperlane-xyz/registry';
-import { ChainMap, ChainMetadata, ChainMetadataSchema } from '@hyperlane-xyz/sdk';
+import { ChainMap, ChainMetadata, ChainMetadataSchemaObject } from '@hyperlane-xyz/sdk';
 
 import { chains as ChainsTS } from '../consts/chains.ts';
 import ChainsYaml from '../consts/chains.yaml';
@@ -11,7 +11,7 @@ import { logger } from '../utils/logger';
 
 export async function assembleChainMetadata() {
   // Chains must include a cosmos chain or CosmosKit throws errors
-  const result = z.record(ChainMetadataSchema).safeParse({
+  const result = z.record(ChainMetadataSchemaObject.passthrough()).safeParse({
     cosmoshub: cosmosDefaultChain,
     ...ChainsYaml,
     ...ChainsTS,

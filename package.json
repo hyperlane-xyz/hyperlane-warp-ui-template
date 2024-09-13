@@ -16,7 +16,7 @@
     "@emotion/react": "^11.13.0",
     "@emotion/styled": "^11.13.0",
     "@headlessui/react": "^1.7.14",
-    "@hyperlane-xyz/registry": "https://github.com/hyperlane-xyz/hyperlane-registry.git",
+    "@hyperlane-xyz/registry": "4.1.0",
     "@hyperlane-xyz/sdk": "5.1.0",
     "@hyperlane-xyz/utils": "5.1.0",
     "@hyperlane-xyz/widgets": "5.1.0",

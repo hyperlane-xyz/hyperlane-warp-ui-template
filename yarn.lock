@@ -3938,13 +3938,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/registry@npm:2.4.0":
-  version: 2.4.0
-  resolution: "@hyperlane-xyz/registry@npm:2.4.0"
+"@hyperlane-xyz/registry@https://github.com/hyperlane-xyz/hyperlane-registry.git":
+  version: 4.0.0
+  resolution: "@hyperlane-xyz/registry@https://github.com/hyperlane-xyz/hyperlane-registry.git#commit=9b1bb59da273ce9912178f15cb759297f6a9d1cb"
   dependencies:
-    yaml: "npm:^2"
+    yaml: "npm:2.4.5"
     zod: "npm:^3.21.2"
-  checksum: 18541e1b2d20a0e750d58e37e043bc22b9683cfc68de7865d2c8d269c50d3ee2255029530b15b61f93e854a18d36a3e367011286c3c1456730fb3362d74f31ac
+  checksum: caf3cf191fe5066a2ca8733b52b281fce89512caabbc244a0ee36b0ab60d46efd245ff83331257f3b9c7df1ccac1ce691a368c4308d9e4f09af8ec13e765b445
   languageName: node
   linkType: hard
 
@@ -4020,7 +4020,7 @@ __metadata:
     "@emotion/react": "npm:^11.13.0"
     "@emotion/styled": "npm:^11.13.0"
     "@headlessui/react": "npm:^1.7.14"
-    "@hyperlane-xyz/registry": "npm:2.4.0"
+    "@hyperlane-xyz/registry": "https://github.com/hyperlane-xyz/hyperlane-registry.git"
     "@hyperlane-xyz/sdk": "npm:5.1.0"
     "@hyperlane-xyz/utils": "npm:5.1.0"
     "@hyperlane-xyz/widgets": "npm:5.1.0"
@@ -21973,6 +21973,15 @@ __metadata:
     loader-utils: "npm:^2.0.0"
     yaml: "npm:^2.0.0"
   checksum: d12dd264666b80baec23cea9f81cb677a9102d6f34ab45d8b6c085ace4d05b7285db9ce317db57264c3317af01128ce6e5b754e6866d15ccd75e8141902fb529
+  languageName: node
+  linkType: hard
+
+"yaml@npm:2.4.5":
+  version: 2.4.5
+  resolution: "yaml@npm:2.4.5"
+  bin:
+    yaml: bin.mjs
+  checksum: b09bf5a615a65276d433d76b8e34ad6b4c0320b85eb3f1a39da132c61ae6e2ff34eff4624e6458d96d49566c93cf43408ba5e568218293a8c6541a2006883f64
   languageName: node
   linkType: hard
 

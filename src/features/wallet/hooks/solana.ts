@@ -2,7 +2,6 @@ import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import { Connection } from '@solana/web3.js';
 import { useCallback, useMemo } from 'react';
-import { toast } from 'react-toastify';
 
 import { ProviderType, TypedTransactionReceipt, WarpTypedTransaction } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
@@ -68,7 +67,7 @@ export function useSolTransactionFns(): ChainTransactionFns {
   const { sendTransaction: sendSolTransaction } = useWallet();
 
   const onSwitchNetwork = useCallback(async (chainName: ChainName) => {
-    toast.warn(`Solana wallet must be connected to origin chain ${chainName}}`);
+    logger.warn(`Solana wallet must be connected to origin chain ${chainName}`);
   }, []);
 
   const onSendTx = useCallback(

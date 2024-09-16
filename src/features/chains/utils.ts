@@ -3,6 +3,8 @@ import { ProtocolType, toTitleCase } from '@hyperlane-xyz/utils';
 
 import { getMultiProvider } from '../../context/context';
 
+const ABACUS_WORKS_DEPLOYER_NAME = 'abacus works';
+
 export function getChainDisplayName(chain: ChainName, shortName = false) {
   if (!chain) return 'Unknown';
   const metadata = tryGetChainMetadata(chain);
@@ -13,7 +15,11 @@ export function getChainDisplayName(chain: ChainName, shortName = false) {
 
 export function isPermissionlessChain(chain: ChainName) {
   if (!chain) return true;
-  return getChainMetadata(chain).protocol !== ProtocolType.Ethereum;
+  const metadata = tryGetChainMetadata(chain);
+  return (
+    metadata?.protocol !== ProtocolType.Ethereum ||
+    metadata.deployer?.name.trim().toLowerCase() !== ABACUS_WORKS_DEPLOYER_NAME
+  );
 }
 
 export function hasPermissionlessChain(ids: ChainName[]) {

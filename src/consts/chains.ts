@@ -14,6 +14,7 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
   solanamainnet: {
     ...solanamainnet,
     mailbox: solanamainnetAddresses.mailbox,
+    rpcUrls: [{ http: process.env.NEXT_PUBLIC_SOLANA_RPC_URL || solanamainnet.rpcUrls[0].http }],
   },
   eclipsemainnet: {
     ...eclipsemainnet,

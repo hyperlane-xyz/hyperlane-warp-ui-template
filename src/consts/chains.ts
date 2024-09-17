@@ -16,7 +16,9 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
     // SVM chains require mailbox addresses for the token adapters
     mailbox: solanamainnetAddresses.mailbox,
     // Including a convenient rpc override because the Solana public RPC does not allow browser requests from localhost
-    rpcUrls: [{ http: process.env.NEXT_PUBLIC_SOLANA_RPC_URL || solanamainnet.rpcUrls[0].http }],
+    rpcUrls: process.env.NEXT_PUBLIC_SOLANA_RPC_URL
+      ? [{ http: process.env.NEXT_PUBLIC_SOLANA_RPC_URL }, ...solanamainnet.rpcUrls]
+      : solanamainnet.rpcUrls,
   },
   eclipsemainnet: {
     ...eclipsemainnet,

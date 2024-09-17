@@ -8,7 +8,7 @@ import { ProtocolType } from '@hyperlane-xyz/utils';
 
 import { getMultiProvider } from '../../../context/context';
 import { logger } from '../../../utils/logger';
-import { getChainByRpcEndpoint } from '../../chains/utils';
+import { getChainByRpcUrl } from '../../chains/utils';
 
 import { AccountInfo, ActiveChainInfo, ChainTransactionFns, WalletDetails } from './types';
 
@@ -54,12 +54,18 @@ export function useSolActiveChain(): ActiveChainInfo {
   const { connection } = useConnection();
   const connectionEndpoint = connection?.rpcEndpoint;
   return useMemo<ActiveChainInfo>(() => {
-    const metadata = getChainByRpcEndpoint(connectionEndpoint);
-    if (!metadata) return {};
-    return {
-      chainDisplayName: metadata.displayName,
-      chainName: metadata.name,
-    };
+    try {
+      const hostname = new URL(connectionEndpoint).hostname;
+      const metadata = getChainByRpcUrl(hostname);
+      if (!metadata) return {};
+      return {
+        chainDisplayName: metadata.displayName,
+        chainName: metadata.name,
+      };
+    } catch (error) {
+      logger.warn('Error finding sol active chain', error);
+      return {};
+    }
   }, [connectionEndpoint]);
 }
 

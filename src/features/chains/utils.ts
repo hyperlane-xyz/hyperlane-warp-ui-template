@@ -26,11 +26,11 @@ export function hasPermissionlessChain(ids: ChainName[]) {
   return !ids.every((c) => !isPermissionlessChain(c));
 }
 
-export function getChainByRpcEndpoint(endpoint?: string) {
-  if (!endpoint) return undefined;
+export function getChainByRpcUrl(url?: string) {
+  if (!url) return undefined;
   const allMetadata = Object.values(getMultiProvider().metadata);
   return allMetadata.find(
-    (m) => !!m.rpcUrls.find((rpc) => rpc.http.toLowerCase().includes(endpoint.toLowerCase())),
+    (m) => !!m.rpcUrls.find((rpc) => rpc.http.toLowerCase().includes(url.toLowerCase())),
   );
 }
 

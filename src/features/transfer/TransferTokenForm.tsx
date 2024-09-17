@@ -427,7 +427,8 @@ function useFormInitialValues(): TransferFormValues {
   }, []);
 }
 
-const insufficientFundsErrMsg = /insufficient.funds/i;
+const insufficientFundsErrMsg = /insufficient.[funds|lamports]/i;
+const emptyAccountErrMsg = /AccountNotFound/i;
 
 async function validateForm(
   values: TransferFormValues,
@@ -447,10 +448,11 @@ async function validateForm(
       senderPubKey: await senderPubKey,
     });
     return result;
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error validating form', error);
     let errorMsg = errorToString(error, 40);
-    if (insufficientFundsErrMsg.test(errorMsg)) {
+    const fullError = `${errorMsg} ${error.message}`;
+    if (insufficientFundsErrMsg.test(fullError) || emptyAccountErrMsg.test(fullError)) {
       errorMsg = 'Insufficient funds for gas fees';
     }
     return { form: errorMsg };

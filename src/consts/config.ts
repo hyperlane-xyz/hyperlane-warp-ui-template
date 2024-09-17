@@ -1,3 +1,5 @@
+import { ChainMap } from '@hyperlane-xyz/sdk';
+
 import { ADDRESS_BLACKLIST } from './blacklist';
 
 const isDevMode = process?.env?.NODE_ENV === 'development';
@@ -7,6 +9,7 @@ const explorerApiKeys = JSON.parse(process?.env?.EXPLORER_API_KEYS || '{}');
 const walletConnectProjectId = process?.env?.NEXT_PUBLIC_WALLET_CONNECT_ID || '';
 const withdrawalWhitelist = process?.env?.NEXT_PUBLIC_BLOCK_WITHDRAWAL_WHITELIST || '';
 const transferBlacklist = process?.env?.NEXT_PUBLIC_TRANSFER_BLACKLIST || '';
+const chainWalletWhitelists = JSON.parse(process?.env?.NEXT_PUBLIC_CHAIN_WALLET_WHITELISTS || '{}');
 
 interface Config {
   isDevMode: boolean; // Enables some debug features in the app
@@ -20,6 +23,7 @@ interface Config {
   transferBlacklist: string; // comma-separated list of routes between which transfers are disabled. Expects Caip2Id-Caip2Id (e.g. ethereum:1-sealevel:1399811149)
   enableExplorerLink: boolean; // Include a link to the hyperlane explorer in the transfer modal
   addressBlacklist: string[]; // A list of addresses that are blacklisted and cannot be used in the app
+  chainWalletWhitelists: ChainMap<string[]>; // A map of chain names to a list of wallet names that work for it
 }
 
 export const config: Config = Object.freeze({
@@ -34,4 +38,5 @@ export const config: Config = Object.freeze({
   transferBlacklist,
   enableExplorerLink: false,
   addressBlacklist: ADDRESS_BLACKLIST.map((address) => address.toLowerCase()),
+  chainWalletWhitelists,
 });

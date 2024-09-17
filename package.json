@@ -13,6 +13,7 @@
     "@cosmos-kit/keplr": "^2.12.2",
     "@cosmos-kit/leap": "^2.12.2",
     "@cosmos-kit/react": "^2.18.0",
+    "@drift-labs/snap-wallet-adapter": "^0.3.0",
     "@emotion/react": "^11.13.0",
     "@emotion/styled": "^11.13.0",
     "@headlessui/react": "^1.7.14",
@@ -92,6 +93,7 @@
   },
   "types": "dist/src/index.d.ts",
   "resolutions": {
+    "@solana/web3.js": "^1.78.4",
     "axios": "0.27.2",
     "bn.js": "^5.2",
     "cosmjs-types": "0.9",

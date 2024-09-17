@@ -3919,13 +3919,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/core@npm:5.1.2":
-  version: 5.1.2
-  resolution: "@hyperlane-xyz/core@npm:5.1.2"
+"@hyperlane-xyz/core@npm:5.2.0-beta.1":
+  version: 5.2.0-beta.1
+  resolution: "@hyperlane-xyz/core@npm:5.2.0-beta.1"
   dependencies:
     "@arbitrum/nitro-contracts": "npm:^1.2.1"
     "@eth-optimism/contracts": "npm:^0.6.0"
-    "@hyperlane-xyz/utils": "npm:5.1.2"
+    "@hyperlane-xyz/utils": "npm:5.2.0-beta.1"
     "@layerzerolabs/lz-evm-oapp-v2": "npm:2.0.2"
     "@openzeppelin/contracts": "npm:^4.9.3"
     "@openzeppelin/contracts-upgradeable": "npm:^v4.9.3"
@@ -3934,42 +3934,43 @@ __metadata:
     "@ethersproject/abi": "*"
     "@ethersproject/providers": "*"
     "@types/sinon-chai": "*"
-  checksum: c4c910f5fd6274e695b3a16389c0b17162422c6a92b9380f80b9feb9cd7632b474df84440449b90ac09869b29925a41062d9447792583382726e339c7c6c4d49
+  checksum: a3e5e96c9d97887f8db575e72e2c1beeceec38e80a117241d62e54f7ea6efcdb5f7ebda7799519de835d9087db7230c8c8a93ab3fa4c68879379ab70e1816dda
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/registry@npm:2.5.0":
-  version: 2.5.0
-  resolution: "@hyperlane-xyz/registry@npm:2.5.0"
-  dependencies:
-    yaml: "npm:^2"
-    zod: "npm:^3.21.2"
-  checksum: 24f433c0938dc31913b0f7a93b880a9aa15eabebf664eb11f319c51f6b38163929429405dd996b8964f8a2f43dfa4ba5424b157ad6fd39432653e46e128e0ffc
-  languageName: node
-  linkType: hard
-
-"@hyperlane-xyz/registry@npm:4.1.1":
-  version: 4.1.1
-  resolution: "@hyperlane-xyz/registry@npm:4.1.1"
+"@hyperlane-xyz/registry@npm:4.1.0":
+  version: 4.1.0
+  resolution: "@hyperlane-xyz/registry@npm:4.1.0"
   dependencies:
     yaml: "npm:2.4.5"
     zod: "npm:^3.21.2"
-  checksum: 2560027554a86a992caa3e0dd34e14b66d46642728d7bdf461614740cbaeada0133ab1d879f28dd44ad0ef9b372b6c027d01e708a1abb0f58bdfbf1a5b890886
+  checksum: 5de3ef5539abfaadbfefb82e6e69fdb2413f404d8321456c91810fb50a5a70e9f93b38789495efce6ab5963682536e95a2abe636c7d0ad91ee158cc0ce6b063a
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/sdk@npm:5.1.2":
-  version: 5.1.2
-  resolution: "@hyperlane-xyz/sdk@npm:5.1.2"
+"@hyperlane-xyz/registry@npm:4.2.0":
+  version: 4.2.0
+  resolution: "@hyperlane-xyz/registry@npm:4.2.0"
+  dependencies:
+    yaml: "npm:2.4.5"
+    zod: "npm:^3.21.2"
+  checksum: 47c985af9511ffd43afb88914e87ede5e6db1ba262c00096955d5e8275a0afda0fa8d6ca5222895bed59a680a06aecf454529853dd6867a1140eabd00b184c21
+  languageName: node
+  linkType: hard
+
+"@hyperlane-xyz/sdk@npm:5.2.0-beta.1":
+  version: 5.2.0-beta.1
+  resolution: "@hyperlane-xyz/sdk@npm:5.2.0-beta.1"
   dependencies:
     "@arbitrum/sdk": "npm:^4.0.0"
     "@aws-sdk/client-s3": "npm:^3.74.0"
     "@cosmjs/cosmwasm-stargate": "npm:^0.32.4"
     "@cosmjs/stargate": "npm:^0.32.4"
-    "@hyperlane-xyz/core": "npm:5.1.2"
-    "@hyperlane-xyz/utils": "npm:5.1.2"
+    "@hyperlane-xyz/core": "npm:5.2.0-beta.1"
+    "@hyperlane-xyz/utils": "npm:5.2.0-beta.1"
     "@safe-global/api-kit": "npm:1.3.0"
     "@safe-global/protocol-kit": "npm:1.3.0"
+    "@safe-global/safe-deployments": "npm:1.37.3"
     "@solana/spl-token": "npm:^0.3.8"
     "@solana/web3.js": "npm:^1.78.0"
     "@types/coingecko-api": "npm:^1.0.10"
@@ -3985,13 +3986,13 @@ __metadata:
   peerDependencies:
     "@ethersproject/abi": "*"
     "@ethersproject/providers": "*"
-  checksum: 8288011c1570e392e7e329ba79029ff98e2660d49b52efe8d34c6b4bbadfb844d1b15ddc55f705c76b4c8d486edabb24f55c9ad1bc278418ec0069a6ef6ae7ff
+  checksum: aae9648e06ff553dd0cebc313d8ee38df47b349770d94ddccc3ae2f5bafccfe61db33ec55983b0917591968cddda380643f01fd619909a6ee67e8391b4b94ddf
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/utils@npm:5.1.2":
-  version: 5.1.2
-  resolution: "@hyperlane-xyz/utils@npm:5.1.2"
+"@hyperlane-xyz/utils@npm:5.2.0-beta.1":
+  version: 5.2.0-beta.1
+  resolution: "@hyperlane-xyz/utils@npm:5.2.0-beta.1"
   dependencies:
     "@cosmjs/encoding": "npm:^0.32.4"
     "@solana/web3.js": "npm:^1.78.0"
@@ -3999,8 +4000,8 @@ __metadata:
     ethers: "npm:^5.7.2"
     lodash-es: "npm:^4.17.21"
     pino: "npm:^8.19.0"
-    yaml: "npm:^2.4.1"
-  checksum: ed92bfe7bc3535a43961df7d0ad3ebe377725f726f59456512d1ac5650261a04b73a95e9613cb969dbb025613185c8aa4fa8cca9f0f04a3294413263c9abbd9c
+    yaml: "npm:2.4.5"
+  checksum: 1daeb4521dbd9f115f1e660e6fa767d3d2851a09eb9885e155df08863b5ee743a96e2df3eab59c25c5cfa57607e65f2e4703e4209d168e2e9cb4c5c4528a7801
   languageName: node
   linkType: hard
 
@@ -4020,10 +4021,10 @@ __metadata:
     "@emotion/react": "npm:^11.13.0"
     "@emotion/styled": "npm:^11.13.0"
     "@headlessui/react": "npm:^1.7.14"
-    "@hyperlane-xyz/registry": "npm:4.1.1"
-    "@hyperlane-xyz/sdk": "npm:5.1.2"
-    "@hyperlane-xyz/utils": "npm:5.1.2"
-    "@hyperlane-xyz/widgets": "npm:5.1.2"
+    "@hyperlane-xyz/registry": "npm:4.2.0"
+    "@hyperlane-xyz/sdk": "npm:5.2.0-beta.1"
+    "@hyperlane-xyz/utils": "npm:5.2.0-beta.1"
+    "@hyperlane-xyz/widgets": "npm:5.2.0-beta.1"
     "@interchain-ui/react": "npm:^1.23.28"
     "@metamask/jazzicon": "https://github.com/jmrossy/jazzicon#7a8df28974b4e81129bfbe3cab76308b889032a6"
     "@metamask/post-message-stream": "npm:6.1.2"
@@ -4075,16 +4076,16 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@hyperlane-xyz/widgets@npm:5.1.2":
-  version: 5.1.2
-  resolution: "@hyperlane-xyz/widgets@npm:5.1.2"
+"@hyperlane-xyz/widgets@npm:5.2.0-beta.1":
+  version: 5.2.0-beta.1
+  resolution: "@hyperlane-xyz/widgets@npm:5.2.0-beta.1"
   dependencies:
-    "@hyperlane-xyz/registry": "npm:2.5.0"
-    "@hyperlane-xyz/sdk": "npm:5.1.2"
+    "@hyperlane-xyz/registry": "npm:4.1.0"
+    "@hyperlane-xyz/sdk": "npm:5.2.0-beta.1"
   peerDependencies:
     react: ^18
     react-dom: ^18
-  checksum: 3e9eff276d24c31bb93853f7886fa9611419f094b54a8c3cffd6890e4eaeabcf529ffdfffdfacc8d53876adf270b27d27b90ce4c106e8a71cb85ec739d87a380
+  checksum: 87608018a112eb8ae8547309513063901170f202533c05292609d85d98f614630b9bb90b72c2ead5079791657612aed2219e3e897b2e64db7232d00da46bc427
   languageName: node
   linkType: hard
 
@@ -7134,6 +7135,15 @@ __metadata:
     web3-core: "npm:^1.8.1"
     web3-utils: "npm:^1.8.1"
   checksum: 4205f8a024730d303ac50441ac8265e6aa3dcb90d46b94f3acaaf6966db1d508281867a804986b0c90bc901a117b51ed75b2d3669b97ee4afc55125bddd70c42
+  languageName: node
+  linkType: hard
+
+"@safe-global/safe-deployments@npm:1.37.3":
+  version: 1.37.3
+  resolution: "@safe-global/safe-deployments@npm:1.37.3"
+  dependencies:
+    semver: "npm:^7.6.2"
+  checksum: 3d1fcaac850a1d1100eaa5ff753c88c9bb889c678bb09248323c6b0c9d6228225a88be47973a89bb32829fe2d13ed17c21f854b9fdc29cc1b3c734021761f15c
   languageName: node
   linkType: hard
 
@@ -19643,6 +19653,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"semver@npm:^7.6.2":
+  version: 7.6.3
+  resolution: "semver@npm:7.6.3"
+  bin:
+    semver: bin/semver.js
+  checksum: 36b1fbe1a2b6f873559cd57b238f1094a053dbfd997ceeb8757d79d1d2089c56d1321b9f1069ce263dc64cfa922fa1d2ad566b39426fe1ac6c723c1487589e10
+  languageName: node
+  linkType: hard
+
 "send@npm:0.18.0":
   version: 0.18.0
   resolution: "send@npm:0.18.0"
@@ -21989,15 +22008,6 @@ __metadata:
   version: 1.10.2
   resolution: "yaml@npm:1.10.2"
   checksum: e088b37b4d4885b70b50c9fa1b7e54bd2e27f5c87205f9deaffd1fb293ab263d9c964feadb9817a7b129a5bf30a06582cb08750f810568ecc14f3cdbabb79cb3
-  languageName: node
-  linkType: hard
-
-"yaml@npm:^2, yaml@npm:^2.4.1":
-  version: 2.4.2
-  resolution: "yaml@npm:2.4.2"
-  bin:
-    yaml: bin.mjs
-  checksum: 6eafbcd68dead734035f6f72af21bd820c29214caf7d8e40c595671a3c908535cef8092b9660a1c055c5833aa148aa640e0c5fa4adb5af2dacd6d28296ccd81c
   languageName: node
   linkType: hard
 

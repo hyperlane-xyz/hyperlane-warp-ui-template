@@ -10,6 +10,9 @@ export const warpRouteWhitelist: Array<string> | null = [
   // ETH routes
   'ETH/ethereum-viction',
 
+  // tETH routes
+  'tETH/eclipsemainnet-ethereum',
+
   // ECLIP routes
   'ECLIP/arbitrum-neutron',
 
@@ -28,4 +31,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // SOL routes
   'SOL/eclipsemainnet-solanamainnet',
+
+  // WIF routes
+  'WIF/eclipsemainnet-solanamainnet',
 ];

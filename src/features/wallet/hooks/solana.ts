@@ -2,14 +2,13 @@ import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import { Connection } from '@solana/web3.js';
 import { useCallback, useMemo } from 'react';
-import { toast } from 'react-toastify';
 
 import { ProviderType, TypedTransactionReceipt, WarpTypedTransaction } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 
 import { getMultiProvider } from '../../../context/context';
 import { logger } from '../../../utils/logger';
-import { getChainByRpcEndpoint } from '../../chains/utils';
+import { getChainByRpcUrl } from '../../chains/utils';
 
 import { AccountInfo, ActiveChainInfo, ChainTransactionFns, WalletDetails } from './types';
 
@@ -55,12 +54,18 @@ export function useSolActiveChain(): ActiveChainInfo {
   const { connection } = useConnection();
   const connectionEndpoint = connection?.rpcEndpoint;
   return useMemo<ActiveChainInfo>(() => {
-    const metadata = getChainByRpcEndpoint(connectionEndpoint);
-    if (!metadata) return {};
-    return {
-      chainDisplayName: metadata.displayName,
-      chainName: metadata.name,
-    };
+    try {
+      const hostname = new URL(connectionEndpoint).hostname;
+      const metadata = getChainByRpcUrl(hostname);
+      if (!metadata) return {};
+      return {
+        chainDisplayName: metadata.displayName,
+        chainName: metadata.name,
+      };
+    } catch (error) {
+      logger.warn('Error finding sol active chain', error);
+      return {};
+    }
   }, [connectionEndpoint]);
 }
 
@@ -68,7 +73,7 @@ export function useSolTransactionFns(): ChainTransactionFns {
   const { sendTransaction: sendSolTransaction } = useWallet();
 
   const onSwitchNetwork = useCallback(async (chainName: ChainName) => {
-    toast.warn(`Solana wallet must be connected to origin chain ${chainName}}`);
+    logger.warn(`Solana wallet must be connected to origin chain ${chainName}`);
   }, []);
 
   const onSendTx = useCallback(

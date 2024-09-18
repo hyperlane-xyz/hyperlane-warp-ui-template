@@ -1,8 +1,9 @@
-import { CoreChain, CoreChains } from '@hyperlane-xyz/registry';
 import { ChainNameOrId } from '@hyperlane-xyz/sdk';
 import { ProtocolType, toTitleCase } from '@hyperlane-xyz/utils';
 
 import { getMultiProvider } from '../../context/context';
+
+const ABACUS_WORKS_DEPLOYER_NAME = 'abacus works';
 
 export function getChainDisplayName(chain: ChainName, shortName = false) {
   if (!chain) return 'Unknown';
@@ -14,9 +15,10 @@ export function getChainDisplayName(chain: ChainName, shortName = false) {
 
 export function isPermissionlessChain(chain: ChainName) {
   if (!chain) return true;
+  const metadata = tryGetChainMetadata(chain);
   return (
-    getChainMetadata(chain).protocol !== ProtocolType.Ethereum ||
-    !CoreChains.includes(chain as CoreChain)
+    metadata?.protocol !== ProtocolType.Ethereum ||
+    metadata.deployer?.name.trim().toLowerCase() !== ABACUS_WORKS_DEPLOYER_NAME
   );
 }
 
@@ -24,11 +26,11 @@ export function hasPermissionlessChain(ids: ChainName[]) {
   return !ids.every((c) => !isPermissionlessChain(c));
 }
 
-export function getChainByRpcEndpoint(endpoint?: string) {
-  if (!endpoint) return undefined;
+export function getChainByRpcUrl(url?: string) {
+  if (!url) return undefined;
   const allMetadata = Object.values(getMultiProvider().metadata);
   return allMetadata.find(
-    (m) => !!m.rpcUrls.find((rpc) => rpc.http.toLowerCase().includes(endpoint.toLowerCase())),
+    (m) => !!m.rpcUrls.find((rpc) => rpc.http.toLowerCase().includes(url.toLowerCase())),
   );
 }
 

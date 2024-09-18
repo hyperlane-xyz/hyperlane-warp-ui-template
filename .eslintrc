@@ -37,6 +37,7 @@
         "caughtErrorsIgnorePattern": "^_"
       }
     ],
-    "jsx-a11y/alt-text": ["off"]
+    "jsx-a11y/alt-text": ["off"],
+    "@next/next/no-img-element": ["off"]
   }
 }

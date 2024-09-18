@@ -30,7 +30,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'INJ/inevm-injective',
 
   // SOL routes
-  // 'SOL/eclipsemainnet-solanamainnet',
+  'SOL/eclipsemainnet-solanamainnet',
 
   // WIF routes
   'WIF/eclipsemainnet-solanamainnet',

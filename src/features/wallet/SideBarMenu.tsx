@@ -33,7 +33,7 @@ export function SideBarMenu({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTransfer, setSelectedTransfer] = useState<TransferContext | null>(null);
-  const disconnects = useDisconnectFns();
+  const disconnectFns = useDisconnectFns();
   const { readyAccounts } = useAccounts();
   const didMountRef = useRef(false);
 
@@ -57,7 +57,7 @@ export function SideBarMenu({
   }, [isOpen]);
 
   const onClickDisconnect = async () => {
-    for (const disconnectFn of Object.values(disconnects)) {
+    for (const disconnectFn of Object.values(disconnectFns)) {
       await disconnectFn();
     }
   };

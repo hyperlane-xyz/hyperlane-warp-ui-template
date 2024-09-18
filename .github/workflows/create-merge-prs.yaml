@@ -1,0 +1,46 @@
+name: Merge Main to Other Branches
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  create-merge-prs:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        name: [ezeth, injective, nexus]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Create and push merge branch
+        run: |
+          git checkout ${{ matrix.name }}
+          git merge origin/main
+          git checkout -b main-to-${{ matrix.name }}
+          git push -fu origin main-to-${{ matrix.name }}
+
+      - name: Check and Create Pull Request
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_EXISTS=$(gh pr list --base ${{ matrix.name }} --head main-to-${{ matrix.name }} --json number --jq length)
+          if [ "$PR_EXISTS" -eq "0" ]; then
+            gh pr create \
+              --base ${{ matrix.name }} \
+              --head main-to-${{ matrix.name }} \
+              --title "chore: merge main into ${{ matrix.name }}" \
+              --body "This PR was automatically created to merge changes from \`main\` into \`${{ matrix.name }}\`." \
+              --draft
+          else
+            echo "Pull request already exists. Skipping creation."
+          fi

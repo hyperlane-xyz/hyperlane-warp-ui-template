@@ -1,10 +1,12 @@
 import type { AssetList, Chain as CosmosChain } from '@chain-registry/types';
 import type { Chain as WagmiChain } from '@wagmi/core';
 
-import { ChainName, chainMetadataToWagmiChain } from '@hyperlane-xyz/sdk';
+import { ChainMetadata, ChainName, chainMetadataToWagmiChain } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 
-import { getWarpContext } from '../../context/context';
+import { getTokens, getWarpContext } from '../../context/context';
+
+import { cosmosDefaultChain } from './cosmosDefault';
 
 // Metadata formatted for use in Wagmi config
 export function getWagmiChainConfig(): WagmiChain[] {
@@ -15,9 +17,7 @@ export function getWagmiChainConfig(): WagmiChain[] {
 }
 
 export function getCosmosKitConfig(): { chains: CosmosChain[]; assets: AssetList[] } {
-  const cosmosChains = Object.values(getWarpContext().chains).filter(
-    (c) => c.protocol === ProtocolType.Cosmos,
-  );
+  const cosmosChains = getCosmosChains();
   const chains = cosmosChains.map((c) => ({
     chain_name: c.name,
     status: 'live',
@@ -96,7 +96,13 @@ export function getCosmosKitConfig(): { chains: CosmosChain[]; assets: AssetList
 }
 
 export function getCosmosChainNames(): ChainName[] {
-  return Object.values(getWarpContext().chains)
-    .filter((c) => c.protocol === ProtocolType.Cosmos)
-    .map((c) => c.name);
+  return getCosmosChains().map((c) => c.name);
+}
+
+export function getCosmosChains(): ChainMetadata[] {
+  const tokens = getTokens();
+  const chains = Object.values(getWarpContext().chains).filter(
+    (c) => c.protocol === ProtocolType.Cosmos && tokens.some((t) => t.chainName === c.name),
+  );
+  return [...chains, cosmosDefaultChain];
 }

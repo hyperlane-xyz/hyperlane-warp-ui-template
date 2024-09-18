@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import { memo } from 'react';
 
 import { IToken } from '@hyperlane-xyz/sdk';
@@ -26,7 +25,7 @@ function _TokenIcon({ token, size = 32 }: Props) {
     <Circle size={size} bgColorSeed={bgColorSeed} title={title}>
       {imageSrc ? (
         <ErrorBoundary hideError={true}>
-          <Image src={imageSrc} alt="" width={size} height={size} className="p-0.5" />
+          <img src={imageSrc} width={size} height={size} className="p-0.5" />
         </ErrorBoundary>
       ) : (
         <div className={`text-[${fontSize}px]`}>{character}</div>

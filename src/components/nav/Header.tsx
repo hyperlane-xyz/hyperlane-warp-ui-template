@@ -17,16 +17,6 @@ export function Header() {
               Nexus
             </h1>
           </Link>
-          <h2 className="flex text-white text-sm md:text-lg font-bold">
-            Powered by Mitosis and Neutron{' '}
-            <Image
-              src="/logos/neutron.svg"
-              alt=""
-              width={18}
-              height={18}
-              className="hidden sm:block ml-1.5 invert"
-            ></Image>
-          </h2>
         </div>
         <div className="flex flex-col items-end md:flex-row-reverse md:items-start gap-2">
           <WalletControlBar />

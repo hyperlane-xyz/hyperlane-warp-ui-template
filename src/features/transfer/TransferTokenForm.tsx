@@ -18,6 +18,7 @@ import SwapIcon from '../../images/icons/swap.svg';
 import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
 import { ChainSelectField } from '../chains/ChainSelectField';
+import { ChainWalletWarning } from '../chains/ChainWalletWarning';
 import { getChainDisplayName } from '../chains/utils';
 import { useIsAccountSanctioned } from '../sanctions/hooks/useIsAccountSanctioned';
 import { useStore } from '../store';
@@ -62,8 +63,9 @@ export function TransferTokenForm() {
       validateOnChange={false}
       validateOnBlur={false}
     >
-      {({ isValidating }) => (
-        <Form className="flex flex-col items-stretch w-full mt-2">
+      {({ isValidating, values }) => (
+        <Form className="flex flex-col items-stretch w-full">
+          <ChainWalletWarning originChain={values.origin} />
           <ChainSelectSection isReview={isReview} />
           <div className="mt-3 flex justify-between items-end space-x-4">
             <TokenSection setIsNft={setIsNft} isReview={isReview} />
@@ -112,7 +114,7 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
   const chains = useMemo(() => getWarpCore().getTokenChains(), []);
 
   return (
-    <div className="flex items-center justify-center space-x-7 sm:space-x-10">
+    <div className="mt-2 flex items-center justify-center space-x-7 sm:space-x-10">
       <ChainSelectField name="origin" label="From" chains={chains} disabled={isReview} />
       <div className="flex flex-col items-center">
         <div className="flex mb-6 sm:space-x-1.5">

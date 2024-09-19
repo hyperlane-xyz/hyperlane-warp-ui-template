@@ -1,6 +1,6 @@
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
-import { Connection } from '@solana/web3.js';
+import { Connection, PublicKey } from '@solana/web3.js';
 import { useCallback, useMemo } from 'react';
 
 import { ProviderType, TypedTransactionReceipt, WarpTypedTransaction } from '@hyperlane-xyz/sdk';
@@ -81,10 +81,12 @@ export function useSolTransactionFns(): ChainTransactionFns {
       tx,
       chainName,
       activeChainName,
+      originTokenCollateralAddressOrDenom,
     }: {
       tx: WarpTypedTransaction;
       chainName: ChainName;
       activeChainName?: ChainName;
+      originTokenCollateralAddressOrDenom?: string;
     }) => {
       if (tx.type !== ProviderType.SolanaWeb3) throw new Error(`Unsupported tx type: ${tx.type}`);
       if (activeChainName && activeChainName !== chainName) await onSwitchNetwork(chainName);
@@ -94,6 +96,18 @@ export function useSolTransactionFns(): ChainTransactionFns {
         context: { slot: minContextSlot },
         value: { blockhash, lastValidBlockHeight },
       } = await connection.getLatestBlockhashAndContext();
+      const fees = await connection.getRecentPrioritizationFees({
+        lockedWritableAccounts: [new PublicKey(originTokenCollateralAddressOrDenom!)],
+      });
+      console.log(fees);
+      console.log(originTokenCollateralAddressOrDenom);
+
+      console.log(tx.transaction);
+      const fee = await tx.transaction.getEstimatedFee(connection);
+      console.log(fee);
+
+      debugger;
+      throw new Error('bad');
 
       logger.debug(`Sending tx on chain ${chainName}`);
       const signature = await sendSolTransaction(tx.transaction, connection, { minContextSlot });

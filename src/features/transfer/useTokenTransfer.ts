@@ -146,6 +146,7 @@ async function executeTransfer({
         tx,
         chainName: origin,
         activeChainName: activeChain.chainName,
+        originTokenCollateralAddressOrDenom: originToken.collateralAddressOrDenom,
       });
       updateTransferStatus(transferIndex, (transferStatus = txCategoryToStatuses[tx.category][1]));
       txReceipt = await confirm();

@@ -35,6 +35,7 @@ export type SendTransactionFn<
   tx: TxReq;
   chainName: ChainName;
   activeChainName?: ChainName;
+  originTokenCollateralAddressOrDenom?: string;
 }) => Promise<{ hash: string; confirm: () => Promise<TxResp> }>;
 
 export type SwitchNetworkFn = (chainName: ChainName) => Promise<void>;

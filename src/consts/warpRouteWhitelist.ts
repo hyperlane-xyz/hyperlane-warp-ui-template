@@ -20,7 +20,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'USDC/ethereum-inevm',
   'USDC/ancient8-ethereum',
   'USDC/ethereum-viction',
-  //'USDC/eclipsemainnet-ethereum-solanamainnet',
+  'USDC/eclipsemainnet-ethereum-solanamainnet',
 
   // USDT routes
   'USDT/ethereum-inevm',

@@ -3,3 +3,4 @@ export const APP_DESCRIPTION =
   'Nexus is the interface for navigating the modular world. Bridge between any chains that are part of the expanding Modular universe. Built on Hyperlane.';
 export const APP_URL = 'https://usenexus.org';
 export const APP_BRAND_COLOR = '#31D99C';
+export const PROXY_DEPLOYED_URL = 'https://proxy.hyperlane.xyz';

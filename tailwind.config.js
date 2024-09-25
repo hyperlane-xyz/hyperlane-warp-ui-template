@@ -11,6 +11,7 @@ module.exports = {
       mono: ['Courier New', 'monospace'],
     },
     screens: {
+      all: '1px',
       xs: '480px',
       ...defaultTheme.screens,
     },
@@ -82,10 +83,10 @@ module.exports = {
       },
       borderRadius: {
         none: '0',
-        sm: '0.25rem',
-        DEFAULT: '0.35rem',
-        md: '0.45rem',
-        lg: '0.55rem',
+        sm: '0.20rem',
+        DEFAULT: '0.30rem',
+        md: '0.40rem',
+        lg: '0.50rem',
         full: '9999px',
       },
       blur: {

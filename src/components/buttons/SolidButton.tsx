@@ -2,7 +2,7 @@ import { PropsWithChildren, ReactElement } from 'react';
 
 interface ButtonProps {
   type?: 'submit' | 'reset' | 'button';
-  color?: 'white' | 'blue' | 'green' | 'red' | 'gray' | 'pink' | 'mint'; // defaults to blue
+  color?: 'white' | 'primary' | 'accent' | 'green' | 'red' | 'gray'; // defaults to primary
   bold?: boolean;
   classes?: string;
   icon?: ReactElement;
@@ -22,23 +22,20 @@ export function SolidButton(
     title,
     ...passThruProps
   } = props;
-  const color = _color ?? 'blue';
+  const color = _color ?? 'primary';
 
   const base =
-    'flex items-center justify-center rounded-full transition-all duration-500 active:scale-95';
+    'flex items-center justify-center rounded-lg transition-all duration-500 active:scale-95';
   let baseColors, onHover;
-  if (color === 'blue') {
+  if (color === 'primary') {
     baseColors = 'bg-primary-500 text-white';
     onHover = 'hover:bg-primary-600';
-  } else if (color === 'pink') {
+  } else if (color === 'accent') {
     baseColors = 'bg-accent-500 text-white';
     onHover = 'hover:bg-accent-600';
   } else if (color === 'green') {
     baseColors = 'bg-green-500 text-white';
     onHover = 'hover:bg-green-600';
-  } else if (color === 'mint') {
-    baseColors = 'bg-mint-500 text-white';
-    onHover = 'hover:bg-mint-600';
   } else if (color === 'red') {
     baseColors = 'bg-red-600 text-white';
     onHover = 'hover:bg-red-500';

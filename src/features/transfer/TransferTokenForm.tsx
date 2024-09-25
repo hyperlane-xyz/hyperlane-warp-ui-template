@@ -66,7 +66,7 @@ export function TransferTokenForm() {
         <Form className="flex flex-col items-stretch w-full">
           <ChainWalletWarning originChain={values.origin} />
           <ChainSelectSection isReview={isReview} />
-          <div className="mt-3 flex justify-between items-end space-x-4">
+          <div className="mt-3.5 flex justify-between items-end space-x-4">
             <TokenSection setIsNft={setIsNft} isReview={isReview} />
             <AmountSection isNft={isNft} isReview={isReview} />
           </div>
@@ -247,16 +247,16 @@ function ButtonSection({
     <div className="mt-4 flex items-center justify-between space-x-4">
       <SolidButton
         type="button"
-        color="gray"
+        color="primary"
         onClick={() => setIsReview(false)}
         classes="px-6 py-1.5"
-        icon={<ChevronIcon direction="w" width={10} height={6} color={Color.primaryBlue} />}
+        icon={<ChevronIcon direction="w" width={10} height={6} color={Color.primaryWhite} />}
       >
         <span>Edit</span>
       </SolidButton>
       <SolidButton
         type="button"
-        color="pink"
+        color="accent"
         onClick={triggerTransactionsHandler}
         classes="flex-1 px-3 py-1.5"
       >
@@ -285,13 +285,13 @@ function MaxButton({ balance, disabled }: { balance?: TokenAmount; disabled?: bo
     <SolidButton
       type="button"
       onClick={onClick}
-      color="gray"
+      color="primary"
       disabled={disabled}
-      classes="text-xs absolute right-0.5 top-2 bottom-0.5 px-2"
+      classes="text-xs absolute right-1 top-2.5 bottom-1 px-2 all:rounded"
     >
       {isLoading ? (
         <div className="flex items-center">
-          <SmallSpinner />
+          <SmallSpinner className="text-white" />
         </div>
       ) : (
         'MAX'
@@ -317,9 +317,9 @@ function SelfButton({ disabled }: { disabled?: boolean }) {
     <SolidButton
       type="button"
       onClick={onClick}
-      color="gray"
+      color="primary"
       disabled={disabled}
-      classes="text-xs absolute right-0.5 top-2 bottom-0.5 px-2"
+      classes="text-xs absolute right-1 top-2.5 bottom-1 px-2 all:rounded"
     >
       SELF
     </SolidButton>

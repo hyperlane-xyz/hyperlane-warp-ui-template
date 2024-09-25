@@ -39,7 +39,9 @@ export function ChainSelectField({ name, label, chains, onChange, disabled }: Pr
   return (
     <div>
       <div className="flex items-center justify-center gap-2.5">
-        <ChainLogo chainName={field.value} size={36} />
+        <div className="max-w-[1.5rem] sm:max-w-fit">
+          <ChainLogo chainName={field.value} size={36} />
+        </div>
         <div className="flex flex-col gap-1">
           <label htmlFor={name} className="pl-2 text-xs text-gray-700 uppercase">
             {label}
@@ -66,7 +68,7 @@ export function ChainSelectField({ name, label, chains, onChange, disabled }: Pr
 }
 
 const styles = {
-  base: 'w-36 px-3 py-1.5 flex items-center justify-between text-sm bg-white rounded-lg border border-primary-300 outline-none transition-colors duration-500',
+  base: 'w-32 sm:w-36 px-3 py-1.5 flex items-center justify-between text-sm bg-white rounded-lg border border-primary-300 outline-none transition-colors duration-500',
   enabled: 'hover:bg-gray-50 active:bg-gray-100 focus:border-primary-500',
   disabled: 'bg-gray-150 cursor-default',
 };

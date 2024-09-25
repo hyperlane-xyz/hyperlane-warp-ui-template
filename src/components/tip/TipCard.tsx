@@ -23,7 +23,7 @@ export function TipCard() {
           href={links.github}
           target="_blank"
           rel="noopener noreferrer"
-          className="ml-2 px-3 py-1.5 flex items-center bg-gray-100 hover:bg-gray-200 active:bg-gray-300 text-xs sm:text-sm text-primary-500 rounded-full transition-all"
+          className="ml-2 px-3 py-1.5 flex items-center bg-gray-100 hover:bg-gray-200 active:bg-gray-300 text-xs sm:text-sm text-primary-500 rounded-lg transition-all"
         >
           <Image src={InfoCircle} width={12} alt="" />
           <span className="ml-1.5 text-sm">Learn More</span>

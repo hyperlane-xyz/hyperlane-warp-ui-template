@@ -287,7 +287,7 @@ function MaxButton({ balance, disabled }: { balance?: TokenAmount; disabled?: bo
       onClick={onClick}
       color="primary"
       disabled={disabled}
-      classes="text-xs absolute right-1 top-2.5 bottom-1 px-2 all:rounded"
+      classes="text-xs absolute right-1 top-2.5 bottom-1 px-2 opacity-90 all:rounded"
     >
       {isLoading ? (
         <div className="flex items-center">
@@ -319,7 +319,7 @@ function SelfButton({ disabled }: { disabled?: boolean }) {
       onClick={onClick}
       color="primary"
       disabled={disabled}
-      classes="text-xs absolute right-1 top-2.5 bottom-1 px-2 all:rounded"
+      classes="text-xs absolute right-1 top-2.5 bottom-1 px-2 opacity-90 all:rounded"
     >
       SELF
     </SolidButton>
@@ -376,17 +376,17 @@ function ReviewDetails({ visible }: { visible: boolean }) {
               <div className="mt-1.5 ml-1.5 pl-2 border-l border-gray-300 space-y-1.5 text-xs">
                 {destinationToken?.addressOrDenom && (
                   <p className="flex">
-                    <span className="min-w-[7rem]">Remote Token</span>
+                    <span className="min-w-[6.5rem]">Remote Token</span>
                     <span>{destinationToken.addressOrDenom}</span>
                   </p>
                 )}
                 <p className="flex">
-                  <span className="min-w-[7rem]">{isNft ? 'Token ID' : 'Amount'}</span>
+                  <span className="min-w-[6.5rem]">{isNft ? 'Token ID' : 'Amount'}</span>
                   <span>{`${amount} ${originTokenSymbol}`}</span>
                 </p>
                 {fees?.localQuote && fees.localQuote.amount > 0n && (
                   <p className="flex">
-                    <span className="min-w-[7rem]">Local Gas (est.)</span>
+                    <span className="min-w-[6.5rem]">Local Gas (est.)</span>
                     <span>{`${fees.localQuote.getDecimalFormattedAmount().toFixed(4) || '0'} ${
                       fees.localQuote.token.symbol || ''
                     }`}</span>
@@ -394,7 +394,7 @@ function ReviewDetails({ visible }: { visible: boolean }) {
                 )}
                 {fees?.interchainQuote && fees.interchainQuote.amount > 0n && (
                   <p className="flex">
-                    <span className="min-w-[7rem]">Interchain Gas</span>
+                    <span className="min-w-[6.5rem]">Interchain Gas</span>
                     <span>{`${fees.interchainQuote.getDecimalFormattedAmount().toFixed(4) || '0'} ${
                       fees.interchainQuote.token.symbol || ''
                     }`}</span>

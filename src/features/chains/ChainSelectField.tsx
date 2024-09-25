@@ -37,27 +37,24 @@ export function ChainSelectField({ name, label, chains, onChange, disabled }: Pr
   };
 
   return (
-    <div className="flex flex-col items-center">
-      <div className="flex flex-col items-center justify-center rounded-full bg-gray-100 h-[5.5rem] w-[5.5rem] p-1.5">
-        <div className="flex items-end h-11">
-          <ChainLogo chainName={field.value} size={34} />
+    <div>
+      <div className="flex items-center justify-center gap-2">
+        <ChainLogo chainName={field.value} size={36} />
+        <div className="flex flex-col gap-1">
+          <label htmlFor={name} className="pl-2 text-xs text-gray-700 uppercase">
+            {label}
+          </label>
+          <button
+            type="button"
+            name={field.name}
+            className={`${styles.base} ${disabled ? styles.disabled : styles.enabled}`}
+            onClick={onClick}
+          >
+            {getChainDisplayName(field.value, true)}
+            <Image src={ChevronIcon} width={12} height={8} alt="" />
+          </button>
         </div>
-        <label htmlFor={name} className="mt-2 mb-1 text-sm text-gray-500 uppercase">
-          {label}
-        </label>
       </div>
-      <button
-        type="button"
-        name={field.name}
-        className={`${styles.base} ${disabled ? styles.disabled : styles.enabled}`}
-        onClick={onClick}
-      >
-        <div className="flex items-center">
-          <ChainLogo chainName={field.value} size={14} />
-          <span className="ml-2">{getChainDisplayName(field.value, true)}</span>
-        </div>
-        <Image src={ChevronIcon} width={12} height={8} alt="" />
-      </button>
       <ChainSelectListModal
         isOpen={isModalOpen}
         close={() => setIsModalOpen(false)}
@@ -69,7 +66,7 @@ export function ChainSelectField({ name, label, chains, onChange, disabled }: Pr
 }
 
 const styles = {
-  base: 'w-36 px-2.5 py-2 relative -top-1.5 flex items-center justify-between text-sm bg-white rounded-full border border-blue-300 outline-none transition-colors duration-500',
-  enabled: 'hover:bg-gray-50 active:bg-gray-100 focus:border-blue-500',
+  base: 'w-36 px-3 py-1.5 flex items-center justify-between text-sm bg-white rounded-full border border-primary-300 outline-none transition-colors duration-500',
+  enabled: 'hover:bg-gray-50 active:bg-gray-100 focus:border-primary-500',
   disabled: 'bg-gray-150 cursor-default',
 };

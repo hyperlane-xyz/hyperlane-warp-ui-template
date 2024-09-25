@@ -11,7 +11,6 @@ import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareS
 import { IconButton } from '../../components/buttons/IconButton';
 import { SolidButton } from '../../components/buttons/SolidButton';
 import { ChevronIcon } from '../../components/icons/Chevron';
-import { WideChevron } from '../../components/icons/WideChevron';
 import { TextField } from '../../components/input/TextField';
 import { getIndexForToken, getTokenByIndex, getTokens, getWarpCore } from '../../context/context';
 import SwapIcon from '../../images/icons/swap.svg';
@@ -100,8 +99,8 @@ function SwapChainsButton({ disabled }: { disabled?: boolean }) {
   return (
     <IconButton
       imgSrc={SwapIcon}
-      width={22}
-      height={22}
+      width={20}
+      height={20}
       title="Swap chains"
       classes={!disabled ? 'hover:rotate-180' : undefined}
       onClick={onClick}
@@ -114,17 +113,12 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
   const chains = useMemo(() => getWarpCore().getTokenChains(), []);
 
   return (
-    <div className="mt-2 flex items-center justify-center space-x-7 sm:space-x-10">
-      <ChainSelectField name="origin" label="From" chains={chains} disabled={isReview} />
+    <div className="mt-4 flex items-center justify-between gap-2">
+      <ChainSelectField name="origin" label="From Chain" chains={chains} disabled={isReview} />
       <div className="flex flex-col items-center">
-        <div className="flex mb-6 sm:space-x-1.5">
-          <WideChevron classes="hidden sm:block" />
-          <WideChevron />
-          <WideChevron />
-        </div>
         <SwapChainsButton disabled={isReview} />
       </div>
-      <ChainSelectField name="destination" label="To" chains={chains} disabled={isReview} />
+      <ChainSelectField name="destination" label="To Chain" chains={chains} disabled={isReview} />
     </div>
   );
 }
@@ -138,7 +132,7 @@ function TokenSection({
 }) {
   return (
     <div className="flex-1">
-      <label htmlFor="tokenIndex" className="block uppercase text-sm text-gray-500 pl-0.5">
+      <label htmlFor="tokenIndex" className="block uppercase text-sm text-gray-700 pl-0.5">
         Token
       </label>
       <TokenSelectField name="tokenIndex" disabled={isReview} setIsNft={setIsNft} />
@@ -153,7 +147,7 @@ function AmountSection({ isNft, isReview }: { isNft: boolean; isReview: boolean 
   return (
     <div className="flex-1">
       <div className="flex justify-between pr-1">
-        <label htmlFor="amount" className="block uppercase text-sm text-gray-500 pl-0.5">
+        <label htmlFor="amount" className="block uppercase text-sm text-gray-700 pl-0.5">
           Amount
         </label>
         <TokenBalance label="My balance" balance={balance} />
@@ -185,7 +179,7 @@ function RecipientSection({ isReview }: { isReview: boolean }) {
   return (
     <div className="mt-4">
       <div className="flex justify-between pr-1">
-        <label htmlFor="recipient" className="block uppercase text-sm text-gray-500 pl-0.5">
+        <label htmlFor="recipient" className="block uppercase text-sm text-gray-700 pl-0.5">
           Recipient Address
         </label>
         <TokenBalance label="Remote balance" balance={balance} />
@@ -205,7 +199,7 @@ function RecipientSection({ isReview }: { isReview: boolean }) {
 
 function TokenBalance({ label, balance }: { label: string; balance?: TokenAmount | null }) {
   const value = balance?.getDecimalFormattedAmount().toFixed(4) || '0';
-  return <div className="text-xs text-gray-500 text-right">{`${label}: ${value}`}</div>;
+  return <div className="text-xs text-gray-700 text-right">{`${label}: ${value}`}</div>;
 }
 
 function ButtonSection({
@@ -358,7 +352,7 @@ function ReviewDetails({ visible }: { visible: boolean }) {
         visible ? 'max-h-screen duration-1000 ease-in' : 'max-h-0 duration-500'
       } overflow-hidden transition-all`}
     >
-      <label className="mt-4 block uppercase text-sm text-gray-500 pl-0.5">Transactions</label>
+      <label className="mt-4 block uppercase text-sm text-gray-700 pl-0.5">Transactions</label>
       <div className="mt-1.5 px-2.5 py-2 space-y-2 rounded border border-gray-400 bg-gray-150 text-sm break-all">
         {isLoading ? (
           <div className="py-6 flex items-center justify-center">

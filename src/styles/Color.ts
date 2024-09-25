@@ -15,7 +15,7 @@ export enum Color {
 // such as in svg fills
 export function classNameToColor(className) {
   switch (className) {
-    case 'bg-blue-500':
+    case 'bg-primary-500':
       return Color.primaryBlue;
     case 'bg-red-500':
       return Color.primaryRed;

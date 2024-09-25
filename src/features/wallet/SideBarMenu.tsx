@@ -83,7 +83,7 @@ export function SideBarMenu({
           </button>
         )}
         <div className="w-full h-full flex flex-col overflow-y-auto">
-          <div className="w-full rounded-t-md bg-blue-500 py-2 px-3.5 text-white text-base font-normal tracking-wider">
+          <div className="w-full rounded-t-md bg-primary-500 py-2 px-3.5 text-white text-base font-normal tracking-wider">
             Connected Wallets
           </div>
           <div className="my-3 px-3 space-y-3">
@@ -99,7 +99,7 @@ export function SideBarMenu({
               <div className="ml-2">Disconnect all wallets</div>
             </button>
           </div>
-          <div className="w-full bg-blue-500 py-2 px-3.5 mb-4 text-white text-base font-normal tracking-wider">
+          <div className="w-full bg-primary-500 py-2 px-3.5 mb-4 text-white text-base font-normal tracking-wider">
             Transfer History
           </div>
           <div className="flex grow flex-col px-3.5">
@@ -198,11 +198,11 @@ function TransferSummary({
               <span className="text-gray-800 text-sm font-normal ml-1">{token?.symbol || ''}</span>
             </div>
             <div className="mt-1 flex flex-row items-center">
-              <span className="text-thin text-gray-900 font-normal tracking-wide">
+              <span className="text-xxs text-gray-900 font-normal tracking-wide">
                 {getChainDisplayName(origin, true)}
               </span>
               <Image className="mx-1" src={ArrowRightIcon} width={10} height={10} alt="" />
-              <span className="text-thin text-gray-900 font-normal tracking-wide">
+              <span className="text-xxs text-gray-900 font-normal tracking-wide">
                 {getChainDisplayName(destination, true)}
               </span>
             </div>

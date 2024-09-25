@@ -7,6 +7,7 @@ import { toTitleCase, toWei } from '@hyperlane-xyz/utils';
 import { toastTxSuccess } from '../../components/toast/TxSuccessToast';
 import { getTokenByIndex, getWarpCore } from '../../context/context';
 import { logger } from '../../utils/logger';
+import { getChainDisplayName } from '../chains/utils';
 import { AppState, useStore } from '../store';
 import {
   getAccountAddressForChain,
@@ -17,6 +18,10 @@ import {
 
 import { TransferContext, TransferFormValues, TransferStatus } from './types';
 import { tryGetMsgIdFromTransferReceipt } from './utils';
+
+const CHAIN_MISMATCH_ERROR = 'ChainMismatchError';
+const TRANSFER_TIMEOUT_ERROR1 = 'block height exceeded';
+const TRANSFER_TIMEOUT_ERROR2 = 'timeout';
 
 export function useTokenTransfer(onDone?: () => void) {
   const { transfers, addTransfer, updateTransferStatus } = useStore((s) => ({
@@ -90,8 +95,8 @@ async function executeTransfer({
   let transferStatus: TransferStatus = TransferStatus.Preparing;
   updateTransferStatus(transferIndex, transferStatus);
 
+  const { origin, destination, tokenIndex, amount, recipient } = values;
   try {
-    const { origin, destination, tokenIndex, amount, recipient } = values;
     const originToken = getTokenByIndex(tokenIndex);
     const connection = originToken?.getConnectionForChain(destination);
     if (!originToken || !connection) throw new Error('No token route found between chains');
@@ -161,12 +166,20 @@ async function executeTransfer({
       originTxHash: hashes.at(-1),
       msgId,
     });
-  } catch (error) {
+  } catch (error: any) {
     logger.error(`Error at stage ${transferStatus}`, error);
+    const errorDetails = error.message || error.toString();
     updateTransferStatus(transferIndex, TransferStatus.Failed);
-    if (JSON.stringify(error).includes('ChainMismatchError')) {
+    if (errorDetails.includes(CHAIN_MISMATCH_ERROR)) {
       // Wagmi switchNetwork call helps prevent this but isn't foolproof
       toast.error('Wallet must be connected to origin chain');
+    } else if (
+      errorDetails.includes(TRANSFER_TIMEOUT_ERROR1) ||
+      errorDetails.includes(TRANSFER_TIMEOUT_ERROR2)
+    ) {
+      toast.error(
+        `Transaction timed out, ${getChainDisplayName(origin)} may be busy. Please try again.`,
+      );
     } else {
       toast.error(errorMessages[transferStatus] || 'Unable to transfer tokens.');
     }

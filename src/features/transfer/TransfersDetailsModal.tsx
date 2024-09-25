@@ -204,7 +204,8 @@ export function TransfersDetailsModal({
           </div>
           {showSignWarning && (
             <div className="mt-3 text-sm text-center text-gray-600">
-              If your wallet does not show a transaction request, please try the transfer again.
+              If your wallet does not show a transaction request or never confirms, please try the
+              transfer again.
             </div>
           )}
         </div>
@@ -265,7 +266,8 @@ function TransferProperty({ name, value, url }: { name: string; value: string; u
 function useSignIssueWarning(status: TransferStatus) {
   const [showWarning, setShowWarning] = useState(false);
   const warningCallback = useCallback(() => {
-    if (status === TransferStatus.SigningTransfer) setShowWarning(true);
+    if (status === TransferStatus.SigningTransfer || status === TransferStatus.ConfirmingTransfer)
+      setShowWarning(true);
   }, [status, setShowWarning]);
   useTimeout(warningCallback, 20_000);
   return showWarning;

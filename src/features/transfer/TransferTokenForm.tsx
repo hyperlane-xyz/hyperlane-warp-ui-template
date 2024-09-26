@@ -113,12 +113,12 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
   const chains = useMemo(() => getWarpCore().getTokenChains(), []);
 
   return (
-    <div className="mt-4 flex items-center justify-between gap-2">
-      <ChainSelectField name="origin" label="From chain" chains={chains} disabled={isReview} />
-      <div className="flex flex-col items-center">
+    <div className="mt-4 flex items-center justify-between gap-4">
+      <ChainSelectField name="origin" label="From" chains={chains} disabled={isReview} />
+      <div className="flex flex-col items-center flex-1">
         <SwapChainsButton disabled={isReview} />
       </div>
-      <ChainSelectField name="destination" label="To chain" chains={chains} disabled={isReview} />
+      <ChainSelectField name="destination" label="To" chains={chains} disabled={isReview} />
     </div>
   );
 }

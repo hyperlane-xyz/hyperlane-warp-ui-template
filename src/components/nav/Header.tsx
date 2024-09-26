@@ -12,8 +12,8 @@ export function Header() {
         <div className="flex flex-col">
           <Link href="/" className="flex items-center">
             <Image src={Logo} width={24} alt="" />
-            <Image src={Name} width={130} alt="" className="hidden sm:block mt-0.5 ml-2" />
-            <h1 className="ml-2 pt-0.5 text-2xl text-white font-bold uppercase tracking-wide">
+            <Image src={Name} width={122} alt="" className="hidden sm:block mt-0.5 ml-2" />
+            <h1 className="ml-2 pt-px text-2xl text-white font-bold uppercase tracking-wide">
               Nexus
             </h1>
           </Link>

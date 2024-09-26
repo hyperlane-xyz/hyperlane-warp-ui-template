@@ -83,27 +83,27 @@ export function SideBarMenu({
           </button>
         )}
         <div className="w-full h-full flex flex-col overflow-y-auto">
-          <div className="w-full rounded-t-md bg-mint-600 py-2 px-3.5 text-white text-base font-normal tracking-wider">
+          <div className="w-full rounded-t-md bg-primary-500 py-2 px-3.5 text-white text-base font-normal tracking-wider">
             Connected Wallets
           </div>
           <div className="my-3 px-3 space-y-3">
             {readyAccounts.map((acc, i) => (
               <AccountSummary key={i} account={acc} />
             ))}
-            <button onClick={onConnectWallet} className={styles.btn}>
+            <button onClick={onConnectWallet} className={`${styles.btn} pl-2.5`}>
               <Icon src={Wallet} alt="" size={18} />
               <div className="ml-2">Connect wallet</div>
             </button>
-            <button onClick={onClickDisconnect} className={styles.btn}>
+            <button onClick={onClickDisconnect} className={`${styles.btn} pl-2.5`}>
               <Icon src={Logout} alt="" size={20} />
               <div className="ml-2">Disconnect all wallets</div>
             </button>
           </div>
-          <div className="w-full bg-mint-600 py-2 px-3.5 mb-4 text-white text-base font-normal tracking-wider">
+          <div className="w-full bg-primary-500 py-2 px-3.5 mb-4 text-white text-base font-normal tracking-wider">
             Transfer History
           </div>
           <div className="flex grow flex-col px-3.5">
-            <div className="grow flex flex-col w-full">
+            <div className="grow flex flex-col w-full divide-y">
               {sortedTransfers?.length > 0 &&
                 sortedTransfers.map((t, i) => (
                   <TransferSummary
@@ -117,7 +117,7 @@ export function SideBarMenu({
                 ))}
             </div>
             {sortedTransfers?.length > 0 && (
-              <button onClick={resetTransfers} className="my-5 mx-2 flex flex-row items-center">
+              <button onClick={resetTransfers} className={`${styles.btn} my-5 mx-2`}>
                 <Image className="mr-4" src={ResetIcon} width={17} height={17} alt="" />
                 <span className="text-gray-900 text-sm font-normal">Reset transaction history</span>
               </button>
@@ -154,9 +154,7 @@ function AccountSummary({ account }: { account: AccountInfo }) {
   return (
     <button
       onClick={onClickCopy}
-      className={`${styles.btn} border border-gray-200 rounded-xl ${
-        numAddresses > 1 && 'cursor-default'
-      }`}
+      className={`${styles.btn} ${numAddresses > 1 && 'all:cursor-default'}`}
     >
       <div className="shrink-0">
         <WalletLogo walletDetails={walletDetails} size={42} />
@@ -182,13 +180,9 @@ function TransferSummary({
   const token = tryFindToken(origin, originTokenAddressOrDenom);
 
   return (
-    <button
-      key={timestamp}
-      onClick={onClick}
-      className="flex justify-between items-center rounded-xl border border-gray-200 px-2.5 py-2 mb-2.5 hover:bg-gray-200 active:bg-gray-300 transition-all duration-500"
-    >
-      <div className="flex">
-        <div className="mr-2.5 flex flex-col items-center justify-center rounded-full bg-gray-100 h-[2.25rem] w-[2.25rem] p-1.5">
+    <button key={timestamp} onClick={onClick} className={`${styles.btn} justify-between  py-3`}>
+      <div className="flex gap-2.5">
+        <div className="px-1.5 flex flex-col items-center justify-center rounded-full bg-gray-100 h-[2.25rem] w-[2.25rem]">
           <ChainLogo chainName={origin} size={20} />
         </div>
         <div className="flex flex-col">
@@ -198,18 +192,18 @@ function TransferSummary({
               <span className="text-gray-800 text-sm font-normal ml-1">{token?.symbol || ''}</span>
             </div>
             <div className="mt-1 flex flex-row items-center">
-              <span className="text-thin text-gray-900 font-normal tracking-wide">
+              <span className="text-xxs text-gray-900 font-normal tracking-wide">
                 {getChainDisplayName(origin, true)}
               </span>
               <Image className="mx-1" src={ArrowRightIcon} width={10} height={10} alt="" />
-              <span className="text-thin text-gray-900 font-normal tracking-wide">
+              <span className="text-xxs text-gray-900 font-normal tracking-wide">
                 {getChainDisplayName(destination, true)}
               </span>
             </div>
           </div>
         </div>
       </div>
-      <div className="flex w-6 h-6">
+      <div className="flex w-5 h-5">
         {STATUSES_WITH_ICON.includes(status) ? (
           <Image src={getIconByTransferStatus(status)} width={25} height={25} alt="" />
         ) : (
@@ -239,5 +233,5 @@ function Icon({
 }
 
 const styles = {
-  btn: 'w-full flex items-center px-2.5 py-2 text-sm hover:bg-gray-200 active:bg-gray-300 rounded transition-all duration-500',
+  btn: 'w-full flex items-center px-1 py-2 text-sm hover:bg-gray-200 active:scale-95 transition-all duration-500 cursor-pointer rounded-sm',
 };

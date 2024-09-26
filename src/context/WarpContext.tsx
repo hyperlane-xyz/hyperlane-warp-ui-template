@@ -31,7 +31,7 @@ export function WarpContext({ children }: PropsWithChildren<unknown>) {
 
   if (isLoading || !warpContext)
     return (
-      <div className="flex items-center justify-center h-screen bg-black2">
+      <div className="flex items-center justify-center h-screen bg-primary-500">
         <Spinner classes="opacity-50" white />
       </div>
     );

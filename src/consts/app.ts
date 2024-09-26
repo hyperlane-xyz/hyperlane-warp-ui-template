@@ -1,8 +1,8 @@
-import { Inter } from 'next/font/google';
+import { Space_Grotesk } from 'next/font/google';
 
 import { Color } from '../styles/Color';
 
-export const MAIN_FONT = Inter({ subsets: ['latin'] });
+export const MAIN_FONT = Space_Grotesk({ subsets: ['latin'] });
 export const APP_NAME = 'Hyperlane Warp UI Template';
 export const APP_DESCRIPTION = 'A DApp for Hyperlane Warp Route transfers';
 export const APP_URL = 'hyperlane-warp-template.vercel.app';

@@ -34,16 +34,6 @@ select:focus {
   outline: none;
 }
 
-/* 
-Backgrounds
-============
-*/
-
-#app-content {
-  background: url('/bg-home.jpg') no-repeat top;
-  background-color: rgb(241 241 241);
-}
-
 /*
 Text and shadows
 ================

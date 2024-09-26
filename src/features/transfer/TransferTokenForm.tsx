@@ -229,6 +229,7 @@ function ButtonSection({
     if (isSanctioned) {
       return;
     }
+    setIsReview(false);
     setTransferLoading(true);
     await triggerTransactions(values);
   };

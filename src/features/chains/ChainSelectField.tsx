@@ -43,7 +43,7 @@ export function ChainSelectField({ name, label, chains, onChange, disabled }: Pr
           <ChainLogo chainName={field.value} size={36} />
         </div>
         <div className="flex flex-col gap-1">
-          <label htmlFor={name} className="pl-2 text-xs text-gray-700 uppercase">
+          <label htmlFor={name} className="pl-2 text-xs text-gray-600">
             {label}
           </label>
           <button

@@ -26,7 +26,7 @@ export function Footer() {
         <div className="flex flex-col sm:flex-row gap-8 sm:gap-10 items-center justify-between">
           <div className="flex items-center justify-center">
             <div className="ml-2 w-12 sm:w-14 h-12 sm:h-14">
-              <HyperlaneLogo fill={Color.primaryWhite} />
+              <HyperlaneLogo fill={Color.white} />
             </div>
             <div className="text-lg sm:text-xl font-medium ml-6 space-y-1">
               <div>Go interchain</div>
@@ -55,7 +55,7 @@ export function Footer() {
                     target={item.external ? '_blank' : '_self'}
                     href={item.url}
                   >
-                    {item?.icon && <div className="mr-4 w-6">{item?.icon}</div>}
+                    {item?.icon && <div className="mr-4 w-5">{item?.icon}</div>}
                     <div className="">{item.title}</div>
                   </Link>
                 </li>

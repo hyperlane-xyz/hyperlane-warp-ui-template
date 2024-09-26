@@ -1,7 +1,7 @@
 import Head from 'next/head';
 import { PropsWithChildren } from 'react';
 
-import { APP_BRAND_COLOR, APP_NAME } from '../../consts/app';
+import { APP_NAME, BACKGROUND_COLOR, BACKGROUND_IMAGE, MAIN_FONT } from '../../consts/app';
 import { Footer } from '../nav/Footer';
 import { Header } from '../nav/Header';
 
@@ -16,7 +16,7 @@ export function AppLayout({ children }: PropsWithChildren) {
       <div
         style={styles.container}
         id="app-content"
-        className="relative flex flex-col justify-between h-full min-h-screen w-full min-w-screen"
+        className={`relative flex flex-col justify-between h-full min-h-screen w-full min-w-screen ${MAIN_FONT.className}`}
       >
         <Header />
         <div className="sm:px-4 mx-auto grow flex items-center max-w-screen-xl">
@@ -30,8 +30,8 @@ export function AppLayout({ children }: PropsWithChildren) {
 
 const styles = {
   container: {
-    backgroundColor: APP_BRAND_COLOR,
-    backgroundImage: 'url(/backgrounds/main.svg)',
+    backgroundColor: BACKGROUND_COLOR,
+    backgroundImage: BACKGROUND_IMAGE,
     backgroundSize: 'cover',
     backgroundRepeat: 'no-repeat',
     backgroundPosition: 'center',

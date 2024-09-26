@@ -26,7 +26,7 @@ export function TipCard() {
           className="ml-2 px-3 py-1.5 flex items-center bg-gray-100 hover:bg-gray-200 active:bg-gray-300 text-xs sm:text-sm text-primary-500 rounded-lg transition-all"
         >
           <Image src={InfoCircle} width={12} alt="" />
-          <span className="hidden sm:inline ml-1.5 text-sm">Learn More</span>
+          <span className="hidden sm:inline ml-1.5 text-sm">More</span>
         </a>
       </div>
       <div className="absolute right-3 top-3">

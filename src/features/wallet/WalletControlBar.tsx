@@ -41,7 +41,7 @@ export function WalletControlBar() {
             icon={<Image src={Wallet} alt="" width={16} height={16} />}
             color="white"
           >
-            <div className="ml-1.5 text-xs sm:text-sm">Connect Wallet</div>
+            <div className="ml-1.5 text-xs sm:text-sm">Connect wallet</div>
           </SolidButton>
         )}
 

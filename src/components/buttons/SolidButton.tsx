@@ -2,7 +2,7 @@ import { PropsWithChildren, ReactElement } from 'react';
 
 interface ButtonProps {
   type?: 'submit' | 'reset' | 'button';
-  color?: 'white' | 'blue' | 'green' | 'red' | 'gray' | 'pink' | 'mint'; // defaults to blue
+  color?: 'white' | 'primary' | 'accent' | 'green' | 'red' | 'gray'; // defaults to primary
   bold?: boolean;
   classes?: string;
   icon?: ReactElement;
@@ -22,42 +22,33 @@ export function SolidButton(
     title,
     ...passThruProps
   } = props;
-  const color = _color ?? 'blue';
+  const color = _color ?? 'primary';
 
-  const base = 'flex items-center justify-center rounded-full transition-all duration-500';
-  let baseColors, onHover, onActive;
-  if (color === 'blue') {
-    baseColors = 'bg-blue-500 text-white';
-    onHover = 'hover:bg-blue-600';
-    onActive = 'active:bg-blue-700';
-  } else if (color === 'pink') {
-    baseColors = 'bg-pink-500 text-white';
-    onHover = 'hover:bg-pink-600';
-    onActive = 'active:bg-pink-700';
+  const base =
+    'flex items-center justify-center rounded-lg transition-all duration-500 active:scale-95';
+  let baseColors, onHover;
+  if (color === 'primary') {
+    baseColors = 'bg-primary-500 text-white';
+    onHover = 'hover:bg-primary-600';
+  } else if (color === 'accent') {
+    baseColors = 'bg-accent-500 text-white';
+    onHover = 'hover:bg-accent-600';
   } else if (color === 'green') {
     baseColors = 'bg-green-500 text-white';
     onHover = 'hover:bg-green-600';
-    onActive = 'active:bg-green-700';
-  } else if (color === 'mint') {
-    baseColors = 'bg-mint-500 text-white';
-    onHover = 'hover:bg-mint-600';
-    onActive = 'active:bg-mint-700';
   } else if (color === 'red') {
     baseColors = 'bg-red-600 text-white';
     onHover = 'hover:bg-red-500';
-    onActive = 'active:bg-red-400';
   } else if (color === 'white') {
     baseColors = 'bg-white text-black';
-    onHover = 'hover:bg-blue-100';
-    onActive = 'active:bg-blue-200';
+    onHover = 'hover:bg-primary-100';
   } else if (color === 'gray') {
-    baseColors = 'bg-gray-100 text-blue-500';
+    baseColors = 'bg-gray-100 text-primary-500';
     onHover = 'hover:bg-gray-200';
-    onActive = 'active:bg-gray-300';
   }
   const onDisabled = 'disabled:bg-gray-300 disabled:text-gray-500';
   const weight = bold ? 'font-semibold' : '';
-  const allClasses = `${base} ${baseColors} ${onHover} ${onDisabled} ${onActive} ${weight} ${classes}`;
+  const allClasses = `${base} ${baseColors} ${onHover} ${onDisabled} ${weight} ${classes}`;
 
   return (
     <button

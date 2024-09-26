@@ -100,6 +100,6 @@ export function SelectTokenIdModal({
 
 const styles = {
   base: 'mt-1.5 w-full px-2.5 py-2 flex items-center justify-between text-sm bg-white rounded border border-gray-400 outline-none transition-colors duration-500',
-  enabled: 'hover:bg-gray-50 active:bg-gray-100 focus:border-blue-500',
+  enabled: 'hover:bg-gray-50 active:bg-gray-100 focus:border-primary-500',
   disabled: 'bg-gray-150 cursor-default',
 };

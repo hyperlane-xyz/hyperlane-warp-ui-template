@@ -11,7 +11,6 @@ import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareS
 import { IconButton } from '../../components/buttons/IconButton';
 import { SolidButton } from '../../components/buttons/SolidButton';
 import { ChevronIcon } from '../../components/icons/Chevron';
-import { WideChevron } from '../../components/icons/WideChevron';
 import { TextField } from '../../components/input/TextField';
 import { getIndexForToken, getTokenByIndex, getTokens, getWarpCore } from '../../context/context';
 import SwapIcon from '../../images/icons/swap.svg';
@@ -67,7 +66,7 @@ export function TransferTokenForm() {
         <Form className="flex flex-col items-stretch w-full">
           <ChainWalletWarning originChain={values.origin} />
           <ChainSelectSection isReview={isReview} />
-          <div className="mt-3 flex justify-between items-end space-x-4">
+          <div className="mt-3.5 flex justify-between items-end space-x-4">
             <TokenSection setIsNft={setIsNft} isReview={isReview} />
             <AmountSection isNft={isNft} isReview={isReview} />
           </div>
@@ -100,8 +99,8 @@ function SwapChainsButton({ disabled }: { disabled?: boolean }) {
   return (
     <IconButton
       imgSrc={SwapIcon}
-      width={22}
-      height={22}
+      width={20}
+      height={20}
       title="Swap chains"
       classes={!disabled ? 'hover:rotate-180' : undefined}
       onClick={onClick}
@@ -114,14 +113,9 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
   const chains = useMemo(() => getWarpCore().getTokenChains(), []);
 
   return (
-    <div className="mt-2 flex items-center justify-center space-x-7 sm:space-x-10">
+    <div className="mt-4 flex items-center justify-between gap-4">
       <ChainSelectField name="origin" label="From" chains={chains} disabled={isReview} />
-      <div className="flex flex-col items-center">
-        <div className="flex mb-6 sm:space-x-1.5">
-          <WideChevron classes="hidden sm:block" />
-          <WideChevron />
-          <WideChevron />
-        </div>
+      <div className="flex flex-col items-center flex-1">
         <SwapChainsButton disabled={isReview} />
       </div>
       <ChainSelectField name="destination" label="To" chains={chains} disabled={isReview} />
@@ -138,7 +132,7 @@ function TokenSection({
 }) {
   return (
     <div className="flex-1">
-      <label htmlFor="tokenIndex" className="block uppercase text-sm text-gray-500 pl-0.5">
+      <label htmlFor="tokenIndex" className="block text-sm text-gray-600 pl-0.5">
         Token
       </label>
       <TokenSelectField name="tokenIndex" disabled={isReview} setIsNft={setIsNft} />
@@ -153,7 +147,7 @@ function AmountSection({ isNft, isReview }: { isNft: boolean; isReview: boolean 
   return (
     <div className="flex-1">
       <div className="flex justify-between pr-1">
-        <label htmlFor="amount" className="block uppercase text-sm text-gray-500 pl-0.5">
+        <label htmlFor="amount" className="block text-sm text-gray-600 pl-0.5">
           Amount
         </label>
         <TokenBalance label="My balance" balance={balance} />
@@ -185,8 +179,8 @@ function RecipientSection({ isReview }: { isReview: boolean }) {
   return (
     <div className="mt-4">
       <div className="flex justify-between pr-1">
-        <label htmlFor="recipient" className="block uppercase text-sm text-gray-500 pl-0.5">
-          Recipient Address
+        <label htmlFor="recipient" className="block text-sm text-gray-600 pl-0.5">
+          Recipient address
         </label>
         <TokenBalance label="Remote balance" balance={balance} />
       </div>
@@ -205,7 +199,7 @@ function RecipientSection({ isReview }: { isReview: boolean }) {
 
 function TokenBalance({ label, balance }: { label: string; balance?: TokenAmount | null }) {
   const value = balance?.getDecimalFormattedAmount().toFixed(4) || '0';
-  return <div className="text-xs text-gray-500 text-right">{`${label}: ${value}`}</div>;
+  return <div className="text-xs text-gray-600 text-right">{`${label}: ${value}`}</div>;
 }
 
 function ButtonSection({
@@ -235,6 +229,7 @@ function ButtonSection({
     if (isSanctioned) {
       return;
     }
+    setIsReview(false);
     setTransferLoading(true);
     await triggerTransactions(values);
   };
@@ -253,16 +248,16 @@ function ButtonSection({
     <div className="mt-4 flex items-center justify-between space-x-4">
       <SolidButton
         type="button"
-        color="gray"
+        color="primary"
         onClick={() => setIsReview(false)}
         classes="px-6 py-1.5"
-        icon={<ChevronIcon direction="w" width={10} height={6} color={Color.primaryBlue} />}
+        icon={<ChevronIcon direction="w" width={10} height={6} color={Color.white} />}
       >
         <span>Edit</span>
       </SolidButton>
       <SolidButton
         type="button"
-        color="pink"
+        color="accent"
         onClick={triggerTransactionsHandler}
         classes="flex-1 px-3 py-1.5"
       >
@@ -291,16 +286,16 @@ function MaxButton({ balance, disabled }: { balance?: TokenAmount; disabled?: bo
     <SolidButton
       type="button"
       onClick={onClick}
-      color="gray"
+      color="primary"
       disabled={disabled}
-      classes="text-xs absolute right-0.5 top-2 bottom-0.5 px-2"
+      classes="text-xs absolute right-1 top-2.5 bottom-1 px-2 opacity-90 all:rounded"
     >
       {isLoading ? (
         <div className="flex items-center">
-          <SmallSpinner />
+          <SmallSpinner className="text-white" />
         </div>
       ) : (
-        'MAX'
+        'Max'
       )}
     </SolidButton>
   );
@@ -323,11 +318,11 @@ function SelfButton({ disabled }: { disabled?: boolean }) {
     <SolidButton
       type="button"
       onClick={onClick}
-      color="gray"
+      color="primary"
       disabled={disabled}
-      classes="text-xs absolute right-0.5 top-2 bottom-0.5 px-2"
+      classes="text-xs absolute right-1 top-2.5 bottom-1 px-2 opacity-90 all:rounded"
     >
-      SELF
+      Self
     </SolidButton>
   );
 }
@@ -358,7 +353,7 @@ function ReviewDetails({ visible }: { visible: boolean }) {
         visible ? 'max-h-screen duration-1000 ease-in' : 'max-h-0 duration-500'
       } overflow-hidden transition-all`}
     >
-      <label className="mt-4 block uppercase text-sm text-gray-500 pl-0.5">Transactions</label>
+      <label className="mt-4 block text-sm text-gray-600 pl-0.5">Transactions</label>
       <div className="mt-1.5 px-2.5 py-2 space-y-2 rounded border border-gray-400 bg-gray-150 text-sm break-all">
         {isLoading ? (
           <div className="py-6 flex items-center justify-center">
@@ -382,17 +377,17 @@ function ReviewDetails({ visible }: { visible: boolean }) {
               <div className="mt-1.5 ml-1.5 pl-2 border-l border-gray-300 space-y-1.5 text-xs">
                 {destinationToken?.addressOrDenom && (
                   <p className="flex">
-                    <span className="min-w-[7rem]">Remote Token</span>
+                    <span className="min-w-[6.5rem]">Remote Token</span>
                     <span>{destinationToken.addressOrDenom}</span>
                   </p>
                 )}
                 <p className="flex">
-                  <span className="min-w-[7rem]">{isNft ? 'Token ID' : 'Amount'}</span>
+                  <span className="min-w-[6.5rem]">{isNft ? 'Token ID' : 'Amount'}</span>
                   <span>{`${amount} ${originTokenSymbol}`}</span>
                 </p>
                 {fees?.localQuote && fees.localQuote.amount > 0n && (
                   <p className="flex">
-                    <span className="min-w-[7rem]">Local Gas (est.)</span>
+                    <span className="min-w-[6.5rem]">Local Gas (est.)</span>
                     <span>{`${fees.localQuote.getDecimalFormattedAmount().toFixed(4) || '0'} ${
                       fees.localQuote.token.symbol || ''
                     }`}</span>
@@ -400,7 +395,7 @@ function ReviewDetails({ visible }: { visible: boolean }) {
                 )}
                 {fees?.interchainQuote && fees.interchainQuote.amount > 0n && (
                   <p className="flex">
-                    <span className="min-w-[7rem]">Interchain Gas</span>
+                    <span className="min-w-[6.5rem]">Interchain Gas</span>
                     <span>{`${fees.interchainQuote.getDecimalFormattedAmount().toFixed(4) || '0'} ${
                       fees.interchainQuote.token.symbol || ''
                     }`}</span>

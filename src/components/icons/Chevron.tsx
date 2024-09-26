@@ -40,7 +40,7 @@ function _ChevronIcon({ width, height, direction, color, classes }: Props) {
       <path
         d="M1 1l6 6 6-6"
         strokeWidth="2"
-        stroke={color || Color.primaryBlack}
+        stroke={color || Color.black}
         fill="none"
         fillRule="evenodd"
         strokeLinecap="round"

@@ -33,14 +33,12 @@ export function Footer() {
 
 function FooterLogo() {
   return (
-    <div className="flex items-center justify-center text-lg sm:text-xl font-medium ml-6 space-y-1 ">
-      <div className="flex items-center font-medium space-x-1">
-        <span>Built with</span>
-        <Image src="/logos/everclear.png" alt="" width={130} height={18} />
-        <span> and </span>
-        <Image src="/logos/renzo.svg" alt="" width={24} height={18} />
-        <span>Renzo</span>
-      </div>
+    <div className="flex items-center justify-center text-lg sm:text-xl font-medium ml-6 space-y-1 gap-1.5">
+      <span>Built with</span>
+      <Image src="/logos/everclear.png" alt="" width={24} height={24} />
+      <span>Everclear and</span>
+      <Image src="/logos/renzo.svg" alt="" width={22} height={22} />
+      <span>Renzo</span>
     </div>
   );
 }

@@ -8,5 +8,4 @@ export const links = {
   chains: 'https://docs.hyperlane.xyz/docs/resources/domains',
   twitter: 'https://twitter.com/hyperlane',
   blog: 'https://medium.com/hyperlane',
-  terms: 'https://hyperlane.xyz/tos',
 };

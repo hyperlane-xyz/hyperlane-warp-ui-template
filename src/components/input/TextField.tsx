@@ -26,4 +26,4 @@ export function TextInput({ onChange, classes, ...props }: InputProps) {
 }
 
 const defaultInputClasses =
-  'mt-1.5 px-2.5 py-2 text-sm rounded-full border border-blue-300 focus:border-blue-500 disabled:bg-gray-150 outline-none transition-all duration-300';
+  'mt-1.5 px-2.5 py-2.5 text-sm rounded-lg border border-primary-300 focus:border-primary-500 disabled:bg-gray-150 outline-none transition-all duration-300';

@@ -120,7 +120,7 @@ export function TransfersDetailsModal({
           <h2 className="text-gray-600 font-medium">{date}</h2>
           <div className="flex items-center font-medium">
             {isSent ? (
-              <h3 className="text-blue-500">Sent</h3>
+              <h3 className="text-primary-500">Sent</h3>
             ) : (
               <h3 className="text-red-500">Failed</h3>
             )}
@@ -135,7 +135,7 @@ export function TransfersDetailsModal({
         </div>
       )}
 
-      <div className="mt-4 p-3 flex items-center justify-center w-full rounded-full bg-blue-200">
+      <div className="mt-4 p-3 flex items-center justify-center w-full rounded-full bg-primary-200">
         <TokenIcon token={token} size={30} />
         <div className="ml-2 flex items items-baseline">
           <span className="text-xl font-medium">{amount}</span>
@@ -203,8 +203,9 @@ export function TransfersDetailsModal({
             {statusDescription}
           </div>
           {showSignWarning && (
-            <div className="mt-3 text-sm text-center text-pink-600 font-medium">
-              If your wallet does not show a transaction request, please try the transfer again.
+            <div className="mt-3 text-sm text-center text-gray-600">
+              If your wallet does not show a transaction request or never confirms, please try the
+              transfer again.
             </div>
           )}
         </div>
@@ -265,7 +266,8 @@ function TransferProperty({ name, value, url }: { name: string; value: string; u
 function useSignIssueWarning(status: TransferStatus) {
   const [showWarning, setShowWarning] = useState(false);
   const warningCallback = useCallback(() => {
-    if (status === TransferStatus.SigningTransfer) setShowWarning(true);
+    if (status === TransferStatus.SigningTransfer || status === TransferStatus.ConfirmingTransfer)
+      setShowWarning(true);
   }, [status, setShowWarning]);
   useTimeout(warningCallback, 20_000);
   return showWarning;

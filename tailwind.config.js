@@ -6,31 +6,43 @@ module.exports = {
   content: ['./src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     fontFamily: {
-      sans: ['Neue Haas Grotesk', 'Helvetica', 'sans-serif'],
+      sans: ['sans-serif'],
       serif: ['Garamond', 'serif'],
       mono: ['Courier New', 'monospace'],
     },
     screens: {
+      all: '1px',
       xs: '480px',
       ...defaultTheme.screens,
     },
     extend: {
       colors: {
         black: '#010101',
-        black2: '#15171a',
         white: '#ffffff',
         gray: {...defaultTheme.colors.gray, 150: '#EBEDF0', 250: '#404040', 350: '#6B6B6B'},
-        blue: {
+        primary: {
           50: '#E6EDF9',
           100: '#CDDCF4',
           200: '#A7C2EC',
           300: '#82A8E4',
           400: '#5385D2',
-          500: '#2362C0',
+          500: '#2764c1',
           600: '#1D4685',
           700: '#162A4A',
           800: '#11213B',
           900: '#0D192C',
+        },
+        accent: {
+          50: '#FAEAF8',
+          100: '#F2C1EA',
+          200: '#EA98DC',
+          300: '#E26ECE',
+          400: '#DA45C0',
+          500: '#D631B9',
+          600: '#C02CA6',
+          700: '#952281',
+          800: '#6B185C',
+          900: '#400E37',
         },
         red: {
           100: '#EBBAB8',
@@ -55,34 +67,12 @@ module.exports = {
           800: '#17462E',
           900: '#0F2F1E',
         },
-        pink: {
-          50: '#FAEAF8',
-          100: '#F2C1EA',
-          200: '#EA98DC',
-          300: '#E26ECE',
-          400: '#DA45C0',
-          500: '#D631B9',
-          600: '#C02CA6',
-          700: '#952281',
-          800: '#6B185C',
-          900: '#400E37',
-        },
-        // Neutron mint/teal
-        mint: {
-          50: '#e5faf4',
-          100: '#b3f1e0',
-          200: '#88e9ce',
-          300: '#5ce1bc',
-          400: '#47ddb3',
-          500: '#31D99C',
-          600: '#25cb9d',
-          700: '#21b68c',
-          800: '#1ea07b'
-        }
       },
       fontSize: {
+        xxs: '0.7rem',
+        xs: '0.775rem',
+        sm: '0.85rem',
         md: '0.95rem',
-        thin: '0.625rem',
       },
       spacing: {
         88: '22rem',
@@ -93,10 +83,10 @@ module.exports = {
       },
       borderRadius: {
         none: '0',
-        sm: '0.25rem',
-        DEFAULT: '0.35rem',
-        md: '0.45rem',
-        lg: '0.55rem',
+        sm: '0.20rem',
+        DEFAULT: '0.30rem',
+        md: '0.40rem',
+        lg: '0.50rem',
         full: '9999px',
       },
       blur: {

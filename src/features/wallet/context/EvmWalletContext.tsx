@@ -78,7 +78,7 @@ export function EvmWalletContext({ children }: PropsWithChildren<unknown>) {
       <RainbowKitProvider
         chains={chains}
         theme={lightTheme({
-          accentColor: Color.primaryBlue,
+          accentColor: Color.primary,
           borderRadius: 'small',
           fontStack: 'system',
         })}

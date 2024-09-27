@@ -6,7 +6,7 @@ module.exports = {
   content: ['./src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     fontFamily: {
-      sans: ['sans-serif'],
+      sans: ['var(--font-main)'],
       serif: ['Garamond', 'serif'],
       mono: ['Courier New', 'monospace'],
     },

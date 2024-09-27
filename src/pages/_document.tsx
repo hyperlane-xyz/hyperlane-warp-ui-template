@@ -31,7 +31,7 @@ export default function Document() {
         <meta property="og:image" content={`${APP_URL}/logo.png`} />
         <meta property="og:description" content={APP_DESCRIPTION} />
       </Head>
-      <body className={`text-black ${MAIN_FONT.className}`}>
+      <body className={`${MAIN_FONT.variable} font-sans text-black`}>
         <Main />
         <NextScript />
       </body>

@@ -26,3 +26,13 @@ export function AppLayout({ children }: PropsWithChildren) {
     </>
   );
 }
+
+// const styles = {
+//   container: {
+//     backgroundColor: BACKGROUND_COLOR,
+//     backgroundImage: BACKGROUND_IMAGE,
+//     backgroundSize: 'cover',
+//     backgroundRepeat: 'no-repeat',
+//     backgroundPosition: 'center',
+//   },
+// };

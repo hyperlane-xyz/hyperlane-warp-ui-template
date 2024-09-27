@@ -70,7 +70,7 @@ function EnvButton({
       className="w-full py-3.5 space-y-2.5 flex flex-col items-center rounded-lg border border-gray-200 hover:bg-gray-100 hover:border-gray-200 active:bg-gray-200 transition-all"
     >
       {logo}
-      <div className="uppercase text-gray-800 tracking-wide">{children}</div>
+      <div className="text-gray-800 tracking-wide">{children}</div>
       <div className="text-sm text-gray-500">{`Connect to ${subTitle} compatible wallet`}</div>
     </button>
   );

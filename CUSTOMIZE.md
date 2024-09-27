@@ -27,9 +27,14 @@ Or it can be hidden entirely with the `showTipBox` setting in `./src/consts/conf
 
 ## Branding
 
-## App name
+## App name and description
 
 The values to describe the app itself (e.g. to WalletConnect) are in `./src/consts/app.ts`
+
+### Color Scheme
+
+To update the color scheme, make changes in the Tailwind config file at `./tailwind.config.js`
+To modify just the background color, that can be changed in `./src/consts/app.ts`
 
 ### Metadata
 
@@ -55,15 +60,3 @@ The links used in the footer can be found here: `./src/consts/links.ts`
 ### Public assets / Favicons
 
 The images and manifest files under `./public` should also be updated.
-
-### Fonts
-
-The web-formatted font files are located in `./public/fonts`
-And the CSS to configure them is in `./src/styles/fonts.css`
-
-### Color Scheme
-
-To update the color scheme, make changes in the Tailwind config and Color consts file:
-
-- `./tailwind.config.js`
-- `./src/styles/Color.ts`

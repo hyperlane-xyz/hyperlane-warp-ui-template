@@ -41,7 +41,7 @@ export function WalletControlBar() {
             icon={<Image src={Wallet} alt="" width={16} height={16} />}
             color="white"
           >
-            <div className="ml-1.5 text-xs sm:text-sm">Connect Wallet</div>
+            <div className="ml-1.5 text-xs sm:text-sm">Connect wallet</div>
           </SolidButton>
         )}
 
@@ -66,7 +66,7 @@ export function WalletControlBar() {
             <div className="flex items-center justify-center">
               <div
                 style={{ height: 26, width: 26 }}
-                className="bg-blue-500 text-white flex items-center justify-center rounded-full"
+                className="bg-primary-500 text-white flex items-center justify-center rounded-full"
               >
                 {numReady}
               </div>

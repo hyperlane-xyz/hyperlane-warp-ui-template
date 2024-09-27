@@ -7,9 +7,16 @@ interface Props {
 export function Card({ className, children }: PropsWithChildren<Props>) {
   return (
     <div
-      className={`p-1.5 sm:p-3 md:p-3.5 relative bg-white rounded-3xl overflow-auto ${className}`}
+      className={`${cardStyles.padding} relative bg-white rounded-2xl overflow-auto ${className}`}
     >
       {children}
     </div>
   );
 }
+
+export const cardStyles = {
+  padding: 'p-1.5 xs:p-2 sm:p-3 md:p-4',
+  // Should be inverse of cardPadding, used when something
+  // should be flush with card edge
+  inverseMargin: '-m-1.5 xs:-m-2 sm:-m-3 md:-m-4',
+};

@@ -30,64 +30,76 @@ export function Footer() {
     <footer className="text-gray-800 opacity-90 relative">
       <div className="relative z-10 px-8 pb-3 pt-2 sm:pt-0">
         <div className="flex flex-col sm:flex-row gap-6 sm:gap-10 items-center sm:items-end justify-between">
-          <div className="py-1 flex items-center justify-center space-x-2">
-            <div className="flex items-center font-medium space-x-1">
-              <span>Built with</span>
-              <Link href={links.about} className="flex items-center space-x-1" target="_blank">
-                <Image src={HyperlaneLogo} alt="" width={17} height={17} />
-                <span>Hyperlane</span>
-              </Link>
-              <span>and</span>
-              <Link href={links.caldera} className="flex items-center space-x-1" target="_blank">
-                <Image src="/logos/caldera.png" alt="" width={24} height={18} />
-                <span>Caldera</span>
-              </Link>
-            </div>
-          </div>
-          <nav className="flex text-md font-medium space-x-10">
-            <ul className={`${styles.linkCol}`}>
-              {footerLinks1.map((item) => (
-                <li className="" key={item.title}>
-                  <Link
-                    className={styles.linkItem}
-                    target={item.external ? '_blank' : '_self'}
-                    href={item.url}
-                  >
-                    <div className="text-sm">{item.title}</div>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-            <ul className={`${styles.linkCol}`}>
-              {footerLinks2.map((item) => (
-                <li className="" key={item.title}>
-                  <Link
-                    className={styles.linkItem}
-                    target={item.external ? '_blank' : '_self'}
-                    href={item.url}
-                  >
-                    <div className="text-sm">{item.title}</div>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-            <ul className={`${styles.linkCol}`}>
-              {footerLinks3.map((item) => (
-                <li key={item.title}>
-                  <Link
-                    className={styles.linkItem}
-                    target={item.external ? '_blank' : '_self'}
-                    href={item.url}
-                  >
-                    {item?.icon && <div className="mt-1 mr-3 w-4">{item?.icon}</div>}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
+          <FooterLogo />
+          <FooterNav />
         </div>
       </div>
     </footer>
+  );
+}
+
+function FooterLogo() {
+  return (
+    <div className="py-1 flex items-center justify-center space-x-2">
+      <div className="flex items-center font-medium space-x-1">
+        <span>Built with</span>
+        <Link href={links.about} className="flex items-center space-x-1" target="_blank">
+          <Image src={HyperlaneLogo} alt="" width={17} height={17} />
+          <span>Hyperlane</span>
+        </Link>
+        <span>and</span>
+        <Link href={links.caldera} className="flex items-center space-x-1" target="_blank">
+          <Image src="/logos/caldera.png" alt="" width={24} height={18} />
+          <span>Caldera</span>
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function FooterNav() {
+  return (
+    <nav className="flex text-md font-medium space-x-10">
+      <ul className={`${styles.linkCol}`}>
+        {footerLinks1.map((item) => (
+          <li className="" key={item.title}>
+            <Link
+              className={styles.linkItem}
+              target={item.external ? '_blank' : '_self'}
+              href={item.url}
+            >
+              <div className="text-sm">{item.title}</div>
+            </Link>
+          </li>
+        ))}
+      </ul>
+      <ul className={`${styles.linkCol}`}>
+        {footerLinks2.map((item) => (
+          <li className="" key={item.title}>
+            <Link
+              className={styles.linkItem}
+              target={item.external ? '_blank' : '_self'}
+              href={item.url}
+            >
+              <div className="text-sm">{item.title}</div>
+            </Link>
+          </li>
+        ))}
+      </ul>
+      <ul className={`${styles.linkCol}`}>
+        {footerLinks3.map((item) => (
+          <li key={item.title}>
+            <Link
+              className={styles.linkItem}
+              target={item.external ? '_blank' : '_self'}
+              href={item.url}
+            >
+              {item?.icon && <div className="mt-1 mr-3 w-4">{item?.icon}</div>}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </nav>
   );
 }
 

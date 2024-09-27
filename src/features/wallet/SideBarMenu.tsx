@@ -86,7 +86,7 @@ export function SideBarMenu({
           <div className="w-full rounded-t-md bg-primary-500 py-2 px-3.5 text-white text-base font-normal tracking-wider">
             Connected Wallets
           </div>
-          <div className="my-3 px-3 space-y-3">
+          <div className="my-3 px-3 space-y-2">
             {readyAccounts.map((acc, i) => (
               <AccountSummary key={i} account={acc} />
             ))}

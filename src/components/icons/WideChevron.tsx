@@ -5,7 +5,7 @@ import { Color } from '../../styles/Color';
 export function WideChevron({ classes }: { classes?: string }) {
   return (
     <WideChevronInner
-      width="17"
+      width="16"
       height="100%"
       direction="e"
       color={Color.lightGray}

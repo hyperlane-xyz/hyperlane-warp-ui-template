@@ -113,15 +113,6 @@ async function executeTransfer({
 
     const warpCore = getWarpCore();
 
-    const isCollateralSufficient = await warpCore.isDestinationCollateralSufficient({
-      originTokenAmount,
-      destination,
-    });
-    if (!isCollateralSufficient) {
-      toast.error('Insufficient collateral on destination for transfer');
-      throw new Error('Insufficient destination collateral');
-    }
-
     addTransfer({
       timestamp: new Date().getTime(),
       status: TransferStatus.Preparing,

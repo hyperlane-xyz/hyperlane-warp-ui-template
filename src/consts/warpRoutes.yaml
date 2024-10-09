@@ -2,5 +2,25 @@
 # These configs will be merged with the warp routes in the configured registry
 # The input here is typically the output of the Hyperlane CLI warp deploy command
 ---
-tokens: []
-options: {}
+tokens: [ 
+ {  
+        chainName: base
+        standard: EvmHypCollateral
+        decimals: 18
+        symbol: toby
+        name: toby
+        addressOrDenom: "0x4443bdb739f765b6811eF106ed969E740ab4C90f"
+        collateralAddressOrDenom: "0xb8d98a102b0079b69ffbc760c8d857a31653e56e"
+        connections:  [ { token: 'ethereum|mode|0x4443bdb739f765b6811eF106ed969E740ab4C90f' } ]        
+      },
+      {
+        chainName: mode
+        standard: EvmHypSynthetic
+        decimals: 18
+        symbol: toby
+        name: toby
+        addressOrDenom: "0x4443bdb739f765b6811eF106ed969E740ab4C90f", 
+        connections: [ {  token: 'ethereum|base|0x4443bdb739f765b6811eF106ed969E740ab4C90f'  } ]
+    }
+]         
+        options: {}

@@ -1,10 +1,15 @@
 import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { useQuery } from '@tanstack/react-query';
-import { getNetwork, sendTransaction, switchNetwork, waitForTransaction } from '@wagmi/core';
+import { getAccount, sendTransaction, waitForTransactionReceipt } from '@wagmi/core';
 import { useCallback, useMemo } from 'react';
-import { useAccount, useDisconnect, useNetwork } from 'wagmi';
+import { useAccount, useConfig, useDisconnect, useSwitchChain } from 'wagmi';
 
-import { ProviderType, TypedTransactionReceipt, WarpTypedTransaction } from '@hyperlane-xyz/sdk';
+import {
+  ProviderType,
+  TypedTransactionReceipt,
+  ViemTransactionReceipt,
+  WarpTypedTransaction,
+} from '@hyperlane-xyz/sdk';
 import { ProtocolType, assert, sleep } from '@hyperlane-xyz/utils';
 
 import { logger } from '../../../utils/logger';
@@ -71,7 +76,7 @@ export function useEvmDisconnectFn(): () => Promise<void> {
 }
 
 export function useEvmActiveChain(): ActiveChainInfo {
-  const { chain } = useNetwork();
+  const { chain } = useAccount();
   return useMemo<ActiveChainInfo>(
     () => ({
       chainDisplayName: chain?.name,
@@ -82,9 +87,11 @@ export function useEvmActiveChain(): ActiveChainInfo {
 }
 
 export function useEvmTransactionFns(): ChainTransactionFns {
+  const { switchChain } = useSwitchChain();
+  const config = useConfig();
   const onSwitchNetwork = useCallback(async (chainName: ChainName) => {
     const chainId = getChainMetadata(chainName).chainId as number;
-    await switchNetwork({ chainId });
+    await switchChain({ chainId });
     // Some wallets seem to require a brief pause after switch
     await sleep(2000);
   }, []);
@@ -111,22 +118,19 @@ export function useEvmTransactionFns(): ChainTransactionFns {
       // Since the network switching is not foolproof, we also force a network check here
       const chainId = getChainMetadata(chainName).chainId as number;
       logger.debug('Checking wallet current chain');
-      const latestNetwork = await getNetwork();
-      assert(
-        latestNetwork.chain?.id === chainId,
-        `Wallet not on chain ${chainName} (ChainMismatchError)`,
-      );
+      const { chainId: lastChainId } = getAccount(config);
+      assert(lastChainId === chainId, `Wallet not on chain ${chainName} (ChainMismatchError)`);
 
       logger.debug(`Sending tx on chain ${chainName}`);
       const wagmiTx = ethers5TxToWagmiTx(tx.transaction);
-      const { hash } = await sendTransaction({
+      const hash = await sendTransaction(config, {
         chainId,
         ...wagmiTx,
       });
       const confirm = (): Promise<TypedTransactionReceipt> =>
-        waitForTransaction({ chainId, hash, confirmations: 1 }).then((r) => ({
+        waitForTransactionReceipt(config, { chainId, hash, confirmations: 1 }).then((r) => ({
           type: ProviderType.Viem,
-          receipt: r,
+          receipt: r as ViemTransactionReceipt['receipt'],
         }));
       return { hash, confirm };
     },

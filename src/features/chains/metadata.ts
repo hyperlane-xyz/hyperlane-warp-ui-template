@@ -1,5 +1,5 @@
 import type { AssetList, Chain as CosmosChain } from '@chain-registry/types';
-import type { Chain as WagmiChain } from '@wagmi/core';
+import { Chain as WagmiChain } from 'wagmi/chains';
 
 import { ChainMetadata, ChainName, chainMetadataToWagmiChain } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
@@ -20,8 +20,9 @@ export function getCosmosKitConfig(): { chains: CosmosChain[]; assets: AssetList
   const cosmosChains = getCosmosChains();
   const chains = cosmosChains.map((c) => ({
     chain_name: c.name,
-    status: 'live',
-    network_type: c.isTestnet ? 'testnet' : 'mainnet',
+    chain_type: 'cosmos' as const,
+    status: 'live' as const,
+    network_type: (c.isTestnet ? 'testnet' : 'mainnet') as 'testnet' | 'mainnet',
     pretty_name: c.displayName || c.name,
     chain_id: c.chainId as string,
     bech32_prefix: c.bech32Prefix!,
@@ -74,6 +75,7 @@ export function getCosmosKitConfig(): { chains: CosmosChain[]; assets: AssetList
           name: 'token',
           display: 'token',
           symbol: 'token',
+          type_asset: 'cw20' as const,
         },
         {
           description: `The native token of ${c.displayName || c.name} chain.`,
@@ -87,6 +89,7 @@ export function getCosmosKitConfig(): { chains: CosmosChain[]; assets: AssetList
           name: 'stake',
           display: 'stake',
           symbol: 'stake',
+          type_asset: 'cw20' as const,
         },
       ],
     };

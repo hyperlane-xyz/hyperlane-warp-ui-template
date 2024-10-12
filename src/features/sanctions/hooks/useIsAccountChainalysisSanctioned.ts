@@ -1,5 +1,5 @@
 import { isAddress } from 'viem';
-import { useContractRead } from 'wagmi';
+import { useReadContract } from 'wagmi';
 
 import { useEvmAccount } from '../../wallet/hooks/evm';
 
@@ -30,13 +30,15 @@ const ORACLE_ADDRESS = '0x40C57923924B5c5c5455c48D93317139ADDaC8fb';
 export function useIsAccountChainalysisSanctioned() {
   const evmAddress = useEvmAccount().addresses[0]?.address;
 
-  const sanctioned = useContractRead({
+  const sanctioned = useReadContract({
     abi: ORACLE_ABI,
     functionName: 'isSanctioned',
     args: [isAddress(evmAddress) ? evmAddress : '0x'],
     chainId: 1,
     address: ORACLE_ADDRESS,
-    enabled: !!evmAddress,
+    query: {
+      enabled: !!evmAddress,
+    },
   });
 
   return !!sanctioned.data;

@@ -51,7 +51,7 @@ export function TransfersDetailsModal({
     originTxHash,
     msgId,
     timestamp,
-  } = transfer || {};
+  } = transfer;
 
   const account = useAccountForChain(origin);
   const walletDetails = useWalletDetails()[account?.protocol || ProtocolType.Ethereum];
@@ -197,7 +197,9 @@ export function TransfersDetailsModal({
           <Spinner />
           <div
             className={`mt-5 text-sm text-center ${
-              status === TransferStatus.Failed ? 'text-red-600' : 'text-gray-600'
+              (status as TransferStatus) === TransferStatus.Failed
+                ? 'text-red-600'
+                : 'text-gray-600'
             }`}
           >
             {statusDescription}

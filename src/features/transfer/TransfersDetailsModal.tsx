@@ -51,7 +51,7 @@ export function TransfersDetailsModal({
     originTxHash,
     msgId,
     timestamp,
-  } = transfer;
+  } = transfer || {};
 
   const account = useAccountForChain(origin);
   const walletDetails = useWalletDetails()[account?.protocol || ProtocolType.Ethereum];

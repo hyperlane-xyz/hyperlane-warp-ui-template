@@ -5,7 +5,7 @@ import { TransferTokenCard } from '../features/transfer/TransferTokenCard';
 
 const Home: NextPage = () => {
   return (
-    <div className="pt-4 space-y-3">
+    <div className="space-y-3 pt-4">
       <TipCard />
       <TransferTokenCard />
     </div>

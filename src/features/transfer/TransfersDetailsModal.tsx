@@ -117,7 +117,7 @@ export function TransfersDetailsModal({
     >
       {isFinal && (
         <div className="flex justify-between">
-          <h2 className="text-gray-600 font-medium">{date}</h2>
+          <h2 className="font-medium text-gray-600">{date}</h2>
           <div className="flex items-center font-medium">
             {isSent ? (
               <h3 className="text-primary-500">Sent</h3>
@@ -135,11 +135,11 @@ export function TransfersDetailsModal({
         </div>
       )}
 
-      <div className="mt-4 p-3 flex items-center justify-center w-full rounded-full bg-primary-200">
+      <div className="mt-4 flex w-full items-center justify-center rounded-full bg-primary-200 p-3">
         <TokenIcon token={token} size={30} />
-        <div className="ml-2 flex items items-baseline">
+        <div className="items ml-2 flex items-baseline">
           <span className="text-xl font-medium">{amount}</span>
-          <span className="text-xl font-medium ml-1">{token?.symbol}</span>
+          <span className="ml-1 text-xl font-medium">{token?.symbol}</span>
         </div>
       </div>
 
@@ -150,7 +150,7 @@ export function TransfersDetailsModal({
             {getChainDisplayName(origin, true)}
           </span>
         </div>
-        <div className="flex mb-6 sm:space-x-1.5">
+        <div className="mb-6 flex sm:space-x-1.5">
           <WideChevron />
           <WideChevron />
         </div>
@@ -179,9 +179,9 @@ export function TransfersDetailsModal({
           {msgId && <TransferProperty name="Message ID" value={msgId} />}
           {explorerLink && (
             <div className="flex justify-between">
-              <span className="text-gray-350 text-xs leading-normal tracking-wider">
+              <span className="text-xs leading-normal tracking-wider text-gray-350">
                 <a
-                  className="text-gray-350 text-xs leading-normal tracking-wider underline underline-offset-2 hover:opacity-80 active:opacity-70"
+                  className="text-xs leading-normal tracking-wider text-gray-350 underline underline-offset-2 hover:opacity-80 active:opacity-70"
                   href={explorerLink}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -193,17 +193,17 @@ export function TransfersDetailsModal({
           )}
         </div>
       ) : (
-        <div className="py-4 flex flex-col justify-center items-center">
+        <div className="flex flex-col items-center justify-center py-4">
           <Spinner />
           <div
-            className={`mt-5 text-sm text-center ${
+            className={`mt-5 text-center text-sm ${
               status === TransferStatus.Failed ? 'text-red-600' : 'text-gray-600'
             }`}
           >
             {statusDescription}
           </div>
           {showSignWarning && (
-            <div className="mt-3 text-sm text-center text-gray-600">
+            <div className="mt-3 text-center text-sm text-gray-600">
               If your wallet does not show a transaction request or never confirms, please try the
               transfer again.
             </div>
@@ -230,7 +230,7 @@ export function Timeline({
   const messageStatus = isFailed ? MessageStatus.Failing : message?.status || MessageStatus.Pending;
 
   return (
-    <div className="mt-6 mb-2 w-full flex flex-col justify-center items-center timeline-container">
+    <div className="timeline-container mb-2 mt-6 flex w-full flex-col items-center justify-center">
       <MessageTimeline
         status={messageStatus}
         stage={stage}
@@ -245,8 +245,8 @@ export function Timeline({
 function TransferProperty({ name, value, url }: { name: string; value: string; url?: string }) {
   return (
     <div>
-      <div className="flex justify-between items-center">
-        <label className="text-gray-350 text-sm leading-normal tracking-wider">{name}</label>
+      <div className="flex items-center justify-between">
+        <label className="text-sm leading-normal tracking-wider text-gray-350">{name}</label>
         <div className="flex items-center space-x-2">
           {url && (
             <a href={url} target="_blank" rel="noopener noreferrer">
@@ -256,7 +256,7 @@ function TransferProperty({ name, value, url }: { name: string; value: string; u
           <CopyButton copyValue={value} width={14} height={14} />
         </div>
       </div>
-      <div className="mt-1 text-sm leading-normal tracking-wider truncate">{value}</div>
+      <div className="mt-1 truncate text-sm leading-normal tracking-wider">{value}</div>
     </div>
   );
 }

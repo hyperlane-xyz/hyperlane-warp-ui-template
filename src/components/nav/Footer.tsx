@@ -21,9 +21,9 @@ const footerLinks3 = [
 
 export function Footer() {
   return (
-    <footer className="text-white relative">
-      <div className="relative z-10 px-8 pb-5 pt-2 sm:pt-0 bg-gradient-to-b from-transparent to-black/40">
-        <div className="flex flex-col sm:flex-row gap-8 sm:gap-10 items-center justify-between">
+    <footer className="relative text-white">
+      <div className="relative z-10 bg-gradient-to-b from-transparent to-black/40 px-8 pb-5 pt-2 sm:pt-0">
+        <div className="flex flex-col items-center justify-between gap-8 sm:flex-row sm:gap-10">
           <FooterLogo />
           <FooterNav />
         </div>
@@ -35,10 +35,10 @@ export function Footer() {
 function FooterLogo() {
   return (
     <div className="flex items-center justify-center">
-      <div className="ml-2 w-12 sm:w-14 h-12 sm:h-14">
+      <div className="ml-2 h-12 w-12 sm:h-14 sm:w-14">
         <HyperlaneLogo fill={Color.white} />
       </div>
-      <div className="text-lg sm:text-xl font-medium ml-6 space-y-1">
+      <div className="ml-6 space-y-1 text-lg font-medium sm:text-xl">
         <div>Go interchain</div>
         <div>with Hyperlane</div>
       </div>

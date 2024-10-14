@@ -48,7 +48,7 @@ export function ChainSelectField({ name, label, chains, onChange, disabled }: Pr
           <div className="max-w-[1.4rem] sm:max-w-fit">
             <ChainLogo chainName={field.value} size={32} />
           </div>
-          <div className="flex flex-col gap-1 items-start">
+          <div className="flex flex-col items-start gap-1">
             <label htmlFor={name} className="text-xs text-gray-600">
               {label}
             </label>

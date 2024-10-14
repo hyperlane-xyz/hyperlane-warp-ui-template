@@ -10,6 +10,7 @@ import { useAccountAddressForChain } from '../wallet/hooks/multiProtocol';
 
 export function useBalance(chain?: ChainName, token?: IToken, address?: Address) {
   const { isLoading, isError, error, data } = useQuery({
+    // eslint-disable-next-line @tanstack/query/exhaustive-deps
     queryKey: ['useBalance', chain, address, token?.addressOrDenom],
     queryFn: () => {
       if (!chain || !token || !address || !isValidAddress(address, token.protocol)) return null;

@@ -29,7 +29,7 @@ export class ErrorBoundary extends Component<any, ErrorBoundaryState> {
     if (errorInfo) {
       const details = errorInfo.message || JSON.stringify(errorInfo);
       return (
-        <div className="w-screen h-screen flex items-center justify-center bg-gray-50">
+        <div className="flex h-screen w-screen items-center justify-center bg-gray-50">
           <div className="flex flex-col items-center">
             <Image src={ErrorIcon} width={80} height={80} alt="" />
             <h1 className="mt-5 text-lg">Fatal Error Occurred</h1>

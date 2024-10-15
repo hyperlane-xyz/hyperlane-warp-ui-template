@@ -3978,6 +3978,25 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@hyperlane-xyz/core@npm:5.4.1":
+  version: 5.4.1
+  resolution: "@hyperlane-xyz/core@npm:5.4.1"
+  dependencies:
+    "@arbitrum/nitro-contracts": "npm:^1.2.1"
+    "@eth-optimism/contracts": "npm:^0.6.0"
+    "@hyperlane-xyz/utils": "npm:5.5.0"
+    "@layerzerolabs/lz-evm-oapp-v2": "npm:2.0.2"
+    "@openzeppelin/contracts": "npm:^4.9.3"
+    "@openzeppelin/contracts-upgradeable": "npm:^v4.9.3"
+    fx-portal: "npm:^1.0.3"
+  peerDependencies:
+    "@ethersproject/abi": "*"
+    "@ethersproject/providers": "*"
+    "@types/sinon-chai": "*"
+  checksum: 10/759d3c2fd86ee6ec7bdf83a0ee5c639abc51a47c940643edae42eb0ea4a4c782621f0d6ec16d4cb19016a1c9d9c09a3b9b7606c4500816780b70cef959ca8787
+  languageName: node
+  linkType: hard
+
 "@hyperlane-xyz/registry@npm:4.3.6":
   version: 4.3.6
   resolution: "@hyperlane-xyz/registry@npm:4.3.6"
@@ -3988,13 +4007,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/registry@npm:4.6.0":
-  version: 4.6.0
-  resolution: "@hyperlane-xyz/registry@npm:4.6.0"
+"@hyperlane-xyz/registry@npm:4.8.0":
+  version: 4.8.0
+  resolution: "@hyperlane-xyz/registry@npm:4.8.0"
   dependencies:
     yaml: "npm:2.4.5"
     zod: "npm:^3.21.2"
-  checksum: 10/696eb36da72983645cea6beaebfd2d2e9c262b96c408c0f00d20495d9243cff9498c1ae4258089254667e490728344e6b7a44700bc02928468cfc82ec0d87000
+  checksum: 10/2fdfbcd33e7e08ed30bdf81d00141d1eaddb12aafdc08f912e6d1ca183204f8a324cea493767091aefa95b9ba6d944727b2efbd7f5767f98a48b26b3be033221
   languageName: node
   linkType: hard
 
@@ -4030,6 +4049,38 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@hyperlane-xyz/sdk@npm:5.5.0":
+  version: 5.5.0
+  resolution: "@hyperlane-xyz/sdk@npm:5.5.0"
+  dependencies:
+    "@arbitrum/sdk": "npm:^4.0.0"
+    "@aws-sdk/client-s3": "npm:^3.74.0"
+    "@cosmjs/cosmwasm-stargate": "npm:^0.32.4"
+    "@cosmjs/stargate": "npm:^0.32.4"
+    "@hyperlane-xyz/core": "npm:5.4.1"
+    "@hyperlane-xyz/utils": "npm:5.5.0"
+    "@safe-global/api-kit": "npm:1.3.0"
+    "@safe-global/protocol-kit": "npm:1.3.0"
+    "@safe-global/safe-deployments": "npm:1.37.8"
+    "@solana/spl-token": "npm:^0.3.8"
+    "@solana/web3.js": "npm:^1.78.0"
+    "@types/coingecko-api": "npm:^1.0.10"
+    "@wagmi/chains": "npm:^1.8.0"
+    bignumber.js: "npm:^9.1.1"
+    coingecko-api: "npm:^1.0.10"
+    cosmjs-types: "npm:^0.9.0"
+    cross-fetch: "npm:^3.1.5"
+    ethers: "npm:^5.7.2"
+    pino: "npm:^8.19.0"
+    viem: "npm:^1.20.0"
+    zod: "npm:^3.21.2"
+  peerDependencies:
+    "@ethersproject/abi": "*"
+    "@ethersproject/providers": "*"
+  checksum: 10/0027df750bab349d82a290e4d949848e9eba2065c34342608b382cbb16b3d47556f153517c9071ed9512642fe252f7d7d5869a6908745b0842235756e027cf29
+  languageName: node
+  linkType: hard
+
 "@hyperlane-xyz/utils@npm:5.3.0":
   version: 5.3.0
   resolution: "@hyperlane-xyz/utils@npm:5.3.0"
@@ -4042,6 +4093,21 @@ __metadata:
     pino: "npm:^8.19.0"
     yaml: "npm:2.4.5"
   checksum: 10/2ae64331824f21c8741c2e94eadd1e863c5ce6f0b4d84e35b03eeae47b2473403636eda0f5aa648523a312b605de2a69fb9fff73949e26e3410e85b4c2fe0d27
+  languageName: node
+  linkType: hard
+
+"@hyperlane-xyz/utils@npm:5.5.0":
+  version: 5.5.0
+  resolution: "@hyperlane-xyz/utils@npm:5.5.0"
+  dependencies:
+    "@cosmjs/encoding": "npm:^0.32.4"
+    "@solana/web3.js": "npm:^1.78.0"
+    bignumber.js: "npm:^9.1.1"
+    ethers: "npm:^5.7.2"
+    lodash-es: "npm:^4.17.21"
+    pino: "npm:^8.19.0"
+    yaml: "npm:2.4.5"
+  checksum: 10/24c32b3badd15812dee980e8873287b6cb9eadaa2c7d99763d5d3a4a297a6717d577179d57556996963cc64dccdefae0e0eeea8e9d3f2e7b4cf83a2092161e70
   languageName: node
   linkType: hard
 
@@ -4062,8 +4128,8 @@ __metadata:
     "@emotion/react": "npm:^11.13.0"
     "@emotion/styled": "npm:^11.13.0"
     "@headlessui/react": "npm:^1.7.14"
-    "@hyperlane-xyz/registry": "npm:4.6.0"
-    "@hyperlane-xyz/sdk": "npm:5.3.0"
+    "@hyperlane-xyz/registry": "npm:4.8.0"
+    "@hyperlane-xyz/sdk": "npm:5.5.0"
     "@hyperlane-xyz/utils": "npm:5.3.0"
     "@hyperlane-xyz/widgets": "npm:5.3.0"
     "@interchain-ui/react": "npm:^1.23.28"

@@ -1,6 +1,6 @@
 import Link from 'next/link';
-
 import React from 'react';
+
 import { links } from '../../consts/links';
 import { Color } from '../../styles/Color';
 import { Discord } from '../icons/Discord';

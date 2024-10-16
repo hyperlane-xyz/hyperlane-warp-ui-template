@@ -107,9 +107,9 @@ export function TokenList({
       {tokens.length ? (
         tokens.map((t, i) => (
           <button
-            className={`-mx-2 py-2 px-2 rounded mb-2 flex items-center ${
+            className={`-mx-2 mb-2 flex items-center rounded px-2 py-2 ${
               t.disabled ? 'opacity-50' : 'hover:bg-gray-200'
-            } transition-all duration-250`}
+            } duration-250 transition-all`}
             key={i}
             type="button"
             disabled={t.disabled}
@@ -118,15 +118,15 @@ export function TokenList({
             <div className="shrink-0">
               <TokenIcon token={t.token} size={30} />
             </div>
-            <div className="ml-2 text-left shrink-0">
-              <div className="text-sm w-14 truncate">{t.token.symbol || 'Unknown'}</div>
-              <div className="text-xs text-gray-500 w-14 truncate">{t.token.name || 'Unknown'}</div>
+            <div className="ml-2 shrink-0 text-left">
+              <div className="w-14 truncate text-sm">{t.token.symbol || 'Unknown'}</div>
+              <div className="w-14 truncate text-xs text-gray-500">{t.token.name || 'Unknown'}</div>
             </div>
-            <div className="ml-2 text-left shrink min-w-0">
-              <div className="text-xs w-full truncate">
+            <div className="ml-2 min-w-0 shrink text-left">
+              <div className="w-full truncate text-xs">
                 {t.token.addressOrDenom || 'Native chain token'}
               </div>
-              <div className=" mt-0.5 text-xs flex space-x-1">
+              <div className="mt-0.5 flex space-x-1 text-xs">
                 <span>{`Decimals: ${t.token.decimals}`}</span>
                 <span>-</span>
                 <span>{`Chain: ${getChainDisplayName(t.token.chainName)}`}</span>
@@ -146,9 +146,9 @@ export function TokenList({
           </button>
         ))
       ) : (
-        <div className="my-8 text-gray-500 text-center">
+        <div className="my-8 text-center text-gray-500">
           <div>No tokens found</div>
-          <div className="mt-2 text-sm ">Try a different destination chain or search query</div>
+          <div className="mt-2 text-sm">Try a different destination chain or search query</div>
         </div>
       )}
     </div>

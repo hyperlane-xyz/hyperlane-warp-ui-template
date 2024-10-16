@@ -63,10 +63,10 @@ export function TransferTokenForm() {
       validateOnBlur={false}
     >
       {({ isValidating, values }) => (
-        <Form className="flex flex-col items-stretch w-full">
+        <Form className="flex w-full flex-col items-stretch">
           <ChainWalletWarning originChain={values.origin} />
           <ChainSelectSection isReview={isReview} />
-          <div className="mt-3.5 flex justify-between items-end space-x-4">
+          <div className="mt-3.5 flex items-end justify-between space-x-4">
             <TokenSection setIsNft={setIsNft} isReview={isReview} />
             <AmountSection isNft={isNft} isReview={isReview} />
           </div>
@@ -115,7 +115,7 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
   return (
     <div className="mt-4 flex items-center justify-between gap-4">
       <ChainSelectField name="origin" label="From" chains={chains} disabled={isReview} />
-      <div className="flex flex-col items-center flex-1">
+      <div className="flex flex-1 flex-col items-center">
         <SwapChainsButton disabled={isReview} />
       </div>
       <ChainSelectField name="destination" label="To" chains={chains} disabled={isReview} />
@@ -132,7 +132,7 @@ function TokenSection({
 }) {
   return (
     <div className="flex-1">
-      <label htmlFor="tokenIndex" className="block text-sm text-gray-600 pl-0.5">
+      <label htmlFor="tokenIndex" className="block pl-0.5 text-sm text-gray-600">
         Token
       </label>
       <TokenSelectField name="tokenIndex" disabled={isReview} setIsNft={setIsNft} />
@@ -147,7 +147,7 @@ function AmountSection({ isNft, isReview }: { isNft: boolean; isReview: boolean 
   return (
     <div className="flex-1">
       <div className="flex justify-between pr-1">
-        <label htmlFor="amount" className="block text-sm text-gray-600 pl-0.5">
+        <label htmlFor="amount" className="block pl-0.5 text-sm text-gray-600">
           Amount
         </label>
         <TokenBalance label="My balance" balance={balance} />
@@ -179,7 +179,7 @@ function RecipientSection({ isReview }: { isReview: boolean }) {
   return (
     <div className="mt-4">
       <div className="flex justify-between pr-1">
-        <label htmlFor="recipient" className="block text-sm text-gray-600 pl-0.5">
+        <label htmlFor="recipient" className="block pl-0.5 text-sm text-gray-600">
           Recipient address
         </label>
         <TokenBalance label="Remote balance" balance={balance} />
@@ -199,7 +199,7 @@ function RecipientSection({ isReview }: { isReview: boolean }) {
 
 function TokenBalance({ label, balance }: { label: string; balance?: TokenAmount | null }) {
   const value = balance?.getDecimalFormattedAmount().toFixed(4) || '0';
-  return <div className="text-xs text-gray-600 text-right">{`${label}: ${value}`}</div>;
+  return <div className="text-right text-xs text-gray-600">{`${label}: ${value}`}</div>;
 }
 
 function ButtonSection({
@@ -353,10 +353,10 @@ function ReviewDetails({ visible }: { visible: boolean }) {
         visible ? 'max-h-screen duration-1000 ease-in' : 'max-h-0 duration-500'
       } overflow-hidden transition-all`}
     >
-      <label className="mt-4 block text-sm text-gray-600 pl-0.5">Transactions</label>
-      <div className="mt-1.5 px-2.5 py-2 space-y-2 rounded border border-gray-400 bg-gray-150 text-sm break-all">
+      <label className="mt-4 block pl-0.5 text-sm text-gray-600">Transactions</label>
+      <div className="mt-1.5 space-y-2 break-all rounded border border-gray-400 bg-gray-150 px-2.5 py-2 text-sm">
         {isLoading ? (
-          <div className="py-6 flex items-center justify-center">
+          <div className="flex items-center justify-center py-6">
             <SmallSpinner />
           </div>
         ) : (
@@ -364,7 +364,7 @@ function ReviewDetails({ visible }: { visible: boolean }) {
             {isApproveRequired && (
               <div>
                 <h4>Transaction 1: Approve Transfer</h4>
-                <div className="mt-1.5 ml-1.5 pl-2 border-l border-gray-300 space-y-1.5 text-xs">
+                <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs">
                   <p>{`Router Address: ${originToken?.addressOrDenom}`}</p>
                   {originToken?.collateralAddressOrDenom && (
                     <p>{`Collateral Address: ${originToken.collateralAddressOrDenom}`}</p>
@@ -374,7 +374,7 @@ function ReviewDetails({ visible }: { visible: boolean }) {
             )}
             <div>
               <h4>{`Transaction${isApproveRequired ? ' 2' : ''}: Transfer Remote`}</h4>
-              <div className="mt-1.5 ml-1.5 pl-2 border-l border-gray-300 space-y-1.5 text-xs">
+              <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs">
                 {destinationToken?.addressOrDenom && (
                   <p className="flex">
                     <span className="min-w-[6.5rem]">Remote Token</span>

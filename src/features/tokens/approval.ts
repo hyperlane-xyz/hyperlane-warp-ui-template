@@ -10,6 +10,7 @@ export function useIsApproveRequired(token?: IToken, amount?: string, enabled = 
   const owner = useAccountAddressForChain(token?.chainName);
 
   const { isLoading, isError, error, data } = useQuery({
+    // eslint-disable-next-line @tanstack/query/exhaustive-deps
     queryKey: ['useIsApproveRequired', owner, amount, token?.addressOrDenom],
     queryFn: async () => {
       if (!token || !owner || !amount) return false;

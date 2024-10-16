@@ -19,7 +19,7 @@ export function useFeeQuotes(
   const { address: sender, publicKey: senderPubKey } = getAccountAddressAndPubKey(origin, accounts);
 
   const { isLoading, isError, data } = useQuery({
-    queryKey: ['useFeeQuotes', destination, tokenIndex, sender],
+    queryKey: ['useFeeQuotes', destination, tokenIndex, sender, senderPubKey],
     queryFn: () => fetchFeeQuotes(destination, tokenIndex, sender, senderPubKey),
     enabled,
     refetchInterval: FEE_QUOTE_REFRESH_INTERVAL,

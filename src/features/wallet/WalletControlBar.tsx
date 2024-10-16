@@ -49,7 +49,7 @@ export function WalletControlBar() {
           <SolidButton onClick={() => setIsSideBarOpen(true)} classes="px-2.5 py-1" color="white">
             <div className="flex items-center justify-center">
               <WalletLogo walletDetails={firstWallet} size={26} />
-              <div className="flex flex-col mx-3 items-start">
+              <div className="mx-3 flex flex-col items-start">
                 <div className="text-xs text-gray-500">{firstWallet.name || 'Wallet'}</div>
                 <div className="text-xs">
                   {readyAccounts[0].addresses.length
@@ -66,11 +66,11 @@ export function WalletControlBar() {
             <div className="flex items-center justify-center">
               <div
                 style={{ height: 26, width: 26 }}
-                className="bg-accent-500 text-white flex items-center justify-center rounded-full"
+                className="flex items-center justify-center rounded-full bg-accent-500 text-white"
               >
                 {numReady}
               </div>
-              <div className="flex flex-col mx-3 items-start">
+              <div className="mx-3 flex flex-col items-start">
                 <div className="text-xs text-gray-500">Wallets</div>
                 <div className="text-xs">{`${numReady} Connected`}</div>
               </div>

@@ -20,7 +20,7 @@ export function WalletEnvSelectionModal({ isOpen, close }: { isOpen: boolean; cl
 
   return (
     <Modal title="Select Wallet Environment" isOpen={isOpen} close={close} width="max-w-sm">
-      <div className="pt-4 pb-2 flex flex-col space-y-2.5">
+      <div className="flex flex-col space-y-2.5 pb-2 pt-4">
         <EnvButton
           onClick={onClickEnv(ProtocolType.Ethereum)}
           subTitle="an EVM"
@@ -67,10 +67,10 @@ function EnvButton({
   return (
     <button
       onClick={onClick}
-      className="w-full py-3.5 space-y-2.5 flex flex-col items-center rounded-lg border border-gray-200 hover:bg-gray-100 hover:border-gray-200 active:bg-gray-200 transition-all"
+      className="flex w-full flex-col items-center space-y-2.5 rounded-lg border border-gray-200 py-3.5 transition-all hover:border-gray-200 hover:bg-gray-100 active:bg-gray-200"
     >
       {logo}
-      <div className="text-gray-800 tracking-wide">{children}</div>
+      <div className="tracking-wide text-gray-800">{children}</div>
       <div className="text-sm text-gray-500">{`Connect to ${subTitle} compatible wallet`}</div>
     </button>
   );

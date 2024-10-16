@@ -31,7 +31,7 @@ export function ChainSelectListModal({
         {sortedChains.map((c) => (
           <button
             key={c}
-            className="py-1.5 px-2 text-sm flex items-center rounded hover:bg-gray-100 active:bg-gray-200 transition-all duration-200"
+            className="flex items-center rounded px-2 py-1.5 text-sm transition-all duration-200 hover:bg-gray-100 active:bg-gray-200"
             onClick={onSelectChain(c)}
           >
             <ChainLogo chainName={c} size={16} background={false} />

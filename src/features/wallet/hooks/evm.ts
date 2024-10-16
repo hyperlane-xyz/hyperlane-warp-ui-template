@@ -34,6 +34,7 @@ export function useEvmWalletDetails() {
   const rainbowKitWalletDetails = connector?._wallets?.[0];
 
   const { data } = useQuery({
+    // eslint-disable-next-line @tanstack/query/exhaustive-deps
     queryKey: ['useEvmWalletDetails', name],
     queryFn: async () => {
       logger.debug('Fetching wallet details');

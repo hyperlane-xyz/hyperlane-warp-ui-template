@@ -38,4 +38,5 @@
   },
   "editor.tabSize": 2,
   "editor.detectIndentation": false,
+  "tailwindCSS.experimental.classRegex": [["clsx\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"]]
 }

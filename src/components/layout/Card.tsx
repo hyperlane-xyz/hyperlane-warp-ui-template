@@ -7,7 +7,7 @@ interface Props {
 export function Card({ className, children }: PropsWithChildren<Props>) {
   return (
     <div
-      className={`${cardStyles.padding} relative bg-white rounded-2xl overflow-auto ${className}`}
+      className={`${cardStyles.padding} relative overflow-auto rounded-2xl bg-white ${className}`}
     >
       {children}
     </div>

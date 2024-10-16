@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import React from 'react';
+import { ReactNode } from 'react';
 
 import { links } from '../../consts/links';
 import { Color } from '../../styles/Color';
@@ -12,7 +12,7 @@ type FooterLink = {
   title: string;
   url: string;
   external: boolean;
-  icon?: React.ReactNode;
+  icon?: ReactNode;
 };
 
 const footerLinks: FooterLink[] = [

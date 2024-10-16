@@ -82,14 +82,14 @@ export function SelectTokenIdModal({
           tokenIds.map((id) => (
             <button
               key={id}
-              className="py-1.5 px-2 text-sm flex items-center rounded hover:bg-gray-100 active:bg-gray-200 transition-all duration-200"
+              className="flex items-center rounded px-2 py-1.5 text-sm transition-all duration-200 hover:bg-gray-100 active:bg-gray-200"
               onClick={onSelectTokenId(id)}
             >
               <span className="ml-2">{id}</span>
             </button>
           ))
         ) : (
-          <div className="py-1.5 px-2 text-sm text-gray-500 transition-all duration-200">
+          <div className="px-2 py-1.5 text-sm text-gray-500 transition-all duration-200">
             No token ids found
           </div>
         )}

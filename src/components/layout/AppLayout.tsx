@@ -16,11 +16,11 @@ export function AppLayout({ children }: PropsWithChildren) {
       <div
         style={styles.container}
         id="app-content"
-        className="relative flex flex-col justify-between h-full min-h-screen w-full min-w-screen"
+        className="min-w-screen relative flex h-full min-h-screen w-full flex-col justify-between"
       >
         <Header />
-        <div className="sm:px-4 mx-auto grow flex items-center max-w-screen-xl">
-          <main className="w-full flex-1 my-4 flex items-center justify-center">{children}</main>
+        <div className="mx-auto flex max-w-screen-xl grow items-center sm:px-4">
+          <main className="my-4 flex w-full flex-1 items-center justify-center">{children}</main>
         </div>
         <Footer />
       </div>

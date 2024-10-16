@@ -69,7 +69,7 @@ export function useCosmosDisconnectFn(): () => Promise<void> {
 }
 
 export function useCosmosActiveChain(): ActiveChainInfo {
-  return useMemo(() => ({} as ActiveChainInfo), []);
+  return useMemo(() => ({}) as ActiveChainInfo, []);
 }
 
 export function useCosmosTransactionFns(): ChainTransactionFns {

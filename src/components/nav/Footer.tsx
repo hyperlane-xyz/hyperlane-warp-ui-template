@@ -1,10 +1,9 @@
+import Image from 'next/image';
 import Link from 'next/link';
 
 import { links } from '../../consts/links';
-import { Color } from '../../styles/Color';
 import { Discord } from '../icons/Discord';
 import { Github } from '../icons/Github';
-import { HyperlaneLogo } from '../icons/HyperlaneLogo';
 import { Twitter } from '../icons/Twitter';
 
 const footerLinks1 = [
@@ -34,14 +33,12 @@ export function Footer() {
 
 function FooterLogo() {
   return (
-    <div className="flex items-center justify-center">
-      <div className="ml-2 h-12 w-12 sm:h-14 sm:w-14">
-        <HyperlaneLogo fill={Color.white} />
-      </div>
-      <div className="ml-6 space-y-1 text-lg font-medium sm:text-xl">
-        <div>Go interchain</div>
-        <div>with Hyperlane</div>
-      </div>
+    <div className="flex items-center justify-center text-lg sm:text-xl font-medium ml-6 space-y-1 gap-1.5">
+      <span>Built with</span>
+      <Image src="/logos/everclear.png" alt="" width={24} height={24} />
+      <span>Everclear and</span>
+      <Image src="/logos/renzo.svg" alt="" width={22} height={22} />
+      <span>Renzo</span>
     </div>
   );
 }

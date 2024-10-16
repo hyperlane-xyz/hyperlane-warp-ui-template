@@ -1,6 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 
-const defaultTheme = require('tailwindcss/defaultTheme')
+const defaultTheme = require('tailwindcss/defaultTheme');
 
 module.exports = {
   content: ['./src/**/*.{js,ts,jsx,tsx}'],
@@ -19,30 +19,30 @@ module.exports = {
       colors: {
         black: '#010101',
         white: '#ffffff',
-        gray: {...defaultTheme.colors.gray, 150: '#EBEDF0', 250: '#404040', 350: '#6B6B6B'},
+        gray: { ...defaultTheme.colors.gray, 150: '#EBEDF0', 250: '#404040', 350: '#6B6B6B' },
         primary: {
-          50: '#E6EDF9',
-          100: '#CDDCF4',
-          200: '#A7C2EC',
-          300: '#82A8E4',
-          400: '#5385D2',
-          500: '#2764c1',
-          600: '#1D4685',
-          700: '#162A4A',
-          800: '#11213B',
-          900: '#0D192C',
+          50: '#e7e7fa',
+          100: '#cdcbf5',
+          200: '#8d91ea',
+          300: '#2731d8',
+          400: '#131961',
+          500: '#040512',
+          600: '#03030f',
+          700: '#02020d',
+          800: '#02020b',
+          900: '#020209',
         },
         accent: {
-          50: '#FAEAF8',
-          100: '#F2C1EA',
-          200: '#EA98DC',
-          300: '#E26ECE',
-          400: '#DA45C0',
-          500: '#D631B9',
-          600: '#C02CA6',
-          700: '#952281',
-          800: '#6B185C',
-          900: '#400E37',
+          50: '#f8fcee',
+          100: '#eff8db',
+          200: '#dff2b9',
+          300: '#c9e792',
+          400: '#afd868',
+          500: '#9ad041',
+          600: '#78ae26',
+          700: '#5c8622',
+          800: '#4c6b22',
+          900: '#415b22',
         },
         red: {
           100: '#EBBAB8',
@@ -61,8 +61,8 @@ module.exports = {
           200: '#93BAA6',
           300: '#679F82',
           400: '#3C835E',
-          500: '#27764d',
-          600: '#236A45',
+          500: '#C4FF61',
+          600: '#ACE730',
           700: '#1F5E3D',
           800: '#17462E',
           900: '#0F2F1E',
@@ -96,8 +96,8 @@ module.exports = {
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;',
       },
       transitionProperty: {
-        'height': 'height, max-height',
-        'spacing': 'margin, padding',
+        height: 'height, max-height',
+        spacing: 'margin, padding',
       },
       maxWidth: {
         'xl-1': '39.5rem',

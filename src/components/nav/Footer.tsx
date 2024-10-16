@@ -17,10 +17,10 @@ type FooterLink = {
 
 const footerLinks: FooterLink[] = [
   { title: 'Docs', url: links.docs, external: true },
-  { title: 'Terms of Service', url: links.tos, external: true },
+  { title: 'Terms', url: links.tos, external: true },
   { title: 'Twitter', url: links.twitter, external: true, icon: <Twitter fill="#fff" /> },
   { title: 'Homepage', url: links.home, external: true },
-  { title: 'Privacy Policy', url: links.privacyPolicy, external: true },
+  { title: 'Privacy', url: links.privacyPolicy, external: true },
   { title: 'Discord', url: links.discord, external: true, icon: <Discord fill="#fff" /> },
   { title: 'Explorer', url: links.explorer, external: true },
   { title: 'Bounty', url: links.bounty, external: true },
@@ -56,7 +56,7 @@ function FooterLogo() {
 
 function FooterNav() {
   return (
-    <nav className="flex text-xxs font-medium md:text-md">
+    <nav className="flex text-md font-medium">
       <ul className={`${styles.linkGrid}`}>
         {footerLinks.map((item) => (
           <li key={item.title}>
@@ -76,6 +76,6 @@ function FooterNav() {
 }
 
 const styles = {
-  linkGrid: 'grid grid-cols-3 gap-x-4 md:gap-x-6 gap-y-1.5',
+  linkGrid: 'grid grid-cols-3 gap-x-6 gap-y-1.5',
   linkItem: 'flex items-center capitalize text-decoration-none hover:underline underline-offset-2',
 };

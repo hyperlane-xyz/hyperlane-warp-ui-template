@@ -33,7 +33,7 @@ export function Footer() {
 
 function FooterLogo() {
   return (
-    <div className="flex items-center justify-center text-lg sm:text-xl font-medium ml-6 space-y-1 gap-1.5">
+    <div className="ml-6 flex items-center justify-center gap-1.5 space-y-1 text-lg font-medium sm:text-xl">
       <span>Built with</span>
       <Image src="/logos/everclear.png" alt="" width={24} height={24} />
       <span>Everclear and</span>

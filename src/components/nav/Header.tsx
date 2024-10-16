@@ -11,7 +11,7 @@ export function Header() {
       <div className="flex items-start justify-between">
         <Link href="/" className="flex items-center py-2">
           <Image src={Logo} width={24} alt="" />
-          <Image src={Name} width={130} alt="" className="hidden sm:block mt-0.5 ml-2" />
+          <Image src={Name} width={130} alt="" className="ml-2 mt-0.5 hidden sm:block" />
         </Link>
         <div className="flex flex-col items-end gap-2 md:flex-row-reverse md:items-start">
           <WalletControlBar />

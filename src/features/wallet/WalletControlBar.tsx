@@ -1,5 +1,4 @@
 import Image from 'next/image';
-import { useState } from 'react';
 
 import { ProtocolType, shortenAddress } from '@hyperlane-xyz/utils';
 
@@ -9,15 +8,16 @@ import Wallet from '../../images/icons/wallet.svg';
 import { useIsSsr } from '../../utils/ssr';
 
 import { ChevronIcon } from '@hyperlane-xyz/widgets';
-import { SideBarMenu } from './SideBarMenu';
-import { WalletEnvSelectionModal } from './WalletEnvSelectionModal';
+import { useStore } from '../store';
 import { useAccounts, useWalletDetails } from './hooks/multiProtocol';
 
 export function WalletControlBar() {
   const isSsr = useIsSsr();
 
-  const [showEnvSelectModal, setShowEnvSelectModal] = useState(false);
-  const [isSideBarOpen, setIsSideBarOpen] = useState(false);
+  const { setShowEnvSelectModal, setIsSideBarOpen } = useStore((s) => ({
+    setShowEnvSelectModal: s.setShowEnvSelectModal,
+    setIsSideBarOpen: s.setIsSideBarOpen,
+  }));
 
   const { readyAccounts } = useAccounts();
   const walletDetails = useWalletDetails();
@@ -48,7 +48,7 @@ export function WalletControlBar() {
 
         {numReady === 1 && (
           <SolidButton onClick={() => setIsSideBarOpen(true)} classes="px-2.5 py-1" color="white">
-            <div className="flex items-center justify-center">
+            <div className="flex w-36 items-center justify-center xs:w-auto">
               <WalletLogo walletDetails={firstWallet} size={26} />
               <div className="mx-3 flex flex-col items-start">
                 <div className="text-xs text-gray-500">{firstWallet.name || 'Wallet'}</div>
@@ -58,7 +58,7 @@ export function WalletControlBar() {
                     : 'Unknown'}
                 </div>
               </div>
-              <ChevronIcon direction="s" width={16} height={16} />
+              <ChevronIcon direction="s" width={10} height={6} />
             </div>
           </SolidButton>
         )}
@@ -76,23 +76,11 @@ export function WalletControlBar() {
                 <div className="text-xs text-gray-500">Wallets</div>
                 <div className="text-xs">{`${numReady} Connected`}</div>
               </div>
-              <ChevronIcon direction="s" width={16} height={16} />
+              <ChevronIcon direction="s" width={10} height={6} />
             </div>
           </SolidButton>
         )}
       </div>
-
-      <WalletEnvSelectionModal
-        isOpen={showEnvSelectModal}
-        close={() => setShowEnvSelectModal(false)}
-      />
-      {numReady > 0 && (
-        <SideBarMenu
-          onClose={() => setIsSideBarOpen(false)}
-          isOpen={isSideBarOpen}
-          onConnectWallet={() => setShowEnvSelectModal(true)}
-        />
-      )}
     </div>
   );
 }

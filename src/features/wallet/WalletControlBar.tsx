@@ -8,6 +8,7 @@ import { WalletLogo } from '../../components/icons/WalletLogo';
 import Wallet from '../../images/icons/wallet.svg';
 import { useIsSsr } from '../../utils/ssr';
 
+import { ChevronIcon } from '@hyperlane-xyz/widgets';
 import { SideBarMenu } from './SideBarMenu';
 import { WalletEnvSelectionModal } from './WalletEnvSelectionModal';
 import { useAccounts, useWalletDetails } from './hooks/multiProtocol';
@@ -57,6 +58,7 @@ export function WalletControlBar() {
                     : 'Unknown'}
                 </div>
               </div>
+              <ChevronIcon direction="s" width={16} height={16} />
             </div>
           </SolidButton>
         )}
@@ -74,6 +76,7 @@ export function WalletControlBar() {
                 <div className="text-xs text-gray-500">Wallets</div>
                 <div className="text-xs">{`${numReady} Connected`}</div>
               </div>
+              <ChevronIcon direction="s" width={16} height={16} />
             </div>
           </SolidButton>
         )}

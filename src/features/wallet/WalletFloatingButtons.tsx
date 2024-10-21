@@ -1,4 +1,5 @@
 import Link from 'next/link';
+
 import { IconButton } from '../../components/buttons/IconButton';
 import { DocsIcon } from '../../components/icons/Docs';
 import { WalletIcon } from '../../components/icons/Wallet';
@@ -7,6 +8,7 @@ import HistoryIcon from '../../images/icons/history.svg';
 import { Color } from '../../styles/Color';
 import { useIsMobile } from '../../styles/mediaQueries';
 import { useStore } from '../store';
+
 import { useAccounts } from './hooks/multiProtocol';
 
 export function WalletFloatingButtons() {
@@ -24,7 +26,7 @@ export function WalletFloatingButtons() {
 
   return (
     <div className="flex items-center justify-end gap-4">
-      <Link href={links.docs} target="_blank" className={linkStyles}>
+      <Link href={links.warpDocs} target="_blank" className={linkStyles}>
         <DocsIcon />
       </Link>
       {numReady === 0 && (

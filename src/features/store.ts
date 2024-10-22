@@ -60,12 +60,12 @@ export const useStore = create<AppState>()(
         set(() => ({ transferLoading: isLoading }));
       },
       isSideBarOpen: false,
-      setIsSideBarOpen: (isOpen) => {
-        set(() => ({ isSideBarOpen: isOpen }));
+      setIsSideBarOpen: (isSideBarOpen) => {
+        set(() => ({ isSideBarOpen }));
       },
       showEnvSelectModal: false,
-      setShowEnvSelectModal: (show) => {
-        set(() => ({ showEnvSelectModal: show }));
+      setShowEnvSelectModal: (showEnvSelectModal) => {
+        set(() => ({ showEnvSelectModal }));
       },
     }),
     {

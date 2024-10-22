@@ -19,7 +19,6 @@ module.exports = {
       colors: {
         black: '#010101',
         white: '#ffffff',
-        blue: '#2362C0',
         gray: { ...defaultTheme.colors.gray, 150: '#EBEDF0', 250: '#404040', 350: '#6B6B6B' },
         primary: {
           50: '#E6EDF9',

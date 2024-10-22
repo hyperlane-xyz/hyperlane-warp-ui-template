@@ -1,6 +1,6 @@
-export interface IconProps {
-  width?: string | number;
-  height?: string | number;
+import { SVGProps } from 'react';
+
+// TODO: Replace with DefaultIconProps in widgets lib
+export type IconProps = SVGProps<SVGSVGElement> & {
   color?: string;
-  className?: string;
-}
+};

@@ -8,7 +8,7 @@ const Home: NextPage = () => {
   return (
     <div className="space-y-3 pt-4">
       <TipCard />
-      <div className="md:relative">
+      <div className="relative">
         <TransferTokenCard />
         <WalletFloatingButtons />
       </div>

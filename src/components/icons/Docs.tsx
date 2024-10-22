@@ -1,14 +1,9 @@
 import { memo } from 'react';
+
 import { Color } from '../../styles/Color';
+import { IconProps } from './types';
 
-interface Props {
-  width?: string | number;
-  height?: string | number;
-  color?: string;
-  className?: string;
-}
-
-function _DocsIcon({ className, color, height = 24, width = 24 }: Props) {
+function _DocsIcon({ className, color, height = 24, width = 24 }: IconProps) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"

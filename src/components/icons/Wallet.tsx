@@ -1,13 +1,8 @@
 import { memo } from 'react';
 
-interface Props {
-  width?: string | number;
-  height?: string | number;
-  color?: string;
-  className?: string;
-}
+import { IconProps } from './types';
 
-function _WalletIcon({ className, color, height = 14, width = 17 }: Props) {
+function _WalletIcon({ className, color, height = 14, width = 17 }: IconProps) {
   return (
     <svg
       width={width}

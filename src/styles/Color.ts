@@ -6,6 +6,7 @@ const themeColors = theme.extend.colors as unknown as Record<string, string>;
 export const Color = {
   black: themeColors.black,
   white: themeColors.white,
+  blue: themeColors.blue,
   gray: themeColors.gray[500],
   lightGray: themeColors.gray[200],
   primary: themeColors.primary[500],

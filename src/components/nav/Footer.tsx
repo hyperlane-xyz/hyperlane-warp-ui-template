@@ -1,20 +1,28 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { ReactNode } from 'react';
 
 import { links } from '../../consts/links';
 import { Discord } from '../icons/Discord';
 import { Github } from '../icons/Github';
 import { Twitter } from '../icons/Twitter';
 
-const footerLinks1 = [
-  { title: 'Docs', url: links.docs, external: true },
-  { title: 'Homepage', url: links.home, external: true },
-  { title: 'Explorer', url: links.explorer, external: true },
-];
+type FooterLink = {
+  title: string;
+  url: string;
+  external: boolean;
+  icon?: ReactNode;
+};
 
-const footerLinks3 = [
+const footerLinks: FooterLink[] = [
+  { title: 'Docs', url: links.docs, external: true },
+  { title: 'Terms', url: links.tos, external: true },
   { title: 'Twitter', url: links.twitter, external: true, icon: <Twitter fill="#fff" /> },
+  { title: 'Homepage', url: links.home, external: true },
+  { title: 'Privacy', url: links.privacyPolicy, external: true },
   { title: 'Discord', url: links.discord, external: true, icon: <Discord fill="#fff" /> },
+  { title: 'Explorer', url: links.explorer, external: true },
+  { title: 'Bounty', url: links.bounty, external: true },
   { title: 'Github', url: links.github, external: true, icon: <Github fill="#fff" /> },
 ];
 
@@ -46,21 +54,8 @@ function FooterLogo() {
 function FooterNav() {
   return (
     <nav className="flex text-md font-medium">
-      <ul className={`${styles.linkCol} mr-14`}>
-        {footerLinks1.map((item) => (
-          <li className="" key={item.title}>
-            <Link
-              className={styles.linkItem}
-              target={item.external ? '_blank' : '_self'}
-              href={item.url}
-            >
-              <div className="">{item.title}</div>
-            </Link>
-          </li>
-        ))}
-      </ul>
-      <ul className={`${styles.linkCol}`}>
-        {footerLinks3.map((item) => (
+      <ul className={`${styles.linkGrid}`}>
+        {footerLinks.map((item) => (
           <li key={item.title}>
             <Link
               className={styles.linkItem}
@@ -78,6 +73,6 @@ function FooterNav() {
 }
 
 const styles = {
-  linkCol: 'flex flex-col gap-1.5',
+  linkGrid: 'grid grid-cols-3 gap-x-6 gap-y-1.5',
   linkItem: 'flex items-center capitalize text-decoration-none hover:underline underline-offset-2',
 };

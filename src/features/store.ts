@@ -20,6 +20,10 @@ export interface AppState {
   failUnconfirmedTransfers: () => void;
   transferLoading: boolean;
   setTransferLoading: (isLoading: boolean) => void;
+  isSideBarOpen: boolean;
+  setIsSideBarOpen: (isOpen: boolean) => void;
+  showEnvSelectModal: boolean;
+  setShowEnvSelectModal: (show: boolean) => void;
 }
 
 export const useStore = create<AppState>()(
@@ -54,6 +58,14 @@ export const useStore = create<AppState>()(
       transferLoading: false,
       setTransferLoading: (isLoading) => {
         set(() => ({ transferLoading: isLoading }));
+      },
+      isSideBarOpen: false,
+      setIsSideBarOpen: (isSideBarOpen) => {
+        set(() => ({ isSideBarOpen }));
+      },
+      showEnvSelectModal: false,
+      setShowEnvSelectModal: (showEnvSelectModal) => {
+        set(() => ({ showEnvSelectModal }));
       },
     }),
     {

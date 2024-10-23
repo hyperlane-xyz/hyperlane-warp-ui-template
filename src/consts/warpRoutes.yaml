@@ -1,5 +1,6 @@
 # yaml-language-server: $schema=../schema.json
 tokens:
+# ezEth
   - addressOrDenom: '0xB26bBfC6d1F469C821Ea25099017862e7368F4E8'
     chainName: arbitrum
     collateralAddressOrDenom: '0x2416092f143378750bb29b79eD961ab195CcEea5'
@@ -240,3 +241,24 @@ tokens:
     name: Restaked ETH on Sei
     standard: EvmHypXERC20
     symbol: redETH
+# pzEth
+  - chainName: ethereum
+    addressOrDenom: '0x0220b1EA1b56ECE8e2b62c8965659f0A621e9ebd'
+    collateralAddressOrDenom: '0xbC5511354C4A9a50DE928F56DB01DD327c4e56d5'
+    connections:
+      - token: ethereum|zircuit|0x8303Ce0E207BB44a3D3B2313AC219d0fC73b3764
+    decimals: 18
+    logoURI: /deployments/warp_routes/PZETH/logo.svg
+    name: 'Renzo Restaked LST '
+    standard: EvmHypXERC20Lockbox
+    symbol: pzETH
+  - chainName: zircuit
+    addressOrDenom: '0x8303Ce0E207BB44a3D3B2313AC219d0fC73b3764'
+    collateralAddressOrDenom: '0x9cb41CD74D01ae4b4f640EC40f7A60cA1bCF83E7'
+    connections:
+      - token: ethereum|ethereum|0x0220b1EA1b56ECE8e2b62c8965659f0A621e9ebd
+    decimals: 18
+    logoURI: /deployments/warp_routes/PZETH/logo.svg
+    name: 'Renzo Restaked LST '
+    standard: EvmHypXERC20
+    symbol: pzETH

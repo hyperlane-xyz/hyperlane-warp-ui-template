@@ -1,6 +1,27 @@
+
 # A list of Warp Route token configs
 # These configs will be merged with the warp routes in the configured registry
 # The input here is typically the output of the Hyperlane CLI warp deploy command
 ---
 tokens: []
 options: {}
+tokens:[
+      - chainName: linea
+        standard: EvmHypCollateral
+        decimals: 6
+        symbol: USDT
+        name: Tether USD
+        addressOrDenom: "0xe3d7587ca19EfF0b4b1CAa752C96fD04E71947D7"
+        collateralAddressOrDenom: "0xa219439258ca9da29e9cc4ce5596924745e12b93"
+        connections:
+          - token: ethereum|scroll|0xF785990CBc715799588C5049eb7bc24892016310
+      - chainName: scroll
+        standard: EvmHypSynthetic
+        decimals: 6
+        symbol: USDT
+        name: Tether USD
+        addressOrDenom: "0xF785990CBc715799588C5049eb7bc24892016310"
+        connections:
+          - token: ethereum|linea|0xe3d7587ca19EfF0b4b1CAa752C96fD04E71947D7
+          ]
+

@@ -3,8 +3,6 @@ import { memo } from 'react';
 import { IToken } from '@hyperlane-xyz/sdk';
 import { Circle } from '@hyperlane-xyz/widgets';
 
-import { getRegistry } from '../../context/context';
-import { isValidHttpsUrl, isValidRelativeUrl } from '../../utils/url';
 import { ErrorBoundary } from '../errors/ErrorBoundary';
 
 interface Props {
@@ -36,11 +34,14 @@ function _TokenIcon({ token, size = 32 }: Props) {
 
 function getImageSrc(token?: IToken | null) {
   if (!token?.logoURI) return null;
-  // If it's a valid, direct URL, return it
-  if (isValidHttpsUrl(token.logoURI)) return token.logoURI;
-  // Otherwise assume it's a relative URL to the registry base
-  if (isValidRelativeUrl(token.logoURI)) return getRegistry().getUri(token.logoURI);
-  return null;
+
+  return '/logos/elixir.svg';
+
+  // // If it's a valid, direct URL, return it
+  // if (isValidHttpsUrl(token.logoURI)) return token.logoURI;
+  // // Otherwise assume it's a relative URL to the registry base
+  // if (isValidRelativeUrl(token.logoURI)) return getRegistry().getUri(token.logoURI);
+  // return null;
 }
 
 export const TokenIcon = memo(_TokenIcon);

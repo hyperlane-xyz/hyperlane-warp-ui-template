@@ -6,6 +6,10 @@ export const warpRouteWhitelist: Array<string> | null = [
   // TIA routes
   'TIA.n/arbitrum-neutron',
   'TIA.n/mantapacific-neutron',
+  'TIA/eclipsemainnet-stride',
+
+  // stTIA routes
+  'stTIA/eclipsemainnet-stride',
 
   // ETH routes
   'ETH/ethereum-viction',

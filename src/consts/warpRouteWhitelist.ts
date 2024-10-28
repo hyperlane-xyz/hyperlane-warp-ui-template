@@ -16,6 +16,9 @@ export const warpRouteWhitelist: Array<string> | null = [
   // ECLIP routes
   'ECLIP/arbitrum-neutron',
 
+  // LUMIA routes
+  'LUMIA/bsc-ethereum-lumia',
+
   // USDC routes
   'USDC/ethereum-inevm',
   'USDC/ancient8-ethereum',

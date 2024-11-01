@@ -32,6 +32,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   // USDT routes
   'USDT/ethereum-inevm',
   'USDT/ethereum-viction',
+  'USDT/eclipsemainnet-ethereum',
 
   // INJ routes
   'INJ/inevm-injective',
@@ -41,4 +42,10 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // WIF routes
   'WIF/eclipsemainnet-solanamainnet',
+
+  // WBTC routes
+  'WBTC/eclipsemainnet-ethereum',
+
+  // ORCA routes
+  'ORCA/eclipsemainnet-solanamainnet',
 ];

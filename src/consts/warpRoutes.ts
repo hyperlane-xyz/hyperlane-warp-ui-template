@@ -23,7 +23,7 @@ export const warpRouteConfigs: WarpCoreConfig = {
           sourcePort: 'transfer',
           sourceChannel: 'channel-8',
         },
-        // To Aribtrum via Neutron
+        // To Arbitrum via Neutron
         {
           token: 'ethereum|arbitrum|0xD56734d7f9979dD94FAE3d67C7e928234e71cD4C',
           type: TokenConnectionType.IbcHyperlane,

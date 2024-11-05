@@ -1,10 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Analytics } from '@vercel/analytics/react';
 import type { AppProps } from 'next/app';
-import { ToastContainer, Zoom, toast } from 'react-toastify';
+import { ToastContainer, Zoom } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import 'src/vendor/inpage-metamask';
-import 'src/vendor/polyfill';
+import '../vendor/inpage-metamask';
+import '../vendor/polyfill';
 
 import '@hyperlane-xyz/widgets/styles.css';
 
@@ -48,11 +48,7 @@ export default function App({ Component, pageProps }: AppProps) {
                     <Component {...pageProps} />
                     <Analytics />
                   </AppLayout>
-                  <ToastContainer
-                    transition={Zoom}
-                    position={toast.POSITION.BOTTOM_RIGHT}
-                    limit={2}
-                  />
+                  <ToastContainer transition={Zoom} position="bottom-right" limit={2} />
                 </CosmosWalletContext>
               </SolanaWalletContext>
             </EvmWalletContext>

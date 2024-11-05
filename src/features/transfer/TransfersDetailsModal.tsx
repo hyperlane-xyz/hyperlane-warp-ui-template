@@ -196,9 +196,7 @@ export function TransfersDetailsModal({
         <div className="flex flex-col items-center justify-center py-4">
           <Spinner />
           <div
-            className={`mt-5 text-center text-sm ${
-              status === TransferStatus.Failed ? 'text-red-600' : 'text-gray-600'
-            }`}
+            className={`mt-5 text-center text-sm ${isFailed ? 'text-red-600' : 'text-gray-600'}`}
           >
             {statusDescription}
           </div>

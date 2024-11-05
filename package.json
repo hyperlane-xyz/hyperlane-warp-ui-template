@@ -88,6 +88,7 @@
     "typecheck": "tsc",
     "lint": "next lint",
     "start": "next start",
+    "test": "echo 'No tests'",
     "prettier": "prettier --write ./src"
   },
   "types": "dist/src/index.d.ts",

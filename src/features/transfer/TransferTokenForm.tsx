@@ -5,12 +5,12 @@ import { toast } from 'react-toastify';
 
 import { TokenAmount } from '@hyperlane-xyz/sdk';
 import { ProtocolType, errorToString, isNullish, toWei } from '@hyperlane-xyz/utils';
+import { ChevronIcon } from '@hyperlane-xyz/widgets';
 
 import { SmallSpinner } from '../../components/animation/SmallSpinner';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
 import { IconButton } from '../../components/buttons/IconButton';
 import { SolidButton } from '../../components/buttons/SolidButton';
-import { ChevronIcon } from '../../components/icons/Chevron';
 import { TextField } from '../../components/input/TextField';
 import { getIndexForToken, getTokenByIndex, getTokens, getWarpCore } from '../../context/context';
 import SwapIcon from '../../images/icons/swap.svg';

@@ -24,14 +24,14 @@ export function WalletEnvSelectionModal({ isOpen, close }: { isOpen: boolean; cl
         <EnvButton
           onClick={onClickEnv(ProtocolType.Ethereum)}
           subTitle="an EVM"
-          logoChainId={ethereum.chainId}
+          logoChainName={ethereum.name}
         >
           Ethereum
         </EnvButton>
         <EnvButton
           onClick={onClickEnv(ProtocolType.Sealevel)}
           subTitle="a Solana"
-          logoChainId={solanamainnet.chainId}
+          logoChainName={solanamainnet.name}
         >
           Solana
         </EnvButton>
@@ -51,18 +51,17 @@ function EnvButton({
   onClick,
   subTitle,
   logo,
-  logoChainId,
+  logoChainName,
   children,
 }: PropsWithChildren<{
   subTitle: string;
-  logoChainId?: number | string;
+  logoChainName?: ChainName;
   logo?: React.ReactElement;
   onClick?: () => void;
 }>) {
   if (!logo) {
-    if (!logoChainId) throw new Error('Either logo or logoChainId must be provided');
-    if (typeof logoChainId !== 'number') throw new Error('logoChainId must be a number');
-    logo = <ChainLogo chainId={logoChainId} size={34} />;
+    if (!logoChainName) throw new Error('Either logo or logoChainName must be provided');
+    logo = <ChainLogo chainName={logoChainName} size={34} />;
   }
   return (
     <button

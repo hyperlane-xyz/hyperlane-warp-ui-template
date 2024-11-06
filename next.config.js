@@ -1,6 +1,5 @@
 /** @type {import('next').NextConfig} */
 
-
 const { version } = require('./package.json')
 const { withSentryConfig } = require("@sentry/nextjs");
 const withBundleAnalyzer = require('@next/bundle-analyzer')({

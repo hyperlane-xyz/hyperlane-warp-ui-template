@@ -21,7 +21,7 @@ export function useFetchMaxAmount() {
   const mutation = useMutation({
     mutationFn: (params: FetchMaxParams) => fetchMaxAmount(params),
   });
-  return { fetchMaxAmount: mutation.mutateAsync, isLoading: mutation.isLoading };
+  return { fetchMaxAmount: mutation.mutateAsync, isLoading: mutation.isPending };
 }
 
 async function fetchMaxAmount({ accounts, balance, destination, origin }: FetchMaxParams) {

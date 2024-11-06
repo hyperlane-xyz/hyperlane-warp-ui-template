@@ -2,6 +2,7 @@ import Image from 'next/image';
 
 import { WalletDetails } from '../../features/wallet/hooks/types';
 import Wallet from '../../images/icons/wallet.svg';
+import WalletConnect from '../../images/logos/wallet-connect.svg';
 
 export function WalletLogo({
   walletDetails,
@@ -10,14 +11,17 @@ export function WalletLogo({
   walletDetails: WalletDetails;
   size?: number;
 }) {
+  let src = walletDetails.logoUrl?.trim();
+  if (!src && walletDetails.name?.toLowerCase() === 'walletconnect') {
+    src = WalletConnect;
+  }
   return (
     <Image
-      src={walletDetails.logoUrl || Wallet}
+      src={src || Wallet}
       alt=""
       width={size}
       height={size}
-      style={{ backgroundColor: !walletDetails.logoUrl ? walletDetails.logoAccent : undefined }}
-      className="rounded-full p-0.5"
+      className={`p-0.5 ${src && 'rounded-full'}`}
     />
   );
 }

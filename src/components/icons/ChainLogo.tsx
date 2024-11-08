@@ -1,8 +1,6 @@
+import { ChainLogo as ChainLogoInner } from '@hyperlane-xyz/widgets';
 import Image from 'next/image';
 import { useMemo } from 'react';
-
-import { ChainLogo as ChainLogoInner } from '@hyperlane-xyz/widgets';
-
 import { getRegistry } from '../../context/context';
 import { tryGetChainMetadata } from '../../features/chains/utils';
 

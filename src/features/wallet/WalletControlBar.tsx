@@ -1,14 +1,11 @@
-import Image from 'next/image';
-
 import { ProtocolType, shortenAddress } from '@hyperlane-xyz/utils';
 import { ChevronIcon } from '@hyperlane-xyz/widgets';
-
+import Image from 'next/image';
 import { SolidButton } from '../../components/buttons/SolidButton';
 import { WalletLogo } from '../../components/icons/WalletLogo';
 import Wallet from '../../images/icons/wallet.svg';
 import { useIsSsr } from '../../utils/ssr';
 import { useStore } from '../store';
-
 import { useAccounts, useWalletDetails } from './hooks/multiProtocol';
 
 export function WalletControlBar() {

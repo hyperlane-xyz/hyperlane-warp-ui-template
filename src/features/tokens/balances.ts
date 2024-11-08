@@ -1,8 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
-
 import { IToken } from '@hyperlane-xyz/sdk';
 import { isValidAddress } from '@hyperlane-xyz/utils';
-
+import { useQuery } from '@tanstack/react-query';
 import { useToastError } from '../../components/toast/useToastError';
 import { getMultiProvider, getTokenByIndex } from '../../context/context';
 import { TransferFormValues } from '../transfer/types';

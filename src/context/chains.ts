@@ -1,8 +1,6 @@
-import { z } from 'zod';
-
 import { GithubRegistry, chainMetadata } from '@hyperlane-xyz/registry';
 import { ChainMap, ChainMetadata, ChainMetadataSchema } from '@hyperlane-xyz/sdk';
-
+import { z } from 'zod';
 import { PROXY_DEPLOYED_URL } from '../consts/app.ts';
 import { chains as ChainsTS } from '../consts/chains.ts';
 import ChainsYaml from '../consts/chains.yaml';

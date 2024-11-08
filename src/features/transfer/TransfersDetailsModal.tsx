@@ -1,9 +1,7 @@
-import Image from 'next/image';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-
 import { ProtocolType } from '@hyperlane-xyz/utils';
 import { MessageStatus, MessageTimeline, useMessageTimeline } from '@hyperlane-xyz/widgets';
-
+import Image from 'next/image';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Spinner } from '../../components/animation/Spinner';
 import { CopyButton } from '../../components/buttons/CopyButton';
 import { ChainLogo } from '../../components/icons/ChainLogo';
@@ -24,7 +22,6 @@ import {
 } from '../../utils/transfer';
 import { getChainDisplayName, hasPermissionlessChain } from '../chains/utils';
 import { useAccountForChain, useWalletDetails } from '../wallet/hooks/multiProtocol';
-
 import { TransferContext, TransferStatus } from './types';
 
 export function TransfersDetailsModal({

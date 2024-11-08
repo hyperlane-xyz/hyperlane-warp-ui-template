@@ -1,11 +1,9 @@
 import { useField, useFormikContext } from 'formik';
 import Image from 'next/image';
 import { useState } from 'react';
-
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import ChevronIcon from '../../images/icons/chevron-down.svg';
 import { TransferFormValues } from '../transfer/types';
-
 import { ChainSelectListModal } from './ChainSelectModal';
 import { getChainDisplayName } from './utils';
 

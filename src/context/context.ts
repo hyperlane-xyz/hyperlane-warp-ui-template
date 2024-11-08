@@ -8,7 +8,6 @@ import {
   WarpCore,
 } from '@hyperlane-xyz/sdk';
 import { isNullish } from '@hyperlane-xyz/utils';
-
 import { assembleChainMetadata } from './chains';
 import { assembleWarpCoreConfig } from './warpCoreConfig';
 

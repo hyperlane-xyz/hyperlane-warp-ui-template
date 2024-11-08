@@ -1,8 +1,7 @@
-import jazzicon from '@metamask/jazzicon';
-import { memo } from 'react';
-
 import { isValidAddressEvm, normalizeAddressEvm } from '@hyperlane-xyz/utils';
 import { Circle } from '@hyperlane-xyz/widgets';
+import jazzicon from '@metamask/jazzicon';
+import { memo } from 'react';
 
 type Props = {
   address?: string;

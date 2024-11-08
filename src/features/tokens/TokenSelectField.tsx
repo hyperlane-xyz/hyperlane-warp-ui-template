@@ -1,14 +1,11 @@
+import { IToken } from '@hyperlane-xyz/sdk';
 import { useField, useFormikContext } from 'formik';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
-
-import { IToken } from '@hyperlane-xyz/sdk';
-
 import { TokenIcon } from '../../components/icons/TokenIcon';
 import { getIndexForToken, getTokenByIndex, getWarpCore } from '../../context/context';
 import ChevronIcon from '../../images/icons/chevron-down.svg';
 import { TransferFormValues } from '../transfer/types';
-
 import { TokenListModal } from './TokenListModal';
 
 type Props = {

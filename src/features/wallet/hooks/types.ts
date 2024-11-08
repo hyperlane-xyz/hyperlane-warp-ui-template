@@ -20,7 +20,6 @@ export interface AccountInfo {
 export interface WalletDetails {
   name?: string;
   logoUrl?: string;
-  logoAccent?: string;
 }
 
 export interface ActiveChainInfo {

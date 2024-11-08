@@ -1,8 +1,7 @@
 import { useConnectModal } from '@rainbow-me/rainbowkit';
-import { useQuery } from '@tanstack/react-query';
-import { getNetwork, sendTransaction, switchNetwork, waitForTransaction } from '@wagmi/core';
+import { getAccount, sendTransaction, switchChain, waitForTransactionReceipt } from '@wagmi/core';
 import { useCallback, useMemo } from 'react';
-import { useAccount, useDisconnect, useNetwork } from 'wagmi';
+import { useAccount, useConfig, useDisconnect } from 'wagmi';
 
 import { ProviderType, TypedTransactionReceipt, WarpTypedTransaction } from '@hyperlane-xyz/sdk';
 import { ProtocolType, assert, sleep } from '@hyperlane-xyz/utils';
@@ -30,34 +29,14 @@ export function useEvmAccount(): AccountInfo {
 export function useEvmWalletDetails() {
   const { connector } = useAccount();
   const name = connector?.name;
-  // @ts-ignore RainbowKit hooks on this extra useful info but it's not typed
-  const rainbowKitWalletDetails = connector?._wallets?.[0];
-
-  const { data } = useQuery({
-    // eslint-disable-next-line @tanstack/query/exhaustive-deps
-    queryKey: ['useEvmWalletDetails', name],
-    queryFn: async () => {
-      logger.debug('Fetching wallet details');
-      if (!rainbowKitWalletDetails) return null;
-      const { iconUrl, iconAccent: logoAccent } = rainbowKitWalletDetails;
-      let logoUrl: string | undefined = undefined;
-      if (typeof iconUrl === 'function') {
-        logoUrl = await iconUrl();
-      } else if (typeof iconUrl === 'string') {
-        logoUrl = iconUrl;
-      }
-      return { logoUrl, logoAccent };
-    },
-    staleTime: Infinity,
-  });
+  const logoUrl = connector?.icon;
 
   return useMemo<WalletDetails>(
     () => ({
       name,
-      logoUrl: data?.logoUrl,
-      logoAccent: data?.logoAccent,
+      logoUrl,
     }),
-    [name, data],
+    [name, logoUrl],
   );
 }
 
@@ -72,7 +51,7 @@ export function useEvmDisconnectFn(): () => Promise<void> {
 }
 
 export function useEvmActiveChain(): ActiveChainInfo {
-  const { chain } = useNetwork();
+  const { chain } = useAccount();
   return useMemo<ActiveChainInfo>(
     () => ({
       chainDisplayName: chain?.name,
@@ -83,12 +62,17 @@ export function useEvmActiveChain(): ActiveChainInfo {
 }
 
 export function useEvmTransactionFns(): ChainTransactionFns {
-  const onSwitchNetwork = useCallback(async (chainName: ChainName) => {
-    const chainId = getChainMetadata(chainName).chainId as number;
-    await switchNetwork({ chainId });
-    // Some wallets seem to require a brief pause after switch
-    await sleep(2000);
-  }, []);
+  const config = useConfig();
+
+  const onSwitchNetwork = useCallback(
+    async (chainName: ChainName) => {
+      const chainId = getChainMetadata(chainName).chainId as number;
+      await switchChain(config, { chainId });
+      // Some wallets seem to require a brief pause after switch
+      await sleep(2000);
+    },
+    [config],
+  );
   // Note, this doesn't use wagmi's prepare + send pattern because we're potentially sending two transactions
   // The prepare hooks are recommended to use pre-click downtime to run async calls, but since the flow
   // may require two serial txs, the prepare hooks aren't useful and complicate hook architecture considerably.
@@ -112,26 +96,29 @@ export function useEvmTransactionFns(): ChainTransactionFns {
       // Since the network switching is not foolproof, we also force a network check here
       const chainId = getChainMetadata(chainName).chainId as number;
       logger.debug('Checking wallet current chain');
-      const latestNetwork = await getNetwork();
+      const latestNetwork = await getAccount(config);
       assert(
-        latestNetwork.chain?.id === chainId,
+        latestNetwork?.chain?.id === chainId,
         `Wallet not on chain ${chainName} (ChainMismatchError)`,
       );
 
       logger.debug(`Sending tx on chain ${chainName}`);
       const wagmiTx = ethers5TxToWagmiTx(tx.transaction);
-      const { hash } = await sendTransaction({
+      const hash = await sendTransaction(config, {
         chainId,
         ...wagmiTx,
       });
-      const confirm = (): Promise<TypedTransactionReceipt> =>
-        waitForTransaction({ chainId, hash, confirmations: 1 }).then((r) => ({
+      const confirm = (): Promise<TypedTransactionReceipt> => {
+        const foo = waitForTransactionReceipt(config, { chainId, hash, confirmations: 1 });
+        return foo.then((r) => ({
           type: ProviderType.Viem,
-          receipt: r,
+          receipt: { ...r, contractAddress: r.contractAddress || null },
         }));
+      };
+
       return { hash, confirm };
     },
-    [onSwitchNetwork],
+    [config, onSwitchNetwork],
   );
 
   return { sendTransaction: onSendTx, switchNetwork: onSwitchNetwork };

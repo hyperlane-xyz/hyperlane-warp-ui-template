@@ -1,8 +1,6 @@
 import { useFormikContext } from 'formik';
-
 import { TextField } from '../../components/input/TextField';
 import { TransferFormValues } from '../transfer/types';
-
 import { SelectTokenIdField } from './SelectTokenIdField';
 
 // import { useContractSupportsTokenByOwner, useIsSenderNftOwner } from './balances';

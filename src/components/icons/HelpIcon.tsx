@@ -1,6 +1,5 @@
 import { memo } from 'react';
 import { toast } from 'react-toastify';
-
 import Question from '../../images/icons/question-circle.svg';
 import { IconButton } from '../buttons/IconButton';
 

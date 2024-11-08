@@ -1,12 +1,9 @@
-import Image from 'next/image';
-import { PropsWithChildren } from 'react';
-
 import { ethereum, solanamainnet } from '@hyperlane-xyz/registry';
 import { ProtocolType } from '@hyperlane-xyz/utils';
-
+import Image from 'next/image';
+import { PropsWithChildren } from 'react';
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import { Modal } from '../../components/layout/Modal';
-
 import { useConnectFns } from './hooks/multiProtocol';
 
 export function WalletEnvSelectionModal({ isOpen, close }: { isOpen: boolean; close: () => void }) {

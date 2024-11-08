@@ -1,5 +1,4 @@
 import { WideChevronIcon } from '@hyperlane-xyz/widgets';
-
 import { Color } from '../../styles/Color';
 
 export function WideChevron({ className }: { className?: string }) {

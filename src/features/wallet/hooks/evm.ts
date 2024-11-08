@@ -1,15 +1,12 @@
+import { ProviderType, TypedTransactionReceipt, WarpTypedTransaction } from '@hyperlane-xyz/sdk';
+import { ProtocolType, assert, sleep } from '@hyperlane-xyz/utils';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { getAccount, sendTransaction, switchChain, waitForTransactionReceipt } from '@wagmi/core';
 import { useCallback, useMemo } from 'react';
 import { useAccount, useConfig, useDisconnect } from 'wagmi';
-
-import { ProviderType, TypedTransactionReceipt, WarpTypedTransaction } from '@hyperlane-xyz/sdk';
-import { ProtocolType, assert, sleep } from '@hyperlane-xyz/utils';
-
 import { logger } from '../../../utils/logger';
 import { getChainMetadata, tryGetChainMetadata } from '../../chains/utils';
 import { ethers5TxToWagmiTx } from '../utils';
-
 import { AccountInfo, ActiveChainInfo, ChainTransactionFns, WalletDetails } from './types';
 
 export function useEvmAccount(): AccountInfo {

@@ -1,5 +1,4 @@
 import { memo } from 'react';
-
 import { Color } from '../../styles/Color';
 import { IconProps } from './types';
 

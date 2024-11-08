@@ -1,5 +1,4 @@
 import { SafeParseReturnType } from 'zod';
-
 import { logger } from './logger';
 
 export function validateZodResult<T>(

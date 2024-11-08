@@ -5,7 +5,6 @@ import {
   ProviderType,
   TypedTransactionReceipt,
 } from '@hyperlane-xyz/sdk';
-
 import { getMultiProvider } from '../../context/context';
 import { logger } from '../../utils/logger';
 

@@ -1,9 +1,7 @@
-import Image from 'next/image';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-
 import { ProtocolType } from '@hyperlane-xyz/utils';
 import { MessageStatus, MessageTimeline, useMessageTimeline } from '@hyperlane-xyz/widgets';
-
+import Image from 'next/image';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Spinner } from '../../components/animation/Spinner';
 import { CopyButton } from '../../components/buttons/CopyButton';
 import { ChainLogo } from '../../components/icons/ChainLogo';
@@ -24,7 +22,6 @@ import {
 } from '../../utils/transfer';
 import { getChainDisplayName, hasPermissionlessChain } from '../chains/utils';
 import { useAccountForChain, useWalletDetails } from '../wallet/hooks/multiProtocol';
-
 import { TransferContext, TransferStatus } from './types';
 
 export function TransfersDetailsModal({
@@ -196,9 +193,7 @@ export function TransfersDetailsModal({
         <div className="flex flex-col items-center justify-center py-4">
           <Spinner />
           <div
-            className={`mt-5 text-center text-sm ${
-              status === TransferStatus.Failed ? 'text-red-600' : 'text-gray-600'
-            }`}
+            className={`mt-5 text-center text-sm ${isFailed ? 'text-red-600' : 'text-gray-600'}`}
           >
             {statusDescription}
           </div>

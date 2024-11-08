@@ -1,7 +1,6 @@
 import { useField } from 'formik';
 import Image from 'next/image';
 import { useState } from 'react';
-
 import { Spinner } from '../../components/animation/Spinner';
 import { Modal } from '../../components/layout/Modal';
 import ChevronIcon from '../../images/icons/chevron-down.svg';

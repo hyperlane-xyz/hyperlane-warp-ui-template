@@ -1,11 +1,9 @@
 import { DeliverTxResponse, ExecuteResult, IndexedTx } from '@cosmjs/cosmwasm-stargate';
 import { useChain, useChains } from '@cosmos-kit/react';
-import { useCallback, useMemo } from 'react';
-import { toast } from 'react-toastify';
-
 import { ProviderType, TypedTransactionReceipt, WarpTypedTransaction } from '@hyperlane-xyz/sdk';
 import { HexString, ProtocolType, assert } from '@hyperlane-xyz/utils';
-
+import { useCallback, useMemo } from 'react';
+import { toast } from 'react-toastify';
 import { PLACEHOLDER_COSMOS_CHAIN } from '../../../consts/values';
 import { logger } from '../../../utils/logger';
 import { getCosmosChainNames } from '../../chains/metadata';
@@ -108,8 +106,8 @@ export function useCosmosTransactionFns(): ChainTransactionFns {
         // The fee param of 'auto' here stopped working for Neutron-based IBC transfers
         // It seems the signAndBroadcast method uses a default fee multiplier of 1.4
         // https://github.com/cosmos/cosmjs/blob/e819a1fc0e99a3e5320d8d6667a08d3b92e5e836/packages/stargate/src/signingstargateclient.ts#L115
-        // Bumping to 1.6 fixes the insufficient gas issue
-        result = await client.signAndBroadcast(chainContext.address, [tx.transaction], 1.6);
+        // A multiplier of 1.6 was insufficient for Celestia -> Neutron|Cosmos -> XXX transfers, but 2 worked.
+        result = await client.signAndBroadcast(chainContext.address, [tx.transaction], 2);
         txDetails = await client.getTx(result.transactionHash);
       } else {
         throw new Error(`Invalid cosmos provider type ${tx.type}`);

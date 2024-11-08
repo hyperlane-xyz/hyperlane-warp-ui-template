@@ -1,6 +1,5 @@
 import Image from 'next/image';
 import { Component } from 'react';
-
 import { links } from '../../consts/links';
 import ErrorIcon from '../../images/icons/error-circle.svg';
 import { logger } from '../../utils/logger';

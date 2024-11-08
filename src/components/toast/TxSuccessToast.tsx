@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { toast } from 'react-toastify';
-
 import { getMultiProvider } from '../../context/context';
 
 export function toastTxSuccess(msg: string, txHash: string, chain: ChainName) {

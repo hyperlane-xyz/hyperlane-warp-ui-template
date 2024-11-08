@@ -1,7 +1,6 @@
 import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
-
 import { SmallSpinner } from '../../components/animation/SmallSpinner';
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import { WalletLogo } from '../../components/icons/WalletLogo';
@@ -17,7 +16,6 @@ import { getChainDisplayName } from '../chains/utils';
 import { useStore } from '../store';
 import { TransfersDetailsModal } from '../transfer/TransfersDetailsModal';
 import { TransferContext } from '../transfer/types';
-
 import { useAccounts, useDisconnectFns, useWalletDetails } from './hooks/multiProtocol';
 import { AccountInfo } from './hooks/types';
 

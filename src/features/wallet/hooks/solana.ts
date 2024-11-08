@@ -1,15 +1,12 @@
+import { ProviderType, TypedTransactionReceipt, WarpTypedTransaction } from '@hyperlane-xyz/sdk';
+import { ProtocolType } from '@hyperlane-xyz/utils';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import { Connection } from '@solana/web3.js';
 import { useCallback, useMemo } from 'react';
-
-import { ProviderType, TypedTransactionReceipt, WarpTypedTransaction } from '@hyperlane-xyz/sdk';
-import { ProtocolType } from '@hyperlane-xyz/utils';
-
 import { getMultiProvider } from '../../../context/context';
 import { logger } from '../../../utils/logger';
 import { getChainByRpcUrl } from '../../chains/utils';
-
 import { AccountInfo, ActiveChainInfo, ChainTransactionFns, WalletDetails } from './types';
 
 export function useSolAccount(): AccountInfo {

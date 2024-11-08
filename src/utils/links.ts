@@ -1,5 +1,4 @@
 import { toBase64 } from '@hyperlane-xyz/utils';
-
 import { config } from '../consts/config';
 import { links } from '../consts/links';
 import { getChainMetadata, isPermissionlessChain } from '../features/chains/utils';

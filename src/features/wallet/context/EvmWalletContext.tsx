@@ -1,3 +1,4 @@
+import { ProtocolType } from '@hyperlane-xyz/utils';
 import { RainbowKitProvider, connectorsForWallets, lightTheme } from '@rainbow-me/rainbowkit';
 import '@rainbow-me/rainbowkit/styles.css';
 import {
@@ -11,11 +12,8 @@ import {
   walletConnectWallet,
 } from '@rainbow-me/rainbowkit/wallets';
 import { PropsWithChildren, useMemo, useState } from 'react';
-import { WagmiProvider, createConfig } from 'wagmi';
-
-import { ProtocolType } from '@hyperlane-xyz/utils';
-
 import { createClient, http } from 'viem';
+import { WagmiProvider, createConfig } from 'wagmi';
 import { APP_NAME } from '../../../consts/app';
 import { config } from '../../../consts/config';
 import { getWarpCore } from '../../../context/context';

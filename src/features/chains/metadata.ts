@@ -1,11 +1,8 @@
 import type { AssetList, Chain as CosmosChain } from '@chain-registry/types';
-
 import { ChainMetadata, ChainName, chainMetadataToViemChain } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
-
-import { getTokens, getWarpContext } from '../../context/context';
-
 import { Chain as ViemChain } from 'viem';
+import { getTokens, getWarpContext } from '../../context/context';
 import { cosmosDefaultChain } from './cosmosDefault';
 
 // Metadata formatted for use in Wagmi config

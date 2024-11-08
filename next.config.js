@@ -80,7 +80,6 @@ const nextConfig = {
   },
 
   reactStrictMode: true,
-  swcMinify: true,
 }
 
 const sentryOptions = {

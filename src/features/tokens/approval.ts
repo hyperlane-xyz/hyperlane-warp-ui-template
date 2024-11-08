@@ -1,7 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
-
 import { IToken } from '@hyperlane-xyz/sdk';
-
+import { useQuery } from '@tanstack/react-query';
 import { useToastError } from '../../components/toast/useToastError';
 import { getWarpCore } from '../../context/context';
 import { useAccountAddressForChain } from '../wallet/hooks/multiProtocol';

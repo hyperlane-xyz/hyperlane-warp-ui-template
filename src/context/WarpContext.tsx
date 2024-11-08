@@ -1,8 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { PropsWithChildren } from 'react';
-
 import { Spinner } from '../components/animation/Spinner';
-
 import { initWarpContext } from './context';
 
 export function WarpContext({ children }: PropsWithChildren<unknown>) {

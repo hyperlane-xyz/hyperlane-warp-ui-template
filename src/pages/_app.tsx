@@ -1,13 +1,9 @@
+import '@hyperlane-xyz/widgets/styles.css';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Analytics } from '@vercel/analytics/react';
 import type { AppProps } from 'next/app';
 import { ToastContainer, Zoom } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import '../vendor/inpage-metamask';
-import '../vendor/polyfill';
-
-import '@hyperlane-xyz/widgets/styles.css';
-
 import { ErrorBoundary } from '../components/errors/ErrorBoundary';
 import { AppLayout } from '../components/layout/AppLayout';
 import { MAIN_FONT } from '../consts/app';
@@ -17,6 +13,8 @@ import { EvmWalletContext } from '../features/wallet/context/EvmWalletContext';
 import { SolanaWalletContext } from '../features/wallet/context/SolanaWalletContext';
 import '../styles/globals.css';
 import { useIsSsr } from '../utils/ssr';
+import '../vendor/inpage-metamask';
+import '../vendor/polyfill';
 
 const reactQueryClient = new QueryClient({
   defaultOptions: {

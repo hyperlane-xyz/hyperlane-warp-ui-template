@@ -1,12 +1,9 @@
+import { HexString, ProtocolType } from '@hyperlane-xyz/utils';
 import { useMemo } from 'react';
 import { toast } from 'react-toastify';
-
-import { HexString, ProtocolType } from '@hyperlane-xyz/utils';
-
 import { config } from '../../../consts/config';
 import { logger } from '../../../utils/logger';
 import { getChainProtocol, tryGetChainProtocol } from '../../chains/utils';
-
 import {
   useCosmosAccount,
   useCosmosActiveChain,

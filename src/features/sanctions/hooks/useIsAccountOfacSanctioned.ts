@@ -1,7 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
-
 import { eqAddress } from '@hyperlane-xyz/utils';
-
+import { useQuery } from '@tanstack/react-query';
 import { useEvmAccount } from '../../wallet/hooks/evm';
 
 const OFAC_SANCTIONED_ADDRESSES_ENDPOINT =

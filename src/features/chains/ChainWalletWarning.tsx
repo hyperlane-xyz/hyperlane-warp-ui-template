@@ -1,12 +1,9 @@
-import { useMemo } from 'react';
-
 import { toTitleCase } from '@hyperlane-xyz/utils';
-
+import { useMemo } from 'react';
 import { FormWarningBanner } from '../../components/banner/FormWarningBanner';
 import { config } from '../../consts/config';
 import { logger } from '../../utils/logger';
 import { useConnectFns, useDisconnectFns, useWalletDetails } from '../wallet/hooks/multiProtocol';
-
 import { getChainDisplayName, tryGetChainProtocol } from './utils';
 
 export function ChainWalletWarning({ originChain }: { originChain: ChainName }) {

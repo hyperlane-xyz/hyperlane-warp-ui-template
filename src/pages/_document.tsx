@@ -23,7 +23,7 @@ export default function Document() {
 
         <meta name="HandheldFriendly" content="true" />
         <meta name="apple-mobile-web-app-title" content={APP_NAME} />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="mobile-web-app-capable" content="yes" />
 
         <meta property="og:url" content={APP_URL} />
         <meta property="og:title" content={APP_NAME} />

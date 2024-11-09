@@ -1,6 +1,7 @@
 import { SafeParseReturnType } from 'zod';
 import { logger } from './logger';
 
+// TODO move to utils package
 export function validateZodResult<T>(
   result: SafeParseReturnType<T, T>,
   desc: string = 'config',

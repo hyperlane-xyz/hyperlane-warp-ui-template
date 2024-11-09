@@ -1,5 +1,12 @@
+import { GithubRegistry, IRegistry } from '@hyperlane-xyz/registry';
+import { ChainMap, ChainMetadata, MultiProtocolProvider, WarpCore } from '@hyperlane-xyz/sdk';
+import { objFilter } from '@hyperlane-xyz/utils';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { config } from '../consts/config';
+import { logger } from '../utils/logger';
+import { assembleChainMetadata } from './chains/metadata';
+import { assembleWarpCoreConfig } from './tokens/warpCoreConfig';
 import { FinalTransferStatuses, TransferContext, TransferStatus } from './transfer/types';
 
 // Increment this when persist state has breaking changes
@@ -8,6 +15,21 @@ const PERSIST_STATE_VERSION = 2;
 // Keeping everything here for now as state is simple
 // Will refactor into slices as necessary
 export interface AppState {
+  // Chains and providers
+  chainMetadata: ChainMap<ChainMetadata>;
+  chainMetadataOverrides: ChainMap<Partial<ChainMetadata>>;
+  setChainMetadataOverrides: (overrides?: ChainMap<Partial<ChainMetadata> | undefined>) => void;
+  multiProvider: MultiProtocolProvider;
+  registry: IRegistry;
+  warpCore: WarpCore;
+  setWarpContext: (context: {
+    registry: IRegistry;
+    chainMetadata: ChainMap<ChainMetadata>;
+    multiProvider: MultiProtocolProvider;
+    warpCore: WarpCore;
+  }) => void;
+
+  // User history
   transfers: TransferContext[];
   addTransfer: (t: TransferContext) => void;
   resetTransfers: () => void;
@@ -17,6 +39,8 @@ export interface AppState {
     options?: { msgId?: string; originTxHash?: string },
   ) => void;
   failUnconfirmedTransfers: () => void;
+
+  // Shared component state
   transferLoading: boolean;
   setTransferLoading: (isLoading: boolean) => void;
   isSideBarOpen: boolean;
@@ -27,7 +51,28 @@ export interface AppState {
 
 export const useStore = create<AppState>()(
   persist(
-    (set) => ({
+    // Store reducers
+    (set, get) => ({
+      // Chains and providers
+      chainMetadata: {},
+      chainMetadataOverrides: {},
+      setChainMetadataOverrides: async (
+        overrides: ChainMap<Partial<ChainMetadata> | undefined> = {},
+      ) => {
+        logger.debug('Setting chain overrides in store');
+        const { multiProvider } = await initWarpContext(get().registry, overrides);
+        const filtered = objFilter(overrides, (_, metadata) => !!metadata);
+        set({ chainMetadataOverrides: filtered, multiProvider });
+      },
+      multiProvider: new MultiProtocolProvider({}),
+      registry: new GithubRegistry({ uri: config.registryUrl, proxyUrl: config.registryProxyUrl }),
+      warpCore: new WarpCore(new MultiProtocolProvider({}), []),
+      setWarpContext: ({ registry, chainMetadata, multiProvider, warpCore }) => {
+        logger.debug('Setting warp context in store');
+        set({ registry, chainMetadata, multiProvider, warpCore });
+      },
+
+      // User history
       transfers: [],
       addTransfer: (t) => {
         set((state) => ({ transfers: [...state.transfers, t] }));
@@ -54,6 +99,8 @@ export const useStore = create<AppState>()(
           ),
         }));
       },
+
+      // Shared component state
       transferLoading: false,
       setTransferLoading: (isLoading) => {
         set(() => ({ transferLoading: isLoading }));
@@ -67,13 +114,48 @@ export const useStore = create<AppState>()(
         set(() => ({ showEnvSelectModal }));
       },
     }),
+
+    // Store config
     {
-      name: 'app-state',
-      partialize: (state) => ({ transfers: state.transfers }),
+      name: 'app-state', // name in storage
+      partialize: (state) => ({
+        // fields to persist
+        chainMetadataOverrides: state.chainMetadataOverrides,
+        transfers: state.transfers,
+      }),
       version: PERSIST_STATE_VERSION,
-      onRehydrateStorage: () => (state) => {
-        state?.failUnconfirmedTransfers();
+      onRehydrateStorage: () => {
+        logger.debug('Rehydrating state');
+        return (state, error) => {
+          state?.failUnconfirmedTransfers();
+          if (error || !state) {
+            logger.error('Error during hydration', error);
+            return;
+          }
+          initWarpContext(state.registry, state.chainMetadataOverrides)
+            .then(({ registry, chainMetadata, multiProvider, warpCore }) => {
+              state.setWarpContext({ registry, chainMetadata, multiProvider, warpCore });
+              logger.debug('Rehydration complete');
+            })
+            .catch((e) => logger.error('Error initializing warp context', e));
+        };
       },
     },
   ),
 );
+
+async function initWarpContext(
+  registry: IRegistry,
+  storeMetadataOverrides: ChainMap<Partial<ChainMetadata> | undefined>,
+) {
+  // Pre-load registry content to avoid repeated requests
+  await registry.listRegistryContent();
+  const { chainMetadata, chainMetadataWithOverrides } = await assembleChainMetadata(
+    registry,
+    storeMetadataOverrides,
+  );
+  const multiProvider = new MultiProtocolProvider(chainMetadataWithOverrides);
+  const coreConfig = await assembleWarpCoreConfig();
+  const warpCore = WarpCore.FromConfig(multiProvider, coreConfig);
+  return { registry, chainMetadata, multiProvider, warpCore };
+}

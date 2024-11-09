@@ -28,7 +28,7 @@ tokens:
     connections:
       - token: ethereum|linea|0x97a17AaDabFac0C2A3B94966143cE499088a517B
     decimals: 6
-    logoURI: /deployments/warp_routes/USDT/logo.svg
+    logoURI: /deployments/warp_routes/USDS/logo.svg
     name: 'USD Coin (Arb1)'
     standard: EvmHypCollateral
     symbol: USDC

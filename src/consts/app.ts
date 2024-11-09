@@ -1,5 +1,4 @@
 import { Space_Grotesk } from 'next/font/google';
-
 import { Color } from '../styles/Color';
 
 export const MAIN_FONT = Space_Grotesk({

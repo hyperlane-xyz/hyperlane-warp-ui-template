@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-
 import { FinalTransferStatuses, TransferContext, TransferStatus } from './transfer/types';
 
 // Increment this when persist state has breaking changes

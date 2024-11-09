@@ -1,8 +1,6 @@
+import { IToken } from '@hyperlane-xyz/sdk';
 import Image from 'next/image';
 import { useMemo, useState } from 'react';
-
-import { IToken } from '@hyperlane-xyz/sdk';
-
 import { TokenIcon } from '../../components/icons/TokenIcon';
 import { TextInput } from '../../components/input/TextField';
 import { Modal } from '../../components/layout/Modal';

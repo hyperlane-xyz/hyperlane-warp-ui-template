@@ -1,3 +1,4 @@
+import { ProtocolType } from '@hyperlane-xyz/utils';
 import { RainbowKitProvider, connectorsForWallets, lightTheme } from '@rainbow-me/rainbowkit';
 import '@rainbow-me/rainbowkit/styles.css';
 import {
@@ -6,17 +7,13 @@ import {
   injectedWallet,
   ledgerWallet,
   metaMaskWallet,
-  omniWallet,
   rainbowWallet,
   trustWallet,
   walletConnectWallet,
 } from '@rainbow-me/rainbowkit/wallets';
 import { PropsWithChildren, useMemo, useState } from 'react';
-import { WagmiConfig, configureChains, createConfig } from 'wagmi';
-import { publicProvider } from 'wagmi/providers/public';
-
-import { ProtocolType } from '@hyperlane-xyz/utils';
-
+import { createClient, http } from 'viem';
+import { WagmiProvider, createConfig } from 'wagmi';
 import { APP_NAME } from '../../../consts/app';
 import { config } from '../../../consts/config';
 import { getWarpCore } from '../../../context/context';
@@ -25,48 +22,37 @@ import { getWagmiChainConfig } from '../../chains/metadata';
 import { tryGetChainMetadata } from '../../chains/utils';
 
 function initWagmi() {
-  const { chains, publicClient } = configureChains(getWagmiChainConfig(), [publicProvider()]);
+  const chains = getWagmiChainConfig();
 
-  const connectorConfig = {
-    chains,
-    publicClient,
-    appName: APP_NAME,
-    projectId: config.walletConnectProjectId,
-  };
-
-  const connectors = connectorsForWallets([
-    {
-      groupName: 'Recommended',
-      wallets: [
-        metaMaskWallet(connectorConfig),
-        injectedWallet(connectorConfig),
-        walletConnectWallet(connectorConfig),
-        ledgerWallet(connectorConfig),
-      ],
-    },
-    {
-      groupName: 'More',
-      wallets: [
-        coinbaseWallet(connectorConfig),
-        omniWallet(connectorConfig),
-        rainbowWallet(connectorConfig),
-        trustWallet(connectorConfig),
-        argentWallet(connectorConfig),
-      ],
-    },
-  ]);
+  const connectors = connectorsForWallets(
+    [
+      {
+        groupName: 'Recommended',
+        wallets: [metaMaskWallet, injectedWallet, walletConnectWallet, ledgerWallet],
+      },
+      {
+        groupName: 'More',
+        wallets: [coinbaseWallet, rainbowWallet, trustWallet, argentWallet],
+      },
+    ],
+    { appName: APP_NAME, projectId: config.walletConnectProjectId },
+  );
 
   const wagmiConfig = createConfig({
-    autoConnect: true,
-    publicClient,
+    // Splice to make annoying wagmi type happy
+    chains: [chains[0], ...chains.splice(1)],
     connectors,
+    client({ chain }) {
+      const transport = http(chain.rpcUrls.default.http[0]);
+      return createClient({ chain, transport });
+    },
   });
 
   return { wagmiConfig, chains };
 }
 
 export function EvmWalletContext({ children }: PropsWithChildren<unknown>) {
-  const [{ wagmiConfig, chains }] = useState(initWagmi());
+  const [{ wagmiConfig }] = useState(initWagmi());
 
   const initialChain = useMemo(() => {
     const tokens = getWarpCore().tokens;
@@ -75,9 +61,8 @@ export function EvmWalletContext({ children }: PropsWithChildren<unknown>) {
   }, []);
 
   return (
-    <WagmiConfig config={wagmiConfig}>
+    <WagmiProvider config={wagmiConfig}>
       <RainbowKitProvider
-        chains={chains}
         theme={lightTheme({
           accentColor: Color.primary,
           borderRadius: 'small',
@@ -87,6 +72,6 @@ export function EvmWalletContext({ children }: PropsWithChildren<unknown>) {
       >
         {children}
       </RainbowKitProvider>
-    </WagmiConfig>
+    </WagmiProvider>
   );
 }

@@ -1,8 +1,6 @@
-import { memo } from 'react';
-
 import { IToken } from '@hyperlane-xyz/sdk';
 import { Circle } from '@hyperlane-xyz/widgets';
-
+import { memo } from 'react';
 import { getRegistry } from '../../context/context';
 import { isValidHttpsUrl, isValidRelativeUrl } from '../../utils/url';
 import { ErrorBoundary } from '../errors/ErrorBoundary';

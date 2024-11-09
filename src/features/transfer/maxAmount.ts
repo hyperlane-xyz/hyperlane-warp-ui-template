@@ -1,9 +1,7 @@
-import { useMutation } from '@tanstack/react-query';
-import { toast } from 'react-toastify';
-
 import { TokenAmount } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
-
+import { useMutation } from '@tanstack/react-query';
+import { toast } from 'react-toastify';
 import { getWarpCore } from '../../context/context';
 import { logger } from '../../utils/logger';
 import { getChainMetadata } from '../chains/utils';
@@ -21,7 +19,7 @@ export function useFetchMaxAmount() {
   const mutation = useMutation({
     mutationFn: (params: FetchMaxParams) => fetchMaxAmount(params),
   });
-  return { fetchMaxAmount: mutation.mutateAsync, isLoading: mutation.isLoading };
+  return { fetchMaxAmount: mutation.mutateAsync, isLoading: mutation.isPending };
 }
 
 async function fetchMaxAmount({ accounts, balance, destination, origin }: FetchMaxParams) {

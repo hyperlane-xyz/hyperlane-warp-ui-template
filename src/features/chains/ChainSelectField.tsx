@@ -1,11 +1,9 @@
 import { useField, useFormikContext } from 'formik';
 import Image from 'next/image';
 import { useState } from 'react';
-
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import ChevronIcon from '../../images/icons/chevron-down.svg';
 import { TransferFormValues } from '../transfer/types';
-
 import { ChainSelectListModal } from './ChainSelectModal';
 import { getChainDisplayName } from './utils';
 
@@ -21,13 +19,13 @@ export function ChainSelectField({ name, label, chains, onChange, disabled }: Pr
   const [field, , helpers] = useField<ChainName>(name);
   const { setFieldValue } = useFormikContext<TransferFormValues>();
 
-  const handleChange = (newChainId: ChainName) => {
-    helpers.setValue(newChainId);
+  const handleChange = (chainName: ChainName) => {
+    helpers.setValue(chainName);
     // Reset other fields on chain change
     setFieldValue('recipient', '');
     setFieldValue('amount', '');
     setFieldValue('tokenIndex', undefined);
-    if (onChange) onChange(newChainId);
+    if (onChange) onChange(chainName);
   };
 
   const [isModalOpen, setIsModalOpen] = useState(false);

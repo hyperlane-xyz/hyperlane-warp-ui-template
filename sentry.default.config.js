@@ -15,6 +15,8 @@ const filters = [
   "canvas.contentDocument",
   "MyApp_RemoveAllHighlights",
   "atomicFindClose",
+  "Wallet is not initialized",
+  "region has been blocked from accessing this service"
 ]
 
 export const sentryDefaultConfig = {

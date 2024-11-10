@@ -46,12 +46,12 @@ export default function App({ Component, pageProps }: AppProps) {
                     <Component {...pageProps} />
                     <Analytics />
                   </AppLayout>
-                  <ToastContainer transition={Zoom} position="bottom-right" limit={2} />
                 </CosmosWalletContext>
               </SolanaWalletContext>
             </EvmWalletContext>
           </WarpContextInitGate>
         </QueryClientProvider>
+        <ToastContainer transition={Zoom} position="bottom-right" limit={2} />
       </ErrorBoundary>
     </div>
   );

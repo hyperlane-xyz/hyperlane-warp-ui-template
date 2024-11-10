@@ -3,7 +3,7 @@ import { Spinner } from '../components/animation/Spinner';
 import { useTimeout } from '../utils/timeout';
 import { useReadyMultiProvider } from './chains/hooks';
 
-const INIT_TIMEOUT = 20_000; // 20 seconds
+const INIT_TIMEOUT = 10_000; // 10 seconds
 
 // A wrapper app to delay rendering children until the warp context is ready
 export function WarpContextInitGate({ children }: PropsWithChildren<unknown>) {

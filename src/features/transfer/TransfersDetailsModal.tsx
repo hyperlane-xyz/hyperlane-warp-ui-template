@@ -8,7 +8,6 @@ import { ChainLogo } from '../../components/icons/ChainLogo';
 import { TokenIcon } from '../../components/icons/TokenIcon';
 import { WideChevron } from '../../components/icons/WideChevron';
 import { Modal } from '../../components/layout/Modal';
-import { getMultiProvider, getWarpCore } from '../../context/context';
 import LinkIcon from '../../images/icons/external-link-icon.svg';
 import { formatTimestamp } from '../../utils/date';
 import { getHypExplorerLink } from '../../utils/links';
@@ -20,7 +19,9 @@ import {
   isTransferFailed,
   isTransferSent,
 } from '../../utils/transfer';
+import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName, hasPermissionlessChain } from '../chains/utils';
+import { useWarpCore } from '../tokens/hooks';
 import { useAccountForChain, useWalletDetails } from '../wallet/hooks/multiProtocol';
 import { TransferContext, TransferStatus } from './types';
 
@@ -53,7 +54,7 @@ export function TransfersDetailsModal({
   const account = useAccountForChain(origin);
   const walletDetails = useWalletDetails()[account?.protocol || ProtocolType.Ethereum];
 
-  const multiProvider = getMultiProvider();
+  const multiProvider = useMultiProvider();
 
   const getMessageUrls = useCallback(async () => {
     try {
@@ -81,9 +82,9 @@ export function TransfersDetailsModal({
 
   const isAccountReady = !!account?.isReady;
   const connectorName = walletDetails.name || 'wallet';
-  const token = getWarpCore().findToken(origin, originTokenAddressOrDenom);
+  const token = useWarpCore().findToken(origin, originTokenAddressOrDenom);
 
-  const isPermissionlessRoute = hasPermissionlessChain([destination, origin]);
+  const isPermissionlessRoute = hasPermissionlessChain(multiProvider, [destination, origin]);
 
   const isSent = isTransferSent(status);
   const isFailed = isTransferFailed(status);
@@ -101,7 +102,7 @@ export function TransfersDetailsModal({
     [timestamp],
   );
 
-  const explorerLink = getHypExplorerLink(origin, msgId);
+  const explorerLink = getHypExplorerLink(multiProvider, origin, msgId);
 
   return (
     <Modal
@@ -144,7 +145,7 @@ export function TransfersDetailsModal({
         <div className="ml-2 flex flex-col items-center">
           <ChainLogo chainName={origin} size={64} background={true} />
           <span className="mt-1 font-medium tracking-wider">
-            {getChainDisplayName(origin, true)}
+            {getChainDisplayName(multiProvider, origin, true)}
           </span>
         </div>
         <div className="mb-6 flex sm:space-x-1.5">
@@ -154,7 +155,7 @@ export function TransfersDetailsModal({
         <div className="mr-2 flex flex-col items-center">
           <ChainLogo chainName={destination} size={64} background={true} />
           <span className="mt-1 font-medium tracking-wider">
-            {getChainDisplayName(destination, true)}
+            {getChainDisplayName(multiProvider, destination, true)}
           </span>
         </div>
       </div>
@@ -218,9 +219,10 @@ export function Timeline({
   originTxHash?: string;
 }) {
   const isFailed = transferStatus === TransferStatus.Failed;
+  const multiProtocolProvider = useMultiProvider();
   const { stage, timings, message } = useMessageTimeline({
     originTxHash: isFailed ? undefined : originTxHash,
-    multiProvider: getMultiProvider().toMultiProvider(),
+    multiProvider: multiProtocolProvider.toMultiProvider(),
   });
   const messageStatus = isFailed ? MessageStatus.Failing : message?.status || MessageStatus.Pending;
 
@@ -256,7 +258,6 @@ function TransferProperty({ name, value, url }: { name: string; value: string; u
   );
 }
 
-// TODO: Remove this once we have a better solution for wagmi signing issue
 // https://github.com/wagmi-dev/wagmi/discussions/2928
 function useSignIssueWarning(status: TransferStatus) {
   const [showWarning, setShowWarning] = useState(false);

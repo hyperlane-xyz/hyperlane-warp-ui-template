@@ -4,29 +4,32 @@ import { FormWarningBanner } from '../../components/banner/FormWarningBanner';
 import { config } from '../../consts/config';
 import { logger } from '../../utils/logger';
 import { useConnectFns, useDisconnectFns, useWalletDetails } from '../wallet/hooks/multiProtocol';
-import { getChainDisplayName, tryGetChainProtocol } from './utils';
+import { useMultiProvider } from './hooks';
+import { getChainDisplayName } from './utils';
 
 export function ChainWalletWarning({ originChain }: { originChain: ChainName }) {
+  const multiProvider = useMultiProvider();
+
   const wallets = useWalletDetails();
   const connectFns = useConnectFns();
   const disconnectFns = useDisconnectFns();
 
   const { isVisible, chainDisplayName, walletWhitelist, connectFn, disconnectFn } = useMemo(() => {
-    const protocol = tryGetChainProtocol(originChain);
+    const protocol = multiProvider.tryGetProtocol(originChain);
     const walletWhitelist = config.chainWalletWhitelists[originChain]?.map((w) =>
       w.trim().toLowerCase(),
     );
     if (!protocol || !walletWhitelist?.length)
       return { isVisible: false, chainDisplayName: '', walletWhitelist: [] };
 
-    const chainDisplayName = getChainDisplayName(originChain, true);
+    const chainDisplayName = getChainDisplayName(multiProvider, originChain, true);
     const walletName = wallets[protocol]?.name?.trim()?.toLowerCase();
     const connectFn = connectFns[protocol];
     const disconnectFn = disconnectFns[protocol];
     const isVisible = !!walletName && !walletWhitelist.includes(walletName);
 
     return { isVisible, chainDisplayName, walletWhitelist, connectFn, disconnectFn };
-  }, [originChain, wallets, connectFns, disconnectFns]);
+  }, [multiProvider, originChain, wallets, connectFns, disconnectFns]);
 
   const onClickChange = () => {
     if (!connectFn || !disconnectFn) return;

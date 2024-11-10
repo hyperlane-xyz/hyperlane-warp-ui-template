@@ -1,7 +1,7 @@
 import { ProtocolType } from '@hyperlane-xyz/utils';
 import { useFormikContext } from 'formik';
 import { useCallback } from 'react';
-import { tryGetChainProtocol } from '../../features/chains/utils';
+import { useChainProtocol } from '../../features/chains/hooks';
 import { useAccountForChain, useConnectFns } from '../../features/wallet/hooks/multiProtocol';
 import { useTimeout } from '../../utils/timeout';
 import { SolidButton } from './SolidButton';
@@ -13,7 +13,7 @@ interface Props {
 }
 
 export function ConnectAwareSubmitButton<FormValues = any>({ chainName, text, classes }: Props) {
-  const protocol = tryGetChainProtocol(chainName) || ProtocolType.Ethereum;
+  const protocol = useChainProtocol(chainName) || ProtocolType.Ethereum;
   const connectFns = useConnectFns();
   const connectFn = connectFns[protocol];
 

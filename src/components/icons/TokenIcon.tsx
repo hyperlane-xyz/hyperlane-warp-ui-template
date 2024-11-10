@@ -1,7 +1,7 @@
+import { IRegistry } from '@hyperlane-xyz/registry';
 import { IToken } from '@hyperlane-xyz/sdk';
 import { Circle } from '@hyperlane-xyz/widgets';
-import { memo } from 'react';
-import { getRegistry } from '../../context/context';
+import { useStore } from '../../features/store';
 import { isValidHttpsUrl, isValidRelativeUrl } from '../../utils/url';
 import { ErrorBoundary } from '../errors/ErrorBoundary';
 
@@ -10,12 +10,13 @@ interface Props {
   size?: number;
 }
 
-function _TokenIcon({ token, size = 32 }: Props) {
+export function TokenIcon({ token, size = 32 }: Props) {
   const title = token?.symbol || '';
   const character = title ? title.charAt(0).toUpperCase() : '';
   const fontSize = Math.floor(size / 2);
 
-  const imageSrc = getImageSrc(token);
+  const registry = useStore((s) => s.registry);
+  const imageSrc = getImageSrc(registry, token);
   const bgColorSeed =
     token && !imageSrc ? (Buffer.from(token.addressOrDenom).at(0) || 0) % 5 : undefined;
 
@@ -32,13 +33,11 @@ function _TokenIcon({ token, size = 32 }: Props) {
   );
 }
 
-function getImageSrc(token?: IToken | null) {
+function getImageSrc(registry: IRegistry, token?: IToken | null) {
   if (!token?.logoURI) return null;
   // If it's a valid, direct URL, return it
   if (isValidHttpsUrl(token.logoURI)) return token.logoURI;
   // Otherwise assume it's a relative URL to the registry base
-  if (isValidRelativeUrl(token.logoURI)) return getRegistry().getUri(token.logoURI);
+  if (isValidRelativeUrl(token.logoURI)) return registry.getUri(token.logoURI);
   return null;
 }
-
-export const TokenIcon = memo(_TokenIcon);

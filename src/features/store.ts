@@ -1,6 +1,7 @@
 import { GithubRegistry, IRegistry } from '@hyperlane-xyz/registry';
 import { ChainMap, ChainMetadata, MultiProtocolProvider, WarpCore } from '@hyperlane-xyz/sdk';
 import { objFilter } from '@hyperlane-xyz/utils';
+import { toast } from 'react-toastify';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { config } from '../consts/config';
@@ -132,12 +133,12 @@ export const useStore = create<AppState>()(
             logger.error('Error during hydration', error);
             return;
           }
-          initWarpContext(state.registry, state.chainMetadataOverrides)
-            .then(({ registry, chainMetadata, multiProvider, warpCore }) => {
+          initWarpContext(state.registry, state.chainMetadataOverrides).then(
+            ({ registry, chainMetadata, multiProvider, warpCore }) => {
               state.setWarpContext({ registry, chainMetadata, multiProvider, warpCore });
               logger.debug('Rehydration complete');
-            })
-            .catch((e) => logger.error('Error initializing warp context', e));
+            },
+          );
         };
       },
     },
@@ -148,14 +149,25 @@ async function initWarpContext(
   registry: IRegistry,
   storeMetadataOverrides: ChainMap<Partial<ChainMetadata> | undefined>,
 ) {
-  // Pre-load registry content to avoid repeated requests
-  await registry.listRegistryContent();
-  const { chainMetadata, chainMetadataWithOverrides } = await assembleChainMetadata(
-    registry,
-    storeMetadataOverrides,
-  );
-  const multiProvider = new MultiProtocolProvider(chainMetadataWithOverrides);
-  const coreConfig = await assembleWarpCoreConfig();
-  const warpCore = WarpCore.FromConfig(multiProvider, coreConfig);
-  return { registry, chainMetadata, multiProvider, warpCore };
+  try {
+    // Pre-load registry content to avoid repeated requests
+    await registry.listRegistryContent();
+    const { chainMetadata, chainMetadataWithOverrides } = await assembleChainMetadata(
+      registry,
+      storeMetadataOverrides,
+    );
+    const multiProvider = new MultiProtocolProvider(chainMetadataWithOverrides);
+    const coreConfig = await assembleWarpCoreConfig();
+    const warpCore = WarpCore.FromConfig(multiProvider, coreConfig);
+    return { registry, chainMetadata, multiProvider, warpCore };
+  } catch (error) {
+    toast.error('Error initializing warp context. Please check connection status and configs.');
+    logger.error('Error initializing warp context', error);
+    return {
+      registry,
+      chainMetadata: {},
+      multiProvider: new MultiProtocolProvider({}),
+      warpCore: new WarpCore(new MultiProtocolProvider({}), []),
+    };
+  }
 }

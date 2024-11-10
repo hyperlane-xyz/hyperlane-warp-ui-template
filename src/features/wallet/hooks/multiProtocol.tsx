@@ -1,9 +1,10 @@
+import { MultiProtocolProvider } from '@hyperlane-xyz/sdk';
 import { HexString, ProtocolType } from '@hyperlane-xyz/utils';
 import { useMemo } from 'react';
 import { toast } from 'react-toastify';
 import { config } from '../../../consts/config';
 import { logger } from '../../../utils/logger';
-import { getChainProtocol, tryGetChainProtocol } from '../../chains/utils';
+import { useChainProtocol, useMultiProvider } from '../../chains/hooks';
 import {
   useCosmosAccount,
   useCosmosActiveChain,
@@ -68,22 +69,23 @@ export function useAccounts(): {
 
 export function useAccountForChain(chainName?: ChainName): AccountInfo | undefined {
   const { accounts } = useAccounts();
-  if (!chainName) return undefined;
-  const protocol = tryGetChainProtocol(chainName);
-  if (!protocol) return undefined;
+  const protocol = useChainProtocol(chainName);
+  if (!chainName || !protocol) return undefined;
   return accounts?.[protocol];
 }
 
 export function useAccountAddressForChain(chainName?: ChainName): Address | undefined {
-  return getAccountAddressForChain(chainName, useAccounts().accounts);
+  const multiProvider = useMultiProvider();
+  return getAccountAddressForChain(multiProvider, chainName, useAccounts().accounts);
 }
 
 export function getAccountAddressForChain(
+  multiProvider: MultiProtocolProvider,
   chainName?: ChainName,
   accounts?: Record<ProtocolType, AccountInfo>,
 ): Address | undefined {
   if (!chainName || !accounts) return undefined;
-  const protocol = getChainProtocol(chainName);
+  const protocol = multiProvider.getProtocol(chainName);
   const account = accounts[protocol];
   if (protocol === ProtocolType.Cosmos) {
     return account?.addresses.find((a) => a.chainName === chainName)?.address;
@@ -94,12 +96,13 @@ export function getAccountAddressForChain(
 }
 
 export function getAccountAddressAndPubKey(
+  multiProvider: MultiProtocolProvider,
   chainName?: ChainName,
   accounts?: Record<ProtocolType, AccountInfo>,
 ): { address?: Address; publicKey?: Promise<HexString> } {
-  const address = getAccountAddressForChain(chainName, accounts);
+  const address = getAccountAddressForChain(multiProvider, chainName, accounts);
   if (!accounts || !chainName || !address) return {};
-  const protocol = getChainProtocol(chainName);
+  const protocol = multiProvider.getProtocol(chainName);
   const publicKey = accounts[protocol]?.publicKey;
   return { address, publicKey };
 }

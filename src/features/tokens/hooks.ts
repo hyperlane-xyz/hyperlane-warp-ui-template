@@ -11,17 +11,13 @@ export function useTokens() {
 }
 
 export function useTokenByIndex(tokenIndex?: number) {
-  const tokens = useTokens();
-  if (isNullish(tokenIndex) || tokenIndex >= tokens.length) return undefined;
-  return tokens[tokenIndex];
+  const warpCore = useWarpCore();
+  return getTokenByIndex(warpCore, tokenIndex);
 }
 
 export function useIndexForToken(token?: IToken): number | undefined {
-  const tokens = useTokens();
-  if (!token) return undefined;
-  const index = tokens.indexOf(token as Token);
-  if (index >= 0) return index;
-  else return undefined;
+  const warpCore = useWarpCore();
+  return getIndexForToken(warpCore, token);
 }
 
 export function getTokenByIndex(warpCore: WarpCore, tokenIndex?: number) {

@@ -1,17 +1,15 @@
 import { TokenAmount } from '@hyperlane-xyz/sdk';
 import { ProtocolType, errorToString, isNullish, toWei } from '@hyperlane-xyz/utils';
-import { ChevronIcon } from '@hyperlane-xyz/widgets';
+import { ChevronIcon, IconButton, SwapIcon } from '@hyperlane-xyz/widgets';
 import BigNumber from 'bignumber.js';
 import { Form, Formik, useFormikContext } from 'formik';
 import { useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 import { SmallSpinner } from '../../components/animation/SmallSpinner';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
-import { IconButton } from '../../components/buttons/IconButton';
 import { SolidButton } from '../../components/buttons/SolidButton';
 import { TextField } from '../../components/input/TextField';
 import { getIndexForToken, getTokenByIndex, getTokens, getWarpCore } from '../../context/context';
-import SwapIcon from '../../images/icons/swap.svg';
 import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
 import { ChainSelectField } from '../chains/ChainSelectField';
@@ -95,14 +93,15 @@ function SwapChainsButton({ disabled }: { disabled?: boolean }) {
 
   return (
     <IconButton
-      imgSrc={SwapIcon}
       width={20}
       height={20}
       title="Swap chains"
-      classes={!disabled ? 'hover:rotate-180' : undefined}
+      className={!disabled ? 'hover:rotate-180' : undefined}
       onClick={onClick}
       disabled={disabled}
-    />
+    >
+      <SwapIcon width={20} height={20} />
+    </IconButton>
   );
 }
 

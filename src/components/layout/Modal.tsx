@@ -1,7 +1,6 @@
-import { Dialog, Transition } from '@headlessui/react';
+import { Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from '@headlessui/react';
+import { IconButton, XCircleIcon } from '@hyperlane-xyz/widgets';
 import { Fragment, PropsWithChildren } from 'react';
-import XCircle from '../../images/icons/x-circle.svg';
-import { IconButton } from '../buttons/IconButton';
 
 export function Modal({
   isOpen,
@@ -22,7 +21,7 @@ export function Modal({
   return (
     <Transition appear show={isOpen} as={Fragment}>
       <Dialog as="div" className="relative z-30" onClose={close}>
-        <Transition.Child
+        <TransitionChild
           as={Fragment}
           enter="ease-out duration-300"
           enterFrom="opacity-0"
@@ -32,11 +31,11 @@ export function Modal({
           leaveTo="opacity-0"
         >
           <div className="fixed inset-0 bg-black bg-opacity-25" />
-        </Transition.Child>
+        </TransitionChild>
 
         <div className="fixed inset-0 overflow-y-auto">
           <div className="flex min-h-full items-center justify-center p-4 text-center">
-            <Transition.Child
+            <TransitionChild
               as={Fragment}
               enter="ease-out duration-300"
               enterFrom="opacity-0 scale-95"
@@ -45,29 +44,26 @@ export function Modal({
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel
+              <DialogPanel
                 className={`w-full ${
                   width || 'max-w-xs'
                 } max-h-[90vh] transform overflow-auto rounded-2xl bg-white ${
                   padding || 'px-4 py-4'
                 } text-left shadow-lg transition-all`}
               >
-                <Dialog.Title as="h3" className="text text-gray-700">
+                <DialogTitle as="h3" className="text text-gray-700">
                   {title}
-                </Dialog.Title>
+                </DialogTitle>
                 {children}
                 {showCloseBtn && (
                   <div className="absolute right-3 top-3">
-                    <IconButton
-                      imgSrc={XCircle}
-                      onClick={close}
-                      title="Close"
-                      classes="hover:rotate-90"
-                    />
+                    <IconButton onClick={close} title="Close" className="hover:rotate-90">
+                      <XCircleIcon width={16} height={16} />
+                    </IconButton>
                   </div>
                 )}
-              </Dialog.Panel>
-            </Transition.Child>
+              </DialogPanel>
+            </TransitionChild>
           </div>
         </div>
       </Dialog>

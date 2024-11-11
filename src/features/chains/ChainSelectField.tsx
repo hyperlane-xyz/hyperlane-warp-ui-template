@@ -5,7 +5,7 @@ import { ChainLogo } from '../../components/icons/ChainLogo';
 import ChevronIcon from '../../images/icons/chevron-down.svg';
 import { TransferFormValues } from '../transfer/types';
 import { ChainSelectListModal } from './ChainSelectModal';
-import { getChainDisplayName } from './utils';
+import { useChainDisplayName } from './hooks';
 
 type Props = {
   name: string;
@@ -18,6 +18,8 @@ type Props = {
 export function ChainSelectField({ name, label, chains, onChange, disabled }: Props) {
   const [field, , helpers] = useField<ChainName>(name);
   const { setFieldValue } = useFormikContext<TransferFormValues>();
+
+  const displayName = useChainDisplayName(field.value, true);
 
   const handleChange = (chainName: ChainName) => {
     helpers.setValue(chainName);
@@ -50,7 +52,7 @@ export function ChainSelectField({ name, label, chains, onChange, disabled }: Pr
             <label htmlFor={name} className="text-xs text-gray-600">
               {label}
             </label>
-            {getChainDisplayName(field.value, true)}
+            {displayName}
           </div>
         </div>
         <Image src={ChevronIcon} width={12} height={8} alt="" />

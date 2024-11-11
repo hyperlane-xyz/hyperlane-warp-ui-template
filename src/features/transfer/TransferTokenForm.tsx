@@ -1,4 +1,4 @@
-import { TokenAmount } from '@hyperlane-xyz/sdk';
+import { TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
 import { ProtocolType, errorToString, isNullish, toWei } from '@hyperlane-xyz/utils';
 import { ChevronIcon, IconButton, SwapIcon } from '@hyperlane-xyz/widgets';
 import BigNumber from 'bignumber.js';
@@ -9,18 +9,18 @@ import { SmallSpinner } from '../../components/animation/SmallSpinner';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
 import { SolidButton } from '../../components/buttons/SolidButton';
 import { TextField } from '../../components/input/TextField';
-import { getIndexForToken, getTokenByIndex, getTokens, getWarpCore } from '../../context/context';
 import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
 import { ChainSelectField } from '../chains/ChainSelectField';
 import { ChainWalletWarning } from '../chains/ChainWalletWarning';
-import { getChainDisplayName } from '../chains/utils';
+import { useChainDisplayName } from '../chains/hooks';
 import { useIsAccountSanctioned } from '../sanctions/hooks/useIsAccountSanctioned';
 import { useStore } from '../store';
 import { SelectOrInputTokenIds } from '../tokens/SelectOrInputTokenIds';
 import { TokenSelectField } from '../tokens/TokenSelectField';
 import { useIsApproveRequired } from '../tokens/approval';
 import { useDestinationBalance, useOriginBalance } from '../tokens/balances';
+import { getIndexForToken, getTokenByIndex, useWarpCore } from '../tokens/hooks';
 import {
   getAccountAddressAndPubKey,
   useAccountAddressForChain,
@@ -34,6 +34,8 @@ import { useFeeQuotes } from './useFeeQuotes';
 import { useTokenTransfer } from './useTokenTransfer';
 
 export function TransferTokenForm() {
+  const warpCore = useWarpCore();
+
   const initialValues = useFormInitialValues();
   const { accounts } = useAccounts();
 
@@ -42,7 +44,7 @@ export function TransferTokenForm() {
   // Flag for check current type of token
   const [isNft, setIsNft] = useState(false);
 
-  const validate = (values: TransferFormValues) => validateForm(values, accounts);
+  const validate = (values: TransferFormValues) => validateForm(warpCore, values, accounts);
 
   const onSubmitForm = (values: TransferFormValues) => {
     logger.debug('Reviewing transfer form values for:', values.origin, values.destination);
@@ -106,7 +108,8 @@ function SwapChainsButton({ disabled }: { disabled?: boolean }) {
 }
 
 function ChainSelectSection({ isReview }: { isReview: boolean }) {
-  const chains = useMemo(() => getWarpCore().getTokenChains(), []);
+  const warpCore = useWarpCore();
+  const chains = useMemo(() => warpCore.getTokenChains(), [warpCore]);
 
   return (
     <div className="mt-4 flex items-center justify-between gap-4">
@@ -208,6 +211,8 @@ function ButtonSection({
   setIsReview: (b: boolean) => void;
 }) {
   const { values } = useFormikContext<TransferFormValues>();
+  const chainDisplayName = useChainDisplayName(values.destination);
+
   const isSanctioned = useIsAccountSanctioned();
 
   const onDoneTransactions = () => {
@@ -257,7 +262,7 @@ function ButtonSection({
         onClick={triggerTransactionsHandler}
         classes="flex-1 px-3 py-1.5"
       >
-        {`Send to ${getChainDisplayName(values.destination)}`}
+        {`Send to ${chainDisplayName}`}
       </SolidButton>
     </div>
   );
@@ -299,16 +304,13 @@ function MaxButton({ balance, disabled }: { balance?: TokenAmount; disabled?: bo
 
 function SelfButton({ disabled }: { disabled?: boolean }) {
   const { values, setFieldValue } = useFormikContext<TransferFormValues>();
+  const chainDisplayName = useChainDisplayName(values.destination);
   const address = useAccountAddressForChain(values.destination);
   const onClick = () => {
     if (disabled) return;
     if (address) setFieldValue('recipient', address);
     else
-      toast.warn(
-        `No account found for for chain ${getChainDisplayName(
-          values.destination,
-        )}, is your wallet connected?`,
-      );
+      toast.warn(`No account found for for chain ${chainDisplayName}, is your wallet connected?`);
   };
   return (
     <SolidButton
@@ -326,7 +328,8 @@ function SelfButton({ disabled }: { disabled?: boolean }) {
 function ReviewDetails({ visible }: { visible: boolean }) {
   const { values } = useFormikContext<TransferFormValues>();
   const { amount, destination, tokenIndex } = values;
-  const originToken = getTokenByIndex(tokenIndex);
+  const warpCore = useWarpCore();
+  const originToken = getTokenByIndex(warpCore, tokenIndex);
   const originTokenSymbol = originToken?.symbol || '';
   const connection = originToken?.getConnectionForChain(destination);
   const destinationToken = connection?.token;
@@ -407,33 +410,39 @@ function ReviewDetails({ visible }: { visible: boolean }) {
 }
 
 function useFormInitialValues(): TransferFormValues {
+  const warpCore = useWarpCore();
   return useMemo(() => {
-    const firstToken = getTokens()[0];
+    const firstToken = warpCore.tokens[0];
     const connectedToken = firstToken.connections?.[0];
     return {
       origin: firstToken.chainName,
       destination: connectedToken?.token?.chainName || '',
-      tokenIndex: getIndexForToken(firstToken),
+      tokenIndex: getIndexForToken(warpCore, firstToken),
       amount: '',
       recipient: '',
     };
-  }, []);
+  }, [warpCore]);
 }
 
 const insufficientFundsErrMsg = /insufficient.[funds|lamports]/i;
 const emptyAccountErrMsg = /AccountNotFound/i;
 
 async function validateForm(
+  warpCore: WarpCore,
   values: TransferFormValues,
   accounts: Record<ProtocolType, AccountInfo>,
 ) {
   try {
     const { origin, destination, tokenIndex, amount, recipient } = values;
-    const token = getTokenByIndex(tokenIndex);
+    const token = getTokenByIndex(warpCore, tokenIndex);
     if (!token) return { token: 'Token is required' };
     const amountWei = toWei(amount, token.decimals);
-    const { address, publicKey: senderPubKey } = getAccountAddressAndPubKey(origin, accounts);
-    const result = await getWarpCore().validateTransfer({
+    const { address, publicKey: senderPubKey } = getAccountAddressAndPubKey(
+      warpCore.multiProvider,
+      origin,
+      accounts,
+    );
+    const result = await warpCore.validateTransfer({
       originTokenAmount: token.amount(amountWei),
       destination,
       recipient,

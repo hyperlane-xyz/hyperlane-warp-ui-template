@@ -1,10 +1,9 @@
-import { WideChevronIcon as WideChevronInner } from '@hyperlane-xyz/widgets';
-
+import { WideChevronIcon } from '@hyperlane-xyz/widgets';
 import { Color } from '../../styles/Color';
 
 export function WideChevron({ className }: { className?: string }) {
   return (
-    <WideChevronInner
+    <WideChevronIcon
       width="16"
       height="100%"
       direction="e"

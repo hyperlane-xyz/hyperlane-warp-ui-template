@@ -1,7 +1,6 @@
 import { warpRouteConfigs } from '@hyperlane-xyz/registry';
 import { WarpCoreConfig, WarpCoreConfigSchema } from '@hyperlane-xyz/sdk';
 import { objFilter, objMerge } from '@hyperlane-xyz/utils';
-
 import { warpRouteWhitelist } from '../consts/warpRouteWhitelist.ts';
 import { warpRouteConfigs as WarpRoutesTs } from '../consts/warpRoutes.ts';
 import WarpRoutesYaml from '../consts/warpRoutes.yaml';

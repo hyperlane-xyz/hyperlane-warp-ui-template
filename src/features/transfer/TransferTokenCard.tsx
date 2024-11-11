@@ -1,5 +1,4 @@
 import { Card } from '../../components/layout/Card';
-
 import { TransferTokenForm } from './TransferTokenForm';
 
 export function TransferTokenCard() {

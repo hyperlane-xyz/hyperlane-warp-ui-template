@@ -1,8 +1,6 @@
+import { DiscordIcon, GithubIcon, HyperlaneLogo, TwitterIcon } from '@hyperlane-xyz/widgets';
 import Link from 'next/link';
 import { ReactNode } from 'react';
-
-import { DiscordIcon, GithubIcon, HyperlaneLogo, TwitterIcon } from '@hyperlane-xyz/widgets';
-
 import { links } from '../../consts/links';
 import { Color } from '../../styles/Color';
 

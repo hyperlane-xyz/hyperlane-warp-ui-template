@@ -1,7 +1,6 @@
+import { TokenAmount } from '@hyperlane-xyz/sdk';
 import { useEffect, useRef } from 'react';
 import { toast } from 'react-toastify';
-
-import { TokenAmount } from '@hyperlane-xyz/sdk';
 
 export function useRecipientBalanceWatcher(recipient?: Address, balance?: TokenAmount) {
   // A crude way to detect transfer completions by triggering

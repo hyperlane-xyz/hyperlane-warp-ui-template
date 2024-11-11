@@ -1,12 +1,10 @@
 import Link from 'next/link';
 
 import { DocsIcon, HistoryIcon, WalletIcon } from '@hyperlane-xyz/widgets';
-
 import { IconButton } from '../../components/buttons/IconButton';
 import { links } from '../../consts/links';
 import { Color } from '../../styles/Color';
 import { useStore } from '../store';
-
 import { useAccounts } from './hooks/multiProtocol';
 
 export function WalletFloatingButtons() {

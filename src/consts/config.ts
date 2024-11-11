@@ -1,5 +1,4 @@
 import { ChainMap } from '@hyperlane-xyz/sdk';
-
 import { ADDRESS_BLACKLIST } from './blacklist';
 
 const isDevMode = process?.env?.NODE_ENV === 'development';

@@ -1,6 +1,5 @@
 import Image from 'next/image';
 import { PropsWithChildren, ReactNode } from 'react';
-
 import WarningIcon from '../../images/icons/warning.svg';
 
 export function WarningBanner({

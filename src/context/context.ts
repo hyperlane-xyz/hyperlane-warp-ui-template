@@ -8,7 +8,6 @@ import {
   WarpCore,
 } from '@hyperlane-xyz/sdk';
 import { isNullish } from '@hyperlane-xyz/utils';
-
 import { assembleChainMetadata } from './chains';
 import { assembleWarpCoreConfig } from './warpCoreConfig';
 
@@ -68,7 +67,7 @@ export function getIndexForToken(token?: IToken): number | undefined {
 export function tryFindToken(chain: ChainName, addressOrDenom?: string): IToken | null {
   try {
     return getWarpCore().findToken(chain, addressOrDenom);
-  } catch (error) {
+  } catch {
     return null;
   }
 }

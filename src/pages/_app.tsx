@@ -7,7 +7,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { ErrorBoundary } from '../components/errors/ErrorBoundary';
 import { AppLayout } from '../components/layout/AppLayout';
 import { MAIN_FONT } from '../consts/app';
-import { WarpContext } from '../context/WarpContext';
+import { WarpContextInitGate } from '../features/WarpContextInitGate';
 import { CosmosWalletContext } from '../features/wallet/context/CosmosWalletContext';
 import { EvmWalletContext } from '../features/wallet/context/EvmWalletContext';
 import { SolanaWalletContext } from '../features/wallet/context/SolanaWalletContext';
@@ -26,7 +26,7 @@ const reactQueryClient = new QueryClient({
 
 export default function App({ Component, pageProps }: AppProps) {
   // Disable app SSR for now as it's not needed and
-  // complicates graphql integration
+  // complicates wallet and graphql integrations
   const isSsr = useIsSsr();
   if (isSsr) {
     return <div></div>;
@@ -38,7 +38,7 @@ export default function App({ Component, pageProps }: AppProps) {
     <div className={`${MAIN_FONT.variable} font-sans text-black`}>
       <ErrorBoundary>
         <QueryClientProvider client={reactQueryClient}>
-          <WarpContext>
+          <WarpContextInitGate>
             <EvmWalletContext>
               <SolanaWalletContext>
                 <CosmosWalletContext>
@@ -46,12 +46,12 @@ export default function App({ Component, pageProps }: AppProps) {
                     <Component {...pageProps} />
                     <Analytics />
                   </AppLayout>
-                  <ToastContainer transition={Zoom} position="bottom-right" limit={2} />
                 </CosmosWalletContext>
               </SolanaWalletContext>
             </EvmWalletContext>
-          </WarpContext>
+          </WarpContextInitGate>
         </QueryClientProvider>
+        <ToastContainer transition={Zoom} position="bottom-right" limit={2} />
       </ErrorBoundary>
     </div>
   );

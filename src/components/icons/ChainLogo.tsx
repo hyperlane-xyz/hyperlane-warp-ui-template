@@ -1,8 +1,8 @@
 import { ChainLogo as ChainLogoInner } from '@hyperlane-xyz/widgets';
 import Image from 'next/image';
 import { useMemo } from 'react';
-import { getRegistry } from '../../context/context';
-import { tryGetChainMetadata } from '../../features/chains/utils';
+import { useChainMetadata } from '../../features/chains/hooks';
+import { useStore } from '../../features/store';
 
 export function ChainLogo({
   chainName,
@@ -13,10 +13,9 @@ export function ChainLogo({
   background?: boolean;
   size?: number;
 }) {
-  const registry = getRegistry();
+  const registry = useStore((s) => s.registry);
+  const chainMetadata = useChainMetadata(chainName);
   const { name, Icon } = useMemo(() => {
-    if (!chainName) return { name: '' };
-    const chainMetadata = tryGetChainMetadata(chainName);
     const name = chainMetadata?.name || '';
     const logoUri = chainMetadata?.logoURI;
     const Icon = logoUri
@@ -28,7 +27,7 @@ export function ChainLogo({
       name,
       Icon,
     };
-  }, [chainName]);
+  }, [chainMetadata]);
 
   return (
     <ChainLogoInner

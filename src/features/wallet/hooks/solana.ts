@@ -4,8 +4,8 @@ import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import { Connection } from '@solana/web3.js';
 import { useCallback, useMemo } from 'react';
-import { getMultiProvider } from '../../../context/context';
 import { logger } from '../../../utils/logger';
+import { useMultiProvider } from '../../chains/hooks';
 import { getChainByRpcUrl } from '../../chains/utils';
 import { AccountInfo, ActiveChainInfo, ChainTransactionFns, WalletDetails } from './types';
 
@@ -48,12 +48,13 @@ export function useSolDisconnectFn(): () => Promise<void> {
 }
 
 export function useSolActiveChain(): ActiveChainInfo {
+  const multiProvider = useMultiProvider();
   const { connection } = useConnection();
   const connectionEndpoint = connection?.rpcEndpoint;
   return useMemo<ActiveChainInfo>(() => {
     try {
       const hostname = new URL(connectionEndpoint).hostname;
-      const metadata = getChainByRpcUrl(hostname);
+      const metadata = getChainByRpcUrl(multiProvider, hostname);
       if (!metadata) return {};
       return {
         chainDisplayName: metadata.displayName,
@@ -63,10 +64,12 @@ export function useSolActiveChain(): ActiveChainInfo {
       logger.warn('Error finding sol active chain', error);
       return {};
     }
-  }, [connectionEndpoint]);
+  }, [connectionEndpoint, multiProvider]);
 }
 
 export function useSolTransactionFns(): ChainTransactionFns {
+  const multiProvider = useMultiProvider();
+
   const { sendTransaction: sendSolTransaction } = useWallet();
 
   const onSwitchNetwork = useCallback(async (chainName: ChainName) => {
@@ -85,7 +88,7 @@ export function useSolTransactionFns(): ChainTransactionFns {
     }) => {
       if (tx.type !== ProviderType.SolanaWeb3) throw new Error(`Unsupported tx type: ${tx.type}`);
       if (activeChainName && activeChainName !== chainName) await onSwitchNetwork(chainName);
-      const rpcUrl = getMultiProvider().getRpcUrl(chainName);
+      const rpcUrl = multiProvider.getRpcUrl(chainName);
       const connection = new Connection(rpcUrl, 'confirmed');
       const {
         context: { slot: minContextSlot },
@@ -106,7 +109,7 @@ export function useSolTransactionFns(): ChainTransactionFns {
 
       return { hash: signature, confirm };
     },
-    [onSwitchNetwork, sendSolTransaction],
+    [onSwitchNetwork, sendSolTransaction, multiProvider],
   );
 
   return { sendTransaction: onSendTx, switchNetwork: onSwitchNetwork };

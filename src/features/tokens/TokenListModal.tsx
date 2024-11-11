@@ -5,9 +5,10 @@ import { TokenIcon } from '../../components/icons/TokenIcon';
 import { TextInput } from '../../components/input/TextField';
 import { Modal } from '../../components/layout/Modal';
 import { config } from '../../consts/config';
-import { getWarpCore } from '../../context/context';
 import InfoIcon from '../../images/icons/info-circle.svg';
+import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
+import { useWarpCore } from './hooks';
 
 export function TokenListModal({
   isOpen,
@@ -70,9 +71,11 @@ export function TokenList({
   searchQuery: string;
   onSelect: (token: IToken) => void;
 }) {
+  const multiProvider = useMultiProvider();
+  const warpCore = useWarpCore();
+
   const tokens = useMemo(() => {
     const q = searchQuery?.trim().toLowerCase();
-    const warpCore = getWarpCore();
     const multiChainTokens = warpCore.tokens.filter((t) => t.isMultiChainToken());
     const tokensWithRoute = warpCore.getTokensForRoute(origin, destination);
     return (
@@ -98,7 +101,7 @@ export function TokenList({
         // Hide/show disabled tokens
         .filter((t) => (config.showDisabledTokens ? true : !t.disabled))
     );
-  }, [searchQuery, origin, destination]);
+  }, [warpCore, searchQuery, origin, destination]);
 
   return (
     <div className="flex flex-col items-stretch">
@@ -127,7 +130,7 @@ export function TokenList({
               <div className="mt-0.5 flex space-x-1 text-xs">
                 <span>{`Decimals: ${t.token.decimals}`}</span>
                 <span>-</span>
-                <span>{`Chain: ${getChainDisplayName(t.token.chainName)}`}</span>
+                <span>{`Chain: ${getChainDisplayName(multiProvider, t.token.chainName)}`}</span>
               </div>
             </div>
             {t.disabled && (
@@ -137,8 +140,9 @@ export function TokenList({
                 className="ml-auto mr-1"
                 data-te-toggle="tooltip"
                 title={`Route not supported for ${getChainDisplayName(
+                  multiProvider,
                   origin,
-                )} to ${getChainDisplayName(destination)}`}
+                )} to ${getChainDisplayName(multiProvider, destination)}`}
               />
             )}
           </button>

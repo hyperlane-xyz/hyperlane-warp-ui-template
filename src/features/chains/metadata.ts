@@ -1,20 +1,87 @@
 import type { AssetList, Chain as CosmosChain } from '@chain-registry/types';
-import { ChainMetadata, ChainName, chainMetadataToViemChain } from '@hyperlane-xyz/sdk';
-import { ProtocolType } from '@hyperlane-xyz/utils';
+import { IRegistry, chainMetadata as publishedChainMetadata } from '@hyperlane-xyz/registry';
+import {
+  ChainMap,
+  ChainMetadata,
+  ChainMetadataSchema,
+  ChainName,
+  WarpCore,
+  chainMetadataToViemChain,
+  mergeChainMetadataMap,
+} from '@hyperlane-xyz/sdk';
+import { ProtocolType, objMap, promiseObjAll } from '@hyperlane-xyz/utils';
 import { Chain as ViemChain } from 'viem';
-import { getTokens, getWarpContext } from '../../context/context';
+import { z } from 'zod';
+import { chains as ChainsTS } from '../../consts/chains.ts';
+import ChainsYaml from '../../consts/chains.yaml';
+import { config } from '../../consts/config.ts';
+import { logger } from '../../utils/logger.ts';
 import { cosmosDefaultChain } from './cosmosDefault';
 
+export async function assembleChainMetadata(
+  registry: IRegistry,
+  storeMetadataOverrides?: ChainMap<Partial<ChainMetadata | undefined>>,
+) {
+  // Chains must include a cosmos chain or CosmosKit throws errors
+  const result = z.record(ChainMetadataSchema).safeParse({
+    cosmoshub: cosmosDefaultChain,
+    ...ChainsYaml,
+    ...ChainsTS,
+  });
+  if (!result.success) {
+    logger.warn('Invalid chain metadata', result.error);
+    throw new Error(`Invalid chain metadata: ${result.error.toString()}`);
+  }
+  const filesystemMetadata = result.data as ChainMap<ChainMetadata>;
+
+  let registryChainMetadata: ChainMap<ChainMetadata>;
+  if (config.registryUrl) {
+    logger.debug('Using custom registry metadata from:', config.registryUrl);
+    registryChainMetadata = await registry.getMetadata();
+  } else {
+    logger.debug('Using default published registry');
+    registryChainMetadata = publishedChainMetadata;
+  }
+
+  // TODO have the registry do this automatically
+  registryChainMetadata = await promiseObjAll(
+    objMap(
+      registryChainMetadata,
+      async (chainName, metadata): Promise<ChainMetadata> => ({
+        ...metadata,
+        logoURI: (await registry.getChainLogoUri(chainName)) || undefined,
+      }),
+    ),
+  );
+
+  const chainMetadata = mergeChainMetadataMap(registryChainMetadata, filesystemMetadata);
+  const chainMetadataWithOverrides = mergeChainMetadataMap(chainMetadata, storeMetadataOverrides);
+  return { chainMetadata, chainMetadataWithOverrides };
+}
+
 // Metadata formatted for use in Wagmi config
-export function getWagmiChainConfig(): ViemChain[] {
-  const evmChains = Object.values(getWarpContext().chains).filter(
-    (c) => !c.protocol || c.protocol === ProtocolType.Ethereum,
+export function getWagmiChainConfig(warpCore: WarpCore): ViemChain[] {
+  const evmChains = Object.values(warpCore.multiProvider.metadata).filter(
+    (c) =>
+      (!c.protocol || c.protocol === ProtocolType.Ethereum) &&
+      warpCore.tokens.some((t) => t.chainName === c.name),
   );
   return evmChains.map(chainMetadataToViemChain);
 }
 
-export function getCosmosKitConfig(): { chains: CosmosChain[]; assets: AssetList[] } {
-  const cosmosChains = getCosmosChains();
+export function getCosmosChains(warpCore: WarpCore): ChainMetadata[] {
+  const chains = Object.values(warpCore.multiProvider.metadata).filter(
+    (c) =>
+      c.protocol === ProtocolType.Cosmos && warpCore.tokens.some((t) => t.chainName === c.name),
+  );
+  return [...chains, cosmosDefaultChain];
+}
+
+export function getCosmosKitConfig(warpCore: WarpCore): {
+  chains: CosmosChain[];
+  assets: AssetList[];
+} {
+  const cosmosChains = getCosmosChains(warpCore);
   const chains = cosmosChains.map((c) => ({
     chain_name: c.name,
     status: 'live',
@@ -92,14 +159,6 @@ export function getCosmosKitConfig(): { chains: CosmosChain[]; assets: AssetList
   return { chains, assets };
 }
 
-export function getCosmosChainNames(): ChainName[] {
-  return getCosmosChains().map((c) => c.name);
-}
-
-export function getCosmosChains(): ChainMetadata[] {
-  const tokens = getTokens();
-  const chains = Object.values(getWarpContext().chains).filter(
-    (c) => c.protocol === ProtocolType.Cosmos && tokens.some((t) => t.chainName === c.name),
-  );
-  return [...chains, cosmosDefaultChain];
+export function getCosmosChainNames(warpCore: WarpCore): ChainName[] {
+  return getCosmosChains(warpCore).map((c) => c.name);
 }

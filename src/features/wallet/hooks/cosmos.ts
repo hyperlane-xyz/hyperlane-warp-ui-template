@@ -7,8 +7,9 @@ import { toast } from 'react-toastify';
 import { PLACEHOLDER_COSMOS_CHAIN } from '../../../consts/values';
 import { logger } from '../../../utils/logger';
 import { getCosmosChainNames } from '../../chains/metadata';
-import { getChainMetadata } from '../../chains/utils';
 
+import { useMultiProvider } from '../../chains/hooks';
+import { useWarpCore } from '../../tokens/hooks';
 import {
   AccountInfo,
   ActiveChainInfo,
@@ -18,7 +19,8 @@ import {
 } from './types';
 
 export function useCosmosAccount(): AccountInfo {
-  const chainToContext = useChains(getCosmosChainNames());
+  const cosmosChains = getCosmosChainNames(useWarpCore());
+  const chainToContext = useChains(cosmosChains);
   return useMemo<AccountInfo>(() => {
     const addresses: Array<ChainAddress> = [];
     let publicKey: Promise<HexString> | undefined = undefined;
@@ -71,12 +73,18 @@ export function useCosmosActiveChain(): ActiveChainInfo {
 }
 
 export function useCosmosTransactionFns(): ChainTransactionFns {
-  const chainToContext = useChains(getCosmosChainNames());
+  const multiProvider = useMultiProvider();
 
-  const onSwitchNetwork = useCallback(async (chainName: ChainName) => {
-    const displayName = getChainMetadata(chainName).displayName || chainName;
-    toast.warn(`Cosmos wallet must be connected to origin chain ${displayName}}`);
-  }, []);
+  const cosmosChains = getCosmosChainNames(useWarpCore());
+  const chainToContext = useChains(cosmosChains);
+
+  const onSwitchNetwork = useCallback(
+    async (chainName: ChainName) => {
+      const displayName = multiProvider.getChainMetadata(chainName).displayName || chainName;
+      toast.warn(`Cosmos wallet must be connected to origin chain ${displayName}}`);
+    },
+    [multiProvider],
+  );
 
   const onSendTx = useCallback(
     async ({

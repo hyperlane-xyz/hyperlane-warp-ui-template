@@ -4,7 +4,6 @@ import { toast } from 'react-toastify';
 import { SmallSpinner } from '../../components/animation/SmallSpinner';
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import { WalletLogo } from '../../components/icons/WalletLogo';
-import { tryFindToken } from '../../context/context';
 import ArrowRightIcon from '../../images/icons/arrow-right.svg';
 import CollapseIcon from '../../images/icons/collapse-icon.svg';
 import Logout from '../../images/icons/logout.svg';
@@ -12,8 +11,10 @@ import ResetIcon from '../../images/icons/reset-icon.svg';
 import Wallet from '../../images/icons/wallet.svg';
 import { tryClipboardSet } from '../../utils/clipboard';
 import { STATUSES_WITH_ICON, getIconByTransferStatus } from '../../utils/transfer';
+import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { useStore } from '../store';
+import { tryFindToken, useWarpCore } from '../tokens/hooks';
 import { TransfersDetailsModal } from '../transfer/TransfersDetailsModal';
 import { TransferContext } from '../transfer/types';
 import { useAccounts, useDisconnectFns, useWalletDetails } from './hooks/multiProtocol';
@@ -174,8 +175,12 @@ function TransferSummary({
   transfer: TransferContext;
   onClick: () => void;
 }) {
+  const multiProvider = useMultiProvider();
+  const warpCore = useWarpCore();
+
   const { amount, origin, destination, status, timestamp, originTokenAddressOrDenom } = transfer;
-  const token = tryFindToken(origin, originTokenAddressOrDenom);
+
+  const token = tryFindToken(warpCore, origin, originTokenAddressOrDenom);
 
   return (
     <button key={timestamp} onClick={onClick} className={`${styles.btn} justify-between py-3`}>
@@ -191,11 +196,11 @@ function TransferSummary({
             </div>
             <div className="mt-1 flex flex-row items-center">
               <span className="text-xxs font-normal tracking-wide text-gray-900">
-                {getChainDisplayName(origin, true)}
+                {getChainDisplayName(multiProvider, origin, true)}
               </span>
               <Image className="mx-1" src={ArrowRightIcon} width={10} height={10} alt="" />
               <span className="text-xxs font-normal tracking-wide text-gray-900">
-                {getChainDisplayName(destination, true)}
+                {getChainDisplayName(multiProvider, destination, true)}
               </span>
             </div>
           </div>

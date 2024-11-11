@@ -3,10 +3,10 @@ import { useField, useFormikContext } from 'formik';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { TokenIcon } from '../../components/icons/TokenIcon';
-import { getIndexForToken, getTokenByIndex, getWarpCore } from '../../context/context';
 import ChevronIcon from '../../images/icons/chevron-down.svg';
 import { TransferFormValues } from '../transfer/types';
 import { TokenListModal } from './TokenListModal';
+import { getIndexForToken, getTokenByIndex, useWarpCore } from './hooks';
 
 type Props = {
   name: string;
@@ -20,9 +20,11 @@ export function TokenSelectField({ name, disabled, setIsNft }: Props) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAutomaticSelection, setIsAutomaticSelection] = useState(false);
 
+  const warpCore = useWarpCore();
+
   const { origin, destination } = values;
   useEffect(() => {
-    const tokensWithRoute = getWarpCore().getTokensForRoute(origin, destination);
+    const tokensWithRoute = warpCore.getTokensForRoute(origin, destination);
     let newFieldValue: number | undefined;
     let newIsAutomatic: boolean;
     // No tokens available for this route
@@ -32,7 +34,7 @@ export function TokenSelectField({ name, disabled, setIsNft }: Props) {
     }
     // Exactly one found
     else if (tokensWithRoute.length === 1) {
-      newFieldValue = getIndexForToken(tokensWithRoute[0]);
+      newFieldValue = getIndexForToken(warpCore, tokensWithRoute[0]);
       newIsAutomatic = true;
       // Multiple possibilities
     } else {
@@ -41,11 +43,11 @@ export function TokenSelectField({ name, disabled, setIsNft }: Props) {
     }
     helpers.setValue(newFieldValue);
     setIsAutomaticSelection(newIsAutomatic);
-  }, [origin, destination, helpers]);
+  }, [warpCore, origin, destination, helpers]);
 
   const onSelectToken = (newToken: IToken) => {
     // Set the token address value in formik state
-    helpers.setValue(getIndexForToken(newToken));
+    helpers.setValue(getIndexForToken(warpCore, newToken));
     // Update nft state in parent
     setIsNft(newToken.isNft());
   };
@@ -57,7 +59,7 @@ export function TokenSelectField({ name, disabled, setIsNft }: Props) {
   return (
     <>
       <TokenButton
-        token={getTokenByIndex(field.value)}
+        token={getTokenByIndex(warpCore, field.value)}
         disabled={isAutomaticSelection || disabled}
         onClick={onClickField}
         isAutomatic={isAutomaticSelection}

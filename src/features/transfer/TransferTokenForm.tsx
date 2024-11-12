@@ -1,11 +1,10 @@
 import { TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
 import { ProtocolType, errorToString, isNullish, toWei } from '@hyperlane-xyz/utils';
-import { ChevronIcon, IconButton, SwapIcon } from '@hyperlane-xyz/widgets';
+import { ChevronIcon, IconButton, SpinnerIcon, SwapIcon } from '@hyperlane-xyz/widgets';
 import BigNumber from 'bignumber.js';
 import { Form, Formik, useFormikContext } from 'formik';
 import { useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
-import { SmallSpinner } from '../../components/animation/SmallSpinner';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
 import { SolidButton } from '../../components/buttons/SolidButton';
 import { TextField } from '../../components/input/TextField';
@@ -293,7 +292,7 @@ function MaxButton({ balance, disabled }: { balance?: TokenAmount; disabled?: bo
     >
       {isLoading ? (
         <div className="flex items-center">
-          <SmallSpinner className="text-white" />
+          <SpinnerIcon className="h-5 w-5" color="white" />
         </div>
       ) : (
         'Max'
@@ -356,7 +355,7 @@ function ReviewDetails({ visible }: { visible: boolean }) {
       <div className="mt-1.5 space-y-2 break-all rounded border border-gray-400 bg-gray-150 px-2.5 py-2 text-sm">
         {isLoading ? (
           <div className="flex items-center justify-center py-6">
-            <SmallSpinner />
+            <SpinnerIcon className="h-5 w-5" />
           </div>
         ) : (
           <>

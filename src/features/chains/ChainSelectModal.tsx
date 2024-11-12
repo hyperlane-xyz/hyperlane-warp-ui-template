@@ -27,7 +27,13 @@ export function ChainSelectListModal({
   };
 
   return (
-    <Modal isOpen={isOpen} close={close} title="Select Chain" panelClassname="p-4" showCloseButton>
+    <Modal
+      isOpen={isOpen}
+      close={close}
+      title="Select Chain"
+      panelClassname="p-4 max-w-xs"
+      showCloseButton
+    >
       <div className="mt-2 flex flex-col space-y-1">
         {sortedChains.map((c) => (
           <button

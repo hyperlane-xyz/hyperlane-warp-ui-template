@@ -1,7 +1,7 @@
+import { SpinnerIcon } from '@hyperlane-xyz/widgets';
 import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
-import { SmallSpinner } from '../../components/animation/SmallSpinner';
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import { WalletLogo } from '../../components/icons/WalletLogo';
 import ArrowRightIcon from '../../images/icons/arrow-right.svg';
@@ -210,7 +210,9 @@ function TransferSummary({
         {STATUSES_WITH_ICON.includes(status) ? (
           <Image src={getIconByTransferStatus(status)} width={25} height={25} alt="" />
         ) : (
-          <SmallSpinner className="-ml-1 mr-3" />
+          <>
+            <SpinnerIcon className="-ml-1 mr-3 h-5 w-5" />
+          </>
         )}
       </div>
     </button>

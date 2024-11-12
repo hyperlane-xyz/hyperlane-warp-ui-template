@@ -1,6 +1,6 @@
+import { CheckmarkIcon } from '@hyperlane-xyz/widgets';
 import Image from 'next/image';
 import { useState } from 'react';
-import CheckmarkIcon from '../../images/icons/checkmark.svg';
 import CopyIcon from '../../images/icons/copy-stack.svg';
 import { tryClipboardSet } from '../../utils/clipboard';
 
@@ -32,7 +32,7 @@ export function CopyButton({ width, height, copyValue, classes }: Props) {
       } hover:opacity-70 active:opacity-90 ${classes}`}
     >
       {showCheckmark ? (
-        <Image src={CheckmarkIcon} width={width} height={height} alt="" />
+        <CheckmarkIcon width={width} height={height} />
       ) : (
         <Image src={CopyIcon} width={width} height={height} alt="" />
       )}

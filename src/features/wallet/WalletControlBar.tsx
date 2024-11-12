@@ -1,9 +1,7 @@
 import { ProtocolType, shortenAddress } from '@hyperlane-xyz/utils';
-import { ChevronIcon } from '@hyperlane-xyz/widgets';
-import Image from 'next/image';
+import { ChevronIcon, WalletIcon } from '@hyperlane-xyz/widgets';
 import { SolidButton } from '../../components/buttons/SolidButton';
 import { WalletLogo } from '../../components/icons/WalletLogo';
-import Wallet from '../../images/icons/wallet.svg';
 import { useIsSsr } from '../../utils/ssr';
 import { useStore } from '../store';
 import { useAccounts, useWalletDetails } from './hooks/multiProtocol';
@@ -36,7 +34,7 @@ export function WalletControlBar() {
             classes="py-2 px-3"
             onClick={() => setShowEnvSelectModal(true)}
             title="Choose wallet"
-            icon={<Image src={Wallet} alt="" width={16} height={16} />}
+            icon={<WalletIcon width={16} height={16} />}
             color="white"
           >
             <div className="ml-1.5 text-xs sm:text-sm">Connect wallet</div>

@@ -1,8 +1,13 @@
 import { ProtocolType } from '@hyperlane-xyz/utils';
-import { MessageStatus, MessageTimeline, Modal, useMessageTimeline } from '@hyperlane-xyz/widgets';
+import {
+  MessageStatus,
+  MessageTimeline,
+  Modal,
+  SpinnerIcon,
+  useMessageTimeline,
+} from '@hyperlane-xyz/widgets';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Spinner } from '../../components/animation/Spinner';
 import { CopyButton } from '../../components/buttons/CopyButton';
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import { TokenIcon } from '../../components/icons/TokenIcon';
@@ -184,7 +189,7 @@ export function TransfersDetailsModal({
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center py-4">
-          <Spinner />
+          <SpinnerIcon width={80} height={80} />
           <div
             className={`mt-5 text-center text-sm ${isFailed ? 'text-red-600' : 'text-gray-600'}`}
           >

@@ -1,4 +1,4 @@
-import { SpinnerIcon } from '@hyperlane-xyz/widgets';
+import { LogoutIcon, SpinnerIcon, WalletIcon } from '@hyperlane-xyz/widgets';
 import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
@@ -6,9 +6,7 @@ import { ChainLogo } from '../../components/icons/ChainLogo';
 import { WalletLogo } from '../../components/icons/WalletLogo';
 import ArrowRightIcon from '../../images/icons/arrow-right.svg';
 import CollapseIcon from '../../images/icons/collapse-icon.svg';
-import Logout from '../../images/icons/logout.svg';
 import ResetIcon from '../../images/icons/reset-icon.svg';
-import Wallet from '../../images/icons/wallet.svg';
 import { tryClipboardSet } from '../../utils/clipboard';
 import { STATUSES_WITH_ICON, getIconByTransferStatus } from '../../utils/transfer';
 import { useMultiProvider } from '../chains/hooks';
@@ -90,11 +88,11 @@ export function SideBarMenu({
               <AccountSummary key={i} account={acc} />
             ))}
             <button onClick={onConnectWallet} className={`${styles.btn} pl-2.5`}>
-              <Icon src={Wallet} alt="" size={18} />
+              <WalletIcon width={17} height={14} />
               <div className="ml-2">Connect wallet</div>
             </button>
             <button onClick={onClickDisconnect} className={`${styles.btn} pl-2.5`}>
-              <Icon src={Logout} alt="" size={20} />
+              <LogoutIcon width={20} height={20} />
               <div className="ml-2">Disconnect all wallets</div>
             </button>
           </div>
@@ -216,24 +214,6 @@ function TransferSummary({
         )}
       </div>
     </button>
-  );
-}
-
-function Icon({
-  src,
-  alt,
-  size,
-  className,
-}: {
-  src: any;
-  alt?: string;
-  size?: number;
-  className?: string;
-}) {
-  return (
-    <div className={`flex w-[20px] items-center justify-center ${className}`}>
-      <Image src={src} alt={alt || ''} width={size ?? 16} height={size ?? 16} />
-    </div>
   );
 }
 

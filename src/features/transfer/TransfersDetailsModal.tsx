@@ -1,5 +1,5 @@
 import { ProtocolType } from '@hyperlane-xyz/utils';
-import { MessageStatus, MessageTimeline, useMessageTimeline } from '@hyperlane-xyz/widgets';
+import { MessageStatus, MessageTimeline, Modal, useMessageTimeline } from '@hyperlane-xyz/widgets';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Spinner } from '../../components/animation/Spinner';
@@ -7,7 +7,6 @@ import { CopyButton } from '../../components/buttons/CopyButton';
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import { TokenIcon } from '../../components/icons/TokenIcon';
 import { WideChevron } from '../../components/icons/WideChevron';
-import { Modal } from '../../components/layout/Modal';
 import LinkIcon from '../../images/icons/external-link-icon.svg';
 import { formatTimestamp } from '../../utils/date';
 import { getHypExplorerLink } from '../../utils/links';
@@ -105,14 +104,7 @@ export function TransfersDetailsModal({
   const explorerLink = getHypExplorerLink(multiProvider, origin, msgId);
 
   return (
-    <Modal
-      showCloseBtn={false}
-      isOpen={isOpen}
-      close={onClose}
-      title=""
-      padding="p-4 md:p-5"
-      width="max-w-sm"
-    >
+    <Modal isOpen={isOpen} close={onClose} panelClassname="p-4 md:p-5 max-w-sm">
       {isFinal && (
         <div className="flex justify-between">
           <h2 className="font-medium text-gray-600">{date}</h2>

@@ -1,9 +1,9 @@
 import { ethereum, solanamainnet } from '@hyperlane-xyz/registry';
 import { ProtocolType } from '@hyperlane-xyz/utils';
+import { Modal } from '@hyperlane-xyz/widgets';
 import Image from 'next/image';
 import { PropsWithChildren } from 'react';
 import { ChainLogo } from '../../components/icons/ChainLogo';
-import { Modal } from '../../components/layout/Modal';
 import { useConnectFns } from './hooks/multiProtocol';
 
 export function WalletEnvSelectionModal({ isOpen, close }: { isOpen: boolean; close: () => void }) {
@@ -16,7 +16,13 @@ export function WalletEnvSelectionModal({ isOpen, close }: { isOpen: boolean; cl
   };
 
   return (
-    <Modal title="Select Wallet Environment" isOpen={isOpen} close={close} width="max-w-sm">
+    <Modal
+      isOpen={isOpen}
+      close={close}
+      title="Select Wallet Environment"
+      panelClassname="p-4 max-w-sm min-h-[40vh]"
+      showCloseButton
+    >
       <div className="flex flex-col space-y-2.5 pb-2 pt-4">
         <EnvButton
           onClick={onClickEnv(ProtocolType.Ethereum)}

@@ -1,8 +1,8 @@
+import { Modal } from '@hyperlane-xyz/widgets';
 import { useField } from 'formik';
 import Image from 'next/image';
 import { useState } from 'react';
 import { Spinner } from '../../components/animation/Spinner';
-import { Modal } from '../../components/layout/Modal';
 import ChevronIcon from '../../images/icons/chevron-down.svg';
 
 type Props = {
@@ -70,7 +70,13 @@ export function SelectTokenIdModal({
   };
 
   return (
-    <Modal isOpen={isOpen} title="Select Token Id" close={close}>
+    <Modal
+      isOpen={isOpen}
+      title="Select Token Id"
+      close={close}
+      showCloseButton
+      panelClassname="p-4"
+    >
       <div className="mt-2 flex flex-col space-y-1">
         {isLoading ? (
           <div className="my-24 flex flex-col items-center">

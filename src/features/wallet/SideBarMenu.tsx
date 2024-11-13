@@ -208,9 +208,7 @@ function TransferSummary({
         {STATUSES_WITH_ICON.includes(status) ? (
           <Image src={getIconByTransferStatus(status)} width={25} height={25} alt="" />
         ) : (
-          <>
-            <SpinnerIcon className="-ml-1 mr-3 h-5 w-5" />
-          </>
+          <SpinnerIcon className="-ml-1 mr-3 h-5 w-5" />
         )}
       </div>
     </button>

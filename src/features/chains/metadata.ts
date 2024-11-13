@@ -1,5 +1,9 @@
 import type { AssetList, Chain as CosmosChain } from '@chain-registry/types';
-import { IRegistry, chainMetadata as publishedChainMetadata } from '@hyperlane-xyz/registry';
+import {
+  IRegistry,
+  cosmoshub,
+  chainMetadata as publishedChainMetadata,
+} from '@hyperlane-xyz/registry';
 import {
   ChainMap,
   ChainMetadata,
@@ -16,7 +20,6 @@ import { chains as ChainsTS } from '../../consts/chains.ts';
 import ChainsYaml from '../../consts/chains.yaml';
 import { config } from '../../consts/config.ts';
 import { logger } from '../../utils/logger.ts';
-import { cosmosDefaultChain } from './cosmosDefault';
 
 export async function assembleChainMetadata(
   registry: IRegistry,
@@ -24,7 +27,7 @@ export async function assembleChainMetadata(
 ) {
   // Chains must include a cosmos chain or CosmosKit throws errors
   const result = z.record(ChainMetadataSchema).safeParse({
-    cosmoshub: cosmosDefaultChain,
+    cosmoshub,
     ...ChainsYaml,
     ...ChainsTS,
   });
@@ -74,7 +77,7 @@ export function getCosmosChains(warpCore: WarpCore): ChainMetadata[] {
     (c) =>
       c.protocol === ProtocolType.Cosmos && warpCore.tokens.some((t) => t.chainName === c.name),
   );
-  return [...chains, cosmosDefaultChain];
+  return [...chains, cosmoshub];
 }
 
 export function getCosmosKitConfig(warpCore: WarpCore): {

@@ -1,3 +1,4 @@
+import { tryClipboardSet } from '@hyperlane-xyz/widgets';
 import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
@@ -9,7 +10,6 @@ import CollapseIcon from '../../images/icons/collapse-icon.svg';
 import Logout from '../../images/icons/logout.svg';
 import ResetIcon from '../../images/icons/reset-icon.svg';
 import Wallet from '../../images/icons/wallet.svg';
-import { tryClipboardSet } from '../../utils/clipboard';
 import { STATUSES_WITH_ICON, getIconByTransferStatus } from '../../utils/transfer';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';

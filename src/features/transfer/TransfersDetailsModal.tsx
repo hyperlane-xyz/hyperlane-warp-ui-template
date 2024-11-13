@@ -1,5 +1,10 @@
 import { ProtocolType } from '@hyperlane-xyz/utils';
-import { MessageStatus, MessageTimeline, useMessageTimeline } from '@hyperlane-xyz/widgets';
+import {
+  MessageStatus,
+  MessageTimeline,
+  useMessageTimeline,
+  useTimeout,
+} from '@hyperlane-xyz/widgets';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Spinner } from '../../components/animation/Spinner';
@@ -12,7 +17,6 @@ import LinkIcon from '../../images/icons/external-link-icon.svg';
 import { formatTimestamp } from '../../utils/date';
 import { getHypExplorerLink } from '../../utils/links';
 import { logger } from '../../utils/logger';
-import { useTimeout } from '../../utils/timeout';
 import {
   getIconByTransferStatus,
   getTransferStatusLabel,

@@ -1,8 +1,8 @@
 import { IRegistry } from '@hyperlane-xyz/registry';
 import { IToken } from '@hyperlane-xyz/sdk';
+import { isHttpsUrl, isRelativeUrl } from '@hyperlane-xyz/utils';
 import { Circle } from '@hyperlane-xyz/widgets';
 import { useStore } from '../../features/store';
-import { isValidHttpsUrl, isValidRelativeUrl } from '../../utils/url';
 import { ErrorBoundary } from '../errors/ErrorBoundary';
 
 interface Props {
@@ -36,8 +36,8 @@ export function TokenIcon({ token, size = 32 }: Props) {
 function getImageSrc(registry: IRegistry, token?: IToken | null) {
   if (!token?.logoURI) return null;
   // If it's a valid, direct URL, return it
-  if (isValidHttpsUrl(token.logoURI)) return token.logoURI;
+  if (isHttpsUrl(token.logoURI)) return token.logoURI;
   // Otherwise assume it's a relative URL to the registry base
-  if (isValidRelativeUrl(token.logoURI)) return registry.getUri(token.logoURI);
+  if (isRelativeUrl(token.logoURI)) return registry.getUri(token.logoURI);
   return null;
 }

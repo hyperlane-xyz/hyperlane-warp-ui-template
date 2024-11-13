@@ -1,9 +1,9 @@
 import { ProtocolType } from '@hyperlane-xyz/utils';
+import { useTimeout } from '@hyperlane-xyz/widgets';
 import { useFormikContext } from 'formik';
 import { useCallback } from 'react';
 import { useChainProtocol } from '../../features/chains/hooks';
 import { useAccountForChain, useConnectFns } from '../../features/wallet/hooks/multiProtocol';
-import { useTimeout } from '../../utils/timeout';
 import { SolidButton } from './SolidButton';
 
 interface Props {

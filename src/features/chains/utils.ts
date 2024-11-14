@@ -1,5 +1,5 @@
 import { isAbacusWorksChain } from '@hyperlane-xyz/registry';
-import { MultiProtocolProvider } from '@hyperlane-xyz/sdk';
+import { ChainMap, ChainMetadata, MultiProtocolProvider, WarpCore } from '@hyperlane-xyz/sdk';
 import { ProtocolType, toTitleCase } from '@hyperlane-xyz/utils';
 
 export function getChainDisplayName(
@@ -29,5 +29,28 @@ export function getChainByRpcUrl(multiProvider: MultiProtocolProvider, url?: str
   const allMetadata = Object.values(multiProvider.metadata);
   return allMetadata.find(
     (m) => !!m.rpcUrls.find((rpc) => rpc.http.toLowerCase().includes(url.toLowerCase())),
+  );
+}
+
+/**
+ * Return a customListItemField object that contains the route
+ * from all the chains to a single origin chain
+ */
+export function getCustomListItemField(
+  warpCore: WarpCore,
+  origin: ChainName,
+  chains: ChainMap<ChainMetadata>,
+): ChainMap<{ display: string; sortValue: number }> {
+  return Object.keys(chains).reduce<ChainMap<{ display: string; sortValue: number }>>(
+    (obj, chainName) => {
+      const tokens = warpCore.getTokensForRoute(origin, chainName);
+      obj[chainName] = {
+        display: `${tokens.length} routes`,
+        sortValue: tokens.length,
+      };
+
+      return obj;
+    },
+    {},
   );
 }

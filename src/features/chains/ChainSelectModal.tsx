@@ -1,45 +1,46 @@
-import { useMemo } from 'react';
-import { ChainLogo } from '../../components/icons/ChainLogo';
-import { Modal } from '../../components/layout/Modal';
-import { useMultiProvider } from './hooks';
-import { getChainDisplayName } from './utils';
+import { ChainMap, ChainMetadata } from '@hyperlane-xyz/sdk';
+import { ChainSearchMenu, Modal } from '@hyperlane-xyz/widgets';
+import { useStore } from '../store';
 
 export function ChainSelectListModal({
   isOpen,
   close,
   chains,
   onSelect,
+  customListItemField,
 }: {
   isOpen: boolean;
   close: () => void;
-  chains: ChainName[];
+  chains: ChainMap<ChainMetadata>;
   onSelect: (chain: ChainName) => void;
+  customListItemField: ChainMap<{
+    display: string;
+    sortValue: number;
+  }>;
 }) {
-  const multiProvider = useMultiProvider();
+  const { chainMetadataOverrides, setChainMetadataOverrides } = useStore((s) => ({
+    chainMetadataOverrides: s.chainMetadataOverrides,
+    setChainMetadataOverrides: s.setChainMetadataOverrides,
+  }));
 
-  const sortedChains = useMemo(() => chains.sort(), [chains]);
-
-  const onSelectChain = (chain: ChainName) => {
-    return () => {
-      onSelect(chain);
-      close();
-    };
+  const onSelectChain = (chain: ChainMetadata) => {
+    onSelect(chain.name);
+    close();
   };
 
   return (
-    <Modal isOpen={isOpen} title="Select Chain" close={close}>
-      <div className="mt-2 flex flex-col space-y-1">
-        {sortedChains.map((c) => (
-          <button
-            key={c}
-            className="flex items-center rounded px-2 py-1.5 text-sm transition-all duration-200 hover:bg-gray-100 active:bg-gray-200"
-            onClick={onSelectChain(c)}
-          >
-            <ChainLogo chainName={c} size={16} background={false} />
-            <span className="ml-2">{getChainDisplayName(multiProvider, c, true)}</span>
-          </button>
-        ))}
-      </div>
+    <Modal isOpen={isOpen} close={close} panelClassname="p-4 sm:p-5 max-w-lg min-h-[40vh]">
+      <ChainSearchMenu
+        chainMetadata={chains}
+        onClickChain={onSelectChain}
+        overrideChainMetadata={chainMetadataOverrides}
+        onChangeOverrideMetadata={setChainMetadataOverrides}
+        customListItemField={{
+          header: 'Warp Routes',
+          data: customListItemField,
+        }}
+        defaultSortField="custom"
+      />
     </Modal>
   );
 }

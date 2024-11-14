@@ -15,7 +15,8 @@ import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
 import { ChainSelectField } from '../chains/ChainSelectField';
 import { ChainWalletWarning } from '../chains/ChainWalletWarning';
-import { useChainDisplayName } from '../chains/hooks';
+import { useChainDisplayName, useChainMetadataMap } from '../chains/hooks';
+import { getCustomListItemField } from '../chains/utils';
 import { useIsAccountSanctioned } from '../sanctions/hooks/useIsAccountSanctioned';
 import { useStore } from '../store';
 import { SelectOrInputTokenIds } from '../tokens/SelectOrInputTokenIds';
@@ -111,14 +112,37 @@ function SwapChainsButton({ disabled }: { disabled?: boolean }) {
 function ChainSelectSection({ isReview }: { isReview: boolean }) {
   const warpCore = useWarpCore();
   const chains = useMemo(() => warpCore.getTokenChains(), [warpCore]);
+  const chainMetadata = useChainMetadataMap(chains);
+
+  const { values } = useFormikContext<TransferFormValues>();
+
+  const originRoutes = useMemo(() => {
+    return getCustomListItemField(warpCore, values.origin, chainMetadata);
+  }, [values.origin, warpCore, chainMetadata]);
+
+  const destinationRoutes = useMemo(() => {
+    return getCustomListItemField(warpCore, values.destination, chainMetadata);
+  }, [values.destination, warpCore, chainMetadata]);
 
   return (
     <div className="mt-4 flex items-center justify-between gap-4">
-      <ChainSelectField name="origin" label="From" chains={chains} disabled={isReview} />
+      <ChainSelectField
+        name="origin"
+        label="From"
+        chains={chainMetadata}
+        disabled={isReview}
+        customListItemField={destinationRoutes}
+      />
       <div className="flex flex-1 flex-col items-center">
         <SwapChainsButton disabled={isReview} />
       </div>
-      <ChainSelectField name="destination" label="To" chains={chains} disabled={isReview} />
+      <ChainSelectField
+        name="destination"
+        label="To"
+        chains={chainMetadata}
+        disabled={isReview}
+        customListItemField={originRoutes}
+      />
     </div>
   );
 }

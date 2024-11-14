@@ -1,3 +1,4 @@
+import { ChainMap, ChainMetadata } from '@hyperlane-xyz/sdk';
 import { useField, useFormikContext } from 'formik';
 import Image from 'next/image';
 import { useState } from 'react';
@@ -10,12 +11,23 @@ import { useChainDisplayName } from './hooks';
 type Props = {
   name: string;
   label: string;
-  chains: ChainName[];
   onChange?: (id: ChainName) => void;
   disabled?: boolean;
+  chains: ChainMap<ChainMetadata>;
+  customListItemField: ChainMap<{
+    display: string;
+    sortValue: number;
+  }>;
 };
 
-export function ChainSelectField({ name, label, chains, onChange, disabled }: Props) {
+export function ChainSelectField({
+  name,
+  label,
+  chains,
+  onChange,
+  disabled,
+  customListItemField,
+}: Props) {
   const [field, , helpers] = useField<ChainName>(name);
   const { setFieldValue } = useFormikContext<TransferFormValues>();
 
@@ -62,6 +74,7 @@ export function ChainSelectField({ name, label, chains, onChange, disabled }: Pr
         close={() => setIsModalOpen(false)}
         chains={chains}
         onSelect={handleChange}
+        customListItemField={customListItemField}
       />
     </div>
   );

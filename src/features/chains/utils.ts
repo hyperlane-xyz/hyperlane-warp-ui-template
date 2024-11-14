@@ -33,8 +33,8 @@ export function getChainByRpcUrl(multiProvider: MultiProtocolProvider, url?: str
 }
 
 /**
- * Return a customListItemField object that contains the route
- * from all the chains to a single origin chain
+ * Return a customListItemField object that contains the amount of
+ * routes from a single chain to every other chain
  */
 export function getCustomListItemField(
   warpCore: WarpCore,

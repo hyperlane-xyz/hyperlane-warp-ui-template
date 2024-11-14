@@ -31,6 +31,9 @@ export function useChainDisplayName(chainName: ChainName, shortName = false) {
   return getChainDisplayName(multiProvider, chainName, shortName);
 }
 
+/**
+ * Return a chainMetadata object with given chains
+ */
 export function useChainMetadataMap(chains: string[]) {
   const multiProvider = useMultiProvider();
 

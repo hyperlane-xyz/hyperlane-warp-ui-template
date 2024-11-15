@@ -15,8 +15,8 @@ import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
 import { ChainSelectField } from '../chains/ChainSelectField';
 import { ChainWalletWarning } from '../chains/ChainWalletWarning';
-import { useChainDisplayName, useChainMetadataMap } from '../chains/hooks';
-import { getCustomListItemField } from '../chains/utils';
+import { useChainDisplayName, useTokenChainsMetadata } from '../chains/hooks';
+import { getAllTokenRoutesFromChain } from '../chains/utils';
 import { useIsAccountSanctioned } from '../sanctions/hooks/useIsAccountSanctioned';
 import { useStore } from '../store';
 import { SelectOrInputTokenIds } from '../tokens/SelectOrInputTokenIds';
@@ -111,17 +111,16 @@ function SwapChainsButton({ disabled }: { disabled?: boolean }) {
 
 function ChainSelectSection({ isReview }: { isReview: boolean }) {
   const warpCore = useWarpCore();
-  const chains = useMemo(() => warpCore.getTokenChains(), [warpCore]);
-  const chainMetadata = useChainMetadataMap(chains);
+  const chainMetadata = useTokenChainsMetadata();
 
   const { values } = useFormikContext<TransferFormValues>();
 
   const originRoutes = useMemo(() => {
-    return getCustomListItemField(warpCore, values.origin, chainMetadata);
+    return getAllTokenRoutesFromChain(warpCore, values.origin, chainMetadata);
   }, [values.origin, warpCore, chainMetadata]);
 
   const destinationRoutes = useMemo(() => {
-    return getCustomListItemField(warpCore, values.destination, chainMetadata);
+    return getAllTokenRoutesFromChain(warpCore, values.destination, chainMetadata);
   }, [values.destination, warpCore, chainMetadata]);
 
   return (

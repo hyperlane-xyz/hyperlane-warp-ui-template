@@ -33,18 +33,18 @@ export function getChainByRpcUrl(multiProvider: MultiProtocolProvider, url?: str
 }
 
 /**
- * Return a customListItemField object that contains the amount of
+ * Returns an object that contains the amount of
  * routes from a single chain to every other chain
  */
-export function getCustomListItemField(
+export function getAllTokenRoutesFromChain(
   warpCore: WarpCore,
   origin: ChainName,
   chains: ChainMap<ChainMetadata>,
 ): ChainMap<{ display: string; sortValue: number }> {
   return Object.keys(chains).reduce<ChainMap<{ display: string; sortValue: number }>>(
-    (obj, chainName) => {
-      const tokens = warpCore.getTokensForRoute(origin, chainName);
-      obj[chainName] = {
+    (obj, destination) => {
+      const tokens = warpCore.getTokensForRoute(origin, destination);
+      obj[destination] = {
         display: `${tokens.length} routes`,
         sortValue: tokens.length,
       };

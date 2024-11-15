@@ -1,6 +1,7 @@
 import { ChainMap, ChainMetadata } from '@hyperlane-xyz/sdk';
 import { useMemo } from 'react';
 import { useStore } from '../store';
+import { useWarpCore } from '../tokens/hooks';
 import { getChainDisplayName } from './utils';
 
 export function useMultiProvider() {
@@ -32,10 +33,12 @@ export function useChainDisplayName(chainName: ChainName, shortName = false) {
 }
 
 /**
- * Return a chainMetadata object with given chains
+ * Returns chainMetadata object with warp core token chains
  */
-export function useChainMetadataMap(chains: string[]) {
+export function useTokenChainsMetadata() {
   const multiProvider = useMultiProvider();
+  const warpCore = useWarpCore();
+  const chains = useMemo(() => warpCore.getTokenChains(), [warpCore]);
 
   const chainMetadata = useMemo(() => {
     return chains.reduce<ChainMap<ChainMetadata>>((obj, chain) => {

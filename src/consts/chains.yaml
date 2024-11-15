@@ -18,3 +18,17 @@
 #   protocol: ethereum
 #   rpcUrls:
 #     - http: http://127.0.0.1:8555
+ethereum:
+  chainId: 1
+  domainId: 1
+  name: ethereum
+  protocol: ethereum
+  rpcUrls:
+    - http: https://1rpc.io/eth
+lukso:
+  chainId: 42
+  domainId: 42
+  name: lukso
+  protocol: ethereum
+  rpcUrls:
+    - http: https://rpc.lukso.sigmacore.io

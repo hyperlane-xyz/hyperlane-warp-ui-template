@@ -2,5 +2,21 @@
 # These configs will be merged with the warp routes in the configured registry
 # The input here is typically the output of the Hyperlane CLI warp deploy command
 ---
-tokens: []
+tokens:
+  - addressOrDenom: '0xe624E2a31ade421558AD818550E7FbDdD8e68340'
+    chainName: gnosis
+    connections:
+      - token: ethereum|lukso|0xd70CabE1c992Cb9E25dc5d41a34c983b5c1E5F7e
+    decimals: 18
+    name: xDai
+    standard: EvmHypNative
+    symbol: xDai
+  - addressOrDenom: '0xd70CabE1c992Cb9E25dc5d41a34c983b5c1E5F7e'
+    chainName: lukso
+    connections:
+      - token: ethereum|gnosis|0xe624E2a31ade421558AD818550E7FbDdD8e68340
+    decimals: 18
+    name: xDai
+    standard: EvmHypNative
+    symbol: xDai
 options: {}

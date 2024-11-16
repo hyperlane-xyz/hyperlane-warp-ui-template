@@ -5,7 +5,7 @@ import { getAccount, sendTransaction, switchChain, waitForTransactionReceipt } f
 import { useCallback, useMemo } from 'react';
 import { useAccount, useConfig, useDisconnect } from 'wagmi';
 import { logger } from '../../../utils/logger';
-import { getChainMetadata, tryGetChainMetadata } from '../../chains/utils';
+import { useMultiProvider } from '../../chains/hooks';
 import { ethers5TxToWagmiTx } from '../utils';
 import { AccountInfo, ActiveChainInfo, ChainTransactionFns, WalletDetails } from './types';
 
@@ -49,26 +49,28 @@ export function useEvmDisconnectFn(): () => Promise<void> {
 
 export function useEvmActiveChain(): ActiveChainInfo {
   const { chain } = useAccount();
+  const multiProvider = useMultiProvider();
   return useMemo<ActiveChainInfo>(
     () => ({
       chainDisplayName: chain?.name,
-      chainName: chain ? tryGetChainMetadata(chain.id)?.name : undefined,
+      chainName: chain ? multiProvider.tryGetChainMetadata(chain.id)?.name : undefined,
     }),
-    [chain],
+    [chain, multiProvider],
   );
 }
 
 export function useEvmTransactionFns(): ChainTransactionFns {
   const config = useConfig();
+  const multiProvider = useMultiProvider();
 
   const onSwitchNetwork = useCallback(
     async (chainName: ChainName) => {
-      const chainId = getChainMetadata(chainName).chainId as number;
+      const chainId = multiProvider.getChainMetadata(chainName).chainId as number;
       await switchChain(config, { chainId });
       // Some wallets seem to require a brief pause after switch
       await sleep(2000);
     },
-    [config],
+    [config, multiProvider],
   );
   // Note, this doesn't use wagmi's prepare + send pattern because we're potentially sending two transactions
   // The prepare hooks are recommended to use pre-click downtime to run async calls, but since the flow
@@ -91,7 +93,7 @@ export function useEvmTransactionFns(): ChainTransactionFns {
       if (activeChainName && activeChainName !== chainName) await onSwitchNetwork(chainName);
 
       // Since the network switching is not foolproof, we also force a network check here
-      const chainId = getChainMetadata(chainName).chainId as number;
+      const chainId = multiProvider.getChainMetadata(chainName).chainId as number;
       logger.debug('Checking wallet current chain');
       const latestNetwork = await getAccount(config);
       assert(
@@ -115,7 +117,7 @@ export function useEvmTransactionFns(): ChainTransactionFns {
 
       return { hash, confirm };
     },
-    [config, onSwitchNetwork],
+    [config, onSwitchNetwork, multiProvider],
   );
 
   return { sendTransaction: onSendTx, switchNetwork: onSwitchNetwork };

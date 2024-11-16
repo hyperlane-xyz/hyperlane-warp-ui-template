@@ -1,3 +1,4 @@
+import { WarpCore } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 import { RainbowKitProvider, connectorsForWallets, lightTheme } from '@rainbow-me/rainbowkit';
 import '@rainbow-me/rainbowkit/styles.css';
@@ -16,13 +17,13 @@ import { createClient, http } from 'viem';
 import { WagmiProvider, createConfig } from 'wagmi';
 import { APP_NAME } from '../../../consts/app';
 import { config } from '../../../consts/config';
-import { getWarpCore } from '../../../context/context';
 import { Color } from '../../../styles/Color';
+import { useMultiProvider } from '../../chains/hooks';
 import { getWagmiChainConfig } from '../../chains/metadata';
-import { tryGetChainMetadata } from '../../chains/utils';
+import { useWarpCore } from '../../tokens/hooks';
 
-function initWagmi() {
-  const chains = getWagmiChainConfig();
+function initWagmi(warpCore: WarpCore) {
+  const chains = getWagmiChainConfig(warpCore);
 
   const connectors = connectorsForWallets(
     [
@@ -52,13 +53,16 @@ function initWagmi() {
 }
 
 export function EvmWalletContext({ children }: PropsWithChildren<unknown>) {
-  const [{ wagmiConfig }] = useState(initWagmi());
+  const multiProvider = useMultiProvider();
+  const warpCore = useWarpCore();
+
+  const [{ wagmiConfig }] = useState(initWagmi(warpCore));
 
   const initialChain = useMemo(() => {
-    const tokens = getWarpCore().tokens;
+    const tokens = warpCore.tokens;
     const firstEvmToken = tokens.filter((token) => token.protocol === ProtocolType.Ethereum)?.[0];
-    return tryGetChainMetadata(firstEvmToken?.chainName)?.chainId as number;
-  }, []);
+    return multiProvider.tryGetChainMetadata(firstEvmToken?.chainName)?.chainId as number;
+  }, [multiProvider, warpCore]);
 
   return (
     <WagmiProvider config={wagmiConfig}>

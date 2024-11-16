@@ -9,6 +9,7 @@ import { PropsWithChildren } from 'react';
 import { APP_DESCRIPTION, APP_NAME, APP_URL } from '../../../consts/app';
 import { config } from '../../../consts/config';
 import { getCosmosKitConfig } from '../../chains/metadata';
+import { useWarpCore } from '../../tokens/hooks';
 
 const theme = extendTheme({
   fonts: {
@@ -18,7 +19,8 @@ const theme = extendTheme({
 });
 
 export function CosmosWalletContext({ children }: PropsWithChildren<unknown>) {
-  const { chains, assets } = getCosmosKitConfig();
+  const warpCore = useWarpCore();
+  const { chains, assets } = getCosmosKitConfig(warpCore);
   const leapWithoutSnap = leapWallets.filter((wallet) => !wallet.walletName.includes('snap'));
   // TODO replace Chakra here with a custom modal for ChainProvider
   // Using Chakra + @cosmos-kit/react instead of @cosmos-kit/react-lite adds about 600Kb to the bundle

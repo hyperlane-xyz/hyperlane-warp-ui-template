@@ -1,5 +1,6 @@
 import { ProtocolType } from '@hyperlane-xyz/utils';
 import {
+  CopyButton,
   MessageStatus,
   MessageTimeline,
   useAccountForChain,
@@ -10,7 +11,6 @@ import {
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Spinner } from '../../components/animation/Spinner';
-import { CopyButton } from '../../components/buttons/CopyButton';
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import { TokenIcon } from '../../components/icons/TokenIcon';
 import { WideChevron } from '../../components/icons/WideChevron';
@@ -254,7 +254,7 @@ function TransferProperty({ name, value, url }: { name: string; value: string; u
               <Image src={LinkIcon} width={14} height={14} alt="" />
             </a>
           )}
-          <CopyButton copyValue={value} width={14} height={14} />
+          <CopyButton copyValue={value} width={14} height={14} className="opacity-40" />
         </div>
       </div>
       <div className="mt-1 truncate text-sm leading-normal tracking-wider">{value}</div>

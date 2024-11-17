@@ -4,19 +4,19 @@ import {
   useAccounts,
   useDisconnectFns,
   useWalletDetails,
+  WalletLogo,
 } from '@hyperlane-xyz/widgets';
 import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 import { SmallSpinner } from '../../components/animation/SmallSpinner';
 import { ChainLogo } from '../../components/icons/ChainLogo';
-import { WalletLogo } from '../../components/icons/WalletLogo';
 import ArrowRightIcon from '../../images/icons/arrow-right.svg';
 import CollapseIcon from '../../images/icons/collapse-icon.svg';
 import Logout from '../../images/icons/logout.svg';
 import ResetIcon from '../../images/icons/reset-icon.svg';
 import Wallet from '../../images/icons/wallet.svg';
-import { STATUSES_WITH_ICON, getIconByTransferStatus } from '../../utils/transfer';
+import { getIconByTransferStatus, STATUSES_WITH_ICON } from '../../utils/transfer';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { useStore } from '../store';
@@ -76,7 +76,7 @@ export function SideBarMenu({
     <>
       <div
         className={`fixed right-0 top-0 h-full w-88 transform bg-white bg-opacity-95 shadow-lg transition-transform duration-100 ease-in ${
-          isMenuOpen ? 'z-30 translate-x-0' : 'z-0 translate-x-full'
+          isMenuOpen ? 'z-10 translate-x-0' : 'z-0 translate-x-full'
         }`}
       >
         {isMenuOpen && (
@@ -161,8 +161,8 @@ function AccountSummary({ account }: { account: AccountInfo }) {
       onClick={onClickCopy}
       className={`${styles.btn} ${numAddresses > 1 && 'all:cursor-default'}`}
     >
-      <div className="shrink-0">
-        <WalletLogo walletDetails={walletDetails} size={42} />
+      <div className="shrink-0 overflow-hidden rounded-full">
+        <WalletLogo walletDetails={walletDetails} size={38} />
       </div>
       <div className="mx-3 flex flex-col items-start">
         <div className="text-sm font-normal text-gray-800">{walletDetails.name || 'Wallet'}</div>

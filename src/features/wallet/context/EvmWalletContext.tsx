@@ -1,5 +1,6 @@
-import { WarpCore } from '@hyperlane-xyz/sdk';
+import { MultiProtocolProvider } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
+import { getWagmiChainConfigs } from '@hyperlane-xyz/widgets';
 import { RainbowKitProvider, connectorsForWallets, lightTheme } from '@rainbow-me/rainbowkit';
 import '@rainbow-me/rainbowkit/styles.css';
 import {
@@ -12,18 +13,17 @@ import {
   trustWallet,
   walletConnectWallet,
 } from '@rainbow-me/rainbowkit/wallets';
-import { PropsWithChildren, useMemo, useState } from 'react';
+import { PropsWithChildren, useMemo } from 'react';
 import { createClient, http } from 'viem';
 import { WagmiProvider, createConfig } from 'wagmi';
 import { APP_NAME } from '../../../consts/app';
 import { config } from '../../../consts/config';
 import { Color } from '../../../styles/Color';
 import { useMultiProvider } from '../../chains/hooks';
-import { getWagmiChainConfig } from '../../chains/metadata';
 import { useWarpCore } from '../../tokens/hooks';
 
-function initWagmi(warpCore: WarpCore) {
-  const chains = getWagmiChainConfig(warpCore);
+function initWagmi(multiProvider: MultiProtocolProvider) {
+  const chains = getWagmiChainConfigs(multiProvider);
 
   const connectors = connectorsForWallets(
     [
@@ -56,7 +56,7 @@ export function EvmWalletContext({ children }: PropsWithChildren<unknown>) {
   const multiProvider = useMultiProvider();
   const warpCore = useWarpCore();
 
-  const [{ wagmiConfig }] = useState(initWagmi(warpCore));
+  const { wagmiConfig } = useMemo(() => initWagmi(multiProvider), [multiProvider]);
 
   const initialChain = useMemo(() => {
     const tokens = warpCore.tokens;

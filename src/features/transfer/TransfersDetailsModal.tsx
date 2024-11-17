@@ -2,8 +2,10 @@ import { ProtocolType } from '@hyperlane-xyz/utils';
 import {
   MessageStatus,
   MessageTimeline,
+  useAccountForChain,
   useMessageTimeline,
   useTimeout,
+  useWalletDetails,
 } from '@hyperlane-xyz/widgets';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -26,7 +28,6 @@ import {
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName, hasPermissionlessChain } from '../chains/utils';
 import { useWarpCore } from '../tokens/hooks';
-import { useAccountForChain, useWalletDetails } from '../wallet/hooks/multiProtocol';
 import { TransferContext, TransferStatus } from './types';
 
 export function TransfersDetailsModal({
@@ -55,10 +56,9 @@ export function TransfersDetailsModal({
     timestamp,
   } = transfer || {};
 
-  const account = useAccountForChain(origin);
-  const walletDetails = useWalletDetails()[account?.protocol || ProtocolType.Ethereum];
-
   const multiProvider = useMultiProvider();
+  const account = useAccountForChain(multiProvider, origin);
+  const walletDetails = useWalletDetails()[account?.protocol || ProtocolType.Ethereum];
 
   const getMessageUrls = useCallback(async () => {
     try {

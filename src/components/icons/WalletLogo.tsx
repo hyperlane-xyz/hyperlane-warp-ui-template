@@ -1,5 +1,5 @@
+import { WalletDetails } from '@hyperlane-xyz/widgets';
 import Image from 'next/image';
-import { WalletDetails } from '../../features/wallet/hooks/types';
 import Wallet from '../../images/icons/wallet.svg';
 import WalletConnect from '../../images/logos/wallet-connect.svg';
 

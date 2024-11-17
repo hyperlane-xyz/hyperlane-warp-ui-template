@@ -1,18 +1,19 @@
 import { TypedTransactionReceipt, WarpCore, WarpTxCategory } from '@hyperlane-xyz/sdk';
 import { toTitleCase, toWei } from '@hyperlane-xyz/utils';
-import { useCallback, useState } from 'react';
-import { toast } from 'react-toastify';
-import { toastTxSuccess } from '../../components/toast/TxSuccessToast';
-import { logger } from '../../utils/logger';
-import { getChainDisplayName } from '../chains/utils';
-import { AppState, useStore } from '../store';
-import { getTokenByIndex, useWarpCore } from '../tokens/hooks';
 import {
   getAccountAddressForChain,
   useAccounts,
   useActiveChains,
   useTransactionFns,
-} from '../wallet/hooks/multiProtocol';
+} from '@hyperlane-xyz/widgets';
+import { useCallback, useState } from 'react';
+import { toast } from 'react-toastify';
+import { toastTxSuccess } from '../../components/toast/TxSuccessToast';
+import { logger } from '../../utils/logger';
+import { useMultiProvider } from '../chains/hooks';
+import { getChainDisplayName } from '../chains/utils';
+import { AppState, useStore } from '../store';
+import { getTokenByIndex, useWarpCore } from '../tokens/hooks';
 import { TransferContext, TransferFormValues, TransferStatus } from './types';
 import { tryGetMsgIdFromTransferReceipt } from './utils';
 
@@ -28,11 +29,12 @@ export function useTokenTransfer(onDone?: () => void) {
   }));
   const transferIndex = transfers.length;
 
-  const activeAccounts = useAccounts();
-  const activeChains = useActiveChains();
-  const transactionFns = useTransactionFns();
-
+  const multiProvider = useMultiProvider();
   const warpCore = useWarpCore();
+
+  const activeAccounts = useAccounts(multiProvider);
+  const activeChains = useActiveChains(multiProvider);
+  const transactionFns = useTransactionFns(multiProvider);
 
   const [isLoading, setIsLoading] = useState(false);
 

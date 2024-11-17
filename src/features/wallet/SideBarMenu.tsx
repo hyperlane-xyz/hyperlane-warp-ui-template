@@ -1,4 +1,10 @@
-import { tryClipboardSet } from '@hyperlane-xyz/widgets';
+import {
+  AccountInfo,
+  tryClipboardSet,
+  useAccounts,
+  useDisconnectFns,
+  useWalletDetails,
+} from '@hyperlane-xyz/widgets';
 import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
@@ -17,8 +23,6 @@ import { useStore } from '../store';
 import { tryFindToken, useWarpCore } from '../tokens/hooks';
 import { TransfersDetailsModal } from '../transfer/TransfersDetailsModal';
 import { TransferContext } from '../transfer/types';
-import { useAccounts, useDisconnectFns, useWalletDetails } from './hooks/multiProtocol';
-import { AccountInfo } from './hooks/types';
 
 export function SideBarMenu({
   onConnectWallet,
@@ -29,12 +33,14 @@ export function SideBarMenu({
   isOpen: boolean;
   onClose: () => void;
 }) {
+  const didMountRef = useRef(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTransfer, setSelectedTransfer] = useState<TransferContext | null>(null);
+
+  const multiProvider = useMultiProvider();
+  const { readyAccounts } = useAccounts(multiProvider);
   const disconnectFns = useDisconnectFns();
-  const { readyAccounts } = useAccounts();
-  const didMountRef = useRef(false);
 
   const { transfers, resetTransfers, transferLoading } = useStore((s) => ({
     transfers: s.transfers,

@@ -1,11 +1,11 @@
 import { ProtocolType, shortenAddress } from '@hyperlane-xyz/utils';
-import { ChevronIcon, useIsSsr } from '@hyperlane-xyz/widgets';
+import { ChevronIcon, useAccounts, useIsSsr, useWalletDetails } from '@hyperlane-xyz/widgets';
 import Image from 'next/image';
 import { SolidButton } from '../../components/buttons/SolidButton';
 import { WalletLogo } from '../../components/icons/WalletLogo';
 import Wallet from '../../images/icons/wallet.svg';
+import { useMultiProvider } from '../chains/hooks';
 import { useStore } from '../store';
-import { useAccounts, useWalletDetails } from './hooks/multiProtocol';
 
 export function WalletControlBar() {
   const isSsr = useIsSsr();
@@ -15,7 +15,8 @@ export function WalletControlBar() {
     setIsSideBarOpen: s.setIsSideBarOpen,
   }));
 
-  const { readyAccounts } = useAccounts();
+  const multiProvider = useMultiProvider();
+  const { readyAccounts } = useAccounts(multiProvider);
   const walletDetails = useWalletDetails();
 
   const numReady = readyAccounts.length;

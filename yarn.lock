@@ -3874,13 +3874,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/registry@npm:6.0.0":
-  version: 6.0.0
-  resolution: "@hyperlane-xyz/registry@npm:6.0.0"
+"@hyperlane-xyz/registry@npm:6.1.0":
+  version: 6.1.0
+  resolution: "@hyperlane-xyz/registry@npm:6.1.0"
   dependencies:
     yaml: "npm:2.4.5"
     zod: "npm:^3.21.2"
-  checksum: 10/6877653d442425afd979ccbb90b12c0e561c09f15a854b0a2858ed0cd13f1f0e5887a821890a54264f6eab1736fce333362ea5711f9f775bb4463e3bea5e28ad
+  checksum: 10/a0e1ecc02d83604793ddda0a3e00a9ffcaa38b1cddf9883b47cf8f1919b4474abd6cc2ee84846e6a35e1bc7539299b9bec92bfdf06be72beecff6aa44b73d382
   languageName: node
   linkType: hard
 
@@ -3945,7 +3945,7 @@ __metadata:
     "@emotion/react": "npm:^11.13.3"
     "@emotion/styled": "npm:^11.13.0"
     "@headlessui/react": "npm:^2.2.0"
-    "@hyperlane-xyz/registry": "npm:6.0.0"
+    "@hyperlane-xyz/registry": "npm:6.1.0"
     "@hyperlane-xyz/sdk": "npm:7.0.0"
     "@hyperlane-xyz/utils": "npm:7.0.0"
     "@hyperlane-xyz/widgets": "npm:7.0.0"
@@ -3954,7 +3954,7 @@ __metadata:
     "@metamask/post-message-stream": "npm:6.1.2"
     "@metamask/providers": "npm:10.2.1"
     "@next/bundle-analyzer": "npm:^15.0.2"
-    "@rainbow-me/rainbowkit": "npm:2.2.0"
+    "@rainbow-me/rainbowkit": "npm:^2.2.0"
     "@sentry/nextjs": "npm:^8.37.1"
     "@solana/spl-token": "npm:^0.4.9"
     "@solana/wallet-adapter-base": "npm:^0.9.22"
@@ -6192,7 +6192,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rainbow-me/rainbowkit@npm:2.2.0":
+"@rainbow-me/rainbowkit@npm:^2.2.0":
   version: 2.2.0
   resolution: "@rainbow-me/rainbowkit@npm:2.2.0"
   dependencies:

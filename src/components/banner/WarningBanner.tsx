@@ -1,6 +1,5 @@
-import Image from 'next/image';
+import { WarningIcon } from '@hyperlane-xyz/widgets';
 import { PropsWithChildren, ReactNode } from 'react';
-import WarningIcon from '../../images/icons/warning.svg';
 
 export function WarningBanner({
   isVisible,
@@ -21,7 +20,7 @@ export function WarningBanner({
       } overflow-hidden transition-all duration-500 ${className}`}
     >
       <div className="flex items-center gap-2">
-        <Image src={WarningIcon} width={20} height={20} alt="Warning:" />
+        <WarningIcon width={20} height={20} />
         {children}
       </div>
       <button

@@ -1,6 +1,6 @@
+import { Modal } from '@hyperlane-xyz/widgets';
 import { useMemo } from 'react';
 import { ChainLogo } from '../../components/icons/ChainLogo';
-import { Modal } from '../../components/layout/Modal';
 import { useMultiProvider } from './hooks';
 import { getChainDisplayName } from './utils';
 
@@ -27,7 +27,13 @@ export function ChainSelectListModal({
   };
 
   return (
-    <Modal isOpen={isOpen} title="Select Chain" close={close}>
+    <Modal
+      isOpen={isOpen}
+      close={close}
+      title="Select Chain"
+      panelClassname="p-4 max-w-xs"
+      showCloseButton
+    >
       <div className="mt-2 flex flex-col space-y-1">
         {sortedChains.map((c) => (
           <button

@@ -1,7 +1,6 @@
 import Link from 'next/link';
-import { IconButton } from '../../components/buttons/IconButton';
-import { DocsIcon } from '../../components/icons/Docs';
-import { HistoryIcon } from '../../components/icons/History';
+
+import { DocsIcon, HistoryIcon, IconButton } from '@hyperlane-xyz/widgets';
 import { links } from '../../consts/links';
 import { Color } from '../../styles/Color';
 import { useStore } from '../store';
@@ -15,7 +14,7 @@ export function WalletFloatingButtons() {
   return (
     <div className="absolute -right-8 top-2 hidden flex-col items-center justify-end gap-4 sm:flex">
       <IconButton
-        classes={`p-0.5 ${styles.roundedCircle} `}
+        className={`p-0.5 ${styles.roundedCircle} `}
         title="History"
         onClick={() => setIsSideBarOpen(!isSideBarOpen)}
       >

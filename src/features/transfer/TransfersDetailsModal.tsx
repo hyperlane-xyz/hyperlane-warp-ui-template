@@ -9,13 +9,14 @@ import {
   useMessageTimeline,
   useTimeout,
   useWalletDetails,
+  WideChevronIcon,
 } from '@hyperlane-xyz/widgets';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import { TokenIcon } from '../../components/icons/TokenIcon';
-import { WideChevron } from '../../components/icons/WideChevron';
 import LinkIcon from '../../images/icons/external-link-icon.svg';
+import { Color } from '../../styles/Color';
 import { formatTimestamp } from '../../utils/date';
 import { getHypExplorerLink } from '../../utils/links';
 import { logger } from '../../utils/logger';
@@ -252,6 +253,18 @@ function TransferProperty({ name, value, url }: { name: string; value: string; u
       </div>
       <div className="mt-1 truncate text-sm leading-normal tracking-wider">{value}</div>
     </div>
+  );
+}
+
+function WideChevron() {
+  return (
+    <WideChevronIcon
+      width="16"
+      height="100%"
+      direction="e"
+      color={Color.lightGray}
+      rounded={true}
+    />
   );
 }
 

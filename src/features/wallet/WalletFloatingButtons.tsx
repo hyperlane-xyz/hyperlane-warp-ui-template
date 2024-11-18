@@ -25,7 +25,7 @@ export function WalletFloatingButtons() {
         target="_blank"
         className={`p-0.5 ${styles.roundedCircle} ${styles.link}`}
       >
-        <DocsIcon color={Color.primary} height={20} width={20} />
+        <DocsIcon color={Color.primary} height={19} width={19} className="p-px" />
       </Link>
     </div>
   );

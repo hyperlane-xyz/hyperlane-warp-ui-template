@@ -2,6 +2,10 @@ import { TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
 import { ProtocolType, errorToString, isNullish, toWei } from '@hyperlane-xyz/utils';
 import {
   AccountInfo,
+  ChevronIcon,
+  IconButton,
+  SpinnerIcon,
+  SwapIcon,
   getAccountAddressAndPubKey,
   useAccountAddressForChain,
   useAccounts,
@@ -10,14 +14,10 @@ import BigNumber from 'bignumber.js';
 import { Form, Formik, useFormikContext } from 'formik';
 import { useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
-import { SmallSpinner } from '../../components/animation/SmallSpinner';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
-import { IconButton } from '../../components/buttons/IconButton';
 import { SolidButton } from '../../components/buttons/SolidButton';
-import { ChevronIcon } from '../../components/icons/Chevron';
 import { TextField } from '../../components/input/TextField';
 import { config } from '../../consts/config';
-import SwapIcon from '../../images/icons/swap.svg';
 import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
 import { ChainSelectField } from '../chains/ChainSelectField';
@@ -99,14 +99,15 @@ function SwapChainsButton({ disabled }: { disabled?: boolean }) {
 
   return (
     <IconButton
-      imgSrc={SwapIcon}
       width={20}
       height={20}
       title="Swap chains"
-      classes={!disabled ? 'hover:rotate-180' : undefined}
+      className={!disabled ? 'hover:rotate-180' : undefined}
       onClick={onClick}
       disabled={disabled}
-    />
+    >
+      <SwapIcon width={20} height={20} />
+    </IconButton>
   );
 }
 
@@ -297,7 +298,7 @@ function MaxButton({ balance, disabled }: { balance?: TokenAmount; disabled?: bo
     >
       {isLoading ? (
         <div className="flex items-center">
-          <SmallSpinner className="text-white" />
+          <SpinnerIcon className="h-5 w-5" color="white" />
         </div>
       ) : (
         'Max'
@@ -361,7 +362,7 @@ function ReviewDetails({ visible }: { visible: boolean }) {
       <div className="mt-1.5 space-y-2 break-all rounded border border-gray-400 bg-gray-150 px-2.5 py-2 text-sm">
         {isLoading ? (
           <div className="flex items-center justify-center py-6">
-            <SmallSpinner />
+            <SpinnerIcon className="h-5 w-5" />
           </div>
         ) : (
           <>

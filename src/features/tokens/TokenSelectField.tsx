@@ -1,9 +1,8 @@
 import { IToken } from '@hyperlane-xyz/sdk';
+import { ChevronIcon } from '@hyperlane-xyz/widgets';
 import { useField, useFormikContext } from 'formik';
-import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { TokenIcon } from '../../components/icons/TokenIcon';
-import ChevronIcon from '../../images/icons/chevron-down.svg';
 import { TransferFormValues } from '../transfer/types';
 import { TokenListModal } from './TokenListModal';
 import { getIndexForToken, getTokenByIndex, useWarpCore } from './hooks';
@@ -98,7 +97,7 @@ function TokenButton({
           {token?.symbol || (isAutomatic ? 'No routes available' : 'Select Token')}
         </span>
       </div>
-      {!isAutomatic && <Image src={ChevronIcon} width={12} height={8} alt="" />}
+      {!isAutomatic && <ChevronIcon width={12} height={8} direction="s" />}
     </button>
   );
 }

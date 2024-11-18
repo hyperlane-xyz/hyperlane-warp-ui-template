@@ -1,9 +1,6 @@
+import { ChevronIcon, Modal, SpinnerIcon } from '@hyperlane-xyz/widgets';
 import { useField } from 'formik';
-import Image from 'next/image';
 import { useState } from 'react';
-import { Spinner } from '../../components/animation/Spinner';
-import { Modal } from '../../components/layout/Modal';
-import ChevronIcon from '../../images/icons/chevron-down.svg';
 
 type Props = {
   name: string;
@@ -36,7 +33,7 @@ export function SelectTokenIdField({ name, disabled }: Props) {
             {tokenId ? tokenId : 'Select Token Id'}
           </span>
         </div>
-        <Image src={ChevronIcon} width={12} height={8} alt="" />
+        <ChevronIcon width={12} height={8} direction="s" />
       </button>
       <SelectTokenIdModal
         isOpen={isModalOpen}
@@ -70,11 +67,17 @@ export function SelectTokenIdModal({
   };
 
   return (
-    <Modal isOpen={isOpen} title="Select Token Id" close={close}>
+    <Modal
+      isOpen={isOpen}
+      title="Select Token Id"
+      close={close}
+      showCloseButton
+      panelClassname="p-4"
+    >
       <div className="mt-2 flex flex-col space-y-1">
         {isLoading ? (
           <div className="my-24 flex flex-col items-center">
-            <Spinner />
+            <SpinnerIcon width={80} height={80} />
             <h3 className="mt-5 text-sm text-gray-500">Finding token IDs</h3>
           </div>
         ) : tokenIds && tokenIds.length !== 0 ? (

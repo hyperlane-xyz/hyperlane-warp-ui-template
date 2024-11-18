@@ -1,9 +1,9 @@
 import { IToken } from '@hyperlane-xyz/sdk';
+import { Modal } from '@hyperlane-xyz/widgets';
 import Image from 'next/image';
 import { useMemo, useState } from 'react';
 import { TokenIcon } from '../../components/icons/TokenIcon';
 import { TextInput } from '../../components/input/TextField';
-import { Modal } from '../../components/layout/Modal';
 import { config } from '../../consts/config';
 import InfoIcon from '../../images/icons/info-circle.svg';
 import { useMultiProvider } from '../chains/hooks';
@@ -40,7 +40,8 @@ export function TokenListModal({
       isOpen={isOpen}
       title="Select Token"
       close={onClose}
-      width="max-w-100 sm:max-w-[31rem] min-h-[24rem]"
+      panelClassname="p-4 max-w-100 sm:max-w-[31rem] min-h-[24rem]"
+      showCloseButton
     >
       <TextInput
         value={search}

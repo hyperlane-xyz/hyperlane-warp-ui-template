@@ -3,19 +3,20 @@ import {
   CopyButton,
   MessageStatus,
   MessageTimeline,
+  Modal,
+  SpinnerIcon,
   useAccountForChain,
   useMessageTimeline,
   useTimeout,
   useWalletDetails,
+  WideChevronIcon,
 } from '@hyperlane-xyz/widgets';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Spinner } from '../../components/animation/Spinner';
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import { TokenIcon } from '../../components/icons/TokenIcon';
-import { WideChevron } from '../../components/icons/WideChevron';
-import { Modal } from '../../components/layout/Modal';
 import LinkIcon from '../../images/icons/external-link-icon.svg';
+import { Color } from '../../styles/Color';
 import { formatTimestamp } from '../../utils/date';
 import { getHypExplorerLink } from '../../utils/links';
 import { logger } from '../../utils/logger';
@@ -109,14 +110,7 @@ export function TransfersDetailsModal({
   const explorerLink = getHypExplorerLink(multiProvider, origin, msgId);
 
   return (
-    <Modal
-      showCloseBtn={false}
-      isOpen={isOpen}
-      close={onClose}
-      title=""
-      padding="p-4 md:p-5"
-      width="max-w-sm"
-    >
+    <Modal isOpen={isOpen} close={onClose} panelClassname="p-4 md:p-5 max-w-sm">
       {isFinal && (
         <div className="flex justify-between">
           <h2 className="font-medium text-gray-600">{date}</h2>
@@ -196,7 +190,7 @@ export function TransfersDetailsModal({
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center py-4">
-          <Spinner />
+          <SpinnerIcon width={80} height={80} />
           <div
             className={`mt-5 text-center text-sm ${isFailed ? 'text-red-600' : 'text-gray-600'}`}
           >
@@ -259,6 +253,18 @@ function TransferProperty({ name, value, url }: { name: string; value: string; u
       </div>
       <div className="mt-1 truncate text-sm leading-normal tracking-wider">{value}</div>
     </div>
+  );
+}
+
+function WideChevron() {
+  return (
+    <WideChevronIcon
+      width="16"
+      height="100%"
+      direction="e"
+      color={Color.lightGray}
+      rounded={true}
+    />
   );
 }
 

@@ -1,6 +1,6 @@
+import { useTimeout } from '@hyperlane-xyz/widgets';
 import { PropsWithChildren, useState } from 'react';
 import { Spinner } from '../components/animation/Spinner';
-import { useTimeout } from '../utils/timeout';
 import { useReadyMultiProvider } from './chains/hooks';
 
 const INIT_TIMEOUT = 10_000; // 10 seconds

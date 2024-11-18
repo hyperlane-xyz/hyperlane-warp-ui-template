@@ -4,12 +4,12 @@ import { wallets as cosmostationWallets } from '@cosmos-kit/cosmostation';
 import { wallets as keplrWallets } from '@cosmos-kit/keplr';
 import { wallets as leapWallets } from '@cosmos-kit/leap';
 import { ChainProvider } from '@cosmos-kit/react';
+import { getCosmosKitChainConfigs } from '@hyperlane-xyz/widgets';
 import '@interchain-ui/react/styles';
-import { PropsWithChildren } from 'react';
+import { PropsWithChildren, useMemo } from 'react';
 import { APP_DESCRIPTION, APP_NAME, APP_URL } from '../../../consts/app';
 import { config } from '../../../consts/config';
-import { getCosmosKitConfig } from '../../chains/metadata';
-import { useWarpCore } from '../../tokens/hooks';
+import { useMultiProvider } from '../../chains/hooks';
 
 const theme = extendTheme({
   fonts: {
@@ -19,8 +19,11 @@ const theme = extendTheme({
 });
 
 export function CosmosWalletContext({ children }: PropsWithChildren<unknown>) {
-  const warpCore = useWarpCore();
-  const { chains, assets } = getCosmosKitConfig(warpCore);
+  const multiProvider = useMultiProvider();
+  const { chains, assets } = useMemo(
+    () => getCosmosKitChainConfigs(multiProvider),
+    [multiProvider],
+  );
   const leapWithoutSnap = leapWallets.filter((wallet) => !wallet.walletName.includes('snap'));
   // TODO replace Chakra here with a custom modal for ChainProvider
   // Using Chakra + @cosmos-kit/react instead of @cosmos-kit/react-lite adds about 600Kb to the bundle

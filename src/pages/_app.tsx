@@ -1,3 +1,4 @@
+import { useIsSsr } from '@hyperlane-xyz/widgets';
 import '@hyperlane-xyz/widgets/styles.css';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Analytics } from '@vercel/analytics/react';
@@ -12,7 +13,6 @@ import { CosmosWalletContext } from '../features/wallet/context/CosmosWalletCont
 import { EvmWalletContext } from '../features/wallet/context/EvmWalletContext';
 import { SolanaWalletContext } from '../features/wallet/context/SolanaWalletContext';
 import '../styles/globals.css';
-import { useIsSsr } from '../utils/ssr';
 import '../vendor/inpage-metamask';
 import '../vendor/polyfill';
 

@@ -1,10 +1,10 @@
 import { TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
 import { HexString } from '@hyperlane-xyz/utils';
+import { getAccountAddressAndPubKey, useAccounts } from '@hyperlane-xyz/widgets';
 import { useQuery } from '@tanstack/react-query';
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { getTokenByIndex, useWarpCore } from '../tokens/hooks';
-import { getAccountAddressAndPubKey, useAccounts } from '../wallet/hooks/multiProtocol';
 import { TransferFormValues } from './types';
 
 const FEE_QUOTE_REFRESH_INTERVAL = 15_000; // 10s
@@ -16,7 +16,7 @@ export function useFeeQuotes(
   const multiProvider = useMultiProvider();
   const warpCore = useWarpCore();
 
-  const { accounts } = useAccounts();
+  const { accounts } = useAccounts(multiProvider);
   const { address: sender, publicKey: senderPubKey } = getAccountAddressAndPubKey(
     multiProvider,
     origin,

@@ -1,9 +1,16 @@
 import { ProtocolType } from '@hyperlane-xyz/utils';
-import { MessageStatus, MessageTimeline, useMessageTimeline } from '@hyperlane-xyz/widgets';
+import {
+  CopyButton,
+  MessageStatus,
+  MessageTimeline,
+  useAccountForChain,
+  useMessageTimeline,
+  useTimeout,
+  useWalletDetails,
+} from '@hyperlane-xyz/widgets';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Spinner } from '../../components/animation/Spinner';
-import { CopyButton } from '../../components/buttons/CopyButton';
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import { TokenIcon } from '../../components/icons/TokenIcon';
 import { WideChevron } from '../../components/icons/WideChevron';
@@ -12,7 +19,6 @@ import LinkIcon from '../../images/icons/external-link-icon.svg';
 import { formatTimestamp } from '../../utils/date';
 import { getHypExplorerLink } from '../../utils/links';
 import { logger } from '../../utils/logger';
-import { useTimeout } from '../../utils/timeout';
 import {
   getIconByTransferStatus,
   getTransferStatusLabel,
@@ -22,7 +28,6 @@ import {
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName, hasPermissionlessChain } from '../chains/utils';
 import { useWarpCore } from '../tokens/hooks';
-import { useAccountForChain, useWalletDetails } from '../wallet/hooks/multiProtocol';
 import { TransferContext, TransferStatus } from './types';
 
 export function TransfersDetailsModal({
@@ -51,10 +56,9 @@ export function TransfersDetailsModal({
     timestamp,
   } = transfer || {};
 
-  const account = useAccountForChain(origin);
-  const walletDetails = useWalletDetails()[account?.protocol || ProtocolType.Ethereum];
-
   const multiProvider = useMultiProvider();
+  const account = useAccountForChain(multiProvider, origin);
+  const walletDetails = useWalletDetails()[account?.protocol || ProtocolType.Ethereum];
 
   const getMessageUrls = useCallback(async () => {
     try {
@@ -250,7 +254,7 @@ function TransferProperty({ name, value, url }: { name: string; value: string; u
               <Image src={LinkIcon} width={14} height={14} alt="" />
             </a>
           )}
-          <CopyButton copyValue={value} width={14} height={14} />
+          <CopyButton copyValue={value} width={14} height={14} className="opacity-40" />
         </div>
       </div>
       <div className="mt-1 truncate text-sm leading-normal tracking-wider">{value}</div>

@@ -1,9 +1,8 @@
 import { ProtocolType } from '@hyperlane-xyz/utils';
+import { useAccountForChain, useConnectFns, useTimeout } from '@hyperlane-xyz/widgets';
 import { useFormikContext } from 'formik';
 import { useCallback } from 'react';
-import { useChainProtocol } from '../../features/chains/hooks';
-import { useAccountForChain, useConnectFns } from '../../features/wallet/hooks/multiProtocol';
-import { useTimeout } from '../../utils/timeout';
+import { useChainProtocol, useMultiProvider } from '../../features/chains/hooks';
 import { SolidButton } from './SolidButton';
 
 interface Props {
@@ -17,7 +16,8 @@ export function ConnectAwareSubmitButton<FormValues = any>({ chainName, text, cl
   const connectFns = useConnectFns();
   const connectFn = connectFns[protocol];
 
-  const account = useAccountForChain(chainName);
+  const multiProvider = useMultiProvider();
+  const account = useAccountForChain(multiProvider, chainName);
   const isAccountReady = account?.isReady;
 
   const { errors, setErrors, touched, setTouched } = useFormikContext<FormValues>();

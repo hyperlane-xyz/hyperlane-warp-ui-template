@@ -1,10 +1,10 @@
 import { IToken } from '@hyperlane-xyz/sdk';
 import { isValidAddress } from '@hyperlane-xyz/utils';
+import { useAccountAddressForChain } from '@hyperlane-xyz/widgets';
 import { useQuery } from '@tanstack/react-query';
 import { useToastError } from '../../components/toast/useToastError';
 import { useMultiProvider } from '../chains/hooks';
 import { TransferFormValues } from '../transfer/types';
-import { useAccountAddressForChain } from '../wallet/hooks/multiProtocol';
 import { useTokenByIndex } from './hooks';
 
 export function useBalance(chain?: ChainName, token?: IToken, address?: Address) {
@@ -30,7 +30,8 @@ export function useBalance(chain?: ChainName, token?: IToken, address?: Address)
 }
 
 export function useOriginBalance({ origin, tokenIndex }: TransferFormValues) {
-  const address = useAccountAddressForChain(origin);
+  const multiProvider = useMultiProvider();
+  const address = useAccountAddressForChain(multiProvider, origin);
   const token = useTokenByIndex(tokenIndex);
   return useBalance(origin, token, address);
 }

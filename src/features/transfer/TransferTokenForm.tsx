@@ -1,5 +1,11 @@
 import { TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
 import { ProtocolType, errorToString, isNullish, toWei } from '@hyperlane-xyz/utils';
+import {
+  AccountInfo,
+  getAccountAddressAndPubKey,
+  useAccountAddressForChain,
+  useAccounts,
+} from '@hyperlane-xyz/widgets';
 import BigNumber from 'bignumber.js';
 import { Form, Formik, useFormikContext } from 'formik';
 import { useMemo, useState } from 'react';
@@ -10,12 +16,13 @@ import { IconButton } from '../../components/buttons/IconButton';
 import { SolidButton } from '../../components/buttons/SolidButton';
 import { ChevronIcon } from '../../components/icons/Chevron';
 import { TextField } from '../../components/input/TextField';
+import { config } from '../../consts/config';
 import SwapIcon from '../../images/icons/swap.svg';
 import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
 import { ChainSelectField } from '../chains/ChainSelectField';
 import { ChainWalletWarning } from '../chains/ChainWalletWarning';
-import { useChainDisplayName } from '../chains/hooks';
+import { useChainDisplayName, useMultiProvider } from '../chains/hooks';
 import { useIsAccountSanctioned } from '../sanctions/hooks/useIsAccountSanctioned';
 import { useStore } from '../store';
 import { SelectOrInputTokenIds } from '../tokens/SelectOrInputTokenIds';
@@ -23,12 +30,6 @@ import { TokenSelectField } from '../tokens/TokenSelectField';
 import { useIsApproveRequired } from '../tokens/approval';
 import { useDestinationBalance, useOriginBalance } from '../tokens/balances';
 import { getIndexForToken, getTokenByIndex, useWarpCore } from '../tokens/hooks';
-import {
-  getAccountAddressAndPubKey,
-  useAccountAddressForChain,
-  useAccounts,
-} from '../wallet/hooks/multiProtocol';
-import { AccountInfo } from '../wallet/hooks/types';
 import { useFetchMaxAmount } from './maxAmount';
 import { TransferFormValues } from './types';
 import { useRecipientBalanceWatcher } from './useBalanceWatcher';
@@ -36,10 +37,11 @@ import { useFeeQuotes } from './useFeeQuotes';
 import { useTokenTransfer } from './useTokenTransfer';
 
 export function TransferTokenForm() {
+  const multiProvider = useMultiProvider();
   const warpCore = useWarpCore();
 
   const initialValues = useFormInitialValues();
-  const { accounts } = useAccounts();
+  const { accounts } = useAccounts(multiProvider, config.addressBlacklist);
 
   // Flag for if form is in input vs review mode
   const [isReview, setIsReview] = useState(false);
@@ -272,7 +274,8 @@ function ButtonSection({
 function MaxButton({ balance, disabled }: { balance?: TokenAmount; disabled?: boolean }) {
   const { values, setFieldValue } = useFormikContext<TransferFormValues>();
   const { origin, destination, tokenIndex } = values;
-  const { accounts } = useAccounts();
+  const multiProvider = useMultiProvider();
+  const { accounts } = useAccounts(multiProvider);
   const { fetchMaxAmount, isLoading } = useFetchMaxAmount();
 
   const onClick = async () => {
@@ -305,8 +308,9 @@ function MaxButton({ balance, disabled }: { balance?: TokenAmount; disabled?: bo
 
 function SelfButton({ disabled }: { disabled?: boolean }) {
   const { values, setFieldValue } = useFormikContext<TransferFormValues>();
+  const multiProvider = useMultiProvider();
   const chainDisplayName = useChainDisplayName(values.destination);
-  const address = useAccountAddressForChain(values.destination);
+  const address = useAccountAddressForChain(multiProvider, values.destination);
   const onClick = () => {
     if (disabled) return;
     if (address) setFieldValue('recipient', address);

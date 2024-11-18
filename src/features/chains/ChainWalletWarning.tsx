@@ -1,9 +1,9 @@
 import { toTitleCase } from '@hyperlane-xyz/utils';
+import { useConnectFns, useDisconnectFns, useWalletDetails } from '@hyperlane-xyz/widgets';
 import { useMemo } from 'react';
 import { FormWarningBanner } from '../../components/banner/FormWarningBanner';
 import { config } from '../../consts/config';
 import { logger } from '../../utils/logger';
-import { useConnectFns, useDisconnectFns, useWalletDetails } from '../wallet/hooks/multiProtocol';
 import { useMultiProvider } from './hooks';
 import { getChainDisplayName } from './utils';
 

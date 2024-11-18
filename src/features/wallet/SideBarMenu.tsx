@@ -1,11 +1,4 @@
-import {
-  AccountInfo,
-  tryClipboardSet,
-  useAccounts,
-  useDisconnectFns,
-  useWalletDetails,
-  WalletLogo,
-} from '@hyperlane-xyz/widgets';
+import { AccountList } from '@hyperlane-xyz/widgets';
 import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
@@ -13,9 +6,7 @@ import { SmallSpinner } from '../../components/animation/SmallSpinner';
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import ArrowRightIcon from '../../images/icons/arrow-right.svg';
 import CollapseIcon from '../../images/icons/collapse-icon.svg';
-import Logout from '../../images/icons/logout.svg';
 import ResetIcon from '../../images/icons/reset-icon.svg';
-import Wallet from '../../images/icons/wallet.svg';
 import { getIconByTransferStatus, STATUSES_WITH_ICON } from '../../utils/transfer';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
@@ -25,11 +16,11 @@ import { TransfersDetailsModal } from '../transfer/TransfersDetailsModal';
 import { TransferContext } from '../transfer/types';
 
 export function SideBarMenu({
-  onConnectWallet,
+  onClickConnectWallet,
   isOpen,
   onClose,
 }: {
-  onConnectWallet: () => void;
+  onClickConnectWallet: () => void;
   isOpen: boolean;
   onClose: () => void;
 }) {
@@ -39,8 +30,6 @@ export function SideBarMenu({
   const [selectedTransfer, setSelectedTransfer] = useState<TransferContext | null>(null);
 
   const multiProvider = useMultiProvider();
-  const { readyAccounts } = useAccounts(multiProvider);
-  const disconnectFns = useDisconnectFns();
 
   const { transfers, resetTransfers, transferLoading } = useStore((s) => ({
     transfers: s.transfers,
@@ -61,16 +50,14 @@ export function SideBarMenu({
     setIsMenuOpen(isOpen);
   }, [isOpen]);
 
-  const onClickDisconnect = async () => {
-    for (const disconnectFn of Object.values(disconnectFns)) {
-      await disconnectFn();
-    }
-  };
-
   const sortedTransfers = useMemo(
     () => [...transfers].sort((a, b) => b.timestamp - a.timestamp) || [],
     [transfers],
   );
+
+  const onCopySuccess = () => {
+    toast.success('Address copied to clipboard', { autoClose: 2000 });
+  };
 
   return (
     <>
@@ -91,19 +78,12 @@ export function SideBarMenu({
           <div className="w-full rounded-t-md bg-primary-500 px-3.5 py-2 text-base font-normal tracking-wider text-white">
             Connected Wallets
           </div>
-          <div className="my-3 space-y-2 px-3">
-            {readyAccounts.map((acc, i) => (
-              <AccountSummary key={i} account={acc} />
-            ))}
-            <button onClick={onConnectWallet} className={`${styles.btn} pl-2.5`}>
-              <Icon src={Wallet} alt="" size={18} />
-              <div className="ml-2">Connect wallet</div>
-            </button>
-            <button onClick={onClickDisconnect} className={`${styles.btn} pl-2.5`}>
-              <Icon src={Logout} alt="" size={20} />
-              <div className="ml-2">Disconnect all wallets</div>
-            </button>
-          </div>
+          <AccountList
+            multiProvider={multiProvider}
+            onClickConnectWallet={onClickConnectWallet}
+            onCopySuccess={onCopySuccess}
+            className="px-3 py-3"
+          />
           <div className="mb-4 w-full bg-primary-500 px-3.5 py-2 text-base font-normal tracking-wider text-white">
             Transfer History
           </div>
@@ -141,36 +121,6 @@ export function SideBarMenu({
         />
       )}
     </>
-  );
-}
-
-function AccountSummary({ account }: { account: AccountInfo }) {
-  const numAddresses = account?.addresses?.length || 0;
-  const onlyAddress = numAddresses === 1 ? account.addresses[0].address : undefined;
-
-  const onClickCopy = async () => {
-    if (!onlyAddress) return;
-    await tryClipboardSet(account.addresses[0].address);
-    toast.success('Address copied to clipboard', { autoClose: 2000 });
-  };
-
-  const walletDetails = useWalletDetails()[account.protocol];
-
-  return (
-    <button
-      onClick={onClickCopy}
-      className={`${styles.btn} ${numAddresses > 1 && 'all:cursor-default'}`}
-    >
-      <div className="shrink-0 overflow-hidden rounded-full">
-        <WalletLogo walletDetails={walletDetails} size={38} />
-      </div>
-      <div className="mx-3 flex flex-col items-start">
-        <div className="text-sm font-normal text-gray-800">{walletDetails.name || 'Wallet'}</div>
-        <div className="w-64 truncate text-left text-xs">
-          {onlyAddress || `${numAddresses} known addresses`}
-        </div>
-      </div>
-    </button>
   );
 }
 
@@ -220,24 +170,6 @@ function TransferSummary({
         )}
       </div>
     </button>
-  );
-}
-
-function Icon({
-  src,
-  alt,
-  size,
-  className,
-}: {
-  src: any;
-  alt?: string;
-  size?: number;
-  className?: string;
-}) {
-  return (
-    <div className={`flex w-[20px] items-center justify-center ${className}`}>
-      <Image src={src} alt={alt || ''} width={size ?? 16} height={size ?? 16} />
-    </div>
   );
 }
 

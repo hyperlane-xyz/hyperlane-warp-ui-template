@@ -43,7 +43,7 @@ export function AppLayout({ children }: PropsWithChildren) {
       <SideBarMenu
         onClose={() => setIsSideBarOpen(false)}
         isOpen={isSideBarOpen}
-        onConnectWallet={() => setShowEnvSelectModal(true)}
+        onClickConnectWallet={() => setShowEnvSelectModal(true)}
       />
     </>
   );

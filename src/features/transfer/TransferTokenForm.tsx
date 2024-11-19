@@ -22,8 +22,8 @@ import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
 import { ChainSelectField } from '../chains/ChainSelectField';
 import { ChainWalletWarning } from '../chains/ChainWalletWarning';
-import { useChainDisplayName, useMultiProvider, useTokenChainsMetadata } from '../chains/hooks';
-import { getAllTokenRoutesFromChain } from '../chains/utils';
+import { useChainDisplayName, useMultiProvider } from '../chains/hooks';
+import { getNumRoutesWithSelectedChain } from '../chains/utils';
 import { useIsAccountSanctioned } from '../sanctions/hooks/useIsAccountSanctioned';
 import { useStore } from '../store';
 import { SelectOrInputTokenIds } from '../tokens/SelectOrInputTokenIds';
@@ -114,26 +114,24 @@ function SwapChainsButton({ disabled }: { disabled?: boolean }) {
 
 function ChainSelectSection({ isReview }: { isReview: boolean }) {
   const warpCore = useWarpCore();
-  const chainMetadata = useTokenChainsMetadata();
 
   const { values } = useFormikContext<TransferFormValues>();
 
-  const originRoutes = useMemo(() => {
-    return getAllTokenRoutesFromChain(warpCore, values.origin, chainMetadata);
-  }, [values.origin, warpCore, chainMetadata]);
+  const originRouteCounts = useMemo(() => {
+    return getNumRoutesWithSelectedChain(warpCore, values.origin, true);
+  }, [values.origin, warpCore]);
 
-  const destinationRoutes = useMemo(() => {
-    return getAllTokenRoutesFromChain(warpCore, values.destination, chainMetadata);
-  }, [values.destination, warpCore, chainMetadata]);
+  const destinationRouteCounts = useMemo(() => {
+    return getNumRoutesWithSelectedChain(warpCore, values.destination, false);
+  }, [values.destination, warpCore]);
 
   return (
     <div className="mt-4 flex items-center justify-between gap-4">
       <ChainSelectField
         name="origin"
         label="From"
-        chains={chainMetadata}
         disabled={isReview}
-        customListItemField={destinationRoutes}
+        customListItemField={destinationRouteCounts}
       />
       <div className="flex flex-1 flex-col items-center">
         <SwapChainsButton disabled={isReview} />
@@ -141,9 +139,8 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
       <ChainSelectField
         name="destination"
         label="To"
-        chains={chainMetadata}
         disabled={isReview}
-        customListItemField={originRoutes}
+        customListItemField={originRouteCounts}
       />
     </div>
   );

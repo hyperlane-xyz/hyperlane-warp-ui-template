@@ -1,5 +1,4 @@
-import { ChainMap, ChainMetadata } from '@hyperlane-xyz/sdk';
-import { ChevronIcon } from '@hyperlane-xyz/widgets';
+import { ChainSearchMenuProps, ChevronIcon } from '@hyperlane-xyz/widgets';
 import { useField, useFormikContext } from 'formik';
 import { useState } from 'react';
 import { ChainLogo } from '../../components/icons/ChainLogo';
@@ -12,21 +11,10 @@ type Props = {
   label: string;
   onChange?: (id: ChainName) => void;
   disabled?: boolean;
-  chains: ChainMap<ChainMetadata>;
-  customListItemField: ChainMap<{
-    display: string;
-    sortValue: number;
-  }>;
+  customListItemField: ChainSearchMenuProps['customListItemField'];
 };
 
-export function ChainSelectField({
-  name,
-  label,
-  chains,
-  onChange,
-  disabled,
-  customListItemField,
-}: Props) {
+export function ChainSelectField({ name, label, onChange, disabled, customListItemField }: Props) {
   const [field, , helpers] = useField<ChainName>(name);
   const { setFieldValue } = useFormikContext<TransferFormValues>();
 
@@ -71,7 +59,6 @@ export function ChainSelectField({
       <ChainSelectListModal
         isOpen={isModalOpen}
         close={() => setIsModalOpen(false)}
-        chains={chains}
         onSelect={handleChange}
         customListItemField={customListItemField}
       />

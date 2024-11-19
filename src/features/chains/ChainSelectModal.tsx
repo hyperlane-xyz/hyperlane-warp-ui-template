@@ -1,51 +1,41 @@
-import { Modal } from '@hyperlane-xyz/widgets';
-import { useMemo } from 'react';
-import { ChainLogo } from '../../components/icons/ChainLogo';
+import { ChainMetadata } from '@hyperlane-xyz/sdk';
+import { ChainSearchMenu, ChainSearchMenuProps, Modal } from '@hyperlane-xyz/widgets';
+import { useStore } from '../store';
 import { useMultiProvider } from './hooks';
-import { getChainDisplayName } from './utils';
 
 export function ChainSelectListModal({
   isOpen,
   close,
-  chains,
   onSelect,
+  customListItemField,
 }: {
   isOpen: boolean;
   close: () => void;
-  chains: ChainName[];
   onSelect: (chain: ChainName) => void;
+  customListItemField: ChainSearchMenuProps['customListItemField'];
 }) {
   const multiProvider = useMultiProvider();
 
-  const sortedChains = useMemo(() => chains.sort(), [chains]);
+  const { chainMetadataOverrides, setChainMetadataOverrides } = useStore((s) => ({
+    chainMetadataOverrides: s.chainMetadataOverrides,
+    setChainMetadataOverrides: s.setChainMetadataOverrides,
+  }));
 
-  const onSelectChain = (chain: ChainName) => {
-    return () => {
-      onSelect(chain);
-      close();
-    };
+  const onSelectChain = (chain: ChainMetadata) => {
+    onSelect(chain.name);
+    close();
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      close={close}
-      title="Select Chain"
-      panelClassname="p-4 max-w-xs"
-      showCloseButton
-    >
-      <div className="mt-2 flex flex-col space-y-1">
-        {sortedChains.map((c) => (
-          <button
-            key={c}
-            className="flex items-center rounded px-2 py-1.5 text-sm transition-all duration-200 hover:bg-gray-100 active:bg-gray-200"
-            onClick={onSelectChain(c)}
-          >
-            <ChainLogo chainName={c} size={16} background={false} />
-            <span className="ml-2">{getChainDisplayName(multiProvider, c, true)}</span>
-          </button>
-        ))}
-      </div>
+    <Modal isOpen={isOpen} close={close} panelClassname="p-4 sm:p-5 max-w-lg min-h-[40vh]">
+      <ChainSearchMenu
+        chainMetadata={multiProvider.metadata}
+        onClickChain={onSelectChain}
+        overrideChainMetadata={chainMetadataOverrides}
+        onChangeOverrideMetadata={setChainMetadataOverrides}
+        customListItemField={customListItemField}
+        defaultSortField="custom"
+      />
     </Modal>
   );
 }

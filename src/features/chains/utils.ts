@@ -1,6 +1,7 @@
 import { isAbacusWorksChain } from '@hyperlane-xyz/registry';
-import { MultiProtocolProvider } from '@hyperlane-xyz/sdk';
-import { ProtocolType, toTitleCase } from '@hyperlane-xyz/utils';
+import { ChainMap, MultiProtocolProvider, WarpCore } from '@hyperlane-xyz/sdk';
+import { ProtocolType, toTitleCase, trimToLength } from '@hyperlane-xyz/utils';
+import { ChainSearchMenuProps } from '@hyperlane-xyz/widgets';
 
 export function getChainDisplayName(
   multiProvider: MultiProtocolProvider,
@@ -30,4 +31,42 @@ export function getChainByRpcUrl(multiProvider: MultiProtocolProvider, url?: str
   return allMetadata.find(
     (m) => !!m.rpcUrls.find((rpc) => rpc.http.toLowerCase().includes(url.toLowerCase())),
   );
+}
+
+/**
+ * Returns an object that contains the amount of
+ * routes from a single chain to every other chain
+ */
+export function getNumRoutesWithSelectedChain(
+  warpCore: WarpCore,
+  selectedChain: ChainName,
+  isSelectedChainOrigin: boolean,
+): ChainSearchMenuProps['customListItemField'] {
+  const multiProvider = warpCore.multiProvider;
+  const chains = multiProvider.metadata;
+  const selectedChainDisplayName = trimToLength(
+    getChainDisplayName(multiProvider, selectedChain, true),
+    10,
+  );
+
+  const data = Object.keys(chains).reduce<ChainMap<{ display: string; sortValue: number }>>(
+    (result, otherChain) => {
+      const origin = isSelectedChainOrigin ? selectedChain : otherChain;
+      const destination = isSelectedChainOrigin ? otherChain : selectedChain;
+      const tokens = warpCore.getTokensForRoute(origin, destination).length;
+      result[otherChain] = {
+        display: `${tokens} route${tokens > 1 ? 's' : ''}`,
+        sortValue: tokens,
+      };
+
+      return result;
+    },
+    {},
+  );
+
+  const preposition = isSelectedChainOrigin ? 'from' : 'to';
+  return {
+    header: `Routes ${preposition} ${selectedChainDisplayName}`,
+    data,
+  };
 }

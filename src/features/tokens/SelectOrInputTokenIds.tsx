@@ -34,7 +34,7 @@ function InputTokenId({ disabled }: { disabled: boolean; tokenIndex?: number }) 
       <TextField
         name="amount"
         placeholder="Input Token Id"
-        classes="w-full"
+        className="w-full"
         type="number"
         step="any"
         disabled={disabled}

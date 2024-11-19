@@ -1,7 +1,7 @@
 import { IToken } from '@hyperlane-xyz/sdk';
-import { Modal } from '@hyperlane-xyz/widgets';
+import { Modal, SearchIcon } from '@hyperlane-xyz/widgets';
 import Image from 'next/image';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { TokenIcon } from '../../components/icons/TokenIcon';
 import { TextInput } from '../../components/input/TextField';
 import { config } from '../../consts/config';
@@ -38,19 +38,10 @@ export function TokenListModal({
   return (
     <Modal
       isOpen={isOpen}
-      title="Select Token"
       close={onClose}
-      panelClassname="p-4 max-w-100 sm:max-w-[31rem] min-h-[24rem]"
-      showCloseButton
+      panelClassname="px-4 py-3 max-w-100 sm:max-w-[31rem] min-h-[24rem]"
     >
-      <TextInput
-        value={search}
-        onChange={setSearch}
-        placeholder="Name, symbol, or address"
-        name="token-search"
-        classes="mt-3 mb-4 sm:py-2.5 w-full"
-        autoComplete="off"
-      />
+      <SearchBar search={search} setSearch={setSearch} />
       <TokenList
         origin={origin}
         destination={destination}
@@ -58,6 +49,32 @@ export function TokenListModal({
         onSelect={onSelectAndClose}
       />
     </Modal>
+  );
+}
+
+function SearchBar({ search, setSearch }: { search: string; setSearch: (s: string) => void }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  return (
+    <div className="relative">
+      <SearchIcon
+        width={20}
+        height={20}
+        className="absolute left-3 top-1/2 -translate-y-1/2 pb-1 opacity-50"
+      />
+      <TextInput
+        ref={inputRef}
+        value={search}
+        onChange={setSearch}
+        placeholder="Token name, symbol, or address"
+        name="token-search"
+        className="mb-4 mt-3 w-full pl-10 all:border-gray-200 all:py-3 all:focus:border-gray-400"
+        autoComplete="off"
+      />
+    </div>
   );
 }
 

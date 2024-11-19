@@ -183,7 +183,7 @@ function AmountSection({ isNft, isReview }: { isNft: boolean; isReview: boolean 
           <TextField
             name="amount"
             placeholder="0.00"
-            classes="w-full"
+            className="w-full"
             type="number"
             step="any"
             disabled={isReview}
@@ -212,7 +212,7 @@ function RecipientSection({ isReview }: { isReview: boolean }) {
         <TextField
           name="recipient"
           placeholder="0x123456..."
-          classes="w-full"
+          className="w-full"
           disabled={isReview}
         />
         <SelfButton disabled={isReview} />

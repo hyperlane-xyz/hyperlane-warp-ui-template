@@ -38,6 +38,7 @@
     "@vercel/functions": "^1.5.0",
     "bignumber.js": "^9.1.2",
     "buffer": "^6.0.3",
+    "clsx": "^2.1.1",
     "cosmjs-types": "^0.9.0",
     "formik": "^2.4.6",
     "framer-motion": "^10.16.4",

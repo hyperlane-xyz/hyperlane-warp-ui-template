@@ -1,22 +1,22 @@
 import { ChainMetadata } from '@hyperlane-xyz/sdk';
 import { ChainSearchMenu, ChainSearchMenuProps, Modal } from '@hyperlane-xyz/widgets';
 import { useStore } from '../store';
-import { useMultiProvider } from './hooks';
 
 export function ChainSelectListModal({
   isOpen,
   close,
   onSelect,
   customListItemField,
+  showChainDetails,
 }: {
   isOpen: boolean;
   close: () => void;
   onSelect: (chain: ChainName) => void;
-  customListItemField: ChainSearchMenuProps['customListItemField'];
+  customListItemField?: ChainSearchMenuProps['customListItemField'];
+  showChainDetails?: ChainSearchMenuProps['showChainDetails'];
 }) {
-  const multiProvider = useMultiProvider();
-
-  const { chainMetadataOverrides, setChainMetadataOverrides } = useStore((s) => ({
+  const { chainMetadata, chainMetadataOverrides, setChainMetadataOverrides } = useStore((s) => ({
+    chainMetadata: s.chainMetadata,
     chainMetadataOverrides: s.chainMetadataOverrides,
     setChainMetadataOverrides: s.setChainMetadataOverrides,
   }));
@@ -29,12 +29,13 @@ export function ChainSelectListModal({
   return (
     <Modal isOpen={isOpen} close={close} panelClassname="p-4 sm:p-5 max-w-lg min-h-[40vh]">
       <ChainSearchMenu
-        chainMetadata={multiProvider.metadata}
+        chainMetadata={chainMetadata}
         onClickChain={onSelectChain}
         overrideChainMetadata={chainMetadataOverrides}
         onChangeOverrideMetadata={setChainMetadataOverrides}
         customListItemField={customListItemField}
         defaultSortField="custom"
+        showChainDetails={showChainDetails}
       />
     </Modal>
   );

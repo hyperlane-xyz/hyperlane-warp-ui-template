@@ -20,6 +20,7 @@ import { TextField } from '../../components/input/TextField';
 import { config } from '../../consts/config';
 import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
+import { ChainConnectionWarning } from '../chains/ChainConnectionWarning';
 import { ChainSelectField } from '../chains/ChainSelectField';
 import { ChainWalletWarning } from '../chains/ChainWalletWarning';
 import { useChainDisplayName, useMultiProvider } from '../chains/hooks';
@@ -64,9 +65,9 @@ export function TransferTokenForm() {
       validateOnChange={false}
       validateOnBlur={false}
     >
-      {({ isValidating, values }) => (
+      {({ isValidating }) => (
         <Form className="flex w-full flex-col items-stretch">
-          <ChainWalletWarning originChain={values.origin} />
+          <WarningBanners />
           <ChainSelectSection isReview={isReview} />
           <div className="mt-3.5 flex items-end justify-between space-x-4">
             <TokenSection setIsNft={setIsNft} isReview={isReview} />
@@ -126,7 +127,7 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
   }, [values.destination, warpCore]);
 
   return (
-    <div className="mt-4 flex items-center justify-between gap-4">
+    <div className="mt-2 flex items-center justify-between gap-4">
       <ChainSelectField
         name="origin"
         label="From"
@@ -431,6 +432,17 @@ function ReviewDetails({ visible }: { visible: boolean }) {
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+function WarningBanners() {
+  const { values } = useFormikContext<TransferFormValues>();
+  return (
+    // Max height to prevent double padding if multiple warnings are visible
+    <div className="max-h-10">
+      <ChainWalletWarning origin={values.origin} />
+      <ChainConnectionWarning origin={values.origin} destination={values.destination} />
     </div>
   );
 }

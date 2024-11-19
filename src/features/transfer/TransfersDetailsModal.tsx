@@ -190,7 +190,7 @@ export function TransfersDetailsModal({
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center py-4">
-          <SpinnerIcon width={80} height={80} />
+          <SpinnerIcon width={60} height={60} className="mt-3" />
           <div
             className={`mt-5 text-center text-sm ${isFailed ? 'text-red-600' : 'text-gray-600'}`}
           >

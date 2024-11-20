@@ -1,51 +1,72 @@
-import { ChainNameOrId } from '@hyperlane-xyz/sdk';
-import { ProtocolType, toTitleCase } from '@hyperlane-xyz/utils';
+import { isAbacusWorksChain } from '@hyperlane-xyz/registry';
+import { ChainMap, MultiProtocolProvider, WarpCore } from '@hyperlane-xyz/sdk';
+import { ProtocolType, toTitleCase, trimToLength } from '@hyperlane-xyz/utils';
+import { ChainSearchMenuProps } from '@hyperlane-xyz/widgets';
 
-import { getMultiProvider } from '../../context/context';
-
-const ABACUS_WORKS_DEPLOYER_NAME = 'abacus works';
-
-export function getChainDisplayName(chain: ChainName, shortName = false) {
+export function getChainDisplayName(
+  multiProvider: MultiProtocolProvider,
+  chain: ChainName,
+  shortName = false,
+) {
   if (!chain) return 'Unknown';
-  const metadata = tryGetChainMetadata(chain);
+  const metadata = multiProvider.tryGetChainMetadata(chain);
   if (!metadata) return 'Unknown';
   const displayName = shortName ? metadata.displayNameShort : metadata.displayName;
   return displayName || metadata.displayName || toTitleCase(metadata.name);
 }
 
-export function isPermissionlessChain(chain: ChainName) {
+export function isPermissionlessChain(multiProvider: MultiProtocolProvider, chain: ChainName) {
   if (!chain) return true;
-  const metadata = tryGetChainMetadata(chain);
-  return (
-    metadata?.protocol !== ProtocolType.Ethereum ||
-    metadata.deployer?.name.trim().toLowerCase() !== ABACUS_WORKS_DEPLOYER_NAME
-  );
+  const metadata = multiProvider.tryGetChainMetadata(chain);
+  return metadata?.protocol !== ProtocolType.Ethereum || !isAbacusWorksChain(metadata);
 }
 
-export function hasPermissionlessChain(ids: ChainName[]) {
-  return !ids.every((c) => !isPermissionlessChain(c));
+export function hasPermissionlessChain(multiProvider: MultiProtocolProvider, ids: ChainName[]) {
+  return !ids.every((c) => !isPermissionlessChain(multiProvider, c));
 }
 
-export function getChainByRpcUrl(url?: string) {
+export function getChainByRpcUrl(multiProvider: MultiProtocolProvider, url?: string) {
   if (!url) return undefined;
-  const allMetadata = Object.values(getMultiProvider().metadata);
+  const allMetadata = Object.values(multiProvider.metadata);
   return allMetadata.find(
     (m) => !!m.rpcUrls.find((rpc) => rpc.http.toLowerCase().includes(url.toLowerCase())),
   );
 }
 
-export function tryGetChainMetadata(chain: ChainNameOrId) {
-  return getMultiProvider().tryGetChainMetadata(chain);
-}
+/**
+ * Returns an object that contains the amount of
+ * routes from a single chain to every other chain
+ */
+export function getNumRoutesWithSelectedChain(
+  warpCore: WarpCore,
+  selectedChain: ChainName,
+  isSelectedChainOrigin: boolean,
+): ChainSearchMenuProps['customListItemField'] {
+  const multiProvider = warpCore.multiProvider;
+  const chains = multiProvider.metadata;
+  const selectedChainDisplayName = trimToLength(
+    getChainDisplayName(multiProvider, selectedChain, true),
+    10,
+  );
 
-export function getChainMetadata(chain: ChainNameOrId) {
-  return getMultiProvider().getChainMetadata(chain);
-}
+  const data = Object.keys(chains).reduce<ChainMap<{ display: string; sortValue: number }>>(
+    (result, otherChain) => {
+      const origin = isSelectedChainOrigin ? selectedChain : otherChain;
+      const destination = isSelectedChainOrigin ? otherChain : selectedChain;
+      const tokens = warpCore.getTokensForRoute(origin, destination).length;
+      result[otherChain] = {
+        display: `${tokens} route${tokens > 1 ? 's' : ''}`,
+        sortValue: tokens,
+      };
 
-export function tryGetChainProtocol(chain: ChainNameOrId) {
-  return tryGetChainMetadata(chain)?.protocol;
-}
+      return result;
+    },
+    {},
+  );
 
-export function getChainProtocol(chain: ChainNameOrId) {
-  return getChainMetadata(chain).protocol;
+  const preposition = isSelectedChainOrigin ? 'from' : 'to';
+  return {
+    header: `Routes ${preposition} ${selectedChainDisplayName}`,
+    data,
+  };
 }

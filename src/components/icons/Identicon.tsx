@@ -1,8 +1,7 @@
-import jazzicon from '@metamask/jazzicon';
-import { memo } from 'react';
-
 import { isValidAddressEvm, normalizeAddressEvm } from '@hyperlane-xyz/utils';
 import { Circle } from '@hyperlane-xyz/widgets';
+import jazzicon from '@metamask/jazzicon';
+import { memo } from 'react';
 
 type Props = {
   address?: string;
@@ -21,7 +20,7 @@ function _Identicon({ address, size: _size }: Props) {
 
   // TODO better handling of non-evm addresses here
   if (!address || !isValidAddressEvm(address)) {
-    return <Circle size={size} classes="bg-primary-500" title="" />;
+    return <Circle size={size} className="bg-primary-500" title="" />;
   }
 
   const jazziconResult = jazzicon(size, addressToSeed(address));

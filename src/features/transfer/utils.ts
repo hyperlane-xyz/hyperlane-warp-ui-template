@@ -2,14 +2,14 @@ import {
   ChainMap,
   CoreAddresses,
   MultiProtocolCore,
+  MultiProtocolProvider,
   ProviderType,
   TypedTransactionReceipt,
 } from '@hyperlane-xyz/sdk';
-
-import { getMultiProvider } from '../../context/context';
 import { logger } from '../../utils/logger';
 
 export function tryGetMsgIdFromTransferReceipt(
+  multiProvider: MultiProtocolProvider,
   origin: ChainName,
   receipt: TypedTransactionReceipt,
 ) {
@@ -26,7 +26,6 @@ export function tryGetMsgIdFromTransferReceipt(
       };
     }
 
-    const multiProvider = getMultiProvider();
     const addressStubs = multiProvider
       .getKnownChainNames()
       .reduce<ChainMap<CoreAddresses>>((acc, chainName) => {

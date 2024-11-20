@@ -14,21 +14,31 @@ type FooterLink = {
 
 const footerLinks: FooterLink[] = [
   { title: 'Homepage', url: links.home, external: true },
-  { title: 'INJ Explorer', url: links.explorerInj, external: true },
-  { title: 'inEVM Explorer', url: links.explorerInEvm, external: true },
   { title: 'Support', url: links.support, external: true },
+  {
+    title: 'Twitter',
+    url: links.twitter,
+    external: true,
+    icon: <TwitterIcon color={Color.black} />,
+  },
+  { title: 'INJ Explorer', url: links.explorerInj, external: true },
   { title: 'About', url: links.about, external: true },
+  {
+    title: 'Discord',
+    url: links.discord,
+    external: true,
+    icon: <DiscordIcon color={Color.black} />,
+  },
+  { title: 'inEVM Explorer', url: links.explorerInEvm, external: true },
   { title: 'Docs', url: links.docs, external: true },
-  { title: 'Twitter', url: links.twitter, external: true, icon: <TwitterIcon color="#fff" /> },
-  { title: 'Discord', url: links.discord, external: true, icon: <DiscordIcon color="#fff" /> },
-  { title: 'Github', url: links.github, external: true, icon: <GithubIcon color="#fff" /> },
+  { title: 'Github', url: links.github, external: true, icon: <GithubIcon color={Color.black} /> },
 ];
 
 export function Footer() {
   return (
-    <footer className="relative text-white">
-      <div className="relative bg-gradient-to-b from-transparent to-black/40 px-8 pb-5 pt-2 sm:pt-0">
-        <div className="flex flex-col items-center justify-between gap-8 sm:flex-row sm:gap-10">
+    <footer className="relative">
+      <div className="relative px-8 pb-5 pt-2 sm:pt-0">
+        <div className="flex flex-col items-end justify-between gap-8 sm:flex-row sm:gap-10">
           <FooterLogo />
           <FooterNav />
         </div>
@@ -40,7 +50,7 @@ export function Footer() {
 function FooterLogo() {
   return (
     <div className="flex items-center justify-center space-x-2 py-1">
-      <div className="flex items-center space-x-1 font-medium">
+      <div className="flex items-center space-x-1">
         <span>Built with</span>
         <Link href={links.about} className="flex items-center space-x-1" target="_blank">
           <HyperlaneLogo color={Color.black} width={17} height={17} />
@@ -58,16 +68,17 @@ function FooterLogo() {
 
 function FooterNav() {
   return (
-    <nav className="flex text-md font-medium">
-      <ul className={`${styles.linkGrid}`}>
+    <nav className="text-sm">
+      <ul style={{ gridTemplateColumns: 'auto auto auto' }} className="grid gap-x-7 gap-y-1.5">
         {footerLinks.map((item) => (
           <li key={item.title}>
             <Link
-              className={styles.linkItem}
+              className="flex items-center capitalize underline-offset-2 hover:underline"
               target={item.external ? '_blank' : '_self'}
               href={item.url}
             >
               {item?.icon && <div className="mr-3 mt-1 w-4">{item?.icon}</div>}
+              {!item?.icon && <div>{item.title}</div>}
             </Link>
           </li>
         ))}
@@ -75,8 +86,3 @@ function FooterNav() {
     </nav>
   );
 }
-
-const styles = {
-  linkGrid: 'grid grid-cols-3 gap-x-6 gap-y-1.5',
-  linkItem: 'flex items-center capitalize text-decoration-none hover:underline underline-offset-2',
-};

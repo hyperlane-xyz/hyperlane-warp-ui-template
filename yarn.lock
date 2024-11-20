@@ -2423,7 +2423,7 @@ __metadata:
     "@cosmjs/utils": "npm:^0.32.4"
     cosmjs-types: "npm:^0.9.0"
     pako: "npm:^2.0.2"
-  checksum: f2924d09d974665cda47f12029db6f834f0e46072db96396fb6405037805dd2b7de81ee80cb86ad8a2677de87faa306d61d5716ffca0c93db73aa22014ef9c91
+  checksum: 10/f2924d09d974665cda47f12029db6f834f0e46072db96396fb6405037805dd2b7de81ee80cb86ad8a2677de87faa306d61d5716ffca0c93db73aa22014ef9c91
   languageName: node
   linkType: hard
 

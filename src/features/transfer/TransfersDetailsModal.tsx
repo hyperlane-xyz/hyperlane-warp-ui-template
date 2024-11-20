@@ -28,7 +28,7 @@ import {
 } from '../../utils/transfer';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName, hasPermissionlessChain } from '../chains/utils';
-import { useWarpCore } from '../tokens/hooks';
+import { tryFindToken, useWarpCore } from '../tokens/hooks';
 import { TransferContext, TransferStatus } from './types';
 
 export function TransfersDetailsModal({
@@ -58,7 +58,10 @@ export function TransfersDetailsModal({
   } = transfer || {};
 
   const multiProvider = useMultiProvider();
-  const account = useAccountForChain(multiProvider, origin);
+  const warpCore = useWarpCore();
+
+  const isChainKnown = multiProvider.hasChain(origin);
+  const account = useAccountForChain(multiProvider, isChainKnown ? origin : undefined);
   const walletDetails = useWalletDetails()[account?.protocol || ProtocolType.Ethereum];
 
   const getMessageUrls = useCallback(async () => {
@@ -87,10 +90,8 @@ export function TransfersDetailsModal({
 
   const isAccountReady = !!account?.isReady;
   const connectorName = walletDetails.name || 'wallet';
-  const token = useWarpCore().findToken(origin, originTokenAddressOrDenom);
-
+  const token = tryFindToken(warpCore, origin, originTokenAddressOrDenom);
   const isPermissionlessRoute = hasPermissionlessChain(multiProvider, [destination, origin]);
-
   const isSent = isTransferSent(status);
   const isFailed = isTransferFailed(status);
   const isFinal = isSent || isFailed;

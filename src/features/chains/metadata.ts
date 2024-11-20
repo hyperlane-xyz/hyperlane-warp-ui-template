@@ -1,8 +1,4 @@
-import {
-  IRegistry,
-  cosmoshub,
-  chainMetadata as publishedChainMetadata,
-} from '@hyperlane-xyz/registry';
+import { IRegistry, chainMetadata as publishedChainMetadata } from '@hyperlane-xyz/registry';
 import {
   ChainMap,
   ChainMetadata,
@@ -23,7 +19,6 @@ export async function assembleChainMetadata(
 ) {
   // Chains must include a cosmos chain or CosmosKit throws errors
   const result = z.record(ChainMetadataSchema).safeParse({
-    cosmoshub,
     ...ChainsYaml,
     ...ChainsTS,
   });

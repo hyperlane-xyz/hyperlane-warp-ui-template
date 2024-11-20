@@ -52,17 +52,17 @@ function FooterLogo() {
 
 function FooterNav() {
   return (
-    <nav className="flex text-md font-medium">
-      <ul className={`${styles.linkGrid}`}>
+    <nav className="text-md font-medium">
+      <ul style={{ gridTemplateColumns: 'auto auto auto' }} className="grid gap-x-7 gap-y-1.5">
         {footerLinks.map((item) => (
           <li key={item.title}>
             <Link
-              className={styles.linkItem}
+              className="flex items-center capitalize underline-offset-2 hover:underline"
               target={item.external ? '_blank' : '_self'}
               href={item.url}
             >
-              {item?.icon && <div className="mr-4 w-5">{item?.icon}</div>}
-              <div className="">{item.title}</div>
+              {item?.icon && <div className="mr-3 mt-1 w-4">{item?.icon}</div>}
+              {!item?.icon && <div>{item.title}</div>}
             </Link>
           </li>
         ))}
@@ -70,8 +70,3 @@ function FooterNav() {
     </nav>
   );
 }
-
-const styles = {
-  linkGrid: 'grid grid-cols-3 gap-x-6 gap-y-1.5',
-  linkItem: 'flex items-center capitalize text-decoration-none hover:underline underline-offset-2',
-};

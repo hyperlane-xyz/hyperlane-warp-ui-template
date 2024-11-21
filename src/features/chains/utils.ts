@@ -1,6 +1,6 @@
 import { isAbacusWorksChain } from '@hyperlane-xyz/registry';
 import { ChainMap, MultiProtocolProvider, WarpCore } from '@hyperlane-xyz/sdk';
-import { ProtocolType, toTitleCase, trimToLength } from '@hyperlane-xyz/utils';
+import { toTitleCase, trimToLength } from '@hyperlane-xyz/utils';
 import { ChainSearchMenuProps } from '@hyperlane-xyz/widgets';
 
 export function getChainDisplayName(
@@ -18,7 +18,7 @@ export function getChainDisplayName(
 export function isPermissionlessChain(multiProvider: MultiProtocolProvider, chain: ChainName) {
   if (!chain) return true;
   const metadata = multiProvider.tryGetChainMetadata(chain);
-  return metadata?.protocol !== ProtocolType.Ethereum || !isAbacusWorksChain(metadata);
+  return !metadata || !isAbacusWorksChain(metadata);
 }
 
 export function hasPermissionlessChain(multiProvider: MultiProtocolProvider, ids: ChainName[]) {

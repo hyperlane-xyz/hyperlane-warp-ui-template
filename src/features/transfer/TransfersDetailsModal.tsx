@@ -1,30 +1,34 @@
+import { ProtocolType } from '@hyperlane-xyz/utils';
+import {
+  CopyButton,
+  MessageStatus,
+  MessageTimeline,
+  Modal,
+  SpinnerIcon,
+  useAccountForChain,
+  useMessageTimeline,
+  useTimeout,
+  useWalletDetails,
+  WideChevronIcon,
+} from '@hyperlane-xyz/widgets';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-
-import { ProtocolType } from '@hyperlane-xyz/utils';
-import { MessageStatus, MessageTimeline, useMessageTimeline } from '@hyperlane-xyz/widgets';
-
-import { Spinner } from '../../components/animation/Spinner';
-import { CopyButton } from '../../components/buttons/CopyButton';
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import { TokenIcon } from '../../components/icons/TokenIcon';
-import { WideChevron } from '../../components/icons/WideChevron';
-import { Modal } from '../../components/layout/Modal';
-import { getMultiProvider, getWarpCore } from '../../context/context';
 import LinkIcon from '../../images/icons/external-link-icon.svg';
+import { Color } from '../../styles/Color';
 import { formatTimestamp } from '../../utils/date';
 import { getHypExplorerLink } from '../../utils/links';
 import { logger } from '../../utils/logger';
-import { useTimeout } from '../../utils/timeout';
 import {
   getIconByTransferStatus,
   getTransferStatusLabel,
   isTransferFailed,
   isTransferSent,
 } from '../../utils/transfer';
+import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName, hasPermissionlessChain } from '../chains/utils';
-import { useAccountForChain, useWalletDetails } from '../wallet/hooks/multiProtocol';
-
+import { tryFindToken, useWarpCore } from '../tokens/hooks';
 import { TransferContext, TransferStatus } from './types';
 
 export function TransfersDetailsModal({
@@ -53,10 +57,12 @@ export function TransfersDetailsModal({
     timestamp,
   } = transfer || {};
 
-  const account = useAccountForChain(origin);
-  const walletDetails = useWalletDetails()[account?.protocol || ProtocolType.Ethereum];
+  const multiProvider = useMultiProvider();
+  const warpCore = useWarpCore();
 
-  const multiProvider = getMultiProvider();
+  const isChainKnown = multiProvider.hasChain(origin);
+  const account = useAccountForChain(multiProvider, isChainKnown ? origin : undefined);
+  const walletDetails = useWalletDetails()[account?.protocol || ProtocolType.Ethereum];
 
   const getMessageUrls = useCallback(async () => {
     try {
@@ -84,10 +90,8 @@ export function TransfersDetailsModal({
 
   const isAccountReady = !!account?.isReady;
   const connectorName = walletDetails.name || 'wallet';
-  const token = getWarpCore().findToken(origin, originTokenAddressOrDenom);
-
-  const isPermissionlessRoute = hasPermissionlessChain([destination, origin]);
-
+  const token = tryFindToken(warpCore, origin, originTokenAddressOrDenom);
+  const isPermissionlessRoute = hasPermissionlessChain(multiProvider, [destination, origin]);
   const isSent = isTransferSent(status);
   const isFailed = isTransferFailed(status);
   const isFinal = isSent || isFailed;
@@ -104,20 +108,13 @@ export function TransfersDetailsModal({
     [timestamp],
   );
 
-  const explorerLink = getHypExplorerLink(origin, msgId);
+  const explorerLink = getHypExplorerLink(multiProvider, origin, msgId);
 
   return (
-    <Modal
-      showCloseBtn={false}
-      isOpen={isOpen}
-      close={onClose}
-      title=""
-      padding="p-4 md:p-5"
-      width="max-w-sm"
-    >
+    <Modal isOpen={isOpen} close={onClose} panelClassname="p-4 md:p-5 max-w-sm">
       {isFinal && (
         <div className="flex justify-between">
-          <h2 className="text-gray-600 font-medium">{date}</h2>
+          <h2 className="font-medium text-gray-600">{date}</h2>
           <div className="flex items-center font-medium">
             {isSent ? (
               <h3 className="text-primary-500">Sent</h3>
@@ -135,11 +132,11 @@ export function TransfersDetailsModal({
         </div>
       )}
 
-      <div className="mt-4 p-3 flex items-center justify-center w-full rounded-full bg-primary-200">
+      <div className="mt-4 flex w-full items-center justify-center rounded-full bg-primary-200 p-3">
         <TokenIcon token={token} size={30} />
-        <div className="ml-2 flex items items-baseline">
+        <div className="items ml-2 flex items-baseline">
           <span className="text-xl font-medium">{amount}</span>
-          <span className="text-xl font-medium ml-1">{token?.symbol}</span>
+          <span className="ml-1 text-xl font-medium">{token?.symbol}</span>
         </div>
       </div>
 
@@ -147,17 +144,17 @@ export function TransfersDetailsModal({
         <div className="ml-2 flex flex-col items-center">
           <ChainLogo chainName={origin} size={64} background={true} />
           <span className="mt-1 font-medium tracking-wider">
-            {getChainDisplayName(origin, true)}
+            {getChainDisplayName(multiProvider, origin, true)}
           </span>
         </div>
-        <div className="flex mb-6 sm:space-x-1.5">
+        <div className="mb-6 flex sm:space-x-1.5">
           <WideChevron />
           <WideChevron />
         </div>
         <div className="mr-2 flex flex-col items-center">
           <ChainLogo chainName={destination} size={64} background={true} />
           <span className="mt-1 font-medium tracking-wider">
-            {getChainDisplayName(destination, true)}
+            {getChainDisplayName(multiProvider, destination, true)}
           </span>
         </div>
       </div>
@@ -179,9 +176,9 @@ export function TransfersDetailsModal({
           {msgId && <TransferProperty name="Message ID" value={msgId} />}
           {explorerLink && (
             <div className="flex justify-between">
-              <span className="text-gray-350 text-xs leading-normal tracking-wider">
+              <span className="text-xs leading-normal tracking-wider text-gray-350">
                 <a
-                  className="text-gray-350 text-xs leading-normal tracking-wider underline underline-offset-2 hover:opacity-80 active:opacity-70"
+                  className="text-xs leading-normal tracking-wider text-gray-350 underline underline-offset-2 hover:opacity-80 active:opacity-70"
                   href={explorerLink}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -193,17 +190,15 @@ export function TransfersDetailsModal({
           )}
         </div>
       ) : (
-        <div className="py-4 flex flex-col justify-center items-center">
-          <Spinner />
+        <div className="flex flex-col items-center justify-center py-4">
+          <SpinnerIcon width={60} height={60} className="mt-3" />
           <div
-            className={`mt-5 text-sm text-center ${
-              status === TransferStatus.Failed ? 'text-red-600' : 'text-gray-600'
-            }`}
+            className={`mt-5 text-center text-sm ${isFailed ? 'text-red-600' : 'text-gray-600'}`}
           >
             {statusDescription}
           </div>
           {showSignWarning && (
-            <div className="mt-3 text-sm text-center text-gray-600">
+            <div className="mt-3 text-center text-sm text-gray-600">
               If your wallet does not show a transaction request or never confirms, please try the
               transfer again.
             </div>
@@ -223,14 +218,15 @@ export function Timeline({
   originTxHash?: string;
 }) {
   const isFailed = transferStatus === TransferStatus.Failed;
+  const multiProtocolProvider = useMultiProvider();
   const { stage, timings, message } = useMessageTimeline({
     originTxHash: isFailed ? undefined : originTxHash,
-    multiProvider: getMultiProvider().toMultiProvider(),
+    multiProvider: multiProtocolProvider.toMultiProvider(),
   });
   const messageStatus = isFailed ? MessageStatus.Failing : message?.status || MessageStatus.Pending;
 
   return (
-    <div className="mt-6 mb-2 w-full flex flex-col justify-center items-center timeline-container">
+    <div className="timeline-container mb-2 mt-6 flex w-full flex-col items-center justify-center">
       <MessageTimeline
         status={messageStatus}
         stage={stage}
@@ -245,23 +241,34 @@ export function Timeline({
 function TransferProperty({ name, value, url }: { name: string; value: string; url?: string }) {
   return (
     <div>
-      <div className="flex justify-between items-center">
-        <label className="text-gray-350 text-sm leading-normal tracking-wider">{name}</label>
+      <div className="flex items-center justify-between">
+        <label className="text-sm leading-normal tracking-wider text-gray-350">{name}</label>
         <div className="flex items-center space-x-2">
           {url && (
             <a href={url} target="_blank" rel="noopener noreferrer">
               <Image src={LinkIcon} width={14} height={14} alt="" />
             </a>
           )}
-          <CopyButton copyValue={value} width={14} height={14} />
+          <CopyButton copyValue={value} width={14} height={14} className="opacity-40" />
         </div>
       </div>
-      <div className="mt-1 text-sm leading-normal tracking-wider truncate">{value}</div>
+      <div className="mt-1 truncate text-sm leading-normal tracking-wider">{value}</div>
     </div>
   );
 }
 
-// TODO: Remove this once we have a better solution for wagmi signing issue
+function WideChevron() {
+  return (
+    <WideChevronIcon
+      width="16"
+      height="100%"
+      direction="e"
+      color={Color.lightGray}
+      rounded={true}
+    />
+  );
+}
+
 // https://github.com/wagmi-dev/wagmi/discussions/2928
 function useSignIssueWarning(status: TransferStatus) {
   const [showWarning, setShowWarning] = useState(false);

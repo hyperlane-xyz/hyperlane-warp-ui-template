@@ -5,7 +5,7 @@ if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
   Sentry.init({
     ...sentryDefaultConfig,
     integrations: [
-      new Sentry.Integrations.Breadcrumbs({
+      Sentry.breadcrumbsIntegration({
         console: false,
         dom: false,
         fetch: false,
@@ -13,10 +13,10 @@ if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
         sentry: false,
         xhr: false,
       }),
-      new Sentry.Integrations.Dedupe(),
-      new Sentry.Integrations.FunctionToString(),
-      new Sentry.Integrations.GlobalHandlers(),
-      new Sentry.Integrations.HttpContext(),
+      Sentry.dedupeIntegration(),
+      Sentry.functionToStringIntegration(),
+      Sentry.globalHandlersIntegration(),
+      Sentry.httpContextIntegration(),
     ],
   });
 }

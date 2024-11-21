@@ -1,10 +1,10 @@
 import { ChainMap } from '@hyperlane-xyz/sdk';
-
 import { ADDRESS_BLACKLIST } from './blacklist';
 
 const isDevMode = process?.env?.NODE_ENV === 'development';
 const version = process?.env?.NEXT_PUBLIC_VERSION || '0.0.0';
 const registryUrl = process?.env?.NEXT_PUBLIC_REGISTRY_URL || undefined;
+const registryProxyUrl = process?.env?.NEXT_PUBLIC_GITHUB_PROXY || 'https://proxy.hyperlane.xyz';
 const explorerApiKeys = JSON.parse(process?.env?.EXPLORER_API_KEYS || '{}');
 const walletConnectProjectId = process?.env?.NEXT_PUBLIC_WALLET_CONNECT_ID || '';
 const withdrawalWhitelist = process?.env?.NEXT_PUBLIC_BLOCK_WITHDRAWAL_WHITELIST || '';
@@ -18,6 +18,7 @@ interface Config {
   explorerApiKeys: Record<string, string>; // Optional map of API keys for block explorer
   isDevMode: boolean; // Enables some debug features in the app
   registryUrl: string | undefined; // Optional URL to use a custom registry instead of the published canonical version
+  registryProxyUrl?: string; // Optional URL to use a custom proxy for the GithubRegistry
   showDisabledTokens: boolean; // Show/Hide invalid token options in the selection modal
   showTipBox: boolean; // Show/Hide the blue tip box above the transfer form
   transferBlacklist: string; // comma-separated list of routes between which transfers are disabled. Expects Caip2Id-Caip2Id (e.g. ethereum:1-sealevel:1399811149)
@@ -33,7 +34,8 @@ export const config: Config = Object.freeze({
   explorerApiKeys,
   isDevMode,
   registryUrl,
-  showDisabledTokens: true,
+  registryProxyUrl,
+  showDisabledTokens: false,
   showTipBox: false,
   version,
   transferBlacklist,

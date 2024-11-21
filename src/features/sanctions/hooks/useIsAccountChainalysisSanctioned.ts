@@ -1,7 +1,7 @@
+import { useEthereumAccount } from '@hyperlane-xyz/widgets';
 import { isAddress } from 'viem';
-import { useContractRead } from 'wagmi';
-
-import { useEvmAccount } from '../../wallet/hooks/evm';
+import { useReadContract } from 'wagmi';
+import { useMultiProvider } from '../../chains/hooks';
 
 // https://go.chainalysis.com/chainalysis-oracle-docs.html
 const ORACLE_ABI = [
@@ -28,15 +28,16 @@ const ORACLE_ABI = [
 const ORACLE_ADDRESS = '0x40C57923924B5c5c5455c48D93317139ADDaC8fb';
 
 export function useIsAccountChainalysisSanctioned() {
-  const evmAddress = useEvmAccount().addresses[0]?.address;
+  const multiProvider = useMultiProvider();
+  const evmAddress = useEthereumAccount(multiProvider).addresses[0]?.address;
 
-  const sanctioned = useContractRead({
+  const sanctioned = useReadContract({
     abi: ORACLE_ABI,
     functionName: 'isSanctioned',
     args: [isAddress(evmAddress) ? evmAddress : '0x'],
     chainId: 1,
     address: ORACLE_ADDRESS,
-    enabled: !!evmAddress,
+    query: { enabled: !!evmAddress },
   });
 
   return !!sanctioned.data;

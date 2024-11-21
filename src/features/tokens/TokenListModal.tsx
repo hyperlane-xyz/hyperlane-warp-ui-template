@@ -1,15 +1,14 @@
-import Image from 'next/image';
-import { useMemo, useState } from 'react';
-
 import { IToken } from '@hyperlane-xyz/sdk';
-
+import { Modal, SearchIcon } from '@hyperlane-xyz/widgets';
+import Image from 'next/image';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { TokenIcon } from '../../components/icons/TokenIcon';
 import { TextInput } from '../../components/input/TextField';
-import { Modal } from '../../components/layout/Modal';
 import { config } from '../../consts/config';
-import { getWarpCore } from '../../context/context';
 import InfoIcon from '../../images/icons/info-circle.svg';
+import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
+import { useWarpCore } from './hooks';
 
 export function TokenListModal({
   isOpen,
@@ -39,18 +38,10 @@ export function TokenListModal({
   return (
     <Modal
       isOpen={isOpen}
-      title="Select Token"
       close={onClose}
-      width="max-w-100 sm:max-w-[31rem] min-h-[24rem]"
+      panelClassname="px-4 py-3 max-w-100 sm:max-w-[31rem] min-h-[24rem]"
     >
-      <TextInput
-        value={search}
-        onChange={setSearch}
-        placeholder="Name, symbol, or address"
-        name="token-search"
-        classes="mt-3 mb-4 sm:py-2.5 w-full"
-        autoComplete="off"
-      />
+      <SearchBar search={search} setSearch={setSearch} />
       <TokenList
         origin={origin}
         destination={destination}
@@ -58,6 +49,32 @@ export function TokenListModal({
         onSelect={onSelectAndClose}
       />
     </Modal>
+  );
+}
+
+function SearchBar({ search, setSearch }: { search: string; setSearch: (s: string) => void }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  return (
+    <div className="relative">
+      <SearchIcon
+        width={20}
+        height={20}
+        className="absolute left-3 top-1/2 -translate-y-1/2 pb-1 opacity-50"
+      />
+      <TextInput
+        ref={inputRef}
+        value={search}
+        onChange={setSearch}
+        placeholder="Token name, symbol, or address"
+        name="token-search"
+        className="mb-4 mt-3 w-full pl-10 all:border-gray-200 all:py-3 all:focus:border-gray-400"
+        autoComplete="off"
+      />
+    </div>
   );
 }
 
@@ -72,9 +89,11 @@ export function TokenList({
   searchQuery: string;
   onSelect: (token: IToken) => void;
 }) {
+  const multiProvider = useMultiProvider();
+  const warpCore = useWarpCore();
+
   const tokens = useMemo(() => {
     const q = searchQuery?.trim().toLowerCase();
-    const warpCore = getWarpCore();
     const multiChainTokens = warpCore.tokens.filter((t) => t.isMultiChainToken());
     const tokensWithRoute = warpCore.getTokensForRoute(origin, destination);
     return (
@@ -100,7 +119,7 @@ export function TokenList({
         // Hide/show disabled tokens
         .filter((t) => (config.showDisabledTokens ? true : !t.disabled))
     );
-  }, [searchQuery, origin, destination]);
+  }, [warpCore, searchQuery, origin, destination]);
 
   return (
     <div className="flex flex-col items-stretch">
@@ -129,7 +148,7 @@ export function TokenList({
               <div className="mt-0.5 flex space-x-1 text-xs">
                 <span>{`Decimals: ${t.token.decimals}`}</span>
                 <span>-</span>
-                <span>{`Chain: ${getChainDisplayName(t.token.chainName)}`}</span>
+                <span>{`Chain: ${getChainDisplayName(multiProvider, t.token.chainName)}`}</span>
               </div>
             </div>
             {t.disabled && (
@@ -139,8 +158,9 @@ export function TokenList({
                 className="ml-auto mr-1"
                 data-te-toggle="tooltip"
                 title={`Route not supported for ${getChainDisplayName(
+                  multiProvider,
                   origin,
-                )} to ${getChainDisplayName(destination)}`}
+                )} to ${getChainDisplayName(multiProvider, destination)}`}
               />
             )}
           </button>

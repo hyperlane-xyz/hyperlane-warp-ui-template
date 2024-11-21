@@ -1,7 +1,5 @@
-import { useMemo } from 'react';
 import { toast } from 'react-toastify';
-
-import { getMultiProvider } from '../../context/context';
+import { useMultiProvider } from '../../features/chains/hooks';
 
 export function toastTxSuccess(msg: string, txHash: string, chain: ChainName) {
   toast.success(<TxSuccessToast msg={msg} txHash={txHash} chain={chain} />, {
@@ -18,9 +16,8 @@ export function TxSuccessToast({
   txHash: string;
   chain: ChainName;
 }) {
-  const url = useMemo(() => {
-    return getMultiProvider().tryGetExplorerTxUrl(chain, { hash: txHash });
-  }, [chain, txHash]);
+  const multiProvider = useMultiProvider();
+  const url = multiProvider.tryGetExplorerTxUrl(chain, { hash: txHash });
 
   return (
     <div>

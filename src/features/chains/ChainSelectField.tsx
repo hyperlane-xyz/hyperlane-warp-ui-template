@@ -1,33 +1,32 @@
+import { ChainSearchMenuProps, ChevronIcon } from '@hyperlane-xyz/widgets';
 import { useField, useFormikContext } from 'formik';
-import Image from 'next/image';
 import { useState } from 'react';
-
 import { ChainLogo } from '../../components/icons/ChainLogo';
-import ChevronIcon from '../../images/icons/chevron-down.svg';
 import { TransferFormValues } from '../transfer/types';
-
 import { ChainSelectListModal } from './ChainSelectModal';
-import { getChainDisplayName } from './utils';
+import { useChainDisplayName } from './hooks';
 
 type Props = {
   name: string;
   label: string;
-  chains: ChainName[];
   onChange?: (id: ChainName) => void;
   disabled?: boolean;
+  customListItemField: ChainSearchMenuProps['customListItemField'];
 };
 
-export function ChainSelectField({ name, label, chains, onChange, disabled }: Props) {
+export function ChainSelectField({ name, label, onChange, disabled, customListItemField }: Props) {
   const [field, , helpers] = useField<ChainName>(name);
   const { setFieldValue } = useFormikContext<TransferFormValues>();
 
-  const handleChange = (newChainId: ChainName) => {
-    helpers.setValue(newChainId);
+  const displayName = useChainDisplayName(field.value, true);
+
+  const handleChange = (chainName: ChainName) => {
+    helpers.setValue(chainName);
     // Reset other fields on chain change
     setFieldValue('recipient', '');
     setFieldValue('amount', '');
     setFieldValue('tokenIndex', undefined);
-    if (onChange) onChange(newChainId);
+    if (onChange) onChange(chainName);
   };
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -52,16 +51,16 @@ export function ChainSelectField({ name, label, chains, onChange, disabled }: Pr
             <label htmlFor={name} className="text-xs text-gray-600">
               {label}
             </label>
-            {getChainDisplayName(field.value, true)}
+            {displayName}
           </div>
         </div>
-        <Image src={ChevronIcon} width={12} height={8} alt="" />
+        <ChevronIcon width={12} height={8} direction="s" />
       </button>
       <ChainSelectListModal
         isOpen={isModalOpen}
         close={() => setIsModalOpen(false)}
-        chains={chains}
         onSelect={handleChange}
+        customListItemField={customListItemField}
       />
     </div>
   );

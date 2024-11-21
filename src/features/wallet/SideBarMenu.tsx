@@ -1,41 +1,34 @@
+import { AccountList, SpinnerIcon } from '@hyperlane-xyz/widgets';
 import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
-
-import { SmallSpinner } from '../../components/animation/SmallSpinner';
 import { ChainLogo } from '../../components/icons/ChainLogo';
-import { WalletLogo } from '../../components/icons/WalletLogo';
-import { tryFindToken } from '../../context/context';
 import ArrowRightIcon from '../../images/icons/arrow-right.svg';
 import CollapseIcon from '../../images/icons/collapse-icon.svg';
-import Logout from '../../images/icons/logout.svg';
 import ResetIcon from '../../images/icons/reset-icon.svg';
-import Wallet from '../../images/icons/wallet.svg';
-import { tryClipboardSet } from '../../utils/clipboard';
-import { STATUSES_WITH_ICON, getIconByTransferStatus } from '../../utils/transfer';
+import { getIconByTransferStatus, STATUSES_WITH_ICON } from '../../utils/transfer';
+import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { useStore } from '../store';
+import { tryFindToken, useWarpCore } from '../tokens/hooks';
 import { TransfersDetailsModal } from '../transfer/TransfersDetailsModal';
 import { TransferContext } from '../transfer/types';
 
-import { useAccounts, useDisconnectFns, useWalletDetails } from './hooks/multiProtocol';
-import { AccountInfo } from './hooks/types';
-
 export function SideBarMenu({
-  onConnectWallet,
+  onClickConnectWallet,
   isOpen,
   onClose,
 }: {
-  onConnectWallet: () => void;
+  onClickConnectWallet: () => void;
   isOpen: boolean;
   onClose: () => void;
 }) {
+  const didMountRef = useRef(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTransfer, setSelectedTransfer] = useState<TransferContext | null>(null);
-  const disconnectFns = useDisconnectFns();
-  const { readyAccounts } = useAccounts();
-  const didMountRef = useRef(false);
+
+  const multiProvider = useMultiProvider();
 
   const { transfers, resetTransfers, transferLoading } = useStore((s) => ({
     transfers: s.transfers,
@@ -56,22 +49,20 @@ export function SideBarMenu({
     setIsMenuOpen(isOpen);
   }, [isOpen]);
 
-  const onClickDisconnect = async () => {
-    for (const disconnectFn of Object.values(disconnectFns)) {
-      await disconnectFn();
-    }
-  };
-
   const sortedTransfers = useMemo(
     () => [...transfers].sort((a, b) => b.timestamp - a.timestamp) || [],
     [transfers],
   );
 
+  const onCopySuccess = () => {
+    toast.success('Address copied to clipboard', { autoClose: 2000 });
+  };
+
   return (
     <>
       <div
         className={`fixed right-0 top-0 h-full w-88 transform bg-white bg-opacity-95 shadow-lg transition-transform duration-100 ease-in ${
-          isMenuOpen ? 'z-30 translate-x-0' : 'z-0 translate-x-full'
+          isMenuOpen ? 'z-10 translate-x-0' : 'z-0 translate-x-full'
         }`}
       >
         {isMenuOpen && (
@@ -86,19 +77,12 @@ export function SideBarMenu({
           <div className="w-full rounded-t-md bg-primary-500 px-3.5 py-2 text-base font-normal tracking-wider text-white">
             Connected Wallets
           </div>
-          <div className="my-3 space-y-2 px-3">
-            {readyAccounts.map((acc, i) => (
-              <AccountSummary key={i} account={acc} />
-            ))}
-            <button onClick={onConnectWallet} className={`${styles.btn} pl-2.5`}>
-              <Icon src={Wallet} alt="" size={18} />
-              <div className="ml-2">Connect wallet</div>
-            </button>
-            <button onClick={onClickDisconnect} className={`${styles.btn} pl-2.5`}>
-              <Icon src={Logout} alt="" size={20} />
-              <div className="ml-2">Disconnect all wallets</div>
-            </button>
-          </div>
+          <AccountList
+            multiProvider={multiProvider}
+            onClickConnectWallet={onClickConnectWallet}
+            onCopySuccess={onCopySuccess}
+            className="px-3 py-3"
+          />
           <div className="mb-4 w-full bg-primary-500 px-3.5 py-2 text-base font-normal tracking-wider text-white">
             Transfer History
           </div>
@@ -139,36 +123,6 @@ export function SideBarMenu({
   );
 }
 
-function AccountSummary({ account }: { account: AccountInfo }) {
-  const numAddresses = account?.addresses?.length || 0;
-  const onlyAddress = numAddresses === 1 ? account.addresses[0].address : undefined;
-
-  const onClickCopy = async () => {
-    if (!onlyAddress) return;
-    await tryClipboardSet(account.addresses[0].address);
-    toast.success('Address copied to clipboard', { autoClose: 2000 });
-  };
-
-  const walletDetails = useWalletDetails()[account.protocol];
-
-  return (
-    <button
-      onClick={onClickCopy}
-      className={`${styles.btn} ${numAddresses > 1 && 'all:cursor-default'}`}
-    >
-      <div className="shrink-0">
-        <WalletLogo walletDetails={walletDetails} size={42} />
-      </div>
-      <div className="mx-3 flex flex-col items-start">
-        <div className="text-sm font-normal text-gray-800">{walletDetails.name || 'Wallet'}</div>
-        <div className="w-64 truncate text-left text-xs">
-          {onlyAddress || `${numAddresses} known addresses`}
-        </div>
-      </div>
-    </button>
-  );
-}
-
 function TransferSummary({
   transfer,
   onClick,
@@ -176,8 +130,12 @@ function TransferSummary({
   transfer: TransferContext;
   onClick: () => void;
 }) {
+  const multiProvider = useMultiProvider();
+  const warpCore = useWarpCore();
+
   const { amount, origin, destination, status, timestamp, originTokenAddressOrDenom } = transfer;
-  const token = tryFindToken(origin, originTokenAddressOrDenom);
+
+  const token = tryFindToken(warpCore, origin, originTokenAddressOrDenom);
 
   return (
     <button key={timestamp} onClick={onClick} className={`${styles.btn} justify-between py-3`}>
@@ -193,11 +151,11 @@ function TransferSummary({
             </div>
             <div className="mt-1 flex flex-row items-center">
               <span className="text-xxs font-normal tracking-wide text-gray-900">
-                {getChainDisplayName(origin, true)}
+                {getChainDisplayName(multiProvider, origin, true)}
               </span>
               <Image className="mx-1" src={ArrowRightIcon} width={10} height={10} alt="" />
               <span className="text-xxs font-normal tracking-wide text-gray-900">
-                {getChainDisplayName(destination, true)}
+                {getChainDisplayName(multiProvider, destination, true)}
               </span>
             </div>
           </div>
@@ -207,28 +165,10 @@ function TransferSummary({
         {STATUSES_WITH_ICON.includes(status) ? (
           <Image src={getIconByTransferStatus(status)} width={25} height={25} alt="" />
         ) : (
-          <SmallSpinner className="-ml-1 mr-3" />
+          <SpinnerIcon className="-ml-1 mr-3 h-5 w-5" />
         )}
       </div>
     </button>
-  );
-}
-
-function Icon({
-  src,
-  alt,
-  size,
-  className,
-}: {
-  src: any;
-  alt?: string;
-  size?: number;
-  className?: string;
-}) {
-  return (
-    <div className={`flex w-[20px] items-center justify-center ${className}`}>
-      <Image src={src} alt={alt || ''} width={size ?? 16} height={size ?? 16} />
-    </div>
   );
 }
 

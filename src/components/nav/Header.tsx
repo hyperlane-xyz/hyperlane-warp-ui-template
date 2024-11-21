@@ -2,7 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ConnectWalletButton } from '../../features/wallet/ConnectWalletButton';
 import Logo from '../../images/logos/app-logo.svg';
-import Name from '../../images/logos/hyperlane-white.svg';
+import Name from '../../images/logos/app-name.svg';
 
 export function Header() {
   return (

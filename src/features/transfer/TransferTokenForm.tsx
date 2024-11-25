@@ -283,7 +283,7 @@ function ButtonSection({
       </SolidButton>
       <SolidButton
         type="button"
-        color="accent"
+        color="primary"
         onClick={triggerTransactionsHandler}
         classes="flex-1 px-3 py-1.5"
       >

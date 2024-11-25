@@ -7,7 +7,6 @@ import {
   argentWallet,
   coinbaseWallet,
   injectedWallet,
-  ledgerWallet,
   metaMaskWallet,
   rainbowWallet,
   trustWallet,
@@ -29,7 +28,7 @@ function initWagmi(multiProvider: MultiProtocolProvider) {
     [
       {
         groupName: 'Recommended',
-        wallets: [metaMaskWallet, injectedWallet, walletConnectWallet, ledgerWallet],
+        wallets: [metaMaskWallet, injectedWallet, walletConnectWallet],
       },
       {
         groupName: 'More',

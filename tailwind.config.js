@@ -1,6 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 
-const defaultTheme = require('tailwindcss/defaultTheme')
+const defaultTheme = require('tailwindcss/defaultTheme');
 
 module.exports = {
   content: ['./src/**/*.{js,ts,jsx,tsx}'],
@@ -19,7 +19,7 @@ module.exports = {
       colors: {
         black: '#010101',
         white: '#ffffff',
-        gray: {...defaultTheme.colors.gray, 150: '#EBEDF0', 250: '#404040', 350: '#6B6B6B'},
+        gray: { ...defaultTheme.colors.gray, 150: '#EBEDF0', 250: '#404040', 350: '#6B6B6B' },
         primary: {
           50: '#E6EDF9',
           100: '#CDDCF4',
@@ -96,8 +96,8 @@ module.exports = {
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;',
       },
       transitionProperty: {
-        'height': 'height, max-height',
-        'spacing': 'margin, padding',
+        height: 'height, max-height',
+        spacing: 'margin, padding',
       },
       maxWidth: {
         'xl-1': '39.5rem',

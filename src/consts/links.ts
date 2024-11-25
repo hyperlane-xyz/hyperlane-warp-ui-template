@@ -6,6 +6,7 @@ export const links = {
   docs: 'https://docs.hyperlane.xyz',
   about: 'https://www.hyperlane.xyz',
   support: 'https://discord.gg/hyperlane',
+  warpDocs: 'https://docs.hyperlane.xyz/docs/reference/applications/warp-routes',
   gasDocs: 'https://docs.hyperlane.xyz/docs/reference/hooks/interchain-gas',
   chains: 'https://docs.hyperlane.xyz/docs/resources/domains',
   discord: 'https://discord.gg/hyperlane',
@@ -13,4 +14,8 @@ export const links = {
   twitter: 'https://twitter.com/hyperlane',
   blog: 'https://medium.com/hyperlane',
   caldera: 'https://www.caldera.xyz',
+  tos: 'https://hyperlane.xyz/terms-of-service',
+  privacyPolicy: 'https://hyperlane.xyz/privacy-policy',
+  bounty:
+    'https://github.com/search?q=org:hyperlane-xyz+label:bounty+is:open+is:issue&type=issues&s=&o=desc',
 };

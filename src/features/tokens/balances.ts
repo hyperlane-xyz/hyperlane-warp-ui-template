@@ -1,20 +1,21 @@
-import { useQuery } from '@tanstack/react-query';
-
 import { IToken } from '@hyperlane-xyz/sdk';
 import { isValidAddress } from '@hyperlane-xyz/utils';
-
+import { useAccountAddressForChain } from '@hyperlane-xyz/widgets';
+import { useQuery } from '@tanstack/react-query';
 import { useToastError } from '../../components/toast/useToastError';
-import { getMultiProvider, getTokenByIndex } from '../../context/context';
+import { useMultiProvider } from '../chains/hooks';
 import { TransferFormValues } from '../transfer/types';
-import { useAccountAddressForChain } from '../wallet/hooks/multiProtocol';
+import { useTokenByIndex } from './hooks';
 
 export function useBalance(chain?: ChainName, token?: IToken, address?: Address) {
+  const multiProvider = useMultiProvider();
   const { isLoading, isError, error, data } = useQuery({
+    // The Token and Multiprovider classes are not serializable, so we can't use it as a key
     // eslint-disable-next-line @tanstack/query/exhaustive-deps
     queryKey: ['useBalance', chain, address, token?.addressOrDenom],
     queryFn: () => {
       if (!chain || !token || !address || !isValidAddress(address, token.protocol)) return null;
-      return token.getBalance(getMultiProvider(), address);
+      return token.getBalance(multiProvider, address);
     },
     refetchInterval: 5000,
   });
@@ -29,13 +30,14 @@ export function useBalance(chain?: ChainName, token?: IToken, address?: Address)
 }
 
 export function useOriginBalance({ origin, tokenIndex }: TransferFormValues) {
-  const address = useAccountAddressForChain(origin);
-  const token = getTokenByIndex(tokenIndex);
+  const multiProvider = useMultiProvider();
+  const address = useAccountAddressForChain(multiProvider, origin);
+  const token = useTokenByIndex(tokenIndex);
   return useBalance(origin, token, address);
 }
 
 export function useDestinationBalance({ destination, tokenIndex, recipient }: TransferFormValues) {
-  const originToken = getTokenByIndex(tokenIndex);
+  const originToken = useTokenByIndex(tokenIndex);
   const connection = originToken?.getConnectionForChain(destination);
   return useBalance(destination, connection?.token, recipient);
 }

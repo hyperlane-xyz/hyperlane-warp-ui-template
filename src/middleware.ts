@@ -1,3 +1,4 @@
+import { geolocation } from '@vercel/functions';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const config = {
@@ -44,8 +45,7 @@ const BLOCKED_REGIONS = [
 ];
 
 export function middleware(req: NextRequest) {
-  const country = req.geo?.country;
-  const region = req.geo?.region;
+  const { country, region } = geolocation(req);
 
   if (country && BLOCKED_COUNTRIES.includes(country)) {
     return NextResponse.redirect(new URL('/blocked', req.url));

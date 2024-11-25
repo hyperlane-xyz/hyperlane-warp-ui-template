@@ -1,10 +1,6 @@
+import { ChevronIcon, Modal, SpinnerIcon } from '@hyperlane-xyz/widgets';
 import { useField } from 'formik';
-import Image from 'next/image';
 import { useState } from 'react';
-
-import { Spinner } from '../../components/animation/Spinner';
-import { Modal } from '../../components/layout/Modal';
-import ChevronIcon from '../../images/icons/chevron-down.svg';
 
 type Props = {
   name: string;
@@ -37,7 +33,7 @@ export function SelectTokenIdField({ name, disabled }: Props) {
             {tokenId ? tokenId : 'Select Token Id'}
           </span>
         </div>
-        <Image src={ChevronIcon} width={12} height={8} alt="" />
+        <ChevronIcon width={12} height={8} direction="s" />
       </button>
       <SelectTokenIdModal
         isOpen={isModalOpen}
@@ -71,25 +67,31 @@ export function SelectTokenIdModal({
   };
 
   return (
-    <Modal isOpen={isOpen} title="Select Token Id" close={close}>
+    <Modal
+      isOpen={isOpen}
+      title="Select Token Id"
+      close={close}
+      showCloseButton
+      panelClassname="p-4"
+    >
       <div className="mt-2 flex flex-col space-y-1">
         {isLoading ? (
           <div className="my-24 flex flex-col items-center">
-            <Spinner />
+            <SpinnerIcon width={80} height={80} />
             <h3 className="mt-5 text-sm text-gray-500">Finding token IDs</h3>
           </div>
         ) : tokenIds && tokenIds.length !== 0 ? (
           tokenIds.map((id) => (
             <button
               key={id}
-              className="py-1.5 px-2 text-sm flex items-center rounded hover:bg-gray-100 active:bg-gray-200 transition-all duration-200"
+              className="flex items-center rounded px-2 py-1.5 text-sm transition-all duration-200 hover:bg-gray-100 active:bg-gray-200"
               onClick={onSelectTokenId(id)}
             >
               <span className="ml-2">{id}</span>
             </button>
           ))
         ) : (
-          <div className="py-1.5 px-2 text-sm text-gray-500 transition-all duration-200">
+          <div className="px-2 py-1.5 text-sm text-gray-500 transition-all duration-200">
             No token ids found
           </div>
         )}

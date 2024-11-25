@@ -1,35 +1,35 @@
-import { useMemo } from 'react';
-
 import { toTitleCase } from '@hyperlane-xyz/utils';
-
+import { useConnectFns, useDisconnectFns, useWalletDetails } from '@hyperlane-xyz/widgets';
+import { useMemo } from 'react';
 import { FormWarningBanner } from '../../components/banner/FormWarningBanner';
 import { config } from '../../consts/config';
 import { logger } from '../../utils/logger';
-import { useConnectFns, useDisconnectFns, useWalletDetails } from '../wallet/hooks/multiProtocol';
+import { useMultiProvider } from './hooks';
+import { getChainDisplayName } from './utils';
 
-import { getChainDisplayName, tryGetChainProtocol } from './utils';
+export function ChainWalletWarning({ origin }: { origin: ChainName }) {
+  const multiProvider = useMultiProvider();
 
-export function ChainWalletWarning({ originChain }: { originChain: ChainName }) {
   const wallets = useWalletDetails();
   const connectFns = useConnectFns();
   const disconnectFns = useDisconnectFns();
 
   const { isVisible, chainDisplayName, walletWhitelist, connectFn, disconnectFn } = useMemo(() => {
-    const protocol = tryGetChainProtocol(originChain);
-    const walletWhitelist = config.chainWalletWhitelists[originChain]?.map((w) =>
+    const protocol = multiProvider.tryGetProtocol(origin);
+    const walletWhitelist = config.chainWalletWhitelists[origin]?.map((w) =>
       w.trim().toLowerCase(),
     );
     if (!protocol || !walletWhitelist?.length)
       return { isVisible: false, chainDisplayName: '', walletWhitelist: [] };
 
-    const chainDisplayName = getChainDisplayName(originChain, true);
+    const chainDisplayName = getChainDisplayName(multiProvider, origin, true);
     const walletName = wallets[protocol]?.name?.trim()?.toLowerCase();
     const connectFn = connectFns[protocol];
     const disconnectFn = disconnectFns[protocol];
     const isVisible = !!walletName && !walletWhitelist.includes(walletName);
 
     return { isVisible, chainDisplayName, walletWhitelist, connectFn, disconnectFn };
-  }, [originChain, wallets, connectFns, disconnectFns]);
+  }, [multiProvider, origin, wallets, connectFns, disconnectFns]);
 
   const onClickChange = () => {
     if (!connectFn || !disconnectFn) return;

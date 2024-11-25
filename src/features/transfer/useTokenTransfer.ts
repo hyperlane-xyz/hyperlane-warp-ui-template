@@ -1,21 +1,19 @@
-import { useCallback, useState } from 'react';
-import { toast } from 'react-toastify';
-
-import { TypedTransactionReceipt, WarpTxCategory } from '@hyperlane-xyz/sdk';
+import { TypedTransactionReceipt, WarpCore, WarpTxCategory } from '@hyperlane-xyz/sdk';
 import { toTitleCase, toWei } from '@hyperlane-xyz/utils';
-
-import { toastTxSuccess } from '../../components/toast/TxSuccessToast';
-import { getTokenByIndex, getWarpCore } from '../../context/context';
-import { logger } from '../../utils/logger';
-import { getChainDisplayName } from '../chains/utils';
-import { AppState, useStore } from '../store';
 import {
   getAccountAddressForChain,
   useAccounts,
   useActiveChains,
   useTransactionFns,
-} from '../wallet/hooks/multiProtocol';
-
+} from '@hyperlane-xyz/widgets';
+import { useCallback, useState } from 'react';
+import { toast } from 'react-toastify';
+import { toastTxSuccess } from '../../components/toast/TxSuccessToast';
+import { logger } from '../../utils/logger';
+import { useMultiProvider } from '../chains/hooks';
+import { getChainDisplayName } from '../chains/utils';
+import { AppState, useStore } from '../store';
+import { getTokenByIndex, useWarpCore } from '../tokens/hooks';
 import { TransferContext, TransferFormValues, TransferStatus } from './types';
 import { tryGetMsgIdFromTransferReceipt } from './utils';
 
@@ -31,9 +29,12 @@ export function useTokenTransfer(onDone?: () => void) {
   }));
   const transferIndex = transfers.length;
 
-  const activeAccounts = useAccounts();
-  const activeChains = useActiveChains();
-  const transactionFns = useTransactionFns();
+  const multiProvider = useMultiProvider();
+  const warpCore = useWarpCore();
+
+  const activeAccounts = useAccounts(multiProvider);
+  const activeChains = useActiveChains(multiProvider);
+  const transactionFns = useTransactionFns(multiProvider);
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -41,6 +42,7 @@ export function useTokenTransfer(onDone?: () => void) {
   const triggerTransactions = useCallback(
     (values: TransferFormValues) =>
       executeTransfer({
+        warpCore,
         values,
         transferIndex,
         activeAccounts,
@@ -52,6 +54,7 @@ export function useTokenTransfer(onDone?: () => void) {
         onDone,
       }),
     [
+      warpCore,
       transferIndex,
       activeAccounts,
       activeChains,
@@ -70,6 +73,7 @@ export function useTokenTransfer(onDone?: () => void) {
 }
 
 async function executeTransfer({
+  warpCore,
   values,
   transferIndex,
   activeAccounts,
@@ -80,6 +84,7 @@ async function executeTransfer({
   setIsLoading,
   onDone,
 }: {
+  warpCore: WarpCore;
   values: TransferFormValues;
   transferIndex: number;
   activeAccounts: ReturnType<typeof useAccounts>;
@@ -96,8 +101,10 @@ async function executeTransfer({
   updateTransferStatus(transferIndex, transferStatus);
 
   const { origin, destination, tokenIndex, amount, recipient } = values;
+  const multiProvider = warpCore.multiProvider;
+
   try {
-    const originToken = getTokenByIndex(tokenIndex);
+    const originToken = getTokenByIndex(warpCore, tokenIndex);
     const connection = originToken?.getConnectionForChain(destination);
     if (!originToken || !connection) throw new Error('No token route found between chains');
 
@@ -108,10 +115,8 @@ async function executeTransfer({
 
     const sendTransaction = transactionFns[originProtocol].sendTransaction;
     const activeChain = activeChains.chains[originProtocol];
-    const sender = getAccountAddressForChain(origin, activeAccounts.accounts);
+    const sender = getAccountAddressForChain(multiProvider, origin, activeAccounts.accounts);
     if (!sender) throw new Error('No active account found for origin chain');
-
-    const warpCore = getWarpCore();
 
     const isCollateralSufficient = await warpCore.isDestinationCollateralSufficient({
       originTokenAmount,
@@ -160,7 +165,9 @@ async function executeTransfer({
       hashes.push(hash);
     }
 
-    const msgId = txReceipt ? tryGetMsgIdFromTransferReceipt(origin, txReceipt) : undefined;
+    const msgId = txReceipt
+      ? tryGetMsgIdFromTransferReceipt(multiProvider, origin, txReceipt)
+      : undefined;
 
     updateTransferStatus(transferIndex, (transferStatus = TransferStatus.ConfirmedTransfer), {
       originTxHash: hashes.at(-1),
@@ -178,7 +185,7 @@ async function executeTransfer({
       errorDetails.includes(TRANSFER_TIMEOUT_ERROR2)
     ) {
       toast.error(
-        `Transaction timed out, ${getChainDisplayName(origin)} may be busy. Please try again.`,
+        `Transaction timed out, ${getChainDisplayName(multiProvider, origin)} may be busy. Please try again.`,
       );
     } else {
       toast.error(errorMessages[transferStatus] || 'Unable to transfer tokens.');

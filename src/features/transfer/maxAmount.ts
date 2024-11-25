@@ -1,14 +1,11 @@
+import { MultiProtocolProvider, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
+import { ProtocolType } from '@hyperlane-xyz/utils';
+import { AccountInfo, getAccountAddressAndPubKey } from '@hyperlane-xyz/widgets';
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
-
-import { TokenAmount } from '@hyperlane-xyz/sdk';
-import { ProtocolType } from '@hyperlane-xyz/utils';
-
-import { getWarpCore } from '../../context/context';
 import { logger } from '../../utils/logger';
-import { getChainMetadata } from '../chains/utils';
-import { getAccountAddressAndPubKey } from '../wallet/hooks/multiProtocol';
-import { AccountInfo } from '../wallet/hooks/types';
+import { useMultiProvider } from '../chains/hooks';
+import { useWarpCore } from '../tokens/hooks';
 
 interface FetchMaxParams {
   accounts: Record<ProtocolType, AccountInfo>;
@@ -18,17 +15,25 @@ interface FetchMaxParams {
 }
 
 export function useFetchMaxAmount() {
+  const multiProvider = useMultiProvider();
+  const warpCore = useWarpCore();
+
   const mutation = useMutation({
-    mutationFn: (params: FetchMaxParams) => fetchMaxAmount(params),
+    mutationFn: (params: FetchMaxParams) => fetchMaxAmount(multiProvider, warpCore, params),
   });
-  return { fetchMaxAmount: mutation.mutateAsync, isLoading: mutation.isLoading };
+
+  return { fetchMaxAmount: mutation.mutateAsync, isLoading: mutation.isPending };
 }
 
-async function fetchMaxAmount({ accounts, balance, destination, origin }: FetchMaxParams) {
+async function fetchMaxAmount(
+  multiProvider: MultiProtocolProvider,
+  warpCore: WarpCore,
+  { accounts, balance, destination, origin }: FetchMaxParams,
+) {
   try {
-    const { address, publicKey } = getAccountAddressAndPubKey(origin, accounts);
+    const { address, publicKey } = getAccountAddressAndPubKey(multiProvider, origin, accounts);
     if (!address) return balance;
-    const maxAmount = await getWarpCore().getMaxTransferAmount({
+    const maxAmount = await warpCore.getMaxTransferAmount({
       balance,
       destination,
       sender: address,
@@ -37,7 +42,7 @@ async function fetchMaxAmount({ accounts, balance, destination, origin }: FetchM
     return maxAmount;
   } catch (error) {
     logger.warn('Error fetching fee quotes for max amount', error);
-    const chainName = getChainMetadata(origin).displayName;
+    const chainName = multiProvider.tryGetChainMetadata(origin)?.displayName;
     toast.warn(`Cannot simulate transfer, ${chainName} native balance may be insufficient.`);
     return undefined;
   }

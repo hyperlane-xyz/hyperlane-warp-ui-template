@@ -19,7 +19,7 @@ interface Config {
   explorerApiKeys: Record<string, string>; // Optional map of API keys for block explorer
   isDevMode: boolean; // Enables some debug features in the app
   registryUrl: string | undefined; // Optional URL to use a custom registry instead of the published canonical version
-  registryBranch?: string | undefined; // Optional branch to use a custom registry instead of the published canonical version
+  registryBranch?: string | undefined; // Optional customization of the registry branch instead of main
   registryProxyUrl?: string; // Optional URL to use a custom proxy for the GithubRegistry
   showDisabledTokens: boolean; // Show/Hide invalid token options in the selection modal
   showTipBox: boolean; // Show/Hide the blue tip box above the transfer form

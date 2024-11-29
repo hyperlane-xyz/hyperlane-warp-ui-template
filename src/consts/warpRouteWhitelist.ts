@@ -43,9 +43,6 @@ export const warpRouteWhitelist: Array<string> | null = [
   // SOL routes
   'SOL/eclipsemainnet-solanamainnet',
 
-  // ezSOL routes
-  'ezSOL/eclipsemainnet-solanamainnet',
-
   // WIF routes
   'WIF/eclipsemainnet-solanamainnet',
 

@@ -2,5 +2,23 @@
 # These configs will be merged with the warp routes in the configured registry
 # The input here is typically the output of the Hyperlane CLI warp deploy command
 ---
-tokens: []
+tokens:
+  - addressOrDenom: "0x1fbcc5A3EE1EfC5e920FFF999AE97a0C2DF4A583"
+    chainName: ethereum
+    collateralAddressOrDenom: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
+    connections:
+      - token: ethereum|swell|0x93D41E41cA545a35A81d11b08D2eE8b852C768df
+    decimals: 6
+    name: USD Coin
+    standard: EvmHypCollateral
+    symbol: USDC
+  - addressOrDenom: "0x93D41E41cA545a35A81d11b08D2eE8b852C768df"
+    chainName: swell
+    collateralAddressOrDenom: "0x99a38322cAF878Ef55AE4d0Eda535535eF8C7960"
+    connections:
+      - token: ethereum|ethereum|0x1fbcc5A3EE1EfC5e920FFF999AE97a0C2DF4A583
+    decimals: 6
+    name: USD Coin
+    standard: EvmHypCollateralFiat
+    symbol: USDC
 options: {}

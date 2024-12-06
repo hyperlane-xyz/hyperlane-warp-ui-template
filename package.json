@@ -22,7 +22,6 @@
     "@hyperlane-xyz/utils": "7.1.0",
     "@hyperlane-xyz/widgets": "7.1.0",
     "@interchain-ui/react": "^1.23.28",
-    "@metamask/jazzicon": "https://github.com/jmrossy/jazzicon#7a8df28974b4e81129bfbe3cab76308b889032a6",
     "@metamask/post-message-stream": "6.1.2",
     "@metamask/providers": "10.2.1",
     "@rainbow-me/rainbowkit": "^2.2.0",

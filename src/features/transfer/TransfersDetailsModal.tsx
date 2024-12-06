@@ -20,16 +20,16 @@ import { Color } from '../../styles/Color';
 import { formatTimestamp } from '../../utils/date';
 import { getHypExplorerLink } from '../../utils/links';
 import { logger } from '../../utils/logger';
+import { useMultiProvider } from '../chains/hooks';
+import { getChainDisplayName, hasPermissionlessChain } from '../chains/utils';
+import { tryFindToken, useWarpCore } from '../tokens/hooks';
+import { TransferContext, TransferStatus } from './types';
 import {
   getIconByTransferStatus,
   getTransferStatusLabel,
   isTransferFailed,
   isTransferSent,
-} from '../../utils/transfer';
-import { useMultiProvider } from '../chains/hooks';
-import { getChainDisplayName, hasPermissionlessChain } from '../chains/utils';
-import { tryFindToken, useWarpCore } from '../tokens/hooks';
-import { TransferContext, TransferStatus } from './types';
+} from './utils';
 
 export function TransfersDetailsModal({
   isOpen,

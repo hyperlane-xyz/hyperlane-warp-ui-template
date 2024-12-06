@@ -9,6 +9,7 @@ tokens:
     connections:
       - token: ethereum|swell|0x93D41E41cA545a35A81d11b08D2eE8b852C768df
     decimals: 6
+    logoURI: /deployments/warp_routes/USDC/logo.svg
     name: USD Coin
     standard: EvmHypCollateral
     symbol: USDC
@@ -18,6 +19,7 @@ tokens:
     connections:
       - token: ethereum|ethereum|0x1fbcc5A3EE1EfC5e920FFF999AE97a0C2DF4A583
     decimals: 6
+    logoURI: /deployments/warp_routes/USDC/logo.svg
     name: USD Coin
     standard: EvmHypCollateralFiat
     symbol: USDC

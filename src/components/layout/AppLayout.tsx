@@ -1,11 +1,22 @@
+import { MultiProtocolWalletModal } from '@hyperlane-xyz/widgets';
 import Head from 'next/head';
 import { PropsWithChildren } from 'react';
-
 import { APP_NAME, BACKGROUND_COLOR, BACKGROUND_IMAGE } from '../../consts/app';
+import { useStore } from '../../features/store';
+import { SideBarMenu } from '../../features/wallet/SideBarMenu';
 import { Footer } from '../nav/Footer';
 import { Header } from '../nav/Header';
 
 export function AppLayout({ children }: PropsWithChildren) {
+  const { showEnvSelectModal, setShowEnvSelectModal, isSideBarOpen, setIsSideBarOpen } = useStore(
+    (s) => ({
+      showEnvSelectModal: s.showEnvSelectModal,
+      setShowEnvSelectModal: s.setShowEnvSelectModal,
+      isSideBarOpen: s.isSideBarOpen,
+      setIsSideBarOpen: s.setIsSideBarOpen,
+    }),
+  );
+
   return (
     <>
       <Head>
@@ -16,14 +27,24 @@ export function AppLayout({ children }: PropsWithChildren) {
       <div
         style={styles.container}
         id="app-content"
-        className="relative flex flex-col justify-between h-full min-h-screen w-full min-w-screen"
+        className="min-w-screen relative flex h-full min-h-screen w-full flex-col justify-between"
       >
         <Header />
-        <div className="sm:px-4 mx-auto grow flex items-center max-w-screen-xl">
-          <main className="w-full flex-1 my-4 flex items-center justify-center">{children}</main>
+        <div className="mx-auto flex max-w-screen-xl grow items-center sm:px-4">
+          <main className="my-4 flex w-full flex-1 items-center justify-center">{children}</main>
         </div>
         <Footer />
       </div>
+
+      <MultiProtocolWalletModal
+        isOpen={showEnvSelectModal}
+        close={() => setShowEnvSelectModal(false)}
+      />
+      <SideBarMenu
+        onClose={() => setIsSideBarOpen(false)}
+        isOpen={isSideBarOpen}
+        onClickConnectWallet={() => setShowEnvSelectModal(true)}
+      />
     </>
   );
 }

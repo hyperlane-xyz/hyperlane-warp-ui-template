@@ -20,6 +20,9 @@ export const warpRouteWhitelist: Array<string> | null = [
   // apxETH routes
   'apxETH/eclipsemainnet-ethereum',
 
+  // weETHs routes
+  'weETHs/eclipsemainnet-ethereum',
+
   // ECLIP routes
   'ECLIP/arbitrum-neutron',
 

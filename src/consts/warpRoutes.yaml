@@ -7,7 +7,6 @@ tokens:
     chainName: optimism
     collateralAddressOrDenom: "0x2416092f143378750bb29b79eD961ab195CcEea5"
     connections:
-      - token: ethereum|arbitrum|0xB26bBfC6d1F469C821Ea25099017862e7368F4E8
       - token: ethereum|base|0x2552516453368e42705D791F674b312b8b87CD9e
       - token: ethereum|blast|0x486b39378f99f073A3043C6Aabe8666876A8F3C5
       - token: ethereum|bsc|0xE00C6185a5c19219F1FFeD213b4406a254968c26
@@ -15,7 +14,6 @@ tokens:
       - token: ethereum|linea|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
       - token: ethereum|ethereum|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
       - token: ethereum|fraxtal|0x3aE8635A4D581d40a6Edfb3f2ED480f9532994F5
-      - token: ethereum|zircuit|0x2552516453368e42705D791F674b312b8b87CD9e
       - token: ethereum|taiko|0x4b6aB5F819A515382B0dEB6935D793817bB4af28
     decimals: 18
     name: Renzo Restaked ETH
@@ -25,7 +23,6 @@ tokens:
     chainName: base
     collateralAddressOrDenom: "0x2416092f143378750bb29b79eD961ab195CcEea5"
     connections:
-      - token: ethereum|arbitrum|0xB26bBfC6d1F469C821Ea25099017862e7368F4E8
       - token: ethereum|optimism|0xacEB607CdF59EB8022Cc0699eEF3eCF246d149e2
       - token: ethereum|blast|0x486b39378f99f073A3043C6Aabe8666876A8F3C5
       - token: ethereum|bsc|0xE00C6185a5c19219F1FFeD213b4406a254968c26
@@ -33,7 +30,6 @@ tokens:
       - token: ethereum|linea|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
       - token: ethereum|ethereum|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
       - token: ethereum|fraxtal|0x3aE8635A4D581d40a6Edfb3f2ED480f9532994F5
-      - token: ethereum|zircuit|0x2552516453368e42705D791F674b312b8b87CD9e
       - token: ethereum|taiko|0x4b6aB5F819A515382B0dEB6935D793817bB4af28
     decimals: 18
     name: Renzo Restaked ETH
@@ -43,7 +39,6 @@ tokens:
     chainName: blast
     collateralAddressOrDenom: "0x2416092f143378750bb29b79eD961ab195CcEea5"
     connections:
-      - token: ethereum|arbitrum|0xB26bBfC6d1F469C821Ea25099017862e7368F4E8
       - token: ethereum|optimism|0xacEB607CdF59EB8022Cc0699eEF3eCF246d149e2
       - token: ethereum|base|0x2552516453368e42705D791F674b312b8b87CD9e
       - token: ethereum|bsc|0xE00C6185a5c19219F1FFeD213b4406a254968c26
@@ -51,7 +46,6 @@ tokens:
       - token: ethereum|linea|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
       - token: ethereum|ethereum|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
       - token: ethereum|fraxtal|0x3aE8635A4D581d40a6Edfb3f2ED480f9532994F5
-      - token: ethereum|zircuit|0x2552516453368e42705D791F674b312b8b87CD9e
       - token: ethereum|taiko|0x4b6aB5F819A515382B0dEB6935D793817bB4af28
     decimals: 18
     name: Renzo Restaked ETH
@@ -61,7 +55,6 @@ tokens:
     chainName: bsc
     collateralAddressOrDenom: "0x2416092f143378750bb29b79eD961ab195CcEea5"
     connections:
-      - token: ethereum|arbitrum|0xB26bBfC6d1F469C821Ea25099017862e7368F4E8
       - token: ethereum|optimism|0xacEB607CdF59EB8022Cc0699eEF3eCF246d149e2
       - token: ethereum|base|0x2552516453368e42705D791F674b312b8b87CD9e
       - token: ethereum|blast|0x486b39378f99f073A3043C6Aabe8666876A8F3C5
@@ -69,7 +62,6 @@ tokens:
       - token: ethereum|linea|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
       - token: ethereum|ethereum|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
       - token: ethereum|fraxtal|0x3aE8635A4D581d40a6Edfb3f2ED480f9532994F5
-      - token: ethereum|zircuit|0x2552516453368e42705D791F674b312b8b87CD9e
       - token: ethereum|taiko|0x4b6aB5F819A515382B0dEB6935D793817bB4af28
     decimals: 18
     name: Renzo Restaked ETH
@@ -79,7 +71,6 @@ tokens:
     chainName: mode
     collateralAddressOrDenom: "0x2416092f143378750bb29b79eD961ab195CcEea5"
     connections:
-      - token: ethereum|arbitrum|0xB26bBfC6d1F469C821Ea25099017862e7368F4E8
       - token: ethereum|optimism|0xacEB607CdF59EB8022Cc0699eEF3eCF246d149e2
       - token: ethereum|base|0x2552516453368e42705D791F674b312b8b87CD9e
       - token: ethereum|blast|0x486b39378f99f073A3043C6Aabe8666876A8F3C5
@@ -87,7 +78,6 @@ tokens:
       - token: ethereum|linea|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
       - token: ethereum|ethereum|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
       - token: ethereum|fraxtal|0x3aE8635A4D581d40a6Edfb3f2ED480f9532994F5
-      - token: ethereum|zircuit|0x2552516453368e42705D791F674b312b8b87CD9e
       - token: ethereum|taiko|0x4b6aB5F819A515382B0dEB6935D793817bB4af28
     decimals: 18
     name: Renzo Restaked ETH
@@ -97,7 +87,6 @@ tokens:
     chainName: linea
     collateralAddressOrDenom: "0x2416092f143378750bb29b79eD961ab195CcEea5"
     connections:
-      - token: ethereum|arbitrum|0xB26bBfC6d1F469C821Ea25099017862e7368F4E8
       - token: ethereum|optimism|0xacEB607CdF59EB8022Cc0699eEF3eCF246d149e2
       - token: ethereum|base|0x2552516453368e42705D791F674b312b8b87CD9e
       - token: ethereum|blast|0x486b39378f99f073A3043C6Aabe8666876A8F3C5
@@ -105,7 +94,6 @@ tokens:
       - token: ethereum|mode|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
       - token: ethereum|ethereum|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
       - token: ethereum|fraxtal|0x3aE8635A4D581d40a6Edfb3f2ED480f9532994F5
-      - token: ethereum|zircuit|0x2552516453368e42705D791F674b312b8b87CD9e
       - token: ethereum|taiko|0x4b6aB5F819A515382B0dEB6935D793817bB4af28
     decimals: 18
     name: Renzo Restaked ETH
@@ -115,7 +103,6 @@ tokens:
     chainName: ethereum
     collateralAddressOrDenom: "0xC8140dA31E6bCa19b287cC35531c2212763C2059"
     connections:
-      - token: ethereum|arbitrum|0xB26bBfC6d1F469C821Ea25099017862e7368F4E8
       - token: ethereum|optimism|0xacEB607CdF59EB8022Cc0699eEF3eCF246d149e2
       - token: ethereum|base|0x2552516453368e42705D791F674b312b8b87CD9e
       - token: ethereum|blast|0x486b39378f99f073A3043C6Aabe8666876A8F3C5
@@ -123,7 +110,6 @@ tokens:
       - token: ethereum|mode|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
       - token: ethereum|linea|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
       - token: ethereum|fraxtal|0x3aE8635A4D581d40a6Edfb3f2ED480f9532994F5
-      - token: ethereum|zircuit|0x2552516453368e42705D791F674b312b8b87CD9e
       - token: ethereum|taiko|0x4b6aB5F819A515382B0dEB6935D793817bB4af28
     decimals: 18
     name: Renzo Restaked ETH
@@ -133,7 +119,6 @@ tokens:
     chainName: fraxtal
     collateralAddressOrDenom: "0x2416092f143378750bb29b79eD961ab195CcEea5"
     connections:
-      - token: ethereum|arbitrum|0xB26bBfC6d1F469C821Ea25099017862e7368F4E8
       - token: ethereum|optimism|0xacEB607CdF59EB8022Cc0699eEF3eCF246d149e2
       - token: ethereum|base|0x2552516453368e42705D791F674b312b8b87CD9e
       - token: ethereum|blast|0x486b39378f99f073A3043C6Aabe8666876A8F3C5
@@ -141,7 +126,6 @@ tokens:
       - token: ethereum|mode|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
       - token: ethereum|linea|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
       - token: ethereum|ethereum|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
-      - token: ethereum|zircuit|0x2552516453368e42705D791F674b312b8b87CD9e
       - token: ethereum|taiko|0x4b6aB5F819A515382B0dEB6935D793817bB4af28
     decimals: 18
     name: Renzo Restaked ETH
@@ -151,7 +135,6 @@ tokens:
     chainName: taiko
     collateralAddressOrDenom: "0x2416092f143378750bb29b79eD961ab195CcEea5"
     connections:
-      - token: ethereum|arbitrum|0xB26bBfC6d1F469C821Ea25099017862e7368F4E8
       - token: ethereum|optimism|0xacEB607CdF59EB8022Cc0699eEF3eCF246d149e2
       - token: ethereum|base|0x2552516453368e42705D791F674b312b8b87CD9e
       - token: ethereum|blast|0x486b39378f99f073A3043C6Aabe8666876A8F3C5
@@ -160,7 +143,6 @@ tokens:
       - token: ethereum|linea|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
       - token: ethereum|ethereum|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
       - token: ethereum|fraxtal|0x3aE8635A4D581d40a6Edfb3f2ED480f9532994F5
-      - token: ethereum|zircuit|0x2552516453368e42705D791F674b312b8b87CD9e
     decimals: 18
     name: Renzo Restaked ETH
     standard: EvmHypXERC20

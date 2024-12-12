@@ -4,6 +4,6 @@
 // If set to a list (including an empty list), only the specified routes will be included
 export const warpRouteWhitelist: Array<string> | null = [
   'ezETH/arbitrum-base-blast-bsc-ethereum-fraxtal-linea-mode-optimism-sei-taiko-zircuit',
-  'pzETH/ethereum-zircuit',
   'ezSOL/eclipsemainnet-solanamainnet',
+  'pzETH/ethereum-swell-zircuit',
 ];

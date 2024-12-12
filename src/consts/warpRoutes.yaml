@@ -16,6 +16,7 @@ tokens:
       - token: ethereum|fraxtal|0x3aE8635A4D581d40a6Edfb3f2ED480f9532994F5
       - token: ethereum|taiko|0x4b6aB5F819A515382B0dEB6935D793817bB4af28
     decimals: 18
+    logoURI: /deployments/warp_routes/EZETH/logo.svg
     name: Renzo Restaked ETH
     standard: EvmHypXERC20
     symbol: ezETH
@@ -32,6 +33,7 @@ tokens:
       - token: ethereum|fraxtal|0x3aE8635A4D581d40a6Edfb3f2ED480f9532994F5
       - token: ethereum|taiko|0x4b6aB5F819A515382B0dEB6935D793817bB4af28
     decimals: 18
+    logoURI: /deployments/warp_routes/EZETH/logo.svg
     name: Renzo Restaked ETH
     standard: EvmHypXERC20
     symbol: ezETH
@@ -48,6 +50,7 @@ tokens:
       - token: ethereum|fraxtal|0x3aE8635A4D581d40a6Edfb3f2ED480f9532994F5
       - token: ethereum|taiko|0x4b6aB5F819A515382B0dEB6935D793817bB4af28
     decimals: 18
+    logoURI: /deployments/warp_routes/EZETH/logo.svg
     name: Renzo Restaked ETH
     standard: EvmHypXERC20
     symbol: ezETH
@@ -64,6 +67,7 @@ tokens:
       - token: ethereum|fraxtal|0x3aE8635A4D581d40a6Edfb3f2ED480f9532994F5
       - token: ethereum|taiko|0x4b6aB5F819A515382B0dEB6935D793817bB4af28
     decimals: 18
+    logoURI: /deployments/warp_routes/EZETH/logo.svg
     name: Renzo Restaked ETH
     standard: EvmHypXERC20
     symbol: ezETH
@@ -80,6 +84,7 @@ tokens:
       - token: ethereum|fraxtal|0x3aE8635A4D581d40a6Edfb3f2ED480f9532994F5
       - token: ethereum|taiko|0x4b6aB5F819A515382B0dEB6935D793817bB4af28
     decimals: 18
+    logoURI: /deployments/warp_routes/EZETH/logo.svg
     name: Renzo Restaked ETH
     standard: EvmHypXERC20
     symbol: ezETH
@@ -96,6 +101,7 @@ tokens:
       - token: ethereum|fraxtal|0x3aE8635A4D581d40a6Edfb3f2ED480f9532994F5
       - token: ethereum|taiko|0x4b6aB5F819A515382B0dEB6935D793817bB4af28
     decimals: 18
+    logoURI: /deployments/warp_routes/EZETH/logo.svg
     name: Renzo Restaked ETH
     standard: EvmHypXERC20
     symbol: ezETH
@@ -112,6 +118,7 @@ tokens:
       - token: ethereum|fraxtal|0x3aE8635A4D581d40a6Edfb3f2ED480f9532994F5
       - token: ethereum|taiko|0x4b6aB5F819A515382B0dEB6935D793817bB4af28
     decimals: 18
+    logoURI: /deployments/warp_routes/EZETH/logo.svg
     name: Renzo Restaked ETH
     standard: EvmHypXERC20Lockbox
     symbol: ezETH
@@ -128,6 +135,7 @@ tokens:
       - token: ethereum|ethereum|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
       - token: ethereum|taiko|0x4b6aB5F819A515382B0dEB6935D793817bB4af28
     decimals: 18
+    logoURI: /deployments/warp_routes/EZETH/logo.svg
     name: Renzo Restaked ETH
     standard: EvmHypXERC20
     symbol: ezETH
@@ -144,6 +152,7 @@ tokens:
       - token: ethereum|ethereum|0xC59336D8edDa9722B4f1Ec104007191Ec16f7087
       - token: ethereum|fraxtal|0x3aE8635A4D581d40a6Edfb3f2ED480f9532994F5
     decimals: 18
+    logoURI: /deployments/warp_routes/EZETH/logo.svg
     name: Renzo Restaked ETH
     standard: EvmHypXERC20
     symbol: ezETH

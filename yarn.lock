@@ -4054,10 +4054,7 @@ __metadata:
     eslint-config-prettier: "npm:^9.1.0"
     formik: "npm:^2.4.6"
     framer-motion: "npm:^10.16.4"
-    fs: "npm:^0.0.1-security"
-    net: "npm:^1.0.2"
     next: "npm:^15.0.3"
-    os: "npm:^0.1.2"
     postcss: "npm:^8.4.47"
     prettier: "npm:^3.2.5"
     prettier-plugin-organize-imports: "npm:^4.1.0"
@@ -4066,7 +4063,6 @@ __metadata:
     react-dom: "npm:^18.3.1"
     react-toastify: "npm:^10.0.6"
     tailwindcss: "npm:^3.4.15"
-    tls: "npm:^0.0.1"
     ts-node: "npm:^10.9.2"
     typescript: "npm:5.6.3"
     viem: "npm:^2.21.41"
@@ -15675,13 +15671,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fs@npm:^0.0.1-security":
-  version: 0.0.1-security
-  resolution: "fs@npm:0.0.1-security"
-  checksum: 10/53c6230e1faae9fa32c1df82c16a84b51b1243d20f3da2b64bd110bb472b73b9185169b703e008356e3cdc92d155088b617d9d39a63b5227a30b3621baad7f5d
-  languageName: node
-  linkType: hard
-
 "fsevents@npm:~2.3.2":
   version: 2.3.3
   resolution: "fsevents@npm:2.3.3"
@@ -18473,13 +18462,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"net@npm:^1.0.2":
-  version: 1.0.2
-  resolution: "net@npm:1.0.2"
-  checksum: 10/d97e215d922e87e9aa86e87daae73ce7f4e291f2d71365a115f2f51831b1add86e73584e944285daafcad4058c09bb85e33250da84834a26a83020740d45b4a1
-  languageName: node
-  linkType: hard
-
 "next-tick@npm:^1.1.0":
   version: 1.1.0
   resolution: "next-tick@npm:1.1.0"
@@ -18982,13 +18964,6 @@ __metadata:
   version: 1.0.2
   resolution: "os-tmpdir@npm:1.0.2"
   checksum: 10/5666560f7b9f10182548bf7013883265be33620b1c1b4a4d405c25be2636f970c5488ff3e6c48de75b55d02bde037249fe5dbfbb4c0fb7714953d56aed062e6d
-  languageName: node
-  linkType: hard
-
-"os@npm:^0.1.2":
-  version: 0.1.2
-  resolution: "os@npm:0.1.2"
-  checksum: 10/dc2d99759eef13f5dc47ddb12c67b9760a7196fd83a35a7aec2d75b82f91163ca1d4e8872238f8c2a35f4cddd5adf5ce6638a234c0563c748d3cd1d69a9f7153
   languageName: node
   linkType: hard
 
@@ -22115,13 +22090,6 @@ __metadata:
   version: 1.0.3
   resolution: "tiny-warning@npm:1.0.3"
   checksum: 10/da62c4acac565902f0624b123eed6dd3509bc9a8d30c06e017104bedcf5d35810da8ff72864400ad19c5c7806fc0a8323c68baf3e326af7cb7d969f846100d71
-  languageName: node
-  linkType: hard
-
-"tls@npm:^0.0.1":
-  version: 0.0.1
-  resolution: "tls@npm:0.0.1"
-  checksum: 10/83aee8b284ac85630ea521b68774c9020d7701dc74788f69b92c84c8513132a21ef8f008e5513e24aaf6096ebc0dd50f2a819e1b7ea96e1ebb0202364c4e2a17
   languageName: node
   linkType: hard
 

@@ -67,7 +67,8 @@ const nextConfig = {
       config.resolve = {
         ...config.resolve,
         fallback: {
-          // fixes proxy-agent dependencies
+          // Temporary measure to fix issues with Node.js-only Hyperlane SDK dependencies.
+          // See https://discord.com/channels/935678348330434570/1316139468662505664.
           net: false,
           tls: false,
           fs: false,

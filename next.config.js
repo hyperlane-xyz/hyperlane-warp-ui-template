@@ -58,11 +58,25 @@ const securityHeaders = [
 ]
 
 const nextConfig = {
-  webpack(config) {
+  webpack(config, { isServer }) {
     config.module.rules.push({
       test: /\.ya?ml$/,
       use: 'yaml-loader',
     });
+    if (!isServer) {
+      config.resolve = {
+        ...config.resolve,
+        fallback: {
+          // Temporary measure to fix issues with Node.js-only Hyperlane SDK dependencies.
+          // See https://discord.com/channels/935678348330434570/1316139468662505664.
+          net: false,
+          tls: false,
+          fs: false,
+          os: false,
+          child_process: false,
+        }
+      };
+    }
     return config;
   },
 

@@ -58,11 +58,24 @@ const securityHeaders = [
 ]
 
 const nextConfig = {
-  webpack(config) {
+  webpack(config, { isServer }) {
     config.module.rules.push({
       test: /\.ya?ml$/,
       use: 'yaml-loader',
     });
+    if (!isServer) {
+      config.resolve = {
+        ...config.resolve,
+        fallback: {
+          // fixes proxy-agent dependencies
+          net: false,
+          tls: false,
+          fs: false,
+          os: false,
+          child_process: false,
+        }
+      };
+    }
     return config;
   },
 

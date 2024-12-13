@@ -7,19 +7,19 @@ tokens:
     standard: EvmHypCollateralFiat
     decimals: 18
     symbol: cbBTC
-    logoURI: https://s2.coinmarketcap.com/static/img/coins/200x200/32731.png
+    logoURI: /deployments/warp_routes/CBBTC/logo.svg
     name: Coinbase Wrapped BTC
-    addressOrDenom: "0xdbf2780C7C6a00EAaa47014E7139e59Db1cE94dC"
-    collateralAddressOrDenom: "0x935310b2704f79d570be9ed486fa9fba735141da"
+    addressOrDenom: '0xdbf2780C7C6a00EAaa47014E7139e59Db1cE94dC'
+    collateralAddressOrDenom: '0x935310b2704f79d570be9ed486fa9fba735141da'
     connections:
       - token: ethereum|ethereum|0x6C94B1C1BcD9F4a1Ce9D76bb95447521231E2bd9
   - chainName: ethereum
     standard: EvmHypCollateralFiat
     decimals: 18
     symbol: cbBTC
-    logoURI: https://s2.coinmarketcap.com/static/img/coins/200x200/32731.png
+    logoURI: /deployments/warp_routes/CBBTC/logo.svg
     name: Coinbase Wrapped BTC
-    addressOrDenom: "0x6C94B1C1BcD9F4a1Ce9D76bb95447521231E2bd9"
-    collateralAddressOrDenom: "0xa1a63d9821ee6d2270c362a6628d74d76c2fd0f0"
+    addressOrDenom: '0x6C94B1C1BcD9F4a1Ce9D76bb95447521231E2bd9'
+    collateralAddressOrDenom: '0xa1a63d9821ee6d2270c362a6628d74d76c2fd0f0'
     connections:
       - token: ethereum|base|0xdbf2780C7C6a00EAaa47014E7139e59Db1cE94dC

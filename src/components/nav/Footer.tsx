@@ -43,8 +43,8 @@ function FooterLogo() {
         <HyperlaneLogo color={Color.white} />
       </div>
       <div className="ml-6 space-y-1 text-lg font-medium sm:text-xl">
-        <div>Go interchain</div>
-        <div>with Hyperlane</div>
+        <div>Bridge cbBTC</div>
+        <div>Hyperlane Demo</div>
       </div>
     </div>
   );

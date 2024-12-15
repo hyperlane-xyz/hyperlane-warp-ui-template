@@ -66,7 +66,11 @@ export const useStore = create<AppState>()(
         set({ chainMetadataOverrides: filtered, multiProvider });
       },
       multiProvider: new MultiProtocolProvider({}),
-      registry: new GithubRegistry({ uri: config.registryUrl, proxyUrl: config.registryProxyUrl }),
+      registry: new GithubRegistry({
+        uri: config.registryUrl,
+        branch: config.registryBranch,
+        proxyUrl: config.registryProxyUrl,
+      }),
       warpCore: new WarpCore(new MultiProtocolProvider({}), []),
       setWarpContext: ({ registry, chainMetadata, multiProvider, warpCore }) => {
         logger.debug('Setting warp context in store');

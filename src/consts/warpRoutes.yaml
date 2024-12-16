@@ -2,5 +2,47 @@
 # These configs will be merged with the warp routes in the configured registry
 # The input here is typically the output of the Hyperlane CLI warp deploy command
 ---
-tokens: []
+tokens:
+  - addressOrDenom: G3hWozA3c4iK5oSX9rTWFFDo5rS9W49bjhWDgg3gDPk8
+    chainName: eclipsemainnet
+    collateralAddressOrDenom: JAh5pFYn1Kbh7kCuqZab8viVFdNgTmpS6hzFstSGNBvG
+    connections:
+      - token: sealevel|solanamainnet|8EMWCPyv6AxgRtMFEZxmxKfhmLmLvi3XbHHendLAUKUF
+    decimals: 9
+    logoURI: /deployments/warp_routes/jitoSOL/logo.svg
+    name: Jito Staked SOL
+    standard: SealevelHypSynthetic
+    symbol: JitoSOL
+  - addressOrDenom: 8EMWCPyv6AxgRtMFEZxmxKfhmLmLvi3XbHHendLAUKUF
+    chainName: solanamainnet
+    coinGeckoId: jito-staked-sol
+    collateralAddressOrDenom: J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn
+    connections:
+      - token: sealevel|eclipsemainnet|G3hWozA3c4iK5oSX9rTWFFDo5rS9W49bjhWDgg3gDPk8
+    decimals: 9
+    logoURI: /deployments/warp_routes/jitoSOL/logo.svg
+    name: Jito Staked SOL
+    standard: SealevelHypCollateral
+    symbol: JitoSOL
+  - addressOrDenom: 5XbuBdh4V5hmqQrazmGLXJBoLUE2jtvYhwMbGNoLNvG2
+    chainName: eclipsemainnet
+    collateralAddressOrDenom: 8jN7xMDqJucigQphWHvqAPQPAmk7VJKKsqLmgCkE7XzP
+    connections:
+      - token: sealevel|solanamainnet|9JdgDXPZtPdDpgiTvo8zuWmEXWUYL9eghvpGXLb31k2f
+    decimals: 9
+    logoURI: /deployments/warp_routes/kySOL/logo.svg
+    name: Kyros Restaked SOL
+    standard: SealevelHypSynthetic
+    symbol: kySOL
+  - addressOrDenom: 9JdgDXPZtPdDpgiTvo8zuWmEXWUYL9eghvpGXLb31k2f
+    chainName: solanamainnet
+    coinGeckoId: kyros-restaked-sol
+    collateralAddressOrDenom: kySo1nETpsZE2NWe5vj2C64mPSciH1SppmHb4XieQ7B
+    connections:
+      - token: sealevel|eclipsemainnet|5XbuBdh4V5hmqQrazmGLXJBoLUE2jtvYhwMbGNoLNvG2
+    decimals: 9
+    logoURI: /deployments/warp_routes/kySOL/logo.svg
+    name: Kyros Restaked SOL
+    standard: SealevelHypCollateral
+    symbol: kySOL
 options: {}

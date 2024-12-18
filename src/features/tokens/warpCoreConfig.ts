@@ -15,6 +15,8 @@ export function assembleWarpCoreConfig(): WarpCoreConfig {
     ? filterToIds(warpRouteConfigs, warpRouteWhitelist)
     : warpRouteConfigs;
 
+  console.log(warpRouteConfigs);
+
   const configValues = Object.values(filteredWarpRouteConfigs);
 
   const configTokens = configValues.map((c) => c.tokens).flat();

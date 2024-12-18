@@ -57,4 +57,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // ORCA routes
   'ORCA/eclipsemainnet-solanamainnet',
+
+  // uBTC routes
+  'uBTC/boba-bsquared-swell',
 ];

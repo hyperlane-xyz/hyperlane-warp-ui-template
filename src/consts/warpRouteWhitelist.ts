@@ -61,4 +61,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // uBTC routes
   'uBTC/boba-bsquared-swell',
+
+  // kySOL
+  'kySOL/eclipsemainnet-solanamainnet',
 ];

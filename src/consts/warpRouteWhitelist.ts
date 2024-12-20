@@ -64,4 +64,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // kySOL
   'kySOL/eclipsemainnet-solanamainnet',
+
+  // INTERN (stride)
+  'INTERN/echos-inevm',
 ];

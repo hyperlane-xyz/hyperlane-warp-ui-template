@@ -25,14 +25,6 @@ export function hasPermissionlessChain(multiProvider: MultiProtocolProvider, ids
   return !ids.every((c) => !isPermissionlessChain(multiProvider, c));
 }
 
-export function getChainByRpcUrl(multiProvider: MultiProtocolProvider, url?: string) {
-  if (!url) return undefined;
-  const allMetadata = Object.values(multiProvider.metadata);
-  return allMetadata.find(
-    (m) => !!m.rpcUrls.find((rpc) => rpc.http.toLowerCase().includes(url.toLowerCase())),
-  );
-}
-
 /**
  * Returns an object that contains the amount of
  * routes from a single chain to every other chain

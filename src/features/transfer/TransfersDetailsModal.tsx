@@ -15,6 +15,7 @@ import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import { TokenIcon } from '../../components/icons/TokenIcon';
+import ArrowRightIcon from '../../images/icons/arrow-right.svg';
 import LinkIcon from '../../images/icons/external-link-icon.svg';
 import { Color } from '../../styles/Color';
 import { formatTimestamp } from '../../utils/date';
@@ -112,6 +113,12 @@ export function TransfersDetailsModal({
 
   return (
     <Modal isOpen={isOpen} close={onClose} panelClassname="p-4 md:p-5 max-w-sm">
+      <div className="flex justify-center p-4 relative items-center">
+        <Image className="transform rotate-180 absolute left-0" src={ArrowRightIcon} width={25} height={25} alt="" />
+        <span className="text-xl font-bold">
+          Bridge
+        </span>
+      </div>
       {isFinal && (
         <div className="flex justify-between">
           <h2 className="font-medium text-gray-600">{date}</h2>

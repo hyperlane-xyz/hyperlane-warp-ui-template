@@ -1,4 +1,5 @@
-import { MultiProtocolProvider } from '@hyperlane-xyz/sdk';
+import { ethereum } from '@hyperlane-xyz/registry';
+import { MultiProtocolProvider, chainMetadataToViemChain } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 import { getWagmiChainConfigs } from '@hyperlane-xyz/widgets';
 import { RainbowKitProvider, connectorsForWallets, lightTheme } from '@rainbow-me/rainbowkit';
@@ -23,7 +24,11 @@ import { useMultiProvider } from '../../chains/hooks';
 import { useWarpCore } from '../../tokens/hooks';
 
 function initWagmi(multiProvider: MultiProtocolProvider) {
-  const chains = getWagmiChainConfigs(multiProvider);
+  let chains = getWagmiChainConfigs(multiProvider);
+
+  if (!chains.length) {
+    chains = [chainMetadataToViemChain(ethereum)];
+  }
 
   const connectors = connectorsForWallets(
     [

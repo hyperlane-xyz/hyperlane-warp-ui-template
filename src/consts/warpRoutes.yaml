@@ -2,5 +2,24 @@
 # These configs will be merged with the warp routes in the configured registry
 # The input here is typically the output of the Hyperlane CLI warp deploy command
 ---
-tokens: []
+tokens:
+  - addressOrDenom: EQDvULvwhZwK349y6Qt2ouAyDhBbHZoaUG8guWcqYdxZ
+    chainName: sonicsvmtestnet
+    connections:
+      - token: sealevel|solanatestnet|J2gbyytzDqQozPh1xgm38NchdDPNnvGKrSff47rnVsFh
+    decimals: 9
+    logoURI: /deployments/warp_routes/SOL/logo.svg
+    name: Solana
+    standard: SealevelHypNative
+    symbol: SOL
+  - addressOrDenom: J2gbyytzDqQozPh1xgm38NchdDPNnvGKrSff47rnVsFh
+    chainName: solanatestnet
+    coinGeckoId: solana
+    connections:
+      - token: sealevel|sonicsvmtestnet|EQDvULvwhZwK349y6Qt2ouAyDhBbHZoaUG8guWcqYdxZ
+    decimals: 9
+    logoURI: /deployments/warp_routes/SOL/logo.svg
+    name: Solana
+    standard: SealevelHypNative
+    symbol: SOL
 options: {}

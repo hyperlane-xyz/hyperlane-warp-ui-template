@@ -3,8 +3,10 @@ import {
   eclipsemainnetAddresses,
   solanamainnet,
   solanamainnetAddresses,
+  solanatestnet,
 } from '@hyperlane-xyz/registry';
-import { ChainMap, ChainMetadata } from '@hyperlane-xyz/sdk';
+import { ChainMap, ChainMetadata, ExplorerFamily } from '@hyperlane-xyz/sdk';
+import { ProtocolType } from '@hyperlane-xyz/utils';
 
 // A map of chain names to ChainMetadata
 // Chains can be defined here, in chains.json, or in chains.yaml
@@ -23,6 +25,49 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
   eclipsemainnet: {
     ...eclipsemainnet,
     mailbox: eclipsemainnetAddresses.mailbox,
+  },
+  solanatestnet: {
+    ...solanatestnet,
+    displayNameShort: 'Solana Testnet',
+    mailbox: '75HBBLae3ddeneJVrZeyrDfv6vb7SMC3aCpBucSXS5aR',
+  },
+  sonicsvmtestnet: {
+    blockExplorers: [
+      {
+        apiUrl: 'https://explorer.sonic.game/?cluster=testnet.v1',
+        family: ExplorerFamily.Other,
+        name: 'Sonic Explorer',
+        url: 'https://explorer.sonic.game/?cluster=testnet.v1',
+      },
+    ],
+    blocks: {
+      confirmations: 1,
+      estimateBlockTime: 0.4,
+      reorgPeriod: 0,
+    },
+    chainId: 15153042,
+    deployer: {
+      name: 'Abacus Works',
+      url: 'https://www.hyperlane.xyz',
+    },
+    displayName: 'Sonic SVM Testnet',
+    displayNameShort: 'Sonic SVM Testnet',
+    domainId: 15153042,
+    isTestnet: true,
+    name: 'sonicsvmtestnet',
+    nativeToken: {
+      decimals: 9,
+      name: 'Solana',
+      symbol: 'SOL',
+    },
+    protocol: ProtocolType.Sealevel,
+    rpcUrls: [
+      {
+        http: 'https://api.testnet.sonic.game',
+      },
+    ],
+    logoURI: '/sonicsvmtestnet-logo.svg',
+    mailbox: '6BaTtWPMpWdA6tHqdT2VbogC4XZ9QV5cNCYpBrx6WP7B',
   },
   // mycustomchain: {
   //   protocol: ProtocolType.Ethereum,

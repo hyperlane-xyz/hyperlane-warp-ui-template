@@ -28,6 +28,7 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
   },
   solanatestnet: {
     ...solanatestnet,
+    displayNameShort: 'Solana Testnet',
     mailbox: '75HBBLae3ddeneJVrZeyrDfv6vb7SMC3aCpBucSXS5aR',
   },
   sonicsvmtestnet: {

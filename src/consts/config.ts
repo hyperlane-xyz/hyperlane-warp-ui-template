@@ -34,7 +34,7 @@ export const config: Config = Object.freeze({
   registryBranch,
   registryProxyUrl,
   showDisabledTokens: false,
-  showTipBox: true,
+  showTipBox: false,
   version,
   transferBlacklist,
   walletConnectProjectId,

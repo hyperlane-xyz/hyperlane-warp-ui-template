@@ -1,6 +1,6 @@
 # Hyperlane Warp Route UI Template
 
-This repo contains an example web interface for interchain tokens built with [Hyperlane Warp Route](https://docs.hyperlane.xyz/docs/reference/applications/warp-routes). Warp is a framework to permisionlessly bridge tokens to any chain.
+This repo contains an example web interface for interchain tokens built with [Hyperlane Warp Route](https://docs.hyperlane.xyz/docs/reference/applications/warp-routes). Warp is a framework to permissionlessly bridge tokens to any chain.
 
 ## Architecture
 

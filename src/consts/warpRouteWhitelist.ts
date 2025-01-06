@@ -20,6 +20,9 @@ export const warpRouteWhitelist: Array<string> | null = [
   // apxETH routes
   'apxETH/eclipsemainnet-ethereum',
 
+  // weETHs routes
+  'weETHs/eclipsemainnet-ethereum',
+
   // ECLIP routes
   'ECLIP/arbitrum-neutron',
 
@@ -31,6 +34,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'USDC/ancient8-ethereum',
   'USDC/ethereum-viction',
   'USDC/eclipsemainnet-ethereum-solanamainnet',
+  'USDC/appchain-base',
 
   // USDT routes
   'USDT/ethereum-inevm',
@@ -43,6 +47,9 @@ export const warpRouteWhitelist: Array<string> | null = [
   // SOL routes
   'SOL/eclipsemainnet-solanamainnet',
 
+  // ezSOL routes
+  'ezSOL/eclipsemainnet-solanamainnet',
+
   // WIF routes
   'WIF/eclipsemainnet-solanamainnet',
 
@@ -51,4 +58,10 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // ORCA routes
   'ORCA/eclipsemainnet-solanamainnet',
+
+  // uBTC routes
+  'uBTC/boba-bsquared-swell',
+
+  // kySOL
+  'kySOL/eclipsemainnet-solanamainnet',
 ];

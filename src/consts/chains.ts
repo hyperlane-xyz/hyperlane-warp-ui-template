@@ -8,11 +8,6 @@ import {
 import { ChainMap, ChainMetadata, ExplorerFamily } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 
-function getOverrideRpcUrls(chainName: string): { http: string }[] {
-  const envVar = process.env[`NEXT_PUBLIC_${chainName.toUpperCase()}_RPC_URL`];
-  return envVar ? [{ http: envVar }] : [];
-}
-
 // A map of chain names to ChainMetadata
 // Chains can be defined here, in chains.json, or in chains.yaml
 // Chains already in the SDK need not be included here unless you want to override some fields
@@ -23,12 +18,9 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
     // SVM chains require mailbox addresses for the token adapters
     mailbox: solanamainnetAddresses.mailbox,
     // Including a convenient rpc override because the Solana public RPC does not allow browser requests from localhost
-    rpcUrls: [
-      // For backward compatibility
-      ...getOverrideRpcUrls('solana'),
-      ...getOverrideRpcUrls('solanamainnet'),
-      ...solanamainnet.rpcUrls,
-    ],
+    rpcUrls: process.env.NEXT_PUBLIC_SOLANA_RPC_URL
+      ? [{ http: process.env.NEXT_PUBLIC_SOLANA_RPC_URL }, ...solanamainnet.rpcUrls]
+      : solanamainnet.rpcUrls,
   },
   eclipsemainnet: {
     ...eclipsemainnet,
@@ -36,7 +28,9 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
   },
   injective: {
     ...injective,
-    rpcUrls: [...getOverrideRpcUrls('injective'), ...injective.rpcUrls],
+    rpcUrls: process.env.NEXT_PUBLIC_INJECTIVE_RPC_URL
+      ? [{ http: process.env.NEXT_PUBLIC_INJECTIVE_RPC_URL }, ...injective.rpcUrls]
+      : injective.rpcUrls,
   },
   // mycustomchain: {
   //   protocol: ProtocolType.Ethereum,

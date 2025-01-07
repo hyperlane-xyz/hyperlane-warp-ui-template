@@ -1,11 +1,17 @@
 import {
   eclipsemainnet,
   eclipsemainnetAddresses,
+  injective,
   solanamainnet,
   solanamainnetAddresses,
 } from '@hyperlane-xyz/registry';
 import { ChainMap, ChainMetadata, ExplorerFamily } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
+
+function getOverrideRpcUrls(chainName: string): { http: string }[] {
+  const envVar = process.env[`NEXT_PUBLIC_${chainName.toUpperCase()}_RPC_URL`];
+  return envVar ? [{ http: envVar }] : [];
+}
 
 // A map of chain names to ChainMetadata
 // Chains can be defined here, in chains.json, or in chains.yaml
@@ -17,13 +23,20 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
     // SVM chains require mailbox addresses for the token adapters
     mailbox: solanamainnetAddresses.mailbox,
     // Including a convenient rpc override because the Solana public RPC does not allow browser requests from localhost
-    rpcUrls: process.env.NEXT_PUBLIC_SOLANA_RPC_URL
-      ? [{ http: process.env.NEXT_PUBLIC_SOLANA_RPC_URL }, ...solanamainnet.rpcUrls]
-      : solanamainnet.rpcUrls,
+    rpcUrls: [
+      // For backward compatibility
+      ...getOverrideRpcUrls('solana'),
+      ...getOverrideRpcUrls('solanamainnet'),
+      ...solanamainnet.rpcUrls,
+    ],
   },
   eclipsemainnet: {
     ...eclipsemainnet,
     mailbox: eclipsemainnetAddresses.mailbox,
+  },
+  injective: {
+    ...injective,
+    rpcUrls: [...getOverrideRpcUrls('injective'), ...solanamainnet.rpcUrls],
   },
   // mycustomchain: {
   //   protocol: ProtocolType.Ethereum,

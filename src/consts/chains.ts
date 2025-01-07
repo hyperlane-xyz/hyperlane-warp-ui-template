@@ -36,7 +36,7 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
   },
   injective: {
     ...injective,
-    rpcUrls: [...getOverrideRpcUrls('injective'), ...solanamainnet.rpcUrls],
+    rpcUrls: [...getOverrideRpcUrls('injective'), ...injective.rpcUrls],
   },
   // mycustomchain: {
   //   protocol: ProtocolType.Ethereum,

@@ -48,7 +48,7 @@ The logo images you should change are:
 - `./src/images/logos/app-name.svg`
 - `./src/images/logos/app-title.svg`
 
-These are images are primarily used in the header and footer files:
+These images are primarily used in the header and footer files:
 
 - `./src/components/nav/Header.tsx`
 - `./src/components/nav/Footer.tsx`

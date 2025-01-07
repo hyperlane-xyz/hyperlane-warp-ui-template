@@ -1,11 +1,6 @@
 import { injective } from '@hyperlane-xyz/registry';
 import { ChainMap, ChainMetadata } from '@hyperlane-xyz/sdk';
 
-function getOverrideRpcUrls(chainName: string): { http: string }[] {
-  const envVar = process.env[`NEXT_PUBLIC_${chainName.toUpperCase()}_RPC_URL`];
-  return envVar ? [{ http: envVar }] : [];
-}
-
 // A map of chain names to ChainMetadata
 // Chains can be defined here, in chains.json, or in chains.yaml
 // Chains already in the SDK need not be included here unless you want to override some fields
@@ -13,7 +8,9 @@ function getOverrideRpcUrls(chainName: string): { http: string }[] {
 export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
   injective: {
     ...injective,
-    rpcUrls: [...getOverrideRpcUrls('injective'), ...injective.rpcUrls],
+    rpcUrls: process.env.NEXT_PUBLIC_INJECTIVE_RPC_URL
+      ? [{ http: process.env.NEXT_PUBLIC_INJECTIVE_RPC_URL }, ...injective.rpcUrls]
+      : injective.rpcUrls,
   },
   // mycustomchain: {
   //   protocol: ProtocolType.Ethereum,

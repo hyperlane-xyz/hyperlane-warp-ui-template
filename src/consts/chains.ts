@@ -1,6 +1,7 @@
 import {
   eclipsemainnet,
   eclipsemainnetAddresses,
+  injective,
   solanamainnet,
   solanamainnetAddresses,
 } from '@hyperlane-xyz/registry';
@@ -24,6 +25,12 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
   eclipsemainnet: {
     ...eclipsemainnet,
     mailbox: eclipsemainnetAddresses.mailbox,
+  },
+  injective: {
+    ...injective,
+    rpcUrls: process.env.NEXT_PUBLIC_INJECTIVE_RPC_URL
+      ? [{ http: process.env.NEXT_PUBLIC_INJECTIVE_RPC_URL }, ...injective.rpcUrls]
+      : injective.rpcUrls,
   },
   // mycustomchain: {
   //   protocol: ProtocolType.Ethereum,

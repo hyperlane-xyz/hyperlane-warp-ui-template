@@ -125,7 +125,7 @@ export const warpRouteConfigs: WarpCoreConfig = {
       {
         origin: 'celestia',
         destination: 'eclipsemainnet',
-        amount: 120000,
+        amount: 500000,
         addressOrDenom: 'utia',
       },
     ],

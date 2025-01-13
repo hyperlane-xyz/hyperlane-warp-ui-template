@@ -46,6 +46,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // SOL routes
   'SOL/eclipsemainnet-solanamainnet',
+  'SOL/solanamainnet-soon',
 
   // ezSOL routes
   'ezSOL/eclipsemainnet-solanamainnet',
@@ -67,4 +68,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // USDC ink
   'USDC/ethereum-ink',
+
+  // Bonk routes
+  'Bonk/solanamainnet-soon',
 ];

@@ -3898,13 +3898,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/registry@npm:6.12.0":
-  version: 6.12.0
-  resolution: "@hyperlane-xyz/registry@npm:6.12.0"
+"@hyperlane-xyz/registry@npm:6.13.0":
+  version: 6.13.0
+  resolution: "@hyperlane-xyz/registry@npm:6.13.0"
   dependencies:
     yaml: "npm:2.4.5"
     zod: "npm:^3.21.2"
-  checksum: 10/94d5141c2b4e1496d4eab74153c998590c986794eaae0404434f0235e7c3de1936c108937bda60006c57422c709dd5539658ca8cddd6504f59f5553f68b0e252
+  checksum: 10/9ffc240deb166c00c55838761c90d0759cd84de0302f3a746ca729027197cfb472937efe83d56eb2fa154426559de79ce990c5bc9433e6fad30aeac55a462a7a
   languageName: node
   linkType: hard
 
@@ -3985,7 +3985,7 @@ __metadata:
     "@emotion/react": "npm:^11.13.3"
     "@emotion/styled": "npm:^11.13.0"
     "@headlessui/react": "npm:^2.2.0"
-    "@hyperlane-xyz/registry": "npm:6.12.0"
+    "@hyperlane-xyz/registry": "npm:6.13.0"
     "@hyperlane-xyz/sdk": "npm:8.0.0-beta.0"
     "@hyperlane-xyz/utils": "npm:8.0.0-beta.0"
     "@hyperlane-xyz/widgets": "npm:8.0.0-beta.0"

@@ -4,6 +4,8 @@ import {
   injective,
   solanamainnet,
   solanamainnetAddresses,
+  soon,
+  soonAddresses,
 } from '@hyperlane-xyz/registry';
 import { ChainMap, ChainMetadata, ExplorerFamily } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
@@ -25,6 +27,10 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
   eclipsemainnet: {
     ...eclipsemainnet,
     mailbox: eclipsemainnetAddresses.mailbox,
+  },
+  soon: {
+    ...soon,
+    mailbox: soonAddresses.mailbox,
   },
   injective: {
     ...injective,

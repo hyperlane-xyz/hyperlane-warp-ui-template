@@ -66,6 +66,9 @@ export const warpRouteWhitelist: Array<string> | null = [
   // kySOL
   'kySOL/eclipsemainnet-solanamainnet',
 
+  // PNDR
+  'PNDR/bsc-ethereum-lumiaprism',
+
   // USDC ink
   'USDC/ethereum-ink',
 

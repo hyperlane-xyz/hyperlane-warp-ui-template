@@ -77,4 +77,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // TONY routes
   'TONY/base-solanamainnet',
+
+  // TRUMP routes
+  'TRUMP/base-solanamainnet',
 ];

@@ -2,5 +2,21 @@
 # These configs will be merged with the warp routes in the configured registry
 # The input here is typically the output of the Hyperlane CLI warp deploy command
 ---
-tokens: []
-options: {}
+tokens:
+  - addressOrDenom: '0x53c0499e7E4aBD3e7994ca161523FD50A12Bb8C8'
+    chainName: base
+    decimals: 18
+    connections:
+      - token: sealevel|solanamainnet|21tAY4poz2VXvghqdSQpn9j7gYravQmGpuQi8pHPx9DS
+    name: OFFICIAL TRUMP
+    standard: EvmHypSynthetic
+    symbol: TRUMP
+  - addressOrDenom: '21tAY4poz2VXvghqdSQpn9j7gYravQmGpuQi8pHPx9DS'
+    collateralAddressOrDenom: '6p6xgHyF7AeE6TZkSmFsko444wqoP15icUSqi2jfGiPN'
+    chainName: solanamainnet
+    connections:
+      - token: ethereum|base|0x53c0499e7E4aBD3e7994ca161523FD50A12Bb8C8
+    decimals: 6
+    name: OFFICIAL TRUMP
+    standard: SealevelHypCollateral
+    symbol: TRUMP

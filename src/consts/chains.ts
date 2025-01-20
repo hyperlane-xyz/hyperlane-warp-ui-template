@@ -1,9 +1,4 @@
-import {
-  eclipsemainnet,
-  eclipsemainnetAddresses,
-  solanamainnet,
-  solanamainnetAddresses,
-} from '@hyperlane-xyz/registry';
+import { solanamainnet, solanamainnetAddresses } from '@hyperlane-xyz/registry';
 import { ChainMap, ChainMetadata } from '@hyperlane-xyz/sdk';
 
 // A map of chain names to ChainMetadata
@@ -19,10 +14,6 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
     rpcUrls: process.env.NEXT_PUBLIC_SOLANA_RPC_URL
       ? [{ http: process.env.NEXT_PUBLIC_SOLANA_RPC_URL }, ...solanamainnet.rpcUrls]
       : solanamainnet.rpcUrls,
-  },
-  eclipsemainnet: {
-    ...eclipsemainnet,
-    mailbox: eclipsemainnetAddresses.mailbox,
   },
   // mycustomchain: {
   //   protocol: ProtocolType.Ethereum,

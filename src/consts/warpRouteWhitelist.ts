@@ -79,5 +79,5 @@ export const warpRouteWhitelist: Array<string> | null = [
   'TONY/base-solanamainnet',
 
   // TRUMP routes
-  'TRUMP/base-solanamainnet',
+  'TRUMP/arbitrum-avalanche-base-flowmainnet-form-solanamainnet-worldchain',
 ];

@@ -2,21 +2,97 @@
 # These configs will be merged with the warp routes in the configured registry
 # The input here is typically the output of the Hyperlane CLI warp deploy command
 ---
+# yaml-language-server: $schema=../schema.json
 tokens:
   - addressOrDenom: '0x53c0499e7E4aBD3e7994ca161523FD50A12Bb8C8'
     chainName: base
-    decimals: 18
     connections:
       - token: sealevel|solanamainnet|21tAY4poz2VXvghqdSQpn9j7gYravQmGpuQi8pHPx9DS
+      - token: ethereum|arbitrum|0x5155EB1bcD30189915cF84717550Acfa537068bF
+      - token: ethereum|flowmainnet|0xD3378b419feae4e3A4Bb4f3349DBa43a1B511760
+      - token: ethereum|form|0x8528bAa7d1d386E7967603e480fa2B558a23644c
+      - token: ethereum|avalanche|0x0e2A546a53678ee8F8605748193a8c114fA0317F
+      - token: ethereum|worldchain|0x0fC7b3518C03BfA5e01995285b1eF3c4B55c8922
+    decimals: 18
+    logoURI: /deployments/warp_routes/TRUMP/logo.png
     name: OFFICIAL TRUMP
     standard: EvmHypSynthetic
     symbol: TRUMP
-  - addressOrDenom: '21tAY4poz2VXvghqdSQpn9j7gYravQmGpuQi8pHPx9DS'
-    collateralAddressOrDenom: '6p6xgHyF7AeE6TZkSmFsko444wqoP15icUSqi2jfGiPN'
+  - addressOrDenom: '0x5155EB1bcD30189915cF84717550Acfa537068bF'
+    chainName: arbitrum
+    connections:
+      - token: ethereum|base|0x53c0499e7E4aBD3e7994ca161523FD50A12Bb8C8
+      - token: ethereum|flowmainnet|0xD3378b419feae4e3A4Bb4f3349DBa43a1B511760
+      - token: ethereum|form|0x8528bAa7d1d386E7967603e480fa2B558a23644c
+      - token: ethereum|avalanche|0x0e2A546a53678ee8F8605748193a8c114fA0317F
+      - token: ethereum|worldchain|0x0fC7b3518C03BfA5e01995285b1eF3c4B55c8922
+
+    decimals: 18
+    logoURI: /deployments/warp_routes/TRUMP/logo.png
+    name: OFFICIAL TRUMP
+    standard: EvmHypSynthetic
+    symbol: TRUMP
+  - addressOrDenom: '0x0e2A546a53678ee8F8605748193a8c114fA0317F'
+    chainName: avalanche
+    connections:
+      - token: ethereum|base|0x53c0499e7E4aBD3e7994ca161523FD50A12Bb8C8
+      - token: ethereum|arbitrum|0x5155EB1bcD30189915cF84717550Acfa537068bF
+      - token: ethereum|flowmainnet|0xD3378b419feae4e3A4Bb4f3349DBa43a1B511760
+      - token: ethereum|form|0x8528bAa7d1d386E7967603e480fa2B558a23644c
+      - token: ethereum|worldchain|0x0fC7b3518C03BfA5e01995285b1eF3c4B55c8922
+    decimals: 18
+    logoURI: /deployments/warp_routes/TRUMP/logo.png
+    name: OFFICIAL TRUMP
+    standard: EvmHypSynthetic
+    symbol: TRUMP
+  - addressOrDenom: '0xD3378b419feae4e3A4Bb4f3349DBa43a1B511760'
+    chainName: flowmainnet
+    connections:
+      - token: ethereum|base|0x53c0499e7E4aBD3e7994ca161523FD50A12Bb8C8
+      - token: ethereum|arbitrum|0x5155EB1bcD30189915cF84717550Acfa537068bF
+      - token: ethereum|form|0x8528bAa7d1d386E7967603e480fa2B558a23644c
+      - token: ethereum|avalanche|0x0e2A546a53678ee8F8605748193a8c114fA0317F
+      - token: ethereum|worldchain|0x0fC7b3518C03BfA5e01995285b1eF3c4B55c8922
+    decimals: 18
+    logoURI: /deployments/warp_routes/TRUMP/logo.png
+    name: OFFICIAL TRUMP
+    standard: EvmHypSynthetic
+    symbol: TRUMP
+  - addressOrDenom: '0x8528bAa7d1d386E7967603e480fa2B558a23644c'
+    chainName: form
+    connections:
+      - token: ethereum|arbitrum|0x5155EB1bcD30189915cF84717550Acfa537068bF
+      - token: ethereum|flowmainnet|0xD3378b419feae4e3A4Bb4f3349DBa43a1B511760
+      - token: ethereum|avalanche|0x0e2A546a53678ee8F8605748193a8c114fA0317F
+      - token: ethereum|worldchain|0x0fC7b3518C03BfA5e01995285b1eF3c4B55c8922
+      - token: ethereum|base|0x53c0499e7E4aBD3e7994ca161523FD50A12Bb8C8
+    decimals: 18
+    logoURI: /deployments/warp_routes/TRUMP/logo.png
+    name: OFFICIAL TRUMP
+    standard: EvmHypSynthetic
+    symbol: TRUMP
+  - addressOrDenom: '0x0fC7b3518C03BfA5e01995285b1eF3c4B55c8922'
+    chainName: worldchain
+    connections:
+      - token: ethereum|arbitrum|0x5155EB1bcD30189915cF84717550Acfa537068bF
+      - token: ethereum|flowmainnet|0xD3378b419feae4e3A4Bb4f3349DBa43a1B511760
+      - token: ethereum|form|0x8528bAa7d1d386E7967603e480fa2B558a23644c
+      - token: ethereum|avalanche|0x0e2A546a53678ee8F8605748193a8c114fA0317F
+      - token: ethereum|worldchain|0x0fC7b3518C03BfA5e01995285b1eF3c4B55c8922
+      - token: ethereum|base|0x53c0499e7E4aBD3e7994ca161523FD50A12Bb8C8
+    decimals: 18
+    logoURI: /deployments/warp_routes/TRUMP/logo.png
+    name: OFFICIAL TRUMP
+    standard: EvmHypSynthetic
+    symbol: TRUMP
+  - addressOrDenom: 21tAY4poz2VXvghqdSQpn9j7gYravQmGpuQi8pHPx9DS
     chainName: solanamainnet
+    coinGeckoId: official-trump
+    collateralAddressOrDenom: 6p6xgHyF7AeE6TZkSmFsko444wqoP15icUSqi2jfGiPN
     connections:
       - token: ethereum|base|0x53c0499e7E4aBD3e7994ca161523FD50A12Bb8C8
     decimals: 6
+    logoURI: /deployments/warp_routes/TRUMP/logo.png
     name: OFFICIAL TRUMP
     standard: SealevelHypCollateral
     symbol: TRUMP

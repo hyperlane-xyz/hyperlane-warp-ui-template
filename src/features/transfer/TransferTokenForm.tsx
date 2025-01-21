@@ -21,6 +21,7 @@ import { TextField } from '../../components/input/TextField';
 import { WARP_QUERY_PARAMS } from '../../consts/args';
 import { config } from '../../consts/config';
 import { Color } from '../../styles/Color';
+import { isIntentStandard } from '../../utils/intents';
 import { logger } from '../../utils/logger';
 import { getQueryParams, updateQueryParam } from '../../utils/queryParams';
 import { ChainConnectionWarning } from '../chains/ChainConnectionWarning';
@@ -469,12 +470,18 @@ function ReviewDetails({ visible }: { visible: boolean }) {
               </div>
             )}
             <div>
-              <h4>{`Transaction${isApproveRequired ? ' 2' : ''}: Transfer Remote`}</h4>
+              <h4>{`Transaction${isApproveRequired ? ' 2' : ''}:
+              ${destinationToken && isIntentStandard(destinationToken.standard) ? 'Open Order' : 'Transfer Remote'}
+              `}</h4>
               <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs">
                 {destinationToken?.addressOrDenom && (
                   <p className="flex">
                     <span className="min-w-[6.5rem]">Remote Token</span>
-                    <span>{destinationToken.addressOrDenom}</span>
+                    <span>
+                      {isIntentStandard(destinationToken.standard)
+                        ? (destinationToken.collateralAddressOrDenom ?? 'Native chain token')
+                        : destinationToken.addressOrDenom}
+                    </span>
                   </p>
                 )}
                 <p className="flex">
@@ -484,7 +491,7 @@ function ReviewDetails({ visible }: { visible: boolean }) {
                 {fees?.localQuote && fees.localQuote.amount > 0n && (
                   <p className="flex">
                     <span className="min-w-[6.5rem]">Local Gas (est.)</span>
-                    <span>{`${fees.localQuote.getDecimalFormattedAmount().toFixed(4) || '0'} ${
+                    <span>{`${fees.localQuote.getDecimalFormattedAmount().toFixed(18) || '0'} ${
                       fees.localQuote.token.symbol || ''
                     }`}</span>
                   </p>
@@ -492,7 +499,7 @@ function ReviewDetails({ visible }: { visible: boolean }) {
                 {fees?.interchainQuote && fees.interchainQuote.amount > 0n && (
                   <p className="flex">
                     <span className="min-w-[6.5rem]">Interchain Gas</span>
-                    <span>{`${fees.interchainQuote.getDecimalFormattedAmount().toFixed(4) || '0'} ${
+                    <span>{`${fees.interchainQuote.getDecimalFormattedAmount().toFixed(18) || '0'} ${
                       fees.interchainQuote.token.symbol || ''
                     }`}</span>
                   </p>
@@ -577,6 +584,7 @@ async function validateForm(
       origin,
       accounts,
     );
+
     const result = await warpCore.validateTransfer({
       originTokenAmount: token.amount(amountWei),
       destination,

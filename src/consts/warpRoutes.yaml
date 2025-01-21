@@ -3,12 +3,12 @@
 # The input here is typically the output of the Hyperlane CLI warp deploy command
 ---
 tokens:
-  - addressOrDenom: "0xD84981Ecd4c411A86E1Ccda77F944c8f3D9737ab"
+  - addressOrDenom: '0xD84981Ecd4c411A86E1Ccda77F944c8f3D9737ab'
     chainName: trumpchain
     coinGeckoId: official-trump
     connections:
       - token: sealevel|solanamainnet|AyJk3V2SjswRv1ppDazVofXnFgjCTeydNEDSyA2UyVNX
-    decimals: 6
+    decimals: 18
     logoURI: /deployments/warp_routes/TRUMP/logo.png
     name: OFFICIAL TRUMP
     standard: EvmHypNative

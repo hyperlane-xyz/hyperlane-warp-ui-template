@@ -3,5 +3,6 @@
 // If left null, all warp routes in the configured registry will be included
 // If set to a list (including an empty list), only the specified routes will be included
 export const warpRouteWhitelist: Array<string> | null = [
-  'TRUMP/arbitrum-avalanche-base-flowmainnet-form-solanamainnet-worldchain',
+  'TRUMP/arbitrum-avalanche-base-flowmainnet-form-optimism-solanamainnet-worldchain',
+  'TRUMP/solanamainnet-trumpchain',
 ];

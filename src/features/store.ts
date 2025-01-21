@@ -1,5 +1,5 @@
 import { GithubRegistry, IRegistry } from '@hyperlane-xyz/registry';
-import { ChainMap, ChainMetadata, MultiProtocolProvider, WarpCore } from '@hyperlane-xyz/sdk';
+import { ChainMap, ChainMetadata, MultiProtocolProvider } from '@hyperlane-xyz/sdk';
 import { objFilter } from '@hyperlane-xyz/utils';
 import { toast } from 'react-toastify';
 import { create } from 'zustand';
@@ -22,12 +22,12 @@ export interface AppState {
   setChainMetadataOverrides: (overrides?: ChainMap<Partial<ChainMetadata> | undefined>) => void;
   multiProvider: MultiProtocolProvider;
   registry: IRegistry;
-  warpCore: WarpCore;
+  warpCore: CoreProxy;
   setWarpContext: (context: {
     registry: IRegistry;
     chainMetadata: ChainMap<ChainMetadata>;
     multiProvider: MultiProtocolProvider;
-    warpCore: WarpCore;
+    warpCore: CoreProxy;
   }) => void;
 
   // User history
@@ -71,7 +71,7 @@ export const useStore = create<AppState>()(
         branch: config.registryBranch,
         proxyUrl: config.registryProxyUrl,
       }),
-      warpCore: new WarpCore(new MultiProtocolProvider({}), []),
+      warpCore: new CoreProxy(new MultiProtocolProvider({}), []),
       setWarpContext: ({ registry, chainMetadata, multiProvider, warpCore }) => {
         logger.debug('Setting warp context in store');
         set({ registry, chainMetadata, multiProvider, warpCore });
@@ -164,7 +164,7 @@ async function initWarpContext(
       storeMetadataOverrides,
     );
     const multiProvider = new MultiProtocolProvider(chainMetadataWithOverrides);
-    const warpCore = WarpCore.FromConfig(multiProvider, coreConfig);
+    const warpCore = CoreProxy.FromConfig(multiProvider, coreConfig);
     return { registry, chainMetadata, multiProvider, warpCore };
   } catch (error) {
     toast.error('Error initializing warp context. Please check connection status and configs.');
@@ -173,7 +173,7 @@ async function initWarpContext(
       registry,
       chainMetadata: {},
       multiProvider: new MultiProtocolProvider({}),
-      warpCore: new WarpCore(new MultiProtocolProvider({}), []),
+      warpCore: new CoreProxy(new MultiProtocolProvider({}), []),
     };
   }
 }

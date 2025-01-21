@@ -6,6 +6,7 @@ import { TokenIcon } from '../../components/icons/TokenIcon';
 import { TextInput } from '../../components/input/TextField';
 import { config } from '../../consts/config';
 import InfoIcon from '../../images/icons/info-circle.svg';
+import { isIntentStandard } from '../../utils/intents';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { useWarpCore } from './hooks';
@@ -143,7 +144,9 @@ export function TokenList({
             </div>
             <div className="ml-2 min-w-0 shrink text-left">
               <div className="w-full truncate text-xs">
-                {t.token.collateralAddressOrDenom || t.token.addressOrDenom || 'Native chain token'}
+                {(isIntentStandard(t.token.standard)
+                  ? t.token.collateralAddressOrDenom
+                  : t.token.addressOrDenom) ?? 'Native chain token'}
               </div>
               <div className="mt-0.5 flex space-x-1 text-xs">
                 <span>{`Decimals: ${t.token.decimals}`}</span>

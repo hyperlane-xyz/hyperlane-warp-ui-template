@@ -69,6 +69,8 @@
     "tailwindcss": "^3.4.15",
     "ts-node": "^10.9.2",
     "typescript": "5.6.3",
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^3.0.3",
     "yaml": "^2.6.0",
     "yaml-loader": "^0.8.1"
   },
@@ -88,7 +90,7 @@
     "typecheck": "tsc",
     "lint": "next lint",
     "start": "next start",
-    "test": "echo 'No tests'",
+    "test": "vitest --watch false",
     "prettier": "prettier --write ./src"
   },
   "types": "dist/src/index.d.ts",

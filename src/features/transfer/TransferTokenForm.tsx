@@ -12,6 +12,7 @@ import {
 } from '@hyperlane-xyz/widgets';
 import BigNumber from 'bignumber.js';
 import { Form, Formik, useFormikContext } from 'formik';
+import { useRouter } from 'next/router';
 import { useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
@@ -20,6 +21,7 @@ import { TextField } from '../../components/input/TextField';
 import { config } from '../../consts/config';
 import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
+import { useMultipleQueryParams, useSyncQueryParam } from '../../utils/queryParams';
 import { ChainConnectionWarning } from '../chains/ChainConnectionWarning';
 import { ChainSelectField } from '../chains/ChainSelectField';
 import { ChainWalletWarning } from '../chains/ChainWalletWarning';
@@ -37,6 +39,12 @@ import { TransferFormValues } from './types';
 import { useRecipientBalanceWatcher } from './useBalanceWatcher';
 import { useFeeQuotes } from './useFeeQuotes';
 import { useTokenTransfer } from './useTokenTransfer';
+
+enum WARP_QUERY_PARAMS {
+  ORIGIN = 'origin',
+  DESTINATION = 'destination',
+  TOKEN = 'token',
+}
 
 export function TransferTokenForm() {
   const multiProvider = useMultiProvider();
@@ -56,6 +64,8 @@ export function TransferTokenForm() {
     logger.debug('Reviewing transfer form values for:', values.origin, values.destination);
     setIsReview(true);
   };
+
+  if (!initialValues) return null;
 
   return (
     <Formik<TransferFormValues>
@@ -125,6 +135,11 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
   const destinationRouteCounts = useMemo(() => {
     return getNumRoutesWithSelectedChain(warpCore, values.destination, false);
   }, [values.destination, warpCore]);
+
+  useSyncQueryParam({
+    [WARP_QUERY_PARAMS.ORIGIN]: values.origin || '',
+    [WARP_QUERY_PARAMS.DESTINATION]: values.destination || '',
+  });
 
   return (
     <div className="mt-2 flex items-center justify-between gap-4">
@@ -447,19 +462,28 @@ function WarningBanners() {
   );
 }
 
-function useFormInitialValues(): TransferFormValues {
+function useFormInitialValues(): TransferFormValues | null {
   const warpCore = useWarpCore();
+  const { isReady } = useRouter();
+  const [defaultOriginQuery, defaultDestinationQuery] = useMultipleQueryParams([
+    WARP_QUERY_PARAMS.ORIGIN,
+    WARP_QUERY_PARAMS.DESTINATION,
+  ]);
+
   return useMemo(() => {
     const firstToken = warpCore.tokens[0];
     const connectedToken = firstToken.connections?.[0];
+
+    if (!isReady) return null;
+
     return {
-      origin: firstToken.chainName,
-      destination: connectedToken?.token?.chainName || '',
-      tokenIndex: getIndexForToken(warpCore, firstToken),
+      origin: defaultOriginQuery || firstToken.chainName,
+      destination: defaultDestinationQuery || connectedToken?.token?.chainName || '',
+      tokenIndex: defaultOriginQuery ? undefined : getIndexForToken(warpCore, firstToken),
       amount: '',
       recipient: '',
     };
-  }, [warpCore]);
+  }, [warpCore, defaultOriginQuery, defaultDestinationQuery, isReady]);
 }
 
 const insufficientFundsErrMsg = /insufficient.[funds|lamports]/i;

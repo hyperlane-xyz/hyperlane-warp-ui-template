@@ -1,5 +1,11 @@
 import { TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
-import { ProtocolType, errorToString, isNullish, toWei } from '@hyperlane-xyz/utils';
+import {
+  ProtocolType,
+  errorToString,
+  isNullish,
+  toWei,
+  tryParseAmount,
+} from '@hyperlane-xyz/utils';
 import {
   AccountInfo,
   ChevronIcon,
@@ -26,7 +32,7 @@ import { ChainConnectionWarning } from '../chains/ChainConnectionWarning';
 import { ChainSelectField } from '../chains/ChainSelectField';
 import { ChainWalletWarning } from '../chains/ChainWalletWarning';
 import { useChainDisplayName, useMultiProvider } from '../chains/hooks';
-import { getNumRoutesWithSelectedChain } from '../chains/utils';
+import { getNumRoutesWithSelectedChain, isChainValid } from '../chains/utils';
 import { useIsAccountSanctioned } from '../sanctions/hooks/useIsAccountSanctioned';
 import { useStore } from '../store';
 import { SelectOrInputTokenIds } from '../tokens/SelectOrInputTokenIds';
@@ -139,6 +145,7 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
   useSyncQueryParam({
     [WARP_QUERY_PARAMS.ORIGIN]: values.origin || '',
     [WARP_QUERY_PARAMS.DESTINATION]: values.destination || '',
+    [WARP_QUERY_PARAMS.TOKEN]: values.tokenIndex !== undefined ? String(values.tokenIndex) : '',
   });
 
   return (
@@ -465,10 +472,13 @@ function WarningBanners() {
 function useFormInitialValues(): TransferFormValues | null {
   const warpCore = useWarpCore();
   const { isReady } = useRouter();
-  const [defaultOriginQuery, defaultDestinationQuery] = useMultipleQueryParams([
+  const [defaultOriginQuery, defaultDestinationQuery, defaultTokenQuery] = useMultipleQueryParams([
     WARP_QUERY_PARAMS.ORIGIN,
     WARP_QUERY_PARAMS.DESTINATION,
+    WARP_QUERY_PARAMS.TOKEN,
   ]);
+  const isOriginQueryValid = isChainValid(defaultOriginQuery, warpCore.multiProvider);
+  const isDestinationQueryValid = isChainValid(defaultDestinationQuery, warpCore.multiProvider);
 
   return useMemo(() => {
     const firstToken = warpCore.tokens[0];
@@ -477,13 +487,24 @@ function useFormInitialValues(): TransferFormValues | null {
     if (!isReady) return null;
 
     return {
-      origin: defaultOriginQuery || firstToken.chainName,
-      destination: defaultDestinationQuery || connectedToken?.token?.chainName || '',
-      tokenIndex: defaultOriginQuery ? undefined : getIndexForToken(warpCore, firstToken),
+      origin: isOriginQueryValid ? defaultOriginQuery : firstToken.chainName,
+      destination: isDestinationQueryValid
+        ? defaultDestinationQuery
+        : connectedToken?.token?.chainName || '',
+      tokenIndex:
+        tryParseAmount(defaultTokenQuery)?.toNumber() || getIndexForToken(warpCore, firstToken),
       amount: '',
       recipient: '',
     };
-  }, [warpCore, defaultOriginQuery, defaultDestinationQuery, isReady]);
+  }, [
+    warpCore,
+    isReady,
+    defaultOriginQuery,
+    defaultDestinationQuery,
+    defaultTokenQuery,
+    isOriginQueryValid,
+    isDestinationQueryValid,
+  ]);
 }
 
 const insufficientFundsErrMsg = /insufficient.[funds|lamports]/i;

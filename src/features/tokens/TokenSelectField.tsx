@@ -1,6 +1,8 @@
 import { IToken } from '@hyperlane-xyz/sdk';
+import { tryParseAmount } from '@hyperlane-xyz/utils';
 import { ChevronIcon } from '@hyperlane-xyz/widgets';
 import { useField, useFormikContext } from 'formik';
+import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { TokenIcon } from '../../components/icons/TokenIcon';
 import { TransferFormValues } from '../transfer/types';
@@ -18,6 +20,7 @@ export function TokenSelectField({ name, disabled, setIsNft }: Props) {
   const [field, , helpers] = useField<number | undefined>(name);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAutomaticSelection, setIsAutomaticSelection] = useState(false);
+  const { query } = useRouter();
 
   const warpCore = useWarpCore();
 
@@ -26,23 +29,34 @@ export function TokenSelectField({ name, disabled, setIsNft }: Props) {
     const tokensWithRoute = warpCore.getTokensForRoute(origin, destination);
     let newFieldValue: number | undefined;
     let newIsAutomatic: boolean;
+
+    // Use token from persistance
+    if (query.token && typeof query.token === 'string') {
+      // Check if tokenIndex exists
+      const tokenIndex = tryParseAmount(query.token)?.toNumber();
+      if (tokenIndex !== undefined) {
+        const token = warpCore.tokens[tokenIndex];
+        newFieldValue = token ? tokenIndex : undefined;
+      }
+    }
     // No tokens available for this route
-    if (tokensWithRoute.length === 0) {
+    else if (tokensWithRoute.length === 0) {
       newFieldValue = undefined;
-      newIsAutomatic = true;
     }
     // Exactly one found
     else if (tokensWithRoute.length === 1) {
       newFieldValue = getIndexForToken(warpCore, tokensWithRoute[0]);
-      newIsAutomatic = true;
       // Multiple possibilities
     } else {
       newFieldValue = undefined;
-      newIsAutomatic = false;
     }
+
+    if (tokensWithRoute.length <= 1) newIsAutomatic = true;
+    else newIsAutomatic = false;
+
     helpers.setValue(newFieldValue);
     setIsAutomaticSelection(newIsAutomatic);
-  }, [warpCore, origin, destination, helpers]);
+  }, [warpCore, origin, destination, helpers, query.token]);
 
   const onSelectToken = (newToken: IToken) => {
     // Set the token address value in formik state

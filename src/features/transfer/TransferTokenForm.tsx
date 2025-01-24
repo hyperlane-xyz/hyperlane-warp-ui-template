@@ -17,6 +17,7 @@ import { toast } from 'react-toastify';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
 import { SolidButton } from '../../components/buttons/SolidButton';
 import { TextField } from '../../components/input/TextField';
+import { WARP_QUERY_PARAMS } from '../../consts/app';
 import { config } from '../../consts/config';
 import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
@@ -43,12 +44,6 @@ import { TransferFormValues } from './types';
 import { useRecipientBalanceWatcher } from './useBalanceWatcher';
 import { useFeeQuotes } from './useFeeQuotes';
 import { useTokenTransfer } from './useTokenTransfer';
-
-export enum WARP_QUERY_PARAMS {
-  ORIGIN = 'origin',
-  DESTINATION = 'destination',
-  TOKEN = 'token',
-}
 
 export function TransferTokenForm() {
   const multiProvider = useMultiProvider();

@@ -26,12 +26,7 @@ export function TokenSelectField({ name, disabled, setIsNft }: Props) {
   const { origin, destination } = values;
   useEffect(() => {
     const tokensWithRoute = warpCore.getTokensForRoute(origin, destination);
-    let newIsAutomatic: boolean;
-
-    if (tokensWithRoute.length <= 1) newIsAutomatic = true;
-    else newIsAutomatic = false;
-
-    setIsAutomaticSelection(newIsAutomatic);
+    setIsAutomaticSelection(tokensWithRoute.length <= 1);
   }, [warpCore, origin, destination, helpers]);
 
   const onSelectToken = (newToken: IToken) => {

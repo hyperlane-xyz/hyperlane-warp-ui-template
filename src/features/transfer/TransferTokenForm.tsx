@@ -17,11 +17,11 @@ import { toast } from 'react-toastify';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
 import { SolidButton } from '../../components/buttons/SolidButton';
 import { TextField } from '../../components/input/TextField';
-import { WARP_QUERY_PARAMS } from '../../consts/app';
 import { config } from '../../consts/config';
+import { WARP_QUERY_PARAMS } from '../../consts/core';
 import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
-import { updateQueryParam } from '../../utils/queryParams';
+import { getQueryParams, updateQueryParam } from '../../utils/queryParams';
 import { ChainConnectionWarning } from '../chains/ChainConnectionWarning';
 import { ChainSelectField } from '../chains/ChainSelectField';
 import { ChainWalletWarning } from '../chains/ChainWalletWarning';
@@ -95,10 +95,10 @@ export function TransferTokenForm() {
 
 function SwapChainsButton({
   disabled,
-  handleSwapChain,
+  onSwapChain,
 }: {
   disabled?: boolean;
-  handleSwapChain(origin: string, destination: string): void;
+  onSwapChain: (origin: string, destination: string) => void;
 }) {
   const { values, setFieldValue } = useFormikContext<TransferFormValues>();
   const { origin, destination } = values;
@@ -109,7 +109,7 @@ function SwapChainsButton({
     setFieldValue('destination', origin);
     // Reset other fields on chain change
     setFieldValue('recipient', '');
-    handleSwapChain(destination, origin);
+    onSwapChain(destination, origin);
   };
 
   return (
@@ -139,7 +139,7 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
     return getNumRoutesWithSelectedChain(warpCore, values.destination, false);
   }, [values.destination, warpCore]);
 
-  const handleGetTokensRoute = (origin: string, destination: string) => {
+  const setTokenOnChainChange = (origin: string, destination: string) => {
     const tokensWithRoute = warpCore.getTokensForRoute(origin, destination);
     let newFieldValue: number | undefined;
     if (tokensWithRoute.length === 1) {
@@ -156,15 +156,17 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
   };
 
   const handleChange = (chainName: string, fieldName: string) => {
-    if (fieldName === 'origin') handleGetTokensRoute(chainName, values.destination);
-    else handleGetTokensRoute(values.origin, chainName);
+    if (fieldName === WARP_QUERY_PARAMS.ORIGIN)
+      setTokenOnChainChange(chainName, values.destination);
+    else if (fieldName === WARP_QUERY_PARAMS.DESTINATION)
+      setTokenOnChainChange(values.origin, chainName);
     updateQueryParam(fieldName, chainName);
   };
 
-  const handleSwapChain = (origin: string, destination: string) => {
+  const onSwapChain = (origin: string, destination: string) => {
     updateQueryParam(WARP_QUERY_PARAMS.ORIGIN, origin);
     updateQueryParam(WARP_QUERY_PARAMS.DESTINATION, destination);
-    handleGetTokensRoute(origin, destination);
+    setTokenOnChainChange(origin, destination);
   };
 
   return (
@@ -177,7 +179,7 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
         onChange={handleChange}
       />
       <div className="flex flex-1 flex-col items-center">
-        <SwapChainsButton disabled={isReview} handleSwapChain={handleSwapChain} />
+        <SwapChainsButton disabled={isReview} onSwapChain={onSwapChain} />
       </div>
       <ChainSelectField
         name="destination"
@@ -197,12 +199,21 @@ function TokenSection({
   setIsNft: (b: boolean) => void;
   isReview: boolean;
 }) {
+  const onChangeToken = (addressOrDenom: string) => {
+    updateQueryParam(WARP_QUERY_PARAMS.TOKEN, addressOrDenom);
+  };
+
   return (
     <div className="flex-1">
       <label htmlFor="tokenIndex" className="block pl-0.5 text-sm text-gray-600">
         Token
       </label>
-      <TokenSelectField name="tokenIndex" disabled={isReview} setIsNft={setIsNft} />
+      <TokenSelectField
+        name="tokenIndex"
+        disabled={isReview}
+        setIsNft={setIsNft}
+        onChangeToken={onChangeToken}
+      />
     </div>
   );
 }
@@ -492,20 +503,17 @@ function WarningBanners() {
 
 function useFormInitialValues(): TransferFormValues {
   const warpCore = useWarpCore();
-  const parameters = new URLSearchParams(window.location.search);
+  const params = getQueryParams();
 
-  const originQuery = getValidChain(
-    parameters.get(WARP_QUERY_PARAMS.ORIGIN),
-    warpCore.multiProvider,
-  );
+  const originQuery = getValidChain(params.get(WARP_QUERY_PARAMS.ORIGIN), warpCore.multiProvider);
   const destinationQuery = getValidChain(
-    parameters.get(WARP_QUERY_PARAMS.DESTINATION),
+    params.get(WARP_QUERY_PARAMS.DESTINATION),
     warpCore.multiProvider,
   );
 
   const tokenIndex = getInitialTokenIndex(
     warpCore,
-    parameters.get(WARP_QUERY_PARAMS.TOKEN),
+    params.get(WARP_QUERY_PARAMS.TOKEN),
     originQuery,
     destinationQuery,
   );

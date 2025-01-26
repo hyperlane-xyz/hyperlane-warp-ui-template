@@ -3,8 +3,7 @@ import { ChevronIcon } from '@hyperlane-xyz/widgets';
 import { useField, useFormikContext } from 'formik';
 import { useEffect, useState } from 'react';
 import { TokenIcon } from '../../components/icons/TokenIcon';
-import { WARP_QUERY_PARAMS } from '../../consts/app';
-import { updateQueryParam } from '../../utils/queryParams';
+
 import { TransferFormValues } from '../transfer/types';
 import { TokenListModal } from './TokenListModal';
 import { getIndexForToken, getTokenByIndex, useWarpCore } from './hooks';
@@ -13,9 +12,10 @@ type Props = {
   name: string;
   disabled?: boolean;
   setIsNft: (value: boolean) => void;
+  onChangeToken: (addressOrDenom: string) => void;
 };
 
-export function TokenSelectField({ name, disabled, setIsNft }: Props) {
+export function TokenSelectField({ name, disabled, setIsNft, onChangeToken }: Props) {
   const { values } = useFormikContext<TransferFormValues>();
   const [field, , helpers] = useField<number | undefined>(name);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -32,7 +32,7 @@ export function TokenSelectField({ name, disabled, setIsNft }: Props) {
   const onSelectToken = (newToken: IToken) => {
     // Set the token address value in formik state
     helpers.setValue(getIndexForToken(warpCore, newToken));
-    updateQueryParam(WARP_QUERY_PARAMS.TOKEN, newToken.addressOrDenom);
+    onChangeToken(newToken.addressOrDenom);
     // Update nft state in parent
     setIsNft(newToken.isNft());
   };

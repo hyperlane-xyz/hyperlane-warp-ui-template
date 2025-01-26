@@ -1,5 +1,9 @@
+export function getQueryParams() {
+  return new URLSearchParams(window.location.search);
+}
+
 export function updateQueryParam(key: string, value?: string | number) {
-  const params = new URLSearchParams(window.location.search); // Get current query parameters
+  const params = getQueryParams(); // Get current query parameters
 
   if (value === undefined || value === null) {
     // Remove the parameter if the value is undefined or null

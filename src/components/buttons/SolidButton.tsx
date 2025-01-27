@@ -4,7 +4,7 @@ interface ButtonProps {
   type?: 'submit' | 'reset' | 'button';
   color?: 'white' | 'primary' | 'accent' | 'green' | 'red' | 'gray'; // defaults to primary
   bold?: boolean;
-  classes?: string;
+  className?: string;
   icon?: ReactElement;
 }
 
@@ -15,7 +15,7 @@ export function SolidButton(
     type,
     onClick,
     color: _color,
-    classes,
+    className,
     bold,
     icon,
     disabled,
@@ -48,7 +48,7 @@ export function SolidButton(
   }
   const onDisabled = 'disabled:bg-gray-300 disabled:text-gray-500';
   const weight = bold ? 'font-semibold' : '';
-  const allClasses = `${base} ${baseColors} ${onHover} ${onDisabled} ${weight} ${classes}`;
+  const allClasses = `${base} ${baseColors} ${onHover} ${onDisabled} ${weight} ${className}`;
 
   return (
     <button

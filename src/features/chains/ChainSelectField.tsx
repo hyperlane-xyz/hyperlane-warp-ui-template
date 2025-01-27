@@ -9,7 +9,7 @@ import { useChainDisplayName } from './hooks';
 type Props = {
   name: string;
   label: string;
-  onChange?: (id: ChainName) => void;
+  onChange?: (id: ChainName, fieldName: string) => void;
   disabled?: boolean;
   customListItemField: ChainSearchMenuProps['customListItemField'];
 };
@@ -25,8 +25,7 @@ export function ChainSelectField({ name, label, onChange, disabled, customListIt
     // Reset other fields on chain change
     setFieldValue('recipient', '');
     setFieldValue('amount', '');
-    setFieldValue('tokenIndex', undefined);
-    if (onChange) onChange(chainName);
+    if (onChange) onChange(chainName, name);
   };
 
   const [isModalOpen, setIsModalOpen] = useState(false);

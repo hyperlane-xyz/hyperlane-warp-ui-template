@@ -62,3 +62,13 @@ export function getNumRoutesWithSelectedChain(
     data,
   };
 }
+
+/**
+ * Return given chainName if it is valid, otherwise return undefined
+ */
+export function tryGetValidChainName(
+  chainName: string | null,
+  multiProvider: MultiProtocolProvider,
+): string | undefined {
+  return chainName && multiProvider.tryGetChainName(chainName) ? chainName : undefined;
+}

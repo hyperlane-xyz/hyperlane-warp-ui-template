@@ -64,11 +64,11 @@ export function getNumRoutesWithSelectedChain(
 }
 
 /**
- * Check if given chainName has valid chain metadata and return chainName if chain is valid
+ * Return given chainName if it is valid, otherwise return undefined
  */
-export function getValidChain(
+export function tryGetValidChainName(
   chainName: string | null,
   multiProvider: MultiProtocolProvider,
 ): string | undefined {
-  return chainName && multiProvider.tryGetChainMetadata(chainName) ? chainName : undefined;
+  return chainName && multiProvider.tryGetChainName(chainName) ? chainName : undefined;
 }

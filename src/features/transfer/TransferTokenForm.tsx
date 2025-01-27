@@ -17,8 +17,8 @@ import { toast } from 'react-toastify';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
 import { SolidButton } from '../../components/buttons/SolidButton';
 import { TextField } from '../../components/input/TextField';
+import { WARP_QUERY_PARAMS } from '../../consts/args';
 import { config } from '../../consts/config';
-import { WARP_QUERY_PARAMS } from '../../consts/core';
 import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
 import { getQueryParams, updateQueryParam } from '../../utils/queryParams';
@@ -26,7 +26,7 @@ import { ChainConnectionWarning } from '../chains/ChainConnectionWarning';
 import { ChainSelectField } from '../chains/ChainSelectField';
 import { ChainWalletWarning } from '../chains/ChainWalletWarning';
 import { useChainDisplayName, useMultiProvider } from '../chains/hooks';
-import { getNumRoutesWithSelectedChain, getValidChain } from '../chains/utils';
+import { getNumRoutesWithSelectedChain, tryGetValidChainName } from '../chains/utils';
 import { useIsAccountSanctioned } from '../sanctions/hooks/useIsAccountSanctioned';
 import { useStore } from '../store';
 import { SelectOrInputTokenIds } from '../tokens/SelectOrInputTokenIds';
@@ -505,8 +505,11 @@ function useFormInitialValues(): TransferFormValues {
   const warpCore = useWarpCore();
   const params = getQueryParams();
 
-  const originQuery = getValidChain(params.get(WARP_QUERY_PARAMS.ORIGIN), warpCore.multiProvider);
-  const destinationQuery = getValidChain(
+  const originQuery = tryGetValidChainName(
+    params.get(WARP_QUERY_PARAMS.ORIGIN),
+    warpCore.multiProvider,
+  );
+  const destinationQuery = tryGetValidChainName(
     params.get(WARP_QUERY_PARAMS.DESTINATION),
     warpCore.multiProvider,
   );

@@ -1,7 +1,6 @@
 import {
   ChainNameOrId,
   IntentCore,
-  IntentCoreFeeEstimate,
   IToken,
   MultiProtocolProvider,
   parseTokenConnectionId,
@@ -10,8 +9,8 @@ import {
   WarpCore,
   WarpCoreConfigSchema,
   WarpCoreOptions,
+  WarpTypedTransaction,
 } from '@hyperlane-xyz/sdk';
-import { TransactionFeeEstimate } from '@hyperlane-xyz/sdk/dist/providers/transactionFeeEstimators';
 import { WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk/dist/warp/types';
 import { assert, HexString } from '@hyperlane-xyz/utils';
 import { isIntentStandard } from '../utils/intents';
@@ -77,86 +76,6 @@ export class CoreProxy {
     });
     // Create new Intent
     return new CoreProxy(multiProvider, tokens, parsedConfig.options);
-  }
-
-  async getInterchainTransferFee({
-    originToken,
-    destination,
-    sender,
-  }: {
-    originToken: IToken;
-    destination: ChainNameOrId;
-    sender?: Address;
-  }): Promise<TokenAmount> {
-    if (isIntentStandard(originToken.standard)) {
-      return this.intentCore.getInterchainTransferFee({ originToken, destination, sender });
-    } else {
-      return this.warpCore.getInterchainTransferFee({ originToken, destination, sender });
-    }
-  }
-
-  async getLocalTransferFee({
-    originToken,
-    destination,
-    sender,
-    senderPubKey,
-    interchainFee,
-  }: {
-    originToken: IToken;
-    destination: ChainNameOrId;
-    sender: Address;
-    senderPubKey?: HexString;
-    interchainFee?: TokenAmount;
-  }): Promise<TransactionFeeEstimate> {
-    if (isIntentStandard(originToken.standard)) {
-      return this.intentCore.getLocalTransferFee({
-        originToken,
-        destination,
-        sender,
-        senderPubKey,
-        interchainFee,
-      });
-    } else {
-      return this.warpCore.getLocalTransferFee({
-        originToken,
-        destination,
-        sender,
-        senderPubKey,
-        interchainFee,
-      });
-    }
-  }
-
-  async getLocalTransferFeeAmount({
-    originToken,
-    destination,
-    sender,
-    senderPubKey,
-    interchainFee,
-  }: {
-    originToken: IToken;
-    destination: ChainNameOrId;
-    sender: Address;
-    senderPubKey?: HexString;
-    interchainFee?: TokenAmount;
-  }): Promise<TokenAmount> {
-    if (isIntentStandard(originToken.standard)) {
-      return this.intentCore.getLocalTransferFeeAmount({
-        originToken,
-        destination,
-        sender,
-        senderPubKey,
-        interchainFee,
-      });
-    } else {
-      return this.warpCore.getLocalTransferFeeAmount({
-        originToken,
-        destination,
-        sender,
-        senderPubKey,
-        interchainFee,
-      });
-    }
   }
 
   async getTransferRemoteTxs({
@@ -230,7 +149,7 @@ export class CoreProxy {
     destination: ChainNameOrId;
     sender: Address;
     senderPubKey?: HexString;
-    feeEstimate?: IntentCoreFeeEstimate;
+    feeEstimate?: WarpCoreFeeEstimate;
   }): Promise<TokenAmount> {
     if (isIntentStandard(balance.token.standard)) {
       return this.intentCore.getMaxTransferAmount({
@@ -291,12 +210,14 @@ export class CoreProxy {
     recipient,
     sender,
     senderPubKey,
+    fillDeadline,
   }: {
     originTokenAmount: TokenAmount;
     destination: ChainNameOrId;
     recipient: Address;
     sender: Address;
     senderPubKey?: HexString;
+    fillDeadline?: number;
   }): Promise<Record<string, string> | null> {
     if (isIntentStandard(originTokenAmount.token.standard)) {
       return this.intentCore.validateTransfer({
@@ -305,6 +226,7 @@ export class CoreProxy {
         recipient,
         sender,
         senderPubKey,
+        fillDeadline,
       });
     } else {
       return this.warpCore.validateTransfer({

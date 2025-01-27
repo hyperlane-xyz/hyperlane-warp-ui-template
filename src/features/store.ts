@@ -7,6 +7,7 @@ import { persist } from 'zustand/middleware';
 import { config } from '../consts/config';
 import { logger } from '../utils/logger';
 import { assembleChainMetadata } from './chains/metadata';
+import { CoreProxy } from './CoreProxy';
 import { assembleWarpCoreConfig } from './tokens/warpCoreConfig';
 import { FinalTransferStatuses, TransferContext, TransferStatus } from './transfer/types';
 

@@ -9,6 +9,7 @@ import {
   getAccountAddressAndPubKey,
   useAccountAddressForChain,
   useAccounts,
+  useModal,
 } from '@hyperlane-xyz/widgets';
 import BigNumber from 'bignumber.js';
 import { Form, Formik, useFormikContext } from 'formik';
@@ -30,8 +31,13 @@ import { useStore } from '../store';
 import { SelectOrInputTokenIds } from '../tokens/SelectOrInputTokenIds';
 import { TokenSelectField } from '../tokens/TokenSelectField';
 import { useIsApproveRequired } from '../tokens/approval';
-import { useDestinationBalance, useOriginBalance } from '../tokens/balances';
+import {
+  getDestinationNativeBalance,
+  useDestinationBalance,
+  useOriginBalance,
+} from '../tokens/balances';
 import { getIndexForToken, getTokenByIndex, useWarpCore } from '../tokens/hooks';
+import { RecipientConfirmationModal } from './RecipientConfirmationModal';
 import { useFetchMaxAmount } from './maxAmount';
 import { TransferFormValues } from './types';
 import { useRecipientBalanceWatcher } from './useBalanceWatcher';
@@ -49,12 +55,26 @@ export function TransferTokenForm() {
   const [isReview, setIsReview] = useState(false);
   // Flag for check current type of token
   const [isNft, setIsNft] = useState(false);
+  // Modal for confirming address
+  const {
+    open: openConfirmationModal,
+    close: closeConfirmationModal,
+    isOpen: isConfirmationModalOpen,
+  } = useModal();
 
   const validate = (values: TransferFormValues) => validateForm(warpCore, values, accounts);
 
-  const onSubmitForm = (values: TransferFormValues) => {
-    logger.debug('Reviewing transfer form values for:', values.origin, values.destination);
-    setIsReview(true);
+  const onSubmitForm = async (values: TransferFormValues) => {
+    logger.debug('Checking destination native balance for:', values.destination, values.recipient);
+    const balance = await getDestinationNativeBalance(multiProvider, values);
+    if (isNullish(balance)) return;
+    else if (balance > 0n) {
+      logger.debug('Reviewing transfer form values for:', values.origin, values.destination);
+      setIsReview(true);
+    } else {
+      logger.debug('Recipient has no balance on destination. Confirming address.');
+      openConfirmationModal();
+    }
   };
 
   return (
@@ -79,6 +99,11 @@ export function TransferTokenForm() {
             isReview={isReview}
             isValidating={isValidating}
             setIsReview={setIsReview}
+          />
+          <RecipientConfirmationModal
+            isOpen={isConfirmationModalOpen}
+            close={closeConfirmationModal}
+            onConfirm={() => setIsReview(true)}
           />
         </Form>
       )}
@@ -276,7 +301,7 @@ function ButtonSection({
         type="button"
         color="primary"
         onClick={() => setIsReview(false)}
-        classes="px-6 py-1.5"
+        className="px-6 py-1.5"
         icon={<ChevronIcon direction="w" width={10} height={6} color={Color.white} />}
       >
         <span>Edit</span>
@@ -285,7 +310,7 @@ function ButtonSection({
         type="button"
         color="accent"
         onClick={triggerTransactionsHandler}
-        classes="flex-1 px-3 py-1.5"
+        className="flex-1 px-3 py-1.5"
       >
         {`Send to ${chainDisplayName}`}
       </SolidButton>
@@ -315,7 +340,7 @@ function MaxButton({ balance, disabled }: { balance?: TokenAmount; disabled?: bo
       onClick={onClick}
       color="primary"
       disabled={disabled}
-      classes="text-xs absolute right-1 top-2.5 bottom-1 px-2 opacity-90 all:rounded"
+      className="absolute bottom-1 right-1 top-2.5 px-2 text-xs opacity-90 all:rounded"
     >
       {isLoading ? (
         <div className="flex items-center">
@@ -345,7 +370,7 @@ function SelfButton({ disabled }: { disabled?: boolean }) {
       onClick={onClick}
       color="primary"
       disabled={disabled}
-      classes="text-xs absolute right-1 top-2.5 bottom-1 px-2 opacity-90 all:rounded"
+      className="absolute bottom-1 right-1 top-2.5 px-2 text-xs opacity-90 all:rounded"
     >
       Self
     </SolidButton>

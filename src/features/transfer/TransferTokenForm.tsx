@@ -18,14 +18,16 @@ import { toast } from 'react-toastify';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
 import { SolidButton } from '../../components/buttons/SolidButton';
 import { TextField } from '../../components/input/TextField';
+import { WARP_QUERY_PARAMS } from '../../consts/args';
 import { config } from '../../consts/config';
 import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
+import { getQueryParams, updateQueryParam } from '../../utils/queryParams';
 import { ChainConnectionWarning } from '../chains/ChainConnectionWarning';
 import { ChainSelectField } from '../chains/ChainSelectField';
 import { ChainWalletWarning } from '../chains/ChainWalletWarning';
 import { useChainDisplayName, useMultiProvider } from '../chains/hooks';
-import { getNumRoutesWithSelectedChain } from '../chains/utils';
+import { getNumRoutesWithSelectedChain, tryGetValidChainName } from '../chains/utils';
 import { useIsAccountSanctioned } from '../sanctions/hooks/useIsAccountSanctioned';
 import { useStore } from '../store';
 import { SelectOrInputTokenIds } from '../tokens/SelectOrInputTokenIds';
@@ -36,7 +38,12 @@ import {
   useDestinationBalance,
   useOriginBalance,
 } from '../tokens/balances';
-import { getIndexForToken, getTokenByIndex, useWarpCore } from '../tokens/hooks';
+import {
+  getIndexForToken,
+  getInitialTokenIndex,
+  getTokenByIndex,
+  useWarpCore,
+} from '../tokens/hooks';
 import { RecipientConfirmationModal } from './RecipientConfirmationModal';
 import { useFetchMaxAmount } from './maxAmount';
 import { TransferFormValues } from './types';
@@ -111,7 +118,13 @@ export function TransferTokenForm() {
   );
 }
 
-function SwapChainsButton({ disabled }: { disabled?: boolean }) {
+function SwapChainsButton({
+  disabled,
+  onSwapChain,
+}: {
+  disabled?: boolean;
+  onSwapChain: (origin: string, destination: string) => void;
+}) {
   const { values, setFieldValue } = useFormikContext<TransferFormValues>();
   const { origin, destination } = values;
 
@@ -120,8 +133,8 @@ function SwapChainsButton({ disabled }: { disabled?: boolean }) {
     setFieldValue('origin', destination);
     setFieldValue('destination', origin);
     // Reset other fields on chain change
-    setFieldValue('tokenIndex', undefined);
     setFieldValue('recipient', '');
+    onSwapChain(destination, origin);
   };
 
   return (
@@ -141,7 +154,7 @@ function SwapChainsButton({ disabled }: { disabled?: boolean }) {
 function ChainSelectSection({ isReview }: { isReview: boolean }) {
   const warpCore = useWarpCore();
 
-  const { values } = useFormikContext<TransferFormValues>();
+  const { values, setFieldValue } = useFormikContext<TransferFormValues>();
 
   const originRouteCounts = useMemo(() => {
     return getNumRoutesWithSelectedChain(warpCore, values.origin, true);
@@ -151,6 +164,36 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
     return getNumRoutesWithSelectedChain(warpCore, values.destination, false);
   }, [values.destination, warpCore]);
 
+  const setTokenOnChainChange = (origin: string, destination: string) => {
+    const tokensWithRoute = warpCore.getTokensForRoute(origin, destination);
+    let newFieldValue: number | undefined;
+    if (tokensWithRoute.length === 1) {
+      const token = tokensWithRoute[0];
+      newFieldValue = getIndexForToken(warpCore, token);
+      updateQueryParam(WARP_QUERY_PARAMS.TOKEN, token.addressOrDenom);
+      // Not found or Multiple possibilities
+    } else {
+      newFieldValue = undefined;
+      updateQueryParam(WARP_QUERY_PARAMS.TOKEN, undefined);
+    }
+
+    setFieldValue('tokenIndex', newFieldValue);
+  };
+
+  const handleChange = (chainName: string, fieldName: string) => {
+    if (fieldName === WARP_QUERY_PARAMS.ORIGIN)
+      setTokenOnChainChange(chainName, values.destination);
+    else if (fieldName === WARP_QUERY_PARAMS.DESTINATION)
+      setTokenOnChainChange(values.origin, chainName);
+    updateQueryParam(fieldName, chainName);
+  };
+
+  const onSwapChain = (origin: string, destination: string) => {
+    updateQueryParam(WARP_QUERY_PARAMS.ORIGIN, origin);
+    updateQueryParam(WARP_QUERY_PARAMS.DESTINATION, destination);
+    setTokenOnChainChange(origin, destination);
+  };
+
   return (
     <div className="mt-2 flex items-center justify-between gap-4">
       <ChainSelectField
@@ -158,15 +201,17 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
         label="From"
         disabled={isReview}
         customListItemField={destinationRouteCounts}
+        onChange={handleChange}
       />
       <div className="flex flex-1 flex-col items-center">
-        <SwapChainsButton disabled={isReview} />
+        <SwapChainsButton disabled={isReview} onSwapChain={onSwapChain} />
       </div>
       <ChainSelectField
         name="destination"
         label="To"
         disabled={isReview}
         customListItemField={originRouteCounts}
+        onChange={handleChange}
       />
     </div>
   );
@@ -179,12 +224,21 @@ function TokenSection({
   setIsNft: (b: boolean) => void;
   isReview: boolean;
 }) {
+  const onChangeToken = (addressOrDenom: string) => {
+    updateQueryParam(WARP_QUERY_PARAMS.TOKEN, addressOrDenom);
+  };
+
   return (
     <div className="flex-1">
       <label htmlFor="tokenIndex" className="block pl-0.5 text-sm text-gray-600">
         Token
       </label>
-      <TokenSelectField name="tokenIndex" disabled={isReview} setIsNft={setIsNft} />
+      <TokenSelectField
+        name="tokenIndex"
+        disabled={isReview}
+        setIsNft={setIsNft}
+        onChangeToken={onChangeToken}
+      />
     </div>
   );
 }
@@ -474,17 +528,36 @@ function WarningBanners() {
 
 function useFormInitialValues(): TransferFormValues {
   const warpCore = useWarpCore();
+  const params = getQueryParams();
+
+  const originQuery = tryGetValidChainName(
+    params.get(WARP_QUERY_PARAMS.ORIGIN),
+    warpCore.multiProvider,
+  );
+  const destinationQuery = tryGetValidChainName(
+    params.get(WARP_QUERY_PARAMS.DESTINATION),
+    warpCore.multiProvider,
+  );
+
+  const tokenIndex = getInitialTokenIndex(
+    warpCore,
+    params.get(WARP_QUERY_PARAMS.TOKEN),
+    originQuery,
+    destinationQuery,
+  );
+
   return useMemo(() => {
     const firstToken = warpCore.tokens[0];
     const connectedToken = firstToken.connections?.[0];
+
     return {
-      origin: firstToken.chainName,
-      destination: connectedToken?.token?.chainName || '',
-      tokenIndex: getIndexForToken(warpCore, firstToken),
+      origin: originQuery ? originQuery : firstToken.chainName,
+      destination: destinationQuery ? destinationQuery : connectedToken?.token?.chainName || '',
+      tokenIndex: tokenIndex,
       amount: '',
       recipient: '',
     };
-  }, [warpCore]);
+  }, [warpCore, destinationQuery, originQuery, tokenIndex]);
 }
 
 const insufficientFundsErrMsg = /insufficient.[funds|lamports]/i;

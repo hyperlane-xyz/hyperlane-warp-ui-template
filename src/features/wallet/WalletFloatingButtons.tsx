@@ -18,14 +18,14 @@ export function WalletFloatingButtons() {
         title="History"
         onClick={() => setIsSideBarOpen(!isSideBarOpen)}
       >
-        <HistoryIcon color={Color.primary} height={20} width={20} />
+        <HistoryIcon color={Color.primary['500']} height={20} width={20} />
       </IconButton>
       <Link
         href={links.warpDocs}
         target="_blank"
         className={`p-0.5 ${styles.roundedCircle} ${styles.link}`}
       >
-        <DocsIcon color={Color.primary} height={19} width={19} className="p-px" />
+        <DocsIcon color={Color.primary['500']} height={19} width={19} className="p-px" />
       </Link>
     </div>
   );

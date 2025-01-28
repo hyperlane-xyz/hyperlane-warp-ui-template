@@ -68,7 +68,7 @@ export function EvmWalletContext({ children }: PropsWithChildren<unknown>) {
     <WagmiProvider config={wagmiConfig}>
       <RainbowKitProvider
         theme={lightTheme({
-          accentColor: Color.primary,
+          accentColor: Color.primary['500'],
           borderRadius: 'small',
           fontStack: 'system',
         })}

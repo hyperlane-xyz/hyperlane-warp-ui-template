@@ -7,7 +7,7 @@ export const links = {
   warpDocs: 'https://docs.hyperlane.xyz/docs/reference/applications/warp-routes',
   gasDocs: 'https://docs.hyperlane.xyz/docs/reference/hooks/interchain-gas',
   chains: 'https://docs.hyperlane.xyz/docs/resources/domains',
-  twitter: 'https://twitter.com/hyperlane',
+  twitter: 'https://x.com/hyperlane',
   blog: 'https://medium.com/hyperlane',
   tos: 'https://hyperlane.xyz/terms-of-service',
   privacyPolicy: 'https://hyperlane.xyz/privacy-policy',

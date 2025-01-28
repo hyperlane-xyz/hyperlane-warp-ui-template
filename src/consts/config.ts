@@ -28,12 +28,7 @@ interface Config {
 export const config: Config = Object.freeze({
   addressBlacklist: ADDRESS_BLACKLIST.map((address) => address.toLowerCase()),
   chainWalletWhitelists,
-<<<<<<< HEAD
-  enableExplorerLink: true,
-  explorerApiKeys,
-=======
   enableExplorerLink: false,
->>>>>>> main
   isDevMode,
   registryUrl,
   registryBranch,

@@ -6,13 +6,13 @@ import { ChainLogo } from '../../components/icons/ChainLogo';
 import ArrowRightIcon from '../../images/icons/arrow-right.svg';
 import CollapseIcon from '../../images/icons/collapse-icon.svg';
 import ResetIcon from '../../images/icons/reset-icon.svg';
-import { getIconByTransferStatus, STATUSES_WITH_ICON } from '../../utils/transfer';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { useStore } from '../store';
 import { tryFindToken, useWarpCore } from '../tokens/hooks';
 import { TransfersDetailsModal } from '../transfer/TransfersDetailsModal';
 import { TransferContext } from '../transfer/types';
+import { getIconByTransferStatus, STATUSES_WITH_ICON } from '../transfer/utils';
 
 export function SideBarMenu({
   onClickConnectWallet,

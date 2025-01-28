@@ -21,6 +21,7 @@ import { TextField } from '../../components/input/TextField';
 import { WARP_QUERY_PARAMS } from '../../consts/args';
 import { config } from '../../consts/config';
 import { Color } from '../../styles/Color';
+import { isIntentStandard } from '../../utils/intents';
 import { logger } from '../../utils/logger';
 import { getQueryParams, updateQueryParam } from '../../utils/queryParams';
 import { ChainConnectionWarning } from '../chains/ChainConnectionWarning';
@@ -470,15 +471,26 @@ function ReviewDetails({ visible }: { visible: boolean }) {
               <div>
                 <h4>Transaction 1: Approve Transfer</h4>
                 <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs">
-                  <p>{`Router Address: ${originToken?.addressOrDenom}`}</p>
-                  {originToken?.collateralAddressOrDenom && (
-                    <p>{`Collateral Address: ${originToken.collateralAddressOrDenom}`}</p>
+                  {originToken && isIntentStandard(originToken.standard) ? (
+                    <>
+                      <p>{`Router Address: ${originToken?.intentRouterAddressOrDenom}`}</p>
+                      {originToken?.addressOrDenom && (
+                        <p>{`Token Address: ${originToken.addressOrDenom}`}</p>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <p>{`Router Address: ${originToken?.addressOrDenom}`}</p>
+                      {originToken?.collateralAddressOrDenom && (
+                        <p>{`Collateral Address: ${originToken.collateralAddressOrDenom}`}</p>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
             )}
             <div>
-              <h4>{`Transaction${isApproveRequired ? ' 2' : ''}: Transfer Remote`}</h4>
+              <h4>{`Transaction${isApproveRequired ? ' 2' : ''}: Open Order`}</h4>
               <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs">
                 {destinationToken?.addressOrDenom && (
                   <p className="flex">
@@ -493,7 +505,7 @@ function ReviewDetails({ visible }: { visible: boolean }) {
                 {fees?.localQuote && fees.localQuote.amount > 0n && (
                   <p className="flex">
                     <span className="min-w-[6.5rem]">Local Gas (est.)</span>
-                    <span>{`${fees.localQuote.getDecimalFormattedAmount().toFixed(4) || '0'} ${
+                    <span>{`${fees.localQuote.getDecimalFormattedAmount().toFixed(18) || '0'} ${
                       fees.localQuote.token.symbol || ''
                     }`}</span>
                   </p>
@@ -562,6 +574,7 @@ function useFormInitialValues(): TransferFormValues {
 
 const insufficientFundsErrMsg = /insufficient.[funds|lamports]/i;
 const emptyAccountErrMsg = /AccountNotFound/i;
+const DEFAULT_FILL_DEADLINE = Math.floor(Date.now() / 1000) + 60 * 3;
 
 async function validateForm(
   warpCore: WarpCore,
@@ -584,6 +597,7 @@ async function validateForm(
       recipient,
       sender: address || '',
       senderPubKey: await senderPubKey,
+      fillDeadline: values.fillDeadline ?? DEFAULT_FILL_DEADLINE,
     });
     return result;
   } catch (error: any) {

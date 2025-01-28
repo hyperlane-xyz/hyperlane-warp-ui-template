@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        name: [ezeth, injective, nexus]
+        name: [ezeth, injective, nexus, trump]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3

@@ -40,7 +40,7 @@ export function ConnectAwareSubmitButton<FormValues = any>({ chainName, text, cl
   useTimeout(clearErrors, 3500);
 
   return (
-    <SolidButton type={type} color={color} onClick={onClick} classes={classes}>
+    <SolidButton type={type} color={color} onClick={onClick} className={classes}>
       {content}
     </SolidButton>
   );

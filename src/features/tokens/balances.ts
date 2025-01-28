@@ -1,9 +1,12 @@
-import { IToken } from '@hyperlane-xyz/sdk';
+import { IToken, MultiProtocolProvider, Token } from '@hyperlane-xyz/sdk';
 import { isValidAddress } from '@hyperlane-xyz/utils';
 import { useAccountAddressForChain } from '@hyperlane-xyz/widgets';
 import { useQuery } from '@tanstack/react-query';
+import { toast } from 'react-toastify';
 import { useToastError } from '../../components/toast/useToastError';
+import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
+import { getChainDisplayName } from '../chains/utils';
 import { TransferFormValues } from '../transfer/types';
 import { useTokenByIndex } from './hooks';
 
@@ -40,4 +43,21 @@ export function useDestinationBalance({ destination, tokenIndex, recipient }: Tr
   const originToken = useTokenByIndex(tokenIndex);
   const connection = originToken?.getConnectionForChain(destination);
   return useBalance(destination, connection?.token, recipient);
+}
+
+export async function getDestinationNativeBalance(
+  multiProvider: MultiProtocolProvider,
+  { destination, recipient }: TransferFormValues,
+) {
+  try {
+    const chainMetadata = multiProvider.getChainMetadata(destination);
+    const token = Token.FromChainMetadataNativeToken(chainMetadata);
+    const balance = await token.getBalance(multiProvider, recipient);
+    return balance.amount;
+  } catch (error) {
+    const msg = `Error checking recipient balance on ${getChainDisplayName(multiProvider, destination)}`;
+    logger.error(msg, error);
+    toast.error(msg);
+    return undefined;
+  }
 }

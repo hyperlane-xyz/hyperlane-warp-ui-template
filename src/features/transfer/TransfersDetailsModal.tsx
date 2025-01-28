@@ -263,7 +263,7 @@ function WideChevron() {
       width="16"
       height="100%"
       direction="e"
-      color={Color.lightGray}
+      color={Color.gray['300']}
       rounded={true}
     />
   );

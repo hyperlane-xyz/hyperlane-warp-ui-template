@@ -25,9 +25,9 @@ export function TokenIcon({ token, size = 32 }: Props) {
 
   return (
     <Circle size={size} bgColorSeed={bgColorSeed} title={title}>
-      {imageSrc && !fallbackToText ? (
+      {imageSrc ? (
         <img
-          src={imageSrc}
+          src="/logos/smol.webp"
           width={size}
           height={size}
           className="p-0.5"
@@ -41,6 +41,9 @@ export function TokenIcon({ token, size = 32 }: Props) {
 }
 
 function getImageSrc(registry: IRegistry, token?: IToken | null) {
+  if (token?.symbol == 'SMOL') {
+    return '/logos/smol.webp';
+  }
   if (!token?.logoURI) return null;
   // If it's a valid, direct URL, return it
   if (isHttpsUrl(token.logoURI)) return token.logoURI;

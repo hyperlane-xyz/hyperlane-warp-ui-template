@@ -1,7 +1,7 @@
 import { TokenStandard, WarpCoreConfig } from '@hyperlane-xyz/sdk';
 import { zeroAddress } from 'viem';
 
-const ROUTER = '0xe0c8f83bA0686FDF1a76AF0cC202181AEaA25a03';
+const ROUTER = '0x6d2175B89315A9EB6c7eA71fDE54Ac0f294aDC34';
 const ITT = '0x5f94BC7Fb4A2779fef010F96b496cD36A909E818';
 
 // A list of Warp Route token configs

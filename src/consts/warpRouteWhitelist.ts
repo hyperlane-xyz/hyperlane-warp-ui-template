@@ -80,4 +80,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // TRUMP routes
   'TRUMP/arbitrum-avalanche-base-flowmainnet-form-optimism-solanamainnet-worldchain',
+
+  // jitoSOL
+  'JitoSOL/eclipsemainnet-solanamainnet',
 ];

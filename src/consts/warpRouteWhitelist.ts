@@ -80,4 +80,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // TRUMP routes
   'TRUMP/arbitrum-avalanche-base-flowmainnet-form-optimism-solanamainnet-worldchain',
+
+  // rstETH routes
+  'rstETH/ethereum-zircuit',
 ];

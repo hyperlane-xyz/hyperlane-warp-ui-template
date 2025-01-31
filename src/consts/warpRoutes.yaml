@@ -2,5 +2,42 @@
 # These configs will be merged with the warp routes in the configured registry
 # The input here is typically the output of the Hyperlane CLI warp deploy command
 ---
-tokens: []
+tokens:
+  - addressOrDenom: "0xa4bbac7ed5bda8ec71a1af5ee84d4c5a737bd875"
+    chainName: arbitrum
+    collateralAddressOrDenom: "0x9e64d3b9e8ec387a9a58ced80b71ed815f8d82b5"
+    connections: []
+    decimals: 18
+    name: SMOL
+    standard: EvmHypCollateral
+    symbol: SMOL
+  - addressOrDenom: "0x53cce6d10e43d1b3d11872ad22ec2acd8d2537b8"
+    chainName: ethereum
+    connections:
+      - token: ethereum|treasure|0xb73e4f558F7d4436d77a18f56e4EE9d01764c641
+      - token: sealevel|solanamainnet|7Z7mZ4d31sfC3mcQYQXUNo6j9snByT2gs5eDkXYmZAyn
+    decimals: 18
+    name: SMOL
+    standard: EvmHypSynthetic
+    symbol: SMOL
+  - addressOrDenom: 7Z7mZ4d31sfC3mcQYQXUNo6j9snByT2gs5eDkXYmZAyn
+    chainName: solanamainnet
+    collateralAddressOrDenom: 5KHQeeQvM4qBtmX3WnaCMGpM3Th7jYpqcHf3c6qzPodM
+    connections:
+      - token: ethereum|ethereum|0x53cce6d10e43d1b3d11872ad22ec2acd8d2537b8
+      - token: ethereum|treasure|0xb73e4f558F7d4436d77a18f56e4EE9d01764c641
+    decimals: 9
+    name: SMOL
+    standard: SealevelHypSynthetic
+    symbol: SMOL
+  - addressOrDenom: "0xb73e4f558F7d4436d77a18f56e4EE9d01764c641"
+    chainName: treasure
+    connections:
+      - token: ethereum|ethereum|0x53cce6d10e43d1b3d11872ad22ec2acd8d2537b8
+      - token: sealevel|solanamainnet|7Z7mZ4d31sfC3mcQYQXUNo6j9snByT2gs5eDkXYmZAyn
+    decimals: 18
+    name: SMOL
+    standard: EvmHypSynthetic
+    symbol: SMOL
+
 options: {}

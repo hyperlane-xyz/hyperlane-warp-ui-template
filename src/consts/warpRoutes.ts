@@ -1,5 +1,4 @@
 import { TokenStandard, WarpCoreConfig } from '@hyperlane-xyz/sdk';
-import { zeroAddress } from 'viem';
 
 const ROUTER = '0x6d2175B89315A9EB6c7eA71fDE54Ac0f294aDC34';
 const ITT = '0x5f94BC7Fb4A2779fef010F96b496cD36A909E818';
@@ -10,9 +9,9 @@ const ITT = '0x5f94BC7Fb4A2779fef010F96b496cD36A909E818';
 export const warpRouteConfigs: WarpCoreConfig = {
   tokens: [
     {
-      addressOrDenom: ITT,
+      addressOrDenom: ROUTER,
       chainName: 'optimismsepolia',
-      intentRouterAddressOrDenom: ROUTER,
+      collateralAddressOrDenom: ITT,
       connections: [
         {
           token: 'ethereum|basesepolia|' + ITT,
@@ -31,9 +30,9 @@ export const warpRouteConfigs: WarpCoreConfig = {
       symbol: 'ITT',
     },
     {
-      addressOrDenom: ITT,
+      addressOrDenom: ROUTER,
       chainName: 'basesepolia',
-      intentRouterAddressOrDenom: ROUTER,
+      collateralAddressOrDenom: ITT,
       connections: [
         {
           token: 'ethereum|optimismsepolia|' + ITT,
@@ -52,9 +51,9 @@ export const warpRouteConfigs: WarpCoreConfig = {
       symbol: 'ITT',
     },
     {
-      addressOrDenom: ITT,
+      addressOrDenom: ROUTER,
       chainName: 'arbitrumsepolia',
-      intentRouterAddressOrDenom: ROUTER,
+      collateralAddressOrDenom: ITT,
       connections: [
         {
           token: 'ethereum|optimismsepolia|' + ITT,
@@ -73,9 +72,9 @@ export const warpRouteConfigs: WarpCoreConfig = {
       symbol: 'ITT',
     },
     {
-      addressOrDenom: ITT,
+      addressOrDenom: ROUTER,
       chainName: 'sepolia',
-      intentRouterAddressOrDenom: ROUTER,
+      collateralAddressOrDenom: ITT,
       connections: [
         {
           token: 'ethereum|optimismsepolia|' + ITT,
@@ -94,18 +93,17 @@ export const warpRouteConfigs: WarpCoreConfig = {
       symbol: 'ITT',
     },
     {
-      addressOrDenom: zeroAddress,
+      addressOrDenom: ROUTER,
       chainName: 'optimismsepolia',
-      intentRouterAddressOrDenom: ROUTER,
       connections: [
         {
-          token: 'ethereum|basesepolia|' + zeroAddress,
+          token: 'ethereum|basesepolia|',
         },
         {
-          token: 'ethereum|arbitrumsepolia|' + zeroAddress,
+          token: 'ethereum|arbitrumsepolia|',
         },
         {
-          token: 'ethereum|sepolia|' + zeroAddress,
+          token: 'ethereum|sepolia|',
         },
       ],
       decimals: 18,
@@ -115,18 +113,17 @@ export const warpRouteConfigs: WarpCoreConfig = {
       symbol: 'ETH',
     },
     {
-      addressOrDenom: zeroAddress,
+      addressOrDenom: ROUTER,
       chainName: 'basesepolia',
-      intentRouterAddressOrDenom: ROUTER,
       connections: [
         {
-          token: 'ethereum|optimismsepolia|' + zeroAddress,
+          token: 'ethereum|optimismsepolia|',
         },
         {
-          token: 'ethereum|arbitrumsepolia|' + zeroAddress,
+          token: 'ethereum|arbitrumsepolia|',
         },
         {
-          token: 'ethereum|sepolia|' + zeroAddress,
+          token: 'ethereum|sepolia|',
         },
       ],
       decimals: 18,
@@ -136,18 +133,17 @@ export const warpRouteConfigs: WarpCoreConfig = {
       symbol: 'ETH',
     },
     {
-      addressOrDenom: zeroAddress,
+      addressOrDenom: ROUTER,
       chainName: 'arbitrumsepolia',
-      intentRouterAddressOrDenom: ROUTER,
       connections: [
         {
-          token: 'ethereum|optimismsepolia|' + zeroAddress,
+          token: 'ethereum|optimismsepolia|',
         },
         {
-          token: 'ethereum|basesepolia|' + zeroAddress,
+          token: 'ethereum|basesepolia|',
         },
         {
-          token: 'ethereum|sepolia|' + zeroAddress,
+          token: 'ethereum|sepolia|',
         },
       ],
       decimals: 18,
@@ -157,18 +153,17 @@ export const warpRouteConfigs: WarpCoreConfig = {
       symbol: 'ETH',
     },
     {
-      addressOrDenom: zeroAddress,
+      addressOrDenom: ROUTER,
       chainName: 'sepolia',
-      intentRouterAddressOrDenom: ROUTER,
       connections: [
         {
-          token: 'ethereum|optimismsepolia|' + zeroAddress,
+          token: 'ethereum|optimismsepolia|',
         },
         {
-          token: 'ethereum|arbitrumsepolia|' + zeroAddress,
+          token: 'ethereum|arbitrumsepolia|',
         },
         {
-          token: 'ethereum|basesepolia|' + zeroAddress,
+          token: 'ethereum|basesepolia|',
         },
       ],
       decimals: 18,

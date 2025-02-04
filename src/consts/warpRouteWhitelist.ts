@@ -83,4 +83,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // jitoSOL
   'JitoSOL/eclipsemainnet-solanamainnet',
+
+  // rstETH routes
+  'rstETH/ethereum-zircuit',
 ];

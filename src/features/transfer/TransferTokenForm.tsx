@@ -479,7 +479,9 @@ function ReviewDetails({ visible }: { visible: boolean }) {
               </div>
             )}
             <div>
-              <h4>{`Transaction${isApproveRequired ? ' 2' : ''}: Open Order`}</h4>
+              <h4>{`Transaction${isApproveRequired ? ' 2' : ''}:
+              ${destinationToken && isIntentStandard(destinationToken.standard) ? 'Open Order' : 'Transfer Remote'}
+              `}</h4>
               <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs">
                 {destinationToken?.addressOrDenom && (
                   <p className="flex">

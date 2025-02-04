@@ -86,4 +86,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // rstETH routes
   'rstETH/ethereum-zircuit',
+
+  // SMOL routes
+  'SMOL/arbitrum-ethereum-solanamainnet-treasure',
 ];

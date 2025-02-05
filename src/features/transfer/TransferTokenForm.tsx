@@ -549,10 +549,11 @@ function useFormInitialValues(): TransferFormValues {
   return useMemo(() => {
     const firstToken = warpCore.tokens[0];
     const connectedToken = firstToken.connections?.[0];
+    const chainsValid = originQuery && destinationQuery;
 
     return {
-      origin: originQuery ? originQuery : firstToken.chainName,
-      destination: destinationQuery ? destinationQuery : connectedToken?.token?.chainName || '',
+      origin: chainsValid ? originQuery : firstToken.chainName,
+      destination: chainsValid ? destinationQuery : connectedToken?.token?.chainName || '',
       tokenIndex: tokenIndex,
       amount: '',
       recipient: '',

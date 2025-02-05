@@ -89,4 +89,6 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // SMOL routes
   'SMOL/arbitrum-ethereum-solanamainnet-treasure',
+
+  
 ];

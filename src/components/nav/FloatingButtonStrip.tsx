@@ -13,7 +13,11 @@ export function FloatingButtonStrip() {
     isSideBarOpen: s.isSideBarOpen,
   }));
 
-  const { isOpen: isAddConfigOpen, open: openAddConfig, close: closeAddConfig } = useModal();
+  const {
+    isOpen: isAddWarpConfigOpen,
+    open: openAddWarpConfig,
+    close: closeAddWarpConfig,
+  } = useModal();
 
   return (
     <>
@@ -26,7 +30,11 @@ export function FloatingButtonStrip() {
           <HistoryIcon color={Color.primary['500']} height={22} width={22} />
         </IconButton>
         {config.showAddRouteButton && (
-          <IconButton className={styles.roundedCircle} title="Add route" onClick={openAddConfig}>
+          <IconButton
+            className={styles.roundedCircle}
+            title="Add route"
+            onClick={openAddWarpConfig}
+          >
             <PlusIcon color={Color.primary['500']} height={26} width={26} />
           </IconButton>
         )}
@@ -38,7 +46,7 @@ export function FloatingButtonStrip() {
           <DocsIcon color={Color.primary['500']} height={21} width={21} className="p-px" />
         </Link>
       </div>
-      <AddWarpConfigModal isOpen={isAddConfigOpen} close={closeAddConfig} />
+      <AddWarpConfigModal isOpen={isAddWarpConfigOpen} close={closeAddWarpConfig} />
     </>
   );
 }

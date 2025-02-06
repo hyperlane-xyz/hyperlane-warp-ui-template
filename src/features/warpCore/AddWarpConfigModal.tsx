@@ -48,6 +48,7 @@ export function AddWarpConfigModal({ isOpen, close }: { isOpen: boolean; close: 
 
 // TODO de-dupe with Form in ChainAddMenu in widgets lib
 function Form({ onAdd }: { onAdd: (warpCoreConfig: WarpCoreConfig) => void }) {
+  const multiProvider = useMultiProvider();
   const [textInput, setTextInput] = useState('');
   const [error, setError] = useState<any>(null);
 
@@ -55,8 +56,6 @@ function Form({ onAdd }: { onAdd: (warpCoreConfig: WarpCoreConfig) => void }) {
     setTextInput(e.target.value);
     setError(null);
   };
-
-  const multiProvider = useMultiProvider();
 
   const onClickAdd = () => {
     const result = tryParseConfigInput(textInput, multiProvider);

@@ -18,6 +18,7 @@ interface Config {
   registryUrl: string | undefined; // Optional URL to use a custom registry instead of the published canonical version
   registryBranch?: string | undefined; // Optional customization of the registry branch instead of main
   registryProxyUrl?: string; // Optional URL to use a custom proxy for the GithubRegistry
+  showAddRouteButton: boolean; // Show/Hide the add route config icon in the button strip
   showDisabledTokens: boolean; // Show/Hide invalid token options in the selection modal
   showTipBox: boolean; // Show/Hide the blue tip box above the transfer form
   transferBlacklist: string; // comma-separated list of routes between which transfers are disabled. Expects Caip2Id-Caip2Id (e.g. ethereum:1-sealevel:1399811149)
@@ -33,6 +34,7 @@ export const config: Config = Object.freeze({
   registryUrl,
   registryBranch,
   registryProxyUrl,
+  showAddRouteButton: true,
   showDisabledTokens: false,
   showTipBox: true,
   version,

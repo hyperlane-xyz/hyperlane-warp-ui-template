@@ -13,6 +13,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // ETH routes
   'ETH/ethereum-viction',
+  'ETH/ethereum-vana',
 
   // tETH routes
   'tETH/eclipsemainnet-ethereum',
@@ -35,11 +36,17 @@ export const warpRouteWhitelist: Array<string> | null = [
   'USDC/ethereum-viction',
   'USDC/eclipsemainnet-ethereum-solanamainnet',
   'USDC/appchain-base',
+  'USDC/arbitrum-base-endurance',
+  'USDC/ethereum-form',
+  'USDC.a/artela-base',
+  'USDC/ethereum-superseed',
 
   // USDT routes
   'USDT/ethereum-inevm',
   'USDT/ethereum-viction',
   'USDT/eclipsemainnet-ethereum-solanamainnet',
+  'USDT/ethereum-form',
+  'USDT/ethereum-superseed',
 
   // INJ routes
   'INJ/inevm-injective',
@@ -56,6 +63,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // WBTC routes
   'WBTC/eclipsemainnet-ethereum',
+  'WBTC/ethereum-form',
 
   // ORCA routes
   'ORCA/eclipsemainnet-solanamainnet',
@@ -80,6 +88,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // TRUMP routes
   'TRUMP/arbitrum-avalanche-base-flowmainnet-form-optimism-solanamainnet-worldchain',
+  'TRUMP/solanamainnet-trumpchain',
 
   // jitoSOL
   'JitoSOL/eclipsemainnet-solanamainnet',
@@ -89,4 +98,35 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // SMOL routes
   'SMOL/arbitrum-ethereum-solanamainnet-treasure',
+
+  // MAGIC routes
+  'MAGIC/arbitrum-treasure',
+
+  // WETH routes
+  'WETH.a/artela-base',
+
+  // FASTUSD routes
+  'fastUSD/ethereum-sei',
+
+  // CBBTC routes
+  'cbBTC/ethereum-superseed',
+  'cbBTC/ethereum-flowmainnet',
+
+  // EZETH routes
+  'ezETH/arbitrum-base-blast-bsc-ethereum-fraxtal-linea-mode-optimism-sei-swell-taiko-zircuit',
+
+  // GAME routes
+  'GAME/base-form',
+
+  // AIXBT routes
+  'AIXBT/base-form',
+
+  // // WSTETH routes
+  'wstETH/ethereum-form',
+
+  // // PZETH routes
+  'pzETH/ethereum-swell-zircuit',
+
+  // ART routes
+  'ART/artela-base-solanamainnet',
 ];

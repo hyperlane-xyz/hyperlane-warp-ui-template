@@ -121,10 +121,10 @@ export const warpRouteWhitelist: Array<string> | null = [
   // AIXBT routes
   'AIXBT/base-form',
 
-  // // wstETH routes
+  // wstETH routes
   'wstETH/ethereum-form',
 
-  // // pzETH routes
+  // pzETH routes
   'pzETH/ethereum-swell-zircuit',
 
   // ART routes

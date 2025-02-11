@@ -105,14 +105,14 @@ export const warpRouteWhitelist: Array<string> | null = [
   // WETH routes
   'WETH.a/artela-base',
 
-  // FASTUSD routes
+  // fastUSD routes
   'fastUSD/ethereum-sei',
 
-  // CBBTC routes
+  // cbBTC routes
   'cbBTC/ethereum-superseed',
   'cbBTC/ethereum-flowmainnet',
 
-  // EZETH routes
+  // ezETH routes
   'ezETH/arbitrum-base-blast-bsc-ethereum-fraxtal-linea-mode-optimism-sei-swell-taiko-zircuit',
 
   // GAME routes
@@ -121,10 +121,10 @@ export const warpRouteWhitelist: Array<string> | null = [
   // AIXBT routes
   'AIXBT/base-form',
 
-  // // WSTETH routes
+  // // wstETH routes
   'wstETH/ethereum-form',
 
-  // // PZETH routes
+  // // pzETH routes
   'pzETH/ethereum-swell-zircuit',
 
   // ART routes

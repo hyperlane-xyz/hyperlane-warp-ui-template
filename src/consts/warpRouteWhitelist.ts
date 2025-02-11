@@ -13,7 +13,6 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // ETH routes
   'ETH/ethereum-viction',
-  'ETH/ethereum-vana',
 
   // tETH routes
   'tETH/eclipsemainnet-ethereum',
@@ -88,7 +87,6 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // TRUMP routes
   'TRUMP/arbitrum-avalanche-base-flowmainnet-form-optimism-solanamainnet-worldchain',
-  'TRUMP/solanamainnet-trumpchain',
 
   // jitoSOL
   'JitoSOL/eclipsemainnet-solanamainnet',
@@ -113,7 +111,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'cbBTC/ethereum-flowmainnet',
 
   // ezETH routes
-  'ezETH/arbitrum-base-blast-bsc-ethereum-fraxtal-linea-mode-optimism-sei-swell-taiko-zircuit',
+  'ezETH/arbitrum-base-berachain-blast-bsc-ethereum-fraxtal-linea-mode-optimism-sei-swell-taiko-unichain-zircuit',
 
   // GAME routes
   'GAME/base-form',

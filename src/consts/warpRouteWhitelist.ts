@@ -127,4 +127,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // ART routes
   'ART/artela-base-solanamainnet',
+
+  // LOGX routes
+  'LOGX/arbitrum-solanamainnet',
 ];

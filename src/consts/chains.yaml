@@ -18,3 +18,30 @@
 #   protocol: ethereum
 #   rpcUrls:
 #     - http: http://127.0.0.1:8555
+sonicsvm:
+  blockExplorers:
+    - apiUrl: https://explorer.sonic.game/?cluster=custom&customUrl=https%3A%2F%2Fapi.mainnet-alpha.sonic.game
+      family: other
+      name: Sonic SVM Explorer
+      url: https://explorer.sonic.game/?cluster=custom&customUrl=https%3A%2F%2Fapi.mainnet-alpha.sonic.game
+  blocks:
+    confirmations: 1
+    estimateBlockTime: 0.4
+    reorgPeriod: 0
+  chainId: 507150715
+  deployer:
+    name: Abacus Works
+    url: https://www.hyperlane.xyz
+  displayName: Sonic SVM
+  domainId: 507150715
+  gasCurrencyCoinGeckoId: solana
+  name: sonicsvm
+  nativeToken:
+    decimals: 9
+    name: Solana
+    symbol: SOL
+  protocol: sealevel
+  rpcUrls:
+    - http: https://api.mainnet-alpha.sonic.game
+  technicalStack: other
+  mailbox: 4MaM9GQZ753NhUcXH1pPsQwof1Mf3ZnjeNF4yx6S3p3N

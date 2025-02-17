@@ -2,26 +2,5 @@
 # These configs will be merged with the warp routes in the configured registry
 # The input here is typically the output of the Hyperlane CLI warp deploy command
 ---
-tokens:
-  - addressOrDenom: "0x22Fd11F93F0303346c9b9070cc67C4Bc7aB2dABB"
-    chainName: base
-    collateralAddressOrDenom: "0xC0D3700000c0e32716863323bFd936b54a1633d1"
-    connections:
-      - token: sealevel|solanamainnet|Dt62xRfWf7h6cURDsr19tqGWhjHMdobNVQ25cfHtZXg7
-    decimals: 18
-    logoURI: /deployments/warp_routes/CDX/logo.svg
-    name: Cod3x Token
-    standard: EvmHypCollateral
-    symbol: CDX
-  - addressOrDenom: Dt62xRfWf7h6cURDsr19tqGWhjHMdobNVQ25cfHtZXg7
-    chainName: solanamainnet
-    collateralAddressOrDenom: APXsvXT37zZocsMtdzfgGrAFzYJJuwGYQCUzuHxwaW4i
-    connections:
-      - token: ethereum|base|0x22Fd11F93F0303346c9b9070cc67C4Bc7aB2dABB
-    decimals: 9
-    logoURI: /deployments/warp_routes/CDX/logo.svg
-    name: Cod3x Token
-    standard: SealevelHypSynthetic
-    symbol: CDX
-
+tokens: []
 options: {}

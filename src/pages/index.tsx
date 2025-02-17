@@ -1,7 +1,7 @@
 import type { NextPage } from 'next';
+import { FloatingButtonStrip } from '../components/nav/FloatingButtonStrip';
 import { TipCard } from '../components/tip/TipCard';
 import { TransferTokenCard } from '../features/transfer/TransferTokenCard';
-import { WalletFloatingButtons } from '../features/wallet/WalletFloatingButtons';
 
 const Home: NextPage = () => {
   return (
@@ -9,7 +9,7 @@ const Home: NextPage = () => {
       <TipCard />
       <div className="relative">
         <TransferTokenCard />
-        <WalletFloatingButtons />
+        <FloatingButtonStrip />
       </div>
     </div>
   );

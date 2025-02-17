@@ -130,4 +130,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // LOGX routes
   'LOGX/arbitrum-solanamainnet',
+
+  // CDX routes
+  'CDX/base-solanamainnet',
 ];

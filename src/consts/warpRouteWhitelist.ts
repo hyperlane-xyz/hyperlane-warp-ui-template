@@ -12,6 +12,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'stTIA/eclipsemainnet-stride',
 
   // ETH routes
+  'ETH/ethereum-hyperevm',
   'ETH/ethereum-viction',
 
   // tETH routes
@@ -45,6 +46,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'USDT/ethereum-viction',
   'USDT/eclipsemainnet-ethereum-solanamainnet',
   'USDT/ethereum-form',
+  'USDT/ethereum-hyperevm',
   'USDT/ethereum-superseed',
 
   // INJ routes
@@ -63,6 +65,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   // WBTC routes
   'WBTC/eclipsemainnet-ethereum',
   'WBTC/ethereum-form',
+  'WBTC/ethereum-hyperevm',
 
   // ORCA routes
   'ORCA/eclipsemainnet-solanamainnet',

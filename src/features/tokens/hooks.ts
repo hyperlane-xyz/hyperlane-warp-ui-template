@@ -44,7 +44,7 @@ export function tryFindToken(
   }
 }
 
-function getTokenIndexFromChains(
+export function getTokenIndexFromChains(
   warpCore: WarpCore,
   addressOrDenom: string | null,
   origin: string,

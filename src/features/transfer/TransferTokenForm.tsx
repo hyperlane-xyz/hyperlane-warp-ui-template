@@ -39,9 +39,9 @@ import {
   useOriginBalance,
 } from '../tokens/balances';
 import {
-  getIndexForToken,
   getInitialTokenIndex,
   getTokenByIndex,
+  getTokenIndexFromChains,
   useWarpCore,
 } from '../tokens/hooks';
 import { RecipientConfirmationModal } from './RecipientConfirmationModal';
@@ -165,19 +165,10 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
   }, [values.destination, warpCore]);
 
   const setTokenOnChainChange = (origin: string, destination: string) => {
-    const tokensWithRoute = warpCore.getTokensForRoute(origin, destination);
-    let newFieldValue: number | undefined;
-    if (tokensWithRoute.length === 1) {
-      const token = tokensWithRoute[0];
-      newFieldValue = getIndexForToken(warpCore, token);
-      updateQueryParam(WARP_QUERY_PARAMS.TOKEN, token.addressOrDenom);
-      // Not found or Multiple possibilities
-    } else {
-      newFieldValue = undefined;
-      updateQueryParam(WARP_QUERY_PARAMS.TOKEN, undefined);
-    }
-
-    setFieldValue('tokenIndex', newFieldValue);
+    const tokenIndex = getTokenIndexFromChains(warpCore, null, origin, destination);
+    const token = getTokenByIndex(warpCore, tokenIndex);
+    updateQueryParam(WARP_QUERY_PARAMS.TOKEN, token?.addressOrDenom);
+    setFieldValue('tokenIndex', tokenIndex);
   };
 
   const handleChange = (chainName: string, fieldName: string) => {

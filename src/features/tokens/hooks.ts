@@ -88,3 +88,11 @@ export function getInitialTokenIndex(
 
   return undefined;
 }
+
+export function tryFindTokenConnection(token: Token, chainName: string) {
+  const connectedToken = token.connections?.find(
+    (connection) => connection.token.chainName === chainName,
+  );
+
+  return connectedToken ? connectedToken.token : null;
+}

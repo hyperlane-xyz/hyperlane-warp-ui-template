@@ -538,6 +538,7 @@ function useFormInitialValues(): TransferFormValues {
     params.get(WARP_QUERY_PARAMS.TOKEN),
     originQuery,
     destinationQuery,
+    defaultOriginToken,
   );
 
   return useMemo(() => {

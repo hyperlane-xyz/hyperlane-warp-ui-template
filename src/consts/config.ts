@@ -1,4 +1,5 @@
 import { ChainMap } from '@hyperlane-xyz/sdk';
+import { ProtocolType } from '@hyperlane-xyz/utils';
 import { ADDRESS_BLACKLIST } from './blacklist';
 
 const isDevMode = process?.env?.NODE_ENV === 'development';
@@ -13,6 +14,7 @@ const chainWalletWhitelists = JSON.parse(process?.env?.NEXT_PUBLIC_CHAIN_WALLET_
 interface Config {
   addressBlacklist: string[]; // A list of addresses that are blacklisted and cannot be used in the app
   chainWalletWhitelists: ChainMap<string[]>; // A map of chain names to a list of wallet names that work for it
+  defaultOriginChain: string | undefined; // The initial origin chain to show when app first loads
   enableExplorerLink: boolean; // Include a link to the hyperlane explorer in the transfer modal
   isDevMode: boolean; // Enables some debug features in the app
   registryUrl: string | undefined; // Optional URL to use a custom registry instead of the published canonical version
@@ -24,12 +26,14 @@ interface Config {
   transferBlacklist: string; // comma-separated list of routes between which transfers are disabled. Expects Caip2Id-Caip2Id (e.g. ethereum:1-sealevel:1399811149)
   version: string; // Matches version number in package.json
   walletConnectProjectId: string; // Project ID provided by walletconnect
+  walletProtocols: ProtocolType[] | undefined; // Wallet Protocols to show in the wallet connect modal. Leave undefined to include all of them
 }
 
 export const config: Config = Object.freeze({
   addressBlacklist: ADDRESS_BLACKLIST.map((address) => address.toLowerCase()),
   chainWalletWhitelists,
   enableExplorerLink: false,
+  defaultOriginChain: undefined,
   isDevMode,
   registryUrl,
   registryBranch,
@@ -40,4 +44,5 @@ export const config: Config = Object.freeze({
   version,
   transferBlacklist,
   walletConnectProjectId,
+  walletProtocols: undefined,
 });

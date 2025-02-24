@@ -68,8 +68,9 @@ export function getInitialTokenIndex(
   addressOrDenom: string | null,
   originQuery?: string,
   destinationQuery?: string,
+  defaultOriginToken?: Token,
 ): number | undefined {
-  const firstToken = warpCore.tokens[0];
+  const firstToken = defaultOriginToken || warpCore.tokens[0];
   const connectedToken = firstToken.connections?.[0];
 
   // origin query and destination query is defined

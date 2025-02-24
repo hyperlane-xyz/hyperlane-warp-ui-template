@@ -538,6 +538,9 @@ function useFormInitialValues(): TransferFormValues {
     params.get(WARP_QUERY_PARAMS.DESTINATION),
     warpCore.multiProvider,
   );
+  const defaultOriginToken = config.defaultOriginChain
+    ? warpCore.getTokensForChain(config.defaultOriginChain)?.[0]
+    : undefined;
 
   const tokenIndex = getInitialTokenIndex(
     warpCore,
@@ -547,7 +550,7 @@ function useFormInitialValues(): TransferFormValues {
   );
 
   return useMemo(() => {
-    const firstToken = warpCore.tokens[0];
+    const firstToken = defaultOriginToken || warpCore.tokens[0];
     const connectedToken = firstToken.connections?.[0];
     const chainsValid = originQuery && destinationQuery;
 
@@ -558,7 +561,7 @@ function useFormInitialValues(): TransferFormValues {
       amount: '',
       recipient: '',
     };
-  }, [warpCore, destinationQuery, originQuery, tokenIndex]);
+  }, [warpCore, destinationQuery, originQuery, tokenIndex, defaultOriginToken]);
 }
 
 const insufficientFundsErrMsg = /insufficient.[funds|lamports]/i;

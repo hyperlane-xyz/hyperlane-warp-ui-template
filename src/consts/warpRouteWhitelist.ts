@@ -12,6 +12,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'stTIA/eclipsemainnet-stride',
 
   // ETH routes
+  'ETH/ethereum-hyperevm',
   'ETH/ethereum-viction',
 
   // tETH routes
@@ -27,7 +28,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'ECLIP/arbitrum-neutron',
 
   // LUMIA routes
-  'LUMIA/bsc-ethereum-lumia',
+  'LUMIA/bsc-ethereum-lumiaprism',
 
   // USDC routes
   'USDC/ethereum-inevm',
@@ -35,11 +36,18 @@ export const warpRouteWhitelist: Array<string> | null = [
   'USDC/ethereum-viction',
   'USDC/eclipsemainnet-ethereum-solanamainnet',
   'USDC/appchain-base',
+  'USDC/arbitrum-base-endurance',
+  'USDC/ethereum-form',
+  'USDC.a/artela-base',
+  'USDC/ethereum-superseed',
 
   // USDT routes
   'USDT/ethereum-inevm',
   'USDT/ethereum-viction',
   'USDT/eclipsemainnet-ethereum-solanamainnet',
+  'USDT/ethereum-form',
+  'USDT/ethereum-hyperevm',
+  'USDT/ethereum-superseed',
 
   // INJ routes
   'INJ/inevm-injective',
@@ -47,6 +55,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   // SOL routes
   'SOL/eclipsemainnet-solanamainnet',
   'SOL/solanamainnet-soon',
+  'SOL/hyperevm-solanamainnet',
 
   // ezSOL routes
   'ezSOL/eclipsemainnet-solanamainnet',
@@ -56,6 +65,8 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // WBTC routes
   'WBTC/eclipsemainnet-ethereum',
+  'WBTC/ethereum-form',
+  'WBTC/ethereum-hyperevm',
 
   // ORCA routes
   'ORCA/eclipsemainnet-solanamainnet',
@@ -80,4 +91,50 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // TRUMP routes
   'TRUMP/arbitrum-avalanche-base-flowmainnet-form-optimism-solanamainnet-worldchain',
+
+  // jitoSOL
+  'JitoSOL/eclipsemainnet-solanamainnet',
+
+  // rstETH routes
+  'rstETH/ethereum-zircuit',
+
+  // SMOL routes
+  'SMOL/arbitrum-ethereum-solanamainnet-treasure',
+
+  // MAGIC routes
+  'MAGIC/arbitrum-treasure',
+
+  // WETH routes
+  'WETH.a/artela-base',
+
+  // fastUSD routes
+  'fastUSD/ethereum-sei',
+
+  // cbBTC routes
+  'cbBTC/ethereum-superseed',
+  'cbBTC/ethereum-flowmainnet',
+
+  // ezETH routes
+  'ezETH/arbitrum-base-berachain-blast-bsc-ethereum-fraxtal-linea-mode-optimism-sei-swell-taiko-unichain-zircuit',
+
+  // GAME routes
+  'GAME/base-form',
+
+  // AIXBT routes
+  'AIXBT/base-form',
+
+  // wstETH routes
+  'wstETH/ethereum-form',
+
+  // pzETH routes
+  'pzETH/ethereum-swell-zircuit',
+
+  // ART routes
+  'ART/artela-base-solanamainnet',
+
+  // LOGX routes
+  'LOGX/arbitrum-solanamainnet',
+
+  // CDX routes
+  'CDX/base-solanamainnet',
 ];

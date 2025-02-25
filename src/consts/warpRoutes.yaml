@@ -114,29 +114,73 @@ tokens:
     standard: SealevelHypSynthetic
     symbol: USDC
 
-# USD*
-  - addressOrDenom: FRPTWpmnNPm4LS2a5NUL1QenUrzGDAuifZBUi1mTWTdt
-    chainName: solanamainnet
-    # USD* is not yet on Coingecko. As it's a stablecoin, we approximate with USDC's value.
-    coinGeckoId: usd-coin
-    collateralAddressOrDenom: BenJy1n3WTx9mTjEvy63e8Q1j4RqUc6E4VBMz3ir4Wo6
-    connections:
-      - token: sealevel|sonicsvm|68g96Cq16vKAqyG79BFVeJCgitjK9fQ1NRCRmcPkJtDB
-    decimals: 6
-    logoURI: /deployments/warp_routes/USD*/logo.svg
-    name: USD Star
-    standard: SealevelHypCollateral
-    symbol: USD*
-  - addressOrDenom: 68g96Cq16vKAqyG79BFVeJCgitjK9fQ1NRCRmcPkJtDB
-    chainName: sonicsvm
-    collateralAddressOrDenom: BhaUtuAuuv8B5BiPx4LZyaPhY8CCtJsGNAic24pZzV78
-    connections:
-      - token: sealevel|solanamainnet|FRPTWpmnNPm4LS2a5NUL1QenUrzGDAuifZBUi1mTWTdt
-    decimals: 6
-    logoURI: /deployments/warp_routes/USD*/logo.svg
-    name: USD Star
-    standard: SealevelHypSynthetic
-    symbol: USD*
+# # USD*
+#   - addressOrDenom: FRPTWpmnNPm4LS2a5NUL1QenUrzGDAuifZBUi1mTWTdt
+#     chainName: solanamainnet
+#     # USD* is not yet on Coingecko. As it's a stablecoin, we approximate with USDC's value.
+#     coinGeckoId: usd-coin
+#     collateralAddressOrDenom: BenJy1n3WTx9mTjEvy63e8Q1j4RqUc6E4VBMz3ir4Wo6
+#     connections:
+#       - token: sealevel|sonicsvm|68g96Cq16vKAqyG79BFVeJCgitjK9fQ1NRCRmcPkJtDB
+#     decimals: 6
+#     logoURI: /deployments/warp_routes/USD*/logo.svg
+#     name: USD Star
+#     standard: SealevelHypCollateral
+#     symbol: USD*
+#   - addressOrDenom: 68g96Cq16vKAqyG79BFVeJCgitjK9fQ1NRCRmcPkJtDB
+#     chainName: sonicsvm
+#     collateralAddressOrDenom: BhaUtuAuuv8B5BiPx4LZyaPhY8CCtJsGNAic24pZzV78
+#     connections:
+#       - token: sealevel|solanamainnet|FRPTWpmnNPm4LS2a5NUL1QenUrzGDAuifZBUi1mTWTdt
+#     decimals: 6
+#     logoURI: /deployments/warp_routes/USD*/logo.svg
+#     name: USD Star
+#     standard: SealevelHypSynthetic
+#     symbol: USD*
 
+
+# lrtsSOL
+  - addressOrDenom: HNaDuUrtr34tXZApiAMGHG9DgAvGYsY5C6w9M2iHu59u
+    chainName: solanamainnet
+    collateralAddressOrDenom: 4tARAT4ssRYhrENCTxxZrmjL741eE2G23Q1zLPDW2ipf
+    connections:
+      - token: sealevel|sonicsvm|573J5VSCMCvUVPBBPmr13ovtEmgzU5J1kyLLJ8L3XMJ6
+    decimals: 9
+    logoURI: /deployments/warp_routes/lrtsSOL/logo.svg
+    name: adraLRT SOL (Solayer)
+    standard: SealevelHypCollateral
+    symbol: lrtsSOL
+  - addressOrDenom: 573J5VSCMCvUVPBBPmr13ovtEmgzU5J1kyLLJ8L3XMJ6
+    chainName: sonicsvm
+    collateralAddressOrDenom: 7JPHd4DQMwMnFSrKJQZzqabcrWfuRvsuWsxwuGbbmFfR
+    connections:
+      - token: sealevel|solanamainnet|HNaDuUrtr34tXZApiAMGHG9DgAvGYsY5C6w9M2iHu59u
+    decimals: 9
+    logoURI: /deployments/warp_routes/lrtsSOL/logo.svg
+    name: adraLRT SOL (Solayer)
+    standard: SealevelHypSynthetic
+    symbol: lrtsSOL
+
+# sonicSOL
+  - addressOrDenom: Fhqa36L7sFJDiMdu54WUah9stAwRacycqHJYm3b3Geje
+    chainName: solanamainnet
+    collateralAddressOrDenom: sonickAJFiVLcYXx25X9vpF293udaWqDMUCiGtk7dg2
+    connections:
+      - token: sealevel|sonicsvm|BGmt6P5djRc3Teo3WLwXfZbEvN9pVJt7wAMgzcCc2idf
+    decimals: 9
+    logoURI: /deployments/warp_routes/sonicSOL/logo.jpeg
+    name: Sonic Restaked SOL
+    standard: SealevelHypCollateral
+    symbol: sonicSOL
+  - addressOrDenom: BGmt6P5djRc3Teo3WLwXfZbEvN9pVJt7wAMgzcCc2idf
+    chainName: sonicsvm
+    collateralAddressOrDenom: CCaj4n3kbuqsGvx4KxiXBfoQPtAgww6fwinHTAPqV5dS
+    connections:
+      - token: sealevel|solanamainnet|Fhqa36L7sFJDiMdu54WUah9stAwRacycqHJYm3b3Geje
+    decimals: 9
+    logoURI: /deployments/warp_routes/sonicSOL/logo.jpeg
+    name: Sonic Restaked SOL
+    standard: SealevelHypSynthetic
+    symbol: sonicSOL
 
 options: {}

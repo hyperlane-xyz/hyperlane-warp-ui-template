@@ -137,4 +137,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // CDX routes
   'CDX/base-solanamainnet',
+
+  // Mint routes
+  'MINT/mint-solanamainnet',
 ];

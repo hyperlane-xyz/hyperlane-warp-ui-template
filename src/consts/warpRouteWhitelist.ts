@@ -117,6 +117,9 @@ export const warpRouteWhitelist: Array<string> | null = [
   // ezETH routes
   'ezETH/arbitrum-base-berachain-blast-bsc-ethereum-fraxtal-linea-mode-optimism-sei-swell-taiko-unichain-zircuit',
 
+  // pzETH routes
+  'pzETH/ethereum-swell-zircuit',
+
   // GAME routes
   'GAME/base-form',
 

@@ -129,6 +129,9 @@ export const warpRouteWhitelist: Array<string> | null = [
   // pzETH routes
   'pzETH/ethereum-swell-zircuit',
 
+  // pumpBTCuni routes
+  'pumpBTC.uni/ethereum-unichain',
+
   // ART routes
   'ART/artela-base-solanamainnet',
 

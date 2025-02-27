@@ -37,7 +37,7 @@ tokens:
     symbol: sSOL
   - addressOrDenom: XYbsJQGzZgPDbt9Swd2ao54nhGSq8Wjq23MoogHvEq6
     chainName: sonicsvm
-    collateralAddressOrDenom: 21e27teReDgn7Z3J1ogdpJmFhUi75eYeiCD22zqCuwpd
+    collateralAddressOrDenom: DYzxL1BWKytFiEnP7XKeRLvgheuQttHW643srPG6rNRn
     connections:
       - token: sealevel|solanamainnet|9PHKQFEDzedHuigSm1ZBojEX4DVF3cincGZwy3k7VHTN
     decimals: 9

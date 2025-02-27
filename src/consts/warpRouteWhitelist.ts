@@ -40,6 +40,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'USDC/ethereum-form',
   'USDC.a/artela-base',
   'USDC/ethereum-superseed',
+  'USDC/solanamainnet-sonicsvm',
 
   // USDT routes
   'USDT/ethereum-inevm',
@@ -48,6 +49,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'USDT/ethereum-form',
   'USDT/ethereum-hyperevm',
   'USDT/ethereum-superseed',
+  'USDT/solanamainnet-sonicsvm',
 
   // INJ routes
   'INJ/inevm-injective',
@@ -56,6 +58,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'SOL/eclipsemainnet-solanamainnet',
   'SOL/solanamainnet-soon',
   'SOL/hyperevm-solanamainnet',
+  'SOL/solanamainnet-sonicsvm',
 
   // ezSOL routes
   'ezSOL/eclipsemainnet-solanamainnet',
@@ -143,4 +146,16 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // Mint routes
   'MINT/mint-solanamainnet',
+
+  // lrtsSOL routes
+  'lrtsSOL/solanamainnet-sonicsvm',
+
+  // sSOL routes
+  'sSOL/solanamainnet-sonicsvm',
+
+  // sonicSOL routes
+  'sonicSOL/solanamainnet-sonicsvm',
+
+  // SONIC routes
+  'SONIC/solanamainnet-sonicsvm',
 ];

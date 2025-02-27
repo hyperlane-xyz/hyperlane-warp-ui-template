@@ -12,6 +12,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'stTIA/eclipsemainnet-stride',
 
   // ETH routes
+  'ETH/ethereum-hyperevm',
   'ETH/ethereum-viction',
 
   // tETH routes
@@ -39,13 +40,16 @@ export const warpRouteWhitelist: Array<string> | null = [
   'USDC/ethereum-form',
   'USDC.a/artela-base',
   'USDC/ethereum-superseed',
+  'USDC/solanamainnet-sonicsvm',
 
   // USDT routes
   'USDT/ethereum-inevm',
   'USDT/ethereum-viction',
   'USDT/eclipsemainnet-ethereum-solanamainnet',
   'USDT/ethereum-form',
+  'USDT/ethereum-hyperevm',
   'USDT/ethereum-superseed',
+  'USDT/solanamainnet-sonicsvm',
 
   // INJ routes
   'INJ/inevm-injective',
@@ -53,6 +57,8 @@ export const warpRouteWhitelist: Array<string> | null = [
   // SOL routes
   'SOL/eclipsemainnet-solanamainnet',
   'SOL/solanamainnet-soon',
+  'SOL/hyperevm-solanamainnet',
+  'SOL/solanamainnet-sonicsvm',
 
   // ezSOL routes
   'ezSOL/eclipsemainnet-solanamainnet',
@@ -63,6 +69,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   // WBTC routes
   'WBTC/eclipsemainnet-ethereum',
   'WBTC/ethereum-form',
+  'WBTC/ethereum-hyperevm',
 
   // ORCA routes
   'ORCA/eclipsemainnet-solanamainnet',
@@ -125,9 +132,30 @@ export const warpRouteWhitelist: Array<string> | null = [
   // pzETH routes
   'pzETH/ethereum-swell-zircuit',
 
+  // pumpBTCuni routes
+  'pumpBTC.uni/ethereum-unichain',
+
   // ART routes
   'ART/artela-base-solanamainnet',
 
   // LOGX routes
   'LOGX/arbitrum-solanamainnet',
+
+  // CDX routes
+  'CDX/base-solanamainnet',
+
+  // Mint routes
+  'MINT/mint-solanamainnet',
+
+  // lrtsSOL routes
+  'lrtsSOL/solanamainnet-sonicsvm',
+
+  // sSOL routes
+  'sSOL/solanamainnet-sonicsvm',
+
+  // sonicSOL routes
+  'sonicSOL/solanamainnet-sonicsvm',
+
+  // SONIC routes
+  'SONIC/solanamainnet-sonicsvm',
 ];

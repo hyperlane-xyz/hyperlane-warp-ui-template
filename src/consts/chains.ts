@@ -4,6 +4,8 @@ import {
   injective,
   solanamainnet,
   solanamainnetAddresses,
+  sonicsvm,
+  sonicsvmAddresses,
   soon,
   soonAddresses,
 } from '@hyperlane-xyz/registry';
@@ -31,6 +33,10 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
   soon: {
     ...soon,
     mailbox: soonAddresses.mailbox,
+  },
+  sonicsvm: {
+    ...sonicsvm,
+    mailbox: sonicsvmAddresses.mailbox,
   },
   injective: {
     ...injective,

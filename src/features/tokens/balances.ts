@@ -3,6 +3,8 @@ import { isValidAddress } from '@hyperlane-xyz/utils';
 import { useAccountAddressForChain } from '@hyperlane-xyz/widgets';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
+import { Hex } from 'viem';
+import { useBalance as useWagmiBalance } from 'wagmi';
 import { useToastError } from '../../components/toast/useToastError';
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
@@ -60,4 +62,27 @@ export async function getDestinationNativeBalance(
     toast.error(msg);
     return undefined;
   }
+}
+
+export function useEvmWalletBalance(
+  chainName: string,
+  chainId: number,
+  token: string,
+  refetchEnabled: boolean,
+) {
+  const multiProvider = useMultiProvider();
+  const address = useAccountAddressForChain(multiProvider, chainName);
+  const allowRefetch = Boolean(address) && refetchEnabled;
+
+  const { data, isError, isLoading } = useWagmiBalance({
+    address: address ? (address as Hex) : undefined,
+    token: token ? (token as Hex) : undefined,
+    chainId: chainId,
+    query: {
+      refetchInterval: allowRefetch ? 5000 : false,
+      enabled: allowRefetch,
+    },
+  });
+
+  return { balance: data, isError, isLoading };
 }

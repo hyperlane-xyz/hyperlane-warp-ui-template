@@ -44,7 +44,7 @@ export function tryFindToken(
   }
 }
 
-function getTokenIndexFromChains(
+export function getTokenIndexFromChains(
   warpCore: WarpCore,
   addressOrDenom: string | null,
   origin: string,
@@ -68,8 +68,9 @@ export function getInitialTokenIndex(
   addressOrDenom: string | null,
   originQuery?: string,
   destinationQuery?: string,
+  defaultOriginToken?: Token,
 ): number | undefined {
-  const firstToken = warpCore.tokens[0];
+  const firstToken = defaultOriginToken || warpCore.tokens[0];
   const connectedToken = firstToken.connections?.[0];
 
   // origin query and destination query is defined
@@ -86,4 +87,12 @@ export function getInitialTokenIndex(
     );
 
   return undefined;
+}
+
+export function tryFindTokenConnection(token: Token, chainName: string) {
+  const connectedToken = token.connections?.find(
+    (connection) => connection.token.chainName === chainName,
+  );
+
+  return connectedToken ? connectedToken.token : null;
 }

@@ -152,6 +152,14 @@ export function TokenList({
                 <span>{`Decimals: ${t.token.decimals}`}</span>
                 <span>-</span>
                 <span>{`Chain: ${getChainDisplayName(multiProvider, t.token.chainName)}`}</span>
+                {isIntentStandard(t.token.standard) && (
+                  <>
+                    <span>-</span>
+                    <span>
+                      <i>via intents</i>
+                    </span>
+                  </>
+                )}
               </div>
             </div>
             {t.disabled && (

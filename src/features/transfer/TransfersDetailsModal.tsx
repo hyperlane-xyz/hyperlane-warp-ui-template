@@ -22,6 +22,7 @@ import { getHypExplorerLink } from '../../utils/links';
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName, hasPermissionlessChain } from '../chains/utils';
+import { useStore } from '../store';
 import { tryFindToken, useWarpCore } from '../tokens/hooks';
 import { TransferContext, TransferStatus } from './types';
 import {
@@ -55,6 +56,8 @@ export function TransfersDetailsModal({
     originTxHash,
     msgId,
     timestamp,
+    orderId,
+    remoteTxHash,
   } = transfer || {};
 
   const multiProvider = useMultiProvider();
@@ -173,6 +176,9 @@ export function TransfersDetailsModal({
               url={originTxUrl}
             />
           )}
+          {orderId && remoteTxHash && (
+            <RemoteTransferProperty name="Destination Transaction Hash" orderId={orderId} />
+          )}
           {msgId && <TransferProperty name="Message ID" value={msgId} />}
           {explorerLink && (
             <div className="flex justify-between">
@@ -254,6 +260,28 @@ function TransferProperty({ name, value, url }: { name: string; value: string; u
       </div>
       <div className="mt-1 truncate text-sm leading-normal tracking-wider">{value}</div>
     </div>
+  );
+}
+
+function RemoteTransferProperty({ name, orderId }: { name: string; orderId: string }) {
+  const multiProvider = useMultiProvider();
+  const { transfers } = useStore((s) => ({
+    transfers: s.transfers,
+  }));
+  const transfer = transfers.find((t) => t.orderId === orderId)!;
+
+  return (
+    transfer.remoteTxHash && (
+      <TransferProperty
+        name={name}
+        value={transfer.remoteTxHash ?? ''}
+        url={
+          multiProvider.tryGetExplorerTxUrl(transfer.destination, {
+            hash: transfer.remoteTxHash,
+          }) ?? ''
+        }
+      />
+    )
   );
 }
 

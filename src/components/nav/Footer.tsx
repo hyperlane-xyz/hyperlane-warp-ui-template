@@ -1,4 +1,5 @@
-import { DiscordIcon, GithubIcon, HyperlaneLogo, TwitterIcon } from '@hyperlane-xyz/widgets';
+import { DiscordIcon, GithubIcon, TwitterIcon } from '@hyperlane-xyz/widgets';
+import Image from 'next/image';
 import Link from 'next/link';
 import { ReactNode } from 'react';
 import { links } from '../../consts/links';
@@ -14,13 +15,23 @@ type FooterLink = {
 const footerLinks: FooterLink[] = [
   { title: 'Docs', url: links.docs, external: true },
   { title: 'Terms', url: links.tos, external: true },
-  { title: 'Twitter', url: links.twitter, external: true, icon: <TwitterIcon color="#fff" /> },
+  {
+    title: 'Twitter',
+    url: links.twitter,
+    external: true,
+    icon: <TwitterIcon color={Color.white} />,
+  },
   { title: 'Homepage', url: links.home, external: true },
   { title: 'Privacy', url: links.privacyPolicy, external: true },
-  { title: 'Discord', url: links.discord, external: true, icon: <DiscordIcon color="#fff" /> },
+  {
+    title: 'Discord',
+    url: links.discord,
+    external: true,
+    icon: <DiscordIcon color={Color.white} />,
+  },
   { title: 'Explorer', url: links.explorer, external: true },
   { title: 'Bounty', url: links.bounty, external: true },
-  { title: 'Github', url: links.github, external: true, icon: <GithubIcon color="#fff" /> },
+  { title: 'Github', url: links.github, external: true, icon: <GithubIcon color={Color.white} /> },
 ];
 
 export function Footer() {
@@ -38,14 +49,12 @@ export function Footer() {
 
 function FooterLogo() {
   return (
-    <div className="flex items-center justify-center">
-      <div className="ml-2 h-12 w-12 sm:h-14 sm:w-14">
-        <HyperlaneLogo color={Color.white} />
-      </div>
-      <div className="ml-6 space-y-1 text-lg font-medium sm:text-xl">
-        <div>Go interchain</div>
-        <div>with Hyperlane</div>
-      </div>
+    <div className="ml-6 flex items-center justify-center gap-1.5 space-y-1 text-lg font-medium sm:text-xl">
+      <span>Built with</span>
+      <Image src="/logos/everclear.png" alt="" width={24} height={24} />
+      <span>Everclear and</span>
+      <Image src="/logos/renzo.svg" alt="" width={22} height={22} />
+      <span>Renzo</span>
     </div>
   );
 }

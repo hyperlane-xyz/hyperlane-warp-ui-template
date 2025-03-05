@@ -6,7 +6,7 @@ import {
   WarpCoreConfigSchema,
   validateZodResult,
 } from '@hyperlane-xyz/sdk';
-import { objFilter, objKeys, objMerge } from '@hyperlane-xyz/utils';
+import { objFilter, objMerge } from '@hyperlane-xyz/utils';
 import { warpRouteWhitelist } from '../../consts/warpRouteWhitelist.ts';
 import { warpRouteConfigs as tsWarpRoutes } from '../../consts/warpRoutes.ts';
 import yamlWarpRoutes from '../../consts/warpRoutes.yaml';
@@ -100,22 +100,20 @@ function assembleWarpDeployConfig(
   warpDeployConfigMap: WarpDeployConfigMap,
 ): WarpDeployConfigChainAddressMap {
   return Object.entries(registryWarpRoutes).reduce((acc, [warpRouteId, warpRoute]) => {
-    // check if warpRouteId exists in the warpDeployConfigMap
-    if (objKeys(warpDeployConfigMap).includes(warpRouteId)) {
-      // iterate over each token in the warp route matching chain name with the chain name in warp deploy config for a specific warpRouteId
-      warpRoute.tokens.forEach((token) => {
-        // ignoring tokens with no connections or without addressOrDenom
-        if (!token.connections || !token.addressOrDenom) return;
+    const warpDeployConfig = warpDeployConfigMap[warpRouteId];
+    if (!warpDeployConfig) return acc;
 
-        const warpDeployConfig = warpDeployConfigMap[warpRouteId];
-        if (objKeys(warpDeployConfig).includes(token.chainName)) {
-          if (!acc[token.chainName]) {
-            acc[token.chainName] = {};
-          }
-          acc[token.chainName][token.addressOrDenom] = warpDeployConfig[token.chainName];
-        }
-      });
-    }
+    // iterate over each token in the warp route matching chain name with the chain name in warp deploy config for a specific warpRouteId
+    warpRoute.tokens.forEach(({ chainName, connections, addressOrDenom }) => {
+      // ignoring tokens with no connections or without addressOrDenom
+      if (!connections || !addressOrDenom) return;
+
+      const chainDeployConfig = warpDeployConfig[chainName];
+      if (chainDeployConfig) {
+        acc[chainName] ??= {};
+        acc[chainName][addressOrDenom] = chainDeployConfig;
+      }
+    });
     return acc;
-  }, {});
+  }, {} as WarpDeployConfigChainAddressMap);
 }

@@ -1,11 +1,28 @@
-import { warpRouteConfigs as registryWarpRoutes } from '@hyperlane-xyz/registry';
-import { WarpCoreConfig, WarpCoreConfigSchema, validateZodResult } from '@hyperlane-xyz/sdk';
-import { objFilter, objMerge } from '@hyperlane-xyz/utils';
+import { IRegistry, warpRouteConfigs as registryWarpRoutes } from '@hyperlane-xyz/registry';
+import { WarpDeployConfigMap } from '@hyperlane-xyz/registry/dist/types';
+import {
+  HypTokenRouterConfig,
+  WarpCoreConfig,
+  WarpCoreConfigSchema,
+  validateZodResult,
+} from '@hyperlane-xyz/sdk';
+import { objFilter, objKeys, objMerge } from '@hyperlane-xyz/utils';
 import { warpRouteWhitelist } from '../../consts/warpRouteWhitelist.ts';
 import { warpRouteConfigs as tsWarpRoutes } from '../../consts/warpRoutes.ts';
 import yamlWarpRoutes from '../../consts/warpRoutes.yaml';
 
-export function assembleWarpCoreConfig(storeOverrides: WarpCoreConfig[]): WarpCoreConfig {
+export type WarpDeployConfigChainAddressMap = Record<
+  ChainName,
+  Record<string, HypTokenRouterConfig>
+>;
+
+export async function assembleWarpCoreConfig(
+  storeOverrides: WarpCoreConfig[],
+  registry: IRegistry,
+): Promise<{
+  warpCoreConfig: WarpCoreConfig;
+  warpDeployConfig: WarpDeployConfigChainAddressMap;
+}> {
   const yamlResult = WarpCoreConfigSchema.safeParse(yamlWarpRoutes);
   const yamlConfig = validateZodResult(yamlResult, 'warp core yaml config');
   const tsResult = WarpCoreConfigSchema.safeParse(tsWarpRoutes);
@@ -17,6 +34,9 @@ export function assembleWarpCoreConfig(storeOverrides: WarpCoreConfig[]): WarpCo
   const filteredRegistryConfigValues = Object.values(filteredRegistryConfigMap);
   const filteredRegistryTokens = filteredRegistryConfigValues.map((c) => c.tokens).flat();
   const filteredRegistryOptions = filteredRegistryConfigValues.map((c) => c.options).flat();
+
+  const warpDeployConfigMap = await registry.getWarpDeployConfigs();
+  const warpDeployConfig = assembleWarpDeployConfig(filteredRegistryConfigMap, warpDeployConfigMap);
 
   const storeOverrideTokens = storeOverrides.map((c) => c.tokens).flat();
   const storeOverrideOptions = storeOverrides.map((c) => c.options).flat();
@@ -42,7 +62,7 @@ export function assembleWarpCoreConfig(storeOverrides: WarpCoreConfig[]): WarpCo
       'No warp route configs provided. Please check your registry, warp route whitelist, and custom route configs for issues.',
     );
 
-  return { tokens, options };
+  return { warpCoreConfig: { tokens, options }, warpDeployConfig };
 }
 
 function filterToIds(
@@ -69,6 +89,32 @@ function reduceOptions(optionsList: Array<WarpCoreConfig['options']>): WarpCoreC
     if (!o || !acc) return acc;
     for (const key of Object.keys(o)) {
       acc[key] = (acc[key] || []).concat(o[key] || []);
+    }
+    return acc;
+  }, {});
+}
+
+// Create a Map of chainName and addressOrDenom with its warp deploy config
+function assembleWarpDeployConfig(
+  registryWarpRoutes: Record<string, WarpCoreConfig>,
+  warpDeployConfigMap: WarpDeployConfigMap,
+): WarpDeployConfigChainAddressMap {
+  return Object.entries(registryWarpRoutes).reduce((acc, [warpRouteId, warpRoute]) => {
+    // check if warpRouteId exists in the warpDeployConfigMap
+    if (objKeys(warpDeployConfigMap).includes(warpRouteId)) {
+      // iterate over each token in the warp route matching chain name with the chain name in warp deploy config for a specific warpRouteId
+      warpRoute.tokens.forEach((token) => {
+        // ignoring tokens with no connections or without addressOrDenom
+        if (!token.connections || !token.addressOrDenom) return;
+
+        const warpDeployConfig = warpDeployConfigMap[warpRouteId];
+        if (objKeys(warpDeployConfig).includes(token.chainName)) {
+          if (!acc[token.chainName]) {
+            acc[token.chainName] = {};
+          }
+          acc[token.chainName][token.addressOrDenom] = warpDeployConfig[token.chainName];
+        }
+      });
     }
     return acc;
   }, {});

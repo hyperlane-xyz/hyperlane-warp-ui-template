@@ -14,7 +14,7 @@ import { config } from '../consts/config';
 import { logger } from '../utils/logger';
 import { assembleChainMetadata } from './chains/metadata';
 import { FinalTransferStatuses, TransferContext, TransferStatus } from './transfer/types';
-import { assembleWarpCoreConfig } from './warpCore/warpCoreConfig';
+import { assembleWarpCoreConfig, WarpDeployConfigChainAddressMap } from './warpCore/warpCoreConfig';
 
 // Increment this when persist state has breaking changes
 const PERSIST_STATE_VERSION = 2;
@@ -33,11 +33,13 @@ export interface AppState {
   multiProvider: MultiProtocolProvider;
   registry: IRegistry;
   warpCore: WarpCore;
+  warpDeployConfig: WarpDeployConfigChainAddressMap;
   setWarpContext: (context: {
     registry: IRegistry;
     chainMetadata: ChainMap<ChainMetadata>;
     multiProvider: MultiProtocolProvider;
     warpCore: WarpCore;
+    warpDeployConfig: WarpDeployConfigChainAddressMap;
   }) => void;
 
   // User history
@@ -98,6 +100,7 @@ export const useStore = create<AppState>()(
         logger.debug('Setting warp context in store');
         set({ registry, chainMetadata, multiProvider, warpCore });
       },
+      warpDeployConfig: {},
 
       // User history
       transfers: [],
@@ -159,10 +162,18 @@ export const useStore = create<AppState>()(
             logger.error('Error during hydration', error);
             return;
           }
-          initWarpContext(state).then(({ registry, chainMetadata, multiProvider, warpCore }) => {
-            state.setWarpContext({ registry, chainMetadata, multiProvider, warpCore });
-            logger.debug('Rehydration complete');
-          });
+          initWarpContext(state).then(
+            ({ registry, chainMetadata, multiProvider, warpCore, warpDeployConfig }) => {
+              state.setWarpContext({
+                registry,
+                chainMetadata,
+                multiProvider,
+                warpCore,
+                warpDeployConfig,
+              });
+              logger.debug('Rehydration complete');
+            },
+          );
         };
       },
     },
@@ -177,12 +188,16 @@ async function initWarpContext({
   registry: IRegistry;
   chainMetadataOverrides: ChainMap<Partial<ChainMetadata> | undefined>;
   warpCoreConfigOverrides: WarpCoreConfig[];
+  warpDeployConfig: WarpDeployConfigChainAddressMap;
 }) {
   try {
-    const coreConfig = await assembleWarpCoreConfig(warpCoreConfigOverrides);
-    const chainsInTokens = Array.from(new Set(coreConfig.tokens.map((t) => t.chainName)));
     // Pre-load registry content to avoid repeated requests
     await registry.listRegistryContent();
+    const { warpCoreConfig: coreConfig, warpDeployConfig } = await assembleWarpCoreConfig(
+      warpCoreConfigOverrides,
+      registry,
+    );
+    const chainsInTokens = Array.from(new Set(coreConfig.tokens.map((t) => t.chainName)));
     const { chainMetadata, chainMetadataWithOverrides } = await assembleChainMetadata(
       chainsInTokens,
       registry,
@@ -190,7 +205,7 @@ async function initWarpContext({
     );
     const multiProvider = new MultiProtocolProvider(chainMetadataWithOverrides);
     const warpCore = WarpCore.FromConfig(multiProvider, coreConfig);
-    return { registry, chainMetadata, multiProvider, warpCore };
+    return { registry, chainMetadata, multiProvider, warpCore, warpDeployConfig };
   } catch (error) {
     toast.error('Error initializing warp context. Please check connection status and configs.');
     logger.error('Error initializing warp context', error);
@@ -199,6 +214,7 @@ async function initWarpContext({
       chainMetadata: {},
       multiProvider: new MultiProtocolProvider({}),
       warpCore: new WarpCore(new MultiProtocolProvider({}), []),
+      warpDeployConfig: {},
     };
   }
 }

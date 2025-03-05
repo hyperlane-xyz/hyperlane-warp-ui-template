@@ -29,6 +29,8 @@ export function getTransferStatusLabel(
     else
       statusDescription =
         'Transfer confirmed, the funds will arrive when the message is delivered.';
+  else if (status === TransferStatus.WaitingForFulfillment)
+    statusDescription = 'Transfer confirmed, waiting for solver to deliver...';
   else if (status === TransferStatus.Delivered)
     statusDescription = 'Delivery complete, transfer successful!';
   else if (status === TransferStatus.Failed)

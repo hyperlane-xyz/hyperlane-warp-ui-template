@@ -18,3 +18,29 @@
 #   protocol: ethereum
 #   rpcUrls:
 #     - http: http://127.0.0.1:8555
+# yaml-language-server: $schema=../schema.json
+infinityvmmonza:
+  blocks:
+    confirmations: 1
+    estimateBlockTime: 1
+    reorgPeriod: 1
+  chainId: 96025
+  deployer:
+    name: Abacus Works
+    url: https://www.hyperlane.xyz
+  displayName: Infinity VM Monza Testnet
+  domainId: 96025
+  index:
+    from: 338182
+  isTestnet: true
+  name: infinityvmmonza
+  nativeToken:
+    decimals: 18
+    name: INF
+    symbol: INF
+  protocol: ethereum
+  rpcUrls:
+    - http: https://rpc.monza.infinityvm.xyz
+  technicalStack: other
+  transactionOverrides:
+    gasLimit: 1000000

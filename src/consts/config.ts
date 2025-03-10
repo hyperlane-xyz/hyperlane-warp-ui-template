@@ -23,6 +23,7 @@ interface Config {
   showAddRouteButton: boolean; // Show/Hide the add route config icon in the button strip
   showDisabledTokens: boolean; // Show/Hide invalid token options in the selection modal
   showTipBox: boolean; // Show/Hide the blue tip box above the transfer form
+  shouldDisableChains: boolean; // Enable chain disabling for ChainSearchMenu. When true it will deactivate chains that have disabled status
   transferBlacklist: string; // comma-separated list of routes between which transfers are disabled. Expects Caip2Id-Caip2Id (e.g. ethereum:1-sealevel:1399811149)
   version: string; // Matches version number in package.json
   walletConnectProjectId: string; // Project ID provided by walletconnect
@@ -45,4 +46,5 @@ export const config: Config = Object.freeze({
   transferBlacklist,
   walletConnectProjectId,
   walletProtocols: undefined,
+  shouldDisableChains: false,
 });

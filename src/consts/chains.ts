@@ -1,10 +1,16 @@
 import {
   eclipsemainnet,
   eclipsemainnetAddresses,
+  injective,
   solanamainnet,
   solanamainnetAddresses,
+  sonicsvm,
+  sonicsvmAddresses,
+  soon,
+  soonAddresses,
 } from '@hyperlane-xyz/registry';
-import { ChainMap, ChainMetadata } from '@hyperlane-xyz/sdk';
+import { ChainMap, ChainMetadata, ExplorerFamily } from '@hyperlane-xyz/sdk';
+import { ProtocolType } from '@hyperlane-xyz/utils';
 
 // A map of chain names to ChainMetadata
 // Chains can be defined here, in chains.json, or in chains.yaml
@@ -23,6 +29,20 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
   eclipsemainnet: {
     ...eclipsemainnet,
     mailbox: eclipsemainnetAddresses.mailbox,
+  },
+  soon: {
+    ...soon,
+    mailbox: soonAddresses.mailbox,
+  },
+  sonicsvm: {
+    ...sonicsvm,
+    mailbox: sonicsvmAddresses.mailbox,
+  },
+  injective: {
+    ...injective,
+    rpcUrls: process.env.NEXT_PUBLIC_INJECTIVE_RPC_URL
+      ? [{ http: process.env.NEXT_PUBLIC_INJECTIVE_RPC_URL }, ...injective.rpcUrls]
+      : injective.rpcUrls,
   },
   // mycustomchain: {
   //   protocol: ProtocolType.Ethereum,
@@ -47,4 +67,36 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
   //   },
   //   logoURI: '/logo.svg',
   // },
+
+  celestia: {
+    protocol: ProtocolType.Cosmos,
+    domainId: 123456789, // TODO not a real domain id
+    chainId: 'celestia',
+    name: 'celestia',
+    displayName: 'Celestia',
+    bech32Prefix: 'celestia',
+    slip44: 118,
+    nativeToken: {
+      name: 'Tia',
+      symbol: 'TIA',
+      decimals: 6,
+      denom: 'utia',
+    },
+    grpcUrls: [{ http: 'https://grpc.celestia.nodestake.top' }],
+    restUrls: [{ http: 'https://public-celestia-lcd.numia.xyz' }],
+    rpcUrls: [{ http: 'https://public-celestia-rpc.numia.xyz' }],
+    blockExplorers: [
+      {
+        name: 'MintScan',
+        url: 'https://www.mintscan.io/celestia',
+        // TODO API not supported, using url to meet validation requirements
+        apiUrl: 'https://www.mintscan.io/celestia',
+        family: ExplorerFamily.Other,
+      },
+    ],
+    logoURI: '/logos/celestia.svg',
+    transactionOverrides: {
+      gasPrice: 0.1,
+    },
+  },
 };

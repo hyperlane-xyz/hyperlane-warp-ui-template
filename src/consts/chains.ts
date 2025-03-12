@@ -38,8 +38,8 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
     ...sonicsvm,
     mailbox: sonicsvmAddresses.mailbox,
     // Including rpc override because the main Sonic public RPC is down
-    rpcUrls: process.env.NEXT_PUBLIC_SONIC_RPC_URL
-      ? [{ http: process.env.NEXT_PUBLIC_SONIC_RPC_URL }, ...sonicsvm.rpcUrls]
+    rpcUrls: process.env.NEXT_PUBLIC_SONICSVM_RPC_URL
+      ? [{ http: process.env.NEXT_PUBLIC_SONICSVM_RPC_URL }, ...sonicsvm.rpcUrls]
       : sonicsvm.rpcUrls,
   },
   injective: {

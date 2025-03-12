@@ -165,4 +165,10 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // GPS routes
   'GPS/base-bsc',
+
+  // enzoBTC routes
+  'enzoBTC/bsc-hyperevm',
+
+  // stBTC routes
+  'stBTC/bsc-hyperevm',
 ];

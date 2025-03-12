@@ -1,5 +1,6 @@
 import { ChainMetadata } from '@hyperlane-xyz/sdk';
 import { ChainSearchMenu, ChainSearchMenuProps, Modal } from '@hyperlane-xyz/widgets';
+import { config } from '../../consts/config';
 import { useStore } from '../store';
 
 export function ChainSelectListModal({
@@ -36,6 +37,8 @@ export function ChainSelectListModal({
         customListItemField={customListItemField}
         defaultSortField="custom"
         showChainDetails={showChainDetails}
+        shouldDisableChains={config.shouldDisableChains}
+        showAddChainButton={config.showAddChainButton}
       />
     </Modal>
   );

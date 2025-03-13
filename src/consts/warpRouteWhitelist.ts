@@ -162,4 +162,10 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // REZ routes
   'REZ/base-ethereum',
+
+  // enzoBTC routes
+  'enzoBTC/bsc-hyperevm',
+
+  // stBTC routes
+  'stBTC/bsc-hyperevm',
 ];

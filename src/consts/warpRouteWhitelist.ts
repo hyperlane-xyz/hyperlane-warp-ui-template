@@ -162,7 +162,4 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // REZ routes
   'REZ/base-ethereum',
-
-  // GPS routes
-  'GPS/base-bsc',
 ];

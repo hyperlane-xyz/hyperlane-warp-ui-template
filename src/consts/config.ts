@@ -50,3 +50,4 @@ export const config: Config = Object.freeze({
   walletProtocols: undefined,
   shouldDisableChains: false,
 });
+//test

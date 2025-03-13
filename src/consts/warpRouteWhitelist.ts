@@ -49,7 +49,6 @@ export const warpRouteWhitelist: Array<string> | null = [
   'USDT/eclipsemainnet-ethereum-solanamainnet',
   'USDT/ethereum-form',
   'USDT/ethereum-hyperevm',
-  'USDT/ethereum-superseed',
   'USDT/solanamainnet-sonicsvm',
 
   // INJ routes

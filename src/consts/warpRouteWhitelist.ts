@@ -169,6 +169,6 @@ export const warpRouteWhitelist: Array<string> | null = [
   // stBTC routes
   'stBTC/bsc-hyperevm',
 
-  // GPS routes
+  // GPS route
   'GPS/base-bsc',
 ];

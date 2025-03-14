@@ -4577,14 +4577,14 @@ __metadata:
 
 "@hyperlane-xyz/cosmos-sdk@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/cosmos-sdk::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
   version: 1.0.0
-  resolution: "@hyperlane-xyz/cosmos-sdk@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/cosmos-sdk#/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/cosmos-sdk::hash=60c3e8&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
+  resolution: "@hyperlane-xyz/cosmos-sdk@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/cosmos-sdk#/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/cosmos-sdk::hash=328310&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
   dependencies:
     "@bufbuild/protobuf": "npm:^2.2.3"
     "@cosmjs/stargate": "npm:^0.32.4"
     axios: "npm:^1.7.9"
     long: "npm:^5.2.4"
     protobufjs: "npm:^7.4.0"
-  checksum: 10/b579a37a8c44080811dd5abbb9443fbea918de210a8239fd9db4c825b95233c16bef5c2c3305d71ba4095aae8eabf5a5168f0e014186188af6136f81421165a6
+  checksum: 10/41b743bfb0855c331af1b040c9965d58ee79b8501e853a7cd9824aa89b2fea4163a88547f5b76ae926fc3f6cf0a505e20c9b80388ff664b9b76cfe2b5982e0a7
   languageName: node
   linkType: hard
 
@@ -4600,7 +4600,7 @@ __metadata:
 
 "@hyperlane-xyz/sdk@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/sdk::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
   version: 8.9.0
-  resolution: "@hyperlane-xyz/sdk@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/sdk#/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/sdk::hash=23d504&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
+  resolution: "@hyperlane-xyz/sdk@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/sdk#/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/sdk::hash=86961c&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
   dependencies:
     "@arbitrum/sdk": "npm:^4.0.0"
     "@aws-sdk/client-s3": "npm:^3.577.0"
@@ -4625,7 +4625,7 @@ __metadata:
   peerDependencies:
     "@ethersproject/abi": "*"
     "@ethersproject/providers": "*"
-  checksum: 10/7d368c7e05ad6fb196065ed00bce4aeaeefd0314bb72eba809ba9afff3ba0c706833e6aab744303b5138490cebfbe5a549f7076d16727a58799d294583624b1d
+  checksum: 10/f30898ef93a2ad1575679c3a76c6013dae243b2cc418e2f90da49f87e7c45c7215065d62e7a045740083e82e0e56444bd33fbb770f1a97bff82459b7b5f2110e
   languageName: node
   linkType: hard
 

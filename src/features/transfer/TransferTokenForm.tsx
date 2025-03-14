@@ -574,15 +574,14 @@ async function validateForm(
       origin,
       accounts,
     );
-    // TODO: remove later
-    // const result = await warpCore.validateTransfer({
-    //   originTokenAmount: token.amount(amountWei),
-    //   destination,
-    //   recipient,
-    //   sender: address || '',
-    //   senderPubKey: await senderPubKey,
-    // });
-    return null;
+    const result = await warpCore.validateTransfer({
+      originTokenAmount: token.amount(amountWei),
+      destination,
+      recipient,
+      sender: address || '',
+      senderPubKey: await senderPubKey,
+    });
+    return result;
   } catch (error: any) {
     logger.error('Error validating form', error);
     let errorMsg = errorToString(error, 40);

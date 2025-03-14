@@ -4577,14 +4577,14 @@ __metadata:
 
 "@hyperlane-xyz/cosmos-sdk@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/cosmos-sdk::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
   version: 1.0.0
-  resolution: "@hyperlane-xyz/cosmos-sdk@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/cosmos-sdk#/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/cosmos-sdk::hash=328310&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
+  resolution: "@hyperlane-xyz/cosmos-sdk@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/cosmos-sdk#/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/cosmos-sdk::hash=eacdbc&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
   dependencies:
     "@bufbuild/protobuf": "npm:^2.2.3"
     "@cosmjs/stargate": "npm:^0.32.4"
     axios: "npm:^1.7.9"
     long: "npm:^5.2.4"
     protobufjs: "npm:^7.4.0"
-  checksum: 10/41b743bfb0855c331af1b040c9965d58ee79b8501e853a7cd9824aa89b2fea4163a88547f5b76ae926fc3f6cf0a505e20c9b80388ff664b9b76cfe2b5982e0a7
+  checksum: 10/30d3187458083f749c83bf660376d9aabc3ec276f5ba50d484572d872fbfa01e90df508efc11a961f5a3276f349ddff3dcc5004be6b372be8370a770b7e20f74
   languageName: node
   linkType: hard
 
@@ -4765,7 +4765,7 @@ __metadata:
 
 "@hyperlane-xyz/widgets@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/widgets::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
   version: 8.9.0
-  resolution: "@hyperlane-xyz/widgets@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/widgets#/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/widgets::hash=90a57c&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
+  resolution: "@hyperlane-xyz/widgets@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/widgets#/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/widgets::hash=c2597a&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
   dependencies:
     "@cosmos-kit/react": "npm:^2.18.0"
     "@headlessui/react": "npm:^2.1.8"
@@ -4784,7 +4784,7 @@ __metadata:
   peerDependencies:
     react: ^18
     react-dom: ^18
-  checksum: 10/647affe5de94840dd678df21e60c15a8d8243cdfa3538a8b5df0db2c4919bbee0fac765f69846360c5adfe2be3c98bfa6551da02f3fdba3da0c68ab8d91b0b84
+  checksum: 10/cf530168cd78b3ee3fdfe1905e0c5492c88b13811e06dd24c348db391291d7e3c329bdc9769606a2cc6bc062fcc3424f3b37b1717f210b8a6aef0b3cc37ea5e2
   languageName: node
   linkType: hard
 

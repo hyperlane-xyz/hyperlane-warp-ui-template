@@ -14,7 +14,6 @@ export const warpRouteWhitelist: Array<string> | null = [
   // ETH routes
   'ETH/ethereum-hyperevm',
   'ETH/ethereum-viction',
-  'ETH/base-ethereum-lumiaprism',
 
   // tETH routes
   'tETH/eclipsemainnet-ethereum',

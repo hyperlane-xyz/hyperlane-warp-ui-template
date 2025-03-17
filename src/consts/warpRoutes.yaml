@@ -2,5 +2,34 @@
 # These configs will be merged with the warp routes in the configured registry
 # The input here is typically the output of the Hyperlane CLI warp deploy command
 ---
-tokens: []
-options: {}
+tokens:
+  - addressOrDenom: '0xE4A9622Bf50025fE99A576D484AEf16280A5304f'
+    chainName: base
+    coinGeckoId: ethereum
+    connections:
+      - token: ethereum|lumiaprism|0xdCB5227EA8E5FDE0f761A55dC669EC09807E7C8b
+    decimals: 18
+    logoURI: /deployments/warp_routes/ETH/logo.svg
+    name: Ether
+    standard: EvmHypNative
+    symbol: ETH
+  - addressOrDenom: '0xE0A5921Bcc37eb2FeCc452AE574b86bD4c332196'
+    chainName: ethereum
+    coinGeckoId: ethereum
+    connections:
+      - token: ethereum|lumiaprism|0xdCB5227EA8E5FDE0f761A55dC669EC09807E7C8b
+    decimals: 18
+    logoURI: /deployments/warp_routes/ETH/logo.svg
+    name: Ether
+    standard: EvmHypNative
+    symbol: ETH
+  - addressOrDenom: '0xdCB5227EA8E5FDE0f761A55dC669EC09807E7C8b'
+    chainName: lumiaprism
+    connections:
+      - token: ethereum|base|0xE4A9622Bf50025fE99A576D484AEf16280A5304f
+      - token: ethereum|ethereum|0xE0A5921Bcc37eb2FeCc452AE574b86bD4c332196
+    decimals: 18
+    logoURI: /deployments/warp_routes/ETH/logo.svg
+    name: Ether
+    standard: EvmHypSynthetic
+    symbol: WETH

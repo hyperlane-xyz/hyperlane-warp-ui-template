@@ -79,12 +79,12 @@ export function getInitialTokenIndex(
     return getTokenIndexFromChains(warpCore, addressOrDenom, originQuery, destinationQuery);
 
   // if none of those are defined, use default values and pass token query
-  if (connectedToken) {
+  if (defaultDestinationChain || connectedToken) {
     return getTokenIndexFromChains(
       warpCore,
       addressOrDenom,
       firstToken.chainName,
-      defaultDestinationChain || connectedToken.chainName,
+      defaultDestinationChain || connectedToken?.chainName || '',
     );
   }
 

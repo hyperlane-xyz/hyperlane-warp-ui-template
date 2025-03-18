@@ -19,7 +19,7 @@
     "@headlessui/react": "^2.2.0",
     "@hyperlane-xyz/registry": "10.15.0",
     "@hyperlane-xyz/sdk": "file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/sdk",
-    "@hyperlane-xyz/utils": "8.8.0",
+    "@hyperlane-xyz/utils": "9.0.0",
     "@hyperlane-xyz/widgets": "file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/widgets",
     "@interchain-ui/react": "^1.23.28",
     "@metamask/post-message-stream": "6.1.2",
@@ -106,6 +106,7 @@
     "react-fast-compare": "^3.2",
     "viem": "^2.21.41",
     "zustand": "^4.4",
-    "@hyperlane-xyz/cosmos-sdk": "file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/cosmos-sdk"
+    "@hyperlane-xyz/cosmos-sdk": "file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/cosmos-sdk",
+    "@hyperlane-xyz/utils": "file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/utils"
   }
 }

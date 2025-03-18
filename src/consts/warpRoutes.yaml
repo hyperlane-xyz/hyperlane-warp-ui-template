@@ -3,20 +3,20 @@
 # The input here is typically the output of the Hyperlane CLI warp deploy command
 ---
 tokens:
-  - addressOrDenom: "0xe63844Ca06Ce8E6D4097Cb33E9b3d62704122307"
-    chainName: infinityvmmonza
-    connections:
-      - token: sealevel|solanatestnet|26oMREEgB1SgQ1wHmuXzh81C2uXvnudyTZ1E4HWqALLB
+  - addressOrDenom: "0x4B7657A56f51B42A8702957EecFF8CBE86fF48C8"
+    chainName: basesepolia
     decimals: 6
     name: USD Coin
     standard: EvmHypSynthetic
     symbol: USDC
     logoURI: /deployments/warp_routes/USDC/logo.svg
-  - addressOrDenom: 26oMREEgB1SgQ1wHmuXzh81C2uXvnudyTZ1E4HWqALLB
+    connections:
+      - token: sealevel|solanatestnet|9q94sfFwgTeNwF2HFPp4b1Hvi3cXDxcpwKi8d2LwxPMc
+  - addressOrDenom: 9q94sfFwgTeNwF2HFPp4b1Hvi3cXDxcpwKi8d2LwxPMc
     chainName: solanatestnet
     collateralAddressOrDenom: Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr
     connections:
-      - token: ethereum|infinityvmmonza|0xe63844Ca06Ce8E6D4097Cb33E9b3d62704122307
+      - token: ethereum|basesepolia|0x4B7657A56f51B42A8702957EecFF8CBE86fF48C8
     decimals: 6
     logoURI: /deployments/warp_routes/USDC/logo.svg
     name: USD Coin

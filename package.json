@@ -4,6 +4,7 @@
   "version": "8.5.0",
   "author": "J M Rossy",
   "dependencies": {
+    "@bootnodedev/intents-framework-core": "^0.1.0",
     "@chakra-ui/next-js": "^2.4.2",
     "@chakra-ui/react": "^2.8.2",
     "@cosmjs/cosmwasm-stargate": "^0.32.4",

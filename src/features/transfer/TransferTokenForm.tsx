@@ -539,6 +539,7 @@ function useFormInitialValues(): TransferFormValues {
     originQuery,
     destinationQuery,
     defaultOriginToken,
+    config.defaultDestinationChain,
   );
 
   return useMemo(() => {
@@ -548,7 +549,9 @@ function useFormInitialValues(): TransferFormValues {
 
     return {
       origin: chainsValid ? originQuery : firstToken.chainName,
-      destination: chainsValid ? destinationQuery : connectedToken?.token?.chainName || '',
+      destination: chainsValid
+        ? destinationQuery
+        : config.defaultDestinationChain || connectedToken?.token?.chainName || '',
       tokenIndex: tokenIndex,
       amount: '',
       recipient: '',

@@ -94,6 +94,9 @@ export const warpRouteWhitelist: Array<string> | null = [
   // TRUMP routes
   'TRUMP/arbitrum-avalanche-base-flowmainnet-form-optimism-solanamainnet-worldchain',
 
+  // TURTLE routes
+  'TURTLE/ethereum-linea',
+
   // jitoSOL
   'JitoSOL/eclipsemainnet-solanamainnet',
 

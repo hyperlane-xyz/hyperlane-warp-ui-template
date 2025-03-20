@@ -1017,9 +1017,9 @@ __metadata:
   linkType: hard
 
 "@bufbuild/protobuf@npm:^2.2.3":
-  version: 2.2.4
-  resolution: "@bufbuild/protobuf@npm:2.2.4"
-  checksum: 10/ac38d509860f18f30638200ac23b56b77ed969323e2489751338efbeba2a1719e47836dc74ab3de39555749963d01f22ff5f6f020d69193581045ff04a4d49c5
+  version: 2.2.5
+  resolution: "@bufbuild/protobuf@npm:2.2.5"
+  checksum: 10/6509bcabb053a91eacf5f4d562d112ae1677209e62135990a6b1fdb4c9b272f150a0afde4fecfb9a55902273a9bf95774cb977d4d14ab5d1714c513cf0927a37
   languageName: node
   linkType: hard
 
@@ -4575,16 +4575,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/cosmos-sdk@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/cosmos-sdk::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
+"@hyperlane-xyz/cosmos-sdk@file:/Users/troykessler/work/kyve/hyperlane-monorepo/typescript/cosmos-sdk::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
   version: 1.0.0
-  resolution: "@hyperlane-xyz/cosmos-sdk@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/cosmos-sdk#/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/cosmos-sdk::hash=b27658&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
+  resolution: "@hyperlane-xyz/cosmos-sdk@file:/Users/troykessler/work/kyve/hyperlane-monorepo/typescript/cosmos-sdk#/Users/troykessler/work/kyve/hyperlane-monorepo/typescript/cosmos-sdk::hash=e0d21c&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
   dependencies:
     "@bufbuild/protobuf": "npm:^2.2.3"
     "@cosmjs/stargate": "npm:^0.32.4"
     axios: "npm:^1.7.9"
     long: "npm:^5.2.4"
     protobufjs: "npm:^7.4.0"
-  checksum: 10/cbfdce16afd2b8649afffb3805e28e6199e4ef456381144117c2e56d73d282b6d112cff500e5d0e6b2b3074f8fa569137018a927703dafd31e7b6c449fed7fbd
+  checksum: 10/8cbf90e351d1ed7e178fcdce3df282a7d36b9611eba791cfb864c4876ca8a8888fba254056860d00d2810041bb511f0ac0a92edfae32feab163702869f45dd18
   languageName: node
   linkType: hard
 
@@ -4598,9 +4598,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/sdk@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/sdk::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
+"@hyperlane-xyz/sdk@file:/Users/troykessler/work/kyve/hyperlane-monorepo/typescript/sdk::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
   version: 9.0.0
-  resolution: "@hyperlane-xyz/sdk@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/sdk#/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/sdk::hash=ef5fc0&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
+  resolution: "@hyperlane-xyz/sdk@file:/Users/troykessler/work/kyve/hyperlane-monorepo/typescript/sdk#/Users/troykessler/work/kyve/hyperlane-monorepo/typescript/sdk::hash=ef5fc0&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
   dependencies:
     "@arbitrum/sdk": "npm:^4.0.0"
     "@aws-sdk/client-s3": "npm:^3.577.0"
@@ -4630,9 +4630,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/utils@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/utils::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
+"@hyperlane-xyz/utils@file:/Users/troykessler/work/kyve/hyperlane-monorepo/typescript/utils::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
   version: 9.0.0
-  resolution: "@hyperlane-xyz/utils@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/utils#/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/utils::hash=182176&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
+  resolution: "@hyperlane-xyz/utils@file:/Users/troykessler/work/kyve/hyperlane-monorepo/typescript/utils#/Users/troykessler/work/kyve/hyperlane-monorepo/typescript/utils::hash=182176&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
   dependencies:
     "@cosmjs/encoding": "npm:^0.32.4"
     "@solana/web3.js": "npm:^1.95.4"
@@ -4663,9 +4663,9 @@ __metadata:
     "@emotion/styled": "npm:^11.13.0"
     "@headlessui/react": "npm:^2.2.0"
     "@hyperlane-xyz/registry": "npm:10.15.0"
-    "@hyperlane-xyz/sdk": "file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/sdk"
+    "@hyperlane-xyz/sdk": "file:/Users/troykessler/work/kyve/hyperlane-monorepo/typescript/sdk"
     "@hyperlane-xyz/utils": "npm:9.0.0"
-    "@hyperlane-xyz/widgets": "file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/widgets"
+    "@hyperlane-xyz/widgets": "file:/Users/troykessler/work/kyve/hyperlane-monorepo/typescript/widgets"
     "@interchain-ui/react": "npm:^1.23.28"
     "@metamask/post-message-stream": "npm:6.1.2"
     "@metamask/providers": "npm:10.2.1"
@@ -4678,6 +4678,8 @@ __metadata:
     "@solana/wallet-adapter-react-ui": "npm:^0.9.31"
     "@solana/wallet-adapter-wallets": "npm:^0.19.16"
     "@solana/web3.js": "npm:^1.95.4"
+    "@starknet-react/chains": "npm:^3.1.2"
+    "@starknet-react/core": "npm:^3.7.2"
     "@tanstack/eslint-plugin-query": "npm:^5.59.20"
     "@tanstack/react-query": "npm:^5.59.20"
     "@types/node": "npm:^18.11.18"
@@ -4705,6 +4707,7 @@ __metadata:
     react: "npm:^18.3.1"
     react-dom: "npm:^18.3.1"
     react-toastify: "npm:^10.0.6"
+    starknetkit: "npm:2.6.1"
     tailwindcss: "npm:^3.4.15"
     ts-node: "npm:^10.9.2"
     typescript: "npm:5.6.3"
@@ -4719,9 +4722,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@hyperlane-xyz/widgets@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/widgets::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
+"@hyperlane-xyz/widgets@file:/Users/troykessler/work/kyve/hyperlane-monorepo/typescript/widgets::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
   version: 9.0.0
-  resolution: "@hyperlane-xyz/widgets@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/widgets#/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/widgets::hash=306a19&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
+  resolution: "@hyperlane-xyz/widgets@file:/Users/troykessler/work/kyve/hyperlane-monorepo/typescript/widgets#/Users/troykessler/work/kyve/hyperlane-monorepo/typescript/widgets::hash=306a19&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
   dependencies:
     "@cosmjs/stargate": "npm:^0.32.4"
     "@cosmos-kit/react": "npm:^2.18.0"

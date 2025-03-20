@@ -107,6 +107,7 @@
     "viem": "^2.21.41",
     "zustand": "^4.4",
     "@hyperlane-xyz/cosmos-sdk": "file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/cosmos-sdk",
+    "@hyperlane-xyz/sdk": "file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/sdk",
     "@hyperlane-xyz/utils": "file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/utils"
   }
 }

@@ -4630,37 +4630,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/sdk@npm:9.0.0":
-  version: 9.0.0
-  resolution: "@hyperlane-xyz/sdk@npm:9.0.0"
-  dependencies:
-    "@arbitrum/sdk": "npm:^4.0.0"
-    "@aws-sdk/client-s3": "npm:^3.577.0"
-    "@chain-registry/types": "npm:^0.50.14"
-    "@cosmjs/cosmwasm-stargate": "npm:^0.32.4"
-    "@cosmjs/stargate": "npm:^0.32.4"
-    "@hyperlane-xyz/core": "npm:6.0.0"
-    "@hyperlane-xyz/utils": "npm:9.0.0"
-    "@safe-global/api-kit": "npm:1.3.0"
-    "@safe-global/protocol-kit": "npm:1.3.0"
-    "@safe-global/safe-deployments": "npm:1.37.23"
-    "@solana/spl-token": "npm:^0.4.9"
-    "@solana/web3.js": "npm:^1.95.4"
-    bignumber.js: "npm:^9.1.1"
-    cosmjs-types: "npm:^0.9.0"
-    cross-fetch: "npm:^3.1.5"
-    ethers: "npm:^5.7.2"
-    pino: "npm:^8.19.0"
-    starknet: "npm:^6.23.1"
-    viem: "npm:^2.21.45"
-    zod: "npm:^3.21.2"
-  peerDependencies:
-    "@ethersproject/abi": "*"
-    "@ethersproject/providers": "*"
-  checksum: 10/a35dea5ea80932dc2f93fc2dcc6a488dbbba859c8459341d081fb05e3404e9c9152342d29ad06a8636edde6e05090709d7688b7ecb4fe397a26771404f25a5b3
-  languageName: node
-  linkType: hard
-
 "@hyperlane-xyz/utils@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/utils::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
   version: 9.0.0
   resolution: "@hyperlane-xyz/utils@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/utils#/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/utils::hash=182176&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."

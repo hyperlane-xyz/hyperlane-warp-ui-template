@@ -6,10 +6,10 @@
 korellia:
   bech32Prefix: kyve
   blockExplorers:
-    - apiUrl: https://apis.mintscan.io/v1/osmosis
+    - apiUrl: https://explorer.kyve.network/korellia
       family: other
-      name: Mintscan
-      url: https://www.mintscan.io/osmosis
+      name: Ping.Pub
+      url: https://explorer.kyve.network/korellia
   blocks:
     confirmations: 1
     estimateBlockTime: 6
@@ -18,8 +18,8 @@ korellia:
   chainId: korellia-2
   contractAddressBytes: 32
   deployer:
-    name: Mitosis
-    url: https://mitosis.org
+    name: KYVE
+    url: https://kyve.network
   displayName: KYVE Testnet (Korellia)
   domainId: 1263684684
   gasCurrencyCoinGeckoId: osmosis

@@ -88,8 +88,8 @@
   },
   "scripts": {
     "clean": "rm -rf dist cache .next",
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "next dev --port 8080",
+    "build": "next build --output public",
     "typecheck": "tsc",
     "lint": "next lint",
     "start": "next start",

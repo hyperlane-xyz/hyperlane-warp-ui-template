@@ -4600,7 +4600,7 @@ __metadata:
 
 "@hyperlane-xyz/sdk@file:/Users/jamin/Desktop/code/kyve/hyperlane-monorepo-private/typescript/sdk::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
   version: 9.0.0
-  resolution: "@hyperlane-xyz/sdk@file:/Users/jamin/Desktop/code/kyve/hyperlane-monorepo-private/typescript/sdk#/Users/jamin/Desktop/code/kyve/hyperlane-monorepo-private/typescript/sdk::hash=14cb6f&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
+  resolution: "@hyperlane-xyz/sdk@file:/Users/jamin/Desktop/code/kyve/hyperlane-monorepo-private/typescript/sdk#/Users/jamin/Desktop/code/kyve/hyperlane-monorepo-private/typescript/sdk::hash=775997&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
   dependencies:
     "@arbitrum/sdk": "npm:^4.0.0"
     "@aws-sdk/client-s3": "npm:^3.577.0"
@@ -4626,7 +4626,7 @@ __metadata:
   peerDependencies:
     "@ethersproject/abi": "*"
     "@ethersproject/providers": "*"
-  checksum: 10/d4b3b4ef4a31f4ee5570e77c8d3b1a970323d50412f6e665b95dd5dee181225af00dea6276dffc693602a165e448eb71ebacfef2f13d569c631e164980453d57
+  checksum: 10/be558982557074a747d600da7d8111a53bd6b798fb19f7b04afc3b8d2cd663d75723668baef192b80d752e0e1d768fe78735ff012c01339abb13ffe9c298d85c
   languageName: node
   linkType: hard
 
@@ -4724,7 +4724,7 @@ __metadata:
 
 "@hyperlane-xyz/widgets@file:/Users/jamin/Desktop/code/kyve/hyperlane-monorepo-private/typescript/widgets::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
   version: 9.0.0
-  resolution: "@hyperlane-xyz/widgets@file:/Users/jamin/Desktop/code/kyve/hyperlane-monorepo-private/typescript/widgets#/Users/jamin/Desktop/code/kyve/hyperlane-monorepo-private/typescript/widgets::hash=c1a4fa&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
+  resolution: "@hyperlane-xyz/widgets@file:/Users/jamin/Desktop/code/kyve/hyperlane-monorepo-private/typescript/widgets#/Users/jamin/Desktop/code/kyve/hyperlane-monorepo-private/typescript/widgets::hash=64fe77&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
   dependencies:
     "@cosmjs/stargate": "npm:^0.32.4"
     "@cosmos-kit/react": "npm:^2.18.0"
@@ -4746,7 +4746,7 @@ __metadata:
   peerDependencies:
     react: ^18
     react-dom: ^18
-  checksum: 10/a7fe215dafcf72708013a87fad6478ed3e68531cf1121052fdb6f409538dc596970dbb7586f52eec093b4b1d5fee0f64b167484563c9963ca4053abdff28182d
+  checksum: 10/f922c566cb3ebe0c1aff556377f4a2cb90707993ecc0d9eec334bf71462210113759d08f2a5ef4dae9b14413ec502670ef8a451a7f9a654d0c3dcdc4ba1833d7
   languageName: node
   linkType: hard
 

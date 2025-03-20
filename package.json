@@ -18,9 +18,9 @@
     "@emotion/styled": "^11.13.0",
     "@headlessui/react": "^2.2.0",
     "@hyperlane-xyz/registry": "10.15.0",
-    "@hyperlane-xyz/sdk": "file:/Users/troykessler/work/kyve/hyperlane-monorepo/typescript/sdk",
+    "@hyperlane-xyz/sdk": "file:/Users/jamin/Desktop/code/kyve/hyperlane-monorepo-private/typescript/sdk",
     "@hyperlane-xyz/utils": "9.0.0",
-    "@hyperlane-xyz/widgets": "file:/Users/troykessler/work/kyve/hyperlane-monorepo/typescript/widgets",
+    "@hyperlane-xyz/widgets": "file:/Users/jamin/Desktop/code/kyve/hyperlane-monorepo-private/typescript/widgets",
     "@interchain-ui/react": "^1.23.28",
     "@metamask/post-message-stream": "6.1.2",
     "@metamask/providers": "10.2.1",
@@ -109,8 +109,8 @@
     "react-fast-compare": "^3.2",
     "viem": "^2.21.41",
     "zustand": "^4.4",
-    "@hyperlane-xyz/cosmos-sdk": "file:/Users/troykessler/work/kyve/hyperlane-monorepo/typescript/cosmos-sdk",
-    "@hyperlane-xyz/sdk": "file:/Users/troykessler/work/kyve/hyperlane-monorepo/typescript/sdk",
-    "@hyperlane-xyz/utils": "file:/Users/troykessler/work/kyve/hyperlane-monorepo/typescript/utils"
+    "@hyperlane-xyz/cosmos-sdk": "file:/Users/jamin/Desktop/code/kyve/hyperlane-monorepo-private/typescript/cosmos-sdk",
+    "@hyperlane-xyz/sdk": "file:/Users/jamin/Desktop/code/kyve/hyperlane-monorepo-private/typescript/sdk",
+    "@hyperlane-xyz/utils": "file:/Users/jamin/Desktop/code/kyve/hyperlane-monorepo-private/typescript/utils"
   }
 }

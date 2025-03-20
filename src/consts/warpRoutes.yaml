@@ -4,12 +4,22 @@
 ---
 tokens:
   - addressOrDenom: '0x726f757465725f61707000000000000000000000000000010000000000000000'
-    chainName: test
+    chainName: korellia
     connections:
-      - token: cosmos|test|0x726f757465725f61707000000000000000000000000000010000000000000000
+      - token: ethereum|moonbasealpha|0x0000000000000000000000483aEa36c69e7aD62A78A9df16e84776e4D998DC
+      - token: cosmos|korellia|0x726f757465725f61707000000000000000000000000000010000000000000000
     decimals: 6
     logoURI: ''
-    name: HYPER
+    name: tKYVE
     standard: CosmosHypCollateral
-    symbol: HYPER
+    symbol: tKYVE
+  - addressOrDenom: '0x0000000000000000000000483aEa36c69e7aD62A78A9df16e84776e4D998DC'
+    chainName: moonbasealpha
+    connections:
+      - token: cosmos|korellia|0x726f757465725f61707000000000000000000000000000010000000000000000
+    decimals: 6
+    logoURI: ''
+    name: wKYVE
+    standard: CosmosHypSynthetic
+    symbol: wKYVE
 options: {}

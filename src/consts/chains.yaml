@@ -3,8 +3,8 @@
 # Chains already in the SDK need not be included here unless you want to override some fields
 # Schema here: https://github.com/hyperlane-xyz/hyperlane-monorepo/blob/main/typescript/sdk/src/metadata/chainMetadataTypes.ts
 ---
-test:
-  bech32Prefix: hyp
+korellia:
+  bech32Prefix: kyve
   blockExplorers:
     - apiUrl: https://apis.mintscan.io/v1/osmosis
       family: other
@@ -14,36 +14,63 @@ test:
     confirmations: 1
     estimateBlockTime: 6
     reorgPeriod: 1
-  canonicalAsset: uhyp
-  chainId: hyperlane-local
+  canonicalAsset: tkyve
+  chainId: korellia-2
   contractAddressBytes: 32
   deployer:
     name: Mitosis
     url: https://mitosis.org
-  displayName: Hyperlane Local
-  domainId: 75898669
+  displayName: KYVE Testnet (Korellia)
+  domainId: 1263684684
   gasCurrencyCoinGeckoId: osmosis
   gasPrice:
-    amount: '0.025'
-    denom: uhyp
+    amount: '2.0'
+    denom: tkyve
   grpcUrls:
-    - http: http://127.0.0.1:9090
+    - http: https://grpc-raw.korellia.kyve.network
   index:
     chunk: 10
-    from: 14389169
-  isTestnet: false
-  name: test
+    from: 15819114
+  isTestnet: true
+  name: korellia
   nativeToken:
     decimals: 6
-    denom: uhyp
-    name: HYPER
-    symbol: HYPER
+    denom: tkyve
+    name: KYVE
+    symbol: KYVE
   protocol: cosmos
   restUrls:
-    - http: http://127.0.0.1:1317
+    - http: https://api.korellia.kyve.network
   rpcUrls:
-    - http: http://127.0.0.1:26657
+    - http: https://rpc.korellia.kyve.network
   slip44: 118
   technicalStack: other
   transactionOverrides:
-    gasPrice: '0.025'
+    gasPrice: '0.2'
+moonbasealpha:
+  blockExplorers:
+    - apiUrl: https://api-moonbase.moonscan.io/api
+      family: etherscan
+      name: MoonScan
+      url: https://moonbase.moonscan.io
+  blocks:
+    confirmations: 1
+    estimateBlockTime: 12
+    reorgPeriod: 1
+  chainId: 1287
+  displayName: Moonbase Alpha
+  displayNameShort: Moonbase
+  domainId: 1287
+  isTestnet: true
+  name: moonbasealpha
+  index:
+    from: 11263834
+    chunk: 999
+  nativeToken:
+    decimals: 18
+    name: DEV
+    symbol: DEV
+  protocol: ethereum
+  rpcUrls:
+    - http: https://rpc.api.moonbase.moonbeam.network
+  technicalStack: other

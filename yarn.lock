@@ -4575,9 +4575,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/cosmos-sdk@file:/Users/troykessler/work/kyve/hyperlane-monorepo/typescript/cosmos-sdk::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
+"@hyperlane-xyz/cosmos-sdk@file:/Users/jamin/Desktop/code/kyve/hyperlane-monorepo-private/typescript/cosmos-sdk::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
   version: 1.0.0
-  resolution: "@hyperlane-xyz/cosmos-sdk@file:/Users/troykessler/work/kyve/hyperlane-monorepo/typescript/cosmos-sdk#/Users/troykessler/work/kyve/hyperlane-monorepo/typescript/cosmos-sdk::hash=e0d21c&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
+  resolution: "@hyperlane-xyz/cosmos-sdk@file:/Users/jamin/Desktop/code/kyve/hyperlane-monorepo-private/typescript/cosmos-sdk#/Users/jamin/Desktop/code/kyve/hyperlane-monorepo-private/typescript/cosmos-sdk::hash=e0d21c&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
   dependencies:
     "@bufbuild/protobuf": "npm:^2.2.3"
     "@cosmjs/stargate": "npm:^0.32.4"
@@ -4598,9 +4598,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/sdk@file:/Users/troykessler/work/kyve/hyperlane-monorepo/typescript/sdk::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
+"@hyperlane-xyz/sdk@file:/Users/jamin/Desktop/code/kyve/hyperlane-monorepo-private/typescript/sdk::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
   version: 9.0.0
-  resolution: "@hyperlane-xyz/sdk@file:/Users/troykessler/work/kyve/hyperlane-monorepo/typescript/sdk#/Users/troykessler/work/kyve/hyperlane-monorepo/typescript/sdk::hash=ef5fc0&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
+  resolution: "@hyperlane-xyz/sdk@file:/Users/jamin/Desktop/code/kyve/hyperlane-monorepo-private/typescript/sdk#/Users/jamin/Desktop/code/kyve/hyperlane-monorepo-private/typescript/sdk::hash=14cb6f&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
   dependencies:
     "@arbitrum/sdk": "npm:^4.0.0"
     "@aws-sdk/client-s3": "npm:^3.577.0"
@@ -4626,13 +4626,13 @@ __metadata:
   peerDependencies:
     "@ethersproject/abi": "*"
     "@ethersproject/providers": "*"
-  checksum: 10/2092730b671882186c7763425966245cfcf3a33fdf2bd9a2ef541e56907b6491504a6d11d741fa55b4544e3ad89ca981d2794b7f3a94e97a1c92a0e7d5c05692
+  checksum: 10/d4b3b4ef4a31f4ee5570e77c8d3b1a970323d50412f6e665b95dd5dee181225af00dea6276dffc693602a165e448eb71ebacfef2f13d569c631e164980453d57
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/utils@file:/Users/troykessler/work/kyve/hyperlane-monorepo/typescript/utils::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
+"@hyperlane-xyz/utils@file:/Users/jamin/Desktop/code/kyve/hyperlane-monorepo-private/typescript/utils::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
   version: 9.0.0
-  resolution: "@hyperlane-xyz/utils@file:/Users/troykessler/work/kyve/hyperlane-monorepo/typescript/utils#/Users/troykessler/work/kyve/hyperlane-monorepo/typescript/utils::hash=182176&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
+  resolution: "@hyperlane-xyz/utils@file:/Users/jamin/Desktop/code/kyve/hyperlane-monorepo-private/typescript/utils#/Users/jamin/Desktop/code/kyve/hyperlane-monorepo-private/typescript/utils::hash=434614&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
   dependencies:
     "@cosmjs/encoding": "npm:^0.32.4"
     "@solana/web3.js": "npm:^1.95.4"
@@ -4641,7 +4641,7 @@ __metadata:
     lodash-es: "npm:^4.17.21"
     pino: "npm:^8.19.0"
     yaml: "npm:2.4.5"
-  checksum: 10/e47ad1438f40754adaac5c401fd4db1c990a89525b7dcf2381705e37d97ab93d0e812a9d85956ba87f32d9fcfd1a19e2d7f32eb17ab111e1c4149df033451ec4
+  checksum: 10/9b95eeb9a534599fd14e520501fdca7e1d68fc67160c0f80bfd1c2b64fef0b9409ae5b18c232b1cafd2f292ba526d3ff1b347dda243b883a5ba5b42dd9ff0a4a
   languageName: node
   linkType: hard
 
@@ -4663,9 +4663,9 @@ __metadata:
     "@emotion/styled": "npm:^11.13.0"
     "@headlessui/react": "npm:^2.2.0"
     "@hyperlane-xyz/registry": "npm:10.15.0"
-    "@hyperlane-xyz/sdk": "file:/Users/troykessler/work/kyve/hyperlane-monorepo/typescript/sdk"
+    "@hyperlane-xyz/sdk": "file:/Users/jamin/Desktop/code/kyve/hyperlane-monorepo-private/typescript/sdk"
     "@hyperlane-xyz/utils": "npm:9.0.0"
-    "@hyperlane-xyz/widgets": "file:/Users/troykessler/work/kyve/hyperlane-monorepo/typescript/widgets"
+    "@hyperlane-xyz/widgets": "file:/Users/jamin/Desktop/code/kyve/hyperlane-monorepo-private/typescript/widgets"
     "@interchain-ui/react": "npm:^1.23.28"
     "@metamask/post-message-stream": "npm:6.1.2"
     "@metamask/providers": "npm:10.2.1"
@@ -4722,9 +4722,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@hyperlane-xyz/widgets@file:/Users/troykessler/work/kyve/hyperlane-monorepo/typescript/widgets::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
+"@hyperlane-xyz/widgets@file:/Users/jamin/Desktop/code/kyve/hyperlane-monorepo-private/typescript/widgets::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
   version: 9.0.0
-  resolution: "@hyperlane-xyz/widgets@file:/Users/troykessler/work/kyve/hyperlane-monorepo/typescript/widgets#/Users/troykessler/work/kyve/hyperlane-monorepo/typescript/widgets::hash=306a19&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
+  resolution: "@hyperlane-xyz/widgets@file:/Users/jamin/Desktop/code/kyve/hyperlane-monorepo-private/typescript/widgets#/Users/jamin/Desktop/code/kyve/hyperlane-monorepo-private/typescript/widgets::hash=c1a4fa&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
   dependencies:
     "@cosmjs/stargate": "npm:^0.32.4"
     "@cosmos-kit/react": "npm:^2.18.0"
@@ -4746,7 +4746,7 @@ __metadata:
   peerDependencies:
     react: ^18
     react-dom: ^18
-  checksum: 10/95d134445f40380daf7bbafc651aad583f681a850ee23d44f0edffbbaa328f43b25e2acd4a47f417a8398745f34f6d78f7c579a3e60388bc36ac9625ddab0a2d
+  checksum: 10/a7fe215dafcf72708013a87fad6478ed3e68531cf1121052fdb6f409538dc596970dbb7586f52eec093b4b1d5fee0f64b167484563c9963ca4053abdff28182d
   languageName: node
   linkType: hard
 

@@ -38,6 +38,7 @@ export function ChainSelectListModal({
         defaultSortField="custom"
         showChainDetails={showChainDetails}
         shouldDisableChains={config.shouldDisableChains}
+        showAddChainButton={config.showAddChainButton}
       />
     </Modal>
   );

@@ -15,12 +15,14 @@ interface Config {
   addressBlacklist: string[]; // A list of addresses that are blacklisted and cannot be used in the app
   chainWalletWhitelists: ChainMap<string[]>; // A map of chain names to a list of wallet names that work for it
   defaultOriginChain: string | undefined; // The initial origin chain to show when app first loads
+  defaultDestinationChain: string | undefined; // The initial destination chain to show when app first loads
   enableExplorerLink: boolean; // Include a link to the hyperlane explorer in the transfer modal
   isDevMode: boolean; // Enables some debug features in the app
   registryUrl: string | undefined; // Optional URL to use a custom registry instead of the published canonical version
   registryBranch?: string | undefined; // Optional customization of the registry branch instead of main
   registryProxyUrl?: string; // Optional URL to use a custom proxy for the GithubRegistry
   showAddRouteButton: boolean; // Show/Hide the add route config icon in the button strip
+  showAddChainButton: boolean; // Show/Hide add custom chain in the chain search menu
   showDisabledTokens: boolean; // Show/Hide invalid token options in the selection modal
   showTipBox: boolean; // Show/Hide the blue tip box above the transfer form
   shouldDisableChains: boolean; // Enable chain disabling for ChainSearchMenu. When true it will deactivate chains that have disabled status
@@ -35,11 +37,13 @@ export const config: Config = Object.freeze({
   chainWalletWhitelists,
   enableExplorerLink: false,
   defaultOriginChain: undefined,
+  defaultDestinationChain: undefined,
   isDevMode,
   registryUrl,
   registryBranch,
   registryProxyUrl,
   showAddRouteButton: true,
+  showAddChainButton: true,
   showDisabledTokens: false,
   showTipBox: true,
   version,

@@ -1,6 +1,7 @@
 import {
   eclipsemainnet,
   eclipsemainnetAddresses,
+  ethereum,
   solanamainnet,
   solanamainnetAddresses,
 } from '@hyperlane-xyz/registry';
@@ -16,9 +17,9 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
     // SVM chains require mailbox addresses for the token adapters
     mailbox: solanamainnetAddresses.mailbox,
     // Including a convenient rpc override because the Solana public RPC does not allow browser requests from localhost
-    rpcUrls: process.env.NEXT_PUBLIC_SOLANA_RPC_URL
-      ? [{ http: process.env.NEXT_PUBLIC_SOLANA_RPC_URL }, ...solanamainnet.rpcUrls]
-      : solanamainnet.rpcUrls,
+    ...(process.env.NEXT_PUBLIC_SOLANA_RPC_URL && {
+      rpcUrls: [{ http: process.env.NEXT_PUBLIC_SOLANA_RPC_URL }],
+    }),
   },
   eclipsemainnet: {
     ...eclipsemainnet,
@@ -47,4 +48,10 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
   //   },
   //   logoURI: '/logo.svg',
   // },
+  ethereum: {
+    ...ethereum,
+    ...(process.env.NEXT_PUBLIC_ETHEREUM_RPC_URL && {
+      rpcUrls: [{ http: process.env.NEXT_PUBLIC_ETHEREUM_RPC_URL }],
+    }),
+  },
 };

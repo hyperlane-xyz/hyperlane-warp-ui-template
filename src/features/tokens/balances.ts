@@ -1,5 +1,7 @@
+import { Hyperlane7683__factory as Hyperlane7683Factory } from '@bootnodedev/intents-framework-core';
+import { FilledEvent } from '@bootnodedev/intents-framework-core/dist/src/Base7683';
 import { IToken, MultiProtocolProvider, Token } from '@hyperlane-xyz/sdk';
-import { isValidAddress } from '@hyperlane-xyz/utils';
+import { assert, isValidAddress } from '@hyperlane-xyz/utils';
 import { useAccountAddressForChain } from '@hyperlane-xyz/widgets';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
@@ -85,4 +87,45 @@ export function useEvmWalletBalance(
   });
 
   return { balance: data, isError, isLoading };
+}
+export async function checkOrderFilled({
+  destination,
+  orderId,
+  originToken,
+  multiProvider,
+}: {
+  destination: ChainName;
+  orderId: string;
+  originToken: Token;
+  multiProvider: MultiProtocolProvider;
+}): Promise<string> {
+  const provider = multiProvider.toMultiProvider().getProvider(destination);
+  const connection = originToken.getConnectionForChain(destination);
+
+  assert(connection?.token.addressOrDenom, 'No connection found for destination chain');
+
+  const contract = Hyperlane7683Factory.connect(connection.token.addressOrDenom, provider);
+  const filter = contract.filters.Filled();
+
+  return new Promise((resolve, reject) => {
+    const intervalId = setInterval(async () => {
+      try {
+        const to = await provider.getBlockNumber();
+        const from = to - 10;
+        const events = await contract.queryFilter(filter, from, to);
+
+        for (const event of events as Array<FilledEvent>) {
+          const resolvedOrder = event.args.orderId;
+
+          if (resolvedOrder === orderId) {
+            clearInterval(intervalId);
+            resolve(event.transactionHash);
+          }
+        }
+      } catch (error) {
+        clearInterval(intervalId);
+        reject(error);
+      }
+    }, 4_000);
+  });
 }

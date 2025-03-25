@@ -74,7 +74,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'ORCA/eclipsemainnet-solanamainnet',
 
   // uBTC routes
-  'uBTC/boba-bsquared-swell',
+  'uBTC/boba-bsquared-soneium-swell',
 
   // kySOL
   'kySOL/eclipsemainnet-solanamainnet',
@@ -144,7 +144,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'LOGX/arbitrum-solanamainnet',
 
   // CDX routes
-  'CDX/base-solanamainnet',
+  'CDX/base-solanamainnet-sophon',
 
   // Mint routes
   'MINT/mint-solanamainnet',

@@ -115,7 +115,6 @@ export const warpRouteWhitelist: Array<string> | null = [
   'fastUSD/ethereum-sei',
 
   // cbBTC routes
-  'cbBTC/ethereum-superseed',
   'cbBTC/ethereum-flowmainnet',
 
   // ezETH routes

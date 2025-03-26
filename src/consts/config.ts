@@ -49,6 +49,6 @@ export const config: Config = Object.freeze({
   version,
   transferBlacklist,
   walletConnectProjectId,
-  walletProtocols: undefined,
+  walletProtocols: [ProtocolType.Ethereum, ProtocolType.Sealevel, ProtocolType.Cosmos],
   shouldDisableChains: false,
 });

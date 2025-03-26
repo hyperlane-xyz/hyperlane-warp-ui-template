@@ -82,7 +82,7 @@ export function tryGetMsgIdFromTransferReceipt(
   try {
     // IBC transfers have no message IDs
     if (receipt.type === ProviderType.CosmJs) return undefined;
-    
+
     // TODO: Remove this once we have a way to get the message ID from SDK
     if (receipt.type === ProviderType.Starknet) return undefined;
 

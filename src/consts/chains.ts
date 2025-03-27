@@ -5,6 +5,7 @@ import {
   injective,
   solanamainnet,
   solanamainnetAddresses,
+  solanatestnet,
   sonicsvm,
   sonicsvmAddresses,
   soon,
@@ -48,6 +49,13 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
     rpcUrls: process.env.NEXT_PUBLIC_INJECTIVE_RPC_URL
       ? [{ http: process.env.NEXT_PUBLIC_INJECTIVE_RPC_URL }]
       : injective.rpcUrls,
+  },
+  solanatestnet: {
+    ...solanatestnet,
+    mailbox: '75HBBLae3ddeneJVrZeyrDfv6vb7SMC3aCpBucSXS5aR',
+    rpcUrls: process.env.NEXT_PUBLIC_SOLANATESTNET_RPC_URL
+      ? [{ http: process.env.NEXT_PUBLIC_SOLANATESTNET_RPC_URL }, ...solanatestnet.rpcUrls]
+      : solanamainnet.rpcUrls,
   },
   // mycustomchain: {
   //   protocol: ProtocolType.Ethereum,

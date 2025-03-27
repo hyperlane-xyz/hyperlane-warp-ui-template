@@ -49,6 +49,9 @@ export const warpRouteWhitelist: Array<string> | null = [
   'USDT/ethereum-hyperevm',
   'USDT/solanamainnet-sonicsvm',
 
+  // oUSDT routes
+  'oUSDT/base-celo-fraxtal-ink-lisk-mode-optimism-soneium-superseed-unichain-worldchain',
+
   // INJ routes
   'INJ/inevm-injective',
 

@@ -162,6 +162,9 @@ export const warpRouteWhitelist: Array<string> | null = [
   // SONIC routes
   'SONIC/solanamainnet-sonicsvm',
 
+  // SPICE routes
+  'SPICE/solanamainnet-sonicsvm',
+
   // REZ routes
   'REZ/base-ethereum',
 

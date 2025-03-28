@@ -39,7 +39,6 @@ export const warpRouteWhitelist: Array<string> | null = [
   'USDC/arbitrum-base-endurance',
   'USDC/ethereum-form',
   'USDC.a/artela-base',
-  'USDC/ethereum-superseed',
   'USDC/solanamainnet-sonicsvm',
 
   // USDT routes
@@ -49,6 +48,9 @@ export const warpRouteWhitelist: Array<string> | null = [
   'USDT/ethereum-form',
   'USDT/ethereum-hyperevm',
   'USDT/solanamainnet-sonicsvm',
+
+  // oUSDT routes
+  'oUSDT/base-celo-fraxtal-ink-lisk-mode-optimism-soneium-superseed-unichain-worldchain',
 
   // INJ routes
   'INJ/inevm-injective',
@@ -74,7 +76,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'ORCA/eclipsemainnet-solanamainnet',
 
   // uBTC routes
-  'uBTC/boba-bsquared-swell',
+  'uBTC/boba-bsquared-soneium-swell',
 
   // kySOL
   'kySOL/eclipsemainnet-solanamainnet',
@@ -93,6 +95,9 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // TRUMP routes
   'TRUMP/arbitrum-avalanche-base-flowmainnet-form-optimism-solanamainnet-worldchain',
+
+  // TURTLE routes
+  'TURTLE/ethereum-linea',
 
   // jitoSOL
   'JitoSOL/eclipsemainnet-solanamainnet',
@@ -113,7 +118,6 @@ export const warpRouteWhitelist: Array<string> | null = [
   'fastUSD/ethereum-sei',
 
   // cbBTC routes
-  'cbBTC/ethereum-superseed',
   'cbBTC/ethereum-flowmainnet',
 
   // ezETH routes
@@ -141,7 +145,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'LOGX/arbitrum-solanamainnet',
 
   // CDX routes
-  'CDX/base-solanamainnet',
+  'CDX/base-solanamainnet-sophon',
 
   // Mint routes
   'MINT/mint-solanamainnet',

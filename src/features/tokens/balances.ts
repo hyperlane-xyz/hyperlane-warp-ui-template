@@ -1,5 +1,4 @@
 import { Hyperlane7683__factory as Hyperlane7683Factory } from '@bootnodedev/intents-framework-core';
-import { FilledEvent } from '@bootnodedev/intents-framework-core/dist/src/Base7683';
 import { IToken, MultiProtocolProvider, Token } from '@hyperlane-xyz/sdk';
 import { assert, isValidAddress } from '@hyperlane-xyz/utils';
 import { useAccountAddressForChain } from '@hyperlane-xyz/widgets';
@@ -114,7 +113,7 @@ export async function checkOrderFilled({
         const from = to - 10;
         const events = await contract.queryFilter(filter, from, to);
 
-        for (const event of events as Array<FilledEvent>) {
+        for (const event of events) {
           const resolvedOrder = event.args.orderId;
 
           if (resolvedOrder === orderId) {

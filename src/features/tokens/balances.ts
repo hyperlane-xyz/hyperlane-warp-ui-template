@@ -106,11 +106,14 @@ export async function checkOrderFilled({
   const contract = Hyperlane7683Factory.connect(connection.token.addressOrDenom, provider);
   const filter = contract.filters.Filled();
 
+  const BLOCKS_TO_CHECK = 10;
+  const BLOCK_CHECK_INTERVAL = 4_000;
+
   return new Promise((resolve, reject) => {
     const intervalId = setInterval(async () => {
       try {
         const to = await provider.getBlockNumber();
-        const from = to - 10;
+        const from = to - BLOCKS_TO_CHECK;
         const events = await contract.queryFilter(filter, from, to);
 
         for (const event of events) {
@@ -125,6 +128,6 @@ export async function checkOrderFilled({
         clearInterval(intervalId);
         reject(error);
       }
-    }, 4_000);
+    }, BLOCK_CHECK_INTERVAL);
   });
 }

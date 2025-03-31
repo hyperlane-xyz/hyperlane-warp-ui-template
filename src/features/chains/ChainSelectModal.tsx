@@ -35,7 +35,6 @@ export function ChainSelectListModal({
         overrideChainMetadata={chainMetadataOverrides}
         onChangeOverrideMetadata={setChainMetadataOverrides}
         customListItemField={customListItemField}
-        defaultSortField="custom"
         showChainDetails={showChainDetails}
         shouldDisableChains={config.shouldDisableChains}
         showAddChainButton={config.showAddChainButton}

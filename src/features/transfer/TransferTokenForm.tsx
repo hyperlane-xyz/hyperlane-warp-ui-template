@@ -27,7 +27,7 @@ import { ChainConnectionWarning } from '../chains/ChainConnectionWarning';
 import { ChainSelectField } from '../chains/ChainSelectField';
 import { ChainWalletWarning } from '../chains/ChainWalletWarning';
 import { useChainDisplayName, useMultiProvider } from '../chains/hooks';
-import { getNumRoutesWithSelectedChain, tryGetValidChainName } from '../chains/utils';
+import { tryGetValidChainName } from '../chains/utils';
 import { useIsAccountSanctioned } from '../sanctions/hooks/useIsAccountSanctioned';
 import { useStore } from '../store';
 import { SelectOrInputTokenIds } from '../tokens/SelectOrInputTokenIds';
@@ -157,14 +157,6 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
 
   const { values, setFieldValue } = useFormikContext<TransferFormValues>();
 
-  const originRouteCounts = useMemo(() => {
-    return getNumRoutesWithSelectedChain(warpCore, values.origin, true);
-  }, [values.origin, warpCore]);
-
-  const destinationRouteCounts = useMemo(() => {
-    return getNumRoutesWithSelectedChain(warpCore, values.destination, false);
-  }, [values.destination, warpCore]);
-
   const setTokenOnChainChange = (origin: string, destination: string) => {
     const tokenIndex = getTokenIndexFromChains(warpCore, null, origin, destination);
     const token = getTokenByIndex(warpCore, tokenIndex);
@@ -192,7 +184,7 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
         name="origin"
         label="From"
         disabled={isReview}
-        customListItemField={destinationRouteCounts}
+        customListItemField={null}
         onChange={handleChange}
       />
       <div className="flex flex-1 flex-col items-center">
@@ -202,7 +194,7 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
         name="destination"
         label="To"
         disabled={isReview}
-        customListItemField={originRouteCounts}
+        customListItemField={null}
         onChange={handleChange}
       />
     </div>

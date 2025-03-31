@@ -171,10 +171,11 @@ async function executeTransfer({
       ? tryGetMsgIdFromTransferReceipt(multiProvider, origin, txReceipt)
       : undefined;
 
+    const INTENT_OPEN_EVENT_TOPIC_ID =
+      '0x3448bbc2203c608599ad448eeb1007cea04b788ac631f9f558e8dd01a3c27b3d';
+
     const orderId = (txReceipt?.receipt as TransactionReceipt)?.logs?.find(
-      (log) =>
-        log.topics[0].toLowerCase() ===
-        '0x3448bbc2203c608599ad448eeb1007cea04b788ac631f9f558e8dd01a3c27b3d', // `Open` event
+      (log) => log.topics[0].toLowerCase() === INTENT_OPEN_EVENT_TOPIC_ID,
     )?.topics[1];
 
     updateTransferStatus(transferIndex, (transferStatus = TransferStatus.WaitingForFulfillment), {

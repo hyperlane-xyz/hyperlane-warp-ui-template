@@ -270,18 +270,18 @@ function RemoteTransferProperty({ name, orderId }: { name: string; orderId: stri
   }));
   const transfer = transfers.find((t) => t.orderId === orderId)!;
 
+  if (!transfer.remoteTxHash) return null;
+
   return (
-    transfer.remoteTxHash && (
-      <TransferProperty
-        name={name}
-        value={transfer.remoteTxHash ?? ''}
-        url={
-          multiProvider.tryGetExplorerTxUrl(transfer.destination, {
-            hash: transfer.remoteTxHash,
-          }) ?? ''
-        }
-      />
-    )
+    <TransferProperty
+      name={name}
+      value={transfer.remoteTxHash}
+      url={
+        multiProvider.tryGetExplorerTxUrl(transfer.destination, {
+          hash: transfer.remoteTxHash,
+        }) ?? ''
+      }
+    />
   );
 }
 

@@ -56,7 +56,6 @@ export async function assembleChainMetadata(
     ),
   );
 
-  console.log('registry', registryChainMetadata);
   const chainMetadata = mergeChainMetadataMap(registryChainMetadata, filesystemMetadata);
   const chainMetadataWithOverrides = mergeChainMetadataMap(chainMetadata, storeMetadataOverrides);
   return { chainMetadata, chainMetadataWithOverrides };

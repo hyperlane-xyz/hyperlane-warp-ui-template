@@ -1,4 +1,5 @@
-import { DiscordIcon, GithubIcon, HyperlaneLogo, TwitterIcon } from '@hyperlane-xyz/widgets';
+import { HyperlaneLogo, TwitterIcon } from '@hyperlane-xyz/widgets';
+import Image from 'next/image';
 import Link from 'next/link';
 import { ReactNode } from 'react';
 import { links } from '../../consts/links';
@@ -13,14 +14,12 @@ type FooterLink = {
 
 const footerLinks: FooterLink[] = [
   { title: 'Docs', url: links.docs, external: true },
-  { title: 'Terms', url: links.tos, external: true },
-  { title: 'Twitter', url: links.twitter, external: true, icon: <TwitterIcon color="#fff" /> },
   { title: 'Homepage', url: links.home, external: true },
-  { title: 'Privacy', url: links.privacyPolicy, external: true },
-  { title: 'Discord', url: links.discord, external: true, icon: <DiscordIcon color="#fff" /> },
   { title: 'Explorer', url: links.explorer, external: true },
-  { title: 'Bounty', url: links.bounty, external: true },
-  { title: 'Github', url: links.github, external: true, icon: <GithubIcon color="#fff" /> },
+  { title: 'Terms', url: links.tos, external: true },
+  { title: 'Privacy', url: links.privacyPolicy, external: true },
+  { title: 'Blog', url: links.blog, external: true },
+  { title: 'Twitter', url: links.twitter, external: true, icon: <TwitterIcon color="#fff" /> },
 ];
 
 export function Footer() {
@@ -38,22 +37,22 @@ export function Footer() {
 
 function FooterLogo() {
   return (
-    <div className="flex items-center justify-center">
-      <div className="ml-2 h-12 w-12 sm:h-14 sm:w-14">
-        <HyperlaneLogo color={Color.white} />
-      </div>
-      <div className="ml-6 space-y-1 text-lg font-medium sm:text-xl">
-        <div>Go interchain</div>
-        <div>with Hyperlane</div>
-      </div>
+    <div className="ml-6 flex items-center justify-center gap-1.5 text-xs font-medium xs:text-md sm:text-xs md:text-base lg:text-xl">
+      <span>Built with</span>
+      <Image src="/logos/celo.svg" alt="" width={18} height={18} />
+      <span>Celo,</span>
+      <Image src="/logos/chainlink.svg" alt="" width={18} height={18} />
+      <span>Chainlink and</span>
+      <HyperlaneLogo color={Color.white} width={18} height={18} />
+      <span>Hyperlane</span>
     </div>
   );
 }
 
 function FooterNav() {
   return (
-    <nav className="text-md font-medium">
-      <ul style={{ gridTemplateColumns: 'auto auto auto' }} className="grid gap-x-7 gap-y-1.5">
+    <nav className="text-md font-medium sm:text-xs md:text-md">
+      <ul className="grid grid-flow-col grid-rows-3 gap-x-7 gap-y-1.5">
         {footerLinks.map((item) => (
           <li key={item.title}>
             <Link

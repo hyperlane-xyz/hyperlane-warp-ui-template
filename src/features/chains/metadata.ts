@@ -38,7 +38,6 @@ export async function assembleChainMetadata(
   }
 
   // Filter out chains that are not in the tokens config
-  // and filter out chains that are in the excluded chains array
   registryChainMetadata = objFilter(registryChainMetadata, (c, m): m is ChainMetadata =>
     chainsInTokens.includes(c),
   );

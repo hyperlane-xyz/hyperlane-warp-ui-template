@@ -7,6 +7,7 @@ import {
 } from '@hyperlane-xyz/sdk';
 import { objFilter, objMap, promiseObjAll } from '@hyperlane-xyz/utils';
 import { z } from 'zod';
+import { EXCLUDED_CHAINS } from '../../consts/blacklist.ts';
 import { chains as ChainsTS } from '../../consts/chains.ts';
 import ChainsYaml from '../../consts/chains.yaml';
 import { config } from '../../consts/config.ts';
@@ -38,8 +39,10 @@ export async function assembleChainMetadata(
   }
 
   // Filter out chains that are not in the tokens config
-  registryChainMetadata = objFilter(registryChainMetadata, (c, m): m is ChainMetadata =>
-    chainsInTokens.includes(c),
+  // and filter out chains that are in the excluded chains array
+  registryChainMetadata = objFilter(
+    registryChainMetadata,
+    (c, m): m is ChainMetadata => chainsInTokens.includes(c) && !EXCLUDED_CHAINS.includes(m.name),
   );
 
   // TODO have the registry do this automatically
@@ -53,6 +56,7 @@ export async function assembleChainMetadata(
     ),
   );
 
+  console.log('registry', registryChainMetadata);
   const chainMetadata = mergeChainMetadataMap(registryChainMetadata, filesystemMetadata);
   const chainMetadataWithOverrides = mergeChainMetadataMap(chainMetadata, storeMetadataOverrides);
   return { chainMetadata, chainMetadataWithOverrides };

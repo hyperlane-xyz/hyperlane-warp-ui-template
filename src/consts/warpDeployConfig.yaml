@@ -1,0 +1,339 @@
+base:
+  hook:
+    domains:
+      mode:
+        lowerHook:
+          type: defaultHook
+        threshold: 250000000000
+        type: amountRoutingHook
+        upperHook:
+          hooks:
+            - type: defaultHook
+            - destinationChain: mode
+              type: ccipHook
+          type: aggregationHook
+      optimism:
+        lowerHook:
+          type: defaultHook
+        threshold: 250000000000
+        type: amountRoutingHook
+        upperHook:
+          hooks:
+            - type: defaultHook
+            - destinationChain: optimism
+              type: ccipHook
+          type: aggregationHook
+    fallback:
+      type: defaultHook
+    owner: '0x125d1b64dfd7898DD06ac3E060A432691b8Fa676'
+    type: fallbackRoutingHook
+  interchainSecurityModule:
+    modules:
+      - domains:
+          mode:
+            lowerIsm:
+              domains: {}
+              owner: '0x125d1b64dfd7898DD06ac3E060A432691b8Fa676'
+              type: defaultFallbackRoutingIsm
+            threshold: 250000000000
+            type: amountRoutingIsm
+            upperIsm:
+              originChain: mode
+              type: ccipIsm
+          optimism:
+            lowerIsm:
+              domains: {}
+              owner: '0x125d1b64dfd7898DD06ac3E060A432691b8Fa676'
+              type: defaultFallbackRoutingIsm
+            threshold: 250000000000
+            type: amountRoutingIsm
+            upperIsm:
+              originChain: optimism
+              type: ccipIsm
+        owner: '0x125d1b64dfd7898DD06ac3E060A432691b8Fa676'
+        type: defaultFallbackRoutingIsm
+      - owner: '0x125d1b64dfd7898DD06ac3E060A432691b8Fa676'
+        paused: false
+        type: pausableIsm
+    threshold: 2
+    type: staticAggregationIsm
+  mailbox: '0xeA87ae93Fa0019a82A727bfd3eBd1cFCa8f64f1D'
+  owner: '0x125d1b64dfd7898DD06ac3E060A432691b8Fa676'
+  token: '0x1217BfE6c773EEC6cc4A38b5Dc45B92292B6E189'
+  type: xERC20
+  xERC20:
+    extraBridges:
+      - limits:
+          bufferCap: '0'
+          rateLimitPerSecond: '0'
+        lockbox: '0x9d922c23d78179c2e75fe394fc8e49363f2dda85'
+      - limits:
+          bufferCap: '20000000000000'
+          rateLimitPerSecond: '5000000000'
+        lockbox: '0xe92e51d99ae33114c60d9621fb2e1ec0acea7e30'
+    warpRouteLimits:
+      bufferCap: '20000000000000'
+      rateLimitPerSecond: '5000000000'
+celo:
+  hook: '0x0000000000000000000000000000000000000000'
+  interchainSecurityModule:
+    modules:
+      - domains: {}
+        owner: '0xf1b3fc934bB46c459253fb38555A400b94909800'
+        type: defaultFallbackRoutingIsm
+      - owner: '0xf1b3fc934bB46c459253fb38555A400b94909800'
+        paused: false
+        type: pausableIsm
+    threshold: 2
+    type: staticAggregationIsm
+  mailbox: '0x50da3B3907A08a24fe4999F4Dcf337E8dC7954bb'
+  owner: '0xf1b3fc934bB46c459253fb38555A400b94909800'
+  token: '0x5e5F4d6B03db16E7f00dE7C9AFAA53b92C8d1D42'
+  type: xERC20Lockbox
+  xERC20:
+    warpRouteLimits:
+      bufferCap: '20000000000000'
+      rateLimitPerSecond: '5000000000'
+fraxtal:
+  hook: '0x0000000000000000000000000000000000000000'
+  interchainSecurityModule:
+    modules:
+      - domains: {}
+        owner: '0x21C0CA5be5aC9BC6161Bf1cfE281A18Fe2190079'
+        type: defaultFallbackRoutingIsm
+      - owner: '0x21C0CA5be5aC9BC6161Bf1cfE281A18Fe2190079'
+        paused: false
+        type: pausableIsm
+    threshold: 2
+    type: staticAggregationIsm
+  mailbox: '0x2f9DB5616fa3fAd1aB06cB2C906830BA63d135e3'
+  owner: '0x21C0CA5be5aC9BC6161Bf1cfE281A18Fe2190079'
+  token: '0x1217BfE6c773EEC6cc4A38b5Dc45B92292B6E189'
+  type: xERC20
+  xERC20:
+    warpRouteLimits:
+      bufferCap: '2000000000000'
+      rateLimitPerSecond: '500000000'
+lisk:
+  hook: '0x0000000000000000000000000000000000000000'
+  interchainSecurityModule:
+    modules:
+      - domains: {}
+        owner: '0x6F0A0038FcDB2F1655219f1b92f7E9aD4b78Aa49'
+        type: defaultFallbackRoutingIsm
+      - owner: '0x6F0A0038FcDB2F1655219f1b92f7E9aD4b78Aa49'
+        paused: false
+        type: pausableIsm
+    threshold: 2
+    type: staticAggregationIsm
+  mailbox: '0x2f2aFaE1139Ce54feFC03593FeE8AB2aDF4a85A7'
+  owner: '0x6F0A0038FcDB2F1655219f1b92f7E9aD4b78Aa49'
+  token: '0x1217BfE6c773EEC6cc4A38b5Dc45B92292B6E189'
+  type: xERC20
+  xERC20:
+    warpRouteLimits:
+      bufferCap: '2000000000000'
+      rateLimitPerSecond: '500000000'
+mode:
+  hook:
+    domains:
+      base:
+        lowerHook:
+          type: defaultHook
+        threshold: 250000000000
+        type: amountRoutingHook
+        upperHook:
+          hooks:
+            - type: defaultHook
+            - destinationChain: base
+              type: ccipHook
+          type: aggregationHook
+      optimism:
+        lowerHook:
+          type: defaultHook
+        threshold: 250000000000
+        type: amountRoutingHook
+        upperHook:
+          hooks:
+            - type: defaultHook
+            - destinationChain: optimism
+              type: ccipHook
+          type: aggregationHook
+    fallback:
+      type: defaultHook
+    owner: '0xD4c01B4753575899AD81aAca0bb2DB7796E9F7C0'
+    type: fallbackRoutingHook
+  interchainSecurityModule:
+    modules:
+      - domains:
+          base:
+            lowerIsm:
+              domains: {}
+              owner: '0xD4c01B4753575899AD81aAca0bb2DB7796E9F7C0'
+              type: defaultFallbackRoutingIsm
+            threshold: 250000000000
+            type: amountRoutingIsm
+            upperIsm:
+              originChain: base
+              type: ccipIsm
+          optimism:
+            lowerIsm:
+              domains: {}
+              owner: '0xD4c01B4753575899AD81aAca0bb2DB7796E9F7C0'
+              type: defaultFallbackRoutingIsm
+            threshold: 250000000000
+            type: amountRoutingIsm
+            upperIsm:
+              originChain: optimism
+              type: ccipIsm
+        owner: '0xD4c01B4753575899AD81aAca0bb2DB7796E9F7C0'
+        type: defaultFallbackRoutingIsm
+      - owner: '0xD4c01B4753575899AD81aAca0bb2DB7796E9F7C0'
+        paused: false
+        type: pausableIsm
+    threshold: 2
+    type: staticAggregationIsm
+  mailbox: '0x2f2aFaE1139Ce54feFC03593FeE8AB2aDF4a85A7'
+  owner: '0xD4c01B4753575899AD81aAca0bb2DB7796E9F7C0'
+  token: '0x1217BfE6c773EEC6cc4A38b5Dc45B92292B6E189'
+  type: xERC20
+  xERC20:
+    warpRouteLimits:
+      bufferCap: '2000000000000'
+      rateLimitPerSecond: '500000000'
+optimism:
+  hook:
+    domains:
+      base:
+        lowerHook:
+          type: defaultHook
+        threshold: 250000000000
+        type: amountRoutingHook
+        upperHook:
+          hooks:
+            - type: defaultHook
+            - destinationChain: base
+              type: ccipHook
+          type: aggregationHook
+      mode:
+        lowerHook:
+          type: defaultHook
+        threshold: 250000000000
+        type: amountRoutingHook
+        upperHook:
+          hooks:
+            - type: defaultHook
+            - destinationChain: mode
+              type: ccipHook
+          type: aggregationHook
+    fallback:
+      type: defaultHook
+    owner: '0x8E3340E241880F80359AA95Ae20Dc498d3f62503'
+    type: fallbackRoutingHook
+  interchainSecurityModule:
+    modules:
+      - domains:
+          base:
+            lowerIsm:
+              domains: {}
+              owner: '0x8E3340E241880F80359AA95Ae20Dc498d3f62503'
+              type: defaultFallbackRoutingIsm
+            threshold: 250000000000
+            type: amountRoutingIsm
+            upperIsm:
+              originChain: base
+              type: ccipIsm
+          mode:
+            lowerIsm:
+              domains: {}
+              owner: '0x8E3340E241880F80359AA95Ae20Dc498d3f62503'
+              type: defaultFallbackRoutingIsm
+            threshold: 250000000000
+            type: amountRoutingIsm
+            upperIsm:
+              originChain: mode
+              type: ccipIsm
+        owner: '0x8E3340E241880F80359AA95Ae20Dc498d3f62503'
+        type: defaultFallbackRoutingIsm
+      - owner: '0x8E3340E241880F80359AA95Ae20Dc498d3f62503'
+        paused: false
+        type: pausableIsm
+    threshold: 2
+    type: staticAggregationIsm
+  mailbox: '0xd4C1905BB1D26BC93DAC913e13CaCC278CdCC80D'
+  owner: '0x8E3340E241880F80359AA95Ae20Dc498d3f62503'
+  token: '0x1217BfE6c773EEC6cc4A38b5Dc45B92292B6E189'
+  type: xERC20
+  xERC20:
+    extraBridges:
+      - limits:
+          bufferCap: '0'
+          rateLimitPerSecond: '0'
+        lockbox: '0x07e437d73e9e43ceece6ea14085b26159e3f7f31'
+      - limits:
+          bufferCap: '20000000000000'
+          rateLimitPerSecond: '5000000000'
+        lockbox: '0x18c4cdc2d774c047eac8375bb09853c4d6d6df36'
+    warpRouteLimits:
+      bufferCap: '20000000000000'
+      rateLimitPerSecond: '5000000000'
+soneium:
+  hook: '0x0000000000000000000000000000000000000000'
+  interchainSecurityModule:
+    modules:
+      - domains: {}
+        owner: '0x31Bf112F33556A0F1dc76881cfA8A36Bc2134A57'
+        type: defaultFallbackRoutingIsm
+      - owner: '0x31Bf112F33556A0F1dc76881cfA8A36Bc2134A57'
+        paused: false
+        type: pausableIsm
+    threshold: 2
+    type: staticAggregationIsm
+  mailbox: '0x3a464f746D23Ab22155710f44dB16dcA53e0775E'
+  owner: '0x31Bf112F33556A0F1dc76881cfA8A36Bc2134A57'
+  token: '0x1217BfE6c773EEC6cc4A38b5Dc45B92292B6E189'
+  type: xERC20
+  xERC20:
+    warpRouteLimits:
+      bufferCap: '2000000000000'
+      rateLimitPerSecond: '500000000'
+superseed:
+  hook: '0x0000000000000000000000000000000000000000'
+  interchainSecurityModule:
+    modules:
+      - domains: {}
+        owner: '0x0731a8e0DC88Df79d9643BD6C1f26cfe6fa53382'
+        type: defaultFallbackRoutingIsm
+      - owner: '0x0731a8e0DC88Df79d9643BD6C1f26cfe6fa53382'
+        paused: false
+        type: pausableIsm
+    threshold: 2
+    type: staticAggregationIsm
+  mailbox: '0x3a464f746D23Ab22155710f44dB16dcA53e0775E'
+  owner: '0x0731a8e0DC88Df79d9643BD6C1f26cfe6fa53382'
+  token: '0x1217BfE6c773EEC6cc4A38b5Dc45B92292B6E189'
+  type: xERC20
+  xERC20:
+    warpRouteLimits:
+      bufferCap: '2000000000000'
+      rateLimitPerSecond: '500000000'
+unichain:
+  hook: '0x0000000000000000000000000000000000000000'
+  interchainSecurityModule:
+    modules:
+      - domains: {}
+        owner: '0xf306ad5bF95960188c67A30f5546D193760ca3D0'
+        type: defaultFallbackRoutingIsm
+      - owner: '0xf306ad5bF95960188c67A30f5546D193760ca3D0'
+        paused: false
+        type: pausableIsm
+    threshold: 2
+    type: staticAggregationIsm
+  mailbox: '0x3a464f746D23Ab22155710f44dB16dcA53e0775E'
+  owner: '0xf306ad5bF95960188c67A30f5546D193760ca3D0'
+  token: '0x1217BfE6c773EEC6cc4A38b5Dc45B92292B6E189'
+  type: xERC20
+  xERC20:
+    warpRouteLimits:
+      bufferCap: '20000000000000'
+      rateLimitPerSecond: '5000000000'

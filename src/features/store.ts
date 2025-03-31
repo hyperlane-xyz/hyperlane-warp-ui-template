@@ -2,15 +2,18 @@ import { GithubRegistry, IRegistry } from '@hyperlane-xyz/registry';
 import {
   ChainMap,
   ChainMetadata,
+  HypTokenRouterConfig,
+  HypTokenRouterConfigSchema,
   MultiProtocolProvider,
   WarpCore,
   WarpCoreConfig,
 } from '@hyperlane-xyz/sdk';
-import { objFilter } from '@hyperlane-xyz/utils';
+import { objFilter, objMap } from '@hyperlane-xyz/utils';
 import { toast } from 'react-toastify';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { config } from '../consts/config';
+import yamlWarpDeployConfig from '../consts/warpDeployConfig.yaml';
 import { logger } from '../utils/logger';
 import { assembleChainMetadata } from './chains/metadata';
 import { FinalTransferStatuses, TransferContext, TransferStatus } from './transfer/types';
@@ -39,6 +42,10 @@ export interface AppState {
     multiProvider: MultiProtocolProvider;
     warpCore: WarpCore;
   }) => void;
+
+  // Warp Deploy Config state
+  warpDeployConfig: ChainMap<HypTokenRouterConfig>;
+  setWarpDeployConfig: (overrides?: ChainMap<HypTokenRouterConfig> | undefined) => void;
 
   // User history
   transfers: TransferContext[];
@@ -87,6 +94,7 @@ export const useStore = create<AppState>()(
         });
         set({ warpCoreConfigOverrides: overrides, multiProvider, warpCore });
       },
+
       multiProvider: new MultiProtocolProvider({}),
       registry: new GithubRegistry({
         uri: config.registryUrl,
@@ -97,6 +105,10 @@ export const useStore = create<AppState>()(
       setWarpContext: ({ registry, chainMetadata, multiProvider, warpCore }) => {
         logger.debug('Setting warp context in store');
         set({ registry, chainMetadata, multiProvider, warpCore });
+      },
+      warpDeployConfig: {},
+      setWarpDeployConfig: (warpDeployConfig?: ChainMap<HypTokenRouterConfig> | undefined) => {
+        set({ warpDeployConfig });
       },
 
       // User history
@@ -163,6 +175,7 @@ export const useStore = create<AppState>()(
             state.setWarpContext({ registry, chainMetadata, multiProvider, warpCore });
             logger.debug('Rehydration complete');
           });
+          state.setWarpDeployConfig(buildWarpDeployConfig());
         };
       },
     },
@@ -201,4 +214,17 @@ async function initWarpContext({
       warpCore: new WarpCore(new MultiProtocolProvider({}), []),
     };
   }
+}
+
+function buildWarpDeployConfig(): ChainMap<HypTokenRouterConfig> {
+  const warpDeployConfig: ChainMap<HypTokenRouterConfig> = {};
+
+  objMap(yamlWarpDeployConfig, (chainName, config) => {
+    const chainConfig = HypTokenRouterConfigSchema.safeParse(config);
+    if (typeof chainName === 'string' && chainConfig.success) {
+      warpDeployConfig[chainName] = chainConfig.data;
+    }
+  });
+
+  return warpDeployConfig;
 }

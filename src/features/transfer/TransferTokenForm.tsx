@@ -44,6 +44,7 @@ import {
   getTokenIndexFromChains,
   useWarpCore,
 } from '../tokens/hooks';
+import { CcipTransferWarning } from './CcipTransferWarning';
 import { RecipientConfirmationModal } from './RecipientConfirmationModal';
 import { useFetchMaxAmount } from './maxAmount';
 import { TransferFormValues } from './types';
@@ -513,6 +514,12 @@ function WarningBanners() {
     <div className="max-h-10">
       <ChainWalletWarning origin={values.origin} />
       <ChainConnectionWarning origin={values.origin} destination={values.destination} />
+      <CcipTransferWarning
+        amount={values.amount}
+        origin={values.origin}
+        destination={values.destination}
+        tokenIndex={values.tokenIndex}
+      />
     </div>
   );
 }

@@ -18,6 +18,8 @@ import { toast } from 'react-toastify';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
 import { SolidButton } from '../../components/buttons/SolidButton';
 import { TextField } from '../../components/input/TextField';
+import { Card } from '../../components/layout/Card';
+import { TipCard } from '../../components/tip/TipCard';
 import { WARP_QUERY_PARAMS } from '../../consts/args';
 import { config } from '../../consts/config';
 import { Color } from '../../styles/Color';
@@ -94,26 +96,31 @@ export function TransferTokenForm() {
       validateOnBlur={false}
     >
       {({ isValidating }) => (
-        <Form className="flex w-full flex-col items-stretch">
-          <WarningBanners />
-          <ChainSelectSection isReview={isReview} />
-          <div className="mt-3.5 flex items-end justify-between space-x-4">
-            <TokenSection setIsNft={setIsNft} isReview={isReview} />
-            <AmountSection isNft={isNft} isReview={isReview} />
-          </div>
-          <RecipientSection isReview={isReview} />
-          <ReviewDetails visible={isReview} />
-          <ButtonSection
-            isReview={isReview}
-            isValidating={isValidating}
-            setIsReview={setIsReview}
-          />
-          <RecipientConfirmationModal
-            isOpen={isConfirmationModalOpen}
-            close={closeConfirmationModal}
-            onConfirm={() => setIsReview(true)}
-          />
-        </Form>
+        <div className="space-y-3 pt-4">
+          <TipCard />
+          <Card className="w-100 sm:w-[31rem]">
+            <Form className="flex w-full flex-col items-stretch">
+              <WarningBanners />
+              <ChainSelectSection isReview={isReview} />
+              <div className="mt-3.5 flex items-end justify-between space-x-4">
+                <TokenSection setIsNft={setIsNft} isReview={isReview} />
+                <AmountSection isNft={isNft} isReview={isReview} />
+              </div>
+              <RecipientSection isReview={isReview} />
+              <ReviewDetails visible={isReview} />
+              <ButtonSection
+                isReview={isReview}
+                isValidating={isValidating}
+                setIsReview={setIsReview}
+              />
+              <RecipientConfirmationModal
+                isOpen={isConfirmationModalOpen}
+                close={closeConfirmationModal}
+                onConfirm={() => setIsReview(true)}
+              />
+            </Form>
+          </Card>
+        </div>
       )}
     </Formik>
   );

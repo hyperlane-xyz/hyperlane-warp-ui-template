@@ -21,7 +21,7 @@ export function FloatingButtonStrip() {
 
   return (
     <>
-      <div className="absolute -right-8 top-2 hidden flex-col items-center justify-end gap-3 sm:flex">
+      <div className="absolute -right-8 top-[9.5rem] hidden flex-col items-center justify-end gap-3 sm:flex">
         <IconButton
           className={`p-0.5 ${styles.roundedCircle}`}
           title="History"

@@ -69,22 +69,24 @@ export function getInitialTokenIndex(
   originQuery?: string,
   destinationQuery?: string,
   defaultOriginToken?: Token,
+  defaultDestinationChain?: string,
 ): number | undefined {
   const firstToken = defaultOriginToken || warpCore.tokens[0];
-  const connectedToken = firstToken.connections?.[0];
+  const connectedToken = firstToken.connections?.[0].token;
 
   // origin query and destination query is defined
   if (originQuery && destinationQuery)
     return getTokenIndexFromChains(warpCore, addressOrDenom, originQuery, destinationQuery);
 
   // if none of those are defined, use default values and pass token query
-  if (connectedToken)
+  if (defaultDestinationChain || connectedToken) {
     return getTokenIndexFromChains(
       warpCore,
       addressOrDenom,
       firstToken.chainName,
-      connectedToken.token.chainName,
+      defaultDestinationChain || connectedToken?.chainName || '',
     );
+  }
 
   return undefined;
 }

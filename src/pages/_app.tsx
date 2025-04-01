@@ -12,6 +12,7 @@ import { WarpContextInitGate } from '../features/WarpContextInitGate';
 import { CosmosWalletContext } from '../features/wallet/context/CosmosWalletContext';
 import { EvmWalletContext } from '../features/wallet/context/EvmWalletContext';
 import { SolanaWalletContext } from '../features/wallet/context/SolanaWalletContext';
+import { StarknetWalletContext } from '../features/wallet/context/StarknetWalletContext';
 import '../styles/globals.css';
 import '../vendor/inpage-metamask';
 import '../vendor/polyfill';
@@ -42,10 +43,12 @@ export default function App({ Component, pageProps }: AppProps) {
             <EvmWalletContext>
               <SolanaWalletContext>
                 <CosmosWalletContext>
-                  <AppLayout>
-                    <Component {...pageProps} />
-                    <Analytics />
-                  </AppLayout>
+                  <StarknetWalletContext>
+                    <AppLayout>
+                      <Component {...pageProps} />
+                      <Analytics />
+                    </AppLayout>
+                  </StarknetWalletContext>
                 </CosmosWalletContext>
               </SolanaWalletContext>
             </EvmWalletContext>

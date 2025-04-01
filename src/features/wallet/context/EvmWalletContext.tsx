@@ -5,6 +5,7 @@ import { RainbowKitProvider, connectorsForWallets, lightTheme } from '@rainbow-m
 import '@rainbow-me/rainbowkit/styles.css';
 import {
   argentWallet,
+  binanceWallet,
   coinbaseWallet,
   injectedWallet,
   ledgerWallet,
@@ -29,7 +30,7 @@ function initWagmi(multiProvider: MultiProtocolProvider) {
     [
       {
         groupName: 'Recommended',
-        wallets: [metaMaskWallet, injectedWallet, walletConnectWallet, ledgerWallet],
+        wallets: [metaMaskWallet, injectedWallet, walletConnectWallet, binanceWallet, ledgerWallet],
       },
       {
         groupName: 'More',

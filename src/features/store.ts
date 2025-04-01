@@ -194,7 +194,7 @@ async function initWarpContext({
   try {
     const coreConfig = await assembleWarpCoreConfig(warpCoreConfigOverrides);
     const chainsInTokens = Array.from(
-      new Set(coreConfig.tokens.filter((t) => t.connections).map((t) => t.chainName)),
+      new Set(coreConfig.tokens.filter((t) => t.connections?.length).map((t) => t.chainName)),
     );
     // Pre-load registry content to avoid repeated requests
     await registry.listRegistryContent();

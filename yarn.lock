@@ -1016,6 +1016,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@bootnodedev/intents-framework-core@npm:^0.1.0":
+  version: 0.1.0
+  resolution: "@bootnodedev/intents-framework-core@npm:0.1.0"
+  dependencies:
+    "@hyperlane-xyz/core": "npm:^5.4.1"
+    "@openzeppelin/contracts": "npm:^4.9.6"
+    "@uniswap/permit2": "github:Uniswap/permit2"
+    dotenv-run-script: "npm:^0.4.1"
+  checksum: 10/f8df5a44e2ba7008e42d5e878ab6b2c57ebad0aaed1e8b134bc4a84d5539d5c62b04f299011435e9e4b2383c218e0d9897aef955c0b03b257ddbf7288242eb46
+  languageName: node
+  linkType: hard
+
 "@bytecodealliance/preview2-shim@npm:0.17.0":
   version: 0.17.0
   resolution: "@bytecodealliance/preview2-shim@npm:0.17.0"
@@ -4568,6 +4580,26 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@hyperlane-xyz/core@npm:^5.4.1":
+  version: 5.12.0
+  resolution: "@hyperlane-xyz/core@npm:5.12.0"
+  dependencies:
+    "@arbitrum/nitro-contracts": "npm:^1.2.1"
+    "@chainlink/contracts-ccip": "npm:^1.5.0"
+    "@eth-optimism/contracts": "npm:^0.6.0"
+    "@hyperlane-xyz/utils": "npm:8.9.0"
+    "@layerzerolabs/lz-evm-oapp-v2": "npm:2.0.2"
+    "@openzeppelin/contracts": "npm:^4.9.3"
+    "@openzeppelin/contracts-upgradeable": "npm:^4.9.3"
+    fx-portal: "npm:^1.0.3"
+  peerDependencies:
+    "@ethersproject/abi": "*"
+    "@ethersproject/providers": "*"
+    "@types/sinon-chai": "*"
+  checksum: 10/9f28ca2d4f3f4baf1d3daed961b8a07d22a3c2c6ab3377620312c5fa3a3084cb17fb4c95e7e3fcf9f273f22d47e361deba3c1f3ea00d46142485d6f432be5211
+  languageName: node
+  linkType: hard
+
 "@hyperlane-xyz/registry@npm:11.3.0":
   version: 11.3.0
   resolution: "@hyperlane-xyz/registry@npm:11.3.0"
@@ -4609,6 +4641,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@hyperlane-xyz/utils@npm:8.9.0":
+  version: 8.9.0
+  resolution: "@hyperlane-xyz/utils@npm:8.9.0"
+  dependencies:
+    "@cosmjs/encoding": "npm:^0.32.4"
+    "@solana/web3.js": "npm:^1.95.4"
+    bignumber.js: "npm:^9.1.1"
+    ethers: "npm:^5.7.2"
+    lodash-es: "npm:^4.17.21"
+    pino: "npm:^8.19.0"
+    yaml: "npm:2.4.5"
+  checksum: 10/49b06a286b1ed9be1198c05c5de45591b55f69f41864397e961686393a428d31a701208b20c62c5897e39dd667cd1bec8b927982ec371d830160522ff96a2892
+  languageName: node
+  linkType: hard
+
 "@hyperlane-xyz/utils@npm:9.2.1":
   version: 9.2.1
   resolution: "@hyperlane-xyz/utils@npm:9.2.1"
@@ -4628,6 +4675,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@hyperlane-xyz/warp-ui-template@workspace:."
   dependencies:
+    "@bootnodedev/intents-framework-core": "npm:^0.1.0"
     "@chakra-ui/next-js": "npm:^2.4.2"
     "@chakra-ui/react": "npm:^2.8.2"
     "@cosmjs/cosmwasm-stargate": "npm:^0.32.4"
@@ -7248,7 +7296,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@openzeppelin/contracts@npm:^4.2.0":
+"@openzeppelin/contracts@npm:^4.2.0, @openzeppelin/contracts@npm:^4.9.6":
   version: 4.9.6
   resolution: "@openzeppelin/contracts@npm:4.9.6"
   checksum: 10/71f45ad42e68c0559be4ba502115462a01c76fc805c08d3005c10b5550a093f1a2b00b2d7e9d6d1f331e147c50fd4ad832f71c4470ec5b34f5a2d0751cd19a47
@@ -12532,6 +12580,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@uniswap/permit2@github:Uniswap/permit2":
+  version: 1.0.0
+  resolution: "@uniswap/permit2@https://github.com/Uniswap/permit2.git#commit=cc56ad0f3439c502c246fc5cfcc3db92bb8b7219"
+  checksum: 10/746891ef1b7e494eada03caf4818223d21c15558c1932111dbdf6584bc632188e9e333685b09ec3f29e9238c11e4246adabefa222a0ae8cc4e11e9a1fc093c38
+  languageName: node
+  linkType: hard
+
 "@vanilla-extract/css@npm:1.15.5":
   version: 1.15.5
   resolution: "@vanilla-extract/css@npm:1.15.5"
@@ -16169,6 +16224,25 @@ __metadata:
   version: 0.1.2
   resolution: "dom-walk@npm:0.1.2"
   checksum: 10/19eb0ce9c6de39d5e231530685248545d9cd2bd97b2cb3486e0bfc0f2a393a9addddfd5557463a932b52fdfcf68ad2a619020cd2c74a5fe46fbecaa8e80872f3
+  languageName: node
+  linkType: hard
+
+"dotenv-expand@npm:^10.0.0":
+  version: 10.0.0
+  resolution: "dotenv-expand@npm:10.0.0"
+  checksum: 10/b41eb278bc96b92cbf3037ca5f3d21e8845bf165dc06b6f9a0a03d278c2bd5a01c0cfbb3528ae3a60301ba1a8a9cace30e748c54b460753bc00d4c014b675597
+  languageName: node
+  linkType: hard
+
+"dotenv-run-script@npm:^0.4.1":
+  version: 0.4.1
+  resolution: "dotenv-run-script@npm:0.4.1"
+  dependencies:
+    dotenv: "npm:^16.3.1"
+    dotenv-expand: "npm:^10.0.0"
+  bin:
+    dotenv-run-script: bin/dotenv-run-script
+  checksum: 10/dc0ec2b3bfbc5d01c32c937c24e6a6e4e910b6c95119dfd57d206a8c77f389a5f0512d68d4ec6e716e5afd3f1f799cc7d2e4a944b0334df781510f8aed0e5bd0
   languageName: node
   linkType: hard
 

@@ -176,4 +176,11 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // GPS routes
   'GPS/base-bsc',
+
+  // SOON batch
+  'ai16z/solanamainnet-soon',
+  'ELIZA/solanamainnet-soon',
+  'MEW/solanamainnet-soon',
+  'Pnut/solanamainnet-soon',
+  'WIF/solanamainnet-soon',
 ];

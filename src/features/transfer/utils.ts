@@ -83,8 +83,12 @@ export function tryGetMsgIdFromTransferReceipt(
     // IBC transfers have no message IDs
     if (receipt.type === ProviderType.CosmJs) return undefined;
 
-    // TODO: Remove this once we have a way to get the message ID from SDK
-    if (receipt.type === ProviderType.Starknet) return undefined;
+    if (receipt.type === ProviderType.Starknet)  {
+      receipt = {
+        type: ProviderType.Starknet,
+        receipt: receipt.receipt as any,
+      }
+    };
 
     if (receipt.type === ProviderType.Viem) {
       // Massage viem type into ethers type because that's still what the

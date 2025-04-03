@@ -1,0 +1,7 @@
+tokens:
+  - chainName: basesepolia
+    standard: EvmHypNative
+    decimals: 18
+    symbol: ETH
+    name: Ether
+    addressOrDenom: '0x12582c7B0f43c6A667CBaA7fA8b112F7fb1E69F0'

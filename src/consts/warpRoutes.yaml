@@ -38,4 +38,21 @@ tokens:
     symbol: DEV
     name: Dev
     standard: EvmHypNative
+  - addressOrDenom: '0x12582c7B0f43c6A667CBaA7fA8b112F7fb1E69F0'
+    chainName: basesepolia
+    connections:
+      - token: cosmos|kyvetestnet|0x726f757465725f61707000000000000000000000000000020000000000000001
+    standard: EvmHypNative
+    decimals: 18
+    symbol: ETH
+    name: Ether
+  - addressOrDenom: '0x726f757465725f61707000000000000000000000000000020000000000000001'
+    chainName: kyvetestnet
+    connections:
+      - token: ethereum|basesepolia|0x12582c7B0f43c6A667CBaA7fA8b112F7fb1E69F0
+    decimals: 18
+    logoURI: ''
+    name: wETH
+    standard: CosmosHypSynthetic
+    symbol: wETH
 options: {}

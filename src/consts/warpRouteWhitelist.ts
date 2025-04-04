@@ -182,4 +182,8 @@ export const warpRouteWhitelist: Array<string> | null = [
   'MEW/solanamainnet-soon',
   'Pnut/solanamainnet-soon',
   'WIF/solanamainnet-soon',
+  'POPCAT/solanamainnet-soon',
+  'GIGA/solanamainnet-soon',
+  'GOAT/solanamainnet-soon',
+  'SPORE/solanamainnet-soon',
 ];

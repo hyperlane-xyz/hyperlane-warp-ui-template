@@ -132,7 +132,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'wstETH/ethereum-form',
 
   // pzETH routes
-  'pzETH/ethereum-swell-zircuit',
+  'pzETH/berachain-ethereum-swell-unichain-zircuit',
 
   // pumpBTCuni routes
   'pumpBTC.uni/ethereum-unichain',
@@ -182,4 +182,8 @@ export const warpRouteWhitelist: Array<string> | null = [
   'MEW/solanamainnet-soon',
   'Pnut/solanamainnet-soon',
   'WIF/solanamainnet-soon',
+  'POPCAT/solanamainnet-soon',
+  'GIGA/solanamainnet-soon',
+  'GOAT/solanamainnet-soon',
+  'SPORE/solanamainnet-soon',
 ];

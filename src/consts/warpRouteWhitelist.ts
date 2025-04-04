@@ -109,9 +109,6 @@ export const warpRouteWhitelist: Array<string> | null = [
   // SMOL routes
   'SMOL/arbitrum-ethereum-solanamainnet-treasure',
 
-  // MAGIC routes
-  'MAGIC/arbitrum-treasure',
-
   // WETH routes
   'WETH.a/artela-base',
 

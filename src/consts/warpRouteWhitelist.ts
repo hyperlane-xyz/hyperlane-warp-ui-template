@@ -132,7 +132,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'wstETH/ethereum-form',
 
   // pzETH routes
-  'pzETH/ethereum-swell-zircuit',
+  'PZETH/berachain-ethereum-swell-unichain-zircuit',
 
   // pumpBTCuni routes
   'pumpBTC.uni/ethereum-unichain',

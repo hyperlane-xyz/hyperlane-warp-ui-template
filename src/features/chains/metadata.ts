@@ -27,7 +27,6 @@ export async function assembleChainMetadata(
     logger.warn('Invalid chain metadata', result.error);
     throw new Error(`Invalid chain metadata: ${result.error.toString()}`);
   }
-
   const filesystemMetadata = result.data as ChainMap<ChainMetadata>;
 
   let registryChainMetadata: ChainMap<ChainMetadata>;
@@ -56,10 +55,10 @@ export async function assembleChainMetadata(
   );
   const mergedChainMetadata = mergeChainMetadataMap(registryChainMetadata, filesystemMetadata);
 
-  const parsedRpcResult = tryParseJsonOrYaml(config.rpcOverrides);
+  const parsedRpcOverridesResult = tryParseJsonOrYaml(config.rpcOverrides);
   const rpcOverrides = z
     .record(RpcUrlSchema)
-    .safeParse(parsedRpcResult.success && parsedRpcResult.data);
+    .safeParse(parsedRpcOverridesResult.success && parsedRpcOverridesResult.data);
   if (config.rpcOverrides && !rpcOverrides.success) {
     logger.warn('Invalid RPC overrides config', rpcOverrides.error);
   }

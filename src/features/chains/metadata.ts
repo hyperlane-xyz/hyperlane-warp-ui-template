@@ -4,8 +4,9 @@ import {
   ChainMetadata,
   ChainMetadataSchema,
   mergeChainMetadataMap,
+  RpcUrlSchema,
 } from '@hyperlane-xyz/sdk';
-import { objFilter, objMap, promiseObjAll } from '@hyperlane-xyz/utils';
+import { objFilter, objMap, promiseObjAll, tryParseJsonOrYaml } from '@hyperlane-xyz/utils';
 import { z } from 'zod';
 import { chains as ChainsTS } from '../../consts/chains.ts';
 import ChainsYaml from '../../consts/chains.yaml';
@@ -26,6 +27,7 @@ export async function assembleChainMetadata(
     logger.warn('Invalid chain metadata', result.error);
     throw new Error(`Invalid chain metadata: ${result.error.toString()}`);
   }
+
   const filesystemMetadata = result.data as ChainMap<ChainMetadata>;
 
   let registryChainMetadata: ChainMap<ChainMetadata>;
@@ -52,8 +54,23 @@ export async function assembleChainMetadata(
       }),
     ),
   );
+  const mergedChainMetadata = mergeChainMetadataMap(registryChainMetadata, filesystemMetadata);
 
-  const chainMetadata = mergeChainMetadataMap(registryChainMetadata, filesystemMetadata);
+  const parsedRpcResult = tryParseJsonOrYaml(config.rpcOverrides);
+  const rpcOverrides = z
+    .record(RpcUrlSchema)
+    .safeParse(parsedRpcResult.success && parsedRpcResult.data);
+  if (config.rpcOverrides && !rpcOverrides.success) {
+    logger.warn('Invalid RPC overrides config', rpcOverrides.error);
+  }
+
+  const chainMetadata = objMap(mergedChainMetadata, (chainName, metadata) => ({
+    ...metadata,
+    rpcUrls:
+      rpcOverrides.success && rpcOverrides.data[chainName]
+        ? [rpcOverrides.data[chainName], ...metadata.rpcUrls]
+        : metadata.rpcUrls,
+  }));
   const chainMetadataWithOverrides = mergeChainMetadataMap(chainMetadata, storeMetadataOverrides);
   return { chainMetadata, chainMetadataWithOverrides };
 }

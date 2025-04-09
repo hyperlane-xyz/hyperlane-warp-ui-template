@@ -109,9 +109,6 @@ export const warpRouteWhitelist: Array<string> | null = [
   // SMOL routes
   'SMOL/arbitrum-ethereum-solanamainnet-treasure',
 
-  // MAGIC routes
-  'MAGIC/arbitrum-treasure',
-
   // WETH routes
   'WETH.a/artela-base',
 
@@ -119,6 +116,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'fastUSD/ethereum-sei',
 
   // cbBTC routes
+  'cbBTC/base-ethereum-superseed',
   'cbBTC/ethereum-flowmainnet',
 
   // ezETH routes
@@ -134,7 +132,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'wstETH/ethereum-form',
 
   // pzETH routes
-  'pzETH/ethereum-swell-zircuit',
+  'pzETH/berachain-ethereum-swell-unichain-zircuit',
 
   // pumpBTCuni routes
   'pumpBTC.uni/ethereum-unichain',
@@ -177,4 +175,15 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // GPS routes
   'GPS/base-bsc',
+
+  // SOON batch
+  'ai16z/solanamainnet-soon',
+  'ELIZA/solanamainnet-soon',
+  'MEW/solanamainnet-soon',
+  'Pnut/solanamainnet-soon',
+  'WIF/solanamainnet-soon',
+  'POPCAT/solanamainnet-soon',
+  'GIGA/solanamainnet-soon',
+  'GOAT/solanamainnet-soon',
+  'SPORE/solanamainnet-soon',
 ];

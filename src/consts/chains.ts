@@ -1,8 +1,6 @@
 import {
   eclipsemainnet,
   eclipsemainnetAddresses,
-  ethereum,
-  injective,
   solanamainnet,
   solanamainnetAddresses,
   sonicsvm,
@@ -22,10 +20,6 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
     ...solanamainnet,
     // SVM chains require mailbox addresses for the token adapters
     mailbox: solanamainnetAddresses.mailbox,
-    // Including a convenient rpc override because the Solana public RPC does not allow browser requests from localhost
-    rpcUrls: process.env.NEXT_PUBLIC_SOLANA_RPC_URL
-      ? [{ http: process.env.NEXT_PUBLIC_SOLANA_RPC_URL }]
-      : solanamainnet.rpcUrls,
   },
   eclipsemainnet: {
     ...eclipsemainnet,
@@ -38,16 +32,6 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
   sonicsvm: {
     ...sonicsvm,
     mailbox: sonicsvmAddresses.mailbox,
-    // Including rpc override because the main Sonic public RPC is down
-    rpcUrls: process.env.NEXT_PUBLIC_SONICSVM_RPC_URL
-      ? [{ http: process.env.NEXT_PUBLIC_SONICSVM_RPC_URL }]
-      : sonicsvm.rpcUrls,
-  },
-  injective: {
-    ...injective,
-    rpcUrls: process.env.NEXT_PUBLIC_INJECTIVE_RPC_URL
-      ? [{ http: process.env.NEXT_PUBLIC_INJECTIVE_RPC_URL }]
-      : injective.rpcUrls,
   },
   // mycustomchain: {
   //   protocol: ProtocolType.Ethereum,
@@ -72,12 +56,6 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
   //   },
   //   logoURI: '/logo.svg',
   // },
-  ethereum: {
-    ...ethereum,
-    rpcUrls: process.env.NEXT_PUBLIC_ETHEREUM_RPC_URL
-      ? [{ http: process.env.NEXT_PUBLIC_ETHEREUM_RPC_URL }]
-      : ethereum.rpcUrls,
-  },
   celestia: {
     protocol: ProtocolType.Cosmos,
     domainId: 123456789, // TODO not a real domain id

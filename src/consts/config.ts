@@ -10,11 +10,13 @@ const registryProxyUrl = process?.env?.NEXT_PUBLIC_GITHUB_PROXY || 'https://prox
 const walletConnectProjectId = process?.env?.NEXT_PUBLIC_WALLET_CONNECT_ID || '';
 const transferBlacklist = process?.env?.NEXT_PUBLIC_TRANSFER_BLACKLIST || '';
 const chainWalletWhitelists = JSON.parse(process?.env?.NEXT_PUBLIC_CHAIN_WALLET_WHITELISTS || '{}');
+const rpcOverrides = process?.env?.NEXT_PUBLIC_RPC_OVERRIDES || '';
 
 interface Config {
   addressBlacklist: string[]; // A list of addresses that are blacklisted and cannot be used in the app
   chainWalletWhitelists: ChainMap<string[]>; // A map of chain names to a list of wallet names that work for it
   defaultOriginChain: string | undefined; // The initial origin chain to show when app first loads
+  defaultDestinationChain: string | undefined; // The initial destination chain to show when app first loads
   enableExplorerLink: boolean; // Include a link to the hyperlane explorer in the transfer modal
   isDevMode: boolean; // Enables some debug features in the app
   registryUrl: string | undefined; // Optional URL to use a custom registry instead of the published canonical version
@@ -29,6 +31,7 @@ interface Config {
   version: string; // Matches version number in package.json
   walletConnectProjectId: string; // Project ID provided by walletconnect
   walletProtocols: ProtocolType[] | undefined; // Wallet Protocols to show in the wallet connect modal. Leave undefined to include all of them
+  rpcOverrides: string; // JSON string containing a map of chain names to an object with an URL for RPC overrides (For an example check the .env.example file)
 }
 
 export const config: Config = Object.freeze({
@@ -36,6 +39,7 @@ export const config: Config = Object.freeze({
   chainWalletWhitelists,
   enableExplorerLink: false,
   defaultOriginChain: undefined,
+  defaultDestinationChain: undefined,
   isDevMode,
   registryUrl,
   registryBranch,
@@ -47,6 +51,7 @@ export const config: Config = Object.freeze({
   version,
   transferBlacklist,
   walletConnectProjectId,
-  walletProtocols: undefined,
+  walletProtocols: [ProtocolType.Ethereum, ProtocolType.Cosmos],
   shouldDisableChains: false,
+  rpcOverrides,
 });

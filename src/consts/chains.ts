@@ -1,5 +1,4 @@
-import { ink, worldchain } from '@hyperlane-xyz/registry';
-import { ChainDisabledReason, ChainMap, ChainMetadata, ChainStatus } from '@hyperlane-xyz/sdk';
+import { ChainMap, ChainMetadata } from '@hyperlane-xyz/sdk';
 
 // A map of chain names to ChainMetadata
 // Chains can be defined here, in chains.json, or in chains.yaml
@@ -29,18 +28,4 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
   //   },
   //   logoURI: '/logo.svg',
   // },
-  ink: {
-    ...ink,
-    availability: {
-      status: ChainStatus.Disabled,
-      reasons: [ChainDisabledReason.Other],
-    },
-  },
-  worldchain: {
-    ...worldchain,
-    availability: {
-      status: ChainStatus.Disabled,
-      reasons: [ChainDisabledReason.Other],
-    },
-  },
 };

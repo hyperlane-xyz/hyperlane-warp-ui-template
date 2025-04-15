@@ -3,18 +3,47 @@
 # Chains already in the SDK need not be included here unless you want to override some fields
 # Schema here: https://github.com/hyperlane-xyz/hyperlane-monorepo/blob/main/typescript/sdk/src/metadata/chainMetadataTypes.ts
 ---
-# Example using local anvil chain:
-# anvil1:
-#   chainId: 31337
-#   domainId: 31337
-#   name: anvil1
-#   protocol: ethereum
-#   rpcUrls:
-#     - http: http://127.0.0.1:8545
-# anvil2:
-#   chainId: 31338
-#   domainId: 31338
-#   name: anvil2
-#   protocol: ethereum
-#   rpcUrls:
-#     - http: http://127.0.0.1:8555
+test:
+  bech32Prefix: hyp
+  blockExplorers:
+    - apiUrl: https://apis.mintscan.io/v1/osmosis
+      family: other
+      name: Mintscan
+      url: https://www.mintscan.io/osmosis
+  blocks:
+    confirmations: 1
+    estimateBlockTime: 6
+    reorgPeriod: 1
+  canonicalAsset: uhyp
+  chainId: hyperlane-local
+  contractAddressBytes: 32
+  deployer:
+    name: Mitosis
+    url: https://mitosis.org
+  displayName: Hyperlane Local
+  domainId: 75898669
+  gasCurrencyCoinGeckoId: osmosis
+  gasPrice:
+    amount: '0.025'
+    denom: uhyp
+  grpcUrls:
+    - http: http://127.0.0.1:9090
+  index:
+    chunk: 10
+    from: 14389169
+  isTestnet: false
+  name: test
+  nativeToken:
+    decimals: 6
+    denom: uhyp
+    name: HYPER
+    symbol: HYPER
+  protocol: cosmosnative
+  restUrls:
+    - http: http://127.0.0.1:1317
+  rpcUrls:
+    - http: http://127.0.0.1:26657
+  slip44: 118
+  technicalStack: other
+  transactionOverrides:
+    gasPrice: '0.025'

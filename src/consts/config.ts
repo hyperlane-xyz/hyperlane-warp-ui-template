@@ -10,6 +10,7 @@ const registryProxyUrl = process?.env?.NEXT_PUBLIC_GITHUB_PROXY || 'https://prox
 const walletConnectProjectId = process?.env?.NEXT_PUBLIC_WALLET_CONNECT_ID || '';
 const transferBlacklist = process?.env?.NEXT_PUBLIC_TRANSFER_BLACKLIST || '';
 const chainWalletWhitelists = JSON.parse(process?.env?.NEXT_PUBLIC_CHAIN_WALLET_WHITELISTS || '{}');
+const rpcOverrides = process?.env?.NEXT_PUBLIC_RPC_OVERRIDES || '';
 
 interface Config {
   addressBlacklist: string[]; // A list of addresses that are blacklisted and cannot be used in the app
@@ -30,6 +31,7 @@ interface Config {
   version: string; // Matches version number in package.json
   walletConnectProjectId: string; // Project ID provided by walletconnect
   walletProtocols: ProtocolType[] | undefined; // Wallet Protocols to show in the wallet connect modal. Leave undefined to include all of them
+  rpcOverrides: string; // JSON string containing a map of chain names to an object with an URL for RPC overrides (For an example check the .env.example file)
 }
 
 export const config: Config = Object.freeze({
@@ -56,4 +58,5 @@ export const config: Config = Object.freeze({
     ProtocolType.Starknet,
   ],
   shouldDisableChains: false,
+  rpcOverrides,
 });

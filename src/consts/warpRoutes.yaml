@@ -4,12 +4,82 @@
 ---
 tokens:
   - addressOrDenom: '0x726f757465725f61707000000000000000000000000000010000000000000000'
-    chainName: test
+    chainName: korellia
     connections:
-      - token: cosmosnative|test|0x726f757465725f61707000000000000000000000000000010000000000000000
+      - token: ethereum|moonbasealpha|0x483aEa36c69e7aD62A78A9df16e84776e4D998DC
     decimals: 6
     logoURI: ''
-    name: HYPER
+    name: tKYVE
     standard: CosmosNativeHypCollateral
-    symbol: HYPER
+    symbol: tKYVE
+  - addressOrDenom: '0x726f757465725f61707000000000000000000000000000020000000000000001'
+    chainName: korellia
+    connections:
+      - token: ethereum|moonbasealpha|0x3287CbF8525F526bE714D17dC54C5506496C774C
+    decimals: 18
+    logoURI: ''
+    name: wDEV
+    standard: CosmosNativeHypSynthetic
+    symbol: wDEV
+  - addressOrDenom: '0x483aEa36c69e7aD62A78A9df16e84776e4D998DC'
+    chainName: moonbasealpha
+    connections:
+      - token: cosmosnative|korellia|0x726f757465725f61707000000000000000000000000000010000000000000000
+    decimals: 6
+    logoURI: ''
+    name: wKYVE
+    standard: EvmHypSynthetic
+    symbol: wKYVE
+  - addressOrDenom: '0x3287CbF8525F526bE714D17dC54C5506496C774C'
+    chainName: moonbasealpha
+    connections:
+      - token: cosmosnative|korellia|0x726f757465725f61707000000000000000000000000000020000000000000001
+    decimals: 18
+    symbol: DEV
+    name: Dev
+    standard: EvmHypNative
+  - addressOrDenom: '0x12582c7B0f43c6A667CBaA7fA8b112F7fb1E69F0'
+    chainName: basesepolia
+    connections:
+      - token: cosmosnative|kyvetestnet|0x726f757465725f61707000000000000000000000000000020000000000000001
+    standard: EvmHypNative
+    decimals: 18
+    symbol: ETH
+    name: Ether
+  - addressOrDenom: '0x726f757465725f61707000000000000000000000000000020000000000000001'
+    chainName: kyvetestnet
+    connections:
+      - token: ethereum|basesepolia|0x12582c7B0f43c6A667CBaA7fA8b112F7fb1E69F0
+    decimals: 18
+    logoURI: ''
+    name: wETH
+    standard: CosmosNativeHypSynthetic
+    symbol: wETH
+  - addressOrDenom: '0x726f757465725f61707000000000000000000000000000010000000000000000'
+    chainName: kyvetestnet
+    connections:
+      - token: ethereum|basesepolia|0x0BD07E3934D1C4cc8Db0eA2a5cDAc8C8d8eb9824
+    decimals: 6
+    logoURI: ''
+    name: tKYVE
+    standard: CosmosNativeHypCollateral
+    symbol: tKYVE
+  - addressOrDenom: '0x726f757465725f61707000000000000000000000000000010000000000000000'
+    chainName: kyvetestnet
+    connections:
+      - token: ethereum|basesepolia|0x0BD07E3934D1C4cc8Db0eA2a5cDAc8C8d8eb9824
+    decimals: 6
+    logoURI: ''
+    name: tKYVE
+    standard: CosmosNativeHypCollateral
+    symbol: tKYVE
+  - addressOrDenom: '0x0BD07E3934D1C4cc8Db0eA2a5cDAc8C8d8eb9824'
+    chainName: basesepolia
+    connections:
+      - token: cosmosnative|kyvetestnet|0x726f757465725f61707000000000000000000000000000010000000000000000
+    decimals: 6
+    logoURI: ''
+    name: wKYVE
+    standard: EvmHypSynthetic
+    symbol: wKYVE
 options: {}

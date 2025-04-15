@@ -5,3 +5,10 @@ tokens:
     symbol: ETH
     name: Ether
     addressOrDenom: '0x12582c7B0f43c6A667CBaA7fA8b112F7fb1E69F0'
+tokens:
+  - chainName: basesepolia
+    standard: EvmHypSynthetic
+    decimals: 6
+    symbol: wKYVE
+    name: test-kyve (wrapped)
+    addressOrDenom: "0x0BD07E3934D1C4cc8Db0eA2a5cDAc8C8d8eb9824"

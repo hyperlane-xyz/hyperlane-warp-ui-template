@@ -41,6 +41,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'USDC.a/artela-base',
   'USDC/solanamainnet-sonicsvm',
   'USDC/arbitrum-base-ethereum-ink-optimism-solanamainnet-superseed',
+  'USDC/ethereum-lumiaprism',
 
   // USDT routes
   'USDT/ethereum-inevm',
@@ -49,6 +50,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'USDT/ethereum-form',
   'USDT/ethereum-hyperevm',
   'USDT/solanamainnet-sonicsvm',
+  'USDT/ethereum-lumiaprism',
 
   // oUSDT routes
   'oUSDT/base-celo-fraxtal-ink-lisk-mode-optimism-soneium-superseed-unichain-worldchain',

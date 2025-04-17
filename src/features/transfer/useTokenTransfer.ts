@@ -1,4 +1,10 @@
-import { TypedTransactionReceipt, WarpCore, WarpTxCategory } from '@hyperlane-xyz/sdk';
+import {
+  TOKEN_STANDARD_TO_PROVIDER_TYPE,
+  TypedTransactionReceipt,
+  WarpCore,
+  WarpTxCategory,
+  WarpTypedTransaction,
+} from '@hyperlane-xyz/sdk';
 import { toTitleCase, toWei } from '@hyperlane-xyz/utils';
 import {
   getAccountAddressForChain,
@@ -141,12 +147,35 @@ async function executeTransfer({
 
     updateTransferStatus(transferIndex, (transferStatus = TransferStatus.CreatingTxs));
 
-    const txs = await warpCore.getTransferRemoteTxs({
-      originTokenAmount,
-      destination,
-      sender,
-      recipient,
-    });
+    const [txs, isApproveRequired] = await Promise.all([
+      warpCore.getTransferRemoteTxs({
+        originTokenAmount,
+        destination,
+        sender,
+        recipient,
+      }),
+      warpCore.isApproveRequired({
+        originTokenAmount,
+        owner: sender,
+      }),
+    ]);
+
+    // if the token to bridge requires approval we reset the allowance because
+    // some tokens require the allowance to be set to 0 before setting the right approval amount
+    // USDT on ethereum is an example https://etherscan.io/token/0xdac17f958d2ee523a2206206994597c13d831ec7#code#L205
+    if (isApproveRequired && txs.length === 2) {
+      const token = originTokenAmount.token.getAdapter(warpCore.multiProvider);
+      const revokeApprovalTx = await token.populateApproveTx({
+        recipient: originTokenAmount.token.addressOrDenom,
+        weiAmountOrId: 0,
+      });
+
+      txs.unshift({
+        category: WarpTxCategory.Approval,
+        type: TOKEN_STANDARD_TO_PROVIDER_TYPE[originTokenAmount.token.standard],
+        transaction: revokeApprovalTx,
+      } as WarpTypedTransaction);
+    }
 
     const hashes: string[] = [];
     let txReceipt: TypedTransactionReceipt | undefined = undefined;

@@ -179,10 +179,18 @@ async function initWarpContext({
   warpCoreConfigOverrides: WarpCoreConfig[];
 }) {
   try {
-    const coreConfig = await assembleWarpCoreConfig(warpCoreConfigOverrides);
-    const chainsInTokens = Array.from(new Set(coreConfig.tokens.map((t) => t.chainName)));
     // Pre-load registry content to avoid repeated requests
     await registry.listRegistryContent();
+  } catch (error) {
+    logger.warn(
+      'Failed to list registry content. Will attempt to continue without pre-loading registry content.',
+      error,
+    );
+  }
+
+  try {
+    const coreConfig = assembleWarpCoreConfig(warpCoreConfigOverrides);
+    const chainsInTokens = Array.from(new Set(coreConfig.tokens.map((t) => t.chainName)));
     const { chainMetadata, chainMetadataWithOverrides } = await assembleChainMetadata(
       chainsInTokens,
       registry,

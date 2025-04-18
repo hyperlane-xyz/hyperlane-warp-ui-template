@@ -63,7 +63,7 @@ export function ChainConnectionWarning({
   );
 }
 
-async function checkRpcHealth(chainMetadata: ChainMetadata) {
+export async function checkRpcHealth(chainMetadata: ChainMetadata) {
   try {
     // Note: this currently checks the health of only the first RPC for non EVM chains,
     // which is what wallets and wallet libs will use

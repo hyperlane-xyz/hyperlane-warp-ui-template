@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { checkRpcHealth } from './ChainConnectionWarning';
 
 vi.mock('@hyperlane-xyz/sdk', async (importOriginal) => {
-  const actual = (await importOriginal()) as { MultiProtocolProvider: any }; // cast it to an object
+  const actual = (await importOriginal()) as { MultiProtocolProvider: any };
   return {
     ...actual,
     MultiProtocolProvider: vi.fn().mockImplementation(() => ({

@@ -1,7 +1,7 @@
 {
   "name": "@hyperlane-xyz/warp-ui-template",
   "description": "A web app template for building Hyperlane Warp Route UIs",
-  "version": "8.5.0",
+  "version": "12.1.0",
   "author": "J M Rossy",
   "dependencies": {
     "@chakra-ui/next-js": "^2.4.2",
@@ -17,10 +17,10 @@
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
     "@headlessui/react": "^2.2.0",
-    "@hyperlane-xyz/registry": "12.1.0",
-    "@hyperlane-xyz/sdk": "9.2.1",
-    "@hyperlane-xyz/utils": "9.2.1",
-    "@hyperlane-xyz/widgets": "9.2.1",
+    "@hyperlane-xyz/registry": "13.5.0",
+    "@hyperlane-xyz/sdk": "12.1.0",
+    "@hyperlane-xyz/utils": "12.1.0",
+    "@hyperlane-xyz/widgets": "12.1.0",
     "@interchain-ui/react": "^1.23.28",
     "@metamask/post-message-stream": "6.1.2",
     "@metamask/providers": "10.2.1",

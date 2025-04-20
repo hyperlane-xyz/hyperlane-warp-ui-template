@@ -1,9 +1,4 @@
-import {
-  eclipsemainnet,
-  eclipsemainnetAddresses,
-  solanamainnet,
-  solanamainnetAddresses,
-} from '@hyperlane-xyz/registry';
+import { solanamainnet, solanamainnetAddresses } from '@hyperlane-xyz/registry';
 import { ChainMap, ChainMetadata } from '@hyperlane-xyz/sdk';
 
 // A map of chain names to ChainMetadata
@@ -16,10 +11,6 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
     // SVM chains require mailbox addresses for the token adapters
     mailbox: solanamainnetAddresses.mailbox,
     // Including a convenient rpc override because the Solana public RPC does not allow browser requests from localhost
-  },
-  eclipsemainnet: {
-    ...eclipsemainnet,
-    mailbox: eclipsemainnetAddresses.mailbox,
   },
   // mycustomchain: {
   //   protocol: ProtocolType.Ethereum,

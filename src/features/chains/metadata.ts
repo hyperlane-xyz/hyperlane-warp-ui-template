@@ -11,6 +11,7 @@ import { z } from 'zod';
 import { chains as ChainsTS } from '../../consts/chains.ts';
 import ChainsYaml from '../../consts/chains.yaml';
 import { config } from '../../consts/config.ts';
+import { links } from '../../consts/links.ts';
 import { logger } from '../../utils/logger.ts';
 
 export async function assembleChainMetadata(
@@ -49,7 +50,7 @@ export async function assembleChainMetadata(
       registryChainMetadata,
       async (chainName, metadata): Promise<ChainMetadata> => ({
         ...metadata,
-        logoURI: (await registry.getChainLogoUri(chainName)) || undefined,
+        logoURI: `${links.imgPath}/chains/${chainName}/logo.svg`,
       }),
     ),
   );

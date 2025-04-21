@@ -188,4 +188,8 @@ export const warpRouteWhitelist: Array<string> | null = [
   'GIGA/solanamainnet-soon',
   'GOAT/solanamainnet-soon',
   'SPORE/solanamainnet-soon',
+
+  // HYPER routes
+  'HYPER/arbitrum-base-bsc-ethereum-optimism',
+  'stHYPER/bsc-ethereum',
 ];

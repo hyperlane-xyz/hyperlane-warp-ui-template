@@ -188,4 +188,10 @@ export const warpRouteWhitelist: Array<string> | null = [
   'GIGA/solanamainnet-soon',
   'GOAT/solanamainnet-soon',
   'SPORE/solanamainnet-soon',
+
+  // COTI routes
+  'USDC/coti-ethereum',
+
+  // SUPR routes
+  'SUPR/base-ethereum-ink-optimism-superseed',
 ];

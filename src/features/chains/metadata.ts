@@ -6,7 +6,13 @@ import {
   mergeChainMetadataMap,
   RpcUrlSchema,
 } from '@hyperlane-xyz/sdk';
-import { objFilter, objMap, promiseObjAll, tryParseJsonOrYaml } from '@hyperlane-xyz/utils';
+import {
+  objFilter,
+  objMap,
+  promiseObjAll,
+  ProtocolType,
+  tryParseJsonOrYaml,
+} from '@hyperlane-xyz/utils';
 import { z } from 'zod';
 import { chains as ChainsTS } from '../../consts/chains.ts';
 import ChainsYaml from '../../consts/chains.yaml';
@@ -64,13 +70,23 @@ export async function assembleChainMetadata(
     logger.warn('Invalid RPC overrides config', rpcOverrides.error);
   }
 
-  const chainMetadata = objMap(mergedChainMetadata, (chainName, metadata) => ({
-    ...metadata,
-    rpcUrls:
+  const chainMetadata = objMap(mergedChainMetadata, (chainName, metadata) => {
+    const overridesUrl =
       rpcOverrides.success && rpcOverrides.data[chainName]
-        ? [rpcOverrides.data[chainName], ...metadata.rpcUrls]
-        : metadata.rpcUrls,
-  }));
+        ? rpcOverrides.data[chainName]
+        : undefined;
+
+    if (!overridesUrl) return metadata;
+
+    // Only EVM supports fallback transport, so we are putting the override at the end
+    const rpcUrls =
+      metadata.protocol === ProtocolType.Ethereum
+        ? [...metadata.rpcUrls, overridesUrl]
+        : [overridesUrl, ...metadata.rpcUrls];
+
+    return { ...metadata, rpcUrls };
+  });
+
   const chainMetadataWithOverrides = mergeChainMetadataMap(chainMetadata, storeMetadataOverrides);
   return { chainMetadata, chainMetadataWithOverrides };
 }

@@ -1,10 +1,4 @@
-import {
-  chainAddresses,
-  chainMetadata,
-  IRegistry,
-  PartialRegistry,
-  warpRouteConfigs,
-} from '@hyperlane-xyz/registry';
+import { chainAddresses, chainMetadata, IRegistry, PartialRegistry } from '@hyperlane-xyz/registry';
 import {
   ChainMap,
   ChainMetadata,
@@ -96,7 +90,6 @@ export const useStore = create<AppState>()(
       registry: new PartialRegistry({
         chainAddresses: chainAddresses,
         chainMetadata: chainMetadata,
-        warpRoutes: Object.values(warpRouteConfigs),
       }),
       warpCore: new WarpCore(new MultiProtocolProvider({}), []),
       setWarpContext: ({ registry, chainMetadata, multiProvider, warpCore }) => {

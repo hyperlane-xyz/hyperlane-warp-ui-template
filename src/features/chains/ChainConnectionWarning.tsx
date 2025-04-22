@@ -26,7 +26,7 @@ export function ChainConnectionWarning({
       const isDestinationHealthy = await checkRpcHealth(destinationMetadata);
       return { isOriginHealthy, isDestinationHealthy };
     },
-    refetchInterval: 5000,
+    refetchInterval: 300000, // 5 minutes
   });
 
   const unhealthyChain =

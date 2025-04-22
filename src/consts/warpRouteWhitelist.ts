@@ -194,4 +194,8 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // SUPR routes
   'SUPR/base-ethereum-ink-optimism-superseed',
+
+  // HYPER routes
+  'HYPER/arbitrum-base-bsc-ethereum-optimism',
+  'stHYPER/bsc-ethereum',
 ];

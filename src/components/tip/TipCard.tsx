@@ -13,8 +13,8 @@ export function TipCard() {
       <h2 className="text-primary-500">Hyperlane is powered by HYPER</h2>
       <div className="flex items-end justify-between">
         <p className="mt-1 max-w-[75%] text-justify text-xs">
-          Bridge to Arbitrum, Base, BNB, Ethereum, and Optimism, or stake it via Symbiotic on
-          Ethereum to qualify for additional Expansion Rewards!
+          Bridge to Arbitrum, Base, BNB, Ethereum, and Optimism, or stake via Symbiotic on Ethereum
+          to qualify for additional Expansion Rewards!
         </p>
         <a
           href="https://app.symbiotic.fi/vault/0xe1f23869776c82f691d9cb34597ab1830fb0de58"

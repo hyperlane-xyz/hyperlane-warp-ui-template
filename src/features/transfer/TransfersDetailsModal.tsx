@@ -55,6 +55,7 @@ export function TransfersDetailsModal({
     originTxHash,
     msgId,
     timestamp,
+    providerExplorerLink,
   } = transfer || {};
 
   const multiProvider = useMultiProvider();
@@ -159,7 +160,9 @@ export function TransfersDetailsModal({
         </div>
       </div>
 
-      {isFinal ? (
+      {transfer.status === TransferStatus.SigningMessage ? (
+        <SigningMessageSection transfer={transfer} />
+      ) : isFinal ? (
         <div className="mt-5 flex flex-col space-y-4">
           <TransferProperty name="Sender Address" value={sender} url={fromUrl} />
           <TransferProperty name="Recipient Address" value={recipient} url={toUrl} />
@@ -174,16 +177,16 @@ export function TransfersDetailsModal({
             />
           )}
           {msgId && <TransferProperty name="Message ID" value={msgId} />}
-          {explorerLink && (
+          {(explorerLink || providerExplorerLink) && (
             <div className="flex justify-between">
               <span className="text-xs leading-normal tracking-wider text-gray-350">
                 <a
                   className="text-xs leading-normal tracking-wider text-gray-350 underline underline-offset-2 hover:opacity-80 active:opacity-70"
-                  href={explorerLink}
+                  href={explorerLink || providerExplorerLink}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  View message in Hyperlane Explorer
+                  View transaction in provider explorer
                 </a>
               </span>
             </div>
@@ -284,4 +287,38 @@ function useSignIssueWarning(status: TransferStatus) {
 // Occurs when baseUrl has not other path (e.g. for manta explorer)
 function fixDoubleSlash(url: string) {
   return url.replace(/([^:]\/)\/+/g, '$1');
+}
+
+function SigningMessageSection({ transfer }: { transfer: TransferContext }) {
+  const { signingMessage } = transfer;
+  const [isSigning, setIsSigning] = useState(false);
+
+  if (!signingMessage) return null;
+
+  const handleSign = async () => {
+    try {
+      setIsSigning(true);
+      await signingMessage.handleSign();
+    } finally {
+      setIsSigning(false);
+    }
+  };
+
+  return (
+    <div className="mt-4 rounded-lg border border-gray-200 p-4">
+      <h3 className="text-sm font-medium text-gray-900">Message Signing Required</h3>
+      <div className="mt-2 space-y-4">
+        <div className="whitespace-pre-line text-sm text-gray-600">{signingMessage.message}</div>
+        <button
+          onClick={handleSign}
+          disabled={isSigning}
+          className={`mt-2 w-full rounded-md px-4 py-2 text-sm font-medium text-white ${
+            isSigning ? 'cursor-not-allowed bg-primary-400' : 'bg-primary-500 hover:bg-primary-600'
+          }`}
+        >
+          {isSigning ? 'Signing...' : 'Sign Message'}
+        </button>
+      </div>
+    </div>
+  );
 }

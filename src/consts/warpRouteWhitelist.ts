@@ -14,6 +14,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   // ETH routes
   'ETH/ethereum-hyperevm',
   'ETH/ethereum-viction',
+  'ETH/arbitrum-base-ethereum-lumiaprism-optimism-polygon',
 
   // tETH routes
   'tETH/eclipsemainnet-ethereum',
@@ -28,7 +29,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'ECLIP/arbitrum-neutron',
 
   // LUMIA routes
-  'LUMIA/bsc-ethereum-lumiaprism',
+  'LUMIA/arbitrum-avalanche-base-bsc-ethereum-lumiaprism-optimism-polygon',
 
   // USDC routes
   'USDC/ethereum-inevm',

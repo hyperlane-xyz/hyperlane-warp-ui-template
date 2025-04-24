@@ -1,4 +1,4 @@
-import { GithubRegistry, IRegistry } from '@hyperlane-xyz/registry';
+import { chainAddresses, chainMetadata, IRegistry, PartialRegistry } from '@hyperlane-xyz/registry';
 import {
   ChainMap,
   ChainMetadata,
@@ -12,7 +12,6 @@ import { objFilter, objMap } from '@hyperlane-xyz/utils';
 import { toast } from 'react-toastify';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { config } from '../consts/config';
 import yamlWarpDeployConfig from '../consts/warpDeployConfig.yaml';
 import { logger } from '../utils/logger';
 import { assembleChainMetadata } from './chains/metadata';
@@ -96,10 +95,9 @@ export const useStore = create<AppState>()(
       },
 
       multiProvider: new MultiProtocolProvider({}),
-      registry: new GithubRegistry({
-        uri: config.registryUrl,
-        branch: config.registryBranch,
-        proxyUrl: config.registryProxyUrl,
+      registry: new PartialRegistry({
+        chainAddresses: chainAddresses,
+        chainMetadata: chainMetadata,
       }),
       warpCore: new WarpCore(new MultiProtocolProvider({}), []),
       setWarpContext: ({ registry, chainMetadata, multiProvider, warpCore }) => {

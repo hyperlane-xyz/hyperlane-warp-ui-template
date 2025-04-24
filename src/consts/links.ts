@@ -1,5 +1,3 @@
-import { baseChain, openUsdtTokenAddress, optimismChain } from './args';
-
 export const links = {
   home: 'https://openusdt.xyz/',
   explorer: 'https://explorer.hyperlane.xyz',
@@ -15,6 +13,5 @@ export const links = {
   privacyPolicy: 'https://openusdt.webflow.io/privacy-policy',
   bounty:
     'https://github.com/search?q=org:hyperlane-xyz+label:bounty+is:open+is:issue&type=issues&s=&o=desc',
-  swapUsdtVelodrome: `https://velodrome.finance/swap?from=${optimismChain.token}&to=${openUsdtTokenAddress}&chain0=${optimismChain.chainId}&chain1=${optimismChain.chainId}`,
-  swapUsdtAerodrome: `https://aerodrome.finance/swap?from=${baseChain.token}&to=${openUsdtTokenAddress}&chain0=${baseChain.chainId}&chain1=${baseChain.chainId}`,
+  imgPath: 'https://raw.githubusercontent.com/hyperlane-xyz/hyperlane-registry/main',
 };

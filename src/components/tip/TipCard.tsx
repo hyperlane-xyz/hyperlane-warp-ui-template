@@ -1,8 +1,6 @@
 import { useFormikContext } from 'formik';
-import { baseChain, CHAIN_NAMES, optimismChain, WARP_QUERY_PARAMS } from '../../consts/args';
+import { CHAIN_NAMES, WARP_QUERY_PARAMS } from '../../consts/args';
 import { config } from '../../consts/config';
-import { links } from '../../consts/links';
-import { useEvmWalletBalance } from '../../features/tokens/balances';
 import { getTokenByIndex, getTokenIndexFromChains, useWarpCore } from '../../features/tokens/hooks';
 import { TransferFormValues } from '../../features/transfer/types';
 import { updateQueryParam } from '../../utils/queryParams';
@@ -11,22 +9,6 @@ import { Card } from '../layout/Card';
 export function TipCard() {
   const warpCore = useWarpCore();
   const { values, setFieldValue } = useFormikContext<TransferFormValues>();
-
-  const { balance: baseUsdcBalance } = useEvmWalletBalance(
-    baseChain.chainName,
-    baseChain.chainId,
-    baseChain.token,
-    values.origin === baseChain.chainName,
-  );
-  const { balance: opUsdtBalance } = useEvmWalletBalance(
-    optimismChain.chainName,
-    optimismChain.chainId,
-    optimismChain.token,
-    values.origin === optimismChain.chainName,
-  );
-
-  const hasBaseUsdcBalance = hasValidChainBalance(values.origin, CHAIN_NAMES.BASE, baseUsdcBalance);
-  const hasOpUsdtBalance = hasValidChainBalance(values.origin, CHAIN_NAMES.OPTIMISM, opUsdtBalance);
 
   const handleSetCeloChain = () => {
     setFieldValue(WARP_QUERY_PARAMS.ORIGIN, CHAIN_NAMES.CELO);
@@ -53,32 +35,10 @@ export function TipCard() {
           <li className={`${styles.list} cursor-pointer`} onClick={handleSetCeloChain}>
             Send USDT From Celo to get OpenUSDT on other chains
           </li>
-          <li className={`${styles.list} ${hasOpUsdtBalance ? styles.highlighted : ''}`}>
-            <a href={links.swapUsdtVelodrome} target="_blank" rel="noopener noreferrer">
-              Swap OP Mainnet {optimismChain.tokenName} for OpenUSDT on Velodrome
-            </a>
-          </li>
-          <li className={`${styles.list} ${hasBaseUsdcBalance ? styles.highlighted : ''}`}>
-            <a href={links.swapUsdtAerodrome} target="_blank" rel="noopener noreferrer">
-              Swap Base {baseChain.tokenName} for OpenUSDT on Aerodrome
-            </a>
-          </li>
         </ul>
       </div>
     </Card>
   );
-}
-
-function hasValidChainBalance(
-  currentChain: string,
-  targetChain: string,
-  balance?: {
-    value: bigint | undefined;
-  },
-) {
-  if (currentChain !== targetChain || !balance || !balance.value) return false;
-
-  return balance.value > 0;
 }
 
 const styles = {

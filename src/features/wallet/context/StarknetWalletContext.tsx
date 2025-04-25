@@ -61,6 +61,7 @@ export function StarknetWalletContext({ children }: PropsWithChildren<unknown>) 
     [],
   );
 
+  // TODO: remove after sepolia is included in registry
   const uniqueChains = useMemo(() => {
     const combinedChains = [...chainsFromRegistry, sepolia];
     const chainMap = combinedChains.reduce((map, chain) => {

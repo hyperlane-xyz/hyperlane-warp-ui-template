@@ -13,6 +13,8 @@ export enum TransferStatus {
   ConfirmingApprove = 'confirming-approve',
   SigningTransfer = 'signing-transfer',
   ConfirmingTransfer = 'confirming-transfer',
+  SigningRevoke = 'signing-revoke',
+  ConfirmingRevoke = 'confirming-revoke',
   ConfirmedTransfer = 'confirmed-transfer',
   Delivered = 'delivered',
   Failed = 'failed',

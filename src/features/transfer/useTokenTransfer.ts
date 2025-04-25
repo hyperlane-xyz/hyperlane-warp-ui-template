@@ -203,9 +203,12 @@ const errorMessages: Partial<Record<TransferStatus, string>> = {
   [TransferStatus.ConfirmingApprove]: 'Error while confirming the approve transaction.',
   [TransferStatus.SigningTransfer]: 'Error while signing the transfer transaction.',
   [TransferStatus.ConfirmingTransfer]: 'Error while confirming the transfer transaction.',
+  [TransferStatus.SigningRevoke]: 'Error while signing the revoke transaction.',
+  [TransferStatus.ConfirmingRevoke]: 'Error while confirming the revoke transaction.',
 };
 
 const txCategoryToStatuses: Record<WarpTxCategory, [TransferStatus, TransferStatus]> = {
   [WarpTxCategory.Approval]: [TransferStatus.SigningApprove, TransferStatus.ConfirmingApprove],
   [WarpTxCategory.Transfer]: [TransferStatus.SigningTransfer, TransferStatus.ConfirmingTransfer],
+  [WarpTxCategory.Revoke]: [TransferStatus.SigningRevoke, TransferStatus.ConfirmingRevoke],
 };

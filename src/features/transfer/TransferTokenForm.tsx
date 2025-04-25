@@ -55,8 +55,17 @@ export function TransferTokenForm() {
   const multiProvider = useMultiProvider();
   const warpCore = useWarpCore();
 
+  const { originChainName, setOriginChainName } = useStore((s) => ({
+    originChainName: s.originChainName,
+    setOriginChainName: s.setOriginChainName,
+  }));
+
   const initialValues = useFormInitialValues();
   const { accounts } = useAccounts(multiProvider, config.addressBlacklist);
+
+  if (!originChainName) {
+    setOriginChainName(initialValues.origin);
+  }
 
   // Flag for if form is in input vs review mode
   const [isReview, setIsReview] = useState(false);
@@ -173,14 +182,15 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
     const token = getTokenByIndex(warpCore, tokenIndex);
     updateQueryParam(WARP_QUERY_PARAMS.TOKEN, token?.addressOrDenom);
     setFieldValue('tokenIndex', tokenIndex);
-    setOriginChainName(origin);
   };
 
   const handleChange = (chainName: string, fieldName: string) => {
-    if (fieldName === WARP_QUERY_PARAMS.ORIGIN)
+    if (fieldName === WARP_QUERY_PARAMS.ORIGIN) {
       setTokenOnChainChange(chainName, values.destination);
-    else if (fieldName === WARP_QUERY_PARAMS.DESTINATION)
+      setOriginChainName(chainName);
+    } else if (fieldName === WARP_QUERY_PARAMS.DESTINATION) {
       setTokenOnChainChange(values.origin, chainName);
+    }
     updateQueryParam(fieldName, chainName);
   };
 

@@ -198,6 +198,7 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
     updateQueryParam(WARP_QUERY_PARAMS.ORIGIN, origin);
     updateQueryParam(WARP_QUERY_PARAMS.DESTINATION, destination);
     setTokenOnChainChange(origin, destination);
+    setOriginChainName(origin);
   };
 
   return (

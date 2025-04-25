@@ -52,7 +52,7 @@ const sepolia: Chain = {
 
 export function StarknetWalletContext({ children }: PropsWithChildren<unknown>) {
   const multiProvider = useMultiProvider();
-  const chains = getStarknetChains(multiProvider);
+  const chainsFromRegistry = getStarknetChains(multiProvider);
   const connectors = useMemo(
     () => [
       new InjectedConnector({ options: { id: 'braavos', name: 'Braavos' } }),
@@ -61,10 +61,21 @@ export function StarknetWalletContext({ children }: PropsWithChildren<unknown>) 
     [],
   );
 
+  const uniqueChains = useMemo(() => {
+    const combinedChains = [...chainsFromRegistry, sepolia];
+    const chainMap = combinedChains.reduce((map, chain) => {
+      if (!map.has(chain.id)) {
+        map.set(chain.id, chain);
+      }
+      return map;
+    }, new Map<bigint, Chain>());
+    return Array.from(chainMap.values());
+  }, [chainsFromRegistry]);
+
   return (
     <StarknetConfig
-      chains={[...chains, sepolia]}
-      provider={publicProvider()}
+    chains={uniqueChains}
+    provider={publicProvider()}
       connectors={connectors}
       explorer={voyager}
     >

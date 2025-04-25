@@ -1101,9 +1101,9 @@ __metadata:
   linkType: hard
 
 "@chain-registry/types@npm:^0.50.14":
-  version: 0.50.15
-  resolution: "@chain-registry/types@npm:0.50.15"
-  checksum: 10/49e7035a45a755355a2f9c154befc67d5af4a7a24aa8b28de71430e3546aa5af27cdefff1e24e40d7195aa664fdc6ad565132a69aae4af7c2e7c6513f1dcae24
+  version: 0.50.122
+  resolution: "@chain-registry/types@npm:0.50.122"
+  checksum: 10/c416f737f40cf4180e6f05bd86d5a636a2549f3947ba4f2c9208a12895597a658047cb017775bca5a4f947b6be9b6fa5785c2fed8dc2ef53a64eaff90ede8a28
   languageName: node
   linkType: hard
 
@@ -4580,9 +4580,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/sdk@npm:12.1.0":
+"@hyperlane-xyz/sdk@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/sdk::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
   version: 12.1.0
-  resolution: "@hyperlane-xyz/sdk@npm:12.1.0"
+  resolution: "@hyperlane-xyz/sdk@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/sdk#/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/sdk::hash=c5fce3&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
   dependencies:
     "@arbitrum/sdk": "npm:^4.0.0"
     "@aws-sdk/client-s3": "npm:^3.577.0"
@@ -4608,7 +4608,22 @@ __metadata:
   peerDependencies:
     "@ethersproject/abi": "*"
     "@ethersproject/providers": "*"
-  checksum: 10/9416031867a5b4eb2bced1903c0b6c3e6c6d79e7c16bfd6e719505970b0a3f42d45dd3cf273f0f99fc40fc5da87220f77ae1dac9c7aab3d46f70a46c21337872
+  checksum: 10/14aeadf1f148a3e49c9e7250e4bea19be1bf7eac4aca77e449fdfc3359a772fe3ddb33fe457e99fa5dee03f179be76a03a8c034cecf69e5099ed1c741fa59994
+  languageName: node
+  linkType: hard
+
+"@hyperlane-xyz/utils@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/utils::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
+  version: 12.1.0
+  resolution: "@hyperlane-xyz/utils@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/utils#/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/utils::hash=10e599&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
+  dependencies:
+    "@cosmjs/encoding": "npm:^0.32.4"
+    "@solana/web3.js": "npm:^1.95.4"
+    bignumber.js: "npm:^9.1.1"
+    ethers: "npm:^5.7.2"
+    lodash-es: "npm:^4.17.21"
+    pino: "npm:^8.19.0"
+    yaml: "npm:2.4.5"
+  checksum: 10/e0a7369e37bc09ddf97e5317d32906be2a7a796ff508d562f00734ef6ed04c78a3fda90b2cb7e2d9d72f6cf73241970e7f7537c433dacc0b6bde91ee73fd3841
   languageName: node
   linkType: hard
 
@@ -4645,9 +4660,9 @@ __metadata:
     "@emotion/styled": "npm:^11.13.0"
     "@headlessui/react": "npm:^2.2.0"
     "@hyperlane-xyz/registry": "npm:13.9.0"
-    "@hyperlane-xyz/sdk": "npm:12.1.0"
-    "@hyperlane-xyz/utils": "npm:12.1.0"
-    "@hyperlane-xyz/widgets": "npm:12.1.0"
+    "@hyperlane-xyz/sdk": "file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/sdk"
+    "@hyperlane-xyz/utils": "file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/utils"
+    "@hyperlane-xyz/widgets": "file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/widgets"
     "@interchain-ui/react": "npm:^1.23.28"
     "@metamask/post-message-stream": "npm:6.1.2"
     "@metamask/providers": "npm:10.2.1"
@@ -4704,9 +4719,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@hyperlane-xyz/widgets@npm:12.1.0":
+"@hyperlane-xyz/widgets@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/widgets::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
   version: 12.1.0
-  resolution: "@hyperlane-xyz/widgets@npm:12.1.0"
+  resolution: "@hyperlane-xyz/widgets@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/widgets#/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/widgets::hash=276d3d&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
   dependencies:
     "@cosmos-kit/react": "npm:^2.18.0"
     "@headlessui/react": "npm:^2.1.8"
@@ -4726,7 +4741,7 @@ __metadata:
   peerDependencies:
     react: ^18
     react-dom: ^18
-  checksum: 10/3d970537177d29bd77a4fbd0c75d247c115134795f4d9038dfcb602bad81c667646d4b70d0e8f68b7f6714042da4f1e5340371bb333670b86e3278e3960610b0
+  checksum: 10/177e0daeb7b0de1df64ea7ffbb68409bc36134b8db1096921c9720062f9075e9d29a8c7e8202e7e9726e8b519f460365a33628254885b92babf240277561734a
   languageName: node
   linkType: hard
 

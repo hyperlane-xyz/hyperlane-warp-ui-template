@@ -154,6 +154,10 @@ function SwapChainsButton({
 function ChainSelectSection({ isReview }: { isReview: boolean }) {
   const warpCore = useWarpCore();
 
+  const { setOriginChainName } = useStore((s) => ({
+    setOriginChainName: s.setOriginChainName,
+  }));
+
   const { values, setFieldValue } = useFormikContext<TransferFormValues>();
 
   const originRouteCounts = useMemo(() => {
@@ -169,6 +173,7 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
     const token = getTokenByIndex(warpCore, tokenIndex);
     updateQueryParam(WARP_QUERY_PARAMS.TOKEN, token?.addressOrDenom);
     setFieldValue('tokenIndex', tokenIndex);
+    setOriginChainName(origin);
   };
 
   const handleChange = (chainName: string, fieldName: string) => {

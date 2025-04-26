@@ -5,6 +5,37 @@ import { TokenConnectionType, TokenStandard, WarpCoreConfig } from '@hyperlane-x
 // The input here is typically the output of the Hyperlane CLI warp deploy command
 export const warpRouteConfigs: WarpCoreConfig = {
   tokens: [
+    // MILK MilkyWay <> BSC
+    {
+      addressOrDenom: '0x726f757465725f61707000000000000000000000000000010000000000000000',
+      chainName: 'milkyway',
+      connections: [
+        {
+          token: 'ethereum|bsc|0x7b4Bf9fEcCfF207eF2CB7101Ceb15b8516021AcD',
+        },
+      ],
+      decimals: 6,
+      logoURI: '/deployments/warp_routes/MILK/logo.svg',
+      name: 'MilkyWay',
+      standard: TokenStandard.CosmNativeHypCollateral,
+      symbol: 'MILK',
+    },
+    {
+      addressOrDenom: '0x7b4Bf9fEcCfF207eF2CB7101Ceb15b8516021AcD',
+      chainName: 'bsc',
+      connections: [
+        {
+          token:
+            'cosmosnative|milkyway|0x726f757465725f61707000000000000000000000000000010000000000000000',
+        },
+      ],
+      decimals: 6,
+      logoURI: '/deployments/warp_routes/MILK/logo.svg',
+      name: 'MilkyWay',
+      standard: TokenStandard.EvmHypSynthetic,
+      symbol: 'MILK',
+    },
+
     // TIA Celestia to Neutron and Stride
     {
       chainName: 'celestia',

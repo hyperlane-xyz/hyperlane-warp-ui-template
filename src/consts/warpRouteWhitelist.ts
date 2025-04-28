@@ -199,4 +199,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   // HYPER routes
   'HYPER/arbitrum-base-bsc-ethereum-optimism',
   'stHYPER/bsc-ethereum',
+
+  // MILK route
+  'MILK/bsc-milkyway',
 ];

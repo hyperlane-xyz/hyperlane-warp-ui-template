@@ -13,7 +13,7 @@ import {
 } from '@hyperlane-xyz/widgets';
 import BigNumber from 'bignumber.js';
 import { Form, Formik, useFormikContext } from 'formik';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
 import { SolidButton } from '../../components/buttons/SolidButton';
@@ -63,10 +63,6 @@ export function TransferTokenForm() {
   const initialValues = useFormInitialValues();
   const { accounts } = useAccounts(multiProvider, config.addressBlacklist);
 
-  if (!originChainName) {
-    setOriginChainName(initialValues.origin);
-  }
-
   // Flag for if form is in input vs review mode
   const [isReview, setIsReview] = useState(false);
   // Flag for check current type of token
@@ -92,6 +88,10 @@ export function TransferTokenForm() {
       openConfirmationModal();
     }
   };
+
+  useEffect(() => {
+    if (!originChainName) setOriginChainName(initialValues.origin);
+  }, [initialValues.origin, originChainName, setOriginChainName]);
 
   return (
     <Formik<TransferFormValues>

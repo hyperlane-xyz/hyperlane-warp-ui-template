@@ -2,6 +2,7 @@ import { chainAddresses, chainMetadata, IRegistry, PartialRegistry } from '@hype
 import {
   ChainMap,
   ChainMetadata,
+  ChainName,
   MultiProtocolProvider,
   WarpCore,
   WarpCoreConfig,
@@ -57,6 +58,9 @@ export interface AppState {
   setIsSideBarOpen: (isOpen: boolean) => void;
   showEnvSelectModal: boolean;
   setShowEnvSelectModal: (show: boolean) => void;
+
+  originChainName: ChainName;
+  setOriginChainName: (originChainName: ChainName) => void;
 }
 
 export const useStore = create<AppState>()(
@@ -137,6 +141,10 @@ export const useStore = create<AppState>()(
       showEnvSelectModal: false,
       setShowEnvSelectModal: (showEnvSelectModal) => {
         set(() => ({ showEnvSelectModal }));
+      },
+      originChainName: '',
+      setOriginChainName: (originChainName: ChainName) => {
+        set(() => ({ originChainName }));
       },
     }),
 

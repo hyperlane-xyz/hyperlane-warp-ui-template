@@ -5,6 +5,10 @@ export type TokenChainMap = {
   tokenInformation: Token;
 };
 
+// Map of token symbols and token chain map
+// Symbols are not duplicated to avoid the same symbol from being shown
+// TokenChainMap: An object containing token information and a map
+// chain names with its metadata and the related token
 export function assembleTokensBySymbolChainMap(
   tokens: Token[],
   multiProvider: MultiProtocolProvider,

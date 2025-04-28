@@ -42,6 +42,8 @@ export function TokenSelectField({ name, disabled, setIsNft }: Props) {
     if (!disabled) setIsModalOpen(true);
   };
 
+  // Set the token and origin from the selected field and the destination
+  // chain from the the first connection in the token
   const onSelectUnsuportedRoute = (token: IToken, origin: string) => {
     if (!token.connections) return;
     const destination = token.connections[0].token.chainName;

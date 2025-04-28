@@ -1,11 +1,14 @@
-import { ChainMap, Token } from '@hyperlane-xyz/sdk';
+import { ChainMap, ChainMetadata, MultiProtocolProvider, Token } from '@hyperlane-xyz/sdk';
 
 export type TokenChainMap = {
-  chains: ChainMap<Token>;
+  chains: ChainMap<{ token: Token; metadata: ChainMetadata | null }>;
   tokenInformation: Token;
 };
 
-export function assembleTokensBySymbolChainMap(tokens: Token[]): Record<string, TokenChainMap> {
+export function assembleTokensBySymbolChainMap(
+  tokens: Token[],
+  multiProvider: MultiProtocolProvider,
+): Record<string, TokenChainMap> {
   const multiChainTokens = tokens.filter((t) => t.isMultiChainToken());
   return multiChainTokens.reduce((acc, token) => {
     if (!acc[token.symbol]) {
@@ -15,7 +18,8 @@ export function assembleTokensBySymbolChainMap(tokens: Token[]): Record<string, 
       };
     }
     if (!acc[token.symbol].chains[token.chainName]) {
-      acc[token.symbol].chains[token.chainName] = token;
+      const chainMetadata = multiProvider.tryGetChainMetadata(token.chainName);
+      acc[token.symbol].chains[token.chainName] = { token, metadata: chainMetadata };
     }
 
     return acc;

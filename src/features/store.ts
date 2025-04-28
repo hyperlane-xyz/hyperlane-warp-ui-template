@@ -215,7 +215,7 @@ async function initWarpContext({
     const multiProvider = new MultiProtocolProvider(chainMetadataWithOverrides);
     const warpCore = WarpCore.FromConfig(multiProvider, coreConfig);
 
-    const tokensBySymbolChainMap = assembleTokensBySymbolChainMap(warpCore.tokens);
+    const tokensBySymbolChainMap = assembleTokensBySymbolChainMap(warpCore.tokens, multiProvider);
     return { registry, chainMetadata, multiProvider, warpCore, tokensBySymbolChainMap };
   } catch (error) {
     toast.error('Error initializing warp context. Please check connection status and configs.');

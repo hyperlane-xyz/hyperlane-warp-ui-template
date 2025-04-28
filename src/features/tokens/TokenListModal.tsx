@@ -224,16 +224,16 @@ export function TokenList({
             </button>
             {open === symbol ? (
               <div>
-                {Object.entries(chains).map(([chainName, token]) => (
+                {Object.entries(chains).map(([chainName, chain]) => (
                   <button
                     key={chainName}
                     className="flex w-full items-center gap-4 rounded border-b border-gray-100 px-4 py-2 hover:bg-gray-200"
-                    onClick={() => onSelectUnsuportedRoute(token, chainName)}
+                    onClick={() => onSelectUnsuportedRoute(chain.token, chainName)}
                   >
                     <div className="shrink-0">
                       <ChainLogo chainName={chainName} size={16} />
                     </div>
-                    <div className="text-xs">{chainName}</div>
+                    <div className="text-xs">{chain.metadata?.displayName || chainName}</div>
                   </button>
                 ))}
               </div>

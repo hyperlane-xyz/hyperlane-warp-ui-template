@@ -1,4 +1,5 @@
 import { IToken } from '@hyperlane-xyz/sdk';
+import { isObjEmpty, objFilter } from '@hyperlane-xyz/utils';
 import { Modal, SearchIcon } from '@hyperlane-xyz/widgets';
 import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -10,6 +11,7 @@ import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { useStore } from '../store';
 import { useWarpCore } from './hooks';
+import { TokenChainMap } from './utils';
 
 export function TokenListModal({
   isOpen,
@@ -96,8 +98,6 @@ export function TokenList({
     tokensBySymbolMap: s.tokensBySymbolMap,
   }));
 
-  console.log('w', tokensBySymbolMap);
-
   const tokens = useMemo(() => {
     const q = searchQuery?.trim().toLowerCase();
     const multiChainTokens = warpCore.tokens.filter((t) => t.isMultiChainToken());
@@ -128,51 +128,95 @@ export function TokenList({
     );
   }, [warpCore, searchQuery, origin, destination]);
 
+  const unsupportedTokensBySymbolMap = useMemo(() => {
+    const tokenSymbols = tokens.map((item) => item.token.symbol);
+    const q = searchQuery?.trim().toLowerCase();
+    return objFilter(tokensBySymbolMap, (symbol, value): value is TokenChainMap => {
+      return (
+        !tokenSymbols.includes(symbol) &&
+        (value.tokenInformation.name.toLowerCase().includes(q) ||
+          value.tokenInformation.symbol.toLowerCase().includes(q))
+      );
+    });
+  }, [tokens, tokensBySymbolMap, searchQuery]);
+
   return (
     <div className="flex flex-col items-stretch">
-      {tokens.length ? (
-        tokens.map((t, i) => (
+      {tokens.map((t, i) => (
+        <button
+          className={`-mx-2 mb-2 flex items-center rounded px-2 py-2 ${
+            t.disabled ? 'opacity-50' : 'hover:bg-gray-200'
+          } duration-250 transition-all`}
+          key={i}
+          type="button"
+          disabled={t.disabled}
+          onClick={() => onSelect(t.token)}
+        >
+          <div className="shrink-0">
+            <TokenIcon token={t.token} size={30} />
+          </div>
+          <div className="ml-2 shrink-0 text-left">
+            <div className="w-14 truncate text-sm">{t.token.symbol || 'Unknown'}</div>
+            <div className="w-14 truncate text-xs text-gray-500">{t.token.name || 'Unknown'}</div>
+          </div>
+          <div className="ml-2 min-w-0 shrink text-left">
+            <div className="w-full truncate text-xs">
+              {t.token.collateralAddressOrDenom || t.token.addressOrDenom || 'Native chain token'}
+            </div>
+            <div className="mt-0.5 flex space-x-1 text-xs">
+              <span>{`Decimals: ${t.token.decimals}`}</span>
+              <span>-</span>
+              <span>{`Chain: ${getChainDisplayName(multiProvider, t.token.chainName)}`}</span>
+            </div>
+          </div>
+          {t.disabled && (
+            <Image
+              src={InfoIcon}
+              alt=""
+              className="ml-auto mr-1"
+              data-te-toggle="tooltip"
+              title={`Route not supported for ${getChainDisplayName(
+                multiProvider,
+                origin,
+              )} to ${getChainDisplayName(multiProvider, destination)}`}
+            />
+          )}
+        </button>
+      ))}
+      {Object.entries(unsupportedTokensBySymbolMap).map(
+        ([symbol, { chains, tokenInformation }]) => (
           <button
-            className={`-mx-2 mb-2 flex items-center rounded px-2 py-2 ${
-              t.disabled ? 'opacity-50' : 'hover:bg-gray-200'
-            } duration-250 transition-all`}
-            key={i}
+            className="duration-250 -mx-2 mb-2 flex items-center rounded px-2 py-2 opacity-50 transition-all"
+            key={symbol}
             type="button"
-            disabled={t.disabled}
-            onClick={() => onSelect(t.token)}
+            disabled
+            // onClick={() => onSelect(t.token)}
           >
             <div className="shrink-0">
-              <TokenIcon token={t.token} size={30} />
+              <TokenIcon token={tokenInformation} size={30} />
             </div>
             <div className="ml-2 shrink-0 text-left">
-              <div className="w-14 truncate text-sm">{t.token.symbol || 'Unknown'}</div>
-              <div className="w-14 truncate text-xs text-gray-500">{t.token.name || 'Unknown'}</div>
-            </div>
-            <div className="ml-2 min-w-0 shrink text-left">
-              <div className="w-full truncate text-xs">
-                {t.token.collateralAddressOrDenom || t.token.addressOrDenom || 'Native chain token'}
-              </div>
-              <div className="mt-0.5 flex space-x-1 text-xs">
-                <span>{`Decimals: ${t.token.decimals}`}</span>
-                <span>-</span>
-                <span>{`Chain: ${getChainDisplayName(multiProvider, t.token.chainName)}`}</span>
+              <div className="w-14 truncate text-sm">{tokenInformation.symbol || 'Unknown'}</div>
+              <div className="w-14 truncate text-xs text-gray-500">
+                {tokenInformation.name || 'Unknown'}
               </div>
             </div>
-            {t.disabled && (
-              <Image
-                src={InfoIcon}
-                alt=""
-                className="ml-auto mr-1"
-                data-te-toggle="tooltip"
-                title={`Route not supported for ${getChainDisplayName(
-                  multiProvider,
-                  origin,
-                )} to ${getChainDisplayName(multiProvider, destination)}`}
-              />
-            )}
+            {/* {t.disabled && (
+            <Image
+              src={InfoIcon}
+              alt=""
+              className="ml-auto mr-1"
+              data-te-toggle="tooltip"
+              title={`Route not supported for ${getChainDisplayName(
+                multiProvider,
+                origin,
+              )} to ${getChainDisplayName(multiProvider, destination)}`}
+            />
+          )} */}
           </button>
-        ))
-      ) : (
+        ),
+      )}
+      {tokens.length === 0 && isObjEmpty(unsupportedTokensBySymbolMap) && (
         <div className="my-8 text-center text-gray-500">
           <div>No tokens found</div>
           <div className="mt-2 text-sm">Try a different destination chain or search query</div>

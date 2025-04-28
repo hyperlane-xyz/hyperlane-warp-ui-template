@@ -4,7 +4,6 @@ import {
   ChainMetadata,
   ChainName,
   MultiProtocolProvider,
-  Token,
   WarpCore,
   WarpCoreConfig,
 } from '@hyperlane-xyz/sdk';
@@ -14,7 +13,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { logger } from '../utils/logger';
 import { assembleChainMetadata } from './chains/metadata';
-import { assembleTokensBySymbolMap } from './tokens/utils';
+import { assembleTokensBySymbolMap, TokenChainMap } from './tokens/utils';
 import { FinalTransferStatuses, TransferContext, TransferStatus } from './transfer/types';
 import { assembleWarpCoreConfig } from './warpCore/warpCoreConfig';
 
@@ -40,7 +39,7 @@ export interface AppState {
     chainMetadata: ChainMap<ChainMetadata>;
     multiProvider: MultiProtocolProvider;
     warpCore: WarpCore;
-    tokensBySymbolMap: Record<string, Token[]>;
+    tokensBySymbolMap: Record<string, TokenChainMap>;
   }) => void;
 
   // User history
@@ -64,7 +63,7 @@ export interface AppState {
 
   originChainName: ChainName;
   setOriginChainName: (originChainName: ChainName) => void;
-  tokensBySymbolMap: Record<string, Token[]>;
+  tokensBySymbolMap: Record<string, TokenChainMap>;
 }
 
 export const useStore = create<AppState>()(

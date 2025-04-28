@@ -4,9 +4,11 @@ import { useField, useFormikContext } from 'formik';
 import { useEffect, useState } from 'react';
 import { TokenIcon } from '../../components/icons/TokenIcon';
 
+import { WARP_QUERY_PARAMS } from '../../consts/args';
+import { updateMultipleQueryParam } from '../../utils/queryParams';
 import { TransferFormValues } from '../transfer/types';
 import { TokenListModal } from './TokenListModal';
-import { getIndexForToken, getTokenByIndex, useWarpCore } from './hooks';
+import { getIndexForToken, getTokenByIndex, getTokenIndexFromChains, useWarpCore } from './hooks';
 
 type Props = {
   name: string;
@@ -16,7 +18,7 @@ type Props = {
 };
 
 export function TokenSelectField({ name, disabled, setIsNft, onChangeToken }: Props) {
-  const { values } = useFormikContext<TransferFormValues>();
+  const { values, setValues } = useFormikContext<TransferFormValues>();
   const [field, , helpers] = useField<number | undefined>(name);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAutomaticSelection, setIsAutomaticSelection] = useState(false);
@@ -38,14 +40,31 @@ export function TokenSelectField({ name, disabled, setIsNft, onChangeToken }: Pr
   };
 
   const onClickField = () => {
-    if (!disabled && !isAutomaticSelection) setIsModalOpen(true);
+    if (!disabled) setIsModalOpen(true);
+  };
+
+  const onSelectUnsuportedRoute = (token: IToken, origin: string) => {
+    if (!token.connections) return;
+    const destination = token.connections[0].token.chainName;
+
+    setValues({
+      ...values,
+      origin,
+      destination,
+      tokenIndex: getTokenIndexFromChains(warpCore, token.addressOrDenom, origin, destination),
+    });
+    updateMultipleQueryParam([
+      { key: WARP_QUERY_PARAMS.ORIGIN, value: origin },
+      { key: WARP_QUERY_PARAMS.DESTINATION, value: destination },
+      { key: WARP_QUERY_PARAMS.TOKEN, value: token.addressOrDenom },
+    ]);
   };
 
   return (
     <>
       <TokenButton
         token={getTokenByIndex(warpCore, field.value)}
-        disabled={isAutomaticSelection || disabled}
+        disabled={disabled}
         onClick={onClickField}
         isAutomatic={isAutomaticSelection}
       />
@@ -55,6 +74,7 @@ export function TokenSelectField({ name, disabled, setIsNft, onChangeToken }: Pr
         onSelect={onSelectToken}
         origin={values.origin}
         destination={values.destination}
+        onSelectUnsuportedRoute={onSelectUnsuportedRoute}
       />
     </>
   );
@@ -83,7 +103,7 @@ function TokenButton({
           {token?.symbol || (isAutomatic ? 'No routes available' : 'Select Token')}
         </span>
       </div>
-      {!isAutomatic && <ChevronIcon width={12} height={8} direction="s" />}
+      <ChevronIcon width={12} height={8} direction="s" />
     </button>
   );
 }

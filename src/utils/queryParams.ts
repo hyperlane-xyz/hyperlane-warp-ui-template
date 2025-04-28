@@ -17,3 +17,7 @@ export function updateQueryParam(key: string, value?: string | number) {
   const newUrl = `${window.location.pathname}?${params.toString()}`;
   window.history.replaceState({}, '', newUrl);
 }
+
+export function updateMultipleQueryParam(params: Array<{ key: string; value?: string | number }>) {
+  params.forEach((param) => updateQueryParam(param.key, param.value));
+}

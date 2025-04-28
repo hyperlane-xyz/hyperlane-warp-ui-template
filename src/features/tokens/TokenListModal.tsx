@@ -283,6 +283,3 @@ function UnsupportedRouteChainList({
     </motion.div>
   );
 }
-
-// TODO: refactor into its own component
-// animations for sliding

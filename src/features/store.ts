@@ -13,7 +13,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { logger } from '../utils/logger';
 import { assembleChainMetadata } from './chains/metadata';
-import { assembleTokensBySymbolMap, TokenChainMap } from './tokens/utils';
+import { assembleTokensBySymbolChainMap, TokenChainMap } from './tokens/utils';
 import { FinalTransferStatuses, TransferContext, TransferStatus } from './transfer/types';
 import { assembleWarpCoreConfig } from './warpCore/warpCoreConfig';
 
@@ -39,7 +39,7 @@ export interface AppState {
     chainMetadata: ChainMap<ChainMetadata>;
     multiProvider: MultiProtocolProvider;
     warpCore: WarpCore;
-    tokensBySymbolMap: Record<string, TokenChainMap>;
+    tokensBySymbolChainMap: Record<string, TokenChainMap>;
   }) => void;
 
   // User history
@@ -63,7 +63,7 @@ export interface AppState {
 
   originChainName: ChainName;
   setOriginChainName: (originChainName: ChainName) => void;
-  tokensBySymbolMap: Record<string, TokenChainMap>;
+  tokensBySymbolChainMap: Record<string, TokenChainMap>;
 }
 
 export const useStore = create<AppState>()(
@@ -99,9 +99,15 @@ export const useStore = create<AppState>()(
         chainMetadata: chainMetadata,
       }),
       warpCore: new WarpCore(new MultiProtocolProvider({}), []),
-      setWarpContext: ({ registry, chainMetadata, multiProvider, warpCore, tokensBySymbolMap }) => {
+      setWarpContext: ({
+        registry,
+        chainMetadata,
+        multiProvider,
+        warpCore,
+        tokensBySymbolChainMap,
+      }) => {
         logger.debug('Setting warp context in store');
-        set({ registry, chainMetadata, multiProvider, warpCore, tokensBySymbolMap });
+        set({ registry, chainMetadata, multiProvider, warpCore, tokensBySymbolChainMap });
       },
 
       // User history
@@ -149,7 +155,7 @@ export const useStore = create<AppState>()(
       setOriginChainName: (originChainName: ChainName) => {
         set(() => ({ originChainName }));
       },
-      tokensBySymbolMap: {},
+      tokensBySymbolChainMap: {},
     }),
 
     // Store config
@@ -170,13 +176,13 @@ export const useStore = create<AppState>()(
             return;
           }
           initWarpContext(state).then(
-            ({ registry, chainMetadata, multiProvider, warpCore, tokensBySymbolMap }) => {
+            ({ registry, chainMetadata, multiProvider, warpCore, tokensBySymbolChainMap }) => {
               state.setWarpContext({
                 registry,
                 chainMetadata,
                 multiProvider,
                 warpCore,
-                tokensBySymbolMap,
+                tokensBySymbolChainMap,
               });
               logger.debug('Rehydration complete');
             },
@@ -209,8 +215,8 @@ async function initWarpContext({
     const multiProvider = new MultiProtocolProvider(chainMetadataWithOverrides);
     const warpCore = WarpCore.FromConfig(multiProvider, coreConfig);
 
-    const tokensBySymbolMap = assembleTokensBySymbolMap(warpCore.tokens);
-    return { registry, chainMetadata, multiProvider, warpCore, tokensBySymbolMap };
+    const tokensBySymbolChainMap = assembleTokensBySymbolChainMap(warpCore.tokens);
+    return { registry, chainMetadata, multiProvider, warpCore, tokensBySymbolChainMap };
   } catch (error) {
     toast.error('Error initializing warp context. Please check connection status and configs.');
     logger.error('Error initializing warp context', error);
@@ -219,7 +225,7 @@ async function initWarpContext({
       chainMetadata: {},
       multiProvider: new MultiProtocolProvider({}),
       warpCore: new WarpCore(new MultiProtocolProvider({}), []),
-      tokensBySymbolMap: {},
+      tokensBySymbolChainMap: {},
     };
   }
 }

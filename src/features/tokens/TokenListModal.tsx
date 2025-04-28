@@ -105,8 +105,8 @@ export function TokenList({
 }) {
   const multiProvider = useMultiProvider();
   const warpCore = useWarpCore();
-  const { tokensBySymbolMap } = useStore((s) => ({
-    tokensBySymbolMap: s.tokensBySymbolMap,
+  const { tokensBySymbolChainMap } = useStore((s) => ({
+    tokensBySymbolChainMap: s.tokensBySymbolChainMap,
   }));
   const [open, setOpen] = useState<string | null>(null);
 
@@ -143,14 +143,14 @@ export function TokenList({
   const unsupportedTokensBySymbolMap = useMemo(() => {
     const tokenSymbols = tokens.map((item) => item.token.symbol);
     const q = searchQuery?.trim().toLowerCase();
-    return objFilter(tokensBySymbolMap, (symbol, value): value is TokenChainMap => {
+    return objFilter(tokensBySymbolChainMap, (symbol, value): value is TokenChainMap => {
       return (
         !tokenSymbols.includes(symbol) &&
         (value.tokenInformation.name.toLowerCase().includes(q) ||
           value.tokenInformation.symbol.toLowerCase().includes(q))
       );
     });
-  }, [tokens, tokensBySymbolMap, searchQuery]);
+  }, [tokens, tokensBySymbolChainMap, searchQuery]);
 
   return (
     <div className="flex flex-col items-stretch">
@@ -199,7 +199,7 @@ export function TokenList({
         ([symbol, { chains, tokenInformation }]) => (
           <>
             <button
-              className="duration-250 -mx-2 mb-2 flex items-center rounded px-2 py-2 opacity-50 transition-all"
+              className="duration-250 -mx-2 mb-2 flex items-center rounded px-2 py-2 opacity-50 transition-all hover:bg-gray-200"
               key={symbol}
               type="button"
               onClick={() => setOpen((prevSymbol) => (prevSymbol === symbol ? null : symbol))}
@@ -227,13 +227,13 @@ export function TokenList({
                 {Object.entries(chains).map(([chainName, token]) => (
                   <button
                     key={chainName}
-                    className="mb-4 flex w-full items-center gap-4 border-b border-gray-100 px-4"
+                    className="flex w-full items-center gap-4 rounded border-b border-gray-100 px-4 py-2 hover:bg-gray-200"
                     onClick={() => onSelectUnsuportedRoute(token, chainName)}
                   >
                     <div className="shrink-0">
                       <ChainLogo chainName={chainName} size={16} />
                     </div>
-                    {chainName}
+                    <div className="text-xs">{chainName}</div>
                   </button>
                 ))}
               </div>

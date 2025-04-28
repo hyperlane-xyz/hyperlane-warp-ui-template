@@ -5,10 +5,9 @@ export type TokenChainMap = {
   tokenInformation: Token;
 };
 
-export function assembleTokensBySymbolMap(tokens: Token[]) {
+export function assembleTokensBySymbolChainMap(tokens: Token[]): Record<string, TokenChainMap> {
   const multiChainTokens = tokens.filter((t) => t.isMultiChainToken());
-
-  const tokensBySymbolMap: Record<string, TokenChainMap> = multiChainTokens.reduce((acc, token) => {
+  return multiChainTokens.reduce((acc, token) => {
     if (!acc[token.symbol]) {
       acc[token.symbol] = {
         chains: {},
@@ -21,6 +20,4 @@ export function assembleTokensBySymbolMap(tokens: Token[]) {
 
     return acc;
   }, {});
-
-  return tokensBySymbolMap;
 }

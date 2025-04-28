@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { TokenIcon } from '../../components/icons/TokenIcon';
 
 import { WARP_QUERY_PARAMS } from '../../consts/args';
-import { updateMultipleQueryParam } from '../../utils/queryParams';
+import { updateMultipleQueryParam, updateQueryParam } from '../../utils/queryParams';
 import { TransferFormValues } from '../transfer/types';
 import { TokenListModal } from './TokenListModal';
 import { getIndexForToken, getTokenByIndex, getTokenIndexFromChains, useWarpCore } from './hooks';
@@ -14,10 +14,9 @@ type Props = {
   name: string;
   disabled?: boolean;
   setIsNft: (value: boolean) => void;
-  onChangeToken: (addressOrDenom: string) => void;
 };
 
-export function TokenSelectField({ name, disabled, setIsNft, onChangeToken }: Props) {
+export function TokenSelectField({ name, disabled, setIsNft }: Props) {
   const { values, setValues } = useFormikContext<TransferFormValues>();
   const [field, , helpers] = useField<number | undefined>(name);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -34,7 +33,7 @@ export function TokenSelectField({ name, disabled, setIsNft, onChangeToken }: Pr
   const onSelectToken = (newToken: IToken) => {
     // Set the token address value in formik state
     helpers.setValue(getIndexForToken(warpCore, newToken));
-    onChangeToken(newToken.addressOrDenom);
+    updateQueryParam(WARP_QUERY_PARAMS.TOKEN, newToken.addressOrDenom);
     // Update nft state in parent
     setIsNft(newToken.isNft());
   };

@@ -30,11 +30,11 @@ function initWagmi(multiProvider: MultiProtocolProvider) {
     [
       {
         groupName: 'Recommended',
-        wallets: [metaMaskWallet, injectedWallet, walletConnectWallet, binanceWallet, ledgerWallet],
+        wallets: [metaMaskWallet, injectedWallet, walletConnectWallet, ledgerWallet],
       },
       {
         groupName: 'More',
-        wallets: [coinbaseWallet, rainbowWallet, trustWallet, argentWallet],
+        wallets: [binanceWallet, coinbaseWallet, rainbowWallet, trustWallet, argentWallet],
       },
     ],
     { appName: APP_NAME, projectId: config.walletConnectProjectId },

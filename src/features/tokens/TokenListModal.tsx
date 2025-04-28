@@ -8,6 +8,7 @@ import { config } from '../../consts/config';
 import InfoIcon from '../../images/icons/info-circle.svg';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
+import { useStore } from '../store';
 import { useWarpCore } from './hooks';
 
 export function TokenListModal({
@@ -91,11 +92,17 @@ export function TokenList({
 }) {
   const multiProvider = useMultiProvider();
   const warpCore = useWarpCore();
+  const { tokensBySymbolMap } = useStore((s) => ({
+    tokensBySymbolMap: s.tokensBySymbolMap,
+  }));
+
+  console.log('w', tokensBySymbolMap);
 
   const tokens = useMemo(() => {
     const q = searchQuery?.trim().toLowerCase();
     const multiChainTokens = warpCore.tokens.filter((t) => t.isMultiChainToken());
     const tokensWithRoute = warpCore.getTokensForRoute(origin, destination);
+
     return (
       multiChainTokens
         .map((t) => ({

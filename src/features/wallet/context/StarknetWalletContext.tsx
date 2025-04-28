@@ -49,7 +49,6 @@ const sepolia: Chain = {
   },
 };
 
-
 export function StarknetWalletContext({ children }: PropsWithChildren<unknown>) {
   const multiProvider = useMultiProvider();
   const chainsFromRegistry = getStarknetChains(multiProvider);
@@ -75,8 +74,8 @@ export function StarknetWalletContext({ children }: PropsWithChildren<unknown>) 
 
   return (
     <StarknetConfig
-    chains={uniqueChains}
-    provider={publicProvider()}
+      chains={uniqueChains}
+      provider={publicProvider()}
       connectors={connectors}
       explorer={voyager}
     >

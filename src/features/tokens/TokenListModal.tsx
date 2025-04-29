@@ -3,7 +3,7 @@ import { isObjEmpty, objFilter } from '@hyperlane-xyz/utils';
 import { Modal, SearchIcon } from '@hyperlane-xyz/widgets';
 import { AnimatePresence, motion } from 'framer-motion';
 import Image from 'next/image';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import { TokenIcon } from '../../components/icons/TokenIcon';
 import { TextInput } from '../../components/input/TextField';
@@ -215,10 +215,9 @@ function UnsupportedRouteTokenList({
 
   return Object.entries(unsupportedRouteTokensBySymbolMap).map(
     ([symbol, { chains, tokenInformation }]) => (
-      <>
+      <React.Fragment key={symbol}>
         <button
           className="duration-250 -mx-2 mb-2 flex items-center rounded px-2 py-2 opacity-50 transition-all hover:bg-gray-200"
-          key={symbol}
           type="button"
           onClick={() => setOpen((prevSymbol) => (prevSymbol === symbol ? null : symbol))}
         >
@@ -248,7 +247,7 @@ function UnsupportedRouteTokenList({
             />
           ) : null}
         </AnimatePresence>
-      </>
+      </React.Fragment>
     ),
   );
 }

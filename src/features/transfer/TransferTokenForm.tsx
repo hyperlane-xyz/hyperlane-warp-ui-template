@@ -13,7 +13,7 @@ import {
 } from '@hyperlane-xyz/widgets';
 import BigNumber from 'bignumber.js';
 import { Form, Formik, useFormikContext } from 'formik';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
 import { SolidButton } from '../../components/buttons/SolidButton';
@@ -92,6 +92,10 @@ export function TransferTokenForm() {
       openConfirmationModal();
     }
   };
+
+  useEffect(() => {
+    if (!originChainName) setOriginChainName(initialValues.origin);
+  }, [initialValues.origin, originChainName, setOriginChainName]);
 
   return (
     <Formik<TransferFormValues>

@@ -123,7 +123,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'cbBTC/ethereum-flowmainnet',
 
   // ezETH routes
-  'ezETH/arbitrum-base-berachain-blast-bsc-ethereum-fraxtal-linea-mode-optimism-sei-swell-taiko-unichain-zircuit',
+  'ezETH/arbitrum-base-berachain-blast-bsc-ethereum-fraxtal-linea-mode-optimism-sei-swell-taiko-unichain-worldchain-zircuit',
 
   // GAME routes
   'GAME/base-form',

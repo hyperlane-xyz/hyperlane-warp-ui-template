@@ -1,4 +1,5 @@
 import { ChainMetadata, isRpcHealthy } from '@hyperlane-xyz/sdk';
+import { ProtocolType } from '@hyperlane-xyz/utils';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { FormWarningBanner } from '../../components/banner/FormWarningBanner';
@@ -25,7 +26,7 @@ export function ChainConnectionWarning({
       const isDestinationHealthy = await checkRpcHealth(destinationMetadata);
       return { isOriginHealthy, isDestinationHealthy };
     },
-    refetchInterval: 5000,
+    refetchInterval: 300000, // 5 minutes
   });
 
   const unhealthyChain =
@@ -62,14 +63,21 @@ export function ChainConnectionWarning({
   );
 }
 
-async function checkRpcHealth(chainMetadata: ChainMetadata) {
+export async function checkRpcHealth(chainMetadata: ChainMetadata) {
   try {
-    // Note: this currently checks the health of only the first RPC,
-    // which is what wallets and wallet libs (e.g. wagmi) will use
-    const isHealthy = await isRpcHealthy(chainMetadata, 0);
-    return isHealthy;
+    // Note: this currently checks the health of only the first RPC for non EVM chains,
+    // which is what wallets and wallet libs will use
+    // for EVM chains it will use a fallback RPC, that is why we need to check if any RPC are healthy instead
+    if (chainMetadata.protocol === ProtocolType.Ethereum) {
+      const healthChecks = chainMetadata.rpcUrls.map((_, i) =>
+        isRpcHealthy(chainMetadata, i).then((result) => (result ? true : Promise.reject())),
+      );
+      return await Promise.any(healthChecks);
+    } else return await isRpcHealthy(chainMetadata, 0);
   } catch (error) {
-    logger.warn('Error checking RPC health', error);
+    if (error instanceof AggregateError)
+      logger.warn(`No healthy RPCs found for ${chainMetadata.name}`);
+    else logger.warn('Error checking RPC health', error);
     return false;
   }
 }

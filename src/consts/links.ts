@@ -13,4 +13,5 @@ export const links = {
   privacyPolicy: 'https://hyperlane.xyz/privacy-policy',
   bounty:
     'https://github.com/search?q=org:hyperlane-xyz+label:bounty+is:open+is:issue&type=issues&s=&o=desc',
+  imgPath: 'https://raw.githubusercontent.com/hyperlane-xyz/hyperlane-registry/main',
 };

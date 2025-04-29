@@ -51,7 +51,7 @@ export function TokenListModal({
     <Modal
       isOpen={isOpen}
       close={onClose}
-      panelClassname="px-4 py-3 max-w-100 sm:max-w-[31rem] min-h-[24rem]"
+      panelClassname="px-2 py-3 max-w-100 sm:max-w-[31rem] max-h-none overflow-auto"
     >
       <SearchBar search={search} setSearch={setSearch} />
       <TokenList
@@ -72,11 +72,11 @@ function SearchBar({ search, setSearch }: { search: string; setSearch: (s: strin
   }, []);
 
   return (
-    <div className="relative">
+    <div className="relative px-2">
       <SearchIcon
         width={20}
         height={20}
-        className="absolute left-3 top-1/2 -translate-y-1/2 pb-1 opacity-50"
+        className="absolute left-5 top-1/2 -translate-y-1/2 pb-1 opacity-50"
       />
       <TextInput
         ref={inputRef}
@@ -153,7 +153,7 @@ export function TokenList({
   }, [tokens, tokensBySymbolChainMap, searchQuery]);
 
   return (
-    <div className="flex flex-col items-stretch">
+    <div className="no-scrollbar flex max-h-[80vh] min-h-[24rem] flex-col items-stretch overflow-auto px-2">
       {tokens.map((t, i) => (
         <button
           className={`-mx-2 mb-2 flex items-center rounded px-2 py-2 ${
@@ -265,7 +265,6 @@ function UnsupportedRouteChainList({
       animate={{ height: 'auto', opacity: 1 }}
       exit={{ height: 0, opacity: 0 }}
       transition={{ duration: 0.2, ease: 'easeInOut' }}
-      className="overflow-hidden"
     >
       {Object.entries(chains).map(([chainName, chain]) => (
         <button

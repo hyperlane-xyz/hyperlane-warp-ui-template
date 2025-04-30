@@ -30,6 +30,7 @@ export function TokenIcon({ token, size = 32 }: Props) {
           height={size}
           className="p-0.5"
           onError={() => setFallbackToText(true)}
+          loading="lazy"
         />
       ) : (
         <div className={`text-[${fontSize}px]`}>{character}</div>

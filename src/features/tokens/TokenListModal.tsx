@@ -106,9 +106,7 @@ export function TokenList({
 }) {
   const multiProvider = useMultiProvider();
   const warpCore = useWarpCore();
-  const { tokensBySymbolChainMap } = useStore((s) => ({
-    tokensBySymbolChainMap: s.tokensBySymbolChainMap,
-  }));
+  const tokensBySymbolChainMap = useStore((s) => s.tokensBySymbolChainMap);
 
   const tokens = useMemo(() => {
     const q = searchQuery?.trim().toLowerCase();

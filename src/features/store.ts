@@ -20,6 +20,14 @@ import { assembleWarpCoreConfig } from './warpCore/warpCoreConfig';
 // Increment this when persist state has breaking changes
 const PERSIST_STATE_VERSION = 2;
 
+interface WarpContext {
+  registry: IRegistry;
+  chainMetadata: ChainMap<ChainMetadata>;
+  multiProvider: MultiProtocolProvider;
+  warpCore: WarpCore;
+  tokensBySymbolChainMap: Record<string, TokenChainMap>;
+}
+
 // Keeping everything here for now as state is simple
 // Will refactor into slices as necessary
 export interface AppState {
@@ -34,13 +42,7 @@ export interface AppState {
   multiProvider: MultiProtocolProvider;
   registry: IRegistry;
   warpCore: WarpCore;
-  setWarpContext: (context: {
-    registry: IRegistry;
-    chainMetadata: ChainMap<ChainMetadata>;
-    multiProvider: MultiProtocolProvider;
-    warpCore: WarpCore;
-    tokensBySymbolChainMap: Record<string, TokenChainMap>;
-  }) => void;
+  setWarpContext: (context: WarpContext) => void;
 
   // User history
   transfers: TransferContext[];
@@ -99,15 +101,9 @@ export const useStore = create<AppState>()(
         chainMetadata: chainMetadata,
       }),
       warpCore: new WarpCore(new MultiProtocolProvider({}), []),
-      setWarpContext: ({
-        registry,
-        chainMetadata,
-        multiProvider,
-        warpCore,
-        tokensBySymbolChainMap,
-      }) => {
+      setWarpContext: (context) => {
         logger.debug('Setting warp context in store');
-        set({ registry, chainMetadata, multiProvider, warpCore, tokensBySymbolChainMap });
+        set(context);
       },
 
       // User history
@@ -175,18 +171,10 @@ export const useStore = create<AppState>()(
             logger.error('Error during hydration', error);
             return;
           }
-          initWarpContext(state).then(
-            ({ registry, chainMetadata, multiProvider, warpCore, tokensBySymbolChainMap }) => {
-              state.setWarpContext({
-                registry,
-                chainMetadata,
-                multiProvider,
-                warpCore,
-                tokensBySymbolChainMap,
-              });
-              logger.debug('Rehydration complete');
-            },
-          );
+          initWarpContext(state).then((context) => {
+            state.setWarpContext(context);
+            logger.debug('Rehydration complete');
+          });
         };
       },
     },
@@ -201,7 +189,7 @@ async function initWarpContext({
   registry: IRegistry;
   chainMetadataOverrides: ChainMap<Partial<ChainMetadata> | undefined>;
   warpCoreConfigOverrides: WarpCoreConfig[];
-}) {
+}): Promise<WarpContext> {
   try {
     const coreConfig = await assembleWarpCoreConfig(warpCoreConfigOverrides);
     const chainsInTokens = Array.from(new Set(coreConfig.tokens.map((t) => t.chainName)));

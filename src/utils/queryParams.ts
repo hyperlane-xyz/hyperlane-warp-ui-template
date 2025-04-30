@@ -18,6 +18,8 @@ export function updateQueryParam(key: string, value?: string | number) {
   window.history.replaceState({}, '', newUrl);
 }
 
-export function updateMultipleQueryParam(params: Array<{ key: string; value?: string | number }>) {
-  params.forEach((param) => updateQueryParam(param.key, param.value));
+export function updateQueryParams(params: Record<string, string | number>) {
+  for (const [key, value] of Object.entries(params)) {
+    updateQueryParam(key, value);
+  }
 }

@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { TokenIcon } from '../../components/icons/TokenIcon';
 
 import { WARP_QUERY_PARAMS } from '../../consts/args';
-import { updateMultipleQueryParam, updateQueryParam } from '../../utils/queryParams';
+import { updateQueryParam, updateQueryParams } from '../../utils/queryParams';
 import { TransferFormValues } from '../transfer/types';
 import { TokenListModal } from './TokenListModal';
 import { getIndexForToken, getTokenByIndex, getTokenIndexFromChains, useWarpCore } from './hooks';
@@ -54,11 +54,11 @@ export function TokenSelectField({ name, disabled, setIsNft }: Props) {
       destination,
       tokenIndex: getTokenIndexFromChains(warpCore, token.addressOrDenom, origin, destination),
     });
-    updateMultipleQueryParam([
-      { key: WARP_QUERY_PARAMS.ORIGIN, value: origin },
-      { key: WARP_QUERY_PARAMS.DESTINATION, value: destination },
-      { key: WARP_QUERY_PARAMS.TOKEN, value: token.addressOrDenom },
-    ]);
+    updateQueryParams({
+      [WARP_QUERY_PARAMS.ORIGIN]: origin,
+      [WARP_QUERY_PARAMS.DESTINATION]: destination,
+      [WARP_QUERY_PARAMS.TOKEN]: token.addressOrDenom,
+    });
   };
 
   return (

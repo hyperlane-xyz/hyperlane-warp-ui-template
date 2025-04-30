@@ -230,7 +230,7 @@ function UnsupportedRouteTokenList({
           </div>
           <Image
             src={InfoIcon}
-            alt=""
+            alt="Unsupported route for origin and destination"
             className="ml-auto mr-1"
             data-te-toggle="tooltip"
             title={`Route not supported for ${getChainDisplayName(

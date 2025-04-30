@@ -21,14 +21,14 @@ export function TokenListModal({
   onSelect,
   origin,
   destination,
-  onSelectUnsuportedRoute,
+  onSelectUnsupportedRoute,
 }: {
   isOpen: boolean;
   close: () => void;
   onSelect: (token: IToken) => void;
   origin: ChainName;
   destination: ChainName;
-  onSelectUnsuportedRoute: (token: IToken, origin: string) => void;
+  onSelectUnsupportedRoute: (token: IToken, origin: string) => void;
 }) {
   const [search, setSearch] = useState('');
 
@@ -42,8 +42,8 @@ export function TokenListModal({
     onClose();
   };
 
-  const onSelectUnsupportRouteAndClose = (token: IToken, origin: string) => {
-    onSelectUnsuportedRoute(token, origin);
+  const onSelectUnsupportedRouteAndClose = (token: IToken, origin: string) => {
+    onSelectUnsupportedRoute(token, origin);
     onClose();
   };
 
@@ -59,7 +59,7 @@ export function TokenListModal({
         destination={destination}
         searchQuery={search}
         onSelect={onSelectAndClose}
-        onSelectUnsuportedRoute={onSelectUnsupportRouteAndClose}
+        onSelectUnsupportedRoute={onSelectUnsupportedRouteAndClose}
       />
     </Modal>
   );
@@ -96,13 +96,13 @@ export function TokenList({
   destination,
   searchQuery,
   onSelect,
-  onSelectUnsuportedRoute,
+  onSelectUnsupportedRoute,
 }: {
   origin: ChainName;
   destination: ChainName;
   searchQuery: string;
   onSelect: (token: IToken) => void;
-  onSelectUnsuportedRoute: (token: Token, origin: string) => void;
+  onSelectUnsupportedRoute: (token: Token, origin: string) => void;
 }) {
   const multiProvider = useMultiProvider();
   const warpCore = useWarpCore();
@@ -187,7 +187,7 @@ export function TokenList({
         unsupportedRouteTokensBySymbolMap={unsupportedRouteTokensBySymbolMap}
         origin={origin}
         destination={destination}
-        onSelectUnsuportedRoute={onSelectUnsuportedRoute}
+        onSelectUnsupportedRoute={onSelectUnsupportedRoute}
       />
       {tokens.length === 0 && isObjEmpty(unsupportedRouteTokensBySymbolMap) && (
         <div className="my-8 text-center text-gray-500">
@@ -203,12 +203,12 @@ function UnsupportedRouteTokenList({
   unsupportedRouteTokensBySymbolMap,
   origin,
   destination,
-  onSelectUnsuportedRoute,
+  onSelectUnsupportedRoute,
 }: {
   unsupportedRouteTokensBySymbolMap: Record<string, TokenChainMap>;
   origin: ChainName;
   destination: ChainName;
-  onSelectUnsuportedRoute: (token: Token, origin: string) => void;
+  onSelectUnsupportedRoute: (token: Token, origin: string) => void;
 }) {
   const [open, setOpen] = useState<string | null>(null);
   const multiProvider = useMultiProvider();
@@ -243,7 +243,7 @@ function UnsupportedRouteTokenList({
           {open === symbol ? (
             <UnsupportedRouteChainList
               chains={chains}
-              onSelectUnsuportedRoute={onSelectUnsuportedRoute}
+              onSelectUnsupportedRoute={onSelectUnsupportedRoute}
             />
           ) : null}
         </AnimatePresence>
@@ -254,10 +254,10 @@ function UnsupportedRouteTokenList({
 
 function UnsupportedRouteChainList({
   chains,
-  onSelectUnsuportedRoute,
+  onSelectUnsupportedRoute,
 }: {
   chains: ChainMap<{ token: Token; metadata: ChainMetadata | null }>;
-  onSelectUnsuportedRoute: (token: Token, origin: string) => void;
+  onSelectUnsupportedRoute: (token: Token, origin: string) => void;
 }) {
   return (
     <motion.div
@@ -270,7 +270,7 @@ function UnsupportedRouteChainList({
         <button
           key={chainName}
           className="flex w-full items-center gap-4 rounded border-b border-gray-100 px-4 py-2 hover:bg-gray-200"
-          onClick={() => onSelectUnsuportedRoute(chain.token, chainName)}
+          onClick={() => onSelectUnsupportedRoute(chain.token, chainName)}
         >
           <div className="shrink-0">
             <ChainLogo chainName={chainName} size={16} />

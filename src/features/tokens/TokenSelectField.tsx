@@ -44,7 +44,7 @@ export function TokenSelectField({ name, disabled, setIsNft }: Props) {
 
   // Set the token and origin from the selected field and the destination
   // chain from the the first connection in the token
-  const onSelectUnsuportedRoute = (token: IToken, origin: string) => {
+  const onSelectUnsupportedRoute = (token: IToken, origin: string) => {
     if (!token.connections) return;
     const destination = token.connections[0].token.chainName;
 
@@ -75,7 +75,7 @@ export function TokenSelectField({ name, disabled, setIsNft }: Props) {
         onSelect={onSelectToken}
         origin={values.origin}
         destination={values.destination}
-        onSelectUnsuportedRoute={onSelectUnsuportedRoute}
+        onSelectUnsupportedRoute={onSelectUnsupportedRoute}
       />
     </>
   );

@@ -202,4 +202,8 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // MILK route
   'MILK/bsc-milkyway',
+
+  // wfragSOL & wfragJTO routes
+  'wfragSOL/eclipsemainnet-solanamainnet-soon',
+  'wfragJTO/eclipsemainnet-solanamainnet-soon',
 ];

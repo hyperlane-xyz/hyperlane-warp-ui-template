@@ -151,6 +151,8 @@ export function TokenList({
     });
   }, [tokens, tokensBySymbolChainMap, searchQuery]);
 
+  const noTokensFound = tokens.length === 0 && isObjEmpty(unsupportedRouteTokensBySymbolMap);
+
   return (
     <div className="no-scrollbar flex max-h-[80vh] min-h-[24rem] flex-col items-stretch overflow-auto px-2">
       {tokens.map((t, i) => (
@@ -188,7 +190,7 @@ export function TokenList({
         destination={destination}
         onSelectUnsupportedRoute={onSelectUnsupportedRoute}
       />
-      {tokens.length === 0 && isObjEmpty(unsupportedRouteTokensBySymbolMap) && (
+      {noTokensFound && (
         <div className="my-8 text-center text-gray-500">
           <div>No tokens found</div>
           <div className="mt-2 text-sm">Try a different destination chain or search query</div>

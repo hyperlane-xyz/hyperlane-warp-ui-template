@@ -79,11 +79,11 @@ export const useStore = create<AppState>()(
         overrides: ChainMap<Partial<ChainMetadata> | undefined> = {},
       ) => {
         logger.debug('Setting chain overrides in store');
+        const filtered = objFilter(overrides, (_, metadata) => !!metadata);
         const { multiProvider, warpCore } = await initWarpContext({
           ...get(),
-          chainMetadataOverrides: overrides,
+          chainMetadataOverrides: filtered,
         });
-        const filtered = objFilter(overrides, (_, metadata) => !!metadata);
         set({ chainMetadataOverrides: filtered, multiProvider, warpCore });
       },
       warpCoreConfigOverrides: [],

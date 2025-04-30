@@ -144,7 +144,8 @@ export function TokenList({
     return objFilter(tokensBySymbolChainMap, (symbol, value): value is TokenChainMap => {
       return (
         !tokenSymbols.includes(symbol) &&
-        (value.tokenInformation.name.toLowerCase().includes(q) ||
+        (q === '' ||
+          value.tokenInformation.name.toLowerCase().includes(q) ||
           value.tokenInformation.symbol.toLowerCase().includes(q))
       );
     });

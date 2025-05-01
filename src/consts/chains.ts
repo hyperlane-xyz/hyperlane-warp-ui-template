@@ -1,5 +1,5 @@
-import { starknetsepolia } from '@hyperlane-xyz/registry';
 import { ChainMap, ChainMetadata } from '@hyperlane-xyz/sdk';
+import starknetsepolia from './chains.yaml';
 
 // A map of chain names to ChainMetadata
 // Chains can be defined here, in chains.json, or in chains.yaml
@@ -26,6 +26,7 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
   starknetsepolia: {
     ...starknetsepolia,
     logoURI: '/logo/starknet.svg',
+    mailbox: '0x03c725cd6a4463e4a9258d29304bcca5e4f1bbccab078ffd69784f5193a6d792',
   },
   // mycustomchain: {
   //   protocol: ProtocolType.Ethereum,

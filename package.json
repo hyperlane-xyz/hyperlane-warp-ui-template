@@ -17,7 +17,7 @@
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
     "@headlessui/react": "^2.2.0",
-    "@hyperlane-xyz/registry": "13.13.0-starknet.0",
+    "@hyperlane-xyz/registry": "13.14.1",
     "@hyperlane-xyz/sdk": "13.0.0-starknet.1",
     "@hyperlane-xyz/utils": "13.0.0-starknet.1",
     "@hyperlane-xyz/widgets": "13.0.0-starknet.1",

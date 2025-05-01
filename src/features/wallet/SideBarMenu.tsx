@@ -30,10 +30,11 @@ export function SideBarMenu({
 
   const multiProvider = useMultiProvider();
 
-  const { transfers, resetTransfers, transferLoading } = useStore((s) => ({
+  const { transfers, resetTransfers, transferLoading, originChainName } = useStore((s) => ({
     transfers: s.transfers,
     resetTransfers: s.resetTransfers,
     transferLoading: s.transferLoading,
+    originChainName: s.originChainName,
   }));
 
   useEffect(() => {
@@ -82,6 +83,7 @@ export function SideBarMenu({
             onClickConnectWallet={onClickConnectWallet}
             onCopySuccess={onCopySuccess}
             className="px-3 py-3"
+            chainName={originChainName}
           />
           <div className="mb-4 w-full bg-primary-500 px-3.5 py-2 text-base font-normal tracking-wider text-white">
             Transfer History

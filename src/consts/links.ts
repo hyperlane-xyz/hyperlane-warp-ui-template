@@ -13,5 +13,5 @@ export const links = {
   privacyPolicy: 'https://openusdt.webflow.io/privacy-policy',
   bounty:
     'https://github.com/search?q=org:hyperlane-xyz+label:bounty+is:open+is:issue&type=issues&s=&o=desc',
-  imgPath: 'https://raw.githubusercontent.com/hyperlane-xyz/hyperlane-registry/main',
+  imgPath: 'https://cdn.jsdelivr.net/gh/hyperlane-xyz/hyperlane-registry@main',
 };

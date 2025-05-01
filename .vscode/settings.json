@@ -4,8 +4,8 @@
   },
   "files.exclude": {
     "**/*.js.map": true,
-    "**/*.js": {"when": "$(basename).ts"},
-    "**/*.map": {"when": "$(basename).map"},
+    "**/*.js": { "when": "$(basename).ts" },
+    "**/*.map": { "when": "$(basename).map" }
   },
   "files.watcherExclude": {
     "**/.git/objects/**": true,
@@ -38,5 +38,6 @@
   },
   "editor.tabSize": 2,
   "editor.detectIndentation": false,
-  "tailwindCSS.experimental.classRegex": [["clsx\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"]]
+  "tailwindCSS.experimental.classRegex": [["clsx\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"]],
+  "typescript.tsdk": "node_modules/typescript/lib"
 }

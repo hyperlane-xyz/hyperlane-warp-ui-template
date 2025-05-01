@@ -4590,13 +4590,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/registry@file:/Users/kunalarora/dev/hype/hyperlane-registry::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
-  version: 13.14.1-starknet.0
-  resolution: "@hyperlane-xyz/registry@file:/Users/kunalarora/dev/hype/hyperlane-registry#/Users/kunalarora/dev/hype/hyperlane-registry::hash=9e1bb0&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
+"@hyperlane-xyz/registry@npm:13.0.0-starknet.1":
+  version: 13.0.0-starknet.1
+  resolution: "@hyperlane-xyz/registry@npm:13.0.0-starknet.1"
   dependencies:
     yaml: "npm:2.4.5"
     zod: "npm:^3.21.2"
-  checksum: 10/d1c02ede2d4f8a014f4a5d5376ee754952ef515512efd0a3d90c0ca6118d63699a98653d957b1880fbe06436dd36b48d400e96b9b62a2e90abcd77162b7a1026
+  checksum: 10/139d4fe2cfb6da13d43506195a2f2ddfbc2f53526185dbc4362b47d7da5657c243f47d8234631aeb286e99da8d712d7cc314b44f245947ccab68204a10c07c96
   languageName: node
   linkType: hard
 
@@ -4676,7 +4676,7 @@ __metadata:
     "@emotion/react": "npm:^11.13.3"
     "@emotion/styled": "npm:^11.13.0"
     "@headlessui/react": "npm:^2.2.0"
-    "@hyperlane-xyz/registry": "file:/Users/kunalarora/dev/hype/hyperlane-registry"
+    "@hyperlane-xyz/registry": "npm:13.0.0-starknet.1"
     "@hyperlane-xyz/sdk": "npm:13.0.0-starknet.1"
     "@hyperlane-xyz/utils": "npm:13.0.0-starknet.1"
     "@hyperlane-xyz/widgets": "npm:13.0.0-starknet.1"

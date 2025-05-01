@@ -1,6 +1,9 @@
+import { getStarknetChains } from '@hyperlane-xyz/widgets';
 import { Chain } from '@starknet-react/chains';
 import { StarknetConfig, publicProvider, voyager } from '@starknet-react/core';
-import { PropsWithChildren } from 'react';
+import { PropsWithChildren, useMemo } from 'react';
+import { InjectedConnector } from 'starknetkit/injected';
+import { useMultiProvider } from '../../chains/hooks';
 
 // temporary using const sepolia chain
 const sepolia: Chain = {
@@ -47,8 +50,35 @@ const sepolia: Chain = {
 };
 
 export function StarknetWalletContext({ children }: PropsWithChildren<unknown>) {
+  const multiProvider = useMultiProvider();
+  const chainsFromRegistry = getStarknetChains(multiProvider);
+  const connectors = useMemo(
+    () => [
+      new InjectedConnector({ options: { id: 'braavos', name: 'Braavos' } }),
+      new InjectedConnector({ options: { id: 'argentX', name: 'Argent X' } }),
+    ],
+    [],
+  );
+
+  // TODO: remove after sepolia is included in registry
+  const uniqueChains = useMemo(() => {
+    const combinedChains = [...chainsFromRegistry, sepolia];
+    const chainMap = combinedChains.reduce((map, chain) => {
+      if (!map.has(chain.id)) {
+        map.set(chain.id, chain);
+      }
+      return map;
+    }, new Map<bigint, Chain>());
+    return Array.from(chainMap.values());
+  }, [chainsFromRegistry]);
+
   return (
-    <StarknetConfig chains={[sepolia]} provider={publicProvider()} explorer={voyager}>
+    <StarknetConfig
+      chains={uniqueChains}
+      provider={publicProvider()}
+      connectors={connectors}
+      explorer={voyager}
+    >
       {children}
     </StarknetConfig>
   );

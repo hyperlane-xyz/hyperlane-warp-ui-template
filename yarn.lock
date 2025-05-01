@@ -4590,13 +4590,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/registry@npm:13.0.0-starknet.1":
-  version: 13.0.0-starknet.1
-  resolution: "@hyperlane-xyz/registry@npm:13.0.0-starknet.1"
+"@hyperlane-xyz/registry@npm:13.13.0":
+  version: 13.13.0
+  resolution: "@hyperlane-xyz/registry@npm:13.13.0"
   dependencies:
     yaml: "npm:2.4.5"
     zod: "npm:^3.21.2"
-  checksum: 10/139d4fe2cfb6da13d43506195a2f2ddfbc2f53526185dbc4362b47d7da5657c243f47d8234631aeb286e99da8d712d7cc314b44f245947ccab68204a10c07c96
+  checksum: 10/9af4c5c02a07a18f6e4a08121d0876a45a3f24ffb986956e805be1890a9a42fb181e779bb45b4cc7005f39ca301b9314dd47a08c0caed8adf54b4cae933f599b
   languageName: node
   linkType: hard
 
@@ -4676,7 +4676,7 @@ __metadata:
     "@emotion/react": "npm:^11.13.3"
     "@emotion/styled": "npm:^11.13.0"
     "@headlessui/react": "npm:^2.2.0"
-    "@hyperlane-xyz/registry": "npm:13.0.0-starknet.1"
+    "@hyperlane-xyz/registry": "npm:13.13.0"
     "@hyperlane-xyz/sdk": "npm:13.0.0-starknet.1"
     "@hyperlane-xyz/utils": "npm:13.0.0-starknet.1"
     "@hyperlane-xyz/widgets": "npm:13.0.0-starknet.1"

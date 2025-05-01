@@ -4,7 +4,7 @@
 ---
 options: {}
 tokens:
-  - addressOrDenom: "0x83C7a7d489826F92bDFBcc5DD861Fd0D913f85c6"
+  - addressOrDenom: '0x83C7a7d489826F92bDFBcc5DD861Fd0D913f85c6'
     chainName: sepolia
     connections:
       - token: ethereum|starknetsepolia|0x01665b7726bba364f9ef9ba0bee66acfda07a8ad95e2c93d8e88a53d78d7e477
@@ -12,7 +12,7 @@ tokens:
     name: Ether
     standard: EvmHypNative
     symbol: ETH
-  - addressOrDenom: "0x01665b7726bba364f9ef9ba0bee66acfda07a8ad95e2c93d8e88a53d78d7e477"
+  - addressOrDenom: '0x01665b7726bba364f9ef9ba0bee66acfda07a8ad95e2c93d8e88a53d78d7e477'
     chainName: starknetsepolia
     connections:
       - token: ethereum|sepolia|0x83C7a7d489826F92bDFBcc5DD861Fd0D913f85c6

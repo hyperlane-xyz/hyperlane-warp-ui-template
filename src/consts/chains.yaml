@@ -20,25 +20,3 @@
 #     - http: http://127.0.0.1:8555
 
 # yaml-language-server: $schema=../schema.json
-chainId: '0x534e5f5345504f4c4941'
-blockExplorers:
-  - apiUrl: https://sepolia.voyager.online/api
-    family: other
-    name: Starknet Sepolia
-    url: https://sepolia.voyager.online/
-blocks:
-  confirmations: 0
-  estimateBlockTime: 5
-  reorgPeriod: 0
-displayName: Starknet Sepolia
-domainId: 23448591
-isTestnet: true
-name: starknetsepolia
-nativeToken:
-  decimals: 18
-  name: Ether
-  symbol: ETH
-  denom: '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7'
-protocol: starknet
-rpcUrls:
-  - http: https://starknet-sepolia.public.blastapi.io/rpc/v0_7

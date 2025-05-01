@@ -1,5 +1,5 @@
-import { ChainMap, ChainMetadata } from '@hyperlane-xyz/sdk';
-import starknetsepolia from './chains.yaml';
+import { ChainMap, ChainMetadata, ExplorerFamily } from '@hyperlane-xyz/sdk';
+import { ProtocolType } from '@hyperlane-xyz/utils';
 
 // A map of chain names to ChainMetadata
 // Chains can be defined here, in chains.json, or in chains.yaml
@@ -24,9 +24,33 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
   //   mailbox: sonicsvmAddresses.mailbox,
   // },
   starknetsepolia: {
-    ...starknetsepolia,
+    chainId: '0x534e5f5345504f4c4941',
+    domainId: 23448591,
+    name: 'starknetsepolia',
+    protocol: ProtocolType.Starknet,
+    rpcUrls: [{ http: 'https://starknet-sepolia.public.blastapi.io/rpc/v0_7' }],
+    blocks: {
+      confirmations: 0,
+      estimateBlockTime: 5,
+      reorgPeriod: 0,
+    },
+    isTestnet: true,
+    displayName: 'Starknet Sepolia',
+    nativeToken: {
+      name: 'Ether',
+      symbol: 'ETH',
+      decimals: 18,
+      denom: '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
+    },
+    blockExplorers: [
+      {
+        name: 'Starknet Sepolia',
+        url: 'https://sepolia.voyager.online/',
+        apiUrl: 'https://sepolia.voyager.online/api',
+        family: ExplorerFamily.Other,
+      },
+    ],
     logoURI: '/logo/starknet.svg',
-    mailbox: '0x03c725cd6a4463e4a9258d29304bcca5e4f1bbccab078ffd69784f5193a6d792',
   },
   // mycustomchain: {
   //   protocol: ProtocolType.Ethereum,

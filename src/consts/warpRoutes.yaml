@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=../schema.json
 tokens:
-  - addressOrDenom: '0xE0A5921Bcc37eb2FeCc452AE574b86bD4c332196'
+  - addressOrDenom: "0xE0A5921Bcc37eb2FeCc452AE574b86bD4c332196"
     chainName: ethereum
     coinGeckoId: ethereum
     connections:
@@ -10,7 +10,7 @@ tokens:
     name: Ether
     standard: EvmHypNative
     symbol: ETH
-  - addressOrDenom: '0xdCB5227EA8E5FDE0f761A55dC669EC09807E7C8b'
+  - addressOrDenom: "0xdCB5227EA8E5FDE0f761A55dC669EC09807E7C8b"
     chainName: lumiaprism
     connections:
       - token: ethereum|ethereum|0xE0A5921Bcc37eb2FeCc452AE574b86bD4c332196
@@ -19,3 +19,24 @@ tokens:
     name: Ether
     standard: EvmHypSynthetic
     symbol: WETH
+  # ES route
+  - addressOrDenom: "0x3eE1BEA3A10f7508b76219f109eBe19419b3dd85"
+    chainName: ethereum
+    collateralAddressOrDenom: "0x6055Dc6Ff1077eebe5e6D2BA1a1f53d7Ef8430dE"
+    connections:
+      - token: sealevel|eclipsemainnet|2JvSu7PzquY2b8NDZbnupFZ1jezqMBtNUhi7TuU3GQJD
+    decimals: 6
+    logoURI: /deployments/warp_routes/ES/logo.svg
+    name: Eclipse
+    standard: EvmHypCollateral
+    symbol: ES
+  - addressOrDenom: 2JvSu7PzquY2b8NDZbnupFZ1jezqMBtNUhi7TuU3GQJD
+    chainName: eclipsemainnet
+    collateralAddressOrDenom: GnBAskb2SQjrLgpTjtgatz4hEugUsYV7XrWU1idV3oqW
+    connections:
+      - token: ethereum|ethereum|0x3eE1BEA3A10f7508b76219f109eBe19419b3dd85
+    decimals: 6
+    logoURI: /deployments/warp_routes/ES/logo.svg
+    name: Eclipse
+    standard: SealevelHypSynthetic
+    symbol: ES

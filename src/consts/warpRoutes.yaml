@@ -2,5 +2,24 @@
 # These configs will be merged with the warp routes in the configured registry
 # The input here is typically the output of the Hyperlane CLI warp deploy command
 ---
-tokens: []
 options: {}
+tokens:
+  - addressOrDenom: '0x42f919945D740A3b6172a4FE320d20CC23B4Ac36'
+    chainName: sepolia
+    collateralAddressOrDenom: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238'
+    connections:
+      - token: ethereum|paradexsepolia|0x0417c1391aba15b35373012970386f8096887c74504b7381d94e646ee9c3815a
+      - token: ethereum|paradexsepolia|0x0417c1391aba15b35373012970386f8096887c74504b7381d94e646ee9c3815a
+    decimals: 6
+    name: USDC
+    standard: EvmHypCollateral
+    symbol: USDC
+  - addressOrDenom: '0x0417c1391aba15b35373012970386f8096887c74504b7381d94e646ee9c3815a'
+    chainName: paradexsepolia
+    connections:
+      - token: ethereum|sepolia|0x42f919945D740A3b6172a4FE320d20CC23B4Ac36
+      - token: ethereum|sepolia|0x42f919945D740A3b6172a4FE320d20CC23B4Ac36
+    decimals: 6
+    name: USDC
+    standard: StarknetHypSynthetic
+    symbol: USDC

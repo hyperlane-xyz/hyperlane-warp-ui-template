@@ -2,5 +2,21 @@
 # These configs will be merged with the warp routes in the configured registry
 # The input here is typically the output of the Hyperlane CLI warp deploy command
 ---
-tokens: []
-options: {}
+tokens:
+  - chainName: arbitrum
+    standard: EvmHypSynthetic
+    decimals: 18
+    symbol: PAXG
+    name: Paxos Gold
+    addressOrDenom: “0xb460ab00Ff334980Cc2EBf0EAB96571b94aA4b3C”
+    connections:
+      - token: ethereum|ethereum|0xb460ab00Ff334980Cc2EBf0EAB96571b94aA4b3C
+  - chainName: ethereum
+    standard: EvmHypCollateral
+    decimals: 18
+    symbol: PAXG
+    name: Paxos Gold
+    addressOrDenom: “0xb460ab00Ff334980Cc2EBf0EAB96571b94aA4b3C”
+    collateralAddressOrDenom: “0x45804880de22913dafe09f4980848ece6ecbaf78”
+    connections:
+      - token: ethereum|arbitrum|0xb460ab00Ff334980Cc2EBf0EAB96571b94aA4b3C

@@ -18,3 +18,20 @@
 #   protocol: ethereum
 #   rpcUrls:
 #     - http: http://127.0.0.1:8555
+seaseedalpha:
+  chainId: 4898
+  domainId: 4898
+  name: seaseedalpha
+  displayName: Seaseed Alpha
+  protocol: ethereum
+  isTestnet: true
+  rpcUrls:
+    - http: https://rpc.alpha.seaseed.network
+  blockExplorers:
+    - name: Test
+      url: https://explorer.alpha.seaseed.network
+      apiUrl: https://explorer.alpha.seaseed.network
+  nativeToken:
+    name: Seaseed Token
+    symbol: SEA
+    decimals: 18

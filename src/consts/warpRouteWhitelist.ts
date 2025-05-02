@@ -202,4 +202,6 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // MILK route
   'MILK/bsc-milkyway',
+
+  'PAXG/arbitrum-ethereum',
 ];

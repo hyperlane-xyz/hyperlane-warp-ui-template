@@ -57,8 +57,10 @@ base:
         type: pausableIsm
     threshold: 2
     type: staticAggregationIsm
-  mailbox: '0xeA87ae93Fa0019a82A727bfd3eBd1cFCa8f64f1D'
   owner: '0x125d1b64dfd7898DD06ac3E060A432691b8Fa676'
+  ownerOverrides:
+    collateralProxyAdmin: '0x125d1b64dfd7898DD06ac3E060A432691b8Fa676'
+    collateralToken: '0x125d1b64dfd7898DD06ac3E060A432691b8Fa676'
   token: '0x1217BfE6c773EEC6cc4A38b5Dc45B92292B6E189'
   type: xERC20
   xERC20:
@@ -68,12 +70,34 @@ base:
           rateLimitPerSecond: '0'
         lockbox: '0x9d922c23d78179c2e75fe394fc8e49363f2dda85'
       - limits:
-          bufferCap: '20000000000000'
-          rateLimitPerSecond: '5000000000'
+          bufferCap: '0'
+          rateLimitPerSecond: '0'
         lockbox: '0xe92e51d99ae33114c60d9621fb2e1ec0acea7e30'
     warpRouteLimits:
       bufferCap: '20000000000000'
       rateLimitPerSecond: '5000000000'
+bitlayer:
+  hook: '0x0000000000000000000000000000000000000000'
+  interchainSecurityModule:
+    modules:
+      - domains: {}
+        owner: '0x5F7771EA40546e2932754C263455Cb0023a55ca7'
+        type: defaultFallbackRoutingIsm
+      - owner: '0x5F7771EA40546e2932754C263455Cb0023a55ca7'
+        paused: false
+        type: pausableIsm
+    threshold: 2
+    type: staticAggregationIsm
+  owner: '0x5F7771EA40546e2932754C263455Cb0023a55ca7'
+  ownerOverrides:
+    collateralProxyAdmin: '0x5F7771EA40546e2932754C263455Cb0023a55ca7'
+    collateralToken: '0x5F7771EA40546e2932754C263455Cb0023a55ca7'
+  token: '0x1217BfE6c773EEC6cc4A38b5Dc45B92292B6E189'
+  type: xERC20
+  xERC20:
+    warpRouteLimits:
+      bufferCap: '2000000000000'
+      rateLimitPerSecond: '500000000'
 celo:
   hook: '0x0000000000000000000000000000000000000000'
   interchainSecurityModule:
@@ -86,11 +110,40 @@ celo:
         type: pausableIsm
     threshold: 2
     type: staticAggregationIsm
-  mailbox: '0x50da3B3907A08a24fe4999F4Dcf337E8dC7954bb'
   owner: '0xf1b3fc934bB46c459253fb38555A400b94909800'
+  ownerOverrides:
+    collateralProxyAdmin: '0xf1b3fc934bB46c459253fb38555A400b94909800'
+    collateralToken: '0xf1b3fc934bB46c459253fb38555A400b94909800'
   token: '0x5e5F4d6B03db16E7f00dE7C9AFAA53b92C8d1D42'
   type: xERC20Lockbox
   xERC20:
+    warpRouteLimits:
+      bufferCap: '20000000000000'
+      rateLimitPerSecond: '5000000000'
+ethereum:
+  hook: '0x0000000000000000000000000000000000000000'
+  interchainSecurityModule:
+    modules:
+      - domains: {}
+        owner: '0x3965AC3D295641E452E0ea896a086A9cD7C6C5b6'
+        type: defaultFallbackRoutingIsm
+      - owner: '0x3965AC3D295641E452E0ea896a086A9cD7C6C5b6'
+        paused: false
+        type: pausableIsm
+    threshold: 2
+    type: staticAggregationIsm
+  owner: '0x3965AC3D295641E452E0ea896a086A9cD7C6C5b6'
+  ownerOverrides:
+    collateralProxyAdmin: '0x3965AC3D295641E452E0ea896a086A9cD7C6C5b6'
+    collateralToken: '0x3965AC3D295641E452E0ea896a086A9cD7C6C5b6'
+  token: '0x6D265C7dD8d76F25155F1a7687C693FDC1220D12'
+  type: xERC20Lockbox
+  xERC20:
+    extraBridges:
+      - limits:
+          bufferCap: '20000000000000'
+          rateLimitPerSecond: '5000000000'
+        lockbox: '0x6D265C7dD8d76F25155F1a7687C693FDC1220D12'
     warpRouteLimits:
       bufferCap: '20000000000000'
       rateLimitPerSecond: '5000000000'
@@ -106,8 +159,54 @@ fraxtal:
         type: pausableIsm
     threshold: 2
     type: staticAggregationIsm
-  mailbox: '0x2f9DB5616fa3fAd1aB06cB2C906830BA63d135e3'
   owner: '0x21C0CA5be5aC9BC6161Bf1cfE281A18Fe2190079'
+  ownerOverrides:
+    collateralProxyAdmin: '0x21C0CA5be5aC9BC6161Bf1cfE281A18Fe2190079'
+    collateralToken: '0x21C0CA5be5aC9BC6161Bf1cfE281A18Fe2190079'
+  token: '0x1217BfE6c773EEC6cc4A38b5Dc45B92292B6E189'
+  type: xERC20
+  xERC20:
+    warpRouteLimits:
+      bufferCap: '2000000000000'
+      rateLimitPerSecond: '500000000'
+ink:
+  hook: '0x0000000000000000000000000000000000000000'
+  interchainSecurityModule:
+    modules:
+      - domains: {}
+        owner: '0x1BBf2CE75A77b8A10dA7e73dC1F76456008010bD'
+        type: defaultFallbackRoutingIsm
+      - owner: '0x1BBf2CE75A77b8A10dA7e73dC1F76456008010bD'
+        paused: false
+        type: pausableIsm
+    threshold: 2
+    type: staticAggregationIsm
+  owner: '0x1BBf2CE75A77b8A10dA7e73dC1F76456008010bD'
+  ownerOverrides:
+    collateralProxyAdmin: '0x1BBf2CE75A77b8A10dA7e73dC1F76456008010bD'
+    collateralToken: '0x1BBf2CE75A77b8A10dA7e73dC1F76456008010bD'
+  token: '0x1217BfE6c773EEC6cc4A38b5Dc45B92292B6E189'
+  type: xERC20
+  xERC20:
+    warpRouteLimits:
+      bufferCap: '0'
+      rateLimitPerSecond: '0'
+linea:
+  hook: '0x0000000000000000000000000000000000000000'
+  interchainSecurityModule:
+    modules:
+      - domains: {}
+        owner: '0xaCD1865B262C89Fb0b50dcc8fB095330ae8F35b5'
+        type: defaultFallbackRoutingIsm
+      - owner: '0xaCD1865B262C89Fb0b50dcc8fB095330ae8F35b5'
+        paused: false
+        type: pausableIsm
+    threshold: 2
+    type: staticAggregationIsm
+  owner: '0xaCD1865B262C89Fb0b50dcc8fB095330ae8F35b5'
+  ownerOverrides:
+    collateralProxyAdmin: '0xaCD1865B262C89Fb0b50dcc8fB095330ae8F35b5'
+    collateralToken: '0xaCD1865B262C89Fb0b50dcc8fB095330ae8F35b5'
   token: '0x1217BfE6c773EEC6cc4A38b5Dc45B92292B6E189'
   type: xERC20
   xERC20:
@@ -126,8 +225,76 @@ lisk:
         type: pausableIsm
     threshold: 2
     type: staticAggregationIsm
-  mailbox: '0x2f2aFaE1139Ce54feFC03593FeE8AB2aDF4a85A7'
   owner: '0x6F0A0038FcDB2F1655219f1b92f7E9aD4b78Aa49'
+  ownerOverrides:
+    collateralProxyAdmin: '0x6F0A0038FcDB2F1655219f1b92f7E9aD4b78Aa49'
+    collateralToken: '0x6F0A0038FcDB2F1655219f1b92f7E9aD4b78Aa49'
+  token: '0x1217BfE6c773EEC6cc4A38b5Dc45B92292B6E189'
+  type: xERC20
+  xERC20:
+    warpRouteLimits:
+      bufferCap: '2000000000000'
+      rateLimitPerSecond: '500000000'
+mantle:
+  hook: '0x0000000000000000000000000000000000000000'
+  interchainSecurityModule:
+    modules:
+      - domains: {}
+        owner: '0x8aFE6EECc6CcB02aA20DA8Fff7d29aadEBbc2DCd'
+        type: defaultFallbackRoutingIsm
+      - owner: '0x8aFE6EECc6CcB02aA20DA8Fff7d29aadEBbc2DCd'
+        paused: false
+        type: pausableIsm
+    threshold: 2
+    type: staticAggregationIsm
+  owner: '0x8aFE6EECc6CcB02aA20DA8Fff7d29aadEBbc2DCd'
+  ownerOverrides:
+    collateralProxyAdmin: '0x8aFE6EECc6CcB02aA20DA8Fff7d29aadEBbc2DCd'
+    collateralToken: '0x8aFE6EECc6CcB02aA20DA8Fff7d29aadEBbc2DCd'
+  token: '0x1217BfE6c773EEC6cc4A38b5Dc45B92292B6E189'
+  type: xERC20
+  xERC20:
+    warpRouteLimits:
+      bufferCap: '8000000000000'
+      rateLimitPerSecond: '2000000000'
+metal:
+  hook: '0x0000000000000000000000000000000000000000'
+  interchainSecurityModule:
+    modules:
+      - domains: {}
+        owner: '0x41A4e3425c7FeE8711D1C1b2c2acc1879F849b45'
+        type: defaultFallbackRoutingIsm
+      - owner: '0x41A4e3425c7FeE8711D1C1b2c2acc1879F849b45'
+        paused: false
+        type: pausableIsm
+    threshold: 2
+    type: staticAggregationIsm
+  owner: '0x41A4e3425c7FeE8711D1C1b2c2acc1879F849b45'
+  ownerOverrides:
+    collateralProxyAdmin: '0x41A4e3425c7FeE8711D1C1b2c2acc1879F849b45'
+    collateralToken: '0x41A4e3425c7FeE8711D1C1b2c2acc1879F849b45'
+  token: '0x1217BfE6c773EEC6cc4A38b5Dc45B92292B6E189'
+  type: xERC20
+  xERC20:
+    warpRouteLimits:
+      bufferCap: '2000000000000'
+      rateLimitPerSecond: '500000000'
+metis:
+  hook: '0x0000000000000000000000000000000000000000'
+  interchainSecurityModule:
+    modules:
+      - domains: {}
+        owner: '0xf6B817Cf8b4440F38951851cf1160969039966A2'
+        type: defaultFallbackRoutingIsm
+      - owner: '0xf6B817Cf8b4440F38951851cf1160969039966A2'
+        paused: false
+        type: pausableIsm
+    threshold: 2
+    type: staticAggregationIsm
+  owner: '0xf6B817Cf8b4440F38951851cf1160969039966A2'
+  ownerOverrides:
+    collateralProxyAdmin: '0xf6B817Cf8b4440F38951851cf1160969039966A2'
+    collateralToken: '0xf6B817Cf8b4440F38951851cf1160969039966A2'
   token: '0x1217BfE6c773EEC6cc4A38b5Dc45B92292B6E189'
   type: xERC20
   xERC20:
@@ -193,8 +360,10 @@ mode:
         type: pausableIsm
     threshold: 2
     type: staticAggregationIsm
-  mailbox: '0x2f2aFaE1139Ce54feFC03593FeE8AB2aDF4a85A7'
   owner: '0xD4c01B4753575899AD81aAca0bb2DB7796E9F7C0'
+  ownerOverrides:
+    collateralProxyAdmin: '0xD4c01B4753575899AD81aAca0bb2DB7796E9F7C0'
+    collateralToken: '0xD4c01B4753575899AD81aAca0bb2DB7796E9F7C0'
   token: '0x1217BfE6c773EEC6cc4A38b5Dc45B92292B6E189'
   type: xERC20
   xERC20:
@@ -260,8 +429,10 @@ optimism:
         type: pausableIsm
     threshold: 2
     type: staticAggregationIsm
-  mailbox: '0xd4C1905BB1D26BC93DAC913e13CaCC278CdCC80D'
   owner: '0x8E3340E241880F80359AA95Ae20Dc498d3f62503'
+  ownerOverrides:
+    collateralProxyAdmin: '0x8E3340E241880F80359AA95Ae20Dc498d3f62503'
+    collateralToken: '0x8E3340E241880F80359AA95Ae20Dc498d3f62503'
   token: '0x1217BfE6c773EEC6cc4A38b5Dc45B92292B6E189'
   type: xERC20
   xERC20:
@@ -271,12 +442,34 @@ optimism:
           rateLimitPerSecond: '0'
         lockbox: '0x07e437d73e9e43ceece6ea14085b26159e3f7f31'
       - limits:
-          bufferCap: '20000000000000'
-          rateLimitPerSecond: '5000000000'
+          bufferCap: '0'
+          rateLimitPerSecond: '0'
         lockbox: '0x18c4cdc2d774c047eac8375bb09853c4d6d6df36'
     warpRouteLimits:
       bufferCap: '20000000000000'
       rateLimitPerSecond: '5000000000'
+ronin:
+  hook: '0x0000000000000000000000000000000000000000'
+  interchainSecurityModule:
+    modules:
+      - domains: {}
+        owner: '0x5F7771EA40546e2932754C263455Cb0023a55ca7'
+        type: defaultFallbackRoutingIsm
+      - owner: '0x5F7771EA40546e2932754C263455Cb0023a55ca7'
+        paused: false
+        type: pausableIsm
+    threshold: 2
+    type: staticAggregationIsm
+  owner: '0x5F7771EA40546e2932754C263455Cb0023a55ca7'
+  ownerOverrides:
+    collateralProxyAdmin: '0x5F7771EA40546e2932754C263455Cb0023a55ca7'
+    collateralToken: '0x5F7771EA40546e2932754C263455Cb0023a55ca7'
+  token: '0x1217BfE6c773EEC6cc4A38b5Dc45B92292B6E189'
+  type: xERC20
+  xERC20:
+    warpRouteLimits:
+      bufferCap: '2000000000000'
+      rateLimitPerSecond: '500000000'
 soneium:
   hook: '0x0000000000000000000000000000000000000000'
   interchainSecurityModule:
@@ -289,14 +482,38 @@ soneium:
         type: pausableIsm
     threshold: 2
     type: staticAggregationIsm
-  mailbox: '0x3a464f746D23Ab22155710f44dB16dcA53e0775E'
   owner: '0x31Bf112F33556A0F1dc76881cfA8A36Bc2134A57'
+  ownerOverrides:
+    collateralProxyAdmin: '0x31Bf112F33556A0F1dc76881cfA8A36Bc2134A57'
+    collateralToken: '0x31Bf112F33556A0F1dc76881cfA8A36Bc2134A57'
   token: '0x1217BfE6c773EEC6cc4A38b5Dc45B92292B6E189'
   type: xERC20
   xERC20:
     warpRouteLimits:
       bufferCap: '2000000000000'
       rateLimitPerSecond: '500000000'
+sonic:
+  hook: '0x0000000000000000000000000000000000000000'
+  interchainSecurityModule:
+    modules:
+      - domains: {}
+        owner: '0x7f56412491D8E77331Ff0300d3C8E42A6D233FdC'
+        type: defaultFallbackRoutingIsm
+      - owner: '0x7f56412491D8E77331Ff0300d3C8E42A6D233FdC'
+        paused: false
+        type: pausableIsm
+    threshold: 2
+    type: staticAggregationIsm
+  owner: '0x7f56412491D8E77331Ff0300d3C8E42A6D233FdC'
+  ownerOverrides:
+    collateralProxyAdmin: '0x7f56412491D8E77331Ff0300d3C8E42A6D233FdC'
+    collateralToken: '0x7f56412491D8E77331Ff0300d3C8E42A6D233FdC'
+  token: '0x1217BfE6c773EEC6cc4A38b5Dc45B92292B6E189'
+  type: xERC20
+  xERC20:
+    warpRouteLimits:
+      bufferCap: '8000000000000'
+      rateLimitPerSecond: '2000000000'
 superseed:
   hook: '0x0000000000000000000000000000000000000000'
   interchainSecurityModule:
@@ -309,8 +526,10 @@ superseed:
         type: pausableIsm
     threshold: 2
     type: staticAggregationIsm
-  mailbox: '0x3a464f746D23Ab22155710f44dB16dcA53e0775E'
   owner: '0x0731a8e0DC88Df79d9643BD6C1f26cfe6fa53382'
+  ownerOverrides:
+    collateralProxyAdmin: '0x0731a8e0DC88Df79d9643BD6C1f26cfe6fa53382'
+    collateralToken: '0x0731a8e0DC88Df79d9643BD6C1f26cfe6fa53382'
   token: '0x1217BfE6c773EEC6cc4A38b5Dc45B92292B6E189'
   type: xERC20
   xERC20:
@@ -329,11 +548,35 @@ unichain:
         type: pausableIsm
     threshold: 2
     type: staticAggregationIsm
-  mailbox: '0x3a464f746D23Ab22155710f44dB16dcA53e0775E'
   owner: '0xf306ad5bF95960188c67A30f5546D193760ca3D0'
+  ownerOverrides:
+    collateralProxyAdmin: '0xf306ad5bF95960188c67A30f5546D193760ca3D0'
+    collateralToken: '0xf306ad5bF95960188c67A30f5546D193760ca3D0'
   token: '0x1217BfE6c773EEC6cc4A38b5Dc45B92292B6E189'
   type: xERC20
   xERC20:
     warpRouteLimits:
       bufferCap: '20000000000000'
       rateLimitPerSecond: '5000000000'
+worldchain:
+  hook: '0x0000000000000000000000000000000000000000'
+  interchainSecurityModule:
+    modules:
+      - domains: {}
+        owner: '0x998238aF5A2DDC7ae08Dbe4B60b82EF63A1538cd'
+        type: defaultFallbackRoutingIsm
+      - owner: '0x998238aF5A2DDC7ae08Dbe4B60b82EF63A1538cd'
+        paused: false
+        type: pausableIsm
+    threshold: 2
+    type: staticAggregationIsm
+  owner: '0x998238aF5A2DDC7ae08Dbe4B60b82EF63A1538cd'
+  ownerOverrides:
+    collateralProxyAdmin: '0x998238aF5A2DDC7ae08Dbe4B60b82EF63A1538cd'
+    collateralToken: '0x998238aF5A2DDC7ae08Dbe4B60b82EF63A1538cd'
+  token: '0x1217BfE6c773EEC6cc4A38b5Dc45B92292B6E189'
+  type: xERC20
+  xERC20:
+    warpRouteLimits:
+      bufferCap: '0'
+      rateLimitPerSecond: '0'

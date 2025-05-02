@@ -3,8 +3,8 @@ import {
   ChainMap,
   ChainMetadata,
   ChainName,
-  HypTokenRouterConfig,
-  HypTokenRouterConfigSchema,
+  HypTokenRouterConfigMailboxOptional,
+  HypTokenRouterConfigMailboxOptionalSchema,
   MultiProtocolProvider,
   WarpCore,
   WarpCoreConfig,
@@ -48,8 +48,10 @@ export interface AppState {
   setWarpContext: (context: WarpContext) => void;
 
   // Warp Deploy Config state
-  warpDeployConfig: ChainMap<HypTokenRouterConfig>;
-  setWarpDeployConfig: (overrides?: ChainMap<HypTokenRouterConfig> | undefined) => void;
+  warpDeployConfig: ChainMap<HypTokenRouterConfigMailboxOptional>;
+  setWarpDeployConfig: (
+    overrides?: ChainMap<HypTokenRouterConfigMailboxOptional> | undefined,
+  ) => void;
 
   // User history
   transfers: TransferContext[];
@@ -114,7 +116,9 @@ export const useStore = create<AppState>()(
         set(context);
       },
       warpDeployConfig: {},
-      setWarpDeployConfig: (warpDeployConfig?: ChainMap<HypTokenRouterConfig> | undefined) => {
+      setWarpDeployConfig: (
+        warpDeployConfig?: ChainMap<HypTokenRouterConfigMailboxOptional> | undefined,
+      ) => {
         set({ warpDeployConfig });
       },
 
@@ -233,11 +237,11 @@ async function initWarpContext({
   }
 }
 
-function buildWarpDeployConfig(): ChainMap<HypTokenRouterConfig> {
-  const warpDeployConfig: ChainMap<HypTokenRouterConfig> = {};
+function buildWarpDeployConfig(): ChainMap<HypTokenRouterConfigMailboxOptional> {
+  const warpDeployConfig: ChainMap<HypTokenRouterConfigMailboxOptional> = {};
 
   objMap(yamlWarpDeployConfig, (chainName, config) => {
-    const chainConfig = HypTokenRouterConfigSchema.safeParse(config);
+    const chainConfig = HypTokenRouterConfigMailboxOptionalSchema.safeParse(config);
     if (typeof chainName === 'string' && chainConfig.success) {
       warpDeployConfig[chainName] = chainConfig.data;
     }

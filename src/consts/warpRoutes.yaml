@@ -1,6 +1,21 @@
-# A list of Warp Route token configs
-# These configs will be merged with the warp routes in the configured registry
-# The input here is typically the output of the Hyperlane CLI warp deploy command
----
-tokens: []
-options: {}
+# yaml-language-server: $schema=../schema.json
+tokens:
+  - addressOrDenom: '0xE0A5921Bcc37eb2FeCc452AE574b86bD4c332196'
+    chainName: ethereum
+    coinGeckoId: ethereum
+    connections:
+      - token: ethereum|lumiaprism|0xdCB5227EA8E5FDE0f761A55dC669EC09807E7C8b
+    decimals: 18
+    logoURI: /deployments/warp_routes/ETH/logo.svg
+    name: Ether
+    standard: EvmHypNative
+    symbol: ETH
+  - addressOrDenom: '0xdCB5227EA8E5FDE0f761A55dC669EC09807E7C8b'
+    chainName: lumiaprism
+    connections:
+      - token: ethereum|ethereum|0xE0A5921Bcc37eb2FeCc452AE574b86bD4c332196
+    decimals: 18
+    logoURI: /deployments/warp_routes/ETH/logo.svg
+    name: Ether
+    standard: EvmHypSynthetic
+    symbol: WETH

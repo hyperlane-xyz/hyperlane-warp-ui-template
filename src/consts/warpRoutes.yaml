@@ -4,19 +4,22 @@
 ---
 options: {}
 tokens:
-  - addressOrDenom: '0x83C7a7d489826F92bDFBcc5DD861Fd0D913f85c6'
+  - addressOrDenom: '0x42f919945D740A3b6172a4FE320d20CC23B4Ac36'
     chainName: sepolia
+    collateralAddressOrDenom: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238'
     connections:
-      - token: ethereum|starknetsepolia|0x01665b7726bba364f9ef9ba0bee66acfda07a8ad95e2c93d8e88a53d78d7e477
-    decimals: 18
-    name: Ether
-    standard: EvmHypNative
-    symbol: ETH
-  - addressOrDenom: '0x01665b7726bba364f9ef9ba0bee66acfda07a8ad95e2c93d8e88a53d78d7e477'
-    chainName: starknetsepolia
+      - token: ethereum|paradexsepolia|0x0417c1391aba15b35373012970386f8096887c74504b7381d94e646ee9c3815a
+      - token: ethereum|paradexsepolia|0x0417c1391aba15b35373012970386f8096887c74504b7381d94e646ee9c3815a
+    decimals: 6
+    name: USDC
+    standard: EvmHypCollateral
+    symbol: USDC
+  - addressOrDenom: '0x0417c1391aba15b35373012970386f8096887c74504b7381d94e646ee9c3815a'
+    chainName: paradexsepolia
     connections:
-      - token: ethereum|sepolia|0x83C7a7d489826F92bDFBcc5DD861Fd0D913f85c6
-    decimals: 18
-    name: Ether
+      - token: ethereum|sepolia|0x42f919945D740A3b6172a4FE320d20CC23B4Ac36
+      - token: ethereum|sepolia|0x42f919945D740A3b6172a4FE320d20CC23B4Ac36
+    decimals: 6
+    name: USDC
     standard: StarknetHypSynthetic
-    symbol: ETH
+    symbol: USDC

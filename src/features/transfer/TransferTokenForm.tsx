@@ -235,21 +235,12 @@ function TokenSection({
   setIsNft: (b: boolean) => void;
   isReview: boolean;
 }) {
-  const onChangeToken = (addressOrDenom: string) => {
-    updateQueryParam(WARP_QUERY_PARAMS.TOKEN, addressOrDenom);
-  };
-
   return (
     <div className="flex-1">
       <label htmlFor="tokenIndex" className="block pl-0.5 text-sm text-gray-600">
         Token
       </label>
-      <TokenSelectField
-        name="tokenIndex"
-        disabled={isReview}
-        setIsNft={setIsNft}
-        onChangeToken={onChangeToken}
-      />
+      <TokenSelectField name="tokenIndex" disabled={isReview} setIsNft={setIsNft} />
     </div>
   );
 }

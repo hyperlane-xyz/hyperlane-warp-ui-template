@@ -17,3 +17,9 @@ export function updateQueryParam(key: string, value?: string | number) {
   const newUrl = `${window.location.pathname}?${params.toString()}`;
   window.history.replaceState({}, '', newUrl);
 }
+
+export function updateQueryParams(params: Record<string, string | number>) {
+  for (const [key, value] of Object.entries(params)) {
+    updateQueryParam(key, value);
+  }
+}

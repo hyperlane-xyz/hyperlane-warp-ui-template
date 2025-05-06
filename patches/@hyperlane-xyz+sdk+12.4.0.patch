@@ -1,0 +1,25 @@
+diff --git a/node_modules/@hyperlane-xyz/sdk/dist/providers/transactionFeeEstimators.js b/node_modules/@hyperlane-xyz/sdk/dist/providers/transactionFeeEstimators.js
+index 634f385..213ec4e 100644
+--- a/node_modules/@hyperlane-xyz/sdk/dist/providers/transactionFeeEstimators.js
++++ b/node_modules/@hyperlane-xyz/sdk/dist/providers/transactionFeeEstimators.js
+@@ -21,7 +21,10 @@ export async function estimateTransactionFeeEthersV5({ transaction, provider, se
+ // Separating out inner function to allow WarpCore to reuse logic
+ export async function estimateTransactionFeeEthersV5ForGasUnits({ provider, gasUnits, }) {
+     const feeData = await provider.getFeeData();
+-    return computeEvmTxFee(gasUnits, feeData.gasPrice ? BigInt(feeData.gasPrice.toString()) : undefined, feeData.maxFeePerGas ? BigInt(feeData.maxFeePerGas.toString()) : undefined, feeData.maxPriorityFeePerGas
++    return computeEvmTxFee(
++      gasUnits,
++      feeData.gasPrice != null ? BigInt(feeData.gasPrice.toString()) : undefined,
++      feeData.maxFeePerGas ? BigInt(feeData.maxFeePerGas.toString()) : undefined, feeData.maxPriorityFeePerGas
+         ? BigInt(feeData.maxPriorityFeePerGas.toString())
+         : undefined);
+ }
+@@ -39,7 +42,7 @@ function computeEvmTxFee(gasUnits, gasPrice, maxFeePerGas, maxPriorityFeePerGas)
+     if (maxFeePerGas && maxPriorityFeePerGas) {
+         estGasPrice = maxFeePerGas + maxPriorityFeePerGas;
+     }
+-    else if (gasPrice) {
++    else if (gasPrice != null) {
+         estGasPrice = gasPrice;
+     }
+     else {

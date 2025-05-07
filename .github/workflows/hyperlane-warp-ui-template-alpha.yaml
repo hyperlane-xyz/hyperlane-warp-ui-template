@@ -1,0 +1,30 @@
+name: Deploy hyperlane-warp-ui-template-alpha
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy-hyperlane-warp-ui-template-alpha:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Deploy backend via SSH
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.GCP_ALPHA_SERVER_HOST }}
+        username: ${{ secrets.GCP_ALPHA_SERVER_USER }}
+        key: ${{ secrets.GCP_ALPHA_SSH_PRIVATE_KEY }}
+        proxy_host: ${{ secrets.GCP_ALPHA_BASTION_HOST }}
+        proxy_username: ${{ secrets.GCP_ALPHA_BASTION_USER }}
+        proxy_key: ${{ secrets.GCP_ALPHA_SSH_PRIVATE_KEY }}
+        script: |
+          cd /home/ubuntu/hyperlane-warp-ui-template
+          git checkout main --force && git pull --no-rebase
+          docker compose -f docker-compose.yaml up -d --build
+

@@ -1,7 +1,7 @@
 FROM node:22.14.0-alpine AS base
 # Install dependencies only when needed
 FROM base AS deps
-RUN apk add --no-cache libc6-compat
+RUN apk add --no-cache libc6-compat git
 RUN corepack enable && corepack prepare yarn@4.5.0 --activate
 WORKDIR /app
 # Install dependencies based on the preferred package manager

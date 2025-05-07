@@ -20,9 +20,6 @@ jobs:
         host: ${{ secrets.GCP_ALPHA_SERVER_HOST }}
         username: ${{ secrets.GCP_ALPHA_SERVER_USER }}
         key: ${{ secrets.GCP_ALPHA_SSH_PRIVATE_KEY }}
-        proxy_host: ${{ secrets.GCP_ALPHA_BASTION_HOST }}
-        proxy_username: ${{ secrets.GCP_ALPHA_BASTION_USER }}
-        proxy_key: ${{ secrets.GCP_ALPHA_SSH_PRIVATE_KEY }}
         script: |
           cd /home/ubuntu/hyperlane-warp-ui-template
           git checkout main --force && git pull --no-rebase

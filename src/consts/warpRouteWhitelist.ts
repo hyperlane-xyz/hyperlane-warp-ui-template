@@ -206,7 +206,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   // wfragSOL & wfragJTO routes
   'wfragSOL/eclipsemainnet-solanamainnet-soon',
   'wfragJTO/eclipsemainnet-solanamainnet-soon',
-  
+
   // ES routes
   'ES/eclipsemainnet-ethereum',
 ];

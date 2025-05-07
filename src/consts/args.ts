@@ -9,6 +9,7 @@ export enum WARP_QUERY_PARAMS {
 export enum CHAIN_NAMES {
   BASE = 'base',
   CELO = 'celo',
+  ETHEREUM = 'ethereum',
   OPTIMISM = 'optimism',
 }
 

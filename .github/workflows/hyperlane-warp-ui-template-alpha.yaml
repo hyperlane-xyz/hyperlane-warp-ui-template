@@ -20,6 +20,7 @@ jobs:
         host: ${{ secrets.GCP_ALPHA_SERVER_HOST }}
         username: ${{ secrets.GCP_ALPHA_SERVER_USER }}
         key: ${{ secrets.GCP_ALPHA_SSH_PRIVATE_KEY }}
+        command_timeout: 60m
         script: |
           cd /home/ubuntu/hyperlane-warp-ui-template
           git checkout main --force && git pull --no-rebase

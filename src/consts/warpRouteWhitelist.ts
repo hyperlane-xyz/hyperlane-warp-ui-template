@@ -14,6 +14,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   // ETH routes
   'ETH/ethereum-hyperevm',
   'ETH/ethereum-viction',
+  'ETH/arbitrum-base-ethereum-lumiaprism-optimism-polygon',
 
   // tETH routes
   'tETH/eclipsemainnet-ethereum',
@@ -201,4 +202,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // MILK route
   'MILK/bsc-milkyway',
+
+  // ES routes
+  'ES/eclipsemainnet-ethereum',
 ];

@@ -63,6 +63,10 @@ export function TransferTokenForm() {
   const initialValues = useFormInitialValues();
   const { accounts } = useAccounts(multiProvider, config.addressBlacklist);
 
+  if (!originChainName) {
+    setOriginChainName(initialValues.origin);
+  }
+
   // Flag for if form is in input vs review mode
   const [isReview, setIsReview] = useState(false);
   // Flag for check current type of token

@@ -1,4 +1,4 @@
-import { MultiProtocolProvider, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
+import { MultiProtocolProvider, TokenAmount } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 import { AccountInfo, getAccountAddressAndPubKey } from '@hyperlane-xyz/widgets';
 import { useMutation } from '@tanstack/react-query';
@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { useWarpCore } from '../tokens/hooks';
+import { WarpCore } from './warpCore';
 
 interface FetchMaxParams {
   accounts: Record<ProtocolType, AccountInfo>;

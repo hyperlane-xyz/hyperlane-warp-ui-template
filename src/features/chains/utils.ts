@@ -1,5 +1,6 @@
 import { isAbacusWorksChain } from '@hyperlane-xyz/registry';
-import { ChainMap, MultiProtocolProvider, WarpCore } from '@hyperlane-xyz/sdk';
+import { ChainMap, MultiProtocolProvider } from '@hyperlane-xyz/sdk';
+import { WarpCore } from '../transfer/warpCore';
 import { toTitleCase, trimToLength } from '@hyperlane-xyz/utils';
 import { ChainSearchMenuProps } from '@hyperlane-xyz/widgets';
 

@@ -18,3 +18,5 @@
 #   protocol: ethereum
 #   rpcUrls:
 #     - http: http://127.0.0.1:8555
+
+# yaml-language-server: $schema=../schema.json

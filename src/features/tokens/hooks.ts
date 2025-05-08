@@ -1,6 +1,7 @@
-import { IToken, Token, WarpCore } from '@hyperlane-xyz/sdk';
+import { IToken, Token } from '@hyperlane-xyz/sdk';
 import { isNullish } from '@hyperlane-xyz/utils';
 import { useStore } from '../store';
+import { WarpCore } from '../transfer/warpCore';
 
 export function useWarpCore() {
   return useStore((s) => s.warpCore);

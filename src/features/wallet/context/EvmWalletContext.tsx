@@ -16,6 +16,7 @@ import {
 } from '@rainbow-me/rainbowkit/wallets';
 import { PropsWithChildren, useMemo } from 'react';
 import { createClient, fallback, http } from 'viem';
+import { sepolia } from 'viem/chains';
 import { WagmiProvider, createConfig } from 'wagmi';
 import { APP_NAME } from '../../../consts/app';
 import { config } from '../../../consts/config';
@@ -25,6 +26,7 @@ import { useWarpCore } from '../../tokens/hooks';
 
 function initWagmi(multiProvider: MultiProtocolProvider) {
   const chains = getWagmiChainConfigs(multiProvider);
+  chains.push(sepolia);
 
   const connectors = connectorsForWallets(
     [

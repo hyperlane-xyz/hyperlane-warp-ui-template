@@ -19,6 +19,6 @@ tokens:
       - token: sealevel|solanatestnet|AxT2AeJJpwUjrhDJVm8grXCMsnwtyp4Zf68yMUiiCdK9
     decimals: 9
     logoURI: /deployments/warp_routes/SOL/logo.svg
-    name: hypSOL
+    name: SOL
     standard: StarknetHypSynthetic
-    symbol: hypSOL
+    symbol: SOL

@@ -4714,7 +4714,6 @@ __metadata:
     formik: "npm:^2.4.6"
     framer-motion: "npm:^10.16.4"
     next: "npm:^15.3.0"
-    pino: "npm:^8.19.0"
     postcss: "npm:^8.4.47"
     prettier: "npm:^3.2.5"
     prettier-plugin-organize-imports: "npm:^4.1.0"

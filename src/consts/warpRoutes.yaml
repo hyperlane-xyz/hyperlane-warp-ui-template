@@ -4,19 +4,21 @@
 ---
 options: {}
 tokens:
-  - addressOrDenom: '0x83C7a7d489826F92bDFBcc5DD861Fd0D913f85c6'
-    chainName: sepolia
+  - addressOrDenom: 'AxT2AeJJpwUjrhDJVm8grXCMsnwtyp4Zf68yMUiiCdK9'
+    chainName: solanatestnet
     connections:
-      - token: ethereum|starknetsepolia|0x01665b7726bba364f9ef9ba0bee66acfda07a8ad95e2c93d8e88a53d78d7e477
-    decimals: 18
-    name: Ether
-    standard: EvmHypNative
-    symbol: ETH
-  - addressOrDenom: '0x01665b7726bba364f9ef9ba0bee66acfda07a8ad95e2c93d8e88a53d78d7e477'
+      - token: ethereum|starknetsepolia|0x05a5b7d2a9be4c41cdc522b42cd787ea4d142bf1dc8619a47be2196c0b3ad1a0
+    decimals: 9
+    logoURI: /deployments/warp_routes/SOL/logo.svg
+    name: Solana
+    standard: SealevelHypNative
+    symbol: SOL
+  - addressOrDenom: '0x05a5b7d2a9be4c41cdc522b42cd787ea4d142bf1dc8619a47be2196c0b3ad1a0'
     chainName: starknetsepolia
     connections:
-      - token: ethereum|sepolia|0x83C7a7d489826F92bDFBcc5DD861Fd0D913f85c6
-    decimals: 18
-    name: Ether
+      - token: sealevel|solanatestnet|AxT2AeJJpwUjrhDJVm8grXCMsnwtyp4Zf68yMUiiCdK9
+    decimals: 9
+    logoURI: /deployments/warp_routes/SOL/logo.svg
+    name: hypSOL
     standard: StarknetHypSynthetic
-    symbol: ETH
+    symbol: hypSOL

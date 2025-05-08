@@ -1,3 +1,4 @@
+import { solanatestnet, solanatestnetAddresses } from '@hyperlane-xyz/registry';
 import { ChainMap, ChainMetadata, ExplorerFamily } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 
@@ -23,6 +24,10 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
   //   ...sonicsvm,
   //   mailbox: sonicsvmAddresses.mailbox,
   // },
+  solanatestnet: {
+    ...solanatestnet,
+    mailbox: solanatestnetAddresses.mailbox,
+  },
   starknetsepolia: {
     chainId: '0x534e5f5345504f4c4941',
     domainId: 23448591,

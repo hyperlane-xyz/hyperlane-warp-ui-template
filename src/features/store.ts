@@ -4,7 +4,6 @@ import {
   ChainMetadata,
   ChainName,
   MultiProtocolProvider,
-  WarpCore,
   WarpCoreConfig,
 } from '@hyperlane-xyz/sdk';
 import { objFilter } from '@hyperlane-xyz/utils';
@@ -15,6 +14,7 @@ import { logger } from '../utils/logger';
 import { assembleChainMetadata } from './chains/metadata';
 import { assembleTokensBySymbolChainMap, TokenChainMap } from './tokens/utils';
 import { FinalTransferStatuses, TransferContext, TransferStatus } from './transfer/types';
+import { WarpCore } from './transfer/warpCore';
 import { assembleWarpCoreConfig } from './warpCore/warpCoreConfig';
 
 // Increment this when persist state has breaking changes

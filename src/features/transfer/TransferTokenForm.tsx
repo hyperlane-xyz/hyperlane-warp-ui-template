@@ -1,4 +1,4 @@
-import { TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
+import { TokenAmount } from '@hyperlane-xyz/sdk';
 import { ProtocolType, errorToString, isNullish, toWei } from '@hyperlane-xyz/utils';
 import {
   AccountInfo,
@@ -50,6 +50,7 @@ import { TransferFormValues } from './types';
 import { useRecipientBalanceWatcher } from './useBalanceWatcher';
 import { useFeeQuotes } from './useFeeQuotes';
 import { useTokenTransfer } from './useTokenTransfer';
+import { WarpCore } from './warpCore';
 
 export function TransferTokenForm() {
   const multiProvider = useMultiProvider();
@@ -584,6 +585,10 @@ async function validateForm(
       origin,
       accounts,
     );
+    console.log('warpCore', warpCore);
+    // if (!isValidAddress(recipient, ProtocolType.Starknet) || isZeroishAddress(recipient))
+    //   return { recipient: 'Invalid recipient' };
+    console.log('recipient', recipient);
     const result = await warpCore.validateTransfer({
       originTokenAmount: token.amount(amountWei),
       destination,

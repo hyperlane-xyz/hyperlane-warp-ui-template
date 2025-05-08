@@ -1,4 +1,5 @@
-import { TypedTransactionReceipt, WarpCore, WarpTxCategory } from '@hyperlane-xyz/sdk';
+import { TypedTransactionReceipt, WarpTxCategory } from '@hyperlane-xyz/sdk';
+import { WarpCore } from './warpCore';
 import { toTitleCase, toWei } from '@hyperlane-xyz/utils';
 import {
   getAccountAddressForChain,

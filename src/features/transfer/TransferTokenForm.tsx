@@ -13,7 +13,7 @@ import {
 } from '@hyperlane-xyz/widgets';
 import BigNumber from 'bignumber.js';
 import { Form, Formik, useFormikContext } from 'formik';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
 import { SolidButton } from '../../components/buttons/SolidButton';
@@ -55,6 +55,11 @@ export function TransferTokenForm() {
   const multiProvider = useMultiProvider();
   const warpCore = useWarpCore();
 
+  const { originChainName, setOriginChainName } = useStore((s) => ({
+    originChainName: s.originChainName,
+    setOriginChainName: s.setOriginChainName,
+  }));
+
   const initialValues = useFormInitialValues();
   const { accounts } = useAccounts(multiProvider, config.addressBlacklist);
 
@@ -83,6 +88,10 @@ export function TransferTokenForm() {
       openConfirmationModal();
     }
   };
+
+  useEffect(() => {
+    if (!originChainName) setOriginChainName(initialValues.origin);
+  }, [initialValues.origin, originChainName, setOriginChainName]);
 
   return (
     <Formik<TransferFormValues>
@@ -154,6 +163,10 @@ function SwapChainsButton({
 function ChainSelectSection({ isReview }: { isReview: boolean }) {
   const warpCore = useWarpCore();
 
+  const { setOriginChainName } = useStore((s) => ({
+    setOriginChainName: s.setOriginChainName,
+  }));
+
   const { values, setFieldValue } = useFormikContext<TransferFormValues>();
 
   const originRouteCounts = useMemo(() => {
@@ -172,10 +185,12 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
   };
 
   const handleChange = (chainName: string, fieldName: string) => {
-    if (fieldName === WARP_QUERY_PARAMS.ORIGIN)
+    if (fieldName === WARP_QUERY_PARAMS.ORIGIN) {
       setTokenOnChainChange(chainName, values.destination);
-    else if (fieldName === WARP_QUERY_PARAMS.DESTINATION)
+      setOriginChainName(chainName);
+    } else if (fieldName === WARP_QUERY_PARAMS.DESTINATION) {
       setTokenOnChainChange(values.origin, chainName);
+    }
     updateQueryParam(fieldName, chainName);
   };
 
@@ -183,6 +198,7 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
     updateQueryParam(WARP_QUERY_PARAMS.ORIGIN, origin);
     updateQueryParam(WARP_QUERY_PARAMS.DESTINATION, destination);
     setTokenOnChainChange(origin, destination);
+    setOriginChainName(origin);
   };
 
   return (
@@ -215,21 +231,12 @@ function TokenSection({
   setIsNft: (b: boolean) => void;
   isReview: boolean;
 }) {
-  const onChangeToken = (addressOrDenom: string) => {
-    updateQueryParam(WARP_QUERY_PARAMS.TOKEN, addressOrDenom);
-  };
-
   return (
     <div className="flex-1">
       <label htmlFor="tokenIndex" className="block pl-0.5 text-sm text-gray-600">
         Token
       </label>
-      <TokenSelectField
-        name="tokenIndex"
-        disabled={isReview}
-        setIsNft={setIsNft}
-        onChangeToken={onChangeToken}
-      />
+      <TokenSelectField name="tokenIndex" disabled={isReview} setIsNft={setIsNft} />
     </div>
   );
 }

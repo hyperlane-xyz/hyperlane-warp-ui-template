@@ -169,8 +169,8 @@ export function TokenList({
             <TokenIcon token={t.token} size={30} />
           </div>
           <div className="ml-2 shrink-0 text-left">
-            <div className="w-14 truncate text-sm">{t.token.symbol || 'Unknown'}</div>
-            <div className="w-14 truncate text-xs text-gray-500">{t.token.name || 'Unknown'}</div>
+            <div className="w-16 truncate text-sm">{t.token.symbol || 'Unknown'}</div>
+            <div className="w-16 truncate text-xs text-gray-500">{t.token.name || 'Unknown'}</div>
           </div>
           <div className="ml-2 min-w-0 shrink text-left">
             <div className="w-full truncate text-xs">

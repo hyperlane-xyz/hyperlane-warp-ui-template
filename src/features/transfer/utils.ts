@@ -19,6 +19,10 @@ export function getTransferStatusLabel(
     statusDescription = `Sign approve transaction in ${connectorName} to continue.`;
   else if (status === TransferStatus.ConfirmingApprove)
     statusDescription = 'Confirming approve transaction...';
+  else if (status === TransferStatus.SigningRevoke)
+    statusDescription = `Sign revoke transaction in ${connectorName} to continue.`;
+  else if (status === TransferStatus.ConfirmingRevoke)
+    statusDescription = 'Confirming revoke transaction...';
   else if (status === TransferStatus.SigningTransfer)
     statusDescription = `Sign transfer transaction in ${connectorName} to continue.`;
   else if (status === TransferStatus.ConfirmingTransfer)

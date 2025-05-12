@@ -22,7 +22,7 @@ export function useBalance(chain?: ChainName, token?: IToken, address?: Address)
       if (!chain || !token || !address || !isValidAddress(address, token.protocol)) return null;
       return token.getBalance(multiProvider, address);
     },
-    refetchInterval: 5000,
+    refetchInterval: 30000,
   });
 
   useToastError(error, 'Error fetching balance');

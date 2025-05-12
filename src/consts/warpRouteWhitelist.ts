@@ -15,6 +15,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'ETH/ethereum-hyperevm',
   'ETH/ethereum-viction',
   'ETH/arbitrum-base-ethereum-lumiaprism-optimism-polygon',
+  'ETH/coti-ethereum',
 
   // tETH routes
   'tETH/eclipsemainnet-ethereum',
@@ -75,6 +76,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'WBTC/eclipsemainnet-ethereum',
   'WBTC/ethereum-form',
   'WBTC/ethereum-hyperevm',
+  'WBTC/coti-ethereum',
 
   // ORCA routes
   'ORCA/eclipsemainnet-solanamainnet',
@@ -214,8 +216,4 @@ export const warpRouteWhitelist: Array<string> | null = [
   'PEPE/apechain-arbitrum',
   'GG/apechain-arbitrum',
   'Boop/apechain-arbitrum',
-
-  // Coti batch
-  'WBTC/coti-ethereum',
-  'ETH/coti-ethereum',
 ];

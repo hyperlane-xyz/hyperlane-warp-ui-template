@@ -209,4 +209,9 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // ES routes
   'ES/eclipsemainnet-ethereum',
+
+  // apechain batch
+  'PEPE/apechain-arbitrum',
+  'GG/apechain-arbitrum',
+  'Boop/apechain-arbitrum',
 ];

@@ -214,4 +214,8 @@ export const warpRouteWhitelist: Array<string> | null = [
   'PEPE/apechain-arbitrum',
   'GG/apechain-arbitrum',
   'Boop/apechain-arbitrum',
+
+  // Coti batch
+  'WBTC/coti-ethereum',
+  'ETH/coti-ethereum',
 ];

@@ -19,3 +19,8 @@ tokens:
     addressOrDenom: "0xa429B42Fdd7E61C0B510A6c1b0506A32b026694a"
     connections:
       - token: ethereum|nibiru|0xa429B42Fdd7E61C0B510A6c1b0506A32b026694a
+options:
+  interchainFeeConstants:
+    - origin: nibiru
+      destination: opbnb
+      amount: 12000000000000000000

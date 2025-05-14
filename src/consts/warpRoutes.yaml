@@ -2,5 +2,20 @@
 # These configs will be merged with the warp routes in the configured registry
 # The input here is typically the output of the Hyperlane CLI warp deploy command
 ---
-tokens: []
-options: {}
+tokens:
+  - chainName: nibiru
+    standard: EvmHypSynthetic
+    decimals: 18
+    symbol: BNB
+    name: BNB
+    addressOrDenom: "0xa429B42Fdd7E61C0B510A6c1b0506A32b026694a"
+    connections:
+      - token: ethereum|opbnb|0xa429B42Fdd7E61C0B510A6c1b0506A32b026694a
+  - chainName: opbnb
+    standard: EvmHypNative
+    decimals: 18
+    symbol: BNB
+    name: BNB
+    addressOrDenom: "0xa429B42Fdd7E61C0B510A6c1b0506A32b026694a"
+    connections:
+      - token: ethereum|nibiru|0xa429B42Fdd7E61C0B510A6c1b0506A32b026694a

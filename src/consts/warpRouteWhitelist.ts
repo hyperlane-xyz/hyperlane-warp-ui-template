@@ -216,4 +216,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'PEPE/apechain-arbitrum',
   'GG/apechain-arbitrum',
   'Boop/apechain-arbitrum',
+
+  // MIRAI
+  'MIRAI/abstract-bsc-solanamainnet',
 ];

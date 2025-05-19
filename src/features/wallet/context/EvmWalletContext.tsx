@@ -5,6 +5,7 @@ import { RainbowKitProvider, connectorsForWallets, lightTheme } from '@rainbow-m
 import '@rainbow-me/rainbowkit/styles.css';
 import {
   argentWallet,
+  binanceWallet,
   coinbaseWallet,
   injectedWallet,
   metaMaskWallet,
@@ -13,7 +14,7 @@ import {
   walletConnectWallet,
 } from '@rainbow-me/rainbowkit/wallets';
 import { PropsWithChildren, useMemo } from 'react';
-import { createClient, http } from 'viem';
+import { createClient, fallback, http } from 'viem';
 import { WagmiProvider, createConfig } from 'wagmi';
 import { APP_NAME } from '../../../consts/app';
 import { config } from '../../../consts/config';
@@ -32,7 +33,7 @@ function initWagmi(multiProvider: MultiProtocolProvider) {
       },
       {
         groupName: 'More',
-        wallets: [coinbaseWallet, rainbowWallet, trustWallet, argentWallet],
+        wallets: [binanceWallet, coinbaseWallet, rainbowWallet, trustWallet, argentWallet],
       },
     ],
     { appName: APP_NAME, projectId: config.walletConnectProjectId },
@@ -43,7 +44,7 @@ function initWagmi(multiProvider: MultiProtocolProvider) {
     chains: [chains[0], ...chains.splice(1)],
     connectors,
     client({ chain }) {
-      const transport = http(chain.rpcUrls.default.http[0]);
+      const transport = fallback(chain.rpcUrls.default.http.map((chainHttp) => http(chainHttp)));
       return createClient({ chain, transport });
     },
   });

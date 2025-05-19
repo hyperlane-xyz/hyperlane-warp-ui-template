@@ -10,6 +10,8 @@ export enum TransferStatus {
   Preparing = 'preparing',
   CreatingTxs = 'creating-txs',
   SigningApprove = 'signing-approve',
+  SigningRevoke = 'signing-revoke',
+  ConfirmingRevoke = 'confirming-revoke',
   ConfirmingApprove = 'confirming-approve',
   SigningTransfer = 'signing-transfer',
   ConfirmingTransfer = 'confirming-transfer',

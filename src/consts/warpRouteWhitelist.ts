@@ -96,6 +96,9 @@ export const warpRouteWhitelist: Array<string> | null = [
   // Bonk routes
   'Bonk/solanamainnet-soon',
 
+  // TGT routes
+  'TGT/bsc-immutablezkevmmainnet',
+
   // TONY routes
   'TONY/base-solanamainnet',
 

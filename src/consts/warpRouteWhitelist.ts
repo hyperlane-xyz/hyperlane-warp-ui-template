@@ -219,4 +219,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // MIRAI
   'MIRAI/abstract-bsc-solanamainnet',
+
+  // Nucleus tUSD routes
+  'tUSD/eclipsemainnet-ethereum',
 ];

@@ -1,13 +1,4 @@
-import {
-  eclipsemainnet,
-  eclipsemainnetAddresses,
-  solanamainnet,
-  solanamainnetAddresses,
-  sonicsvm,
-  sonicsvmAddresses,
-  soon,
-  soonAddresses,
-} from '@hyperlane-xyz/registry';
+import { solanamainnet, solanamainnetAddresses } from '@hyperlane-xyz/registry';
 import { ChainMap, ChainMetadata } from '@hyperlane-xyz/sdk';
 
 // A map of chain names to ChainMetadata
@@ -19,18 +10,6 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
     ...solanamainnet,
     // SVM chains require mailbox addresses for the token adapters
     mailbox: solanamainnetAddresses.mailbox,
-  },
-  eclipsemainnet: {
-    ...eclipsemainnet,
-    mailbox: eclipsemainnetAddresses.mailbox,
-  },
-  soon: {
-    ...soon,
-    mailbox: soonAddresses.mailbox,
-  },
-  sonicsvm: {
-    ...sonicsvm,
-    mailbox: sonicsvmAddresses.mailbox,
   },
   // mycustomchain: {
   //   protocol: ProtocolType.Ethereum,

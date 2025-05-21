@@ -218,6 +218,12 @@ export const warpRouteWhitelist: Array<string> | null = [
   'GG/apechain-arbitrum',
   'Boop/apechain-arbitrum',
 
+  // apechain solana batch
+  'SOL/apechain-solanamainnet',
+  'PENGU/apechain-solanamainnet',
+  'Fartcoin/apechain-solanamainnet',
+  'UFD/apechain-solanamainnet',
+
   // MIRAI
   'MIRAI/abstract-bsc-solanamainnet',
 ];

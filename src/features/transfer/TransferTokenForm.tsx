@@ -19,7 +19,7 @@ import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareS
 import { SolidButton } from '../../components/buttons/SolidButton';
 import { TextField } from '../../components/input/TextField';
 import { WARP_QUERY_PARAMS } from '../../consts/args';
-import { rentEstimate } from '../../consts/chains';
+import { chainsRentEstimate } from '../../consts/chains';
 import { config } from '../../consts/config';
 import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
@@ -452,8 +452,8 @@ function ReviewDetails({ visible }: { visible: boolean }) {
   const isLoading = isApproveLoading || isQuoteLoading;
 
   const interchainQuote =
-    originToken && objKeys(rentEstimate).includes(originToken.chainName)
-      ? fees?.interchainQuote.plus(rentEstimate[originToken.chainName])
+    originToken && objKeys(chainsRentEstimate).includes(originToken.chainName)
+      ? fees?.interchainQuote.plus(chainsRentEstimate[originToken.chainName])
       : fees?.interchainQuote;
 
   return (

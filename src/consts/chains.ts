@@ -57,11 +57,11 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
   // },
 };
 
-// rent account payment for SVM chains added on top of IGP, not exact but should be
-// pretty close to actual payment
-export const rentEstimate: ChainMap<bigint> = {
+// rent account payment for (mostly for) SVM chains added on top of IGP,
+// not exact but should be pretty close to actual payment
+export const chainsRentEstimate: ChainMap<bigint> = {
   eclipsemainnet: BigInt(Math.round(0.00004019 * 10 ** 9)),
   solanamainnet: BigInt(Math.round(0.004114 * 10 ** 9)),
   sonicsvm: BigInt(Math.round(0.004114 * 10 ** 9)),
-  soon: BigInt(Math.round(0.00000343 * 10 ** 9)),
+  soon: BigInt(Math.round(0.00000355 * 10 ** 9)),
 };

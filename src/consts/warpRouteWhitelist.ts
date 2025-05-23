@@ -44,6 +44,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'USDC/solanamainnet-sonicsvm',
   'USDC/arbitrum-base-ethereum-ink-optimism-solanamainnet-superseed',
   'USDC/ethereum-lumiaprism',
+  'USDC/base-ethereum-solanamainnet-subtensor',
 
   // USDT routes
   'USDT/ethereum-inevm',
@@ -217,9 +218,21 @@ export const warpRouteWhitelist: Array<string> | null = [
   'GG/apechain-arbitrum',
   'Boop/apechain-arbitrum',
 
+  // apechain solana batch
+  'SOL/apechain-solanamainnet',
+  'PENGU/apechain-solanamainnet',
+  'Fartcoin/apechain-solanamainnet',
+  'UFD/apechain-solanamainnet',
+
   // MIRAI
   'MIRAI/abstract-bsc-solanamainnet',
 
   // Nucleus tUSD routes
   'tUSD/eclipsemainnet-ethereum',
+
+  // FUEL
+  'FUEL/base-bsc-ethereum',
+
+  // KYVE
+  'KYVE/base-kyve',
 ];

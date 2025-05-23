@@ -1,5 +1,5 @@
 import { TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
-import { ProtocolType, errorToString, isNullish, toWei } from '@hyperlane-xyz/utils';
+import { ProtocolType, errorToString, isNullish, objKeys, toWei } from '@hyperlane-xyz/utils';
 import {
   AccountInfo,
   ChevronIcon,
@@ -21,6 +21,7 @@ import { TextField } from '../../components/input/TextField';
 import { Card } from '../../components/layout/Card';
 import { TipCard } from '../../components/tip/TipCard';
 import { WARP_QUERY_PARAMS } from '../../consts/args';
+import { chainsRentEstimate } from '../../consts/chains';
 import { config } from '../../consts/config';
 import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
@@ -450,6 +451,11 @@ function ReviewDetails({ visible }: { visible: boolean }) {
 
   const isLoading = isApproveLoading || isQuoteLoading;
 
+  const interchainQuote =
+    originToken && objKeys(chainsRentEstimate).includes(originToken.chainName)
+      ? fees?.interchainQuote.plus(chainsRentEstimate[originToken.chainName])
+      : fees?.interchainQuote;
+
   return (
     <div
       className={`${
@@ -496,11 +502,11 @@ function ReviewDetails({ visible }: { visible: boolean }) {
                     }`}</span>
                   </p>
                 )}
-                {fees?.interchainQuote && fees.interchainQuote.amount > 0n && (
+                {interchainQuote && interchainQuote.amount > 0n && (
                   <p className="flex">
                     <span className="min-w-[6.5rem]">Interchain Gas</span>
-                    <span>{`${fees.interchainQuote.getDecimalFormattedAmount().toFixed(4) || '0'} ${
-                      fees.interchainQuote.token.symbol || ''
+                    <span>{`${interchainQuote.getDecimalFormattedAmount().toFixed(4) || '0'} ${
+                      interchainQuote.token.symbol || ''
                     }`}</span>
                   </p>
                 )}

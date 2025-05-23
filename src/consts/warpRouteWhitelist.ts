@@ -229,4 +229,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // FUEL
   'FUEL/base-bsc-ethereum',
+
+  // KYVE
+  'KYVE/base-kyve'
 ];

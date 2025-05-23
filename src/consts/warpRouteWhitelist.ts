@@ -226,4 +226,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // MIRAI
   'MIRAI/abstract-bsc-solanamainnet',
+
+  // FUEL
+  'FUEL/base-bsc-ethereum',
 ];

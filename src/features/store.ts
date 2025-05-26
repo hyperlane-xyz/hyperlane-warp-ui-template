@@ -254,9 +254,7 @@ function getRouterAddressesByChain(
 ): Record<ChainName, Set<string>> {
   return tokens.reduce<Record<ChainName, Set<string>>>((acc, token) => {
     acc[token.chainName] ||= new Set<string>();
-
     if (token.addressOrDenom) acc[token.chainName].add(token.addressOrDenom);
-
     return acc;
   }, {});
 }

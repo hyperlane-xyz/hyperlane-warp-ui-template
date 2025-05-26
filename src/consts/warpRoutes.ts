@@ -12,8 +12,8 @@ export const warpRouteConfigs: WarpCoreConfig = {
       decimals: 18,
       symbol: 'EDGEN',
       name: 'LayerEdge',
-      addressOrDenom: '0x64508Ee3af87a7F26D4F531B10E13585dA29f15b', // Hyperlane token contract on Base Sepolia
-      collateralAddressOrDenom: '0x64508Ee3af87a7F26D4F531B10E13585dA29f15b', // Underlying token (same as hyperlane token in this case)
+      addressOrDenom: '0x5ce55C6c132c5Aa04028635b8a83fB6940f392Da',
+      collateralAddressOrDenom: '0x64508Ee3af87a7F26D4F531B10E13585dA29f15b',
       connections: [
         {
           token: 'ethereum|bsctestnet|0x83c2084CC653c5149b3f429503188836fe280e71',
@@ -26,7 +26,7 @@ export const warpRouteConfigs: WarpCoreConfig = {
       decimals: 18,
       symbol: 'EDGEN',
       name: 'LayerEdge',
-      addressOrDenom: '0x83c2084CC653c5149b3f429503188836fe280e71', // Hyperlane synthetic token on BSC Testnet
+      addressOrDenom: '0x83c2084CC653c5149b3f429503188836fe280e71',
       connections: [
         {
           token: 'ethereum|basesepolia|0x64508Ee3af87a7F26D4F531B10E13585dA29f15b', // Actual basesepolia token address

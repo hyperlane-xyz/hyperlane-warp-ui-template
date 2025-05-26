@@ -1,5 +1,5 @@
 import { TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
-import { ProtocolType, errorToString, isNullish, objKeys, toWei } from '@hyperlane-xyz/utils';
+import { ProtocolType, errorToString, isNullish, toWei } from '@hyperlane-xyz/utils';
 import {
   AccountInfo,
   ChevronIcon,
@@ -19,7 +19,7 @@ import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareS
 import { SolidButton } from '../../components/buttons/SolidButton';
 import { TextField } from '../../components/input/TextField';
 import { WARP_QUERY_PARAMS } from '../../consts/args';
-import { chainsRentEstimate } from '../../consts/chains';
+// Removed chainsRentEstimate import since not needed for EVM chains
 import { config } from '../../consts/config';
 import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
@@ -95,43 +95,43 @@ export function TransferTokenForm() {
   }, [initialValues.origin, originChainName, setOriginChainName]);
 
   return (
-    <Formik<TransferFormValues>
-      initialValues={initialValues}
-      onSubmit={onSubmitForm}
-      validate={validate}
-      validateOnChange={false}
-      validateOnBlur={false}
-    >
-      {({ isValidating }) => (
-        <Form className="flex w-full flex-col items-stretch">
-          <WarningBanners />
-          <ChainSelectSection isReview={isReview} />
-          <div className="mt-3.5 flex items-end justify-between space-x-4">
-            <TokenSection setIsNft={setIsNft} isReview={isReview} />
-            <AmountSection isNft={isNft} isReview={isReview} />
-          </div>
-          <RecipientSection isReview={isReview} />
-          <ReviewDetails visible={isReview} />
-          <ButtonSection
-            isReview={isReview}
-            isValidating={isValidating}
-            setIsReview={setIsReview}
-          />
-          <RecipientConfirmationModal
-            isOpen={isConfirmationModalOpen}
-            close={closeConfirmationModal}
-            onConfirm={() => setIsReview(true)}
-          />
-        </Form>
-      )}
-    </Formik>
+      <Formik<TransferFormValues>
+          initialValues={initialValues}
+          onSubmit={onSubmitForm}
+          validate={validate}
+          validateOnChange={false}
+          validateOnBlur={false}
+      >
+        {({ isValidating }) => (
+            <Form className="flex w-full flex-col items-stretch">
+              <WarningBanners />
+              <ChainSelectSection isReview={isReview} />
+              <div className="mt-3.5 flex items-end justify-between space-x-4">
+                <TokenSection setIsNft={setIsNft} isReview={isReview} />
+                <AmountSection isNft={isNft} isReview={isReview} />
+              </div>
+              <RecipientSection isReview={isReview} />
+              <ReviewDetails visible={isReview} />
+              <ButtonSection
+                  isReview={isReview}
+                  isValidating={isValidating}
+                  setIsReview={setIsReview}
+              />
+              <RecipientConfirmationModal
+                  isOpen={isConfirmationModalOpen}
+                  close={closeConfirmationModal}
+                  onConfirm={() => setIsReview(true)}
+              />
+            </Form>
+        )}
+      </Formik>
   );
 }
 
 function SwapChainsButton({
-  disabled,
-  onSwapChain,
-}: {
+                            disabled,
+                            onSwapChain,
+                          }: {
   disabled?: boolean;
   onSwapChain: (origin: string, destination: string) => void;
 }) {
@@ -148,16 +148,16 @@ function SwapChainsButton({
   };
 
   return (
-    <IconButton
-      width={20}
-      height={20}
-      title="Swap chains"
-      className={!disabled ? 'hover:rotate-180' : undefined}
-      onClick={onClick}
-      disabled={disabled}
-    >
-      <SwapIcon width={20} height={20} />
-    </IconButton>
+      <IconButton
+          width={20}
+          height={20}
+          title="Swap chains"
+          className={!disabled ? 'hover:rotate-180' : undefined}
+          onClick={onClick}
+          disabled={disabled}
+      >
+        <SwapIcon width={20} height={20} />
+      </IconButton>
   );
 }
 
@@ -203,42 +203,42 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
   };
 
   return (
-    <div className="mt-2 flex items-center justify-between gap-4">
-      <ChainSelectField
-        name="origin"
-        label="From"
-        disabled={isReview}
-        customListItemField={destinationRouteCounts}
-        onChange={handleChange}
-      />
-      <div className="flex flex-1 flex-col items-center">
-        <SwapChainsButton disabled={isReview} onSwapChain={onSwapChain} />
+      <div className="mt-2 flex items-center justify-between gap-4">
+        <ChainSelectField
+            name="origin"
+            label="From"
+            disabled={isReview}
+            customListItemField={destinationRouteCounts}
+            onChange={handleChange}
+        />
+        <div className="flex flex-1 flex-col items-center">
+          <SwapChainsButton disabled={isReview} onSwapChain={onSwapChain} />
+        </div>
+        <ChainSelectField
+            name="destination"
+            label="To"
+            disabled={isReview}
+            customListItemField={originRouteCounts}
+            onChange={handleChange}
+        />
       </div>
-      <ChainSelectField
-        name="destination"
-        label="To"
-        disabled={isReview}
-        customListItemField={originRouteCounts}
-        onChange={handleChange}
-      />
-    </div>
   );
 }
 
 function TokenSection({
-  setIsNft,
-  isReview,
-}: {
+                        setIsNft,
+                        isReview,
+                      }: {
   setIsNft: (b: boolean) => void;
   isReview: boolean;
 }) {
   return (
-    <div className="flex-1">
-      <label htmlFor="tokenIndex" className="block pl-0.5 text-sm text-gray-600">
-        Token
-      </label>
-      <TokenSelectField name="tokenIndex" disabled={isReview} setIsNft={setIsNft} />
-    </div>
+      <div className="flex-1">
+        <label htmlFor="tokenIndex" className="block pl-0.5 text-sm text-gray-600">
+          Token
+        </label>
+        <TokenSelectField name="tokenIndex" disabled={isReview} setIsNft={setIsNft} />
+      </div>
   );
 }
 
@@ -247,29 +247,29 @@ function AmountSection({ isNft, isReview }: { isNft: boolean; isReview: boolean 
   const { balance } = useOriginBalance(values);
 
   return (
-    <div className="flex-1">
-      <div className="flex justify-between pr-1">
-        <label htmlFor="amount" className="block pl-0.5 text-sm text-gray-600">
-          Amount
-        </label>
-        <TokenBalance label="My balance" balance={balance} />
-      </div>
-      {isNft ? (
-        <SelectOrInputTokenIds disabled={isReview} />
-      ) : (
-        <div className="relative w-full">
-          <TextField
-            name="amount"
-            placeholder="0.00"
-            className="w-full"
-            type="number"
-            step="any"
-            disabled={isReview}
-          />
-          <MaxButton disabled={isReview} balance={balance} />
+      <div className="flex-1">
+        <div className="flex justify-between pr-1">
+          <label htmlFor="amount" className="block pl-0.5 text-sm text-gray-600">
+            Amount
+          </label>
+          <TokenBalance label="My balance" balance={balance} />
         </div>
-      )}
-    </div>
+        {isNft ? (
+            <SelectOrInputTokenIds disabled={isReview} />
+        ) : (
+            <div className="relative w-full">
+              <TextField
+                  name="amount"
+                  placeholder="0.00"
+                  className="w-full"
+                  type="number"
+                  step="any"
+                  disabled={isReview}
+              />
+              <MaxButton disabled={isReview} balance={balance} />
+            </div>
+        )}
+      </div>
   );
 }
 
@@ -279,23 +279,23 @@ function RecipientSection({ isReview }: { isReview: boolean }) {
   useRecipientBalanceWatcher(values.recipient, balance);
 
   return (
-    <div className="mt-4">
-      <div className="flex justify-between pr-1">
-        <label htmlFor="recipient" className="block pl-0.5 text-sm text-gray-600">
-          Recipient address
-        </label>
-        <TokenBalance label="Remote balance" balance={balance} />
+      <div className="mt-4">
+        <div className="flex justify-between pr-1">
+          <label htmlFor="recipient" className="block pl-0.5 text-sm text-gray-600">
+            Recipient address
+          </label>
+          <TokenBalance label="Remote balance" balance={balance} />
+        </div>
+        <div className="relative w-full">
+          <TextField
+              name="recipient"
+              placeholder="0x123456..."
+              className="w-full"
+              disabled={isReview}
+          />
+          <SelfButton disabled={isReview} />
+        </div>
       </div>
-      <div className="relative w-full">
-        <TextField
-          name="recipient"
-          placeholder="0x123456..."
-          className="w-full"
-          disabled={isReview}
-        />
-        <SelfButton disabled={isReview} />
-      </div>
-    </div>
   );
 }
 
@@ -305,10 +305,10 @@ function TokenBalance({ label, balance }: { label: string; balance?: TokenAmount
 }
 
 function ButtonSection({
-  isReview,
-  isValidating,
-  setIsReview,
-}: {
+                         isReview,
+                         isValidating,
+                         setIsReview,
+                       }: {
   isReview: boolean;
   isValidating: boolean;
   setIsReview: (b: boolean) => void;
@@ -340,34 +340,34 @@ function ButtonSection({
 
   if (!isReview) {
     return (
-      <ConnectAwareSubmitButton
-        chainName={values.origin}
-        text={isValidating ? 'Validating...' : 'Continue'}
-        classes="mt-4 px-3 py-1.5"
-      />
+        <ConnectAwareSubmitButton
+            chainName={values.origin}
+            text={isValidating ? 'Validating...' : 'Continue'}
+            classes="mt-4 px-3 py-1.5"
+        />
     );
   }
 
   return (
-    <div className="mt-4 flex items-center justify-between space-x-4">
-      <SolidButton
-        type="button"
-        color="primary"
-        onClick={() => setIsReview(false)}
-        className="px-6 py-1.5"
-        icon={<ChevronIcon direction="w" width={10} height={6} color={Color.white} />}
-      >
-        <span>Edit</span>
-      </SolidButton>
-      <SolidButton
-        type="button"
-        color="accent"
-        onClick={triggerTransactionsHandler}
-        className="flex-1 px-3 py-1.5"
-      >
-        {`Send to ${chainDisplayName}`}
-      </SolidButton>
-    </div>
+      <div className="mt-4 flex items-center justify-between space-x-4">
+        <SolidButton
+            type="button"
+            color="primary"
+            onClick={() => setIsReview(false)}
+            className="px-6 py-1.5"
+            icon={<ChevronIcon direction="w" width={10} height={6} color={Color.white} />}
+        >
+          <span>Edit</span>
+        </SolidButton>
+        <SolidButton
+            type="button"
+            color="accent"
+            onClick={triggerTransactionsHandler}
+            className="flex-1 px-3 py-1.5"
+        >
+          {`Send to ${chainDisplayName}`}
+        </SolidButton>
+      </div>
   );
 }
 
@@ -388,21 +388,21 @@ function MaxButton({ balance, disabled }: { balance?: TokenAmount; disabled?: bo
   };
 
   return (
-    <SolidButton
-      type="button"
-      onClick={onClick}
-      color="primary"
-      disabled={disabled}
-      className="absolute bottom-1 right-1 top-2.5 px-2 text-xs opacity-90 all:rounded"
-    >
-      {isLoading ? (
-        <div className="flex items-center">
-          <SpinnerIcon className="h-5 w-5" color="white" />
-        </div>
-      ) : (
-        'Max'
-      )}
-    </SolidButton>
+      <SolidButton
+          type="button"
+          onClick={onClick}
+          color="primary"
+          disabled={disabled}
+          className="absolute bottom-1 right-1 top-2.5 px-2 text-xs opacity-90 all:rounded"
+      >
+        {isLoading ? (
+            <div className="flex items-center">
+              <SpinnerIcon className="h-5 w-5" color="white" />
+            </div>
+        ) : (
+            'Max'
+        )}
+      </SolidButton>
   );
 }
 
@@ -418,15 +418,15 @@ function SelfButton({ disabled }: { disabled?: boolean }) {
       toast.warn(`No account found for for chain ${chainDisplayName}, is your wallet connected?`);
   };
   return (
-    <SolidButton
-      type="button"
-      onClick={onClick}
-      color="primary"
-      disabled={disabled}
-      className="absolute bottom-1 right-1 top-2.5 px-2 text-xs opacity-90 all:rounded"
-    >
-      Self
-    </SolidButton>
+      <SolidButton
+          type="button"
+          onClick={onClick}
+          color="primary"
+          disabled={disabled}
+          className="absolute bottom-1 right-1 top-2.5 px-2 text-xs opacity-90 all:rounded"
+      >
+        Self
+      </SolidButton>
   );
 }
 
@@ -443,90 +443,88 @@ function ReviewDetails({ visible }: { visible: boolean }) {
   const amountWei = isNft ? amount.toString() : toWei(amount, originToken?.decimals);
 
   const { isLoading: isApproveLoading, isApproveRequired } = useIsApproveRequired(
-    originToken,
-    amountWei,
-    visible,
+      originToken,
+      amountWei,
+      visible,
   );
   const { isLoading: isQuoteLoading, fees } = useFeeQuotes(values, visible);
 
   const isLoading = isApproveLoading || isQuoteLoading;
 
-  const interchainQuote =
-    originToken && objKeys(chainsRentEstimate).includes(originToken.chainName)
-      ? fees?.interchainQuote.plus(chainsRentEstimate[originToken.chainName])
-      : fees?.interchainQuote;
+  // Removed SVM rent estimation logic - EVM chains only use standard interchain gas
+  const interchainQuote = fees?.interchainQuote;
 
   return (
-    <div
-      className={`${
-        visible ? 'max-h-screen duration-1000 ease-in' : 'max-h-0 duration-500'
-      } overflow-hidden transition-all`}
-    >
-      <label className="mt-4 block pl-0.5 text-sm text-gray-600">Transactions</label>
-      <div className="mt-1.5 space-y-2 break-all rounded border border-gray-400 bg-gray-150 px-2.5 py-2 text-sm">
-        {isLoading ? (
-          <div className="flex items-center justify-center py-6">
-            <SpinnerIcon className="h-5 w-5" />
-          </div>
-        ) : (
-          <>
-            {isApproveRequired && (
-              <div>
-                <h4>Transaction 1: Approve Transfer</h4>
-                <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs">
-                  <p>{`Router Address: ${originToken?.addressOrDenom}`}</p>
-                  {originToken?.collateralAddressOrDenom && (
-                    <p>{`Collateral Address: ${originToken.collateralAddressOrDenom}`}</p>
-                  )}
+      <div
+          className={`${
+              visible ? 'max-h-screen duration-1000 ease-in' : 'max-h-0 duration-500'
+          } overflow-hidden transition-all`}
+      >
+        <label className="mt-4 block pl-0.5 text-sm text-gray-600">Transactions</label>
+        <div className="mt-1.5 space-y-2 break-all rounded border border-gray-400 bg-gray-150 px-2.5 py-2 text-sm">
+          {isLoading ? (
+              <div className="flex items-center justify-center py-6">
+                <SpinnerIcon className="h-5 w-5" />
+              </div>
+          ) : (
+              <>
+                {isApproveRequired && (
+                    <div>
+                      <h4>Transaction 1: Approve Transfer</h4>
+                      <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs">
+                        <p>{`Router Address: ${originToken?.addressOrDenom}`}</p>
+                        {originToken?.collateralAddressOrDenom && (
+                            <p>{`Collateral Address: ${originToken.collateralAddressOrDenom}`}</p>
+                        )}
+                      </div>
+                    </div>
+                )}
+                <div>
+                  <h4>{`Transaction${isApproveRequired ? ' 2' : ''}: Transfer Remote`}</h4>
+                  <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs">
+                    {destinationToken?.addressOrDenom && (
+                        <p className="flex">
+                          <span className="min-w-[6.5rem]">Remote Token</span>
+                          <span>{destinationToken.addressOrDenom}</span>
+                        </p>
+                    )}
+                    <p className="flex">
+                      <span className="min-w-[6.5rem]">{isNft ? 'Token ID' : 'Amount'}</span>
+                      <span>{`${amount} ${originTokenSymbol}`}</span>
+                    </p>
+                    {fees?.localQuote && fees.localQuote.amount > 0n && (
+                        <p className="flex">
+                          <span className="min-w-[6.5rem]">Local Gas (est.)</span>
+                          <span>{`${fees.localQuote.getDecimalFormattedAmount().toFixed(4) || '0'} ${
+                              fees.localQuote.token.symbol || ''
+                          }`}</span>
+                        </p>
+                    )}
+                    {interchainQuote && interchainQuote.amount > 0n && (
+                        <p className="flex">
+                          <span className="min-w-[6.5rem]">Interchain Gas</span>
+                          <span>{`${interchainQuote.getDecimalFormattedAmount().toFixed(4) || '0'} ${
+                              interchainQuote.token.symbol || ''
+                          }`}</span>
+                        </p>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
-            <div>
-              <h4>{`Transaction${isApproveRequired ? ' 2' : ''}: Transfer Remote`}</h4>
-              <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs">
-                {destinationToken?.addressOrDenom && (
-                  <p className="flex">
-                    <span className="min-w-[6.5rem]">Remote Token</span>
-                    <span>{destinationToken.addressOrDenom}</span>
-                  </p>
-                )}
-                <p className="flex">
-                  <span className="min-w-[6.5rem]">{isNft ? 'Token ID' : 'Amount'}</span>
-                  <span>{`${amount} ${originTokenSymbol}`}</span>
-                </p>
-                {fees?.localQuote && fees.localQuote.amount > 0n && (
-                  <p className="flex">
-                    <span className="min-w-[6.5rem]">Local Gas (est.)</span>
-                    <span>{`${fees.localQuote.getDecimalFormattedAmount().toFixed(4) || '0'} ${
-                      fees.localQuote.token.symbol || ''
-                    }`}</span>
-                  </p>
-                )}
-                {interchainQuote && interchainQuote.amount > 0n && (
-                  <p className="flex">
-                    <span className="min-w-[6.5rem]">Interchain Gas</span>
-                    <span>{`${interchainQuote.getDecimalFormattedAmount().toFixed(4) || '0'} ${
-                      interchainQuote.token.symbol || ''
-                    }`}</span>
-                  </p>
-                )}
-              </div>
-            </div>
-          </>
-        )}
+              </>
+          )}
+        </div>
       </div>
-    </div>
   );
 }
 
 function WarningBanners() {
   const { values } = useFormikContext<TransferFormValues>();
   return (
-    // Max height to prevent double padding if multiple warnings are visible
-    <div className="max-h-10">
-      <ChainWalletWarning origin={values.origin} />
-      <ChainConnectionWarning origin={values.origin} destination={values.destination} />
-    </div>
+      // Max height to prevent double padding if multiple warnings are visible
+      <div className="max-h-10">
+        <ChainWalletWarning origin={values.origin} />
+        <ChainConnectionWarning origin={values.origin} destination={values.destination} />
+      </div>
   );
 }
 
@@ -535,24 +533,24 @@ function useFormInitialValues(): TransferFormValues {
   const params = getQueryParams();
 
   const originQuery = tryGetValidChainName(
-    params.get(WARP_QUERY_PARAMS.ORIGIN),
-    warpCore.multiProvider,
+      params.get(WARP_QUERY_PARAMS.ORIGIN),
+      warpCore.multiProvider,
   );
   const destinationQuery = tryGetValidChainName(
-    params.get(WARP_QUERY_PARAMS.DESTINATION),
-    warpCore.multiProvider,
+      params.get(WARP_QUERY_PARAMS.DESTINATION),
+      warpCore.multiProvider,
   );
   const defaultOriginToken = config.defaultOriginChain
-    ? warpCore.getTokensForChain(config.defaultOriginChain)?.[0]
-    : undefined;
+      ? warpCore.getTokensForChain(config.defaultOriginChain)?.[0]
+      : undefined;
 
   const tokenIndex = getInitialTokenIndex(
-    warpCore,
-    params.get(WARP_QUERY_PARAMS.TOKEN),
-    originQuery,
-    destinationQuery,
-    defaultOriginToken,
-    config.defaultDestinationChain,
+      warpCore,
+      params.get(WARP_QUERY_PARAMS.TOKEN),
+      originQuery,
+      destinationQuery,
+      defaultOriginToken,
+      config.defaultDestinationChain,
   );
 
   return useMemo(() => {
@@ -563,8 +561,8 @@ function useFormInitialValues(): TransferFormValues {
     return {
       origin: chainsValid ? originQuery : firstToken.chainName,
       destination: chainsValid
-        ? destinationQuery
-        : config.defaultDestinationChain || connectedToken?.token?.chainName || '',
+          ? destinationQuery
+          : config.defaultDestinationChain || connectedToken?.token?.chainName || '',
       tokenIndex: tokenIndex,
       amount: '',
       recipient: '',
@@ -576,29 +574,36 @@ const insufficientFundsErrMsg = /insufficient.[funds|lamports]/i;
 const emptyAccountErrMsg = /AccountNotFound/i;
 
 async function validateForm(
-  warpCore: WarpCore,
-  values: TransferFormValues,
-  accounts: Record<ProtocolType, AccountInfo>,
+    warpCore: WarpCore,
+    values: TransferFormValues,
+    accounts: Record<ProtocolType, AccountInfo>,
 ) {
   try {
     const { origin, destination, tokenIndex, amount, recipient } = values;
+    console.log( origin, destination, tokenIndex, amount, recipient)
     const token = getTokenByIndex(warpCore, tokenIndex);
+    console.log( token );
     if (!token) return { token: 'Token is required' };
     const amountWei = toWei(amount, token.decimals);
-    const { address, publicKey: senderPubKey } = getAccountAddressAndPubKey(
-      warpCore.multiProvider,
-      origin,
-      accounts,
+    console.log(
+        amountWei,
+    )
+    const { address } = getAccountAddressAndPubKey(
+        warpCore.multiProvider,
+        origin,
+        accounts,
     );
+    console.log(address)
     const result = await warpCore.validateTransfer({
       originTokenAmount: token.amount(amountWei),
       destination,
       recipient,
       sender: address || '',
-      senderPubKey: await senderPubKey,
     });
+    console.log(result);
     return result;
   } catch (error: any) {
+    console.log(error)
     logger.error('Error validating form', error);
     let errorMsg = errorToString(error, 40);
     const fullError = `${errorMsg} ${error.message}`;

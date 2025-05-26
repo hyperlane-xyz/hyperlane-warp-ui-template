@@ -17,7 +17,7 @@ export function useFeeQuotes(
   const warpCore = useWarpCore();
 
   const { accounts } = useAccounts(multiProvider);
-  const { address: sender, publicKey: senderPubKey } = getAccountAddressAndPubKey(
+  const { address: sender } = getAccountAddressAndPubKey(
     multiProvider,
     origin,
     accounts,
@@ -26,8 +26,8 @@ export function useFeeQuotes(
   const { isLoading, isError, data } = useQuery({
     // The WarpCore class is not serializable, so we can't use it as a key
     // eslint-disable-next-line @tanstack/query/exhaustive-deps
-    queryKey: ['useFeeQuotes', destination, tokenIndex, sender, senderPubKey],
-    queryFn: () => fetchFeeQuotes(warpCore, destination, tokenIndex, sender, senderPubKey),
+    queryKey: ['useFeeQuotes', destination, tokenIndex, sender],
+    queryFn: () => fetchFeeQuotes(warpCore, destination, tokenIndex, sender),
     enabled,
     refetchInterval: FEE_QUOTE_REFRESH_INTERVAL,
   });

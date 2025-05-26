@@ -28,7 +28,6 @@ export function assembleWarpCoreConfig(storeOverrides: WarpCoreConfig[]): WarpCo
     ...storeOverrideTokens,
   ];
   const tokens = dedupeTokens(combinedTokens);
-  console.log('tokens', tokens);
 
   const combinedOptions = [
     ...filteredRegistryOptions,

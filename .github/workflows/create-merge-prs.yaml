@@ -9,6 +9,7 @@ jobs:
   create-merge-prs:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         name: [ezeth, injective, nexus, trump, ousdt]
     steps:

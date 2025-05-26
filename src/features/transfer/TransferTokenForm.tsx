@@ -56,9 +56,10 @@ export function TransferTokenForm() {
   const multiProvider = useMultiProvider();
   const warpCore = useWarpCore();
 
-  const { originChainName, setOriginChainName } = useStore((s) => ({
+  const { originChainName, setOriginChainName, routerAddresses } = useStore((s) => ({
     originChainName: s.originChainName,
     setOriginChainName: s.setOriginChainName,
+    routerAddresses: s.routerAddresses,
   }));
 
   const initialValues = useFormInitialValues();
@@ -75,7 +76,8 @@ export function TransferTokenForm() {
     isOpen: isConfirmationModalOpen,
   } = useModal();
 
-  const validate = (values: TransferFormValues) => validateForm(warpCore, values, accounts);
+  const validate = (values: TransferFormValues) =>
+    validateForm(warpCore, values, accounts, routerAddresses);
 
   const onSubmitForm = async (values: TransferFormValues) => {
     logger.debug('Checking destination native balance for:', values.destination, values.recipient);
@@ -579,6 +581,7 @@ async function validateForm(
   warpCore: WarpCore,
   values: TransferFormValues,
   accounts: Record<ProtocolType, AccountInfo>,
+  routerAddresses: Set<string>,
 ) {
   try {
     const { origin, destination, tokenIndex, amount, recipient } = values;
@@ -590,6 +593,10 @@ async function validateForm(
       origin,
       accounts,
     );
+
+    if (routerAddresses.has(recipient))
+      return { recipient: 'Warp Route address is not valid as recipient' };
+
     const result = await warpCore.validateTransfer({
       originTokenAmount: token.amount(amountWei),
       destination,

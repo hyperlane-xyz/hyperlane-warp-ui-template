@@ -235,4 +235,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // KYVE
   'KYVE/base-kyve',
+
+  // RDO routes
+  'RDO/bsc-ethereum',
 ];

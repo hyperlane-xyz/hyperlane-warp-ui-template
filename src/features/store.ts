@@ -119,7 +119,6 @@ export const useStore = create<AppState>()(
         chainMetadata: chainMetadata,
       }),
       warpCore: new WarpCore(new MultiProtocolProvider({}), []),
-      routerAddresses: {},
       setWarpContext: (context) => {
         logger.debug('Setting warp context in store');
         set(context);

@@ -144,6 +144,7 @@ export function TokenList({
           (acc, t) => {
             if (!t.token.collateralAddressOrDenom) return { ...acc, tokens: [...acc.tokens, t] };
 
+            // TODO: check if origin and destination are collateral before doing this
             if (acc.collateralAddresses.has(t.token.collateralAddressOrDenom.toLowerCase()))
               return acc;
 

@@ -238,4 +238,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // RDO routes
   'RDO/bsc-ethereum',
+
+  // CHILL routes
+  'CHILL/solanamainnet-sonicsvm',
 ];

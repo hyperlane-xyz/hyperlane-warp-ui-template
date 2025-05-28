@@ -1,5 +1,5 @@
 import { TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
-import { ProtocolType, errorToString, isNullish, toWei } from '@hyperlane-xyz/utils';
+import { ProtocolType, errorToString, isNullish, objKeys, toWei } from '@hyperlane-xyz/utils';
 import {
   AccountInfo,
   ChevronIcon,
@@ -19,6 +19,7 @@ import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareS
 import { SolidButton } from '../../components/buttons/SolidButton';
 import { TextField } from '../../components/input/TextField';
 import { WARP_QUERY_PARAMS } from '../../consts/args';
+import { chainsRentEstimate } from '../../consts/chains';
 import { config } from '../../consts/config';
 import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
@@ -55,9 +56,10 @@ export function TransferTokenForm() {
   const multiProvider = useMultiProvider();
   const warpCore = useWarpCore();
 
-  const { originChainName, setOriginChainName } = useStore((s) => ({
+  const { originChainName, setOriginChainName, routerAddressesByChainMap } = useStore((s) => ({
     originChainName: s.originChainName,
     setOriginChainName: s.setOriginChainName,
+    routerAddressesByChainMap: s.routerAddressesByChainMap,
   }));
 
   const initialValues = useFormInitialValues();
@@ -74,7 +76,8 @@ export function TransferTokenForm() {
     isOpen: isConfirmationModalOpen,
   } = useModal();
 
-  const validate = (values: TransferFormValues) => validateForm(warpCore, values, accounts);
+  const validate = (values: TransferFormValues) =>
+    validateForm(warpCore, values, accounts, routerAddressesByChainMap);
 
   const onSubmitForm = async (values: TransferFormValues) => {
     logger.debug('Checking destination native balance for:', values.destination, values.recipient);
@@ -450,6 +453,11 @@ function ReviewDetails({ visible }: { visible: boolean }) {
 
   const isLoading = isApproveLoading || isQuoteLoading;
 
+  const interchainQuote =
+    originToken && objKeys(chainsRentEstimate).includes(originToken.chainName)
+      ? fees?.interchainQuote.plus(chainsRentEstimate[originToken.chainName])
+      : fees?.interchainQuote;
+
   return (
     <div
       className={`${
@@ -496,11 +504,11 @@ function ReviewDetails({ visible }: { visible: boolean }) {
                     }`}</span>
                   </p>
                 )}
-                {fees?.interchainQuote && fees.interchainQuote.amount > 0n && (
+                {interchainQuote && interchainQuote.amount > 0n && (
                   <p className="flex">
                     <span className="min-w-[6.5rem]">Interchain Gas</span>
-                    <span>{`${fees.interchainQuote.getDecimalFormattedAmount().toFixed(4) || '0'} ${
-                      fees.interchainQuote.token.symbol || ''
+                    <span>{`${interchainQuote.getDecimalFormattedAmount().toFixed(4) || '0'} ${
+                      interchainQuote.token.symbol || ''
                     }`}</span>
                   </p>
                 )}
@@ -573,6 +581,7 @@ async function validateForm(
   warpCore: WarpCore,
   values: TransferFormValues,
   accounts: Record<ProtocolType, AccountInfo>,
+  routerAddressesByChainMap: Record<ChainName, Set<string>>,
 ) {
   try {
     const { origin, destination, tokenIndex, amount, recipient } = values;
@@ -584,6 +593,14 @@ async function validateForm(
       origin,
       accounts,
     );
+
+    if (
+      objKeys(routerAddressesByChainMap).includes(destination) &&
+      routerAddressesByChainMap[destination].has(recipient)
+    ) {
+      return { recipient: 'Warp Route address is not valid as recipient' };
+    }
+
     const result = await warpCore.validateTransfer({
       originTokenAmount: token.amount(amountWei),
       destination,

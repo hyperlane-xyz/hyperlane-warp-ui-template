@@ -1,4 +1,4 @@
-import { TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
+import { TOKEN_COLLATERALIZED_STANDARDS, Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
 import { ProtocolType, errorToString, isNullish, objKeys, toWei } from '@hyperlane-xyz/utils';
 import {
   AccountInfo,
@@ -587,6 +587,7 @@ async function validateForm(
     const { origin, destination, tokenIndex, amount, recipient } = values;
     const token = getTokenByIndex(warpCore, tokenIndex);
     if (!token) return { token: 'Token is required' };
+
     const amountWei = toWei(amount, token.decimals);
     const { address, publicKey: senderPubKey } = getAccountAddressAndPubKey(
       warpCore.multiProvider,
@@ -618,4 +619,49 @@ async function validateForm(
     }
     return { form: errorMsg };
   }
+}
+
+function getCollateralToken(
+  origin: ChainName,
+  destination: ChainName,
+  token: Token,
+  warpCore: WarpCore,
+) {
+  if (
+    isNullish(token.collateralAddressOrDenom) ||
+    !TOKEN_COLLATERALIZED_STANDARDS.includes(token.standard)
+  )
+    return token;
+
+  const collateralAddress = token.collateralAddressOrDenom;
+
+  const sameCollateralAddressTokens = warpCore
+    .getTokensForRoute(origin, destination)
+    .filter((originToken) => {
+      if (!originToken.collateralAddressOrDenom) return false;
+      if (originToken.collateralAddressOrDenom.toLowerCase() !== collateralAddress.toLowerCase())
+        return false;
+
+      const destinationTokenConnection = originToken.getConnectionForChain(destination);
+      if (!destinationTokenConnection) return false;
+      if (
+        !TOKEN_COLLATERALIZED_STANDARDS.includes(originToken.standard) ||
+        !TOKEN_COLLATERALIZED_STANDARDS.includes(destinationTokenConnection.token.standard)
+      )
+        return false;
+
+      return true;
+    });
+
+  // if only one token exists then just return that one
+  if (sameCollateralAddressTokens.length <= 1) return token;
+
+  try {
+    // fetch each one, check for highest collateral?
+    // return for highest colleteral address
+  } catch {
+    //
+  }
+
+  return token;
 }

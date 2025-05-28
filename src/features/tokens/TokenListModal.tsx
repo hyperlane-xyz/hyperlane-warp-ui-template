@@ -112,6 +112,7 @@ export function TokenList({
     const q = searchQuery?.trim().toLowerCase();
     const multiChainTokens = warpCore.tokens.filter((t) => t.isMultiChainToken());
     const tokensWithRoute = warpCore.getTokensForRoute(origin, destination);
+    console.log('tokensWithRoute', tokensWithRoute);
 
     return (
       multiChainTokens
@@ -135,6 +136,27 @@ export function TokenList({
         })
         // Hide/show disabled tokens
         .filter((t) => (config.showDisabledTokens ? true : !t.disabled))
+        // Remove the tokens that have the same collateral addresses
+        .reduce<{
+          tokens: Array<{ token: Token; disabled: boolean }>;
+          collateralAddresses: Set<string>;
+        }>(
+          (acc, t) => {
+            if (!t.token.collateralAddressOrDenom) return { ...acc, tokens: [...acc.tokens, t] };
+
+            if (acc.collateralAddresses.has(t.token.collateralAddressOrDenom.toLowerCase()))
+              return acc;
+
+            return {
+              tokens: [...acc.tokens, t],
+              collateralAddresses: acc.collateralAddresses.add(
+                t.token.collateralAddressOrDenom.toLowerCase(),
+              ),
+            };
+          },
+          { tokens: [], collateralAddresses: new Set() },
+        )
+        .tokens.map((t) => t)
     );
   }, [warpCore, searchQuery, origin, destination]);
 

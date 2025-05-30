@@ -154,7 +154,7 @@ export function TokenList({
             const destinationAddress = destinationToken.collateralAddressOrDenom!.toLowerCase();
 
             // now origin and destination are both collaterals
-            // create for tokens with same origin and destination collateral addresses
+            // create map for tokens with same origin and destination collateral addresses
             acc.multiCollateralTokenMap[originAddress] ||= {};
             if (!acc.multiCollateralTokenMap[originAddress][destinationAddress]) {
               acc.multiCollateralTokenMap[originAddress][destinationAddress] = [];

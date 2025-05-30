@@ -79,7 +79,7 @@ export function getTokensWithSameCollateralAddresses(
     })
     .filter((tokens): tokens is { originToken: Token; destinationToken: Token } => {
       // doing this because annoying Typescript will have destinationToken
-      // as undefined or Token even if it is filtered out
+      // as undefined even if it is filtered out
       const { originToken, destinationToken } = tokens;
 
       if (!destinationToken) return false;

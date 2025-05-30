@@ -84,8 +84,8 @@ export function TransferTokenForm() {
   const validate = async (values: TransferFormValues) => {
     const result = await validateForm(warpCore, values, accounts, routerAddressesByChainMap);
 
-    // Unless this is done, the review would contain the selected token rather than
-    // the collateral with highest balance
+    // Unless this is done, the review and the transfer would contain
+    //  the selected token rather than collateral with highest balance
     if (result instanceof Token) {
       setMultiCollateralToken(result);
       return null;

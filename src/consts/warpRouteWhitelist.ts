@@ -4,8 +4,8 @@
 // If set to a list (including an empty list), only the specified routes will be included
 export const warpRouteWhitelist: Array<string> | null = [
   // TIA routes
-  'TIA.n/arbitrum-neutron',
-  'TIA.n/mantapacific-neutron',
+  'TIA/arbitrum-neutron',
+  'TIA/mantapacific-neutron',
   'TIA/eclipsemainnet-stride',
 
   // stTIA routes
@@ -40,7 +40,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'USDC/appchain-base',
   'USDC/arbitrum-base-endurance',
   'USDC/ethereum-form',
-  'USDC.a/artela-base',
+  'USDC/artela-base',
   'USDC/solanamainnet-sonicsvm',
   'USDC/arbitrum-base-ethereum-ink-optimism-solanamainnet-superseed',
   'USDC/ethereum-lumiaprism',
@@ -116,7 +116,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'rstETH/ethereum-zircuit',
 
   // WETH routes
-  'WETH.a/artela-base',
+  'WETH/artela-base',
 
   // fastUSD routes
   'fastUSD/ethereum-sei',
@@ -141,7 +141,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'pzETH/berachain-ethereum-swell-unichain-zircuit',
 
   // pumpBTCuni routes
-  'pumpBTC.uni/ethereum-unichain',
+  'pumpBTCuni/ethereum-unichain',
 
   // ART routes
   'ART/artela-base-solanamainnet',
@@ -171,7 +171,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'SPICE/solanamainnet-sonicsvm',
 
   // REZ routes
-  'REZ/base-ethereum',
+  'REZ/base-ethereum-unichain',
 
   // enzoBTC routes
   'enzoBTC/bsc-hyperevm',

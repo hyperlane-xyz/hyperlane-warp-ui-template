@@ -13,7 +13,10 @@ import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { useStore } from '../store';
 import { useWarpCore } from './hooks';
-import { TokenChainMap } from './utils';
+import { MultiCollateralTokenMap } from './types';
+import { isValidMultiCollateralToken, TokenChainMap } from './utils';
+
+// type MultiCollateralToken = { baseToken: Token; tokens: Token[] };
 
 export function TokenListModal({
   isOpen,
@@ -108,11 +111,10 @@ export function TokenList({
   const warpCore = useWarpCore();
   const tokensBySymbolChainMap = useStore((s) => s.tokensBySymbolChainMap);
 
-  const tokens = useMemo(() => {
+  const { tokens } = useMemo(() => {
     const q = searchQuery?.trim().toLowerCase();
     const multiChainTokens = warpCore.tokens.filter((t) => t.isMultiChainToken());
     const tokensWithRoute = warpCore.getTokensForRoute(origin, destination);
-
     return (
       multiChainTokens
         .map((t) => ({
@@ -135,6 +137,35 @@ export function TokenList({
         })
         // Hide/show disabled tokens
         .filter((t) => (config.showDisabledTokens ? true : !t.disabled))
+        // Remove the tokens that have the same collateral addresses
+        .reduce<{
+          tokens: Array<{ token: Token; disabled: boolean }>;
+          multiCollateralTokenMap: MultiCollateralTokenMap;
+        }>(
+          (acc, t) => {
+            const originToken = t.token;
+            const isMultiCollateralToken = isValidMultiCollateralToken(originToken, destination);
+            if (!isMultiCollateralToken) return { ...acc, tokens: [...acc.tokens, t] };
+
+            // Non-Null asserting this because this is covered by isValidMultiCollateralToken and
+            // the early return from above
+            const destinationToken = originToken.getConnectionForChain(destination)!.token;
+            const originAddress = originToken.collateralAddressOrDenom!.toLowerCase();
+            const destinationAddress = destinationToken.collateralAddressOrDenom!.toLowerCase();
+
+            // now origin and destination are both collaterals
+            // create map for tokens with same origin and destination collateral addresses
+            acc.multiCollateralTokenMap[originAddress] ||= {};
+            if (!acc.multiCollateralTokenMap[originAddress][destinationAddress]) {
+              acc.multiCollateralTokenMap[originAddress][destinationAddress] = [];
+              acc.tokens.push(t);
+            }
+
+            acc.multiCollateralTokenMap[originAddress][destinationAddress].push(originToken);
+            return acc;
+          },
+          { tokens: [], multiCollateralTokenMap: {} },
+        )
     );
   }, [warpCore, searchQuery, origin, destination]);
 

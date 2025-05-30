@@ -45,6 +45,7 @@ import {
   getTokenIndexFromChains,
   useWarpCore,
 } from '../tokens/hooks';
+import { isValidMultiCollateralToken } from '../tokens/utils';
 import { RecipientConfirmationModal } from './RecipientConfirmationModal';
 import { useFetchMaxAmount } from './maxAmount';
 import { TransferFormValues } from './types';
@@ -588,13 +589,6 @@ async function validateForm(
     const token = getTokenByIndex(warpCore, tokenIndex);
     if (!token) return { token: 'Token is required' };
 
-    const amountWei = toWei(amount, token.decimals);
-    const { address, publicKey: senderPubKey } = getAccountAddressAndPubKey(
-      warpCore.multiProvider,
-      origin,
-      accounts,
-    );
-
     if (
       objKeys(routerAddressesByChainMap).includes(destination) &&
       routerAddressesByChainMap[destination].has(recipient)
@@ -602,8 +596,17 @@ async function validateForm(
       return { recipient: 'Warp Route address is not valid as recipient' };
     }
 
+    const transferToken = getTransferToken(origin, destination, token, warpCore);
+
+    const amountWei = toWei(amount, transferToken.decimals);
+    const { address, publicKey: senderPubKey } = getAccountAddressAndPubKey(
+      warpCore.multiProvider,
+      origin,
+      accounts,
+    );
+
     const result = await warpCore.validateTransfer({
-      originTokenAmount: token.amount(amountWei),
+      originTokenAmount: transferToken.amount(amountWei),
       destination,
       recipient,
       sender: address || '',
@@ -621,7 +624,10 @@ async function validateForm(
   }
 }
 
-function getCollateralToken(
+// Checks if a token is a multi-collateral token and if so
+// look for other tokens that are the same and returns
+// the one with the highest collateral in the destination
+function getTransferToken(
   origin: ChainName,
   destination: ChainName,
   token: Token,
@@ -638,22 +644,18 @@ function getCollateralToken(
   const sameCollateralAddressTokens = warpCore
     .getTokensForRoute(origin, destination)
     .filter((originToken) => {
-      if (!originToken.collateralAddressOrDenom) return false;
-      if (originToken.collateralAddressOrDenom.toLowerCase() !== collateralAddress.toLowerCase())
-        return false;
+      const isMultiCollateralToken = isValidMultiCollateralToken(originToken, destination);
+      if (!isMultiCollateralToken) return false;
 
-      const destinationTokenConnection = originToken.getConnectionForChain(destination);
-      if (!destinationTokenConnection) return false;
-      if (
-        !TOKEN_COLLATERALIZED_STANDARDS.includes(originToken.standard) ||
-        !TOKEN_COLLATERALIZED_STANDARDS.includes(destinationTokenConnection.token.standard)
-      )
+      // asserting because isValidMultiCollateralToken already checks for existence of collateralAddressOrDenom
+      if (originToken.collateralAddressOrDenom!.toLowerCase() !== collateralAddress.toLowerCase())
         return false;
 
       return true;
     });
 
   // if only one token exists then just return that one
+  console.log('returned here');
   if (sameCollateralAddressTokens.length <= 1) return token;
 
   try {
@@ -663,5 +665,5 @@ function getCollateralToken(
     //
   }
 
-  return token;
+  return sameCollateralAddressTokens[0];
 }

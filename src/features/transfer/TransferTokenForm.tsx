@@ -40,6 +40,7 @@ import {
   useOriginBalance,
 } from '../tokens/balances';
 import {
+  getIndexForToken,
   getInitialTokenIndex,
   getTokenByIndex,
   getTokenIndexFromChains,
@@ -133,6 +134,8 @@ export function TransferTokenForm() {
             isValidating={isValidating}
             setIsReview={setIsReview}
             cleanMultiCollateralToken={() => setMultiCollateralToken(null)}
+            multiCollateralToken={multiCollateralToken}
+            warpCore={warpCore}
           />
           <RecipientConfirmationModal
             isOpen={isConfirmationModalOpen}
@@ -326,11 +329,15 @@ function ButtonSection({
   isValidating,
   setIsReview,
   cleanMultiCollateralToken,
+  multiCollateralToken,
+  warpCore,
 }: {
   isReview: boolean;
   isValidating: boolean;
   setIsReview: (b: boolean) => void;
   cleanMultiCollateralToken: () => void;
+  multiCollateralToken: Token | null;
+  warpCore: WarpCore;
 }) {
   const { values } = useFormikContext<TransferFormValues>();
   const chainDisplayName = useChainDisplayName(values.destination);
@@ -355,7 +362,14 @@ function ButtonSection({
     }
     setIsReview(false);
     setTransferLoading(true);
-    await triggerTransactions(values);
+    let tokenIndex = values.tokenIndex;
+    let origin = values.origin;
+
+    if (multiCollateralToken) {
+      tokenIndex = getIndexForToken(warpCore, multiCollateralToken);
+      origin = multiCollateralToken.chainName;
+    }
+    await triggerTransactions({ ...values, tokenIndex, origin });
   };
 
   const onEdit = () => {

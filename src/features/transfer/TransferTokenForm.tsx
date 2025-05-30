@@ -70,6 +70,9 @@ export function TransferTokenForm() {
   const [isReview, setIsReview] = useState(false);
   // Flag for check current type of token
   const [isNft, setIsNft] = useState(false);
+  // This state is used for when the formik token is different from
+  // the token with highest collateral in a multi-collateral token setup
+  const [multiCollateralToken, setMultiCollateralToken] = useState<Token | null>(null);
   // Modal for confirming address
   const {
     open: openConfirmationModal,
@@ -77,8 +80,18 @@ export function TransferTokenForm() {
     isOpen: isConfirmationModalOpen,
   } = useModal();
 
-  const validate = (values: TransferFormValues) =>
-    validateForm(warpCore, values, accounts, routerAddressesByChainMap);
+  const validate = async (values: TransferFormValues) => {
+    const result = await validateForm(warpCore, values, accounts, routerAddressesByChainMap);
+
+    // Unless this is done, the review would contain the selected token rather than
+    // the collateral with highest balance
+    if (result instanceof Token) {
+      setMultiCollateralToken(result);
+      return null;
+    }
+    setMultiCollateralToken(null);
+    return result;
+  };
 
   const onSubmitForm = async (values: TransferFormValues) => {
     logger.debug('Checking destination native balance for:', values.destination, values.recipient);
@@ -114,11 +127,12 @@ export function TransferTokenForm() {
             <AmountSection isNft={isNft} isReview={isReview} />
           </div>
           <RecipientSection isReview={isReview} />
-          <ReviewDetails visible={isReview} />
+          <ReviewDetails visible={isReview} multiCollateralToken={multiCollateralToken} />
           <ButtonSection
             isReview={isReview}
             isValidating={isValidating}
             setIsReview={setIsReview}
+            cleanMultiCollateralToken={() => setMultiCollateralToken(null)}
           />
           <RecipientConfirmationModal
             isOpen={isConfirmationModalOpen}
@@ -311,10 +325,12 @@ function ButtonSection({
   isReview,
   isValidating,
   setIsReview,
+  cleanMultiCollateralToken,
 }: {
   isReview: boolean;
   isValidating: boolean;
   setIsReview: (b: boolean) => void;
+  cleanMultiCollateralToken: () => void;
 }) {
   const { values } = useFormikContext<TransferFormValues>();
   const chainDisplayName = useChainDisplayName(values.destination);
@@ -324,6 +340,7 @@ function ButtonSection({
   const onDoneTransactions = () => {
     setIsReview(false);
     setTransferLoading(false);
+    cleanMultiCollateralToken();
     // resetForm();
   };
   const { triggerTransactions } = useTokenTransfer(onDoneTransactions);
@@ -341,6 +358,10 @@ function ButtonSection({
     await triggerTransactions(values);
   };
 
+  const onEdit = () => {
+    setIsReview(false);
+    cleanMultiCollateralToken();
+  };
   if (!isReview) {
     return (
       <ConnectAwareSubmitButton
@@ -356,7 +377,7 @@ function ButtonSection({
       <SolidButton
         type="button"
         color="primary"
-        onClick={() => setIsReview(false)}
+        onClick={onEdit}
         className="px-6 py-1.5"
         icon={<ChevronIcon direction="w" width={10} height={6} color={Color.white} />}
       >
@@ -433,11 +454,17 @@ function SelfButton({ disabled }: { disabled?: boolean }) {
   );
 }
 
-function ReviewDetails({ visible }: { visible: boolean }) {
+function ReviewDetails({
+  visible,
+  multiCollateralToken,
+}: {
+  visible: boolean;
+  multiCollateralToken: Token | null;
+}) {
   const { values } = useFormikContext<TransferFormValues>();
   const { amount, destination, tokenIndex } = values;
   const warpCore = useWarpCore();
-  const originToken = getTokenByIndex(warpCore, tokenIndex);
+  const originToken = multiCollateralToken || getTokenByIndex(warpCore, tokenIndex);
   const originTokenSymbol = originToken?.symbol || '';
   const connection = originToken?.getConnectionForChain(destination);
   const destinationToken = connection?.token;
@@ -614,7 +641,12 @@ async function validateForm(
       sender: address || '',
       senderPubKey: await senderPubKey,
     });
-    return result;
+
+    if (!isNullish(result)) return result;
+
+    if (transferToken.addressOrDenom === token.addressOrDenom) return null;
+
+    return transferToken;
   } catch (error: any) {
     logger.error('Error validating form', error);
     let errorMsg = errorToString(error, 40);
@@ -641,10 +673,12 @@ async function getTransferToken(warpCore: WarpCore, originToken: Token, destinat
   // if only one token exists then just return that one
   if (tokensWithSameCollateralAddresses.length <= 1) return originToken;
 
-  logger.debug('Multiple multi collateral tokens found, retrieving balances...');
+  logger.debug(
+    'Multiple multi-collateral tokens found for same collateral address, retrieving balances...',
+  );
   const tokenBalances: Array<{ token: Token; balance: bigint }> = [];
 
-  // fetch each token balance
+  // fetch each destination token balance
   const results = await Promise.allSettled(
     tokensWithSameCollateralAddresses.map(({ destinationToken }) =>
       warpCore.getTokenCollateral(destinationToken),

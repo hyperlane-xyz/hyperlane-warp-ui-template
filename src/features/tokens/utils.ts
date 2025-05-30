@@ -67,8 +67,8 @@ export function getTokensWithSameCollateralAddresses(
   origin: Token,
   destination: IToken | Token,
 ) {
-  const originCollateralAddress = origin.collateralAddressOrDenom;
-  const destinationCollateralAddress = destination.collateralAddressOrDenom;
+  const originCollateralAddress = origin.collateralAddressOrDenom?.toLowerCase();
+  const destinationCollateralAddress = destination.collateralAddressOrDenom?.toLowerCase();
   if (!originCollateralAddress || !destinationCollateralAddress) return [];
 
   return warpCore
@@ -89,8 +89,7 @@ export function getTokensWithSameCollateralAddresses(
       // asserting because isValidMultiCollateralToken already checks for existence of collateralAddressOrDenom
       if (
         originToken.collateralAddressOrDenom!.toLowerCase() !== originCollateralAddress ||
-        destinationToken.collateralAddressOrDenom!.toLowerCase() !==
-          destinationCollateralAddress.toLowerCase()
+        destinationToken.collateralAddressOrDenom!.toLowerCase() !== destinationCollateralAddress
       )
         return false;
 

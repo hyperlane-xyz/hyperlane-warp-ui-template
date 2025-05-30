@@ -1,9 +1,11 @@
 import {
   ChainMap,
   ChainMetadata,
+  IToken,
   MultiProtocolProvider,
   Token,
   TOKEN_COLLATERALIZED_STANDARDS,
+  WarpCore,
 } from '@hyperlane-xyz/sdk';
 
 export type TokenChainMap = {
@@ -38,14 +40,17 @@ export function assembleTokensBySymbolChainMap(
   }, {});
 }
 
-export function isValidMultiCollateralToken(originToken: Token, destinationChainName: ChainName) {
+export function isValidMultiCollateralToken(originToken: Token, destination: ChainName | IToken) {
   if (
     !originToken.collateralAddressOrDenom ||
     !TOKEN_COLLATERALIZED_STANDARDS.includes(originToken.standard)
   )
     return false;
 
-  const destinationToken = originToken.getConnectionForChain(destinationChainName)?.token;
+  const destinationToken =
+    typeof destination === 'string'
+      ? originToken.getConnectionForChain(destination)?.token
+      : destination;
 
   if (
     !destinationToken ||
@@ -55,4 +60,40 @@ export function isValidMultiCollateralToken(originToken: Token, destinationChain
     return false;
 
   return true;
+}
+
+export function getTokensWithSameCollateralAddresses(
+  warpCore: WarpCore,
+  origin: Token,
+  destination: IToken | Token,
+) {
+  const originCollateralAddress = origin.collateralAddressOrDenom;
+  const destinationCollateralAddress = destination.collateralAddressOrDenom;
+  if (!originCollateralAddress || !destinationCollateralAddress) return [];
+
+  return warpCore
+    .getTokensForRoute(origin.chainName, destination.chainName)
+    .map((originToken) => {
+      const destinationToken = originToken.getConnectionForChain(destination.chainName)?.token;
+      return { originToken, destinationToken };
+    })
+    .filter((tokens): tokens is { originToken: Token; destinationToken: Token } => {
+      // doing this because annoying Typescript will have destinationToken
+      // as undefined or Token even if it is filtered out
+      const { originToken, destinationToken } = tokens;
+
+      if (!destinationToken) return false;
+      const isMultiCollateralToken = isValidMultiCollateralToken(originToken, destinationToken);
+      if (!destinationToken || !isMultiCollateralToken) return false;
+
+      // asserting because isValidMultiCollateralToken already checks for existence of collateralAddressOrDenom
+      if (
+        originToken.collateralAddressOrDenom!.toLowerCase() !== originCollateralAddress ||
+        destinationToken.collateralAddressOrDenom!.toLowerCase() !==
+          destinationCollateralAddress.toLowerCase()
+      )
+        return false;
+
+      return true;
+    });
 }

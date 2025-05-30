@@ -143,8 +143,6 @@ export function TokenList({
           multiCollateralTokenMap: MultiCollateralTokenMap;
         }>(
           (acc, t) => {
-            //check if originToken is collaterized
-
             const originToken = t.token;
             const isMultiCollateralToken = isValidMultiCollateralToken(originToken, destination);
             if (!isMultiCollateralToken) return { ...acc, tokens: [...acc.tokens, t] };

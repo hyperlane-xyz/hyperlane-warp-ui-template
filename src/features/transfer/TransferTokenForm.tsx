@@ -1,4 +1,4 @@
-import { TOKEN_COLLATERALIZED_STANDARDS, Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
+import { IToken, Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
 import { ProtocolType, errorToString, isNullish, objKeys, toWei } from '@hyperlane-xyz/utils';
 import {
   AccountInfo,
@@ -45,7 +45,7 @@ import {
   getTokenIndexFromChains,
   useWarpCore,
 } from '../tokens/hooks';
-import { isValidMultiCollateralToken } from '../tokens/utils';
+import { getTokensWithSameCollateralAddresses, isValidMultiCollateralToken } from '../tokens/utils';
 import { RecipientConfirmationModal } from './RecipientConfirmationModal';
 import { useFetchMaxAmount } from './maxAmount';
 import { TransferFormValues } from './types';
@@ -588,6 +588,8 @@ async function validateForm(
     const { origin, destination, tokenIndex, amount, recipient } = values;
     const token = getTokenByIndex(warpCore, tokenIndex);
     if (!token) return { token: 'Token is required' };
+    const destinationToken = token.getConnectionForChain(destination)?.token;
+    if (!destinationToken) return { token: 'Token is required' };
 
     if (
       objKeys(routerAddressesByChainMap).includes(destination) &&
@@ -596,7 +598,7 @@ async function validateForm(
       return { recipient: 'Warp Route address is not valid as recipient' };
     }
 
-    const transferToken = getTransferToken(origin, destination, token, warpCore);
+    const transferToken = await getTransferToken(warpCore, token, destinationToken);
 
     const amountWei = toWei(amount, transferToken.decimals);
     const { address, publicKey: senderPubKey } = getAccountAddressAndPubKey(
@@ -627,43 +629,45 @@ async function validateForm(
 // Checks if a token is a multi-collateral token and if so
 // look for other tokens that are the same and returns
 // the one with the highest collateral in the destination
-function getTransferToken(
-  origin: ChainName,
-  destination: ChainName,
-  token: Token,
-  warpCore: WarpCore,
-) {
-  if (
-    isNullish(token.collateralAddressOrDenom) ||
-    !TOKEN_COLLATERALIZED_STANDARDS.includes(token.standard)
-  )
-    return token;
+async function getTransferToken(warpCore: WarpCore, originToken: Token, destinationToken: IToken) {
+  if (!isValidMultiCollateralToken(originToken, destinationToken)) return originToken;
 
-  const collateralAddress = token.collateralAddressOrDenom;
-
-  const sameCollateralAddressTokens = warpCore
-    .getTokensForRoute(origin, destination)
-    .filter((originToken) => {
-      const isMultiCollateralToken = isValidMultiCollateralToken(originToken, destination);
-      if (!isMultiCollateralToken) return false;
-
-      // asserting because isValidMultiCollateralToken already checks for existence of collateralAddressOrDenom
-      if (originToken.collateralAddressOrDenom!.toLowerCase() !== collateralAddress.toLowerCase())
-        return false;
-
-      return true;
-    });
+  const tokensWithSameCollateralAddresses = getTokensWithSameCollateralAddresses(
+    warpCore,
+    originToken,
+    destinationToken,
+  );
 
   // if only one token exists then just return that one
-  console.log('returned here');
-  if (sameCollateralAddressTokens.length <= 1) return token;
+  if (tokensWithSameCollateralAddresses.length <= 1) return originToken;
 
-  try {
-    // fetch each one, check for highest collateral?
-    // return for highest colleteral address
-  } catch {
-    //
-  }
+  logger.debug('Multiple multi collateral tokens found, retrieving balances...');
+  const tokenBalances: Array<{ token: Token; balance: bigint }> = [];
 
-  return sameCollateralAddressTokens[0];
+  // fetch each token balance
+  const results = await Promise.allSettled(
+    tokensWithSameCollateralAddresses.map(({ destinationToken }) =>
+      warpCore.getTokenCollateral(destinationToken),
+    ),
+  );
+
+  results.forEach((result, i) => {
+    if (result.status === 'fulfilled') {
+      tokenBalances.push({
+        token: tokensWithSameCollateralAddresses[i].originToken,
+        balance: result.value,
+      });
+    }
+  });
+
+  if (!tokenBalances.length) return originToken;
+
+  // sort by balance to return the highest one
+  tokenBalances.sort((a, b) => {
+    if (a.balance > b.balance) return -1;
+    else if (a.balance < b.balance) return 1;
+    else return 0;
+  });
+
+  return tokenBalances[0].token;
 }

@@ -1,4 +1,10 @@
-import { ChainMap, ChainMetadata, MultiProtocolProvider, Token } from '@hyperlane-xyz/sdk';
+import {
+  ChainMap,
+  ChainMetadata,
+  MultiProtocolProvider,
+  Token,
+  TOKEN_COLLATERALIZED_STANDARDS,
+} from '@hyperlane-xyz/sdk';
 
 export type TokenChainMap = {
   chains: ChainMap<{ token: Token; metadata: ChainMetadata | null }>;
@@ -30,4 +36,23 @@ export function assembleTokensBySymbolChainMap(
 
     return acc;
   }, {});
+}
+
+export function isValidMultiCollateralToken(originToken: Token, destinationChainName: ChainName) {
+  if (
+    !originToken.collateralAddressOrDenom ||
+    !TOKEN_COLLATERALIZED_STANDARDS.includes(originToken.standard)
+  )
+    return false;
+
+  const destinationToken = originToken.getConnectionForChain(destinationChainName)?.token;
+
+  if (
+    !destinationToken ||
+    !destinationToken.collateralAddressOrDenom ||
+    !TOKEN_COLLATERALIZED_STANDARDS.includes(destinationToken.standard)
+  )
+    return false;
+
+  return true;
 }

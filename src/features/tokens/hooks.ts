@@ -27,7 +27,9 @@ export function getTokenByIndex(warpCore: WarpCore, tokenIndex?: number) {
 
 export function getIndexForToken(warpCore: WarpCore, token?: IToken): number | undefined {
   if (!token) return undefined;
+  console.log('t', token);
   const index = warpCore.tokens.indexOf(token as Token);
+  console.log('index', index);
   if (index >= 0) return index;
   else return undefined;
 }

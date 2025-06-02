@@ -126,7 +126,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'cbBTC/ethereum-flowmainnet',
 
   // ezETH routes
-  'ezETH/arbitrum-base-berachain-blast-bsc-ethereum-fraxtal-linea-mode-optimism-sei-swell-taiko-unichain-worldchain-zircuit',
+  'ezETH/renzo-prod',
 
   // GAME routes
   'GAME/base-form',
@@ -241,4 +241,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // CHILL routes
   'CHILL/solanamainnet-sonicsvm',
+
+  // SMOL route
+  'SMOL/ethereum-solanamainnet-treasure',
 ];

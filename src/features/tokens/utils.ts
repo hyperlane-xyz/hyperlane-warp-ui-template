@@ -41,11 +41,7 @@ export function assembleTokensBySymbolChainMap(
 }
 
 export function isValidMultiCollateralToken(originToken: Token, destination: ChainName | IToken) {
-  if (
-    !originToken.collateralAddressOrDenom ||
-    !TOKEN_COLLATERALIZED_STANDARDS.includes(originToken.standard)
-  )
-    return false;
+  if (!originToken.collateralAddressOrDenom || !originToken.isCollateralized()) return false;
 
   const destinationToken =
     typeof destination === 'string'

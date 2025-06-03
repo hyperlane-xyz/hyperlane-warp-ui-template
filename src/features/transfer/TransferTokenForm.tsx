@@ -626,8 +626,8 @@ async function validateForm(
   accounts: Record<ProtocolType, AccountInfo>,
   routerAddressesByChainMap: Record<ChainName, Set<string>>,
 ): Promise<[Record<string, string> | null, Token | null]> {
-  // returns a tutple, where first value is validation result
-  // second value is token override
+  // returns a tuple, where first value is validation result
+  // and second value is token override
   try {
     const { origin, destination, tokenIndex, amount, recipient } = values;
     const token = getTokenByIndex(warpCore, tokenIndex);

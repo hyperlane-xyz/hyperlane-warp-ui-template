@@ -717,5 +717,6 @@ async function getTransferToken(warpCore: WarpCore, originToken: Token, destinat
     else return 0;
   });
 
+  logger.debug('Found route with higher collateral in destination, switching route...');
   return tokenBalances[0].token;
 }

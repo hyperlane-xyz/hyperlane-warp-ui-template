@@ -1,5 +1,5 @@
 import { ChainMap, ChainMetadata, IToken, Token } from '@hyperlane-xyz/sdk';
-import { isObjEmpty, objFilter } from '@hyperlane-xyz/utils';
+import { isObjEmpty, normalizeAddress, objFilter } from '@hyperlane-xyz/utils';
 import { Modal, SearchIcon } from '@hyperlane-xyz/widgets';
 import { AnimatePresence, motion } from 'framer-motion';
 import Image from 'next/image';
@@ -150,8 +150,14 @@ export function TokenList({
             // Non-Null asserting this because this is covered by isValidMultiCollateralToken and
             // the early return from above
             const destinationToken = originToken.getConnectionForChain(destination)!.token;
-            const originAddress = originToken.collateralAddressOrDenom!.toLowerCase();
-            const destinationAddress = destinationToken.collateralAddressOrDenom!.toLowerCase();
+            const originAddress = normalizeAddress(
+              originToken.collateralAddressOrDenom!,
+              originToken.protocol,
+            );
+            const destinationAddress = normalizeAddress(
+              destinationToken.collateralAddressOrDenom!,
+              destinationToken.protocol,
+            );
 
             // now origin and destination are both collaterals
             // create map for tokens with same origin and destination collateral addresses

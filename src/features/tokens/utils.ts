@@ -7,6 +7,7 @@ import {
   TOKEN_COLLATERALIZED_STANDARDS,
   WarpCore,
 } from '@hyperlane-xyz/sdk';
+import { eqAddress, normalizeAddress } from '@hyperlane-xyz/utils';
 
 export type TokenChainMap = {
   chains: ChainMap<{ token: Token; metadata: ChainMetadata | null }>;
@@ -61,10 +62,14 @@ export function isValidMultiCollateralToken(originToken: Token, destination: Cha
 export function getTokensWithSameCollateralAddresses(
   warpCore: WarpCore,
   origin: Token,
-  destination: IToken | Token,
+  destination: IToken,
 ) {
-  const originCollateralAddress = origin.collateralAddressOrDenom?.toLowerCase();
-  const destinationCollateralAddress = destination.collateralAddressOrDenom?.toLowerCase();
+  const originCollateralAddress = origin.collateralAddressOrDenom
+    ? normalizeAddress(origin.collateralAddressOrDenom, origin.protocol)
+    : undefined;
+  const destinationCollateralAddress = destination.collateralAddressOrDenom
+    ? normalizeAddress(destination.collateralAddressOrDenom, destination.protocol)
+    : undefined;
   if (!originCollateralAddress || !destinationCollateralAddress) return [];
 
   return warpCore
@@ -83,12 +88,18 @@ export function getTokensWithSameCollateralAddresses(
       if (!destinationToken || !isMultiCollateralToken) return false;
 
       // asserting because isValidMultiCollateralToken already checks for existence of collateralAddressOrDenom
-      if (
-        originToken.collateralAddressOrDenom!.toLowerCase() !== originCollateralAddress ||
-        destinationToken.collateralAddressOrDenom!.toLowerCase() !== destinationCollateralAddress
-      )
-        return false;
+      const currentOriginCollateralAddress = normalizeAddress(
+        originToken.collateralAddressOrDenom!,
+        originToken.protocol,
+      );
+      const currentDestinationCollateralAddress = normalizeAddress(
+        destinationToken.collateralAddressOrDenom!,
+        destinationToken.protocol,
+      );
 
-      return true;
+      return (
+        eqAddress(originCollateralAddress, currentOriginCollateralAddress) &&
+        eqAddress(destinationCollateralAddress, currentDestinationCollateralAddress)
+      );
     });
 }

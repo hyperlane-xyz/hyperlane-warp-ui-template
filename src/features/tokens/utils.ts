@@ -8,11 +8,14 @@ import {
   WarpCore,
 } from '@hyperlane-xyz/sdk';
 import { eqAddress, normalizeAddress } from '@hyperlane-xyz/utils';
+import { MultiCollateralTokenMap } from './types';
 
 export type TokenChainMap = {
   chains: ChainMap<{ token: Token; metadata: ChainMetadata | null }>;
   tokenInformation: Token;
 };
+
+type Tokens = Array<{ token: Token; disabled: boolean }>;
 
 // Map of token symbols and token chain map
 // Symbols are not duplicated to avoid the same symbol from being shown
@@ -102,4 +105,41 @@ export function getTokensWithSameCollateralAddresses(
         eqAddress(destinationCollateralAddress, currentDestinationCollateralAddress)
       );
     });
+}
+
+// De-duplicate collaterized tokens
+// Returns a map of token with same origin and dest collateral address
+// And an array of tokens with repeated collateral addresses grouped into one
+export function dedupeMultiCollateralTokens(tokens: Tokens, destination) {
+  return tokens.reduce<{ tokens: Tokens; multiCollateralTokenMap: MultiCollateralTokenMap }>(
+    (acc, t) => {
+      const originToken = t.token;
+      const isMultiCollateralToken = isValidMultiCollateralToken(originToken, destination);
+      if (!isMultiCollateralToken) return { ...acc, tokens: [...acc.tokens, t] };
+
+      // Non-Null asserting this because this is covered by isValidMultiCollateralToken and
+      // the early return from above
+      const destinationToken = originToken.getConnectionForChain(destination)!.token;
+      const originAddress = normalizeAddress(
+        originToken.collateralAddressOrDenom!,
+        originToken.protocol,
+      );
+      const destinationAddress = normalizeAddress(
+        destinationToken.collateralAddressOrDenom!,
+        destinationToken.protocol,
+      );
+
+      // now origin and destination are both collaterals
+      // create map for tokens with same origin and destination collateral addresses
+      acc.multiCollateralTokenMap[originAddress] ||= {};
+      if (!acc.multiCollateralTokenMap[originAddress][destinationAddress]) {
+        acc.multiCollateralTokenMap[originAddress][destinationAddress] = [];
+        acc.tokens.push(t);
+      }
+
+      acc.multiCollateralTokenMap[originAddress][destinationAddress].push(originToken);
+      return acc;
+    },
+    { tokens: [], multiCollateralTokenMap: {} },
+  );
 }

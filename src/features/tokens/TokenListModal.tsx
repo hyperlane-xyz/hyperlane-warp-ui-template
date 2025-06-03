@@ -1,5 +1,5 @@
 import { ChainMap, ChainMetadata, IToken, Token } from '@hyperlane-xyz/sdk';
-import { isObjEmpty, normalizeAddress, objFilter } from '@hyperlane-xyz/utils';
+import { isObjEmpty, objFilter } from '@hyperlane-xyz/utils';
 import { Modal, SearchIcon } from '@hyperlane-xyz/widgets';
 import { AnimatePresence, motion } from 'framer-motion';
 import Image from 'next/image';
@@ -13,10 +13,7 @@ import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { useStore } from '../store';
 import { useWarpCore } from './hooks';
-import { MultiCollateralTokenMap } from './types';
-import { isValidMultiCollateralToken, TokenChainMap } from './utils';
-
-// type MultiCollateralToken = { baseToken: Token; tokens: Token[] };
+import { dedupeMultiCollateralTokens, TokenChainMap } from './utils';
 
 export function TokenListModal({
   isOpen,
@@ -115,64 +112,30 @@ export function TokenList({
     const q = searchQuery?.trim().toLowerCase();
     const multiChainTokens = warpCore.tokens.filter((t) => t.isMultiChainToken());
     const tokensWithRoute = warpCore.getTokensForRoute(origin, destination);
-    return (
-      multiChainTokens
-        .map((t) => ({
-          token: t,
-          disabled: !tokensWithRoute.includes(t),
-        }))
-        .sort((a, b) => {
-          if (a.disabled && !b.disabled) return 1;
-          else if (!a.disabled && b.disabled) return -1;
-          else return 0;
-        })
-        // Filter down to search query
-        .filter((t) => {
-          if (!q) return t;
-          return (
-            t.token.name.toLowerCase().includes(q) ||
-            t.token.symbol.toLowerCase().includes(q) ||
-            t.token.addressOrDenom.toLowerCase().includes(q)
-          );
-        })
-        // Hide/show disabled tokens
-        .filter((t) => (config.showDisabledTokens ? true : !t.disabled))
-        // Remove the tokens that have the same collateral addresses
-        .reduce<{
-          tokens: Array<{ token: Token; disabled: boolean }>;
-          multiCollateralTokenMap: MultiCollateralTokenMap;
-        }>(
-          (acc, t) => {
-            const originToken = t.token;
-            const isMultiCollateralToken = isValidMultiCollateralToken(originToken, destination);
-            if (!isMultiCollateralToken) return { ...acc, tokens: [...acc.tokens, t] };
 
-            // Non-Null asserting this because this is covered by isValidMultiCollateralToken and
-            // the early return from above
-            const destinationToken = originToken.getConnectionForChain(destination)!.token;
-            const originAddress = normalizeAddress(
-              originToken.collateralAddressOrDenom!,
-              originToken.protocol,
-            );
-            const destinationAddress = normalizeAddress(
-              destinationToken.collateralAddressOrDenom!,
-              destinationToken.protocol,
-            );
+    const tokens = multiChainTokens
+      .map((t) => ({
+        token: t,
+        disabled: !tokensWithRoute.includes(t),
+      }))
+      .sort((a, b) => {
+        if (a.disabled && !b.disabled) return 1;
+        else if (!a.disabled && b.disabled) return -1;
+        else return 0;
+      })
+      // Filter down to search query
+      .filter((t) => {
+        if (!q) return t;
+        return (
+          t.token.name.toLowerCase().includes(q) ||
+          t.token.symbol.toLowerCase().includes(q) ||
+          t.token.addressOrDenom.toLowerCase().includes(q)
+        );
+      })
+      // Hide/show disabled tokens
+      .filter((t) => (config.showDisabledTokens ? true : !t.disabled));
 
-            // now origin and destination are both collaterals
-            // create map for tokens with same origin and destination collateral addresses
-            acc.multiCollateralTokenMap[originAddress] ||= {};
-            if (!acc.multiCollateralTokenMap[originAddress][destinationAddress]) {
-              acc.multiCollateralTokenMap[originAddress][destinationAddress] = [];
-              acc.tokens.push(t);
-            }
-
-            acc.multiCollateralTokenMap[originAddress][destinationAddress].push(originToken);
-            return acc;
-          },
-          { tokens: [], multiCollateralTokenMap: {} },
-        )
-    );
+    return dedupeMultiCollateralTokens(tokens, destination);
   }, [warpCore, searchQuery, origin, destination]);
 
   const unsupportedRouteTokensBySymbolMap = useMemo(() => {

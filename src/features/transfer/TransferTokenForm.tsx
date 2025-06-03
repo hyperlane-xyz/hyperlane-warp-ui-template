@@ -73,7 +73,7 @@ export function TransferTokenForm() {
   const [isNft, setIsNft] = useState(false);
   // This state is used for when the formik token is different from
   // the token with highest collateral in a multi-collateral token setup
-  const [multiCollateralToken, setMultiCollateralToken] = useState<Token | null>(null);
+  const [routeOverrideToken, setRouteTokenOverride] = useState<Token | null>(null);
   // Modal for confirming address
   const {
     open: openConfirmationModal,
@@ -82,15 +82,16 @@ export function TransferTokenForm() {
   } = useModal();
 
   const validate = async (values: TransferFormValues) => {
-    const result = await validateForm(warpCore, values, accounts, routerAddressesByChainMap);
+    const [result, overrideToken] = await validateForm(
+      warpCore,
+      values,
+      accounts,
+      routerAddressesByChainMap,
+    );
 
     // Unless this is done, the review and the transfer would contain
-    //  the selected token rather than collateral with highest balance
-    if (result instanceof Token) {
-      setMultiCollateralToken(result);
-      return null;
-    }
-    setMultiCollateralToken(null);
+    // the selected token rather than collateral with highest balance
+    setRouteTokenOverride(overrideToken);
     return result;
   };
 
@@ -128,13 +129,13 @@ export function TransferTokenForm() {
             <AmountSection isNft={isNft} isReview={isReview} />
           </div>
           <RecipientSection isReview={isReview} />
-          <ReviewDetails visible={isReview} multiCollateralToken={multiCollateralToken} />
+          <ReviewDetails visible={isReview} routeOverrideToken={routeOverrideToken} />
           <ButtonSection
             isReview={isReview}
             isValidating={isValidating}
             setIsReview={setIsReview}
-            cleanMultiCollateralToken={() => setMultiCollateralToken(null)}
-            multiCollateralToken={multiCollateralToken}
+            cleanOverrideToken={() => setRouteTokenOverride(null)}
+            routeOverrideToken={routeOverrideToken}
             warpCore={warpCore}
           />
           <RecipientConfirmationModal
@@ -328,15 +329,15 @@ function ButtonSection({
   isReview,
   isValidating,
   setIsReview,
-  cleanMultiCollateralToken,
-  multiCollateralToken,
+  cleanOverrideToken,
+  routeOverrideToken,
   warpCore,
 }: {
   isReview: boolean;
   isValidating: boolean;
   setIsReview: (b: boolean) => void;
-  cleanMultiCollateralToken: () => void;
-  multiCollateralToken: Token | null;
+  cleanOverrideToken: () => void;
+  routeOverrideToken: Token | null;
   warpCore: WarpCore;
 }) {
   const { values } = useFormikContext<TransferFormValues>();
@@ -347,7 +348,7 @@ function ButtonSection({
   const onDoneTransactions = () => {
     setIsReview(false);
     setTransferLoading(false);
-    cleanMultiCollateralToken();
+    cleanOverrideToken();
     // resetForm();
   };
   const { triggerTransactions } = useTokenTransfer(onDoneTransactions);
@@ -365,16 +366,16 @@ function ButtonSection({
     let tokenIndex = values.tokenIndex;
     let origin = values.origin;
 
-    if (multiCollateralToken) {
-      tokenIndex = getIndexForToken(warpCore, multiCollateralToken);
-      origin = multiCollateralToken.chainName;
+    if (routeOverrideToken) {
+      tokenIndex = getIndexForToken(warpCore, routeOverrideToken);
+      origin = routeOverrideToken.chainName;
     }
     await triggerTransactions({ ...values, tokenIndex, origin });
   };
 
   const onEdit = () => {
     setIsReview(false);
-    cleanMultiCollateralToken();
+    cleanOverrideToken();
   };
   if (!isReview) {
     return (
@@ -470,15 +471,15 @@ function SelfButton({ disabled }: { disabled?: boolean }) {
 
 function ReviewDetails({
   visible,
-  multiCollateralToken,
+  routeOverrideToken,
 }: {
   visible: boolean;
-  multiCollateralToken: Token | null;
+  routeOverrideToken: Token | null;
 }) {
   const { values } = useFormikContext<TransferFormValues>();
   const { amount, destination, tokenIndex } = values;
   const warpCore = useWarpCore();
-  const originToken = multiCollateralToken || getTokenByIndex(warpCore, tokenIndex);
+  const originToken = routeOverrideToken || getTokenByIndex(warpCore, tokenIndex);
   const originTokenSymbol = originToken?.symbol || '';
   const connection = originToken?.getConnectionForChain(destination);
   const destinationToken = connection?.token;
@@ -624,19 +625,21 @@ async function validateForm(
   values: TransferFormValues,
   accounts: Record<ProtocolType, AccountInfo>,
   routerAddressesByChainMap: Record<ChainName, Set<string>>,
-) {
+): Promise<[Record<string, string> | null, Token | null]> {
+  // returns a tutple, where first value is validation result
+  // second value is token override
   try {
     const { origin, destination, tokenIndex, amount, recipient } = values;
     const token = getTokenByIndex(warpCore, tokenIndex);
-    if (!token) return { token: 'Token is required' };
+    if (!token) return [{ token: 'Token is required' }, null];
     const destinationToken = token.getConnectionForChain(destination)?.token;
-    if (!destinationToken) return { token: 'Token is required' };
+    if (!destinationToken) return [{ token: 'Token is required' }, null];
 
     if (
       objKeys(routerAddressesByChainMap).includes(destination) &&
       routerAddressesByChainMap[destination].has(recipient)
     ) {
-      return { recipient: 'Warp Route address is not valid as recipient' };
+      return [{ recipient: 'Warp Route address is not valid as recipient' }, null];
     }
 
     const transferToken = await getTransferToken(warpCore, token, destinationToken);
@@ -656,11 +659,11 @@ async function validateForm(
       senderPubKey: await senderPubKey,
     });
 
-    if (!isNullish(result)) return result;
+    if (!isNullish(result)) return [result, null];
 
-    if (transferToken.addressOrDenom === token.addressOrDenom) return null;
+    if (transferToken.addressOrDenom === token.addressOrDenom) return [null, null];
 
-    return transferToken;
+    return [null, transferToken];
   } catch (error: any) {
     logger.error('Error validating form', error);
     let errorMsg = errorToString(error, 40);
@@ -668,7 +671,7 @@ async function validateForm(
     if (insufficientFundsErrMsg.test(fullError) || emptyAccountErrMsg.test(fullError)) {
       errorMsg = 'Insufficient funds for gas fees';
     }
-    return { form: errorMsg };
+    return [{ form: errorMsg }, null];
   }
 }
 

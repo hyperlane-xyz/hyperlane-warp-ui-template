@@ -696,20 +696,22 @@ async function getTransferToken(warpCore: WarpCore, originToken: Token, destinat
   const tokenBalances: Array<{ token: Token; balance: bigint }> = [];
 
   // fetch each destination token balance
-  const results = await Promise.allSettled(
-    tokensWithSameCollateralAddresses.map(({ destinationToken }) =>
-      warpCore.getTokenCollateral(destinationToken),
-    ),
+  const balanceResults = await Promise.allSettled(
+    tokensWithSameCollateralAddresses.map(async ({ originToken, destinationToken }) => {
+      try {
+        const balance = await warpCore.getTokenCollateral(destinationToken);
+        return { token: originToken, balance };
+      } catch {
+        return null;
+      }
+    }),
   );
 
-  results.forEach((result, i) => {
-    if (result.status === 'fulfilled') {
-      tokenBalances.push({
-        token: tokensWithSameCollateralAddresses[i].originToken,
-        balance: result.value,
-      });
+  for (const result of balanceResults) {
+    if (result.status === 'fulfilled' && result.value) {
+      tokenBalances.push(result.value);
     }
-  });
+  }
 
   if (!tokenBalances.length) return originToken;
 

@@ -1,5 +1,4 @@
 import { IToken, Token } from '@hyperlane-xyz/sdk';
-import { logger } from '../../utils/logger';
 import { isValidMultiCollateralToken } from '../tokens/utils';
 import { multiCollateralTokenLimits } from './const';
 import { RouteLimit } from './types';
@@ -14,7 +13,6 @@ export function getMultiCollateralTokenLimit(
 
   const isMultiCollateralToken = isValidMultiCollateralToken(originToken, destinationToken);
   if (!isMultiCollateralToken) return null;
-  logger.debug('hello', destinationToken);
 
   const limitExists = routeLimits.find((limit) => {
     if (limit.symbol !== originToken.symbol || limit.symbol !== destinationToken.symbol)

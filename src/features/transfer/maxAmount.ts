@@ -41,13 +41,12 @@ async function fetchMaxAmount(
       senderPubKey: await publicKey,
     });
 
-    const multiCollateralLimitExceeded = isMultiCollateralLimitExceeded(
+    const multiCollateralLimit = isMultiCollateralLimitExceeded(
       maxAmount.token,
       destination,
       maxAmount.amount.toString(),
     );
-    if (multiCollateralLimitExceeded)
-      return new TokenAmount(multiCollateralLimitExceeded, maxAmount.token);
+    if (multiCollateralLimit) return new TokenAmount(multiCollateralLimit, maxAmount.token);
 
     return maxAmount;
   } catch (error) {

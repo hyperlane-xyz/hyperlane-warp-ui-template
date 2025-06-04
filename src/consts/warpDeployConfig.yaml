@@ -73,6 +73,10 @@ base:
           bufferCap: '0'
           rateLimitPerSecond: '0'
         lockbox: '0xe92e51d99ae33114c60d9621fb2e1ec0acea7e30'
+      - limits:
+          bufferCap: '20000000000000'
+          rateLimitPerSecond: '5000000000'
+        lockbox: '0xa760D20a91C076A57b270D3F7a3150421ab40591'
     warpRouteLimits:
       bufferCap: '20000000000000'
       rateLimitPerSecond: '5000000000'
@@ -98,6 +102,33 @@ bitlayer:
     warpRouteLimits:
       bufferCap: '2000000000000'
       rateLimitPerSecond: '500000000'
+bob:
+  hook: '0x0000000000000000000000000000000000000000'
+  interchainSecurityModule:
+    modules:
+      - domains: {}
+        owner: '0xa7ECcdb9Be08178f896c26b7BbD8C3D4E844d9Ba'
+        type: defaultFallbackRoutingIsm
+      - owner: '0xa7ECcdb9Be08178f896c26b7BbD8C3D4E844d9Ba'
+        paused: false
+        type: pausableIsm
+    threshold: 2
+    type: staticAggregationIsm
+  owner: '0xa7ECcdb9Be08178f896c26b7BbD8C3D4E844d9Ba'
+  ownerOverrides:
+    collateralProxyAdmin: '0xa7ECcdb9Be08178f896c26b7BbD8C3D4E844d9Ba'
+    collateralToken: '0xa7ECcdb9Be08178f896c26b7BbD8C3D4E844d9Ba'
+  token: '0x1217BfE6c773EEC6cc4A38b5Dc45B92292B6E189'
+  type: xERC20
+  xERC20:
+    extraBridges:
+      - limits:
+          bufferCap: '20000000000000'
+          rateLimitPerSecond: '5000000000'
+        lockbox: '0xAFEd606Bd2CAb6983fC6F10167c98aaC2173D77f'
+    warpRouteLimits:
+      bufferCap: '2000000000000'
+      rateLimitPerSecond: '500000000'
 celo:
   hook: '0x0000000000000000000000000000000000000000'
   interchainSecurityModule:
@@ -117,6 +148,11 @@ celo:
   token: '0x5e5F4d6B03db16E7f00dE7C9AFAA53b92C8d1D42'
   type: xERC20Lockbox
   xERC20:
+    extraBridges:
+      - limits:
+          bufferCap: '20000000000000'
+          rateLimitPerSecond: '5000000000'
+        lockbox: '0x47Db76c9c97F4bcFd54D8872FDb848Cab696092d'
     warpRouteLimits:
       bufferCap: '20000000000000'
       rateLimitPerSecond: '5000000000'
@@ -144,6 +180,10 @@ ethereum:
           bufferCap: '20000000000000'
           rateLimitPerSecond: '5000000000'
         lockbox: '0x6D265C7dD8d76F25155F1a7687C693FDC1220D12'
+      - limits:
+          bufferCap: '20000000000000'
+          rateLimitPerSecond: '5000000000'
+        lockbox: '0xCe19f75BCE7Fb74c9e2328766Ebe50465df24CA3'
     warpRouteLimits:
       bufferCap: '20000000000000'
       rateLimitPerSecond: '5000000000'
@@ -166,6 +206,33 @@ fraxtal:
   token: '0x1217BfE6c773EEC6cc4A38b5Dc45B92292B6E189'
   type: xERC20
   xERC20:
+    warpRouteLimits:
+      bufferCap: '2000000000000'
+      rateLimitPerSecond: '500000000'
+hashkey:
+  hook: '0x0000000000000000000000000000000000000000'
+  interchainSecurityModule:
+    modules:
+      - domains: {}
+        owner: '0xa7ECcdb9Be08178f896c26b7BbD8C3D4E844d9Ba'
+        type: defaultFallbackRoutingIsm
+      - owner: '0xa7ECcdb9Be08178f896c26b7BbD8C3D4E844d9Ba'
+        paused: false
+        type: pausableIsm
+    threshold: 2
+    type: staticAggregationIsm
+  owner: '0xa7ECcdb9Be08178f896c26b7BbD8C3D4E844d9Ba'
+  ownerOverrides:
+    collateralProxyAdmin: '0xa7ECcdb9Be08178f896c26b7BbD8C3D4E844d9Ba'
+    collateralToken: '0xa7ECcdb9Be08178f896c26b7BbD8C3D4E844d9Ba'
+  token: '0x1217BfE6c773EEC6cc4A38b5Dc45B92292B6E189'
+  type: xERC20
+  xERC20:
+    extraBridges:
+      - limits:
+          bufferCap: '20000000000000'
+          rateLimitPerSecond: '5000000000'
+        lockbox: '0x55aeb80Aa6Ab34aA83E1F387903F8Bb2Aa9e2F2d'
     warpRouteLimits:
       bufferCap: '2000000000000'
       rateLimitPerSecond: '500000000'
@@ -445,6 +512,10 @@ optimism:
           bufferCap: '0'
           rateLimitPerSecond: '0'
         lockbox: '0x18c4cdc2d774c047eac8375bb09853c4d6d6df36'
+      - limits:
+          bufferCap: '20000000000000'
+          rateLimitPerSecond: '5000000000'
+        lockbox: '0x6a21a19aD44542d83F7f7FF45Aa31A62a36200de'
     warpRouteLimits:
       bufferCap: '20000000000000'
       rateLimitPerSecond: '5000000000'
@@ -511,6 +582,11 @@ sonic:
   token: '0x1217BfE6c773EEC6cc4A38b5Dc45B92292B6E189'
   type: xERC20
   xERC20:
+    extraBridges:
+      - limits:
+          bufferCap: '20000000000000'
+          rateLimitPerSecond: '5000000000'
+        lockbox: '0x6a21a19aD44542d83F7f7FF45Aa31A62a36200de'
     warpRouteLimits:
       bufferCap: '8000000000000'
       rateLimitPerSecond: '2000000000'

@@ -13,7 +13,8 @@ import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { useStore } from '../store';
 import { useWarpCore } from './hooks';
-import { dedupeMultiCollateralTokens, TokenChainMap } from './utils';
+import { TokenChainMap } from './types';
+import { dedupeMultiCollateralTokens } from './utils';
 
 export function TokenListModal({
   isOpen,

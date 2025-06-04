@@ -1,6 +1,4 @@
 import {
-  ChainMap,
-  ChainMetadata,
   IToken,
   MultiProtocolProvider,
   Token,
@@ -8,14 +6,7 @@ import {
   WarpCore,
 } from '@hyperlane-xyz/sdk';
 import { eqAddress, normalizeAddress } from '@hyperlane-xyz/utils';
-import { MultiCollateralTokenMap } from './types';
-
-export type TokenChainMap = {
-  chains: ChainMap<{ token: Token; metadata: ChainMetadata | null }>;
-  tokenInformation: Token;
-};
-
-type Tokens = Array<{ token: Token; disabled: boolean }>;
+import { MultiCollateralTokenMap, TokenChainMap, Tokens } from './types';
 
 // Map of token symbols and token chain map
 // Symbols are not duplicated to avoid the same symbol from being shown

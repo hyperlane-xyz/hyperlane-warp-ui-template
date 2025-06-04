@@ -15,6 +15,8 @@ export function assembleTokensBySymbolChainMap(
 ): Record<string, TokenChainMap> {
   const multiChainTokens = tokens.filter((t) => t.isMultiChainToken());
   return multiChainTokens.reduce<Record<string, TokenChainMap>>((acc, token) => {
+    if (!token.connections || !token.connections.length) return acc;
+
     if (!acc[token.symbol]) {
       acc[token.symbol] = {
         chains: {},

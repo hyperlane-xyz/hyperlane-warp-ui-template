@@ -2,14 +2,10 @@ import { IToken, Token } from '@hyperlane-xyz/sdk';
 import { isValidMultiCollateralToken } from '../tokens/utils';
 import { multiCollateralTokenLimits } from './const';
 
-export function isMultiCollateralLimitExceeded(
-  originToken: Token,
-  destinationToken: IToken,
-  amountWei: string,
-) {
+function getMultiCollateralTokenLimit(originToken: Token, destinationToken: IToken) {
   const isMultiCollateralToken = isValidMultiCollateralToken(originToken, destinationToken);
 
-  if (!isMultiCollateralToken) return false;
+  if (!isMultiCollateralToken) return null;
 
   const limitExists = multiCollateralTokenLimits.find((limit) => {
     if (limit.symbol !== originToken.symbol || limit.symbol !== destinationToken.symbol)
@@ -24,7 +20,17 @@ export function isMultiCollateralLimitExceeded(
     return true;
   });
 
-  if (!limitExists) return false;
+  return limitExists || null;
+}
 
-  return amountWei <= limitExists.amountWei.toString();
+export function isMultiCollateralLimitExceeded(
+  originToken: Token,
+  destinationToken: IToken,
+  amount: string,
+): bigint | null {
+  const limitExists = getMultiCollateralTokenLimit(originToken, destinationToken);
+
+  if (!limitExists) return null;
+
+  return BigInt(amount) > limitExists.amount ? limitExists.amount : null;
 }

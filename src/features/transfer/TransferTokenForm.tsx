@@ -29,6 +29,7 @@ import { ChainSelectField } from '../chains/ChainSelectField';
 import { ChainWalletWarning } from '../chains/ChainWalletWarning';
 import { useChainDisplayName, useMultiProvider } from '../chains/hooks';
 import { getNumRoutesWithSelectedChain, tryGetValidChainName } from '../chains/utils';
+import { isMultiCollateralLimitExceeded } from '../limits/utils';
 import { useIsAccountSanctioned } from '../sanctions/hooks/useIsAccountSanctioned';
 import { useStore } from '../store';
 import { SelectOrInputTokenIds } from '../tokens/SelectOrInputTokenIds';
@@ -645,6 +646,18 @@ async function validateForm(
     const transferToken = await getTransferToken(warpCore, token, destinationToken);
 
     const amountWei = toWei(amount, transferToken.decimals);
+
+    const multiCollateralLimit = isMultiCollateralLimitExceeded(token, destinationToken, amount);
+
+    if (multiCollateralLimit) {
+      return [
+        {
+          amount: `Transfer limit is ${multiCollateralLimit} ${token.symbol}`,
+        },
+        null,
+      ];
+    }
+
     const { address, publicKey: senderPubKey } = getAccountAddressAndPubKey(
       warpCore.multiProvider,
       origin,

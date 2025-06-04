@@ -1,5 +1,5 @@
 export type RouteLimit = {
   symbol: string;
-  amount: bigint;
+  amountWei: bigint;
   chains: ChainName[];
 };

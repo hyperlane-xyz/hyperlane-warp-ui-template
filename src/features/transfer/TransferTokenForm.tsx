@@ -1,5 +1,12 @@
 import { IToken, Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
-import { ProtocolType, errorToString, isNullish, objKeys, toWei } from '@hyperlane-xyz/utils';
+import {
+  ProtocolType,
+  errorToString,
+  fromWei,
+  isNullish,
+  objKeys,
+  toWei,
+} from '@hyperlane-xyz/utils';
 import {
   AccountInfo,
   ChevronIcon,
@@ -644,15 +651,13 @@ async function validateForm(
     }
 
     const transferToken = await getTransferToken(warpCore, token, destinationToken);
-
     const amountWei = toWei(amount, transferToken.decimals);
-
-    const multiCollateralLimit = isMultiCollateralLimitExceeded(token, destinationToken, amount);
+    const multiCollateralLimit = isMultiCollateralLimitExceeded(token, destination, amountWei);
 
     if (multiCollateralLimit) {
       return [
         {
-          amount: `Transfer limit is ${multiCollateralLimit} ${token.symbol}`,
+          amount: `Transfer limit is ${fromWei(multiCollateralLimit.toString(), token.decimals)} ${token.symbol}`,
         },
         null,
       ];

@@ -2,9 +2,11 @@ import { IToken, Token } from '@hyperlane-xyz/sdk';
 import { isValidMultiCollateralToken } from '../tokens/utils';
 import { multiCollateralTokenLimits } from './const';
 
-function getMultiCollateralTokenLimit(originToken: Token, destinationToken: IToken) {
-  const isMultiCollateralToken = isValidMultiCollateralToken(originToken, destinationToken);
+function getMultiCollateralTokenLimit(originToken: Token | IToken, destination: ChainName) {
+  const destinationToken = originToken.getConnectionForChain(destination)?.token;
+  if (!destinationToken) return null;
 
+  const isMultiCollateralToken = isValidMultiCollateralToken(originToken, destinationToken);
   if (!isMultiCollateralToken) return null;
 
   const limitExists = multiCollateralTokenLimits.find((limit) => {
@@ -24,13 +26,14 @@ function getMultiCollateralTokenLimit(originToken: Token, destinationToken: ITok
 }
 
 export function isMultiCollateralLimitExceeded(
-  originToken: Token,
-  destinationToken: IToken,
-  amount: string,
+  originToken: Token | IToken,
+  destination: ChainName,
+  amountWei: string,
 ): bigint | null {
-  const limitExists = getMultiCollateralTokenLimit(originToken, destinationToken);
+  const limitExists = getMultiCollateralTokenLimit(originToken, destination);
 
+  console.log('limitsExist', limitExists);
   if (!limitExists) return null;
 
-  return BigInt(amount) > limitExists.amount ? limitExists.amount : null;
+  return BigInt(amountWei) > limitExists.amountWei ? limitExists.amountWei : null;
 }

@@ -79,7 +79,7 @@ export function getTokensWithSameCollateralAddresses(
 
       if (!destinationToken) return false;
       const isMultiCollateralToken = isValidMultiCollateralToken(originToken, destinationToken);
-      if (!destinationToken || !isMultiCollateralToken) return false;
+      if (!isMultiCollateralToken) return false;
 
       // asserting because isValidMultiCollateralToken already checks for existence of collateralAddressOrDenom
       const currentOriginCollateralAddress = normalizeAddress(

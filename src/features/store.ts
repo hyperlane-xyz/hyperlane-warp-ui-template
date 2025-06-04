@@ -29,6 +29,7 @@ interface WarpContext {
   multiProvider: MultiProtocolProvider;
   warpCore: WarpCore;
   tokensBySymbolChainMap: Record<string, TokenChainMap>;
+  routerAddressesByChainMap: Record<ChainName, Set<string>>;
 }
 
 // Keeping everything here for now as state is simple
@@ -75,6 +76,9 @@ export interface AppState {
   originChainName: ChainName;
   setOriginChainName: (originChainName: ChainName) => void;
   tokensBySymbolChainMap: Record<string, TokenChainMap>;
+  // this map is currently used by the transfer token form validation to prevent
+  // users from sending funds to a warp route address in a given destination chain
+  routerAddressesByChainMap: Record<ChainName, Set<string>>;
 }
 
 export const useStore = create<AppState>()(
@@ -89,20 +93,34 @@ export const useStore = create<AppState>()(
       ) => {
         logger.debug('Setting chain overrides in store');
         const filtered = objFilter(overrides, (_, metadata) => !!metadata);
-        const { multiProvider, warpCore } = await initWarpContext({
-          ...get(),
+        const { multiProvider, warpCore, routerAddressesByChainMap, tokensBySymbolChainMap } =
+          await initWarpContext({
+            ...get(),
+            chainMetadataOverrides: filtered,
+          });
+        set({
           chainMetadataOverrides: filtered,
+          multiProvider,
+          warpCore,
+          tokensBySymbolChainMap,
+          routerAddressesByChainMap,
         });
-        set({ chainMetadataOverrides: filtered, multiProvider, warpCore });
       },
       warpCoreConfigOverrides: [],
       setWarpCoreConfigOverrides: async (overrides: WarpCoreConfig[] | undefined = []) => {
         logger.debug('Setting warp core config overrides in store');
-        const { multiProvider, warpCore } = await initWarpContext({
-          ...get(),
+        const { multiProvider, warpCore, routerAddressesByChainMap, tokensBySymbolChainMap } =
+          await initWarpContext({
+            ...get(),
+            warpCoreConfigOverrides: overrides,
+          });
+        set({
           warpCoreConfigOverrides: overrides,
+          multiProvider,
+          warpCore,
+          tokensBySymbolChainMap,
+          routerAddressesByChainMap,
         });
-        set({ warpCoreConfigOverrides: overrides, multiProvider, warpCore });
       },
 
       multiProvider: new MultiProtocolProvider({}),
@@ -168,6 +186,7 @@ export const useStore = create<AppState>()(
         set(() => ({ originChainName }));
       },
       tokensBySymbolChainMap: {},
+      routerAddressesByChainMap: {},
     }),
 
     // Store config
@@ -223,7 +242,15 @@ async function initWarpContext({
     const warpCore = WarpCore.FromConfig(multiProvider, coreConfig);
 
     const tokensBySymbolChainMap = assembleTokensBySymbolChainMap(warpCore.tokens, multiProvider);
-    return { registry, chainMetadata, multiProvider, warpCore, tokensBySymbolChainMap };
+    const routerAddressesByChainMap = getRouterAddressesByChain(coreConfig.tokens);
+    return {
+      registry,
+      chainMetadata,
+      multiProvider,
+      warpCore,
+      tokensBySymbolChainMap,
+      routerAddressesByChainMap,
+    };
   } catch (error) {
     toast.error('Error initializing warp context. Please check connection status and configs.');
     logger.error('Error initializing warp context', error);
@@ -233,6 +260,7 @@ async function initWarpContext({
       multiProvider: new MultiProtocolProvider({}),
       warpCore: new WarpCore(new MultiProtocolProvider({}), []),
       tokensBySymbolChainMap: {},
+      routerAddressesByChainMap: {},
     };
   }
 }
@@ -248,4 +276,15 @@ function buildWarpDeployConfig(): ChainMap<HypTokenRouterConfigMailboxOptional> 
   });
 
   return warpDeployConfig;
+}
+// this weird type (WarpCoreConfig['tokens']) is to match what is being used in dedupeTokens at assembleWarpCoreConfig.ts
+// returns a set with all the warp route addressOrDenom known to the registry
+function getRouterAddressesByChain(
+  tokens: WarpCoreConfig['tokens'],
+): Record<ChainName, Set<string>> {
+  return tokens.reduce<Record<ChainName, Set<string>>>((acc, token) => {
+    acc[token.chainName] ||= new Set<string>();
+    if (token.addressOrDenom) acc[token.chainName].add(token.addressOrDenom);
+    return acc;
+  }, {});
 }

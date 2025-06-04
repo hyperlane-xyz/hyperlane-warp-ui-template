@@ -49,7 +49,9 @@ function filterToIds(
   config: Record<string, WarpCoreConfig>,
   idWhitelist: string[],
 ): Record<string, WarpCoreConfig> {
-  return objFilter(config, (id, c): c is WarpCoreConfig => idWhitelist.includes(id));
+  return objFilter(config, (id, c): c is WarpCoreConfig =>
+    idWhitelist.map((id) => id.toUpperCase()).includes(id.toUpperCase()),
+  );
 }
 
 // Separate warp configs may contain duplicate definitions of the same token.

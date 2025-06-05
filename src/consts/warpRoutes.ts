@@ -205,7 +205,6 @@ export const warpRouteConfigs: WarpCoreConfig = {
       symbol: 'USDC',
       decimals: 6,
       addressOrDenom: '0x42DbD98966B4ec9C1CC33c1AA45a0a08a4f772E0',
-      collateralAddressOrDenom: '0x078d782b760474a361dda0af3839290b0ef57ad6',
       connections: [
         {
           token: 'ethereum|avalanche|0x44c4e1d8872847BBF9Ab1479A994A7bEBF24B957',

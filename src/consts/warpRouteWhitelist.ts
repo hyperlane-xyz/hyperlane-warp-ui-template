@@ -244,4 +244,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // SMOL route
   'SMOL/ethereum-solanamainnet-treasure',
+
+  // bbSOL
+  'bbSOL/solanamainnet-soon',
 ];

@@ -118,9 +118,6 @@ export const warpRouteConfigs: WarpCoreConfig = {
       collateralAddressOrDenom: '0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E',
       connections: [
         {
-          token: 'ethereum|avalanche|0x44c4e1d8872847BBF9Ab1479A994A7bEBF24B957',
-        },
-        {
           token: 'ethereum|optimism|0x40710E1206C15029DB25e07eBad80B4d9246BB46',
         },
         {
@@ -152,9 +149,6 @@ export const warpRouteConfigs: WarpCoreConfig = {
       connections: [
         {
           token: 'ethereum|avalanche|0x44c4e1d8872847BBF9Ab1479A994A7bEBF24B957',
-        },
-        {
-          token: 'ethereum|optimism|0x40710E1206C15029DB25e07eBad80B4d9246BB46',
         },
         {
           token: 'ethereum|arbitrum|0x52755EE22e6e4D7f144C4fB09c409e2B0A691d6D',
@@ -190,9 +184,6 @@ export const warpRouteConfigs: WarpCoreConfig = {
           token: 'ethereum|optimism|0x40710E1206C15029DB25e07eBad80B4d9246BB46',
         },
         {
-          token: 'ethereum|arbitrum|0x52755EE22e6e4D7f144C4fB09c409e2B0A691d6D',
-        },
-        {
           token: 'ethereum|bsc|0x42DbD98966B4ec9C1CC33c1AA45a0a08a4f772E0',
         },
         {
@@ -209,7 +200,7 @@ export const warpRouteConfigs: WarpCoreConfig = {
 
     {
       chainName: 'bsc',
-      standard: TokenStandard.EvmHypCollateral,
+      standard: TokenStandard.EvmHypSynthetic,
       name: 'USD Coin',
       symbol: 'USDC',
       decimals: 6,
@@ -224,9 +215,6 @@ export const warpRouteConfigs: WarpCoreConfig = {
         },
         {
           token: 'ethereum|arbitrum|0x52755EE22e6e4D7f144C4fB09c409e2B0A691d6D',
-        },
-        {
-          token: 'ethereum|bsc|0x42DbD98966B4ec9C1CC33c1AA45a0a08a4f772E0',
         },
         {
           token: 'ethereum|unichain|0xE15216b866349d789b17c85A4edC81AadfC410CE',
@@ -262,9 +250,6 @@ export const warpRouteConfigs: WarpCoreConfig = {
           token: 'ethereum|bsc|0x42DbD98966B4ec9C1CC33c1AA45a0a08a4f772E0',
         },
         {
-          token: 'ethereum|unichain|0xE15216b866349d789b17c85A4edC81AadfC410CE',
-        },
-        {
           token: 'ethereum|base|0xF27A5F084d5546d6e2bf843D3E30dCA4b9bE7dC3',
         },
         {
@@ -298,9 +283,6 @@ export const warpRouteConfigs: WarpCoreConfig = {
           token: 'ethereum|unichain|0xE15216b866349d789b17c85A4edC81AadfC410CE',
         },
         {
-          token: 'ethereum|base|0xF27A5F084d5546d6e2bf843D3E30dCA4b9bE7dC3',
-        },
-        {
           token: 'ethereum|ethereum|0x16B16094B018678b9EFa77AEDE41C4cbeF063c7e',
         },
       ],
@@ -332,9 +314,6 @@ export const warpRouteConfigs: WarpCoreConfig = {
         },
         {
           token: 'ethereum|base|0xF27A5F084d5546d6e2bf843D3E30dCA4b9bE7dC3',
-        },
-        {
-          token: 'ethereum|ethereum|0x16B16094B018678b9EFa77AEDE41C4cbeF063c7e',
         },
       ],
     },

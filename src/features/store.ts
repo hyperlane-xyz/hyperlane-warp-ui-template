@@ -1,4 +1,4 @@
-import { chainAddresses, chainMetadata, IRegistry, PartialRegistry } from '@hyperlane-xyz/registry';
+import { GithubRegistry, IRegistry } from '@hyperlane-xyz/registry';
 import {
   ChainMap,
   ChainMetadata,
@@ -11,6 +11,7 @@ import { objFilter } from '@hyperlane-xyz/utils';
 import { toast } from 'react-toastify';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { config } from '../consts/config';
 import { logger } from '../utils/logger';
 import { assembleChainMetadata } from './chains/metadata';
 import { TokenChainMap } from './tokens/types';
@@ -115,9 +116,10 @@ export const useStore = create<AppState>()(
         });
       },
       multiProvider: new MultiProtocolProvider({}),
-      registry: new PartialRegistry({
-        chainAddresses: chainAddresses,
-        chainMetadata: chainMetadata,
+      registry: new GithubRegistry({
+        uri: config.registryUrl,
+        branch: config.registryBranch,
+        proxyUrl: config.registryProxyUrl,
       }),
       warpCore: new WarpCore(new MultiProtocolProvider({}), []),
       setWarpContext: (context) => {
@@ -211,10 +213,11 @@ async function initWarpContext({
   warpCoreConfigOverrides: WarpCoreConfig[];
 }): Promise<WarpContext> {
   try {
-    const coreConfig = await assembleWarpCoreConfig(warpCoreConfigOverrides);
-    const chainsInTokens = Array.from(new Set(coreConfig.tokens.map((t) => t.chainName)));
     // Pre-load registry content to avoid repeated requests
     await registry.listRegistryContent();
+    const coreConfig = await assembleWarpCoreConfig(warpCoreConfigOverrides, registry);
+
+    const chainsInTokens = Array.from(new Set(coreConfig.tokens.map((t) => t.chainName)));
     const { chainMetadata, chainMetadataWithOverrides } = await assembleChainMetadata(
       chainsInTokens,
       registry,

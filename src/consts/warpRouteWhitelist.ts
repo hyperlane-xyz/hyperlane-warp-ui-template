@@ -206,9 +206,10 @@ export const warpRouteWhitelist: Array<string> | null = [
   // MILK route
   'MILK/bsc-milkyway',
 
-  // wfragSOL & wfragJTO routes
-  'wfragSOL/eclipsemainnet-solanamainnet-soon',
-  'wfragJTO/eclipsemainnet-solanamainnet-soon',
+  // Fragmetric routes
+  'wfragSOL/fragmetric',
+  'wfragJTO/fragmetric',
+  'wfragBTC/fragmetric',
 
   // ES routes
   'ES/eclipsemainnet-ethereum',
@@ -247,4 +248,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // bbSOL
   'bbSOL/solanamainnet-soon',
+
+  // adraSOL
+  'adraSOL/solanamainnet-sonicsvm',
 ];

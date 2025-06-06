@@ -13,7 +13,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { logger } from '../utils/logger';
 import { assembleChainMetadata } from './chains/metadata';
-import { assembleTokensBySymbolChainMap, TokenChainMap } from './tokens/utils';
+import { TokenChainMap } from './tokens/types';
+import { assembleTokensBySymbolChainMap } from './tokens/utils';
 import { FinalTransferStatuses, TransferContext, TransferStatus } from './transfer/types';
 import { assembleWarpCoreConfig } from './warpCore/warpCoreConfig';
 

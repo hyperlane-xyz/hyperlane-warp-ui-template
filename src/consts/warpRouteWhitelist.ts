@@ -86,7 +86,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'uBTC/boba-bsquared-soneium-swell',
 
   // kySOL
-  'kySOL/eclipsemainnet-solanamainnet',
+  'kySOL/kyros',
 
   // PNDR
   'PNDR/bsc-ethereum-lumiaprism',

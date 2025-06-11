@@ -56,7 +56,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'USDT/ethereum-lumiaprism',
 
   // oUSDT routes
-  'oUSDT/base-bitlayer-celo-ethereum-fraxtal-ink-linea-lisk-mantle-metal-metis-mode-optimism-ronin-soneium-sonic-superseed-unichain-worldchain',
+  'oUSDT/production',
 
   // INJ routes
   'INJ/inevm-injective',

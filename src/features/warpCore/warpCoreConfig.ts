@@ -21,10 +21,14 @@ export async function assembleWarpCoreConfig(
 
   let registryWarpRoutes: Record<string, WarpCoreConfig>;
 
-  if (config.registryUrl) {
-    logger.debug('Using custom registry warp routes from:', config.registryUrl);
-    registryWarpRoutes = await registry.getWarpRoutes();
-  } else {
+  try {
+    if (config.registryUrl) {
+      logger.debug('Using custom registry warp routes from:', config.registryUrl);
+      registryWarpRoutes = await registry.getWarpRoutes();
+    } else {
+      throw new Error('No custom registry URL provided');
+    }
+  } catch {
     logger.debug('Using default published registry for warp routes');
     registryWarpRoutes = publishedRegistryWarpRoutes;
   }

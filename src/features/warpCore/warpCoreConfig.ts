@@ -1,15 +1,37 @@
-import { warpRouteConfigs as registryWarpRoutes } from '@hyperlane-xyz/registry';
+import {
+  IRegistry,
+  warpRouteConfigs as publishedRegistryWarpRoutes,
+} from '@hyperlane-xyz/registry';
 import { WarpCoreConfig, WarpCoreConfigSchema, validateZodResult } from '@hyperlane-xyz/sdk';
 import { objFilter, objMerge } from '@hyperlane-xyz/utils';
+import { config } from '../../consts/config.ts';
 import { warpRouteWhitelist } from '../../consts/warpRouteWhitelist.ts';
 import { warpRouteConfigs as tsWarpRoutes } from '../../consts/warpRoutes.ts';
 import yamlWarpRoutes from '../../consts/warpRoutes.yaml';
+import { logger } from '../../utils/logger.ts';
 
-export function assembleWarpCoreConfig(storeOverrides: WarpCoreConfig[]): WarpCoreConfig {
+export async function assembleWarpCoreConfig(
+  storeOverrides: WarpCoreConfig[],
+  registry: IRegistry,
+): Promise<WarpCoreConfig> {
   const yamlResult = WarpCoreConfigSchema.safeParse(yamlWarpRoutes);
   const yamlConfig = validateZodResult(yamlResult, 'warp core yaml config');
   const tsResult = WarpCoreConfigSchema.safeParse(tsWarpRoutes);
   const tsConfig = validateZodResult(tsResult, 'warp core typescript config');
+
+  let registryWarpRoutes: Record<string, WarpCoreConfig>;
+
+  try {
+    if (config.registryUrl) {
+      logger.debug('Using custom registry warp routes from:', config.registryUrl);
+      registryWarpRoutes = await registry.getWarpRoutes();
+    } else {
+      throw new Error('No custom registry URL provided');
+    }
+  } catch {
+    logger.debug('Using default published registry for warp routes');
+    registryWarpRoutes = publishedRegistryWarpRoutes;
+  }
 
   const filteredRegistryConfigMap = warpRouteWhitelist
     ? filterToIds(registryWarpRoutes, warpRouteWhitelist)

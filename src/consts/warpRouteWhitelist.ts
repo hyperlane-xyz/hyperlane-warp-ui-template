@@ -257,4 +257,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // MAT
   'MAT/matchain',
+
+  // TOSHI
+  'TOSHI/toshi',
 ];

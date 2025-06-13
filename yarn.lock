@@ -4692,9 +4692,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/sdk@file:/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/sdk::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
+"@hyperlane-xyz/sdk@npm:13.3.0":
   version: 13.3.0
-  resolution: "@hyperlane-xyz/sdk@file:/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/sdk#/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/sdk::hash=9568cc&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
+  resolution: "@hyperlane-xyz/sdk@npm:13.3.0"
   dependencies:
     "@arbitrum/sdk": "npm:^4.0.0"
     "@aws-sdk/client-s3": "npm:^3.577.0"
@@ -4724,7 +4724,7 @@ __metadata:
   peerDependencies:
     "@ethersproject/abi": "*"
     "@ethersproject/providers": "*"
-  checksum: 10/8a85738f3fae3a6924d68a206be242469c55e8a802aa0322b122b1453a00c42744277c2386bd35c97e2e0b3c2cc71eab385e5b63d7ed3e721ef729f40ff8cc4e
+  checksum: 10/edc0bf6bdfb764c834a7738492a08e0183f8c052b4f5ad4f3cacf3b080a6a49e0ed1dfe04a6cf48c8369b67c9103a18f1b2497db06d61a72d603b2ea9eb7231f
   languageName: node
   linkType: hard
 
@@ -4737,9 +4737,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/utils@file:/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/utils::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
+"@hyperlane-xyz/utils@npm:13.3.0":
   version: 13.3.0
-  resolution: "@hyperlane-xyz/utils@file:/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/utils#/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/utils::hash=2162ef&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
+  resolution: "@hyperlane-xyz/utils@npm:13.3.0"
   dependencies:
     "@cosmjs/encoding": "npm:^0.32.4"
     "@solana/web3.js": "npm:^1.95.4"
@@ -4749,7 +4749,7 @@ __metadata:
     pino: "npm:^8.19.0"
     starknet: "npm:^6.24.1"
     yaml: "npm:2.4.5"
-  checksum: 10/4f5ceb532d677763e3aec13d8aefdfb0edb61f9bc1d56691f565e58f1aa1dfba3b9cabe112ae3a61d230742c046261c95e755b22b8cce9df2a630c6d6bc5f95d
+  checksum: 10/4320450a7ee517f681b55482152e918e75fcdf52dcda86caeac6452f44fafdcf03c2d85bde01b925807a0ab1b3c67ac8a6d46ce1fc04a890923b58a4199f1de5
   languageName: node
   linkType: hard
 
@@ -4771,8 +4771,8 @@ __metadata:
     "@emotion/styled": "npm:^11.13.0"
     "@headlessui/react": "npm:^2.2.0"
     "@hyperlane-xyz/registry": "npm:17.5.0"
-    "@hyperlane-xyz/sdk": "file:/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/sdk"
-    "@hyperlane-xyz/utils": "file:/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/utils"
+    "@hyperlane-xyz/sdk": "npm:13.3.0"
+    "@hyperlane-xyz/utils": "npm:13.3.0"
     "@hyperlane-xyz/widgets": "npm:13.3.0"
     "@interchain-ui/react": "npm:^1.23.28"
     "@metamask/post-message-stream": "npm:6.1.2"

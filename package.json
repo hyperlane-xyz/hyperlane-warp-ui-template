@@ -17,7 +17,7 @@
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
     "@headlessui/react": "^2.2.0",
-    "@hyperlane-xyz/registry": "17.4.0",
+    "@hyperlane-xyz/registry": "17.5.0",
     "@hyperlane-xyz/sdk": "13.3.0",
     "@hyperlane-xyz/utils": "13.3.0",
     "@hyperlane-xyz/widgets": "13.3.0",
@@ -108,6 +108,7 @@
     "lit-html": "2.8.0",
     "react-fast-compare": "^3.2",
     "viem": "^2.21.41",
-    "zustand": "^4.4"
+    "zustand": "^4.4",
+    "yaml": "2.4.5"
   }
 }

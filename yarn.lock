@@ -4681,20 +4681,20 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/registry@npm:17.4.0":
-  version: 17.4.0
-  resolution: "@hyperlane-xyz/registry@npm:17.4.0"
+"@hyperlane-xyz/registry@npm:17.5.0":
+  version: 17.5.0
+  resolution: "@hyperlane-xyz/registry@npm:17.5.0"
   dependencies:
     jszip: "npm:^3.10.1"
     yaml: "npm:2.4.5"
     zod: "npm:^3.21.2"
-  checksum: 10/4899eb332087c814e61d46d2b502aaff01251f85254a92ba26c7be412d12c52f4824238cec2a2a8ce55f4a74a0041c505b75a21a9720ae9ee49a7453b73a7af1
+  checksum: 10/43bd8958b0b130c0975003955c64f5a01b3def442d605a7374bbfaf9630f145458e436a6dcf688aa67d962dd15ad4662bc747517dc7090a99d1945f69b239349
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/sdk@npm:13.3.0":
+"@hyperlane-xyz/sdk@file:/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/sdk::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
   version: 13.3.0
-  resolution: "@hyperlane-xyz/sdk@npm:13.3.0"
+  resolution: "@hyperlane-xyz/sdk@file:/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/sdk#/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/sdk::hash=9568cc&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
   dependencies:
     "@arbitrum/sdk": "npm:^4.0.0"
     "@aws-sdk/client-s3": "npm:^3.577.0"
@@ -4724,7 +4724,7 @@ __metadata:
   peerDependencies:
     "@ethersproject/abi": "*"
     "@ethersproject/providers": "*"
-  checksum: 10/edc0bf6bdfb764c834a7738492a08e0183f8c052b4f5ad4f3cacf3b080a6a49e0ed1dfe04a6cf48c8369b67c9103a18f1b2497db06d61a72d603b2ea9eb7231f
+  checksum: 10/8a85738f3fae3a6924d68a206be242469c55e8a802aa0322b122b1453a00c42744277c2386bd35c97e2e0b3c2cc71eab385e5b63d7ed3e721ef729f40ff8cc4e
   languageName: node
   linkType: hard
 
@@ -4737,9 +4737,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/utils@npm:13.3.0":
+"@hyperlane-xyz/utils@file:/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/utils::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
   version: 13.3.0
-  resolution: "@hyperlane-xyz/utils@npm:13.3.0"
+  resolution: "@hyperlane-xyz/utils@file:/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/utils#/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/utils::hash=2162ef&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
   dependencies:
     "@cosmjs/encoding": "npm:^0.32.4"
     "@solana/web3.js": "npm:^1.95.4"
@@ -4749,7 +4749,7 @@ __metadata:
     pino: "npm:^8.19.0"
     starknet: "npm:^6.24.1"
     yaml: "npm:2.4.5"
-  checksum: 10/4320450a7ee517f681b55482152e918e75fcdf52dcda86caeac6452f44fafdcf03c2d85bde01b925807a0ab1b3c67ac8a6d46ce1fc04a890923b58a4199f1de5
+  checksum: 10/4f5ceb532d677763e3aec13d8aefdfb0edb61f9bc1d56691f565e58f1aa1dfba3b9cabe112ae3a61d230742c046261c95e755b22b8cce9df2a630c6d6bc5f95d
   languageName: node
   linkType: hard
 
@@ -4770,9 +4770,9 @@ __metadata:
     "@emotion/react": "npm:^11.13.3"
     "@emotion/styled": "npm:^11.13.0"
     "@headlessui/react": "npm:^2.2.0"
-    "@hyperlane-xyz/registry": "npm:17.4.0"
-    "@hyperlane-xyz/sdk": "npm:13.3.0"
-    "@hyperlane-xyz/utils": "npm:13.3.0"
+    "@hyperlane-xyz/registry": "npm:17.5.0"
+    "@hyperlane-xyz/sdk": "file:/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/sdk"
+    "@hyperlane-xyz/utils": "file:/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/utils"
     "@hyperlane-xyz/widgets": "npm:13.3.0"
     "@interchain-ui/react": "npm:^1.23.28"
     "@metamask/post-message-stream": "npm:6.1.2"
@@ -27210,29 +27210,6 @@ __metadata:
   bin:
     yaml: bin.mjs
   checksum: 10/b09bf5a615a65276d433d76b8e34ad6b4c0320b85eb3f1a39da132c61ae6e2ff34eff4624e6458d96d49566c93cf43408ba5e568218293a8c6541a2006883f64
-  languageName: node
-  linkType: hard
-
-"yaml@npm:^1.10.0, yaml@npm:^1.10.2":
-  version: 1.10.2
-  resolution: "yaml@npm:1.10.2"
-  checksum: 10/e088b37b4d4885b70b50c9fa1b7e54bd2e27f5c87205f9deaffd1fb293ab263d9c964feadb9817a7b129a5bf30a06582cb08750f810568ecc14f3cdbabb79cb3
-  languageName: node
-  linkType: hard
-
-"yaml@npm:^2.0.0":
-  version: 2.3.4
-  resolution: "yaml@npm:2.3.4"
-  checksum: 10/f8207ce43065a22268a2806ea6a0fa3974c6fde92b4b2fa0082357e487bc333e85dc518910007e7ac001b532c7c84bd3eccb6c7757e94182b564028b0008f44b
-  languageName: node
-  linkType: hard
-
-"yaml@npm:^2.3.4, yaml@npm:^2.6.0":
-  version: 2.6.0
-  resolution: "yaml@npm:2.6.0"
-  bin:
-    yaml: bin.mjs
-  checksum: 10/f4369f667c7626c216ea81b5840fe9b530cdae4cff2d84d166ec1239e54bf332dbfac4a71bf60d121f8e85e175364a4e280a520292269b6cf9d074368309adf9
   languageName: node
   linkType: hard
 

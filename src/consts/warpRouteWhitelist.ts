@@ -254,4 +254,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // TAIKO
   'TAIKO/taiko',
+
+  // MAT
+  'MAT/matchain',
 ];

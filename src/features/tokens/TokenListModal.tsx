@@ -13,7 +13,8 @@ import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { useStore } from '../store';
 import { useWarpCore } from './hooks';
-import { TokenChainMap } from './utils';
+import { TokenChainMap } from './types';
+import { dedupeMultiCollateralTokens } from './utils';
 
 export function TokenListModal({
   isOpen,
@@ -108,34 +109,34 @@ export function TokenList({
   const warpCore = useWarpCore();
   const tokensBySymbolChainMap = useStore((s) => s.tokensBySymbolChainMap);
 
-  const tokens = useMemo(() => {
+  const { tokens } = useMemo(() => {
     const q = searchQuery?.trim().toLowerCase();
     const multiChainTokens = warpCore.tokens.filter((t) => t.isMultiChainToken());
     const tokensWithRoute = warpCore.getTokensForRoute(origin, destination);
 
-    return (
-      multiChainTokens
-        .map((t) => ({
-          token: t,
-          disabled: !tokensWithRoute.includes(t),
-        }))
-        .sort((a, b) => {
-          if (a.disabled && !b.disabled) return 1;
-          else if (!a.disabled && b.disabled) return -1;
-          else return 0;
-        })
-        // Filter down to search query
-        .filter((t) => {
-          if (!q) return t;
-          return (
-            t.token.name.toLowerCase().includes(q) ||
-            t.token.symbol.toLowerCase().includes(q) ||
-            t.token.addressOrDenom.toLowerCase().includes(q)
-          );
-        })
-        // Hide/show disabled tokens
-        .filter((t) => (config.showDisabledTokens ? true : !t.disabled))
-    );
+    const tokens = multiChainTokens
+      .map((t) => ({
+        token: t,
+        disabled: !tokensWithRoute.includes(t),
+      }))
+      .sort((a, b) => {
+        if (a.disabled && !b.disabled) return 1;
+        else if (!a.disabled && b.disabled) return -1;
+        else return 0;
+      })
+      // Filter down to search query
+      .filter((t) => {
+        if (!q) return t;
+        return (
+          t.token.name.toLowerCase().includes(q) ||
+          t.token.symbol.toLowerCase().includes(q) ||
+          t.token.addressOrDenom.toLowerCase().includes(q)
+        );
+      })
+      // Hide/show disabled tokens
+      .filter((t) => (config.showDisabledTokens ? true : !t.disabled));
+
+    return dedupeMultiCollateralTokens(tokens, destination);
   }, [warpCore, searchQuery, origin, destination]);
 
   const unsupportedRouteTokensBySymbolMap = useMemo(() => {

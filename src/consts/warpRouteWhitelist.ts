@@ -83,7 +83,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'ORCA/eclipsemainnet-solanamainnet',
 
   // uBTC routes
-  'uBTC/boba-bsquared-soneium-swell',
+  'uBTC/bsquared',
 
   // kySOL
   'kySOL/kyros',
@@ -260,4 +260,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // TOSHI
   'TOSHI/toshi',
+
+  // SOLX
+  'SOLX/nitro',
 ];

@@ -22,8 +22,4 @@ tokens:
     name: SOL
     standard: StarknetHypSynthetic
     symbol: SOL
-options:
-  interchainFeeConstants:
-    - amount: 1000000000000000000
-      destination: solanamainnet
-      origin: starknet
+options: {}

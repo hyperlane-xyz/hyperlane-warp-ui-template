@@ -251,4 +251,13 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // adraSOL
   'adraSOL/solanamainnet-sonicsvm',
+
+  // TAIKO
+  'TAIKO/taiko',
+
+  // MAT
+  'MAT/matchain',
+
+  // TOSHI
+  'TOSHI/toshi',
 ];

@@ -35,3 +35,20 @@ seaseedalpha:
     name: Seaseed Token
     symbol: SEA
     decimals: 18
+seaseedtest:
+  chainId: 7336
+  domainId: 7336
+  name: seaseedtest
+  displayName: Seaseed Testnet
+  protocol: ethereum
+  isTestnet: true
+  rpcUrls:
+    - http: https://rpc.testnet.seaseed.network
+  blockExplorers:
+    - name: Test
+      url: https://explorer.testnet.seaseed.network
+      apiUrl: https://explorer.testnet.seaseed.network
+  nativeToken:
+    name: Seaseed Token
+    symbol: SEA
+    decimals: 18

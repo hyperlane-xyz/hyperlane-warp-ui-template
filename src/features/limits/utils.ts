@@ -18,13 +18,10 @@ export function getMultiCollateralTokenLimit(
     if (limit.symbol !== originToken.symbol || limit.symbol !== destinationToken.symbol)
       return false;
 
-    if (
-      !limit.chains.includes(originToken.chainName) ||
-      !limit.chains.includes(destinationToken.chainName)
-    )
-      return false;
-
-    return true;
+    return (
+      limit.chains.includes(originToken.chainName) &&
+      limit.chains.includes(destinationToken.chainName)
+    );
   });
 
   return limitExists || null;

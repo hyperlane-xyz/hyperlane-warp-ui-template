@@ -263,4 +263,8 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // SOLX
   'SOLX/nitro',
+
+  // fluence routes
+  'FLT/fluence',
+  'wpFLT/fluence',
 ];

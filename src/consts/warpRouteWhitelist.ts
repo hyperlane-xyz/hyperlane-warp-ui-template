@@ -58,6 +58,9 @@ export const warpRouteWhitelist: Array<string> | null = [
   // oUSDT routes
   'oUSDT/production',
 
+  // oXAUT routes
+  'oXAUT/production',
+
   // INJ routes
   'INJ/inevm-injective',
 

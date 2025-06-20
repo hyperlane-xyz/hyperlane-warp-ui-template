@@ -48,6 +48,7 @@
     "react-dom": "^18.3.1",
     "react-toastify": "^10.0.6",
     "starknetkit": "2.6.1",
+    "tailwind-merge": "^3.3.1",
     "viem": "^2.21.41",
     "wagmi": "^2.12.26",
     "zod": "3.21.4",

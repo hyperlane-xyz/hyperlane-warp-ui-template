@@ -1,4 +1,5 @@
 import { PropsWithChildren, ReactElement } from 'react';
+import { cn } from '../../utils/cn';
 
 interface ButtonProps {
   type?: 'submit' | 'reset' | 'button';
@@ -31,8 +32,12 @@ export function SolidButton(
     baseColors = 'bg-primary-500 text-white';
     onHover = 'hover:bg-primary-600';
   } else if (color === 'accent') {
-    baseColors = 'bg-accent-500 text-white';
-    onHover = 'hover:bg-accent-600';
+    baseColors = cn(
+      'relative before:absolute before:-z-10 isolate overflow-hidden',
+      'bg-[linear-gradient(104.99deg,#FFC555_-21.89%,#FB4AB9_87.44%)] text-white',
+      'before:inset-0 before:transition-colors',
+    );
+    onHover = cn('hover:before:bg-gray-350');
   } else if (color === 'green') {
     baseColors = 'bg-green-500 text-white';
     onHover = 'hover:bg-green-600';

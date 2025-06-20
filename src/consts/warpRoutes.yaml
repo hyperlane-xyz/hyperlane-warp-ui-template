@@ -2,5 +2,24 @@
 # These configs will be merged with the warp routes in the configured registry
 # The input here is typically the output of the Hyperlane CLI warp deploy command
 ---
-tokens: []
+tokens:
+  - addressOrDenom: '0x692A07f2306a3bba739e5281A26A5a97C6D7A6cA'
+    chainName: base
+    connections:
+      - token: ethereum|ethereum|0x197729F9D1a8EAdcd548b4E1A02f9ebdd2b46404
+    decimals: 18
+    name: Spark
+    standard: EvmHypSynthetic
+    symbol: SPK
+    logoURI: '/tokens/spk.svg'
+  - addressOrDenom: '0x197729F9D1a8EAdcd548b4E1A02f9ebdd2b46404'
+    chainName: ethereum
+    collateralAddressOrDenom: '0xc20059e0317DE91738d13af027DfC4a50781b066'
+    connections:
+      - token: ethereum|base|0x692A07f2306a3bba739e5281A26A5a97C6D7A6cA
+    decimals: 18
+    name: Spark
+    standard: EvmHypCollateral
+    symbol: SPK
+    logoURI: '/tokens/spk.svg'
 options: {}

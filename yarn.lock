@@ -4814,6 +4814,7 @@ __metadata:
     react-dom: "npm:^18.3.1"
     react-toastify: "npm:^10.0.6"
     starknetkit: "npm:2.6.1"
+    tailwind-merge: "npm:^3.3.1"
     tailwindcss: "npm:^3.4.15"
     ts-node: "npm:^10.9.2"
     typescript: "npm:5.6.3"
@@ -25081,6 +25082,13 @@ __metadata:
     string-width: "npm:^4.2.3"
     strip-ansi: "npm:^6.0.1"
   checksum: 10/976da6d89841566e39628d1ba107ffab126964c9390a0a877a7c54ebb08820bf388d28fe9f8dcf354b538f19634a572a506c38a3762081640013a149cc862af9
+  languageName: node
+  linkType: hard
+
+"tailwind-merge@npm:^3.3.1":
+  version: 3.3.1
+  resolution: "tailwind-merge@npm:3.3.1"
+  checksum: 10/ad97f0763afdfdce785b8de50bc546951bb3cc803ab4f809cb10d654d9b7e28b0d19dead70ab9070edf479af68622a5f6ba16a21584fa8c21236855709dc648f
   languageName: node
   linkType: hard
 

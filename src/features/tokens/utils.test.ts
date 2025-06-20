@@ -1,46 +1,7 @@
-import {
-  TestChainName,
-  Token,
-  TokenArgs,
-  TokenConnection,
-  TokenConnectionType,
-  TokenStandard,
-} from '@hyperlane-xyz/sdk';
+import { TestChainName, TokenStandard } from '@hyperlane-xyz/sdk';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { createMockToken, createTokenConnectionMock } from '../../utils/test';
 import { isValidMultiCollateralToken } from './utils';
-
-const mockCollateralAddress = '0xabc';
-const addressZero = '0x0000000000000000000000000000000000000000';
-
-const defaultTokenArgs: TokenArgs = {
-  chainName: TestChainName.test1,
-  standard: TokenStandard.EvmHypCollateral,
-  addressOrDenom: addressZero,
-  decimals: 6,
-  symbol: 'FAKE',
-  name: 'Fake Token',
-  collateralAddressOrDenom: mockCollateralAddress,
-};
-
-const defaultTokenArgs2: TokenArgs = {
-  ...defaultTokenArgs,
-  chainName: TestChainName.test2,
-};
-
-const createMockToken = (args?: Partial<TokenArgs>) => {
-  return new Token({ ...defaultTokenArgs, ...args });
-};
-
-const createTokenConnectionMock = (
-  args?: Partial<TokenConnection>,
-  tokenArgs?: Partial<TokenArgs>,
-): TokenConnection => {
-  return {
-    type: TokenConnectionType.Hyperlane,
-    token: createMockToken({ ...defaultTokenArgs2, ...tokenArgs }),
-    ...args,
-  } as TokenConnection;
-};
 
 beforeEach(() => {
   vi.restoreAllMocks();

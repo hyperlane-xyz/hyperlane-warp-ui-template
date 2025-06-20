@@ -270,4 +270,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   // fluence routes
   'FLT/fluence',
   'wpFLT/fluence',
+
+  // H
+  'H/humanity',
 ];

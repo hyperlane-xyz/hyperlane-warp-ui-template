@@ -1,4 +1,4 @@
-import { ChainMap, ChainMetadata, IToken, Token } from '@hyperlane-xyz/sdk';
+import { ChainMap, ChainMetadata, IToken, Token, TokenStandard } from '@hyperlane-xyz/sdk';
 import { isObjEmpty, objFilter } from '@hyperlane-xyz/utils';
 import { Modal, SearchIcon } from '@hyperlane-xyz/widgets';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -181,6 +181,14 @@ export function TokenList({
               <span>{`Decimals: ${t.token.decimals}`}</span>
               <span>-</span>
               <span>{`Chain: ${getChainDisplayName(multiProvider, t.token.chainName)}`}</span>
+              {t.token.standard === TokenStandard.EvmKhalaniIntent && (
+                  <>
+                    <span>-</span>
+                    <span>
+                      <i>via Khalani</i>
+                    </span>
+                  </>
+                )}
             </div>
           </div>
         </button>

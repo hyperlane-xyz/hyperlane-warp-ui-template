@@ -16,14 +16,22 @@ export enum TransferStatus {
   SigningTransfer = 'signing-transfer',
   ConfirmingTransfer = 'confirming-transfer',
   ConfirmedTransfer = 'confirmed-transfer',
+  ProcessingDeposit = 'processing-deposit',
   Delivered = 'delivered',
   Failed = 'failed',
+  WaitingForFulfillment = 'waiting-for-fulfillment',
+  SigningMessage = 'signing-message',
 }
 
 export const SentTransferStatuses = [TransferStatus.ConfirmedTransfer, TransferStatus.Delivered];
 
 // Statuses considered not pending
 export const FinalTransferStatuses = [...SentTransferStatuses, TransferStatus.Failed];
+
+export interface SigningMessageContext {
+  message: string;
+  handleSign: () => Promise<void>;
+}
 
 export interface TransferContext {
   status: TransferStatus;
@@ -37,4 +45,6 @@ export interface TransferContext {
   originTxHash?: string;
   msgId?: string;
   timestamp: number;
+  signingMessage?: SigningMessageContext;
+  providerExplorerLink?: string;
 }

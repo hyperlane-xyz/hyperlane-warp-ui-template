@@ -156,7 +156,6 @@ async function executeTransfer({
 
     const hashes: string[] = [];
     let txReceipt: TypedTransactionReceipt | undefined = undefined;
-<<<<<<< HEAD
 
     if (txs.length > 1 && txs.every((tx) => tx.type === ProviderType.Starknet)) {
       updateTransferStatus(
@@ -165,13 +164,6 @@ async function executeTransfer({
       );
       const { hash, confirm } = await sendMultiTransaction({
         txs,
-=======
-    for (const tx of txs) {
-      updateTransferStatus(transferIndex, (transferStatus = txCategoryToStatuses[tx.category][0]));
-      console.log('tx', tx);
-      const { hash, confirm } = await sendTransaction({
-        tx,
->>>>>>> feat/starknet-wallet-enabled-ui-state
         chainName: origin,
         activeChainName: activeChain.chainName,
       });

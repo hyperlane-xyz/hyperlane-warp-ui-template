@@ -215,7 +215,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'wfragBTC/fragmetric',
 
   // ES routes
-  'ES/eclipsemainnet-ethereum',
+  'ES/eclipse',
 
   // apechain batch
   'PEPE/apechain-arbitrum',

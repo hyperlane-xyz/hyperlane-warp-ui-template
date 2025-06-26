@@ -40,6 +40,7 @@ export function StarknetWalletContext({ children }: PropsWithChildren<unknown>) 
       provider={publicProvider()}
       connectors={connectors}
       explorer={voyager}
+      autoConnect
     >
       {children}
     </StarknetConfig>

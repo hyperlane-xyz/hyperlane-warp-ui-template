@@ -35,8 +35,15 @@ export function assembleTokensBySymbolChainMap(
   }, {});
 }
 
-export function isValidMultiCollateralToken(originToken: Token, destination: ChainName | IToken) {
-  if (!originToken.collateralAddressOrDenom || !originToken.isCollateralized()) return false;
+export function isValidMultiCollateralToken(
+  originToken: Token | IToken,
+  destination: ChainName | IToken,
+) {
+  if (
+    !originToken.collateralAddressOrDenom ||
+    !TOKEN_COLLATERALIZED_STANDARDS.includes(originToken.standard)
+  )
+    return false;
 
   const destinationToken =
     typeof destination === 'string'

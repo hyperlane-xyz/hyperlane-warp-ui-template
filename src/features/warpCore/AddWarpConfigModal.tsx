@@ -1,4 +1,4 @@
-import { warpRouteConfigToId } from '@hyperlane-xyz/registry';
+import { BaseRegistry } from '@hyperlane-xyz/registry';
 import { MultiProtocolProvider, WarpCoreConfig, WarpCoreConfigSchema } from '@hyperlane-xyz/sdk';
 import { failure, Result, success, tryParseJsonOrYaml } from '@hyperlane-xyz/utils';
 import { Button, CopyButton, IconButton, Modal, PlusIcon, XIcon } from '@hyperlane-xyz/widgets';
@@ -110,7 +110,7 @@ function ConfigList({
     <div className="mt-2 flex w-full flex-col gap-2 border-t pt-3">
       {warpCoreConfigOverrides.map((config, i) => (
         <div key={i} className="flex items-center justify-between gap-1">
-          <span className="truncate text-xs">{warpRouteConfigToId(config)}</span>
+          <span className="truncate text-xs">{BaseRegistry.warpRouteConfigToId(config)}</span>
           <IconButton onClick={() => onRemove(i)} title="Remove config">
             <XIcon width={10} height={10} color={Color.gray['800']} />
           </IconButton>

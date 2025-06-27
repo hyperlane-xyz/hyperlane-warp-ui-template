@@ -44,7 +44,6 @@ export const warpRouteWhitelist: Array<string> | null = [
   'USDC/solanamainnet-sonicsvm',
   'USDC/arbitrum-base-ethereum-ink-optimism-solanamainnet-superseed',
   'USDC/base-ethereum-solanamainnet-subtensor',
-  'USDC/mainnet-cctp',
   'USDC/lumia',
 
   // USDT routes

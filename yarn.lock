@@ -2658,7 +2658,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@cosmjs/cosmwasm-stargate@npm:^0.32.3, @cosmjs/cosmwasm-stargate@npm:^0.32.4":
+"@cosmjs/cosmwasm-stargate@npm:0.32.4":
   version: 0.32.4
   resolution: "@cosmjs/cosmwasm-stargate@npm:0.32.4"
   dependencies:
@@ -2673,6 +2673,24 @@ __metadata:
     cosmjs-types: "npm:^0.9.0"
     pako: "npm:^2.0.2"
   checksum: 10/d3c0f771409dc7079864e3357f9999cc85e2a2af825075910bb52d643024363ecbe19f516634fc9b8e3fac7a94e68eb96b32c362d000ff30369e7442778cc2d4
+  languageName: node
+  linkType: hard
+
+"@cosmjs/cosmwasm-stargate@patch:@cosmjs/cosmwasm-stargate@npm%3A0.32.4#~/.yarn/patches/@cosmjs-cosmwasm-stargate-npm-0.32.4-f9dd51429c.patch":
+  version: 0.32.4
+  resolution: "@cosmjs/cosmwasm-stargate@patch:@cosmjs/cosmwasm-stargate@npm%3A0.32.4#~/.yarn/patches/@cosmjs-cosmwasm-stargate-npm-0.32.4-f9dd51429c.patch::version=0.32.4&hash=b0e272"
+  dependencies:
+    "@cosmjs/amino": "npm:^0.32.4"
+    "@cosmjs/crypto": "npm:^0.32.4"
+    "@cosmjs/encoding": "npm:^0.32.4"
+    "@cosmjs/math": "npm:^0.32.4"
+    "@cosmjs/proto-signing": "npm:^0.32.4"
+    "@cosmjs/stargate": "npm:^0.32.4"
+    "@cosmjs/tendermint-rpc": "npm:^0.32.4"
+    "@cosmjs/utils": "npm:^0.32.4"
+    cosmjs-types: "npm:^0.9.0"
+    pako: "npm:^2.0.2"
+  checksum: 10/f2924d09d974665cda47f12029db6f834f0e46072db96396fb6405037805dd2b7de81ee80cb86ad8a2677de87faa306d61d5716ffca0c93db73aa22014ef9c91
   languageName: node
   linkType: hard
 
@@ -4759,7 +4777,7 @@ __metadata:
   dependencies:
     "@chakra-ui/next-js": "npm:^2.4.2"
     "@chakra-ui/react": "npm:^2.8.2"
-    "@cosmjs/cosmwasm-stargate": "npm:^0.32.4"
+    "@cosmjs/cosmwasm-stargate": "patch:@cosmjs/cosmwasm-stargate@npm%3A0.32.4#~/.yarn/patches/@cosmjs-cosmwasm-stargate-npm-0.32.4-f9dd51429c.patch"
     "@cosmjs/stargate": "npm:^0.32.4"
     "@cosmos-kit/core": "npm:^2.13.1"
     "@cosmos-kit/cosmostation": "npm:^2.11.2"

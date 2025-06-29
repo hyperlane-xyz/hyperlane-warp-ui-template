@@ -16,7 +16,12 @@ import { logger } from '../utils/logger';
 import { assembleChainMetadata } from './chains/metadata';
 import { TokenChainMap } from './tokens/types';
 import { assembleTokensBySymbolChainMap } from './tokens/utils';
-import { FinalTransferStatuses, TransferContext, TransferStatus } from './transfer/types';
+import {
+  FinalTransferStatuses,
+  SigningMessageContext,
+  TransferContext,
+  TransferStatus,
+} from './transfer/types';
 import { assembleWarpCoreConfig } from './warpCore/warpCoreConfig';
 
 // Increment this when persist state has breaking changes
@@ -54,7 +59,12 @@ export interface AppState {
   updateTransferStatus: (
     i: number,
     s: TransferStatus,
-    options?: { msgId?: string; originTxHash?: string },
+    options?: {
+      msgId?: string;
+      originTxHash?: string;
+      signingMessage?: SigningMessageContext;
+      providerExplorerLink?: string;
+    },
   ) => void;
   failUnconfirmedTransfers: () => void;
 
@@ -142,6 +152,8 @@ export const useStore = create<AppState>()(
           txs[i].status = s;
           txs[i].msgId ||= options?.msgId;
           txs[i].originTxHash ||= options?.originTxHash;
+          txs[i].signingMessage = options?.signingMessage;
+          txs[i].providerExplorerLink ||= options?.providerExplorerLink;
           return {
             transfers: txs,
           };

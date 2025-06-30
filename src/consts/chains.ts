@@ -1,4 +1,5 @@
 import {
+  botanix,
   eclipsemainnet,
   eclipsemainnetAddresses,
   solanamainnet,
@@ -8,7 +9,7 @@ import {
   soon,
   soonAddresses,
 } from '@hyperlane-xyz/registry';
-import { ChainMap, ChainMetadata } from '@hyperlane-xyz/sdk';
+import { ChainDisabledReason, ChainMap, ChainMetadata, ChainStatus } from '@hyperlane-xyz/sdk';
 
 // A map of chain names to ChainMetadata
 // Chains can be defined here, in chains.json, or in chains.yaml
@@ -31,6 +32,13 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
   sonicsvm: {
     ...sonicsvm,
     mailbox: sonicsvmAddresses.mailbox,
+  },
+  botanix: {
+    ...botanix,
+    availability: {
+      status: ChainStatus.Disabled,
+      reasons: [ChainDisabledReason.Unavailable],
+    },
   },
   // mycustomchain: {
   //   protocol: ProtocolType.Ethereum,

@@ -32,7 +32,6 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
     ...sonicsvm,
     mailbox: sonicsvmAddresses.mailbox,
   },
-
   // mycustomchain: {
   //   protocol: ProtocolType.Ethereum,
   //   chainId: 123123,

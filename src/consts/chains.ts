@@ -1,4 +1,5 @@
 import {
+  botanix,
   eclipsemainnet,
   eclipsemainnetAddresses,
   solanamainnet,
@@ -7,8 +8,15 @@ import {
   sonicsvmAddresses,
   soon,
   soonAddresses,
+  treasure,
 } from '@hyperlane-xyz/registry';
-import { ChainMap, ChainMetadata, ExplorerFamily } from '@hyperlane-xyz/sdk';
+import {
+  ChainDisabledReason,
+  ChainMap,
+  ChainMetadata,
+  ChainStatus,
+  ExplorerFamily,
+} from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 
 // A map of chain names to ChainMetadata
@@ -85,6 +93,19 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
     logoURI: '/logos/celestia.svg',
     transactionOverrides: {
       gasPrice: 0.1,
+    },
+  },
+  botanix: {
+    ...botanix,
+    availability: {
+      status: ChainStatus.Disabled,
+      reasons: [ChainDisabledReason.Unavailable],
+    },
+  },
+  treasure: {
+    ...treasure,
+    availability: {
+      status: ChainStatus.Live,
     },
   },
 };

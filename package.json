@@ -108,7 +108,6 @@
     "lit-html": "2.8.0",
     "react-fast-compare": "^3.2",
     "viem": "^2.21.41",
-    "zustand": "^4.4",
-    "yaml": "2.4.5"
+    "zustand": "^4.4"
   }
 }

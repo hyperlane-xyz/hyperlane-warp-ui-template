@@ -8,7 +8,6 @@ import {
   sonicsvmAddresses,
   soon,
   soonAddresses,
-  treasure,
 } from '@hyperlane-xyz/registry';
 import {
   ChainDisabledReason,
@@ -100,12 +99,6 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
     availability: {
       status: ChainStatus.Disabled,
       reasons: [ChainDisabledReason.Unavailable],
-    },
-  },
-  treasure: {
-    ...treasure,
-    availability: {
-      status: ChainStatus.Live,
     },
   },
 };

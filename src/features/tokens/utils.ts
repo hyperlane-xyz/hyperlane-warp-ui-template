@@ -6,6 +6,7 @@ import {
   WarpCore,
 } from '@hyperlane-xyz/sdk';
 import { eqAddress, normalizeAddress } from '@hyperlane-xyz/utils';
+import { isChainDisabled } from '../chains/utils';
 import { MultiCollateralTokenMap, TokenChainMap, Tokens } from './types';
 
 // Map of token symbols and token chain map
@@ -28,6 +29,11 @@ export function assembleTokensBySymbolChainMap(
     }
     if (!acc[token.symbol].chains[token.chainName]) {
       const chainMetadata = multiProvider.tryGetChainMetadata(token.chainName);
+
+      // remove chain from map if it is disabled
+      const chainDisabled = isChainDisabled(chainMetadata);
+      if (chainDisabled) return acc;
+
       acc[token.symbol].chains[token.chainName] = { token, metadata: chainMetadata };
     }
 

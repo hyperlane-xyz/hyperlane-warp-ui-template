@@ -5,6 +5,7 @@ import { useMutation } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
+import { isMultiCollateralLimitExceeded } from '../limits/utils';
 import { useWarpCore } from '../tokens/hooks';
 
 interface FetchMaxParams {
@@ -39,6 +40,14 @@ async function fetchMaxAmount(
       sender: address,
       senderPubKey: await publicKey,
     });
+
+    const multiCollateralLimit = isMultiCollateralLimitExceeded(
+      maxAmount.token,
+      destination,
+      maxAmount.amount.toString(),
+    );
+    if (multiCollateralLimit) return new TokenAmount(multiCollateralLimit, maxAmount.token);
+
     return maxAmount;
   } catch (error) {
     logger.warn('Error fetching fee quotes for max amount', error);

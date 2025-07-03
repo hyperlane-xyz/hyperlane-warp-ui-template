@@ -273,4 +273,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // H
   'H/humanity',
+
+  // RCADE route
+  'RCADE/arbitrum-bsc',
 ];

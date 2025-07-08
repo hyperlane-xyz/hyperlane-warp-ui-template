@@ -4,6 +4,8 @@ import {
   eclipsemainnetAddresses,
   solanamainnet,
   solanamainnetAddresses,
+  solaxy,
+  solaxyAddresses,
   sonicsvm,
   sonicsvmAddresses,
   soon,
@@ -39,6 +41,10 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
   sonicsvm: {
     ...sonicsvm,
     mailbox: sonicsvmAddresses.mailbox,
+  },
+  solaxy: {
+    ...solaxy,
+    mailbox: solaxyAddresses.mailbox,
   },
   // mycustomchain: {
   //   protocol: ProtocolType.Ethereum,

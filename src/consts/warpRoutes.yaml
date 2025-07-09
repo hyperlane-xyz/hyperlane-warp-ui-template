@@ -2,22 +2,5 @@
 # These configs will be merged with the warp routes in the configured registry
 # The input here is typically the output of the Hyperlane CLI warp deploy command
 ---
-tokens:
-  - addressOrDenom: "0x1E6865d2c2092745454D97F1f9499B256f3b54Ae"
-    chainName: holesky
-    collateralAddressOrDenom: "0xab40Ae82E39204dcf5E915cB4a84779b13e02B3A"
-    connections:
-      - token: ethereum|seaseedalpha|0xA2134670cD0548Ef644073fd9d34F53cEc03fCEF
-    decimals: 18
-    name: Test USDT
-    standard: EvmHypCollateral
-    symbol: TUSDT
-  - addressOrDenom: "0xA2134670cD0548Ef644073fd9d34F53cEc03fCEF"
-    chainName: seaseedalpha
-    connections:
-      - token: ethereum|holesky|0x1E6865d2c2092745454D97F1f9499B256f3b54Ae
-    decimals: 18
-    name: Test USDT
-    standard: EvmHypSynthetic
-    symbol: TUSDT
+tokens: []
 options: {}

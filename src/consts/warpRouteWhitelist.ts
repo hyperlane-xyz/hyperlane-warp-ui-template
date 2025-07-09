@@ -276,4 +276,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // RCADE route
   'RCADE/arbitrum-bsc',
+
+  // SEDA
+  'SEDA/base-ethereum',
 ];

@@ -16,6 +16,8 @@ export function StarknetWalletContext({ children }: PropsWithChildren<unknown>) 
     () => [
       new InjectedConnector({ options: { id: 'braavos', name: 'Braavos' } }),
       new InjectedConnector({ options: { id: 'argentX', name: 'Argent X' } }),
+      new InjectedConnector({ options: { id: 'keplr', name: 'Keplr' } }),
+      new InjectedConnector({ options: { id: 'metamask', name: 'MetaMask Snap' } }),
     ],
     [],
   );

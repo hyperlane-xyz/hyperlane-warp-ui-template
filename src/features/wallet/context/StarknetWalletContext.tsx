@@ -13,9 +13,7 @@ export function StarknetWalletContext({ children }: PropsWithChildren<unknown>) 
   const multiProvider = useMultiProvider();
   const chainsFromRegistry = getStarknetChains(multiProvider);
   const connectors = useMemo(
-    () => [
-      new InjectedConnector({ options: { id: 'argentX', name: 'Argent X' } }),
-    ],
+    () => [new InjectedConnector({ options: { id: 'argentX', name: 'Argent X' } })],
     [],
   );
 

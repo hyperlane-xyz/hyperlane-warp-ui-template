@@ -55,7 +55,7 @@ import {
   useWarpCore,
 } from '../tokens/hooks';
 import { getTokensWithSameCollateralAddresses, isValidMultiCollateralToken } from '../tokens/utils';
-import { WalletConnectionWarning } from '../wallet/WalletconnectionWarning';
+import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { RecipientConfirmationModal } from './RecipientConfirmationModal';
 import { useFetchMaxAmount } from './maxAmount';
 import { TransferFormValues } from './types';

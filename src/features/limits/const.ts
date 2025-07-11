@@ -2,8 +2,8 @@ import { RouteLimit } from './types';
 
 export const multiCollateralTokenLimits: RouteLimit[] = [
   {
-    amountWei: 5000000000n, // 5000 USDC
-    chains: ['arbitrum', 'base', 'ethereum', 'optimism'],
+    amountWei: 10000000000n, // 10000 USDC
+    chains: ['arbitrum', 'base', 'ethereum', 'optimism', 'solanamainnet'],
     symbol: 'USDC',
   },
 ];

@@ -4820,7 +4820,7 @@ __metadata:
     react: "npm:^18.3.1"
     react-dom: "npm:^18.3.1"
     react-toastify: "npm:^10.0.6"
-    starknetkit: "npm:2.6.1"
+    starknetkit: "patch:starknetkit@npm%3A2.6.1#~/.yarn/patches/starknetkit-npm-2.6.1-61cd76646d.patch"
     tailwindcss: "npm:^3.4.15"
     ts-node: "npm:^10.9.2"
     typescript: "npm:5.6.3"
@@ -24612,6 +24612,29 @@ __metadata:
   peerDependencies:
     starknet: ^6.9.0
   checksum: 10/fa4302296999604134810f56951d3e016d6425dbbf1d08eea8cb2c16d4c64d62e240f874ea1418df3aa187fab02b32540b8c4b416f5334a711645da2dc59bb12
+  languageName: node
+  linkType: hard
+
+"starknetkit@patch:starknetkit@npm%3A2.6.1#~/.yarn/patches/starknetkit-npm-2.6.1-61cd76646d.patch":
+  version: 2.6.1
+  resolution: "starknetkit@patch:starknetkit@npm%3A2.6.1#~/.yarn/patches/starknetkit-npm-2.6.1-61cd76646d.patch::version=2.6.1&hash=c82884"
+  dependencies:
+    "@starknet-io/get-starknet": "npm:^4.0.4"
+    "@starknet-io/get-starknet-core": "npm:^4.0.4"
+    "@starknet-io/types-js": "npm:^0.7.7"
+    "@trpc/client": "npm:^10.38.1"
+    "@trpc/server": "npm:^10.38.1"
+    "@walletconnect/sign-client": "npm:^2.11.0"
+    bowser: "npm:^2.11.0"
+    detect-browser: "npm:^5.3.0"
+    eventemitter3: "npm:^5.0.1"
+    events: "npm:^3.3.0"
+    lodash-es: "npm:^4.17.21"
+    svelte-forms: "npm:^2.3.1"
+    trpc-browser: "npm:^1.3.2"
+  peerDependencies:
+    starknet: ^6.9.0
+  checksum: 10/f6ab123907deefee9e1571d0f401316f1e049dc0520d54986159ad831178e6aeed0914e07f6bfc85b67eb3d2d716ce3ef635995193bfb673334f2d76f5821f80
   languageName: node
   linkType: hard
 

@@ -57,7 +57,7 @@ import {
   useWarpCore,
 } from '../tokens/hooks';
 import { getTokensWithSameCollateralAddresses, isValidMultiCollateralToken } from '../tokens/utils';
-import { CcipTransferWarning } from './CcipTransferWarning';
+import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { RecipientConfirmationModal } from './RecipientConfirmationModal';
 import { useFetchMaxAmount } from './maxAmount';
 import { TransferFormValues } from './types';
@@ -579,12 +579,7 @@ function WarningBanners() {
     <div className="max-h-10">
       <ChainWalletWarning origin={values.origin} />
       <ChainConnectionWarning origin={values.origin} destination={values.destination} />
-      <CcipTransferWarning
-        amount={values.amount}
-        origin={values.origin}
-        destination={values.destination}
-        tokenIndex={values.tokenIndex}
-      />
+      <WalletConnectionWarning origin={values.origin} />
     </div>
   );
 }

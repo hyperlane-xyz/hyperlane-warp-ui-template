@@ -1,5 +1,12 @@
-import { TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
-import { ProtocolType, errorToString, isNullish, objKeys, toWei } from '@hyperlane-xyz/utils';
+import { IToken, Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
+import {
+  ProtocolType,
+  errorToString,
+  fromWei,
+  isNullish,
+  objKeys,
+  toWei,
+} from '@hyperlane-xyz/utils';
 import {
   AccountInfo,
   ChevronIcon,
@@ -31,6 +38,7 @@ import { ChainSelectField } from '../chains/ChainSelectField';
 import { ChainWalletWarning } from '../chains/ChainWalletWarning';
 import { useChainDisplayName, useMultiProvider } from '../chains/hooks';
 import { tryGetValidChainName } from '../chains/utils';
+import { isMultiCollateralLimitExceeded } from '../limits/utils';
 import { useIsAccountSanctioned } from '../sanctions/hooks/useIsAccountSanctioned';
 import { useStore } from '../store';
 import { SelectOrInputTokenIds } from '../tokens/SelectOrInputTokenIds';
@@ -42,12 +50,14 @@ import {
   useOriginBalance,
 } from '../tokens/balances';
 import {
+  getIndexForToken,
   getInitialTokenIndex,
   getTokenByIndex,
   getTokenIndexFromChains,
   useWarpCore,
 } from '../tokens/hooks';
-import { CcipTransferWarning } from './CcipTransferWarning';
+import { getTokensWithSameCollateralAddresses, isValidMultiCollateralToken } from '../tokens/utils';
+import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { RecipientConfirmationModal } from './RecipientConfirmationModal';
 import { useFetchMaxAmount } from './maxAmount';
 import { TransferFormValues } from './types';
@@ -72,6 +82,9 @@ export function TransferTokenForm() {
   const [isReview, setIsReview] = useState(false);
   // Flag for check current type of token
   const [isNft, setIsNft] = useState(false);
+  // This state is used for when the formik token is different from
+  // the token with highest collateral in a multi-collateral token setup
+  const [routeOverrideToken, setRouteTokenOverride] = useState<Token | null>(null);
   // Modal for confirming address
   const {
     open: openConfirmationModal,
@@ -79,8 +92,19 @@ export function TransferTokenForm() {
     isOpen: isConfirmationModalOpen,
   } = useModal();
 
-  const validate = (values: TransferFormValues) =>
-    validateForm(warpCore, values, accounts, routerAddressesByChainMap);
+  const validate = async (values: TransferFormValues) => {
+    const [result, overrideToken] = await validateForm(
+      warpCore,
+      values,
+      accounts,
+      routerAddressesByChainMap,
+    );
+
+    // Unless this is done, the review and the transfer would contain
+    // the selected token rather than collateral with highest balance
+    setRouteTokenOverride(overrideToken);
+    return result;
+  };
 
   const onSubmitForm = async (values: TransferFormValues) => {
     logger.debug('Checking destination native balance for:', values.destination, values.recipient);
@@ -119,11 +143,14 @@ export function TransferTokenForm() {
                 <AmountSection isNft={isNft} isReview={isReview} />
               </div>
               <RecipientSection isReview={isReview} />
-              <ReviewDetails visible={isReview} />
+              <ReviewDetails visible={isReview} routeOverrideToken={routeOverrideToken} />
               <ButtonSection
                 isReview={isReview}
                 isValidating={isValidating}
                 setIsReview={setIsReview}
+                cleanOverrideToken={() => setRouteTokenOverride(null)}
+                routeOverrideToken={routeOverrideToken}
+                warpCore={warpCore}
               />
               <RecipientConfirmationModal
                 isOpen={isConfirmationModalOpen}
@@ -310,10 +337,16 @@ function ButtonSection({
   isReview,
   isValidating,
   setIsReview,
+  cleanOverrideToken,
+  routeOverrideToken,
+  warpCore,
 }: {
   isReview: boolean;
   isValidating: boolean;
   setIsReview: (b: boolean) => void;
+  cleanOverrideToken: () => void;
+  routeOverrideToken: Token | null;
+  warpCore: WarpCore;
 }) {
   const { values } = useFormikContext<TransferFormValues>();
   const chainDisplayName = useChainDisplayName(values.destination);
@@ -323,6 +356,7 @@ function ButtonSection({
   const onDoneTransactions = () => {
     setIsReview(false);
     setTransferLoading(false);
+    cleanOverrideToken();
     // resetForm();
   };
   const { triggerTransactions } = useTokenTransfer(onDoneTransactions);
@@ -337,9 +371,20 @@ function ButtonSection({
     }
     setIsReview(false);
     setTransferLoading(true);
-    await triggerTransactions(values);
+    let tokenIndex = values.tokenIndex;
+    let origin = values.origin;
+
+    if (routeOverrideToken) {
+      tokenIndex = getIndexForToken(warpCore, routeOverrideToken);
+      origin = routeOverrideToken.chainName;
+    }
+    await triggerTransactions({ ...values, tokenIndex, origin });
   };
 
+  const onEdit = () => {
+    setIsReview(false);
+    cleanOverrideToken();
+  };
   if (!isReview) {
     return (
       <ConnectAwareSubmitButton
@@ -355,7 +400,7 @@ function ButtonSection({
       <SolidButton
         type="button"
         color="primary"
-        onClick={() => setIsReview(false)}
+        onClick={onEdit}
         className="px-6 py-1.5"
         icon={<ChevronIcon direction="w" width={10} height={6} color={Color.white} />}
       >
@@ -432,11 +477,17 @@ function SelfButton({ disabled }: { disabled?: boolean }) {
   );
 }
 
-function ReviewDetails({ visible }: { visible: boolean }) {
+function ReviewDetails({
+  visible,
+  routeOverrideToken,
+}: {
+  visible: boolean;
+  routeOverrideToken: Token | null;
+}) {
   const { values } = useFormikContext<TransferFormValues>();
   const { amount, destination, tokenIndex } = values;
   const warpCore = useWarpCore();
-  const originToken = getTokenByIndex(warpCore, tokenIndex);
+  const originToken = routeOverrideToken || getTokenByIndex(warpCore, tokenIndex);
   const originTokenSymbol = originToken?.symbol || '';
   const connection = originToken?.getConnectionForChain(destination);
   const destinationToken = connection?.token;
@@ -528,12 +579,7 @@ function WarningBanners() {
     <div className="max-h-10">
       <ChainWalletWarning origin={values.origin} />
       <ChainConnectionWarning origin={values.origin} destination={values.destination} />
-      <CcipTransferWarning
-        amount={values.amount}
-        origin={values.origin}
-        destination={values.destination}
-        tokenIndex={values.tokenIndex}
-      />
+      <WalletConnectionWarning origin={values.origin} />
     </div>
   );
 }
@@ -588,33 +634,55 @@ async function validateForm(
   values: TransferFormValues,
   accounts: Record<ProtocolType, AccountInfo>,
   routerAddressesByChainMap: Record<ChainName, Set<string>>,
-) {
+): Promise<[Record<string, string> | null, Token | null]> {
+  // returns a tuple, where first value is validation result
+  // and second value is token override
   try {
     const { origin, destination, tokenIndex, amount, recipient } = values;
     const token = getTokenByIndex(warpCore, tokenIndex);
-    if (!token) return { token: 'Token is required' };
-    const amountWei = toWei(amount, token.decimals);
+    if (!token) return [{ token: 'Token is required' }, null];
+    const destinationToken = token.getConnectionForChain(destination)?.token;
+    if (!destinationToken) return [{ token: 'Token is required' }, null];
+
+    if (
+      objKeys(routerAddressesByChainMap).includes(destination) &&
+      routerAddressesByChainMap[destination].has(recipient)
+    ) {
+      return [{ recipient: 'Warp Route address is not valid as recipient' }, null];
+    }
+
+    const transferToken = await getTransferToken(warpCore, token, destinationToken);
+    const amountWei = toWei(amount, transferToken.decimals);
+    const multiCollateralLimit = isMultiCollateralLimitExceeded(token, destination, amountWei);
+
+    if (multiCollateralLimit) {
+      return [
+        {
+          amount: `Transfer limit is ${fromWei(multiCollateralLimit.toString(), token.decimals)} ${token.symbol}`,
+        },
+        null,
+      ];
+    }
+
     const { address, publicKey: senderPubKey } = getAccountAddressAndPubKey(
       warpCore.multiProvider,
       origin,
       accounts,
     );
 
-    if (
-      objKeys(routerAddressesByChainMap).includes(destination) &&
-      routerAddressesByChainMap[destination].has(recipient)
-    ) {
-      return { recipient: 'Warp Route address is not valid as recipient' };
-    }
-
     const result = await warpCore.validateTransfer({
-      originTokenAmount: token.amount(amountWei),
+      originTokenAmount: transferToken.amount(amountWei),
       destination,
       recipient,
       sender: address || '',
       senderPubKey: await senderPubKey,
     });
-    return result;
+
+    if (!isNullish(result)) return [result, null];
+
+    if (transferToken.addressOrDenom === token.addressOrDenom) return [null, null];
+
+    return [null, transferToken];
   } catch (error: any) {
     logger.error('Error validating form', error);
     let errorMsg = errorToString(error, 40);
@@ -622,6 +690,57 @@ async function validateForm(
     if (insufficientFundsErrMsg.test(fullError) || emptyAccountErrMsg.test(fullError)) {
       errorMsg = 'Insufficient funds for gas fees';
     }
-    return { form: errorMsg };
+    return [{ form: errorMsg }, null];
   }
+}
+
+// Checks if a token is a multi-collateral token and if so
+// look for other tokens that are the same and returns
+// the one with the highest collateral in the destination
+async function getTransferToken(warpCore: WarpCore, originToken: Token, destinationToken: IToken) {
+  if (!isValidMultiCollateralToken(originToken, destinationToken)) return originToken;
+
+  const tokensWithSameCollateralAddresses = getTokensWithSameCollateralAddresses(
+    warpCore,
+    originToken,
+    destinationToken,
+  );
+
+  // if only one token exists then just return that one
+  if (tokensWithSameCollateralAddresses.length <= 1) return originToken;
+
+  logger.debug(
+    'Multiple multi-collateral tokens found for same collateral address, retrieving balances...',
+  );
+  const tokenBalances: Array<{ token: Token; balance: bigint }> = [];
+
+  // fetch each destination token balance
+  const balanceResults = await Promise.allSettled(
+    tokensWithSameCollateralAddresses.map(async ({ originToken, destinationToken }) => {
+      try {
+        const balance = await warpCore.getTokenCollateral(destinationToken);
+        return { token: originToken, balance };
+      } catch {
+        return null;
+      }
+    }),
+  );
+
+  for (const result of balanceResults) {
+    if (result.status === 'fulfilled' && result.value) {
+      tokenBalances.push(result.value);
+    }
+  }
+
+  if (!tokenBalances.length) return originToken;
+
+  // sort by balance to return the highest one
+  tokenBalances.sort((a, b) => {
+    if (a.balance > b.balance) return -1;
+    else if (a.balance < b.balance) return 1;
+    else return 0;
+  });
+
+  logger.debug('Found route with higher collateral in destination, switching route...');
+  return tokenBalances[0].token;
 }

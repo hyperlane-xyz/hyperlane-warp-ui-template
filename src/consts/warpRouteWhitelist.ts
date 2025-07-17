@@ -290,4 +290,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // VRA route
   'VRA/bsc-ethereum',
+
+  // PUMP routes
+  'PUMP/eclipsemainnet',
 ];

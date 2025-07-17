@@ -35,3 +35,35 @@ seaseedtest:
     name: Seaseed Token
     symbol: SEA
     decimals: 18
+arbitrumsepolia:
+  blockExplorers:
+    - apiKey: QAI5SWBNHJSFAN6KMS9RC5JGFKV2IYD2Z5
+      apiUrl: https://api-sepolia.arbiscan.io/api
+      family: etherscan
+      name: Arbiscan
+      url: https://sepolia.arbiscan.io
+  blocks:
+    confirmations: 1
+    estimateBlockTime: 3
+    reorgPeriod: 0
+  chainId: 421614
+  deployer:
+    name: Abacus Works
+    url: https://www.hyperlane.xyz
+  displayName: Arbitrum Sepolia
+  domainId: 421614
+  gasCurrencyCoinGeckoId: ethereum
+  index:
+    from: 49690504 # Index of Mailbox deployment, nitro specific
+  isTestnet: true
+  name: arbitrumsepolia
+  nativeToken:
+    decimals: 18
+    name: Ether
+    symbol: ETH
+  protocol: ethereum
+  rpcUrls:
+    - http: https://arbitrum-sepolia.drpc.org
+    - http: https://arbitrum-sepolia.gateway.tenderly.co
+    - http: https://sepolia-rollup.arbitrum.io/rpc
+  technicalStack: arbitrumnitro

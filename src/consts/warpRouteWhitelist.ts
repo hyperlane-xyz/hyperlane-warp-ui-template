@@ -287,4 +287,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // SEDA
   'SEDA/base-ethereum',
+
+  // VRA route
+  'VRA/bsc-ethereum',
 ];

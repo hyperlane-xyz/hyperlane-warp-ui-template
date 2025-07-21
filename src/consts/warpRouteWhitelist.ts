@@ -293,4 +293,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // PUMP routes
   'PUMP/eclipsemainnet',
+
+  // Matchain
+  'USDC/matchain',
 ];

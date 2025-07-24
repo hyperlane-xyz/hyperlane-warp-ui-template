@@ -18,12 +18,14 @@
     "@emotion/styled": "^11.13.0",
     "@headlessui/react": "^2.2.0",
     "@hyperlane-xyz/registry": "18.0.0",
-    "@hyperlane-xyz/sdk": "14.0.0",
-    "@hyperlane-xyz/utils": "14.0.0",
-    "@hyperlane-xyz/widgets": "14.0.0",
+    "@hyperlane-xyz/sdk": "file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/sdk",
+    "@hyperlane-xyz/utils": "file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/utils",
+    "@hyperlane-xyz/widgets": "file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/widgets",
     "@interchain-ui/react": "^1.23.28",
     "@metamask/post-message-stream": "6.1.2",
     "@metamask/providers": "10.2.1",
+    "@radixdlt/babylon-gateway-api-sdk": "^1.10.1",
+    "@radixdlt/radix-dapp-toolkit": "^2.2.1",
     "@rainbow-me/rainbowkit": "^2.2.0",
     "@sentry/nextjs": "^8.38.0",
     "@solana/spl-token": "^0.4.9",
@@ -108,6 +110,10 @@
     "lit-html": "2.8.0",
     "react-fast-compare": "^3.2",
     "viem": "^2.21.41",
-    "zustand": "^4.4"
+    "zustand": "^4.4",
+    "@hyperlane-xyz/sdk": "file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/sdk",
+    "@hyperlane-xyz/utils": "file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/utils",
+    "@hyperlane-xyz/widgets": "file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/widgets",
+    "@hyperlane-xyz/radix-sdk": "file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/radix-sdk"
   }
 }

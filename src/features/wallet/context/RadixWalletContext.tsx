@@ -11,7 +11,7 @@ import { PropsWithChildren } from 'react';
 
 export function RadixWalletContext({ children }: PropsWithChildren<unknown>) {
   const rdt = RadixDappToolkit({
-    networkId: RadixNetwork.Mainnet,
+    networkId: RadixNetwork.Stokenet,
     applicationVersion: '1.0.0',
     applicationName: 'Radix Web3 dApp',
     applicationDappDefinitionAddress:

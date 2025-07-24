@@ -17,7 +17,7 @@
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
     "@headlessui/react": "^2.2.0",
-    "@hyperlane-xyz/registry": "18.0.0",
+    "@hyperlane-xyz/registry": "20.0.0",
     "@hyperlane-xyz/sdk": "file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/sdk",
     "@hyperlane-xyz/utils": "file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/utils",
     "@hyperlane-xyz/widgets": "file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/widgets",
@@ -49,7 +49,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-toastify": "^10.0.6",
-    "starknetkit": "2.6.1",
+    "starknetkit": "patch:starknetkit@npm%3A2.6.1#~/.yarn/patches/starknetkit-npm-2.6.1-61cd76646d.patch",
     "viem": "^2.21.41",
     "wagmi": "^2.12.26",
     "zod": "3.21.4",
@@ -114,6 +114,7 @@
     "@hyperlane-xyz/sdk": "file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/sdk",
     "@hyperlane-xyz/utils": "file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/utils",
     "@hyperlane-xyz/widgets": "file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/widgets",
-    "@hyperlane-xyz/radix-sdk": "file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/radix-sdk"
+    "@hyperlane-xyz/radix-sdk": "file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/radix-sdk",
+    "starknetkit@npm:2.6.1": "patch:starknetkit@npm%3A2.6.1#~/.yarn/patches/starknetkit-npm-2.6.1-61cd76646d.patch"
   }
 }

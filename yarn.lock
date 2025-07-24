@@ -4639,85 +4639,84 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/core@npm:8.1.2":
-  version: 8.1.2
-  resolution: "@hyperlane-xyz/core@npm:8.1.2"
+"@hyperlane-xyz/core@npm:9.0.2":
+  version: 9.0.2
+  resolution: "@hyperlane-xyz/core@npm:9.0.2"
   dependencies:
     "@arbitrum/nitro-contracts": "npm:^1.2.1"
     "@chainlink/contracts-ccip": "npm:^1.5.0"
     "@eth-optimism/contracts": "npm:^0.6.0"
-    "@hyperlane-xyz/utils": "npm:14.3.0"
-    "@layerzerolabs/lz-evm-oapp-v2": "npm:2.0.2"
+    "@hyperlane-xyz/utils": "npm:16.0.0"
     "@matterlabs/hardhat-zksync-solc": "npm:1.2.5"
     "@matterlabs/hardhat-zksync-verify": "npm:1.7.1"
     "@openzeppelin/contracts": "npm:^4.9.3"
     "@openzeppelin/contracts-upgradeable": "npm:^4.9.3"
-    fx-portal: "npm:^1.0.3"
   peerDependencies:
     "@ethersproject/abi": "*"
     "@ethersproject/providers": "*"
     "@types/sinon-chai": "*"
-  checksum: 10/2c67536f7132a211c095c30e9bf76654f135727cbfe1fbb06c8340c31a3c9293bb1386dc1bcc8e106dcf625a4fb8b0e2af268aa490c2043bdf1d6e178080a80c
+  checksum: 10/ea8ac54c02b787ea3bbe36e19dba37ac5f4999c7ef3bd04ee2259c7b479d4792451cac521c383d1097dcde115c30c8e1c48513d90975cfe8c31d1e0ed6d33fc6
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/cosmos-sdk@npm:14.3.0":
-  version: 14.3.0
-  resolution: "@hyperlane-xyz/cosmos-sdk@npm:14.3.0"
+"@hyperlane-xyz/cosmos-sdk@npm:16.0.0":
+  version: 16.0.0
+  resolution: "@hyperlane-xyz/cosmos-sdk@npm:16.0.0"
   dependencies:
     "@cosmjs/stargate": "npm:^0.32.4"
-    "@hyperlane-xyz/cosmos-types": "npm:14.3.0"
-  checksum: 10/dfc9221b752dc9ae1da56258b3841bd61be08c3ba54f42e1329e7b9814bcf44ba0836f1497a947690cccf2cb7c532db595682e89512322b916919acf92704e28
+    "@hyperlane-xyz/cosmos-types": "npm:16.0.0"
+  checksum: 10/89d6c6f2362614385de4d3fac1bdc904bfea4d16af09bc127e365984b20d35941d686965284bc15a68b654daceeecc424ce50b198e67877b07c7d3fa27ec3714
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/cosmos-types@npm:14.3.0":
-  version: 14.3.0
-  resolution: "@hyperlane-xyz/cosmos-types@npm:14.3.0"
+"@hyperlane-xyz/cosmos-types@npm:16.0.0":
+  version: 16.0.0
+  resolution: "@hyperlane-xyz/cosmos-types@npm:16.0.0"
   dependencies:
     long: "npm:^5.2.4"
     protobufjs: "npm:^7.4.0"
-  checksum: 10/7b8566ad05e357110edfeb03a9914130dbb270a05195b18b82f1d5d728cf77e763b4b47fe32ee934a40aaa2c4650e327ebb4380edc4ac80b5c95c55553ea110a
+  checksum: 10/40fe77d8bcda0e90a26881fb13d4e4f4408314f0e0b76e368229dd93d4cdc2e1d756bea21af9585b20b37444f41f67aa78e0507d553fdeb54caf2ca8a4863fda
   languageName: node
   linkType: hard
 
 "@hyperlane-xyz/radix-sdk@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/radix-sdk::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
   version: 1.0.0
-  resolution: "@hyperlane-xyz/radix-sdk@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/radix-sdk#/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/radix-sdk::hash=58349b&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
+  resolution: "@hyperlane-xyz/radix-sdk@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/radix-sdk#/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/radix-sdk::hash=cb91f3&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
   dependencies:
     "@hyperlane-xyz/utils": "npm:14.1.0"
     "@radixdlt/babylon-core-api-sdk": "npm:^1.3.0"
     "@radixdlt/babylon-gateway-api-sdk": "npm:^1.10.1"
     "@radixdlt/radix-engine-toolkit": "npm:^1.0.5"
-  checksum: 10/097245592642679e2e4dac0c001d1f8d3c1a8e58e9f09d9dc83c9b885dd48d453d25e77dee6294cd530ee18e84476634a8608967bacabbbf7ec57cb34924d64c
+    bignumber.js: "npm:^9.3.1"
+  checksum: 10/d408428d1f17059d65f228c7a0df425118f53e76bac88a07dbff9cf12bc8b948eca8bcd67a3249bed440d8ff259b39d8c0fcada8b8a30650f632f8e62ba994c8
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/registry@npm:18.0.0":
-  version: 18.0.0
-  resolution: "@hyperlane-xyz/registry@npm:18.0.0"
+"@hyperlane-xyz/registry@npm:20.0.0":
+  version: 20.0.0
+  resolution: "@hyperlane-xyz/registry@npm:20.0.0"
   dependencies:
     jszip: "npm:^3.10.1"
     yaml: "npm:2.4.5"
     zod: "npm:^3.21.2"
-  checksum: 10/96573a0e59a300f4c38ff7ecb746e04ff766a1d15f06875cb2c4f3d29f85e8e6c12110e1a7550c6438c58913f44db84119068caf397e37e0bacb3f2df23fa5c5
+  checksum: 10/0eaa9accf96822d5d8c4df8476d1688a725ff967e3bcbac41c68c82392add1835d8f629a4e70f37b271b51666751e83f79f4557b8bd71b39b6c207a0148395f4
   languageName: node
   linkType: hard
 
 "@hyperlane-xyz/sdk@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/sdk::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
-  version: 14.3.0
-  resolution: "@hyperlane-xyz/sdk@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/sdk#/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/sdk::hash=f87cd3&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
+  version: 16.0.0
+  resolution: "@hyperlane-xyz/sdk@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/sdk#/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/sdk::hash=32b210&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
   dependencies:
     "@arbitrum/sdk": "npm:^4.0.0"
     "@aws-sdk/client-s3": "npm:^3.577.0"
     "@chain-registry/types": "npm:^0.50.122"
     "@cosmjs/cosmwasm-stargate": "npm:^0.32.4"
     "@cosmjs/stargate": "npm:^0.32.4"
-    "@hyperlane-xyz/core": "npm:8.1.2"
-    "@hyperlane-xyz/cosmos-sdk": "npm:14.3.0"
+    "@hyperlane-xyz/core": "npm:9.0.2"
+    "@hyperlane-xyz/cosmos-sdk": "npm:16.0.0"
     "@hyperlane-xyz/radix-sdk": "npm:1.0.0"
-    "@hyperlane-xyz/starknet-core": "npm:14.3.0"
-    "@hyperlane-xyz/utils": "npm:14.3.0"
+    "@hyperlane-xyz/starknet-core": "npm:16.0.0"
+    "@hyperlane-xyz/utils": "npm:16.0.0"
     "@safe-global/api-kit": "npm:1.3.0"
     "@safe-global/protocol-kit": "npm:1.3.0"
     "@safe-global/safe-core-sdk-types": "npm:2.3.0"
@@ -4737,25 +4736,26 @@ __metadata:
   peerDependencies:
     "@ethersproject/abi": "*"
     "@ethersproject/providers": "*"
-  checksum: 10/85aba2ce00b105cbe0671f4d6e16b66786f9a2dd4dca1ff8fa1c364b49a17043b2e8eece1d515ab1626cf2305032c97f522b4e142cfa9712a12d3a20112ca17a
+  checksum: 10/b56052aee53d8e123b7f4955f9b8884b2bba9c7038518f21527485b0d64dc2145db333bf1854089b59657a5dbdd52b23143198a9b4a5cde446e2abbe7aa37948
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/starknet-core@npm:14.3.0":
-  version: 14.3.0
-  resolution: "@hyperlane-xyz/starknet-core@npm:14.3.0"
+"@hyperlane-xyz/starknet-core@npm:16.0.0":
+  version: 16.0.0
+  resolution: "@hyperlane-xyz/starknet-core@npm:16.0.0"
   dependencies:
     starknet: "npm:^7.4.0"
-  checksum: 10/14d22c9914ed50169d509da464ebf73cd5b5b3fe114991135e38fcc3e4e28da26935d2e7a0a9dfa2abf468937ad62542a8479966f4f523eb4ddff32183450d85
+  checksum: 10/1e70267a19afdff0fd743008aa7ddfb6726c4ca5b64d2259874bec6073bc90d0cceed459542dc836be4617f94905924c56bf2699f162c8d24de40d7c62578f46
   languageName: node
   linkType: hard
 
 "@hyperlane-xyz/utils@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/utils::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
-  version: 14.3.0
-  resolution: "@hyperlane-xyz/utils@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/utils#/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/utils::hash=42b6da&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
+  version: 16.0.0
+  resolution: "@hyperlane-xyz/utils@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/utils#/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/utils::hash=ef796b&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
   dependencies:
     "@cosmjs/encoding": "npm:^0.32.4"
     "@solana/web3.js": "npm:^1.95.4"
+    bech32: "npm:^2.0.0"
     bignumber.js: "npm:^9.1.1"
     ethers: "npm:^5.8.0"
     lodash-es: "npm:^4.17.21"
@@ -4764,10 +4764,13 @@ __metadata:
     yaml: "npm:2.4.5"
   peerDependencies:
     "@google-cloud/pino-logging-gcp-config": ^1.0.6
+    pino-pretty: ">=10.0.0"
   peerDependenciesMeta:
     "@google-cloud/pino-logging-gcp-config":
       optional: true
-  checksum: 10/851052f0064c1059743d501f60e416f394e937ace019106de7ad5298737e1615e00abe9c3630613af48553b6930fab06cb284ed8cc9ab27764f0b4f743fc41ba
+    pino-pretty:
+      optional: true
+  checksum: 10/889313838a892e2fd9d3271b549831dc141bedf3ee613838e0650f9a51ba546a161becc0298f7294efa13ef70a827dc00062570356cd9dbff3691a2f2789a9a9
   languageName: node
   linkType: hard
 
@@ -4788,7 +4791,7 @@ __metadata:
     "@emotion/react": "npm:^11.13.3"
     "@emotion/styled": "npm:^11.13.0"
     "@headlessui/react": "npm:^2.2.0"
-    "@hyperlane-xyz/registry": "npm:18.0.0"
+    "@hyperlane-xyz/registry": "npm:20.0.0"
     "@hyperlane-xyz/sdk": "file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/sdk"
     "@hyperlane-xyz/utils": "file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/utils"
     "@hyperlane-xyz/widgets": "file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/widgets"
@@ -4835,7 +4838,7 @@ __metadata:
     react: "npm:^18.3.1"
     react-dom: "npm:^18.3.1"
     react-toastify: "npm:^10.0.6"
-    starknetkit: "npm:2.6.1"
+    starknetkit: "patch:starknetkit@npm%3A2.6.1#~/.yarn/patches/starknetkit-npm-2.6.1-61cd76646d.patch"
     tailwindcss: "npm:^3.4.15"
     ts-node: "npm:^10.9.2"
     typescript: "npm:5.6.3"
@@ -4851,15 +4854,15 @@ __metadata:
   linkType: soft
 
 "@hyperlane-xyz/widgets@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/widgets::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
-  version: 14.3.0
-  resolution: "@hyperlane-xyz/widgets@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/widgets#/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/widgets::hash=2e815c&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
+  version: 16.0.0
+  resolution: "@hyperlane-xyz/widgets@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/widgets#/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/widgets::hash=94923c&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
   dependencies:
     "@cosmjs/stargate": "npm:^0.32.4"
     "@cosmos-kit/react": "npm:^2.18.0"
     "@headlessui/react": "npm:^2.1.8"
-    "@hyperlane-xyz/cosmos-sdk": "npm:14.3.0"
-    "@hyperlane-xyz/sdk": "npm:14.3.0"
-    "@hyperlane-xyz/utils": "npm:14.3.0"
+    "@hyperlane-xyz/cosmos-sdk": "npm:16.0.0"
+    "@hyperlane-xyz/sdk": "npm:16.0.0"
+    "@hyperlane-xyz/utils": "npm:16.0.0"
     "@interchain-ui/react": "npm:^1.23.28"
     "@radixdlt/babylon-gateway-api-sdk": "npm:^1.10.1"
     "@radixdlt/radix-dapp-toolkit": "npm:^2.2.1"
@@ -4876,7 +4879,7 @@ __metadata:
   peerDependencies:
     react: ^18
     react-dom: ^18
-  checksum: 10/b8a8b14360e2ad2e41645205c3275b622f948563770c1894d884ce900e64c605cc1796b420ee161f7960edf6bff2858ae44313875e6a5ce18b58dad387a31608
+  checksum: 10/13607f79d68b7b9bb2efee87d505056839c10210b882115b1a74cd30e723f46d0643bedda7b89817fb6d731bdbe97cc11e87204ff4b0f0a669d3384c7cc9f59c
   languageName: node
   linkType: hard
 
@@ -5476,63 +5479,6 @@ __metadata:
     bs58: "npm:^5.0.0"
     uuid: "npm:^8.3.2"
   checksum: 10/85d54eae6b92ccac890a3b6ca8b6bf41eb8187f9506d17da597930211b10aa98e6f55b6b6a8aff6541c3faae03067ce729f8318bac748da553c7b7c1b2d0ead2
-  languageName: node
-  linkType: hard
-
-"@layerzerolabs/lz-evm-messagelib-v2@npm:^2.0.2":
-  version: 2.1.22
-  resolution: "@layerzerolabs/lz-evm-messagelib-v2@npm:2.1.22"
-  peerDependencies:
-    "@arbitrum/nitro-contracts": ^1.1.0
-    "@axelar-network/axelar-gmp-sdk-solidity": ^5.6.3
-    "@chainlink/contracts-ccip": ^0.7.6
-    "@eth-optimism/contracts": ^0.6.0
-    "@layerzerolabs/lz-evm-protocol-v2": ^2.1.22
-    "@layerzerolabs/lz-evm-v1-0.7": ^2.1.22
-    "@openzeppelin/contracts": ^4.8.1 || ^5.0.0
-    "@openzeppelin/contracts-upgradeable": ^4.8.1 || ^5.0.0
-    hardhat-deploy: ^0.11.44
-    solidity-bytes-utils: ^0.8.0
-  peerDependenciesMeta:
-    "@arbitrum/nitro-contracts":
-      optional: true
-  checksum: 10/2de9fcf1687286b3b70e04c1260500258b3762f0ee7435a4535d115464995ad1de137ae5d695503a09a9e72a2aef42e0615bd8d529e1565367eaf0bd40ba8454
-  languageName: node
-  linkType: hard
-
-"@layerzerolabs/lz-evm-oapp-v2@npm:2.0.2":
-  version: 2.0.2
-  resolution: "@layerzerolabs/lz-evm-oapp-v2@npm:2.0.2"
-  dependencies:
-    "@layerzerolabs/lz-evm-messagelib-v2": "npm:^2.0.2"
-    "@layerzerolabs/lz-evm-protocol-v2": "npm:^2.0.2"
-    "@layerzerolabs/lz-evm-v1-0.7": "npm:^2.0.2"
-  peerDependencies:
-    solidity-bytes-utils: ^0.8.0
-  checksum: 10/bc5a4bc5493f756931b150eefe6a6c31ffe8c691c418191d22eff044f8ca653043edc64dd746f30fc4b05f3230e667a6e3f5005ade7c324283bf8550bbaa32f5
-  languageName: node
-  linkType: hard
-
-"@layerzerolabs/lz-evm-protocol-v2@npm:^2.0.2":
-  version: 2.1.22
-  resolution: "@layerzerolabs/lz-evm-protocol-v2@npm:2.1.22"
-  peerDependencies:
-    "@openzeppelin/contracts": ^4.8.1 || ^5.0.0
-    "@openzeppelin/contracts-upgradeable": ^4.8.1 || ^5.0.0
-    hardhat-deploy: ^0.11.44
-    solidity-bytes-utils: ^0.8.0
-  checksum: 10/479d4df6f37985fa5354cabea0facfbd0a1292c1f0cc9b2ac82a51a971cd4f4f1f8dafd6933cdc55bf99e4dffb653056d5a687a8ba9265273d5f6d9e9e7df58a
-  languageName: node
-  linkType: hard
-
-"@layerzerolabs/lz-evm-v1-0.7@npm:^2.0.2":
-  version: 2.1.22
-  resolution: "@layerzerolabs/lz-evm-v1-0.7@npm:2.1.22"
-  peerDependencies:
-    "@openzeppelin/contracts": 3.4.2-solc-0.7 || ^3.4.2 || ^4.0.0 || ^5.0.0
-    "@openzeppelin/contracts-upgradeable": 3.4.2-solc-0.7 || ^3.4.2 || ^4.0.0 || ^5.0.0
-    hardhat-deploy: ^0.11.44
-  checksum: 10/087bbf540d4fee22da63a38471a5eeedbb505a18c2a2c339c9b05da6ddb355cf002e95704a9fb91d08288b4b6c2488afcb665eb188a3176b488e3d8ebae68243
   languageName: node
   linkType: hard
 
@@ -7442,13 +7388,6 @@ __metadata:
   version: 4.9.3
   resolution: "@openzeppelin/contracts@npm:4.9.3"
   checksum: 10/ce0a16a56a39b62d72370ac702bce1917096492442ff05de88521beda2c3f3935b93ee2b9a184614dd543a6181f2f0be10243f5a629be87aab284ade68c18320
-  languageName: node
-  linkType: hard
-
-"@openzeppelin/contracts@npm:^4.2.0":
-  version: 4.9.6
-  resolution: "@openzeppelin/contracts@npm:4.9.6"
-  checksum: 10/71f45ad42e68c0559be4ba502115462a01c76fc805c08d3005c10b5550a093f1a2b00b2d7e9d6d1f331e147c50fd4ad832f71c4470ec5b34f5a2d0751cd19a47
   languageName: node
   linkType: hard
 
@@ -14559,6 +14498,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"bech32@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "bech32@npm:2.0.0"
+  checksum: 10/fa15acb270b59aa496734a01f9155677b478987b773bf701f465858bf1606c6a970085babd43d71ce61895f1baa594cb41a2cd1394bd2c6698f03cc2d811300e
+  languageName: node
+  linkType: hard
+
 "better-path-resolve@npm:1.0.0":
   version: 1.0.0
   resolution: "better-path-resolve@npm:1.0.0"
@@ -14610,6 +14556,13 @@ __metadata:
   version: 9.1.1
   resolution: "bignumber.js@npm:9.1.1"
   checksum: 10/1f771bfa883a5863626e1e4274042065d5f975651eda556ecd28560f287c065004681226f826380792a22be116d7666499c3e3300b1a48b2a7bff66e8dde7aa8
+  languageName: node
+  linkType: hard
+
+"bignumber.js@npm:^9.3.1":
+  version: 9.3.1
+  resolution: "bignumber.js@npm:9.3.1"
+  checksum: 10/1be0372bf0d6d29d0a49b9e6a9cefbd54dad9918232ad21fcd4ec39030260773abf0c76af960c6b3b98d3115a3a71e61c6a111812d1395040a039cfa178e0245
   languageName: node
   linkType: hard
 
@@ -18448,15 +18401,6 @@ __metadata:
   version: 1.2.3
   resolution: "functions-have-names@npm:1.2.3"
   checksum: 10/0ddfd3ed1066a55984aaecebf5419fbd9344a5c38dd120ffb0739fac4496758dcf371297440528b115e4367fc46e3abc86a2cc0ff44612181b175ae967a11a05
-  languageName: node
-  linkType: hard
-
-"fx-portal@npm:^1.0.3":
-  version: 1.0.3
-  resolution: "fx-portal@npm:1.0.3"
-  dependencies:
-    "@openzeppelin/contracts": "npm:^4.2.0"
-  checksum: 10/89309e03da57238d153b41fd9fd492d582d41a90da51fc18b4cdd939a8713736572ed1ba034210888ad1b2e81596a860f157785f6911e6d265e2fd0730aa94c2
   languageName: node
   linkType: hard
 
@@ -24939,6 +24883,29 @@ __metadata:
   peerDependencies:
     starknet: ^6.9.0
   checksum: 10/fa4302296999604134810f56951d3e016d6425dbbf1d08eea8cb2c16d4c64d62e240f874ea1418df3aa187fab02b32540b8c4b416f5334a711645da2dc59bb12
+  languageName: node
+  linkType: hard
+
+"starknetkit@patch:starknetkit@npm%3A2.6.1#~/.yarn/patches/starknetkit-npm-2.6.1-61cd76646d.patch":
+  version: 2.6.1
+  resolution: "starknetkit@patch:starknetkit@npm%3A2.6.1#~/.yarn/patches/starknetkit-npm-2.6.1-61cd76646d.patch::version=2.6.1&hash=c82884"
+  dependencies:
+    "@starknet-io/get-starknet": "npm:^4.0.4"
+    "@starknet-io/get-starknet-core": "npm:^4.0.4"
+    "@starknet-io/types-js": "npm:^0.7.7"
+    "@trpc/client": "npm:^10.38.1"
+    "@trpc/server": "npm:^10.38.1"
+    "@walletconnect/sign-client": "npm:^2.11.0"
+    bowser: "npm:^2.11.0"
+    detect-browser: "npm:^5.3.0"
+    eventemitter3: "npm:^5.0.1"
+    events: "npm:^3.3.0"
+    lodash-es: "npm:^4.17.21"
+    svelte-forms: "npm:^2.3.1"
+    trpc-browser: "npm:^1.3.2"
+  peerDependencies:
+    starknet: ^6.9.0
+  checksum: 10/f6ab123907deefee9e1571d0f401316f1e049dc0520d54986159ad831178e6aeed0914e07f6bfc85b67eb3d2d716ce3ef635995193bfb673334f2d76f5821f80
   languageName: node
   linkType: hard
 

@@ -279,7 +279,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'RCADE/arbitrum-bsc',
 
   // Starknet Batch
-  'dreams/solanamainnet-starknet',
+  'dreams/solanamainnet-starkz`net',
   'SOL/solanamainnet-starknet',
   'Fartcoin/solanamainnet-starknet',
   'JUP/starknet',
@@ -294,4 +294,5 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // PUMP routes
   'PUMP/eclipsemainnet',
+  'PUMP/starknet',
 ];

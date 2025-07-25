@@ -37,17 +37,7 @@ export function Footer() {
 }
 
 function FooterLogo() {
-  return (
-    <div className="flex items-center justify-center">
-      <div className="ml-2 h-12 w-12 sm:h-14 sm:w-14">
-        <HyperlaneLogo color={Color.white} />
-      </div>
-      <div className="ml-6 space-y-1 text-lg font-medium sm:text-xl">
-        <div>Go interchain</div>
-        <div>with Hyperlane</div>
-      </div>
-    </div>
-  );
+  return (<div></div>);
 }
 
 function FooterNav() {

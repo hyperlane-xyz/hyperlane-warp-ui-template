@@ -9,9 +9,8 @@ jobs:
   create-merge-prs:
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
       matrix:
-        name: [injective, nexus, trump, ousdt]
+        name: [ezeth, injective, nexus, trump, ousdt]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3

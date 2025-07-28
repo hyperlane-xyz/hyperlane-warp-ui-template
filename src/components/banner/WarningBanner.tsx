@@ -9,8 +9,8 @@ export function WarningBanner({
   children,
 }: PropsWithChildren<{
   isVisible: boolean;
-  cta: ReactNode;
-  onClick: () => void;
+  cta?: ReactNode;
+  onClick?: () => void;
   className?: string;
 }>) {
   return (
@@ -23,13 +23,15 @@ export function WarningBanner({
         <WarningIcon width={20} height={20} />
         {children}
       </div>
-      <button
-        type="button"
-        onClick={onClick}
-        className="rounded-full bg-white/30 px-2.5 py-1 text-center hover:bg-white/50 active:bg-white/60"
-      >
-        {cta}
-      </button>
+      {cta && onClick && (
+        <button
+          type="button"
+          onClick={onClick}
+          className="rounded-full bg-white/30 px-2.5 py-1 text-center hover:bg-white/50 active:bg-white/60"
+        >
+          {cta}
+        </button>
+      )}
     </div>
   );
 }

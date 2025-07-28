@@ -4,6 +4,8 @@ import {
   eclipsemainnetAddresses,
   solanamainnet,
   solanamainnetAddresses,
+  solanatestnet,
+  solanatestnetAddresses,
   solaxy,
   solaxyAddresses,
   sonicsvm,
@@ -29,6 +31,11 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
     ...solanamainnet,
     // SVM chains require mailbox addresses for the token adapters
     mailbox: solanamainnetAddresses.mailbox,
+  },
+  solanatestnet: {
+    ...solanatestnet,
+    // SVM chains require mailbox addresses for the token adapters
+    mailbox: solanatestnetAddresses.mailbox,
   },
   eclipsemainnet: {
     ...eclipsemainnet,

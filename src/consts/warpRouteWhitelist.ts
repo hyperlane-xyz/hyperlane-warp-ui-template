@@ -3,295 +3,297 @@
 // If left null, all warp routes in the configured registry will be included
 // If set to a list (including an empty list), only the specified routes will be included
 export const warpRouteWhitelist: Array<string> | null = [
-  // TIA routes
-  'TIA/arbitrum-neutron',
-  'TIA/mantapacific-neutron',
-  'TIA/eclipsemainnet-stride',
-
-  // stTIA routes
-  'stTIA/eclipsemainnet-stride',
-
-  // ETH routes
-  'ETH/ethereum-hyperevm',
-  'ETH/ethereum-viction',
-  'ETH/arbitrum-base-ethereum-lumiaprism-optimism-polygon',
-  'ETH/coti-ethereum',
-
-  // tETH routes
-  'tETH/eclipsemainnet-ethereum',
+  'ETH/sepolia-starknetsepolia',
+
+  // // TIA routes
+  // 'TIA/arbitrum-neutron',
+  // 'TIA/mantapacific-neutron',
+  // 'TIA/eclipsemainnet-stride',
+
+  // // stTIA routes
+  // 'stTIA/eclipsemainnet-stride',
+
+  // // ETH routes
+  // 'ETH/ethereum-hyperevm',
+  // 'ETH/ethereum-viction',
+  // 'ETH/arbitrum-base-ethereum-lumiaprism-optimism-polygon',
+  // 'ETH/coti-ethereum',
 
-  // apxETH routes
-  'apxETH/eclipsemainnet-ethereum',
+  // // tETH routes
+  // 'tETH/eclipsemainnet-ethereum',
 
-  // weETHs routes
-  'weETHs/eclipsemainnet-ethereum',
+  // // apxETH routes
+  // 'apxETH/eclipsemainnet-ethereum',
 
-  // ECLIP routes
-  'ECLIP/arbitrum-neutron',
-
-  // LUMIA routes
-  'LUMIA/arbitrum-avalanche-base-bsc-ethereum-lumiaprism-optimism-polygon',
+  // // weETHs routes
+  // 'weETHs/eclipsemainnet-ethereum',
 
-  // USDC routes
-  'USDC/ethereum-inevm',
-  'USDC/ancient8-ethereum',
-  'USDC/ethereum-viction',
-  'USDC/eclipsemainnet-ethereum-solanamainnet',
-  'USDC/appchain-base',
-  'USDC/arbitrum-base-endurance',
-  'USDC/ethereum-form',
-  'USDC/artela-base',
-  'USDC/solanamainnet-sonicsvm',
-  'USDC/arbitrum-base-ethereum-ink-optimism-solanamainnet-superseed',
-  'USDC/subtensor',
-  'USDC/lumia',
-  'USDC/matchain',
+  // // ECLIP routes
+  // 'ECLIP/arbitrum-neutron',
 
-  // USDT routes
-  'USDT/ethereum-inevm',
-  'USDT/ethereum-viction',
-  'USDT/eclipsemainnet-ethereum-solanamainnet',
-  'USDT/ethereum-form',
-  'USDT/ethereum-hyperevm',
-  'USDT/solanamainnet-sonicsvm',
-  'USDT/ethereum-lumiaprism',
+  // // LUMIA routes
+  // 'LUMIA/arbitrum-avalanche-base-bsc-ethereum-lumiaprism-optimism-polygon',
 
-  // oUSDT routes
-  'oUSDT/production',
+  // // USDC routes
+  // 'USDC/ethereum-inevm',
+  // 'USDC/ancient8-ethereum',
+  // 'USDC/ethereum-viction',
+  // 'USDC/eclipsemainnet-ethereum-solanamainnet',
+  // 'USDC/appchain-base',
+  // 'USDC/arbitrum-base-endurance',
+  // 'USDC/ethereum-form',
+  // 'USDC/artela-base',
+  // 'USDC/solanamainnet-sonicsvm',
+  // 'USDC/arbitrum-base-ethereum-ink-optimism-solanamainnet-superseed',
+  // 'USDC/subtensor',
+  // 'USDC/lumia',
+  // 'USDC/matchain',
 
-  // oXAUT routes
-  'oXAUT/production',
+  // // USDT routes
+  // 'USDT/ethereum-inevm',
+  // 'USDT/ethereum-viction',
+  // 'USDT/eclipsemainnet-ethereum-solanamainnet',
+  // 'USDT/ethereum-form',
+  // 'USDT/ethereum-hyperevm',
+  // 'USDT/solanamainnet-sonicsvm',
+  // 'USDT/ethereum-lumiaprism',
 
-  // INJ routes
-  'INJ/inevm-injective',
+  // // oUSDT routes
+  // 'oUSDT/production',
 
-  // SOL routes
-  'SOL/eclipsemainnet-solanamainnet',
-  'SOL/solanamainnet-soon',
-  'SOL/hyperevm-solanamainnet',
-  'SOL/solanamainnet-sonicsvm',
+  // // oXAUT routes
+  // 'oXAUT/production',
 
-  // ezSOL routes
-  'ezSOL/eclipsemainnet-solanamainnet',
+  // // INJ routes
+  // 'INJ/inevm-injective',
 
-  // WIF routes
-  'WIF/eclipsemainnet-solanamainnet',
+  // // SOL routes
+  // 'SOL/eclipsemainnet-solanamainnet',
+  // 'SOL/solanamainnet-soon',
+  // 'SOL/hyperevm-solanamainnet',
+  // 'SOL/solanamainnet-sonicsvm',
 
-  // WBTC routes
-  'WBTC/eclipsemainnet-ethereum',
-  'WBTC/ethereum-form',
-  'WBTC/ethereum-hyperevm',
-  'WBTC/coti-ethereum',
+  // // ezSOL routes
+  // 'ezSOL/eclipsemainnet-solanamainnet',
 
-  // ORCA routes
-  'ORCA/eclipsemainnet-solanamainnet',
+  // // WIF routes
+  // 'WIF/eclipsemainnet-solanamainnet',
 
-  // uBTC routes
-  'uBTC/bsquared',
+  // // WBTC routes
+  // 'WBTC/eclipsemainnet-ethereum',
+  // 'WBTC/ethereum-form',
+  // 'WBTC/ethereum-hyperevm',
+  // 'WBTC/coti-ethereum',
 
-  // kySOL
-  'kySOL/kyros',
+  // // ORCA routes
+  // 'ORCA/eclipsemainnet-solanamainnet',
 
-  // PNDR
-  'PNDR/bsc-ethereum-lumiaprism',
+  // // uBTC routes
+  // 'uBTC/bsquared',
 
-  // USDC ink
-  'USDC/ethereum-ink',
+  // // kySOL
+  // 'kySOL/kyros',
 
-  // Bonk routes
-  'Bonk/solanamainnet-soon',
+  // // PNDR
+  // 'PNDR/bsc-ethereum-lumiaprism',
 
-  // TGT routes
-  'TGT/bsc-immutablezkevmmainnet',
+  // // USDC ink
+  // 'USDC/ethereum-ink',
 
-  // TONY routes
-  'TONY/base-solanamainnet',
+  // // Bonk routes
+  // 'Bonk/solanamainnet-soon',
 
-  // TRUMP routes
-  'TRUMP/arbitrum-avalanche-base-flowmainnet-form-optimism-solanamainnet-worldchain',
+  // // TGT routes
+  // 'TGT/bsc-immutablezkevmmainnet',
 
-  // TURTLE routes
-  'TURTLE/ethereum-linea',
+  // // TONY routes
+  // 'TONY/base-solanamainnet',
 
-  // jitoSOL
-  'JitoSOL/eclipsemainnet-solanamainnet',
+  // // TRUMP routes
+  // 'TRUMP/arbitrum-avalanche-base-flowmainnet-form-optimism-solanamainnet-worldchain',
 
-  // rstETH routes
-  'rstETH/ethereum-zircuit',
+  // // TURTLE routes
+  // 'TURTLE/ethereum-linea',
 
-  // WETH routes
-  'WETH/artela-base',
+  // // jitoSOL
+  // 'JitoSOL/eclipsemainnet-solanamainnet',
 
-  // fastUSD routes
-  'fastUSD/ethereum-sei',
+  // // rstETH routes
+  // 'rstETH/ethereum-zircuit',
 
-  // cbBTC routes
-  'cbBTC/base-ethereum-superseed',
-  'cbBTC/ethereum-flowmainnet',
+  // // WETH routes
+  // 'WETH/artela-base',
 
-  // ezETH routes
-  'ezETH/renzo-prod',
+  // // fastUSD routes
+  // 'fastUSD/ethereum-sei',
 
-  // GAME routes
-  'GAME/base-form',
+  // // cbBTC routes
+  // 'cbBTC/base-ethereum-superseed',
+  // 'cbBTC/ethereum-flowmainnet',
 
-  // AIXBT routes
-  'AIXBT/base-form',
+  // // ezETH routes
+  // 'ezETH/renzo-prod',
 
-  // wstETH routes
-  'wstETH/ethereum-form',
+  // // GAME routes
+  // 'GAME/base-form',
 
-  // pzETH routes
-  'pzETH/berachain-ethereum-swell-unichain-zircuit',
+  // // AIXBT routes
+  // 'AIXBT/base-form',
 
-  // pumpBTCuni routes
-  'pumpBTCuni/ethereum-unichain',
+  // // wstETH routes
+  // 'wstETH/ethereum-form',
 
-  // ART routes
-  'ART/artela-base-solanamainnet',
+  // // pzETH routes
+  // 'pzETH/berachain-ethereum-swell-unichain-zircuit',
 
-  // LOGX routes
-  'LOGX/arbitrum-solanamainnet',
+  // // pumpBTCuni routes
+  // 'pumpBTCuni/ethereum-unichain',
 
-  // CDX routes
-  'CDX/base-solanamainnet-sophon',
+  // // ART routes
+  // 'ART/artela-base-solanamainnet',
 
-  // Mint routes
-  'MINT/mint-solanamainnet',
+  // // LOGX routes
+  // 'LOGX/arbitrum-solanamainnet',
 
-  // lrtsSOL routes
-  'lrtsSOL/solanamainnet-sonicsvm',
+  // // CDX routes
+  // 'CDX/base-solanamainnet-sophon',
 
-  // sSOL routes
-  'sSOL/solanamainnet-sonicsvm',
+  // // Mint routes
+  // 'MINT/mint-solanamainnet',
 
-  // sonicSOL routes
-  'sonicSOL/solanamainnet-sonicsvm',
+  // // lrtsSOL routes
+  // 'lrtsSOL/solanamainnet-sonicsvm',
 
-  // SONIC routes
-  'SONIC/solanamainnet-sonicsvm',
+  // // sSOL routes
+  // 'sSOL/solanamainnet-sonicsvm',
 
-  // SPICE routes
-  'SPICE/solanamainnet-sonicsvm',
+  // // sonicSOL routes
+  // 'sonicSOL/solanamainnet-sonicsvm',
 
-  // REZ routes
-  'REZ/base-ethereum-unichain',
+  // // SONIC routes
+  // 'SONIC/solanamainnet-sonicsvm',
 
-  // enzoBTC routes
-  'enzoBTC/bsc-hyperevm',
+  // // SPICE routes
+  // 'SPICE/solanamainnet-sonicsvm',
 
-  // stBTC routes
-  'stBTC/bsc-hyperevm',
+  // // REZ routes
+  // 'REZ/base-ethereum-unichain',
 
-  // GPS routes
-  'GPS/base-bsc',
+  // // enzoBTC routes
+  // 'enzoBTC/bsc-hyperevm',
 
-  // SOON batch
-  'ai16z/solanamainnet-soon',
-  'ELIZA/solanamainnet-soon',
-  'MEW/solanamainnet-soon',
-  'Pnut/solanamainnet-soon',
-  'WIF/solanamainnet-soon',
-  'POPCAT/solanamainnet-soon',
-  'GIGA/solanamainnet-soon',
-  'GOAT/solanamainnet-soon',
-  'SPORE/solanamainnet-soon',
+  // // stBTC routes
+  // 'stBTC/bsc-hyperevm',
 
-  // COTI routes
-  'USDC/coti-ethereum',
+  // // GPS routes
+  // 'GPS/base-bsc',
 
-  // SUPR routes
-  'SUPR/base-ethereum-ink-optimism-superseed',
+  // // SOON batch
+  // 'ai16z/solanamainnet-soon',
+  // 'ELIZA/solanamainnet-soon',
+  // 'MEW/solanamainnet-soon',
+  // 'Pnut/solanamainnet-soon',
+  // 'WIF/solanamainnet-soon',
+  // 'POPCAT/solanamainnet-soon',
+  // 'GIGA/solanamainnet-soon',
+  // 'GOAT/solanamainnet-soon',
+  // 'SPORE/solanamainnet-soon',
 
-  // HYPER routes
-  'HYPER/arbitrum-base-bsc-ethereum-optimism',
-  'stHYPER/bsc-ethereum',
+  // // COTI routes
+  // 'USDC/coti-ethereum',
 
-  // MILK route
-  'MILK/bsc-milkyway',
+  // // SUPR routes
+  // 'SUPR/base-ethereum-ink-optimism-superseed',
 
-  // Fragmetric routes
-  'wfragSOL/fragmetric',
-  'wfragJTO/fragmetric',
-  'wfragBTC/fragmetric',
+  // // HYPER routes
+  // 'HYPER/arbitrum-base-bsc-ethereum-optimism',
+  // 'stHYPER/bsc-ethereum',
 
-  // ES routes
-  'ES/eclipse',
+  // // MILK route
+  // 'MILK/bsc-milkyway',
 
-  // apechain batch
-  'PEPE/apechain-arbitrum',
-  'GG/apechain-arbitrum',
-  'Boop/apechain-arbitrum',
+  // // Fragmetric routes
+  // 'wfragSOL/fragmetric',
+  // 'wfragJTO/fragmetric',
+  // 'wfragBTC/fragmetric',
 
-  // apechain solana batch
-  'SOL/apechain-solanamainnet',
-  'PENGU/apechain-solanamainnet',
-  'Fartcoin/apechain-solanamainnet',
-  'UFD/apechain-solanamainnet',
+  // // ES routes
+  // 'ES/eclipse',
 
-  // MIRAI
-  'MIRAI/abstract-bsc-solanamainnet',
+  // // apechain batch
+  // 'PEPE/apechain-arbitrum',
+  // 'GG/apechain-arbitrum',
+  // 'Boop/apechain-arbitrum',
 
-  // Nucleus tUSD routes
-  'tUSD/eclipsemainnet-ethereum',
+  // // apechain solana batch
+  // 'SOL/apechain-solanamainnet',
+  // 'PENGU/apechain-solanamainnet',
+  // 'Fartcoin/apechain-solanamainnet',
+  // 'UFD/apechain-solanamainnet',
 
-  // FUEL
-  'FUEL/base-bsc-ethereum',
+  // // MIRAI
+  // 'MIRAI/abstract-bsc-solanamainnet',
 
-  // KYVE
-  'KYVE/base-kyve',
+  // // Nucleus tUSD routes
+  // 'tUSD/eclipsemainnet-ethereum',
 
-  // RDO routes
-  'RDO/bsc-ethereum',
+  // // FUEL
+  // 'FUEL/base-bsc-ethereum',
 
-  // CHILL routes
-  'CHILL/solanamainnet-sonicsvm',
+  // // KYVE
+  // 'KYVE/base-kyve',
 
-  // SMOL route
-  'SMOL/ethereum-solanamainnet-treasure',
+  // // RDO routes
+  // 'RDO/bsc-ethereum',
 
-  // bbSOL
-  'bbSOL/solanamainnet-soon',
+  // // CHILL routes
+  // 'CHILL/solanamainnet-sonicsvm',
 
-  // adraSOL
-  'adraSOL/solanamainnet-sonicsvm',
+  // // SMOL route
+  // 'SMOL/ethereum-solanamainnet-treasure',
 
-  // TAIKO
-  'TAIKO/taiko',
+  // // bbSOL
+  // 'bbSOL/solanamainnet-soon',
 
-  // MAT
-  'MAT/matchain',
+  // // adraSOL
+  // 'adraSOL/solanamainnet-sonicsvm',
 
-  // TOSHI
-  'TOSHI/toshi',
+  // // TAIKO
+  // 'TAIKO/taiko',
 
-  // SOLX
-  'SOLX/nitro',
+  // // MAT
+  // 'MAT/matchain',
 
-  // fluence routes
-  'FLT/fluence',
-  'wpFLT/fluence',
+  // // TOSHI
+  // 'TOSHI/toshi',
 
-  // H
-  'H/humanity',
+  // // SOLX
+  // 'SOLX/nitro',
 
-  // RCADE route
-  'RCADE/arbitrum-bsc',
+  // // fluence routes
+  // 'FLT/fluence',
+  // 'wpFLT/fluence',
 
-  // Starknet Batch
-  'dreams/solanamainnet-starknet',
-  'SOL/solanamainnet-starknet',
-  'Fartcoin/solanamainnet-starknet',
-  'JUP/starknet',
-  'Bonk/starknet',
-  'Trump/starknet',
+  // // H
+  // 'H/humanity',
 
-  // SEDA
-  'SEDA/base-ethereum',
+  // // RCADE route
+  // 'RCADE/arbitrum-bsc',
 
-  // VRA route
-  'VRA/bsc-ethereum',
+  // // Starknet Batch
+  // 'dreams/solanamainnet-starknet',
+  // 'SOL/solanamainnet-starknet',
+  // 'Fartcoin/solanamainnet-starknet',
+  // 'JUP/starknet',
+  // 'Bonk/starknet',
+  // 'Trump/starknet',
 
-  // PUMP routes
-  'PUMP/eclipsemainnet',
+  // // SEDA
+  // 'SEDA/base-ethereum',
+
+  // // VRA route
+  // 'VRA/bsc-ethereum',
+
+  // // PUMP routes
+  // 'PUMP/eclipsemainnet',
 ];

@@ -37,7 +37,10 @@ export async function assembleChainMetadata(
   const filesystemMetadata = result.data as ChainMap<ChainMetadata>;
 
   let registryChainMetadata: ChainMap<ChainMetadata>;
-  if (config.registryUrl) {
+  if (!config.loadOnlineRegistry) {
+    logger.debug('Online registry disabled, using empty registry metadata');
+    registryChainMetadata = {};
+  } else if (config.registryUrl) {
     logger.debug('Using custom registry metadata from:', config.registryUrl);
     registryChainMetadata = await registry.getMetadata();
   } else {

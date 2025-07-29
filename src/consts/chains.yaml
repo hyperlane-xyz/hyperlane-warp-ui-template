@@ -28,9 +28,10 @@ seaseedtest:
   rpcUrls:
     - http: https://rpc.testnet.seaseed.network
   blockExplorers:
-    - name: Test
+    - name: Seaseed Testnet Explorer
       url: https://explorer.testnet.seaseed.network
       apiUrl: https://explorer.testnet.seaseed.network
+      family: blockscout
   nativeToken:
     name: Seaseed Token
     symbol: SEA

@@ -19,7 +19,6 @@ interface Config {
   defaultDestinationChain: string | undefined; // The initial destination chain to show when app first loads
   enableExplorerLink: boolean; // Include a link to the hyperlane explorer in the transfer modal
   isDevMode: boolean; // Enables some debug features in the app
-  loadOnlineRegistry: boolean;
   registryUrl: string | undefined; // Optional URL to use a custom registry instead of the published canonical version
   registryBranch?: string | undefined; // Optional customization of the registry branch instead of main
   registryProxyUrl?: string; // Optional URL to use a custom proxy for the GithubRegistry
@@ -42,7 +41,6 @@ export const config: Config = Object.freeze({
   defaultOriginChain: 'seaseedtest',
   defaultDestinationChain: 'sepolia',
   isDevMode,
-  loadOnlineRegistry: false,
   registryUrl,
   registryBranch,
   registryProxyUrl,

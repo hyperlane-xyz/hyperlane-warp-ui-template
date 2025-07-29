@@ -11,7 +11,6 @@ import { objFilter } from '@hyperlane-xyz/utils';
 import { toast } from 'react-toastify';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { config } from '../consts/config';
 import { logger } from '../utils/logger';
 import { assembleChainMetadata } from './chains/metadata';
 import { assembleTokensBySymbolChainMap, TokenChainMap } from './tokens/utils';
@@ -98,8 +97,8 @@ export const useStore = create<AppState>()(
       },
       multiProvider: new MultiProtocolProvider({}),
       registry: new PartialRegistry({
-        chainAddresses: config.loadOnlineRegistry ? chainAddresses : {},
-        chainMetadata: config.loadOnlineRegistry ? chainMetadata : {},
+        chainAddresses: chainAddresses,
+        chainMetadata: chainMetadata,
       }),
       warpCore: new WarpCore(new MultiProtocolProvider({}), []),
       setWarpContext: (context) => {

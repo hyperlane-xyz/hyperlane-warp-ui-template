@@ -1,7 +1,6 @@
 import { warpRouteConfigs as registryWarpRoutes } from '@hyperlane-xyz/registry';
 import { WarpCoreConfig, WarpCoreConfigSchema, validateZodResult } from '@hyperlane-xyz/sdk';
 import { objFilter, objMerge } from '@hyperlane-xyz/utils';
-import { config } from '../../consts/config.ts';
 import { warpRouteWhitelist } from '../../consts/warpRouteWhitelist.ts';
 import { warpRouteConfigs as tsWarpRoutes } from '../../consts/warpRoutes.ts';
 import yamlWarpRoutes from '../../consts/warpRoutes.yaml';
@@ -12,11 +11,9 @@ export function assembleWarpCoreConfig(storeOverrides: WarpCoreConfig[]): WarpCo
   const tsResult = WarpCoreConfigSchema.safeParse(tsWarpRoutes);
   const tsConfig = validateZodResult(tsResult, 'warp core typescript config');
 
-  const filteredRegistryConfigMap = config.loadOnlineRegistry
-    ? warpRouteWhitelist
-      ? filterToIds(registryWarpRoutes, warpRouteWhitelist)
-      : registryWarpRoutes
-    : {};
+  const filteredRegistryConfigMap = warpRouteWhitelist
+    ? filterToIds(registryWarpRoutes, warpRouteWhitelist)
+    : registryWarpRoutes;
   const filteredRegistryConfigValues = Object.values(filteredRegistryConfigMap);
   const filteredRegistryTokens = filteredRegistryConfigValues.map((c) => c.tokens).flat();
   const filteredRegistryOptions = filteredRegistryConfigValues.map((c) => c.options).flat();

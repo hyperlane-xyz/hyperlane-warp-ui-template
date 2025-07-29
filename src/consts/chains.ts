@@ -3,6 +3,8 @@ import {
   eclipsemainnetAddresses,
   solanamainnet,
   solanamainnetAddresses,
+  solaxy,
+  solaxyAddresses,
   sonicsvm,
   sonicsvmAddresses,
   soon,
@@ -32,6 +34,10 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
     ...sonicsvm,
     mailbox: sonicsvmAddresses.mailbox,
   },
+  solaxy: {
+    ...solaxy,
+    mailbox: solaxyAddresses.mailbox,
+  },
   // mycustomchain: {
   //   protocol: ProtocolType.Ethereum,
   //   chainId: 123123,
@@ -55,4 +61,13 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
   //   },
   //   logoURI: '/logo.svg',
   // },
+};
+
+// rent account payment for (mostly for) SVM chains added on top of IGP,
+// not exact but should be pretty close to actual payment
+export const chainsRentEstimate: ChainMap<bigint> = {
+  eclipsemainnet: BigInt(Math.round(0.00004019 * 10 ** 9)),
+  solanamainnet: BigInt(Math.round(0.00411336 * 10 ** 9)),
+  sonicsvm: BigInt(Math.round(0.00411336 * 10 ** 9)),
+  soon: BigInt(Math.round(0.00000355 * 10 ** 9)),
 };

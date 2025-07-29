@@ -5,9 +5,9 @@
 tokens:
   # STAGING #
   ## USDC ##
-  - addressOrDenom: "0xaE68d312149335B477Fa2EafFB1a1a18E287aC1b"
+  - addressOrDenom: '0xaE68d312149335B477Fa2EafFB1a1a18E287aC1b'
     chainName: seaseedtest
-    collateralAddressOrDenom: "0xeCacC484026a02022565496E088CA0581cC36373"
+    collateralAddressOrDenom: '0xeCacC484026a02022565496E088CA0581cC36373'
     connections:
       - token: ethereum|sepolia|0xc97f971b0ddffC63e87365c2ce2F88107E79A167
       - token: ethereum|arbitrumsepolia|0x97695ca9aa0699C438B001be4fBe8750d1295956
@@ -15,9 +15,9 @@ tokens:
     name: USDC
     standard: EvmHypCollateralFiat
     symbol: USDC
-  - addressOrDenom: "0xc97f971b0ddffC63e87365c2ce2F88107E79A167"
+  - addressOrDenom: '0xc97f971b0ddffC63e87365c2ce2F88107E79A167'
     chainName: sepolia
-    collateralAddressOrDenom: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"
+    collateralAddressOrDenom: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238'
     connections:
       - token: ethereum|seaseedtest|0xaE68d312149335B477Fa2EafFB1a1a18E287aC1b
       - token: ethereum|arbitrumsepolia|0x97695ca9aa0699C438B001be4fBe8750d1295956
@@ -25,9 +25,9 @@ tokens:
     name: USDC
     standard: EvmHypCollateral
     symbol: USDC
-  - addressOrDenom: "0x97695ca9aa0699C438B001be4fBe8750d1295956"
+  - addressOrDenom: '0x97695ca9aa0699C438B001be4fBe8750d1295956'
     chainName: arbitrumsepolia
-    collateralAddressOrDenom: "0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d"
+    collateralAddressOrDenom: '0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d'
     connections:
       - token: ethereum|seaseedtest|0xaE68d312149335B477Fa2EafFB1a1a18E287aC1b
       - token: ethereum|sepolia|0xc97f971b0ddffC63e87365c2ce2F88107E79A167

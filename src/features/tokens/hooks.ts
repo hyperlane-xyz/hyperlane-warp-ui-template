@@ -1,5 +1,9 @@
 import { IToken, Token, WarpCore } from '@hyperlane-xyz/sdk';
 import { isNullish } from '@hyperlane-xyz/utils';
+import { useActiveChains, useWatchAsset } from '@hyperlane-xyz/widgets';
+import { useMutation } from '@tanstack/react-query';
+import { ADD_ASSET_SUPPORTED_PROTOCOLS } from '../../consts/args';
+import { useMultiProvider } from '../chains/hooks';
 import { useStore } from '../store';
 
 export function useWarpCore() {
@@ -97,4 +101,24 @@ export function tryFindTokenConnection(token: Token, chainName: string) {
   );
 
   return connectedToken ? connectedToken.token : null;
+}
+
+export function useAddToken() {
+  const multiProvider = useMultiProvider();
+  const activeChains = useActiveChains(multiProvider);
+  const watchAsset = useWatchAsset(multiProvider);
+  const { isPending, mutateAsync } = useMutation({
+    mutationFn: (token: IToken) => {
+      const { addAsset } = watchAsset[token.protocol];
+      const activeChain = activeChains.chains[token.protocol];
+
+      if (!ADD_ASSET_SUPPORTED_PROTOCOLS.includes(token.protocol) || !activeChain.chainName) {
+        return Promise.resolve(false);
+      }
+
+      return addAsset(token, activeChain.chainName);
+    },
+  });
+
+  return { addToken: mutateAsync, isLoading: isPending };
 }

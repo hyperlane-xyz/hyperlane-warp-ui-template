@@ -21,7 +21,7 @@ import {
 } from '@hyperlane-xyz/widgets';
 import BigNumber from 'bignumber.js';
 import { Form, Formik, useFormikContext } from 'formik';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
 import { SolidButton } from '../../components/buttons/SolidButton';
@@ -53,6 +53,7 @@ import {
   getInitialTokenIndex,
   getTokenByIndex,
   getTokenIndexFromChains,
+  useAddToken,
   useWarpCore,
 } from '../tokens/hooks';
 import { getTokensWithSameCollateralAddresses, isValidMultiCollateralToken } from '../tokens/utils';
@@ -134,7 +135,7 @@ export function TransferTokenForm() {
         <Form className="flex w-full flex-col items-stretch">
           <WarningBanners />
           <ChainSelectSection isReview={isReview} />
-          <div className="mt-3.5 flex items-end justify-between space-x-4">
+          <div className="mt-2.5 flex items-end justify-between space-x-4">
             <TokenSection setIsNft={setIsNft} isReview={isReview} />
             <AmountSection isNft={isNft} isReview={isReview} />
           </div>
@@ -194,6 +195,7 @@ function SwapChainsButton({
 
 function ChainSelectSection({ isReview }: { isReview: boolean }) {
   const warpCore = useWarpCore();
+  const { addToken, isLoading } = useAddToken();
 
   const { setOriginChainName } = useStore((s) => ({
     setOriginChainName: s.setOriginChainName,
@@ -208,6 +210,13 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
   const destinationRouteCounts = useMemo(() => {
     return getNumRoutesWithSelectedChain(warpCore, values.destination, false);
   }, [values.destination, warpCore]);
+
+  const { originToken, destinationToken } = useMemo(() => {
+    const originToken = getTokenByIndex(warpCore, values.tokenIndex);
+    if (!originToken) return { originToken: undefined, destinationToken: undefined };
+    const destinationToken = originToken.getConnectionForChain(values.destination)?.token;
+    return { originToken, destinationToken };
+  }, [values.tokenIndex, values.destination, warpCore]);
 
   const setTokenOnChainChange = (origin: string, destination: string) => {
     const tokenIndex = getTokenIndexFromChains(warpCore, null, origin, destination);
@@ -233,6 +242,18 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
     setOriginChainName(origin);
   };
 
+  const onAddToken = useCallback(
+    async (token: IToken) => {
+      try {
+        await addToken(token);
+      } catch (error) {
+        console.log('error', error);
+        logger.debug('Canceled add asset');
+      }
+    },
+    [addToken],
+  );
+
   return (
     <div className="mt-2 flex items-center justify-between gap-4">
       <ChainSelectField
@@ -241,6 +262,9 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
         disabled={isReview}
         customListItemField={destinationRouteCounts}
         onChange={handleChange}
+        token={originToken}
+        onAddAsset={onAddToken}
+        disabledAdd={isLoading}
       />
       <div className="flex flex-1 flex-col items-center">
         <SwapChainsButton disabled={isReview} onSwapChain={onSwapChain} />
@@ -251,6 +275,9 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
         disabled={isReview}
         customListItemField={originRouteCounts}
         onChange={handleChange}
+        token={destinationToken}
+        onAddAsset={onAddToken}
+        disabledAdd={isLoading}
       />
     </div>
   );

@@ -1,10 +1,18 @@
-import { ChainSearchMenuProps, ChevronIcon } from '@hyperlane-xyz/widgets';
+import { IToken } from '@hyperlane-xyz/sdk';
+import {
+  ChainSearchMenuProps,
+  ChevronIcon,
+  PlusIcon,
+  useAccountForChain,
+} from '@hyperlane-xyz/widgets';
 import { useField, useFormikContext } from 'formik';
 import { useState } from 'react';
 import { ChainLogo } from '../../components/icons/ChainLogo';
+import { ADD_ASSET_SUPPORTED_PROTOCOLS } from '../../consts/args';
+import { Color } from '../../styles/Color';
 import { TransferFormValues } from '../transfer/types';
 import { ChainSelectListModal } from './ChainSelectModal';
-import { useChainDisplayName } from './hooks';
+import { useChainDisplayName, useMultiProvider } from './hooks';
 
 type Props = {
   name: string;
@@ -12,11 +20,29 @@ type Props = {
   onChange?: (id: ChainName, fieldName: string) => void;
   disabled?: boolean;
   customListItemField: ChainSearchMenuProps['customListItemField'];
+  token?: IToken;
+  onAddAsset: (token: IToken) => Promise<void>;
+  disabledAdd: boolean;
 };
 
-export function ChainSelectField({ name, label, onChange, disabled, customListItemField }: Props) {
+export function ChainSelectField({
+  name,
+  label,
+  onChange,
+  disabled,
+  customListItemField,
+  token,
+  onAddAsset,
+  disabledAdd,
+}: Props) {
   const [field, , helpers] = useField<ChainName>(name);
   const { setFieldValue } = useFormikContext<TransferFormValues>();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const multiProvider = useMultiProvider();
+  const account = useAccountForChain(multiProvider, token?.chainName);
+  const isAccountReady = account?.isReady;
+  const isSupportedProtocol = token && !!ADD_ASSET_SUPPORTED_PROTOCOLS.includes(token?.protocol);
 
   const displayName = useChainDisplayName(field.value, true);
 
@@ -28,14 +54,14 @@ export function ChainSelectField({ name, label, onChange, disabled, customListIt
     if (onChange) onChange(chainName, name);
   };
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
   const onClick = () => {
     if (!disabled) setIsModalOpen(true);
   };
 
+  const showAddToken = token && isAccountReady && isSupportedProtocol;
+
   return (
-    <div className="flex-[4]">
+    <div className={`flex-[4] ${showAddToken ? 'h-[4.5rem]' : ''}`}>
       <button
         type="button"
         name={field.name}
@@ -55,6 +81,24 @@ export function ChainSelectField({ name, label, onChange, disabled, customListIt
         </div>
         <ChevronIcon width={12} height={8} direction="s" />
       </button>
+      {showAddToken && (
+        <button
+          type="button"
+          className={styles.addButton}
+          onClick={() => {
+            onAddAsset(token);
+          }}
+          disabled={disabledAdd}
+        >
+          <PlusIcon
+            height={16}
+            width={16}
+            color={disabledAdd ? Color.gray[500] : Color.primary[500]}
+          />{' '}
+          Add token
+        </button>
+      )}
+
       <ChainSelectListModal
         isOpen={isModalOpen}
         close={() => setIsModalOpen(false)}
@@ -69,4 +113,5 @@ const styles = {
   base: 'px-2 py-1.5 w-full flex items-center justify-between text-sm bg-white rounded-lg border border-primary-300 outline-none transition-colors duration-500',
   enabled: 'hover:bg-gray-100 active:scale-95 focus:border-primary-500',
   disabled: 'bg-gray-150 cursor-default',
+  addButton: 'flex text-xxs text-primary-500 disabled:text-gray-500',
 };

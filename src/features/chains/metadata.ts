@@ -36,30 +36,36 @@ export async function assembleChainMetadata(
   }
   const filesystemMetadata = result.data as ChainMap<ChainMetadata>;
 
-  let registryChainMetadata: ChainMap<ChainMetadata>;
-  if (config.registryUrl) {
-    logger.debug('Using custom registry chain metadata from:', config.registryUrl);
-    registryChainMetadata = await registry.getMetadata();
+  let registryChainMetadata: ChainMap<ChainMetadata> = {};
+
+  if (config.useOnlineRegistry) {
+    if (config.registryUrl) {
+      logger.debug('Using custom registry chain metadata from:', config.registryUrl);
+      registryChainMetadata = await registry.getMetadata();
+    } else {
+      logger.debug('Using default published registry for chain metadata');
+      registryChainMetadata = publishedChainMetadata;
+    }
+
+    // Filter out chains that are not in the tokens config
+    registryChainMetadata = objFilter(registryChainMetadata, (c, m): m is ChainMetadata =>
+      chainsInTokens.includes(c),
+    );
+
+    // TODO have the registry do this automatically
+    registryChainMetadata = await promiseObjAll(
+      objMap(
+        registryChainMetadata,
+        async (chainName, metadata): Promise<ChainMetadata> => ({
+          ...metadata,
+          logoURI: `${links.imgPath}/chains/${chainName}/logo.svg`,
+        }),
+      ),
+    );
   } else {
-    logger.debug('Using default published registry for chain metadata');
-    registryChainMetadata = publishedChainMetadata;
+    logger.debug('Skipping registry chain metadata (useOnlineRegistry is false)');
   }
 
-  // Filter out chains that are not in the tokens config
-  registryChainMetadata = objFilter(registryChainMetadata, (c, m): m is ChainMetadata =>
-    chainsInTokens.includes(c),
-  );
-
-  // TODO have the registry do this automatically
-  registryChainMetadata = await promiseObjAll(
-    objMap(
-      registryChainMetadata,
-      async (chainName, metadata): Promise<ChainMetadata> => ({
-        ...metadata,
-        logoURI: `${links.imgPath}/chains/${chainName}/logo.svg`,
-      }),
-    ),
-  );
   const mergedChainMetadata = mergeChainMetadataMap(registryChainMetadata, filesystemMetadata);
 
   const parsedRpcOverridesResult = tryParseJsonOrYaml(config.rpcOverrides);

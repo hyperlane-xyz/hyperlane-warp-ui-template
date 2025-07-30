@@ -39,7 +39,7 @@ export const config: Config = Object.freeze({
   addressBlacklist: ADDRESS_BLACKLIST.map((address) => address.toLowerCase()),
   chainWalletWhitelists,
   enableExplorerLink: false,
-  defaultOriginChain: 'seaseedtest',
+  defaultOriginChain: 'pruvtest',
   defaultDestinationChain: 'sepolia',
   isDevMode,
   useOnlineRegistry: false,

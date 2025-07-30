@@ -18,24 +18,24 @@
 #   protocol: ethereum
 #   rpcUrls:
 #     - http: http://127.0.0.1:8555
-seaseedtest:
+pruvtest:
   chainId: 7336
   domainId: 7336
-  name: seaseedtest
-  displayName: Seaseed Testnet
+  name: pruvtest
+  displayName: Pruv Testnet
   protocol: ethereum
   isTestnet: true
   logoURI: /images/chains/seaseedtest/logo.svg
   rpcUrls:
     - http: https://rpc.testnet.seaseed.network
   blockExplorers:
-    - name: Seaseed Testnet Explorer
+    - name: Pruv Testnet Explorer
       url: https://explorer.testnet.seaseed.network
       apiUrl: https://explorer.testnet.seaseed.network
       family: blockscout
   nativeToken:
-    name: Seaseed Token
-    symbol: SEA
+    name: Pruv Token
+    symbol: PRUV
     decimals: 18
 arbitrumsepolia:
   blockExplorers:

@@ -401,7 +401,7 @@ function ButtonSection({
     <div className="mt-4 flex items-center justify-between space-x-4">
       <SolidButton
         type="button"
-        color="primary"
+        color="accent"
         onClick={onEdit}
         className="px-6 py-1.5"
         icon={<ChevronIcon direction="w" width={10} height={6} color={Color.white} />}
@@ -410,7 +410,7 @@ function ButtonSection({
       </SolidButton>
       <SolidButton
         type="button"
-        color="accent"
+        color="primary"
         onClick={triggerTransactionsHandler}
         className="flex-1 px-3 py-1.5"
       >

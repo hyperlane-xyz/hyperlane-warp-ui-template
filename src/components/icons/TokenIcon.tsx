@@ -41,6 +41,8 @@ function getImageSrc(token?: IToken | null) {
   if (!token?.logoURI) return null;
   // If it's a valid, direct URL, return it
   if (isHttpsUrl(token.logoURI)) return token.logoURI;
+  // If it starts with /, treat it as a local path for Next.js
+  if (token.logoURI.startsWith('/')) return token.logoURI;
   // Otherwise assume it's a relative URL to the registry base
   if (isRelativeUrl(token.logoURI)) return `${links.imgPath}${token.logoURI}`;
   return null;

@@ -12,6 +12,7 @@ tokens:
       - token: ethereum|sepolia|0xc97f971b0ddffC63e87365c2ce2F88107E79A167
       - token: ethereum|arbitrumsepolia|0x97695ca9aa0699C438B001be4fBe8750d1295956
     decimals: 6
+    logoURI: /images/tokens/USDC/logo.svg
     name: USDC
     standard: EvmHypCollateralFiat
     symbol: USDC
@@ -22,6 +23,7 @@ tokens:
       - token: ethereum|seaseedtest|0xaE68d312149335B477Fa2EafFB1a1a18E287aC1b
       - token: ethereum|arbitrumsepolia|0x97695ca9aa0699C438B001be4fBe8750d1295956
     decimals: 6
+    logoURI: /images/tokens/USDC/logo.svg
     name: USDC
     standard: EvmHypCollateral
     symbol: USDC
@@ -32,6 +34,7 @@ tokens:
       - token: ethereum|seaseedtest|0xaE68d312149335B477Fa2EafFB1a1a18E287aC1b
       - token: ethereum|sepolia|0xc97f971b0ddffC63e87365c2ce2F88107E79A167
     decimals: 6
+    logoURI: /images/tokens/USDC/logo.svg
     name: USDC
     standard: EvmHypCollateral
     symbol: USDC

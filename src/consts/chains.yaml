@@ -25,6 +25,7 @@ seaseedtest:
   displayName: Seaseed Testnet
   protocol: ethereum
   isTestnet: true
+  logoURI: /images/chains/seaseedtest/logo.svg
   rpcUrls:
     - http: https://rpc.testnet.seaseed.network
   blockExplorers:
@@ -53,6 +54,7 @@ arbitrumsepolia:
     url: https://www.hyperlane.xyz
   displayName: Arbitrum Sepolia
   domainId: 421614
+  logoURI: /images/chains/arbitrumsepolia/logo.svg
   gasCurrencyCoinGeckoId: ethereum
   index:
     from: 49690504 # Index of Mailbox deployment, nitro specific
@@ -86,6 +88,7 @@ sepolia:
     url: https://www.hyperlane.xyz
   displayName: Sepolia
   domainId: 11155111
+  logoURI: /images/chains/sepolia/logo.svg
   gasCurrencyCoinGeckoId: ethereum
   gnosisSafeTransactionServiceUrl: https://safe-transaction-sepolia.safe.global
   isTestnet: true

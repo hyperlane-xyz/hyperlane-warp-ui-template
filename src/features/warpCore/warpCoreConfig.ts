@@ -19,26 +19,32 @@ export async function assembleWarpCoreConfig(
   const tsResult = WarpCoreConfigSchema.safeParse(tsWarpRoutes);
   const tsConfig = validateZodResult(tsResult, 'warp core typescript config');
 
-  let registryWarpRoutes: Record<string, WarpCoreConfig>;
+  let registryWarpRoutes: Record<string, WarpCoreConfig> = {};
+  let filteredRegistryTokens: WarpCoreConfig['tokens'] = [];
+  let filteredRegistryOptions: WarpCoreConfig['options'][] = [];
 
-  try {
-    if (config.registryUrl) {
-      logger.debug('Using custom registry warp routes from:', config.registryUrl);
-      registryWarpRoutes = await registry.getWarpRoutes();
-    } else {
-      throw new Error('No custom registry URL provided');
+  if (config.useOnlineRegistry) {
+    try {
+      if (config.registryUrl) {
+        logger.debug('Using custom registry warp routes from:', config.registryUrl);
+        registryWarpRoutes = await registry.getWarpRoutes();
+      } else {
+        throw new Error('No custom registry URL provided');
+      }
+    } catch {
+      logger.debug('Using default published registry for warp routes');
+      registryWarpRoutes = publishedRegistryWarpRoutes;
     }
-  } catch {
-    logger.debug('Using default published registry for warp routes');
-    registryWarpRoutes = publishedRegistryWarpRoutes;
-  }
 
-  const filteredRegistryConfigMap = warpRouteWhitelist
-    ? filterToIds(registryWarpRoutes, warpRouteWhitelist)
-    : registryWarpRoutes;
-  const filteredRegistryConfigValues = Object.values(filteredRegistryConfigMap);
-  const filteredRegistryTokens = filteredRegistryConfigValues.map((c) => c.tokens).flat();
-  const filteredRegistryOptions = filteredRegistryConfigValues.map((c) => c.options).flat();
+    const filteredRegistryConfigMap = warpRouteWhitelist
+      ? filterToIds(registryWarpRoutes, warpRouteWhitelist)
+      : registryWarpRoutes;
+    const filteredRegistryConfigValues = Object.values(filteredRegistryConfigMap);
+    filteredRegistryTokens = filteredRegistryConfigValues.map((c) => c.tokens).flat();
+    filteredRegistryOptions = filteredRegistryConfigValues.map((c) => c.options).flat();
+  } else {
+    logger.debug('Skipping registry warp routes (useOnlineRegistry is false)');
+  }
 
   const storeOverrideTokens = storeOverrides.map((c) => c.tokens).flat();
   const storeOverrideOptions = storeOverrides.map((c) => c.options).flat();

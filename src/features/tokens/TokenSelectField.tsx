@@ -4,6 +4,8 @@ import { useField, useFormikContext } from 'formik';
 import { useEffect, useState } from 'react';
 import { TokenIcon } from '../../components/icons/TokenIcon';
 
+import { Color } from '../../styles/Color';
+
 import { WARP_QUERY_PARAMS } from '../../consts/args';
 import { updateQueryParam, updateQueryParams } from '../../utils/queryParams';
 import { TransferFormValues } from '../transfer/types';
@@ -104,7 +106,7 @@ function TokenButton({
           {token?.symbol || (isAutomatic ? 'No routes available' : 'Select Token')}
         </span>
       </div>
-      <ChevronIcon width={12} height={8} direction="s" />
+      <ChevronIcon width={12} height={8} direction="s" color={Color.primary['500']} />
     </button>
   );
 }

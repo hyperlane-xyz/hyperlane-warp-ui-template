@@ -1,6 +1,7 @@
 import { ChevronIcon, Modal, SpinnerIcon } from '@hyperlane-xyz/widgets';
 import { useField } from 'formik';
 import { useState } from 'react';
+import { Color } from '../../styles/Color';
 
 type Props = {
   name: string;
@@ -33,7 +34,7 @@ export function SelectTokenIdField({ name, disabled }: Props) {
             {tokenId ? tokenId : 'Select Token Id'}
           </span>
         </div>
-        <ChevronIcon width={12} height={8} direction="s" />
+        <ChevronIcon width={12} height={8} direction="s" color={Color.primary['500']} />
       </button>
       <SelectTokenIdModal
         isOpen={isModalOpen}

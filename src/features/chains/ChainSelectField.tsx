@@ -2,6 +2,7 @@ import { ChainSearchMenuProps, ChevronIcon } from '@hyperlane-xyz/widgets';
 import { useField, useFormikContext } from 'formik';
 import { useState } from 'react';
 import { ChainLogo } from '../../components/icons/ChainLogo';
+import { Color } from '../../styles/Color';
 import { TransferFormValues } from '../transfer/types';
 import { ChainSelectListModal } from './ChainSelectModal';
 import { useChainDisplayName } from './hooks';
@@ -53,7 +54,7 @@ export function ChainSelectField({ name, label, onChange, disabled, customListIt
             {displayName}
           </div>
         </div>
-        <ChevronIcon width={12} height={8} direction="s" />
+        <ChevronIcon width={12} height={8} direction="s" color={Color.primary['500']} />
       </button>
       <ChainSelectListModal
         isOpen={isModalOpen}

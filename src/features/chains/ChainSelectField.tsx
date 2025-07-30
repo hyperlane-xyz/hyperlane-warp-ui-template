@@ -42,7 +42,9 @@ export function ChainSelectField({
   const multiProvider = useMultiProvider();
   const account = useAccountForChain(multiProvider, token?.chainName);
   const isAccountReady = account?.isReady;
-  const isSupportedProtocol = token && !!ADD_ASSET_SUPPORTED_PROTOCOLS.includes(token?.protocol);
+  const isSupportedProtocol = token
+    ? ADD_ASSET_SUPPORTED_PROTOCOLS.includes(token?.protocol)
+    : false;
 
   const displayName = useChainDisplayName(field.value, true);
 

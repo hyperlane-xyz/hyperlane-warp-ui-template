@@ -1,21 +1,30 @@
 /** @type {import('next').NextConfig} */
 
-const { version } = require('./package.json')
-const { withSentryConfig } = require("@sentry/nextjs");
+const { version } = require('./package.json');
+const { withSentryConfig } = require('@sentry/nextjs');
 const withBundleAnalyzer = require('@next/bundle-analyzer')({
   enabled: process.env.ANALYZE === 'true',
-})
+});
 
-const isDev = process.env.NODE_ENV !== 'production'
+const isDev = process.env.NODE_ENV !== 'production';
 
 // Sometimes useful to disable this during development
 const ENABLE_CSP_HEADER = true;
-const FRAME_SRC_HOSTS = ['https://*.walletconnect.com', 'https://*.walletconnect.org','https://*.solflare.com'];
-const STYLE_SRC_HOSTS = []
-const IMG_SRC_HOSTS = ['https://*.walletconnect.com', 'https://*.githubusercontent.com'];
+const FRAME_SRC_HOSTS = [
+  'https://*.walletconnect.com',
+  'https://*.walletconnect.org',
+  'https://cdn.solflare.com',
+];
+const STYLE_SRC_HOSTS = [];
+const IMG_SRC_HOSTS = [
+  'https://*.walletconnect.com',
+  'https://*.githubusercontent.com',
+  'https://cdn.jsdelivr.net/gh/hyperlane-xyz/hyperlane-registry@main/',
+];
+const SCRIPT_SRC_HOSTS = ['https://snaps.consensys.io'];
 const cspHeader = `
   default-src 'self';
-  script-src 'self'${isDev ? " 'unsafe-eval'" : ''};
+  script-src 'self'${isDev ? " 'unsafe-eval'" : ''} ${SCRIPT_SRC_HOSTS.join(' ')};
   style-src 'self' 'unsafe-inline' ${STYLE_SRC_HOSTS.join(' ')};
   connect-src *;
   img-src 'self' blob: data: ${IMG_SRC_HOSTS.join(' ')};
@@ -27,7 +36,9 @@ const cspHeader = `
   frame-ancestors 'none';
   ${!isDev ? 'block-all-mixed-content;' : ''}
   ${!isDev ? 'upgrade-insecure-requests;' : ''}
-`.replace(/\s{2,}/g, ' ').trim();
+`
+  .replace(/\s{2,}/g, ' ')
+  .trim();
 
 const securityHeaders = [
   {
@@ -54,8 +65,8 @@ const securityHeaders = [
           value: cspHeader,
         },
       ]
-    : [])
-]
+    : []),
+];
 
 const nextConfig = {
   webpack(config) {
@@ -72,7 +83,7 @@ const nextConfig = {
         source: '/(.*)',
         headers: securityHeaders,
       },
-    ]
+    ];
   },
 
   env: {
@@ -80,14 +91,14 @@ const nextConfig = {
   },
 
   reactStrictMode: true,
-}
+};
 
 const sentryOptions = {
-  org: "hyperlane",
-  project: "warp-ui",
+  org: 'hyperlane',
+  project: 'warp-ui',
   authToken: process.env.SENTRY_AUTH_TOKEN,
   hideSourceMaps: true,
-  tunnelRoute: "/monitoring-tunnel",
+  tunnelRoute: '/monitoring-tunnel',
   bundleSizeOptimizations: {
     excludeDebugStatements: true,
     excludeReplayIframe: true,

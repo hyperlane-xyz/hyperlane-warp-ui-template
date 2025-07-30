@@ -28,8 +28,8 @@ export function SolidButton(
     'flex items-center justify-center rounded-lg transition-all duration-500 active:scale-95';
   let baseColors, onHover;
   if (color === 'primary') {
-    baseColors = 'bg-primary-500 text-white';
-    onHover = 'hover:bg-primary-600';
+    baseColors = 'bg-primary-900 text-white';
+    onHover = 'hover:bg-primary-800';
   } else if (color === 'accent') {
     baseColors = 'bg-accent-500 text-white';
     onHover = 'hover:bg-accent-600';

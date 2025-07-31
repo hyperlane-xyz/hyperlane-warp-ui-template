@@ -5,24 +5,97 @@ on:
     branches:
       - main
 
+env:
+  PROJECT_ID: "sto-dev-452608"
+  SERVICE_ACCOUNT: "stg-hyperlane-warp@sto-dev-452608.iam.gserviceaccount.com"
+  WORKLOAD_IDENTITY_PROVIDER: "projects/164899678221/locations/global/workloadIdentityPools/sto-dev-452608/providers/hyperlane-warp-gha-prvdr"
+  AR_REPO_LOCATION: "asia-southeast2"
+  AR_URL: "asia-southeast2-docker.pkg.dev/sto-dev-452608/bridge"
+
 jobs:
-  deploy-hyperlane-warp-ui-template-alpha:
+  deploy-hyperlane-warp-alpha:
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    environment:
+      name: ${{ github.ref_name }}
+
     runs-on: ubuntu-latest
-    timeout-minutes: 60
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Deploy backend via SSH
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: ${{ secrets.GCP_ALPHA_SERVER_HOST }}
-        username: ${{ secrets.GCP_ALPHA_SERVER_USER }}
-        key: ${{ secrets.GCP_ALPHA_SSH_PRIVATE_KEY }}
-        command_timeout: 60m
-        script: |
-          cd /home/ubuntu/hyperlane-warp-ui-template
-          git checkout main --force && git pull --no-rebase
-          docker compose -f docker-compose.yaml up -d --build
+      - name: Google Auth
+        id: auth
+        uses: 'google-github-actions/auth@v2'
+        with:
+          token_format: 'access_token'
+          project_id: ${{ env.PROJECT_ID }}
+          service_account: ${{ env.SERVICE_ACCOUNT }}
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
 
+      - name: Docker Auth
+        id: docker-auth
+        uses: 'docker/login-action@v1'
+        with:
+          username: 'oauth2accesstoken'
+          password: '${{ steps.auth.outputs.access_token }}'
+          registry: '${{ env.AR_REPO_LOCATION }}-docker.pkg.dev'
+
+      - name: "Fetch secrets from Google Secret Manager"
+        run: |
+          echo "Fetching secrets from GCP..."
+          gcloud secrets versions access latest \
+            --secret=seaseed-bridge-stg-hyperlane-warp \
+            --format='get(payload.data)' \
+            | tr '_-' '/+' | base64 -d > secret.json
+
+      - name: "Convert JSON to .env"
+        env:
+          NEXT_PUBLIC_RPC_OVERRIDES: '{"chain1":{"http":"https://..."}}'
+        run: |
+          echo "Write env file..."
+          jq -r 'to_entries|map("\(.key)=\(.value)")|.[]' secret.json > .env
+          echo "NEXT_PUBLIC_RPC_OVERRIDES=${{ env.NEXT_PUBLIC_RPC_OVERRIDES }}" >> .env
+          cat .env
+
+      - name: Build and Push Container
+        run: |-
+          git_hash=$(git rev-parse --short HEAD)
+
+          docker build -t hyperlane-warp . 
+          # git hash tagging
+          docker tag hyperlane-warp ${{ env.AR_URL }}/hyperlane-warp:${git_hash}
+          docker push ${{ env.AR_URL }}/hyperlane-warp:${git_hash}
+          # latest tagging
+          docker tag hyperlane-warp ${{ env.AR_URL }}/hyperlane-warp:latest
+          docker push ${{ env.AR_URL }}/hyperlane-warp:latest
+
+      - name: Get Git short hash
+        id: vars
+        run: echo "GIT_HASH=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+      # Checkout Helm chart repo
+      - name: Checkout Helm chart repo
+        uses: actions/checkout@v4
+        with:
+          repository: d3labs-io/argo-apps
+          ref: main                              
+          path: argo-apps                
+          token: ${{ secrets.GITHUB_TOKEN }} 
+
+      # Update image tag in values.yaml
+      - name: Update image tag
+        run: |
+          echo "Updating Helm chart image tag to ${GIT_HASH}..."
+          sed -i "s|tag: \".*\"|tag: \"${GIT_HASH}\"|g" argo-apps/accounts/sto-staging/hyperlane-warp/values.yaml
+
+      # Commit and push to repo chart
+      - name: Commit and push changes
+        run: |
+          cd argo-apps
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add accounts/sto-staging/hyperlane-warp/values.yaml
+          git commit -m "chore: update image tag to ${GIT_HASH}" || echo "No changes to commit"
+          git push origin main

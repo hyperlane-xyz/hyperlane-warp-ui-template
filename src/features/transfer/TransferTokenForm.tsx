@@ -13,7 +13,6 @@ import {
   ChevronIcon,
   IconButton,
   SpinnerIcon,
-  SwapIcon,
   getAccountAddressAndPubKey,
   useAccountAddressForChain,
   useAccounts,
@@ -25,6 +24,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
 import { SolidButton } from '../../components/buttons/SolidButton';
+import { CustomSwapIcon } from '../../components/icons/CustomSwapIcon';
 import { TextField } from '../../components/input/TextField';
 import { WARP_QUERY_PARAMS } from '../../consts/args';
 import { chainsRentEstimate } from '../../consts/chains';
@@ -187,7 +187,7 @@ function SwapChainsButton({
       onClick={onClick}
       disabled={disabled}
     >
-      <SwapIcon width={20} height={20} />
+      <CustomSwapIcon width={20} height={20} />
     </IconButton>
   );
 }

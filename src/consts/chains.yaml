@@ -49,15 +49,10 @@ arbitrumsepolia:
     estimateBlockTime: 3
     reorgPeriod: 0
   chainId: 421614
-  deployer:
-    name: Abacus Works
-    url: https://www.hyperlane.xyz
   displayName: Arbitrum Sepolia
   domainId: 421614
   logoURI: /images/chains/arbitrumsepolia/logo.svg
   gasCurrencyCoinGeckoId: ethereum
-  index:
-    from: 49690504 # Index of Mailbox deployment, nitro specific
   isTestnet: true
   name: arbitrumsepolia
   nativeToken:
@@ -83,9 +78,6 @@ sepolia:
     estimateBlockTime: 13
     reorgPeriod: 2
   chainId: 11155111
-  deployer:
-    name: Abacus Works
-    url: https://www.hyperlane.xyz
   displayName: Sepolia
   domainId: 11155111
   logoURI: /images/chains/sepolia/logo.svg

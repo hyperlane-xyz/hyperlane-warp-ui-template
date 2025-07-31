@@ -57,7 +57,6 @@ jobs:
           echo "Write env file..."
           jq -r 'to_entries|map("\(.key)=\(.value)")|.[]' secret.json > .env
           echo "NEXT_PUBLIC_RPC_OVERRIDES='${NEXT_PUBLIC_RPC_OVERRIDES}'" >> .env
-          cat .env
 
       - name: Build and Push Container
         run: |-

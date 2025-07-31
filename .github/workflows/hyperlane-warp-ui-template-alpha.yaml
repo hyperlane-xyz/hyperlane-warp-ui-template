@@ -56,7 +56,7 @@ jobs:
         run: |
           echo "Write env file..."
           jq -r 'to_entries|map("\(.key)=\(.value)")|.[]' secret.json > .env
-          echo "NEXT_PUBLIC_RPC_OVERRIDES=${{ env.NEXT_PUBLIC_RPC_OVERRIDES }}" >> .env
+          echo "NEXT_PUBLIC_RPC_OVERRIDES='${NEXT_PUBLIC_RPC_OVERRIDES}'" >> .env
           cat .env
 
       - name: Build and Push Container
@@ -82,7 +82,7 @@ jobs:
           repository: d3labs-io/argo-apps
           ref: main                              
           path: argo-apps                
-          token: ${{ secrets.GITHUB_TOKEN }} 
+          token: ${{ secrets.CHART_REPO_TOKEN  }} 
 
       # Update image tag in values.yaml
       - name: Update image tag

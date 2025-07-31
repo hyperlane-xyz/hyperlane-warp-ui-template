@@ -25,7 +25,7 @@ pruvtest:
   displayName: Pruv Testnet
   protocol: ethereum
   isTestnet: true
-  logoURI: /images/chains/seaseedtest/logo.svg
+  logoURI: /images/chains/pruvtest/logo.svg
   rpcUrls:
     - http: https://rpc.testnet.seaseed.network
   blockExplorers:

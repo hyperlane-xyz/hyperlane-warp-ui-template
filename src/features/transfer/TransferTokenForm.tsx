@@ -246,8 +246,7 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
     async (token: IToken) => {
       try {
         await addToken(token);
-      } catch (error) {
-        console.log('error', error);
+      } catch {
         logger.debug('Canceled add asset');
       }
     },

@@ -17,7 +17,7 @@ export default function Document() {
         <meta name="theme-color" content="#ffffff" />
 
         <meta name="application-name" content={APP_NAME} />
-        <meta name="keywords" content={APP_NAME + ' Hyperlane Token Bridge Interchain App'} />
+        <meta name="keywords" content={APP_NAME + ' Interchain App'} />
         <meta name="description" content={APP_DESCRIPTION} />
 
         <meta name="HandheldFriendly" content="true" />

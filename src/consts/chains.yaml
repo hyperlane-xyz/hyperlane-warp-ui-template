@@ -27,11 +27,11 @@ pruvtest:
   isTestnet: true
   logoURI: /images/chains/pruvtest/logo.svg
   rpcUrls:
-    - http: https://rpc.testnet.seaseed.network
+    - http: https://rpc.testnet.pruv.network
   blockExplorers:
     - name: Pruv Testnet Explorer
-      url: https://explorer.testnet.seaseed.network
-      apiUrl: https://explorer.testnet.seaseed.network
+      url: https://explorer.testnet.pruv.network
+      apiUrl: https://explorer.testnet.pruv.network
       family: blockscout
   nativeToken:
     name: Pruv Token

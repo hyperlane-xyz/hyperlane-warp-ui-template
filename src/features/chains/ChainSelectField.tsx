@@ -9,7 +9,6 @@ import { useField, useFormikContext } from 'formik';
 import { useState } from 'react';
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import { ADD_ASSET_SUPPORTED_PROTOCOLS } from '../../consts/args';
-import { Color } from '../../styles/Color';
 import { TransferFormValues } from '../transfer/types';
 import { ChainSelectListModal } from './ChainSelectModal';
 import { useChainDisplayName, useMultiProvider } from './hooks';
@@ -92,12 +91,7 @@ export function ChainSelectField({
           }}
           disabled={disabledAdd}
         >
-          <PlusIcon
-            height={16}
-            width={16}
-            color={disabledAdd ? Color.gray[500] : Color.primary[500]}
-          />{' '}
-          Add token
+          <PlusIcon height={16} width={16} /> Import token to wallet
         </button>
       )}
 
@@ -115,5 +109,6 @@ const styles = {
   base: 'px-2 py-1.5 w-full flex items-center justify-between text-sm bg-white rounded-lg border border-primary-300 outline-none transition-colors duration-500',
   enabled: 'hover:bg-gray-100 active:scale-95 focus:border-primary-500',
   disabled: 'bg-gray-150 cursor-default',
-  addButton: 'flex text-xxs text-primary-500 disabled:text-gray-500',
+  addButton:
+    'flex text-xxs text-primary-500 hover:text-primary-600 disabled:text-gray-500 [&_path]:fill-primary-500 [&_path]:hover:fill-primary-600 [&_path]:disabled:fill-gray-500',
 };

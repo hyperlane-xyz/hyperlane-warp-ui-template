@@ -3,18 +3,32 @@
 # Chains already in the SDK need not be included here unless you want to override some fields
 # Schema here: https://github.com/hyperlane-xyz/hyperlane-monorepo/blob/main/typescript/sdk/src/metadata/chainMetadataTypes.ts
 ---
-# Example using local anvil chain:
-# anvil1:
-#   chainId: 31337
-#   domainId: 31337
-#   name: anvil1
-#   protocol: ethereum
-#   rpcUrls:
-#     - http: http://127.0.0.1:8545
-# anvil2:
-#   chainId: 31338
-#   domainId: 31338
-#   name: anvil2
-#   protocol: ethereum
-#   rpcUrls:
-#     - http: http://127.0.0.1:8555
+radix:
+  blockExplorers:
+    - apiKey: n
+      apiUrl: https://api-sepolia.etherscan.io/api
+      family: etherscan
+      name: Etherscan
+      url: https://sepolia.etherscan.io
+  blocks:
+    confirmations: 1
+    estimateBlockTime: 13
+    reorgPeriod: 2
+  chainId: 2
+  deployer:
+    name: Abacus Works
+    url: https://www.hyperlane.xyz
+  displayName: Radix
+  domainId: 1337
+  gasCurrencyCoinGeckoId: radix
+  gnosisSafeTransactionServiceUrl: https://safe-transaction-sepolia.safe.global
+  isTestnet: true
+  name: radix
+  nativeToken:
+    decimals: 18
+    name: Radix
+    symbol: XRD
+    denom: resource_tdx_2_1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxtfd2jc
+  protocol: radix
+  rpcUrls:
+    - http: https://stokenet.radixdlt.com

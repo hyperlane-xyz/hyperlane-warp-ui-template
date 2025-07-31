@@ -10,12 +10,14 @@ import { RadixDappToolkit, RadixNetwork } from '@radixdlt/radix-dapp-toolkit';
 import { PropsWithChildren } from 'react';
 
 export function RadixWalletContext({ children }: PropsWithChildren<unknown>) {
+  // TODO: RADIX
+  // get real dapp definition address
   const rdt = RadixDappToolkit({
     networkId: RadixNetwork.Stokenet,
     applicationVersion: '1.0.0',
-    applicationName: 'Radix Web3 dApp',
+    applicationName: 'Radix dApp Sandbox',
     applicationDappDefinitionAddress:
-      'account_rdx129zzrj4mwjwec8e6rmsvcz0hx4lp7uj3kf73w8rd2fek4cryaemewh',
+      'account_tdx_2_12yf9gd53yfep7a669fv2t3wm7nz9zeezwd04n02a433ker8vza6rhe',
     useCache: false,
   });
 

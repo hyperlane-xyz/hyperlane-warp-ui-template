@@ -4681,14 +4681,14 @@ __metadata:
 
 "@hyperlane-xyz/radix-sdk@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/radix-sdk::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
   version: 1.0.0
-  resolution: "@hyperlane-xyz/radix-sdk@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/radix-sdk#/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/radix-sdk::hash=cb91f3&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
+  resolution: "@hyperlane-xyz/radix-sdk@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/radix-sdk#/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/radix-sdk::hash=07a848&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
   dependencies:
     "@hyperlane-xyz/utils": "npm:14.1.0"
     "@radixdlt/babylon-core-api-sdk": "npm:^1.3.0"
     "@radixdlt/babylon-gateway-api-sdk": "npm:^1.10.1"
     "@radixdlt/radix-engine-toolkit": "npm:^1.0.5"
     bignumber.js: "npm:^9.3.1"
-  checksum: 10/d408428d1f17059d65f228c7a0df425118f53e76bac88a07dbff9cf12bc8b948eca8bcd67a3249bed440d8ff259b39d8c0fcada8b8a30650f632f8e62ba994c8
+  checksum: 10/cb5868ed92ea73e6796a03cf5dbd0502a79ebb1110a6739e6b3b0e30f22707681002e6dbab50b9d226c04ec4402bd003beae68718370917b468145587129a9de
   languageName: node
   linkType: hard
 
@@ -4705,7 +4705,7 @@ __metadata:
 
 "@hyperlane-xyz/sdk@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/sdk::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
   version: 16.0.0
-  resolution: "@hyperlane-xyz/sdk@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/sdk#/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/sdk::hash=32b210&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
+  resolution: "@hyperlane-xyz/sdk@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/sdk#/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/sdk::hash=3e76a7&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
   dependencies:
     "@arbitrum/sdk": "npm:^4.0.0"
     "@aws-sdk/client-s3": "npm:^3.577.0"
@@ -4736,7 +4736,7 @@ __metadata:
   peerDependencies:
     "@ethersproject/abi": "*"
     "@ethersproject/providers": "*"
-  checksum: 10/b56052aee53d8e123b7f4955f9b8884b2bba9c7038518f21527485b0d64dc2145db333bf1854089b59657a5dbdd52b23143198a9b4a5cde446e2abbe7aa37948
+  checksum: 10/ff5134684ab4abeeece1cbbb851524e5a16e1296a9e5c26b69f441b158e47d1496c2a5344ab653206cfcf64bb90154f64f7430c12060afd4409193d00b337eaa
   languageName: node
   linkType: hard
 
@@ -4751,7 +4751,7 @@ __metadata:
 
 "@hyperlane-xyz/utils@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/utils::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
   version: 16.0.0
-  resolution: "@hyperlane-xyz/utils@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/utils#/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/utils::hash=ef796b&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
+  resolution: "@hyperlane-xyz/utils@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/utils#/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/utils::hash=5703bb&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
   dependencies:
     "@cosmjs/encoding": "npm:^0.32.4"
     "@solana/web3.js": "npm:^1.95.4"
@@ -4770,7 +4770,7 @@ __metadata:
       optional: true
     pino-pretty:
       optional: true
-  checksum: 10/889313838a892e2fd9d3271b549831dc141bedf3ee613838e0650f9a51ba546a161becc0298f7294efa13ef70a827dc00062570356cd9dbff3691a2f2789a9a9
+  checksum: 10/03c03cc5ff22e006b09bdab5e2e31dcac76820138e7fc210bae988811f67e52382b6ecf8d039d9def13a879ddc62a754e501cd555f2923d513260611fe37191d
   languageName: node
   linkType: hard
 
@@ -4855,7 +4855,7 @@ __metadata:
 
 "@hyperlane-xyz/widgets@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/widgets::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
   version: 16.0.0
-  resolution: "@hyperlane-xyz/widgets@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/widgets#/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/widgets::hash=94923c&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
+  resolution: "@hyperlane-xyz/widgets@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/widgets#/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/widgets::hash=572e1c&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
   dependencies:
     "@cosmjs/stargate": "npm:^0.32.4"
     "@cosmos-kit/react": "npm:^2.18.0"
@@ -4879,7 +4879,7 @@ __metadata:
   peerDependencies:
     react: ^18
     react-dom: ^18
-  checksum: 10/13607f79d68b7b9bb2efee87d505056839c10210b882115b1a74cd30e723f46d0643bedda7b89817fb6d731bdbe97cc11e87204ff4b0f0a669d3384c7cc9f59c
+  checksum: 10/ccd30a9080dd3555ff1c679e77d6287b46334d198b4ac805581d2714829bb40f9ed9721768727308f4b159f79e146a6eaef67318213b827df8ea6ba6685f3c40
   languageName: node
   linkType: hard
 

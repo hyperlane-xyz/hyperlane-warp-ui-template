@@ -2,5 +2,14 @@
 # These configs will be merged with the warp routes in the configured registry
 # The input here is typically the output of the Hyperlane CLI warp deploy command
 ---
-tokens: []
+tokens:
+  - addressOrDenom: 'component_tdx_2_1cqz8a07x8hmc2qyqg3glyut9te4lpcc2qelgn740lceasgwwv3dgjs'
+    chainName: radix
+    connections:
+      - token: radix|radix|component_tdx_2_1cqz8a07x8hmc2qyqg3glyut9te4lpcc2qelgn740lceasgwwv3dgjs
+    decimals: 18
+    logoURI: ''
+    name: Radix
+    standard: RadixHypCollateral
+    symbol: XRD
 options: {}

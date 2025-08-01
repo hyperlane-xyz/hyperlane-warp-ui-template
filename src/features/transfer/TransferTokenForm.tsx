@@ -21,7 +21,7 @@ import {
 } from '@hyperlane-xyz/widgets';
 import BigNumber from 'bignumber.js';
 import { Form, Formik, useFormikContext } from 'formik';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
 import { SolidButton } from '../../components/buttons/SolidButton';
@@ -53,7 +53,6 @@ import {
   getInitialTokenIndex,
   getTokenByIndex,
   getTokenIndexFromChains,
-  useAddToken,
   useWarpCore,
 } from '../tokens/hooks';
 import { getTokensWithSameCollateralAddresses, isValidMultiCollateralToken } from '../tokens/utils';
@@ -195,7 +194,6 @@ function SwapChainsButton({
 
 function ChainSelectSection({ isReview }: { isReview: boolean }) {
   const warpCore = useWarpCore();
-  const { addToken, isLoading } = useAddToken();
 
   const { setOriginChainName } = useStore((s) => ({
     setOriginChainName: s.setOriginChainName,
@@ -242,17 +240,6 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
     setOriginChainName(origin);
   };
 
-  const onAddToken = useCallback(
-    async (token: IToken) => {
-      try {
-        await addToken(token);
-      } catch {
-        logger.debug('Canceled add asset');
-      }
-    },
-    [addToken],
-  );
-
   return (
     <div className="mt-2 flex items-center justify-between gap-4">
       <ChainSelectField
@@ -262,8 +249,6 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
         customListItemField={destinationRouteCounts}
         onChange={handleChange}
         token={originToken}
-        onAddAsset={onAddToken}
-        disabledAdd={isLoading}
       />
       <div className="flex flex-1 flex-col items-center">
         <SwapChainsButton disabled={isReview} onSwapChain={onSwapChain} />
@@ -275,8 +260,6 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
         customListItemField={originRouteCounts}
         onChange={handleChange}
         token={destinationToken}
-        onAddAsset={onAddToken}
-        disabledAdd={isLoading}
       />
     </div>
   );

@@ -6,9 +6,11 @@ import {
   useAccountForChain,
 } from '@hyperlane-xyz/widgets';
 import { useField, useFormikContext } from 'formik';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import { ADD_ASSET_SUPPORTED_PROTOCOLS } from '../../consts/args';
+import { logger } from '../../utils/logger';
+import { useAddToken } from '../tokens/hooks';
 import { TransferFormValues } from '../transfer/types';
 import { ChainSelectListModal } from './ChainSelectModal';
 import { useChainDisplayName, useMultiProvider } from './hooks';
@@ -20,8 +22,6 @@ type Props = {
   disabled?: boolean;
   customListItemField: ChainSearchMenuProps['customListItemField'];
   token?: IToken;
-  onAddAsset: (token: IToken) => Promise<void>;
-  disabledAdd: boolean;
 };
 
 export function ChainSelectField({
@@ -31,12 +31,11 @@ export function ChainSelectField({
   disabled,
   customListItemField,
   token,
-  onAddAsset,
-  disabledAdd,
 }: Props) {
   const [field, , helpers] = useField<ChainName>(name);
   const { setFieldValue } = useFormikContext<TransferFormValues>();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { addToken, canAddAsset, isLoading } = useAddToken(token);
 
   const multiProvider = useMultiProvider();
   const account = useAccountForChain(multiProvider, token?.chainName);
@@ -58,6 +57,15 @@ export function ChainSelectField({
   const onClick = () => {
     if (!disabled) setIsModalOpen(true);
   };
+
+  const onAddToken = useCallback(async () => {
+    console.log('hello');
+    try {
+      await addToken();
+    } catch {
+      logger.debug('Failed to add asset');
+    }
+  }, [addToken]);
 
   const showAddToken = token && isAccountReady && isSupportedProtocol;
 
@@ -82,14 +90,12 @@ export function ChainSelectField({
         </div>
         <ChevronIcon width={12} height={8} direction="s" />
       </button>
-      {showAddToken && (
+      {canAddAsset && (
         <button
           type="button"
           className={styles.addButton}
-          onClick={() => {
-            onAddAsset(token);
-          }}
-          disabled={disabledAdd}
+          onClick={onAddToken}
+          disabled={isLoading}
         >
           <PlusIcon height={16} width={16} /> Import token to wallet
         </button>

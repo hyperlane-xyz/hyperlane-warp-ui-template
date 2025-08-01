@@ -15,9 +15,8 @@ export function RadixWalletContext({ children }: PropsWithChildren<unknown>) {
   const rdt = RadixDappToolkit({
     networkId: RadixNetwork.Stokenet,
     applicationVersion: '1.0.0',
-    applicationName: 'Radix dApp Sandbox',
-    applicationDappDefinitionAddress:
-      'account_tdx_2_12yf9gd53yfep7a669fv2t3wm7nz9zeezwd04n02a433ker8vza6rhe',
+    applicationName: 'Hyperlane Test',
+    dAppDefinitionAddress: 'account_tdx_2_128l0zrskd4ed4hyee2zw5u3jqry5k939kyn359ltmungvsxn2jxd3d',
     useCache: false,
   });
 

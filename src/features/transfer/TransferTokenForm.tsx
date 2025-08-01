@@ -588,7 +588,7 @@ function ReviewDetails({
                 )}
                 {interchainQuote && interchainQuote.amount > 0n && (
                   <p className="flex">
-                    <span className="min-w-[7.5rem]">Interchain Gas</span>
+                    <span className="min-w-[7.5rem]">Bridge Fee</span>
                     <span>{`${interchainQuote.getDecimalFormattedAmount().toFixed(4) || '0'} ${
                       interchainQuote.token.symbol || ''
                     }`}</span>

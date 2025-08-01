@@ -134,7 +134,7 @@ export function TransferTokenForm() {
         <Form className="flex w-full flex-col items-stretch">
           <WarningBanners />
           <ChainSelectSection isReview={isReview} />
-          <div className="mt-3.5 flex items-end justify-between space-x-4">
+          <div className="mt-2.5 flex items-end justify-between space-x-4">
             <TokenSection setIsNft={setIsNft} isReview={isReview} />
             <AmountSection isNft={isNft} isReview={isReview} />
           </div>
@@ -209,6 +209,13 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
     return getNumRoutesWithSelectedChain(warpCore, values.destination, false);
   }, [values.destination, warpCore]);
 
+  const { originToken, destinationToken } = useMemo(() => {
+    const originToken = getTokenByIndex(warpCore, values.tokenIndex);
+    if (!originToken) return { originToken: undefined, destinationToken: undefined };
+    const destinationToken = originToken.getConnectionForChain(values.destination)?.token;
+    return { originToken, destinationToken };
+  }, [values.tokenIndex, values.destination, warpCore]);
+
   const setTokenOnChainChange = (origin: string, destination: string) => {
     const tokenIndex = getTokenIndexFromChains(warpCore, null, origin, destination);
     const token = getTokenByIndex(warpCore, tokenIndex);
@@ -241,6 +248,7 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
         disabled={isReview}
         customListItemField={destinationRouteCounts}
         onChange={handleChange}
+        token={originToken}
       />
       <div className="flex flex-1 flex-col items-center">
         <SwapChainsButton disabled={isReview} onSwapChain={onSwapChain} />
@@ -251,6 +259,7 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
         disabled={isReview}
         customListItemField={originRouteCounts}
         onChange={handleChange}
+        token={destinationToken}
       />
     </div>
   );

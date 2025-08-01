@@ -21,7 +21,6 @@ tokens:
     collateralAddressOrDenom: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238'
     connections:
       - token: ethereum|pruvtest|0xaE68d312149335B477Fa2EafFB1a1a18E287aC1b
-      - token: ethereum|arbitrumsepolia|0x97695ca9aa0699C438B001be4fBe8750d1295956
     decimals: 6
     logoURI: /images/tokens/USDC/logo.svg
     name: USDC
@@ -32,7 +31,6 @@ tokens:
     collateralAddressOrDenom: '0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d'
     connections:
       - token: ethereum|pruvtest|0xaE68d312149335B477Fa2EafFB1a1a18E287aC1b
-      - token: ethereum|sepolia|0xc97f971b0ddffC63e87365c2ce2F88107E79A167
     decimals: 6
     logoURI: /images/tokens/USDC/logo.svg
     name: USDC

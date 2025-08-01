@@ -6,7 +6,4 @@ export enum WARP_QUERY_PARAMS {
   TOKEN = 'token',
 }
 
-export const ADD_ASSET_SUPPORTED_PROTOCOLS: ProtocolType[] = [
-  ProtocolType.Ethereum,
-  ProtocolType.Starknet,
-];
+export const ADD_ASSET_SUPPORTED_PROTOCOLS: ProtocolType[] = [ProtocolType.Ethereum];

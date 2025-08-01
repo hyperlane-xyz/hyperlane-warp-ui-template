@@ -1,20 +1,14 @@
 import { IToken } from '@hyperlane-xyz/sdk';
-import {
-  ChainSearchMenuProps,
-  ChevronIcon,
-  PlusIcon,
-  useAccountForChain,
-} from '@hyperlane-xyz/widgets';
+import { ChainSearchMenuProps, ChevronIcon, PlusIcon } from '@hyperlane-xyz/widgets';
 import { useField, useFormikContext } from 'formik';
 import { useCallback, useState } from 'react';
 import { toast } from 'react-toastify';
 import { ChainLogo } from '../../components/icons/ChainLogo';
-import { ADD_ASSET_SUPPORTED_PROTOCOLS } from '../../consts/args';
 import { logger } from '../../utils/logger';
 import { useAddToken } from '../tokens/hooks';
 import { TransferFormValues } from '../transfer/types';
 import { ChainSelectListModal } from './ChainSelectModal';
-import { useChainDisplayName, useMultiProvider } from './hooks';
+import { useChainDisplayName } from './hooks';
 
 const USER_REJECTED_ERROR = 'User rejected';
 
@@ -40,13 +34,6 @@ export function ChainSelectField({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { addToken, canAddAsset, isLoading } = useAddToken(token);
 
-  const multiProvider = useMultiProvider();
-  const account = useAccountForChain(multiProvider, token?.chainName);
-  const isAccountReady = account?.isReady;
-  const isSupportedProtocol = token
-    ? ADD_ASSET_SUPPORTED_PROTOCOLS.includes(token?.protocol)
-    : false;
-
   const displayName = useChainDisplayName(field.value, true);
 
   const handleChange = (chainName: ChainName) => {
@@ -71,10 +58,8 @@ export function ChainSelectField({
     }
   }, [addToken]);
 
-  const showAddToken = token && isAccountReady && isSupportedProtocol;
-
   return (
-    <div className={`flex-[4] ${showAddToken ? 'h-[4.5rem]' : ''}`}>
+    <div className={`flex-[4] ${canAddAsset ? 'h-[4.5rem]' : ''}`}>
       <button
         type="button"
         name={field.name}

@@ -2,7 +2,6 @@ import { IToken, Token, WarpCore } from '@hyperlane-xyz/sdk';
 import { isNullish } from '@hyperlane-xyz/utils';
 import { useAccountForChain, useActiveChains, useWatchAsset } from '@hyperlane-xyz/widgets';
 import { useMutation } from '@tanstack/react-query';
-import { useToastError } from '../../components/toast/useToastError';
 import { ADD_ASSET_SUPPORTED_PROTOCOLS } from '../../consts/args';
 import { useMultiProvider } from '../chains/hooks';
 import { useStore } from '../store';
@@ -115,9 +114,8 @@ export function useAddToken(token?: IToken) {
     : false;
 
   const canAddAsset = token && isAccountReady && isSupportedProtocol;
-  console.log('hello1');
 
-  const { isPending, mutateAsync, error } = useMutation({
+  const { isPending, mutateAsync } = useMutation({
     mutationFn: () => {
       if (!canAddAsset)
         throw new Error('Cannot import this asset, please check the token imported');
@@ -131,11 +129,6 @@ export function useAddToken(token?: IToken) {
       return addAsset(token, activeChain.chainName);
     },
   });
-
-  useToastError(
-    error,
-    'Failed to import asset, please make sure your wallet is connected or token is valid',
-  );
 
   return { addToken: mutateAsync, isLoading: isPending, canAddAsset };
 }

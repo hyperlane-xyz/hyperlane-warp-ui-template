@@ -7,6 +7,7 @@ import {
 } from '@hyperlane-xyz/widgets';
 import { useField, useFormikContext } from 'formik';
 import { useCallback, useState } from 'react';
+import { toast } from 'react-toastify';
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import { ADD_ASSET_SUPPORTED_PROTOCOLS } from '../../consts/args';
 import { logger } from '../../utils/logger';
@@ -14,6 +15,8 @@ import { useAddToken } from '../tokens/hooks';
 import { TransferFormValues } from '../transfer/types';
 import { ChainSelectListModal } from './ChainSelectModal';
 import { useChainDisplayName, useMultiProvider } from './hooks';
+
+const USER_REJECTED_ERROR = 'User rejected';
 
 type Props = {
   name: string;
@@ -59,11 +62,12 @@ export function ChainSelectField({
   };
 
   const onAddToken = useCallback(async () => {
-    console.log('hello');
     try {
       await addToken();
-    } catch {
-      logger.debug('Failed to add asset');
+    } catch (error: any) {
+      const errorDetails = error.message || error.toString();
+      if (!errorDetails.includes(USER_REJECTED_ERROR)) toast.error(errorDetails);
+      logger.debug(error);
     }
   }, [addToken]);
 

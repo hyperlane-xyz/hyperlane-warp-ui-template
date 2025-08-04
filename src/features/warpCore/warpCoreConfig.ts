@@ -50,7 +50,7 @@ export async function assembleWarpCoreConfig(
     ...yamlConfig.tokens,
     ...storeOverrideTokens,
   ];
-  const tokens = dedupeTokens(combinedTokens);
+  const tokens = filterUnconnectedToken(dedupeTokens(combinedTokens));
 
   const combinedOptions = [
     ...filteredRegistryOptions,
@@ -97,4 +97,9 @@ function reduceOptions(optionsList: Array<WarpCoreConfig['options']>): WarpCoreC
     }
     return acc;
   }, {});
+}
+
+// Remove tokens that have no connections from the token list
+function filterUnconnectedToken(tokens: WarpCoreConfig['tokens']): WarpCoreConfig['tokens'] {
+  return tokens.filter((token) => token.connections);
 }

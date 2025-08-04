@@ -3,7 +3,7 @@ import {
   warpRouteConfigs as publishedRegistryWarpRoutes,
 } from '@hyperlane-xyz/registry';
 import { WarpCoreConfig, WarpCoreConfigSchema, validateZodResult } from '@hyperlane-xyz/sdk';
-import { objFilter, objMerge } from '@hyperlane-xyz/utils';
+import { isObjEmpty, objFilter, objMerge } from '@hyperlane-xyz/utils';
 import { config } from '../../consts/config.ts';
 import { warpRouteWhitelist } from '../../consts/warpRouteWhitelist.ts';
 import { warpRouteConfigs as tsWarpRoutes } from '../../consts/warpRoutes.ts';
@@ -25,6 +25,7 @@ export async function assembleWarpCoreConfig(
     if (config.registryUrl) {
       logger.debug('Using custom registry warp routes from:', config.registryUrl);
       registryWarpRoutes = await registry.getWarpRoutes();
+      if (isObjEmpty(registryWarpRoutes)) throw new Error('Warp routes empty');
     } else {
       throw new Error('No custom registry URL provided');
     }
@@ -49,7 +50,7 @@ export async function assembleWarpCoreConfig(
     ...yamlConfig.tokens,
     ...storeOverrideTokens,
   ];
-  const tokens = dedupeTokens(combinedTokens);
+  const tokens = filterUnconnectedToken(dedupeTokens(combinedTokens));
 
   const combinedOptions = [
     ...filteredRegistryOptions,
@@ -96,4 +97,9 @@ function reduceOptions(optionsList: Array<WarpCoreConfig['options']>): WarpCoreC
     }
     return acc;
   }, {});
+}
+
+// Remove tokens that have no connections from the token list
+function filterUnconnectedToken(tokens: WarpCoreConfig['tokens']): WarpCoreConfig['tokens'] {
+  return tokens.filter((token) => token.connections && token.connections.length);
 }

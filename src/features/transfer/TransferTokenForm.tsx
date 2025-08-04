@@ -109,7 +109,8 @@ export function TransferTokenForm() {
     logger.debug('Checking destination native balance for:', values.destination, values.recipient);
     const balance = await getDestinationNativeBalance(multiProvider, values);
     if (isNullish(balance)) return;
-    else if (balance > 0n) {
+    const isGaslessChain = config.gaslessChains?.includes(values.destination) || false;
+    if (balance > 0n || isGaslessChain) {
       logger.debug('Reviewing transfer form values for:', values.origin, values.destination);
       setIsReview(true);
     } else {

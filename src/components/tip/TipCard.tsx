@@ -1,9 +1,6 @@
 import { IconButton, XCircleIcon } from '@hyperlane-xyz/widgets';
-import Image from 'next/image';
 import { useState } from 'react';
 import { config } from '../../consts/config';
-import { links } from '../../consts/links';
-import InfoCircle from '../../images/icons/info-circle.svg';
 import { Card } from '../layout/Card';
 
 export function TipCard() {
@@ -11,13 +8,13 @@ export function TipCard() {
   if (!show) return null;
   return (
     <Card className="w-100 p-2 sm:w-[31rem]">
-      <h2 className="text-primary-500">Bridge Tokens with Hyperlane Warp Routes!</h2>
+      <h2 className="text-primary-500">Update for inEVM/injective route</h2>
       <div className="flex items-end justify-between">
         <p className="mt-1 max-w-[75%] text-xs">
-          Warp Routes make it easy to permissionlessly take your tokens interchain. Fork this
-          template to get started!
+          Bridging INJ between inEVM and Injective is temporarily disabled while our team
+          investigates an ongoing issue.
         </p>
-        <a
+        {/* <a
           href={links.github}
           target="_blank"
           rel="noopener noreferrer"
@@ -25,7 +22,7 @@ export function TipCard() {
         >
           <Image src={InfoCircle} width={12} alt="" />
           <span className="ml-1.5 hidden text-sm sm:inline">More</span>
-        </a>
+        </a> */}
       </div>
       <div className="absolute right-3 top-3">
         <IconButton onClick={() => setShow(false)} title="Hide tip" className="hover:rotate-90">

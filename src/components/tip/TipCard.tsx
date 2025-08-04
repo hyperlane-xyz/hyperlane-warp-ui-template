@@ -10,11 +10,11 @@ export function TipCard() {
   if (!show) return null;
   return (
     <Card className="w-100 p-2 sm:w-[31rem]">
-      <h2 className="text-primary-500">Hyperlane is powered by HYPER</h2>
+      <h2 className="text-primary-500">Update for inEVM/injective route</h2>
       <div className="flex items-end justify-between">
         <p className="mt-1 max-w-[75%] text-justify text-xs">
-          Bridge to Arbitrum, Base, BNB, Ethereum, and Optimism, or stake via Symbiotic on Ethereum
-          to qualify for additional Expansion Rewards!
+          Bridging INJ between inEVM and Injective is temporarily disabled while our team
+          investigates an ongoing issue.
         </p>
         <a
           href="https://app.symbiotic.fi/vault/0xe1f23869776c82f691d9cb34597ab1830fb0de58"

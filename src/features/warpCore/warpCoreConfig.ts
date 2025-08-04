@@ -101,5 +101,5 @@ function reduceOptions(optionsList: Array<WarpCoreConfig['options']>): WarpCoreC
 
 // Remove tokens that have no connections from the token list
 function filterUnconnectedToken(tokens: WarpCoreConfig['tokens']): WarpCoreConfig['tokens'] {
-  return tokens.filter((token) => token.connections);
+  return tokens.filter((token) => token.connections && token.connections.length);
 }

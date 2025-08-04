@@ -1,4 +1,5 @@
 import { ChainMap } from '@hyperlane-xyz/sdk';
+import { ProtocolType } from '@hyperlane-xyz/utils';
 
 export enum WARP_QUERY_PARAMS {
   ORIGIN = 'origin',
@@ -36,3 +37,4 @@ export const tipCardChains: ChainMap<{
 export const baseChain = tipCardChains[CHAIN_NAMES.BASE];
 export const optimismChain = tipCardChains[CHAIN_NAMES.OPTIMISM];
 export const openUsdtTokenAddress = '0x1217BfE6c773EEC6cc4A38b5Dc45B92292B6E189';
+export const ADD_ASSET_SUPPORTED_PROTOCOLS: ProtocolType[] = [ProtocolType.Ethereum];

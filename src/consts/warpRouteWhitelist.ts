@@ -5,6 +5,7 @@
 export const warpRouteWhitelist: Array<string> | null = [
   'USDC/ethereum-inevm',
   'USDT/ethereum-inevm',
+  'INJ/inevm-injective',
   // Relayed by Stride
   'INTERN/echos-inevm',
 ];

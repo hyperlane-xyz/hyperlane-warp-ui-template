@@ -47,7 +47,7 @@ export const config: Config = Object.freeze({
   showAddRouteButton: false,
   showAddChainButton: false,
   showDisabledTokens: false,
-  showTipBox: true,
+  showTipBox: false,
   version,
   transferBlacklist,
   walletConnectProjectId,

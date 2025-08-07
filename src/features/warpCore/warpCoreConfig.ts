@@ -109,7 +109,7 @@ function filterUnconnectedToken(tokens: WarpCoreConfig['tokens']): WarpCoreConfi
   const destinationTokenIds = new Set<string>();
 
   tokens.forEach((token) => {
-    if (token.connections && token.connections.length > 0) {
+    if (token.connections && token.connections.length) {
       token.connections.forEach((conn) => {
         destinationTokenIds.add(conn.token);
       });
@@ -119,7 +119,7 @@ function filterUnconnectedToken(tokens: WarpCoreConfig['tokens']): WarpCoreConfi
   // Keep tokens with connections OR tokens that are destinations
   return tokens.filter((token) => {
     // Has connections - keep it
-    if (token.connections && token.connections.length > 0) return true;
+    if (token.connections && token.connections.length) return true;
 
     const protocol = TOKEN_STANDARD_TO_PROTOCOL[token.standard];
 

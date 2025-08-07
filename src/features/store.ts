@@ -1,4 +1,10 @@
-import { GithubRegistry, IRegistry } from '@hyperlane-xyz/registry';
+import {
+  chainAddresses,
+  chainMetadata,
+  GithubRegistry,
+  IRegistry,
+  PartialRegistry,
+} from '@hyperlane-xyz/registry';
 import {
   ChainMap,
   ChainMetadata,
@@ -212,15 +218,28 @@ async function initWarpContext({
   chainMetadataOverrides: ChainMap<Partial<ChainMetadata> | undefined>;
   warpCoreConfigOverrides: WarpCoreConfig[];
 }): Promise<WarpContext> {
+  let currentRegistry = registry;
   try {
     // Pre-load registry content to avoid repeated requests
-    await registry.listRegistryContent();
-    const coreConfig = await assembleWarpCoreConfig(warpCoreConfigOverrides, registry);
+    await currentRegistry.listRegistryContent();
+  } catch (error) {
+    currentRegistry = new PartialRegistry({
+      chainAddresses: chainAddresses,
+      chainMetadata: chainMetadata,
+    });
+    logger.warn(
+      'Failed to list registry content using GithubRegistry, will continue with PartialRegistry.',
+      error,
+    );
+  }
+
+  try {
+    const coreConfig = await assembleWarpCoreConfig(warpCoreConfigOverrides, currentRegistry);
 
     const chainsInTokens = Array.from(new Set(coreConfig.tokens.map((t) => t.chainName)));
     const { chainMetadata, chainMetadataWithOverrides } = await assembleChainMetadata(
       chainsInTokens,
-      registry,
+      currentRegistry,
       chainMetadataOverrides,
     );
     const multiProvider = new MultiProtocolProvider(chainMetadataWithOverrides);
@@ -229,7 +248,7 @@ async function initWarpContext({
     const tokensBySymbolChainMap = assembleTokensBySymbolChainMap(warpCore.tokens, multiProvider);
     const routerAddressesByChainMap = getRouterAddressesByChain(coreConfig.tokens);
     return {
-      registry,
+      registry: currentRegistry,
       chainMetadata,
       multiProvider,
       warpCore,

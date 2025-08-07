@@ -1,6 +1,7 @@
 import { IToken, Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
 import {
   ProtocolType,
+  convertToScaledAmount,
   errorToString,
   fromWei,
   isNullish,
@@ -55,6 +56,7 @@ import {
   useWarpCore,
 } from '../tokens/hooks';
 import { getTokensWithSameCollateralAddresses, isValidMultiCollateralToken } from '../tokens/utils';
+import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { RecipientConfirmationModal } from './RecipientConfirmationModal';
 import { useFetchMaxAmount } from './maxAmount';
 import { TransferFormValues } from './types';
@@ -132,7 +134,7 @@ export function TransferTokenForm() {
         <Form className="flex w-full flex-col items-stretch">
           <WarningBanners />
           <ChainSelectSection isReview={isReview} />
-          <div className="mt-3.5 flex items-end justify-between space-x-4">
+          <div className="mt-2.5 flex items-end justify-between space-x-4">
             <TokenSection setIsNft={setIsNft} isReview={isReview} />
             <AmountSection isNft={isNft} isReview={isReview} />
           </div>
@@ -207,6 +209,13 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
     return getNumRoutesWithSelectedChain(warpCore, values.destination, false);
   }, [values.destination, warpCore]);
 
+  const { originToken, destinationToken } = useMemo(() => {
+    const originToken = getTokenByIndex(warpCore, values.tokenIndex);
+    if (!originToken) return { originToken: undefined, destinationToken: undefined };
+    const destinationToken = originToken.getConnectionForChain(values.destination)?.token;
+    return { originToken, destinationToken };
+  }, [values.tokenIndex, values.destination, warpCore]);
+
   const setTokenOnChainChange = (origin: string, destination: string) => {
     const tokenIndex = getTokenIndexFromChains(warpCore, null, origin, destination);
     const token = getTokenByIndex(warpCore, tokenIndex);
@@ -239,6 +248,7 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
         disabled={isReview}
         customListItemField={destinationRouteCounts}
         onChange={handleChange}
+        token={originToken}
       />
       <div className="flex flex-1 flex-col items-center">
         <SwapChainsButton disabled={isReview} onSwapChain={onSwapChain} />
@@ -249,6 +259,7 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
         disabled={isReview}
         customListItemField={originRouteCounts}
         onChange={handleChange}
+        token={destinationToken}
       />
     </div>
   );
@@ -493,6 +504,28 @@ function ReviewDetails({
   const destinationToken = connection?.token;
   const isNft = originToken?.isNft();
 
+  const scaledAmount = useMemo(() => {
+    if (!originToken?.scale || !destinationToken?.scale) return null;
+    if (!visible || originToken.scale === destinationToken.scale) return null;
+
+    const amountWei = toWei(amount, originToken.decimals);
+    const precisionFactor = 100000;
+
+    const convertedAmount = convertToScaledAmount({
+      amount: BigInt(amountWei),
+      fromScale: originToken.scale,
+      toScale: destinationToken.scale,
+      precisionFactor,
+    });
+    const value = convertedAmount / BigInt(precisionFactor);
+
+    return {
+      value: fromWei(value.toString(), originToken.decimals),
+      originScale: originToken.scale,
+      destinationScale: destinationToken.scale,
+    };
+  }, [amount, originToken, destinationToken, visible]);
+
   const amountWei = isNft ? amount.toString() : toWei(amount, originToken?.decimals);
 
   const { isLoading: isApproveLoading, isApproveRequired } = useIsApproveRequired(
@@ -539,17 +572,24 @@ function ReviewDetails({
               <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs">
                 {destinationToken?.addressOrDenom && (
                   <p className="flex">
-                    <span className="min-w-[6.5rem]">Remote Token</span>
+                    <span className="min-w-[7.5rem]">Remote Token</span>
                     <span>{destinationToken.addressOrDenom}</span>
                   </p>
                 )}
+
                 <p className="flex">
-                  <span className="min-w-[6.5rem]">{isNft ? 'Token ID' : 'Amount'}</span>
+                  <span className="min-w-[7.5rem]">{isNft ? 'Token ID' : 'Amount'}</span>
                   <span>{`${amount} ${originTokenSymbol}`}</span>
                 </p>
+                {scaledAmount && (
+                  <p className="flex">
+                    <span className="min-w-[7.5rem]">Received Amount</span>
+                    <span>{`${scaledAmount.value} ${originTokenSymbol} (scaled from ${scaledAmount.originScale} to ${scaledAmount.destinationScale})`}</span>
+                  </p>
+                )}
                 {fees?.localQuote && fees.localQuote.amount > 0n && (
                   <p className="flex">
-                    <span className="min-w-[6.5rem]">Local Gas (est.)</span>
+                    <span className="min-w-[7.5rem]">Local Gas (est.)</span>
                     <span>{`${fees.localQuote.getDecimalFormattedAmount().toFixed(4) || '0'} ${
                       fees.localQuote.token.symbol || ''
                     }`}</span>
@@ -557,7 +597,7 @@ function ReviewDetails({
                 )}
                 {interchainQuote && interchainQuote.amount > 0n && (
                   <p className="flex">
-                    <span className="min-w-[6.5rem]">Interchain Gas</span>
+                    <span className="min-w-[7.5rem]">Interchain Gas</span>
                     <span>{`${interchainQuote.getDecimalFormattedAmount().toFixed(4) || '0'} ${
                       interchainQuote.token.symbol || ''
                     }`}</span>
@@ -579,6 +619,7 @@ function WarningBanners() {
     <div className="max-h-10">
       <ChainWalletWarning origin={values.origin} />
       <ChainConnectionWarning origin={values.origin} destination={values.destination} />
+      <WalletConnectionWarning origin={values.origin} />
     </div>
   );
 }

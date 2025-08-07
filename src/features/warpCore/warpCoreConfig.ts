@@ -6,6 +6,7 @@ import {
   TOKEN_STANDARD_TO_PROTOCOL,
   WarpCoreConfig,
   WarpCoreConfigSchema,
+  getTokenConnectionId,
   validateZodResult,
 } from '@hyperlane-xyz/sdk';
 import { isObjEmpty, objFilter, objMerge } from '@hyperlane-xyz/utils';
@@ -118,13 +119,15 @@ function filterUnconnectedToken(tokens: WarpCoreConfig['tokens']): WarpCoreConfi
 
   // Keep tokens with connections OR tokens that are destinations
   return tokens.filter((token) => {
+    // remove null addresses if they exist
+    if (!token.addressOrDenom) return false;
     // Has connections - keep it
     if (token.connections?.length) return true;
 
     const protocol = TOKEN_STANDARD_TO_PROTOCOL[token.standard];
 
     // Is a destination token - keep it
-    const tokenId = `${protocol}|${token.chainName}|${token.addressOrDenom}`;
+    const tokenId = getTokenConnectionId(protocol, token.chainName, token.addressOrDenom);
     return destinationTokenIds.has(tokenId);
   });
 }

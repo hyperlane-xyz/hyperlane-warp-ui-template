@@ -3,19 +3,5 @@
 # The input here is typically the output of the Hyperlane CLI warp deploy command
 ---
 # yaml-language-server: $schema=../schema.json
-tokens:
-  - addressOrDenom: '0x5c12ADC734699C07b095fe30B8312F1A7bbaA788'
-    chainName: basesepolia
-    connections:
-      - token: ethereum|sepolia|0x95878Fd41bC26f7045C0b98e381c22f010745A75
-    decimals: 18
-    name: Ether
-    standard: EvmHypNative
-    symbol: ETH
-  - addressOrDenom: '0x95878Fd41bC26f7045C0b98e381c22f010745A75'
-    chainName: sepolia
-    decimals: 18
-    name: Ether
-    standard: EvmHypNative
-    symbol: ETH
+tokens: []
 options: {}

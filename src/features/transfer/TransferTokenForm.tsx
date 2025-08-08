@@ -23,6 +23,7 @@ import BigNumber from 'bignumber.js';
 import { Form, Formik, useFormikContext } from 'formik';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
+import { RecipientWarningBanner } from '../../components/banner/RecipientWarningBanner';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
 import { SolidButton } from '../../components/buttons/SolidButton';
 import { TextField } from '../../components/input/TextField';
@@ -63,8 +64,11 @@ import { TransferFormValues } from './types';
 import { useRecipientBalanceWatcher } from './useBalanceWatcher';
 import { useFeeQuotes } from './useFeeQuotes';
 import { useTokenTransfer } from './useTokenTransfer';
+import { isSmartContract } from './utils';
 
 export function TransferTokenForm() {
+  const store = useStore();
+
   const multiProvider = useMultiProvider();
   const warpCore = useWarpCore();
 
@@ -120,7 +124,7 @@ export function TransferTokenForm() {
 
   useEffect(() => {
     if (!originChainName) setOriginChainName(initialValues.origin);
-  }, [initialValues.origin, originChainName, setOriginChainName]);
+  }, [initialValues.origin, originChainName, setOriginChainName, store.recipientAddressConfirmed]);
 
   return (
     <Formik<TransferFormValues>
@@ -141,6 +145,7 @@ export function TransferTokenForm() {
           <RecipientSection isReview={isReview} />
           <ReviewDetails visible={isReview} routeOverrideToken={routeOverrideToken} />
           <ButtonSection
+            disabled={!store.recipientAddressConfirmed}
             isReview={isReview}
             isValidating={isValidating}
             setIsReview={setIsReview}
@@ -314,9 +319,66 @@ function AmountSection({ isNft, isReview }: { isNft: boolean; isReview: boolean 
 }
 
 function RecipientSection({ isReview }: { isReview: boolean }) {
+  const store = useStore();
+
   const { values } = useFormikContext<TransferFormValues>();
   const { balance } = useDestinationBalance(values);
   useRecipientBalanceWatcher(values.recipient, balance);
+
+  // Confirming recipient address
+  const [destinationChainName, setDestinationChainName] = useState('');
+  const [showRecipientAddressWarning, setShowRecipientAddressWarning] = useState(false);
+
+  const multiProvider = useMultiProvider();
+  const { accounts } = useAccounts(multiProvider, config.addressBlacklist);
+
+  const { address: connectedWallet } = getAccountAddressAndPubKey(
+    multiProvider,
+    values.origin,
+    accounts,
+  );
+
+  useEffect(() => {
+    const checkRecipient = async (recipient: string) => {
+      if (!connectedWallet) return;
+
+      const { displayName: destinationChainName } = multiProvider.getChainMetadata(
+        values.destination,
+      );
+      setDestinationChainName(destinationChainName || '');
+
+      // check first if the address on origin is a smart contract
+      const isSenderSmartContract = await isSmartContract(
+        multiProvider,
+        values.origin,
+        connectedWallet,
+      );
+
+      const isSelfRecipient = values.recipient?.toLowerCase() === connectedWallet.toLowerCase();
+
+      let isRecipientSmartContract: boolean | undefined;
+
+      if (isSelfRecipient) {
+        isRecipientSmartContract = await isSmartContract(
+          multiProvider,
+          values.destination,
+          recipient,
+        );
+      }
+
+      if (isSenderSmartContract && isSelfRecipient && !isRecipientSmartContract) {
+        const msg =
+          'The recipient address is the same as the connected wallet, but it appears to not exist as a smart contract on the destination chain.';
+        logger.warn(msg);
+        setShowRecipientAddressWarning(true);
+        store.setRecipientAddressConfirmed(false);
+      } else {
+        setShowRecipientAddressWarning(false);
+        store.setRecipientAddressConfirmed(true);
+      }
+    };
+    checkRecipient(values.recipient);
+  }, [values.recipient, connectedWallet, multiProvider, values.destination, values.origin]);
 
   return (
     <div className="mt-4">
@@ -335,6 +397,10 @@ function RecipientSection({ isReview }: { isReview: boolean }) {
         />
         <SelfButton disabled={isReview} />
       </div>
+      <RecipientWarningBanner
+        destinationChain={destinationChainName}
+        isVisible={showRecipientAddressWarning}
+      />
     </div>
   );
 }
@@ -351,6 +417,7 @@ function ButtonSection({
   cleanOverrideToken,
   routeOverrideToken,
   warpCore,
+  disabled,
 }: {
   isReview: boolean;
   isValidating: boolean;
@@ -358,6 +425,7 @@ function ButtonSection({
   cleanOverrideToken: () => void;
   routeOverrideToken: Token | null;
   warpCore: WarpCore;
+  disabled: boolean;
 }) {
   const { values } = useFormikContext<TransferFormValues>();
   const chainDisplayName = useChainDisplayName(values.destination);
@@ -399,6 +467,7 @@ function ButtonSection({
   if (!isReview) {
     return (
       <ConnectAwareSubmitButton
+        disabled={disabled}
         chainName={values.origin}
         text={isValidating ? 'Validating...' : 'Continue'}
         classes="mt-4 px-3 py-1.5"

@@ -63,6 +63,8 @@ export interface AppState {
     options?: { msgId?: string; originTxHash?: string },
   ) => void;
   failUnconfirmedTransfers: () => void;
+  recipientAddressConfirmed: boolean;
+  setRecipientAddressConfirmed: (confirmed: boolean) => void;
 
   // Shared component state
   transferLoading: boolean;
@@ -173,6 +175,10 @@ export const useStore = create<AppState>()(
       showEnvSelectModal: false,
       setShowEnvSelectModal: (showEnvSelectModal) => {
         set(() => ({ showEnvSelectModal }));
+      },
+      recipientAddressConfirmed: true,
+      setRecipientAddressConfirmed: (recipientAddressConfirmed) => {
+        set(() => ({ recipientAddressConfirmed }));
       },
       originChainName: '',
       setOriginChainName: (originChainName: ChainName) => {

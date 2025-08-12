@@ -1,9 +1,9 @@
-name: Deploy hyperlane-warp-ui-template-alpha
+name: Deploy stg-hyperlane-warp-ui-template
 
 on:
   push:
     branches:
-      - main
+      - staging
 
 env:
   PROJECT_ID: "sto-dev-452608"

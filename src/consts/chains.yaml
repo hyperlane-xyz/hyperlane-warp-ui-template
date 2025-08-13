@@ -18,82 +18,78 @@
 #   protocol: ethereum
 #   rpcUrls:
 #     - http: http://127.0.0.1:8555
-pruvtest:
-  chainId: 7336
-  domainId: 7336
-  name: pruvtest
-  displayName: Pruv Testnet
-  protocol: ethereum
-  isTestnet: true
-  logoURI: /images/chains/pruvtest/logo.svg
-  rpcUrls:
-    - http: https://rpc.testnet.pruv.network
+polygon:
   blockExplorers:
-    - name: Pruv Testnet Explorer
-      url: https://explorer.testnet.pruv.network
-      apiUrl: https://explorer.testnet.pruv.network
-      family: blockscout
-  nativeToken:
-    name: Pruv Token
-    symbol: PRUV
-    decimals: 18
-arbitrumsepolia:
-  blockExplorers:
-    - apiKey: QAI5SWBNHJSFAN6KMS9RC5JGFKV2IYD2Z5
-      apiUrl: https://api-sepolia.arbiscan.io/api
+    - apiKey: GP69JEAP2W7YFJT9ZJTEPGQT6Y6KMW44ZN
+      apiUrl: https://api.etherscan.io/v2/api?chainid=137
       family: etherscan
-      name: Arbiscan
-      url: https://sepolia.arbiscan.io
+      name: PolygonScan
+      url: https://polygonscan.com
   blocks:
-    confirmations: 1
-    estimateBlockTime: 3
-    reorgPeriod: 0
-  chainId: 421614
-  displayName: Arbitrum Sepolia
-  domainId: 421614
-  logoURI: /images/chains/arbitrumsepolia/logo.svg
-  gasCurrencyCoinGeckoId: ethereum
-  index:
-    from: 49690504 # Index of Mailbox deployment, nitro specific
-  isTestnet: true
-  name: arbitrumsepolia
+    confirmations: 3
+    estimateBlockTime: 2
+    reorgPeriod: finalized
+  chainId: 137
+  deployer:
+    name: Abacus Works
+    url: https://www.hyperlane.xyz
+  displayName: Polygon
+  domainId: 137
+  gasCurrencyCoinGeckoId: polygon-ecosystem-token
+  gnosisSafeTransactionServiceUrl: https://safe-transaction-polygon.safe.global/
+  logoURI: /images/chains/polygon/logo.svg
+  name: polygon
   nativeToken:
     decimals: 18
-    name: Ether
-    symbol: ETH
+    name: Polygon Ecosystem Token
+    symbol: POL
   protocol: ethereum
   rpcUrls:
-    - http: https://arbitrum-sepolia.drpc.org
-    - http: https://arbitrum-sepolia.gateway.tenderly.co
-    - http: https://sepolia-rollup.arbitrum.io/rpc
-  technicalStack: arbitrumnitro
-sepolia:
+    - http: https://polygon-bor.publicnode.com
+    - http: https://polygon-rpc.com
+    - http: https://polygon.drpc.org
+    - http: https://polygon-pokt.nodies.app
+  technicalStack: other
+ethereum:
   # yaml-language-server: $schema=../schema.json
   blockExplorers:
-    - apiKey: CYUPN3Q66JIMRGQWYUDXJKQH4SX8YIYZMW
-      apiUrl: https://api-sepolia.etherscan.io/api
+    - apiKey: GP69JEAP2W7YFJT9ZJTEPGQT6Y6KMW44ZN
+      apiUrl: https://api.etherscan.io/v2/api?chainid=1
       family: etherscan
       name: Etherscan
-      url: https://sepolia.etherscan.io
+      url: https://etherscan.io
+    - apiUrl: https://eth.blockscout.com/api
+      family: blockscout
+      name: Blockscout
+      url: https://blockscout.com/eth/mainnet
+    - apiUrl: https://api.routescan.io/v2/network/mainnet/evm/1/etherscan/api
+      family: routescan
+      name: Ethereum Explorer
+      url: https://1.routescan.io
   blocks:
-    confirmations: 1
+    confirmations: 2
     estimateBlockTime: 13
-    reorgPeriod: 2
-  chainId: 11155111
-  displayName: Sepolia
-  domainId: 11155111
-  logoURI: /images/chains/sepolia/logo.svg
+    reorgPeriod: 15
+  chainId: 1
+  deployer:
+    name: Abacus Works
+    url: https://www.hyperlane.xyz
+  displayName: Ethereum
+  domainId: 1
   gasCurrencyCoinGeckoId: ethereum
-  gnosisSafeTransactionServiceUrl: https://safe-transaction-sepolia.safe.global
-  isTestnet: true
-  name: sepolia
+  gnosisSafeTransactionServiceUrl: https://safe-transaction-mainnet.safe.global/
+  logoURI: /images/chains/ethereum/logo.svg
+  name: ethereum
   nativeToken:
     decimals: 18
     name: Ether
     symbol: ETH
   protocol: ethereum
   rpcUrls:
-    - http: https://ethereum-sepolia.publicnode.com
-    - http: https://gateway.tenderly.co/public/sepolia
-    - http: https://sepolia.drpc.org
-    - http: https://1rpc.io/sepolia
+    - http: https://eth.llamarpc.com
+    - http: https://ethereum.publicnode.com
+    - http: https://eth.drpc.org
+    - http: https://rpc.flashbots.net
+    - http: https://eth.blockrazor.xyz
+    - http: https://eth-pokt.nodies.app
+  technicalStack: other

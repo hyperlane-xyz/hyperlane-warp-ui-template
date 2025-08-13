@@ -40,8 +40,8 @@ export const config: Config = Object.freeze({
   addressBlacklist: ADDRESS_BLACKLIST.map((address) => address.toLowerCase()),
   chainWalletWhitelists,
   enableExplorerLink: false,
-  defaultOriginChain: 'pruvtest',
-  defaultDestinationChain: 'sepolia',
+  defaultOriginChain: 'ethereum',
+  defaultDestinationChain: 'polygon',
   isDevMode,
   useOnlineRegistry: false,
   registryUrl,
@@ -62,5 +62,5 @@ export const config: Config = Object.freeze({
   ],
   shouldDisableChains: false,
   rpcOverrides,
-  gaslessChains: ['pruvtest'],
+  gaslessChains: [],
 });

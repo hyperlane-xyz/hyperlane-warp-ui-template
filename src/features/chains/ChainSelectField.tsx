@@ -59,7 +59,7 @@ export function ChainSelectField({
   }, [addToken]);
 
   return (
-    <div className={`flex-[4] ${canAddAsset ? 'h-[4.5rem]' : ''}`}>
+    <div className="h-[4.5rem] flex-[4]">
       <button
         type="button"
         name={field.name}

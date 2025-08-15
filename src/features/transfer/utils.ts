@@ -76,7 +76,6 @@ import {
   ProviderType,
   TypedTransactionReceipt,
 } from '@hyperlane-xyz/sdk';
-import { toast } from 'react-toastify';
 import { getAddress } from 'viem';
 import { logger } from '../../utils/logger';
 import { getChainDisplayName } from '../chains/utils';
@@ -135,27 +134,30 @@ export function tryGetMsgIdFromTransferReceipt(
 
 export async function isSmartContract(
   multiProvider: MultiProtocolProvider,
-  origin: string,
+  chain: string,
   address: string,
-) {
+): Promise<{ isContract: boolean; error?: string }> {
+  if (!address) {
+    return { isContract: false };
+  }
+
   try {
-    const provider = multiProvider.getViemProvider(origin);
+    const provider = multiProvider.getViemProvider(chain);
 
     if (!provider) {
-      throw new Error(`No viem provider for chain ${origin}`);
+      throw new Error(`No viem provider for chain ${chain}`);
     }
 
     const code = await provider.getCode({ address: getAddress(address) });
 
     if (!code || code === '0x') {
-      return false;
+      return { isContract: false };
     }
 
-    return true;
+    return { isContract: true };
   } catch (error) {
-    const msg = `Error checking if address is a smart contract on ${getChainDisplayName(multiProvider, origin)}`;
+    const msg = `Error checking if ${address} is a smart contract on ${getChainDisplayName(multiProvider, chain)}`;
     logger.error(msg, error);
-    toast.error(msg);
-    return undefined;
+    return { isContract: false, error: msg };
   }
 }

@@ -33,7 +33,11 @@ export function ConnectAwareSubmitButton<FormValues = any>({
 
   const color = hasError ? 'red' : 'accent';
   const content = hasError ? firstError : isAccountReady ? text : 'Connect wallet';
-  const type = isAccountReady ? 'submit' : 'button';
+  const type =
+    disabled || !isAccountReady
+      ? 'button' // never submits when deliberately disabled
+      : 'submit';
+
   const onClick = isAccountReady ? undefined : connectFn;
 
   // Automatically clear error state after a timeout

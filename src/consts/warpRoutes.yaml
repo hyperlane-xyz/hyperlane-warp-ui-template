@@ -2,5 +2,39 @@
 # These configs will be merged with the warp routes in the configured registry
 # The input here is typically the output of the Hyperlane CLI warp deploy command
 ---
-tokens: []
+tokens:
+  - addressOrDenom: '0xcC2816aC3fe471e5378BBd3B30F2B8247021625D'
+    chainName: basesepolia
+    collateralAddressOrDenom: '0x7bD1331A7c4E32F3aD9Ca14Ad0E7FAb0d4F380Ec'
+    connections:
+      - token: ethereum|sepolia|0x781bE492F1232E66990d83a9D3AC3Ec26f56DAfB
+    decimals: 6
+    name: USDC
+    standard: EvmHypCollateral
+    symbol: USDC
+  - addressOrDenom: '0x781bE492F1232E66990d83a9D3AC3Ec26f56DAfB'
+    chainName: sepolia
+    connections:
+      - token: ethereum|basesepolia|0xcC2816aC3fe471e5378BBd3B30F2B8247021625D
+    decimals: 6
+    name: USDC
+    standard: EvmHypSynthetic
+    symbol: USDC
+  - addressOrDenom: '0x5c12ADC734699C07b095fe30B8312F1A7bbaA788'
+    chainName: basesepolia
+    connections:
+      - token: ethereum|sepolia|0x95878Fd41bC26f7045C0b98e381c22f010745A75
+    decimals: 18
+    name: Ether
+    standard: EvmHypNative
+    symbol: ETH
+  - addressOrDenom: '0x95878Fd41bC26f7045C0b98e381c22f010745A75'
+    chainName: sepolia
+    connections:
+      - token: ethereum|basesepolia|0x5c12ADC734699C07b095fe30B8312F1A7bbaA788
+    decimals: 18
+    name: Ether
+    standard: EvmHypNative
+    symbol: ETH
+
 options: {}

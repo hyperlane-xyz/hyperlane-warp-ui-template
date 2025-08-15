@@ -603,6 +603,14 @@ function ReviewDetails({
                     }`}</span>
                   </p>
                 )}
+                {fees?.tokenFeeQuote && fees.tokenFeeQuote.amount > 0n && (
+                  <p className="flex">
+                    <span className="min-w-[7.5rem]">Token Fee</span>
+                    <span>{`${fees.tokenFeeQuote.amount || '0'} ${
+                      fees.tokenFeeQuote.token.symbol || ''
+                    }`}</span>
+                  </p>
+                )}
               </div>
             </div>
           </>

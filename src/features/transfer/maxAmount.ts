@@ -39,6 +39,8 @@ async function fetchMaxAmount(
       destination,
       sender: address,
       senderPubKey: await publicKey,
+      // defaulting to address here for recipient
+      recipient: address,
     });
 
     const multiCollateralLimit = isMultiCollateralLimitExceeded(

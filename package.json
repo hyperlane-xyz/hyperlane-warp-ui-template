@@ -18,7 +18,7 @@
     "@emotion/styled": "^11.13.0",
     "@headlessui/react": "^2.2.0",
     "@hyperlane-xyz/registry": "21.1.0",
-    "@hyperlane-xyz/sdk": "16.2.0",
+    "@hyperlane-xyz/sdk": "file:/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/sdk",
     "@hyperlane-xyz/utils": "16.2.0",
     "@hyperlane-xyz/widgets": "16.2.0",
     "@interchain-ui/react": "^1.23.28",
@@ -109,6 +109,11 @@
     "react-fast-compare": "^3.2",
     "viem": "^2.21.41",
     "zustand": "^4.4",
-    "starknetkit@npm:2.6.1": "patch:starknetkit@npm%3A2.6.1#~/.yarn/patches/starknetkit-npm-2.6.1-61cd76646d.patch"
+    "starknetkit@npm:2.6.1": "patch:starknetkit@npm%3A2.6.1#~/.yarn/patches/starknetkit-npm-2.6.1-61cd76646d.patch",
+    "@hyperlane-xyz/core": "file:/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/solidity",
+    "@hyperlane-xyz/cosmos-sdk": "file:/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/cosmos-sdk",
+    "@hyperlane-xyz/cosmos-types": "file:/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/cosmos-types",
+    "@hyperlane-xyz/starknet-core": "file:/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/starknet",
+    "@hyperlane-xyz/sdk": "file:/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/sdk"
   }
 }

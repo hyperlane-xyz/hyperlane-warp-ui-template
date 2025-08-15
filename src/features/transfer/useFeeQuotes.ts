@@ -1,5 +1,5 @@
 import { TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
-import { HexString } from '@hyperlane-xyz/utils';
+import { HexString, toWei } from '@hyperlane-xyz/utils';
 import { getAccountAddressAndPubKey, useAccounts } from '@hyperlane-xyz/widgets';
 import { useQuery } from '@tanstack/react-query';
 import { logger } from '../../utils/logger';
@@ -10,7 +10,7 @@ import { TransferFormValues } from './types';
 const FEE_QUOTE_REFRESH_INTERVAL = 15_000; // 10s
 
 export function useFeeQuotes(
-  { origin, destination, tokenIndex }: TransferFormValues,
+  { origin, destination, tokenIndex, amount, recipient }: TransferFormValues,
   enabled: boolean,
 ) {
   const multiProvider = useMultiProvider();
@@ -27,7 +27,8 @@ export function useFeeQuotes(
     // The WarpCore class is not serializable, so we can't use it as a key
     // eslint-disable-next-line @tanstack/query/exhaustive-deps
     queryKey: ['useFeeQuotes', destination, tokenIndex, sender, senderPubKey],
-    queryFn: () => fetchFeeQuotes(warpCore, destination, tokenIndex, sender, senderPubKey),
+    queryFn: () =>
+      fetchFeeQuotes(warpCore, destination, tokenIndex, sender, senderPubKey, amount, recipient),
     enabled,
     refetchInterval: FEE_QUOTE_REFRESH_INTERVAL,
   });
@@ -41,14 +42,23 @@ async function fetchFeeQuotes(
   tokenIndex?: number,
   sender?: Address,
   senderPubKey?: Promise<HexString>,
-): Promise<{ interchainQuote: TokenAmount; localQuote: TokenAmount } | null> {
+  amount?: string,
+  recipient?: string,
+): Promise<{
+  interchainQuote: TokenAmount;
+  localQuote: TokenAmount;
+  tokenFeeQuote?: TokenAmount;
+} | null> {
   const originToken = getTokenByIndex(warpCore, tokenIndex);
-  if (!destination || !sender || !originToken) return null;
+  if (!destination || !sender || !originToken || !amount || !recipient) return null;
+  const amountWei = toWei(amount, originToken.decimals);
+  const originTokenAmount = originToken.amount(amountWei);
   logger.debug('Fetching fee quotes');
   return warpCore.estimateTransferRemoteFees({
-    originToken,
+    originTokenAmount,
     destination,
     sender,
     senderPubKey: await senderPubKey,
+    recipient: recipient,
   });
 }

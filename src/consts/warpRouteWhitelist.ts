@@ -298,4 +298,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   // PUMP routes
   'PUMP/eclipsemainnet',
   'PUMP/starknet',
+
+  // MITO route
+  'MITO/mitosis',
 ];

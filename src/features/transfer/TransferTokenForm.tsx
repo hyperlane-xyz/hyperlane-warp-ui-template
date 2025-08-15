@@ -469,12 +469,13 @@ function ButtonSection({
     setIsReview(false);
     cleanOverrideToken();
   };
+
   if (!isReview) {
     return (
       <>
         <div
           className={`mt-3 gap-2 bg-amber-400 px-4 text-sm ${
-            showWarning ? 'max-h-36 py-2' : 'max-h-0'
+            showWarning ? 'max-h-38 py-2' : 'max-h-0'
           } overflow-hidden transition-all duration-500`}
         >
           <RecipientWarningBanner
@@ -495,25 +496,40 @@ function ButtonSection({
   }
 
   return (
-    <div className="mt-4 flex items-center justify-between space-x-4">
-      <SolidButton
-        type="button"
-        color="primary"
-        onClick={onEdit}
-        className="px-6 py-1.5"
-        icon={<ChevronIcon direction="w" width={10} height={6} color={Color.white} />}
+    <>
+      <div
+        className={`mt-3 gap-2 bg-amber-400 px-4 text-sm ${
+          showWarning ? 'max-h-38 py-2' : 'max-h-0'
+        } overflow-hidden transition-all duration-500`}
       >
-        <span>Edit</span>
-      </SolidButton>
-      <SolidButton
-        type="button"
-        color="accent"
-        onClick={triggerTransactionsHandler}
-        className="flex-1 px-3 py-1.5"
-      >
-        {`Send to ${chainDisplayName}`}
-      </SolidButton>
-    </div>
+        <RecipientWarningBanner
+          destinationChain={chainDisplayName}
+          confirmRecipientHandler={(checked) =>
+            setRecipientInfos((state) => ({ ...state, addressConfirmed: checked }))
+          }
+        />
+      </div>
+      <div className="mt-4 flex items-center justify-between space-x-4">
+        <SolidButton
+          type="button"
+          color="primary"
+          onClick={onEdit}
+          className="px-6 py-1.5"
+          icon={<ChevronIcon direction="w" width={10} height={6} color={Color.white} />}
+        >
+          <span>Edit</span>
+        </SolidButton>
+        <SolidButton
+          disabled={!addressConfirmed}
+          type="button"
+          color="accent"
+          onClick={triggerTransactionsHandler}
+          className="flex-1 px-3 py-1.5"
+        >
+          {`Send to ${chainDisplayName}`}
+        </SolidButton>
+      </div>
+    </>
   );
 }
 

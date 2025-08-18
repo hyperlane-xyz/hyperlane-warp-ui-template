@@ -24,6 +24,7 @@ import BigNumber from 'bignumber.js';
 import { Form, Formik, useFormikContext } from 'formik';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
+import { isAddress } from 'viem';
 import { RecipientWarningBanner } from '../../components/banner/RecipientWarningBanner';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
 import { SolidButton } from '../../components/buttons/SolidButton';
@@ -395,6 +396,11 @@ function ButtonSection({
         sourceProtocol !== ProtocolType.Ethereum ||
         destinationProtocol !== ProtocolType.Ethereum
       ) {
+        return;
+      }
+
+      if (!isAddress(recipient)) {
+        setRecipientInfos({ showWarning: false, addressConfirmed: false });
         return;
       }
 

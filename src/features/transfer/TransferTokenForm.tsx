@@ -396,11 +396,12 @@ function ButtonSection({
         sourceProtocol !== ProtocolType.Ethereum ||
         destinationProtocol !== ProtocolType.Ethereum
       ) {
+        setRecipientInfos({ showWarning: false, addressConfirmed: true });
         return;
       }
 
       if (!isValidAddressEvm(recipient)) {
-        setRecipientInfos({ showWarning: false, addressConfirmed: false });
+        setRecipientInfos({ showWarning: false, addressConfirmed: true });
         return;
       }
 

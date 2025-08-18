@@ -6,6 +6,7 @@ import {
   errorToString,
   fromWei,
   isNullish,
+  isValidAddressEvm,
   objKeys,
   toWei,
 } from '@hyperlane-xyz/utils';
@@ -24,7 +25,6 @@ import BigNumber from 'bignumber.js';
 import { Form, Formik, useFormikContext } from 'formik';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
-import { isAddress } from 'viem';
 import { RecipientWarningBanner } from '../../components/banner/RecipientWarningBanner';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
 import { SolidButton } from '../../components/buttons/SolidButton';
@@ -399,7 +399,7 @@ function ButtonSection({
         return;
       }
 
-      if (!isAddress(recipient)) {
+      if (!isValidAddressEvm(recipient)) {
         setRecipientInfos({ showWarning: false, addressConfirmed: false });
         return;
       }

@@ -76,7 +76,8 @@ import {
   ProviderType,
   TypedTransactionReceipt,
 } from '@hyperlane-xyz/sdk';
-import { getAddress, isAddress } from 'viem';
+import { isValidAddressEvm } from '@hyperlane-xyz/utils';
+import { getAddress } from 'viem';
 import { logger } from '../../utils/logger';
 import { getChainDisplayName } from '../chains/utils';
 
@@ -137,7 +138,7 @@ export async function isSmartContract(
   chain: string,
   address: string,
 ): Promise<{ isContract: boolean; error?: string }> {
-  if (!isAddress(address)) {
+  if (!isValidAddressEvm(address)) {
     return { isContract: false };
   }
 

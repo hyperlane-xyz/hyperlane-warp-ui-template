@@ -54,3 +54,43 @@ tokens:
     name: TIA
     standard: CosmosNativeHypCollateral
     symbol: TIA
+  # Solana
+  - addressOrDenom: "0x726f757465725f61707000000000000000000000000000010000000000000003"
+    chainName: celestia
+    collateralAddressOrDenom: utia
+    connections:
+      - token: sealevel|solanamainnet|49UtqAFzuJ8bk2zgYjnGMaU3Z2xVs9n1eFY8Y4dKozyY
+    decimals: 6
+    name: TIA
+    standard: CosmosNativeHypCollateral
+    symbol: TIA
+  - addressOrDenom: 49UtqAFzuJ8bk2zgYjnGMaU3Z2xVs9n1eFY8Y4dKozyY
+    chainName: solanamainnet
+    collateralAddressOrDenom: 4PsPuUu4KK8a8kZsbqzTFQiPTriUNbzYyzEyB7bQMNBL
+    connections:
+      - token: cosmosnative|celestia|0x726f757465725f61707000000000000000000000000000010000000000000003
+    decimals: 6
+    logoURI: /deployments/warp_routes/TIA/logo.svg
+    name: Celestia
+    standard: SealevelHypSynthetic
+    symbol: TIA
+  # Eclipse
+  - addressOrDenom: "0x726f757465725f61707000000000000000000000000000010000000000000004"
+    chainName: celestia
+    collateralAddressOrDenom: utia
+    connections:
+      - token: sealevel|eclipsemainnet|BpXHAiktwjx7fN6M9ST9wr6qKAsH27wZFhdHEhReJsR6
+    decimals: 6
+    name: TIA
+    standard: CosmosNativeHypCollateral
+    symbol: TIA
+  - addressOrDenom: 8gkLoHDNA8VygyCD1T7bbDszYboUjALtrxgSLnKZsYBt
+    chainName: eclipsemainnet
+    collateralAddressOrDenom: CixfcEPw3aAzmXRcgbkaRKCs2wvuWKP2wRB1sBd7ZrPQ
+    connections:
+      - token: cosmosnative|celestia|0x726f757465725f61707000000000000000000000000000010000000000000004
+    decimals: 6
+    logoURI: /deployments/warp_routes/TIA/logo.svg
+    name: Celestia
+    standard: SealevelHypSynthetic
+    symbol: TIA

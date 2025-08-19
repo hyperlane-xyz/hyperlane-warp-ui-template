@@ -606,7 +606,7 @@ function ReviewDetails({
                 {fees?.tokenFeeQuote && fees.tokenFeeQuote.amount > 0n && (
                   <p className="flex">
                     <span className="min-w-[7.5rem]">Token Fee</span>
-                    <span>{`${fees.tokenFeeQuote.amount || '0'} ${
+                    <span>{`${fees.tokenFeeQuote.getDecimalFormattedAmount().toFixed(4) || '0'} ${
                       fees.tokenFeeQuote.token.symbol || ''
                     }`}</span>
                   </p>

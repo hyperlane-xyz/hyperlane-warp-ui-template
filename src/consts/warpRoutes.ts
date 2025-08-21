@@ -107,6 +107,63 @@ export const warpRouteConfigs: WarpCoreConfig = {
         },
       ],
     },
+
+    {
+      chainName: 'arbitrum',
+      standard: TokenStandard.EvmHypNative,
+      name: 'Ether',
+      symbol: 'ETH',
+      decimals: 18,
+      addressOrDenom: '0x8A8260896199AB2c06C001438Fb20C47EdB0FdA5',
+      connections: [
+        {
+          token: 'ethereum|optimism|0x82eEECE1c3b1F865243dC089d3Fb34E25557B34B',
+          type: TokenConnectionType.Hyperlane,
+        },
+        {
+          token: 'ethereum|base|0xB395706F4b1976499e8789F4a2bf82c4B3aa2b59',
+          type: TokenConnectionType.Hyperlane,
+        },
+      ],
+    },
+
+    {
+      chainName: 'optimism',
+      standard: TokenStandard.EvmHypNative,
+      name: 'Ether',
+      symbol: 'ETH',
+      decimals: 18,
+      addressOrDenom: '0x82eEECE1c3b1F865243dC089d3Fb34E25557B34B',
+      connections: [
+        {
+          token: 'ethereum|arbitrum|0x8A8260896199AB2c06C001438Fb20C47EdB0FdA5',
+          type: TokenConnectionType.Hyperlane,
+        },
+        {
+          token: 'ethereum|base|0xB395706F4b1976499e8789F4a2bf82c4B3aa2b59',
+          type: TokenConnectionType.Hyperlane,
+        },
+      ],
+    },
+
+    {
+      chainName: 'base',
+      standard: TokenStandard.EvmHypSynthetic,
+      name: 'Ether',
+      symbol: 'ETH',
+      decimals: 18,
+      addressOrDenom: '0xB395706F4b1976499e8789F4a2bf82c4B3aa2b59',
+      connections: [
+        {
+          token: 'ethereum|arbitrum|0x8A8260896199AB2c06C001438Fb20C47EdB0FdA5',
+          type: TokenConnectionType.Hyperlane,
+        },
+        {
+          token: 'ethereum|optimism|0x82eEECE1c3b1F865243dC089d3Fb34E25557B34B',
+          type: TokenConnectionType.Hyperlane,
+        },
+      ],
+    },
   ],
   options: {
     interchainFeeConstants: [

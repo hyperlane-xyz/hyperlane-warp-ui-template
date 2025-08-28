@@ -302,4 +302,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // LYX route
   'LYX/lukso',
+
+  // MONEY
+  'MONEY/sonicsvm',
 ];

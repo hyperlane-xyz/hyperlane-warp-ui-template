@@ -114,6 +114,7 @@
     "@hyperlane-xyz/cosmos-sdk": "file:/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/cosmos-sdk",
     "@hyperlane-xyz/cosmos-types": "file:/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/cosmos-types",
     "@hyperlane-xyz/starknet-core": "file:/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/starknet",
-    "@hyperlane-xyz/sdk": "file:/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/sdk"
+    "@hyperlane-xyz/sdk": "file:/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/sdk",
+    "@hyperlane-xyz/utils": "file:/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/utils"
   }
 }

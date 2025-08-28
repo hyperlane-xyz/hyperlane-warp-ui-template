@@ -10,20 +10,28 @@ export function TipCard() {
   if (!show) return null;
   return (
     <Card className="w-100 p-2 sm:w-[31rem]">
-      <h2 className="text-primary-500">Hyperlane is powered by HYPER</h2>
+      <h2 className="text-primary-500">Nexus is moving to nexus.hyperlane.xyz</h2>
       <div className="flex items-end justify-between">
         <p className="mt-1 max-w-[75%] text-justify text-xs">
-          Bridge to Arbitrum, Base, BNB, Ethereum, and Optimism, or stake via Symbiotic on Ethereum
-          to qualify for additional Expansion Rewards!
+          On Saturday 8/30, Nexus will move to{' '}
+          <a
+            href="http://nexus.hyperlane.xyz/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary-500"
+          >
+            nexus.hyperlane.xyz
+          </a>
+          . Nothing you need to do except access us at the new domain.
         </p>
         <a
-          href="https://app.symbiotic.fi/vault/0xe1f23869776c82f691d9cb34597ab1830fb0de58"
+          href="http://nexus.hyperlane.xyz/"
           target="_blank"
           rel="noopener noreferrer"
           className="ml-2 flex items-center rounded-lg bg-gray-100 px-3 py-1.5 text-xs text-primary-500 transition-all hover:bg-gray-200 active:bg-gray-300 sm:text-sm"
         >
           <Image src={ExternalIcon} width={12} alt="" />
-          <span className="ml-1.5 hidden text-sm sm:inline">Stake</span>
+          <span className="ml-1.5 hidden text-sm sm:inline">Visit</span>
         </a>
       </div>
       <div className="absolute right-3 top-3">

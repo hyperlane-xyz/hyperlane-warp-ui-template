@@ -305,4 +305,10 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // MONEY
   'MONEY/sonicsvm',
+
+  // INVT route
+  'INVT/solanamainnet-eclipsemainnet',
+
+  // MITO route
+  'MITO/mitosis',
 ];

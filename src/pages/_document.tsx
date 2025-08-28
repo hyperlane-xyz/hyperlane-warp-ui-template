@@ -29,6 +29,17 @@ export default function Document() {
         <meta property="og:type" content="website" />
         <meta property="og:image" content={`${APP_URL}/logo.png`} />
         <meta property="og:description" content={APP_DESCRIPTION} />
+
+        <script
+          defer
+          data-domain="usenexus.org"
+          src="https://plausible.io/js/script.outbound-links.js"
+        ></script>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.plausible = window.plausible || function() { (window.plausible.q = window.plausible.q || []).push(arguments) }`,
+          }}
+        />
       </Head>
       <body className={`${MAIN_FONT.variable} font-sans text-black`}>
         <Main />

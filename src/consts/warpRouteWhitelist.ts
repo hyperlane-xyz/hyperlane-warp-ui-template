@@ -48,13 +48,14 @@ export const warpRouteWhitelist: Array<string> | null = [
   'USDC/matchain',
 
   // USDT routes
-  'USDT/ethereum-inevm',
-  'USDT/ethereum-viction',
   'USDT/eclipsemainnet-ethereum-solanamainnet',
   'USDT/ethereum-form',
   'USDT/ethereum-hyperevm',
-  'USDT/solanamainnet-sonicsvm',
+  'USDT/ethereum-inevm',
   'USDT/ethereum-lumiaprism',
+  'USDT/ethereum-viction',
+  'USDT/matchain',
+  'USDT/solanamainnet-sonicsvm',
 
   // oUSDT routes
   'oUSDT/production',
@@ -298,4 +299,16 @@ export const warpRouteWhitelist: Array<string> | null = [
   // PUMP routes
   'PUMP/eclipsemainnet',
   'PUMP/starknet',
+
+  // LYX route
+  'LYX/lukso',
+
+  // MONEY
+  'MONEY/sonicsvm',
+
+  // INVT route
+  'INVT/solanamainnet-eclipsemainnet',
+
+  // MITO route
+  'MITO/mitosis',
 ];

@@ -683,6 +683,16 @@ async function validateForm(
       return [{ recipient: 'Warp Route address is not valid as recipient' }, null];
     }
 
+    // Check minimum amount requirement
+    const inputAmount = parseFloat(amount);
+    const minimumAmount = config.routerUSDCFee?.[token.symbol]?.[origin]?.[destination] || 0;
+    if (isNaN(inputAmount) || inputAmount < 0) {
+      return [{ amount: 'Amount must be a valid positive number' }, null];
+    }
+    if (minimumAmount > 0 && inputAmount <= minimumAmount) {
+      return [{ amount: `Amount must be greater than ${minimumAmount}` }, null];
+    }
+
     const transferToken = await getTransferToken(warpCore, token, destinationToken);
     const amountWei = toWei(amount, transferToken.decimals);
     const multiCollateralLimit = isMultiCollateralLimitExceeded(token, destination, amountWei);

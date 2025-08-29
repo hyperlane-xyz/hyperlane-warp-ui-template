@@ -34,6 +34,7 @@ interface Config {
   walletProtocols: ProtocolType[] | undefined; // Wallet Protocols to show in the wallet connect modal. Leave undefined to include all of them
   rpcOverrides: string; // JSON string containing a map of chain names to an object with an URL for RPC overrides (For an example check the .env.example file)
   gaslessChains: string[] | undefined;
+  routerUSDCFee: Record<string, Record<string, Record<string, number>>>; // Minimum fee configuration for tokens across different chains
 }
 
 export const config: Config = Object.freeze({
@@ -63,4 +64,12 @@ export const config: Config = Object.freeze({
   shouldDisableChains: false,
   rpcOverrides,
   gaslessChains: ['pruvtest'],
+  routerUSDCFee: {
+    USDC: {
+      pruvtest: {
+        sepolia: 0.75,
+        arbitrumsepolia: 0.1,
+      },
+    },
+  },
 });

@@ -1,5 +1,5 @@
 diff --git a/node_modules/@hyperlane-xyz/sdk/dist/providers/transactionFeeEstimators.js b/node_modules/@hyperlane-xyz/sdk/dist/providers/transactionFeeEstimators.js
-index 634f385..213ec4e 100644
+index 0176989..65f616b 100644
 --- a/node_modules/@hyperlane-xyz/sdk/dist/providers/transactionFeeEstimators.js
 +++ b/node_modules/@hyperlane-xyz/sdk/dist/providers/transactionFeeEstimators.js
 @@ -21,7 +21,10 @@ export async function estimateTransactionFeeEthersV5({ transaction, provider, se
@@ -23,3 +23,18 @@ index 634f385..213ec4e 100644
          estGasPrice = gasPrice;
      }
      else {
+diff --git a/node_modules/@hyperlane-xyz/sdk/dist/warp/WarpCore.js b/node_modules/@hyperlane-xyz/sdk/dist/warp/WarpCore.js
+index ba679ed..e3178d6 100644
+--- a/node_modules/@hyperlane-xyz/sdk/dist/warp/WarpCore.js
++++ b/node_modules/@hyperlane-xyz/sdk/dist/warp/WarpCore.js
+@@ -107,8 +107,9 @@ export class WarpCore {
+         }
+         // Form transactions to estimate local gas with
+         const recipient = convertToProtocolAddress(sender, destinationMetadata.protocol, destinationMetadata.bech32Prefix);
++        const { amount: senderBalance } = await originToken.getBalance(this.multiProvider, sender);
+         const txs = await this.getTransferRemoteTxs({
+-            originTokenAmount: originToken.amount(1),
++            originTokenAmount: originToken.amount(senderBalance > 0n ? senderBalance : 1000000000n),
+             destination,
+             sender,
+             recipient,

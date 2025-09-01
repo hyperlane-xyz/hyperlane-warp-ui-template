@@ -534,6 +534,12 @@ function ReviewDetails({
       ? fees?.interchainQuote.plus(chainsRentEstimate[originToken.chainName])
       : fees?.interchainQuote;
 
+  const showPruvOriginUSDCFee =
+    config.enablePruvOriginFeeUSDC &&
+    values.origin.startsWith('pruv') &&
+    originToken?.symbol === 'USDC' &&
+    config.pruvOriginFeeUSDC[values.destination];
+
   return (
     <div
       className={`${
@@ -593,6 +599,18 @@ function ReviewDetails({
                     <span>{`${interchainQuote.getDecimalFormattedAmount().toFixed(4) || '0'} ${
                       interchainQuote.token.symbol || ''
                     }`}</span>
+                  </p>
+                )}
+                {showPruvOriginUSDCFee && (
+                  <p className="flex">
+                    <span className="min-w-[7.5rem]">Bridge Fee (USDC)</span>
+                    <span>{`${config.pruvOriginFeeUSDC[values.destination]} USDC`}</span>
+                  </p>
+                )}
+                {showPruvOriginUSDCFee && (
+                  <p className="flex">
+                    <span className="min-w-[7.5rem]">Amount Received</span>
+                    <span className="font-bold">{`${(parseFloat(amount) - config.pruvOriginFeeUSDC[values.destination]).toFixed(2)} USDC`}</span>
                   </p>
                 )}
               </div>

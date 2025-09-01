@@ -148,6 +148,9 @@ export const warpRouteWhitelist: Array<string> | null = [
   // pumpBTCuni routes
   'pumpBTCuni/ethereum-unichain',
 
+  // pumpBTCstk routes
+  'pumpBTCstk/starknet',
+
   // ART routes
   'ART/artela-base-solanamainnet',
 

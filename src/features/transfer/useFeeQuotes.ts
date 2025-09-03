@@ -1,17 +1,18 @@
-import { TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
+import { Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
 import { HexString, toWei } from '@hyperlane-xyz/utils';
 import { getAccountAddressAndPubKey, useAccounts } from '@hyperlane-xyz/widgets';
 import { useQuery } from '@tanstack/react-query';
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
-import { getTokenByIndex, useWarpCore } from '../tokens/hooks';
+import { useWarpCore } from '../tokens/hooks';
 import { TransferFormValues } from './types';
 
 const FEE_QUOTE_REFRESH_INTERVAL = 15_000; // 10s
 
 export function useFeeQuotes(
-  { origin, destination, tokenIndex, amount, recipient }: TransferFormValues,
+  { destination, amount, recipient }: TransferFormValues,
   enabled: boolean,
+  originToken: Token | undefined,
 ) {
   const multiProvider = useMultiProvider();
   const warpCore = useWarpCore();
@@ -19,16 +20,16 @@ export function useFeeQuotes(
   const { accounts } = useAccounts(multiProvider);
   const { address: sender, publicKey: senderPubKey } = getAccountAddressAndPubKey(
     multiProvider,
-    origin,
+    originToken?.chainName,
     accounts,
   );
 
   const { isLoading, isError, data } = useQuery({
     // The WarpCore class is not serializable, so we can't use it as a key
     // eslint-disable-next-line @tanstack/query/exhaustive-deps
-    queryKey: ['useFeeQuotes', destination, tokenIndex, sender, senderPubKey],
+    queryKey: ['useFeeQuotes', destination, sender, senderPubKey],
     queryFn: () =>
-      fetchFeeQuotes(warpCore, destination, tokenIndex, sender, senderPubKey, amount, recipient),
+      fetchFeeQuotes(warpCore, originToken, destination, sender, senderPubKey, amount, recipient),
     enabled,
     refetchInterval: FEE_QUOTE_REFRESH_INTERVAL,
   });
@@ -38,8 +39,8 @@ export function useFeeQuotes(
 
 async function fetchFeeQuotes(
   warpCore: WarpCore,
+  originToken: Token | undefined,
   destination?: ChainName,
-  tokenIndex?: number,
   sender?: Address,
   senderPubKey?: Promise<HexString>,
   amount?: string,
@@ -49,8 +50,7 @@ async function fetchFeeQuotes(
   localQuote: TokenAmount;
   tokenFeeQuote?: TokenAmount;
 } | null> {
-  const originToken = getTokenByIndex(warpCore, tokenIndex);
-  if (!destination || !sender || !originToken || !amount || !recipient) return null;
+  if (!originToken || !destination || !sender || !originToken || !amount || !recipient) return null;
   const amountWei = toWei(amount, originToken.decimals);
   const originTokenAmount = originToken.amount(amountWei);
   logger.debug('Fetching fee quotes');

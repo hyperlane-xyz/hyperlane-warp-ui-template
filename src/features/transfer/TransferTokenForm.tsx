@@ -11,6 +11,7 @@ import {
 import {
   AccountInfo,
   ChevronIcon,
+  FuelPumpIcon,
   IconButton,
   SpinnerIcon,
   SwapIcon,
@@ -139,6 +140,7 @@ export function TransferTokenForm() {
             <AmountSection isNft={isNft} isReview={isReview} />
           </div>
           <RecipientSection isReview={isReview} />
+          <FeeSection isReview={isReview} />
           <ReviewDetails visible={isReview} routeOverrideToken={routeOverrideToken} />
           <ButtonSection
             isReview={isReview}
@@ -401,7 +403,7 @@ function ButtonSection({
       <ConnectAwareSubmitButton
         chainName={values.origin}
         text={isValidating ? 'Validating...' : 'Continue'}
-        classes="mt-4 px-3 py-1.5"
+        classes="mt-2 px-3 py-1.5"
       />
     );
   }
@@ -533,7 +535,7 @@ function ReviewDetails({
     amountWei,
     visible,
   );
-  const { isLoading: isQuoteLoading, fees } = useFeeQuotes(values, visible);
+  const { isLoading: isQuoteLoading, fees } = useFeeQuotes(values, visible, originToken);
 
   const isLoading = isApproveLoading || isQuoteLoading;
 
@@ -617,6 +619,21 @@ function ReviewDetails({
         )}
       </div>
     </div>
+  );
+}
+
+function FeeSection({ isReview }: { isReview: boolean }) {
+  if (isReview) return null;
+
+  return (
+    <button
+      className="mt-2 flex w-fit items-center text-xxs text-gray-600 hover:text-gray-500 [&_path]:fill-gray-600 [&_path]:hover:fill-gray-500"
+      type="button"
+    >
+      <FuelPumpIcon width={14} height={14} color={Color.gray[600]} className="mr-1" />
+      100 ETH, 5 USDC
+      <ChevronIcon direction="e" width="0.6rem" height="0.6rem" />
+    </button>
   );
 }
 

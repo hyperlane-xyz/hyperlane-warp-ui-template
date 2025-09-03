@@ -4692,7 +4692,7 @@ __metadata:
 
 "@hyperlane-xyz/sdk@file:/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/sdk::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
   version: 15.0.0-beta.0
-  resolution: "@hyperlane-xyz/sdk@file:/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/sdk#/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/sdk::hash=290d43&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
+  resolution: "@hyperlane-xyz/sdk@file:/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/sdk#/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/sdk::hash=950178&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
   dependencies:
     "@arbitrum/sdk": "npm:^4.0.0"
     "@aws-sdk/client-s3": "npm:^3.577.0"
@@ -4722,7 +4722,7 @@ __metadata:
   peerDependencies:
     "@ethersproject/abi": "*"
     "@ethersproject/providers": "*"
-  checksum: 10/a3807cb0e5b71270d7b81b804d62482f401e306fc1fe1eddccbc235e6b36b43a3c6d0f5364afff01433519161ac8fb283b8690de081897ade50e2bee7e5d9548
+  checksum: 10/f2c74bbc843e431fa0723265290407aff46ba5af1ccba31a63869d5c965d3a6aac4defea2c5e15751a9f157f177d1bb1982659cefc3897c49cdd4b42a867d010
   languageName: node
   linkType: hard
 
@@ -4779,7 +4779,7 @@ __metadata:
     "@hyperlane-xyz/registry": "npm:21.1.0"
     "@hyperlane-xyz/sdk": "file:/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/sdk"
     "@hyperlane-xyz/utils": "npm:16.2.0"
-    "@hyperlane-xyz/widgets": "npm:16.2.0"
+    "@hyperlane-xyz/widgets": "file:/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/widgets"
     "@interchain-ui/react": "npm:^1.23.28"
     "@metamask/post-message-stream": "npm:6.1.2"
     "@metamask/providers": "npm:10.2.1"
@@ -4836,16 +4836,16 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@hyperlane-xyz/widgets@npm:16.2.0":
-  version: 16.2.0
-  resolution: "@hyperlane-xyz/widgets@npm:16.2.0"
+"@hyperlane-xyz/widgets@file:/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/widgets::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
+  version: 15.0.0-beta.0
+  resolution: "@hyperlane-xyz/widgets@file:/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/widgets#/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/widgets::hash=bc56e6&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
   dependencies:
     "@cosmjs/stargate": "npm:^0.32.4"
     "@cosmos-kit/react": "npm:^2.18.0"
     "@headlessui/react": "npm:^2.1.8"
-    "@hyperlane-xyz/cosmos-sdk": "npm:16.2.0"
-    "@hyperlane-xyz/sdk": "npm:16.2.0"
-    "@hyperlane-xyz/utils": "npm:16.2.0"
+    "@hyperlane-xyz/cosmos-sdk": "npm:15.0.0-beta.0"
+    "@hyperlane-xyz/sdk": "npm:15.0.0-beta.0"
+    "@hyperlane-xyz/utils": "npm:15.0.0-beta.0"
     "@interchain-ui/react": "npm:^1.23.28"
     "@rainbow-me/rainbowkit": "npm:^2.2.0"
     "@solana/wallet-adapter-react": "npm:^0.15.32"
@@ -4860,7 +4860,7 @@ __metadata:
   peerDependencies:
     react: ^18
     react-dom: ^18
-  checksum: 10/9b06d23f3847e4f01c3c5d3fb5a143f77b021bec6a9cb098c7e3f51e3107fd1f399e1a873a6ae02adbad37bc0124341ac78d2d50cf4a8a605e9b2ca99dcddee7
+  checksum: 10/1063687b625aed6ffed888c034c037c430080e16a1fda0f19df5d19f2d1601344b735739df5ff3a99ba5b58337ee6e86bbd2d639a8ba7ce568d18d7154aae044
   languageName: node
   linkType: hard
 

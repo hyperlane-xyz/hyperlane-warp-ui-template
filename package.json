@@ -20,7 +20,7 @@
     "@hyperlane-xyz/registry": "21.1.0",
     "@hyperlane-xyz/sdk": "file:/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/sdk",
     "@hyperlane-xyz/utils": "16.2.0",
-    "@hyperlane-xyz/widgets": "16.2.0",
+    "@hyperlane-xyz/widgets": "file:/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/widgets",
     "@interchain-ui/react": "^1.23.28",
     "@metamask/post-message-stream": "6.1.2",
     "@metamask/providers": "10.2.1",

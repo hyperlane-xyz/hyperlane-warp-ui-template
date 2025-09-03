@@ -314,4 +314,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // MITO route
   'MITO/mitosis',
+
+  // KING route
+  'KING/coti-ethereum',
 ];

@@ -11,12 +11,7 @@ import {
   soon,
   soonAddresses,
 } from '@hyperlane-xyz/registry';
-import {
-  ChainDisabledReason,
-  ChainMap,
-  ChainMetadata,
-  ChainStatus,
-} from '@hyperlane-xyz/sdk';
+import { ChainDisabledReason, ChainMap, ChainMetadata, ChainStatus } from '@hyperlane-xyz/sdk';
 
 // A map of chain names to ChainMetadata
 // Chains can be defined here, in chains.json, or in chains.yaml

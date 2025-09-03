@@ -1,4 +1,4 @@
-import { Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
+import { Token, WarpCore, WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
 import { HexString, toWei } from '@hyperlane-xyz/utils';
 import { getAccountAddressAndPubKey, useAccounts } from '@hyperlane-xyz/widgets';
 import { useQuery } from '@tanstack/react-query';
@@ -10,7 +10,7 @@ import { TransferFormValues } from './types';
 const FEE_QUOTE_REFRESH_INTERVAL = 15_000; // 10s
 
 export function useFeeQuotes(
-  { destination, amount, recipient }: TransferFormValues,
+  { destination, amount, recipient, tokenIndex }: TransferFormValues,
   enabled: boolean,
   originToken: Token | undefined,
 ) {
@@ -24,17 +24,17 @@ export function useFeeQuotes(
     accounts,
   );
 
-  const { isLoading, isError, data } = useQuery({
+  const { isLoading, isError, data, isFetching } = useQuery({
     // The WarpCore class is not serializable, so we can't use it as a key
     // eslint-disable-next-line @tanstack/query/exhaustive-deps
-    queryKey: ['useFeeQuotes', destination, sender, senderPubKey],
+    queryKey: ['useFeeQuotes', tokenIndex, destination, sender, senderPubKey, amount],
     queryFn: () =>
       fetchFeeQuotes(warpCore, originToken, destination, sender, senderPubKey, amount, recipient),
     enabled,
     refetchInterval: FEE_QUOTE_REFRESH_INTERVAL,
   });
 
-  return { isLoading, isError, fees: data };
+  return { isLoading: isLoading || isFetching, isError, fees: data };
 }
 
 async function fetchFeeQuotes(
@@ -45,11 +45,7 @@ async function fetchFeeQuotes(
   senderPubKey?: Promise<HexString>,
   amount?: string,
   recipient?: string,
-): Promise<{
-  interchainQuote: TokenAmount;
-  localQuote: TokenAmount;
-  tokenFeeQuote?: TokenAmount;
-} | null> {
+): Promise<WarpCoreFeeEstimate | null> {
   if (!originToken || !destination || !sender || !originToken || !amount || !recipient) return null;
   const amountWei = toWei(amount, originToken.decimals);
   const originTokenAmount = originToken.amount(amountWei);

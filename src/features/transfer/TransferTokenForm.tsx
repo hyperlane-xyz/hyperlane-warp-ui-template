@@ -11,7 +11,6 @@ import {
 import {
   AccountInfo,
   ChevronIcon,
-  FuelPumpIcon,
   IconButton,
   SpinnerIcon,
   SwapIcon,
@@ -23,12 +22,12 @@ import {
 import BigNumber from 'bignumber.js';
 import { Form, Formik, useFormikContext } from 'formik';
 import { useEffect, useMemo, useState } from 'react';
+
 import { toast } from 'react-toastify';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
 import { SolidButton } from '../../components/buttons/SolidButton';
 import { TextField } from '../../components/input/TextField';
 import { WARP_QUERY_PARAMS } from '../../consts/args';
-import { chainsRentEstimate } from '../../consts/chains';
 import { config } from '../../consts/config';
 import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
@@ -58,7 +57,10 @@ import {
 } from '../tokens/hooks';
 import { getTokensWithSameCollateralAddresses, isValidMultiCollateralToken } from '../tokens/utils';
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
+import { FeeSectionButton } from './FeeSection';
 import { RecipientConfirmationModal } from './RecipientConfirmationModal';
+import { TransferFeeModal } from './TransferFeeModal';
+import { getInterchainQuote, getTotalFee } from './fees';
 import { useFetchMaxAmount } from './maxAmount';
 import { TransferFormValues } from './types';
 import { useRecipientBalanceWatcher } from './useBalanceWatcher';
@@ -140,7 +142,7 @@ export function TransferTokenForm() {
             <AmountSection isNft={isNft} isReview={isReview} />
           </div>
           <RecipientSection isReview={isReview} />
-          <FeeSection isReview={isReview} />
+          <FeeSection visible={!isReview} />
           <ReviewDetails visible={isReview} routeOverrideToken={routeOverrideToken} />
           <ButtonSection
             isReview={isReview}
@@ -403,7 +405,7 @@ function ButtonSection({
       <ConnectAwareSubmitButton
         chainName={values.origin}
         text={isValidating ? 'Validating...' : 'Continue'}
-        classes="mt-2 px-3 py-1.5"
+        classes="mt-4 px-3 py-1.5"
       />
     );
   }
@@ -539,10 +541,7 @@ function ReviewDetails({
 
   const isLoading = isApproveLoading || isQuoteLoading;
 
-  const interchainQuote =
-    originToken && objKeys(chainsRentEstimate).includes(originToken.chainName)
-      ? fees?.interchainQuote.plus(chainsRentEstimate[originToken.chainName])
-      : fees?.interchainQuote;
+  const interchainQuote = getInterchainQuote(originToken, fees?.interchainQuote);
 
   return (
     <div
@@ -622,18 +621,41 @@ function ReviewDetails({
   );
 }
 
-function FeeSection({ isReview }: { isReview: boolean }) {
-  if (isReview) return null;
+function FeeSection({ visible }: { visible: boolean }) {
+  const warpCore = useWarpCore();
+  const { close, isOpen, open } = useModal();
+  const { values } = useFormikContext<TransferFormValues>();
+  const { tokenIndex } = values;
+
+  const originToken = getTokenByIndex(warpCore, tokenIndex);
+  const { fees: feeQuotes, isLoading } = useFeeQuotes(values, visible, originToken);
+
+  const fees = useMemo(() => {
+    if (!feeQuotes) return null;
+
+    const interchainQuote = getInterchainQuote(originToken, feeQuotes.interchainQuote);
+    const fees = {
+      ...feeQuotes,
+      interchainQuote: interchainQuote || feeQuotes.interchainQuote,
+    };
+    const totalFees = getTotalFee({
+      ...fees,
+      interchainQuote: interchainQuote || fees.interchainQuote,
+    })
+      .map((fee) => `${fee.getDecimalFormattedAmount().toFixed(4)} ${fee.token.symbol}`)
+      .join(', ');
+
+    return {
+      ...fees,
+      totalFees,
+    };
+  }, [feeQuotes, originToken]);
 
   return (
-    <button
-      className="mt-2 flex w-fit items-center text-xxs text-gray-600 hover:text-gray-500 [&_path]:fill-gray-600 [&_path]:hover:fill-gray-500"
-      type="button"
-    >
-      <FuelPumpIcon width={14} height={14} color={Color.gray[600]} className="mr-1" />
-      100 ETH, 5 USDC
-      <ChevronIcon direction="e" width="0.6rem" height="0.6rem" />
-    </button>
+    <>
+      <FeeSectionButton visible={visible} fees={fees} onClick={open} isLoading={isLoading} />
+      <TransferFeeModal close={close} isOpen={isOpen} isLoading={isLoading} fees={fees} />
+    </>
   );
 }
 

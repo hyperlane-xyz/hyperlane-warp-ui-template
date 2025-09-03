@@ -4692,7 +4692,7 @@ __metadata:
 
 "@hyperlane-xyz/sdk@file:/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/sdk::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
   version: 15.0.0-beta.0
-  resolution: "@hyperlane-xyz/sdk@file:/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/sdk#/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/sdk::hash=950178&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
+  resolution: "@hyperlane-xyz/sdk@file:/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/sdk#/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/sdk::hash=4f6c74&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
   dependencies:
     "@arbitrum/sdk": "npm:^4.0.0"
     "@aws-sdk/client-s3": "npm:^3.577.0"
@@ -4722,7 +4722,7 @@ __metadata:
   peerDependencies:
     "@ethersproject/abi": "*"
     "@ethersproject/providers": "*"
-  checksum: 10/f2c74bbc843e431fa0723265290407aff46ba5af1ccba31a63869d5c965d3a6aac4defea2c5e15751a9f157f177d1bb1982659cefc3897c49cdd4b42a867d010
+  checksum: 10/6f96e0736a07ad669fd4b4beb2b241f31124f6b41737f7b7f369a4c6208a8b818e7da60f116e1a9ab196c89d20d51fc04a8c5a4cc41ddc4b0b0829ea325d36a0
   languageName: node
   linkType: hard
 
@@ -4838,7 +4838,7 @@ __metadata:
 
 "@hyperlane-xyz/widgets@file:/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/widgets::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
   version: 15.0.0-beta.0
-  resolution: "@hyperlane-xyz/widgets@file:/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/widgets#/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/widgets::hash=bc56e6&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
+  resolution: "@hyperlane-xyz/widgets@file:/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/widgets#/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/widgets::hash=7ef819&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
   dependencies:
     "@cosmjs/stargate": "npm:^0.32.4"
     "@cosmos-kit/react": "npm:^2.18.0"
@@ -4860,7 +4860,7 @@ __metadata:
   peerDependencies:
     react: ^18
     react-dom: ^18
-  checksum: 10/1063687b625aed6ffed888c034c037c430080e16a1fda0f19df5d19f2d1601344b735739df5ff3a99ba5b58337ee6e86bbd2d639a8ba7ce568d18d7154aae044
+  checksum: 10/79dc4731759c05c9f4a58d3499d2c68c4b389d6fbe456c0529b711a28bbda54a8479926da9cac27dfab2f64d1e8a917a93ed71d00fab86fe952b25d47fde54e1
   languageName: node
   linkType: hard
 

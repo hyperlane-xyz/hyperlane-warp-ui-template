@@ -57,7 +57,7 @@ import {
 } from '../tokens/hooks';
 import { getTokensWithSameCollateralAddresses, isValidMultiCollateralToken } from '../tokens/utils';
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
-import { FeeSectionButton } from './FeeSection';
+import { FeeSectionButton } from './FeeSectionButton';
 import { RecipientConfirmationModal } from './RecipientConfirmationModal';
 import { TransferFeeModal } from './TransferFeeModal';
 import { getInterchainQuote, getTotalFee } from './fees';
@@ -405,7 +405,7 @@ function ButtonSection({
       <ConnectAwareSubmitButton
         chainName={values.origin}
         text={isValidating ? 'Validating...' : 'Continue'}
-        classes="mt-4 px-3 py-1.5"
+        classes={`${isReview ? 'mt-4' : 'mt-2'} px-3 py-1.5`}
       />
     );
   }

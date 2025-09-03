@@ -23,7 +23,7 @@ export function TransferFeeModal({
     >
       <div className="flex w-full flex-col items-start text-sm">
         {fees?.localQuote && fees.localQuote.amount > 0n && (
-          <p className="flex gap-4">
+          <div className="flex gap-4">
             <span className="min-w-[7.5rem]">Local Gas (est.)</span>
             {isLoading ? (
               <Skeleton className="h-4 w-52" />
@@ -32,10 +32,10 @@ export function TransferFeeModal({
                 fees.localQuote.token.symbol || ''
               }`}</span>
             )}
-          </p>
+          </div>
         )}
         {fees?.interchainQuote && fees.interchainQuote.amount > 0n && (
-          <p className="flex gap-4">
+          <div className="flex gap-4">
             <span className="min-w-[7.5rem]">Interchain Gas</span>
             {isLoading ? (
               <Skeleton className="h-4 w-52" />
@@ -44,10 +44,10 @@ export function TransferFeeModal({
                 fees.interchainQuote.token.symbol || ''
               }`}</span>
             )}
-          </p>
+          </div>
         )}
         {fees?.tokenFeeQuote && fees.tokenFeeQuote.amount > 0n && (
-          <p className="flex gap-4">
+          <div className="flex gap-4">
             <span className="min-w-[7.5rem]">Token Fee</span>
             {isLoading ? (
               <Skeleton className="h-4 w-52" />
@@ -56,7 +56,7 @@ export function TransferFeeModal({
                 fees.tokenFeeQuote.token.symbol || ''
               }`}</span>
             )}
-          </p>
+          </div>
         )}
       </div>
     </Modal>

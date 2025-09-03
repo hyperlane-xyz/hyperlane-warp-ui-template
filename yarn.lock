@@ -4838,7 +4838,7 @@ __metadata:
 
 "@hyperlane-xyz/widgets@file:/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/widgets::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
   version: 15.0.0-beta.0
-  resolution: "@hyperlane-xyz/widgets@file:/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/widgets#/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/widgets::hash=7ef819&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
+  resolution: "@hyperlane-xyz/widgets@file:/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/widgets#/Users/jasonguo/Documents/hyperlane/hyperlane-monorepo/typescript/widgets::hash=790a5d&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
   dependencies:
     "@cosmjs/stargate": "npm:^0.32.4"
     "@cosmos-kit/react": "npm:^2.18.0"
@@ -4860,7 +4860,7 @@ __metadata:
   peerDependencies:
     react: ^18
     react-dom: ^18
-  checksum: 10/79dc4731759c05c9f4a58d3499d2c68c4b389d6fbe456c0529b711a28bbda54a8479926da9cac27dfab2f64d1e8a917a93ed71d00fab86fe952b25d47fde54e1
+  checksum: 10/3cf6b39da5fd099425fb8dcd48f1db771fba792ded296893f012b9e1694f747b4d2ca6f2333d2d177802dd1faff23dadab32df0bdce7d5b9a1b954537844ee8c
   languageName: node
   linkType: hard
 

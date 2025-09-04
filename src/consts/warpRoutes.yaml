@@ -10,33 +10,33 @@ tokens:
     decimals: 6
     symbol: USDC
     name: USDC
-    addressOrDenom: '0x0d291568Bf9052F32595b12Cf98185707ecB1275'
+    addressOrDenom: '0x1D12DCE1A9AA37A3f47bFD8acabd922682B747b4'
     collateralAddressOrDenom: '0xeCacC484026a02022565496E088CA0581cC36373'
     connections:
-      - token: ethereum|arbitrumsepolia|0x98346E891cd2Ae43F7c576a8DD2825baa5D0B5e3
-      - token: ethereum|sepolia|0x6e95898c7f7EFbeb7E0987c980D8d32871430d6d
+      - token: ethereum|arbitrumsepolia|0x65f3b0990F4B76a8066E560dD224BfC62716A3A6
+      - token: ethereum|sepolia|0x6dC57F5153052a78f14e500394Ec200d4Cf07C68
     logoURI: /images/tokens/USDC/logo.svg
   - chainName: arbitrumsepolia
     standard: EvmHypCollateral
     decimals: 6
     symbol: USDC
     name: USD Coin
-    addressOrDenom: '0x98346E891cd2Ae43F7c576a8DD2825baa5D0B5e3'
+    addressOrDenom: '0x65f3b0990F4B76a8066E560dD224BfC62716A3A6'
     collateralAddressOrDenom: '0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d'
     connections:
-      - token: ethereum|pruvtest|0x0d291568Bf9052F32595b12Cf98185707ecB1275
-    #      - token: ethereum|sepolia|0x6e95898c7f7EFbeb7E0987c980D8d32871430d6d
+      - token: ethereum|pruvtest|0x1D12DCE1A9AA37A3f47bFD8acabd922682B747b4
+    #      - token: ethereum|sepolia|0x6dC57F5153052a78f14e500394Ec200d4Cf07C68
     logoURI: /images/tokens/USDC/logo.svg
   - chainName: sepolia
     standard: EvmHypCollateral
     decimals: 6
     symbol: USDC
     name: USDC
-    addressOrDenom: '0x6e95898c7f7EFbeb7E0987c980D8d32871430d6d'
+    addressOrDenom: '0x6dC57F5153052a78f14e500394Ec200d4Cf07C68'
     collateralAddressOrDenom: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238'
     connections:
-      - token: ethereum|pruvtest|0x0d291568Bf9052F32595b12Cf98185707ecB1275
-    #      - token: ethereum|arbitrumsepolia|0x98346E891cd2Ae43F7c576a8DD2825baa5D0B5e3
+      - token: ethereum|pruvtest|0x1D12DCE1A9AA37A3f47bFD8acabd922682B747b4
+    #      - token: ethereum|arbitrumsepolia|0x65f3b0990F4B76a8066E560dD224BfC62716A3A6
     logoURI: /images/tokens/USDC/logo.svg
   ## USDC ##
   # STAGING #

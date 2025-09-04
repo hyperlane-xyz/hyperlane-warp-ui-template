@@ -317,4 +317,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // KING route
   'KING/coti-ethereum',
+
+  // HOLO route
+  'HOLO/bsc-solanamainnet',
 ];

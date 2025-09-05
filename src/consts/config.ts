@@ -56,6 +56,7 @@ export const config: Config = Object.freeze({
     ProtocolType.Sealevel,
     ProtocolType.Cosmos,
     ProtocolType.Starknet,
+    ProtocolType.Radix,
   ],
   shouldDisableChains: false,
   rpcOverrides,

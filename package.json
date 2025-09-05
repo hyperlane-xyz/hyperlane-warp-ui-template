@@ -18,9 +18,9 @@
     "@emotion/styled": "^11.13.0",
     "@headlessui/react": "^2.2.0",
     "@hyperlane-xyz/registry": "20.0.0",
-    "@hyperlane-xyz/sdk": "file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/sdk",
-    "@hyperlane-xyz/utils": "file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/utils",
-    "@hyperlane-xyz/widgets": "file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/widgets",
+    "@hyperlane-xyz/sdk": "file:/Users/jamin/Desktop/code/hyperlane-monorepo/typescript/sdk",
+    "@hyperlane-xyz/utils": "file:/Users/jamin/Desktop/code/hyperlane-monorepo/typescript/utils",
+    "@hyperlane-xyz/widgets": "file:/Users/jamin/Desktop/code/hyperlane-monorepo/typescript/widgets",
     "@interchain-ui/react": "^1.23.28",
     "@metamask/post-message-stream": "6.1.2",
     "@metamask/providers": "10.2.1",
@@ -111,10 +111,10 @@
     "react-fast-compare": "^3.2",
     "viem": "^2.21.41",
     "zustand": "^4.4",
-    "@hyperlane-xyz/sdk": "file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/sdk",
-    "@hyperlane-xyz/utils": "file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/utils",
-    "@hyperlane-xyz/widgets": "file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/widgets",
-    "@hyperlane-xyz/radix-sdk": "file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/radix-sdk",
+    "@hyperlane-xyz/sdk": "file:/Users/jamin/Desktop/code/hyperlane-monorepo/typescript/sdk",
+    "@hyperlane-xyz/utils": "file:/Users/jamin/Desktop/code/hyperlane-monorepo/typescript/utils",
+    "@hyperlane-xyz/widgets": "file:/Users/jamin/Desktop/code/hyperlane-monorepo/typescript/widgets",
+    "@hyperlane-xyz/radix-sdk": "file:/Users/jamin/Desktop/code/hyperlane-monorepo/typescript/radix-sdk",
     "starknetkit@npm:2.6.1": "patch:starknetkit@npm%3A2.6.1#~/.yarn/patches/starknetkit-npm-2.6.1-61cd76646d.patch"
   }
 }

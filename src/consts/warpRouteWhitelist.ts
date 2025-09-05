@@ -326,10 +326,4 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // HOLO route
   'HOLO/bsc-solanamainnet',
-
-  // Radix batch
-  'USDC/arbitrum-base-ethereum-radix',
-  'USDT/ethereum-radix',
-  'ETH/ethereum-radix',
-  'WBTC/ethereum-radix',
 ];

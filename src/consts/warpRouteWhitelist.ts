@@ -330,6 +330,6 @@ export const warpRouteWhitelist: Array<string> | null = [
   // Radix batch
   'USDC/arbitrum-base-ethereum-radix',
   'USDT/ethereum-radix',
-  'ETH/etheruem-radix',
+  'ETH/ethereum-radix',
   'WBTC/ethereum-radix',
 ];

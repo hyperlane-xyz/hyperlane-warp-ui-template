@@ -17,7 +17,7 @@
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
     "@headlessui/react": "^2.2.0",
-    "@hyperlane-xyz/registry": "20.0.0",
+    "@hyperlane-xyz/registry": "23.0.0",
     "@hyperlane-xyz/sdk": "file:/Users/jamin/Desktop/code/hyperlane-monorepo/typescript/sdk",
     "@hyperlane-xyz/utils": "file:/Users/jamin/Desktop/code/hyperlane-monorepo/typescript/utils",
     "@hyperlane-xyz/widgets": "file:/Users/jamin/Desktop/code/hyperlane-monorepo/typescript/widgets",
@@ -58,7 +58,7 @@
   "devDependencies": {
     "@next/bundle-analyzer": "^15.0.2",
     "@tanstack/eslint-plugin-query": "^5.59.20",
-    "@types/node": "^18.11.18",
+    "@types/node": "^22.13.14",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@typescript-eslint/eslint-plugin": "^8.13.0",

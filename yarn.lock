@@ -4642,6 +4642,9 @@ __metadata:
 "@hyperlane-xyz/core@npm:9.0.6":
   version: 9.0.6
   resolution: "@hyperlane-xyz/core@npm:9.0.6"
+"@hyperlane-xyz/core@npm:9.0.6":
+  version: 9.0.6
+  resolution: "@hyperlane-xyz/core@npm:9.0.6"
   dependencies:
     "@arbitrum/nitro-contracts": "npm:^1.2.1"
     "@chainlink/contracts-ccip": "npm:^1.5.0"
@@ -4672,6 +4675,9 @@ __metadata:
 "@hyperlane-xyz/cosmos-types@npm:17.0.0":
   version: 17.0.0
   resolution: "@hyperlane-xyz/cosmos-types@npm:17.0.0"
+"@hyperlane-xyz/cosmos-types@npm:17.0.0":
+  version: 17.0.0
+  resolution: "@hyperlane-xyz/cosmos-types@npm:17.0.0"
   dependencies:
     long: "npm:^5.2.4"
     protobufjs: "npm:^7.4.0"
@@ -4692,14 +4698,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/registry@npm:20.0.0":
-  version: 20.0.0
-  resolution: "@hyperlane-xyz/registry@npm:20.0.0"
+"@hyperlane-xyz/registry@npm:23.0.0":
+  version: 23.0.0
+  resolution: "@hyperlane-xyz/registry@npm:23.0.0"
   dependencies:
     jszip: "npm:^3.10.1"
     yaml: "npm:2.4.5"
     zod: "npm:^3.21.2"
-  checksum: 10/0eaa9accf96822d5d8c4df8476d1688a725ff967e3bcbac41c68c82392add1835d8f629a4e70f37b271b51666751e83f79f4557b8bd71b39b6c207a0148395f4
+  checksum: 10/c334e0248846f6a4b5c02adca644952e7f57a9797dc726e4351c1a806a5fb191e6e1dbd56ed9c28670223d18e11981c5a44ed9bec5f1a0bf55b2d301782017c6
   languageName: node
   linkType: hard
 
@@ -4745,6 +4751,7 @@ __metadata:
   resolution: "@hyperlane-xyz/starknet-core@npm:17.0.0"
   dependencies:
     starknet: "npm:^7.4.0"
+  checksum: 10/9d3f4cea2d643bb451f7da4619e662e59f2b1a87d8bcf78f1bfc83019568c8c96fc9d8805aa6daf22d7783503abe0064a2068c23274f98a2ba840691b6d29967
   checksum: 10/9d3f4cea2d643bb451f7da4619e662e59f2b1a87d8bcf78f1bfc83019568c8c96fc9d8805aa6daf22d7783503abe0064a2068c23274f98a2ba840691b6d29967
   languageName: node
   linkType: hard
@@ -4813,7 +4820,7 @@ __metadata:
     "@starknet-react/core": "npm:^3.7.2"
     "@tanstack/eslint-plugin-query": "npm:^5.59.20"
     "@tanstack/react-query": "npm:^5.59.20"
-    "@types/node": "npm:^18.11.18"
+    "@types/node": "npm:^22.13.14"
     "@types/react": "npm:^18.3.12"
     "@types/react-dom": "npm:^18.3.1"
     "@typescript-eslint/eslint-plugin": "npm:^8.13.0"
@@ -12393,10 +12400,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:^18.11.18":
-  version: 18.11.18
-  resolution: "@types/node@npm:18.11.18"
-  checksum: 10/da05cf3a0036ef05cd695ac4cb265948593acbe723ba818f0ca0ce466b13ba99e1aac3a363086d6b8c7ea8f30c9233478e0293ac878a6f4b1d5515b10c392257
+"@types/node@npm:^22.13.14":
+  version: 22.17.0
+  resolution: "@types/node@npm:22.17.0"
+  dependencies:
+    undici-types: "npm:~6.21.0"
+  checksum: 10/f77b0e1c3c00e438b56c726d6b1170d4969c600cc8d4ecf2c2aa7692243a8ff455a3d530760da95e0b6aab059c4605a384b43d18f96646c745ff133c00b84875
   languageName: node
   linkType: hard
 
@@ -26056,6 +26065,13 @@ __metadata:
   version: 5.25.3
   resolution: "undici-types@npm:5.25.3"
   checksum: 10/9a57f2dd6fecb2d0f7d9b86aa6f417609a0ffc73247a95aa25c078cf36cbbfe6c164b63b8dace7ad01126e6510f284c185b69c78356bb1d6b279f195acffcaf4
+  languageName: node
+  linkType: hard
+
+"undici-types@npm:~6.21.0":
+  version: 6.21.0
+  resolution: "undici-types@npm:6.21.0"
+  checksum: 10/ec8f41aa4359d50f9b59fa61fe3efce3477cc681908c8f84354d8567bb3701fafdddf36ef6bff307024d3feb42c837cf6f670314ba37fc8145e219560e473d14
   languageName: node
   linkType: hard
 

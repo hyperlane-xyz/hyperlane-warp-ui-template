@@ -8,12 +8,13 @@ import '@interchain-ui/react/styles';
 import { GatewayApiClient } from '@radixdlt/babylon-gateway-api-sdk';
 import { RadixDappToolkit, RadixNetwork } from '@radixdlt/radix-dapp-toolkit';
 import { PropsWithChildren } from 'react';
+import { APP_NAME } from '../../../consts/app';
 
 export function RadixWalletContext({ children }: PropsWithChildren<unknown>) {
   const rdt = RadixDappToolkit({
     networkId: RadixNetwork.Mainnet,
     applicationVersion: '1.0.0',
-    applicationName: 'Hyperlane Nexus',
+    applicationName: APP_NAME,
     dAppDefinitionAddress: 'account_rdx12ycz0wsuygqa5slye9du6e7wz7fr4pzx39l5r5cznqc6yudpks20cw',
     useCache: false,
   });

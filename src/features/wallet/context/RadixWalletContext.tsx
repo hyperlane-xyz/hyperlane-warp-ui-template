@@ -10,13 +10,11 @@ import { RadixDappToolkit, RadixNetwork } from '@radixdlt/radix-dapp-toolkit';
 import { PropsWithChildren } from 'react';
 
 export function RadixWalletContext({ children }: PropsWithChildren<unknown>) {
-  // TODO: RADIX
-  // get real dapp definition address
   const rdt = RadixDappToolkit({
     networkId: RadixNetwork.Mainnet,
     applicationVersion: '1.0.0',
-    applicationName: 'Hyperlane Test',
-    dAppDefinitionAddress: 'account_rdx12xa2c277wq35qk0sruvtd62t2c4mgvewam2px5jsjt4hlmh6r4cwcm',
+    applicationName: 'Hyperlane Nexus',
+    dAppDefinitionAddress: 'account_rdx12ycz0wsuygqa5slye9du6e7wz7fr4pzx39l5r5cznqc6yudpks20cw',
     useCache: false,
   });
 

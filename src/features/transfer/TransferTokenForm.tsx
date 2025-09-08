@@ -642,7 +642,7 @@ function FeeSection({ visible }: { visible: boolean }) {
       ...fees,
       interchainQuote: interchainQuote || fees.interchainQuote,
     })
-      .map((fee) => `${fee.getDecimalFormattedAmount().toFixed(4)} ${fee.token.symbol}`)
+      .map((fee) => `${fee.getDecimalFormattedAmount().toFixed(8)} ${fee.token.symbol}`)
       .join(', ');
 
     return {

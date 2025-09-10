@@ -738,7 +738,19 @@ async function validateForm(
       return [{ recipient: 'Warp Route address is not valid as recipient' }, null];
     }
 
-    const transferToken = await getTransferToken(warpCore, token, destinationToken);
+    const { address: sender, publicKey: senderPubKey } = getAccountAddressAndPubKey(
+      warpCore.multiProvider,
+      origin,
+      accounts,
+    );
+    const transferToken = await getTransferToken(
+      warpCore,
+      token,
+      destinationToken,
+      values.amount,
+      values.recipient,
+      sender,
+    );
     const amountWei = toWei(amount, transferToken.decimals);
     const multiCollateralLimit = isMultiCollateralLimitExceeded(token, destination, amountWei);
 
@@ -751,17 +763,11 @@ async function validateForm(
       ];
     }
 
-    const { address, publicKey: senderPubKey } = getAccountAddressAndPubKey(
-      warpCore.multiProvider,
-      origin,
-      accounts,
-    );
-
     const result = await warpCore.validateTransfer({
       originTokenAmount: transferToken.amount(amountWei),
       destination,
       recipient,
-      sender: address || '',
+      sender: sender || '',
       senderPubKey: await senderPubKey,
     });
 
@@ -783,8 +789,15 @@ async function validateForm(
 
 // Checks if a token is a multi-collateral token and if so
 // look for other tokens that are the same and returns
-// the one with the highest collateral in the destination
-async function getTransferToken(warpCore: WarpCore, originToken: Token, destinationToken: IToken) {
+// the one with the lowest fee
+async function getTransferToken(
+  warpCore: WarpCore,
+  originToken: Token,
+  destinationToken: IToken,
+  amount: string,
+  recipient: string,
+  sender: string | undefined,
+) {
   if (!isValidMultiCollateralToken(originToken, destinationToken)) return originToken;
 
   const tokensWithSameCollateralAddresses = getTokensWithSameCollateralAddresses(
@@ -797,37 +810,50 @@ async function getTransferToken(warpCore: WarpCore, originToken: Token, destinat
   if (tokensWithSameCollateralAddresses.length <= 1) return originToken;
 
   logger.debug(
-    'Multiple multi-collateral tokens found for same collateral address, retrieving balances...',
+    'Multiple multi-collateral tokens found for same collateral address, retrieving fees...',
   );
-  const tokenBalances: Array<{ token: Token; balance: bigint }> = [];
+  const tokenFees: Array<{ token: Token; tokenFee?: TokenAmount }> = [];
 
-  // fetch each destination token balance
-  const balanceResults = await Promise.allSettled(
+  // fetch each route fees
+  const feeResults = await Promise.allSettled(
     tokensWithSameCollateralAddresses.map(async ({ originToken, destinationToken }) => {
       try {
-        const balance = await warpCore.getTokenCollateral(destinationToken);
-        return { token: originToken, balance };
+        const originTokenAmount = new TokenAmount(amount, originToken);
+        const fees = await warpCore.getInterchainTransferFee({
+          originTokenAmount,
+          destination: destinationToken.chainName,
+          recipient,
+          sender,
+        });
+        return { token: originToken, fees };
       } catch {
         return null;
       }
     }),
   );
 
-  for (const result of balanceResults) {
+  for (const result of feeResults) {
     if (result.status === 'fulfilled' && result.value) {
-      tokenBalances.push(result.value);
+      tokenFees.push({ token: result.value.token, tokenFee: result.value.fees.tokenFeeQuote });
     }
   }
 
-  if (!tokenBalances.length) return originToken;
+  if (!tokenFees.length) return originToken;
 
-  // sort by balance to return the highest one
-  tokenBalances.sort((a, b) => {
-    if (a.balance > b.balance) return -1;
-    else if (a.balance < b.balance) return 1;
-    else return 0;
+  // sort by token fees, no fees routes take precedence
+  tokenFees.sort((a, b) => {
+    const aFee = a.tokenFee?.amount;
+    const bFee = b.tokenFee?.amount;
+
+    if (aFee === undefined && bFee !== undefined) return -1;
+    if (aFee !== undefined && bFee === undefined) return 1;
+    if (aFee === undefined && bFee === undefined) return 0;
+
+    if (aFee! > bFee!) return -1;
+    if (aFee! < bFee!) return 1;
+    return 0;
   });
 
-  logger.debug('Found route with higher collateral in destination, switching route...');
-  return tokenBalances[0].token;
+  logger.debug('Found route with lower fee, switching route...');
+  return tokenFees[0].token;
 }

@@ -20,37 +20,36 @@ tokens:
     name: USDC
     standard: EvmHypSynthetic
     symbol: USDC
-  - addressOrDenom: '0x5c12ADC734699C07b095fe30B8312F1A7bbaA788'
+  # - addressOrDenom: '0x5c12ADC734699C07b095fe30B8312F1A7bbaA788'
+  #   chainName: basesepolia
+  #   connections:
+  #     - token: ethereum|sepolia|0x95878Fd41bC26f7045C0b98e381c22f010745A75
+  #   decimals: 18
+  #   name: Ether
+  #   standard: EvmHypNative
+  #   symbol: ETH
+  # - addressOrDenom: '0x95878Fd41bC26f7045C0b98e381c22f010745A75'
+  #   chainName: sepolia
+  #   connections:
+  #     - token: ethereum|basesepolia|0x5c12ADC734699C07b095fe30B8312F1A7bbaA788
+  #   decimals: 18
+  #   name: Ether
+  #   standard: EvmHypNative
+  #   symbol: ETH
+  - addressOrDenom: '0x783EC5e105234a570eB90f314284E5dBe53bdd90'
     chainName: basesepolia
     connections:
-      - token: ethereum|sepolia|0x95878Fd41bC26f7045C0b98e381c22f010745A75
+      - token: ethereum|sepolia|0x79B1257BDBCaeF98Da685A7c225b6e61a119Cb7a
     decimals: 18
     name: Ether
     standard: EvmHypNative
     symbol: ETH
-  - addressOrDenom: '0x95878Fd41bC26f7045C0b98e381c22f010745A75'
+  - addressOrDenom: '0x79B1257BDBCaeF98Da685A7c225b6e61a119Cb7a'
     chainName: sepolia
     connections:
-      - token: ethereum|basesepolia|0x5c12ADC734699C07b095fe30B8312F1A7bbaA788
+      - token: ethereum|basesepolia|0x783EC5e105234a570eB90f314284E5dBe53bdd90
     decimals: 18
     name: Ether
-    standard: EvmHypNative
+    standard: EvmHypSynthetic
     symbol: ETH
-  - addressOrDenom: '0x5c12ADC734699C07b095fe30B8312F1A7bbaA788'
-    chainName: basesepolia
-    connections:
-      - token: ethereum|sepolia|0x95878Fd41bC26f7045C0b98e381c22f010745A75
-    decimals: 18
-    name: Ether
-    standard: EvmHypNative
-    symbol: ETH
-  - addressOrDenom: '0x95878Fd41bC26f7045C0b98e381c22f010745A75'
-    chainName: sepolia
-    connections:
-      - token: ethereum|basesepolia|0x5c12ADC734699C07b095fe30B8312F1A7bbaA788
-    decimals: 18
-    name: Ether
-    standard: EvmHypNative
-    symbol: ETH
-
 options: {}

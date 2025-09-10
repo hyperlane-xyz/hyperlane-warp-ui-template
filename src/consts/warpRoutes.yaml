@@ -39,5 +39,35 @@ tokens:
     #      - token: ethereum|arbitrumsepolia|0x65f3b0990F4B76a8066E560dD224BfC62716A3A6
     logoURI: /images/tokens/USDC/logo.svg
   ## USDC ##
+  ## Test ERC20 Token ##
+  - chainName: pruvtest
+    standard: EvmHypCollateral
+    decimals: 18
+    symbol: FREE
+    name: FreeERC20
+    addressOrDenom: '0x317da564C81f23f01dFdFfB6ff97596D00556d83'
+    collateralAddressOrDenom: '0x3909c14120016b027A91B2E3AFA0c73F48695ac7'
+    connections:
+      - token: ethereum|arbitrumsepolia|0x5b50DC5945b95B3e5e1d25e55272390F9Ffb12B4
+      - token: ethereum|sepolia|0xd654FBc40d57775D9287d11023CD9302ab8EFC53
+  - chainName: arbitrumsepolia
+    standard: EvmHypSynthetic
+    decimals: 18
+    symbol: FREE
+    name: FreeERC20
+    addressOrDenom: '0x5b50DC5945b95B3e5e1d25e55272390F9Ffb12B4'
+    connections:
+      - token: ethereum|pruvtest|0x317da564C81f23f01dFdFfB6ff97596D00556d83
+      - token: ethereum|sepolia|0xd654FBc40d57775D9287d11023CD9302ab8EFC53
+  - chainName: sepolia
+    standard: EvmHypSynthetic
+    decimals: 18
+    symbol: FREE
+    name: FreeERC20
+    addressOrDenom: '0xd654FBc40d57775D9287d11023CD9302ab8EFC53'
+    connections:
+      - token: ethereum|pruvtest|0x317da564C81f23f01dFdFfB6ff97596D00556d83
+      - token: ethereum|arbitrumsepolia|0x5b50DC5945b95B3e5e1d25e55272390F9Ffb12B4
+  ## Test ERC20 Token ##
   # STAGING #
 options: {}

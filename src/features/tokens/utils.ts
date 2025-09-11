@@ -5,7 +5,7 @@ import {
   TOKEN_COLLATERALIZED_STANDARDS,
   WarpCore,
 } from '@hyperlane-xyz/sdk';
-import { eqAddress, normalizeAddress } from '@hyperlane-xyz/utils';
+import { eqAddress, isNullish, normalizeAddress } from '@hyperlane-xyz/utils';
 import { isChainDisabled } from '../chains/utils';
 import { MultiCollateralTokenMap, TokenChainMap, Tokens } from './types';
 
@@ -45,8 +45,9 @@ export function isValidMultiCollateralToken(
   originToken: Token | IToken,
   destination: ChainName | IToken,
 ) {
+  // HypNative tokens are Collaterized but does not contain collateralAddressOrDenom (most of the time)
   if (
-    !originToken.collateralAddressOrDenom ||
+    (!originToken.collateralAddressOrDenom && !originToken.isHypNative()) ||
     !TOKEN_COLLATERALIZED_STANDARDS.includes(originToken.standard)
   )
     return false;
@@ -58,7 +59,7 @@ export function isValidMultiCollateralToken(
 
   if (
     !destinationToken ||
-    !destinationToken.collateralAddressOrDenom ||
+    (!destinationToken.collateralAddressOrDenom && !destinationToken.isHypNative()) ||
     !TOKEN_COLLATERALIZED_STANDARDS.includes(destinationToken.standard)
   )
     return false;
@@ -71,13 +72,19 @@ export function getTokensWithSameCollateralAddresses(
   origin: Token,
   destination: IToken,
 ) {
+  if (
+    !TOKEN_COLLATERALIZED_STANDARDS.includes(origin.standard) ||
+    !TOKEN_COLLATERALIZED_STANDARDS.includes(destination.standard)
+  )
+    return [];
+
+  // For HypNative tokens, use null as identifier since they don't have collateralAddressOrDenom
   const originCollateralAddress = origin.collateralAddressOrDenom
     ? normalizeAddress(origin.collateralAddressOrDenom, origin.protocol)
-    : undefined;
+    : null;
   const destinationCollateralAddress = destination.collateralAddressOrDenom
     ? normalizeAddress(destination.collateralAddressOrDenom, destination.protocol)
-    : undefined;
-  if (!originCollateralAddress || !destinationCollateralAddress) return [];
+    : null;
 
   return warpCore
     .getTokensForRoute(origin.chainName, destination.chainName)
@@ -94,20 +101,29 @@ export function getTokensWithSameCollateralAddresses(
       const isMultiCollateralToken = isValidMultiCollateralToken(originToken, destinationToken);
       if (!isMultiCollateralToken) return false;
 
-      // asserting because isValidMultiCollateralToken already checks for existence of collateralAddressOrDenom
-      const currentOriginCollateralAddress = normalizeAddress(
-        originToken.collateralAddressOrDenom!,
-        originToken.protocol,
-      );
-      const currentDestinationCollateralAddress = normalizeAddress(
-        destinationToken.collateralAddressOrDenom!,
-        destinationToken.protocol,
-      );
+      const currentOriginCollateralAddress = originToken.collateralAddressOrDenom
+        ? normalizeAddress(originToken.collateralAddressOrDenom, originToken.protocol)
+        : null;
+      const currentDestinationCollateralAddress = destinationToken.collateralAddressOrDenom
+        ? normalizeAddress(destinationToken.collateralAddressOrDenom, destinationToken.protocol)
+        : null;
 
-      return (
-        eqAddress(originCollateralAddress, currentOriginCollateralAddress) &&
-        eqAddress(destinationCollateralAddress, currentDestinationCollateralAddress)
-      );
+      // For HypNative tokens if both addresses are null then it matches, otherwise check with eqAddress
+      const originMatches =
+        isNullish(originCollateralAddress) && isNullish(currentOriginCollateralAddress)
+          ? true
+          : originCollateralAddress && currentOriginCollateralAddress
+            ? eqAddress(originCollateralAddress, currentOriginCollateralAddress)
+            : false;
+
+      const destinationMatches =
+        isNullish(destinationCollateralAddress) && isNullish(currentDestinationCollateralAddress)
+          ? true
+          : destinationCollateralAddress && currentDestinationCollateralAddress
+            ? eqAddress(destinationCollateralAddress, currentDestinationCollateralAddress)
+            : false;
+
+      return originMatches && destinationMatches;
     });
 }
 
@@ -121,17 +137,16 @@ export function dedupeMultiCollateralTokens(tokens: Tokens, destination) {
       const isMultiCollateralToken = isValidMultiCollateralToken(originToken, destination);
       if (!isMultiCollateralToken) return { ...acc, tokens: [...acc.tokens, t] };
 
-      // Non-Null asserting this because this is covered by isValidMultiCollateralToken and
-      // the early return from above
       const destinationToken = originToken.getConnectionForChain(destination)!.token;
-      const originAddress = normalizeAddress(
-        originToken.collateralAddressOrDenom!,
-        originToken.protocol,
-      );
-      const destinationAddress = normalizeAddress(
-        destinationToken.collateralAddressOrDenom!,
-        destinationToken.protocol,
-      );
+
+      // For HypNative tokens, use their symbol and standard as identifier since they don't have collateralAddressOrDenom
+      const originAddress = originToken.collateralAddressOrDenom
+        ? normalizeAddress(originToken.collateralAddressOrDenom, originToken.protocol)
+        : `hypnative-${originToken.standard}-${originToken.symbol}`;
+
+      const destinationAddress = destinationToken.collateralAddressOrDenom
+        ? normalizeAddress(destinationToken.collateralAddressOrDenom, destinationToken.protocol)
+        : `hypnative-${destinationToken.standard}-${destinationToken.symbol}`;
 
       // now origin and destination are both collaterals
       // create map for tokens with same origin and destination collateral addresses

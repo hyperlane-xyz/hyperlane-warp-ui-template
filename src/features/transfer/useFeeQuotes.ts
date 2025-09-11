@@ -1,10 +1,11 @@
 import { Token, WarpCore, WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
 import { HexString, toWei } from '@hyperlane-xyz/utils';
-import { getAccountAddressAndPubKey, useAccounts } from '@hyperlane-xyz/widgets';
+import { getAccountAddressAndPubKey, useAccounts, useDebounce } from '@hyperlane-xyz/widgets';
 import { useQuery } from '@tanstack/react-query';
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { useWarpCore } from '../tokens/hooks';
+import { getLowestFeeTransferToken } from './fees';
 import { TransferFormValues } from './types';
 
 const FEE_QUOTE_REFRESH_INTERVAL = 15_000; // 10s
@@ -13,9 +14,11 @@ export function useFeeQuotes(
   { destination, amount, recipient, tokenIndex }: TransferFormValues,
   enabled: boolean,
   originToken: Token | undefined,
+  searchForLowestFee: boolean = false,
 ) {
   const multiProvider = useMultiProvider();
   const warpCore = useWarpCore();
+  const debouncedAmount = useDebounce(amount, 500);
 
   const { accounts } = useAccounts(multiProvider);
   const { address: sender, publicKey: senderPubKey } = getAccountAddressAndPubKey(
@@ -24,13 +27,33 @@ export function useFeeQuotes(
     accounts,
   );
 
+  const isFormValid = !!(originToken && destination && debouncedAmount && recipient && sender);
+  const shouldFetch = enabled && isFormValid;
+
   const { isLoading, isError, data, isFetching } = useQuery({
     // The WarpCore class is not serializable, so we can't use it as a key
     // eslint-disable-next-line @tanstack/query/exhaustive-deps
-    queryKey: ['useFeeQuotes', tokenIndex, destination, sender, senderPubKey, amount],
+    queryKey: [
+      'useFeeQuotes',
+      tokenIndex,
+      destination,
+      sender,
+      senderPubKey,
+      debouncedAmount,
+      recipient,
+    ],
     queryFn: () =>
-      fetchFeeQuotes(warpCore, originToken, destination, sender, senderPubKey, amount, recipient),
-    enabled,
+      fetchFeeQuotes(
+        warpCore,
+        originToken,
+        destination,
+        sender,
+        senderPubKey,
+        debouncedAmount,
+        recipient,
+        searchForLowestFee,
+      ),
+    enabled: shouldFetch,
     refetchInterval: FEE_QUOTE_REFRESH_INTERVAL,
   });
 
@@ -45,10 +68,28 @@ async function fetchFeeQuotes(
   senderPubKey?: Promise<HexString>,
   amount?: string,
   recipient?: string,
+  searchForLowestFee: boolean = false,
 ): Promise<WarpCoreFeeEstimate | null> {
   if (!originToken || !destination || !sender || !originToken || !amount || !recipient) return null;
-  const amountWei = toWei(amount, originToken.decimals);
-  const originTokenAmount = originToken.amount(amountWei);
+  let transferToken = originToken;
+
+  // when true attempt to get route with lowest fee
+  if (searchForLowestFee) {
+    const destinationToken = originToken.getConnectionForChain(destination)?.token;
+    if (destinationToken) {
+      transferToken = await getLowestFeeTransferToken(
+        warpCore,
+        originToken,
+        destinationToken,
+        amount,
+        recipient,
+        sender,
+      );
+    }
+  }
+
+  const amountWei = toWei(amount, transferToken.decimals);
+  const originTokenAmount = transferToken.amount(amountWei);
   logger.debug('Fetching fee quotes');
   return warpCore.estimateTransferRemoteFees({
     originTokenAmount,

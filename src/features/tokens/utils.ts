@@ -5,7 +5,7 @@ import {
   TOKEN_COLLATERALIZED_STANDARDS,
   WarpCore,
 } from '@hyperlane-xyz/sdk';
-import { eqAddress, normalizeAddress } from '@hyperlane-xyz/utils';
+import { eqAddress, isNullish, normalizeAddress } from '@hyperlane-xyz/utils';
 import { isChainDisabled } from '../chains/utils';
 import { MultiCollateralTokenMap, TokenChainMap, Tokens } from './types';
 
@@ -110,14 +110,14 @@ export function getTokensWithSameCollateralAddresses(
 
       // For HypNative tokens if both addresses are null then it matches, otherwise check with eqAddress
       const originMatches =
-        !originCollateralAddress && !currentOriginCollateralAddress
+        isNullish(originCollateralAddress) && isNullish(currentOriginCollateralAddress)
           ? true
           : originCollateralAddress && currentOriginCollateralAddress
             ? eqAddress(originCollateralAddress, currentOriginCollateralAddress)
             : false;
 
       const destinationMatches =
-        !destinationCollateralAddress && !currentDestinationCollateralAddress
+        isNullish(destinationCollateralAddress) && isNullish(currentDestinationCollateralAddress)
           ? true
           : destinationCollateralAddress && currentDestinationCollateralAddress
             ? eqAddress(destinationCollateralAddress, currentDestinationCollateralAddress)

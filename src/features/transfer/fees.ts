@@ -105,7 +105,7 @@ export async function getLowestFeeTransferToken(
 
   if (!tokenFees.length) return originToken;
 
-  // sort by token fees, no fees routes take precedence
+  // sort by token fees, no fees routes take precedence, then lowest fee to highest
   tokenFees.sort((a, b) => {
     const aFee = a.tokenFee?.amount;
     const bFee = b.tokenFee?.amount;
@@ -114,8 +114,8 @@ export async function getLowestFeeTransferToken(
     if (aFee !== undefined && bFee === undefined) return 1;
     if (aFee === undefined && bFee === undefined) return 0;
 
-    if (aFee! > bFee!) return -1;
-    if (aFee! < bFee!) return 1;
+    if (aFee! < bFee!) return -1;
+    if (aFee! > bFee!) return 1;
     return 0;
   });
 

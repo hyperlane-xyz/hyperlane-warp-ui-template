@@ -4,6 +4,7 @@ import { chainsRentEstimate } from '../../consts/chains';
 import { logger } from '../../utils/logger';
 import { getTokensWithSameCollateralAddresses, isValidMultiCollateralToken } from '../tokens/utils';
 
+// get the total amount combined of all the fees
 export function getTotalFee({
   interchainQuote,
   localQuote,
@@ -23,7 +24,8 @@ export function getTotalFee({
   for (const tokenAmount of tokenAmounts) {
     let foundFungibleGroup = false;
 
-    // Check if this token is fungible with any existing fee group
+    // Check if the current tokenAmount is fungible (same asset) as any token
+    // in the feeGroups array, if so add the amount to that asset group
     for (let i = 0; i < feeGroups.length; i++) {
       if (tokenAmount.token.isFungibleWith(feeGroups[i].token)) {
         feeGroups[i] = feeGroups[i].plus(tokenAmount.amount);

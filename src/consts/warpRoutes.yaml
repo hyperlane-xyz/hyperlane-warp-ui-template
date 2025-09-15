@@ -39,7 +39,7 @@ tokens:
     #      - token: ethereum|arbitrumsepolia|0x65f3b0990F4B76a8066E560dD224BfC62716A3A6
     logoURI: /images/tokens/USDC/logo.svg
   ## USDC ##
-  ## Test ERC20 Token ##
+  ## Test ERC20 Token - no bridge fee ##
   - chainName: pruvtest
     standard: EvmHypCollateral
     decimals: 18
@@ -68,6 +68,36 @@ tokens:
     connections:
       - token: ethereum|pruvtest|0x317da564C81f23f01dFdFfB6ff97596D00556d83
       - token: ethereum|arbitrumsepolia|0x5b50DC5945b95B3e5e1d25e55272390F9Ffb12B4
-  ## Test ERC20 Token ##
-  # STAGING #
+  ## Test ERC20 Token - no bridge fee ##
+  ## Test ERC20 Token - with USDC bridge fee ##
+  - chainName: pruvtest
+    standard: EvmHypCollateral
+    decimals: 18
+    symbol: MOCKRWA
+    name: MockRWAToken
+    addressOrDenom: '0x8188BFf405025BaA02b09c7524e73E3A16B15924'
+    collateralAddressOrDenom: '0x4A1FDad497Ac84b657Ac4D0b23aeD440B4b1Fe44'
+    connections:
+      - token: ethereum|arbitrumsepolia|0x4C89e71cbcFA162AA678E73e7BF6dd3Eb475839e
+      - token: ethereum|sepolia|0x61aFa69a38ec4A252897259BA6C8322120B13C30
+  - chainName: arbitrumsepolia
+    standard: EvmHypSynthetic
+    decimals: 18
+    symbol: MOCKRWA
+    name: MockRWAToken
+    addressOrDenom: '0x4C89e71cbcFA162AA678E73e7BF6dd3Eb475839e'
+    connections:
+      - token: ethereum|pruvtest|0x8188BFf405025BaA02b09c7524e73E3A16B15924
+  #      - token: ethereum|sepolia|0x61aFa69a38ec4A252897259BA6C8322120B13C30
+  - chainName: sepolia
+    standard: EvmHypSynthetic
+    decimals: 18
+    symbol: MOCKRWA
+    name: MockRWAToken
+    addressOrDenom: '0x61aFa69a38ec4A252897259BA6C8322120B13C30'
+    connections:
+      - token: ethereum|pruvtest|0x8188BFf405025BaA02b09c7524e73E3A16B15924
+#      - token: ethereum|arbitrumsepolia|0x4C89e71cbcFA162AA678E73e7BF6dd3Eb475839e
+## Test ERC20 Token - with USDC bridge fee ##
+# STAGING #
 options: {}

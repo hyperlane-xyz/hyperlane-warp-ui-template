@@ -75,8 +75,8 @@ tokens:
     decimals: 18
     symbol: MOCKRWA
     name: MockRWAToken
-    addressOrDenom: "0x8188BFf405025BaA02b09c7524e73E3A16B15924"
-    collateralAddressOrDenom: "0x4A1FDad497Ac84b657Ac4D0b23aeD440B4b1Fe44"
+    addressOrDenom: '0x8188BFf405025BaA02b09c7524e73E3A16B15924'
+    collateralAddressOrDenom: '0x4A1FDad497Ac84b657Ac4D0b23aeD440B4b1Fe44'
     connections:
       - token: ethereum|arbitrumsepolia|0x4C89e71cbcFA162AA678E73e7BF6dd3Eb475839e
       - token: ethereum|sepolia|0x61aFa69a38ec4A252897259BA6C8322120B13C30
@@ -85,19 +85,19 @@ tokens:
     decimals: 18
     symbol: MOCKRWA
     name: MockRWAToken
-    addressOrDenom: "0x4C89e71cbcFA162AA678E73e7BF6dd3Eb475839e"
+    addressOrDenom: '0x4C89e71cbcFA162AA678E73e7BF6dd3Eb475839e'
     connections:
       - token: ethereum|pruvtest|0x8188BFf405025BaA02b09c7524e73E3A16B15924
-#      - token: ethereum|sepolia|0x61aFa69a38ec4A252897259BA6C8322120B13C30
+  #      - token: ethereum|sepolia|0x61aFa69a38ec4A252897259BA6C8322120B13C30
   - chainName: sepolia
     standard: EvmHypSynthetic
     decimals: 18
     symbol: MOCKRWA
     name: MockRWAToken
-    addressOrDenom: "0x61aFa69a38ec4A252897259BA6C8322120B13C30"
+    addressOrDenom: '0x61aFa69a38ec4A252897259BA6C8322120B13C30'
     connections:
       - token: ethereum|pruvtest|0x8188BFf405025BaA02b09c7524e73E3A16B15924
 #      - token: ethereum|arbitrumsepolia|0x4C89e71cbcFA162AA678E73e7BF6dd3Eb475839e
-  ## Test ERC20 Token - with USDC bridge fee ##
-  # STAGING #
+## Test ERC20 Token - with USDC bridge fee ##
+# STAGING #
 options: {}

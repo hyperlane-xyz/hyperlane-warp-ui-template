@@ -730,15 +730,15 @@ async function validateForm(
       origin,
       accounts,
     );
+    const amountWei = toWei(amount, token.decimals);
     const transferToken = await getLowestFeeTransferToken(
       warpCore,
       token,
       destinationToken,
-      values.amount,
-      values.recipient,
+      amountWei,
+      recipient,
       sender,
     );
-    const amountWei = toWei(amount, transferToken.decimals);
     const multiCollateralLimit = isMultiCollateralLimitExceeded(token, destination, amountWei);
 
     if (multiCollateralLimit) {

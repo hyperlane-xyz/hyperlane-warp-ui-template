@@ -61,7 +61,7 @@ export async function getLowestFeeTransferToken(
   warpCore: WarpCore,
   originToken: Token,
   destinationToken: IToken,
-  amount: string,
+  amounWei: string,
   recipient: string,
   sender: string | undefined,
 ) {
@@ -85,12 +85,12 @@ export async function getLowestFeeTransferToken(
   const feeResults = await Promise.allSettled(
     tokensWithSameCollateralAddresses.map(async ({ originToken, destinationToken }) => {
       try {
-        const originTokenAmount = new TokenAmount(amount, originToken);
+        const originTokenAmount = new TokenAmount(amounWei, originToken);
         const fees = await warpCore.getInterchainTransferFee({
           originTokenAmount,
           destination: destinationToken.chainName,
           recipient,
-          sender,
+          sender: sender,
         });
         return { token: originToken, fees };
       } catch {

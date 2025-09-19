@@ -90,7 +90,7 @@ export async function getLowestFeeTransferToken(
           originTokenAmount,
           destination: destinationToken.chainName,
           recipient,
-          sender: sender,
+          sender,
         });
         return { token: originToken, fees };
       } catch {

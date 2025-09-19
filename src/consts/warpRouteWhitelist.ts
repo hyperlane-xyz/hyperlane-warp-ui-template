@@ -5,6 +5,7 @@
 export const warpRouteWhitelist: Array<string> | null = [
   // TIA routes
   'TIA/mantapacific-neutron',
+  'TIA/eclipsemainnet-stride',
 
   // TIA routes (cosmos-sdk)
   'TIA/abstract-celestia',

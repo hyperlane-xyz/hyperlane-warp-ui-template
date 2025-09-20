@@ -43,18 +43,6 @@ export const warpRouteConfigs: WarpCoreConfig = {
           sourcePort: 'transfer',
           sourceChannel: 'channel-4',
         },
-        // To Eclipse via Stride
-        {
-          token: 'sealevel|eclipsemainnet|BpXHAiktwjx7fN6M9ST9wr6qKAsH27wZFhdHEhReJsR6',
-          type: TokenConnectionType.IbcHyperlane,
-          sourcePort: 'transfer',
-          sourceChannel: 'channel-4',
-          intermediateChainName: 'stride',
-          intermediateRouterAddress:
-            'stride1pvtesu3ve7qn7ctll2x495mrqf2ysp6fws68grvcu6f7n2ajghgsh2jdj6',
-          intermediateIbcDenom:
-            'ibc/BF3B4F53F3694B66E13C23107C84B6485BD2B96296BB7EC680EA77BBA75B4801',
-        },
       ],
     },
 
@@ -98,12 +86,6 @@ export const warpRouteConfigs: WarpCoreConfig = {
   ],
   options: {
     interchainFeeConstants: [
-      {
-        origin: 'celestia',
-        destination: 'arbitrum',
-        amount: 270000,
-        addressOrDenom: 'utia',
-      },
       {
         origin: 'celestia',
         destination: 'mantapacific',

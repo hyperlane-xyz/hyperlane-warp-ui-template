@@ -43,7 +43,19 @@ export const warpRouteConfigs: WarpCoreConfig = {
           sourcePort: 'transfer',
           sourceChannel: 'channel-4',
         },
-        // To Eclipse via Stride
+      ],
+    },
+
+    // TIA Celestia to Eclipse via Stride
+    {
+      chainName: 'celestia',
+      standard: TokenStandard.CosmosIbc,
+      name: 'TIA.s',
+      symbol: 'TIA.s',
+      decimals: 6,
+      addressOrDenom: 'utia',
+      logoURI: '/deployments/warp_routes/TIA/logo.svg',
+      connections: [
         {
           token: 'sealevel|eclipsemainnet|BpXHAiktwjx7fN6M9ST9wr6qKAsH27wZFhdHEhReJsR6',
           type: TokenConnectionType.IbcHyperlane,

@@ -278,7 +278,6 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
   }, [setValues, warpCore]);
 
   useEffect(() => {
-    console.log('hello');
     if (!isTipCardActionTriggered) return;
 
     onTipCardActionTriggered();

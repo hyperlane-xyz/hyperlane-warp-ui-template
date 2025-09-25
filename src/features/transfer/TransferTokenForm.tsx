@@ -257,7 +257,7 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
     setOriginChainName(origin);
   };
 
-  const handleThis = useCallback(() => {
+  const onTipCardActionTriggered = useCallback(() => {
     const tokenIndex = getTokenIndexFromChains(
       warpCore,
       TIP_CARD_ACTION_ADDRESS_OR_DENOM,
@@ -278,11 +278,12 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
   }, [setValues, warpCore]);
 
   useEffect(() => {
+    console.log('hello');
     if (!isTipCardActionTriggered) return;
 
-    handleThis();
+    onTipCardActionTriggered();
     setIsTipCardActionTriggered(false);
-  }, [isTipCardActionTriggered, handleThis, setIsTipCardActionTriggered]);
+  }, [isTipCardActionTriggered, onTipCardActionTriggered, setIsTipCardActionTriggered]);
 
   return (
     <div className="mt-2 flex items-center justify-between gap-4">

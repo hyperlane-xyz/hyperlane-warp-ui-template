@@ -336,4 +336,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // Pulsechain routes
   'USDC/pulsechain',
+
+  // Electroneum routes
+  'USDC/electroneum',
 ];

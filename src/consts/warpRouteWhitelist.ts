@@ -339,4 +339,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // Electroneum routes
   'USDC/electroneum',
+
+  // Galactica routes
+  'GNET/galactica',
 ];

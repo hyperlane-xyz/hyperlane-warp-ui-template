@@ -23,18 +23,23 @@ import {
 } from '@hyperlane-xyz/widgets';
 import BigNumber from 'bignumber.js';
 import { Form, Formik, useFormikContext } from 'formik';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 import { RecipientWarningBanner } from '../../components/banner/RecipientWarningBanner';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
 import { SolidButton } from '../../components/buttons/SolidButton';
 import { TextField } from '../../components/input/TextField';
+import {
+  TIP_CARD_ACTION_ADDRESS_OR_DENOM,
+  TIP_CARD_ACTION_DESTINATION,
+  TIP_CARD_ACTION_ORIGIN,
+} from '../../components/tip/const';
 import { WARP_QUERY_PARAMS } from '../../consts/args';
 import { chainsRentEstimate } from '../../consts/chains';
 import { config } from '../../consts/config';
 import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
-import { getQueryParams, updateQueryParam } from '../../utils/queryParams';
+import { getQueryParams, updateQueryParam, updateQueryParams } from '../../utils/queryParams';
 import { ChainConnectionWarning } from '../chains/ChainConnectionWarning';
 import { ChainSelectField } from '../chains/ChainSelectField';
 import { ChainWalletWarning } from '../chains/ChainWalletWarning';
@@ -203,11 +208,15 @@ function SwapChainsButton({
 function ChainSelectSection({ isReview }: { isReview: boolean }) {
   const warpCore = useWarpCore();
 
-  const { setOriginChainName } = useStore((s) => ({
-    setOriginChainName: s.setOriginChainName,
-  }));
+  const { setOriginChainName, isTipCardActionTriggered, setIsTipCardActionTriggered } = useStore(
+    (s) => ({
+      setOriginChainName: s.setOriginChainName,
+      setIsTipCardActionTriggered: s.setIsTipCardActionTriggered,
+      isTipCardActionTriggered: s.isTipCardActionTriggered,
+    }),
+  );
 
-  const { values, setFieldValue } = useFormikContext<TransferFormValues>();
+  const { values, setFieldValue, setValues } = useFormikContext<TransferFormValues>();
 
   const originRouteCounts = useMemo(() => {
     return getNumRoutesWithSelectedChain(warpCore, values.origin, true);
@@ -247,6 +256,33 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
     setTokenOnChainChange(origin, destination);
     setOriginChainName(origin);
   };
+
+  const handleThis = useCallback(() => {
+    const tokenIndex = getTokenIndexFromChains(
+      warpCore,
+      TIP_CARD_ACTION_ADDRESS_OR_DENOM,
+      TIP_CARD_ACTION_ORIGIN,
+      TIP_CARD_ACTION_DESTINATION,
+    );
+    setValues((prevValues) => ({
+      ...prevValues,
+      origin: TIP_CARD_ACTION_ORIGIN,
+      destination: TIP_CARD_ACTION_DESTINATION,
+      tokenIndex,
+    }));
+    updateQueryParams({
+      [WARP_QUERY_PARAMS.ORIGIN]: TIP_CARD_ACTION_ORIGIN,
+      [WARP_QUERY_PARAMS.DESTINATION]: TIP_CARD_ACTION_DESTINATION,
+      [WARP_QUERY_PARAMS.TOKEN]: TIP_CARD_ACTION_ADDRESS_OR_DENOM,
+    });
+  }, [setValues, warpCore]);
+
+  useEffect(() => {
+    if (!isTipCardActionTriggered) return;
+
+    handleThis();
+    setIsTipCardActionTriggered(false);
+  }, [isTipCardActionTriggered, handleThis, setIsTipCardActionTriggered]);
 
   return (
     <div className="mt-2 flex items-center justify-between gap-4">

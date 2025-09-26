@@ -15,7 +15,8 @@ jobs:
   install:
     runs-on: ubuntu-latest
     steps:
-      - uses: ./.github/actions/checkout-with-cache
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/yarn-cache
       - name: yarn-install
         # Check out the lockfile from main, reinstall, and then
         # verify the lockfile matches what was committed.
@@ -31,7 +32,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: ./.github/actions/checkout-with-cache
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/yarn-cache
       - name: build
         run: yarn run build
         env:
@@ -40,7 +42,8 @@ jobs:
   prettier:
     runs-on: ubuntu-latest
     steps:
-      - uses: ./.github/actions/checkout-with-cache
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/yarn-cache
       - name: prettier
         run: |
           yarn run prettier
@@ -53,13 +56,15 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: ./.github/actions/checkout-with-cache
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/yarn-cache
       - name: lint
         run: yarn run lint
 
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: ./.github/actions/checkout-with-cache
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/yarn-cache
       - name: test
         run: yarn run test

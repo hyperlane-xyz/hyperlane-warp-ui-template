@@ -1,13 +1,10 @@
-name: 'Checkout and Cache Dependencies'
-description: 'Checkout code and cache node_modules and yarn cache'
+name: 'Cache Yarn Dependencies'
+description: 'Cache node_modules and yarn cache'
 author: 'Hyperlane Team'
 
 runs:
   using: 'composite'
   steps:
-    - name: Checkout code
-      uses: actions/checkout@v5
-
     - name: Cache dependencies
       uses: actions/cache@v4
       with:

@@ -11,6 +11,7 @@ import { MAIN_FONT } from '../consts/app';
 import { WarpContextInitGate } from '../features/WarpContextInitGate';
 import { CosmosWalletContext } from '../features/wallet/context/CosmosWalletContext';
 import { EvmWalletContext } from '../features/wallet/context/EvmWalletContext';
+import { RadixWalletContext } from '../features/wallet/context/RadixWalletContext';
 import { SolanaWalletContext } from '../features/wallet/context/SolanaWalletContext';
 import { StarknetWalletContext } from '../features/wallet/context/StarknetWalletContext';
 import '../styles/globals.css';
@@ -44,10 +45,12 @@ export default function App({ Component, pageProps }: AppProps) {
               <SolanaWalletContext>
                 <CosmosWalletContext>
                   <StarknetWalletContext>
-                    <AppLayout>
-                      <Component {...pageProps} />
-                      <Analytics />
-                    </AppLayout>
+                    <RadixWalletContext>
+                      <AppLayout>
+                        <Component {...pageProps} />
+                        <Analytics />
+                      </AppLayout>
+                    </RadixWalletContext>
                   </StarknetWalletContext>
                 </CosmosWalletContext>
               </SolanaWalletContext>

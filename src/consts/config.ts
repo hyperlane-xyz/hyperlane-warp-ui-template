@@ -47,7 +47,7 @@ export const config: Config = Object.freeze({
   chainWalletWhitelists,
   enableExplorerLink: false,
   defaultOriginChain: 'ethereum',
-  defaultDestinationChain: 'polygon',
+  defaultDestinationChain: 'pruv',
   isDevMode,
   useOnlineRegistry: false,
   registryUrl,

@@ -34,6 +34,12 @@ interface Config {
   walletProtocols: ProtocolType[] | undefined; // Wallet Protocols to show in the wallet connect modal. Leave undefined to include all of them
   rpcOverrides: string; // JSON string containing a map of chain names to an object with an URL for RPC overrides (For an example check the .env.example file)
   gaslessChains: string[] | undefined;
+  enablePruvOriginFeeUSDC: boolean;
+  pruvOriginFeeUSDC: Record<string, number>; // Bridge fee for transaction originating from pruv
+  pruvUSDCMetadata: {
+    address: string;
+    decimals: number;
+  }; // USDC token metadata for pruv chains
 }
 
 export const config: Config = Object.freeze({
@@ -62,5 +68,15 @@ export const config: Config = Object.freeze({
   ],
   shouldDisableChains: false,
   rpcOverrides,
-  gaslessChains: [],
+  gaslessChains: ['pruv'],
+  enablePruvOriginFeeUSDC: true,
+  pruvOriginFeeUSDC: {
+    ethereum: 0.75,
+    arbitrum: 0.1,
+    polygon: 0.1,
+  },
+  pruvUSDCMetadata: {
+    address: '0x0000000000000000000000000000000000000000',
+    decimals: 6,
+  },
 });

@@ -1,5 +1,5 @@
 diff --git a/node_modules/@hyperlane-xyz/sdk/dist/providers/transactionFeeEstimators.js b/node_modules/@hyperlane-xyz/sdk/dist/providers/transactionFeeEstimators.js
-index 634f385..213ec4e 100644
+index 0176989..65f616b 100644
 --- a/node_modules/@hyperlane-xyz/sdk/dist/providers/transactionFeeEstimators.js
 +++ b/node_modules/@hyperlane-xyz/sdk/dist/providers/transactionFeeEstimators.js
 @@ -21,7 +21,10 @@ export async function estimateTransactionFeeEthersV5({ transaction, provider, se
@@ -23,3 +23,31 @@ index 634f385..213ec4e 100644
          estGasPrice = gasPrice;
      }
      else {
+diff --git a/node_modules/@hyperlane-xyz/sdk/dist/warp/WarpCore.js b/node_modules/@hyperlane-xyz/sdk/dist/warp/WarpCore.js
+index ba679ed..cc7873e 100644
+--- a/node_modules/@hyperlane-xyz/sdk/dist/warp/WarpCore.js
++++ b/node_modules/@hyperlane-xyz/sdk/dist/warp/WarpCore.js
+@@ -97,6 +97,12 @@ export class WarpCore {
+      */
+     async getLocalTransferFee({ originToken, destination, sender, senderPubKey, interchainFee, }) {
+         this.logger.debug(`Estimating local transfer gas to ${destination}`);
++        // Check if origin chain is pruv
++        if (originToken.chainName.startsWith('pruv')) {
++            // Pruv's custom smart contract may revert if USDC is not approved for bridge fee
++            // Gas price will be zero before TGE anyway, so return zero for local gas fees
++            return { gasUnits: 0n, gasPrice: 0n, fee: 0n };
++        }
+         const originMetadata = this.multiProvider.getChainMetadata(originToken.chainName);
+         const destinationMetadata = this.multiProvider.getChainMetadata(destination);
+         // Check constant quotes first
+@@ -107,8 +113,9 @@ export class WarpCore {
+         }
+         // Form transactions to estimate local gas with
+         const recipient = convertToProtocolAddress(sender, destinationMetadata.protocol, destinationMetadata.bech32Prefix);
++        const { amount: senderBalance } = await originToken.getBalance(this.multiProvider, sender);
+         const txs = await this.getTransferRemoteTxs({
+-            originTokenAmount: originToken.amount(1),
++            originTokenAmount: originToken.amount(senderBalance > 0n ? senderBalance : 1000000000n),
+             destination,
+             sender,
+             recipient,

@@ -529,6 +529,16 @@ function ReviewDetails({
 
   const isLoading = isApproveLoading || isQuoteLoading;
 
+  const isBridgeFeeUSDC = config.enablePruvOriginFeeUSDC && values.origin.startsWith('pruv');
+
+  // Check if we need to show usdc approval for pruv
+  const needAdditionalUSDCApproval = isBridgeFeeUSDC && originTokenSymbol !== 'USDC';
+  const totalApprovals = (isApproveRequired ? 1 : 0) + (needAdditionalUSDCApproval ? 1 : 0);
+  const receivedAmount =
+    isBridgeFeeUSDC && originToken?.symbol === 'USDC'
+      ? (parseFloat(amount) - config.pruvOriginFeeUSDC[values.destination]).toFixed(2)
+      : amount; // if token is USDC, take bridge fee from amount
+
   const interchainQuote =
     originToken && objKeys(chainsRentEstimate).includes(originToken.chainName)
       ? fees?.interchainQuote.plus(chainsRentEstimate[originToken.chainName])
@@ -548,9 +558,18 @@ function ReviewDetails({
           </div>
         ) : (
           <>
+            {needAdditionalUSDCApproval && (
+              <div>
+                <h4>Transaction 1: Approve USDC (For Bridge Fee)</h4>
+                <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs">
+                  <p>{`Router Address: ${originToken?.addressOrDenom}`}</p>
+                  <p>{`USDC Address: ${config.pruvUSDCMetadata.address}`}</p>
+                </div>
+              </div>
+            )}
             {isApproveRequired && (
               <div>
-                <h4>Transaction 1: Approve Transfer</h4>
+                <h4>Transaction {needAdditionalUSDCApproval ? '2' : '1'}: Approve Transfer</h4>
                 <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs">
                   <p>{`Router Address: ${originToken?.addressOrDenom}`}</p>
                   {originToken?.collateralAddressOrDenom && (
@@ -560,7 +579,7 @@ function ReviewDetails({
               </div>
             )}
             <div>
-              <h4>{`Transaction${isApproveRequired ? ' 2' : ''}: Transfer Remote`}</h4>
+              <h4>{`Transaction ${totalApprovals + 1}: Transfer Remote`}</h4>
               <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs">
                 {destinationToken?.addressOrDenom && (
                   <p className="flex">
@@ -595,6 +614,16 @@ function ReviewDetails({
                     }`}</span>
                   </p>
                 )}
+                {isBridgeFeeUSDC && (
+                  <p className="flex">
+                    <span className="min-w-[7.5rem]">Bridge Fee (USDC)</span>
+                    <span className="font-bold">{`${config.pruvOriginFeeUSDC[values.destination]} USDC`}</span>
+                  </p>
+                )}
+                <p className="flex">
+                  <span className="min-w-[7.5rem]">Amount Received</span>
+                  <span className="font-bold">{`${receivedAmount} ${originToken?.symbol || ''}`}</span>
+                </p>
               </div>
             </div>
           </>
@@ -681,6 +710,16 @@ async function validateForm(
       routerAddressesByChainMap[destination].has(recipient)
     ) {
       return [{ recipient: 'Warp Route address is not valid as recipient' }, null];
+    }
+
+    // Check if origin is pruv and token symbol is USDC
+    if (config.enablePruvOriginFeeUSDC && origin.startsWith('pruv') && token.symbol === 'USDC') {
+      const inputAmount = parseFloat(amount);
+      // For USDC, input must be gt fee because the contract will deduct the fee from user input amount
+      const minimumAmount = config.pruvOriginFeeUSDC[destination] || 0;
+      if (minimumAmount > 0 && inputAmount <= minimumAmount) {
+        return [{ amount: `Amount must be greater than ${minimumAmount}` }, null];
+      }
     }
 
     const transferToken = await getTransferToken(warpCore, token, destinationToken);

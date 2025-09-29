@@ -279,8 +279,9 @@ export const warpRouteWhitelist: Array<string> | null = [
   // TOSHI
   'TOSHI/toshi',
 
-  // SOLX
+  // Solaxy routes
   'SOLX/nitro',
+  'USDC/solaxy',
 
   // fluence routes
   'FLT/fluence',

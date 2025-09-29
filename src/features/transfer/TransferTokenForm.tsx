@@ -712,8 +712,8 @@ async function validateForm(
       return [{ recipient: 'Warp Route address is not valid as recipient' }, null];
     }
 
-    // Check if origin is pruvtest and token symbol is USDC
-    if (config.enablePruvOriginFeeUSDC && origin === 'pruvtest' && token.symbol === 'USDC') {
+    // Check if origin is pruv and token symbol is USDC
+    if (config.enablePruvOriginFeeUSDC && origin.startsWith('pruv') && token.symbol === 'USDC') {
       const inputAmount = parseFloat(amount);
       // For USDC, input must be gt fee because the contract will deduct the fee from user input amount
       const minimumAmount = config.pruvOriginFeeUSDC[destination] || 0;

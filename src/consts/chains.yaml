@@ -18,6 +18,28 @@
 #   protocol: ethereum
 #   rpcUrls:
 #     - http: http://127.0.0.1:8555
+pruv:
+  # yaml-language-server: $schema=../schema.json
+  blockExplorers:
+    - apiKey: ''
+      apiUrl: https://explorer.pruv.network/api
+      family: blockscout
+      name: PruvExplorer
+      url: https://explorer.pruv.network/
+  chainId: 7337
+  displayName: Pruv
+  domainId: 7337
+  logoURI: /images/chains/pruv/logo.svg
+  isTestnet: false
+  name: pruv
+  nativeToken:
+    decimals: 18
+    name: Pruv
+    symbol: PRUV
+  protocol: ethereum
+  rpcUrls:
+    - http: https://rpc.pruv.network/
+  technicalStack: other
 polygon:
   blockExplorers:
     - apiKey: GP69JEAP2W7YFJT9ZJTEPGQT6Y6KMW44ZN

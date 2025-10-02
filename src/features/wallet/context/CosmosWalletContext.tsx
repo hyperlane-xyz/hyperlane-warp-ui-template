@@ -4,7 +4,6 @@ import { wallets as cosmostationWallets } from '@cosmos-kit/cosmostation';
 import { wallets as keplrWallets } from '@cosmos-kit/keplr';
 import { wallets as leapWallets } from '@cosmos-kit/leap';
 import { ChainProvider } from '@cosmos-kit/react';
-import { cosmoshub } from '@hyperlane-xyz/registry';
 import { MultiProtocolProvider } from '@hyperlane-xyz/sdk';
 import { getCosmosKitChainConfigs } from '@hyperlane-xyz/widgets';
 import '@interchain-ui/react/styles';
@@ -23,7 +22,7 @@ const theme = extendTheme({
 export function CosmosWalletContext({ children }: PropsWithChildren<unknown>) {
   const chainMetadata = useMultiProvider().metadata;
   const { chains, assets } = useMemo(() => {
-    const multiProvider = new MultiProtocolProvider({ ...chainMetadata, cosmoshub });
+    const multiProvider = new MultiProtocolProvider({ ...chainMetadata });
     return getCosmosKitChainConfigs(multiProvider);
   }, [chainMetadata]);
   const leapWithoutSnap = leapWallets.filter((wallet) => !wallet.walletName.includes('snap'));

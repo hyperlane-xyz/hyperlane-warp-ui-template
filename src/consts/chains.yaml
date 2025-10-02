@@ -139,7 +139,7 @@ arbitrum:
     # not the L2 block number. See https://docs.arbitrum.io/build-decentralized-apps/arbitrum-vs-ethereum/block-numbers-and-time#ethereum-block-numbers-within-arbitrum.
     # This is the block that the Mailbox was deployed at:
     # https://arbiscan.io/tx/0x946b241bfa1465d8de7247c155a533d2ee9437a2763a0399f1ca458f13b5efa5
-    from: 143649797 #TODO change this after custom mailbox deployed
+    from: 385183555
   logoURI: /images/chains/arbitrum/logo.svg
   name: arbitrum
   nativeToken:

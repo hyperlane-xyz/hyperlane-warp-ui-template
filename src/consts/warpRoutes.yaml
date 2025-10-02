@@ -3,12 +3,37 @@
 # The input here is typically the output of the Hyperlane CLI warp deploy command
 ---
 tokens:
-  - addressOrDenom: '0x0000000000000000000000000000000000000000'
-    chainName: ethereum
-    collateralAddressOrDenom: '0x0000000000000000000000000000000000000000'
-    connections: []
-    decimals: 18
-    name: dummytoken
+  - chainName: pruv
+    standard: EvmHypCollateralFiat
+    decimals: 6
+    symbol: USDC
+    name: USDC
+    addressOrDenom: '0x10601d2a127423560c3e331172E358eCe005ed86'
+    collateralAddressOrDenom: '0xD0f50830550c682E4c15c3f6E286a7ce277e85A5'
+    connections:
+      - token: ethereum|arbitrum|0xB9902183e32157c00AA48Ba492AdEEeb970C7514
+      - token: ethereum|polygon|0xD0f50830550c682E4c15c3f6E286a7ce277e85A5
+    logoURI: /images/tokens/USDC/logo.svg
+  - chainName: arbitrum
     standard: EvmHypCollateral
-    symbol: dummy
+    decimals: 6
+    symbol: USDC
+    name: USD Coin
+    addressOrDenom: '0xB9902183e32157c00AA48Ba492AdEEeb970C7514'
+    collateralAddressOrDenom: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831'
+    connections:
+      - token: ethereum|pruv|0x10601d2a127423560c3e331172E358eCe005ed86
+    #      - token: ethereum|polygon|0xD0f50830550c682E4c15c3f6E286a7ce277e85A5
+    logoURI: /images/tokens/USDC/logo.svg
+  - chainName: polygon
+    standard: EvmHypCollateral
+    decimals: 6
+    symbol: USDC
+    name: USD Coin
+    addressOrDenom: '0xD0f50830550c682E4c15c3f6E286a7ce277e85A5'
+    collateralAddressOrDenom: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359'
+    connections:
+      - token: ethereum|pruv|0x10601d2a127423560c3e331172E358eCe005ed86
+    #      - token: ethereum|arbitrum|0xB9902183e32157c00AA48Ba492AdEEeb970C7514
+    logoURI: /images/tokens/USDC/logo.svg
 options: {}

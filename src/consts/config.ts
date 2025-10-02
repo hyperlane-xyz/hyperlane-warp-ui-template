@@ -46,7 +46,7 @@ export const config: Config = Object.freeze({
   addressBlacklist: ADDRESS_BLACKLIST.map((address) => address.toLowerCase()),
   chainWalletWhitelists,
   enableExplorerLink: false,
-  defaultOriginChain: 'ethereum',
+  defaultOriginChain: 'polygon',
   defaultDestinationChain: 'pruv',
   isDevMode,
   useOnlineRegistry: false,
@@ -72,11 +72,11 @@ export const config: Config = Object.freeze({
   enablePruvOriginFeeUSDC: true,
   pruvOriginFeeUSDC: {
     ethereum: 0.75,
-    arbitrum: 0.1,
+    arbitrum: 0.75,
     polygon: 0.1,
   },
   pruvUSDCMetadata: {
-    address: '0x0000000000000000000000000000000000000000',
+    address: '0xD0f50830550c682E4c15c3f6E286a7ce277e85A5',
     decimals: 6,
   },
 });

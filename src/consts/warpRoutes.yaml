@@ -3,6 +3,7 @@
 # The input here is typically the output of the Hyperlane CLI warp deploy command
 ---
 tokens:
+  # USDC
   - chainName: pruv
     standard: EvmHypCollateralFiat
     decimals: 6
@@ -36,4 +37,37 @@ tokens:
       - token: ethereum|pruv|0x10601d2a127423560c3e331172E358eCe005ed86
     #      - token: ethereum|arbitrum|0xB9902183e32157c00AA48Ba492AdEEeb970C7514
     logoURI: /images/tokens/USDC/logo.svg
+  # USDC
+
+  # test RWA
+  - chainName: pruv
+    standard: EvmHypCollateral
+    decimals: 6
+    symbol: ptt1
+    name: prod test token 1 - y
+    addressOrDenom: '0x08029b38EfBb6f5f5285422cf27a7A457693d4e5'
+    collateralAddressOrDenom: '0x164be96d0775fe848dd0e050685e19e0b2bb307c'
+    connections:
+      - token: ethereum|arbitrum|0xf11a6c338374f20071dB4AD889618e4A2eCbEe20
+      - token: ethereum|polygon|0x10601d2a127423560c3e331172E358eCe005ed86
+  - chainName: arbitrum
+    standard: EvmHypSynthetic
+    decimals: 6
+    symbol: ptt1
+    name: prod test token 1 - y
+    addressOrDenom: '0xf11a6c338374f20071dB4AD889618e4A2eCbEe20'
+    connections:
+      - token: ethereum|pruv|0x08029b38EfBb6f5f5285422cf27a7A457693d4e5
+  #      - token: ethereum|polygon|0x10601d2a127423560c3e331172E358eCe005ed86
+  - chainName: polygon
+    standard: EvmHypSynthetic
+    decimals: 6
+    symbol: ptt1
+    name: prod test token 1 - y
+    addressOrDenom: '0x10601d2a127423560c3e331172E358eCe005ed86'
+    connections:
+      - token: ethereum|pruv|0x08029b38EfBb6f5f5285422cf27a7A457693d4e5
+#      - token: ethereum|arbitrum|0xf11a6c338374f20071dB4AD889618e4A2eCbEe20
+# test RWA
+
 options: {}

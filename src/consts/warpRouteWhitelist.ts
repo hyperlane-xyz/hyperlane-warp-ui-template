@@ -345,4 +345,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // Galactica routes
   'GNET/galactica',
+
+  // Carrchain routes
+  'CARR/carrchain',
 ];

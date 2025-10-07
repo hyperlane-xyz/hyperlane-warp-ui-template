@@ -72,11 +72,10 @@ export const config: Config = Object.freeze({
   enablePruvOriginFeeUSDC: true,
   pruvOriginFeeUSDC: {
     ethereum: 0.75,
-    arbitrum: 0.75,
     polygon: 0.1,
   },
   pruvUSDCMetadata: {
-    address: '0xD0f50830550c682E4c15c3f6E286a7ce277e85A5',
+    address: '0xae2205D95520A80D0B380678b6BECf0566457B7E',
     decimals: 6,
   },
 });

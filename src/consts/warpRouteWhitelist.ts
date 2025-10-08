@@ -334,6 +334,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'USDT/ethereum-radix',
   'ETH/ethereum-radix',
   'WBTC/ethereum-radix',
+  'SOL/radix',
 
   // Pulsechain routes
   'USDC/pulsechain',

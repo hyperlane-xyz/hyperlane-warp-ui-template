@@ -349,4 +349,8 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // Carrchain routes
   'CARR/carrchain',
+
+  // Mantra routes
+  'USDC/mantra',
+  'USDT/mantra',
 ];

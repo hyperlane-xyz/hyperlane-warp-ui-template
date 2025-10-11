@@ -185,10 +185,8 @@ async function executeTransfer({
         transaction: approvalTx,
       } as any;
       txs.unshift(approvalTxObj);
-    }
-
-    // Add extra USDC approval transaction if origin is pruv and token is not USDC
-    if (IS_NON_ORIGIN_DEFAULT) {
+    } else if (IS_NON_ORIGIN_DEFAULT) {
+      // Add extra USDC approval transaction if origin is pruv and token is not USDC
       const originProviderType = multiProvider.getProvider(origin).type;
 
       // Get the bridge fee for the destination chain from config

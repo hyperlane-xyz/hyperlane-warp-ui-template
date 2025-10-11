@@ -123,6 +123,13 @@ async function executeTransfer({
     const sendTransaction = transactionFns[originProtocol].sendTransaction;
     const sendMultiTransaction = transactionFns[originProtocol].sendMultiTransaction;
     const activeChain = activeChains.chains[originProtocol];
+
+    const IS_ORIGIN_DEFAULT =
+      config.enablePruvOriginFeeUSDC && origin.startsWith('pruv') && originToken.symbol === 'USDC';
+
+    const IS_NON_ORIGIN_DEFAULT =
+      config.enablePruvOriginFeeUSDC && origin.startsWith('pruv') && originToken.symbol !== 'USDC';
+
     const sender = getAccountAddressForChain(multiProvider, origin, activeAccounts.accounts);
     if (!sender) throw new Error('No active account found for origin chain');
 
@@ -156,12 +163,32 @@ async function executeTransfer({
       recipient,
     });
 
+    if (IS_ORIGIN_DEFAULT) {
+      // Modify the approval transaction to only approve the transfer amount (not including fee)
+      // Calculate amounts
+      const bridgeFee = config.pruvOriginFeeUSDC[destination];
+      const totalApprovalAmount = parseFloat(amount) + bridgeFee;
+      const approvalAmountWei = toWei(totalApprovalAmount.toString(), originToken.decimals);
+      // Get router address (spender for approval)
+      const routerAddress = originToken.addressOrDenom;
+      // Step 1: Create and send approval transaction with amount + bridgeFee
+      const tokenAdapter = new EvmTokenAdapter(origin, multiProvider, {
+        token: originToken.collateralAddressOrDenom || originToken.addressOrDenom,
+      });
+      const approvalTx = await tokenAdapter.populateApproveTx({
+        weiAmountOrId: approvalAmountWei,
+        recipient: routerAddress,
+      });
+      const approvalTxObj = {
+        category: WarpTxCategory.Approval,
+        type: multiProvider.getProvider(origin).type,
+        transaction: approvalTx,
+      } as any;
+      txs.unshift(approvalTxObj);
+    }
+
     // Add extra USDC approval transaction if origin is pruv and token is not USDC
-    if (
-      config.enablePruvOriginFeeUSDC &&
-      origin.startsWith('pruv') &&
-      originToken.symbol !== 'USDC'
-    ) {
+    if (IS_NON_ORIGIN_DEFAULT) {
       const originProviderType = multiProvider.getProvider(origin).type;
 
       // Get the bridge fee for the destination chain from config

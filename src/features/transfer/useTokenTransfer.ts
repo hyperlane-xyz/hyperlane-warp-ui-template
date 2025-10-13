@@ -164,14 +164,11 @@ async function executeTransfer({
     });
 
     if (IS_ORIGIN_DEFAULT) {
-      // Modify the approval transaction to only approve the transfer amount (not including fee)
-      // Calculate amounts
       const bridgeFee = config.pruvOriginFeeUSDC[destination];
       const totalApprovalAmount = parseFloat(amount) + bridgeFee;
       const approvalAmountWei = toWei(totalApprovalAmount.toString(), originToken.decimals);
-      // Get router address (spender for approval)
       const routerAddress = originToken.addressOrDenom;
-      // Step 1: Create and send approval transaction with amount + bridgeFee
+
       const tokenAdapter = new EvmTokenAdapter(origin, multiProvider, {
         token: originToken.collateralAddressOrDenom || originToken.addressOrDenom,
       });
@@ -179,12 +176,23 @@ async function executeTransfer({
         weiAmountOrId: approvalAmountWei,
         recipient: routerAddress,
       });
-      const approvalTxObj = {
-        category: WarpTxCategory.Approval,
-        type: multiProvider.getProvider(origin).type,
-        transaction: approvalTx,
-      } as any;
-      txs.unshift(approvalTxObj);
+
+      // Replace the original approval transaction so we do not send two approvals
+      const approvalIndex = txs.findIndex((tx) => tx.category === WarpTxCategory.Approval);
+
+      if (approvalIndex >= 0) {
+        txs[approvalIndex] = {
+          ...txs[approvalIndex],
+          transaction: approvalTx,
+        } as any;
+      } else {
+        const approvalTxObj = {
+          category: WarpTxCategory.Approval,
+          type: multiProvider.getProvider(origin).type,
+          transaction: approvalTx,
+        } as any;
+        txs.unshift(approvalTxObj);
+      }
     } else if (IS_NON_ORIGIN_DEFAULT) {
       // Add extra USDC approval transaction if origin is pruv and token is not USDC
       const originProviderType = multiProvider.getProvider(origin).type;

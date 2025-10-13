@@ -162,7 +162,10 @@ async function executeTransfer({
       sender,
       recipient,
     });
-
+    /*
+     If origin is a pruv chain and the token is USDC (IS_ORIGIN_DEFAULT),
+     change the approval amount to (user input amount) + (bridge USDC fee).
+    */
     if (IS_ORIGIN_DEFAULT) {
       const bridgeFee = config.pruvOriginFeeUSDC[destination];
       const totalApprovalAmount = parseFloat(amount) + bridgeFee;

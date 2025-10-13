@@ -534,10 +534,7 @@ function ReviewDetails({
   // Check if we need to show usdc approval for pruv
   const needAdditionalUSDCApproval = isBridgeFeeUSDC && originTokenSymbol !== 'USDC';
   const totalApprovals = (isApproveRequired ? 1 : 0) + (needAdditionalUSDCApproval ? 1 : 0);
-  const receivedAmount =
-    isBridgeFeeUSDC && originToken?.symbol === 'USDC' && values.destination.startsWith('pruv')
-      ? (parseFloat(amount) - config.pruvOriginFeeUSDC[values.destination]).toFixed(2)
-      : amount;
+  const receivedAmount = amount;
 
   const interchainQuote =
     originToken && objKeys(chainsRentEstimate).includes(originToken.chainName)

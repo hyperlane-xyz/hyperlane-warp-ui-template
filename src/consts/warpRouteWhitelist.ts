@@ -279,8 +279,9 @@ export const warpRouteWhitelist: Array<string> | null = [
   // TOSHI
   'TOSHI/toshi',
 
-  // SOLX
+  // Solaxy routes
   'SOLX/nitro',
+  'USDC/solaxy',
 
   // fluence routes
   'FLT/fluence',
@@ -329,17 +330,27 @@ export const warpRouteWhitelist: Array<string> | null = [
   'HOLO/bsc-solanamainnet',
 
   // Radix batch
-  'USDC/arbitrum-base-ethereum-radix',
+  'USDC/radix',
   'USDT/ethereum-radix',
   'ETH/ethereum-radix',
   'WBTC/ethereum-radix',
+  'SOL/radix',
 
   // Pulsechain routes
   'USDC/pulsechain',
 
   // Electroneum routes
   'USDC/electroneum',
+  'USDT/electroneum',
+  'ETN/electroneum',
 
   // Galactica routes
   'GNET/galactica',
+
+  // Carrchain routes
+  'CARR/carrchain',
+
+  // Mantra routes
+  'USDC/mantra',
+  'USDT/mantra',
 ];

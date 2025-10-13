@@ -32,8 +32,8 @@ export default function Document() {
 
         <script
           defer
-          data-domain="usenexus.org"
-          src="https://plausible.io/js/script.outbound-links.js"
+          data-domain="nexus.hyperlane.xyz"
+          src="https://plausible.io/js/script.outbound-links.tagged-events.js"
         ></script>
         <script
           dangerouslySetInnerHTML={{

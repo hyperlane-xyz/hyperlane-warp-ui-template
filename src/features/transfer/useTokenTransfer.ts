@@ -123,6 +123,13 @@ async function executeTransfer({
     const sendTransaction = transactionFns[originProtocol].sendTransaction;
     const sendMultiTransaction = transactionFns[originProtocol].sendMultiTransaction;
     const activeChain = activeChains.chains[originProtocol];
+
+    const IS_ORIGIN_DEFAULT =
+      config.enablePruvOriginFeeUSDC && origin.startsWith('pruv') && originToken.symbol === 'USDC';
+
+    const IS_NON_ORIGIN_DEFAULT =
+      config.enablePruvOriginFeeUSDC && origin.startsWith('pruv') && originToken.symbol !== 'USDC';
+
     const sender = getAccountAddressForChain(multiProvider, origin, activeAccounts.accounts);
     if (!sender) throw new Error('No active account found for origin chain');
 
@@ -155,13 +162,42 @@ async function executeTransfer({
       sender,
       recipient,
     });
+    /*
+     If origin is a pruv chain and the token is USDC (IS_ORIGIN_DEFAULT),
+     change the approval amount to (user input amount) + (bridge USDC fee).
+    */
+    if (IS_ORIGIN_DEFAULT) {
+      const bridgeFee = config.pruvOriginFeeUSDC[destination];
+      const totalApprovalAmount = parseFloat(amount) + bridgeFee;
+      const approvalAmountWei = toWei(totalApprovalAmount.toString(), originToken.decimals);
+      const routerAddress = originToken.addressOrDenom;
 
-    // Add extra USDC approval transaction if origin is pruv and token is not USDC
-    if (
-      config.enablePruvOriginFeeUSDC &&
-      origin.startsWith('pruv') &&
-      originToken.symbol !== 'USDC'
-    ) {
+      const tokenAdapter = new EvmTokenAdapter(origin, multiProvider, {
+        token: originToken.collateralAddressOrDenom || originToken.addressOrDenom,
+      });
+      const approvalTx = await tokenAdapter.populateApproveTx({
+        weiAmountOrId: approvalAmountWei,
+        recipient: routerAddress,
+      });
+
+      // Replace the original approval transaction so we do not send two approvals
+      const approvalIndex = txs.findIndex((tx) => tx.category === WarpTxCategory.Approval);
+
+      if (approvalIndex >= 0) {
+        txs[approvalIndex] = {
+          ...txs[approvalIndex],
+          transaction: approvalTx,
+        } as any;
+      } else {
+        const approvalTxObj = {
+          category: WarpTxCategory.Approval,
+          type: multiProvider.getProvider(origin).type,
+          transaction: approvalTx,
+        } as any;
+        txs.unshift(approvalTxObj);
+      }
+    } else if (IS_NON_ORIGIN_DEFAULT) {
+      // Add extra USDC approval transaction if origin is pruv and token is not USDC
       const originProviderType = multiProvider.getProvider(origin).type;
 
       // Get the bridge fee for the destination chain from config

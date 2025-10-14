@@ -21,6 +21,7 @@ import {
   useAccounts,
   useModal,
 } from '@hyperlane-xyz/widgets';
+import { track } from '@vercel/analytics';
 import BigNumber from 'bignumber.js';
 import { Form, Formik, useFormikContext } from 'formik';
 import { useEffect, useMemo, useState } from 'react';
@@ -480,6 +481,14 @@ function ButtonSection({
   if (!isReview) {
     return (
       <>
+        <button
+          onClick={() => {
+            track('Test Event', { test: 1, test2: 'string' });
+          }}
+          type="button"
+        >
+          hello
+        </button>
         <div
           className={`mt-3 gap-2 bg-amber-400 px-4 text-sm ${
             showWarning ? 'max-h-38 py-2' : 'max-h-0'
@@ -492,6 +501,7 @@ function ButtonSection({
             }
           />
         </div>
+
         <ConnectAwareSubmitButton
           disabled={!addressConfirmed}
           chainName={values.origin}

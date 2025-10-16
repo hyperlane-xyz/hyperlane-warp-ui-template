@@ -5,10 +5,12 @@ import { useCallback, useState } from 'react';
 import { toast } from 'react-toastify';
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import { logger } from '../../utils/logger';
+import { EVENT_NAME } from '../analytics/types';
+import { trackEvent } from '../analytics/utils';
 import { useAddToken } from '../tokens/hooks';
 import { TransferFormValues } from '../transfer/types';
 import { ChainSelectListModal } from './ChainSelectModal';
-import { useChainDisplayName } from './hooks';
+import { useChainDisplayName, useMultiProvider } from './hooks';
 
 const USER_REJECTED_ERROR = 'User rejected';
 
@@ -33,10 +35,20 @@ export function ChainSelectField({
   const { setFieldValue } = useFormikContext<TransferFormValues>();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { addToken, canAddAsset, isLoading } = useAddToken(token);
+  const multiProvider = useMultiProvider();
 
   const displayName = useChainDisplayName(field.value, true);
 
   const handleChange = (chainName: ChainName) => {
+    const chainId = multiProvider.getChainId(chainName);
+    const previousChainId = multiProvider.getChainId(field.value);
+    trackEvent(EVENT_NAME.CHAIN_SELECTION, {
+      chainType: name,
+      chainId,
+      chainName,
+      previousChainId,
+      previousChainName: field.value,
+    });
     helpers.setValue(chainName);
     // Reset other fields on chain change
     setFieldValue('recipient', '');

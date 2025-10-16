@@ -1,3 +1,4 @@
+import { IToken, MultiProtocolProvider } from '@hyperlane-xyz/sdk';
 import { track } from '@vercel/analytics';
 import { config } from '../../consts/config';
 import { EVENT_NAME, EventProperties } from './types';
@@ -14,5 +15,21 @@ export function trackEvent<T extends EVENT_NAME>(eventName: T, properties: Event
     timestamp: Date.now(),
     userAgent: navigator.userAgent,
     ...properties,
+  });
+}
+
+export function trackTokenSelectionEvent(
+  token: IToken,
+  origin: string,
+  destination: string,
+  multiProvider: MultiProtocolProvider,
+) {
+  const originChainId = multiProvider.getChainId(origin);
+  const destinationChainId = multiProvider.getChainId(destination);
+  trackEvent(EVENT_NAME.TOKEN_SELECTION, {
+    standard: token.standard,
+    tokenAddress: token.addressOrDenom,
+    tokenSymbol: token.symbol,
+    chains: `${origin}|${originChainId}|${destination}|${destinationChainId}`,
   });
 }

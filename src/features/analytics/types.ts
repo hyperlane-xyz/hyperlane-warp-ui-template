@@ -1,5 +1,9 @@
+import { TokenStandard } from '@hyperlane-xyz/sdk';
+
 export enum EVENT_NAME {
   CHAIN_SELECTION = 'Chain Selection',
+  TOKEN_SELECTION = 'Token Selection',
+  TRANSACTION_SUBMISSION = 'Transaction Submission',
 }
 
 export type AllowedPropertyValues = string | number | boolean | null;
@@ -14,5 +18,17 @@ export type EventProperties = {
     previousChainId: ChainId;
     previousChainName: string;
   };
-  // Add more events here with their specific properties
+  [EVENT_NAME.TOKEN_SELECTION]: {
+    tokenSymbol: string;
+    tokenAddress: string;
+    chains: string;
+    standard: TokenStandard;
+  };
+  [EVENT_NAME.TRANSACTION_SUBMISSION]: {
+    chains: string;
+    token: string;
+    amount: string;
+    walletAddress: string;
+    transactionHash: string;
+  };
 };

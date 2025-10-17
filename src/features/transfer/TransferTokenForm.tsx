@@ -709,6 +709,54 @@ async function validateForm(
       return [{ recipient: 'Warp Route address is not valid as recipient' }, null];
     }
 
+    const { address, publicKey: senderPubKey } = getAccountAddressAndPubKey(
+      warpCore.multiProvider,
+      origin,
+      accounts,
+    );
+
+    if (
+      config.enablePruvOriginFeeUSDC &&
+      origin.startsWith('pruv') &&
+      !destination.startsWith('pruv') &&
+      token.symbol === 'USDC'
+    ) {
+      const bridgeFeeValue = config.pruvOriginFeeUSDC[destination];
+      const bridgeFee = bridgeFeeValue ? new BigNumber(bridgeFeeValue) : new BigNumber(0);
+      const parsedInput = new BigNumber(amount || 0);
+      const inputAmountBn = parsedInput.isNaN() ? new BigNumber(0) : parsedInput;
+
+      if (address) {
+        try {
+          const balanceResult = await token.getBalance(warpCore.multiProvider, address);
+          if (balanceResult) {
+            const balanceDecimal = balanceResult.getDecimalFormattedAmount();
+            const balanceBn = new BigNumber(balanceDecimal.toString());
+            const totalCost = inputAmountBn.plus(bridgeFee);
+
+            if (totalCost.isGreaterThan(balanceBn)) {
+              const maxTransfer = balanceBn.minus(bridgeFee);
+              const clampedMaxTransfer = maxTransfer.isGreaterThan(0)
+                ? maxTransfer
+                : new BigNumber(0);
+
+              return [
+                {
+                  amount: `Maximum transfer amount is ${clampedMaxTransfer.toFixed(
+                    2,
+                    BigNumber.ROUND_FLOOR,
+                  )}`,
+                },
+                null,
+              ];
+            }
+          }
+        } catch (balanceError) {
+          logger.warn('Unable to fetch balance for PRUV USDC validation', balanceError);
+        }
+      }
+    }
+
     const transferToken = await getTransferToken(warpCore, token, destinationToken);
     const amountWei = toWei(amount, transferToken.decimals);
     const multiCollateralLimit = isMultiCollateralLimitExceeded(token, destination, amountWei);
@@ -721,12 +769,6 @@ async function validateForm(
         null,
       ];
     }
-
-    const { address, publicKey: senderPubKey } = getAccountAddressAndPubKey(
-      warpCore.multiProvider,
-      origin,
-      accounts,
-    );
 
     const result = await warpCore.validateTransfer({
       originTokenAmount: transferToken.amount(amountWei),

@@ -354,6 +354,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'USDC/mantra',
   'USDT/mantra',
 
-  // Incentiv
-  'WETH/incentiv'
+  // Incentiv routes
+  'CENT/incentiv',
+  'WETH/incentiv',
 ];

@@ -3,6 +3,8 @@ import Head from 'next/head';
 import { PropsWithChildren } from 'react';
 import { APP_NAME, BACKGROUND_COLOR, BACKGROUND_IMAGE } from '../../consts/app';
 import { config } from '../../consts/config';
+import { EVENT_NAME } from '../../features/analytics/types';
+import { trackEvent } from '../../features/analytics/utils';
 import { useStore } from '../../features/store';
 import { SideBarMenu } from '../../features/wallet/SideBarMenu';
 import { Footer } from '../nav/Footer';

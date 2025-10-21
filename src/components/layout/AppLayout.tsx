@@ -41,6 +41,9 @@ export function AppLayout({ children }: PropsWithChildren) {
         isOpen={showEnvSelectModal}
         close={() => setShowEnvSelectModal(false)}
         protocols={config.walletProtocols}
+        onProtocolSelected={(protocol) =>
+          trackEvent(EVENT_NAME.WALLET_CONNECTION_INITIATED, { protocol })
+        }
       />
       <SideBarMenu
         onClose={() => setIsSideBarOpen(false)}

@@ -1,9 +1,13 @@
 import { TokenStandard } from '@hyperlane-xyz/sdk';
 
+import { ProtocolType } from '@hyperlane-xyz/utils';
+
 export enum EVENT_NAME {
   CHAIN_SELECTION = 'Chain Selection',
   TOKEN_SELECTION = 'Token Selection',
   TRANSACTION_SUBMISSION = 'Transaction Submission',
+  WALLET_CONNECTION_INITIATED = 'Wallet Connection Initiated',
+  WALLET_CONNECTED = 'Wallet Connected',
 }
 
 export type AllowedPropertyValues = string | number | boolean | null;
@@ -30,5 +34,13 @@ export type EventProperties = {
     amount: string;
     walletAddress: string;
     transactionHash: string;
+  };
+  [EVENT_NAME.WALLET_CONNECTION_INITIATED]: {
+    protocol: ProtocolType;
+  };
+  [EVENT_NAME.WALLET_CONNECTED]: {
+    protocol: ProtocolType;
+    walletAddress: string;
+    walletName: string;
   };
 };

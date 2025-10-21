@@ -356,7 +356,11 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // Incentiv routes
   'CENT/incentiv',
+  'WETH/incentiv',
 
   // Litchain
   'LITKEY/litchain',
+
+  // M0 routes
+  'mUSD/musd',
 ];

@@ -687,6 +687,14 @@ function useFormInitialValues(): TransferFormValues {
 const insufficientFundsErrMsg = /insufficient.[funds|lamports]/i;
 const emptyAccountErrMsg = /AccountNotFound/i;
 
+// Helper function to get USDC token from warpCore for a specific chain
+function getUSDCTokenForChain(warpCore: WarpCore, chainName: ChainName): Token | null {
+  return (
+    warpCore.tokens.find((token) => token.chainName === chainName && token.symbol === 'USDC') ||
+    null
+  );
+}
+
 async function validateForm(
   warpCore: WarpCore,
   values: TransferFormValues,
@@ -714,45 +722,76 @@ async function validateForm(
       origin,
       accounts,
     );
-
+    // Check bridge fee requirements for PRUV to non-PRUV transfers
     if (
       config.enablePruvOriginFeeUSDC &&
       origin.startsWith('pruv') &&
-      !destination.startsWith('pruv') &&
-      token.symbol === 'USDC'
+      !destination.startsWith('pruv')
     ) {
       const bridgeFeeValue = config.pruvOriginFeeUSDC[destination];
       const bridgeFee = bridgeFeeValue ? new BigNumber(bridgeFeeValue) : new BigNumber(0);
-      const parsedInput = new BigNumber(amount || 0);
-      const inputAmountBn = parsedInput.isNaN() ? new BigNumber(0) : parsedInput;
 
-      if (address) {
+      if (address && bridgeFee.isGreaterThan(0)) {
         try {
-          const balanceResult = await token.getBalance(warpCore.multiProvider, address);
-          if (balanceResult) {
-            const balanceDecimal = balanceResult.getDecimalFormattedAmount();
-            const balanceBn = new BigNumber(balanceDecimal.toString());
-            const totalCost = inputAmountBn.plus(bridgeFee);
+          const usdcToken = getUSDCTokenForChain(warpCore, origin);
+          if (usdcToken) {
+            const usdcBalanceResult = await usdcToken.getBalance(warpCore.multiProvider, address);
+            if (usdcBalanceResult) {
+              const usdcBalanceDecimal = usdcBalanceResult.getDecimalFormattedAmount();
+              const usdcBalanceBn = new BigNumber(usdcBalanceDecimal.toString());
 
-            if (totalCost.isGreaterThan(balanceBn)) {
-              const maxTransfer = balanceBn.minus(bridgeFee);
-              const clampedMaxTransfer = maxTransfer.isGreaterThan(0)
-                ? maxTransfer
-                : new BigNumber(0);
+              // For USDC tokens, check if total cost (amount + bridge fee) exceeds balance
+              // First, ensure there's any USDC balance at all
+              if (usdcBalanceBn.isLessThanOrEqualTo(0)) {
+                return [
+                  {
+                    amount: 'Insufficient balance',
+                  },
+                  null,
+                ];
+              }
 
-              return [
-                {
-                  amount: `Maximum transfer amount is ${clampedMaxTransfer.toFixed(
-                    2,
-                    BigNumber.ROUND_FLOOR,
-                  )}`,
-                },
-                null,
-              ];
+              // If balance exists but is less than the required bridge fee, show fee requirement
+              if (usdcBalanceBn.isLessThan(bridgeFee)) {
+                return [
+                  {
+                    amount: `${bridgeFee.toString()} USDC is required for bridge fee`,
+                  },
+                  null,
+                ];
+              }
+
+              // If the token being sent is USDC, ensure the transfer amount + bridge fee
+              // does not exceed available USDC balance. If it does, suggest a maximum
+              // transferable amount.
+              if (token.symbol === 'USDC') {
+                const parsedInput = new BigNumber(amount || 0);
+                const inputAmountBn = parsedInput.isNaN() ? new BigNumber(0) : parsedInput;
+                const totalCost = inputAmountBn.plus(bridgeFee);
+
+                if (totalCost.isGreaterThan(usdcBalanceBn)) {
+                  const maxTransfer = usdcBalanceBn.minus(bridgeFee);
+                  if (maxTransfer.isLessThanOrEqualTo(0)) {
+                    return [
+                      {
+                        amount: 'Insufficient balance',
+                      },
+                      null,
+                    ];
+                  }
+                  const formattedMaxTransfer = maxTransfer.toFixed(2, BigNumber.ROUND_FLOOR);
+                  return [
+                    {
+                      amount: `Maximum transfer amount is ${formattedMaxTransfer}`,
+                    },
+                    null,
+                  ];
+                }
+              }
             }
           }
         } catch (balanceError) {
-          logger.warn('Unable to fetch balance for PRUV USDC validation', balanceError);
+          logger.warn('Unable to fetch USDC balance for bridge fee validation', balanceError);
         }
       }
     }

@@ -23,6 +23,9 @@ export function useWalletConnectionTracking() {
     Object.entries(accounts).forEach(([protocol, accountInfo]) => {
       const { addresses } = accountInfo;
 
+      // not tracking cosmos protocols chain
+      if (protocol === ProtocolType.Cosmos) return;
+
       // Only track if account has addresses (meaning wallet is connected)
       if (addresses && addresses.length > 0) {
         const address = addresses[0].address;

@@ -359,6 +359,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'WETH/incentiv',
   'WBTC/incentiv',
   'USDC/incentiv',
+  'USDT/incentiv',
 
   // Litchain
   'LITKEY/litchain',

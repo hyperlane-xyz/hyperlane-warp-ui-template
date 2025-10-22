@@ -4,6 +4,7 @@ import { PropsWithChildren } from 'react';
 import { APP_NAME, BACKGROUND_COLOR, BACKGROUND_IMAGE } from '../../consts/app';
 import { config } from '../../consts/config';
 import { EVENT_NAME } from '../../features/analytics/types';
+import { useWalletConnectionTracking } from '../../features/analytics/useWalletConnectionTracking';
 import { trackEvent } from '../../features/analytics/utils';
 import { useStore } from '../../features/store';
 import { SideBarMenu } from '../../features/wallet/SideBarMenu';
@@ -19,6 +20,8 @@ export function AppLayout({ children }: PropsWithChildren) {
       setIsSideBarOpen: s.setIsSideBarOpen,
     }),
   );
+
+  useWalletConnectionTracking();
 
   return (
     <>

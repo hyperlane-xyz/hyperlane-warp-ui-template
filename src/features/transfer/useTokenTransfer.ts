@@ -207,8 +207,9 @@ async function executeTransfer({
       ? tryGetMsgIdFromTransferReceipt(multiProvider, origin, txReceipt)
       : undefined;
 
+    const originTxHash = hashes.at(-1);
     updateTransferStatus(transferIndex, (transferStatus = TransferStatus.ConfirmedTransfer), {
-      originTxHash: hashes.at(-1),
+      originTxHash,
       msgId,
     });
 
@@ -217,10 +218,12 @@ async function executeTransfer({
     const destinationChainId = warpCore.multiProvider.getChainId(destination);
     trackEvent(EVENT_NAME.TRANSACTION_SUBMISSION, {
       amount,
+      recipient,
       chains: `${origin}|${originChainId}|${destination}|${destinationChainId}`,
-      token: `${originToken.symbol}|${originToken.addressOrDenom}`,
+      tokenAddress: originToken.addressOrDenom,
+      tokenSymbol: originToken.symbol,
       walletAddress: sender,
-      transactionHash: hashes.at(-1) || '',
+      transactionHash: originTxHash || '',
     });
   } catch (error: any) {
     logger.error(`Error at stage ${transferStatus}`, error);

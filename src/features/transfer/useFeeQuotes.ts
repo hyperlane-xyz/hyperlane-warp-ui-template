@@ -8,7 +8,7 @@ import { useWarpCore } from '../tokens/hooks';
 import { getLowestFeeTransferToken } from './fees';
 import { TransferFormValues } from './types';
 
-const FEE_QUOTE_REFRESH_INTERVAL = 15_000; // 10s
+const FEE_QUOTE_REFRESH_INTERVAL = 30_000; // 30s
 
 export function useFeeQuotes(
   { destination, amount, recipient, tokenIndex }: TransferFormValues,
@@ -72,6 +72,7 @@ async function fetchFeeQuotes(
 ): Promise<WarpCoreFeeEstimate | null> {
   if (!originToken || !destination || !sender || !originToken || !amount || !recipient) return null;
   let transferToken = originToken;
+  const amountWei = toWei(amount, transferToken.decimals);
 
   // when true attempt to get route with lowest fee
   if (searchForLowestFee) {
@@ -81,14 +82,13 @@ async function fetchFeeQuotes(
         warpCore,
         originToken,
         destinationToken,
-        amount,
+        amountWei,
         recipient,
         sender,
       );
     }
   }
 
-  const amountWei = toWei(amount, transferToken.decimals);
   const originTokenAmount = transferToken.amount(amountWei);
   logger.debug('Fetching fee quotes');
   return warpCore.estimateTransferRemoteFees({

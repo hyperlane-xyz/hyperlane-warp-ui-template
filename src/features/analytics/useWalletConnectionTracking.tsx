@@ -31,6 +31,9 @@ export function useWalletConnectionTracking() {
         const address = addresses[0].address;
         const walletName = walletDetails[protocol as ProtocolType]?.name;
 
+        // if protocol is cosmosnative, track only cosmos addresses
+        if (protocol === ProtocolType.CosmosNative && !address.includes('cosmos')) return;
+
         // Create a unique identifier for this wallet connection (protocol + address)
         const walletId = `${protocol}:${address}`;
 

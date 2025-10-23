@@ -28,7 +28,10 @@ export function trackTokenSelectionEvent(
     standard: token.standard,
     tokenAddress: token.addressOrDenom,
     tokenSymbol: token.symbol,
-    chains: `${origin}|${originChainId}|${destination}|${destinationChainId}`,
+    origin,
+    destination,
+    originChainId,
+    destinationChainId,
   });
 }
 
@@ -57,7 +60,7 @@ export function trackTransactionFailedEvent(
     amount: values.amount,
     destination: values.destination,
     origin: values.origin,
-    walletAddress: address || '',
+    walletAddress: address || null,
     tokenAddress: token.addressOrDenom,
     tokenSymbol: token.symbol,
     recipient: values.recipient,

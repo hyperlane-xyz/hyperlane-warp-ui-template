@@ -14,7 +14,6 @@ export enum EVENT_NAME {
 export type AllowedPropertyValues = string | number | boolean | null;
 
 // Define specific properties for each event (max 8 custom properties due to Vercel's 8 property limit)
-// Note: sessionId, timestamp, and userAgent are automatically added (3 properties)
 export type EventProperties = {
   [EVENT_NAME.CHAIN_SELECTION]: {
     chainType: string;
@@ -26,8 +25,11 @@ export type EventProperties = {
   [EVENT_NAME.TOKEN_SELECTION]: {
     tokenSymbol: string;
     tokenAddress: string;
-    chains: string;
     standard: TokenStandard;
+    origin: string;
+    originChainId: ChainId;
+    destination: string;
+    destinationChainId: ChainId;
   };
   [EVENT_NAME.TRANSACTION_SUBMISSION]: {
     chains: string;

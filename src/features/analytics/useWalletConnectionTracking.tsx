@@ -8,7 +8,7 @@ import { trackEvent } from './utils';
 
 /**
  * Custom hook to track wallet connections and fire analytics events
- * Handles both new connections and browser refreshes without duplicating events
+ * Handles both new connections without duplicating events
  */
 export function useWalletConnectionTracking() {
   const multiProvider = useMultiProvider();

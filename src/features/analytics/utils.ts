@@ -1,5 +1,5 @@
 import { IToken, MultiProtocolProvider, Token, WarpCore } from '@hyperlane-xyz/sdk';
-import { ProtocolType } from '@hyperlane-xyz/utils';
+import { objLength, ProtocolType } from '@hyperlane-xyz/utils';
 import { AccountInfo, getAccountAddressAndPubKey } from '@hyperlane-xyz/widgets';
 import { track } from '@vercel/analytics';
 import { config } from '../../consts/config';
@@ -45,7 +45,7 @@ export function trackTransactionFailedEvent(
   accounts: Record<ProtocolType, AccountInfo>,
   overrideToken: Token | null,
 ) {
-  if (!errors || Object.keys(errors).length < 1) return;
+  if (!errors || objLength(errors) < 1) return;
 
   const firstError = `${Object.values(errors)[0]}` || 'Unknown error';
 

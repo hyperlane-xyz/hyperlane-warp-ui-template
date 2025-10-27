@@ -61,5 +61,5 @@ export const config: Config = Object.freeze({
   ],
   shouldDisableChains: false,
   rpcOverrides,
-  enableTrackingEvents: true,
+  enableTrackingEvents: false,
 });

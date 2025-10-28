@@ -645,7 +645,12 @@ function ReviewDetails({
     amountWei,
     isReview,
   );
-  const { isLoading: isQuoteLoading, fees: feeQuotes } = useFeeQuotes(values, true);
+  const { isLoading: isQuoteLoading, fees: feeQuotes } = useFeeQuotes(
+    values,
+    true,
+    originToken,
+    !isReview,
+  );
 
   const isLoading = isApproveLoading || isQuoteLoading;
 
@@ -868,7 +873,11 @@ async function validateForm(
 // Checks if a token is a multi-collateral token and if so
 // look for other tokens that are the same and returns
 // the one with the highest collateral in the destination
-async function getTransferToken(warpCore: WarpCore, originToken: Token, destinationToken: IToken) {
+export async function getTransferToken(
+  warpCore: WarpCore,
+  originToken: Token,
+  destinationToken: IToken,
+) {
   if (!isValidMultiCollateralToken(originToken, destinationToken)) return originToken;
 
   const tokensWithSameCollateralAddresses = getTokensWithSameCollateralAddresses(

@@ -97,7 +97,25 @@ tokens:
     addressOrDenom: '0x61aFa69a38ec4A252897259BA6C8322120B13C30'
     connections:
       - token: ethereum|pruvtest|0x8188BFf405025BaA02b09c7524e73E3A16B15924
-#      - token: ethereum|arbitrumsepolia|0x4C89e71cbcFA162AA678E73e7BF6dd3Eb475839e
-## Test ERC20 Token - with USDC bridge fee ##
+  #      - token: ethereum|arbitrumsepolia|0x4C89e71cbcFA162AA678E73e7BF6dd3Eb475839e
+  ## Test ERC20 Token - with USDC bridge fee ##
+  - chainName: pruvtest
+    standard: EvmHypCollateral
+    decimals: 6
+    symbol: YELL
+    name: Yellow Gold Reserve
+    addressOrDenom: '0x0d5Df1F4982fd249a8D142926F10B73e524a8cB8'
+    collateralAddressOrDenom: '0xB32385f4388219D66d16a2D623Aa169E6aaA14F0'
+    connections:
+      - token: ethereum|mantapacifictestnet|0x1139db01B1E681aebBEf58FF750CdE6269b69cA1
+  - chainName: mantapacifictestnet
+    standard: EvmHypSynthetic
+    decimals: 6
+    symbol: YELL
+    name: Yellow Gold Reserve
+    addressOrDenom: '0x1139db01B1E681aebBEf58FF750CdE6269b69cA1'
+    connections:
+      - token: ethereum|pruvtest|0x0d5Df1F4982fd249a8D142926F10B73e524a8cB8
+
 # STAGING #
 options: {}

@@ -73,6 +73,7 @@ export const config: Config = Object.freeze({
   pruvOriginFeeUSDC: {
     sepolia: 0.75,
     arbitrumsepolia: 0.1,
+    mantapacifictestnet: 0.1,
   },
   pruvUSDCMetadata: {
     address: '0xeCacC484026a02022565496E088CA0581cC36373',

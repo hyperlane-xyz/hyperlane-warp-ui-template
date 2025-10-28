@@ -14,7 +14,7 @@ export function useFeeQuotes(
   { destination, tokenIndex }: TransferFormValues,
   enabled: boolean,
   originToken: Token | undefined,
-  searchForLowestCollateralToken: boolean = false,
+  searchForHighestCollateralToken: boolean = false,
 ) {
   const multiProvider = useMultiProvider();
   const warpCore = useWarpCore();
@@ -40,7 +40,7 @@ export function useFeeQuotes(
         destination,
         sender,
         senderPubKey,
-        searchForLowestCollateralToken,
+        searchForHighestCollateralToken,
       ),
     enabled: shouldFetch,
     refetchInterval: FEE_QUOTE_REFRESH_INTERVAL,
@@ -55,12 +55,12 @@ async function fetchFeeQuotes(
   destination?: ChainName,
   sender?: Address,
   senderPubKey?: Promise<HexString>,
-  searchForLowestCollateralToken: boolean = false,
+  searchForHighestCollateralToken: boolean = false,
 ): Promise<WarpCoreFeeEstimate | null> {
   if (!destination || !sender || !originToken) return null;
   let transferToken = originToken;
 
-  if (searchForLowestCollateralToken) {
+  if (searchForHighestCollateralToken) {
     const destinationToken = originToken.getConnectionForChain(destination)?.token;
     if (destinationToken) {
       transferToken = await getTransferToken(warpCore, originToken, destinationToken);

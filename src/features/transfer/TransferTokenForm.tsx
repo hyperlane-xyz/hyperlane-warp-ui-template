@@ -30,7 +30,6 @@ import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareS
 import { SolidButton } from '../../components/buttons/SolidButton';
 import { TextField } from '../../components/input/TextField';
 import { WARP_QUERY_PARAMS } from '../../consts/args';
-import { chainsRentEstimate } from '../../consts/chains';
 import { config } from '../../consts/config';
 import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
@@ -60,7 +59,9 @@ import {
 } from '../tokens/hooks';
 import { getTokensWithSameCollateralAddresses, isValidMultiCollateralToken } from '../tokens/utils';
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
+import { FeeSectionButton } from './FeeSectionButton';
 import { RecipientConfirmationModal } from './RecipientConfirmationModal';
+import { getInterchainQuote, getTotalFee } from './fees';
 import { useFetchMaxAmount } from './maxAmount';
 import { TransferFormValues } from './types';
 import { useRecipientBalanceWatcher } from './useBalanceWatcher';
@@ -143,7 +144,7 @@ export function TransferTokenForm() {
             <AmountSection isNft={isNft} isReview={isReview} />
           </div>
           <RecipientSection isReview={isReview} />
-          <ReviewDetails visible={isReview} routeOverrideToken={routeOverrideToken} />
+          <ReviewDetails isReview={isReview} routeOverrideToken={routeOverrideToken} />
           <ButtonSection
             isReview={isReview}
             isValidating={isValidating}
@@ -496,7 +497,7 @@ function ButtonSection({
           disabled={!addressConfirmed}
           chainName={values.origin}
           text={isValidating ? 'Validating...' : 'Continue'}
-          classes="mt-4 px-3 py-1.5"
+          classes={`${isReview ? 'mt-4' : 'mt-2'} px-3 py-1.5`}
         />
       </>
     );
@@ -600,10 +601,10 @@ function SelfButton({ disabled }: { disabled?: boolean }) {
 }
 
 function ReviewDetails({
-  visible,
+  isReview,
   routeOverrideToken,
 }: {
-  visible: boolean;
+  isReview: boolean;
   routeOverrideToken: Token | null;
 }) {
   const { values } = useFormikContext<TransferFormValues>();
@@ -617,7 +618,7 @@ function ReviewDetails({
 
   const scaledAmount = useMemo(() => {
     if (!originToken?.scale || !destinationToken?.scale) return null;
-    if (!visible || originToken.scale === destinationToken.scale) return null;
+    if (!isReview || originToken.scale === destinationToken.scale) return null;
 
     const amountWei = toWei(amount, originToken.decimals);
     const precisionFactor = 100000;
@@ -635,91 +636,110 @@ function ReviewDetails({
       originScale: originToken.scale,
       destinationScale: destinationToken.scale,
     };
-  }, [amount, originToken, destinationToken, visible]);
+  }, [amount, originToken, destinationToken, isReview]);
 
   const amountWei = isNft ? amount.toString() : toWei(amount, originToken?.decimals);
 
   const { isLoading: isApproveLoading, isApproveRequired } = useIsApproveRequired(
     originToken,
     amountWei,
-    visible,
+    isReview,
   );
-  const { isLoading: isQuoteLoading, fees } = useFeeQuotes(values, visible);
+  const { isLoading: isQuoteLoading, fees: feeQuotes } = useFeeQuotes(values, true);
 
   const isLoading = isApproveLoading || isQuoteLoading;
 
-  const interchainQuote =
-    originToken && objKeys(chainsRentEstimate).includes(originToken.chainName)
-      ? fees?.interchainQuote.plus(chainsRentEstimate[originToken.chainName])
-      : fees?.interchainQuote;
+  const fees = useMemo(() => {
+    if (!feeQuotes) return null;
+
+    const interchainQuote = getInterchainQuote(originToken, feeQuotes.interchainQuote);
+    const fees = {
+      ...feeQuotes,
+      interchainQuote: interchainQuote || feeQuotes.interchainQuote,
+    };
+    const totalFees = getTotalFee({
+      ...fees,
+      interchainQuote: interchainQuote || fees.interchainQuote,
+    })
+      .map((fee) => `${fee.getDecimalFormattedAmount().toFixed(8)} ${fee.token.symbol}`)
+      .join(', ');
+
+    return {
+      ...fees,
+      totalFees,
+    };
+  }, [feeQuotes, originToken]);
 
   return (
-    <div
-      className={`${
-        visible ? 'max-h-screen duration-1000 ease-in' : 'max-h-0 duration-500'
-      } overflow-hidden transition-all`}
-    >
-      <label className="mt-4 block pl-0.5 text-sm text-gray-600">Transactions</label>
-      <div className="mt-1.5 space-y-2 break-all rounded border border-gray-400 bg-gray-150 px-2.5 py-2 text-sm">
-        {isLoading ? (
-          <div className="flex items-center justify-center py-6">
-            <SpinnerIcon className="h-5 w-5" />
-          </div>
-        ) : (
-          <>
-            {isApproveRequired && (
+    <>
+      {!isReview && <FeeSectionButton visible={!isReview} fees={fees} isLoading={isLoading} />}
+      <div
+        className={`${
+          isReview ? 'max-h-screen duration-1000 ease-in' : 'max-h-0 duration-500'
+        } overflow-hidden transition-all`}
+      >
+        <label className="mt-4 block pl-0.5 text-sm text-gray-600">Transactions</label>
+        <div className="mt-1.5 space-y-2 break-all rounded border border-gray-400 bg-gray-150 px-2.5 py-2 text-sm">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-6">
+              <SpinnerIcon className="h-5 w-5" />
+            </div>
+          ) : (
+            <>
+              {isApproveRequired && (
+                <div>
+                  <h4>Transaction 1: Approve Transfer</h4>
+                  <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs">
+                    <p>{`Router Address: ${originToken?.addressOrDenom}`}</p>
+                    {originToken?.collateralAddressOrDenom && (
+                      <p>{`Collateral Address: ${originToken.collateralAddressOrDenom}`}</p>
+                    )}
+                  </div>
+                </div>
+              )}
               <div>
-                <h4>Transaction 1: Approve Transfer</h4>
+                <h4>{`Transaction${isApproveRequired ? ' 2' : ''}: Transfer Remote`}</h4>
                 <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs">
-                  <p>{`Router Address: ${originToken?.addressOrDenom}`}</p>
-                  {originToken?.collateralAddressOrDenom && (
-                    <p>{`Collateral Address: ${originToken.collateralAddressOrDenom}`}</p>
+                  {destinationToken?.addressOrDenom && (
+                    <p className="flex">
+                      <span className="min-w-[7.5rem]">Remote Token</span>
+                      <span>{destinationToken.addressOrDenom}</span>
+                    </p>
+                  )}
+
+                  <p className="flex">
+                    <span className="min-w-[7.5rem]">{isNft ? 'Token ID' : 'Amount'}</span>
+                    <span>{`${amount} ${originTokenSymbol}`}</span>
+                  </p>
+                  {scaledAmount && (
+                    <p className="flex">
+                      <span className="min-w-[7.5rem]">Received Amount</span>
+                      <span>{`${scaledAmount.value} ${originTokenSymbol} (scaled from ${scaledAmount.originScale} to ${scaledAmount.destinationScale})`}</span>
+                    </p>
+                  )}
+                  {fees?.localQuote && fees.localQuote.amount > 0n && (
+                    <p className="flex">
+                      <span className="min-w-[7.5rem]">Local Gas (est.)</span>
+                      <span>{`${fees.localQuote.getDecimalFormattedAmount().toFixed(4) || '0'} ${
+                        fees.localQuote.token.symbol || ''
+                      }`}</span>
+                    </p>
+                  )}
+                  {fees?.interchainQuote && fees.interchainQuote.amount > 0n && (
+                    <p className="flex">
+                      <span className="min-w-[7.5rem]">Interchain Gas</span>
+                      <span>{`${fees.interchainQuote.getDecimalFormattedAmount().toFixed(4) || '0'} ${
+                        fees.interchainQuote.token.symbol || ''
+                      }`}</span>
+                    </p>
                   )}
                 </div>
               </div>
-            )}
-            <div>
-              <h4>{`Transaction${isApproveRequired ? ' 2' : ''}: Transfer Remote`}</h4>
-              <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs">
-                {destinationToken?.addressOrDenom && (
-                  <p className="flex">
-                    <span className="min-w-[7.5rem]">Remote Token</span>
-                    <span>{destinationToken.addressOrDenom}</span>
-                  </p>
-                )}
-
-                <p className="flex">
-                  <span className="min-w-[7.5rem]">{isNft ? 'Token ID' : 'Amount'}</span>
-                  <span>{`${amount} ${originTokenSymbol}`}</span>
-                </p>
-                {scaledAmount && (
-                  <p className="flex">
-                    <span className="min-w-[7.5rem]">Received Amount</span>
-                    <span>{`${scaledAmount.value} ${originTokenSymbol} (scaled from ${scaledAmount.originScale} to ${scaledAmount.destinationScale})`}</span>
-                  </p>
-                )}
-                {fees?.localQuote && fees.localQuote.amount > 0n && (
-                  <p className="flex">
-                    <span className="min-w-[7.5rem]">Local Gas (est.)</span>
-                    <span>{`${fees.localQuote.getDecimalFormattedAmount().toFixed(4) || '0'} ${
-                      fees.localQuote.token.symbol || ''
-                    }`}</span>
-                  </p>
-                )}
-                {interchainQuote && interchainQuote.amount > 0n && (
-                  <p className="flex">
-                    <span className="min-w-[7.5rem]">Interchain Gas</span>
-                    <span>{`${interchainQuote.getDecimalFormattedAmount().toFixed(4) || '0'} ${
-                      interchainQuote.token.symbol || ''
-                    }`}</span>
-                  </p>
-                )}
-              </div>
-            </div>
-          </>
-        )}
+            </>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 

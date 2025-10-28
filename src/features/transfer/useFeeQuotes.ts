@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { useWarpCore } from '../tokens/hooks';
-import { getTransferToken } from './TransferTokenForm';
+import { getTransferToken } from './fees';
 import { TransferFormValues } from './types';
 
 const FEE_QUOTE_REFRESH_INTERVAL = 30_000; // 30s

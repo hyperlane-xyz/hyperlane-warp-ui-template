@@ -1,4 +1,4 @@
-import { IToken, Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
+import { Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
 import {
   ProtocolType,
   convertToScaledAmount,
@@ -57,11 +57,10 @@ import {
   getTokenIndexFromChains,
   useWarpCore,
 } from '../tokens/hooks';
-import { getTokensWithSameCollateralAddresses, isValidMultiCollateralToken } from '../tokens/utils';
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { FeeSectionButton } from './FeeSectionButton';
 import { RecipientConfirmationModal } from './RecipientConfirmationModal';
-import { getInterchainQuote, getTotalFee } from './fees';
+import { getInterchainQuote, getTotalFee, getTransferToken } from './fees';
 import { useFetchMaxAmount } from './maxAmount';
 import { TransferFormValues } from './types';
 import { useRecipientBalanceWatcher } from './useBalanceWatcher';
@@ -868,59 +867,4 @@ async function validateForm(
     }
     return [{ form: errorMsg }, null];
   }
-}
-
-// Checks if a token is a multi-collateral token and if so
-// look for other tokens that are the same and returns
-// the one with the highest collateral in the destination
-export async function getTransferToken(
-  warpCore: WarpCore,
-  originToken: Token,
-  destinationToken: IToken,
-) {
-  if (!isValidMultiCollateralToken(originToken, destinationToken)) return originToken;
-
-  const tokensWithSameCollateralAddresses = getTokensWithSameCollateralAddresses(
-    warpCore,
-    originToken,
-    destinationToken,
-  );
-
-  // if only one token exists then just return that one
-  if (tokensWithSameCollateralAddresses.length <= 1) return originToken;
-
-  logger.debug(
-    'Multiple multi-collateral tokens found for same collateral address, retrieving balances...',
-  );
-  const tokenBalances: Array<{ token: Token; balance: bigint }> = [];
-
-  // fetch each destination token balance
-  const balanceResults = await Promise.allSettled(
-    tokensWithSameCollateralAddresses.map(async ({ originToken, destinationToken }) => {
-      try {
-        const balance = await warpCore.getTokenCollateral(destinationToken);
-        return { token: originToken, balance };
-      } catch {
-        return null;
-      }
-    }),
-  );
-
-  for (const result of balanceResults) {
-    if (result.status === 'fulfilled' && result.value) {
-      tokenBalances.push(result.value);
-    }
-  }
-
-  if (!tokenBalances.length) return originToken;
-
-  // sort by balance to return the highest one
-  tokenBalances.sort((a, b) => {
-    if (a.balance > b.balance) return -1;
-    else if (a.balance < b.balance) return 1;
-    else return 0;
-  });
-
-  logger.debug('Found route with higher collateral in destination, switching route...');
-  return tokenBalances[0].token;
 }

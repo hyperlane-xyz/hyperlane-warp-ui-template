@@ -13,7 +13,7 @@ export enum EVENT_NAME {
 
 export type AllowedPropertyValues = string | number | boolean | null;
 
-// Define specific properties for each event (max 8 custom properties due to Vercel's 8 property limit)
+// Define specific properties for each event (max 7 custom properties due to Vercel's 8 property limit, sessionId takes one slot)
 export type EventProperties = {
   [EVENT_NAME.CHAIN_SELECTED]: {
     chainType: string;
@@ -49,8 +49,7 @@ export type EventProperties = {
     walletName: string;
   };
   [EVENT_NAME.TRANSACTION_SUBMISSION_FAILED]: {
-    origin: string;
-    destination: string;
+    chains: string;
     tokenAddress: string;
     tokenSymbol: string;
     amount: string;

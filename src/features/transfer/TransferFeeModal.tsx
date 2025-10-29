@@ -61,7 +61,12 @@ export function TransferFeeModal({
         )}
         <span className="mt-2">
           Read more about{' '}
-          <Link href={links.transferFees} target="_blank" className="text-primary-500 underline">
+          <Link
+            href={links.transferFees}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary-500 underline"
+          >
             transfer fees.
           </Link>
         </span>

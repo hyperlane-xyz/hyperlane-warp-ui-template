@@ -3,9 +3,10 @@ import { TokenStandard } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 
 export enum EVENT_NAME {
-  CHAIN_SELECTION = 'Chain Selection',
-  TOKEN_SELECTION = 'Token Selection',
-  TRANSACTION_SUBMISSION = 'Transaction Submission',
+  PAGE_VIEWED = 'Page Viewed',
+  CHAIN_SELECTED = 'Chain Selected',
+  TOKEN_SELECTED = 'Token Selected',
+  TRANSACTION_SUBMITTED = 'Transaction Submitted',
   TRANSACTION_SUBMISSION_FAILED = 'Transaction Submission Failed',
   WALLET_CONNECTION_INITIATED = 'Wallet Connection Initiated',
   WALLET_CONNECTED = 'Wallet Connected',
@@ -13,16 +14,17 @@ export enum EVENT_NAME {
 
 export type AllowedPropertyValues = string | number | boolean | null;
 
-// Define specific properties for each event (max 8 custom properties due to Vercel's 8 property limit)
+// Define specific properties for each event (max 7 custom properties due to Vercel's 8 property limit, sessionId takes one slot)
 export type EventProperties = {
-  [EVENT_NAME.CHAIN_SELECTION]: {
+  [EVENT_NAME.PAGE_VIEWED]: Record<string, never>;
+  [EVENT_NAME.CHAIN_SELECTED]: {
     chainType: string;
     chainId: ChainId;
     chainName: string;
     previousChainId: ChainId;
     previousChainName: string;
   };
-  [EVENT_NAME.TOKEN_SELECTION]: {
+  [EVENT_NAME.TOKEN_SELECTED]: {
     tokenSymbol: string;
     tokenAddress: string;
     standard: TokenStandard;
@@ -31,7 +33,7 @@ export type EventProperties = {
     destination: string;
     destinationChainId: ChainId;
   };
-  [EVENT_NAME.TRANSACTION_SUBMISSION]: {
+  [EVENT_NAME.TRANSACTION_SUBMITTED]: {
     chains: string;
     tokenAddress: string;
     tokenSymbol: string;
@@ -49,8 +51,7 @@ export type EventProperties = {
     walletName: string;
   };
   [EVENT_NAME.TRANSACTION_SUBMISSION_FAILED]: {
-    origin: string;
-    destination: string;
+    chains: string;
     tokenAddress: string;
     tokenSymbol: string;
     amount: string;

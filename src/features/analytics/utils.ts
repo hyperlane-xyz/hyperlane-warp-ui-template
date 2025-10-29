@@ -7,11 +7,15 @@ import { getTokenByIndex } from '../tokens/hooks';
 import { TransferFormValues } from '../transfer/types';
 import { EVENT_NAME, EventProperties } from './types';
 
+const sessionId =
+  crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+
 export function trackEvent<T extends EVENT_NAME>(eventName: T, properties: EventProperties[T]) {
   if (!config.enableTrackingEvents) return;
 
   // take into consideration vercel only allows up to 8 properties
   track(eventName, {
+    sessionId,
     ...properties,
   });
 }
@@ -24,7 +28,7 @@ export function trackTokenSelectionEvent(
 ) {
   const originChainId = multiProvider.getChainId(origin);
   const destinationChainId = multiProvider.getChainId(destination);
-  trackEvent(EVENT_NAME.TOKEN_SELECTION, {
+  trackEvent(EVENT_NAME.TOKEN_SELECTED, {
     standard: token.standard,
     tokenAddress: token.addressOrDenom,
     tokenSymbol: token.symbol,
@@ -41,7 +45,7 @@ const SKIPPED_ERRORS = ['Token is required', 'Invalid amount'];
 export function trackTransactionFailedEvent(
   errors: Record<string, string> | null,
   warpCore: WarpCore,
-  values: TransferFormValues,
+  { tokenIndex, origin, destination, amount, recipient }: TransferFormValues,
   accounts: Record<ProtocolType, AccountInfo>,
   overrideToken: Token | null,
 ) {
@@ -51,19 +55,20 @@ export function trackTransactionFailedEvent(
 
   if (SKIPPED_ERRORS.includes(firstError)) return;
 
-  const { address } = getAccountAddressAndPubKey(warpCore.multiProvider, values.origin, accounts);
-  const token = overrideToken || getTokenByIndex(warpCore, values.tokenIndex);
+  const { address } = getAccountAddressAndPubKey(warpCore.multiProvider, origin, accounts);
+  const token = overrideToken || getTokenByIndex(warpCore, tokenIndex);
 
   if (!token) return;
 
+  const originChainId = warpCore.multiProvider.getChainId(origin);
+  const destinationChainId = warpCore.multiProvider.getChainId(destination);
   return trackEvent(EVENT_NAME.TRANSACTION_SUBMISSION_FAILED, {
-    amount: values.amount,
-    destination: values.destination,
-    origin: values.origin,
+    amount,
+    chains: `${origin}|${originChainId}|${destination}|${destinationChainId}`,
     walletAddress: address || null,
     tokenAddress: token.addressOrDenom,
     tokenSymbol: token.symbol,
-    recipient: values.recipient,
+    recipient,
     error: firstError,
   });
 }

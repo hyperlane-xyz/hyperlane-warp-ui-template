@@ -1,6 +1,6 @@
 import { MultiProtocolWalletModal } from '@hyperlane-xyz/widgets';
 import Head from 'next/head';
-import { PropsWithChildren } from 'react';
+import { PropsWithChildren, useEffect } from 'react';
 import { APP_NAME, BACKGROUND_COLOR, BACKGROUND_IMAGE } from '../../consts/app';
 import { config } from '../../consts/config';
 import { EVENT_NAME } from '../../features/analytics/types';
@@ -22,6 +22,10 @@ export function AppLayout({ children }: PropsWithChildren) {
   );
 
   useWalletConnectionTracking();
+
+  useEffect(() => {
+    trackEvent(EVENT_NAME.PAGE_VIEWED, {});
+  }, []);
 
   return (
     <>

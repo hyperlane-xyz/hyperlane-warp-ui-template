@@ -42,7 +42,7 @@ export function ChainSelectField({
   const handleChange = (chainName: ChainName) => {
     const chainId = multiProvider.getChainId(chainName);
     const previousChainId = multiProvider.getChainId(field.value);
-    trackEvent(EVENT_NAME.CHAIN_SELECTION, {
+    trackEvent(EVENT_NAME.CHAIN_SELECTED, {
       chainType: name,
       chainId,
       chainName,

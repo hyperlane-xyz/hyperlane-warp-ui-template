@@ -216,7 +216,7 @@ async function executeTransfer({
     // track event after tx submission
     const originChainId = warpCore.multiProvider.getChainId(origin);
     const destinationChainId = warpCore.multiProvider.getChainId(destination);
-    trackEvent(EVENT_NAME.TRANSACTION_SUBMISSION, {
+    trackEvent(EVENT_NAME.TRANSACTION_SUBMITTED, {
       amount,
       recipient,
       chains: `${origin}|${originChainId}|${destination}|${destinationChainId}`,

@@ -115,3 +115,34 @@ ethereum:
     - http: https://eth.blockrazor.xyz
     - http: https://eth-pokt.nodies.app
   technicalStack: other
+mantapacific:
+  blockExplorers:
+    - apiUrl: https://pacific-explorer.manta.network/api
+      family: blockscout
+      name: Manta Pacific Explorer
+      url: https://pacific-explorer.manta.network
+  blocks:
+    confirmations: 1
+    estimateBlockTime: 3
+    reorgPeriod: 5
+  chainId: 169
+  deployer:
+    name: Abacus Works
+    url: https://www.hyperlane.xyz
+  displayName: Manta Pacific
+  displayNameShort: Manta
+  domainId: 169
+  gasCurrencyCoinGeckoId: ethereum
+  gnosisSafeTransactionServiceUrl: https://transaction.safe.manta.network
+  isTestnet: false
+  logoURI: /images/chains/mantapacific/logo.svg
+  name: mantapacific
+  nativeToken:
+    decimals: 18
+    name: Ether
+    symbol: ETH
+  protocol: ethereum
+  rpcUrls:
+    - http: https://pacific-rpc.manta.network/http
+    - http: https://manta.nirvanalabs.xyz/mantapublic
+  technicalStack: opstack

@@ -40,6 +40,7 @@ import { config } from '../../consts/config';
 import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
 import { getQueryParams, updateQueryParam, updateQueryParams } from '../../utils/queryParams';
+import { trackTransactionFailedEvent } from '../analytics/utils';
 import { ChainConnectionWarning } from '../chains/ChainConnectionWarning';
 import { ChainSelectField } from '../chains/ChainSelectField';
 import { ChainWalletWarning } from '../chains/ChainWalletWarning';
@@ -111,6 +112,8 @@ export function TransferTokenForm() {
       accounts,
       routerAddressesByChainMap,
     );
+
+    trackTransactionFailedEvent(result, warpCore, values, accounts, overrideToken);
 
     // Unless this is done, the review and the transfer would contain
     // the selected token rather than collateral with highest balance
@@ -532,6 +535,7 @@ function ButtonSection({
             }
           />
         </div>
+
         <ConnectAwareSubmitButton
           disabled={!addressConfirmed}
           chainName={values.origin}

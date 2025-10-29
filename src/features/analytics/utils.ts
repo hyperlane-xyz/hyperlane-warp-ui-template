@@ -24,7 +24,7 @@ export function trackTokenSelectionEvent(
 ) {
   const originChainId = multiProvider.getChainId(origin);
   const destinationChainId = multiProvider.getChainId(destination);
-  trackEvent(EVENT_NAME.TOKEN_SELECTION, {
+  trackEvent(EVENT_NAME.TOKEN_SELECTED, {
     standard: token.standard,
     tokenAddress: token.addressOrDenom,
     tokenSymbol: token.symbol,

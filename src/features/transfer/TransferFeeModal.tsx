@@ -30,6 +30,7 @@ export function TransferFeeModal({
               <Tooltip
                 content="Gas to submit the transaction on the origin chain"
                 id="local-gas-tooltip"
+                tooltipClassName="max-w-[300px]"
               />
             </span>
             {isLoading ? (
@@ -48,6 +49,7 @@ export function TransferFeeModal({
               <Tooltip
                 content="Gas to deliver and execute the message on the destination chain, including the relayer fee"
                 id="igp-tooltip"
+                tooltipClassName="max-w-[300px]"
               />
             </span>
             {isLoading ? (

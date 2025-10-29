@@ -3,6 +3,7 @@ import { TokenStandard } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 
 export enum EVENT_NAME {
+  PAGE_VIEWED = 'Page Viewed',
   CHAIN_SELECTED = 'Chain Selected',
   TOKEN_SELECTED = 'Token Selected',
   TRANSACTION_SUBMITTED = 'Transaction Submitted',
@@ -15,6 +16,7 @@ export type AllowedPropertyValues = string | number | boolean | null;
 
 // Define specific properties for each event (max 7 custom properties due to Vercel's 8 property limit, sessionId takes one slot)
 export type EventProperties = {
+  [EVENT_NAME.PAGE_VIEWED]: Record<string, never>;
   [EVENT_NAME.CHAIN_SELECTED]: {
     chainType: string;
     chainId: ChainId;

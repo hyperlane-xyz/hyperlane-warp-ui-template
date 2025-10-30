@@ -43,7 +43,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'USDC/ethereum-inevm',
   'USDC/ancient8-ethereum',
   'USDC/ethereum-viction',
-  'USDC/eclipsemainnet-ethereum-solanamainnet',
+  // 'USDC/eclipsemainnet-ethereum-solanamainnet', // Disabled - using custom USDCSTAGE route instead
   'USDC/appchain-base',
   'USDC/arbitrum-base-endurance',
   'USDC/ethereum-form',

@@ -293,7 +293,7 @@ function TokenSection({
 function AmountSection({ isNft, isReview }: { isNft: boolean; isReview: boolean }) {
   const { values } = useFormikContext<TransferFormValues>();
   const { balance } = useOriginBalance(values);
-  const { tokenPrice } = useTokenPrice(values);
+  const { tokenPrice, isLoading } = useTokenPrice(values);
 
   const amount = parseFloat(values.amount);
   const totalTokenPrice = !isNullish(tokenPrice) && !isNaN(amount) ? amount * tokenPrice : 0;
@@ -319,7 +319,7 @@ function AmountSection({ isNft, isReview }: { isNft: boolean; isReview: boolean 
             step="any"
             disabled={isReview}
           />
-          {shouldShowPrice && (
+          {shouldShowPrice && !isLoading && (
             <div className="absolute bottom-[-18px] left-1 text-xxs text-gray-500">
               ≈$
               {totalTokenPrice.toLocaleString('en-US', {

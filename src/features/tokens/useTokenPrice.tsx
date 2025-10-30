@@ -1,22 +1,25 @@
 import { WarpCore } from '@hyperlane-xyz/sdk';
+import { isNullish } from '@hyperlane-xyz/utils';
 import { useQuery } from '@tanstack/react-query';
 import { logger } from '../../utils/logger';
 import { TransferFormValues } from '../transfer/types';
 import { getTokenByIndex, useWarpCore } from './hooks';
 
+const TOKEN_PRICE_REFRESH_INTERVAL = 30_000; // 30s
+
 export function useTokenPrice({ tokenIndex }: TransferFormValues) {
   const warpCore = useWarpCore();
 
-  const { data, isError } = useQuery({
+  const { data, isError, isLoading } = useQuery({
     // The WarpCore class is not serializable, so we can't use it as a key
     // eslint-disable-next-line @tanstack/query/exhaustive-deps
     queryKey: ['useTokenPrice', tokenIndex],
     queryFn: () => fetchTokenPrice(warpCore, tokenIndex),
-    enabled: true,
-    refetchInterval: 30_000,
+    enabled: !isNullish(tokenIndex),
+    refetchInterval: TOKEN_PRICE_REFRESH_INTERVAL,
   });
 
-  return { tokenPrice: data, isError };
+  return { tokenPrice: data, isError, isLoading };
 }
 
 type CoinGeckoResponse = Record<string, { usd: number }>;

@@ -37,6 +37,25 @@ tokens:
       - token: ethereum|pruv|0xc663238a743F664e4c9b79C3503DBb068E2526d2
     #      - token: ethereum|polygon|0xD83A093C073208739FB7824EEda3dc91dEDFa579
     logoURI: /images/tokens/USDC/logo.svg
-## USDC
+  ## USDC
+  ## GSP
+  - chainName: pruv
+    standard: EvmHypCollateral
+    decimals: 6
+    symbol: GSP
+    name: Garuda Sports Group
+    addressOrDenom: '0x92e3582717B09462E4Aa01203a89BB176283C20c'
+    collateralAddressOrDenom: '0x8f038c1ee8fcb6c70b1d103a3b9cefd4d6401998'
+    connections:
+      - token: ethereum|mantapacific|0xFB13Ad8c286025E1874D631bC62EAde352f05d33
+  - chainName: mantapacific
+    standard: EvmHypSynthetic
+    decimals: 6
+    symbol: GSP
+    name: Garuda Sports Group
+    addressOrDenom: '0xFB13Ad8c286025E1874D631bC62EAde352f05d33'
+    connections:
+      - token: ethereum|pruv|0x92e3582717B09462E4Aa01203a89BB176283C20c
+## GSP
 
 options: {}

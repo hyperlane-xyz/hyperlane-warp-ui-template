@@ -58,6 +58,7 @@ import {
   getTokenIndexFromChains,
   useWarpCore,
 } from '../tokens/hooks';
+import { useTokenPrice } from '../tokens/useTokenPrice';
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { FeeSectionButton } from './FeeSectionButton';
 import { RecipientConfirmationModal } from './RecipientConfirmationModal';
@@ -292,6 +293,11 @@ function TokenSection({
 function AmountSection({ isNft, isReview }: { isNft: boolean; isReview: boolean }) {
   const { values } = useFormikContext<TransferFormValues>();
   const { balance } = useOriginBalance(values);
+  const { tokenPrice, isLoading } = useTokenPrice(values);
+
+  const amount = parseFloat(values.amount);
+  const totalTokenPrice = !isNullish(tokenPrice) && !isNaN(amount) ? amount * tokenPrice : 0;
+  const shouldShowPrice = totalTokenPrice >= 0.01;
 
   return (
     <div className="flex-1">
@@ -313,6 +319,15 @@ function AmountSection({ isNft, isReview }: { isNft: boolean; isReview: boolean 
             step="any"
             disabled={isReview}
           />
+          {shouldShowPrice && !isLoading && (
+            <div className="absolute bottom-[-18px] left-1 max-w-52 overflow-hidden text-ellipsis whitespace-nowrap text-xxs text-gray-500">
+              ≈$
+              {totalTokenPrice.toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </div>
+          )}
           <MaxButton disabled={isReview} balance={balance} />
         </div>
       )}

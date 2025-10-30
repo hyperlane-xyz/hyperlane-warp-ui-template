@@ -29,13 +29,23 @@ type CoinGeckoResponse = Record<string, { usd: number }>;
 
 async function fetchTokenPrice(originToken?: Token): Promise<number | null> {
   if (!originToken || !originToken.coinGeckoId) return null;
-  logger.debug('Fetching token price');
 
-  const res = await fetch(
-    `https://api.coingecko.com/api/v3/simple/price?ids=${originToken.coinGeckoId}&vs_currencies=usd`,
-  );
-  const data: CoinGeckoResponse = await res.json();
+  try {
+    logger.debug('Fetching token price');
 
-  const priceData = Object.values(data)[0];
-  return priceData?.usd ?? null;
+    const res = await fetch(
+      `https://api.coingecko.com/api/v3/simple/price?ids=${originToken.coinGeckoId}&vs_currencies=usd`,
+    );
+    if (!res.ok) {
+      logger.warn(`CoinGecko API error: ${res.status} ${res.statusText}`);
+      return null;
+    }
+
+    const data: CoinGeckoResponse = await res.json();
+    const priceData = Object.values(data)[0];
+    return priceData?.usd ?? null;
+  } catch (error) {
+    logger.warn('Failed to fetch token price', error);
+    return null;
+  }
 }

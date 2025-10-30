@@ -320,7 +320,7 @@ function AmountSection({ isNft, isReview }: { isNft: boolean; isReview: boolean 
             disabled={isReview}
           />
           {shouldShowPrice && !isLoading && (
-            <div className="absolute bottom-[-18px] left-1 text-xxs text-gray-500">
+            <div className="absolute bottom-[-18px] left-1 max-w-52 overflow-hidden text-ellipsis whitespace-nowrap text-xxs text-gray-500">
               ≈$
               {totalTokenPrice.toLocaleString('en-US', {
                 minimumFractionDigits: 2,

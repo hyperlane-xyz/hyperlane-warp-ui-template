@@ -337,6 +337,8 @@ export const warpRouteWhitelist: Array<string> | null = [
   'SOL/radix',
   'BNB/radix',
 
+  'XRD/radix',
+
   // Pulsechain routes
   'USDC/pulsechain',
 

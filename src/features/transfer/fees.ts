@@ -104,8 +104,6 @@ export async function getLowestFeeTransferToken(
       tokenBalances.push(result.value);
     }
   }
-  console.log('tokenBalances', tokenBalances);
-
   if (!tokenBalances.length) return originToken;
 
   logger.debug('Retrieving fees for multi-collateral routes...');
@@ -133,7 +131,6 @@ export async function getLowestFeeTransferToken(
       tokenFees.push({ token: result.value.token, tokenFee: result.value.fees.tokenFeeQuote });
     }
   }
-
   if (!tokenFees.length) return originToken;
 
   // sort by token fees, no fees routes take precedence, then lowest fee to highest

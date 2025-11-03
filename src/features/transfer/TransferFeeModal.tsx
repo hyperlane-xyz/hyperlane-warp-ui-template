@@ -1,5 +1,7 @@
 import { WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
 import { Modal, Skeleton, Tooltip } from '@hyperlane-xyz/widgets';
+import Link from 'next/link';
+import { links } from '../../consts/links';
 
 export function TransferFeeModal({
   isOpen,
@@ -12,7 +14,6 @@ export function TransferFeeModal({
   fees: WarpCoreFeeEstimate | null;
   isLoading: boolean;
 }) {
-  // if (!fees) return null;
   return (
     <Modal
       title="Fee details"
@@ -26,7 +27,11 @@ export function TransferFeeModal({
           <div className="flex gap-4">
             <span className="flex min-w-[7.5rem] items-center gap-1">
               Local Gas (est.)
-              <Tooltip content="Fee paid to the network" id="local-gas-tooltip" />
+              <Tooltip
+                content="Gas to submit the transaction on the origin chain"
+                id="local-gas-tooltip"
+                tooltipClassName="max-w-[300px]"
+              />
             </span>
             {isLoading ? (
               <Skeleton className="h-4 w-52" />
@@ -41,7 +46,11 @@ export function TransferFeeModal({
           <div className="flex gap-4">
             <span className="flex min-w-[7.5rem] items-center gap-1">
               Interchain Gas
-              <Tooltip content="Interchain Gas paid to the contract" id="igp-tooltip" />
+              <Tooltip
+                content="Gas to deliver and execute the message on the destination chain, including the relayer fee"
+                id="igp-tooltip"
+                tooltipClassName="max-w-[300px]"
+              />
             </span>
             {isLoading ? (
               <Skeleton className="h-4 w-52" />
@@ -66,6 +75,17 @@ export function TransferFeeModal({
             )}
           </div>
         )}
+        <span className="mt-2">
+          Read more about{' '}
+          <Link
+            href={links.transferFees}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary-500 underline"
+          >
+            transfer fees.
+          </Link>
+        </span>
       </div>
     </Modal>
   );

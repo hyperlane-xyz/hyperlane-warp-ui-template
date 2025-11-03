@@ -24,6 +24,8 @@
     "@interchain-ui/react": "^1.23.28",
     "@metamask/post-message-stream": "6.1.2",
     "@metamask/providers": "10.2.1",
+    "@radixdlt/babylon-gateway-api-sdk": "^1.10.1",
+    "@radixdlt/radix-dapp-toolkit": "^2.2.1",
     "@rainbow-me/rainbowkit": "^2.2.0",
     "@sentry/nextjs": "^8.38.0",
     "@solana/spl-token": "^0.4.9",
@@ -73,7 +75,7 @@
     "ts-node": "^10.9.2",
     "typescript": "5.6.3",
     "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "^3.0.3",
+    "vitest": "3.0.5",
     "yaml": "^2.6.0",
     "yaml-loader": "^0.8.1"
   },

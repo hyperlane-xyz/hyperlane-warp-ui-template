@@ -18,7 +18,7 @@ export function FeeSectionButton({
 
   return (
     <>
-      <div className="mt-2 h-4">
+      <div className="mt-2 h-2">
         {isLoading ? (
           <Skeleton className="h-4 w-72" />
         ) : fees ? (

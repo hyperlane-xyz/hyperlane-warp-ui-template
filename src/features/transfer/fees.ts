@@ -61,7 +61,7 @@ export async function getLowestFeeTransferToken(
   warpCore: WarpCore,
   originToken: Token,
   destinationToken: IToken,
-  amounWei: string,
+  amountWei: string,
   recipient: string,
   sender: string | undefined,
 ) {
@@ -77,15 +77,43 @@ export async function getLowestFeeTransferToken(
   if (tokensWithSameCollateralAddresses.length <= 1) return originToken;
 
   logger.debug(
-    'Multiple multi-collateral tokens found for same collateral address, retrieving fees...',
+    'Multiple multi-collateral tokens found for same collateral address, retrieving routes with collateral balance...',
   );
-  const tokenFees: Array<{ token: Token; tokenFee?: TokenAmount }> = [];
 
-  // fetch each route fees
-  const feeResults = await Promise.allSettled(
+  // fetch each destination token balance
+  const balanceResults = await Promise.allSettled(
     tokensWithSameCollateralAddresses.map(async ({ originToken, destinationToken }) => {
       try {
-        const originTokenAmount = new TokenAmount(amounWei, originToken);
+        const balance = await warpCore.getTokenCollateral(destinationToken);
+        return { originToken, destinationToken, balance };
+      } catch {
+        return null;
+      }
+    }),
+  );
+
+  const amountWeiBigInt = BigInt(amountWei);
+  const tokenBalances: Array<{ originToken: Token; destinationToken: Token; balance: bigint }> = [];
+  // filter tokens that have lower collateral in destination than the amount
+  for (const result of balanceResults) {
+    if (
+      result.status === 'fulfilled' &&
+      result.value?.balance &&
+      result.value.balance >= amountWeiBigInt
+    ) {
+      tokenBalances.push(result.value);
+    }
+  }
+  console.log('tokenBalances', tokenBalances);
+
+  if (!tokenBalances.length) return originToken;
+
+  logger.debug('Retrieving fees for multi-collateral routes...');
+  // fetch each route fees
+  const feeResults = await Promise.allSettled(
+    tokenBalances.map(async ({ originToken, destinationToken }) => {
+      try {
+        const originTokenAmount = new TokenAmount(amountWei, originToken);
         const fees = await warpCore.getInterchainTransferFee({
           originTokenAmount,
           destination: destinationToken.chainName,
@@ -99,6 +127,7 @@ export async function getLowestFeeTransferToken(
     }),
   );
 
+  const tokenFees: Array<{ token: Token; tokenFee?: TokenAmount }> = [];
   for (const result of feeResults) {
     if (result.status === 'fulfilled' && result.value) {
       tokenFees.push({ token: result.value.token, tokenFee: result.value.fees.tokenFeeQuote });

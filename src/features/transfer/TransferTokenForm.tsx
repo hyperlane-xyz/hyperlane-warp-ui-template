@@ -745,7 +745,7 @@ function ReviewDetails({
                   {fees?.localQuote && fees.localQuote.amount > 0n && (
                     <p className="flex">
                       <span className="min-w-[7.5rem]">Local Gas (est.)</span>
-                      <span>{`${fees.localQuote.getDecimalFormattedAmount().toFixed(4) || '0'} ${
+                      <span>{`${fees.localQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${
                         fees.localQuote.token.symbol || ''
                       }`}</span>
                     </p>
@@ -753,7 +753,7 @@ function ReviewDetails({
                   {fees?.interchainQuote && fees.interchainQuote.amount > 0n && (
                     <p className="flex">
                       <span className="min-w-[7.5rem]">Interchain Gas</span>
-                      <span>{`${fees.interchainQuote.getDecimalFormattedAmount().toFixed(4) || '0'} ${
+                      <span>{`${fees.interchainQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${
                         fees.interchainQuote.token.symbol || ''
                       }`}</span>
                     </p>
@@ -761,7 +761,7 @@ function ReviewDetails({
                   {fees?.tokenFeeQuote && fees.tokenFeeQuote.amount > 0n && (
                     <p className="flex">
                       <span className="min-w-[7.5rem]">Token Fee</span>
-                      <span>{`${fees.tokenFeeQuote.getDecimalFormattedAmount().toFixed(4) || '0'} ${
+                      <span>{`${fees.tokenFeeQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${
                         fees.tokenFeeQuote.token.symbol || ''
                       }`}</span>
                     </p>

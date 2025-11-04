@@ -259,10 +259,10 @@ export const warpRouteWhitelist: Array<string> | null = [
   'CHILL/solanamainnet-sonicsvm',
 
   // SMOL route
-  'SMOL/arbitrum-abstract-ethereum-solanamainnet',
+  'SMOL/arbitrum-abstract-ethereum-solanamainnet-base',
 
   // MAGIC route
-  'MAGIC/arbitrum-abstract-ronin',
+  'MAGIC/arbitrum-abstract-ronin-base',
 
   // bbSOL
   'bbSOL/solanamainnet-soon',
@@ -361,6 +361,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'WBTC/incentiv',
   'USDC/incentiv',
   'USDT/incentiv',
+  'SOL/incentiv',
 
   // Litchain
   'LITKEY/litchain',

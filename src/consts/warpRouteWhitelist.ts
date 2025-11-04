@@ -262,7 +262,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'SMOL/arbitrum-abstract-ethereum-solanamainnet-base',
 
   // MAGIC route
-  'MAGIC/arbitrum-abstract-ronin',
+  'MAGIC/arbitrum-abstract-ronin-base',
 
   // bbSOL
   'bbSOL/solanamainnet-soon',

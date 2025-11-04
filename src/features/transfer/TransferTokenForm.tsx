@@ -515,7 +515,7 @@ function ButtonSection({
           disabled={!addressConfirmed}
           chainName={values.origin}
           text={isValidating ? 'Validating...' : 'Continue'}
-          classes={`${isReview ? 'mt-4' : 'mt-2'} px-3 py-1.5`}
+          classes={`${isReview ? 'mt-4' : 'mt-0'} px-3 py-1.5`}
         />
       </>
     );

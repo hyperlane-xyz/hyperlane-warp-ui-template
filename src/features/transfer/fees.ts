@@ -131,7 +131,8 @@ export async function getLowestFeeTransferToken(
       tokenFees.push({ token: result.value.token, tokenFee: result.value.fees.tokenFeeQuote });
     }
   }
-  if (!tokenFees.length) return originToken;
+  // if no token was found with fees, just return the first token with enough collateral
+  if (!tokenFees.length) return tokenBalances[0].originToken;
 
   // sort by token fees, no fees routes take precedence, then lowest fee to highest
   tokenFees.sort((a, b) => {

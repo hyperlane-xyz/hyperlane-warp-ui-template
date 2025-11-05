@@ -67,7 +67,7 @@ import { useTokenPrice } from '../tokens/useTokenPrice';
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { FeeSectionButton } from './FeeSectionButton';
 import { RecipientConfirmationModal } from './RecipientConfirmationModal';
-import { getInterchainQuote, getTotalFee, getTransferToken } from './fees';
+import { getInterchainQuote, getLowestFeeTransferToken, getTotalFee } from './fees';
 import { useFetchMaxAmount } from './maxAmount';
 import { TransferFormValues } from './types';
 import { useRecipientBalanceWatcher } from './useBalanceWatcher';
@@ -555,7 +555,7 @@ function ButtonSection({
           disabled={!addressConfirmed}
           chainName={values.origin}
           text={isValidating ? 'Validating...' : 'Continue'}
-          classes={`${isReview ? 'mt-4' : 'mt-2'} px-3 py-1.5`}
+          classes={`${isReview ? 'mt-4' : 'mt-0'} px-3 py-1.5`}
         />
       </>
     );
@@ -736,6 +736,7 @@ function ReviewDetails({
   return (
     <>
       {!isReview && <FeeSectionButton visible={!isReview} fees={fees} isLoading={isLoading} />}
+
       <div
         className={`${
           isReview ? 'max-h-screen duration-1000 ease-in' : 'max-h-0 duration-500'
@@ -783,7 +784,7 @@ function ReviewDetails({
                   {fees?.localQuote && fees.localQuote.amount > 0n && (
                     <p className="flex">
                       <span className="min-w-[7.5rem]">Local Gas (est.)</span>
-                      <span>{`${fees.localQuote.getDecimalFormattedAmount().toFixed(4) || '0'} ${
+                      <span>{`${fees.localQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${
                         fees.localQuote.token.symbol || ''
                       }`}</span>
                     </p>
@@ -791,8 +792,16 @@ function ReviewDetails({
                   {fees?.interchainQuote && fees.interchainQuote.amount > 0n && (
                     <p className="flex">
                       <span className="min-w-[7.5rem]">Interchain Gas</span>
-                      <span>{`${fees.interchainQuote.getDecimalFormattedAmount().toFixed(4) || '0'} ${
+                      <span>{`${fees.interchainQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${
                         fees.interchainQuote.token.symbol || ''
+                      }`}</span>
+                    </p>
+                  )}
+                  {fees?.tokenFeeQuote && fees.tokenFeeQuote.amount > 0n && (
+                    <p className="flex">
+                      <span className="min-w-[7.5rem]">Token Fee</span>
+                      <span>{`${fees.tokenFeeQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${
+                        fees.tokenFeeQuote.token.symbol || ''
                       }`}</span>
                     </p>
                   )}
@@ -885,8 +894,20 @@ async function validateForm(
       return [{ recipient: 'Warp Route address is not valid as recipient' }, null];
     }
 
-    const transferToken = await getTransferToken(warpCore, token, destinationToken);
-    const amountWei = toWei(amount, transferToken.decimals);
+    const { address: sender, publicKey: senderPubKey } = getAccountAddressAndPubKey(
+      warpCore.multiProvider,
+      origin,
+      accounts,
+    );
+    const amountWei = toWei(amount, token.decimals);
+    const transferToken = await getLowestFeeTransferToken(
+      warpCore,
+      token,
+      destinationToken,
+      amountWei,
+      recipient,
+      sender,
+    );
     const multiCollateralLimit = isMultiCollateralLimitExceeded(token, destination, amountWei);
 
     if (multiCollateralLimit) {
@@ -898,17 +919,11 @@ async function validateForm(
       ];
     }
 
-    const { address, publicKey: senderPubKey } = getAccountAddressAndPubKey(
-      warpCore.multiProvider,
-      origin,
-      accounts,
-    );
-
     const result = await warpCore.validateTransfer({
       originTokenAmount: transferToken.amount(amountWei),
       destination,
       recipient,
-      sender: address || '',
+      sender: sender || '',
       senderPubKey: await senderPubKey,
     });
 

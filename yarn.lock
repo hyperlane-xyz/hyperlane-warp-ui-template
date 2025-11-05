@@ -4605,14 +4605,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/core@npm:9.0.17":
-  version: 9.0.17
-  resolution: "@hyperlane-xyz/core@npm:9.0.17"
+"@hyperlane-xyz/core@npm:10.0.1":
+  version: 10.0.1
+  resolution: "@hyperlane-xyz/core@npm:10.0.1"
   dependencies:
     "@arbitrum/nitro-contracts": "npm:^1.2.1"
     "@chainlink/contracts-ccip": "npm:^1.5.0"
     "@eth-optimism/contracts": "npm:^0.6.0"
-    "@hyperlane-xyz/utils": "npm:19.5.0"
+    "@hyperlane-xyz/utils": "npm:19.7.0"
     "@matterlabs/hardhat-zksync-solc": "npm:1.2.5"
     "@matterlabs/hardhat-zksync-verify": "npm:1.7.1"
     "@openzeppelin/contracts": "npm:^4.9.3"
@@ -4621,41 +4621,41 @@ __metadata:
     "@ethersproject/abi": "*"
     "@ethersproject/providers": "*"
     "@types/sinon-chai": "*"
-  checksum: 10/ac1774d353db6e4963f2cc1b7c5ac731d5fab1c29aedd432b0f8edb8cab90f72fb7556a6bef852fa57a7e54bff6bd3c40ed36e53ca5111be263d8475bb3fee25
+  checksum: 10/f33b921e57255214bd5c09189fd24313a5949ce446c4222665b0702298f0d9648d1d62044720b7a7e6ab081ec25bcdf4bed3a7a3f0d2005229a7917648e2fc35
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/cosmos-sdk@npm:19.5.0":
-  version: 19.5.0
-  resolution: "@hyperlane-xyz/cosmos-sdk@npm:19.5.0"
+"@hyperlane-xyz/cosmos-sdk@npm:19.7.0":
+  version: 19.7.0
+  resolution: "@hyperlane-xyz/cosmos-sdk@npm:19.7.0"
   dependencies:
     "@cosmjs/stargate": "npm:^0.32.4"
-    "@hyperlane-xyz/cosmos-types": "npm:19.5.0"
-    "@hyperlane-xyz/utils": "npm:19.5.0"
-  checksum: 10/59efc866733d00fffca45a29f0bf59138fb63e54f624d61143131979127d5b246b3184b62f5985e890a0f838abddadf93426cae7c4df7695013c5a826c36edda
+    "@hyperlane-xyz/cosmos-types": "npm:19.7.0"
+    "@hyperlane-xyz/utils": "npm:19.7.0"
+  checksum: 10/7d5fe4f64af84f1dcb3005c13e90fb788c7273bccb04d88411627be920dc9a09e3af850df4181e4727cbaadbde91fe256a4d82739e45db9bd4a391a3845be2cf
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/cosmos-types@npm:19.5.0":
-  version: 19.5.0
-  resolution: "@hyperlane-xyz/cosmos-types@npm:19.5.0"
+"@hyperlane-xyz/cosmos-types@npm:19.7.0":
+  version: 19.7.0
+  resolution: "@hyperlane-xyz/cosmos-types@npm:19.7.0"
   dependencies:
     long: "npm:^5.2.4"
     protobufjs: "npm:^7.4.0"
-  checksum: 10/fcc7e0976860ce38c4fc401fa63a2fbdf1f5e580b1934d652a34a081da39f2c8c2d2632aa922955eeae94c5bca1bd2b271a69aa03e690cdda6527ceaf7c74800
+  checksum: 10/2c673e68ae5577c2df8928ee71af5709a75d36e0c6212e7a3dcad0875bb564f399fddfef443a4d504ed27248def24eaaf5ce052f95c90791da20ca676aeff362
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/radix-sdk@npm:19.5.0":
-  version: 19.5.0
-  resolution: "@hyperlane-xyz/radix-sdk@npm:19.5.0"
+"@hyperlane-xyz/radix-sdk@npm:19.7.0":
+  version: 19.7.0
+  resolution: "@hyperlane-xyz/radix-sdk@npm:19.7.0"
   dependencies:
-    "@hyperlane-xyz/utils": "npm:19.5.0"
+    "@hyperlane-xyz/utils": "npm:19.7.0"
     "@radixdlt/babylon-core-api-sdk": "npm:^1.3.0"
     "@radixdlt/babylon-gateway-api-sdk": "npm:^1.10.1"
     "@radixdlt/radix-engine-toolkit": "npm:^1.0.5"
     bignumber.js: "npm:^9.1.1"
-  checksum: 10/891df33e29a094ccf2d425c498a9a0a69c413a876e24e60273b06091be0ad9ec93b1f702c77f2df591b2f1334456d0964ca10e76392177f3370769a7eaa22251
+  checksum: 10/249b4d4b8953568c0420267ce8d062879d9b27956f1ba34c521fc44eed2446a286317e3bcac6c0a72fbb08f74e27eaa9ff15a9fe8db74d3ae52299e451aa3a7a
   languageName: node
   linkType: hard
 
@@ -4670,9 +4670,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/sdk@npm:19.5.0":
-  version: 19.5.0
-  resolution: "@hyperlane-xyz/sdk@npm:19.5.0"
+"@hyperlane-xyz/sdk@npm:19.7.0":
+  version: 19.7.0
+  resolution: "@hyperlane-xyz/sdk@npm:19.7.0"
   dependencies:
     "@arbitrum/sdk": "npm:^4.0.0"
     "@aws-sdk/client-s3": "npm:^3.577.0"
@@ -4680,11 +4680,11 @@ __metadata:
     "@cosmjs/cosmwasm-stargate": "npm:^0.32.4"
     "@cosmjs/proto-signing": "npm:^0.32.4"
     "@cosmjs/stargate": "npm:^0.32.4"
-    "@hyperlane-xyz/core": "npm:9.0.17"
-    "@hyperlane-xyz/cosmos-sdk": "npm:19.5.0"
-    "@hyperlane-xyz/radix-sdk": "npm:19.5.0"
-    "@hyperlane-xyz/starknet-core": "npm:19.5.0"
-    "@hyperlane-xyz/utils": "npm:19.5.0"
+    "@hyperlane-xyz/core": "npm:10.0.1"
+    "@hyperlane-xyz/cosmos-sdk": "npm:19.7.0"
+    "@hyperlane-xyz/radix-sdk": "npm:19.7.0"
+    "@hyperlane-xyz/starknet-core": "npm:19.7.0"
+    "@hyperlane-xyz/utils": "npm:19.7.0"
     "@safe-global/api-kit": "npm:4.0.0"
     "@safe-global/protocol-kit": "npm:6.1.1"
     "@safe-global/safe-core-sdk-types": "npm:5.1.0"
@@ -4704,22 +4704,22 @@ __metadata:
   peerDependencies:
     "@ethersproject/abi": "*"
     "@ethersproject/providers": "*"
-  checksum: 10/a0194fbe8749808ac52e9eae89e4cebaa51b610c7757bdb83779ecf382d3c8cf5e4433f6b96a08e2fc04a1d3505f65c2f7fa81fb1c7729ee09e448feacaa4752
+  checksum: 10/d233f402e8f1fa56f0746949508111c16aa7bbba4181c68a27051c7055dfa17dfe6d10cc82fad5b2f6b25cd358bf2fc1c002106fec8501c2f4c0a893037ea9fa
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/starknet-core@npm:19.5.0":
-  version: 19.5.0
-  resolution: "@hyperlane-xyz/starknet-core@npm:19.5.0"
+"@hyperlane-xyz/starknet-core@npm:19.7.0":
+  version: 19.7.0
+  resolution: "@hyperlane-xyz/starknet-core@npm:19.7.0"
   dependencies:
     starknet: "npm:^7.4.0"
-  checksum: 10/131bb9c91bb1a0f96aa0442997cf0ef76f46e272e0b855127b22817fe10f0f3b5d28b596cbcc75bae36fb99c2509a69dd36615d61cefaff44497ef8ca9460bb7
+  checksum: 10/c025466b179bf90e9536cea28b35f0f934bb8f0660f8c215feb1532c7f229081eec06e3d0834300a9ba3bc62b826e5f75a7fa8f35658dd48f4440e035c9d6b94
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/utils@npm:19.5.0":
-  version: 19.5.0
-  resolution: "@hyperlane-xyz/utils@npm:19.5.0"
+"@hyperlane-xyz/utils@npm:19.7.0":
+  version: 19.7.0
+  resolution: "@hyperlane-xyz/utils@npm:19.7.0"
   dependencies:
     "@cosmjs/encoding": "npm:^0.32.4"
     "@solana/web3.js": "npm:^1.98.4"
@@ -4738,7 +4738,7 @@ __metadata:
       optional: true
     pino-pretty:
       optional: true
-  checksum: 10/cf5568f5d26985388cc682a6f9bdcf2c0c725bdd8fe49f62fe39985188909554d557e3cc31746d1f6638626fbcc6d38f99235f6974612ab4261a976ef579c81c
+  checksum: 10/4e5d8d94a33ed147c1a25c402bac829d47a5c5e1e7a8f07e80220030c04698973fd08858a5f27718f41bff7e42a71c0aef8d6d9073557a3996ab656dc2770741
   languageName: node
   linkType: hard
 
@@ -4760,9 +4760,9 @@ __metadata:
     "@emotion/styled": "npm:^11.13.0"
     "@headlessui/react": "npm:^2.2.0"
     "@hyperlane-xyz/registry": "npm:23.4.0"
-    "@hyperlane-xyz/sdk": "npm:19.5.0"
-    "@hyperlane-xyz/utils": "npm:19.5.0"
-    "@hyperlane-xyz/widgets": "npm:19.5.0"
+    "@hyperlane-xyz/sdk": "npm:19.7.0"
+    "@hyperlane-xyz/utils": "npm:19.7.0"
+    "@hyperlane-xyz/widgets": "npm:19.7.0"
     "@interchain-ui/react": "npm:^1.23.28"
     "@metamask/post-message-stream": "npm:6.1.2"
     "@metamask/providers": "npm:10.2.1"
@@ -4821,16 +4821,16 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@hyperlane-xyz/widgets@npm:19.5.0":
-  version: 19.5.0
-  resolution: "@hyperlane-xyz/widgets@npm:19.5.0"
+"@hyperlane-xyz/widgets@npm:19.7.0":
+  version: 19.7.0
+  resolution: "@hyperlane-xyz/widgets@npm:19.7.0"
   dependencies:
     "@cosmjs/stargate": "npm:^0.32.4"
     "@cosmos-kit/react": "npm:^2.18.0"
     "@headlessui/react": "npm:^2.1.8"
-    "@hyperlane-xyz/cosmos-sdk": "npm:19.5.0"
-    "@hyperlane-xyz/sdk": "npm:19.5.0"
-    "@hyperlane-xyz/utils": "npm:19.5.0"
+    "@hyperlane-xyz/cosmos-sdk": "npm:19.7.0"
+    "@hyperlane-xyz/sdk": "npm:19.7.0"
+    "@hyperlane-xyz/utils": "npm:19.7.0"
     "@interchain-ui/react": "npm:^1.23.28"
     "@radixdlt/babylon-gateway-api-sdk": "npm:^1.10.1"
     "@radixdlt/radix-dapp-toolkit": "npm:^2.2.1"
@@ -4847,7 +4847,7 @@ __metadata:
   peerDependencies:
     react: ^18
     react-dom: ^18
-  checksum: 10/96002af01f2b42b01aeee9ed1bab032025dacb38dcf4cb5ee94e1fe22dcc4373ac79f263112dffca1c2c090c7a19a076b221afff19deae8dffedbd5924370321
+  checksum: 10/d6297e460fe9b7decfc749c41c78c10ba76a9b8bbf368aea6e55dd0633fed327074c5ba02b5e9e1fa16852db6a5e10fa36faf91bc9e4fc29b3a04de6b89a40cb
   languageName: node
   linkType: hard
 
@@ -5541,10 +5541,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lit-labs/ssr-dom-shim@npm:^1.2.0":
-  version: 1.3.0
-  resolution: "@lit-labs/ssr-dom-shim@npm:1.3.0"
-  checksum: 10/a15c5d145a20f367a392cff91f2091ffe54457119ac26569670bbbe32760f86d1e250f865dc1bd0604641106376776c4862a8fff9adb44f9881b510747c08680
+"@lit-labs/ssr-dom-shim@npm:^1.4.0":
+  version: 1.4.0
+  resolution: "@lit-labs/ssr-dom-shim@npm:1.4.0"
+  checksum: 10/a592a2d134f6f9c0e40aef2122226114b82d22f3308d375cb28e231342ee1dec8529bfcf283e8c9d80511c5cfc54bb6eaaaecf5f93f9a04d2be9d1663ab54705
   languageName: node
   linkType: hard
 
@@ -5558,11 +5558,11 @@ __metadata:
   linkType: hard
 
 "@lit/reactive-element@npm:^2.1.0":
-  version: 2.1.0
-  resolution: "@lit/reactive-element@npm:2.1.0"
+  version: 2.1.1
+  resolution: "@lit/reactive-element@npm:2.1.1"
   dependencies:
-    "@lit-labs/ssr-dom-shim": "npm:^1.2.0"
-  checksum: 10/c13dbc370550b8f3cbdfff3524c4bf58fbda6e91689951ca376104d95c80df96182e0b1c9480786740711f67493f50166d261c79b020eb7a4a10b6794921c790
+    "@lit-labs/ssr-dom-shim": "npm:^1.4.0"
+  checksum: 10/5bd091d8149a8cb07e51ab58e218693204563ab87894528c7639e828aac9eb463b6d68048557c37a43f493cf310fff75ee337c3ced274903879c5e5e335df919
   languageName: node
   linkType: hard
 
@@ -9390,8 +9390,8 @@ __metadata:
   linkType: hard
 
 "@rollup/rollup-linux-x64-gnu@npm:^4.24.0":
-  version: 4.44.2
-  resolution: "@rollup/rollup-linux-x64-gnu@npm:4.44.2"
+  version: 4.52.5
+  resolution: "@rollup/rollup-linux-x64-gnu@npm:4.52.5"
   conditions: os=linux & cpu=x64 & libc=glibc
   languageName: node
   linkType: hard
@@ -19550,13 +19550,13 @@ __metadata:
   linkType: hard
 
 "lit-element@npm:^4.2.0":
-  version: 4.2.0
-  resolution: "lit-element@npm:4.2.0"
+  version: 4.2.1
+  resolution: "lit-element@npm:4.2.1"
   dependencies:
-    "@lit-labs/ssr-dom-shim": "npm:^1.2.0"
+    "@lit-labs/ssr-dom-shim": "npm:^1.4.0"
     "@lit/reactive-element": "npm:^2.1.0"
     lit-html: "npm:^3.3.0"
-  checksum: 10/0760140f9cf7eb71e327f04d51a41e3ae4c3fca2ddccca05fa3458d67124a2008044ef3d3812d021e2297ba8b3af7c06fa56b03860877bc09567c334b9d390ad
+  checksum: 10/0d1d306cb12c3ba840cd9baf376997891ece751220049aa4a3cbd6bab25ba21e30d45012662eddaccccc94fe9930e8a0ef36fb779bf22fbcd2184b7a794fee3d
   languageName: node
   linkType: hard
 
@@ -19581,13 +19581,13 @@ __metadata:
   linkType: hard
 
 "lit@npm:^3.1.2":
-  version: 3.3.0
-  resolution: "lit@npm:3.3.0"
+  version: 3.3.1
+  resolution: "lit@npm:3.3.1"
   dependencies:
     "@lit/reactive-element": "npm:^2.1.0"
     lit-element: "npm:^4.2.0"
     lit-html: "npm:^3.3.0"
-  checksum: 10/442b8eabd5d1b4aee0ab34db0b67d5c07a988f30d345f4a68263275acf826816ba30937bb8d5d331dc260c2127cd8953f332dcc45edbf080d61c21291cb06330
+  checksum: 10/ec70ff33db610537fd7cfc608cc7728126ecfae2d5593aa94844c614d2f6840448f1b995a58aeba593b0bf0e8169af5988036c11d3c5b55313fe8e722417c17d
   languageName: node
   linkType: hard
 
@@ -24536,9 +24536,9 @@ __metadata:
   linkType: hard
 
 "tslog@npm:>=4.8.0":
-  version: 4.9.3
-  resolution: "tslog@npm:4.9.3"
-  checksum: 10/134ea14335902b64a49e3ab02f03bab7746e114e1bed6c4a0e9aaf7927d2f7816f5fad50406b905e52fac9f9897cb3f19bd7be84e2c23153f0fc7752277d2622
+  version: 4.10.2
+  resolution: "tslog@npm:4.10.2"
+  checksum: 10/fb8f8a154876bcacd1a9ad7f4e40974623554508efe610edab5242562ccac2f7aa30a53971c49172e8fb9f4d096f2d0ca26a154f48d32d159d21f7d3a0dd0dc7
   languageName: node
   linkType: hard
 

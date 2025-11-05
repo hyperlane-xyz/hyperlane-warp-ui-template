@@ -4,6 +4,7 @@ import { chainsRentEstimate } from '../../consts/chains';
 import { logger } from '../../utils/logger';
 import { getTokensWithSameCollateralAddresses, isValidMultiCollateralToken } from '../tokens/utils';
 
+// get the total amount combined of all the fees
 export function getTotalFee({
   interchainQuote,
   localQuote,
@@ -55,11 +56,14 @@ export function getInterchainQuote(
 
 // Checks if a token is a multi-collateral token and if so
 // look for other tokens that are the same and returns
-// the one with the highest collateral in the destination
-export async function getTransferToken(
+// the one with the lowest fee
+export async function getLowestFeeTransferToken(
   warpCore: WarpCore,
   originToken: Token,
   destinationToken: IToken,
+  amountWei: string,
+  recipient: string,
+  sender: string | undefined,
 ) {
   if (!isValidMultiCollateralToken(originToken, destinationToken)) return originToken;
 
@@ -73,37 +77,76 @@ export async function getTransferToken(
   if (tokensWithSameCollateralAddresses.length <= 1) return originToken;
 
   logger.debug(
-    'Multiple multi-collateral tokens found for same collateral address, retrieving balances...',
+    'Multiple multi-collateral tokens found for same collateral address, retrieving routes with collateral balance...',
   );
-  const tokenBalances: Array<{ token: Token; balance: bigint }> = [];
 
   // fetch each destination token balance
   const balanceResults = await Promise.allSettled(
     tokensWithSameCollateralAddresses.map(async ({ originToken, destinationToken }) => {
       try {
         const balance = await warpCore.getTokenCollateral(destinationToken);
-        return { token: originToken, balance };
+        return { originToken, destinationToken, balance };
       } catch {
         return null;
       }
     }),
   );
 
+  const amountWeiBigInt = BigInt(amountWei);
+  const tokenBalances: Array<{ originToken: Token; destinationToken: Token; balance: bigint }> = [];
+  // filter tokens that have lower collateral in destination than the amount
   for (const result of balanceResults) {
-    if (result.status === 'fulfilled' && result.value) {
+    if (
+      result.status === 'fulfilled' &&
+      result.value?.balance &&
+      result.value.balance >= amountWeiBigInt
+    ) {
       tokenBalances.push(result.value);
     }
   }
-
   if (!tokenBalances.length) return originToken;
 
-  // sort by balance to return the highest one
-  tokenBalances.sort((a, b) => {
-    if (a.balance > b.balance) return -1;
-    else if (a.balance < b.balance) return 1;
-    else return 0;
+  logger.debug('Retrieving fees for multi-collateral routes...');
+  // fetch each route fees
+  const feeResults = await Promise.allSettled(
+    tokenBalances.map(async ({ originToken, destinationToken }) => {
+      try {
+        const originTokenAmount = new TokenAmount(amountWei, originToken);
+        const fees = await warpCore.getInterchainTransferFee({
+          originTokenAmount,
+          destination: destinationToken.chainName,
+          recipient,
+          sender,
+        });
+        return { token: originToken, fees };
+      } catch {
+        return null;
+      }
+    }),
+  );
+
+  const tokenFees: Array<{ token: Token; tokenFee?: TokenAmount }> = [];
+  for (const result of feeResults) {
+    if (result.status === 'fulfilled' && result.value) {
+      tokenFees.push({ token: result.value.token, tokenFee: result.value.fees.tokenFeeQuote });
+    }
+  }
+  if (!tokenFees.length) return originToken;
+
+  // sort by token fees, no fees routes take precedence, then lowest fee to highest
+  tokenFees.sort((a, b) => {
+    const aFee = a.tokenFee?.amount;
+    const bFee = b.tokenFee?.amount;
+
+    if (aFee === undefined && bFee !== undefined) return -1;
+    if (aFee !== undefined && bFee === undefined) return 1;
+    if (aFee === undefined && bFee === undefined) return 0;
+
+    if (aFee! < bFee!) return -1;
+    if (aFee! > bFee!) return 1;
+    return 0;
   });
 
-  logger.debug('Found route with higher collateral in destination, switching route...');
-  return tokenBalances[0].token;
+  logger.debug('Found route with lower fee, switching route...');
+  return tokenFees[0].token;
 }

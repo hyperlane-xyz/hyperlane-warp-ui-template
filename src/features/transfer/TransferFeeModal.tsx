@@ -61,6 +61,20 @@ export function TransferFeeModal({
             )}
           </div>
         )}
+        {fees?.tokenFeeQuote && fees.tokenFeeQuote.amount > 0n && (
+          <div className="flex gap-4">
+            <span className="flex min-w-[7.5rem] items-center gap-1">
+              Token Fee <Tooltip content="Variable fee based on amount" id="token-fee-tooltip" />
+            </span>
+            {isLoading ? (
+              <Skeleton className="h-4 w-52" />
+            ) : (
+              <span>{`${fees.tokenFeeQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${
+                fees.tokenFeeQuote.token.symbol || ''
+              }`}</span>
+            )}
+          </div>
+        )}
         <span className="mt-2">
           Read more about{' '}
           <Link

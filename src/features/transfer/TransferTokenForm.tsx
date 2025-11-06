@@ -490,7 +490,7 @@ function MaxButton({ balance, disabled }: { balance?: TokenAmount; disabled?: bo
       type="button"
       onClick={onClick}
       color="primary"
-      disabled={disabled}
+      disabled={disabled || !balance}
       className="absolute bottom-1 right-1 top-2.5 px-2 text-xs opacity-90 all:rounded"
     >
       {isLoading ? (

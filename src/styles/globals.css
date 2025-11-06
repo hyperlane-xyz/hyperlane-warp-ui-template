@@ -194,6 +194,10 @@ Toasts
   --toastify-color-progress-error: var(--toastify-color-error);
 }
 
+.custom-toast-container .Toastify__toast {
+  width: 100%;
+}
+
 /*
 Timeline tweaks
 ===============

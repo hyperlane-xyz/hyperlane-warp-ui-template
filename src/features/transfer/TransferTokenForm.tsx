@@ -422,18 +422,66 @@ function ButtonSection({
 }
 
 function MaxButton({ balance, disabled }: { balance?: TokenAmount; disabled?: boolean }) {
-  const { values, setFieldValue } = useFormikContext<TransferFormValues>();
+  const { values, errors, setFieldValue } = useFormikContext<TransferFormValues>();
   const { origin, destination, tokenIndex } = values;
   const multiProvider = useMultiProvider();
   const { accounts } = useAccounts(multiProvider);
   const { fetchMaxAmount, isLoading } = useFetchMaxAmount();
+  const warpCore = useWarpCore();
+
+  const getSuggestedAmountFromError = () => {
+    const amountError = errors?.amount;
+    if (typeof amountError !== 'string') return null;
+    const match = amountError.match(/Maximum transfer amount is\s+([0-9]*\.?[0-9]+)/i);
+    return match?.[1] ?? null;
+  };
 
   const onClick = async () => {
-    if (!balance || isNullish(tokenIndex) || disabled) return;
+    if (disabled) return;
+
+    const suggestedAmount = getSuggestedAmountFromError();
+    if (suggestedAmount) {
+      setFieldValue('amount', suggestedAmount);
+      return;
+    }
+
+    if (!balance || isNullish(tokenIndex)) return;
+    const token = getTokenByIndex(warpCore, tokenIndex);
+    if (!token) return;
     const maxAmount = await fetchMaxAmount({ balance, origin, destination, accounts });
     if (isNullish(maxAmount)) return;
     const decimalsAmount = maxAmount.getDecimalFormattedAmount();
-    const roundedAmount = new BigNumber(decimalsAmount).toFixed(4, BigNumber.ROUND_FLOOR);
+    let targetAmountBn = new BigNumber(decimalsAmount);
+
+    const shouldApplyBridgeFeeAdjustment =
+      config.enablePruvOriginFeeUSDC &&
+      origin.startsWith('pruv') &&
+      !destination.startsWith('pruv') &&
+      token.symbol === 'USDC';
+
+    if (shouldApplyBridgeFeeAdjustment) {
+      const feeValue = config.pruvOriginFeeUSDC[destination];
+      if (feeValue) {
+        const feeBn = new BigNumber(feeValue);
+        if (feeBn.isGreaterThan(0)) {
+          const balanceDecimal = balance.getDecimalFormattedAmount();
+          const balanceBn = new BigNumber(balanceDecimal);
+          const maxAllowedFromBalance = balanceBn.minus(feeBn);
+          if (maxAllowedFromBalance.isLessThanOrEqualTo(0)) {
+            const fullBalanceBn = new BigNumber(balanceDecimal);
+            targetAmountBn = fullBalanceBn.isFinite() ? fullBalanceBn : new BigNumber(0);
+          } else {
+            targetAmountBn = BigNumber.min(targetAmountBn, maxAllowedFromBalance);
+          }
+        }
+      }
+    }
+
+    if (!targetAmountBn.isFinite() || targetAmountBn.isNegative()) {
+      targetAmountBn = new BigNumber(0);
+    }
+
+    const roundedAmount = targetAmountBn.toFixed(4, BigNumber.ROUND_FLOOR);
     setFieldValue('amount', roundedAmount);
   };
 

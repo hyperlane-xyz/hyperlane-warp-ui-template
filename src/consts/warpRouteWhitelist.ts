@@ -4,16 +4,16 @@
 // If set to a list (including an empty list), only the specified routes will be included
 export const warpRouteWhitelist: Array<string> | null = [
   // TIA routes
-  'TIA/mantapacific-neutron',
   'TIA/eclipsemainnet-stride',
 
   // TIA routes (cosmos-sdk)
   'TIA/abstract-celestia',
+  'TIA/arbitrum',
   'TIA/base-celestia',
+  'TIA/celestia-eclipsemainnet',
   'TIA/celestia-ethereum',
   'TIA/celestia-solanamainnet',
-  'TIA/arbitrum-celestia-neutron',
-  'TIA/celestia-eclipsemainnet',
+  'TIA/mantapacific',
 
   // stTIA routes
   'stTIA/eclipsemainnet-stride',

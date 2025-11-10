@@ -10,7 +10,7 @@ options:
       destination: mantapacific
       origin: neutron
 tokens:
-  - addressOrDenom: "0x726f757465725f61707000000000000000000000000000010000000000000007"
+  - addressOrDenom: '0x726f757465725f61707000000000000000000000000000010000000000000007'
     chainName: celestia
     collateralAddressOrDenom: utia
     connections:
@@ -20,7 +20,7 @@ tokens:
     name: TIA
     standard: CosmosNativeHypCollateral
     symbol: TIA
-  - addressOrDenom: "0x6Fae4D9935E2fcb11fC79a64e917fb2BF14DaFaa"
+  - addressOrDenom: '0x6Fae4D9935E2fcb11fC79a64e917fb2BF14DaFaa'
     chainName: mantapacific
     connections:
       - token: cosmosnative|celestia|0x726f757465725f61707000000000000000000000000000010000000000000007

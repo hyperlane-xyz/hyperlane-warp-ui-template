@@ -1,7 +1,7 @@
 import { ChainMetadata, isRpcHealthy } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { checkRpcHealth } from './ChainConnectionWarning';
+import { checkRpcHealth } from '../ChainConnectionWarning';
 
 vi.mock('@hyperlane-xyz/sdk', async (importOriginal) => {
   const actual = (await importOriginal()) as { MultiProtocolProvider: any };

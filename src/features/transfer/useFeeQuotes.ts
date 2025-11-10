@@ -35,7 +35,7 @@ export function useFeeQuotes(
   return { isLoading, isError, fees: data };
 }
 
-async function fetchFeeQuotes(
+export async function fetchFeeQuotes(
   warpCore: WarpCore,
   destination?: ChainName,
   tokenIndex?: number,

@@ -5,7 +5,14 @@ import { SelectTokenIdField } from './SelectTokenIdField';
 
 // import { useContractSupportsTokenByOwner, useIsSenderNftOwner } from './balances';
 
-export function SelectOrInputTokenIds({ disabled }: { disabled: boolean }) {
+export function SelectOrInputTokenIds({
+  disabled,
+  // test helper: when true forces the input path instead of the select path
+  forceInput,
+}: {
+  disabled: boolean;
+  forceInput?: boolean;
+}) {
   const {
     values: { tokenIndex },
   } = useFormikContext<TransferFormValues>();
@@ -14,7 +21,8 @@ export function SelectOrInputTokenIds({ disabled }: { disabled: boolean }) {
   //   activeToken,
   //   accountAddress,
   // );
-  const isContractAllowToGetTokenIds = true;
+  // In production this would be derived from hooks; allow tests to override.
+  const isContractAllowToGetTokenIds = forceInput ? false : true;
 
   return isContractAllowToGetTokenIds ? (
     <SelectTokenIdField name="amount" disabled={disabled} tokenIndex={tokenIndex} />
@@ -32,6 +40,7 @@ function InputTokenId({ disabled }: { disabled: boolean; tokenIndex?: number }) 
   return (
     <div className="relative w-full">
       <TextField
+        data-testid="text-field"
         name="amount"
         placeholder="Input Token Id"
         className="w-full"

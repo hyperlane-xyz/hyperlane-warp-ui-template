@@ -115,6 +115,42 @@ ethereum:
     - http: https://eth.blockrazor.xyz
     - http: https://eth-pokt.nodies.app
   technicalStack: other
+bsc:
+  blockExplorers:
+    - apiKey: GP69JEAP2W7YFJT9ZJTEPGQT6Y6KMW44ZN
+      apiUrl: https://api.etherscan.io/v2/api?chainid=56
+      family: etherscan
+      name: BscScan
+      url: https://bscscan.com
+  blocks:
+    confirmations: 1
+    estimateBlockTime: 3
+    reorgPeriod: finalized
+  chainId: 56
+  deployer:
+    name: Abacus Works
+    url: https://www.hyperlane.xyz
+  displayName: Binance Smart Chain
+  displayNameShort: Binance
+  domainId: 56
+  gasCurrencyCoinGeckoId: binancecoin
+  gnosisSafeTransactionServiceUrl: https://safe-transaction-bsc.safe.global/
+  logoURI: /images/chains/bsc/logo.svg
+  name: bsc
+  nativeToken:
+    decimals: 18
+    name: BNB
+    symbol: BNB
+  protocol: ethereum
+  rpcUrls:
+    - http: https://bsc.drpc.org
+    - http: https://bnb.rpc.subquery.network/public
+    - http: https://binance.llamarpc.com
+    - http: https://bsc.blockrazor.xyz
+    - http: https://bsc-pokt.nodies.app
+  technicalStack: other
+  transactionOverrides:
+    gasPrice: 50000000
 mantapacific:
   blockExplorers:
     - apiUrl: https://pacific-explorer.manta.network/api

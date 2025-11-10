@@ -74,6 +74,7 @@ export const config: Config = Object.freeze({
     ethereum: 0.75,
     polygon: 0.1,
     mantapacific: 0.1,
+    bsc: 0.1,
   },
   pruvUSDCMetadata: {
     address: '0xae2205D95520A80D0B380678b6BECf0566457B7E',

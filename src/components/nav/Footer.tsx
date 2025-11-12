@@ -1,4 +1,10 @@
-import { DiscordIcon, GithubIcon, HyperlaneLogo, TwitterIcon } from '@hyperlane-xyz/widgets';
+import {
+  DiscordIcon,
+  DocsIcon,
+  GithubIcon,
+  HyperlaneLogo,
+  TwitterIcon,
+} from '@hyperlane-xyz/widgets';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ReactNode } from 'react';
@@ -15,23 +21,23 @@ type FooterLink = {
 const footerLinks: FooterLink[] = [
   { title: 'Homepage', url: links.home, external: true },
   { title: 'Support', url: links.support, external: true },
-  {
-    title: 'Twitter',
-    url: links.twitter,
-    external: true,
-    icon: <TwitterIcon color={Color.black} />,
-  },
+
   { title: 'INJ Explorer', url: links.explorerInj, external: true },
   { title: 'About', url: links.about, external: true },
+  { title: 'Docs', url: links.docs, external: true, icon: <DocsIcon color={Color.black} /> },
   {
     title: 'Discord',
     url: links.discord,
     external: true,
     icon: <DiscordIcon color={Color.black} />,
   },
-  { title: 'inEVM Explorer', url: links.explorerInEvm, external: true },
-  { title: 'Docs', url: links.docs, external: true },
   { title: 'Github', url: links.github, external: true, icon: <GithubIcon color={Color.black} /> },
+  {
+    title: 'Twitter',
+    url: links.twitter,
+    external: true,
+    icon: <TwitterIcon color={Color.black} />,
+  },
 ];
 
 export function Footer() {
@@ -69,7 +75,10 @@ function FooterLogo() {
 function FooterNav() {
   return (
     <nav className="text-sm">
-      <ul style={{ gridTemplateColumns: 'auto auto auto' }} className="grid gap-x-7 gap-y-1.5">
+      <ul
+        style={{ gridTemplateColumns: 'auto auto auto auto', gridAutoFlow: 'column' }}
+        className="grid grid-rows-2 gap-x-3 gap-y-1.5"
+      >
         {footerLinks.map((item) => (
           <li key={item.title}>
             <Link

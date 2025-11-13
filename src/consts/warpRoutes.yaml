@@ -3,9 +3,9 @@
 # The input here is typically the output of the Hyperlane CLI warp deploy command
 ---
 tokens:
-  - addressOrDenom: "0xB26bBfC6d1F469C821Ea25099017862e7368F4E8"
+  - addressOrDenom: '0xB26bBfC6d1F469C821Ea25099017862e7368F4E8'
     chainName: arbitrum
-    collateralAddressOrDenom: "0x2416092f143378750bb29b79eD961ab195CcEea5"
+    collateralAddressOrDenom: '0x2416092f143378750bb29b79eD961ab195CcEea5'
     connections:
       - token: ethereum|base|0x2552516453368e42705D791F674b312b8b87CD9e
       - token: ethereum|berachain|0x50105110D9e14Eb3d1e4BA7C32daC7f002AC50FD
@@ -31,9 +31,9 @@ tokens:
     name: Renzo Restaked ETH
     standard: EvmHypXERC20
     symbol: ezETH
-  - addressOrDenom: "0x2552516453368e42705D791F674b312b8b87CD9e"
+  - addressOrDenom: '0x2552516453368e42705D791F674b312b8b87CD9e'
     chainName: base
-    collateralAddressOrDenom: "0x2416092f143378750bb29b79eD961ab195CcEea5"
+    collateralAddressOrDenom: '0x2416092f143378750bb29b79eD961ab195CcEea5'
     connections:
       - token: ethereum|arbitrum|0xB26bBfC6d1F469C821Ea25099017862e7368F4E8
       - token: ethereum|berachain|0x50105110D9e14Eb3d1e4BA7C32daC7f002AC50FD
@@ -59,9 +59,9 @@ tokens:
     name: Renzo Restaked ETH
     standard: EvmHypXERC20
     symbol: ezETH
-  - addressOrDenom: "0x50105110D9e14Eb3d1e4BA7C32daC7f002AC50FD"
+  - addressOrDenom: '0x50105110D9e14Eb3d1e4BA7C32daC7f002AC50FD'
     chainName: berachain
-    collateralAddressOrDenom: "0x2416092f143378750bb29b79eD961ab195CcEea5"
+    collateralAddressOrDenom: '0x2416092f143378750bb29b79eD961ab195CcEea5'
     connections:
       - token: ethereum|arbitrum|0xB26bBfC6d1F469C821Ea25099017862e7368F4E8
       - token: ethereum|base|0x2552516453368e42705D791F674b312b8b87CD9e
@@ -87,9 +87,9 @@ tokens:
     name: Renzo Restaked ETH
     standard: EvmHypXERC20
     symbol: ezETH
-  - addressOrDenom: "0x486b39378f99f073A3043C6Aabe8666876A8F3C5"
+  - addressOrDenom: '0x486b39378f99f073A3043C6Aabe8666876A8F3C5'
     chainName: blast
-    collateralAddressOrDenom: "0x2416092f143378750bb29b79eD961ab195CcEea5"
+    collateralAddressOrDenom: '0x2416092f143378750bb29b79eD961ab195CcEea5'
     connections:
       - token: ethereum|arbitrum|0xB26bBfC6d1F469C821Ea25099017862e7368F4E8
       - token: ethereum|base|0x2552516453368e42705D791F674b312b8b87CD9e
@@ -115,9 +115,9 @@ tokens:
     name: Renzo Restaked ETH
     standard: EvmHypXERC20
     symbol: ezETH
-  - addressOrDenom: "0xE00C6185a5c19219F1FFeD213b4406a254968c26"
+  - addressOrDenom: '0xE00C6185a5c19219F1FFeD213b4406a254968c26'
     chainName: bsc
-    collateralAddressOrDenom: "0x2416092f143378750bb29b79eD961ab195CcEea5"
+    collateralAddressOrDenom: '0x2416092f143378750bb29b79eD961ab195CcEea5'
     connections:
       - token: ethereum|arbitrum|0xB26bBfC6d1F469C821Ea25099017862e7368F4E8
       - token: ethereum|base|0x2552516453368e42705D791F674b312b8b87CD9e
@@ -143,10 +143,10 @@ tokens:
     name: Renzo Restaked ETH
     standard: EvmHypXERC20
     symbol: ezETH
-  - addressOrDenom: "0xC59336D8edDa9722B4f1Ec104007191Ec16f7087"
+  - addressOrDenom: '0xC59336D8edDa9722B4f1Ec104007191Ec16f7087'
     chainName: ethereum
     coinGeckoId: renzo-restaked-eth
-    collateralAddressOrDenom: "0xC8140dA31E6bCa19b287cC35531c2212763C2059"
+    collateralAddressOrDenom: '0xC8140dA31E6bCa19b287cC35531c2212763C2059'
     connections:
       - token: ethereum|arbitrum|0xB26bBfC6d1F469C821Ea25099017862e7368F4E8
       - token: ethereum|base|0x2552516453368e42705D791F674b312b8b87CD9e
@@ -172,9 +172,9 @@ tokens:
     name: Renzo Restaked ETH
     standard: EvmHypXERC20Lockbox
     symbol: ezETH
-  - addressOrDenom: "0x3aE8635A4D581d40a6Edfb3f2ED480f9532994F5"
+  - addressOrDenom: '0x3aE8635A4D581d40a6Edfb3f2ED480f9532994F5'
     chainName: fraxtal
-    collateralAddressOrDenom: "0x2416092f143378750bb29b79eD961ab195CcEea5"
+    collateralAddressOrDenom: '0x2416092f143378750bb29b79eD961ab195CcEea5'
     connections:
       - token: ethereum|arbitrum|0xB26bBfC6d1F469C821Ea25099017862e7368F4E8
       - token: ethereum|base|0x2552516453368e42705D791F674b312b8b87CD9e
@@ -200,9 +200,9 @@ tokens:
     name: Renzo Restaked ETH
     standard: EvmHypXERC20
     symbol: ezETH
-  - addressOrDenom: "0x698f0Acd19F4795B6C187d5187E1d0b62f6e257b"
+  - addressOrDenom: '0x698f0Acd19F4795B6C187d5187E1d0b62f6e257b'
     chainName: ink
-    collateralAddressOrDenom: "0x2416092f143378750bb29b79eD961ab195CcEea5"
+    collateralAddressOrDenom: '0x2416092f143378750bb29b79eD961ab195CcEea5'
     connections:
       - token: ethereum|arbitrum|0xB26bBfC6d1F469C821Ea25099017862e7368F4E8
       - token: ethereum|base|0x2552516453368e42705D791F674b312b8b87CD9e
@@ -228,9 +228,9 @@ tokens:
     name: Renzo Restaked ETH
     standard: EvmHypXERC20
     symbol: ezETH
-  - addressOrDenom: "0xC59336D8edDa9722B4f1Ec104007191Ec16f7087"
+  - addressOrDenom: '0xC59336D8edDa9722B4f1Ec104007191Ec16f7087'
     chainName: linea
-    collateralAddressOrDenom: "0x2416092f143378750bb29b79eD961ab195CcEea5"
+    collateralAddressOrDenom: '0x2416092f143378750bb29b79eD961ab195CcEea5'
     connections:
       - token: ethereum|arbitrum|0xB26bBfC6d1F469C821Ea25099017862e7368F4E8
       - token: ethereum|base|0x2552516453368e42705D791F674b312b8b87CD9e
@@ -256,9 +256,9 @@ tokens:
     name: Renzo Restaked ETH
     standard: EvmHypXERC20
     symbol: ezETH
-  - addressOrDenom: "0xC59336D8edDa9722B4f1Ec104007191Ec16f7087"
+  - addressOrDenom: '0xC59336D8edDa9722B4f1Ec104007191Ec16f7087'
     chainName: mode
-    collateralAddressOrDenom: "0x2416092f143378750bb29b79eD961ab195CcEea5"
+    collateralAddressOrDenom: '0x2416092f143378750bb29b79eD961ab195CcEea5'
     connections:
       - token: ethereum|arbitrum|0xB26bBfC6d1F469C821Ea25099017862e7368F4E8
       - token: ethereum|base|0x2552516453368e42705D791F674b312b8b87CD9e
@@ -284,9 +284,9 @@ tokens:
     name: Renzo Restaked ETH
     standard: EvmHypXERC20
     symbol: ezETH
-  - addressOrDenom: "0x7A911b0bD4F067FB8DAFF734A78E7A72865100d8"
+  - addressOrDenom: '0x7A911b0bD4F067FB8DAFF734A78E7A72865100d8'
     chainName: monad
-    collateralAddressOrDenom: "0x2416092f143378750bb29b79eD961ab195CcEea5"
+    collateralAddressOrDenom: '0x2416092f143378750bb29b79eD961ab195CcEea5'
     connections:
       - token: ethereum|arbitrum|0xB26bBfC6d1F469C821Ea25099017862e7368F4E8
       - token: ethereum|base|0x2552516453368e42705D791F674b312b8b87CD9e
@@ -312,9 +312,9 @@ tokens:
     name: Renzo Restaked ETH
     standard: EvmHypXERC20
     symbol: ezETH
-  - addressOrDenom: "0xacEB607CdF59EB8022Cc0699eEF3eCF246d149e2"
+  - addressOrDenom: '0xacEB607CdF59EB8022Cc0699eEF3eCF246d149e2'
     chainName: optimism
-    collateralAddressOrDenom: "0x2416092f143378750bb29b79eD961ab195CcEea5"
+    collateralAddressOrDenom: '0x2416092f143378750bb29b79eD961ab195CcEea5'
     connections:
       - token: ethereum|arbitrum|0xB26bBfC6d1F469C821Ea25099017862e7368F4E8
       - token: ethereum|base|0x2552516453368e42705D791F674b312b8b87CD9e
@@ -340,9 +340,9 @@ tokens:
     name: Renzo Restaked ETH
     standard: EvmHypXERC20
     symbol: ezETH
-  - addressOrDenom: "0xcD78A32Da8cfe9452cD2F50F547c11B979Afcf1b"
+  - addressOrDenom: '0xcD78A32Da8cfe9452cD2F50F547c11B979Afcf1b'
     chainName: plasma
-    collateralAddressOrDenom: "0x2416092f143378750bb29b79eD961ab195CcEea5"
+    collateralAddressOrDenom: '0x2416092f143378750bb29b79eD961ab195CcEea5'
     connections:
       - token: ethereum|arbitrum|0xB26bBfC6d1F469C821Ea25099017862e7368F4E8
       - token: ethereum|base|0x2552516453368e42705D791F674b312b8b87CD9e
@@ -368,9 +368,9 @@ tokens:
     name: Renzo Restaked ETH
     standard: EvmHypXERC20
     symbol: ezETH
-  - addressOrDenom: "0xE5163F148C82a0818545d5D34e30BC1EDA870cB9"
+  - addressOrDenom: '0xE5163F148C82a0818545d5D34e30BC1EDA870cB9'
     chainName: sei
-    collateralAddressOrDenom: "0x6DCfbF4729890043DFd34A93A2694E5303BA2703"
+    collateralAddressOrDenom: '0x6DCfbF4729890043DFd34A93A2694E5303BA2703'
     connections:
       - token: ethereum|arbitrum|0xB26bBfC6d1F469C821Ea25099017862e7368F4E8
       - token: ethereum|base|0x2552516453368e42705D791F674b312b8b87CD9e
@@ -396,9 +396,9 @@ tokens:
     name: Restaked ETH on Sei
     standard: EvmHypXERC20
     symbol: redETH
-  - addressOrDenom: "0xA166219dF110BDA97b91e65D4BB4Aae4159978b9"
+  - addressOrDenom: '0xA166219dF110BDA97b91e65D4BB4Aae4159978b9'
     chainName: swell
-    collateralAddressOrDenom: "0x2416092f143378750bb29b79eD961ab195CcEea5"
+    collateralAddressOrDenom: '0x2416092f143378750bb29b79eD961ab195CcEea5'
     connections:
       - token: ethereum|arbitrum|0xB26bBfC6d1F469C821Ea25099017862e7368F4E8
       - token: ethereum|base|0x2552516453368e42705D791F674b312b8b87CD9e
@@ -424,9 +424,9 @@ tokens:
     name: Renzo Restaked ETH
     standard: EvmHypXERC20
     symbol: ezETH
-  - addressOrDenom: "0x5eAFB1D4b5BDFaFE81715EeBcC7713e418C80E78"
+  - addressOrDenom: '0x5eAFB1D4b5BDFaFE81715EeBcC7713e418C80E78'
     chainName: taiko
-    collateralAddressOrDenom: "0x2416092f143378750bb29b79eD961ab195CcEea5"
+    collateralAddressOrDenom: '0x2416092f143378750bb29b79eD961ab195CcEea5'
     connections:
       - token: ethereum|arbitrum|0xB26bBfC6d1F469C821Ea25099017862e7368F4E8
       - token: ethereum|base|0x2552516453368e42705D791F674b312b8b87CD9e
@@ -452,9 +452,9 @@ tokens:
     name: Renzo Restaked ETH
     standard: EvmHypXERC20
     symbol: ezETH
-  - addressOrDenom: "0xFf0247f72b0d7ceD319D8457dD30622a2bed78B5"
+  - addressOrDenom: '0xFf0247f72b0d7ceD319D8457dD30622a2bed78B5'
     chainName: unichain
-    collateralAddressOrDenom: "0x2416092f143378750bb29b79eD961ab195CcEea5"
+    collateralAddressOrDenom: '0x2416092f143378750bb29b79eD961ab195CcEea5'
     connections:
       - token: ethereum|arbitrum|0xB26bBfC6d1F469C821Ea25099017862e7368F4E8
       - token: ethereum|base|0x2552516453368e42705D791F674b312b8b87CD9e
@@ -480,9 +480,9 @@ tokens:
     name: Renzo Restaked ETH
     standard: EvmHypXERC20
     symbol: ezETH
-  - addressOrDenom: "0x530b6596af6B6aB4D355d7Af2b5FF12eAeef8261"
+  - addressOrDenom: '0x530b6596af6B6aB4D355d7Af2b5FF12eAeef8261'
     chainName: worldchain
-    collateralAddressOrDenom: "0x2416092f143378750bb29b79eD961ab195CcEea5"
+    collateralAddressOrDenom: '0x2416092f143378750bb29b79eD961ab195CcEea5'
     connections:
       - token: ethereum|arbitrum|0xB26bBfC6d1F469C821Ea25099017862e7368F4E8
       - token: ethereum|base|0x2552516453368e42705D791F674b312b8b87CD9e
@@ -508,9 +508,9 @@ tokens:
     name: Renzo Restaked ETH
     standard: EvmHypXERC20
     symbol: ezETH
-  - addressOrDenom: "0xB0A73DBA15454B3f84CeC0f88CFc7D88B6De59B3"
+  - addressOrDenom: '0xB0A73DBA15454B3f84CeC0f88CFc7D88B6De59B3'
     chainName: xlayer
-    collateralAddressOrDenom: "0x2416092f143378750bb29b79eD961ab195CcEea5"
+    collateralAddressOrDenom: '0x2416092f143378750bb29b79eD961ab195CcEea5'
     connections:
       - token: ethereum|arbitrum|0xB26bBfC6d1F469C821Ea25099017862e7368F4E8
       - token: ethereum|base|0x2552516453368e42705D791F674b312b8b87CD9e
@@ -536,9 +536,9 @@ tokens:
     name: Renzo Restaked ETH
     standard: EvmHypXERC20
     symbol: ezETH
-  - addressOrDenom: "0x2552516453368e42705D791F674b312b8b87CD9e"
+  - addressOrDenom: '0x2552516453368e42705D791F674b312b8b87CD9e'
     chainName: zircuit
-    collateralAddressOrDenom: "0x2416092f143378750bb29b79eD961ab195CcEea5"
+    collateralAddressOrDenom: '0x2416092f143378750bb29b79eD961ab195CcEea5'
     connections:
       - token: ethereum|arbitrum|0xB26bBfC6d1F469C821Ea25099017862e7368F4E8
       - token: ethereum|base|0x2552516453368e42705D791F674b312b8b87CD9e

@@ -6,11 +6,12 @@ on:
       - staging
 
 env:
-  PROJECT_ID: "sto-dev-452608"
-  SERVICE_ACCOUNT: "stg-hyperlane-warp@sto-dev-452608.iam.gserviceaccount.com"
-  WORKLOAD_IDENTITY_PROVIDER: "projects/164899678221/locations/global/workloadIdentityPools/sto-dev-452608/providers/hyperlane-warp-gha-prvdr"
-  AR_REPO_LOCATION: "asia-southeast2"
-  AR_URL: "asia-southeast2-docker.pkg.dev/sto-dev-452608/bridge"
+  PROJECT_ID: 'sto-dev-452608'
+  SERVICE_ACCOUNT: 'stg-hyperlane-warp@sto-dev-452608.iam.gserviceaccount.com'
+  WORKLOAD_IDENTITY_PROVIDER: 'projects/164899678221/locations/global/workloadIdentityPools/sto-dev-452608/providers/hyperlane-warp-gha-prvdr'
+  AR_REPO_LOCATION: 'asia-southeast2'
+  AR_URL: 'asia-southeast2-docker.pkg.dev/sto-dev-452608/bridge'
+  NEXT_PUBLIC_BRIDGE_DASHBOARD_URL: https://bridge-dashboard.testnet.pruv.network/
 
 jobs:
   deploy-hyperlane-warp-alpha:
@@ -42,7 +43,7 @@ jobs:
           password: '${{ steps.auth.outputs.access_token }}'
           registry: '${{ env.AR_REPO_LOCATION }}-docker.pkg.dev'
 
-      - name: "Fetch secrets from Google Secret Manager"
+      - name: 'Fetch secrets from Google Secret Manager'
         run: |
           echo "Fetching secrets from GCP..."
           gcloud secrets versions access latest \
@@ -50,7 +51,7 @@ jobs:
             --format='get(payload.data)' \
             | tr '_-' '/+' | base64 -d > secret.json
 
-      - name: "Convert JSON to .env"
+      - name: 'Convert JSON to .env'
         env:
           NEXT_PUBLIC_RPC_OVERRIDES: '{"chain1":{"http":"https://..."}}'
         run: |
@@ -79,9 +80,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: d3labs-io/argo-apps
-          ref: main                              
-          path: argo-apps                
-          token: ${{ secrets.CHART_REPO_TOKEN  }} 
+          ref: main
+          path: argo-apps
+          token: ${{ secrets.CHART_REPO_TOKEN  }}
 
       # Update image tag in values.yaml
       - name: Update image tag

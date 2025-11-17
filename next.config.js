@@ -86,6 +86,17 @@ const nextConfig = {
     ];
   },
 
+  async redirects() {
+    return [
+      {
+        source: '/dashboard',
+        destination:
+          process.env.NEXT_PUBLIC_BRIDGE_DASHBOARD_URL || 'https://bridge-dashboard.pruv.network/',
+        permanent: true,
+      },
+    ];
+  },
+
   env: {
     NEXT_PUBLIC_VERSION: version,
   },

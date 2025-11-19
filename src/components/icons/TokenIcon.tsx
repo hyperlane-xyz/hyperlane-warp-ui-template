@@ -29,6 +29,7 @@ export function TokenIcon({ token, size = 32 }: Props) {
           className="h-full w-full p-0.5"
           onError={() => setFallbackToText(true)}
           loading="lazy"
+          alt={title}
         />
       ) : (
         <div className={`text-[${fontSize}px]`}>{character}</div>

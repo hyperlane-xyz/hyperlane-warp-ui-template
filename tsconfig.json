@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "allowJs": true,
-    "allowImportingTsExtensions":true,
+    "allowImportingTsExtensions": true,
     "declaration": true,
     "declarationMap": true,
     "esModuleInterop": true,
@@ -24,10 +24,11 @@
     "skipLibCheck": true,
     "sourceMap": true,
     "strict": true,
-    "target": "ES2022"
+    "target": "es2020"
   },
+  "types": ["node", "jest", "@testing-library/jest-dom"],
   "exclude": ["node_modules", "dist"],
-  "include": ["next-env.d.ts", "./src/"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
   "files": ["./src/global.d.ts"],
   "ts-node": {
     "files": true,

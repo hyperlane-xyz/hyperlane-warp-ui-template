@@ -81,6 +81,7 @@ function SearchBar({ search, setSearch }: { search: string; setSearch: (s: strin
       />
       <TextInput
         ref={inputRef}
+        data-testid="input-token-search"
         value={search}
         onChange={setSearch}
         placeholder="Token name, symbol, or address"

@@ -40,6 +40,7 @@ export function ChainSelectField({ name, label, onChange, disabled, customListIt
       <button
         type="button"
         name={field.name}
+        id={name}
         className={`${styles.base} ${disabled ? styles.disabled : styles.enabled}`}
         onClick={onClick}
       >

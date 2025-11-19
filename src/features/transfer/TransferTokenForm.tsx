@@ -931,3 +931,9 @@ async function getTransferToken(warpCore: WarpCore, originToken: Token, destinat
   logger.debug('Found route with higher collateral in destination, switching route...');
   return tokenBalances[0].token;
 }
+
+export const __testables = {
+  useFormInitialValues,
+  validateForm,
+  getTransferToken,
+};

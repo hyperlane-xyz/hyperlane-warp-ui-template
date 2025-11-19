@@ -30,17 +30,26 @@ export function SideBarMenu({
 
   const multiProvider = useMultiProvider();
 
-  const { transfers, resetTransfers, transferLoading, originChainName } = useStore((s) => ({
+  const {
+    transfers: transfersFromStore,
+    resetTransfers,
+    transferLoading,
+    originChainName,
+  } = useStore((s) => ({
     transfers: s.transfers,
     resetTransfers: s.resetTransfers,
     transferLoading: s.transferLoading,
     originChainName: s.originChainName,
   }));
+  const transfers = useMemo(
+    () => (Array.isArray(transfersFromStore) ? transfersFromStore : []),
+    [transfersFromStore],
+  );
 
   useEffect(() => {
     if (!didMountRef.current) {
       didMountRef.current = true;
-    } else if (transferLoading) {
+    } else if (transferLoading && transfers.length > 0) {
       setSelectedTransfer(transfers[transfers.length - 1]);
       setIsModalOpen(true);
     }
@@ -51,7 +60,7 @@ export function SideBarMenu({
   }, [isOpen]);
 
   const sortedTransfers = useMemo(
-    () => [...transfers].sort((a, b) => b.timestamp - a.timestamp) || [],
+    () => transfers.slice().sort((a, b) => b.timestamp - a.timestamp),
     [transfers],
   );
 

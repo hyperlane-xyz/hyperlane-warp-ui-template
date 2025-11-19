@@ -4,7 +4,6 @@
 // If set to a list (including an empty list), only the specified routes will be included
 export const warpRouteWhitelist: Array<string> | null = [
   // TIA routes
-  'TIA/mantapacific-neutron',
   'TIA/eclipsemainnet-stride',
 
   // TIA routes (cosmos-sdk)
@@ -12,7 +11,6 @@ export const warpRouteWhitelist: Array<string> | null = [
   'TIA/base-celestia',
   'TIA/celestia-ethereum',
   'TIA/celestia-solanamainnet',
-  'TIA/arbitrum-celestia-neutron',
   'TIA/celestia-eclipsemainnet',
 
   // stTIA routes
@@ -35,9 +33,6 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // ECLIP routes
   'ECLIP/arbitrum-neutron',
-
-  // LUMIA routes
-  'LUMIA/arbitrum-avalanche-base-bsc-ethereum-lumiaprism-optimism-polygon',
 
   // USDC routes
   'USDC/ethereum-inevm',
@@ -240,6 +235,8 @@ export const warpRouteWhitelist: Array<string> | null = [
   'Fartcoin/apechain-solanamainnet',
   'UFD/apechain-solanamainnet',
 
+  'POG/apechain',
+
   // MIRAI
   'MIRAI/abstract-bsc-solanamainnet',
 
@@ -259,10 +256,10 @@ export const warpRouteWhitelist: Array<string> | null = [
   'CHILL/solanamainnet-sonicsvm',
 
   // SMOL route
-  'SMOL/arbitrum-abstract-ethereum-solanamainnet',
+  'SMOL/arbitrum-abstract-ethereum-solanamainnet-base',
 
   // MAGIC route
-  'MAGIC/arbitrum-abstract-ronin',
+  'MAGIC/arbitrum-abstract-ronin-base',
 
   // bbSOL
   'bbSOL/solanamainnet-soon',
@@ -356,6 +353,9 @@ export const warpRouteWhitelist: Array<string> | null = [
   // Mantra routes
   'USDC/mantra',
   'USDT/mantra',
+  'ETH/mantra',
+  'HYPE/mantra',
+  'WBTC/mantra',
 
   // Incentiv routes
   'CENT/incentiv',
@@ -363,6 +363,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'WBTC/incentiv',
   'USDC/incentiv',
   'USDT/incentiv',
+  'SOL/incentiv',
 
   // Litchain
   'LITKEY/litchain',

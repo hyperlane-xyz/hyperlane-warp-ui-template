@@ -71,4 +71,3 @@ describe('Footer', () => {
     expect(gradientDiv).toBeInTheDocument();
   });
 });
-

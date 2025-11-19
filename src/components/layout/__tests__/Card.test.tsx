@@ -74,4 +74,3 @@ describe('Card', () => {
     expect(card).toBeInTheDocument();
   });
 });
-

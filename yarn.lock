@@ -4460,12 +4460,12 @@ __metadata:
 
 "@hyperlane-xyz/aleo-sdk@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/aleo-sdk::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
   version: 19.9.0
-  resolution: "@hyperlane-xyz/aleo-sdk@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/aleo-sdk#/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/aleo-sdk::hash=59c70f&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
+  resolution: "@hyperlane-xyz/aleo-sdk@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/aleo-sdk#/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/aleo-sdk::hash=081f58&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
   dependencies:
     "@hyperlane-xyz/utils": "npm:19.9.0"
     "@provablehq/sdk": "npm:^0.9.11"
     bignumber.js: "npm:^9.1.1"
-  checksum: 10/790d6312413a73d0362f1d0d1412443dc1be126b3a20370c59f15ba821e5371ed05a57996165934893ab7e0a16b32c8d48d59f013da681b6800a20aca1c08e31
+  checksum: 10/5bf6c11fb9b8666253e51dd2149f149a41b1ace94ceb058c8aaff1099419154f0a44efdcc6457cd53f586d30fd908f5e670d3f9649db2381fb2e7fe7ccea2c5a
   languageName: node
   linkType: hard
 
@@ -4693,11 +4693,12 @@ __metadata:
 
 "@hyperlane-xyz/widgets@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/widgets::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
   version: 19.9.0
-  resolution: "@hyperlane-xyz/widgets@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/widgets#/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/widgets::hash=4d690e&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
+  resolution: "@hyperlane-xyz/widgets@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/widgets#/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/widgets::hash=a236e7&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
   dependencies:
     "@cosmjs/stargate": "npm:^0.32.4"
     "@cosmos-kit/react": "npm:^2.18.0"
     "@headlessui/react": "npm:^2.1.8"
+    "@hyperlane-xyz/aleo-sdk": "npm:19.9.0"
     "@hyperlane-xyz/cosmos-sdk": "npm:19.9.0"
     "@hyperlane-xyz/sdk": "npm:19.9.0"
     "@hyperlane-xyz/utils": "npm:19.9.0"
@@ -4717,7 +4718,7 @@ __metadata:
   peerDependencies:
     react: ^18
     react-dom: ^18
-  checksum: 10/9897e40e728dfcc8a46f877a5d405f545251c3ca75defbe85678d23855686abda9f3791fc5366b2169ee78f29687582d0ef909b721222cfb9a4abeff7feac17a
+  checksum: 10/c32ea6888284c07aca14b955c322b5e6a8ecfe2eb4c0a7f92a9df1161f0e0cf2582768753c810d658006e76e7f6e4aeb18aa65c01f54ad936c5ff436d98230be
   languageName: node
   linkType: hard
 

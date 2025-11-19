@@ -235,6 +235,8 @@ export const warpRouteWhitelist: Array<string> | null = [
   'Fartcoin/apechain-solanamainnet',
   'UFD/apechain-solanamainnet',
 
+  'POG/apechain',
+
   // MIRAI
   'MIRAI/abstract-bsc-solanamainnet',
 

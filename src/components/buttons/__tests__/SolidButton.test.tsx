@@ -13,7 +13,7 @@ describe('SolidButton', () => {
     const user = userEvent.setup();
     const handleClick = vi.fn();
     render(<SolidButton onClick={handleClick}>Click Me</SolidButton>);
-    
+
     await user.click(screen.getByRole('button'));
     expect(handleClick).toHaveBeenCalledTimes(1);
   });
@@ -36,8 +36,12 @@ describe('SolidButton', () => {
   it('should not call onClick when disabled', async () => {
     const user = userEvent.setup();
     const handleClick = vi.fn();
-    render(<SolidButton onClick={handleClick} disabled>Disabled</SolidButton>);
-    
+    render(
+      <SolidButton onClick={handleClick} disabled>
+        Disabled
+      </SolidButton>,
+    );
+
     await user.click(screen.getByRole('button'));
     expect(handleClick).not.toHaveBeenCalled();
   });
@@ -102,4 +106,3 @@ describe('SolidButton', () => {
     expect(screen.getByRole('button')).toHaveAttribute('title', 'Button Title');
   });
 });
-

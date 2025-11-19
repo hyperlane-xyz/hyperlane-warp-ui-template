@@ -1,2 +1,4 @@
+yarn run prettier
+yarn run lint
 yarn run typecheck
 yarn run lint-staged

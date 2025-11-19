@@ -10,7 +10,11 @@ vi.mock('@hyperlane-xyz/widgets', () => ({
       {children}
     </button>
   ),
-  XCircleIcon: (props: any) => <span data-testid="x-icon" {...props}>X</span>,
+  XCircleIcon: (props: any) => (
+    <span data-testid="x-icon" {...props}>
+      X
+    </span>
+  ),
 }));
 
 describe('TipCard', () => {
@@ -20,7 +24,7 @@ describe('TipCard', () => {
         showTipBox: true,
       },
     }));
-    
+
     const { container } = render(<TipCard />);
     expect(container.querySelector('.rounded-2xl')).toBeInTheDocument();
   });
@@ -36,7 +40,9 @@ describe('TipCard', () => {
 
   it('should render instructions text', () => {
     render(<TipCard />);
-    expect(screen.getByText('To bridge your assets, follow these simple steps:')).toBeInTheDocument();
+    expect(
+      screen.getByText('To bridge your assets, follow these simple steps:'),
+    ).toBeInTheDocument();
   });
 
   it('should render all instruction steps', () => {
@@ -56,10 +62,10 @@ describe('TipCard', () => {
   it('should hide tip card when close button is clicked', async () => {
     const user = userEvent.setup();
     const { container } = render(<TipCard />);
-    
+
     const closeButton = screen.getByTitle('Hide tip');
     await user.click(closeButton);
-    
+
     expect(container.firstChild).toBeNull();
   });
 

@@ -44,9 +44,8 @@ describe('CustomSwapIcon', () => {
     const { container } = render(<CustomSwapIcon />);
     const circle = container.querySelector('circle');
     const paths = container.querySelectorAll('path');
-    
+
     expect(circle).toBeInTheDocument();
     expect(paths).toHaveLength(2);
   });
 });
-

@@ -1,13 +1,13 @@
 import { TokenAmount } from '@hyperlane-xyz/sdk';
+import { getAccountAddressAndPubKey } from '@hyperlane-xyz/widgets';
 import { useMutation } from '@tanstack/react-query';
 import { act, renderHook } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { getAccountAddressAndPubKey } from '@hyperlane-xyz/widgets';
 import { toast } from 'react-toastify';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { logger } from '../../../utils/logger';
 import { useMultiProvider } from '../../chains/hooks';
 import { isMultiCollateralLimitExceeded } from '../../limits/utils';
 import { useWarpCore } from '../../tokens/hooks';
-import { logger } from '../../../utils/logger';
 import { useFetchMaxAmount } from '../maxAmount';
 
 vi.mock('../../chains/hooks');
@@ -18,7 +18,9 @@ vi.mock('@hyperlane-xyz/sdk', async () => {
   const actual = await vi.importActual<typeof import('@hyperlane-xyz/sdk')>('@hyperlane-xyz/sdk');
   return {
     ...actual,
-    TokenAmount: vi.fn().mockImplementation((amount: unknown, token: unknown) => ({ amount, token })),
+    TokenAmount: vi
+      .fn()
+      .mockImplementation((amount: unknown, token: unknown) => ({ amount, token })),
   };
 });
 vi.mock('@hyperlane-xyz/widgets', () => ({

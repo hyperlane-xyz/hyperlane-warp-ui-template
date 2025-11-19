@@ -59,4 +59,3 @@ describe('ErrorBoundary', () => {
     expect(link).toHaveAttribute('rel', 'noopener noreferrer');
   });
 });
-

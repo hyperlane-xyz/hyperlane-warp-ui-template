@@ -44,7 +44,7 @@ describe('TextField', () => {
   it('should handle value changes', async () => {
     const user = userEvent.setup();
     const onSubmit = vi.fn();
-    
+
     render(
       <Formik initialValues={{ testField: '' }} onSubmit={onSubmit}>
         <Form>
@@ -52,7 +52,7 @@ describe('TextField', () => {
         </Form>
       </Formik>,
     );
-    
+
     const input = screen.getByRole('textbox');
     await user.type(input, 'test value');
     expect(input).toHaveValue('test value');
@@ -70,10 +70,10 @@ describe('TextInput', () => {
   it('should call onChange with value', async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
-    
+
     render(<TextInput onChange={onChange} />);
     const input = screen.getByRole('textbox');
-    
+
     await user.type(input, 'a');
     expect(onChange).toHaveBeenCalledWith('a');
   });
@@ -109,10 +109,10 @@ describe('TextInput', () => {
   it('should handle empty value changes', async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
-    
+
     render(<TextInput onChange={onChange} value="test" />);
     const input = screen.getByRole('textbox');
-    
+
     await user.clear(input);
     expect(onChange).toHaveBeenCalled();
   });
@@ -120,7 +120,7 @@ describe('TextInput', () => {
   it('should forward ref correctly', () => {
     const onChange = vi.fn();
     const ref = vi.fn();
-    
+
     render(<TextInput ref={ref} onChange={onChange} />);
     expect(ref).toHaveBeenCalled();
   });
@@ -133,4 +133,3 @@ describe('TextInput', () => {
     expect(input).toBeDisabled();
   });
 });
-

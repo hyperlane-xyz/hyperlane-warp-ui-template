@@ -1,9 +1,9 @@
-import type { ReactNode } from 'react';
 import { ProtocolType } from '@hyperlane-xyz/utils';
+import { useWalletDetails } from '@hyperlane-xyz/widgets';
 import { render, screen } from '@testing-library/react';
+import type { ReactNode } from 'react';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useMultiProvider } from '../../chains/hooks';
-import { useWalletDetails } from '@hyperlane-xyz/widgets';
 
 vi.mock('../../components/banner/FormWarningBanner', () => ({
   FormWarningBanner: ({ children, isVisible }: { children: ReactNode; isVisible: boolean }) => (

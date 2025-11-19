@@ -106,10 +106,7 @@ describe('useIsAccountOfacSanctioned', () => {
 
     expect(result.current).toBe(true);
     expect(mockUseQuery).toHaveBeenCalledTimes(1);
-    expect(capturedOptions?.queryKey).toEqual([
-      'useIsAccountOfacSanctioned',
-      ofacAddress,
-    ]);
+    expect(capturedOptions?.queryKey).toEqual(['useIsAccountOfacSanctioned', ofacAddress]);
     expect(capturedOptions?.enabled).toBe(true);
   });
 
@@ -150,9 +147,7 @@ describe('useIsAccountOfacSanctioned', () => {
 
 describe('useIsAccountSanctioned', () => {
   it('returns false when neither source flags the account', () => {
-    const ofacSpy = vi
-      .spyOn(OfacHook, 'useIsAccountOfacSanctioned')
-      .mockReturnValue(false);
+    const ofacSpy = vi.spyOn(OfacHook, 'useIsAccountOfacSanctioned').mockReturnValue(false);
     const chainalysisSpy = vi
       .spyOn(ChainalysisHook, 'useIsAccountChainalysisSanctioned')
       .mockReturnValue(false);
@@ -166,9 +161,7 @@ describe('useIsAccountSanctioned', () => {
   });
 
   it('returns true when OFAC flags the address', () => {
-    const ofacSpy = vi
-      .spyOn(OfacHook, 'useIsAccountOfacSanctioned')
-      .mockReturnValue(true);
+    const ofacSpy = vi.spyOn(OfacHook, 'useIsAccountOfacSanctioned').mockReturnValue(true);
     const chainalysisSpy = vi
       .spyOn(ChainalysisHook, 'useIsAccountChainalysisSanctioned')
       .mockReturnValue(false);
@@ -182,9 +175,7 @@ describe('useIsAccountSanctioned', () => {
   });
 
   it('returns true when Chainalysis flags the address', () => {
-    const ofacSpy = vi
-      .spyOn(OfacHook, 'useIsAccountOfacSanctioned')
-      .mockReturnValue(false);
+    const ofacSpy = vi.spyOn(OfacHook, 'useIsAccountOfacSanctioned').mockReturnValue(false);
     const chainalysisSpy = vi
       .spyOn(ChainalysisHook, 'useIsAccountChainalysisSanctioned')
       .mockReturnValue(true);

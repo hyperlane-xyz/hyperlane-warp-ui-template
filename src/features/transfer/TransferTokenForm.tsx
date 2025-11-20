@@ -61,6 +61,7 @@ import { RecipientConfirmationModal } from './RecipientConfirmationModal';
 import { useFetchMaxAmount } from './maxAmount';
 import { TransferFormValues } from './types';
 import { useRecipientBalanceWatcher } from './useBalanceWatcher';
+import { useDashboardDestinationSync } from './useDashboardDestinationSync';
 import { useFeeQuotes } from './useFeeQuotes';
 import { useTokenTransfer } from './useTokenTransfer';
 
@@ -201,6 +202,9 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
   }));
 
   const { values, setFieldValue } = useFormikContext<TransferFormValues>();
+
+  // Sync destination from query param when isDashboard=true
+  useDashboardDestinationSync();
 
   const originRouteCounts = useMemo(() => {
     return getNumRoutesWithSelectedChain(warpCore, values.origin, true);

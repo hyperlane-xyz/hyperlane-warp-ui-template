@@ -227,7 +227,7 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
   const setTokenOnChainChange = (origin: string, destination: string) => {
     const tokenIndex = getTokenIndexFromChains(warpCore, null, origin, destination);
     const token = getTokenByIndex(warpCore, tokenIndex);
-    updateQueryParam(WARP_QUERY_PARAMS.TOKEN, token?.addressOrDenom);
+    updateQueryParam(WARP_QUERY_PARAMS.TOKEN, token?.symbol);
     setFieldValue('tokenIndex', tokenIndex);
   };
 

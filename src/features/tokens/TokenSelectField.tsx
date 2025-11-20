@@ -40,7 +40,7 @@ export function TokenSelectField({ name, disabled, setIsNft }: Props) {
     // token selection event
     trackTokenSelectionEvent(newToken, origin, destination, multiProvider);
 
-    updateQueryParam(WARP_QUERY_PARAMS.TOKEN, newToken.addressOrDenom);
+    updateQueryParam(WARP_QUERY_PARAMS.TOKEN, newToken.symbol);
     // Update nft state in parent
     setIsNft(newToken.isNft());
   };
@@ -67,7 +67,7 @@ export function TokenSelectField({ name, disabled, setIsNft }: Props) {
     updateQueryParams({
       [WARP_QUERY_PARAMS.ORIGIN]: origin,
       [WARP_QUERY_PARAMS.DESTINATION]: destination,
-      [WARP_QUERY_PARAMS.TOKEN]: token.addressOrDenom,
+      [WARP_QUERY_PARAMS.TOKEN]: token.symbol,
     });
   };
 

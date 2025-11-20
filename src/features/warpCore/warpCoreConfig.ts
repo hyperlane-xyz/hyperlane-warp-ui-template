@@ -44,6 +44,7 @@ export async function assembleWarpCoreConfig(
     ? filterToIds(registryWarpRoutes, warpRouteWhitelist)
     : registryWarpRoutes;
   filteredRegistryConfigMap = fillMissingCoinGeckoIds(filteredRegistryConfigMap);
+
   const filteredRegistryConfigValues = Object.values(filteredRegistryConfigMap);
   const filteredRegistryTokens = filteredRegistryConfigValues.map((c) => c.tokens).flat();
   const filteredRegistryOptions = filteredRegistryConfigValues.map((c) => c.options).flat();

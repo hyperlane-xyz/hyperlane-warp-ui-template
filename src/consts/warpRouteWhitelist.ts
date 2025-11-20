@@ -368,4 +368,6 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // M0 routes
   'mUSD/musd',
+  'USDSC/usdsc',
+  'wM/wrapped-m',
 ];

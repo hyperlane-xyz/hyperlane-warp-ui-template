@@ -4,6 +4,37 @@
 ---
 tokens:
   # STAGING #
+  - chainName: pruvtest
+    standard: EvmHypCollateralFiat
+    decimals: 6
+    symbol: USDC
+    name: USD Coin
+    addressOrDenom: '0xA231111ad6755C06854ca1C8636CDdC101f05243'
+    collateralAddressOrDenom: '0xeCacC484026a02022565496E088CA0581cC36373'
+    connections:
+      - token: ethereum|arbitrumsepolia|0xf04197995509E34d6e17c9F7Cc57fCCe8673825a
+      - token: ethereum|sepolia|0xDccdE646A3dd411cCE613c36E9ed098E0622E784
+    logoURI: /images/tokens/USDC/logo.svg
+  - chainName: arbitrumsepolia
+    standard: EvmHypCollateral
+    decimals: 6
+    symbol: USDC
+    name: USD Coin
+    addressOrDenom: '0xf04197995509E34d6e17c9F7Cc57fCCe8673825a'
+    collateralAddressOrDenom: '0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d'
+    connections:
+      - token: ethereum|pruvtest|0xA231111ad6755C06854ca1C8636CDdC101f05243
+    logoURI: /images/tokens/USDC/logo.svg
+  - chainName: sepolia
+    standard: EvmHypCollateral
+    decimals: 6
+    symbol: USDC
+    name: USD Coin
+    addressOrDenom: '0xDccdE646A3dd411cCE613c36E9ed098E0622E784'
+    collateralAddressOrDenom: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238'
+    connections:
+      - token: ethereum|pruvtest|0xA231111ad6755C06854ca1C8636CDdC101f05243
+    logoURI: /images/tokens/USDC/logo.svg
   ## USDT ##
   - chainName: pruvtest
     standard: EvmHypCollateralFiat

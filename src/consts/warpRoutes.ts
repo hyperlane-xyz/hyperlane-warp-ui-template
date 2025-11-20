@@ -14,36 +14,7 @@ export const warpRouteConfigs: WarpCoreConfig = {
       decimals: 6,
       addressOrDenom: 'utia',
       logoURI: '/deployments/warp_routes/TIA/logo.svg',
-      connections: [
-        // To Neutron
-        {
-          token:
-            'cosmos|neutron|ibc/773B4D0A3CD667B2275D5A4A7A2F0909C0BA0F4059C0B9181E680DDF4965DCC7',
-          type: TokenConnectionType.Ibc,
-          sourcePort: 'transfer',
-          sourceChannel: 'channel-8',
-        },
-        // To Manta Pacific via Neutron
-        {
-          token: 'ethereum|mantapacific|0x6Fae4D9935E2fcb11fC79a64e917fb2BF14DaFaa',
-          type: TokenConnectionType.IbcHyperlane,
-          sourcePort: 'transfer',
-          sourceChannel: 'channel-8',
-          intermediateChainName: 'neutron',
-          intermediateRouterAddress:
-            'neutron1ch7x3xgpnj62weyes8vfada35zff6z59kt2psqhnx9gjnt2ttqdqtva3pa',
-          intermediateIbcDenom:
-            'ibc/773B4D0A3CD667B2275D5A4A7A2F0909C0BA0F4059C0B9181E680DDF4965DCC7',
-        },
-        // To Stride
-        {
-          token:
-            'cosmos|stride|ibc/BF3B4F53F3694B66E13C23107C84B6485BD2B96296BB7EC680EA77BBA75B4801',
-          type: TokenConnectionType.Ibc,
-          sourcePort: 'transfer',
-          sourceChannel: 'channel-4',
-        },
-      ],
+      connections: [],
     },
 
     // TIA Celestia to Eclipse via Stride

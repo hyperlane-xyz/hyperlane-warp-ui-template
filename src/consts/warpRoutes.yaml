@@ -3,41 +3,6 @@
 # The input here is typically the output of the Hyperlane CLI warp deploy command
 ---
 tokens:
-  ## USDC
-  - chainName: pruv
-    standard: EvmHypCollateralFiat
-    decimals: 6
-    symbol: USDC
-    name: USD Coin
-    addressOrDenom: '0xc663238a743F664e4c9b79C3503DBb068E2526d2'
-    collateralAddressOrDenom: '0xae2205D95520A80D0B380678b6BECf0566457B7E'
-    connections:
-      - token: ethereum|polygon|0xD83A093C073208739FB7824EEda3dc91dEDFa579
-      - token: ethereum|ethereum|0xa9CDf338E16bb1c2eA46106ab4B1841a1A84248A
-    logoURI: /images/tokens/USDC/logo.svg
-  - chainName: polygon
-    standard: EvmHypCollateral
-    decimals: 6
-    symbol: USDC
-    name: USD Coin
-    addressOrDenom: '0xD83A093C073208739FB7824EEda3dc91dEDFa579'
-    collateralAddressOrDenom: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359'
-    connections:
-      - token: ethereum|pruv|0xc663238a743F664e4c9b79C3503DBb068E2526d2
-    #      - token: ethereum|ethereum|0xa9CDf338E16bb1c2eA46106ab4B1841a1A84248A
-    logoURI: /images/tokens/USDC/logo.svg
-  - chainName: ethereum
-    standard: EvmHypCollateral
-    decimals: 6
-    symbol: USDC
-    name: USD Coin
-    addressOrDenom: '0xa9CDf338E16bb1c2eA46106ab4B1841a1A84248A'
-    collateralAddressOrDenom: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'
-    connections:
-      - token: ethereum|pruv|0xc663238a743F664e4c9b79C3503DBb068E2526d2
-    #      - token: ethereum|polygon|0xD83A093C073208739FB7824EEda3dc91dEDFa579
-    logoURI: /images/tokens/USDC/logo.svg
-  ## USDC
   ## GSP
   - chainName: pruv
     standard: EvmHypCollateral

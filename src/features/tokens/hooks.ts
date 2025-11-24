@@ -67,9 +67,30 @@ export function getTokenIndexFromChains(
   return undefined;
 }
 
+export function getTokenIndexFromChainsAndSymbol(
+  warpCore: WarpCore,
+  symbol: string | null,
+  origin: string,
+  destination: string,
+) {
+  // find routes
+  const tokensWithRoute = warpCore.getTokensForRoute(origin, destination);
+  // find provided token addressOrDenom
+  const queryToken = tokensWithRoute.find(
+    (token) => token.symbol.toLowerCase() === symbol?.toLowerCase(),
+  );
+
+  // if found return index
+  if (queryToken) return getIndexForToken(warpCore, queryToken);
+  // if tokens route has only one route return that index
+  else if (tokensWithRoute.length === 1) return getIndexForToken(warpCore, tokensWithRoute[0]);
+  // if 0 or more than 1
+  return undefined;
+}
+
 export function getInitialTokenIndex(
   warpCore: WarpCore,
-  addressOrDenom: string | null,
+  symbol: string | null,
   originQuery?: string,
   destinationQuery?: string,
   defaultOriginToken?: Token,
@@ -80,13 +101,13 @@ export function getInitialTokenIndex(
 
   // origin query and destination query is defined
   if (originQuery && destinationQuery)
-    return getTokenIndexFromChains(warpCore, addressOrDenom, originQuery, destinationQuery);
+    return getTokenIndexFromChainsAndSymbol(warpCore, symbol, originQuery, destinationQuery);
 
   // if none of those are defined, use default values and pass token query
   if (defaultDestinationChain || connectedToken) {
-    return getTokenIndexFromChains(
+    return getTokenIndexFromChainsAndSymbol(
       warpCore,
-      addressOrDenom,
+      symbol,
       firstToken.chainName,
       defaultDestinationChain || connectedToken?.chainName || '',
     );

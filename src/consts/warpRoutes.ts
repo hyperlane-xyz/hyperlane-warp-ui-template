@@ -14,7 +14,16 @@ export const warpRouteConfigs: WarpCoreConfig = {
       decimals: 6,
       addressOrDenom: 'utia',
       logoURI: '/deployments/warp_routes/TIA/logo.svg',
-      connections: [],
+      connections: [
+        // To Stride
+        {
+          token:
+            'cosmos|stride|ibc/BF3B4F53F3694B66E13C23107C84B6485BD2B96296BB7EC680EA77BBA75B4801',
+          type: TokenConnectionType.Ibc,
+          sourcePort: 'transfer',
+          sourceChannel: 'channel-4',
+        },
+      ],
     },
 
     // TIA Celestia to Eclipse via Stride

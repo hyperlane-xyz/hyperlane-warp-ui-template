@@ -4460,12 +4460,13 @@ __metadata:
 
 "@hyperlane-xyz/aleo-sdk@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/aleo-sdk::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
   version: 19.9.0
-  resolution: "@hyperlane-xyz/aleo-sdk@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/aleo-sdk#/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/aleo-sdk::hash=081f58&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
+  resolution: "@hyperlane-xyz/aleo-sdk@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/aleo-sdk#/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/aleo-sdk::hash=4ef18b&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
   dependencies:
     "@hyperlane-xyz/utils": "npm:19.9.0"
-    "@provablehq/sdk": "npm:^0.9.11"
+    "@provablehq/sdk": "portal:../../../sdk/sdk"
     bignumber.js: "npm:^9.1.1"
-  checksum: 10/5bf6c11fb9b8666253e51dd2149f149a41b1ace94ceb058c8aaff1099419154f0a44efdcc6457cd53f586d30fd908f5e670d3f9649db2381fb2e7fe7ccea2c5a
+    unzipper: "npm:^0.12.3"
+  checksum: 10/fb2706c550469952ed66aaa228590e9dde9416d9a91061650724629bf0fc10fb5e2caf48eb39d53d9f6895381845c3657cd92abe19dcfb70a1493a04f9c2fb12
   languageName: node
   linkType: hard
 
@@ -4536,7 +4537,7 @@ __metadata:
 
 "@hyperlane-xyz/sdk@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/sdk::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
   version: 19.9.0
-  resolution: "@hyperlane-xyz/sdk@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/sdk#/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/sdk::hash=2dfb10&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
+  resolution: "@hyperlane-xyz/sdk@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/sdk#/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/sdk::hash=7c2eab&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
   dependencies:
     "@arbitrum/sdk": "npm:^4.0.0"
     "@aws-sdk/client-s3": "npm:^3.577.0"
@@ -4572,7 +4573,7 @@ __metadata:
   peerDependencies:
     "@ethersproject/abi": "*"
     "@ethersproject/providers": "*"
-  checksum: 10/38659888e5fca98eca83f01f0cd57951252d82e02ce133c788521e9a3a0f989e929226473975a5dd90bbdc12700f9ec17b16be7354b2ec197b9595a69994bd79
+  checksum: 10/8c3304c5d7838f6a1f0677943a3765372c8d1f58913f40e22d09a83854e11eb2681a303a7dc36bedc0b764a6e6952fff70657a72c8c5aee4ba368e3caf1e7c94
   languageName: node
   linkType: hard
 
@@ -4587,7 +4588,7 @@ __metadata:
 
 "@hyperlane-xyz/utils@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/utils::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
   version: 19.9.0
-  resolution: "@hyperlane-xyz/utils@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/utils#/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/utils::hash=925652&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
+  resolution: "@hyperlane-xyz/utils@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/utils#/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/utils::hash=6e2d4b&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
   dependencies:
     "@cosmjs/encoding": "npm:^0.32.4"
     "@provablehq/sdk": "npm:^0.9.11"
@@ -4607,7 +4608,7 @@ __metadata:
       optional: true
     pino-pretty:
       optional: true
-  checksum: 10/ca369facf5e656a60f6b529b56a87ac4161ed88fa2edf6831fac74d0a3704694fb672a0d41d6ec8a928f1a530ab836bee8a5a5b41001c22b050d1abbd6a88857
+  checksum: 10/68a15780ee6565dfd702d4eb7392a87188f93c0b53d28a647e4870069e8961043d8c66d309e448187d63fd7347d136f5c0997716b364ea659a7ce5e14f78be8a
   languageName: node
   linkType: hard
 
@@ -4693,7 +4694,7 @@ __metadata:
 
 "@hyperlane-xyz/widgets@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/widgets::locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A.":
   version: 19.9.0
-  resolution: "@hyperlane-xyz/widgets@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/widgets#/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/widgets::hash=a236e7&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
+  resolution: "@hyperlane-xyz/widgets@file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/widgets#/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/widgets::hash=db5b62&locator=%40hyperlane-xyz%2Fwarp-ui-template%40workspace%3A."
   dependencies:
     "@cosmjs/stargate": "npm:^0.32.4"
     "@cosmos-kit/react": "npm:^2.18.0"
@@ -4718,7 +4719,7 @@ __metadata:
   peerDependencies:
     react: ^18
     react-dom: ^18
-  checksum: 10/c32ea6888284c07aca14b955c322b5e6a8ecfe2eb4c0a7f92a9df1161f0e0cf2582768753c810d658006e76e7f6e4aeb18aa65c01f54ad936c5ff436d98230be
+  checksum: 10/02b3497c543f434800b15cb46d177bcce52614eb29d601088775d33400def129effbede63c991950ad0f21da893040f1a52ee80d099eb9086c0136fe00e15b47
   languageName: node
   linkType: hard
 
@@ -7757,7 +7758,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@provablehq/wasm@npm:^0.9.12":
+"@provablehq/sdk@portal:../../../sdk/sdk::locator=%40hyperlane-xyz%2Faleo-sdk%40file%3A%2FUsers%2Ftroykessler%2Fwork%2Fhyperlane%2Fhyperlane-monorepo%2Ftypescript%2Faleo-sdk%23%2FUsers%2Ftroykessler%2Fwork%2Fhyperlane%2Fhyperlane-monorepo%2Ftypescript%2Faleo-sdk%3A%3Ahash%3D4ef18b%26locator%3D%2540hyperlane-xyz%252Fwarp-ui-template%2540workspace%253A.":
+  version: 0.0.0-use.local
+  resolution: "@provablehq/sdk@portal:../../../sdk/sdk::locator=%40hyperlane-xyz%2Faleo-sdk%40file%3A%2FUsers%2Ftroykessler%2Fwork%2Fhyperlane%2Fhyperlane-monorepo%2Ftypescript%2Faleo-sdk%23%2FUsers%2Ftroykessler%2Fwork%2Fhyperlane%2Fhyperlane-monorepo%2Ftypescript%2Faleo-sdk%3A%3Ahash%3D4ef18b%26locator%3D%2540hyperlane-xyz%252Fwarp-ui-template%2540workspace%253A."
+  dependencies:
+    "@provablehq/wasm": "npm:^0.9.11"
+    "@scure/base": "npm:^2.0.0"
+    comlink: "npm:^4.4.2"
+    core-js: "npm:^3.40.0"
+    mime: "npm:^4.0.6"
+    sync-request: "npm:^6.1.0"
+    xmlhttprequest-ssl: "npm:^3.1.0"
+  languageName: node
+  linkType: soft
+
+"@provablehq/wasm@npm:^0.9.11, @provablehq/wasm@npm:^0.9.12":
   version: 0.9.12
   resolution: "@provablehq/wasm@npm:0.9.12"
   checksum: 10/1da6d935b67b8ab63a409aa962901fef29189a5c5256649f1f529e21f2345e20e8935d06681dfb761bb789088a76c5bd45888de951b1e1368be1e0052f3610bb
@@ -15131,6 +15146,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"bluebird@npm:~3.7.2":
+  version: 3.7.2
+  resolution: "bluebird@npm:3.7.2"
+  checksum: 10/007c7bad22c5d799c8dd49c85b47d012a1fe3045be57447721e6afbd1d5be43237af1db62e26cb9b0d9ba812d2e4ca3bac82f6d7e016b6b88de06ee25ceb96e7
+  languageName: node
+  linkType: hard
+
 "bn.js@npm:^5.2":
   version: 5.2.1
   resolution: "bn.js@npm:5.2.1"
@@ -16848,6 +16870,15 @@ __metadata:
     es-errors: "npm:^1.3.0"
     gopd: "npm:^1.2.0"
   checksum: 10/5add88a3d68d42d6e6130a0cac450b7c2edbe73364bbd2fc334564418569bea97c6943a8fcd70e27130bf32afc236f30982fc4905039b703f23e9e0433c29934
+  languageName: node
+  linkType: hard
+
+"duplexer2@npm:~0.1.4":
+  version: 0.1.4
+  resolution: "duplexer2@npm:0.1.4"
+  dependencies:
+    readable-stream: "npm:^2.0.2"
+  checksum: 10/f60ff8b8955f992fd9524516e82faa5662d7aca5b99ee71c50bbbe1a3c970fafacb35d526d8b05cef8c08be56eed3663c096c50626c3c3651a52af36c408bf4d
   languageName: node
   linkType: hard
 
@@ -18752,7 +18783,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"graceful-fs@npm:^4.1.11, graceful-fs@npm:^4.1.2, graceful-fs@npm:^4.1.5, graceful-fs@npm:^4.1.6, graceful-fs@npm:^4.2.0, graceful-fs@npm:^4.2.4, graceful-fs@npm:^4.2.6":
+"graceful-fs@npm:^4.1.11, graceful-fs@npm:^4.1.2, graceful-fs@npm:^4.1.5, graceful-fs@npm:^4.1.6, graceful-fs@npm:^4.2.0, graceful-fs@npm:^4.2.2, graceful-fs@npm:^4.2.4, graceful-fs@npm:^4.2.6":
   version: 4.2.11
   resolution: "graceful-fs@npm:4.2.11"
   checksum: 10/bf152d0ed1dc159239db1ba1f74fdbc40cb02f626770dcd5815c427ce0688c2635a06ed69af364396da4636d0408fcf7d4afdf7881724c3307e46aff30ca49e2
@@ -21258,6 +21289,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"node-int64@npm:^0.4.0":
+  version: 0.4.0
+  resolution: "node-int64@npm:0.4.0"
+  checksum: 10/b7afc2b65e56f7035b1a2eec57ae0fbdee7d742b1cdcd0f4387562b6527a011ab1cbe9f64cc8b3cca61e3297c9637c8bf61cec2e6b8d3a711d4b5267dfafbe02
+  languageName: node
+  linkType: hard
+
 "node-releases@npm:^2.0.18":
   version: 2.0.18
   resolution: "node-releases@npm:2.0.18"
@@ -23212,7 +23250,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"readable-stream@npm:^2.2.2, readable-stream@npm:^2.3.0, readable-stream@npm:^2.3.3, readable-stream@npm:^2.3.5, readable-stream@npm:^2.3.8, readable-stream@npm:~2.3.6":
+"readable-stream@npm:^2.0.2, readable-stream@npm:^2.2.2, readable-stream@npm:^2.3.0, readable-stream@npm:^2.3.3, readable-stream@npm:^2.3.5, readable-stream@npm:^2.3.8, readable-stream@npm:~2.3.6":
   version: 2.3.8
   resolution: "readable-stream@npm:2.3.8"
   dependencies:
@@ -25810,6 +25848,19 @@ __metadata:
   bin:
     untun: bin/untun.mjs
   checksum: 10/6a096002ca13b8442ad1d40840088888cfaa28626eefdd132cd0fd3d3b956af121a9733b7bda32647608e278fb13332d2b72e2c319a27dc55dbc8e709a2f61d4
+  languageName: node
+  linkType: hard
+
+"unzipper@npm:^0.12.3":
+  version: 0.12.3
+  resolution: "unzipper@npm:0.12.3"
+  dependencies:
+    bluebird: "npm:~3.7.2"
+    duplexer2: "npm:~0.1.4"
+    fs-extra: "npm:^11.2.0"
+    graceful-fs: "npm:^4.2.2"
+    node-int64: "npm:^0.4.0"
+  checksum: 10/b210c421308e1913e01b54faad4ae79e758c674311892414a0697acacba9f82fa0051b677faa77e62fab422eef928c858f2d5cda9ddb47a2f3db95b0e9b36359
   languageName: node
   linkType: hard
 

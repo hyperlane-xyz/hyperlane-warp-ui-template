@@ -3,18 +3,75 @@
 # Chains already in the SDK need not be included here unless you want to override some fields
 # Schema here: https://github.com/hyperlane-xyz/hyperlane-monorepo/blob/main/typescript/sdk/src/metadata/chainMetadataTypes.ts
 ---
-# Example using local anvil chain:
-# anvil1:
-#   chainId: 31337
-#   domainId: 31337
-#   name: anvil1
-#   protocol: ethereum
-#   rpcUrls:
-#     - http: http://127.0.0.1:8545
-# anvil2:
-#   chainId: 31338
-#   domainId: 31338
-#   name: anvil2
-#   protocol: ethereum
-#   rpcUrls:
-#     - http: http://127.0.0.1:8555
+aleo:
+  blockExplorers:
+    - apiUrl: https://apis.mintscan.io/v1/osmosis
+      family: other
+      name: Mintscan
+      url: https://www.mintscan.io/osmosis
+  blocks:
+    confirmations: 1
+    estimateBlockTime: 6
+    reorgPeriod: 1
+  canonicalAsset: 0field
+  chainId: 1
+  contractAddressBytes: 32
+  deployer:
+    name: Mitosis
+    url: https://mitosis.org
+  displayName: Aleo Testnet
+  domainId: 1234567890
+  gasCurrencyCoinGeckoId: aleo
+  gasPrice:
+    amount: '0.01'
+    denom: 0field
+  grpcUrls:
+    - http: https://api.explorer.provable.com/v1
+  index:
+    chunk: 10
+    from: 14389169
+  isTestnet: false
+  name: aleo
+  nativeToken:
+    decimals: 6
+    denom: 0field
+    name: Aleo
+    symbol: Aleo
+  protocol: aleo
+  restUrls:
+    - http: https://api.explorer.provable.com/v1
+  rpcUrls:
+    - http: https://api.explorer.provable.com/v1
+  slip44: 118
+  technicalStack: other
+  transactionOverrides:
+    gasPrice: '0.01uhyp'
+
+sepolia:
+  blockExplorers:
+    - apiKey: n
+      apiUrl: https://api-sepolia.etherscan.io/api
+      family: etherscan
+      name: Etherscan
+      url: https://sepolia.etherscan.io
+  blocks:
+    confirmations: 1
+    estimateBlockTime: 13
+    reorgPeriod: 2
+  chainId: 11155111
+  deployer:
+    name: Abacus Works
+    url: https://www.hyperlane.xyz
+  displayName: Sepolia
+  domainId: 11155111
+  gasCurrencyCoinGeckoId: ethereum
+  gnosisSafeTransactionServiceUrl: https://safe-transaction-sepolia.safe.global
+  isTestnet: true
+  name: sepolia
+  nativeToken:
+    decimals: 18
+    name: Ether
+    symbol: ETH
+  protocol: ethereum
+  rpcUrls:
+    - http: https://api-ethereum-sepolia.n.dwellir.com/98585163-c7e8-4a24-b0fa-47cf300bc305

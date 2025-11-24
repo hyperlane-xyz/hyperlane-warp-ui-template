@@ -2,5 +2,23 @@
 # These configs will be merged with the warp routes in the configured registry
 # The input here is typically the output of the Hyperlane CLI warp deploy command
 ---
-tokens: []
+tokens:
+  - addressOrDenom: 'test_hyp_native.aleo'
+    chainName: aleo
+    connections:
+      - token: ethereum|sepolia|0xB5A9199FBB49cFF7C0D5432591248297971435f4
+    decimals: 6
+    logoURI: ''
+    name: Aleo
+    standard: AleoHypNative
+    symbol: ALEO
+  - addressOrDenom: '0xB5A9199FBB49cFF7C0D5432591248297971435f4'
+    chainName: sepolia
+    connections:
+      - token: aleo|aleo|test_hyp_native.aleo
+    decimals: 6
+    logoURI: ''
+    name: wALEO
+    standard: EvmHypSynthetic
+    symbol: wALEO
 options: {}

@@ -116,7 +116,7 @@ function filterToIds(
 function dedupeTokens(tokens: WarpCoreConfig['tokens']): WarpCoreConfig['tokens'] {
   const idToToken: Record<string, WarpCoreConfig['tokens'][number]> = {};
   for (const token of tokens) {
-    const id = `${token.chainName}|${token.addressOrDenom?.toLowerCase()}`;
+    const id = `${token.chainName}|${token.symbol}|${token.addressOrDenom?.toLowerCase()}`;
     idToToken[id] = objMerge(idToToken[id] || {}, token);
   }
   return Object.values(idToToken);

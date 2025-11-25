@@ -120,7 +120,7 @@ function dedupeTokens(tokens: WarpCoreConfig['tokens']): WarpCoreConfig['tokens'
     let id = '';
     // Temporary fix issue for M0 routes where addressOrDenom can be the same
     if (token.standard === TokenStandard.EvmM0PortalLite) {
-      id = id = `${token.chainName}|${token.symbol}|${token.addressOrDenom?.toLowerCase()}`;
+      id = `${token.chainName}|${token.symbol}|${token.addressOrDenom?.toLowerCase()}`;
     } else {
       id = `${token.chainName}|${token.addressOrDenom?.toLowerCase()}`;
     }

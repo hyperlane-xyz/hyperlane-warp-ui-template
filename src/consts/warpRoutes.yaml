@@ -36,6 +36,28 @@ tokens:
       - token: ethereum|pruv|0x261F1088850b7d3E404B399D970b8c3841F4aCa5
     logoURI: /images/tokens/USDC/logo.svg
   ## USDC
+  ## USDT
+  - chainName: pruv
+    standard: EvmHypCollateralFiat
+    decimals: 6
+    symbol: USDT
+    name: Tether USD
+    addressOrDenom: '0xF8158CC824E5794fc35e31D777476e98b51498C0'
+    collateralAddressOrDenom: '0x0c88A80A4bE4E5806C90f849e0bc46DE67fd6900'
+    connections:
+      - token: ethereum|bsc|0xeCFF040e761159f18Bc171C9F05FCCd4d76Aa588
+    logoURI: /images/tokens/USDT/logo.svg
+  - chainName: bsc
+    standard: EvmHypCollateral
+    decimals: 18
+    symbol: USDT
+    name: Tether USD
+    addressOrDenom: '0xeCFF040e761159f18Bc171C9F05FCCd4d76Aa588'
+    collateralAddressOrDenom: '0x55d398326f99059fF775485246999027B3197955'
+    connections:
+      - token: ethereum|pruv|0xF8158CC824E5794fc35e31D777476e98b51498C0
+    logoURI: /images/tokens/USDT/logo.svg
+  ## USDT
   ## GSP
   - chainName: pruv
     standard: EvmHypCollateral

@@ -792,18 +792,9 @@ async function validateForm(
               const usdcBalanceDecimal = usdcBalanceResult.getDecimalFormattedAmount();
               const usdcBalanceBn = new BigNumber(usdcBalanceDecimal.toString());
 
-              // For USDC tokens, check if total cost (amount + bridge fee) exceeds balance
-              // First, ensure there's any USDC balance at all
-              if (usdcBalanceBn.isLessThanOrEqualTo(0)) {
-                return [
-                  {
-                    amount: 'Insufficient balance',
-                  },
-                  null,
-                ];
-              }
-
-              // If balance exists but is less than the required bridge fee, show fee requirement
+              // If the USDC balance is less than the required bridge fee (including 0 balance),
+              // show the bridge fee requirement. This applies regardless of which token
+              // is being transferred because the fee is always charged in USDC.
               if (usdcBalanceBn.isLessThan(bridgeFee)) {
                 return [
                   {

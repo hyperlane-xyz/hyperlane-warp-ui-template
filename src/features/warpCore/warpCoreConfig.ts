@@ -4,6 +4,7 @@ import {
 } from '@hyperlane-xyz/registry';
 import {
   TOKEN_STANDARD_TO_PROTOCOL,
+  TokenStandard,
   WarpCoreConfig,
   WarpCoreConfigSchema,
   getTokenConnectionId,
@@ -116,7 +117,13 @@ function filterToIds(
 function dedupeTokens(tokens: WarpCoreConfig['tokens']): WarpCoreConfig['tokens'] {
   const idToToken: Record<string, WarpCoreConfig['tokens'][number]> = {};
   for (const token of tokens) {
-    const id = `${token.chainName}|${token.addressOrDenom?.toLowerCase()}`;
+    let id = '';
+    // Temporary fix issue for M0 routes where addressOrDenom can be the same
+    if (token.standard === TokenStandard.EvmM0PortalLite) {
+      id = `${token.chainName}|${token.symbol}|${token.addressOrDenom?.toLowerCase()}`;
+    } else {
+      id = `${token.chainName}|${token.addressOrDenom?.toLowerCase()}`;
+    }
     idToToken[id] = objMerge(idToToken[id] || {}, token);
   }
   return Object.values(idToToken);

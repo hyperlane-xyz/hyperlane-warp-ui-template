@@ -52,7 +52,7 @@ export function TokenListModal({
     <Modal
       isOpen={isOpen}
       close={onClose}
-      panelClassname="px-2 py-3 max-w-100 sm:max-w-[31rem] max-h-none overflow-auto"
+      panelClassname="bg-[#f8f8ff] px-4 py-4 max-w-100 sm:max-w-[31rem] max-h-none overflow-auto rounded-3xl"
     >
       <SearchBar search={search} setSearch={setSearch} />
       <TokenList
@@ -73,11 +73,11 @@ function SearchBar({ search, setSearch }: { search: string; setSearch: (s: strin
   }, []);
 
   return (
-    <div className="relative px-2">
+    <div className="relative">
       <SearchIcon
-        width={20}
-        height={20}
-        className="absolute left-5 top-1/2 -translate-y-1/2 pb-1 opacity-50"
+        width={24}
+        height={24}
+        className="absolute left-4 top-1/2 -translate-y-1/2 opacity-50"
       />
       <TextInput
         ref={inputRef}
@@ -85,7 +85,7 @@ function SearchBar({ search, setSearch }: { search: string; setSearch: (s: strin
         onChange={setSearch}
         placeholder="Token name, symbol, or address"
         name="token-search"
-        className="mb-4 mt-3 w-full pl-10 all:border-gray-200 all:py-3 all:focus:border-gray-400"
+        className="mb-6 h-14 w-full rounded-xl border border-[#dbd8e0] bg-white pl-12 text-base font-medium text-[#8e8c99] all:py-3.5 all:focus:border-primary-500"
         autoComplete="off"
       />
     </div>
@@ -159,32 +159,42 @@ export function TokenList({
   const noTokensFound = tokens.length === 0 && isObjEmpty(unsupportedRouteTokensBySymbolMap);
 
   return (
-    <div className="no-scrollbar flex max-h-[80vh] min-h-[24rem] flex-col items-stretch overflow-auto px-2">
+    <div className="no-scrollbar flex max-h-[80vh] min-h-[24rem] flex-col items-stretch gap-2 overflow-auto">
       {tokens.map((t, i) => (
         <button
-          className={`-mx-2 mb-2 flex items-center rounded px-2 py-2 ${
-            t.disabled ? 'opacity-50' : 'hover:bg-gray-200'
-          } duration-250 transition-all`}
+          className={`relative flex min-h-[60px] items-start gap-2 rounded-xl p-2 pl-14 transition-all duration-200 ${
+            t.disabled ? 'opacity-50' : 'hover:bg-[#eae7ec]'
+          }`}
           key={i}
           type="button"
           disabled={t.disabled}
           onClick={() => onSelect(t.token)}
         >
-          <div className="shrink-0">
-            <TokenIcon token={t.token} size={30} />
+          {/* Token Icon - absolute positioned */}
+          <div className="absolute left-2 top-[10px] shrink-0">
+            <TokenIcon token={t.token} size={40} />
           </div>
-          <div className="ml-2 shrink-0 text-left">
-            <div className="w-16 truncate text-sm">{t.token.symbol || 'Unknown'}</div>
-            <div className="w-16 truncate text-xs text-gray-500">{t.token.name || 'Unknown'}</div>
+
+          {/* Token Info - left column */}
+          <div className="flex w-16 shrink-0 flex-col gap-1">
+            <span className="truncate text-base font-semibold leading-5 text-[#202020]">
+              {t.token.symbol || 'Unknown'}
+            </span>
+            <span className="truncate text-base font-medium leading-5 text-[#8e8c99]">
+              {t.token.name || 'Unknown'}
+            </span>
           </div>
-          <div className="ml-2 min-w-0 shrink text-left">
-            <div className="w-full truncate text-xs">
-              {t.token.collateralAddressOrDenom || t.token.addressOrDenom || 'Native chain token'}
-            </div>
-            <div className="mt-0.5 flex space-x-1 text-xs">
-              <span>{`Decimals: ${t.token.decimals}`}</span>
-              <span>-</span>
-              <span>{`Chain: ${getChainDisplayName(multiProvider, t.token.chainName)}`}</span>
+
+          {/* Token Details - right column */}
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <span className="truncate text-base font-semibold leading-5 text-[#202020]">
+              {t.token.collateralAddressOrDenom || t.token.addressOrDenom || 'Native'}
+            </span>
+            <div className="flex items-center justify-end gap-3 text-base font-medium leading-5 text-[#8e8c99]">
+              <span className="whitespace-nowrap">Decimals: {t.token.decimals}</span>
+              <span className="whitespace-nowrap">
+                Chain: {getChainDisplayName(multiProvider, t.token.chainName)}
+              </span>
             </div>
           </div>
         </button>
@@ -223,21 +233,41 @@ function UnsupportedRouteTokenList({
     ([symbol, { chains, tokenInformation }]) => (
       <React.Fragment key={symbol}>
         <button
-          className="duration-250 -mx-2 mb-2 flex items-center rounded px-2 py-2 opacity-50 transition-all hover:bg-gray-200"
+          className="relative flex min-h-[60px] items-start gap-2 rounded-xl p-2 pl-14 opacity-50 transition-all duration-200 hover:bg-[#eae7ec]"
           type="button"
           onClick={() => setOpen((prevSymbol) => (prevSymbol === symbol ? null : symbol))}
         >
-          <div className="shrink-0">
-            <TokenIcon token={tokenInformation} size={30} />
+          {/* Token Icon - absolute positioned */}
+          <div className="absolute left-2 top-[10px] shrink-0">
+            <TokenIcon token={tokenInformation} size={40} />
           </div>
-          <div className="ml-2 shrink-0 text-left">
-            <div className="text-sm">{tokenInformation.symbol || 'Unknown'}</div>
-            <div className="text-xs text-gray-500">{tokenInformation.name || 'Unknown'}</div>
+
+          {/* Token Info - left column */}
+          <div className="flex w-16 shrink-0 flex-col gap-1">
+            <span className="truncate text-base font-semibold leading-5 text-[#202020]">
+              {tokenInformation.symbol || 'Unknown'}
+            </span>
+            <span className="truncate text-base font-medium leading-5 text-[#8e8c99]">
+              {tokenInformation.name || 'Unknown'}
+            </span>
           </div>
+
+          {/* Token Details - right column */}
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <span className="truncate text-base font-semibold leading-5 text-[#202020]">
+              Unsupported route
+            </span>
+            <div className="flex items-center justify-end gap-3 text-base font-medium leading-5 text-[#8e8c99]">
+              <span className="whitespace-nowrap">
+                {getChainDisplayName(multiProvider, origin)} → {getChainDisplayName(multiProvider, destination)}
+              </span>
+            </div>
+          </div>
+
           <Image
             src={InfoIcon}
             alt="Unsupported route for origin and destination"
-            className="ml-auto mr-1"
+            className="ml-2 shrink-0"
             data-te-toggle="tooltip"
             title={`Route not supported for ${getChainDisplayName(
               multiProvider,

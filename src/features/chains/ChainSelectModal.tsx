@@ -28,7 +28,7 @@ export function ChainSelectListModal({
   };
 
   return (
-    <Modal isOpen={isOpen} close={close} panelClassname="p-4 sm:p-5 max-w-lg min-h-[40vh]">
+    <Modal isOpen={isOpen} close={close} panelClassname="bg-[#f8f8ff] p-4 sm:p-5 max-w-lg min-h-[40vh] rounded-3xl">
       <ChainSearchMenu
         chainMetadata={chainMetadata}
         onClickChain={onSelectChain}

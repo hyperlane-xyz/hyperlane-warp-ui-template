@@ -71,7 +71,7 @@ export function ChainSelectField({
   }, [addToken]);
 
   return (
-    <div className="h-[4.5rem] flex-[4]">
+    <div className="flex-1">
       <button
         type="button"
         name={field.name}
@@ -79,14 +79,14 @@ export function ChainSelectField({
         onClick={onClick}
       >
         <div className="flex items-center gap-3">
-          <div className="max-w-[1.4rem] sm:max-w-fit">
+          <div className="shrink-0">
             <ChainLogo chainName={field.value} size={32} />
           </div>
-          <div className="flex flex-col items-start gap-1">
-            <label htmlFor={name} className="text-xs text-gray-600">
+          <div className="flex flex-col items-start gap-0.5">
+            <label htmlFor={name} className="text-xs font-semibold text-gray-600">
               {label}
             </label>
-            {displayName}
+            <span className="text-base font-semibold text-gray-900">{displayName}</span>
           </div>
         </div>
         <ChevronIcon width={12} height={8} direction="s" />
@@ -113,8 +113,8 @@ export function ChainSelectField({
 }
 
 const styles = {
-  base: 'px-2 py-1.5 w-full flex items-center justify-between text-sm bg-white rounded-lg border border-primary-300 outline-none transition-colors duration-500',
-  enabled: 'hover:bg-gray-100 active:scale-95 focus:border-primary-500',
+  base: 'h-14 w-full flex items-center justify-between px-3 py-3.5 text-sm bg-white rounded-xl border border-[#e3dfe6] outline-none transition-colors duration-300',
+  enabled: 'hover:border-primary-400 active:scale-95 focus:border-primary-500',
   disabled: 'bg-gray-150 cursor-default',
   addButton:
     'flex text-xxs text-primary-500 hover:text-primary-600 disabled:text-gray-500 [&_path]:fill-primary-500 [&_path]:hover:fill-primary-600 [&_path]:disabled:fill-gray-500',

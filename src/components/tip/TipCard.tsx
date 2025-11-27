@@ -1,37 +1,36 @@
-import { IconButton, XCircleIcon } from '@hyperlane-xyz/widgets';
-import Image from 'next/image';
+import { XIcon } from '@hyperlane-xyz/widgets';
 import { useState } from 'react';
 import { config } from '../../consts/config';
-import { links } from '../../consts/links';
-import InfoCircle from '../../images/icons/info-circle.svg';
 import { Card } from '../layout/Card';
 
 export function TipCard() {
   const [show, setShow] = useState(config.showTipBox);
   if (!show) return null;
   return (
-    <Card className="w-100 p-2 sm:w-[31rem]">
-      <h2 className="text-primary-500">Bridge Tokens with Hyperlane Warp Routes!</h2>
-      <div className="flex items-end justify-between">
-        <p className="mt-1 max-w-[75%] text-xs">
-          Warp Routes make it easy to permissionlessly take your tokens interchain. Fork this
-          template to get started!
-        </p>
-        <a
-          href={links.github}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="ml-2 flex items-center rounded-lg bg-gray-100 px-3 py-1.5 text-xs text-primary-500 transition-all hover:bg-gray-200 active:bg-gray-300 sm:text-sm"
-        >
-          <Image src={InfoCircle} width={12} alt="" />
-          <span className="ml-1.5 hidden text-sm sm:inline">More</span>
-        </a>
+    <Card className="relative w-100 bg-[#d4cafe] p-4 sm:w-[31rem]">
+      <div className="flex items-end justify-between gap-6">
+        <div className="flex flex-col gap-2">
+          <h2 className="text-base font-semibold leading-[18px] text-[#202020]">
+            Bridge USDC with zero slippage
+          </h2>
+          <p className="text-sm font-medium leading-[18px] text-[rgba(0,0,0,0.49)]">
+            Move between Solana, Base, Arbitrum, Optimism, Ethereum, Unichain, and more.
+          </p>
+        </div>
+        <button className="flex h-8 shrink-0 items-center gap-2 rounded-lg bg-[#f2e2fc] px-2 text-sm font-semibold text-[#6550b9] transition-colors hover:bg-[#e8d5f9]">
+          Bridge
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 8L12 8M12 8L9 5M12 8L9 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
       </div>
-      <div className="absolute right-3 top-3">
-        <IconButton onClick={() => setShow(false)} title="Hide tip" className="hover:rotate-90">
-          <XCircleIcon width={16} height={16} />
-        </IconButton>
-      </div>
+      <button
+        onClick={() => setShow(false)}
+        className="absolute right-4 top-4 transition-transform hover:rotate-90"
+        title="Close"
+      >
+        <XIcon width={16} height={16} color="#202020" />
+      </button>
     </Card>
   );
 }

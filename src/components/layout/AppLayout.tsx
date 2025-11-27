@@ -8,7 +8,7 @@ import { useWalletConnectionTracking } from '../../features/analytics/useWalletC
 import { trackEvent } from '../../features/analytics/utils';
 import { useStore } from '../../features/store';
 import { SideBarMenu } from '../../features/wallet/SideBarMenu';
-import { Footer } from '../nav/Footer';
+// import { Footer } from '../nav/Footer';
 import { Header } from '../nav/Header';
 
 export function AppLayout({ children }: PropsWithChildren) {
@@ -37,13 +37,13 @@ export function AppLayout({ children }: PropsWithChildren) {
       <div
         style={styles.container}
         id="app-content"
-        className="min-w-screen relative flex h-full min-h-screen w-full flex-col justify-between"
+        className="min-w-screen relative flex h-full min-h-screen w-full flex-col justify-between backdrop-blur-[2px]"
       >
         <Header />
         <div className="mx-auto flex max-w-screen-xl grow items-center sm:px-4">
           <main className="my-4 flex w-full flex-1 items-center justify-center">{children}</main>
         </div>
-        <Footer />
+        {/*<Footer />*/}
       </div>
 
       <MultiProtocolWalletModal
@@ -65,8 +65,8 @@ export function AppLayout({ children }: PropsWithChildren) {
 
 const styles = {
   container: {
-    backgroundColor: BACKGROUND_COLOR,
-    backgroundImage: BACKGROUND_IMAGE,
+    backgroundColor:BACKGROUND_COLOR,
+    background: BACKGROUND_IMAGE,
     backgroundSize: 'cover',
     backgroundRepeat: 'no-repeat',
     backgroundPosition: 'center',

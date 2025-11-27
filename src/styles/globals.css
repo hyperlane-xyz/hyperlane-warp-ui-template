@@ -210,3 +210,146 @@ Fixes for cosmos chain selection modal
 div[data-floating-ui-portal] > div {
   z-index: 10000;
 }
+
+/*
+Chain Search Menu Redesign
+===========================
+*/
+
+/* Search input styling */
+.htw-ChainSearchMenu input[type='search'] {
+  height: 56px;
+  padding: 14px 12px;
+  padding-left: 44px;
+  background-color: #ffffff;
+  border: 1px solid #dbd8e0;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 500;
+  color: #8e8c99;
+}
+
+.htw-ChainSearchMenu input[type='search']:focus {
+  border-color: #2764c1;
+  outline: none;
+}
+
+/* Search icon container */
+.htw-ChainSearchMenu .htw-relative:has(input[type='search']) svg {
+  width: 24px;
+  height: 24px;
+  color: #8e8c99;
+}
+
+/* Chain list items */
+.htw-ChainSearchMenu button[role='button'] {
+  height: 60px;
+  padding: 8px;
+  border-radius: 16px;
+  gap: 8px;
+  transition: all 0.2s;
+}
+
+.htw-ChainSearchMenu button[role='button']:hover {
+  background-color: #eae7ec;
+}
+
+/* Chain logo */
+.htw-ChainSearchMenu button[role='button'] img,
+.htw-ChainSearchMenu button[role='button'] > div:first-child {
+  width: 40px;
+  height: 40px;
+}
+
+/* Chain name and route count */
+.htw-ChainSearchMenu button[role='button'] > div:last-child > div:first-child {
+  font-size: 16px;
+  font-weight: 600;
+  color: #202020;
+}
+
+/* Network type and routes info */
+.htw-ChainSearchMenu button[role='button'] > div:last-child > div:last-child {
+  font-size: 16px;
+  font-weight: 500;
+  color: #8e8c99;
+}
+
+/* Selected/highlighted item */
+.htw-ChainSearchMenu button[role='button'][data-selected='true'],
+.htw-ChainSearchMenu button[role='button']:first-of-type {
+  background-color: #eae7ec;
+}
+
+/* Custom field (route count) styling */
+.htw-ChainSearchMenu button[role='button'] > div > div > span {
+  font-size: 16px;
+  font-weight: 600;
+  color: #202020;
+}
+
+/* List container spacing */
+.htw-ChainSearchMenu > div:last-child {
+  margin-top: 24px;
+  gap: 8px;
+}
+
+/*
+Multi Protocol Wallet Modal Redesign
+=====================================
+*/
+
+/* Modal background */
+.htw-MultiProtocolWalletModal > div > div {
+  background-color: #f8f8ff;
+  border-radius: 24px;
+  padding: 16px;
+}
+
+/* Protocol cards container */
+.htw-MultiProtocolWalletModal button {
+  background-color: #ffffff;
+  border: 1px solid #e3dfe6;
+  border-radius: 16px;
+  padding: 16px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+  width: 100%;
+}
+
+.htw-MultiProtocolWalletModal button:hover {
+  background-color: #f8f8ff;
+  transform: scale(1.02);
+}
+
+/* Protocol icon */
+.htw-MultiProtocolWalletModal button img,
+.htw-MultiProtocolWalletModal button svg {
+  width: 40px;
+  height: 40px;
+}
+
+/* Protocol name */
+.htw-MultiProtocolWalletModal button > div:nth-child(2) {
+  font-size: 16px;
+  font-weight: 600;
+  color: #202020;
+  line-height: 20px;
+}
+
+/* Protocol description */
+.htw-MultiProtocolWalletModal button > div:nth-child(3) {
+  font-size: 16px;
+  font-weight: 500;
+  color: #8e8c99;
+  line-height: 20px;
+  text-align: center;
+}
+
+/* Gap between cards */
+.htw-MultiProtocolWalletModal > div > div > div {
+  gap: 16px;
+}

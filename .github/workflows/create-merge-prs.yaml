@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - feat/robust-merge-prs-with-gonk # temporary for testing
   workflow_dispatch:
 
 concurrency:

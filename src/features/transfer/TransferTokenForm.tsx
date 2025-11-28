@@ -141,12 +141,16 @@ export function TransferTokenForm() {
       {({ isValidating }) => (
         <Form className="flex w-full flex-col items-stretch">
           <WarningBanners />
-          <ChainSelectSection isReview={isReview} />
-          <div className="mt-2.5 flex items-end justify-between space-x-4">
+          <div className="mt-8">
+            <ChainSelectSection isReview={isReview} />
+          </div>
+          <div className="mt-8 flex items-start justify-between gap-4">
             <TokenSection setIsNft={setIsNft} isReview={isReview} />
             <AmountSection isNft={isNft} isReview={isReview} />
           </div>
-          <RecipientSection isReview={isReview} />
+          <div className="mt-8">
+            <RecipientSection isReview={isReview} />
+          </div>
           <ReviewDetails isReview={isReview} routeOverrideToken={routeOverrideToken} />
           <ButtonSection
             isReview={isReview}
@@ -249,7 +253,7 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
   };
 
   return (
-    <div className="mt-2 flex items-center justify-between gap-4">
+    <div className="flex items-center justify-center gap-4">
       <ChainSelectField
         name="origin"
         label="From"
@@ -258,7 +262,7 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
         onChange={handleChange}
         token={originToken}
       />
-      <div className="flex flex-1 flex-col items-center">
+      <div className="flex shrink-0 flex-col items-center pt-5">
         <SwapChainsButton disabled={isReview} onSwapChain={onSwapChain} />
       </div>
       <ChainSelectField
@@ -282,7 +286,7 @@ function TokenSection({
 }) {
   return (
     <div className="flex-1">
-      <label htmlFor="tokenIndex" className="block pl-0.5 text-sm text-gray-600">
+      <label htmlFor="tokenIndex" className="mb-2 block text-sm font-bold text-gray-900">
         Token
       </label>
       <TokenSelectField name="tokenIndex" disabled={isReview} setIsNft={setIsNft} />
@@ -301,8 +305,8 @@ function AmountSection({ isNft, isReview }: { isNft: boolean; isReview: boolean 
 
   return (
     <div className="flex-1">
-      <div className="flex justify-between pr-1">
-        <label htmlFor="amount" className="block pl-0.5 text-sm text-gray-600">
+      <div className="mb-2 flex justify-between">
+        <label htmlFor="amount" className="block text-sm font-bold text-gray-900">
           Amount
         </label>
         <TokenBalance label="My balance" balance={balance} />
@@ -313,7 +317,7 @@ function AmountSection({ isNft, isReview }: { isNft: boolean; isReview: boolean 
         <div className="relative w-full">
           <TextField
             name="amount"
-            placeholder="0.00"
+            placeholder="0.0"
             className="w-full"
             type="number"
             step="any"
@@ -341,9 +345,9 @@ function RecipientSection({ isReview }: { isReview: boolean }) {
   useRecipientBalanceWatcher(values.recipient, balance);
 
   return (
-    <div className="mt-4">
-      <div className="flex justify-between pr-1">
-        <label htmlFor="recipient" className="block pl-0.5 text-sm text-gray-600">
+    <div>
+      <div className="mb-2 flex justify-between">
+        <label htmlFor="recipient" className="block text-sm font-bold text-gray-900">
           Recipient address
         </label>
         <TokenBalance label="Remote balance" balance={balance} />
@@ -363,7 +367,7 @@ function RecipientSection({ isReview }: { isReview: boolean }) {
 
 function TokenBalance({ label, balance }: { label: string; balance?: TokenAmount | null }) {
   const value = balance?.getDecimalFormattedAmount().toFixed(5) || '0';
-  return <div className="text-right text-xs text-gray-600">{`${label}: ${value}`}</div>;
+  return <div className="text-right text-sm font-medium text-gray-600">{`${label}: ${value}`}</div>;
 }
 
 function ButtonSection({
@@ -498,11 +502,33 @@ function ButtonSection({
   if (!isReview) {
     return (
       <>
-        <div
-          className={`mt-3 gap-2 bg-amber-400 px-4 text-sm ${
-            showWarning ? 'max-h-38 py-2' : 'max-h-0'
-          } overflow-hidden transition-all duration-500`}
-        >
+        {showWarning && (
+          <div className="mt-3 gap-2 bg-amber-400 px-4 py-2 text-sm">
+            <RecipientWarningBanner
+              destinationChain={chainDisplayName}
+              confirmRecipientHandler={(checked) =>
+                setRecipientInfos((state) => ({ ...state, addressConfirmed: checked }))
+              }
+            />
+          </div>
+        )}
+
+        <div className="mt-8">
+          <ConnectAwareSubmitButton
+            disabled={!addressConfirmed}
+            chainName={values.origin}
+            text={isValidating ? 'Validating...' : 'Continue'}
+            classes="h-12 w-full px-3 py-2 text-base font-bold"
+          />
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <>
+      {showWarning && (
+        <div className="mt-3 gap-2 bg-amber-400 px-4 py-2 text-sm">
           <RecipientWarningBanner
             destinationChain={chainDisplayName}
             confirmRecipientHandler={(checked) =>
@@ -510,31 +536,7 @@ function ButtonSection({
             }
           />
         </div>
-
-        <ConnectAwareSubmitButton
-          disabled={!addressConfirmed}
-          chainName={values.origin}
-          text={isValidating ? 'Validating...' : 'Continue'}
-          classes={`${isReview ? 'mt-4' : 'mt-0'} px-3 py-1.5`}
-        />
-      </>
-    );
-  }
-
-  return (
-    <>
-      <div
-        className={`mt-3 gap-2 bg-amber-400 px-4 text-sm ${
-          showWarning ? 'max-h-38 py-2' : 'max-h-0'
-        } overflow-hidden transition-all duration-500`}
-      >
-        <RecipientWarningBanner
-          destinationChain={chainDisplayName}
-          confirmRecipientHandler={(checked) =>
-            setRecipientInfos((state) => ({ ...state, addressConfirmed: checked }))
-          }
-        />
-      </div>
+      )}
       <div className="mt-4 flex items-center justify-between space-x-4">
         <SolidButton
           type="button"
@@ -576,21 +578,20 @@ function MaxButton({ balance, disabled }: { balance?: TokenAmount; disabled?: bo
   };
 
   return (
-    <SolidButton
+    <button
       type="button"
       onClick={onClick}
-      color="primary"
       disabled={disabled}
-      className="absolute bottom-1 right-1 top-2.5 px-2 text-xs opacity-90 all:rounded"
+      className="absolute bottom-1.5 right-1 h-8 rounded-lg bg-[#f2e2fc] px-2 text-sm font-semibold text-[#6550b9] transition-colors hover:bg-[#e8d5f9] disabled:bg-gray-200 disabled:text-gray-400"
     >
       {isLoading ? (
         <div className="flex items-center">
-          <SpinnerIcon className="h-5 w-5" color="white" />
+          <SpinnerIcon className="h-5 w-5" color="#6550b9" />
         </div>
       ) : (
         'Max'
       )}
-    </SolidButton>
+    </button>
   );
 }
 
@@ -606,15 +607,14 @@ function SelfButton({ disabled }: { disabled?: boolean }) {
       toast.warn(`No account found for for chain ${chainDisplayName}, is your wallet connected?`);
   };
   return (
-    <SolidButton
+    <button
       type="button"
       onClick={onClick}
-      color="primary"
       disabled={disabled}
-      className="absolute bottom-1 right-1 top-2.5 px-2 text-xs opacity-90 all:rounded"
+      className="absolute bottom-1.5 right-1 h-8 rounded-lg bg-[#f2e2fc] px-2 text-sm font-semibold text-[#6550b9] transition-colors hover:bg-[#e8d5f9] disabled:bg-gray-200 disabled:text-gray-400"
     >
       Self
-    </SolidButton>
+    </button>
   );
 }
 
@@ -697,12 +697,9 @@ function ReviewDetails({
     <>
       {!isReview && <FeeSectionButton visible={!isReview} fees={fees} isLoading={isLoading} />}
 
-      <div
-        className={`${
-          isReview ? 'max-h-screen duration-1000 ease-in' : 'max-h-0 duration-500'
-        } overflow-hidden transition-all`}
-      >
-        <label className="mt-4 block pl-0.5 text-sm text-gray-600">Transactions</label>
+      {isReview && (
+        <div className="mt-4">
+          <label className="block pl-0.5 text-sm text-gray-600">Transactions</label>
         <div className="mt-1.5 space-y-2 break-all rounded border border-gray-400 bg-gray-150 px-2.5 py-2 text-sm">
           {isLoading ? (
             <div className="flex items-center justify-center py-6">
@@ -770,7 +767,8 @@ function ReviewDetails({
             </>
           )}
         </div>
-      </div>
+        </div>
+      )}
     </>
   );
 }

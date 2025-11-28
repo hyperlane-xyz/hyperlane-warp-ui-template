@@ -111,9 +111,9 @@ export function TransfersDetailsModal({
   const explorerLink = getHypExplorerLink(multiProvider, origin, msgId);
 
   return (
-    <Modal isOpen={isOpen} close={onClose} panelClassname="p-4 md:p-5 max-w-sm">
+    <Modal isOpen={isOpen} close={onClose} panelClassname="bg-[#f8f8ff] p-4 max-w-sm rounded-3xl">
       {isFinal && (
-        <div className="flex justify-between">
+        <div className="mb-4 flex justify-between">
           <h2 className="font-medium text-gray-600">{date}</h2>
           <div className="flex items-center font-medium">
             {isSent ? (
@@ -132,30 +132,31 @@ export function TransfersDetailsModal({
         </div>
       )}
 
-      <div className="mt-4 flex w-full items-center justify-center rounded-full bg-primary-200 p-3">
-        <TokenIcon token={token} size={30} />
-        <div className="items ml-2 flex items-baseline">
-          <span className="text-xl font-medium">{amount}</span>
-          <span className="ml-1 text-xl font-medium">{token?.symbol}</span>
+      <div className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#eae7ec] px-0 py-4">
+        <TokenIcon token={token} size={24} />
+        <div className="text-base font-semibold leading-5 text-[#202020]">
+          {amount} {token?.symbol}
         </div>
       </div>
 
-      <div className="mt-4 flex items-center justify-around">
-        <div className="ml-2 flex flex-col items-center">
-          <ChainLogo chainName={origin} size={64} background={true} />
-          <span className="mt-1 font-medium tracking-wider">
-            {getChainDisplayName(multiProvider, origin, true)}
+      <div className="relative flex items-center justify-between px-4 pb-4 pt-0">
+        <div className="flex w-[72px] flex-col items-center gap-[13px]">
+          <ChainLogo chainName={origin} size={56} background={false} />
+          <span className="text-center text-base font-semibold leading-5 text-[#202020]">
+            {getChainDisplayName(multiProvider, origin)}
           </span>
         </div>
-        <div className="mb-6 flex sm:space-x-1.5">
-          <WideChevron />
-          <WideChevron />
-        </div>
-        <div className="mr-2 flex flex-col items-center">
-          <ChainLogo chainName={destination} size={64} background={true} />
-          <span className="mt-1 font-medium tracking-wider">
-            {getChainDisplayName(multiProvider, destination, true)}
+        <div className="flex w-[72px] flex-col items-center gap-[13px]">
+          <ChainLogo chainName={destination} size={56} background={false} />
+          <span className="text-center text-base font-semibold leading-5 text-[#202020]">
+            {getChainDisplayName(multiProvider, destination)}
           </span>
+        </div>
+        <div className="absolute left-1/2 top-3 size-8 -translate-x-1/2">
+          <div className="flex items-center justify-center">
+            <WideChevron />
+            <WideChevron />
+          </div>
         </div>
       </div>
 
@@ -190,15 +191,13 @@ export function TransfersDetailsModal({
           )}
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center py-4">
-          <SpinnerIcon width={60} height={60} className="mt-3" />
-          <div
-            className={`mt-5 text-center text-sm ${isFailed ? 'text-red-600' : 'text-gray-600'}`}
-          >
+        <div className="flex flex-col items-center justify-center gap-4">
+          <SpinnerIcon width={40} height={40} />
+          <div className="text-center text-sm font-medium leading-5 text-[#8e8c99]">
             {statusDescription}
           </div>
           {showSignWarning && (
-            <div className="mt-3 text-center text-sm text-gray-600">
+            <div className="text-center text-sm font-medium leading-5 text-[#8e8c99]">
               If your wallet does not show a transaction request or never confirms, please try the
               transfer again.
             </div>

@@ -23,27 +23,27 @@ export function FloatingButtonStrip() {
     <>
       <div className="absolute -right-8 top-2 hidden flex-col items-center justify-end gap-3 sm:flex">
         <IconButton
-          className={`p-0.5 ${styles.roundedCircle}`}
+          className={`${styles.button}`}
           title="History"
           onClick={() => setIsSideBarOpen(!isSideBarOpen)}
         >
-          <HistoryIcon color={Color.primary['500']} height={22} width={22} />
+          <HistoryIcon color={Color.gray['600']} height={24} width={24} />
         </IconButton>
         {config.showAddRouteButton && (
           <IconButton
-            className={styles.roundedCircle}
+            className={styles.button}
             title="Add route"
             onClick={openAddWarpConfig}
           >
-            <PlusIcon color={Color.primary['500']} height={26} width={26} />
+            <PlusIcon color={Color.gray['600']} height={24} width={24} />
           </IconButton>
         )}
         <Link
           href={links.warpDocs}
           target="_blank"
-          className={`p-0.5 ${styles.roundedCircle} ${styles.link}`}
+          className={`${styles.button} ${styles.link}`}
         >
-          <DocsIcon color={Color.primary['500']} height={21} width={21} className="p-px" />
+          <DocsIcon color={Color.gray['600']} height={24} width={24} />
         </Link>
       </div>
       <AddWarpConfigModal isOpen={isAddWarpConfigOpen} close={closeAddWarpConfig} />
@@ -53,5 +53,5 @@ export function FloatingButtonStrip() {
 
 const styles = {
   link: 'hover:opacity-70 active:opacity-60',
-  roundedCircle: 'rounded-full bg-white',
+  button: 'flex size-10 items-center justify-center rounded-2xl bg-[#f8f8ff] p-2',
 };

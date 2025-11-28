@@ -110,8 +110,8 @@ function TokenButton({
     >
       <div className="flex items-center">
         {token && <TokenIcon token={token} size={20} />}
-        <span className={`ml-2 ${!token?.symbol && 'text-slate-400'}`}>
-          {token?.symbol || (isAutomatic ? 'No routes available' : 'Select Token')}
+        <span className={`ml-2 font-medium ${!token?.symbol && 'text-gray-500'}`}>
+          {token?.symbol || (isAutomatic ? 'No routes available' : 'Select token')}
         </span>
       </div>
       <ChevronIcon width={12} height={8} direction="s" />
@@ -120,7 +120,7 @@ function TokenButton({
 }
 
 const styles = {
-  base: 'mt-1.5 w-full px-2.5 py-2.5 flex items-center justify-between text-sm rounded-lg border border-primary-300 outline-none transition-colors duration-500',
-  enabled: 'hover:bg-gray-100 active:scale-95 focus:border-primary-500',
-  disabled: 'bg-gray-100 cursor-default',
+  base: 'h-10 w-full flex items-center justify-between px-3 py-2 text-sm bg-white rounded-xl border border-[#e3dfe6] outline-none transition-colors duration-300',
+  enabled: 'hover:border-primary-400 active:scale-95 focus:border-primary-500',
+  disabled: 'bg-gray-150 cursor-default',
 };

@@ -1,10 +1,9 @@
-import { AccountList, SpinnerIcon } from '@hyperlane-xyz/widgets';
+import { AccountList, SpinnerIcon, WalletIcon } from '@hyperlane-xyz/widgets';
 import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import ArrowRightIcon from '../../images/icons/arrow-right.svg';
-import CollapseIcon from '../../images/icons/collapse-icon.svg';
 import ResetIcon from '../../images/icons/reset-icon.svg';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
@@ -62,33 +61,91 @@ export function SideBarMenu({
   return (
     <>
       <div
-        className={`fixed right-0 top-0 h-full w-88 transform bg-white bg-opacity-95 shadow-lg transition-transform duration-100 ease-in ${
+        className={`fixed right-0 top-0 flex h-full items-center justify-end overflow-hidden rounded-l-2xl transition-transform duration-100 ease-in ${
           isMenuOpen ? 'z-10 translate-x-0' : 'z-0 translate-x-full'
         }`}
+        style={{ width: '400px' }}
       >
+        {/* Background image with blur */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-l-2xl backdrop-blur-[2px]">
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-200/40 to-purple-300/40" />
+        </div>
+
+        {/* Close button */}
         {isMenuOpen && (
-          <button
-            className="absolute left-0 top-0 flex h-full w-9 -translate-x-full items-center justify-center rounded-l-md bg-white bg-opacity-60 transition-all hover:bg-opacity-80"
-            onClick={() => onClose()}
-          >
-            <Image src={CollapseIcon} width={15} height={24} alt="" />
-          </button>
+          <div className="z-10 flex h-full shrink-0 items-center bg-purple-900/20 p-2 backdrop-blur-sm">
+            <button
+              className="flex size-6 items-center justify-center transition-transform hover:rotate-180"
+              onClick={() => onClose()}
+              title="Close sidebar"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M14 5L7 12L14 19"
+                  stroke="white"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+          </div>
         )}
-        <div className="flex h-full w-full flex-col overflow-y-auto">
-          <div className="w-full rounded-t-md bg-primary-500 px-3.5 py-2 text-base font-normal tracking-wider text-white">
-            Connected Wallets
+
+        {/* Main content */}
+        <div className="relative z-10 flex h-full w-[352px] shrink-0 flex-col gap-4 overflow-y-auto bg-[#f8f8ff]">
+          {/* Connected Wallets Header */}
+          <div className="w-full bg-[#8e4ec6] px-4 py-2">
+            <p className="text-xs font-semibold text-white">Connected Wallets</p>
           </div>
-          <AccountList
-            multiProvider={multiProvider}
-            onClickConnectWallet={onClickConnectWallet}
-            onCopySuccess={onCopySuccess}
-            className="px-3 py-3"
-            chainName={originChainName}
-          />
-          <div className="mb-4 w-full bg-primary-500 px-3.5 py-2 text-base font-normal tracking-wider text-white">
-            Transfer History
+
+          {/* Account List */}
+          <div className="flex flex-col gap-2 px-4">
+            <AccountList
+              multiProvider={multiProvider}
+              onClickConnectWallet={onClickConnectWallet}
+              onCopySuccess={onCopySuccess}
+              className=""
+              chainName={originChainName}
+            />
           </div>
-          <div className="flex grow flex-col px-3.5">
+
+          {/* Action Buttons */}
+          <div className="flex flex-col gap-6 border-y border-gray-200 py-2">
+            <button
+              onClick={onClickConnectWallet}
+              className="flex items-center gap-2 px-4 py-0 text-sm font-medium text-gray-900 transition-colors hover:text-primary-600"
+            >
+              <WalletIcon width={24} height={24} />
+              <span>Connect wallet</span>
+            </button>
+            <button
+              onClick={() => {
+                // Add disconnect all logic here if needed
+                toast.info('Disconnect all wallets');
+              }}
+              className="flex items-center gap-2 px-4 py-0 text-sm font-medium text-gray-900 transition-colors hover:text-primary-600"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              <span>Disconnect all wallets</span>
+            </button>
+          </div>
+
+          {/* Transfer History Header */}
+          <div className="w-full bg-[#8e4ec6] px-4 py-2">
+            <p className="text-xs font-semibold text-white">Transfer History</p>
+          </div>
+
+          {/* Transfer List */}
+          <div className="flex grow flex-col px-4">
             <div className="flex w-full grow flex-col divide-y">
               {sortedTransfers?.length > 0 &&
                 sortedTransfers.map((t, i) => (

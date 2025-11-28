@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Container from './assets/container.svg';
-import MidlImg from './assets/midl.svg';
+import MidlImg from './assets/midlS.svg';
 
 export function HowItWorks() {
   return (

@@ -24,6 +24,12 @@
     "@interchain-ui/react": "^1.23.28",
     "@metamask/post-message-stream": "6.1.2",
     "@metamask/providers": "10.2.1",
+    "@midl-xyz/midl-js-connectors": "^2.0.1",
+    "@midl-xyz/midl-js-core": "^2.0.1",
+    "@midl-xyz/midl-js-executor": "^2.0.1",
+    "@midl-xyz/midl-js-executor-react": "^2.0.1",
+    "@midl-xyz/midl-js-react": "^2.0.1",
+    "@midl-xyz/satoshi-kit": "^2.0.1",
     "@radixdlt/babylon-gateway-api-sdk": "^1.10.1",
     "@radixdlt/radix-dapp-toolkit": "^2.2.1",
     "@rainbow-me/rainbowkit": "^2.2.0",
@@ -40,6 +46,7 @@
     "@vercel/analytics": "^1.4.0",
     "@vercel/functions": "^1.5.0",
     "bignumber.js": "^9.1.2",
+    "bitcoinjs-lib": "^7.0.0",
     "buffer": "^6.0.3",
     "clsx": "^2.1.1",
     "cosmjs-types": "^0.9.0",
@@ -53,7 +60,7 @@
     "viem": "^2.21.41",
     "wagmi": "^2.12.26",
     "zod": "3.21.4",
-    "zustand": "^4.4.7"
+    "zustand": "5.0.1"
   },
   "devDependencies": {
     "@next/bundle-analyzer": "^15.0.2",
@@ -116,6 +123,7 @@
     "cipher-base": "1.0.5",
     "elliptic": "6.6.1",
     "pbkdf2": "3.1.3",
-    "form-data": "4.0.4"
+    "form-data": "4.0.4",
+    "bitcoinjs-lib": "7.0.0-rc.0"
   }
 }

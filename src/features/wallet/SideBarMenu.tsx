@@ -1,11 +1,18 @@
-import { AccountList, SpinnerIcon, WalletIcon } from '@hyperlane-xyz/widgets';
+import {
+  SpinnerIcon,
+  WalletIcon,
+  useAccounts as useProtocolAccounts,
+  useDisconnectFns,
+  useWalletDetails,
+} from '@hyperlane-xyz/widgets';
+import { useAccounts as useBtcAccounts, useDisconnect } from '@midl-xyz/midl-js-react';
 import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
+import { useMultiProvider } from '../chains/hooks';
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import ArrowRightIcon from '../../images/icons/arrow-right.svg';
 import ResetIcon from '../../images/icons/reset-icon.svg';
-import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { useStore } from '../store';
 import { tryFindToken, useWarpCore } from '../tokens/hooks';
@@ -29,11 +36,19 @@ export function SideBarMenu({
 
   const multiProvider = useMultiProvider();
 
-  const { transfers, resetTransfers, transferLoading, originChainName } = useStore((s) => ({
+  // Bitcoin wallet hooks
+  const { isConnected: isBtcConnected, accounts: btcAccounts } = useBtcAccounts();
+  const { disconnect: disconnectBtc } = useDisconnect();
+
+  // Other protocol wallets
+  const wallets = useWalletDetails();
+  const { readyAccounts } = useProtocolAccounts(multiProvider);
+  const disconnectFns = useDisconnectFns();
+
+  const { transfers, resetTransfers, transferLoading } = useStore((s) => ({
     transfers: s.transfers,
     resetTransfers: s.resetTransfers,
     transferLoading: s.transferLoading,
-    originChainName: s.originChainName,
   }));
 
   useEffect(() => {
@@ -53,10 +68,6 @@ export function SideBarMenu({
     () => [...transfers].sort((a, b) => b.timestamp - a.timestamp) || [],
     [transfers],
   );
-
-  const onCopySuccess = () => {
-    toast.success('Address copied to clipboard', { autoClose: 2000 });
-  };
 
   return (
     <>
@@ -101,13 +112,114 @@ export function SideBarMenu({
 
           {/* Account List */}
           <div className="flex flex-col gap-2 px-4">
-            <AccountList
-              multiProvider={multiProvider}
-              onClickConnectWallet={onClickConnectWallet}
-              onCopySuccess={onCopySuccess}
-              className=""
-              chainName={originChainName}
-            />
+            {/* Bitcoin Wallet */}
+            {isBtcConnected && btcAccounts?.[0] && (
+              <div className="flex items-center gap-3 rounded-xl bg-[#eae7ec] px-2 py-2 pr-3">
+                {/* Bitcoin Icon */}
+                <div className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-orange-400 to-orange-600">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 32 32"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M23.189 14.02C23.519 11.93 21.939 10.79 19.779 10.02L20.479 7.21L18.779 6.78L18.099 9.51C17.639 9.4 17.169 9.3 16.699 9.2L17.389 6.45L15.689 6.02L14.989 8.82C14.609 8.74 14.239 8.66 13.879 8.57L13.879 8.56L11.539 7.98L11.079 9.77C11.079 9.77 12.339 10.05 12.309 10.07C13.009 10.24 13.129 10.71 13.109 11.1L12.309 14.31C12.359 14.32 12.419 14.34 12.489 14.37L12.309 14.32L11.159 18.78C11.079 18.98 10.869 19.29 10.369 19.16C10.389 19.19 9.13899 18.87 9.13899 18.87L8.27899 20.79L10.509 21.34C10.939 21.45 11.359 21.56 11.769 21.66L11.059 24.49L12.759 24.92L13.459 22.11C13.939 22.24 14.409 22.36 14.869 22.47L14.169 25.26L15.869 25.69L16.579 22.87C19.539 23.42 21.779 23.19 22.759 20.51C23.569 18.31 22.779 17.03 21.219 16.18C22.359 15.91 23.219 15.14 23.189 14.02ZM19.499 19.27C18.949 21.53 15.119 20.27 13.879 19.96L14.819 16.21C16.059 16.52 20.079 16.89 19.499 19.27ZM20.049 13.98C19.549 16.02 16.369 15.01 15.359 14.76L16.209 11.33C17.219 11.58 20.569 11.84 20.049 13.98Z"
+                      fill="white"
+                    />
+                  </svg>
+                </div>
+
+                {/* Wallet Info */}
+                <div className="flex min-w-0 flex-1 flex-col gap-1">
+                  <div className="overflow-hidden text-ellipsis whitespace-nowrap text-xs font-medium leading-normal text-[#202020]">
+                    Bitcoin
+                  </div>
+                  <div className="overflow-hidden text-ellipsis whitespace-nowrap text-xs font-semibold leading-normal text-[#202020]">
+                    {btcAccounts[0].address}
+                  </div>
+                </div>
+
+                {/* Close/Disconnect Button */}
+                <button
+                  onClick={() => {
+                    disconnectBtc();
+                    toast.success('Bitcoin wallet disconnected');
+                  }}
+                  className="flex h-4 w-4 shrink-0 items-center justify-center transition-opacity hover:opacity-70"
+                  title="Disconnect"
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path
+                      d="M12 4L4 12M4 4L12 12"
+                      stroke="#202020"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </button>
+              </div>
+            )}
+
+            {/* Other protocol wallets */}
+            {readyAccounts.map((accountInfo) => {
+              if (!accountInfo?.addresses?.[0]?.address) return null;
+
+              const protocolType = accountInfo.protocol;
+              const wallet = wallets[protocolType];
+              const disconnectFn = disconnectFns[protocolType];
+              const address = accountInfo.addresses[0].address;
+
+              return (
+                <div
+                  key={`${protocolType}-${address}`}
+                  className="flex items-center gap-3 rounded-xl bg-[#eae7ec] px-2 py-2 pr-3"
+                >
+                  {/* Wallet Icon */}
+                  {wallet?.logoUrl && (
+                    <img
+                      src={wallet.logoUrl}
+                      alt={wallet.name || protocolType}
+                      className="h-6 w-6 shrink-0 rounded-full"
+                    />
+                  )}
+
+                  {/* Wallet Info */}
+                  <div className="flex min-w-0 flex-1 flex-col gap-1">
+                    <div className="overflow-hidden text-ellipsis whitespace-nowrap text-xs font-medium leading-normal text-[#202020]">
+                      {wallet?.name || protocolType}
+                    </div>
+                    <div className="overflow-hidden text-ellipsis whitespace-nowrap text-xs font-semibold leading-normal text-[#202020]">
+                      {address}
+                    </div>
+                  </div>
+
+                  {/* Close/Disconnect Button */}
+                  <button
+                    onClick={async () => {
+                      if (disconnectFn) {
+                        await disconnectFn();
+                        toast.success(`${wallet?.name || protocolType} wallet disconnected`);
+                      }
+                    }}
+                    className="flex h-4 w-4 shrink-0 items-center justify-center transition-opacity hover:opacity-70"
+                    title="Disconnect"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <path
+                        d="M12 4L4 12M4 4L12 12"
+                        stroke="#202020"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              );
+            })}
           </div>
 
           {/* Action Buttons */}
@@ -121,8 +233,12 @@ export function SideBarMenu({
             </button>
             <button
               onClick={() => {
-                // Add disconnect all logic here if needed
-                toast.info('Disconnect all wallets');
+                if (isBtcConnected) {
+                  disconnectBtc();
+                  toast.success('Bitcoin wallet disconnected');
+                } else {
+                  toast.info('No wallets to disconnect');
+                }
               }}
               className="flex items-center gap-2 px-4 py-0 text-sm font-medium text-gray-900 transition-colors hover:text-primary-600"
             >

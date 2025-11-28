@@ -1,6 +1,6 @@
 import { MultiProtocolWalletModal } from '@hyperlane-xyz/widgets';
 import Head from 'next/head';
-import { PropsWithChildren, useEffect } from 'react';
+import { PropsWithChildren, useEffect, useState } from 'react';
 import { APP_NAME, BACKGROUND_COLOR, BACKGROUND_IMAGE } from '../../consts/app';
 import { config } from '../../consts/config';
 import { EVENT_NAME } from '../../features/analytics/types';
@@ -8,6 +8,7 @@ import { useWalletConnectionTracking } from '../../features/analytics/useWalletC
 import { trackEvent } from '../../features/analytics/utils';
 import { useStore } from '../../features/store';
 import { SideBarMenu } from '../../features/wallet/SideBarMenu';
+import { WalletTypeSelectModal } from '../../features/wallet/WalletTypeSelectModal';
 // import { Footer } from '../nav/Footer';
 import { Header } from '../nav/Header';
 
@@ -20,6 +21,8 @@ export function AppLayout({ children }: PropsWithChildren) {
       setIsSideBarOpen: s.setIsSideBarOpen,
     }),
   );
+
+  const [showEvmWalletModal, setShowEvmWalletModal] = useState(false);
 
   useWalletConnectionTracking();
 
@@ -46,14 +49,23 @@ export function AppLayout({ children }: PropsWithChildren) {
         {/*<Footer />*/}
       </div>
 
-      <MultiProtocolWalletModal
-        isOpen={showEnvSelectModal}
-        close={() => setShowEnvSelectModal(false)}
-        protocols={config.walletProtocols}
-        onProtocolSelected={(protocol) =>
-          trackEvent(EVENT_NAME.WALLET_CONNECTION_INITIATED, { protocol })
-        }
-      />
+      {showEnvSelectModal ? (
+        <WalletTypeSelectModal
+          isOpen={showEnvSelectModal}
+          close={() => setShowEnvSelectModal(false)}
+          onEvmSelected={() => setShowEvmWalletModal(true)}
+        />
+      ) : null}
+      {showEvmWalletModal ? (
+        <MultiProtocolWalletModal
+          isOpen={showEvmWalletModal}
+          close={() => setShowEvmWalletModal(false)}
+          protocols={config.walletProtocols}
+          onProtocolSelected={(protocol) =>
+            trackEvent(EVENT_NAME.WALLET_CONNECTION_INITIATED, { protocol })
+          }
+        />
+      ) : null}
       <SideBarMenu
         onClose={() => setIsSideBarOpen(false)}
         isOpen={isSideBarOpen}
@@ -65,7 +77,7 @@ export function AppLayout({ children }: PropsWithChildren) {
 
 const styles = {
   container: {
-    backgroundColor:BACKGROUND_COLOR,
+    backgroundColor: BACKGROUND_COLOR,
     background: BACKGROUND_IMAGE,
     backgroundSize: 'cover',
     backgroundRepeat: 'no-repeat',

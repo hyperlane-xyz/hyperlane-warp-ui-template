@@ -91,6 +91,15 @@ const nextConfig = {
   },
 
   reactStrictMode: true,
+
+  transpilePackages: [
+    '@midl-xyz/satoshi-kit',
+    '@midl-xyz/midl-js-core',
+    '@midl-xyz/midl-js-react',
+    '@midl-xyz/midl-js-executor',
+    '@midl-xyz/midl-js-executor-react',
+    '@midl-xyz/midl-js-connectors',
+  ],
 };
 
 const sentryOptions = {

@@ -1,10 +1,9 @@
-import { ProtocolType } from '@hyperlane-xyz/utils';
-import { useAccountForChain, useConnectFns, useTimeout } from '@hyperlane-xyz/widgets';
+import { useAccountForChain, useTimeout } from '@hyperlane-xyz/widgets';
+import { useAccounts as useBtcAccounts } from '@midl-xyz/midl-js-react';
 import { useFormikContext } from 'formik';
 import { useCallback } from 'react';
-import { EVENT_NAME } from '../../features/analytics/types';
-import { trackEvent } from '../../features/analytics/utils';
-import { useChainProtocol, useMultiProvider } from '../../features/chains/hooks';
+import { useMultiProvider } from '../../features/chains/hooks';
+import { useStore } from '../../features/store';
 import { SolidButton } from './SolidButton';
 
 interface Props {
@@ -20,13 +19,19 @@ export function ConnectAwareSubmitButton<FormValues = any>({
   classes,
   disabled,
 }: Props) {
-  const protocol = useChainProtocol(chainName) || ProtocolType.Ethereum;
-  const connectFns = useConnectFns();
-  const connectFn = connectFns[protocol];
-
   const multiProvider = useMultiProvider();
   const account = useAccountForChain(multiProvider, chainName);
-  const isAccountReady = account?.isReady;
+
+  // Check Bitcoin wallet status
+  const { isConnected: isBtcConnected } = useBtcAccounts();
+
+  // Account is ready if either protocol account is ready OR Bitcoin wallet is connected
+  const isAccountReady = account?.isReady || isBtcConnected;
+
+  // Get wallet type select modal control
+  const { setShowEnvSelectModal } = useStore((s) => ({
+    setShowEnvSelectModal: s.setShowEnvSelectModal,
+  }));
 
   const { errors, setErrors, touched, setTouched } = useFormikContext<FormValues>();
 
@@ -43,8 +48,8 @@ export function ConnectAwareSubmitButton<FormValues = any>({
   const onClick = () => {
     if (isAccountReady) return undefined;
 
-    trackEvent(EVENT_NAME.WALLET_CONNECTION_INITIATED, { protocol });
-    connectFn();
+    // Open wallet type select modal to let user choose between EVM and Bitcoin
+    setShowEnvSelectModal(true);
   };
 
   // Automatically clear error state after a timeout

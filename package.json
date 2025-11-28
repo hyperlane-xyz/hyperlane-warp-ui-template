@@ -18,12 +18,15 @@
     "@emotion/styled": "^11.13.0",
     "@headlessui/react": "^2.2.0",
     "@hyperlane-xyz/registry": "23.6.0",
-    "@hyperlane-xyz/sdk": "19.9.0",
-    "@hyperlane-xyz/utils": "19.9.0",
-    "@hyperlane-xyz/widgets": "19.9.0",
+    "@hyperlane-xyz/sdk": "file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/sdk",
+    "@hyperlane-xyz/utils": "file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/utils",
+    "@hyperlane-xyz/widgets": "file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/widgets",
     "@interchain-ui/react": "^1.23.28",
     "@metamask/post-message-stream": "6.1.2",
     "@metamask/providers": "10.2.1",
+    "@provablehq/aleo-wallet-adaptor-prove-alpha": "^0.3.0-alpha.0",
+    "@provablehq/aleo-wallet-adaptor-react": "^0.3.0-alpha.0",
+    "@puzzlehq/sdk": "^1.0.4",
     "@radixdlt/babylon-gateway-api-sdk": "^1.10.1",
     "@radixdlt/radix-dapp-toolkit": "^2.2.1",
     "@rainbow-me/rainbowkit": "^2.2.0",
@@ -116,6 +119,10 @@
     "cipher-base": "1.0.5",
     "elliptic": "6.6.1",
     "pbkdf2": "3.1.3",
-    "form-data": "4.0.4"
+    "form-data": "4.0.4",
+    "@hyperlane-xyz/sdk": "file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/sdk",
+    "@hyperlane-xyz/utils": "file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/utils",
+    "@hyperlane-xyz/widgets": "file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/widgets",
+    "@hyperlane-xyz/aleo-sdk": "file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/aleo-sdk"
   }
 }

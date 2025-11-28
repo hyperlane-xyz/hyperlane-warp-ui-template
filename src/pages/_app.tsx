@@ -1,5 +1,7 @@
 import { useIsSsr } from '@hyperlane-xyz/widgets';
 import '@hyperlane-xyz/widgets/styles.css';
+import { GalileoWalletAdapter } from '@provablehq/aleo-wallet-adaptor-prove-alpha';
+import { AleoWalletProvider } from '@provablehq/aleo-wallet-adaptor-react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Analytics } from '@vercel/analytics/react';
 import type { AppProps } from 'next/app';
@@ -17,6 +19,8 @@ import { StarknetWalletContext } from '../features/wallet/context/StarknetWallet
 import '../styles/globals.css';
 import '../vendor/inpage-metamask';
 import '../vendor/polyfill';
+
+const wallets = [new GalileoWalletAdapter()];
 
 const reactQueryClient = new QueryClient({
   defaultOptions: {
@@ -46,10 +50,12 @@ export default function App({ Component, pageProps }: AppProps) {
                 <CosmosWalletContext>
                   <StarknetWalletContext>
                     <RadixWalletContext>
-                      <AppLayout>
-                        <Component {...pageProps} />
-                        <Analytics />
-                      </AppLayout>
+                      <AleoWalletProvider wallets={wallets}>
+                        <AppLayout>
+                          <Component {...pageProps} />
+                          <Analytics />
+                        </AppLayout>
+                      </AleoWalletProvider>
                     </RadixWalletContext>
                   </StarknetWalletContext>
                 </CosmosWalletContext>

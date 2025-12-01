@@ -3,9 +3,9 @@ name: ci
 on:
   # Triggers the workflow on push or pull request events but only for the main branch
   push:
-    branches: [main, nautilus, nexus, injective, trump, ousdt]
+    branches: [main, nexus, trump, ousdt]
   pull_request:
-    branches: [main, nautilus, nexus, injective, trump, ousdt]
+    branches: [main, nexus, trump, ousdt]
   merge_group:
 
   # Allows you to run this workflow manually from the Actions tab

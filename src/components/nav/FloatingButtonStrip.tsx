@@ -21,7 +21,7 @@ export function FloatingButtonStrip() {
 
   return (
     <>
-      <div className="absolute -right-8 top-2 hidden flex-col items-center justify-end gap-3 sm:flex">
+      <div className="absolute top-2 -right-[52px] hidden flex-col items-center justify-end gap-3 sm:flex">
         <IconButton
           className={`${styles.button}`}
           title="History"
@@ -30,19 +30,11 @@ export function FloatingButtonStrip() {
           <HistoryIcon color={Color.gray['600']} height={24} width={24} />
         </IconButton>
         {config.showAddRouteButton && (
-          <IconButton
-            className={styles.button}
-            title="Add route"
-            onClick={openAddWarpConfig}
-          >
+          <IconButton className={styles.button} title="Add route" onClick={openAddWarpConfig}>
             <PlusIcon color={Color.gray['600']} height={24} width={24} />
           </IconButton>
         )}
-        <Link
-          href={links.warpDocs}
-          target="_blank"
-          className={`${styles.button} ${styles.link}`}
-        >
+        <Link href={links.warpDocs} target="_blank" className={`${styles.button} ${styles.link}`}>
           <DocsIcon color={Color.gray['600']} height={24} width={24} />
         </Link>
       </div>

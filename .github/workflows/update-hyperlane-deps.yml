@@ -86,7 +86,7 @@ jobs:
 
             git push -fu origin ci/update-hl-deps
 
-            PR_TITLE="chore: update SDK to ${{ steps.get-versions.outputs.sdk }}, Registry to ${{ steps.get-versions.outputs.registry }}"
+            PR_TITLE="chore: update Hyperlane deps"
             PR_BODY="## Automated Dependency Update
 
           This PR updates the Hyperlane dependencies to their latest versions.

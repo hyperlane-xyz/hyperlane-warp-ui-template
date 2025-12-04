@@ -130,7 +130,8 @@ export function TokenList({
         return (
           t.token.name.toLowerCase().includes(q) ||
           t.token.symbol.toLowerCase().includes(q) ||
-          t.token.addressOrDenom.toLowerCase().includes(q)
+          t.token.addressOrDenom.toLowerCase().includes(q) ||
+          t.token.collateralAddressOrDenom?.toLowerCase().includes(q)
         );
       })
       // Hide/show disabled tokens
@@ -143,11 +144,14 @@ export function TokenList({
     const tokenSymbols = tokens.map((item) => item.token.symbol);
     const q = searchQuery?.trim().toLowerCase();
     return objFilter(tokensBySymbolChainMap, (symbol, value): value is TokenChainMap => {
+      const token = value.tokenInformation;
       return (
         !tokenSymbols.includes(symbol) &&
         (q === '' ||
-          value.tokenInformation.name.toLowerCase().includes(q) ||
-          value.tokenInformation.symbol.toLowerCase().includes(q))
+          token.name.toLowerCase().includes(q) ||
+          token.symbol.toLowerCase().includes(q) ||
+          token.collateralAddressOrDenom?.toLowerCase().includes(q) ||
+          token.addressOrDenom.toLowerCase().includes(q))
       );
     });
   }, [tokens, tokensBySymbolChainMap, searchQuery]);

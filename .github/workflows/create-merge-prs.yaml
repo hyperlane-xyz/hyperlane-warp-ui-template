@@ -4,44 +4,104 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   create-merge-prs:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     strategy:
       fail-fast: false
       matrix:
-        name: [injective, nexus, trump, ousdt]
+        branch: [injective, nexus, trump, ousdt]
     steps:
+      - name: Generate GitHub App Token
+        id: generate-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.HYPER_GONK_APP_ID }}
+          private-key: ${{ secrets.HYPER_GONK_PRIVATE_KEY }}
+
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
+          token: ${{ steps.generate-token.outputs.token }}
 
-      - name: Configure Git
+      - name: Get GitHub App User ID
+        id: get-user-id
+        run: echo "user-id=$(gh api /users/${{ steps.generate-token.outputs.app-slug }}[bot] --jq .id)" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+
+      - name: Configure Git for Hyper Gonk
         run: |
-          git config user.name "GitHub Actions Bot"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "${{ steps.generate-token.outputs.app-slug }}[bot]"
+          git config user.email "${{ steps.get-user-id.outputs.user-id }}+${{ steps.generate-token.outputs.app-slug }}[bot]@users.noreply.github.com"
+
+      - name: Check if merge is needed
+        id: check-merge
+        run: |
+          git fetch origin ${{ matrix.branch }}
+          if git merge-base --is-ancestor origin/main origin/${{ matrix.branch }}; then
+            echo "Branch ${{ matrix.branch }} is already up-to-date with main"
+            echo "needs_merge=false" >> $GITHUB_OUTPUT
+          else
+            echo "Branch ${{ matrix.branch }} needs updates from main"
+            echo "needs_merge=true" >> $GITHUB_OUTPUT
+          fi
 
       - name: Create and push merge branch
+        if: steps.check-merge.outputs.needs_merge == 'true'
+        id: merge
         run: |
-          git checkout ${{ matrix.name }}
-          git merge origin/main
-          git checkout -b main-to-${{ matrix.name }}
-          git push -fu origin main-to-${{ matrix.name }}
+          git checkout ${{ matrix.branch }}
 
-      - name: Check and Create Pull Request
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          PR_EXISTS=$(gh pr list --base ${{ matrix.name }} --head main-to-${{ matrix.name }} --json number --jq length)
-          if [ "$PR_EXISTS" -eq "0" ]; then
-            gh pr create \
-              --base ${{ matrix.name }} \
-              --head main-to-${{ matrix.name }} \
-              --title "chore: merge main into ${{ matrix.name }}" \
-              --body "This PR was automatically created to merge changes from \`main\` into \`${{ matrix.name }}\`." \
-              --draft
+          # Attempt merge, capturing if there are conflicts
+          if git merge origin/main --no-edit; then
+            echo "has_conflicts=false" >> $GITHUB_OUTPUT
           else
-            echo "Pull request already exists. Skipping creation."
+            echo "::warning::Merge conflict detected for ${{ matrix.branch }}"
+            echo "has_conflicts=true" >> $GITHUB_OUTPUT
+            # Stage all files including conflicts to allow branch creation
+            git add -A
+            git commit --no-edit || true
           fi
+
+          git branch -M main-to-${{ matrix.branch }}
+          git push -fu origin main-to-${{ matrix.branch }}
+        env:
+          GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
+
+      - name: Create or update PR
+        if: steps.check-merge.outputs.needs_merge == 'true'
+        run: |
+          PR_EXISTS=$(gh pr list --base ${{ matrix.branch }} --head main-to-${{ matrix.branch }} --json number --jq '.[0].number')
+
+          if [ "${{ steps.merge.outputs.has_conflicts }}" == "true" ]; then
+            BODY="⚠️ **This PR has merge conflicts that need to be resolved manually.**
+
+          This PR was automatically created to merge changes from \`main\` into \`${{ matrix.branch }}\`."
+          else
+            BODY="This PR was automatically created to merge changes from \`main\` into \`${{ matrix.branch }}\`."
+          fi
+
+          if [ -z "$PR_EXISTS" ]; then
+            gh pr create \
+              --base ${{ matrix.branch }} \
+              --head main-to-${{ matrix.branch }} \
+              --title "chore: merge main into ${{ matrix.branch }}" \
+              --body "$BODY" \
+              --draft
+            echo "Created new PR for ${{ matrix.branch }}"
+          else
+            echo "PR #$PR_EXISTS already exists for ${{ matrix.branch }}"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}

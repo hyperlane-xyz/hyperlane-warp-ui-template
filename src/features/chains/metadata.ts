@@ -38,10 +38,18 @@ export async function assembleChainMetadata(
 
   let registryChainMetadata: ChainMap<ChainMetadata>;
   if (config.registryUrl) {
-    logger.debug('Using custom registry metadata from:', config.registryUrl);
-    registryChainMetadata = await registry.getMetadata();
+    try {
+      logger.debug('Using custom registry chain metadata from:', config.registryUrl);
+      registryChainMetadata = await registry.getMetadata();
+    } catch {
+      logger.debug(
+        'Failed fetching chain metadata from GH registry, using published registry',
+        config.registryUrl,
+      );
+      registryChainMetadata = publishedChainMetadata;
+    }
   } else {
-    logger.debug('Using default published registry');
+    logger.debug('Using default published registry for chain metadata');
     registryChainMetadata = publishedChainMetadata;
   }
 

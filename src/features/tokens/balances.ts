@@ -10,7 +10,7 @@ import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { TransferFormValues } from '../transfer/types';
-import { useTokenByIndex } from './hooks';
+import { useTokenByKey } from './hooks';
 
 export function useBalance(chain?: ChainName, token?: IToken, address?: Address) {
   const multiProvider = useMultiProvider();
@@ -34,15 +34,15 @@ export function useBalance(chain?: ChainName, token?: IToken, address?: Address)
   };
 }
 
-export function useOriginBalance({ origin, tokenIndex }: TransferFormValues) {
+export function useOriginBalance({ origin, tokenKey }: TransferFormValues) {
   const multiProvider = useMultiProvider();
   const address = useAccountAddressForChain(multiProvider, origin);
-  const token = useTokenByIndex(tokenIndex);
+  const token = useTokenByKey(tokenKey);
   return useBalance(origin, token, address);
 }
 
-export function useDestinationBalance({ destination, tokenIndex, recipient }: TransferFormValues) {
-  const originToken = useTokenByIndex(tokenIndex);
+export function useDestinationBalance({ destination, tokenKey, recipient }: TransferFormValues) {
+  const originToken = useTokenByKey(tokenKey);
   const connection = originToken?.getConnectionForChain(destination);
   return useBalance(destination, connection?.token, recipient);
 }

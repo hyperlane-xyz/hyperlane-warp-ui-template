@@ -1,7 +1,7 @@
 export interface TransferFormValues {
   origin: ChainName;
   destination: ChainName;
-  tokenIndex: number | undefined;
+  tokenKey: string | undefined;
   amount: string;
   recipient: Address;
 }

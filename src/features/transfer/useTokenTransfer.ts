@@ -20,7 +20,7 @@ import { trackEvent } from '../analytics/utils';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { AppState, useStore } from '../store';
-import { getTokenByIndex, useWarpCore } from '../tokens/hooks';
+import { getTokenByKey, useWarpCore } from '../tokens/hooks';
 import { TransferContext, TransferFormValues, TransferStatus } from './types';
 import { tryGetMsgIdFromTransferReceipt } from './utils';
 
@@ -107,11 +107,11 @@ async function executeTransfer({
   let transferStatus: TransferStatus = TransferStatus.Preparing;
   updateTransferStatus(transferIndex, transferStatus);
 
-  const { origin, destination, tokenIndex, amount, recipient } = values;
+  const { origin, destination, tokenKey, amount, recipient } = values;
   const multiProvider = warpCore.multiProvider;
 
   try {
-    const originToken = getTokenByIndex(warpCore, tokenIndex);
+    const originToken = getTokenByKey(warpCore, tokenKey);
     const connection = originToken?.getConnectionForChain(destination);
     if (!originToken || !connection) throw new Error('No token route found between chains');
 

@@ -10,7 +10,7 @@ import { trackTokenSelectionEvent } from '../analytics/utils';
 import { useMultiProvider } from '../chains/hooks';
 import { TransferFormValues } from '../transfer/types';
 import { TokenListModal } from './TokenListModal';
-import { getIndexForToken, getTokenByIndex, getTokenIndexFromChains, useWarpCore } from './hooks';
+import { getTokenByKey, getTokenKey, getTokenKeyFromChains, useWarpCore } from './hooks';
 
 type Props = {
   name: string;
@@ -20,7 +20,7 @@ type Props = {
 
 export function TokenSelectField({ name, disabled, setIsNft }: Props) {
   const { values, setValues } = useFormikContext<TransferFormValues>();
-  const [field, , helpers] = useField<number | undefined>(name);
+  const [field, , helpers] = useField<string | undefined>(name);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAutomaticSelection, setIsAutomaticSelection] = useState(false);
 
@@ -34,8 +34,8 @@ export function TokenSelectField({ name, disabled, setIsNft }: Props) {
   }, [warpCore, origin, destination, helpers]);
 
   const onSelectToken = (newToken: IToken) => {
-    // Set the token address value in formik state
-    helpers.setValue(getIndexForToken(warpCore, newToken));
+    // Set the token key value in formik state
+    helpers.setValue(getTokenKey(newToken));
 
     // token selection event
     trackTokenSelectionEvent(newToken, origin, destination, multiProvider);
@@ -62,7 +62,7 @@ export function TokenSelectField({ name, disabled, setIsNft }: Props) {
       ...values,
       origin,
       destination,
-      tokenIndex: getTokenIndexFromChains(warpCore, token.addressOrDenom, origin, destination),
+      tokenKey: getTokenKeyFromChains(warpCore, token.addressOrDenom, origin, destination, token.symbol),
     });
     updateQueryParams({
       [WARP_QUERY_PARAMS.ORIGIN]: origin,
@@ -74,7 +74,7 @@ export function TokenSelectField({ name, disabled, setIsNft }: Props) {
   return (
     <>
       <TokenButton
-        token={getTokenByIndex(warpCore, field.value)}
+        token={getTokenByKey(warpCore, field.value)}
         disabled={disabled}
         onClick={onClickField}
         isAutomatic={isAutomaticSelection}

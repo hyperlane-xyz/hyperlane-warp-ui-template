@@ -11,7 +11,7 @@ import { TransferFormValues } from './types';
 const FEE_QUOTE_REFRESH_INTERVAL = 30_000; // 30s
 
 export function useFeeQuotes(
-  { destination, amount, recipient, tokenIndex }: TransferFormValues,
+  { destination, amount, recipient, tokenKey }: TransferFormValues,
   enabled: boolean,
   originToken: Token | undefined,
   searchForLowestFee: boolean = false,
@@ -35,7 +35,7 @@ export function useFeeQuotes(
     // eslint-disable-next-line @tanstack/query/exhaustive-deps
     queryKey: [
       'useFeeQuotes',
-      tokenIndex,
+      tokenKey,
       destination,
       sender,
       senderPubKey,

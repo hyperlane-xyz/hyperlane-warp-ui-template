@@ -7,7 +7,7 @@ import { SelectTokenIdField } from './SelectTokenIdField';
 
 export function SelectOrInputTokenIds({ disabled }: { disabled: boolean }) {
   const {
-    values: { tokenIndex },
+    values: { tokenKey },
   } = useFormikContext<TransferFormValues>();
   // const accountAddress = useAccountAddressForChain(origin);
   // const { isContractAllowToGetTokenIds } = useContractSupportsTokenByOwner(
@@ -17,13 +17,13 @@ export function SelectOrInputTokenIds({ disabled }: { disabled: boolean }) {
   const isContractAllowToGetTokenIds = true;
 
   return isContractAllowToGetTokenIds ? (
-    <SelectTokenIdField name="amount" disabled={disabled} tokenIndex={tokenIndex} />
+    <SelectTokenIdField name="amount" disabled={disabled} tokenKey={tokenKey} />
   ) : (
-    <InputTokenId disabled={disabled} tokenIndex={tokenIndex} />
+    <InputTokenId disabled={disabled} tokenKey={tokenKey} />
   );
 }
 
-function InputTokenId({ disabled }: { disabled: boolean; tokenIndex?: number }) {
+function InputTokenId({ disabled }: { disabled: boolean; tokenKey?: string }) {
   // const {
   //   values: { amount },
   // } = useFormikContext<TransferFormValues>();

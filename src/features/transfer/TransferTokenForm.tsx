@@ -52,10 +52,10 @@ import {
   useOriginBalance,
 } from '../tokens/balances';
 import {
-  getIndexForToken,
-  getInitialTokenIndex,
-  getTokenByIndex,
-  getTokenIndexFromChains,
+  getTokenByKey,
+  getTokenKey,
+  getInitialTokenKey,
+  getTokenKeyFromChains,
   useWarpCore,
 } from '../tokens/hooks';
 import { useTokenPrice } from '../tokens/useTokenPrice';
@@ -154,7 +154,6 @@ export function TransferTokenForm() {
             setIsReview={setIsReview}
             cleanOverrideToken={() => setRouteTokenOverride(null)}
             routeOverrideToken={routeOverrideToken}
-            warpCore={warpCore}
           />
           <RecipientConfirmationModal
             isOpen={isConfirmationModalOpen}
@@ -218,17 +217,18 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
   }, [values.destination, warpCore]);
 
   const { originToken, destinationToken } = useMemo(() => {
-    const originToken = getTokenByIndex(warpCore, values.tokenIndex);
+    const originToken = getTokenByKey(warpCore, values.tokenKey);
     if (!originToken) return { originToken: undefined, destinationToken: undefined };
     const destinationToken = originToken.getConnectionForChain(values.destination)?.token;
     return { originToken, destinationToken };
-  }, [values.tokenIndex, values.destination, warpCore]);
+  }, [values.tokenKey, values.destination, warpCore]);
 
   const setTokenOnChainChange = (origin: string, destination: string) => {
-    const tokenIndex = getTokenIndexFromChains(warpCore, null, origin, destination);
-    const token = getTokenByIndex(warpCore, tokenIndex);
+    // Returns token key if only one route exists, undefined if 0 or multiple routes
+    const tokenKey = getTokenKeyFromChains(warpCore, null, origin, destination);
+    const token = tokenKey ? getTokenByKey(warpCore, tokenKey) : undefined;
     updateQueryParam(WARP_QUERY_PARAMS.TOKEN, token?.symbol);
-    setFieldValue('tokenIndex', tokenIndex);
+    setFieldValue('tokenKey', tokenKey);
   };
 
   const handleChange = (chainName: string, fieldName: string) => {
@@ -282,10 +282,10 @@ function TokenSection({
 }) {
   return (
     <div className="flex-1">
-      <label htmlFor="tokenIndex" className="block pl-0.5 text-sm text-gray-600">
+      <label htmlFor="tokenKey" className="block pl-0.5 text-sm text-gray-600">
         Token
       </label>
-      <TokenSelectField name="tokenIndex" disabled={isReview} setIsNft={setIsNft} />
+      <TokenSelectField name="tokenKey" disabled={isReview} setIsNft={setIsNft} />
     </div>
   );
 }
@@ -372,14 +372,12 @@ function ButtonSection({
   setIsReview,
   cleanOverrideToken,
   routeOverrideToken,
-  warpCore,
 }: {
   isReview: boolean;
   isValidating: boolean;
   setIsReview: (b: boolean) => void;
   cleanOverrideToken: () => void;
   routeOverrideToken: Token | null;
-  warpCore: WarpCore;
 }) {
   const { values } = useFormikContext<TransferFormValues>();
   const multiProvider = useMultiProvider();
@@ -480,14 +478,14 @@ function ButtonSection({
     }
     setIsReview(false);
     setTransferLoading(true);
-    let tokenIndex = values.tokenIndex;
+    let tokenKey = values.tokenKey;
     let origin = values.origin;
 
     if (routeOverrideToken) {
-      tokenIndex = getIndexForToken(warpCore, routeOverrideToken);
+      tokenKey = getTokenKey(routeOverrideToken);
       origin = routeOverrideToken.chainName;
     }
-    await triggerTransactions({ ...values, tokenIndex, origin });
+    await triggerTransactions({ ...values, tokenKey, origin });
   };
 
   const onEdit = () => {
@@ -561,13 +559,13 @@ function ButtonSection({
 
 function MaxButton({ balance, disabled }: { balance?: TokenAmount; disabled?: boolean }) {
   const { values, setFieldValue } = useFormikContext<TransferFormValues>();
-  const { origin, destination, tokenIndex } = values;
+  const { origin, destination, tokenKey } = values;
   const multiProvider = useMultiProvider();
   const { accounts } = useAccounts(multiProvider);
   const { fetchMaxAmount, isLoading } = useFetchMaxAmount();
 
   const onClick = async () => {
-    if (!balance || isNullish(tokenIndex) || disabled) return;
+    if (!balance || !tokenKey || disabled) return;
     const maxAmount = await fetchMaxAmount({ balance, origin, destination, accounts });
     if (isNullish(maxAmount)) return;
     const decimalsAmount = maxAmount.getDecimalFormattedAmount();
@@ -626,9 +624,9 @@ function ReviewDetails({
   routeOverrideToken: Token | null;
 }) {
   const { values } = useFormikContext<TransferFormValues>();
-  const { amount, destination, tokenIndex } = values;
+  const { amount, destination, tokenKey } = values;
   const warpCore = useWarpCore();
-  const originToken = routeOverrideToken || getTokenByIndex(warpCore, tokenIndex);
+  const originToken = routeOverrideToken || getTokenByKey(warpCore, tokenKey);
   const originTokenSymbol = originToken?.symbol || '';
   const connection = originToken?.getConnectionForChain(destination);
   const destinationToken = connection?.token;
@@ -803,7 +801,7 @@ function useFormInitialValues(): TransferFormValues {
     ? warpCore.getTokensForChain(config.defaultOriginChain)?.[0]
     : undefined;
 
-  const tokenIndex = getInitialTokenIndex(
+  const tokenKey = getInitialTokenKey(
     warpCore,
     params.get(WARP_QUERY_PARAMS.TOKEN),
     originQuery,
@@ -822,11 +820,11 @@ function useFormInitialValues(): TransferFormValues {
       destination: chainsValid
         ? destinationQuery
         : config.defaultDestinationChain || connectedToken?.token?.chainName || '',
-      tokenIndex: tokenIndex,
+      tokenKey: tokenKey,
       amount: '',
       recipient: '',
     };
-  }, [warpCore, destinationQuery, originQuery, tokenIndex, defaultOriginToken]);
+  }, [warpCore, destinationQuery, originQuery, tokenKey, defaultOriginToken]);
 }
 
 const insufficientFundsErrMsg = /insufficient.[funds|lamports]/i;
@@ -841,8 +839,8 @@ async function validateForm(
   // returns a tuple, where first value is validation result
   // and second value is token override
   try {
-    const { origin, destination, tokenIndex, amount, recipient } = values;
-    const token = getTokenByIndex(warpCore, tokenIndex);
+    const { origin, destination, tokenKey, amount, recipient } = values;
+    const token = getTokenByKey(warpCore, tokenKey);
     if (!token) return [{ token: 'Token is required' }, null];
     const destinationToken = token.getConnectionForChain(destination)?.token;
     if (!destinationToken) return [{ token: 'Token is required' }, null];

@@ -10,6 +10,7 @@ import {
   ChainMetadata,
   ChainName,
   MultiProtocolProvider,
+  Token,
   WarpCore,
   WarpCoreConfig,
 } from '@hyperlane-xyz/sdk';
@@ -21,7 +22,11 @@ import { config } from '../consts/config';
 import { logger } from '../utils/logger';
 import { assembleChainMetadata } from './chains/metadata';
 import { TokenChainMap } from './tokens/types';
-import { assembleTokensBySymbolChainMap } from './tokens/utils';
+import {
+  assembleTokensBySymbolChainMap,
+  buildDestinationTokens,
+  buildOriginTokens,
+} from './tokens/utils';
 import { FinalTransferStatuses, TransferContext, TransferStatus } from './transfer/types';
 import { assembleWarpCoreConfig } from './warpCore/warpCoreConfig';
 
@@ -35,6 +40,8 @@ interface WarpContext {
   warpCore: WarpCore;
   tokensBySymbolChainMap: Record<string, TokenChainMap>;
   routerAddressesByChainMap: Record<ChainName, Set<string>>;
+  originTokens: Token[];
+  destinationTokens: Token[];
 }
 
 // Keeping everything here for now as state is simple
@@ -78,6 +85,9 @@ export interface AppState {
   // this map is currently used by the transfer token form validation to prevent
   // users from sending funds to a warp route address in a given destination chain
   routerAddressesByChainMap: Record<ChainName, Set<string>>;
+  // Token arrays for origin and destination selection (deduplicated by collateral at startup)
+  originTokens: Token[];
+  destinationTokens: Token[];
 }
 
 export const useStore = create<AppState>()(
@@ -92,33 +102,49 @@ export const useStore = create<AppState>()(
       ) => {
         logger.debug('Setting chain overrides in store');
         const filtered = objFilter(overrides, (_, metadata) => !!metadata);
-        const { multiProvider, warpCore, routerAddressesByChainMap, tokensBySymbolChainMap } =
-          await initWarpContext({
-            ...get(),
-            chainMetadataOverrides: filtered,
-          });
+        const {
+          multiProvider,
+          warpCore,
+          routerAddressesByChainMap,
+          tokensBySymbolChainMap,
+          originTokens,
+          destinationTokens,
+        } = await initWarpContext({
+          ...get(),
+          chainMetadataOverrides: filtered,
+        });
         set({
           chainMetadataOverrides: filtered,
           multiProvider,
           warpCore,
           tokensBySymbolChainMap,
           routerAddressesByChainMap,
+          originTokens,
+          destinationTokens,
         });
       },
       warpCoreConfigOverrides: [],
       setWarpCoreConfigOverrides: async (overrides: WarpCoreConfig[] | undefined = []) => {
         logger.debug('Setting warp core config overrides in store');
-        const { multiProvider, warpCore, routerAddressesByChainMap, tokensBySymbolChainMap } =
-          await initWarpContext({
-            ...get(),
-            warpCoreConfigOverrides: overrides,
-          });
+        const {
+          multiProvider,
+          warpCore,
+          routerAddressesByChainMap,
+          tokensBySymbolChainMap,
+          originTokens,
+          destinationTokens,
+        } = await initWarpContext({
+          ...get(),
+          warpCoreConfigOverrides: overrides,
+        });
         set({
           warpCoreConfigOverrides: overrides,
           multiProvider,
           warpCore,
           tokensBySymbolChainMap,
           routerAddressesByChainMap,
+          originTokens,
+          destinationTokens,
         });
       },
       multiProvider: new MultiProtocolProvider({}),
@@ -180,6 +206,8 @@ export const useStore = create<AppState>()(
       },
       tokensBySymbolChainMap: {},
       routerAddressesByChainMap: {},
+      originTokens: [],
+      destinationTokens: [],
     }),
 
     // Store config
@@ -247,6 +275,11 @@ async function initWarpContext({
 
     const tokensBySymbolChainMap = assembleTokensBySymbolChainMap(warpCore.tokens, multiProvider);
     const routerAddressesByChainMap = getRouterAddressesByChain(coreConfig.tokens);
+
+    // Build origin and destination token arrays (deduplicated by collateral at startup)
+    const originTokens = buildOriginTokens(warpCore.tokens);
+    const destinationTokens = buildDestinationTokens(warpCore.tokens);
+
     return {
       registry: currentRegistry,
       chainMetadata,
@@ -254,6 +287,8 @@ async function initWarpContext({
       warpCore,
       tokensBySymbolChainMap,
       routerAddressesByChainMap,
+      originTokens,
+      destinationTokens,
     };
   } catch (error) {
     toast.error('Error initializing warp context. Please check connection status and configs.');
@@ -265,6 +300,8 @@ async function initWarpContext({
       warpCore: new WarpCore(new MultiProtocolProvider({}), []),
       tokensBySymbolChainMap: {},
       routerAddressesByChainMap: {},
+      originTokens: [],
+      destinationTokens: [],
     };
   }
 }

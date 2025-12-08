@@ -1,8 +1,11 @@
 import { IToken, Token, WarpCore } from '@hyperlane-xyz/sdk';
 import { useAccountForChain, useActiveChains, useWatchAsset } from '@hyperlane-xyz/widgets';
 import { useMutation } from '@tanstack/react-query';
-import { ADD_ASSET_SUPPORTED_PROTOCOLS } from '../../consts/args';
+import { ADD_ASSET_SUPPORTED_PROTOCOLS, WARP_QUERY_PARAMS } from '../../consts/args';
+import { config } from '../../consts/config';
+import { getQueryParams } from '../../utils/queryParams';
 import { useMultiProvider } from '../chains/hooks';
+import { tryGetValidChainName } from '../chains/utils';
 import { useStore } from '../store';
 import { getTokenKey } from './utils';
 
@@ -17,110 +20,92 @@ export function getTokenByKey(tokens: Token[], key: string | undefined): Token |
   return tokens.find((token) => getTokenKey(token) === key);
 }
 
-/**
- * Hook to get a token by its key
- */
-export function useTokenByKey(key: string | undefined): Token | undefined {
-  const warpCore = useWarpCore();
-  return getTokenByKey(warpCore.tokens, key);
+// Helper to find token by chainName-symbol format
+function findTokenByChainSymbol(tokens: Token[], chainSymbol: string): Token | undefined {
+  const [chainName, symbol] = chainSymbol.split('-');
+  if (!chainName || !symbol) return undefined;
+  return tokens.find(
+    (t) => t.chainName === chainName && t.symbol.toLowerCase() === symbol.toLowerCase(),
+  );
 }
 
 /**
- * Get token key from origin/destination chains (for route lookup)
- * Returns the key of a token that has a route between origin and destination
- * Can match by addressOrDenom and/or symbol (both checks are useful because
- * some routes may have same addressOrDenom but different symbol)
+ * Get initial origin and destination token keys from URL params
+ * Returns { originTokenKey, destinationTokenKey } for form initialization
  */
-export function getTokenKeyFromChains(
+export function getInitialTokenKeys(
   warpCore: WarpCore,
-  addressOrDenom: string | null,
-  origin: string,
-  destination: string,
-  symbol?: string | null,
-): string | undefined {
-  const tokensWithRoute = warpCore.getTokensForRoute(origin, destination);
-
-  // Find by both address and symbol if both provided
-  if (addressOrDenom && symbol) {
-    const queryToken = tokensWithRoute.find(
-      (token) =>
-        token.addressOrDenom === addressOrDenom &&
-        token.symbol.toLowerCase() === symbol.toLowerCase(),
-    );
-    if (queryToken) return getTokenKey(queryToken);
+  originTokens: Token[],
+  destinationTokens: Token[],
+): { originTokenKey: string | undefined; destinationTokenKey: string | undefined } {
+  // Early return if no tokens
+  if (originTokens.length === 0) {
+    return { originTokenKey: undefined, destinationTokenKey: undefined };
   }
 
-  // Find by address if provided
-  if (addressOrDenom) {
-    const queryToken = tokensWithRoute.find((token) => token.addressOrDenom === addressOrDenom);
-    if (queryToken) return getTokenKey(queryToken);
-  }
+  // 1. First priority: URL params
+  const params = getQueryParams();
+  const originChainQuery = tryGetValidChainName(
+    params.get(WARP_QUERY_PARAMS.ORIGIN),
+    warpCore.multiProvider,
+  );
+  const destinationChainQuery = tryGetValidChainName(
+    params.get(WARP_QUERY_PARAMS.DESTINATION),
+    warpCore.multiProvider,
+  );
+  const originTokenSymbol = params.get(WARP_QUERY_PARAMS.ORIGIN_TOKEN);
+  const destinationTokenSymbol = params.get(WARP_QUERY_PARAMS.DESTINATION_TOKEN);
 
-  // Find by symbol if provided
-  if (symbol) {
-    const queryToken = tokensWithRoute.find(
-      (token) => token.symbol.toLowerCase() === symbol.toLowerCase(),
-    );
-    if (queryToken) return getTokenKey(queryToken);
-  }
-
-  // If only one route, return that token's key
-  if (tokensWithRoute.length === 1) return getTokenKey(tokensWithRoute[0]);
-
-  return undefined;
-}
-
-/**
- * Get token key from chains and symbol (for URL params)
- */
-export function getTokenKeyFromChainsAndSymbol(
-  warpCore: WarpCore,
-  symbol: string | null,
-  origin: string,
-  destination: string,
-): string | undefined {
-  const tokensWithRoute = warpCore.getTokensForRoute(origin, destination);
-
-  const queryToken = symbol
-    ? tokensWithRoute.find((token) => token.symbol.toLowerCase() === symbol.toLowerCase())
-    : undefined;
-
-  if (queryToken) return getTokenKey(queryToken);
-  if (tokensWithRoute.length === 1) return getTokenKey(tokensWithRoute[0]);
-
-  return undefined;
-}
-
-/**
- * Get initial token key (for app initialization from URL params)
- */
-export function getInitialTokenKey(
-  warpCore: WarpCore,
-  symbol: string | null,
-  originQuery?: string,
-  destinationQuery?: string,
-  defaultOriginToken?: Token,
-  defaultDestinationChain?: string,
-): string | undefined {
-  const firstToken = defaultOriginToken || warpCore.tokens[0];
-  const connectedToken = firstToken?.connections?.[0]?.token;
-
-  // If origin and destination query are defined, use them
-  if (originQuery && destinationQuery) {
-    return getTokenKeyFromChainsAndSymbol(warpCore, symbol, originQuery, destinationQuery);
-  }
-
-  // Use default values
-  if (defaultDestinationChain || connectedToken) {
-    return getTokenKeyFromChainsAndSymbol(
-      warpCore,
-      symbol,
-      firstToken?.chainName || '',
-      defaultDestinationChain || connectedToken?.chainName || '',
+  // Try to find origin token from URL params (chain + symbol)
+  let originToken: Token | undefined;
+  if (originChainQuery && originTokenSymbol) {
+    originToken = originTokens.find(
+      (t) =>
+        t.chainName === originChainQuery &&
+        t.symbol.toLowerCase() === originTokenSymbol.toLowerCase(),
     );
   }
 
-  return undefined;
+  // 2. Second priority: Config default token (format: chainName-symbol)
+  if (!originToken && config.defaultOriginToken) {
+    originToken = findTokenByChainSymbol(originTokens, config.defaultOriginToken);
+  }
+
+  // 3. Last resort: First available token
+  if (!originToken) {
+    originToken = originTokens[0];
+  }
+
+  // Try to find destination token from URL params (chain + symbol)
+  let destinationToken: Token | undefined;
+  if (destinationChainQuery && destinationTokenSymbol) {
+    destinationToken = destinationTokens.find(
+      (t) =>
+        t.chainName === destinationChainQuery &&
+        t.symbol.toLowerCase() === destinationTokenSymbol.toLowerCase(),
+    );
+  }
+
+  // Fallback: use config default token (format: chainName-symbol)
+  if (!destinationToken && config.defaultDestinationToken) {
+    destinationToken = findTokenByChainSymbol(destinationTokens, config.defaultDestinationToken);
+  }
+
+  // Last resort: first connection from origin token
+  if (!destinationToken) {
+    const firstConnection = originToken.connections?.[0];
+    const connectedChain = firstConnection?.token?.chainName;
+    destinationToken = connectedChain
+      ? destinationTokens.find(
+          (dt) => dt.chainName === connectedChain && dt.symbol === firstConnection?.token?.symbol,
+        )
+      : undefined;
+  }
+
+  return {
+    originTokenKey: getTokenKey(originToken),
+    destinationTokenKey: destinationToken ? getTokenKey(destinationToken) : undefined,
+  };
 }
 
 export function useTokens() {

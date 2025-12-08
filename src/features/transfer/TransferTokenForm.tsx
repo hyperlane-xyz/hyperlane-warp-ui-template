@@ -44,7 +44,13 @@ import {
   useDestinationBalance,
   useOriginBalance,
 } from '../tokens/balances';
-import { getTokenByKey, useDestinationTokens, useOriginTokens, useWarpCore } from '../tokens/hooks';
+import {
+  getInitialTokenKeys,
+  getTokenByKey,
+  useDestinationTokens,
+  useOriginTokens,
+  useWarpCore,
+} from '../tokens/hooks';
 import { useTokenPrice } from '../tokens/useTokenPrice';
 import { getTokenKey } from '../tokens/utils';
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
@@ -734,40 +740,25 @@ function WarningBanners() {
 }
 
 function useFormInitialValues(): TransferFormValues {
+  const warpCore = useWarpCore();
   const originTokens = useOriginTokens();
   const destinationTokens = useDestinationTokens();
 
-  return useMemo(() => {
-    // Default: pick first origin token
-    const firstOriginToken = originTokens[0];
-    if (!firstOriginToken) {
-      return {
-        originTokenKey: undefined,
-        destinationTokenKey: undefined,
-        amount: '',
-        recipient: '',
-      };
-    }
+  const { originTokenKey, destinationTokenKey } = getInitialTokenKeys(
+    warpCore,
+    originTokens,
+    destinationTokens,
+  );
 
-    // Find a matching destination token from the destination array
-    // that is connected to the origin token
-    const firstConnection = firstOriginToken.connections?.[0];
-    const connectedChain = firstConnection?.token?.chainName;
-
-    // Find the destination token in destinationTokens array that matches the connection
-    const matchingDestToken = connectedChain
-      ? destinationTokens.find(
-          (dt) => dt.chainName === connectedChain && dt.symbol === firstConnection?.token?.symbol,
-        )
-      : undefined;
-
-    return {
-      originTokenKey: getTokenKey(firstOriginToken),
-      destinationTokenKey: matchingDestToken ? getTokenKey(matchingDestToken) : undefined,
+  return useMemo(
+    () => ({
+      originTokenKey,
+      destinationTokenKey,
       amount: '',
       recipient: '',
-    };
-  }, [originTokens, destinationTokens]);
+    }),
+    [originTokenKey, destinationTokenKey],
+  );
 }
 
 const insufficientFundsErrMsg = /insufficient.[funds|lamports]/i;

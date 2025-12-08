@@ -4,7 +4,7 @@ import { useField, useFormikContext } from 'formik';
 import { useState } from 'react';
 
 import { WARP_QUERY_PARAMS } from '../../consts/args';
-import { updateQueryParam } from '../../utils/queryParams';
+import { updateQueryParams } from '../../utils/queryParams';
 import { trackTokenSelectionEvent } from '../analytics/utils';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
@@ -47,8 +47,18 @@ export function TokenSelectField({ name, label, selectionMode, disabled, setIsNf
       selectionMode === 'destination' ? newToken.chainName : destToken?.chainName || '';
     trackTokenSelectionEvent(newToken, origin, destination, multiProvider);
 
-    // Update URL query param
-    updateQueryParam(WARP_QUERY_PARAMS.TOKEN, newToken.symbol);
+    // Update URL query params based on selection mode
+    if (selectionMode === 'origin') {
+      updateQueryParams({
+        [WARP_QUERY_PARAMS.ORIGIN]: newToken.chainName,
+        [WARP_QUERY_PARAMS.ORIGIN_TOKEN]: newToken.symbol,
+      });
+    } else {
+      updateQueryParams({
+        [WARP_QUERY_PARAMS.DESTINATION]: newToken.chainName,
+        [WARP_QUERY_PARAMS.DESTINATION_TOKEN]: newToken.symbol,
+      });
+    }
 
     // Update NFT state if callback provided
     if (setIsNft) {

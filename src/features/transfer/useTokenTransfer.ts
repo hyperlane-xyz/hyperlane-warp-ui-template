@@ -107,13 +107,15 @@ async function executeTransfer({
   let transferStatus: TransferStatus = TransferStatus.Preparing;
   updateTransferStatus(transferIndex, transferStatus);
 
-  const { origin, destination, tokenKey, amount, recipient } = values;
+  const { originTokenKey, destinationTokenKey, amount, recipient } = values;
   const multiProvider = warpCore.multiProvider;
 
   try {
-    const originToken = getTokenByKey(warpCore, tokenKey);
-    const connection = originToken?.getConnectionForChain(destination);
-    if (!originToken || !connection) throw new Error('No token route found between chains');
+    const originToken = getTokenByKey(warpCore.tokens, originTokenKey);
+    const destinationToken = getTokenByKey(warpCore.tokens, destinationTokenKey);
+    if (!originToken || !destinationToken) throw new Error('No token route found between chains');
+    const origin = originToken.chainName;
+    const destination = destinationToken.chainName;
 
     const originProtocol = originToken.protocol;
     const isNft = originToken.isNft();
@@ -141,7 +143,7 @@ async function executeTransfer({
       origin,
       destination,
       originTokenAddressOrDenom: originToken.addressOrDenom,
-      destTokenAddressOrDenom: connection.token.addressOrDenom,
+      destTokenAddressOrDenom: destinationToken.addressOrDenom,
       sender,
       recipient,
       amount,

@@ -10,11 +10,11 @@ export function useWarpCore() {
   return useStore((s) => s.warpCore);
 }
 /**
- * Find a token by its key
+ * Find a token by its key from a WarpCore or Token array
  */
-export function getTokenByKey(warpCore: WarpCore, key: string | undefined): Token | undefined {
+export function getTokenByKey(tokens: Token[], key: string | undefined): Token | undefined {
   if (!key) return undefined;
-  return warpCore.tokens.find((token) => getTokenKey(token) === key);
+  return tokens.find((token) => getTokenKey(token) === key);
 }
 
 /**
@@ -22,7 +22,7 @@ export function getTokenByKey(warpCore: WarpCore, key: string | undefined): Toke
  */
 export function useTokenByKey(key: string | undefined): Token | undefined {
   const warpCore = useWarpCore();
-  return getTokenByKey(warpCore, key);
+  return getTokenByKey(warpCore.tokens, key);
 }
 
 /**

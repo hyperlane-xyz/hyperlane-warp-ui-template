@@ -2,13 +2,13 @@ import { Token } from '@hyperlane-xyz/sdk';
 import { useQuery } from '@tanstack/react-query';
 import { logger } from '../../utils/logger';
 import { TransferFormValues } from '../transfer/types';
-import { getTokenByKey, useWarpCore } from './hooks';
+import { getTokenByKey, useOriginTokens } from './hooks';
 
 const TOKEN_PRICE_REFRESH_INTERVAL = 60_000; // 60s
 
-export function useTokenPrice({ tokenKey }: TransferFormValues) {
-  const warpCore = useWarpCore();
-  const originToken = getTokenByKey(warpCore, tokenKey);
+export function useTokenPrice({ originTokenKey }: TransferFormValues) {
+  const originTokens = useOriginTokens();
+  const originToken = getTokenByKey(originTokens, originTokenKey);
 
   const { data, isError, isLoading } = useQuery({
     // The WarpCore class is not serializable, so we can't use it as a key

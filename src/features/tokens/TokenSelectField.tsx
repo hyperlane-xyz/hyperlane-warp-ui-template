@@ -1,98 +1,84 @@
-import { IToken } from '@hyperlane-xyz/sdk';
+import { Token } from '@hyperlane-xyz/sdk';
 import { ChevronIcon } from '@hyperlane-xyz/widgets';
 import { useField, useFormikContext } from 'formik';
-import { useEffect, useState } from 'react';
-import { TokenChainIcon } from './TokenChainIcon';
+import { useState } from 'react';
 
 import { WARP_QUERY_PARAMS } from '../../consts/args';
-import { updateQueryParam, updateQueryParams } from '../../utils/queryParams';
+import { updateQueryParam } from '../../utils/queryParams';
 import { trackTokenSelectionEvent } from '../analytics/utils';
 import { useMultiProvider } from '../chains/hooks';
+import { getChainDisplayName } from '../chains/utils';
 import { TransferFormValues } from '../transfer/types';
-import { TokenListModal } from './TokenListModal';
-import { getTokenByKey, getTokenKeyFromChains, useWarpCore } from './hooks';
+import { useDestinationTokens, useOriginTokens } from './hooks';
+import { TokenChainIcon } from './TokenChainIcon';
+import { UnifiedTokenChainModal } from './UnifiedTokenChainModal';
 import { getTokenKey } from './utils';
 
 type Props = {
   name: string;
+  label: string;
+  selectionMode: 'origin' | 'destination';
   disabled?: boolean;
-  setIsNft: (value: boolean) => void;
+  setIsNft?: (value: boolean) => void;
 };
 
-export function TokenSelectField({ name, disabled, setIsNft }: Props) {
-  const { values, setValues } = useFormikContext<TransferFormValues>();
-  const [tokenField, , helpers] = useField<string | undefined>(name);
+export function TokenSelectField({ name, label, selectionMode, disabled, setIsNft }: Props) {
+  const { values } = useFormikContext<TransferFormValues>();
+  const [field, , helpers] = useField<string | undefined>(name);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isAutomaticSelection, setIsAutomaticSelection] = useState(false);
 
-  const warpCore = useWarpCore();
   const multiProvider = useMultiProvider();
+  const originTokens = useOriginTokens();
+  const destinationTokens = useDestinationTokens();
 
-  const { origin, destination } = values;
-  useEffect(() => {
-    const tokensWithRoute = warpCore.getTokensForRoute(origin, destination);
-    setIsAutomaticSelection(tokensWithRoute.length <= 1);
-  }, [warpCore, origin, destination, helpers]);
+  // Get the current token from the appropriate array based on selection mode
+  const tokens = selectionMode === 'origin' ? originTokens : destinationTokens;
+  const token = getTokenByKey(tokens, field.value);
 
-  const onSelectToken = (newToken: IToken) => {
-    // Set the token key value in formik state
-    helpers.setValue(getTokenKey(newToken));
+  const onSelectToken = (newToken: Token) => {
+    const newTokenKey = getTokenKey(newToken);
+    helpers.setValue(newTokenKey);
 
-    // token selection event
+    // Track analytics - derive origin and destination from current tokens
+    const originToken = getTokenByKey(originTokens, values.originTokenKey);
+    const destToken = getTokenByKey(destinationTokens, values.destinationTokenKey);
+    const origin = selectionMode === 'origin' ? newToken.chainName : originToken?.chainName || '';
+    const destination =
+      selectionMode === 'destination' ? newToken.chainName : destToken?.chainName || '';
     trackTokenSelectionEvent(newToken, origin, destination, multiProvider);
 
+    // Update URL query param
     updateQueryParam(WARP_QUERY_PARAMS.TOKEN, newToken.symbol);
-    // Update nft state in parent
-    setIsNft(newToken.isNft());
+
+    // Update NFT state if callback provided
+    if (setIsNft) {
+      setIsNft(newToken.isNft());
+    }
   };
 
   const onClickField = () => {
     if (!disabled) setIsModalOpen(true);
   };
 
-  // Set the token and origin from the selected field and the destination
-  // chain from the the first connection in the token
-  const onSelectUnsupportedRoute = (token: IToken, origin: string) => {
-    if (!token.connections) return;
-    const destination = token.connections[0].token.chainName;
-
-    // token selection event
-    trackTokenSelectionEvent(token, token.chainName, destination, multiProvider);
-
-    setValues({
-      ...values,
-      origin,
-      destination,
-      tokenKey: getTokenKeyFromChains(
-        warpCore,
-        token.addressOrDenom,
-        origin,
-        destination,
-        token.symbol,
-      ),
-    });
-    updateQueryParams({
-      [WARP_QUERY_PARAMS.ORIGIN]: origin,
-      [WARP_QUERY_PARAMS.DESTINATION]: destination,
-      [WARP_QUERY_PARAMS.TOKEN]: token.symbol,
-    });
-  };
-
   return (
     <>
-      <TokenButton
-        token={getTokenByKey(warpCore, tokenField.value)}
-        disabled={disabled}
-        onClick={onClickField}
-        isAutomatic={isAutomaticSelection}
-      />
-      <TokenListModal
+      <div className="flex flex-col">
+        <label htmlFor={name} className="mb-1 pl-0.5 text-sm text-gray-600">
+          {label}
+        </label>
+        <TokenButton
+          token={token}
+          disabled={disabled}
+          onClick={onClickField}
+          multiProvider={multiProvider}
+        />
+      </div>
+
+      <UnifiedTokenChainModal
         isOpen={isModalOpen}
         close={() => setIsModalOpen(false)}
         onSelect={onSelectToken}
-        origin={values.origin}
-        destination={values.destination}
-        onSelectUnsupportedRoute={onSelectUnsupportedRoute}
+        selectionMode={selectionMode}
       />
     </>
   );
@@ -102,32 +88,46 @@ function TokenButton({
   token,
   disabled,
   onClick,
-  isAutomatic,
+  multiProvider,
 }: {
-  token?: IToken;
+  token?: Token;
   disabled?: boolean;
-  onClick?: () => void;
-  isAutomatic?: boolean;
+  onClick: () => void;
+  multiProvider: ReturnType<typeof useMultiProvider>;
 }) {
+  const chainDisplayName = token ? getChainDisplayName(multiProvider, token.chainName) : '';
+
   return (
     <button
       type="button"
       className={`${styles.base} ${disabled ? styles.disabled : styles.enabled}`}
       onClick={onClick}
+      disabled={disabled}
     >
-      <div className="flex items-center">
-        {token && <TokenChainIcon token={token} size={20} />}
-        <span className={`ml-2 ${!token?.symbol && 'text-slate-400'}`}>
-          {token?.symbol || (isAutomatic ? 'No routes available' : 'Select Token')}
-        </span>
-      </div>
-      <ChevronIcon width={12} height={8} direction="s" />
+      {token ? (
+        <div className="flex min-w-0 flex-1 items-center gap-2.5">
+          <TokenChainIcon token={token} size={24} />
+          <div className="flex min-w-0 flex-col items-start">
+            <span className="text-sm font-medium text-gray-900">{token.symbol}</span>
+            <span className="text-xs text-gray-500">{chainDisplayName}</span>
+          </div>
+        </div>
+      ) : (
+        <span className="text-sm text-gray-400">Select token</span>
+      )}
+      <ChevronIcon width={12} height={8} direction="s" className="ml-2 opacity-60" />
     </button>
   );
 }
 
+// Helper to get token from array by key
+function getTokenByKey(tokens: Token[], key: string | undefined): Token | undefined {
+  if (!key) return undefined;
+  return tokens.find((t) => getTokenKey(t) === key);
+}
+
 const styles = {
-  base: 'mt-1.5 w-full px-2.5 py-2.5 flex items-center justify-between text-sm rounded-lg border border-primary-300 outline-none transition-colors duration-500',
-  enabled: 'hover:bg-gray-100 active:scale-95 focus:border-primary-500',
-  disabled: 'bg-gray-100 cursor-default',
+  base: 'w-full px-3 py-2.5 flex items-center justify-between rounded-lg border border-gray-300 bg-white transition-all',
+  enabled: 'hover:border-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200',
+  disabled: 'bg-gray-100 cursor-not-allowed opacity-60',
 };

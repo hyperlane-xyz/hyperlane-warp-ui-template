@@ -11,14 +11,16 @@ import { TransferFormValues } from './types';
 const FEE_QUOTE_REFRESH_INTERVAL = 30_000; // 30s
 
 export function useFeeQuotes(
-  { destination, amount, recipient, tokenKey }: TransferFormValues,
+  { originTokenKey, destinationTokenKey, amount, recipient }: TransferFormValues,
   enabled: boolean,
   originToken: Token | undefined,
+  destinationToken: Token | undefined,
   searchForLowestFee: boolean = false,
 ) {
   const multiProvider = useMultiProvider();
   const warpCore = useWarpCore();
   const debouncedAmount = useDebounce(amount, 500);
+  const destination = destinationToken?.chainName;
 
   const { accounts } = useAccounts(multiProvider);
   const { address: sender, publicKey: senderPubKey } = getAccountAddressAndPubKey(
@@ -35,8 +37,8 @@ export function useFeeQuotes(
     // eslint-disable-next-line @tanstack/query/exhaustive-deps
     queryKey: [
       'useFeeQuotes',
-      tokenKey,
-      destination,
+      originTokenKey,
+      destinationTokenKey,
       sender,
       senderPubKey,
       debouncedAmount,

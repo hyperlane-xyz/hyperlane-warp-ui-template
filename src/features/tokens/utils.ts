@@ -205,7 +205,7 @@ export function buildOriginTokens(tokens: Token[]): Token[] {
   // Deduplicate by chain-address
   const tokenMap = new Map<string, Token>();
   originTokens.forEach((token) => {
-    const key = `${token.chainName}-${token.addressOrDenom}`;
+    const key = `${token.chainName}-${token.symbol}-${token.addressOrDenom}`;
     if (!tokenMap.has(key)) {
       tokenMap.set(key, token);
     }
@@ -228,7 +228,7 @@ export function buildDestinationTokens(tokens: Token[]): Token[] {
   tokens.forEach((token) => {
     token.connections?.forEach((conn) => {
       const destToken = conn.token as Token;
-      const key = `${destToken.chainName}-${destToken.addressOrDenom}`;
+      const key = `${destToken.chainName}-${destToken.symbol}-${destToken.addressOrDenom}`;
       if (!tokenMap.has(key)) {
         tokenMap.set(key, destToken);
       }

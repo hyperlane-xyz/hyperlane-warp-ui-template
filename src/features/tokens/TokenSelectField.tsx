@@ -2,7 +2,7 @@ import { IToken } from '@hyperlane-xyz/sdk';
 import { ChevronIcon } from '@hyperlane-xyz/widgets';
 import { useField, useFormikContext } from 'formik';
 import { useEffect, useState } from 'react';
-import { TokenIcon } from '../../components/icons/TokenIcon';
+import { TokenChainIcon } from './TokenChainIcon';
 
 import { WARP_QUERY_PARAMS } from '../../consts/args';
 import { updateQueryParam, updateQueryParams } from '../../utils/queryParams';
@@ -115,7 +115,7 @@ function TokenButton({
       onClick={onClick}
     >
       <div className="flex items-center">
-        {token && <TokenIcon token={token} size={20} />}
+        {token && <TokenChainIcon token={token} size={20} />}
         <span className={`ml-2 ${!token?.symbol && 'text-slate-400'}`}>
           {token?.symbol || (isAutomatic ? 'No routes available' : 'Select Token')}
         </span>

@@ -151,6 +151,14 @@ export function useTokens() {
   return useWarpCore().tokens;
 }
 
+export function useOriginTokens() {
+  return useStore((s) => s.originTokens);
+}
+
+export function useDestinationTokens() {
+  return useStore((s) => s.destinationTokens);
+}
+
 export function tryFindToken(
   warpCore: WarpCore,
   chain: ChainName,

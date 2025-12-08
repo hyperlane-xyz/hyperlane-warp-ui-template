@@ -1,4 +1,5 @@
 import {
+  ChainName,
   IToken,
   MultiProtocolProvider,
   Token,
@@ -130,7 +131,7 @@ export function getTokensWithSameCollateralAddresses(
 // De-duplicate collaterized tokens
 // Returns a map of token with same origin and dest collateral address
 // And an array of tokens with repeated collateral addresses grouped into one
-export function dedupeMultiCollateralTokens(tokens: Tokens, destination) {
+export function dedupeMultiCollateralTokens(tokens: Tokens, destination: ChainName) {
   return tokens.reduce<{ tokens: Tokens; multiCollateralTokenMap: MultiCollateralTokenMap }>(
     (acc, t) => {
       const originToken = t.token;
@@ -161,4 +162,81 @@ export function dedupeMultiCollateralTokens(tokens: Tokens, destination) {
     },
     { tokens: [], multiCollateralTokenMap: {} },
   );
+}
+
+/**
+ * De-duplicate tokens by collateral address on the same chain
+ * Returns only one token per unique collateral address per chain
+ * Used for both origin and destination token arrays at startup
+ */
+export function dedupeTokensByCollateral(tokens: Token[]): Token[] {
+  const seenCollaterals = new Map<string, Token>();
+
+  return tokens.filter((token) => {
+    // If not a collateralized token, include it
+    if (!TOKEN_COLLATERALIZED_STANDARDS.includes(token.standard)) {
+      return true;
+    }
+
+    // For HypNative tokens, use their symbol and standard as identifier
+    const collateralKey = token.collateralAddressOrDenom
+      ? `${token.chainName}-${token.symbol}-${normalizeAddress(token.collateralAddressOrDenom, token.protocol)}`
+      : `${token.chainName}-${token.symbol}-hypnative-${token.standard}`;
+
+    // If we haven't seen this collateral on this chain, include it
+    if (!seenCollaterals.has(collateralKey)) {
+      seenCollaterals.set(collateralKey, token);
+      return true;
+    }
+
+    // Already seen this collateral, skip it
+    return false;
+  });
+}
+
+/**
+ * Build and deduplicate origin tokens (tokens with outgoing connections)
+ * Deduplicates by address and by collateral address per chain
+ */
+export function buildOriginTokens(tokens: Token[]): Token[] {
+  // Filter to only tokens with outgoing connections
+  const originTokens = tokens.filter((token) => token.connections && token.connections.length > 0);
+
+  // Deduplicate by chain-address
+  const tokenMap = new Map<string, Token>();
+  originTokens.forEach((token) => {
+    const key = `${token.chainName}-${token.addressOrDenom}`;
+    if (!tokenMap.has(key)) {
+      tokenMap.set(key, token);
+    }
+  });
+
+  const dedupedTokens = Array.from(tokenMap.values());
+
+  // Deduplicate tokens that have same collateral address on the same chain
+  return dedupeTokensByCollateral(dedupedTokens);
+}
+
+/**
+ * Build and deduplicate destination tokens (tokens reachable via connections)
+ * Deduplicates by address and by collateral address per chain
+ */
+export function buildDestinationTokens(tokens: Token[]): Token[] {
+  const tokenMap = new Map<string, Token>();
+
+  // Traverse all connections to find destination tokens
+  tokens.forEach((token) => {
+    token.connections?.forEach((conn) => {
+      const destToken = conn.token as Token;
+      const key = `${destToken.chainName}-${destToken.addressOrDenom}`;
+      if (!tokenMap.has(key)) {
+        tokenMap.set(key, destToken);
+      }
+    });
+  });
+
+  const dedupedTokens = Array.from(tokenMap.values());
+
+  // Deduplicate tokens that have same collateral address on the same chain
+  return dedupeTokensByCollateral(dedupedTokens);
 }

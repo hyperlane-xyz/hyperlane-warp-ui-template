@@ -3,31 +3,28 @@ import { ChainLogo } from '../../components/icons/ChainLogo';
 import { TokenIcon } from '../../components/icons/TokenIcon';
 
 interface Props {
-  token?: IToken | null;
+  token: IToken;
   size?: number;
-  chainName?: string; // Optional override, defaults to token.chainName
 }
 
-export function TokenChainIcon({ token, size = 32, chainName }: Props) {
-  const chain = chainName || token?.chainName;
+export function TokenChainIcon({ token, size = 32 }: Props) {
+  // Chain logo is 45% of token size, with minimum of 12px
   const chainLogoSize = Math.max(Math.floor(size * 0.45), 12);
+  // Add 2px padding around chain logo for the white border/background
+  const chainLogoContainerSize = chainLogoSize + 2;
 
   return (
     <div className="relative inline-block" style={{ width: size, height: size }}>
       <TokenIcon token={token} size={size} />
-      {chain && (
-        <div
-          className="absolute rounded-full border border-white bg-white"
-          style={{
-            bottom: -2,
-            right: -2,
-            width: chainLogoSize + 2,
-            height: chainLogoSize + 2,
-          }}
-        >
-          <ChainLogo chainName={chain} size={chainLogoSize} />
-        </div>
-      )}
+      <div
+        className="absolute -bottom-0.5 -right-0.5 rounded-full border border-white bg-white"
+        style={{
+          width: chainLogoContainerSize,
+          height: chainLogoContainerSize,
+        }}
+      >
+        <ChainLogo chainName={token.chainName} size={chainLogoSize} />
+      </div>
     </div>
   );
 }

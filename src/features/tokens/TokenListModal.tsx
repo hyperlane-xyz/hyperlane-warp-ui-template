@@ -181,8 +181,10 @@ export function TokenList({
             <div className="w-full truncate text-xs">
               {t.token.collateralAddressOrDenom || t.token.addressOrDenom || 'Native chain token'}
             </div>
-            <div className="mt-0.5 text-xs text-gray-500">
-              {`${getChainDisplayName(multiProvider, t.token.chainName)} · ${t.token.decimals} decimals`}
+            <div className="mt-0.5 flex space-x-1 text-xs">
+              <span>{`Decimals: ${t.token.decimals}`}</span>
+              <span>-</span>
+              <span>{`Chain: ${getChainDisplayName(multiProvider, t.token.chainName)}`}</span>
             </div>
           </div>
         </button>

@@ -1,14 +1,9 @@
-import { useFormikContext } from 'formik';
 import { TextField } from '../../components/input/TextField';
-import { TransferFormValues } from '../transfer/types';
 import { SelectTokenIdField } from './SelectTokenIdField';
 
 // import { useContractSupportsTokenByOwner, useIsSenderNftOwner } from './balances';
 
 export function SelectOrInputTokenIds({ disabled }: { disabled: boolean }) {
-  const {
-    values: { tokenKey },
-  } = useFormikContext<TransferFormValues>();
   // const accountAddress = useAccountAddressForChain(origin);
   // const { isContractAllowToGetTokenIds } = useContractSupportsTokenByOwner(
   //   activeToken,
@@ -17,13 +12,13 @@ export function SelectOrInputTokenIds({ disabled }: { disabled: boolean }) {
   const isContractAllowToGetTokenIds = true;
 
   return isContractAllowToGetTokenIds ? (
-    <SelectTokenIdField name="amount" disabled={disabled} tokenKey={tokenKey} />
+    <SelectTokenIdField name="amount" disabled={disabled} />
   ) : (
-    <InputTokenId disabled={disabled} tokenKey={tokenKey} />
+    <InputTokenId disabled={disabled} />
   );
 }
 
-function InputTokenId({ disabled }: { disabled: boolean; tokenKey?: string }) {
+function InputTokenId({ disabled }: { disabled: boolean }) {
   // const {
   //   values: { amount },
   // } = useFormikContext<TransferFormValues>();

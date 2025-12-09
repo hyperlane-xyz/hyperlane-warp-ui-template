@@ -20,7 +20,7 @@ type Props = {
 
 export function TokenSelectField({ name, disabled, setIsNft }: Props) {
   const { values, setValues } = useFormikContext<TransferFormValues>();
-  const [field, , helpers] = useField<string | undefined>(name);
+  const [tokenField, , helpers] = useField<string | undefined>(name);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAutomaticSelection, setIsAutomaticSelection] = useState(false);
 
@@ -80,7 +80,7 @@ export function TokenSelectField({ name, disabled, setIsNft }: Props) {
   return (
     <>
       <TokenButton
-        token={getTokenByKey(warpCore, field.value)}
+        token={getTokenByKey(warpCore, tokenField.value)}
         disabled={disabled}
         onClick={onClickField}
         isAutomatic={isAutomaticSelection}

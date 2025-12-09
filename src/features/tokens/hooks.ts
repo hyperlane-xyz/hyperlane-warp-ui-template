@@ -22,7 +22,7 @@ export function useWarpCore() {
  */
 export function getTokenKey(token: IToken): string {
   const normalizedAddress = normalizeAddress(token.addressOrDenom, token.protocol);
-  return `${token.chainName}-${token.symbol.toLowerCase()}-${normalizedAddress}`;
+  return `${token.chainName.toLowerCase()}-${token.symbol.toLowerCase()}-${normalizedAddress}`;
 }
 
 /**

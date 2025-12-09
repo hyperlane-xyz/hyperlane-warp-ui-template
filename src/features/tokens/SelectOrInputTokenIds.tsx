@@ -17,13 +17,13 @@ export function SelectOrInputTokenIds({ disabled }: { disabled: boolean }) {
   const isContractAllowToGetTokenIds = true;
 
   return isContractAllowToGetTokenIds ? (
-    <SelectTokenIdField name="amount" disabled={disabled} tokenKey={tokenKey} />
+    <SelectTokenIdField name="amount" disabled={disabled} />
   ) : (
-    <InputTokenId disabled={disabled} tokenKey={tokenKey} />
+    <InputTokenId disabled={disabled} />
   );
 }
 
-function InputTokenId({ disabled }: { disabled: boolean; tokenKey?: string }) {
+function InputTokenId({ disabled }: { disabled: boolean }) {
   // const {
   //   values: { amount },
   // } = useFormikContext<TransferFormValues>();

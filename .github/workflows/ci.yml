@@ -71,7 +71,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: build
-        run: pnpm build
+        run: pnpm run build
         env:
           NEXT_PUBLIC_WALLET_CONNECT_ID: ${{ secrets.NEXT_PUBLIC_WALLET_CONNECT_ID }}
 
@@ -137,7 +137,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: lint
-        run: pnpm lint
+        run: pnpm run lint
 
   test:
     runs-on: ubuntu-latest
@@ -166,4 +166,4 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: test
-        run: pnpm test
+        run: pnpm run test

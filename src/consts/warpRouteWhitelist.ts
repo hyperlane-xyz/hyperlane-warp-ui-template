@@ -49,6 +49,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'USDC/subtensor',
   'USDC/lumia',
   'USDC/matchain',
+  'USDC/paradex',
 
   // USDT routes
   'USDT/eclipsemainnet-ethereum-solanamainnet',

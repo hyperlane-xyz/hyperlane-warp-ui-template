@@ -26,10 +26,10 @@ You need a `projectId` from the WalletConnect Cloud to run the Hyperlane Warp Ro
 
 ```sh
 # Install dependencies
-yarn
+pnpm install
 
 # Build Next project
-yarn build
+pnpm build
 ```
 
 ### Run
@@ -38,33 +38,33 @@ You can add `.env.local` file next to `.env.example` where you set `projectId` c
 
 ```sh
 # Start the Next dev server
-yarn dev
+pnpm dev
 # Or with a custom projectId
-NEXT_PUBLIC_WALLET_CONNECT_ID=<projectId> yarn dev
+NEXT_PUBLIC_WALLET_CONNECT_ID=<projectId> pnpm dev
 ```
 
 ### Test
 
 ```sh
 # Lint check code
-yarn lint
+pnpm lint
 
 # Check code types
-yarn typecheck
+pnpm typecheck
 ```
 
 ### Format
 
 ```sh
 # Format code using Prettier
-yarn prettier
+pnpm prettier
 ```
 
 ### Clean / Reset
 
 ```sh
-# Delete build artifacts to start fresh 
-yarn clean
+# Delete build artifacts to start fresh
+pnpm clean
 ```
 
 ## Deployment

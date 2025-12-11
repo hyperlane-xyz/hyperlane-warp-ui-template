@@ -1,6 +1,34 @@
+import { TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { createMockToken } from '../../utils/test';
-import { getTotalFee } from './fees';
+import { TokensWithDestinationBalance, TokenWithFee } from '../tokens/types';
+import * as tokenUtils from '../tokens/utils';
+import {
+  compareByBalanceDesc,
+  filterAndSortTokensByBalance,
+  getLowestFeeTransferToken,
+  getTotalFee,
+  sortTokensByFee,
+} from './fees';
+
+// Common test constants
+const MOCK_RECIPIENT = '0xrecipient';
+const MOCK_SENDER = '0xsender';
+const TRANSFER_AMOUNT = '500000';
+const LARGE_TRANSFER_AMOUNT = '1000000';
+
+// Balance constants (collateral/token balances)
+const BALANCE_TINY = BigInt(100);
+const BALANCE_SMALL = BigInt(500);
+const BALANCE_MEDIUM = BigInt(1000);
+const BALANCE_LARGE = BigInt(1000000);
+const BALANCE_XLARGE = BigInt(2000000);
+const BALANCE_XXLARGE = BigInt(5000000);
+
+// Fee constants
+const FEE_LOW = BigInt(1000);
+const FEE_MEDIUM = BigInt(3000);
+const FEE_HIGH = BigInt(5000);
 
 beforeEach(() => {
   vi.restoreAllMocks();
@@ -11,16 +39,12 @@ describe('getTotalFee', () => {
     const token1 = createMockToken({ symbol: 'ETH', decimals: 18 });
     const token2 = createMockToken({ symbol: 'ETH', decimals: 18 });
 
-    // Mock isFungibleWith to return true for same tokens
     vi.spyOn(token1, 'isFungibleWith').mockReturnValue(true);
 
     const interchainQuote = token1.amount('1000000000000000000');
     const localQuote = token2.amount('500000000000000000');
 
-    const result = getTotalFee({
-      interchainQuote,
-      localQuote,
-    });
+    const result = getTotalFee({ interchainQuote, localQuote });
 
     expect(result).toHaveLength(1);
     expect(result[0].token).toEqual(token1);
@@ -28,29 +52,16 @@ describe('getTotalFee', () => {
   });
 
   test('should separate non-fungible tokens with same symbol', () => {
-    const token1 = createMockToken({
-      symbol: 'ETH',
-      decimals: 18,
-      chainName: 'ethereum',
-    });
-    const token2 = createMockToken({
-      symbol: 'ETH',
-      decimals: 18,
-      chainName: 'polygon',
-    });
+    const token1 = createMockToken({ symbol: 'ETH', decimals: 18, chainName: 'ethereum' });
+    const token2 = createMockToken({ symbol: 'ETH', decimals: 18, chainName: 'polygon' });
 
-    // Mock isFungibleWith to return false for different chain tokens
     vi.spyOn(token1, 'isFungibleWith').mockReturnValue(false);
 
     const interchainQuote = token1.amount('1000000000000000000');
     const localQuote = token2.amount('500000000000000000');
 
-    const result = getTotalFee({
-      interchainQuote,
-      localQuote,
-    });
+    const result = getTotalFee({ interchainQuote, localQuote });
 
-    // Now we can properly handle same symbols but non-fungible tokens
     expect(result).toHaveLength(2);
     expect(result[0].token).toEqual(token1);
     expect(result[0].amount).toEqual(BigInt('1000000000000000000'));
@@ -63,7 +74,6 @@ describe('getTotalFee', () => {
     const usdcToken = createMockToken({ symbol: 'USDC', decimals: 6 });
     const wethToken = createMockToken({ symbol: 'WETH', decimals: 18 });
 
-    // Mock isFungibleWith to return false for all combinations
     vi.spyOn(ethToken, 'isFungibleWith').mockReturnValue(false);
     vi.spyOn(usdcToken, 'isFungibleWith').mockReturnValue(false);
     vi.spyOn(wethToken, 'isFungibleWith').mockReturnValue(false);
@@ -72,11 +82,7 @@ describe('getTotalFee', () => {
     const localQuote = usdcToken.amount('1000000');
     const tokenFeeQuote = wethToken.amount('2000000000000000000');
 
-    const result = getTotalFee({
-      interchainQuote,
-      localQuote,
-      tokenFeeQuote,
-    });
+    const result = getTotalFee({ interchainQuote, localQuote, tokenFeeQuote });
 
     expect(result).toHaveLength(3);
     expect(result[0].token).toEqual(ethToken);
@@ -92,7 +98,6 @@ describe('getTotalFee', () => {
     const ethToken2 = createMockToken({ symbol: 'ETH', decimals: 18 });
     const usdcToken = createMockToken({ symbol: 'USDC', decimals: 6 });
 
-    // Mock ETH tokens to be fungible with each other but not with USDC
     vi.spyOn(ethToken1, 'isFungibleWith').mockImplementation(
       (token) => token === ethToken2 || token === ethToken1,
     );
@@ -105,11 +110,7 @@ describe('getTotalFee', () => {
     const localQuote = ethToken2.amount('500000000000000000');
     const tokenFeeQuote = usdcToken.amount('1000000');
 
-    const result = getTotalFee({
-      interchainQuote,
-      localQuote,
-      tokenFeeQuote,
-    });
+    const result = getTotalFee({ interchainQuote, localQuote, tokenFeeQuote });
 
     expect(result).toHaveLength(2);
     expect(result[0].token).toEqual(ethToken1);
@@ -127,11 +128,7 @@ describe('getTotalFee', () => {
     const interchainQuote = ethToken.amount('1000000000000000000');
     const localQuote = usdcToken.amount('1000000');
 
-    const result = getTotalFee({
-      interchainQuote,
-      localQuote,
-      tokenFeeQuote: undefined,
-    });
+    const result = getTotalFee({ interchainQuote, localQuote, tokenFeeQuote: undefined });
 
     expect(result).toHaveLength(2);
     expect(result[0].token).toEqual(ethToken);
@@ -149,10 +146,7 @@ describe('getTotalFee', () => {
     const interchainQuote = ethToken1.amount('0');
     const localQuote = ethToken2.amount('1000000000000000000');
 
-    const result = getTotalFee({
-      interchainQuote,
-      localQuote,
-    });
+    const result = getTotalFee({ interchainQuote, localQuote });
 
     expect(result).toHaveLength(1);
     expect(result[0].token).toEqual(ethToken1);
@@ -165,16 +159,13 @@ describe('getTotalFee', () => {
 
     vi.spyOn(ethToken1, 'isFungibleWith').mockReturnValue(true);
 
-    const largeAmount1 = '999999999999999999999999999'; // Very large amount
-    const largeAmount2 = '1000000000000000000000000000'; // Another very large amount
+    const largeAmount1 = '999999999999999999999999999';
+    const largeAmount2 = '1000000000000000000000000000';
 
     const interchainQuote = ethToken1.amount(largeAmount1);
     const localQuote = ethToken2.amount(largeAmount2);
 
-    const result = getTotalFee({
-      interchainQuote,
-      localQuote,
-    });
+    const result = getTotalFee({ interchainQuote, localQuote });
 
     expect(result).toHaveLength(1);
     expect(result[0].token).toEqual(ethToken1);
@@ -194,11 +185,7 @@ describe('getTotalFee', () => {
     const localQuote = usdcToken.amount('1000000');
     const tokenFeeQuote = ethToken2.amount('2000000000000000000');
 
-    const result = getTotalFee({
-      interchainQuote,
-      localQuote,
-      tokenFeeQuote,
-    });
+    const result = getTotalFee({ interchainQuote, localQuote, tokenFeeQuote });
 
     expect(result).toHaveLength(2);
     expect(result[0].token).toEqual(ethToken);
@@ -220,11 +207,7 @@ describe('getTotalFee', () => {
     const localQuote = usdcToken.amount('1000000');
     const tokenFeeQuote = usdceToken.amount('2000000');
 
-    const result = getTotalFee({
-      interchainQuote,
-      localQuote,
-      tokenFeeQuote,
-    });
+    const result = getTotalFee({ interchainQuote, localQuote, tokenFeeQuote });
 
     expect(result).toHaveLength(2);
     expect(result[0].token).toEqual(ethToken);
@@ -238,7 +221,6 @@ describe('getTotalFee', () => {
     const token2 = createMockToken({ symbol: 'USDC', decimals: 6 });
     const token3 = createMockToken({ symbol: 'USDC', decimals: 6 });
 
-    // Mock all tokens to be fungible with each other
     vi.spyOn(token1, 'isFungibleWith').mockImplementation(
       (token) => token === token2 || token === token3,
     );
@@ -253,14 +235,486 @@ describe('getTotalFee', () => {
     const localQuote = token2.amount('2000000');
     const tokenFeeQuote = token3.amount('3000000');
 
-    const result = getTotalFee({
-      interchainQuote,
-      localQuote,
-      tokenFeeQuote,
-    });
+    const result = getTotalFee({ interchainQuote, localQuote, tokenFeeQuote });
 
     expect(result).toHaveLength(1);
     expect(result[0].token).toEqual(token1);
     expect(result[0].amount).toEqual(BigInt('6000000'));
+  });
+});
+
+describe('compareByBalanceDesc', () => {
+  test('should return -1 when first balance is greater', () => {
+    expect(compareByBalanceDesc(BALANCE_TINY, BigInt(50))).toBe(-1);
+  });
+
+  test('should return 1 when first balance is smaller', () => {
+    expect(compareByBalanceDesc(BigInt(50), BALANCE_TINY)).toBe(1);
+  });
+
+  test('should return 0 when balances are equal', () => {
+    expect(compareByBalanceDesc(BALANCE_TINY, BALANCE_TINY)).toBe(0);
+  });
+
+  test('should handle very large bigints', () => {
+    const large1 = BigInt('999999999999999999999999999');
+    const large2 = BigInt('999999999999999999999999998');
+    expect(compareByBalanceDesc(large1, large2)).toBe(-1);
+  });
+});
+
+describe('filterAndSortTokensByBalance', () => {
+  test('should filter out tokens with balance below minimum', () => {
+    const token1 = createMockToken({ symbol: 'TOKEN1' });
+    const token2 = createMockToken({ symbol: 'TOKEN2' });
+    const destToken1 = createMockToken({ symbol: 'TOKEN1', chainName: 'chain1' });
+    const destToken2 = createMockToken({ symbol: 'TOKEN2', chainName: 'chain2' });
+
+    const balanceResults: PromiseSettledResult<TokensWithDestinationBalance | null>[] = [
+      {
+        status: 'fulfilled',
+        value: { originToken: token1, destinationToken: destToken1, balance: BALANCE_TINY },
+      },
+      {
+        status: 'fulfilled',
+        value: { originToken: token2, destinationToken: destToken2, balance: BALANCE_MEDIUM },
+      },
+    ];
+
+    const result = filterAndSortTokensByBalance(balanceResults, BALANCE_SMALL);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].originToken).toBe(token2);
+  });
+
+  test('should sort tokens by balance in descending order', () => {
+    const token1 = createMockToken({ symbol: 'TOKEN1' });
+    const token2 = createMockToken({ symbol: 'TOKEN2' });
+    const token3 = createMockToken({ symbol: 'TOKEN3' });
+    const destToken1 = createMockToken({ symbol: 'TOKEN1', chainName: 'chain1' });
+    const destToken2 = createMockToken({ symbol: 'TOKEN2', chainName: 'chain2' });
+    const destToken3 = createMockToken({ symbol: 'TOKEN3', chainName: 'chain3' });
+
+    const balanceResults: PromiseSettledResult<TokensWithDestinationBalance | null>[] = [
+      {
+        status: 'fulfilled',
+        value: { originToken: token1, destinationToken: destToken1, balance: BALANCE_TINY },
+      },
+      {
+        status: 'fulfilled',
+        value: { originToken: token2, destinationToken: destToken2, balance: BALANCE_SMALL },
+      },
+      {
+        status: 'fulfilled',
+        value: { originToken: token3, destinationToken: destToken3, balance: BigInt(300) },
+      },
+    ];
+
+    const result = filterAndSortTokensByBalance(balanceResults, BigInt(50));
+
+    expect(result).toHaveLength(3);
+    // Should be sorted: token2 (500) > token3 (300) > token1 (100)
+    expect(result[0].originToken).toBe(token2);
+    expect(result[0].balance).toBe(BALANCE_SMALL);
+    expect(result[1].originToken).toBe(token3);
+    expect(result[1].balance).toBe(BigInt(300));
+    expect(result[2].originToken).toBe(token1);
+    expect(result[2].balance).toBe(BALANCE_TINY);
+  });
+
+  test('should handle rejected promises', () => {
+    const token1 = createMockToken({ symbol: 'TOKEN1' });
+    const destToken1 = createMockToken({ symbol: 'TOKEN1', chainName: 'chain1' });
+
+    const balanceResults: PromiseSettledResult<TokensWithDestinationBalance | null>[] = [
+      { status: 'rejected', reason: new Error('Failed') },
+      {
+        status: 'fulfilled',
+        value: { originToken: token1, destinationToken: destToken1, balance: BALANCE_MEDIUM },
+      },
+    ];
+
+    const result = filterAndSortTokensByBalance(balanceResults, BALANCE_SMALL);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].originToken).toBe(token1);
+  });
+
+  test('should handle null values in fulfilled results', () => {
+    const token1 = createMockToken({ symbol: 'TOKEN1' });
+    const destToken1 = createMockToken({ symbol: 'TOKEN1', chainName: 'chain1' });
+
+    const balanceResults: PromiseSettledResult<TokensWithDestinationBalance | null>[] = [
+      { status: 'fulfilled', value: null },
+      {
+        status: 'fulfilled',
+        value: { originToken: token1, destinationToken: destToken1, balance: BALANCE_MEDIUM },
+      },
+    ];
+
+    const result = filterAndSortTokensByBalance(balanceResults, BALANCE_SMALL);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].originToken).toBe(token1);
+  });
+
+  test('should return empty array when no tokens meet minimum balance', () => {
+    const token1 = createMockToken({ symbol: 'TOKEN1' });
+    const destToken1 = createMockToken({ symbol: 'TOKEN1', chainName: 'chain1' });
+
+    const balanceResults: PromiseSettledResult<TokensWithDestinationBalance | null>[] = [
+      {
+        status: 'fulfilled',
+        value: { originToken: token1, destinationToken: destToken1, balance: BALANCE_TINY },
+      },
+    ];
+
+    const result = filterAndSortTokensByBalance(balanceResults, BALANCE_SMALL);
+
+    expect(result).toHaveLength(0);
+  });
+});
+
+describe('sortTokensByFee', () => {
+  test('should return tokens with no fee before tokens with fee', () => {
+    const token1 = createMockToken({ symbol: 'TOKEN1' });
+    const token2 = createMockToken({ symbol: 'TOKEN2' });
+    const feeToken = createMockToken({ symbol: 'FEE' });
+
+    const tokenFees: TokenWithFee[] = [
+      { token: token1, tokenFee: new TokenAmount(FEE_LOW, feeToken), tokenBalance: BALANCE_TINY },
+      { token: token2, tokenFee: undefined, tokenBalance: BALANCE_TINY },
+    ];
+
+    const result = sortTokensByFee(tokenFees);
+
+    expect(result[0].token).toBe(token2);
+    expect(result[1].token).toBe(token1);
+  });
+
+  test('should sort tokens by fee amount (lowest first)', () => {
+    const token1 = createMockToken({ symbol: 'TOKEN1' });
+    const token2 = createMockToken({ symbol: 'TOKEN2' });
+    const token3 = createMockToken({ symbol: 'TOKEN3' });
+    const feeToken = createMockToken({ symbol: 'FEE' });
+
+    const tokenFees: TokenWithFee[] = [
+      { token: token1, tokenFee: new TokenAmount(FEE_HIGH, feeToken), tokenBalance: BALANCE_TINY },
+      { token: token2, tokenFee: new TokenAmount(FEE_LOW, feeToken), tokenBalance: BALANCE_TINY },
+      { token: token3, tokenFee: new TokenAmount(FEE_MEDIUM, feeToken), tokenBalance: BALANCE_TINY },
+    ];
+
+    const result = sortTokensByFee(tokenFees);
+
+    expect(result[0].token).toBe(token2);
+    expect(result[1].token).toBe(token3);
+    expect(result[2].token).toBe(token1);
+  });
+
+  test('should use balance as tiebreaker when fees are equal', () => {
+    const token1 = createMockToken({ symbol: 'TOKEN1' });
+    const token2 = createMockToken({ symbol: 'TOKEN2' });
+    const feeToken = createMockToken({ symbol: 'FEE' });
+
+    const tokenFees: TokenWithFee[] = [
+      { token: token1, tokenFee: new TokenAmount(FEE_LOW, feeToken), tokenBalance: BALANCE_TINY },
+      { token: token2, tokenFee: new TokenAmount(FEE_LOW, feeToken), tokenBalance: BALANCE_SMALL },
+    ];
+
+    const result = sortTokensByFee(tokenFees);
+
+    // Same fee, so token2 should come first (higher balance)
+    expect(result[0].token).toBe(token2);
+    expect(result[1].token).toBe(token1);
+  });
+
+  test('should use balance as tiebreaker when both have no fee', () => {
+    const token1 = createMockToken({ symbol: 'TOKEN1' });
+    const token2 = createMockToken({ symbol: 'TOKEN2' });
+
+    const tokenFees: TokenWithFee[] = [
+      { token: token1, tokenFee: undefined, tokenBalance: BALANCE_TINY },
+      { token: token2, tokenFee: undefined, tokenBalance: BALANCE_SMALL },
+    ];
+
+    const result = sortTokensByFee(tokenFees);
+
+    // Both no fee, so token2 should come first (higher balance)
+    expect(result[0].token).toBe(token2);
+    expect(result[1].token).toBe(token1);
+  });
+
+  test('should handle complex sorting with mixed fees and balances', () => {
+    const token1 = createMockToken({ symbol: 'TOKEN1' });
+    const token2 = createMockToken({ symbol: 'TOKEN2' });
+    const token3 = createMockToken({ symbol: 'TOKEN3' });
+    const token4 = createMockToken({ symbol: 'TOKEN4' });
+    const feeToken = createMockToken({ symbol: 'FEE' });
+
+    const tokenFees: TokenWithFee[] = [
+      { token: token1, tokenFee: new TokenAmount(FEE_LOW, feeToken), tokenBalance: BALANCE_TINY }, // low fee, low balance
+      { token: token2, tokenFee: undefined, tokenBalance: BigInt(200) }, // no fee, low balance
+      { token: token3, tokenFee: new TokenAmount(FEE_LOW, feeToken), tokenBalance: BALANCE_SMALL }, // low fee, high balance
+      { token: token4, tokenFee: undefined, tokenBalance: BigInt(800) }, // no fee, high balance
+    ];
+
+    const result = sortTokensByFee(tokenFees);
+
+    // Expected order:
+    // 1. token4 (no fee, high balance 800)
+    // 2. token2 (no fee, low balance 200)
+    // 3. token3 (fee 1000, high balance 500)
+    // 4. token1 (fee 1000, low balance 100)
+    expect(result[0].token).toBe(token4);
+    expect(result[1].token).toBe(token2);
+    expect(result[2].token).toBe(token3);
+    expect(result[3].token).toBe(token1);
+  });
+});
+
+describe('getLowestFeeTransferToken', () => {
+  const createMockWarpCore = (overrides?: Partial<WarpCore>) =>
+    ({
+      getTokenCollateral: vi.fn(),
+      getInterchainTransferFee: vi.fn(),
+      ...overrides,
+    }) as unknown as WarpCore;
+
+  test('should return originToken if not a valid multi-collateral token', async () => {
+    const originToken = createMockToken();
+    const destinationToken = createMockToken();
+
+    vi.spyOn(tokenUtils, 'isValidMultiCollateralToken').mockReturnValue(false);
+
+    const result = await getLowestFeeTransferToken(
+      createMockWarpCore(),
+      originToken,
+      destinationToken,
+      LARGE_TRANSFER_AMOUNT,
+      MOCK_RECIPIENT,
+      MOCK_SENDER,
+    );
+
+    expect(result).toBe(originToken);
+  });
+
+  test('should return originToken if only one token exists with same collateral', async () => {
+    const originToken = createMockToken();
+    const destinationToken = createMockToken();
+
+    vi.spyOn(tokenUtils, 'isValidMultiCollateralToken').mockReturnValue(true);
+    vi.spyOn(tokenUtils, 'getTokensWithSameCollateralAddresses').mockReturnValue([
+      { originToken, destinationToken },
+    ]);
+
+    const result = await getLowestFeeTransferToken(
+      createMockWarpCore(),
+      originToken,
+      destinationToken,
+      LARGE_TRANSFER_AMOUNT,
+      MOCK_RECIPIENT,
+      MOCK_SENDER,
+    );
+
+    expect(result).toBe(originToken);
+  });
+
+  test('should return originToken if no tokens have sufficient collateral balance', async () => {
+    const originToken = createMockToken({ symbol: 'TOKEN1' });
+    const destinationToken = createMockToken({ symbol: 'TOKEN1' });
+    const originToken2 = createMockToken({ symbol: 'TOKEN2' });
+    const destinationToken2 = createMockToken({ symbol: 'TOKEN2' });
+
+    vi.spyOn(tokenUtils, 'isValidMultiCollateralToken').mockReturnValue(true);
+    vi.spyOn(tokenUtils, 'getTokensWithSameCollateralAddresses').mockReturnValue([
+      { originToken, destinationToken },
+      { originToken: originToken2, destinationToken: destinationToken2 },
+    ]);
+
+    const warpCore = createMockWarpCore({
+      getTokenCollateral: vi.fn().mockResolvedValue(BALANCE_TINY),
+    });
+
+    const result = await getLowestFeeTransferToken(
+      warpCore,
+      originToken,
+      destinationToken,
+      LARGE_TRANSFER_AMOUNT,
+      MOCK_RECIPIENT,
+      MOCK_SENDER,
+    );
+
+    expect(result).toBe(originToken);
+  });
+
+  test('should return first token with enough collateral if fee fetching fails for all', async () => {
+    const originToken = createMockToken({ symbol: 'TOKEN1' });
+    const destinationToken = createMockToken({ symbol: 'TOKEN1', chainName: 'chain1' });
+    const originToken2 = createMockToken({ symbol: 'TOKEN2' });
+    const destinationToken2 = createMockToken({ symbol: 'TOKEN2', chainName: 'chain2' });
+
+    vi.spyOn(tokenUtils, 'isValidMultiCollateralToken').mockReturnValue(true);
+    vi.spyOn(tokenUtils, 'getTokensWithSameCollateralAddresses').mockReturnValue([
+      { originToken, destinationToken },
+      { originToken: originToken2, destinationToken: destinationToken2 },
+    ]);
+
+    const warpCore = createMockWarpCore({
+      getTokenCollateral: vi
+        .fn()
+        .mockResolvedValueOnce(BALANCE_LARGE)
+        .mockResolvedValueOnce(BALANCE_XLARGE),
+      getInterchainTransferFee: vi.fn().mockRejectedValue(new Error('Fee fetch failed')),
+    });
+
+    const result = await getLowestFeeTransferToken(
+      warpCore,
+      originToken,
+      destinationToken,
+      TRANSFER_AMOUNT,
+      MOCK_RECIPIENT,
+      MOCK_SENDER,
+    );
+
+    // Should return the token with highest collateral balance
+    expect(result).toBe(originToken2);
+  });
+
+  test('should return token with lowest fee when multiple routes available', async () => {
+    const originToken = createMockToken({ symbol: 'TOKEN1' });
+    const destinationToken = createMockToken({ symbol: 'TOKEN1', chainName: 'chain1' });
+    const originToken2 = createMockToken({ symbol: 'TOKEN2' });
+    const destinationToken2 = createMockToken({ symbol: 'TOKEN2', chainName: 'chain2' });
+
+    vi.spyOn(tokenUtils, 'isValidMultiCollateralToken').mockReturnValue(true);
+    vi.spyOn(tokenUtils, 'getTokensWithSameCollateralAddresses').mockReturnValue([
+      { originToken, destinationToken },
+      { originToken: originToken2, destinationToken: destinationToken2 },
+    ]);
+
+    const feeToken = createMockToken({ symbol: 'FEE' });
+
+    const warpCore = createMockWarpCore({
+      getTokenCollateral: vi.fn().mockResolvedValue(BALANCE_XLARGE),
+      getInterchainTransferFee: vi
+        .fn()
+        .mockResolvedValueOnce({ tokenFeeQuote: new TokenAmount(FEE_HIGH, feeToken) })
+        .mockResolvedValueOnce({ tokenFeeQuote: new TokenAmount(FEE_LOW, feeToken) }),
+    });
+
+    const result = await getLowestFeeTransferToken(
+      warpCore,
+      originToken,
+      destinationToken,
+      TRANSFER_AMOUNT,
+      MOCK_RECIPIENT,
+      MOCK_SENDER,
+    );
+
+    expect(result).toBe(originToken2);
+  });
+
+  test('should prefer route with no fee over route with fee', async () => {
+    const originToken = createMockToken({ symbol: 'TOKEN1' });
+    const destinationToken = createMockToken({ symbol: 'TOKEN1', chainName: 'chain1' });
+    const originToken2 = createMockToken({ symbol: 'TOKEN2' });
+    const destinationToken2 = createMockToken({ symbol: 'TOKEN2', chainName: 'chain2' });
+
+    vi.spyOn(tokenUtils, 'isValidMultiCollateralToken').mockReturnValue(true);
+    vi.spyOn(tokenUtils, 'getTokensWithSameCollateralAddresses').mockReturnValue([
+      { originToken, destinationToken },
+      { originToken: originToken2, destinationToken: destinationToken2 },
+    ]);
+
+    const feeToken = createMockToken({ symbol: 'FEE' });
+
+    const warpCore = createMockWarpCore({
+      getTokenCollateral: vi.fn().mockResolvedValue(BALANCE_XLARGE),
+      getInterchainTransferFee: vi
+        .fn()
+        .mockResolvedValueOnce({ tokenFeeQuote: new TokenAmount(FEE_LOW, feeToken) })
+        .mockResolvedValueOnce({ tokenFeeQuote: undefined }),
+    });
+
+    const result = await getLowestFeeTransferToken(
+      warpCore,
+      originToken,
+      destinationToken,
+      TRANSFER_AMOUNT,
+      MOCK_RECIPIENT,
+      MOCK_SENDER,
+    );
+
+    expect(result).toBe(originToken2);
+  });
+
+  test('should handle collateral fetch failure gracefully', async () => {
+    const originToken = createMockToken({ symbol: 'TOKEN1' });
+    const destinationToken = createMockToken({ symbol: 'TOKEN1', chainName: 'chain1' });
+    const originToken2 = createMockToken({ symbol: 'TOKEN2' });
+    const destinationToken2 = createMockToken({ symbol: 'TOKEN2', chainName: 'chain2' });
+
+    vi.spyOn(tokenUtils, 'isValidMultiCollateralToken').mockReturnValue(true);
+    vi.spyOn(tokenUtils, 'getTokensWithSameCollateralAddresses').mockReturnValue([
+      { originToken, destinationToken },
+      { originToken: originToken2, destinationToken: destinationToken2 },
+    ]);
+
+    const feeToken = createMockToken({ symbol: 'FEE' });
+
+    const warpCore = createMockWarpCore({
+      getTokenCollateral: vi
+        .fn()
+        .mockRejectedValueOnce(new Error('Failed to fetch collateral'))
+        .mockResolvedValueOnce(BALANCE_XXLARGE),
+      getInterchainTransferFee: vi.fn().mockResolvedValue({
+        tokenFeeQuote: new TokenAmount(FEE_LOW, feeToken),
+      }),
+    });
+
+    const result = await getLowestFeeTransferToken(
+      warpCore,
+      originToken,
+      destinationToken,
+      TRANSFER_AMOUNT,
+      MOCK_RECIPIENT,
+      MOCK_SENDER,
+    );
+
+    expect(result).toBe(originToken2);
+  });
+
+  test('should handle fee fetch failure for some routes gracefully', async () => {
+    const originToken = createMockToken({ symbol: 'TOKEN1' });
+    const destinationToken = createMockToken({ symbol: 'TOKEN1', chainName: 'chain1' });
+    const originToken2 = createMockToken({ symbol: 'TOKEN2' });
+    const destinationToken2 = createMockToken({ symbol: 'TOKEN2', chainName: 'chain2' });
+
+    vi.spyOn(tokenUtils, 'isValidMultiCollateralToken').mockReturnValue(true);
+    vi.spyOn(tokenUtils, 'getTokensWithSameCollateralAddresses').mockReturnValue([
+      { originToken, destinationToken },
+      { originToken: originToken2, destinationToken: destinationToken2 },
+    ]);
+
+    const feeToken = createMockToken({ symbol: 'FEE' });
+
+    const warpCore = createMockWarpCore({
+      getTokenCollateral: vi.fn().mockResolvedValue(BALANCE_XXLARGE),
+      getInterchainTransferFee: vi
+        .fn()
+        .mockRejectedValueOnce(new Error('Fee fetch failed'))
+        .mockResolvedValueOnce({ tokenFeeQuote: new TokenAmount(FEE_LOW, feeToken) }),
+    });
+
+    const result = await getLowestFeeTransferToken(
+      warpCore,
+      originToken,
+      destinationToken,
+      TRANSFER_AMOUNT,
+      MOCK_RECIPIENT,
+      MOCK_SENDER,
+    );
+
+    expect(result).toBe(originToken2);
   });
 });

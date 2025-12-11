@@ -39,6 +39,7 @@ describe('getTotalFee', () => {
     const token1 = createMockToken({ symbol: 'ETH', decimals: 18 });
     const token2 = createMockToken({ symbol: 'ETH', decimals: 18 });
 
+    // Mock isFungibleWith to return true for same tokens
     vi.spyOn(token1, 'isFungibleWith').mockReturnValue(true);
 
     const interchainQuote = token1.amount('1000000000000000000');
@@ -55,6 +56,7 @@ describe('getTotalFee', () => {
     const token1 = createMockToken({ symbol: 'ETH', decimals: 18, chainName: 'ethereum' });
     const token2 = createMockToken({ symbol: 'ETH', decimals: 18, chainName: 'polygon' });
 
+    // Mock isFungibleWith to return false for different chain tokens
     vi.spyOn(token1, 'isFungibleWith').mockReturnValue(false);
 
     const interchainQuote = token1.amount('1000000000000000000');
@@ -84,6 +86,7 @@ describe('getTotalFee', () => {
 
     const result = getTotalFee({ interchainQuote, localQuote, tokenFeeQuote });
 
+    // Now we can properly handle same symbols but non-fungible tokens
     expect(result).toHaveLength(3);
     expect(result[0].token).toEqual(ethToken);
     expect(result[0].amount).toEqual(BigInt('1000000000000000000'));
@@ -98,6 +101,7 @@ describe('getTotalFee', () => {
     const ethToken2 = createMockToken({ symbol: 'ETH', decimals: 18 });
     const usdcToken = createMockToken({ symbol: 'USDC', decimals: 6 });
 
+    // Mock ETH tokens to be fungible with each other but not with USDC
     vi.spyOn(ethToken1, 'isFungibleWith').mockImplementation(
       (token) => token === ethToken2 || token === ethToken1,
     );
@@ -401,7 +405,11 @@ describe('sortTokensByFee', () => {
     const tokenFees: TokenWithFee[] = [
       { token: token1, tokenFee: new TokenAmount(FEE_HIGH, feeToken), tokenBalance: BALANCE_TINY },
       { token: token2, tokenFee: new TokenAmount(FEE_LOW, feeToken), tokenBalance: BALANCE_TINY },
-      { token: token3, tokenFee: new TokenAmount(FEE_MEDIUM, feeToken), tokenBalance: BALANCE_TINY },
+      {
+        token: token3,
+        tokenFee: new TokenAmount(FEE_MEDIUM, feeToken),
+        tokenBalance: BALANCE_TINY,
+      },
     ];
 
     const result = sortTokensByFee(tokenFees);

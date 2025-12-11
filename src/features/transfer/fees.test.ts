@@ -64,6 +64,7 @@ describe('getTotalFee', () => {
 
     const result = getTotalFee({ interchainQuote, localQuote });
 
+    // Now we can properly handle same symbols but non-fungible tokens
     expect(result).toHaveLength(2);
     expect(result[0].token).toEqual(token1);
     expect(result[0].amount).toEqual(BigInt('1000000000000000000'));
@@ -76,6 +77,7 @@ describe('getTotalFee', () => {
     const usdcToken = createMockToken({ symbol: 'USDC', decimals: 6 });
     const wethToken = createMockToken({ symbol: 'WETH', decimals: 18 });
 
+    // Mock isFungibleWith to return false for all combinations
     vi.spyOn(ethToken, 'isFungibleWith').mockReturnValue(false);
     vi.spyOn(usdcToken, 'isFungibleWith').mockReturnValue(false);
     vi.spyOn(wethToken, 'isFungibleWith').mockReturnValue(false);
@@ -86,7 +88,6 @@ describe('getTotalFee', () => {
 
     const result = getTotalFee({ interchainQuote, localQuote, tokenFeeQuote });
 
-    // Now we can properly handle same symbols but non-fungible tokens
     expect(result).toHaveLength(3);
     expect(result[0].token).toEqual(ethToken);
     expect(result[0].amount).toEqual(BigInt('1000000000000000000'));

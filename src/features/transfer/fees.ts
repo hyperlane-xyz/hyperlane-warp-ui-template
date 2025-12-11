@@ -4,6 +4,13 @@ import { chainsRentEstimate } from '../../consts/chains';
 import { logger } from '../../utils/logger';
 import { getTokensWithSameCollateralAddresses, isValidMultiCollateralToken } from '../tokens/utils';
 
+// Compare two bigint balances in descending order (highest first)
+function compareByBalanceDesc(a: bigint, b: bigint): number {
+  if (a > b) return -1;
+  if (a < b) return 1;
+  return 0;
+}
+
 // get the total amount combined of all the fees
 export function getTotalFee({
   interchainQuote,
@@ -106,10 +113,13 @@ export async function getLowestFeeTransferToken(
   }
   if (!tokenBalances.length) return originToken;
 
+  // sort by descending balance (highest to lowest)
+  tokenBalances.sort((a, b) => compareByBalanceDesc(a.balance, b.balance));
+
   logger.debug('Retrieving fees for multi-collateral routes...');
   // fetch each route fees
   const feeResults = await Promise.allSettled(
-    tokenBalances.map(async ({ originToken, destinationToken }) => {
+    tokenBalances.map(async ({ originToken, destinationToken, balance }) => {
       try {
         const originTokenAmount = new TokenAmount(amountWei, originToken);
         const fees = await warpCore.getInterchainTransferFee({
@@ -118,34 +128,36 @@ export async function getLowestFeeTransferToken(
           recipient,
           sender,
         });
-        return { token: originToken, fees };
+        return { token: originToken, fees, tokenBalance: balance };
       } catch {
         return null;
       }
     }),
   );
 
-  const tokenFees: Array<{ token: Token; tokenFee?: TokenAmount }> = [];
+  const tokenFees: Array<{ token: Token; tokenFee?: TokenAmount; tokenBalance: bigint }> = [];
   for (const result of feeResults) {
     if (result.status === 'fulfilled' && result.value) {
-      tokenFees.push({ token: result.value.token, tokenFee: result.value.fees.tokenFeeQuote });
+      const { fees, token, tokenBalance } = result.value;
+      tokenFees.push({ token, tokenFee: fees.tokenFeeQuote, tokenBalance });
     }
   }
   // if no token was found with fees, just return the first token with enough collateral
   if (!tokenFees.length) return tokenBalances[0].originToken;
 
   // sort by token fees, no fees routes take precedence, then lowest fee to highest
+  // use tokenBalance as tie breaker (higher balance preferred)
   tokenFees.sort((a, b) => {
     const aFee = a.tokenFee?.amount;
     const bFee = b.tokenFee?.amount;
 
     if (aFee === undefined && bFee !== undefined) return -1;
     if (aFee !== undefined && bFee === undefined) return 1;
-    if (aFee === undefined && bFee === undefined) return 0;
+    if (aFee === undefined && bFee === undefined) return compareByBalanceDesc(a.tokenBalance, b.tokenBalance);
 
     if (aFee! < bFee!) return -1;
     if (aFee! > bFee!) return 1;
-    return 0;
+    return compareByBalanceDesc(a.tokenBalance, b.tokenBalance);
   });
 
   logger.debug('Found route with lower fee, switching route...');

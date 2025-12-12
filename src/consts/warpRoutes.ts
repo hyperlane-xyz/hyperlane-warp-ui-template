@@ -23,18 +23,6 @@ export const warpRouteConfigs: WarpCoreConfig = {
           sourcePort: 'transfer',
           sourceChannel: 'channel-8',
         },
-        // To Manta Pacific via Neutron
-        {
-          token: 'ethereum|mantapacific|0x6Fae4D9935E2fcb11fC79a64e917fb2BF14DaFaa',
-          type: TokenConnectionType.IbcHyperlane,
-          sourcePort: 'transfer',
-          sourceChannel: 'channel-8',
-          intermediateChainName: 'neutron',
-          intermediateRouterAddress:
-            'neutron1ch7x3xgpnj62weyes8vfada35zff6z59kt2psqhnx9gjnt2ttqdqtva3pa',
-          intermediateIbcDenom:
-            'ibc/773B4D0A3CD667B2275D5A4A7A2F0909C0BA0F4059C0B9181E680DDF4965DCC7',
-        },
         // To Arbitrum via Neutron
         {
           token: 'ethereum|arbitrum|0xD56734d7f9979dD94FAE3d67C7e928234e71cD4C',

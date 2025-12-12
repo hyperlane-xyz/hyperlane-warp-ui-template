@@ -3,20 +3,6 @@
 // If left null, all warp routes in the configured registry will be included
 // If set to a list (including an empty list), only the specified routes will be included
 export const warpRouteWhitelist: Array<string> | null = [
-  // TIA routes
-  'TIA/eclipsemainnet-stride',
-
-  // TIA routes (cosmos-sdk)
-  'TIA/abstract-celestia',
-  'TIA/arbitrum',
-  'TIA/base-celestia',
-  'TIA/celestia-ethereum',
-  'TIA/celestia-solanamainnet',
-  'TIA/celestia-eclipsemainnet',
-
-  // stTIA routes
-  'stTIA/eclipsemainnet-stride',
-
   // ETH routes
   'ETH/ethereum-hyperevm',
   'ETH/ethereum-viction',

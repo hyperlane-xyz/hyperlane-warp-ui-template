@@ -2,7 +2,40 @@ import { IToken, Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
 import { objKeys } from '@hyperlane-xyz/utils';
 import { chainsRentEstimate } from '../../consts/chains';
 import { logger } from '../../utils/logger';
+import { getPromisesFulfilledValues } from '../../utils/promises';
+import { TokensWithDestinationBalance, TokenWithFee } from '../tokens/types';
 import { getTokensWithSameCollateralAddresses, isValidMultiCollateralToken } from '../tokens/utils';
+
+// Compare two objects with balance field in descending order (highest first)
+export function compareByBalanceDesc(a: { balance: bigint }, b: { balance: bigint }) {
+  if (a.balance > b.balance) return -1;
+  if (a.balance < b.balance) return 1;
+  return 0;
+}
+
+// Filter tokens by minimum balance and sort by descending balance
+export function filterAndSortTokensByBalance(
+  tokens: TokensWithDestinationBalance[],
+  minAmount: bigint,
+): TokensWithDestinationBalance[] {
+  return tokens.filter((t) => t.balance >= minAmount).sort(compareByBalanceDesc);
+}
+
+// Sort tokens by fee (no fee first, then lowest fee), using balance as tiebreaker
+export function sortTokensByFee(tokenFees: TokenWithFee[]): TokenWithFee[] {
+  return [...tokenFees].sort((a, b) => {
+    const aFee = a.tokenFee?.amount;
+    const bFee = b.tokenFee?.amount;
+
+    if (aFee === undefined && bFee !== undefined) return -1;
+    if (aFee !== undefined && bFee === undefined) return 1;
+    if (aFee === undefined && bFee === undefined) return compareByBalanceDesc(a, b);
+
+    if (aFee! < bFee!) return -1;
+    if (aFee! > bFee!) return 1;
+    return compareByBalanceDesc(a, b);
+  });
+}
 
 // get the total amount combined of all the fees
 export function getTotalFee({
@@ -92,24 +125,15 @@ export async function getLowestFeeTransferToken(
     }),
   );
 
-  const amountWeiBigInt = BigInt(amountWei);
-  const tokenBalances: Array<{ originToken: Token; destinationToken: Token; balance: bigint }> = [];
-  // filter tokens that have lower collateral in destination than the amount
-  for (const result of balanceResults) {
-    if (
-      result.status === 'fulfilled' &&
-      result.value?.balance &&
-      result.value.balance >= amountWeiBigInt
-    ) {
-      tokenBalances.push(result.value);
-    }
-  }
+  const validBalanceResults = getPromisesFulfilledValues(balanceResults);
+
+  const tokenBalances = filterAndSortTokensByBalance(validBalanceResults, BigInt(amountWei));
   if (!tokenBalances.length) return originToken;
 
   logger.debug('Retrieving fees for multi-collateral routes...');
   // fetch each route fees
   const feeResults = await Promise.allSettled(
-    tokenBalances.map(async ({ originToken, destinationToken }) => {
+    tokenBalances.map(async ({ originToken, destinationToken, balance }) => {
       try {
         const originTokenAmount = new TokenAmount(amountWei, originToken);
         const fees = await warpCore.getInterchainTransferFee({
@@ -118,36 +142,23 @@ export async function getLowestFeeTransferToken(
           recipient,
           sender,
         });
-        return { token: originToken, fees };
+        return { token: originToken, fees, balance };
       } catch {
         return null;
       }
     }),
   );
 
-  const tokenFees: Array<{ token: Token; tokenFee?: TokenAmount }> = [];
-  for (const result of feeResults) {
-    if (result.status === 'fulfilled' && result.value) {
-      tokenFees.push({ token: result.value.token, tokenFee: result.value.fees.tokenFeeQuote });
-    }
-  }
+  const tokenFees = getPromisesFulfilledValues(feeResults).map(({ token, fees, balance }) => ({
+    token,
+    tokenFee: fees.tokenFeeQuote,
+    balance,
+  }));
   // if no token was found with fees, just return the first token with enough collateral
   if (!tokenFees.length) return tokenBalances[0].originToken;
 
-  // sort by token fees, no fees routes take precedence, then lowest fee to highest
-  tokenFees.sort((a, b) => {
-    const aFee = a.tokenFee?.amount;
-    const bFee = b.tokenFee?.amount;
-
-    if (aFee === undefined && bFee !== undefined) return -1;
-    if (aFee !== undefined && bFee === undefined) return 1;
-    if (aFee === undefined && bFee === undefined) return 0;
-
-    if (aFee! < bFee!) return -1;
-    if (aFee! > bFee!) return 1;
-    return 0;
-  });
+  const sortedTokensByFees = sortTokensByFee(tokenFees);
 
   logger.debug('Found route with lower fee, switching route...');
-  return tokenFees[0].token;
+  return sortedTokensByFees[0].token;
 }

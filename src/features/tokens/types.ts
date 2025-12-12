@@ -18,5 +18,5 @@ export interface TokensWithDestinationBalance {
 export interface TokenWithFee {
   token: Token;
   tokenFee?: TokenAmount;
-  tokenBalance: bigint;
+  balance: bigint;
 }

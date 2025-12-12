@@ -2,37 +2,23 @@ import { IToken, Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
 import { objKeys } from '@hyperlane-xyz/utils';
 import { chainsRentEstimate } from '../../consts/chains';
 import { logger } from '../../utils/logger';
+import { getPromisesFulfilledValues } from '../../utils/promises';
 import { TokensWithDestinationBalance, TokenWithFee } from '../tokens/types';
 import { getTokensWithSameCollateralAddresses, isValidMultiCollateralToken } from '../tokens/utils';
 
-// Compare two bigint balances in descending order (highest first)
-export function compareByBalanceDesc(a: bigint, b: bigint): number {
-  if (a > b) return -1;
-  if (a < b) return 1;
+// Compare two objects with balance field in descending order (highest first)
+export function compareByBalanceDesc(a: { balance: bigint }, b: { balance: bigint }) {
+  if (a.balance > b.balance) return -1;
+  if (a.balance < b.balance) return 1;
   return 0;
 }
 
-// Filter tokens that have sufficient collateral balance and sort by descending balance
+// Filter tokens by minimum balance and sort by descending balance
 export function filterAndSortTokensByBalance(
-  balanceResults: PromiseSettledResult<TokensWithDestinationBalance | null>[],
+  tokens: TokensWithDestinationBalance[],
   minAmount: bigint,
 ): TokensWithDestinationBalance[] {
-  const tokenBalances: TokensWithDestinationBalance[] = [];
-
-  for (const result of balanceResults) {
-    if (
-      result.status === 'fulfilled' &&
-      result.value?.balance &&
-      result.value.balance >= minAmount
-    ) {
-      tokenBalances.push(result.value);
-    }
-  }
-
-  // sort by descending balance (highest to lowest)
-  tokenBalances.sort((a, b) => compareByBalanceDesc(a.balance, b.balance));
-
-  return tokenBalances;
+  return tokens.filter((t) => t.balance >= minAmount).sort(compareByBalanceDesc);
 }
 
 // Sort tokens by fee (no fee first, then lowest fee), using balance as tiebreaker
@@ -43,12 +29,11 @@ export function sortTokensByFee(tokenFees: TokenWithFee[]): TokenWithFee[] {
 
     if (aFee === undefined && bFee !== undefined) return -1;
     if (aFee !== undefined && bFee === undefined) return 1;
-    if (aFee === undefined && bFee === undefined)
-      return compareByBalanceDesc(a.tokenBalance, b.tokenBalance);
+    if (aFee === undefined && bFee === undefined) return compareByBalanceDesc(a, b);
 
     if (aFee! < bFee!) return -1;
     if (aFee! > bFee!) return 1;
-    return compareByBalanceDesc(a.tokenBalance, b.tokenBalance);
+    return compareByBalanceDesc(a, b);
   });
 }
 
@@ -140,7 +125,9 @@ export async function getLowestFeeTransferToken(
     }),
   );
 
-  const tokenBalances = filterAndSortTokensByBalance(balanceResults, BigInt(amountWei));
+  const validBalanceResults = getPromisesFulfilledValues(balanceResults);
+
+  const tokenBalances = filterAndSortTokensByBalance(validBalanceResults, BigInt(amountWei));
   if (!tokenBalances.length) return originToken;
 
   logger.debug('Retrieving fees for multi-collateral routes...');
@@ -155,20 +142,18 @@ export async function getLowestFeeTransferToken(
           recipient,
           sender,
         });
-        return { token: originToken, fees, tokenBalance: balance };
+        return { token: originToken, fees, balance };
       } catch {
         return null;
       }
     }),
   );
 
-  const tokenFees: TokenWithFee[] = [];
-  for (const result of feeResults) {
-    if (result.status === 'fulfilled' && result.value) {
-      const { fees, token, tokenBalance } = result.value;
-      tokenFees.push({ token, tokenFee: fees.tokenFeeQuote, tokenBalance });
-    }
-  }
+  const tokenFees = getPromisesFulfilledValues(feeResults).map(({ token, fees, balance }) => ({
+    token,
+    tokenFee: fees.tokenFeeQuote,
+    balance,
+  }));
   // if no token was found with fees, just return the first token with enough collateral
   if (!tokenFees.length) return tokenBalances[0].originToken;
 

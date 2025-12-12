@@ -250,21 +250,21 @@ describe('getTotalFee', () => {
 
 describe('compareByBalanceDesc', () => {
   test('should return -1 when first balance is greater', () => {
-    expect(compareByBalanceDesc(BALANCE_TINY, BigInt(50))).toBe(-1);
+    expect(compareByBalanceDesc({ balance: BALANCE_TINY }, { balance: BigInt(50) })).toBe(-1);
   });
 
   test('should return 1 when first balance is smaller', () => {
-    expect(compareByBalanceDesc(BigInt(50), BALANCE_TINY)).toBe(1);
+    expect(compareByBalanceDesc({ balance: BigInt(50) }, { balance: BALANCE_TINY })).toBe(1);
   });
 
   test('should return 0 when balances are equal', () => {
-    expect(compareByBalanceDesc(BALANCE_TINY, BALANCE_TINY)).toBe(0);
+    expect(compareByBalanceDesc({ balance: BALANCE_TINY }, { balance: BALANCE_TINY })).toBe(0);
   });
 
   test('should handle very large bigints', () => {
     const large1 = BigInt('999999999999999999999999999');
     const large2 = BigInt('999999999999999999999999998');
-    expect(compareByBalanceDesc(large1, large2)).toBe(-1);
+    expect(compareByBalanceDesc({ balance: large1 }, { balance: large2 })).toBe(-1);
   });
 });
 
@@ -275,18 +275,12 @@ describe('filterAndSortTokensByBalance', () => {
     const destToken1 = createMockToken({ symbol: 'TOKEN1', chainName: 'chain1' });
     const destToken2 = createMockToken({ symbol: 'TOKEN2', chainName: 'chain2' });
 
-    const balanceResults: PromiseSettledResult<TokensWithDestinationBalance | null>[] = [
-      {
-        status: 'fulfilled',
-        value: { originToken: token1, destinationToken: destToken1, balance: BALANCE_TINY },
-      },
-      {
-        status: 'fulfilled',
-        value: { originToken: token2, destinationToken: destToken2, balance: BALANCE_MEDIUM },
-      },
+    const tokens: TokensWithDestinationBalance[] = [
+      { originToken: token1, destinationToken: destToken1, balance: BALANCE_TINY },
+      { originToken: token2, destinationToken: destToken2, balance: BALANCE_MEDIUM },
     ];
 
-    const result = filterAndSortTokensByBalance(balanceResults, BALANCE_SMALL);
+    const result = filterAndSortTokensByBalance(tokens, BALANCE_SMALL);
 
     expect(result).toHaveLength(1);
     expect(result[0].originToken).toBe(token2);
@@ -300,22 +294,13 @@ describe('filterAndSortTokensByBalance', () => {
     const destToken2 = createMockToken({ symbol: 'TOKEN2', chainName: 'chain2' });
     const destToken3 = createMockToken({ symbol: 'TOKEN3', chainName: 'chain3' });
 
-    const balanceResults: PromiseSettledResult<TokensWithDestinationBalance | null>[] = [
-      {
-        status: 'fulfilled',
-        value: { originToken: token1, destinationToken: destToken1, balance: BALANCE_TINY },
-      },
-      {
-        status: 'fulfilled',
-        value: { originToken: token2, destinationToken: destToken2, balance: BALANCE_SMALL },
-      },
-      {
-        status: 'fulfilled',
-        value: { originToken: token3, destinationToken: destToken3, balance: BigInt(300) },
-      },
+    const tokens: TokensWithDestinationBalance[] = [
+      { originToken: token1, destinationToken: destToken1, balance: BALANCE_TINY },
+      { originToken: token2, destinationToken: destToken2, balance: BALANCE_SMALL },
+      { originToken: token3, destinationToken: destToken3, balance: BigInt(300) },
     ];
 
-    const result = filterAndSortTokensByBalance(balanceResults, BigInt(50));
+    const result = filterAndSortTokensByBalance(tokens, BigInt(50));
 
     expect(result).toHaveLength(3);
     // Should be sorted: token2 (500) > token3 (300) > token1 (100)
@@ -327,54 +312,15 @@ describe('filterAndSortTokensByBalance', () => {
     expect(result[2].balance).toBe(BALANCE_TINY);
   });
 
-  test('should handle rejected promises', () => {
-    const token1 = createMockToken({ symbol: 'TOKEN1' });
-    const destToken1 = createMockToken({ symbol: 'TOKEN1', chainName: 'chain1' });
-
-    const balanceResults: PromiseSettledResult<TokensWithDestinationBalance | null>[] = [
-      { status: 'rejected', reason: new Error('Failed') },
-      {
-        status: 'fulfilled',
-        value: { originToken: token1, destinationToken: destToken1, balance: BALANCE_MEDIUM },
-      },
-    ];
-
-    const result = filterAndSortTokensByBalance(balanceResults, BALANCE_SMALL);
-
-    expect(result).toHaveLength(1);
-    expect(result[0].originToken).toBe(token1);
-  });
-
-  test('should handle null values in fulfilled results', () => {
-    const token1 = createMockToken({ symbol: 'TOKEN1' });
-    const destToken1 = createMockToken({ symbol: 'TOKEN1', chainName: 'chain1' });
-
-    const balanceResults: PromiseSettledResult<TokensWithDestinationBalance | null>[] = [
-      { status: 'fulfilled', value: null },
-      {
-        status: 'fulfilled',
-        value: { originToken: token1, destinationToken: destToken1, balance: BALANCE_MEDIUM },
-      },
-    ];
-
-    const result = filterAndSortTokensByBalance(balanceResults, BALANCE_SMALL);
-
-    expect(result).toHaveLength(1);
-    expect(result[0].originToken).toBe(token1);
-  });
-
   test('should return empty array when no tokens meet minimum balance', () => {
     const token1 = createMockToken({ symbol: 'TOKEN1' });
     const destToken1 = createMockToken({ symbol: 'TOKEN1', chainName: 'chain1' });
 
-    const balanceResults: PromiseSettledResult<TokensWithDestinationBalance | null>[] = [
-      {
-        status: 'fulfilled',
-        value: { originToken: token1, destinationToken: destToken1, balance: BALANCE_TINY },
-      },
+    const tokens: TokensWithDestinationBalance[] = [
+      { originToken: token1, destinationToken: destToken1, balance: BALANCE_TINY },
     ];
 
-    const result = filterAndSortTokensByBalance(balanceResults, BALANCE_SMALL);
+    const result = filterAndSortTokensByBalance(tokens, BALANCE_SMALL);
 
     expect(result).toHaveLength(0);
   });
@@ -387,8 +333,8 @@ describe('sortTokensByFee', () => {
     const feeToken = createMockToken({ symbol: 'FEE' });
 
     const tokenFees: TokenWithFee[] = [
-      { token: token1, tokenFee: new TokenAmount(FEE_LOW, feeToken), tokenBalance: BALANCE_TINY },
-      { token: token2, tokenFee: undefined, tokenBalance: BALANCE_TINY },
+      { token: token1, tokenFee: new TokenAmount(FEE_LOW, feeToken), balance: BALANCE_TINY },
+      { token: token2, tokenFee: undefined, balance: BALANCE_TINY },
     ];
 
     const result = sortTokensByFee(tokenFees);
@@ -404,13 +350,9 @@ describe('sortTokensByFee', () => {
     const feeToken = createMockToken({ symbol: 'FEE' });
 
     const tokenFees: TokenWithFee[] = [
-      { token: token1, tokenFee: new TokenAmount(FEE_HIGH, feeToken), tokenBalance: BALANCE_TINY },
-      { token: token2, tokenFee: new TokenAmount(FEE_LOW, feeToken), tokenBalance: BALANCE_TINY },
-      {
-        token: token3,
-        tokenFee: new TokenAmount(FEE_MEDIUM, feeToken),
-        tokenBalance: BALANCE_TINY,
-      },
+      { token: token1, tokenFee: new TokenAmount(FEE_HIGH, feeToken), balance: BALANCE_TINY },
+      { token: token2, tokenFee: new TokenAmount(FEE_LOW, feeToken), balance: BALANCE_TINY },
+      { token: token3, tokenFee: new TokenAmount(FEE_MEDIUM, feeToken), balance: BALANCE_TINY },
     ];
 
     const result = sortTokensByFee(tokenFees);
@@ -426,8 +368,8 @@ describe('sortTokensByFee', () => {
     const feeToken = createMockToken({ symbol: 'FEE' });
 
     const tokenFees: TokenWithFee[] = [
-      { token: token1, tokenFee: new TokenAmount(FEE_LOW, feeToken), tokenBalance: BALANCE_TINY },
-      { token: token2, tokenFee: new TokenAmount(FEE_LOW, feeToken), tokenBalance: BALANCE_SMALL },
+      { token: token1, tokenFee: new TokenAmount(FEE_LOW, feeToken), balance: BALANCE_TINY },
+      { token: token2, tokenFee: new TokenAmount(FEE_LOW, feeToken), balance: BALANCE_SMALL },
     ];
 
     const result = sortTokensByFee(tokenFees);
@@ -442,8 +384,8 @@ describe('sortTokensByFee', () => {
     const token2 = createMockToken({ symbol: 'TOKEN2' });
 
     const tokenFees: TokenWithFee[] = [
-      { token: token1, tokenFee: undefined, tokenBalance: BALANCE_TINY },
-      { token: token2, tokenFee: undefined, tokenBalance: BALANCE_SMALL },
+      { token: token1, tokenFee: undefined, balance: BALANCE_TINY },
+      { token: token2, tokenFee: undefined, balance: BALANCE_SMALL },
     ];
 
     const result = sortTokensByFee(tokenFees);
@@ -461,10 +403,10 @@ describe('sortTokensByFee', () => {
     const feeToken = createMockToken({ symbol: 'FEE' });
 
     const tokenFees: TokenWithFee[] = [
-      { token: token1, tokenFee: new TokenAmount(FEE_LOW, feeToken), tokenBalance: BALANCE_TINY }, // low fee, low balance
-      { token: token2, tokenFee: undefined, tokenBalance: BigInt(200) }, // no fee, low balance
-      { token: token3, tokenFee: new TokenAmount(FEE_LOW, feeToken), tokenBalance: BALANCE_SMALL }, // low fee, high balance
-      { token: token4, tokenFee: undefined, tokenBalance: BigInt(800) }, // no fee, high balance
+      { token: token1, tokenFee: new TokenAmount(FEE_LOW, feeToken), balance: BALANCE_TINY }, // low fee, low balance
+      { token: token2, tokenFee: undefined, balance: BigInt(200) }, // no fee, low balance
+      { token: token3, tokenFee: new TokenAmount(FEE_LOW, feeToken), balance: BALANCE_SMALL }, // low fee, high balance
+      { token: token4, tokenFee: undefined, balance: BigInt(800) }, // no fee, high balance
     ];
 
     const result = sortTokensByFee(tokenFees);

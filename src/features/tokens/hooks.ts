@@ -1,30 +1,14 @@
 import { IToken, Token, WarpCore } from '@hyperlane-xyz/sdk';
-import { normalizeAddress } from '@hyperlane-xyz/utils';
 import { useAccountForChain, useActiveChains, useWatchAsset } from '@hyperlane-xyz/widgets';
 import { useMutation } from '@tanstack/react-query';
 import { ADD_ASSET_SUPPORTED_PROTOCOLS } from '../../consts/args';
 import { useMultiProvider } from '../chains/hooks';
 import { useStore } from '../store';
+import { getTokenKey } from './utils';
 
 export function useWarpCore() {
   return useStore((s) => s.warpCore);
 }
-
-// ============================================
-// Token Key System
-// ============================================
-// Format: "chainName-symbol-addressOrDenom" (stable identifier)
-// Example: "ethereum-usdc-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
-
-/**
- * Generate a stable token key from a token object
- * Uses chainName + lowercase symbol + normalized address
- */
-export function getTokenKey(token: IToken): string {
-  const normalizedAddress = normalizeAddress(token.addressOrDenom, token.protocol);
-  return `${token.chainName.toLowerCase()}-${token.symbol.toLowerCase()}-${normalizedAddress}`;
-}
-
 /**
  * Find a token by its key
  */
@@ -39,14 +23,6 @@ export function getTokenByKey(warpCore: WarpCore, key: string | undefined): Toke
 export function useTokenByKey(key: string | undefined): Token | undefined {
   const warpCore = useWarpCore();
   return getTokenByKey(warpCore, key);
-}
-
-/**
- * Hook to get a token key for a token
- */
-export function useTokenKey(token: IToken | undefined): string | undefined {
-  if (!token) return undefined;
-  return getTokenKey(token);
 }
 
 /**

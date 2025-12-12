@@ -52,13 +52,13 @@ import {
   useOriginBalance,
 } from '../tokens/balances';
 import {
-  getTokenByKey,
-  getTokenKey,
   getInitialTokenKey,
+  getTokenByKey,
   getTokenKeyFromChains,
   useWarpCore,
 } from '../tokens/hooks';
 import { useTokenPrice } from '../tokens/useTokenPrice';
+import { getTokenKey } from '../tokens/utils';
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { FeeSectionButton } from './FeeSectionButton';
 import { RecipientConfirmationModal } from './RecipientConfirmationModal';

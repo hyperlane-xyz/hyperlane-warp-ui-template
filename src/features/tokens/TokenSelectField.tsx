@@ -10,7 +10,8 @@ import { trackTokenSelectionEvent } from '../analytics/utils';
 import { useMultiProvider } from '../chains/hooks';
 import { TransferFormValues } from '../transfer/types';
 import { TokenListModal } from './TokenListModal';
-import { getTokenByKey, getTokenKey, getTokenKeyFromChains, useWarpCore } from './hooks';
+import { getTokenByKey, getTokenKeyFromChains, useWarpCore } from './hooks';
+import { getTokenKey } from './utils';
 
 type Props = {
   name: string;

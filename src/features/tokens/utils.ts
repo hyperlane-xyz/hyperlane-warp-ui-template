@@ -128,6 +128,17 @@ export function getTokensWithSameCollateralAddresses(
     });
 }
 
+/**
+ * Generate a stable token key from a token object
+ * Uses chainName + lowercase symbol + normalized address
+ * Format: "chainName-symbol-addressOrDenom" (stable identifier)
+ * Example: "ethereum-usdc-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+ */
+export function getTokenKey(token: IToken): string {
+  const normalizedAddress = normalizeAddress(token.addressOrDenom, token.protocol);
+  return `${token.chainName.toLowerCase()}-${token.symbol.toLowerCase()}-${normalizedAddress}`;
+}
+
 // De-duplicate collaterized tokens
 // Returns a map of token with same origin and dest collateral address
 // And an array of tokens with repeated collateral addresses grouped into one
@@ -178,10 +189,13 @@ export function dedupeTokensByCollateral(tokens: Token[]): Token[] {
       return true;
     }
 
-    // For HypNative tokens, use their symbol and standard as identifier
+    const chainName = token.chainName.toLowerCase();
+    const symbol = token.symbol.toLowerCase();
+    const protocol = token.protocol;
+    // For HypNative tokens, use their symbol and protocol as identifier
     const collateralKey = token.collateralAddressOrDenom
-      ? `${token.chainName}-${token.symbol}-${normalizeAddress(token.collateralAddressOrDenom, token.protocol)}`
-      : `${token.chainName}-${token.symbol}-hypnative-${token.standard}`;
+      ? `${chainName}-${symbol}-${normalizeAddress(token.collateralAddressOrDenom, protocol)}`
+      : `${chainName}-${symbol}-hypnative-${protocol}`;
 
     // If we haven't seen this collateral on this chain, include it
     if (!seenCollaterals.has(collateralKey)) {
@@ -205,7 +219,7 @@ export function buildOriginTokens(tokens: Token[]): Token[] {
   // Deduplicate by chain-address
   const tokenMap = new Map<string, Token>();
   originTokens.forEach((token) => {
-    const key = `${token.chainName}-${token.symbol}-${token.addressOrDenom}`;
+    const key = getTokenKey(token);
     if (!tokenMap.has(key)) {
       tokenMap.set(key, token);
     }
@@ -228,7 +242,7 @@ export function buildDestinationTokens(tokens: Token[]): Token[] {
   tokens.forEach((token) => {
     token.connections?.forEach((conn) => {
       const destToken = conn.token as Token;
-      const key = `${destToken.chainName}-${destToken.symbol}-${destToken.addressOrDenom}`;
+      const key = getTokenKey(destToken);
       if (!tokenMap.has(key)) {
         tokenMap.set(key, destToken);
       }

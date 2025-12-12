@@ -5,7 +5,6 @@ import { AnimatePresence, motion } from 'framer-motion';
 import Image from 'next/image';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ChainLogo } from '../../components/icons/ChainLogo';
-import { TokenIcon } from '../../components/icons/TokenIcon';
 import { TextInput } from '../../components/input/TextField';
 import { config } from '../../consts/config';
 import InfoIcon from '../../images/icons/info-circle.svg';
@@ -13,6 +12,7 @@ import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { useStore } from '../store';
 import { useWarpCore } from './hooks';
+import { TokenChainIcon } from './TokenChainIcon';
 import { TokenChainMap } from './types';
 import { dedupeMultiCollateralTokens } from './utils';
 
@@ -171,9 +171,9 @@ export function TokenList({
           onClick={() => onSelect(t.token)}
         >
           <div className="shrink-0">
-            <TokenIcon token={t.token} size={30} />
+            <TokenChainIcon token={t.token} size={30} />
           </div>
-          <div className="ml-2 shrink-0 text-left">
+          <div className="ml-3 shrink-0 text-left">
             <div className="w-16 truncate text-sm">{t.token.symbol || 'Unknown'}</div>
             <div className="w-16 truncate text-xs text-gray-500">{t.token.name || 'Unknown'}</div>
           </div>
@@ -228,7 +228,7 @@ function UnsupportedRouteTokenList({
           onClick={() => setOpen((prevSymbol) => (prevSymbol === symbol ? null : symbol))}
         >
           <div className="shrink-0">
-            <TokenIcon token={tokenInformation} size={30} />
+            <TokenChainIcon token={tokenInformation} size={30} />
           </div>
           <div className="ml-2 shrink-0 text-left">
             <div className="text-sm">{tokenInformation.symbol || 'Unknown'}</div>

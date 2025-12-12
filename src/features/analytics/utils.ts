@@ -3,7 +3,7 @@ import { objLength, ProtocolType } from '@hyperlane-xyz/utils';
 import { AccountInfo, getAccountAddressAndPubKey } from '@hyperlane-xyz/widgets';
 import { track } from '@vercel/analytics';
 import { config } from '../../consts/config';
-import { getTokenByIndex } from '../tokens/hooks';
+import { getTokenByKey } from '../tokens/hooks';
 import { TransferFormValues } from '../transfer/types';
 import { EVENT_NAME, EventProperties } from './types';
 
@@ -45,7 +45,7 @@ const SKIPPED_ERRORS = ['Token is required', 'Invalid amount'];
 export function trackTransactionFailedEvent(
   errors: Record<string, string> | null,
   warpCore: WarpCore,
-  { tokenIndex, origin, destination, amount, recipient }: TransferFormValues,
+  { tokenKey, origin, destination, amount, recipient }: TransferFormValues,
   accounts: Record<ProtocolType, AccountInfo>,
   overrideToken: Token | null,
 ) {
@@ -56,7 +56,7 @@ export function trackTransactionFailedEvent(
   if (SKIPPED_ERRORS.includes(firstError)) return;
 
   const { address } = getAccountAddressAndPubKey(warpCore.multiProvider, origin, accounts);
-  const token = overrideToken || getTokenByIndex(warpCore, tokenIndex);
+  const token = overrideToken || getTokenByKey(warpCore, tokenKey);
 
   if (!token) return;
 

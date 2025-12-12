@@ -2,7 +2,7 @@ import { IToken } from '@hyperlane-xyz/sdk';
 import { ChevronIcon } from '@hyperlane-xyz/widgets';
 import { useField, useFormikContext } from 'formik';
 import { useEffect, useState } from 'react';
-import { TokenIcon } from '../../components/icons/TokenIcon';
+import { TokenChainIcon } from './TokenChainIcon';
 
 import { WARP_QUERY_PARAMS } from '../../consts/args';
 import { updateQueryParam, updateQueryParams } from '../../utils/queryParams';
@@ -10,7 +10,8 @@ import { trackTokenSelectionEvent } from '../analytics/utils';
 import { useMultiProvider } from '../chains/hooks';
 import { TransferFormValues } from '../transfer/types';
 import { TokenListModal } from './TokenListModal';
-import { getIndexForToken, getTokenByIndex, getTokenIndexFromChains, useWarpCore } from './hooks';
+import { getTokenByKey, getTokenKeyFromChains, useWarpCore } from './hooks';
+import { getTokenKey } from './utils';
 
 type Props = {
   name: string;
@@ -20,7 +21,7 @@ type Props = {
 
 export function TokenSelectField({ name, disabled, setIsNft }: Props) {
   const { values, setValues } = useFormikContext<TransferFormValues>();
-  const [field, , helpers] = useField<number | undefined>(name);
+  const [tokenField, , helpers] = useField<string | undefined>(name);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAutomaticSelection, setIsAutomaticSelection] = useState(false);
 
@@ -34,8 +35,8 @@ export function TokenSelectField({ name, disabled, setIsNft }: Props) {
   }, [warpCore, origin, destination, helpers]);
 
   const onSelectToken = (newToken: IToken) => {
-    // Set the token address value in formik state
-    helpers.setValue(getIndexForToken(warpCore, newToken));
+    // Set the token key value in formik state
+    helpers.setValue(getTokenKey(newToken));
 
     // token selection event
     trackTokenSelectionEvent(newToken, origin, destination, multiProvider);
@@ -62,7 +63,13 @@ export function TokenSelectField({ name, disabled, setIsNft }: Props) {
       ...values,
       origin,
       destination,
-      tokenIndex: getTokenIndexFromChains(warpCore, token.addressOrDenom, origin, destination),
+      tokenKey: getTokenKeyFromChains(
+        warpCore,
+        token.addressOrDenom,
+        origin,
+        destination,
+        token.symbol,
+      ),
     });
     updateQueryParams({
       [WARP_QUERY_PARAMS.ORIGIN]: origin,
@@ -74,7 +81,7 @@ export function TokenSelectField({ name, disabled, setIsNft }: Props) {
   return (
     <>
       <TokenButton
-        token={getTokenByIndex(warpCore, field.value)}
+        token={getTokenByKey(warpCore, tokenField.value)}
         disabled={disabled}
         onClick={onClickField}
         isAutomatic={isAutomaticSelection}
@@ -109,7 +116,7 @@ function TokenButton({
       onClick={onClick}
     >
       <div className="flex items-center">
-        {token && <TokenIcon token={token} size={20} />}
+        {token && <TokenChainIcon token={token} size={20} />}
         <span className={`ml-2 ${!token?.symbol && 'text-slate-400'}`}>
           {token?.symbol || (isAutomatic ? 'No routes available' : 'Select Token')}
         </span>

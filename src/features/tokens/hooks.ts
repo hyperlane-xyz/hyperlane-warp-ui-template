@@ -1,39 +1,138 @@
 import { IToken, Token, WarpCore } from '@hyperlane-xyz/sdk';
-import { isNullish } from '@hyperlane-xyz/utils';
 import { useAccountForChain, useActiveChains, useWatchAsset } from '@hyperlane-xyz/widgets';
 import { useMutation } from '@tanstack/react-query';
 import { ADD_ASSET_SUPPORTED_PROTOCOLS } from '../../consts/args';
 import { useMultiProvider } from '../chains/hooks';
 import { useStore } from '../store';
+import { getTokenKey } from './utils';
 
 export function useWarpCore() {
   return useStore((s) => s.warpCore);
+}
+/**
+ * Find a token by its key
+ */
+export function getTokenByKey(warpCore: WarpCore, key: string | undefined): Token | undefined {
+  if (!key) return undefined;
+  return warpCore.tokens.find((token) => getTokenKey(token) === key);
+}
+
+/**
+ * Hook to get a token by its key
+ */
+export function useTokenByKey(key: string | undefined): Token | undefined {
+  const warpCore = useWarpCore();
+  return getTokenByKey(warpCore, key);
+}
+
+/**
+ * Get token key from origin/destination chains (for route lookup)
+ * Returns the key of a token that has a route between origin and destination
+ * Can match by addressOrDenom and/or symbol (both checks are useful because
+ * some routes may have same addressOrDenom but different symbol)
+ */
+export function getTokenKeyFromChains(
+  warpCore: WarpCore,
+  addressOrDenom: string | null,
+  origin: string,
+  destination: string,
+  symbol?: string | null,
+): string | undefined {
+  const tokensWithRoute = warpCore.getTokensForRoute(origin, destination);
+
+  // Find by both address and symbol if both provided
+  if (addressOrDenom && symbol) {
+    const queryToken = tokensWithRoute.find(
+      (token) =>
+        token.addressOrDenom === addressOrDenom &&
+        token.symbol.toLowerCase() === symbol.toLowerCase(),
+    );
+    if (queryToken) return getTokenKey(queryToken);
+  }
+
+  // Find by address if provided
+  if (addressOrDenom) {
+    const queryToken = tokensWithRoute.find((token) => token.addressOrDenom === addressOrDenom);
+    if (queryToken) return getTokenKey(queryToken);
+  }
+
+  // Find by symbol if provided
+  if (symbol) {
+    const queryToken = tokensWithRoute.find(
+      (token) => token.symbol.toLowerCase() === symbol.toLowerCase(),
+    );
+    if (queryToken) return getTokenKey(queryToken);
+  }
+
+  // If only one route, return that token's key
+  if (tokensWithRoute.length === 1) return getTokenKey(tokensWithRoute[0]);
+
+  return undefined;
+}
+
+/**
+ * Get token key from chains and symbol (for URL params)
+ */
+export function getTokenKeyFromChainsAndSymbol(
+  warpCore: WarpCore,
+  symbol: string | null,
+  origin: string,
+  destination: string,
+): string | undefined {
+  const tokensWithRoute = warpCore.getTokensForRoute(origin, destination);
+
+  const queryToken = symbol
+    ? tokensWithRoute.find((token) => token.symbol.toLowerCase() === symbol.toLowerCase())
+    : undefined;
+
+  if (queryToken) return getTokenKey(queryToken);
+  if (tokensWithRoute.length === 1) return getTokenKey(tokensWithRoute[0]);
+
+  return undefined;
+}
+
+/**
+ * Get initial token key (for app initialization from URL params)
+ */
+export function getInitialTokenKey(
+  warpCore: WarpCore,
+  symbol: string | null,
+  originQuery?: string,
+  destinationQuery?: string,
+  defaultOriginToken?: Token,
+  defaultDestinationChain?: string,
+): string | undefined {
+  const firstToken = defaultOriginToken || warpCore.tokens[0];
+  const connectedToken = firstToken?.connections?.[0]?.token;
+
+  // If origin and destination query are defined, use them
+  if (originQuery && destinationQuery) {
+    return getTokenKeyFromChainsAndSymbol(warpCore, symbol, originQuery, destinationQuery);
+  }
+
+  // Use default values
+  if (defaultDestinationChain || connectedToken) {
+    return getTokenKeyFromChainsAndSymbol(
+      warpCore,
+      symbol,
+      firstToken?.chainName || '',
+      defaultDestinationChain || connectedToken?.chainName || '',
+    );
+  }
+
+  return undefined;
 }
 
 export function useTokens() {
   return useWarpCore().tokens;
 }
 
-export function useTokenByIndex(tokenIndex?: number) {
-  const warpCore = useWarpCore();
-  return getTokenByIndex(warpCore, tokenIndex);
+export function useOriginTokens() {
+  return useStore((s) => s.originTokens);
 }
 
-export function useIndexForToken(token?: IToken): number | undefined {
-  const warpCore = useWarpCore();
-  return getIndexForToken(warpCore, token);
-}
-
-export function getTokenByIndex(warpCore: WarpCore, tokenIndex?: number) {
-  if (isNullish(tokenIndex) || tokenIndex >= warpCore.tokens.length) return undefined;
-  return warpCore.tokens[tokenIndex];
-}
-
-export function getIndexForToken(warpCore: WarpCore, token?: IToken): number | undefined {
-  if (!token) return undefined;
-  const index = warpCore.tokens.indexOf(token as Token);
-  if (index >= 0) return index;
-  else return undefined;
+export function useDestinationTokens() {
+  return useStore((s) => s.destinationTokens);
 }
 
 export function tryFindToken(
@@ -46,74 +145,6 @@ export function tryFindToken(
   } catch {
     return null;
   }
-}
-
-export function getTokenIndexFromChains(
-  warpCore: WarpCore,
-  addressOrDenom: string | null,
-  origin: string,
-  destination: string,
-) {
-  // find routes
-  const tokensWithRoute = warpCore.getTokensForRoute(origin, destination);
-  // find provided token addressOrDenom
-  const queryToken = tokensWithRoute.find((token) => token.addressOrDenom === addressOrDenom);
-
-  // if found return index
-  if (queryToken) return getIndexForToken(warpCore, queryToken);
-  // if tokens route has only one route return that index
-  else if (tokensWithRoute.length === 1) return getIndexForToken(warpCore, tokensWithRoute[0]);
-  // if 0 or more than 1 then return undefined
-  return undefined;
-}
-
-export function getTokenIndexFromChainsAndSymbol(
-  warpCore: WarpCore,
-  symbol: string | null,
-  origin: string,
-  destination: string,
-) {
-  // find routes
-  const tokensWithRoute = warpCore.getTokensForRoute(origin, destination);
-  // find provided token addressOrDenom
-  const queryToken = tokensWithRoute.find(
-    (token) => token.symbol.toLowerCase() === symbol?.toLowerCase(),
-  );
-
-  // if found return index
-  if (queryToken) return getIndexForToken(warpCore, queryToken);
-  // if tokens route has only one route return that index
-  else if (tokensWithRoute.length === 1) return getIndexForToken(warpCore, tokensWithRoute[0]);
-  // if 0 or more than 1
-  return undefined;
-}
-
-export function getInitialTokenIndex(
-  warpCore: WarpCore,
-  symbol: string | null,
-  originQuery?: string,
-  destinationQuery?: string,
-  defaultOriginToken?: Token,
-  defaultDestinationChain?: string,
-): number | undefined {
-  const firstToken = defaultOriginToken || warpCore.tokens[0];
-  const connectedToken = firstToken.connections?.[0].token;
-
-  // origin query and destination query is defined
-  if (originQuery && destinationQuery)
-    return getTokenIndexFromChainsAndSymbol(warpCore, symbol, originQuery, destinationQuery);
-
-  // if none of those are defined, use default values and pass token query
-  if (defaultDestinationChain || connectedToken) {
-    return getTokenIndexFromChainsAndSymbol(
-      warpCore,
-      symbol,
-      firstToken.chainName,
-      defaultDestinationChain || connectedToken?.chainName || '',
-    );
-  }
-
-  return undefined;
 }
 
 export function tryFindTokenConnection(token: Token, chainName: string) {

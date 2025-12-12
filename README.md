@@ -29,7 +29,7 @@ You need a `projectId` from the WalletConnect Cloud to run the Hyperlane Warp Ro
 pnpm install
 
 # Build Next project
-pnpm build
+pnpm run build
 ```
 
 ### Run
@@ -38,33 +38,33 @@ You can add `.env.local` file next to `.env.example` where you set `projectId` c
 
 ```sh
 # Start the Next dev server
-pnpm dev
+pnpm run dev
 # Or with a custom projectId
-NEXT_PUBLIC_WALLET_CONNECT_ID=<projectId> pnpm dev
+NEXT_PUBLIC_WALLET_CONNECT_ID=<projectId> pnpm run dev
 ```
 
 ### Test
 
 ```sh
 # Lint check code
-pnpm lint
+pnpm run lint
 
 # Check code types
-pnpm typecheck
+pnpm run typecheck
 ```
 
 ### Format
 
 ```sh
 # Format code using Prettier
-pnpm prettier
+pnpm run prettier
 ```
 
 ### Clean / Reset
 
 ```sh
 # Delete build artifacts to start fresh
-pnpm clean
+pnpm run clean
 ```
 
 ## Deployment

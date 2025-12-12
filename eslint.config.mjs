@@ -56,7 +56,7 @@ export default [
     },
 
     rules: {
-      camelcase: ['error'],
+      'camelcase': ['error'],
       'guard-for-in': ['error'],
       'import/no-cycle': ['error'],
       'import/no-self-import': ['error'],

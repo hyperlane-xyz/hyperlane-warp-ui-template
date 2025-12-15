@@ -23,6 +23,9 @@ overrides:
   form-data: 4.0.4
 
 patchedDependencies:
+  '@cosmjs/cosmwasm-stargate@0.32.4':
+    hash: c77d7da4aa556dced41baab8b5007d5363a0db1ad1fd795ca66ce2a4757e3f1e
+    path: patches/@cosmjs-cosmwasm-stargate-npm-0.32.4-f9dd51429c.patch
   starknetkit@2.6.1:
     hash: d8d81d77fa623989f021747f735ecef191f7ef8744e03c5f475cc1e9314d79d7
     path: patches/starknetkit@2.6.1.patch
@@ -48,7 +51,7 @@ importers:
         version: 2.0.21
       '@cosmjs/cosmwasm-stargate':
         specifier: ^0.32.4
-        version: 0.32.4(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+        version: 0.32.4(patch_hash=c77d7da4aa556dced41baab8b5007d5363a0db1ad1fd795ca66ce2a4757e3f1e)(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       '@cosmjs/stargate':
         specifier: ^0.32.4
         version: 0.32.4(bufferutil@4.0.9)(utf-8-validate@5.0.10)
@@ -10621,7 +10624,7 @@ snapshots:
       '@cosmjs/math': 0.36.2
       '@cosmjs/utils': 0.36.2
 
-  '@cosmjs/cosmwasm-stargate@0.32.4(bufferutil@4.0.9)(utf-8-validate@5.0.10)':
+  '@cosmjs/cosmwasm-stargate@0.32.4(patch_hash=c77d7da4aa556dced41baab8b5007d5363a0db1ad1fd795ca66ce2a4757e3f1e)(bufferutil@4.0.9)(utf-8-validate@5.0.10)':
     dependencies:
       '@cosmjs/amino': 0.32.4
       '@cosmjs/crypto': 0.32.4
@@ -12059,7 +12062,7 @@ snapshots:
       '@arbitrum/sdk': 4.0.4(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       '@aws-sdk/client-s3': 3.948.0
       '@chain-registry/types': 0.50.269
-      '@cosmjs/cosmwasm-stargate': 0.32.4(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+      '@cosmjs/cosmwasm-stargate': 0.32.4(patch_hash=c77d7da4aa556dced41baab8b5007d5363a0db1ad1fd795ca66ce2a4757e3f1e)(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       '@cosmjs/proto-signing': 0.32.4
       '@cosmjs/stargate': 0.32.4(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       '@ethersproject/abi': 5.8.0

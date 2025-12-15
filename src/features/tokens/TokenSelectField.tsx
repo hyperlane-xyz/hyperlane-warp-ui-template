@@ -6,6 +6,8 @@ import { TokenIcon } from '../../components/icons/TokenIcon';
 
 import { WARP_QUERY_PARAMS } from '../../consts/args';
 import { updateQueryParam, updateQueryParams } from '../../utils/queryParams';
+import { trackTokenSelectionEvent } from '../analytics/utils';
+import { useMultiProvider } from '../chains/hooks';
 import { TransferFormValues } from '../transfer/types';
 import { TokenListModal } from './TokenListModal';
 import { getIndexForToken, getTokenByIndex, getTokenIndexFromChains, useWarpCore } from './hooks';
@@ -23,6 +25,7 @@ export function TokenSelectField({ name, disabled, setIsNft }: Props) {
   const [isAutomaticSelection, setIsAutomaticSelection] = useState(false);
 
   const warpCore = useWarpCore();
+  const multiProvider = useMultiProvider();
 
   const { origin, destination } = values;
   useEffect(() => {
@@ -33,7 +36,11 @@ export function TokenSelectField({ name, disabled, setIsNft }: Props) {
   const onSelectToken = (newToken: IToken) => {
     // Set the token address value in formik state
     helpers.setValue(getIndexForToken(warpCore, newToken));
-    updateQueryParam(WARP_QUERY_PARAMS.TOKEN, newToken.addressOrDenom);
+
+    // token selection event
+    trackTokenSelectionEvent(newToken, origin, destination, multiProvider);
+
+    updateQueryParam(WARP_QUERY_PARAMS.TOKEN, newToken.symbol);
     // Update nft state in parent
     setIsNft(newToken.isNft());
   };
@@ -48,6 +55,9 @@ export function TokenSelectField({ name, disabled, setIsNft }: Props) {
     if (!token.connections) return;
     const destination = token.connections[0].token.chainName;
 
+    // token selection event
+    trackTokenSelectionEvent(token, token.chainName, destination, multiProvider);
+
     setValues({
       ...values,
       origin,
@@ -57,7 +67,7 @@ export function TokenSelectField({ name, disabled, setIsNft }: Props) {
     updateQueryParams({
       [WARP_QUERY_PARAMS.ORIGIN]: origin,
       [WARP_QUERY_PARAMS.DESTINATION]: destination,
-      [WARP_QUERY_PARAMS.TOKEN]: token.addressOrDenom,
+      [WARP_QUERY_PARAMS.TOKEN]: token.symbol,
     });
   };
 

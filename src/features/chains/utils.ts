@@ -1,7 +1,14 @@
 import { isAbacusWorksChain } from '@hyperlane-xyz/registry';
-import { ChainMap, MultiProtocolProvider, WarpCore } from '@hyperlane-xyz/sdk';
+import {
+  ChainMap,
+  ChainMetadata,
+  ChainStatus,
+  MultiProtocolProvider,
+  WarpCore,
+} from '@hyperlane-xyz/sdk';
 import { toTitleCase, trimToLength } from '@hyperlane-xyz/utils';
 import { ChainSearchMenuProps } from '@hyperlane-xyz/widgets';
+import { config } from '../../consts/config';
 
 export function getChainDisplayName(
   multiProvider: MultiProtocolProvider,
@@ -63,6 +70,12 @@ export function getNumRoutesWithSelectedChain(
   };
 }
 
+export function isChainDisabled(chainMetadata: ChainMetadata | null) {
+  if (!config.shouldDisableChains || !chainMetadata) return false;
+
+  return chainMetadata.availability?.status === ChainStatus.Disabled;
+}
+
 /**
  * Return given chainName if it is valid, otherwise return undefined
  */
@@ -70,5 +83,11 @@ export function tryGetValidChainName(
   chainName: string | null,
   multiProvider: MultiProtocolProvider,
 ): string | undefined {
-  return chainName && multiProvider.tryGetChainName(chainName) ? chainName : undefined;
+  const validChainName = chainName && multiProvider.tryGetChainName(chainName);
+  const chainMetadata = validChainName ? multiProvider.tryGetChainMetadata(chainName) : null;
+  const chainDisabled = isChainDisabled(chainMetadata);
+
+  if (chainDisabled) return undefined;
+
+  return validChainName ? chainName : undefined;
 }

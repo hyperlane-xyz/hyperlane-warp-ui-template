@@ -1,4 +1,19 @@
+<<<<<<< HEAD
 import { solanamainnet, solanamainnetAddresses } from '@hyperlane-xyz/registry';
+=======
+import {
+  eclipsemainnet,
+  eclipsemainnetAddresses,
+  solanamainnet,
+  solanamainnetAddresses,
+  solaxy,
+  solaxyAddresses,
+  sonicsvm,
+  sonicsvmAddresses,
+  soon,
+  soonAddresses,
+} from '@hyperlane-xyz/registry';
+>>>>>>> origin/main
 import { ChainMap, ChainMetadata } from '@hyperlane-xyz/sdk';
 
 // A map of chain names to ChainMetadata
@@ -11,6 +26,25 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
     // SVM chains require mailbox addresses for the token adapters
     mailbox: solanamainnetAddresses.mailbox,
   },
+<<<<<<< HEAD
+=======
+  eclipsemainnet: {
+    ...eclipsemainnet,
+    mailbox: eclipsemainnetAddresses.mailbox,
+  },
+  soon: {
+    ...soon,
+    mailbox: soonAddresses.mailbox,
+  },
+  sonicsvm: {
+    ...sonicsvm,
+    mailbox: sonicsvmAddresses.mailbox,
+  },
+  solaxy: {
+    ...solaxy,
+    mailbox: solaxyAddresses.mailbox,
+  },
+>>>>>>> origin/main
   // mycustomchain: {
   //   protocol: ProtocolType.Ethereum,
   //   chainId: 123123,

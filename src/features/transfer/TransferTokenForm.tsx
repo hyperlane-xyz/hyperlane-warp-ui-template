@@ -528,19 +528,6 @@ function ButtonSection({
           showWarning ? 'max-h-38 py-2' : 'max-h-0'
         } overflow-hidden transition-all duration-500`}
       >
-<<<<<<< HEAD
-        <span>Edit</span>
-      </SolidButton>
-      <SolidButton
-        type="button"
-        color="primary"
-        onClick={triggerTransactionsHandler}
-        className="flex-1 px-3 py-1.5"
-      >
-        {`Send to ${chainDisplayName}`}
-      </SolidButton>
-    </div>
-=======
         <RecipientWarningBanner
           destinationChain={chainDisplayName}
           confirmRecipientHandler={(checked) =>
@@ -569,7 +556,6 @@ function ButtonSection({
         </SolidButton>
       </div>
     </>
->>>>>>> origin/main
   );
 }
 

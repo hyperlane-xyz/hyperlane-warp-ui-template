@@ -1,18 +1,3 @@
-<<<<<<< HEAD
-=======
-import {
-  eclipsemainnet,
-  eclipsemainnetAddresses,
-  solanamainnet,
-  solanamainnetAddresses,
-  solaxy,
-  solaxyAddresses,
-  sonicsvm,
-  sonicsvmAddresses,
-  soon,
-  soonAddresses,
-} from '@hyperlane-xyz/registry';
->>>>>>> origin/main
 import { ChainMap, ChainMetadata } from '@hyperlane-xyz/sdk';
 
 // A map of chain names to ChainMetadata
@@ -20,30 +5,6 @@ import { ChainMap, ChainMetadata } from '@hyperlane-xyz/sdk';
 // Chains already in the SDK need not be included here unless you want to override some fields
 // Schema here: https://github.com/hyperlane-xyz/hyperlane-monorepo/blob/main/typescript/sdk/src/metadata/chainMetadataTypes.ts
 export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
-<<<<<<< HEAD
-=======
-  solanamainnet: {
-    ...solanamainnet,
-    // SVM chains require mailbox addresses for the token adapters
-    mailbox: solanamainnetAddresses.mailbox,
-  },
-  eclipsemainnet: {
-    ...eclipsemainnet,
-    mailbox: eclipsemainnetAddresses.mailbox,
-  },
-  soon: {
-    ...soon,
-    mailbox: soonAddresses.mailbox,
-  },
-  sonicsvm: {
-    ...sonicsvm,
-    mailbox: sonicsvmAddresses.mailbox,
-  },
-  solaxy: {
-    ...solaxy,
-    mailbox: solaxyAddresses.mailbox,
-  },
->>>>>>> origin/main
   // mycustomchain: {
   //   protocol: ProtocolType.Ethereum,
   //   chainId: 123123,

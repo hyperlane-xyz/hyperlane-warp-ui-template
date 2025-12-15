@@ -7,13 +7,9 @@
     "@chakra-ui/next-js": "^2.4.2",
     "@chakra-ui/provider": "^2.4.2",
     "@chakra-ui/react": "^2.8.2",
-<<<<<<< HEAD
-    "@cosmjs/cosmwasm-stargate": "patch:@cosmjs/cosmwasm-stargate@npm%3A0.32.4#~/.yarn/patches/@cosmjs-cosmwasm-stargate-npm-0.32.4-f9dd51429c.patch",
-=======
     "@chakra-ui/system": "^2.6.2",
     "@chakra-ui/theme-utils": "^2.0.21",
     "@cosmjs/cosmwasm-stargate": "^0.32.4",
->>>>>>> origin/main
     "@cosmjs/stargate": "^0.32.4",
     "@cosmos-kit/core": "^2.13.1",
     "@cosmos-kit/cosmostation": "^2.11.2",
@@ -120,22 +116,6 @@
     "prettier": "prettier --write ./src"
   },
   "types": "dist/src/index.d.ts",
-<<<<<<< HEAD
-  "resolutions": {
-    "@solana/web3.js": "^1.95.4",
-    "axios": "0.27.2",
-    "bignumber": "9.1.2",
-    "bn.js": "^5.2",
-    "cosmjs-types": "0.9",
-    "ethers": "^5.7",
-    "globals": "^14.0.0",
-    "lit-html": "2.8.0",
-    "react-fast-compare": "^3.2",
-    "viem": "^2.21.41",
-    "zustand": "^4.4",
-    "@cosmjs/cosmwasm-stargate@npm:^0.32.3": "patch:@cosmjs/cosmwasm-stargate@npm%3A0.32.4#~/.yarn/patches/@cosmjs-cosmwasm-stargate-npm-0.32.4-f9dd51429c.patch",
-    "@cosmjs/cosmwasm-stargate@npm:^0.32.4": "patch:@cosmjs/cosmwasm-stargate@npm%3A0.32.4#~/.yarn/patches/@cosmjs-cosmwasm-stargate-npm-0.32.4-f9dd51429c.patch"
-=======
   "pnpm": {
     "overrides": {
       "@solana/web3.js": "^1.95.4",
@@ -156,9 +136,9 @@
       "form-data": "4.0.4"
     },
     "patchedDependencies": {
-      "starknetkit@2.6.1": "patches/starknetkit@2.6.1.patch"
+      "starknetkit@2.6.1": "patches/starknetkit@2.6.1.patch",
+      "@cosmjs/cosmwasm-stargate@0.32.4": "patches/@cosmjs-cosmwasm-stargate-npm-0.32.4-f9dd51429c.patch"
     },
     "onlyBuiltDependencies": []
->>>>>>> origin/main
   }
 }

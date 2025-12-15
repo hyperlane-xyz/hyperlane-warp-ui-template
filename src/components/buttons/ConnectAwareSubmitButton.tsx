@@ -2,6 +2,8 @@ import { ProtocolType } from '@hyperlane-xyz/utils';
 import { useAccountForChain, useConnectFns, useTimeout } from '@hyperlane-xyz/widgets';
 import { useFormikContext } from 'formik';
 import { useCallback } from 'react';
+import { EVENT_NAME } from '../../features/analytics/types';
+import { trackEvent } from '../../features/analytics/utils';
 import { useChainProtocol, useMultiProvider } from '../../features/chains/hooks';
 import { SolidButton } from './SolidButton';
 
@@ -9,9 +11,15 @@ interface Props {
   chainName: ChainName;
   text: string;
   classes?: string;
+  disabled?: boolean;
 }
 
-export function ConnectAwareSubmitButton<FormValues = any>({ chainName, text, classes }: Props) {
+export function ConnectAwareSubmitButton<FormValues = any>({
+  chainName,
+  text,
+  classes,
+  disabled,
+}: Props) {
   const protocol = useChainProtocol(chainName) || ProtocolType.Ethereum;
   const connectFns = useConnectFns();
   const connectFn = connectFns[protocol];
@@ -27,8 +35,17 @@ export function ConnectAwareSubmitButton<FormValues = any>({ chainName, text, cl
 
   const color = hasError ? 'red' : 'primary';
   const content = hasError ? firstError : isAccountReady ? text : 'Connect wallet';
-  const type = isAccountReady ? 'submit' : 'button';
-  const onClick = isAccountReady ? undefined : connectFn;
+  const type =
+    disabled || !isAccountReady
+      ? 'button' // never submits when deliberately disabled
+      : 'submit';
+
+  const onClick = () => {
+    if (isAccountReady) return undefined;
+
+    trackEvent(EVENT_NAME.WALLET_CONNECTION_INITIATED, { protocol });
+    connectFn();
+  };
 
   // Automatically clear error state after a timeout
   const clearErrors = useCallback(() => {
@@ -40,7 +57,13 @@ export function ConnectAwareSubmitButton<FormValues = any>({ chainName, text, cl
   useTimeout(clearErrors, 3500);
 
   return (
-    <SolidButton type={type} color={color} onClick={onClick} className={classes}>
+    <SolidButton
+      disabled={disabled}
+      type={type}
+      color={color}
+      onClick={onClick}
+      className={classes}
+    >
       {content}
     </SolidButton>
   );

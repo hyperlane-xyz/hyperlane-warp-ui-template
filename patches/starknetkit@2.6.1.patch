@@ -1,0 +1,22 @@
+diff --git a/dist/starknetkit.js b/dist/starknetkit.js
+index 9fee9301ba99263b32be70b492787671eb9a2d26..6cfeb4756cdb7e2ddcd39f3b292d0b123fc56a2b 100644
+--- a/dist/starknetkit.js
++++ b/dist/starknetkit.js
+@@ -4563,7 +4563,7 @@ const mapModalWallets = ({
+     if (d) {
+       const g = d.id === "argentX" ? { light: ARGENT_X_ICON, dark: ARGENT_X_ICON } : isString(d.icon) ? { light: d.icon, dark: d.icon } : d.icon;
+       return {
+-        name: d.name,
++        name: d.id === "argentX" ? "Ready Wallet (formerly Argent)" : d.name,
+         id: d.id,
+         icon: g,
+         connector: c
+@@ -4575,7 +4575,7 @@ const mapModalWallets = ({
+     if (m) {
+       const { downloads: g } = m, p = m.id === "argentX" ? ARGENT_X_ICON : m.icon;
+       return {
+-        name: m.name,
++        name: m.id === "argentX" ? "Ready Wallet (formerly Argent)" : m.name,
+         id: m.id,
+         icon: { light: p, dark: p },
+         connector: c,

@@ -1,5 +1,9 @@
 import { IToken, Token, WarpCore } from '@hyperlane-xyz/sdk';
 import { isNullish } from '@hyperlane-xyz/utils';
+import { useAccountForChain, useActiveChains, useWatchAsset } from '@hyperlane-xyz/widgets';
+import { useMutation } from '@tanstack/react-query';
+import { ADD_ASSET_SUPPORTED_PROTOCOLS } from '../../consts/args';
+import { useMultiProvider } from '../chains/hooks';
 import { useStore } from '../store';
 
 export function useWarpCore() {
@@ -63,9 +67,30 @@ export function getTokenIndexFromChains(
   return undefined;
 }
 
+export function getTokenIndexFromChainsAndSymbol(
+  warpCore: WarpCore,
+  symbol: string | null,
+  origin: string,
+  destination: string,
+) {
+  // find routes
+  const tokensWithRoute = warpCore.getTokensForRoute(origin, destination);
+  // find provided token addressOrDenom
+  const queryToken = tokensWithRoute.find(
+    (token) => token.symbol.toLowerCase() === symbol?.toLowerCase(),
+  );
+
+  // if found return index
+  if (queryToken) return getIndexForToken(warpCore, queryToken);
+  // if tokens route has only one route return that index
+  else if (tokensWithRoute.length === 1) return getIndexForToken(warpCore, tokensWithRoute[0]);
+  // if 0 or more than 1
+  return undefined;
+}
+
 export function getInitialTokenIndex(
   warpCore: WarpCore,
-  addressOrDenom: string | null,
+  symbol: string | null,
   originQuery?: string,
   destinationQuery?: string,
   defaultOriginToken?: Token,
@@ -76,13 +101,13 @@ export function getInitialTokenIndex(
 
   // origin query and destination query is defined
   if (originQuery && destinationQuery)
-    return getTokenIndexFromChains(warpCore, addressOrDenom, originQuery, destinationQuery);
+    return getTokenIndexFromChainsAndSymbol(warpCore, symbol, originQuery, destinationQuery);
 
   // if none of those are defined, use default values and pass token query
   if (defaultDestinationChain || connectedToken) {
-    return getTokenIndexFromChains(
+    return getTokenIndexFromChainsAndSymbol(
       warpCore,
-      addressOrDenom,
+      symbol,
       firstToken.chainName,
       defaultDestinationChain || connectedToken?.chainName || '',
     );
@@ -97,4 +122,34 @@ export function tryFindTokenConnection(token: Token, chainName: string) {
   );
 
   return connectedToken ? connectedToken.token : null;
+}
+
+export function useAddToken(token?: IToken) {
+  const multiProvider = useMultiProvider();
+  const activeChains = useActiveChains(multiProvider);
+  const watchAsset = useWatchAsset(multiProvider);
+  const account = useAccountForChain(multiProvider, token?.chainName);
+  const isAccountReady = account?.isReady;
+  const isSupportedProtocol = token
+    ? ADD_ASSET_SUPPORTED_PROTOCOLS.includes(token?.protocol)
+    : false;
+
+  const canAddAsset = token && isAccountReady && isSupportedProtocol;
+
+  const { isPending, mutateAsync } = useMutation({
+    mutationFn: () => {
+      if (!canAddAsset)
+        throw new Error('Cannot import this asset, please check the token imported');
+
+      const { addAsset } = watchAsset[token.protocol];
+      const activeChain = activeChains.chains[token.protocol];
+
+      if (!activeChain.chainName)
+        throw new Error('Not active chain found, please check if your wallet is connected ');
+
+      return addAsset(token, activeChain.chainName);
+    },
+  });
+
+  return { addToken: mutateAsync, isLoading: isPending, canAddAsset };
 }

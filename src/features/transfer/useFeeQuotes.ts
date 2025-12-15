@@ -1,54 +1,101 @@
-import { TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
-import { HexString } from '@hyperlane-xyz/utils';
-import { getAccountAddressAndPubKey, useAccounts } from '@hyperlane-xyz/widgets';
+import { Token, WarpCore, WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
+import { HexString, toWei } from '@hyperlane-xyz/utils';
+import { getAccountAddressAndPubKey, useAccounts, useDebounce } from '@hyperlane-xyz/widgets';
 import { useQuery } from '@tanstack/react-query';
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
-import { getTokenByIndex, useWarpCore } from '../tokens/hooks';
+import { useWarpCore } from '../tokens/hooks';
+import { getLowestFeeTransferToken } from './fees';
 import { TransferFormValues } from './types';
 
-const FEE_QUOTE_REFRESH_INTERVAL = 15_000; // 10s
+const FEE_QUOTE_REFRESH_INTERVAL = 30_000; // 30s
 
 export function useFeeQuotes(
-  { origin, destination, tokenIndex }: TransferFormValues,
+  { destination, amount, recipient, tokenIndex }: TransferFormValues,
   enabled: boolean,
+  originToken: Token | undefined,
+  searchForLowestFee: boolean = false,
 ) {
   const multiProvider = useMultiProvider();
   const warpCore = useWarpCore();
+  const debouncedAmount = useDebounce(amount, 500);
 
   const { accounts } = useAccounts(multiProvider);
   const { address: sender, publicKey: senderPubKey } = getAccountAddressAndPubKey(
     multiProvider,
-    origin,
+    originToken?.chainName,
     accounts,
   );
 
-  const { isLoading, isError, data } = useQuery({
+  const isFormValid = !!(originToken && destination && debouncedAmount && recipient && sender);
+  const shouldFetch = enabled && isFormValid;
+
+  const { isLoading, isError, data, isFetching } = useQuery({
     // The WarpCore class is not serializable, so we can't use it as a key
     // eslint-disable-next-line @tanstack/query/exhaustive-deps
-    queryKey: ['useFeeQuotes', destination, tokenIndex, sender, senderPubKey],
-    queryFn: () => fetchFeeQuotes(warpCore, destination, tokenIndex, sender, senderPubKey),
-    enabled,
+    queryKey: [
+      'useFeeQuotes',
+      tokenIndex,
+      destination,
+      sender,
+      senderPubKey,
+      debouncedAmount,
+      recipient,
+    ],
+    queryFn: () =>
+      fetchFeeQuotes(
+        warpCore,
+        originToken,
+        destination,
+        sender,
+        senderPubKey,
+        debouncedAmount,
+        recipient,
+        searchForLowestFee,
+      ),
+    enabled: shouldFetch,
     refetchInterval: FEE_QUOTE_REFRESH_INTERVAL,
   });
 
-  return { isLoading, isError, fees: data };
+  return { isLoading: isLoading || isFetching, isError, fees: data };
 }
 
 async function fetchFeeQuotes(
   warpCore: WarpCore,
+  originToken: Token | undefined,
   destination?: ChainName,
-  tokenIndex?: number,
   sender?: Address,
   senderPubKey?: Promise<HexString>,
-): Promise<{ interchainQuote: TokenAmount; localQuote: TokenAmount } | null> {
-  const originToken = getTokenByIndex(warpCore, tokenIndex);
-  if (!destination || !sender || !originToken) return null;
+  amount?: string,
+  recipient?: string,
+  searchForLowestFee: boolean = false,
+): Promise<WarpCoreFeeEstimate | null> {
+  if (!originToken || !destination || !sender || !originToken || !amount || !recipient) return null;
+  let transferToken = originToken;
+  const amountWei = toWei(amount, transferToken.decimals);
+
+  // when true attempt to get route with lowest fee
+  if (searchForLowestFee) {
+    const destinationToken = originToken.getConnectionForChain(destination)?.token;
+    if (destinationToken) {
+      transferToken = await getLowestFeeTransferToken(
+        warpCore,
+        originToken,
+        destinationToken,
+        amountWei,
+        recipient,
+        sender,
+      );
+    }
+  }
+
+  const originTokenAmount = transferToken.amount(amountWei);
   logger.debug('Fetching fee quotes');
   return warpCore.estimateTransferRemoteFees({
-    originToken,
+    originTokenAmount,
     destination,
     sender,
     senderPubKey: await senderPubKey,
+    recipient: recipient,
   });
 }

@@ -20,29 +20,18 @@
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
     "@headlessui/react": "^2.2.0",
-<<<<<<< HEAD
-    "@hyperlane-xyz/registry": "23.2.0",
-    "@hyperlane-xyz/sdk": "18.2.0",
-    "@hyperlane-xyz/utils": "18.2.0",
-    "@hyperlane-xyz/widgets": "18.2.0",
-=======
     "@hyperlane-xyz/registry": "23.7.0",
     "@hyperlane-xyz/sdk": "19.13.0",
     "@hyperlane-xyz/utils": "19.13.0",
     "@hyperlane-xyz/widgets": "19.13.0",
->>>>>>> origin/main
     "@interchain-ui/react": "^1.23.28",
     "@metamask/post-message-stream": "6.1.2",
     "@metamask/providers": "10.2.1",
     "@radixdlt/babylon-gateway-api-sdk": "^1.10.1",
     "@radixdlt/radix-dapp-toolkit": "^2.2.1",
-<<<<<<< HEAD
-    "@rainbow-me/rainbowkit": "^2.2.0",
-=======
     "@rainbow-me/rainbowkit": "2.2.0",
     "@sentry/browser": "8.38.0",
     "@sentry/core": "8.38.0",
->>>>>>> origin/main
     "@sentry/nextjs": "^8.38.0",
     "@sentry/react": "8.38.0",
     "@solana/spl-token": "^0.4.9",

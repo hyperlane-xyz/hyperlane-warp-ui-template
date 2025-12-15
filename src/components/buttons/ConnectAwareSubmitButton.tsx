@@ -40,16 +40,12 @@ export function ConnectAwareSubmitButton<FormValues = any>({
       ? 'button' // never submits when deliberately disabled
       : 'submit';
 
-<<<<<<< HEAD
-  const onClick = isAccountReady ? undefined : connectFn;
-=======
   const onClick = () => {
     if (isAccountReady) return undefined;
 
     trackEvent(EVENT_NAME.WALLET_CONNECTION_INITIATED, { protocol });
     connectFn();
   };
->>>>>>> origin/main
 
   // Automatically clear error state after a timeout
   const clearErrors = useCallback(() => {

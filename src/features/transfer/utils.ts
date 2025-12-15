@@ -134,8 +134,6 @@ export function tryGetMsgIdFromTransferReceipt(
   }
 }
 
-<<<<<<< HEAD
-=======
 export async function isEvmContractAddress(
   viemProvider: ViemProvider['provider'],
   address: string,
@@ -150,7 +148,6 @@ export async function isEvmContractAddress(
 }
 
 const eip7702AccountSelector = '0xef0100';
->>>>>>> origin/main
 export async function isSmartContract(
   multiProvider: MultiProtocolProvider,
   chain: string,
@@ -167,13 +164,6 @@ export async function isSmartContract(
       throw new Error(`No viem provider for chain ${chain}`);
     }
 
-<<<<<<< HEAD
-    const code = await provider.getCode({ address: getAddress(address) });
-
-    if (!code || code === '0x') {
-      return { isContract: false };
-    }
-=======
     const { isContractAddress, code } = await isEvmContractAddress(provider, address);
 
     if (!isContractAddress && !code) return { isContract: false };
@@ -184,7 +174,6 @@ export async function isSmartContract(
     // if the address is a Smart Contract, this wouldn't be necessary since `0xef0100`
     // is only reserved for Smart Accounts
     if (code.startsWith(eip7702AccountSelector)) return { isContract: false };
->>>>>>> origin/main
 
     return { isContract: true };
   } catch (error) {

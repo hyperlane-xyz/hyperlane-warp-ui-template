@@ -2,6 +2,8 @@ import { ProtocolType } from '@hyperlane-xyz/utils';
 import { useAccountForChain, useConnectFns, useTimeout } from '@hyperlane-xyz/widgets';
 import { useFormikContext } from 'formik';
 import { useCallback } from 'react';
+import { EVENT_NAME } from '../../features/analytics/types';
+import { trackEvent } from '../../features/analytics/utils';
 import { useChainProtocol, useMultiProvider } from '../../features/chains/hooks';
 import { SolidButton } from './SolidButton';
 
@@ -38,7 +40,16 @@ export function ConnectAwareSubmitButton<FormValues = any>({
       ? 'button' // never submits when deliberately disabled
       : 'submit';
 
+<<<<<<< HEAD
   const onClick = isAccountReady ? undefined : connectFn;
+=======
+  const onClick = () => {
+    if (isAccountReady) return undefined;
+
+    trackEvent(EVENT_NAME.WALLET_CONNECTION_INITIATED, { protocol });
+    connectFn();
+  };
+>>>>>>> origin/main
 
   // Automatically clear error state after a timeout
   const clearErrors = useCallback(() => {

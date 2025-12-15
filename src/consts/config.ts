@@ -32,6 +32,7 @@ interface Config {
   walletConnectProjectId: string; // Project ID provided by walletconnect
   walletProtocols: ProtocolType[] | undefined; // Wallet Protocols to show in the wallet connect modal. Leave undefined to include all of them
   rpcOverrides: string; // JSON string containing a map of chain names to an object with an URL for RPC overrides (For an example check the .env.example file)
+  enableTrackingEvents: boolean; // Allow tracking events to happen on some actions;
 }
 
 export const config: Config = Object.freeze({
@@ -51,7 +52,18 @@ export const config: Config = Object.freeze({
   version,
   transferBlacklist,
   walletConnectProjectId,
+<<<<<<< HEAD
   walletProtocols: [ProtocolType.Ethereum],
+=======
+  walletProtocols: [
+    ProtocolType.Ethereum,
+    ProtocolType.Sealevel,
+    ProtocolType.Cosmos,
+    ProtocolType.Starknet,
+    ProtocolType.Radix,
+  ],
+>>>>>>> origin/main
   shouldDisableChains: false,
   rpcOverrides,
+  enableTrackingEvents: false,
 });

@@ -4,6 +4,7 @@ import {
 } from '@hyperlane-xyz/registry';
 import {
   TOKEN_STANDARD_TO_PROTOCOL,
+  TokenStandard,
   WarpCoreConfig,
   WarpCoreConfigSchema,
   getTokenConnectionId,
@@ -40,9 +41,10 @@ export async function assembleWarpCoreConfig(
     registryWarpRoutes = publishedRegistryWarpRoutes;
   }
 
-  const filteredRegistryConfigMap = warpRouteWhitelist
+  let filteredRegistryConfigMap = warpRouteWhitelist
     ? filterToIds(registryWarpRoutes, warpRouteWhitelist)
     : registryWarpRoutes;
+  filteredRegistryConfigMap = fillMissingCoinGeckoIds(filteredRegistryConfigMap);
   const filteredRegistryConfigValues = Object.values(filteredRegistryConfigMap);
   const filteredRegistryTokens = filteredRegistryConfigValues.map((c) => c.tokens).flat();
   const filteredRegistryOptions = filteredRegistryConfigValues.map((c) => c.options).flat();
@@ -74,6 +76,33 @@ export async function assembleWarpCoreConfig(
   return { tokens, options };
 }
 
+// Fill missing coinGeckoIds within each warp route
+// For each route, if any token has a coinGeckoId, apply it to tokens without one
+function fillMissingCoinGeckoIds(
+  routes: Record<string, WarpCoreConfig>,
+): Record<string, WarpCoreConfig> {
+  return Object.entries(routes).reduce<Record<string, WarpCoreConfig>>((acc, [routeId, config]) => {
+    // Find first coinGeckoId in this route's tokens
+    const coinGeckoId = config.tokens.find((token) => token.coinGeckoId)?.coinGeckoId;
+
+    if (coinGeckoId) {
+      // Apply coinGeckoId to all tokens in this route that don't have one
+      const updatedTokens = config.tokens.map((token) => ({
+        ...token,
+        coinGeckoId: token.coinGeckoId || coinGeckoId,
+      }));
+      acc[routeId] = {
+        ...config,
+        tokens: updatedTokens,
+      };
+    } else {
+      // No coinGeckoId found, keep route as is
+      acc[routeId] = config;
+    }
+    return acc;
+  }, {});
+}
+
 function filterToIds(
   config: Record<string, WarpCoreConfig>,
   idWhitelist: string[],
@@ -88,7 +117,13 @@ function filterToIds(
 function dedupeTokens(tokens: WarpCoreConfig['tokens']): WarpCoreConfig['tokens'] {
   const idToToken: Record<string, WarpCoreConfig['tokens'][number]> = {};
   for (const token of tokens) {
-    const id = `${token.chainName}|${token.addressOrDenom?.toLowerCase()}`;
+    let id = '';
+    // Temporary fix issue for M0 routes where addressOrDenom can be the same
+    if (token.standard === TokenStandard.EvmM0PortalLite) {
+      id = `${token.chainName}|${token.symbol}|${token.addressOrDenom?.toLowerCase()}`;
+    } else {
+      id = `${token.chainName}|${token.addressOrDenom?.toLowerCase()}`;
+    }
     idToToken[id] = objMerge(idToToken[id] || {}, token);
   }
   return Object.values(idToToken);

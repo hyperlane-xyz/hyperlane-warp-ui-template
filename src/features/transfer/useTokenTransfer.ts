@@ -15,6 +15,8 @@ import { useCallback, useState } from 'react';
 import { toast } from 'react-toastify';
 import { toastTxSuccess } from '../../components/toast/TxSuccessToast';
 import { logger } from '../../utils/logger';
+import { EVENT_NAME } from '../analytics/types';
+import { trackEvent } from '../analytics/utils';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { AppState, useStore } from '../store';
@@ -205,9 +207,23 @@ async function executeTransfer({
       ? tryGetMsgIdFromTransferReceipt(multiProvider, origin, txReceipt)
       : undefined;
 
+    const originTxHash = hashes.at(-1);
     updateTransferStatus(transferIndex, (transferStatus = TransferStatus.ConfirmedTransfer), {
-      originTxHash: hashes.at(-1),
+      originTxHash,
       msgId,
+    });
+
+    // track event after tx submission
+    const originChainId = warpCore.multiProvider.getChainId(origin);
+    const destinationChainId = warpCore.multiProvider.getChainId(destination);
+    trackEvent(EVENT_NAME.TRANSACTION_SUBMITTED, {
+      amount,
+      recipient,
+      chains: `${origin}|${originChainId}|${destination}|${destinationChainId}`,
+      tokenAddress: originToken.addressOrDenom,
+      tokenSymbol: originToken.symbol,
+      walletAddress: sender,
+      transactionHash: originTxHash || '',
     });
   } catch (error: any) {
     logger.error(`Error at stage ${transferStatus}`, error);

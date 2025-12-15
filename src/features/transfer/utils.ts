@@ -75,6 +75,7 @@ import {
   MultiProtocolProvider,
   ProviderType,
   TypedTransactionReceipt,
+  ViemProvider,
 } from '@hyperlane-xyz/sdk';
 import { isValidAddressEvm } from '@hyperlane-xyz/utils';
 import { getAddress } from 'viem';
@@ -133,6 +134,23 @@ export function tryGetMsgIdFromTransferReceipt(
   }
 }
 
+<<<<<<< HEAD
+=======
+export async function isEvmContractAddress(
+  viemProvider: ViemProvider['provider'],
+  address: string,
+): Promise<
+  { isContractAddress: false; code: undefined } | { isContractAddress: true; code: string }
+> {
+  const code = await viemProvider.getCode({ address: getAddress(address) });
+  if (!code || code === '0x') {
+    return { isContractAddress: false, code: undefined };
+  }
+  return { isContractAddress: true, code };
+}
+
+const eip7702AccountSelector = '0xef0100';
+>>>>>>> origin/main
 export async function isSmartContract(
   multiProvider: MultiProtocolProvider,
   chain: string,
@@ -149,11 +167,24 @@ export async function isSmartContract(
       throw new Error(`No viem provider for chain ${chain}`);
     }
 
+<<<<<<< HEAD
     const code = await provider.getCode({ address: getAddress(address) });
 
     if (!code || code === '0x') {
       return { isContract: false };
     }
+=======
+    const { isContractAddress, code } = await isEvmContractAddress(provider, address);
+
+    if (!isContractAddress && !code) return { isContract: false };
+
+    // Checks if an address is also an EIP-7702 which is a smart account but not an smart contract
+    // It would technically be correct to check if the delegated contract address is also a valid
+    // contract address, but for our use case which is showing a banner to warn users
+    // if the address is a Smart Contract, this wouldn't be necessary since `0xef0100`
+    // is only reserved for Smart Accounts
+    if (code.startsWith(eip7702AccountSelector)) return { isContract: false };
+>>>>>>> origin/main
 
     return { isContract: true };
   } catch (error) {

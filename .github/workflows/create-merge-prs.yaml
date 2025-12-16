@@ -49,13 +49,54 @@ jobs:
         id: check-merge
         run: |
           git fetch origin ${{ matrix.branch }}
+
+          # First check commit ancestry (handles regular merges)
           if git merge-base --is-ancestor origin/main origin/${{ matrix.branch }}; then
-            echo "Branch ${{ matrix.branch }} is already up-to-date with main"
+            echo "Branch ${{ matrix.branch }} is already up-to-date with main (via ancestry)"
             echo "needs_merge=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Ancestry check failed - could be squash merge or actual changes needed
+          # Try a merge to see if it would produce any changes
+          git checkout -B temp-merge-check origin/${{ matrix.branch }}
+
+          if git merge --no-commit --no-ff origin/main 2>/dev/null; then
+            # Merge succeeded without conflicts - check if there are actual changes
+            if git diff --cached --quiet HEAD; then
+              echo "Branch ${{ matrix.branch }} is already up-to-date with main (no changes from merge)"
+              echo "needs_merge=false" >> $GITHUB_OUTPUT
+            else
+              echo "Branch ${{ matrix.branch }} needs updates from main"
+              echo "needs_merge=true" >> $GITHUB_OUTPUT
+            fi
           else
-            echo "Branch ${{ matrix.branch }} needs updates from main"
+            # Merge had conflicts - definitely needs merge
+            echo "Branch ${{ matrix.branch }} needs updates from main (merge has conflicts)"
             echo "needs_merge=true" >> $GITHUB_OUTPUT
           fi
+
+          # Clean up
+          git merge --abort 2>/dev/null || true
+          git checkout main 2>/dev/null || true
+
+      - name: Close stale PR and delete branch if no merge needed
+        if: steps.check-merge.outputs.needs_merge == 'false'
+        run: |
+          PR_NUMBER=$(gh pr list --base ${{ matrix.branch }} --head main-to-${{ matrix.branch }} --json number --jq '.[0].number')
+
+          if [ -n "$PR_NUMBER" ]; then
+            echo "Closing stale PR #$PR_NUMBER as ${{ matrix.branch }} is already up-to-date with main"
+            gh pr close "$PR_NUMBER" --comment "Closing: ${{ matrix.branch }} is already up-to-date with main."
+          fi
+
+          # Delete the merge branch if it exists
+          if git ls-remote --exit-code --heads origin main-to-${{ matrix.branch }} > /dev/null 2>&1; then
+            echo "Deleting stale branch main-to-${{ matrix.branch }}"
+            git push origin --delete main-to-${{ matrix.branch }} || true
+          fi
+        env:
+          GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
 
       - name: Create and push merge branch
         if: steps.check-merge.outputs.needs_merge == 'true'
@@ -82,7 +123,7 @@ jobs:
       - name: Create or update PR
         if: steps.check-merge.outputs.needs_merge == 'true'
         run: |
-          PR_EXISTS=$(gh pr list --base ${{ matrix.branch }} --head main-to-${{ matrix.branch }} --json number --jq '.[0].number')
+          PR_NUMBER=$(gh pr list --base ${{ matrix.branch }} --head main-to-${{ matrix.branch }} --json number --jq '.[0].number')
 
           if [ "${{ steps.merge.outputs.has_conflicts }}" == "true" ]; then
             BODY="⚠️ **This PR has merge conflicts that need to be resolved manually.**
@@ -92,7 +133,7 @@ jobs:
             BODY="This PR was automatically created to merge changes from \`main\` into \`${{ matrix.branch }}\`."
           fi
 
-          if [ -z "$PR_EXISTS" ]; then
+          if [ -z "$PR_NUMBER" ]; then
             gh pr create \
               --base ${{ matrix.branch }} \
               --head main-to-${{ matrix.branch }} \
@@ -101,7 +142,8 @@ jobs:
               --draft
             echo "Created new PR for ${{ matrix.branch }}"
           else
-            echo "PR #$PR_EXISTS already exists for ${{ matrix.branch }}"
+            echo "PR #$PR_NUMBER already exists for ${{ matrix.branch }}, updating..."
+            gh pr edit "$PR_NUMBER" --body "$BODY"
           fi
         env:
           GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}

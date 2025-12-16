@@ -364,5 +364,5 @@ export const warpRouteWhitelist: Array<string> | null = [
   'BEST/ethereum',
 
   // Lazai routes
-  "METIS/lazai"
+  'METIS/lazai',
 ];

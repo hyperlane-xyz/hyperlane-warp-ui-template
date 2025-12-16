@@ -52,7 +52,17 @@ export const config: Config = Object.freeze({
   version,
   transferBlacklist,
   walletConnectProjectId,
+<<<<<<< HEAD
   walletProtocols: [ProtocolType.Ethereum, ProtocolType.Sealevel],
+=======
+  walletProtocols: [
+    ProtocolType.Ethereum,
+    ProtocolType.Sealevel,
+    ProtocolType.Cosmos,
+    ProtocolType.Starknet,
+    ProtocolType.Radix,
+  ],
+>>>>>>> origin/main
   shouldDisableChains: false,
   rpcOverrides,
   enableTrackingEvents: false,

@@ -20,10 +20,10 @@
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
     "@headlessui/react": "^2.2.0",
-    "@hyperlane-xyz/registry": "23.7.0",
-    "@hyperlane-xyz/sdk": "19.13.0",
-    "@hyperlane-xyz/utils": "19.13.0",
-    "@hyperlane-xyz/widgets": "19.13.0",
+    "@hyperlane-xyz/registry": "23.10.0",
+    "@hyperlane-xyz/sdk": "20.1.0",
+    "@hyperlane-xyz/utils": "20.1.0",
+    "@hyperlane-xyz/widgets": "20.1.0",
     "@interchain-ui/react": "^1.23.28",
     "@metamask/post-message-stream": "6.1.2",
     "@metamask/providers": "10.2.1",
@@ -136,8 +136,12 @@
       "form-data": "4.0.4"
     },
     "patchedDependencies": {
+<<<<<<< HEAD
       "starknetkit@2.6.1": "patches/starknetkit@2.6.1.patch",
       "@cosmjs/cosmwasm-stargate@0.32.4": "patches/@cosmjs-cosmwasm-stargate-npm-0.32.4-f9dd51429c.patch"
+=======
+      "starknetkit@2.6.1": "patches/starknetkit@2.6.1.patch"
+>>>>>>> origin/main
     },
     "onlyBuiltDependencies": []
   }

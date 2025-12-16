@@ -1,4 +1,3 @@
-import { LeoWalletAdapter } from '@demox-labs/aleo-wallet-adapter-leo';
 import { useIsSsr } from '@hyperlane-xyz/widgets';
 import '@hyperlane-xyz/widgets/styles.css';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -19,9 +18,7 @@ import '../styles/globals.css';
 import '../vendor/inpage-metamask';
 import '../vendor/polyfill';
 
-import { DecryptPermission, WalletAdapterNetwork } from '@demox-labs/aleo-wallet-adapter-base';
-import { WalletProvider as AleoWalletProvider } from '@demox-labs/aleo-wallet-adapter-react';
-import { WalletModalProvider as AleoWalletModalProvider } from '@demox-labs/aleo-wallet-adapter-reactui';
+import { PuzzleWalletProvider } from '@puzzlehq/sdk';
 
 const reactQueryClient = new QueryClient({
   defaultOptions: {
@@ -51,19 +48,12 @@ export default function App({ Component, pageProps }: AppProps) {
                 <CosmosWalletContext>
                   <StarknetWalletContext>
                     <RadixWalletContext>
-                      <AleoWalletProvider
-                        wallets={[new LeoWalletAdapter({ appName: 'Leo App' })]}
-                        network={WalletAdapterNetwork.TestnetBeta}
-                        decryptPermission={DecryptPermission.UponRequest}
-                        autoConnect
-                      >
-                        <AleoWalletModalProvider>
+                      <PuzzleWalletProvider>
                           <AppLayout>
                             <Component {...pageProps} />
                             <Analytics />
                           </AppLayout>
-                        </AleoWalletModalProvider>
-                      </AleoWalletProvider>
+                        </PuzzleWalletProvider>
                     </RadixWalletContext>
                   </StarknetWalletContext>
                 </CosmosWalletContext>

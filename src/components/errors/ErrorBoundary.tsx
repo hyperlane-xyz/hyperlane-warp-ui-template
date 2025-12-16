@@ -9,7 +9,8 @@ export function ErrorBoundary({ children }: PropsWithChildren<unknown>) {
 function SupportLink() {
   return (
     <a href={links.discord} target="_blank" rel="noopener noreferrer" className="mt-5 text-sm">
-      For support, join the <span className="underline underline-offset-2">Hyperlane Discord</span>{' '}
+      For support, join the{' '}
+      <span className="underline underline-offset-2">Hyperlane Discord</span>{' '}
     </a>
   );
 }

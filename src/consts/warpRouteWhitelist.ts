@@ -42,7 +42,6 @@ export const warpRouteWhitelist: Array<string> | null = [
   'USDC/eclipsemainnet-ethereum-solanamainnet',
   'USDC/appchain-base',
   'USDC/arbitrum-base-endurance',
-  'USDC/ethereum-form',
   'USDC/artela-base',
   'USDC/solanamainnet-sonicsvm',
   'USDC/arbitrum-base-ethereum-ink-optimism-solanamainnet-superseed',
@@ -53,7 +52,6 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // USDT routes
   'USDT/eclipsemainnet-ethereum-solanamainnet',
-  'USDT/ethereum-form',
   'USDT/ethereum-hyperevm',
   'USDT/ethereum-inevm',
   'USDT/ethereum-lumiaprism',
@@ -84,7 +82,6 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // WBTC routes
   'WBTC/eclipsemainnet-ethereum',
-  'WBTC/ethereum-form',
   'WBTC/ethereum-hyperevm',
   'WBTC/coti-ethereum',
 
@@ -136,15 +133,6 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // ezETH routes
   'ezETH/renzo-prod',
-
-  // GAME routes
-  'GAME/base-form',
-
-  // AIXBT routes
-  'AIXBT/base-form',
-
-  // wstETH routes
-  'wstETH/ethereum-form',
 
   // pzETH routes
   'pzETH/berachain-ethereum-swell-unichain-zircuit',

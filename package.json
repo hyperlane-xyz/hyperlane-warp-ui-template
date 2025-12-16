@@ -136,12 +136,8 @@
       "form-data": "4.0.4"
     },
     "patchedDependencies": {
-<<<<<<< HEAD
       "starknetkit@2.6.1": "patches/starknetkit@2.6.1.patch",
       "@cosmjs/cosmwasm-stargate@0.32.4": "patches/@cosmjs-cosmwasm-stargate-npm-0.32.4-f9dd51429c.patch"
-=======
-      "starknetkit@2.6.1": "patches/starknetkit@2.6.1.patch"
->>>>>>> origin/main
     },
     "onlyBuiltDependencies": []
   }

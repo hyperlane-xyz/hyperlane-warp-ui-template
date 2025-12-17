@@ -26,7 +26,7 @@ pnpm clean            # Remove build artifacts (dist, cache, .next)
 - **Styling**: Tailwind CSS + Chakra UI
 - **State**: Zustand with persist middleware (`src/features/store.ts`)
 - **Queries**: TanStack Query
-- **Wallets**: Multi-protocol support via context providers (EVM/RainbowKit, Solana, Cosmos, Starknet, Radix)
+- **Wallets**: Each blockchain uses distinct, composable wallet providers (EVM/RainbowKit, Solana, Cosmos, Starknet, Radix)
 - **Core Libraries**: `@hyperlane-xyz/sdk`, `@hyperlane-xyz/registry`, `@hyperlane-xyz/widgets`
 
 ### Key Directories
@@ -57,9 +57,9 @@ pnpm clean            # Remove build artifacts (dist, cache, .next)
 ### Configuration
 
 Environment variables (see `.env.example`):
-- `NEXT_PUBLIC_WALLET_CONNECT_ID` - Required for wallet connections
-- `NEXT_PUBLIC_REGISTRY_URL` - Custom Hyperlane registry URL
-- `NEXT_PUBLIC_RPC_OVERRIDES` - JSON map of chain RPC overrides
+- `NEXT_PUBLIC_WALLET_CONNECT_ID` - **Required** for wallet connections
+- `NEXT_PUBLIC_REGISTRY_URL` - **Optional** custom Hyperlane registry URL
+- `NEXT_PUBLIC_RPC_OVERRIDES` - **Optional** JSON map of chain RPC overrides
 
 ## Customization
 
@@ -71,7 +71,15 @@ See `CUSTOMIZE.md` for detailed customization instructions:
 
 ## Testing
 
-Tests use Vitest and are co-located with source files (`*.test.ts`). Run a single test file:
+Tests use Vitest and are co-located with source files using the `*.test.ts` naming convention. Vitest automatically discovers and runs all matching test files.
+
 ```bash
+# Run all tests
+pnpm test
+
+# Run a single test file
 pnpm vitest src/features/transfer/fees.test.ts
+
+# Run tests in watch mode
+pnpm vitest --watch
 ```

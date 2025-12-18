@@ -63,10 +63,11 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-toastify": "^10.0.6",
+    "starknet": "7.6.4",
     "starknetkit": "2.6.1",
-    "viem": "^2.21.41",
+    "viem": "^2.21.45",
     "wagmi": "^2.12.26",
-    "zod": "3.21.4",
+    "zod": "3.25.76",
     "zustand": "^4.4.7"
   },
   "devDependencies": {
@@ -90,7 +91,7 @@
     "prettier-plugin-tailwindcss": "^0.6.8",
     "tailwindcss": "^3.4.15",
     "ts-node": "^10.9.2",
-    "typescript": "5.6.3",
+    "typescript": "5.8.3",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "3.0.5",
     "yaml": "^2.6.0",
@@ -118,6 +119,8 @@
   "types": "dist/src/index.d.ts",
   "pnpm": {
     "overrides": {
+      "@chain-registry/types": "0.50.269",
+      "@cosmjs/math": "0.32.4",
       "@solana/web3.js": "^1.95.4",
       "axios": "^1.7.9",
       "bignumber": "9.1.2",
@@ -127,7 +130,6 @@
       "globals": "^14.0.0",
       "lit-html": "2.8.0",
       "react-fast-compare": "^3.2",
-      "viem": "^2.21.41",
       "zustand": "^4.4",
       "sha.js": "2.4.12",
       "cipher-base": "1.0.5",

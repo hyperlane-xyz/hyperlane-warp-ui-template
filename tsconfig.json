@@ -18,7 +18,6 @@
     "noImplicitAny": false,
     "noImplicitReturns": true,
     "noUnusedLocals": true,
-    "preserveSymlinks": true,
     "preserveWatchOutput": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,

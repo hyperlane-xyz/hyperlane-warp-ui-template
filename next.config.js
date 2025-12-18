@@ -69,11 +69,19 @@ const securityHeaders = [
 ];
 
 const nextConfig = {
-  webpack(config) {
+  webpack(config, { isServer }) {
     config.module.rules.push({
       test: /\.ya?ml$/,
       use: 'yaml-loader',
     });
+    // Prefer ESM versions of packages in the server bundle (webpack default)
+    // For client bundles, use browser field to get browser-specific versions (both next.js and webpack default)
+    if (isServer) {
+      config.resolve.mainFields = ['module', 'main'];
+    } else {
+      config.resolve.mainFields = ['browser', 'module', 'main'];
+    }
+
     return config;
   },
 

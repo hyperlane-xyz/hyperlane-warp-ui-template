@@ -365,4 +365,10 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // Lazai routes
   'METIS/lazai',
+
+  // Carrchain routes
+  'USDC/carrchain',
+  'USDT/carrchain',
+  'WBTC/carrchain',
+  'WETH/carrchain',
 ];

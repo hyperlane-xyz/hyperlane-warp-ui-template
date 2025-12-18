@@ -9,7 +9,7 @@ import { trackTokenSelectionEvent } from '../analytics/utils';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { TransferFormValues } from '../transfer/types';
-import { useDestinationTokens, useOriginTokens } from './hooks';
+import { useTokens } from './hooks';
 import { TokenChainIcon } from './TokenChainIcon';
 import { UnifiedTokenChainModal } from './UnifiedTokenChainModal';
 import { getTokenKey } from './utils';
@@ -28,20 +28,24 @@ export function TokenSelectField({ name, label, selectionMode, disabled, setIsNf
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const multiProvider = useMultiProvider();
-  const originTokens = useOriginTokens();
-  const destinationTokens = useDestinationTokens();
+  const tokens = useTokens();
 
-  // Get the current token from the appropriate array based on selection mode
-  const tokens = selectionMode === 'origin' ? originTokens : destinationTokens;
+  // Get the current token
   const token = getTokenByKey(tokens, field.value);
+
+  // Get the counterpart token (destination when selecting origin, origin when selecting destination)
+  const counterpartToken =
+    selectionMode === 'origin'
+      ? getTokenByKey(tokens, values.destinationTokenKey)
+      : getTokenByKey(tokens, values.originTokenKey);
 
   const onSelectToken = (newToken: Token) => {
     const newTokenKey = getTokenKey(newToken);
     helpers.setValue(newTokenKey);
 
     // Track analytics - derive origin and destination from current tokens
-    const originToken = getTokenByKey(originTokens, values.originTokenKey);
-    const destToken = getTokenByKey(destinationTokens, values.destinationTokenKey);
+    const originToken = getTokenByKey(tokens, values.originTokenKey);
+    const destToken = getTokenByKey(tokens, values.destinationTokenKey);
     const origin = selectionMode === 'origin' ? newToken.chainName : originToken?.chainName || '';
     const destination =
       selectionMode === 'destination' ? newToken.chainName : destToken?.chainName || '';
@@ -89,6 +93,7 @@ export function TokenSelectField({ name, label, selectionMode, disabled, setIsNf
         close={() => setIsModalOpen(false)}
         onSelect={onSelectToken}
         selectionMode={selectionMode}
+        counterpartToken={counterpartToken}
       />
     </>
   );

@@ -1,5 +1,5 @@
 import { IToken, Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
-import { objKeys } from '@hyperlane-xyz/utils';
+import { normalizeAddress, objKeys } from '@hyperlane-xyz/utils';
 import { chainsRentEstimate } from '../../consts/chains';
 import { logger } from '../../utils/logger';
 import { getPromisesFulfilledValues } from '../../utils/promises';
@@ -87,6 +87,44 @@ export function getInterchainQuote(
     : interchainQuote;
 }
 
+/**
+ * Find the actual warpCore token that has a route to the destination.
+ * The passed originToken may be from a deduplicated array and may not have
+ * the connection, but a token with the same collateral in warpCore does.
+ */
+export function findRouteToken(
+  warpCore: WarpCore,
+  originToken: Token,
+  destinationChain: string,
+): Token | null {
+  // First check if the passed token already has the connection
+  if (originToken.getConnectionForChain(destinationChain)) {
+    return originToken;
+  }
+
+  // Otherwise, find a token from warpCore that has the route and shares collateral
+  const routeTokens = warpCore.getTokensForRoute(originToken.chainName, destinationChain);
+  if (routeTokens.length === 0) return null;
+
+  const normalizedOriginCollateral = originToken.collateralAddressOrDenom
+    ? normalizeAddress(originToken.collateralAddressOrDenom, originToken.protocol)
+    : null;
+
+  // Find a route token that shares collateral with the origin token
+  const matchingToken = routeTokens.find((t) => {
+    const normalizedRouteCollateral = t.collateralAddressOrDenom
+      ? normalizeAddress(t.collateralAddressOrDenom, t.protocol)
+      : null;
+    // Match by collateral address if both have one, otherwise match by symbol
+    if (normalizedOriginCollateral && normalizedRouteCollateral) {
+      return normalizedOriginCollateral === normalizedRouteCollateral;
+    }
+    return t.symbol === originToken.symbol;
+  });
+
+  return matchingToken || routeTokens[0];
+}
+
 // Checks if a token is a multi-collateral token and if so
 // look for other tokens that are the same and returns
 // the one with the lowest fee
@@ -98,16 +136,28 @@ export async function getLowestFeeTransferToken(
   recipient: string,
   sender: string | undefined,
 ) {
-  if (!isValidMultiCollateralToken(originToken, destinationToken)) return originToken;
+  const destinationChain = destinationToken.chainName;
+
+  // Find the actual warpCore token that has the route
+  // The passed originToken may be deduplicated and not have the connection
+  const originRouteToken = findRouteToken(warpCore, originToken, destinationChain);
+  if (!originRouteToken) {
+    // No route exists, return original token (validation will catch this)
+    return originToken;
+  }
+
+  if (!isValidMultiCollateralToken(originRouteToken, destinationToken)) {
+    return originRouteToken;
+  }
 
   const tokensWithSameCollateralAddresses = getTokensWithSameCollateralAddresses(
     warpCore,
-    originToken,
+    originRouteToken,
     destinationToken,
   );
 
   // if only one token exists then just return that one
-  if (tokensWithSameCollateralAddresses.length <= 1) return originToken;
+  if (tokensWithSameCollateralAddresses.length <= 1) return originRouteToken;
 
   logger.debug(
     'Multiple multi-collateral tokens found for same collateral address, retrieving routes with collateral balance...',
@@ -128,7 +178,7 @@ export async function getLowestFeeTransferToken(
   const validBalanceResults = getPromisesFulfilledValues(balanceResults);
 
   const tokenBalances = filterAndSortTokensByBalance(validBalanceResults, BigInt(amountWei));
-  if (!tokenBalances.length) return originToken;
+  if (!tokenBalances.length) return originRouteToken;
 
   logger.debug('Retrieving fees for multi-collateral routes...');
   // fetch each route fees

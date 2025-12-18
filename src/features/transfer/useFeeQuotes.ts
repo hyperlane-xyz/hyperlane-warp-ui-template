@@ -48,6 +48,7 @@ export function useFeeQuotes(
       fetchFeeQuotes(
         warpCore,
         originToken,
+        destinationToken,
         destination,
         sender,
         senderPubKey,
@@ -65,6 +66,7 @@ export function useFeeQuotes(
 async function fetchFeeQuotes(
   warpCore: WarpCore,
   originToken: Token | undefined,
+  destinationToken: Token | undefined,
   destination?: ChainName,
   sender?: Address,
   senderPubKey?: Promise<HexString>,
@@ -72,23 +74,22 @@ async function fetchFeeQuotes(
   recipient?: string,
   searchForLowestFee: boolean = false,
 ): Promise<WarpCoreFeeEstimate | null> {
-  if (!originToken || !destination || !sender || !originToken || !amount || !recipient) return null;
+  if (!originToken || !destinationToken || !destination || !sender || !amount || !recipient)
+    return null;
+
   let transferToken = originToken;
   const amountWei = toWei(amount, transferToken.decimals);
 
   // when true attempt to get route with lowest fee
   if (searchForLowestFee) {
-    const destinationToken = originToken.getConnectionForChain(destination)?.token;
-    if (destinationToken) {
-      transferToken = await getLowestFeeTransferToken(
-        warpCore,
-        originToken,
-        destinationToken,
-        amountWei,
-        recipient,
-        sender,
-      );
-    }
+    transferToken = await getLowestFeeTransferToken(
+      warpCore,
+      originToken,
+      destinationToken,
+      amountWei,
+      recipient,
+      sender,
+    );
   }
 
   const originTokenAmount = transferToken.amount(amountWei);

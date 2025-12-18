@@ -44,13 +44,7 @@ import {
   useDestinationBalance,
   useOriginBalance,
 } from '../tokens/balances';
-import {
-  getInitialTokenKeys,
-  getTokenByKey,
-  useDestinationTokens,
-  useOriginTokens,
-  useWarpCore,
-} from '../tokens/hooks';
+import { getInitialTokenKeys, getTokenByKey, useTokens, useWarpCore } from '../tokens/hooks';
 import { useTokenPrice } from '../tokens/useTokenPrice';
 import { getTokenKey } from '../tokens/utils';
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
@@ -67,8 +61,7 @@ import { isSmartContract } from './utils';
 export function TransferTokenForm() {
   const multiProvider = useMultiProvider();
   const warpCore = useWarpCore();
-  const originTokens = useOriginTokens();
-  const destinationTokens = useDestinationTokens();
+  const tokens = useTokens();
 
   const { setOriginChainName, routerAddressesByChainMap } = useStore((s) => ({
     setOriginChainName: s.setOriginChainName,
@@ -95,8 +88,7 @@ export function TransferTokenForm() {
   const validate = async (values: TransferFormValues) => {
     const [result, overrideToken] = await validateForm(
       warpCore,
-      originTokens,
-      destinationTokens,
+      tokens,
       values,
       accounts,
       routerAddressesByChainMap,
@@ -111,8 +103,8 @@ export function TransferTokenForm() {
   };
 
   const onSubmitForm = async (values: TransferFormValues) => {
-    const originToken = getTokenByKey(originTokens, values.originTokenKey);
-    const destinationToken = getTokenByKey(destinationTokens, values.destinationTokenKey);
+    const originToken = getTokenByKey(tokens, values.originTokenKey);
+    const destinationToken = getTokenByKey(tokens, values.destinationTokenKey);
     if (!originToken || !destinationToken) return;
 
     logger.debug(
@@ -136,11 +128,11 @@ export function TransferTokenForm() {
 
   // Update origin chain name in store when origin token changes
   useEffect(() => {
-    const originToken = getTokenByKey(originTokens, initialValues.originTokenKey);
+    const originToken = getTokenByKey(tokens, initialValues.originTokenKey);
     if (originToken) {
       setOriginChainName(originToken.chainName);
     }
-  }, [initialValues.originTokenKey, originTokens, setOriginChainName]);
+  }, [initialValues.originTokenKey, tokens, setOriginChainName]);
 
   return (
     <Formik<TransferFormValues>
@@ -203,8 +195,8 @@ function TokenSelectSection({
 
 function AmountSection({ isNft, isReview }: { isNft: boolean; isReview: boolean }) {
   const { values } = useFormikContext<TransferFormValues>();
-  const originTokens = useOriginTokens();
-  const originToken = getTokenByKey(originTokens, values.originTokenKey);
+  const tokens = useTokens();
+  const originToken = getTokenByKey(tokens, values.originTokenKey);
   const { balance } = useOriginBalance(values, originToken);
   const { tokenPrice, isLoading } = useTokenPrice(values);
 
@@ -246,8 +238,8 @@ function AmountSection({ isNft, isReview }: { isNft: boolean; isReview: boolean 
 
 function RecipientSection({ isReview }: { isReview: boolean }) {
   const { values } = useFormikContext<TransferFormValues>();
-  const destinationTokens = useDestinationTokens();
-  const destinationToken = getTokenByKey(destinationTokens, values.destinationTokenKey);
+  const tokens = useTokens();
+  const destinationToken = getTokenByKey(tokens, values.destinationTokenKey);
 
   const { balance } = useDestinationBalance(values, destinationToken);
   useRecipientBalanceWatcher(destinationToken?.chainName || '', balance);
@@ -306,10 +298,9 @@ function ButtonSection({
 }) {
   const { values, setFieldValue } = useFormikContext<TransferFormValues>();
   const multiProvider = useMultiProvider();
-  const originTokens = useOriginTokens();
-  const destinationTokens = useDestinationTokens();
-  const originToken = routeOverrideToken || getTokenByKey(originTokens, values.originTokenKey);
-  const destinationToken = getTokenByKey(destinationTokens, values.destinationTokenKey);
+  const tokens = useTokens();
+  const originToken = routeOverrideToken || getTokenByKey(tokens, values.originTokenKey);
+  const destinationToken = getTokenByKey(tokens, values.destinationTokenKey);
   const chainDisplayName = useChainDisplayName(destinationToken?.chainName || '');
 
   const { accounts } = useAccounts(multiProvider, config.addressBlacklist);
@@ -483,10 +474,9 @@ function ButtonSection({
 function MaxButton({ balance, disabled }: { balance?: TokenAmount; disabled?: boolean }) {
   const { values, setFieldValue } = useFormikContext<TransferFormValues>();
   const { originTokenKey, destinationTokenKey } = values;
-  const originTokens = useOriginTokens();
-  const destinationTokens = useDestinationTokens();
-  const originToken = getTokenByKey(originTokens, originTokenKey);
-  const destinationToken = getTokenByKey(destinationTokens, destinationTokenKey);
+  const tokens = useTokens();
+  const originToken = getTokenByKey(tokens, originTokenKey);
+  const destinationToken = getTokenByKey(tokens, destinationTokenKey);
   const multiProvider = useMultiProvider();
   const { accounts } = useAccounts(multiProvider);
   const { fetchMaxAmount, isLoading } = useFetchMaxAmount();
@@ -570,10 +560,9 @@ function ReviewDetails({
 }) {
   const { values } = useFormikContext<TransferFormValues>();
   const { amount, originTokenKey, destinationTokenKey } = values;
-  const originTokens = useOriginTokens();
-  const destinationTokens = useDestinationTokens();
-  const originToken = routeOverrideToken || getTokenByKey(originTokens, originTokenKey);
-  const destinationToken = getTokenByKey(destinationTokens, destinationTokenKey);
+  const tokens = useTokens();
+  const originToken = routeOverrideToken || getTokenByKey(tokens, originTokenKey);
+  const destinationToken = getTokenByKey(tokens, destinationTokenKey);
   const originTokenSymbol = originToken?.symbol || '';
   const isNft = originToken?.isNft();
 
@@ -721,10 +710,9 @@ function ReviewDetails({
 
 function WarningBanners() {
   const { values } = useFormikContext<TransferFormValues>();
-  const originTokens = useOriginTokens();
-  const destinationTokens = useDestinationTokens();
-  const originToken = getTokenByKey(originTokens, values.originTokenKey);
-  const destinationToken = getTokenByKey(destinationTokens, values.destinationTokenKey);
+  const tokens = useTokens();
+  const originToken = getTokenByKey(tokens, values.originTokenKey);
+  const destinationToken = getTokenByKey(tokens, values.destinationTokenKey);
 
   return (
     // Max height to prevent double padding if multiple warnings are visible
@@ -741,14 +729,9 @@ function WarningBanners() {
 
 function useFormInitialValues(): TransferFormValues {
   const warpCore = useWarpCore();
-  const originTokens = useOriginTokens();
-  const destinationTokens = useDestinationTokens();
+  const tokens = useTokens();
 
-  const { originTokenKey, destinationTokenKey } = getInitialTokenKeys(
-    warpCore,
-    originTokens,
-    destinationTokens,
-  );
+  const { originTokenKey, destinationTokenKey } = getInitialTokenKeys(warpCore, tokens);
 
   return useMemo(
     () => ({
@@ -766,8 +749,7 @@ const emptyAccountErrMsg = /AccountNotFound/i;
 
 async function validateForm(
   warpCore: WarpCore,
-  originTokens: Token[],
-  destinationTokens: Token[],
+  tokens: Token[],
   values: TransferFormValues,
   accounts: Record<ProtocolType, AccountInfo>,
   routerAddressesByChainMap: Record<ChainName, Set<string>>,
@@ -777,9 +759,9 @@ async function validateForm(
   try {
     const { originTokenKey, destinationTokenKey, amount, recipient } = values;
 
-    // Look up tokens from their respective arrays
-    const token = getTokenByKey(originTokens, originTokenKey);
-    const destinationToken = getTokenByKey(destinationTokens, destinationTokenKey);
+    // Look up tokens from the unified array
+    const token = getTokenByKey(tokens, originTokenKey);
+    const destinationToken = getTokenByKey(tokens, destinationTokenKey);
 
     if (!token) return [{ originTokenKey: 'Origin token is required' }, null];
     if (!destinationToken) return [{ destinationTokenKey: 'Destination token is required' }, null];
@@ -798,7 +780,11 @@ async function validateForm(
       token.chainName,
       accounts,
     );
+
     const amountWei = toWei(amount, token.decimals);
+
+    // getLowestFeeTransferToken will find the actual warpCore token that has the route
+    // The unified array token may not have the connection due to deduplication
     const transferToken = await getLowestFeeTransferToken(
       warpCore,
       token,
@@ -808,7 +794,7 @@ async function validateForm(
       sender,
     );
 
-    // Check if a valid route exists using the SDK method
+    // Check if a valid route exists
     const connection = transferToken.getConnectionForChain(destination);
     if (!connection) {
       return [{ destinationTokenKey: 'Unsupported Route' }, null];

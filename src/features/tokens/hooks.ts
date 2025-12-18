@@ -35,11 +35,10 @@ function findTokenByChainSymbol(tokens: Token[], chainSymbol: string): Token | u
  */
 export function getInitialTokenKeys(
   warpCore: WarpCore,
-  originTokens: Token[],
-  destinationTokens: Token[],
+  tokens: Token[],
 ): { originTokenKey: string | undefined; destinationTokenKey: string | undefined } {
   // Early return if no tokens
-  if (originTokens.length === 0) {
+  if (tokens.length === 0) {
     return { originTokenKey: undefined, destinationTokenKey: undefined };
   }
 
@@ -59,7 +58,7 @@ export function getInitialTokenKeys(
   // Try to find origin token from URL params (chain + symbol)
   let originToken: Token | undefined;
   if (originChainQuery && originTokenSymbol) {
-    originToken = originTokens.find(
+    originToken = tokens.find(
       (t) =>
         t.chainName === originChainQuery &&
         t.symbol.toLowerCase() === originTokenSymbol.toLowerCase(),
@@ -68,18 +67,18 @@ export function getInitialTokenKeys(
 
   // 2. Second priority: Config default token (format: chainName-symbol)
   if (!originToken && config.defaultOriginToken) {
-    originToken = findTokenByChainSymbol(originTokens, config.defaultOriginToken);
+    originToken = findTokenByChainSymbol(tokens, config.defaultOriginToken);
   }
 
-  // 3. Last resort: First available token
+  // 3. Last resort: First available token with connections (can be origin)
   if (!originToken) {
-    originToken = originTokens[0];
+    originToken = tokens.find((t) => t.connections && t.connections.length > 0);
   }
 
   // Try to find destination token from URL params (chain + symbol)
   let destinationToken: Token | undefined;
   if (destinationChainQuery && destinationTokenSymbol) {
-    destinationToken = destinationTokens.find(
+    destinationToken = tokens.find(
       (t) =>
         t.chainName === destinationChainQuery &&
         t.symbol.toLowerCase() === destinationTokenSymbol.toLowerCase(),
@@ -88,36 +87,37 @@ export function getInitialTokenKeys(
 
   // Fallback: use config default token (format: chainName-symbol)
   if (!destinationToken && config.defaultDestinationToken) {
-    destinationToken = findTokenByChainSymbol(destinationTokens, config.defaultDestinationToken);
+    destinationToken = findTokenByChainSymbol(tokens, config.defaultDestinationToken);
   }
 
   // Last resort: first connection from origin token
-  if (!destinationToken) {
+  if (!destinationToken && originToken) {
     const firstConnection = originToken.connections?.[0];
     const connectedChain = firstConnection?.token?.chainName;
+    const connectedSymbol = firstConnection?.token?.symbol;
     destinationToken = connectedChain
-      ? destinationTokens.find(
-          (dt) => dt.chainName === connectedChain && dt.symbol === firstConnection?.token?.symbol,
-        )
+      ? tokens.find((t) => t.chainName === connectedChain && t.symbol === connectedSymbol)
       : undefined;
   }
 
   return {
-    originTokenKey: getTokenKey(originToken),
+    originTokenKey: originToken ? getTokenKey(originToken) : undefined,
     destinationTokenKey: destinationToken ? getTokenKey(destinationToken) : undefined,
   };
 }
 
-export function useTokens() {
+/** Raw tokens from WarpCore (not deduplicated) */
+export function useWarpCoreTokens() {
   return useWarpCore().tokens;
 }
 
-export function useOriginTokens() {
-  return useStore((s) => s.originTokens);
+/** Unified tokens array (deduplicated, can be origin or destination) */
+export function useTokens() {
+  return useStore((s) => s.tokens);
 }
 
-export function useDestinationTokens() {
-  return useStore((s) => s.destinationTokens);
+export function useCollateralGroups() {
+  return useStore((s) => s.collateralGroups);
 }
 
 export function tryFindToken(

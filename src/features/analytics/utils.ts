@@ -3,7 +3,7 @@ import { objLength, ProtocolType } from '@hyperlane-xyz/utils';
 import { AccountInfo, getAccountAddressAndPubKey } from '@hyperlane-xyz/widgets';
 import { track } from '@vercel/analytics';
 import { config } from '../../consts/config';
-import { getTokenKey } from '../tokens/hooks';
+import { getTokenKey } from '../tokens/utils';
 import { TransferFormValues } from '../transfer/types';
 import { EVENT_NAME, EventProperties } from './types';
 

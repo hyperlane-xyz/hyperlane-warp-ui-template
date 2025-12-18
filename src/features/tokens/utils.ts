@@ -58,12 +58,14 @@ export function isValidMultiCollateralToken(
       ? originToken.getConnectionForChain(destination)?.token
       : destination;
 
-  if (
-    !destinationToken ||
-    (!destinationToken.collateralAddressOrDenom && !destinationToken.isHypNative()) ||
-    !TOKEN_COLLATERALIZED_STANDARDS.includes(destinationToken.standard)
-  )
-    return false;
+  // Check if destination is collateralized - has collateral address, is HypNative, or is in SDK's list
+  // Note: Some standards like EvmHypCollateralFiat may not be in TOKEN_COLLATERALIZED_STANDARDS
+  const isDestCollateralized =
+    !!destinationToken?.collateralAddressOrDenom ||
+    destinationToken?.isHypNative?.() ||
+    TOKEN_COLLATERALIZED_STANDARDS.includes(destinationToken?.standard as any);
+
+  if (!destinationToken || !isDestCollateralized) return false;
 
   return true;
 }
@@ -209,37 +211,24 @@ export function dedupeTokensByCollateral(tokens: Token[]): Token[] {
 }
 
 /**
- * Build and deduplicate origin tokens (tokens with outgoing connections)
- * Deduplicates by address and by collateral address per chain
+ * Build a unified tokens array containing all tokens that can participate in transfers
+ * (either as origin or destination). Deduplicates by address and by collateral.
  */
-export function buildOriginTokens(tokens: Token[]): Token[] {
-  // Filter to only tokens with outgoing connections
-  const originTokens = tokens.filter((token) => token.connections && token.connections.length > 0);
-
-  // Deduplicate by chain-address
+export function buildTokensArray(warpCoreTokens: Token[]): Token[] {
   const tokenMap = new Map<string, Token>();
-  originTokens.forEach((token) => {
-    const key = getTokenKey(token);
-    if (!tokenMap.has(key)) {
-      tokenMap.set(key, token);
+
+  // Add all tokens that have connections (can be origins)
+  for (const token of warpCoreTokens) {
+    if (token.connections && token.connections.length > 0) {
+      const key = getTokenKey(token);
+      if (!tokenMap.has(key)) {
+        tokenMap.set(key, token);
+      }
     }
-  });
+  }
 
-  const dedupedTokens = Array.from(tokenMap.values());
-
-  // Deduplicate tokens that have same collateral address on the same chain
-  return dedupeTokensByCollateral(dedupedTokens);
-}
-
-/**
- * Build and deduplicate destination tokens (tokens reachable via connections)
- * Deduplicates by address and by collateral address per chain
- */
-export function buildDestinationTokens(tokens: Token[]): Token[] {
-  const tokenMap = new Map<string, Token>();
-
-  // Traverse all connections to find destination tokens
-  tokens.forEach((token) => {
+  // Add all destination tokens (reachable via connections)
+  for (const token of warpCoreTokens) {
     token.connections?.forEach((conn) => {
       const destToken = conn.token as Token;
       const key = getTokenKey(destToken);
@@ -247,10 +236,108 @@ export function buildDestinationTokens(tokens: Token[]): Token[] {
         tokenMap.set(key, destToken);
       }
     });
-  });
-
-  const dedupedTokens = Array.from(tokenMap.values());
+  }
 
   // Deduplicate tokens that have same collateral address on the same chain
-  return dedupeTokensByCollateral(dedupedTokens);
+  return dedupeTokensByCollateral(Array.from(tokenMap.values()));
+}
+
+/**
+ * Build collateral groups - groups tokens by their collateral key for O(1) lookup
+ * Used for fast route checking in the token selection modal
+ */
+export function buildCollateralGroups(tokens: Token[]): Map<string, Token[]> {
+  const groups = new Map<string, Token[]>();
+  for (const token of tokens) {
+    const key = getCollateralKey(token);
+    const existing = groups.get(key) || [];
+    existing.push(token);
+    groups.set(key, existing);
+  }
+  return groups;
+}
+
+/**
+ * Get a unique collateral identifier for a token
+ * Used to determine if two tokens share the same underlying collateral
+ */
+export function getCollateralKey(token: IToken): string {
+  const chainName = token.chainName.toLowerCase();
+  const symbol = token.symbol.toLowerCase();
+  const protocol = token.protocol;
+
+  // For collateralized tokens, use the collateral address
+  if (TOKEN_COLLATERALIZED_STANDARDS.includes(token.standard)) {
+    if (token.collateralAddressOrDenom) {
+      return `${chainName}-${symbol}-${normalizeAddress(token.collateralAddressOrDenom, protocol)}`;
+    }
+    // For HypNative tokens without collateralAddressOrDenom
+    return `${chainName}-${symbol}-hypnative-${protocol}`;
+  }
+
+  // For non-collateralized tokens, use the token's own address
+  return `${chainName}-${symbol}-${normalizeAddress(token.addressOrDenom, protocol)}`;
+}
+
+/**
+ * Check if two tokens share the same collateral
+ */
+export function sharesCollateral(tokenA: IToken, tokenB: IToken): boolean {
+  return getCollateralKey(tokenA) === getCollateralKey(tokenB);
+}
+
+/**
+ * Check if a displayed origin token can reach a specific destination token
+ * This accounts for collateral deduplication by:
+ * 1. Finding all tokens that share collateral with the displayed origin
+ * 2. Checking if any of their connections share collateral with the destination token
+ */
+export function originTokenCanReachDestinationToken(
+  warpCore: WarpCore,
+  displayedOriginToken: IToken,
+  selectedDestinationToken: IToken,
+): boolean {
+  // Get all tokens from origin's chain that could be the "real" token behind the displayed one
+  const originChainTokens = warpCore.getTokensForChain(displayedOriginToken.chainName);
+
+  // Find all origin tokens that share collateral with the displayed origin token
+  const originCollateralGroup = originChainTokens.filter((t) =>
+    sharesCollateral(t, displayedOriginToken),
+  );
+
+  // Check if any token in the origin's collateral group can reach a token
+  // that shares collateral with the destination
+  return originCollateralGroup.some((originToken) => {
+    const destConnection = originToken.getConnectionForChain(selectedDestinationToken.chainName);
+    if (!destConnection?.token) return false;
+    return sharesCollateral(destConnection.token, selectedDestinationToken);
+  });
+}
+
+/**
+ * Check if a displayed destination token can be reached from a specific origin token
+ * This accounts for collateral deduplication by:
+ * 1. Finding all tokens that share collateral with the selected origin
+ * 2. Checking if any of their connections share collateral with the displayed destination token
+ */
+export function destinationTokenCanBeReachedFromOriginToken(
+  warpCore: WarpCore,
+  displayedDestinationToken: IToken,
+  selectedOriginToken: IToken,
+): boolean {
+  // Get all tokens from origin's chain that could be the "real" token behind the selected one
+  const originChainTokens = warpCore.getTokensForChain(selectedOriginToken.chainName);
+
+  // Find all origin tokens that share collateral with the selected origin token
+  const originCollateralGroup = originChainTokens.filter((t) =>
+    sharesCollateral(t, selectedOriginToken),
+  );
+
+  // Check if any token in the origin's collateral group can reach a token
+  // that shares collateral with the displayed destination
+  return originCollateralGroup.some((originToken) => {
+    const destConnection = originToken.getConnectionForChain(displayedDestinationToken.chainName);
+    if (!destConnection?.token) return false;
+    return sharesCollateral(destConnection.token, displayedDestinationToken);
+  });
 }

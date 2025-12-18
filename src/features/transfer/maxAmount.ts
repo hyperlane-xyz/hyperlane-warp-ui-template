@@ -7,7 +7,7 @@ import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { isMultiCollateralLimitExceeded } from '../limits/utils';
 import { useWarpCore } from '../tokens/hooks';
-import { getLowestFeeTransferToken } from './fees';
+import { findRouteToken, getLowestFeeTransferToken } from './fees';
 
 interface FetchMaxParams {
   accounts: Record<ProtocolType, AccountInfo>;
@@ -36,7 +36,12 @@ async function fetchMaxAmount(
     const { address, publicKey } = getAccountAddressAndPubKey(multiProvider, origin, accounts);
     if (!address) return balance;
     const originToken = new Token(balance.token);
-    const destinationToken = originToken.getConnectionForChain(destination)?.token;
+
+    // Find the actual warpCore token that has the route (handles deduplicated tokens)
+    const originRouteToken = findRouteToken(warpCore, originToken, destination);
+    if (!originRouteToken) return undefined;
+
+    const destinationToken = originRouteToken.getConnectionForChain(destination)?.token;
     if (!destinationToken) return undefined;
 
     const transferToken = await getLowestFeeTransferToken(

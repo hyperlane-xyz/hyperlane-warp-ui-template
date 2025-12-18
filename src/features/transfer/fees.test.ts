@@ -424,10 +424,15 @@ describe('sortTokensByFee', () => {
 });
 
 describe('getLowestFeeTransferToken', () => {
-  const createMockWarpCore = (overrides?: Partial<WarpCore>) =>
+  const createMockWarpCore = (
+    overrides?: Partial<WarpCore>,
+    originToken?: ReturnType<typeof createMockToken>,
+  ) =>
     ({
       getTokenCollateral: vi.fn(),
       getInterchainTransferFee: vi.fn(),
+      // Return the origin token from getTokensForRoute so findRouteToken can find a match
+      getTokensForRoute: vi.fn().mockReturnValue(originToken ? [originToken] : []),
       ...overrides,
     }) as unknown as WarpCore;
 
@@ -438,7 +443,7 @@ describe('getLowestFeeTransferToken', () => {
     vi.spyOn(tokenUtils, 'isValidMultiCollateralToken').mockReturnValue(false);
 
     const result = await getLowestFeeTransferToken(
-      createMockWarpCore(),
+      createMockWarpCore({}, originToken),
       originToken,
       destinationToken,
       LARGE_TRANSFER_AMOUNT,
@@ -459,7 +464,7 @@ describe('getLowestFeeTransferToken', () => {
     ]);
 
     const result = await getLowestFeeTransferToken(
-      createMockWarpCore(),
+      createMockWarpCore({}, originToken),
       originToken,
       destinationToken,
       LARGE_TRANSFER_AMOUNT,
@@ -482,9 +487,12 @@ describe('getLowestFeeTransferToken', () => {
       { originToken: originToken2, destinationToken: destinationToken2 },
     ]);
 
-    const warpCore = createMockWarpCore({
-      getTokenCollateral: vi.fn().mockResolvedValue(BALANCE_TINY),
-    });
+    const warpCore = createMockWarpCore(
+      {
+        getTokenCollateral: vi.fn().mockResolvedValue(BALANCE_TINY),
+      },
+      originToken,
+    );
 
     const result = await getLowestFeeTransferToken(
       warpCore,
@@ -510,13 +518,16 @@ describe('getLowestFeeTransferToken', () => {
       { originToken: originToken2, destinationToken: destinationToken2 },
     ]);
 
-    const warpCore = createMockWarpCore({
-      getTokenCollateral: vi
-        .fn()
-        .mockResolvedValueOnce(BALANCE_LARGE)
-        .mockResolvedValueOnce(BALANCE_XLARGE),
-      getInterchainTransferFee: vi.fn().mockRejectedValue(new Error('Fee fetch failed')),
-    });
+    const warpCore = createMockWarpCore(
+      {
+        getTokenCollateral: vi
+          .fn()
+          .mockResolvedValueOnce(BALANCE_LARGE)
+          .mockResolvedValueOnce(BALANCE_XLARGE),
+        getInterchainTransferFee: vi.fn().mockRejectedValue(new Error('Fee fetch failed')),
+      },
+      originToken,
+    );
 
     const result = await getLowestFeeTransferToken(
       warpCore,
@@ -545,13 +556,16 @@ describe('getLowestFeeTransferToken', () => {
 
     const feeToken = createMockToken({ symbol: 'FEE' });
 
-    const warpCore = createMockWarpCore({
-      getTokenCollateral: vi.fn().mockResolvedValue(BALANCE_XLARGE),
-      getInterchainTransferFee: vi
-        .fn()
-        .mockResolvedValueOnce({ tokenFeeQuote: new TokenAmount(FEE_HIGH, feeToken) })
-        .mockResolvedValueOnce({ tokenFeeQuote: new TokenAmount(FEE_LOW, feeToken) }),
-    });
+    const warpCore = createMockWarpCore(
+      {
+        getTokenCollateral: vi.fn().mockResolvedValue(BALANCE_XLARGE),
+        getInterchainTransferFee: vi
+          .fn()
+          .mockResolvedValueOnce({ tokenFeeQuote: new TokenAmount(FEE_HIGH, feeToken) })
+          .mockResolvedValueOnce({ tokenFeeQuote: new TokenAmount(FEE_LOW, feeToken) }),
+      },
+      originToken,
+    );
 
     const result = await getLowestFeeTransferToken(
       warpCore,
@@ -579,13 +593,16 @@ describe('getLowestFeeTransferToken', () => {
 
     const feeToken = createMockToken({ symbol: 'FEE' });
 
-    const warpCore = createMockWarpCore({
-      getTokenCollateral: vi.fn().mockResolvedValue(BALANCE_XLARGE),
-      getInterchainTransferFee: vi
-        .fn()
-        .mockResolvedValueOnce({ tokenFeeQuote: new TokenAmount(FEE_LOW, feeToken) })
-        .mockResolvedValueOnce({ tokenFeeQuote: undefined }),
-    });
+    const warpCore = createMockWarpCore(
+      {
+        getTokenCollateral: vi.fn().mockResolvedValue(BALANCE_XLARGE),
+        getInterchainTransferFee: vi
+          .fn()
+          .mockResolvedValueOnce({ tokenFeeQuote: new TokenAmount(FEE_LOW, feeToken) })
+          .mockResolvedValueOnce({ tokenFeeQuote: undefined }),
+      },
+      originToken,
+    );
 
     const result = await getLowestFeeTransferToken(
       warpCore,
@@ -613,15 +630,18 @@ describe('getLowestFeeTransferToken', () => {
 
     const feeToken = createMockToken({ symbol: 'FEE' });
 
-    const warpCore = createMockWarpCore({
-      getTokenCollateral: vi
-        .fn()
-        .mockRejectedValueOnce(new Error('Failed to fetch collateral'))
-        .mockResolvedValueOnce(BALANCE_XXLARGE),
-      getInterchainTransferFee: vi.fn().mockResolvedValue({
-        tokenFeeQuote: new TokenAmount(FEE_LOW, feeToken),
-      }),
-    });
+    const warpCore = createMockWarpCore(
+      {
+        getTokenCollateral: vi
+          .fn()
+          .mockRejectedValueOnce(new Error('Failed to fetch collateral'))
+          .mockResolvedValueOnce(BALANCE_XXLARGE),
+        getInterchainTransferFee: vi.fn().mockResolvedValue({
+          tokenFeeQuote: new TokenAmount(FEE_LOW, feeToken),
+        }),
+      },
+      originToken,
+    );
 
     const result = await getLowestFeeTransferToken(
       warpCore,
@@ -649,13 +669,16 @@ describe('getLowestFeeTransferToken', () => {
 
     const feeToken = createMockToken({ symbol: 'FEE' });
 
-    const warpCore = createMockWarpCore({
-      getTokenCollateral: vi.fn().mockResolvedValue(BALANCE_XXLARGE),
-      getInterchainTransferFee: vi
-        .fn()
-        .mockRejectedValueOnce(new Error('Fee fetch failed'))
-        .mockResolvedValueOnce({ tokenFeeQuote: new TokenAmount(FEE_LOW, feeToken) }),
-    });
+    const warpCore = createMockWarpCore(
+      {
+        getTokenCollateral: vi.fn().mockResolvedValue(BALANCE_XXLARGE),
+        getInterchainTransferFee: vi
+          .fn()
+          .mockRejectedValueOnce(new Error('Fee fetch failed'))
+          .mockResolvedValueOnce({ tokenFeeQuote: new TokenAmount(FEE_LOW, feeToken) }),
+      },
+      originToken,
+    );
 
     const result = await getLowestFeeTransferToken(
       warpCore,

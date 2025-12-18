@@ -1,12 +1,13 @@
 import { ChainName, Token } from '@hyperlane-xyz/sdk';
 import { Modal, SearchIcon } from '@hyperlane-xyz/widgets';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import { TextInput } from '../../components/input/TextField';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
-import { useDestinationTokens, useOriginTokens } from './hooks';
+import { useCollateralGroups, useTokens } from './hooks';
 import { TokenChainIcon } from './TokenChainIcon';
+import { getCollateralKey, getTokenKey } from './utils';
 
 type SelectionMode = 'origin' | 'destination';
 
@@ -15,9 +16,17 @@ interface Props {
   close: () => void;
   onSelect: (token: Token) => void;
   selectionMode: SelectionMode;
+  /** The currently selected token on the counterpart side (destination when selecting origin, origin when selecting destination) */
+  counterpartToken?: Token;
 }
 
-export function UnifiedTokenChainModal({ isOpen, close, onSelect, selectionMode }: Props) {
+export function UnifiedTokenChainModal({
+  isOpen,
+  close,
+  onSelect,
+  selectionMode,
+  counterpartToken,
+}: Props) {
   const [chainSearch, setChainSearch] = useState('');
   const [tokenSearch, setTokenSearch] = useState('');
   const [selectedChain, setSelectedChain] = useState<ChainName | null>(null);
@@ -39,7 +48,6 @@ export function UnifiedTokenChainModal({ isOpen, close, onSelect, selectionMode 
       <div className="flex h-[600px]">
         {/* Left panel - Chain filter */}
         <ChainFilterPanel
-          selectionMode={selectionMode}
           searchQuery={chainSearch}
           onSearchChange={setChainSearch}
           selectedChain={selectedChain}
@@ -53,6 +61,7 @@ export function UnifiedTokenChainModal({ isOpen, close, onSelect, selectionMode 
           onSearchChange={setTokenSearch}
           chainFilter={selectedChain}
           onSelect={onSelectAndClose}
+          counterpartToken={counterpartToken}
         />
       </div>
     </Modal>
@@ -64,13 +73,11 @@ export function UnifiedTokenChainModal({ isOpen, close, onSelect, selectionMode 
 // ============================================
 
 function ChainFilterPanel({
-  selectionMode,
   searchQuery,
   onSearchChange,
   selectedChain,
   onSelectChain,
 }: {
-  selectionMode: SelectionMode;
   searchQuery: string;
   onSearchChange: (s: string) => void;
   selectedChain: ChainName | null;
@@ -87,7 +94,6 @@ function ChainFilterPanel({
         />
       </div>
       <ChainList
-        selectionMode={selectionMode}
         searchQuery={searchQuery}
         selectedChain={selectedChain}
         onSelectChain={onSelectChain}
@@ -97,23 +103,18 @@ function ChainFilterPanel({
 }
 
 function ChainList({
-  selectionMode,
   searchQuery,
   selectedChain,
   onSelectChain,
 }: {
-  selectionMode: SelectionMode;
   searchQuery: string;
   selectedChain: ChainName | null;
   onSelectChain: (chain: ChainName | null) => void;
 }) {
   const multiProvider = useMultiProvider();
-  const originTokens = useOriginTokens();
-  const destinationTokens = useDestinationTokens();
+  const tokens = useTokens();
 
   const chains = useMemo(() => {
-    const tokens = selectionMode === 'origin' ? originTokens : destinationTokens;
-
     // Get unique chains that have tokens
     const chainSet = new Set(tokens.map((t) => t.chainName));
 
@@ -134,7 +135,7 @@ function ChainList({
       (chain) =>
         chain.displayName.toLowerCase().includes(q) || chain.name.toLowerCase().includes(q),
     );
-  }, [selectionMode, searchQuery, originTokens, destinationTokens, multiProvider]);
+  }, [searchQuery, tokens, multiProvider]);
 
   return (
     <div className="flex-1 overflow-auto">
@@ -205,12 +206,14 @@ function TokenListPanel({
   onSearchChange,
   chainFilter,
   onSelect,
+  counterpartToken,
 }: {
   selectionMode: SelectionMode;
   searchQuery: string;
   onSearchChange: (s: string) => void;
   chainFilter: ChainName | null;
   onSelect: (token: Token) => void;
+  counterpartToken?: Token;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -235,9 +238,47 @@ function TokenListPanel({
         searchQuery={searchQuery}
         chainFilter={chainFilter}
         onSelect={onSelect}
+        counterpartToken={counterpartToken}
       />
     </div>
   );
+}
+
+/**
+ * Fast route checking using pre-computed collateral groups
+ */
+function checkTokenHasRoute(
+  displayedToken: Token,
+  counterpartToken: Token,
+  selectionMode: SelectionMode,
+  collateralGroups: Map<string, Token[]>,
+): boolean {
+  const counterpartCollateralKey = getCollateralKey(counterpartToken);
+
+  if (selectionMode === 'origin') {
+    // Check if displayed origin token can reach the counterpart destination
+    const originCollateralKey = getCollateralKey(displayedToken);
+    const originGroup = collateralGroups.get(originCollateralKey) || [];
+
+    // Check if any token in origin's collateral group connects to destination's collateral group
+    return originGroup.some((originToken) => {
+      const destConnection = originToken.getConnectionForChain(counterpartToken.chainName);
+      if (!destConnection?.token) return false;
+      return getCollateralKey(destConnection.token) === counterpartCollateralKey;
+    });
+  } else {
+    // Check if displayed destination token can be reached from counterpart origin
+    const originCollateralKey = getCollateralKey(counterpartToken);
+    const originGroup = collateralGroups.get(originCollateralKey) || [];
+    const destCollateralKey = getCollateralKey(displayedToken);
+
+    // Check if any token in origin's collateral group connects to destination's collateral group
+    return originGroup.some((originToken) => {
+      const destConnection = originToken.getConnectionForChain(displayedToken.chainName);
+      if (!destConnection?.token) return false;
+      return getCollateralKey(destConnection.token) === destCollateralKey;
+    });
+  }
 }
 
 function TokenList({
@@ -245,18 +286,45 @@ function TokenList({
   searchQuery,
   chainFilter,
   onSelect,
+  counterpartToken,
 }: {
   selectionMode: SelectionMode;
   searchQuery: string;
   chainFilter: ChainName | null;
   onSelect: (token: Token) => void;
+  counterpartToken?: Token;
 }) {
   const multiProvider = useMultiProvider();
-  const originTokens = useOriginTokens();
-  const destinationTokens = useDestinationTokens();
+  const allTokens = useTokens();
+
+  // Pre-computed collateral groups from store (computed at app startup)
+  const collateralGroups = useCollateralGroups();
+
+  // Deferred state for route map - allows UI to render immediately
+  const [tokenRouteMap, setTokenRouteMap] = useState<Map<string, boolean> | null>(null);
+  const [, startTransition] = useTransition();
+
+  // Compute route map in a transition (non-blocking)
+  useEffect(() => {
+    if (!counterpartToken) {
+      setTokenRouteMap(null);
+      return;
+    }
+
+    startTransition(() => {
+      const routeMap = new Map<string, boolean>();
+
+      for (const token of allTokens) {
+        const key = getTokenKey(token);
+        const hasRoute = checkTokenHasRoute(token, counterpartToken, selectionMode, collateralGroups);
+        routeMap.set(key, hasRoute);
+      }
+
+      setTokenRouteMap(routeMap);
+    });
+  }, [allTokens, counterpartToken, selectionMode, collateralGroups]);
 
   const { tokens, totalCount, isLimited } = useMemo(() => {
-    const allTokens = selectionMode === 'origin' ? originTokens : destinationTokens;
     const q = searchQuery?.trim().toLowerCase();
 
     // Filter by chain
@@ -276,8 +344,18 @@ function TokenList({
       );
     });
 
-    // Sort: by symbol, then by chain name
-    const sorted = filtered.sort((a, b) => {
+    // Sort: tokens with routes first, then by symbol, then by chain name
+    const sorted = [...filtered].sort((a, b) => {
+      // If we have route info, sort tokens with routes first
+      if (tokenRouteMap) {
+        const aHasRoute = tokenRouteMap.get(getTokenKey(a)) ?? true;
+        const bHasRoute = tokenRouteMap.get(getTokenKey(b)) ?? true;
+
+        if (aHasRoute && !bHasRoute) return -1;
+        if (!aHasRoute && bHasRoute) return 1;
+      }
+
+      // Then sort alphabetically by symbol
       const symbolCompare = a.symbol.localeCompare(b.symbol);
       if (symbolCompare !== 0) return symbolCompare;
       return a.chainName.localeCompare(b.chainName);
@@ -294,7 +372,7 @@ function TokenList({
       totalCount: sorted.length,
       isLimited,
     };
-  }, [selectionMode, searchQuery, chainFilter, originTokens, destinationTokens, multiProvider]);
+  }, [searchQuery, chainFilter, allTokens, multiProvider, tokenRouteMap]);
 
   if (tokens.length === 0) {
     return (
@@ -307,9 +385,20 @@ function TokenList({
 
   return (
     <div className="flex-1 overflow-auto px-3 py-2">
-      {tokens.map((token) => (
-        <TokenButton key={`${token.chainName}-${token.addressOrDenom}`} token={token} onSelect={onSelect} />
-      ))}
+      {tokens.map((token) => {
+        const tokenKey = getTokenKey(token);
+        // If no counterpart selected (tokenRouteMap is null), all tokens have routes
+        const hasRoute = tokenRouteMap ? (tokenRouteMap.get(tokenKey) ?? true) : true;
+
+        return (
+          <TokenButton
+            key={tokenKey}
+            token={token}
+            onSelect={onSelect}
+            hasRoute={hasRoute}
+          />
+        );
+      })}
 
       {isLimited && (
         <div className="mx-1 mb-3 mt-2 rounded-lg bg-blue-50 p-3 text-center">
@@ -325,7 +414,16 @@ function TokenList({
   );
 }
 
-function TokenButton({ token, onSelect }: { token: Token; onSelect: (token: Token) => void }) {
+function TokenButton({
+  token,
+  onSelect,
+  hasRoute,
+}: {
+  token: Token;
+  onSelect: (token: Token) => void;
+  /** Whether this token has a valid route to/from the counterpart. False = grayed appearance */
+  hasRoute: boolean;
+}) {
   const multiProvider = useMultiProvider();
   const chainDisplayName = getChainDisplayName(multiProvider, token.chainName);
 
@@ -337,14 +435,18 @@ function TokenButton({ token, onSelect }: { token: Token; onSelect: (token: Toke
   return (
     <button
       type="button"
-      className="group mb-1.5 flex w-full items-center rounded-lg border border-transparent px-3 py-2.5 transition-all hover:border-gray-200 hover:bg-gray-50"
+      className={`group mb-1.5 flex w-full items-center rounded-lg border border-transparent px-3 py-2.5 transition-all hover:border-gray-200 hover:bg-gray-50 ${
+        !hasRoute ? 'opacity-40' : ''
+      }`}
       onClick={() => onSelect(token)}
     >
       <TokenChainIcon token={token} size={36} />
 
       <div className="ml-3 min-w-0 flex-1 text-left">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-gray-900">{token.symbol || 'Unknown'}</span>
+          <span className={`text-sm font-semibold ${hasRoute ? 'text-gray-900' : 'text-gray-500'}`}>
+            {token.symbol || 'Unknown'}
+          </span>
           <span className="text-xs text-gray-500">{chainDisplayName}</span>
         </div>
         <div className="mt-0.5 truncate text-xs text-gray-500">{token.name || 'Unknown Token'}</div>

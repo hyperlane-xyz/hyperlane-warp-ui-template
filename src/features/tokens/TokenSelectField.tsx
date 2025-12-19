@@ -27,7 +27,7 @@ type Props = {
 };
 
 export function TokenSelectField({ name, label, selectionMode, disabled, setIsNft }: Props) {
-  const { values } = useFormikContext<TransferFormValues>();
+  const { values, setFieldValue } = useFormikContext<TransferFormValues>();
   const [field, , helpers] = useField<string | undefined>(name);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -58,6 +58,7 @@ export function TokenSelectField({ name, label, selectionMode, disabled, setIsNf
 
     // Update URL query params based on selection mode
     if (selectionMode === 'origin') {
+      setFieldValue('amount', '');
       updateQueryParams({
         [WARP_QUERY_PARAMS.ORIGIN]: newToken.chainName,
         [WARP_QUERY_PARAMS.ORIGIN_TOKEN]: newToken.symbol,

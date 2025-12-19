@@ -279,3 +279,29 @@ export function getCollateralKey(token: IToken): string {
 export function sharesCollateral(tokenA: IToken, tokenB: IToken): boolean {
   return getCollateralKey(tokenA) === getCollateralKey(tokenB);
 }
+
+/**
+ * Check if a route exists between origin and destination tokens
+ * Uses pre-computed collateral groups for fast O(1) lookups
+ *
+ * @param originToken - The origin token (what the user is sending)
+ * @param destToken - The destination token (what the user will receive)
+ * @param collateralGroups - Pre-computed map of collateral key → tokens
+ * @returns true if a valid route exists between the tokens
+ */
+export function checkTokenHasRoute(
+  originToken: Token,
+  destToken: Token,
+  collateralGroups: Map<string, Token[]>,
+): boolean {
+  const originCollateralKey = getCollateralKey(originToken);
+  const destCollateralKey = getCollateralKey(destToken);
+  const originGroup = collateralGroups.get(originCollateralKey) || [];
+
+  // Check if any token in origin's collateral group connects to destination's collateral group
+  return originGroup.some((token) => {
+    const destConnection = token.getConnectionForChain(destToken.chainName);
+    if (!destConnection?.token) return false;
+    return getCollateralKey(destConnection.token) === destCollateralKey;
+  });
+}

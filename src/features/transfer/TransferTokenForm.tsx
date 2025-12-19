@@ -44,9 +44,15 @@ import {
   useDestinationBalance,
   useOriginBalance,
 } from '../tokens/balances';
-import { getInitialTokenKeys, getTokenByKey, useTokens, useWarpCore } from '../tokens/hooks';
+import {
+  getInitialTokenKeys,
+  getTokenByKey,
+  useCollateralGroups,
+  useTokens,
+  useWarpCore,
+} from '../tokens/hooks';
 import { useTokenPrice } from '../tokens/useTokenPrice';
-import { getTokenKey } from '../tokens/utils';
+import { checkTokenHasRoute, getTokenKey } from '../tokens/utils';
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { FeeSectionButton } from './FeeSectionButton';
 import { RecipientConfirmationModal } from './RecipientConfirmationModal';
@@ -62,6 +68,7 @@ export function TransferTokenForm() {
   const multiProvider = useMultiProvider();
   const warpCore = useWarpCore();
   const tokens = useTokens();
+  const collateralGroups = useCollateralGroups();
 
   const { setOriginChainName, routerAddressesByChainMap } = useStore((s) => ({
     setOriginChainName: s.setOriginChainName,
@@ -89,6 +96,7 @@ export function TransferTokenForm() {
     const [result, overrideToken] = await validateForm(
       warpCore,
       tokens,
+      collateralGroups,
       values,
       accounts,
       routerAddressesByChainMap,
@@ -306,6 +314,7 @@ function ButtonSection({
   const originToken = routeOverrideToken || getTokenByKey(tokens, values.originTokenKey);
   const destinationToken = getTokenByKey(tokens, values.destinationTokenKey);
   const chainDisplayName = useChainDisplayName(destinationToken?.chainName || '');
+  const isRouteSupported = useIsRouteSupported();
 
   const { accounts } = useAccounts(multiProvider, config.addressBlacklist);
   const { address: connectedWallet } = getAccountAddressAndPubKey(
@@ -411,6 +420,12 @@ function ButtonSection({
     cleanOverrideToken();
   };
 
+  const text = !isRouteSupported
+    ? 'Route is not supported'
+    : isValidating
+      ? 'Validating...'
+      : 'Continue';
+
   if (!isReview) {
     return (
       <>
@@ -428,9 +443,9 @@ function ButtonSection({
         </div>
 
         <ConnectAwareSubmitButton
-          disabled={!addressConfirmed}
+          disabled={!addressConfirmed || !isRouteSupported}
           chainName={originToken?.chainName || ''}
-          text={isValidating ? 'Validating...' : 'Continue'}
+          text={text}
           classes={`${isReview ? 'mt-4' : 'mt-0'} px-3 py-1.5`}
         />
       </>
@@ -484,9 +499,12 @@ function MaxButton({ balance, disabled }: { balance?: TokenAmount; disabled?: bo
   const multiProvider = useMultiProvider();
   const { accounts } = useAccounts(multiProvider);
   const { fetchMaxAmount, isLoading } = useFetchMaxAmount();
+  const isRouteSupported = useIsRouteSupported();
+
+  const isDisabled = disabled || !isRouteSupported;
 
   const onClick = async () => {
-    if (!balance || !originToken || !destinationToken || disabled) return;
+    if (!balance || !originToken || !destinationToken || isDisabled) return;
     const maxAmount = await fetchMaxAmount({
       balance,
       origin: originToken.chainName,
@@ -504,7 +522,7 @@ function MaxButton({ balance, disabled }: { balance?: TokenAmount; disabled?: bo
       type="button"
       onClick={onClick}
       color="primary"
-      disabled={disabled}
+      disabled={isDisabled}
       className="absolute bottom-1 right-1 top-2.5 px-2 text-xs opacity-90 all:rounded"
     >
       {isLoading ? (
@@ -569,6 +587,7 @@ function ReviewDetails({
   const destinationToken = getTokenByKey(tokens, destinationTokenKey);
   const originTokenSymbol = originToken?.symbol || '';
   const isNft = originToken?.isNft();
+  const isRouteSupported = useIsRouteSupported();
 
   const scaledAmount = useMemo(() => {
     if (!originToken?.scale || !destinationToken?.scale) return null;
@@ -599,9 +618,10 @@ function ReviewDetails({
     amountWei,
     isReview,
   );
+  // Only fetch fees if route is supported
   const { isLoading: isQuoteLoading, fees: feeQuotes } = useFeeQuotes(
     values,
-    true,
+    isRouteSupported,
     originToken,
     destinationToken,
     !isReview,
@@ -748,12 +768,26 @@ function useFormInitialValues(): TransferFormValues {
   );
 }
 
+function useIsRouteSupported(): boolean {
+  const { values } = useFormikContext<TransferFormValues>();
+  const tokens = useTokens();
+  const collateralGroups = useCollateralGroups();
+  const originToken = getTokenByKey(tokens, values.originTokenKey);
+  const destinationToken = getTokenByKey(tokens, values.destinationTokenKey);
+
+  return useMemo(() => {
+    if (!originToken || !destinationToken) return true;
+    return checkTokenHasRoute(originToken, destinationToken, collateralGroups);
+  }, [originToken, destinationToken, collateralGroups]);
+}
+
 const insufficientFundsErrMsg = /insufficient.[funds|lamports]/i;
 const emptyAccountErrMsg = /AccountNotFound/i;
 
 async function validateForm(
   warpCore: WarpCore,
   tokens: Token[],
+  collateralGroups: Map<string, Token[]>,
   values: TransferFormValues,
   accounts: Record<ProtocolType, AccountInfo>,
   routerAddressesByChainMap: Record<ChainName, Set<string>>,
@@ -769,6 +803,11 @@ async function validateForm(
 
     if (!token) return [{ originTokenKey: 'Origin token is required' }, null];
     if (!destinationToken) return [{ destinationTokenKey: 'Destination token is required' }, null];
+
+    // Early route check using collateral groups - validates origin token can reach destination token
+    if (!checkTokenHasRoute(token, destinationToken, collateralGroups)) {
+      return [{ destinationTokenKey: 'Route is not supported' }, null];
+    }
 
     const destination = destinationToken.chainName;
 
@@ -798,10 +837,10 @@ async function validateForm(
       sender,
     );
 
-    // Check if a valid route exists
+    // This should not happen since we already checked the route above, but keep as safety check
     const connection = transferToken.getConnectionForChain(destination);
     if (!connection) {
-      return [{ destinationTokenKey: 'Unsupported Route' }, null];
+      return [{ destinationTokenKey: 'Route is not supported' }, null];
     }
 
     const multiCollateralLimit = isMultiCollateralLimitExceeded(token, destination, amountWei);

@@ -5,7 +5,7 @@ import { getChainDisplayName } from '../chains/utils';
 import { useCollateralGroups, useTokens } from './hooks';
 import { TokenChainIcon } from './TokenChainIcon';
 import { TokenSelectionMode } from './types';
-import { getCollateralKey, getTokenKey } from './utils';
+import { checkTokenHasRoute, getTokenKey } from './utils';
 
 interface TokenListProps {
   selectionMode: TokenSelectionMode;
@@ -44,12 +44,10 @@ export function TokenList({
 
       for (const token of allTokens) {
         const key = getTokenKey(token);
-        const hasRoute = checkTokenHasRoute(
-          token,
-          counterpartToken,
-          selectionMode,
-          collateralGroups,
-        );
+        // Determine origin/destination based on selection mode
+        const originToken = selectionMode === 'origin' ? token : counterpartToken;
+        const destToken = selectionMode === 'origin' ? counterpartToken : token;
+        const hasRoute = checkTokenHasRoute(originToken, destToken, collateralGroups);
         routeMap.set(key, hasRoute);
       }
 
@@ -183,27 +181,3 @@ function TokenButton({
   );
 }
 
-/**
- * Fast route checking using pre-computed collateral groups
- */
-function checkTokenHasRoute(
-  displayedToken: Token,
-  counterpartToken: Token,
-  selectionMode: TokenSelectionMode,
-  collateralGroups: Map<string, Token[]>,
-): boolean {
-  // Determine origin/destination based on selection mode
-  const originToken = selectionMode === 'origin' ? displayedToken : counterpartToken;
-  const destToken = selectionMode === 'origin' ? counterpartToken : displayedToken;
-
-  const originCollateralKey = getCollateralKey(originToken);
-  const destCollateralKey = getCollateralKey(destToken);
-  const originGroup = collateralGroups.get(originCollateralKey) || [];
-
-  // Check if any token in origin's collateral group connects to destination's collateral group
-  return originGroup.some((token) => {
-    const destConnection = token.getConnectionForChain(destToken.chainName);
-    if (!destConnection?.token) return false;
-    return getCollateralKey(destConnection.token) === destCollateralKey;
-  });
-}

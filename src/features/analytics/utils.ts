@@ -40,7 +40,12 @@ export function trackTokenSelectionEvent(
 }
 
 // errors that happen because of form not being filled correctly
-const SKIPPED_ERRORS = ['Origin token is required', 'Destination token is required', 'Invalid amount'];
+const SKIPPED_ERRORS = [
+  'Token is required',
+  'Origin token is required',
+  'Destination token is required',
+  'Invalid amount',
+];
 
 export function trackTransactionFailedEvent(
   errors: Record<string, string> | null,
@@ -64,7 +69,8 @@ export function trackTransactionFailedEvent(
 
   // Find destination token to get destination chain
   const destToken = warpCore.tokens.find((t) => getTokenKey(t) === destinationTokenKey);
-  const destination = destToken?.chainName || '';
+  if (!destToken) return;
+  const destination = destToken.chainName;
 
   const originChainId = warpCore.multiProvider.tryGetChainId(origin);
   const destinationChainId = destination ? warpCore.multiProvider.tryGetChainId(destination) : null;

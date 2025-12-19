@@ -87,6 +87,63 @@ export const warpRouteConfigs: WarpCoreConfig = {
         },
       ],
     },
+
+    // USDCSTAGE - Eclipse Mainnet (Synthetic)
+    {
+      chainName: 'eclipsemainnet',
+      standard: TokenStandard.SealevelHypSynthetic,
+      name: 'USD Coin STAGE',
+      symbol: 'USDCSTAGE',
+      decimals: 6,
+      addressOrDenom: '6QSWUmEaEcE2KJrU5jq7T11tNRaVsgnG8XULezjg7JjL',
+      logoURI: '/deployments/warp_routes/USDCSTAGE/logo.svg',
+      connections: [
+        {
+          token: 'ethereum|ethereum|0x04C26A1Efb87D5Ac9ee6179754B4CDDC61fC11d5',
+          type: TokenConnectionType.Hyperlane,
+        },
+        {
+          token: 'sealevel|solanamainnet|E5rVV8zXwtc4TKGypCJvSBaYbgxa4XaYg5MS6N9QGdeo',
+          type: TokenConnectionType.Hyperlane,
+        },
+      ],
+    },
+
+    // USDCSTAGE - Ethereum (Collateral)
+    {
+      chainName: 'ethereum',
+      standard: TokenStandard.EvmHypCollateral,
+      name: 'USD Coin STAGE',
+      symbol: 'USDCSTAGE',
+      decimals: 6,
+      addressOrDenom: '0x04C26A1Efb87D5Ac9ee6179754B4CDDC61fC11d5',
+      collateralAddressOrDenom: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+      logoURI: '/deployments/warp_routes/USDCSTAGE/logo.svg',
+      connections: [
+        {
+          token: 'sealevel|eclipsemainnet|6QSWUmEaEcE2KJrU5jq7T11tNRaVsgnG8XULezjg7JjL',
+          type: TokenConnectionType.Hyperlane,
+        },
+      ],
+    },
+
+    // USDCSTAGE - Solana Mainnet (Collateral)
+    {
+      chainName: 'solanamainnet',
+      standard: TokenStandard.SealevelHypCollateral,
+      name: 'USDCSTAGE',
+      symbol: 'USDCSTAGE',
+      decimals: 6,
+      addressOrDenom: 'E5rVV8zXwtc4TKGypCJvSBaYbgxa4XaYg5MS6N9QGdeo',
+      collateralAddressOrDenom: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+      logoURI: '/deployments/warp_routes/USDCSTAGE/logo.svg',
+      connections: [
+        {
+          token: 'sealevel|eclipsemainnet|6QSWUmEaEcE2KJrU5jq7T11tNRaVsgnG8XULezjg7JjL',
+          type: TokenConnectionType.Hyperlane,
+        },
+      ],
+    },
   ],
   options: {
     interchainFeeConstants: [

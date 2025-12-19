@@ -105,8 +105,8 @@ const nextConfig = {
 };
 
 const sentryOptions = {
-  org: 'hyperlane',
-  project: 'warp-ui',
+  org: 'd3labs',
+  project: 'pruv-bridge-web',
   authToken: process.env.SENTRY_AUTH_TOKEN,
   hideSourceMaps: true,
   tunnelRoute: '/monitoring-tunnel',

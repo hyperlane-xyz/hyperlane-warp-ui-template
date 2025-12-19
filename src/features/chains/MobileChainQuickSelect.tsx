@@ -1,9 +1,7 @@
 import { ChainName } from '@hyperlane-xyz/sdk';
 import { useMemo } from 'react';
 import { ChainLogo } from '../../components/icons/ChainLogo';
-import { useTokens } from '../tokens/hooks';
-import { useMultiProvider } from './hooks';
-import { getChainDisplayName } from './utils';
+import { useStore } from '../store';
 
 const DEFAULT_MAX_VISIBLE_CHAINS = 4;
 
@@ -11,7 +9,7 @@ interface MobileChainQuickSelectProps {
   selectedChain: ChainName | null;
   onSelectChain: (chain: ChainName | null) => void;
   onMoreClick: () => void;
-  /** Optional list of preferred chain names to display. If provided, only these chains are shown (up to their length). */
+  /** Optional list of preferred chain names to display first. Remaining slots filled with other chains. */
   preferredChains?: ChainName[];
 }
 
@@ -21,34 +19,40 @@ export function MobileChainQuickSelect({
   onMoreClick,
   preferredChains,
 }: MobileChainQuickSelectProps) {
-  const multiProvider = useMultiProvider();
-  const tokens = useTokens();
+  const { chainMetadata } = useStore((s) => ({
+    chainMetadata: s.chainMetadata,
+  }));
 
-  const { visibleChains, hasMore } = useMemo(() => {
-    // Get unique chains that have tokens
-    const chainSet = new Set(tokens.map((t) => t.chainName));
-
-    // Build chain info with display names for sorting
-    const allChainInfos = Array.from(chainSet).map((chainName) => ({
-      name: chainName,
-      displayName: getChainDisplayName(multiProvider, chainName),
+  // Build and sort all chains - only rebuilds when chainMetadata changes
+  const allChains = useMemo(() => {
+    const chainList = Object.values(chainMetadata);
+    const chainInfos = chainList.map((chain) => ({
+      name: chain.name,
+      displayName: chain.displayName || chain.name,
     }));
+    chainInfos.sort((a, b) => a.displayName.localeCompare(b.displayName));
+    return chainInfos;
+  }, [chainMetadata]);
 
-    // Sort alphabetically by display name
-    allChainInfos.sort((a, b) => a.displayName.localeCompare(b.displayName));
-
-    // If preferredChains provided, show those first then fill remaining slots
+  // Compute visible chains - only recalculates when preferredChains changes
+  const { visibleChains, hasMore } = useMemo(() => {
     if (preferredChains && preferredChains.length > 0) {
+      const chainNameSet = new Set(allChains.map((c) => c.name));
       const preferredSet = new Set(preferredChains);
+
+      // Get preferred chains that exist, maintaining preferred order
       const preferred = preferredChains
-        .filter((name) => chainSet.has(name)) // Only include chains that exist
-        .map((name) => ({
-          name,
-          displayName: getChainDisplayName(multiProvider, name),
-        }));
+        .filter((name) => chainNameSet.has(name))
+        .map((name) => {
+          const chain = allChains.find((c) => c.name === name);
+          return {
+            name,
+            displayName: chain?.displayName || name,
+          };
+        });
 
       // Fill remaining slots with other chains (not in preferred list)
-      const remaining = allChainInfos.filter((c) => !preferredSet.has(c.name));
+      const remaining = allChains.filter((c) => !preferredSet.has(c.name));
       const slotsToFill = DEFAULT_MAX_VISIBLE_CHAINS - preferred.length;
       const fillers = remaining.slice(0, Math.max(0, slotsToFill));
 
@@ -56,16 +60,16 @@ export function MobileChainQuickSelect({
 
       return {
         visibleChains: visible,
-        hasMore: allChainInfos.length > visible.length,
+        hasMore: allChains.length > visible.length,
       };
     }
 
     // Otherwise use first N chains alphabetically
     return {
-      visibleChains: allChainInfos.slice(0, DEFAULT_MAX_VISIBLE_CHAINS),
-      hasMore: allChainInfos.length > DEFAULT_MAX_VISIBLE_CHAINS,
+      visibleChains: allChains.slice(0, DEFAULT_MAX_VISIBLE_CHAINS),
+      hasMore: allChains.length > DEFAULT_MAX_VISIBLE_CHAINS,
     };
-  }, [tokens, multiProvider, preferredChains]);
+  }, [allChains, preferredChains]);
 
   return (
     <div className="flex items-center gap-2">
@@ -89,9 +93,7 @@ export function MobileChainQuickSelect({
           type="button"
           onClick={() => onSelectChain(chain.name)}
           className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors ${
-            selectedChain === chain.name
-              ? 'bg-blue-100'
-              : 'bg-gray-100 hover:bg-gray-200'
+            selectedChain === chain.name ? 'bg-blue-100' : 'bg-gray-100 hover:bg-gray-200'
           }`}
           title={chain.displayName}
         >

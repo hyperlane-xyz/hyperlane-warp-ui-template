@@ -1,8 +1,6 @@
 import { useMemo } from 'react';
 import { ChainLogo } from '../../components/icons/ChainLogo';
-import { useTokens } from '../tokens/hooks';
-import { useMultiProvider } from './hooks';
-import { getChainDisplayName } from './utils';
+import { useStore } from '../store';
 
 interface ChainListProps {
   searchQuery: string;
@@ -11,31 +9,30 @@ interface ChainListProps {
 }
 
 export function ChainList({ searchQuery, selectedChain, onSelectChain }: ChainListProps) {
-  const multiProvider = useMultiProvider();
-  const tokens = useTokens();
+  const { chainMetadata } = useStore((s) => ({
+    chainMetadata: s.chainMetadata,
+  }));
 
-  const chains = useMemo(() => {
-    // Get unique chains that have tokens
-    const chainSet = new Set(tokens.map((t) => t.chainName));
-
-    // Build chain info with display names for sorting
-    const chainInfos = Array.from(chainSet).map((chainName) => ({
-      name: chainName,
-      displayName: getChainDisplayName(multiProvider, chainName),
+  // Build and sort chains - only rebuilds when chainMetadata changes
+  const allChains = useMemo(() => {
+    const chainList = Object.values(chainMetadata);
+    const chainInfos = chainList.map((chain) => ({
+      name: chain.name,
+      displayName: chain.displayName || chain.name,
     }));
-
-    // Sort alphabetically by display name
     chainInfos.sort((a, b) => a.displayName.localeCompare(b.displayName));
+    return chainInfos;
+  }, [chainMetadata]);
 
-    // Filter by search query
+  // Filter by search query - only re-filters when searchQuery changes
+  const chains = useMemo(() => {
     const q = searchQuery?.trim().toLowerCase();
-    if (!q) return chainInfos;
-
-    return chainInfos.filter(
+    if (!q) return allChains;
+    return allChains.filter(
       (chain) =>
         chain.displayName.toLowerCase().includes(q) || chain.name.toLowerCase().includes(q),
     );
-  }, [searchQuery, tokens, multiProvider]);
+  }, [searchQuery, allChains]);
 
   return (
     <div className="flex-1 overflow-auto">

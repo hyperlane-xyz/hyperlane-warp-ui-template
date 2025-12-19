@@ -10,7 +10,7 @@ import { trackTokenSelectionEvent } from '../analytics/utils';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { TransferFormValues } from '../transfer/types';
-import { useAddToken, useTokens } from './hooks';
+import { getTokenByKey, useAddToken, useTokens } from './hooks';
 import { TokenChainIcon } from './TokenChainIcon';
 import { TokenSelectionMode } from './types';
 import { UnifiedTokenChainModal } from './UnifiedTokenChainModal';
@@ -158,12 +158,6 @@ function TokenButton({
       <ChevronIcon width={12} height={8} direction="s" className="ml-2 opacity-60" />
     </button>
   );
-}
-
-// Helper to get token from array by key
-function getTokenByKey(tokens: Token[], key: string | undefined): Token | undefined {
-  if (!key) return undefined;
-  return tokens.find((t) => getTokenKey(t) === key);
 }
 
 const styles = {

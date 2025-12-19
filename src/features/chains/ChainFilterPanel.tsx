@@ -35,7 +35,12 @@ export function ChainFilterPanel({
             </button>
           )}
         </div>
-        <SearchInput value={searchQuery} onChange={onSearchChange} placeholder="Search chains..." />
+        <SearchInput
+          value={searchQuery}
+          onChange={onSearchChange}
+          placeholder="Search chains..."
+          aria-label="Search chains"
+        />
       </div>
       <ChainList
         searchQuery={searchQuery}

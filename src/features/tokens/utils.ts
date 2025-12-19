@@ -191,13 +191,7 @@ export function dedupeTokensByCollateral(tokens: Token[]): Token[] {
       return true;
     }
 
-    const chainName = token.chainName.toLowerCase();
-    const symbol = token.symbol.toLowerCase();
-    const protocol = token.protocol;
-    // For HypNative tokens, use their symbol and protocol as identifier
-    const collateralKey = token.collateralAddressOrDenom
-      ? `${chainName}-${symbol}-${normalizeAddress(token.collateralAddressOrDenom, protocol)}`
-      : `${chainName}-${symbol}-hypnative-${protocol}`;
+    const collateralKey = getCollateralKey(token);
 
     // If we haven't seen this collateral on this chain, include it
     if (!seenCollaterals.has(collateralKey)) {

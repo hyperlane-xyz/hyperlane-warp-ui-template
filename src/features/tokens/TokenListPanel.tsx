@@ -46,6 +46,7 @@ export function TokenListPanel({
           value={searchQuery}
           onChange={onSearchChange}
           placeholder="Search for a token or paste address"
+          aria-label="Search tokens"
         />
         {/* Mobile chain quick select (hidden on desktop) */}
         <div className="mt-3 md:hidden">

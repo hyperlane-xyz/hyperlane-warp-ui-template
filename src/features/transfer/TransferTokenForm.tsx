@@ -226,7 +226,11 @@ function AmountSection({ isNft, isReview }: { isNft: boolean; isReview: boolean 
           />
           {shouldShowPrice && !isLoading && (
             <div className="absolute bottom-[-18px] left-1 max-w-52 overflow-hidden text-ellipsis whitespace-nowrap text-xxs text-gray-500">
-              ≈${totalTokenPrice.toLocaleString('en-US', { maximumFractionDigits: 2 })}
+              ≈$
+              {totalTokenPrice.toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
             </div>
           )}
           <MaxButton balance={balance} disabled={isReview} />

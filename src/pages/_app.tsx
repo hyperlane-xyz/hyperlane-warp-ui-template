@@ -18,7 +18,10 @@ import '../styles/globals.css';
 import '../vendor/inpage-metamask';
 import '../vendor/polyfill';
 
-import { PuzzleWalletProvider } from '@puzzlehq/sdk';
+import { GalileoWalletAdapter } from '@provablehq/aleo-wallet-adaptor-prove-alpha';
+import { AleoWalletProvider } from '@provablehq/aleo-wallet-adaptor-react';
+
+const wallets = [new GalileoWalletAdapter()];
 
 const reactQueryClient = new QueryClient({
   defaultOptions: {
@@ -48,12 +51,12 @@ export default function App({ Component, pageProps }: AppProps) {
                 <CosmosWalletContext>
                   <StarknetWalletContext>
                     <RadixWalletContext>
-                      <PuzzleWalletProvider>
-                          <AppLayout>
-                            <Component {...pageProps} />
-                            <Analytics />
-                          </AppLayout>
-                        </PuzzleWalletProvider>
+                      <AleoWalletProvider wallets={wallets}>
+                        <AppLayout>
+                          <Component {...pageProps} />
+                          <Analytics />
+                        </AppLayout>
+                      </AleoWalletProvider>
                     </RadixWalletContext>
                   </StarknetWalletContext>
                 </CosmosWalletContext>

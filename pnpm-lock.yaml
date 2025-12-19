@@ -101,7 +101,7 @@ importers:
         version: file:../hyperlane-monorepo/typescript/utils(bufferutil@4.0.9)(typescript@5.6.3)(utf-8-validate@5.0.10)
       '@hyperlane-xyz/widgets':
         specifier: file:/Users/troykessler/work/hyperlane/hyperlane-monorepo/typescript/widgets
-        version: file:../hyperlane-monorepo/typescript/widgets(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@ethersproject/abi@5.8.0)(@ethersproject/providers@5.8.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(@react-native-async-storage/async-storage@1.24.0(react-native@0.82.1(@babel/core@7.28.5)(@types/react@18.3.27)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10)))(@tanstack/query-core@5.90.12)(@tanstack/react-query@5.90.12(react@18.3.1))(@types/react-dom@18.3.7(@types/react@18.3.27))(@types/react@18.3.27)(@types/sinon-chai@4.0.0)(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.953.0))(babel-plugin-macros@3.1.0)(bs58@5.0.0)(buffer@6.0.3)(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(get-starknet-core@4.0.0)(immer@9.0.21)(react-dom@18.3.1(react@18.3.1))(react-native@0.82.1(@babel/core@7.28.5)(@types/react@18.3.27)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(typescript@5.6.3)(utf-8-validate@5.0.10)(ws@8.18.3(bufferutil@4.0.9)(utf-8-validate@5.0.10))(zod@3.21.4)
+        version: file:../hyperlane-monorepo/typescript/widgets(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@ethersproject/abi@5.8.0)(@ethersproject/providers@5.8.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(@react-native-async-storage/async-storage@1.24.0(react-native@0.82.1(@babel/core@7.28.5)(@types/react@18.3.27)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10)))(@tanstack/query-core@5.90.12)(@tanstack/react-query@5.90.12(react@18.3.1))(@types/react-dom@18.3.7(@types/react@18.3.27))(@types/react@18.3.27)(@types/sinon-chai@4.0.0)(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.953.0))(babel-plugin-macros@3.1.0)(bs58@5.0.0)(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(get-starknet-core@4.0.0)(immer@9.0.21)(react-dom@18.3.1(react@18.3.1))(react-native@0.82.1(@babel/core@7.28.5)(@types/react@18.3.27)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(typescript@5.6.3)(utf-8-validate@5.0.10)(ws@8.18.3(bufferutil@4.0.9)(utf-8-validate@5.0.10))(zod@3.21.4)
       '@interchain-ui/react':
         specifier: ^1.23.28
         version: 1.26.3(@types/react@18.3.27)(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -111,6 +111,12 @@ importers:
       '@metamask/providers':
         specifier: 10.2.1
         version: 10.2.1
+      '@provablehq/aleo-wallet-adaptor-prove-alpha':
+        specifier: 0.3.0-alpha.0
+        version: 0.3.0-alpha.0
+      '@provablehq/aleo-wallet-adaptor-react':
+        specifier: 0.3.0-alpha.0
+        version: 0.3.0-alpha.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@puzzlehq/sdk':
         specifier: ^1.0.4
         version: 1.0.4(@types/react@18.3.27)(buffer@6.0.3)(bufferutil@4.0.9)(react-dom@18.3.1(react@18.3.1))(react-native@0.82.1(@babel/core@7.28.5)(@types/react@18.3.27)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(utf-8-validate@5.0.10)
@@ -12366,7 +12372,7 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  ? '@hyperlane-xyz/widgets@file:../hyperlane-monorepo/typescript/widgets(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@ethersproject/abi@5.8.0)(@ethersproject/providers@5.8.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(@react-native-async-storage/async-storage@1.24.0(react-native@0.82.1(@babel/core@7.28.5)(@types/react@18.3.27)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10)))(@tanstack/query-core@5.90.12)(@tanstack/react-query@5.90.12(react@18.3.1))(@types/react-dom@18.3.7(@types/react@18.3.27))(@types/react@18.3.27)(@types/sinon-chai@4.0.0)(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.953.0))(babel-plugin-macros@3.1.0)(bs58@5.0.0)(buffer@6.0.3)(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(get-starknet-core@4.0.0)(immer@9.0.21)(react-dom@18.3.1(react@18.3.1))(react-native@0.82.1(@babel/core@7.28.5)(@types/react@18.3.27)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(typescript@5.6.3)(utf-8-validate@5.0.10)(ws@8.18.3(bufferutil@4.0.9)(utf-8-validate@5.0.10))(zod@3.21.4)'
+  ? '@hyperlane-xyz/widgets@file:../hyperlane-monorepo/typescript/widgets(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@ethersproject/abi@5.8.0)(@ethersproject/providers@5.8.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(@react-native-async-storage/async-storage@1.24.0(react-native@0.82.1(@babel/core@7.28.5)(@types/react@18.3.27)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10)))(@tanstack/query-core@5.90.12)(@tanstack/react-query@5.90.12(react@18.3.1))(@types/react-dom@18.3.7(@types/react@18.3.27))(@types/react@18.3.27)(@types/sinon-chai@4.0.0)(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.953.0))(babel-plugin-macros@3.1.0)(bs58@5.0.0)(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(get-starknet-core@4.0.0)(immer@9.0.21)(react-dom@18.3.1(react@18.3.1))(react-native@0.82.1(@babel/core@7.28.5)(@types/react@18.3.27)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(typescript@5.6.3)(utf-8-validate@5.0.10)(ws@8.18.3(bufferutil@4.0.9)(utf-8-validate@5.0.10))(zod@3.21.4)'
   : dependencies:
       '@chain-registry/types': 0.50.269
       '@cosmjs/stargate': 0.32.4(bufferutil@4.0.9)(utf-8-validate@5.0.10)
@@ -12379,9 +12385,10 @@ snapshots:
       '@hyperlane-xyz/sdk': file:../hyperlane-monorepo/typescript/sdk(@ethersproject/abi@5.8.0)(@ethersproject/providers@5.8.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(@react-native-async-storage/async-storage@1.24.0(react-native@0.82.1(@babel/core@7.28.5)(@types/react@18.3.27)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10)))(@types/sinon-chai@4.0.0)(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.953.0))(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.6.3)(utf-8-validate@5.0.10)
       '@hyperlane-xyz/utils': file:../hyperlane-monorepo/typescript/utils(bufferutil@4.0.9)(typescript@5.6.3)(utf-8-validate@5.0.10)
       '@interchain-ui/react': 1.26.3(@types/react@18.3.27)(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@provablehq/aleo-types': 0.3.0-alpha.0
       '@provablehq/aleo-wallet-adaptor-prove-alpha': 0.3.0-alpha.0
       '@provablehq/aleo-wallet-adaptor-react': 0.3.0-alpha.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@puzzlehq/sdk': 1.0.4(@types/react@18.3.27)(buffer@6.0.3)(bufferutil@4.0.9)(react-dom@18.3.1(react@18.3.1))(react-native@0.82.1(@babel/core@7.28.5)(@types/react@18.3.27)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(utf-8-validate@5.0.10)
+      '@provablehq/aleo-wallet-standard': 0.3.0-alpha.0
       '@radixdlt/babylon-gateway-api-sdk': 1.10.1
       '@radixdlt/radix-dapp-toolkit': 2.2.1(typescript@5.6.3)
       '@rainbow-me/rainbowkit': 2.2.0(@tanstack/react-query@5.90.12(react@18.3.1))(@types/react@18.3.27)(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(viem@2.41.2(bufferutil@4.0.9)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.21.4))(wagmi@2.19.5(@react-native-async-storage/async-storage@1.24.0(react-native@0.82.1(@babel/core@7.28.5)(@types/react@18.3.27)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10)))(@tanstack/query-core@5.90.12)(@tanstack/react-query@5.90.12(react@18.3.1))(@types/react@18.3.27)(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.953.0))(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(immer@9.0.21)(react-native@0.82.1(@babel/core@7.28.5)(@types/react@18.3.27)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(typescript@5.6.3)(utf-8-validate@5.0.10)(viem@2.41.2(bufferutil@4.0.9)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.21.4))(ws@8.18.3(bufferutil@4.0.9)(utf-8-validate@5.0.10))(zod@3.21.4))
@@ -12433,7 +12440,6 @@ snapshots:
       - aws4fetch
       - babel-plugin-macros
       - bs58
-      - buffer
       - bufferutil
       - db0
       - debug

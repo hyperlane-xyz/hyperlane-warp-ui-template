@@ -1,23 +1,27 @@
 import { Token } from '@hyperlane-xyz/sdk';
-import { ChevronIcon } from '@hyperlane-xyz/widgets';
+import { ChevronIcon, PlusIcon } from '@hyperlane-xyz/widgets';
 import { useField, useFormikContext } from 'formik';
-import { useState } from 'react';
-
+import { useCallback, useState } from 'react';
+import { toast } from 'react-toastify';
 import { WARP_QUERY_PARAMS } from '../../consts/args';
+import { logger } from '../../utils/logger';
 import { updateQueryParams } from '../../utils/queryParams';
 import { trackTokenSelectionEvent } from '../analytics/utils';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { TransferFormValues } from '../transfer/types';
-import { useTokens } from './hooks';
+import { useAddToken, useTokens } from './hooks';
 import { TokenChainIcon } from './TokenChainIcon';
+import { TokenSelectionMode } from './types';
 import { UnifiedTokenChainModal } from './UnifiedTokenChainModal';
 import { getTokenKey } from './utils';
+
+const USER_REJECTED_ERROR = 'User rejected';
 
 type Props = {
   name: string;
   label: string;
-  selectionMode: 'origin' | 'destination';
+  selectionMode: TokenSelectionMode;
   disabled?: boolean;
   setIsNft?: (value: boolean) => void;
 };
@@ -32,6 +36,7 @@ export function TokenSelectField({ name, label, selectionMode, disabled, setIsNf
 
   // Get the current token
   const token = getTokenByKey(tokens, field.value);
+  const { addToken, canAddAsset, isLoading } = useAddToken(token);
 
   // Get the counterpart token (destination when selecting origin, origin when selecting destination)
   const counterpartToken =
@@ -74,6 +79,16 @@ export function TokenSelectField({ name, label, selectionMode, disabled, setIsNf
     if (!disabled) setIsModalOpen(true);
   };
 
+  const onAddToken = useCallback(async () => {
+    try {
+      await addToken();
+    } catch (error: any) {
+      const errorDetails = error.message || error.toString();
+      if (!errorDetails.includes(USER_REJECTED_ERROR)) toast.error(errorDetails);
+      logger.debug(error);
+    }
+  }, [addToken]);
+
   return (
     <>
       <div className="flex flex-col">
@@ -86,6 +101,16 @@ export function TokenSelectField({ name, label, selectionMode, disabled, setIsNf
           onClick={onClickField}
           multiProvider={multiProvider}
         />
+        {canAddAsset && (
+          <button
+            type="button"
+            className={styles.addButton}
+            onClick={onAddToken}
+            disabled={isLoading}
+          >
+            <PlusIcon height={16} width={16} /> Import token to wallet
+          </button>
+        )}
       </div>
 
       <UnifiedTokenChainModal
@@ -145,4 +170,6 @@ const styles = {
   base: 'w-full px-3 py-2.5 flex items-center justify-between rounded-lg border border-gray-300 bg-white transition-all',
   enabled: 'hover:border-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200',
   disabled: 'bg-gray-100 cursor-not-allowed opacity-60',
+  addButton:
+    'flex text-xxs text-primary-500 w-fit hover:text-primary-600 disabled:text-gray-500 [&_path]:fill-primary-500 [&_path]:hover:fill-primary-600 [&_path]:disabled:fill-gray-500',
 };

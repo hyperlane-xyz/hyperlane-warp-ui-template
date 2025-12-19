@@ -192,30 +192,18 @@ function checkTokenHasRoute(
   selectionMode: TokenSelectionMode,
   collateralGroups: Map<string, Token[]>,
 ): boolean {
-  const counterpartCollateralKey = getCollateralKey(counterpartToken);
+  // Determine origin/destination based on selection mode
+  const originToken = selectionMode === 'origin' ? displayedToken : counterpartToken;
+  const destToken = selectionMode === 'origin' ? counterpartToken : displayedToken;
 
-  if (selectionMode === 'origin') {
-    // Check if displayed origin token can reach the counterpart destination
-    const originCollateralKey = getCollateralKey(displayedToken);
-    const originGroup = collateralGroups.get(originCollateralKey) || [];
+  const originCollateralKey = getCollateralKey(originToken);
+  const destCollateralKey = getCollateralKey(destToken);
+  const originGroup = collateralGroups.get(originCollateralKey) || [];
 
-    // Check if any token in origin's collateral group connects to destination's collateral group
-    return originGroup.some((originToken) => {
-      const destConnection = originToken.getConnectionForChain(counterpartToken.chainName);
-      if (!destConnection?.token) return false;
-      return getCollateralKey(destConnection.token) === counterpartCollateralKey;
-    });
-  } else {
-    // Check if displayed destination token can be reached from counterpart origin
-    const originCollateralKey = getCollateralKey(counterpartToken);
-    const originGroup = collateralGroups.get(originCollateralKey) || [];
-    const destCollateralKey = getCollateralKey(displayedToken);
-
-    // Check if any token in origin's collateral group connects to destination's collateral group
-    return originGroup.some((originToken) => {
-      const destConnection = originToken.getConnectionForChain(displayedToken.chainName);
-      if (!destConnection?.token) return false;
-      return getCollateralKey(destConnection.token) === destCollateralKey;
-    });
-  }
+  // Check if any token in origin's collateral group connects to destination's collateral group
+  return originGroup.some((token) => {
+    const destConnection = token.getConnectionForChain(destToken.chainName);
+    if (!destConnection?.token) return false;
+    return getCollateralKey(destConnection.token) === destCollateralKey;
+  });
 }

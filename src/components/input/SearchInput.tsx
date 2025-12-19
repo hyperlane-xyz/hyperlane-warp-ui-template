@@ -14,7 +14,7 @@ export function SearchInput({
   placeholder: string;
 }) {
   return (
-    <div className="relative">
+    <div className="relative w-full">
       <SearchIcon
         width={16}
         height={16}
@@ -26,7 +26,7 @@ export function SearchInput({
         onChange={onChange}
         placeholder={placeholder}
         name="search"
-        className="w-full pl-9 all:border-gray-300 all:py-2 all:text-sm all:focus:border-blue-400"
+        className="!mt-0 w-full pl-9 all:border-gray-300 all:py-2 all:text-sm all:focus:border-blue-400"
         autoComplete="off"
       />
     </div>

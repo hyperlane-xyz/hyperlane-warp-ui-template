@@ -24,12 +24,15 @@ export function UnifiedTokenChainModal({
   const [chainSearch, setChainSearch] = useState('');
   const [tokenSearch, setTokenSearch] = useState('');
   const [selectedChain, setSelectedChain] = useState<ChainName | null>(null);
+  // Mobile-only state: whether to show the full chain list
+  const [showMobileChainList, setShowMobileChainList] = useState(false);
 
   const onClose = () => {
     close();
     setChainSearch('');
     setTokenSearch('');
     setSelectedChain(null);
+    setShowMobileChainList(false);
   };
 
   const onSelectAndClose = (token: Token) => {
@@ -37,24 +40,45 @@ export function UnifiedTokenChainModal({
     onClose();
   };
 
-  return (
-    <Modal isOpen={isOpen} close={onClose} panelClassname="p-0 max-w-[56rem] overflow-hidden">
-      <div className="flex h-[600px]">
-        <ChainFilterPanel
-          searchQuery={chainSearch}
-          onSearchChange={setChainSearch}
-          selectedChain={selectedChain}
-          onSelectChain={setSelectedChain}
-        />
+  // Mobile: when selecting a chain from the full list, go back to tokens
+  const onMobileSelectChain = (chain: ChainName | null) => {
+    setSelectedChain(chain);
+    setShowMobileChainList(false);
+  };
 
-        <TokenListPanel
-          selectionMode={selectionMode}
-          searchQuery={tokenSearch}
-          onSearchChange={setTokenSearch}
-          chainFilter={selectedChain}
-          onSelect={onSelectAndClose}
-          counterpartToken={counterpartToken}
-        />
+  return (
+    <Modal
+      isOpen={isOpen}
+      close={onClose}
+      panelClassname="p-0 max-w-sm md:max-w-4xl overflow-hidden"
+    >
+      <div className="flex max-h-[80vh] min-h-[24rem]">
+        {/* Chain filter panel: always visible on desktop, conditionally visible on mobile */}
+        <div className={`${showMobileChainList ? 'flex flex-1' : 'hidden'} md:flex md:flex-none`}>
+          <ChainFilterPanel
+            searchQuery={chainSearch}
+            onSearchChange={setChainSearch}
+            selectedChain={selectedChain}
+            onSelectChain={onMobileSelectChain}
+            showBackButton={showMobileChainList}
+            onBack={() => setShowMobileChainList(false)}
+          />
+        </div>
+
+        {/* Token list panel: hidden on mobile when showing chain list */}
+        <div className={`min-w-0 flex-1 ${showMobileChainList ? 'hidden md:flex' : 'flex'}`}>
+          <TokenListPanel
+            selectionMode={selectionMode}
+            searchQuery={tokenSearch}
+            onSearchChange={setTokenSearch}
+            chainFilter={selectedChain}
+            onSelect={onSelectAndClose}
+            counterpartToken={counterpartToken}
+            selectedChain={selectedChain}
+            onSelectChain={setSelectedChain}
+            onMoreChainsClick={() => setShowMobileChainList(true)}
+          />
+        </div>
       </div>
     </Modal>
   );

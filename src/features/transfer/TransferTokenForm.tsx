@@ -19,11 +19,12 @@ import {
   getAccountAddressAndPubKey,
   useAccountAddressForChain,
   useAccounts,
+  useEthereumSwitchNetwork,
   useModal,
 } from '@hyperlane-xyz/widgets';
 import BigNumber from 'bignumber.js';
 import { Form, Formik, useFormikContext } from 'formik';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 import { RecipientWarningBanner } from '../../components/banner/RecipientWarningBanner';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
@@ -209,12 +210,15 @@ function SwapChainsButton({
 
 function ChainSelectSection({ isReview }: { isReview: boolean }) {
   const warpCore = useWarpCore();
+  const multiProvider = useMultiProvider();
 
-  const { setOriginChainName } = useStore((s) => ({
+  const { setOriginChainName, originChainName } = useStore((s) => ({
     setOriginChainName: s.setOriginChainName,
+    originChainName: s.originChainName,
   }));
 
   const { values, setFieldValue } = useFormikContext<TransferFormValues>();
+  const { switchNetwork } = useEthereumSwitchNetwork(multiProvider);
 
   const { originToken, destinationToken } = useMemo(() => {
     const originToken = getTokenByIndex(warpCore, values.tokenIndex);
@@ -246,6 +250,21 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
     setTokenOnChainChange(origin, destination);
     setOriginChainName(origin);
   };
+
+  const handleSwitchNetwork = useCallback(
+    async (chainName: ChainName) => {
+      try {
+        await switchNetwork(chainName);
+      } catch (err) {
+        logger.error('failed to switch network', err);
+      }
+    },
+    [switchNetwork],
+  );
+
+  useEffect(() => {
+    handleSwitchNetwork(originChainName);
+  }, [originChainName, handleSwitchNetwork]);
 
   return (
     <div className="mt-2 flex items-center justify-between gap-4">

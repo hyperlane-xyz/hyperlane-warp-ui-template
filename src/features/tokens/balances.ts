@@ -10,7 +10,6 @@ import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { TransferFormValues } from '../transfer/types';
-import { useTokenByKey } from './hooks';
 
 export function useBalance(chain?: ChainName, token?: IToken, address?: Address) {
   const multiProvider = useMultiProvider();
@@ -34,22 +33,27 @@ export function useBalance(chain?: ChainName, token?: IToken, address?: Address)
   };
 }
 
-export function useOriginBalance({ origin, tokenKey }: TransferFormValues) {
+export function useOriginBalance(
+  values: TransferFormValues,
+  originToken?: Token,
+) {
   const multiProvider = useMultiProvider();
+  const origin = originToken?.chainName;
   const address = useAccountAddressForChain(multiProvider, origin);
-  const token = useTokenByKey(tokenKey);
-  return useBalance(origin, token, address);
+  return useBalance(origin, originToken, address);
 }
 
-export function useDestinationBalance({ destination, tokenKey, recipient }: TransferFormValues) {
-  const originToken = useTokenByKey(tokenKey);
-  const connection = originToken?.getConnectionForChain(destination);
-  return useBalance(destination, connection?.token, recipient);
+export function useDestinationBalance(
+  values: TransferFormValues,
+  destinationToken?: Token,
+) {
+  const destination = destinationToken?.chainName;
+  return useBalance(destination, destinationToken, values.recipient);
 }
 
 export async function getDestinationNativeBalance(
   multiProvider: MultiProtocolProvider,
-  { destination, recipient }: TransferFormValues,
+  { destination, recipient }: { destination: string; recipient: string },
 ) {
   try {
     const chainMetadata = multiProvider.getChainMetadata(destination);

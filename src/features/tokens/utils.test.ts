@@ -40,7 +40,7 @@ describe('isValidMultiCollateralToken', () => {
     expect(isValidMultiCollateralToken(token, 'destination')).toBe(false);
   });
 
-  test('should return false if destinationToken has no collateralAddressOrDenom and is not HypNative', () => {
+  test('should return true if destinationToken standard is in TOKEN_COLLATERALIZED_STANDARDS even without collateralAddressOrDenom', () => {
     const token = createMockToken({
       connections: [
         createTokenConnectionMock(undefined, {
@@ -49,7 +49,8 @@ describe('isValidMultiCollateralToken', () => {
         }),
       ],
     });
-    expect(isValidMultiCollateralToken(token, TestChainName.test2)).toBe(false);
+    // EvmHypCollateral is in TOKEN_COLLATERALIZED_STANDARDS, so this should return true
+    expect(isValidMultiCollateralToken(token, TestChainName.test2)).toBe(true);
   });
 
   test('should return true if destinationToken is HypNative even without collateralAddressOrDenom', () => {
@@ -69,7 +70,12 @@ describe('isValidMultiCollateralToken', () => {
 
   test('should return false if destinationToken is not collateralized', () => {
     const token = createMockToken({
-      connections: [createTokenConnectionMock(undefined, { standard: TokenStandard.CosmosIbc })],
+      connections: [
+        createTokenConnectionMock(undefined, {
+          standard: TokenStandard.CosmosIbc,
+          collateralAddressOrDenom: undefined,
+        }),
+      ],
     });
     expect(isValidMultiCollateralToken(token, TestChainName.test2)).toBe(false);
   });

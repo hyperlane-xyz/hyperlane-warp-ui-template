@@ -4,7 +4,11 @@ import { chainsRentEstimate } from '../../consts/chains';
 import { logger } from '../../utils/logger';
 import { getPromisesFulfilledValues } from '../../utils/promises';
 import { TokensWithDestinationBalance, TokenWithFee } from '../tokens/types';
-import { getTokensWithSameCollateralAddresses, isValidMultiCollateralToken } from '../tokens/utils';
+import {
+  findRouteToken,
+  getTokensWithSameCollateralAddresses,
+  isValidMultiCollateralToken,
+} from '../tokens/utils';
 
 // Compare two objects with balance field in descending order (highest first)
 export function compareByBalanceDesc(a: { balance: bigint }, b: { balance: bigint }) {
@@ -98,16 +102,31 @@ export async function getLowestFeeTransferToken(
   recipient: string,
   sender: string | undefined,
 ) {
-  if (!isValidMultiCollateralToken(originToken, destinationToken)) return originToken;
+  const destinationChain = destinationToken.chainName;
+
+  // Find the actual warpCore token that has the route
+  // Because we deduplicated tokens with the same collateral, the current token pair
+  // might not be correct, so it is necessary to get the correct token pair.
+  // Make sure to have used `checkTokenHasRoute` before calling getLowestFeeTransferToken
+  // as that will validate that the token pair actually refer to the same asset
+  const originRouteToken = findRouteToken(warpCore, originToken, destinationChain);
+  if (!originRouteToken) {
+    // No route exists, return original token (validation will catch this)
+    return originToken;
+  }
+
+  if (!isValidMultiCollateralToken(originRouteToken, destinationToken)) {
+    return originRouteToken;
+  }
 
   const tokensWithSameCollateralAddresses = getTokensWithSameCollateralAddresses(
     warpCore,
-    originToken,
+    originRouteToken,
     destinationToken,
   );
 
   // if only one token exists then just return that one
-  if (tokensWithSameCollateralAddresses.length <= 1) return originToken;
+  if (tokensWithSameCollateralAddresses.length <= 1) return originRouteToken;
 
   logger.debug(
     'Multiple multi-collateral tokens found for same collateral address, retrieving routes with collateral balance...',
@@ -128,7 +147,7 @@ export async function getLowestFeeTransferToken(
   const validBalanceResults = getPromisesFulfilledValues(balanceResults);
 
   const tokenBalances = filterAndSortTokensByBalance(validBalanceResults, BigInt(amountWei));
-  if (!tokenBalances.length) return originToken;
+  if (!tokenBalances.length) return originRouteToken;
 
   logger.debug('Retrieving fees for multi-collateral routes...');
   // fetch each route fees

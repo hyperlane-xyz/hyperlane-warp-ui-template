@@ -15,8 +15,8 @@ const rpcOverrides = process?.env?.NEXT_PUBLIC_RPC_OVERRIDES || '';
 interface Config {
   addressBlacklist: string[]; // A list of addresses that are blacklisted and cannot be used in the app
   chainWalletWhitelists: ChainMap<string[]>; // A map of chain names to a list of wallet names that work for it
-  defaultOriginChain: string | undefined; // The initial origin chain to show when app first loads
-  defaultDestinationChain: string | undefined; // The initial destination chain to show when app first loads
+  defaultOriginToken: string | undefined; // The initial origin token to show when app first loads (format: chainName-symbol, e.g. "ethereum-hyper")
+  defaultDestinationToken: string | undefined; // The initial destination token to show when app first loads (format: chainName-symbol, e.g. "bsc-hyper")
   enableExplorerLink: boolean; // Include a link to the hyperlane explorer in the transfer modal
   isDevMode: boolean; // Enables some debug features in the app
   registryUrl: string | undefined; // Optional URL to use a custom registry instead of the published canonical version
@@ -39,8 +39,8 @@ export const config: Config = Object.freeze({
   addressBlacklist: ADDRESS_BLACKLIST.map((address) => address.toLowerCase()),
   chainWalletWhitelists,
   enableExplorerLink: false,
-  defaultOriginChain: undefined,
-  defaultDestinationChain: undefined,
+  defaultOriginToken: undefined,
+  defaultDestinationToken: undefined,
   isDevMode,
   registryUrl,
   registryBranch,

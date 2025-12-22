@@ -3,7 +3,7 @@ import { objLength, ProtocolType } from '@hyperlane-xyz/utils';
 import { AccountInfo, getAccountAddressAndPubKey } from '@hyperlane-xyz/widgets';
 import { track } from '@vercel/analytics';
 import { config } from '../../consts/config';
-import { getTokenByKey } from '../tokens/hooks';
+import { getTokenKey } from '../tokens/utils';
 import { TransferFormValues } from '../transfer/types';
 import { EVENT_NAME, EventProperties } from './types';
 
@@ -40,12 +40,17 @@ export function trackTokenSelectionEvent(
 }
 
 // errors that happen because of form not being filled correctly
-const SKIPPED_ERRORS = ['Token is required', 'Invalid amount'];
+const SKIPPED_ERRORS = [
+  'Token is required',
+  'Origin token is required',
+  'Destination token is required',
+  'Invalid amount',
+];
 
 export function trackTransactionFailedEvent(
   errors: Record<string, string> | null,
   warpCore: WarpCore,
-  { tokenKey, origin, destination, amount, recipient }: TransferFormValues,
+  { originTokenKey, destinationTokenKey, amount, recipient }: TransferFormValues,
   accounts: Record<ProtocolType, AccountInfo>,
   overrideToken: Token | null,
 ) {
@@ -55,13 +60,20 @@ export function trackTransactionFailedEvent(
 
   if (SKIPPED_ERRORS.includes(firstError)) return;
 
-  const { address } = getAccountAddressAndPubKey(warpCore.multiProvider, origin, accounts);
-  const token = overrideToken || getTokenByKey(warpCore, tokenKey);
-
+  // Find token from warpCore tokens by key
+  const token = overrideToken || warpCore.tokens.find((t) => getTokenKey(t) === originTokenKey);
   if (!token) return;
 
-  const originChainId = warpCore.multiProvider.getChainId(origin);
-  const destinationChainId = warpCore.multiProvider.getChainId(destination);
+  const origin = token.chainName;
+  const { address } = getAccountAddressAndPubKey(warpCore.multiProvider, origin, accounts);
+
+  // Find destination token to get destination chain
+  const destToken = warpCore.tokens.find((t) => getTokenKey(t) === destinationTokenKey);
+  if (!destToken) return;
+  const destination = destToken.chainName;
+
+  const originChainId = warpCore.multiProvider.tryGetChainId(origin);
+  const destinationChainId = destination ? warpCore.multiProvider.tryGetChainId(destination) : null;
   return trackEvent(EVENT_NAME.TRANSACTION_SUBMISSION_FAILED, {
     amount,
     chains: `${origin}|${originChainId}|${destination}|${destinationChainId}`,

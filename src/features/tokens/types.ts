@@ -20,3 +20,5 @@ export interface TokenWithFee {
   tokenFee?: TokenAmount;
   balance: bigint;
 }
+
+export type TokenSelectionMode = 'origin' | 'destination';

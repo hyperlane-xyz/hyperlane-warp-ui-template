@@ -24,8 +24,8 @@ import { assembleChainMetadata } from './chains/metadata';
 import { TokenChainMap } from './tokens/types';
 import {
   assembleTokensBySymbolChainMap,
-  buildDestinationTokens,
-  buildOriginTokens,
+  buildCollateralGroups,
+  buildTokensArray,
 } from './tokens/utils';
 import { FinalTransferStatuses, TransferContext, TransferStatus } from './transfer/types';
 import { assembleWarpCoreConfig } from './warpCore/warpCoreConfig';
@@ -40,8 +40,10 @@ interface WarpContext {
   warpCore: WarpCore;
   tokensBySymbolChainMap: Record<string, TokenChainMap>;
   routerAddressesByChainMap: Record<ChainName, Set<string>>;
-  originTokens: Token[];
-  destinationTokens: Token[];
+  /** Unified tokens array (deduplicated, can be origin or destination) */
+  tokens: Token[];
+  /** Pre-computed collateral groups for fast route checking */
+  collateralGroups: Map<string, Token[]>;
 }
 
 // Keeping everything here for now as state is simple
@@ -85,9 +87,10 @@ export interface AppState {
   // this map is currently used by the transfer token form validation to prevent
   // users from sending funds to a warp route address in a given destination chain
   routerAddressesByChainMap: Record<ChainName, Set<string>>;
-  // Token arrays for origin and destination selection (deduplicated by collateral at startup)
-  originTokens: Token[];
-  destinationTokens: Token[];
+  /** Unified tokens array (deduplicated, can be origin or destination) */
+  tokens: Token[];
+  /** Pre-computed collateral groups for fast route checking */
+  collateralGroups: Map<string, Token[]>;
 }
 
 export const useStore = create<AppState>()(
@@ -107,8 +110,8 @@ export const useStore = create<AppState>()(
           warpCore,
           routerAddressesByChainMap,
           tokensBySymbolChainMap,
-          originTokens,
-          destinationTokens,
+          tokens,
+          collateralGroups,
         } = await initWarpContext({
           ...get(),
           chainMetadataOverrides: filtered,
@@ -119,8 +122,8 @@ export const useStore = create<AppState>()(
           warpCore,
           tokensBySymbolChainMap,
           routerAddressesByChainMap,
-          originTokens,
-          destinationTokens,
+          tokens,
+          collateralGroups,
         });
       },
       warpCoreConfigOverrides: [],
@@ -131,8 +134,8 @@ export const useStore = create<AppState>()(
           warpCore,
           routerAddressesByChainMap,
           tokensBySymbolChainMap,
-          originTokens,
-          destinationTokens,
+          tokens,
+          collateralGroups,
         } = await initWarpContext({
           ...get(),
           warpCoreConfigOverrides: overrides,
@@ -143,8 +146,8 @@ export const useStore = create<AppState>()(
           warpCore,
           tokensBySymbolChainMap,
           routerAddressesByChainMap,
-          originTokens,
-          destinationTokens,
+          tokens,
+          collateralGroups,
         });
       },
       multiProvider: new MultiProtocolProvider({}),
@@ -206,8 +209,8 @@ export const useStore = create<AppState>()(
       },
       tokensBySymbolChainMap: {},
       routerAddressesByChainMap: {},
-      originTokens: [],
-      destinationTokens: [],
+      tokens: [],
+      collateralGroups: new Map(),
     }),
 
     // Store config
@@ -276,9 +279,10 @@ async function initWarpContext({
     const tokensBySymbolChainMap = assembleTokensBySymbolChainMap(warpCore.tokens, multiProvider);
     const routerAddressesByChainMap = getRouterAddressesByChain(coreConfig.tokens);
 
-    // Build origin and destination token arrays (deduplicated by collateral at startup)
-    const originTokens = buildOriginTokens(warpCore.tokens);
-    const destinationTokens = buildDestinationTokens(warpCore.tokens);
+    // Build unified tokens array (deduplicated by collateral at startup)
+    const tokens = buildTokensArray(warpCore.tokens);
+    // Build collateral groups for fast route checking
+    const collateralGroups = buildCollateralGroups(warpCore.tokens);
 
     return {
       registry: currentRegistry,
@@ -287,8 +291,8 @@ async function initWarpContext({
       warpCore,
       tokensBySymbolChainMap,
       routerAddressesByChainMap,
-      originTokens,
-      destinationTokens,
+      tokens,
+      collateralGroups,
     };
   } catch (error) {
     toast.error('Error initializing warp context. Please check connection status and configs.');
@@ -300,8 +304,8 @@ async function initWarpContext({
       warpCore: new WarpCore(new MultiProtocolProvider({}), []),
       tokensBySymbolChainMap: {},
       routerAddressesByChainMap: {},
-      originTokens: [],
-      destinationTokens: [],
+      tokens: [],
+      collateralGroups: new Map(),
     };
   }
 }

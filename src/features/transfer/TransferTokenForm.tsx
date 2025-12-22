@@ -52,11 +52,11 @@ import {
   useWarpCore,
 } from '../tokens/hooks';
 import { useTokenPrice } from '../tokens/useTokenPrice';
-import { checkTokenHasRoute, getTokenKey } from '../tokens/utils';
+import { checkTokenHasRoute } from '../tokens/utils';
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { FeeSectionButton } from './FeeSectionButton';
 import { RecipientConfirmationModal } from './RecipientConfirmationModal';
-import { getInterchainQuote, getLowestFeeTransferToken, getTotalFee } from './fees';
+import { findRouteToken, getInterchainQuote, getLowestFeeTransferToken, getTotalFee } from './fees';
 import { useFetchMaxAmount } from './maxAmount';
 import { TransferFormValues } from './types';
 import { useRecipientBalanceWatcher } from './useBalanceWatcher';
@@ -406,12 +406,7 @@ function ButtonSection({
     setIsReview(false);
     setTransferLoading(true);
 
-    // For existing tokens with override applied, update the token key
-    if (routeOverrideToken) {
-      setFieldValue('originTokenKey', getTokenKey(routeOverrideToken));
-    }
-
-    await triggerTransactions(values);
+    await triggerTransactions(values, routeOverrideToken);
     setTransferLoading(false);
   };
 
@@ -581,10 +576,19 @@ function ReviewDetails({
   routeOverrideToken: Token | null;
 }) {
   const { values } = useFormikContext<TransferFormValues>();
+  const warpCore = useWarpCore();
   const { amount, originTokenKey, destinationTokenKey } = values;
   const tokens = useTokens();
-  const originToken = routeOverrideToken || getTokenByKey(tokens, originTokenKey);
-  const destinationToken = getTokenByKey(tokens, destinationTokenKey);
+  const originTokenByKey = routeOverrideToken || getTokenByKey(tokens, originTokenKey);
+  const destinationTokenByKey = getTokenByKey(tokens, destinationTokenKey);
+  // Finding actual token pair for the given tokens
+  const originToken =
+    destinationTokenByKey && originTokenByKey
+      ? findRouteToken(warpCore, originTokenByKey, destinationTokenByKey.chainName)
+      : undefined;
+  const destinationToken = destinationTokenByKey
+    ? originToken?.getConnectionForChain(destinationTokenByKey.chainName)?.token
+    : undefined;
   const originTokenSymbol = originToken?.symbol || '';
   const isNft = originToken?.isNft();
   const isRouteSupported = useIsRouteSupported();

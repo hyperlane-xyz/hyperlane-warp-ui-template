@@ -1,4 +1,4 @@
-import { Token, WarpCore, WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
+import { IToken, Token, WarpCore, WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
 import { HexString, toWei } from '@hyperlane-xyz/utils';
 import { getAccountAddressAndPubKey, useAccounts, useDebounce } from '@hyperlane-xyz/widgets';
 import { useQuery } from '@tanstack/react-query';
@@ -14,7 +14,7 @@ export function useFeeQuotes(
   { originTokenKey, destinationTokenKey, amount, recipient }: TransferFormValues,
   enabled: boolean,
   originToken: Token | undefined,
-  destinationToken: Token | undefined,
+  destinationToken: IToken | undefined,
   searchForLowestFee: boolean = false,
 ) {
   const multiProvider = useMultiProvider();
@@ -66,7 +66,7 @@ export function useFeeQuotes(
 async function fetchFeeQuotes(
   warpCore: WarpCore,
   originToken: Token | undefined,
-  destinationToken: Token | undefined,
+  destinationToken: IToken | undefined,
   destination?: ChainName,
   sender?: Address,
   senderPubKey?: Promise<HexString>,

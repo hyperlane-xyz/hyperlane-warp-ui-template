@@ -96,7 +96,7 @@ export function findRouteToken(
   warpCore: WarpCore,
   originToken: Token,
   destinationChain: string,
-): Token | null {
+): Token | undefined {
   // First check if the passed token already has the connection
   if (originToken.getConnectionForChain(destinationChain)) {
     return originToken;
@@ -104,7 +104,7 @@ export function findRouteToken(
 
   // Otherwise, find a token from warpCore that has the route and shares collateral
   const routeTokens = warpCore.getTokensForRoute(originToken.chainName, destinationChain);
-  if (routeTokens.length === 0) return null;
+  if (routeTokens.length === 0) return undefined;
 
   const normalizedOriginCollateral = originToken.collateralAddressOrDenom
     ? normalizeAddress(originToken.collateralAddressOrDenom, originToken.protocol)
@@ -139,7 +139,10 @@ export async function getLowestFeeTransferToken(
   const destinationChain = destinationToken.chainName;
 
   // Find the actual warpCore token that has the route
-  // The passed originToken may be deduplicated and not have the connection
+  // Because we deduplicated tokens with the same collateral, the current token pair
+  // might not be correct, so it is necessary to get the correct token pair.
+  // Make sure to have used `checkTokenHasRoute` before calling getLowestFeeTransferToken
+  // as that will validate that the token pair actually refer to the same asset
   const originRouteToken = findRouteToken(warpCore, originToken, destinationChain);
   if (!originRouteToken) {
     // No route exists, return original token (validation will catch this)

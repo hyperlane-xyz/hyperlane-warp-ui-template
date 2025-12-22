@@ -68,15 +68,15 @@ export function SideBarMenu({
       >
         {isMenuOpen && (
           <button
-            className="absolute left-0 top-0 flex h-full w-9 -translate-x-full items-center justify-center rounded-l-md bg-white bg-opacity-60 transition-all hover:bg-opacity-80"
+            className="absolute left-0 top-0 flex h-full w-9 -translate-x-full items-center justify-center rounded-l bg-[rgba(245,198,255,0.3)] backdrop-blur-[1.5px] transition-all"
             onClick={() => onClose()}
           >
             <Image src={CollapseIcon} width={15} height={24} alt="" />
           </button>
         )}
         <div className="flex h-full w-full flex-col overflow-y-auto">
-          <div className="w-full rounded-t-md bg-primary-500 px-3.5 py-2 text-base font-normal tracking-wider text-white">
-            Connected Wallets
+          <div className="w-full rounded-t-md bg-accent-gradient px-3.5 py-2 text-base font-normal tracking-wider text-white shadow-accent-glow">
+            My Wallets
           </div>
           <AccountList
             multiProvider={multiProvider}
@@ -85,8 +85,8 @@ export function SideBarMenu({
             className="px-3 py-3"
             chainName={originChainName}
           />
-          <div className="mb-4 w-full bg-primary-500 px-3.5 py-2 text-base font-normal tracking-wider text-white">
-            Transfer History
+          <div className="mb-4 w-full bg-accent-gradient px-3.5 py-2 text-base font-normal tracking-wider text-white shadow-accent-glow">
+            Transaction History
           </div>
           <div className="flex grow flex-col px-3.5">
             <div className="flex w-full grow flex-col divide-y">

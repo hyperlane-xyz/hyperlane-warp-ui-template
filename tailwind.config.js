@@ -20,20 +20,22 @@ module.exports = {
       colors: {
         black: '#010101',
         white: '#ffffff',
+        'off-white': '#F8F8FF',
         gray: { ...defaultColors.gray, '150': '#EBEDF0', '250': '#404040', '350': '#6B6B6B' },
         primary: {
-          50: '#E6EDF9',
-          100: '#CDDCF4',
-          200: '#A7C2EC',
-          300: '#82A8E4',
-          400: '#5385D2',
-          500: '#2764c1',
-          600: '#1D4685',
-          700: '#162A4A',
-          800: '#11213B',
-          900: '#0D192C',
+          50: '#F5E6FF',
+          100: '#E8CAFF',
+          200: '#D4A3FF',
+          300: '#C97EFF',
+          400: '#B245FF',
+          500: '#9A0DFF',
+          600: '#7B0ACC',
+          700: '#5C0899',
+          800: '#3D0566',
+          900: '#1E0333',
         },
         accent: {
+          25: '#FABAF8',
           50: '#FAEAF8',
           100: '#F2C1EA',
           200: '#EA98DC',
@@ -96,6 +98,13 @@ module.exports = {
       animation: {
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;',
       },
+      backgroundImage: ({ theme }) => ({
+        'app-gradient': `radial-gradient(81.94% 51.02% at 50% 100%, ${theme('colors.primary.100')} 0%, ${theme('colors.off-white')} 100%)`,
+        'accent-gradient': `radial-gradient(61.48% 118.8% at 50.08% 92%, ${theme('colors.primary.300')} 0%, ${theme('colors.primary.500')} 100%)`,
+      }),
+      boxShadow: ({ theme }) => ({
+        'accent-glow': `inset 2px 2px 13px 2px ${theme('colors.accent.25')}`,
+      }),
       transitionProperty: {
         height: 'height, max-height',
         spacing: 'margin, padding',

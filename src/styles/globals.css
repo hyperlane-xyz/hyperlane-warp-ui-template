@@ -43,7 +43,7 @@ Text and shadows
   text-shadow: 0 0 #010101;
 }
 
-/* 
+/*
 Scrollbar Overrides
 ===================
 */
@@ -51,6 +51,24 @@ Scrollbar Overrides
 body {
   scroll-behavior: smooth;
   scrollbar-width: thin;
+  scrollbar-color: #E8CAFF transparent;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #E8CAFF;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #D4A3FF;
 }
 
 /* phones */

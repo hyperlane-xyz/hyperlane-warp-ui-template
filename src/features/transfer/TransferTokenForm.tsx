@@ -308,7 +308,7 @@ function ButtonSection({
   cleanOverrideToken: () => void;
   routeOverrideToken: Token | null;
 }) {
-  const { values, setFieldValue } = useFormikContext<TransferFormValues>();
+  const { values } = useFormikContext<TransferFormValues>();
   const multiProvider = useMultiProvider();
   const tokens = useTokens();
   const originToken = routeOverrideToken || getTokenByKey(tokens, values.originTokenKey);

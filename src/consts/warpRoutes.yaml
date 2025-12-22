@@ -76,6 +76,25 @@ tokens:
     addressOrDenom: '0xFB13Ad8c286025E1874D631bC62EAde352f05d33'
     connections:
       - token: ethereum|pruv|0x92e3582717B09462E4Aa01203a89BB176283C20c
-## GSP
+  ## GSP
+  ## SATE
+  - chainName: pruv
+    standard: EvmHypCollateral
+    decimals: 6
+    symbol: SATE
+    name: SATEYIELD
+    addressOrDenom: '0xa367885CC6f620ba311E2588a1D386324da7494f'
+    collateralAddressOrDenom: '0xf6b62398F48943b0BAfB441CCD277ED64524FC88'
+    connections:
+      - token: ethereum|bsc|0x4cA9D17b3F69AF58506B78F2B0EdEEFdcFb86354
+  - chainName: bsc
+    standard: EvmHypSynthetic
+    decimals: 6
+    symbol: SATE
+    name: SATEYIELD
+    addressOrDenom: '0x4cA9D17b3F69AF58506B78F2B0EdEEFdcFb86354'
+    connections:
+      - token: ethereum|pruv|0xa367885CC6f620ba311E2588a1D386324da7494f
+## SATE
 
 options: {}

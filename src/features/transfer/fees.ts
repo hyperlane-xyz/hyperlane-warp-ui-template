@@ -1,10 +1,14 @@
 import { IToken, Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
-import { normalizeAddress, objKeys } from '@hyperlane-xyz/utils';
+import { objKeys } from '@hyperlane-xyz/utils';
 import { chainsRentEstimate } from '../../consts/chains';
 import { logger } from '../../utils/logger';
 import { getPromisesFulfilledValues } from '../../utils/promises';
 import { TokensWithDestinationBalance, TokenWithFee } from '../tokens/types';
-import { getTokensWithSameCollateralAddresses, isValidMultiCollateralToken } from '../tokens/utils';
+import {
+  findRouteToken,
+  getTokensWithSameCollateralAddresses,
+  isValidMultiCollateralToken,
+} from '../tokens/utils';
 
 // Compare two objects with balance field in descending order (highest first)
 export function compareByBalanceDesc(a: { balance: bigint }, b: { balance: bigint }) {
@@ -85,44 +89,6 @@ export function getInterchainQuote(
   return originToken && objKeys(chainsRentEstimate).includes(originToken.chainName)
     ? interchainQuote.plus(chainsRentEstimate[originToken.chainName])
     : interchainQuote;
-}
-
-/**
- * Find the actual warpCore token that has a route to the destination.
- * The passed originToken may be from a deduplicated array and may not have
- * the connection, but a token with the same collateral in warpCore does.
- */
-export function findRouteToken(
-  warpCore: WarpCore,
-  originToken: Token,
-  destinationChain: string,
-): Token | undefined {
-  // First check if the passed token already has the connection
-  if (originToken.getConnectionForChain(destinationChain)) {
-    return originToken;
-  }
-
-  // Otherwise, find a token from warpCore that has the route and shares collateral
-  const routeTokens = warpCore.getTokensForRoute(originToken.chainName, destinationChain);
-  if (routeTokens.length === 0) return undefined;
-
-  const normalizedOriginCollateral = originToken.collateralAddressOrDenom
-    ? normalizeAddress(originToken.collateralAddressOrDenom, originToken.protocol)
-    : null;
-
-  // Find a route token that shares collateral with the origin token
-  const matchingToken = routeTokens.find((t) => {
-    const normalizedRouteCollateral = t.collateralAddressOrDenom
-      ? normalizeAddress(t.collateralAddressOrDenom, t.protocol)
-      : null;
-    // Match by collateral address if both have one, otherwise match by symbol
-    if (normalizedOriginCollateral && normalizedRouteCollateral) {
-      return normalizedOriginCollateral === normalizedRouteCollateral;
-    }
-    return t.symbol === originToken.symbol;
-  });
-
-  return matchingToken || routeTokens[0];
 }
 
 // Checks if a token is a multi-collateral token and if so

@@ -7,7 +7,8 @@ import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { isMultiCollateralLimitExceeded } from '../limits/utils';
 import { useWarpCore } from '../tokens/hooks';
-import { findRouteToken, getLowestFeeTransferToken } from './fees';
+import { findRouteToken } from '../tokens/utils';
+import { getLowestFeeTransferToken } from './fees';
 
 interface FetchMaxParams {
   accounts: Record<ProtocolType, AccountInfo>;

@@ -52,11 +52,11 @@ import {
   useWarpCore,
 } from '../tokens/hooks';
 import { useTokenPrice } from '../tokens/useTokenPrice';
-import { checkTokenHasRoute } from '../tokens/utils';
+import { checkTokenHasRoute, findRouteToken } from '../tokens/utils';
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { FeeSectionButton } from './FeeSectionButton';
 import { RecipientConfirmationModal } from './RecipientConfirmationModal';
-import { findRouteToken, getInterchainQuote, getLowestFeeTransferToken, getTotalFee } from './fees';
+import { getInterchainQuote, getLowestFeeTransferToken, getTotalFee } from './fees';
 import { useFetchMaxAmount } from './maxAmount';
 import { TransferFormValues } from './types';
 import { useRecipientBalanceWatcher } from './useBalanceWatcher';

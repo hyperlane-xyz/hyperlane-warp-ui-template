@@ -7,7 +7,8 @@ module.exports = {
   content: ['./src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     fontFamily: {
-      sans: ['var(--font-main)'],
+      sans: ['PP Fraktion Sans', 'system-ui', 'sans-serif'],
+      secondary: ['PP Valve', 'system-ui', 'sans-serif'],
       serif: ['Garamond', 'serif'],
       mono: ['Courier New', 'monospace'],
     },

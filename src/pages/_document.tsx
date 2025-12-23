@@ -1,5 +1,5 @@
 import { Head, Html, Main, NextScript } from 'next/document';
-import { APP_DESCRIPTION, APP_NAME, APP_URL, BRAND_COLOR, MAIN_FONT } from '../consts/app';
+import { APP_DESCRIPTION, APP_NAME, APP_URL, BRAND_COLOR } from '../consts/app';
 
 export default function Document() {
   return (
@@ -30,7 +30,7 @@ export default function Document() {
         <meta property="og:image" content={`${APP_URL}/logo.png`} />
         <meta property="og:description" content={APP_DESCRIPTION} />
       </Head>
-      <body className={`${MAIN_FONT.variable} font-sans text-black`}>
+      <body className="font-sans text-black">
         <Main />
         <NextScript />
       </body>

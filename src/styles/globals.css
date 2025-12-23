@@ -3,6 +3,68 @@
 @tailwind utilities;
 
 /*
+Custom Fonts (optional - falls back to system fonts if not available)
+Place font files in public/fonts/ directory
+=====================================================================
+*/
+@font-face {
+  font-family: 'PP Fraktion Sans';
+  src: url('/fonts/PPFraktionSans-Thin.woff2') format('woff2');
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'PP Fraktion Sans';
+  src: url('/fonts/PPFraktionSans-Light.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'PP Fraktion Sans';
+  src: url('/fonts/PPFraktionSans-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'PP Fraktion Sans';
+  src: url('/fonts/PPFraktionSans-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'PP Fraktion Sans';
+  src: url('/fonts/PPFraktionSans-Semibold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'PP Fraktion Sans';
+  src: url('/fonts/PPFraktionSans-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'PP Fraktion Sans';
+  src: url('/fonts/PPFraktionSans-Black.woff2') format('woff2');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'PP Valve';
+  src: url('/fonts/PPValve-PlainVariable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/*
 Normalization
 =============
 */
@@ -51,7 +113,7 @@ Scrollbar Overrides
 body {
   scroll-behavior: smooth;
   scrollbar-width: thin;
-  scrollbar-color: #E8CAFF transparent;
+  scrollbar-color: #e8caff transparent;
 }
 
 ::-webkit-scrollbar {
@@ -63,12 +125,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #E8CAFF;
+  background: #e8caff;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #D4A3FF;
+  background: #d4a3ff;
 }
 
 /* phones */

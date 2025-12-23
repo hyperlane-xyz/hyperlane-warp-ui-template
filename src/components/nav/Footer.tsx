@@ -1,8 +1,13 @@
-import { DiscordIcon, GithubIcon, HyperlaneLogo, TwitterIcon } from '@hyperlane-xyz/widgets';
+import { DiscordIcon, GithubIcon } from '@hyperlane-xyz/widgets';
 import Link from 'next/link';
 import { ReactNode } from 'react';
 import { links } from '../../consts/links';
 import { Color } from '../../styles/Color';
+import { BookIcon } from '../icons/BookIcon';
+import { HyperlaneFooterLogo } from '../icons/HyperlaneGradientLogo';
+import { StakeIcon } from '../icons/StakeIcon';
+import { WebSimpleIcon } from '../icons/WebSimpleIcon';
+import { XIcon } from '../icons/XIcon';
 
 type FooterLink = {
   title: string;
@@ -12,22 +17,39 @@ type FooterLink = {
 };
 
 const footerLinks: FooterLink[] = [
-  { title: 'Docs', url: links.docs, external: true },
-  { title: 'Terms', url: links.tos, external: true },
-  { title: 'Twitter', url: links.twitter, external: true, icon: <TwitterIcon color="#fff" /> },
-  { title: 'Homepage', url: links.home, external: true },
-  { title: 'Privacy', url: links.privacyPolicy, external: true },
-  { title: 'Discord', url: links.discord, external: true, icon: <DiscordIcon color="#fff" /> },
-  { title: 'Explorer', url: links.explorer, external: true },
-  { title: 'Bounty', url: links.bounty, external: true },
-  { title: 'Github', url: links.github, external: true, icon: <GithubIcon color="#fff" /> },
+  { title: 'Stake', url: links.stake, external: true, icon: <StakeIcon width={20} height={20} /> },
+  { title: 'X.com', url: links.twitter, external: true, icon: <XIcon width={19} height={17} /> },
+  {
+    title: 'Hyperlane',
+    url: links.home,
+    external: true,
+    icon: <WebSimpleIcon width={20} height={20} />,
+  },
+  {
+    title: 'Discord',
+    url: links.discord,
+    external: true,
+    icon: <DiscordIcon color={Color.primary[500]} width={20} height={20} />,
+  },
+  {
+    title: 'Docs',
+    url: links.docs,
+    external: true,
+    icon: <BookIcon color={Color.primary[500]} width={23} height={16} />,
+  },
+  {
+    title: 'Github',
+    url: links.github,
+    external: true,
+    icon: <GithubIcon width={20} height={20} color={Color.primary[500]} />,
+  },
 ];
 
 export function Footer() {
   return (
     <footer className="relative text-white">
       <div className="relative bg-gradient-to-b from-transparent to-black/40 px-8 pb-5 pt-2 sm:pt-0">
-        <div className="flex flex-col items-center justify-between gap-8 sm:flex-row sm:gap-10">
+        <div className="flex flex-col items-center justify-between gap-4">
           <FooterLogo />
           <FooterNav />
         </div>
@@ -39,13 +61,7 @@ export function Footer() {
 function FooterLogo() {
   return (
     <div className="flex items-center justify-center">
-      <div className="ml-2 h-12 w-12 sm:h-14 sm:w-14">
-        <HyperlaneLogo color={Color.white} />
-      </div>
-      <div className="ml-6 space-y-1 text-lg font-medium sm:text-xl">
-        <div>Go interchain</div>
-        <div>with Hyperlane</div>
-      </div>
+      <HyperlaneFooterLogo width={219} height={18} />
     </div>
   );
 }
@@ -53,16 +69,16 @@ function FooterLogo() {
 function FooterNav() {
   return (
     <nav className="text-md font-medium">
-      <ul style={{ gridTemplateColumns: 'auto auto auto' }} className="grid gap-x-7 gap-y-1.5">
+      <ul className="flex gap-9">
         {footerLinks.map((item) => (
           <li key={item.title}>
             <Link
-              className="flex items-center capitalize underline-offset-2 hover:underline"
+              className="flex items-center gap-2 decoration-primary-500 underline-offset-2 hover:underline"
               target={item.external ? '_blank' : '_self'}
               href={item.url}
             >
-              {item?.icon && <div className="mr-3 mt-1 w-4">{item?.icon}</div>}
-              {!item?.icon && <div>{item.title}</div>}
+              {item?.icon && <div className="w-4">{item.icon}</div>}
+              <span className="text-primary-500">{item.title}</span>
             </Link>
           </li>
         ))}

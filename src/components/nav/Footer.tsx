@@ -1,49 +1,5 @@
-import { DiscordIcon, GithubIcon } from '@hyperlane-xyz/widgets';
-import Link from 'next/link';
-import { ReactNode } from 'react';
-import { links } from '../../consts/links';
-import { Color } from '../../styles/Color';
-import { BookIcon } from '../icons/BookIcon';
 import { HyperlaneFooterLogo } from '../icons/HyperlaneGradientLogo';
-import { StakeIcon } from '../icons/StakeIcon';
-import { WebSimpleIcon } from '../icons/WebSimpleIcon';
-import { XIcon } from '../icons/XIcon';
-
-type FooterLink = {
-  title: string;
-  url: string;
-  external: boolean;
-  icon?: ReactNode;
-};
-
-const footerLinks: FooterLink[] = [
-  { title: 'Stake', url: links.stake, external: true, icon: <StakeIcon width={20} height={20} /> },
-  { title: 'X.com', url: links.twitter, external: true, icon: <XIcon width={19} height={17} /> },
-  {
-    title: 'Hyperlane',
-    url: links.home,
-    external: true,
-    icon: <WebSimpleIcon width={20} height={20} />,
-  },
-  {
-    title: 'Discord',
-    url: links.discord,
-    external: true,
-    icon: <DiscordIcon color={Color.primary[500]} width={20} height={20} />,
-  },
-  {
-    title: 'Docs',
-    url: links.docs,
-    external: true,
-    icon: <BookIcon color={Color.primary[500]} width={23} height={16} />,
-  },
-  {
-    title: 'Github',
-    url: links.github,
-    external: true,
-    icon: <GithubIcon width={20} height={20} color={Color.primary[500]} />,
-  },
-];
+import { NavItem, navLinks } from './Nav';
 
 export function Footer() {
   return (
@@ -68,18 +24,11 @@ function FooterLogo() {
 
 function FooterNav() {
   return (
-    <nav className="text-md font-medium">
+    <nav className="hidden text-md font-medium sm:block">
       <ul className="flex gap-9">
-        {footerLinks.map((item) => (
+        {navLinks.map((item) => (
           <li key={item.title}>
-            <Link
-              className="flex items-center gap-2 decoration-primary-500 underline-offset-2 hover:underline"
-              target={item.external ? '_blank' : '_self'}
-              href={item.url}
-            >
-              {item?.icon && <div className="w-4">{item.icon}</div>}
-              <span className="text-primary-500">{item.title}</span>
-            </Link>
+            <NavItem item={item} />
           </li>
         ))}
       </ul>

@@ -1,17 +1,12 @@
+import { DropdownMenu } from '@hyperlane-xyz/widgets';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ConnectWalletButton } from '../../features/wallet/ConnectWalletButton';
 import Logo from '../../images/logos/app-logo.svg';
 import Name from '../../images/logos/app-name.svg';
 import Title from '../../images/logos/app-title.svg';
-
-function HamburgerIcon() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M3 6H21M3 12H21" stroke="#9A0DFF" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
-}
+import { HamburgerIcon } from '../icons/HamburgerIcon';
+import { NavItem, navLinks } from './Nav';
 
 export function Header() {
   return (
@@ -42,9 +37,18 @@ export function Header() {
           <Link href="/">
             <Image src={Logo} width={36} alt="" className="h-auto" />
           </Link>
-          <button type="button" aria-label="Menu">
-            <HamburgerIcon />
-          </button>
+          <DropdownMenu
+            button={<HamburgerIcon width={20} height={19} />}
+            buttonClassname="rounded p-2 text-primary-500 data-[open]:bg-[#E2C4FC] data-[open]:shadow-[inset_4px_4px_4px_rgba(154,13,255,0.1)] data-[open]:text-white"
+            menuClassname="py-4"
+            menuItems={navLinks.map((item) => (
+              <NavItem
+                key={item.title}
+                item={item}
+                className="w-full gap-3 px-6 py-2 hover:bg-primary-50 hover:bg-opacity-30"
+              />
+            ))}
+          />
         </div>
         <ConnectWalletButton />
       </header>

@@ -1,7 +1,4 @@
-# A list of Warp Route token configs
-# These configs will be merged with the warp routes in the configured registry
-# The input here is typically the output of the Hyperlane CLI warp deploy command
----
+# yaml-language-server: $schema=../schema.json
 tokens:
   - addressOrDenom: "0x692A07f2306a3bba739e5281A26A5a97C6D7A6cA"
     chainName: base
@@ -20,5 +17,3 @@ tokens:
     name: Spark
     standard: EvmHypCollateral
     symbol: SPK
-
-options: {}

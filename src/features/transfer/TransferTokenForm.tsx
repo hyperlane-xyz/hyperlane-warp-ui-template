@@ -325,7 +325,7 @@ function TokenAmountBlock({ type, tokenFieldName, isReview, setIsNft }: TokenAmo
 }
 
 function SwapTokensButton({ disabled }: { disabled?: boolean }) {
-  const { values, setFieldValue } = useFormikContext<TransferFormValues>();
+  const { values, setValues } = useFormikContext<TransferFormValues>();
   const tokens = useTokens();
 
   const onSwap = useCallback(() => {
@@ -335,11 +335,12 @@ function SwapTokensButton({ disabled }: { disabled?: boolean }) {
     const originToken = getTokenByKey(tokens, originTokenKey);
     const destToken = getTokenByKey(tokens, destinationTokenKey);
 
-    // Swap the token keys
-    setFieldValue('originTokenKey', destinationTokenKey);
-    setFieldValue('destinationTokenKey', originTokenKey);
-    // Clear the amount when swapping
-    setFieldValue('amount', '');
+    setValues((prevValues) => ({
+      ...prevValues,
+      amount: '',
+      originTokenKey: destinationTokenKey,
+      destinationTokenKey: originTokenKey,
+    }));
 
     // Update URL params
     if (originToken && destToken) {
@@ -350,7 +351,7 @@ function SwapTokensButton({ disabled }: { disabled?: boolean }) {
         [WARP_QUERY_PARAMS.DESTINATION_TOKEN]: originToken.symbol,
       });
     }
-  }, [disabled, values, tokens, setFieldValue]);
+  }, [disabled, values, tokens, setValues]);
 
   return (
     <div className="relative z-10 -my-4 flex justify-center">

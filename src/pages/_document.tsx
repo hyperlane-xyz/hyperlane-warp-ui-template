@@ -30,7 +30,7 @@ export default function Document() {
         <meta property="og:image" content={`${APP_URL}/logo.png`} />
         <meta property="og:description" content={APP_DESCRIPTION} />
       </Head>
-      <body className="font-sans text-black">
+      <body className="font-primary text-black">
         <Main />
         <NextScript />
       </body>

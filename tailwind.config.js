@@ -7,10 +7,9 @@ module.exports = {
   content: ['./src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     fontFamily: {
-      sans: ['PP Fraktion Sans', 'system-ui', 'sans-serif'],
+      primary: ['PP Fraktion Mono', 'system-ui', 'sans-serif'],
       secondary: ['PP Valve', 'system-ui', 'sans-serif'],
       serif: ['Garamond', 'serif'],
-      mono: ['Courier New', 'monospace'],
     },
     screens: {
       all: '1px',
@@ -22,7 +21,20 @@ module.exports = {
         black: '#010101',
         white: '#ffffff',
         'off-white': '#F8F8FF',
-        gray: { ...defaultColors.gray, 150: '#EBEDF0', 250: '#404040', 350: '#6B6B6B' },
+        'card-white': '#FCF9FE',
+        gray: {
+          ...defaultColors.gray,
+          150: '#EBEDF0',
+          250: '#404040',
+          300: '#D9D9D9',
+          350: '#6B6B6B',
+          400: '#BFBFBF',
+          450: '#B6B6B6',
+        },
+        plum: {
+          900: '#332840',
+          950: '#221A2D',
+        },
         primary: {
           50: '#E8CAFF',
           100: '#D9A4FF',
@@ -101,10 +113,17 @@ module.exports = {
       },
       backgroundImage: ({ theme }) => ({
         'app-gradient': `radial-gradient(81.94% 51.02% at 50% 100%, ${theme('colors.primary.100')} 0%, ${theme('colors.off-white')} 100%)`,
-        'accent-gradient': `radial-gradient(61.48% 118.8% at 50.08% 92%, ${theme('colors.primary.300')} 0%, ${theme('colors.primary.500')} 100%)`,
+        'accent-gradient': `radial-gradient(61.48% 118.8% at 50.08% 92%, ${theme('colors.primary.200')} 0%, ${theme('colors.primary.500')} 100%)`,
+        'card-gradient': `linear-gradient(180deg, ${theme('colors.white')} 0%, ${theme('colors.card-white')} 100%)`,
       }),
       boxShadow: ({ theme }) => ({
-        'accent-glow': `inset 2px 2px 13px 2px ${theme('colors.accent.25')}`,
+        'accent-glow': `inset 2px 2px 13px ${theme('colors.accent.100')}`,
+        'card': `0px 4px 6px ${theme('colors.plum.950')}1A`,
+        'button': `0 4px 6px ${theme('colors.plum.950')}1A`,
+        'input': `0 0 4px ${theme('colors.gray.400')}4D`,
+      }),
+      dropShadow: ({ theme }) => ({
+        'button': `0 4px 6px ${theme('colors.plum.950')}0D`,
       }),
       transitionProperty: {
         height: 'height, max-height',

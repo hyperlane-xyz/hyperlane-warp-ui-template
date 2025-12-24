@@ -1,32 +1,36 @@
 import { Token } from '@hyperlane-xyz/sdk';
-import { ChevronIcon, PlusIcon } from '@hyperlane-xyz/widgets';
+import { ChevronIcon } from '@hyperlane-xyz/widgets';
 import { useField, useFormikContext } from 'formik';
-import { useCallback, useState } from 'react';
-import { toast } from 'react-toastify';
+import { useState } from 'react';
 import { WARP_QUERY_PARAMS } from '../../consts/args';
-import { logger } from '../../utils/logger';
 import { updateQueryParams } from '../../utils/queryParams';
 import { trackTokenSelectionEvent } from '../analytics/utils';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { TransferFormValues } from '../transfer/types';
-import { getTokenByKey, useAddToken, useTokens } from './hooks';
+import { getTokenByKey, useTokens } from './hooks';
 import { TokenChainIcon } from './TokenChainIcon';
 import { TokenSelectionMode } from './types';
 import { UnifiedTokenChainModal } from './UnifiedTokenChainModal';
 import { getTokenKey } from './utils';
 
-const USER_REJECTED_ERROR = 'User rejected';
-
 type Props = {
   name: string;
-  label: string;
+  label?: string;
   selectionMode: TokenSelectionMode;
   disabled?: boolean;
   setIsNft?: (value: boolean) => void;
+  showLabel?: boolean;
 };
 
-export function TokenSelectField({ name, label, selectionMode, disabled, setIsNft }: Props) {
+export function TokenSelectField({
+  name,
+  label,
+  selectionMode,
+  disabled,
+  setIsNft,
+  showLabel = true,
+}: Props) {
   const { values, setFieldValue } = useFormikContext<TransferFormValues>();
   const [field, , helpers] = useField<string | undefined>(name);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -36,7 +40,6 @@ export function TokenSelectField({ name, label, selectionMode, disabled, setIsNf
 
   // Get the current token
   const token = getTokenByKey(tokens, field.value);
-  const { addToken, canAddAsset, isLoading } = useAddToken(token);
 
   // Get the counterpart token (destination when selecting origin, origin when selecting destination)
   const counterpartToken =
@@ -80,38 +83,20 @@ export function TokenSelectField({ name, label, selectionMode, disabled, setIsNf
     if (!disabled) setIsModalOpen(true);
   };
 
-  const onAddToken = useCallback(async () => {
-    try {
-      await addToken();
-    } catch (error: any) {
-      const errorDetails = error.message || error.toString();
-      if (!errorDetails.includes(USER_REJECTED_ERROR)) toast.error(errorDetails);
-      logger.debug(error);
-    }
-  }, [addToken]);
-
   return (
     <>
       <div className="flex flex-col">
-        <label htmlFor={name} className="mb-1 pl-0.5 text-sm text-gray-600">
-          {label}
-        </label>
+        {showLabel && label && (
+          <label htmlFor={name} className="mb-1 pl-0.5 text-sm text-gray-600">
+            {label}
+          </label>
+        )}
         <TokenButton
           token={token}
           disabled={disabled}
           onClick={onClickField}
           multiProvider={multiProvider}
         />
-        {canAddAsset && (
-          <button
-            type="button"
-            className={styles.addButton}
-            onClick={onAddToken}
-            disabled={isLoading}
-          >
-            <PlusIcon height={16} width={16} /> Import token to wallet
-          </button>
-        )}
       </div>
 
       <UnifiedTokenChainModal
@@ -146,25 +131,25 @@ function TokenButton({
       disabled={disabled}
     >
       {token ? (
-        <div className="flex min-w-0 flex-1 items-center gap-2.5">
-          <TokenChainIcon token={token} size={24} />
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          <TokenChainIcon token={token} size={44} />
           <div className="flex min-w-0 flex-col items-start">
-            <span className="text-sm font-medium text-gray-900">{token.symbol}</span>
-            <span className="text-xs text-gray-500">{chainDisplayName}</span>
+            <span className="text-lg font-semibold text-gray-900">{token.symbol}</span>
+            <span className="text-sm text-gray-500">{chainDisplayName}</span>
           </div>
         </div>
       ) : (
         <span className="text-sm text-gray-400">Select token</span>
       )}
-      <ChevronIcon width={12} height={8} direction="s" className="ml-2 opacity-60" />
+      <div className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-400 bg-white drop-shadow-button">
+        <ChevronIcon width={14} height={10} direction="e" className="text-gray-600" />
+      </div>
     </button>
   );
 }
 
 const styles = {
-  base: 'w-full px-3 py-2.5 flex items-center justify-between rounded-lg border border-gray-300 bg-white transition-all',
-  enabled: 'hover:border-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200',
-  disabled: 'bg-gray-100 cursor-not-allowed opacity-60',
-  addButton:
-    'flex text-xxs text-primary-500 w-fit hover:text-primary-600 disabled:text-gray-500 [&_path]:fill-primary-500 [&_path]:hover:fill-primary-600 [&_path]:disabled:fill-gray-500',
+  base: 'w-full py-3 flex items-center justify-between transition-all',
+  enabled: '',
+  disabled: 'cursor-not-allowed opacity-60',
 };

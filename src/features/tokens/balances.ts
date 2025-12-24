@@ -33,22 +33,16 @@ export function useBalance(chain?: ChainName, token?: IToken, address?: Address)
   };
 }
 
-export function useOriginBalance(
-  values: TransferFormValues,
-  originToken?: Token,
-) {
+export function useOriginBalance(values: TransferFormValues, originToken?: Token) {
   const multiProvider = useMultiProvider();
   const origin = originToken?.chainName;
   const address = useAccountAddressForChain(multiProvider, origin);
   return useBalance(origin, originToken, address);
 }
 
-export function useDestinationBalance(
-  values: TransferFormValues,
-  destinationToken?: Token,
-) {
+export function useDestinationBalance(recipient?: string, destinationToken?: Token) {
   const destination = destinationToken?.chainName;
-  return useBalance(destination, destinationToken, values.recipient);
+  return useBalance(destination, destinationToken, recipient);
 }
 
 export async function getDestinationNativeBalance(

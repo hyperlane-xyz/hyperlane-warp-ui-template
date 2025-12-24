@@ -7,59 +7,63 @@ Custom Fonts (optional - falls back to system fonts if not available)
 Place font files in public/fonts/ directory
 =====================================================================
 */
+
+/* PP Valve - Secondary font */
 @font-face {
-  font-family: 'PP Fraktion Sans';
-  src: url('/fonts/PPFraktionSans-Thin.woff2') format('woff2');
+  font-family: 'PP Valve';
+  src: url('/fonts/PPValve-PlainVariable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* PP Fraktion Mono - Primary font */
+@font-face {
+  font-family: 'PP Fraktion Mono';
+  src: url('/fonts/PPFraktionMono-Thin.woff2') format('woff2');
   font-weight: 100;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: 'PP Fraktion Sans';
-  src: url('/fonts/PPFraktionSans-Light.woff2') format('woff2');
+  font-family: 'PP Fraktion Mono';
+  src: url('/fonts/PPFraktionMono-Light.woff2') format('woff2');
   font-weight: 300;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: 'PP Fraktion Sans';
-  src: url('/fonts/PPFraktionSans-Regular.woff2') format('woff2');
+  font-family: 'PP Fraktion Mono';
+  src: url('/fonts/PPFraktionMono-Regular.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: 'PP Fraktion Sans';
-  src: url('/fonts/PPFraktionSans-Medium.woff2') format('woff2');
+  font-family: 'PP Fraktion Mono';
+  src: url('/fonts/PPFraktionMono-Medium.woff2') format('woff2');
   font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: 'PP Fraktion Sans';
-  src: url('/fonts/PPFraktionSans-Semibold.woff2') format('woff2');
+  font-family: 'PP Fraktion Mono';
+  src: url('/fonts/PPFraktionMono-Semibold.woff2') format('woff2');
   font-weight: 600;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: 'PP Fraktion Sans';
-  src: url('/fonts/PPFraktionSans-Bold.woff2') format('woff2');
+  font-family: 'PP Fraktion Mono';
+  src: url('/fonts/PPFraktionMono-Bold.woff2') format('woff2');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: 'PP Fraktion Sans';
-  src: url('/fonts/PPFraktionSans-Black.woff2') format('woff2');
+  font-family: 'PP Fraktion Mono';
+  src: url('/fonts/PPFraktionMono-Black.woff2') format('woff2');
   font-weight: 900;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'PP Valve';
-  src: url('/fonts/PPValve-PlainVariable.woff2') format('woff2');
-  font-weight: 100 900;
   font-style: normal;
   font-display: swap;
 }

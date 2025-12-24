@@ -34,7 +34,7 @@ export default function App({ Component, pageProps }: AppProps) {
   }
 
   return (
-    <div className="font-sans text-black">
+    <div className="font-primary text-black">
       <ErrorBoundary>
         <QueryClientProvider client={reactQueryClient}>
           <WarpContextInitGate>

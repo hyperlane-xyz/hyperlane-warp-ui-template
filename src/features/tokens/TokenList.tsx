@@ -175,7 +175,7 @@ function TokenButton({
       </div>
 
       <div className="ml-2 shrink-0 text-right">
-        <div className="font-mono text-[10px] text-gray-400">{shortAddress}</div>
+        <div className="text-[10px] text-gray-400">{shortAddress}</div>
       </div>
     </button>
   );

@@ -13,22 +13,27 @@ import {
 import {
   AccountInfo,
   ChevronIcon,
+  PlusIcon,
   SpinnerIcon,
   getAccountAddressAndPubKey,
+  useAccountAddressForChain,
   useAccounts,
   useModal,
 } from '@hyperlane-xyz/widgets';
 import BigNumber from 'bignumber.js';
 import { Form, Formik, useFormikContext } from 'formik';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 import { RecipientWarningBanner } from '../../components/banner/RecipientWarningBanner';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
 import { SolidButton } from '../../components/buttons/SolidButton';
-import { TextField } from '../../components/input/TextField';
+import { SwapIcon } from '../../components/icons/SwapIcon';
+// import { TextField } from '../../components/input/TextField';
+import { WARP_QUERY_PARAMS } from '../../consts/args';
 import { config } from '../../consts/config';
 import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
+import { updateQueryParams } from '../../utils/queryParams';
 import { trackTransactionFailedEvent } from '../analytics/utils';
 import { ChainConnectionWarning } from '../chains/ChainConnectionWarning';
 import { ChainWalletWarning } from '../chains/ChainWalletWarning';
@@ -36,7 +41,7 @@ import { useChainDisplayName, useMultiProvider } from '../chains/hooks';
 import { isMultiCollateralLimitExceeded } from '../limits/utils';
 import { useIsAccountSanctioned } from '../sanctions/hooks/useIsAccountSanctioned';
 import { useStore } from '../store';
-import { SelectOrInputTokenIds } from '../tokens/SelectOrInputTokenIds';
+// import { SelectOrInputTokenIds } from '../tokens/SelectOrInputTokenIds';
 import { TokenSelectField } from '../tokens/TokenSelectField';
 import { useIsApproveRequired } from '../tokens/approval';
 import {
@@ -47,6 +52,7 @@ import {
 import {
   getInitialTokenKeys,
   getTokenByKey,
+  useAddToken,
   useCollateralGroups,
   useTokens,
   useWarpCore,
@@ -56,10 +62,11 @@ import { checkTokenHasRoute, findRouteToken } from '../tokens/utils';
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { FeeSectionButton } from './FeeSectionButton';
 import { RecipientConfirmationModal } from './RecipientConfirmationModal';
+import { TransferSection } from './TransferSection';
 import { getInterchainQuote, getLowestFeeTransferToken, getTotalFee } from './fees';
 import { useFetchMaxAmount } from './maxAmount';
 import { TransferFormValues } from './types';
-import { useRecipientBalanceWatcher } from './useBalanceWatcher';
+// import { useRecipientBalanceWatcher } from './useBalanceWatcher';
 import { useFeeQuotes } from './useFeeQuotes';
 import { useTokenTransfer } from './useTokenTransfer';
 import { isSmartContract } from './utils';
@@ -80,8 +87,8 @@ export function TransferTokenForm() {
 
   // Flag for if form is in input vs review mode
   const [isReview, setIsReview] = useState(false);
-  // Flag for check current type of token
-  const [isNft, setIsNft] = useState(false);
+  // Flag for check current type of token (setter used by TokenSelectField)
+  const [, setIsNft] = useState(false);
   // This state is used for when the formik token is different from
   // the token with highest collateral in a multi-collateral token setup
   const [routeOverrideToken, setRouteTokenOverride] = useState<Token | null>(null);
@@ -151,11 +158,32 @@ export function TransferTokenForm() {
       validateOnBlur={false}
     >
       {({ isValidating }) => (
-        <Form className="flex w-full flex-col items-stretch">
+        <Form className="flex w-full flex-col items-stretch gap-1.5">
           <WarningBanners />
-          <TokenSelectSection setIsNft={setIsNft} isReview={isReview} />
-          <AmountSection isNft={isNft} isReview={isReview} />
-          <RecipientSection isReview={isReview} />
+
+          {/* Pay Section */}
+          <TransferSection label="Pay">
+            <TokenAmountBlock
+              type="origin"
+              tokenFieldName="originTokenKey"
+              isReview={isReview}
+              setIsNft={setIsNft}
+            />
+          </TransferSection>
+
+          {/* Swap Button */}
+          <SwapTokensButton disabled={isReview} />
+
+          {/* Receive Section */}
+          <TransferSection label="Receive">
+            <TokenAmountBlock
+              type="destination"
+              tokenFieldName="destinationTokenKey"
+              isReview={isReview}
+            />
+          </TransferSection>
+
+          {/* <RecipientSection isReview={isReview} /> */}
           <ReviewDetails isReview={isReview} routeOverrideToken={routeOverrideToken} />
           <ButtonSection
             isReview={isReview}
@@ -175,107 +203,202 @@ export function TransferTokenForm() {
   );
 }
 
-function TokenSelectSection({
-  setIsNft,
-  isReview,
-}: {
-  setIsNft: (b: boolean) => void;
+type TokenAmountBlockProps = {
+  type: 'origin' | 'destination';
+  tokenFieldName: string;
   isReview: boolean;
-}) {
-  return (
-    <div className="mt-2 space-y-3">
-      <TokenSelectField
-        name="originTokenKey"
-        label="From"
-        selectionMode="origin"
-        disabled={isReview}
-        setIsNft={setIsNft}
-      />
-      <TokenSelectField
-        name="destinationTokenKey"
-        label="To"
-        selectionMode="destination"
-        disabled={isReview}
-      />
-    </div>
-  );
-}
+  setIsNft?: (b: boolean) => void;
+};
 
-function AmountSection({ isNft, isReview }: { isNft: boolean; isReview: boolean }) {
-  const { values } = useFormikContext<TransferFormValues>();
+const USER_REJECTED_ERROR = 'User rejected';
+
+function TokenAmountBlock({ type, tokenFieldName, isReview, setIsNft }: TokenAmountBlockProps) {
+  const { values, setFieldValue } = useFormikContext<TransferFormValues>();
   const tokens = useTokens();
+  const multiProvider = useMultiProvider();
+  const isOrigin = type === 'origin';
+
   const originToken = getTokenByKey(tokens, values.originTokenKey);
-  const { balance } = useOriginBalance(values, originToken);
-  const { tokenPrice, isLoading } = useTokenPrice(values);
+  const destinationToken = getTokenByKey(tokens, values.destinationTokenKey);
+  const currentToken = isOrigin ? originToken : destinationToken;
+
+  // Get wallet addresses for both chains
+  const destWalletAddress = useAccountAddressForChain(multiProvider, destinationToken?.chainName);
+
+  const { balance: originBalance } = useOriginBalance(values, originToken);
+  const { balance: destBalance } = useDestinationBalance(destWalletAddress, destinationToken);
+  const balance = isOrigin ? originBalance : destBalance;
+
+  const { tokenPrice, isLoading: isPriceLoading } = useTokenPrice(values);
+
+  // Import token to wallet functionality
+  const { addToken, canAddAsset, isLoading: isAddingToken } = useAddToken(currentToken);
+  const onAddToken = useCallback(async () => {
+    try {
+      await addToken();
+    } catch (error: any) {
+      const errorDetails = error.message || error.toString();
+      if (!errorDetails.includes(USER_REJECTED_ERROR)) toast.error(errorDetails);
+      logger.debug(error);
+    }
+  }, [addToken]);
 
   const amount = parseFloat(values.amount);
   const totalTokenPrice = !isNullish(tokenPrice) && !isNaN(amount) ? amount * tokenPrice : 0;
   const shouldShowPrice = totalTokenPrice >= 0.01;
 
   return (
-    <div className="mt-4">
-      <div className="flex justify-between pr-1">
-        <label htmlFor="amount" className="block pl-0.5 text-sm text-gray-600">
-          Amount
-        </label>
-        <TokenBalance label="My balance" balance={balance} />
+    <div>
+      {/* Header Row: Wallet dropdown + Import Token / Advanced Settings */}
+      <div className="mb-3 flex items-center justify-between">
+        <button type="button" className="flex items-center gap-2 text-sm">
+          <div className="h-2 w-2 rounded-full bg-green-400" />
+          <span className="text-gray-600">0x32...2088</span>
+          <ChevronIcon width={10} height={6} direction="s" className="text-gray-400" />
+        </button>
+        {canAddAsset && (
+          <button
+            type="button"
+            className="flex items-center text-sm text-primary-500 hover:text-primary-600 disabled:opacity-50 [&_path]:fill-primary-500 [&_path]:hover:fill-primary-600"
+            onClick={onAddToken}
+            disabled={isAddingToken}
+          >
+            <PlusIcon width={18} height={18} className="-mr-0.5" />
+            <span>Import token</span>
+          </button>
+        )}
       </div>
-      {isNft ? (
-        <SelectOrInputTokenIds disabled={isReview} />
-      ) : (
-        <div className="relative w-full">
-          <TextField
-            name="amount"
-            placeholder="0.00"
-            className="w-full"
-            type="number"
-            step="any"
-            disabled={isReview}
-          />
-          {shouldShowPrice && !isLoading && (
-            <div className="absolute bottom-[-18px] left-1 max-w-52 overflow-hidden text-ellipsis whitespace-nowrap text-xxs text-gray-500">
-              ≈$
-              {totalTokenPrice.toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
+
+      {/* White box wrapper for token selector and amount */}
+      <div className="rounded-[7px] border border-gray-400/50 bg-white p-4 shadow-input">
+        {/* Token Selector */}
+        <TokenSelectField
+          name={tokenFieldName}
+          selectionMode={isOrigin ? 'origin' : 'destination'}
+          disabled={isReview}
+          setIsNft={setIsNft}
+          showLabel={false}
+        />
+
+        {/* Separator */}
+        <div className="my-4 h-px bg-primary-50" />
+
+        {isOrigin ? (
+          /* Amount Section for Origin */
+          <>
+            <div className="flex items-start justify-between">
+              <input
+                name="amount"
+                value={values.amount}
+                onChange={(e) => setFieldValue('amount', e.target.value)}
+                placeholder="0.00"
+                className="w-full flex-1 border-none bg-transparent p-0 font-secondary text-[26px] font-normal leading-[34px] text-plum-900 outline-none placeholder:text-gray-300"
+                type="number"
+                step="any"
+                disabled={isReview}
+              />
+              <MaxButton balance={balance} disabled={isReview} />
             </div>
-          )}
-          <MaxButton balance={balance} disabled={isReview} />
-        </div>
-      )}
+            <div className="mt-1 flex items-center justify-between text-xs leading-[18px] text-gray-450">
+              <span>
+                {shouldShowPrice && !isPriceLoading ? (
+                  <>
+                    $
+                    {totalTokenPrice.toLocaleString('en-US', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </>
+                ) : (
+                  '$0.00'
+                )}
+              </span>
+              <TokenBalance label="Balance" balance={balance} />
+            </div>
+          </>
+        ) : (
+          /* Remote Balance for Destination */
+          <TokenBalance label="Remote Balance" balance={balance} />
+        )}
+      </div>
     </div>
   );
 }
 
-function RecipientSection({ isReview }: { isReview: boolean }) {
-  const { values } = useFormikContext<TransferFormValues>();
+function SwapTokensButton({ disabled }: { disabled?: boolean }) {
+  const { values, setFieldValue } = useFormikContext<TransferFormValues>();
   const tokens = useTokens();
-  const destinationToken = getTokenByKey(tokens, values.destinationTokenKey);
 
-  const { balance } = useDestinationBalance(values, destinationToken);
-  useRecipientBalanceWatcher(destinationToken?.chainName || '', balance);
+  const onSwap = useCallback(() => {
+    if (disabled) return;
+
+    const { originTokenKey, destinationTokenKey } = values;
+    const originToken = getTokenByKey(tokens, originTokenKey);
+    const destToken = getTokenByKey(tokens, destinationTokenKey);
+
+    // Swap the token keys
+    setFieldValue('originTokenKey', destinationTokenKey);
+    setFieldValue('destinationTokenKey', originTokenKey);
+    // Clear the amount when swapping
+    setFieldValue('amount', '');
+
+    // Update URL params
+    if (originToken && destToken) {
+      updateQueryParams({
+        [WARP_QUERY_PARAMS.ORIGIN]: destToken.chainName,
+        [WARP_QUERY_PARAMS.ORIGIN_TOKEN]: destToken.symbol,
+        [WARP_QUERY_PARAMS.DESTINATION]: originToken.chainName,
+        [WARP_QUERY_PARAMS.DESTINATION_TOKEN]: originToken.symbol,
+      });
+    }
+  }, [disabled, values, tokens, setFieldValue]);
 
   return (
-    <div className="mt-4">
-      <div className="flex justify-between pr-1">
-        <label htmlFor="recipient" className="block pl-0.5 text-sm text-gray-600">
-          Recipient
-        </label>
-        <TokenBalance label="Recipient balance" balance={balance} />
-      </div>
-      <div className="relative w-full">
-        <TextField
-          name="recipient"
-          placeholder="Recipient address (0x...)"
-          className="w-full"
-          disabled={isReview}
+    <div className="relative z-10 -my-4 flex justify-center">
+      <button
+        type="button"
+        onClick={onSwap}
+        disabled={disabled}
+        className="group flex h-10 w-10 items-center justify-center rounded border border-gray-400/50 bg-white shadow-button transition-all hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        <SwapIcon
+          width={18}
+          height={24}
+          className="transition-transform duration-300 group-hover:rotate-180 group-disabled:rotate-0"
         />
-        <SelfButton disabled={isReview} destinationChain={destinationToken?.chainName} />
-      </div>
+      </button>
     </div>
   );
 }
+
+// function RecipientSection({ isReview }: { isReview: boolean }) {
+//   const { values } = useFormikContext<TransferFormValues>();
+//   const tokens = useTokens();
+//   const destinationToken = getTokenByKey(tokens, values.destinationTokenKey);
+
+//   const { balance } = useDestinationBalance(values, destinationToken);
+//   useRecipientBalanceWatcher(destinationToken?.chainName || '', balance);
+
+//   return (
+//     <div className="mt-4">
+//       <div className="flex justify-between pr-1">
+//         <label htmlFor="recipient" className="block pl-0.5 text-sm text-gray-600">
+//           Recipient
+//         </label>
+//         <TokenBalance label="Recipient balance" balance={balance} />
+//       </div>
+//       <div className="relative w-full">
+//         <TextField
+//           name="recipient"
+//           placeholder="Recipient address (0x...)"
+//           className="w-full"
+//           disabled={isReview}
+//         />
+//         <SelfButton disabled={isReview} destinationChain={destinationToken?.chainName} />
+//       </div>
+//     </div>
+//   );
+// }
 
 function TokenBalance({
   label,
@@ -285,13 +408,15 @@ function TokenBalance({
   balance: TokenAmount | null | undefined;
 }) {
   return (
-    <div className="text-xs text-gray-500">
+    <span className="text-xs leading-[18px] text-gray-450">
       {balance ? (
-        <span>
+        <>
           {label}: {balance.getDecimalFormattedAmount().toFixed(4)} {balance.token.symbol}
-        </span>
-      ) : null}
-    </div>
+        </>
+      ) : (
+        <>{label}: 0.00</>
+      )}
+    </span>
   );
 }
 
@@ -513,60 +638,53 @@ function MaxButton({ balance, disabled }: { balance?: TokenAmount; disabled?: bo
   };
 
   return (
-    <SolidButton
+    <button
       type="button"
       onClick={onClick}
-      color="primary"
       disabled={isDisabled}
-      className="absolute bottom-1 right-1 top-2.5 px-2 text-xs opacity-90 all:rounded"
+      className="rounded border border-gray-300 px-2 py-0.5 text-sm text-gray-600 transition-colors hover:border-gray-400 hover:text-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
     >
-      {isLoading ? (
-        <div className="flex items-center">
-          <SpinnerIcon className="h-5 w-5" color="white" />
-        </div>
-      ) : (
-        'Max'
-      )}
-    </SolidButton>
+      {isLoading ? <SpinnerIcon className="h-4 w-4" /> : 'Max'}
+    </button>
   );
 }
 
-function SelfButton({
-  disabled,
-  destinationChain,
-}: {
-  disabled?: boolean;
-  destinationChain?: string;
-}) {
-  const { setFieldValue } = useFormikContext<TransferFormValues>();
-  const multiProvider = useMultiProvider();
-  const chainDisplayName = useChainDisplayName(destinationChain || '');
-  const { accounts } = useAccounts(multiProvider);
+// function SelfButton({
+//   disabled,
+//   destinationChain,
+// }: {
+//   disabled?: boolean;
+//   destinationChain?: string;
+// }) {
+//   const { setFieldValue } = useFormikContext<TransferFormValues>();
+//   const multiProvider = useMultiProvider();
+//   const chainDisplayName = useChainDisplayName(destinationChain || '');
+//   const { accounts } = useAccounts(multiProvider);
 
-  const onClick = () => {
-    if (disabled || !destinationChain) return;
-    const protocol = multiProvider.tryGetProtocol(destinationChain);
-    if (!protocol) return;
-    const account = accounts[protocol];
-    if (account?.addresses?.[0]?.address) {
-      setFieldValue('recipient', account.addresses[0].address);
-    } else {
-      logger.warn(`No account found for chain ${chainDisplayName}`);
-    }
-  };
+//   const onClick = () => {
+//     if (disabled || !destinationChain) return;
+//     const protocol = multiProvider.tryGetProtocol(destinationChain);
+//     if (!protocol) return;
+//     const account = accounts[protocol];
+//     if (account?.addresses?.[0]?.address) {
+//       setFieldValue('recipient', account.addresses[0].address);
+//     } else {
+//       logger.warn(`No account found for chain ${chainDisplayName}`);
+//     }
+//   };
 
-  return (
-    <SolidButton
-      type="button"
-      onClick={onClick}
-      color="primary"
-      disabled={disabled || !destinationChain}
-      className="absolute bottom-1 right-1 top-2.5 px-2 text-xs opacity-90 all:rounded"
-    >
-      Self
-    </SolidButton>
-  );
-}
+//   return (
+//     <SolidButton
+//       type="button"
+//       onClick={onClick}
+//       color="primary"
+//       disabled={disabled || !destinationChain}
+//       className="absolute bottom-1 right-1 top-2.5 px-2 text-xs opacity-90 all:rounded"
+//     >
+//       Self
+//     </SolidButton>
+//   );
+// }
 
 function ReviewDetails({
   isReview,

@@ -20,8 +20,11 @@ module.exports = {
       colors: {
         black: '#010101',
         white: '#ffffff',
-        'off-white': '#F8F8FF',
-        'card-white': '#FCF9FE',
+        cream: {
+          100: '#FDFBFF',
+          200: '#FCF9FE',
+          300: '#F8F8FF',
+        },
         gray: {
           ...defaultColors.gray,
           150: '#EBEDF0',
@@ -54,6 +57,7 @@ module.exports = {
           200: '#FCA0F4',
           300: '#FD85F0',
           400: '#FE6AED',
+          450: '#FF0D7E',
           500: '#D631B9',
           600: '#DA46CA',
           700: '#B53DAA',
@@ -112,12 +116,14 @@ module.exports = {
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;',
       },
       backgroundImage: ({ theme }) => ({
-        'app-gradient': `radial-gradient(81.94% 51.02% at 50% 100%, ${theme('colors.primary.100')} 0%, ${theme('colors.off-white')} 100%)`,
+        'app-gradient': `radial-gradient(81.94% 51.02% at 50% 100%, ${theme('colors.primary.100')} 0%, ${theme('colors.cream.300')} 100%)`,
         'accent-gradient': `radial-gradient(61.48% 118.8% at 50.08% 92%, ${theme('colors.primary.200')} 0%, ${theme('colors.primary.500')} 100%)`,
-        'card-gradient': `linear-gradient(180deg, ${theme('colors.white')} 0%, ${theme('colors.card-white')} 100%)`,
+        'error-gradient': `radial-gradient(61.48% 118.8% at 50.08% 92%, ${theme('colors.accent.300')} 0%, ${theme('colors.accent.450')} 100%)`,
+        'card-gradient': `linear-gradient(180deg, ${theme('colors.white')} 0%, ${theme('colors.cream.200')} 100%)`,
       }),
       boxShadow: ({ theme }) => ({
-        'accent-glow': `inset 2px 2px 13px ${theme('colors.accent.100')}`,
+        'accent-glow': `inset 2px 2px 13px 2px ${theme('colors.accent.100')}`,
+        'error-glow': `inset 2px 2px 13px 2px ${theme('colors.accent.100')}`,
         'card': `0px 4px 6px ${theme('colors.plum.950')}1A`,
         'button': `0 4px 6px ${theme('colors.plum.950')}1A`,
         'input': `0 0 4px ${theme('colors.gray.400')}4D`,

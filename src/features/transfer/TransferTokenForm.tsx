@@ -565,7 +565,7 @@ function ButtonSection({
           disabled={!addressConfirmed || !isRouteSupported}
           chainName={originToken?.chainName || ''}
           text={text}
-          classes={`${isReview ? 'mt-4' : 'mt-0'} px-3 py-1.5`}
+          classes={`${isReview ? 'mt-4' : 'mt-4'} w-full px-3 py-3 font-secondary text-2xl text-cream-100`}
         />
       </>
     );
@@ -922,6 +922,8 @@ async function validateForm(
     const token = getTokenByKey(tokens, originTokenKey);
     const destinationToken = getTokenByKey(tokens, destinationTokenKey);
 
+    if (!amount) return [{ amount: 'Invalid amount' }, null];
+    if (!recipient) return [{ amount: 'Invalid recipient' }, null];
     if (!token) return [{ originTokenKey: 'Origin token is required' }, null];
     if (!destinationToken) return [{ destinationTokenKey: 'Destination token is required' }, null];
 

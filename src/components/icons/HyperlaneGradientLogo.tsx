@@ -17,10 +17,10 @@ function _HyperlaneGradientLogo({ ...props }: DefaultIconProps) {
           y2="8.988"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#4C52FF" />
-          <stop offset="0.3" stop-color="#9A0DFF" />
-          <stop offset="0.6" stop-color="#9A0DFF" />
-          <stop offset="1" stop-color="#FF4FE9" />
+          <stop stopColor="#4C52FF" />
+          <stop offset="0.3" stopColor="#9A0DFF" />
+          <stop offset="0.6" stopColor="#9A0DFF" />
+          <stop offset="1" stopColor="#FF4FE9" />
         </linearGradient>
       </defs>
     </svg>

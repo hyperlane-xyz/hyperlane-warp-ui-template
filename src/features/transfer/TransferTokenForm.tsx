@@ -60,7 +60,6 @@ import {
 import { useTokenPrice } from '../tokens/useTokenPrice';
 import { checkTokenHasRoute, findRouteToken } from '../tokens/utils';
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
-import { FeeSectionButton } from './FeeSectionButton';
 import { RecipientConfirmationModal } from './RecipientConfirmationModal';
 import { TransferSection } from './TransferSection';
 import { getInterchainQuote, getLowestFeeTransferToken, getTotalFee } from './fees';
@@ -774,7 +773,7 @@ function ReviewDetails({
 
   return (
     <>
-      {!isReview && <FeeSectionButton visible={!isReview} fees={fees} isLoading={isLoading} />}
+      {/* {!isReview && <FeeSectionButton visible={!isReview} fees={fees} isLoading={isLoading} />} */}
 
       <div
         className={`${

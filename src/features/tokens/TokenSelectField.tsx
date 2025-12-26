@@ -149,7 +149,7 @@ function TokenButton({
 }
 
 const styles = {
-  base: 'w-full py-3 flex items-center justify-between transition-all',
-  enabled: '',
+  base: 'w-full py-3 flex items-center justify-between transition-all rounded-xl px-2',
+  enabled: 'hover:bg-gray-50 cursor pointer',
   disabled: 'cursor-not-allowed opacity-60',
 };

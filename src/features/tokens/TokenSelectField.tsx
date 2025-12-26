@@ -1,4 +1,5 @@
 import { Token } from '@hyperlane-xyz/sdk';
+import { isValidAddress } from '@hyperlane-xyz/utils';
 import { ChevronIcon } from '@hyperlane-xyz/widgets';
 import { useField, useFormikContext } from 'formik';
 import { useState } from 'react';
@@ -67,6 +68,11 @@ export function TokenSelectField({
         [WARP_QUERY_PARAMS.ORIGIN_TOKEN]: newToken.symbol,
       });
     } else {
+      // When destination changes, validate and clear custom recipient if protocol changed
+      const newProtocol = multiProvider.tryGetProtocol(newToken.chainName);
+      if (values.recipient && newProtocol && !isValidAddress(values.recipient, newProtocol)) {
+        setFieldValue('recipient', '');
+      }
       updateQueryParams({
         [WARP_QUERY_PARAMS.DESTINATION]: newToken.chainName,
         [WARP_QUERY_PARAMS.DESTINATION_TOKEN]: newToken.symbol,

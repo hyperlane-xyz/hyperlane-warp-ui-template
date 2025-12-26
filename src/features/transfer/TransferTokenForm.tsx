@@ -6,6 +6,7 @@ import {
   errorToString,
   fromWei,
   isNullish,
+  isValidAddress,
   isValidAddressEvm,
   objKeys,
   toWei,
@@ -60,6 +61,7 @@ import {
 import { useTokenPrice } from '../tokens/useTokenPrice';
 import { checkTokenHasRoute, findRouteToken } from '../tokens/utils';
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
+import { WalletDropdown } from '../wallet/WalletDropdown';
 import { RecipientConfirmationModal } from './RecipientConfirmationModal';
 import { TransferSection } from './TransferSection';
 import { getInterchainQuote, getLowestFeeTransferToken, getTotalFee } from './fees';
@@ -121,14 +123,23 @@ export function TransferTokenForm() {
     const destinationToken = getTokenByKey(tokens, values.destinationTokenKey);
     if (!originToken || !destinationToken) return;
 
+    // Get recipient (form value or fallback to connected wallet)
+    const { address: connectedDestAddress } = getAccountAddressAndPubKey(
+      multiProvider,
+      destinationToken.chainName,
+      accounts,
+    );
+    const recipient = values.recipient || connectedDestAddress || '';
+    if (!recipient) return;
+
     logger.debug(
       'Checking destination native balance for:',
       destinationToken.chainName,
-      values.recipient,
+      recipient,
     );
     const balance = await getDestinationNativeBalance(multiProvider, {
       destination: destinationToken.chainName,
-      recipient: values.recipient,
+      recipient,
     });
     if (isNullish(balance)) return;
     else if (balance > 0n) {
@@ -221,11 +232,12 @@ function TokenAmountBlock({ type, tokenFieldName, isReview, setIsNft }: TokenAmo
   const destinationToken = getTokenByKey(tokens, values.destinationTokenKey);
   const currentToken = isOrigin ? originToken : destinationToken;
 
-  // Get wallet addresses for both chains
-  const destWalletAddress = useAccountAddressForChain(multiProvider, destinationToken?.chainName);
+  // Get recipient (form value or fallback to connected wallet for destination)
+  const connectedDestAddress = useAccountAddressForChain(multiProvider, destinationToken?.chainName);
+  const recipient = values.recipient || connectedDestAddress;
 
   const { balance: originBalance } = useOriginBalance(values, originToken);
-  const { balance: destBalance } = useDestinationBalance(destWalletAddress, destinationToken);
+  const { balance: destBalance } = useDestinationBalance(recipient, destinationToken);
   const balance = isOrigin ? originBalance : destBalance;
 
   const { tokenPrice, isLoading: isPriceLoading } = useTokenPrice(values);
@@ -250,11 +262,12 @@ function TokenAmountBlock({ type, tokenFieldName, isReview, setIsNft }: TokenAmo
     <div>
       {/* Header Row: Wallet dropdown + Import Token / Advanced Settings */}
       <div className="mb-3 flex items-center justify-between">
-        <button type="button" className="flex items-center gap-2 text-sm">
-          <div className="h-2 w-2 rounded-full bg-green-400" />
-          <span className="text-gray-600">0x32...2088</span>
-          <ChevronIcon width={10} height={6} direction="s" className="text-gray-400" />
-        </button>
+        <WalletDropdown
+          chainName={currentToken?.chainName}
+          selectionMode={isOrigin ? 'origin' : 'destination'}
+          recipient={!isOrigin ? values.recipient : undefined}
+          onRecipientChange={!isOrigin ? (addr: string) => setFieldValue('recipient', addr) : undefined}
+        />
         {canAddAsset && (
           <button
             type="button"
@@ -327,19 +340,28 @@ function TokenAmountBlock({ type, tokenFieldName, isReview, setIsNft }: TokenAmo
 function SwapTokensButton({ disabled }: { disabled?: boolean }) {
   const { values, setValues } = useFormikContext<TransferFormValues>();
   const tokens = useTokens();
+  const multiProvider = useMultiProvider();
 
   const onSwap = useCallback(() => {
     if (disabled) return;
 
-    const { originTokenKey, destinationTokenKey } = values;
+    const { originTokenKey, destinationTokenKey, recipient } = values;
     const originToken = getTokenByKey(tokens, originTokenKey);
     const destToken = getTokenByKey(tokens, destinationTokenKey);
+
+    // After swap, origin becomes the new destination - validate recipient for new destination protocol
+    const newDestProtocol = originToken
+      ? multiProvider.tryGetProtocol(originToken.chainName)
+      : undefined;
+    const shouldClearRecipient =
+      recipient && newDestProtocol && !isValidAddress(recipient, newDestProtocol);
 
     setValues((prevValues) => ({
       ...prevValues,
       amount: '',
       originTokenKey: destinationTokenKey,
       destinationTokenKey: originTokenKey,
+      recipient: shouldClearRecipient ? '' : prevValues.recipient,
     }));
 
     // Update URL params
@@ -351,7 +373,7 @@ function SwapTokensButton({ disabled }: { disabled?: boolean }) {
         [WARP_QUERY_PARAMS.DESTINATION_TOKEN]: originToken.symbol,
       });
     }
-  }, [disabled, values, tokens, setValues]);
+  }, [disabled, values, tokens, setValues, multiProvider]);
 
   return (
     <div className="relative z-10 -my-4 flex justify-center">
@@ -448,6 +470,14 @@ function ButtonSection({
     accounts,
   );
 
+  // Get recipient (form value or fallback to connected wallet for destination)
+  const { address: connectedDestAddress } = getAccountAddressAndPubKey(
+    multiProvider,
+    destinationToken?.chainName,
+    accounts,
+  );
+  const recipient = values.recipient || connectedDestAddress || '';
+
   // Confirming recipient address
   const [{ addressConfirmed, showWarning }, setRecipientInfos] = useState({
     showWarning: false,
@@ -504,9 +534,9 @@ function ButtonSection({
         setRecipientInfos({ showWarning: false, addressConfirmed: true });
       }
     };
-    checkSameEVMRecipient(values.recipient);
+    checkSameEVMRecipient(recipient);
   }, [
-    values.recipient,
+    recipient,
     connectedWallet,
     multiProvider,
     originToken,
@@ -630,6 +660,7 @@ function MaxButton({ balance, disabled }: { balance?: TokenAmount; disabled?: bo
       origin: originToken.chainName,
       destination: destinationToken.chainName,
       accounts,
+      recipient: values.recipient,
     });
     if (isNullish(maxAmount)) return;
     const decimalsAmount = maxAmount.getDecimalFormattedAmount();
@@ -917,16 +948,25 @@ async function validateForm(
   // returns a tuple, where first value is validation result
   // and second value is token override
   try {
-    const { originTokenKey, destinationTokenKey, amount, recipient } = values;
+    const { originTokenKey, destinationTokenKey, amount, recipient: formRecipient } = values;
 
     // Look up tokens from the unified array
     const token = getTokenByKey(tokens, originTokenKey);
     const destinationToken = getTokenByKey(tokens, destinationTokenKey);
 
     if (!amount) return [{ amount: 'Invalid amount' }, null];
-    if (!recipient) return [{ amount: 'Invalid recipient' }, null];
     if (!token) return [{ originTokenKey: 'Origin token is required' }, null];
     if (!destinationToken) return [{ destinationTokenKey: 'Destination token is required' }, null];
+
+    // Use form recipient if set, otherwise fallback to connected wallet for destination chain
+    const { address: connectedDestAddress } = getAccountAddressAndPubKey(
+      warpCore.multiProvider,
+      destinationToken.chainName,
+      accounts,
+    );
+    const recipient = formRecipient || connectedDestAddress || '';
+
+    if (!recipient) return [{ amount: 'Invalid recipient' }, null];
 
     // Early route check using collateral groups - validates origin token can reach destination token
     if (!checkTokenHasRoute(token, destinationToken, collateralGroups)) {

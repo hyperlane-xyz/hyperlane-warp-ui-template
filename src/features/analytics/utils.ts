@@ -50,7 +50,7 @@ const SKIPPED_ERRORS = [
 export function trackTransactionFailedEvent(
   errors: Record<string, string> | null,
   warpCore: WarpCore,
-  { originTokenKey, destinationTokenKey, amount, recipient }: TransferFormValues,
+  { originTokenKey, destinationTokenKey, amount, recipient: formRecipient }: TransferFormValues,
   accounts: Record<ProtocolType, AccountInfo>,
   overrideToken: Token | null,
 ) {
@@ -71,6 +71,14 @@ export function trackTransactionFailedEvent(
   const destToken = warpCore.tokens.find((t) => getTokenKey(t) === destinationTokenKey);
   if (!destToken) return;
   const destination = destToken.chainName;
+
+  // Get recipient (form value or fallback to connected wallet for destination)
+  const { address: connectedDestAddress } = getAccountAddressAndPubKey(
+    warpCore.multiProvider,
+    destination,
+    accounts,
+  );
+  const recipient = formRecipient || connectedDestAddress || '';
 
   const originChainId = warpCore.multiProvider.tryGetChainId(origin);
   const destinationChainId = destination ? warpCore.multiProvider.tryGetChainId(destination) : null;

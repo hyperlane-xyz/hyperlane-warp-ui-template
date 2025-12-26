@@ -14,7 +14,6 @@ import {
 import {
   AccountInfo,
   ChevronIcon,
-  PlusIcon,
   SpinnerIcon,
   getAccountAddressAndPubKey,
   useAccountAddressForChain,
@@ -29,7 +28,6 @@ import { RecipientWarningBanner } from '../../components/banner/RecipientWarning
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
 import { SolidButton } from '../../components/buttons/SolidButton';
 import { SwapIcon } from '../../components/icons/SwapIcon';
-// import { TextField } from '../../components/input/TextField';
 import { WARP_QUERY_PARAMS } from '../../consts/args';
 import { config } from '../../consts/config';
 import { Color } from '../../styles/Color';
@@ -42,18 +40,13 @@ import { useChainDisplayName, useMultiProvider } from '../chains/hooks';
 import { isMultiCollateralLimitExceeded } from '../limits/utils';
 import { useIsAccountSanctioned } from '../sanctions/hooks/useIsAccountSanctioned';
 import { useStore } from '../store';
-// import { SelectOrInputTokenIds } from '../tokens/SelectOrInputTokenIds';
+import { ImportTokenButton } from '../tokens/ImportTokenButton';
 import { TokenSelectField } from '../tokens/TokenSelectField';
 import { useIsApproveRequired } from '../tokens/approval';
-import {
-  getDestinationNativeBalance,
-  useDestinationBalance,
-  useOriginBalance,
-} from '../tokens/balances';
+import { getDestinationNativeBalance, useDestinationBalance, useOriginBalance } from '../tokens/balances';
 import {
   getInitialTokenKeys,
   getTokenByKey,
-  useAddToken,
   useCollateralGroups,
   useTokens,
   useWarpCore,
@@ -168,20 +161,11 @@ export function TransferTokenForm() {
           <WarningBanners />
 
           <TransferSection label="Send">
-            <TokenAmountBlock
-              type="origin"
-              tokenFieldName="originTokenKey"
-              isReview={isReview}
-              setIsNft={setIsNft}
-            />
+            <OriginTokenCard isReview={isReview} setIsNft={setIsNft} />
           </TransferSection>
           <SwapTokensButton disabled={isReview} />
           <TransferSection label="Receive">
-            <TokenAmountBlock
-              type="destination"
-              tokenFieldName="destinationTokenKey"
-              isReview={isReview}
-            />
+            <DestinationTokenCard isReview={isReview} />
           </TransferSection>
 
           <ReviewDetails isReview={isReview} routeOverrideToken={routeOverrideToken} />
@@ -200,141 +184,6 @@ export function TransferTokenForm() {
         </Form>
       )}
     </Formik>
-  );
-}
-
-type TokenAmountBlockProps = {
-  type: 'origin' | 'destination';
-  tokenFieldName: string;
-  isReview: boolean;
-  setIsNft?: (b: boolean) => void;
-};
-
-const USER_REJECTED_ERROR = 'User rejected';
-
-function TokenAmountBlock({ type, tokenFieldName, isReview, setIsNft }: TokenAmountBlockProps) {
-  const { values, setFieldValue } = useFormikContext<TransferFormValues>();
-  const tokens = useTokens();
-  const multiProvider = useMultiProvider();
-  const isOrigin = type === 'origin';
-
-  const originToken = getTokenByKey(tokens, values.originTokenKey);
-  const destinationToken = getTokenByKey(tokens, values.destinationTokenKey);
-  const currentToken = isOrigin ? originToken : destinationToken;
-
-  // Get recipient (form value or fallback to connected wallet for destination)
-  const connectedDestAddress = useAccountAddressForChain(
-    multiProvider,
-    destinationToken?.chainName,
-  );
-  const recipient = values.recipient || connectedDestAddress;
-
-  const { balance: originBalance } = useOriginBalance(values, originToken);
-  const { balance: destBalance } = useDestinationBalance(recipient, destinationToken);
-  const balance = isOrigin ? originBalance : destBalance;
-
-  // Watch for recipient balance increases to detect transfer completion (destination only)
-  useRecipientBalanceWatcher(
-    !isOrigin ? recipient : undefined,
-    !isOrigin ? destBalance : undefined,
-  );
-
-  const { tokenPrice, isLoading: isPriceLoading } = useTokenPrice(values);
-
-  // Import token to wallet functionality
-  const { addToken, canAddAsset, isLoading: isAddingToken } = useAddToken(currentToken);
-  const onAddToken = useCallback(async () => {
-    try {
-      await addToken();
-    } catch (error: any) {
-      const errorDetails = error.message || error.toString();
-      if (!errorDetails.includes(USER_REJECTED_ERROR)) toast.error(errorDetails);
-      logger.debug(error);
-    }
-  }, [addToken]);
-
-  const amount = parseFloat(values.amount);
-  const totalTokenPrice = !isNullish(tokenPrice) && !isNaN(amount) ? amount * tokenPrice : 0;
-  const shouldShowPrice = totalTokenPrice >= 0.01;
-
-  return (
-    <div>
-      {/* Header Row: Wallet dropdown + Import Token / Advanced Settings */}
-      <div className="mb-3 flex items-center justify-between">
-        <WalletDropdown
-          chainName={currentToken?.chainName}
-          selectionMode={isOrigin ? 'origin' : 'destination'}
-          recipient={!isOrigin ? values.recipient : undefined}
-          onRecipientChange={
-            !isOrigin ? (addr: string) => setFieldValue('recipient', addr) : undefined
-          }
-        />
-        {canAddAsset && (
-          <button
-            type="button"
-            className="flex items-center text-sm text-primary-500 hover:text-primary-600 disabled:opacity-50 [&_path]:fill-primary-500 [&_path]:hover:fill-primary-600"
-            onClick={onAddToken}
-            disabled={isAddingToken}
-          >
-            <PlusIcon width={18} height={18} className="-mr-0.5" />
-            <span>Import token</span>
-          </button>
-        )}
-      </div>
-
-      {/* White box wrapper for token selector and amount */}
-      <div className="rounded-[7px] border border-gray-400/50 bg-white p-4 shadow-input">
-        {/* Token Selector */}
-        <TokenSelectField
-          name={tokenFieldName}
-          selectionMode={isOrigin ? 'origin' : 'destination'}
-          disabled={isReview}
-          setIsNft={setIsNft}
-          showLabel={false}
-        />
-
-        {/* Separator */}
-        <div className="my-4 h-px bg-primary-50" />
-
-        {isOrigin ? (
-          /* Amount Section for Origin */
-          <>
-            <div className="flex items-start justify-between">
-              <input
-                name="amount"
-                value={values.amount}
-                onChange={(e) => setFieldValue('amount', e.target.value)}
-                placeholder="0.00"
-                className="w-full flex-1 border-none bg-transparent p-0 font-secondary text-[26px] font-normal leading-[34px] text-gray-900 outline-none placeholder:text-gray-300"
-                type="number"
-                step="any"
-                disabled={isReview}
-              />
-              <MaxButton balance={balance} disabled={isReview} />
-            </div>
-            <div className="mt-1 flex items-center justify-between text-xs leading-[18px] text-gray-450">
-              <span>
-                {shouldShowPrice && !isPriceLoading ? (
-                  <>
-                    $
-                    {totalTokenPrice.toLocaleString('en-US', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </>
-                ) : (
-                  '$0.00'
-                )}
-              </span>
-              <TokenBalance label="Balance" balance={balance} />
-            </div>
-          </>
-        ) : (
-          /* Remote Balance for Destination */
-          <TokenBalance label="Remote Balance" balance={balance} />
-        )}
-      </div>
-    </div>
   );
 }
 
@@ -391,6 +240,166 @@ function SwapTokensButton({ disabled }: { disabled?: boolean }) {
         />
       </button>
     </div>
+  );
+}
+
+function OriginTokenCard({ isReview, setIsNft }: { isReview: boolean; setIsNft?: (b: boolean) => void }) {
+  const { values, setFieldValue } = useFormikContext<TransferFormValues>();
+  const tokens = useTokens();
+  const collateralGroups = useCollateralGroups();
+
+  const originToken = getTokenByKey(tokens, values.originTokenKey);
+  const destinationToken = getTokenByKey(tokens, values.destinationTokenKey);
+  const { balance } = useOriginBalance(values, originToken);
+  const { tokenPrice, isLoading: isPriceLoading } = useTokenPrice(values);
+
+  const isRouteSupported = useMemo(() => {
+    if (!originToken || !destinationToken) return true;
+    return checkTokenHasRoute(originToken, destinationToken, collateralGroups);
+  }, [originToken, destinationToken, collateralGroups]);
+
+  const amount = parseFloat(values.amount);
+  const totalTokenPrice = !isNullish(tokenPrice) && !isNaN(amount) ? amount * tokenPrice : 0;
+  const shouldShowPrice = totalTokenPrice >= 0.01;
+
+  return (
+    <div>
+      <div className="mb-3 flex items-center justify-between">
+        <WalletDropdown chainName={originToken?.chainName} selectionMode="origin" />
+        <ImportTokenButton token={originToken} />
+      </div>
+
+      <div className="rounded-[7px] border border-gray-400/50 bg-white p-4 shadow-input">
+        <TokenSelectField
+          name="originTokenKey"
+          selectionMode="origin"
+          disabled={isReview}
+          setIsNft={setIsNft}
+          showLabel={false}
+        />
+
+        <div className="my-4 h-px bg-primary-50" />
+
+        <div className="flex items-start justify-between">
+          <input
+            name="amount"
+            value={values.amount}
+            onChange={(e) => setFieldValue('amount', e.target.value)}
+            placeholder="0.00"
+            className="w-full flex-1 border-none bg-transparent p-0 font-secondary text-[26px] font-normal leading-[34px] text-gray-900 outline-none placeholder:text-gray-300"
+            type="number"
+            step="any"
+            disabled={isReview}
+          />
+          <MaxButton balance={balance} disabled={isReview} isRouteSupported={isRouteSupported} />
+        </div>
+        <div className="mt-1 flex items-center justify-between text-xs leading-[18px] text-gray-450">
+          <span>
+            {shouldShowPrice && !isPriceLoading ? (
+              <>
+                $
+                {totalTokenPrice.toLocaleString('en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </>
+            ) : (
+              '$0.00'
+            )}
+          </span>
+          <TokenBalance label="Balance" balance={balance} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DestinationTokenCard({ isReview }: { isReview: boolean }) {
+  const { values, setFieldValue } = useFormikContext<TransferFormValues>();
+  const tokens = useTokens();
+  const multiProvider = useMultiProvider();
+
+  const destinationToken = getTokenByKey(tokens, values.destinationTokenKey);
+
+  const connectedDestAddress = useAccountAddressForChain(multiProvider, destinationToken?.chainName);
+  const recipient = values.recipient || connectedDestAddress;
+
+  const { balance } = useDestinationBalance(recipient, destinationToken);
+
+  useRecipientBalanceWatcher(recipient, balance);
+
+  return (
+    <div>
+      <div className="mb-3 flex items-center justify-between">
+        <WalletDropdown
+          chainName={destinationToken?.chainName}
+          selectionMode="destination"
+          recipient={values.recipient}
+          onRecipientChange={(addr: string) => setFieldValue('recipient', addr)}
+        />
+        <ImportTokenButton token={destinationToken} />
+      </div>
+
+      <div className="rounded-[7px] border border-gray-400/50 bg-white p-4 shadow-input">
+        <TokenSelectField
+          name="destinationTokenKey"
+          selectionMode="destination"
+          disabled={isReview}
+          showLabel={false}
+        />
+
+        <div className="my-4 h-px bg-primary-50" />
+
+        <TokenBalance label="Remote Balance" balance={balance} />
+      </div>
+    </div>
+  );
+}
+
+function MaxButton({
+  balance,
+  disabled,
+  isRouteSupported,
+}: {
+  balance?: TokenAmount;
+  disabled?: boolean;
+  isRouteSupported: boolean;
+}) {
+  const { values, setFieldValue } = useFormikContext<TransferFormValues>();
+  const { originTokenKey, destinationTokenKey } = values;
+  const tokens = useTokens();
+  const originToken = getTokenByKey(tokens, originTokenKey);
+  const destinationToken = getTokenByKey(tokens, destinationTokenKey);
+  const multiProvider = useMultiProvider();
+  const { accounts } = useAccounts(multiProvider);
+  const { fetchMaxAmount, isLoading } = useFetchMaxAmount();
+
+  const isDisabled = disabled || !isRouteSupported;
+
+  const onClick = async () => {
+    if (!balance || !originToken || !destinationToken || isDisabled) return;
+    const maxAmount = await fetchMaxAmount({
+      balance,
+      origin: originToken.chainName,
+      destination: destinationToken.chainName,
+      accounts,
+      recipient: values.recipient,
+    });
+    if (isNullish(maxAmount)) return;
+    const decimalsAmount = maxAmount.getDecimalFormattedAmount();
+    const roundedAmount = new BigNumber(decimalsAmount).toFixed(4, BigNumber.ROUND_FLOOR);
+    setFieldValue('amount', roundedAmount);
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={isDisabled}
+      className="rounded border border-gray-300 px-2 py-0.5 text-sm text-gray-600 transition-colors hover:border-gray-400 hover:text-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      {isLoading ? <SpinnerIcon className="h-4 w-4" /> : 'Max'}
+    </button>
   );
 }
 
@@ -602,46 +611,6 @@ function ButtonSection({
         </SolidButton>
       </div>
     </>
-  );
-}
-
-function MaxButton({ balance, disabled }: { balance?: TokenAmount; disabled?: boolean }) {
-  const { values, setFieldValue } = useFormikContext<TransferFormValues>();
-  const { originTokenKey, destinationTokenKey } = values;
-  const tokens = useTokens();
-  const originToken = getTokenByKey(tokens, originTokenKey);
-  const destinationToken = getTokenByKey(tokens, destinationTokenKey);
-  const multiProvider = useMultiProvider();
-  const { accounts } = useAccounts(multiProvider);
-  const { fetchMaxAmount, isLoading } = useFetchMaxAmount();
-  const isRouteSupported = useIsRouteSupported();
-
-  const isDisabled = disabled || !isRouteSupported;
-
-  const onClick = async () => {
-    if (!balance || !originToken || !destinationToken || isDisabled) return;
-    const maxAmount = await fetchMaxAmount({
-      balance,
-      origin: originToken.chainName,
-      destination: destinationToken.chainName,
-      accounts,
-      recipient: values.recipient,
-    });
-    if (isNullish(maxAmount)) return;
-    const decimalsAmount = maxAmount.getDecimalFormattedAmount();
-    const roundedAmount = new BigNumber(decimalsAmount).toFixed(4, BigNumber.ROUND_FLOOR);
-    setFieldValue('amount', roundedAmount);
-  };
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={isDisabled}
-      className="rounded border border-gray-300 px-2 py-0.5 text-sm text-gray-600 transition-colors hover:border-gray-400 hover:text-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
-    >
-      {isLoading ? <SpinnerIcon className="h-4 w-4" /> : 'Max'}
-    </button>
   );
 }
 

@@ -10,7 +10,7 @@ import { NavItem, navLinks } from './Nav';
 
 export function Header() {
   return (
-    <header className="flex w-full items-center justify-between bg-primary-50 px-4 py-3 shadow-[0px_4px_7px_rgba(0,0,0,0.05)] sm:justify-center sm:bg-transparent sm:px-6 sm:pb-2 sm:pt-3 sm:shadow-none lg:px-12">
+    <header className="bg-primary-25 flex w-full items-center justify-between px-4 py-3 shadow-[0px_4px_7px_rgba(0,0,0,0.05)] sm:justify-center sm:bg-transparent sm:px-6 sm:pb-2 sm:pt-3 sm:shadow-none lg:px-12">
       {/* Mobile: Logo + Hamburger Menu */}
       <div className="flex items-center gap-3 sm:hidden">
         <Link href="/">
@@ -18,7 +18,7 @@ export function Header() {
         </Link>
         <DropdownMenu
           button={<HamburgerIcon width={20} height={19} />}
-          buttonClassname="rounded p-2 text-primary-500 data-[open]:bg-[#E2C4FC] data-[open]:shadow-[inset_4px_4px_4px_rgba(154,13,255,0.1)] data-[open]:text-white"
+          buttonClassname="rounded p-2 text-primary-500 data-[open]:bg-primary-25 data-[open]:shadow-[inset_4px_4px_4px_rgba(154,13,255,0.1)] data-[open]:text-white"
           menuClassname="py-4"
           menuItems={navLinks.map((item) => (
             <NavItem

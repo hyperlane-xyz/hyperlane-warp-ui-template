@@ -1,7 +1,7 @@
 import { DiscordIcon, GithubIcon } from '@hyperlane-xyz/widgets';
 import clsx from 'clsx';
 import Link from 'next/link';
-import { ReactNode } from 'react';
+import { forwardRef, ReactNode } from 'react';
 import { links } from '../../consts/links';
 import { Color } from '../../styles/Color';
 import { BookIcon } from '../icons/BookIcon';
@@ -41,9 +41,13 @@ interface NavItemProps {
   className?: string;
 }
 
-export function NavItem({ item, className }: NavItemProps) {
+export const NavItem = forwardRef<HTMLAnchorElement, NavItemProps>(function NavItem(
+  { item, className },
+  ref,
+) {
   return (
     <Link
+      ref={ref}
       className={clsx(
         'flex items-center gap-2 text-primary-500 decoration-primary-500 underline-offset-2 hover:underline',
         className,
@@ -55,4 +59,4 @@ export function NavItem({ item, className }: NavItemProps) {
       <span>{item.title}</span>
     </Link>
   );
-}
+});

@@ -33,12 +33,11 @@ module.exports = {
           350: '#6B6B6B',
           400: '#BFBFBF',
           450: '#B6B6B6',
-        },
-        plum: {
           900: '#332840',
           950: '#221A2D',
         },
         primary: {
+          25: '#E2C4FC',
           50: '#E8CAFF',
           100: '#D9A4FF',
           200: '#C97EFF',
@@ -124,12 +123,12 @@ module.exports = {
       boxShadow: ({ theme }) => ({
         'accent-glow': `inset 2px 2px 13px 2px ${theme('colors.accent.100')}`,
         'error-glow': `inset 2px 2px 13px 2px ${theme('colors.accent.100')}`,
-        'card': `0px 4px 6px ${theme('colors.plum.950')}1A`,
-        'button': `0 4px 6px ${theme('colors.plum.950')}1A`,
-        'input': `0 0 4px ${theme('colors.gray.400')}4D`,
+        card: `0px 4px 6px ${theme('colors.gray.950')}1A`,
+        button: `0 4px 6px ${theme('colors.gray.950')}1A`,
+        input: `0 0 4px ${theme('colors.gray.400')}4D`,
       }),
       dropShadow: ({ theme }) => ({
-        'button': `0 4px 6px ${theme('colors.plum.950')}0D`,
+        button: `0 4px 6px ${theme('colors.gray.950')}0D`,
       }),
       transitionProperty: {
         height: 'height, max-height',

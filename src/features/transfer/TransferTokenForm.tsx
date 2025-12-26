@@ -291,7 +291,7 @@ function TokenAmountBlock({ type, tokenFieldName, isReview, setIsNft }: TokenAmo
                 value={values.amount}
                 onChange={(e) => setFieldValue('amount', e.target.value)}
                 placeholder="0.00"
-                className="w-full flex-1 border-none bg-transparent p-0 font-secondary text-[26px] font-normal leading-[34px] text-plum-900 outline-none placeholder:text-gray-300"
+                className="w-full flex-1 border-none bg-transparent p-0 font-secondary text-[26px] font-normal leading-[34px] text-gray-900 outline-none placeholder:text-gray-300"
                 type="number"
                 step="any"
                 disabled={isReview}

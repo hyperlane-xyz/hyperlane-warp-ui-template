@@ -68,7 +68,7 @@ export function SideBarMenu({
       >
         {isMenuOpen && (
           <button
-            className="absolute left-0 top-0 flex h-full w-9 -translate-x-full items-center justify-center rounded-l bg-[rgba(245,198,255,0.3)] backdrop-blur-[1.5px] transition-all"
+            className="absolute left-0 top-0 flex h-full w-9 -translate-x-full items-center justify-center rounded-l bg-accent-50/30 backdrop-blur-[1.5px] transition-all"
             onClick={() => onClose()}
           >
             <Image src={CollapseIcon} width={15} height={24} alt="" />

@@ -50,9 +50,14 @@ export function UnifiedTokenChainModal({
     <Modal
       isOpen={isOpen}
       close={onClose}
-      panelClassname="p-0 max-w-sm md:max-w-4xl overflow-hidden"
+      panelClassname="p-0 max-w-sm md:max-w-[800px] overflow-hidden"
     >
-      <div className="flex max-h-[80vh] min-h-[24rem]">
+      {/* Purple gradient header */}
+      <div className="flex items-center gap-2 bg-accent-gradient px-4 py-1">
+        <div className="h-2 w-2 rounded-full bg-white" />
+        <span className="font-secondary text-xs text-white">Select Token</span>
+      </div>
+      <div className="flex max-h-[80vh] min-h-[24rem] gap-4 p-4 sm:max-h-[582px]">
         {/* Chain filter panel: always visible on desktop, conditionally visible on mobile */}
         <div className={`${showMobileChainList ? 'flex flex-1' : 'hidden'} md:flex md:flex-none`}>
           <ChainFilterPanel

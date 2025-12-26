@@ -40,12 +40,12 @@ export function TokenListPanel({
 
   return (
     <div className="flex min-w-0 flex-1 flex-col bg-white">
-      <div className="shrink-0 border-b border-gray-200 px-4 py-4">
+      <div className="shrink-0 px-4 py-4">
         <SearchInput
           inputRef={inputRef}
           value={searchQuery}
           onChange={onSearchChange}
-          placeholder="Search for a token or paste address"
+          placeholder="Search Name, Symbol, or Contract Address"
           aria-label="Search tokens"
         />
         {/* Mobile chain quick select (hidden on desktop) */}

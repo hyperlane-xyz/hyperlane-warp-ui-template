@@ -134,8 +134,10 @@ function TokenButton({
         <div className="flex min-w-0 flex-1 items-center gap-3">
           <TokenChainIcon token={token} size={44} />
           <div className="flex min-w-0 flex-col items-start">
-            <span className="text-lg font-semibold text-gray-900">{token.symbol}</span>
-            <span className="text-sm text-gray-500">{chainDisplayName}</span>
+            <span className="font-secondary text-2xl font-normal text-gray-900">
+              {token.symbol}
+            </span>
+            <span className="text-base text-gray-900">{chainDisplayName}</span>
           </div>
         </div>
       ) : (

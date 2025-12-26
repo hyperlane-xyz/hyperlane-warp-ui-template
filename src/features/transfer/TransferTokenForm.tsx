@@ -67,7 +67,7 @@ import { TransferSection } from './TransferSection';
 import { getInterchainQuote, getLowestFeeTransferToken, getTotalFee } from './fees';
 import { useFetchMaxAmount } from './maxAmount';
 import { TransferFormValues } from './types';
-// import { useRecipientBalanceWatcher } from './useBalanceWatcher';
+import { useRecipientBalanceWatcher } from './useBalanceWatcher';
 import { useFeeQuotes } from './useFeeQuotes';
 import { useTokenTransfer } from './useTokenTransfer';
 import { isSmartContract } from './utils';
@@ -132,11 +132,7 @@ export function TransferTokenForm() {
     const recipient = values.recipient || connectedDestAddress || '';
     if (!recipient) return;
 
-    logger.debug(
-      'Checking destination native balance for:',
-      destinationToken.chainName,
-      recipient,
-    );
+    logger.debug('Checking destination native balance for:', destinationToken.chainName, recipient);
     const balance = await getDestinationNativeBalance(multiProvider, {
       destination: destinationToken.chainName,
       recipient,
@@ -171,8 +167,7 @@ export function TransferTokenForm() {
         <Form className="flex w-full flex-col items-stretch gap-1.5">
           <WarningBanners />
 
-          {/* Pay Section */}
-          <TransferSection label="Pay">
+          <TransferSection label="Send">
             <TokenAmountBlock
               type="origin"
               tokenFieldName="originTokenKey"
@@ -180,11 +175,7 @@ export function TransferTokenForm() {
               setIsNft={setIsNft}
             />
           </TransferSection>
-
-          {/* Swap Button */}
           <SwapTokensButton disabled={isReview} />
-
-          {/* Receive Section */}
           <TransferSection label="Receive">
             <TokenAmountBlock
               type="destination"
@@ -193,7 +184,6 @@ export function TransferTokenForm() {
             />
           </TransferSection>
 
-          {/* <RecipientSection isReview={isReview} /> */}
           <ReviewDetails isReview={isReview} routeOverrideToken={routeOverrideToken} />
           <ButtonSection
             isReview={isReview}
@@ -233,12 +223,21 @@ function TokenAmountBlock({ type, tokenFieldName, isReview, setIsNft }: TokenAmo
   const currentToken = isOrigin ? originToken : destinationToken;
 
   // Get recipient (form value or fallback to connected wallet for destination)
-  const connectedDestAddress = useAccountAddressForChain(multiProvider, destinationToken?.chainName);
+  const connectedDestAddress = useAccountAddressForChain(
+    multiProvider,
+    destinationToken?.chainName,
+  );
   const recipient = values.recipient || connectedDestAddress;
 
   const { balance: originBalance } = useOriginBalance(values, originToken);
   const { balance: destBalance } = useDestinationBalance(recipient, destinationToken);
   const balance = isOrigin ? originBalance : destBalance;
+
+  // Watch for recipient balance increases to detect transfer completion (destination only)
+  useRecipientBalanceWatcher(
+    !isOrigin ? recipient : undefined,
+    !isOrigin ? destBalance : undefined,
+  );
 
   const { tokenPrice, isLoading: isPriceLoading } = useTokenPrice(values);
 
@@ -266,7 +265,9 @@ function TokenAmountBlock({ type, tokenFieldName, isReview, setIsNft }: TokenAmo
           chainName={currentToken?.chainName}
           selectionMode={isOrigin ? 'origin' : 'destination'}
           recipient={!isOrigin ? values.recipient : undefined}
-          onRecipientChange={!isOrigin ? (addr: string) => setFieldValue('recipient', addr) : undefined}
+          onRecipientChange={
+            !isOrigin ? (addr: string) => setFieldValue('recipient', addr) : undefined
+          }
         />
         {canAddAsset && (
           <button
@@ -393,35 +394,6 @@ function SwapTokensButton({ disabled }: { disabled?: boolean }) {
   );
 }
 
-// function RecipientSection({ isReview }: { isReview: boolean }) {
-//   const { values } = useFormikContext<TransferFormValues>();
-//   const tokens = useTokens();
-//   const destinationToken = getTokenByKey(tokens, values.destinationTokenKey);
-
-//   const { balance } = useDestinationBalance(values, destinationToken);
-//   useRecipientBalanceWatcher(destinationToken?.chainName || '', balance);
-
-//   return (
-//     <div className="mt-4">
-//       <div className="flex justify-between pr-1">
-//         <label htmlFor="recipient" className="block pl-0.5 text-sm text-gray-600">
-//           Recipient
-//         </label>
-//         <TokenBalance label="Recipient balance" balance={balance} />
-//       </div>
-//       <div className="relative w-full">
-//         <TextField
-//           name="recipient"
-//           placeholder="Recipient address (0x...)"
-//           className="w-full"
-//           disabled={isReview}
-//         />
-//         <SelfButton disabled={isReview} destinationChain={destinationToken?.chainName} />
-//       </div>
-//     </div>
-//   );
-// }
-
 function TokenBalance({
   label,
   balance,
@@ -535,14 +507,7 @@ function ButtonSection({
       }
     };
     checkSameEVMRecipient(recipient);
-  }, [
-    recipient,
-    connectedWallet,
-    multiProvider,
-    originToken,
-    destinationToken,
-    chainDisplayName,
-  ]);
+  }, [recipient, connectedWallet, multiProvider, originToken, destinationToken, chainDisplayName]);
 
   const isSanctioned = useIsAccountSanctioned();
 
@@ -679,43 +644,6 @@ function MaxButton({ balance, disabled }: { balance?: TokenAmount; disabled?: bo
     </button>
   );
 }
-
-// function SelfButton({
-//   disabled,
-//   destinationChain,
-// }: {
-//   disabled?: boolean;
-//   destinationChain?: string;
-// }) {
-//   const { setFieldValue } = useFormikContext<TransferFormValues>();
-//   const multiProvider = useMultiProvider();
-//   const chainDisplayName = useChainDisplayName(destinationChain || '');
-//   const { accounts } = useAccounts(multiProvider);
-
-//   const onClick = () => {
-//     if (disabled || !destinationChain) return;
-//     const protocol = multiProvider.tryGetProtocol(destinationChain);
-//     if (!protocol) return;
-//     const account = accounts[protocol];
-//     if (account?.addresses?.[0]?.address) {
-//       setFieldValue('recipient', account.addresses[0].address);
-//     } else {
-//       logger.warn(`No account found for chain ${chainDisplayName}`);
-//     }
-//   };
-
-//   return (
-//     <SolidButton
-//       type="button"
-//       onClick={onClick}
-//       color="primary"
-//       disabled={disabled || !destinationChain}
-//       className="absolute bottom-1 right-1 top-2.5 px-2 text-xs opacity-90 all:rounded"
-//     >
-//       Self
-//     </SolidButton>
-//   );
-// }
 
 function ReviewDetails({
   isReview,

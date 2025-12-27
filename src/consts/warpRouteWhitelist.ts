@@ -129,7 +129,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // cbBTC routes
   'cbBTC/base-ethereum-superseed',
-  'cbBTC/ethereum-flowmainnet',
+  // 'cbBTC/ethereum-flowmainnet',
 
   // ezETH routes
   'ezETH/renzo-prod',

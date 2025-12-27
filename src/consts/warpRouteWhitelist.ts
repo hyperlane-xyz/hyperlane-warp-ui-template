@@ -110,7 +110,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'TONY/base-solanamainnet',
 
   // TRUMP routes
-  'TRUMP/arbitrum-avalanche-base-flowmainnet-form-optimism-solanamainnet-worldchain',
+  // 'TRUMP/arbitrum-avalanche-base-flowmainnet-form-optimism-solanamainnet-worldchain',
 
   // TURTLE routes
   'TURTLE/ethereum-linea',
@@ -129,7 +129,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // cbBTC routes
   'cbBTC/base-ethereum-superseed',
-  'cbBTC/ethereum-flowmainnet',
+  // 'cbBTC/ethereum-flowmainnet',
 
   // ezETH routes
   'ezETH/renzo-prod',

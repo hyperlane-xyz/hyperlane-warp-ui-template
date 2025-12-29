@@ -1,7 +1,6 @@
-import { DefaultIconProps } from '@hyperlane-xyz/widgets';
 import { memo } from 'react';
 
-function _HyperlaneTransparentLogo({ color, ...props }: DefaultIconProps) {
+function _HyperlaneTransparentLogo() {
   return (
     <svg
       width="146"

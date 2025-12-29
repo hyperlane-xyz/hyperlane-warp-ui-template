@@ -9,6 +9,7 @@ import { trackTokenSelectionEvent } from '../analytics/utils';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { TransferFormValues } from '../transfer/types';
+import { shouldClearAddress } from '../transfer/utils';
 import { getTokenByKey, useTokens } from './hooks';
 import { TokenChainIcon } from './TokenChainIcon';
 import { TokenSelectionMode } from './types';
@@ -69,10 +70,12 @@ export function TokenSelectField({
       });
     } else {
       // When destination changes, validate and clear custom recipient if protocol changed
-      const newProtocol = multiProvider.tryGetProtocol(newToken.chainName);
-      if (values.recipient && newProtocol && !isValidAddress(values.recipient, newProtocol)) {
-        setFieldValue('recipient', '');
-      }
+      const shouldClearRecipient = shouldClearAddress(
+        multiProvider,
+        values.recipient,
+        newToken.chainName,
+      );
+      if (shouldClearRecipient) setFieldValue('recipient', '');
       updateQueryParams({
         [WARP_QUERY_PARAMS.DESTINATION]: newToken.chainName,
         [WARP_QUERY_PARAMS.DESTINATION_TOKEN]: newToken.symbol,

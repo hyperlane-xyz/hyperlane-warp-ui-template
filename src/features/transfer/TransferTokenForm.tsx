@@ -6,7 +6,6 @@ import {
   errorToString,
   fromWei,
   isNullish,
-  isValidAddress,
   isValidAddressEvm,
   objKeys,
   toWei,
@@ -69,7 +68,7 @@ import { TransferFormValues } from './types';
 import { useRecipientBalanceWatcher } from './useBalanceWatcher';
 import { useFeeQuotes } from './useFeeQuotes';
 import { useTokenTransfer } from './useTokenTransfer';
-import { isSmartContract } from './utils';
+import { isSmartContract, shouldClearAddress } from './utils';
 
 export function TransferTokenForm() {
   const multiProvider = useMultiProvider();
@@ -205,12 +204,14 @@ function SwapTokensButton({ disabled }: { disabled?: boolean }) {
     const originToken = getTokenByKey(tokens, originTokenKey);
     const destToken = getTokenByKey(tokens, destinationTokenKey);
 
+    if (!originToken || !destToken) return;
+
     // After swap, origin becomes the new destination - validate recipient for new destination protocol
-    const newDestProtocol = originToken
-      ? multiProvider.tryGetProtocol(originToken.chainName)
-      : undefined;
-    const shouldClearRecipient =
-      recipient && newDestProtocol && !isValidAddress(recipient, newDestProtocol);
+    const shouldClearRecipient = shouldClearAddress(
+      multiProvider,
+      recipient,
+      originToken.chainName,
+    );
 
     setValues((prevValues) => ({
       ...prevValues,

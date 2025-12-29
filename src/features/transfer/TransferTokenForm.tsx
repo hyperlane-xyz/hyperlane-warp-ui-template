@@ -573,7 +573,7 @@ function ButtonSection({
     return (
       <>
         <div
-          className={`mt-3 gap-2 bg-amber-400 px-4 text-sm ${
+          className={`gap-2 bg-amber-400 px-4 text-sm ${
             showWarning ? 'max-h-38 py-2' : 'max-h-0'
           } overflow-hidden transition-all duration-500`}
         >
@@ -598,7 +598,7 @@ function ButtonSection({
   return (
     <>
       <div
-        className={`mt-3 gap-2 bg-amber-400 px-4 text-sm ${
+        className={`gap-2 bg-amber-400 px-4 text-sm ${
           showWarning ? 'max-h-38 py-2' : 'max-h-0'
         } overflow-hidden transition-all duration-500`}
       >

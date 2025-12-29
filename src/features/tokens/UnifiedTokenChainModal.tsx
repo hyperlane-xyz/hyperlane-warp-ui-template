@@ -1,6 +1,7 @@
 import { ChainName, Token } from '@hyperlane-xyz/sdk';
 import { Modal } from '@hyperlane-xyz/widgets';
 import { useState } from 'react';
+import { ModalHeader } from '../../components/layout/ModalHeader';
 import { ChainFilterPanel } from '../chains/ChainFilterPanel';
 import { TokenListPanel } from './TokenListPanel';
 import { TokenSelectionMode } from './types';
@@ -52,11 +53,7 @@ export function UnifiedTokenChainModal({
       close={onClose}
       panelClassname="p-0 max-w-sm md:max-w-[800px] overflow-hidden"
     >
-      {/* Purple gradient header */}
-      <div className="flex items-center gap-2 bg-accent-gradient px-4 py-1">
-        <div className="h-2 w-2 rounded-full bg-white" />
-        <span className="font-secondary text-xs text-white">Select Token</span>
-      </div>
+      <ModalHeader>Select Token</ModalHeader>
       <div className="flex max-h-[80vh] min-h-[24rem] gap-4 p-4 sm:max-h-[582px]">
         {/* Chain filter panel: always visible on desktop, conditionally visible on mobile */}
         <div className={`${showMobileChainList ? 'flex flex-1' : 'hidden'} md:flex md:flex-none`}>

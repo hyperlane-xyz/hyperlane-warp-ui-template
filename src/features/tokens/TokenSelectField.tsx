@@ -149,7 +149,7 @@ function TokenButton({
       ) : (
         <span className="text-sm text-gray-400">Select token</span>
       )}
-      <div className="flex h-14 w-14 items-center justify-center rounded-full border border-gray-400 bg-white drop-shadow-button">
+      <div className="flex h-12 w-12 items-center justify-center rounded-full border border-gray-400 bg-white drop-shadow-button">
         <ChevronLargeIcon width={16} height={20} />
       </div>
     </button>

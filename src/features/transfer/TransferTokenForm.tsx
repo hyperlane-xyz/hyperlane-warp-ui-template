@@ -285,7 +285,7 @@ function OriginTokenCard({
         <ImportTokenButton token={originToken} />
       </div>
 
-      <div className="rounded-[7px] border border-gray-400/50 bg-white p-4 shadow-input">
+      <div className="rounded-[7px] border border-gray-400/25 bg-white p-4 shadow-input">
         <TokenSelectField
           name="originTokenKey"
           selectionMode="origin"
@@ -358,7 +358,7 @@ function DestinationTokenCard({ isReview }: { isReview: boolean }) {
         <ImportTokenButton token={destinationToken} />
       </div>
 
-      <div className="rounded-[7px] border border-gray-400/50 bg-white p-4 shadow-input">
+      <div className="rounded-[7px] border border-gray-400/25 bg-white p-4 shadow-input">
         <TokenSelectField
           name="destinationTokenKey"
           selectionMode="destination"

@@ -13,7 +13,7 @@ import React, { useCallback, useMemo } from 'react';
 import { Color } from '../../styles/Color';
 import { useChainProtocol, useMultiProvider } from '../chains/hooks';
 import { useStore } from '../store';
-import { ReceiveAddressModal } from './ReceiveAddressModal';
+import { RecipientAddressModal } from './RecipientAddressModal';
 
 interface WalletDropdownProps {
   chainName: string | undefined;
@@ -141,7 +141,7 @@ export function WalletDropdown({
         menuItems={menuItems}
         buttonProps={{ disabled }}
       />
-      <ReceiveAddressModal
+      <RecipientAddressModal
         isOpen={isModalOpen}
         close={closeModal}
         onSave={onSaveRecipient}

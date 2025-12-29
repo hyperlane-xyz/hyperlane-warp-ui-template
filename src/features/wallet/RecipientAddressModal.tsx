@@ -3,7 +3,7 @@ import { Modal, XIcon } from '@hyperlane-xyz/widgets';
 import { useState } from 'react';
 import { SolidButton } from '../../components/buttons/SolidButton';
 
-interface ReceiveAddressModalProps {
+interface RecipientAddressModalProps {
   isOpen: boolean;
   close: () => void;
   onSave: (address: string) => void;
@@ -11,13 +11,13 @@ interface ReceiveAddressModalProps {
   protocol?: ProtocolType;
 }
 
-export function ReceiveAddressModal({
+export function RecipientAddressModal({
   isOpen,
   close,
   onSave,
   initialValue = '',
   protocol = ProtocolType.Ethereum,
-}: ReceiveAddressModalProps) {
+}: RecipientAddressModalProps) {
   const [address, setAddress] = useState(initialValue);
   const [error, setError] = useState('');
 
@@ -65,7 +65,9 @@ export function ReceiveAddressModal({
           onChange={handleAddressChange}
           placeholder="Paste Address or ENS"
           className={`w-full rounded-lg border px-4 py-3 text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none ${
-            error ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-primary-500'
+            error
+              ? 'border-red-500 focus:border-red-500'
+              : 'border-gray-300 focus:border-primary-500'
           }`}
         />
         {error && <p className="mt-1 text-sm text-red-500">{error}</p>}

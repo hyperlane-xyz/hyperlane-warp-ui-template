@@ -33,6 +33,8 @@ export default function App({ Component, pageProps }: AppProps) {
     return <div></div>;
   }
 
+  // Note, the font definition is required both here and in _document.tsx
+  // Otherwise Next.js will not load the font
   return (
     <div className="font-primary text-black">
       <ErrorBoundary>

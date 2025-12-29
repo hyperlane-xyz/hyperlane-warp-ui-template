@@ -1,5 +1,4 @@
 import { Token } from '@hyperlane-xyz/sdk';
-import { isValidAddress } from '@hyperlane-xyz/utils';
 import { useField, useFormikContext } from 'formik';
 import { useState } from 'react';
 import { ChevronLargeIcon } from '../../components/icons/ChevronLargeIcon';

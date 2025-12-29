@@ -28,6 +28,7 @@ import { RecipientWarningBanner } from '../../components/banner/RecipientWarning
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
 import { SolidButton } from '../../components/buttons/SolidButton';
 import { SwapIcon } from '../../components/icons/SwapIcon';
+import { TextField } from '../../components/input/TextField';
 import { WARP_QUERY_PARAMS } from '../../consts/args';
 import { config } from '../../consts/config';
 import { Color } from '../../styles/Color';
@@ -255,7 +256,7 @@ function OriginTokenCard({
   isReview: boolean;
   setIsNft?: (b: boolean) => void;
 }) {
-  const { values, setFieldValue } = useFormikContext<TransferFormValues>();
+  const { values } = useFormikContext<TransferFormValues>();
   const tokens = useTokens();
   const collateralGroups = useCollateralGroups();
 
@@ -296,12 +297,10 @@ function OriginTokenCard({
         <div className="my-4 h-px bg-primary-50" />
 
         <div className="flex items-start justify-between">
-          <input
+          <TextField
             name="amount"
-            value={values.amount}
-            onChange={(e) => setFieldValue('amount', e.target.value)}
             placeholder="0.00"
-            className="w-full flex-1 border-none bg-transparent p-0 font-secondary text-[26px] font-normal leading-[34px] text-gray-900 outline-none placeholder:text-gray-300"
+            className="w-full flex-1 border-none bg-transparent font-secondary text-[26px] font-normal leading-[34px] text-gray-900 outline-none placeholder:text-gray-300"
             type="number"
             step="any"
             disabled={isReview}
@@ -415,7 +414,7 @@ function MaxButton({
       type="button"
       onClick={onClick}
       disabled={isDisabled}
-      className="rounded border border-gray-300 px-2 py-0.5 text-sm text-gray-600 transition-colors hover:border-gray-400 hover:text-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+      className="rounded border border-gray-300 px-2 py-0.5 font-secondary text-sm text-gray-450 transition-colors hover:border-gray-400 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50"
     >
       {isLoading ? <SpinnerIcon className="h-4 w-4" /> : 'Max'}
     </button>
@@ -614,7 +613,7 @@ function ButtonSection({
           type="button"
           color="primary"
           onClick={onEdit}
-          className="px-6 py-1.5"
+          className="px-6 py-1.5 font-secondary"
           icon={<ChevronIcon direction="w" width={10} height={6} color={Color.white} />}
         >
           <span>Edit</span>
@@ -624,7 +623,7 @@ function ButtonSection({
           type="button"
           color="accent"
           onClick={triggerTransactionsHandler}
-          className="flex-1 px-3 py-1.5"
+          className="flex-1 px-3 py-1.5 font-secondary text-white"
         >
           {`Send to ${chainDisplayName}`}
         </SolidButton>

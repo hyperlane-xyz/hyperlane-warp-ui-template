@@ -589,7 +589,7 @@ function ButtonSection({
           disabled={!addressConfirmed || !isRouteSupported}
           chainName={originToken?.chainName || ''}
           text={text}
-          classes="w-full px-3 py-3 font-secondary text-2xl text-cream-100"
+          classes="w-full mb-4 px-3 py-3 font-secondary text-2xl text-cream-100"
         />
       </>
     );

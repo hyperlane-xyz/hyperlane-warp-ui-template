@@ -119,6 +119,7 @@ module.exports = {
         'accent-gradient': `radial-gradient(61.48% 118.8% at 50.08% 92%, ${theme('colors.primary.200')} 0%, ${theme('colors.primary.500')} 100%)`,
         'error-gradient': `radial-gradient(61.48% 118.8% at 50.08% 92%, ${theme('colors.accent.300')} 0%, ${theme('colors.accent.450')} 100%)`,
         'card-gradient': `linear-gradient(180deg, ${theme('colors.white')} 0%, ${theme('colors.cream.200')} 100%)`,
+        'tip-card-gradient': `radial-gradient(74.42% 40.45% at 50% 100%, ${theme('colors.primary.50')} 0%, ${theme('colors.cream.300')} 100%)`,
       }),
       boxShadow: ({ theme }) => ({
         'accent-glow': `inset 2px 2px 13px 2px ${theme('colors.accent.100')}`,

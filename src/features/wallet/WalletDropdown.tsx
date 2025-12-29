@@ -20,6 +20,7 @@ interface WalletDropdownProps {
   selectionMode: 'origin' | 'destination';
   recipient?: string;
   onRecipientChange?: (address: string) => void;
+  disabled?: boolean;
 }
 
 export function WalletDropdown({
@@ -27,6 +28,7 @@ export function WalletDropdown({
   selectionMode,
   recipient,
   onRecipientChange,
+  disabled,
 }: WalletDropdownProps) {
   const multiProvider = useMultiProvider();
   const protocol = useChainProtocol(chainName || '') || ProtocolType.Ethereum;
@@ -137,6 +139,7 @@ export function WalletDropdown({
         buttonClassname="flex items-center"
         menuClassname="mt-2 min-w-[200px] rounded-lg border border-gray-200 bg-white py-1 shadow-md"
         menuItems={menuItems}
+        buttonProps={{ disabled }}
       />
       <ReceiveAddressModal
         isOpen={isModalOpen}

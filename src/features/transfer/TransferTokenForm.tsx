@@ -43,7 +43,11 @@ import { useStore } from '../store';
 import { ImportTokenButton } from '../tokens/ImportTokenButton';
 import { TokenSelectField } from '../tokens/TokenSelectField';
 import { useIsApproveRequired } from '../tokens/approval';
-import { getDestinationNativeBalance, useDestinationBalance, useOriginBalance } from '../tokens/balances';
+import {
+  getDestinationNativeBalance,
+  useDestinationBalance,
+  useOriginBalance,
+} from '../tokens/balances';
 import {
   getInitialTokenKeys,
   getTokenByKey,
@@ -55,6 +59,7 @@ import { useTokenPrice } from '../tokens/useTokenPrice';
 import { checkTokenHasRoute, findRouteToken } from '../tokens/utils';
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { WalletDropdown } from '../wallet/WalletDropdown';
+import { FeeSectionButton } from './FeeSectionButton';
 import { RecipientConfirmationModal } from './RecipientConfirmationModal';
 import { TransferSection } from './TransferSection';
 import { getInterchainQuote, getLowestFeeTransferToken, getTotalFee } from './fees';
@@ -243,7 +248,13 @@ function SwapTokensButton({ disabled }: { disabled?: boolean }) {
   );
 }
 
-function OriginTokenCard({ isReview, setIsNft }: { isReview: boolean; setIsNft?: (b: boolean) => void }) {
+function OriginTokenCard({
+  isReview,
+  setIsNft,
+}: {
+  isReview: boolean;
+  setIsNft?: (b: boolean) => void;
+}) {
   const { values, setFieldValue } = useFormikContext<TransferFormValues>();
   const tokens = useTokens();
   const collateralGroups = useCollateralGroups();
@@ -265,7 +276,11 @@ function OriginTokenCard({ isReview, setIsNft }: { isReview: boolean; setIsNft?:
   return (
     <div>
       <div className="mb-3 flex items-center justify-between">
-        <WalletDropdown chainName={originToken?.chainName} selectionMode="origin" />
+        <WalletDropdown
+          chainName={originToken?.chainName}
+          selectionMode="origin"
+          disabled={isReview}
+        />
         <ImportTokenButton token={originToken} />
       </div>
 
@@ -321,7 +336,10 @@ function DestinationTokenCard({ isReview }: { isReview: boolean }) {
 
   const destinationToken = getTokenByKey(tokens, values.destinationTokenKey);
 
-  const connectedDestAddress = useAccountAddressForChain(multiProvider, destinationToken?.chainName);
+  const connectedDestAddress = useAccountAddressForChain(
+    multiProvider,
+    destinationToken?.chainName,
+  );
   const recipient = values.recipient || connectedDestAddress;
 
   const { balance } = useDestinationBalance(recipient, destinationToken);
@@ -336,6 +354,7 @@ function DestinationTokenCard({ isReview }: { isReview: boolean }) {
           selectionMode="destination"
           recipient={values.recipient}
           onRecipientChange={(addr: string) => setFieldValue('recipient', addr)}
+          disabled={isReview}
         />
         <ImportTokenButton token={destinationToken} />
       </div>
@@ -570,7 +589,7 @@ function ButtonSection({
           disabled={!addressConfirmed || !isRouteSupported}
           chainName={originToken?.chainName || ''}
           text={text}
-          classes={`${isReview ? 'mt-4' : 'mt-4'} w-full px-3 py-3 font-secondary text-2xl text-cream-100`}
+          classes="w-full px-3 py-3 font-secondary text-2xl text-cream-100"
         />
       </>
     );
@@ -590,7 +609,7 @@ function ButtonSection({
           }
         />
       </div>
-      <div className="mt-4 flex items-center justify-between space-x-4">
+      <div className="mb-4 mt-4 flex items-center justify-between space-x-4">
         <SolidButton
           type="button"
           color="primary"
@@ -702,7 +721,7 @@ function ReviewDetails({
 
   return (
     <>
-      {/* {!isReview && <FeeSectionButton visible={!isReview} fees={fees} isLoading={isLoading} />} */}
+      {!isReview && <FeeSectionButton visible={!isReview} fees={fees} isLoading={isLoading} />}
 
       <div
         className={`${

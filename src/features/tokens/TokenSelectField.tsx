@@ -1,8 +1,8 @@
 import { Token } from '@hyperlane-xyz/sdk';
 import { isValidAddress } from '@hyperlane-xyz/utils';
-import { ChevronIcon } from '@hyperlane-xyz/widgets';
 import { useField, useFormikContext } from 'formik';
 import { useState } from 'react';
+import { ChevronLargeIcon } from '../../components/icons/ChevronLargeIcon';
 import { WARP_QUERY_PARAMS } from '../../consts/args';
 import { updateQueryParams } from '../../utils/queryParams';
 import { trackTokenSelectionEvent } from '../analytics/utils';
@@ -149,8 +149,8 @@ function TokenButton({
       ) : (
         <span className="text-sm text-gray-400">Select token</span>
       )}
-      <div className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-400 bg-white drop-shadow-button">
-        <ChevronIcon width={14} height={10} direction="e" className="text-gray-600" />
+      <div className="flex h-14 w-14 items-center justify-center rounded-full border border-gray-400 bg-white drop-shadow-button">
+        <ChevronLargeIcon width={16} height={20} />
       </div>
     </button>
   );

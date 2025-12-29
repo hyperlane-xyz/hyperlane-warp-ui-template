@@ -1,5 +1,6 @@
 const filters = [
   // Hyperlane custom set
+  'Cosmostation initClientError', // Wallet extension not installed / noisy console error
   'trap returned falsish for property', // Error from cosmos wallet lib
   'not established yet', // Same, bug with their WC integration ^
   'Refused to create a WebAssembly object', // CSP blocking wasm

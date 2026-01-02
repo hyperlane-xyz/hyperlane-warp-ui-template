@@ -263,7 +263,7 @@ function OriginTokenCard({
 
   const originToken = getTokenByKey(tokens, values.originTokenKey);
   const destinationToken = getTokenByKey(tokens, values.destinationTokenKey);
-  const { balance } = useOriginBalance(values, originToken);
+  const { balance } = useOriginBalance(originToken);
   const { tokenPrice, isLoading: isPriceLoading } = useTokenPrice(values);
 
   const isRouteSupported = useMemo(() => {

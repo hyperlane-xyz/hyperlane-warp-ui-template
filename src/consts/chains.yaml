@@ -18,24 +18,3 @@
 #   protocol: ethereum
 #   rpcUrls:
 #     - http: http://127.0.0.1:8555
-krown:
-  blocks:
-    confirmations: 1
-    estimateBlockTime: 12
-    reorgPeriod: 1
-  chainId: 1983
-  deployer:
-    name: Abacus Works
-    url: https://www.hyperlane.xyz
-  displayName: Krown
-  domainId: 1983
-  gasCurrencyCoinGeckoId: krown-network
-  name: krown
-  nativeToken:
-    decimals: 18
-    name: KROWN
-    symbol: KROWN
-  protocol: ethereum
-  rpcUrls:
-    - http: https://mainnet1.krown.network/
-  technicalStack: other

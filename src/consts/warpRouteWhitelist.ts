@@ -371,4 +371,9 @@ export const warpRouteWhitelist: Array<string> | null = [
   'USDT/carrchain',
   'WBTC/carrchain',
   'WETH/carrchain',
+
+  // Krown routes
+  'ETH/krown',
+  'USDC/krown',
+  'USDT/krown',
 ];

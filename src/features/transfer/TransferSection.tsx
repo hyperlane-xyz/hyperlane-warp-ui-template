@@ -12,7 +12,7 @@ export function TransferSection({ label, children }: TransferSectionProps) {
       <div className="bg-accent-gradient px-3 py-1 shadow-accent-glow">
         <div className="flex items-center gap-2">
           <div className="h-2 w-2 rounded-full bg-cream-300" />
-          <span className="text-sm font-medium text-white">{label}</span>
+          <span className="font-secondary text-sm font-medium text-white">{label}</span>
         </div>
       </div>
       {/* Content */}

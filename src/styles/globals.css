@@ -11,7 +11,7 @@ Place font files in public/fonts/ directory
 /* PP Valve - Secondary font */
 @font-face {
   font-family: 'PP Valve';
-  src: url('/fonts/PPValve-PlainVariable.woff2') format('woff2');
+  src: url('/fonts/PP Valve/PP Valve - Plain Family v1.1/variable/PPValve-PlainVariable.woff2') format('woff2');
   font-weight: 100 900;
   font-style: normal;
   font-display: swap;
@@ -114,7 +114,7 @@ input::-webkit-inner-spin-button {
   margin: 0;
 }
 
-/* clears the ‘X’ from Internet Explorer */
+/* clears the 'X' from Internet Explorer */
 input[type='search']::-ms-clear {
   display: none;
   width: 0;
@@ -126,7 +126,7 @@ input[type='search']::-ms-reveal {
   height: 0;
 }
 
-/* clears the ‘X’ from Chrome */
+/* clears the 'X' from Chrome */
 input[type='search']::-webkit-search-decoration,
 input[type='search']::-webkit-search-cancel-button,
 input[type='search']::-webkit-search-results-button,

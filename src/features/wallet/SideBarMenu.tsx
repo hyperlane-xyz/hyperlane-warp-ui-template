@@ -72,6 +72,14 @@ export function SideBarMenu({
 
   return (
     <>
+      {/* Backdrop overlay - click to close */}
+      {isMenuOpen && (
+        <div
+          className="fixed inset-0 z-[5] bg-black/20"
+          onClick={onClose}
+          aria-hidden="true"
+        />
+      )}
       <div
         className={`fixed right-0 top-0 h-full w-88 transform bg-white bg-opacity-95 shadow-lg transition-transform duration-100 ease-in ${
           isMenuOpen ? 'z-10 translate-x-0' : 'z-0 translate-x-full'
@@ -85,8 +93,8 @@ export function SideBarMenu({
             <Image src={CollapseIcon} width={15} height={24} alt="" />
           </button>
         )}
-        <div className="flex h-full w-full flex-col overflow-y-auto">
-          <div className="w-full bg-accent-gradient px-3.5 py-2 text-base font-normal tracking-wider text-white shadow-accent-glow">
+        <div className="flex h-full w-full flex-col overflow-y-auto overflow-x-hidden">
+          <div className="w-full bg-accent-gradient px-3.5 py-2 font-secondary text-base font-normal tracking-wider text-white shadow-accent-glow">
             My Wallets
           </div>
           <AccountList
@@ -96,7 +104,7 @@ export function SideBarMenu({
             className="px-3 py-3"
             chainName={originChainName}
           />
-          <div className="mb-4 w-full bg-accent-gradient px-3.5 py-2 text-base font-normal tracking-wider text-white shadow-accent-glow">
+          <div className="mb-4 w-full bg-accent-gradient px-3.5 py-2 font-secondary text-base font-normal tracking-wider text-white shadow-accent-glow">
             Transaction History
           </div>
           <div className="flex grow flex-col px-3.5">

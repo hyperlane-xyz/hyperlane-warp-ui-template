@@ -50,6 +50,17 @@ export function SideBarMenu({
     setIsMenuOpen(isOpen);
   }, [isOpen]);
 
+  useEffect(() => {
+    if (!isMenuOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isMenuOpen, onClose]);
+
   const sortedTransfers = useMemo(
     () => [...transfers].sort((a, b) => b.timestamp - a.timestamp) || [],
     [transfers],

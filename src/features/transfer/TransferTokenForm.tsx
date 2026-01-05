@@ -197,9 +197,14 @@ function SwapTokensButton({ disabled }: { disabled?: boolean }) {
   const { values, setValues } = useFormikContext<TransferFormValues>();
   const tokens = useTokens();
   const multiProvider = useMultiProvider();
+  const [isRotating, setIsRotating] = useState(false);
 
   const onSwap = useCallback(() => {
     if (disabled) return;
+
+    // Trigger rotation animation
+    setIsRotating(true);
+    setTimeout(() => setIsRotating(false), 300);
 
     const { originTokenKey, destinationTokenKey, recipient } = values;
     const originToken = getTokenByKey(tokens, originTokenKey);
@@ -244,7 +249,7 @@ function SwapTokensButton({ disabled }: { disabled?: boolean }) {
         <SwapIcon
           width={18}
           height={24}
-          className="transition-transform duration-300 group-hover:rotate-180 group-disabled:rotate-0"
+          className={`transition-transform duration-300 group-disabled:rotate-0 ${isRotating ? 'rotate-180' : 'group-hover:rotate-180'}`}
         />
       </button>
     </div>

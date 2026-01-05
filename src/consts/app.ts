@@ -3,6 +3,6 @@ export const APP_NAME = 'Hyperlane Warp UI Template';
 export const APP_DESCRIPTION = 'A DApp for Hyperlane Warp Route transfers';
 export const APP_URL = 'hyperlane-warp-template.vercel.app';
 export const BRAND_COLOR = Color.primary['500'];
-export const BACKGROUND_COLOR = '#F8F8FF';
+export const BACKGROUND_COLOR = '#0d0612';
 export const BACKGROUND_IMAGE =
-  'url(/backgrounds/main.svg), radial-gradient(81.94% 51.02% at 50% 100%, #E8CAFF 0%, #F8F8FF 100%)';
+  'url(/backgrounds/main.svg), radial-gradient(ellipse 200% 150% at 50% 100%, #5E1396 0%, #1a0a28 40%, #0d0612 100%)';

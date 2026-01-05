@@ -10,7 +10,7 @@ export function TipCard() {
   const [show, setShow] = useState(config.showTipBox);
   if (!show) return null;
   return (
-    <div className="relative w-full overflow-hidden rounded border border-accent-500/50 bg-gradient-to-t from-accent-500/30 to-gray-900/95 px-4 pb-4 pt-4 shadow-card xl:w-72 xl:pb-24">
+    <div className="relative w-full overflow-hidden rounded border border-accent-500/50 bg-gradient-to-t from-accent-500/30 to-gray-900/95 px-4 pb-4 pt-4 shadow-card xl:pb-24">
       <div className="absolute right-2 top-2">
         <IconButton
           onClick={() => setShow(false)}

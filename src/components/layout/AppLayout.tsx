@@ -40,8 +40,8 @@ export function AppLayout({ children }: PropsWithChildren) {
         className="min-w-screen relative flex h-full min-h-screen w-full flex-col justify-between"
       >
         <Header />
-        <div className="mx-auto flex max-w-screen-xl grow sm:px-4">
-          <main className="mt-4 flex w-full flex-1 items-start justify-center">{children}</main>
+        <div className="mx-auto flex max-w-screen-xl grow items-center sm:px-4">
+          <main className="my-4 flex w-full flex-1 items-center justify-center">{children}</main>
         </div>
         <Footer />
       </div>

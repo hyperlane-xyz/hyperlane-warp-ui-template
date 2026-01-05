@@ -61,14 +61,6 @@ export function SideBarMenu({
 
   return (
     <>
-      {/* Backdrop overlay - click to close */}
-      {isMenuOpen && (
-        <div
-          className="fixed inset-0 z-[5] bg-black/20"
-          onClick={onClose}
-          aria-hidden="true"
-        />
-      )}
       <div
         className={`fixed right-0 top-0 h-full w-88 transform bg-white bg-opacity-95 shadow-lg transition-transform duration-100 ease-in ${
           isMenuOpen ? 'z-10 translate-x-0' : 'z-0 translate-x-full'

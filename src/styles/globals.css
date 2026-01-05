@@ -20,50 +20,8 @@ Place font files in public/fonts/ directory
 /* PP Fraktion Mono - Primary font */
 @font-face {
   font-family: 'PP Fraktion Mono';
-  src: url('/fonts/PPFraktionMono-Thin.woff2') format('woff2');
-  font-weight: 100;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'PP Fraktion Mono';
-  src: url('/fonts/PPFraktionMono-Light.woff2') format('woff2');
-  font-weight: 300;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'PP Fraktion Mono';
-  src: url('/fonts/PPFraktionMono-Regular.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'PP Fraktion Mono';
-  src: url('/fonts/PPFraktionMono-Medium.woff2') format('woff2');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'PP Fraktion Mono';
-  src: url('/fonts/PPFraktionMono-Semibold.woff2') format('woff2');
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'PP Fraktion Mono';
-  src: url('/fonts/PPFraktionMono-Bold.woff2') format('woff2');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'PP Fraktion Mono';
-  src: url('/fonts/PPFraktionMono-Black.woff2') format('woff2');
-  font-weight: 900;
+  src: url('/fonts/PPFraktionMono-Variable.woff2') format('woff2');
+  font-weight: 100 900;
   font-style: normal;
   font-display: swap;
 }

@@ -233,12 +233,12 @@ function SwapTokensButton({ disabled }: { disabled?: boolean }) {
   }, [disabled, values, tokens, setValues, multiProvider]);
 
   return (
-    <div className="relative z-10 -my-4 flex justify-center">
+    <div className="relative z-10 -my-3 flex justify-center">
       <button
         type="button"
         onClick={onSwap}
         disabled={disabled}
-        className="group flex h-10 w-10 items-center justify-center rounded border border-gray-400/50 bg-white shadow-button transition-all hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+        className="group flex h-8 w-8 items-center justify-center rounded border border-gray-400/50 bg-white shadow-button transition-all hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
       >
         <SwapIcon
           width={18}
@@ -277,7 +277,7 @@ function OriginTokenCard({
 
   return (
     <div>
-      <div className="mb-3 flex items-center justify-between">
+      <div className="mb-2 flex items-center justify-between">
         <WalletDropdown
           chainName={originToken?.chainName}
           selectionMode="origin"
@@ -286,7 +286,7 @@ function OriginTokenCard({
         <ImportTokenButton token={originToken} />
       </div>
 
-      <div className="rounded-[7px] border border-gray-400/25 bg-white p-4 shadow-input">
+      <div className="rounded-[7px] border border-gray-400/25 bg-white p-3 shadow-input">
         <TokenSelectField
           name="originTokenKey"
           selectionMode="origin"
@@ -295,13 +295,13 @@ function OriginTokenCard({
           showLabel={false}
         />
 
-        <div className="my-4 h-px bg-primary-50" />
+        <div className="my-2.5 h-px bg-primary-50" />
 
         <div className="flex items-start justify-between">
           <TextField
             name="amount"
             placeholder="0.00"
-            className="w-full flex-1 border-none bg-transparent font-secondary text-[26px] font-normal leading-[34px] text-gray-900 outline-none placeholder:text-gray-300"
+            className="w-full flex-1 border-none bg-transparent font-secondary text-xl font-normal text-gray-900 outline-none placeholder:text-gray-300"
             type="number"
             step="any"
             disabled={isReview}
@@ -348,7 +348,7 @@ function DestinationTokenCard({ isReview }: { isReview: boolean }) {
 
   return (
     <div>
-      <div className="mb-3 flex items-center justify-between">
+      <div className="mb-2 flex items-center justify-between">
         <WalletDropdown
           chainName={destinationToken?.chainName}
           selectionMode="destination"
@@ -359,7 +359,7 @@ function DestinationTokenCard({ isReview }: { isReview: boolean }) {
         <ImportTokenButton token={destinationToken} />
       </div>
 
-      <div className="rounded-[7px] border border-gray-400/25 bg-white p-4 shadow-input">
+      <div className="rounded-[7px] border border-gray-400/25 bg-white p-3 shadow-input">
         <TokenSelectField
           name="destinationTokenKey"
           selectionMode="destination"
@@ -367,7 +367,7 @@ function DestinationTokenCard({ isReview }: { isReview: boolean }) {
           showLabel={false}
         />
 
-        <div className="my-4 h-px bg-primary-50" />
+        <div className="my-2.5 h-px bg-primary-50" />
 
         <TokenBalance label="Remote Balance" balance={balance} />
       </div>
@@ -589,7 +589,7 @@ function ButtonSection({
           disabled={!addressConfirmed || !isRouteSupported}
           chainName={originToken?.chainName || ''}
           text={text}
-          classes="w-full mb-4 px-3 py-3 font-secondary text-2xl text-cream-100"
+          classes="w-full mb-4 px-3 py-2.5 font-secondary text-xl text-cream-100"
         />
       </>
     );

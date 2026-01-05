@@ -17,7 +17,7 @@ export function TokenChainIcon({ token, size = 32 }: Props) {
     <div className="relative inline-block" style={{ width: size, height: size }}>
       <TokenIcon token={token} size={size} />
       <div
-        className="absolute -bottom-0.5 -right-0.5 rounded-full border border-white bg-white"
+        className="absolute -bottom-0.5 -right-0.5 flex items-center justify-center rounded-full"
         style={{
           width: chainLogoContainerSize,
           height: chainLogoContainerSize,

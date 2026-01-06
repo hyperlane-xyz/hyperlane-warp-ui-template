@@ -6,8 +6,8 @@ import * as tokenUtils from '../tokens/utils';
 import {
   compareByBalanceDesc,
   filterAndSortTokensByBalance,
-  getTransferToken,
   getTotalFee,
+  getTransferToken,
   sortTokensByFee,
 } from './fees';
 

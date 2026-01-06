@@ -7,7 +7,12 @@ import {
 } from '@hyperlane-xyz/sdk';
 import { eqAddress, isNullish, normalizeAddress, objKeys } from '@hyperlane-xyz/utils';
 import { isChainDisabled } from '../chains/utils';
-import { DefaultMultiCollateralRoutes, MultiCollateralTokenMap, TokenChainMap, Tokens } from './types';
+import {
+  DefaultMultiCollateralRoutes,
+  MultiCollateralTokenMap,
+  TokenChainMap,
+  Tokens,
+} from './types';
 
 // Map of token symbols and token chain map
 // Symbols are not duplicated to avoid the same symbol from being shown
@@ -174,6 +179,8 @@ export function tryGetDefaultOriginToken(
   defaultMultiCollateralRoutes: DefaultMultiCollateralRoutes | undefined,
   tokensWithSameCollateralAddresses: { originToken: Token; destinationToken: Token }[],
 ): Token | null {
+  // this call might be repeated with getTransferToken but it ensures we are only dealing with valid
+  // multi-collateral tokens here
   if (!isValidMultiCollateralToken(originToken, destinationToken)) return null;
   if (!defaultMultiCollateralRoutes) return null;
 
@@ -189,7 +196,9 @@ export function tryGetDefaultOriginToken(
 
   // Get lookup key - 'native' for HypNative, collateralAddressOrDenom otherwise
   const originKey = originToken.isHypNative() ? 'native' : originToken.collateralAddressOrDenom;
-  const destKey = destinationToken.isHypNative() ? 'native' : destinationToken.collateralAddressOrDenom;
+  const destKey = destinationToken.isHypNative()
+    ? 'native'
+    : destinationToken.collateralAddressOrDenom;
 
   if (!originKey || !destKey) return null;
 

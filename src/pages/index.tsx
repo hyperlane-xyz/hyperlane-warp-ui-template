@@ -4,13 +4,11 @@ import { TransferTokenCard } from '../features/transfer/TransferTokenCard';
 
 const Home: NextPage = () => {
   return (
-    <div className="relative flex flex-col items-center pt-4">
-      <div className="mb-3 w-100 sm:w-[31rem] xl:absolute xl:right-[calc(50%+340px)] xl:top-6 xl:mb-0 xl:w-56 xl:max-w-sm">
+    <div className="relative flex w-100 flex-col gap-8 sm:w-[31rem] xl:block">
+      <div className="xl:absolute xl:right-[calc(100%+1rem)] xl:top-0 xl:w-72">
         <TipCard />
       </div>
-      <div className="relative">
-        <TransferTokenCard />
-      </div>
+      <TransferTokenCard />
     </div>
   );
 };

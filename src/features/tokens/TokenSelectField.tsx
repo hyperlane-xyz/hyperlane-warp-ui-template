@@ -139,27 +139,27 @@ function TokenButton({
       disabled={disabled}
     >
       {token ? (
-        <div className="flex min-w-0 flex-1 items-center gap-3">
-          <TokenChainIcon token={token} size={44} />
+        <div className="flex min-w-0 flex-1 items-center gap-2.5">
+          <TokenChainIcon token={token} size={36} />
           <div className="flex min-w-0 flex-col items-start">
-            <span className="font-secondary text-2xl font-normal text-gray-900">
+            <span className="font-secondary text-lg font-normal text-gray-900">
               {token.symbol}
             </span>
-            <span className="text-base text-gray-900">{chainDisplayName}</span>
+            <span className="text-sm text-gray-900">{chainDisplayName}</span>
           </div>
         </div>
       ) : (
         <span className="text-sm text-gray-400">Select token</span>
       )}
-      <div className="flex h-12 w-12 items-center justify-center rounded-full border border-gray-400 bg-white drop-shadow-button">
-        <ChevronLargeIcon width={16} height={20} />
+      <div className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-400 bg-white drop-shadow-button">
+        <ChevronLargeIcon width={14} height={18} />
       </div>
     </button>
   );
 }
 
 const styles = {
-  base: 'w-full py-3 flex items-center justify-between transition-all rounded-xl px-2',
+  base: 'w-full py-2 flex items-center justify-between transition-all rounded-xl px-1.5',
   enabled: 'hover:bg-gray-50 cursor pointer',
   disabled: 'cursor-not-allowed opacity-60',
 };

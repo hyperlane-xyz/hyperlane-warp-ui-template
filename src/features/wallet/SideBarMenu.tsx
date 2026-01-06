@@ -50,6 +50,17 @@ export function SideBarMenu({
     setIsMenuOpen(isOpen);
   }, [isOpen]);
 
+  useEffect(() => {
+    if (!isMenuOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isMenuOpen, onClose]);
+
   const sortedTransfers = useMemo(
     () => [...transfers].sort((a, b) => b.timestamp - a.timestamp) || [],
     [transfers],
@@ -75,7 +86,7 @@ export function SideBarMenu({
           </button>
         )}
         <div className="flex h-full w-full flex-col overflow-y-auto">
-          <div className="w-full rounded-t-md bg-accent-gradient px-3.5 py-2 text-base font-normal tracking-wider text-white shadow-accent-glow">
+          <div className="w-full bg-accent-gradient px-3.5 py-2 text-base font-normal tracking-wider text-white shadow-accent-glow">
             My Wallets
           </div>
           <AccountList

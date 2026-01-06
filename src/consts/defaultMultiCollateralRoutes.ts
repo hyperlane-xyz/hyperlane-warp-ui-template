@@ -8,7 +8,7 @@ import { DefaultMultiCollateralRoutes } from '../features/tokens/types';
 //
 // For native tokens (HypNative), use 'native' as the key:
 //   { "ethereum": { "native": "0xWarpRoute..." } }
-export const defaultMultiCollateralRoutes: DefaultMultiCollateralRoutes = {
+export const defaultMultiCollateralRoutes: DefaultMultiCollateralRoutes | undefined = {
   arbitrum: {
     // USDC
     '0xaf88d065e77c8cC2239327C5EDb3A432268e5831': '0xAd4350Ee0f9f5b85BaB115425426086Ae8384ebb',

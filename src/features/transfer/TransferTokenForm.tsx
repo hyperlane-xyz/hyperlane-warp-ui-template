@@ -62,7 +62,8 @@ import { useTokenPrice } from '../tokens/useTokenPrice';
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { FeeSectionButton } from './FeeSectionButton';
 import { RecipientConfirmationModal } from './RecipientConfirmationModal';
-import { getInterchainQuote, getLowestFeeTransferToken, getTotalFee } from './fees';
+import { defaultMultiCollateralRoutes } from '../../consts/defaultMultiCollateralRoutes';
+import { getInterchainQuote, getTransferToken, getTotalFee } from './fees';
 import { useFetchMaxAmount } from './maxAmount';
 import { TransferFormValues } from './types';
 import { useRecipientBalanceWatcher } from './useBalanceWatcher';
@@ -860,13 +861,14 @@ async function validateForm(
       accounts,
     );
     const amountWei = toWei(amount, token.decimals);
-    const transferToken = await getLowestFeeTransferToken(
+    const transferToken = await getTransferToken(
       warpCore,
       token,
       destinationToken,
       amountWei,
       recipient,
       sender,
+      defaultMultiCollateralRoutes,
     );
     const multiCollateralLimit = isMultiCollateralLimitExceeded(token, destination, amountWei);
 

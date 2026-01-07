@@ -13,7 +13,6 @@ import React, { useCallback, useMemo } from 'react';
 import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
 import { useChainProtocol, useMultiProvider } from '../chains/hooks';
-import { useStore } from '../store';
 import { RecipientAddressModal } from './RecipientAddressModal';
 
 interface WalletDropdownProps {
@@ -41,10 +40,6 @@ export function WalletDropdown({
   const disconnectFns = useDisconnectFns();
   const disconnectFn = disconnectFns[protocol];
 
-  const { setShowEnvSelectModal } = useStore((s) => ({
-    setShowEnvSelectModal: s.setShowEnvSelectModal,
-  }));
-
   const { isOpen: isModalOpen, open: openModal, close: closeModal } = useModal();
 
   const onDisconnect = useCallback(async () => {
@@ -54,10 +49,6 @@ export function WalletDropdown({
       logger.error('Failed to disconnect wallet', err);
     }
   }, [disconnectFn]);
-
-  const onConnectNewWallet = useCallback(() => {
-    setShowEnvSelectModal(true);
-  }, [setShowEnvSelectModal]);
 
   const onSaveRecipient = useCallback(
     (address: string) => {
@@ -80,19 +71,12 @@ export function WalletDropdown({
     const items: React.ReactNode[] = [];
 
     // when there is not a wallet connected, show the current chain wallet connect modal
-    // if a wallet is connected then show the multi-vm select modal instead
     if (!isConnected) {
       items.push(<ConnectMenuItem key="connect" protocol={protocol} />);
-    } else {
-      items.push(
-        <MenuItemButton key="connect-new" onClick={onConnectNewWallet}>
-          Connect new wallet
-        </MenuItemButton>,
-      );
     }
 
     if (isDestination) {
-      items.push(<MenuSeparator key="sep-1" />);
+      if (items.length > 0) items.push(<MenuSeparator key="sep-1" />);
       items.push(
         <MenuItemButton key="paste" onClick={openModal}>
           Paste wallet address
@@ -111,7 +95,7 @@ export function WalletDropdown({
 
     // Only show disconnect if actually connected
     if (isConnected) {
-      items.push(<MenuSeparator key="sep-3" />);
+      if (items.length > 0) items.push(<MenuSeparator key="sep-3" />);
       items.push(
         <MenuItemButton key="disconnect" onClick={onDisconnect}>
           Disconnect wallet
@@ -125,7 +109,6 @@ export function WalletDropdown({
     hasCustomRecipient,
     isConnected,
     protocol,
-    onConnectNewWallet,
     onDisconnect,
     onUseConnectedWallet,
     openModal,
@@ -171,7 +154,7 @@ function ConnectWalletButton({ chainName }: { chainName?: string }) {
     <button
       type="button"
       onClick={onConnect}
-      className="flex items-center gap-1.5 text-sm text-primary-500 transition-colors hover:text-primary-600"
+      className="flex items-center gap-1.5 text-sm text-primary-500 underline transition-colors hover:text-primary-600"
     >
       <XIcon width={8} height={8} color={Color.red[500]} />
       <span>Connect Wallet</span>
@@ -202,7 +185,7 @@ function ConnectMenuItem({ protocol }: { protocol: ProtocolType }) {
 
 function DropdownWalletButton({ address }: { address: string }) {
   return (
-    <div className="flex items-center gap-2 text-sm text-primary-500 transition-colors hover:text-primary-600">
+    <div className="flex items-center gap-2 text-sm text-primary-500 underline transition-colors hover:text-primary-600">
       {address ? (
         <div className="h-2 w-2 rounded-full bg-green-50" />
       ) : (

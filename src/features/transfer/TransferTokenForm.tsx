@@ -393,10 +393,11 @@ function MaxButton({
   const { accounts } = useAccounts(multiProvider);
   const { fetchMaxAmount, isLoading } = useFetchMaxAmount();
 
-  const isDisabled = disabled || !isRouteSupported;
+  const isDisabled =
+    disabled || !isRouteSupported || isLoading || !balance || !originToken || !destinationToken;
 
   const onClick = async () => {
-    if (!balance || !originToken || !destinationToken || isDisabled) return;
+    if (isDisabled) return;
     const maxAmount = await fetchMaxAmount({
       balance,
       origin: originToken.chainName,
@@ -485,6 +486,8 @@ function ButtonSection({
   });
 
   useEffect(() => {
+    let isMounted = true;
+
     const checkSameEVMRecipient = async (recipient: string) => {
       if (!connectedWallet || !originToken || !destinationToken) {
         setRecipientInfos({ showWarning: false, addressConfirmed: true });
@@ -514,9 +517,11 @@ function ButtonSection({
         originToken.chainName,
         connectedWallet,
       );
+      if (!isMounted) return;
 
       const { isContract: isRecipientSmartContract, error: recipientCheckError } =
         await isSmartContract(multiProvider, destinationToken.chainName, recipient);
+      if (!isMounted) return;
 
       const isSelfRecipient = eqAddress(recipient, connectedWallet);
 
@@ -535,6 +540,10 @@ function ButtonSection({
       }
     };
     checkSameEVMRecipient(recipient);
+
+    return () => {
+      isMounted = false;
+    };
   }, [recipient, connectedWallet, multiProvider, originToken, destinationToken, chainDisplayName]);
 
   const isSanctioned = useIsAccountSanctioned();

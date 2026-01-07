@@ -63,7 +63,7 @@ export function RecipientAddressModal({
           type="text"
           value={address}
           onChange={handleAddressChange}
-          placeholder="Paste Address or ENS"
+          placeholder="Paste Wallet Address"
           className={`w-full rounded-lg border px-4 py-3 text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none ${
             error
               ? 'border-red-500 focus:border-red-500'

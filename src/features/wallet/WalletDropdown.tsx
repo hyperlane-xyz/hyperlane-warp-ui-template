@@ -11,6 +11,7 @@ import {
 } from '@hyperlane-xyz/widgets';
 import React, { useCallback, useMemo } from 'react';
 import { Color } from '../../styles/Color';
+import { logger } from '../../utils/logger';
 import { useChainProtocol, useMultiProvider } from '../chains/hooks';
 import { useStore } from '../store';
 import { RecipientAddressModal } from './RecipientAddressModal';
@@ -47,7 +48,11 @@ export function WalletDropdown({
   const { isOpen: isModalOpen, open: openModal, close: closeModal } = useModal();
 
   const onDisconnect = useCallback(async () => {
-    await disconnectFn?.();
+    try {
+      await disconnectFn?.();
+    } catch (err) {
+      logger.error('Failed to disconnect wallet', err);
+    }
   }, [disconnectFn]);
 
   const onConnectNewWallet = useCallback(() => {

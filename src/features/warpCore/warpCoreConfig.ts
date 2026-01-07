@@ -12,7 +12,7 @@ import {
 } from '@hyperlane-xyz/sdk';
 import { isObjEmpty, objFilter, objMerge } from '@hyperlane-xyz/utils';
 import { config } from '../../consts/config.ts';
-import { warpRouteWhitelist } from '../../consts/warpRouteWhitelist.ts';
+import { warpRouteBlacklist, warpRouteWhitelist } from '../../consts/warpRouteWhitelist.ts';
 import { warpRouteConfigs as tsWarpRoutes } from '../../consts/warpRoutes.ts';
 import yamlWarpRoutes from '../../consts/warpRoutes.yaml';
 import { logger } from '../../utils/logger.ts';
@@ -44,6 +44,7 @@ export async function assembleWarpCoreConfig(
   let filteredRegistryConfigMap = warpRouteWhitelist
     ? filterToIds(registryWarpRoutes, warpRouteWhitelist)
     : registryWarpRoutes;
+  filteredRegistryConfigMap = filterOutBlacklisted(filteredRegistryConfigMap, warpRouteBlacklist);
   filteredRegistryConfigMap = fillMissingCoinGeckoIds(filteredRegistryConfigMap);
   const filteredRegistryConfigValues = Object.values(filteredRegistryConfigMap);
   const filteredRegistryTokens = filteredRegistryConfigValues.map((c) => c.tokens).flat();
@@ -109,6 +110,19 @@ function filterToIds(
 ): Record<string, WarpCoreConfig> {
   return objFilter(config, (id, c): c is WarpCoreConfig =>
     idWhitelist.map((id) => id.toUpperCase()).includes(id.toUpperCase()),
+  );
+}
+
+function filterOutBlacklisted(
+  config: Record<string, WarpCoreConfig>,
+  blacklist: string[],
+): Record<string, WarpCoreConfig> {
+  if (!blacklist.length) return config;
+  const blacklistLower = blacklist.map((b) => b.toLowerCase());
+  return objFilter(
+    config,
+    (id, c): c is WarpCoreConfig =>
+      !blacklistLower.some((pattern) => id.toLowerCase().includes(pattern)),
   );
 }
 

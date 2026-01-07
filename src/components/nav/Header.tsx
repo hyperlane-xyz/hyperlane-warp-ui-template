@@ -10,7 +10,7 @@ import { NavItem, navLinks } from './Nav';
 
 export function Header() {
   return (
-    <header className="bg-primary-25 flex w-full items-center justify-between px-4 py-3 shadow-[0px_4px_7px_rgba(0,0,0,0.05)] sm:justify-center sm:bg-transparent sm:px-6 sm:pb-2 sm:pt-3 sm:shadow-none lg:px-12">
+    <header className="flex w-full items-center justify-between bg-primary-25 px-4 py-3 shadow-[0px_4px_7px_rgba(0,0,0,0.05)] sm:justify-center sm:bg-transparent sm:px-6 sm:pb-2 sm:pt-3 sm:shadow-none lg:px-12">
       {/* Mobile: Logo + Hamburger Menu */}
       <div className="flex items-center gap-3 sm:hidden">
         <Link href="/">

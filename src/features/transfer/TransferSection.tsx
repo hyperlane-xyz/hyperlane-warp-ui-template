@@ -7,7 +7,7 @@ type TransferSectionProps = {
 
 export function TransferSection({ label, children }: TransferSectionProps) {
   return (
-    <div className="bg-card-gradient shadow-card overflow-hidden rounded">
+    <div className="overflow-hidden rounded bg-card-gradient shadow-card">
       {/* Gradient Header */}
       <div className="bg-accent-gradient px-3 py-1 shadow-accent-glow">
         <div className="flex items-center gap-2">

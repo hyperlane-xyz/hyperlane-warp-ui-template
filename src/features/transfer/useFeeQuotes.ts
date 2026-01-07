@@ -1,4 +1,4 @@
-import { Token, WarpCore, WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
+import { IToken, Token, WarpCore, WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
 import { HexString, toWei } from '@hyperlane-xyz/utils';
 import { getAccountAddressAndPubKey, useAccounts, useDebounce } from '@hyperlane-xyz/widgets';
 import { useQuery } from '@tanstack/react-query';
@@ -11,14 +11,16 @@ import { TransferFormValues } from './types';
 const FEE_QUOTE_REFRESH_INTERVAL = 30_000; // 30s
 
 export function useFeeQuotes(
-  { destination, amount, recipient, tokenKey }: TransferFormValues,
+  { originTokenKey, destinationTokenKey, amount, recipient }: TransferFormValues,
   enabled: boolean,
   originToken: Token | undefined,
+  destinationToken: IToken | undefined,
   searchForLowestFee: boolean = false,
 ) {
   const multiProvider = useMultiProvider();
   const warpCore = useWarpCore();
   const debouncedAmount = useDebounce(amount, 500);
+  const destination = destinationToken?.chainName;
 
   const { accounts } = useAccounts(multiProvider);
   const { address: sender, publicKey: senderPubKey } = getAccountAddressAndPubKey(
@@ -35,8 +37,8 @@ export function useFeeQuotes(
     // eslint-disable-next-line @tanstack/query/exhaustive-deps
     queryKey: [
       'useFeeQuotes',
-      tokenKey,
-      destination,
+      originTokenKey,
+      destinationTokenKey,
       sender,
       senderPubKey,
       debouncedAmount,
@@ -46,6 +48,7 @@ export function useFeeQuotes(
       fetchFeeQuotes(
         warpCore,
         originToken,
+        destinationToken,
         destination,
         sender,
         senderPubKey,
@@ -63,6 +66,7 @@ export function useFeeQuotes(
 async function fetchFeeQuotes(
   warpCore: WarpCore,
   originToken: Token | undefined,
+  destinationToken: IToken | undefined,
   destination?: ChainName,
   sender?: Address,
   senderPubKey?: Promise<HexString>,
@@ -70,23 +74,22 @@ async function fetchFeeQuotes(
   recipient?: string,
   searchForLowestFee: boolean = false,
 ): Promise<WarpCoreFeeEstimate | null> {
-  if (!originToken || !destination || !sender || !originToken || !amount || !recipient) return null;
+  if (!originToken || !destinationToken || !destination || !sender || !amount || !recipient)
+    return null;
+
   let transferToken = originToken;
   const amountWei = toWei(amount, transferToken.decimals);
 
   // when true attempt to get route with lowest fee
   if (searchForLowestFee) {
-    const destinationToken = originToken.getConnectionForChain(destination)?.token;
-    if (destinationToken) {
-      transferToken = await getLowestFeeTransferToken(
-        warpCore,
-        originToken,
-        destinationToken,
-        amountWei,
-        recipient,
-        sender,
-      );
-    }
+    transferToken = await getLowestFeeTransferToken(
+      warpCore,
+      originToken,
+      destinationToken,
+      amountWei,
+      recipient,
+      sender,
+    );
   }
 
   const originTokenAmount = transferToken.amount(amountWei);

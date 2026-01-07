@@ -8,7 +8,7 @@ import {
 } from '@hyperlane-xyz/sdk';
 import { eqAddress, isNullish, normalizeAddress } from '@hyperlane-xyz/utils';
 import { isChainDisabled } from '../chains/utils';
-import { MultiCollateralTokenMap, TokenChainMap, Tokens } from './types';
+import { TokenChainMap } from './types';
 
 // Map of token symbols and token chain map
 // Symbols are not duplicated to avoid the same symbol from being shown
@@ -58,12 +58,14 @@ export function isValidMultiCollateralToken(
       ? originToken.getConnectionForChain(destination)?.token
       : destination;
 
-  if (
-    !destinationToken ||
-    (!destinationToken.collateralAddressOrDenom && !destinationToken.isHypNative()) ||
-    !TOKEN_COLLATERALIZED_STANDARDS.includes(destinationToken.standard)
-  )
-    return false;
+  // Check if destination is collateralized - has collateral address, is HypNative, or is in SDK's list
+  // Note: Some standards like EvmHypCollateralFiat may not be in TOKEN_COLLATERALIZED_STANDARDS
+  const isDestCollateralized =
+    !!destinationToken?.collateralAddressOrDenom ||
+    destinationToken?.isHypNative?.() ||
+    TOKEN_COLLATERALIZED_STANDARDS.includes(destinationToken?.standard as any);
+
+  if (!destinationToken || !isDestCollateralized) return false;
 
   return true;
 }
@@ -139,42 +141,6 @@ export function getTokenKey(token: IToken): string {
   return `${token.chainName.toLowerCase()}-${token.symbol.toLowerCase()}-${normalizedAddress}`;
 }
 
-// De-duplicate collaterized tokens
-// Returns a map of token with same origin and dest collateral address
-// And an array of tokens with repeated collateral addresses grouped into one
-export function dedupeMultiCollateralTokens(tokens: Tokens, destination: ChainName) {
-  return tokens.reduce<{ tokens: Tokens; multiCollateralTokenMap: MultiCollateralTokenMap }>(
-    (acc, t) => {
-      const originToken = t.token;
-      const isMultiCollateralToken = isValidMultiCollateralToken(originToken, destination);
-      if (!isMultiCollateralToken) return { ...acc, tokens: [...acc.tokens, t] };
-
-      const destinationToken = originToken.getConnectionForChain(destination)!.token;
-
-      // For HypNative tokens, use their symbol and standard as identifier since they don't have collateralAddressOrDenom
-      const originAddress = originToken.collateralAddressOrDenom
-        ? normalizeAddress(originToken.collateralAddressOrDenom, originToken.protocol)
-        : `hypnative-${originToken.standard}-${originToken.symbol}`;
-
-      const destinationAddress = destinationToken.collateralAddressOrDenom
-        ? normalizeAddress(destinationToken.collateralAddressOrDenom, destinationToken.protocol)
-        : `hypnative-${destinationToken.standard}-${destinationToken.symbol}`;
-
-      // now origin and destination are both collaterals
-      // create map for tokens with same origin and destination collateral addresses
-      acc.multiCollateralTokenMap[originAddress] ||= {};
-      if (!acc.multiCollateralTokenMap[originAddress][destinationAddress]) {
-        acc.multiCollateralTokenMap[originAddress][destinationAddress] = [];
-        acc.tokens.push(t);
-      }
-
-      acc.multiCollateralTokenMap[originAddress][destinationAddress].push(originToken);
-      return acc;
-    },
-    { tokens: [], multiCollateralTokenMap: {} },
-  );
-}
-
 /**
  * De-duplicate tokens by collateral address on the same chain
  * Returns only one token per unique collateral address per chain
@@ -189,13 +155,7 @@ export function dedupeTokensByCollateral(tokens: Token[]): Token[] {
       return true;
     }
 
-    const chainName = token.chainName.toLowerCase();
-    const symbol = token.symbol.toLowerCase();
-    const protocol = token.protocol;
-    // For HypNative tokens, use their symbol and protocol as identifier
-    const collateralKey = token.collateralAddressOrDenom
-      ? `${chainName}-${symbol}-${normalizeAddress(token.collateralAddressOrDenom, protocol)}`
-      : `${chainName}-${symbol}-hypnative-${protocol}`;
+    const collateralKey = getCollateralKey(token);
 
     // If we haven't seen this collateral on this chain, include it
     if (!seenCollaterals.has(collateralKey)) {
@@ -209,37 +169,24 @@ export function dedupeTokensByCollateral(tokens: Token[]): Token[] {
 }
 
 /**
- * Build and deduplicate origin tokens (tokens with outgoing connections)
- * Deduplicates by address and by collateral address per chain
+ * Build a unified tokens array containing all tokens that can participate in transfers
+ * (either as origin or destination). Deduplicates by address and by collateral.
  */
-export function buildOriginTokens(tokens: Token[]): Token[] {
-  // Filter to only tokens with outgoing connections
-  const originTokens = tokens.filter((token) => token.connections && token.connections.length > 0);
-
-  // Deduplicate by chain-address
+export function buildTokensArray(warpCoreTokens: Token[]): Token[] {
   const tokenMap = new Map<string, Token>();
-  originTokens.forEach((token) => {
-    const key = getTokenKey(token);
-    if (!tokenMap.has(key)) {
-      tokenMap.set(key, token);
+
+  // Add all tokens that have connections (can be origins)
+  for (const token of warpCoreTokens) {
+    if (token.connections && token.connections.length > 0) {
+      const key = getTokenKey(token);
+      if (!tokenMap.has(key)) {
+        tokenMap.set(key, token);
+      }
     }
-  });
+  }
 
-  const dedupedTokens = Array.from(tokenMap.values());
-
-  // Deduplicate tokens that have same collateral address on the same chain
-  return dedupeTokensByCollateral(dedupedTokens);
-}
-
-/**
- * Build and deduplicate destination tokens (tokens reachable via connections)
- * Deduplicates by address and by collateral address per chain
- */
-export function buildDestinationTokens(tokens: Token[]): Token[] {
-  const tokenMap = new Map<string, Token>();
-
-  // Traverse all connections to find destination tokens
-  tokens.forEach((token) => {
+  // Add all destination tokens (reachable via connections)
+  for (const token of warpCoreTokens) {
     token.connections?.forEach((conn) => {
       const destToken = conn.token as Token;
       const key = getTokenKey(destToken);
@@ -247,10 +194,116 @@ export function buildDestinationTokens(tokens: Token[]): Token[] {
         tokenMap.set(key, destToken);
       }
     });
-  });
-
-  const dedupedTokens = Array.from(tokenMap.values());
+  }
 
   // Deduplicate tokens that have same collateral address on the same chain
-  return dedupeTokensByCollateral(dedupedTokens);
+  return dedupeTokensByCollateral(Array.from(tokenMap.values()));
+}
+
+/**
+ * Build collateral groups - groups tokens by their collateral key for O(1) lookup
+ * Used for fast route checking in the token selection modal
+ */
+export function buildCollateralGroups(tokens: Token[]): Map<string, Token[]> {
+  const groups = new Map<string, Token[]>();
+  for (const token of tokens) {
+    const key = getCollateralKey(token);
+    const existing = groups.get(key) || [];
+    existing.push(token);
+    groups.set(key, existing);
+  }
+  return groups;
+}
+
+/**
+ * Get a unique collateral identifier for a token
+ * Used to determine if two tokens share the same underlying collateral
+ */
+export function getCollateralKey(token: IToken): string {
+  const chainName = token.chainName.toLowerCase();
+  const symbol = token.symbol.toLowerCase();
+  const protocol = token.protocol;
+
+  // For collateralized tokens, use the collateral address
+  if (TOKEN_COLLATERALIZED_STANDARDS.includes(token.standard)) {
+    if (token.collateralAddressOrDenom) {
+      return `${chainName}-${symbol}-${normalizeAddress(token.collateralAddressOrDenom, protocol)}`;
+    }
+    // For HypNative tokens without collateralAddressOrDenom
+    return `${chainName}-${symbol}-hypnative-${protocol}`;
+  }
+
+  // For non-collateralized tokens, use the token's own address
+  return `${chainName}-${symbol}-${normalizeAddress(token.addressOrDenom, protocol)}`;
+}
+
+/**
+ * Check if two tokens share the same collateral
+ */
+export function sharesCollateral(tokenA: IToken, tokenB: IToken): boolean {
+  return getCollateralKey(tokenA) === getCollateralKey(tokenB);
+}
+
+/**
+ * Check if a route exists between origin and destination tokens
+ * Uses pre-computed collateral groups for fast O(1) lookups
+ *
+ * @param originToken - The origin token (what the user is sending)
+ * @param destToken - The destination token (what the user will receive)
+ * @param collateralGroups - Pre-computed map of collateral key → tokens
+ * @returns true if a valid route exists between the tokens
+ */
+export function checkTokenHasRoute(
+  originToken: Token,
+  destToken: Token,
+  collateralGroups: Map<string, Token[]>,
+): boolean {
+  const originCollateralKey = getCollateralKey(originToken);
+  const destCollateralKey = getCollateralKey(destToken);
+  const originGroup = collateralGroups.get(originCollateralKey) || [];
+
+  // Check if any token in origin's collateral group connects to destination's collateral group
+  return originGroup.some((token) => {
+    const destConnection = token.getConnectionForChain(destToken.chainName);
+    if (!destConnection?.token) return false;
+    return getCollateralKey(destConnection.token) === destCollateralKey;
+  });
+}
+
+/**
+ * Find the actual warpCore token that has a route to the destination.
+ * The passed originToken may be from a deduplicated array and may not have
+ * the connection, but a token with the same collateral in warpCore does.
+ */
+export function findRouteToken(
+  warpCore: WarpCore,
+  originToken: Token,
+  destinationChain: string,
+): Token | undefined {
+  // First check if the passed token already has the connection
+  if (originToken.getConnectionForChain(destinationChain)) {
+    return originToken;
+  }
+
+  // Otherwise, find a token from warpCore that has the route and shares collateral
+  const routeTokens = warpCore.getTokensForRoute(originToken.chainName, destinationChain);
+  if (routeTokens.length === 0) return undefined;
+
+  const normalizedOriginCollateral = originToken.collateralAddressOrDenom
+    ? normalizeAddress(originToken.collateralAddressOrDenom, originToken.protocol)
+    : null;
+
+  // Find a route token that shares collateral with the origin token
+  const matchingToken = routeTokens.find((t) => {
+    const normalizedRouteCollateral = t.collateralAddressOrDenom
+      ? normalizeAddress(t.collateralAddressOrDenom, t.protocol)
+      : null;
+    // Match by collateral address if both have one, otherwise match by symbol
+    if (normalizedOriginCollateral && normalizedRouteCollateral) {
+      return normalizedOriginCollateral === normalizedRouteCollateral;
+    }
+    return t.symbol === originToken.symbol;
+  });
+
+  return matchingToken || routeTokens[0];
 }

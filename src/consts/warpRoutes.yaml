@@ -101,5 +101,43 @@ tokens:
   #      - token: ethereum|arbitrumsepolia|0x4C89e71cbcFA162AA678E73e7BF6dd3Eb475839e
   ## Test ERC20 Token - with USDC bridge fee ##
 
+  ## tt10
+  - addressOrDenom: '0x974e193fC63B8A9E837783D0612D3884803fdf9C'
+    chainName: pruvtest
+    collateralAddressOrDenom: '0x4b6889790D212f80B54AeA7410B044cB277Bf498'
+    connections:
+      - token: ethereum|bsctestnet|0x4B1335f619A797eA5Bb7E91B87a81Cc3c9C8322B
+      - token: ethereum|arbitrumsepolia|0xd63bB5Eb4EF3C2868EAbe4cEb9402ecdA5660Adc
+      - token: ethereum|sepolia|0x2d904Ee22F34000611b9230140A3f3eB98c66444
+    decimals: 6
+    name: test token 10
+    standard: EvmHypCollateral
+    symbol: tt10
+  - addressOrDenom: '0x4B1335f619A797eA5Bb7E91B87a81Cc3c9C8322B'
+    chainName: bsctestnet
+    connections:
+      - token: ethereum|pruvtest|0x974e193fC63B8A9E837783D0612D3884803fdf9C
+    decimals: 6
+    name: test token 10
+    standard: EvmHypSynthetic
+    symbol: tt10
+  - addressOrDenom: '0xd63bB5Eb4EF3C2868EAbe4cEb9402ecdA5660Adc'
+    chainName: arbitrumsepolia
+    connections:
+      - token: ethereum|pruvtest|0x974e193fC63B8A9E837783D0612D3884803fdf9C
+    decimals: 6
+    name: test token 10
+    standard: EvmHypSynthetic
+    symbol: tt10
+  - addressOrDenom: '0x2d904Ee22F34000611b9230140A3f3eB98c66444'
+    chainName: sepolia
+    connections:
+      - token: ethereum|pruvtest|0x974e193fC63B8A9E837783D0612D3884803fdf9C
+    decimals: 6
+    name: test token 10
+    standard: EvmHypSynthetic
+    symbol: tt10
+  ## tt10
+
 # STAGING #
 options: {}

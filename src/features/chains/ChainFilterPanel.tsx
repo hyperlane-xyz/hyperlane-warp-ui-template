@@ -21,26 +21,27 @@ export function ChainFilterPanel({
   onBack,
 }: ChainFilterPanelProps) {
   return (
-    <div className="flex w-full flex-col border-r border-gray-200 bg-gray-50 md:w-56">
-      <div className="flex shrink-0 items-center border-b border-gray-200 bg-white px-4 py-4">
-        <div className="flex gap-2">
-          {/* Back button only shown on mobile */}
-          {showBackButton && (
-            <button
-              type="button"
-              onClick={onBack}
-              className="flex h-7 w-7 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 md:hidden"
-            >
-              <ChevronIcon direction="w" width={14} height={14} />
-            </button>
-          )}
-        </div>
+    <div className="flex w-full flex-col rounded-sm bg-gray-100 md:w-[282px]">
+      <div className="relative shrink-0 px-4 py-4">
+        {/* Back button only shown on mobile */}
+        {showBackButton && (
+          <button
+            type="button"
+            onClick={onBack}
+            className="absolute left-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700 md:hidden"
+          >
+            <ChevronIcon direction="w" width={14} height={14} />
+          </button>
+        )}
         <SearchInput
           value={searchQuery}
           onChange={onSearchChange}
-          placeholder="Search chains..."
+          placeholder="Search Chains"
           aria-label="Search chains"
         />
+      </div>
+      <div className="px-4 pb-2">
+        <h3 className="font-secondary text-sm font-normal text-black">Chain Selection</h3>
       </div>
       <ChainList
         searchQuery={searchQuery}

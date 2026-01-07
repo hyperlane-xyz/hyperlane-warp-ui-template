@@ -111,13 +111,22 @@ async function executeTransfer({
   let transferStatus: TransferStatus = TransferStatus.Preparing;
   updateTransferStatus(transferIndex, transferStatus);
 
-  const { originTokenKey, destinationTokenKey, amount, recipient } = values;
+  const { originTokenKey, destinationTokenKey, amount, recipient: formRecipient } = values;
   const multiProvider = warpCore.multiProvider;
 
   try {
     const originToken = routeOverrideToken || getTokenByKey(warpCore.tokens, originTokenKey);
     const destinationToken = getTokenByKey(warpCore.tokens, destinationTokenKey);
     if (!originToken || !destinationToken) throw new Error('No token route found between chains');
+
+    // Get effective recipient (form value or fallback to connected wallet for destination)
+    const connectedDestAddress = getAccountAddressForChain(
+      multiProvider,
+      destinationToken.chainName,
+      activeAccounts.accounts,
+    );
+    const recipient = formRecipient || connectedDestAddress || '';
+    if (!recipient) throw new Error('No recipient address available');
     // Find the actual connected token from the origin and destination chains
     const connectedDestinationToken = originToken?.getConnectionForChain(
       destinationToken.chainName,

@@ -9,7 +9,6 @@ import { useToastError } from '../../components/toast/useToastError';
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
-import { TransferFormValues } from '../transfer/types';
 
 export function useBalance(chain?: ChainName, token?: IToken, address?: Address) {
   const multiProvider = useMultiProvider();
@@ -33,16 +32,16 @@ export function useBalance(chain?: ChainName, token?: IToken, address?: Address)
   };
 }
 
-export function useOriginBalance(values: TransferFormValues, originToken?: Token) {
+export function useOriginBalance(originToken?: Token) {
   const multiProvider = useMultiProvider();
   const origin = originToken?.chainName;
   const address = useAccountAddressForChain(multiProvider, origin);
   return useBalance(origin, originToken, address);
 }
 
-export function useDestinationBalance(values: TransferFormValues, destinationToken?: Token) {
+export function useDestinationBalance(recipient?: string, destinationToken?: Token) {
   const destination = destinationToken?.chainName;
-  return useBalance(destination, destinationToken, values.recipient);
+  return useBalance(destination, destinationToken, recipient);
 }
 
 export async function getDestinationNativeBalance(

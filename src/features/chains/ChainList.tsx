@@ -35,33 +35,39 @@ export function ChainList({ searchQuery, selectedChain, onSelectChain }: ChainLi
   }, [searchQuery, allChains]);
 
   return (
-    <div className="flex-1 overflow-auto">
-      {/* All Chains option */}
-      <ChainButton
-        isSelected={selectedChain === null}
-        onClick={() => onSelectChain(null)}
-        icon={
-          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-purple-500 text-[10px] font-bold text-white">
-            ALL
-          </div>
-        }
-        label="All Chains"
-      />
-
-      {/* Individual chains */}
-      {chains.map((chain) => (
+    <div className="relative flex-1 overflow-hidden">
+      <div className="h-full overflow-auto">
+        {/* All Chains option */}
         <ChainButton
-          key={chain.name}
-          isSelected={selectedChain === chain.name}
-          onClick={() => onSelectChain(chain.name)}
-          icon={<ChainLogo chainName={chain.name} size={28} />}
-          label={chain.displayName}
+          isSelected={selectedChain === null}
+          onClick={() => onSelectChain(null)}
+          icon={
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-purple-500 text-[10px] font-bold text-white">
+              ALL
+            </div>
+          }
+          label="All Chains"
         />
-      ))}
 
-      {chains.length === 0 && (
-        <div className="px-4 py-8 text-center text-sm text-gray-500">No chains found</div>
-      )}
+        {/* Individual chains */}
+        {chains.map((chain) => (
+          <ChainButton
+            key={chain.name}
+            isSelected={selectedChain === chain.name}
+            onClick={() => onSelectChain(chain.name)}
+            icon={<ChainLogo chainName={chain.name} size={28} />}
+            label={chain.displayName}
+          />
+        ))}
+
+        {chains.length === 0 && (
+          <div className="px-4 py-8 text-center text-sm text-gray-500">No chains found</div>
+        )}
+        {/* Spacer for fade effect */}
+        <div className="h-10" />
+      </div>
+      {/* Bottom fade effect */}
+      <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-b from-transparent to-gray-100" />
     </div>
   );
 }
@@ -80,10 +86,10 @@ function ChainButton({
   return (
     <button
       type="button"
-      className={`flex w-full items-center gap-3 border-l-2 px-4 py-2.5 transition-colors ${
+      className={`${styles.label} flex w-full items-center gap-3 border-l-2 px-4 py-2.5 transition-colors ${
         isSelected
-          ? 'border-blue-500 bg-blue-50 text-blue-700'
-          : 'border-transparent text-gray-700 hover:bg-gray-100'
+          ? 'border-primary-500 bg-primary-500/10 text-primary-700'
+          : 'border-transparent text-black hover:bg-gray-200'
       }`}
       onClick={onClick}
     >
@@ -92,3 +98,7 @@ function ChainButton({
     </button>
   );
 }
+
+const styles = {
+  label: 'font-secondary text-sm font-normal',
+};

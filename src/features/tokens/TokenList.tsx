@@ -71,6 +71,7 @@ export function TokenList({
         t.name.toLowerCase().includes(q) ||
         t.symbol.toLowerCase().includes(q) ||
         t.addressOrDenom.toLowerCase().includes(q) ||
+        t.collateralAddressOrDenom?.toLowerCase().includes(q) ||
         chainDisplayName.includes(q)
       );
     });
@@ -115,23 +116,36 @@ export function TokenList({
   }
 
   return (
-    <div className="flex-1 overflow-auto px-3 py-2">
-      {tokens.map((token) => {
-        const tokenKey = getTokenKey(token);
-        // If no counterpart selected (tokenRouteMap is null), all tokens have routes
-        const hasRoute = tokenRouteMap ? (tokenRouteMap.get(tokenKey) ?? true) : true;
-
-        return <TokenButton key={tokenKey} token={token} onSelect={onSelect} hasRoute={hasRoute} />;
-      })}
-
-      {isLimited && (
-        <div className="mx-1 mb-3 mt-2 rounded-lg bg-blue-50 p-3 text-center">
-          <p className="text-sm text-blue-800">
-            Showing {tokens.length} of {totalCount} tokens
-          </p>
-          <p className="mt-1 text-xs text-blue-600">Use search or select a chain to see more</p>
+    <div className="relative flex-1 overflow-hidden">
+      <div className="h-full overflow-auto">
+        <div className="sticky top-0 z-10 border-b border-primary-50 bg-white px-4 pb-2 pt-2">
+          <h3 className={`${styles.base} text-sm text-black`}>Token Selection</h3>
         </div>
-      )}
+        <div className="px-3 py-2">
+          {tokens.map((token) => {
+            const tokenKey = getTokenKey(token);
+            // If no counterpart selected (tokenRouteMap is null), all tokens have routes
+            const hasRoute = tokenRouteMap ? (tokenRouteMap.get(tokenKey) ?? true) : true;
+
+            return (
+              <TokenButton key={tokenKey} token={token} onSelect={onSelect} hasRoute={hasRoute} />
+            );
+          })}
+
+          {isLimited && (
+            <div className="mx-1 mb-3 mt-2 rounded-lg bg-blue-50 p-3 text-center">
+              <p className="text-sm text-blue-800">
+                Showing {tokens.length} of {totalCount} tokens
+              </p>
+              <p className="mt-1 text-xs text-blue-600">Use search or select a chain to see more</p>
+            </div>
+          )}
+          {/* Spacer for fade effect */}
+          <div className="h-10" />
+        </div>
+      </div>
+      {/* Bottom fade effect */}
+      <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-b from-transparent to-cream-200" />
     </div>
   );
 }
@@ -157,7 +171,7 @@ function TokenButton({
   return (
     <button
       type="button"
-      className={`group mb-1.5 flex w-full items-center rounded-lg border border-transparent px-3 py-2.5 transition-all hover:border-gray-200 hover:bg-gray-50 ${
+      className={`group mb-1.5 flex w-full items-center rounded-[3px] px-3 py-2.5 transition-colors hover:bg-gray-100 ${
         !hasRoute ? 'opacity-40' : ''
       }`}
       onClick={() => onSelect(token)}
@@ -166,17 +180,23 @@ function TokenButton({
 
       <div className="ml-3 min-w-0 flex-1 text-left">
         <div className="flex items-center gap-2">
-          <span className={`text-sm font-semibold ${hasRoute ? 'text-gray-900' : 'text-gray-500'}`}>
+          <span className={`${styles.base} ${hasRoute ? 'text-black' : 'text-gray-500'} text-base`}>
             {token.symbol || 'Unknown'}
           </span>
           <span className="text-xs text-gray-500">{chainDisplayName}</span>
         </div>
-        <div className="mt-0.5 truncate text-xs text-gray-500">{token.name || 'Unknown Token'}</div>
+        <div className={`${styles.base} mt-0.5 truncate text-xs text-gray-500`}>
+          {token.name || 'Unknown Token'}
+        </div>
       </div>
 
       <div className="ml-2 shrink-0 text-right">
-        <div className="font-mono text-[10px] text-gray-400">{shortAddress}</div>
+        <div className="text-[10px] text-gray-400">{shortAddress}</div>
       </div>
     </button>
   );
 }
+
+const styles = {
+  base: 'font-secondary font-normal',
+};

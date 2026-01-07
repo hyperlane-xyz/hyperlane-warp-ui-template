@@ -11,7 +11,7 @@ import { TransferFormValues } from './types';
 const FEE_QUOTE_REFRESH_INTERVAL = 30_000; // 30s
 
 export function useFeeQuotes(
-  { originTokenKey, destinationTokenKey, amount, recipient }: TransferFormValues,
+  { originTokenKey, destinationTokenKey, amount, recipient: formRecipient }: TransferFormValues,
   enabled: boolean,
   originToken: Token | undefined,
   destinationToken: IToken | undefined,
@@ -28,6 +28,14 @@ export function useFeeQuotes(
     originToken?.chainName,
     accounts,
   );
+
+  // Get effective recipient (form value or fallback to connected wallet for destination)
+  const { address: connectedDestAddress } = getAccountAddressAndPubKey(
+    multiProvider,
+    destinationToken?.chainName,
+    accounts,
+  );
+  const recipient = formRecipient || connectedDestAddress || '';
 
   const isFormValid = !!(originToken && destination && debouncedAmount && recipient && sender);
   const shouldFetch = enabled && isFormValid;

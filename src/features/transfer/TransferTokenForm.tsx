@@ -297,7 +297,7 @@ function OriginTokenCard({
 
         <div className="my-2.5 h-px bg-primary-50" />
 
-        <div className="flex items-start justify-between">
+        <div className="flex items-center justify-between gap-2">
           <TextField
             name="amount"
             placeholder="0.00"

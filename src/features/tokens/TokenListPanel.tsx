@@ -40,7 +40,7 @@ export function TokenListPanel({
 
   return (
     <div className="flex min-w-0 flex-1 flex-col bg-white">
-      <div className="shrink-0 px-4 py-4">
+      <div className="shrink-0 md:p-4">
         <SearchInput
           inputRef={inputRef}
           value={searchQuery}

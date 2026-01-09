@@ -115,7 +115,7 @@ module.exports = {
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;',
       },
       backgroundImage: ({ theme }) => ({
-        'app-gradient': `radial-gradient(81.94% 51.02% at 50% 100%, ${theme('colors.primary.100')} 0%, ${theme('colors.cream.300')} 100%)`,
+        'app-gradient': `radial-gradient(81.94% 51.02% at 50% 100%, ${theme('colors.primary.50')} 0%, ${theme('colors.cream.300')} 100%)`,
         'accent-gradient': `radial-gradient(61.48% 118.8% at 50.08% 92%, ${theme('colors.primary.200')} 0%, ${theme('colors.primary.500')} 100%)`,
         'error-gradient': `radial-gradient(61.48% 118.8% at 50.08% 92%, ${theme('colors.accent.300')} 0%, ${theme('colors.accent.450')} 100%)`,
         'card-gradient': `linear-gradient(180deg, ${theme('colors.white')} 0%, ${theme('colors.cream.200')} 100%)`,

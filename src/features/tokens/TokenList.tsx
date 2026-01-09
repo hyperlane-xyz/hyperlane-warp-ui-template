@@ -121,7 +121,7 @@ export function TokenList({
         <div className="sticky top-0 z-10 border-b border-primary-50 bg-white px-4 pb-2 pt-2">
           <h3 className={`${styles.base} text-sm text-black`}>Token Selection</h3>
         </div>
-        <div className="px-3 py-2">
+        <div className="py-2 md:px-3">
           {tokens.map((token) => {
             const tokenKey = getTokenKey(token);
             // If no counterpart selected (tokenRouteMap is null), all tokens have routes
@@ -145,7 +145,7 @@ export function TokenList({
         </div>
       </div>
       {/* Bottom fade effect */}
-      <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-b from-transparent to-cream-200" />
+      <div className="to-cream-200 pointer-events-none absolute bottom-0 left-0 right-0 hidden h-12 bg-gradient-to-b from-transparent md:block" />
     </div>
   );
 }
@@ -191,7 +191,7 @@ function TokenButton({
       </div>
 
       <div className="ml-2 shrink-0 text-right">
-        <div className="text-[10px] text-gray-400">{shortAddress}</div>
+        <div className="text-[10px] text-black">{shortAddress}</div>
       </div>
     </button>
   );

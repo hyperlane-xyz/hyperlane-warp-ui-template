@@ -4,7 +4,7 @@ import { NavItem, navLinks } from './Nav';
 export function Footer() {
   return (
     <footer className="relative text-white">
-      <div className="relative bg-gradient-to-b from-transparent to-black/40 px-8 pb-5 pt-2 sm:pt-0">
+      <div className="relative px-8 pb-5 pt-2 sm:pt-0">
         <div className="flex flex-col items-center justify-between gap-4">
           <FooterLogo />
           <FooterNav />

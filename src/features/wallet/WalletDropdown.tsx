@@ -185,13 +185,13 @@ function ConnectMenuItem({ protocol }: { protocol: ProtocolType }) {
 
 function DropdownWalletButton({ address }: { address: string }) {
   return (
-    <div className="flex items-center gap-2 text-sm text-primary-500 underline transition-colors hover:text-primary-600">
+    <div className="flex items-center gap-2 text-sm underline transition-colors">
       {address ? (
         <div className="h-2 w-2 rounded-full bg-green-50" />
       ) : (
         <XIcon width={8} height={8} color={Color.red[500]} />
       )}
-      <span className="text-primary-500">{address || 'Connect Wallet'}</span>
+      <span className="text-primary-500 hover:text-primary-600">{address || 'Connect Wallet'}</span>
       <ChevronIcon width={10} height={6} direction="s" color={Color.primary[500]} />
     </div>
   );

@@ -1,4 +1,5 @@
-import { Token } from '@hyperlane-xyz/sdk';
+import { ChainName, Token } from '@hyperlane-xyz/sdk';
+import { Tooltip } from '@hyperlane-xyz/widgets';
 import { useEffect, useMemo, useState, useTransition } from 'react';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
@@ -128,7 +129,14 @@ export function TokenList({
             const hasRoute = tokenRouteMap ? (tokenRouteMap.get(tokenKey) ?? true) : true;
 
             return (
-              <TokenButton key={tokenKey} token={token} onSelect={onSelect} hasRoute={hasRoute} />
+              <TokenButton
+                key={tokenKey}
+                token={token}
+                onSelect={onSelect}
+                hasRoute={hasRoute}
+                counterpartToken={counterpartToken}
+                selectionMode={selectionMode}
+              />
             );
           })}
 
@@ -154,35 +162,46 @@ function TokenButton({
   token,
   onSelect,
   hasRoute,
+  counterpartToken,
+  selectionMode,
 }: {
   token: Token;
   onSelect: (token: Token) => void;
-  /** Whether this token has a valid route to/from the counterpart. False = grayed appearance */
+  /** Whether this token has a valid route to/from the counterpart */
   hasRoute: boolean;
+  counterpartToken?: Token;
+  selectionMode: TokenSelectionMode;
 }) {
   const multiProvider = useMultiProvider();
   const chainDisplayName = getChainDisplayName(multiProvider, token.chainName);
+  const counterpartChainName = counterpartToken
+    ? getChainDisplayName(multiProvider, counterpartToken.chainName)
+    : '';
 
   // Truncate address for display
   const shortAddress = token.addressOrDenom
     ? `${token.addressOrDenom.slice(0, 6)}...${token.addressOrDenom.slice(-4)}`
     : 'Native';
 
+  // Build tooltip message for unsupported routes
+  // selectionMode 'destination' -> counterpart is origin -> "from"
+  // selectionMode 'origin' -> counterpart is destination -> "to"
+  const routeDirection = selectionMode === 'destination' ? 'from' : 'to';
+  const routeTooltipMessage = counterpartToken
+    ? `No route ${routeDirection} ${counterpartToken.symbol} on ${counterpartChainName}`
+    : '';
+
   return (
     <button
       type="button"
-      className={`group mb-1.5 flex w-full items-center rounded-[3px] px-3 py-2.5 transition-colors hover:bg-gray-100 ${
-        !hasRoute ? 'opacity-40' : ''
-      }`}
+      className="group mb-1.5 flex w-full items-center rounded-[3px] px-3 py-2.5 transition-colors hover:bg-gray-100"
       onClick={() => onSelect(token)}
     >
       <TokenChainIcon token={token} size={36} />
 
       <div className="ml-3 min-w-0 flex-1 text-left">
         <div className="flex items-center gap-2">
-          <span className={`${styles.base} ${hasRoute ? 'text-black' : 'text-gray-500'} text-base`}>
-            {token.symbol || 'Unknown'}
-          </span>
+          <span className={`${styles.base} text-base text-black`}>{token.symbol || 'Unknown'}</span>
           <span className="text-xs text-gray-500">{chainDisplayName}</span>
         </div>
         <div className={`${styles.base} mt-0.5 truncate text-xs text-gray-500`}>
@@ -192,6 +211,17 @@ function TokenButton({
 
       <div className="ml-2 shrink-0 text-right">
         <div className="text-[10px] text-black">{shortAddress}</div>
+        {!hasRoute && counterpartToken && (
+          <div className="mt-0.5 flex items-center justify-end gap-1 text-[10px] text-gray-400">
+            <span>Route unavailable</span>
+            <Tooltip
+              content={routeTooltipMessage}
+              id={`route-tooltip-${getTokenKey(token)}`}
+              tooltipClassName="max-w-[200px]"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        )}
       </div>
     </button>
   );

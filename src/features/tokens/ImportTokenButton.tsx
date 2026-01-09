@@ -29,12 +29,12 @@ export function ImportTokenButton({ token }: ImportTokenButtonProps) {
   return (
     <button
       type="button"
-      className="flex items-center text-sm text-primary-500 hover:text-primary-600 disabled:opacity-50 [&_path]:fill-primary-500 [&_path]:hover:fill-primary-600"
+      className="flex items-center text-sm text-primary-500 hover:text-primary-700 disabled:opacity-50 [&_path]:fill-primary-500 [&_path]:hover:fill-primary-700"
       onClick={onClick}
       disabled={isLoading}
     >
       <PlusIcon width={18} height={18} className="-mr-0.5" />
-      <span>Import token</span>
+      <span>Add token to Wallet</span>
     </button>
   );
 }

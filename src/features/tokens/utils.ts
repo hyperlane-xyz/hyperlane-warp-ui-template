@@ -4,6 +4,7 @@ import {
   MultiProtocolProvider,
   Token,
   TOKEN_COLLATERALIZED_STANDARDS,
+  TokenStandard,
   WarpCore,
 } from '@hyperlane-xyz/sdk';
 import { eqAddress, isNullish, normalizeAddress } from '@hyperlane-xyz/utils';
@@ -245,6 +246,36 @@ export function sharesCollateral(tokenA: IToken, tokenB: IToken): boolean {
 }
 
 /**
+ * Check if two tokens are in the same stableswap pool
+ */
+export function isStableSwapRoute(originToken: Token, destToken: Token): boolean {
+  // Both must be stableswap tokens
+  if (
+    originToken.standard !== TokenStandard.EvmHypStableSwap ||
+    destToken.standard !== TokenStandard.EvmHypStableSwap
+  ) {
+    return false;
+  }
+
+  // Both must have stableSwapPool defined and match
+  const originPool = (originToken as any).stableSwapPool;
+  const destPool = (destToken as any).stableSwapPool;
+  if (!originPool || !destPool || originPool !== destPool) {
+    return false;
+  }
+
+  // Exclude same token on same chain (no swap needed)
+  if (
+    originToken.chainName === destToken.chainName &&
+    originToken.addressOrDenom === destToken.addressOrDenom
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+/**
  * Check if a route exists between origin and destination tokens
  * Uses pre-computed collateral groups for fast O(1) lookups
  *
@@ -258,6 +289,11 @@ export function checkTokenHasRoute(
   destToken: Token,
   collateralGroups: Map<string, Token[]>,
 ): boolean {
+  // Check for stableswap route first (tokens in same pool)
+  if (isStableSwapRoute(originToken, destToken)) {
+    return true;
+  }
+
   const originCollateralKey = getCollateralKey(originToken);
   const destCollateralKey = getCollateralKey(destToken);
   const originGroup = collateralGroups.get(originCollateralKey) || [];

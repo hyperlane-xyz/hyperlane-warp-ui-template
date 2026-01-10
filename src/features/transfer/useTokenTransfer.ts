@@ -24,6 +24,7 @@ import { AppState, useStore } from '../store';
 import { getTokenByKey, useWarpCore } from '../tokens/hooks';
 import { TransferContext, TransferFormValues, TransferStatus } from './types';
 import { tryGetMsgIdFromTransferReceipt } from './utils';
+import { isStableSwapRoute } from '../tokens/utils';
 
 const CHAIN_MISMATCH_ERROR = 'ChainMismatchError';
 const TRANSFER_TIMEOUT_ERROR1 = 'block height exceeded';
@@ -119,6 +120,9 @@ async function executeTransfer({
     const destinationToken = getTokenByKey(warpCore.tokens, destinationTokenKey);
     if (!originToken || !destinationToken) throw new Error('No token route found between chains');
 
+    // Check if this is a stableswap transfer (same pool, different tokens)
+    const isStableSwap = isStableSwapRoute(originToken, destinationToken);
+
     // Get effective recipient (form value or fallback to connected wallet for destination)
     const connectedDestAddress = getAccountAddressForChain(
       multiProvider,
@@ -127,11 +131,18 @@ async function executeTransfer({
     );
     const recipient = formRecipient || connectedDestAddress || '';
     if (!recipient) throw new Error('No recipient address available');
-    // Find the actual connected token from the origin and destination chains
-    const connectedDestinationToken = originToken?.getConnectionForChain(
-      destinationToken.chainName,
-    )?.token;
-    if (!connectedDestinationToken) throw new Error('No token connection found between chains');
+
+    // For stableswap: use the user-selected destination token directly
+    // For normal warp: find the connected token via the warp route
+    let connectedDestinationToken: Token;
+    if (isStableSwap) {
+      connectedDestinationToken = destinationToken;
+    } else {
+      const connected = originToken?.getConnectionForChain(destinationToken.chainName)?.token;
+      if (!connected) throw new Error('No token connection found between chains');
+      connectedDestinationToken = connected as Token;
+    }
+
     const origin = originToken.chainName;
     const destination = connectedDestinationToken.chainName;
 
@@ -146,13 +157,16 @@ async function executeTransfer({
     const sender = getAccountAddressForChain(multiProvider, origin, activeAccounts.accounts);
     if (!sender) throw new Error('No active account found for origin chain');
 
-    const isCollateralSufficient = await warpCore.isDestinationCollateralSufficient({
-      originTokenAmount,
-      destination,
-    });
-    if (!isCollateralSufficient) {
-      toast.error('Insufficient collateral on destination for transfer');
-      throw new Error('Insufficient destination collateral');
+    // Skip collateral check for stableswap (liquidity is managed by the pool)
+    if (!isStableSwap) {
+      const isCollateralSufficient = await warpCore.isDestinationCollateralSufficient({
+        originTokenAmount,
+        destination,
+      });
+      if (!isCollateralSufficient) {
+        toast.error('Insufficient collateral on destination for transfer');
+        throw new Error('Insufficient destination collateral');
+      }
     }
 
     addTransfer({
@@ -169,11 +183,13 @@ async function executeTransfer({
 
     updateTransferStatus(transferIndex, (transferStatus = TransferStatus.CreatingTxs));
 
+    // For stableswap transfers, pass the destination token to enable the swap logic in WarpCore
     const txs = await warpCore.getTransferRemoteTxs({
       originTokenAmount,
       destination,
       sender,
       recipient,
+      destinationToken: isStableSwap ? connectedDestinationToken : undefined,
     });
 
     const hashes: string[] = [];

@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { useWarpCore } from '../tokens/hooks';
+import { isStableSwapRoute } from '../tokens/utils';
 import { getLowestFeeTransferToken } from './fees';
 import { TransferFormValues } from './types';
 
@@ -102,11 +103,16 @@ async function fetchFeeQuotes(
 
   const originTokenAmount = transferToken.amount(amountWei);
   logger.debug('Fetching fee quotes');
+
+  // For stableswap transfers, pass the destination token to enable proper fee estimation
+  const isStableSwap = isStableSwapRoute(transferToken, destinationToken as Token);
+
   return warpCore.estimateTransferRemoteFees({
     originTokenAmount,
     destination,
     sender,
     senderPubKey: await senderPubKey,
     recipient: recipient,
+    destinationToken: isStableSwap ? (destinationToken as Token) : undefined,
   });
 }

@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { useWarpCore } from '../tokens/hooks';
-import { getLowestFeeTransferToken } from './fees';
+import { getTransferToken } from './fees';
 import { TransferFormValues } from './types';
 
 const FEE_QUOTE_REFRESH_INTERVAL = 30_000; // 30s
@@ -88,9 +88,9 @@ async function fetchFeeQuotes(
   let transferToken = originToken;
   const amountWei = toWei(amount, transferToken.decimals);
 
-  // when true attempt to get route with lowest fee
+  // when true attempt to get route with lowest fee (or use default if configured)
   if (searchForLowestFee) {
-    transferToken = await getLowestFeeTransferToken(
+    transferToken = await getTransferToken(
       warpCore,
       originToken,
       destinationToken,

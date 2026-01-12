@@ -22,3 +22,4 @@ export interface TokenWithFee {
 }
 
 export type TokenSelectionMode = 'origin' | 'destination';
+export type DefaultMultiCollateralRoutes = Record<ChainName, Record<Address, Address>>;

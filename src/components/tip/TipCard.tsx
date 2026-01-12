@@ -14,7 +14,7 @@ export function TipCard() {
     <Card className="w-100 p-2 sm:w-[31rem]">
       <h2 className="text-primary-500">Bridge USDC</h2>
       <div className="flex items-end justify-between">
-        <p className="mt-1 max-w-[75%] text-justify text-xs">
+        <p className="mt-1 max-w-[90%] text-left text-xs">
           Move between Solana, Base, Arbitrum, Optimism, Ethereum, Unichain, and more.
         </p>
         <Button

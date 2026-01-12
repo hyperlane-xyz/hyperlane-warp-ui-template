@@ -192,7 +192,7 @@ function DropdownWalletButton({ address }: { address: string }) {
         <XIcon width={8} height={8} color={Color.red[500]} />
       )}
       <div className="flex items-center gap-2 text-primary-500 transition-colors duration-150 hover:text-primary-700 [&_path]:fill-primary-500 [&_path]:hover:fill-primary-700">
-        <span className="">{address || 'Connect Wallet'}</span>
+        <span>{address || 'Connect Wallet'}</span>
         <ChevronIcon width={10} height={6} direction="s" />
       </div>
     </div>

@@ -134,7 +134,7 @@ function TokenButton({
   return (
     <button
       type="button"
-      className={`${styles.base} ${disabled ? styles.disabled : styles.enabled} `}
+      className={`${styles.base} ${disabled ? styles.disabled : styles.enabled}`}
       onClick={onClick}
       disabled={disabled}
     >
@@ -149,7 +149,7 @@ function TokenButton({
       ) : (
         <span className="text-sm text-gray-400">Select token</span>
       )}
-      <div className="drop-shadow-button flex h-10 w-10 items-center justify-center rounded-full border border-gray-400 bg-white transition-colors duration-150 group-hover:bg-gray-50">
+      <div className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-400 bg-white drop-shadow-button transition-colors duration-150 group-hover:bg-gray-50">
         <ChevronLargeIcon width={14} height={18} />
       </div>
     </button>

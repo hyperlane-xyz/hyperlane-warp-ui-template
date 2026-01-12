@@ -39,7 +39,6 @@ export const warpRouteWhitelist: Array<string> | null = [
   'USDC/ethereum-inevm',
   'USDC/ancient8-ethereum',
   'USDC/ethereum-viction',
-  'USDC/eclipsemainnet-ethereum-solanamainnet',
   'USDC/appchain-base',
   'USDC/arbitrum-base-endurance',
   'USDC/artela-base',
@@ -376,4 +375,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'ETH/krown',
   'USDC/krown',
   'USDT/krown',
+
+  // First Party Warp Routes
+  'USDC/eclipsemainnet',
 ];

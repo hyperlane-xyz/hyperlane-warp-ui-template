@@ -238,7 +238,7 @@ function SwapTokensButton({ disabled }: { disabled?: boolean }) {
         type="button"
         onClick={onSwap}
         disabled={disabled}
-        className="group flex h-8 w-8 items-center justify-center rounded border border-gray-400/50 bg-white shadow-button transition-all hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+        className="shadow-button group flex h-8 w-8 items-center justify-center rounded border border-gray-400/50 bg-white transition-all hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
       >
         <SwapIcon
           width={18}
@@ -286,7 +286,7 @@ function OriginTokenCard({
         <ImportTokenButton token={originToken} />
       </div>
 
-      <div className="rounded-[7px] border border-gray-400/25 bg-white p-3 shadow-input">
+      <div className="shadow-input rounded-[7px] border border-gray-400/25 bg-white p-3">
         <TokenSelectField
           name="originTokenKey"
           selectionMode="origin"
@@ -297,18 +297,18 @@ function OriginTokenCard({
 
         <div className="my-2.5 h-px bg-primary-50" />
 
-        <div className="flex items-start justify-between">
+        <div className="flex items-center justify-between gap-2">
           <TextField
             name="amount"
-            placeholder="0.00"
-            className="w-full flex-1 border-none bg-transparent font-secondary text-xl font-normal text-gray-900 outline-none placeholder:text-gray-300"
+            placeholder="0"
+            className="font-secondary w-full flex-1 border-none bg-transparent text-xl font-normal text-gray-900 outline-none placeholder:text-gray-900"
             type="number"
             step="any"
             disabled={isReview}
           />
           <MaxButton balance={balance} disabled={isReview} isRouteSupported={isRouteSupported} />
         </div>
-        <div className="mt-1 flex items-center justify-between text-xs leading-[18px] text-gray-450">
+        <div className="text-gray-450 mt-1 flex items-center justify-between text-xs leading-[18px]">
           <span>
             {shouldShowPrice && !isPriceLoading ? (
               <>
@@ -359,7 +359,7 @@ function DestinationTokenCard({ isReview }: { isReview: boolean }) {
         <ImportTokenButton token={destinationToken} />
       </div>
 
-      <div className="rounded-[7px] border border-gray-400/25 bg-white p-3 shadow-input">
+      <div className="shadow-input rounded-[7px] border border-gray-400/25 bg-white p-3">
         <TokenSelectField
           name="destinationTokenKey"
           selectionMode="destination"
@@ -416,7 +416,7 @@ function MaxButton({
       type="button"
       onClick={onClick}
       disabled={isDisabled}
-      className="rounded border border-gray-300 px-2 py-0.5 font-secondary text-sm text-gray-450 transition-colors hover:border-gray-400 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50"
+      className="font-secondary text-gray-450 rounded border border-gray-300 px-2 py-0.5 text-sm transition-colors hover:border-gray-400 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50"
     >
       {isLoading ? <SpinnerIcon className="h-4 w-4" /> : 'Max'}
     </button>
@@ -431,7 +431,7 @@ function TokenBalance({
   balance: TokenAmount | null | undefined;
 }) {
   return (
-    <span className="text-xs leading-[18px] text-gray-450">
+    <span className="text-gray-450 text-xs leading-[18px]">
       {balance ? (
         <>
           {label}: {balance.getDecimalFormattedAmount().toFixed(4)} {balance.token.symbol}
@@ -623,7 +623,7 @@ function ButtonSection({
           type="button"
           color="primary"
           onClick={onEdit}
-          className="px-6 py-1.5 font-secondary"
+          className="font-secondary px-6 py-1.5"
           icon={<ChevronIcon direction="w" width={10} height={6} color={Color.white} />}
         >
           <span>Edit</span>
@@ -633,7 +633,7 @@ function ButtonSection({
           type="button"
           color="accent"
           onClick={triggerTransactionsHandler}
-          className="flex-1 px-3 py-1.5 font-secondary text-white"
+          className="font-secondary flex-1 px-3 py-1.5 text-white"
         >
           {`Send to ${chainDisplayName}`}
         </SolidButton>

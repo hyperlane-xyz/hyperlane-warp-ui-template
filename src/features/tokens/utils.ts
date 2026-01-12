@@ -273,7 +273,8 @@ export function checkTokenHasRoute(
 /**
  * Find the actual warpCore token that has a route to the destination.
  * The passed originToken may be from a deduplicated array and may not have
- * the connection, but a token with the same collateral in warpCore does.
+ * the connection, but another token with the same collateral in the warpCore might
+ * have this token.
  */
 export function findRouteToken(
   warpCore: WarpCore,
@@ -285,7 +286,7 @@ export function findRouteToken(
     return originToken;
   }
 
-  // Otherwise, find a token from warpCore that has the route and shares collateral
+  // Otherwise, find all the tokens from warpCore that has a route with the origin and destination
   const routeTokens = warpCore.getTokensForRoute(originToken.chainName, destinationChain);
   if (routeTokens.length === 0) return undefined;
 

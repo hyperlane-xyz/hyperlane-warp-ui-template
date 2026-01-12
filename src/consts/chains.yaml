@@ -1,20 +1,50 @@
-# A map of chain names to ChainMetadata
-# Chains can be defined here, in chains.json, or in chains.ts
-# Chains already in the SDK need not be included here unless you want to override some fields
-# Schema here: https://github.com/hyperlane-xyz/hyperlane-monorepo/blob/main/typescript/sdk/src/metadata/chainMetadataTypes.ts
----
-# Example using local anvil chain:
-# anvil1:
-#   chainId: 31337
-#   domainId: 31337
-#   name: anvil1
-#   protocol: ethereum
-#   rpcUrls:
-#     - http: http://127.0.0.1:8545
-# anvil2:
-#   chainId: 31338
-#   domainId: 31338
-#   name: anvil2
-#   protocol: ethereum
-#   rpcUrls:
-#     - http: http://127.0.0.1:8555
+arbitrum:
+  name: arbitrum
+  displayName: Arbitrum One
+  chainId: 42161
+  domainId: 42161
+  protocol: ethereum
+  rpcUrls:
+    - http: https://arb1.arbitrum.io/rpc
+  nativeToken:
+    name: Ether
+    symbol: ETH
+    decimals: 18
+  blockExplorers:
+    - name: Arbiscan
+      url: https://arbiscan.io
+      apiUrl: https://api.arbiscan.io/api
+
+base:
+  name: base
+  displayName: Base
+  chainId: 8453
+  domainId: 8453
+  protocol: ethereum
+  rpcUrls:
+    - http: https://mainnet.base.org
+  nativeToken:
+    name: Ether
+    symbol: ETH
+    decimals: 18
+  blockExplorers:
+    - name: BaseScan
+      url: https://basescan.org
+      apiUrl: https://api.basescan.org/api
+
+soneium:
+  name: soneium
+  displayName: Soneium
+  chainId: 1868
+  domainId: 1868
+  protocol: ethereum
+  rpcUrls:
+    - http: https://rpc.soneium.org
+  nativeToken:
+    name: Ether
+    symbol: ETH
+    decimals: 18
+  blockExplorers:
+    - name: Soneium Explorer
+      url: https://soneium.blockscout.com
+      apiUrl: https://soneium.blockscout.com/api

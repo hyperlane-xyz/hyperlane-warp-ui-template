@@ -30,6 +30,7 @@ import { SwapIcon } from '../../components/icons/SwapIcon';
 import { TextField } from '../../components/input/TextField';
 import { WARP_QUERY_PARAMS } from '../../consts/args';
 import { config } from '../../consts/config';
+import { defaultMultiCollateralRoutes } from '../../consts/defaultMultiCollateralRoutes';
 import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
 import { updateQueryParams } from '../../utils/queryParams';
@@ -62,7 +63,7 @@ import { WalletDropdown } from '../wallet/WalletDropdown';
 import { FeeSectionButton } from './FeeSectionButton';
 import { RecipientConfirmationModal } from './RecipientConfirmationModal';
 import { TransferSection } from './TransferSection';
-import { getInterchainQuote, getLowestFeeTransferToken, getTotalFee } from './fees';
+import { getInterchainQuote, getTotalFee, getTransferToken } from './fees';
 import { useFetchMaxAmount } from './maxAmount';
 import { TransferFormValues } from './types';
 import { useRecipientBalanceWatcher } from './useBalanceWatcher';
@@ -914,16 +915,14 @@ async function validateForm(
     );
 
     const amountWei = toWei(amount, token.decimals);
-
-    // getLowestFeeTransferToken will find the actual warpCore token that has the route
-    // The unified array token may not have the connection due to deduplication
-    const transferToken = await getLowestFeeTransferToken(
+    const transferToken = await getTransferToken(
       warpCore,
       token,
       destinationToken,
       amountWei,
       recipient,
       sender,
+      defaultMultiCollateralRoutes,
     );
 
     // This should not happen since we already checked the route above, but keep as safety check

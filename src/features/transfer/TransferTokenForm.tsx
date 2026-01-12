@@ -239,7 +239,7 @@ function SwapTokensButton({ disabled }: { disabled?: boolean }) {
         type="button"
         onClick={onSwap}
         disabled={disabled}
-        className="shadow-button group flex h-8 w-8 items-center justify-center rounded border border-gray-400/50 bg-white transition-all hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+        className="group flex h-8 w-8 items-center justify-center rounded border border-gray-400/50 bg-white shadow-button transition-all hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
       >
         <SwapIcon
           width={18}
@@ -287,7 +287,7 @@ function OriginTokenCard({
         <ImportTokenButton token={originToken} />
       </div>
 
-      <div className="shadow-input rounded-[7px] border border-gray-400/25 bg-white p-3">
+      <div className="rounded-[7px] border border-gray-400/25 bg-white p-3 shadow-input">
         <TokenSelectField
           name="originTokenKey"
           selectionMode="origin"
@@ -302,14 +302,14 @@ function OriginTokenCard({
           <TextField
             name="amount"
             placeholder="0"
-            className="font-secondary w-full flex-1 border-none bg-transparent text-xl font-normal text-gray-900 outline-none placeholder:text-gray-900"
+            className="w-full flex-1 border-none bg-transparent font-secondary text-xl font-normal text-gray-900 outline-none placeholder:text-gray-900"
             type="number"
             step="any"
             disabled={isReview}
           />
           <MaxButton balance={balance} disabled={isReview} isRouteSupported={isRouteSupported} />
         </div>
-        <div className="text-gray-450 mt-1 flex items-center justify-between text-xs leading-[18px]">
+        <div className="mt-1 flex items-center justify-between text-xs leading-[18px] text-gray-450">
           <span>
             {shouldShowPrice && !isPriceLoading ? (
               <>
@@ -360,7 +360,7 @@ function DestinationTokenCard({ isReview }: { isReview: boolean }) {
         <ImportTokenButton token={destinationToken} />
       </div>
 
-      <div className="shadow-input rounded-[7px] border border-gray-400/25 bg-white p-3">
+      <div className="rounded-[7px] border border-gray-400/25 bg-white p-3 shadow-input">
         <TokenSelectField
           name="destinationTokenKey"
           selectionMode="destination"
@@ -417,7 +417,7 @@ function MaxButton({
       type="button"
       onClick={onClick}
       disabled={isDisabled}
-      className="font-secondary text-gray-450 rounded border border-gray-300 px-2 py-0.5 text-sm transition-colors hover:border-gray-400 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50"
+      className="rounded border border-gray-300 px-2 py-0.5 font-secondary text-sm text-gray-450 transition-colors hover:border-gray-400 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50"
     >
       {isLoading ? <SpinnerIcon className="h-4 w-4" /> : 'Max'}
     </button>
@@ -432,7 +432,7 @@ function TokenBalance({
   balance: TokenAmount | null | undefined;
 }) {
   return (
-    <span className="text-gray-450 text-xs leading-[18px]">
+    <span className="text-xs leading-[18px] text-gray-450">
       {balance ? (
         <>
           {label}: {balance.getDecimalFormattedAmount().toFixed(4)} {balance.token.symbol}
@@ -624,7 +624,7 @@ function ButtonSection({
           type="button"
           color="primary"
           onClick={onEdit}
-          className="font-secondary px-6 py-1.5"
+          className="px-6 py-1.5 font-secondary"
           icon={<ChevronIcon direction="w" width={10} height={6} color={Color.white} />}
         >
           <span>Edit</span>
@@ -634,7 +634,7 @@ function ButtonSection({
           type="button"
           color="accent"
           onClick={triggerTransactionsHandler}
-          className="font-secondary flex-1 px-3 py-1.5 text-white"
+          className="flex-1 px-3 py-1.5 font-secondary text-white"
         >
           {`Send to ${chainDisplayName}`}
         </SolidButton>

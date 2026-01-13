@@ -1,7 +1,11 @@
 import { MultiProtocolWalletModal } from '@hyperlane-xyz/widgets';
 import Head from 'next/head';
 import { PropsWithChildren, useEffect } from 'react';
+<<<<<<< HEAD
 import { APP_NAME } from '../../consts/app';
+=======
+import { APP_NAME, BACKGROUND_COLOR, BACKGROUND_IMAGE } from '../../consts/app';
+>>>>>>> origin/main
 import { config } from '../../consts/config';
 import { EVENT_NAME } from '../../features/analytics/types';
 import { useWalletConnectionTracking } from '../../features/analytics/useWalletConnectionTracking';

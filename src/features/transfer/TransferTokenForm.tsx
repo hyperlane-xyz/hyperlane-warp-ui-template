@@ -33,6 +33,7 @@ import { Card } from '../../components/layout/Card';
 import { TipCard } from '../../components/tip/TipCard';
 import { WARP_QUERY_PARAMS } from '../../consts/args';
 import { config } from '../../consts/config';
+import { defaultMultiCollateralRoutes } from '../../consts/defaultMultiCollateralRoutes';
 import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
 import { getQueryParams, updateQueryParam } from '../../utils/queryParams';
@@ -64,7 +65,11 @@ import { useTokenPrice } from '../tokens/useTokenPrice';
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { FeeSectionButton } from './FeeSectionButton';
 import { RecipientConfirmationModal } from './RecipientConfirmationModal';
+<<<<<<< HEAD
 import { getInterchainQuote, getLowestFeeTransferToken, getTotalFee } from './fees';
+=======
+import { getInterchainQuote, getTotalFee, getTransferToken } from './fees';
+>>>>>>> origin/main
 import { useFetchMaxAmount } from './maxAmount';
 import { TransferFormValues } from './types';
 import { useRecipientBalanceWatcher } from './useBalanceWatcher';
@@ -141,6 +146,7 @@ export function TransferTokenForm() {
       validateOnBlur={false}
     >
       {({ isValidating }) => (
+<<<<<<< HEAD
         <div className="space-y-3 pt-4">
           <TipCard />
           <Card className="w-100 sm:w-[31rem]">
@@ -169,6 +175,31 @@ export function TransferTokenForm() {
             </Form>
           </Card>
         </div>
+=======
+        <Form className="flex w-full flex-col items-stretch">
+          <WarningBanners />
+          <ChainSelectSection isReview={isReview} />
+          <div className="mt-2.5 flex items-end justify-between space-x-4">
+            <TokenSection setIsNft={setIsNft} isReview={isReview} />
+            <AmountSection isNft={isNft} isReview={isReview} />
+          </div>
+          <RecipientSection isReview={isReview} />
+          <ReviewDetails isReview={isReview} routeOverrideToken={routeOverrideToken} />
+          <ButtonSection
+            isReview={isReview}
+            isValidating={isValidating}
+            setIsReview={setIsReview}
+            cleanOverrideToken={() => setRouteTokenOverride(null)}
+            routeOverrideToken={routeOverrideToken}
+            warpCore={warpCore}
+          />
+          <RecipientConfirmationModal
+            isOpen={isConfirmationModalOpen}
+            close={closeConfirmationModal}
+            onConfirm={() => setIsReview(true)}
+          />
+        </Form>
+>>>>>>> origin/main
       )}
     </Formik>
   );
@@ -509,11 +540,19 @@ function ButtonSection({
             }
           />
         </div>
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/main
         <ConnectAwareSubmitButton
           disabled={!addressConfirmed}
           chainName={values.origin}
           text={isValidating ? 'Validating...' : 'Continue'}
+<<<<<<< HEAD
           classes="mt-4 px-3 py-1.5"
+=======
+          classes={`${isReview ? 'mt-4' : 'mt-0'} px-3 py-1.5`}
+>>>>>>> origin/main
         />
       </>
     );
@@ -858,13 +897,21 @@ async function validateForm(
       accounts,
     );
     const amountWei = toWei(amount, token.decimals);
+<<<<<<< HEAD
     const transferToken = await getLowestFeeTransferToken(
+=======
+    const transferToken = await getTransferToken(
+>>>>>>> origin/main
       warpCore,
       token,
       destinationToken,
       amountWei,
       recipient,
       sender,
+<<<<<<< HEAD
+=======
+      defaultMultiCollateralRoutes,
+>>>>>>> origin/main
     );
     const multiCollateralLimit = isMultiCollateralLimitExceeded(token, destination, amountWei);
 

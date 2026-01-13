@@ -138,6 +138,28 @@ tokens:
     standard: EvmHypSynthetic
     symbol: tt10
   ## tt10
+  ## GSPPP
+  - chainName: pruvtest
+    standard: EvmHypCollateral
+    decimals: 6
+    symbol: GSPPP
+    name: Garuda Sport Funddd
+    addressOrDenom: '0x114F013cABE6B8B25d1c63EC58a9cd946C7186b1'
+    collateralAddressOrDenom: '0xf78b16bbc8a3ef47c0c289c171082c5532f42513'
+    connections:
+      - token: ethereum|sepolia|0x76Eb93B5Bd10b742896E386662F19C3d4BD38EB4
+  - chainName: sepolia
+    standard: EvmHypSynthetic
+    decimals: 6
+    symbol: GSPPP
+    name: Garuda Sport Funddd
+    addressOrDenom: '0x76Eb93B5Bd10b742896E386662F19C3d4BD38EB4'
+    connections:
+      - token: ethereum|pruvtest|0x114F013cABE6B8B25d1c63EC58a9cd946C7186b1
+  ## GSPPP
+  ## MMF
+
+  ## MMF
 
 # STAGING #
 options: {}

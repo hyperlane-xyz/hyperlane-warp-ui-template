@@ -122,7 +122,7 @@ function dedupeTokens(tokens: WarpCoreConfig['tokens']): WarpCoreConfig['tokens'
     if (token.standard === TokenStandard.EvmM0PortalLite) {
       id = `${token.chainName}|${token.symbol}|${token.addressOrDenom?.toLowerCase()}`;
     } else {
-      id = `${token.chainName}|${token.addressOrDenom?.toLowerCase()}`;
+      id = `${token.chainName}|${token.symbol}|${token.addressOrDenom?.toLowerCase()}`;
     }
     idToToken[id] = objMerge(idToToken[id] || {}, token);
   }

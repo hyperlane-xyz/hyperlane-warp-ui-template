@@ -31,6 +31,7 @@ import { SolidButton } from '../../components/buttons/SolidButton';
 import { TextField } from '../../components/input/TextField';
 import { WARP_QUERY_PARAMS } from '../../consts/args';
 import { config } from '../../consts/config';
+import { defaultMultiCollateralRoutes } from '../../consts/defaultMultiCollateralRoutes';
 import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
 import { getQueryParams, updateQueryParam } from '../../utils/queryParams';
@@ -62,7 +63,11 @@ import { useTokenPrice } from '../tokens/useTokenPrice';
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { FeeSectionButton } from './FeeSectionButton';
 import { RecipientConfirmationModal } from './RecipientConfirmationModal';
+<<<<<<< HEAD
 import { getInterchainQuote, getLowestFeeTransferToken, getTotalFee } from './fees';
+=======
+import { getInterchainQuote, getTotalFee, getTransferToken } from './fees';
+>>>>>>> origin/main
 import { useFetchMaxAmount } from './maxAmount';
 import { TransferFormValues } from './types';
 import { useRecipientBalanceWatcher } from './useBalanceWatcher';
@@ -860,13 +865,21 @@ async function validateForm(
       accounts,
     );
     const amountWei = toWei(amount, token.decimals);
+<<<<<<< HEAD
     const transferToken = await getLowestFeeTransferToken(
+=======
+    const transferToken = await getTransferToken(
+>>>>>>> origin/main
       warpCore,
       token,
       destinationToken,
       amountWei,
       recipient,
       sender,
+<<<<<<< HEAD
+=======
+      defaultMultiCollateralRoutes,
+>>>>>>> origin/main
     );
     const multiCollateralLimit = isMultiCollateralLimitExceeded(token, destination, amountWei);
 

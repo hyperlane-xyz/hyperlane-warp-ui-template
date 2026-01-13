@@ -81,7 +81,6 @@
     "@typescript-eslint/eslint-plugin": "^8.13.0",
     "@typescript-eslint/parser": "^8.13.0",
     "autoprefixer": "^10.4.20",
-    "dotenv": "^17.2.3",
     "eslint": "^9.14.0",
     "eslint-config-next": "^15.0.2",
     "eslint-config-prettier": "^9.1.0",
@@ -110,7 +109,7 @@
   "scripts": {
     "clean": "rm -rf dist cache .next",
     "prebuild": "node scripts/fetch-fonts.mjs",
-    "fetch-fonts": "node scripts/fetch-fonts.mjs",
+    "fetch-fonts": "node --env-file=.env.local scripts/fetch-fonts.mjs",
     "dev": "next dev",
     "build": "next build",
     "typecheck": "tsc",

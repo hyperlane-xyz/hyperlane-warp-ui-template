@@ -1,4 +1,3 @@
-import { config } from 'dotenv';
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { createWriteStream, mkdirSync, existsSync } from 'fs';
 import { pipeline } from 'stream/promises';
@@ -7,9 +6,6 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-
-// Load .env.local for local development (Vercel sets env vars directly)
-config({ path: join(__dirname, '..', '.env.local') });
 const FONTS_DIR = join(__dirname, '..', 'public', 'fonts');
 
 // Font files to download from S3

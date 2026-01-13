@@ -1,9 +1,10 @@
 import react from '@vitejs/plugin-react';
+import vitePluginBundleObfuscator from 'vite-plugin-bundle-obfuscator';
 import tsconfigPaths from 'vite-tsconfig-paths';
 import { coverageConfigDefaults, defineConfig } from 'vitest/config';
 
 export default defineConfig({
-  plugins: [tsconfigPaths(), react({})],
+  plugins: [tsconfigPaths(), react({}), vitePluginBundleObfuscator()],
   assetsInclude: ['**/*.yaml'],
   test: {
     globals: true,
@@ -26,5 +27,8 @@ export default defineConfig({
         'src/pages/**/*.tsx',
       ],
     },
+  },
+  build: {
+    sourcemap: false,
   },
 });

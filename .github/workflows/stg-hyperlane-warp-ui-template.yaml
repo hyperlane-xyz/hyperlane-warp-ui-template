@@ -55,11 +55,13 @@ jobs:
         env:
           NEXT_PUBLIC_RPC_OVERRIDES: '{"chain1":{"http":"https://..."}}'
           NEXT_PUBLIC_BRIDGE_DASHBOARD_URL: https://bridge-dashboard.testnet.pruv.network/
+          NODE_ENV: production
         run: |
           echo "Write env file..."
           jq -r 'to_entries|map("\(.key)=\(.value)")|.[]' secret.json > .env
           echo "NEXT_PUBLIC_RPC_OVERRIDES='${NEXT_PUBLIC_RPC_OVERRIDES}'" >> .env
           echo "NEXT_PUBLIC_BRIDGE_DASHBOARD_URL='${NEXT_PUBLIC_BRIDGE_DASHBOARD_URL}'" >> .env
+          echo "NODE_ENV='${NODE_ENV}'" >> .env
 
       - name: Build and Push Container
         run: |-

@@ -1,5 +1,9 @@
 import { IToken, Token, WarpCore } from '@hyperlane-xyz/sdk';
 import { isNullish } from '@hyperlane-xyz/utils';
+import { useAccountForChain, useActiveChains, useWatchAsset } from '@hyperlane-xyz/widgets';
+import { useMutation } from '@tanstack/react-query';
+import { ADD_ASSET_SUPPORTED_PROTOCOLS } from '../../consts/args';
+import { useMultiProvider } from '../chains/hooks';
 import { useStore } from '../store';
 
 export function useWarpCore() {
@@ -97,4 +101,34 @@ export function tryFindTokenConnection(token: Token, chainName: string) {
   );
 
   return connectedToken ? connectedToken.token : null;
+}
+
+export function useAddToken(token?: IToken) {
+  const multiProvider = useMultiProvider();
+  const activeChains = useActiveChains(multiProvider);
+  const watchAsset = useWatchAsset(multiProvider);
+  const account = useAccountForChain(multiProvider, token?.chainName);
+  const isAccountReady = account?.isReady;
+  const isSupportedProtocol = token
+    ? ADD_ASSET_SUPPORTED_PROTOCOLS.includes(token?.protocol)
+    : false;
+
+  const canAddAsset = token && isAccountReady && isSupportedProtocol;
+
+  const { isPending, mutateAsync } = useMutation({
+    mutationFn: () => {
+      if (!canAddAsset)
+        throw new Error('Cannot import this asset, please check the token imported');
+
+      const { addAsset } = watchAsset[token.protocol];
+      const activeChain = activeChains.chains[token.protocol];
+
+      if (!activeChain.chainName)
+        throw new Error('Not active chain found, please check if your wallet is connected ');
+
+      return addAsset(token, activeChain.chainName);
+    },
+  });
+
+  return { addToken: mutateAsync, isLoading: isPending, canAddAsset };
 }

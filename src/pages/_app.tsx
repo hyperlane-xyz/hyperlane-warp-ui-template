@@ -1,8 +1,8 @@
 import { useIsSsr } from '@hyperlane-xyz/widgets';
 import '@hyperlane-xyz/widgets/styles.css';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Analytics } from '@vercel/analytics/react';
 import type { AppProps } from 'next/app';
+import { useEffect } from 'react';
 import { ToastContainer, Zoom } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { ErrorBoundary } from '../components/errors/ErrorBoundary';
@@ -11,6 +11,7 @@ import { MAIN_FONT } from '../consts/app';
 import { WarpContextInitGate } from '../features/WarpContextInitGate';
 import { CosmosWalletContext } from '../features/wallet/context/CosmosWalletContext';
 import { EvmWalletContext } from '../features/wallet/context/EvmWalletContext';
+import { RadixWalletContext } from '../features/wallet/context/RadixWalletContext';
 import { SolanaWalletContext } from '../features/wallet/context/SolanaWalletContext';
 import { StarknetWalletContext } from '../features/wallet/context/StarknetWalletContext';
 import '../styles/globals.css';
@@ -29,6 +30,28 @@ export default function App({ Component, pageProps }: AppProps) {
   // Disable app SSR for now as it's not needed and
   // complicates wallet and graphql integrations
   const isSsr = useIsSsr();
+
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) {
+      return undefined;
+    }
+
+    const registerServiceWorker = () => {
+      navigator.serviceWorker
+        .register('/service-worker.js')
+        // eslint-disable-next-line no-console
+        .catch((error) => console.error('Service worker registration failed', error));
+    };
+
+    if (document.readyState === 'complete') {
+      registerServiceWorker();
+      return undefined;
+    } else {
+      window.addEventListener('load', registerServiceWorker);
+      return () => window.removeEventListener('load', registerServiceWorker);
+    }
+  }, []);
+
   if (isSsr) {
     return <div></div>;
   }
@@ -44,10 +67,11 @@ export default function App({ Component, pageProps }: AppProps) {
               <SolanaWalletContext>
                 <CosmosWalletContext>
                   <StarknetWalletContext>
-                    <AppLayout>
-                      <Component {...pageProps} />
-                      <Analytics />
-                    </AppLayout>
+                    <RadixWalletContext>
+                      <AppLayout>
+                        <Component {...pageProps} />
+                      </AppLayout>
+                    </RadixWalletContext>
                   </StarknetWalletContext>
                 </CosmosWalletContext>
               </SolanaWalletContext>

@@ -9,9 +9,15 @@ interface Props {
   chainName: ChainName;
   text: string;
   classes?: string;
+  disabled?: boolean;
 }
 
-export function ConnectAwareSubmitButton<FormValues = any>({ chainName, text, classes }: Props) {
+export function ConnectAwareSubmitButton<FormValues = any>({
+  chainName,
+  text,
+  classes,
+  disabled,
+}: Props) {
   const protocol = useChainProtocol(chainName) || ProtocolType.Ethereum;
   const connectFns = useConnectFns();
   const connectFn = connectFns[protocol];
@@ -27,7 +33,11 @@ export function ConnectAwareSubmitButton<FormValues = any>({ chainName, text, cl
 
   const color = hasError ? 'red' : 'primary';
   const content = hasError ? firstError : isAccountReady ? text : 'Connect wallet';
-  const type = isAccountReady ? 'submit' : 'button';
+  const type =
+    disabled || !isAccountReady
+      ? 'button' // never submits when deliberately disabled
+      : 'submit';
+
   const onClick = isAccountReady ? undefined : connectFn;
 
   // Automatically clear error state after a timeout
@@ -40,7 +50,13 @@ export function ConnectAwareSubmitButton<FormValues = any>({ chainName, text, cl
   useTimeout(clearErrors, 3500);
 
   return (
-    <SolidButton type={type} color={color} onClick={onClick} className={classes}>
+    <SolidButton
+      disabled={disabled}
+      type={type}
+      color={color}
+      onClick={onClick}
+      className={classes}
+    >
       {content}
     </SolidButton>
   );

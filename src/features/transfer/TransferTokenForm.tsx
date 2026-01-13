@@ -2,9 +2,11 @@ import { IToken, Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
 import {
   ProtocolType,
   convertToScaledAmount,
+  eqAddress,
   errorToString,
   fromWei,
   isNullish,
+  isValidAddressEvm,
   objKeys,
   toWei,
 } from '@hyperlane-xyz/utils';
@@ -22,6 +24,7 @@ import BigNumber from 'bignumber.js';
 import { Form, Formik, useFormikContext } from 'formik';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
+import { RecipientWarningBanner } from '../../components/banner/RecipientWarningBanner';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
 import { SolidButton } from '../../components/buttons/SolidButton';
 import { CustomSwapIcon } from '../../components/icons/CustomSwapIcon';
@@ -64,6 +67,7 @@ import { useRecipientBalanceWatcher } from './useBalanceWatcher';
 import { useDashboardDestinationSync } from './useDashboardDestinationSync';
 import { useFeeQuotes } from './useFeeQuotes';
 import { useTokenTransfer } from './useTokenTransfer';
+import { isSmartContract } from './utils';
 
 export function TransferTokenForm() {
   const multiProvider = useMultiProvider();
@@ -136,7 +140,7 @@ export function TransferTokenForm() {
         <Form className="flex w-full flex-col items-stretch">
           <WarningBanners />
           <ChainSelectSection isReview={isReview} />
-          <div className="mt-3.5 flex items-end justify-between space-x-4">
+          <div className="mt-2.5 flex items-end justify-between space-x-4">
             <TokenSection setIsNft={setIsNft} isReview={isReview} />
             <AmountSection isNft={isNft} isReview={isReview} />
           </div>
@@ -214,6 +218,13 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
     return getNumRoutesWithSelectedChain(warpCore, values.destination, false);
   }, [values.destination, warpCore]);
 
+  const { originToken, destinationToken } = useMemo(() => {
+    const originToken = getTokenByIndex(warpCore, values.tokenIndex);
+    if (!originToken) return { originToken: undefined, destinationToken: undefined };
+    const destinationToken = originToken.getConnectionForChain(values.destination)?.token;
+    return { originToken, destinationToken };
+  }, [values.tokenIndex, values.destination, warpCore]);
+
   const setTokenOnChainChange = (origin: string, destination: string) => {
     const tokenIndex = getTokenIndexFromChains(warpCore, null, origin, destination);
     const token = getTokenByIndex(warpCore, tokenIndex);
@@ -246,6 +257,7 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
         disabled={isReview}
         customListItemField={destinationRouteCounts}
         onChange={handleChange}
+        token={originToken}
       />
       <div className="flex flex-1 flex-col items-center">
         <SwapChainsButton disabled={isReview} onSwapChain={onSwapChain} />
@@ -256,6 +268,7 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
         disabled={isReview}
         customListItemField={originRouteCounts}
         onChange={handleChange}
+        token={destinationToken}
       />
     </div>
   );
@@ -356,7 +369,83 @@ function ButtonSection({
   warpCore: WarpCore;
 }) {
   const { values } = useFormikContext<TransferFormValues>();
+  const multiProvider = useMultiProvider();
   const chainDisplayName = useChainDisplayName(values.destination);
+
+  const { accounts } = useAccounts(multiProvider, config.addressBlacklist);
+  const { address: connectedWallet } = getAccountAddressAndPubKey(
+    multiProvider,
+    values.origin,
+    accounts,
+  );
+
+  // Confirming recipient address
+  const [{ addressConfirmed, showWarning }, setRecipientInfos] = useState({
+    showWarning: false,
+    addressConfirmed: true,
+  });
+
+  useEffect(() => {
+    const checkSameEVMRecipient = async (recipient: string) => {
+      if (!connectedWallet) {
+        // Hide warning banner if entering a recipient address and then disconnect wallet
+        setRecipientInfos({ showWarning: false, addressConfirmed: true });
+        return;
+      }
+
+      const { protocol: destinationProtocol } = multiProvider.getChainMetadata(values.destination);
+      const { protocol: sourceProtocol } = multiProvider.getChainMetadata(values.origin);
+
+      // Check if we are only dealing with bridging between two EVM chains
+      if (
+        sourceProtocol !== ProtocolType.Ethereum ||
+        destinationProtocol !== ProtocolType.Ethereum
+      ) {
+        setRecipientInfos({ showWarning: false, addressConfirmed: true });
+        return;
+      }
+
+      if (!isValidAddressEvm(recipient)) {
+        setRecipientInfos({ showWarning: false, addressConfirmed: true });
+        return;
+      }
+
+      // check first if the address on origin is a smart contract
+      const { isContract: isSenderSmartContract, error: senderCheckError } = await isSmartContract(
+        multiProvider,
+        values.origin,
+        connectedWallet,
+      );
+
+      const { isContract: isRecipientSmartContract, error: recipientCheckError } =
+        await isSmartContract(multiProvider, values.destination, recipient);
+
+      const isSelfRecipient = eqAddress(recipient, connectedWallet);
+
+      // Hide warning banners if entering a recipient address and then disconnect wallet
+      if (senderCheckError || recipientCheckError) {
+        toast.error(senderCheckError || recipientCheckError);
+        setRecipientInfos({ addressConfirmed: true, showWarning: false });
+        return;
+      }
+
+      if (isSelfRecipient && isSenderSmartContract && !isRecipientSmartContract) {
+        const msg = `The recipient address is the same as the connected wallet, but it does not exist as a smart contract on ${chainDisplayName}.`;
+        logger.warn(msg);
+        setRecipientInfos({ showWarning: true, addressConfirmed: false });
+      } else {
+        setRecipientInfos({ showWarning: false, addressConfirmed: true });
+      }
+    };
+    checkSameEVMRecipient(values.recipient);
+  }, [
+    values.recipient,
+    connectedWallet,
+    multiProvider,
+    values.destination,
+    values.origin,
+    chainDisplayName,
+  ]);
 
   const isSanctioned = useIsAccountSanctioned();
 
@@ -392,36 +481,67 @@ function ButtonSection({
     setIsReview(false);
     cleanOverrideToken();
   };
+
   if (!isReview) {
     return (
-      <ConnectAwareSubmitButton
-        chainName={values.origin}
-        text={isValidating ? 'Validating...' : 'Continue'}
-        classes="mt-4 px-3 py-1.5"
-      />
+      <>
+        <div
+          className={`mt-3 gap-2 bg-amber-400 px-4 text-sm ${
+            showWarning ? 'max-h-38 py-2' : 'max-h-0'
+          } overflow-hidden transition-all duration-500`}
+        >
+          <RecipientWarningBanner
+            destinationChain={chainDisplayName}
+            confirmRecipientHandler={(checked) =>
+              setRecipientInfos((state) => ({ ...state, addressConfirmed: checked }))
+            }
+          />
+        </div>
+        <ConnectAwareSubmitButton
+          disabled={!addressConfirmed}
+          chainName={values.origin}
+          text={isValidating ? 'Validating...' : 'Continue'}
+          classes="mt-4 px-3 py-1.5"
+        />
+      </>
     );
   }
 
   return (
-    <div className="mt-4 flex items-center justify-between space-x-4">
-      <SolidButton
-        type="button"
-        color="accent"
-        onClick={onEdit}
-        className="px-6 py-1.5"
-        icon={<ChevronIcon direction="w" width={10} height={6} color={Color.white} />}
+    <>
+      <div
+        className={`mt-3 gap-2 bg-amber-400 px-4 text-sm ${
+          showWarning ? 'max-h-38 py-2' : 'max-h-0'
+        } overflow-hidden transition-all duration-500`}
       >
-        <span>Edit</span>
-      </SolidButton>
-      <SolidButton
-        type="button"
-        color="primary"
-        onClick={triggerTransactionsHandler}
-        className="flex-1 px-3 py-1.5"
-      >
-        {`Send to ${chainDisplayName}`}
-      </SolidButton>
-    </div>
+        <RecipientWarningBanner
+          destinationChain={chainDisplayName}
+          confirmRecipientHandler={(checked) =>
+            setRecipientInfos((state) => ({ ...state, addressConfirmed: checked }))
+          }
+        />
+      </div>
+      <div className="mt-4 flex items-center justify-between space-x-4">
+        <SolidButton
+          type="button"
+          color="accent"
+          onClick={onEdit}
+          className="px-6 py-1.5"
+          icon={<ChevronIcon direction="w" width={10} height={6} color={Color.white} />}
+        >
+          <span>Edit</span>
+        </SolidButton>
+        <SolidButton
+          disabled={!addressConfirmed}
+          type="button"
+          color="primary"
+          onClick={triggerTransactionsHandler}
+          className="flex-1 px-3 py-1.5"
+        >
+          {`Send to ${chainDisplayName}`}
+        </SolidButton>
+      </div>
+    </>
   );
 }
 

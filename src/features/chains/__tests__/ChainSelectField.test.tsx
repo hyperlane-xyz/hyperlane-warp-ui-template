@@ -13,6 +13,15 @@ vi.mock('../hooks', () => ({
   useChainDisplayName: vi.fn(),
   useChainSelect: vi.fn(),
   useChainMetadata: vi.fn(),
+  useMultiProvider: vi.fn(),
+}));
+
+vi.mock('../../tokens/hooks', () => ({
+  useAddToken: vi.fn(() => ({
+    addToken: vi.fn(),
+    canAddAsset: false,
+    isLoading: false,
+  })),
 }));
 
 // Mock ChainSelectListModal

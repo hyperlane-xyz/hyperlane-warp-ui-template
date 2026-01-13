@@ -1,3 +1,6 @@
+import { extendTheme } from '@chakra-ui/react';
+import { wallets as cosmostationWallets } from '@cosmos-kit/cosmostation';
+import { wallets as keplrWallets } from '@cosmos-kit/keplr';
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as chainsHooks from '../../../chains/hooks';
@@ -214,8 +217,6 @@ describe('CosmosWalletContext', () => {
   });
 
   it.skip('should apply custom Chakra theme', () => {
-    const { extendTheme } = require('@chakra-ui/react');
-
     render(
       <CosmosWalletContext>
         <div>Test</div>
@@ -428,8 +429,6 @@ describe('CosmosWalletContext', () => {
 
   describe.skip('Wallet Configuration', () => {
     it('should include Keplr wallets', () => {
-      const { wallets: keplrWallets } = require('@cosmos-kit/keplr');
-
       render(
         <CosmosWalletContext>
           <div>Test</div>
@@ -441,8 +440,6 @@ describe('CosmosWalletContext', () => {
     });
 
     it('should include Cosmostation wallets', () => {
-      const { wallets: cosmostationWallets } = require('@cosmos-kit/cosmostation');
-
       render(
         <CosmosWalletContext>
           <div>Test</div>

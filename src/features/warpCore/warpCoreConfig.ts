@@ -2,7 +2,13 @@ import {
   IRegistry,
   warpRouteConfigs as publishedRegistryWarpRoutes,
 } from '@hyperlane-xyz/registry';
-import { WarpCoreConfig, WarpCoreConfigSchema, validateZodResult } from '@hyperlane-xyz/sdk';
+import {
+  TOKEN_STANDARD_TO_PROTOCOL,
+  WarpCoreConfig,
+  WarpCoreConfigSchema,
+  getTokenConnectionId,
+  validateZodResult,
+} from '@hyperlane-xyz/sdk';
 import { objFilter, objMerge } from '@hyperlane-xyz/utils';
 import { config } from '../../consts/config.ts';
 import { warpRouteWhitelist } from '../../consts/warpRouteWhitelist.ts';
@@ -55,7 +61,7 @@ export async function assembleWarpCoreConfig(
     ...yamlConfig.tokens,
     ...storeOverrideTokens,
   ];
-  const tokens = dedupeTokens(combinedTokens);
+  const tokens = filterUnconnectedToken(dedupeTokens(combinedTokens));
 
   const combinedOptions = [
     ...filteredRegistryOptions,
@@ -102,4 +108,31 @@ function reduceOptions(optionsList: Array<WarpCoreConfig['options']>): WarpCoreC
     }
     return acc;
   }, {});
+}
+
+// Remove tokens that have no connections from the token list, but preserve tokens that are destinations
+function filterUnconnectedToken(tokens: WarpCoreConfig['tokens']): WarpCoreConfig['tokens'] {
+  const destinationTokenIds = new Set<string>();
+
+  tokens.forEach((token) => {
+    if (token.connections?.length) {
+      token.connections.forEach((conn) => {
+        destinationTokenIds.add(conn.token);
+      });
+    }
+  });
+
+  // Keep tokens with connections OR tokens that are destinations
+  return tokens.filter((token) => {
+    // remove null addresses if they exist
+    if (!token.addressOrDenom) return false;
+    // Has connections - keep it
+    if (token.connections?.length) return true;
+
+    const protocol = TOKEN_STANDARD_TO_PROTOCOL[token.standard];
+
+    // Is a destination token - keep it
+    const tokenId = getTokenConnectionId(protocol, token.chainName, token.addressOrDenom);
+    return destinationTokenIds.has(tokenId);
+  });
 }

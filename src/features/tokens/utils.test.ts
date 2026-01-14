@@ -570,7 +570,9 @@ describe('buildTokensArray', () => {
     const origin = createMockToken({
       chainName: 'ethereum',
       addressOrDenom: ADDR_1,
-      connections: [createTokenConnectionMock(undefined, { chainName: 'arbitrum', addressOrDenom: ADDR_2 })],
+      connections: [
+        createTokenConnectionMock(undefined, { chainName: 'arbitrum', addressOrDenom: ADDR_2 }),
+      ],
     });
 
     const result = buildTokensArray([origin]);
@@ -585,13 +587,17 @@ describe('buildTokensArray', () => {
       chainName: 'ethereum',
       addressOrDenom: ADDR_1,
       name: 'First',
-      connections: [createTokenConnectionMock(undefined, { chainName: 'arbitrum', addressOrDenom: ADDR_2 })],
+      connections: [
+        createTokenConnectionMock(undefined, { chainName: 'arbitrum', addressOrDenom: ADDR_2 }),
+      ],
     });
     const token2 = createMockToken({
       chainName: 'ethereum',
       addressOrDenom: ADDR_1,
       name: 'Second',
-      connections: [createTokenConnectionMock(undefined, { chainName: 'arbitrum', addressOrDenom: ADDR_2 })],
+      connections: [
+        createTokenConnectionMock(undefined, { chainName: 'arbitrum', addressOrDenom: ADDR_2 }),
+      ],
     });
 
     const result = buildTokensArray([token1, token2]);
@@ -607,12 +613,16 @@ describe('buildTokensArray', () => {
     const token1 = createMockToken({
       chainName: 'ethereum',
       addressOrDenom: ADDR_1,
-      connections: [createTokenConnectionMock(undefined, { chainName: 'arbitrum', addressOrDenom: ADDR_3 })],
+      connections: [
+        createTokenConnectionMock(undefined, { chainName: 'arbitrum', addressOrDenom: ADDR_3 }),
+      ],
     });
     const token2 = createMockToken({
       chainName: 'optimism',
       addressOrDenom: ADDR_2,
-      connections: [createTokenConnectionMock(undefined, { chainName: 'arbitrum', addressOrDenom: ADDR_3 })],
+      connections: [
+        createTokenConnectionMock(undefined, { chainName: 'arbitrum', addressOrDenom: ADDR_3 }),
+      ],
     });
 
     const result = buildTokensArray([token1, token2]);
@@ -626,12 +636,16 @@ describe('buildTokensArray', () => {
     const tokenA = createMockToken({
       chainName: 'ethereum',
       addressOrDenom: ADDR_1,
-      connections: [createTokenConnectionMock(undefined, { chainName: 'arbitrum', addressOrDenom: ADDR_2 })],
+      connections: [
+        createTokenConnectionMock(undefined, { chainName: 'arbitrum', addressOrDenom: ADDR_2 }),
+      ],
     });
     const tokenB = createMockToken({
       chainName: 'arbitrum',
       addressOrDenom: ADDR_2,
-      connections: [createTokenConnectionMock(undefined, { chainName: 'ethereum', addressOrDenom: ADDR_1 })],
+      connections: [
+        createTokenConnectionMock(undefined, { chainName: 'ethereum', addressOrDenom: ADDR_1 }),
+      ],
     });
 
     const result = buildTokensArray([tokenA, tokenB]);
@@ -648,7 +662,9 @@ describe('buildTokensArray', () => {
       standard: TokenStandard.EvmHypCollateral,
       addressOrDenom: ADDR_1,
       collateralAddressOrDenom: COLLATERAL_USDC,
-      connections: [createTokenConnectionMock(undefined, { chainName: 'arbitrum', addressOrDenom: ADDR_3 })],
+      connections: [
+        createTokenConnectionMock(undefined, { chainName: 'arbitrum', addressOrDenom: ADDR_3 }),
+      ],
     });
     const token2 = createMockToken({
       chainName: 'ethereum',
@@ -656,7 +672,9 @@ describe('buildTokensArray', () => {
       standard: TokenStandard.EvmHypCollateral,
       addressOrDenom: ADDR_2,
       collateralAddressOrDenom: COLLATERAL_USDC,
-      connections: [createTokenConnectionMock(undefined, { chainName: 'optimism', addressOrDenom: ADDR_3 })],
+      connections: [
+        createTokenConnectionMock(undefined, { chainName: 'optimism', addressOrDenom: ADDR_3 }),
+      ],
     });
 
     const result = buildTokensArray([token1, token2]);

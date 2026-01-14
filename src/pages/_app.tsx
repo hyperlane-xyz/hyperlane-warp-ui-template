@@ -18,10 +18,10 @@ import '../styles/globals.css';
 import '../vendor/inpage-metamask';
 import '../vendor/polyfill';
 
-import { GalileoWalletAdapter } from '@provablehq/aleo-wallet-adaptor-prove-alpha';
 import { AleoWalletProvider } from '@provablehq/aleo-wallet-adaptor-react';
+import { ShieldWalletAdapter } from '@provablehq/aleo-wallet-adaptor-shield';
 
-const wallets = [new GalileoWalletAdapter()];
+const wallets = [new ShieldWalletAdapter()];
 
 const reactQueryClient = new QueryClient({
   defaultOptions: {

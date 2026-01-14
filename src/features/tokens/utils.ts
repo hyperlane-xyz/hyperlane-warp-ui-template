@@ -57,15 +57,16 @@ export function isValidMultiCollateralToken(
     typeof destination === 'string'
       ? originToken.getConnectionForChain(destination)?.token
       : destination;
+  if (!destinationToken) return false;
 
   // Check if destination is collateralized - has collateral address, is HypNative, or is in SDK's list
   // Note: Some standards like EvmHypCollateralFiat may not be in TOKEN_COLLATERALIZED_STANDARDS
   const isDestCollateralized =
-    !!destinationToken?.collateralAddressOrDenom ||
-    destinationToken?.isHypNative?.() ||
-    TOKEN_COLLATERALIZED_STANDARDS.includes(destinationToken?.standard as any);
+    !!destinationToken.collateralAddressOrDenom ||
+    destinationToken.isHypNative() ||
+    TOKEN_COLLATERALIZED_STANDARDS.includes(destinationToken.standard);
 
-  if (!destinationToken || !isDestCollateralized) return false;
+  if (!isDestCollateralized) return false;
 
   return true;
 }
@@ -204,7 +205,7 @@ export function buildTokensArray(warpCoreTokens: Token[]): Token[] {
  * Build collateral groups - groups tokens by their collateral key for O(1) lookup
  * Used for fast route checking in the token selection modal
  */
-export function buildCollateralGroups(tokens: Token[]): Map<string, Token[]> {
+export function groupTokensByCollateral(tokens: Token[]): Map<string, Token[]> {
   const groups = new Map<string, Token[]>();
   for (const token of tokens) {
     const key = getCollateralKey(token);

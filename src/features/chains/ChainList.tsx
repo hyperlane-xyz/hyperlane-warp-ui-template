@@ -1,6 +1,7 @@
+import { ChainName } from '@hyperlane-xyz/sdk';
 import { useMemo } from 'react';
 import { ChainLogo } from '../../components/icons/ChainLogo';
-import { useStore } from '../store';
+import { useChainInfos } from './hooks';
 
 interface ChainListProps {
   searchQuery: string;
@@ -9,20 +10,7 @@ interface ChainListProps {
 }
 
 export function ChainList({ searchQuery, selectedChain, onSelectChain }: ChainListProps) {
-  const { chainMetadata } = useStore((s) => ({
-    chainMetadata: s.chainMetadata,
-  }));
-
-  // Build and sort chains - only rebuilds when chainMetadata changes
-  const allChains = useMemo(() => {
-    const chainList = Object.values(chainMetadata);
-    const chainInfos = chainList.map((chain) => ({
-      name: chain.name,
-      displayName: chain.displayName || chain.name,
-    }));
-    chainInfos.sort((a, b) => a.displayName.localeCompare(b.displayName));
-    return chainInfos;
-  }, [chainMetadata]);
+  const allChains = useChainInfos();
 
   // Filter by search query - only re-filters when searchQuery changes
   const chains = useMemo(() => {

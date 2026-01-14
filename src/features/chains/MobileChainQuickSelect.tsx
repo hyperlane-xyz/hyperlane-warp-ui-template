@@ -1,7 +1,7 @@
 import { ChainName } from '@hyperlane-xyz/sdk';
 import { useMemo } from 'react';
 import { ChainLogo } from '../../components/icons/ChainLogo';
-import { useStore } from '../store';
+import { useChainInfos } from './hooks';
 
 const DEFAULT_MAX_VISIBLE_CHAINS = 4;
 
@@ -19,20 +19,7 @@ export function MobileChainQuickSelect({
   onMoreClick,
   preferredChains,
 }: MobileChainQuickSelectProps) {
-  const { chainMetadata } = useStore((s) => ({
-    chainMetadata: s.chainMetadata,
-  }));
-
-  // Build and sort all chains - only rebuilds when chainMetadata changes
-  const allChains = useMemo(() => {
-    const chainList = Object.values(chainMetadata);
-    const chainInfos = chainList.map((chain) => ({
-      name: chain.name,
-      displayName: chain.displayName || chain.name,
-    }));
-    chainInfos.sort((a, b) => a.displayName.localeCompare(b.displayName));
-    return chainInfos;
-  }, [chainMetadata]);
+  const allChains = useChainInfos();
 
   // Compute visible chains - only recalculates when preferredChains changes
   const { visibleChains, hasMore } = useMemo(() => {

@@ -24,8 +24,8 @@ import { assembleChainMetadata } from './chains/metadata';
 import { TokenChainMap } from './tokens/types';
 import {
   assembleTokensBySymbolChainMap,
-  buildCollateralGroups,
   buildTokensArray,
+  groupTokensByCollateral,
 } from './tokens/utils';
 import { FinalTransferStatuses, TransferContext, TransferStatus } from './transfer/types';
 import { assembleWarpCoreConfig } from './warpCore/warpCoreConfig';
@@ -289,7 +289,7 @@ async function initWarpContext({
     // Build unified tokens array (deduplicated by collateral at startup)
     const tokens = buildTokensArray(warpCore.tokens);
     // Build collateral groups for fast route checking
-    const collateralGroups = buildCollateralGroups(warpCore.tokens);
+    const collateralGroups = groupTokensByCollateral(warpCore.tokens);
 
     return {
       registry: currentRegistry,

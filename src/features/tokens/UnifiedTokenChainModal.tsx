@@ -36,13 +36,13 @@ export function UnifiedTokenChainModal({
     setShowMobileChainList(false);
   };
 
-  const onSelectAndClose = (token: Token) => {
+  const handleSelectToken = (token: Token) => {
     onSelect(token);
     onClose();
   };
 
   // Mobile: when selecting a chain from the full list, go back to tokens
-  const onMobileSelectChain = (chain: ChainName | null) => {
+  const handleSelectChain = (chain: ChainName | null) => {
     setSelectedChain(chain);
     setShowMobileChainList(false);
   };
@@ -61,7 +61,7 @@ export function UnifiedTokenChainModal({
             searchQuery={chainSearch}
             onSearchChange={setChainSearch}
             selectedChain={selectedChain}
-            onSelectChain={onMobileSelectChain}
+            onSelectChain={handleSelectChain}
             showBackButton={showMobileChainList}
             onBack={() => setShowMobileChainList(false)}
           />
@@ -74,7 +74,7 @@ export function UnifiedTokenChainModal({
             searchQuery={tokenSearch}
             onSearchChange={setTokenSearch}
             chainFilter={selectedChain}
-            onSelect={onSelectAndClose}
+            onSelect={handleSelectToken}
             counterpartToken={counterpartToken}
             selectedChain={selectedChain}
             onSelectChain={setSelectedChain}

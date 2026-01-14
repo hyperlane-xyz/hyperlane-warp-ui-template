@@ -14,7 +14,7 @@ interface ImportTokenButtonProps {
 export function ImportTokenButton({ token }: ImportTokenButtonProps) {
   const { addToken, canAddAsset, isLoading } = useAddToken(token);
 
-  const onClick = useCallback(async () => {
+  const handleAddToken = useCallback(async () => {
     try {
       await addToken();
     } catch (error: any) {
@@ -30,7 +30,7 @@ export function ImportTokenButton({ token }: ImportTokenButtonProps) {
     <button
       type="button"
       className="flex items-center text-sm text-primary-500 hover:text-primary-700 disabled:opacity-50 [&_path]:fill-primary-500 [&_path]:hover:fill-primary-700"
-      onClick={onClick}
+      onClick={handleAddToken}
       disabled={isLoading}
     >
       <PlusIcon width={18} height={18} className="-mr-0.5" />

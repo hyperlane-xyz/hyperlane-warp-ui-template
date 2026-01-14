@@ -1,7 +1,7 @@
 import { TestChainName, TokenStandard } from '@hyperlane-xyz/sdk';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { createMockToken, createTokenConnectionMock } from '../../utils/test';
-import { isValidMultiCollateralToken, tryGetDefaultOriginToken } from './utils';
+import { dedupeTokensByCollateral, isValidMultiCollateralToken, tryGetDefaultOriginToken } from './utils';
 
 beforeEach(() => {
   vi.restoreAllMocks();
@@ -336,5 +336,212 @@ describe('tryGetDefaultOriginToken', () => {
 
     expect(result).toBe(defaultOriginToken);
     expect(result).not.toBe(otherOriginToken);
+  });
+});
+
+describe('dedupeTokensByCollateral', () => {
+  test('should return empty array for empty input', () => {
+    expect(dedupeTokensByCollateral([])).toEqual([]);
+  });
+
+  test('should keep all non-collateralized tokens without deduplication', () => {
+    const token1 = createMockToken({
+      standard: TokenStandard.EvmHypSynthetic,
+      addressOrDenom: '0x1111111111111111111111111111111111111111',
+    });
+    const token2 = createMockToken({
+      standard: TokenStandard.EvmHypSynthetic,
+      addressOrDenom: '0x2222222222222222222222222222222222222222',
+    });
+
+    const result = dedupeTokensByCollateral([token1, token2]);
+
+    expect(result).toHaveLength(2);
+    expect(result).toContain(token1);
+    expect(result).toContain(token2);
+  });
+
+  test('should keep collateralized tokens with different collateral addresses', () => {
+    const token1 = createMockToken({
+      standard: TokenStandard.EvmHypCollateral,
+      addressOrDenom: '0x1111111111111111111111111111111111111111',
+      collateralAddressOrDenom: '0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+    });
+    const token2 = createMockToken({
+      standard: TokenStandard.EvmHypCollateral,
+      addressOrDenom: '0x2222222222222222222222222222222222222222',
+      collateralAddressOrDenom: '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
+    });
+
+    const result = dedupeTokensByCollateral([token1, token2]);
+
+    expect(result).toHaveLength(2);
+    expect(result).toContain(token1);
+    expect(result).toContain(token2);
+  });
+
+  test('should dedupe collateralized tokens with same collateral on same chain', () => {
+    const collateralAddress = '0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+    const token1 = createMockToken({
+      chainName: 'ethereum',
+      standard: TokenStandard.EvmHypCollateral,
+      addressOrDenom: '0x1111111111111111111111111111111111111111',
+      collateralAddressOrDenom: collateralAddress,
+    });
+    const token2 = createMockToken({
+      chainName: 'ethereum',
+      standard: TokenStandard.EvmHypCollateral,
+      addressOrDenom: '0x2222222222222222222222222222222222222222',
+      collateralAddressOrDenom: collateralAddress,
+    });
+
+    const result = dedupeTokensByCollateral([token1, token2]);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toBe(token1);
+  });
+
+  test('should keep tokens with same collateral on different chains', () => {
+    const collateralAddress = '0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+    const token1 = createMockToken({
+      chainName: 'ethereum',
+      standard: TokenStandard.EvmHypCollateral,
+      addressOrDenom: '0x1111111111111111111111111111111111111111',
+      collateralAddressOrDenom: collateralAddress,
+    });
+    const token2 = createMockToken({
+      chainName: 'arbitrum',
+      standard: TokenStandard.EvmHypCollateral,
+      addressOrDenom: '0x2222222222222222222222222222222222222222',
+      collateralAddressOrDenom: collateralAddress,
+    });
+
+    const result = dedupeTokensByCollateral([token1, token2]);
+
+    expect(result).toHaveLength(2);
+    expect(result).toContain(token1);
+    expect(result).toContain(token2);
+  });
+
+  test('should handle mixed collateralized and non-collateralized tokens', () => {
+    const collateralAddress = '0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+    const syntheticToken = createMockToken({
+      standard: TokenStandard.EvmHypSynthetic,
+      addressOrDenom: '0x1111111111111111111111111111111111111111',
+    });
+    const collateralToken1 = createMockToken({
+      chainName: 'ethereum',
+      standard: TokenStandard.EvmHypCollateral,
+      addressOrDenom: '0x2222222222222222222222222222222222222222',
+      collateralAddressOrDenom: collateralAddress,
+    });
+    const collateralToken2 = createMockToken({
+      chainName: 'ethereum',
+      standard: TokenStandard.EvmHypCollateral,
+      addressOrDenom: '0x3333333333333333333333333333333333333333',
+      collateralAddressOrDenom: collateralAddress,
+    });
+
+    const result = dedupeTokensByCollateral([syntheticToken, collateralToken1, collateralToken2]);
+
+    expect(result).toHaveLength(2);
+    expect(result).toContain(syntheticToken);
+    expect(result).toContain(collateralToken1);
+    expect(result).not.toContain(collateralToken2);
+  });
+
+  test('should dedupe HypNative tokens on same chain', () => {
+    const token1 = createMockToken({
+      chainName: 'ethereum',
+      standard: TokenStandard.EvmHypNative,
+      addressOrDenom: '0x1111111111111111111111111111111111111111',
+      collateralAddressOrDenom: undefined,
+    });
+    const token2 = createMockToken({
+      chainName: 'ethereum',
+      standard: TokenStandard.EvmHypNative,
+      addressOrDenom: '0x2222222222222222222222222222222222222222',
+      collateralAddressOrDenom: undefined,
+    });
+
+    const result = dedupeTokensByCollateral([token1, token2]);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toBe(token1);
+  });
+
+  test('should keep HypNative tokens on different chains', () => {
+    const token1 = createMockToken({
+      chainName: 'ethereum',
+      standard: TokenStandard.EvmHypNative,
+      addressOrDenom: '0x1111111111111111111111111111111111111111',
+      collateralAddressOrDenom: undefined,
+    });
+    const token2 = createMockToken({
+      chainName: 'arbitrum',
+      standard: TokenStandard.EvmHypNative,
+      addressOrDenom: '0x2222222222222222222222222222222222222222',
+      collateralAddressOrDenom: undefined,
+    });
+
+    const result = dedupeTokensByCollateral([token1, token2]);
+
+    expect(result).toHaveLength(2);
+    expect(result).toContain(token1);
+    expect(result).toContain(token2);
+  });
+
+  test('should preserve order keeping first token seen', () => {
+    const collateralAddress = '0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+    const token1 = createMockToken({
+      chainName: 'ethereum',
+      standard: TokenStandard.EvmHypCollateral,
+      addressOrDenom: '0x1111111111111111111111111111111111111111',
+      collateralAddressOrDenom: collateralAddress,
+      name: 'First Token',
+    });
+    const token2 = createMockToken({
+      chainName: 'ethereum',
+      standard: TokenStandard.EvmHypCollateral,
+      addressOrDenom: '0x2222222222222222222222222222222222222222',
+      collateralAddressOrDenom: collateralAddress,
+      name: 'Second Token',
+    });
+    const token3 = createMockToken({
+      chainName: 'ethereum',
+      standard: TokenStandard.EvmHypCollateral,
+      addressOrDenom: '0x3333333333333333333333333333333333333333',
+      collateralAddressOrDenom: collateralAddress,
+      name: 'Third Token',
+    });
+
+    const result = dedupeTokensByCollateral([token1, token2, token3]);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].name).toBe('First Token');
+  });
+
+  test('should dedupe by symbol as well as collateral address', () => {
+    const collateralAddress = '0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+    const usdcToken = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USDC',
+      standard: TokenStandard.EvmHypCollateral,
+      addressOrDenom: '0x1111111111111111111111111111111111111111',
+      collateralAddressOrDenom: collateralAddress,
+    });
+    const usdtToken = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USDT',
+      standard: TokenStandard.EvmHypCollateral,
+      addressOrDenom: '0x2222222222222222222222222222222222222222',
+      collateralAddressOrDenom: collateralAddress,
+    });
+
+    const result = dedupeTokensByCollateral([usdcToken, usdtToken]);
+
+    expect(result).toHaveLength(2);
+    expect(result).toContain(usdcToken);
+    expect(result).toContain(usdtToken);
   });
 });

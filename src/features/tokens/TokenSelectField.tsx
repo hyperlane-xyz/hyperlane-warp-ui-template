@@ -33,14 +33,14 @@ export function TokenSelectField({
   showLabel = true,
 }: Props) {
   const { values, setFieldValue } = useFormikContext<TransferFormValues>();
-  const [field, , helpers] = useField<string | undefined>(name);
+  const [{ value: tokenKey }, , { setValue: setTokenKey }] = useField<string | undefined>(name);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const multiProvider = useMultiProvider();
   const tokens = useTokens();
 
   // Get the current token
-  const token = getTokenByKey(tokens, field.value);
+  const selectedToken = getTokenByKey(tokens, tokenKey);
 
   // Get the counterpart token (destination when selecting origin, origin when selecting destination)
   const counterpartToken =
@@ -48,9 +48,9 @@ export function TokenSelectField({
       ? getTokenByKey(tokens, values.destinationTokenKey)
       : getTokenByKey(tokens, values.originTokenKey);
 
-  const onSelectToken = (newToken: Token) => {
+  const handleSelectToken = (newToken: Token) => {
     const newTokenKey = getTokenKey(newToken);
-    helpers.setValue(newTokenKey);
+    setTokenKey(newTokenKey);
 
     // Track analytics - derive origin and destination from current tokens
     const originToken = getTokenByKey(tokens, values.originTokenKey);
@@ -87,7 +87,7 @@ export function TokenSelectField({
     }
   };
 
-  const onClickField = () => {
+  const openTokenSelectModal = () => {
     if (!disabled) setIsModalOpen(true);
   };
 
@@ -100,9 +100,9 @@ export function TokenSelectField({
           </label>
         )}
         <TokenButton
-          token={token}
+          token={selectedToken}
           disabled={disabled}
-          onClick={onClickField}
+          onClick={openTokenSelectModal}
           multiProvider={multiProvider}
         />
       </div>
@@ -110,7 +110,7 @@ export function TokenSelectField({
       <UnifiedTokenChainModal
         isOpen={isModalOpen}
         close={() => setIsModalOpen(false)}
-        onSelect={onSelectToken}
+        onSelect={handleSelectToken}
         selectionMode={selectionMode}
         counterpartToken={counterpartToken}
       />

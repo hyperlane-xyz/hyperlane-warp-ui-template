@@ -59,6 +59,7 @@ import {
   getTokenIndexFromChains,
   useWarpCore,
 } from '../tokens/hooks';
+import { useSupportsPermit } from '../tokens/permit';
 import { useTokenPrice } from '../tokens/useTokenPrice';
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { FeeSectionButton } from './FeeSectionButton';
@@ -386,6 +387,9 @@ function ButtonSection({
   const multiProvider = useMultiProvider();
   const chainDisplayName = useChainDisplayName(values.destination);
 
+  const originToken = routeOverrideToken || getTokenByIndex(warpCore, values.tokenIndex);
+  const { supportsPermit } = useSupportsPermit(originToken);
+
   const { accounts } = useAccounts(multiProvider, config.addressBlacklist);
   const { address: connectedWallet } = getAccountAddressAndPubKey(
     multiProvider,
@@ -488,7 +492,7 @@ function ButtonSection({
       tokenIndex = getIndexForToken(warpCore, routeOverrideToken);
       origin = routeOverrideToken.chainName;
     }
-    await triggerTransactions({ ...values, tokenIndex, origin });
+    await triggerTransactions({ ...values, tokenIndex, origin }, supportsPermit);
   };
 
   const onEdit = () => {
@@ -670,8 +674,9 @@ function ReviewDetails({
     originToken,
     !isReview,
   );
+  const { supportsPermit, isLoading: isPermitLoading } = useSupportsPermit(originToken);
 
-  const isLoading = isApproveLoading || isQuoteLoading;
+  const isLoading = isApproveLoading || isQuoteLoading || isPermitLoading;
 
   const fees = useMemo(() => {
     if (!feeQuotes) return null;
@@ -713,11 +718,23 @@ function ReviewDetails({
             <>
               {isApproveRequired && (
                 <div>
-                  <h4>Transaction 1: Approve Transfer</h4>
+                  <h4>
+                    {supportsPermit
+                      ? 'Step 1: Sign Permit (no gas)'
+                      : 'Transaction 1: Approve Transfer'}
+                  </h4>
                   <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs">
-                    <p>{`Router Address: ${originToken?.addressOrDenom}`}</p>
-                    {originToken?.collateralAddressOrDenom && (
-                      <p>{`Collateral Address: ${originToken.collateralAddressOrDenom}`}</p>
+                    {supportsPermit ? (
+                      <p className="text-green-600">
+                        This token supports gasless approval via permit signature
+                      </p>
+                    ) : (
+                      <>
+                        <p>{`Router Address: ${originToken?.addressOrDenom}`}</p>
+                        {originToken?.collateralAddressOrDenom && (
+                          <p>{`Collateral Address: ${originToken.collateralAddressOrDenom}`}</p>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>

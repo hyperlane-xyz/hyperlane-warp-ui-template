@@ -2,5 +2,232 @@
 # These configs will be merged with the warp routes in the configured registry
 # The input here is typically the output of the Hyperlane CLI warp deploy command
 ---
-tokens: []
+tokens:
+  - addressOrDenom: "0x06De94EfBE80A2804c5FDE2e7C4278a10575A272"
+    chainName: eni
+    connections:
+      - token: ethereum|ethereum|0xCF8EeA870e3124FF4fF2323B181Ca93Eb89Ddc40
+    decimals: 18
+    name: Ether
+    standard: EvmHypSynthetic
+    symbol: ETH
+  - addressOrDenom: "0xCF8EeA870e3124FF4fF2323B181Ca93Eb89Ddc40"
+    chainName: ethereum
+    connections:
+      - token: ethereum|eni|0x06De94EfBE80A2804c5FDE2e7C4278a10575A272
+    decimals: 18
+    name: Ether
+    standard: EvmHypNative
+    symbol: ETH
+  - addressOrDenom: "0xc2600eB2d0a3e20521eaB9F9B6B5e0433d2a19f9"
+    chainName: arbitrum
+    collateralAddressOrDenom: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"
+    connections:
+      - token: ethereum|base|0x2D88dbbAB372EAc7F78c3566B0742864dEAf984D
+      - token: ethereum|bsc|0x38847CDB99f374DbD5E053CC5306Dbca4f5DccbB
+      - token: ethereum|eni|0xC8E323036AAFB4B4201e7B640E79C4Db285A3FC8
+      - token: ethereum|ethereum|0x76E88eEE5Ba22498c18356fa63F52DBe5aBEdE6d
+      - token: ethereum|optimism|0x6d7Dfef82F2733D2d44DC7b4507a1D0d4D96E267
+      - token: ethereum|polygon|0x4cD30d29E54dbf1DF231ed563C2B180ABfE1eaD3
+    decimals: 6
+    name: USD Coin
+    standard: EvmHypCollateral
+    symbol: USDC
+  - addressOrDenom: "0x2D88dbbAB372EAc7F78c3566B0742864dEAf984D"
+    chainName: base
+    collateralAddressOrDenom: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
+    connections:
+      - token: ethereum|arbitrum|0xc2600eB2d0a3e20521eaB9F9B6B5e0433d2a19f9
+      - token: ethereum|bsc|0x38847CDB99f374DbD5E053CC5306Dbca4f5DccbB
+      - token: ethereum|eni|0xC8E323036AAFB4B4201e7B640E79C4Db285A3FC8
+      - token: ethereum|ethereum|0x76E88eEE5Ba22498c18356fa63F52DBe5aBEdE6d
+      - token: ethereum|optimism|0x6d7Dfef82F2733D2d44DC7b4507a1D0d4D96E267
+      - token: ethereum|polygon|0x4cD30d29E54dbf1DF231ed563C2B180ABfE1eaD3
+    decimals: 6
+    name: USD Coin
+    standard: EvmHypCollateral
+    symbol: USDC
+  - addressOrDenom: "0x38847CDB99f374DbD5E053CC5306Dbca4f5DccbB"
+    chainName: bsc
+    collateralAddressOrDenom: "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d"
+    connections:
+      - token: ethereum|arbitrum|0xc2600eB2d0a3e20521eaB9F9B6B5e0433d2a19f9
+      - token: ethereum|base|0x2D88dbbAB372EAc7F78c3566B0742864dEAf984D
+      - token: ethereum|eni|0xC8E323036AAFB4B4201e7B640E79C4Db285A3FC8
+      - token: ethereum|ethereum|0x76E88eEE5Ba22498c18356fa63F52DBe5aBEdE6d
+      - token: ethereum|optimism|0x6d7Dfef82F2733D2d44DC7b4507a1D0d4D96E267
+      - token: ethereum|polygon|0x4cD30d29E54dbf1DF231ed563C2B180ABfE1eaD3
+    decimals: 18
+    name: USD Coin
+    standard: EvmHypCollateral
+    symbol: USDC
+  - addressOrDenom: "0xC8E323036AAFB4B4201e7B640E79C4Db285A3FC8"
+    chainName: eni
+    connections:
+      - token: ethereum|arbitrum|0xc2600eB2d0a3e20521eaB9F9B6B5e0433d2a19f9
+      - token: ethereum|base|0x2D88dbbAB372EAc7F78c3566B0742864dEAf984D
+      - token: ethereum|bsc|0x38847CDB99f374DbD5E053CC5306Dbca4f5DccbB
+      - token: ethereum|ethereum|0x76E88eEE5Ba22498c18356fa63F52DBe5aBEdE6d
+      - token: ethereum|optimism|0x6d7Dfef82F2733D2d44DC7b4507a1D0d4D96E267
+      - token: ethereum|polygon|0x4cD30d29E54dbf1DF231ed563C2B180ABfE1eaD3
+    decimals: 6
+    name: USD Coin
+    standard: EvmHypSynthetic
+    symbol: USDC
+  - addressOrDenom: "0x76E88eEE5Ba22498c18356fa63F52DBe5aBEdE6d"
+    chainName: ethereum
+    collateralAddressOrDenom: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
+    connections:
+      - token: ethereum|arbitrum|0xc2600eB2d0a3e20521eaB9F9B6B5e0433d2a19f9
+      - token: ethereum|base|0x2D88dbbAB372EAc7F78c3566B0742864dEAf984D
+      - token: ethereum|bsc|0x38847CDB99f374DbD5E053CC5306Dbca4f5DccbB
+      - token: ethereum|eni|0xC8E323036AAFB4B4201e7B640E79C4Db285A3FC8
+      - token: ethereum|optimism|0x6d7Dfef82F2733D2d44DC7b4507a1D0d4D96E267
+      - token: ethereum|polygon|0x4cD30d29E54dbf1DF231ed563C2B180ABfE1eaD3
+    decimals: 6
+    name: USD Coin
+    standard: EvmHypCollateral
+    symbol: USDC
+  - addressOrDenom: "0x6d7Dfef82F2733D2d44DC7b4507a1D0d4D96E267"
+    chainName: optimism
+    collateralAddressOrDenom: "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85"
+    connections:
+      - token: ethereum|arbitrum|0xc2600eB2d0a3e20521eaB9F9B6B5e0433d2a19f9
+      - token: ethereum|base|0x2D88dbbAB372EAc7F78c3566B0742864dEAf984D
+      - token: ethereum|bsc|0x38847CDB99f374DbD5E053CC5306Dbca4f5DccbB
+      - token: ethereum|eni|0xC8E323036AAFB4B4201e7B640E79C4Db285A3FC8
+      - token: ethereum|ethereum|0x76E88eEE5Ba22498c18356fa63F52DBe5aBEdE6d
+      - token: ethereum|polygon|0x4cD30d29E54dbf1DF231ed563C2B180ABfE1eaD3
+    decimals: 6
+    name: USD Coin
+    standard: EvmHypCollateral
+    symbol: USDC
+  - addressOrDenom: "0x4cD30d29E54dbf1DF231ed563C2B180ABfE1eaD3"
+    chainName: polygon
+    collateralAddressOrDenom: "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359"
+    connections:
+      - token: ethereum|arbitrum|0xc2600eB2d0a3e20521eaB9F9B6B5e0433d2a19f9
+      - token: ethereum|base|0x2D88dbbAB372EAc7F78c3566B0742864dEAf984D
+      - token: ethereum|bsc|0x38847CDB99f374DbD5E053CC5306Dbca4f5DccbB
+      - token: ethereum|eni|0xC8E323036AAFB4B4201e7B640E79C4Db285A3FC8
+      - token: ethereum|ethereum|0x76E88eEE5Ba22498c18356fa63F52DBe5aBEdE6d
+      - token: ethereum|optimism|0x6d7Dfef82F2733D2d44DC7b4507a1D0d4D96E267
+    decimals: 6
+    name: USD Coin
+    standard: EvmHypCollateral
+    symbol: USDC
+  - addressOrDenom: "0x92637DCE7F34b9e9b5741B9203F33EED7f71E5a4"
+    chainName: arbitrum
+    collateralAddressOrDenom: "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"
+    connections:
+      - token: ethereum|base|0x3a669c00F7A041330646AC8AE89d74e104bd1363
+      - token: ethereum|bsc|0xC05617bc2490CB57a8db163b5551bb7E532695e3
+      - token: ethereum|eni|0x545E289B88c6d97b74eC0B96e308cae46Bf5f832
+      - token: ethereum|ethereum|0x291A485Fd288786728Ba34052b95DDb60278AB49
+      - token: ethereum|optimism|0x2EbFeC15f3Ff64E52af17c1c9a4aE9B7f6574298
+      - token: ethereum|polygon|0x98e9738DF4A304A97124D3A360A70DeC6efc4f99
+    decimals: 6
+    name: USD₮0
+    standard: EvmHypCollateral
+    symbol: USDT
+  - addressOrDenom: "0x3a669c00F7A041330646AC8AE89d74e104bd1363"
+    chainName: base
+    collateralAddressOrDenom: "0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2"
+    connections:
+      - token: ethereum|arbitrum|0x92637DCE7F34b9e9b5741B9203F33EED7f71E5a4
+      - token: ethereum|bsc|0xC05617bc2490CB57a8db163b5551bb7E532695e3
+      - token: ethereum|eni|0x545E289B88c6d97b74eC0B96e308cae46Bf5f832
+      - token: ethereum|ethereum|0x291A485Fd288786728Ba34052b95DDb60278AB49
+      - token: ethereum|optimism|0x2EbFeC15f3Ff64E52af17c1c9a4aE9B7f6574298
+      - token: ethereum|polygon|0x98e9738DF4A304A97124D3A360A70DeC6efc4f99
+    decimals: 6
+    name: Tether USD
+    standard: EvmHypCollateral
+    symbol: USDT
+  - addressOrDenom: "0xC05617bc2490CB57a8db163b5551bb7E532695e3"
+    chainName: bsc
+    collateralAddressOrDenom: "0x55d398326f99059fF775485246999027B3197955"
+    connections:
+      - token: ethereum|arbitrum|0x92637DCE7F34b9e9b5741B9203F33EED7f71E5a4
+      - token: ethereum|base|0x3a669c00F7A041330646AC8AE89d74e104bd1363
+      - token: ethereum|eni|0x545E289B88c6d97b74eC0B96e308cae46Bf5f832
+      - token: ethereum|ethereum|0x291A485Fd288786728Ba34052b95DDb60278AB49
+      - token: ethereum|optimism|0x2EbFeC15f3Ff64E52af17c1c9a4aE9B7f6574298
+      - token: ethereum|polygon|0x98e9738DF4A304A97124D3A360A70DeC6efc4f99
+    decimals: 18
+    name: Tether USD
+    standard: EvmHypCollateral
+    symbol: USDT
+  - addressOrDenom: "0x545E289B88c6d97b74eC0B96e308cae46Bf5f832"
+    chainName: eni
+    connections:
+      - token: ethereum|arbitrum|0x92637DCE7F34b9e9b5741B9203F33EED7f71E5a4
+      - token: ethereum|base|0x3a669c00F7A041330646AC8AE89d74e104bd1363
+      - token: ethereum|bsc|0xC05617bc2490CB57a8db163b5551bb7E532695e3
+      - token: ethereum|ethereum|0x291A485Fd288786728Ba34052b95DDb60278AB49
+      - token: ethereum|optimism|0x2EbFeC15f3Ff64E52af17c1c9a4aE9B7f6574298
+      - token: ethereum|polygon|0x98e9738DF4A304A97124D3A360A70DeC6efc4f99
+    decimals: 6
+    name: Tether USD
+    standard: EvmHypSynthetic
+    symbol: USDT
+  - addressOrDenom: "0x291A485Fd288786728Ba34052b95DDb60278AB49"
+    chainName: ethereum
+    collateralAddressOrDenom: "0xdac17f958d2ee523a2206206994597c13d831ec7"
+    connections:
+      - token: ethereum|arbitrum|0x92637DCE7F34b9e9b5741B9203F33EED7f71E5a4
+      - token: ethereum|base|0x3a669c00F7A041330646AC8AE89d74e104bd1363
+      - token: ethereum|bsc|0xC05617bc2490CB57a8db163b5551bb7E532695e3
+      - token: ethereum|eni|0x545E289B88c6d97b74eC0B96e308cae46Bf5f832
+      - token: ethereum|optimism|0x2EbFeC15f3Ff64E52af17c1c9a4aE9B7f6574298
+      - token: ethereum|polygon|0x98e9738DF4A304A97124D3A360A70DeC6efc4f99
+    decimals: 6
+    name: Tether USD
+    standard: EvmHypCollateral
+    symbol: USDT
+  - addressOrDenom: "0x2EbFeC15f3Ff64E52af17c1c9a4aE9B7f6574298"
+    chainName: optimism
+    collateralAddressOrDenom: "0x94b008aA00579c1307B0EF2c499aD98a8ce58e58"
+    connections:
+      - token: ethereum|arbitrum|0x92637DCE7F34b9e9b5741B9203F33EED7f71E5a4
+      - token: ethereum|base|0x3a669c00F7A041330646AC8AE89d74e104bd1363
+      - token: ethereum|bsc|0xC05617bc2490CB57a8db163b5551bb7E532695e3
+      - token: ethereum|eni|0x545E289B88c6d97b74eC0B96e308cae46Bf5f832
+      - token: ethereum|ethereum|0x291A485Fd288786728Ba34052b95DDb60278AB49
+      - token: ethereum|polygon|0x98e9738DF4A304A97124D3A360A70DeC6efc4f99
+    decimals: 6
+    name: Tether USD
+    standard: EvmHypCollateral
+    symbol: USDT
+  - addressOrDenom: "0x98e9738DF4A304A97124D3A360A70DeC6efc4f99"
+    chainName: polygon
+    collateralAddressOrDenom: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"
+    connections:
+      - token: ethereum|arbitrum|0x92637DCE7F34b9e9b5741B9203F33EED7f71E5a4
+      - token: ethereum|base|0x3a669c00F7A041330646AC8AE89d74e104bd1363
+      - token: ethereum|bsc|0xC05617bc2490CB57a8db163b5551bb7E532695e3
+      - token: ethereum|eni|0x545E289B88c6d97b74eC0B96e308cae46Bf5f832
+      - token: ethereum|ethereum|0x291A485Fd288786728Ba34052b95DDb60278AB49
+      - token: ethereum|optimism|0x2EbFeC15f3Ff64E52af17c1c9a4aE9B7f6574298
+    decimals: 6
+    name: USDT0
+    standard: EvmHypCollateral
+    symbol: USDT
+  - addressOrDenom: "0xd59be1Da2e9B30b6f7aB27b2D08f841B39c349fa"
+    chainName: eni
+    connections:
+      - token: ethereum|ethereum|0x52FcCFD806f11c0eB61912A24Ca09547626739e7
+    decimals: 8
+    name: Wrapped BTC
+    standard: EvmHypSynthetic
+    symbol: WBTC
+  - addressOrDenom: "0x52FcCFD806f11c0eB61912A24Ca09547626739e7"
+    chainName: ethereum
+    collateralAddressOrDenom: "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599"
+    connections:
+      - token: ethereum|eni|0xd59be1Da2e9B30b6f7aB27b2D08f841B39c349fa
+    decimals: 8
+    name: Wrapped BTC
+    standard: EvmHypCollateral
+    symbol: WBTC
 options: {}

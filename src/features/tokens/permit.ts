@@ -33,7 +33,8 @@ export function useSupportsPermit(token?: IToken) {
   const multiProvider = useMultiProvider();
 
   const { data: supportsPermit, isLoading } = useQuery({
-    queryKey: ['supportsPermit', token?.addressOrDenom, token?.chainName],
+    // eslint-disable-next-line @tanstack/query/exhaustive-deps
+    queryKey: ['supportsPermit', token?.addressOrDenom, token?.chainName, token?.protocol],
     queryFn: async () => {
       if (!token) return false;
       if (token.protocol !== ProtocolType.Ethereum) return false;

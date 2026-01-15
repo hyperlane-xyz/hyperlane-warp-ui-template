@@ -43,7 +43,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'USDC/arbitrum-base-endurance',
   'USDC/artela-base',
   'USDC/solanamainnet-sonicsvm',
-  'USDC/arbitrum-base-ethereum-ink-optimism-solanamainnet-superseed',
+  'USDC/superseed',
   'USDC/subtensor',
   'USDC/lumia',
   'USDC/matchain',

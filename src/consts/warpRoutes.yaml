@@ -2,5 +2,121 @@
 # These configs will be merged with the warp routes in the configured registry
 # The input here is typically the output of the Hyperlane CLI warp deploy command
 ---
-tokens: []
+tokens:
+  - addressOrDenom: "0x604610E6B3310852f1599a6eDbEbd6b6b2B766DC"
+    chainName: arbitrum
+    collateralAddressOrDenom: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"
+    connections:
+      - token: ethereum|base|0x5A0E13290ec57F5e9031D01D03C6A40029Cc24ea
+      - token: ethereum|ethereum|0x04C26A1Efb87D5Ac9ee6179754B4CDDC61fC11d5
+      - token: ethereum|optimism|0x36D930c7782BafE74Ff52CAb54648a1b2ecC48bE
+      - token: ethereum|polygon|0xfc78F4Dace2Ee0057281D0267DB3491181510593
+      - token: ethereum|unichain|0x33e6681548a0E5A07bf2Ffa33e7Ef274F08a34E1
+      - token: sealevel|eclipsemainnet|6QSWUmEaEcE2KJrU5jq7T11tNRaVsgnG8XULezjg7JjL
+      - token: sealevel|solanamainnet|E5rVV8zXwtc4TKGypCJvSBaYbgxa4XaYg5MS6N9QGdeo
+    decimals: 6
+    logoURI: /deployments/warp_routes/USDCSTAGE/logo.svg
+    name: USD Coin
+    standard: EvmHypCollateral
+    symbol: USDCSTAGE
+  - addressOrDenom: "0x5A0E13290ec57F5e9031D01D03C6A40029Cc24ea"
+    chainName: base
+    collateralAddressOrDenom: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
+    connections:
+      - token: ethereum|arbitrum|0x604610E6B3310852f1599a6eDbEbd6b6b2B766DC
+      - token: ethereum|ethereum|0x04C26A1Efb87D5Ac9ee6179754B4CDDC61fC11d5
+      - token: ethereum|optimism|0x36D930c7782BafE74Ff52CAb54648a1b2ecC48bE
+      - token: ethereum|polygon|0xfc78F4Dace2Ee0057281D0267DB3491181510593
+      - token: ethereum|unichain|0x33e6681548a0E5A07bf2Ffa33e7Ef274F08a34E1
+      - token: sealevel|eclipsemainnet|6QSWUmEaEcE2KJrU5jq7T11tNRaVsgnG8XULezjg7JjL
+      - token: sealevel|solanamainnet|E5rVV8zXwtc4TKGypCJvSBaYbgxa4XaYg5MS6N9QGdeo
+    decimals: 6
+    logoURI: /deployments/warp_routes/USDCSTAGE/logo.svg
+    name: USD Coin
+    standard: EvmHypCollateral
+    symbol: USDCSTAGE
+  - addressOrDenom: 6QSWUmEaEcE2KJrU5jq7T11tNRaVsgnG8XULezjg7JjL
+    chainName: eclipsemainnet
+    collateralAddressOrDenom: CFbKuNFUy1gDmu5yb3N49g7BUr6ftAR1f4Sricnh2ABv
+    connections:
+      - token: ethereum|arbitrum|0x604610E6B3310852f1599a6eDbEbd6b6b2B766DC
+      - token: ethereum|base|0x5A0E13290ec57F5e9031D01D03C6A40029Cc24ea
+      - token: ethereum|ethereum|0x04C26A1Efb87D5Ac9ee6179754B4CDDC61fC11d5
+      - token: sealevel|solanamainnet|E5rVV8zXwtc4TKGypCJvSBaYbgxa4XaYg5MS6N9QGdeo
+    decimals: 6
+    logoURI: /deployments/warp_routes/USDCSTAGE/logo.svg
+    name: USD Coin STAGE
+    standard: SealevelHypSynthetic
+    symbol: USDCSTAGE
+  - addressOrDenom: "0x04C26A1Efb87D5Ac9ee6179754B4CDDC61fC11d5"
+    chainName: ethereum
+    collateralAddressOrDenom: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
+    connections:
+      - token: ethereum|arbitrum|0x604610E6B3310852f1599a6eDbEbd6b6b2B766DC
+      - token: ethereum|base|0x5A0E13290ec57F5e9031D01D03C6A40029Cc24ea
+      - token: ethereum|optimism|0x36D930c7782BafE74Ff52CAb54648a1b2ecC48bE
+      - token: ethereum|polygon|0xfc78F4Dace2Ee0057281D0267DB3491181510593
+      - token: ethereum|unichain|0x33e6681548a0E5A07bf2Ffa33e7Ef274F08a34E1
+      - token: sealevel|eclipsemainnet|6QSWUmEaEcE2KJrU5jq7T11tNRaVsgnG8XULezjg7JjL
+      - token: sealevel|solanamainnet|E5rVV8zXwtc4TKGypCJvSBaYbgxa4XaYg5MS6N9QGdeo
+    decimals: 6
+    logoURI: /deployments/warp_routes/USDCSTAGE/logo.svg
+    name: USD Coin
+    standard: EvmHypCollateral
+    symbol: USDCSTAGE
+  - addressOrDenom: "0x36D930c7782BafE74Ff52CAb54648a1b2ecC48bE"
+    chainName: optimism
+    collateralAddressOrDenom: "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85"
+    connections:
+      - token: ethereum|arbitrum|0x604610E6B3310852f1599a6eDbEbd6b6b2B766DC
+      - token: ethereum|base|0x5A0E13290ec57F5e9031D01D03C6A40029Cc24ea
+      - token: ethereum|ethereum|0x04C26A1Efb87D5Ac9ee6179754B4CDDC61fC11d5
+      - token: ethereum|polygon|0xfc78F4Dace2Ee0057281D0267DB3491181510593
+      - token: ethereum|unichain|0x33e6681548a0E5A07bf2Ffa33e7Ef274F08a34E1
+    decimals: 6
+    logoURI: /deployments/warp_routes/USDCSTAGE/logo.svg
+    name: USD Coin
+    standard: EvmHypCollateral
+    symbol: USDCSTAGE
+  - addressOrDenom: "0xfc78F4Dace2Ee0057281D0267DB3491181510593"
+    chainName: polygon
+    collateralAddressOrDenom: "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359"
+    connections:
+      - token: ethereum|arbitrum|0x604610E6B3310852f1599a6eDbEbd6b6b2B766DC
+      - token: ethereum|base|0x5A0E13290ec57F5e9031D01D03C6A40029Cc24ea
+      - token: ethereum|ethereum|0x04C26A1Efb87D5Ac9ee6179754B4CDDC61fC11d5
+      - token: ethereum|optimism|0x36D930c7782BafE74Ff52CAb54648a1b2ecC48bE
+      - token: ethereum|unichain|0x33e6681548a0E5A07bf2Ffa33e7Ef274F08a34E1
+    decimals: 6
+    logoURI: /deployments/warp_routes/USDCSTAGE/logo.svg
+    name: USD Coin
+    standard: EvmHypCollateral
+    symbol: USDCSTAGE
+  - addressOrDenom: E5rVV8zXwtc4TKGypCJvSBaYbgxa4XaYg5MS6N9QGdeo
+    chainName: solanamainnet
+    collateralAddressOrDenom: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+    connections:
+      - token: ethereum|arbitrum|0x604610E6B3310852f1599a6eDbEbd6b6b2B766DC
+      - token: ethereum|base|0x5A0E13290ec57F5e9031D01D03C6A40029Cc24ea
+      - token: ethereum|ethereum|0x04C26A1Efb87D5Ac9ee6179754B4CDDC61fC11d5
+      - token: sealevel|eclipsemainnet|6QSWUmEaEcE2KJrU5jq7T11tNRaVsgnG8XULezjg7JjL
+    decimals: 6
+    logoURI: /deployments/warp_routes/USDCSTAGE/logo.svg
+    name: USDCSTAGE
+    standard: SealevelHypCollateral
+    symbol: USDCSTAGE
+  - addressOrDenom: "0x33e6681548a0E5A07bf2Ffa33e7Ef274F08a34E1"
+    chainName: unichain
+    collateralAddressOrDenom: "0x078D782b760474a361dDA0AF3839290b0EF57AD6"
+    connections:
+      - token: ethereum|arbitrum|0x604610E6B3310852f1599a6eDbEbd6b6b2B766DC
+      - token: ethereum|base|0x5A0E13290ec57F5e9031D01D03C6A40029Cc24ea
+      - token: ethereum|ethereum|0x04C26A1Efb87D5Ac9ee6179754B4CDDC61fC11d5
+      - token: ethereum|optimism|0x36D930c7782BafE74Ff52CAb54648a1b2ecC48bE
+      - token: ethereum|polygon|0xfc78F4Dace2Ee0057281D0267DB3491181510593
+    decimals: 6
+    logoURI: /deployments/warp_routes/USDCSTAGE/logo.svg
+    name: USDC
+    standard: EvmHypCollateral
+    symbol: USDCSTAGE
 options: {}

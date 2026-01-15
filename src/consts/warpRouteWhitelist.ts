@@ -376,6 +376,12 @@ export const warpRouteWhitelist: Array<string> | null = [
   'USDC/krown',
   'USDT/krown',
 
+  // ENI routes
+  'ETH/eni',
+  'USDC/eni',
+  'USDT/eni',
+  'WBTC/eni',
+
   // First Party Warp Routes
   'USDC/eclipsemainnet',
 ];

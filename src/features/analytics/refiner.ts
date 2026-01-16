@@ -1,4 +1,5 @@
 import { config } from '../../consts/config';
+import { logger } from '../../utils/logger';
 
 const REFINER_PROJECT_ID = process.env.NEXT_PUBLIC_REFINER_PROJECT_ID || '';
 const REFINER_TRANSFER_FORM_ID = process.env.NEXT_PUBLIC_REFINER_TRANSFER_FORM_ID || '';
@@ -18,7 +19,7 @@ export async function initRefiner(): Promise<void> {
     refiner = refinerModule.default;
     refiner('setProject', REFINER_PROJECT_ID);
   } catch (error) {
-    console.warn('Failed to initialize Refiner:', error);
+    logger.warn('Failed to initialize Refiner:', error);
   }
 }
 

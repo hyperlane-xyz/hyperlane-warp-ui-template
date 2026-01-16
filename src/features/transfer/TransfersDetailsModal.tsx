@@ -64,29 +64,33 @@ export function TransfersDetailsModal({
   const account = useAccountForChain(multiProvider, isChainKnown ? origin : undefined);
   const walletDetails = useWalletDetails()[account?.protocol || ProtocolType.Ethereum];
 
-  const getMessageUrls = useCallback(async () => {
-    try {
-      if (originTxHash) {
-        const originTxUrl = multiProvider.tryGetExplorerTxUrl(origin, { hash: originTxHash });
-        if (originTxUrl) setOriginTxUrl(fixDoubleSlash(originTxUrl));
-      }
-      const [fromUrl, toUrl] = await Promise.all([
-        multiProvider.tryGetExplorerAddressUrl(origin, sender),
-        multiProvider.tryGetExplorerAddressUrl(destination, recipient),
-      ]);
-      if (fromUrl) setFromUrl(fixDoubleSlash(fromUrl));
-      if (toUrl) setToUrl(fixDoubleSlash(toUrl));
-    } catch (error) {
-      logger.error('Error fetching URLs:', error);
-    }
-  }, [sender, recipient, originTxHash, multiProvider, origin, destination]);
-
   useEffect(() => {
     if (!transfer) return;
-    getMessageUrls().catch((err) =>
-      logger.error('Error getting message URLs for details modal', err),
-    );
-  }, [transfer, getMessageUrls]);
+    let cancelled = false;
+
+    const fetchUrls = async () => {
+      try {
+        if (originTxHash) {
+          const txUrl = multiProvider.tryGetExplorerTxUrl(origin, { hash: originTxHash });
+          if (txUrl && !cancelled) setOriginTxUrl(fixDoubleSlash(txUrl));
+        }
+        const [fetchedFromUrl, fetchedToUrl] = await Promise.all([
+          multiProvider.tryGetExplorerAddressUrl(origin, sender),
+          multiProvider.tryGetExplorerAddressUrl(destination, recipient),
+        ]);
+        if (cancelled) return;
+        if (fetchedFromUrl) setFromUrl(fixDoubleSlash(fetchedFromUrl));
+        if (fetchedToUrl) setToUrl(fixDoubleSlash(fetchedToUrl));
+      } catch (error) {
+        logger.error('Error fetching URLs:', error);
+      }
+    };
+
+    fetchUrls();
+    return () => {
+      cancelled = true;
+    };
+  }, [transfer, multiProvider, origin, destination, originTxHash, sender, recipient]);
 
   const isAccountReady = !!account?.isReady;
   const connectorName = walletDetails.name || 'wallet';

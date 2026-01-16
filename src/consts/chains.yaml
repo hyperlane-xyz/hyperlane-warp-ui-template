@@ -3,18 +3,31 @@
 # Chains already in the SDK need not be included here unless you want to override some fields
 # Schema here: https://github.com/hyperlane-xyz/hyperlane-monorepo/blob/main/typescript/sdk/src/metadata/chainMetadataTypes.ts
 ---
-# Example using local anvil chain:
-# anvil1:
-#   chainId: 31337
-#   domainId: 31337
-#   name: anvil1
-#   protocol: ethereum
-#   rpcUrls:
-#     - http: http://127.0.0.1:8545
-# anvil2:
-#   chainId: 31338
-#   domainId: 31338
-#   name: anvil2
-#   protocol: ethereum
-#   rpcUrls:
-#     - http: http://127.0.0.1:8555
+aleo:
+  blockExplorers:
+    - apiUrl: https://explorer.provable.com
+      family: other
+      name: Provable Explorer
+      url: https://explorer.provable.com
+  blocks:
+    confirmations: 0
+    estimateBlockTime: 3
+    reorgPeriod: 0
+  chainId: 0
+  deployer:
+    name: Abacus Works
+    url: https://www.hyperlane.xyz
+  displayName: Aleo
+  # Generated from: parseInt('0x'+Buffer.from('aleo').toString('hex')) % (2**31-1)
+  domainId: 1634493807
+  gasCurrencyCoinGeckoId: aleo
+  name: aleo
+  nativeToken:
+    decimals: 6
+    denom: credits
+    name: Aleo
+    symbol: ALEO
+  protocol: aleo
+  rpcUrls:
+    - http: https://api.explorer.provable.com/v2
+  technicalStack: other

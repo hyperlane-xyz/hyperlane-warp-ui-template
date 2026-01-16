@@ -24,7 +24,7 @@ const IMG_SRC_HOSTS = [
 const SCRIPT_SRC_HOSTS = ['https://snaps.consensys.io'];
 const cspHeader = `
   default-src 'self';
-  script-src 'self'${isDev ? " 'unsafe-eval'" : ''} ${SCRIPT_SRC_HOSTS.join(' ')};
+  script-src 'self'${isDev ? " 'unsafe-eval'" : 'wasm-unsafe-eval'} ${SCRIPT_SRC_HOSTS.join(' ')};
   style-src 'self' 'unsafe-inline' ${STYLE_SRC_HOSTS.join(' ')};
   connect-src *;
   img-src 'self' blob: data: ${IMG_SRC_HOSTS.join(' ')};
@@ -69,11 +69,26 @@ const securityHeaders = [
 ];
 
 const nextConfig = {
-  webpack(config) {
+  webpack(config, { isServer }) {
     config.module.rules.push({
       test: /\.ya?ml$/,
       use: 'yaml-loader',
     });
+
+    config.experiments = {
+      ...config.experiments,
+      asyncWebAssembly: true,
+      layers: true,
+    };
+
+    if (isServer) {
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        '@provablehq/wasm': false,
+        '@provablehq/sdk': false,
+      };
+    }
+
     return config;
   },
 

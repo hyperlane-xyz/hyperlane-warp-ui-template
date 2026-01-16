@@ -13,8 +13,8 @@ let refiner: RefinerFn | null = null;
  */
 export async function initRefiner(): Promise<void> {
   if (typeof window === 'undefined' || refiner || !REFINER_PROJECT_ID) return;
-  const module = await import('refiner-js');
-  refiner = module.default;
+  const refinerModule = await import('refiner-js');
+  refiner = refinerModule.default;
   refiner('setProject', REFINER_PROJECT_ID);
 }
 

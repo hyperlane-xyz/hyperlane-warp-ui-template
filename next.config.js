@@ -14,14 +14,18 @@ const FRAME_SRC_HOSTS = [
   'https://*.walletconnect.com',
   'https://*.walletconnect.org',
   'https://cdn.solflare.com',
+  'https://js.refiner.io',
 ];
-const STYLE_SRC_HOSTS = [];
+const STYLE_SRC_HOSTS = ['https://js.refiner.io', 'https://storage.refiner.io'];
 const IMG_SRC_HOSTS = [
   'https://*.walletconnect.com',
   'https://*.githubusercontent.com',
   'https://cdn.jsdelivr.net/gh/hyperlane-xyz/hyperlane-registry@main/',
+  'https://js.refiner.io',
+  'https://storage.refiner.io',
 ];
-const SCRIPT_SRC_HOSTS = ['https://snaps.consensys.io'];
+const SCRIPT_SRC_HOSTS = ['https://snaps.consensys.io', 'https://js.refiner.io'];
+const MEDIA_SRC_HOSTS = ['https://js.refiner.io', 'https://storage.refiner.io'];
 const cspHeader = `
   default-src 'self';
   script-src 'self'${isDev ? " 'unsafe-eval'" : ''} ${SCRIPT_SRC_HOSTS.join(' ')};
@@ -32,8 +36,9 @@ const cspHeader = `
   object-src 'none';
   base-uri 'self';
   form-action 'self';
-  frame-src 'self' ${FRAME_SRC_HOSTS.join(' ')};
-  frame-ancestors 'none';
+  frame-src 'self' ${FRAME_SRC_HOSTS.join(' ')};We
+  frame-ancestors 'self' https://js.refiner.io;
+  media-src 'self' ${MEDIA_SRC_HOSTS.join(' ')};
   ${!isDev ? 'block-all-mixed-content;' : ''}
   ${!isDev ? 'upgrade-insecure-requests;' : ''}
 `

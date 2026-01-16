@@ -55,16 +55,22 @@ try {
     }
   }
 
-  // For dependencies, we'll prompt user to restore them manually or keep registry versions
+  // Restore dependencies to published versions
   if (packOverrides.length > 0) {
-    console.log('\n⚠️  WARNING: The following dependencies still point to packed tarballs:');
+    console.log('\n🔧 Restoring dependencies to published versions...');
+
     packOverrides.forEach((name) => {
-      console.log(`   - ${name}`);
+      if (packageJson.dependencies[name]) {
+        try {
+          // Fetch the latest version from npm registry
+          const versionOutput = execSync(`npm view ${name} version`, { encoding: 'utf8' }).trim();
+          packageJson.dependencies[name] = versionOutput;
+          console.log(`   ${name} -> ${versionOutput}`);
+        } catch (err) {
+          console.warn(`   ⚠️  Failed to fetch version for ${name}, keeping current value`);
+        }
+      }
     });
-    console.log('\nTo restore published versions, either:');
-    console.log('   1. Manually edit package.json to use version numbers (e.g., "23.10.0")');
-    console.log('   2. Or delete the dependency lines and run: pnpm add <package-name>');
-    console.log('\nFor now, keeping the file: references. You can still install.\n');
   }
 
   // Write updated package.json

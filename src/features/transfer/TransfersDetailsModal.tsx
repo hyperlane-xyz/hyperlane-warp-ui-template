@@ -70,6 +70,8 @@ export function TransfersDetailsModal({
 
     const fetchUrls = async () => {
       try {
+        setFromUrl('');
+        setToUrl('');
         if (originTxHash) {
           const txUrl = multiProvider.tryGetExplorerTxUrl(origin, { hash: originTxHash });
           if (txUrl && !cancelled) setOriginTxUrl(fixDoubleSlash(txUrl));

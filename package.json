@@ -21,9 +21,9 @@
     "@emotion/styled": "^11.13.0",
     "@headlessui/react": "^2.2.0",
     "@hyperlane-xyz/registry": "23.10.0",
-    "@hyperlane-xyz/sdk": "20.1.0",
-    "@hyperlane-xyz/utils": "20.1.0",
-    "@hyperlane-xyz/widgets": "20.1.0",
+    "@hyperlane-xyz/sdk": "file:.monorepo-tarballs/hyperlane-xyz-sdk-21.1.0.tgz",
+    "@hyperlane-xyz/utils": "file:.monorepo-tarballs/hyperlane-xyz-utils-21.1.0.tgz",
+    "@hyperlane-xyz/widgets": "file:.monorepo-tarballs/hyperlane-xyz-widgets-21.1.0.tgz",
     "@interchain-ui/react": "^1.23.28",
     "@metamask/post-message-stream": "6.1.2",
     "@metamask/providers": "10.2.1",
@@ -113,7 +113,9 @@
     "lint": "next lint",
     "start": "next start",
     "test": "vitest --watch false",
-    "prettier": "prettier --write ./src"
+    "prettier": "prettier --write ./src",
+    "link:monorepo": "node scripts/link-monorepo.js utils deploy-sdk sdk widgets",
+    "unlink:monorepo": "node scripts/unlink-monorepo.js"
   },
   "types": "dist/src/index.d.ts",
   "pnpm": {
@@ -133,7 +135,11 @@
       "cipher-base": "1.0.5",
       "elliptic": "6.6.1",
       "pbkdf2": "3.1.3",
-      "form-data": "4.0.4"
+      "form-data": "4.0.4",
+      "@hyperlane-xyz/utils": "file:.monorepo-tarballs/hyperlane-xyz-utils-21.1.0.tgz",
+      "@hyperlane-xyz/deploy-sdk": "file:.monorepo-tarballs/hyperlane-xyz-deploy-sdk-1.1.0.tgz",
+      "@hyperlane-xyz/sdk": "file:.monorepo-tarballs/hyperlane-xyz-sdk-21.1.0.tgz",
+      "@hyperlane-xyz/widgets": "file:.monorepo-tarballs/hyperlane-xyz-widgets-21.1.0.tgz"
     },
     "patchedDependencies": {
       "starknetkit@2.6.1": "patches/starknetkit@2.6.1.patch"

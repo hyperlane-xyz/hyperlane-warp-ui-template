@@ -37,7 +37,7 @@ const cspHeader = `
   base-uri 'self';
   form-action 'self';
   frame-src 'self' ${FRAME_SRC_HOSTS.join(' ')};
-  frame-ancestors 'self' https://js.refiner.io;
+  frame-ancestors 'none';
   media-src 'self' ${MEDIA_SRC_HOSTS.join(' ')};
   ${!isDev ? 'block-all-mixed-content;' : ''}
   ${!isDev ? 'upgrade-insecure-requests;' : ''}

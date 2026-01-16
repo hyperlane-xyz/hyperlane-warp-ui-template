@@ -34,6 +34,7 @@ export function refinerIdentifyAndShowTransferForm(params: {
 
   refiner('identifyUser', {
     id: params.walletAddress,
+    // eslint-disable-next-line camelcase
     wallet_address: params.walletAddress,
     protocol: params.protocol,
     chain: params.chain,

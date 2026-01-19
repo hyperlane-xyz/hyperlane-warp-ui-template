@@ -8,15 +8,15 @@ tokens:
     decimals: 6
     symbol: TRX
     name: TRON
-    addressOrDenom: TJhhviXCnncMcoQajAyNs9y7uSYi6edVnG
+    addressOrDenom: TLzNG31BFMGVh3uXN1jeTAcgFA2uGguFxU
     connections:
-      - token: cosmosnative|hyp|0x726f757465725f61707000000000000000000000000000020000000000000005
+      - token: cosmosnative|hyp|0x726f757465725f61707000000000000000000000000000020000000000000000
   - chainName: hyp
     standard: CosmosNativeHypSynthetic
     decimals: 6
     symbol: TRX
     name: TRON
-    addressOrDenom: '0x726f757465725f61707000000000000000000000000000020000000000000005'
+    addressOrDenom: '0x726f757465725f61707000000000000000000000000000020000000000000000'
     connections:
-      - token: tron|tronlocal|TJhhviXCnncMcoQajAyNs9y7uSYi6edVnG
+      - token: tron|tronlocal|TLzNG31BFMGVh3uXN1jeTAcgFA2uGguFxU
 options: {}

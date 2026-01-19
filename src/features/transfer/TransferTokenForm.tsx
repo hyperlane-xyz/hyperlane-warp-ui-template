@@ -503,6 +503,10 @@ function ButtonSection({
 
   const isSanctioned = useIsAccountSanctioned();
 
+  const { setTransferLoading } = useStore((s) => ({
+    setTransferLoading: s.setTransferLoading,
+  }));
+
   const onDoneTransactions = () => {
     setIsReview(false);
     setTransferLoading(false);
@@ -510,10 +514,6 @@ function ButtonSection({
     // resetForm();
   };
   const { triggerTransactions } = useTokenTransfer(onDoneTransactions);
-
-  const { setTransferLoading } = useStore((s) => ({
-    setTransferLoading: s.setTransferLoading,
-  }));
 
   const triggerTransactionsHandler = async () => {
     if (isSanctioned) {

@@ -24,12 +24,12 @@ const IMG_SRC_HOSTS = [
   'https://js.refiner.io',
   'https://storage.refiner.io',
 ];
-<<<<<<< HEAD
-const SCRIPT_SRC_HOSTS = ['https://snaps.consensys.io', 'https://plausible.io'];
-=======
-const SCRIPT_SRC_HOSTS = ['https://snaps.consensys.io', 'https://js.refiner.io'];
+const SCRIPT_SRC_HOSTS = [
+  'https://snaps.consensys.io',
+  'https://plausible.io',
+  'https://js.refiner.io',
+];
 const MEDIA_SRC_HOSTS = ['https://js.refiner.io', 'https://storage.refiner.io'];
->>>>>>> origin/main
 const cspHeader = `
   default-src 'self';
   script-src 'self'${isDev ? " 'unsafe-eval'" : ''} ${SCRIPT_SRC_HOSTS.join(' ')};

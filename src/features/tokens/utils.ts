@@ -10,6 +10,13 @@ import { eqAddress, isNullish, normalizeAddress, objKeys } from '@hyperlane-xyz/
 import { isChainDisabled } from '../chains/utils';
 import { DefaultMultiCollateralRoutes, TokenChainMap } from './types';
 
+// Module-level caches for expensive key computations
+// These use Map with token object references as keys for O(1) lookups
+// Cache invalidation is automatic: when initWarpContext() runs, it creates NEW token objects
+// via WarpCore.FromConfig(), so old cache entries are never accessed
+const tokenKeyCache = new Map<IToken, string>();
+const collateralKeyCache = new Map<IToken, string>();
+
 // Map of token symbols and token chain map
 // Symbols are not duplicated to avoid the same symbol from being shown
 // TokenChainMap: An object containing token information and a map
@@ -136,10 +143,18 @@ export function getTokensWithSameCollateralAddresses(
  * Uses chainName + lowercase symbol + normalized address
  * Format: "chainName-symbol-addressOrDenom" (stable identifier)
  * Example: "ethereum-usdc-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+ *
+ * Results are cached by token object reference for O(1) subsequent lookups.
  */
 export function getTokenKey(token: IToken): string {
+  const cached = tokenKeyCache.get(token);
+  if (cached !== undefined) return cached;
+
   const normalizedAddress = normalizeAddress(token.addressOrDenom, token.protocol);
-  return `${token.chainName.toLowerCase()}-${token.symbol.toLowerCase()}-${normalizedAddress}`;
+  const key = `${token.chainName.toLowerCase()}-${token.symbol.toLowerCase()}-${normalizedAddress}`;
+
+  tokenKeyCache.set(token, key);
+  return key;
 }
 
 /**
@@ -219,23 +234,34 @@ export function groupTokensByCollateral(tokens: Token[]): Map<string, Token[]> {
 /**
  * Get a unique collateral identifier for a token
  * Used to determine if two tokens share the same underlying collateral
+ *
+ * Results are cached by token object reference for O(1) subsequent lookups.
  */
 export function getCollateralKey(token: IToken): string {
+  const cached = collateralKeyCache.get(token);
+  if (cached !== undefined) return cached;
+
   const chainName = token.chainName.toLowerCase();
   const symbol = token.symbol.toLowerCase();
   const protocol = token.protocol;
 
+  let key: string;
+
   // For collateralized tokens, use the collateral address
   if (TOKEN_COLLATERALIZED_STANDARDS.includes(token.standard)) {
     if (token.collateralAddressOrDenom) {
-      return `${chainName}-${symbol}-${normalizeAddress(token.collateralAddressOrDenom, protocol)}`;
+      key = `${chainName}-${symbol}-${normalizeAddress(token.collateralAddressOrDenom, protocol)}`;
+    } else {
+      // For HypNative tokens without collateralAddressOrDenom
+      key = `${chainName}-${symbol}-hypnative-${protocol}`;
     }
-    // For HypNative tokens without collateralAddressOrDenom
-    return `${chainName}-${symbol}-hypnative-${protocol}`;
+  } else {
+    // For non-collateralized tokens, use the token's own address
+    key = `${chainName}-${symbol}-${normalizeAddress(token.addressOrDenom, protocol)}`;
   }
 
-  // For non-collateralized tokens, use the token's own address
-  return `${chainName}-${symbol}-${normalizeAddress(token.addressOrDenom, protocol)}`;
+  collateralKeyCache.set(token, key);
+  return key;
 }
 
 /**

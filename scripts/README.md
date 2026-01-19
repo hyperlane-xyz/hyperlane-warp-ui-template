@@ -46,6 +46,7 @@ This approach is simpler and more reliable than yalc for monorepos with pnpm cat
 - `utils` - @hyperlane-xyz/utils
 - `widgets` - @hyperlane-xyz/widgets
 - `registry` - @hyperlane-xyz/registry
+- `deploy-sdk` - @hyperlane-xyz/deploy-sdk
 - `tron-sdk` - @hyperlane-xyz/tron-sdk (unpublished)
 - `provider-sdk` - @hyperlane-xyz/provider-sdk
 
@@ -86,7 +87,7 @@ pnpm build && pnpm pack && cd - && pnpm install
 
 ### Unlinking
 
-To clean up packed packages:
+To clean up packed packages and restore published versions:
 
 ```bash
 pnpm unlink:monorepo
@@ -94,11 +95,12 @@ pnpm unlink:monorepo
 
 This will:
 1. Find all dependencies pointing to packed tarballs
-2. Remove pnpm overrides for packed packages
-3. Clean `node_modules` and lockfile
-4. Run `pnpm install`
+2. Automatically restore dependencies to their latest published versions from npm (using `npm view`)
+3. Remove pnpm overrides for packed packages
+4. Clean `node_modules`, lockfile, and the `.monorepo-tarballs/` directory
+5. Run `pnpm install`
 
-Note: You'll need to manually update `package.json` to restore published versions from npm, or the tarballs will remain.
+The script automatically fetches the latest version for each linked package from the npm registry and updates `package.json` accordingly.
 
 ## unlink-monorepo.js
 

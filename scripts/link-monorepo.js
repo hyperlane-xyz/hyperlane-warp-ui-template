@@ -6,6 +6,7 @@ const path = require('path');
 const MONOREPO_NAME = 'hyperlane-monorepo';
 const REACT_APP_DIR = process.cwd();
 const MONOREPO_PATH = path.resolve(REACT_APP_DIR, '..', MONOREPO_NAME);
+const TYPESCRIPT_DIR = path.join(MONOREPO_PATH, 'typescript');
 const LOCAL_TARBALLS_DIR = path.join(REACT_APP_DIR, '.monorepo-tarballs');
 
 const args = process.argv.slice(2);
@@ -27,14 +28,22 @@ function run(command, cwd = REACT_APP_DIR) {
 }
 
 /**
- * Helper to run commands and capture output
+ * Validates that a package path stays within the typescript directory
+ * Prevents path traversal attacks (e.g., ../foo)
  */
-function runSilent(command, cwd = REACT_APP_DIR) {
-  try {
-    return execSync(command, { cwd, encoding: 'utf8' }).trim();
-  } catch (err) {
-    return null;
+function validatePackagePath(folder) {
+  const pkgPath = path.join(TYPESCRIPT_DIR, folder);
+  const resolvedPath = path.resolve(pkgPath);
+  const relativePath = path.relative(TYPESCRIPT_DIR, resolvedPath);
+
+  // Check if the path escapes the typescript directory
+  if (relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
+    console.error(`❌ Invalid package path: "${folder}"`);
+    console.error(`   Package paths must be within ${TYPESCRIPT_DIR}`);
+    process.exit(1);
   }
+
+  return pkgPath;
 }
 
 console.log('🚀 Starting pnpm pack link workflow...\n');
@@ -84,7 +93,7 @@ console.log('------------------------------------------');
 console.log('📦 Packing packages...\n');
 
 args.forEach((folder) => {
-  const pkgPath = path.join(MONOREPO_PATH, 'typescript', folder);
+  const pkgPath = validatePackagePath(folder);
   if (!fs.existsSync(pkgPath)) {
     console.warn(`⚠️  Folder not found: ${pkgPath}`);
     return;

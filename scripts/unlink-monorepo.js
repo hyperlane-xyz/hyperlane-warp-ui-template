@@ -1,4 +1,4 @@
-const { execSync } = require('child_process');
+const { execSync, spawnSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
@@ -56,21 +56,47 @@ try {
   }
 
   // Restore dependencies to published versions
+  const failedToRestore = [];
   if (packOverrides.length > 0) {
     console.log('\n🔧 Restoring dependencies to published versions...');
 
     packOverrides.forEach((name) => {
       if (packageJson.dependencies[name]) {
+        const currentValue = packageJson.dependencies[name];
         try {
           // Fetch the latest version from npm registry
-          const versionOutput = execSync(`npm view ${name} version`, { encoding: 'utf8' }).trim();
-          packageJson.dependencies[name] = versionOutput;
-          console.log(`   ${name} -> ${versionOutput}`);
+          // Use spawnSync with array args to prevent command injection
+          const result = spawnSync('npm', ['view', name, 'version'], { encoding: 'utf8' });
+          if (result.status === 0 && result.stdout) {
+            const versionOutput = result.stdout.trim();
+            packageJson.dependencies[name] = versionOutput;
+            console.log(`   ${name} -> ${versionOutput}`);
+          } else {
+            console.warn(`   ⚠️  Failed to fetch version for ${name}`);
+            failedToRestore.push({ name, currentValue });
+          }
         } catch (err) {
-          console.warn(`   ⚠️  Failed to fetch version for ${name}, keeping current value`);
+          console.warn(`   ⚠️  Failed to fetch version for ${name}`);
+          failedToRestore.push({ name, currentValue });
         }
       }
     });
+  }
+
+  // Check if any dependencies couldn't be restored
+  if (failedToRestore.length > 0) {
+    console.error('\n❌ Cannot proceed: Some dependencies could not be restored to published versions.');
+    console.error('   This typically happens with unpublished packages (e.g., @hyperlane-xyz/tron-sdk)');
+    console.error('   or when you are offline.\n');
+    console.error('   Failed packages:');
+    failedToRestore.forEach(({ name, currentValue }) => {
+      console.error(`   - ${name} (currently: ${currentValue})`);
+    });
+    console.error('\n💡 Options:');
+    console.error('   1. Manually update these dependencies in package.json to published versions');
+    console.error('   2. Remove these dependencies from package.json if not needed');
+    console.error('   3. Keep using the linked versions (do not run this script)\n');
+    process.exit(1);
   }
 
   // Write updated package.json
@@ -105,8 +131,7 @@ try {
   });
 
   console.log('\n✅ Successfully unlinked packages!');
-  console.log('   Note: If you want to use published versions from npm,');
-  console.log('   update package.json dependencies to use version numbers.\n');
+  console.log('   All dependencies have been restored to their published versions from npm.\n');
 } catch (err) {
   console.error('\n❌ Unlink failed. See error above.\n');
   process.exit(1);

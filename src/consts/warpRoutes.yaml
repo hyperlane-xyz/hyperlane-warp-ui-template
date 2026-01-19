@@ -2,5 +2,21 @@
 # These configs will be merged with the warp routes in the configured registry
 # The input here is typically the output of the Hyperlane CLI warp deploy command
 ---
-tokens: []
+tokens:
+  - addressOrDenom: TLdadTL5GwUZCRXFuLeLrZRLeQDjtk6Dem
+    chainName: tronlocal
+    connections:
+      - token: cosmosnative|hyp|0x726f757465725f61707000000000000000000000000000020000000000000004
+    decimals: 6
+    name: TRON
+    standard: TronHypNative
+    symbol: TRX
+  - addressOrDenom: '0x726f757465725f61707000000000000000000000000000020000000000000004'
+    chainName: hyp
+    connections:
+      - token: tron|tronlocal|TLdadTL5GwUZCRXFuLeLrZRLeQDjtk6Dem
+    decimals: 6
+    name: TRON
+    standard: CosmosNativeHypSynthetic
+    symbol: TRX
 options: {}

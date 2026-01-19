@@ -21,9 +21,9 @@
     "@emotion/styled": "^11.13.0",
     "@headlessui/react": "^2.2.0",
     "@hyperlane-xyz/registry": "23.10.0",
-    "@hyperlane-xyz/sdk": "20.1.0",
-    "@hyperlane-xyz/utils": "20.1.0",
-    "@hyperlane-xyz/widgets": "20.1.0",
+    "@hyperlane-xyz/sdk": "file:.monorepo-tarballs/hyperlane-xyz-sdk-21.0.0.tgz",
+    "@hyperlane-xyz/utils": "file:.monorepo-tarballs/hyperlane-xyz-utils-21.0.0.tgz",
+    "@hyperlane-xyz/widgets": "file:.monorepo-tarballs/hyperlane-xyz-widgets-21.0.0.tgz",
     "@interchain-ui/react": "^1.23.28",
     "@metamask/post-message-stream": "6.1.2",
     "@metamask/providers": "10.2.1",
@@ -50,6 +50,9 @@
     "@starknet-react/core": "^3.7.2",
     "@tanstack/query-core": "^5.90.12",
     "@tanstack/react-query": "^5.59.20",
+    "@tronweb3/tronwallet-adapter-react-hooks": "^1.1.11",
+    "@tronweb3/tronwallet-adapter-tronlink": "^1.1.13",
+    "@tronweb3/tronwallet-adapters": "^1.2.19",
     "@vercel/analytics": "^1.4.0",
     "@vercel/functions": "^1.5.0",
     "axios": "^1.7.9",
@@ -135,7 +138,12 @@
       "cipher-base": "1.0.5",
       "elliptic": "6.6.1",
       "pbkdf2": "3.1.3",
-      "form-data": "4.0.4"
+      "form-data": "4.0.4",
+      "@hyperlane-xyz/utils": "file:.monorepo-tarballs/hyperlane-xyz-utils-21.0.0.tgz",
+      "@hyperlane-xyz/deploy-sdk": "file:.monorepo-tarballs/hyperlane-xyz-deploy-sdk-1.0.0.tgz",
+      "@hyperlane-xyz/sdk": "file:.monorepo-tarballs/hyperlane-xyz-sdk-21.0.0.tgz",
+      "@hyperlane-xyz/widgets": "file:.monorepo-tarballs/hyperlane-xyz-widgets-21.0.0.tgz",
+      "@hyperlane-xyz/tron-sdk": "file:.monorepo-tarballs/hyperlane-xyz-tron-sdk-20.1.0.tgz"
     },
     "patchedDependencies": {
       "starknetkit@2.6.1": "patches/starknetkit@2.6.1.patch"

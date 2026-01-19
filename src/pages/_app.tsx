@@ -1,6 +1,8 @@
 import { useIsSsr } from '@hyperlane-xyz/widgets';
 import '@hyperlane-xyz/widgets/styles.css';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { WalletProvider } from '@tronweb3/tronwallet-adapter-react-hooks';
+import { TronLinkAdapter } from '@tronweb3/tronwallet-adapters';
 import { Analytics } from '@vercel/analytics/react';
 import type { AppProps } from 'next/app';
 import { ToastContainer, Zoom } from 'react-toastify';
@@ -46,10 +48,12 @@ export default function App({ Component, pageProps }: AppProps) {
                 <CosmosWalletContext>
                   <StarknetWalletContext>
                     <RadixWalletContext>
-                      <AppLayout>
-                        <Component {...pageProps} />
-                        <Analytics />
-                      </AppLayout>
+                      <WalletProvider adapters={[new TronLinkAdapter()]} autoConnect={true}>
+                        <AppLayout>
+                          <Component {...pageProps} />
+                          <Analytics />
+                        </AppLayout>
+                      </WalletProvider>
                     </RadixWalletContext>
                   </StarknetWalletContext>
                 </CosmosWalletContext>

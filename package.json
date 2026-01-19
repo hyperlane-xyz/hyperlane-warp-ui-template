@@ -129,6 +129,7 @@
       "bn.js": "^5.2",
       "cosmjs-types": "0.9",
       "ethers": "^5.8.0",
+      "tronweb>ethers": "^6.13.5",
       "globals": "^14.0.0",
       "lit-html": "2.8.0",
       "react-fast-compare": "^3.2",

@@ -15,6 +15,7 @@ import { useCallback, useState } from 'react';
 import { toast } from 'react-toastify';
 import { toastTxSuccess } from '../../components/toast/TxSuccessToast';
 import { logger } from '../../utils/logger';
+import { refinerIdentifyAndShowTransferForm } from '../analytics/refiner';
 import { EVENT_NAME } from '../analytics/types';
 import { trackEvent } from '../analytics/utils';
 import { useMultiProvider } from '../chains/hooks';
@@ -224,6 +225,13 @@ async function executeTransfer({
       tokenSymbol: originToken.symbol,
       walletAddress: sender,
       transactionHash: originTxHash || '',
+    });
+
+    // Identify user and show Refiner survey form after successful transfer
+    refinerIdentifyAndShowTransferForm({
+      walletAddress: sender,
+      protocol: originProtocol,
+      chain: origin,
     });
   } catch (error: any) {
     logger.error(`Error at stage ${transferStatus}`, error);

@@ -116,7 +116,7 @@
     "start": "next start",
     "test": "vitest --watch false",
     "prettier": "prettier --write ./src",
-    "link:monorepo": "node scripts/link-monorepo.js utils deploy-sdk sdk widgets",
+    "link:monorepo": "node scripts/link-monorepo.js utils provider-sdk deploy-sdk sdk widgets",
     "unlink:monorepo": "node scripts/unlink-monorepo.js"
   },
   "types": "dist/src/index.d.ts",
@@ -141,7 +141,8 @@
       "@hyperlane-xyz/utils": "file:.monorepo-tarballs/hyperlane-xyz-utils-21.1.0.tgz",
       "@hyperlane-xyz/sdk": "file:.monorepo-tarballs/hyperlane-xyz-sdk-21.1.0.tgz",
       "@hyperlane-xyz/widgets": "file:.monorepo-tarballs/hyperlane-xyz-widgets-21.1.0.tgz",
-      "@hyperlane-xyz/deploy-sdk": "file:.monorepo-tarballs/hyperlane-xyz-deploy-sdk-1.1.0.tgz"
+      "@hyperlane-xyz/deploy-sdk": "file:.monorepo-tarballs/hyperlane-xyz-deploy-sdk-1.1.0.tgz",
+      "@hyperlane-xyz/provider-sdk": "file:.monorepo-tarballs/hyperlane-xyz-provider-sdk-1.1.0.tgz"
     },
     "patchedDependencies": {
       "starknetkit@2.6.1": "patches/starknetkit@2.6.1.patch"

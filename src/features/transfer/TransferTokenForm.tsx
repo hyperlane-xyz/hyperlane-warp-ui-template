@@ -363,7 +363,11 @@ function RecipientSection({ isReview }: { isReview: boolean }) {
 }
 
 function TokenBalance({ label, balance }: { label: string; balance?: TokenAmount | null }) {
-  const value = balance?.getDecimalFormattedAmount().toFixed(5) || '0';
+  const value =
+    balance?.getDecimalFormattedAmount().toLocaleString('en-US', {
+      maximumFractionDigits: 6,
+      useGrouping: false,
+    }) || '0';
   return <div className="text-right text-xs text-gray-600">{`${label}: ${value}`}</div>;
 }
 
@@ -572,8 +576,9 @@ function MaxButton({ balance, disabled }: { balance?: TokenAmount; disabled?: bo
     const maxAmount = await fetchMaxAmount({ balance, origin, destination, accounts });
     if (isNullish(maxAmount)) return;
     const decimalsAmount = maxAmount.getDecimalFormattedAmount();
-    const roundedAmount = new BigNumber(decimalsAmount).toFixed(4, BigNumber.ROUND_FLOOR);
-    setFieldValue('amount', roundedAmount);
+    const roundedAmount = new BigNumber(decimalsAmount).toFixed(8, BigNumber.ROUND_FLOOR);
+    const trimmedAmount = roundedAmount.replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
+    setFieldValue('amount', trimmedAmount);
   };
 
   return (

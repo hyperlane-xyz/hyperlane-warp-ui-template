@@ -11,11 +11,9 @@ import { isChainDisabled } from '../chains/utils';
 import { DefaultMultiCollateralRoutes, TokenChainMap } from './types';
 
 // Module-level caches for expensive key computations
-// These use Map with token object references as keys for O(1) lookups
-// Cache invalidation is automatic: when initWarpContext() runs, it creates NEW token objects
-// via WarpCore.FromConfig(), so old cache entries are never accessed
-const tokenKeyCache = new Map<IToken, string>();
-const collateralKeyCache = new Map<IToken, string>();
+// WeakMap allows automatic garbage collection when token objects are no longer referenced
+const tokenKeyCache = new WeakMap<IToken, string>();
+const collateralKeyCache = new WeakMap<IToken, string>();
 
 // Map of token symbols and token chain map
 // Symbols are not duplicated to avoid the same symbol from being shown
@@ -148,7 +146,7 @@ export function getTokensWithSameCollateralAddresses(
  */
 export function getTokenKey(token: IToken): string {
   const cached = tokenKeyCache.get(token);
-  if (cached !== undefined) return cached;
+  if (!isNullish(cached)) return cached;
 
   const normalizedAddress = normalizeAddress(token.addressOrDenom, token.protocol);
   const key = `${token.chainName.toLowerCase()}-${token.symbol.toLowerCase()}-${normalizedAddress}`;
@@ -239,7 +237,7 @@ export function groupTokensByCollateral(tokens: Token[]): Map<string, Token[]> {
  */
 export function getCollateralKey(token: IToken): string {
   const cached = collateralKeyCache.get(token);
-  if (cached !== undefined) return cached;
+  if (!isNullish(cached)) return cached;
 
   const chainName = token.chainName.toLowerCase();
   const symbol = token.symbol.toLowerCase();

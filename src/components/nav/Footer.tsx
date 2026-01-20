@@ -13,13 +13,13 @@ type FooterLink = {
 
 const footerLinks: FooterLink[] = [
   { title: 'Docs', url: links.docs, external: true },
-  { title: 'Terms', url: links.tos, external: true },
+  { title: 'Support', url: links.support, external: true },
   { title: 'Twitter', url: links.twitter, external: true, icon: <TwitterIcon color="#fff" /> },
   { title: 'Homepage', url: links.home, external: true },
   { title: 'Privacy', url: links.privacyPolicy, external: true },
   { title: 'Discord', url: links.discord, external: true, icon: <DiscordIcon color="#fff" /> },
   { title: 'Explorer', url: links.explorer, external: true },
-  { title: 'Bounty', url: links.bounty, external: true },
+  { title: 'Terms', url: links.tos, external: true },
   { title: 'Github', url: links.github, external: true, icon: <GithubIcon color="#fff" /> },
 ];
 

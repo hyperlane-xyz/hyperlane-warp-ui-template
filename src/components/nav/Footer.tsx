@@ -1,7 +1,9 @@
 import { DiscordIcon, GithubIcon, HyperlaneLogo, TwitterIcon } from '@hyperlane-xyz/widgets';
+import clsx from 'clsx';
 import Link from 'next/link';
 import { ReactNode } from 'react';
 import { links } from '../../consts/links';
+import { INTERCOM_APP_ID } from '../../features/analytics/intercom';
 import { Color } from '../../styles/Color';
 
 type FooterLink = {
@@ -24,11 +26,17 @@ const footerLinks: FooterLink[] = [
 ];
 
 export function Footer() {
+  const chatboxExist = !!INTERCOM_APP_ID;
   return (
     <footer className="relative text-white">
       <div className="relative bg-gradient-to-b from-transparent to-black/40 px-8 pb-5 pt-2 sm:pt-0">
-        <div className="flex flex-col items-center justify-between gap-8 sm:flex-row sm:gap-10">
-          <FooterLogo />
+        <div
+          className={clsx(
+            'flex flex-col items-center gap-8 sm:flex-row sm:gap-10',
+            chatboxExist ? 'justify-end' : 'justify-between',
+          )}
+        >
+          {!chatboxExist && <FooterLogo />}
           <FooterNav />
         </div>
       </div>

@@ -1,7 +1,7 @@
 import Intercom from '@intercom/messenger-js-sdk';
 import { logger } from '../../utils/logger';
 
-const INTERCOM_APP_ID = process.env.NEXT_PUBLIC_INTERCOM_APP_ID || '';
+export const INTERCOM_APP_ID = process.env.NEXT_PUBLIC_INTERCOM_APP_ID || '';
 
 let isInitialized = false;
 
@@ -16,6 +16,7 @@ export function initIntercom(): void {
     Intercom({
       // eslint-disable-next-line camelcase
       app_id: INTERCOM_APP_ID,
+      alignment: 'left',
     });
     isInitialized = true;
   } catch (error) {

@@ -1,0 +1,53 @@
+name: hyperlane-warp-ui-template Sonarqube Scan
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+    types: [closed]
+
+jobs:
+  build:
+    name: Build and analyze
+    runs-on: ubuntu-latest
+    
+    # For PR events, only run if merged
+    if: |
+      github.event_name == 'push' || 
+      (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          # For PR events, checkout the merge commit
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.merge_commit_sha || github.sha }}
+
+      - uses: SonarSource/sonarqube-scan-action@v5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+      - uses: SonarSource/sonarqube-quality-gate-action@v1
+        id: sonarqube-quality-gate
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      # - name: Notify Slack with SonarQube results
+      #   run: |
+      #     # Determine event type for Slack message
+      #     if [ "${{ github.event_name }}" == "pull_request" ]; then
+      #       EVENT_TEXT="PR Merge to ${{ github.event.pull_request.base.ref }}"
+      #       BRANCH_TEXT="${{ github.event.pull_request.base.ref }}"
+      #     else
+      #       EVENT_TEXT="Push"
+      #       BRANCH_TEXT="${{ github.ref_name }}"
+      #     fi
+
+      #     curl -X POST -H 'Content-type: application/json' --data "{
+      #       \"text\": \"📊 *SonarQube Scan Results (hyperlane-warp-ui-template)*\\n*Repo:* ${{ github.repository }}\\n*Branch:* $BRANCH_TEXT\\n*Event:* $EVENT_TEXT\\n*Quality Gate:* ${{ steps.sonarqube-quality-gate.outputs.quality-gate-status }}\\n<${{ secrets.SONAR_HOST_URL }}/dashboard?id=hyperlane-warp-ui-template|View SonarQube Report>\\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View GitHub Action>\"
+      #     }" ${{ secrets.SLACK_POST_MESSAGE_INCOMING_WEBHOOK_URL }}

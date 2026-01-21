@@ -33,6 +33,7 @@ const IMG_SRC_HOSTS = [
 ];
 const SCRIPT_SRC_HOSTS = [
   'https://snaps.consensys.io',
+  'https://plausible.io',
   'https://js.refiner.io',
   'https://app.intercom.io',
   'https://widget.intercom.io',
@@ -44,15 +45,6 @@ const MEDIA_SRC_HOSTS = [
   'https://js.intercomcdn.com',
   'https://downloads.intercomcdn.com',
 ];
-<<<<<<< HEAD
-const SCRIPT_SRC_HOSTS = [
-  'https://snaps.consensys.io',
-  'https://plausible.io',
-  'https://js.refiner.io',
-];
-const MEDIA_SRC_HOSTS = ['https://js.refiner.io', 'https://storage.refiner.io'];
-=======
->>>>>>> origin/main
 const cspHeader = `
   default-src 'self';
   script-src 'self'${isDev ? " 'unsafe-eval'" : ''} ${SCRIPT_SRC_HOSTS.join(' ')};

@@ -25,6 +25,7 @@
     "@hyperlane-xyz/utils": "20.1.0",
     "@hyperlane-xyz/widgets": "20.1.0",
     "@interchain-ui/react": "^1.23.28",
+    "@intercom/messenger-js-sdk": "^0.0.18",
     "@metamask/post-message-stream": "6.1.2",
     "@metamask/providers": "10.2.1",
     "@radixdlt/babylon-gateway-api-sdk": "^1.10.1",

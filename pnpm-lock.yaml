@@ -97,6 +97,9 @@ importers:
       '@interchain-ui/react':
         specifier: ^1.23.28
         version: 1.26.3(@types/react@18.3.27)(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@intercom/messenger-js-sdk':
+        specifier: ^0.0.18
+        version: 0.0.18
       '@metamask/post-message-stream':
         specifier: 6.1.2
         version: 6.1.2
@@ -1662,6 +1665,9 @@ packages:
     peerDependencies:
       react: ^18.0.0 || ^19.0.0
       react-dom: ^18.0.0 || ^19.0.0
+
+  '@intercom/messenger-js-sdk@0.0.18':
+    resolution: {integrity: sha512-OQbhnNh26cdI0ddIVh67JOGnSTFAHrbKF5atXuOeWpDF2Ups3O7Do1Oz42BrvQA/o0AZF+1Wqaxtc3kq70wc6w==}
 
   '@internationalized/date@3.10.0':
     resolution: {integrity: sha512-oxDR/NTEJ1k+UFVQElaNIk65E/Z83HK1z1WI3lQyhTtnNg4R5oVXaPzK3jcpKG8UHKDVuDQHzn+wsxSz8RP3aw==}
@@ -12416,6 +12422,8 @@ snapshots:
     transitivePeerDependencies:
       - '@types/react'
       - babel-plugin-macros
+
+  '@intercom/messenger-js-sdk@0.0.18': {}
 
   '@internationalized/date@3.10.0':
     dependencies:

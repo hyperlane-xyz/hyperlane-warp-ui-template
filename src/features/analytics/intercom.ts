@@ -16,7 +16,7 @@ export function initIntercom(): void {
     Intercom({
       // eslint-disable-next-line camelcase
       app_id: INTERCOM_APP_ID,
-      alignment: 'left',
+      alignment: 'right',
     });
     isInitialized = true;
   } catch (error) {

@@ -33,7 +33,7 @@ export function Footer() {
         <div
           className={clsx(
             'flex flex-col items-center gap-8 sm:flex-row sm:gap-10',
-            chatboxExist ? 'justify-end' : 'justify-between',
+            chatboxExist ? 'justify-start' : 'justify-between',
           )}
         >
           {!chatboxExist && <FooterLogo />}

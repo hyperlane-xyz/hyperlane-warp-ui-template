@@ -8,7 +8,6 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // TIA routes (cosmos-sdk)
   'TIA/abstract-celestia',
-  'TIA/arbitrum',
   'TIA/base-celestia',
   'TIA/celestia-ethereum',
   'TIA/celestia-solanamainnet',

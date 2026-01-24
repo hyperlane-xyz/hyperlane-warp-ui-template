@@ -4,7 +4,7 @@ import {
   WarpCore,
   WarpTxCategory,
 } from '@hyperlane-xyz/sdk';
-import { toTitleCase, toWei } from '@hyperlane-xyz/utils';
+import { ProtocolType, toTitleCase, toWei } from '@hyperlane-xyz/utils';
 import {
   getAccountAddressForChain,
   useAccounts,
@@ -22,6 +22,7 @@ import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { AppState, useStore } from '../store';
 import { getTokenByIndex, useWarpCore } from '../tokens/hooks';
+import { PermitSignature, usePermitSignature } from '../tokens/permit';
 import { TransferContext, TransferFormValues, TransferStatus } from './types';
 import { tryGetMsgIdFromTransferReceipt } from './utils';
 
@@ -43,12 +44,12 @@ export function useTokenTransfer(onDone?: () => void) {
   const activeAccounts = useAccounts(multiProvider);
   const activeChains = useActiveChains(multiProvider);
   const transactionFns = useTransactionFns(multiProvider);
+  const { requestPermitSignature } = usePermitSignature();
 
   const [isLoading, setIsLoading] = useState(false);
 
-  // TODO implement cancel callback for when modal is closed?
   const triggerTransactions = useCallback(
-    (values: TransferFormValues) =>
+    (values: TransferFormValues, supportsPermit: boolean) =>
       executeTransfer({
         warpCore,
         values,
@@ -60,6 +61,8 @@ export function useTokenTransfer(onDone?: () => void) {
         updateTransferStatus,
         setIsLoading,
         onDone,
+        supportsPermit,
+        requestPermitSignature,
       }),
     [
       warpCore,
@@ -71,6 +74,7 @@ export function useTokenTransfer(onDone?: () => void) {
       addTransfer,
       updateTransferStatus,
       onDone,
+      requestPermitSignature,
     ],
   );
 
@@ -91,6 +95,8 @@ async function executeTransfer({
   updateTransferStatus,
   setIsLoading,
   onDone,
+  supportsPermit,
+  requestPermitSignature,
 }: {
   warpCore: WarpCore;
   values: TransferFormValues;
@@ -102,6 +108,8 @@ async function executeTransfer({
   updateTransferStatus: AppState['updateTransferStatus'];
   setIsLoading: (b: boolean) => void;
   onDone?: () => void;
+  supportsPermit: boolean;
+  requestPermitSignature: ReturnType<typeof usePermitSignature>['requestPermitSignature'];
 }) {
   logger.debug('Preparing transfer transaction(s)');
   setIsLoading(true);
@@ -150,12 +158,39 @@ async function executeTransfer({
 
     updateTransferStatus(transferIndex, (transferStatus = TransferStatus.CreatingTxs));
 
-    const txs = await warpCore.getTransferRemoteTxs({
+    let permitSignature: PermitSignature | undefined;
+
+    if (supportsPermit && originProtocol === ProtocolType.Ethereum) {
+      updateTransferStatus(transferIndex, (transferStatus = TransferStatus.SigningPermit));
+      const signature = await requestPermitSignature(
+        originToken,
+        sender,
+        originToken.addressOrDenom,
+        weiAmountOrId,
+      );
+
+      if (signature) {
+        permitSignature = signature;
+        logger.debug('Permit signature obtained, proceeding with permit flow');
+      } else {
+        logger.warn('Permit signing failed or rejected, falling back to approval flow');
+      }
+    }
+
+    updateTransferStatus(transferIndex, (transferStatus = TransferStatus.CreatingTxs));
+
+    const transferParams: Parameters<typeof warpCore.getTransferRemoteTxs>[0] = {
       originTokenAmount,
       destination,
       sender,
       recipient,
-    });
+    };
+
+    if (permitSignature) {
+      (transferParams as any).permitSignature = permitSignature;
+    }
+
+    const txs = await warpCore.getTransferRemoteTxs(transferParams);
 
     const hashes: string[] = [];
     let txReceipt: TypedTransactionReceipt | undefined = undefined;
@@ -259,14 +294,17 @@ async function executeTransfer({
 const errorMessages: Partial<Record<TransferStatus, string>> = {
   [TransferStatus.Preparing]: 'Error while preparing the transactions.',
   [TransferStatus.CreatingTxs]: 'Error while creating the transactions.',
+  [TransferStatus.SigningPermit]: 'Error while signing the permit.',
+  [TransferStatus.ConfirmingPermit]: 'Error while confirming the permit transaction.',
   [TransferStatus.SigningApprove]: 'Error while signing the approve transaction.',
   [TransferStatus.ConfirmingApprove]: 'Error while confirming the approve transaction.',
   [TransferStatus.SigningTransfer]: 'Error while signing the transfer transaction.',
   [TransferStatus.ConfirmingTransfer]: 'Error while confirming the transfer transaction.',
 };
 
-const txCategoryToStatuses: Record<WarpTxCategory, [TransferStatus, TransferStatus]> = {
+const txCategoryToStatuses: Record<string, [TransferStatus, TransferStatus]> = {
   [WarpTxCategory.Approval]: [TransferStatus.SigningApprove, TransferStatus.ConfirmingApprove],
   [WarpTxCategory.Revoke]: [TransferStatus.SigningRevoke, TransferStatus.ConfirmingRevoke],
   [WarpTxCategory.Transfer]: [TransferStatus.SigningTransfer, TransferStatus.ConfirmingTransfer],
+  permit: [TransferStatus.SigningPermit, TransferStatus.ConfirmingPermit],
 };

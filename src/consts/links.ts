@@ -15,4 +15,8 @@ export const links = {
     'https://github.com/search?q=org:hyperlane-xyz+label:bounty+is:open+is:issue&type=issues&s=&o=desc',
   imgPath: 'https://cdn.jsdelivr.net/gh/hyperlane-xyz/hyperlane-registry@main',
   transferFees: 'https://docs.hyperlane.xyz/docs/protocol/core/fees#fee-estimation',
+<<<<<<< HEAD
+=======
+  support: 'https://help.hyperlane.xyz/',
+>>>>>>> origin/main
 };

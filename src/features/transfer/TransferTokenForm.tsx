@@ -31,6 +31,7 @@ import { SolidButton } from '../../components/buttons/SolidButton';
 import { TextField } from '../../components/input/TextField';
 import { WARP_QUERY_PARAMS } from '../../consts/args';
 import { config } from '../../consts/config';
+import { defaultMultiCollateralRoutes } from '../../consts/defaultMultiCollateralRoutes';
 import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
 import { getQueryParams, updateQueryParam } from '../../utils/queryParams';
@@ -62,7 +63,11 @@ import { useTokenPrice } from '../tokens/useTokenPrice';
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { FeeSectionButton } from './FeeSectionButton';
 import { RecipientConfirmationModal } from './RecipientConfirmationModal';
+<<<<<<< HEAD
 import { getInterchainQuote, getLowestFeeTransferToken, getTotalFee } from './fees';
+=======
+import { getInterchainQuote, getTotalFee, getTransferToken } from './fees';
+>>>>>>> origin/main
 import { useFetchMaxAmount } from './maxAmount';
 import { TransferFormValues } from './types';
 import { useRecipientBalanceWatcher } from './useBalanceWatcher';
@@ -362,7 +367,11 @@ function RecipientSection({ isReview }: { isReview: boolean }) {
 }
 
 function TokenBalance({ label, balance }: { label: string; balance?: TokenAmount | null }) {
-  const value = balance?.getDecimalFormattedAmount().toFixed(5) || '0';
+  const value =
+    balance?.getDecimalFormattedAmount().toLocaleString('en-US', {
+      maximumFractionDigits: 6,
+      useGrouping: false,
+    }) || '0';
   return <div className="text-right text-xs text-gray-600">{`${label}: ${value}`}</div>;
 }
 
@@ -391,6 +400,7 @@ function ButtonSection({
     values.origin,
     accounts,
   );
+<<<<<<< HEAD
 
   // Confirming recipient address
   const [{ addressConfirmed, showWarning }, setRecipientInfos] = useState({
@@ -469,10 +479,90 @@ function ButtonSection({
     // resetForm();
   };
   const { triggerTransactions } = useTokenTransfer(onDoneTransactions);
+=======
+
+  // Confirming recipient address
+  const [{ addressConfirmed, showWarning }, setRecipientInfos] = useState({
+    showWarning: false,
+    addressConfirmed: true,
+  });
+
+  useEffect(() => {
+    const checkSameEVMRecipient = async (recipient: string) => {
+      if (!connectedWallet) {
+        // Hide warning banner if entering a recipient address and then disconnect wallet
+        setRecipientInfos({ showWarning: false, addressConfirmed: true });
+        return;
+      }
+
+      const { protocol: destinationProtocol } = multiProvider.getChainMetadata(values.destination);
+      const { protocol: sourceProtocol } = multiProvider.getChainMetadata(values.origin);
+
+      // Check if we are only dealing with bridging between two EVM chains
+      if (
+        sourceProtocol !== ProtocolType.Ethereum ||
+        destinationProtocol !== ProtocolType.Ethereum
+      ) {
+        setRecipientInfos({ showWarning: false, addressConfirmed: true });
+        return;
+      }
+
+      if (!isValidAddressEvm(recipient)) {
+        setRecipientInfos({ showWarning: false, addressConfirmed: true });
+        return;
+      }
+
+      // check first if the address on origin is a smart contract
+      const { isContract: isSenderSmartContract, error: senderCheckError } = await isSmartContract(
+        multiProvider,
+        values.origin,
+        connectedWallet,
+      );
+
+      const { isContract: isRecipientSmartContract, error: recipientCheckError } =
+        await isSmartContract(multiProvider, values.destination, recipient);
+
+      const isSelfRecipient = eqAddress(recipient, connectedWallet);
+
+      // Hide warning banners if entering a recipient address and then disconnect wallet
+      if (senderCheckError || recipientCheckError) {
+        toast.error(senderCheckError || recipientCheckError);
+        setRecipientInfos({ addressConfirmed: true, showWarning: false });
+        return;
+      }
+
+      if (isSelfRecipient && isSenderSmartContract && !isRecipientSmartContract) {
+        const msg = `The recipient address is the same as the connected wallet, but it does not exist as a smart contract on ${chainDisplayName}.`;
+        logger.warn(msg);
+        setRecipientInfos({ showWarning: true, addressConfirmed: false });
+      } else {
+        setRecipientInfos({ showWarning: false, addressConfirmed: true });
+      }
+    };
+    checkSameEVMRecipient(values.recipient);
+  }, [
+    values.recipient,
+    connectedWallet,
+    multiProvider,
+    values.destination,
+    values.origin,
+    chainDisplayName,
+  ]);
+
+  const isSanctioned = useIsAccountSanctioned();
+>>>>>>> origin/main
 
   const { setTransferLoading } = useStore((s) => ({
     setTransferLoading: s.setTransferLoading,
   }));
+
+  const onDoneTransactions = () => {
+    setIsReview(false);
+    setTransferLoading(false);
+    cleanOverrideToken();
+    // resetForm();
+  };
+  const { triggerTransactions } = useTokenTransfer(onDoneTransactions);
 
   const triggerTransactionsHandler = async () => {
     if (isSanctioned) {
@@ -571,8 +661,9 @@ function MaxButton({ balance, disabled }: { balance?: TokenAmount; disabled?: bo
     const maxAmount = await fetchMaxAmount({ balance, origin, destination, accounts });
     if (isNullish(maxAmount)) return;
     const decimalsAmount = maxAmount.getDecimalFormattedAmount();
-    const roundedAmount = new BigNumber(decimalsAmount).toFixed(4, BigNumber.ROUND_FLOOR);
-    setFieldValue('amount', roundedAmount);
+    const roundedAmount = new BigNumber(decimalsAmount).toFixed(8, BigNumber.ROUND_FLOOR);
+    const trimmedAmount = roundedAmount.replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
+    setFieldValue('amount', trimmedAmount);
   };
 
   return (
@@ -860,13 +951,21 @@ async function validateForm(
       accounts,
     );
     const amountWei = toWei(amount, token.decimals);
+<<<<<<< HEAD
     const transferToken = await getLowestFeeTransferToken(
+=======
+    const transferToken = await getTransferToken(
+>>>>>>> origin/main
       warpCore,
       token,
       destinationToken,
       amountWei,
       recipient,
       sender,
+<<<<<<< HEAD
+=======
+      defaultMultiCollateralRoutes,
+>>>>>>> origin/main
     );
     const multiCollateralLimit = isMultiCollateralLimitExceeded(token, destination, amountWei);
 
@@ -897,7 +996,9 @@ async function validateForm(
     let errorMsg = errorToString(error, 40);
     const fullError = `${errorMsg} ${error.message}`;
     if (insufficientFundsErrMsg.test(fullError) || emptyAccountErrMsg.test(fullError)) {
-      errorMsg = 'Insufficient funds for gas fees';
+      const chainMetadata = warpCore.multiProvider.getChainMetadata(values.origin);
+      const nativeToken = Token.FromChainMetadataNativeToken(chainMetadata);
+      errorMsg = `Insufficient ${nativeToken.symbol} for gas fees`;
     }
     return [{ form: errorMsg }, null];
   }

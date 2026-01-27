@@ -19,7 +19,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version-file: 'package.json'
+          node-version-file: '.nvmrc'
 
       - name: Get pnpm store directory
         id: pnpm-store
@@ -52,7 +52,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version-file: 'package.json'
+          node-version-file: '.nvmrc'
 
       - name: Get pnpm store directory
         id: pnpm-store
@@ -83,7 +83,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version-file: 'package.json'
+          node-version-file: '.nvmrc'
 
       - name: Get pnpm store directory
         id: pnpm-store
@@ -118,7 +118,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version-file: 'package.json'
+          node-version-file: '.nvmrc'
 
       - name: Get pnpm store directory
         id: pnpm-store
@@ -147,7 +147,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version-file: 'package.json'
+          node-version-file: '.nvmrc'
 
       - name: Get pnpm store directory
         id: pnpm-store

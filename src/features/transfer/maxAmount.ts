@@ -8,6 +8,7 @@ import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { isMultiCollateralLimitExceeded } from '../limits/utils';
 import { useWarpCore } from '../tokens/hooks';
+import { findRouteToken } from '../tokens/utils';
 import { getTransferToken } from './fees';
 
 interface FetchMaxParams {
@@ -15,6 +16,7 @@ interface FetchMaxParams {
   balance: TokenAmount;
   origin: ChainName;
   destination: ChainName;
+  recipient?: string;
 }
 
 export function useFetchMaxAmount() {
@@ -31,13 +33,26 @@ export function useFetchMaxAmount() {
 async function fetchMaxAmount(
   multiProvider: MultiProtocolProvider,
   warpCore: WarpCore,
-  { accounts, balance, destination, origin }: FetchMaxParams,
+  { accounts, balance, destination, origin, recipient: formRecipient }: FetchMaxParams,
 ) {
   try {
     const { address, publicKey } = getAccountAddressAndPubKey(multiProvider, origin, accounts);
     if (!address) return balance;
     const originToken = new Token(balance.token);
-    const destinationToken = originToken.getConnectionForChain(destination)?.token;
+
+    // Get recipient (form value or fallback to connected wallet for destination)
+    const { address: connectedDestAddress } = getAccountAddressAndPubKey(
+      multiProvider,
+      destination,
+      accounts,
+    );
+    const recipient = formRecipient || connectedDestAddress || address;
+
+    // Find the actual warpCore token that has the route (handles deduplicated tokens)
+    const originRouteToken = findRouteToken(warpCore, originToken, destination);
+    if (!originRouteToken) return undefined;
+
+    const destinationToken = originRouteToken.getConnectionForChain(destination)?.token;
     if (!destinationToken) return undefined;
 
     const transferToken = await getTransferToken(
@@ -45,7 +60,7 @@ async function fetchMaxAmount(
       originToken,
       destinationToken,
       balance.amount.toString(),
-      address,
+      recipient,
       address,
       defaultMultiCollateralRoutes,
     );
@@ -55,8 +70,7 @@ async function fetchMaxAmount(
       destination,
       sender: address,
       senderPubKey: await publicKey,
-      // defaulting to address here for recipient
-      recipient: address,
+      recipient,
     });
 
     const multiCollateralLimit = isMultiCollateralLimitExceeded(

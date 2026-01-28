@@ -1,5 +1,6 @@
 import {
   ProviderType,
+  Token,
   TypedTransactionReceipt,
   WarpCore,
   WarpTxCategory,
@@ -21,7 +22,7 @@ import { trackEvent } from '../analytics/utils';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { AppState, useStore } from '../store';
-import { getTokenByIndex, useWarpCore } from '../tokens/hooks';
+import { getTokenByKey, useWarpCore } from '../tokens/hooks';
 import { TransferContext, TransferFormValues, TransferStatus } from './types';
 import { tryGetMsgIdFromTransferReceipt } from './utils';
 
@@ -48,7 +49,7 @@ export function useTokenTransfer(onDone?: () => void) {
 
   // TODO implement cancel callback for when modal is closed?
   const triggerTransactions = useCallback(
-    (values: TransferFormValues) =>
+    (values: TransferFormValues, routeOverrideToken: Token | null) =>
       executeTransfer({
         warpCore,
         values,
@@ -60,6 +61,7 @@ export function useTokenTransfer(onDone?: () => void) {
         updateTransferStatus,
         setIsLoading,
         onDone,
+        routeOverrideToken,
       }),
     [
       warpCore,
@@ -91,6 +93,7 @@ async function executeTransfer({
   updateTransferStatus,
   setIsLoading,
   onDone,
+  routeOverrideToken,
 }: {
   warpCore: WarpCore;
   values: TransferFormValues;
@@ -102,19 +105,36 @@ async function executeTransfer({
   updateTransferStatus: AppState['updateTransferStatus'];
   setIsLoading: (b: boolean) => void;
   onDone?: () => void;
+  routeOverrideToken: Token | null;
 }) {
   logger.debug('Preparing transfer transaction(s)');
   setIsLoading(true);
   let transferStatus: TransferStatus = TransferStatus.Preparing;
   updateTransferStatus(transferIndex, transferStatus);
 
-  const { origin, destination, tokenIndex, amount, recipient } = values;
+  const { originTokenKey, destinationTokenKey, amount, recipient: formRecipient } = values;
   const multiProvider = warpCore.multiProvider;
 
   try {
-    const originToken = getTokenByIndex(warpCore, tokenIndex);
-    const connection = originToken?.getConnectionForChain(destination);
-    if (!originToken || !connection) throw new Error('No token route found between chains');
+    const originToken = routeOverrideToken || getTokenByKey(warpCore.tokens, originTokenKey);
+    const destinationToken = getTokenByKey(warpCore.tokens, destinationTokenKey);
+    if (!originToken || !destinationToken) throw new Error('No token route found between chains');
+
+    // Get effective recipient (form value or fallback to connected wallet for destination)
+    const connectedDestAddress = getAccountAddressForChain(
+      multiProvider,
+      destinationToken.chainName,
+      activeAccounts.accounts,
+    );
+    const recipient = formRecipient || connectedDestAddress || '';
+    if (!recipient) throw new Error('No recipient address available');
+    // Find the actual connected token from the origin and destination chains
+    const connectedDestinationToken = originToken?.getConnectionForChain(
+      destinationToken.chainName,
+    )?.token;
+    if (!connectedDestinationToken) throw new Error('No token connection found between chains');
+    const origin = originToken.chainName;
+    const destination = connectedDestinationToken.chainName;
 
     const originProtocol = originToken.protocol;
     const isNft = originToken.isNft();
@@ -142,7 +162,7 @@ async function executeTransfer({
       origin,
       destination,
       originTokenAddressOrDenom: originToken.addressOrDenom,
-      destTokenAddressOrDenom: connection.token.addressOrDenom,
+      destTokenAddressOrDenom: connectedDestinationToken.addressOrDenom,
       sender,
       recipient,
       amount,

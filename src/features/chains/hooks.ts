@@ -1,3 +1,5 @@
+import { ChainName } from '@hyperlane-xyz/sdk';
+import { useMemo } from 'react';
 import { useStore } from '../store';
 import { getChainDisplayName } from './utils';
 
@@ -27,4 +29,17 @@ export function useChainProtocol(chainName?: ChainName) {
 export function useChainDisplayName(chainName: ChainName, shortName = false) {
   const multiProvider = useMultiProvider();
   return getChainDisplayName(multiProvider, chainName, shortName);
+}
+
+export function useChainInfos() {
+  const chainMetadata = useStore((s) => s.chainMetadata);
+
+  return useMemo(() => {
+    const chainInfos = Object.values(chainMetadata).map((chain) => ({
+      name: chain.name,
+      displayName: chain.displayName || chain.name,
+    }));
+    chainInfos.sort((a, b) => a.displayName.localeCompare(b.displayName));
+    return chainInfos;
+  }, [chainMetadata]);
 }

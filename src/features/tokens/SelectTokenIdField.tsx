@@ -4,7 +4,6 @@ import { useState } from 'react';
 
 type Props = {
   name: string;
-  tokenIndex?: number;
   disabled?: boolean;
 };
 

@@ -960,9 +960,12 @@ async function validateForm(
     let errorMsg = errorToString(error, 40);
     const fullError = `${errorMsg} ${error.message}`;
     if (insufficientFundsErrMsg.test(fullError) || emptyAccountErrMsg.test(fullError)) {
-      const chainMetadata = warpCore.multiProvider.getChainMetadata(values.origin);
-      const nativeToken = Token.FromChainMetadataNativeToken(chainMetadata);
-      errorMsg = `Insufficient ${nativeToken.symbol} for gas fees`;
+      const originToken = getTokenByKey(tokens, values.originTokenKey);
+      const chainMetadata = originToken
+        ? warpCore.multiProvider.tryGetChainMetadata(originToken.chainName)
+        : null;
+      const symbol = chainMetadata?.nativeToken?.symbol || 'funds';
+      errorMsg = `Insufficient ${symbol} for gas fees`;
     }
     return [{ form: errorMsg }, null];
   }

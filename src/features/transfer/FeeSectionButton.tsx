@@ -1,31 +1,19 @@
 import { WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
 import { ChevronIcon, FuelPumpIcon, useModal } from '@hyperlane-xyz/widgets';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { TransferFeeModal } from './TransferFeeModal';
 
 function useLoadingDots(isLoading: boolean, intervalMs = 1000) {
   const [dotCount, setDotCount] = useState(1);
-  const lastUpdateRef = useRef(0);
 
   useEffect(() => {
-    if (!isLoading) {
-      setDotCount(1);
-      lastUpdateRef.current = 0;
-      return;
-    }
+    if (!isLoading) return;
 
-    let rafId: number;
+    const interval = setInterval(() => {
+      setDotCount((prev) => (prev % 3) + 1);
+    }, intervalMs);
 
-    const animate = (timestamp: number) => {
-      if (timestamp - lastUpdateRef.current >= intervalMs) {
-        setDotCount((prev) => (prev % 3) + 1);
-        lastUpdateRef.current = timestamp;
-      }
-      rafId = requestAnimationFrame(animate);
-    };
-
-    rafId = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(rafId);
+    return () => clearInterval(interval);
   }, [isLoading, intervalMs]);
 
   return 'Loading' + '.'.repeat(dotCount);

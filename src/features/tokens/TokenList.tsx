@@ -35,12 +35,12 @@ export function TokenList({
 
   // Compute route map in a transition (non-blocking)
   useEffect(() => {
-    if (!counterpartToken) {
-      setTokenRouteMap(null);
-      return;
-    }
-
     startTransition(() => {
+      if (!counterpartToken) {
+        setTokenRouteMap(null);
+        return;
+      }
+
       const routeMap = new Map<string, boolean>();
 
       for (const token of allTokens) {

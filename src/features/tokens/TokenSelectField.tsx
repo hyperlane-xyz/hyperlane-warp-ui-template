@@ -58,7 +58,16 @@ export function TokenSelectField({
     const origin = selectionMode === 'origin' ? newToken.chainName : originToken?.chainName || '';
     const destination =
       selectionMode === 'destination' ? newToken.chainName : destToken?.chainName || '';
-    trackTokenSelectionEvent(newToken, origin, destination, multiProvider);
+    const destinationTokenSymbol =
+      selectionMode === 'destination' ? newToken.symbol : destToken?.symbol || '';
+    trackTokenSelectionEvent(
+      selectionMode,
+      newToken,
+      destinationTokenSymbol,
+      origin,
+      destination,
+      multiProvider,
+    );
 
     // Update URL query params based on selection mode
     if (selectionMode === 'origin') {

@@ -1,6 +1,6 @@
 import { ChainName, Token } from '@hyperlane-xyz/sdk';
 import { Modal } from '@hyperlane-xyz/widgets';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ModalHeader } from '../../components/layout/ModalHeader';
 import { ChainFilterPanel } from '../chains/ChainFilterPanel';
 import { TokenListPanel } from './TokenListPanel';
@@ -28,18 +28,21 @@ export function UnifiedTokenChainModal({
   // Mobile-only state: whether to show the full chain list
   const [showMobileChainList, setShowMobileChainList] = useState(false);
 
-  const onClose = () => {
+  const onClose = useCallback(() => {
     close();
     setChainSearch('');
     setTokenSearch('');
     setSelectedChain(null);
     setShowMobileChainList(false);
-  };
+  }, [close]);
 
-  const handleSelectToken = (token: Token) => {
-    onSelect(token);
-    onClose();
-  };
+  const handleSelectToken = useCallback(
+    (token: Token) => {
+      onSelect(token);
+      onClose();
+    },
+    [onSelect, onClose],
+  );
 
   // Mobile: when selecting a chain from the full list, go back to tokens
   const handleSelectChain = (chain: ChainName | null) => {

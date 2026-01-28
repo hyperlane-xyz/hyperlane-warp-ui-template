@@ -1,6 +1,6 @@
 import { ChainName, Token } from '@hyperlane-xyz/sdk';
 import { Tooltip } from '@hyperlane-xyz/widgets';
-import { useEffect, useMemo, useState, useTransition } from 'react';
+import React, { useEffect, useMemo, useState, useTransition } from 'react';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { useCollateralGroups, useTokens } from './hooks';
@@ -158,7 +158,7 @@ export function TokenList({
   );
 }
 
-function TokenButton({
+const TokenButton = React.memo(function TokenButton({
   token,
   onSelect,
   hasRoute,
@@ -225,7 +225,7 @@ function TokenButton({
       </div>
     </button>
   );
-}
+});
 
 const styles = {
   base: 'font-secondary font-normal',

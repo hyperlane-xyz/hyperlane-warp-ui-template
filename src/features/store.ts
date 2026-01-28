@@ -25,6 +25,7 @@ import { TokenChainMap } from './tokens/types';
 import {
   assembleTokensBySymbolChainMap,
   buildTokensArray,
+  getTokenKey,
   groupTokensByCollateral,
 } from './tokens/utils';
 import { FinalTransferStatuses, TransferContext, TransferStatus } from './transfer/types';
@@ -44,6 +45,8 @@ interface WarpContext {
   tokens: Token[];
   /** Pre-computed collateral groups for fast route checking */
   collateralGroups: Map<string, Token[]>;
+  /** Pre-computed token key to Token map for O(1) lookups */
+  tokenByKeyMap: Map<string, Token>;
 }
 
 // Keeping everything here for now as state is simple
@@ -94,6 +97,8 @@ export interface AppState {
   tokens: Token[];
   /** Pre-computed collateral groups for fast route checking */
   collateralGroups: Map<string, Token[]>;
+  /** Pre-computed token key to Token map for O(1) lookups */
+  tokenByKeyMap: Map<string, Token>;
 }
 
 export const useStore = create<AppState>()(
@@ -115,6 +120,7 @@ export const useStore = create<AppState>()(
           tokensBySymbolChainMap,
           tokens,
           collateralGroups,
+          tokenByKeyMap,
         } = await initWarpContext({
           ...get(),
           chainMetadataOverrides: filtered,
@@ -127,6 +133,7 @@ export const useStore = create<AppState>()(
           routerAddressesByChainMap,
           tokens,
           collateralGroups,
+          tokenByKeyMap,
         });
       },
       warpCoreConfigOverrides: [],
@@ -139,6 +146,7 @@ export const useStore = create<AppState>()(
           tokensBySymbolChainMap,
           tokens,
           collateralGroups,
+          tokenByKeyMap,
         } = await initWarpContext({
           ...get(),
           warpCoreConfigOverrides: overrides,
@@ -151,6 +159,7 @@ export const useStore = create<AppState>()(
           routerAddressesByChainMap,
           tokens,
           collateralGroups,
+          tokenByKeyMap,
         });
       },
       multiProvider: new MultiProtocolProvider({}),
@@ -218,6 +227,7 @@ export const useStore = create<AppState>()(
       },
       tokens: [],
       collateralGroups: new Map(),
+      tokenByKeyMap: new Map(),
     }),
 
     // Store config
@@ -290,6 +300,11 @@ async function initWarpContext({
     const tokens = buildTokensArray(warpCore.tokens);
     // Build collateral groups for fast route checking
     const collateralGroups = groupTokensByCollateral(warpCore.tokens);
+    // Build token by key map for O(1) lookups
+    const tokenByKeyMap = new Map<string, Token>();
+    for (const token of tokens) {
+      tokenByKeyMap.set(getTokenKey(token), token);
+    }
 
     return {
       registry: currentRegistry,
@@ -300,6 +315,7 @@ async function initWarpContext({
       routerAddressesByChainMap,
       tokens,
       collateralGroups,
+      tokenByKeyMap,
     };
   } catch (error) {
     toast.error('Error initializing warp context. Please check connection status and configs.');
@@ -313,6 +329,7 @@ async function initWarpContext({
       routerAddressesByChainMap: {},
       tokens: [],
       collateralGroups: new Map(),
+      tokenByKeyMap: new Map(),
     };
   }
 }

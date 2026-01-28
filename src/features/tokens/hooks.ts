@@ -120,6 +120,23 @@ export function useCollateralGroups() {
   return useStore((s) => s.collateralGroups);
 }
 
+/** Pre-computed token key to Token map for O(1) lookups */
+export function useTokenByKeyMap() {
+  return useStore((s) => s.tokenByKeyMap);
+}
+
+/**
+ * O(1) token lookup by key using the pre-computed map.
+ * Use this instead of getTokenByKey() for better performance.
+ */
+export function getTokenByKeyFromMap(
+  tokenByKeyMap: Map<string, Token>,
+  key: string | undefined,
+): Token | undefined {
+  if (!key) return undefined;
+  return tokenByKeyMap.get(key);
+}
+
 export function tryFindToken(
   warpCore: WarpCore,
   chain: ChainName,

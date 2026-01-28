@@ -1,0 +1,3 @@
+export const TIP_CARD_ACTION_ORIGIN = 'base';
+export const TIP_CARD_ACTION_DESTINATION = 'solanamainnet';
+export const TIP_CARD_ACTION_ADDRESS_OR_DENOM = '0x955132016f9B6376B1392aA7BFF50538d21Ababc';

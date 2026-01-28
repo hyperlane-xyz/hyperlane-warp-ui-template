@@ -1,12 +1,12 @@
 import { ChainName } from '@hyperlane-xyz/sdk';
 import { useMemo } from 'react';
 import { ChainLogo } from '../../components/icons/ChainLogo';
-import { useChainInfos } from './hooks';
+import { ChainInfo, useChainInfos } from './hooks';
 
 interface ChainListProps {
   searchQuery: string;
   selectedChain: ChainName | null;
-  onSelectChain: (chain: ChainName | null) => void;
+  onSelectChain: (chain: ChainInfo | null) => void;
 }
 
 export function ChainList({ searchQuery, selectedChain, onSelectChain }: ChainListProps) {
@@ -42,7 +42,7 @@ export function ChainList({ searchQuery, selectedChain, onSelectChain }: ChainLi
           <ChainButton
             key={chain.name}
             isSelected={selectedChain === chain.name}
-            onClick={() => onSelectChain(chain.name)}
+            onClick={() => onSelectChain(chain)}
             icon={<ChainLogo chainName={chain.name} size={28} />}
             label={chain.displayName}
           />

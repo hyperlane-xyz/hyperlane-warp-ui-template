@@ -1,6 +1,7 @@
 import { ChainName, Token } from '@hyperlane-xyz/sdk';
 import { useEffect, useRef } from 'react';
 import { SearchInput } from '../../components/input/SearchInput';
+import { ChainInfo } from '../chains/hooks';
 import { MobileChainQuickSelect } from '../chains/MobileChainQuickSelect';
 import { TokenList } from './TokenList';
 import { TokenSelectionMode } from './types';
@@ -16,7 +17,7 @@ interface TokenListPanelProps {
   counterpartToken?: Token;
   /** Mobile chain selection props */
   selectedChain: ChainName | null;
-  onSelectChain: (chain: ChainName | null) => void;
+  onSelectChain: (chain: ChainInfo | null) => void;
   onMoreChainsClick: () => void;
 }
 

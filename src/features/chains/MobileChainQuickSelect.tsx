@@ -1,13 +1,13 @@
 import { ChainName } from '@hyperlane-xyz/sdk';
 import { useMemo } from 'react';
 import { ChainLogo } from '../../components/icons/ChainLogo';
-import { useChainInfos } from './hooks';
+import { ChainInfo, useChainInfos } from './hooks';
 
 const DEFAULT_MAX_VISIBLE_CHAINS = 4;
 
 interface MobileChainQuickSelectProps {
   selectedChain: ChainName | null;
-  onSelectChain: (chain: ChainName | null) => void;
+  onSelectChain: (chain: ChainInfo | null) => void;
   onMoreClick: () => void;
   /** Optional list of preferred chain names to display first. Remaining slots filled with other chains. */
   preferredChains?: ChainName[];
@@ -35,6 +35,7 @@ export function MobileChainQuickSelect({
           return {
             name,
             displayName: chain?.displayName || name,
+            chainId: chain?.chainId || 1,
           };
         });
 
@@ -78,7 +79,7 @@ export function MobileChainQuickSelect({
         <button
           key={chain.name}
           type="button"
-          onClick={() => onSelectChain(chain.name)}
+          onClick={() => onSelectChain(chain)}
           className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors ${
             selectedChain === chain.name ? 'bg-blue-100' : 'bg-gray-100 hover:bg-gray-200'
           }`}

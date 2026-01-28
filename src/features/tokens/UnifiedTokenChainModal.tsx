@@ -1,8 +1,10 @@
-import { ChainName, Token } from '@hyperlane-xyz/sdk';
+import { Token } from '@hyperlane-xyz/sdk';
 import { Modal } from '@hyperlane-xyz/widgets';
 import { useState } from 'react';
 import { ModalHeader } from '../../components/layout/ModalHeader';
+import { trackChainSelectionEvent } from '../analytics/utils';
 import { ChainFilterPanel } from '../chains/ChainFilterPanel';
+import { ChainInfo } from '../chains/hooks';
 import { TokenListPanel } from './TokenListPanel';
 import { TokenSelectionMode } from './types';
 
@@ -24,7 +26,7 @@ export function UnifiedTokenChainModal({
 }: Props) {
   const [chainSearch, setChainSearch] = useState('');
   const [tokenSearch, setTokenSearch] = useState('');
-  const [selectedChain, setSelectedChain] = useState<ChainName | null>(null);
+  const [selectedChain, setSelectedChain] = useState<ChainInfo | null>(null);
   // Mobile-only state: whether to show the full chain list
   const [showMobileChainList, setShowMobileChainList] = useState(false);
 
@@ -41,9 +43,17 @@ export function UnifiedTokenChainModal({
     onClose();
   };
 
+  const handleSelectChain = (chain: ChainInfo | null) => {
+    setSelectedChain((prev) => {
+      if (prev?.name === chain?.name) return prev;
+      trackChainSelectionEvent(selectionMode, chain, prev);
+      return chain;
+    });
+  };
+
   // Mobile: when selecting a chain from the full list, go back to tokens
-  const handleSelectChain = (chain: ChainName | null) => {
-    setSelectedChain(chain);
+  const handleSelectChainMobile = (chain: ChainInfo | null) => {
+    handleSelectChain(chain);
     setShowMobileChainList(false);
   };
 
@@ -60,8 +70,8 @@ export function UnifiedTokenChainModal({
           <ChainFilterPanel
             searchQuery={chainSearch}
             onSearchChange={setChainSearch}
-            selectedChain={selectedChain}
-            onSelectChain={handleSelectChain}
+            selectedChain={selectedChain?.name ?? null}
+            onSelectChain={handleSelectChainMobile}
             showBackButton={showMobileChainList}
             onBack={() => setShowMobileChainList(false)}
           />
@@ -73,11 +83,11 @@ export function UnifiedTokenChainModal({
             selectionMode={selectionMode}
             searchQuery={tokenSearch}
             onSearchChange={setTokenSearch}
-            chainFilter={selectedChain}
+            chainFilter={selectedChain?.name ?? null}
             onSelect={handleSelectToken}
             counterpartToken={counterpartToken}
-            selectedChain={selectedChain}
-            onSelectChain={setSelectedChain}
+            selectedChain={selectedChain?.name ?? null}
+            onSelectChain={handleSelectChain}
             onMoreChainsClick={() => setShowMobileChainList(true)}
           />
         </div>

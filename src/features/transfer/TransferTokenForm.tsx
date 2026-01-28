@@ -549,15 +549,15 @@ function ButtonSection({
 
   const isSanctioned = useIsAccountSanctioned();
 
+  const { setTransferLoading } = useStore((s) => ({
+    setTransferLoading: s.setTransferLoading,
+  }));
+
   const onDoneTransactions = () => {
     setIsReview(false);
     cleanOverrideToken();
   };
   const { triggerTransactions } = useTokenTransfer(onDoneTransactions);
-
-  const { setTransferLoading } = useStore((s) => ({
-    setTransferLoading: s.setTransferLoading,
-  }));
 
   const triggerTransactionsHandler = async () => {
     if (isSanctioned || !originToken || !destinationToken) return;
@@ -960,7 +960,9 @@ async function validateForm(
     let errorMsg = errorToString(error, 40);
     const fullError = `${errorMsg} ${error.message}`;
     if (insufficientFundsErrMsg.test(fullError) || emptyAccountErrMsg.test(fullError)) {
-      errorMsg = 'Insufficient funds for gas fees';
+      const chainMetadata = warpCore.multiProvider.getChainMetadata(values.origin);
+      const nativeToken = Token.FromChainMetadataNativeToken(chainMetadata);
+      errorMsg = `Insufficient ${nativeToken.symbol} for gas fees`;
     }
     return [{ form: errorMsg }, null];
   }

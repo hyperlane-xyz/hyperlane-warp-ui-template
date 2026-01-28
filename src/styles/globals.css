@@ -252,3 +252,12 @@ Fixes for cosmos chain selection modal
 div[data-floating-ui-portal] > div {
   z-index: 10000;
 }
+
+/*
+Refiner widget z-index override
+===============================
+Needs to be higher than Intercom chatbox (z-index: 2147483000)
+*/
+#refiner-widget-wrapper {
+  z-index: 2147483001 !important;
+}

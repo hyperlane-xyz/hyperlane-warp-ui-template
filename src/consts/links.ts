@@ -16,4 +16,5 @@ export const links = {
   imgPath: 'https://cdn.jsdelivr.net/gh/hyperlane-xyz/hyperlane-registry@main',
   transferFees: 'https://docs.hyperlane.xyz/docs/protocol/core/fees#fee-estimation',
   stake: 'https://app.symbiotic.fi/vault/0xE1F23869776c82f691d9Cb34597Ab1830Fb0De58',
+  support: 'https://help.hyperlane.xyz/',
 };

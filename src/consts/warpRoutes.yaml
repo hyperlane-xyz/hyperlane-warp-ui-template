@@ -7,6 +7,7 @@ tokens:
     name: USD Coin
     addressOrDenom: '0x94C62e7958738B65737a0Db8A5077def3AED84AA'
     collateralAddressOrDenom: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831'
+    logoURI: https://raw.githubusercontent.com/hyperlane-xyz/hyperlane-registry/main/deployments/warp_routes/USDC/logo.svg
     stableSwapPool: mainnet-stableswap-pool
     helperAddress: '0x880024136413E048427F299FfA85cBbFFc1be2bF'
     sUSDAddress: '0x38E8720EBE02e7c5254F9De9F81440C7a770a9c6'
@@ -25,6 +26,7 @@ tokens:
     name: Tether USD
     addressOrDenom: '0x6BEC839292A36372882Cb850E93FB5aC2A9BA4Af'
     collateralAddressOrDenom: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9'
+    logoURI: https://raw.githubusercontent.com/hyperlane-xyz/hyperlane-registry/main/deployments/warp_routes/USDT/logo.svg
     stableSwapPool: mainnet-stableswap-pool
     helperAddress: '0x880024136413E048427F299FfA85cBbFFc1be2bF'
     sUSDAddress: '0x38E8720EBE02e7c5254F9De9F81440C7a770a9c6'
@@ -43,6 +45,7 @@ tokens:
     name: USD Coin
     addressOrDenom: '0x73Ef899fDa87213e26501707ab585028BFB297c8'
     collateralAddressOrDenom: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'
+    logoURI: https://raw.githubusercontent.com/hyperlane-xyz/hyperlane-registry/main/deployments/warp_routes/USDC/logo.svg
     stableSwapPool: mainnet-stableswap-pool
     helperAddress: '0xD5d718EE1466A7a7f7e4C3B3bA54636707a919af'
     sUSDAddress: '0x38E8720EBE02e7c5254F9De9F81440C7a770a9c6'
@@ -61,6 +64,7 @@ tokens:
     name: Tether USD
     addressOrDenom: '0x23c51024b19303F1315DbFFA055666aE9B7A0B2c'
     collateralAddressOrDenom: '0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2'
+    logoURI: https://raw.githubusercontent.com/hyperlane-xyz/hyperlane-registry/main/deployments/warp_routes/USDT/logo.svg
     stableSwapPool: mainnet-stableswap-pool
     helperAddress: '0xD5d718EE1466A7a7f7e4C3B3bA54636707a919af'
     sUSDAddress: '0x38E8720EBE02e7c5254F9De9F81440C7a770a9c6'
@@ -79,6 +83,7 @@ tokens:
     name: Startale USD
     addressOrDenom: '0x867D428B8FbE196EA4e997e7980623E75ED219a7'
     collateralAddressOrDenom: '0x3f99231dD03a9F0E7e3421c92B7b90fbe012985a'
+    logoURI: https://raw.githubusercontent.com/hyperlane-xyz/hyperlane-registry/main/deployments/warp_routes/USDSC/logo.svg
     stableSwapPool: mainnet-stableswap-pool
     helperAddress: '0x73Ef899fDa87213e26501707ab585028BFB297c8'
     sUSDAddress: '0x38E8720EBE02e7c5254F9De9F81440C7a770a9c6'

@@ -314,10 +314,12 @@ export function getBlockedAddressesByChain(
   // Collect all unique chain names first
   const allChainNames = new Set<ChainName>(tokens.map((t) => t.chainName));
 
-  // Helper to add address to the map (case-insensitive for EVM compatibility)
+  // Helper to add address to the map
+  // Only lowercase EVM hex addresses (0x...) for case-insensitive matching
+  // Non-EVM addresses (e.g., base58 for Solana) are case-sensitive and left unchanged
   const addBlockedAddress = (chain: ChainName, address: string, reason: string) => {
     result[chain] ||= new Map<string, string>();
-    const normalizedAddress = address.toLowerCase();
+    const normalizedAddress = /^0x[0-9a-fA-F]+$/i.test(address) ? address.toLowerCase() : address;
     // Don't overwrite existing entries (first reason wins)
     if (!result[chain].has(normalizedAddress)) {
       result[chain].set(normalizedAddress, reason);

@@ -853,7 +853,11 @@ async function validateForm(
     if (!destinationToken) return [{ token: 'Token is required' }, null];
 
     // Check if recipient is a blocked address (warp route, token contract, or well-known address)
-    const blockedReason = blockedAddressesByChainMap[destination]?.get(recipient.toLowerCase());
+    // Only lowercase EVM hex addresses for case-insensitive matching
+    const normalizedRecipient = /^0x[0-9a-fA-F]+$/i.test(recipient)
+      ? recipient.toLowerCase()
+      : recipient;
+    const blockedReason = blockedAddressesByChainMap[destination]?.get(normalizedRecipient);
     if (blockedReason) {
       return [{ recipient: blockedReason }, null];
     }

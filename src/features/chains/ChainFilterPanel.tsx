@@ -1,12 +1,13 @@
 import { ChevronIcon } from '@hyperlane-xyz/widgets';
 import { SearchInput } from '../../components/input/SearchInput';
 import { ChainList } from './ChainList';
+import { ChainInfo } from './hooks';
 
 interface ChainFilterPanelProps {
   searchQuery: string;
   onSearchChange: (s: string) => void;
   selectedChain: ChainName | null;
-  onSelectChain: (chain: ChainName | null) => void;
+  onSelectChain: (chain: ChainInfo | null) => void;
   /** Mobile only: show back button */
   showBackButton?: boolean;
   onBack?: () => void;

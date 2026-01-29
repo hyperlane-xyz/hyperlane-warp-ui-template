@@ -1,4 +1,4 @@
-import { Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
+import { ChainName, Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
 import {
   ProtocolType,
   convertToScaledAmount,
@@ -7,7 +7,6 @@ import {
   fromWei,
   isNullish,
   isValidAddressEvm,
-  objKeys,
   toWei,
 } from '@hyperlane-xyz/utils';
 import {
@@ -75,10 +74,10 @@ export function TransferTokenForm() {
   const multiProvider = useMultiProvider();
   const warpCore = useWarpCore();
 
-  const { originChainName, setOriginChainName, routerAddressesByChainMap } = useStore((s) => ({
+  const { originChainName, setOriginChainName, blockedAddressesByChainMap } = useStore((s) => ({
     originChainName: s.originChainName,
     setOriginChainName: s.setOriginChainName,
-    routerAddressesByChainMap: s.routerAddressesByChainMap,
+    blockedAddressesByChainMap: s.blockedAddressesByChainMap,
   }));
 
   const initialValues = useFormInitialValues();
@@ -103,7 +102,7 @@ export function TransferTokenForm() {
       warpCore,
       values,
       accounts,
-      routerAddressesByChainMap,
+      blockedAddressesByChainMap,
     );
 
     trackTransactionFailedEvent(result, warpCore, values, accounts, overrideToken);
@@ -842,7 +841,7 @@ async function validateForm(
   warpCore: WarpCore,
   values: TransferFormValues,
   accounts: Record<ProtocolType, AccountInfo>,
-  routerAddressesByChainMap: Record<ChainName, Set<string>>,
+  blockedAddressesByChainMap: Record<ChainName, Map<string, string>>,
 ): Promise<[Record<string, string> | null, Token | null]> {
   // returns a tuple, where first value is validation result
   // and second value is token override
@@ -853,11 +852,10 @@ async function validateForm(
     const destinationToken = token.getConnectionForChain(destination)?.token;
     if (!destinationToken) return [{ token: 'Token is required' }, null];
 
-    if (
-      objKeys(routerAddressesByChainMap).includes(destination) &&
-      routerAddressesByChainMap[destination].has(recipient)
-    ) {
-      return [{ recipient: 'Warp Route address is not valid as recipient' }, null];
+    // Check if recipient is a blocked address (warp route, token contract, or well-known address)
+    const blockedReason = blockedAddressesByChainMap[destination]?.get(recipient.toLowerCase());
+    if (blockedReason) {
+      return [{ recipient: blockedReason }, null];
     }
 
     const { address: sender, publicKey: senderPubKey } = getAccountAddressAndPubKey(

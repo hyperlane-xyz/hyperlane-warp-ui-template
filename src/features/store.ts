@@ -17,6 +17,7 @@ import { objFilter } from '@hyperlane-xyz/utils';
 import { toast } from 'react-toastify';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { BLOCKED_RECIPIENT_ADDRESSES } from '../consts/blacklist';
 import { config } from '../consts/config';
 import { logger } from '../utils/logger';
 import { assembleChainMetadata } from './chains/metadata';
@@ -35,6 +36,9 @@ interface WarpContext {
   warpCore: WarpCore;
   tokensBySymbolChainMap: Record<string, TokenChainMap>;
   routerAddressesByChainMap: Record<ChainName, Set<string>>;
+  // Map of destination chain -> Map of blocked address (lowercase) -> reason string
+  // Used to prevent users from sending to contract addresses (warp routes, token contracts, etc.)
+  blockedAddressesByChainMap: Record<ChainName, Map<string, string>>;
 }
 
 // Keeping everything here for now as state is simple
@@ -78,6 +82,9 @@ export interface AppState {
   // this map is currently used by the transfer token form validation to prevent
   // users from sending funds to a warp route address in a given destination chain
   routerAddressesByChainMap: Record<ChainName, Set<string>>;
+  // Map of destination chain -> Map of blocked address (lowercase) -> reason string
+  // Used to prevent users from sending to contract addresses (warp routes, token contracts, etc.)
+  blockedAddressesByChainMap: Record<ChainName, Map<string, string>>;
 }
 
 export const useStore = create<AppState>()(
@@ -92,33 +99,45 @@ export const useStore = create<AppState>()(
       ) => {
         logger.debug('Setting chain overrides in store');
         const filtered = objFilter(overrides, (_, metadata) => !!metadata);
-        const { multiProvider, warpCore, routerAddressesByChainMap, tokensBySymbolChainMap } =
-          await initWarpContext({
-            ...get(),
-            chainMetadataOverrides: filtered,
-          });
+        const {
+          multiProvider,
+          warpCore,
+          routerAddressesByChainMap,
+          blockedAddressesByChainMap,
+          tokensBySymbolChainMap,
+        } = await initWarpContext({
+          ...get(),
+          chainMetadataOverrides: filtered,
+        });
         set({
           chainMetadataOverrides: filtered,
           multiProvider,
           warpCore,
           tokensBySymbolChainMap,
           routerAddressesByChainMap,
+          blockedAddressesByChainMap,
         });
       },
       warpCoreConfigOverrides: [],
       setWarpCoreConfigOverrides: async (overrides: WarpCoreConfig[] | undefined = []) => {
         logger.debug('Setting warp core config overrides in store');
-        const { multiProvider, warpCore, routerAddressesByChainMap, tokensBySymbolChainMap } =
-          await initWarpContext({
-            ...get(),
-            warpCoreConfigOverrides: overrides,
-          });
+        const {
+          multiProvider,
+          warpCore,
+          routerAddressesByChainMap,
+          blockedAddressesByChainMap,
+          tokensBySymbolChainMap,
+        } = await initWarpContext({
+          ...get(),
+          warpCoreConfigOverrides: overrides,
+        });
         set({
           warpCoreConfigOverrides: overrides,
           multiProvider,
           warpCore,
           tokensBySymbolChainMap,
           routerAddressesByChainMap,
+          blockedAddressesByChainMap,
         });
       },
       multiProvider: new MultiProtocolProvider({}),
@@ -180,6 +199,7 @@ export const useStore = create<AppState>()(
       },
       tokensBySymbolChainMap: {},
       routerAddressesByChainMap: {},
+      blockedAddressesByChainMap: {},
     }),
 
     // Store config
@@ -247,6 +267,7 @@ async function initWarpContext({
 
     const tokensBySymbolChainMap = assembleTokensBySymbolChainMap(warpCore.tokens, multiProvider);
     const routerAddressesByChainMap = getRouterAddressesByChain(coreConfig.tokens);
+    const blockedAddressesByChainMap = getBlockedAddressesByChain(coreConfig.tokens);
     return {
       registry: currentRegistry,
       chainMetadata,
@@ -254,6 +275,7 @@ async function initWarpContext({
       warpCore,
       tokensBySymbolChainMap,
       routerAddressesByChainMap,
+      blockedAddressesByChainMap,
     };
   } catch (error) {
     toast.error('Error initializing warp context. Please check connection status and configs.');
@@ -265,6 +287,7 @@ async function initWarpContext({
       warpCore: new WarpCore(new MultiProtocolProvider({}), []),
       tokensBySymbolChainMap: {},
       routerAddressesByChainMap: {},
+      blockedAddressesByChainMap: {},
     };
   }
 }
@@ -279,4 +302,57 @@ function getRouterAddressesByChain(
     if (token.addressOrDenom) acc[token.chainName].add(token.addressOrDenom);
     return acc;
   }, {});
+}
+
+// Returns a map of chain -> (address -> reason) for all addresses that should be blocked as recipients
+// Includes: warp route addresses, collateral token addresses, and well-known blocked addresses
+export function getBlockedAddressesByChain(
+  tokens: WarpCoreConfig['tokens'],
+): Record<ChainName, Map<string, string>> {
+  const result: Record<ChainName, Map<string, string>> = {};
+
+  // Collect all unique chain names first
+  const allChainNames = new Set<ChainName>(tokens.map((t) => t.chainName));
+
+  // Helper to add address to the map (case-insensitive for EVM compatibility)
+  const addBlockedAddress = (chain: ChainName, address: string, reason: string) => {
+    result[chain] ||= new Map<string, string>();
+    const normalizedAddress = address.toLowerCase();
+    // Don't overwrite existing entries (first reason wins)
+    if (!result[chain].has(normalizedAddress)) {
+      result[chain].set(normalizedAddress, reason);
+    }
+  };
+
+  // Add warp route addresses and collateral addresses from tokens
+  for (const token of tokens) {
+    const chain = token.chainName;
+
+    // Block warp route contract addresses (on the chain where it's deployed)
+    if (token.addressOrDenom) {
+      addBlockedAddress(
+        chain,
+        token.addressOrDenom,
+        'This is a Warp Route contract address, not a wallet address',
+      );
+    }
+
+    // Block collateral token addresses (e.g., USDC contract) on their own chain
+    if (token.collateralAddressOrDenom) {
+      addBlockedAddress(
+        chain,
+        token.collateralAddressOrDenom,
+        `This is the ${token.symbol} token contract address, not a wallet address`,
+      );
+    }
+  }
+
+  // Add well-known blocked addresses to all chains
+  for (const chain of allChainNames) {
+    for (const [address, reason] of Object.entries(BLOCKED_RECIPIENT_ADDRESSES)) {
+      addBlockedAddress(chain, address, reason);
+    }
+  }
+
+  return result;
 }

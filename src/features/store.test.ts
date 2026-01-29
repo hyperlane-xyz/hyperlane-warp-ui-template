@@ -98,9 +98,7 @@ describe('getBlockedAddressesByChain', () => {
       'This is a Warp Route contract address, not a wallet address',
     );
     // Should only have warp route + well-known addresses, not any collateral
-    expect(result['ethereum']?.size).toBe(
-      1 + Object.keys(BLOCKED_RECIPIENT_ADDRESSES).length,
-    );
+    expect(result['ethereum']?.size).toBe(1 + Object.keys(BLOCKED_RECIPIENT_ADDRESSES).length);
   });
 
   test('should not overwrite existing entries (first reason wins)', () => {

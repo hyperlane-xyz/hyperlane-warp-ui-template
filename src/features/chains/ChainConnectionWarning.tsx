@@ -1,10 +1,8 @@
 import { ChainMetadata, isRpcHealthy } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
 import { FormWarningBanner } from '../../components/banner/FormWarningBanner';
 import { logger } from '../../utils/logger';
-import { ChainSelectListModal } from './ChainSelectModal';
 import { useMultiProvider } from './hooks';
 import { getChainDisplayName } from './utils';
 
@@ -41,24 +39,11 @@ export function ChainConnectionWarning({
     true,
   );
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const onClickEdit = () => {
-    if (!unhealthyChain) return;
-    setIsModalOpen(true);
-  };
-
   return (
     <>
-      <FormWarningBanner isVisible={!!unhealthyChain} cta="Edit" onClick={onClickEdit}>
+      <FormWarningBanner isVisible={!!unhealthyChain}>
         {`Connection to ${displayName} is unstable. Consider adding a more reliable RPC URL.`}
       </FormWarningBanner>
-      <ChainSelectListModal
-        isOpen={isModalOpen}
-        close={() => setIsModalOpen(false)}
-        onSelect={() => {}}
-        showChainDetails={unhealthyChain?.name}
-      />
     </>
   );
 }

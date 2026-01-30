@@ -2,7 +2,6 @@
 
 **Be extremely concise. Sacrifice grammar for concision. Terse responses preferred. No fluff.**
 
-
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
@@ -13,7 +12,6 @@ Hyperlane Warp UI Template is a Next.js web application for cross-chain token tr
 
 - Make the plan extremely concise. Sacrifice grammar for the sake of concision.
 - At the end of each plan, give me a list of unresolved questions to answer, if any.
-
 
 ## Development Commands
 

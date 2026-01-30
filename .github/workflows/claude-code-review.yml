@@ -49,7 +49,7 @@ jobs:
             }
 
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ steps.pr-sha.outputs.head_sha }}
           fetch-depth: 0
@@ -71,7 +71,7 @@ jobs:
           track_progress: true
           use_sticky_comment: true
           claude_args: |
-            --model claude-sonnet-4-5
+            --model claude-opus-4-5
             --max-turns 30
 
   security-review:
@@ -110,7 +110,7 @@ jobs:
             }
 
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ steps.pr-sha.outputs.head_sha }}
           fetch-depth: 2
@@ -123,7 +123,7 @@ jobs:
           upload-results: true
           exclude-directories: 'node_modules,dist,.next,coverage,cache'
           claudecode-timeout: '15'
-          claude-model: claude-sonnet-4-5
+          claude-model: claude-opus-4-5
           custom-security-scan-instructions: '.github/prompts/security-scan.md'
 
   interactive:
@@ -148,7 +148,7 @@ jobs:
       id-token: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 

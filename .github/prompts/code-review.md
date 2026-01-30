@@ -25,8 +25,8 @@ Review this pull request. Focus on:
 
 ## Performance
 
-- Gas efficiency (for Solidity changes)
-- Unnecessary allocations or computations
+- Unnecessary re-renders or computations
+- Bundle size impact of new dependencies
 
 ## Frontend-Specific
 

@@ -2,6 +2,7 @@ import {
   chainAddresses,
   chainMetadata,
   GithubRegistry,
+  HttpClientRegistry,
   IRegistry,
   PartialRegistry,
 } from '@hyperlane-xyz/registry';
@@ -122,7 +123,7 @@ export const useStore = create<AppState>()(
         });
       },
       multiProvider: new MultiProtocolProvider({}),
-      registry: new GithubRegistry({
+      registry: config.registryUrl?.startsWith("http://") ? new HttpClientRegistry(config.registryUrl) : new GithubRegistry({
         uri: config.registryUrl,
         branch: config.registryBranch,
         proxyUrl: config.registryProxyUrl,

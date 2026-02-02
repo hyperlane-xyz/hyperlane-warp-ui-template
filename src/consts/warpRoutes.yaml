@@ -17,6 +17,9 @@ tokens:
       - token: ethereum|base|0x73Ef899fDa87213e26501707ab585028BFB297c8
       - token: ethereum|base|0x23c51024b19303F1315DbFFA055666aE9B7A0B2c
       - token: ethereum|soneium|0x867D428B8FbE196EA4e997e7980623E75ED219a7
+      - token: ethereum|hyperevm|0xc7d07C8acFC66852BAad9Afb49E8A3AA7F6D3575
+      - token: ethereum|linea|0xb9Fc2748D7f4d81cfc2ca78a52f52b4ADf1C4895
+      - token: ethereum|mantra|0xb9Fc2748D7f4d81cfc2ca78a52f52b4ADf1C4895
 
   # Arbitrum USDT
   - chainName: arbitrum
@@ -36,6 +39,9 @@ tokens:
       - token: ethereum|base|0x73Ef899fDa87213e26501707ab585028BFB297c8
       - token: ethereum|base|0x23c51024b19303F1315DbFFA055666aE9B7A0B2c
       - token: ethereum|soneium|0x867D428B8FbE196EA4e997e7980623E75ED219a7
+      - token: ethereum|hyperevm|0xc7d07C8acFC66852BAad9Afb49E8A3AA7F6D3575
+      - token: ethereum|linea|0xb9Fc2748D7f4d81cfc2ca78a52f52b4ADf1C4895
+      - token: ethereum|mantra|0xb9Fc2748D7f4d81cfc2ca78a52f52b4ADf1C4895
 
   # Base USDC
   - chainName: base
@@ -55,6 +61,9 @@ tokens:
       - token: ethereum|arbitrum|0x94C62e7958738B65737a0Db8A5077def3AED84AA
       - token: ethereum|arbitrum|0x6BEC839292A36372882Cb850E93FB5aC2A9BA4Af
       - token: ethereum|soneium|0x867D428B8FbE196EA4e997e7980623E75ED219a7
+      - token: ethereum|hyperevm|0xc7d07C8acFC66852BAad9Afb49E8A3AA7F6D3575
+      - token: ethereum|linea|0xb9Fc2748D7f4d81cfc2ca78a52f52b4ADf1C4895
+      - token: ethereum|mantra|0xb9Fc2748D7f4d81cfc2ca78a52f52b4ADf1C4895
 
   # Base USDT
   - chainName: base
@@ -74,6 +83,9 @@ tokens:
       - token: ethereum|arbitrum|0x94C62e7958738B65737a0Db8A5077def3AED84AA
       - token: ethereum|arbitrum|0x6BEC839292A36372882Cb850E93FB5aC2A9BA4Af
       - token: ethereum|soneium|0x867D428B8FbE196EA4e997e7980623E75ED219a7
+      - token: ethereum|hyperevm|0xc7d07C8acFC66852BAad9Afb49E8A3AA7F6D3575
+      - token: ethereum|linea|0xb9Fc2748D7f4d81cfc2ca78a52f52b4ADf1C4895
+      - token: ethereum|mantra|0xb9Fc2748D7f4d81cfc2ca78a52f52b4ADf1C4895
 
   # Soneium Startale USD (USDSC)
   - chainName: soneium

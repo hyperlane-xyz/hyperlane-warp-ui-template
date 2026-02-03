@@ -34,7 +34,7 @@ pnpm clean            # Remove build artifacts (dist, cache, .next)
 - **State**: Zustand with persist middleware (`src/features/store.ts`)
 - **Queries**: TanStack Query
 - **Wallets**: Each blockchain uses distinct, composable wallet providers (EVM/RainbowKit, Solana, Cosmos, Starknet, Radix)
-- **Core Libraries**: `@hyperlane-xyz/sdk`, `@hyperlane-xyz/registry`, `@hyperlane-xyz/widgets`
+- **Core Libraries**: `@hyperlane-xyz/sdk`, `@hyperlane-xyz/registry`, `@hyperlane-xyz/widgets`, `@hyperlane-xyz/utils`
 
 ### Key Directories
 

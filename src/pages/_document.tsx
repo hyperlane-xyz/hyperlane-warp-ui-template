@@ -38,9 +38,9 @@ export default function Document() {
         <meta property="og:description" content={APP_DESCRIPTION} />
       </Head>
       <body
-          className={`${MAIN_FONT.variable} font-sans text-black`}
-          style={{ backgroundColor: BACKGROUND_COLOR }}
-        >
+        className={`${MAIN_FONT.variable} font-sans text-black`}
+        style={{ backgroundColor: BACKGROUND_COLOR }}
+      >
         <Main />
         <NextScript />
       </body>

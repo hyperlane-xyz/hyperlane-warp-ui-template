@@ -1,8 +1,8 @@
-# CLAUDE.md
+# AGENTS.md
 
 **Be extremely concise. Sacrifice grammar for concision. Terse responses preferred. No fluff.**
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to AI coding assistants when working with code in this repository.
 
 ## Project Overview
 
@@ -108,7 +108,11 @@ We handle ONLY the most important cases. Don't add functionality unless it's sma
 | In main unreleased | Preferred | Minimize friction for other developers |
 | Released | Required | Prevent breaking downstream integrations |
 
-## Tips for Claude Code Sessions
+## Code Review
+
+For code review guidelines, see `.github/prompts/code-review.md`.
+
+## Tips for AI Coding Sessions
 
 1. **Run tests incrementally** - `pnpm vitest <file>` for specific test files
 2. **Check existing patterns** - Search codebase for similar implementations
@@ -131,7 +135,7 @@ We handle ONLY the most important cases. Don't add functionality unless it's sma
 - Check `git log` or blame before assuming why code exists
 - Verify imports exist in `package.json` before using them
 
-## When Claude Gets It Wrong
+## When the AI Gets It Wrong
 
 If output seems wrong, check:
 

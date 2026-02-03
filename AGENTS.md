@@ -108,6 +108,10 @@ We handle ONLY the most important cases. Don't add functionality unless it's sma
 | In main unreleased | Preferred | Minimize friction for other developers |
 | Released | Required | Prevent breaking downstream integrations |
 
+## Code Review
+
+For code review guidelines, see `.github/prompts/code-review.md`.
+
 ## Tips for AI Coding Sessions
 
 1. **Run tests incrementally** - `pnpm vitest <file>` for specific test files

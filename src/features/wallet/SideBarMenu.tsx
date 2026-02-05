@@ -1,4 +1,4 @@
-import { fromWei } from '@hyperlane-xyz/utils';
+import { fromWei, normalizeAddress } from '@hyperlane-xyz/utils';
 import { AccountList, RefreshIcon, SpinnerIcon, useAccounts } from '@hyperlane-xyz/widgets';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -46,26 +46,30 @@ export function SideBarMenu({
     }),
   );
 
-  // Get all connected wallet addresses
+  // Get all connected wallet addresses (normalized for consistent matching)
   const { accounts } = useAccounts(multiProvider, config.addressBlacklist);
   const walletAddresses = useMemo(() => {
     const addresses: string[] = [];
-    Object.values(accounts).forEach((accountInfo) => {
+    for (const accountInfo of Object.values(accounts)) {
       if (accountInfo.addresses) {
-        accountInfo.addresses.forEach((addrInfo) => {
-          if (addrInfo.address) addresses.push(addrInfo.address);
-        });
+        for (const addrInfo of accountInfo.addresses) {
+          if (addrInfo.address) {
+            addresses.push(normalizeAddress(addrInfo.address));
+          }
+        }
       }
-    });
+    }
     return addresses;
   }, [accounts]);
 
-  // Get all warp route addresses from configured routes
+  // Get all warp route addresses from configured routes (normalized)
   const warpRouteAddresses = useMemo(() => {
     const addresses: string[] = [];
-    Object.values(routerAddressesByChainMap).forEach((addressSet) => {
-      addressSet.forEach((addr) => addresses.push(addr));
-    });
+    for (const addressSet of Object.values(routerAddressesByChainMap)) {
+      for (const addr of addressSet) {
+        addresses.push(normalizeAddress(addr));
+      }
+    }
     return addresses;
   }, [routerAddressesByChainMap]);
 
@@ -220,8 +224,16 @@ export function SideBarMenu({
               {mergedTransfers.length === 0 && !isLoading && (
                 <div className="py-6 text-center text-sm text-gray-500">No transfers yet</div>
               )}
-              {mergedTransfers.map((item, i) => (
-                <TransferSummary key={i} item={item} onClick={() => handleItemClick(item)} />
+              {mergedTransfers.map((item) => (
+                <TransferSummary
+                  key={
+                    item.type === 'local'
+                      ? `local-${item.data.timestamp}`
+                      : `api-${item.data.msgId}`
+                  }
+                  item={item}
+                  onClick={() => handleItemClick(item)}
+                />
               ))}
             </div>
             {isLoading && (

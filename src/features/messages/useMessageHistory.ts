@@ -1,6 +1,7 @@
 import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk';
 import { parseWarpRouteMessage } from '@hyperlane-xyz/utils';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { logger } from '../../utils/logger';
 import { executeGraphQLQuery } from './graphqlClient';
 import { buildMessageHistoryQuery } from './queries/build';
 import {
@@ -32,6 +33,9 @@ export function useMessageHistory(
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [hasMore, setHasMore] = useState(true);
+
+  // Synchronous lock to prevent race conditions in loadMore
+  const loadingRef = useRef(false);
 
   // Use refs to avoid dependency issues in callbacks
   const multiProviderRef = useRef(multiProvider);
@@ -119,7 +123,7 @@ export function useMessageHistory(
     };
   }, [walletKey, warpRouteKey, fetchMessages]);
 
-  // Auto-refresh every 60s
+  // Auto-refresh every 60s - updates existing messages and prepends new ones
   useEffect(() => {
     if (!walletKey || !warpRouteKey) return;
 
@@ -128,14 +132,18 @@ export function useMessageHistory(
         fetchMessages(0)
           .then((latest) => {
             setMessages((prev) => {
+              // Create a map of latest messages for O(1) lookup
+              const latestMap = new Map(latest.map((m) => [m.msgId, m]));
+              // Update existing messages (e.g., Pending → Delivered)
+              const updated = prev.map((m) => latestMap.get(m.msgId) ?? m);
+              // Find truly new messages
               const existingIds = new Set(prev.map((m) => m.msgId));
               const newOnes = latest.filter((m) => !existingIds.has(m.msgId));
-              if (newOnes.length === 0) return prev;
-              return [...newOnes, ...prev];
+              return newOnes.length ? [...newOnes, ...updated] : updated;
             });
           })
-          .catch(() => {
-            // Silently ignore refresh errors
+          .catch((err) => {
+            logger.warn('Auto-refresh failed', err);
           });
       }
     }, REFRESH_INTERVAL_MS);
@@ -144,20 +152,28 @@ export function useMessageHistory(
   }, [walletKey, warpRouteKey, fetchMessages]);
 
   const loadMore = useCallback(async () => {
-    if (isLoading || !hasMore || !walletKey || !warpRouteKey) return;
+    // Use ref for synchronous check to prevent race conditions
+    if (loadingRef.current || !hasMore || !walletKey || !warpRouteKey) return;
 
+    loadingRef.current = true;
     setIsLoading(true);
     try {
       const currentLength = messages.length;
       const result = await fetchMessages(currentLength);
-      setMessages((prev) => [...prev, ...result]);
+      // Dedup to handle offset drift from new messages
+      setMessages((prev) => {
+        const existingIds = new Set(prev.map((m) => m.msgId));
+        const newMsgs = result.filter((m) => !existingIds.has(m.msgId));
+        return [...prev, ...newMsgs];
+      });
       setHasMore(result.length === PAGE_LIMIT);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to load more messages'));
     } finally {
+      loadingRef.current = false;
       setIsLoading(false);
     }
-  }, [isLoading, hasMore, walletKey, warpRouteKey, fetchMessages, messages.length]);
+  }, [hasMore, walletKey, warpRouteKey, fetchMessages, messages.length]);
 
   const refresh = useCallback(async () => {
     if (!walletKey || !warpRouteKey || isLoading) return;
@@ -197,8 +213,25 @@ function parseMessageEntry(
           amount: parsed.amount.toString(),
         };
       } catch {
-        // Not a warp transfer message or parsing failed
+        // Not a warp transfer message or parsing failed - this is expected for non-warp messages
       }
+    }
+
+    // Build destination only if all required fields are present (indexer race protection)
+    let destination: MessageStub['destination'];
+    if (
+      entry.is_delivered &&
+      entry.delivery_occurred_at &&
+      entry.destination_tx_hash &&
+      entry.destination_tx_sender &&
+      entry.destination_tx_recipient
+    ) {
+      destination = {
+        timestamp: parseTimestamp(entry.delivery_occurred_at),
+        hash: postgresByteaToTxHash(entry.destination_tx_hash, destinationMetadata),
+        from: postgresByteaToAddress(entry.destination_tx_sender, destinationMetadata),
+        to: postgresByteaToAddress(entry.destination_tx_recipient, destinationMetadata),
+      };
     }
 
     return {
@@ -218,17 +251,11 @@ function parseMessageEntry(
         from: postgresByteaToAddress(entry.origin_tx_sender, originMetadata),
         to: postgresByteaToAddress(entry.origin_tx_recipient, originMetadata),
       },
-      destination: entry.is_delivered
-        ? {
-            timestamp: parseTimestamp(entry.delivery_occurred_at!),
-            hash: postgresByteaToTxHash(entry.destination_tx_hash!, destinationMetadata),
-            from: postgresByteaToAddress(entry.destination_tx_sender!, destinationMetadata),
-            to: postgresByteaToAddress(entry.destination_tx_recipient!, destinationMetadata),
-          }
-        : undefined,
+      destination,
       warpTransfer,
     };
-  } catch {
+  } catch (err) {
+    logger.error('Failed to parse message entry', entry.id, err);
     return null;
   }
 }

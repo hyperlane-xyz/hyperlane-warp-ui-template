@@ -13,7 +13,7 @@ import {
   WarpCore,
   WarpCoreConfig,
 } from '@hyperlane-xyz/sdk';
-import { objFilter } from '@hyperlane-xyz/utils';
+import { normalizeAddress, objFilter } from '@hyperlane-xyz/utils';
 import { toast } from 'react-toastify';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
@@ -28,13 +28,20 @@ import { assembleWarpCoreConfig } from './warpCore/warpCoreConfig';
 // Increment this when persist state has breaking changes
 const PERSIST_STATE_VERSION = 2;
 
+// Info stored per router address
+export interface RouterAddressInfo {
+  // Max decimals across all tokens in the warp route (for amount formatting)
+  wireDecimals: number;
+}
+
 interface WarpContext {
   registry: IRegistry;
   chainMetadata: ChainMap<ChainMetadata>;
   multiProvider: MultiProtocolProvider;
   warpCore: WarpCore;
   tokensBySymbolChainMap: Record<string, TokenChainMap>;
-  routerAddressesByChainMap: Record<ChainName, Set<string>>;
+  // Map of chain -> address -> router info
+  routerAddressesByChainMap: Record<ChainName, Record<string, RouterAddressInfo>>;
 }
 
 // Keeping everything here for now as state is simple
@@ -75,9 +82,9 @@ export interface AppState {
   originChainName: ChainName;
   setOriginChainName: (originChainName: ChainName) => void;
   tokensBySymbolChainMap: Record<string, TokenChainMap>;
-  // this map is currently used by the transfer token form validation to prevent
-  // users from sending funds to a warp route address in a given destination chain
-  routerAddressesByChainMap: Record<ChainName, Set<string>>;
+  // Map of chain -> address -> router info
+  // Used to: 1) prevent sending to warp route addresses, 2) format amounts with correct decimals
+  routerAddressesByChainMap: Record<ChainName, Record<string, RouterAddressInfo>>;
 }
 
 export const useStore = create<AppState>()(
@@ -234,7 +241,10 @@ async function initWarpContext({
   }
 
   try {
-    const coreConfig = await assembleWarpCoreConfig(warpCoreConfigOverrides, currentRegistry);
+    const { config: coreConfig, wireDecimalsMap } = await assembleWarpCoreConfig(
+      warpCoreConfigOverrides,
+      currentRegistry,
+    );
 
     const chainsInTokens = Array.from(new Set(coreConfig.tokens.map((t) => t.chainName)));
     const { chainMetadata, chainMetadataWithOverrides } = await assembleChainMetadata(
@@ -246,7 +256,7 @@ async function initWarpContext({
     const warpCore = WarpCore.FromConfig(multiProvider, coreConfig);
 
     const tokensBySymbolChainMap = assembleTokensBySymbolChainMap(warpCore.tokens, multiProvider);
-    const routerAddressesByChainMap = getRouterAddressesByChain(coreConfig.tokens);
+    const routerAddressesByChainMap = getRouterAddressesByChain(warpCore.tokens, wireDecimalsMap);
     return {
       registry: currentRegistry,
       chainMetadata,
@@ -269,14 +279,20 @@ async function initWarpContext({
   }
 }
 
-// this weird type (WarpCoreConfig['tokens']) is to match what is being used in dedupeTokens at assembleWarpCoreConfig.ts
-// returns a set with all the warp route addressOrDenom known to the registry
+// Build map of chain -> address -> router info using precomputed wireDecimals
 function getRouterAddressesByChain(
-  tokens: WarpCoreConfig['tokens'],
-): Record<ChainName, Set<string>> {
-  return tokens.reduce<Record<ChainName, Set<string>>>((acc, token) => {
-    acc[token.chainName] ||= new Set<string>();
-    if (token.addressOrDenom) acc[token.chainName].add(token.addressOrDenom);
+  tokens: WarpCore['tokens'],
+  wireDecimalsMap: Record<ChainName, Record<string, number>>,
+): Record<ChainName, Record<string, RouterAddressInfo>> {
+  return tokens.reduce<Record<ChainName, Record<string, RouterAddressInfo>>>((acc, token) => {
+    if (!token.addressOrDenom) return acc;
+    const normalizedAddr = normalizeAddress(token.addressOrDenom);
+
+    // Use precomputed wireDecimals from config, fallback to token decimals
+    const wireDecimals = wireDecimalsMap[token.chainName]?.[normalizedAddr] ?? token.decimals;
+
+    acc[token.chainName] ||= {};
+    acc[token.chainName][normalizedAddr] = { wireDecimals };
     return acc;
   }, {});
 }

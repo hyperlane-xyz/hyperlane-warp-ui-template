@@ -1,3 +1,4 @@
+import type { ChainName } from '@hyperlane-xyz/sdk';
 import { fromWei, normalizeAddress } from '@hyperlane-xyz/utils';
 import { AccountList, RefreshIcon, SpinnerIcon, useAccounts } from '@hyperlane-xyz/widgets';
 import Image from 'next/image';
@@ -16,7 +17,7 @@ import {
   useMergedTransferHistory,
 } from '../messages/useMergedTransferHistory';
 import { useMessageHistory } from '../messages/useMessageHistory';
-import { useStore } from '../store';
+import { RouterAddressInfo, useStore } from '../store';
 import { tryFindToken, useWarpCore } from '../tokens/hooks';
 import { TransfersDetailsModal } from '../transfer/TransfersDetailsModal';
 import { TransferContext, TransferStatus } from '../transfer/types';
@@ -67,8 +68,8 @@ export function SideBarMenu({
   // Get all warp route addresses from configured routes (normalized)
   const warpRouteAddresses = useMemo(() => {
     const addresses: string[] = [];
-    for (const addressSet of Object.values(routerAddressesByChainMap)) {
-      for (const addr of addressSet) {
+    for (const addressMap of Object.values(routerAddressesByChainMap)) {
+      for (const addr of Object.keys(addressMap)) {
         addresses.push(normalizeAddress(addr));
       }
     }
@@ -76,7 +77,7 @@ export function SideBarMenu({
   }, [routerAddressesByChainMap]);
 
   // Fetch message history from API
-  const { messages, isLoading, hasMore, loadMore, refresh } = useMessageHistory(
+  const { messages, isLoading, isRefreshing, hasMore, loadMore, refresh } = useMessageHistory(
     walletAddresses,
     warpRouteAddresses,
     multiProvider,
@@ -120,7 +121,9 @@ export function SideBarMenu({
     if (item.type === 'local') {
       setSelectedTransfer(item.data);
     } else {
-      setSelectedTransfer(messageToTransferContext(item.data, multiProvider, warpCore));
+      setSelectedTransfer(
+        messageToTransferContext(item.data, multiProvider, warpCore, routerAddressesByChainMap),
+      );
     }
     setIsModalOpen(true);
   };
@@ -174,31 +177,40 @@ export function SideBarMenu({
             </button>
           </div>
           <div className="flex grow flex-col px-3.5 pb-4">
-            <div className="flex w-full grow flex-col divide-y">
-              {mergedTransfers.length === 0 && !isLoading && (
-                <div className="py-6 text-center text-sm text-gray-500">No transfers yet</div>
-              )}
-              {mergedTransfers.map((item) => (
-                <TransferSummary
-                  key={
-                    item.type === 'local'
-                      ? `local-${item.data.timestamp}`
-                      : `api-${item.data.msgId}`
-                  }
-                  item={item}
-                  onClick={() => handleItemClick(item)}
-                  multiProvider={multiProvider}
-                  warpCore={warpCore}
-                />
-              ))}
-            </div>
-            {isLoading && (
-              <div className="flex justify-center py-4">
+            {isRefreshing ? (
+              <div className="flex justify-center py-6">
                 <SpinnerIcon className="h-5 w-5" />
               </div>
-            )}
-            {!hasMore && mergedTransfers.length > 0 && (
-              <div className="py-3 text-center text-xs text-gray-400">No more transfers</div>
+            ) : (
+              <>
+                <div className="flex w-full grow flex-col divide-y">
+                  {mergedTransfers.length === 0 && !isLoading && (
+                    <div className="py-6 text-center text-sm text-gray-500">No transfers yet</div>
+                  )}
+                  {mergedTransfers.map((item) => (
+                    <TransferSummary
+                      key={
+                        item.type === 'local'
+                          ? `local-${item.data.timestamp}`
+                          : `api-${item.data.msgId}`
+                      }
+                      item={item}
+                      onClick={() => handleItemClick(item)}
+                      multiProvider={multiProvider}
+                      warpCore={warpCore}
+                      routerAddressesByChainMap={routerAddressesByChainMap}
+                    />
+                  ))}
+                </div>
+                {isLoading && (
+                  <div className="flex justify-center py-4">
+                    <SpinnerIcon className="h-5 w-5" />
+                  </div>
+                )}
+                {!hasMore && mergedTransfers.length > 0 && (
+                  <div className="py-3 text-center text-xs text-gray-400">No more transfers</div>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -222,11 +234,13 @@ function TransferSummary({
   onClick,
   multiProvider,
   warpCore,
+  routerAddressesByChainMap,
 }: {
   item: TransferItem;
   onClick: () => void;
   multiProvider: ReturnType<typeof useMultiProvider>;
   warpCore: ReturnType<typeof useWarpCore>;
+  routerAddressesByChainMap: Record<ChainName, Record<string, RouterAddressInfo>>;
 }) {
   if (item.type === 'local') {
     return (
@@ -250,10 +264,13 @@ function TransferSummary({
   // Find token by sender (origin warp route address - the token contract)
   const token = tryFindToken(warpCore, originChain, msg.sender);
 
-  // Format amount if available
+  // Format amount using wire decimals from precomputed map
   let formattedAmount = '';
-  if (msg.warpTransfer?.amount && token?.decimals) {
-    formattedAmount = fromWei(msg.warpTransfer.amount, token.decimals);
+  if (msg.warpTransfer?.amount && token) {
+    const normalizedSender = normalizeAddress(msg.sender);
+    const routerInfo = routerAddressesByChainMap[originChain]?.[normalizedSender];
+    const wireDecimals = routerInfo?.wireDecimals ?? token.decimals;
+    formattedAmount = fromWei(msg.warpTransfer.amount, wireDecimals);
   }
 
   return (

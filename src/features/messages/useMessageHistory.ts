@@ -1,6 +1,7 @@
 import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk';
-import { parseWarpRouteMessage } from '@hyperlane-xyz/utils';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { bytesToProtocolAddress, fromHexString, parseWarpRouteMessage } from '@hyperlane-xyz/utils';
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
+import { useCallback, useMemo, useState } from 'react';
 import { logger } from '../../utils/logger';
 import { executeGraphQLQuery } from './graphqlClient';
 import { buildMessageHistoryQuery } from './queries/build';
@@ -18,6 +19,7 @@ const REFRESH_INTERVAL_MS = 60_000;
 interface UseMessageHistoryResult {
   messages: MessageStub[];
   isLoading: boolean;
+  isRefreshing: boolean;
   error: Error | null;
   hasMore: boolean;
   loadMore: () => void;
@@ -29,170 +31,85 @@ export function useMessageHistory(
   warpRouteAddresses: string[],
   multiProvider: MultiProtocolProvider,
 ): UseMessageHistoryResult {
-  const [messages, setMessages] = useState<MessageStub[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-  const [hasMore, setHasMore] = useState(true);
-
-  // Synchronous lock to prevent race conditions in loadMore
-  const loadingRef = useRef(false);
-
-  // Use refs to avoid dependency issues in callbacks
-  const multiProviderRef = useRef(multiProvider);
-  multiProviderRef.current = multiProvider;
-
-  // Memoize address lists to avoid unnecessary re-fetches
-  // Use JSON.stringify for stable keys (comma-join could break if addresses contain commas)
-  const sortedWallets = useMemo(() => [...walletAddresses].sort(), [walletAddresses]);
-  const sortedWarpRoutes = useMemo(() => [...warpRouteAddresses].sort(), [warpRouteAddresses]);
-  const walletKey = useMemo(() => JSON.stringify(sortedWallets), [sortedWallets]);
-  const warpRouteKey = useMemo(() => JSON.stringify(sortedWarpRoutes), [sortedWarpRoutes]);
-
-  const walletsRef = useRef<string[]>([]);
-  const warpRoutesRef = useRef<string[]>([]);
-
-  // Update refs when addresses change
-  useEffect(() => {
-    walletsRef.current = sortedWallets;
-  }, [sortedWallets]);
-
-  useEffect(() => {
-    warpRoutesRef.current = sortedWarpRoutes;
-  }, [sortedWarpRoutes]);
-
-  const fetchMessages = useCallback(
-    async (offset: number): Promise<MessageStub[]> => {
-      const wallets = walletsRef.current;
-      const warpRoutes = warpRoutesRef.current;
-      if (!wallets.length || !warpRoutes.length) return [];
-
-      const queryData = buildMessageHistoryQuery(wallets, warpRoutes, PAGE_LIMIT, offset);
-      if (!queryData) return [];
-
-      const result = await executeGraphQLQuery<{ message_view: MessageStubEntry[] }>(
-        queryData.query,
-        queryData.variables,
-      );
-
-      if (result.error) {
-        throw result.error;
-      }
-
-      const entries = result.data?.message_view;
-      if (!entries?.length) return [];
-
-      return entries
-        .map((entry) => parseMessageEntry(entry, multiProviderRef.current))
-        .filter((m): m is MessageStub => m !== null);
-    },
-    [], // No dependencies - uses refs
+  const walletKey = useMemo(() => JSON.stringify([...walletAddresses].sort()), [walletAddresses]);
+  const warpRouteKey = useMemo(
+    () => JSON.stringify([...warpRouteAddresses].sort()),
+    [warpRouteAddresses],
   );
 
-  // Initial load when addresses change
-  useEffect(() => {
-    if (!sortedWallets.length || !sortedWarpRoutes.length) {
-      setMessages([]);
-      setHasMore(true);
-      return;
-    }
+  const queryClient = useQueryClient();
+  const queryKey = useMemo(
+    () => ['messageHistory', walletKey, warpRouteKey] as const,
+    [walletKey, warpRouteKey],
+  );
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-    let cancelled = false;
+  const { data, isLoading, isFetchingNextPage, error, hasNextPage, fetchNextPage } =
+    useInfiniteQuery({
+      queryKey,
+      queryFn: async ({ pageParam }) => {
+        const wallets = JSON.parse(walletKey) as string[];
+        const warpRoutes = JSON.parse(warpRouteKey) as string[];
 
-    const load = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const result = await fetchMessages(0);
-        if (!cancelled) {
-          setMessages(result);
-          setHasMore(result.length === PAGE_LIMIT);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof Error ? err : new Error('Failed to fetch messages'));
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoading(false);
+        if (!wallets.length || !warpRoutes.length) return [];
+
+        const queryData = buildMessageHistoryQuery(wallets, warpRoutes, PAGE_LIMIT, pageParam);
+        if (!queryData) return [];
+
+        const result = await executeGraphQLQuery<{ message_view: MessageStubEntry[] }>(
+          queryData.query,
+          queryData.variables,
+        );
+
+        if (result.error) throw result.error;
+
+        const entries = result.data?.message_view;
+        if (!entries?.length) return [];
+
+        return entries
+          .map((entry) => parseMessageEntry(entry, multiProvider))
+          .filter((m): m is MessageStub => m !== null);
+      },
+      initialPageParam: 0,
+      getNextPageParam: (lastPage, allPages) => {
+        if (lastPage.length < PAGE_LIMIT) return undefined;
+        return allPages.flat().length;
+      },
+      enabled: walletAddresses.length > 0 && warpRouteAddresses.length > 0,
+      refetchInterval: REFRESH_INTERVAL_MS,
+      refetchOnWindowFocus: false,
+    });
+
+  const messages = useMemo(() => {
+    if (!data?.pages) return [];
+    const seen = new Set<string>();
+    const result: MessageStub[] = [];
+    for (const page of data.pages) {
+      for (const msg of page) {
+        if (!seen.has(msg.msgId)) {
+          seen.add(msg.msgId);
+          result.push(msg);
         }
       }
-    };
-
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [walletKey, warpRouteKey, fetchMessages]);
-
-  // Auto-refresh every 60s - updates existing messages and prepends new ones
-  useEffect(() => {
-    if (!sortedWallets.length || !sortedWarpRoutes.length) return;
-
-    const interval = setInterval(() => {
-      if (document.visibilityState === 'visible') {
-        fetchMessages(0)
-          .then((latest) => {
-            setMessages((prev) => {
-              // Create a map of latest messages for O(1) lookup
-              const latestMap = new Map(latest.map((m) => [m.msgId, m]));
-              // Update existing messages (e.g., Pending → Delivered)
-              const updated = prev.map((m) => latestMap.get(m.msgId) ?? m);
-              // Find truly new messages
-              const existingIds = new Set(prev.map((m) => m.msgId));
-              const newOnes = latest.filter((m) => !existingIds.has(m.msgId));
-              return newOnes.length ? [...newOnes, ...updated] : updated;
-            });
-          })
-          .catch((err) => {
-            logger.warn('Auto-refresh failed', err);
-          });
-      }
-    }, REFRESH_INTERVAL_MS);
-
-    return () => clearInterval(interval);
-  }, [walletKey, warpRouteKey, fetchMessages]);
-
-  const loadMore = useCallback(async () => {
-    // Use ref for synchronous check to prevent race conditions
-    if (loadingRef.current || !hasMore || !sortedWallets.length || !sortedWarpRoutes.length) return;
-
-    loadingRef.current = true;
-    setIsLoading(true);
-    try {
-      const currentLength = messages.length;
-      const result = await fetchMessages(currentLength);
-      // Dedup to handle offset drift from new messages
-      setMessages((prev) => {
-        const existingIds = new Set(prev.map((m) => m.msgId));
-        const newMsgs = result.filter((m) => !existingIds.has(m.msgId));
-        return [...prev, ...newMsgs];
-      });
-      setHasMore(result.length === PAGE_LIMIT);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to load more messages'));
-    } finally {
-      loadingRef.current = false;
-      setIsLoading(false);
     }
-  }, [hasMore, walletKey, warpRouteKey, fetchMessages, messages.length]);
+    return result;
+  }, [data]);
 
   const refresh = useCallback(async () => {
-    if (!sortedWallets.length || !sortedWarpRoutes.length || isLoading) return;
+    setIsRefreshing(true);
+    await queryClient.resetQueries({ queryKey });
+    setIsRefreshing(false);
+  }, [queryClient, queryKey]);
 
-    setIsLoading(true);
-    setError(null);
-    try {
-      const result = await fetchMessages(0);
-      setMessages(result);
-      setHasMore(result.length === PAGE_LIMIT);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to refresh messages'));
-    } finally {
-      setIsLoading(false);
-    }
-  }, [walletKey, warpRouteKey, isLoading, fetchMessages]);
-
-  return { messages, isLoading, error, hasMore, loadMore, refresh };
+  return {
+    messages,
+    isLoading: isLoading || isFetchingNextPage,
+    isRefreshing,
+    error: error as Error | null,
+    hasMore: !!hasNextPage,
+    loadMore: () => fetchNextPage(),
+    refresh,
+  };
 }
 
 function parseMessageEntry(
@@ -203,22 +120,27 @@ function parseMessageEntry(
     const originMetadata = multiProvider.tryGetChainMetadata(entry.origin_domain_id);
     const destinationMetadata = multiProvider.tryGetChainMetadata(entry.destination_domain_id);
 
-    // Parse warp transfer info from message body
     let warpTransfer: WarpTransferInfo | undefined;
-    if (entry.message_body) {
+    if (entry.message_body && destinationMetadata) {
       try {
         const body = postgresByteaToString(entry.message_body);
         const parsed = parseWarpRouteMessage(body);
+        // Convert recipient from bytes32 to proper address format for destination chain
+        const recipientBytes = fromHexString(parsed.recipient);
+        const recipientAddress = bytesToProtocolAddress(
+          recipientBytes,
+          destinationMetadata.protocol,
+          destinationMetadata.bech32Prefix,
+        );
         warpTransfer = {
-          recipient: parsed.recipient,
+          recipient: recipientAddress,
           amount: parsed.amount.toString(),
         };
       } catch {
-        // Not a warp transfer message or parsing failed - this is expected for non-warp messages
+        // Not a warp transfer message or parsing failed
       }
     }
 
-    // Build destination only if all required fields are present (indexer race protection)
     let destination: MessageStub['destination'];
     if (
       entry.is_delivered &&

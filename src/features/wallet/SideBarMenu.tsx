@@ -9,16 +9,18 @@ import ArrowRightIcon from '../../images/icons/arrow-right.svg';
 import CollapseIcon from '../../images/icons/collapse-icon.svg';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
-import { MessageStatus, MessageStub } from '../messages/types';
+import { MessageStatus } from '../messages/types';
+import {
+  messageToTransferContext,
+  TransferItem,
+  useMergedTransferHistory,
+} from '../messages/useMergedTransferHistory';
 import { useMessageHistory } from '../messages/useMessageHistory';
 import { useStore } from '../store';
 import { tryFindToken, useWarpCore } from '../tokens/hooks';
 import { TransfersDetailsModal } from '../transfer/TransfersDetailsModal';
 import { TransferContext, TransferStatus } from '../transfer/types';
 import { getIconByTransferStatus, STATUSES_WITH_ICON } from '../transfer/utils';
-
-// Union type for transfer items from both local state and API
-type TransferItem = { type: 'local'; data: TransferContext } | { type: 'api'; data: MessageStub };
 
 export function SideBarMenu({
   onClickConnectWallet,
@@ -81,24 +83,7 @@ export function SideBarMenu({
   );
 
   // Merge local transfers with API messages
-  const mergedTransfers = useMemo((): TransferItem[] => {
-    const apiMsgIds = new Set(messages.map((m) => m.msgId));
-
-    // Local transfers that aren't in API yet
-    const localItems: TransferItem[] = transfers
-      .filter((t) => !t.msgId || !apiMsgIds.has(t.msgId))
-      .map((t) => ({ type: 'local' as const, data: t }));
-
-    // API messages
-    const apiItems: TransferItem[] = messages.map((m) => ({ type: 'api' as const, data: m }));
-
-    // Sort by timestamp descending
-    return [...localItems, ...apiItems].sort((a, b) => {
-      const tsA = a.type === 'local' ? a.data.timestamp : a.data.origin.timestamp;
-      const tsB = b.type === 'local' ? b.data.timestamp : b.data.origin.timestamp;
-      return tsB - tsA;
-    });
-  }, [transfers, messages]);
+  const mergedTransfers = useMergedTransferHistory(transfers, messages);
 
   // Open modal for new transfer
   useEffect(() => {
@@ -135,38 +120,7 @@ export function SideBarMenu({
     if (item.type === 'local') {
       setSelectedTransfer(item.data);
     } else {
-      // Convert API message to TransferContext for modal
-      const msg = item.data;
-      const originChain = multiProvider.tryGetChainName(msg.originDomainId) || '';
-      const destChain = multiProvider.tryGetChainName(msg.destinationDomainId) || '';
-
-      // Use actual sender (tx sender) and recipient (from warp message body)
-      const actualSender = msg.origin.from;
-      const actualRecipient = msg.warpTransfer?.recipient || msg.recipient;
-
-      // Format amount if available
-      let formattedAmount = '';
-      const token = tryFindToken(warpCore, originChain, msg.sender);
-      if (msg.warpTransfer?.amount && token?.decimals) {
-        formattedAmount = fromWei(msg.warpTransfer.amount, token.decimals);
-      }
-
-      setSelectedTransfer({
-        status:
-          msg.status === MessageStatus.Delivered
-            ? TransferStatus.Delivered
-            : TransferStatus.ConfirmedTransfer,
-        origin: originChain,
-        destination: destChain,
-        amount: formattedAmount,
-        sender: actualSender,
-        recipient: actualRecipient,
-        originTxHash: msg.origin.hash,
-        msgId: msg.msgId,
-        timestamp: msg.origin.timestamp,
-        // Store the warp route address to look up the token
-        originTokenAddressOrDenom: msg.sender,
-      });
+      setSelectedTransfer(messageToTransferContext(item.data, multiProvider, warpCore));
     }
     setIsModalOpen(true);
   };

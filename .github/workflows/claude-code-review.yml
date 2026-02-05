@@ -64,20 +64,11 @@ jobs:
           ref: ${{ steps.pr-sha.outputs.head_sha }}
           fetch-depth: 0
 
-      - name: Read code review prompt
-        id: prompt
-        run: |
-          {
-            echo 'content<<EOF'
-            cat .github/prompts/code-review.md
-            echo 'EOF'
-          } >> $GITHUB_OUTPUT
-
       - name: Run Claude Code Review
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          prompt: ${{ steps.prompt.outputs.content }}
+          prompt: Run /claude-review
           track_progress: true
           use_sticky_comment: true
           claude_args: |

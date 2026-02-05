@@ -188,7 +188,7 @@ export const useStore = create<AppState>()(
       partialize: (state) => ({
         // fields to persist
         chainMetadataOverrides: state.chainMetadataOverrides,
-        transfers: state.transfers,
+        transfers: state.transfers, // Keep for transfers through non-indexed routes
       }),
       version: PERSIST_STATE_VERSION,
       onRehydrateStorage: () => {

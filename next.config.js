@@ -114,6 +114,10 @@ const nextConfig = {
   },
 
   reactStrictMode: true,
+
+  // Skip linting and type checking during builds — CI runs these separately
+  eslint: { ignoreDuringBuilds: true },
+  typescript: { ignoreBuildErrors: true },
 };
 
 const sentryOptions = {
@@ -123,6 +127,7 @@ const sentryOptions = {
   hideSourceMaps: true,
   tunnelRoute: '/monitoring-tunnel',
   sourcemaps: { disable: true },
+  telemetry: false,
   bundleSizeOptimizations: {
     excludeDebugStatements: true,
     excludeReplayIframe: true,

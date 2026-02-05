@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import {
   DiscordIcon,
   DocsIcon,
@@ -6,9 +7,14 @@ import {
   TwitterIcon,
 } from '@hyperlane-xyz/widgets';
 import Image from 'next/image';
+=======
+import { DiscordIcon, GithubIcon, HyperlaneLogo, TwitterIcon } from '@hyperlane-xyz/widgets';
+import clsx from 'clsx';
+>>>>>>> origin/main
 import Link from 'next/link';
 import { ReactNode } from 'react';
 import { links } from '../../consts/links';
+import { INTERCOM_APP_ID } from '../../features/analytics/intercom';
 import { Color } from '../../styles/Color';
 
 type FooterLink = {
@@ -19,6 +25,7 @@ type FooterLink = {
 };
 
 const footerLinks: FooterLink[] = [
+<<<<<<< HEAD
   { title: 'Homepage', url: links.home, external: true },
   { title: 'Support', url: links.support, external: true },
 
@@ -38,14 +45,38 @@ const footerLinks: FooterLink[] = [
     external: true,
     icon: <TwitterIcon color={Color.black} />,
   },
+=======
+  { title: 'Docs', url: links.docs, external: true },
+  { title: 'Support', url: links.support, external: true },
+  { title: 'Twitter', url: links.twitter, external: true, icon: <TwitterIcon color="#fff" /> },
+  { title: 'Homepage', url: links.home, external: true },
+  { title: 'Privacy', url: links.privacyPolicy, external: true },
+  { title: 'Discord', url: links.discord, external: true, icon: <DiscordIcon color="#fff" /> },
+  { title: 'Explorer', url: links.explorer, external: true },
+  { title: 'Terms', url: links.tos, external: true },
+  { title: 'Github', url: links.github, external: true, icon: <GithubIcon color="#fff" /> },
+>>>>>>> origin/main
 ];
 
 export function Footer() {
+  const chatboxExist = !!INTERCOM_APP_ID;
   return (
+<<<<<<< HEAD
     <footer className="relative">
       <div className="relative px-8 pb-5 pt-2 sm:pt-0">
         <div className="flex flex-col items-end justify-between gap-8 sm:flex-row sm:gap-10">
           <FooterLogo />
+=======
+    <footer className="relative text-white">
+      <div className="relative bg-gradient-to-b from-transparent to-black/40 px-8 pb-5 pt-2 sm:pt-0">
+        <div
+          className={clsx(
+            'flex flex-col items-center gap-8 sm:flex-row sm:gap-10',
+            chatboxExist ? 'justify-start' : 'justify-between',
+          )}
+        >
+          {!chatboxExist && <FooterLogo />}
+>>>>>>> origin/main
           <FooterNav />
         </div>
       </div>

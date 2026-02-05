@@ -2,10 +2,15 @@ import { Token, WarpCore, WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
 import { HexString, toWei } from '@hyperlane-xyz/utils';
 import { getAccountAddressAndPubKey, useAccounts, useDebounce } from '@hyperlane-xyz/widgets';
 import { useQuery } from '@tanstack/react-query';
+import { defaultMultiCollateralRoutes } from '../../consts/defaultMultiCollateralRoutes';
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { useWarpCore } from '../tokens/hooks';
+<<<<<<< HEAD
 import { getLowestFeeTransferToken } from './fees';
+=======
+import { getTransferToken } from './fees';
+>>>>>>> origin/main
 import { TransferFormValues } from './types';
 
 const FEE_QUOTE_REFRESH_INTERVAL = 30_000; // 30s
@@ -74,17 +79,29 @@ async function fetchFeeQuotes(
   let transferToken = originToken;
   const amountWei = toWei(amount, transferToken.decimals);
 
+<<<<<<< HEAD
   // when true attempt to get route with lowest fee
   if (searchForLowestFee) {
     const destinationToken = originToken.getConnectionForChain(destination)?.token;
     if (destinationToken) {
       transferToken = await getLowestFeeTransferToken(
+=======
+  // when true attempt to get route with lowest fee (or use default if configured)
+  if (searchForLowestFee) {
+    const destinationToken = originToken.getConnectionForChain(destination)?.token;
+    if (destinationToken) {
+      transferToken = await getTransferToken(
+>>>>>>> origin/main
         warpCore,
         originToken,
         destinationToken,
         amountWei,
         recipient,
         sender,
+<<<<<<< HEAD
+=======
+        defaultMultiCollateralRoutes,
+>>>>>>> origin/main
       );
     }
   }

@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk';
 import { parseWarpRouteMessage } from '@hyperlane-xyz/utils';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { executeGraphQLQuery } from './graphqlClient';
 import { buildMessageHistoryQuery } from './queries/build';
 import {
@@ -9,7 +10,6 @@ import {
 } from './queries/encoding';
 import { MessageStubEntry } from './queries/fragments';
 import { MessageStatus, MessageStub, WarpTransferInfo } from './types';
-import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk';
 
 const PAGE_LIMIT = 15;
 const REFRESH_INTERVAL_MS = 60_000;
@@ -39,7 +39,10 @@ export function useMessageHistory(
 
   // Memoize address lists to avoid unnecessary re-fetches
   const walletKey = useMemo(() => [...walletAddresses].sort().join(','), [walletAddresses]);
-  const warpRouteKey = useMemo(() => [...warpRouteAddresses].sort().join(','), [warpRouteAddresses]);
+  const warpRouteKey = useMemo(
+    () => [...warpRouteAddresses].sort().join(','),
+    [warpRouteAddresses],
+  );
   const walletsRef = useRef<string[]>([]);
   const warpRoutesRef = useRef<string[]>([]);
 

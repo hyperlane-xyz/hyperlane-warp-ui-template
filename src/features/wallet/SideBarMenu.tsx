@@ -1,5 +1,5 @@
 import { fromWei } from '@hyperlane-xyz/utils';
-import { useAccounts, AccountList, SpinnerIcon, RefreshIcon } from '@hyperlane-xyz/widgets';
+import { AccountList, RefreshIcon, SpinnerIcon, useAccounts } from '@hyperlane-xyz/widgets';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
@@ -9,8 +9,8 @@ import ArrowRightIcon from '../../images/icons/arrow-right.svg';
 import CollapseIcon from '../../images/icons/collapse-icon.svg';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
-import { useMessageHistory } from '../messages/useMessageHistory';
 import { MessageStatus, MessageStub } from '../messages/types';
+import { useMessageHistory } from '../messages/useMessageHistory';
 import { useStore } from '../store';
 import { tryFindToken, useWarpCore } from '../tokens/hooks';
 import { TransfersDetailsModal } from '../transfer/TransfersDetailsModal';
@@ -18,9 +18,7 @@ import { TransferContext, TransferStatus } from '../transfer/types';
 import { getIconByTransferStatus, STATUSES_WITH_ICON } from '../transfer/utils';
 
 // Union type for transfer items from both local state and API
-type TransferItem =
-  | { type: 'local'; data: TransferContext }
-  | { type: 'api'; data: MessageStub };
+type TransferItem = { type: 'local'; data: TransferContext } | { type: 'api'; data: MessageStub };
 
 export function SideBarMenu({
   onClickConnectWallet,
@@ -288,7 +286,9 @@ function TransferSummary({ item, onClick }: { item: TransferItem; onClick: () =>
               {formattedAmount && (
                 <span className="text-sm font-normal text-gray-800">{formattedAmount}</span>
               )}
-              <span className={`text-sm font-normal text-gray-800 ${formattedAmount ? 'ml-1' : ''}`}>
+              <span
+                className={`text-sm font-normal text-gray-800 ${formattedAmount ? 'ml-1' : ''}`}
+              >
                 {token?.symbol || 'Unknown token'}
               </span>
             </div>

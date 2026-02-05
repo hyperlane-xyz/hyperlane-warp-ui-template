@@ -78,6 +78,9 @@ export interface AppState {
   // this map is currently used by the transfer token form validation to prevent
   // users from sending funds to a warp route address in a given destination chain
   routerAddressesByChainMap: Record<ChainName, Set<string>>;
+  // instead of moving the TipCard component inside the formik and an useEffect can be set to watch for it
+  isTipCardActionTriggered: boolean;
+  setIsTipCardActionTriggered: (isTipCardActionTriggered: boolean) => void;
 }
 
 export const useStore = create<AppState>()(
@@ -180,6 +183,10 @@ export const useStore = create<AppState>()(
       },
       tokensBySymbolChainMap: {},
       routerAddressesByChainMap: {},
+      isTipCardActionTriggered: false,
+      setIsTipCardActionTriggered: (isTipCardActionTriggered: boolean) => {
+        set(() => ({ isTipCardActionTriggered }));
+      },
     }),
 
     // Store config

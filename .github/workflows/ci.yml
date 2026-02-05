@@ -1,25 +1,22 @@
 name: ci
 
 on:
-  # Triggers the workflow on push or pull request events but only for the main branch
   push:
     branches: [main, nautilus, nexus, injective, trump, ousdt]
   pull_request:
     branches: [main, nautilus, nexus, injective, trump, ousdt]
   merge_group:
-
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 jobs:
-  install:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version-file: 'package.json'
+          node-version-file: '.nvmrc'
 
       - name: Get pnpm store directory
         id: pnpm-store
@@ -34,7 +31,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
-      - name: pnpm-install
+      - name: Install dependencies
         run: |
           pnpm install --frozen-lockfile
           CHANGES=$(git status -s)
@@ -44,15 +41,19 @@ jobs:
             exit 1
           fi
 
-  build:
+      - name: build
+        run: pnpm run build
+        env:
+          NEXT_PUBLIC_WALLET_CONNECT_ID: ${{ secrets.NEXT_PUBLIC_WALLET_CONNECT_ID }}
+
+  typecheck:
     runs-on: ubuntu-latest
-    needs: [install]
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version-file: 'package.json'
+          node-version-file: '.nvmrc'
 
       - name: Get pnpm store directory
         id: pnpm-store
@@ -70,20 +71,17 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: build
-        run: pnpm run build
-        env:
-          NEXT_PUBLIC_WALLET_CONNECT_ID: ${{ secrets.NEXT_PUBLIC_WALLET_CONNECT_ID }}
+      - name: typecheck
+        run: pnpm run typecheck
 
   prettier:
     runs-on: ubuntu-latest
-    needs: [install]
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version-file: 'package.json'
+          node-version-file: '.nvmrc'
 
       - name: Get pnpm store directory
         id: pnpm-store
@@ -112,13 +110,12 @@ jobs:
 
   lint:
     runs-on: ubuntu-latest
-    needs: [install]
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version-file: 'package.json'
+          node-version-file: '.nvmrc'
 
       - name: Get pnpm store directory
         id: pnpm-store
@@ -141,13 +138,12 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
-    needs: [build]
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version-file: 'package.json'
+          node-version-file: '.nvmrc'
 
       - name: Get pnpm store directory
         id: pnpm-store

@@ -42,22 +42,23 @@ export function useMessageHistory(
   multiProviderRef.current = multiProvider;
 
   // Memoize address lists to avoid unnecessary re-fetches
-  const walletKey = useMemo(() => [...walletAddresses].sort().join(','), [walletAddresses]);
-  const warpRouteKey = useMemo(
-    () => [...warpRouteAddresses].sort().join(','),
-    [warpRouteAddresses],
-  );
+  // Use JSON.stringify for stable keys (comma-join could break if addresses contain commas)
+  const sortedWallets = useMemo(() => [...walletAddresses].sort(), [walletAddresses]);
+  const sortedWarpRoutes = useMemo(() => [...warpRouteAddresses].sort(), [warpRouteAddresses]);
+  const walletKey = useMemo(() => JSON.stringify(sortedWallets), [sortedWallets]);
+  const warpRouteKey = useMemo(() => JSON.stringify(sortedWarpRoutes), [sortedWarpRoutes]);
+
   const walletsRef = useRef<string[]>([]);
   const warpRoutesRef = useRef<string[]>([]);
 
-  // Update refs when keys change
+  // Update refs when addresses change
   useEffect(() => {
-    walletsRef.current = walletKey ? walletKey.split(',') : [];
-  }, [walletKey]);
+    walletsRef.current = sortedWallets;
+  }, [sortedWallets]);
 
   useEffect(() => {
-    warpRoutesRef.current = warpRouteKey ? warpRouteKey.split(',') : [];
-  }, [warpRouteKey]);
+    warpRoutesRef.current = sortedWarpRoutes;
+  }, [sortedWarpRoutes]);
 
   const fetchMessages = useCallback(
     async (offset: number): Promise<MessageStub[]> => {
@@ -89,7 +90,7 @@ export function useMessageHistory(
 
   // Initial load when addresses change
   useEffect(() => {
-    if (!walletKey || !warpRouteKey) {
+    if (!sortedWallets.length || !sortedWarpRoutes.length) {
       setMessages([]);
       setHasMore(true);
       return;
@@ -125,7 +126,7 @@ export function useMessageHistory(
 
   // Auto-refresh every 60s - updates existing messages and prepends new ones
   useEffect(() => {
-    if (!walletKey || !warpRouteKey) return;
+    if (!sortedWallets.length || !sortedWarpRoutes.length) return;
 
     const interval = setInterval(() => {
       if (document.visibilityState === 'visible') {
@@ -153,7 +154,7 @@ export function useMessageHistory(
 
   const loadMore = useCallback(async () => {
     // Use ref for synchronous check to prevent race conditions
-    if (loadingRef.current || !hasMore || !walletKey || !warpRouteKey) return;
+    if (loadingRef.current || !hasMore || !sortedWallets.length || !sortedWarpRoutes.length) return;
 
     loadingRef.current = true;
     setIsLoading(true);
@@ -176,7 +177,7 @@ export function useMessageHistory(
   }, [hasMore, walletKey, warpRouteKey, fetchMessages, messages.length]);
 
   const refresh = useCallback(async () => {
-    if (!walletKey || !warpRouteKey || isLoading) return;
+    if (!sortedWallets.length || !sortedWarpRoutes.length || isLoading) return;
 
     setIsLoading(true);
     setError(null);

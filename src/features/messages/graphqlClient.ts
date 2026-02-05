@@ -1,11 +1,11 @@
-const EXPLORER_API_URL = 'https://explorer4.hasura.app/v1/graphql';
+import { config } from '../../consts/config';
 
 export async function executeGraphQLQuery<T = unknown>(
   query: string,
   variables: Record<string, unknown>,
 ): Promise<{ data?: T; error?: Error }> {
   try {
-    const response = await fetch(EXPLORER_API_URL, {
+    const response = await fetch(config.explorerApiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

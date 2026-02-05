@@ -233,6 +233,8 @@ export function SideBarMenu({
                   }
                   item={item}
                   onClick={() => handleItemClick(item)}
+                  multiProvider={multiProvider}
+                  warpCore={warpCore}
                 />
               ))}
             </div>
@@ -261,12 +263,26 @@ export function SideBarMenu({
   );
 }
 
-function TransferSummary({ item, onClick }: { item: TransferItem; onClick: () => void }) {
-  const multiProvider = useMultiProvider();
-  const warpCore = useWarpCore();
-
+function TransferSummary({
+  item,
+  onClick,
+  multiProvider,
+  warpCore,
+}: {
+  item: TransferItem;
+  onClick: () => void;
+  multiProvider: ReturnType<typeof useMultiProvider>;
+  warpCore: ReturnType<typeof useWarpCore>;
+}) {
   if (item.type === 'local') {
-    return <LocalTransferSummary transfer={item.data} onClick={onClick} />;
+    return (
+      <LocalTransferSummary
+        transfer={item.data}
+        onClick={onClick}
+        multiProvider={multiProvider}
+        warpCore={warpCore}
+      />
+    );
   }
 
   const msg = item.data;
@@ -330,13 +346,14 @@ function TransferSummary({ item, onClick }: { item: TransferItem; onClick: () =>
 function LocalTransferSummary({
   transfer,
   onClick,
+  multiProvider,
+  warpCore,
 }: {
   transfer: TransferContext;
   onClick: () => void;
+  multiProvider: ReturnType<typeof useMultiProvider>;
+  warpCore: ReturnType<typeof useWarpCore>;
 }) {
-  const multiProvider = useMultiProvider();
-  const warpCore = useWarpCore();
-
   const { amount, origin, destination, status, timestamp, originTokenAddressOrDenom } = transfer;
   const token = tryFindToken(warpCore, origin, originTokenAddressOrDenom);
 

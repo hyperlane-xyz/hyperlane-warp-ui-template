@@ -32,6 +32,5 @@ export interface MessageStub {
   destinationDomainId: number;
   origin: MessageTxStub;
   destination?: MessageTxStub;
-  isPiMsg?: boolean;
   warpTransfer?: WarpTransferInfo; // Parsed from message body
 }

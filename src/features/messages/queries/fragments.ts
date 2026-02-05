@@ -47,5 +47,3 @@ export interface MessageStubEntry {
   destination_tx_recipient: string | null; // bytea
   message_body: string | null; // bytea - contains recipient and amount for warp transfers
 }
-
-export type MessagesStubQueryResult = Record<string, MessageStubEntry[]>;

@@ -122,6 +122,7 @@ const sentryOptions = {
   authToken: process.env.SENTRY_AUTH_TOKEN,
   hideSourceMaps: true,
   tunnelRoute: '/monitoring-tunnel',
+  sourcemaps: { disable: true },
   bundleSizeOptimizations: {
     excludeDebugStatements: true,
     excludeReplayIframe: true,

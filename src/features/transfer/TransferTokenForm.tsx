@@ -1,5 +1,6 @@
 import { Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
 import {
+  KnownProtocolType,
   ProtocolType,
   convertToScaledAmount,
   eqAddress,
@@ -31,6 +32,7 @@ import { SolidButton } from '../../components/buttons/SolidButton';
 import { TextField } from '../../components/input/TextField';
 import { WARP_QUERY_PARAMS } from '../../consts/args';
 import { config } from '../../consts/config';
+import { defaultMultiCollateralRoutes } from '../../consts/defaultMultiCollateralRoutes';
 import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
 import { getQueryParams, updateQueryParam } from '../../utils/queryParams';
@@ -62,7 +64,7 @@ import { useTokenPrice } from '../tokens/useTokenPrice';
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { FeeSectionButton } from './FeeSectionButton';
 import { RecipientConfirmationModal } from './RecipientConfirmationModal';
-import { getInterchainQuote, getLowestFeeTransferToken, getTotalFee } from './fees';
+import { getInterchainQuote, getTotalFee, getTransferToken } from './fees';
 import { useFetchMaxAmount } from './maxAmount';
 import { TransferFormValues } from './types';
 import { useRecipientBalanceWatcher } from './useBalanceWatcher';
@@ -362,7 +364,11 @@ function RecipientSection({ isReview }: { isReview: boolean }) {
 }
 
 function TokenBalance({ label, balance }: { label: string; balance?: TokenAmount | null }) {
-  const value = balance?.getDecimalFormattedAmount().toFixed(5) || '0';
+  const value =
+    balance?.getDecimalFormattedAmount().toLocaleString('en-US', {
+      maximumFractionDigits: 6,
+      useGrouping: false,
+    }) || '0';
   return <div className="text-right text-xs text-gray-600">{`${label}: ${value}`}</div>;
 }
 
@@ -462,6 +468,10 @@ function ButtonSection({
 
   const isSanctioned = useIsAccountSanctioned();
 
+  const { setTransferLoading } = useStore((s) => ({
+    setTransferLoading: s.setTransferLoading,
+  }));
+
   const onDoneTransactions = () => {
     setIsReview(false);
     setTransferLoading(false);
@@ -469,10 +479,6 @@ function ButtonSection({
     // resetForm();
   };
   const { triggerTransactions } = useTokenTransfer(onDoneTransactions);
-
-  const { setTransferLoading } = useStore((s) => ({
-    setTransferLoading: s.setTransferLoading,
-  }));
 
   const triggerTransactionsHandler = async () => {
     if (isSanctioned) {
@@ -571,8 +577,9 @@ function MaxButton({ balance, disabled }: { balance?: TokenAmount; disabled?: bo
     const maxAmount = await fetchMaxAmount({ balance, origin, destination, accounts });
     if (isNullish(maxAmount)) return;
     const decimalsAmount = maxAmount.getDecimalFormattedAmount();
-    const roundedAmount = new BigNumber(decimalsAmount).toFixed(4, BigNumber.ROUND_FLOOR);
-    setFieldValue('amount', roundedAmount);
+    const roundedAmount = new BigNumber(decimalsAmount).toFixed(8, BigNumber.ROUND_FLOOR);
+    const trimmedAmount = roundedAmount.replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
+    setFieldValue('amount', trimmedAmount);
   };
 
   return (
@@ -835,7 +842,7 @@ const emptyAccountErrMsg = /AccountNotFound/i;
 async function validateForm(
   warpCore: WarpCore,
   values: TransferFormValues,
-  accounts: Record<ProtocolType, AccountInfo>,
+  accounts: Record<KnownProtocolType, AccountInfo>,
   routerAddressesByChainMap: Record<ChainName, Set<string>>,
 ): Promise<[Record<string, string> | null, Token | null]> {
   // returns a tuple, where first value is validation result
@@ -860,13 +867,14 @@ async function validateForm(
       accounts,
     );
     const amountWei = toWei(amount, token.decimals);
-    const transferToken = await getLowestFeeTransferToken(
+    const transferToken = await getTransferToken(
       warpCore,
       token,
       destinationToken,
       amountWei,
       recipient,
       sender,
+      defaultMultiCollateralRoutes,
     );
     const multiCollateralLimit = isMultiCollateralLimitExceeded(token, destination, amountWei);
 
@@ -897,7 +905,9 @@ async function validateForm(
     let errorMsg = errorToString(error, 40);
     const fullError = `${errorMsg} ${error.message}`;
     if (insufficientFundsErrMsg.test(fullError) || emptyAccountErrMsg.test(fullError)) {
-      errorMsg = 'Insufficient funds for gas fees';
+      const chainMetadata = warpCore.multiProvider.getChainMetadata(values.origin);
+      const nativeToken = Token.FromChainMetadataNativeToken(chainMetadata);
+      errorMsg = `Insufficient ${nativeToken.symbol} for gas fees`;
     }
     return [{ form: errorMsg }, null];
   }

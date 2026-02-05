@@ -25,6 +25,7 @@ export default [
       '**/next.config.js',
       '**/tailwind.config.js',
       '**/sentry.*',
+      'eslint.config.mjs',
     ],
   },
   ...compat.extends(

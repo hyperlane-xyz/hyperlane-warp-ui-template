@@ -112,6 +112,31 @@ We handle ONLY the most important cases. Don't add functionality unless it's sma
 
 For code review guidelines, see `.github/prompts/code-review.md`.
 
+### PR Review Comment Format
+
+**Use inline comments** for specific feedback on code changes. Use the GitHub API to post reviews:
+
+```bash
+gh api repos/{owner}/{repo}/pulls/{pr}/reviews --input - << 'EOF'
+{
+  "event": "COMMENT",
+  "body": "Overall summary (optional)",
+  "comments": [
+    {"path": "file.ts", "line": 42, "body": "Specific issue here"},
+    {"path": "file.ts", "start_line": 10, "line": 15, "body": "Multi-line comment"}
+  ]
+}
+EOF
+```
+
+| Feedback Type        | Where                                   |
+| -------------------- | --------------------------------------- |
+| Specific code issue  | Inline comment on that line             |
+| Repeated pattern     | Inline on first, mention others in body |
+| Architecture concern | Summary body                            |
+
+**Limitation**: Can only comment on lines in the diff (changed lines). Comments on unchanged code fail.
+
 ## Tips for AI Coding Sessions
 
 1. **Run tests incrementally** - `pnpm vitest <file>` for specific test files

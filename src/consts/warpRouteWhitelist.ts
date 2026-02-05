@@ -383,6 +383,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'USDC/eni',
   'USDT/eni',
   'WBTC/eni',
+  'ROAM/eni',
 
   // First Party Warp Routes
   'USDC/eclipsemainnet',

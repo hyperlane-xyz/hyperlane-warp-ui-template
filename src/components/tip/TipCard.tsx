@@ -39,7 +39,7 @@ export function TipCard() {
         <span>More</span>
       </a>
 
-      <div className="pointer-events-none absolute -bottom-6 left-1/2 -translate-x-1/2 opacity-40">
+      <div className="pointer-events-none absolute -bottom-0 left-1/2 -translate-x-1/2 opacity-40">
         <HyperlaneTransparentLogo />
       </div>
     </div>

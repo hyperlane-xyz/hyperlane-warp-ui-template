@@ -45,7 +45,7 @@ export function FeeSectionButton({
     <>
       <div className="mb-2 mt-2 h-2">
         <button
-          className={`flex w-fit items-center font-secondary text-xxs text-gray-700 [&_path]:fill-gray-700 ${isClickable ? 'hover:text-gray-900 [&_path]:hover:fill-gray-900' : 'cursor-default pointer-events-none'}`}
+          className={`flex w-fit items-center font-secondary text-xxs text-gray-700 [&_path]:fill-gray-700 ${isClickable ? 'hover:text-gray-900 [&_path]:hover:fill-gray-900' : 'pointer-events-none cursor-default'}`}
           type="button"
           onClick={isClickable ? open : undefined}
           disabled={!isClickable}

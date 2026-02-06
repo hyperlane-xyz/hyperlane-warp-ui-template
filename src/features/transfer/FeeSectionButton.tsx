@@ -7,10 +7,7 @@ function useLoadingDots(isLoading: boolean, intervalMs = 1000) {
   const [dotCount, setDotCount] = useState(1);
 
   useEffect(() => {
-    if (!isLoading) {
-      setDotCount(1);
-      return;
-    }
+    if (!isLoading) return;
 
     const interval = setInterval(() => {
       setDotCount((prev) => (prev % 3) + 1);

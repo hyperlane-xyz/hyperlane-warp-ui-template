@@ -18,6 +18,11 @@ import '../styles/globals.css';
 import '../vendor/inpage-metamask';
 import '../vendor/polyfill';
 
+import { AleoWalletProvider } from '@provablehq/aleo-wallet-adaptor-react';
+import { ShieldWalletAdapter } from '@provablehq/aleo-wallet-adaptor-shield';
+
+const wallets = [new ShieldWalletAdapter()];
+
 const reactQueryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -46,10 +51,12 @@ export default function App({ Component, pageProps }: AppProps) {
                 <CosmosWalletContext>
                   <StarknetWalletContext>
                     <RadixWalletContext>
-                      <AppLayout>
-                        <Component {...pageProps} />
-                        <Analytics />
-                      </AppLayout>
+                      <AleoWalletProvider wallets={wallets}>
+                        <AppLayout>
+                          <Component {...pageProps} />
+                          <Analytics />
+                        </AppLayout>
+                      </AleoWalletProvider>
                     </RadixWalletContext>
                   </StarknetWalletContext>
                 </CosmosWalletContext>

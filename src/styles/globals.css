@@ -3,6 +3,30 @@
 @tailwind utilities;
 
 /*
+Custom Fonts (optional - falls back to system fonts if not available)
+Place font files in public/fonts/ directory
+=====================================================================
+*/
+
+/* PP Valve - Secondary font */
+@font-face {
+  font-family: 'PP Valve';
+  src: url('/fonts/PPValve-PlainVariable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* PP Fraktion Mono - Primary font */
+@font-face {
+  font-family: 'PP Fraktion Mono';
+  src: url('/fonts/PPFraktionMono-Variable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/*
 Normalization
 =============
 */
@@ -43,7 +67,7 @@ Text and shadows
   text-shadow: 0 0 #010101;
 }
 
-/* 
+/*
 Scrollbar Overrides
 ===================
 */
@@ -51,6 +75,24 @@ Scrollbar Overrides
 body {
   scroll-behavior: smooth;
   scrollbar-width: thin;
+  scrollbar-color: #e8caff transparent;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #e8caff;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #d4a3ff;
 }
 
 /* phones */
@@ -72,7 +114,7 @@ input::-webkit-inner-spin-button {
   margin: 0;
 }
 
-/* clears the ‘X’ from Internet Explorer */
+/* clears the 'X' from Internet Explorer */
 input[type='search']::-ms-clear {
   display: none;
   width: 0;
@@ -84,7 +126,7 @@ input[type='search']::-ms-reveal {
   height: 0;
 }
 
-/* clears the ‘X’ from Chrome */
+/* clears the 'X' from Chrome */
 input[type='search']::-webkit-search-decoration,
 input[type='search']::-webkit-search-cancel-button,
 input[type='search']::-webkit-search-results-button,

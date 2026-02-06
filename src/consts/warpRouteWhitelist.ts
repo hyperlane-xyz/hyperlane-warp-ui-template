@@ -386,5 +386,6 @@ export const warpRouteWhitelist: Array<string> | null = [
   'ROAM/eni',
 
   // First Party Warp Routes
+  'ETH/viction',
   'USDC/eclipsemainnet',
 ];

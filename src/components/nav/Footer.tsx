@@ -24,7 +24,7 @@ function FooterLogo() {
 
 function FooterNav() {
   return (
-    <nav className="hidden text-md font-medium sm:block">
+    <nav className="hidden text-md font-medium lg:block">
       <ul className="flex gap-9">
         {navLinks.map((item) => (
           <li key={item.title}>

@@ -5,4 +5,4 @@ export const APP_URL = 'hyperlane-warp-template.vercel.app';
 export const BRAND_COLOR = Color.primary['500'];
 export const BACKGROUND_COLOR = '#F8F8FF';
 export const BACKGROUND_IMAGE =
-  'url(/backgrounds/main.svg), radial-gradient(81.94% 51.02% at 50% 100%, #E8CAFF 0%, #F8F8FF 100%)';
+  'url(/backgrounds/main.svg), radial-gradient(120% 80% at 50% 100%, #E8CAFF 0%, #F2E4FF 60%, #F8F2FF 100%)';

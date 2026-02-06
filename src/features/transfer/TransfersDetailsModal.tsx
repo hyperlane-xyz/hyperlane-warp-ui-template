@@ -140,7 +140,7 @@ export function TransfersDetailsModal({
 
       <div className="mt-4 flex w-full items-center justify-center rounded-full bg-primary-200 p-3">
         <TokenIcon token={token} size={30} />
-        <div className="items ml-2 flex items-baseline">
+        <div className="items ml-2 flex items-baseline font-secondary">
           <span className="text-xl font-medium">{amount}</span>
           <span className="ml-1 text-xl font-medium">{token?.symbol}</span>
         </div>

@@ -14,26 +14,49 @@ const FRAME_SRC_HOSTS = [
   'https://*.walletconnect.com',
   'https://*.walletconnect.org',
   'https://cdn.solflare.com',
+  'https://js.refiner.io',
+  'https://intercom-sheets.com',
+  'https://intercom-reporting.com',
 ];
-const STYLE_SRC_HOSTS = [];
+const STYLE_SRC_HOSTS = ['https://js.refiner.io', 'https://storage.refiner.io'];
 const IMG_SRC_HOSTS = [
   'https://*.walletconnect.com',
   'https://*.githubusercontent.com',
   'https://cdn.jsdelivr.net/gh/hyperlane-xyz/hyperlane-registry@main/',
+  'https://js.refiner.io',
+  'https://storage.refiner.io',
+  'https://js.intercomcdn.com',
+  'https://static.intercomassets.com',
+  'https://downloads.intercomcdn.com',
+  'https://uploads.intercomusercontent.com',
+  'https://gifs.intercomcdn.com',
 ];
-const SCRIPT_SRC_HOSTS = ['https://snaps.consensys.io'];
+const SCRIPT_SRC_HOSTS = [
+  'https://snaps.consensys.io',
+  'https://js.refiner.io',
+  'https://app.intercom.io',
+  'https://widget.intercom.io',
+  'https://js.intercomcdn.com',
+];
+const MEDIA_SRC_HOSTS = [
+  'https://js.refiner.io',
+  'https://storage.refiner.io',
+  'https://js.intercomcdn.com',
+  'https://downloads.intercomcdn.com',
+];
 const cspHeader = `
   default-src 'self';
-  script-src 'self'${isDev ? " 'unsafe-eval'" : " 'wasm-unsafe-eval'"} ${SCRIPT_SRC_HOSTS.join(' ')};
+  script-src 'self' 'wasm-unsafe-eval'${isDev ? " 'unsafe-eval'" : ''} ${SCRIPT_SRC_HOSTS.join(' ')};
   style-src 'self' 'unsafe-inline' ${STYLE_SRC_HOSTS.join(' ')};
   connect-src *;
   img-src 'self' blob: data: ${IMG_SRC_HOSTS.join(' ')};
-  font-src 'self' data:;
+  font-src 'self' data: https://js.intercomcdn.com https://fonts.intercomcdn.com;
   object-src 'none';
   base-uri 'self';
   form-action 'self';
   frame-src 'self' ${FRAME_SRC_HOSTS.join(' ')};
   frame-ancestors 'none';
+  media-src 'self' ${MEDIA_SRC_HOSTS.join(' ')};
   ${!isDev ? 'block-all-mixed-content;' : ''}
   ${!isDev ? 'upgrade-insecure-requests;' : ''}
 `
@@ -106,6 +129,10 @@ const nextConfig = {
   },
 
   reactStrictMode: true,
+
+  // Skip linting and type checking during builds — CI runs these separately
+  eslint: { ignoreDuringBuilds: true },
+  typescript: { ignoreBuildErrors: true },
 };
 
 const sentryOptions = {
@@ -114,6 +141,8 @@ const sentryOptions = {
   authToken: process.env.SENTRY_AUTH_TOKEN,
   hideSourceMaps: true,
   tunnelRoute: '/monitoring-tunnel',
+  sourcemaps: { disable: true },
+  telemetry: false,
   bundleSizeOptimizations: {
     excludeDebugStatements: true,
     excludeReplayIframe: true,

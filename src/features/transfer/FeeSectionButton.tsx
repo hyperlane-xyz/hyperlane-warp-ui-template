@@ -7,7 +7,10 @@ function useLoadingDots(isLoading: boolean, intervalMs = 1000) {
   const [dotCount, setDotCount] = useState(1);
 
   useEffect(() => {
-    if (!isLoading) return;
+    if (!isLoading) {
+      setDotCount(1);
+      return;
+    }
 
     const interval = setInterval(() => {
       setDotCount((prev) => (prev % 3) + 1);
@@ -42,7 +45,7 @@ export function FeeSectionButton({
     <>
       <div className="mb-2 mt-2 h-2">
         <button
-          className={`flex w-fit items-center font-secondary text-xxs text-gray-700 hover:text-gray-900 [&_path]:fill-gray-700 [&_path]:hover:fill-gray-900 ${!isClickable ? 'cursor-default' : ''}`}
+          className={`flex w-fit items-center font-secondary text-xxs text-gray-700 [&_path]:fill-gray-700 ${isClickable ? 'hover:text-gray-900 [&_path]:hover:fill-gray-900' : 'cursor-default pointer-events-none'}`}
           type="button"
           onClick={isClickable ? open : undefined}
           disabled={!isClickable}

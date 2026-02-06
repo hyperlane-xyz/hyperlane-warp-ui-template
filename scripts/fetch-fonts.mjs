@@ -52,7 +52,7 @@ async function fetchFonts() {
       const response = await s3.send(command);
       const writeStream = createWriteStream(outputPath);
 
-      await pipeline(Readable.fromWeb(response.Body.transformToWebStream()), writeStream);
+      await pipeline(response.Body, writeStream);
 
       console.log(`Downloaded ${fontFile}`);
       results.success.push(fontFile);
@@ -71,6 +71,6 @@ async function fetchFonts() {
 }
 
 fetchFonts().catch((error) => {
-  console.warn('Font fetch script encountered an error:', error.message);
-  // Exit gracefully - don't fail the build
+  console.error('Font fetch script encountered an unexpected error:', error.message);
+  // Don't fail the build, but log as error for visibility
 });

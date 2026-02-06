@@ -109,7 +109,7 @@ function TokenButton({
     >
       <div className="flex items-center">
         {token && <TokenIcon token={token} size={20} />}
-        <span className={`ml-2 font-secondary ${!token?.symbol && 'text-slate-400'}`}>
+        <span className={`ml-2 font-secondary ${!token?.symbol ? 'text-slate-400' : ''}`}>
           {token?.symbol || (isAutomatic ? 'No routes available' : 'Select Token')}
         </span>
       </div>

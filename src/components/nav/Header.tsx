@@ -10,7 +10,7 @@ import { NavItem, navLinks } from './Nav';
 
 export function Header() {
   return (
-    <header className="flex w-full items-center justify-between bg-primary-25 px-4 py-3 shadow-[0px_4px_7px_rgba(0,0,0,0.05)] lg:justify-center lg:bg-transparent lg:px-6 lg:pb-2 lg:pt-3 lg:shadow-none">
+    <header className="relative flex w-full items-center justify-between bg-primary-25 px-4 py-3 shadow-[0px_4px_7px_rgba(0,0,0,0.05)] lg:justify-center lg:bg-transparent lg:px-6 lg:pb-2 lg:pt-3 lg:shadow-none">
       {/* Mobile/Tablet: Logo + Hamburger Menu */}
       <div className="flex items-center gap-3 lg:hidden">
         <Link href="/">
@@ -31,7 +31,7 @@ export function Header() {
       </div>
 
       {/* Desktop: Centered Logo */}
-      <Link href="/" className="hidden flex-col py-2 lg:flex">
+      <Link href="/" aria-label="Homepage" className="hidden flex-col py-2 lg:flex">
         <div className="flex items-end">
           <Image src={Logo} width={46} alt="" className="h-auto" />
           <Image src={Name} width={150} alt="" className="ml-1.5" />

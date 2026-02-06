@@ -54,6 +54,7 @@ export const NavItem = forwardRef<HTMLAnchorElement, NavItemProps>(function NavI
         className,
       )}
       target="_blank"
+      rel="noopener noreferrer"
       href={item.url}
     >
       <div className="w-5">{item.icon}</div>

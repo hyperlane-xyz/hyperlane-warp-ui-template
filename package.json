@@ -100,6 +100,7 @@
     "typescript": "5.6.3",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "3.0.5",
+    "@aws-sdk/client-s3": "^3.967.0",
     "yaml": "^2.6.0",
     "yaml-loader": "^0.8.1"
   },
@@ -118,6 +119,8 @@
   "scripts": {
     "clean": "rm -rf dist cache .next",
     "dev": "next dev",
+    "prebuild": "node scripts/fetch-fonts.mjs",
+    "fetch-fonts": "node --env-file=.env.local scripts/fetch-fonts.mjs",
     "build": "next build",
     "typecheck": "tsc",
     "lint": "next lint",

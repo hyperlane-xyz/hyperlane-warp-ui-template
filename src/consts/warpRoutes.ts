@@ -87,6 +87,125 @@ export const warpRouteConfigs: WarpCoreConfig = {
         },
       ],
     },
+
+    {
+      chainName: 'arbitrumsepolia',
+      standard: TokenStandard.EvmHypCollateral,
+      name: 'USD Coin',
+      symbol: 'USDC',
+      decimals: 6,
+      addressOrDenom: '0xcc8D60a0575E1FB0892B8D03e79d06372b0Db5db',
+      collateralAddressOrDenom: '0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d',
+      connections: [
+        {
+          token: 'ethereum|basesepolia|0xe288A3D1DAE7D894F7d829d967D5129e1b5f6468',
+        },
+        {
+          token: 'ethereum|modetestnet|0x16C20625B11E0c8187Cc1B3e4ceedc35C48D8013',
+        },
+        {
+          token: 'ethereum|optimismsepolia|0x991b90FCa036F2D94584D05a281c65352729B984',
+        },
+        {
+          token: 'ethereum|sepolia|0xC96f21e32062B3D616b09110584ef2E54DC3d632',
+        },
+      ],
+    },
+
+    {
+      chainName: 'basesepolia',
+      standard: TokenStandard.EvmHypCollateral,
+      name: 'USD Coin',
+      symbol: 'USDC',
+      decimals: 6,
+      addressOrDenom: '0xe288A3D1DAE7D894F7d829d967D5129e1b5f6468',
+      collateralAddressOrDenom: '0x036CbD53842c5426634e7929541eC2318f3dCF7e',
+      connections: [
+        {
+          token: 'ethereum|arbitrumsepolia|0xcc8D60a0575E1FB0892B8D03e79d06372b0Db5db',
+        },
+        {
+          token: 'ethereum|modetestnet|0x16C20625B11E0c8187Cc1B3e4ceedc35C48D8013',
+        },
+        {
+          token: 'ethereum|optimismsepolia|0x991b90FCa036F2D94584D05a281c65352729B984',
+        },
+        {
+          token: 'ethereum|sepolia|0xC96f21e32062B3D616b09110584ef2E54DC3d632',
+        },
+      ],
+    },
+
+    {
+      chainName: 'modetestnet',
+      standard: TokenStandard.EvmHypSynthetic,
+      name: 'USD Coin',
+      symbol: 'USDC',
+      decimals: 6,
+      addressOrDenom: '0x16C20625B11E0c8187Cc1B3e4ceedc35C48D8013',
+      connections: [
+        {
+          token: 'ethereum|arbitrumsepolia|0xcc8D60a0575E1FB0892B8D03e79d06372b0Db5db',
+        },
+        {
+          token: 'ethereum|basesepolia|0xe288A3D1DAE7D894F7d829d967D5129e1b5f6468',
+        },
+        {
+          token: 'ethereum|optimismsepolia|0x991b90FCa036F2D94584D05a281c65352729B984',
+        },
+        {
+          token: 'ethereum|sepolia|0xC96f21e32062B3D616b09110584ef2E54DC3d632',
+        },
+      ],
+    },
+
+    {
+      chainName: 'optimismsepolia',
+      standard: TokenStandard.EvmHypCollateral,
+      name: 'USD Coin',
+      symbol: 'USDC',
+      decimals: 6,
+      addressOrDenom: '0x991b90FCa036F2D94584D05a281c65352729B984',
+      collateralAddressOrDenom: '0x5fd84259d66Cd46123540766Be93DFE6D43130D7',
+      connections: [
+        {
+          token: 'ethereum|arbitrumsepolia|0xcc8D60a0575E1FB0892B8D03e79d06372b0Db5db',
+        },
+        {
+          token: 'ethereum|basesepolia|0xe288A3D1DAE7D894F7d829d967D5129e1b5f6468',
+        },
+        {
+          token: 'ethereum|modetestnet|0x16C20625B11E0c8187Cc1B3e4ceedc35C48D8013',
+        },
+        {
+          token: 'ethereum|sepolia|0xC96f21e32062B3D616b09110584ef2E54DC3d632',
+        },
+      ],
+    },
+
+    {
+      chainName: 'sepolia',
+      standard: TokenStandard.EvmHypCollateral,
+      name: 'USD Coin',
+      symbol: 'USDC',
+      decimals: 6,
+      addressOrDenom: '0xC96f21e32062B3D616b09110584ef2E54DC3d632',
+      collateralAddressOrDenom: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
+      connections: [
+        {
+          token: 'ethereum|arbitrumsepolia|0xcc8D60a0575E1FB0892B8D03e79d06372b0Db5db',
+        },
+        {
+          token: 'ethereum|basesepolia|0xe288A3D1DAE7D894F7d829d967D5129e1b5f6468',
+        },
+        {
+          token: 'ethereum|modetestnet|0x16C20625B11E0c8187Cc1B3e4ceedc35C48D8013',
+        },
+        {
+          token: 'ethereum|optimismsepolia|0x991b90FCa036F2D94584D05a281c65352729B984',
+        },
+      ],
+    },
   ],
   options: {
     interchainFeeConstants: [

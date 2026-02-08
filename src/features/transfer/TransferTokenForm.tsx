@@ -586,7 +586,7 @@ function MaxButton({ balance, disabled }: { balance?: TokenAmount; disabled?: bo
     <SolidButton
       type="button"
       onClick={onClick}
-      color="primary"
+      color="accent"
       disabled={disabled}
       className="absolute bottom-1 right-1 top-2.5 px-2 text-xs opacity-90 all:rounded"
     >
@@ -616,7 +616,7 @@ function SelfButton({ disabled }: { disabled?: boolean }) {
     <SolidButton
       type="button"
       onClick={onClick}
-      color="primary"
+      color="accent"
       disabled={disabled}
       className="absolute bottom-1 right-1 top-2.5 px-2 text-xs opacity-90 all:rounded"
     >

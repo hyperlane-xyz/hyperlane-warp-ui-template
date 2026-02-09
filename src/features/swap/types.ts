@@ -36,3 +36,11 @@ export interface SwapQuote {
   minimumReceived: string;
   slippage: number;
 }
+
+export type IcaTransactionStatus =
+  | 'idle'
+  | 'building'
+  | 'signing'
+  | 'confirming'
+  | 'complete'
+  | 'failed';

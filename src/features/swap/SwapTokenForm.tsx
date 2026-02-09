@@ -1,5 +1,5 @@
 import { ProtocolType } from '@hyperlane-xyz/utils';
-import { useAccountForChain, useConnectFns } from '@hyperlane-xyz/widgets';
+import { useAccountAddressForChain, useAccountForChain, useConnectFns } from '@hyperlane-xyz/widgets';
 import { Form, Formik, useFormikContext } from 'formik';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { usePublicClient, useWalletClient } from 'wagmi';
@@ -8,10 +8,12 @@ import { useChainProtocol, useMultiProvider } from '../chains/hooks';
 import { useEvmWalletBalance } from '../tokens/balances';
 import { TransferSection } from '../transfer/TransferSection';
 import { SwapDirectionIndicator } from './components/SwapDirectionIndicator';
+import { IcaPanel } from './components/IcaPanel';
 import { SwapQuoteDisplay } from './components/SwapQuoteDisplay';
 import { SwapReviewModal } from './components/SwapReviewModal';
 import { SwapStatusDisplay } from './components/SwapStatusDisplay';
 import { SwapTokenCard } from './components/SwapTokenCard';
+import { useIcaAddress } from './hooks/useIcaAddress';
 import { SWAP_CHAINS, SWAP_CONTRACTS } from './swapConfig';
 import { useSwapQuote } from './hooks/useSwapQuote';
 import { useSwapTokens } from './hooks/useSwapTokens';
@@ -26,9 +28,11 @@ export function SwapTokenForm() {
   const protocol = useChainProtocol(ARBITRUM_CHAIN_NAME) || ProtocolType.Ethereum;
   const connectFns = useConnectFns();
   const account = useAccountForChain(multiProvider, ARBITRUM_CHAIN_NAME);
+  const accountAddress = useAccountAddressForChain(multiProvider, ARBITRUM_CHAIN_NAME);
   const { data: walletClient } = useWalletClient();
   const publicClient = usePublicClient();
   const isWalletReady = account?.isReady ?? false;
+  const { icaAddress } = useIcaAddress(accountAddress);
 
   const { status, error, txHash, executeSwap, reset } = useSwapTransaction();
   const [isReview, setIsReview] = useState(false);
@@ -129,6 +133,7 @@ export function SwapTokenForm() {
                   onConfirm={() => void onConfirm(values)}
                   onCancel={onEdit}
                   isLoading={isSubmitting || status !== SwapStatus.Idle}
+                  icaAddress={icaAddress}
                 />
               )}
 
@@ -137,6 +142,8 @@ export function SwapTokenForm() {
                   {submitError}
                 </div>
               )}
+
+              {isWalletReady ? <IcaPanel userAddress={accountAddress} /> : null}
             </>
           )}
         </Form>

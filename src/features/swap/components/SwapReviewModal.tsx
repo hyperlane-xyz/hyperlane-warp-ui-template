@@ -1,3 +1,5 @@
+import { shortenAddress } from '@hyperlane-xyz/utils';
+
 interface SwapReviewProps {
   originToken: { symbol: string; amount: string };
   destinationToken: { symbol: string; estimatedOutput: string };
@@ -11,6 +13,7 @@ interface SwapReviewProps {
   onConfirm: () => void;
   onCancel: () => void;
   isLoading: boolean;
+  icaAddress?: string | null;
 }
 
 export function SwapReviewModal({
@@ -20,6 +23,7 @@ export function SwapReviewModal({
   onConfirm,
   onCancel,
   isLoading,
+  icaAddress,
 }: SwapReviewProps) {
   return (
     <div className="rounded-[7px] border border-gray-400/25 bg-white p-4 shadow-input">
@@ -55,6 +59,13 @@ export function SwapReviewModal({
           </div>
         </div>
       )}
+
+      <div className="mt-3 rounded border border-primary-100 bg-primary-50 px-3 py-2 text-sm text-primary-700">
+        <div>Funds will arrive in your Interchain Account on Base.</div>
+        <div className="mt-1 text-xs text-primary-600">
+          ICA address: {icaAddress ? shortenAddress(icaAddress) : 'Unavailable'}
+        </div>
+      </div>
 
       <button
         type="button"

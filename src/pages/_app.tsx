@@ -9,6 +9,7 @@ import { ErrorBoundary } from '../components/errors/ErrorBoundary';
 import { AppLayout } from '../components/layout/AppLayout';
 import { MAIN_FONT } from '../consts/app';
 import { WarpContextInitGate } from '../features/WarpContextInitGate';
+import { AleoWalletContext } from '../features/wallet/context/AleoWalletContext';
 import { CosmosWalletContext } from '../features/wallet/context/CosmosWalletContext';
 import { EvmWalletContext } from '../features/wallet/context/EvmWalletContext';
 import { RadixWalletContext } from '../features/wallet/context/RadixWalletContext';
@@ -17,11 +18,6 @@ import { StarknetWalletContext } from '../features/wallet/context/StarknetWallet
 import '../styles/globals.css';
 import '../vendor/inpage-metamask';
 import '../vendor/polyfill';
-
-import { AleoWalletProvider } from '@provablehq/aleo-wallet-adaptor-react';
-import { ShieldWalletAdapter } from '@provablehq/aleo-wallet-adaptor-shield';
-
-const wallets = [new ShieldWalletAdapter()];
 
 const reactQueryClient = new QueryClient({
   defaultOptions: {
@@ -51,12 +47,12 @@ export default function App({ Component, pageProps }: AppProps) {
                 <CosmosWalletContext>
                   <StarknetWalletContext>
                     <RadixWalletContext>
-                      <AleoWalletProvider wallets={wallets}>
+                      <AleoWalletContext>
                         <AppLayout>
                           <Component {...pageProps} />
                           <Analytics />
                         </AppLayout>
-                      </AleoWalletProvider>
+                      </AleoWalletContext>
                     </RadixWalletContext>
                   </StarknetWalletContext>
                 </CosmosWalletContext>

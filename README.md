@@ -67,6 +67,18 @@ pnpm run prettier
 pnpm run clean
 ```
 
+### Local package linking to hyperlane-monorepo
+
+If you have to make changes to the widgets package to edit e.g. the Connect Button or other components linking
+the widgets package locally to test it is necessary. To do that you can run the following commands
+
+```sh
+# Link monorepo packages with the warp-ui
+pnpm link:monorepo
+# Unlink packages again after testing
+pnpm unlink:monorepo
+```
+
 ## Deployment
 
 The easiest hosting solution for this Next.JS app is to create a project on Vercel.

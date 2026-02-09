@@ -1,5 +1,6 @@
 import { Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
 import {
+  KnownProtocolType,
   ProtocolType,
   convertToScaledAmount,
   eqAddress,
@@ -868,7 +869,7 @@ async function validateForm(
   tokens: Token[],
   collateralGroups: Map<string, Token[]>,
   values: TransferFormValues,
-  accounts: Record<ProtocolType, AccountInfo>,
+  accounts: Record<KnownProtocolType, AccountInfo>,
   routerAddressesByChainMap: Record<ChainName, Set<string>>,
 ): Promise<[Record<string, string> | null, Token | null]> {
   // returns a tuple, where first value is validation result

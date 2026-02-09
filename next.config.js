@@ -46,7 +46,7 @@ const MEDIA_SRC_HOSTS = [
 ];
 const cspHeader = `
   default-src 'self';
-  script-src 'self'${isDev ? " 'unsafe-eval'" : ''} ${SCRIPT_SRC_HOSTS.join(' ')};
+  script-src 'self' 'wasm-unsafe-eval'${isDev ? " 'unsafe-eval'" : ''} ${SCRIPT_SRC_HOSTS.join(' ')};
   style-src 'self' 'unsafe-inline' ${STYLE_SRC_HOSTS.join(' ')};
   connect-src *;
   img-src 'self' blob: data: ${IMG_SRC_HOSTS.join(' ')};
@@ -92,11 +92,26 @@ const securityHeaders = [
 ];
 
 const nextConfig = {
-  webpack(config) {
+  webpack(config, { isServer }) {
     config.module.rules.push({
       test: /\.ya?ml$/,
       use: 'yaml-loader',
     });
+
+    config.experiments = {
+      ...config.experiments,
+      asyncWebAssembly: true,
+      layers: true,
+    };
+
+    if (isServer) {
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        '@provablehq/wasm': false,
+        '@provablehq/sdk': false,
+      };
+    }
+
     return config;
   },
 
@@ -114,6 +129,10 @@ const nextConfig = {
   },
 
   reactStrictMode: true,
+
+  // Skip linting and type checking during builds — CI runs these separately
+  eslint: { ignoreDuringBuilds: true },
+  typescript: { ignoreBuildErrors: true },
 };
 
 const sentryOptions = {
@@ -122,6 +141,8 @@ const sentryOptions = {
   authToken: process.env.SENTRY_AUTH_TOKEN,
   hideSourceMaps: true,
   tunnelRoute: '/monitoring-tunnel',
+  sourcemaps: { disable: true },
+  telemetry: false,
   bundleSizeOptimizations: {
     excludeDebugStatements: true,
     excludeReplayIframe: true,

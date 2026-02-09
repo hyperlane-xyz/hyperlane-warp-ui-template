@@ -37,7 +37,7 @@ export function SolidButton(
     baseColors = 'bg-green-500 text-white';
     onHover = 'hover:bg-green-600';
   } else if (color === 'red') {
-    baseColors = 'bg-error-gradient shadow-error-glow';
+    baseColors = 'bg-error-gradient';
     onHover = 'hover:opacity-90';
   } else if (color === 'white') {
     baseColors = 'bg-white text-black';

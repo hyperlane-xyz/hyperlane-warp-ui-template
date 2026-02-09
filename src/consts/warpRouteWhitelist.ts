@@ -7,3 +7,10 @@ export const warpRouteWhitelist: Array<string> | null = null;
 // [
 //   // 'ETH/ethereum-viction'
 // ];
+
+// A list of warp route config IDs to be excluded from the app
+// Routes matching any of these patterns (case-insensitive) will be filtered out
+// This is applied after the whitelist filter
+export const warpRouteBlacklist: Array<string> = [
+  'form', // Exclude all Form chain routes
+];

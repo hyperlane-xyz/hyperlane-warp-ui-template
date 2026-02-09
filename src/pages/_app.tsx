@@ -7,7 +7,6 @@ import { ToastContainer, Zoom } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { ErrorBoundary } from '../components/errors/ErrorBoundary';
 import { AppLayout } from '../components/layout/AppLayout';
-import { MAIN_FONT } from '../consts/app';
 import { WarpContextInitGate } from '../features/WarpContextInitGate';
 import { AleoWalletContext } from '../features/wallet/context/AleoWalletContext';
 import { CosmosWalletContext } from '../features/wallet/context/CosmosWalletContext';
@@ -38,7 +37,7 @@ export default function App({ Component, pageProps }: AppProps) {
   // Note, the font definition is required both here and in _document.tsx
   // Otherwise Next.js will not load the font
   return (
-    <div className={`${MAIN_FONT.variable} font-sans text-black`}>
+    <div className="font-primary text-black">
       <ErrorBoundary>
         <QueryClientProvider client={reactQueryClient}>
           <WarpContextInitGate>

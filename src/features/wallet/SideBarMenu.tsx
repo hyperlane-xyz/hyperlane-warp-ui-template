@@ -50,6 +50,17 @@ export function SideBarMenu({
     setIsMenuOpen(isOpen);
   }, [isOpen]);
 
+  useEffect(() => {
+    if (!isMenuOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isMenuOpen, onClose]);
+
   const sortedTransfers = useMemo(
     () => [...transfers].sort((a, b) => b.timestamp - a.timestamp) || [],
     [transfers],
@@ -61,6 +72,14 @@ export function SideBarMenu({
 
   return (
     <>
+      {/* Backdrop overlay - click to close */}
+      {isMenuOpen && (
+        <div
+          className="fixed inset-0 z-[5] bg-black/20"
+          onClick={onClose}
+          aria-hidden="true"
+        />
+      )}
       <div
         className={`fixed right-0 top-0 h-full w-88 transform bg-white bg-opacity-95 shadow-lg transition-transform duration-100 ease-in ${
           isMenuOpen ? 'z-10 translate-x-0' : 'z-0 translate-x-full'
@@ -68,15 +87,15 @@ export function SideBarMenu({
       >
         {isMenuOpen && (
           <button
-            className="absolute left-0 top-0 flex h-full w-9 -translate-x-full items-center justify-center rounded-l-md bg-white bg-opacity-60 transition-all hover:bg-opacity-80"
+            className="absolute left-0 top-0 flex h-full w-9 -translate-x-full items-center justify-center rounded-l bg-accent-50/30 backdrop-blur-[1.5px] transition-all"
             onClick={() => onClose()}
           >
             <Image src={CollapseIcon} width={15} height={24} alt="" />
           </button>
         )}
-        <div className="flex h-full w-full flex-col overflow-y-auto">
-          <div className="w-full rounded-t-md bg-primary-500 px-3.5 py-2 text-base font-normal tracking-wider text-white">
-            Connected Wallets
+        <div className="flex h-full w-full flex-col overflow-y-auto overflow-x-hidden">
+          <div className="w-full bg-accent-gradient px-3.5 py-2 font-secondary text-base font-normal tracking-wider text-white shadow-accent-glow">
+            My Wallets
           </div>
           <AccountList
             multiProvider={multiProvider}
@@ -85,8 +104,8 @@ export function SideBarMenu({
             className="px-3 py-3"
             chainName={originChainName}
           />
-          <div className="mb-4 w-full bg-primary-500 px-3.5 py-2 text-base font-normal tracking-wider text-white">
-            Transfer History
+          <div className="mb-4 w-full bg-accent-gradient px-3.5 py-2 font-secondary text-base font-normal tracking-wider text-white shadow-accent-glow">
+            Transaction History
           </div>
           <div className="flex grow flex-col px-3.5">
             <div className="flex w-full grow flex-col divide-y">

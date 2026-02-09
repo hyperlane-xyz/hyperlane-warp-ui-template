@@ -4,34 +4,50 @@ import { useState } from 'react';
 import { config } from '../../consts/config';
 import { links } from '../../consts/links';
 import InfoCircle from '../../images/icons/info-circle.svg';
-import { Card } from '../layout/Card';
+import { HyperlaneTransparentLogo } from '../icons/HyperlaneTransparentLogo';
 
 export function TipCard() {
   const [show, setShow] = useState(config.showTipBox);
   if (!show) return null;
   return (
-    <Card className="w-100 p-2 sm:w-[31rem]">
-      <h2 className="text-primary-500">Bridge Tokens with Hyperlane Warp Routes!</h2>
-      <div className="flex items-end justify-between">
-        <p className="mt-1 max-w-[75%] text-xs">
-          Warp Routes make it easy to permissionlessly take your tokens interchain. Fork this
-          template to get started!
-        </p>
-        <a
-          href={links.github}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="ml-2 flex items-center rounded-lg bg-gray-100 px-3 py-1.5 text-xs text-primary-500 transition-all hover:bg-gray-200 active:bg-gray-300 sm:text-sm"
+    <div className="relative w-full overflow-hidden rounded border border-accent-500/50 bg-gradient-to-t from-accent-500/30 to-gray-900/95 px-4 pb-4 pt-4 shadow-card xl:pb-24">
+      <div className="absolute right-2 top-2">
+        <IconButton
+          onClick={() => setShow(false)}
+          title="Hide tip"
+          className="text-gray-400 hover:text-gray-200"
         >
-          <Image src={InfoCircle} width={12} alt="" />
-          <span className="ml-1.5 hidden text-sm sm:inline">More</span>
-        </a>
-      </div>
-      <div className="absolute right-3 top-3">
-        <IconButton onClick={() => setShow(false)} title="Hide tip" className="hover:rotate-90">
-          <XCircleIcon width={16} height={16} />
+          <XCircleIcon width={14} height={14} />
         </IconButton>
       </div>
-    </Card>
+
+      <h2 className="pr-6 font-secondary text-lg font-normal text-white">
+        Bridge Tokens with Hyperlane Warp Routes!
+      </h2>
+      <p className="mt-2 text-sm text-gray-300">
+        Warp Routes make it easy to permissionlessly take your tokens interchain. Fork this template
+        to get started!
+      </p>
+
+      <a
+        href={links.github}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-3 inline-flex items-center gap-1.5 rounded-md border border-accent-500 bg-accent-500/20 px-3 py-1.5 font-secondary text-sm text-white transition-colors hover:bg-accent-500/30"
+      >
+        <Image src={InfoCircle} width={12} alt="" className="invert" />
+        <span>More</span>
+      </a>
+
+      <div
+        className="pointer-events-none absolute bottom-3 left-0 right-0 flex justify-center"
+        style={{
+          maskImage: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 80%)',
+          WebkitMaskImage: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 80%)',
+        }}
+      >
+        <HyperlaneTransparentLogo />
+      </div>
+    </div>
   );
 }

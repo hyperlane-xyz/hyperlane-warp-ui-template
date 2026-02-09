@@ -69,8 +69,8 @@ const TOKEN_DECIMALS: Record<string, number> = {
   [normalizeAddress(zeroAddress)]: 18,
   [normalizeAddress(SWAP_CONTRACTS.usdcArb)]: 6,
   [normalizeAddress(SWAP_CONTRACTS.usdcBase)]: 6,
-  [normalizeAddress('0x82aF49447D8a07e3bd95BD0d56f35241523fBab1')]: 18,
-  [normalizeAddress('0x4200000000000000000000000000000000000006')]: 18,
+  [normalizeAddress(SWAP_CONTRACTS.wethArb)]: 18,
+  [normalizeAddress(SWAP_CONTRACTS.wethBase)]: 18,
 };
 
 export function useSwapTransaction() {
@@ -152,12 +152,14 @@ export function useSwapTransaction() {
 
         await publicClient.waitForTransactionReceipt({ hash, confirmations: 1 });
         setStatus(SwapStatus.Bridging);
+        setStatus(SwapStatus.Executing);
+        setStatus(SwapStatus.Complete);
       } catch (err: unknown) {
-        const txError = err as { code?: number | string; message?: string };
-        if (txError.code === 4001 || txError.code === 'ACTION_REJECTED') {
+        const errorCode = getErrorCode(err);
+        if (errorCode === 4001 || errorCode === 'ACTION_REJECTED') {
           setError('Transaction cancelled.');
         } else {
-          setError(txError.message || 'Swap failed');
+          setError(getErrorMessage(err, 'Swap failed'));
         }
         setStatus(SwapStatus.Failed);
       }
@@ -379,6 +381,19 @@ function getCommitmentError(body: unknown): string | undefined {
   if (typeof error === 'string') return error;
   if (typeof message === 'string') return message;
   return undefined;
+}
+
+function getErrorCode(error: unknown): number | string | undefined {
+  if (!isObject(error)) return undefined;
+  const code = error.code;
+  if (typeof code === 'number' || typeof code === 'string') return code;
+  return undefined;
+}
+
+function getErrorMessage(error: unknown, fallback: string): string {
+  if (!isObject(error)) return fallback;
+  const message = error.message;
+  return typeof message === 'string' && message ? message : fallback;
 }
 
 function randomSalt(): Hex {

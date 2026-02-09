@@ -1,15 +1,16 @@
 import { ProtocolType } from '@hyperlane-xyz/utils';
 import { useAccountForChain, useConnectFns } from '@hyperlane-xyz/widgets';
-import { Form, Formik, FormikHelpers, useFormikContext } from 'formik';
+import { Form, Formik, useFormikContext } from 'formik';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { usePublicClient, useWalletClient } from 'wagmi';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
-import { SolidButton } from '../../components/buttons/SolidButton';
 import { useChainProtocol, useMultiProvider } from '../chains/hooks';
 import { useEvmWalletBalance } from '../tokens/balances';
 import { TransferSection } from '../transfer/TransferSection';
 import { SwapDirectionIndicator } from './components/SwapDirectionIndicator';
 import { SwapQuoteDisplay } from './components/SwapQuoteDisplay';
+import { SwapReviewModal } from './components/SwapReviewModal';
+import { SwapStatusDisplay } from './components/SwapStatusDisplay';
 import { SwapTokenCard } from './components/SwapTokenCard';
 import { SWAP_CHAINS, SWAP_CONTRACTS } from './swapConfig';
 import { useSwapQuote } from './hooks/useSwapQuote';
@@ -33,6 +34,7 @@ export function SwapTokenForm() {
   const [isReview, setIsReview] = useState(false);
   const [activeQuote, setActiveQuote] = useState<SwapQuote | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const isStatusActive = status !== SwapStatus.Idle;
 
   const initialValues: SwapFormValues = {
     originChainId: SWAP_CHAINS.origin.chainId,
@@ -42,104 +44,115 @@ export function SwapTokenForm() {
     amount: '',
   };
 
-  const onSubmit = useCallback(
-    async (values: SwapFormValues, helpers: FormikHelpers<SwapFormValues>) => {
-      if (!isReview) {
-        if (!activeQuote) {
-          setSubmitError('Quote unavailable. Please provide an amount and wait for quote refresh.');
-          helpers.setSubmitting(false);
-          return;
-        }
-        setSubmitError(null);
-        setIsReview(true);
-        helpers.setSubmitting(false);
-        return;
-      }
+  const onSubmit = useCallback(async () => {
+    if (!activeQuote) {
+      setSubmitError('Quote unavailable. Please provide an amount and wait for quote refresh.');
+      return;
+    }
+    setSubmitError(null);
+    setIsReview(true);
+  }, [activeQuote]);
 
+  const onEdit = () => {
+    setIsReview(false);
+    setSubmitError(null);
+  };
+
+  const onConfirm = useCallback(
+    async (values: SwapFormValues) => {
       if (!activeQuote) {
         setSubmitError('Quote expired. Please edit and review again.');
-        helpers.setSubmitting(false);
         return;
       }
 
       if (!isWalletReady) {
         connectFns[protocol]();
-        helpers.setSubmitting(false);
         return;
       }
 
-      try {
-        setSubmitError(null);
-        if (!walletClient || !publicClient) {
-          throw new Error('Wallet client unavailable. Reconnect wallet and retry.');
-        }
-        await executeSwap(values, activeQuote, walletClient, publicClient);
-      } catch (err: unknown) {
-        const txError = err as { message?: string };
-        setSubmitError(txError.message || 'Unable to access wallet signer.');
-      } finally {
-        helpers.setSubmitting(false);
+      if (!walletClient || !publicClient) {
+        setSubmitError('Wallet client unavailable. Reconnect wallet and retry.');
+        return;
       }
-    },
-    [activeQuote, connectFns, executeSwap, isReview, isWalletReady, protocol, publicClient, walletClient],
-  );
 
-  const onEdit = () => {
-    setIsReview(false);
-    setSubmitError(null);
-    reset();
-  };
+      setSubmitError(null);
+      await executeSwap(values, activeQuote, walletClient, publicClient);
+    },
+    [activeQuote, connectFns, executeSwap, isWalletReady, protocol, publicClient, walletClient],
+  );
 
   return (
     <Formik<SwapFormValues> initialValues={initialValues} onSubmit={onSubmit}>
-      <Form className="flex w-full flex-col items-stretch gap-1.5">
-        <SwapFormFields
-          isReview={isReview}
-          onQuoteChange={(quote) => {
-            setActiveQuote(quote);
-            if (!quote && isReview) setIsReview(false);
-          }}
-        />
+      {({ values, isSubmitting, resetForm }) => (
+        <Form className="flex w-full flex-col items-stretch gap-1.5">
+          {isStatusActive ? (
+            <SwapStatusDisplay
+              status={status}
+              txHash={txHash}
+              error={error || submitError}
+              onReset={() => {
+                reset();
+                setIsReview(false);
+                setActiveQuote(null);
+                setSubmitError(null);
+                resetForm();
+              }}
+            />
+          ) : (
+            <>
+              <SwapFormFields
+                isReview={isReview}
+                onQuoteChange={(quote) => {
+                  setActiveQuote(quote);
+                  if (!quote && isReview) setIsReview(false);
+                }}
+              />
 
-        {isReview && activeQuote && <SwapReviewSummary quote={activeQuote} />}
+              {!isReview ? (
+                <ConnectAwareSubmitButton<SwapFormValues>
+                  chainName={ARBITRUM_CHAIN_NAME}
+                  text="Review Swap"
+                  classes="mb-4 w-full px-3 py-2.5 font-secondary text-xl text-cream-100"
+                  disabled={!activeQuote}
+                />
+              ) : (
+                <SwapReviewModal
+                  originToken={{
+                    symbol: getTokenSymbol(values.originTokenAddress),
+                    amount: values.amount,
+                  }}
+                  destinationToken={{
+                    symbol: getTokenSymbol(values.destinationTokenAddress),
+                    estimatedOutput: activeQuote?.estimatedOutput || '',
+                  }}
+                  quote={activeQuote}
+                  onConfirm={() => void onConfirm(values)}
+                  onCancel={onEdit}
+                  isLoading={isSubmitting || status !== SwapStatus.Idle}
+                />
+              )}
 
-        {!isReview ? (
-          <ConnectAwareSubmitButton<SwapFormValues>
-            chainName={ARBITRUM_CHAIN_NAME}
-            text="Review Swap"
-            classes="mb-4 w-full px-3 py-2.5 font-secondary text-xl text-cream-100"
-            disabled={
-              !activeQuote ||
-              (status !== SwapStatus.Idle &&
-                status !== SwapStatus.Failed &&
-                status !== SwapStatus.ReviewMode)
-            }
-          />
-        ) : (
-          <div className="mb-4 mt-4 flex items-center justify-between space-x-4">
-            <SolidButton
-              type="button"
-              color="primary"
-              onClick={onEdit}
-              className="px-6 py-1.5 font-secondary"
-            >
-              Edit
-            </SolidButton>
-            <SolidButton
-              type="submit"
-              color="accent"
-              disabled={status !== SwapStatus.Idle && status !== SwapStatus.Failed}
-              className="flex-1 px-3 py-1.5 font-secondary text-white"
-            >
-              {isWalletReady ? 'Confirm Swap' : 'Connect Wallet'}
-            </SolidButton>
-          </div>
-        )}
-
-        <SwapExecutionStatus status={status} error={error || submitError} txHash={txHash} />
-      </Form>
+              {submitError && (
+                <div className="mb-4 rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  {submitError}
+                </div>
+              )}
+            </>
+          )}
+        </Form>
+      )}
     </Formik>
   );
+}
+
+function getTokenSymbol(address: string): string {
+  const lower = address.toLowerCase();
+  if (lower === SWAP_CONTRACTS.usdcArb.toLowerCase()) return 'USDC';
+  if (lower === SWAP_CONTRACTS.usdcBase.toLowerCase()) return 'USDC';
+  if (lower === SWAP_CONTRACTS.wethArb.toLowerCase()) return 'WETH';
+  if (lower === SWAP_CONTRACTS.wethBase.toLowerCase()) return 'WETH';
+  if (lower === '0x0000000000000000000000000000000000000000') return 'ETH';
+  return 'Token';
 }
 
 function SwapFormFields({
@@ -252,51 +265,4 @@ function SwapFormFields({
       <SwapQuoteDisplay quote={quote || null} isLoading={isLoading} error={quoteError} />
     </>
   );
-}
-
-function SwapReviewSummary({ quote }: { quote: SwapQuote }) {
-  return (
-    <div className="mt-3 rounded border border-gray-400/25 bg-gray-150 px-3 py-2 text-sm text-gray-800">
-      <div className="mb-1 font-secondary text-base text-gray-900">Review swap</div>
-      <div>Origin swap: {quote.originSwapRate}</div>
-      <div>Bridge fee: {quote.bridgeFee}</div>
-      <div>Destination swap: {quote.destinationSwapRate}</div>
-      <div>Estimated output: {quote.estimatedOutput}</div>
-      <div>Minimum received: {quote.minimumReceived}</div>
-    </div>
-  );
-}
-
-function SwapExecutionStatus({
-  status,
-  error,
-  txHash,
-}: {
-  status: SwapStatus;
-  error: string | null;
-  txHash: string | null;
-}) {
-  const statusMessage = getStatusMessage(status);
-  if (!statusMessage && !error && !txHash) return null;
-
-  return (
-    <div className="mb-4 rounded border border-gray-400/25 bg-gray-150 px-3 py-2 text-sm text-gray-800">
-      {statusMessage && <div>Status: {statusMessage}</div>}
-      {txHash && <div className="break-all">Tx hash: {txHash}</div>}
-      {error && <div className="text-red-700">{error}</div>}
-    </div>
-  );
-}
-
-function getStatusMessage(status: SwapStatus): string | null {
-  if (status === SwapStatus.Idle || status === SwapStatus.ReviewMode) return null;
-  if (status === SwapStatus.PostingCommitment) return 'Posting commitment...';
-  if (status === SwapStatus.Approving) return 'Waiting for token approval...';
-  if (status === SwapStatus.Signing) return 'Sign transaction in wallet...';
-  if (status === SwapStatus.Confirming) return 'Confirming transaction...';
-  if (status === SwapStatus.Bridging) return 'Bridge in progress...';
-  if (status === SwapStatus.Executing) return 'Executing destination swap...';
-  if (status === SwapStatus.Complete) return 'Swap complete.';
-  if (status === SwapStatus.Failed) return 'Swap failed.';
-  return null;
 }

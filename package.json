@@ -125,7 +125,9 @@
     "lint": "next lint",
     "start": "next start",
     "test": "vitest --watch false",
-    "prettier": "prettier --write ./src"
+    "prettier": "prettier --write ./src",
+    "link:monorepo": "node scripts/link-monorepo.js utils provider-sdk deploy-sdk sdk widgets",
+    "unlink:monorepo": "node scripts/unlink-monorepo.js"
   },
   "types": "dist/src/index.d.ts",
   "pnpm": {

@@ -3,6 +3,7 @@ import Head from 'next/head';
 import { PropsWithChildren, useEffect } from 'react';
 import { APP_NAME, BACKGROUND_COLOR, BACKGROUND_IMAGE } from '../../consts/app';
 import { config } from '../../consts/config';
+import { initIntercom } from '../../features/analytics/intercom';
 import { initRefiner } from '../../features/analytics/refiner';
 import { EVENT_NAME } from '../../features/analytics/types';
 import { useWalletConnectionTracking } from '../../features/analytics/useWalletConnectionTracking';
@@ -25,6 +26,7 @@ export function AppLayout({ children }: PropsWithChildren) {
   useWalletConnectionTracking();
 
   useEffect(() => {
+    initIntercom();
     initRefiner();
     trackEvent(EVENT_NAME.PAGE_VIEWED, {});
   }, []);

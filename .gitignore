@@ -38,3 +38,6 @@ npm-debug.log*
 
 .idea
 .monorepo-tarballs
+
+.opencode
+.sisyphus

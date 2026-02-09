@@ -1,30 +1,19 @@
 import { Form, Formik, useFormikContext } from 'formik';
+import { useEffect, useMemo } from 'react';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
-import { SwapIcon } from '../../components/icons/SwapIcon';
-import { TextField } from '../../components/input/TextField';
+import { useEvmWalletBalance } from '../tokens/balances';
 import { TransferSection } from '../transfer/TransferSection';
-import { DEFAULT_SLIPPAGE, SWAP_CHAINS, SWAP_CONTRACTS } from './swapConfig';
+import { SwapDirectionIndicator } from './components/SwapDirectionIndicator';
+import { SwapQuoteDisplay } from './components/SwapQuoteDisplay';
+import { SwapTokenCard } from './components/SwapTokenCard';
+import { SWAP_CHAINS, SWAP_CONTRACTS } from './swapConfig';
+import { useSwapQuote } from './hooks/useSwapQuote';
+import { useSwapTokens } from './hooks/useSwapTokens';
 import { useSwapTransaction } from './useSwapTransaction';
-import { SwapFormValues, SwapQuote, SwapStatus } from './types';
+import { SwapFormValues, SwapStatus } from './types';
 
-const tokenOptions = [
-  { label: 'USDC', value: SWAP_CONTRACTS.usdcArb },
-  { label: 'USDC.e', value: '' },
-];
-
-const destinationTokenOptions = [
-  { label: 'USDC', value: SWAP_CONTRACTS.usdcBase },
-  { label: 'USDbC', value: '' },
-];
-
-const initialQuote: SwapQuote = {
-  originSwapRate: '--',
-  bridgeFee: '--',
-  destinationSwapRate: '--',
-  estimatedOutput: '--',
-  minimumReceived: '--',
-  slippage: DEFAULT_SLIPPAGE,
-};
+const ARBITRUM_CHAIN_NAME = 'arbitrum';
+const BASE_CHAIN_NAME = 'base';
 
 export function SwapTokenForm() {
   const { status } = useSwapTransaction();
@@ -40,20 +29,10 @@ export function SwapTokenForm() {
   return (
     <Formik<SwapFormValues> initialValues={initialValues} onSubmit={() => {}}>
       <Form className="flex w-full flex-col items-stretch gap-1.5">
-        <TransferSection label="From">
-          <OriginSwapFields />
-        </TransferSection>
-
-        <DirectionIndicator />
-
-        <TransferSection label="To">
-          <DestinationSwapFields quote={initialQuote} />
-        </TransferSection>
-
-        <QuoteSummary quote={initialQuote} status={status} />
+        <SwapFormFields />
 
         <ConnectAwareSubmitButton<SwapFormValues>
-          chainName="arbitrum"
+          chainName={ARBITRUM_CHAIN_NAME}
           text="Review Swap"
           classes="mb-4 w-full px-3 py-2.5 font-secondary text-xl text-cream-100"
           disabled={status !== SwapStatus.Idle && status !== SwapStatus.ReviewMode}
@@ -63,95 +42,102 @@ export function SwapTokenForm() {
   );
 }
 
-function OriginSwapFields() {
-  return (
-    <div>
-      <ChainLabel chainName={SWAP_CHAINS.origin.name} />
-      <div className="mt-2 rounded-[7px] border border-gray-400/25 bg-white p-3 shadow-input">
-        <TokenSelector name="originTokenAddress" options={tokenOptions} />
-        <div className="my-2.5 h-px bg-primary-50" />
-
-        <TextField
-          name="amount"
-          placeholder="0"
-          className="w-full border-none bg-transparent font-secondary text-xl font-normal text-gray-900 outline-none placeholder:text-gray-900"
-          type="number"
-          step="any"
-        />
-
-        <div className="mt-1 text-xs leading-[18px] text-gray-450">Balance: --</div>
-      </div>
-    </div>
-  );
-}
-
-function DestinationSwapFields({ quote }: { quote: SwapQuote }) {
-  return (
-    <div>
-      <ChainLabel chainName={SWAP_CHAINS.destination.name} />
-      <div className="mt-2 rounded-[7px] border border-gray-400/25 bg-white p-3 shadow-input">
-        <TokenSelector name="destinationTokenAddress" options={destinationTokenOptions} />
-        <div className="my-2.5 h-px bg-primary-50" />
-        <div className="font-secondary text-xl font-normal text-gray-900">
-          Estimated output: {quote.estimatedOutput}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function QuoteSummary({ quote, status }: { quote: SwapQuote; status: SwapStatus }) {
-  return (
-    <div className="rounded border border-gray-400/25 bg-gray-150 px-3 py-2 text-sm text-gray-800">
-      <div className="mb-1 font-secondary text-base text-gray-900">Quote summary</div>
-      <div>Origin swap rate: {quote.originSwapRate}</div>
-      <div>Bridge fee: {quote.bridgeFee}</div>
-      <div>Destination swap rate: {quote.destinationSwapRate}</div>
-      <div>Minimum received: {quote.minimumReceived}</div>
-      <div>Slippage: {(quote.slippage * 100).toFixed(2)}%</div>
-      <div>Status: {status}</div>
-    </div>
-  );
-}
-
-function DirectionIndicator() {
-  return (
-    <div className="relative z-10 -my-3 flex justify-center">
-      <div className="flex h-8 w-8 items-center justify-center rounded border border-gray-400/50 bg-white shadow-button">
-        <SwapIcon width={18} height={24} />
-      </div>
-    </div>
-  );
-}
-
-function ChainLabel({ chainName }: { chainName: string }) {
-  return <div className="font-secondary text-sm font-medium text-gray-700">Chain: {chainName}</div>;
-}
-
-function TokenSelector({
-  name,
-  options,
-}: {
-  name: 'originTokenAddress' | 'destinationTokenAddress';
-  options: { label: string; value: string }[];
-}) {
+function SwapFormFields() {
   const { values, setFieldValue } = useFormikContext<SwapFormValues>();
-  const value = values[name];
+
+  const {
+    tokens: originTokens,
+    selectedToken: selectedOriginToken,
+    setSelectedToken: setSelectedOriginToken,
+  } = useSwapTokens(SWAP_CHAINS.origin.chainId, values.originTokenAddress);
+
+  const {
+    tokens: destinationTokens,
+    selectedToken: selectedDestinationToken,
+    setSelectedToken: setSelectedDestinationToken,
+  } = useSwapTokens(SWAP_CHAINS.destination.chainId, values.destinationTokenAddress);
+
+  useEffect(() => {
+    if (selectedOriginToken?.address !== values.originTokenAddress) {
+      setFieldValue('originTokenAddress', selectedOriginToken?.address || '');
+    }
+  }, [selectedOriginToken, setFieldValue, values.originTokenAddress]);
+
+  useEffect(() => {
+    if (selectedDestinationToken?.address !== values.destinationTokenAddress) {
+      setFieldValue('destinationTokenAddress', selectedDestinationToken?.address || '');
+    }
+  }, [selectedDestinationToken, setFieldValue, values.destinationTokenAddress]);
+
+  const { data: quote, isLoading, error } = useSwapQuote(
+    selectedOriginToken?.address || null,
+    selectedDestinationToken?.address || null,
+    values.amount,
+    SWAP_CHAINS.origin.chainId,
+    SWAP_CHAINS.destination.chainId,
+  );
+
+  const { balance: originBalance } = useEvmWalletBalance(
+    ARBITRUM_CHAIN_NAME,
+    SWAP_CHAINS.origin.chainId,
+    selectedOriginToken?.address || '',
+    true,
+  );
+
+  const { balance: destinationBalance } = useEvmWalletBalance(
+    BASE_CHAIN_NAME,
+    SWAP_CHAINS.destination.chainId,
+    selectedDestinationToken?.address || '',
+    true,
+  );
+
+  const quoteError = error instanceof Error ? error.message : null;
+
+  const originBalanceLabel = useMemo(() => {
+    if (!originBalance) return undefined;
+    return Number(originBalance.formatted).toFixed(2);
+  }, [originBalance]);
+
+  const destinationBalanceLabel = useMemo(() => {
+    if (!destinationBalance) return undefined;
+    return Number(destinationBalance.formatted).toFixed(2);
+  }, [destinationBalance]);
 
   return (
-    <label className="flex flex-col gap-1 text-sm text-gray-600">
-      Token
-      <select
-        value={value}
-        onChange={(event) => setFieldValue(name, event.target.value)}
-        className="rounded border border-gray-300 bg-white px-3 py-2 text-gray-900"
-      >
-        {options.map((option) => (
-          <option key={option.label} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-    </label>
+    <>
+      <TransferSection label="From">
+        <SwapTokenCard
+          side="origin"
+          tokens={originTokens}
+          selectedToken={selectedOriginToken}
+          amount={values.amount}
+          onTokenSelect={(token) => {
+            setSelectedOriginToken(token);
+            setFieldValue('originTokenAddress', token.address);
+          }}
+          onAmountChange={(amount) => setFieldValue('amount', amount)}
+          balance={originBalanceLabel}
+        />
+      </TransferSection>
+
+      <SwapDirectionIndicator />
+
+      <TransferSection label="To">
+        <SwapTokenCard
+          side="destination"
+          tokens={destinationTokens}
+          selectedToken={selectedDestinationToken}
+          amount={values.amount}
+          onTokenSelect={(token) => {
+            setSelectedDestinationToken(token);
+            setFieldValue('destinationTokenAddress', token.address);
+          }}
+          balance={destinationBalanceLabel}
+          estimatedOutput={quote?.estimatedOutput}
+        />
+      </TransferSection>
+
+      <SwapQuoteDisplay quote={quote || null} isLoading={isLoading} error={quoteError} />
+    </>
   );
 }

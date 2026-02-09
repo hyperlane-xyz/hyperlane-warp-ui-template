@@ -6,6 +6,14 @@ export interface SwapFormValues {
   amount: string;
 }
 
+export interface SwapToken {
+  symbol: string;
+  name: string;
+  address: string;
+  decimals: number;
+  chainId: number;
+}
+
 export enum SwapStatus {
   Idle = 'idle',
   FetchingQuote = 'fetching-quote',

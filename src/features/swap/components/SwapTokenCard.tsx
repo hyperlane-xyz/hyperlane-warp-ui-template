@@ -11,6 +11,7 @@ interface Props {
   onAmountChange?: (amount: string) => void;
   balance?: string;
   estimatedOutput?: string;
+  disabled?: boolean;
 }
 
 export function SwapTokenCard({
@@ -22,6 +23,7 @@ export function SwapTokenCard({
   onAmountChange,
   balance,
   estimatedOutput,
+  disabled,
 }: Props) {
   const [isSelectorOpen, setIsSelectorOpen] = useState(false);
   const chainLabel = side === 'origin' ? 'Arbitrum' : 'Base';
@@ -43,7 +45,8 @@ export function SwapTokenCard({
         <button
           type="button"
           onClick={() => setIsSelectorOpen((prev) => !prev)}
-          className="flex w-full items-center justify-between rounded border border-gray-300 px-3 py-2 text-left text-sm text-gray-900 transition-colors hover:border-gray-400"
+          disabled={disabled}
+          className="flex w-full items-center justify-between rounded border border-gray-300 px-3 py-2 text-left text-sm text-gray-900 transition-colors hover:border-gray-400 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <span>{selectedToken ? `${selectedToken.symbol} - ${selectedToken.name}` : 'Select token'}</span>
           <span className="text-gray-450">v</span>
@@ -55,12 +58,13 @@ export function SwapTokenCard({
               <button
                 key={`${token.chainId}-${token.address}`}
                 type="button"
+                disabled={disabled}
                 onClick={() => {
                   onTokenSelect(token);
                   setIsSelectorOpen(false);
                 }}
                 className={clsx(
-                  'flex w-full items-center justify-between px-3 py-2 text-left text-sm transition-colors hover:bg-gray-100',
+                  'flex w-full items-center justify-between px-3 py-2 text-left text-sm transition-colors hover:bg-gray-100 disabled:cursor-not-allowed',
                   selectedToken?.address === token.address ? 'bg-gray-100 text-gray-900' : 'text-gray-700',
                 )}
               >
@@ -78,7 +82,8 @@ export function SwapTokenCard({
             value={displayAmount}
             onChange={(event) => onAmountChange?.(event.target.value)}
             placeholder="0"
-            className="w-full border-none bg-transparent font-secondary text-xl font-normal text-gray-900 outline-none placeholder:text-gray-900"
+            disabled={disabled}
+            className="w-full border-none bg-transparent font-secondary text-xl font-normal text-gray-900 outline-none placeholder:text-gray-900 disabled:cursor-not-allowed"
             type="number"
             step="any"
           />

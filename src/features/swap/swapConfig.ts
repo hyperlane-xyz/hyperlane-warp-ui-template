@@ -17,7 +17,7 @@ export const SWAP_CHAIN_CONFIGS: Record<string, SwapChainConfig> = {
     chainId: 42161,
     domainId: 42161,
     universalRouter: '',
-    icaRouter: '0xCd2858B6bCaA9b628EBc4892F578b7d37E9ec229',
+    icaRouter: '0xF90A3d406C6F8321fe118861A357F4D7107760D7',
     bridgeToken: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
     warpRoute: '0xAd4350Ee0f9f5b85BaB115425426086Ae8384ebb',
     wrappedNative: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
@@ -26,12 +26,12 @@ export const SWAP_CHAIN_CONFIGS: Record<string, SwapChainConfig> = {
   base: {
     chainId: 8453,
     domainId: 8453,
-    universalRouter: '',
-    icaRouter: '0x5ed29F0f32636CC69b0c189D5ec82C09DE7Cb0a7',
+    universalRouter: '0xa9606caaC711Ac816E568356187EC7a009500Eb2',
+    icaRouter: '0x44647Cd983E80558793780f9a0c7C2aa9F384D07',
     bridgeToken: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
     warpRoute: '0x37e637891A558B5b621723cbf8Fc771525f280C1',
     wrappedNative: '0x4200000000000000000000000000000000000006',
-    icaBridgeRoute: '',
+    icaBridgeRoute: '0x37e637891A558B5b621723cbf8Fc771525f280C1',
   },
 };
 

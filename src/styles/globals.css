@@ -17,6 +17,7 @@ Place font files in public/fonts/ directory
   font-display: swap;
 }
 
+/* Custom fonts — fetched via `pnpm run fetch-fonts` (requires S3 creds). Falls back to system-ui if missing. */
 /* PP Fraktion Mono - Primary font */
 @font-face {
   font-family: 'PP Fraktion Mono';

@@ -123,6 +123,7 @@ module.exports = {
       }),
       boxShadow: ({ theme }) => ({
         'accent-glow': `inset 2px 2px 13px 2px ${theme('colors.accent.100')}`,
+        // Intentionally identical to accent-glow — error is differentiated via error-gradient background, not the glow
         'error-glow': `inset 2px 2px 13px 2px ${theme('colors.accent.100')}`,
         card: `0px 4px 6px ${theme('colors.gray.950')}1A`,
         button: `0 4px 6px ${theme('colors.gray.950')}1A`,

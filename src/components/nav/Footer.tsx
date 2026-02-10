@@ -1,4 +1,4 @@
-import { HyperlaneFooterLogo } from '../icons/HyperlaneGradientLogo';
+import { HyperlaneGradientLogo } from '../icons/HyperlaneGradientLogo';
 import { NavItem, navLinks } from './Nav';
 
 export function Footer() {
@@ -17,7 +17,7 @@ export function Footer() {
 function FooterLogo() {
   return (
     <div className="flex items-center justify-center">
-      <HyperlaneFooterLogo width={219} height={18} />
+      <HyperlaneGradientLogo width={219} height={18} />
     </div>
   );
 }

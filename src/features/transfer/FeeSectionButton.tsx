@@ -9,8 +9,10 @@ function useLoadingDots(isLoading: boolean, intervalMs = 1000) {
   useEffect(() => {
     if (!isLoading) return;
 
+    let count = 0;
     const interval = setInterval(() => {
-      setDotCount((prev) => (prev % 3) + 1);
+      count = (count % 3) + 1;
+      setDotCount(count);
     }, intervalMs);
 
     return () => clearInterval(interval);

@@ -13,7 +13,7 @@ export function Header() {
     <header className="relative flex w-full items-center justify-between bg-primary-25 px-4 py-3 shadow-[0px_4px_7px_rgba(0,0,0,0.05)] lg:justify-center lg:bg-transparent lg:px-6 lg:pb-2 lg:pt-3 lg:shadow-none">
       {/* Mobile/Tablet: Logo + Hamburger Menu */}
       <div className="flex items-center gap-3 lg:hidden">
-        <Link href="/">
+        <Link href="/" aria-label="Homepage">
           <Image src={Logo} width={36} alt="" className="h-auto" />
         </Link>
         <DropdownMenu

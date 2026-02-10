@@ -2,10 +2,12 @@ import {
   buildSwapAndBridgeTx,
   commitmentFromIcaCalls,
   deriveIcaAddress,
+  getBridgeFee,
+  getSwapQuote,
   normalizeCalls,
   shareCallsWithPrivateRelayer,
 } from '@hyperlane-xyz/sdk';
-import { BigNumber } from 'ethers';
+import { BigNumber, providers } from 'ethers';
 import { useCallback, useState } from 'react';
 import {
   Address,
@@ -43,6 +45,7 @@ export interface SwapBridgeParams {
   originDecimals: number;
   walletClient: WalletClient;
   publicClient: PublicClient;
+  ethersProvider: providers.Provider;
   onStatusChange: (status: TransferStatus) => void;
 }
 
@@ -96,6 +99,7 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
     originDecimals,
     walletClient,
     publicClient,
+    ethersProvider,
     onStatusChange,
   } = params;
 
@@ -120,6 +124,7 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
 
   const salt = randomSalt();
   const amountWei = parseUnits(amount, originDecimals);
+  const amountBN = BigNumber.from(amountWei.toString());
 
   const rawDestCalls =
     destinationTokenAddress.toLowerCase() !== destConfig.bridgeToken.toLowerCase()
@@ -136,11 +141,32 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
   const commitmentHash =
     normalizedCalls.length > 0 ? commitmentFromIcaCalls(normalizedCalls, salt) : salt;
 
+  onStatusChange(TransferStatus.Preparing);
+
+  const isNativeToken =
+    originTokenAddress === ZERO_ADDRESS ||
+    originTokenAddress.toLowerCase() === '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
+  const swapTokenAddress = isNativeToken ? originConfig.wrappedNative : originTokenAddress;
+
+  const swapOutput = await getSwapQuote(
+    ethersProvider,
+    swapTokenAddress,
+    originConfig.bridgeToken,
+    amountBN,
+  );
+
+  const bridge = await getBridgeFee(
+    ethersProvider,
+    originConfig.warpRoute,
+    destConfig.domainId,
+    swapOutput,
+  );
+
   const sdkParams = {
-    originToken: originTokenAddress,
+    originToken: swapTokenAddress,
     bridgeToken: originConfig.bridgeToken,
     destinationToken: destinationTokenAddress,
-    amount: BigNumber.from(amountWei.toString()),
+    amount: amountBN,
     recipient: icaAddress,
     originDomain: originConfig.domainId,
     destinationDomain: destConfig.domainId,
@@ -151,13 +177,16 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
     ismAddress: ZERO_ADDRESS,
     commitment: commitmentHash,
     slippage: DEFAULT_SLIPPAGE,
+    bridgeMsgFee: bridge.fee,
   };
 
   const { commands, inputs, value } = buildSwapAndBridgeTx(sdkParams);
 
-  onStatusChange(TransferStatus.SigningApprove);
-  const originToken = requireAddress(originTokenAddress, 'Origin token address required');
-  await checkAndApprove(walletClient, publicClient, originToken, universalRouter, amountWei);
+  if (!isNativeToken) {
+    onStatusChange(TransferStatus.SigningApprove);
+    const originToken = requireAddress(swapTokenAddress, 'Origin token address required');
+    await checkAndApprove(walletClient, publicClient, originToken, universalRouter, amountWei);
+  }
 
   onStatusChange(TransferStatus.SigningSwapBridge);
   const deadline = BigInt(Math.floor(Date.now() / 1000) + 1800);
@@ -167,7 +196,7 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
     args: [commands as Hex, inputs as Hex[], deadline],
   });
 
-  const txValue = BigInt(value.toString());
+  const txValue = BigInt(value.toString()) + (isNativeToken ? amountWei : 0n);
   const hash = await walletClient.sendTransaction({
     account,
     to: universalRouter,

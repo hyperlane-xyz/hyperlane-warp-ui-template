@@ -151,6 +151,8 @@ async function executeTransfer({
       const sender = walletClient.account?.address;
       if (!sender) throw new Error('No active account found');
 
+      const ethersProvider = multiProvider.getEthersV5Provider(origin);
+
       addTransfer({
         timestamp: new Date().getTime(),
         status: TransferStatus.Preparing,
@@ -174,6 +176,7 @@ async function executeTransfer({
         originDecimals: originToken.decimals,
         walletClient,
         publicClient,
+        ethersProvider,
         onStatusChange: (status) => {
           transferStatus = status;
           updateTransferStatus(transferIndex, status);

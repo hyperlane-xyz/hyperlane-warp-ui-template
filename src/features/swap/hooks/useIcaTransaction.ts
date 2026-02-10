@@ -6,13 +6,15 @@ import { getSwapConfig } from '../swapConfig';
 type IcaTransactionStatus = 'idle' | 'building' | 'signing' | 'confirming' | 'complete' | 'failed';
 
 const icaRouterAbi = parseAbi([
-  'function callRemote(uint32 destinationDomain, (address to,uint256 value,bytes data)[] calls) payable',
+  'function callRemote(uint32 destinationDomain, (address to,uint256 value,bytes data)[] calls) payable returns (bytes32)',
+  'function quoteGasPayment(uint32 destinationDomain) view returns (uint256)',
 ]);
 
 const erc20Abi = parseAbi(['function approve(address spender, uint256 amount) returns (bool)']);
 
 const warpRouteAbi = parseAbi([
-  'function transferRemote(uint32 destinationDomain, bytes32 recipient, uint256 amount) payable',
+  'function transferRemote(uint32 destinationDomain, bytes32 recipient, uint256 amount) payable returns (bytes32)',
+  'function quoteTransferRemote(uint32 destination, bytes32 recipient, uint256 amount) view returns ((address token, uint256 amount)[])',
 ]);
 
 export function useIcaTransaction(originChainName?: string, destinationChainName?: string) {
@@ -23,6 +25,7 @@ export function useIcaTransaction(originChainName?: string, destinationChainName
   const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
   const publicClient = usePublicClient({ chainId: originConfig?.chainId });
+  const destPublicClient = usePublicClient({ chainId: destConfig?.chainId });
 
   const sendFromIca = useCallback(
     async (params: {
@@ -36,6 +39,7 @@ export function useIcaTransaction(originChainName?: string, destinationChainName
           account: `0x${string}`;
           to: `0x${string}`;
           data: Hex;
+          value?: bigint;
           chain?: { id: number };
         }) => Promise<Hex>;
       };
@@ -62,19 +66,42 @@ export function useIcaTransaction(originChainName?: string, destinationChainName
         const amount = parseUnits(params.amount, params.decimals ?? 6);
         if (amount <= 0n) throw new Error('Amount must be greater than zero.');
 
+        const recipientBytes32 = pad(params.recipient as `0x${string}`, { size: 32 });
+
+        let bridgeMsgValue = 0n;
+        if (destPublicClient) {
+          const quotes = await destPublicClient.readContract({
+            address: destConfig.icaBridgeRoute as `0x${string}`,
+            abi: warpRouteAbi,
+            functionName: 'quoteTransferRemote',
+            args: [originConfig.domainId, recipientBytes32, amount],
+          });
+          for (const q of quotes) {
+            bridgeMsgValue += q.amount;
+          }
+        }
+
         const approveData = encodeFunctionData({
           abi: erc20Abi,
           functionName: 'approve',
           args: [destConfig.icaBridgeRoute as `0x${string}`, amount],
         });
 
-        const recipientBytes32 = pad(params.recipient as `0x${string}`, { size: 32 });
-
         const transferRemoteData = encodeFunctionData({
           abi: warpRouteAbi,
           functionName: 'transferRemote',
           args: [originConfig.domainId, recipientBytes32, amount],
         });
+
+        let icaGasPayment = 0n;
+        if (publicClient) {
+          icaGasPayment = await publicClient.readContract({
+            address: originConfig.icaRouter as `0x${string}`,
+            abi: icaRouterAbi,
+            functionName: 'quoteGasPayment',
+            args: [destConfig.domainId],
+          });
+        }
 
         const callRemoteData = encodeFunctionData({
           abi: icaRouterAbi,
@@ -85,18 +112,21 @@ export function useIcaTransaction(originChainName?: string, destinationChainName
               { to: params.token as `0x${string}`, value: 0n, data: approveData },
               {
                 to: destConfig.icaBridgeRoute as `0x${string}`,
-                value: 0n,
+                value: bridgeMsgValue,
                 data: transferRemoteData,
               },
             ],
           ],
         });
 
+        const totalValue = icaGasPayment + bridgeMsgValue;
+
         setStatus('signing');
         const hash = await params.signer.sendTransaction({
           account,
           to: originConfig.icaRouter as `0x${string}`,
           data: callRemoteData,
+          value: totalValue,
           chain: params.signer.chain,
         });
 
@@ -114,7 +144,7 @@ export function useIcaTransaction(originChainName?: string, destinationChainName
         setStatus('failed');
       }
     },
-    [publicClient, originConfig, destConfig],
+    [publicClient, destPublicClient, originConfig, destConfig],
   );
 
   const reset = useCallback(() => {

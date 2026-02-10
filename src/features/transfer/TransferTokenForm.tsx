@@ -42,8 +42,10 @@ import { useChainDisplayName, useMultiProvider } from '../chains/hooks';
 import { isMultiCollateralLimitExceeded } from '../limits/utils';
 import { useIsAccountSanctioned } from '../sanctions/hooks/useIsAccountSanctioned';
 import { useStore } from '../store';
+import { IcaPanel } from '../swap/components/IcaPanel';
 import { useIcaAddress } from '../swap/hooks/useIcaAddress';
-import { isSwapSupported } from '../swap/swapConfig';
+import { useSwapQuote } from '../swap/hooks/useSwapQuote';
+import { DEFAULT_SLIPPAGE, isSwapSupported } from '../swap/swapConfig';
 import { ImportTokenButton } from '../tokens/ImportTokenButton';
 import { TokenSelectField } from '../tokens/TokenSelectField';
 import { useIsApproveRequired } from '../tokens/approval';
@@ -188,6 +190,7 @@ export function TransferTokenForm() {
             <DestinationTokenCard isReview={isReview} />
           </TransferSection>
 
+          <ContextualIcaPanel />
           <ReviewDetails isReview={isReview} routeOverrideToken={routeOverrideToken} />
           <ButtonSection
             isReview={isReview}
@@ -476,6 +479,30 @@ function TokenBalance({
   );
 }
 
+function ContextualIcaPanel() {
+  const { values } = useFormikContext<TransferFormValues>();
+  const tokens = useTokens();
+  const collateralGroups = useCollateralGroups();
+  const multiProvider = useMultiProvider();
+
+  const originToken = getTokenByKey(tokens, values.originTokenKey);
+  const destinationToken = getTokenByKey(tokens, values.destinationTokenKey);
+  const { routeType } = useTransferRoute(originToken, destinationToken, collateralGroups);
+  const senderAddress = useAccountAddressForChain(multiProvider, originToken?.chainName);
+
+  if (routeType !== 'swap-bridge' || !originToken || !destinationToken || !senderAddress) {
+    return null;
+  }
+
+  return (
+    <IcaPanel
+      userAddress={senderAddress}
+      originChainName={originToken.chainName}
+      destinationChainName={destinationToken.chainName}
+    />
+  );
+}
+
 function ButtonSection({
   isReview,
   isValidating,
@@ -745,7 +772,23 @@ function ReviewDetails({
     !isReview,
   );
 
-  const isLoading = isSwapBridge ? false : isApproveLoading || isQuoteLoading;
+  const amountWeiForQuote = useMemo(() => {
+    if (!isSwapBridge || !originToken || !amount || parseFloat(amount) <= 0) return undefined;
+    try {
+      return toWei(amount, originToken.decimals);
+    } catch {
+      return undefined;
+    }
+  }, [isSwapBridge, originToken, amount]);
+
+  const { data: swapQuote, isLoading: isSwapQuoteLoading } = useSwapQuote(
+    isSwapBridge ? originToken?.chainName : undefined,
+    isSwapBridge ? destinationTokenByKey?.chainName : undefined,
+    isSwapBridge ? originToken?.addressOrDenom : undefined,
+    amountWeiForQuote,
+  );
+
+  const isLoading = isSwapBridge ? isSwapQuoteLoading : isApproveLoading || isQuoteLoading;
 
   const fees = useMemo(() => {
     if (isSwapBridge || !feeQuotes) return null;
@@ -796,6 +839,22 @@ function ReviewDetails({
                 <p className="flex">
                   <span className="min-w-[7.5rem]">Route</span>
                   <span>{`${originTokenSymbol}${originTokenSymbol !== 'USDC' ? ' → USDC' : ''} (${originToken?.chainName || ''}) → ${destinationToken?.symbol || 'USDC'} (${destinationToken?.chainName || ''})`}</span>
+                </p>
+                {swapQuote && (
+                  <>
+                    <p className="flex">
+                      <span className="min-w-[7.5rem]">Est. Received</span>
+                      <span>{`~${Number(swapQuote.swapOutput.toString()) / 1e6} USDC`}</span>
+                    </p>
+                    <p className="flex">
+                      <span className="min-w-[7.5rem]">Bridge Fee</span>
+                      <span>{`${Number(swapQuote.bridgeFee.toString()) / 1e18} ETH`}</span>
+                    </p>
+                  </>
+                )}
+                <p className="flex">
+                  <span className="min-w-[7.5rem]">Slippage</span>
+                  <span>{`${DEFAULT_SLIPPAGE * 100}%`}</span>
                 </p>
                 <p className="flex">
                   <span className="min-w-[7.5rem]">Delivery</span>

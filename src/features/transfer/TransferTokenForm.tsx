@@ -844,11 +844,11 @@ function ReviewDetails({
                   <>
                     <p className="flex">
                       <span className="min-w-[7.5rem]">Est. Received</span>
-                      <span>{`~${Number(swapQuote.swapOutput.toString()) / 1e6} USDC`}</span>
+                      <span>{`~${fromWei(swapQuote.swapOutput.toString(), destinationToken?.decimals)} ${destinationToken?.symbol || 'USDC'}`}</span>
                     </p>
                     <p className="flex">
                       <span className="min-w-[7.5rem]">Bridge Fee</span>
-                      <span>{`${Number(swapQuote.bridgeFee.toString()) / 1e18} ETH`}</span>
+                      <span>{`${fromWei(swapQuote.bridgeFee.toString())} ETH`}</span>
                     </p>
                   </>
                 )}

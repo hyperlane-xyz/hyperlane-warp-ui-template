@@ -16,7 +16,7 @@ export const SWAP_CHAIN_CONFIGS: Record<string, SwapChainConfig> = {
   arbitrum: {
     chainId: 42161,
     domainId: 42161,
-    universalRouter: '',
+    universalRouter: '0x21672Ef3f1a6D4Af2026BA9b872657d0cF75f41C',
     icaRouter: '0xF90A3d406C6F8321fe118861A357F4D7107760D7',
     bridgeToken: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
     warpRoute: '0xAd4350Ee0f9f5b85BaB115425426086Ae8384ebb',

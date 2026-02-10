@@ -1,0 +1,201 @@
+import {
+  buildSwapAndBridgeTx,
+  commitmentFromIcaCalls,
+  deriveIcaAddress,
+  normalizeCalls,
+  shareCallsWithPrivateRelayer,
+} from '@hyperlane-xyz/sdk';
+import { BigNumber } from 'ethers';
+import { useCallback, useState } from 'react';
+import {
+  Address,
+  Hex,
+  PublicClient,
+  WalletClient,
+  encodeFunctionData,
+  maxUint256,
+  parseAbi,
+  parseUnits,
+} from 'viem';
+import { DEFAULT_SLIPPAGE, SWAP_CHAINS, SWAP_CONTRACTS } from '../swap/swapConfig';
+import { TransferStatus } from './types';
+
+const COMMITMENTS_SERVICE_URL =
+  'https://offchain-lookup.services.hyperlane.xyz/callCommitments/calls';
+
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
+
+const erc20Abi = parseAbi([
+  'function allowance(address owner, address spender) view returns (uint256)',
+  'function approve(address spender, uint256 amount) returns (bool)',
+]);
+
+const universalRouterAbi = parseAbi([
+  'function execute(bytes commands, bytes[] inputs, uint256 deadline) external payable',
+]);
+
+export interface SwapBridgeParams {
+  originTokenAddress: string;
+  destinationTokenAddress: string;
+  amount: string;
+  originDecimals: number;
+  walletClient: WalletClient;
+  publicClient: PublicClient;
+  onStatusChange: (status: TransferStatus) => void;
+}
+
+function randomSalt(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(32));
+  return '0x' + Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+function requireAddress(value: string, errorMessage: string): Address {
+  if (!value || value.length < 10) throw new Error(errorMessage);
+  return value as Address;
+}
+
+async function checkAndApprove(
+  walletClient: WalletClient,
+  publicClient: PublicClient,
+  tokenAddress: Address,
+  spender: Address,
+  amount: bigint,
+): Promise<void> {
+  const owner = walletClient.account?.address;
+  if (!owner) throw new Error('Wallet not connected');
+
+  const currentAllowance = await publicClient.readContract({
+    address: tokenAddress,
+    abi: erc20Abi,
+    functionName: 'allowance',
+    args: [owner, spender],
+  });
+
+  if (currentAllowance < amount) {
+    const approveHash = await walletClient.writeContract({
+      account: owner,
+      address: tokenAddress,
+      abi: erc20Abi,
+      functionName: 'approve',
+      args: [spender, maxUint256],
+      chain: walletClient.chain,
+    });
+    await publicClient.waitForTransactionReceipt({ hash: approveHash, confirmations: 1 });
+  }
+}
+
+export async function executeSwapBridge(params: SwapBridgeParams): Promise<string> {
+  const {
+    originTokenAddress,
+    destinationTokenAddress,
+    amount,
+    originDecimals,
+    walletClient,
+    publicClient,
+    onStatusChange,
+  } = params;
+
+  const account = walletClient.account?.address;
+  if (!account) throw new Error('Wallet not connected');
+
+  const universalRouter = requireAddress(
+    SWAP_CONTRACTS.universalRouterArb,
+    'Universal Router address not configured',
+  );
+
+  const icaAddress = deriveIcaAddress({
+    origin: SWAP_CHAINS.origin.domainId,
+    owner: account,
+    routerAddress: SWAP_CONTRACTS.icaRouterBase,
+    ismAddress: ZERO_ADDRESS,
+  });
+
+  const salt = randomSalt();
+  const amountWei = parseUnits(amount, originDecimals);
+
+  const rawDestCalls =
+    destinationTokenAddress.toLowerCase() !== SWAP_CONTRACTS.usdcBase.toLowerCase()
+      ? [
+          {
+            to: destinationTokenAddress,
+            data: '0x',
+            value: '0',
+          },
+        ]
+      : [];
+
+  const normalizedCalls = rawDestCalls.length > 0 ? normalizeCalls(rawDestCalls) : [];
+  const commitmentHash =
+    normalizedCalls.length > 0 ? commitmentFromIcaCalls(normalizedCalls, salt) : salt;
+
+  const sdkParams = {
+    originToken: originTokenAddress,
+    bridgeToken: SWAP_CONTRACTS.usdcArb,
+    destinationToken: destinationTokenAddress,
+    amount: BigNumber.from(amountWei.toString()),
+    recipient: icaAddress,
+    originDomain: SWAP_CHAINS.origin.domainId,
+    destinationDomain: SWAP_CHAINS.destination.domainId,
+    warpRouteAddress: SWAP_CONTRACTS.warpRouteArb,
+    icaRouterAddress: SWAP_CONTRACTS.icaRouterArb,
+    remoteIcaRouterAddress: SWAP_CONTRACTS.icaRouterBase,
+    universalRouterAddress: universalRouter,
+    ismAddress: ZERO_ADDRESS,
+    commitment: commitmentHash,
+    slippage: DEFAULT_SLIPPAGE,
+  };
+
+  const { commands, inputs, value } = buildSwapAndBridgeTx(sdkParams);
+
+  onStatusChange(TransferStatus.SigningApprove);
+  const originToken = requireAddress(originTokenAddress, 'Origin token address required');
+  await checkAndApprove(walletClient, publicClient, originToken, universalRouter, amountWei);
+
+  onStatusChange(TransferStatus.SigningSwapBridge);
+  const deadline = BigInt(Math.floor(Date.now() / 1000) + 1800);
+  const data = encodeFunctionData({
+    abi: universalRouterAbi,
+    functionName: 'execute',
+    args: [commands as Hex, inputs as Hex[], deadline],
+  });
+
+  const txValue = BigInt(value.toString());
+  const hash = await walletClient.sendTransaction({
+    account,
+    to: universalRouter,
+    data,
+    value: txValue,
+    chain: walletClient.chain,
+  });
+
+  onStatusChange(TransferStatus.ConfirmingSwapBridge);
+  await publicClient.waitForTransactionReceipt({ hash, confirmations: 1 });
+
+  if (rawDestCalls.length > 0) {
+    onStatusChange(TransferStatus.PostingCommitment);
+    await shareCallsWithPrivateRelayer(COMMITMENTS_SERVICE_URL, {
+      calls: rawDestCalls,
+      relayers: [],
+      salt,
+      commitmentDispatchTx: hash,
+      originDomain: SWAP_CHAINS.origin.domainId,
+    });
+  }
+
+  return hash;
+}
+
+export function useSwapBridgeTransfer() {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const execute = useCallback(async (params: SwapBridgeParams) => {
+    setIsLoading(true);
+    try {
+      return await executeSwapBridge(params);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  return { execute, isLoading };
+}

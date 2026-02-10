@@ -2,7 +2,8 @@ import { useCallback, useState } from 'react';
 import { Hex, encodeFunctionData, isAddress, pad, parseAbi, parseUnits } from 'viem';
 import { usePublicClient } from 'wagmi';
 import { SWAP_CHAINS, SWAP_CONTRACTS } from '../swapConfig';
-import { IcaTransactionStatus } from '../types';
+
+type IcaTransactionStatus = 'idle' | 'building' | 'signing' | 'confirming' | 'complete' | 'failed';
 
 const icaRouterAbi = parseAbi([
   'function callRemote(uint32 destinationDomain, (address to,uint256 value,bytes data)[] calls) payable',

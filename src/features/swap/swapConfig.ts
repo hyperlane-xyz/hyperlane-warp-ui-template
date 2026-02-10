@@ -6,6 +6,7 @@ export const SWAP_CHAINS = {
 export const SWAP_CONTRACTS = {
   universalRouterArb: '',
   universalRouterBase: '',
+  warpRouteArb: '0x0FC41a92F526A8CD22060A4052e156502D6B9db0',
   icaRouterArb: '0xCd2858B6bCaA9b628EBc4892F578b7d37E9ec229',
   icaRouterBase: '0x5ed29F0f32636CC69b0c189D5ec82C09DE7Cb0a7',
   icaBridgeRouteBase: '',

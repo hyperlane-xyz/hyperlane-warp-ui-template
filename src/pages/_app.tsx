@@ -8,6 +8,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { ErrorBoundary } from '../components/errors/ErrorBoundary';
 import { AppLayout } from '../components/layout/AppLayout';
 import { WarpContextInitGate } from '../features/WarpContextInitGate';
+import { AleoWalletContext } from '../features/wallet/context/AleoWalletContext';
 import { CosmosWalletContext } from '../features/wallet/context/CosmosWalletContext';
 import { EvmWalletContext } from '../features/wallet/context/EvmWalletContext';
 import { RadixWalletContext } from '../features/wallet/context/RadixWalletContext';
@@ -43,10 +44,12 @@ export default function App({ Component, pageProps }: AppProps) {
                 <CosmosWalletContext>
                   <StarknetWalletContext>
                     <RadixWalletContext>
-                      <AppLayout>
-                        <Component {...pageProps} />
-                        <Analytics />
-                      </AppLayout>
+                      <AleoWalletContext>
+                        <AppLayout>
+                          <Component {...pageProps} />
+                          <Analytics />
+                        </AppLayout>
+                      </AleoWalletContext>
                     </RadixWalletContext>
                   </StarknetWalletContext>
                 </CosmosWalletContext>

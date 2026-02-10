@@ -28,6 +28,8 @@
     "@intercom/messenger-js-sdk": "^0.0.18",
     "@metamask/post-message-stream": "6.1.2",
     "@metamask/providers": "10.2.1",
+    "@provablehq/aleo-wallet-adaptor-react": "0.3.0-alpha.1",
+    "@provablehq/aleo-wallet-adaptor-shield": "0.3.0-alpha.1",
     "@radixdlt/babylon-gateway-api-sdk": "^1.10.1",
     "@radixdlt/radix-dapp-toolkit": "^2.2.1",
     "@rainbow-me/rainbowkit": "2.2.0",
@@ -123,7 +125,9 @@
     "lint": "next lint",
     "start": "next start",
     "test": "vitest --watch false",
-    "prettier": "prettier --write ./src"
+    "prettier": "prettier --write ./src",
+    "link:monorepo": "node scripts/link-monorepo.js utils provider-sdk deploy-sdk sdk widgets",
+    "unlink:monorepo": "node scripts/unlink-monorepo.js"
   },
   "types": "dist/src/index.d.ts",
   "pnpm": {

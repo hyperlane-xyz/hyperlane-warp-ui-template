@@ -37,6 +37,7 @@ npm-debug.log*
 *.tsbuildinfo
 
 .idea
+.monorepo-tarballs
 
 .opencode
 .sisyphus

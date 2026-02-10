@@ -43,6 +43,7 @@ import { isMultiCollateralLimitExceeded } from '../limits/utils';
 import { useIsAccountSanctioned } from '../sanctions/hooks/useIsAccountSanctioned';
 import { useStore } from '../store';
 import { useIcaAddress } from '../swap/hooks/useIcaAddress';
+import { isSwapSupported } from '../swap/swapConfig';
 import { ImportTokenButton } from '../tokens/ImportTokenButton';
 import { TokenSelectField } from '../tokens/TokenSelectField';
 import { useIsApproveRequired } from '../tokens/approval';
@@ -352,7 +353,11 @@ function DestinationTokenCard({ isReview }: { isReview: boolean }) {
   const { routeType } = useTransferRoute(originToken, destinationToken, collateralGroups);
 
   const senderAddress = useAccountAddressForChain(multiProvider, originToken?.chainName);
-  const { icaAddress } = useIcaAddress(senderAddress ?? undefined);
+  const { icaAddress } = useIcaAddress(
+    senderAddress ?? undefined,
+    originToken?.chainName,
+    destinationToken?.chainName,
+  );
 
   const connectedDestAddress = useAccountAddressForChain(
     multiProvider,
@@ -901,8 +906,6 @@ function useFormInitialValues(): TransferFormValues {
   );
 }
 
-const SUPPORTED_SWAP_CHAINS = new Set(['arbitrum', 'base']);
-
 function getRouteType(
   _warpCore: WarpCore,
   tokens: Token[],
@@ -913,14 +916,7 @@ function getRouteType(
   const destinationToken = getTokenByKey(tokens, values.destinationTokenKey);
   if (!originToken || !destinationToken) return 'unavailable';
   if (checkTokenHasRoute(originToken, destinationToken, collateralGroups)) return 'warp';
-
-  if (
-    SUPPORTED_SWAP_CHAINS.has(originToken.chainName) &&
-    SUPPORTED_SWAP_CHAINS.has(destinationToken.chainName) &&
-    originToken.chainName !== destinationToken.chainName
-  ) {
-    return 'swap-bridge';
-  }
+  if (isSwapSupported(originToken.chainName, destinationToken.chainName)) return 'swap-bridge';
   return 'unavailable';
 }
 

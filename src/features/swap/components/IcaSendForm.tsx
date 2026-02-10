@@ -3,17 +3,32 @@ import { useMemo, useState } from 'react';
 import { useWalletClient } from 'wagmi';
 import { useIcaBalance } from '../hooks/useIcaBalance';
 import { useIcaTransaction } from '../hooks/useIcaTransaction';
-import { SWAP_CHAINS } from '../swapConfig';
+import { getSwapConfig } from '../swapConfig';
 
 interface IcaSendFormProps {
   icaAddress: string | null;
   defaultRecipient?: string;
+  originChainName: string;
+  destinationChainName: string;
 }
 
-export function IcaSendForm({ icaAddress, defaultRecipient }: IcaSendFormProps) {
+export function IcaSendForm({
+  icaAddress,
+  defaultRecipient,
+  originChainName,
+  destinationChainName,
+}: IcaSendFormProps) {
+  const destConfig = getSwapConfig(destinationChainName);
   const { data: walletClient } = useWalletClient();
-  const { data: balances } = useIcaBalance(icaAddress, SWAP_CHAINS.destination.chainId);
-  const { status, error, txHash, sendFromIca, reset } = useIcaTransaction();
+  const { data: balances } = useIcaBalance(
+    icaAddress,
+    destConfig?.chainId ?? 0,
+    destinationChainName,
+  );
+  const { status, error, txHash, sendFromIca, reset } = useIcaTransaction(
+    originChainName,
+    destinationChainName,
+  );
 
   const tokenOptions = useMemo(() => balances?.tokens || [], [balances?.tokens]);
   const [selectedToken, setSelectedToken] = useState(tokenOptions[0]?.address || '');

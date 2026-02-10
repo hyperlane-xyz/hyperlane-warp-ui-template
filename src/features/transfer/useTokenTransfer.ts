@@ -23,7 +23,6 @@ import { trackEvent } from '../analytics/utils';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { AppState, useStore } from '../store';
-import { SWAP_CHAINS } from '../swap/swapConfig';
 import { getTokenByKey, useWarpCore } from '../tokens/hooks';
 import { TransferContext, TransferFormValues, TransferStatus } from './types';
 import { executeSwapBridge } from './useSwapBridgeTransfer';
@@ -49,7 +48,7 @@ export function useTokenTransfer(onDone?: () => void) {
   const activeChains = useActiveChains(multiProvider);
   const transactionFns = useTransactionFns(multiProvider);
   const { data: walletClient } = useWalletClient();
-  const publicClient = usePublicClient({ chainId: SWAP_CHAINS.origin.chainId });
+  const publicClient = usePublicClient();
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -167,6 +166,8 @@ async function executeTransfer({
       updateTransferStatus(transferIndex, (transferStatus = TransferStatus.CreatingTxs));
 
       const txHash = await executeSwapBridge({
+        originChainName: origin,
+        destinationChainName: destination,
         originTokenAddress: originToken.addressOrDenom,
         destinationTokenAddress: destinationToken.addressOrDenom,
         amount,

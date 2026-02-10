@@ -2,7 +2,10 @@ import type { NextPage } from 'next';
 import { useAccount } from 'wagmi';
 import { TipCard } from '../components/tip/TipCard';
 import { IcaPanel } from '../features/swap/components/IcaPanel';
+import { SWAP_CHAIN_CONFIGS } from '../features/swap/swapConfig';
 import { TransferTokenCard } from '../features/transfer/TransferTokenCard';
+
+const swapChainNames = Object.keys(SWAP_CHAIN_CONFIGS);
 
 const Home: NextPage = () => {
   const { address } = useAccount();
@@ -13,7 +16,13 @@ const Home: NextPage = () => {
         <TipCard />
       </div>
       <TransferTokenCard />
-      {address && <IcaPanel userAddress={address} />}
+      {address && swapChainNames.length >= 2 && (
+        <IcaPanel
+          userAddress={address}
+          originChainName={swapChainNames[0]}
+          destinationChainName={swapChainNames[1]}
+        />
+      )}
     </div>
   );
 };

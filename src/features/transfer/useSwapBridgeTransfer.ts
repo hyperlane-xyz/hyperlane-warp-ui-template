@@ -17,7 +17,7 @@ import {
   parseAbi,
   parseUnits,
 } from 'viem';
-import { DEFAULT_SLIPPAGE, SWAP_CHAINS, SWAP_CONTRACTS } from '../swap/swapConfig';
+import { DEFAULT_SLIPPAGE, getSwapConfig } from '../swap/swapConfig';
 import { TransferStatus } from './types';
 
 const COMMITMENTS_SERVICE_URL =
@@ -35,6 +35,8 @@ const universalRouterAbi = parseAbi([
 ]);
 
 export interface SwapBridgeParams {
+  originChainName: string;
+  destinationChainName: string;
   originTokenAddress: string;
   destinationTokenAddress: string;
   amount: string;
@@ -86,6 +88,8 @@ async function checkAndApprove(
 
 export async function executeSwapBridge(params: SwapBridgeParams): Promise<string> {
   const {
+    originChainName,
+    destinationChainName,
     originTokenAddress,
     destinationTokenAddress,
     amount,
@@ -95,18 +99,22 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
     onStatusChange,
   } = params;
 
+  const originConfig = getSwapConfig(originChainName);
+  const destConfig = getSwapConfig(destinationChainName);
+  if (!originConfig || !destConfig) throw new Error('Swap not supported for selected chains');
+
   const account = walletClient.account?.address;
   if (!account) throw new Error('Wallet not connected');
 
   const universalRouter = requireAddress(
-    SWAP_CONTRACTS.universalRouterArb,
+    originConfig.universalRouter,
     'Universal Router address not configured',
   );
 
   const icaAddress = deriveIcaAddress({
-    origin: SWAP_CHAINS.origin.domainId,
+    origin: originConfig.domainId,
     owner: account,
-    routerAddress: SWAP_CONTRACTS.icaRouterBase,
+    routerAddress: destConfig.icaRouter,
     ismAddress: ZERO_ADDRESS,
   });
 
@@ -114,7 +122,7 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
   const amountWei = parseUnits(amount, originDecimals);
 
   const rawDestCalls =
-    destinationTokenAddress.toLowerCase() !== SWAP_CONTRACTS.usdcBase.toLowerCase()
+    destinationTokenAddress.toLowerCase() !== destConfig.bridgeToken.toLowerCase()
       ? [
           {
             to: destinationTokenAddress,
@@ -130,15 +138,15 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
 
   const sdkParams = {
     originToken: originTokenAddress,
-    bridgeToken: SWAP_CONTRACTS.usdcArb,
+    bridgeToken: originConfig.bridgeToken,
     destinationToken: destinationTokenAddress,
     amount: BigNumber.from(amountWei.toString()),
     recipient: icaAddress,
-    originDomain: SWAP_CHAINS.origin.domainId,
-    destinationDomain: SWAP_CHAINS.destination.domainId,
-    warpRouteAddress: SWAP_CONTRACTS.warpRouteArb,
-    icaRouterAddress: SWAP_CONTRACTS.icaRouterArb,
-    remoteIcaRouterAddress: SWAP_CONTRACTS.icaRouterBase,
+    originDomain: originConfig.domainId,
+    destinationDomain: destConfig.domainId,
+    warpRouteAddress: originConfig.warpRoute,
+    icaRouterAddress: originConfig.icaRouter,
+    remoteIcaRouterAddress: destConfig.icaRouter,
     universalRouterAddress: universalRouter,
     ismAddress: ZERO_ADDRESS,
     commitment: commitmentHash,
@@ -178,7 +186,7 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
       relayers: [],
       salt,
       commitmentDispatchTx: hash,
-      originDomain: SWAP_CHAINS.origin.domainId,
+      originDomain: originConfig.domainId,
     });
   }
 

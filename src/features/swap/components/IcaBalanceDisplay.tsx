@@ -1,15 +1,25 @@
 import { shortenAddress } from '@hyperlane-xyz/utils';
 import { CopyButton } from '@hyperlane-xyz/widgets';
 import { useIcaBalance } from '../hooks/useIcaBalance';
-import { SWAP_CHAINS } from '../swapConfig';
+import { getSwapConfig } from '../swapConfig';
 
 interface IcaBalanceDisplayProps {
   icaAddress: string | null;
   chainName: string;
+  destinationChainName: string;
 }
 
-export function IcaBalanceDisplay({ icaAddress, chainName }: IcaBalanceDisplayProps) {
-  const { data, isLoading } = useIcaBalance(icaAddress, SWAP_CHAINS.destination.chainId);
+export function IcaBalanceDisplay({
+  icaAddress,
+  chainName,
+  destinationChainName,
+}: IcaBalanceDisplayProps) {
+  const destConfig = getSwapConfig(destinationChainName);
+  const { data, isLoading } = useIcaBalance(
+    icaAddress,
+    destConfig?.chainId ?? 0,
+    destinationChainName,
+  );
 
   return (
     <div className="rounded-[7px] border border-gray-400/25 bg-white p-3 shadow-input">

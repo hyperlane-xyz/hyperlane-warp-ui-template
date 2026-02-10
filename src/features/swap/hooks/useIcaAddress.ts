@@ -1,5 +1,6 @@
 import { deriveIcaAddress } from '@hyperlane-xyz/sdk';
 import { useMemo } from 'react';
+import { logger } from '../../../utils/logger';
 import { getSwapConfig } from '../swapConfig';
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
@@ -20,13 +21,16 @@ export function useIcaAddress(
     if (!originConfig || !destConfig) return null;
 
     try {
-      return deriveIcaAddress({
+      const addr = deriveIcaAddress({
         origin: originConfig.domainId,
         owner: userAddress,
         routerAddress: destConfig.icaRouter,
         ismAddress: ZERO_ADDRESS,
       });
-    } catch {
+      logger.debug('Derived ICA address:', addr);
+      return addr;
+    } catch (err) {
+      logger.error('Failed to derive ICA address:', err);
       return null;
     }
   }, [userAddress, originChainName, destinationChainName]);

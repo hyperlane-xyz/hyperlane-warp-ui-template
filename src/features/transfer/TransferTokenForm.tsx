@@ -795,7 +795,7 @@ function ReviewDetails({
                 </p>
                 <p className="flex">
                   <span className="min-w-[7.5rem]">Route</span>
-                  <span>{`${originTokenSymbol} → USDC → ${destinationToken?.symbol || ''}`}</span>
+                  <span>{`${originTokenSymbol}${originTokenSymbol !== 'USDC' ? ' → USDC' : ''} (${originToken?.chainName || ''}) → ${destinationToken?.symbol || 'USDC'} (${destinationToken?.chainName || ''})`}</span>
                 </p>
                 <p className="flex">
                   <span className="min-w-[7.5rem]">Delivery</span>

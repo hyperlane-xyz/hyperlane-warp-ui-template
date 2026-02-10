@@ -19,8 +19,7 @@ import {
 import { DEFAULT_SLIPPAGE, SWAP_CHAINS, SWAP_CONTRACTS } from './swapConfig';
 import { SwapFormValues, SwapQuote, SwapStatus } from './types';
 
-const COMMITMENTS_SERVICE_URL =
-  'https://offchain-lookup.services.hyperlane.xyz/callCommitments';
+const COMMITMENTS_SERVICE_URL = 'https://offchain-lookup.services.hyperlane.xyz/callCommitments';
 
 const Commands = {
   V3_SWAP_EXACT_IN: 0x00,
@@ -190,10 +189,19 @@ function buildDestinationCalls(values: SwapFormValues, quote: SwapQuote): Destin
     functionName: 'exactInputSingle',
     args: [
       {
-        tokenIn: requireAddress(SWAP_CONTRACTS.usdcBase, 'Missing Base USDC token address in swapConfig'),
-        tokenOut: requireAddress(values.destinationTokenAddress, 'Destination token address is required'),
+        tokenIn: requireAddress(
+          SWAP_CONTRACTS.usdcBase,
+          'Missing Base USDC token address in swapConfig',
+        ),
+        tokenOut: requireAddress(
+          values.destinationTokenAddress,
+          'Destination token address is required',
+        ),
         fee: 500,
-        recipient: requireAddress(SWAP_CONTRACTS.icaRouterBase, 'Missing Base ICA router in swapConfig'),
+        recipient: requireAddress(
+          SWAP_CONTRACTS.icaRouterBase,
+          'Missing Base ICA router in swapConfig',
+        ),
         amountIn: inputAmount,
         amountOutMinimum: outputMin,
         sqrtPriceLimitX96: 0,
@@ -216,9 +224,7 @@ function computeCommitmentHash(calls: DestinationCall[], salt: Hex): Hex {
     [calls],
   );
 
-  return keccak256(
-    encodeAbiParameters(parseAbiParameters('bytes32, bytes'), [salt, callsPayload]),
-  );
+  return keccak256(encodeAbiParameters(parseAbiParameters('bytes32, bytes'), [salt, callsPayload]));
 }
 
 async function postCommitment(params: PostCommitmentParams): Promise<PostCommitmentResult> {
@@ -252,7 +258,9 @@ async function postCommitment(params: PostCommitmentParams): Promise<PostCommitm
   const successful = isObject(body) ? body.success !== false : true;
   return {
     success: successful,
-    error: successful ? undefined : getCommitmentError(body) || 'Call commitments service rejected request',
+    error: successful
+      ? undefined
+      : getCommitmentError(body) || 'Call commitments service rejected request',
   };
 }
 
@@ -307,7 +315,10 @@ function buildOriginTransaction(
   ]);
 
   const originToken = requireAddress(values.originTokenAddress, 'Origin token address is required');
-  const usdcArb = requireAddress(SWAP_CONTRACTS.usdcArb, 'Missing Arbitrum USDC token in swapConfig');
+  const usdcArb = requireAddress(
+    SWAP_CONTRACTS.usdcArb,
+    'Missing Arbitrum USDC token in swapConfig',
+  );
   const universalRouterArb = requireAddress(
     SWAP_CONTRACTS.universalRouterArb,
     'Missing Arbitrum Universal Router address in swapConfig',

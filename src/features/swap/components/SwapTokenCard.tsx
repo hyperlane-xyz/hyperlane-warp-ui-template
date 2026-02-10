@@ -48,7 +48,9 @@ export function SwapTokenCard({
           disabled={disabled}
           className="flex w-full items-center justify-between rounded border border-gray-300 px-3 py-2 text-left text-sm text-gray-900 transition-colors hover:border-gray-400 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          <span>{selectedToken ? `${selectedToken.symbol} - ${selectedToken.name}` : 'Select token'}</span>
+          <span>
+            {selectedToken ? `${selectedToken.symbol} - ${selectedToken.name}` : 'Select token'}
+          </span>
           <span className="text-gray-450">v</span>
         </button>
 
@@ -65,7 +67,9 @@ export function SwapTokenCard({
                 }}
                 className={clsx(
                   'flex w-full items-center justify-between px-3 py-2 text-left text-sm transition-colors hover:bg-gray-100 disabled:cursor-not-allowed',
-                  selectedToken?.address === token.address ? 'bg-gray-100 text-gray-900' : 'text-gray-700',
+                  selectedToken?.address === token.address
+                    ? 'bg-gray-100 text-gray-900'
+                    : 'text-gray-700',
                 )}
               >
                 <span>{token.symbol}</span>
@@ -88,10 +92,14 @@ export function SwapTokenCard({
             step="any"
           />
         ) : (
-          <div className="font-secondary text-xl font-normal text-gray-900">Estimated output: {displayAmount}</div>
+          <div className="font-secondary text-xl font-normal text-gray-900">
+            Estimated output: {displayAmount}
+          </div>
         )}
 
-        {balance && <div className="mt-1 text-xs leading-[18px] text-gray-450">Balance: {balance}</div>}
+        {balance && (
+          <div className="mt-1 text-xs leading-[18px] text-gray-450">Balance: {balance}</div>
+        )}
       </div>
     </div>
   );

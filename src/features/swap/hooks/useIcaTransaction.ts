@@ -46,7 +46,8 @@ export function useIcaTransaction() {
         if (!account) throw new Error('Wallet account unavailable. Reconnect wallet and retry.');
         if (!isAddress(params.token)) throw new Error('Invalid token address.');
         if (!isAddress(params.recipient)) throw new Error('Invalid recipient address.');
-        if (!isAddress(SWAP_CONTRACTS.icaRouterArb)) throw new Error('ICA router missing in swapConfig.');
+        if (!isAddress(SWAP_CONTRACTS.icaRouterArb))
+          throw new Error('ICA router missing in swapConfig.');
         if (!isAddress(SWAP_CONTRACTS.icaBridgeRouteBase)) {
           throw new Error('Set SWAP_CONTRACTS.icaBridgeRouteBase before using ICA sends.');
         }
@@ -71,14 +72,17 @@ export function useIcaTransaction() {
         const callRemoteData = encodeFunctionData({
           abi: icaRouterAbi,
           functionName: 'callRemote',
-          args: [SWAP_CHAINS.destination.domainId, [
-            { to: params.token as `0x${string}`, value: 0n, data: approveData },
-            {
-              to: SWAP_CONTRACTS.icaBridgeRouteBase as `0x${string}`,
-              value: 0n,
-              data: transferRemoteData,
-            },
-          ]],
+          args: [
+            SWAP_CHAINS.destination.domainId,
+            [
+              { to: params.token as `0x${string}`, value: 0n, data: approveData },
+              {
+                to: SWAP_CONTRACTS.icaBridgeRouteBase as `0x${string}`,
+                value: 0n,
+                data: transferRemoteData,
+              },
+            ],
+          ],
         });
 
         setStatus('signing');

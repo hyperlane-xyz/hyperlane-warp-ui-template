@@ -15,7 +15,7 @@ export function useIcaBalance(icaAddress: string | null, chainId: number) {
   const publicClient = usePublicClient({ chainId });
 
   return useQuery({
-    queryKey: ['icaBalance', icaAddress, chainId],
+    queryKey: ['icaBalance', icaAddress, chainId, publicClient] as const,
     queryFn: async (): Promise<{ tokens: IcaTokenBalance[] } | null> => {
       if (!icaAddress) return null;
 
@@ -23,7 +23,11 @@ export function useIcaBalance(icaAddress: string | null, chainId: number) {
         return {
           tokens: [
             { symbol: 'USDC', balance: '0.00', address: SWAP_CONTRACTS.usdcBase },
-            { symbol: 'ETH', balance: '0.00', address: '0x0000000000000000000000000000000000000000' },
+            {
+              symbol: 'ETH',
+              balance: '0.00',
+              address: '0x0000000000000000000000000000000000000000',
+            },
           ],
         };
       }

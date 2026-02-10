@@ -11,7 +11,8 @@ Place font files in public/fonts/ directory
 /* PP Valve - Secondary font */
 @font-face {
   font-family: 'PP Valve';
-  src: url('/fonts/PP Valve/PP Valve - Plain Family v1.1/variable/PPValve-PlainVariable.woff2') format('woff2');
+  src: url('/fonts/PP Valve/PP Valve - Plain Family v1.1/variable/PPValve-PlainVariable.woff2')
+    format('woff2');
   font-weight: 100 900;
   font-style: normal;
   font-display: swap;

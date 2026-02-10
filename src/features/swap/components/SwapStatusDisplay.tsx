@@ -85,7 +85,12 @@ export function SwapStatusDisplay({ status, txHash, error, onReset }: SwapStatus
 function getStatusIcon(status: SwapStatus) {
   if (status === SwapStatus.Complete) {
     return (
-      <svg className="h-4 w-4 text-green-600" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+      <svg
+        className="h-4 w-4 text-green-600"
+        viewBox="0 0 20 20"
+        fill="currentColor"
+        aria-hidden="true"
+      >
         <path
           fillRule="evenodd"
           d="M16.704 5.29a1 1 0 010 1.414l-7.25 7.25a1 1 0 01-1.414 0l-3-3a1 1 0 011.414-1.414L8.75 11.836l6.543-6.546a1 1 0 011.41 0z"
@@ -97,7 +102,12 @@ function getStatusIcon(status: SwapStatus) {
 
   if (status === SwapStatus.Failed) {
     return (
-      <svg className="h-4 w-4 text-red-600" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+      <svg
+        className="h-4 w-4 text-red-600"
+        viewBox="0 0 20 20"
+        fill="currentColor"
+        aria-hidden="true"
+      >
         <path
           fillRule="evenodd"
           d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-10.293a1 1 0 00-1.414-1.414L10 8.586 7.707 6.293a1 1 0 00-1.414 1.414L8.586 10l-2.293 2.293a1 1 0 101.414 1.414L10 11.414l2.293 2.293a1 1 0 001.414-1.414L11.414 10l2.293-2.293z"

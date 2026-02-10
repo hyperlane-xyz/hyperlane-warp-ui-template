@@ -1,7 +1,7 @@
 import { useState } from 'react';
+import { useIcaAddress } from '../hooks/useIcaAddress';
 import { IcaBalanceDisplay } from './IcaBalanceDisplay';
 import { IcaSendForm } from './IcaSendForm';
-import { useIcaAddress } from '../hooks/useIcaAddress';
 
 interface IcaPanelProps {
   userAddress: string | undefined;
@@ -39,7 +39,9 @@ export function IcaPanel({ userAddress }: IcaPanelProps) {
             {showSendForm ? 'Hide send form' : 'Send from ICA'}
           </button>
 
-          {showSendForm ? <IcaSendForm icaAddress={icaAddress} defaultRecipient={userAddress} /> : null}
+          {showSendForm ? (
+            <IcaSendForm icaAddress={icaAddress} defaultRecipient={userAddress} />
+          ) : null}
         </div>
       ) : null}
     </div>

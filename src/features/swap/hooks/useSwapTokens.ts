@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { SWAP_CHAINS, SWAP_CONTRACTS } from '../swapConfig';
 import { SwapToken } from '../types';
 
@@ -61,12 +61,6 @@ export function useSwapTokens(chainId: number, initialTokenAddress?: string) {
     if (!initialTokenAddress) return tokens[0] ?? null;
     return tokens.find((token) => token.address === initialTokenAddress) ?? tokens[0] ?? null;
   });
-
-  useEffect(() => {
-    if (!initialTokenAddress) return;
-    const token = tokens.find((item) => item.address === initialTokenAddress);
-    if (token) setSelectedToken(token);
-  }, [initialTokenAddress, tokens]);
 
   return { tokens, selectedToken, setSelectedToken };
 }

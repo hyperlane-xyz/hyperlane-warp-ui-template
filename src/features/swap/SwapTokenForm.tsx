@@ -1,5 +1,9 @@
 import { ProtocolType } from '@hyperlane-xyz/utils';
-import { useAccountAddressForChain, useAccountForChain, useConnectFns } from '@hyperlane-xyz/widgets';
+import {
+  useAccountAddressForChain,
+  useAccountForChain,
+  useConnectFns,
+} from '@hyperlane-xyz/widgets';
 import { Form, Formik, useFormikContext } from 'formik';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { usePublicClient, useWalletClient } from 'wagmi';
@@ -7,18 +11,18 @@ import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareS
 import { useChainProtocol, useMultiProvider } from '../chains/hooks';
 import { useEvmWalletBalance } from '../tokens/balances';
 import { TransferSection } from '../transfer/TransferSection';
-import { SwapDirectionIndicator } from './components/SwapDirectionIndicator';
 import { IcaPanel } from './components/IcaPanel';
+import { SwapDirectionIndicator } from './components/SwapDirectionIndicator';
 import { SwapQuoteDisplay } from './components/SwapQuoteDisplay';
 import { SwapReviewModal } from './components/SwapReviewModal';
 import { SwapStatusDisplay } from './components/SwapStatusDisplay';
 import { SwapTokenCard } from './components/SwapTokenCard';
 import { useIcaAddress } from './hooks/useIcaAddress';
-import { SWAP_CHAINS, SWAP_CONTRACTS } from './swapConfig';
 import { useSwapQuote } from './hooks/useSwapQuote';
 import { useSwapTokens } from './hooks/useSwapTokens';
-import { useSwapTransaction } from './useSwapTransaction';
+import { SWAP_CHAINS, SWAP_CONTRACTS } from './swapConfig';
 import { SwapFormValues, SwapQuote, SwapStatus } from './types';
+import { useSwapTransaction } from './useSwapTransaction';
 
 const ARBITRUM_CHAIN_NAME = 'arbitrum';
 const BASE_CHAIN_NAME = 'base';
@@ -195,7 +199,11 @@ function SwapFormFields({
     }
   }, [selectedDestinationToken, setFieldValue, values.destinationTokenAddress]);
 
-  const { data: quote, isLoading, error } = useSwapQuote(
+  const {
+    data: quote,
+    isLoading,
+    error,
+  } = useSwapQuote(
     selectedOriginToken?.address || null,
     selectedDestinationToken?.address || null,
     values.amount,

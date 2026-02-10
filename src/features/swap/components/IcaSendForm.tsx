@@ -1,9 +1,9 @@
 import { isAddress } from '@hyperlane-xyz/utils';
 import { useMemo, useState } from 'react';
 import { useWalletClient } from 'wagmi';
-import { SWAP_CHAINS } from '../swapConfig';
 import { useIcaBalance } from '../hooks/useIcaBalance';
 import { useIcaTransaction } from '../hooks/useIcaTransaction';
+import { SWAP_CHAINS } from '../swapConfig';
 
 interface IcaSendFormProps {
   icaAddress: string | null;
@@ -15,7 +15,7 @@ export function IcaSendForm({ icaAddress, defaultRecipient }: IcaSendFormProps) 
   const { data: balances } = useIcaBalance(icaAddress, SWAP_CHAINS.destination.chainId);
   const { status, error, txHash, sendFromIca, reset } = useIcaTransaction();
 
-  const tokenOptions = balances?.tokens || [];
+  const tokenOptions = useMemo(() => balances?.tokens || [], [balances?.tokens]);
   const [selectedToken, setSelectedToken] = useState(tokenOptions[0]?.address || '');
   const [amount, setAmount] = useState('');
   const [recipient, setRecipient] = useState(defaultRecipient || '');

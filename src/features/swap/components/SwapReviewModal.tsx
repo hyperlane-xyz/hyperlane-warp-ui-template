@@ -27,7 +27,7 @@ export function SwapReviewModal({
 }: SwapReviewProps) {
   return (
     <div className="rounded-[7px] border border-gray-400/25 bg-white p-4 shadow-input">
-      <h3 className="font-secondary text-base text-gray-900">You're swapping</h3>
+      <h3 className="font-secondary text-base text-gray-900">{"You're swapping"}</h3>
 
       <div className="mt-3 rounded border border-gray-300 bg-gray-150 px-3 py-2">
         <div className="font-secondary text-lg text-gray-900">
@@ -35,7 +35,8 @@ export function SwapReviewModal({
         </div>
         <div className="my-2 text-center text-gray-500">-&gt;</div>
         <div className="font-secondary text-lg text-gray-900">
-          {destinationToken.estimatedOutput || quote?.estimatedOutput || '0'} {destinationToken.symbol}
+          {destinationToken.estimatedOutput || quote?.estimatedOutput || '0'}{' '}
+          {destinationToken.symbol}
         </div>
       </div>
 

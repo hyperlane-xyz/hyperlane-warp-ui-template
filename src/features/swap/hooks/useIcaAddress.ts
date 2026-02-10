@@ -3,8 +3,7 @@ import { encodePacked, getAddress, keccak256 } from 'viem';
 import { SWAP_CONTRACTS } from '../swapConfig';
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
-const ZERO_BYTES_32 =
-  '0x0000000000000000000000000000000000000000000000000000000000000000';
+const ZERO_BYTES_32 = '0x0000000000000000000000000000000000000000000000000000000000000000';
 
 export function useIcaAddress(userAddress: string | undefined): {
   icaAddress: string | null;
@@ -27,7 +26,7 @@ export function useIcaAddress(userAddress: string | undefined): {
         ),
       );
 
-      const derivedAddress = (`0x${salt.slice(26)}` as `0x${string}`);
+      const derivedAddress = `0x${salt.slice(26)}` as `0x${string}`;
       return getAddress(derivedAddress);
     } catch {
       return null;

@@ -40,6 +40,7 @@ export interface SwapBridgeParams {
   destinationChainName: string;
   originTokenAddress: string;
   destinationTokenAddress: string;
+  destinationRouteAddress: string;
   amount: string;
   originDecimals: number;
   isNativeOriginToken: boolean;
@@ -94,6 +95,7 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
     destinationChainName,
     originTokenAddress,
     destinationTokenAddress,
+    destinationRouteAddress,
     amount,
     originDecimals,
     isNativeOriginToken,
@@ -134,9 +136,10 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
       originChainName,
       destinationChainName,
       destinationTokenAddress,
+      destinationRouteAddress,
     })
   ) {
-    throw new Error('Unsupported token pair. Demo supports Arbitrum -> Base USDC only.');
+    throw new Error('Unsupported token pair. Demo supports Optimism -> Base canonical USDC only.');
   }
 
   const amountWeiString = toWei(amount, originDecimals);

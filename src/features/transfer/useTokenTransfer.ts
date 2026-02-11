@@ -197,6 +197,7 @@ async function executeTransfer({
         destinationChainName: destination,
         originTokenAddress: originSwapAddress,
         destinationTokenAddress: destinationSwapAddress,
+        destinationRouteAddress: destinationToken.addressOrDenom,
         amount,
         originDecimals: originToken.decimals,
         isNativeOriginToken,

@@ -37,6 +37,7 @@ export function useTransferRoute(
           originChainName: originToken.chainName,
           destinationChainName: destinationToken.chainName,
           destinationTokenAddress,
+          destinationRouteAddress: destinationToken.addressOrDenom,
         })
       ) {
         return { routeType: 'unavailable' };

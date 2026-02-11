@@ -1028,6 +1028,7 @@ function getRouteType(
         originChainName: originToken.chainName,
         destinationChainName: destinationToken.chainName,
         destinationTokenAddress,
+        destinationRouteAddress: destinationToken.addressOrDenom,
       })
     ) {
       return 'swap-bridge';

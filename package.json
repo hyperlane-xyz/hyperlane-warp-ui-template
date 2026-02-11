@@ -21,7 +21,7 @@
     "@emotion/styled": "^11.13.0",
     "@headlessui/react": "^2.2.0",
     "@hyperlane-xyz/registry": "23.14.0",
-    "@hyperlane-xyz/sdk": "25.1.0-beta.ffb4f4308b804323186fd7e959f9c28b7413a061",
+    "@hyperlane-xyz/sdk": "25.1.0-beta.7259ce28287cc16a2260dc97ae09aef60206e151",
     "@hyperlane-xyz/utils": "25.1.0-beta.ffb4f4308b804323186fd7e959f9c28b7413a061",
     "@hyperlane-xyz/widgets": "25.1.0-beta.ffb4f4308b804323186fd7e959f9c28b7413a061",
     "@interchain-ui/react": "^1.23.28",

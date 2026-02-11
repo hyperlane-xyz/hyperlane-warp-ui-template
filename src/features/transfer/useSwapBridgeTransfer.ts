@@ -179,10 +179,14 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
       amountBN,
     ));
 
-  const bridgeFee =
-    cachedBridgeFee ??
-    (await getBridgeFee(ethersProvider, originConfig.warpRoute, destConfig.domainId, swapOutput))
-      .fee;
+  const bridgeQuote = await getBridgeFee(
+    ethersProvider,
+    originConfig.warpRoute,
+    destConfig.domainId,
+    swapOutput,
+  );
+  const bridgeFee = cachedBridgeFee ?? bridgeQuote.fee;
+  const bridgeTokenFee = bridgeQuote.bridgeTokenFee;
 
   const { commands, inputs, value } = buildSwapAndBridgeTx({
     originToken: swapTokenAddress,
@@ -200,7 +204,9 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
     commitment: commitmentHash,
     slippage: DEFAULT_SLIPPAGE,
     isNativeOrigin: isNativeOriginToken,
+    expectedSwapOutput: swapOutput,
     bridgeMsgFee: bridgeFee,
+    bridgeTokenFee,
   });
 
   if (!isNativeOriginToken) {

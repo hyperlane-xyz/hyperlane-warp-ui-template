@@ -8,7 +8,9 @@ import { getSwapConfig } from '../swapConfig';
 type IcaTransactionStatus = 'idle' | 'building' | 'signing' | 'confirming' | 'complete' | 'failed';
 
 const erc20Abi = parseAbi(['function approve(address spender, uint256 amount) returns (bool)']);
+const erc20BalanceAbi = parseAbi(['function balanceOf(address account) view returns (uint256)']);
 const erc20TransferAbi = parseAbi(['function transfer(address to, uint256 amount) returns (bool)']);
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 const warpRouteAbi = parseAbi([
   'function transferRemote(uint32 destinationDomain, bytes32 recipient, uint256 amount) payable returns (bytes32)',
@@ -76,14 +78,23 @@ export function useIcaTransaction(
           const recipientBytes32 = addressToBytes32(params.recipient);
 
           let msgFee: bigint;
+          let tokenPull = amount;
           try {
-            const quote = await destinationPublicClient.readContract({
+            const quotes = await destinationPublicClient.readContract({
               address: destConfig.icaBridgeRoute as `0x${string}`,
               abi: warpRouteAbi,
               functionName: 'quoteTransferRemote',
               args: [originConfig.domainId, recipientBytes32 as `0x${string}`, amount],
             });
-            msgFee = quote[0]?.amount ?? 0n;
+
+            msgFee = 0n;
+            const normalizedToken = params.token.toLowerCase();
+            for (const quoteEntry of quotes) {
+              const quoteToken = quoteEntry.token.toLowerCase();
+              if (quoteToken === ZERO_ADDRESS) msgFee = quoteEntry.amount;
+              if (quoteToken === normalizedToken) tokenPull = quoteEntry.amount;
+            }
+            if (tokenPull < amount) tokenPull = amount;
           } catch (error) {
             throw new Error('Fee quote failure while preparing ICA return transaction.');
           }
@@ -105,10 +116,22 @@ export function useIcaTransaction(
             );
           }
 
+          const icaTokenBalance = await destinationPublicClient.readContract({
+            address: params.token as `0x${string}`,
+            abi: erc20BalanceAbi,
+            functionName: 'balanceOf',
+            args: [icaAddress as `0x${string}`],
+          });
+          if (icaTokenBalance < tokenPull) {
+            throw new Error(
+              `Insufficient token balance in ICA for return. Required amount includes bridge token fee.`,
+            );
+          }
+
           const approveData = encodeFunctionData({
             abi: erc20Abi,
             functionName: 'approve',
-            args: [destConfig.icaBridgeRoute as `0x${string}`, amount],
+            args: [destConfig.icaBridgeRoute as `0x${string}`, tokenPull],
           });
 
           const transferRemoteData = encodeFunctionData({

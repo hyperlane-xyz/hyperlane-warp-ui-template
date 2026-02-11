@@ -26,7 +26,8 @@ import { TransferStatus } from './types';
 const COMMITMENTS_SERVICE_URL =
   'https://offchain-lookup.services.hyperlane.xyz/callCommitments/calls';
 
-const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
+const ZERO_BYTES32 =
+  '0x0000000000000000000000000000000000000000000000000000000000000000';
 
 const erc20Abi = parseAbi([
   'function allowance(address owner, address spender) view returns (uint256)',
@@ -184,7 +185,7 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
     icaRouterAddress: originConfig.icaRouter,
     remoteIcaRouterAddress: destConfig.icaRouter,
     universalRouterAddress: universalRouter,
-    ismAddress: ZERO_ADDRESS,
+    ismAddress: ZERO_BYTES32,
     commitment: commitmentHash,
     slippage: DEFAULT_SLIPPAGE,
     bridgeMsgFee: bridgeFee,

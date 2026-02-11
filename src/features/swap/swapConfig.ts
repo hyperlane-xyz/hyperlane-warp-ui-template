@@ -40,6 +40,8 @@ export const SWAP_CHAIN_CONFIGS: Record<string, SwapChainConfig> = {
 };
 
 export const DEFAULT_SLIPPAGE = 0.005;
+export const DEMO_ORIGIN_CHAIN = 'arbitrum';
+export const DEMO_DESTINATION_CHAIN = 'base';
 
 export function getSwapConfig(chainName: string): SwapChainConfig | undefined {
   return SWAP_CHAIN_CONFIGS[chainName];
@@ -48,6 +50,21 @@ export function getSwapConfig(chainName: string): SwapChainConfig | undefined {
 export function isSwapSupported(origin: string, destination: string): boolean {
   return (
     origin !== destination && origin in SWAP_CHAIN_CONFIGS && destination in SWAP_CHAIN_CONFIGS
+  );
+}
+
+export function isDemoSwapBridgePath(params: {
+  originChainName: string;
+  destinationChainName: string;
+  destinationTokenAddress: string;
+}): boolean {
+  const baseConfig = getSwapConfig(DEMO_DESTINATION_CHAIN);
+  if (!baseConfig) return false;
+
+  return (
+    params.originChainName === DEMO_ORIGIN_CHAIN &&
+    params.destinationChainName === DEMO_DESTINATION_CHAIN &&
+    params.destinationTokenAddress.toLowerCase() === baseConfig.bridgeToken.toLowerCase()
   );
 }
 

@@ -1,5 +1,5 @@
 import { isAddress } from '@hyperlane-xyz/utils';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useWalletClient } from 'wagmi';
 import { useIcaBalance } from '../hooks/useIcaBalance';
 import { useIcaTransaction } from '../hooks/useIcaTransaction';
@@ -36,13 +36,23 @@ export function IcaSendForm({
   const tokenOptions = useMemo(() => balances?.tokens || [], [balances?.tokens]);
   const [selectedToken, setSelectedToken] = useState(tokenOptions[0]?.address || '');
   const [amount, setAmount] = useState('');
-  const [recipient, setRecipient] = useState(defaultRecipient || '');
+  const [mode, setMode] = useState<'send-destination' | 'return-origin'>('return-origin');
+  const [recipient, setRecipient] = useState(defaultRecipient || walletClient?.account?.address || '');
   const [formError, setFormError] = useState<string | null>(null);
 
   const activeToken = useMemo(
     () => tokenOptions.find((token) => token.address === selectedToken) || tokenOptions[0],
     [selectedToken, tokenOptions],
   );
+
+  useEffect(() => {
+    if (mode === 'return-origin') {
+      setRecipient(defaultRecipient || walletClient?.account?.address || '');
+    }
+  }, [mode, defaultRecipient, walletClient?.account?.address]);
+
+  const insufficientBalance =
+    !!activeToken && !!amount && Number(amount) > Number(activeToken.balance);
 
   const canSend =
     !!walletClient &&
@@ -51,6 +61,7 @@ export function IcaSendForm({
     !!recipient &&
     isAddress(recipient) &&
     activeToken.symbol !== 'ETH' &&
+    !insufficientBalance &&
     status !== 'building' &&
     status !== 'signing' &&
     status !== 'confirming';
@@ -76,11 +87,17 @@ export function IcaSendForm({
       return;
     }
 
+    if (insufficientBalance) {
+      setFormError('Insufficient ICA balance for this amount.');
+      return;
+    }
+
     setFormError(null);
     await sendFromIca({
       token: activeToken.address,
       amount,
       recipient,
+      mode,
       signer: walletClient,
       decimals: activeToken.symbol === 'USDC' ? 6 : 18,
     });
@@ -89,6 +106,31 @@ export function IcaSendForm({
   return (
     <div className="mt-2 rounded-[7px] border border-gray-400/25 bg-white p-3 shadow-input">
       <h4 className="font-secondary text-sm text-gray-900">Send from ICA</h4>
+
+      <div className="mt-2 grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          onClick={() => setMode('return-origin')}
+          className={`rounded border px-2 py-1 text-xs ${
+            mode === 'return-origin'
+              ? 'border-primary-500 bg-primary-50 text-primary-700'
+              : 'border-gray-300 bg-white text-gray-700'
+          }`}
+        >
+          Return to origin
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode('send-destination')}
+          className={`rounded border px-2 py-1 text-xs ${
+            mode === 'send-destination'
+              ? 'border-primary-500 bg-primary-50 text-primary-700'
+              : 'border-gray-300 bg-white text-gray-700'
+          }`}
+        >
+          Send on destination
+        </button>
+      </div>
 
       <div className="mt-2 space-y-2">
         <label className="block text-xs text-gray-700">Token</label>
@@ -121,6 +163,12 @@ export function IcaSendForm({
           placeholder="0x..."
           className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900"
         />
+
+        {insufficientBalance && (
+          <div className="rounded border border-red-300 bg-red-50 px-2 py-1.5 text-xs text-red-700">
+            Insufficient ICA balance.
+          </div>
+        )}
       </div>
 
       {(formError || error) && (
@@ -143,7 +191,9 @@ export function IcaSendForm({
       >
         {status === 'building' || status === 'signing' || status === 'confirming'
           ? 'Sending...'
-          : 'Send via ICA'}
+          : mode === 'return-origin'
+            ? 'Return to origin'
+            : 'Send on destination'}
       </button>
 
       {status === 'complete' || status === 'failed' ? (

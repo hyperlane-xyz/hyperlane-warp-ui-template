@@ -1,6 +1,11 @@
 import { Token } from '@hyperlane-xyz/sdk';
 import { useMemo } from 'react';
-import { getSwapConfig, isSwapSupported } from '../swap/swapConfig';
+import {
+  getSwapConfig,
+  getSwappableAddress,
+  isDemoSwapBridgePath,
+  isSwapSupported,
+} from '../swap/swapConfig';
 import { checkTokenHasRoute } from '../tokens/utils';
 
 export type TransferRouteType = 'warp' | 'swap-bridge' | 'unavailable';
@@ -25,6 +30,18 @@ export function useTransferRoute(
     }
 
     if (isSwapSupported(originToken.chainName, destinationToken.chainName)) {
+      const destinationTokenAddress =
+        getSwappableAddress(destinationToken) ?? destinationToken.addressOrDenom;
+      if (
+        !isDemoSwapBridgePath({
+          originChainName: originToken.chainName,
+          destinationChainName: destinationToken.chainName,
+          destinationTokenAddress,
+        })
+      ) {
+        return { routeType: 'unavailable' };
+      }
+
       const originConfig = getSwapConfig(originToken.chainName);
       return {
         routeType: 'swap-bridge',

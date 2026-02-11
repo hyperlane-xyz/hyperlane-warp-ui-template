@@ -184,13 +184,19 @@ async function executeTransfer({
 
       updateTransferStatus(transferIndex, (transferStatus = TransferStatus.CreatingTxs));
 
+      const isNativeOriginToken = originToken.isNative() || originToken.isHypNative();
+      const originSwapAddress = isNativeOriginToken
+        ? originToken.addressOrDenom
+        : originToken.collateralAddressOrDenom || originToken.addressOrDenom;
+
       const txHash = await executeSwapBridge({
         originChainName: origin,
         destinationChainName: destination,
-        originTokenAddress: originToken.addressOrDenom,
+        originTokenAddress: originSwapAddress,
         destinationTokenAddress: destinationToken.addressOrDenom,
         amount,
         originDecimals: originToken.decimals,
+        isNativeOriginToken,
         walletClient,
         publicClient,
         ethersProvider,

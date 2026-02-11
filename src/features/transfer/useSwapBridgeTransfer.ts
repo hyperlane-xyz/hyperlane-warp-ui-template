@@ -44,6 +44,7 @@ export interface SwapBridgeParams {
   destinationTokenAddress: string;
   amount: string;
   originDecimals: number;
+  isNativeOriginToken: boolean;
   walletClient: WalletClient;
   publicClient: PublicClient;
   ethersProvider: providers.Provider;
@@ -102,6 +103,7 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
     destinationTokenAddress,
     amount,
     originDecimals,
+    isNativeOriginToken,
     walletClient,
     publicClient,
     ethersProvider,
@@ -153,10 +155,7 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
 
   onStatusChange(TransferStatus.Preparing);
 
-  const isNativeToken =
-    originTokenAddress === ZERO_ADDRESS ||
-    originTokenAddress.toLowerCase() === '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
-  const swapTokenAddress = isNativeToken ? originConfig.wrappedNative : originTokenAddress;
+  const swapTokenAddress = isNativeOriginToken ? originConfig.wrappedNative : originTokenAddress;
 
   const swapOutput =
     cachedSwapOutput ??
@@ -191,7 +190,7 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
     bridgeMsgFee: bridgeFee,
   });
 
-  if (!isNativeToken) {
+  if (!isNativeOriginToken) {
     onStatusChange(TransferStatus.SigningApprove);
     const originToken = requireAddress(swapTokenAddress, 'Origin token address required');
     await checkAndApprove(walletClient, publicClient, originToken, universalRouter, amountWei);
@@ -205,7 +204,7 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
     args: [commands as Hex, inputs as Hex[], deadline],
   });
 
-  const txValue = BigInt(value.toString()) + (isNativeToken ? amountWei : 0n);
+  const txValue = BigInt(value.toString()) + (isNativeOriginToken ? amountWei : 0n);
   const hash = await walletClient.sendTransaction({
     account,
     to: universalRouter,

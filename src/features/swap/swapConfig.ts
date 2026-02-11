@@ -50,3 +50,21 @@ export function isSwapSupported(origin: string, destination: string): boolean {
     origin !== destination && origin in SWAP_CHAIN_CONFIGS && destination in SWAP_CHAIN_CONFIGS
   );
 }
+
+/**
+ * Resolve the address Uniswap should use for the swap input token.
+ * Warp route tokens (HypNative, HypCollateral) use their own contract addresses
+ * which Uniswap doesn't know about. This maps them to the underlying swappable token.
+ */
+export function getSwappableAddress(token: {
+  isNative: () => boolean;
+  isHypNative: () => boolean;
+  collateralAddressOrDenom?: string;
+  addressOrDenom: string;
+  chainName: string;
+}): string | undefined {
+  const config = getSwapConfig(token.chainName);
+  if (!config) return undefined;
+  if (token.isNative() || token.isHypNative()) return config.wrappedNative;
+  return token.collateralAddressOrDenom || token.addressOrDenom;
+}

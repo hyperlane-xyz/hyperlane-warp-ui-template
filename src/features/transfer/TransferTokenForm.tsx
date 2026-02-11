@@ -46,7 +46,7 @@ import { IcaPanel } from '../swap/components/IcaPanel';
 import { useIcaAddress } from '../swap/hooks/useIcaAddress';
 import { useInterchainAccountApp } from '../swap/hooks/useInterchainAccount';
 import { useSwapQuote } from '../swap/hooks/useSwapQuote';
-import { DEFAULT_SLIPPAGE, isSwapSupported } from '../swap/swapConfig';
+import { DEFAULT_SLIPPAGE, getSwappableAddress, isSwapSupported } from '../swap/swapConfig';
 import { ImportTokenButton } from '../tokens/ImportTokenButton';
 import { TokenSelectField } from '../tokens/TokenSelectField';
 import { useIsApproveRequired } from '../tokens/approval';
@@ -661,10 +661,13 @@ function ButtonSection({
     }
   }, [isSwapBridge, originToken, values.amount]);
 
+  const originSwapAddress =
+    isSwapBridge && originToken ? getSwappableAddress(originToken) : undefined;
+
   const { data: swapQuoteCache } = useSwapQuote(
     isSwapBridge ? originToken?.chainName : undefined,
     isSwapBridge ? destinationToken?.chainName : undefined,
-    isSwapBridge ? originToken?.addressOrDenom : undefined,
+    originSwapAddress,
     amountWeiForCache,
   );
 
@@ -815,10 +818,13 @@ function ReviewDetails({
     }
   }, [isSwapBridge, originToken, amount]);
 
+  const originSwapAddressForQuote =
+    isSwapBridge && originToken ? getSwappableAddress(originToken) : undefined;
+
   const { data: swapQuote, isLoading: isSwapQuoteLoading } = useSwapQuote(
     isSwapBridge ? originToken?.chainName : undefined,
     isSwapBridge ? destinationTokenByKey?.chainName : undefined,
-    isSwapBridge ? originToken?.addressOrDenom : undefined,
+    originSwapAddressForQuote,
     amountWeiForQuote,
   );
 

@@ -43,6 +43,7 @@ const universalRouterAbi = parseAbi([
 
 const COMMITMENTS_SERVICE_URL =
   'https://offchain-lookup.services.hyperlane.xyz/callCommitments/calls';
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 type CommitmentCall = {
   to: string;
@@ -81,7 +82,7 @@ function randomSalt(): string {
 }
 
 function requireAddress(value: string, errorMessage: string): Address {
-  if (!value || value.length < 10) throw new Error(errorMessage);
+  if (!isAddress(value)) throw new Error(errorMessage);
   return value as Address;
 }
 
@@ -157,6 +158,18 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
     originConfig.universalRouter,
     'Universal Router address not configured',
   );
+  const originIcaRouter = requireAddress(
+    originConfig.icaRouter,
+    `Invalid origin ICA router address for ${originChainName}`,
+  );
+  const destinationIcaRouter = requireAddress(
+    destConfig.icaRouter,
+    `Invalid destination ICA router address for ${destinationChainName}`,
+  );
+  const warpRouteAddress = requireAddress(
+    originConfig.warpRoute,
+    `Invalid warp route address for ${originChainName}`,
+  );
 
   if (
     !isDemoSwapBridgePath({
@@ -212,15 +225,11 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
   const bridgeFee = cachedBridgeFee ?? bridgeQuote.fee;
   const bridgeTokenFee = bridgeQuote.bridgeTokenFee;
 
-  if (!originConfig.icaRouter || !destConfig.icaRouter) {
-    throw new Error('Missing ICA router configuration for selected chain pair.');
-  }
-
   const icaFee =
     cachedIcaFee ??
     (await (async () => {
       try {
-        return await getIcaFee(ethersProvider, originConfig.icaRouter, destConfig.domainId);
+        return await getIcaFee(ethersProvider, originIcaRouter, destConfig.domainId);
       } catch (error) {
         throw new Error(
           `Failed to quote ICA execution fee (${originChainName} -> ${destinationChainName}). Retry in a few seconds. Root cause: ${toErrorMessage(error)}`,
@@ -231,7 +240,7 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
   if (!isAddress(destinationTokenAddress)) {
     throw new Error('Invalid destination token address for ICA destination-call commitment.');
   }
-  if (!destConfig.icaBridgeRoute || !isAddress(destConfig.icaBridgeRoute)) {
+  if (!isAddress(destConfig.icaBridgeRoute)) {
     throw new Error('Missing or invalid destination bridge route required for ICA commitment calls.');
   }
 
@@ -255,7 +264,10 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
       origin: originChainName,
       owner: account,
     }));
-  const recipient = icaAddress;
+  const recipient = requireAddress(
+    icaAddress,
+    `Invalid derived ICA recipient address for ${destinationChainName}`,
+  );
 
   const swapBridgeParams: Parameters<typeof buildSwapAndBridgeTx>[0] = {
     originToken: swapTokenAddress,
@@ -265,15 +277,16 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
     recipient,
     originDomain: originConfig.domainId,
     destinationDomain: destConfig.domainId,
-    warpRouteAddress: originConfig.warpRoute,
+    warpRouteAddress,
     universalRouterAddress: universalRouter,
     slippage: DEFAULT_SLIPPAGE,
     isNativeOrigin: isNativeOriginToken,
     expectedSwapOutput: swapOutput,
     bridgeMsgFee: bridgeFee,
     bridgeTokenFee,
-    icaRouterAddress: originConfig.icaRouter,
-    remoteIcaRouterAddress: destConfig.icaRouter,
+    icaRouterAddress: originIcaRouter,
+    remoteIcaRouterAddress: destinationIcaRouter,
+    ismAddress: ZERO_ADDRESS,
     commitment: commitmentHash,
     crossChainMsgFee: icaFee,
     includeCrossChainCommand: true,

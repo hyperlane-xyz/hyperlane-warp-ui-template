@@ -56,6 +56,7 @@ export function IcaSendForm({
 
   const canSend =
     !!walletClient &&
+    !!icaAddress &&
     !!activeToken &&
     !!amount &&
     !!recipient &&
@@ -69,6 +70,11 @@ export function IcaSendForm({
   const onSubmit = async () => {
     if (!walletClient) {
       setFormError('Connect an Arbitrum wallet first.');
+      return;
+    }
+
+    if (!icaAddress) {
+      setFormError('ICA address is still resolving. Retry in a few seconds.');
       return;
     }
 

@@ -10,8 +10,10 @@ export function useIcaAddress(
 ): {
   icaAddress: string | null;
   isLoading: boolean;
+  isError: boolean;
+  refetch: () => Promise<unknown>;
 } {
-  const { data: icaAddress = null, isLoading } = useQuery({
+  const { data: icaAddress = null, isLoading, isError, refetch } = useQuery({
     queryKey: ['icaAddress', icaApp, userAddress, originChainName, destinationChainName] as const,
     queryFn: async (): Promise<string | null> => {
       if (!icaApp || !userAddress || !originChainName || !destinationChainName) return null;
@@ -25,13 +27,21 @@ export function useIcaAddress(
         return addr;
       } catch (err) {
         logger.error('Failed to fetch ICA address:', err);
-        return null;
+        throw err;
       }
     },
     enabled: !!icaApp && !!userAddress && !!originChainName && !!destinationChainName,
-    staleTime: 5 * 60_000,
+    staleTime: 30_000,
     refetchInterval: false,
   });
 
-  return { icaAddress, isLoading };
+  return {
+    icaAddress,
+    isLoading,
+    isError,
+    refetch: async () => {
+      const result = await refetch();
+      return result.data;
+    },
+  };
 }

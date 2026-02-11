@@ -46,7 +46,12 @@ import { IcaPanel } from '../swap/components/IcaPanel';
 import { useIcaAddress } from '../swap/hooks/useIcaAddress';
 import { useInterchainAccountApp } from '../swap/hooks/useInterchainAccount';
 import { useSwapQuote } from '../swap/hooks/useSwapQuote';
-import { DEFAULT_SLIPPAGE, getSwappableAddress, isSwapSupported } from '../swap/swapConfig';
+import {
+  DEFAULT_SLIPPAGE,
+  getSwappableAddress,
+  isDemoSwapBridgePath,
+  isSwapSupported,
+} from '../swap/swapConfig';
 import { ImportTokenButton } from '../tokens/ImportTokenButton';
 import { TokenSelectField } from '../tokens/TokenSelectField';
 import { useIsApproveRequired } from '../tokens/approval';
@@ -1015,7 +1020,19 @@ function getRouteType(
   const destinationToken = getTokenByKey(tokens, values.destinationTokenKey);
   if (!originToken || !destinationToken) return 'unavailable';
   if (checkTokenHasRoute(originToken, destinationToken, collateralGroups)) return 'warp';
-  if (isSwapSupported(originToken.chainName, destinationToken.chainName)) return 'swap-bridge';
+  if (isSwapSupported(originToken.chainName, destinationToken.chainName)) {
+    const destinationTokenAddress =
+      getSwappableAddress(destinationToken) ?? destinationToken.addressOrDenom;
+    if (
+      isDemoSwapBridgePath({
+        originChainName: originToken.chainName,
+        destinationChainName: destinationToken.chainName,
+        destinationTokenAddress,
+      })
+    ) {
+      return 'swap-bridge';
+    }
+  }
   return 'unavailable';
 }
 

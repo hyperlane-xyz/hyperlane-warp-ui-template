@@ -1,7 +1,7 @@
 import { InterchainAccount } from '@hyperlane-xyz/sdk';
 import { addressToBytes32 } from '@hyperlane-xyz/utils';
 import { useCallback, useState } from 'react';
-import { Hex, encodeFunctionData, isAddress, parseAbi, parseUnits } from 'viem';
+import { Hex, WalletClient, encodeFunctionData, isAddress, parseAbi, parseUnits } from 'viem';
 import { usePublicClient } from 'wagmi';
 import { getSwapConfig } from '../swapConfig';
 
@@ -12,7 +12,7 @@ const erc20TransferAbi = parseAbi(['function transfer(address to, uint256 amount
 
 const warpRouteAbi = parseAbi([
   'function transferRemote(uint32 destinationDomain, bytes32 recipient, uint256 amount) payable returns (bytes32)',
-  'function quoteTransferRemote(uint32 destinationDomain, bytes32 recipient, uint256 amount) view returns (uint256, (address,uint256)[])',
+  'function quoteTransferRemote(uint32 destinationDomain, bytes32 recipient, uint256 amount) view returns ((address token, uint256 amount)[] quotes)',
 ]);
 
 export function useIcaTransaction(
@@ -35,17 +35,7 @@ export function useIcaTransaction(
       amount: string;
       recipient: string;
       mode: 'send-destination' | 'return-origin';
-      signer: {
-        account?: { address: `0x${string}` };
-        chain?: { id: number };
-        sendTransaction: (args: {
-          account: `0x${string}`;
-          to: `0x${string}`;
-          data: Hex;
-          value?: bigint;
-          chain?: { id: number };
-        }) => Promise<Hex>;
-      };
+      signer: WalletClient;
       decimals?: number;
     }) => {
       try {
@@ -61,7 +51,11 @@ export function useIcaTransaction(
         const account = params.signer.account?.address;
         if (!account) throw new Error('Wallet account unavailable. Reconnect wallet and retry.');
         if (params.signer.chain?.id !== originConfig.chainId) {
-          throw new Error(`Wrong connected origin chain. Switch wallet to ${originChainName}.`);
+          try {
+            await params.signer.switchChain({ id: originConfig.chainId });
+          } catch {
+            throw new Error(`Wrong connected origin chain. Switch wallet to ${originChainName}.`);
+          }
         }
         if (!isAddress(params.token)) throw new Error('Invalid token address.');
         if (!isAddress(params.recipient)) throw new Error('Invalid recipient address.');
@@ -89,9 +83,26 @@ export function useIcaTransaction(
               functionName: 'quoteTransferRemote',
               args: [originConfig.domainId, recipientBytes32 as `0x${string}`, amount],
             });
-            msgFee = quote[0];
+            msgFee = quote[0]?.amount ?? 0n;
           } catch (error) {
             throw new Error('Fee quote failure while preparing ICA return transaction.');
+          }
+
+          const icaAddress = await icaApp.getAccount(destinationChainName, {
+            origin: originChainName,
+            owner: account,
+          });
+          if (!isAddress(icaAddress)) {
+            throw new Error('Invalid ICA address while preparing return transaction.');
+          }
+
+          const icaNativeBalance = await destinationPublicClient.getBalance({
+            address: icaAddress as `0x${string}`,
+          });
+          if (icaNativeBalance < msgFee) {
+            throw new Error(
+              `Insufficient ${destinationChainName} native balance in ICA to cover return fee. Fund ICA with gas token and retry.`,
+            );
           }
 
           const approveData = encodeFunctionData({
@@ -140,7 +151,7 @@ export function useIcaTransaction(
           to: populatedTx.to as `0x${string}`,
           data: populatedTx.data as Hex,
           value: populatedTx.value ? BigInt(populatedTx.value.toString()) : 0n,
-          chain: params.signer.chain,
+          chain: null,
         });
 
         setTxHash(hash);

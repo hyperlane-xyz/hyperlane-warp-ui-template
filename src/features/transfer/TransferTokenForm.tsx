@@ -20,7 +20,7 @@ import {
   useAccounts,
   useModal,
 } from '@hyperlane-xyz/widgets';
-import BigNumber from 'bignumber.js';
+import BigNumberJS from 'bignumber.js';
 import { Form, Formik, useFormikContext } from 'formik';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
@@ -446,7 +446,7 @@ function MaxButton({
     });
     if (isNullish(maxAmount)) return;
     const decimalsAmount = maxAmount.getDecimalFormattedAmount();
-    const roundedAmount = new BigNumber(decimalsAmount).toFixed(4, BigNumber.ROUND_FLOOR);
+    const roundedAmount = new BigNumberJS(decimalsAmount).toFixed(4, BigNumberJS.ROUND_FLOOR);
     setFieldValue('amount', roundedAmount);
   };
 
@@ -626,7 +626,11 @@ function ButtonSection({
     setIsReview(false);
     setTransferLoading(true);
 
-    await triggerTransactions(values, routeOverrideToken, routeType);
+    await triggerTransactions(values, routeOverrideToken, routeType, {
+      icaAddress: icaAddress ?? undefined,
+      swapOutput: swapQuoteCache?.swapOutput,
+      bridgeFee: swapQuoteCache?.bridgeFee,
+    });
     setTransferLoading(false);
   };
 
@@ -636,6 +640,33 @@ function ButtonSection({
   };
 
   const isSwapBridge = routeType === 'swap-bridge';
+
+  // Pre-fetch ICA address and swap quote for swap-bridge to avoid redundant RPC calls
+  const senderAddress = useAccountAddressForChain(multiProvider, originToken?.chainName);
+  const icaApp = useInterchainAccountApp();
+  const { icaAddress } = useIcaAddress(
+    isSwapBridge ? icaApp : null,
+    isSwapBridge ? (senderAddress ?? undefined) : undefined,
+    isSwapBridge ? originToken?.chainName : undefined,
+    isSwapBridge ? destinationToken?.chainName : undefined,
+  );
+
+  const amountWeiForCache = useMemo(() => {
+    if (!isSwapBridge || !originToken || !values.amount || parseFloat(values.amount) <= 0)
+      return undefined;
+    try {
+      return toWei(values.amount, originToken.decimals);
+    } catch {
+      return undefined;
+    }
+  }, [isSwapBridge, originToken, values.amount]);
+
+  const { data: swapQuoteCache } = useSwapQuote(
+    isSwapBridge ? originToken?.chainName : undefined,
+    isSwapBridge ? destinationToken?.chainName : undefined,
+    isSwapBridge ? originToken?.addressOrDenom : undefined,
+    amountWeiForCache,
+  );
 
   const text = !isRouteSupported
     ? 'Route is not supported'

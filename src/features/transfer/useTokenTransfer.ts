@@ -13,6 +13,7 @@ import {
   useActiveChains,
   useTransactionFns,
 } from '@hyperlane-xyz/widgets';
+import { BigNumber } from 'ethers';
 import { useCallback, useState } from 'react';
 import { toast } from 'react-toastify';
 import { usePublicClient, useWalletClient } from 'wagmi';
@@ -56,7 +57,12 @@ export function useTokenTransfer(onDone?: () => void) {
   const [isLoading, setIsLoading] = useState(false);
 
   const triggerTransactions = useCallback(
-    (values: TransferFormValues, routeOverrideToken: Token | null, routeType?: TransferRouteType) =>
+    (
+      values: TransferFormValues,
+      routeOverrideToken: Token | null,
+      routeType?: TransferRouteType,
+      swapCache?: { icaAddress?: string; swapOutput?: BigNumber; bridgeFee?: BigNumber },
+    ) =>
       executeTransfer({
         warpCore,
         values,
@@ -73,6 +79,7 @@ export function useTokenTransfer(onDone?: () => void) {
         walletClient: walletClient ?? undefined,
         publicClient: publicClient ?? undefined,
         icaApp: icaApp ?? undefined,
+        swapCache,
       }),
     [
       warpCore,
@@ -112,6 +119,7 @@ async function executeTransfer({
   walletClient,
   publicClient,
   icaApp,
+  swapCache,
 }: {
   warpCore: WarpCore;
   values: TransferFormValues;
@@ -128,6 +136,7 @@ async function executeTransfer({
   walletClient?: ReturnType<typeof useWalletClient>['data'];
   publicClient?: ReturnType<typeof usePublicClient>;
   icaApp?: InterchainAccount;
+  swapCache?: { icaAddress?: string; swapOutput?: BigNumber; bridgeFee?: BigNumber };
 }) {
   logger.debug('Preparing transfer transaction(s)');
   setIsLoading(true);
@@ -190,6 +199,9 @@ async function executeTransfer({
           transferStatus = status;
           updateTransferStatus(transferIndex, status);
         },
+        cachedIcaAddress: swapCache?.icaAddress,
+        cachedSwapOutput: swapCache?.swapOutput,
+        cachedBridgeFee: swapCache?.bridgeFee,
       });
 
       updateTransferStatus(transferIndex, (transferStatus = TransferStatus.ConfirmedTransfer), {

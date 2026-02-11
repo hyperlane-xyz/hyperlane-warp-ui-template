@@ -7,6 +7,7 @@ import {
   normalizeCalls,
   shareCallsWithPrivateRelayer,
 } from '@hyperlane-xyz/sdk';
+import { toWei } from '@hyperlane-xyz/utils';
 
 import { BigNumber, providers } from 'ethers';
 import { useCallback, useState } from 'react';
@@ -18,7 +19,6 @@ import {
   encodeFunctionData,
   maxUint256,
   parseAbi,
-  parseUnits,
 } from 'viem';
 import { DEFAULT_SLIPPAGE, getSwapConfig } from '../swap/swapConfig';
 import { TransferStatus } from './types';
@@ -49,6 +49,9 @@ export interface SwapBridgeParams {
   ethersProvider: providers.Provider;
   icaApp: InterchainAccount;
   onStatusChange: (status: TransferStatus) => void;
+  cachedIcaAddress?: string;
+  cachedSwapOutput?: BigNumber;
+  cachedBridgeFee?: BigNumber;
 }
 
 function randomSalt(): string {
@@ -104,6 +107,9 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
     ethersProvider,
     icaApp,
     onStatusChange,
+    cachedIcaAddress,
+    cachedSwapOutput,
+    cachedBridgeFee,
   } = params;
 
   const originConfig = getSwapConfig(originChainName);
@@ -118,26 +124,27 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
     'Universal Router address not configured',
   );
 
-  console.log('[swap-bridge] fetching ICA address…');
-  const icaAddress = await icaApp.getAccount(destinationChainName, {
-    origin: originChainName,
-    owner: account,
-  });
-  console.log('[swap-bridge] ICA address:', icaAddress);
+  const icaAddress =
+    cachedIcaAddress ??
+    (await icaApp.getAccount(destinationChainName, {
+      origin: originChainName,
+      owner: account,
+    }));
 
   const salt = randomSalt();
-  const amountWei = parseUnits(amount, originDecimals);
-  const amountBN = BigNumber.from(amountWei.toString());
+  const amountWeiString = toWei(amount, originDecimals);
+  const amountWei = BigInt(amountWeiString);
+  const amountBN = BigNumber.from(amountWeiString);
 
   const rawDestCalls =
     destinationTokenAddress.toLowerCase() !== destConfig.bridgeToken.toLowerCase()
       ? [
-            {
-              to: destinationTokenAddress,
-              data: '0x',
-              value: '0',
-            },
-          ]
+          {
+            to: destinationTokenAddress,
+            data: '0x',
+            value: '0',
+          },
+        ]
       : [];
 
   const normalizedCalls = rawDestCalls.length > 0 ? normalizeCalls(rawDestCalls) : [];
@@ -151,26 +158,22 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
     originTokenAddress.toLowerCase() === '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
   const swapTokenAddress = isNativeToken ? originConfig.wrappedNative : originTokenAddress;
 
-  console.log('[swap-bridge] getting swap quote…', { swapTokenAddress, bridgeToken: originConfig.bridgeToken, amountBN: amountBN.toString() });
-  const swapOutput = await getSwapQuote(
-    ethersProvider,
-    originConfig.quoterV2,
-    swapTokenAddress,
-    originConfig.bridgeToken,
-    amountBN,
-  );
-  console.log('[swap-bridge] swap quote:', swapOutput.toString());
+  const swapOutput =
+    cachedSwapOutput ??
+    (await getSwapQuote(
+      ethersProvider,
+      originConfig.quoterV2,
+      swapTokenAddress,
+      originConfig.bridgeToken,
+      amountBN,
+    ));
 
-  console.log('[swap-bridge] getting bridge fee…');
-  const bridge = await getBridgeFee(
-    ethersProvider,
-    originConfig.warpRoute,
-    destConfig.domainId,
-    swapOutput,
-  );
-  console.log('[swap-bridge] bridge fee:', bridge.fee.toString());
+  const bridgeFee =
+    cachedBridgeFee ??
+    (await getBridgeFee(ethersProvider, originConfig.warpRoute, destConfig.domainId, swapOutput))
+      .fee;
 
-  const sdkParams = {
+  const { commands, inputs, value } = buildSwapAndBridgeTx({
     originToken: swapTokenAddress,
     bridgeToken: originConfig.bridgeToken,
     destinationToken: destinationTokenAddress,
@@ -185,12 +188,8 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
     ismAddress: ZERO_ADDRESS,
     commitment: commitmentHash,
     slippage: DEFAULT_SLIPPAGE,
-    bridgeMsgFee: bridge.fee,
-  };
-
-  console.log('[swap-bridge] building tx…', JSON.stringify(sdkParams, null, 2));
-  const { commands, inputs, value } = buildSwapAndBridgeTx(sdkParams);
-  console.log('[swap-bridge] tx built:', { commands, inputCount: inputs.length, value: value.toString() });
+    bridgeMsgFee: bridgeFee,
+  });
 
   if (!isNativeToken) {
     onStatusChange(TransferStatus.SigningApprove);
@@ -200,13 +199,11 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
 
   onStatusChange(TransferStatus.SigningSwapBridge);
   const deadline = BigInt(Math.floor(Date.now() / 1000) + 1800);
-  console.log('[swap-bridge] encoding execute call…', { commands, inputCount: inputs.length });
   const data = encodeFunctionData({
     abi: universalRouterAbi,
     functionName: 'execute',
     args: [commands as Hex, inputs as Hex[], deadline],
   });
-  console.log('[swap-bridge] encoded, sending tx…');
 
   const txValue = BigInt(value.toString()) + (isNativeToken ? amountWei : 0n);
   const hash = await walletClient.sendTransaction({

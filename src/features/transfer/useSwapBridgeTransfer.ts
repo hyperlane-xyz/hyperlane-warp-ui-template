@@ -1,5 +1,6 @@
 import {
   InterchainAccount,
+  MultiProtocolProvider,
   buildSwapAndBridgeTx,
   commitmentFromIcaCalls,
   getBridgeFee,
@@ -14,9 +15,10 @@ import { useCallback, useState } from 'react';
 import {
   Address,
   Hex,
-  PublicClient,
   WalletClient,
+  createPublicClient,
   encodeFunctionData,
+  http,
   maxUint256,
   parseAbi,
 } from 'viem';
@@ -26,8 +28,7 @@ import { TransferStatus } from './types';
 const COMMITMENTS_SERVICE_URL =
   'https://offchain-lookup.services.hyperlane.xyz/callCommitments/calls';
 
-const ZERO_BYTES32 =
-  '0x0000000000000000000000000000000000000000000000000000000000000000';
+const ZERO_BYTES32 = '0x0000000000000000000000000000000000000000000000000000000000000000';
 
 const erc20Abi = parseAbi([
   'function allowance(address owner, address spender) view returns (uint256)',
@@ -47,7 +48,7 @@ export interface SwapBridgeParams {
   originDecimals: number;
   isNativeOriginToken: boolean;
   walletClient: WalletClient;
-  publicClient: PublicClient;
+  multiProvider: MultiProtocolProvider;
   ethersProvider: providers.Provider;
   icaApp: InterchainAccount;
   onStatusChange: (status: TransferStatus) => void;
@@ -68,7 +69,7 @@ function requireAddress(value: string, errorMessage: string): Address {
 
 async function checkAndApprove(
   walletClient: WalletClient,
-  publicClient: PublicClient,
+  publicClient: any,
   tokenAddress: Address,
   spender: Address,
   amount: bigint,
@@ -90,7 +91,7 @@ async function checkAndApprove(
       abi: erc20Abi,
       functionName: 'approve',
       args: [spender, maxUint256],
-      chain: walletClient.chain,
+      chain: null,
     });
     await publicClient.waitForTransactionReceipt({ hash: approveHash, confirmations: 1 });
   }
@@ -106,7 +107,7 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
     originDecimals,
     isNativeOriginToken,
     walletClient,
-    publicClient,
+    multiProvider,
     ethersProvider,
     icaApp,
     onStatusChange,
@@ -121,6 +122,16 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
 
   const account = walletClient.account?.address;
   if (!account) throw new Error('Wallet not connected');
+
+  // Switch wallet to origin chain before sending any txs
+  if (walletClient.chain?.id !== originConfig.chainId) {
+    await walletClient.switchChain({ id: originConfig.chainId });
+  }
+
+  // Create a public client explicitly bound to the origin chain's RPC
+  // (wagmi's usePublicClient is bound to whatever chain was active at render time)
+  const rpcUrl = multiProvider.getRpcUrl(originChainName);
+  const publicClient = createPublicClient({ transport: http(rpcUrl) });
 
   const universalRouter = requireAddress(
     originConfig.universalRouter,
@@ -211,7 +222,7 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
     to: universalRouter,
     data,
     value: txValue,
-    chain: walletClient.chain,
+    chain: null,
   });
 
   onStatusChange(TransferStatus.ConfirmingSwapBridge);

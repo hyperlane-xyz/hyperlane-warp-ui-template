@@ -1,5 +1,6 @@
 import {
   InterchainAccount,
+  MultiProtocolProvider,
   ProviderType,
   Token,
   TypedTransactionReceipt,
@@ -16,7 +17,7 @@ import {
 import { BigNumber } from 'ethers';
 import { useCallback, useState } from 'react';
 import { toast } from 'react-toastify';
-import { usePublicClient, useWalletClient } from 'wagmi';
+import { useWalletClient } from 'wagmi';
 import { toastTxSuccess } from '../../components/toast/TxSuccessToast';
 import { logger } from '../../utils/logger';
 import { refinerIdentifyAndShowTransferForm } from '../analytics/refiner';
@@ -52,7 +53,6 @@ export function useTokenTransfer(onDone?: () => void) {
   const activeChains = useActiveChains(multiProvider);
   const transactionFns = useTransactionFns(multiProvider);
   const { data: walletClient } = useWalletClient();
-  const publicClient = usePublicClient();
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -77,8 +77,8 @@ export function useTokenTransfer(onDone?: () => void) {
         routeOverrideToken,
         routeType,
         walletClient: walletClient ?? undefined,
-        publicClient: publicClient ?? undefined,
         icaApp: icaApp ?? undefined,
+        multiProvider,
         swapCache,
       }),
     [
@@ -93,7 +93,7 @@ export function useTokenTransfer(onDone?: () => void) {
       updateTransferStatus,
       onDone,
       walletClient,
-      publicClient,
+      multiProvider,
     ],
   );
 
@@ -117,8 +117,8 @@ async function executeTransfer({
   routeOverrideToken,
   routeType,
   walletClient,
-  publicClient,
   icaApp,
+  multiProvider: mp,
   swapCache,
 }: {
   warpCore: WarpCore;
@@ -134,8 +134,8 @@ async function executeTransfer({
   routeOverrideToken: Token | null;
   routeType?: TransferRouteType;
   walletClient?: ReturnType<typeof useWalletClient>['data'];
-  publicClient?: ReturnType<typeof usePublicClient>;
   icaApp?: InterchainAccount;
+  multiProvider?: MultiProtocolProvider;
   swapCache?: { icaAddress?: string; swapOutput?: BigNumber; bridgeFee?: BigNumber };
 }) {
   logger.debug('Preparing transfer transaction(s)');
@@ -160,7 +160,7 @@ async function executeTransfer({
     if (!recipient) throw new Error('No recipient address available');
 
     if (routeType === 'swap-bridge') {
-      if (!walletClient || !publicClient || !icaApp)
+      if (!walletClient || !icaApp || !mp)
         throw new Error('Wallet or ICA app not available for swap-bridge');
 
       const origin = originToken.chainName;
@@ -168,7 +168,7 @@ async function executeTransfer({
       const sender = walletClient.account?.address;
       if (!sender) throw new Error('No active account found');
 
-      const ethersProvider = multiProvider.getEthersV5Provider(origin);
+      const ethersProvider = mp.getEthersV5Provider(origin);
 
       addTransfer({
         timestamp: new Date().getTime(),
@@ -198,7 +198,7 @@ async function executeTransfer({
         originDecimals: originToken.decimals,
         isNativeOriginToken,
         walletClient,
-        publicClient,
+        multiProvider: mp,
         ethersProvider,
         icaApp,
         onStatusChange: (status) => {

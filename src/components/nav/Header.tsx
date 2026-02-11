@@ -10,7 +10,7 @@ import Title from '../../images/logos/app-title.svg';
 import { HamburgerIcon } from '../icons/HamburgerIcon';
 import { NavItem, navLinks } from './Nav';
 
-const appLinks = [{ title: 'Transfer', href: '/' }];
+const appLinks: { title: string; href: string }[] = [];
 
 export function Header() {
   const { pathname } = useRouter();

@@ -1,7 +1,6 @@
 import {
   buildSwapAndBridgeTx,
   commitmentFromIcaCalls,
-  deriveIcaAddress,
   getBridgeFee,
   getSwapQuote,
   normalizeCalls,
@@ -34,6 +33,10 @@ const erc20Abi = parseAbi([
 
 const universalRouterAbi = parseAbi([
   'function execute(bytes commands, bytes[] inputs, uint256 deadline) external payable',
+]);
+
+const icaRouterAbi = parseAbi([
+  'function getLocalInterchainAccount(uint32 _origin, address _owner, address _router, address _ism) view returns (address)',
 ]);
 
 export interface SwapBridgeParams {
@@ -115,11 +118,11 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
     'Universal Router address not configured',
   );
 
-  const icaAddress = deriveIcaAddress({
-    origin: originConfig.domainId,
-    owner: account,
-    routerAddress: destConfig.icaRouter,
-    ismAddress: ZERO_ADDRESS,
+  const icaAddress = await publicClient.readContract({
+    address: destConfig.icaRouter as Address,
+    abi: icaRouterAbi,
+    functionName: 'getLocalInterchainAccount',
+    args: [originConfig.domainId, account, originConfig.icaRouter as Address, ZERO_ADDRESS],
   });
 
   const salt = randomSalt();

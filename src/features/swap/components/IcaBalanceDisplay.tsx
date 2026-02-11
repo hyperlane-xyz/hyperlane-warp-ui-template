@@ -32,7 +32,7 @@ export function IcaBalanceDisplay({
             <CopyButton copyValue={icaAddress} width={14} height={14} className="opacity-40" />
           ) : null}
         </div>
-        <div className="font-mono mt-1 truncate text-xs text-gray-900">
+        <div className="mt-1 truncate font-primary text-xs text-gray-900">
           {icaAddress ? shortenAddress(icaAddress) : 'Unavailable'}
         </div>
       </div>

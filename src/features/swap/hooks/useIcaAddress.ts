@@ -1,5 +1,4 @@
 import { InterchainAccount } from '@hyperlane-xyz/sdk';
-import { addressToBytes32 } from '@hyperlane-xyz/utils';
 import { useQuery } from '@tanstack/react-query';
 import { logger } from '../../../utils/logger';
 
@@ -20,7 +19,7 @@ export function useIcaAddress(
       try {
         const addr = await icaApp.getAccount(destinationChainName, {
           origin: originChainName,
-          owner: addressToBytes32(userAddress),
+          owner: userAddress,
         });
         logger.debug('ICA address from SDK:', addr);
         return addr;

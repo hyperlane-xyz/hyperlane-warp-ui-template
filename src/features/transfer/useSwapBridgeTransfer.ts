@@ -7,7 +7,7 @@ import {
   normalizeCalls,
   shareCallsWithPrivateRelayer,
 } from '@hyperlane-xyz/sdk';
-import { addressToBytes32 } from '@hyperlane-xyz/utils';
+
 import { BigNumber, providers } from 'ethers';
 import { useCallback, useState } from 'react';
 import {
@@ -120,7 +120,7 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
 
   const icaAddress = await icaApp.getAccount(destinationChainName, {
     origin: originChainName,
-    owner: addressToBytes32(account),
+    owner: account,
   });
 
   const salt = randomSalt();

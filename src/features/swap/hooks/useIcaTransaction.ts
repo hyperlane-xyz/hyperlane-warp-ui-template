@@ -91,7 +91,7 @@ export function useIcaTransaction(
           ],
           config: {
             origin: originChainName,
-            owner: addressToBytes32(account),
+            owner: account,
           },
         });
 

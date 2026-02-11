@@ -1,10 +1,14 @@
 /** @type {import('next').NextConfig} */
 
 const { version } = require('./package.json');
-const { withSentryConfig } = require('@sentry/nextjs');
 const withBundleAnalyzer = require('@next/bundle-analyzer')({
   enabled: process.env.ANALYZE === 'true',
 });
+const sentryDsn = process.env.NEXT_PUBLIC_SENTRY_DSN || '';
+const isSentryEnabled = Boolean(sentryDsn);
+const withSentryConfig = isSentryEnabled
+  ? require('@sentry/nextjs').withSentryConfig
+  : (config) => config;
 
 const isDev = process.env.NODE_ENV !== 'production';
 
@@ -126,9 +130,16 @@ const nextConfig = {
 
   env: {
     NEXT_PUBLIC_VERSION: version,
+    NEXT_PUBLIC_SENTRY_DSN: sentryDsn,
   },
 
   reactStrictMode: true,
+
+  experimental: {
+    webpackBuildWorker: true,
+    parallelServerCompiles: true,
+    parallelServerBuildTraces: true,
+  },
 
   // Skip linting and type checking during builds — CI runs these separately
   eslint: { ignoreDuringBuilds: true },
@@ -150,4 +161,6 @@ const sentryOptions = {
   },
 };
 
-module.exports = withBundleAnalyzer(withSentryConfig(nextConfig, sentryOptions));
+module.exports = withBundleAnalyzer(
+  withSentryConfig(nextConfig, sentryOptions),
+);

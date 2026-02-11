@@ -199,6 +199,7 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
     ismAddress: ZERO_BYTES32,
     commitment: commitmentHash,
     slippage: DEFAULT_SLIPPAGE,
+    isNativeOrigin: isNativeOriginToken,
     bridgeMsgFee: bridgeFee,
   });
 
@@ -216,7 +217,7 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
     args: [commands as Hex, inputs as Hex[], deadline],
   });
 
-  const txValue = BigInt(value.toString()) + (isNativeOriginToken ? amountWei : 0n);
+  const txValue = BigInt(value.toString());
   const hash = await walletClient.sendTransaction({
     account,
     to: universalRouter,

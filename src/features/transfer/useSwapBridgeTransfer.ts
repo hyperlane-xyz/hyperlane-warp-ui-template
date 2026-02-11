@@ -20,6 +20,7 @@ import {
   createPublicClient,
   encodeFunctionData,
   http,
+  isAddress,
   maxUint256,
   parseAbi,
 } from 'viem';
@@ -47,6 +48,11 @@ type CommitmentCall = {
   data: string;
   value?: string;
 };
+
+function toErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message) return error.message;
+  return String(error);
+}
 
 export interface SwapBridgeParams {
   originChainName: string;
@@ -172,20 +178,36 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
 
   const swapOutput =
     cachedSwapOutput ??
-    (await getSwapQuote(
-      ethersProvider,
-      originConfig.quoterV2,
-      swapTokenAddress,
-      originConfig.bridgeToken,
-      amountBN,
-    ));
+    (await (async () => {
+      try {
+        return await getSwapQuote(
+          ethersProvider,
+          originConfig.quoterV2,
+          swapTokenAddress,
+          originConfig.bridgeToken,
+          amountBN,
+        );
+      } catch (error) {
+        throw new Error(
+          `Failed to quote ${originChainName} swap (${swapTokenAddress} -> ${originConfig.bridgeToken}). Retry with a smaller amount or try again shortly. Root cause: ${toErrorMessage(error)}`,
+        );
+      }
+    })());
 
-  const bridgeQuote = await getBridgeFee(
-    ethersProvider,
-    originConfig.warpRoute,
-    destConfig.domainId,
-    swapOutput,
-  );
+  const bridgeQuote = await (async () => {
+    try {
+      return await getBridgeFee(
+        ethersProvider,
+        originConfig.warpRoute,
+        destConfig.domainId,
+        swapOutput,
+      );
+    } catch (error) {
+      throw new Error(
+        `Failed to quote bridge fee on ${originChainName}. Verify route support and retry. Root cause: ${toErrorMessage(error)}`,
+      );
+    }
+  })();
   const bridgeFee = cachedBridgeFee ?? bridgeQuote.fee;
   const bridgeTokenFee = bridgeQuote.bridgeTokenFee;
 
@@ -195,13 +217,43 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
 
   const icaFee =
     cachedIcaFee ??
-    (await getIcaFee(ethersProvider, originConfig.icaRouter, destConfig.domainId));
+    (await (async () => {
+      try {
+        return await getIcaFee(ethersProvider, originConfig.icaRouter, destConfig.domainId);
+      } catch (error) {
+        throw new Error(
+          `Failed to quote ICA execution fee (${originChainName} -> ${destinationChainName}). Retry in a few seconds. Root cause: ${toErrorMessage(error)}`,
+        );
+      }
+    })());
 
-  const rawDestCalls: CommitmentCall[] = [];
-  const normalizedCalls = rawDestCalls.length > 0 ? normalizeCalls(rawDestCalls) : [];
+  if (!isAddress(destinationTokenAddress)) {
+    throw new Error('Invalid destination token address for ICA destination-call commitment.');
+  }
+  if (!destConfig.icaBridgeRoute || !isAddress(destConfig.icaBridgeRoute)) {
+    throw new Error('Missing or invalid destination bridge route required for ICA commitment calls.');
+  }
+
+  const approveData = encodeFunctionData({
+    abi: erc20Abi,
+    functionName: 'approve',
+    args: [destConfig.icaBridgeRoute as Address, maxUint256],
+  });
+  const rawDestCalls: CommitmentCall[] = [
+    {
+      to: destinationTokenAddress,
+      data: approveData,
+      value: '0',
+    },
+  ];
+  const normalizedCalls = normalizeCalls(rawDestCalls);
+  if (normalizedCalls.length === 0) {
+    throw new Error(
+      'Failed to construct destination ICA calls for commit-reveal. Cannot continue with empty commitment payload.',
+    );
+  }
   const salt = randomSalt();
-  const commitmentHash =
-    normalizedCalls.length > 0 ? commitmentFromIcaCalls(normalizedCalls, salt) : salt;
+  const commitmentHash = commitmentFromIcaCalls(normalizedCalls, salt);
   if (!commitmentHash) {
     throw new Error('Missing ICA commitment for cross-chain command.');
   }
@@ -260,6 +312,19 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
     );
   }
 
+  try {
+    await publicClient.call({
+      account,
+      to: universalRouter,
+      data,
+      value: txValue,
+    });
+  } catch (error) {
+    throw new Error(
+      `Unable to simulate swap+bridge before wallet confirmation. Check balances, fee quotes, and route readiness, then retry. Root cause: ${toErrorMessage(error)}`,
+    );
+  }
+
   const hash = await walletClient.sendTransaction({
     account,
     to: universalRouter,
@@ -271,8 +336,8 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
   onStatusChange(TransferStatus.ConfirmingSwapBridge);
   await publicClient.waitForTransactionReceipt({ hash, confirmations: 1 });
 
-  if (rawDestCalls.length > 0) {
-    onStatusChange(TransferStatus.PostingCommitment);
+  onStatusChange(TransferStatus.PostingCommitment);
+  try {
     const relayerResponse = await shareCallsWithPrivateRelayer(COMMITMENTS_SERVICE_URL, {
       calls: rawDestCalls,
       relayers: [],
@@ -282,8 +347,12 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
     });
 
     if (!relayerResponse.ok) {
-      throw new Error('Failed to post ICA call commitment to relayer service.');
+      throw new Error('Relayer rejected commitment payload.');
     }
+  } catch (error) {
+    throw new Error(
+      `Failed to post ICA call commitment to relayer service. Without this, reveal cannot execute destination calls. Root cause: ${toErrorMessage(error)}`,
+    );
   }
 
   return hash;

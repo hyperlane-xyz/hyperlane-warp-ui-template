@@ -71,6 +71,11 @@ export function useIcaTransaction(
           if (!isAddress(destConfig.icaBridgeRoute)) {
             throw new Error('ICA bridge route not configured for destination chain.');
           }
+          if (params.token.toLowerCase() !== destConfig.bridgeToken.toLowerCase()) {
+            throw new Error(
+              'Return to origin currently supports the canonical bridge token only. Select USDC on Base and retry.',
+            );
+          }
           if (!destinationPublicClient) {
             throw new Error('Fee quote failure: destination public client unavailable.');
           }

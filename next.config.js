@@ -129,14 +129,19 @@ const nextConfig = {
 
   reactStrictMode: true,
 
-  // Exclude heavy Sentry/OpenTelemetry deps from serverless function tracing
-  // (saves ~40s in "Collecting build traces"). Runtime Sentry still works via
-  // sentry.client.config.js (client) and instrumentation.ts (server).
+  // Exclude heavy client-only deps from serverless function file tracing.
+  // Server-side only does static page generation — these are never used there.
   outputFileTracingExcludes: {
     '*': [
       './node_modules/@sentry/**',
       './node_modules/@opentelemetry/**',
       './node_modules/require-in-the-middle/**',
+      './node_modules/@provablehq/**',
+      './node_modules/@radixdlt/**',
+      './node_modules/@solana/**',
+      './node_modules/@cosmjs/**',
+      './node_modules/@starknet-io/**',
+      './node_modules/ethers/**',
     ],
   },
 

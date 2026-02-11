@@ -4,13 +4,14 @@ import {
   buildSwapAndBridgeTx,
   commitmentFromIcaCalls,
   getBridgeFee,
+  getIcaFee,
   getSwapQuote,
   normalizeCalls,
   shareCallsWithPrivateRelayer,
 } from '@hyperlane-xyz/sdk';
 import { toWei } from '@hyperlane-xyz/utils';
 
-import { BigNumber, providers } from 'ethers';
+import { BigNumber, providers, utils } from 'ethers';
 import { useCallback, useState } from 'react';
 import {
   Address,
@@ -138,32 +139,13 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
     'Universal Router address not configured',
   );
 
-  const icaAddress =
-    cachedIcaAddress ??
-    (await icaApp.getAccount(destinationChainName, {
-      origin: originChainName,
-      owner: account,
-    }));
+  const needsIca =
+    destinationTokenAddress.toLowerCase() !== destConfig.bridgeToken.toLowerCase();
 
   const salt = randomSalt();
   const amountWeiString = toWei(amount, originDecimals);
   const amountWei = BigInt(amountWeiString);
   const amountBN = BigNumber.from(amountWeiString);
-
-  const rawDestCalls =
-    destinationTokenAddress.toLowerCase() !== destConfig.bridgeToken.toLowerCase()
-      ? [
-          {
-            to: destinationTokenAddress,
-            data: '0x',
-            value: '0',
-          },
-        ]
-      : [];
-
-  const normalizedCalls = rawDestCalls.length > 0 ? normalizeCalls(rawDestCalls) : [];
-  const commitmentHash =
-    normalizedCalls.length > 0 ? commitmentFromIcaCalls(normalizedCalls, salt) : salt;
 
   onStatusChange(TransferStatus.Preparing);
 
@@ -188,26 +170,112 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
   const bridgeFee = cachedBridgeFee ?? bridgeQuote.fee;
   const bridgeTokenFee = bridgeQuote.bridgeTokenFee;
 
-  const { commands, inputs, value } = buildSwapAndBridgeTx({
+  // Compute the worst-case bridged amount (after slippage + bridge fee)
+  const slippageBps = Math.floor(DEFAULT_SLIPPAGE * 10000);
+  const hasOriginSwap = swapTokenAddress.toLowerCase() !== originConfig.bridgeToken.toLowerCase();
+  const swapOutMin = hasOriginSwap
+    ? swapOutput.mul(10000 - slippageBps).div(10000)
+    : amountBN;
+  const bridgedAmount = hasOriginSwap ? swapOutMin.sub(bridgeTokenFee) : amountBN;
+
+  let recipient: string;
+  let rawDestCalls: Array<{ to: string; data: string; value: string }> = [];
+  let commitmentHash: string;
+  let crossChainMsgFee = BigNumber.from(0);
+
+  if (needsIca) {
+    const icaAddress =
+      cachedIcaAddress ??
+      (await icaApp.getAccount(destinationChainName, {
+        origin: originChainName,
+        owner: account,
+      }));
+    recipient = icaAddress;
+
+    // Get dest swap quote for USDC→destToken
+    const destRpcUrl = multiProvider.getRpcUrl(destinationChainName);
+    const destProvider = new providers.JsonRpcProvider(destRpcUrl);
+    const destSwapOutput = await getSwapQuote(
+      destProvider,
+      destConfig.quoterV2,
+      destConfig.bridgeToken,
+      destinationTokenAddress,
+      bridgedAmount,
+    );
+    const destSwapOutMin = destSwapOutput.mul(10000 - slippageBps).div(10000);
+
+    // Build ICA calls: approve USDC → swap USDC→destToken (recipient=user) → (swap handles transfer)
+    const approveData = utils.defaultAbiCoder.encode(
+      ['address', 'uint256'],
+      [destConfig.universalRouter, bridgedAmount],
+    );
+    const swapPath = utils.solidityPack(
+      ['address', 'uint24', 'address'],
+      [destConfig.bridgeToken, 500, destinationTokenAddress],
+    );
+    const swapInput = utils.defaultAbiCoder.encode(
+      ['address', 'uint256', 'uint256', 'bytes', 'bool'],
+      [account, bridgedAmount, destSwapOutMin, swapPath, false],
+    );
+    const swapCommands = '0x00'; // V3_SWAP_EXACT_IN
+    const destDeadline = Math.floor(Date.now() / 1000) + 3600;
+    const executeData = utils.defaultAbiCoder.encode(
+      ['bytes', 'bytes[]', 'uint256'],
+      [swapCommands, [swapInput], destDeadline],
+    );
+
+    rawDestCalls = [
+      {
+        to: destConfig.bridgeToken,
+        data: '0x095ea7b3' + approveData.slice(2),
+        value: '0',
+      },
+      {
+        to: destConfig.universalRouter,
+        data: '0x3593564c' + executeData.slice(2),
+        value: '0',
+      },
+    ];
+
+    const normalizedCalls = normalizeCalls(rawDestCalls);
+    commitmentHash = commitmentFromIcaCalls(normalizedCalls, salt);
+
+    crossChainMsgFee = await getIcaFee(
+      ethersProvider,
+      originConfig.icaRouter,
+      destConfig.domainId,
+    );
+  } else {
+    recipient = account;
+    commitmentHash = salt;
+  }
+
+  const swapBridgeParams: Parameters<typeof buildSwapAndBridgeTx>[0] = {
     originToken: swapTokenAddress,
     bridgeToken: originConfig.bridgeToken,
     destinationToken: destinationTokenAddress,
     amount: amountBN,
-    recipient: icaAddress,
+    recipient,
     originDomain: originConfig.domainId,
     destinationDomain: destConfig.domainId,
     warpRouteAddress: originConfig.warpRoute,
-    icaRouterAddress: originConfig.icaRouter,
-    remoteIcaRouterAddress: destConfig.icaRouter,
     universalRouterAddress: universalRouter,
-    ismAddress: ZERO_BYTES32,
-    commitment: commitmentHash,
     slippage: DEFAULT_SLIPPAGE,
     isNativeOrigin: isNativeOriginToken,
     expectedSwapOutput: swapOutput,
     bridgeMsgFee: bridgeFee,
     bridgeTokenFee,
-  });
+  };
+
+  if (needsIca) {
+    swapBridgeParams.icaRouterAddress = originConfig.icaRouter;
+    swapBridgeParams.remoteIcaRouterAddress = destConfig.icaRouter;
+    swapBridgeParams.ismAddress = ZERO_BYTES32;
+    swapBridgeParams.commitment = commitmentHash;
+    swapBridgeParams.crossChainMsgFee = crossChainMsgFee;
+  }
+
+  const { commands, inputs, value } = buildSwapAndBridgeTx(swapBridgeParams);
 
   if (!isNativeOriginToken) {
     onStatusChange(TransferStatus.SigningApprove);

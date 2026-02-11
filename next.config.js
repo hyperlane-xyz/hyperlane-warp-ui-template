@@ -139,6 +139,12 @@ const nextConfig = {
     webpackBuildWorker: true,
     parallelServerCompiles: true,
     parallelServerBuildTraces: true,
+    optimizePackageImports: [
+      '@hyperlane-xyz/registry',
+      '@hyperlane-xyz/sdk',
+      '@hyperlane-xyz/utils',
+      '@hyperlane-xyz/widgets',
+    ],
   },
 
   // Skip linting and type checking during builds — CI runs these separately
@@ -161,6 +167,4 @@ const sentryOptions = {
   },
 };
 
-module.exports = withBundleAnalyzer(
-  withSentryConfig(nextConfig, sentryOptions),
-);
+module.exports = withBundleAnalyzer(withSentryConfig(nextConfig, sentryOptions));

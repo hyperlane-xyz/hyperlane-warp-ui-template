@@ -8,6 +8,8 @@ export interface SwapChainConfig {
   /** HypCollateral warp route for the bridge token */
   warpRoute: string;
   wrappedNative: string;
+  /** Uniswap V3 QuoterV2 contract for swap price quotes */
+  quoterV2: string;
   /** Phase 2: warp route the ICA can use to bridge tokens back */
   icaBridgeRoute: string;
 }
@@ -21,6 +23,7 @@ export const SWAP_CHAIN_CONFIGS: Record<string, SwapChainConfig> = {
     bridgeToken: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
     warpRoute: '0xAd4350Ee0f9f5b85BaB115425426086Ae8384ebb',
     wrappedNative: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
+    quoterV2: '0x61fFE014bA17989E743c5F6cB21bF9697530B21e',
     icaBridgeRoute: '',
   },
   base: {
@@ -31,6 +34,7 @@ export const SWAP_CHAIN_CONFIGS: Record<string, SwapChainConfig> = {
     bridgeToken: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
     warpRoute: '0x37e637891A558B5b621723cbf8Fc771525f280C1',
     wrappedNative: '0x4200000000000000000000000000000000000006',
+    quoterV2: '0x3d4e44Eb1374240CE5F1B871ab261CD16335B76a',
     icaBridgeRoute: '0x37e637891A558B5b621723cbf8Fc771525f280C1',
   },
 };

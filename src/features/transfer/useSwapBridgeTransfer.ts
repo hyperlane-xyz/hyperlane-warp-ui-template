@@ -153,6 +153,7 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
 
   const swapOutput = await getSwapQuote(
     ethersProvider,
+    originConfig.quoterV2,
     swapTokenAddress,
     originConfig.bridgeToken,
     amountBN,

@@ -45,6 +45,7 @@ export function useSwapQuote(
 
       const swapOutput = await getSwapQuote(
         provider,
+        originConfig.quoterV2,
         originTokenAddress,
         originConfig.bridgeToken,
         amount,

@@ -48,9 +48,7 @@ export function getSwapConfig(chainName: string): SwapChainConfig | undefined {
 }
 
 export function isSwapSupported(origin: string, destination: string): boolean {
-  return (
-    origin !== destination && origin in SWAP_CHAIN_CONFIGS && destination in SWAP_CHAIN_CONFIGS
-  );
+  return origin === 'arbitrum' && destination === 'base';
 }
 
 export function isDemoSwapBridgePath(params: {

@@ -189,6 +189,7 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
     expectedSwapOutput: swapOutput,
     bridgeMsgFee: bridgeFee,
     bridgeTokenFee,
+    includeCrossChainCommand: false,
   };
 
   const { commands, inputs, value } = buildSwapAndBridgeTx(swapBridgeParams);

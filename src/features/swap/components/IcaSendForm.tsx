@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { useWalletClient } from 'wagmi';
 import { useIcaBalance } from '../hooks/useIcaBalance';
 import { useIcaTransaction } from '../hooks/useIcaTransaction';
+import { useInterchainAccountApp } from '../hooks/useInterchainAccount';
 import { getSwapConfig } from '../swapConfig';
 
 interface IcaSendFormProps {
@@ -25,7 +26,9 @@ export function IcaSendForm({
     destConfig?.chainId ?? 0,
     destinationChainName,
   );
+  const icaApp = useInterchainAccountApp();
   const { status, error, txHash, sendFromIca, reset } = useIcaTransaction(
+    icaApp,
     originChainName,
     destinationChainName,
   );

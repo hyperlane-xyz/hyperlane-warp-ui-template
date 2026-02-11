@@ -1,4 +1,5 @@
 import {
+  InterchainAccount,
   ProviderType,
   Token,
   TypedTransactionReceipt,
@@ -23,6 +24,7 @@ import { trackEvent } from '../analytics/utils';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { AppState, useStore } from '../store';
+import { useInterchainAccountApp } from '../swap/hooks/useInterchainAccount';
 import { getTokenByKey, useWarpCore } from '../tokens/hooks';
 import { TransferContext, TransferFormValues, TransferStatus } from './types';
 import { executeSwapBridge } from './useSwapBridgeTransfer';
@@ -43,6 +45,7 @@ export function useTokenTransfer(onDone?: () => void) {
 
   const multiProvider = useMultiProvider();
   const warpCore = useWarpCore();
+  const icaApp = useInterchainAccountApp();
 
   const activeAccounts = useAccounts(multiProvider);
   const activeChains = useActiveChains(multiProvider);
@@ -69,9 +72,11 @@ export function useTokenTransfer(onDone?: () => void) {
         routeType,
         walletClient: walletClient ?? undefined,
         publicClient: publicClient ?? undefined,
+        icaApp: icaApp ?? undefined,
       }),
     [
       warpCore,
+      icaApp,
       transferIndex,
       activeAccounts,
       activeChains,
@@ -106,6 +111,7 @@ async function executeTransfer({
   routeType,
   walletClient,
   publicClient,
+  icaApp,
 }: {
   warpCore: WarpCore;
   values: TransferFormValues;
@@ -121,6 +127,7 @@ async function executeTransfer({
   routeType?: TransferRouteType;
   walletClient?: ReturnType<typeof useWalletClient>['data'];
   publicClient?: ReturnType<typeof usePublicClient>;
+  icaApp?: InterchainAccount;
 }) {
   logger.debug('Preparing transfer transaction(s)');
   setIsLoading(true);
@@ -144,7 +151,8 @@ async function executeTransfer({
     if (!recipient) throw new Error('No recipient address available');
 
     if (routeType === 'swap-bridge') {
-      if (!walletClient || !publicClient) throw new Error('Wallet not connected for swap-bridge');
+      if (!walletClient || !publicClient || !icaApp)
+        throw new Error('Wallet or ICA app not available for swap-bridge');
 
       const origin = originToken.chainName;
       const destination = destinationToken.chainName;
@@ -177,6 +185,7 @@ async function executeTransfer({
         walletClient,
         publicClient,
         ethersProvider,
+        icaApp,
         onStatusChange: (status) => {
           transferStatus = status;
           updateTransferStatus(transferIndex, status);

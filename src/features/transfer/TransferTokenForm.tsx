@@ -44,6 +44,7 @@ import { useIsAccountSanctioned } from '../sanctions/hooks/useIsAccountSanctione
 import { useStore } from '../store';
 import { IcaPanel } from '../swap/components/IcaPanel';
 import { useIcaAddress } from '../swap/hooks/useIcaAddress';
+import { useInterchainAccountApp } from '../swap/hooks/useInterchainAccount';
 import { useSwapQuote } from '../swap/hooks/useSwapQuote';
 import { DEFAULT_SLIPPAGE, isSwapSupported } from '../swap/swapConfig';
 import { ImportTokenButton } from '../tokens/ImportTokenButton';
@@ -356,7 +357,9 @@ function DestinationTokenCard({ isReview }: { isReview: boolean }) {
   const { routeType } = useTransferRoute(originToken, destinationToken, collateralGroups);
 
   const senderAddress = useAccountAddressForChain(multiProvider, originToken?.chainName);
+  const icaApp = useInterchainAccountApp();
   const { icaAddress } = useIcaAddress(
+    icaApp,
     senderAddress ?? undefined,
     originToken?.chainName,
     destinationToken?.chainName,

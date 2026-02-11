@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useIcaAddress } from '../hooks/useIcaAddress';
+import { useInterchainAccountApp } from '../hooks/useInterchainAccount';
 import { IcaBalanceDisplay } from './IcaBalanceDisplay';
 import { IcaSendForm } from './IcaSendForm';
 
@@ -12,7 +13,8 @@ interface IcaPanelProps {
 export function IcaPanel({ userAddress, originChainName, destinationChainName }: IcaPanelProps) {
   const [expanded, setExpanded] = useState(false);
   const [showSendForm, setShowSendForm] = useState(false);
-  const { icaAddress } = useIcaAddress(userAddress, originChainName, destinationChainName);
+  const icaApp = useInterchainAccountApp();
+  const { icaAddress } = useIcaAddress(icaApp, userAddress, originChainName, destinationChainName);
   const destDisplayName =
     destinationChainName.charAt(0).toUpperCase() + destinationChainName.slice(1);
 

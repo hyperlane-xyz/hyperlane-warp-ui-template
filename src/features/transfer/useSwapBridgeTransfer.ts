@@ -1,4 +1,5 @@
 import {
+  InterchainAccount,
   buildSwapAndBridgeTx,
   commitmentFromIcaCalls,
   getBridgeFee,
@@ -6,6 +7,7 @@ import {
   normalizeCalls,
   shareCallsWithPrivateRelayer,
 } from '@hyperlane-xyz/sdk';
+import { addressToBytes32 } from '@hyperlane-xyz/utils';
 import { BigNumber, providers } from 'ethers';
 import { useCallback, useState } from 'react';
 import {
@@ -35,10 +37,6 @@ const universalRouterAbi = parseAbi([
   'function execute(bytes commands, bytes[] inputs, uint256 deadline) external payable',
 ]);
 
-const icaRouterAbi = parseAbi([
-  'function getLocalInterchainAccount(uint32 _origin, address _owner, address _router, address _ism) view returns (address)',
-]);
-
 export interface SwapBridgeParams {
   originChainName: string;
   destinationChainName: string;
@@ -49,6 +47,7 @@ export interface SwapBridgeParams {
   walletClient: WalletClient;
   publicClient: PublicClient;
   ethersProvider: providers.Provider;
+  icaApp: InterchainAccount;
   onStatusChange: (status: TransferStatus) => void;
 }
 
@@ -103,6 +102,7 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
     walletClient,
     publicClient,
     ethersProvider,
+    icaApp,
     onStatusChange,
   } = params;
 
@@ -118,11 +118,9 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
     'Universal Router address not configured',
   );
 
-  const icaAddress = await publicClient.readContract({
-    address: destConfig.icaRouter as Address,
-    abi: icaRouterAbi,
-    functionName: 'getLocalInterchainAccount',
-    args: [originConfig.domainId, account, originConfig.icaRouter as Address, ZERO_ADDRESS],
+  const icaAddress = await icaApp.getAccount(destinationChainName, {
+    origin: originChainName,
+    owner: addressToBytes32(account),
   });
 
   const salt = randomSalt();

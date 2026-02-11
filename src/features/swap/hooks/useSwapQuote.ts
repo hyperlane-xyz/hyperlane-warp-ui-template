@@ -1,16 +1,14 @@
-import { getBridgeFee, getSwapQuote } from '@hyperlane-xyz/sdk';
+import { getBridgeFee, getIcaFee, getSwapQuote } from '@hyperlane-xyz/sdk';
 import { useQuery } from '@tanstack/react-query';
 import { BigNumber } from 'ethers';
 import { useMultiProvider } from '../../chains/hooks';
 import { getSwapConfig } from '../swapConfig';
 
 export interface SwapQuoteResult {
-  /** Amount of bridge token received after origin swap */
   swapOutput: BigNumber;
-  /** ETH fee for warp bridge transferRemote */
   bridgeFee: BigNumber;
-  /** Token the bridge fee is denominated in */
   bridgeFeeToken: string;
+  icaFee: BigNumber;
 }
 
 export function useSwapQuote(
@@ -58,10 +56,17 @@ export function useSwapQuote(
         swapOutput,
       );
 
+      const icaFee = await getIcaFee(
+        provider,
+        originConfig.icaRouter,
+        destConfig.domainId,
+      );
+
       return {
         swapOutput,
         bridgeFee: bridge.fee,
         bridgeFeeToken: bridge.feeToken,
+        icaFee,
       };
     },
     enabled:

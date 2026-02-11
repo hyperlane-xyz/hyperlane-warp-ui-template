@@ -635,6 +635,7 @@ function ButtonSection({
       icaAddress: icaAddress ?? undefined,
       swapOutput: swapQuoteCache?.swapOutput,
       bridgeFee: swapQuoteCache?.bridgeFee,
+      icaFee: swapQuoteCache?.icaFee,
     });
     setTransferLoading(false);
   };
@@ -894,6 +895,10 @@ function ReviewDetails({
                     <p className="flex">
                       <span className="min-w-[7.5rem]">Bridge Fee</span>
                       <span>{`${fromWei(swapQuote.bridgeFee.toString())} ETH`}</span>
+                    </p>
+                    <p className="flex">
+                      <span className="min-w-[7.5rem]">ICA Fee</span>
+                      <span>{`${fromWei(swapQuote.icaFee.toString())} ETH`}</span>
                     </p>
                   </>
                 )}

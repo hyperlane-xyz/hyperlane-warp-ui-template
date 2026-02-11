@@ -69,7 +69,7 @@ export function IcaSendForm({
 
   const onSubmit = async () => {
     if (!walletClient) {
-      setFormError('Connect an Arbitrum wallet first.');
+      setFormError(`Connect a ${originChainName} wallet first.`);
       return;
     }
 

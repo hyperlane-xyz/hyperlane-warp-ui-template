@@ -2,8 +2,12 @@ import {
   InterchainAccount,
   MultiProtocolProvider,
   buildSwapAndBridgeTx,
+  commitmentFromIcaCalls,
   getBridgeFee,
+  getIcaFee,
   getSwapQuote,
+  normalizeCalls,
+  shareCallsWithPrivateRelayer,
 } from '@hyperlane-xyz/sdk';
 import { toWei } from '@hyperlane-xyz/utils';
 
@@ -35,6 +39,15 @@ const universalRouterAbi = parseAbi([
   'function execute(bytes commands, bytes[] inputs, uint256 deadline) external payable',
 ]);
 
+const COMMITMENTS_SERVICE_URL =
+  'https://offchain-lookup.services.hyperlane.xyz/callCommitments/calls';
+
+type CommitmentCall = {
+  to: string;
+  data: string;
+  value?: string;
+};
+
 export interface SwapBridgeParams {
   originChainName: string;
   destinationChainName: string;
@@ -52,6 +65,12 @@ export interface SwapBridgeParams {
   cachedIcaAddress?: string;
   cachedSwapOutput?: BigNumber;
   cachedBridgeFee?: BigNumber;
+  cachedIcaFee?: BigNumber;
+}
+
+function randomSalt(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(32));
+  return `0x${Array.from(bytes, (value) => value.toString(16).padStart(2, '0')).join('')}`;
 }
 
 function requireAddress(value: string, errorMessage: string): Address {
@@ -107,6 +126,7 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
     cachedIcaAddress,
     cachedSwapOutput,
     cachedBridgeFee,
+    cachedIcaFee,
   } = params;
 
   const originConfig = getSwapConfig(originChainName);
@@ -169,6 +189,23 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
   const bridgeFee = cachedBridgeFee ?? bridgeQuote.fee;
   const bridgeTokenFee = bridgeQuote.bridgeTokenFee;
 
+  if (!originConfig.icaRouter || !destConfig.icaRouter) {
+    throw new Error('Missing ICA router configuration for selected chain pair.');
+  }
+
+  const icaFee =
+    cachedIcaFee ??
+    (await getIcaFee(ethersProvider, originConfig.icaRouter, destConfig.domainId));
+
+  const rawDestCalls: CommitmentCall[] = [];
+  const normalizedCalls = rawDestCalls.length > 0 ? normalizeCalls(rawDestCalls) : [];
+  const salt = randomSalt();
+  const commitmentHash =
+    normalizedCalls.length > 0 ? commitmentFromIcaCalls(normalizedCalls, salt) : salt;
+  if (!commitmentHash) {
+    throw new Error('Missing ICA commitment for cross-chain command.');
+  }
+
   const icaAddress =
     cachedIcaAddress ??
     (await icaApp.getAccount(destinationChainName, {
@@ -192,7 +229,11 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
     expectedSwapOutput: swapOutput,
     bridgeMsgFee: bridgeFee,
     bridgeTokenFee,
-    includeCrossChainCommand: false,
+    icaRouterAddress: originConfig.icaRouter,
+    remoteIcaRouterAddress: destConfig.icaRouter,
+    commitment: commitmentHash,
+    crossChainMsgFee: icaFee,
+    includeCrossChainCommand: true,
   };
 
   const { commands, inputs, value } = buildSwapAndBridgeTx(swapBridgeParams);
@@ -212,6 +253,13 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
   });
 
   const txValue = BigInt(value.toString());
+  const nativeBalance = await publicClient.getBalance({ address: account });
+  if (nativeBalance < txValue) {
+    throw new Error(
+      'Insufficient origin-chain native balance to cover swap, bridge, and ICA execution fees.',
+    );
+  }
+
   const hash = await walletClient.sendTransaction({
     account,
     to: universalRouter,
@@ -222,6 +270,21 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
 
   onStatusChange(TransferStatus.ConfirmingSwapBridge);
   await publicClient.waitForTransactionReceipt({ hash, confirmations: 1 });
+
+  if (rawDestCalls.length > 0) {
+    onStatusChange(TransferStatus.PostingCommitment);
+    const relayerResponse = await shareCallsWithPrivateRelayer(COMMITMENTS_SERVICE_URL, {
+      calls: rawDestCalls,
+      relayers: [],
+      salt,
+      commitmentDispatchTx: hash,
+      originDomain: originConfig.domainId,
+    });
+
+    if (!relayerResponse.ok) {
+      throw new Error('Failed to post ICA call commitment to relayer service.');
+    }
+  }
 
   return hash;
 }

@@ -62,7 +62,12 @@ export function useTokenTransfer(onDone?: () => void) {
       values: TransferFormValues,
       routeOverrideToken: Token | null,
       routeType?: TransferRouteType,
-      swapCache?: { icaAddress?: string; swapOutput?: BigNumber; bridgeFee?: BigNumber },
+      swapCache?: {
+        icaAddress?: string;
+        swapOutput?: BigNumber;
+        bridgeFee?: BigNumber;
+        icaFee?: BigNumber;
+      },
     ) =>
       executeTransfer({
         warpCore,
@@ -137,7 +142,12 @@ async function executeTransfer({
   walletClient?: ReturnType<typeof useWalletClient>['data'];
   icaApp?: InterchainAccount;
   multiProvider?: MultiProtocolProvider;
-  swapCache?: { icaAddress?: string; swapOutput?: BigNumber; bridgeFee?: BigNumber };
+  swapCache?: {
+    icaAddress?: string;
+    swapOutput?: BigNumber;
+    bridgeFee?: BigNumber;
+    icaFee?: BigNumber;
+  };
 }) {
   logger.debug('Preparing transfer transaction(s)');
   setIsLoading(true);
@@ -212,6 +222,7 @@ async function executeTransfer({
         cachedIcaAddress: swapCache?.icaAddress,
         cachedSwapOutput: swapCache?.swapOutput,
         cachedBridgeFee: swapCache?.bridgeFee,
+        cachedIcaFee: swapCache?.icaFee,
       });
 
       updateTransferStatus(transferIndex, (transferStatus = TransferStatus.ConfirmedTransfer), {

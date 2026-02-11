@@ -1,5 +1,5 @@
 import { InterchainAccount } from '@hyperlane-xyz/sdk';
-import { addressToBytes32 } from '@hyperlane-xyz/utils';
+import { addressToBytes32, eqAddress, isZeroishAddress } from '@hyperlane-xyz/utils';
 import { useCallback, useState } from 'react';
 import { Hex, WalletClient, encodeFunctionData, isAddress, parseAbi, parseUnits } from 'viem';
 import { usePublicClient } from 'wagmi';
@@ -10,8 +10,6 @@ type IcaTransactionStatus = 'idle' | 'building' | 'signing' | 'confirming' | 'co
 const erc20Abi = parseAbi(['function approve(address spender, uint256 amount) returns (bool)']);
 const erc20BalanceAbi = parseAbi(['function balanceOf(address account) view returns (uint256)']);
 const erc20TransferAbi = parseAbi(['function transfer(address to, uint256 amount) returns (bool)']);
-const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
-
 const warpRouteAbi = parseAbi([
   'function transferRemote(uint32 destinationDomain, bytes32 recipient, uint256 amount) payable returns (bytes32)',
   'function quoteTransferRemote(uint32 destinationDomain, bytes32 recipient, uint256 amount) view returns ((address token, uint256 amount)[] quotes)',
@@ -71,7 +69,7 @@ export function useIcaTransaction(
           if (!isAddress(destConfig.icaBridgeRoute)) {
             throw new Error('ICA bridge route not configured for destination chain.');
           }
-          if (params.token.toLowerCase() !== destConfig.bridgeToken.toLowerCase()) {
+          if (!eqAddress(params.token, destConfig.bridgeToken)) {
             throw new Error(
               'Return to origin currently supports the canonical bridge token only. Select USDC on Base and retry.',
             );
@@ -93,11 +91,11 @@ export function useIcaTransaction(
             });
 
             msgFee = 0n;
-            const normalizedToken = params.token.toLowerCase();
             for (const quoteEntry of quotes) {
-              const quoteToken = quoteEntry.token.toLowerCase();
-              if (quoteToken === ZERO_ADDRESS) msgFee = quoteEntry.amount;
-              if (quoteToken === normalizedToken) tokenPull = quoteEntry.amount;
+              if (isZeroishAddress(quoteEntry.token)) msgFee = quoteEntry.amount;
+              if (eqAddress(quoteEntry.token, params.token)) {
+                tokenPull = quoteEntry.amount;
+              }
             }
             if (tokenPull < amount) tokenPull = amount;
           } catch (error) {

@@ -1,12 +1,13 @@
 import {
   InterchainAccount,
   MultiProtocolProvider,
+  buildErc20ApproveCall,
+  buildIcaCommitmentFromRawCalls,
+  buildPostCallsPayload,
   buildSwapAndBridgeTx,
-  commitmentFromIcaCalls,
   getBridgeFee,
   getIcaFee,
   getSwapQuote,
-  normalizeCalls,
   shareCallsWithPrivateRelayer,
 } from '@hyperlane-xyz/sdk';
 import { toWei } from '@hyperlane-xyz/utils';
@@ -46,7 +47,7 @@ const COMMITMENTS_SERVICE_URL =
 type CommitmentCall = {
   to: string;
   data: string;
-  value?: string;
+  value?: string | number;
 };
 
 function toErrorMessage(error: unknown): string {
@@ -234,26 +235,16 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
     throw new Error('Missing or invalid destination bridge route required for ICA commitment calls.');
   }
 
-  const approveData = encodeFunctionData({
-    abi: erc20Abi,
-    functionName: 'approve',
-    args: [destConfig.icaBridgeRoute as Address, maxUint256],
-  });
   const rawDestCalls: CommitmentCall[] = [
-    {
-      to: destinationTokenAddress,
-      data: approveData,
-      value: '0',
-    },
+    buildErc20ApproveCall({
+      token: destinationTokenAddress,
+      spender: destConfig.icaBridgeRoute,
+      amount: maxUint256.toString(),
+    }),
   ];
-  const normalizedCalls = normalizeCalls(rawDestCalls);
-  if (normalizedCalls.length === 0) {
-    throw new Error(
-      'Failed to construct destination ICA calls for commit-reveal. Cannot continue with empty commitment payload.',
-    );
-  }
   const salt = randomSalt();
-  const commitmentHash = commitmentFromIcaCalls(normalizedCalls, salt);
+  const commitmentPayload = buildIcaCommitmentFromRawCalls(rawDestCalls, salt);
+  const commitmentHash = commitmentPayload.commitment;
   if (!commitmentHash) {
     throw new Error('Missing ICA commitment for cross-chain command.');
   }
@@ -338,13 +329,17 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
 
   onStatusChange(TransferStatus.PostingCommitment);
   try {
-    const relayerResponse = await shareCallsWithPrivateRelayer(COMMITMENTS_SERVICE_URL, {
-      calls: rawDestCalls,
+    const payload = buildPostCallsPayload({
+      calls: commitmentPayload.normalizedCalls,
       relayers: [],
       salt,
       commitmentDispatchTx: hash,
       originDomain: originConfig.domainId,
     });
+    const relayerResponse = await shareCallsWithPrivateRelayer(
+      COMMITMENTS_SERVICE_URL,
+      payload,
+    );
 
     if (!relayerResponse.ok) {
       throw new Error('Relayer rejected commitment payload.');

@@ -4,12 +4,6 @@ const { version } = require('./package.json');
 const withBundleAnalyzer = require('@next/bundle-analyzer')({
   enabled: process.env.ANALYZE === 'true',
 });
-const sentryDsn = process.env.NEXT_PUBLIC_SENTRY_DSN || '';
-const isSentryEnabled = Boolean(sentryDsn);
-const withSentryConfig = isSentryEnabled
-  ? require('@sentry/nextjs').withSentryConfig
-  : (config) => config;
-
 const isDev = process.env.NODE_ENV !== 'production';
 
 // Sometimes useful to disable this during development
@@ -130,7 +124,7 @@ const nextConfig = {
 
   env: {
     NEXT_PUBLIC_VERSION: version,
-    NEXT_PUBLIC_SENTRY_DSN: sentryDsn,
+    NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN || '',
   },
 
   reactStrictMode: true,
@@ -152,19 +146,4 @@ const nextConfig = {
   typescript: { ignoreBuildErrors: true },
 };
 
-const sentryOptions = {
-  org: 'hyperlane',
-  project: 'warp-ui',
-  authToken: process.env.SENTRY_AUTH_TOKEN,
-  hideSourceMaps: true,
-  tunnelRoute: '/monitoring-tunnel',
-  sourcemaps: { disable: true },
-  telemetry: false,
-  bundleSizeOptimizations: {
-    excludeDebugStatements: true,
-    excludeReplayIframe: true,
-    excludeReplayShadowDom: true,
-  },
-};
-
-module.exports = withBundleAnalyzer(withSentryConfig(nextConfig, sentryOptions));
+module.exports = withBundleAnalyzer(nextConfig);

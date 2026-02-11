@@ -4,6 +4,11 @@ import { useMutation } from '@tanstack/react-query';
 import { ADD_ASSET_SUPPORTED_PROTOCOLS, WARP_QUERY_PARAMS } from '../../consts/args';
 import { config } from '../../consts/config';
 import { getQueryParams } from '../../utils/queryParams';
+import {
+  getSwappableAddress,
+  isDemoSwapBridgePath,
+  isSwapSupported,
+} from '../swap/swapConfig';
 import { useMultiProvider } from '../chains/hooks';
 import { tryGetValidChainName } from '../chains/utils';
 import { useStore } from '../store';
@@ -25,6 +30,12 @@ function findTokenByChainSymbol(tokens: Token[], chainSymbol: string): Token | u
   const [chainName, symbol] = chainSymbol.split('-');
   if (!chainName || !symbol) return undefined;
   return tokens.find(
+    (t) => t.chainName === chainName && t.symbol.toLowerCase() === symbol.toLowerCase(),
+  );
+}
+
+function findTokensByChainSymbol(tokens: Token[], chainName: string, symbol: string): Token[] {
+  return tokens.filter(
     (t) => t.chainName === chainName && t.symbol.toLowerCase() === symbol.toLowerCase(),
   );
 }
@@ -58,11 +69,9 @@ export function getInitialTokenKeys(
   // Try to find origin token from URL params (chain + symbol)
   let originToken: Token | undefined;
   if (originChainQuery && originTokenSymbol) {
-    originToken = tokens.find(
-      (t) =>
-        t.chainName === originChainQuery &&
-        t.symbol.toLowerCase() === originTokenSymbol.toLowerCase(),
-    );
+    const candidates = findTokensByChainSymbol(tokens, originChainQuery, originTokenSymbol);
+    originToken =
+      candidates.find((t) => t.isNative() || t.isHypNative()) || candidates[0] || undefined;
   }
 
   // 2. Second priority: Config default token (format: chainName-symbol)
@@ -78,11 +87,25 @@ export function getInitialTokenKeys(
   // Try to find destination token from URL params (chain + symbol)
   let destinationToken: Token | undefined;
   if (destinationChainQuery && destinationTokenSymbol) {
-    destinationToken = tokens.find(
-      (t) =>
-        t.chainName === destinationChainQuery &&
-        t.symbol.toLowerCase() === destinationTokenSymbol.toLowerCase(),
+    const candidates = findTokensByChainSymbol(
+      tokens,
+      destinationChainQuery,
+      destinationTokenSymbol,
     );
+    const routeOriginChain = originToken?.chainName || originChainQuery;
+    const demoCandidate =
+      routeOriginChain && isSwapSupported(routeOriginChain, destinationChainQuery)
+        ? candidates.find((token) =>
+            isDemoSwapBridgePath({
+              originChainName: routeOriginChain,
+              destinationChainName: destinationChainQuery,
+              destinationTokenAddress:
+                getSwappableAddress(token) ?? token.addressOrDenom,
+              destinationRouteAddress: token.addressOrDenom,
+            }),
+          )
+        : undefined;
+    destinationToken = demoCandidate || candidates[0] || undefined;
   }
 
   // Fallback: use config default token (format: chainName-symbol)

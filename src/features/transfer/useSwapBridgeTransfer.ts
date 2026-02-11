@@ -195,13 +195,20 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
     // Get dest swap quote for USDC→destToken
     const destRpcUrl = multiProvider.getRpcUrl(destinationChainName);
     const destProvider = new providers.JsonRpcProvider(destRpcUrl);
-    const destSwapOutput = await getSwapQuote(
-      destProvider,
-      destConfig.quoterV2,
-      destConfig.bridgeToken,
-      destinationTokenAddress,
-      bridgedAmount,
-    );
+    let destSwapOutput: BigNumber;
+    try {
+      destSwapOutput = await getSwapQuote(
+        destProvider,
+        destConfig.quoterV2,
+        destConfig.bridgeToken,
+        destinationTokenAddress,
+        bridgedAmount,
+      );
+    } catch (error) {
+      throw new Error(
+        `Unable to quote destination swap on ${destinationChainName} for ${destConfig.bridgeToken} -> ${destinationTokenAddress}.`,
+      );
+    }
     const destSwapOutMin = destSwapOutput.mul(10000 - slippageBps).div(10000);
 
     // Build ICA calls: approve USDC → swap USDC→destToken (recipient=user) → (swap handles transfer)

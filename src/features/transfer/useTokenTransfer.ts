@@ -27,6 +27,7 @@ import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { AppState, useStore } from '../store';
 import { useInterchainAccountApp } from '../swap/hooks/useInterchainAccount';
+import { getSwappableAddress } from '../swap/swapConfig';
 import { getTokenByKey, useWarpCore } from '../tokens/hooks';
 import { TransferContext, TransferFormValues, TransferStatus } from './types';
 import { executeSwapBridge } from './useSwapBridgeTransfer';
@@ -188,12 +189,14 @@ async function executeTransfer({
       const originSwapAddress = isNativeOriginToken
         ? originToken.addressOrDenom
         : originToken.collateralAddressOrDenom || originToken.addressOrDenom;
+      const destinationSwapAddress =
+        getSwappableAddress(destinationToken) || destinationToken.addressOrDenom;
 
       const txHash = await executeSwapBridge({
         originChainName: origin,
         destinationChainName: destination,
         originTokenAddress: originSwapAddress,
-        destinationTokenAddress: destinationToken.addressOrDenom,
+        destinationTokenAddress: destinationSwapAddress,
         amount,
         originDecimals: originToken.decimals,
         isNativeOriginToken,

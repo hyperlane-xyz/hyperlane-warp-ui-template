@@ -7,12 +7,14 @@ interface IcaBalanceDisplayProps {
   icaAddress: string | null;
   chainName: string;
   destinationChainName: string;
+  isIcaAddressLoading?: boolean;
 }
 
 export function IcaBalanceDisplay({
   icaAddress,
   chainName,
   destinationChainName,
+  isIcaAddressLoading = false,
 }: IcaBalanceDisplayProps) {
   const destConfig = getSwapConfig(destinationChainName);
   const { data, isLoading } = useIcaBalance(
@@ -33,7 +35,11 @@ export function IcaBalanceDisplay({
           ) : null}
         </div>
         <div className="mt-1 truncate font-primary text-xs text-gray-900">
-          {icaAddress ? shortenAddress(icaAddress) : 'Unavailable'}
+          {icaAddress
+            ? shortenAddress(icaAddress)
+            : isIcaAddressLoading
+              ? 'Resolving...'
+              : 'Unavailable'}
         </div>
       </div>
 

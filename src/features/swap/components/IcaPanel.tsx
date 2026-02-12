@@ -44,6 +44,7 @@ export function IcaPanel({ userAddress, originChainName, destinationChainName }:
             icaAddress={icaAddress}
             chainName={destDisplayName}
             destinationChainName={destinationChainName}
+            isIcaAddressLoading={isIcaAddressLoading}
           />
 
           {!icaApp ? (

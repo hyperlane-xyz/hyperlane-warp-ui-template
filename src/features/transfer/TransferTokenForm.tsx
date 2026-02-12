@@ -360,14 +360,15 @@ function DestinationTokenCard({ isReview }: { isReview: boolean }) {
   const originToken = getTokenByKey(tokens, values.originTokenKey);
   const destinationToken = getTokenByKey(tokens, values.destinationTokenKey);
   const { routeType } = useTransferRoute(originToken, destinationToken, collateralGroups);
+  const isSwapBridge = routeType === 'swap-bridge';
 
   const senderAddress = useAccountAddressForChain(multiProvider, originToken?.chainName);
   const icaApp = useInterchainAccountApp();
   const { icaAddress } = useIcaAddress(
-    icaApp,
-    senderAddress ?? undefined,
-    originToken?.chainName,
-    destinationToken?.chainName,
+    isSwapBridge ? icaApp : null,
+    isSwapBridge ? (senderAddress ?? undefined) : undefined,
+    isSwapBridge ? originToken?.chainName : undefined,
+    isSwapBridge ? destinationToken?.chainName : undefined,
   );
 
   const connectedDestAddress = useAccountAddressForChain(
@@ -375,7 +376,6 @@ function DestinationTokenCard({ isReview }: { isReview: boolean }) {
     destinationToken?.chainName,
   );
 
-  const isSwapBridge = routeType === 'swap-bridge';
   const recipient =
     isSwapBridge && icaAddress ? icaAddress : values.recipient || connectedDestAddress;
 

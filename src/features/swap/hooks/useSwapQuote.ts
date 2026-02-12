@@ -19,17 +19,23 @@ export function useSwapQuote(
   amountWei: string | undefined,
 ) {
   const multiProvider = useMultiProvider();
+  const normalizedOriginTokenAddress = originTokenAddress?.toLowerCase();
 
   return useQuery({
     queryKey: [
       'swapQuote',
       originChainName,
       destinationChainName,
-      originTokenAddress,
+      normalizedOriginTokenAddress,
       amountWei,
     ] as const,
     queryFn: async (): Promise<SwapQuoteResult | null> => {
-      if (!originChainName || !destinationChainName || !originTokenAddress || !amountWei) {
+      if (
+        !originChainName ||
+        !destinationChainName ||
+        !normalizedOriginTokenAddress ||
+        !amountWei
+      ) {
         return null;
       }
 
@@ -45,7 +51,7 @@ export function useSwapQuote(
       const swapOutput = await getSwapQuote(
         provider,
         originConfig.quoterV2,
-        originTokenAddress,
+        normalizedOriginTokenAddress,
         originConfig.bridgeToken,
         amount,
         {
@@ -78,10 +84,14 @@ export function useSwapQuote(
     enabled:
       !!originChainName &&
       !!destinationChainName &&
-      !!originTokenAddress &&
+      !!normalizedOriginTokenAddress &&
       !!amountWei &&
       amountWei !== '0',
-    staleTime: 30_000,
+    staleTime: 60_000,
+    gcTime: 10 * 60_000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    placeholderData: (previousData) => previousData,
     refetchInterval: 60_000,
   });
 }

@@ -20,12 +20,18 @@ export function useIcaBalance(icaAddress: string | null, chainId: number, chainN
   const config = chainName ? getSwapConfig(chainName) : undefined;
   const bridgeToken = config?.bridgeToken;
   const wrappedNative = config?.wrappedNative;
+  const normalizedIcaAddress = icaAddress?.toLowerCase();
+  const normalizedBridgeToken = bridgeToken?.toLowerCase();
+  const normalizedWrappedNative = wrappedNative?.toLowerCase();
 
   return useQuery({
     queryKey: [
       'icaBalance',
-      icaAddress,
+      normalizedIcaAddress,
       chainId,
+      normalizedBridgeToken,
+      normalizedWrappedNative,
+      icaAddress,
       bridgeToken,
       wrappedNative,
       publicClient,
@@ -114,6 +120,11 @@ export function useIcaBalance(icaAddress: string | null, chainId: number, chainN
       };
     },
     enabled: !!icaAddress && !!bridgeToken,
+    staleTime: 15_000,
+    gcTime: 10 * 60_000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    placeholderData: (previousData) => previousData,
     refetchInterval: 30_000,
   });
 }

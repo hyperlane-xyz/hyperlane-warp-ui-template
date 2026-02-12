@@ -99,6 +99,9 @@ export interface AppState {
   collateralGroups: Map<string, Token[]>;
   /** Pre-computed token key to Token map for O(1) lookups */
   tokenByKeyMap: Map<string, Token>;
+  /** Cached ICA addresses keyed by `${owner}:${origin}:${destination}` */
+  icaAddressCache: Record<string, string>;
+  setIcaAddressCacheEntry: (key: string, value: string) => void;
 }
 
 export const useStore = create<AppState>()(
@@ -228,6 +231,18 @@ export const useStore = create<AppState>()(
       tokens: [],
       collateralGroups: new Map(),
       tokenByKeyMap: new Map(),
+      icaAddressCache: {},
+      setIcaAddressCacheEntry: (key: string, value: string) => {
+        set((state) => {
+          if (state.icaAddressCache[key] === value) return state;
+          return {
+            icaAddressCache: {
+              ...state.icaAddressCache,
+              [key]: value,
+            },
+          };
+        });
+      },
     }),
 
     // Store config
@@ -237,6 +252,7 @@ export const useStore = create<AppState>()(
         // fields to persist
         chainMetadataOverrides: state.chainMetadataOverrides,
         transfers: state.transfers,
+        icaAddressCache: state.icaAddressCache,
       }),
       version: PERSIST_STATE_VERSION,
       onRehydrateStorage: () => {

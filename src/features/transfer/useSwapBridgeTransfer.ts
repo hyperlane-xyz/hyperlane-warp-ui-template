@@ -6,7 +6,6 @@ import {
   buildPostCallsPayload,
   buildSwapAndBridgeTx,
   getBridgeFee,
-  getIcaFee,
   getSwapQuote,
   shareCallsWithPrivateRelayer,
 } from '@hyperlane-xyz/sdk';
@@ -30,6 +29,7 @@ import {
   getSwapConfig,
   isDemoSwapBridgePath,
 } from '../swap/swapConfig';
+import { getIcaCommitRevealFee } from '../swap/icaFees';
 import { TransferStatus } from './types';
 
 const erc20Abi = parseAbi([
@@ -262,7 +262,11 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
 
   const icaQuote = await (async () => {
     try {
-      return await getIcaFee(quoteProvider, originIcaRouter, destConfig.domainId);
+      return await getIcaCommitRevealFee(
+        quoteProvider,
+        originIcaRouter,
+        destConfig.domainId,
+      );
     } catch (error) {
       throw new Error(
         `Failed to quote ICA execution fee (${originChainName} -> ${destinationChainName}). Retry in a few seconds. Root cause: ${toErrorMessage(error)}`,

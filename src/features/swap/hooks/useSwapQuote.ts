@@ -1,7 +1,8 @@
-import { getBridgeFee, getIcaFee, getSwapQuote } from '@hyperlane-xyz/sdk';
+import { getBridgeFee, getSwapQuote } from '@hyperlane-xyz/sdk';
 import { useQuery } from '@tanstack/react-query';
 import { BigNumber } from 'ethers';
 import { useMultiProvider } from '../../chains/hooks';
+import { getIcaCommitRevealFee } from '../icaFees';
 import { getSwapConfig } from '../swapConfig';
 
 export interface SwapQuoteResult {
@@ -61,7 +62,7 @@ export function useSwapQuote(
         originConfig.bridgeToken,
       );
 
-      const icaFee = await getIcaFee(
+      const icaFee = await getIcaCommitRevealFee(
         provider,
         originConfig.icaRouter,
         destConfig.domainId,

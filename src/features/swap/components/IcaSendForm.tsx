@@ -1,6 +1,8 @@
+import { ChainName } from '@hyperlane-xyz/sdk';
 import { eqAddress, isAddress } from '@hyperlane-xyz/utils';
 import { useMemo, useState } from 'react';
 import { useWalletClient } from 'wagmi';
+import { getHypExplorerSearchLink } from '../../../utils/links';
 import { useIcaBalance } from '../hooks/useIcaBalance';
 import { useIcaTransaction } from '../hooks/useIcaTransaction';
 import { useInterchainAccountApp } from '../hooks/useInterchainAccount';
@@ -9,8 +11,8 @@ import { getSwapConfig } from '../swapConfig';
 interface IcaSendFormProps {
   icaAddress: string | null;
   defaultRecipient?: string;
-  originChainName: string;
-  destinationChainName: string;
+  originChainName: ChainName;
+  destinationChainName: ChainName;
 }
 
 export function IcaSendForm({
@@ -59,6 +61,7 @@ export function IcaSendForm({
 
   const returnRecipient = defaultRecipient || walletClient?.account?.address || '';
   const effectiveRecipient = mode === 'return-origin' ? returnRecipient : recipient;
+  const hyperlaneLink = txHash ? getHypExplorerSearchLink(txHash) : null;
 
   const insufficientBalance =
     !!activeToken && !!amount && Number(amount) > Number(activeToken.balance);
@@ -147,13 +150,6 @@ export function IcaSendForm({
         </button>
       </div>
 
-      {mode === 'return-origin' && (
-        <div className="mt-2 rounded border border-amber-200 bg-amber-50 px-2 py-1.5 text-xs text-amber-800">
-          Return-to-origin uses commit-reveal. Non-USDC tokens are swapped to canonical USDC on the
-          destination ICA before bridging.
-        </div>
-      )}
-
       <div className="mt-2 space-y-2">
         <label className="block text-xs text-gray-700">Token</label>
         <select
@@ -206,7 +202,20 @@ export function IcaSendForm({
 
       {txHash && (
         <div className="mt-2 rounded border border-green-300 bg-green-50 px-2 py-1.5 text-xs text-green-700">
-          ICA send submitted: {txHash.slice(0, 10)}...
+          <span>ICA call submitted: {txHash.slice(0, 10)}...</span>
+          {hyperlaneLink ? (
+            <>
+              {' '}
+              <a
+                href={hyperlaneLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-green-800 underline underline-offset-2 hover:opacity-80"
+              >
+                Search in Hyperlane Explorer
+              </a>
+            </>
+          ) : null}
         </div>
       )}
 

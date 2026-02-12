@@ -31,6 +31,7 @@ import {
   applySlippage,
   buildUniversalRouterV3SwapExactInCall,
 } from '../swap/universalRouter';
+import { COMMITMENTS_SERVICE_URL, randomSalt, toErrorMessage } from '../swap/utils';
 import { TransferStatus } from './types';
 
 const erc20Abi = parseAbi([
@@ -42,15 +43,8 @@ const universalRouterAbi = parseAbi([
   'function execute(bytes commands, bytes[] inputs, uint256 deadline) external payable',
 ]);
 
-const COMMITMENTS_SERVICE_URL =
-  'https://offchain-lookup.services.hyperlane.xyz/callCommitments/calls';
 const FEE_BUFFER_ATTEMPTS_BPS = [500, 2000, 5000] as const;
 const BPS_DENOMINATOR = 10_000;
-
-function toErrorMessage(error: unknown): string {
-  if (error instanceof Error && error.message) return error.message;
-  return String(error);
-}
 
 export interface SwapBridgeParams {
   originChainName: string;
@@ -69,11 +63,6 @@ export interface SwapBridgeParams {
   cachedSwapOutput?: BigNumber;
   cachedBridgeFee?: BigNumber;
   cachedIcaFee?: BigNumber;
-}
-
-function randomSalt(): string {
-  const bytes = crypto.getRandomValues(new Uint8Array(32));
-  return `0x${Array.from(bytes, (value) => value.toString(16).padStart(2, '0')).join('')}`;
 }
 
 function requireAddress(value: string, errorMessage: string): Address {

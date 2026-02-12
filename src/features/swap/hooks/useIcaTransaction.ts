@@ -29,6 +29,7 @@ import {
   applySlippage,
   buildUniversalRouterV3SwapExactInCall,
 } from '../universalRouter';
+import { COMMITMENTS_SERVICE_URL, randomSalt, toErrorMessage } from '../utils';
 
 type IcaTransactionStatus = 'idle' | 'building' | 'signing' | 'confirming' | 'complete' | 'failed';
 
@@ -37,19 +38,6 @@ const erc20TransferAbi = parseAbi(['function transfer(address to, uint256 amount
 const icaRouterAbi = parseAbi([
   'function callRemoteCommitReveal(uint32 destinationDomain, bytes32 commitment, uint256 gasLimit) payable returns (bytes32 commitmentMsgId, bytes32 revealMsgId)',
 ]);
-
-const COMMITMENTS_SERVICE_URL =
-  'https://offchain-lookup.services.hyperlane.xyz/callCommitments/calls';
-
-function toErrorMessage(error: unknown): string {
-  if (error instanceof Error && error.message) return error.message;
-  return String(error);
-}
-
-function randomSalt(): `0x${string}` {
-  const bytes = crypto.getRandomValues(new Uint8Array(32));
-  return `0x${Array.from(bytes, (value) => value.toString(16).padStart(2, '0')).join('')}`;
-}
 
 export function useIcaTransaction(
   icaApp: InterchainAccount | null,

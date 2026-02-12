@@ -57,13 +57,13 @@ importers:
         version: 2.18.1(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       '@cosmos-kit/cosmostation':
         specifier: ^2.11.2
-        version: 2.17.1(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(@walletconnect/types@2.23.4(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5)))(bufferutil@4.1.0)(cosmjs-types@0.9.0)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.21.4)
+        version: 2.17.1(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(@walletconnect/types@2.23.5(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5)))(bufferutil@4.1.0)(cosmjs-types@0.9.0)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.21.4)
       '@cosmos-kit/keplr':
         specifier: ^2.12.2
-        version: 2.17.1(01720f9f0d00f41533740f57dbd1fead)
+        version: 2.17.1(42e118a5d1b15b8777d645f045c74ca3)
       '@cosmos-kit/leap':
         specifier: ^2.12.2
-        version: 2.17.1(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(@walletconnect/types@2.23.4(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5)))(bufferutil@4.1.0)(cosmjs-types@0.9.0)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.21.4)
+        version: 2.17.1(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(@walletconnect/types@2.23.5(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5)))(bufferutil@4.1.0)(cosmjs-types@0.9.0)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.21.4)
       '@cosmos-kit/react':
         specifier: 2.18.0
         version: 2.18.0(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@interchain-ui/react@1.26.3(@types/react@18.3.28)(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@types/react-dom@18.3.7(@types/react@18.3.28))(@types/react@18.3.28)(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(bufferutil@4.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(utf-8-validate@5.0.10)
@@ -83,14 +83,14 @@ importers:
         specifier: 23.14.0
         version: 23.14.0
       '@hyperlane-xyz/sdk':
-        specifier: 25.1.1-beta.e959e2b694f2696c6d18669edf691bd6bd110677
-        version: 25.1.1-beta.e959e2b694f2696c6d18669edf691bd6bd110677(@ethersproject/abi@5.8.0)(@ethersproject/providers@5.8.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@types/sinon-chai@4.0.0)(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
+        specifier: 25.1.1-beta.49818f74c289a72696559690d464fe1bb4d311c7
+        version: 25.1.1-beta.49818f74c289a72696559690d464fe1bb4d311c7(@ethersproject/abi@5.8.0)(@ethersproject/providers@5.8.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@types/sinon-chai@4.0.0)(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
       '@hyperlane-xyz/utils':
-        specifier: 25.1.1-beta.e959e2b694f2696c6d18669edf691bd6bd110677
-        version: 25.1.1-beta.e959e2b694f2696c6d18669edf691bd6bd110677(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
+        specifier: 25.1.1-beta.49818f74c289a72696559690d464fe1bb4d311c7
+        version: 25.1.1-beta.49818f74c289a72696559690d464fe1bb4d311c7(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
       '@hyperlane-xyz/widgets':
-        specifier: 25.1.1-beta.e959e2b694f2696c6d18669edf691bd6bd110677
-        version: 25.1.1-beta.e959e2b694f2696c6d18669edf691bd6bd110677(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@ethersproject/abi@5.8.0)(@ethersproject/providers@5.8.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@tanstack/query-core@5.90.20)(@tanstack/react-query@5.90.20(react@18.3.1))(@types/react-dom@18.3.7(@types/react@18.3.28))(@types/react@18.3.28)(@types/sinon-chai@4.0.0)(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(babel-plugin-macros@3.1.0)(bs58@5.0.0)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(get-starknet-core@4.0.0)(immer@10.2.0)(pino-pretty@13.1.3)(react-dom@18.3.1(react@18.3.1))(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.21.4)
+        specifier: 25.1.1-beta.49818f74c289a72696559690d464fe1bb4d311c7
+        version: 25.1.1-beta.49818f74c289a72696559690d464fe1bb4d311c7(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@ethersproject/abi@5.8.0)(@ethersproject/providers@5.8.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@tanstack/query-core@5.90.20)(@tanstack/react-query@5.90.20(react@18.3.1))(@types/react-dom@18.3.7(@types/react@18.3.28))(@types/react@18.3.28)(@types/sinon-chai@4.0.0)(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(babel-plugin-macros@3.1.0)(bs58@5.0.0)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(get-starknet-core@4.0.0)(immer@10.2.0)(pino-pretty@13.1.3)(react-dom@18.3.1(react@18.3.1))(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.21.4)
       '@interchain-ui/react':
         specifier: ^1.23.28
         version: 1.26.3(@types/react@18.3.28)(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -702,6 +702,9 @@ packages:
 
   '@chain-registry/types@0.50.301':
     resolution: {integrity: sha512-M/l96CAUuii8Z1x9lOfWmvIZDt+BgQkz1ahgbbjOcvyMZPPklPi1jdLeFmZ0R+FPW98FzYH/lLKQXHbkBhLGKg==}
+
+  '@chain-registry/types@0.50.302':
+    resolution: {integrity: sha512-89cFTSH99yFuZsOpJMuTCz/1EgaPzPEiPykhvZnbCz5q2JrWy+a5TalvBNUBozheiubQ6RnK1zbYY3fYhTCrlQ==}
 
   '@chain-registry/utils@1.51.301':
     resolution: {integrity: sha512-Po9gDPK1CZ1PexSkWj+eYc24tfpesVsF2PL8OjrcdlOOn4iz1TLjZURkxOsixRVIlhIqLT076rVftCBW/SZ42w==}
@@ -1489,8 +1492,8 @@ packages:
     resolution: {integrity: sha512-bV0Tgo9K4hfPCek+aMAn81RppFKv2ySDQeMoSZuvTASywNTnVJCArCZE2FWqpvIatKu7VMRLWlR1EazvVhDyhQ==}
     engines: {node: '>=18.18'}
 
-  '@hyperlane-xyz/aleo-sdk@25.1.1-beta.e959e2b694f2696c6d18669edf691bd6bd110677':
-    resolution: {integrity: sha512-Mt0kYqITToThbhJtPDgZkzqn5/5/swQ4I0JWLzw8SOmjeocPDGSdQC0GelETw4VPj971M6TOfag5nv5Fsefq6g==}
+  '@hyperlane-xyz/aleo-sdk@25.1.1-beta.49818f74c289a72696559690d464fe1bb4d311c7':
+    resolution: {integrity: sha512-h9kBTa1SBYNoEfoyG9QopPrOQTFM8ZcWeZ20UgdmnyEqiDCG9L8Ffu+StLILJmUGufYVy154zJxjhMcwxC8czg==}
     peerDependencies:
       testcontainers: 11.7.0
     peerDependenciesMeta:
@@ -1505,33 +1508,33 @@ packages:
       '@ethersproject/providers': '*'
       '@types/sinon-chai': '*'
 
-  '@hyperlane-xyz/cosmos-sdk@25.1.1-beta.e959e2b694f2696c6d18669edf691bd6bd110677':
-    resolution: {integrity: sha512-LXfn1uD7Lf0N/Xfz+aYwObHLLhTraIuDInqNBMm6onx0SEfYuMOWqVrDZbwzG/xnrPysQFIOjU7KqkxyTp/ZRg==}
+  '@hyperlane-xyz/cosmos-sdk@25.1.1-beta.49818f74c289a72696559690d464fe1bb4d311c7':
+    resolution: {integrity: sha512-F6d36tvZL6zS0Oe1JVieHwLm2FyiYggALwXKNM37MLY4qS75InABLBXA2Xs2iW9g4jvztqpq40qNINARMiesbg==}
 
-  '@hyperlane-xyz/cosmos-types@25.1.1-beta.e959e2b694f2696c6d18669edf691bd6bd110677':
-    resolution: {integrity: sha512-+fi+gSvvBqCOIEsTsKDUE6vRpfngXuq2PbdLTPnM1I7y+cS+VbG6V3CCh/0RK8VspV2UVGjr5JsiFKEC+Bd3tA==}
+  '@hyperlane-xyz/cosmos-types@25.1.1-beta.49818f74c289a72696559690d464fe1bb4d311c7':
+    resolution: {integrity: sha512-BcmxpnOTsI7ua/hmvvEA5OpgsJt+tOKPS2RFZbu+GUJ5s3Ilx8T0P5LeRk5tvqXVENX+3NtckW6sld/BeLq76A==}
 
-  '@hyperlane-xyz/deploy-sdk@1.3.3-beta.e959e2b694f2696c6d18669edf691bd6bd110677':
-    resolution: {integrity: sha512-dsoEOCOygUY/30mwoYeAufSyzXA/EWoRTrzg/keeR15EtL52Cxo6d0LCgpJSsYMO+tPEiViuogvXuGHbGrWfQg==}
+  '@hyperlane-xyz/deploy-sdk@1.3.3-beta.49818f74c289a72696559690d464fe1bb4d311c7':
+    resolution: {integrity: sha512-JTQgfd1Rkh9KdJzpdnoRJ5fxYIy2tJDaTSstKfh/ViVv6baSfwHJgrF1khB7ccGIGeGy41k6KJ71+ZMbj+Vmdw==}
 
-  '@hyperlane-xyz/provider-sdk@1.3.3-beta.e959e2b694f2696c6d18669edf691bd6bd110677':
-    resolution: {integrity: sha512-fzME6e4WVzqJN6UV8TtlEAOrj9mS1k+PdI5oDEhRPfuhV3a2BbF9uqs0hrNVm67Bvn9bHuIn1K8UGwoXpiIxoA==}
+  '@hyperlane-xyz/provider-sdk@1.3.3-beta.49818f74c289a72696559690d464fe1bb4d311c7':
+    resolution: {integrity: sha512-9XViH3R8kAmdAKZ3vKA+ncCNZwrvE17+BlZuhsNhkX7AWpqWTup1YD7Fg5k+n28fpzie029niurTmwGozO+Sog==}
 
-  '@hyperlane-xyz/radix-sdk@25.1.1-beta.e959e2b694f2696c6d18669edf691bd6bd110677':
-    resolution: {integrity: sha512-IOyOy27VviEBjCN4f9VYZ5Ti9LREVmTWejVNk+NaSCU89J/SrQUhuv1OGcS9ox4GhuOVI/AP17f1l2arMFw4nw==}
+  '@hyperlane-xyz/radix-sdk@25.1.1-beta.49818f74c289a72696559690d464fe1bb4d311c7':
+    resolution: {integrity: sha512-cOyb7t60xp8IGcQQ9iLNVeOBOD2BtiH/d5lk7/aSKXWgvJnunwYYySY9V+TmYfcUO2kjg2P8wtyqFLNWCav61Q==}
 
   '@hyperlane-xyz/registry@23.14.0':
     resolution: {integrity: sha512-bhFsB/lpeSYIJf8SEGVr30mNimGBofuSNAvv0cv5cX/ms8cOyk89FvjDJiYNO+axfc8uCV+vBTqVkTE8RTUwrA==}
     engines: {node: '>=24'}
 
-  '@hyperlane-xyz/sdk@25.1.1-beta.e959e2b694f2696c6d18669edf691bd6bd110677':
-    resolution: {integrity: sha512-RL0XaUYMR7k3jOC9+UwZKifO0ul/ZLbLB/BNbfEuFErtSolrDPoLefqlodm2MK+gGWkh1bN8rJb4UPTEytPAmA==}
+  '@hyperlane-xyz/sdk@25.1.1-beta.49818f74c289a72696559690d464fe1bb4d311c7':
+    resolution: {integrity: sha512-+hR/+3gQlxlM4LAOYo7BZKYlRx5Lx20j7agN1Fg/SndeugO9/Znh+mHfXnLdQyVYYoUNXe7+eP9azceLh/D8uQ==}
     engines: {node: '>=16'}
     peerDependencies:
       '@ethersproject/abi': '*'
 
-  '@hyperlane-xyz/starknet-core@25.1.1-beta.e959e2b694f2696c6d18669edf691bd6bd110677':
-    resolution: {integrity: sha512-ZO5XoCBkcc8sJM0QL0vFaMx36mrTsyPeyXhJaPc3QmmGJS7kx2a3I1LNGXbDKjY3j09FKYBS7wxEEeR4KtF1Iw==}
+  '@hyperlane-xyz/starknet-core@25.1.1-beta.49818f74c289a72696559690d464fe1bb4d311c7':
+    resolution: {integrity: sha512-pPL0KTn4zyOpflzfkC44fkPofrkS0t2R6bIcaVJue1t3crl61oWaxoj7eU7M+gGXffA6XvkBFNRB0GpV3CBEKw==}
 
   '@hyperlane-xyz/utils@21.1.0':
     resolution: {integrity: sha512-6u294IdqMbpvZ7sdzA6/9+xxrjngCQWZRrUNcwXx9F7ZQg4cQiIv9qVnwNb1K23eSYYkIyknuIhj+19qFvaBPA==}
@@ -1545,8 +1548,8 @@ packages:
       pino-pretty:
         optional: true
 
-  '@hyperlane-xyz/utils@25.1.1-beta.e959e2b694f2696c6d18669edf691bd6bd110677':
-    resolution: {integrity: sha512-XxlE7LR0GugaQGFU40lii7KHpQjQCxKAvKm0vN9irPCyAnpkkQ20efqjX4mzNGwXG23grV2Mu4jhdUOuNMBMOg==}
+  '@hyperlane-xyz/utils@25.1.1-beta.49818f74c289a72696559690d464fe1bb4d311c7':
+    resolution: {integrity: sha512-2+CWEZt/uStAbaC7xDoTg/hads0TkMEvcGpf2Gj8xwlqpGGvcxyvduawELzlIUsX/CrEsRg/3SUH/0Zvjz6oLQ==}
     engines: {node: '>=16'}
     peerDependencies:
       '@google-cloud/pino-logging-gcp-config': ^1.3.0
@@ -1557,8 +1560,8 @@ packages:
       pino-pretty:
         optional: true
 
-  '@hyperlane-xyz/widgets@25.1.1-beta.e959e2b694f2696c6d18669edf691bd6bd110677':
-    resolution: {integrity: sha512-1ML3KiCX4ZMYNiQTyUWjw7aOiXhDzDfaLL124DyfrIqyPi1YQ5gztPp9AqEcCKuHT3QYAWp/NC/prX0y6R9l5w==}
+  '@hyperlane-xyz/widgets@25.1.1-beta.49818f74c289a72696559690d464fe1bb4d311c7':
+    resolution: {integrity: sha512-n9hmArRJ6ZXYXRbMNCQYMOcyrCV9Okgh7cLESQhiFrSHrvOpu+M8IOk4Oqq4mQ2c6ls70G4/4HaAOyk+uoLX/g==}
     peerDependencies:
       react: ^18
       react-dom: ^18
@@ -5299,6 +5302,10 @@ packages:
     resolution: {integrity: sha512-qkzNvRfibl+r2GoPqKl+2MJLYA7ApEWyCmECJoK6IExeWyjKawAUC6Eo4cN0geCBefk9VSFRFEIVQ17vYWp0jQ==}
     engines: {node: '>=18.20.8'}
 
+  '@walletconnect/core@2.23.5':
+    resolution: {integrity: sha512-XcN2dbJbepB6FH+Gwo8niGgFYJkQr3gyjm9MSZBUVjtyko1PJ1SqJGd6tF3h2qZXs3BRhWUNwl4peUv5+v4SyQ==}
+    engines: {node: '>=18.20.8'}
+
   '@walletconnect/environment@1.0.1':
     resolution: {integrity: sha512-T426LLZtHj8e8rYnKfzsw1aG6+M0BT1ZxayMdv/p8yM0MU+eJDISqNY3/bccxRr4LrF9csq02Rhqt08Ibl0VRg==}
 
@@ -5378,6 +5385,9 @@ packages:
   '@walletconnect/sign-client@2.23.4':
     resolution: {integrity: sha512-Q3hM8YmO+RHdT3R0MWyRBmekK5SNwpeheQQ+rWbu2dZFm9NyqfxJqwr6ZEhrZltFGTzCHrajTaFPrQnMb/LxuA==}
 
+  '@walletconnect/sign-client@2.23.5':
+    resolution: {integrity: sha512-/74RjPm1Ue2NbeNCqAyu0L7g4X3UdPDHuhslhJWkA4kdsX8vzhQ521IpTaL4SuqtdqyMlv6jMBvbLy2RYmdhoQ==}
+
   '@walletconnect/solana-adapter@0.0.8':
     resolution: {integrity: sha512-Qb7MT8SdkeBldfUCmF+rYW6vL98mxPuT1yAwww5X2vpx7xEPZvFCoAKnyT5fXu0v56rMxhW3MGejnHyyYdDY7Q==}
     peerDependencies:
@@ -5404,6 +5414,9 @@ packages:
 
   '@walletconnect/types@2.23.4':
     resolution: {integrity: sha512-6M+9JEXbZdnvdPc4tleXOFTV9al1brKojBpL5uzNCbzCxqvq273wWtW/eqPgTqH7BJam1nDVK8D02o63ECIooQ==}
+
+  '@walletconnect/types@2.23.5':
+    resolution: {integrity: sha512-hz6C1ylk0EwmwEcB6/DunfEfnJxXpohsghAoHyW85JjuThqwmErLfLJintgYLa2f+N5YZB6G4mddssZzan89LQ==}
 
   '@walletconnect/universal-provider@2.19.0':
     resolution: {integrity: sha512-e9JvadT5F8QwdLmd7qBrmACq04MT7LQEe1m3X2Fzvs3DWo8dzY8QbacnJy4XSv5PCdxMWnua+2EavBk8nrI9QA==}
@@ -5435,6 +5448,9 @@ packages:
 
   '@walletconnect/utils@2.23.4':
     resolution: {integrity: sha512-J2QTS1rga3/FE+REJUAk1HNnZZ2ubAA3VRZehsT3bfOn+OzT2+skQXVzU6ZFaiwPWsLtIOF3aSodZoc5bUrLyw==}
+
+  '@walletconnect/utils@2.23.5':
+    resolution: {integrity: sha512-wjDGmOyg0fiJlj1gl41pQj6X/Ax4HbUAaelSKwqzUyHU7R/EN9Wp9x+PvMHNtGaoSOKN3QIChsGxGREut/C/tg==}
 
   '@walletconnect/window-getters@1.0.1':
     resolution: {integrity: sha512-vHp+HqzGxORPAN8gY03qnbTMnhqIwjeRJNOMOAzePRg4xVEEE2WvYsI9G2NMjOknA8hnuYbU3/hwLcKbjhc8+Q==}
@@ -10732,6 +10748,8 @@ snapshots:
 
   '@chain-registry/types@0.50.301': {}
 
+  '@chain-registry/types@0.50.302': {}
+
   '@chain-registry/utils@1.51.301':
     dependencies:
       '@chain-registry/types': 0.50.301
@@ -11248,11 +11266,11 @@ snapshots:
       - uploadthing
       - utf-8-validate
 
-  '@cosmos-kit/cosmostation-mobile@2.16.1(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(@walletconnect/types@2.23.4(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5)))(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.21.4)':
+  '@cosmos-kit/cosmostation-mobile@2.16.1(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(@walletconnect/types@2.23.5(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5)))(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.21.4)':
     dependencies:
       '@chain-registry/cosmostation': 1.67.13
       '@cosmos-kit/core': 2.18.1(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      '@cosmos-kit/walletconnect': 2.15.1(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(@walletconnect/types@2.23.4(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5)))(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.21.4)
+      '@cosmos-kit/walletconnect': 2.15.1(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(@walletconnect/types@2.23.5(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5)))(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.21.4)
     transitivePeerDependencies:
       - '@azure/app-configuration'
       - '@azure/cosmos'
@@ -11283,10 +11301,10 @@ snapshots:
       - utf-8-validate
       - zod
 
-  '@cosmos-kit/cosmostation@2.17.1(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(@walletconnect/types@2.23.4(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5)))(bufferutil@4.1.0)(cosmjs-types@0.9.0)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.21.4)':
+  '@cosmos-kit/cosmostation@2.17.1(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(@walletconnect/types@2.23.5(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5)))(bufferutil@4.1.0)(cosmjs-types@0.9.0)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.21.4)':
     dependencies:
       '@cosmos-kit/cosmostation-extension': 2.18.1(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(bufferutil@4.1.0)(cosmjs-types@0.9.0)(utf-8-validate@5.0.10)
-      '@cosmos-kit/cosmostation-mobile': 2.16.1(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(@walletconnect/types@2.23.4(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5)))(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.21.4)
+      '@cosmos-kit/cosmostation-mobile': 2.16.1(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(@walletconnect/types@2.23.5(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5)))(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.21.4)
     transitivePeerDependencies:
       - '@azure/app-configuration'
       - '@azure/cosmos'
@@ -11352,16 +11370,16 @@ snapshots:
       - uploadthing
       - utf-8-validate
 
-  '@cosmos-kit/keplr-mobile@2.17.1(01720f9f0d00f41533740f57dbd1fead)':
+  '@cosmos-kit/keplr-mobile@2.17.1(42e118a5d1b15b8777d645f045c74ca3)':
     dependencies:
       '@chain-registry/keplr': 1.74.487
       '@cosmjs/amino': 0.36.2
       '@cosmjs/proto-signing': 0.36.2
       '@cosmos-kit/core': 2.18.1(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       '@cosmos-kit/keplr-extension': 2.17.1(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(bufferutil@4.1.0)(starknet@7.6.4)(utf-8-validate@5.0.10)
-      '@cosmos-kit/walletconnect': 2.15.1(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(@walletconnect/types@2.23.4(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5)))(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.21.4)
+      '@cosmos-kit/walletconnect': 2.15.1(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(@walletconnect/types@2.23.5(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5)))(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.21.4)
       '@keplr-wallet/provider-extension': 0.12.313(starknet@7.6.4)
-      '@keplr-wallet/wc-client': 0.12.313(@walletconnect/sign-client@2.23.4(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.21.4))(@walletconnect/types@2.23.4(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5)))(starknet@7.6.4)
+      '@keplr-wallet/wc-client': 0.12.313(@walletconnect/sign-client@2.23.5(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.21.4))(@walletconnect/types@2.23.5(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5)))(starknet@7.6.4)
     transitivePeerDependencies:
       - '@azure/app-configuration'
       - '@azure/cosmos'
@@ -11392,10 +11410,10 @@ snapshots:
       - utf-8-validate
       - zod
 
-  '@cosmos-kit/keplr@2.17.1(01720f9f0d00f41533740f57dbd1fead)':
+  '@cosmos-kit/keplr@2.17.1(42e118a5d1b15b8777d645f045c74ca3)':
     dependencies:
       '@cosmos-kit/keplr-extension': 2.17.1(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(bufferutil@4.1.0)(starknet@7.6.4)(utf-8-validate@5.0.10)
-      '@cosmos-kit/keplr-mobile': 2.17.1(01720f9f0d00f41533740f57dbd1fead)
+      '@cosmos-kit/keplr-mobile': 2.17.1(42e118a5d1b15b8777d645f045c74ca3)
     transitivePeerDependencies:
       - '@azure/app-configuration'
       - '@azure/cosmos'
@@ -11493,11 +11511,11 @@ snapshots:
       - uploadthing
       - utf-8-validate
 
-  '@cosmos-kit/leap-mobile@2.16.1(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(@walletconnect/types@2.23.4(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5)))(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.21.4)':
+  '@cosmos-kit/leap-mobile@2.16.1(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(@walletconnect/types@2.23.5(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5)))(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.21.4)':
     dependencies:
       '@chain-registry/keplr': 1.74.487
       '@cosmos-kit/core': 2.18.1(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      '@cosmos-kit/walletconnect': 2.15.1(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(@walletconnect/types@2.23.4(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5)))(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.21.4)
+      '@cosmos-kit/walletconnect': 2.15.1(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(@walletconnect/types@2.23.5(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5)))(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.21.4)
     transitivePeerDependencies:
       - '@azure/app-configuration'
       - '@azure/cosmos'
@@ -11528,11 +11546,11 @@ snapshots:
       - utf-8-validate
       - zod
 
-  '@cosmos-kit/leap@2.17.1(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(@walletconnect/types@2.23.4(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5)))(bufferutil@4.1.0)(cosmjs-types@0.9.0)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.21.4)':
+  '@cosmos-kit/leap@2.17.1(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(@walletconnect/types@2.23.5(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5)))(bufferutil@4.1.0)(cosmjs-types@0.9.0)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.21.4)':
     dependencies:
       '@cosmos-kit/leap-extension': 2.17.1(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       '@cosmos-kit/leap-metamask-cosmos-snap': 0.17.1(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(bufferutil@4.1.0)(cosmjs-types@0.9.0)(utf-8-validate@5.0.10)
-      '@cosmos-kit/leap-mobile': 2.16.1(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(@walletconnect/types@2.23.4(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5)))(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.21.4)
+      '@cosmos-kit/leap-mobile': 2.16.1(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(@walletconnect/types@2.23.5(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5)))(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.21.4)
     transitivePeerDependencies:
       - '@azure/app-configuration'
       - '@azure/cosmos'
@@ -11638,13 +11656,13 @@ snapshots:
       - uploadthing
       - utf-8-validate
 
-  '@cosmos-kit/walletconnect@2.15.1(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(@walletconnect/types@2.23.4(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5)))(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.21.4)':
+  '@cosmos-kit/walletconnect@2.15.1(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(@walletconnect/types@2.23.5(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5)))(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.21.4)':
     dependencies:
       '@cosmjs/amino': 0.36.2
       '@cosmjs/proto-signing': 0.36.2
       '@cosmos-kit/core': 2.18.1(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       '@walletconnect/sign-client': 2.23.4(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.21.4)
-      '@walletconnect/types': 2.23.4(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))
+      '@walletconnect/types': 2.23.5(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))
       '@walletconnect/utils': 2.23.4(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(typescript@5.6.3)(zod@3.21.4)
       events: 3.3.0
     transitivePeerDependencies:
@@ -12330,10 +12348,10 @@ snapshots:
 
   '@humanwhocodes/retry@0.4.3': {}
 
-  '@hyperlane-xyz/aleo-sdk@25.1.1-beta.e959e2b694f2696c6d18669edf691bd6bd110677(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)':
+  '@hyperlane-xyz/aleo-sdk@25.1.1-beta.49818f74c289a72696559690d464fe1bb4d311c7(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)':
     dependencies:
-      '@hyperlane-xyz/provider-sdk': 1.3.3-beta.e959e2b694f2696c6d18669edf691bd6bd110677(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
-      '@hyperlane-xyz/utils': 25.1.1-beta.e959e2b694f2696c6d18669edf691bd6bd110677(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
+      '@hyperlane-xyz/provider-sdk': 1.3.3-beta.49818f74c289a72696559690d464fe1bb4d311c7(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
+      '@hyperlane-xyz/utils': 25.1.1-beta.49818f74c289a72696559690d464fe1bb4d311c7(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
       '@provablehq/sdk': 0.9.15
       bignumber.js: 9.3.1
       unzipper: 0.12.3
@@ -12359,16 +12377,16 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@hyperlane-xyz/cosmos-sdk@25.1.1-beta.e959e2b694f2696c6d18669edf691bd6bd110677(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)':
+  '@hyperlane-xyz/cosmos-sdk@25.1.1-beta.49818f74c289a72696559690d464fe1bb4d311c7(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)':
     dependencies:
       '@cosmjs/amino': 0.32.4
       '@cosmjs/math': 0.32.4
       '@cosmjs/proto-signing': 0.32.4
       '@cosmjs/stargate': 0.32.4(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       '@cosmjs/tendermint-rpc': 0.32.4(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      '@hyperlane-xyz/cosmos-types': 25.1.1-beta.e959e2b694f2696c6d18669edf691bd6bd110677
-      '@hyperlane-xyz/provider-sdk': 1.3.3-beta.e959e2b694f2696c6d18669edf691bd6bd110677(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
-      '@hyperlane-xyz/utils': 25.1.1-beta.e959e2b694f2696c6d18669edf691bd6bd110677(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
+      '@hyperlane-xyz/cosmos-types': 25.1.1-beta.49818f74c289a72696559690d464fe1bb4d311c7
+      '@hyperlane-xyz/provider-sdk': 1.3.3-beta.49818f74c289a72696559690d464fe1bb4d311c7(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
+      '@hyperlane-xyz/utils': 25.1.1-beta.49818f74c289a72696559690d464fe1bb4d311c7(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - '@google-cloud/pino-logging-gcp-config'
       - bufferutil
@@ -12378,18 +12396,18 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@hyperlane-xyz/cosmos-types@25.1.1-beta.e959e2b694f2696c6d18669edf691bd6bd110677':
+  '@hyperlane-xyz/cosmos-types@25.1.1-beta.49818f74c289a72696559690d464fe1bb4d311c7':
     dependencies:
       long: 5.3.2
       protobufjs: 7.5.4
 
-  '@hyperlane-xyz/deploy-sdk@1.3.3-beta.e959e2b694f2696c6d18669edf691bd6bd110677(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)':
+  '@hyperlane-xyz/deploy-sdk@1.3.3-beta.49818f74c289a72696559690d464fe1bb4d311c7(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)':
     dependencies:
-      '@hyperlane-xyz/aleo-sdk': 25.1.1-beta.e959e2b694f2696c6d18669edf691bd6bd110677(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
-      '@hyperlane-xyz/cosmos-sdk': 25.1.1-beta.e959e2b694f2696c6d18669edf691bd6bd110677(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
-      '@hyperlane-xyz/provider-sdk': 1.3.3-beta.e959e2b694f2696c6d18669edf691bd6bd110677(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
-      '@hyperlane-xyz/radix-sdk': 25.1.1-beta.e959e2b694f2696c6d18669edf691bd6bd110677(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
-      '@hyperlane-xyz/utils': 25.1.1-beta.e959e2b694f2696c6d18669edf691bd6bd110677(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
+      '@hyperlane-xyz/aleo-sdk': 25.1.1-beta.49818f74c289a72696559690d464fe1bb4d311c7(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
+      '@hyperlane-xyz/cosmos-sdk': 25.1.1-beta.49818f74c289a72696559690d464fe1bb4d311c7(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
+      '@hyperlane-xyz/provider-sdk': 1.3.3-beta.49818f74c289a72696559690d464fe1bb4d311c7(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
+      '@hyperlane-xyz/radix-sdk': 25.1.1-beta.49818f74c289a72696559690d464fe1bb4d311c7(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
+      '@hyperlane-xyz/utils': 25.1.1-beta.49818f74c289a72696559690d464fe1bb4d311c7(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
       zod: 3.21.4
     transitivePeerDependencies:
       - '@google-cloud/pino-logging-gcp-config'
@@ -12401,9 +12419,9 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@hyperlane-xyz/provider-sdk@1.3.3-beta.e959e2b694f2696c6d18669edf691bd6bd110677(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)':
+  '@hyperlane-xyz/provider-sdk@1.3.3-beta.49818f74c289a72696559690d464fe1bb4d311c7(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)':
     dependencies:
-      '@hyperlane-xyz/utils': 25.1.1-beta.e959e2b694f2696c6d18669edf691bd6bd110677(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
+      '@hyperlane-xyz/utils': 25.1.1-beta.49818f74c289a72696559690d464fe1bb4d311c7(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
       pino: 8.21.0
       zod: 3.21.4
     transitivePeerDependencies:
@@ -12414,10 +12432,10 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@hyperlane-xyz/radix-sdk@25.1.1-beta.e959e2b694f2696c6d18669edf691bd6bd110677(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)':
+  '@hyperlane-xyz/radix-sdk@25.1.1-beta.49818f74c289a72696559690d464fe1bb4d311c7(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)':
     dependencies:
-      '@hyperlane-xyz/provider-sdk': 1.3.3-beta.e959e2b694f2696c6d18669edf691bd6bd110677(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
-      '@hyperlane-xyz/utils': 25.1.1-beta.e959e2b694f2696c6d18669edf691bd6bd110677(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
+      '@hyperlane-xyz/provider-sdk': 1.3.3-beta.49818f74c289a72696559690d464fe1bb4d311c7(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
+      '@hyperlane-xyz/utils': 25.1.1-beta.49818f74c289a72696559690d464fe1bb4d311c7(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
       '@radixdlt/babylon-core-api-sdk': 1.3.0
       '@radixdlt/babylon-gateway-api-sdk': 1.10.1
       '@radixdlt/radix-engine-toolkit': 1.0.6
@@ -12438,11 +12456,11 @@ snapshots:
       yaml: 2.4.5
       zod: 3.21.4
 
-  '@hyperlane-xyz/sdk@25.1.1-beta.e959e2b694f2696c6d18669edf691bd6bd110677(@ethersproject/abi@5.8.0)(@ethersproject/providers@5.8.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@types/sinon-chai@4.0.0)(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)':
+  '@hyperlane-xyz/sdk@25.1.1-beta.49818f74c289a72696559690d464fe1bb4d311c7(@ethersproject/abi@5.8.0)(@ethersproject/providers@5.8.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@types/sinon-chai@4.0.0)(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)':
     dependencies:
       '@arbitrum/sdk': 4.0.4(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       '@aws-sdk/client-s3': 3.987.0
-      '@chain-registry/types': 0.50.301
+      '@chain-registry/types': 0.50.302
       '@cosmjs/amino': 0.32.4
       '@cosmjs/cosmwasm-stargate': 0.32.4(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       '@cosmjs/crypto': 0.32.4
@@ -12452,14 +12470,14 @@ snapshots:
       '@cosmjs/stargate': 0.32.4(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       '@cosmjs/tendermint-rpc': 0.32.4(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       '@ethersproject/abi': 5.8.0
-      '@hyperlane-xyz/aleo-sdk': 25.1.1-beta.e959e2b694f2696c6d18669edf691bd6bd110677(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
+      '@hyperlane-xyz/aleo-sdk': 25.1.1-beta.49818f74c289a72696559690d464fe1bb4d311c7(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
       '@hyperlane-xyz/core': 10.1.5(@ethersproject/abi@5.8.0)(@ethersproject/providers@5.8.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(@types/sinon-chai@4.0.0)(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
-      '@hyperlane-xyz/cosmos-sdk': 25.1.1-beta.e959e2b694f2696c6d18669edf691bd6bd110677(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
-      '@hyperlane-xyz/deploy-sdk': 1.3.3-beta.e959e2b694f2696c6d18669edf691bd6bd110677(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
-      '@hyperlane-xyz/provider-sdk': 1.3.3-beta.e959e2b694f2696c6d18669edf691bd6bd110677(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
-      '@hyperlane-xyz/radix-sdk': 25.1.1-beta.e959e2b694f2696c6d18669edf691bd6bd110677(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
-      '@hyperlane-xyz/starknet-core': 25.1.1-beta.e959e2b694f2696c6d18669edf691bd6bd110677
-      '@hyperlane-xyz/utils': 25.1.1-beta.e959e2b694f2696c6d18669edf691bd6bd110677(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
+      '@hyperlane-xyz/cosmos-sdk': 25.1.1-beta.49818f74c289a72696559690d464fe1bb4d311c7(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
+      '@hyperlane-xyz/deploy-sdk': 1.3.3-beta.49818f74c289a72696559690d464fe1bb4d311c7(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
+      '@hyperlane-xyz/provider-sdk': 1.3.3-beta.49818f74c289a72696559690d464fe1bb4d311c7(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
+      '@hyperlane-xyz/radix-sdk': 25.1.1-beta.49818f74c289a72696559690d464fe1bb4d311c7(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
+      '@hyperlane-xyz/starknet-core': 25.1.1-beta.49818f74c289a72696559690d464fe1bb4d311c7
+      '@hyperlane-xyz/utils': 25.1.1-beta.49818f74c289a72696559690d464fe1bb4d311c7(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
       '@safe-global/api-kit': 4.0.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.21.4)
       '@safe-global/protocol-kit': 6.1.1(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.21.4)
       '@safe-global/safe-core-sdk-types': 5.1.0(typescript@5.6.3)(zod@3.21.4)
@@ -12516,7 +12534,7 @@ snapshots:
       - uploadthing
       - utf-8-validate
 
-  '@hyperlane-xyz/starknet-core@25.1.1-beta.e959e2b694f2696c6d18669edf691bd6bd110677':
+  '@hyperlane-xyz/starknet-core@25.1.1-beta.49818f74c289a72696559690d464fe1bb4d311c7':
     dependencies:
       starknet: 7.6.4
 
@@ -12541,7 +12559,7 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@hyperlane-xyz/utils@25.1.1-beta.e959e2b694f2696c6d18669edf691bd6bd110677(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)':
+  '@hyperlane-xyz/utils@25.1.1-beta.49818f74c289a72696559690d464fe1bb4d311c7(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)':
     dependencies:
       '@cosmjs/encoding': 0.32.4
       '@ethersproject/bytes': 5.8.0
@@ -12562,18 +12580,18 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@hyperlane-xyz/widgets@25.1.1-beta.e959e2b694f2696c6d18669edf691bd6bd110677(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@ethersproject/abi@5.8.0)(@ethersproject/providers@5.8.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@tanstack/query-core@5.90.20)(@tanstack/react-query@5.90.20(react@18.3.1))(@types/react-dom@18.3.7(@types/react@18.3.28))(@types/react@18.3.28)(@types/sinon-chai@4.0.0)(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(babel-plugin-macros@3.1.0)(bs58@5.0.0)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(get-starknet-core@4.0.0)(immer@10.2.0)(pino-pretty@13.1.3)(react-dom@18.3.1(react@18.3.1))(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.21.4)':
+  '@hyperlane-xyz/widgets@25.1.1-beta.49818f74c289a72696559690d464fe1bb4d311c7(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@ethersproject/abi@5.8.0)(@ethersproject/providers@5.8.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@tanstack/query-core@5.90.20)(@tanstack/react-query@5.90.20(react@18.3.1))(@types/react-dom@18.3.7(@types/react@18.3.28))(@types/react@18.3.28)(@types/sinon-chai@4.0.0)(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(babel-plugin-macros@3.1.0)(bs58@5.0.0)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(get-starknet-core@4.0.0)(immer@10.2.0)(pino-pretty@13.1.3)(react-dom@18.3.1(react@18.3.1))(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.21.4)':
     dependencies:
-      '@chain-registry/types': 0.50.301
+      '@chain-registry/types': 0.50.302
       '@cosmjs/stargate': 0.32.4(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       '@cosmos-kit/react': 2.18.0(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@interchain-ui/react@1.26.3(@types/react@18.3.28)(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@types/react-dom@18.3.7(@types/react@18.3.28))(@types/react@18.3.28)(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(bufferutil@4.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(utf-8-validate@5.0.10)
       '@headlessui/react': 2.2.9(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@hyperlane-xyz/aleo-sdk': 25.1.1-beta.e959e2b694f2696c6d18669edf691bd6bd110677(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
-      '@hyperlane-xyz/cosmos-sdk': 25.1.1-beta.e959e2b694f2696c6d18669edf691bd6bd110677(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
-      '@hyperlane-xyz/provider-sdk': 1.3.3-beta.e959e2b694f2696c6d18669edf691bd6bd110677(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
-      '@hyperlane-xyz/radix-sdk': 25.1.1-beta.e959e2b694f2696c6d18669edf691bd6bd110677(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
-      '@hyperlane-xyz/sdk': 25.1.1-beta.e959e2b694f2696c6d18669edf691bd6bd110677(@ethersproject/abi@5.8.0)(@ethersproject/providers@5.8.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@types/sinon-chai@4.0.0)(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
-      '@hyperlane-xyz/utils': 25.1.1-beta.e959e2b694f2696c6d18669edf691bd6bd110677(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
+      '@hyperlane-xyz/aleo-sdk': 25.1.1-beta.49818f74c289a72696559690d464fe1bb4d311c7(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
+      '@hyperlane-xyz/cosmos-sdk': 25.1.1-beta.49818f74c289a72696559690d464fe1bb4d311c7(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
+      '@hyperlane-xyz/provider-sdk': 1.3.3-beta.49818f74c289a72696559690d464fe1bb4d311c7(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
+      '@hyperlane-xyz/radix-sdk': 25.1.1-beta.49818f74c289a72696559690d464fe1bb4d311c7(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
+      '@hyperlane-xyz/sdk': 25.1.1-beta.49818f74c289a72696559690d464fe1bb4d311c7(@ethersproject/abi@5.8.0)(@ethersproject/providers@5.8.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@types/sinon-chai@4.0.0)(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
+      '@hyperlane-xyz/utils': 25.1.1-beta.49818f74c289a72696559690d464fe1bb4d311c7(bufferutil@4.1.0)(pino-pretty@13.1.3)(typescript@5.6.3)(utf-8-validate@5.0.10)
       '@interchain-ui/react': 1.26.3(@types/react@18.3.28)(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@provablehq/aleo-types': 0.3.0-alpha.1
       '@provablehq/aleo-wallet-adaptor-react': 0.3.0-alpha.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -12989,12 +13007,12 @@ snapshots:
       big-integer: 1.6.52
       utility-types: 3.11.0
 
-  '@keplr-wallet/wc-client@0.12.313(@walletconnect/sign-client@2.23.4(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.21.4))(@walletconnect/types@2.23.4(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5)))(starknet@7.6.4)':
+  '@keplr-wallet/wc-client@0.12.313(@walletconnect/sign-client@2.23.5(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.21.4))(@walletconnect/types@2.23.5(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5)))(starknet@7.6.4)':
     dependencies:
       '@keplr-wallet/provider': 0.12.313(starknet@7.6.4)
       '@keplr-wallet/types': 0.12.313(starknet@7.6.4)
-      '@walletconnect/sign-client': 2.23.4(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.21.4)
-      '@walletconnect/types': 2.23.4(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))
+      '@walletconnect/sign-client': 2.23.5(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.21.4)
+      '@walletconnect/types': 2.23.5(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))
       buffer: 6.0.3
       deepmerge: 4.3.1
       long: 5.3.2
@@ -17692,8 +17710,8 @@ snapshots:
       '@turnkey/webauthn-stamper': 0.6.0
       '@wallet-standard/app': 1.1.0
       '@wallet-standard/base': 1.1.0
-      '@walletconnect/sign-client': 2.23.4(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.21.4)
-      '@walletconnect/types': 2.23.4(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))
+      '@walletconnect/sign-client': 2.23.5(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.21.4)
+      '@walletconnect/types': 2.23.5(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))
       cross-fetch: 3.2.0
       ethers: 5.8.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       jwt-decode: 4.0.0
@@ -18651,6 +18669,50 @@ snapshots:
       - utf-8-validate
       - zod
 
+  '@walletconnect/core@2.23.5(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.21.4)':
+    dependencies:
+      '@walletconnect/heartbeat': 1.2.2
+      '@walletconnect/jsonrpc-provider': 1.0.14
+      '@walletconnect/jsonrpc-types': 1.0.4
+      '@walletconnect/jsonrpc-utils': 1.0.8
+      '@walletconnect/jsonrpc-ws-connection': 1.0.16(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      '@walletconnect/keyvaluestorage': 1.1.1(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))
+      '@walletconnect/logger': 3.0.2
+      '@walletconnect/relay-api': 1.0.11
+      '@walletconnect/relay-auth': 1.1.0
+      '@walletconnect/safe-json': 1.0.2
+      '@walletconnect/time': 1.0.2
+      '@walletconnect/types': 2.23.5(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))
+      '@walletconnect/utils': 2.23.5(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(typescript@5.6.3)(zod@3.21.4)
+      '@walletconnect/window-getters': 1.0.1
+      es-toolkit: 1.44.0
+      events: 3.3.0
+      uint8arrays: 3.1.1
+    transitivePeerDependencies:
+      - '@azure/app-configuration'
+      - '@azure/cosmos'
+      - '@azure/data-tables'
+      - '@azure/identity'
+      - '@azure/keyvault-secrets'
+      - '@azure/storage-blob'
+      - '@capacitor/preferences'
+      - '@deno/kv'
+      - '@netlify/blobs'
+      - '@planetscale/database'
+      - '@react-native-async-storage/async-storage'
+      - '@upstash/redis'
+      - '@vercel/blob'
+      - '@vercel/functions'
+      - '@vercel/kv'
+      - aws4fetch
+      - bufferutil
+      - db0
+      - ioredis
+      - typescript
+      - uploadthing
+      - utf-8-validate
+      - zod
+
   '@walletconnect/environment@1.0.1':
     dependencies:
       tslib: 1.14.1
@@ -18992,6 +19054,42 @@ snapshots:
       - utf-8-validate
       - zod
 
+  '@walletconnect/sign-client@2.23.5(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.21.4)':
+    dependencies:
+      '@walletconnect/core': 2.23.5(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.21.4)
+      '@walletconnect/events': 1.0.1
+      '@walletconnect/heartbeat': 1.2.2
+      '@walletconnect/jsonrpc-utils': 1.0.8
+      '@walletconnect/logger': 3.0.2
+      '@walletconnect/time': 1.0.2
+      '@walletconnect/types': 2.23.5(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))
+      '@walletconnect/utils': 2.23.5(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(typescript@5.6.3)(zod@3.21.4)
+      events: 3.3.0
+    transitivePeerDependencies:
+      - '@azure/app-configuration'
+      - '@azure/cosmos'
+      - '@azure/data-tables'
+      - '@azure/identity'
+      - '@azure/keyvault-secrets'
+      - '@azure/storage-blob'
+      - '@capacitor/preferences'
+      - '@deno/kv'
+      - '@netlify/blobs'
+      - '@planetscale/database'
+      - '@react-native-async-storage/async-storage'
+      - '@upstash/redis'
+      - '@vercel/blob'
+      - '@vercel/functions'
+      - '@vercel/kv'
+      - aws4fetch
+      - bufferutil
+      - db0
+      - ioredis
+      - typescript
+      - uploadthing
+      - utf-8-validate
+      - zod
+
   '@walletconnect/solana-adapter@0.0.8(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@solana/wallet-adapter-base@0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@5.0.10)))(@solana/web3.js@1.98.4(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@5.0.10))(@types/react@18.3.28)(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(bufferutil@4.1.0)(react@18.3.1)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.21.4)':
     dependencies:
       '@reown/appkit': 1.7.2(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@types/react@18.3.28)(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(bufferutil@4.1.0)(react@18.3.1)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.21.4)
@@ -19178,6 +19276,35 @@ snapshots:
       - uploadthing
 
   '@walletconnect/types@2.23.4(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))':
+    dependencies:
+      '@walletconnect/events': 1.0.1
+      '@walletconnect/heartbeat': 1.2.2
+      '@walletconnect/jsonrpc-types': 1.0.4
+      '@walletconnect/keyvaluestorage': 1.1.1(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))
+      '@walletconnect/logger': 3.0.2
+      events: 3.3.0
+    transitivePeerDependencies:
+      - '@azure/app-configuration'
+      - '@azure/cosmos'
+      - '@azure/data-tables'
+      - '@azure/identity'
+      - '@azure/keyvault-secrets'
+      - '@azure/storage-blob'
+      - '@capacitor/preferences'
+      - '@deno/kv'
+      - '@netlify/blobs'
+      - '@planetscale/database'
+      - '@react-native-async-storage/async-storage'
+      - '@upstash/redis'
+      - '@vercel/blob'
+      - '@vercel/functions'
+      - '@vercel/kv'
+      - aws4fetch
+      - db0
+      - ioredis
+      - uploadthing
+
+  '@walletconnect/types@2.23.5(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))':
     dependencies:
       '@walletconnect/events': 1.0.1
       '@walletconnect/heartbeat': 1.2.2
@@ -19562,6 +19689,50 @@ snapshots:
       '@walletconnect/window-metadata': 1.0.1
       blakejs: 1.2.1
       bs58: 6.0.0
+      detect-browser: 5.3.0
+      ox: 0.9.3(typescript@5.6.3)(zod@3.21.4)
+      uint8arrays: 3.1.1
+    transitivePeerDependencies:
+      - '@azure/app-configuration'
+      - '@azure/cosmos'
+      - '@azure/data-tables'
+      - '@azure/identity'
+      - '@azure/keyvault-secrets'
+      - '@azure/storage-blob'
+      - '@capacitor/preferences'
+      - '@deno/kv'
+      - '@netlify/blobs'
+      - '@planetscale/database'
+      - '@react-native-async-storage/async-storage'
+      - '@upstash/redis'
+      - '@vercel/blob'
+      - '@vercel/functions'
+      - '@vercel/kv'
+      - aws4fetch
+      - db0
+      - ioredis
+      - typescript
+      - uploadthing
+      - zod
+
+  '@walletconnect/utils@2.23.5(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))(typescript@5.6.3)(zod@3.21.4)':
+    dependencies:
+      '@msgpack/msgpack': 3.1.3
+      '@noble/ciphers': 1.3.0
+      '@noble/curves': 1.9.7
+      '@noble/hashes': 1.8.0
+      '@scure/base': 1.2.6
+      '@walletconnect/jsonrpc-utils': 1.0.8
+      '@walletconnect/keyvaluestorage': 1.1.1(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))
+      '@walletconnect/logger': 3.0.2
+      '@walletconnect/relay-api': 1.0.11
+      '@walletconnect/relay-auth': 1.1.0
+      '@walletconnect/safe-json': 1.0.2
+      '@walletconnect/time': 1.0.2
+      '@walletconnect/types': 2.23.5(@react-native-async-storage/async-storage@1.24.0(react-native@0.83.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.5))
+      '@walletconnect/window-getters': 1.0.1
+      '@walletconnect/window-metadata': 1.0.1
+      blakejs: 1.2.1
       detect-browser: 5.3.0
       ox: 0.9.3(typescript@5.6.3)(zod@3.21.4)
       uint8arrays: 3.1.1

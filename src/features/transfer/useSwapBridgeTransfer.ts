@@ -10,7 +10,7 @@ import {
   getSwapQuote,
   shareCallsWithPrivateRelayer,
 } from '@hyperlane-xyz/sdk';
-import { ZERO_ADDRESS_HEX_32, toWei } from '@hyperlane-xyz/utils';
+import { ZERO_ADDRESS_HEX_32, addressToBytes32, toWei } from '@hyperlane-xyz/utils';
 
 import { BigNumber, providers } from 'ethers';
 import { useCallback, useState } from 'react';
@@ -230,6 +230,17 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
       }
     })());
 
+  const icaAddress =
+    cachedIcaAddress ??
+    (await icaApp.getAccount(destinationChainName, {
+      origin: originChainName,
+      owner: account,
+    }));
+  const recipient = requireAddress(
+    icaAddress,
+    `Invalid derived ICA recipient address for ${destinationChainName}`,
+  );
+
   const bridgeQuote = await (async () => {
     try {
       return await getBridgeFee(
@@ -238,6 +249,7 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
         destConfig.domainId,
         swapOutput,
         originConfig.bridgeToken,
+        addressToBytes32(recipient),
       );
     } catch (error) {
       throw new Error(
@@ -279,17 +291,6 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
   if (!commitmentHash) {
     throw new Error('Missing ICA commitment for cross-chain command.');
   }
-
-  const icaAddress =
-    cachedIcaAddress ??
-    (await icaApp.getAccount(destinationChainName, {
-      origin: originChainName,
-      owner: account,
-    }));
-  const recipient = requireAddress(
-    icaAddress,
-    `Invalid derived ICA recipient address for ${destinationChainName}`,
-  );
 
   const swapBridgeParamsBase: Parameters<typeof buildSwapAndBridgeTx>[0] = {
     originToken: swapTokenAddress,

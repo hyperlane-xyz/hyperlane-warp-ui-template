@@ -155,13 +155,6 @@ export function IcaSendForm({
         </button>
       </div>
 
-      {mode === 'return-origin' && (
-        <div className="mt-2 rounded border border-amber-200 bg-amber-50 px-2 py-1.5 text-xs text-amber-800">
-          Return-to-origin uses commit-reveal. Non-USDC tokens are swapped to canonical USDC on the
-          destination ICA before bridging.
-        </div>
-      )}
-
       <div className="mt-2 space-y-2">
         <label className="block text-xs text-gray-700">Token</label>
         <select

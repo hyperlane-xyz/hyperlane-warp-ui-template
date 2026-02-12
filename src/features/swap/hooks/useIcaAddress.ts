@@ -30,6 +30,7 @@ export function useIcaAddress(
   );
   const cachedIcaAddress = useStore((s) => s.icaAddressCache);
   const setIcaAddressCacheEntry = useStore((s) => s.setIcaAddressCacheEntry);
+  const cachedAddress = cacheKey ? cachedIcaAddress[cacheKey] : undefined;
   const icaAppRef = useRef<InterchainAccount | null>(icaApp);
 
   useEffect(() => {
@@ -67,9 +68,8 @@ export function useIcaAddress(
       }
     },
     enabled: !!icaApp && !!userAddress && !!originChainName && !!destinationChainName && !!cacheKey,
-    initialData: cacheKey ? (cachedIcaAddress[cacheKey] ?? null) : null,
-    placeholderData: (previousData) =>
-      previousData ?? (cacheKey ? (cachedIcaAddress[cacheKey] ?? null) : null),
+    initialData: cachedAddress ?? undefined,
+    placeholderData: (previousData) => previousData ?? cachedAddress ?? null,
     staleTime: 5 * 60_000,
     gcTime: 24 * 60 * 60_000,
     refetchOnWindowFocus: false,
@@ -77,7 +77,7 @@ export function useIcaAddress(
     refetchInterval: false,
     retry: 1,
   });
-  const icaAddress = resolvedIcaAddress ?? (cacheKey ? (cachedIcaAddress[cacheKey] ?? null) : null);
+  const icaAddress = resolvedIcaAddress ?? cachedAddress ?? null;
   const isLoading = isPending || (isFetching && !icaAddress);
 
   useEffect(() => {

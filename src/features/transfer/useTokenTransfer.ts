@@ -179,8 +179,6 @@ async function executeTransfer({
       const sender = walletClient.account?.address;
       if (!sender) throw new Error('No active account found');
 
-      const ethersProvider = mp.getEthersV5Provider(origin);
-
       addTransfer({
         timestamp: new Date().getTime(),
         status: TransferStatus.Preparing,
@@ -213,7 +211,6 @@ async function executeTransfer({
         isNativeOriginToken,
         walletClient,
         multiProvider: mp,
-        ethersProvider,
         icaApp,
         onStatusChange: (status) => {
           transferStatus = status;

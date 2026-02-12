@@ -43,7 +43,7 @@ const universalRouterAbi = parseAbi([
 
 const COMMITMENTS_SERVICE_URL =
   'https://offchain-lookup.services.hyperlane.xyz/callCommitments/calls';
-const FEE_BUFFER_BPS = 500;
+const FEE_BUFFER_ATTEMPTS_BPS = [500, 2000, 5000] as const;
 const BPS_DENOMINATOR = 10_000;
 
 type CommitmentCall = {
@@ -68,7 +68,6 @@ export interface SwapBridgeParams {
   isNativeOriginToken: boolean;
   walletClient: WalletClient;
   multiProvider: MultiProtocolProvider;
-  ethersProvider: providers.Provider;
   icaApp: InterchainAccount;
   onStatusChange: (status: TransferStatus) => void;
   cachedIcaAddress?: string;
@@ -95,12 +94,14 @@ function maxBigNumber(
   return a ?? b ?? BigNumber.from(0);
 }
 
-function withFeeBuffer(fee: BigNumber): BigNumber {
+function withFeeBufferBps(fee: BigNumber, bufferBps: number): BigNumber {
   if (fee.isZero()) return fee;
-  return fee
-    .mul(BPS_DENOMINATOR + FEE_BUFFER_BPS)
-    .add(BPS_DENOMINATOR - 1)
-    .div(BPS_DENOMINATOR);
+  return fee.mul(BPS_DENOMINATOR + bufferBps).add(BPS_DENOMINATOR - 1).div(BPS_DENOMINATOR);
+}
+
+function isInsufficientValueError(error: unknown): boolean {
+  const message = toErrorMessage(error).toLowerCase();
+  return message.includes('insufficient value') || message.includes('staticaggregationhook');
 }
 
 async function checkAndApprove(
@@ -145,7 +146,6 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
     isNativeOriginToken,
     walletClient,
     multiProvider,
-    ethersProvider,
     icaApp,
     onStatusChange,
     cachedIcaAddress,
@@ -170,6 +170,7 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
   // (wagmi's usePublicClient is bound to whatever chain was active at render time)
   const rpcUrl = multiProvider.getRpcUrl(originChainName);
   const publicClient = createPublicClient({ transport: http(rpcUrl) });
+  const quoteProvider = new providers.JsonRpcProvider(rpcUrl);
 
   const universalRouter = requireAddress(
     originConfig.universalRouter,
@@ -212,7 +213,7 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
     (await (async () => {
       try {
         return await getSwapQuote(
-          ethersProvider,
+          quoteProvider,
           originConfig.quoterV2,
           swapTokenAddress,
           originConfig.bridgeToken,
@@ -232,7 +233,7 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
   const bridgeQuote = await (async () => {
     try {
       return await getBridgeFee(
-        ethersProvider,
+        quoteProvider,
         originConfig.warpRoute,
         destConfig.domainId,
         swapOutput,
@@ -244,19 +245,19 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
       );
     }
   })();
-  const bridgeFee = withFeeBuffer(maxBigNumber(cachedBridgeFee, bridgeQuote.fee));
+  const bridgeBaseFee = maxBigNumber(cachedBridgeFee, bridgeQuote.fee);
   const bridgeTokenFee = bridgeQuote.bridgeTokenFee;
 
   const icaQuote = await (async () => {
     try {
-      return await getIcaFee(ethersProvider, originIcaRouter, destConfig.domainId);
+      return await getIcaFee(quoteProvider, originIcaRouter, destConfig.domainId);
     } catch (error) {
       throw new Error(
         `Failed to quote ICA execution fee (${originChainName} -> ${destinationChainName}). Retry in a few seconds. Root cause: ${toErrorMessage(error)}`,
       );
     }
   })();
-  const icaFee = withFeeBuffer(maxBigNumber(cachedIcaFee, icaQuote));
+  const icaBaseFee = maxBigNumber(cachedIcaFee, icaQuote);
 
   if (!isAddress(destinationTokenAddress)) {
     throw new Error('Invalid destination token address for ICA destination-call commitment.');
@@ -290,7 +291,7 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
     `Invalid derived ICA recipient address for ${destinationChainName}`,
   );
 
-  const swapBridgeParams: Parameters<typeof buildSwapAndBridgeTx>[0] = {
+  const swapBridgeParamsBase: Parameters<typeof buildSwapAndBridgeTx>[0] = {
     originToken: swapTokenAddress,
     bridgeToken: originConfig.bridgeToken,
     destinationToken: destinationTokenAddress,
@@ -303,19 +304,15 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
     slippage: DEFAULT_SLIPPAGE,
     isNativeOrigin: isNativeOriginToken,
     expectedSwapOutput: swapOutput,
-    bridgeMsgFee: bridgeFee,
     bridgeTokenFee,
     icaRouterAddress: originIcaRouter,
     remoteIcaRouterAddress: destinationIcaRouter,
     ismAddress: ZERO_ADDRESS_HEX_32,
     commitment: commitmentHash,
-    crossChainMsgFee: icaFee,
     dexFlavor: originConfig.dexFlavor,
     poolParam: originConfig.poolParam,
     includeCrossChainCommand: true,
   };
-
-  const { commands, inputs, value } = buildSwapAndBridgeTx(swapBridgeParams);
 
   if (!isNativeOriginToken) {
     onStatusChange(TransferStatus.SigningApprove);
@@ -325,30 +322,55 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
 
   onStatusChange(TransferStatus.SigningSwapBridge);
   const deadline = BigInt(Math.floor(Date.now() / 1000) + 1800);
-  const data = encodeFunctionData({
-    abi: universalRouterAbi,
-    functionName: 'execute',
-    args: [commands as Hex, inputs as Hex[], deadline],
-  });
-
-  const txValue = BigInt(value.toString());
   const nativeBalance = await publicClient.getBalance({ address: account });
-  if (nativeBalance < txValue) {
-    throw new Error(
-      'Insufficient origin-chain native balance to cover swap, bridge, and ICA execution fees.',
-    );
+  let data: Hex | undefined;
+  let txValue: bigint | undefined;
+  let lastSimulationError: unknown;
+
+  for (const bufferBps of FEE_BUFFER_ATTEMPTS_BPS) {
+    const swapBridgeParams: Parameters<typeof buildSwapAndBridgeTx>[0] = {
+      ...swapBridgeParamsBase,
+      bridgeMsgFee: withFeeBufferBps(bridgeBaseFee, bufferBps),
+      crossChainMsgFee: withFeeBufferBps(icaBaseFee, bufferBps),
+    };
+    const { commands, inputs, value } = buildSwapAndBridgeTx(swapBridgeParams);
+    const attemptTxValue = BigInt(value.toString());
+
+    if (nativeBalance < attemptTxValue) {
+      throw new Error(
+        'Insufficient origin-chain native balance to cover swap, bridge, and ICA execution fees.',
+      );
+    }
+
+    const attemptData = encodeFunctionData({
+      abi: universalRouterAbi,
+      functionName: 'execute',
+      args: [commands as Hex, inputs as Hex[], deadline],
+    });
+
+    try {
+      await publicClient.call({
+        account,
+        to: universalRouter,
+        data: attemptData,
+        value: attemptTxValue,
+      });
+      data = attemptData;
+      txValue = attemptTxValue;
+      break;
+    } catch (error) {
+      lastSimulationError = error;
+      if (!isInsufficientValueError(error)) {
+        throw new Error(
+          `Unable to simulate swap+bridge before wallet confirmation. Check balances, fee quotes, and route readiness, then retry. Root cause: ${toErrorMessage(error)}`,
+        );
+      }
+    }
   }
 
-  try {
-    await publicClient.call({
-      account,
-      to: universalRouter,
-      data,
-      value: txValue,
-    });
-  } catch (error) {
+  if (!data || txValue === undefined) {
     throw new Error(
-      `Unable to simulate swap+bridge before wallet confirmation. Check balances, fee quotes, and route readiness, then retry. Root cause: ${toErrorMessage(error)}`,
+      `Unable to simulate swap+bridge before wallet confirmation. Check balances, fee quotes, and route readiness, then retry. Root cause: ${toErrorMessage(lastSimulationError)}`,
     );
   }
 

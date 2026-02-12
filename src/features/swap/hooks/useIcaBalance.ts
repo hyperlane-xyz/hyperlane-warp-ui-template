@@ -17,6 +17,7 @@ export interface IcaTokenBalance {
 
 export function useIcaBalance(icaAddress: string | null, chainId: number, chainName?: string) {
   const publicClient = usePublicClient({ chainId });
+  const publicClientChainId = publicClient?.chain?.id;
   const config = chainName ? getSwapConfig(chainName) : undefined;
   const bridgeToken = config?.bridgeToken;
   const wrappedNative = config?.wrappedNative;
@@ -25,31 +26,31 @@ export function useIcaBalance(icaAddress: string | null, chainId: number, chainN
   const normalizedWrappedNative = wrappedNative?.toLowerCase();
 
   return useQuery({
+    // We intentionally avoid object references in this key to keep cache stable
+    // across provider instance churn from app context re-creation.
+    // eslint-disable-next-line @tanstack/query/exhaustive-deps
     queryKey: [
       'icaBalance',
       normalizedIcaAddress,
       chainId,
       normalizedBridgeToken,
       normalizedWrappedNative,
-      icaAddress,
-      bridgeToken,
-      wrappedNative,
-      publicClient,
+      publicClientChainId,
     ] as const,
     queryFn: async (): Promise<{ tokens: IcaTokenBalance[] } | null> => {
-      if (!icaAddress || !bridgeToken) return null;
+      if (!normalizedIcaAddress || !normalizedBridgeToken) return null;
       const includeWrapped =
-        !!wrappedNative && wrappedNative.toLowerCase() !== bridgeToken.toLowerCase();
+        !!normalizedWrappedNative && normalizedWrappedNative !== normalizedBridgeToken;
 
       if (!publicClient) {
         const fallbackTokens: IcaTokenBalance[] = [
-          { symbol: 'USDC', balance: '0.00', address: bridgeToken, decimals: 6 },
+          { symbol: 'USDC', balance: '0.00', address: normalizedBridgeToken, decimals: 6 },
         ];
-        if (includeWrapped && wrappedNative) {
+        if (includeWrapped && normalizedWrappedNative) {
           fallbackTokens.push({
             symbol: 'WETH',
             balance: '0.00',
-            address: wrappedNative,
+            address: normalizedWrappedNative,
             decimals: 18,
           });
         }
@@ -65,25 +66,25 @@ export function useIcaBalance(icaAddress: string | null, chainId: number, chainN
 
       const balanceReads: Promise<bigint>[] = [
         publicClient.readContract({
-          address: bridgeToken as `0x${string}`,
+          address: normalizedBridgeToken as `0x${string}`,
           abi: erc20Abi,
           functionName: 'balanceOf',
-          args: [icaAddress as `0x${string}`],
+          args: [normalizedIcaAddress as `0x${string}`],
         }),
       ];
-      if (includeWrapped && wrappedNative) {
+      if (includeWrapped && normalizedWrappedNative) {
         balanceReads.push(
           publicClient.readContract({
-            address: wrappedNative as `0x${string}`,
+            address: normalizedWrappedNative as `0x${string}`,
             abi: erc20Abi,
             functionName: 'balanceOf',
-            args: [icaAddress as `0x${string}`],
+            args: [normalizedIcaAddress as `0x${string}`],
           }),
         );
       }
       balanceReads.push(
         publicClient.getBalance({
-          address: icaAddress as `0x${string}`,
+          address: normalizedIcaAddress as `0x${string}`,
         }),
       );
       const balances = await Promise.all(balanceReads);
@@ -95,15 +96,15 @@ export function useIcaBalance(icaAddress: string | null, chainId: number, chainN
         {
           symbol: 'USDC',
           balance: Number(formatUnits(usdcRaw, 6)).toFixed(2),
-          address: bridgeToken,
+          address: normalizedBridgeToken,
           decimals: 6,
         },
       ];
-      if (includeWrapped && wrappedNative && wrappedRaw !== undefined) {
+      if (includeWrapped && normalizedWrappedNative && wrappedRaw !== undefined) {
         tokens.push({
           symbol: 'WETH',
           balance: Number(formatUnits(wrappedRaw, 18)).toFixed(4),
-          address: wrappedNative,
+          address: normalizedWrappedNative,
           decimals: 18,
         });
       }
@@ -119,7 +120,7 @@ export function useIcaBalance(icaAddress: string | null, chainId: number, chainN
         tokens,
       };
     },
-    enabled: !!icaAddress && !!bridgeToken,
+    enabled: !!normalizedIcaAddress && !!normalizedBridgeToken,
     staleTime: 15_000,
     gcTime: 10 * 60_000,
     refetchOnWindowFocus: false,

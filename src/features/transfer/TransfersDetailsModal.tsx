@@ -19,7 +19,7 @@ import { ModalHeader } from '../../components/layout/ModalHeader';
 import LinkIcon from '../../images/icons/external-link-icon.svg';
 import { Color } from '../../styles/Color';
 import { formatTimestamp } from '../../utils/date';
-import { getHypExplorerLink } from '../../utils/links';
+import { getHypExplorerLink, getHypExplorerSearchLink } from '../../utils/links';
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName, hasPermissionlessChain } from '../chains/utils';
@@ -116,6 +116,11 @@ export function TransfersDetailsModal({
   );
 
   const explorerLink = getHypExplorerLink(multiProvider, origin, msgId);
+  const explorerSearchLink =
+    !explorerLink && (msgId || originTxHash || sender || recipient)
+      ? getHypExplorerSearchLink(msgId || originTxHash || sender || recipient)
+      : null;
+  const hyperlaneExplorerLink = explorerLink || explorerSearchLink;
 
   return (
     <Modal isOpen={isOpen} close={onClose} panelClassname="max-w-sm">
@@ -185,16 +190,16 @@ export function TransfersDetailsModal({
               />
             )}
             {msgId && <TransferProperty name="Message ID" value={msgId} />}
-            {explorerLink && (
+            {hyperlaneExplorerLink && (
               <div className="flex justify-center">
                 <span className="text-xxs leading-normal tracking-wider text-primary-500">
                   <a
                     className="text-xs leading-normal tracking-wider text-primary-500 underline-offset-2 hover:opacity-80 active:opacity-70"
-                    href={explorerLink}
+                    href={hyperlaneExplorerLink}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    View in Explorer
+                    {explorerLink ? 'View in Hyperlane Explorer' : 'Search in Hyperlane Explorer'}
                   </a>
                 </span>
               </div>

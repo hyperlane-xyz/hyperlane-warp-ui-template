@@ -1,3 +1,4 @@
+import type { DexFlavor } from '@hyperlane-xyz/sdk';
 import {
   chainAddresses,
   chainMetadata,
@@ -19,6 +20,10 @@ export interface SwapChainConfig {
   quoterV2: string;
   /** Phase 2: warp route the ICA can use to bridge tokens back */
   icaBridgeRoute: string;
+  /** DEX flavor used by Universal Router quoting/execution */
+  dexFlavor?: DexFlavor;
+  /** Pool fee/tick parameter for the selected DEX flavor */
+  poolParam?: number;
 }
 
 export const DEMO_WARP_ROUTE_ID = 'USDC/eclipsemainnet';
@@ -86,6 +91,8 @@ export const SWAP_CHAIN_CONFIGS: Record<string, SwapChainConfig> = {
     wrappedNative: '0x4200000000000000000000000000000000000006',
     quoterV2: '0x61fFE014bA17989E743c5F6cB21bF9697530B21e',
     icaBridgeRoute: '',
+    dexFlavor: 'velodrome-slipstream',
+    poolParam: 500,
   },
   base: {
     chainId: requireNumericId(demoDestinationMetadata.chainId, 'chainId', DEMO_DESTINATION_CHAIN),
@@ -117,6 +124,7 @@ export function isDemoSwapBridgePath(params: {
   destinationRouteAddress?: string;
 }): boolean {
   const destinationTokenAddress = params.destinationTokenAddress.toLowerCase();
+  const destinationRouteAddress = params.destinationRouteAddress?.toLowerCase();
   const canonicalBaseCollateral = DEMO_BASE_USDC_COLLATERAL.toLowerCase();
   const canonicalBaseRoute = DEMO_BASE_USDC_WARP_ROUTE.toLowerCase();
 
@@ -129,6 +137,13 @@ export function isDemoSwapBridgePath(params: {
 
   if (destinationTokenAddress === canonicalBaseRoute) return false;
   if (destinationTokenAddress !== canonicalBaseCollateral) return false;
+  if (
+    destinationRouteAddress &&
+    destinationRouteAddress !== canonicalBaseRoute &&
+    destinationRouteAddress !== canonicalBaseCollateral
+  ) {
+    return false;
+  }
 
   return true;
 }

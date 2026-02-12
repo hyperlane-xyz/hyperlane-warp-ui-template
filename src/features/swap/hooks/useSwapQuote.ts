@@ -47,6 +47,10 @@ export function useSwapQuote(
         originTokenAddress,
         originConfig.bridgeToken,
         amount,
+        {
+          poolParam: originConfig.poolParam,
+          dexFlavor: originConfig.dexFlavor,
+        },
       );
 
       const bridge = await getBridgeFee(
@@ -54,6 +58,7 @@ export function useSwapQuote(
         originConfig.warpRoute,
         destConfig.domainId,
         swapOutput,
+        originConfig.bridgeToken,
       );
 
       const icaFee = await getIcaFee(

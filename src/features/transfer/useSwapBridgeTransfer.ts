@@ -10,7 +10,7 @@ import {
   getSwapQuote,
   shareCallsWithPrivateRelayer,
 } from '@hyperlane-xyz/sdk';
-import { toWei } from '@hyperlane-xyz/utils';
+import { ZERO_ADDRESS_HEX_32, toWei } from '@hyperlane-xyz/utils';
 
 import { BigNumber, providers } from 'ethers';
 import { useCallback, useState } from 'react';
@@ -43,7 +43,6 @@ const universalRouterAbi = parseAbi([
 
 const COMMITMENTS_SERVICE_URL =
   'https://offchain-lookup.services.hyperlane.xyz/callCommitments/calls';
-const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 type CommitmentCall = {
   to: string;
@@ -200,6 +199,10 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
           swapTokenAddress,
           originConfig.bridgeToken,
           amountBN,
+          {
+            poolParam: originConfig.poolParam,
+            dexFlavor: originConfig.dexFlavor,
+          },
         );
       } catch (error) {
         throw new Error(
@@ -215,6 +218,7 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
         originConfig.warpRoute,
         destConfig.domainId,
         swapOutput,
+        originConfig.bridgeToken,
       );
     } catch (error) {
       throw new Error(
@@ -286,9 +290,11 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
     bridgeTokenFee,
     icaRouterAddress: originIcaRouter,
     remoteIcaRouterAddress: destinationIcaRouter,
-    ismAddress: ZERO_ADDRESS,
+    ismAddress: ZERO_ADDRESS_HEX_32,
     commitment: commitmentHash,
     crossChainMsgFee: icaFee,
+    dexFlavor: originConfig.dexFlavor,
+    poolParam: originConfig.poolParam,
     includeCrossChainCommand: true,
   };
 

@@ -1,6 +1,6 @@
 export const links = {
   home: 'https://www.hyperlane.xyz',
-  explorer: 'https://explorer.hyperlane.xyz',
+  explorer: 'https://hyperlane-explorer-git-pb-offsite-swap-abacus-works.vercel.app',
   discord: 'https://discord.gg/VK9ZUy3aTV',
   github: 'https://github.com/hyperlane-xyz/hyperlane-warp-ui-template',
   docs: 'https://docs.hyperlane.xyz',

@@ -38,3 +38,7 @@ npm-debug.log*
 
 .idea
 /public/fonts
+.monorepo-tarballs
+
+.opencode
+.sisyphus

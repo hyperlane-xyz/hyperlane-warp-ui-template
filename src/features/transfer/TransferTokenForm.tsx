@@ -1,5 +1,6 @@
 import { Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
 import {
+  KnownProtocolType,
   ProtocolType,
   convertToScaledAmount,
   eqAddress,
@@ -19,7 +20,7 @@ import {
   useAccounts,
   useModal,
 } from '@hyperlane-xyz/widgets';
-import BigNumber from 'bignumber.js';
+import BigNumberJS from 'bignumber.js';
 import { Form, Formik, useFormikContext } from 'formik';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
@@ -41,6 +42,16 @@ import { useChainDisplayName, useMultiProvider } from '../chains/hooks';
 import { isMultiCollateralLimitExceeded } from '../limits/utils';
 import { useIsAccountSanctioned } from '../sanctions/hooks/useIsAccountSanctioned';
 import { useStore } from '../store';
+import { IcaPanel } from '../swap/components/IcaPanel';
+import { useIcaAddress } from '../swap/hooks/useIcaAddress';
+import { useInterchainAccountApp } from '../swap/hooks/useInterchainAccount';
+import { useSwapQuote } from '../swap/hooks/useSwapQuote';
+import {
+  DEFAULT_SLIPPAGE,
+  getSwappableAddress,
+  isDemoSwapBridgePath,
+  isSwapSupported,
+} from '../swap/swapConfig';
 import { ImportTokenButton } from '../tokens/ImportTokenButton';
 import { TokenSelectField } from '../tokens/TokenSelectField';
 import { useIsApproveRequired } from '../tokens/approval';
@@ -69,6 +80,7 @@ import { TransferFormValues } from './types';
 import { useRecipientBalanceWatcher } from './useBalanceWatcher';
 import { useFeeQuotes } from './useFeeQuotes';
 import { useTokenTransfer } from './useTokenTransfer';
+import { TransferRouteType, useTransferRoute } from './useTransferRoute';
 import { isSmartContract, shouldClearAddress } from './utils';
 
 export function TransferTokenForm() {
@@ -100,6 +112,16 @@ export function TransferTokenForm() {
   } = useModal();
 
   const validate = async (values: TransferFormValues) => {
+    const routeType = getRouteType(warpCore, tokens, collateralGroups, values);
+
+    // Skip full warp validation for swap-bridge routes
+    if (routeType === 'swap-bridge') {
+      if (!values.amount || parseFloat(values.amount) <= 0) {
+        return { amount: 'Invalid amount' };
+      }
+      return null;
+    }
+
     const [result, overrideToken] = await validateForm(
       warpCore,
       tokens,
@@ -174,6 +196,7 @@ export function TransferTokenForm() {
             <DestinationTokenCard isReview={isReview} />
           </TransferSection>
 
+          <ContextualIcaPanel />
           <ReviewDetails isReview={isReview} routeOverrideToken={routeOverrideToken} />
           <ButtonSection
             isReview={isReview}
@@ -267,10 +290,8 @@ function OriginTokenCard({
   const { balance } = useOriginBalance(originToken);
   const { tokenPrice, isLoading: isPriceLoading } = useTokenPrice(values);
 
-  const isRouteSupported = useMemo(() => {
-    if (!originToken || !destinationToken) return true;
-    return checkTokenHasRoute(originToken, destinationToken, collateralGroups);
-  }, [originToken, destinationToken, collateralGroups]);
+  const { routeType } = useTransferRoute(originToken, destinationToken, collateralGroups);
+  const isRouteSupported = routeType !== 'unavailable';
 
   const amount = parseFloat(values.amount);
   const totalTokenPrice = !isNullish(tokenPrice) && !isNaN(amount) ? amount * tokenPrice : 0;
@@ -333,15 +354,30 @@ function OriginTokenCard({
 function DestinationTokenCard({ isReview }: { isReview: boolean }) {
   const { values, setFieldValue } = useFormikContext<TransferFormValues>();
   const tokens = useTokens();
+  const collateralGroups = useCollateralGroups();
   const multiProvider = useMultiProvider();
 
+  const originToken = getTokenByKey(tokens, values.originTokenKey);
   const destinationToken = getTokenByKey(tokens, values.destinationTokenKey);
+  const { routeType } = useTransferRoute(originToken, destinationToken, collateralGroups);
+  const isSwapBridge = routeType === 'swap-bridge';
+
+  const senderAddress = useAccountAddressForChain(multiProvider, originToken?.chainName);
+  const icaApp = useInterchainAccountApp();
+  const { icaAddress } = useIcaAddress(
+    isSwapBridge ? icaApp : null,
+    isSwapBridge ? (senderAddress ?? undefined) : undefined,
+    isSwapBridge ? originToken?.chainName : undefined,
+    isSwapBridge ? destinationToken?.chainName : undefined,
+  );
 
   const connectedDestAddress = useAccountAddressForChain(
     multiProvider,
     destinationToken?.chainName,
   );
-  const recipient = values.recipient || connectedDestAddress;
+
+  const recipient =
+    isSwapBridge && icaAddress ? icaAddress : values.recipient || connectedDestAddress;
 
   const { balance } = useDestinationBalance(recipient, destinationToken);
 
@@ -355,7 +391,7 @@ function DestinationTokenCard({ isReview }: { isReview: boolean }) {
           selectionMode="destination"
           recipient={values.recipient}
           onRecipientChange={(addr: string) => setFieldValue('recipient', addr)}
-          disabled={isReview}
+          disabled={isReview || isSwapBridge}
         />
         <ImportTokenButton token={destinationToken} />
       </div>
@@ -369,6 +405,13 @@ function DestinationTokenCard({ isReview }: { isReview: boolean }) {
         />
 
         <div className="my-2.5 h-px bg-primary-50" />
+
+        {isSwapBridge && icaAddress && (
+          <div className="mb-2 flex items-center gap-1.5 rounded border border-primary-200 bg-primary-50 px-2 py-1 text-xs text-primary-700">
+            <span className="font-medium">Unified Account</span>
+            <span className="truncate text-primary-500">{icaAddress}</span>
+          </div>
+        )}
 
         <TokenBalance label="Remote Balance" balance={balance} />
       </div>
@@ -408,7 +451,7 @@ function MaxButton({
     });
     if (isNullish(maxAmount)) return;
     const decimalsAmount = maxAmount.getDecimalFormattedAmount();
-    const roundedAmount = new BigNumber(decimalsAmount).toFixed(4, BigNumber.ROUND_FLOOR);
+    const roundedAmount = new BigNumberJS(decimalsAmount).toFixed(4, BigNumberJS.ROUND_FLOOR);
     setFieldValue('amount', roundedAmount);
   };
 
@@ -444,6 +487,30 @@ function TokenBalance({
   );
 }
 
+function ContextualIcaPanel() {
+  const { values } = useFormikContext<TransferFormValues>();
+  const tokens = useTokens();
+  const collateralGroups = useCollateralGroups();
+  const multiProvider = useMultiProvider();
+
+  const originToken = getTokenByKey(tokens, values.originTokenKey);
+  const destinationToken = getTokenByKey(tokens, values.destinationTokenKey);
+  const { routeType } = useTransferRoute(originToken, destinationToken, collateralGroups);
+  const senderAddress = useAccountAddressForChain(multiProvider, originToken?.chainName);
+
+  if (routeType !== 'swap-bridge' || !originToken || !destinationToken || !senderAddress) {
+    return null;
+  }
+
+  return (
+    <IcaPanel
+      userAddress={senderAddress}
+      originChainName={originToken.chainName}
+      destinationChainName={destinationToken.chainName}
+    />
+  );
+}
+
 function ButtonSection({
   isReview,
   isValidating,
@@ -460,10 +527,12 @@ function ButtonSection({
   const { values } = useFormikContext<TransferFormValues>();
   const multiProvider = useMultiProvider();
   const tokens = useTokens();
+  const collateralGroups = useCollateralGroups();
   const originToken = routeOverrideToken || getTokenByKey(tokens, values.originTokenKey);
   const destinationToken = getTokenByKey(tokens, values.destinationTokenKey);
   const chainDisplayName = useChainDisplayName(destinationToken?.chainName || '');
-  const isRouteSupported = useIsRouteSupported();
+  const { routeType } = useTransferRoute(originToken, destinationToken, collateralGroups);
+  const isRouteSupported = routeType !== 'unavailable';
 
   const { accounts } = useAccounts(multiProvider, config.addressBlacklist);
   const { address: connectedWallet } = getAccountAddressAndPubKey(
@@ -472,7 +541,6 @@ function ButtonSection({
     accounts,
   );
 
-  // Get recipient (form value or fallback to connected wallet for destination)
   const { address: connectedDestAddress } = getAccountAddressAndPubKey(
     multiProvider,
     destinationToken?.chainName,
@@ -480,7 +548,6 @@ function ButtonSection({
   );
   const recipient = values.recipient || connectedDestAddress || '';
 
-  // Confirming recipient address
   const [{ addressConfirmed, showWarning }, setRecipientInfos] = useState({
     showWarning: false,
     addressConfirmed: true,
@@ -564,7 +631,12 @@ function ButtonSection({
     setIsReview(false);
     setTransferLoading(true);
 
-    await triggerTransactions(values, routeOverrideToken);
+    await triggerTransactions(values, routeOverrideToken, routeType, {
+      icaAddress: icaAddress ?? undefined,
+      swapOutput: swapQuoteCache?.swapOutput,
+      bridgeFee: swapQuoteCache?.bridgeFee,
+      icaFee: swapQuoteCache?.icaFee,
+    });
     setTransferLoading(false);
   };
 
@@ -572,6 +644,38 @@ function ButtonSection({
     setIsReview(false);
     cleanOverrideToken();
   };
+
+  const isSwapBridge = routeType === 'swap-bridge';
+
+  // Pre-fetch ICA address and swap quote for swap-bridge to avoid redundant RPC calls
+  const senderAddress = useAccountAddressForChain(multiProvider, originToken?.chainName);
+  const icaApp = useInterchainAccountApp();
+  const { icaAddress } = useIcaAddress(
+    isSwapBridge ? icaApp : null,
+    isSwapBridge ? (senderAddress ?? undefined) : undefined,
+    isSwapBridge ? originToken?.chainName : undefined,
+    isSwapBridge ? destinationToken?.chainName : undefined,
+  );
+
+  const amountWeiForCache = useMemo(() => {
+    if (!isSwapBridge || !originToken || !values.amount || parseFloat(values.amount) <= 0)
+      return undefined;
+    try {
+      return toWei(values.amount, originToken.decimals);
+    } catch {
+      return undefined;
+    }
+  }, [isSwapBridge, originToken, values.amount]);
+
+  const originSwapAddress =
+    isSwapBridge && originToken ? getSwappableAddress(originToken) : undefined;
+
+  const { data: swapQuoteCache } = useSwapQuote(
+    isSwapBridge ? originToken?.chainName : undefined,
+    isSwapBridge ? destinationToken?.chainName : undefined,
+    originSwapAddress,
+    amountWeiForCache,
+  );
 
   const text = !isRouteSupported
     ? 'Route is not supported'
@@ -636,7 +740,7 @@ function ButtonSection({
           onClick={triggerTransactionsHandler}
           className="flex-1 px-3 py-1.5 font-secondary text-white"
         >
-          {`Send to ${chainDisplayName}`}
+          {isSwapBridge ? `Swap & Bridge to ${chainDisplayName}` : `Send to ${chainDisplayName}`}
         </SolidButton>
       </div>
     </>
@@ -654,21 +758,27 @@ function ReviewDetails({
   const warpCore = useWarpCore();
   const { amount, originTokenKey, destinationTokenKey } = values;
   const tokens = useTokens();
+  const collateralGroups = useCollateralGroups();
   const originTokenByKey = routeOverrideToken || getTokenByKey(tokens, originTokenKey);
   const destinationTokenByKey = getTokenByKey(tokens, destinationTokenKey);
-  // Finding actual token pair for the given tokens
+
+  const { routeType } = useTransferRoute(originTokenByKey, destinationTokenByKey, collateralGroups);
+  const isSwapBridge = routeType === 'swap-bridge';
+
   const originToken =
-    destinationTokenByKey && originTokenByKey
+    !isSwapBridge && destinationTokenByKey && originTokenByKey
       ? findRouteToken(warpCore, originTokenByKey, destinationTokenByKey.chainName)
-      : undefined;
-  const destinationToken = destinationTokenByKey
-    ? originToken?.getConnectionForChain(destinationTokenByKey.chainName)?.token
-    : undefined;
+      : originTokenByKey;
+  const destinationToken =
+    !isSwapBridge && destinationTokenByKey && originToken
+      ? originToken.getConnectionForChain(destinationTokenByKey.chainName)?.token
+      : destinationTokenByKey;
   const originTokenSymbol = originToken?.symbol || '';
-  const isNft = originToken?.isNft();
-  const isRouteSupported = useIsRouteSupported();
+  const isNft = !isSwapBridge && originToken?.isNft();
+  const isRouteSupported = routeType !== 'unavailable';
 
   const scaledAmount = useMemo(() => {
+    if (isSwapBridge) return null;
     if (!originToken?.scale || !destinationToken?.scale) return null;
     if (!isReview || originToken.scale === destinationToken.scale) return null;
 
@@ -688,28 +798,46 @@ function ReviewDetails({
       originScale: originToken.scale,
       destinationScale: destinationToken.scale,
     };
-  }, [amount, originToken, destinationToken, isReview]);
+  }, [amount, originToken, destinationToken, isReview, isSwapBridge]);
 
   const amountWei = isNft ? amount.toString() : toWei(amount, originToken?.decimals);
 
   const { isLoading: isApproveLoading, isApproveRequired } = useIsApproveRequired(
-    originToken,
+    isSwapBridge ? undefined : originToken,
     amountWei,
     isReview,
   );
-  // Only fetch fees if route is supported
   const { isLoading: isQuoteLoading, fees: feeQuotes } = useFeeQuotes(
     values,
-    isRouteSupported,
-    originToken,
-    destinationToken,
+    isRouteSupported && !isSwapBridge,
+    isSwapBridge ? undefined : originToken,
+    isSwapBridge ? undefined : destinationToken,
     !isReview,
   );
 
-  const isLoading = isApproveLoading || isQuoteLoading;
+  const amountWeiForQuote = useMemo(() => {
+    if (!isSwapBridge || !originToken || !amount || parseFloat(amount) <= 0) return undefined;
+    try {
+      return toWei(amount, originToken.decimals);
+    } catch {
+      return undefined;
+    }
+  }, [isSwapBridge, originToken, amount]);
+
+  const originSwapAddressForQuote =
+    isSwapBridge && originToken ? getSwappableAddress(originToken) : undefined;
+
+  const { data: swapQuote, isLoading: isSwapQuoteLoading } = useSwapQuote(
+    isSwapBridge ? originToken?.chainName : undefined,
+    isSwapBridge ? destinationTokenByKey?.chainName : undefined,
+    originSwapAddressForQuote,
+    amountWeiForQuote,
+  );
+
+  const isLoading = isSwapBridge ? isSwapQuoteLoading : isApproveLoading || isQuoteLoading;
 
   const fees = useMemo(() => {
-    if (!feeQuotes) return null;
+    if (isSwapBridge || !feeQuotes) return null;
 
     const interchainQuote = getInterchainQuote(originToken, feeQuotes.interchainQuote);
     const fees = {
@@ -727,11 +855,13 @@ function ReviewDetails({
       ...fees,
       totalFees,
     };
-  }, [feeQuotes, originToken]);
+  }, [feeQuotes, originToken, isSwapBridge]);
 
   return (
     <>
-      {!isReview && <FeeSectionButton visible={!isReview} fees={fees} isLoading={isLoading} />}
+      {!isReview && !isSwapBridge && (
+        <FeeSectionButton visible={!isReview} fees={fees} isLoading={isLoading} />
+      )}
 
       <div
         className={`${
@@ -743,6 +873,44 @@ function ReviewDetails({
           {isLoading ? (
             <div className="flex items-center justify-center py-6">
               <SpinnerIcon className="h-5 w-5" />
+            </div>
+          ) : isSwapBridge ? (
+            <div>
+              <h4>Swap & Bridge</h4>
+              <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs">
+                <p className="flex">
+                  <span className="min-w-[7.5rem]">Amount</span>
+                  <span>{`${amount} ${originTokenSymbol}`}</span>
+                </p>
+                <p className="flex">
+                  <span className="min-w-[7.5rem]">Route</span>
+                  <span>{`${originTokenSymbol}${originTokenSymbol !== 'USDC' ? ' → USDC' : ''} (${originToken?.chainName || ''}) → ${destinationToken?.symbol || 'USDC'} (${destinationToken?.chainName || ''})`}</span>
+                </p>
+                {swapQuote && (
+                  <>
+                    <p className="flex">
+                      <span className="min-w-[7.5rem]">Est. Received</span>
+                      <span>{`~${fromWei(swapQuote.swapOutput.toString(), destinationToken?.decimals)} ${destinationToken?.symbol || 'USDC'}`}</span>
+                    </p>
+                    <p className="flex">
+                      <span className="min-w-[7.5rem]">Bridge Fee</span>
+                      <span>{`${fromWei(swapQuote.bridgeFee.toString())} ETH`}</span>
+                    </p>
+                    <p className="flex">
+                      <span className="min-w-[7.5rem]">ICA Fee</span>
+                      <span>{`${fromWei(swapQuote.icaFee.toString())} ETH`}</span>
+                    </p>
+                  </>
+                )}
+                <p className="flex">
+                  <span className="min-w-[7.5rem]">Slippage</span>
+                  <span>{`${DEFAULT_SLIPPAGE * 100}%`}</span>
+                </p>
+                <p className="flex">
+                  <span className="min-w-[7.5rem]">Delivery</span>
+                  <span>Via Unified Account (ICA)</span>
+                </p>
+              </div>
             </div>
           ) : (
             <>
@@ -847,17 +1015,31 @@ function useFormInitialValues(): TransferFormValues {
   );
 }
 
-function useIsRouteSupported(): boolean {
-  const { values } = useFormikContext<TransferFormValues>();
-  const tokens = useTokens();
-  const collateralGroups = useCollateralGroups();
+function getRouteType(
+  _warpCore: WarpCore,
+  tokens: Token[],
+  collateralGroups: Map<string, Token[]>,
+  values: TransferFormValues,
+): TransferRouteType {
   const originToken = getTokenByKey(tokens, values.originTokenKey);
   const destinationToken = getTokenByKey(tokens, values.destinationTokenKey);
-
-  return useMemo(() => {
-    if (!originToken || !destinationToken) return true;
-    return checkTokenHasRoute(originToken, destinationToken, collateralGroups);
-  }, [originToken, destinationToken, collateralGroups]);
+  if (!originToken || !destinationToken) return 'unavailable';
+  if (checkTokenHasRoute(originToken, destinationToken, collateralGroups)) return 'warp';
+  if (isSwapSupported(originToken.chainName, destinationToken.chainName)) {
+    const destinationTokenAddress =
+      getSwappableAddress(destinationToken) ?? destinationToken.addressOrDenom;
+    if (
+      isDemoSwapBridgePath({
+        originChainName: originToken.chainName,
+        destinationChainName: destinationToken.chainName,
+        destinationTokenAddress,
+        destinationRouteAddress: destinationToken.addressOrDenom,
+      })
+    ) {
+      return 'swap-bridge';
+    }
+  }
+  return 'unavailable';
 }
 
 const insufficientFundsErrMsg = /insufficient.[funds|lamports]/i;
@@ -868,7 +1050,7 @@ async function validateForm(
   tokens: Token[],
   collateralGroups: Map<string, Token[]>,
   values: TransferFormValues,
-  accounts: Record<ProtocolType, AccountInfo>,
+  accounts: Record<KnownProtocolType, AccountInfo>,
   routerAddressesByChainMap: Record<ChainName, Set<string>>,
 ): Promise<[Record<string, string> | null, Token | null]> {
   // returns a tuple, where first value is validation result

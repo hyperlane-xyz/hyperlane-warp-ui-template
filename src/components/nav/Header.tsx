@@ -1,6 +1,8 @@
 import { DropdownMenu } from '@hyperlane-xyz/widgets';
+import clsx from 'clsx';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { ConnectWalletButton } from '../../features/wallet/ConnectWalletButton';
 import Logo from '../../images/logos/app-logo.svg';
 import Name from '../../images/logos/app-name.svg';
@@ -8,7 +10,11 @@ import Title from '../../images/logos/app-title.svg';
 import { HamburgerIcon } from '../icons/HamburgerIcon';
 import { NavItem, navLinks } from './Nav';
 
+const appLinks: { title: string; href: string }[] = [];
+
 export function Header() {
+  const { pathname } = useRouter();
+
   return (
     <header className="flex w-full items-center justify-between bg-primary-25 px-4 py-3 shadow-[0px_4px_7px_rgba(0,0,0,0.05)] sm:justify-center sm:bg-transparent sm:px-6 sm:pb-2 sm:pt-3 sm:shadow-none lg:px-12">
       {/* Mobile: Logo + Hamburger Menu */}
@@ -38,6 +44,24 @@ export function Header() {
         </div>
         <Image src={Title} width={43} alt="" className="self-end" />
       </Link>
+
+      <nav className="hidden items-center gap-4 sm:absolute sm:left-6 sm:flex lg:left-12">
+        {appLinks.map((link) => {
+          const isActive = pathname === link.href;
+          return (
+            <Link
+              key={link.title}
+              href={link.href}
+              className={clsx(
+                'text-sm text-primary-500 decoration-primary-500 underline-offset-2 transition-colors hover:underline',
+                isActive && 'font-medium underline',
+              )}
+            >
+              {link.title}
+            </Link>
+          );
+        })}
+      </nav>
 
       <div className="sm:absolute sm:right-6 lg:right-12">
         <ConnectWalletButton />

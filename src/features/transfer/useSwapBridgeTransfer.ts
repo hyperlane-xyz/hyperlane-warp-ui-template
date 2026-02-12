@@ -279,6 +279,7 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
   }
 
   const hasDestinationSwap = !eqAddress(destinationTokenAddress, destConfig.bridgeToken);
+  const requiresDestinationCommitReveal = hasDestinationSwap;
   const destinationSwapOutput =
     hasDestinationSwap &&
     (await (async () => {
@@ -304,7 +305,7 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
     destinationSwapOutput && applySlippage(destinationSwapOutput, DEFAULT_SLIPPAGE);
 
   const rawDestCalls: CommitmentCall[] = [];
-  if (hasDestinationSwap) {
+  if (requiresDestinationCommitReveal) {
     if (!destinationSwapOutMin || destinationSwapOutMin.lte(0)) {
       throw new Error('Destination swap quote returned no usable output amount.');
     }
@@ -329,58 +330,56 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
         payerIsUser: true,
       }),
     );
-  } else {
-    rawDestCalls.push(
-      buildErc20ApproveCall({
-        token: destinationTokenAddress,
-        spender: destConfig.icaBridgeRoute,
-        amount: maxUint256.toString(),
-      }),
-    );
   }
 
-  const estimatedIcaHandleGas = await (async () => {
-    try {
-      return await icaApp.estimateIcaHandleGas({
-        origin: originChainName,
-        destination: destinationChainName,
-        innerCalls: rawDestCalls.map((call) => ({
-          ...call,
-          value: call.value?.toString() ?? '0',
-        })),
-        config: {
+  let icaBaseFee = BigNumber.from(0);
+  let commitmentSalt: string | undefined;
+  let commitmentPayload: ReturnType<typeof buildIcaCommitmentFromRawCalls> | undefined;
+  let commitmentHash: string | undefined;
+  if (requiresDestinationCommitReveal) {
+    const estimatedIcaHandleGas = await (async () => {
+      try {
+        return await icaApp.estimateIcaHandleGas({
           origin: originChainName,
-          owner: account,
-        },
-      });
-    } catch (error) {
-      throw new Error(
-        `Failed to estimate destination ICA execution gas. Root cause: ${toErrorMessage(error)}`,
-      );
-    }
-  })();
+          destination: destinationChainName,
+          innerCalls: rawDestCalls.map((call) => ({
+            ...call,
+            value: call.value?.toString() ?? '0',
+          })),
+          config: {
+            origin: originChainName,
+            owner: account,
+          },
+        });
+      } catch (error) {
+        throw new Error(
+          `Failed to estimate destination ICA execution gas. Root cause: ${toErrorMessage(error)}`,
+        );
+      }
+    })();
 
-  const icaQuote = await (async () => {
-    try {
-      return await getIcaCommitRevealFee(
-        quoteProvider,
-        originIcaRouter,
-        destConfig.domainId,
-        estimatedIcaHandleGas.toString(),
-      );
-    } catch (error) {
-      throw new Error(
-        `Failed to quote ICA execution fee (${originChainName} -> ${destinationChainName}). Retry in a few seconds. Root cause: ${toErrorMessage(error)}`,
-      );
-    }
-  })();
-  const icaBaseFee = maxBigNumber(cachedIcaFee, icaQuote);
+    const icaQuote = await (async () => {
+      try {
+        return await getIcaCommitRevealFee(
+          quoteProvider,
+          originIcaRouter,
+          destConfig.domainId,
+          estimatedIcaHandleGas.toString(),
+        );
+      } catch (error) {
+        throw new Error(
+          `Failed to quote ICA execution fee (${originChainName} -> ${destinationChainName}). Retry in a few seconds. Root cause: ${toErrorMessage(error)}`,
+        );
+      }
+    })();
+    icaBaseFee = maxBigNumber(cachedIcaFee, icaQuote);
 
-  const salt = randomSalt();
-  const commitmentPayload = buildIcaCommitmentFromRawCalls(rawDestCalls, salt);
-  const commitmentHash = commitmentPayload.commitment;
-  if (!commitmentHash) {
-    throw new Error('Missing ICA commitment for cross-chain command.');
+    commitmentSalt = randomSalt();
+    commitmentPayload = buildIcaCommitmentFromRawCalls(rawDestCalls, commitmentSalt);
+    commitmentHash = commitmentPayload.commitment;
+    if (!commitmentHash) {
+      throw new Error('Missing ICA commitment for cross-chain command.');
+    }
   }
 
   const swapBridgeParamsBase: Parameters<typeof buildSwapAndBridgeTx>[0] = {
@@ -397,13 +396,17 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
     isNativeOrigin: isNativeOriginToken,
     expectedSwapOutput: swapOutput,
     bridgeTokenFee,
-    icaRouterAddress: originIcaRouter,
-    remoteIcaRouterAddress: destinationIcaRouter,
-    ismAddress: ZERO_ADDRESS_HEX_32,
-    commitment: commitmentHash,
     dexFlavor: originConfig.dexFlavor,
     poolParam: originConfig.poolParam,
-    includeCrossChainCommand: true,
+    includeCrossChainCommand: requiresDestinationCommitReveal,
+    ...(requiresDestinationCommitReveal
+      ? {
+          icaRouterAddress: originIcaRouter,
+          remoteIcaRouterAddress: destinationIcaRouter,
+          ismAddress: ZERO_ADDRESS_HEX_32,
+          commitment: commitmentHash,
+        }
+      : {}),
   };
 
   if (!isNativeOriginToken) {
@@ -423,7 +426,9 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
     const swapBridgeParams: Parameters<typeof buildSwapAndBridgeTx>[0] = {
       ...swapBridgeParamsBase,
       bridgeMsgFee: withFeeBufferBps(bridgeBaseFee, bufferBps),
-      crossChainMsgFee: withFeeBufferBps(icaBaseFee, bufferBps),
+      crossChainMsgFee: requiresDestinationCommitReveal
+        ? withFeeBufferBps(icaBaseFee, bufferBps)
+        : BigNumber.from(0),
     };
     const { commands, inputs, value } = buildSwapAndBridgeTx(swapBridgeParams);
     const attemptTxValue = BigInt(value.toString());
@@ -477,26 +482,31 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
   onStatusChange(TransferStatus.ConfirmingSwapBridge);
   await publicClient.waitForTransactionReceipt({ hash, confirmations: 1 });
 
-  onStatusChange(TransferStatus.PostingCommitment);
-  try {
-    const payload = buildPostCallsPayload({
-      calls: commitmentPayload.normalizedCalls,
-      relayers: [],
-      salt,
-      commitmentDispatchTx: hash,
-      originDomain: originConfig.domainId,
-      destinationDomain: destConfig.domainId,
-      owner: account,
-    });
-    const relayerResponse = await shareCallsWithPrivateRelayer(COMMITMENTS_SERVICE_URL, payload);
-
-    if (!relayerResponse.ok) {
-      throw new Error('Relayer rejected commitment payload.');
+  if (requiresDestinationCommitReveal) {
+    if (!commitmentPayload || !commitmentSalt) {
+      throw new Error('Missing commitment payload for destination execution.');
     }
-  } catch (error) {
-    throw new Error(
-      `Failed to post ICA call commitment to relayer service. Without this, reveal cannot execute destination calls. Root cause: ${toErrorMessage(error)}`,
-    );
+    onStatusChange(TransferStatus.PostingCommitment);
+    try {
+      const payload = buildPostCallsPayload({
+        calls: commitmentPayload.normalizedCalls,
+        relayers: [],
+        salt: commitmentSalt,
+        commitmentDispatchTx: hash,
+        originDomain: originConfig.domainId,
+        destinationDomain: destConfig.domainId,
+        owner: account,
+      });
+      const relayerResponse = await shareCallsWithPrivateRelayer(COMMITMENTS_SERVICE_URL, payload);
+
+      if (!relayerResponse.ok) {
+        throw new Error('Relayer rejected commitment payload.');
+      }
+    } catch (error) {
+      throw new Error(
+        `Failed to post ICA call commitment to relayer service. Without this, reveal cannot execute destination calls. Root cause: ${toErrorMessage(error)}`,
+      );
+    }
   }
 
   return hash;

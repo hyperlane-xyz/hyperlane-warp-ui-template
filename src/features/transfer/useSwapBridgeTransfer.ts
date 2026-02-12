@@ -43,6 +43,8 @@ const universalRouterAbi = parseAbi([
 
 const COMMITMENTS_SERVICE_URL =
   'https://offchain-lookup.services.hyperlane.xyz/callCommitments/calls';
+const FEE_BUFFER_BPS = 500;
+const BPS_DENOMINATOR = 10_000;
 
 type CommitmentCall = {
   to: string;
@@ -83,6 +85,22 @@ function randomSalt(): string {
 function requireAddress(value: string, errorMessage: string): Address {
   if (!isAddress(value)) throw new Error(errorMessage);
   return value as Address;
+}
+
+function maxBigNumber(
+  a: BigNumber | undefined,
+  b: BigNumber | undefined,
+): BigNumber {
+  if (a && b) return a.gt(b) ? a : b;
+  return a ?? b ?? BigNumber.from(0);
+}
+
+function withFeeBuffer(fee: BigNumber): BigNumber {
+  if (fee.isZero()) return fee;
+  return fee
+    .mul(BPS_DENOMINATOR + FEE_BUFFER_BPS)
+    .add(BPS_DENOMINATOR - 1)
+    .div(BPS_DENOMINATOR);
 }
 
 async function checkAndApprove(
@@ -226,20 +244,19 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
       );
     }
   })();
-  const bridgeFee = cachedBridgeFee ?? bridgeQuote.fee;
+  const bridgeFee = withFeeBuffer(maxBigNumber(cachedBridgeFee, bridgeQuote.fee));
   const bridgeTokenFee = bridgeQuote.bridgeTokenFee;
 
-  const icaFee =
-    cachedIcaFee ??
-    (await (async () => {
-      try {
-        return await getIcaFee(ethersProvider, originIcaRouter, destConfig.domainId);
-      } catch (error) {
-        throw new Error(
-          `Failed to quote ICA execution fee (${originChainName} -> ${destinationChainName}). Retry in a few seconds. Root cause: ${toErrorMessage(error)}`,
-        );
-      }
-    })());
+  const icaQuote = await (async () => {
+    try {
+      return await getIcaFee(ethersProvider, originIcaRouter, destConfig.domainId);
+    } catch (error) {
+      throw new Error(
+        `Failed to quote ICA execution fee (${originChainName} -> ${destinationChainName}). Retry in a few seconds. Root cause: ${toErrorMessage(error)}`,
+      );
+    }
+  })();
+  const icaFee = withFeeBuffer(maxBigNumber(cachedIcaFee, icaQuote));
 
   if (!isAddress(destinationTokenAddress)) {
     throw new Error('Invalid destination token address for ICA destination-call commitment.');

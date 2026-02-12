@@ -2,8 +2,7 @@ import { ChainName } from '@hyperlane-xyz/sdk';
 import { eqAddress, isAddress } from '@hyperlane-xyz/utils';
 import { useMemo, useState } from 'react';
 import { useWalletClient } from 'wagmi';
-import { useMultiProvider } from '../../chains/hooks';
-import { getHypExplorerSearchLink, getHypExplorerTxLink } from '../../../utils/links';
+import { getHypExplorerSearchLink } from '../../../utils/links';
 import { useIcaBalance } from '../hooks/useIcaBalance';
 import { useIcaTransaction } from '../hooks/useIcaTransaction';
 import { useInterchainAccountApp } from '../hooks/useInterchainAccount';
@@ -23,7 +22,6 @@ export function IcaSendForm({
   destinationChainName,
 }: IcaSendFormProps) {
   const destConfig = getSwapConfig(destinationChainName);
-  const multiProvider = useMultiProvider();
   const { data: walletClient } = useWalletClient();
   const { data: balances } = useIcaBalance(
     icaAddress,
@@ -63,10 +61,7 @@ export function IcaSendForm({
 
   const returnRecipient = defaultRecipient || walletClient?.account?.address || '';
   const effectiveRecipient = mode === 'return-origin' ? returnRecipient : recipient;
-  const hyperlaneTxLink = getHypExplorerTxLink(multiProvider, originChainName, txHash ?? undefined);
-  const hyperlaneSearchLink =
-    !hyperlaneTxLink && txHash ? getHypExplorerSearchLink(txHash) : null;
-  const hyperlaneLink = hyperlaneTxLink || hyperlaneSearchLink;
+  const hyperlaneLink = txHash ? getHypExplorerSearchLink(txHash) : null;
 
   const insufficientBalance =
     !!activeToken && !!amount && Number(amount) > Number(activeToken.balance);
@@ -217,7 +212,7 @@ export function IcaSendForm({
                 rel="noopener noreferrer"
                 className="font-medium text-green-800 underline underline-offset-2 hover:opacity-80"
               >
-                {hyperlaneTxLink ? 'View in Hyperlane Explorer' : 'Search in Hyperlane Explorer'}
+                Search in Hyperlane Explorer
               </a>
             </>
           ) : null}

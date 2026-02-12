@@ -1,5 +1,6 @@
 import { toast } from 'react-toastify';
 import { useMultiProvider } from '../../features/chains/hooks';
+import { getHypExplorerSearchLink, getHypExplorerTxLink } from '../../utils/links';
 
 export function toastTxSuccess(msg: string, txHash: string, chain: ChainName) {
   toast.success(<TxSuccessToast msg={msg} txHash={txHash} chain={chain} />, {
@@ -17,14 +18,15 @@ export function TxSuccessToast({
   chain: ChainName;
 }) {
   const multiProvider = useMultiProvider();
-  const url = multiProvider.tryGetExplorerTxUrl(chain, { hash: txHash });
+  const explorerTxLink = getHypExplorerTxLink(multiProvider, chain, txHash);
+  const url = explorerTxLink || getHypExplorerSearchLink(txHash);
 
   return (
     <div>
       {msg + ' '}
       {url && (
         <a className="underline" href={url} target="_blank" rel="noopener noreferrer">
-          Open in Explorer
+          Open in Hyperlane Explorer
         </a>
       )}
     </div>

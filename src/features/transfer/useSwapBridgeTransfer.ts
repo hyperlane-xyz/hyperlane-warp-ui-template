@@ -9,7 +9,7 @@ import {
   getSwapQuote,
   shareCallsWithPrivateRelayer,
 } from '@hyperlane-xyz/sdk';
-import { ZERO_ADDRESS_HEX_32, addressToBytes32, toWei } from '@hyperlane-xyz/utils';
+import { ZERO_ADDRESS_HEX_32, addressToBytes32, eqAddress, toWei } from '@hyperlane-xyz/utils';
 
 import { BigNumber, providers } from 'ethers';
 import { useCallback, useState } from 'react';
@@ -24,12 +24,13 @@ import {
   maxUint256,
   parseAbi,
 } from 'viem';
-import {
-  DEFAULT_SLIPPAGE,
-  getSwapConfig,
-  isDemoSwapBridgePath,
-} from '../swap/swapConfig';
 import { getIcaCommitRevealFee } from '../swap/icaFees';
+import { DEFAULT_SLIPPAGE, getSwapConfig, isDemoSwapBridgePath } from '../swap/swapConfig';
+import {
+  CommitmentCall,
+  applySlippage,
+  buildUniversalRouterV3SwapExactInCall,
+} from '../swap/universalRouter';
 import { TransferStatus } from './types';
 
 const erc20Abi = parseAbi([
@@ -45,12 +46,6 @@ const COMMITMENTS_SERVICE_URL =
   'https://offchain-lookup.services.hyperlane.xyz/callCommitments/calls';
 const FEE_BUFFER_ATTEMPTS_BPS = [500, 2000, 5000] as const;
 const BPS_DENOMINATOR = 10_000;
-
-type CommitmentCall = {
-  to: string;
-  data: string;
-  value?: string | number;
-};
 
 function toErrorMessage(error: unknown): string {
   if (error instanceof Error && error.message) return error.message;
@@ -86,17 +81,17 @@ function requireAddress(value: string, errorMessage: string): Address {
   return value as Address;
 }
 
-function maxBigNumber(
-  a: BigNumber | undefined,
-  b: BigNumber | undefined,
-): BigNumber {
+function maxBigNumber(a: BigNumber | undefined, b: BigNumber | undefined): BigNumber {
   if (a && b) return a.gt(b) ? a : b;
   return a ?? b ?? BigNumber.from(0);
 }
 
 function withFeeBufferBps(fee: BigNumber, bufferBps: number): BigNumber {
   if (fee.isZero()) return fee;
-  return fee.mul(BPS_DENOMINATOR + bufferBps).add(BPS_DENOMINATOR - 1).div(BPS_DENOMINATOR);
+  return fee
+    .mul(BPS_DENOMINATOR + bufferBps)
+    .add(BPS_DENOMINATOR - 1)
+    .div(BPS_DENOMINATOR);
 }
 
 function isInsufficientValueError(error: unknown): boolean {
@@ -171,6 +166,7 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
   const rpcUrl = multiProvider.getRpcUrl(originChainName);
   const publicClient = createPublicClient({ transport: http(rpcUrl) });
   const quoteProvider = new providers.JsonRpcProvider(rpcUrl);
+  const destinationQuoteProvider = multiProvider.getEthersV5Provider(destinationChainName);
 
   const universalRouter = requireAddress(
     originConfig.universalRouter,
@@ -197,7 +193,7 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
       destinationRouteAddress,
     })
   ) {
-    throw new Error('Unsupported token pair. Demo supports Optimism -> Base canonical USDC only.');
+    throw new Error('Unsupported token pair for demo swap-bridge path.');
   }
 
   const amountWeiString = toWei(amount, originDecimals);
@@ -260,12 +256,117 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
   const bridgeBaseFee = maxBigNumber(cachedBridgeFee, bridgeQuote.fee);
   const bridgeTokenFee = bridgeQuote.bridgeTokenFee;
 
+  if (!isAddress(destinationTokenAddress)) {
+    throw new Error('Invalid destination token address for ICA destination-call commitment.');
+  }
+  if (!isAddress(destConfig.icaBridgeRoute)) {
+    throw new Error(
+      'Missing or invalid destination bridge route required for ICA commitment calls.',
+    );
+  }
+  const destinationUniversalRouter = requireAddress(
+    destConfig.universalRouter,
+    `Invalid destination universal router for ${destinationChainName}`,
+  );
+
+  const hasOriginSwap = !eqAddress(swapTokenAddress, originConfig.bridgeToken);
+  const swapOutMin = hasOriginSwap ? applySlippage(swapOutput, DEFAULT_SLIPPAGE) : amountBN;
+  const bridgeAmount = hasOriginSwap ? swapOutMin.sub(bridgeTokenFee) : amountBN;
+  if (bridgeAmount.lte(0)) {
+    throw new Error(
+      'Origin swap output after slippage is insufficient to cover bridge token fees.',
+    );
+  }
+
+  const hasDestinationSwap = !eqAddress(destinationTokenAddress, destConfig.bridgeToken);
+  const destinationSwapOutput =
+    hasDestinationSwap &&
+    (await (async () => {
+      try {
+        return await getSwapQuote(
+          destinationQuoteProvider,
+          destConfig.quoterV2,
+          destConfig.bridgeToken,
+          destinationTokenAddress,
+          bridgeAmount,
+          {
+            poolParam: destConfig.poolParam,
+            dexFlavor: destConfig.dexFlavor,
+          },
+        );
+      } catch (error) {
+        throw new Error(
+          `Failed to quote destination swap (${destConfig.bridgeToken} -> ${destinationTokenAddress}) on ${destinationChainName}. Root cause: ${toErrorMessage(error)}`,
+        );
+      }
+    })());
+  const destinationSwapOutMin =
+    destinationSwapOutput && applySlippage(destinationSwapOutput, DEFAULT_SLIPPAGE);
+
+  const rawDestCalls: CommitmentCall[] = [];
+  if (hasDestinationSwap) {
+    if (!destinationSwapOutMin || destinationSwapOutMin.lte(0)) {
+      throw new Error('Destination swap quote returned no usable output amount.');
+    }
+    rawDestCalls.push(
+      buildErc20ApproveCall({
+        token: destConfig.bridgeToken,
+        spender: destinationUniversalRouter,
+        amount: maxUint256.toString(),
+      }),
+    );
+    rawDestCalls.push(
+      buildUniversalRouterV3SwapExactInCall({
+        universalRouter: destinationUniversalRouter,
+        recipient,
+        tokenIn: destConfig.bridgeToken,
+        tokenOut: destinationTokenAddress,
+        amountIn: bridgeAmount,
+        amountOutMinimum: destinationSwapOutMin,
+        deadline: Math.floor(Date.now() / 1000) + 1800,
+        dexFlavor: destConfig.dexFlavor,
+        poolParam: destConfig.poolParam,
+        payerIsUser: true,
+      }),
+    );
+  } else {
+    rawDestCalls.push(
+      buildErc20ApproveCall({
+        token: destinationTokenAddress,
+        spender: destConfig.icaBridgeRoute,
+        amount: maxUint256.toString(),
+      }),
+    );
+  }
+
+  const estimatedIcaHandleGas = await (async () => {
+    try {
+      return await icaApp.estimateIcaHandleGas({
+        origin: originChainName,
+        destination: destinationChainName,
+        innerCalls: rawDestCalls.map((call) => ({
+          ...call,
+          value: call.value?.toString() ?? '0',
+        })),
+        config: {
+          origin: originChainName,
+          owner: account,
+        },
+      });
+    } catch (error) {
+      throw new Error(
+        `Failed to estimate destination ICA execution gas. Root cause: ${toErrorMessage(error)}`,
+      );
+    }
+  })();
+
   const icaQuote = await (async () => {
     try {
       return await getIcaCommitRevealFee(
         quoteProvider,
         originIcaRouter,
         destConfig.domainId,
+        estimatedIcaHandleGas.toString(),
       );
     } catch (error) {
       throw new Error(
@@ -275,20 +376,6 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
   })();
   const icaBaseFee = maxBigNumber(cachedIcaFee, icaQuote);
 
-  if (!isAddress(destinationTokenAddress)) {
-    throw new Error('Invalid destination token address for ICA destination-call commitment.');
-  }
-  if (!isAddress(destConfig.icaBridgeRoute)) {
-    throw new Error('Missing or invalid destination bridge route required for ICA commitment calls.');
-  }
-
-  const rawDestCalls: CommitmentCall[] = [
-    buildErc20ApproveCall({
-      token: destinationTokenAddress,
-      spender: destConfig.icaBridgeRoute,
-      amount: maxUint256.toString(),
-    }),
-  ];
   const salt = randomSalt();
   const commitmentPayload = buildIcaCommitmentFromRawCalls(rawDestCalls, salt);
   const commitmentHash = commitmentPayload.commitment;
@@ -398,11 +485,10 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
       salt,
       commitmentDispatchTx: hash,
       originDomain: originConfig.domainId,
+      destinationDomain: destConfig.domainId,
+      owner: account,
     });
-    const relayerResponse = await shareCallsWithPrivateRelayer(
-      COMMITMENTS_SERVICE_URL,
-      payload,
-    );
+    const relayerResponse = await shareCallsWithPrivateRelayer(COMMITMENTS_SERVICE_URL, payload);
 
     if (!relayerResponse.ok) {
       throw new Error('Relayer rejected commitment payload.');

@@ -4,14 +4,10 @@ import { useMutation } from '@tanstack/react-query';
 import { ADD_ASSET_SUPPORTED_PROTOCOLS, WARP_QUERY_PARAMS } from '../../consts/args';
 import { config } from '../../consts/config';
 import { getQueryParams } from '../../utils/queryParams';
-import {
-  getSwappableAddress,
-  isDemoSwapBridgePath,
-  isSwapSupported,
-} from '../swap/swapConfig';
 import { useMultiProvider } from '../chains/hooks';
 import { tryGetValidChainName } from '../chains/utils';
 import { useStore } from '../store';
+import { getSwappableAddress, isDemoSwapBridgePath, isSwapSupported } from '../swap/swapConfig';
 import { getTokenKey } from './utils';
 
 export function useWarpCore() {
@@ -99,8 +95,7 @@ export function getInitialTokenKeys(
             isDemoSwapBridgePath({
               originChainName: routeOriginChain,
               destinationChainName: destinationChainQuery,
-              destinationTokenAddress:
-                getSwappableAddress(token) ?? token.addressOrDenom,
+              destinationTokenAddress: getSwappableAddress(token) ?? token.addressOrDenom,
               destinationRouteAddress: token.addressOrDenom,
             }),
           )

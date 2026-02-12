@@ -13,7 +13,12 @@ export function useIcaAddress(
   isError: boolean;
   refetch: () => Promise<unknown>;
 } {
-  const { data: icaAddress = null, isLoading, isError, refetch } = useQuery({
+  const {
+    data: icaAddress = null,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
     queryKey: ['icaAddress', icaApp, userAddress, originChainName, destinationChainName] as const,
     queryFn: async (): Promise<string | null> => {
       if (!icaApp || !userAddress || !originChainName || !destinationChainName) return null;

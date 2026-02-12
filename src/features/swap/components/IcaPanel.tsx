@@ -14,8 +14,12 @@ export function IcaPanel({ userAddress, originChainName, destinationChainName }:
   const [expanded, setExpanded] = useState(false);
   const [showSendForm, setShowSendForm] = useState(false);
   const icaApp = useInterchainAccountApp();
-  const { icaAddress, isLoading: isIcaAddressLoading, isError: isIcaAddressError, refetch } =
-    useIcaAddress(icaApp, userAddress, originChainName, destinationChainName);
+  const {
+    icaAddress,
+    isLoading: isIcaAddressLoading,
+    isError: isIcaAddressError,
+    refetch,
+  } = useIcaAddress(icaApp, userAddress, originChainName, destinationChainName);
   const destDisplayName =
     destinationChainName.charAt(0).toUpperCase() + destinationChainName.slice(1);
 

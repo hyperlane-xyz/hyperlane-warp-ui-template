@@ -1,5 +1,5 @@
-import { isAddress } from '@hyperlane-xyz/utils';
-import { useEffect, useMemo, useState } from 'react';
+import { eqAddress, isAddress } from '@hyperlane-xyz/utils';
+import { useMemo, useState } from 'react';
 import { useWalletClient } from 'wagmi';
 import { useIcaBalance } from '../hooks/useIcaBalance';
 import { useIcaTransaction } from '../hooks/useIcaTransaction';
@@ -34,22 +34,31 @@ export function IcaSendForm({
   );
 
   const tokenOptions = useMemo(() => balances?.tokens || [], [balances?.tokens]);
-  const [selectedToken, setSelectedToken] = useState(tokenOptions[0]?.address || '');
+  const [selectedToken, setSelectedToken] = useState('');
   const [amount, setAmount] = useState('');
   const [mode, setMode] = useState<'send-destination' | 'return-origin'>('return-origin');
-  const [recipient, setRecipient] = useState(defaultRecipient || walletClient?.account?.address || '');
+  const [recipient, setRecipient] = useState(
+    defaultRecipient || walletClient?.account?.address || '',
+  );
   const [formError, setFormError] = useState<string | null>(null);
 
+  const selectedTokenAddress = useMemo(() => {
+    const matchingToken = tokenOptions.find(
+      (token) => selectedToken && eqAddress(token.address, selectedToken),
+    );
+    return matchingToken?.address || tokenOptions[0]?.address || '';
+  }, [selectedToken, tokenOptions]);
+
   const activeToken = useMemo(
-    () => tokenOptions.find((token) => token.address === selectedToken) || tokenOptions[0],
-    [selectedToken, tokenOptions],
+    () =>
+      tokenOptions.find(
+        (token) => selectedTokenAddress && eqAddress(token.address, selectedTokenAddress),
+      ) || tokenOptions[0],
+    [selectedTokenAddress, tokenOptions],
   );
 
-  useEffect(() => {
-    if (mode === 'return-origin') {
-      setRecipient(defaultRecipient || walletClient?.account?.address || '');
-    }
-  }, [mode, defaultRecipient, walletClient?.account?.address]);
+  const returnRecipient = defaultRecipient || walletClient?.account?.address || '';
+  const effectiveRecipient = mode === 'return-origin' ? returnRecipient : recipient;
 
   const insufficientBalance =
     !!activeToken && !!amount && Number(amount) > Number(activeToken.balance);
@@ -59,9 +68,9 @@ export function IcaSendForm({
     !!icaAddress &&
     !!activeToken &&
     !!amount &&
-    !!recipient &&
-    isAddress(recipient) &&
-    activeToken.symbol !== 'ETH' &&
+    !!effectiveRecipient &&
+    isAddress(effectiveRecipient) &&
+    !activeToken.isNative &&
     !insufficientBalance &&
     status !== 'building' &&
     status !== 'signing' &&
@@ -83,12 +92,12 @@ export function IcaSendForm({
       return;
     }
 
-    if (activeToken.symbol === 'ETH') {
-      setFormError('ETH send is not supported yet. Use USDC.');
+    if (activeToken.isNative) {
+      setFormError('Native ETH send is not supported from ICA yet. Use an ERC20 token.');
       return;
     }
 
-    if (!isAddress(recipient)) {
+    if (!isAddress(effectiveRecipient)) {
       setFormError('Recipient must be a valid EVM address.');
       return;
     }
@@ -102,10 +111,10 @@ export function IcaSendForm({
     await sendFromIca({
       token: activeToken.address,
       amount,
-      recipient,
+      recipient: effectiveRecipient,
       mode,
       signer: walletClient,
-      decimals: activeToken.symbol === 'USDC' ? 6 : 18,
+      decimals: activeToken.decimals,
     });
   };
 
@@ -140,15 +149,15 @@ export function IcaSendForm({
 
       {mode === 'return-origin' && (
         <div className="mt-2 rounded border border-amber-200 bg-amber-50 px-2 py-1.5 text-xs text-amber-800">
-          Return-to-origin currently supports Base USDC only. One-click USDC to ETH on Optimism is
-          not available in this demo yet.
+          Return-to-origin uses commit-reveal. Non-USDC tokens are swapped to canonical USDC on the
+          destination ICA before bridging.
         </div>
       )}
 
       <div className="mt-2 space-y-2">
         <label className="block text-xs text-gray-700">Token</label>
         <select
-          value={activeToken?.address || ''}
+          value={selectedTokenAddress}
           onChange={(event) => setSelectedToken(event.target.value)}
           className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900"
         >
@@ -171,9 +180,14 @@ export function IcaSendForm({
 
         <label className="block text-xs text-gray-700">Recipient</label>
         <input
-          value={recipient}
-          onChange={(event) => setRecipient(event.target.value)}
+          value={effectiveRecipient}
+          onChange={(event) => {
+            if (mode !== 'return-origin') {
+              setRecipient(event.target.value);
+            }
+          }}
           placeholder="0x..."
+          disabled={mode === 'return-origin'}
           className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900"
         />
 

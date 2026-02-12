@@ -1,19 +1,55 @@
-import { InterchainAccount } from '@hyperlane-xyz/sdk';
+import {
+  InterchainAccount,
+  buildErc20ApproveCall,
+  buildIcaCommitmentFromRawCalls,
+  buildPostCallsPayload,
+  buildWarpTransferRemoteCall,
+  getBridgeFee,
+  getSwapQuote,
+  shareCallsWithPrivateRelayer,
+} from '@hyperlane-xyz/sdk';
 import { addressToBytes32, eqAddress, isZeroishAddress } from '@hyperlane-xyz/utils';
+import { BigNumber } from 'ethers';
 import { useCallback, useState } from 'react';
-import { Hex, WalletClient, encodeFunctionData, isAddress, parseAbi, parseUnits } from 'viem';
+import {
+  Hex,
+  WalletClient,
+  encodeFunctionData,
+  isAddress,
+  maxUint256,
+  parseAbi,
+  parseUnits,
+} from 'viem';
 import { usePublicClient } from 'wagmi';
-import { getSwapConfig } from '../swapConfig';
+import { useMultiProvider } from '../../chains/hooks';
+import { getIcaCommitRevealFee } from '../icaFees';
+import { DEFAULT_SLIPPAGE, getSwapConfig } from '../swapConfig';
+import {
+  CommitmentCall,
+  applySlippage,
+  buildUniversalRouterV3SwapExactInCall,
+} from '../universalRouter';
 
 type IcaTransactionStatus = 'idle' | 'building' | 'signing' | 'confirming' | 'complete' | 'failed';
 
-const erc20Abi = parseAbi(['function approve(address spender, uint256 amount) returns (bool)']);
 const erc20BalanceAbi = parseAbi(['function balanceOf(address account) view returns (uint256)']);
 const erc20TransferAbi = parseAbi(['function transfer(address to, uint256 amount) returns (bool)']);
-const warpRouteAbi = parseAbi([
-  'function transferRemote(uint32 destinationDomain, bytes32 recipient, uint256 amount) payable returns (bytes32)',
-  'function quoteTransferRemote(uint32 destinationDomain, bytes32 recipient, uint256 amount) view returns ((address token, uint256 amount)[] quotes)',
+const icaRouterAbi = parseAbi([
+  'function callRemoteCommitReveal(uint32 destinationDomain, bytes32 commitment, uint256 gasLimit) payable returns (bytes32 commitmentMsgId, bytes32 revealMsgId)',
 ]);
+
+const COMMITMENTS_SERVICE_URL =
+  'https://offchain-lookup.services.hyperlane.xyz/callCommitments/calls';
+
+function toErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message) return error.message;
+  return String(error);
+}
+
+function randomSalt(): `0x${string}` {
+  const bytes = crypto.getRandomValues(new Uint8Array(32));
+  return `0x${Array.from(bytes, (value) => value.toString(16).padStart(2, '0')).join('')}`;
+}
 
 export function useIcaTransaction(
   icaApp: InterchainAccount | null,
@@ -28,6 +64,7 @@ export function useIcaTransaction(
   const [txHash, setTxHash] = useState<string | null>(null);
   const publicClient = usePublicClient({ chainId: originConfig?.chainId });
   const destinationPublicClient = usePublicClient({ chainId: destConfig?.chainId });
+  const multiProvider = useMultiProvider();
 
   const sendFromIca = useCallback(
     async (params: {
@@ -58,49 +95,27 @@ export function useIcaTransaction(
           }
         }
         if (!isAddress(params.token)) throw new Error('Invalid token address.');
+        if (isZeroishAddress(params.token))
+          throw new Error('Native-token ICA sends are not supported in this flow.');
         if (!isAddress(params.recipient)) throw new Error('Invalid recipient address.');
 
-        const amount = parseUnits(params.amount, params.decimals ?? 6);
+        const amount = parseUnits(params.amount, params.decimals ?? 18);
         if (amount <= 0n) throw new Error('Amount must be greater than zero.');
-
-        let innerCalls: Array<{ to: string; data: `0x${string}`; value: string }>;
+        const amountBN = BigNumber.from(amount.toString());
 
         if (params.mode === 'return-origin') {
           if (!isAddress(destConfig.icaBridgeRoute)) {
             throw new Error('ICA bridge route not configured for destination chain.');
           }
-          if (!eqAddress(params.token, destConfig.bridgeToken)) {
-            throw new Error(
-              'Return to origin currently supports the canonical bridge token only. Select USDC on Base and retry.',
-            );
+          if (!isAddress(destConfig.universalRouter)) {
+            throw new Error('Destination universal router not configured.');
           }
           if (!destinationPublicClient) {
-            throw new Error('Fee quote failure: destination public client unavailable.');
+            throw new Error('Destination public client unavailable.');
           }
 
-          const recipientBytes32 = addressToBytes32(params.recipient);
-
-          let msgFee: bigint;
-          let tokenPull = amount;
-          try {
-            const quotes = await destinationPublicClient.readContract({
-              address: destConfig.icaBridgeRoute as `0x${string}`,
-              abi: warpRouteAbi,
-              functionName: 'quoteTransferRemote',
-              args: [originConfig.domainId, recipientBytes32 as `0x${string}`, amount],
-            });
-
-            msgFee = 0n;
-            for (const quoteEntry of quotes) {
-              if (isZeroishAddress(quoteEntry.token)) msgFee = quoteEntry.amount;
-              if (eqAddress(quoteEntry.token, params.token)) {
-                tokenPull = quoteEntry.amount;
-              }
-            }
-            if (tokenPull < amount) tokenPull = amount;
-          } catch (error) {
-            throw new Error('Fee quote failure while preparing ICA return transaction.');
-          }
+          const destinationProvider = multiProvider.getEthersV5Provider(destinationChainName);
+          const originProvider = multiProvider.getEthersV5Provider(originChainName);
 
           const icaAddress = await icaApp.getAccount(destinationChainName, {
             origin: originChainName,
@@ -110,61 +125,220 @@ export function useIcaTransaction(
             throw new Error('Invalid ICA address while preparing return transaction.');
           }
 
-          const icaNativeBalance = await destinationPublicClient.getBalance({
-            address: icaAddress as `0x${string}`,
-          });
-          if (icaNativeBalance < msgFee) {
+          const inputIsBridgeToken = eqAddress(params.token, destConfig.bridgeToken);
+
+          let swapOutputMin: BigNumber | undefined;
+          if (!inputIsBridgeToken) {
+            const swapOutput = await (async () => {
+              try {
+                return await getSwapQuote(
+                  destinationProvider,
+                  destConfig.quoterV2,
+                  params.token,
+                  destConfig.bridgeToken,
+                  amountBN,
+                  {
+                    poolParam: destConfig.poolParam,
+                    dexFlavor: destConfig.dexFlavor,
+                  },
+                );
+              } catch (quoteError) {
+                throw new Error(
+                  `Failed to quote destination swap for ICA return flow. Root cause: ${toErrorMessage(quoteError)}`,
+                );
+              }
+            })();
+            swapOutputMin = applySlippage(swapOutput, DEFAULT_SLIPPAGE);
+            if (swapOutputMin.lte(0)) {
+              throw new Error('Destination swap output is too low after slippage.');
+            }
+          }
+
+          let bridgeAmount = inputIsBridgeToken ? amountBN : swapOutputMin!;
+          const recipientBytes32 = addressToBytes32(params.recipient);
+
+          const quoteBridge = async (amountToBridge: BigNumber) =>
+            getBridgeFee(
+              destinationProvider,
+              destConfig.icaBridgeRoute,
+              originConfig.domainId,
+              amountToBridge,
+              destConfig.bridgeToken,
+              recipientBytes32,
+            );
+
+          let bridgeQuote = await quoteBridge(bridgeAmount);
+          let tokenPull = bridgeQuote.tokenPull.lt(bridgeAmount)
+            ? bridgeAmount
+            : bridgeQuote.tokenPull;
+
+          if (!inputIsBridgeToken && swapOutputMin) {
+            for (let attempts = 0; attempts < 4 && tokenPull.gt(swapOutputMin); attempts += 1) {
+              const deficit = tokenPull.sub(swapOutputMin);
+              if (deficit.gte(bridgeAmount)) {
+                throw new Error('Swap output is insufficient to cover bridge token fees.');
+              }
+              bridgeAmount = bridgeAmount.sub(deficit);
+              bridgeQuote = await quoteBridge(bridgeAmount);
+              tokenPull = bridgeQuote.tokenPull.lt(bridgeAmount)
+                ? bridgeAmount
+                : bridgeQuote.tokenPull;
+            }
+            if (tokenPull.gt(swapOutputMin)) {
+              throw new Error(
+                'Swap output is insufficient to cover bridge token fees after adjustment.',
+              );
+            }
+          }
+
+          const msgFee = bridgeQuote.fee;
+
+          const [icaNativeBalance, inputTokenBalance] = await Promise.all([
+            destinationPublicClient.getBalance({
+              address: icaAddress as `0x${string}`,
+            }),
+            destinationPublicClient.readContract({
+              address: params.token as `0x${string}`,
+              abi: erc20BalanceAbi,
+              functionName: 'balanceOf',
+              args: [icaAddress as `0x${string}`],
+            }),
+          ]);
+
+          if (icaNativeBalance < BigInt(msgFee.toString())) {
             throw new Error(
-              `Insufficient ${destinationChainName} native balance in ICA to cover return fee. Fund ICA with gas token and retry.`,
+              `Insufficient ${destinationChainName} native balance in ICA to cover bridge message fee.`,
+            );
+          }
+          if (inputTokenBalance < amount) {
+            throw new Error('Insufficient ICA input token balance for requested amount.');
+          }
+          if (inputIsBridgeToken && inputTokenBalance < BigInt(tokenPull.toString())) {
+            throw new Error(
+              'Insufficient ICA bridge-token balance to cover amount plus bridge fees.',
             );
           }
 
-          const icaTokenBalance = await destinationPublicClient.readContract({
-            address: params.token as `0x${string}`,
-            abi: erc20BalanceAbi,
-            functionName: 'balanceOf',
-            args: [icaAddress as `0x${string}`],
-          });
-          if (icaTokenBalance < tokenPull) {
-            throw new Error(
-              `Insufficient token balance in ICA for return. Required amount includes bridge token fee.`,
+          const rawCalls: CommitmentCall[] = [];
+          if (!inputIsBridgeToken && swapOutputMin) {
+            rawCalls.push(
+              buildErc20ApproveCall({
+                token: params.token,
+                spender: destConfig.universalRouter,
+                amount: maxUint256.toString(),
+              }),
+            );
+            rawCalls.push(
+              buildUniversalRouterV3SwapExactInCall({
+                universalRouter: destConfig.universalRouter,
+                recipient: icaAddress,
+                tokenIn: params.token,
+                tokenOut: destConfig.bridgeToken,
+                amountIn: amountBN,
+                amountOutMinimum: swapOutputMin,
+                deadline: Math.floor(Date.now() / 1000) + 1800,
+                dexFlavor: destConfig.dexFlavor,
+                poolParam: destConfig.poolParam,
+                payerIsUser: true,
+              }),
             );
           }
 
-          const approveData = encodeFunctionData({
-            abi: erc20Abi,
-            functionName: 'approve',
-            args: [destConfig.icaBridgeRoute as `0x${string}`, tokenPull],
-          });
+          rawCalls.push(
+            buildErc20ApproveCall({
+              token: destConfig.bridgeToken,
+              spender: destConfig.icaBridgeRoute,
+              amount: tokenPull.toString(),
+            }),
+          );
+          rawCalls.push(
+            buildWarpTransferRemoteCall({
+              warpRoute: destConfig.icaBridgeRoute,
+              destinationDomain: originConfig.domainId,
+              recipient: params.recipient,
+              amount: bridgeAmount,
+              msgFee,
+            }),
+          );
 
-          const transferRemoteData = encodeFunctionData({
-            abi: warpRouteAbi,
-            functionName: 'transferRemote',
-            args: [originConfig.domainId, recipientBytes32 as `0x${string}`, amount],
-          });
-
-          innerCalls = [
-            { to: params.token, data: approveData, value: '0' },
-            {
-              to: destConfig.icaBridgeRoute,
-              data: transferRemoteData,
-              value: msgFee.toString(),
+          const estimatedHandleGas = await icaApp.estimateIcaHandleGas({
+            origin: originChainName,
+            destination: destinationChainName,
+            innerCalls: rawCalls.map((call) => ({
+              ...call,
+              value: call.value?.toString() ?? '0',
+            })),
+            config: {
+              origin: originChainName,
+              owner: account,
             },
-          ];
-        } else {
-          const transferData = encodeFunctionData({
-            abi: erc20TransferAbi,
-            functionName: 'transfer',
-            args: [params.recipient as `0x${string}`, amount],
           });
 
-          innerCalls = [{ to: params.token, data: transferData, value: '0' }];
+          const commitRevealMsgFee = await getIcaCommitRevealFee(
+            originProvider,
+            originConfig.icaRouter,
+            destConfig.domainId,
+            estimatedHandleGas.toString(),
+          );
+
+          const salt = randomSalt();
+          const commitmentPayload = buildIcaCommitmentFromRawCalls(rawCalls, salt);
+          const txData = encodeFunctionData({
+            abi: icaRouterAbi,
+            functionName: 'callRemoteCommitReveal',
+            args: [
+              destConfig.domainId,
+              commitmentPayload.commitment as `0x${string}`,
+              BigInt(estimatedHandleGas.toString()),
+            ],
+          });
+
+          setStatus('signing');
+          const hash = await params.signer.sendTransaction({
+            account,
+            to: originConfig.icaRouter as `0x${string}`,
+            data: txData as Hex,
+            value: BigInt(commitRevealMsgFee.toString()),
+            chain: null,
+          });
+          setTxHash(hash);
+          setStatus('confirming');
+
+          if (publicClient) {
+            await publicClient.waitForTransactionReceipt({ hash, confirmations: 1 });
+          }
+
+          const payload = buildPostCallsPayload({
+            calls: commitmentPayload.normalizedCalls,
+            relayers: [],
+            salt,
+            commitmentDispatchTx: hash,
+            originDomain: originConfig.domainId,
+            destinationDomain: destConfig.domainId,
+            owner: account,
+          });
+          const relayerResponse = await shareCallsWithPrivateRelayer(
+            COMMITMENTS_SERVICE_URL,
+            payload,
+          );
+          if (!relayerResponse.ok) {
+            throw new Error('Relayer rejected commitment payload.');
+          }
+
+          setStatus('complete');
+          return;
         }
+
+        const transferData = encodeFunctionData({
+          abi: erc20TransferAbi,
+          functionName: 'transfer',
+          args: [params.recipient as `0x${string}`, amount],
+        });
 
         const populatedTx = await icaApp.getCallRemote({
           chain: originChainName,
           destination: destinationChainName,
-          innerCalls,
+          innerCalls: [{ to: params.token, data: transferData, value: '0' }],
           config: {
             origin: originChainName,
             owner: account,
@@ -189,7 +363,8 @@ export function useIcaTransaction(
 
         setStatus('complete');
       } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : 'Failed to send from ICA';
+        const message =
+          err instanceof Error ? err.message : `Failed to send from ICA: ${toErrorMessage(err)}`;
         setError(message);
         setStatus('failed');
       }
@@ -202,6 +377,7 @@ export function useIcaTransaction(
       destinationChainName,
       originConfig,
       destConfig,
+      multiProvider,
     ],
   );
 

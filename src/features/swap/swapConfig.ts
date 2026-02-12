@@ -1,10 +1,10 @@
-import type { DexFlavor } from '@hyperlane-xyz/sdk';
 import {
   chainAddresses,
   chainMetadata,
   warpConfigToWarpAddresses,
   warpRouteConfigs,
 } from '@hyperlane-xyz/registry';
+import type { DexFlavor } from '@hyperlane-xyz/sdk';
 
 export interface SwapChainConfig {
   chainId: number;
@@ -39,10 +39,13 @@ const demoWarpAddresses = warpConfigToWarpAddresses(demoWarpRouteConfig);
 
 function requireRouteAddress(chainName: string): string {
   const byType = demoWarpAddresses[chainName];
-  if (!byType) throw new Error(`Missing warp route address for ${chainName} in ${DEMO_WARP_ROUTE_ID}`);
+  if (!byType)
+    throw new Error(`Missing warp route address for ${chainName} in ${DEMO_WARP_ROUTE_ID}`);
   const routeAddress = Object.values(byType)[0];
   if (!routeAddress)
-    throw new Error(`Missing concrete route token address for ${chainName} in ${DEMO_WARP_ROUTE_ID}`);
+    throw new Error(
+      `Missing concrete route token address for ${chainName} in ${DEMO_WARP_ROUTE_ID}`,
+    );
   return routeAddress;
 }
 
@@ -98,7 +101,11 @@ export const SWAP_CHAIN_CONFIGS: Record<string, SwapChainConfig> = {
   },
   base: {
     chainId: requireNumericId(demoDestinationMetadata.chainId, 'chainId', DEMO_DESTINATION_CHAIN),
-    domainId: requireNumericId(demoDestinationMetadata.domainId, 'domainId', DEMO_DESTINATION_CHAIN),
+    domainId: requireNumericId(
+      demoDestinationMetadata.domainId,
+      'domainId',
+      DEMO_DESTINATION_CHAIN,
+    ),
     universalRouter: '0xa9606caaC711Ac816E568356187EC7a009500Eb2',
     icaRouter: requireIcaRouter(DEMO_DESTINATION_CHAIN),
     bridgeToken: DEMO_BASE_USDC_COLLATERAL,
@@ -136,10 +143,13 @@ export function isDemoSwapBridgePath(params: {
     return false;
   }
 
-  if (destinationTokenAddress === canonicalBaseRoute) return false;
-  if (destinationTokenAddress !== canonicalBaseCollateral) return false;
+  // Do not route through swap-bridge when user selected the warp route token itself.
+  if (params.destinationRouteAddress?.toLowerCase() === canonicalBaseRoute) return false;
+  // Keep canonical base USDC collateral explicitly supported (phase 1 path).
+  if (destinationTokenAddress === canonicalBaseCollateral) return true;
 
-  return true;
+  // Destination-side swap is allowed for any other Base token.
+  return destinationTokenAddress !== canonicalBaseRoute;
 }
 
 /**

@@ -24,7 +24,7 @@ import {
   maxUint256,
   parseAbi,
 } from 'viem';
-import { getIcaCommitRevealFee } from '../swap/icaFees';
+import { getIcaFee } from '@hyperlane-xyz/sdk';
 import { DEFAULT_SLIPPAGE, getSwapConfig, isDemoSwapBridgePath } from '../swap/swapConfig';
 import {
   CommitmentCall,
@@ -362,7 +362,7 @@ export async function executeSwapBridge(params: SwapBridgeParams): Promise<strin
 
   const icaQuote = await (async () => {
     try {
-      return await getIcaCommitRevealFee(
+      return await getIcaFee(
         quoteProvider,
         originIcaRouter,
         destConfig.domainId,

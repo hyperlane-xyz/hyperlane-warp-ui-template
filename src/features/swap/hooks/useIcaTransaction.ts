@@ -22,7 +22,7 @@ import {
 } from 'viem';
 import { usePublicClient } from 'wagmi';
 import { useMultiProvider } from '../../chains/hooks';
-import { getIcaCommitRevealFee } from '../icaFees';
+import { getIcaFee } from '@hyperlane-xyz/sdk';
 import { DEFAULT_SLIPPAGE, getSwapConfig } from '../swapConfig';
 import {
   CommitmentCall,
@@ -274,7 +274,7 @@ export function useIcaTransaction(
             },
           });
 
-          const commitRevealMsgFee = await getIcaCommitRevealFee(
+          const commitRevealMsgFee = await getIcaFee(
             originProvider,
             originConfig.icaRouter,
             destConfig.domainId,

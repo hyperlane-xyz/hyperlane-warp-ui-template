@@ -124,7 +124,6 @@ export function isDemoSwapBridgePath(params: {
   destinationRouteAddress?: string;
 }): boolean {
   const destinationTokenAddress = params.destinationTokenAddress.toLowerCase();
-  const destinationRouteAddress = params.destinationRouteAddress?.toLowerCase();
   const canonicalBaseCollateral = DEMO_BASE_USDC_COLLATERAL.toLowerCase();
   const canonicalBaseRoute = DEMO_BASE_USDC_WARP_ROUTE.toLowerCase();
 
@@ -137,13 +136,6 @@ export function isDemoSwapBridgePath(params: {
 
   if (destinationTokenAddress === canonicalBaseRoute) return false;
   if (destinationTokenAddress !== canonicalBaseCollateral) return false;
-  if (
-    destinationRouteAddress &&
-    destinationRouteAddress !== canonicalBaseRoute &&
-    destinationRouteAddress !== canonicalBaseCollateral
-  ) {
-    return false;
-  }
 
   return true;
 }

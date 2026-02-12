@@ -91,7 +91,9 @@ export const SWAP_CHAIN_CONFIGS: Record<string, SwapChainConfig> = {
     wrappedNative: '0x4200000000000000000000000000000000000006',
     quoterV2: '0x61fFE014bA17989E743c5F6cB21bF9697530B21e',
     icaBridgeRoute: '',
-    dexFlavor: 'velodrome-slipstream',
+    // Current demo quoting uses the Uniswap QuoterV2 endpoint below.
+    // Keep execution flavor aligned with quote source to avoid pre-wallet simulation reverts.
+    dexFlavor: 'uniswap-v3',
     poolParam: 500,
   },
   base: {

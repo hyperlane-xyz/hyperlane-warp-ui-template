@@ -37,6 +37,7 @@ npm-debug.log*
 *.tsbuildinfo
 
 .idea
+/public/fonts
 .monorepo-tarballs
 
 .opencode

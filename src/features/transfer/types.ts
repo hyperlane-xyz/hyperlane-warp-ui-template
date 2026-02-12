@@ -1,7 +1,6 @@
 export interface TransferFormValues {
-  origin: ChainName;
-  destination: ChainName;
-  tokenIndex: number | undefined;
+  originTokenKey: string | undefined;
+  destinationTokenKey: string | undefined;
   amount: string;
   recipient: Address;
 }
@@ -15,6 +14,9 @@ export enum TransferStatus {
   ConfirmingApprove = 'confirming-approve',
   SigningTransfer = 'signing-transfer',
   ConfirmingTransfer = 'confirming-transfer',
+  PostingCommitment = 'posting-commitment',
+  SigningSwapBridge = 'signing-swap-bridge',
+  ConfirmingSwapBridge = 'confirming-swap-bridge',
   ConfirmedTransfer = 'confirmed-transfer',
   Delivered = 'delivered',
   Failed = 'failed',

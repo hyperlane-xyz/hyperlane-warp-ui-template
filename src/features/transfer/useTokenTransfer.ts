@@ -1,5 +1,8 @@
 import {
+  InterchainAccount,
+  MultiProtocolProvider,
   ProviderType,
+  Token,
   TypedTransactionReceipt,
   WarpCore,
   WarpTxCategory,
@@ -11,8 +14,10 @@ import {
   useActiveChains,
   useTransactionFns,
 } from '@hyperlane-xyz/widgets';
+import { BigNumber } from 'ethers';
 import { useCallback, useState } from 'react';
 import { toast } from 'react-toastify';
+import { useWalletClient } from 'wagmi';
 import { toastTxSuccess } from '../../components/toast/TxSuccessToast';
 import { logger } from '../../utils/logger';
 import { refinerIdentifyAndShowTransferForm } from '../analytics/refiner';
@@ -21,8 +26,12 @@ import { trackEvent } from '../analytics/utils';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { AppState, useStore } from '../store';
-import { getTokenByIndex, useWarpCore } from '../tokens/hooks';
+import { useInterchainAccountApp } from '../swap/hooks/useInterchainAccount';
+import { getSwappableAddress } from '../swap/swapConfig';
+import { getTokenByKey, useWarpCore } from '../tokens/hooks';
 import { TransferContext, TransferFormValues, TransferStatus } from './types';
+import { executeSwapBridge } from './useSwapBridgeTransfer';
+import { TransferRouteType } from './useTransferRoute';
 import { tryGetMsgIdFromTransferReceipt } from './utils';
 
 const CHAIN_MISMATCH_ERROR = 'ChainMismatchError';
@@ -39,16 +48,27 @@ export function useTokenTransfer(onDone?: () => void) {
 
   const multiProvider = useMultiProvider();
   const warpCore = useWarpCore();
+  const icaApp = useInterchainAccountApp();
 
   const activeAccounts = useAccounts(multiProvider);
   const activeChains = useActiveChains(multiProvider);
   const transactionFns = useTransactionFns(multiProvider);
+  const { data: walletClient } = useWalletClient();
 
   const [isLoading, setIsLoading] = useState(false);
 
-  // TODO implement cancel callback for when modal is closed?
   const triggerTransactions = useCallback(
-    (values: TransferFormValues) =>
+    (
+      values: TransferFormValues,
+      routeOverrideToken: Token | null,
+      routeType?: TransferRouteType,
+      swapCache?: {
+        icaAddress?: string;
+        swapOutput?: BigNumber;
+        bridgeFee?: BigNumber;
+        icaFee?: BigNumber;
+      },
+    ) =>
       executeTransfer({
         warpCore,
         values,
@@ -60,9 +80,16 @@ export function useTokenTransfer(onDone?: () => void) {
         updateTransferStatus,
         setIsLoading,
         onDone,
+        routeOverrideToken,
+        routeType,
+        walletClient: walletClient ?? undefined,
+        icaApp: icaApp ?? undefined,
+        multiProvider,
+        swapCache,
       }),
     [
       warpCore,
+      icaApp,
       transferIndex,
       activeAccounts,
       activeChains,
@@ -71,6 +98,8 @@ export function useTokenTransfer(onDone?: () => void) {
       addTransfer,
       updateTransferStatus,
       onDone,
+      walletClient,
+      multiProvider,
     ],
   );
 
@@ -91,6 +120,12 @@ async function executeTransfer({
   updateTransferStatus,
   setIsLoading,
   onDone,
+  routeOverrideToken,
+  routeType,
+  walletClient,
+  icaApp,
+  multiProvider: mp,
+  swapCache,
 }: {
   warpCore: WarpCore;
   values: TransferFormValues;
@@ -102,19 +137,107 @@ async function executeTransfer({
   updateTransferStatus: AppState['updateTransferStatus'];
   setIsLoading: (b: boolean) => void;
   onDone?: () => void;
+  routeOverrideToken: Token | null;
+  routeType?: TransferRouteType;
+  walletClient?: ReturnType<typeof useWalletClient>['data'];
+  icaApp?: InterchainAccount;
+  multiProvider?: MultiProtocolProvider;
+  swapCache?: {
+    icaAddress?: string;
+    swapOutput?: BigNumber;
+    bridgeFee?: BigNumber;
+    icaFee?: BigNumber;
+  };
 }) {
   logger.debug('Preparing transfer transaction(s)');
   setIsLoading(true);
   let transferStatus: TransferStatus = TransferStatus.Preparing;
   updateTransferStatus(transferIndex, transferStatus);
 
-  const { origin, destination, tokenIndex, amount, recipient } = values;
+  const { originTokenKey, destinationTokenKey, amount, recipient: formRecipient } = values;
   const multiProvider = warpCore.multiProvider;
 
   try {
-    const originToken = getTokenByIndex(warpCore, tokenIndex);
-    const connection = originToken?.getConnectionForChain(destination);
-    if (!originToken || !connection) throw new Error('No token route found between chains');
+    const originToken = routeOverrideToken || getTokenByKey(warpCore.tokens, originTokenKey);
+    const destinationToken = getTokenByKey(warpCore.tokens, destinationTokenKey);
+    if (!originToken || !destinationToken) throw new Error('No token route found between chains');
+
+    const connectedDestAddress = getAccountAddressForChain(
+      multiProvider,
+      destinationToken.chainName,
+      activeAccounts.accounts,
+    );
+    const recipient = formRecipient || connectedDestAddress || '';
+    if (!recipient) throw new Error('No recipient address available');
+
+    if (routeType === 'swap-bridge') {
+      if (!walletClient || !icaApp || !mp)
+        throw new Error('Wallet or ICA app not available for swap-bridge');
+
+      const origin = originToken.chainName;
+      const destination = destinationToken.chainName;
+      const sender = walletClient.account?.address;
+      if (!sender) throw new Error('No active account found');
+
+      addTransfer({
+        timestamp: new Date().getTime(),
+        status: TransferStatus.Preparing,
+        origin,
+        destination,
+        originTokenAddressOrDenom: originToken.addressOrDenom,
+        destTokenAddressOrDenom: destinationToken.addressOrDenom,
+        sender,
+        recipient,
+        amount,
+      });
+
+      updateTransferStatus(transferIndex, (transferStatus = TransferStatus.CreatingTxs));
+
+      const isNativeOriginToken = originToken.isNative() || originToken.isHypNative();
+      const originSwapAddress = isNativeOriginToken
+        ? originToken.addressOrDenom
+        : originToken.collateralAddressOrDenom || originToken.addressOrDenom;
+      const destinationSwapAddress =
+        getSwappableAddress(destinationToken) || destinationToken.addressOrDenom;
+
+      const txHash = await executeSwapBridge({
+        originChainName: origin,
+        destinationChainName: destination,
+        originTokenAddress: originSwapAddress,
+        destinationTokenAddress: destinationSwapAddress,
+        destinationRouteAddress: destinationToken.addressOrDenom,
+        amount,
+        originDecimals: originToken.decimals,
+        isNativeOriginToken,
+        walletClient,
+        multiProvider: mp,
+        icaApp,
+        onStatusChange: (status) => {
+          transferStatus = status;
+          updateTransferStatus(transferIndex, status);
+        },
+        cachedIcaAddress: swapCache?.icaAddress,
+        cachedSwapOutput: swapCache?.swapOutput,
+        cachedBridgeFee: swapCache?.bridgeFee,
+        cachedIcaFee: swapCache?.icaFee,
+      });
+
+      updateTransferStatus(transferIndex, (transferStatus = TransferStatus.ConfirmedTransfer), {
+        originTxHash: txHash,
+      });
+
+      toastTxSuccess('Swap & bridge transaction sent!', txHash, origin);
+      setIsLoading(false);
+      if (onDone) onDone();
+      return;
+    }
+
+    const connectedDestinationToken = originToken?.getConnectionForChain(
+      destinationToken.chainName,
+    )?.token;
+    if (!connectedDestinationToken) throw new Error('No token connection found between chains');
+    const origin = originToken.chainName;
+    const destination = connectedDestinationToken.chainName;
 
     const originProtocol = originToken.protocol;
     const isNft = originToken.isNft();
@@ -142,7 +265,7 @@ async function executeTransfer({
       origin,
       destination,
       originTokenAddressOrDenom: originToken.addressOrDenom,
-      destTokenAddressOrDenom: connection.token.addressOrDenom,
+      destTokenAddressOrDenom: connectedDestinationToken.addressOrDenom,
       sender,
       recipient,
       amount,
@@ -263,6 +386,9 @@ const errorMessages: Partial<Record<TransferStatus, string>> = {
   [TransferStatus.ConfirmingApprove]: 'Error while confirming the approve transaction.',
   [TransferStatus.SigningTransfer]: 'Error while signing the transfer transaction.',
   [TransferStatus.ConfirmingTransfer]: 'Error while confirming the transfer transaction.',
+  [TransferStatus.SigningSwapBridge]: 'Error while signing the swap & bridge transaction.',
+  [TransferStatus.ConfirmingSwapBridge]: 'Error while confirming the swap & bridge transaction.',
+  [TransferStatus.PostingCommitment]: 'Error while posting the commitment.',
 };
 
 const txCategoryToStatuses: Record<WarpTxCategory, [TransferStatus, TransferStatus]> = {

@@ -10,6 +10,7 @@ import {
   ChainMetadata,
   ChainName,
   MultiProtocolProvider,
+  Token,
   WarpCore,
   WarpCoreConfig,
 } from '@hyperlane-xyz/sdk';
@@ -21,7 +22,12 @@ import { config } from '../consts/config';
 import { logger } from '../utils/logger';
 import { assembleChainMetadata } from './chains/metadata';
 import { TokenChainMap } from './tokens/types';
-import { assembleTokensBySymbolChainMap } from './tokens/utils';
+import {
+  assembleTokensBySymbolChainMap,
+  buildTokensArray,
+  getTokenKey,
+  groupTokensByCollateral,
+} from './tokens/utils';
 import { FinalTransferStatuses, TransferContext, TransferStatus } from './transfer/types';
 import { assembleWarpCoreConfig } from './warpCore/warpCoreConfig';
 
@@ -35,6 +41,12 @@ interface WarpContext {
   warpCore: WarpCore;
   tokensBySymbolChainMap: Record<string, TokenChainMap>;
   routerAddressesByChainMap: Record<ChainName, Set<string>>;
+  /** Unified tokens array (deduplicated, can be origin or destination) */
+  tokens: Token[];
+  /** Pre-computed collateral groups for fast route checking */
+  collateralGroups: Map<string, Token[]>;
+  /** Pre-computed token key to Token map for O(1) lookups */
+  tokenByKeyMap: Map<string, Token>;
 }
 
 // Keeping everything here for now as state is simple
@@ -78,6 +90,15 @@ export interface AppState {
   // this map is currently used by the transfer token form validation to prevent
   // users from sending funds to a warp route address in a given destination chain
   routerAddressesByChainMap: Record<ChainName, Set<string>>;
+  // instead of moving the TipCard component inside the formik and an useEffect can be set to watch for it
+  isTipCardActionTriggered: boolean;
+  setIsTipCardActionTriggered: (isTipCardActionTriggered: boolean) => void;
+  /** Unified tokens array (deduplicated, can be origin or destination) */
+  tokens: Token[];
+  /** Pre-computed collateral groups for fast route checking */
+  collateralGroups: Map<string, Token[]>;
+  /** Pre-computed token key to Token map for O(1) lookups */
+  tokenByKeyMap: Map<string, Token>;
 }
 
 export const useStore = create<AppState>()(
@@ -92,33 +113,53 @@ export const useStore = create<AppState>()(
       ) => {
         logger.debug('Setting chain overrides in store');
         const filtered = objFilter(overrides, (_, metadata) => !!metadata);
-        const { multiProvider, warpCore, routerAddressesByChainMap, tokensBySymbolChainMap } =
-          await initWarpContext({
-            ...get(),
-            chainMetadataOverrides: filtered,
-          });
+        const {
+          multiProvider,
+          warpCore,
+          routerAddressesByChainMap,
+          tokensBySymbolChainMap,
+          tokens,
+          collateralGroups,
+          tokenByKeyMap,
+        } = await initWarpContext({
+          ...get(),
+          chainMetadataOverrides: filtered,
+        });
         set({
           chainMetadataOverrides: filtered,
           multiProvider,
           warpCore,
           tokensBySymbolChainMap,
           routerAddressesByChainMap,
+          tokens,
+          collateralGroups,
+          tokenByKeyMap,
         });
       },
       warpCoreConfigOverrides: [],
       setWarpCoreConfigOverrides: async (overrides: WarpCoreConfig[] | undefined = []) => {
         logger.debug('Setting warp core config overrides in store');
-        const { multiProvider, warpCore, routerAddressesByChainMap, tokensBySymbolChainMap } =
-          await initWarpContext({
-            ...get(),
-            warpCoreConfigOverrides: overrides,
-          });
+        const {
+          multiProvider,
+          warpCore,
+          routerAddressesByChainMap,
+          tokensBySymbolChainMap,
+          tokens,
+          collateralGroups,
+          tokenByKeyMap,
+        } = await initWarpContext({
+          ...get(),
+          warpCoreConfigOverrides: overrides,
+        });
         set({
           warpCoreConfigOverrides: overrides,
           multiProvider,
           warpCore,
           tokensBySymbolChainMap,
           routerAddressesByChainMap,
+          tokens,
+          collateralGroups,
+          tokenByKeyMap,
         });
       },
       multiProvider: new MultiProtocolProvider({}),
@@ -180,6 +221,13 @@ export const useStore = create<AppState>()(
       },
       tokensBySymbolChainMap: {},
       routerAddressesByChainMap: {},
+      isTipCardActionTriggered: false,
+      setIsTipCardActionTriggered: (isTipCardActionTriggered: boolean) => {
+        set(() => ({ isTipCardActionTriggered }));
+      },
+      tokens: [],
+      collateralGroups: new Map(),
+      tokenByKeyMap: new Map(),
     }),
 
     // Store config
@@ -247,6 +295,17 @@ async function initWarpContext({
 
     const tokensBySymbolChainMap = assembleTokensBySymbolChainMap(warpCore.tokens, multiProvider);
     const routerAddressesByChainMap = getRouterAddressesByChain(coreConfig.tokens);
+
+    // Build unified tokens array (deduplicated by collateral at startup)
+    const tokens = buildTokensArray(warpCore.tokens);
+    // Build collateral groups for fast route checking
+    const collateralGroups = groupTokensByCollateral(warpCore.tokens);
+    // Build token by key map for O(1) lookups
+    const tokenByKeyMap = new Map<string, Token>();
+    for (const token of tokens) {
+      tokenByKeyMap.set(getTokenKey(token), token);
+    }
+
     return {
       registry: currentRegistry,
       chainMetadata,
@@ -254,6 +313,9 @@ async function initWarpContext({
       warpCore,
       tokensBySymbolChainMap,
       routerAddressesByChainMap,
+      tokens,
+      collateralGroups,
+      tokenByKeyMap,
     };
   } catch (error) {
     toast.error('Error initializing warp context. Please check connection status and configs.');
@@ -265,6 +327,9 @@ async function initWarpContext({
       warpCore: new WarpCore(new MultiProtocolProvider({}), []),
       tokensBySymbolChainMap: {},
       routerAddressesByChainMap: {},
+      tokens: [],
+      collateralGroups: new Map(),
+      tokenByKeyMap: new Map(),
     };
   }
 }

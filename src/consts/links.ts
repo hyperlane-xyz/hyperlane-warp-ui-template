@@ -1,6 +1,6 @@
 export const links = {
   home: 'https://www.hyperlane.xyz',
-  explorer: 'https://explorer.hyperlane.xyz',
+  explorer: 'https://hyperlane-explorer-git-pb-offsite-swap-abacus-works.vercel.app',
   discord: 'https://discord.gg/VK9ZUy3aTV',
   github: 'https://github.com/hyperlane-xyz/hyperlane-warp-ui-template',
   docs: 'https://docs.hyperlane.xyz',
@@ -15,5 +15,6 @@ export const links = {
     'https://github.com/search?q=org:hyperlane-xyz+label:bounty+is:open+is:issue&type=issues&s=&o=desc',
   imgPath: 'https://cdn.jsdelivr.net/gh/hyperlane-xyz/hyperlane-registry@main',
   transferFees: 'https://docs.hyperlane.xyz/docs/protocol/core/fees#fee-estimation',
+  stake: 'https://app.symbiotic.fi/vault/0xE1F23869776c82f691d9Cb34597Ab1830Fb0De58',
   support: 'https://help.hyperlane.xyz/',
 };

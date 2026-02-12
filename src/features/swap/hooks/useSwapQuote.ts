@@ -61,11 +61,7 @@ export function useSwapQuote(
         originConfig.bridgeToken,
       );
 
-      const icaFee = await getIcaFee(
-        provider,
-        originConfig.icaRouter,
-        destConfig.domainId,
-      );
+      const icaFee = await getIcaFee(provider, originConfig.icaRouter, destConfig.domainId);
 
       return {
         swapOutput,

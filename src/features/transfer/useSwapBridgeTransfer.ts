@@ -6,11 +6,11 @@ import {
   buildPostCallsPayload,
   buildSwapAndBridgeTx,
   getBridgeFee,
+  getIcaFee,
   getSwapQuote,
   shareCallsWithPrivateRelayer,
 } from '@hyperlane-xyz/sdk';
 import { ZERO_ADDRESS_HEX_32, addressToBytes32, eqAddress, toWei } from '@hyperlane-xyz/utils';
-
 import { BigNumber, providers } from 'ethers';
 import { useCallback, useState } from 'react';
 import {
@@ -24,7 +24,6 @@ import {
   maxUint256,
   parseAbi,
 } from 'viem';
-import { getIcaFee } from '@hyperlane-xyz/sdk';
 import { DEFAULT_SLIPPAGE, getSwapConfig, isDemoSwapBridgePath } from '../swap/swapConfig';
 import {
   CommitmentCall,

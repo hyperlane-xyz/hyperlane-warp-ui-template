@@ -2,5 +2,40 @@
 # These configs will be merged with the warp routes in the configured registry
 # The input here is typically the output of the Hyperlane CLI warp deploy command
 ---
-tokens: []
+tokens:
+  # SOL/celestia — Solana ↔ Celestia
+  - addressOrDenom: "0x726f757465725f6170700000000000000000000000000002000000000000000a"
+    chainName: celestia
+    connections:
+      - token: sealevel|solanamainnet|4Acwq4Sw8Y7rZT8traFYmYsxZ86MAe2pQtGgkjh1mHP6
+    decimals: 9
+    name: SOL
+    standard: CosmosNativeHypSynthetic
+    symbol: SOL
+  - addressOrDenom: 4Acwq4Sw8Y7rZT8traFYmYsxZ86MAe2pQtGgkjh1mHP6
+    chainName: solanamainnet
+    connections:
+      - token: cosmosnative|celestia|0x726f757465725f6170700000000000000000000000000002000000000000000a
+    decimals: 9
+    name: SOL
+    standard: SealevelHypNative
+    symbol: SOL
+  # SOL/eden — Celestia ↔ Eden
+  - addressOrDenom: "0x726f757465725f6170700000000000000000000000000001000000000000000c"
+    chainName: celestia
+    collateralAddressOrDenom: hyperlane/0x726f757465725f6170700000000000000000000000000002000000000000000a
+    connections:
+      - token: ethereum|eden|0x16eD50F96ea655Cb03638d7054e62e42Afb7b4fA
+    decimals: 9
+    name: SOL
+    standard: CosmosNativeHypCollateral
+    symbol: SOL
+  - addressOrDenom: "0x16eD50F96ea655Cb03638d7054e62e42Afb7b4fA"
+    chainName: eden
+    connections:
+      - token: cosmosnative|celestia|0x726f757465725f6170700000000000000000000000000001000000000000000c
+    decimals: 9
+    name: SOL
+    standard: EvmHypSynthetic
+    symbol: SOL
 options: {}

@@ -129,13 +129,11 @@ const nextConfig = {
 
   reactStrictMode: true,
 
-  // Exclude heavy client-only deps from serverless function file tracing.
-  // Server-side only does static page generation — these are never used there.
+  // Exclude heavy client-only chain SDKs from serverless function file tracing.
+  // These packages are only used client-side and not needed in serverless functions.
+  // Note: @sentry and @opentelemetry are kept for server-side instrumentation (see instrumentation.ts).
   outputFileTracingExcludes: {
     '*': [
-      './node_modules/@sentry/**',
-      './node_modules/@opentelemetry/**',
-      './node_modules/require-in-the-middle/**',
       './node_modules/@provablehq/**',
       './node_modules/@radixdlt/**',
       './node_modules/@solana/**',

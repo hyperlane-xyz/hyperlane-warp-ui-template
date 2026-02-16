@@ -1,7 +1,7 @@
 import { WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
 import { ChevronIcon, FuelPumpIcon, Skeleton, useModal } from '@hyperlane-xyz/widgets';
 import { Color } from '../../styles/Color';
-import { getTotalFeesUsd } from '../tokens/feeUsdDisplay';
+import { getFeePercentage, getTotalFeesUsd, getTotalFeesUsdRaw } from '../tokens/feeUsdDisplay';
 import { FeePrices } from '../tokens/useFeePrices';
 import { TransferFeeModal } from './TransferFeeModal';
 
@@ -10,11 +10,13 @@ export function FeeSectionButton({
   fees,
   visible,
   feePrices,
+  transferUsd,
 }: {
   isLoading: boolean;
   fees: (WarpCoreFeeEstimate & { totalFees: string }) | null;
   visible: boolean;
   feePrices: FeePrices;
+  transferUsd: number;
 }) {
   const { close, isOpen, open } = useModal();
 
@@ -35,7 +37,14 @@ export function FeeSectionButton({
             Fees: {fees.totalFees}
             {(() => {
               const usd = getTotalFeesUsd(fees, feePrices);
-              return usd ? <span className="ml-1 text-gray-500">{usd}</span> : null;
+              const pct = getFeePercentage(getTotalFeesUsdRaw(fees, feePrices), transferUsd);
+              if (!usd) return null;
+              return (
+                <span className="ml-1 text-gray-500">
+                  {usd}
+                  {pct ? ` (${pct})` : ''}
+                </span>
+              );
             })()}
             <ChevronIcon direction="e" width="0.6rem" height="0.6rem" />
           </button>

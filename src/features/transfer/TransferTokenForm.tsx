@@ -680,6 +680,9 @@ function ReviewDetails({
   );
 
   const feePrices = useFeePrices(feeQuotes ?? null, warpCore.tokens);
+  const { tokenPrice } = useTokenPrice(values);
+  const parsedAmount = parseFloat(amount);
+  const transferUsd = tokenPrice && !isNaN(parsedAmount) ? parsedAmount * tokenPrice : 0;
   const isLoading = isApproveLoading || isQuoteLoading;
 
   const fees = useMemo(() => {
@@ -711,6 +714,7 @@ function ReviewDetails({
           fees={fees}
           isLoading={isLoading}
           feePrices={feePrices}
+          transferUsd={transferUsd}
         />
       )}
 

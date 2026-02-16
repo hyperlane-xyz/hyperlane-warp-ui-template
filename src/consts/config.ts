@@ -58,6 +58,7 @@ export const config: Config = Object.freeze({
     ProtocolType.Cosmos,
     ProtocolType.Starknet,
     ProtocolType.Radix,
+    ProtocolType.Aleo,
   ],
   shouldDisableChains: true,
   rpcOverrides,

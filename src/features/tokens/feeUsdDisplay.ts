@@ -11,10 +11,9 @@ export function getUsdDisplayForFee(
   feePrices: FeePrices,
 ): string | null {
   if (!tokenAmount || tokenAmount.amount === 0n) return null;
-  const id = tokenAmount.token.coinGeckoId;
-  if (!id || !feePrices[id]) return null;
-  const usd = tokenAmount.getDecimalFormattedAmount() * feePrices[id];
-  return formatUsd(usd);
+  const price = feePrices[tokenAmount.token.symbol];
+  if (!price) return null;
+  return formatUsd(tokenAmount.getDecimalFormattedAmount() * price);
 }
 
 export function getTotalFeesUsd(
@@ -24,9 +23,9 @@ export function getTotalFeesUsd(
   let total = 0;
   for (const quote of [fees.localQuote, fees.interchainQuote, fees.tokenFeeQuote]) {
     if (!quote || quote.amount === 0n) continue;
-    const id = quote.token.coinGeckoId;
-    if (!id || !feePrices[id]) continue;
-    total += quote.getDecimalFormattedAmount() * feePrices[id];
+    const price = feePrices[quote.token.symbol];
+    if (!price) continue;
+    total += quote.getDecimalFormattedAmount() * price;
   }
   return formatUsd(total);
 }

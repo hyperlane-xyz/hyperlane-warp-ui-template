@@ -679,7 +679,7 @@ function ReviewDetails({
     !isReview,
   );
 
-  const feePrices = useFeePrices(feeQuotes ?? null);
+  const feePrices = useFeePrices(feeQuotes ?? null, warpCore.tokens);
   const isLoading = isApproveLoading || isQuoteLoading;
 
   const fees = useMemo(() => {

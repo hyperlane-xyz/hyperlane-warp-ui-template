@@ -41,7 +41,13 @@ export function FeeSectionButton({
           </button>
         ) : null}
       </div>
-      <TransferFeeModal close={close} isOpen={isOpen} isLoading={isLoading} fees={fees} feePrices={feePrices} />
+      <TransferFeeModal
+        close={close}
+        isOpen={isOpen}
+        isLoading={isLoading}
+        fees={fees}
+        feePrices={feePrices}
+      />
     </>
   );
 }

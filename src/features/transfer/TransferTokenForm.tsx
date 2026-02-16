@@ -53,6 +53,7 @@ import {
   useDestinationBalance,
   useOriginBalance,
 } from '../tokens/balances';
+import { getUsdDisplayForFee } from '../tokens/feeUsdDisplay';
 import {
   getIndexForToken,
   getInitialTokenIndex,
@@ -60,7 +61,6 @@ import {
   getTokenIndexFromChains,
   useWarpCore,
 } from '../tokens/hooks';
-import { getUsdDisplayForFee } from '../tokens/feeUsdDisplay';
 import { useFeePrices } from '../tokens/useFeePrices';
 import { useTokenPrice } from '../tokens/useTokenPrice';
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
@@ -705,7 +705,14 @@ function ReviewDetails({
 
   return (
     <>
-      {!isReview && <FeeSectionButton visible={!isReview} fees={fees} isLoading={isLoading} feePrices={feePrices} />}
+      {!isReview && (
+        <FeeSectionButton
+          visible={!isReview}
+          fees={fees}
+          isLoading={isLoading}
+          feePrices={feePrices}
+        />
+      )}
 
       <div
         className={`${

@@ -129,6 +129,8 @@ const nextConfig = {
 
   reactStrictMode: true,
 
+  serverExternalPackages: ['@sentry/nextjs'],
+
   // Exclude heavy client-only chain SDKs from serverless function file tracing.
   // These packages are only used client-side and not needed in serverless functions.
   // Note: @sentry and @opentelemetry are kept for server-side instrumentation (see instrumentation.ts).

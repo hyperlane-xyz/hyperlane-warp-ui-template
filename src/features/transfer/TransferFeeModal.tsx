@@ -2,17 +2,21 @@ import { WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
 import { Modal, Skeleton, Tooltip } from '@hyperlane-xyz/widgets';
 import Link from 'next/link';
 import { links } from '../../consts/links';
+import { getUsdDisplayForFee } from '../tokens/feeUsdDisplay';
+import { FeePrices } from '../tokens/useFeePrices';
 
 export function TransferFeeModal({
   isOpen,
   close,
   fees,
   isLoading,
+  feePrices,
 }: {
   isOpen: boolean;
   close: () => void;
   fees: WarpCoreFeeEstimate | null;
   isLoading: boolean;
+  feePrices: FeePrices;
 }) {
   return (
     <Modal
@@ -36,9 +40,13 @@ export function TransferFeeModal({
             {isLoading ? (
               <Skeleton className="h-4 w-52" />
             ) : (
-              <span>{`${fees.localQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${
-                fees.localQuote.token.symbol || ''
-              }`}</span>
+              <span>
+                {`${fees.localQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${fees.localQuote.token.symbol || ''}`}
+                {(() => {
+                  const usd = getUsdDisplayForFee(fees.localQuote, feePrices);
+                  return usd ? <span className="ml-1 text-gray-500">{usd}</span> : null;
+                })()}
+              </span>
             )}
           </div>
         )}
@@ -55,9 +63,13 @@ export function TransferFeeModal({
             {isLoading ? (
               <Skeleton className="h-4 w-52" />
             ) : (
-              <span>{`${fees.interchainQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${
-                fees.interchainQuote.token.symbol || ''
-              }`}</span>
+              <span>
+                {`${fees.interchainQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${fees.interchainQuote.token.symbol || ''}`}
+                {(() => {
+                  const usd = getUsdDisplayForFee(fees.interchainQuote, feePrices);
+                  return usd ? <span className="ml-1 text-gray-500">{usd}</span> : null;
+                })()}
+              </span>
             )}
           </div>
         )}
@@ -69,9 +81,13 @@ export function TransferFeeModal({
             {isLoading ? (
               <Skeleton className="h-4 w-52" />
             ) : (
-              <span>{`${fees.tokenFeeQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${
-                fees.tokenFeeQuote.token.symbol || ''
-              }`}</span>
+              <span>
+                {`${fees.tokenFeeQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${fees.tokenFeeQuote.token.symbol || ''}`}
+                {(() => {
+                  const usd = getUsdDisplayForFee(fees.tokenFeeQuote, feePrices);
+                  return usd ? <span className="ml-1 text-gray-500">{usd}</span> : null;
+                })()}
+              </span>
             )}
           </div>
         )}

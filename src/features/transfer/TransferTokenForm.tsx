@@ -60,6 +60,8 @@ import {
   getTokenIndexFromChains,
   useWarpCore,
 } from '../tokens/hooks';
+import { getUsdDisplayForFee } from '../tokens/feeUsdDisplay';
+import { useFeePrices } from '../tokens/useFeePrices';
 import { useTokenPrice } from '../tokens/useTokenPrice';
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { FeeSectionButton } from './FeeSectionButton';
@@ -677,6 +679,7 @@ function ReviewDetails({
     !isReview,
   );
 
+  const feePrices = useFeePrices(feeQuotes ?? null);
   const isLoading = isApproveLoading || isQuoteLoading;
 
   const fees = useMemo(() => {
@@ -702,7 +705,7 @@ function ReviewDetails({
 
   return (
     <>
-      {!isReview && <FeeSectionButton visible={!isReview} fees={fees} isLoading={isLoading} />}
+      {!isReview && <FeeSectionButton visible={!isReview} fees={fees} isLoading={isLoading} feePrices={feePrices} />}
 
       <div
         className={`${
@@ -751,25 +754,37 @@ function ReviewDetails({
                   {fees?.localQuote && fees.localQuote.amount > 0n && (
                     <p className="flex">
                       <span className="min-w-[7.5rem]">Local Gas (est.)</span>
-                      <span>{`${fees.localQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${
-                        fees.localQuote.token.symbol || ''
-                      }`}</span>
+                      <span>
+                        {`${fees.localQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${fees.localQuote.token.symbol || ''}`}
+                        {(() => {
+                          const usd = getUsdDisplayForFee(fees.localQuote, feePrices);
+                          return usd ? <span className="ml-1 text-gray-500">{usd}</span> : null;
+                        })()}
+                      </span>
                     </p>
                   )}
                   {fees?.interchainQuote && fees.interchainQuote.amount > 0n && (
                     <p className="flex">
                       <span className="min-w-[7.5rem]">Interchain Gas</span>
-                      <span>{`${fees.interchainQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${
-                        fees.interchainQuote.token.symbol || ''
-                      }`}</span>
+                      <span>
+                        {`${fees.interchainQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${fees.interchainQuote.token.symbol || ''}`}
+                        {(() => {
+                          const usd = getUsdDisplayForFee(fees.interchainQuote, feePrices);
+                          return usd ? <span className="ml-1 text-gray-500">{usd}</span> : null;
+                        })()}
+                      </span>
                     </p>
                   )}
                   {fees?.tokenFeeQuote && fees.tokenFeeQuote.amount > 0n && (
                     <p className="flex">
                       <span className="min-w-[7.5rem]">Token Fee</span>
-                      <span>{`${fees.tokenFeeQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${
-                        fees.tokenFeeQuote.token.symbol || ''
-                      }`}</span>
+                      <span>
+                        {`${fees.tokenFeeQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${fees.tokenFeeQuote.token.symbol || ''}`}
+                        {(() => {
+                          const usd = getUsdDisplayForFee(fees.tokenFeeQuote, feePrices);
+                          return usd ? <span className="ml-1 text-gray-500">{usd}</span> : null;
+                        })()}
+                      </span>
                     </p>
                   )}
                 </div>

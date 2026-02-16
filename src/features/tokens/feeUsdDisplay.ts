@@ -2,7 +2,8 @@ import { TokenAmount } from '@hyperlane-xyz/sdk';
 import { FeePrices } from './useFeePrices';
 
 function formatUsd(value: number): string | null {
-  if (value < 0.01) return null;
+  if (value <= 0) return null;
+  if (value < 0.01) return '<$0.01';
   return `≈$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 

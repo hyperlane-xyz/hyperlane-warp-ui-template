@@ -60,11 +60,7 @@ export function useTokenPrice({ tokenIndex }: TransferFormValues) {
  * Batch-fetch USD prices for multiple tokens via CoinGecko.
  * Returns Record<coinGeckoId, usdPrice>.
  */
-export function useTokenPrices(
-  tokens: Token[],
-  origin: ChainName,
-  destination: ChainName,
-) {
+export function useTokenPrices(tokens: Token[], origin: ChainName, destination: ChainName) {
   const coinGeckoIds = useMemo(() => {
     const ids = new Set<string>();
     for (const t of tokens) {

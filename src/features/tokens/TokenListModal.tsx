@@ -153,7 +153,11 @@ export function TokenList({
 
   // Fetch balances and prices for ALL route tokens (not search-filtered)
   const routeTokenObjects = useMemo(() => allRouteTokens.map((t) => t.token), [allRouteTokens]);
-  const { balances, isLoading: balancesLoading, evmAddress } = useTokenBalances(routeTokenObjects, origin, destination);
+  const {
+    balances,
+    isLoading: balancesLoading,
+    evmAddress,
+  } = useTokenBalances(routeTokenObjects, origin, destination);
   const { prices } = useTokenPrices(routeTokenObjects, origin, destination);
 
   // Search-filtered + sorted tokens for display
@@ -235,7 +239,9 @@ export function TokenList({
             </div>
             <div className="ml-auto shrink-0 text-right">
               {!evmAddress ? (
-                <div className="text-xs text-gray-400">{getChainDisplayName(multiProvider, t.token.chainName)}</div>
+                <div className="text-xs text-gray-400">
+                  {getChainDisplayName(multiProvider, t.token.chainName)}
+                </div>
               ) : balancesLoading ? (
                 <SpinnerIcon width={14} height={14} className="opacity-50" />
               ) : balance != null && balance > 0n ? (
@@ -252,7 +258,9 @@ export function TokenList({
                   </div>
                 )
               ) : (
-                <div className="text-xs text-gray-400">{getChainDisplayName(multiProvider, t.token.chainName)}</div>
+                <div className="text-xs text-gray-400">
+                  {getChainDisplayName(multiProvider, t.token.chainName)}
+                </div>
               )}
             </div>
           </button>

@@ -82,18 +82,12 @@ export interface AppState {
   originChainName: ChainName;
   setOriginChainName: (originChainName: ChainName) => void;
   tokensBySymbolChainMap: Record<string, TokenChainMap>;
-<<<<<<< HEAD
-  // this map is currently used by the transfer token form validation to prevent
-  // users from sending funds to a warp route address in a given destination chain
-  routerAddressesByChainMap: Record<ChainName, Set<string>>;
-  // instead of moving the TipCard component inside the formik and an useEffect can be set to watch for it
-  isTipCardActionTriggered: boolean;
-  setIsTipCardActionTriggered: (isTipCardActionTriggered: boolean) => void;
-=======
   // Map of chain -> address -> router info
   // Used to: 1) prevent sending to warp route addresses, 2) format amounts with correct decimals
   routerAddressesByChainMap: Record<ChainName, Record<string, RouterAddressInfo>>;
->>>>>>> origin/main
+  // instead of moving the TipCard component inside the formik and an useEffect can be set to watch for it
+  isTipCardActionTriggered: boolean;
+  setIsTipCardActionTriggered: (isTipCardActionTriggered: boolean) => void;
 }
 
 export const useStore = create<AppState>()(

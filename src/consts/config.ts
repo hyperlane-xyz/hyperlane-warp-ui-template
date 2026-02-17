@@ -41,16 +41,10 @@ interface Config {
 export const config: Config = Object.freeze({
   addressBlacklist: ADDRESS_BLACKLIST.map((address) => address.toLowerCase()),
   chainWalletWhitelists,
-<<<<<<< HEAD
   enableExplorerLink: true,
   defaultOriginChain: 'ethereum',
   defaultDestinationChain: 'bsc',
-=======
-  enableExplorerLink: false,
   explorerApiUrl,
-  defaultOriginChain: undefined,
-  defaultDestinationChain: undefined,
->>>>>>> origin/main
   isDevMode,
   registryUrl,
   registryBranch,

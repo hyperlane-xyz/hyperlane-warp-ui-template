@@ -13,6 +13,7 @@ import {
 } from '@hyperlane-xyz/widgets';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { SafeTextMorph } from '../../components/SafeTextMorph';
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import { TokenIcon } from '../../components/icons/TokenIcon';
 import LinkIcon from '../../images/icons/external-link-icon.svg';
@@ -201,7 +202,7 @@ export function TransfersDetailsModal({
           <div
             className={`mt-5 text-center text-sm ${isFailed ? 'text-red-600' : 'text-gray-600'}`}
           >
-            {statusDescription}
+            <SafeTextMorph>{statusDescription}</SafeTextMorph>
           </div>
           {showSignWarning && (
             <div className="mt-3 text-center text-sm text-gray-600">

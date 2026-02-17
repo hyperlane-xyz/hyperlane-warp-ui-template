@@ -1,5 +1,6 @@
 import { WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
 import { ChevronIcon, FuelPumpIcon, Skeleton, useModal } from '@hyperlane-xyz/widgets';
+import { SafeTextMorph } from '../../components/SafeTextMorph';
 import { Color } from '../../styles/Color';
 import { TransferFeeModal } from './TransferFeeModal';
 
@@ -28,7 +29,7 @@ export function FeeSectionButton({
             onClick={open}
           >
             <FuelPumpIcon width={14} height={14} color={Color.gray[600]} className="mr-1" />
-            Fees: {fees.totalFees}
+            Fees: <SafeTextMorph>{fees.totalFees}</SafeTextMorph>
             <ChevronIcon direction="e" width="0.6rem" height="0.6rem" />
           </button>
         ) : null}

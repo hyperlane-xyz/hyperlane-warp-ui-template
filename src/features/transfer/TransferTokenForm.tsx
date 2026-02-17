@@ -27,6 +27,7 @@ import { Form, Formik, useFormikContext } from 'formik';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 import { RecipientWarningBanner } from '../../components/banner/RecipientWarningBanner';
+import { SafeTextMorph } from '../../components/SafeTextMorph';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
 import { SolidButton } from '../../components/buttons/SolidButton';
 import { TextField } from '../../components/input/TextField';
@@ -558,7 +559,7 @@ function ButtonSection({
           onClick={triggerTransactionsHandler}
           className="flex-1 px-3 py-1.5"
         >
-          {`Send to ${chainDisplayName}`}
+          <SafeTextMorph>{`Send to ${chainDisplayName}`}</SafeTextMorph>
         </SolidButton>
       </div>
     </>

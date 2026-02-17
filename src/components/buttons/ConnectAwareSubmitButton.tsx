@@ -5,6 +5,7 @@ import { useCallback } from 'react';
 import { EVENT_NAME } from '../../features/analytics/types';
 import { trackEvent } from '../../features/analytics/utils';
 import { useChainProtocol, useMultiProvider } from '../../features/chains/hooks';
+import { SafeTextMorph } from '../SafeTextMorph';
 import { SolidButton } from './SolidButton';
 
 interface Props {
@@ -64,7 +65,7 @@ export function ConnectAwareSubmitButton<FormValues = any>({
       onClick={onClick}
       className={classes}
     >
-      {content}
+      <SafeTextMorph>{content}</SafeTextMorph>
     </SolidButton>
   );
 }

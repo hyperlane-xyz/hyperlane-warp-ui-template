@@ -3,6 +3,7 @@ import { ChainSearchMenuProps, ChevronIcon, PlusIcon } from '@hyperlane-xyz/widg
 import { useField, useFormikContext } from 'formik';
 import { useCallback, useState } from 'react';
 import { toast } from 'react-toastify';
+import { SafeTextMorph } from '../../components/SafeTextMorph';
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import { logger } from '../../utils/logger';
 import { EVENT_NAME } from '../analytics/types';
@@ -86,7 +87,7 @@ export function ChainSelectField({
             <label htmlFor={name} className="text-xs text-gray-600">
               {label}
             </label>
-            {displayName}
+            <SafeTextMorph>{displayName}</SafeTextMorph>
           </div>
         </div>
         <ChevronIcon width={12} height={8} direction="s" />

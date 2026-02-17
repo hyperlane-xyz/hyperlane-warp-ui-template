@@ -1,8 +1,6 @@
 import { config } from '../../consts/config';
 
-export type GraphQLResult<T> =
-  | { type: 'success'; data: T }
-  | { type: 'error'; error: Error };
+export type GraphQLResult<T> = { type: 'success'; data: T } | { type: 'error'; error: Error };
 
 export async function executeGraphQLQuery<T = unknown>(
   query: string,

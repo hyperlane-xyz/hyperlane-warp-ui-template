@@ -1,11 +1,9 @@
 /** @type {import('next').NextConfig} */
 
 const { version } = require('./package.json');
-const { withSentryConfig } = require('@sentry/nextjs');
 const withBundleAnalyzer = require('@next/bundle-analyzer')({
   enabled: process.env.ANALYZE === 'true',
 });
-
 const isDev = process.env.NODE_ENV !== 'production';
 
 // Sometimes useful to disable this during development
@@ -126,28 +124,41 @@ const nextConfig = {
 
   env: {
     NEXT_PUBLIC_VERSION: version,
+    NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN || '',
   },
 
   reactStrictMode: true,
+
+  serverExternalPackages: ['@sentry/nextjs'],
+
+  // Exclude heavy client-only chain SDKs from serverless function file tracing.
+  // These packages are only used client-side and not needed in serverless functions.
+  // Note: @sentry and @opentelemetry are kept for server-side instrumentation (see instrumentation.ts).
+  outputFileTracingExcludes: {
+    '*': [
+      './node_modules/@provablehq/**',
+      './node_modules/@radixdlt/**',
+      './node_modules/@solana/**',
+      './node_modules/@cosmjs/**',
+      './node_modules/@starknet-io/**',
+      './node_modules/ethers/**',
+    ],
+  },
+
+  experimental: {
+    webpackBuildWorker: true,
+    parallelServerBuildTraces: true,
+    optimizePackageImports: [
+      '@hyperlane-xyz/registry',
+      '@hyperlane-xyz/sdk',
+      '@hyperlane-xyz/utils',
+      '@hyperlane-xyz/widgets',
+    ],
+  },
 
   // Skip linting and type checking during builds — CI runs these separately
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },
 };
 
-const sentryOptions = {
-  org: 'hyperlane',
-  project: 'warp-ui',
-  authToken: process.env.SENTRY_AUTH_TOKEN,
-  hideSourceMaps: true,
-  tunnelRoute: '/monitoring-tunnel',
-  sourcemaps: { disable: true },
-  telemetry: false,
-  bundleSizeOptimizations: {
-    excludeDebugStatements: true,
-    excludeReplayIframe: true,
-    excludeReplayShadowDom: true,
-  },
-};
-
-module.exports = withBundleAnalyzer(withSentryConfig(nextConfig, sentryOptions));
+module.exports = withBundleAnalyzer(nextConfig);

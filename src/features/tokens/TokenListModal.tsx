@@ -1,6 +1,6 @@
 import { ChainMap, ChainMetadata, IToken, Token } from '@hyperlane-xyz/sdk';
 import { isObjEmpty, objFilter } from '@hyperlane-xyz/utils';
-import { Modal, SearchIcon } from '@hyperlane-xyz/widgets';
+import { Modal, SearchIcon, SpinnerIcon } from '@hyperlane-xyz/widgets';
 import { AnimatePresence, motion } from 'framer-motion';
 import Image from 'next/image';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -12,8 +12,10 @@ import InfoIcon from '../../images/icons/info-circle.svg';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { useStore } from '../store';
+import { tokenKey, useTokenBalances } from './balances';
 import { useWarpCore } from './hooks';
 import { TokenChainMap } from './types';
+import { useTokenPrices } from './useTokenPrice';
 import { dedupeMultiCollateralTokens } from './utils';
 
 export function TokenListModal({
@@ -92,6 +94,35 @@ function SearchBar({ search, setSearch }: { search: string; setSearch: (s: strin
   );
 }
 
+function formatBalance(balance: bigint, decimals: number): string {
+  const divisor = 10n ** BigInt(decimals);
+  const whole = balance / divisor;
+  const remainder = balance % divisor;
+  const fractionStr = remainder.toString().padStart(decimals, '0').slice(0, 4);
+  // Remove trailing zeros from fraction
+  const trimmed = fractionStr.replace(/0+$/, '');
+  if (!trimmed) return whole.toString();
+  return `${whole}.${trimmed}`;
+}
+
+function formatUsd(value: number): string {
+  if (value < 0.01) return '<$0.01';
+  return `$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function getUsdValue(
+  token: Token,
+  balances: Record<string, bigint>,
+  prices: Record<string, number>,
+): number | null {
+  const key = tokenKey(token);
+  const bal = balances[key];
+  if (bal == null || !token.coinGeckoId) return null;
+  const price = prices[token.coinGeckoId];
+  if (price == null) return null;
+  return (Number(bal) / 10 ** token.decimals) * price;
+}
+
 export function TokenList({
   origin,
   destination,
@@ -109,36 +140,56 @@ export function TokenList({
   const warpCore = useWarpCore();
   const tokensBySymbolChainMap = useStore((s) => s.tokensBySymbolChainMap);
 
-  const { tokens } = useMemo(() => {
-    const q = searchQuery?.trim().toLowerCase();
+  // All route tokens (stable — only changes on origin/destination change, NOT on search)
+  const { allRouteTokens } = useMemo(() => {
     const multiChainTokens = warpCore.tokens.filter((t) => t.isMultiChainToken());
     const tokensWithRoute = warpCore.getTokensForRoute(origin, destination);
-
-    const tokens = multiChainTokens
-      .map((t) => ({
-        token: t,
-        disabled: !tokensWithRoute.includes(t),
-      }))
-      .sort((a, b) => {
-        if (a.disabled && !b.disabled) return 1;
-        else if (!a.disabled && b.disabled) return -1;
-        else return 0;
-      })
-      // Filter down to search query
-      .filter((t) => {
-        if (!q) return t;
-        return (
-          t.token.name.toLowerCase().includes(q) ||
-          t.token.symbol.toLowerCase().includes(q) ||
-          t.token.addressOrDenom.toLowerCase().includes(q) ||
-          t.token.collateralAddressOrDenom?.toLowerCase().includes(q)
-        );
-      })
-      // Hide/show disabled tokens
+    const items = multiChainTokens
+      .map((t) => ({ token: t, disabled: !tokensWithRoute.includes(t) }))
       .filter((t) => (config.showDisabledTokens ? true : !t.disabled));
+    const { tokens: deduped } = dedupeMultiCollateralTokens(items, destination);
+    return { allRouteTokens: deduped };
+  }, [warpCore, origin, destination]);
 
-    return dedupeMultiCollateralTokens(tokens, destination);
-  }, [warpCore, searchQuery, origin, destination]);
+  // Fetch balances and prices for ALL route tokens (not search-filtered)
+  const routeTokenObjects = useMemo(() => allRouteTokens.map((t) => t.token), [allRouteTokens]);
+  const { balances, isLoading: balancesLoading, evmAddress } = useTokenBalances(routeTokenObjects, origin, destination);
+  const { prices } = useTokenPrices(routeTokenObjects, origin, destination);
+
+  // Search-filtered + sorted tokens for display
+  const { tokens, sortedTokens } = useMemo(() => {
+    const q = searchQuery?.trim().toLowerCase();
+
+    const filtered = allRouteTokens.filter((t) => {
+      if (!q) return true;
+      return (
+        t.token.name.toLowerCase().includes(q) ||
+        t.token.symbol.toLowerCase().includes(q) ||
+        t.token.addressOrDenom.toLowerCase().includes(q) ||
+        t.token.collateralAddressOrDenom?.toLowerCase().includes(q)
+      );
+    });
+
+    const enabled = filtered.filter((t) => !t.disabled);
+    const disabled = filtered.filter((t) => t.disabled);
+
+    enabled.sort((a, b) => {
+      const aBal = balances[tokenKey(a.token)] ?? 0n;
+      const bBal = balances[tokenKey(b.token)] ?? 0n;
+      // Tokens with any balance always come before tokens with none
+      if (aBal > 0n && bBal === 0n) return -1;
+      if (aBal === 0n && bBal > 0n) return 1;
+      // Among tokens with balance, sort by USD value descending
+      const aUsd = getUsdValue(a.token, balances, prices);
+      const bUsd = getUsdValue(b.token, balances, prices);
+      if (aUsd != null && bUsd != null) return bUsd - aUsd;
+      if (aUsd != null) return -1;
+      if (bUsd != null) return 1;
+      return 0;
+    });
+
+    return { tokens: filtered, sortedTokens: [...enabled, ...disabled] };
+  }, [allRouteTokens, searchQuery, balances, prices]);
 
   const unsupportedRouteTokensBySymbolMap = useMemo(() => {
     const tokenSymbols = tokens.map((item) => item.token.symbol);
@@ -160,35 +211,53 @@ export function TokenList({
 
   return (
     <div className="no-scrollbar flex max-h-[80vh] min-h-[24rem] flex-col items-stretch overflow-auto px-2">
-      {tokens.map((t, i) => (
-        <button
-          className={`-mx-2 mb-2 flex items-center rounded px-2 py-2 ${
-            t.disabled ? 'opacity-50' : 'hover:bg-gray-200'
-          } duration-250 transition-all`}
-          key={i}
-          type="button"
-          disabled={t.disabled}
-          onClick={() => onSelect(t.token)}
-        >
-          <div className="shrink-0">
-            <TokenIcon token={t.token} size={30} />
-          </div>
-          <div className="ml-2 shrink-0 text-left">
-            <div className="w-16 truncate text-sm">{t.token.symbol || 'Unknown'}</div>
-            <div className="w-16 truncate text-xs text-gray-500">{t.token.name || 'Unknown'}</div>
-          </div>
-          <div className="ml-2 min-w-0 shrink text-left">
-            <div className="w-full truncate text-xs">
-              {t.token.collateralAddressOrDenom || t.token.addressOrDenom || 'Native chain token'}
+      {sortedTokens.map((t) => {
+        const key = tokenKey(t.token);
+        const balance = balances[key];
+        const usdValue = getUsdValue(t.token, balances, prices);
+
+        return (
+          <button
+            className={`-mx-2 mb-2 flex items-center rounded px-2 py-2 ${
+              t.disabled ? 'opacity-50' : 'hover:bg-gray-200'
+            } duration-250 transition-all`}
+            key={key}
+            type="button"
+            disabled={t.disabled}
+            onClick={() => onSelect(t.token)}
+          >
+            <div className="shrink-0">
+              <TokenIcon token={t.token} size={30} />
             </div>
-            <div className="mt-0.5 flex space-x-1 text-xs">
-              <span>{`Decimals: ${t.token.decimals}`}</span>
-              <span>-</span>
-              <span>{`Chain: ${getChainDisplayName(multiProvider, t.token.chainName)}`}</span>
+            <div className="ml-2 shrink-0 text-left">
+              <div className="w-16 truncate text-sm">{t.token.symbol || 'Unknown'}</div>
+              <div className="w-16 truncate text-xs text-gray-500">{t.token.name || 'Unknown'}</div>
             </div>
-          </div>
-        </button>
-      ))}
+            <div className="ml-auto shrink-0 text-right">
+              {!evmAddress ? (
+                <div className="text-xs text-gray-400">{getChainDisplayName(multiProvider, t.token.chainName)}</div>
+              ) : balancesLoading ? (
+                <SpinnerIcon width={14} height={14} className="opacity-50" />
+              ) : balance != null && balance > 0n ? (
+                usdValue != null ? (
+                  <>
+                    <div className="text-sm">{formatUsd(usdValue)}</div>
+                    <div className="text-xs text-gray-500">
+                      {formatBalance(balance, t.token.decimals)} {t.token.symbol}
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-sm">
+                    {formatBalance(balance, t.token.decimals)} {t.token.symbol}
+                  </div>
+                )
+              ) : (
+                <div className="text-xs text-gray-400">{getChainDisplayName(multiProvider, t.token.chainName)}</div>
+              )}
+            </div>
+          </button>
+        );
+      })}
       <UnsupportedRouteTokenList
         unsupportedRouteTokensBySymbolMap={unsupportedRouteTokensBySymbolMap}
         origin={origin}

@@ -8,7 +8,7 @@ import {
   fromWei,
   isNullish,
   isValidAddressEvm,
-  objKeys,
+  normalizeAddress,
   toWei,
 } from '@hyperlane-xyz/utils';
 import {
@@ -49,7 +49,7 @@ import { useChainDisplayName, useMultiProvider } from '../chains/hooks';
 import { getNumRoutesWithSelectedChain, tryGetValidChainName } from '../chains/utils';
 import { isMultiCollateralLimitExceeded } from '../limits/utils';
 import { useIsAccountSanctioned } from '../sanctions/hooks/useIsAccountSanctioned';
-import { useStore } from '../store';
+import { RouterAddressInfo, useStore } from '../store';
 import { SelectOrInputTokenIds } from '../tokens/SelectOrInputTokenIds';
 import { TokenSelectField } from '../tokens/TokenSelectField';
 import { useIsApproveRequired } from '../tokens/approval';
@@ -883,7 +883,7 @@ async function validateForm(
   warpCore: WarpCore,
   values: TransferFormValues,
   accounts: Record<KnownProtocolType, AccountInfo>,
-  routerAddressesByChainMap: Record<ChainName, Set<string>>,
+  routerAddressesByChainMap: Record<ChainName, Record<string, RouterAddressInfo>>,
 ): Promise<[Record<string, string> | null, Token | null]> {
   // returns a tuple, where first value is validation result
   // and second value is token override
@@ -894,10 +894,7 @@ async function validateForm(
     const destinationToken = token.getConnectionForChain(destination)?.token;
     if (!destinationToken) return [{ token: 'Token is required' }, null];
 
-    if (
-      objKeys(routerAddressesByChainMap).includes(destination) &&
-      routerAddressesByChainMap[destination].has(recipient)
-    ) {
+    if (routerAddressesByChainMap[destination]?.[normalizeAddress(recipient)]) {
       return [{ recipient: 'Warp Route address is not valid as recipient' }, null];
     }
 

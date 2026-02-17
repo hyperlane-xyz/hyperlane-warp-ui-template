@@ -1,5 +1,10 @@
 import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk';
-import { bytesToProtocolAddress, fromHexString, parseWarpRouteMessage } from '@hyperlane-xyz/utils';
+import {
+  assert,
+  bytesToProtocolAddress,
+  fromHexString,
+  parseWarpRouteMessage,
+} from '@hyperlane-xyz/utils';
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo, useState } from 'react';
 import { logger } from '../../utils/logger';
@@ -53,8 +58,10 @@ export function useMessageHistory(
     useInfiniteQuery({
       queryKey,
       queryFn: async ({ pageParam }): Promise<PageResult> => {
-        const wallets = JSON.parse(walletKey) as string[];
-        const warpRoutes = JSON.parse(warpRouteKey) as string[];
+        const wallets = JSON.parse(walletKey);
+        const warpRoutes = JSON.parse(warpRouteKey);
+        assert(Array.isArray(wallets), 'wallets must be an array');
+        assert(Array.isArray(warpRoutes), 'warpRoutes must be an array');
 
         if (!wallets.length || !warpRoutes.length) return { messages: [], rawCount: 0 };
 
@@ -66,9 +73,9 @@ export function useMessageHistory(
           queryData.variables,
         );
 
-        if (result.error) throw result.error;
+        if (result.type === 'error') throw result.error;
 
-        const entries = result.data?.message_view;
+        const entries = result.data.message_view;
         if (!entries?.length) return { messages: [], rawCount: 0 };
 
         const messages = entries

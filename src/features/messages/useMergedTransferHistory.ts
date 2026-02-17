@@ -6,10 +6,14 @@ import { tryFindToken } from '../tokens/hooks';
 import { TransferContext, TransferStatus } from '../transfer/types';
 import { MessageStatus, MessageStub } from './types';
 
-// Union type for transfer items from both local state and API
+export const TransferItemType = {
+  Local: 'local',
+  Api: 'api',
+} as const;
+
 export type TransferItem =
-  | { type: 'local'; data: TransferContext }
-  | { type: 'api'; data: MessageStub };
+  | { type: typeof TransferItemType.Local; data: TransferContext }
+  | { type: typeof TransferItemType.Api; data: MessageStub };
 
 /**
  * Convert an API MessageStub to a TransferContext for display
@@ -68,18 +72,18 @@ export function useMergedTransferHistory(
     // Local transfers that aren't in API yet
     const localItems: TransferItem[] = localTransfers
       .filter((t) => !t.msgId || !apiMsgIds.has(t.msgId))
-      .map((t) => ({ type: 'local' as const, data: t }));
+      .map((t) => ({ type: TransferItemType.Local, data: t }));
 
     // API messages
     const apiItems: TransferItem[] = apiMessages.map((m) => ({
-      type: 'api' as const,
+      type: TransferItemType.Api,
       data: m,
     }));
 
     // Sort by timestamp descending
     return [...localItems, ...apiItems].sort((a, b) => {
-      const tsA = a.type === 'local' ? a.data.timestamp : a.data.origin.timestamp;
-      const tsB = b.type === 'local' ? b.data.timestamp : b.data.origin.timestamp;
+      const tsA = a.type === TransferItemType.Local ? a.data.timestamp : a.data.origin.timestamp;
+      const tsB = b.type === TransferItemType.Local ? b.data.timestamp : b.data.origin.timestamp;
       return tsB - tsA;
     });
   }, [localTransfers, apiMessages]);

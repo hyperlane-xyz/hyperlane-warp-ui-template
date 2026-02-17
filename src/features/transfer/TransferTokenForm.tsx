@@ -9,7 +9,6 @@ import {
   isNullish,
   isValidAddressEvm,
   normalizeAddress,
-  objKeys,
   toWei,
 } from '@hyperlane-xyz/utils';
 import {
@@ -855,10 +854,7 @@ async function validateForm(
     const destinationToken = token.getConnectionForChain(destination)?.token;
     if (!destinationToken) return [{ token: 'Token is required' }, null];
 
-    if (
-      objKeys(routerAddressesByChainMap).includes(destination) &&
-      normalizeAddress(recipient) in routerAddressesByChainMap[destination]
-    ) {
+    if (routerAddressesByChainMap[destination]?.[normalizeAddress(recipient)]) {
       return [{ recipient: 'Warp Route address is not valid as recipient' }, null];
     }
 

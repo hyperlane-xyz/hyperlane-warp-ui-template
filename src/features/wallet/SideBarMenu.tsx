@@ -14,6 +14,7 @@ import { MessageStatus } from '../messages/types';
 import {
   messageToTransferContext,
   TransferItem,
+  TransferItemType,
   useMergedTransferHistory,
 } from '../messages/useMergedTransferHistory';
 import { useMessageHistory } from '../messages/useMessageHistory';
@@ -91,7 +92,7 @@ export function SideBarMenu({
   const mergedTransfers = useMemo(
     () =>
       allMergedTransfers.filter((item) => {
-        if (item.type === 'local') return true;
+        if (item.type === TransferItemType.Local) return true;
         const originChain = multiProvider.tryGetChainName(item.data.originDomainId);
         if (!originChain) return false;
         return !!tryFindToken(warpCore, originChain, item.data.sender);
@@ -115,7 +116,7 @@ export function SideBarMenu({
   };
 
   const handleItemClick = (item: TransferItem) => {
-    if (item.type === 'local') {
+    if (item.type === TransferItemType.Local) {
       setSelectedTransfer(item.data);
     } else {
       setSelectedTransfer(
@@ -201,7 +202,7 @@ export function SideBarMenu({
                   {mergedTransfers.map((item) => (
                     <TransferSummary
                       key={
-                        item.type === 'local'
+                        item.type === TransferItemType.Local
                           ? `local-${item.data.timestamp}`
                           : `api-${item.data.msgId}`
                       }
@@ -253,7 +254,7 @@ function TransferSummary({
   warpCore: ReturnType<typeof useWarpCore>;
   routerAddressesByChainMap: Record<ChainName, Record<string, RouterAddressInfo>>;
 }) {
-  if (item.type === 'local') {
+  if (item.type === TransferItemType.Local) {
     return (
       <LocalTransferSummary
         transfer={item.data}

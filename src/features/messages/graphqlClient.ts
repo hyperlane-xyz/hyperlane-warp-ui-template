@@ -1,9 +1,13 @@
 import { config } from '../../consts/config';
 
+export type GraphQLResult<T> =
+  | { type: 'success'; data: T }
+  | { type: 'error'; error: Error };
+
 export async function executeGraphQLQuery<T = unknown>(
   query: string,
   variables: Record<string, unknown>,
-): Promise<{ data?: T; error?: Error }> {
+): Promise<GraphQLResult<T>> {
   try {
     const response = await fetch(config.explorerApiUrl, {
       method: 'POST',
@@ -14,17 +18,18 @@ export async function executeGraphQLQuery<T = unknown>(
     });
 
     if (!response.ok) {
-      return { error: new Error(`HTTP error: ${response.status}`) };
+      return { type: 'error', error: new Error(`HTTP error: ${response.status}`) };
     }
 
     const result = await response.json();
 
-    if (result.errors?.length) {
-      return { error: new Error(result.errors[0].message) };
+    const [err] = result.errors ?? [];
+    if (err) {
+      return { type: 'error', error: new Error(err.message) };
     }
 
-    return { data: result.data };
+    return { type: 'success', data: result.data };
   } catch (err) {
-    return { error: err instanceof Error ? err : new Error('Unknown error') };
+    return { type: 'error', error: err instanceof Error ? err : new Error('Unknown error') };
   }
 }

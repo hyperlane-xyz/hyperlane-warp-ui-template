@@ -1,13 +1,21 @@
 'use client';
 
-import React, { type ReactNode, type CSSProperties } from 'react';
+import React, { type CSSProperties, type ReactNode } from 'react';
 import { TextMorph } from 'torph/react';
 
+type TextMorphErrorBoundaryProps = {
+  children: ReactNode;
+  fallbackText: string;
+  as: keyof JSX.IntrinsicElements;
+  className?: string;
+  style?: CSSProperties;
+};
+
 class TextMorphErrorBoundary extends React.Component<
-  { children: ReactNode; fallbackText: string },
+  TextMorphErrorBoundaryProps,
   { hasError: boolean }
 > {
-  constructor(props: { children: ReactNode; fallbackText: string }) {
+  constructor(props: TextMorphErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false };
   }
@@ -21,9 +29,22 @@ class TextMorphErrorBoundary extends React.Component<
     console.error('TextMorph error:', error);
   }
 
+  componentDidUpdate(prevProps: TextMorphErrorBoundaryProps) {
+    if (
+      this.state.hasError &&
+      (prevProps.fallbackText !== this.props.fallbackText ||
+        prevProps.as !== this.props.as ||
+        prevProps.className !== this.props.className ||
+        prevProps.style !== this.props.style)
+    ) {
+      this.setState({ hasError: false });
+    }
+  }
+
   render() {
     if (this.state.hasError) {
-      return <span>{this.props.fallbackText}</span>;
+      const { as: Tag, className, style, fallbackText } = this.props;
+      return React.createElement(Tag, { className, style }, fallbackText);
     }
     return this.props.children;
   }
@@ -47,13 +68,8 @@ export function SafeTextMorph({
   const textContent = String(children ?? '');
 
   return (
-    <TextMorphErrorBoundary fallbackText={textContent}>
-      <TextMorph
-        as={as}
-        className={className}
-        style={style}
-        duration={duration}
-      >
+    <TextMorphErrorBoundary fallbackText={textContent} as={as} className={className} style={style}>
+      <TextMorph as={as} className={className} style={style} duration={duration}>
         {textContent}
       </TextMorph>
     </TextMorphErrorBoundary>

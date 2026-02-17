@@ -203,7 +203,7 @@ export function SideBarMenu({
                     <TransferSummary
                       key={
                         item.type === TransferItemType.Local
-                          ? `local-${item.data.timestamp}`
+                          ? `local-${item.data.timestamp}-${item.data.originTxHash || item.data.msgId || ''}`
                           : `api-${item.data.msgId}`
                       }
                       item={item}

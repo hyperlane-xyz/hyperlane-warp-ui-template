@@ -147,6 +147,7 @@ const nextConfig = {
 
   experimental: {
     webpackBuildWorker: true,
+    parallelServerBuildTraces: true,
     optimizePackageImports: [
       '@hyperlane-xyz/registry',
       '@hyperlane-xyz/sdk',

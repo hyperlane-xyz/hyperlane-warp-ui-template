@@ -84,21 +84,20 @@ export function SideBarMenu({
   );
 
   // Merge local transfers with API messages
-  const mergedTransfers = useMergedTransferHistory(transfers, messages);
+  const warpCore = useWarpCore();
+  const allMergedTransfers = useMergedTransferHistory(transfers, messages);
 
-  // Open modal for new transfer
-  useEffect(() => {
-    if (!didMountRef.current) {
-      didMountRef.current = true;
-    } else if (transferLoading) {
-      setSelectedTransfer(transfers[transfers.length - 1]);
-      setIsModalOpen(true);
-    }
-  }, [transfers, transferLoading]);
-
-  useEffect(() => {
-    setIsMenuOpen(isOpen);
-  }, [isOpen]);
+  // Filter out API messages with unknown tokens
+  const mergedTransfers = useMemo(
+    () =>
+      allMergedTransfers.filter((item) => {
+        if (item.type === 'local') return true;
+        const originChain = multiProvider.tryGetChainName(item.data.originDomainId);
+        if (!originChain) return false;
+        return !!tryFindToken(warpCore, originChain, item.data.sender);
+      }),
+    [allMergedTransfers, multiProvider, warpCore],
+  );
 
   // Infinite scroll handler
   const handleScroll = useCallback(() => {
@@ -115,8 +114,6 @@ export function SideBarMenu({
     toast.success('Address copied to clipboard', { autoClose: 2000 });
   };
 
-  const warpCore = useWarpCore();
-
   const handleItemClick = (item: TransferItem) => {
     if (item.type === 'local') {
       setSelectedTransfer(item.data);
@@ -127,6 +124,20 @@ export function SideBarMenu({
     }
     setIsModalOpen(true);
   };
+
+  // Open modal for new transfer
+  useEffect(() => {
+    if (!didMountRef.current) {
+      didMountRef.current = true;
+    } else if (transferLoading) {
+      setSelectedTransfer(transfers[transfers.length - 1]);
+      setIsModalOpen(true);
+    }
+  }, [transfers, transferLoading]);
+
+  useEffect(() => {
+    setIsMenuOpen(isOpen);
+  }, [isOpen]);
 
   return (
     <>

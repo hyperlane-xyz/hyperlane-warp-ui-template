@@ -26,6 +26,11 @@ interface UseMessageHistoryResult {
   refresh: () => void;
 }
 
+interface PageResult {
+  messages: MessageStub[];
+  rawCount: number; // Raw DB rows fetched (before parsing/filtering)
+}
+
 export function useMessageHistory(
   walletAddresses: string[],
   warpRouteAddresses: string[],
@@ -47,14 +52,14 @@ export function useMessageHistory(
   const { data, isLoading, isFetchingNextPage, error, hasNextPage, fetchNextPage } =
     useInfiniteQuery({
       queryKey,
-      queryFn: async ({ pageParam }) => {
+      queryFn: async ({ pageParam }): Promise<PageResult> => {
         const wallets = JSON.parse(walletKey) as string[];
         const warpRoutes = JSON.parse(warpRouteKey) as string[];
 
-        if (!wallets.length || !warpRoutes.length) return [];
+        if (!wallets.length || !warpRoutes.length) return { messages: [], rawCount: 0 };
 
         const queryData = buildMessageHistoryQuery(wallets, warpRoutes, PAGE_LIMIT, pageParam);
-        if (!queryData) return [];
+        if (!queryData) return { messages: [], rawCount: 0 };
 
         const result = await executeGraphQLQuery<{ message_view: MessageStubEntry[] }>(
           queryData.query,
@@ -64,16 +69,19 @@ export function useMessageHistory(
         if (result.error) throw result.error;
 
         const entries = result.data?.message_view;
-        if (!entries?.length) return [];
+        if (!entries?.length) return { messages: [], rawCount: 0 };
 
-        return entries
+        const messages = entries
           .map((entry) => parseMessageEntry(entry, multiProvider))
           .filter((m): m is MessageStub => m !== null);
+
+        return { messages, rawCount: entries.length };
       },
       initialPageParam: 0,
       getNextPageParam: (lastPage, allPages) => {
-        if (lastPage.length < PAGE_LIMIT) return undefined;
-        return allPages.flat().length;
+        if (lastPage.rawCount < PAGE_LIMIT) return undefined;
+        // Use raw DB row count for offset to avoid drift when parseMessageEntry filters entries
+        return allPages.reduce((acc, page) => acc + page.rawCount, 0);
       },
       enabled: walletAddresses.length > 0 && warpRouteAddresses.length > 0,
       refetchInterval: REFRESH_INTERVAL_MS,
@@ -85,7 +93,7 @@ export function useMessageHistory(
     const seen = new Set<string>();
     const result: MessageStub[] = [];
     for (const page of data.pages) {
-      for (const msg of page) {
+      for (const msg of page.messages) {
         if (!seen.has(msg.msgId)) {
           seen.add(msg.msgId);
           result.push(msg);

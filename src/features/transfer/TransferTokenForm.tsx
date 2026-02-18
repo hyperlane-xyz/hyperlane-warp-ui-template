@@ -941,10 +941,15 @@ async function enrichBalanceError(
         sender,
         recipient,
       });
-      const balance = originTokenAmount.token.isFungibleWith(igpQuote.token)
+      const isFungible = originTokenAmount.token.isFungibleWith(igpQuote.token);
+      const balance = isFungible
         ? await originTokenAmount.token.getBalance(warpCore.multiProvider, sender)
         : await igpQuote.token.getBalance(warpCore.multiProvider, sender);
-      const deficit = igpQuote.amount - balance.amount;
+      // When fungible, balance must cover both transfer + gas
+      const totalNeeded = isFungible
+        ? igpQuote.amount + originTokenAmount.amount
+        : igpQuote.amount;
+      const deficit = totalNeeded - balance.amount;
       if (deficit > 0n) {
         const deficitAmount = new TokenAmount(deficit, igpQuote.token);
         return {

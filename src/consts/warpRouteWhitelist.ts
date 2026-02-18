@@ -21,6 +21,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'ETH/ethereum-hyperevm',
   'ETH/arbitrum-base-ethereum-lumiaprism-optimism-polygon',
   'ETH/coti-ethereum',
+  'ETH/paradex',
 
   // tETH routes
   'tETH/eclipsemainnet-ethereum',

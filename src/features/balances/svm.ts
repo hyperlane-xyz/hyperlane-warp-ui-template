@@ -34,8 +34,9 @@ function classifySealevelToken(token: Token): {
     case TokenStandard.SealevelHypCollateral:
       return { type: 'spl', mintAddress: token.collateralAddressOrDenom };
     case TokenStandard.SealevelHypSynthetic:
-      // Synthetic mint is a PDA derived from the warp router program.
-      // Matches SealevelHypSyntheticAdapter.deriveMintAuthorityAccount().
+      // The synthetic token mint IS the PDA at these seeds.
+      // SDK's deriveMintAuthorityAccount() is misleadingly named — it returns the mint address,
+      // as confirmed by its use as the `mint` arg in getAssociatedTokenAddressSync.
       return {
         type: 'spl2022',
         mintAddress: BaseSealevelAdapter.derivePda(
@@ -98,13 +99,15 @@ function buildMintToKeysMap(entries: SealevelTokenEntry[]): Map<string, string[]
   return map;
 }
 
+interface ParsedTokenAccount {
+  account: { data: { parsed: { info: { mint: string; tokenAmount: { amount: string } } } } };
+}
+
 function parseSplTokenAccounts(
-  accounts: Array<{
-    account: { data: { parsed: { info: { mint: string; tokenAmount: { amount: string } } } } };
-  }>,
+  accounts: ParsedTokenAccount[],
   mintToKeys: Map<string, string[]>,
-  out: Record<string, bigint>,
-) {
+): Record<string, bigint> {
+  const out: Record<string, bigint> = {};
   for (const { account } of accounts) {
     const info = account.data.parsed.info;
     const keys = mintToKeys.get(info.mint);
@@ -114,6 +117,7 @@ function parseSplTokenAccounts(
       out[key] = amount;
     }
   }
+  return out;
 }
 
 /** Fetch all SPL token balances for a single Sealevel chain via getParsedTokenAccountsByOwner. */
@@ -121,11 +125,10 @@ export async function fetchSealevelChainBalances(
   group: SealevelChainGroup,
   rpcUrl: string,
   ownerAddress: string,
-  out: Record<string, bigint>,
-) {
+): Promise<Record<string, bigint>> {
   const connection = new Connection(rpcUrl, 'confirmed');
   const owner = new PublicKey(ownerAddress);
-  const promises: Promise<void>[] = [];
+  const promises: Promise<Record<string, bigint>>[] = [];
 
   // Fetch SPL and Token-2022 accounts
   const programFetches: [Map<string, string[]>, PublicKey, string][] = [
@@ -137,8 +140,11 @@ export async function fetchSealevelChainBalances(
     promises.push(
       connection
         .getParsedTokenAccountsByOwner(owner, { programId })
-        .then((result) => parseSplTokenAccounts(result.value, mintToKeys, out))
-        .catch((err) => logger.warn(`${label} fetch failed on ${group.chainName}`, err)),
+        .then((result) => parseSplTokenAccounts(result.value, mintToKeys))
+        .catch((err) => {
+          logger.warn(`${label} fetch failed on ${group.chainName}`, err);
+          return {};
+        }),
     );
   }
 
@@ -149,13 +155,19 @@ export async function fetchSealevelChainBalances(
         .getBalance(owner)
         .then((lamports) => {
           const balance = BigInt(lamports);
+          const out: Record<string, bigint> = {};
           for (const { key } of group.nativeTokens) {
             out[key] = balance;
           }
+          return out;
         })
-        .catch((err) => logger.warn(`Native SOL balance failed on ${group.chainName}`, err)),
+        .catch((err) => {
+          logger.warn(`Native SOL balance failed on ${group.chainName}`, err);
+          return {};
+        }),
     );
   }
 
-  await Promise.all(promises);
+  const partials = await Promise.all(promises);
+  return Object.assign({}, ...partials);
 }

@@ -43,6 +43,7 @@ interface CallInfo {
 
 type Aggregate3Result = Array<{ success: boolean; returnData: Hex }>;
 
+/** Assumes EVM tokens only — callers must filter by ProtocolType.Ethereum first. */
 function classifyToken(token: Token): { type: TokenClassification; erc20Address?: Hex } {
   if (token.isHypNative()) return { type: 'native' };
 
@@ -213,10 +214,9 @@ export async function fetchChainBalances(
   group: ChainGroup,
   multiProvider: MultiProtocolProvider,
   evmAddress: Hex,
-  out: Record<string, bigint>,
-) {
+): Promise<Record<string, bigint>> {
   const rpcUrl = multiProvider.tryGetChainMetadata(group.chainName)?.rpcUrls?.[0]?.http;
-  if (!rpcUrl) return;
+  if (!rpcUrl) return {};
 
   const client = createPublicClient({ transport: http(rpcUrl) });
   const batchAddress = getBatchAddress(group.chainName);
@@ -242,17 +242,18 @@ export async function fetchChainBalances(
     })),
     ...lockboxResolved,
   ];
-  if (allCalls.length === 0) return;
+  if (allCalls.length === 0) return {};
 
   try {
+    const out: Record<string, bigint> = {};
     const decoded = await callAggregate3(client, batchAddress, allCalls);
     decodeBalanceResults(decoded, allCalls, out);
+    return out;
   } catch (err) {
     logger.warn(`Batch call failed on chain ${chainId}, falling back to SDK getBalance`, err);
-    await Promise.all(
-      group.tokens.map(({ token, key }) =>
-        fetchSdkBalance(token, multiProvider, evmAddress, out, key),
-      ),
+    const partials = await Promise.all(
+      group.tokens.map(({ token, key }) => fetchSdkBalance(token, multiProvider, evmAddress, key)),
     );
+    return Object.assign({}, ...partials);
   }
 }

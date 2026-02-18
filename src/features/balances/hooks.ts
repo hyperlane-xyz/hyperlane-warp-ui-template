@@ -128,17 +128,16 @@ export function useTokenBalances(tokens: Token[], origin: ChainName, destination
   const { data: balances = {}, isLoading } = useQuery({
     queryKey: ['tokenBalances', walletEntries, origin, destination, tokenKeys],
     queryFn: async (): Promise<Record<string, bigint>> => {
-      const results: Record<string, bigint> = {};
-      const promises: Promise<void>[] = [];
+      const promises: Promise<Record<string, bigint>>[] = [];
 
       const evmAddr = walletAddresses.get(ProtocolType.Ethereum);
       if (evmAddr) {
         const { chainGroups, fallbackTokens } = groupEvmTokensByChain(tokens, multiProvider);
         for (const [chainId, group] of chainGroups) {
-          promises.push(fetchChainBalances(chainId, group, multiProvider, evmAddr as Hex, results));
+          promises.push(fetchChainBalances(chainId, group, multiProvider, evmAddr as Hex));
         }
         for (const { token, key } of fallbackTokens) {
-          promises.push(fetchSdkBalance(token, multiProvider, evmAddr, results, key));
+          promises.push(fetchSdkBalance(token, multiProvider, evmAddr, key));
         }
       }
 
@@ -148,13 +147,13 @@ export function useTokenBalances(tokens: Token[], origin: ChainName, destination
         for (const [, group] of sealevelGroups) {
           const rpcUrl = multiProvider.tryGetChainMetadata(group.chainName)?.rpcUrls?.[0]?.http;
           if (rpcUrl) {
-            promises.push(fetchSealevelChainBalances(group, rpcUrl, solAddr, results));
+            promises.push(fetchSealevelChainBalances(group, rpcUrl, solAddr));
           }
         }
       }
 
-      await Promise.all(promises);
-      return results;
+      const partials = await Promise.all(promises);
+      return Object.assign({}, ...partials);
     },
     enabled: tokens.length > 0 && walletAddresses.size > 0,
     staleTime: 30_000,

@@ -16,13 +16,13 @@ export async function fetchSdkBalance(
   token: Token,
   multiProvider: MultiProtocolProvider,
   address: string,
-  out: Record<string, bigint>,
   key: string,
-) {
+): Promise<Record<string, bigint>> {
   try {
     const balance = await token.getBalance(multiProvider, address);
-    out[key] = balance.amount;
+    return { [key]: balance.amount };
   } catch (err) {
     logger.warn(`Failed to fetch balance for ${key}`, err);
+    return {};
   }
 }

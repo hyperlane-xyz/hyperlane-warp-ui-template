@@ -894,7 +894,14 @@ async function validateForm(
     });
 
     if (!isNullish(result)) {
-      const enriched = await enrichIgpError(warpCore, result, originTokenAmount, destination, sender || '', recipient);
+      const enriched = await enrichBalanceError(
+        warpCore,
+        result,
+        originTokenAmount,
+        destination,
+        sender || '',
+        recipient,
+      );
       return [enriched, null];
     }
 
@@ -915,8 +922,9 @@ async function validateForm(
 }
 
 const igpErrorPattern = /^Insufficient (\S+) for interchain gas$/;
+const gasAndTransferError = 'Insufficient balance for gas and transfer';
 
-async function enrichIgpError(
+async function enrichBalanceError(
   warpCore: WarpCore,
   result: Record<string, string>,
   originTokenAmount: TokenAmount,
@@ -924,26 +932,43 @@ async function enrichIgpError(
   sender: string,
   recipient: string,
 ): Promise<Record<string, string>> {
-  if (!result.amount || !igpErrorPattern.test(result.amount)) return result;
+  if (!result.amount) return result;
   try {
-    const { igpQuote } = await warpCore.getInterchainTransferFee({
-      originTokenAmount,
-      destination,
-      sender,
-      recipient,
-    });
-    const balance = originTokenAmount.token.isFungibleWith(igpQuote.token)
-      ? await originTokenAmount.token.getBalance(warpCore.multiProvider, sender)
-      : await igpQuote.token.getBalance(warpCore.multiProvider, sender);
-    const deficit = igpQuote.amount - balance.amount;
-    if (deficit > 0n) {
-      const deficitAmount = new TokenAmount(deficit, igpQuote.token);
-      return {
-        amount: `Insufficient ${igpQuote.token.symbol} for interchain gas (need ${deficitAmount.getDecimalFormattedAmount().toFixed(4)} more)`,
-      };
+    if (igpErrorPattern.test(result.amount)) {
+      const { igpQuote } = await warpCore.getInterchainTransferFee({
+        originTokenAmount,
+        destination,
+        sender,
+        recipient,
+      });
+      const balance = originTokenAmount.token.isFungibleWith(igpQuote.token)
+        ? await originTokenAmount.token.getBalance(warpCore.multiProvider, sender)
+        : await igpQuote.token.getBalance(warpCore.multiProvider, sender);
+      const deficit = igpQuote.amount - balance.amount;
+      if (deficit > 0n) {
+        const deficitAmount = new TokenAmount(deficit, igpQuote.token);
+        return {
+          amount: `Insufficient ${igpQuote.token.symbol} for interchain gas (need ${deficitAmount.getDecimalFormattedAmount().toFixed(4)} more)`,
+        };
+      }
+    } else if (result.amount === gasAndTransferError) {
+      const balance = await originTokenAmount.token.getBalance(warpCore.multiProvider, sender);
+      const maxTransfer = await warpCore.getMaxTransferAmount({
+        balance,
+        destination,
+        recipient,
+        sender,
+      });
+      const deficit = originTokenAmount.amount - maxTransfer.amount;
+      if (deficit > 0n) {
+        const deficitAmount = new TokenAmount(deficit, originTokenAmount.token);
+        return {
+          amount: `Insufficient balance for gas and transfer (need ${deficitAmount.getDecimalFormattedAmount().toFixed(4)} more ${originTokenAmount.token.symbol})`,
+        };
+      }
     }
   } catch (e) {
-    logger.warn('Failed to enrich IGP error', e);
+    logger.warn('Failed to enrich balance error', e);
   }
   return result;
 }

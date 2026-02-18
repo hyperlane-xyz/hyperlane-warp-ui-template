@@ -149,7 +149,7 @@ export function SideBarMenu({
       >
         {isMenuOpen && (
           <button
-            className="absolute left-0 top-0 flex h-full w-9 -translate-x-full items-center justify-center rounded-l-md bg-white bg-opacity-60 transition-all hover:bg-opacity-80"
+            className="absolute left-0 top-0 flex h-full w-9 -translate-x-full items-center justify-center rounded-l bg-accent-50/30 backdrop-blur-[1.5px] transition-all"
             onClick={() => onClose()}
           >
             <Image src={CollapseIcon} width={15} height={24} alt="" />
@@ -160,7 +160,7 @@ export function SideBarMenu({
           onScroll={handleScroll}
           className="flex h-full w-full flex-col overflow-y-auto"
         >
-          <div className="w-full rounded-t-md bg-primary-500 px-3.5 py-2 text-base font-normal tracking-wider text-white">
+          <div className="w-full bg-accent-gradient px-3.5 py-2 text-base font-normal tracking-wider text-white shadow-accent-glow">
             Connected Wallets
           </div>
           <AccountList
@@ -170,14 +170,14 @@ export function SideBarMenu({
             className="px-3 py-3"
             chainName={originChainName}
           />
-          <div className="flex w-full items-center justify-between bg-primary-500 px-3.5 py-2">
+          <div className="flex w-full items-center justify-between bg-accent-gradient px-3.5 py-2 shadow-accent-glow">
             <span className="text-base font-normal tracking-wider text-white">
               Transfer History
             </span>
             <button
               onClick={refresh}
               disabled={isLoading}
-              className="rounded p-1 hover:bg-primary-400 disabled:opacity-50"
+              className="rounded p-1 hover:bg-accent-500/50 disabled:opacity-50"
               title="Refresh"
             >
               <RefreshIcon

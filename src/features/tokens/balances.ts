@@ -1,5 +1,5 @@
-import { IToken, MultiProtocolProvider, Token } from '@hyperlane-xyz/sdk';
 import { chainAddresses } from '@hyperlane-xyz/registry';
+import { IToken, MultiProtocolProvider, Token } from '@hyperlane-xyz/sdk';
 import { ProtocolType, isValidAddress, normalizeAddress } from '@hyperlane-xyz/utils';
 import { useAccountAddressForChain, useEthereumAccount } from '@hyperlane-xyz/widgets';
 import { useQuery } from '@tanstack/react-query';
@@ -338,7 +338,10 @@ export function useTokenBalances(tokens: Token[], origin: ChainName, destination
             // Batch contract unavailable on this chain. Fall back to the SDK's
             // token.getBalance() which handles all token standards correctly.
             // Runs in parallel — typically only 1-3 tokens per chain in a route.
-            logger.warn(`Batch call failed on chain ${chainId}, falling back to SDK getBalance`, err);
+            logger.warn(
+              `Batch call failed on chain ${chainId}, falling back to SDK getBalance`,
+              err,
+            );
             await Promise.all(
               group.tokens.map(async ({ token, key }) => {
                 try {

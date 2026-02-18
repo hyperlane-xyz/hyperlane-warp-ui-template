@@ -901,6 +901,7 @@ async function validateForm(
         destination,
         sender || '',
         recipient,
+        await senderPubKey,
       );
       return [enriched, null];
     }
@@ -931,6 +932,7 @@ async function enrichBalanceError(
   destination: string,
   sender: string,
   recipient: string,
+  senderPubKey?: string,
 ): Promise<Record<string, string>> {
   if (!result.amount) return result;
   try {
@@ -963,6 +965,7 @@ async function enrichBalanceError(
         destination,
         recipient,
         sender,
+        senderPubKey,
       });
       const deficit = originTokenAmount.amount - maxTransfer.amount;
       if (deficit > 0n) {

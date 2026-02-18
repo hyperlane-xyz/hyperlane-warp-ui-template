@@ -8,19 +8,18 @@ import { TransferFeeModal } from './TransferFeeModal';
 export function FeeSectionButton({
   isLoading,
   fees,
-  visible,
   feePrices,
   transferUsd,
 }: {
   isLoading: boolean;
   fees: (WarpCoreFeeEstimate & { totalFees: string }) | null;
-  visible: boolean;
   feePrices: FeePrices;
   transferUsd: number;
 }) {
   const { close, isOpen, open } = useModal();
 
-  if (!visible) return null;
+  const totalUsd = fees ? getTotalFeesUsd(fees, feePrices) : null;
+  const pct = fees ? getFeePercentage(getTotalFeesUsdRaw(fees, feePrices), transferUsd) : null;
 
   return (
     <>
@@ -35,17 +34,12 @@ export function FeeSectionButton({
           >
             <FuelPumpIcon width={14} height={14} color={Color.gray[600]} className="mr-1" />
             Fees: {fees.totalFees}
-            {(() => {
-              const usd = getTotalFeesUsd(fees, feePrices);
-              const pct = getFeePercentage(getTotalFeesUsdRaw(fees, feePrices), transferUsd);
-              if (!usd) return null;
-              return (
-                <span className="ml-1 text-gray-500">
-                  {usd}
-                  {pct ? ` (${pct})` : ''}
-                </span>
-              );
-            })()}
+            {totalUsd && (
+              <span className="ml-1 text-gray-500">
+                {totalUsd}
+                {pct ? ` (${pct})` : ''}
+              </span>
+            )}
             <ChevronIcon direction="e" width="0.6rem" height="0.6rem" />
           </button>
         ) : null}

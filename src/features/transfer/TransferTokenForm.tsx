@@ -47,13 +47,13 @@ import { useIsAccountSanctioned } from '../sanctions/hooks/useIsAccountSanctione
 import { useStore } from '../store';
 import { SelectOrInputTokenIds } from '../tokens/SelectOrInputTokenIds';
 import { TokenSelectField } from '../tokens/TokenSelectField';
+import { UsdLabel } from '../tokens/UsdLabel';
 import { useIsApproveRequired } from '../tokens/approval';
 import {
   getDestinationNativeBalance,
   useDestinationBalance,
   useOriginBalance,
 } from '../tokens/balances';
-import { getUsdDisplayForFee } from '../tokens/feeUsdDisplay';
 import {
   getIndexForToken,
   getInitialTokenIndex,
@@ -710,7 +710,6 @@ function ReviewDetails({
     <>
       {!isReview && (
         <FeeSectionButton
-          visible={!isReview}
           fees={fees}
           isLoading={isLoading}
           feePrices={feePrices}
@@ -767,10 +766,7 @@ function ReviewDetails({
                       <span className="min-w-[7.5rem]">Local Gas (est.)</span>
                       <span>
                         {`${fees.localQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${fees.localQuote.token.symbol || ''}`}
-                        {(() => {
-                          const usd = getUsdDisplayForFee(fees.localQuote, feePrices);
-                          return usd ? <span className="ml-1 text-gray-500">{usd}</span> : null;
-                        })()}
+                        <UsdLabel tokenAmount={fees.localQuote} feePrices={feePrices} />
                       </span>
                     </p>
                   )}
@@ -779,10 +775,7 @@ function ReviewDetails({
                       <span className="min-w-[7.5rem]">Interchain Gas</span>
                       <span>
                         {`${fees.interchainQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${fees.interchainQuote.token.symbol || ''}`}
-                        {(() => {
-                          const usd = getUsdDisplayForFee(fees.interchainQuote, feePrices);
-                          return usd ? <span className="ml-1 text-gray-500">{usd}</span> : null;
-                        })()}
+                        <UsdLabel tokenAmount={fees.interchainQuote} feePrices={feePrices} />
                       </span>
                     </p>
                   )}
@@ -791,10 +784,7 @@ function ReviewDetails({
                       <span className="min-w-[7.5rem]">Token Fee</span>
                       <span>
                         {`${fees.tokenFeeQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${fees.tokenFeeQuote.token.symbol || ''}`}
-                        {(() => {
-                          const usd = getUsdDisplayForFee(fees.tokenFeeQuote, feePrices);
-                          return usd ? <span className="ml-1 text-gray-500">{usd}</span> : null;
-                        })()}
+                        <UsdLabel tokenAmount={fees.tokenFeeQuote} feePrices={feePrices} />
                       </span>
                     </p>
                   )}

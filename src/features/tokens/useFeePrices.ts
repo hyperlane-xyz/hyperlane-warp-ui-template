@@ -1,6 +1,6 @@
 import { IToken, Token, WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
 import { useQuery } from '@tanstack/react-query';
-import { logger } from '../../utils/logger';
+import { fetchCoinGeckoPrices } from './fetchCoinGeckoPrices';
 
 const FEE_PRICE_REFRESH_INTERVAL = 60_000;
 
@@ -9,22 +9,32 @@ export type FeePrices = Record<string, number>;
 
 // SDK fee tokens lack coinGeckoId. Resolve it by matching against warp core
 // tokens which carry coinGeckoId from config.
-function resolveCoinGeckoId(feeToken: IToken, knownTokens: Token[]): string | undefined {
+function resolveCoinGeckoId(
+  feeToken: IToken,
+  knownTokens: Token[],
+  resolvedSymbols: Record<string, string>,
+): string | undefined {
   if (feeToken.coinGeckoId) return feeToken.coinGeckoId;
-  for (const t of knownTokens) {
-    if (t.symbol === feeToken.symbol && t.coinGeckoId) return t.coinGeckoId;
+  if (resolvedSymbols[feeToken.symbol]) return resolvedSymbols[feeToken.symbol];
+  for (const token of knownTokens) {
+    if (!token.coinGeckoId) continue;
+    if (token.chainName === feeToken.chainName && token.symbol === feeToken.symbol)
+      return token.coinGeckoId;
+  }
+  // Fall back to symbol-only match (native tokens like ETH across chains share a CoinGecko ID)
+  for (const token of knownTokens) {
+    if (token.symbol === feeToken.symbol && token.coinGeckoId) return token.coinGeckoId;
   }
   return undefined;
 }
 
 export function useFeePrices(fees: WarpCoreFeeEstimate | null, knownTokens: Token[]): FeePrices {
-  // Build symbol→coinGeckoId map for fee tokens
   const symbolToId: Record<string, string> = {};
   if (fees) {
-    for (const q of [fees.localQuote, fees.interchainQuote, fees.tokenFeeQuote]) {
-      if (!q || q.amount === 0n) continue;
-      const id = resolveCoinGeckoId(q.token, knownTokens);
-      if (id) symbolToId[q.token.symbol] = id;
+    for (const quote of [fees.localQuote, fees.interchainQuote, fees.tokenFeeQuote]) {
+      if (!quote || quote.amount === 0n) continue;
+      const id = resolveCoinGeckoId(quote.token, knownTokens, symbolToId);
+      if (id) symbolToId[quote.token.symbol] = id;
     }
   }
 
@@ -32,7 +42,7 @@ export function useFeePrices(fees: WarpCoreFeeEstimate | null, knownTokens: Toke
 
   const { data } = useQuery({
     queryKey: ['useFeePrices', ids],
-    queryFn: () => fetchFeePrices(ids),
+    queryFn: () => fetchCoinGeckoPrices(ids),
     enabled: ids.length > 0,
     staleTime: FEE_PRICE_REFRESH_INTERVAL,
     refetchInterval: FEE_PRICE_REFRESH_INTERVAL,
@@ -40,35 +50,10 @@ export function useFeePrices(fees: WarpCoreFeeEstimate | null, knownTokens: Toke
     refetchOnMount: false,
   });
 
-  // Return prices keyed by symbol for easy lookup from fee TokenAmounts
   if (!data) return {};
   const result: FeePrices = {};
   for (const [symbol, id] of Object.entries(symbolToId)) {
     if (data[id]) result[symbol] = data[id];
   }
   return result;
-}
-
-type CoinGeckoResponse = Record<string, { usd: number }>;
-
-async function fetchFeePrices(ids: string[]): Promise<FeePrices> {
-  if (!ids.length) return {};
-  try {
-    const res = await fetch(
-      `https://api.coingecko.com/api/v3/simple/price?ids=${ids.join(',')}&vs_currencies=usd`,
-    );
-    if (!res.ok) {
-      logger.warn(`CoinGecko fee price error: ${res.status}`);
-      return {};
-    }
-    const data: CoinGeckoResponse = await res.json();
-    const prices: FeePrices = {};
-    for (const [id, val] of Object.entries(data)) {
-      if (val?.usd) prices[id] = val.usd;
-    }
-    return prices;
-  } catch (error) {
-    logger.warn('Failed to fetch fee prices', error);
-    return {};
-  }
 }

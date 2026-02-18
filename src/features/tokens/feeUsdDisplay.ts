@@ -1,5 +1,5 @@
 import { TokenAmount } from '@hyperlane-xyz/sdk';
-import { FeePrices } from './useFeePrices';
+import type { FeePrices } from './useFeePrices';
 
 function formatUsd(value: number): string | null {
   if (value <= 0) return null;

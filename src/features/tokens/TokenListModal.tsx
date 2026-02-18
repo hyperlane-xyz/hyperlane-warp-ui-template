@@ -12,6 +12,7 @@ import InfoIcon from '../../images/icons/info-circle.svg';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { useStore } from '../store';
+import { formatBalance, formatUsd, getUsdValue } from '../../utils/balances';
 import { tokenKey, useTokenBalances } from './balances';
 import { useWarpCore } from './hooks';
 import { TokenChainMap } from './types';
@@ -94,35 +95,6 @@ function SearchBar({ search, setSearch }: { search: string; setSearch: (s: strin
   );
 }
 
-function formatBalance(balance: bigint, decimals: number): string {
-  const divisor = 10n ** BigInt(decimals);
-  const whole = balance / divisor;
-  const remainder = balance % divisor;
-  const fractionStr = remainder.toString().padStart(decimals, '0').slice(0, 4);
-  // Remove trailing zeros from fraction
-  const trimmed = fractionStr.replace(/0+$/, '');
-  if (!trimmed) return whole.toString();
-  return `${whole}.${trimmed}`;
-}
-
-function formatUsd(value: number): string {
-  if (value < 0.01) return '<$0.01';
-  return `$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
-
-function getUsdValue(
-  token: Token,
-  balances: Record<string, bigint>,
-  prices: Record<string, number>,
-): number | null {
-  const key = tokenKey(token);
-  const bal = balances[key];
-  if (bal == null || !token.coinGeckoId) return null;
-  const price = prices[token.coinGeckoId];
-  if (price == null) return null;
-  return (Number(bal) / 10 ** token.decimals) * price;
-}
-
 export function TokenList({
   origin,
   destination,
@@ -141,14 +113,13 @@ export function TokenList({
   const tokensBySymbolChainMap = useStore((s) => s.tokensBySymbolChainMap);
 
   // All route tokens (stable — only changes on origin/destination change, NOT on search)
-  const { allRouteTokens } = useMemo(() => {
+  const allRouteTokens = useMemo(() => {
     const multiChainTokens = warpCore.tokens.filter((t) => t.isMultiChainToken());
     const tokensWithRoute = warpCore.getTokensForRoute(origin, destination);
     const items = multiChainTokens
       .map((t) => ({ token: t, disabled: !tokensWithRoute.includes(t) }))
       .filter((t) => (config.showDisabledTokens ? true : !t.disabled));
-    const { tokens: deduped } = dedupeMultiCollateralTokens(items, destination);
-    return { allRouteTokens: deduped };
+    return dedupeMultiCollateralTokens(items, destination).tokens;
   }, [warpCore, origin, destination]);
 
   // Fetch balances and prices for ALL route tokens (not search-filtered)
@@ -233,9 +204,9 @@ export function TokenList({
             <div className="shrink-0">
               <TokenIcon token={t.token} size={30} />
             </div>
-            <div className="ml-2 shrink-0 text-left">
-              <div className="w-16 truncate text-sm">{t.token.symbol || 'Unknown'}</div>
-              <div className="w-16 truncate text-xs text-gray-500">{t.token.name || 'Unknown'}</div>
+            <div className="ml-2 min-w-0 text-left">
+              <div className="truncate text-sm">{t.token.symbol || 'Unknown'}</div>
+              <div className="truncate text-xs text-gray-500">{t.token.name || 'Unknown'}</div>
             </div>
             <div className="ml-auto shrink-0 text-right">
               {!evmAddress ? (

@@ -3,6 +3,7 @@ import {
   warpRouteConfigs as publishedRegistryWarpRoutes,
 } from '@hyperlane-xyz/registry';
 import {
+  ChainName,
   TOKEN_STANDARD_TO_PROTOCOL,
   TokenStandard,
   WarpCoreConfig,
@@ -10,17 +11,20 @@ import {
   getTokenConnectionId,
   validateZodResult,
 } from '@hyperlane-xyz/sdk';
-import { isObjEmpty, objFilter, objMerge } from '@hyperlane-xyz/utils';
+import { isObjEmpty, normalizeAddress, objFilter, objMerge } from '@hyperlane-xyz/utils';
 import { config } from '../../consts/config.ts';
 import { warpRouteWhitelist } from '../../consts/warpRouteWhitelist.ts';
 import { warpRouteConfigs as tsWarpRoutes } from '../../consts/warpRoutes.ts';
 import yamlWarpRoutes from '../../consts/warpRoutes.yaml';
 import { logger } from '../../utils/logger.ts';
 
+// Map of chain -> address -> wireDecimals
+export type WireDecimalsMap = Record<ChainName, Record<string, number>>;
+
 export async function assembleWarpCoreConfig(
   storeOverrides: WarpCoreConfig[],
   registry: IRegistry,
-): Promise<WarpCoreConfig> {
+): Promise<{ config: WarpCoreConfig; wireDecimalsMap: WireDecimalsMap }> {
   const yamlResult = WarpCoreConfigSchema.safeParse(yamlWarpRoutes);
   const yamlConfig = validateZodResult(yamlResult, 'warp core yaml config');
   const tsResult = WarpCoreConfigSchema.safeParse(tsWarpRoutes);
@@ -45,6 +49,10 @@ export async function assembleWarpCoreConfig(
     ? filterToIds(registryWarpRoutes, warpRouteWhitelist)
     : registryWarpRoutes;
   filteredRegistryConfigMap = fillMissingCoinGeckoIds(filteredRegistryConfigMap);
+
+  // Build wireDecimalsMap BEFORE flattening - this preserves route grouping
+  const wireDecimalsMap = buildWireDecimalsMap(filteredRegistryConfigMap);
+
   const filteredRegistryConfigValues = Object.values(filteredRegistryConfigMap);
   const filteredRegistryTokens = filteredRegistryConfigValues.map((c) => c.tokens).flat();
   const filteredRegistryOptions = filteredRegistryConfigValues.map((c) => c.options).flat();
@@ -73,7 +81,22 @@ export async function assembleWarpCoreConfig(
       'No warp route configs provided. Please check your registry, warp route whitelist, and custom route configs for issues.',
     );
 
-  return { tokens, options };
+  return { config: { tokens, options }, wireDecimalsMap };
+}
+
+// Build map of chain -> address -> wireDecimals before tokens are flattened
+// wireDecimals = max decimals across all tokens in a warp route
+function buildWireDecimalsMap(routes: Record<string, WarpCoreConfig>): WireDecimalsMap {
+  const map: WireDecimalsMap = {};
+  for (const routeConfig of Object.values(routes)) {
+    const wireDecimals = Math.max(...routeConfig.tokens.map((t) => t.decimals ?? 18));
+    for (const token of routeConfig.tokens) {
+      if (!token.addressOrDenom) continue;
+      map[token.chainName] ||= {};
+      map[token.chainName][normalizeAddress(token.addressOrDenom)] = wireDecimals;
+    }
+  }
+  return map;
 }
 
 // Fill missing coinGeckoIds within each warp route

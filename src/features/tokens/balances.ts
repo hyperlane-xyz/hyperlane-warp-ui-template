@@ -97,8 +97,65 @@ export function useEvmWalletBalance(
   return { balance: data, isError, isLoading };
 }
 
+// ─── Constants & ABIs ────────────────────────────────────────────────────────
+
 // Default multicall3 address, deployed at the same address on most EVM chains
 const MULTICALL3_ADDRESS = '0xca11bde05977b3631167028862be2a173976ca11' as Hex;
+
+// Minimal ABI for HypCollateral.wrappedToken() — returns the underlying ERC20 address
+const wrappedTokenAbi = [
+  {
+    inputs: [],
+    name: 'wrappedToken',
+    outputs: [{ internalType: 'address', name: '', type: 'address' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+] as const;
+
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+type TokenClassification = 'erc20' | 'lockbox' | 'native' | 'unknown';
+
+interface TokenEntry {
+  token: Token;
+  key: string;
+}
+
+interface ChainGroup {
+  chainName: string;
+  tokens: TokenEntry[];
+  erc20: { address: Hex; key: string }[];
+  lockbox: { routerAddress: Hex; key: string }[];
+}
+
+interface CallInfo {
+  target: Hex;
+  callData: Hex;
+  tokenKey: string;
+}
+
+type Aggregate3Result = Array<{ success: boolean; returnData: Hex }>;
+
+// ─── Pure helpers ────────────────────────────────────────────────────────────
+
+function tokenKey(token: Token): string {
+  return `${token.chainName}:${normalizeAddress(token.addressOrDenom, token.protocol)}`;
+}
+
+function classifyToken(token: Token): { type: TokenClassification; erc20Address?: Hex } {
+  if (token.protocol !== ProtocolType.Ethereum) return { type: 'native' };
+  if (token.isHypNative()) return { type: 'native' };
+
+  const standard = token.standard as string;
+  if (standard.includes('Lockbox')) return { type: 'lockbox' };
+  if (token.collateralAddressOrDenom)
+    return { type: 'erc20', erc20Address: normalizeAddress(token.collateralAddressOrDenom) as Hex };
+  if (standard.includes('Synthetic'))
+    return { type: 'erc20', erc20Address: normalizeAddress(token.addressOrDenom) as Hex };
+  // Unrecognized token type — fall back to SDK getBalance()
+  return { type: 'unknown' };
+}
 
 /**
  * Some chains have a custom batch contract address in the Hyperlane registry
@@ -113,42 +170,221 @@ function getBatchAddress(chainName: string): Hex {
   return MULTICALL3_ADDRESS;
 }
 
-// Minimal ABI for HypCollateral.wrappedToken() — returns the underlying ERC20 address
-const wrappedTokenAbi = [
-  {
-    inputs: [],
-    name: 'wrappedToken',
-    outputs: [{ internalType: 'address', name: '', type: 'address' }],
-    stateMutability: 'view',
-    type: 'function',
-  },
-] as const;
+// ─── Token grouping ──────────────────────────────────────────────────────────
 
-type TokenClassification = 'erc20' | 'lockbox' | 'native';
+/** Classify tokens and group by EVM chain. Non-EVM / native / unknown tokens use SDK fallback. */
+function groupTokensByChain(
+  tokens: Token[],
+  multiProvider: MultiProtocolProvider,
+): { chainGroups: Map<number, ChainGroup>; sdkFallbackTokens: TokenEntry[] } {
+  const chainGroups = new Map<number, ChainGroup>();
+  const sdkFallbackTokens: TokenEntry[] = [];
 
-function classifyToken(token: Token): { type: TokenClassification; erc20Address?: Hex } {
-  if (token.protocol !== ProtocolType.Ethereum) return { type: 'native' };
-  if (token.isHypNative()) return { type: 'native' };
+  for (const token of tokens) {
+    if (token.protocol !== ProtocolType.Ethereum) continue;
+    const chainMeta = multiProvider.tryGetChainMetadata(token.chainName);
+    if (!chainMeta?.chainId) continue;
+    const chainId = Number(chainMeta.chainId);
 
-  const standard = token.standard as string;
-  if (standard.includes('Lockbox')) return { type: 'lockbox' };
-  if (token.collateralAddressOrDenom)
-    return { type: 'erc20', erc20Address: normalizeAddress(token.collateralAddressOrDenom) as Hex };
-  if (standard.includes('Synthetic'))
-    return { type: 'erc20', erc20Address: normalizeAddress(token.addressOrDenom) as Hex };
-  // Collateral without collateralAddressOrDenom — resolve via wrappedToken()
-  return { type: 'lockbox' };
+    const key = tokenKey(token);
+    const classification = classifyToken(token);
+
+    // Native and unknown tokens use SDK getBalance() individually
+    if (classification.type === 'native' || classification.type === 'unknown') {
+      sdkFallbackTokens.push({ token, key });
+      continue;
+    }
+
+    if (!chainGroups.has(chainId)) {
+      chainGroups.set(chainId, { chainName: token.chainName, tokens: [], erc20: [], lockbox: [] });
+    }
+    const group = chainGroups.get(chainId)!;
+    group.tokens.push({ token, key });
+
+    if (classification.type === 'erc20' && classification.erc20Address) {
+      group.erc20.push({ address: classification.erc20Address, key });
+    } else {
+      group.lockbox.push({ routerAddress: normalizeAddress(token.addressOrDenom) as Hex, key });
+    }
+  }
+
+  return { chainGroups, sdkFallbackTokens };
 }
 
-function tokenKey(token: Token): string {
-  return `${token.chainName}:${normalizeAddress(token.addressOrDenom, token.protocol)}`;
+// ─── RPC helpers ─────────────────────────────────────────────────────────────
+
+/** Send a multicall3 aggregate3 batch via a single eth_call. */
+async function callAggregate3(
+  client: any, // ReturnType<typeof createPublicClient> triggers TS2589
+  batchAddress: Hex,
+  calls: Array<{ target: Hex; callData: Hex }>,
+): Promise<Aggregate3Result> {
+  const raw = await client.request({
+    method: 'eth_call',
+    params: [
+      {
+        to: batchAddress,
+        data: encodeFunctionData({
+          abi: multicall3Abi,
+          functionName: 'aggregate3',
+          args: [
+            calls.map((c) => ({
+              target: c.target,
+              allowFailure: true as const,
+              callData: c.callData,
+            })),
+          ],
+        }),
+      },
+      'latest',
+    ],
+  });
+  return decodeFunctionResult({
+    abi: multicall3Abi,
+    functionName: 'aggregate3',
+    data: raw,
+  }) as Aggregate3Result;
 }
 
-interface CallInfo {
-  target: Hex;
-  callData: Hex;
-  tokenKey: string;
+/** Fetch a single token balance via SDK fallback. */
+async function fetchSdkBalance(
+  token: Token,
+  multiProvider: MultiProtocolProvider,
+  address: string,
+  out: Record<string, bigint>,
+  key: string,
+) {
+  try {
+    const balance = await token.getBalance(multiProvider, address);
+    out[key] = balance.amount;
+  } catch (err) {
+    logger.warn(`Failed to fetch balance for ${key}`, err);
+  }
 }
+
+/**
+ * Resolve lockbox underlying ERC20 addresses via wrappedToken() multicall.
+ * Returns CallInfo[] ready for Phase 2 balanceOf batching.
+ */
+async function resolveLockboxTokens(
+  client: any,
+  batchAddress: Hex,
+  lockboxTokens: ChainGroup['lockbox'],
+  balanceOfCallData: Hex,
+  chainId: number,
+): Promise<CallInfo[]> {
+  if (lockboxTokens.length === 0) return [];
+
+  const resolveCallData = encodeFunctionData({
+    abi: wrappedTokenAbi,
+    functionName: 'wrappedToken',
+  });
+  try {
+    const decoded = await callAggregate3(
+      client,
+      batchAddress,
+      lockboxTokens.map((lb) => ({ target: lb.routerAddress, callData: resolveCallData })),
+    );
+    const resolved: CallInfo[] = [];
+    for (let i = 0; i < decoded.length; i++) {
+      if (decoded[i].success && decoded[i].returnData !== '0x') {
+        const underlying = decodeFunctionResult({
+          abi: wrappedTokenAbi,
+          functionName: 'wrappedToken',
+          data: decoded[i].returnData,
+        }) as Hex;
+        resolved.push({
+          target: underlying,
+          callData: balanceOfCallData,
+          tokenKey: lockboxTokens[i].key,
+        });
+      }
+    }
+    return resolved;
+  } catch (err) {
+    // Batch contract not deployed — these tokens fall back to SDK in the caller
+    logger.warn(`Lockbox resolution failed on chain ${chainId}`, err);
+    return [];
+  }
+}
+
+/** Decode successful balanceOf results from an aggregate3 response into `out`. */
+function decodeBalanceResults(
+  decoded: Aggregate3Result,
+  calls: CallInfo[],
+  out: Record<string, bigint>,
+) {
+  for (let i = 0; i < decoded.length; i++) {
+    if (decoded[i].success && decoded[i].returnData !== '0x') {
+      out[calls[i].tokenKey] = decodeFunctionResult({
+        abi: erc20Abi,
+        functionName: 'balanceOf',
+        data: decoded[i].returnData,
+      }) as bigint;
+    }
+  }
+}
+
+/**
+ * Fetch all ERC20 balances for a single chain via multicall3.
+ * Phase 1: resolve lockbox underlying ERC20 addresses.
+ * Phase 2: batch all balanceOf calls into one aggregate3.
+ * Falls back to SDK getBalance() if the batch contract is unavailable.
+ */
+async function fetchChainBalances(
+  chainId: number,
+  group: ChainGroup,
+  multiProvider: MultiProtocolProvider,
+  evmAddress: Hex,
+  out: Record<string, bigint>,
+) {
+  const chainMeta = multiProvider.tryGetChainMetadata(group.chainName);
+  const rpcUrl = chainMeta?.rpcUrls?.[0]?.http;
+  if (!rpcUrl) return;
+
+  const client = createPublicClient({ transport: http(rpcUrl) });
+  const batchAddress = getBatchAddress(group.chainName);
+  const balanceOfCallData = encodeFunctionData({
+    abi: erc20Abi,
+    functionName: 'balanceOf',
+    args: [evmAddress],
+  });
+
+  // Phase 1: resolve lockbox wrappedToken() addresses
+  const lockboxResolved = await resolveLockboxTokens(
+    client,
+    batchAddress,
+    group.lockbox,
+    balanceOfCallData,
+    chainId,
+  );
+
+  // Phase 2: batch all balanceOf calls (direct ERC20 + resolved lockbox)
+  const allCalls: CallInfo[] = [
+    ...group.erc20.map((t) => ({
+      target: t.address,
+      callData: balanceOfCallData,
+      tokenKey: t.key,
+    })),
+    ...lockboxResolved,
+  ];
+  if (allCalls.length === 0) return;
+
+  try {
+    const decoded = await callAggregate3(client, batchAddress, allCalls);
+    decodeBalanceResults(decoded, allCalls, out);
+  } catch (err) {
+    // Batch contract unavailable — fall back to SDK getBalance() per token
+    logger.warn(`Batch call failed on chain ${chainId}, falling back to SDK getBalance`, err);
+    await Promise.all(
+      group.tokens.map(({ token, key }) =>
+        fetchSdkBalance(token, multiProvider, evmAddress, out, key),
+      ),
+    );
+  }
+}
+
+// ─── Hook ────────────────────────────────────────────────────────────────────
 
 /**
  * Batch-fetch EVM token balances via multicall3.aggregate3 — one eth_call per chain.
@@ -163,206 +399,22 @@ export function useTokenBalances(tokens: Token[], origin: ChainName, destination
   const tokenKeys = useMemo(() => tokens.map((t) => tokenKey(t)), [tokens]);
 
   const { data: balances = {}, isLoading } = useQuery({
+    // Token and MultiProvider classes are not serializable — tokenKeys covers token identity
+    // eslint-disable-next-line @tanstack/query/exhaustive-deps
     queryKey: ['tokenBalances', evmAddress, origin, destination, tokenKeys],
     queryFn: async (): Promise<Record<string, bigint>> => {
       if (!evmAddress) return {};
 
-      // Classify and group tokens by chain — all inside queryFn, not on render
-      const chainGroups = new Map<
-        number,
-        {
-          chainName: string;
-          tokens: { token: Token; key: string }[];
-          erc20: { address: Hex; key: string }[];
-          lockbox: { routerAddress: Hex; key: string }[];
-        }
-      >();
-      const nativeTokens: { token: Token; key: string }[] = [];
-
-      for (const token of tokens) {
-        if (token.protocol !== ProtocolType.Ethereum) continue;
-        const chainMeta = multiProvider.tryGetChainMetadata(token.chainName);
-        if (!chainMeta?.chainId) continue;
-        const chainId = Number(chainMeta.chainId);
-
-        if (!chainGroups.has(chainId)) {
-          chainGroups.set(chainId, {
-            chainName: token.chainName,
-            tokens: [],
-            erc20: [],
-            lockbox: [],
-          });
-        }
-        const group = chainGroups.get(chainId)!;
-        const key = tokenKey(token);
-        const classification = classifyToken(token);
-
-        if (classification.type === 'erc20' && classification.erc20Address) {
-          group.tokens.push({ token, key });
-          group.erc20.push({ address: classification.erc20Address, key });
-        } else if (classification.type === 'lockbox') {
-          group.tokens.push({ token, key });
-          group.lockbox.push({ routerAddress: normalizeAddress(token.addressOrDenom) as Hex, key });
-        } else {
-          // Native tokens are fetched separately via SDK getBalance at the bottom
-          nativeTokens.push({ token, key });
-        }
-      }
-
+      const { chainGroups, sdkFallbackTokens } = groupTokensByChain(tokens, multiProvider);
       const results: Record<string, bigint> = {};
-      const balanceOfCallData = encodeFunctionData({
-        abi: erc20Abi,
-        functionName: 'balanceOf',
-        args: [evmAddress],
-      });
 
-      // Run ERC20 multicall and native balance fetches in parallel — they're independent
       await Promise.all([
-        ...Array.from(chainGroups.entries()).map(async ([chainId, group]) => {
-          const chainMeta = multiProvider.tryGetChainMetadata(group.chainName);
-          const rpcUrl = chainMeta?.rpcUrls?.[0]?.http;
-          if (!rpcUrl) return;
-
-          const client = createPublicClient({ transport: http(rpcUrl) });
-          // Use registry's batchContractAddress if available (e.g. ancient8, viction
-          // where standard multicall3 was compromised), otherwise default multicall3
-          const batchAddress = getBatchAddress(group.chainName);
-
-          // Phase 1: Resolve lockbox underlying ERC20 addresses via wrappedToken().
-          // Lockbox tokens (e.g. EvmHypXERC20Lockbox) wrap an underlying ERC20 — we need
-          // to call wrappedToken() on the router contract to discover the actual ERC20 address,
-          // then balanceOf on that address in Phase 2.
-          const lockboxResolved: CallInfo[] = [];
-          if (group.lockbox.length > 0) {
-            const resolveCallData = encodeFunctionData({
-              abi: wrappedTokenAbi,
-              functionName: 'wrappedToken',
-            });
-            try {
-              const raw = await client.request({
-                method: 'eth_call',
-                params: [
-                  {
-                    to: batchAddress,
-                    data: encodeFunctionData({
-                      abi: multicall3Abi,
-                      functionName: 'aggregate3',
-                      args: [
-                        group.lockbox.map((lb) => ({
-                          target: lb.routerAddress,
-                          allowFailure: true as const,
-                          callData: resolveCallData,
-                        })),
-                      ],
-                    }),
-                  },
-                  'latest',
-                ],
-              });
-              const decoded = decodeFunctionResult({
-                abi: multicall3Abi,
-                functionName: 'aggregate3',
-                data: raw,
-              }) as Array<{ success: boolean; returnData: Hex }>;
-
-              for (let i = 0; i < decoded.length; i++) {
-                if (decoded[i].success && decoded[i].returnData !== '0x') {
-                  const underlying = decodeFunctionResult({
-                    abi: wrappedTokenAbi,
-                    functionName: 'wrappedToken',
-                    data: decoded[i].returnData,
-                  }) as Hex;
-                  lockboxResolved.push({
-                    target: underlying,
-                    callData: balanceOfCallData,
-                    tokenKey: group.lockbox[i].key,
-                  });
-                }
-              }
-            } catch (err) {
-              // Batch contract not deployed on this chain — skip lockbox resolution,
-              // these tokens will be handled by the SDK fallback below
-              logger.warn(`Lockbox resolution failed on chain ${chainId}`, err);
-            }
-          }
-
-          // Phase 2: Batch all balanceOf calls (ERC20 + resolved lockbox) into one multicall3 aggregate3.
-          // This is the main optimization — one single eth_call per chain instead of N individual calls.
-          const allCalls: CallInfo[] = [
-            ...group.erc20.map((t) => ({
-              target: t.address,
-              callData: balanceOfCallData,
-              tokenKey: t.key,
-            })),
-            ...lockboxResolved,
-          ];
-          if (allCalls.length === 0) return;
-
-          try {
-            const raw = await client.request({
-              method: 'eth_call',
-              params: [
-                {
-                  to: batchAddress,
-                  data: encodeFunctionData({
-                    abi: multicall3Abi,
-                    functionName: 'aggregate3',
-                    args: [
-                      allCalls.map((c) => ({
-                        target: c.target,
-                        allowFailure: true as const,
-                        callData: c.callData,
-                      })),
-                    ],
-                  }),
-                },
-                'latest',
-              ],
-            });
-            const decoded = decodeFunctionResult({
-              abi: multicall3Abi,
-              functionName: 'aggregate3',
-              data: raw,
-            }) as Array<{ success: boolean; returnData: Hex }>;
-
-            for (let i = 0; i < decoded.length; i++) {
-              if (decoded[i].success && decoded[i].returnData !== '0x') {
-                results[allCalls[i].tokenKey] = decodeFunctionResult({
-                  abi: erc20Abi,
-                  functionName: 'balanceOf',
-                  data: decoded[i].returnData,
-                }) as bigint;
-              }
-            }
-          } catch (err) {
-            // Batch contract unavailable on this chain. Fall back to the SDK's
-            // token.getBalance() which handles all token standards correctly.
-            // Runs in parallel — typically only 1-3 tokens per chain in a route.
-            logger.warn(
-              `Batch call failed on chain ${chainId}, falling back to SDK getBalance`,
-              err,
-            );
-            await Promise.all(
-              group.tokens.map(async ({ token, key }) => {
-                try {
-                  const balance = await token.getBalance(multiProvider, evmAddress);
-                  results[key] = balance.amount;
-                } catch (innerErr) {
-                  logger.warn(`Failed to fetch balance for ${key} on chain ${chainId}`, innerErr);
-                }
-              }),
-            );
-          }
-        }),
-        // Native tokens (typically 0-1, uses eth_getBalance via SDK)
-        ...nativeTokens.map(async ({ token, key }) => {
-          try {
-            const balance = await token.getBalance(multiProvider, evmAddress);
-            results[key] = balance.amount;
-          } catch (err) {
-            logger.warn(`Failed to fetch native balance for ${key}`, err);
-          }
-        }),
+        ...Array.from(chainGroups.entries()).map(([chainId, group]) =>
+          fetchChainBalances(chainId, group, multiProvider, evmAddress, results),
+        ),
+        ...sdkFallbackTokens.map(({ token, key }) =>
+          fetchSdkBalance(token, multiProvider, evmAddress, results, key),
+        ),
       ]);
 
       return results;

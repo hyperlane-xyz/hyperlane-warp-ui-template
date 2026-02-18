@@ -128,7 +128,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // cbBTC routes
   'cbBTC/base-ethereum-superseed',
-  // 'cbBTC/ethereum-flowmainnet',
+  'cbBTC/ethereum-flowmainnet',
 
   // ezETH routes
   'ezETH/renzo-prod',
@@ -387,6 +387,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'ROAM/eni',
 
   // First Party Warp Routes
+  'ETH/viction',
   'USDC/eclipsemainnet',
 
   // Aleo warp routes

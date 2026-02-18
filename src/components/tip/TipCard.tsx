@@ -2,40 +2,15 @@ import { Button, IconButton, XCircleIcon } from '@hyperlane-xyz/widgets';
 import Image from 'next/image';
 import { useState } from 'react';
 import { config } from '../../consts/config';
-<<<<<<< HEAD
 import { useStore } from '../../features/store';
 import ExternalIcon from '../../images/icons/external-link-icon.svg';
-import { Card } from '../layout/Card';
-=======
-import { links } from '../../consts/links';
-import InfoCircle from '../../images/icons/info-circle.svg';
 import { HyperlaneTransparentLogo } from '../icons/HyperlaneTransparentLogo';
->>>>>>> origin/main
 
 export function TipCard() {
   const [show, setShow] = useState(config.showTipBox);
   const setIsTipCardActionTriggered = useStore((s) => s.setIsTipCardActionTriggered);
   if (!show) return null;
   return (
-<<<<<<< HEAD
-    <Card className="w-100 p-2 sm:w-[31rem]">
-      <h2 className="text-primary-500">Bridge USDC</h2>
-      <div className="flex items-end justify-between">
-        <p className="mt-1 max-w-[90%] text-left text-xs">
-          Move between Solana, Base, Arbitrum, Optimism, Ethereum, Unichain, and more.
-        </p>
-        <Button
-          className="ml-2 flex items-center rounded-lg bg-gray-100 px-3 py-1.5 text-xs text-primary-500 transition-all hover:bg-gray-200 active:bg-gray-300 sm:text-sm"
-          onClick={() => setIsTipCardActionTriggered(true)}
-        >
-          <Image src={ExternalIcon} width={12} alt="" />
-          <span className="ml-1.5 hidden text-sm sm:inline">Bridge</span>
-        </Button>
-      </div>
-      <div className="absolute right-3 top-3">
-        <IconButton onClick={() => setShow(false)} title="Hide tip" className="hover:rotate-90">
-          <XCircleIcon width={16} height={16} />
-=======
     <div className="relative w-100 overflow-hidden rounded bg-tip-card-gradient px-3 pb-3 pt-3 shadow-card sm:w-[31rem] sm:px-4 sm:pb-4 sm:pt-4">
       <div className="absolute right-2 top-2">
         <IconButton
@@ -44,27 +19,23 @@ export function TipCard() {
           className="text-gray-400 hover:text-gray-600"
         >
           <XCircleIcon width={14} height={14} />
->>>>>>> origin/main
         </IconButton>
       </div>
 
       <h2 className="pr-6 font-secondary text-sm font-normal text-gray-900 sm:text-lg">
-        Bridge Tokens with Hyperlane Warp Routes!
+        Bridge USDC
       </h2>
       <p className="mt-1 text-xs text-gray-600 sm:mt-2 sm:text-sm">
-        Warp Routes make it easy to permissionlessly take your tokens interchain. Fork this template
-        to get started!
+        Move between Solana, Base, Arbitrum, Optimism, Ethereum, Unichain, and more.
       </p>
 
-      <a
-        href={links.github}
-        target="_blank"
-        rel="noopener noreferrer"
+      <Button
         className="mt-2 inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-2 py-1 font-secondary text-xs text-gray-700 transition-colors hover:bg-gray-50 sm:mt-3 sm:px-3 sm:py-1.5 sm:text-sm"
+        onClick={() => setIsTipCardActionTriggered(true)}
       >
-        <Image src={InfoCircle} width={12} alt="" />
-        <span>More</span>
-      </a>
+        <Image src={ExternalIcon} width={12} alt="" />
+        <span>Bridge</span>
+      </Button>
 
       <div className="pointer-events-none absolute -bottom-0 left-1/2 -translate-x-1/2 opacity-40">
         <HyperlaneTransparentLogo />

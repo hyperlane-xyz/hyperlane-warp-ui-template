@@ -34,6 +34,7 @@ import {
   TIP_CARD_ACTION_ADDRESS_OR_DENOM,
   TIP_CARD_ACTION_DESTINATION,
   TIP_CARD_ACTION_ORIGIN,
+  TIP_CARD_ACTION_TOKEN,
 } from '../../components/tip/const';
 import { WARP_QUERY_PARAMS } from '../../consts/args';
 import { config } from '../../consts/config';
@@ -279,7 +280,7 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
     updateQueryParams({
       [WARP_QUERY_PARAMS.ORIGIN]: TIP_CARD_ACTION_ORIGIN,
       [WARP_QUERY_PARAMS.DESTINATION]: TIP_CARD_ACTION_DESTINATION,
-      [WARP_QUERY_PARAMS.TOKEN]: TIP_CARD_ACTION_ADDRESS_OR_DENOM,
+      [WARP_QUERY_PARAMS.TOKEN]: TIP_CARD_ACTION_TOKEN,
     });
   }, [setValues, warpCore]);
 

@@ -302,6 +302,7 @@ Needs to be higher than Intercom chatbox (z-index: 2147483000)
 /*
 Theme mode
 ==========
+Many selectors below target widget internals (.htw-*); revisit during @hyperlane-xyz/widgets upgrades.
 */
 .theme-toggle {
   border: 1px solid rgba(154, 13, 255, 0.35);

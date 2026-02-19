@@ -2,7 +2,7 @@ import { ChainMetadata } from '@hyperlane-xyz/sdk';
 import { ChainSearchMenu, ChainSearchMenuProps, Modal } from '@hyperlane-xyz/widgets';
 import { useEffect, useRef } from 'react';
 import { config } from '../../consts/config';
-import { processDarkLogoImage, processDarkLogosInContainer } from '../../utils/imageBrightness';
+import { observeDarkLogosInContainer } from '../../utils/imageBrightness';
 import { useStore } from '../store';
 
 export function ChainSelectListModal({
@@ -39,15 +39,6 @@ export function ChainSelectListModal({
     let attempts = 0;
     let logoObserver: MutationObserver | null = null;
 
-    const processNodeImages = (node: Node) => {
-      if (!(node instanceof Element)) return;
-      if (node instanceof HTMLImageElement) {
-        processDarkLogoImage(node);
-        return;
-      }
-      node.querySelectorAll('img').forEach((img) => processDarkLogoImage(img as HTMLImageElement));
-    };
-
     const attachObserver = () => {
       const el = contentRef.current || document.querySelector('.chain-picker-modal');
       if (!el) {
@@ -56,26 +47,7 @@ export function ChainSelectListModal({
         return;
       }
 
-      processDarkLogosInContainer(el);
-
-      logoObserver = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-          if (mutation.type === 'childList') {
-            mutation.addedNodes.forEach(processNodeImages);
-            return;
-          }
-          if (mutation.type === 'attributes' && mutation.target instanceof HTMLImageElement) {
-            processDarkLogoImage(mutation.target);
-          }
-        });
-      });
-
-      logoObserver.observe(el, {
-        childList: true,
-        subtree: true,
-        attributes: true,
-        attributeFilter: ['src'],
-      });
+      logoObserver = observeDarkLogosInContainer(el);
     };
 
     frame = window.requestAnimationFrame(attachObserver);

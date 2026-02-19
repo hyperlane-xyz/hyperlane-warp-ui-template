@@ -3,6 +3,7 @@ import {
   markDarkLogoMissing,
   processDarkLogoImage,
   processDarkLogosInContainer,
+  toOriginalVariantSrc,
 } from './imageBrightness';
 
 class FakeImage {
@@ -123,5 +124,15 @@ describe('imageBrightness', () => {
 
     expect(first.src).toBe('https://cdn.example/icons/darkmode-logo-e.svg');
     expect(second.src).toBe('https://cdn.example/icons/darkmode-logo-f.svg');
+  });
+
+  test('maps dark variant src back to original src', () => {
+    expect(
+      toOriginalVariantSrc('https://cdn.example/icons/darkmode-logo-g.svg?v=1#logo'),
+    ).toBe('https://cdn.example/icons/logo-g.svg?v=1#logo');
+  });
+
+  test('returns null when src is not a dark variant', () => {
+    expect(toOriginalVariantSrc('https://cdn.example/icons/logo-g.svg')).toBeNull();
   });
 });

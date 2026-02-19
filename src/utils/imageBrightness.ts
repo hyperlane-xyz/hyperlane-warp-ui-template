@@ -6,10 +6,6 @@ const darkLogoAvailabilityCache = new Map<string, 'ok' | 'missing'>();
 
 function isDarkModeEnabled(): boolean {
   if (typeof document === 'undefined') return false;
-  const appTheme = document.getElementById('app-content')?.getAttribute('data-theme-mode');
-  if (appTheme === 'dark') return true;
-  if (appTheme === 'light') return false;
-
   const htmlTheme = document.documentElement.dataset.themeMode;
   if (htmlTheme === 'dark') return true;
   if (htmlTheme === 'light') return false;
@@ -29,6 +25,21 @@ function toDarkVariantSrc(src: string): string | null {
     const [, fileBase, ext] = match;
     if (fileBase.startsWith('darkmode-')) return null;
     url.pathname = url.pathname.replace(/([^/]+?)(\.[^/.]+)$/, `darkmode-$1${ext}`);
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
+export function toOriginalVariantSrc(src: string): string | null {
+  try {
+    const url = new URL(src, window.location.href);
+    const nextPathname = url.pathname.replace(
+      /(^|\/)darkmode-([^/]+?)(\.[^/.]+)$/i,
+      '$1$2$3',
+    );
+    if (nextPathname === url.pathname) return null;
+    url.pathname = nextPathname;
     return url.toString();
   } catch {
     return null;

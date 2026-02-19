@@ -937,23 +937,27 @@ async function enrichBalanceError(
   if (!result.amount) return result;
   try {
     if (igpErrorPattern.test(result.amount)) {
-      const { igpQuote } = await warpCore.getInterchainTransferFee({
+      const { tokenFeeQuote } = await warpCore.getInterchainTransferFee({
         originTokenAmount,
         destination,
         sender,
         recipient,
       });
-      const isFungible = originTokenAmount.token.isFungibleWith(igpQuote.token);
+      if (!tokenFeeQuote) return result;
+
+      const isFungible = originTokenAmount.token.isFungibleWith(tokenFeeQuote.token);
       const balance = isFungible
         ? await originTokenAmount.token.getBalance(warpCore.multiProvider, sender)
-        : await igpQuote.token.getBalance(warpCore.multiProvider, sender);
+        : await tokenFeeQuote.token.getBalance(warpCore.multiProvider, sender);
       // When fungible, balance must cover both transfer + gas
-      const totalNeeded = isFungible ? igpQuote.amount + originTokenAmount.amount : igpQuote.amount;
+      const totalNeeded = isFungible
+        ? tokenFeeQuote.amount + originTokenAmount.amount
+        : tokenFeeQuote.amount;
       const deficit = totalNeeded - balance.amount;
       if (deficit > 0n) {
-        const deficitAmount = new TokenAmount(deficit, igpQuote.token);
+        const deficitAmount = new TokenAmount(deficit, tokenFeeQuote.token);
         return {
-          amount: `Insufficient ${igpQuote.token.symbol} for interchain gas (need ${deficitAmount.getDecimalFormattedAmount().toFixed(4)} more ${igpQuote.token.symbol})`,
+          amount: `Insufficient ${tokenFeeQuote.token.symbol} for interchain gas (need ${deficitAmount.getDecimalFormattedAmount().toFixed(4)} more ${tokenFeeQuote.token.symbol})`,
         };
       }
     } else if (result.amount === gasAndTransferError) {

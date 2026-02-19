@@ -1,7 +1,13 @@
-import { MultiProtocolWalletModal } from '@hyperlane-xyz/widgets';
 import Head from 'next/head';
-import { PropsWithChildren, useEffect } from 'react';
-import { APP_NAME, BACKGROUND_COLOR, BACKGROUND_IMAGE } from '../../consts/app';
+import { PropsWithChildren, useCallback, useEffect, useState } from 'react';
+import {
+  APP_NAME,
+  DEFAULT_UI_THEME_MODE,
+  getSystemUiThemeMode,
+  parseUiThemeMode,
+  UI_THEME_STORAGE_KEY,
+  UiThemeMode,
+} from '../../consts/app';
 import { config } from '../../consts/config';
 import { initIntercom } from '../../features/analytics/intercom';
 import { initRefiner } from '../../features/analytics/refiner';
@@ -10,8 +16,28 @@ import { useWalletConnectionTracking } from '../../features/analytics/useWalletC
 import { trackEvent } from '../../features/analytics/utils';
 import { useStore } from '../../features/store';
 import { SideBarMenu } from '../../features/wallet/SideBarMenu';
+import { WalletProtocolModal } from '../../features/wallet/WalletProtocolModal';
+import { processDarkLogosInContainer } from '../../utils/imageBrightness';
 import { Footer } from '../nav/Footer';
 import { Header } from '../nav/Header';
+
+function getStoredThemeMode(): UiThemeMode | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return parseUiThemeMode(window.localStorage.getItem(UI_THEME_STORAGE_KEY));
+  } catch {
+    return null;
+  }
+}
+
+function persistThemeMode(mode: UiThemeMode) {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(UI_THEME_STORAGE_KEY, mode);
+  } catch {
+    // Keep theme toggle working for this session when storage is unavailable.
+  }
+}
 
 export function AppLayout({ children }: PropsWithChildren) {
   const { showEnvSelectModal, setShowEnvSelectModal, isSideBarOpen, setIsSideBarOpen } = useStore(
@@ -23,6 +49,28 @@ export function AppLayout({ children }: PropsWithChildren) {
     }),
   );
 
+  const [themeMode, setThemeMode] = useState<UiThemeMode>(() => {
+    if (typeof window === 'undefined') return DEFAULT_UI_THEME_MODE;
+    const docTheme = parseUiThemeMode(document.documentElement.dataset.themeMode);
+    if (docTheme) return docTheme;
+    const storedTheme = getStoredThemeMode();
+    return storedTheme ?? getSystemUiThemeMode();
+  });
+  const [hasExplicitThemePreference, setHasExplicitThemePreference] = useState(() => {
+    return getStoredThemeMode() !== null;
+  });
+
+  const toggleThemeMode = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    document.documentElement.dataset.themeSwitching = 'true';
+    setThemeMode((prevThemeMode) => {
+      const nextMode: UiThemeMode = prevThemeMode === 'dark' ? 'light' : 'dark';
+      persistThemeMode(nextMode);
+      return nextMode;
+    });
+    setHasExplicitThemePreference(true);
+  }, []);
+
   useWalletConnectionTracking();
 
   useEffect(() => {
@@ -30,6 +78,37 @@ export function AppLayout({ children }: PropsWithChildren) {
     initRefiner();
     trackEvent(EVENT_NAME.PAGE_VIEWED, {});
   }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    document.documentElement.dataset.themeMode = themeMode;
+    processDarkLogosInContainer(document.body);
+
+    const frame = window.requestAnimationFrame(() => {
+      delete document.documentElement.dataset.themeSwitching;
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [themeMode]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    // If user has explicit preference, do not sync to system changes.
+    if (hasExplicitThemePreference) return;
+    if (typeof window.matchMedia !== 'function') return;
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (event: MediaQueryListEvent) => {
+      const nextMode: UiThemeMode = event.matches ? 'dark' : 'light';
+      setThemeMode(nextMode);
+    };
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    }
+
+    mediaQuery.addListener(handleChange);
+    return () => mediaQuery.removeListener(handleChange);
+  }, [hasExplicitThemePreference]);
 
   return (
     <>
@@ -41,16 +120,17 @@ export function AppLayout({ children }: PropsWithChildren) {
       <div
         style={styles.container}
         id="app-content"
+        data-theme-mode={themeMode}
         className="min-w-screen relative flex h-full min-h-screen w-full flex-col justify-between"
       >
-        <Header />
+        <Header themeMode={themeMode} onToggleTheme={toggleThemeMode} />
         <div className="mx-auto flex max-w-screen-xl grow items-center sm:px-4">
           <main className="my-4 flex w-full flex-1 items-center justify-center">{children}</main>
         </div>
         <Footer />
       </div>
 
-      <MultiProtocolWalletModal
+      <WalletProtocolModal
         isOpen={showEnvSelectModal}
         close={() => setShowEnvSelectModal(false)}
         protocols={config.walletProtocols}
@@ -69,8 +149,6 @@ export function AppLayout({ children }: PropsWithChildren) {
 
 const styles = {
   container: {
-    backgroundColor: BACKGROUND_COLOR,
-    backgroundImage: BACKGROUND_IMAGE,
     backgroundSize: 'cover',
     backgroundRepeat: 'no-repeat',
     backgroundPosition: 'center',

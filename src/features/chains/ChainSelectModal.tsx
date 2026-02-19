@@ -36,21 +36,14 @@ export function ChainSelectListModal({
     if (typeof window === 'undefined') return;
 
     let frame = 0;
-    let attempts = 0;
     let logoObserver: MutationObserver | null = null;
 
-    const attachObserver = () => {
-      const el = contentRef.current || document.querySelector('.chain-picker-modal');
-      if (!el) {
-        attempts += 1;
-        if (attempts < 12) frame = window.requestAnimationFrame(attachObserver);
-        return;
-      }
-
+    frame = window.requestAnimationFrame(() => {
+      const el = contentRef.current;
+      if (!el) return;
       logoObserver = observeDarkLogosInContainer(el);
-    };
+    });
 
-    frame = window.requestAnimationFrame(attachObserver);
     return () => {
       if (frame) window.cancelAnimationFrame(frame);
       logoObserver?.disconnect();

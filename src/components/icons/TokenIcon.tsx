@@ -3,7 +3,11 @@ import { isHttpsUrl, isRelativeUrl } from '@hyperlane-xyz/utils';
 import { Circle } from '@hyperlane-xyz/widgets';
 import { useState } from 'react';
 import { links } from '../../consts/links';
-import { markDarkLogoMissing, processDarkLogoImage } from '../../utils/imageBrightness';
+import {
+  markDarkLogoMissing,
+  processDarkLogoImage,
+  toOriginalVariantSrc,
+} from '../../utils/imageBrightness';
 
 interface Props {
   token?: IToken | null;
@@ -37,16 +41,13 @@ export function TokenIcon({ token, size = 32 }: Props) {
               const attemptedDark = img.dataset.logoDarkSrc;
               const isDarkFallbackError =
                 !!original && !!attemptedDark && current === attemptedDark;
-              const fallbackSrc = current.replace(
-                /(^|\/)darkmode-([^/]+)\.([a-z0-9]+)(?=([?#].*)?$)/i,
-                '$1$2.$3',
-              );
-              const isDarkVariantSrc = fallbackSrc !== current;
+              const fallbackSrc = toOriginalVariantSrc(current);
+              const isDarkVariantSrc = fallbackSrc !== null;
 
               // Dark-variant misses should fall back to original logo, not text.
               if (isDarkFallbackError || isDarkVariantSrc) {
                 markDarkLogoMissing(current);
-                if (isDarkVariantSrc) {
+                if (fallbackSrc) {
                   img.src = fallbackSrc;
                 }
                 return;

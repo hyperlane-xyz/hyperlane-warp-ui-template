@@ -15,11 +15,15 @@ export function TransferFeeModal({
   isLoading: boolean;
 }) {
   return (
-    <Modal isOpen={isOpen} close={close} panelClassname="p-0 max-w-sm md:max-w-128 overflow-hidden">
+    <Modal
+      isOpen={isOpen}
+      close={close}
+      panelClassname="transfer-fee-modal p-0 max-w-sm md:max-w-128 overflow-hidden"
+    >
       <div className="w-full bg-accent-gradient px-4 py-2.5 font-secondary text-base font-normal tracking-wider text-white shadow-accent-glow">
         Fee Details
       </div>
-      <div className="flex w-full flex-col items-start gap-2 p-4 text-sm">
+      <div className="transfer-fee-modal-content flex w-full flex-col items-start gap-2 p-4 text-sm">
         {fees?.localQuote && fees.localQuote.amount > 0n && (
           <div className="flex gap-4">
             <span className="flex min-w-[7.5rem] items-center gap-1">

@@ -3,6 +3,7 @@ import { isHttpsUrl, isRelativeUrl } from '@hyperlane-xyz/utils';
 import { Circle } from '@hyperlane-xyz/widgets';
 import { useState } from 'react';
 import { links } from '../../consts/links';
+import { markDarkLogoMissing, processDarkLogoImage } from '../../utils/imageBrightness';
 
 interface Props {
   token?: IToken | null;
@@ -22,18 +23,43 @@ export function TokenIcon({ token, size = 32 }: Props) {
       : undefined;
 
   return (
-    <Circle size={size} bgColorSeed={bgColorSeed} title={title}>
-      {imageSrc && !fallbackToText ? (
-        <img
-          src={imageSrc}
-          className="h-full w-full p-0.5"
-          onError={() => setFallbackToText(true)}
-          loading="lazy"
-        />
-      ) : (
-        <div className={`text-[${fontSize}px]`}>{character}</div>
-      )}
-    </Circle>
+    <span className="inline-flex">
+      <Circle size={size} bgColorSeed={bgColorSeed} title={title}>
+        {imageSrc && !fallbackToText ? (
+          <img
+            src={imageSrc}
+            className="h-full w-full p-0.5"
+            onLoad={(event) => scheduleDarkLogoProcessing(event.currentTarget)}
+            onError={(event) => {
+              const img = event.currentTarget;
+              const current = img.getAttribute('src') || img.src;
+              const original = img.dataset.logoOriginalSrc;
+              const attemptedDark = img.dataset.logoDarkSrc;
+              const isDarkFallbackError =
+                !!original && !!attemptedDark && current === attemptedDark;
+              const fallbackSrc = current.replace(
+                /(^|\/)darkmode-([^/]+)\.([a-z0-9]+)(?=([?#].*)?$)/i,
+                '$1$2.$3',
+              );
+              const isDarkVariantSrc = fallbackSrc !== current;
+
+              // Dark-variant misses should fall back to original logo, not text.
+              if (isDarkFallbackError || isDarkVariantSrc) {
+                markDarkLogoMissing(current);
+                if (isDarkVariantSrc) {
+                  img.src = fallbackSrc;
+                }
+                return;
+              }
+              setFallbackToText(true);
+            }}
+            loading="lazy"
+          />
+        ) : (
+          <div className={`text-[${fontSize}px]`}>{character}</div>
+        )}
+      </Circle>
+    </span>
   );
 }
 
@@ -44,4 +70,16 @@ function getImageSrc(token?: IToken | null) {
   // Otherwise assume it's a relative URL to the registry base
   if (isRelativeUrl(token.logoURI)) return `${links.imgPath}${token.logoURI}`;
   return null;
+}
+
+function scheduleDarkLogoProcessing(img: HTMLImageElement) {
+  if (typeof window === 'undefined') return;
+  const win = window as Window & {
+    requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
+  };
+  if (typeof win.requestIdleCallback === 'function') {
+    win.requestIdleCallback(() => processDarkLogoImage(img), { timeout: 200 });
+    return;
+  }
+  window.setTimeout(() => processDarkLogoImage(img), 0);
 }

@@ -35,16 +35,6 @@ function toDarkVariantSrc(src: string): string | null {
   }
 }
 
-export function getPreferredLogoSrc(src: string): string {
-  if (!src) return src;
-  if (!isDarkModeEnabled()) return src;
-
-  const darkSrc = toDarkVariantSrc(src);
-  if (!darkSrc) return src;
-  if (darkLogoAvailabilityCache.get(darkSrc) === 'missing') return src;
-  return darkSrc;
-}
-
 export function markDarkLogoMissing(darkSrc: string) {
   if (!darkSrc) return;
   darkLogoAvailabilityCache.set(darkSrc, 'missing');
@@ -95,6 +85,21 @@ function syncOriginalSrc(img: HTMLImageElement): string {
   return img.dataset.logoOriginalSrc || current;
 }
 
+function hasReadyImg(container: Element): boolean {
+  return Array.from(container.querySelectorAll('img')).some((img) =>
+    Boolean((img as HTMLImageElement).getAttribute('src')),
+  );
+}
+
+function processNodeImages(node: Node) {
+  if (!(node instanceof Element)) return;
+  if (node instanceof HTMLImageElement) {
+    processDarkLogoImage(node);
+    return;
+  }
+  node.querySelectorAll('img').forEach((img) => processDarkLogoImage(img as HTMLImageElement));
+}
+
 /**
  * For one image:
  * - light mode: always use base file name
@@ -136,4 +141,35 @@ export function processDarkLogosInContainer(container: Element) {
   container.querySelectorAll('img').forEach((imgEl) => {
     processDarkLogoImage(imgEl as HTMLImageElement);
   });
+}
+
+export function observeDarkLogosInContainer(
+  container: Element,
+  { disconnectOnFirstImage = false }: { disconnectOnFirstImage?: boolean } = {},
+): MutationObserver | null {
+  if (typeof MutationObserver === 'undefined') return null;
+
+  processDarkLogosInContainer(container);
+  if (disconnectOnFirstImage && hasReadyImg(container)) return null;
+
+  const logoObserver = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.type === 'childList') {
+        mutation.addedNodes.forEach(processNodeImages);
+        return;
+      }
+      if (mutation.type === 'attributes' && mutation.target instanceof HTMLImageElement) {
+        processDarkLogoImage(mutation.target);
+      }
+    });
+    if (disconnectOnFirstImage && hasReadyImg(container)) logoObserver.disconnect();
+  });
+
+  logoObserver.observe(container, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['src'],
+  });
+  return logoObserver;
 }

@@ -17,7 +17,7 @@ import { trackEvent } from '../../features/analytics/utils';
 import { useStore } from '../../features/store';
 import { SideBarMenu } from '../../features/wallet/SideBarMenu';
 import { WalletProtocolModal } from '../../features/wallet/WalletProtocolModal';
-import { processDarkLogosInContainer } from '../../utils/imageBrightness';
+import { processDarkLogoImage } from '../../utils/imageBrightness';
 import { Footer } from '../nav/Footer';
 import { Header } from '../nav/Header';
 
@@ -82,7 +82,10 @@ export function AppLayout({ children }: PropsWithChildren) {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     document.documentElement.dataset.themeMode = themeMode;
-    processDarkLogosInContainer(document.body);
+    const knownLogoImages = document.querySelectorAll(
+      'img[data-logo-handlers-bound="true"], img[data-logo-original-src], img[data-logo-dark-src]',
+    );
+    knownLogoImages.forEach((img) => processDarkLogoImage(img as HTMLImageElement));
 
     const frame = window.requestAnimationFrame(() => {
       delete document.documentElement.dataset.themeSwitching;

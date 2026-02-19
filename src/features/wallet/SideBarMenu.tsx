@@ -8,7 +8,7 @@ import { ChainLogo } from '../../components/icons/ChainLogo';
 import { config } from '../../consts/config';
 import ArrowRightIcon from '../../images/icons/arrow-right.svg';
 import CollapseIcon from '../../images/icons/collapse-icon.svg';
-import { formatTimestamp } from '../../utils/date';
+import { formatTransferHistoryTimestamp } from '../../utils/date';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { MessageStatus } from '../messages/types';
@@ -404,18 +404,6 @@ function LocalTransferSummary({
       </div>
     </button>
   );
-}
-
-function formatTransferHistoryTimestamp(timestamp: number) {
-  const elapsedMs = Date.now() - timestamp;
-  if (elapsedMs < 0) return formatTimestamp(timestamp);
-  const elapsedSec = Math.floor(elapsedMs / 1000);
-  if (elapsedSec < 60) return `${elapsedSec}s ago`;
-  const elapsedMin = Math.floor(elapsedSec / 60);
-  if (elapsedMin < 60) return `${elapsedMin}m ago`;
-  const elapsedHours = Math.floor(elapsedMin / 60);
-  if (elapsedHours < 24) return `${elapsedHours}h ago`;
-  return formatTimestamp(timestamp);
 }
 
 const styles = {

@@ -127,9 +127,9 @@ describe('imageBrightness', () => {
   });
 
   test('maps dark variant src back to original src', () => {
-    expect(
-      toOriginalVariantSrc('https://cdn.example/icons/darkmode-logo-g.svg?v=1#logo'),
-    ).toBe('https://cdn.example/icons/logo-g.svg?v=1#logo');
+    expect(toOriginalVariantSrc('https://cdn.example/icons/darkmode-logo-g.svg?v=1#logo')).toBe(
+      'https://cdn.example/icons/logo-g.svg?v=1#logo',
+    );
   });
 
   test('returns null when src is not a dark variant', () => {

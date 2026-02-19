@@ -27,7 +27,13 @@ export function useBalance(chain?: ChainName, token?: IToken, address?: Address)
   const { isLoading, isError, error, data } = useQuery({
     // The Token and Multiprovider classes are not serializable, so we can't use it as a key
     // eslint-disable-next-line @tanstack/query/exhaustive-deps
-    queryKey: ['useBalance', chain, address, token?.addressOrDenom],
+    queryKey: [
+      'useBalance',
+      chain,
+      address,
+      token?.addressOrDenom,
+      token?.collateralAddressOrDenom,
+    ],
     queryFn: () => {
       if (!chain || !token || !address || !isValidAddress(address, token.protocol)) return null;
       return token.getBalance(multiProvider, address);
@@ -139,8 +145,10 @@ type Aggregate3Result = Array<{ success: boolean; returnData: Hex }>;
 
 // ─── Pure helpers ────────────────────────────────────────────────────────────
 
+/** Includes symbol to distinguish tokens sharing the same addressOrDenom
+ *  (e.g. M0PortalLite wM/mUSD/USDSC all use the same portal contract). */
 function tokenKey(token: Token): string {
-  return `${token.chainName}:${normalizeAddress(token.addressOrDenom, token.protocol)}`;
+  return `${token.chainName}-${normalizeAddress(token.addressOrDenom, token.protocol)}-${token.symbol}`;
 }
 
 function classifyToken(token: Token): { type: TokenClassification; erc20Address?: Hex } {

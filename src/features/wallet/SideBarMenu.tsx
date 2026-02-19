@@ -8,6 +8,7 @@ import { ChainLogo } from '../../components/icons/ChainLogo';
 import { config } from '../../consts/config';
 import ArrowRightIcon from '../../images/icons/arrow-right.svg';
 import CollapseIcon from '../../images/icons/collapse-icon.svg';
+import { formatTimestamp } from '../../utils/date';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { MessageStatus } from '../messages/types';
@@ -143,13 +144,13 @@ export function SideBarMenu({
   return (
     <>
       <div
-        className={`fixed right-0 top-0 h-full w-88 transform bg-white bg-opacity-95 shadow-lg transition-transform duration-100 ease-in ${
+        className={`sidebar-menu fixed right-0 top-0 h-full w-88 transform bg-white bg-opacity-95 shadow-lg transition-transform duration-100 ease-in ${
           isMenuOpen ? 'z-10 translate-x-0' : 'z-0 translate-x-full'
         }`}
       >
         {isMenuOpen && (
           <button
-            className="absolute left-0 top-0 flex h-full w-9 -translate-x-full items-center justify-center rounded-l bg-accent-50/30 backdrop-blur-[1.5px] transition-all"
+            className="sidebar-menu-collapse absolute left-0 top-0 flex h-full w-9 -translate-x-full items-center justify-center rounded-l bg-accent-50/30 backdrop-blur-[1.5px] transition-all"
             onClick={() => onClose()}
           >
             <Image src={CollapseIcon} width={15} height={24} alt="" />
@@ -160,7 +161,7 @@ export function SideBarMenu({
           onScroll={handleScroll}
           className="flex h-full w-full flex-col overflow-y-auto"
         >
-          <div className="w-full bg-accent-gradient px-3.5 py-2 text-base font-normal tracking-wider text-white shadow-accent-glow">
+          <div className="sidebar-menu-header w-full bg-accent-gradient px-3.5 py-2 text-base font-normal tracking-wider text-white shadow-accent-glow">
             Connected Wallets
           </div>
           <AccountList
@@ -170,14 +171,14 @@ export function SideBarMenu({
             className="px-3 py-3"
             chainName={originChainName}
           />
-          <div className="flex w-full items-center justify-between bg-accent-gradient px-3.5 py-2 shadow-accent-glow">
+          <div className="sidebar-menu-header flex w-full items-center justify-between bg-accent-gradient px-3.5 py-2 shadow-accent-glow">
             <span className="text-base font-normal tracking-wider text-white">
               Transfer History
             </span>
             <button
               onClick={refresh}
               disabled={isLoading}
-              className="rounded p-1 hover:bg-accent-500/50 disabled:opacity-50"
+              className="sidebar-menu-refresh rounded p-1 hover:bg-accent-500/50 disabled:opacity-50"
               title="Refresh"
             >
               <RefreshIcon
@@ -188,16 +189,18 @@ export function SideBarMenu({
               />
             </button>
           </div>
-          <div className="flex grow flex-col px-3.5 pb-4">
+          <div className="flex grow flex-col pb-4">
             {isRefreshing ? (
-              <div className="flex justify-center py-6">
+              <div className="flex justify-center px-3.5 py-6">
                 <SpinnerIcon className="h-5 w-5" />
               </div>
             ) : (
               <>
-                <div className="flex w-full grow flex-col divide-y">
+                <div className="sidebar-menu-list flex w-full grow flex-col divide-y">
                   {mergedTransfers.length === 0 && !isLoading && (
-                    <div className="py-6 text-center text-sm text-gray-500">No transfers yet</div>
+                    <div className="sidebar-menu-empty px-3.5 py-6 text-center text-sm text-gray-500">
+                      No transfers yet
+                    </div>
                   )}
                   {mergedTransfers.map((item) => (
                     <TransferSummary
@@ -215,12 +218,14 @@ export function SideBarMenu({
                   ))}
                 </div>
                 {isLoading && (
-                  <div className="flex justify-center py-4">
+                  <div className="flex justify-center px-3.5 py-4">
                     <SpinnerIcon className="h-5 w-5" />
                   </div>
                 )}
                 {!hasMore && mergedTransfers.length > 0 && (
-                  <div className="py-3 text-center text-xs text-gray-400">No more transfers</div>
+                  <div className="sidebar-menu-end px-3.5 py-3 text-center text-xs text-gray-400">
+                    No more transfers
+                  </div>
                 )}
               </>
             )}
@@ -288,29 +293,42 @@ function TransferSummary({
   return (
     <button onClick={onClick} className={`${styles.btn} justify-between py-3`}>
       <div className="flex gap-2.5">
-        <div className="flex h-[2.25rem] w-[2.25rem] flex-col items-center justify-center rounded-full bg-gray-100 px-1.5">
+        <div className="sidebar-menu-chain-badge flex h-[2.25rem] w-[2.25rem] flex-col items-center justify-center rounded-full bg-gray-100 px-1.5">
           <ChainLogo chainName={originChain} size={20} />
         </div>
         <div className="flex flex-col">
           <div className="flex flex-col">
             <div className="items flex items-baseline">
               {formattedAmount && (
-                <span className="text-sm font-normal text-gray-800">{formattedAmount}</span>
+                <span className="sidebar-menu-token-text text-sm font-normal text-gray-800">
+                  {formattedAmount}
+                </span>
               )}
               <span
-                className={`text-sm font-normal text-gray-800 ${formattedAmount ? 'ml-1' : ''}`}
+                className={`sidebar-menu-token-text text-sm font-normal text-gray-800 ${
+                  formattedAmount ? 'ml-1' : ''
+                }`}
               >
                 {token?.symbol || 'Unknown token'}
               </span>
             </div>
             <div className="mt-1 flex flex-row items-center">
-              <span className="text-xxs font-normal tracking-wide text-gray-900">
+              <span className="sidebar-menu-route-text text-xxs font-normal tracking-wide text-gray-900">
                 {getChainDisplayName(multiProvider, originChain, true)}
               </span>
-              <Image className="mx-1" src={ArrowRightIcon} width={10} height={10} alt="" />
-              <span className="text-xxs font-normal tracking-wide text-gray-900">
+              <Image
+                className="sidebar-menu-arrow mx-1"
+                src={ArrowRightIcon}
+                width={10}
+                height={10}
+                alt=""
+              />
+              <span className="sidebar-menu-route-text text-xxs font-normal tracking-wide text-gray-900">
                 {getChainDisplayName(multiProvider, destChain, true)}
               </span>
+            </div>
+            <div className="sidebar-menu-time mt-1 w-full text-left text-xxs font-normal text-gray-500">
+              {formatTransferHistoryTimestamp(msg.origin.timestamp)}
             </div>
           </div>
         </div>
@@ -343,23 +361,36 @@ function LocalTransferSummary({
   return (
     <button key={timestamp} onClick={onClick} className={`${styles.btn} justify-between py-3`}>
       <div className="flex gap-2.5">
-        <div className="flex h-[2.25rem] w-[2.25rem] flex-col items-center justify-center rounded-full bg-gray-100 px-1.5">
+        <div className="sidebar-menu-chain-badge flex h-[2.25rem] w-[2.25rem] flex-col items-center justify-center rounded-full bg-gray-100 px-1.5">
           <ChainLogo chainName={origin} size={20} />
         </div>
         <div className="flex flex-col">
           <div className="flex flex-col">
             <div className="items flex items-baseline">
-              <span className="text-sm font-normal text-gray-800">{amount}</span>
-              <span className="ml-1 text-sm font-normal text-gray-800">{token?.symbol || ''}</span>
+              <span className="sidebar-menu-token-text text-sm font-normal text-gray-800">
+                {amount}
+              </span>
+              <span className="sidebar-menu-token-text ml-1 text-sm font-normal text-gray-800">
+                {token?.symbol || ''}
+              </span>
             </div>
             <div className="mt-1 flex flex-row items-center">
-              <span className="text-xxs font-normal tracking-wide text-gray-900">
+              <span className="sidebar-menu-route-text text-xxs font-normal tracking-wide text-gray-900">
                 {getChainDisplayName(multiProvider, origin, true)}
               </span>
-              <Image className="mx-1" src={ArrowRightIcon} width={10} height={10} alt="" />
-              <span className="text-xxs font-normal tracking-wide text-gray-900">
+              <Image
+                className="sidebar-menu-arrow mx-1"
+                src={ArrowRightIcon}
+                width={10}
+                height={10}
+                alt=""
+              />
+              <span className="sidebar-menu-route-text text-xxs font-normal tracking-wide text-gray-900">
                 {getChainDisplayName(multiProvider, destination, true)}
               </span>
+            </div>
+            <div className="sidebar-menu-time mt-1 w-full text-left text-xxs font-normal text-gray-500">
+              {formatTransferHistoryTimestamp(timestamp)}
             </div>
           </div>
         </div>
@@ -375,6 +406,18 @@ function LocalTransferSummary({
   );
 }
 
+function formatTransferHistoryTimestamp(timestamp: number) {
+  const elapsedMs = Date.now() - timestamp;
+  if (elapsedMs < 0) return formatTimestamp(timestamp);
+  const elapsedSec = Math.floor(elapsedMs / 1000);
+  if (elapsedSec < 60) return `${elapsedSec}s ago`;
+  const elapsedMin = Math.floor(elapsedSec / 60);
+  if (elapsedMin < 60) return `${elapsedMin}m ago`;
+  const elapsedHours = Math.floor(elapsedMin / 60);
+  if (elapsedHours < 24) return `${elapsedHours}h ago`;
+  return formatTimestamp(timestamp);
+}
+
 const styles = {
-  btn: 'w-full flex items-center px-1 py-2 text-sm hover:bg-gray-200 active:scale-95 transition-all duration-500 cursor-pointer rounded-sm',
+  btn: 'sidebar-menu-item w-full flex items-center px-3.5 py-2 text-sm hover:bg-gray-200 active:scale-95 transition-all duration-500 cursor-pointer',
 };

@@ -8,6 +8,8 @@ export async function register() {
       Sentry.init({ ...sentryDefaultConfig, defaultIntegrations: false });
     }
   } catch (error) {
-    console.error('Failed to load Sentry instrumentation:', error);
+    if (typeof process !== 'undefined' && process.stderr?.write) {
+      process.stderr.write(`Failed to load Sentry instrumentation: ${String(error)}\n`);
+    }
   }
 }

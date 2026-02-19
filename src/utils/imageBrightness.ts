@@ -34,10 +34,7 @@ function toDarkVariantSrc(src: string): string | null {
 export function toOriginalVariantSrc(src: string): string | null {
   try {
     const url = new URL(src, window.location.href);
-    const nextPathname = url.pathname.replace(
-      /(^|\/)darkmode-([^/]+?)(\.[^/.]+)$/i,
-      '$1$2$3',
-    );
+    const nextPathname = url.pathname.replace(/(^|\/)darkmode-([^/]+?)(\.[^/.]+)$/i, '$1$2$3');
     if (nextPathname === url.pathname) return null;
     url.pathname = nextPathname;
     return url.toString();

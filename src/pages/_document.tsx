@@ -1,12 +1,5 @@
 import { Head, Html, Main, NextScript } from 'next/document';
-import {
-  APP_DESCRIPTION,
-  APP_NAME,
-  APP_URL,
-  BACKGROUND_COLOR,
-  BRAND_COLOR,
-  MAIN_FONT,
-} from '../consts/app';
+import { APP_DESCRIPTION, APP_NAME, APP_URL, BRAND_COLOR } from '../consts/app';
 
 export default function Document() {
   return (
@@ -48,10 +41,7 @@ export default function Document() {
           }}
         />
       </Head>
-      <body
-        className={`${MAIN_FONT.variable} font-sans text-black`}
-        style={{ backgroundColor: BACKGROUND_COLOR }}
-      >
+      <body className="font-primary text-black">
         <Main />
         <NextScript />
       </body>

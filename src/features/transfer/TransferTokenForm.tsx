@@ -34,6 +34,7 @@ import {
   TIP_CARD_ACTION_ADDRESS_OR_DENOM,
   TIP_CARD_ACTION_DESTINATION,
   TIP_CARD_ACTION_ORIGIN,
+  TIP_CARD_ACTION_TOKEN,
 } from '../../components/tip/const';
 import { WARP_QUERY_PARAMS } from '../../consts/args';
 import { config } from '../../consts/config';
@@ -279,7 +280,7 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
     updateQueryParams({
       [WARP_QUERY_PARAMS.ORIGIN]: TIP_CARD_ACTION_ORIGIN,
       [WARP_QUERY_PARAMS.DESTINATION]: TIP_CARD_ACTION_DESTINATION,
-      [WARP_QUERY_PARAMS.TOKEN]: TIP_CARD_ACTION_ADDRESS_OR_DENOM,
+      [WARP_QUERY_PARAMS.TOKEN]: TIP_CARD_ACTION_TOKEN,
     });
   }, [setValues, warpCore]);
 
@@ -324,7 +325,7 @@ function TokenSection({
 }) {
   return (
     <div className="flex-1">
-      <label htmlFor="tokenIndex" className="block pl-0.5 text-sm text-gray-600">
+      <label htmlFor="tokenIndex" className="block pl-0.5 font-secondary text-sm text-gray-600">
         Token
       </label>
       <TokenSelectField name="tokenIndex" disabled={isReview} setIsNft={setIsNft} />
@@ -344,7 +345,7 @@ function AmountSection({ isNft, isReview }: { isNft: boolean; isReview: boolean 
   return (
     <div className="flex-1">
       <div className="flex justify-between pr-1">
-        <label htmlFor="amount" className="block pl-0.5 text-sm text-gray-600">
+        <label htmlFor="amount" className="block pl-0.5 font-secondary text-sm text-gray-600">
           Amount
         </label>
         <TokenBalance label="My balance" balance={balance} />
@@ -385,7 +386,7 @@ function RecipientSection({ isReview }: { isReview: boolean }) {
   return (
     <div className="mt-4">
       <div className="flex justify-between pr-1">
-        <label htmlFor="recipient" className="block pl-0.5 text-sm text-gray-600">
+        <label htmlFor="recipient" className="block pl-0.5 font-secondary text-sm text-gray-600">
           Recipient address
         </label>
         <TokenBalance label="Remote balance" balance={balance} />
@@ -561,7 +562,7 @@ function ButtonSection({
           disabled={!addressConfirmed}
           chainName={values.origin}
           text={isValidating ? 'Validating...' : 'Continue'}
-          classes={`${isReview ? 'mt-4' : 'mt-0'} px-3 py-1.5`}
+          classes={`${isReview ? 'mt-4' : 'mt-0'} px-3 py-1.5 font-secondary`}
         />
       </>
     );
@@ -586,7 +587,7 @@ function ButtonSection({
           type="button"
           color="primary"
           onClick={onEdit}
-          className="px-6 py-1.5"
+          className="px-6 py-1.5 font-secondary"
           icon={<ChevronIcon direction="w" width={10} height={6} color={Color.white} />}
         >
           <span>Edit</span>
@@ -596,7 +597,7 @@ function ButtonSection({
           type="button"
           color="accent"
           onClick={triggerTransactionsHandler}
-          className="flex-1 px-3 py-1.5"
+          className="flex-1 px-3 py-1.5 font-secondary text-white"
         >
           {`Send to ${chainDisplayName}`}
         </SolidButton>

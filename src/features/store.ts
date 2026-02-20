@@ -42,6 +42,8 @@ interface WarpContext {
   tokensBySymbolChainMap: Record<string, TokenChainMap>;
   // Map of chain -> address -> router info
   routerAddressesByChainMap: Record<ChainName, Record<string, RouterAddressInfo>>;
+  // Deduplicated, sorted CoinGecko IDs for all tokens
+  coinGeckoIds: string[];
 }
 
 // Keeping everything here for now as state is simple
@@ -85,6 +87,8 @@ export interface AppState {
   // Map of chain -> address -> router info
   // Used to: 1) prevent sending to warp route addresses, 2) format amounts with correct decimals
   routerAddressesByChainMap: Record<ChainName, Record<string, RouterAddressInfo>>;
+  // Deduplicated, sorted CoinGecko IDs for all tokens (used by useTokenPrices)
+  coinGeckoIds: string[];
   // instead of moving the TipCard component inside the formik and an useEffect can be set to watch for it
   isTipCardActionTriggered: boolean;
   setIsTipCardActionTriggered: (isTipCardActionTriggered: boolean) => void;
@@ -102,33 +106,45 @@ export const useStore = create<AppState>()(
       ) => {
         logger.debug('Setting chain overrides in store');
         const filtered = objFilter(overrides, (_, metadata) => !!metadata);
-        const { multiProvider, warpCore, routerAddressesByChainMap, tokensBySymbolChainMap } =
-          await initWarpContext({
-            ...get(),
-            chainMetadataOverrides: filtered,
-          });
+        const {
+          multiProvider,
+          warpCore,
+          routerAddressesByChainMap,
+          tokensBySymbolChainMap,
+          coinGeckoIds,
+        } = await initWarpContext({
+          ...get(),
+          chainMetadataOverrides: filtered,
+        });
         set({
           chainMetadataOverrides: filtered,
           multiProvider,
           warpCore,
           tokensBySymbolChainMap,
           routerAddressesByChainMap,
+          coinGeckoIds,
         });
       },
       warpCoreConfigOverrides: [],
       setWarpCoreConfigOverrides: async (overrides: WarpCoreConfig[] | undefined = []) => {
         logger.debug('Setting warp core config overrides in store');
-        const { multiProvider, warpCore, routerAddressesByChainMap, tokensBySymbolChainMap } =
-          await initWarpContext({
-            ...get(),
-            warpCoreConfigOverrides: overrides,
-          });
+        const {
+          multiProvider,
+          warpCore,
+          routerAddressesByChainMap,
+          tokensBySymbolChainMap,
+          coinGeckoIds,
+        } = await initWarpContext({
+          ...get(),
+          warpCoreConfigOverrides: overrides,
+        });
         set({
           warpCoreConfigOverrides: overrides,
           multiProvider,
           warpCore,
           tokensBySymbolChainMap,
           routerAddressesByChainMap,
+          coinGeckoIds,
         });
       },
       multiProvider: new MultiProtocolProvider({}),
@@ -190,6 +206,7 @@ export const useStore = create<AppState>()(
       },
       tokensBySymbolChainMap: {},
       routerAddressesByChainMap: {},
+      coinGeckoIds: [],
       isTipCardActionTriggered: false,
       setIsTipCardActionTriggered: (isTipCardActionTriggered: boolean) => {
         set(() => ({ isTipCardActionTriggered }));
@@ -264,6 +281,9 @@ async function initWarpContext({
 
     const tokensBySymbolChainMap = assembleTokensBySymbolChainMap(warpCore.tokens, multiProvider);
     const routerAddressesByChainMap = getRouterAddressesByChain(warpCore.tokens, wireDecimalsMap);
+    const coinGeckoIds = Array.from(
+      new Set(coreConfig.tokens.map((t) => t.coinGeckoId).filter(Boolean)),
+    ).sort() as string[];
     return {
       registry: currentRegistry,
       chainMetadata,
@@ -271,6 +291,7 @@ async function initWarpContext({
       warpCore,
       tokensBySymbolChainMap,
       routerAddressesByChainMap,
+      coinGeckoIds,
     };
   } catch (error) {
     toast.error('Error initializing warp context. Please check connection status and configs.');
@@ -282,6 +303,7 @@ async function initWarpContext({
       warpCore: new WarpCore(new MultiProtocolProvider({}), []),
       tokensBySymbolChainMap: {},
       routerAddressesByChainMap: {},
+      coinGeckoIds: [],
     };
   }
 }

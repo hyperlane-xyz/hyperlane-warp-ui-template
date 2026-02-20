@@ -839,7 +839,7 @@ function WarningBanners() {
 
   return (
     // Cap space to one visible banner since warning layers are absolutely positioned at the top.
-    <div className="max-h-12 overflow-hidden sm:max-h-10">
+    <div className="relative max-h-12 overflow-hidden sm:max-h-10">
       <ChainWalletWarning origin={originToken?.chainName || ''} />
       <ChainConnectionWarning
         origin={originToken?.chainName || ''}

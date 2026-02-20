@@ -39,12 +39,14 @@ export function TokenIcon({ token, size = 32 }: Props) {
               const original = img.dataset.logoOriginalSrc;
               const attemptedDark = img.dataset.logoDarkSrc;
               const current = img.getAttribute('src') || img.src;
+              const originalLoadFailed =
+                !!original && current === original && img.complete && img.naturalWidth === 0;
               const darkFallbackAlreadyHandled =
                 img.dataset.logoDarkFailed === 'true' &&
                 !!original &&
                 !!attemptedDark &&
                 current === original;
-              if (darkFallbackAlreadyHandled) return;
+              if (darkFallbackAlreadyHandled && !originalLoadFailed) return;
 
               const isDarkFallbackError =
                 !!original && !!attemptedDark && current === attemptedDark;

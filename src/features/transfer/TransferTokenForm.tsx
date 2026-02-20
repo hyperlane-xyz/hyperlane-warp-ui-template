@@ -52,6 +52,7 @@ import { useIsAccountSanctioned } from '../sanctions/hooks/useIsAccountSanctione
 import { RouterAddressInfo, useStore } from '../store';
 import { SelectOrInputTokenIds } from '../tokens/SelectOrInputTokenIds';
 import { TokenSelectField } from '../tokens/TokenSelectField';
+import { UsdLabel } from '../tokens/UsdLabel';
 import { useIsApproveRequired } from '../tokens/approval';
 import {
   getIndexForToken,
@@ -60,6 +61,7 @@ import {
   getTokenIndexFromChains,
   useWarpCore,
 } from '../tokens/hooks';
+import { useFeePrices } from '../tokens/useFeePrices';
 import { useTokenPrice } from '../tokens/useTokenPrice';
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { FeeSectionButton } from './FeeSectionButton';
@@ -677,6 +679,10 @@ function ReviewDetails({
     !isReview,
   );
 
+  const feePrices = useFeePrices(feeQuotes ?? null, warpCore.tokens);
+  const { tokenPrice } = useTokenPrice(values);
+  const parsedAmount = parseFloat(amount);
+  const transferUsd = tokenPrice && !isNaN(parsedAmount) ? parsedAmount * tokenPrice : 0;
   const isLoading = isApproveLoading || isQuoteLoading;
 
   const fees = useMemo(() => {
@@ -702,7 +708,14 @@ function ReviewDetails({
 
   return (
     <>
-      {!isReview && <FeeSectionButton visible={!isReview} fees={fees} isLoading={isLoading} />}
+      {!isReview && (
+        <FeeSectionButton
+          fees={fees}
+          isLoading={isLoading}
+          feePrices={feePrices}
+          transferUsd={transferUsd}
+        />
+      )}
 
       <div
         className={`${
@@ -751,25 +764,28 @@ function ReviewDetails({
                   {fees?.localQuote && fees.localQuote.amount > 0n && (
                     <p className="flex">
                       <span className="min-w-[7.5rem]">Local Gas (est.)</span>
-                      <span>{`${fees.localQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${
-                        fees.localQuote.token.symbol || ''
-                      }`}</span>
+                      <span>
+                        {`${fees.localQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${fees.localQuote.token.symbol || ''}`}
+                        <UsdLabel tokenAmount={fees.localQuote} feePrices={feePrices} />
+                      </span>
                     </p>
                   )}
                   {fees?.interchainQuote && fees.interchainQuote.amount > 0n && (
                     <p className="flex">
                       <span className="min-w-[7.5rem]">Interchain Gas</span>
-                      <span>{`${fees.interchainQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${
-                        fees.interchainQuote.token.symbol || ''
-                      }`}</span>
+                      <span>
+                        {`${fees.interchainQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${fees.interchainQuote.token.symbol || ''}`}
+                        <UsdLabel tokenAmount={fees.interchainQuote} feePrices={feePrices} />
+                      </span>
                     </p>
                   )}
                   {fees?.tokenFeeQuote && fees.tokenFeeQuote.amount > 0n && (
                     <p className="flex">
                       <span className="min-w-[7.5rem]">Token Fee</span>
-                      <span>{`${fees.tokenFeeQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${
-                        fees.tokenFeeQuote.token.symbol || ''
-                      }`}</span>
+                      <span>
+                        {`${fees.tokenFeeQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${fees.tokenFeeQuote.token.symbol || ''}`}
+                        <UsdLabel tokenAmount={fees.tokenFeeQuote} feePrices={feePrices} />
+                      </span>
                     </p>
                   )}
                 </div>

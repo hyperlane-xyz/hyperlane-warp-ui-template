@@ -1,6 +1,8 @@
 import { WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
 import { ChevronIcon, FuelPumpIcon, useModal } from '@hyperlane-xyz/widgets';
 import { useEffect, useState } from 'react';
+import { getFeePercentage, getTotalFeesUsd, getTotalFeesUsdRaw } from '../tokens/feeUsdDisplay';
+import { FeePrices } from '../tokens/useFeePrices';
 import { TransferFeeModal } from './TransferFeeModal';
 
 function useLoadingDots(isLoading: boolean, intervalMs = 1000) {
@@ -24,21 +26,23 @@ function useLoadingDots(isLoading: boolean, intervalMs = 1000) {
 export function FeeSectionButton({
   isLoading,
   fees,
-  visible,
+  feePrices,
+  transferUsd,
 }: {
   isLoading: boolean;
   fees: (WarpCoreFeeEstimate & { totalFees: string }) | null;
-  visible: boolean;
+  feePrices: FeePrices;
+  transferUsd: number;
 }) {
   const { close, isOpen, open } = useModal();
   const loadingText = useLoadingDots(isLoading);
-
-  if (!visible) return null;
 
   // Determine display text and whether button is clickable
   const hasFees = fees !== null;
   const isClickable = hasFees && !isLoading;
   const feeText = isLoading ? loadingText : hasFees ? fees.totalFees : '-';
+  const totalUsd = hasFees ? getTotalFeesUsd(fees, feePrices) : null;
+  const pct = hasFees ? getFeePercentage(getTotalFeesUsdRaw(fees, feePrices), transferUsd) : null;
 
   return (
     <>
@@ -51,10 +55,22 @@ export function FeeSectionButton({
         >
           <FuelPumpIcon width={14} height={14} className="mr-1" />
           Fees: {feeText}
+          {isClickable && totalUsd && (
+            <span className="ml-1 text-gray-500">
+              {totalUsd}
+              {pct ? ` (${pct})` : ''}
+            </span>
+          )}
           {isClickable && <ChevronIcon direction="e" width="0.6rem" height="0.6rem" />}
         </button>
       </div>
-      <TransferFeeModal close={close} isOpen={isOpen} isLoading={isLoading} fees={fees} />
+      <TransferFeeModal
+        close={close}
+        isOpen={isOpen}
+        isLoading={isLoading}
+        fees={fees}
+        feePrices={feePrices}
+      />
     </>
   );
 }

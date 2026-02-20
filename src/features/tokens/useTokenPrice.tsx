@@ -10,7 +10,7 @@ const TOKEN_PRICE_REFRESH_INTERVAL = 60_000; // 60s
 type CoinGeckoResponse = Record<string, { usd: number }>;
 
 /** Fetch USD prices from CoinGecko for one or more coinGeckoIds. */
-async function fetchPrices(ids: string[]): Promise<Record<string, number>> {
+export async function fetchPrices(ids: string[]): Promise<Record<string, number>> {
   if (ids.length === 0) return {};
   try {
     const res = await fetch(

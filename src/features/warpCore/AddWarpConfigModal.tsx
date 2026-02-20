@@ -109,7 +109,7 @@ function ConfigList({
   return (
     <div className="mt-2 flex w-full flex-col gap-2 border-t pt-3">
       {warpCoreConfigOverrides.map((config, i) => (
-        <div key={i} className="flex items-center justify-between gap-1">
+        <div key={BaseRegistry.warpRouteConfigToId(config)} className="flex items-center justify-between gap-1">
           <span className="truncate text-xs">{BaseRegistry.warpRouteConfigToId(config)}</span>
           <IconButton onClick={() => onRemove(i)} title="Remove config">
             <XIcon width={10} height={10} color={Color.gray['800']} />

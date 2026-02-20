@@ -35,7 +35,6 @@ export function SideBarMenu({
 }) {
   const didMountRef = useRef(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTransfer, setSelectedTransfer] = useState<TransferContext | null>(null);
 
@@ -136,18 +135,14 @@ export function SideBarMenu({
     }
   }, [transfers, transferLoading]);
 
-  useEffect(() => {
-    setIsMenuOpen(isOpen);
-  }, [isOpen]);
-
   return (
     <>
       <div
         className={`fixed right-0 top-0 h-full w-88 transform bg-white bg-opacity-95 shadow-lg transition-transform duration-100 ease-in ${
-          isMenuOpen ? 'z-10 translate-x-0' : 'z-0 translate-x-full'
+          isOpen ? 'z-10 translate-x-0' : 'z-0 translate-x-full'
         }`}
       >
-        {isMenuOpen && (
+        {isOpen && (
           <button
             className="absolute left-0 top-0 flex h-full w-9 -translate-x-full items-center justify-center rounded-l bg-accent-50/30 backdrop-blur-[1.5px] transition-all"
             onClick={() => onClose()}

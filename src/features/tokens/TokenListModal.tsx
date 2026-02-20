@@ -1,7 +1,7 @@
 import { ChainMap, ChainMetadata, IToken, Token } from '@hyperlane-xyz/sdk';
 import { isObjEmpty, objFilter } from '@hyperlane-xyz/utils';
 import { Modal, SearchIcon, SpinnerIcon } from '@hyperlane-xyz/widgets';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, LazyMotion, domAnimation, m } from 'framer-motion';
 import Image from 'next/image';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ChainLogo } from '../../components/icons/ChainLogo';
@@ -314,24 +314,26 @@ function UnsupportedRouteChainList({
   onSelectUnsupportedRoute: (token: Token, origin: string) => void;
 }) {
   return (
-    <motion.div
-      initial={{ height: 0, opacity: 0 }}
-      animate={{ height: 'auto', opacity: 1 }}
-      exit={{ height: 0, opacity: 0 }}
-      transition={{ duration: 0.2, ease: 'easeInOut' }}
-    >
-      {Object.entries(chains).map(([chainName, chain]) => (
-        <button
-          key={chainName}
-          className="flex w-full items-center gap-4 rounded border-b border-gray-100 px-4 py-2 hover:bg-gray-200"
-          onClick={() => onSelectUnsupportedRoute(chain.token, chainName)}
-        >
-          <div className="shrink-0">
-            <ChainLogo chainName={chainName} size={16} />
-          </div>
-          <div className="text-xs">{chain.metadata?.displayName || chainName}</div>
-        </button>
-      ))}
-    </motion.div>
+    <LazyMotion features={domAnimation}>
+      <m.div
+        initial={{ height: 0, opacity: 0 }}
+        animate={{ height: 'auto', opacity: 1 }}
+        exit={{ height: 0, opacity: 0 }}
+        transition={{ duration: 0.2, ease: 'easeInOut' }}
+      >
+        {Object.entries(chains).map(([chainName, chain]) => (
+          <button
+            key={chainName}
+            className="flex w-full items-center gap-4 rounded border-b border-gray-100 px-4 py-2 hover:bg-gray-200"
+            onClick={() => onSelectUnsupportedRoute(chain.token, chainName)}
+          >
+            <div className="shrink-0">
+              <ChainLogo chainName={chainName} size={16} />
+            </div>
+            <div className="text-xs">{chain.metadata?.displayName || chainName}</div>
+          </button>
+        ))}
+      </m.div>
+    </LazyMotion>
   );
 }

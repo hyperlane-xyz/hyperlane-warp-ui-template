@@ -14,6 +14,10 @@ describe('formatTransferHistoryTimestamp', () => {
     expect(formatTransferHistoryTimestamp(timestamp, now)).toBe('59s ago');
   });
 
+  test('returns 0s ago for zero elapsed time', () => {
+    expect(formatTransferHistoryTimestamp(now, now)).toBe('0s ago');
+  });
+
   test('rolls over to minutes at 60 seconds', () => {
     const timestamp = now - 60_000;
     expect(formatTransferHistoryTimestamp(timestamp, now)).toBe('1m ago');

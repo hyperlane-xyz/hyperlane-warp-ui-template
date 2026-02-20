@@ -58,7 +58,7 @@ export function WalletProtocolModal({
                 {option.title}
               </div>
               <div className="wallet-protocol-subtitle text-sm text-gray-500">
-                {`Connect to ${option.subtitle} compatible wallet`}
+                {`Connect to ${option.subtitle}-compatible wallet`}
               </div>
             </button>
           );

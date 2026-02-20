@@ -54,10 +54,11 @@ export function TokenIcon({ token, size = 32 }: Props) {
               // Dark-variant misses should fall back to original logo, not text.
               if (isDarkFallbackError || isDarkVariantSrc) {
                 markDarkLogoMissing(current);
-                if (fallbackSrc) {
-                  img.src = fallbackSrc;
+                const nextSrc = fallbackSrc || original;
+                if (nextSrc) {
+                  img.src = nextSrc;
+                  return;
                 }
-                return;
               }
               setFallbackToText(true);
             }}

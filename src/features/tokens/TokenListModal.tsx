@@ -129,7 +129,7 @@ export function TokenList({
     isLoading: balancesLoading,
     hasAnyAddress,
   } = useTokenBalances(routeTokenObjects, origin, destination);
-  const { prices } = useTokenPrices(routeTokenObjects, origin, destination);
+  const { prices } = useTokenPrices();
 
   // Search-filtered + sorted tokens for display
   const { tokens, sortedTokens } = useMemo(() => {

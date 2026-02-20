@@ -39,6 +39,7 @@ export function SideBarMenu({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTransfer, setSelectedTransfer] = useState<TransferContext | null>(null);
+  const [nowMs, setNowMs] = useState(() => Date.now());
 
   const multiProvider = useMultiProvider();
 
@@ -141,6 +142,13 @@ export function SideBarMenu({
     setIsMenuOpen(isOpen);
   }, [isOpen]);
 
+  useEffect(() => {
+    if (!isMenuOpen) return;
+    setNowMs(Date.now());
+    const intervalId = window.setInterval(() => setNowMs(Date.now()), 30000);
+    return () => window.clearInterval(intervalId);
+  }, [isMenuOpen]);
+
   return (
     <>
       <div
@@ -214,6 +222,7 @@ export function SideBarMenu({
                       multiProvider={multiProvider}
                       warpCore={warpCore}
                       routerAddressesByChainMap={routerAddressesByChainMap}
+                      nowMs={nowMs}
                     />
                   ))}
                 </div>
@@ -252,12 +261,14 @@ function TransferSummary({
   multiProvider,
   warpCore,
   routerAddressesByChainMap,
+  nowMs,
 }: {
   item: TransferItem;
   onClick: () => void;
   multiProvider: ReturnType<typeof useMultiProvider>;
   warpCore: ReturnType<typeof useWarpCore>;
   routerAddressesByChainMap: Record<ChainName, Record<string, RouterAddressInfo>>;
+  nowMs: number;
 }) {
   if (item.type === TransferItemType.Local) {
     return (
@@ -266,6 +277,7 @@ function TransferSummary({
         onClick={onClick}
         multiProvider={multiProvider}
         warpCore={warpCore}
+        nowMs={nowMs}
       />
     );
   }
@@ -328,7 +340,7 @@ function TransferSummary({
               </span>
             </div>
             <div className="sidebar-menu-time mt-1 w-full text-left text-xxs font-normal text-gray-500">
-              {formatTransferHistoryTimestamp(msg.origin.timestamp)}
+              {formatTransferHistoryTimestamp(msg.origin.timestamp, nowMs)}
             </div>
           </div>
         </div>
@@ -349,11 +361,13 @@ function LocalTransferSummary({
   onClick,
   multiProvider,
   warpCore,
+  nowMs,
 }: {
   transfer: TransferContext;
   onClick: () => void;
   multiProvider: ReturnType<typeof useMultiProvider>;
   warpCore: ReturnType<typeof useWarpCore>;
+  nowMs: number;
 }) {
   const { amount, origin, destination, status, timestamp, originTokenAddressOrDenom } = transfer;
   const token = tryFindToken(warpCore, origin, originTokenAddressOrDenom);
@@ -390,7 +404,7 @@ function LocalTransferSummary({
               </span>
             </div>
             <div className="sidebar-menu-time mt-1 w-full text-left text-xxs font-normal text-gray-500">
-              {formatTransferHistoryTimestamp(timestamp)}
+              {formatTransferHistoryTimestamp(timestamp, nowMs)}
             </div>
           </div>
         </div>

@@ -3,6 +3,7 @@ import {
   markDarkLogoMissing,
   processDarkLogoImage,
   processDarkLogosInContainer,
+  resetDarkLogoCache,
   toOriginalVariantSrc,
 } from './imageBrightness';
 
@@ -74,6 +75,7 @@ function restoreDomGlobals() {
 
 describe('imageBrightness', () => {
   beforeEach(() => {
+    resetDarkLogoCache();
     setThemeMode('dark');
   });
 

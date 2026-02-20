@@ -3,6 +3,18 @@ function getImgSrc(img: HTMLImageElement): string {
 }
 
 const darkLogoAvailabilityCache = new Map<string, 'ok' | 'missing'>();
+const DARK_LOGO_CACHE_MAX_ENTRIES = 500;
+
+function setDarkLogoAvailability(key: string, value: 'ok' | 'missing') {
+  if (!key) return;
+  if (darkLogoAvailabilityCache.has(key)) {
+    darkLogoAvailabilityCache.delete(key);
+  }
+  darkLogoAvailabilityCache.set(key, value);
+  if (darkLogoAvailabilityCache.size <= DARK_LOGO_CACHE_MAX_ENTRIES) return;
+  const oldestKey = darkLogoAvailabilityCache.keys().next().value as string | undefined;
+  if (oldestKey) darkLogoAvailabilityCache.delete(oldestKey);
+}
 
 /** @internal visibleForTesting */
 export function resetDarkLogoCache() {
@@ -49,8 +61,7 @@ export function toOriginalVariantSrc(src: string): string | null {
 }
 
 export function markDarkLogoMissing(darkSrc: string) {
-  if (!darkSrc) return;
-  darkLogoAvailabilityCache.set(darkSrc, 'missing');
+  setDarkLogoAvailability(darkSrc, 'missing');
 }
 
 function bindFallbackHandlers(img: HTMLImageElement) {
@@ -66,7 +77,7 @@ function bindFallbackHandlers(img: HTMLImageElement) {
 
     img.dataset.logoDarkFailed = 'true';
     img.dataset.logoDarkFailedSrc = attemptedDark;
-    darkLogoAvailabilityCache.set(attemptedDark, 'missing');
+    setDarkLogoAvailability(attemptedDark, 'missing');
     img.src = original;
   });
 
@@ -76,7 +87,7 @@ function bindFallbackHandlers(img: HTMLImageElement) {
     if (getImgSrc(img) !== attemptedDark) return;
     img.dataset.logoDarkFailed = 'false';
     img.dataset.logoDarkFailedSrc = '';
-    darkLogoAvailabilityCache.set(attemptedDark, 'ok');
+    setDarkLogoAvailability(attemptedDark, 'ok');
   });
 
   img.dataset.logoHandlersBound = 'true';

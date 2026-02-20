@@ -193,7 +193,11 @@ function SwapChainsButton({
       width={20}
       height={20}
       title="Swap chains"
-      className={disabled ? 'swap-chains-button' : 'swap-chains-button hover:rotate-180'}
+      className={
+        disabled
+          ? 'swap-chains-button transition-transform'
+          : 'swap-chains-button transition-transform hover:rotate-180'
+      }
       onClick={onClick}
       disabled={disabled}
     >
@@ -794,7 +798,7 @@ function WarningBanners() {
   const { values } = useFormikContext<TransferFormValues>();
   return (
     // Cap space to one visible banner since warning layers are absolutely positioned at the top.
-    <div className="max-h-12 overflow-hidden sm:max-h-10">
+    <div className="relative max-h-12 overflow-hidden sm:max-h-10">
       <ChainWalletWarning origin={values.origin} />
       <ChainConnectionWarning origin={values.origin} destination={values.destination} />
       <WalletConnectionWarning origin={values.origin} />

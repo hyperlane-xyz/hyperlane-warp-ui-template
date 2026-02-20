@@ -14,7 +14,12 @@ const PROTOCOL_OPTIONS = [
   { protocol: ProtocolType.Cosmos, title: 'Cosmos', subtitle: 'a Cosmos' },
   { protocol: ProtocolType.Starknet, title: 'Starknet', subtitle: 'a Starknet' },
   { protocol: ProtocolType.Radix, title: 'Radix', subtitle: 'a Radix' },
-  { protocol: ProtocolType.Aleo, title: 'Aleo', subtitle: 'an Aleo' },
+  {
+    protocol: ProtocolType.Aleo,
+    title: 'Aleo',
+    subtitle: 'an Aleo',
+    logoClassName: 'wallet-protocol-aleo-logo',
+  },
 ];
 
 export function WalletProtocolModal({
@@ -26,9 +31,15 @@ export function WalletProtocolModal({
   const connectFns = useConnectFns();
 
   const onClickProtocol = (protocol: ProtocolType) => {
+    const connectFn = connectFns[protocol];
+    if (!connectFn) {
+      // eslint-disable-next-line no-console
+      console.error(`No wallet connect function configured for protocol: ${protocol}`);
+      return;
+    }
     close();
     onProtocolSelected?.(protocol);
-    connectFns[protocol]?.();
+    connectFn();
   };
 
   const includesProtocol = (protocol: ProtocolType) => !protocols || protocols.includes(protocol);
@@ -49,11 +60,7 @@ export function WalletProtocolModal({
               onClick={() => onClickProtocol(option.protocol)}
               className="wallet-protocol-card flex w-full flex-col items-center space-y-2.5 rounded-lg border border-gray-200 py-3.5 transition-all hover:bg-gray-100 active:scale-95"
             >
-              <Logo
-                width={34}
-                height={34}
-                className={option.protocol === ProtocolType.Aleo ? 'wallet-protocol-aleo-logo' : ''}
-              />
+              <Logo width={34} height={34} className={option.logoClassName} />
               <div className="wallet-protocol-title tracking-wide text-gray-800">
                 {option.title}
               </div>

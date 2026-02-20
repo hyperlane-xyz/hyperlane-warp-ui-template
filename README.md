@@ -65,6 +65,21 @@ pnpm run prettier
 ```sh
 # Delete build artifacts to start fresh
 pnpm run clean
+<<<<<<< HEAD
+=======
+```
+
+### Local package linking to hyperlane-monorepo
+
+If you have to make changes to the widgets package to edit e.g. the Connect Button or other components linking
+the widgets package locally to test it is necessary. To do that you can run the following commands
+
+```sh
+# Link monorepo packages with the warp-ui
+pnpm link:monorepo
+# Unlink packages again after testing
+pnpm unlink:monorepo
+>>>>>>> origin/main
 ```
 
 ## Deployment

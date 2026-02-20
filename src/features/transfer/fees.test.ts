@@ -1,6 +1,6 @@
 import { TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { createMockToken } from '../../utils/test';
+import { createMockToken, createTokenConnectionMock } from '../../utils/test';
 import { TokensWithDestinationBalance, TokenWithFee } from '../tokens/types';
 import * as tokenUtils from '../tokens/utils';
 import {
@@ -431,7 +431,7 @@ describe('getTransferToken', () => {
     ({
       getTokenCollateral: vi.fn(),
       getInterchainTransferFee: vi.fn(),
-      // Return the origin token from getTokensForRoute so findRouteToken can find a match
+      // Return the origin token from getTokensForRoute so route resolution can find a match
       getTokensForRoute: vi.fn().mockReturnValue(originToken ? [originToken] : []),
       ...overrides,
     }) as unknown as WarpCore;
@@ -510,7 +510,11 @@ describe('getTransferToken', () => {
     const originToken = createMockToken({ symbol: 'TOKEN1' });
     const destinationToken = createMockToken({ symbol: 'TOKEN1', chainName: 'chain1' });
     const originToken2 = createMockToken({ symbol: 'TOKEN2' });
-    const destinationToken2 = createMockToken({ symbol: 'TOKEN2', chainName: 'chain2' });
+    const destinationToken2 = createMockToken({
+      symbol: 'TOKEN2',
+      chainName: destinationToken.chainName,
+      addressOrDenom: destinationToken.addressOrDenom,
+    });
 
     vi.spyOn(tokenUtils, 'isValidMultiCollateralToken').mockReturnValue(true);
     vi.spyOn(tokenUtils, 'getTokensWithSameCollateralAddresses').mockReturnValue([
@@ -546,7 +550,11 @@ describe('getTransferToken', () => {
     const originToken = createMockToken({ symbol: 'TOKEN1' });
     const destinationToken = createMockToken({ symbol: 'TOKEN1', chainName: 'chain1' });
     const originToken2 = createMockToken({ symbol: 'TOKEN2' });
-    const destinationToken2 = createMockToken({ symbol: 'TOKEN2', chainName: 'chain2' });
+    const destinationToken2 = createMockToken({
+      symbol: 'TOKEN2',
+      chainName: destinationToken.chainName,
+      addressOrDenom: destinationToken.addressOrDenom,
+    });
 
     vi.spyOn(tokenUtils, 'isValidMultiCollateralToken').mockReturnValue(true);
     vi.spyOn(tokenUtils, 'getTokensWithSameCollateralAddresses').mockReturnValue([
@@ -579,11 +587,135 @@ describe('getTransferToken', () => {
     expect(result).toBe(originToken2);
   });
 
+  test('forwards destinationTokenAddress while evaluating route fees', async () => {
+    const destinationToken = createMockToken({
+      symbol: 'TOKEN1',
+      chainName: 'chain1',
+      addressOrDenom: '0x1111111111111111111111111111111111111111',
+    });
+    const destinationToken2 = createMockToken({
+      symbol: 'TOKEN2',
+      chainName: 'chain1',
+      addressOrDenom: '0x1111111111111111111111111111111111111111',
+    });
+    const originToken = createMockToken({
+      symbol: 'TOKEN1',
+      connections: [
+        createTokenConnectionMock(undefined, {
+          chainName: destinationToken.chainName,
+          symbol: destinationToken.symbol,
+          addressOrDenom: destinationToken.addressOrDenom,
+          collateralAddressOrDenom: destinationToken.collateralAddressOrDenom,
+        }),
+      ],
+    });
+    const originToken2 = createMockToken({ symbol: 'TOKEN2' });
+
+    vi.spyOn(tokenUtils, 'isValidMultiCollateralToken').mockReturnValue(true);
+    vi.spyOn(tokenUtils, 'getTokensWithSameCollateralAddresses').mockReturnValue([
+      { originToken, destinationToken },
+      { originToken: originToken2, destinationToken: destinationToken2 },
+    ]);
+
+    const warpCore = createMockWarpCore(
+      {
+        getTokenCollateral: vi.fn().mockResolvedValue(BALANCE_XLARGE),
+        getInterchainTransferFee: vi.fn().mockResolvedValue({ tokenFeeQuote: undefined }),
+      },
+      originToken,
+    );
+
+    await getTransferToken(
+      warpCore,
+      originToken,
+      destinationToken,
+      TRANSFER_AMOUNT,
+      MOCK_RECIPIENT,
+      MOCK_SENDER,
+    );
+
+    expect(warpCore.getInterchainTransferFee).toHaveBeenCalledTimes(2);
+    expect(warpCore.getInterchainTransferFee).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        destination: destinationToken.chainName,
+        destinationTokenAddress: destinationToken.addressOrDenom,
+      }),
+    );
+    expect(warpCore.getInterchainTransferFee).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        destination: destinationToken.chainName,
+        destinationTokenAddress: destinationToken.addressOrDenom,
+      }),
+    );
+  });
+
+  test('does not switch to a lower-fee route with different destination token', async () => {
+    const selectedDestinationToken = createMockToken({
+      symbol: 'TOKEN1',
+      chainName: 'chain1',
+      addressOrDenom: '0x1111111111111111111111111111111111111111',
+      collateralAddressOrDenom: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+    });
+    const otherDestinationToken = createMockToken({
+      symbol: 'TOKEN1',
+      chainName: 'chain1',
+      addressOrDenom: '0x2222222222222222222222222222222222222222',
+      collateralAddressOrDenom: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+    });
+    const selectedOriginToken = createMockToken({
+      symbol: 'TOKEN1',
+      connections: [
+        createTokenConnectionMock(undefined, {
+          chainName: selectedDestinationToken.chainName,
+          symbol: selectedDestinationToken.symbol,
+          addressOrDenom: selectedDestinationToken.addressOrDenom,
+          collateralAddressOrDenom: selectedDestinationToken.collateralAddressOrDenom,
+        }),
+      ],
+    });
+    const otherOriginToken = createMockToken({ symbol: 'TOKEN1' });
+
+    vi.spyOn(tokenUtils, 'isValidMultiCollateralToken').mockReturnValue(true);
+    vi.spyOn(tokenUtils, 'getTokensWithSameCollateralAddresses').mockReturnValue([
+      { originToken: selectedOriginToken, destinationToken: selectedDestinationToken },
+      { originToken: otherOriginToken, destinationToken: otherDestinationToken },
+    ]);
+
+    const feeToken = createMockToken({ symbol: 'FEE' });
+    const warpCore = createMockWarpCore(
+      {
+        getTokenCollateral: vi.fn().mockResolvedValue(BALANCE_XXLARGE),
+        getInterchainTransferFee: vi
+          .fn()
+          .mockResolvedValueOnce({ tokenFeeQuote: new TokenAmount(FEE_HIGH, feeToken) })
+          .mockResolvedValueOnce({ tokenFeeQuote: new TokenAmount(FEE_LOW, feeToken) }),
+      },
+      selectedOriginToken,
+    );
+
+    const selected = await getTransferToken(
+      warpCore,
+      selectedOriginToken,
+      selectedDestinationToken,
+      TRANSFER_AMOUNT,
+      MOCK_RECIPIENT,
+      MOCK_SENDER,
+    );
+
+    expect(selected).toBe(selectedOriginToken);
+  });
+
   test('should prefer route with no fee over route with fee', async () => {
     const originToken = createMockToken({ symbol: 'TOKEN1' });
     const destinationToken = createMockToken({ symbol: 'TOKEN1', chainName: 'chain1' });
     const originToken2 = createMockToken({ symbol: 'TOKEN2' });
-    const destinationToken2 = createMockToken({ symbol: 'TOKEN2', chainName: 'chain2' });
+    const destinationToken2 = createMockToken({
+      symbol: 'TOKEN2',
+      chainName: destinationToken.chainName,
+      addressOrDenom: destinationToken.addressOrDenom,
+    });
 
     vi.spyOn(tokenUtils, 'isValidMultiCollateralToken').mockReturnValue(true);
     vi.spyOn(tokenUtils, 'getTokensWithSameCollateralAddresses').mockReturnValue([
@@ -620,7 +752,11 @@ describe('getTransferToken', () => {
     const originToken = createMockToken({ symbol: 'TOKEN1' });
     const destinationToken = createMockToken({ symbol: 'TOKEN1', chainName: 'chain1' });
     const originToken2 = createMockToken({ symbol: 'TOKEN2' });
-    const destinationToken2 = createMockToken({ symbol: 'TOKEN2', chainName: 'chain2' });
+    const destinationToken2 = createMockToken({
+      symbol: 'TOKEN2',
+      chainName: destinationToken.chainName,
+      addressOrDenom: destinationToken.addressOrDenom,
+    });
 
     vi.spyOn(tokenUtils, 'isValidMultiCollateralToken').mockReturnValue(true);
     vi.spyOn(tokenUtils, 'getTokensWithSameCollateralAddresses').mockReturnValue([
@@ -659,7 +795,11 @@ describe('getTransferToken', () => {
     const originToken = createMockToken({ symbol: 'TOKEN1' });
     const destinationToken = createMockToken({ symbol: 'TOKEN1', chainName: 'chain1' });
     const originToken2 = createMockToken({ symbol: 'TOKEN2' });
-    const destinationToken2 = createMockToken({ symbol: 'TOKEN2', chainName: 'chain2' });
+    const destinationToken2 = createMockToken({
+      symbol: 'TOKEN2',
+      chainName: destinationToken.chainName,
+      addressOrDenom: destinationToken.addressOrDenom,
+    });
 
     vi.spyOn(tokenUtils, 'isValidMultiCollateralToken').mockReturnValue(true);
     vi.spyOn(tokenUtils, 'getTokensWithSameCollateralAddresses').mockReturnValue([
@@ -701,6 +841,7 @@ describe('getTransferToken', () => {
     const destinationToken = createMockToken({
       symbol: 'USDC',
       chainName: 'arbitrum',
+      addressOrDenom: '0xAd4350Ee0f9f5b85BaB115425426086Ae8384ebb',
       collateralAddressOrDenom: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
     });
     const defaultOriginToken = createMockToken({
@@ -765,6 +906,7 @@ describe('getTransferToken', () => {
     const destinationToken = createMockToken({
       symbol: 'USDC',
       chainName: 'arbitrum',
+      addressOrDenom: '0xAd4350Ee0f9f5b85BaB115425426086Ae8384ebb',
       collateralAddressOrDenom: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
     });
     const originToken2 = createMockToken({
@@ -775,7 +917,7 @@ describe('getTransferToken', () => {
     });
     const destinationToken2 = createMockToken({
       symbol: 'USDC',
-      addressOrDenom: '0xDifferentDestWarpRoute',
+      addressOrDenom: destinationToken.addressOrDenom,
       chainName: 'arbitrum',
       collateralAddressOrDenom: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
     });

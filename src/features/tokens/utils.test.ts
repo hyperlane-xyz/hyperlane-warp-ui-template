@@ -3,7 +3,9 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { createMockToken, createTokenConnectionMock } from '../../utils/test';
 import {
   buildTokensArray,
+  checkTokenHasRoute,
   dedupeTokensByCollateral,
+  groupTokensByCollateral,
   isValidMultiCollateralToken,
   tryGetDefaultOriginToken,
 } from './utils';
@@ -341,6 +343,85 @@ describe('tryGetDefaultOriginToken', () => {
 
     expect(result).toBe(defaultOriginToken);
     expect(result).not.toBe(otherOriginToken);
+  });
+});
+
+describe('checkTokenHasRoute', () => {
+  test('matches exact destination token when multiple connections exist on destination chain', () => {
+    const destinationUsdc = createMockToken({
+      chainName: 'arbitrum',
+      symbol: 'USDC',
+      addressOrDenom: '0x1111111111111111111111111111111111111111',
+      collateralAddressOrDenom: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+    });
+    const destinationUsdt = createMockToken({
+      chainName: 'arbitrum',
+      symbol: 'USDT',
+      addressOrDenom: '0x2222222222222222222222222222222222222222',
+      collateralAddressOrDenom: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+    });
+    const routeOriginToken = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USD',
+      addressOrDenom: '0x3333333333333333333333333333333333333333',
+      collateralAddressOrDenom: '0xcccccccccccccccccccccccccccccccccccccccc',
+      connections: [
+        createTokenConnectionMock(undefined, {
+          chainName: destinationUsdc.chainName,
+          symbol: destinationUsdc.symbol,
+          addressOrDenom: destinationUsdc.addressOrDenom,
+          collateralAddressOrDenom: destinationUsdc.collateralAddressOrDenom,
+        }),
+        createTokenConnectionMock(undefined, {
+          chainName: destinationUsdt.chainName,
+          symbol: destinationUsdt.symbol,
+          addressOrDenom: destinationUsdt.addressOrDenom,
+          collateralAddressOrDenom: destinationUsdt.collateralAddressOrDenom,
+        }),
+      ],
+    });
+    const selectedOriginToken = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USD',
+      addressOrDenom: '0x4444444444444444444444444444444444444444',
+      collateralAddressOrDenom: '0xcccccccccccccccccccccccccccccccccccccccc',
+      connections: [],
+    });
+
+    const collateralGroups = groupTokensByCollateral([routeOriginToken]);
+    expect(checkTokenHasRoute(selectedOriginToken, destinationUsdt, collateralGroups)).toBe(true);
+  });
+
+  test('returns false when destination token does not match by address or collateral', () => {
+    const routeDestination = createMockToken({
+      chainName: 'arbitrum',
+      symbol: 'USDC',
+      addressOrDenom: '0x1111111111111111111111111111111111111111',
+      collateralAddressOrDenom: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+    });
+    const nonRouteDestination = createMockToken({
+      chainName: 'arbitrum',
+      symbol: 'USDC',
+      addressOrDenom: '0x5555555555555555555555555555555555555555',
+      collateralAddressOrDenom: '0xffffffffffffffffffffffffffffffffffffffff',
+    });
+    const routeOriginToken = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USDC',
+      addressOrDenom: '0x3333333333333333333333333333333333333333',
+      collateralAddressOrDenom: '0xcccccccccccccccccccccccccccccccccccccccc',
+      connections: [
+        createTokenConnectionMock(undefined, {
+          chainName: routeDestination.chainName,
+          symbol: routeDestination.symbol,
+          addressOrDenom: routeDestination.addressOrDenom,
+          collateralAddressOrDenom: routeDestination.collateralAddressOrDenom,
+        }),
+      ],
+    });
+
+    const collateralGroups = groupTokensByCollateral([routeOriginToken]);
+    expect(checkTokenHasRoute(routeOriginToken, nonRouteDestination, collateralGroups)).toBe(false);
   });
 });
 

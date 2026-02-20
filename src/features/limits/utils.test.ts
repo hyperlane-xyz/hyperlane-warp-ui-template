@@ -46,6 +46,32 @@ describe('getMultiCollateralTokenLimit', () => {
       mockLimits[0],
     );
   });
+
+  test('resolves limit using the exact destination token object', () => {
+    const exactDestination = createMockToken({
+      chainName: TestChainName.test2,
+      symbol: 'FAKE',
+      collateralAddressOrDenom: '0x1111111111111111111111111111111111111111',
+    });
+    const differentDestination = createMockToken({
+      chainName: TestChainName.test2,
+      symbol: 'OTHER',
+      collateralAddressOrDenom: '0x2222222222222222222222222222222222222222',
+    });
+    const token = createMockToken({
+      connections: [
+        createTokenConnectionMock(undefined, {
+          chainName: exactDestination.chainName,
+          symbol: exactDestination.symbol,
+          collateralAddressOrDenom: exactDestination.collateralAddressOrDenom,
+          addressOrDenom: exactDestination.addressOrDenom,
+        }),
+      ],
+    });
+
+    expect(getMultiCollateralTokenLimit(token, exactDestination, mockLimits)).toEqual(mockLimits[0]);
+    expect(getMultiCollateralTokenLimit(token, differentDestination, mockLimits)).toBeNull();
+  });
 });
 
 describe('isMultiCollateralLimitExceeded', () => {
@@ -66,5 +92,17 @@ describe('isMultiCollateralLimitExceeded', () => {
     expect(
       isMultiCollateralLimitExceeded(token, TestChainName.test2, '10000000', mockLimits),
     ).toEqual(BigInt(mockLimits[0].amountWei));
+  });
+
+  test('uses exact destination token when checking exceeded limit', () => {
+    const destinationToken = createMockToken({
+      chainName: TestChainName.test2,
+      symbol: 'OTHER',
+    });
+    const token = createMockToken({
+      connections: [createTokenConnectionMock()],
+    });
+
+    expect(isMultiCollateralLimitExceeded(token, destinationToken, '10000000', mockLimits)).toBeNull();
   });
 });

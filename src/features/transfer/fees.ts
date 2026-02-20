@@ -9,11 +9,12 @@ import {
   TokenWithFee,
 } from '../tokens/types';
 import {
-  findRouteToken,
   getTokensWithSameCollateralAddresses,
   isValidMultiCollateralToken,
   tryGetDefaultOriginToken,
 } from '../tokens/utils';
+import { asMultiRouterWarpCore } from './multiRouterWarpCore';
+import { matchesDestinationToken, resolveTransferRoute } from './routeResolution';
 
 // Compare two objects with balance field in descending order (highest first)
 export function compareByBalanceDesc(a: { balance: bigint }, b: { balance: bigint }) {
@@ -108,28 +109,24 @@ export async function getTransferToken(
   sender: string | undefined,
   defaultMultiCollateralRoutes?: DefaultMultiCollateralRoutes,
 ) {
-  const destinationChain = destinationToken.chainName;
+  const multiRouterWarpCore = asMultiRouterWarpCore(warpCore);
+  const resolvedRoute = resolveTransferRoute({
+    warpCore,
+    originToken,
+    destinationToken,
+  });
+  const originRouteToken = resolvedRoute?.originToken || originToken;
+  const destinationRouteToken = resolvedRoute?.destinationToken || destinationToken;
 
-  // Find the actual warpCore token that has the route
-  // Because we deduplicated tokens with the same collateral, the current token pair
-  // might not be correct, so it is necessary to get the correct token pair.
-  // Make sure to have used `checkTokenHasRoute` before calling getLowestFeeTransferToken
-  // as that will validate that the token pair actually refer to the same asset
-  const originRouteToken = findRouteToken(warpCore, originToken, destinationChain);
-  if (!originRouteToken) {
-    // No route exists, return original token (validation will catch this)
-    return originToken;
-  }
-
-  if (!isValidMultiCollateralToken(originRouteToken, destinationToken)) {
+  if (!isValidMultiCollateralToken(originRouteToken, destinationRouteToken)) {
     return originRouteToken;
   }
 
   const tokensWithSameCollateralAddresses = getTokensWithSameCollateralAddresses(
     warpCore,
     originRouteToken,
-    destinationToken,
-  );
+    destinationRouteToken,
+  ).filter(({ destinationToken }) => matchesDestinationToken(destinationToken, destinationRouteToken));
 
   // if only one token exists then just return that one
   if (tokensWithSameCollateralAddresses.length <= 1) return originRouteToken;
@@ -140,8 +137,8 @@ export async function getTransferToken(
 
   // Check for default multi-collateral route first (bypasses fee lookup)
   const defaultToken = tryGetDefaultOriginToken(
-    originToken,
-    destinationToken,
+    originRouteToken,
+    destinationRouteToken,
     defaultMultiCollateralRoutes,
     tokensWithSameCollateralAddresses,
   );
@@ -170,12 +167,13 @@ export async function getTransferToken(
   logger.debug('Retrieving fees for multi-collateral routes...');
   // fetch each route fees
   const feeResults = await Promise.allSettled(
-    tokenBalances.map(async ({ originToken, destinationToken, balance }) => {
+    tokenBalances.map(async ({ originToken, destinationToken: destinationRouteToken, balance }) => {
       try {
         const originTokenAmount = new TokenAmount(amountWei, originToken);
-        const fees = await warpCore.getInterchainTransferFee({
+        const fees = await multiRouterWarpCore.getInterchainTransferFee({
           originTokenAmount,
-          destination: destinationToken.chainName,
+          destination: destinationRouteToken.chainName,
+          destinationTokenAddress: destinationRouteToken.addressOrDenom,
           recipient,
           sender,
         });

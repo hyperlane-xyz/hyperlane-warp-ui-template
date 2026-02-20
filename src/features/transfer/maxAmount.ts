@@ -1,5 +1,5 @@
 import { MultiProtocolProvider, Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
-import { ProtocolType } from '@hyperlane-xyz/utils';
+import { KnownProtocolType } from '@hyperlane-xyz/utils';
 import { AccountInfo, getAccountAddressAndPubKey } from '@hyperlane-xyz/widgets';
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
@@ -8,14 +8,15 @@ import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { isMultiCollateralLimitExceeded } from '../limits/utils';
 import { useWarpCore } from '../tokens/hooks';
-import { findRouteToken } from '../tokens/utils';
 import { getTransferToken } from './fees';
+import { asMultiRouterWarpCore } from './multiRouterWarpCore';
+import { resolveTransferRoute } from './routeResolution';
 
 interface FetchMaxParams {
-  accounts: Record<ProtocolType, AccountInfo>;
+  accounts: Record<KnownProtocolType, AccountInfo>;
   balance: TokenAmount;
   origin: ChainName;
-  destination: ChainName;
+  destinationToken: Token;
   recipient?: string;
 }
 
@@ -30,30 +31,32 @@ export function useFetchMaxAmount() {
   return { fetchMaxAmount: mutation.mutateAsync, isLoading: mutation.isPending };
 }
 
-async function fetchMaxAmount(
+export async function fetchMaxAmount(
   multiProvider: MultiProtocolProvider,
   warpCore: WarpCore,
-  { accounts, balance, destination, origin, recipient: formRecipient }: FetchMaxParams,
+  { accounts, balance, destinationToken, origin, recipient: formRecipient }: FetchMaxParams,
 ) {
   try {
+    const multiRouterWarpCore = asMultiRouterWarpCore(warpCore);
     const { address, publicKey } = getAccountAddressAndPubKey(multiProvider, origin, accounts);
     if (!address) return balance;
     const originToken = new Token(balance.token);
+    const destination = destinationToken.chainName;
 
     // Get recipient (form value or fallback to connected wallet for destination)
     const { address: connectedDestAddress } = getAccountAddressAndPubKey(
       multiProvider,
-      destination,
+      destinationToken.chainName,
       accounts,
     );
     const recipient = formRecipient || connectedDestAddress || address;
 
-    // Find the actual warpCore token that has the route (handles deduplicated tokens)
-    const originRouteToken = findRouteToken(warpCore, originToken, destination);
-    if (!originRouteToken) return undefined;
-
-    const destinationToken = originRouteToken.getConnectionForChain(destination)?.token;
-    if (!destinationToken) return undefined;
+    const route = resolveTransferRoute({
+      warpCore,
+      originToken,
+      destinationToken,
+    });
+    if (!route) return undefined;
 
     const transferToken = await getTransferToken(
       warpCore,
@@ -65,9 +68,10 @@ async function fetchMaxAmount(
       defaultMultiCollateralRoutes,
     );
     const tokenAmount = new TokenAmount(balance.amount, transferToken);
-    const maxAmount = await warpCore.getMaxTransferAmount({
+    const maxAmount = await multiRouterWarpCore.getMaxTransferAmount({
       balance: tokenAmount,
       destination,
+      destinationTokenAddress: destinationToken.addressOrDenom,
       sender: address,
       senderPubKey: await publicKey,
       recipient,
@@ -75,7 +79,7 @@ async function fetchMaxAmount(
 
     const multiCollateralLimit = isMultiCollateralLimitExceeded(
       maxAmount.token,
-      destination,
+      destinationToken,
       maxAmount.amount.toString(),
     );
     if (multiCollateralLimit) return new TokenAmount(multiCollateralLimit, maxAmount.token);

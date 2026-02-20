@@ -114,7 +114,7 @@ function filterToIds(
 
 // Separate warp configs may contain duplicate definitions of the same token.
 // E.g. an IBC token that gets used for interchain gas in many different routes.
-function dedupeTokens(tokens: WarpCoreConfig['tokens']): WarpCoreConfig['tokens'] {
+export function dedupeTokens(tokens: WarpCoreConfig['tokens']): WarpCoreConfig['tokens'] {
   const idToToken: Record<string, WarpCoreConfig['tokens'][number]> = {};
   for (const token of tokens) {
     let id = '';
@@ -124,7 +124,21 @@ function dedupeTokens(tokens: WarpCoreConfig['tokens']): WarpCoreConfig['tokens'
     } else {
       id = `${token.chainName}|${token.addressOrDenom?.toLowerCase()}`;
     }
-    idToToken[id] = objMerge(idToToken[id] || {}, token);
+    const existing = idToToken[id];
+    if (!existing) {
+      idToToken[id] = token;
+      continue;
+    }
+
+    const mergedToken = objMerge<WarpCoreConfig['tokens'][number]>(existing, token);
+    const mergedConnections = [...(existing.connections || []), ...(token.connections || [])];
+    if (mergedConnections.length) {
+      const uniqueConnections = new Map(
+        mergedConnections.map((connection) => [connection.token, connection]),
+      );
+      mergedToken.connections = Array.from(uniqueConnections.values());
+    }
+    idToToken[id] = mergedToken;
   }
   return Object.values(idToToken);
 }

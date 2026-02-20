@@ -23,6 +23,8 @@ import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { AppState, useStore } from '../store';
 import { getTokenByKey, useWarpCore } from '../tokens/hooks';
+import { asMultiRouterWarpCore } from './multiRouterWarpCore';
+import { resolveTransferRoute } from './routeResolution';
 import { TransferContext, TransferFormValues, TransferStatus } from './types';
 import { tryGetMsgIdFromTransferReceipt } from './utils';
 
@@ -116,6 +118,7 @@ async function executeTransfer({
   const multiProvider = warpCore.multiProvider;
 
   try {
+    const multiRouterWarpCore = asMultiRouterWarpCore(warpCore);
     const originToken = routeOverrideToken || getTokenByKey(warpCore.tokens, originTokenKey);
     const destinationToken = getTokenByKey(warpCore.tokens, destinationTokenKey);
     if (!originToken || !destinationToken) throw new Error('No token route found between chains');
@@ -128,18 +131,22 @@ async function executeTransfer({
     );
     const recipient = formRecipient || connectedDestAddress || '';
     if (!recipient) throw new Error('No recipient address available');
-    // Find the actual connected token from the origin and destination chains
-    const connectedDestinationToken = originToken?.getConnectionForChain(
-      destinationToken.chainName,
-    )?.token;
-    if (!connectedDestinationToken) throw new Error('No token connection found between chains');
-    const origin = originToken.chainName;
-    const destination = connectedDestinationToken.chainName;
 
-    const originProtocol = originToken.protocol;
-    const isNft = originToken.isNft();
-    const weiAmountOrId = isNft ? amount : toWei(amount, originToken.decimals);
-    const originTokenAmount = originToken.amount(weiAmountOrId);
+    const route = resolveTransferRoute({
+      warpCore,
+      originToken,
+      destinationToken,
+    });
+    if (!route) throw new Error('No token connection found between chains');
+    const transferToken = route.originToken;
+    const transferDestinationToken = route.destinationToken;
+    const origin = transferToken.chainName;
+    const destination = transferDestinationToken.chainName;
+
+    const originProtocol = transferToken.protocol;
+    const isNft = transferToken.isNft();
+    const weiAmountOrId = isNft ? amount : toWei(amount, transferToken.decimals);
+    const originTokenAmount = transferToken.amount(weiAmountOrId);
 
     const sendTransaction = transactionFns[originProtocol].sendTransaction;
     const sendMultiTransaction = transactionFns[originProtocol].sendMultiTransaction;
@@ -147,9 +154,10 @@ async function executeTransfer({
     const sender = getAccountAddressForChain(multiProvider, origin, activeAccounts.accounts);
     if (!sender) throw new Error('No active account found for origin chain');
 
-    const isCollateralSufficient = await warpCore.isDestinationCollateralSufficient({
+    const isCollateralSufficient = await multiRouterWarpCore.isDestinationCollateralSufficient({
       originTokenAmount,
       destination,
+      destinationTokenAddress: transferDestinationToken.addressOrDenom,
     });
     if (!isCollateralSufficient) {
       toast.error('Insufficient collateral on destination for transfer');
@@ -161,8 +169,8 @@ async function executeTransfer({
       status: TransferStatus.Preparing,
       origin,
       destination,
-      originTokenAddressOrDenom: originToken.addressOrDenom,
-      destTokenAddressOrDenom: connectedDestinationToken.addressOrDenom,
+      originTokenAddressOrDenom: transferToken.addressOrDenom,
+      destTokenAddressOrDenom: transferDestinationToken.addressOrDenom,
       sender,
       recipient,
       amount,
@@ -170,11 +178,12 @@ async function executeTransfer({
 
     updateTransferStatus(transferIndex, (transferStatus = TransferStatus.CreatingTxs));
 
-    const txs = await warpCore.getTransferRemoteTxs({
+    const txs = await multiRouterWarpCore.getTransferRemoteTxs({
       originTokenAmount,
       destination,
       sender,
       recipient,
+      destinationTokenAddress: transferDestinationToken.addressOrDenom,
     });
 
     const hashes: string[] = [];
@@ -241,8 +250,8 @@ async function executeTransfer({
       amount,
       recipient,
       chains: `${origin}|${originChainId}|${destination}|${destinationChainId}`,
-      tokenAddress: originToken.addressOrDenom,
-      tokenSymbol: originToken.symbol,
+      tokenAddress: transferToken.addressOrDenom,
+      tokenSymbol: transferToken.symbol,
       walletAddress: sender,
       transactionHash: originTxHash || '',
     });

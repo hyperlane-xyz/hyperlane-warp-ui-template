@@ -8,6 +8,7 @@ import {
 } from '@hyperlane-xyz/sdk';
 import { eqAddress, isNullish, normalizeAddress, objKeys } from '@hyperlane-xyz/utils';
 import { isChainDisabled } from '../chains/utils';
+import { findConnectionToDestinationToken, matchesDestinationToken } from '../transfer/routeResolution';
 import { DefaultMultiCollateralRoutes, TokenChainMap } from './types';
 
 // Module-level caches for expensive key computations
@@ -98,8 +99,11 @@ export function getTokensWithSameCollateralAddresses(
   return warpCore
     .getTokensForRoute(origin.chainName, destination.chainName)
     .map((originToken) => {
-      const destinationToken = originToken.getConnectionForChain(destination.chainName)?.token;
-      return { originToken, destinationToken };
+      const destinationConnection = findConnectionToDestinationToken(originToken, destination);
+      return {
+        originToken,
+        destinationToken: destinationConnection?.token,
+      };
     })
     .filter((tokens): tokens is { originToken: Token; destinationToken: Token } => {
       // doing this because annoying Typescript will have destinationToken
@@ -288,11 +292,12 @@ export function checkTokenHasRoute(
   const originGroup = collateralGroups.get(originCollateralKey) || [];
 
   // Check if any token in origin's collateral group connects to destination's collateral group
-  return originGroup.some((token) => {
-    const destConnection = token.getConnectionForChain(destToken.chainName);
-    if (!destConnection?.token) return false;
-    return getCollateralKey(destConnection.token) === destCollateralKey;
-  });
+  return originGroup.some((token) =>
+    (token.connections || []).some((connection) => {
+      if (!matchesDestinationToken(connection.token, destToken, true)) return false;
+      return getCollateralKey(connection.token) === destCollateralKey;
+    }),
+  );
 }
 
 /**

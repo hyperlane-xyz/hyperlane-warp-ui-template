@@ -5,10 +5,11 @@ import { RouteLimit } from './types';
 
 export function getMultiCollateralTokenLimit(
   originToken: Token | IToken,
-  destination: ChainName,
+  destination: ChainName | IToken,
   routeLimits: RouteLimit[] = multiCollateralTokenLimits,
 ) {
-  const destinationToken = originToken.getConnectionForChain(destination)?.token;
+  const destinationToken =
+    typeof destination === 'string' ? originToken.getConnectionForChain(destination)?.token : destination;
   if (!destinationToken) return null;
 
   const isMultiCollateralToken = isValidMultiCollateralToken(originToken, destinationToken);
@@ -29,7 +30,7 @@ export function getMultiCollateralTokenLimit(
 
 export function isMultiCollateralLimitExceeded(
   originToken: Token | IToken,
-  destination: ChainName,
+  destination: ChainName | IToken,
   amountWei: string,
   routeLimits: RouteLimit[] = multiCollateralTokenLimits,
 ): bigint | null {

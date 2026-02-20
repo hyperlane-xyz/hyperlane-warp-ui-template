@@ -1,6 +1,7 @@
 import { Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
 import {
   ProtocolType,
+  KnownProtocolType,
   convertToScaledAmount,
   eqAddress,
   errorToString,
@@ -57,11 +58,13 @@ import {
   useWarpCore,
 } from '../tokens/hooks';
 import { useTokenPrice } from '../tokens/useTokenPrice';
-import { checkTokenHasRoute, findRouteToken } from '../tokens/utils';
+import { checkTokenHasRoute } from '../tokens/utils';
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { WalletDropdown } from '../wallet/WalletDropdown';
 import { FeeSectionButton } from './FeeSectionButton';
+import { asMultiRouterWarpCore } from './multiRouterWarpCore';
 import { RecipientConfirmationModal } from './RecipientConfirmationModal';
+import { resolveTransferRoute } from './routeResolution';
 import { TransferSection } from './TransferSection';
 import { getInterchainQuote, getTotalFee, getTransferToken } from './fees';
 import { useFetchMaxAmount } from './maxAmount';
@@ -402,7 +405,7 @@ function MaxButton({
     const maxAmount = await fetchMaxAmount({
       balance,
       origin: originToken.chainName,
-      destination: destinationToken.chainName,
+      destinationToken,
       accounts,
       recipient: values.recipient,
     });
@@ -656,14 +659,16 @@ function ReviewDetails({
   const tokens = useTokens();
   const originTokenByKey = routeOverrideToken || getTokenByKey(tokens, originTokenKey);
   const destinationTokenByKey = getTokenByKey(tokens, destinationTokenKey);
-  // Finding actual token pair for the given tokens
-  const originToken =
+  const route =
     destinationTokenByKey && originTokenByKey
-      ? findRouteToken(warpCore, originTokenByKey, destinationTokenByKey.chainName)
+      ? resolveTransferRoute({
+          warpCore,
+          originToken: originTokenByKey,
+          destinationToken: destinationTokenByKey,
+        })
       : undefined;
-  const destinationToken = destinationTokenByKey
-    ? originToken?.getConnectionForChain(destinationTokenByKey.chainName)?.token
-    : undefined;
+  const originToken = route?.originToken;
+  const destinationToken = route?.destinationToken;
   const originTokenSymbol = originToken?.symbol || '';
   const isNft = originToken?.isNft();
   const isRouteSupported = useIsRouteSupported();
@@ -868,12 +873,13 @@ async function validateForm(
   tokens: Token[],
   collateralGroups: Map<string, Token[]>,
   values: TransferFormValues,
-  accounts: Record<ProtocolType, AccountInfo>,
+  accounts: Record<KnownProtocolType, AccountInfo>,
   routerAddressesByChainMap: Record<ChainName, Set<string>>,
 ): Promise<[Record<string, string> | null, Token | null]> {
   // returns a tuple, where first value is validation result
   // and second value is token override
   try {
+    const multiRouterWarpCore = asMultiRouterWarpCore(warpCore);
     const { originTokenKey, destinationTokenKey, amount, recipient: formRecipient } = values;
 
     // Look up tokens from the unified array
@@ -925,13 +931,21 @@ async function validateForm(
       defaultMultiCollateralRoutes,
     );
 
-    // This should not happen since we already checked the route above, but keep as safety check
-    const connection = transferToken.getConnectionForChain(destination);
-    if (!connection) {
+    const route = resolveTransferRoute({
+      warpCore,
+      originToken: transferToken,
+      destinationToken,
+    });
+    if (!route) {
       return [{ destinationTokenKey: 'Route is not supported' }, null];
     }
+    const routeDestinationToken = route.destinationToken;
 
-    const multiCollateralLimit = isMultiCollateralLimitExceeded(token, destination, amountWei);
+    const multiCollateralLimit = isMultiCollateralLimitExceeded(
+      token,
+      routeDestinationToken,
+      amountWei,
+    );
 
     if (multiCollateralLimit) {
       return [
@@ -942,9 +956,10 @@ async function validateForm(
       ];
     }
 
-    const result = await warpCore.validateTransfer({
+    const result = await multiRouterWarpCore.validateTransfer({
       originTokenAmount: transferToken.amount(amountWei),
       destination,
+      destinationTokenAddress: routeDestinationToken.addressOrDenom,
       recipient,
       sender: sender || '',
       senderPubKey: await senderPubKey,

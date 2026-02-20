@@ -145,8 +145,6 @@ type Aggregate3Result = Array<{ success: boolean; returnData: Hex }>;
 
 // ─── Pure helpers ────────────────────────────────────────────────────────────
 
-/** Includes symbol to distinguish tokens sharing the same addressOrDenom
- *  (e.g. M0PortalLite wM/mUSD/USDSC all use the same portal contract). */
 function tokenKey(token: Token): string {
   return `${token.chainName}-${normalizeAddress(token.addressOrDenom, token.protocol)}-${token.symbol}`;
 }

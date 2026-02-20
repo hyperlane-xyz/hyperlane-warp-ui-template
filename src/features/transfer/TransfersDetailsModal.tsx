@@ -117,7 +117,11 @@ export function TransfersDetailsModal({
   const explorerLink = getHypExplorerLink(multiProvider, origin, msgId);
 
   return (
-    <Modal isOpen={isOpen} close={onClose} panelClassname="p-4 md:p-5 max-w-sm">
+    <Modal
+      isOpen={isOpen}
+      close={onClose}
+      panelClassname="transfer-details-modal p-4 md:p-5 max-w-sm"
+    >
       {isFinal && (
         <div className="flex justify-between">
           <h2 className="font-medium text-gray-600">{date}</h2>
@@ -199,7 +203,12 @@ export function TransfersDetailsModal({
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center py-4">
-          <SpinnerIcon width={60} height={60} className="mt-3" />
+          <SpinnerIcon
+            width={60}
+            height={60}
+            color={Color.primary['500']}
+            className="transfer-details-spinner mt-3"
+          />
           <div
             className={`mt-5 text-center text-sm ${isFailed ? 'text-red-600' : 'text-gray-600'}`}
           >

@@ -224,7 +224,10 @@ export async function fetchChainBalances(
   evmAddress: Hex,
 ): Promise<Record<string, bigint>> {
   const rpcUrl = multiProvider.tryGetChainMetadata(group.chainName)?.rpcUrls?.[0]?.http;
-  if (!rpcUrl) return {};
+  if (!rpcUrl) {
+    logger.warn(`No RPC URL for chain ${group.chainName}, skipping balance fetch`);
+    return {};
+  }
 
   const client = createPublicClient({ transport: http(rpcUrl) });
   const batchAddress = getBatchAddress(group.chainName);

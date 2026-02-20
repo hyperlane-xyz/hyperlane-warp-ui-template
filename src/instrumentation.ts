@@ -9,6 +9,6 @@ export async function register() {
     }
   } catch (error) {
     // eslint-disable-next-line no-console
-    console.error(`Failed to load Sentry instrumentation: ${String(error)}`);
+    console.error('Failed to load Sentry instrumentation:', error);
   }
 }

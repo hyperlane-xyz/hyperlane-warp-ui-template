@@ -1,0 +1,22 @@
+name: react-doctor
+
+on:
+  pull_request:
+    branches: [main, nexus, trump, ousdt]
+  workflow_dispatch:
+
+jobs:
+  react-doctor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: React Doctor
+        id: react-doctor
+        uses: millionco/react-doctor@0.0.1
+        with:
+          verbose: 'true'
+
+      - name: Print score
+        run: |
+          echo "React Doctor score: ${{ steps.react-doctor.outputs.score }}/100"

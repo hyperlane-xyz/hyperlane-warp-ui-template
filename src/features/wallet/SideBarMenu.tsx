@@ -126,6 +126,7 @@ export function SideBarMenu({
   };
 
   // Open modal for new transfer
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (!didMountRef.current) {
       didMountRef.current = true;
@@ -134,6 +135,7 @@ export function SideBarMenu({
       setIsModalOpen(true);
     }
   }, [transfers, transferLoading]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   return (
     <>

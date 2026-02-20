@@ -1,7 +1,6 @@
 import { IToken } from '@hyperlane-xyz/sdk';
 import { isHttpsUrl, isRelativeUrl } from '@hyperlane-xyz/utils';
 import { Circle } from '@hyperlane-xyz/widgets';
-import Image from 'next/image';
 import { useState } from 'react';
 import { links } from '../../consts/links';
 
@@ -25,14 +24,12 @@ export function TokenIcon({ token, size = 32 }: Props) {
   return (
     <Circle size={size} bgColorSeed={bgColorSeed} title={title}>
       {imageSrc && !fallbackToText ? (
-        <Image
+        <img
           src={imageSrc}
           alt={title}
-          width={size}
-          height={size}
           className="h-full w-full p-0.5"
           onError={() => setFallbackToText(true)}
-          unoptimized
+          loading="lazy"
         />
       ) : (
         <div className={`text-[${fontSize}px]`}>{character}</div>

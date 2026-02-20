@@ -33,7 +33,6 @@ export function ChainSelectListModal({
   // Detect chain logos rendered by the widget and process only newly added images.
   useEffect(() => {
     if (!isOpen) return;
-    if (typeof window === 'undefined') return;
 
     let frame = 0;
     let logoObserver: MutationObserver | null = null;

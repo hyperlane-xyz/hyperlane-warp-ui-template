@@ -284,10 +284,7 @@ function TokenSection({
 }) {
   return (
     <div className="flex-1">
-      <label
-        htmlFor="tokenIndex"
-        className="transfer-field-label block pl-0.5 font-secondary text-sm text-gray-600"
-      >
+      <label className="transfer-field-label block pl-0.5 font-secondary text-sm text-gray-600">
         Token
       </label>
       <TokenSelectField name="tokenIndex" disabled={isReview} setIsNft={setIsNft} />

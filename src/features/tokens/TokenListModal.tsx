@@ -106,7 +106,7 @@ export function TokenList({
   destination: ChainName;
   searchQuery: string;
   onSelect: (token: IToken) => void;
-  onSelectUnsupportedRoute: (token: Token, origin: string) => void;
+  onSelectUnsupportedRoute: (token: IToken, origin: string) => void;
 }) {
   const multiProvider = useMultiProvider();
   const warpCore = useWarpCore();
@@ -272,7 +272,7 @@ function UnsupportedRouteTokenList({
   unsupportedRouteTokensBySymbolMap: Record<string, TokenChainMap>;
   origin: ChainName;
   destination: ChainName;
-  onSelectUnsupportedRoute: (token: Token, origin: string) => void;
+  onSelectUnsupportedRoute: (token: IToken, origin: string) => void;
 }) {
   const [open, setOpen] = useState<string | null>(null);
   const multiProvider = useMultiProvider();
@@ -325,7 +325,7 @@ function UnsupportedRouteChainList({
   onSelectUnsupportedRoute,
 }: {
   chains: ChainMap<{ token: Token; metadata: ChainMetadata | null }>;
-  onSelectUnsupportedRoute: (token: Token, origin: string) => void;
+  onSelectUnsupportedRoute: (token: IToken, origin: string) => void;
 }) {
   return (
     <motion.div

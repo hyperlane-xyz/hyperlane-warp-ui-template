@@ -4,6 +4,11 @@ function getImgSrc(img: HTMLImageElement): string {
 
 const darkLogoAvailabilityCache = new Map<string, 'ok' | 'missing'>();
 
+/** @internal visibleForTesting */
+export function resetDarkLogoCache() {
+  darkLogoAvailabilityCache.clear();
+}
+
 function isDarkModeEnabled(): boolean {
   if (typeof document === 'undefined') return false;
   const htmlTheme = document.documentElement.dataset.themeMode;

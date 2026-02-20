@@ -820,7 +820,7 @@ html[data-theme-mode='dark'] .sidebar-menu .htw-rounded-sm .htw-text-xs {
 }
 
 html[data-theme-mode='dark'] .sidebar-menu .htw-rounded-sm svg path {
-  fill: currentColor !important;
+  fill: currentcolor !important;
 }
 
 html[data-theme-mode='dark'] .sidebar-menu .htw-relative > .htw-absolute svg path {
@@ -830,29 +830,6 @@ html[data-theme-mode='dark'] .sidebar-menu .htw-relative > .htw-absolute svg pat
 html[data-theme-mode='dark'] .sidebar-menu .htw-bg-gray-600 {
   background: rgba(255, 255, 255, 0.18) !important;
   color: #f2e4ff !important;
-}
-
-html[data-theme-mode='dark'] .htw-max-w-sm.htw-p-4 {
-  border: 1px solid rgba(185, 89, 255, 0.42) !important;
-  background: rgba(20, 10, 30, 0.96) !important;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
-}
-
-html[data-theme-mode='dark'] .htw-max-w-sm.htw-p-4 .htw-space-y-2\.5 > button {
-  border-color: rgba(185, 89, 255, 0.38) !important;
-  background: rgba(255, 255, 255, 0.08);
-}
-
-html[data-theme-mode='dark'] .htw-max-w-sm.htw-p-4 .htw-space-y-2\.5 > button:hover {
-  background: rgba(185, 89, 255, 0.18) !important;
-}
-
-html[data-theme-mode='dark'] .htw-max-w-sm.htw-p-4 .htw-space-y-2\.5 > button .htw-text-gray-800 {
-  color: #f2e4ff !important;
-}
-
-html[data-theme-mode='dark'] .htw-max-w-sm.htw-p-4 .htw-space-y-2\.5 > button .htw-text-gray-500 {
-  color: #c9b5df !important;
 }
 
 html[data-theme-mode='dark'] .app-header {

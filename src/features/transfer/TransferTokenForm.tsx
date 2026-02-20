@@ -953,6 +953,7 @@ async function enrichBalanceError(
     if (deficit > 0n) {
       const deficitAmount = new TokenAmount(deficit, igpQuote.token);
       return {
+        ...result,
         amount: `Insufficient ${igpQuote.token.symbol} for interchain gas (need ${deficitAmount.getDecimalFormattedAmount().toFixed(4)} more ${igpQuote.token.symbol})`,
       };
     }

@@ -47,7 +47,7 @@ type Aggregate3Result = Array<{ success: boolean; returnData: Hex }>;
 function classifyToken(token: Token): { type: TokenClassification; erc20Address?: Hex } {
   if (token.isHypNative()) return { type: 'native' };
 
-  const standard = token.standard as string;
+  const standard = token.standard;
   if (standard.includes('Lockbox')) return { type: 'lockbox' };
   if (token.collateralAddressOrDenom)
     return { type: 'erc20', erc20Address: normalizeAddress(token.collateralAddressOrDenom) as Hex };
@@ -139,12 +139,17 @@ async function callAggregate3(
     abi: multicall3Abi,
     functionName: 'aggregate3',
     data: raw,
-  }) as Aggregate3Result;
+  });
+}
+
+interface LockboxResolution {
+  resolved: CallInfo[];
+  unresolvedKeys: string[];
 }
 
 /**
  * Resolve lockbox underlying ERC20 addresses via wrappedToken() multicall.
- * Returns CallInfo[] ready for Phase 2 balanceOf batching.
+ * Returns resolved CallInfo[] for Phase 2 + keys of any unresolved lockboxes for SDK fallback.
  */
 async function resolveLockboxTokens(
   client: any,
@@ -152,8 +157,8 @@ async function resolveLockboxTokens(
   lockboxTokens: ChainGroup['lockbox'],
   balanceOfCallData: Hex,
   chainId: number,
-): Promise<CallInfo[]> {
-  if (lockboxTokens.length === 0) return [];
+): Promise<LockboxResolution> {
+  if (lockboxTokens.length === 0) return { resolved: [], unresolvedKeys: [] };
 
   const resolveCallData = encodeFunctionData({
     abi: wrappedTokenAbi,
@@ -166,24 +171,27 @@ async function resolveLockboxTokens(
       lockboxTokens.map((lb) => ({ target: lb.routerAddress, callData: resolveCallData })),
     );
     const resolved: CallInfo[] = [];
+    const unresolvedKeys: string[] = [];
     for (let i = 0; i < decoded.length; i++) {
       if (decoded[i].success && decoded[i].returnData !== '0x') {
         const underlying = decodeFunctionResult({
           abi: wrappedTokenAbi,
           functionName: 'wrappedToken',
           data: decoded[i].returnData,
-        }) as Hex;
+        });
         resolved.push({
           target: underlying,
           callData: balanceOfCallData,
           tokenKey: lockboxTokens[i].key,
         });
+      } else {
+        unresolvedKeys.push(lockboxTokens[i].key);
       }
     }
-    return resolved;
+    return { resolved, unresolvedKeys };
   } catch (err) {
     logger.warn(`Lockbox resolution failed on chain ${chainId}`, err);
-    return [];
+    return { resolved: [], unresolvedKeys: lockboxTokens.map((lb) => lb.key) };
   }
 }
 
@@ -198,7 +206,7 @@ function decodeBalanceResults(
         abi: erc20Abi,
         functionName: 'balanceOf',
         data: decoded[i].returnData,
-      }) as bigint;
+      });
     }
   }
 }
@@ -226,7 +234,7 @@ export async function fetchChainBalances(
     args: [evmAddress],
   });
 
-  const lockboxResolved = await resolveLockboxTokens(
+  const { resolved: lockboxResolved, unresolvedKeys } = await resolveLockboxTokens(
     client,
     batchAddress,
     group.lockbox,
@@ -242,13 +250,26 @@ export async function fetchChainBalances(
     })),
     ...lockboxResolved,
   ];
-  if (allCalls.length === 0) return {};
+
+  // SDK fallback for lockbox tokens whose wrappedToken() couldn't be resolved
+  const unresolvedFallbacks =
+    unresolvedKeys.length > 0
+      ? group.tokens
+          .filter(({ key }) => unresolvedKeys.includes(key))
+          .map(({ token, key }) => fetchSdkBalance(token, multiProvider, evmAddress, key))
+      : [];
+
+  if (allCalls.length === 0) {
+    const partials = await Promise.all(unresolvedFallbacks);
+    return Object.assign({}, ...partials);
+  }
 
   try {
     const out: Record<string, bigint> = {};
     const decoded = await callAggregate3(client, batchAddress, allCalls);
     decodeBalanceResults(decoded, allCalls, out);
-    return out;
+    const fallbackPartials = await Promise.all(unresolvedFallbacks);
+    return Object.assign(out, ...fallbackPartials);
   } catch (err) {
     logger.warn(`Batch call failed on chain ${chainId}, falling back to SDK getBalance`, err);
     const partials = await Promise.all(

@@ -1,4 +1,4 @@
-import { BaseSealevelAdapter, Token, TokenStandard } from '@hyperlane-xyz/sdk';
+import { Token, TokenStandard } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 import { TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { Connection, PublicKey } from '@solana/web3.js';
@@ -22,8 +22,7 @@ function classifySealevelToken(token: Token): {
   type: SealevelTokenClassification;
   mintAddress?: string;
 } {
-  const standard = token.standard as string;
-  switch (standard) {
+  switch (token.standard) {
     case TokenStandard.SealevelNative:
     case TokenStandard.SealevelHypNative:
       return { type: 'native' };
@@ -34,16 +33,8 @@ function classifySealevelToken(token: Token): {
     case TokenStandard.SealevelHypCollateral:
       return { type: 'spl', mintAddress: token.collateralAddressOrDenom };
     case TokenStandard.SealevelHypSynthetic:
-      // The synthetic token mint IS the PDA at these seeds.
-      // SDK's deriveMintAuthorityAccount() is misleadingly named — it returns the mint address,
-      // as confirmed by its use as the `mint` arg in getAssociatedTokenAddressSync.
-      return {
-        type: 'spl2022',
-        mintAddress: BaseSealevelAdapter.derivePda(
-          ['hyperlane_token', '-', 'mint'],
-          token.addressOrDenom,
-        ).toBase58(),
-      };
+      if (!token.collateralAddressOrDenom) return { type: 'unknown' };
+      return { type: 'spl2022', mintAddress: token.collateralAddressOrDenom };
     default:
       return { type: 'unknown' };
   }
@@ -114,7 +105,7 @@ function parseSplTokenAccounts(
     if (!keys) continue;
     const amount = BigInt(info.tokenAmount.amount);
     for (const key of keys) {
-      out[key] = amount;
+      out[key] = (out[key] ?? 0n) + amount;
     }
   }
   return out;
@@ -126,8 +117,14 @@ export async function fetchSealevelChainBalances(
   rpcUrl: string,
   ownerAddress: string,
 ): Promise<Record<string, bigint>> {
+  let owner: PublicKey;
+  try {
+    owner = new PublicKey(ownerAddress);
+  } catch {
+    logger.warn(`Invalid Solana address: ${ownerAddress}`);
+    return {};
+  }
   const connection = new Connection(rpcUrl, 'confirmed');
-  const owner = new PublicKey(ownerAddress);
   const promises: Promise<Record<string, bigint>>[] = [];
 
   // Fetch SPL and Token-2022 accounts

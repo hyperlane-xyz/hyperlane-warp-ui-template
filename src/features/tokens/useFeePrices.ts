@@ -1,6 +1,6 @@
 import { IToken, Token, WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
 import { useQuery } from '@tanstack/react-query';
-import { fetchCoinGeckoPrices } from './fetchCoinGeckoPrices';
+import { fetchPrices } from './useTokenPrice';
 
 const FEE_PRICE_REFRESH_INTERVAL = 60_000;
 
@@ -42,7 +42,7 @@ export function useFeePrices(fees: WarpCoreFeeEstimate | null, knownTokens: Toke
 
   const { data } = useQuery({
     queryKey: ['useFeePrices', ids],
-    queryFn: () => fetchCoinGeckoPrices(ids),
+    queryFn: () => fetchPrices(ids),
     enabled: ids.length > 0,
     staleTime: FEE_PRICE_REFRESH_INTERVAL,
     refetchInterval: FEE_PRICE_REFRESH_INTERVAL,

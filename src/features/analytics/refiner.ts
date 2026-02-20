@@ -2,7 +2,6 @@ import { config } from '../../consts/config';
 import { logger } from '../../utils/logger';
 
 const REFINER_PROJECT_ID = process.env.NEXT_PUBLIC_REFINER_PROJECT_ID || '';
-const REFINER_TRANSFER_FORM_ID = process.env.NEXT_PUBLIC_REFINER_TRANSFER_FORM_ID || '';
 const REFINER_RESEARCH_FORM_ID = process.env.NEXT_PUBLIC_REFINER_RESEARCH_FORM_ID || '';
 
 type RefinerFn = (method: string, ...args: unknown[]) => void;
@@ -32,13 +31,7 @@ export function refinerIdentifyAndShowTransferForm(params: {
   protocol: string;
   chain: string;
 }): void {
-  if (
-    !config.enableTrackingEvents ||
-    !refiner ||
-    !REFINER_TRANSFER_FORM_ID ||
-    !REFINER_RESEARCH_FORM_ID
-  )
-    return;
+  if (!config.enableTrackingEvents || !refiner || !REFINER_RESEARCH_FORM_ID) return;
 
   refiner('identifyUser', {
     id: params.walletAddress,
@@ -47,6 +40,5 @@ export function refinerIdentifyAndShowTransferForm(params: {
     protocol: params.protocol,
     chain: params.chain,
   });
-  refiner('showForm', REFINER_TRANSFER_FORM_ID);
   refiner('showForm', REFINER_RESEARCH_FORM_ID);
 }

@@ -37,6 +37,11 @@ import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
 import { getQueryParams, updateQueryParam } from '../../utils/queryParams';
 import { trackTransactionFailedEvent } from '../analytics/utils';
+import {
+  getDestinationNativeBalance,
+  useDestinationBalance,
+  useOriginBalance,
+} from '../balances/hooks';
 import { ChainConnectionWarning } from '../chains/ChainConnectionWarning';
 import { ChainSelectField } from '../chains/ChainSelectField';
 import { ChainWalletWarning } from '../chains/ChainWalletWarning';
@@ -48,11 +53,6 @@ import { RouterAddressInfo, useStore } from '../store';
 import { SelectOrInputTokenIds } from '../tokens/SelectOrInputTokenIds';
 import { TokenSelectField } from '../tokens/TokenSelectField';
 import { useIsApproveRequired } from '../tokens/approval';
-import {
-  getDestinationNativeBalance,
-  useDestinationBalance,
-  useOriginBalance,
-} from '../tokens/balances';
 import {
   getIndexForToken,
   getInitialTokenIndex,

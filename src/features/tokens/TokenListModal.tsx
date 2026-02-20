@@ -9,11 +9,12 @@ import { TokenIcon } from '../../components/icons/TokenIcon';
 import { TextInput } from '../../components/input/TextField';
 import { config } from '../../consts/config';
 import InfoIcon from '../../images/icons/info-circle.svg';
-import { formatBalance, formatUsd, getUsdValue } from '../../utils/balances';
+import { useTokenBalances } from '../balances/hooks';
+import { tokenKey } from '../balances/tokens';
+import { formatBalance, formatUsd, getUsdValue } from '../balances/utils';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { useStore } from '../store';
-import { tokenKey, useTokenBalances } from './balances';
 import { useWarpCore } from './hooks';
 import { TokenChainMap } from './types';
 import { useTokenPrices } from './useTokenPrice';
@@ -108,7 +109,6 @@ export function TokenList({
   onSelect: (token: IToken) => void;
   onSelectUnsupportedRoute: (token: Token, origin: string) => void;
 }) {
-  const multiProvider = useMultiProvider();
   const warpCore = useWarpCore();
   const tokensBySymbolChainMap = useStore((s) => s.tokensBySymbolChainMap);
 
@@ -127,7 +127,7 @@ export function TokenList({
   const {
     balances,
     isLoading: balancesLoading,
-    evmAddress,
+    hasAnyAddress,
   } = useTokenBalances(routeTokenObjects, origin, destination);
   const { prices } = useTokenPrices(routeTokenObjects, origin, destination);
 
@@ -151,10 +151,8 @@ export function TokenList({
     enabled.sort((a, b) => {
       const aBal = balances[tokenKey(a.token)] ?? 0n;
       const bBal = balances[tokenKey(b.token)] ?? 0n;
-      // Tokens with any balance always come before tokens with none
       if (aBal > 0n && bBal === 0n) return -1;
       if (aBal === 0n && bBal > 0n) return 1;
-      // Among tokens with balance, sort by USD value descending
       const aUsd = getUsdValue(a.token, balances, prices);
       const bUsd = getUsdValue(b.token, balances, prices);
       if (aUsd != null && bUsd != null) return bUsd - aUsd;
@@ -188,9 +186,6 @@ export function TokenList({
     <div className="no-scrollbar flex max-h-[80vh] min-h-[24rem] flex-col items-stretch overflow-auto px-2">
       {sortedTokens.map((t) => {
         const key = tokenKey(t.token);
-        const balance = balances[key];
-        const usdValue = getUsdValue(t.token, balances, prices);
-
         return (
           <button
             className={`-mx-2 mb-2 flex items-center rounded px-2 py-2 ${
@@ -209,30 +204,13 @@ export function TokenList({
               <div className="truncate text-xs text-gray-500">{t.token.name || 'Unknown'}</div>
             </div>
             <div className="ml-auto shrink-0 text-right">
-              {!evmAddress ? (
-                <div className="text-xs text-gray-400">
-                  {getChainDisplayName(multiProvider, t.token.chainName)}
-                </div>
-              ) : balancesLoading ? (
-                <SpinnerIcon width={14} height={14} className="opacity-50" />
-              ) : balance != null && balance > 0n ? (
-                usdValue != null ? (
-                  <>
-                    <div className="text-sm">{formatUsd(usdValue)}</div>
-                    <div className="text-xs text-gray-500">
-                      {formatBalance(balance, t.token.decimals)} {t.token.symbol}
-                    </div>
-                  </>
-                ) : (
-                  <div className="text-sm">
-                    {formatBalance(balance, t.token.decimals)} {t.token.symbol}
-                  </div>
-                )
-              ) : (
-                <div className="text-xs text-gray-400">
-                  {getChainDisplayName(multiProvider, t.token.chainName)}
-                </div>
-              )}
+              <TokenBalanceCell
+                token={t.token}
+                balance={balances[key]}
+                usdValue={getUsdValue(t.token, balances, prices)}
+                hasAnyAddress={hasAnyAddress}
+                balancesLoading={balancesLoading}
+              />
             </div>
           </button>
         );
@@ -249,6 +227,44 @@ export function TokenList({
           <div className="mt-2 text-sm">Try a different destination chain or search query</div>
         </div>
       )}
+    </div>
+  );
+}
+
+function TokenBalanceCell({
+  token,
+  balance,
+  usdValue,
+  hasAnyAddress,
+  balancesLoading,
+}: {
+  token: Token;
+  balance: bigint | undefined;
+  usdValue: number | null;
+  hasAnyAddress: boolean;
+  balancesLoading: boolean;
+}) {
+  const multiProvider = useMultiProvider();
+  const chainLabel = getChainDisplayName(multiProvider, token.chainName);
+
+  if (!hasAnyAddress) return <div className="text-xs text-gray-400">{chainLabel}</div>;
+  if (balancesLoading) return <SpinnerIcon width={14} height={14} className="opacity-50" />;
+  if (balance == null || balance === 0n)
+    return <div className="text-xs text-gray-400">{chainLabel}</div>;
+
+  if (usdValue != null) {
+    return (
+      <>
+        <div className="text-sm">{formatUsd(usdValue)}</div>
+        <div className="text-xs text-gray-500">
+          {formatBalance(balance, token.decimals)} {token.symbol}
+        </div>
+      </>
+    );
+  }
+  return (
+    <div className="text-sm">
+      {formatBalance(balance, token.decimals)} {token.symbol}
     </div>
   );
 }

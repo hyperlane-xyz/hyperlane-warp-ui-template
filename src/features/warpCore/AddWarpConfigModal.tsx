@@ -110,7 +110,7 @@ function ConfigList({
     <div className="mt-2 flex w-full flex-col gap-2 border-t pt-3">
       {warpCoreConfigOverrides.map((config, i) => (
         <div
-          key={BaseRegistry.warpRouteConfigToId(config)}
+          key={`${BaseRegistry.warpRouteConfigToId(config)}-${i}`}
           className="flex items-center justify-between gap-1"
         >
           <span className="truncate text-xs">{BaseRegistry.warpRouteConfigToId(config)}</span>

@@ -1,6 +1,6 @@
 import { Token } from '@hyperlane-xyz/sdk';
 import { fromWeiRounded } from '@hyperlane-xyz/utils';
-import { tokenKey } from '../features/tokens/balances';
+import { tokenKey } from './tokens';
 
 export function formatBalance(balance: bigint, decimals: number): string {
   return fromWeiRounded(balance.toString(), decimals, 4);

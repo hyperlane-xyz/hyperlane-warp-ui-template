@@ -796,7 +796,8 @@ function ReviewDetails({
 function WarningBanners() {
   const { values } = useFormikContext<TransferFormValues>();
   return (
-    <div>
+    // Cap space to one visible banner since warning layers are absolutely positioned at the top.
+    <div className="max-h-12 overflow-hidden sm:max-h-10">
       <ChainWalletWarning origin={values.origin} />
       <ChainConnectionWarning origin={values.origin} destination={values.destination} />
       <WalletConnectionWarning origin={values.origin} />

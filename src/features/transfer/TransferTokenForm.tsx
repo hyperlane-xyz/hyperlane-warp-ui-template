@@ -838,8 +838,8 @@ function WarningBanners() {
   const destinationToken = getTokenByKeyFromMap(tokenMap, values.destinationTokenKey);
 
   return (
-    // Max height to prevent double padding if multiple warnings are visible
-    <div className="max-h-10">
+    // Cap space to one visible banner since warning layers are absolutely positioned at the top.
+    <div className="max-h-12 overflow-hidden sm:max-h-10">
       <ChainWalletWarning origin={originToken?.chainName || ''} />
       <ChainConnectionWarning
         origin={originToken?.chainName || ''}

@@ -36,9 +36,16 @@ export function TokenIcon({ token, size = 32 }: Props) {
             onLoad={(event) => scheduleDarkLogoProcessing(event.currentTarget)}
             onError={(event) => {
               const img = event.currentTarget;
-              const current = img.getAttribute('src') || img.src;
               const original = img.dataset.logoOriginalSrc;
               const attemptedDark = img.dataset.logoDarkSrc;
+              const current = img.getAttribute('src') || img.src;
+              const darkFallbackAlreadyHandled =
+                img.dataset.logoDarkFailed === 'true' &&
+                !!original &&
+                !!attemptedDark &&
+                current === original;
+              if (darkFallbackAlreadyHandled) return;
+
               const isDarkFallbackError =
                 !!original && !!attemptedDark && current === attemptedDark;
               const fallbackSrc = toOriginalVariantSrc(current);

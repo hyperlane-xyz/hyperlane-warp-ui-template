@@ -15,6 +15,7 @@ export function TransferFeeModal({
   isLoading: boolean;
 }) {
   return (
+<<<<<<< HEAD
     <Modal
       title="Fee details"
       isOpen={isOpen}
@@ -23,6 +24,13 @@ export function TransferFeeModal({
       showCloseButton
     >
       <div className="flex w-full flex-col items-start gap-2 text-sm">
+=======
+    <Modal isOpen={isOpen} close={close} panelClassname="p-0 max-w-sm md:max-w-128 overflow-hidden">
+      <div className="w-full bg-accent-gradient px-4 py-2.5 font-secondary text-base font-normal tracking-wider text-white shadow-accent-glow">
+        Fee Details
+      </div>
+      <div className="flex w-full flex-col items-start gap-2 p-4 text-sm">
+>>>>>>> origin/main
         {fees?.localQuote && fees.localQuote.amount > 0n && (
           <div className="flex gap-4">
             <span className="flex min-w-[7.5rem] items-center gap-1">
@@ -34,7 +42,11 @@ export function TransferFeeModal({
               />
             </span>
             {isLoading ? (
+<<<<<<< HEAD
               <Skeleton className="h-4 w-52" />
+=======
+              <Skeleton className="h-4 w-40 sm:w-72" />
+>>>>>>> origin/main
             ) : (
               <span>{`${fees.localQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${
                 fees.localQuote.token.symbol || ''
@@ -53,7 +65,11 @@ export function TransferFeeModal({
               />
             </span>
             {isLoading ? (
+<<<<<<< HEAD
               <Skeleton className="h-4 w-52" />
+=======
+              <Skeleton className="h-4 w-40 sm:w-72" />
+>>>>>>> origin/main
             ) : (
               <span>{`${fees.interchainQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${
                 fees.interchainQuote.token.symbol || ''
@@ -67,7 +83,11 @@ export function TransferFeeModal({
               Token Fee <Tooltip content="Variable fee based on amount" id="token-fee-tooltip" />
             </span>
             {isLoading ? (
+<<<<<<< HEAD
               <Skeleton className="h-4 w-52" />
+=======
+              <Skeleton className="h-4 w-40 sm:w-72" />
+>>>>>>> origin/main
             ) : (
               <span>{`${fees.tokenFeeQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${
                 fees.tokenFeeQuote.token.symbol || ''

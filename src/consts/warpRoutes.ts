@@ -89,13 +89,7 @@ export const warpRouteConfigs: WarpCoreConfig = {
     },
   ],
   options: {
-    interchainFeeConstants: [
-      {
-        origin: 'celestia',
-        destination: 'arbitrum',
-        amount: 270000,
-        addressOrDenom: 'utia',
-      },
+    interchainFeeConstants: [ 
       {
         origin: 'celestia',
         destination: 'mantapacific',

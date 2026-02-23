@@ -1,5 +1,4 @@
 import { Head, Html, Main, NextScript } from 'next/document';
-import Script from 'next/script';
 import { APP_DESCRIPTION, APP_NAME, APP_URL, BRAND_COLOR } from '../consts/app';
 
 export default function Document() {
@@ -30,7 +29,8 @@ export default function Document() {
         <meta property="og:type" content="website" />
         <meta property="og:image" content={`${APP_URL}/logo.png`} />
         <meta property="og:description" content={APP_DESCRIPTION} />
-        <Script src="/theme-init.js" strategy="beforeInteractive" />
+        {/* Synchronous script — must block rendering to prevent theme flash */}
+        <script src="/theme-init.js" />
       </Head>
       <body className="font-primary text-black">
         <Main />

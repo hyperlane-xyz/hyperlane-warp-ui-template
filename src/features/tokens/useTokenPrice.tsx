@@ -1,11 +1,8 @@
-import { Token } from '@hyperlane-xyz/sdk';
 import { useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
 import { logger } from '../../utils/logger';
-import { TransferFormValues } from '../transfer/types';
-import { getTokenByIndex, useWarpCore } from './hooks';
+import { useStore } from '../store';
 
-const TOKEN_PRICE_REFRESH_INTERVAL = 60_000; // 60s
+const PRICE_STALE_TIME = 300_000; // 5 min
 
 type CoinGeckoResponse = Record<string, { usd: number }>;
 
@@ -32,49 +29,20 @@ async function fetchPrices(ids: string[]): Promise<Record<string, number>> {
   }
 }
 
-export function useTokenPrice({ tokenIndex }: TransferFormValues) {
-  const warpCore = useWarpCore();
-  const originToken = getTokenByIndex(warpCore, tokenIndex);
-  const coinGeckoId = originToken?.coinGeckoId;
-
-  const { data, isError, isLoading } = useQuery({
-    // The WarpCore class is not serializable, so we can't use it as a key
-    // eslint-disable-next-line @tanstack/query/exhaustive-deps
-    queryKey: ['useTokenPrice', coinGeckoId],
-    queryFn: async () => {
-      if (!coinGeckoId) return null;
-      const prices = await fetchPrices([coinGeckoId]);
-      return prices[coinGeckoId] ?? null;
-    },
-    enabled: !!coinGeckoId,
-    staleTime: TOKEN_PRICE_REFRESH_INTERVAL,
-    refetchInterval: TOKEN_PRICE_REFRESH_INTERVAL,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-  });
-
-  return { tokenPrice: data, isError, isLoading };
-}
-
 /**
- * Batch-fetch USD prices for multiple tokens via CoinGecko.
- * Returns Record<coinGeckoId, usdPrice>.
+ * Batch-fetch USD prices for all tokens via CoinGecko.
+ * Uses deduplicated coinGeckoIds from the store (computed during init).
+ * Single query shared across all consumers via TanStack Query deduplication.
  */
-export function useTokenPrices(tokens: Token[], origin: ChainName, destination: ChainName) {
-  const coinGeckoIds = useMemo(() => {
-    const ids = new Set<string>();
-    for (const t of tokens) {
-      if (t.coinGeckoId) ids.add(t.coinGeckoId);
-    }
-    return Array.from(ids);
-  }, [tokens]);
+export function useTokenPrices() {
+  const coinGeckoIds = useStore((s) => s.coinGeckoIds);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['tokenPrices', origin, destination, coinGeckoIds],
+    queryKey: ['tokenPrices', coinGeckoIds],
     queryFn: () => fetchPrices(coinGeckoIds),
     enabled: coinGeckoIds.length > 0,
-    staleTime: TOKEN_PRICE_REFRESH_INTERVAL,
-    refetchInterval: TOKEN_PRICE_REFRESH_INTERVAL,
+    staleTime: PRICE_STALE_TIME,
+    refetchInterval: PRICE_STALE_TIME,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
   });

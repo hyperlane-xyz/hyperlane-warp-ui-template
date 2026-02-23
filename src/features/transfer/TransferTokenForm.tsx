@@ -37,6 +37,11 @@ import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
 import { getQueryParams, updateQueryParam } from '../../utils/queryParams';
 import { trackTransactionFailedEvent } from '../analytics/utils';
+import {
+  getDestinationNativeBalance,
+  useDestinationBalance,
+  useOriginBalance,
+} from '../balances/hooks';
 import { ChainConnectionWarning } from '../chains/ChainConnectionWarning';
 import { ChainSelectField } from '../chains/ChainSelectField';
 import { ChainWalletWarning } from '../chains/ChainWalletWarning';
@@ -49,18 +54,13 @@ import { SelectOrInputTokenIds } from '../tokens/SelectOrInputTokenIds';
 import { TokenSelectField } from '../tokens/TokenSelectField';
 import { useIsApproveRequired } from '../tokens/approval';
 import {
-  getDestinationNativeBalance,
-  useDestinationBalance,
-  useOriginBalance,
-} from '../tokens/balances';
-import {
   getIndexForToken,
   getInitialTokenIndex,
   getTokenByIndex,
   getTokenIndexFromChains,
   useWarpCore,
 } from '../tokens/hooks';
-import { useTokenPrice } from '../tokens/useTokenPrice';
+import { useTokenPrices } from '../tokens/useTokenPrice';
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { FeeSectionButton } from './FeeSectionButton';
 import { RecipientConfirmationModal } from './RecipientConfirmationModal';
@@ -299,7 +299,10 @@ function TokenSection({
 function AmountSection({ isNft, isReview }: { isNft: boolean; isReview: boolean }) {
   const { values } = useFormikContext<TransferFormValues>();
   const { balance } = useOriginBalance(values);
-  const { tokenPrice, isLoading } = useTokenPrice(values);
+  const warpCore = useWarpCore();
+  const { prices, isLoading } = useTokenPrices();
+  const originToken = getTokenByIndex(warpCore, values.tokenIndex);
+  const tokenPrice = originToken?.coinGeckoId ? prices[originToken.coinGeckoId] : undefined;
 
   const amount = parseFloat(values.amount);
   const totalTokenPrice = !isNullish(tokenPrice) && !isNaN(amount) ? amount * tokenPrice : 0;
@@ -896,15 +899,26 @@ async function validateForm(
       ];
     }
 
+    const originTokenAmount = transferToken.amount(amountWei);
     const result = await warpCore.validateTransfer({
-      originTokenAmount: transferToken.amount(amountWei),
+      originTokenAmount,
       destination,
       recipient,
       sender: sender || '',
       senderPubKey: await senderPubKey,
     });
 
-    if (!isNullish(result)) return [result, null];
+    if (!isNullish(result)) {
+      const enriched = await enrichBalanceError(
+        warpCore,
+        result,
+        originTokenAmount,
+        destination,
+        sender || '',
+        recipient,
+      );
+      return [enriched, null];
+    }
 
     if (transferToken.addressOrDenom === token.addressOrDenom) return [null, null];
 
@@ -920,4 +934,46 @@ async function validateForm(
     }
     return [{ form: errorMsg }, null];
   }
+}
+
+const igpErrorPattern = /^Insufficient (\S+) for interchain gas$/;
+
+async function enrichBalanceError(
+  warpCore: WarpCore,
+  result: Record<string, string>,
+  originTokenAmount: TokenAmount,
+  destination: string,
+  sender: string,
+  recipient: string,
+): Promise<Record<string, string>> {
+  if (!result.amount) return result;
+  const igpErrorMatch = igpErrorPattern.exec(result.amount);
+  if (!igpErrorMatch) return result;
+
+  try {
+    const { igpQuote } = await warpCore.getInterchainTransferFee({
+      originTokenAmount,
+      destination,
+      sender,
+      recipient,
+    });
+
+    // Symbol in validateTransfer message is sourced from igpQuote.token.symbol.
+    if (igpErrorMatch[1] !== igpQuote.token.symbol) return result;
+
+    const balance = originTokenAmount.token.isFungibleWith(igpQuote.token)
+      ? await originTokenAmount.token.getBalance(warpCore.multiProvider, sender)
+      : await igpQuote.token.getBalance(warpCore.multiProvider, sender);
+    const deficit = igpQuote.amount - balance.amount;
+    if (deficit > 0n) {
+      const deficitAmount = new TokenAmount(deficit, igpQuote.token);
+      return {
+        ...result,
+        amount: `Insufficient ${igpQuote.token.symbol} for interchain gas (need ${deficitAmount.getDecimalFormattedAmount().toFixed(4)} more ${igpQuote.token.symbol})`,
+      };
+    }
+  } catch (e) {
+    logger.warn('Failed to enrich balance error', e);
+  }
+  return result;
 }

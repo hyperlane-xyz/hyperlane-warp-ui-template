@@ -31,46 +31,35 @@ Place font files in public/fonts/ directory
 Normalization
 =============
 */
+:root {
+  --app-bg-color: #f8f8ff;
+  --app-bg-image:
+    url('/backgrounds/main.svg'),
+    radial-gradient(120% 80% at 50% 100%, #e8caff 0%, #f2e4ff 60%, #f8f2ff 100%);
+}
+
+html[data-theme-mode='dark'] {
+  --app-bg-color: #0d0612;
+  --app-bg-image:
+    url('/backgrounds/main-dark.svg'),
+    radial-gradient(ellipse 200% 150% at 50% 100%, #5e1396 0%, #1a0a28 40%, #0d0612 100%);
+}
+
 html,
 body {
   padding: 0;
   margin: 0;
-  background-color: #f8f8ff;
+  background-color: var(--app-bg-color);
 }
 
-body {
-  background-image:
-    url('/backgrounds/main.svg'),
-    radial-gradient(120% 80% at 50% 100%, #e8caff 0%, #f2e4ff 60%, #f8f2ff 100%);
+body,
+.warp-init-gate,
+#app-content {
+  background-color: var(--app-bg-color);
+  background-image: var(--app-bg-image);
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
-}
-
-html[data-theme-mode='dark'],
-html[data-theme-mode='dark'] body {
-  background-color: #0d0612;
-}
-
-html[data-theme-mode='dark'] body {
-  background-image: url('/backgrounds/main-dark.svg');
-}
-
-.warp-init-gate {
-  background-color: #f8f8ff;
-  background-image:
-    url('/backgrounds/main.svg'),
-    radial-gradient(120% 80% at 50% 100%, #e8caff 0%, #f2e4ff 60%, #f8f2ff 100%);
-  background-size: cover;
-  background-repeat: no-repeat;
-  background-position: center;
-}
-
-html[data-theme-mode='dark'] .warp-init-gate {
-  background-color: #0d0612;
-  background-image:
-    url('/backgrounds/main-dark.svg'),
-    radial-gradient(ellipse 200% 150% at 50% 100%, #5e1396 0%, #1a0a28 40%, #0d0612 100%);
 }
 
 a {
@@ -452,20 +441,6 @@ html[data-theme-mode='dark'] .tip-card-logo {
     rgba(0, 0, 0, 0.12) 86%,
     transparent 100%
   );
-}
-
-#app-content {
-  background-color: #f8f8ff;
-  background-image:
-    url('/backgrounds/main.svg'),
-    radial-gradient(120% 80% at 50% 100%, #e8caff 0%, #f2e4ff 60%, #f8f2ff 100%);
-}
-
-html[data-theme-mode='dark'] #app-content {
-  background-color: #0d0612;
-  background-image:
-    url('/backgrounds/main-dark.svg'),
-    radial-gradient(ellipse 200% 150% at 50% 100%, #5e1396 0%, #1a0a28 40%, #0d0612 100%);
 }
 
 .floating-btn {

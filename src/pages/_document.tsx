@@ -29,13 +29,9 @@ export default function Document() {
         <meta property="og:type" content="website" />
         <meta property="og:image" content={`${APP_URL}/logo.png`} />
         <meta property="og:description" content={APP_DESCRIPTION} />
-        {/* Inline script — executes synchronously without network fetch to prevent theme flash.
-            Must stay in sync with UI_THEME_STORAGE_KEY ('warp-ui-theme') in src/consts/app.ts. */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{var s=localStorage.getItem('warp-ui-theme');if(s==='dark'||s==='light'){document.documentElement.dataset.themeMode=s;return}}catch(e){}try{document.documentElement.dataset.themeMode=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'}catch(e){document.documentElement.dataset.themeMode='light'}})()`,
-          }}
-        />
+        {/* Synchronous same-origin script — blocks rendering to set theme before first paint.
+            Inline version would be blocked by CSP (no unsafe-inline in script-src). */}
+        <script src="/theme-init.js" />
       </Head>
       <body className="font-primary text-black">
         <Main />

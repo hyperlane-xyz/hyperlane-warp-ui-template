@@ -3,7 +3,7 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { config } from '../../consts/config';
 import { useStore } from '../../features/store';
-import ExternalIcon from '../../images/icons/external-link-icon.svg';
+import SendIcon from '../../images/icons/send-icon.svg';
 import { HyperlaneTransparentLogo } from '../icons/HyperlaneTransparentLogo';
 
 export function TipCard() {
@@ -23,18 +23,19 @@ export function TipCard() {
       </div>
 
       <h2 className="pr-6 font-secondary text-sm font-normal text-gray-900 sm:text-lg">
-        Bridge USDC
+        Bridge ETH
       </h2>
       <p className="mt-1 text-xs text-gray-600 sm:mt-2 sm:text-sm">
-        Move between Solana, Base, Arbitrum, Optimism, Ethereum, Unichain, and more.
+        Bridge and get real ETH in seconds, no unwrapping needed. Starting with Arbitrum, Base,
+        Ethereum, Optimism.
       </p>
 
       <Button
         className="mt-2 inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-2 py-1 font-secondary text-xs text-gray-700 transition-colors hover:bg-gray-50 sm:mt-3 sm:px-3 sm:py-1.5 sm:text-sm"
         onClick={() => setIsTipCardActionTriggered(true)}
       >
-        <Image src={ExternalIcon} width={12} alt="" />
         <span>Bridge</span>
+        <Image src={SendIcon} width={16} alt="" />
       </Button>
 
       <div className="pointer-events-none absolute -bottom-0 left-1/2 -translate-x-1/2 opacity-40">

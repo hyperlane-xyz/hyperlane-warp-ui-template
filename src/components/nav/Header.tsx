@@ -51,7 +51,7 @@ export function Header({ themeMode, onToggleTheme }: HeaderProps) {
       <div className="flex items-center gap-2 lg:absolute lg:right-12">
         <button
           type="button"
-          className="theme-toggle rounded-md px-2.5 py-1 text-xs font-medium"
+          className={`${styles.themeToggle} theme-toggle`}
           onClick={onToggleTheme}
           aria-label={`Switch to ${nextThemeMode} mode`}
           title={`Switch to ${nextThemeMode} mode`}
@@ -63,3 +63,8 @@ export function Header({ themeMode, onToggleTheme }: HeaderProps) {
     </header>
   );
 }
+
+const styles = {
+  themeToggle:
+    'rounded-md border border-primary-500/35 bg-white/85 px-2.5 py-1 text-xs font-medium capitalize text-primary-900 transition-[background-color,border-color,color,box-shadow] duration-200 hover:border-primary-300/70 hover:bg-gray-950/90 hover:text-primary-25 focus-visible:outline-none focus-visible:shadow-[0_0_0_2px_rgba(154,13,255,0.25)]',
+};

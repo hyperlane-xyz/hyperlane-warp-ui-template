@@ -3,8 +3,6 @@ import { PropsWithChildren, useCallback, useEffect, useState } from 'react';
 import {
   APP_NAME,
   DEFAULT_UI_THEME_MODE,
-  getSystemUiThemeMode,
-  parseUiThemeMode,
   UI_THEME_STORAGE_KEY,
   UiThemeMode,
 } from '../../consts/app';
@@ -18,6 +16,7 @@ import { useStore } from '../../features/store';
 import { SideBarMenu } from '../../features/wallet/SideBarMenu';
 import { WalletProtocolModal } from '../../features/wallet/WalletProtocolModal';
 import { processDarkLogoImage } from '../../utils/imageBrightness';
+import { getSystemUiThemeMode, parseUiThemeMode } from '../../utils/theme';
 import { Footer } from '../nav/Footer';
 import { Header } from '../nav/Header';
 

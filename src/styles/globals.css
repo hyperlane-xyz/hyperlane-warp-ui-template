@@ -304,6 +304,14 @@ Many selectors below target widget internals (.htw-*); revisit during @hyperlane
   text-decoration: underline;
 }
 
+html[data-theme-mode='dark'] .theme-toggle {
+  @apply border-primary-300/45 bg-black/75 text-primary-50;
+}
+
+html[data-theme-mode='dark'] .theme-toggle:hover {
+  @apply border-primary-500/55 bg-white/95 text-primary-900;
+}
+
 html[data-theme-mode='dark'] .theme-toggle:focus-visible {
   box-shadow: 0 0 0 2px rgba(185, 89, 255, 0.35);
 }
@@ -816,7 +824,7 @@ html[data-theme-mode='dark'] .app-header-menu-btn {
   background: rgba(255, 255, 255, 0.08);
 }
 
-html[data-theme-mode='dark'] .app-header-menu-btn[data-open='true'] {
+html[data-theme-mode='dark'] .app-header-menu-btn[data-open] {
   background: rgba(185, 89, 255, 0.24) !important;
   box-shadow: inset 0 0 0 1px rgba(185, 89, 255, 0.45) !important;
   color: #ffffff !important;

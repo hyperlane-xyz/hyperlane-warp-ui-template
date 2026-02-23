@@ -21,7 +21,9 @@ export function trackEvent<T extends EVENT_NAME>(eventName: T, properties: Event
 }
 
 export function trackTokenSelectionEvent(
+  tokenType: string,
   token: IToken,
+  destinationTokenSymbol: string,
   origin: string,
   destination: string,
   multiProvider: MultiProtocolProvider,
@@ -29,13 +31,27 @@ export function trackTokenSelectionEvent(
   const originChainId = multiProvider.getChainId(origin);
   const destinationChainId = multiProvider.getChainId(destination);
   trackEvent(EVENT_NAME.TOKEN_SELECTED, {
-    standard: token.standard,
-    tokenAddress: token.addressOrDenom,
-    tokenSymbol: token.symbol,
+    tokenType,
+    originTokenSymbol: token.symbol,
+    destinationToken: destinationTokenSymbol,
     origin,
     destination,
     originChainId,
     destinationChainId,
+  });
+}
+
+export function trackChainSelectionEvent(
+  chainType: string,
+  chain: { name: string; chainId: ChainId } | null,
+  previousChain: { name: string; chainId: ChainId } | null,
+) {
+  trackEvent(EVENT_NAME.CHAIN_SELECTED, {
+    chainType,
+    chainId: chain?.chainId ?? null,
+    chainName: chain?.name ?? null,
+    previousChainId: previousChain?.chainId ?? null,
+    previousChainName: previousChain?.name ?? null,
   });
 }
 

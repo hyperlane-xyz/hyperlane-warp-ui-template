@@ -31,13 +31,20 @@ export function useChainDisplayName(chainName: ChainName, shortName = false) {
   return getChainDisplayName(multiProvider, chainName, shortName);
 }
 
-export function useChainInfos() {
+export interface ChainInfo {
+  name: string;
+  displayName: string;
+  chainId: ChainId;
+}
+
+export function useChainInfos(): ChainInfo[] {
   const chainMetadata = useStore((s) => s.chainMetadata);
 
   return useMemo(() => {
     const chainInfos = Object.values(chainMetadata).map((chain) => ({
       name: chain.name,
       displayName: chain.displayName || chain.name,
+      chainId: chain.chainId,
     }));
     chainInfos.sort((a, b) => a.displayName.localeCompare(b.displayName));
     return chainInfos;

@@ -43,8 +43,8 @@ export const config: Config = Object.freeze({
   chainWalletWhitelists,
   enableExplorerLink: false,
   explorerApiUrl,
-  defaultOriginChain: undefined,
-  defaultDestinationChain: undefined,
+  defaultOriginToken: undefined,
+  defaultDestinationToken: undefined,
   isDevMode,
   registryUrl,
   registryBranch,
@@ -66,5 +66,5 @@ export const config: Config = Object.freeze({
   ],
   shouldDisableChains: false,
   rpcOverrides,
-  enableTrackingEvents: true,
+  enableTrackingEvents: false,
 });

@@ -14,8 +14,6 @@ import { useToastError } from '../../components/toast/useToastError';
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
-import { useTokenByIndex } from '../tokens/hooks';
-import { TransferFormValues } from '../transfer/types';
 import { fetchChainBalances, groupEvmTokensByChain } from './evm';
 import { fetchSealevelChainBalances, groupSealevelTokensByChain } from './svm';
 import { fetchSdkBalance, tokenKey } from './tokens';
@@ -49,22 +47,21 @@ export function useBalance(chain?: ChainName, token?: IToken, address?: Address)
   };
 }
 
-export function useOriginBalance({ origin, tokenIndex }: TransferFormValues) {
+export function useOriginBalance(originToken?: Token) {
   const multiProvider = useMultiProvider();
+  const origin = originToken?.chainName;
   const address = useAccountAddressForChain(multiProvider, origin);
-  const token = useTokenByIndex(tokenIndex);
-  return useBalance(origin, token, address);
+  return useBalance(origin, originToken, address);
 }
 
-export function useDestinationBalance({ destination, tokenIndex, recipient }: TransferFormValues) {
-  const originToken = useTokenByIndex(tokenIndex);
-  const connection = originToken?.getConnectionForChain(destination);
-  return useBalance(destination, connection?.token, recipient);
+export function useDestinationBalance(recipient?: string, destinationToken?: Token) {
+  const destination = destinationToken?.chainName;
+  return useBalance(destination, destinationToken, recipient);
 }
 
 export async function getDestinationNativeBalance(
   multiProvider: MultiProtocolProvider,
-  { destination, recipient }: TransferFormValues,
+  { destination, recipient }: { destination: string; recipient: string },
 ) {
   try {
     const chainMetadata = multiProvider.getChainMetadata(destination);

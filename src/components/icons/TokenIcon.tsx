@@ -1,8 +1,8 @@
 import { IToken } from '@hyperlane-xyz/sdk';
 import { isHttpsUrl, isRelativeUrl } from '@hyperlane-xyz/utils';
 import { Circle } from '@hyperlane-xyz/widgets';
-import { useState } from 'react';
 import type { SyntheticEvent } from 'react';
+import { useState } from 'react';
 import { links } from '../../consts/links';
 import {
   markDarkLogoMissing,

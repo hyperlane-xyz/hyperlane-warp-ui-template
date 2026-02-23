@@ -2,6 +2,7 @@ import { IToken } from '@hyperlane-xyz/sdk';
 import { isHttpsUrl, isRelativeUrl } from '@hyperlane-xyz/utils';
 import { Circle } from '@hyperlane-xyz/widgets';
 import { useState } from 'react';
+import type { SyntheticEvent } from 'react';
 import { links } from '../../consts/links';
 import {
   markDarkLogoMissing,
@@ -26,6 +27,40 @@ export function TokenIcon({ token, size = 32 }: Props) {
       ? (Buffer.from(token.addressOrDenom).at(0) || 0) % 5
       : undefined;
 
+  function handleImageLoad(event: SyntheticEvent<HTMLImageElement>) {
+    scheduleDarkLogoProcessing(event.currentTarget);
+  }
+
+  function handleImageError(event: SyntheticEvent<HTMLImageElement>) {
+    const img = event.currentTarget;
+    const original = img.dataset.logoOriginalSrc;
+    const attemptedDark = img.dataset.logoDarkSrc;
+    const current = img.getAttribute('src') || img.src;
+    const originalLoadFailed =
+      !!original && current === original && img.complete && img.naturalWidth === 0;
+    const darkFallbackAlreadyHandled =
+      img.dataset.logoDarkFailed === 'true' &&
+      !!original &&
+      !!attemptedDark &&
+      current === original;
+    if (darkFallbackAlreadyHandled && !originalLoadFailed) return;
+
+    const isDarkFallbackError = !!original && !!attemptedDark && current === attemptedDark;
+    const fallbackSrc = toOriginalVariantSrc(current);
+    const isDarkVariantSrc = fallbackSrc !== null;
+
+    // Dark-variant misses should fall back to original logo, not text.
+    if (isDarkFallbackError || isDarkVariantSrc) {
+      markDarkLogoMissing(current);
+      const nextSrc = fallbackSrc || original;
+      if (nextSrc) {
+        img.src = nextSrc;
+        return;
+      }
+    }
+    setFallbackToText(true);
+  }
+
   return (
     <span className="inline-flex">
       <Circle size={size} bgColorSeed={bgColorSeed} title={title}>
@@ -33,37 +68,8 @@ export function TokenIcon({ token, size = 32 }: Props) {
           <img
             src={imageSrc}
             className="h-full w-full p-0.5"
-            onLoad={(event) => scheduleDarkLogoProcessing(event.currentTarget)}
-            onError={(event) => {
-              const img = event.currentTarget;
-              const original = img.dataset.logoOriginalSrc;
-              const attemptedDark = img.dataset.logoDarkSrc;
-              const current = img.getAttribute('src') || img.src;
-              const originalLoadFailed =
-                !!original && current === original && img.complete && img.naturalWidth === 0;
-              const darkFallbackAlreadyHandled =
-                img.dataset.logoDarkFailed === 'true' &&
-                !!original &&
-                !!attemptedDark &&
-                current === original;
-              if (darkFallbackAlreadyHandled && !originalLoadFailed) return;
-
-              const isDarkFallbackError =
-                !!original && !!attemptedDark && current === attemptedDark;
-              const fallbackSrc = toOriginalVariantSrc(current);
-              const isDarkVariantSrc = fallbackSrc !== null;
-
-              // Dark-variant misses should fall back to original logo, not text.
-              if (isDarkFallbackError || isDarkVariantSrc) {
-                markDarkLogoMissing(current);
-                const nextSrc = fallbackSrc || original;
-                if (nextSrc) {
-                  img.src = nextSrc;
-                  return;
-                }
-              }
-              setFallbackToText(true);
-            }}
+            onLoad={handleImageLoad}
+            onError={handleImageError}
             loading="lazy"
           />
         ) : (

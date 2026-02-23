@@ -9,15 +9,3 @@ export const BRAND_COLOR = Color.primary['500'];
 
 export const UI_THEME_STORAGE_KEY = 'warp-ui-theme';
 export const DEFAULT_UI_THEME_MODE: UiThemeMode = 'light';
-
-export function parseUiThemeMode(value: string | null | undefined): UiThemeMode | null {
-  if (value === 'light' || value === 'dark') return value;
-  return null;
-}
-
-export function getSystemUiThemeMode(): UiThemeMode {
-  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
-    return DEFAULT_UI_THEME_MODE;
-  }
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-}

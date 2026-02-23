@@ -1,10 +1,11 @@
-import { DiscordIcon, GithubIcon } from '@hyperlane-xyz/widgets';
+import { GithubIcon } from '@hyperlane-xyz/widgets';
 import clsx from 'clsx';
 import Link from 'next/link';
 import { forwardRef, ReactNode } from 'react';
 import { links } from '../../consts/links';
 import { Color } from '../../styles/Color';
 import { BookIcon } from '../icons/BookIcon';
+import { QuestionMarkIcon } from '../icons/QuestionMarkIcon';
 import { StakeIcon } from '../icons/StakeIcon';
 import { WebSimpleIcon } from '../icons/WebSimpleIcon';
 import { XIcon } from '../icons/XIcon';
@@ -20,9 +21,9 @@ export const navLinks: NavLinkItem[] = [
   { title: 'X.com', url: links.twitter, icon: <XIcon width={19} height={17} /> },
   { title: 'Hyperlane', url: links.home, icon: <WebSimpleIcon width={20} height={20} /> },
   {
-    title: 'Discord',
-    url: links.discord,
-    icon: <DiscordIcon color={Color.primary[500]} width={20} height={20} />,
+    title: 'Support',
+    url: links.support,
+    icon: <QuestionMarkIcon width={20} height={20} color={Color.primary[500]} />,
   },
   {
     title: 'Docs',
@@ -53,6 +54,7 @@ export const NavItem = forwardRef<HTMLAnchorElement, NavItemProps>(function NavI
         className,
       )}
       target="_blank"
+      rel="noopener noreferrer"
       href={item.url}
     >
       <div className="w-5">{item.icon}</div>

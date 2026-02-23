@@ -1,9 +1,8 @@
-import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
-import { createWriteStream, mkdirSync, existsSync } from 'fs';
-import { pipeline } from 'stream/promises';
-import { Readable } from 'stream';
-import { fileURLToPath } from 'url';
+import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { createWriteStream, existsSync, mkdirSync } from 'fs';
 import { dirname, join } from 'path';
+import { pipeline } from 'stream/promises';
+import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const FONTS_DIR = join(__dirname, '..', 'public', 'fonts');
@@ -17,7 +16,9 @@ async function fetchFonts() {
   // Gracefully skip if environment variables are not configured
   if (!AWS_ACCESS_KEY_ID || !AWS_SECRET_ACCESS_KEY || !AWS_S3_BUCKET) {
     console.warn('AWS environment variables not configured - skipping font download');
-    console.warn('To enable font fetching, set: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET');
+    console.warn(
+      'To enable font fetching, set: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET',
+    );
     return;
   }
 
@@ -52,7 +53,7 @@ async function fetchFonts() {
       const response = await s3.send(command);
       const writeStream = createWriteStream(outputPath);
 
-      await pipeline(Readable.fromWeb(response.Body.transformToWebStream()), writeStream);
+      await pipeline(response.Body, writeStream);
 
       console.log(`Downloaded ${fontFile}`);
       results.success.push(fontFile);
@@ -63,7 +64,9 @@ async function fetchFonts() {
   }
 
   // Summary
-  console.log(`\nFont download complete: ${results.success.length} succeeded, ${results.failed.length} failed`);
+  console.log(
+    `\nFont download complete: ${results.success.length} succeeded, ${results.failed.length} failed`,
+  );
 
   if (results.failed.length > 0) {
     console.warn('Failed fonts:', results.failed.join(', '));
@@ -71,6 +74,6 @@ async function fetchFonts() {
 }
 
 fetchFonts().catch((error) => {
-  console.warn('Font fetch script encountered an error:', error.message);
-  // Exit gracefully - don't fail the build
+  console.error('Font fetch script encountered an unexpected error:', error.message);
+  // Don't fail the build, but log as error for visibility
 });

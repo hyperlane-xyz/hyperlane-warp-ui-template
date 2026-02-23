@@ -1,4 +1,4 @@
-import { HyperlaneFooterLogo } from '../icons/HyperlaneGradientLogo';
+import { HyperlaneGradientLogo } from '../icons/HyperlaneGradientLogo';
 import { NavItem, navLinks } from './Nav';
 
 export function Footer() {
@@ -17,14 +17,14 @@ export function Footer() {
 function FooterLogo() {
   return (
     <div className="flex items-center justify-center">
-      <HyperlaneFooterLogo width={219} height={18} />
+      <HyperlaneGradientLogo width={219} height={18} />
     </div>
   );
 }
 
 function FooterNav() {
   return (
-    <nav className="hidden text-md font-medium sm:block">
+    <nav className="hidden text-md font-medium lg:block">
       <ul className="flex gap-9">
         {navLinks.map((item) => (
           <li key={item.title}>

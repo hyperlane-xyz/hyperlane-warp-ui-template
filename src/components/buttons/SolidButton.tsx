@@ -31,13 +31,13 @@ export function SolidButton(
     baseColors = 'bg-primary-500 text-white';
     onHover = 'hover:bg-primary-600';
   } else if (color === 'accent') {
-    baseColors = 'bg-accent-gradient shadow-accent-glow';
+    baseColors = 'bg-accent-gradient text-white shadow-accent-glow';
     onHover = 'hover:opacity-90';
   } else if (color === 'green') {
     baseColors = 'bg-green-500 text-white';
     onHover = 'hover:bg-green-600';
   } else if (color === 'red') {
-    baseColors = 'bg-error-gradient shadow-error-glow';
+    baseColors = 'bg-error-gradient text-white shadow-error-glow';
     onHover = 'hover:opacity-90';
   } else if (color === 'white') {
     baseColors = 'bg-white text-black';

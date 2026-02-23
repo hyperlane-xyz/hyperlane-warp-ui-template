@@ -27,4 +27,4 @@ function _HyperlaneGradientLogo({ ...props }: DefaultIconProps) {
   );
 }
 
-export const HyperlaneFooterLogo = memo(_HyperlaneGradientLogo);
+export const HyperlaneGradientLogo = memo(_HyperlaneGradientLogo);

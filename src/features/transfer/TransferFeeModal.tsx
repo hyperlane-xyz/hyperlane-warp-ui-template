@@ -1,7 +1,6 @@
 import { WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
 import { Modal, Skeleton, Tooltip } from '@hyperlane-xyz/widgets';
 import Link from 'next/link';
-import { ModalHeader } from '../../components/layout/ModalHeader';
 import { links } from '../../consts/links';
 
 export function TransferFeeModal({
@@ -17,7 +16,9 @@ export function TransferFeeModal({
 }) {
   return (
     <Modal isOpen={isOpen} close={close} panelClassname="p-0 max-w-sm md:max-w-128 overflow-hidden">
-      <ModalHeader>Fee Details</ModalHeader>
+      <div className="w-full bg-accent-gradient px-4 py-2.5 font-secondary text-base font-normal tracking-wider text-white shadow-accent-glow">
+        Fee Details
+      </div>
       <div className="flex w-full flex-col items-start gap-2 p-4 text-sm">
         {fees?.localQuote && fees.localQuote.amount > 0n && (
           <div className="flex gap-4">

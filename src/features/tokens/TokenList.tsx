@@ -1,12 +1,23 @@
 import { ChainName, Token } from '@hyperlane-xyz/sdk';
-import { Tooltip } from '@hyperlane-xyz/widgets';
+import { Tooltip, useDebounce } from '@hyperlane-xyz/widgets';
 import React, { useEffect, useMemo, useState, useTransition } from 'react';
+import { config } from '../../consts/config';
+import { useTokenBalances } from '../balances/hooks';
+import { tokenKey } from '../balances/tokens';
+import { formatBalance, formatUsd, getUsdValue } from '../balances/utils';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { useCollateralGroups, useTokens } from './hooks';
 import { TokenChainIcon } from './TokenChainIcon';
 import { TokenSelectionMode } from './types';
+import { useTokenPrices } from './useTokenPrice';
 import { checkTokenHasRoute, getTokenKey } from './utils';
+
+const featuredSet = new Set(config.featuredTokens.map((t) => t.toLowerCase()));
+
+function isFeaturedToken(token: Token): boolean {
+  return featuredSet.has(`${token.chainName}-${token.symbol}`.toLowerCase());
+}
 
 interface TokenListProps {
   selectionMode: TokenSelectionMode;
@@ -14,6 +25,8 @@ interface TokenListProps {
   chainFilter: ChainName | null;
   onSelect: (token: Token) => void;
   counterpartToken?: Token;
+  /** Recipient address for destination balance lookups */
+  recipient?: string;
 }
 
 export function TokenList({
@@ -22,12 +35,12 @@ export function TokenList({
   chainFilter,
   onSelect,
   counterpartToken,
+  recipient,
 }: TokenListProps) {
   const multiProvider = useMultiProvider();
   const allTokens = useTokens();
-
-  // Pre-computed collateral groups from store (computed at app startup)
   const collateralGroups = useCollateralGroups();
+  const debouncedSearch = useDebounce(searchQuery, 300);
 
   // Deferred state for route map - allows UI to render immediately
   const [tokenRouteMap, setTokenRouteMap] = useState<Map<string, boolean> | null>(null);
@@ -45,7 +58,6 @@ export function TokenList({
 
       for (const token of allTokens) {
         const key = getTokenKey(token);
-        // Determine origin/destination based on selection mode
         const originToken = selectionMode === 'origin' ? token : counterpartToken;
         const destToken = selectionMode === 'origin' ? counterpartToken : token;
         const hasRoute = checkTokenHasRoute(originToken, destToken, collateralGroups);
@@ -56,13 +68,82 @@ export function TokenList({
     });
   }, [allTokens, counterpartToken, selectionMode, collateralGroups]);
 
+  // Tokens we care about: featured + routable
+  const relevantTokens = useMemo(() => {
+    return allTokens.filter((t) => {
+      if (isFeaturedToken(t)) return true;
+      if (tokenRouteMap) return tokenRouteMap.get(getTokenKey(t)) ?? false;
+      return false;
+    });
+  }, [allTokens, tokenRouteMap]);
+
+  // Balance fetch set: relevant + chain filter + search matches
+  // Expands when user picks a chain or searches, so those tokens get balances too
+  const balanceTokens = useMemo(() => {
+    const q = debouncedSearch?.trim().toLowerCase();
+    if (!chainFilter && !q) return relevantTokens;
+    const seen = new Set(relevantTokens.map((t) => getTokenKey(t)));
+    const merged = [...relevantTokens];
+    for (const t of allTokens) {
+      const key = getTokenKey(t);
+      if (seen.has(key)) continue;
+      const chainMatch = chainFilter && t.chainName === chainFilter;
+      const searchMatch =
+        q &&
+        (t.name.toLowerCase().includes(q) ||
+          t.symbol.toLowerCase().includes(q) ||
+          t.addressOrDenom.toLowerCase().includes(q) ||
+          t.collateralAddressOrDenom?.toLowerCase().includes(q));
+      if (chainMatch || searchMatch) {
+        seen.add(key);
+        merged.push(t);
+      }
+    }
+    return merged;
+  }, [relevantTokens, chainFilter, debouncedSearch, allTokens]);
+
+  // Fetch balances for relevant + chain-filtered tokens only
+  // For destination mode, use recipient address if provided
+  const {
+    balances,
+    isLoading: isBalanceLoading,
+    hasAnyAddress,
+  } = useTokenBalances(
+    balanceTokens,
+    chainFilter ?? ('default' as ChainName),
+    'all' as ChainName,
+    recipient,
+  );
+  const { prices } = useTokenPrices();
+
+  // Build lookup maps: getTokenKey → balance/usdValue
+  const { balanceMap, usdMap } = useMemo(() => {
+    const bMap = new Map<string, bigint>();
+    const uMap = new Map<string, number>();
+    for (const token of balanceTokens) {
+      const tKey = tokenKey(token);
+      const gKey = getTokenKey(token);
+      const bal = balances[tKey];
+      if (bal != null && bal > 0n) {
+        bMap.set(gKey, bal);
+        const usd = getUsdValue(token, balances, prices);
+        if (usd != null && usd > 0) uMap.set(gKey, usd);
+      }
+    }
+    return { balanceMap: bMap, usdMap: uMap };
+  }, [balanceTokens, balances, prices]);
+
   const { tokens, totalCount, isLimited } = useMemo(() => {
-    const q = searchQuery?.trim().toLowerCase();
+    const q = debouncedSearch?.trim().toLowerCase();
+
+    // Default view: only relevant tokens (featured + routable)
+    // Search/chain filter: expand to all tokens so user can discover
+    const baseTokens = q || chainFilter ? allTokens : relevantTokens;
 
     // Filter by chain
     const chainFiltered = chainFilter
-      ? allTokens.filter((t) => t.chainName === chainFilter)
-      : allTokens;
+      ? baseTokens.filter((t) => t.chainName === chainFilter)
+      : baseTokens;
 
     // Filter by search query
     const filtered = chainFiltered.filter((t) => {
@@ -77,25 +158,53 @@ export function TokenList({
       );
     });
 
-    // Sort: tokens with routes first, then by symbol, then by chain name
-    const sorted = [...filtered].sort((a, b) => {
-      // If we have route info, sort tokens with routes first
-      if (tokenRouteMap) {
-        const aHasRoute = tokenRouteMap.get(getTokenKey(a)) ?? true;
-        const bHasRoute = tokenRouteMap.get(getTokenKey(b)) ?? true;
+    const hasFilter = !!q || chainFilter !== null;
 
+    // Multi-tier sort
+    const sorted = [...filtered].sort((a, b) => {
+      const aKey = getTokenKey(a);
+      const bKey = getTokenKey(b);
+
+      // 1. Has route to counterpart (true first)
+      if (tokenRouteMap) {
+        const aHasRoute = tokenRouteMap.get(aKey) ?? true;
+        const bHasRoute = tokenRouteMap.get(bKey) ?? true;
         if (aHasRoute && !bHasRoute) return -1;
         if (!aHasRoute && bHasRoute) return 1;
       }
 
-      // Then sort alphabetically by symbol
+      // 2. Featured tokens first — only in default view (no filter/search)
+      if (!hasFilter) {
+        const aFeatured = isFeaturedToken(a);
+        const bFeatured = isFeaturedToken(b);
+        if (aFeatured && !bFeatured) return -1;
+        if (!aFeatured && bFeatured) return 1;
+      }
+
+      // 3. Has balance with USD value (desc)
+      const aUsd = usdMap.get(aKey) ?? 0;
+      const bUsd = usdMap.get(bKey) ?? 0;
+      if (aUsd > 0 || bUsd > 0) {
+        if (aUsd !== bUsd) return bUsd - aUsd;
+      }
+
+      // 4. Has balance without USD (desc by raw amount)
+      const aBal = balanceMap.get(aKey) ?? 0n;
+      const bBal = balanceMap.get(bKey) ?? 0n;
+      if (aBal > 0n || bBal > 0n) {
+        if (aBal > bBal) return -1;
+        if (aBal < bBal) return 1;
+      }
+
+      // 5. Symbol alphabetical
       const symbolCompare = a.symbol.localeCompare(b.symbol);
       if (symbolCompare !== 0) return symbolCompare;
+
+      // 6. Chain name alphabetical
       return a.chainName.localeCompare(b.chainName);
     });
 
-    // Limit display when no filters applied (for performance with large token lists)
-    const hasFilter = !!q || chainFilter !== null;
+    // Limit display when no filters applied
     const maxDisplay = 50;
     const isLimited = !hasFilter && sorted.length > maxDisplay;
     const displayTokens = isLimited ? sorted.slice(0, maxDisplay) : sorted;
@@ -105,7 +214,16 @@ export function TokenList({
       totalCount: sorted.length,
       isLimited,
     };
-  }, [searchQuery, chainFilter, allTokens, multiProvider, tokenRouteMap]);
+  }, [
+    debouncedSearch,
+    chainFilter,
+    allTokens,
+    relevantTokens,
+    multiProvider,
+    tokenRouteMap,
+    usdMap,
+    balanceMap,
+  ]);
 
   if (tokens.length === 0) {
     return (
@@ -124,18 +242,22 @@ export function TokenList({
         </div>
         <div className="py-2 md:px-3">
           {tokens.map((token) => {
-            const tokenKey = getTokenKey(token);
-            // If no counterpart selected (tokenRouteMap is null), all tokens have routes
-            const hasRoute = tokenRouteMap ? (tokenRouteMap.get(tokenKey) ?? true) : true;
+            const key = getTokenKey(token);
+            const hasRoute = tokenRouteMap ? (tokenRouteMap.get(key) ?? true) : true;
+            const balance = balanceMap.get(key);
+            const usdValue = usdMap.get(key) ?? null;
 
             return (
               <TokenButton
-                key={tokenKey}
+                key={key}
                 token={token}
                 onSelect={onSelect}
                 hasRoute={hasRoute}
                 counterpartToken={counterpartToken}
                 selectionMode={selectionMode}
+                balance={balance}
+                usdValue={usdValue}
+                isBalanceLoading={isBalanceLoading && hasAnyAddress}
               />
             );
           })}
@@ -164,13 +286,18 @@ const TokenButton = React.memo(function TokenButton({
   hasRoute,
   counterpartToken,
   selectionMode,
+  balance,
+  usdValue,
+  isBalanceLoading,
 }: {
   token: Token;
   onSelect: (token: Token) => void;
-  /** Whether this token has a valid route to/from the counterpart */
   hasRoute: boolean;
   counterpartToken?: Token;
   selectionMode: TokenSelectionMode;
+  balance?: bigint;
+  usdValue?: number | null;
+  isBalanceLoading: boolean;
 }) {
   const multiProvider = useMultiProvider();
   const chainDisplayName = getChainDisplayName(multiProvider, token.chainName);
@@ -178,23 +305,23 @@ const TokenButton = React.memo(function TokenButton({
     ? getChainDisplayName(multiProvider, counterpartToken.chainName)
     : '';
 
-  // Truncate address for display
-  const shortAddress = token.addressOrDenom
-    ? `${token.addressOrDenom.slice(0, 6)}...${token.addressOrDenom.slice(-4)}`
-    : 'Native';
-
-  // Build tooltip message for unsupported routes
-  // selectionMode 'destination' -> counterpart is origin -> "from"
-  // selectionMode 'origin' -> counterpart is destination -> "to"
   const routeDirection = selectionMode === 'destination' ? 'from' : 'to';
   const routeTooltipMessage = counterpartToken
     ? `No route ${routeDirection} ${counterpartToken.symbol} on ${counterpartChainName}`
     : '';
 
+  const formattedBalance = balance != null ? formatBalance(balance, token.decimals) : null;
+  const formattedUsd = usdValue != null && usdValue > 0 ? formatUsd(usdValue) : null;
+  const showRouteUnavailable = !hasRoute && counterpartToken;
+
+  // Primary = USD if available, else balance. Secondary = balance when USD is primary.
+  const primaryValue = formattedUsd ?? formattedBalance;
+  const secondaryValue = formattedUsd ? formattedBalance : null;
+
   return (
     <button
       type="button"
-      className="group mb-1.5 flex w-full items-center rounded-[3px] px-3 py-2.5 transition-colors hover:bg-gray-100"
+      className="group mb-2 flex h-[60px] w-full items-center rounded-[3px] px-3 transition-colors hover:bg-gray-100"
       onClick={() => onSelect(token)}
     >
       <TokenChainIcon token={token} size={36} />
@@ -210,9 +337,18 @@ const TokenButton = React.memo(function TokenButton({
       </div>
 
       <div className="ml-2 shrink-0 text-right">
-        <div className="text-[10px] text-black">{shortAddress}</div>
-        {!hasRoute && counterpartToken && (
-          <div className="mt-0.5 flex items-center justify-end gap-1 text-[10px] text-gray-400">
+        {isBalanceLoading && !primaryValue ? (
+          <div className="mb-1 ml-auto h-4 w-14 animate-pulse rounded bg-gray-100" />
+        ) : primaryValue ? (
+          <>
+            <div className={`${styles.base} text-sm font-medium text-black`}>{primaryValue}</div>
+            {secondaryValue && (
+              <div className={`${styles.base} text-xs text-gray-400`}>{secondaryValue}</div>
+            )}
+          </>
+        ) : null}
+        {showRouteUnavailable && (
+          <div className="flex items-center justify-end gap-1 whitespace-nowrap text-[10px] text-gray-400">
             <span>Route unavailable</span>
             <Tooltip
               content={routeTooltipMessage}

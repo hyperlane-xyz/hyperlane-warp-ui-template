@@ -15,6 +15,8 @@ interface Props {
   selectionMode: TokenSelectionMode;
   /** The currently selected token on the counterpart side (destination when selecting origin, origin when selecting destination) */
   counterpartToken?: Token;
+  /** Recipient address for destination balance lookups */
+  recipient?: string;
 }
 
 export function UnifiedTokenChainModal({
@@ -23,6 +25,7 @@ export function UnifiedTokenChainModal({
   onSelect,
   selectionMode,
   counterpartToken,
+  recipient,
 }: Props) {
   const [chainSearch, setChainSearch] = useState('');
   const [tokenSearch, setTokenSearch] = useState('');
@@ -89,6 +92,7 @@ export function UnifiedTokenChainModal({
             chainFilter={selectedChain?.name ?? null}
             onSelect={handleSelectToken}
             counterpartToken={counterpartToken}
+            recipient={recipient}
             selectedChain={selectedChain?.name ?? null}
             onSelectChain={handleSelectChain}
             onMoreChainsClick={() => setShowMobileChainList(true)}

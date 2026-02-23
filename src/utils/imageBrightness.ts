@@ -53,7 +53,8 @@ export function toOriginalVariantSrc(src: string): string | null {
     const lastSlash = url.pathname.lastIndexOf('/');
     const filename = url.pathname.substring(lastSlash + 1);
     if (!filename.toLowerCase().startsWith('darkmode-')) return null;
-    url.pathname = url.pathname.substring(0, lastSlash + 1) + filename.substring('darkmode-'.length);
+    url.pathname =
+      url.pathname.substring(0, lastSlash + 1) + filename.substring('darkmode-'.length);
     return url.toString();
   } catch {
     return null;

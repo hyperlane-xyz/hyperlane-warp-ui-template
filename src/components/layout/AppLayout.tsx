@@ -124,6 +124,7 @@ export function AppLayout({ children }: PropsWithChildren) {
         style={styles.container}
         id="app-content"
         data-theme-mode={themeMode}
+        suppressHydrationWarning
         className="min-w-screen relative flex h-full min-h-screen w-full flex-col justify-between"
       >
         <Header themeMode={themeMode} onToggleTheme={toggleThemeMode} />

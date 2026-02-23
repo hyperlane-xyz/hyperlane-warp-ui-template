@@ -37,11 +37,10 @@ function isDarkModeEnabled(): boolean {
 function toDarkVariantSrc(src: string): string | null {
   try {
     const url = new URL(src, window.location.href);
-    const match = url.pathname.match(/([^/]+?)(\.[^/.]+)$/);
-    if (!match) return null;
-    const [, fileBase, ext] = match;
-    if (fileBase.startsWith('darkmode-')) return null;
-    url.pathname = url.pathname.replace(/([^/]+?)(\.[^/.]+)$/, `darkmode-$1${ext}`);
+    const lastSlash = url.pathname.lastIndexOf('/');
+    const filename = url.pathname.substring(lastSlash + 1);
+    if (!filename || filename.startsWith('darkmode-')) return null;
+    url.pathname = url.pathname.substring(0, lastSlash + 1) + 'darkmode-' + filename;
     return url.toString();
   } catch {
     return null;
@@ -51,9 +50,10 @@ function toDarkVariantSrc(src: string): string | null {
 export function toOriginalVariantSrc(src: string): string | null {
   try {
     const url = new URL(src, window.location.href);
-    const nextPathname = url.pathname.replace(/(^|\/)darkmode-([^/]+?)(\.[^/.]+)$/i, '$1$2$3');
-    if (nextPathname === url.pathname) return null;
-    url.pathname = nextPathname;
+    const lastSlash = url.pathname.lastIndexOf('/');
+    const filename = url.pathname.substring(lastSlash + 1);
+    if (!filename.toLowerCase().startsWith('darkmode-')) return null;
+    url.pathname = url.pathname.substring(0, lastSlash + 1) + filename.substring('darkmode-'.length);
     return url.toString();
   } catch {
     return null;

@@ -304,39 +304,12 @@ Theme mode
 ==========
 Many selectors below target widget internals (.htw-*); revisit during @hyperlane-xyz/widgets upgrades.
 */
-.theme-toggle {
-  border: 1px solid rgba(154, 13, 255, 0.35);
-  background: rgba(255, 255, 255, 0.85);
-  color: #4d0f7b;
-  text-transform: capitalize;
-  transition:
-    background-color 0.2s ease,
-    border-color 0.2s ease,
-    color 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
-.theme-toggle:hover {
-  border-color: rgba(185, 89, 255, 0.72);
-  background: rgba(23, 10, 31, 0.92);
-  color: #f7edff;
-}
-
-.theme-toggle:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(154, 13, 255, 0.25);
-}
-
 html[data-theme-mode='dark'] .theme-toggle {
-  border-color: rgba(185, 89, 255, 0.45);
-  background: rgba(13, 6, 18, 0.75);
-  color: #e9d8ff;
+  @apply border-primary-300/45 bg-black/75 text-primary-50;
 }
 
 html[data-theme-mode='dark'] .theme-toggle:hover {
-  border-color: rgba(154, 13, 255, 0.55);
-  background: rgba(255, 255, 255, 0.96);
-  color: #3d0c60;
+  @apply border-primary-500/55 bg-white/95 text-primary-900;
 }
 
 html[data-theme-mode='dark'] .theme-toggle:focus-visible {
@@ -851,7 +824,7 @@ html[data-theme-mode='dark'] .app-header-menu-btn {
   background: rgba(255, 255, 255, 0.08);
 }
 
-html[data-theme-mode='dark'] .app-header-menu-btn[data-open='true'] {
+html[data-theme-mode='dark'] .app-header-menu-btn[data-open] {
   background: rgba(185, 89, 255, 0.24) !important;
   box-shadow: inset 0 0 0 1px rgba(185, 89, 255, 0.45) !important;
   color: #ffffff !important;

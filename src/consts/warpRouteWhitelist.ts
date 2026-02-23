@@ -199,9 +199,6 @@ export const warpRouteWhitelist: Array<string> | null = [
   'HYPER/arbitrum-base-bsc-ethereum-optimism',
   'stHYPER/bsc-ethereum',
 
-  // MILK route
-  'MILK/bsc-milkyway',
-
   // Fragmetric routes
   'wfragSOL/fragmetric',
   'wfragJTO/fragmetric',

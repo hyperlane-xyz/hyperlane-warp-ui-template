@@ -1,8 +1,9 @@
 import { IToken, Token, WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
 import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import { fetchPrices } from '../tokens/useTokenPrice';
 
-const FEE_PRICE_REFRESH_INTERVAL = 60_000;
+const FEE_PRICE_REFRESH_INTERVAL = 300_000; // 5 min, matches PRICE_STALE_TIME
 
 // Maps fee token symbol to its CoinGecko USD price
 export type FeePrices = Record<string, number>;
@@ -37,17 +38,21 @@ export function useFeePrices(
   knownTokens: Token[],
   batchPrices: Record<string, number>,
 ): FeePrices {
-  const symbolToId: Record<string, string> = {};
-  if (fees) {
-    for (const quote of [fees.localQuote, fees.interchainQuote, fees.tokenFeeQuote]) {
-      if (!quote || quote.amount === 0n) continue;
-      const id = resolveCoinGeckoId(quote.token, knownTokens, symbolToId);
-      if (id) symbolToId[quote.token.symbol] = id;
+  // Fee tokens are native gas tokens whose symbol (e.g. "ETH") maps 1:1 to a
+  // CoinGecko ID regardless of chain, so keying by symbol is safe here.
+  const { symbolToId, missingIds } = useMemo(() => {
+    const map: Record<string, string> = {};
+    if (fees) {
+      for (const quote of [fees.localQuote, fees.interchainQuote, fees.tokenFeeQuote]) {
+        if (!quote || quote.amount === 0n) continue;
+        const id = resolveCoinGeckoId(quote.token, knownTokens, map);
+        if (id) map[quote.token.symbol] = id;
+      }
     }
-  }
-
-  // IDs not already covered by the batch useTokenPrices() fetch
-  const missingIds = [...new Set(Object.values(symbolToId))].filter((id) => !(id in batchPrices));
+    // IDs not already covered by the batch useTokenPrices() fetch
+    const missing = [...new Set(Object.values(map))].filter((id) => !(id in batchPrices));
+    return { symbolToId: map, missingIds: missing };
+  }, [fees, knownTokens, batchPrices]);
 
   const { data } = useQuery({
     queryKey: ['useFeePrices', missingIds],
@@ -59,11 +64,13 @@ export function useFeePrices(
     refetchOnMount: false,
   });
 
-  const result: FeePrices = {};
-  for (const [symbol, id] of Object.entries(symbolToId)) {
-    // Prefer batch price, fall back to separately fetched price
-    const price = batchPrices[id] ?? data?.[id];
-    if (price) result[symbol] = price;
-  }
-  return result;
+  return useMemo(() => {
+    const result: FeePrices = {};
+    for (const [symbol, id] of Object.entries(symbolToId)) {
+      // Prefer batch price, fall back to separately fetched price
+      const price = batchPrices[id] ?? data?.[id];
+      if (price != null) result[symbol] = price;
+    }
+    return result;
+  }, [symbolToId, batchPrices, data]);
 }

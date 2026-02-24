@@ -1,8 +1,9 @@
 import { WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
 import { ChevronIcon, FuelPumpIcon, useModal } from '@hyperlane-xyz/widgets';
 import { useEffect, useState } from 'react';
-import { getFeePercentage, getTotalFeesUsd, getTotalFeesUsdRaw } from '../balances/feeUsdDisplay';
+import { getFeePercentage, getTotalFeesUsdRaw } from '../balances/feeUsdDisplay';
 import { FeePrices } from '../balances/useFeePrices';
+import { formatUsd } from '../balances/utils';
 import { TransferFeeModal } from './TransferFeeModal';
 
 function useLoadingDots(isLoading: boolean, intervalMs = 1000) {
@@ -41,8 +42,9 @@ export function FeeSectionButton({
   const hasFees = fees !== null;
   const isClickable = hasFees && !isLoading;
   const feeText = isLoading ? loadingText : hasFees ? fees.totalFees : '-';
-  const totalUsd = hasFees ? getTotalFeesUsd(fees, feePrices) : null;
-  const pct = hasFees ? getFeePercentage(getTotalFeesUsdRaw(fees, feePrices), transferUsd) : null;
+  const totalUsdRaw = hasFees ? getTotalFeesUsdRaw(fees, feePrices) : 0;
+  const totalUsd = totalUsdRaw > 0 ? formatUsd(totalUsdRaw, true) : null;
+  const pct = hasFees ? getFeePercentage(totalUsdRaw, transferUsd) : null;
 
   return (
     <>

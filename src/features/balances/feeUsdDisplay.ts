@@ -8,7 +8,7 @@ export function getUsdDisplayForFee(
 ): string | null {
   if (!tokenAmount || tokenAmount.amount === 0n) return null;
   const price = feePrices[tokenAmount.token.symbol];
-  if (!price) return null;
+  if (price == null) return null;
   const value = tokenAmount.getDecimalFormattedAmount() * price;
   if (value <= 0) return null;
   return formatUsd(value, true);

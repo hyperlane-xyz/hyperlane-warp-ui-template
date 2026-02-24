@@ -1,4 +1,5 @@
 import { TokenAmount } from '@hyperlane-xyz/sdk';
+import { isNullish } from '@hyperlane-xyz/utils';
 import type { FeePrices } from './useFeePrices';
 import { formatUsd } from './utils';
 
@@ -8,7 +9,7 @@ export function getUsdDisplayForFee(
 ): string | null {
   if (!tokenAmount || tokenAmount.amount === 0n) return null;
   const price = feePrices[tokenAmount.token.symbol];
-  if (price == null) return null;
+  if (isNullish(price)) return null;
   const value = tokenAmount.getDecimalFormattedAmount() * price;
   if (value <= 0) return null;
   return formatUsd(value, true);

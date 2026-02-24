@@ -1,4 +1,5 @@
 import { IToken, Token, WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
+import { isNullish } from '@hyperlane-xyz/utils';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { fetchPrices } from '../tokens/useTokenPrice';
@@ -69,7 +70,7 @@ export function useFeePrices(
     for (const [symbol, id] of Object.entries(symbolToId)) {
       // Prefer batch price, fall back to separately fetched price
       const price = batchPrices[id] ?? data?.[id];
-      if (price != null) result[symbol] = price;
+      if (!isNullish(price)) result[symbol] = price;
     }
     return result;
   }, [symbolToId, batchPrices, data]);

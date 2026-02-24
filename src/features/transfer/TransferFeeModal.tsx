@@ -2,17 +2,21 @@ import { WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
 import { Modal, Skeleton, Tooltip } from '@hyperlane-xyz/widgets';
 import Link from 'next/link';
 import { links } from '../../consts/links';
+import { UsdLabel } from '../balances/UsdLabel';
+import { FeePrices } from '../balances/useFeePrices';
 
 export function TransferFeeModal({
   isOpen,
   close,
   fees,
   isLoading,
+  feePrices,
 }: {
   isOpen: boolean;
   close: () => void;
   fees: WarpCoreFeeEstimate | null;
   isLoading: boolean;
+  feePrices: FeePrices;
 }) {
   return (
     <Modal isOpen={isOpen} close={close} panelClassname="p-0 max-w-sm md:max-w-128 overflow-hidden">
@@ -33,9 +37,10 @@ export function TransferFeeModal({
             {isLoading ? (
               <Skeleton className="h-4 w-40 sm:w-72" />
             ) : (
-              <span>{`${fees.localQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${
-                fees.localQuote.token.symbol || ''
-              }`}</span>
+              <span>
+                {`${fees.localQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${fees.localQuote.token.symbol || ''}`}
+                <UsdLabel tokenAmount={fees.localQuote} feePrices={feePrices} />
+              </span>
             )}
           </div>
         )}
@@ -52,9 +57,10 @@ export function TransferFeeModal({
             {isLoading ? (
               <Skeleton className="h-4 w-40 sm:w-72" />
             ) : (
-              <span>{`${fees.interchainQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${
-                fees.interchainQuote.token.symbol || ''
-              }`}</span>
+              <span>
+                {`${fees.interchainQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${fees.interchainQuote.token.symbol || ''}`}
+                <UsdLabel tokenAmount={fees.interchainQuote} feePrices={feePrices} />
+              </span>
             )}
           </div>
         )}
@@ -66,9 +72,10 @@ export function TransferFeeModal({
             {isLoading ? (
               <Skeleton className="h-4 w-40 sm:w-72" />
             ) : (
-              <span>{`${fees.tokenFeeQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${
-                fees.tokenFeeQuote.token.symbol || ''
-              }`}</span>
+              <span>
+                {`${fees.tokenFeeQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${fees.tokenFeeQuote.token.symbol || ''}`}
+                <UsdLabel tokenAmount={fees.tokenFeeQuote} feePrices={feePrices} />
+              </span>
             )}
           </div>
         )}

@@ -682,8 +682,9 @@ function ReviewDetails({
     !isReview,
   );
 
-  const feePrices = useFeePrices(feeQuotes ?? null, warpCore.tokens);
-  const { tokenPrice } = useTokenPrice(values);
+  const { prices } = useTokenPrices();
+  const feePrices = useFeePrices(feeQuotes ?? null, warpCore.tokens, prices);
+  const tokenPrice = originToken?.coinGeckoId ? prices[originToken.coinGeckoId] : undefined;
   const parsedAmount = parseFloat(amount);
   const transferUsd = tokenPrice && !isNaN(parsedAmount) ? parsedAmount * tokenPrice : 0;
   const isLoading = isApproveLoading || isQuoteLoading;

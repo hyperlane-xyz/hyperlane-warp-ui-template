@@ -28,7 +28,15 @@ function resolveCoinGeckoId(
   return undefined;
 }
 
-export function useFeePrices(fees: WarpCoreFeeEstimate | null, knownTokens: Token[]): FeePrices {
+/**
+ * Resolves USD prices for fee tokens. First checks batch prices from useTokenPrices(),
+ * then fetches only the missing ones from CoinGecko.
+ */
+export function useFeePrices(
+  fees: WarpCoreFeeEstimate | null,
+  knownTokens: Token[],
+  batchPrices: Record<string, number>,
+): FeePrices {
   const symbolToId: Record<string, string> = {};
   if (fees) {
     for (const quote of [fees.localQuote, fees.interchainQuote, fees.tokenFeeQuote]) {
@@ -38,22 +46,24 @@ export function useFeePrices(fees: WarpCoreFeeEstimate | null, knownTokens: Toke
     }
   }
 
-  const ids = [...new Set(Object.values(symbolToId))];
+  // IDs not already covered by the batch useTokenPrices() fetch
+  const missingIds = [...new Set(Object.values(symbolToId))].filter((id) => !(id in batchPrices));
 
   const { data } = useQuery({
-    queryKey: ['useFeePrices', ids],
-    queryFn: () => fetchPrices(ids),
-    enabled: ids.length > 0,
+    queryKey: ['useFeePrices', missingIds],
+    queryFn: () => fetchPrices(missingIds),
+    enabled: missingIds.length > 0,
     staleTime: FEE_PRICE_REFRESH_INTERVAL,
     refetchInterval: FEE_PRICE_REFRESH_INTERVAL,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
   });
 
-  if (!data) return {};
   const result: FeePrices = {};
   for (const [symbol, id] of Object.entries(symbolToId)) {
-    if (data[id]) result[symbol] = data[id];
+    // Prefer batch price, fall back to separately fetched price
+    const price = batchPrices[id] ?? data?.[id];
+    if (price) result[symbol] = price;
   }
   return result;
 }

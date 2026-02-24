@@ -1,6 +1,6 @@
 import { IToken, Token, WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
 import { useQuery } from '@tanstack/react-query';
-import { fetchPrices } from './useTokenPrice';
+import { fetchPrices } from '../tokens/useTokenPrice';
 
 const FEE_PRICE_REFRESH_INTERVAL = 60_000;
 

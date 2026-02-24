@@ -6,9 +6,10 @@ export function formatBalance(balance: bigint, decimals: number): string {
   return fromWeiRounded(balance.toString(), decimals, 4);
 }
 
-export function formatUsd(value: number): string {
+export function formatUsd(value: number, approximate = false): string {
   if (value < 0.01) return '<$0.01';
-  return value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+  const prefix = approximate ? '≈$' : '$';
+  return `${prefix}${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 export function getUsdValue(

@@ -104,4 +104,12 @@ describe('getFeePercentage', () => {
   test('returns <0.01% for tiny percentages', () => {
     expect(getFeePercentage(0.001, 1000)).toBe('<0.01%');
   });
+
+  test('returns ≥100% when fees exceed transfer', () => {
+    expect(getFeePercentage(1500, 1000)).toBe('≥100%');
+  });
+
+  test('returns ≥100% when fees equal transfer', () => {
+    expect(getFeePercentage(1000, 1000)).toBe('≥100%');
+  });
 });

@@ -1,8 +1,8 @@
 import { WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
 import { ChevronIcon, FuelPumpIcon, useModal } from '@hyperlane-xyz/widgets';
 import { useEffect, useState } from 'react';
-import { getFeePercentage, getTotalFeesUsd, getTotalFeesUsdRaw } from '../tokens/feeUsdDisplay';
-import { FeePrices } from '../tokens/useFeePrices';
+import { getFeePercentage, getTotalFeesUsd, getTotalFeesUsdRaw } from '../balances/feeUsdDisplay';
+import { FeePrices } from '../balances/useFeePrices';
 import { TransferFeeModal } from './TransferFeeModal';
 
 function useLoadingDots(isLoading: boolean, intervalMs = 1000) {

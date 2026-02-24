@@ -37,11 +37,14 @@ import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
 import { getQueryParams, updateQueryParam } from '../../utils/queryParams';
 import { trackTransactionFailedEvent } from '../analytics/utils';
+import { UsdLabel } from '../balances/UsdLabel';
 import {
   getDestinationNativeBalance,
   useDestinationBalance,
   useOriginBalance,
 } from '../balances/hooks';
+import { useFeePrices } from '../balances/useFeePrices';
+import { formatUsd } from '../balances/utils';
 import { ChainConnectionWarning } from '../chains/ChainConnectionWarning';
 import { ChainSelectField } from '../chains/ChainSelectField';
 import { ChainWalletWarning } from '../chains/ChainWalletWarning';
@@ -52,7 +55,6 @@ import { useIsAccountSanctioned } from '../sanctions/hooks/useIsAccountSanctione
 import { RouterAddressInfo, useStore } from '../store';
 import { SelectOrInputTokenIds } from '../tokens/SelectOrInputTokenIds';
 import { TokenSelectField } from '../tokens/TokenSelectField';
-import { UsdLabel } from '../tokens/UsdLabel';
 import { useIsApproveRequired } from '../tokens/approval';
 import {
   getIndexForToken,
@@ -61,7 +63,6 @@ import {
   getTokenIndexFromChains,
   useWarpCore,
 } from '../tokens/hooks';
-import { useFeePrices } from '../tokens/useFeePrices';
 import { useTokenPrices } from '../tokens/useTokenPrice';
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { FeeSectionButton } from './FeeSectionButton';
@@ -328,11 +329,7 @@ function AmountSection({ isNft, isReview }: { isNft: boolean; isReview: boolean 
           />
           {shouldShowPrice && !isLoading && (
             <div className="absolute bottom-[-18px] left-1 max-w-52 overflow-hidden text-ellipsis whitespace-nowrap text-xxs text-gray-500">
-              ≈$
-              {totalTokenPrice.toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
+              {formatUsd(totalTokenPrice, true)}
             </div>
           )}
           <MaxButton disabled={isReview} balance={balance} />

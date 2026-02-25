@@ -1,6 +1,6 @@
 import { ChainName, Token } from '@hyperlane-xyz/sdk';
 import { Tooltip, useDebounce } from '@hyperlane-xyz/widgets';
-import React, { useEffect, useMemo, useState, useTransition } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import { config } from '../../consts/config';
 import { useTokenBalances } from '../balances/hooks';
 import { tokenKey } from '../balances/tokens';
@@ -55,32 +55,11 @@ export function TokenList({
   const allTokens = useTokens();
   const collateralGroups = useCollateralGroups();
   const debouncedSearch = useDebounce(searchQuery, 300);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   // Deferred state for route map - allows UI to render immediately
   const [tokenRouteMap, setTokenRouteMap] = useState<Map<string, boolean> | null>(null);
   const [, startTransition] = useTransition();
-
-  // Compute route map in a transition (non-blocking)
-  useEffect(() => {
-    startTransition(() => {
-      if (!counterpartToken) {
-        setTokenRouteMap(null);
-        return;
-      }
-
-      const routeMap = new Map<string, boolean>();
-
-      for (const token of allTokens) {
-        const key = getTokenKey(token);
-        const originToken = selectionMode === 'origin' ? token : counterpartToken;
-        const destToken = selectionMode === 'origin' ? counterpartToken : token;
-        const hasRoute = checkTokenHasRoute(originToken, destToken, collateralGroups);
-        routeMap.set(key, hasRoute);
-      }
-
-      setTokenRouteMap(routeMap);
-    });
-  }, [allTokens, counterpartToken, selectionMode, collateralGroups]);
 
   // Default token set: featured+routable when featured defined, all tokens otherwise
   const defaultTokens = useMemo(() => {
@@ -216,6 +195,33 @@ export function TokenList({
     balanceMap,
   ]);
 
+  // Compute route map in a transition (non-blocking)
+  useEffect(() => {
+    startTransition(() => {
+      if (!counterpartToken) {
+        setTokenRouteMap(null);
+        return;
+      }
+
+      const routeMap = new Map<string, boolean>();
+
+      for (const token of allTokens) {
+        const key = getTokenKey(token);
+        const originToken = selectionMode === 'origin' ? token : counterpartToken;
+        const destToken = selectionMode === 'origin' ? counterpartToken : token;
+        const hasRoute = checkTokenHasRoute(originToken, destToken, collateralGroups);
+        routeMap.set(key, hasRoute);
+      }
+
+      setTokenRouteMap(routeMap);
+    });
+  }, [allTokens, counterpartToken, selectionMode, collateralGroups]);
+
+  // Reset scroll when user changes search or chain filter
+  useEffect(() => {
+    scrollRef.current?.scrollTo(0, 0);
+  }, [searchQuery, chainFilter]);
+
   if (tokens.length === 0) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center px-4 py-12 text-gray-500">
@@ -227,7 +233,7 @@ export function TokenList({
 
   return (
     <div className="relative flex-1 overflow-hidden">
-      <div className="h-full overflow-auto">
+      <div ref={scrollRef} className="h-full overflow-auto">
         <div className="sticky top-0 z-10 border-b border-primary-50 bg-white px-4 pb-2 pt-2">
           <h3 className={`${styles.base} text-sm text-black`}>Token Selection</h3>
         </div>

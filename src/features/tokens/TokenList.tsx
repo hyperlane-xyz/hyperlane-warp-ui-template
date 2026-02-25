@@ -19,6 +19,20 @@ function isFeaturedToken(token: Token): boolean {
   return featuredSet.has(`${token.chainName}-${token.symbol}`.toLowerCase());
 }
 
+function matchesSearch(
+  token: Token,
+  query: string,
+  multiProvider: ReturnType<typeof useMultiProvider>,
+): boolean {
+  return (
+    token.name.toLowerCase().includes(query) ||
+    token.symbol.toLowerCase().includes(query) ||
+    token.addressOrDenom.toLowerCase().includes(query) ||
+    token.collateralAddressOrDenom?.toLowerCase().includes(query) ||
+    getChainDisplayName(multiProvider, token.chainName).toLowerCase().includes(query)
+  );
+}
+
 interface TokenListProps {
   selectionMode: TokenSelectionMode;
   searchQuery: string;
@@ -68,9 +82,8 @@ export function TokenList({
     });
   }, [allTokens, counterpartToken, selectionMode, collateralGroups]);
 
-  // Tokens we care about: featured + routable
-  // If no featured tokens configured, fall back to all tokens (original behavior)
-  const relevantTokens = useMemo(() => {
+  // Default token set: featured+routable when featured defined, all tokens otherwise
+  const defaultTokens = useMemo(() => {
     if (featuredSet.size === 0) return allTokens;
     return allTokens.filter((t) => {
       if (isFeaturedToken(t)) return true;
@@ -79,31 +92,32 @@ export function TokenList({
     });
   }, [allTokens, tokenRouteMap]);
 
-  // Balance fetch set: relevant + chain filter + search matches
-  // Expands when user picks a chain or searches, so those tokens get balances too
+  // Tokens to fetch balances for:
+  // Filter active → all matching tokens (no cap)
+  // No filter     → defaultTokens, capped at 50 with routable prioritized
   const balanceTokens = useMemo(() => {
     const q = debouncedSearch?.trim().toLowerCase();
-    if (!chainFilter && !q) return relevantTokens;
-    const seen = new Set(relevantTokens.map((t) => getTokenKey(t)));
-    const merged = [...relevantTokens];
-    for (const t of allTokens) {
-      const key = getTokenKey(t);
-      if (seen.has(key)) continue;
-      const chainMatch = chainFilter && t.chainName === chainFilter;
-      const searchMatch =
-        q &&
-        (t.name.toLowerCase().includes(q) ||
-          t.symbol.toLowerCase().includes(q) ||
-          t.addressOrDenom.toLowerCase().includes(q) ||
-          t.collateralAddressOrDenom?.toLowerCase().includes(q) ||
-          getChainDisplayName(multiProvider, t.chainName).toLowerCase().includes(q));
-      if (chainMatch || searchMatch) {
-        seen.add(key);
-        merged.push(t);
-      }
+
+    if (q || chainFilter) {
+      return allTokens.filter((t) => {
+        const chainMatch = chainFilter && t.chainName === chainFilter;
+        const searchMatch = q && matchesSearch(t, q, multiProvider);
+        return chainMatch || searchMatch;
+      });
     }
-    return merged;
-  }, [relevantTokens, chainFilter, debouncedSearch, allTokens, multiProvider]);
+
+    // No filter: cap at 50, routable first
+    const maxDefault = 50;
+    if (defaultTokens.length <= maxDefault) return defaultTokens;
+
+    const routable: Token[] = [];
+    const rest: Token[] = [];
+    for (const t of defaultTokens) {
+      const hasRoute = tokenRouteMap ? (tokenRouteMap.get(getTokenKey(t)) ?? true) : true;
+      (hasRoute ? routable : rest).push(t);
+    }
+    return [...routable, ...rest].slice(0, maxDefault);
+  }, [debouncedSearch, chainFilter, allTokens, defaultTokens, tokenRouteMap, multiProvider]);
 
   // Fetch balances for relevant + chain-filtered tokens only
   // For destination mode, use recipient address if provided
@@ -131,12 +145,12 @@ export function TokenList({
     return { balanceMap: bMap, usdMap: uMap };
   }, [balanceTokens, balances, prices]);
 
-  const { tokens, totalCount, isLimited } = useMemo(() => {
+  const { tokens, isLimited } = useMemo(() => {
     const q = debouncedSearch?.trim().toLowerCase();
+    const hasFilter = !!q || !!chainFilter;
 
-    // Default view: only relevant tokens (featured + routable)
-    // Search/chain filter: expand to all tokens so user can discover
-    const baseTokens = q || chainFilter ? allTokens : relevantTokens;
+    // Default view: use defaultTokens; filter active: search all tokens
+    const baseTokens = hasFilter ? allTokens : defaultTokens;
 
     // Filter by chain
     const chainFiltered = chainFilter
@@ -146,24 +160,15 @@ export function TokenList({
     // Filter by search query
     const filtered = chainFiltered.filter((t) => {
       if (!q) return true;
-      const chainDisplayName = getChainDisplayName(multiProvider, t.chainName).toLowerCase();
-      return (
-        t.name.toLowerCase().includes(q) ||
-        t.symbol.toLowerCase().includes(q) ||
-        t.addressOrDenom.toLowerCase().includes(q) ||
-        t.collateralAddressOrDenom?.toLowerCase().includes(q) ||
-        chainDisplayName.includes(q)
-      );
+      return matchesSearch(t, q, multiProvider);
     });
 
-    const hasFilter = !!q || chainFilter !== null;
-
-    // Multi-tier sort
+    // Sort: routable → USD value → balance → no balance → alphabetical
     const sorted = [...filtered].sort((a, b) => {
       const aKey = getTokenKey(a);
       const bKey = getTokenKey(b);
 
-      // 1. Has route to counterpart (true first)
+      // 1. Routable tokens always first
       if (tokenRouteMap) {
         const aHasRoute = tokenRouteMap.get(aKey) ?? true;
         const bHasRoute = tokenRouteMap.get(bKey) ?? true;
@@ -171,22 +176,14 @@ export function TokenList({
         if (!aHasRoute && bHasRoute) return 1;
       }
 
-      // 2. Featured tokens first — only in default view (no filter/search)
-      if (!hasFilter) {
-        const aFeatured = isFeaturedToken(a);
-        const bFeatured = isFeaturedToken(b);
-        if (aFeatured && !bFeatured) return -1;
-        if (!aFeatured && bFeatured) return 1;
-      }
-
-      // 3. Has balance with USD value (desc)
+      // 2. USD value descending
       const aUsd = usdMap.get(aKey) ?? 0;
       const bUsd = usdMap.get(bKey) ?? 0;
       if (aUsd > 0 || bUsd > 0) {
         if (aUsd !== bUsd) return bUsd - aUsd;
       }
 
-      // 4. Has balance without USD (desc by raw amount)
+      // 3. Balance without USD descending
       const aBal = balanceMap.get(aKey) ?? 0n;
       const bBal = balanceMap.get(bKey) ?? 0n;
       if (aBal > 0n || bBal > 0n) {
@@ -194,29 +191,25 @@ export function TokenList({
         if (aBal < bBal) return 1;
       }
 
-      // 5. Symbol alphabetical
+      // 4. Symbol alphabetical
       const symbolCompare = a.symbol.localeCompare(b.symbol);
       if (symbolCompare !== 0) return symbolCompare;
 
-      // 6. Chain name alphabetical
+      // 5. Chain name alphabetical
       return a.chainName.localeCompare(b.chainName);
     });
 
-    // Limit display when no filters applied
+    // No filter: cap display at 50
     const maxDisplay = 50;
     const isLimited = !hasFilter && sorted.length > maxDisplay;
     const displayTokens = isLimited ? sorted.slice(0, maxDisplay) : sorted;
 
-    return {
-      tokens: displayTokens,
-      totalCount: sorted.length,
-      isLimited,
-    };
+    return { tokens: displayTokens, isLimited };
   }, [
     debouncedSearch,
     chainFilter,
     allTokens,
-    relevantTokens,
+    defaultTokens,
     multiProvider,
     tokenRouteMap,
     usdMap,
@@ -261,11 +254,10 @@ export function TokenList({
           })}
 
           {isLimited && (
-            <div className="mx-1 mb-3 mt-2 rounded-lg bg-blue-50 p-3 text-center">
-              <p className="text-sm text-blue-800">
-                Showing {tokens.length} of {totalCount} tokens
+            <div className="mx-1 mb-3 mt-2 rounded-lg bg-blue-50 px-3 py-4 text-center">
+              <p className="text-sm text-blue-600">
+                Use search or select a chain to see more tokens
               </p>
-              <p className="mt-1 text-xs text-blue-600">Use search or select a chain to see more</p>
             </div>
           )}
           {/* Spacer for fade effect */}

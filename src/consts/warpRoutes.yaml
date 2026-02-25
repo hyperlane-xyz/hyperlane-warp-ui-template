@@ -127,6 +127,6 @@ tokens:
       - token: cosmosnative|celestia|0x726f757465725f61707000000000000000000000000000010000000000000009
     decimals: 18
     name: TIA
-    standard: EvmNative
+    standard: EvmHypNative
     symbol: TIA
 options: {}

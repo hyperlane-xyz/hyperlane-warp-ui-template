@@ -129,4 +129,48 @@ tokens:
     name: TIA
     standard: EvmHypNative
     symbol: TIA
+    # eUSD/celestia: Collateral eUSD on Ethereum <-> Synthetic eUSD on Celestia
+  - addressOrDenom: '0x726f757465725f61707000000000000000000000000000020000000000000013'
+    chainName: celestia
+    connections:
+      - token: ethereum|ethereum|0x129b6d0b13e04a3de4c3e133ca926c174fdcec7d
+    decimals: 18
+    logoURI: /deployments/warp_routes/eUSD/logo.svg
+    name: eUSD
+    standard: CosmosNativeHypSynthetic
+    symbol: eUSD
+  - addressOrDenom: '0x129b6d0b13e04a3de4c3e133ca926c174fdcec7d'
+    chainName: ethereum
+    # no info on coingecko for this token yet but will assume its usdc priced
+    coinGeckoId: usd-coin
+    collateralAddressOrDenom: '0x399cc65703e01c7fdefdf27093f84e7eb4b3f8b6'
+    connections:
+      - token: cosmosnative|celestia|0x726f757465725f61707000000000000000000000000000020000000000000013
+    decimals: 18
+    logoURI: /deployments/warp_routes/eUSD/logo.svg
+    name: eUSD
+    standard: EvmHypCollateral
+    symbol: eUSD
+  # eUSD/eden: Collateral eUSD on Celestia <-> Synthetic eUSD on Eden
+  - addressOrDenom: '0x726f757465725f61707000000000000000000000000000010000000000000014'
+    chainName: celestia
+    # no info on coingecko for this token yet but will assume its usdc priced
+    coinGeckoId: usd-coin
+    collateralAddressOrDenom: hyperlane/0x726f757465725f61707000000000000000000000000000020000000000000013
+    connections:
+      - token: ethereum|eden|0xF4e644772b17b6c57327F4D111a73D68C8cC731B
+    decimals: 18
+    logoURI: /deployments/warp_routes/eUSD/logo.svg
+    name: eUSD
+    standard: CosmosNativeHypCollateral
+    symbol: eUSD
+  - addressOrDenom: '0xF4e644772b17b6c57327F4D111a73D68C8cC731B'
+    chainName: eden
+    connections:
+      - token: cosmosnative|celestia|0x726f757465725f61707000000000000000000000000000010000000000000014
+    decimals: 18
+    logoURI: /deployments/warp_routes/eUSD/logo.svg
+    name: eUSD
+    standard: EvmHypSynthetic
+    symbol: eUSD
 options: {}

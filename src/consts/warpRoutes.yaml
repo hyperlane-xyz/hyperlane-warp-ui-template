@@ -4,7 +4,7 @@
 ---
 tokens:
   # SOL/celestia: Native SOL on Solana <-> Synthetic SOL on Celestia
-  - addressOrDenom: "0x726f757465725f6170700000000000000000000000000002000000000000000a"
+  - addressOrDenom: '0x726f757465725f6170700000000000000000000000000002000000000000000a'
     chainName: celestia
     connections:
       - token: sealevel|solanamainnet|4Acwq4Sw8Y7rZT8traFYmYsxZ86MAe2pQtGgkjh1mHP6
@@ -21,7 +21,7 @@ tokens:
     standard: SealevelHypNative
     symbol: SOL
   # SOL/eden: Collateral SOL on Celestia <-> Synthetic SOL on Eden
-  - addressOrDenom: "0x726f757465725f6170700000000000000000000000000001000000000000000c"
+  - addressOrDenom: '0x726f757465725f6170700000000000000000000000000001000000000000000c'
     chainName: celestia
     collateralAddressOrDenom: hyperlane/0x726f757465725f6170700000000000000000000000000002000000000000000a
     connections:
@@ -30,7 +30,7 @@ tokens:
     name: SOL
     standard: CosmosNativeHypCollateral
     symbol: SOL
-  - addressOrDenom: "0x16eD50F96ea655Cb03638d7054e62e42Afb7b4fA"
+  - addressOrDenom: '0x16eD50F96ea655Cb03638d7054e62e42Afb7b4fA'
     chainName: eden
     connections:
       - token: cosmosnative|celestia|0x726f757465725f6170700000000000000000000000000001000000000000000c
@@ -39,7 +39,7 @@ tokens:
     standard: EvmHypSynthetic
     symbol: SOL
   # ETH/celestia: Native ETH on Ethereum <-> Synthetic ETH on Celestia
-  - addressOrDenom: "0x726f757465725f6170700000000000000000000000000002000000000000000b"
+  - addressOrDenom: '0x726f757465725f6170700000000000000000000000000002000000000000000b'
     chainName: celestia
     connections:
       - token: ethereum|ethereum|0x26Cba9F11119892a7540a26b67cBcB9c08F586cD
@@ -47,7 +47,7 @@ tokens:
     name: Ether
     standard: CosmosNativeHypSynthetic
     symbol: ETH
-  - addressOrDenom: "0x26Cba9F11119892a7540a26b67cBcB9c08F586cD"
+  - addressOrDenom: '0x26Cba9F11119892a7540a26b67cBcB9c08F586cD'
     chainName: ethereum
     coinGeckoId: ethereum
     connections:
@@ -57,7 +57,7 @@ tokens:
     standard: EvmHypNative
     symbol: ETH
   # ETH/eden: Collateral ETH on Celestia <-> Synthetic ETH on Eden
-  - addressOrDenom: "0x726f757465725f61707000000000000000000000000000010000000000000010"
+  - addressOrDenom: '0x726f757465725f61707000000000000000000000000000010000000000000010'
     chainName: celestia
     coinGeckoId: ethereum
     collateralAddressOrDenom: hyperlane/0x726f757465725f6170700000000000000000000000000002000000000000000b
@@ -67,7 +67,7 @@ tokens:
     name: Ether
     standard: CosmosNativeHypCollateral
     symbol: ETH
-  - addressOrDenom: "0x23958cBa555AC52C9495Df9b121ff73003e39dBb"
+  - addressOrDenom: '0x23958cBa555AC52C9495Df9b121ff73003e39dBb'
     chainName: eden
     connections:
       - token: cosmosnative|celestia|0x726f757465725f61707000000000000000000000000000010000000000000010
@@ -76,7 +76,7 @@ tokens:
     standard: EvmHypSynthetic
     symbol: ETH
   # WBTC/celestia: LBTC Collateral on Ethereum <-> Synthetic BTC on Celestia
-  - addressOrDenom: "0x726f757465725f6170700000000000000000000000000002000000000000000e"
+  - addressOrDenom: '0x726f757465725f6170700000000000000000000000000002000000000000000e'
     chainName: celestia
     connections:
       - token: ethereum|ethereum|0x02D28685e808A962aF327180AD55cEE32Eb94C94
@@ -84,10 +84,10 @@ tokens:
     name: BTC
     standard: CosmosNativeHypSynthetic
     symbol: BTC
-  - addressOrDenom: "0x02D28685e808A962aF327180AD55cEE32Eb94C94"
+  - addressOrDenom: '0x02D28685e808A962aF327180AD55cEE32Eb94C94'
     chainName: ethereum
     coinGeckoId: wrapped-bitcoin
-    collateralAddressOrDenom: "0x8236a87084f8B84306f72007F36F2618A5634494"
+    collateralAddressOrDenom: '0x8236a87084f8B84306f72007F36F2618A5634494'
     connections:
       - token: cosmosnative|celestia|0x726f757465725f6170700000000000000000000000000002000000000000000e
     decimals: 8
@@ -95,7 +95,7 @@ tokens:
     standard: EvmHypCollateral
     symbol: LBTC
   # WBTC/eden: Collateral BTC on Celestia <-> Synthetic BTC on Eden
-  - addressOrDenom: "0x726f757465725f61707000000000000000000000000000010000000000000011"
+  - addressOrDenom: '0x726f757465725f61707000000000000000000000000000010000000000000011'
     chainName: celestia
     collateralAddressOrDenom: hyperlane/0x726f757465725f6170700000000000000000000000000002000000000000000e
     connections:
@@ -104,7 +104,7 @@ tokens:
     name: BTC
     standard: CosmosNativeHypCollateral
     symbol: BTC
-  - addressOrDenom: "0xFA3198ecF05303a6d96E57a45E6c815055D255b1"
+  - addressOrDenom: '0xFA3198ecF05303a6d96E57a45E6c815055D255b1'
     chainName: eden
     connections:
       - token: cosmosnative|celestia|0x726f757465725f61707000000000000000000000000000010000000000000011
@@ -112,4 +112,21 @@ tokens:
     name: BTC
     standard: EvmHypSynthetic
     symbol: BTC
+  # TIA/eden: Collateral TIA on Celestia <-> Native TIA on Eden
+  - addressOrDenom: '0x726f757465725f61707000000000000000000000000000010000000000000009'
+    chainName: celestia
+    connections:
+      - token: ethereum|eden|0x4A60C46f671A3b86D78E9c0b793235C2D502d44E
+    decimals: 6
+    name: TIA
+    standard: CosmosNativeHypCollateral
+    symbol: TIA
+  - addressOrDenom: '0x4A60C46f671A3b86D78E9c0b793235C2D502d44E'
+    chainName: eden
+    connections:
+      - token: cosmosnative|celestia|0x726f757465725f61707000000000000000000000000000010000000000000009
+    decimals: 18
+    name: TIA
+    standard: EvmNative
+    symbol: TIA
 options: {}

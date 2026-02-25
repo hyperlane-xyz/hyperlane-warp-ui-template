@@ -9,4 +9,5 @@ export const warpRouteWhitelist: Array<string> | null = [
   'ETH/celestia-eden',
   'WBTC/celestia-ethereum',
   'WBTC/celestia-eden',
+  'TIA/celestia-eden',
 ];

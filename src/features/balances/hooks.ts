@@ -118,12 +118,7 @@ function useWalletAddresses(multiProvider: MultiProtocolProvider): Map<ProtocolT
  * - Sealevel: getParsedTokenAccountsByOwner — 2-3 RPC calls per SVM chain
  * - Other VMs are not supported and silently skipped.
  */
-export function useTokenBalances(
-  tokens: Token[],
-  origin: ChainName,
-  destination: ChainName,
-  addressOverride?: string,
-) {
+export function useTokenBalances(tokens: Token[], scope: string, addressOverride?: string) {
   const multiProvider = useMultiProvider();
   const walletAddresses = useWalletAddresses(multiProvider);
   const tokenKeys = useMemo(() => tokens.map((t) => tokenKey(t)), [tokens]);
@@ -148,7 +143,7 @@ export function useTokenBalances(
   );
 
   const { data: balances = {}, isLoading } = useQuery({
-    queryKey: ['tokenBalances', addressEntries, origin, destination, tokenKeys],
+    queryKey: ['tokenBalances', addressEntries, scope, tokenKeys],
     queryFn: async (): Promise<Record<string, bigint>> => {
       const promises: Promise<Record<string, bigint>>[] = [];
 

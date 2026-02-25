@@ -69,7 +69,9 @@ export function TokenList({
   }, [allTokens, counterpartToken, selectionMode, collateralGroups]);
 
   // Tokens we care about: featured + routable
+  // If no featured tokens configured, fall back to all tokens (original behavior)
   const relevantTokens = useMemo(() => {
+    if (featuredSet.size === 0) return allTokens;
     return allTokens.filter((t) => {
       if (isFeaturedToken(t)) return true;
       if (tokenRouteMap) return tokenRouteMap.get(getTokenKey(t)) ?? false;
@@ -93,14 +95,15 @@ export function TokenList({
         (t.name.toLowerCase().includes(q) ||
           t.symbol.toLowerCase().includes(q) ||
           t.addressOrDenom.toLowerCase().includes(q) ||
-          t.collateralAddressOrDenom?.toLowerCase().includes(q));
+          t.collateralAddressOrDenom?.toLowerCase().includes(q) ||
+          getChainDisplayName(multiProvider, t.chainName).toLowerCase().includes(q));
       if (chainMatch || searchMatch) {
         seen.add(key);
         merged.push(t);
       }
     }
     return merged;
-  }, [relevantTokens, chainFilter, debouncedSearch, allTokens]);
+  }, [relevantTokens, chainFilter, debouncedSearch, allTokens, multiProvider]);
 
   // Fetch balances for relevant + chain-filtered tokens only
   // For destination mode, use recipient address if provided
@@ -108,12 +111,7 @@ export function TokenList({
     balances,
     isLoading: isBalanceLoading,
     hasAnyAddress,
-  } = useTokenBalances(
-    balanceTokens,
-    chainFilter ?? ('default' as ChainName),
-    'all' as ChainName,
-    recipient,
-  );
+  } = useTokenBalances(balanceTokens, chainFilter ?? 'all', recipient);
   const { prices } = useTokenPrices();
 
   // Build lookup maps: getTokenKey → balance/usdValue

@@ -1,50 +1,69 @@
 import { ChainName } from '@hyperlane-xyz/sdk';
+import { PencilIcon } from '@hyperlane-xyz/widgets';
 import { useMemo } from 'react';
 import { ChainLogo } from '../../components/icons/ChainLogo';
+import { Color } from '../../styles/Color';
+import {
+  ChainFilterState,
+  SortState,
+  chainSearch,
+  defaultFilterState,
+  defaultSortState,
+} from './chainFilterSort';
 import { ChainInfo, useChainInfos } from './hooks';
 
 interface ChainListProps {
   searchQuery: string;
   selectedChain: ChainName | null;
   onSelectChain: (chain: ChainInfo | null) => void;
+  isEditMode?: boolean;
+  filterState?: ChainFilterState;
+  sortState?: SortState;
 }
 
-export function ChainList({ searchQuery, selectedChain, onSelectChain }: ChainListProps) {
+export function ChainList({
+  searchQuery,
+  selectedChain,
+  onSelectChain,
+  isEditMode,
+  filterState = defaultFilterState,
+  sortState = defaultSortState,
+}: ChainListProps) {
   const allChains = useChainInfos();
 
-  // Filter by search query - only re-filters when searchQuery changes
-  const chains = useMemo(() => {
-    const q = searchQuery?.trim().toLowerCase();
-    if (!q) return allChains;
-    return allChains.filter(
-      (chain) =>
-        chain.displayName.toLowerCase().includes(q) || chain.name.toLowerCase().includes(q),
-    );
-  }, [searchQuery, allChains]);
+  const chains = useMemo(
+    () =>
+      chainSearch({ data: allChains, query: searchQuery, sort: sortState, filter: filterState }),
+    [searchQuery, allChains, filterState, sortState],
+  );
 
   return (
     <div className="relative flex-1 overflow-hidden">
       <div className="h-full overflow-auto">
-        {/* All Chains option */}
-        <ChainButton
-          isSelected={selectedChain === null}
-          onClick={() => onSelectChain(null)}
-          icon={
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-purple-500 text-[10px] font-bold text-white">
-              ALL
-            </div>
-          }
-          label="All Chains"
-        />
+        {/* All Chains option - hidden in edit mode */}
+        {!isEditMode && (
+          <ChainButton
+            isSelected={selectedChain === null}
+            onClick={() => onSelectChain(null)}
+            icon={
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-purple-500 text-[10px] font-bold text-white">
+                ALL
+              </div>
+            }
+            label="All Chains"
+          />
+        )}
 
         {/* Individual chains */}
         {chains.map((chain) => (
           <ChainButton
             key={chain.name}
-            isSelected={selectedChain === chain.name}
+            isSelected={!isEditMode && selectedChain === chain.name}
             onClick={() => onSelectChain(chain)}
             icon={<ChainLogo chainName={chain.name} size={28} />}
             label={chain.displayName}
+            showEditIcon={isEditMode}
+            disabled={chain.disabled}
           />
         ))}
 
@@ -65,24 +84,32 @@ function ChainButton({
   onClick,
   icon,
   label,
+  showEditIcon,
+  disabled,
 }: {
   isSelected: boolean;
   onClick: () => void;
   icon: React.ReactNode;
   label: string;
+  showEditIcon?: boolean;
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
+      disabled={disabled}
       className={`${styles.label} flex w-full items-center gap-3 border-l-2 px-4 py-2.5 transition-colors ${
-        isSelected
-          ? 'border-primary-500 bg-primary-500/10 text-primary-700'
-          : 'border-transparent text-black hover:bg-gray-200'
+        disabled
+          ? 'border-transparent opacity-50'
+          : isSelected
+            ? 'border-primary-500 bg-primary-500/10 text-primary-700'
+            : 'border-transparent text-black hover:bg-gray-200'
       }`}
       onClick={onClick}
     >
       {icon}
-      <span className="truncate text-sm font-medium">{label}</span>
+      <span className="min-w-0 flex-1 truncate text-sm font-medium">{label}</span>
+      {showEditIcon && <PencilIcon width={14} height={14} color={Color.gray['500']} />}
     </button>
   );
 }

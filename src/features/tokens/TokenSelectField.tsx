@@ -5,6 +5,7 @@ import { ChevronLargeIcon } from '../../components/icons/ChevronLargeIcon';
 import { WARP_QUERY_PARAMS } from '../../consts/args';
 import { updateQueryParams } from '../../utils/queryParams';
 import { trackTokenSelectionEvent } from '../analytics/utils';
+import { ChainEditModal } from '../chains/ChainEditModal';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { TransferFormValues } from '../transfer/types';
@@ -35,6 +36,12 @@ export function TokenSelectField({
   const { values, setFieldValue } = useFormikContext<TransferFormValues>();
   const [{ value: tokenKey }, , { setValue: setTokenKey }] = useField<string | undefined>(name);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingChain, setEditingChain] = useState<string | null>(null);
+
+  const handleEditBack = () => {
+    setEditingChain(null);
+    setIsModalOpen(true);
+  };
 
   const multiProvider = useMultiProvider();
   const tokens = useTokens();
@@ -123,7 +130,16 @@ export function TokenSelectField({
         selectionMode={selectionMode}
         counterpartToken={counterpartToken}
         recipient={values.recipient}
+        onEditChain={setEditingChain}
       />
+      {editingChain && (
+        <ChainEditModal
+          isOpen={!!editingChain}
+          close={() => setEditingChain(null)}
+          onClickBack={handleEditBack}
+          chainName={editingChain}
+        />
+      )}
     </>
   );
 }

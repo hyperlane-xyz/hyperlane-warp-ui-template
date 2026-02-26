@@ -20,10 +20,10 @@
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
     "@headlessui/react": "^2.2.0",
-    "@hyperlane-xyz/registry": "23.14.0",
-    "@hyperlane-xyz/sdk": "25.2.0",
-    "@hyperlane-xyz/utils": "25.2.0",
-    "@hyperlane-xyz/widgets": "25.2.0",
+    "@hyperlane-xyz/registry": "24.0.0",
+    "@hyperlane-xyz/sdk": "25.3.2",
+    "@hyperlane-xyz/utils": "25.3.2",
+    "@hyperlane-xyz/widgets": "25.3.2",
     "@interchain-ui/react": "^1.23.28",
     "@intercom/messenger-js-sdk": "^0.0.18",
     "@metamask/post-message-stream": "6.1.2",
@@ -136,6 +136,7 @@
   "types": "dist/src/index.d.ts",
   "pnpm": {
     "overrides": {
+      "tronweb>ethers": "^6.13.5",
       "@solana/web3.js": "^1.95.4",
       "axios": "^1.7.9",
       "bignumber": "9.1.2",

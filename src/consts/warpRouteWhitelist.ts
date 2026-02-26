@@ -96,9 +96,6 @@ export const warpRouteWhitelist: Array<string> | null = [
   // PNDR
   'PNDR/bsc-ethereum-lumiaprism',
 
-  // USDC ink
-  'USDC/ethereum-ink',
-
   // Bonk routes
   'Bonk/solanamainnet-soon',
 

@@ -5,9 +5,14 @@ import {
   TOKEN_COLLATERALIZED_STANDARDS,
   WarpCore,
 } from '@hyperlane-xyz/sdk';
-import { eqAddress, isNullish, normalizeAddress } from '@hyperlane-xyz/utils';
+import { eqAddress, isNullish, normalizeAddress, objKeys } from '@hyperlane-xyz/utils';
 import { isChainDisabled } from '../chains/utils';
-import { MultiCollateralTokenMap, TokenChainMap, Tokens } from './types';
+import {
+  DefaultMultiCollateralRoutes,
+  MultiCollateralTokenMap,
+  TokenChainMap,
+  Tokens,
+} from './types';
 
 // Map of token symbols and token chain map
 // Symbols are not duplicated to avoid the same symbol from being shown
@@ -161,4 +166,53 @@ export function dedupeMultiCollateralTokens(tokens: Tokens, destination) {
     },
     { tokens: [], multiCollateralTokenMap: {} },
   );
+}
+
+// Returns the default origin token from tokensWithSameCollateralAddresses if:
+// - It is a valid multi-collateral token
+// - Both origin and destination chains are configured in defaultMultiCollateralRoutes
+// - A matching token is found in tokensWithSameCollateralAddresses
+// Returns null if no default is found (caller should fall back to fee-based selection)
+export function tryGetDefaultOriginToken(
+  originToken: IToken,
+  destinationToken: IToken,
+  defaultMultiCollateralRoutes: DefaultMultiCollateralRoutes | undefined,
+  tokensWithSameCollateralAddresses: { originToken: Token; destinationToken: Token }[],
+): Token | null {
+  // this call might be repeated with getTransferToken but it ensures we are only dealing with valid
+  // multi-collateral tokens here
+  if (!isValidMultiCollateralToken(originToken, destinationToken)) return null;
+  if (!defaultMultiCollateralRoutes) return null;
+
+  const originChainName = originToken.chainName;
+  const destChainName = destinationToken.chainName;
+
+  // Check both chains are in config
+  if (
+    !objKeys(defaultMultiCollateralRoutes).includes(originChainName) ||
+    !objKeys(defaultMultiCollateralRoutes).includes(destChainName)
+  )
+    return null;
+
+  // Get lookup key - 'native' for HypNative, collateralAddressOrDenom otherwise
+  const originKey = originToken.isHypNative() ? 'native' : originToken.collateralAddressOrDenom;
+  const destKey = destinationToken.isHypNative()
+    ? 'native'
+    : destinationToken.collateralAddressOrDenom;
+
+  if (!originKey || !destKey) return null;
+
+  const defaultOriginAddressOrDenom = defaultMultiCollateralRoutes[originChainName][originKey];
+  const defaultDestAddressOrDenom = defaultMultiCollateralRoutes[destChainName][destKey];
+
+  if (!defaultOriginAddressOrDenom || !defaultDestAddressOrDenom) return null;
+
+  // Find matching token from tokensWithSameCollateralAddresses
+  const match = tokensWithSameCollateralAddresses.find(
+    ({ originToken: ot, destinationToken: dt }) =>
+      eqAddress(ot.addressOrDenom, defaultOriginAddressOrDenom) &&
+      eqAddress(dt.addressOrDenom, defaultDestAddressOrDenom),
+  );
+
+  return match?.originToken ?? null;
 }

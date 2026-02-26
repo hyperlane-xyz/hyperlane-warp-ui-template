@@ -16,7 +16,7 @@ export function ChainConnectionWarning({
   destination: ChainName;
 }) {
   const multiProvider = useMultiProvider();
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editChainName, setEditChainName] = useState<string | null>(null);
   const originMetadata = multiProvider.getChainMetadata(origin);
   const destinationMetadata = multiProvider.getChainMetadata(destination);
 
@@ -44,7 +44,7 @@ export function ChainConnectionWarning({
 
   const onClickEdit = () => {
     if (!unhealthyChain) return;
-    setIsModalOpen(true);
+    setEditChainName(unhealthyChain.name);
   };
 
   return (
@@ -52,11 +52,11 @@ export function ChainConnectionWarning({
       <FormWarningBanner isVisible={!!unhealthyChain} cta="Edit" onClick={onClickEdit}>
         {`Connection to ${displayName} is unstable. Consider adding a more reliable RPC URL.`}
       </FormWarningBanner>
-      {unhealthyChain && (
+      {editChainName && (
         <ChainEditModal
-          isOpen={isModalOpen}
-          close={() => setIsModalOpen(false)}
-          chainName={unhealthyChain.name}
+          isOpen={!!editChainName}
+          close={() => setEditChainName(null)}
+          chainName={editChainName}
         />
       )}
     </>

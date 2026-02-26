@@ -3,6 +3,10 @@ import {
   warpRouteConfigs as publishedRegistryWarpRoutes,
 } from '@hyperlane-xyz/registry';
 import {
+<<<<<<< HEAD
+=======
+  ChainName,
+>>>>>>> origin/main
   TOKEN_STANDARD_TO_PROTOCOL,
   TokenStandard,
   WarpCoreConfig,
@@ -10,17 +14,31 @@ import {
   getTokenConnectionId,
   validateZodResult,
 } from '@hyperlane-xyz/sdk';
+<<<<<<< HEAD
 import { isObjEmpty, objFilter, objMerge } from '@hyperlane-xyz/utils';
+=======
+import { isObjEmpty, normalizeAddress, objFilter, objMerge } from '@hyperlane-xyz/utils';
+>>>>>>> origin/main
 import { config } from '../../consts/config.ts';
 import { warpRouteWhitelist } from '../../consts/warpRouteWhitelist.ts';
 import { warpRouteConfigs as tsWarpRoutes } from '../../consts/warpRoutes.ts';
 import yamlWarpRoutes from '../../consts/warpRoutes.yaml';
 import { logger } from '../../utils/logger.ts';
 
+<<<<<<< HEAD
 export async function assembleWarpCoreConfig(
   storeOverrides: WarpCoreConfig[],
   registry: IRegistry,
 ): Promise<WarpCoreConfig> {
+=======
+// Map of chain -> address -> wireDecimals
+export type WireDecimalsMap = Record<ChainName, Record<string, number>>;
+
+export async function assembleWarpCoreConfig(
+  storeOverrides: WarpCoreConfig[],
+  registry: IRegistry,
+): Promise<{ config: WarpCoreConfig; wireDecimalsMap: WireDecimalsMap }> {
+>>>>>>> origin/main
   const yamlResult = WarpCoreConfigSchema.safeParse(yamlWarpRoutes);
   const yamlConfig = validateZodResult(yamlResult, 'warp core yaml config');
   const tsResult = WarpCoreConfigSchema.safeParse(tsWarpRoutes);
@@ -45,6 +63,13 @@ export async function assembleWarpCoreConfig(
     ? filterToIds(registryWarpRoutes, warpRouteWhitelist)
     : registryWarpRoutes;
   filteredRegistryConfigMap = fillMissingCoinGeckoIds(filteredRegistryConfigMap);
+<<<<<<< HEAD
+=======
+
+  // Build wireDecimalsMap BEFORE flattening - this preserves route grouping
+  const wireDecimalsMap = buildWireDecimalsMap(filteredRegistryConfigMap);
+
+>>>>>>> origin/main
   const filteredRegistryConfigValues = Object.values(filteredRegistryConfigMap);
   const filteredRegistryTokens = filteredRegistryConfigValues.map((c) => c.tokens).flat();
   const filteredRegistryOptions = filteredRegistryConfigValues.map((c) => c.options).flat();
@@ -73,7 +98,49 @@ export async function assembleWarpCoreConfig(
       'No warp route configs provided. Please check your registry, warp route whitelist, and custom route configs for issues.',
     );
 
-  return { tokens, options };
+  return { config: { tokens, options }, wireDecimalsMap };
+}
+
+// Build map of chain -> address -> wireDecimals before tokens are flattened
+// wireDecimals = max decimals across all tokens in a warp route
+function buildWireDecimalsMap(routes: Record<string, WarpCoreConfig>): WireDecimalsMap {
+  const map: WireDecimalsMap = {};
+  for (const routeConfig of Object.values(routes)) {
+    const wireDecimals = Math.max(...routeConfig.tokens.map((t) => t.decimals ?? 18));
+    for (const token of routeConfig.tokens) {
+      if (!token.addressOrDenom) continue;
+      map[token.chainName] ||= {};
+      map[token.chainName][normalizeAddress(token.addressOrDenom)] = wireDecimals;
+    }
+  }
+  return map;
+}
+
+// Fill missing coinGeckoIds within each warp route
+// For each route, if any token has a coinGeckoId, apply it to tokens without one
+function fillMissingCoinGeckoIds(
+  routes: Record<string, WarpCoreConfig>,
+): Record<string, WarpCoreConfig> {
+  return Object.entries(routes).reduce<Record<string, WarpCoreConfig>>((acc, [routeId, config]) => {
+    // Find first coinGeckoId in this route's tokens
+    const coinGeckoId = config.tokens.find((token) => token.coinGeckoId)?.coinGeckoId;
+
+    if (coinGeckoId) {
+      // Apply coinGeckoId to all tokens in this route that don't have one
+      const updatedTokens = config.tokens.map((token) => ({
+        ...token,
+        coinGeckoId: token.coinGeckoId || coinGeckoId,
+      }));
+      acc[routeId] = {
+        ...config,
+        tokens: updatedTokens,
+      };
+    } else {
+      // No coinGeckoId found, keep route as is
+      acc[routeId] = config;
+    }
+    return acc;
+  }, {});
 }
 
 // Fill missing coinGeckoIds within each warp route

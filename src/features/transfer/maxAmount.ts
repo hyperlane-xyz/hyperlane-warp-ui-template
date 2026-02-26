@@ -1,16 +1,25 @@
 import { MultiProtocolProvider, Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
+<<<<<<< HEAD
 import { ProtocolType } from '@hyperlane-xyz/utils';
+=======
+import { KnownProtocolType } from '@hyperlane-xyz/utils';
+>>>>>>> origin/main
 import { AccountInfo, getAccountAddressAndPubKey } from '@hyperlane-xyz/widgets';
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
+import { defaultMultiCollateralRoutes } from '../../consts/defaultMultiCollateralRoutes';
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { isMultiCollateralLimitExceeded } from '../limits/utils';
 import { useWarpCore } from '../tokens/hooks';
+<<<<<<< HEAD
 import { getLowestFeeTransferToken } from './fees';
+=======
+import { getTransferToken } from './fees';
+>>>>>>> origin/main
 
 interface FetchMaxParams {
-  accounts: Record<ProtocolType, AccountInfo>;
+  accounts: Record<KnownProtocolType, AccountInfo>;
   balance: TokenAmount;
   origin: ChainName;
   destination: ChainName;
@@ -39,13 +48,21 @@ async function fetchMaxAmount(
     const destinationToken = originToken.getConnectionForChain(destination)?.token;
     if (!destinationToken) return undefined;
 
+<<<<<<< HEAD
     const transferToken = await getLowestFeeTransferToken(
+=======
+    const transferToken = await getTransferToken(
+>>>>>>> origin/main
       warpCore,
       originToken,
       destinationToken,
       balance.amount.toString(),
       address,
       address,
+<<<<<<< HEAD
+=======
+      defaultMultiCollateralRoutes,
+>>>>>>> origin/main
     );
     const tokenAmount = new TokenAmount(balance.amount, transferToken);
     const maxAmount = await warpCore.getMaxTransferAmount({

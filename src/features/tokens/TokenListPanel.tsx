@@ -15,6 +15,8 @@ interface TokenListPanelProps {
   chainFilter: ChainName | null;
   onSelect: (token: Token) => void;
   counterpartToken?: Token;
+  /** Recipient address for destination balance lookups */
+  recipient?: string;
   /** Mobile chain selection props */
   selectedChain: ChainName | null;
   onSelectChain: (chain: ChainInfo | null) => void;
@@ -28,6 +30,7 @@ export function TokenListPanel({
   chainFilter,
   onSelect,
   counterpartToken,
+  recipient,
   selectedChain,
   onSelectChain,
   onMoreChainsClick,
@@ -65,6 +68,7 @@ export function TokenListPanel({
         chainFilter={chainFilter}
         onSelect={onSelect}
         counterpartToken={counterpartToken}
+        recipient={recipient}
       />
     </div>
   );

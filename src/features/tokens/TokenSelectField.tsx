@@ -122,6 +122,7 @@ export function TokenSelectField({
         onSelect={handleSelectToken}
         selectionMode={selectionMode}
         counterpartToken={counterpartToken}
+        recipient={values.recipient}
       />
     </>
   );

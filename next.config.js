@@ -102,6 +102,15 @@ const nextConfig = {
       layers: true,
     };
 
+    // TODO: Remove when @hyperlane-xyz/core fixes ethers v5/v6 compat in tron typechain.
+    // core's tron typechain does `import { utils } from 'ethers'` (v5 API) which
+    // flakily fails during barrel optimization with webpackBuildWorker enabled.
+    // See: https://github.com/hyperlane-xyz/hyperlane-warp-ui-template/pull/973
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@hyperlane-xyz/core/dist/tron': false,
+    };
+
     if (isServer) {
       config.resolve.alias = {
         ...config.resolve.alias,

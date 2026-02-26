@@ -1,8 +1,16 @@
 import { ChainName } from '@hyperlane-xyz/sdk';
 import { ProtocolType, toTitleCase } from '@hyperlane-xyz/utils';
-import { ArrowIcon, ChevronIcon, FunnelIcon, PencilIcon, XIcon } from '@hyperlane-xyz/widgets';
+import {
+  ArrowIcon,
+  ChevronIcon,
+  FunnelIcon,
+  PencilIcon,
+  UpDownArrowsIcon,
+  XIcon,
+} from '@hyperlane-xyz/widgets';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { SearchInput } from '../../components/input/SearchInput';
+import { Color } from '../../styles/Color';
 import {
   ChainFilterState,
   FilterTestnet,
@@ -88,7 +96,11 @@ export function ChainFilterPanel({
             title={isEditMode ? 'Exit edit mode' : 'Edit chain metadata'}
             className="flex h-6 w-6 items-center justify-center rounded transition-colors hover:bg-gray-200"
           >
-            <PencilIcon width={14} height={14} color={isEditMode ? '#9A0DFF' : '#6b7280'} />
+            <PencilIcon
+              width={14}
+              height={14}
+              color={isEditMode ? Color.primary['500'] : Color.gray['500']}
+            />
           </button>
         </div>
       </div>
@@ -128,7 +140,11 @@ function FilterButton({
         title="Filter chains"
         className="flex h-6 w-6 items-center justify-center rounded transition-colors hover:bg-gray-200"
       >
-        <FunnelIcon width={14} height={14} color={isActive ? '#9A0DFF' : '#6b7280'} />
+        <FunnelIcon
+          width={14}
+          height={14}
+          color={isActive ? Color.primary['500'] : Color.gray['500']}
+        />
       </button>
       {isOpen && (
         <div className="absolute left-0 top-full z-20 mt-1 w-56 rounded-lg border border-gray-200 bg-white p-3 shadow-md">
@@ -230,11 +246,10 @@ function SortButton({
         title={`Sort: ${toTitleCase(sortState.sortBy)} (${sortState.sortOrder})`}
         className="flex h-6 w-6 items-center justify-center rounded transition-colors hover:bg-gray-200"
       >
-        <ArrowIcon
-          direction={sortState.sortOrder === SortOrder.Asc ? 'n' : 's'}
+        <UpDownArrowsIcon
           width={14}
           height={14}
-          color={isActive ? '#9A0DFF' : '#6b7280'}
+          color={isActive ? Color.primary['500'] : Color.gray['500']}
         />
       </button>
       {isOpen && (

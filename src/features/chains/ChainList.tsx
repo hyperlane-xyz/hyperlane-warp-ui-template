@@ -2,6 +2,7 @@ import { ChainName } from '@hyperlane-xyz/sdk';
 import { PencilIcon } from '@hyperlane-xyz/widgets';
 import { useMemo } from 'react';
 import { ChainLogo } from '../../components/icons/ChainLogo';
+import { Color } from '../../styles/Color';
 import {
   ChainFilterState,
   SortState,
@@ -108,7 +109,7 @@ function ChainButton({
     >
       {icon}
       <span className="min-w-0 flex-1 truncate text-sm font-medium">{label}</span>
-      {showEditIcon && <PencilIcon width={14} height={14} color="#6b7280" />}
+      {showEditIcon && <PencilIcon width={14} height={14} color={Color.gray['500']} />}
     </button>
   );
 }

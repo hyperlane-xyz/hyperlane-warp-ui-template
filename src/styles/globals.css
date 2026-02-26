@@ -281,7 +281,7 @@ ChainDetailsMenu to match v2 styling
 
 .chain-edit-container h3 {
   font-family: var(--font-secondary, 'PP Valve', system-ui, sans-serif);
-  color: #6b7280;
+  color: var(--color-gray-500, #6b7280);
 }
 
 /* Text inputs */

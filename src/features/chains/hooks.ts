@@ -54,7 +54,6 @@ export function useChainInfos(): ChainInfo[] {
       isTestnet: !!chain.isTestnet,
       disabled: config.shouldDisableChains && chain.availability?.status === ChainStatus.Disabled,
     }));
-    chainInfos.sort((a, b) => a.displayName.localeCompare(b.displayName));
     return chainInfos;
   }, [chainMetadata]);
 }

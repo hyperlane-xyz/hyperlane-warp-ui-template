@@ -31,6 +31,7 @@ const IMG_SRC_HOSTS = [
 ];
 const SCRIPT_SRC_HOSTS = [
   'https://snaps.consensys.io',
+  'https://plausible.io',
   'https://js.refiner.io',
   'https://app.intercom.io',
   'https://widget.intercom.io',

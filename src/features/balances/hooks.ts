@@ -1,5 +1,5 @@
 import { IToken, MultiProtocolProvider, Token } from '@hyperlane-xyz/sdk';
-import { ProtocolType, isValidAddress } from '@hyperlane-xyz/utils';
+import { ProtocolType, getAddressProtocolType, isValidAddress } from '@hyperlane-xyz/utils';
 import {
   useAccountAddressForChain,
   useEthereumAccount,
@@ -127,13 +127,10 @@ export function useTokenBalances(tokens: Token[], scope: string, addressOverride
   // detect its protocol and use it instead of the connected wallet address
   const effectiveAddresses = useMemo(() => {
     if (!addressOverride) return walletAddresses;
+    const protocol = getAddressProtocolType(addressOverride);
+    if (!protocol) return walletAddresses;
     const map = new Map(walletAddresses);
-    if (isValidAddress(addressOverride, ProtocolType.Ethereum)) {
-      map.set(ProtocolType.Ethereum, addressOverride);
-    }
-    if (isValidAddress(addressOverride, ProtocolType.Sealevel)) {
-      map.set(ProtocolType.Sealevel, addressOverride);
-    }
+    map.set(protocol, addressOverride);
     return map;
   }, [walletAddresses, addressOverride]);
 

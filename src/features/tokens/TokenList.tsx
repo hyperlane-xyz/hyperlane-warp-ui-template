@@ -98,13 +98,13 @@ export function TokenList({
     return [...routable, ...rest].slice(0, maxDefault);
   }, [debouncedSearch, chainFilter, allTokens, defaultTokens, tokenRouteMap, multiProvider]);
 
-  // Fetch balances for relevant + chain-filtered tokens only
-  // For destination mode, use recipient address if provided
+  // Fetch balances — use recipient address override only in destination mode
+  const addressOverride = selectionMode === 'destination' ? recipient : undefined;
   const {
     balances,
     isLoading: isBalanceLoading,
     hasAnyAddress,
-  } = useTokenBalances(balanceTokens, chainFilter ?? 'all', recipient);
+  } = useTokenBalances(balanceTokens, chainFilter ?? 'all', addressOverride);
   const { prices } = useTokenPrices();
 
   // Build lookup maps: getTokenKey → balance/usdValue

@@ -108,9 +108,9 @@ ethereum:
     symbol: ETH
   protocol: ethereum
   rpcUrls:
+    - http: https://eth.drpc.org
     - http: https://eth.llamarpc.com
     - http: https://ethereum.publicnode.com
-    - http: https://eth.drpc.org
     - http: https://rpc.flashbots.net
     - http: https://eth.blockrazor.xyz
     - http: https://eth-pokt.nodies.app

@@ -375,7 +375,6 @@ export const warpRouteWhitelist: Array<string> | null = [
   'BNB/krown',
   'WBTC/krown',
   'KROWN/krown',
-  'USD1/eni',
 
   // ENI routes
   'ETH/eni',
@@ -383,6 +382,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'USDT/eni',
   'WBTC/eni',
   'ROAM/eni',
+  'USD1/eni',
 
   // First Party Warp Routes
   'ETH/viction',

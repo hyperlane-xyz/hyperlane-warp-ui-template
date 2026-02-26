@@ -147,7 +147,7 @@ function FilterButton({
         />
       </button>
       {isOpen && (
-        <div className="absolute left-0 top-full z-20 mt-1 w-56 rounded-lg border border-gray-200 bg-white p-3 shadow-md">
+        <div className="absolute right-0 top-full z-20 mt-1 w-56 max-w-[calc(100vw-2rem)] rounded-lg border border-gray-200 bg-white p-3 shadow-md md:left-0 md:right-auto">
           <div className="mb-3 flex items-center justify-between">
             <span className="text-xs font-medium text-gray-500">Filters</span>
             {isActive && (

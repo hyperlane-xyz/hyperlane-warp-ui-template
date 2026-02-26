@@ -1,5 +1,7 @@
-import { ChainName } from '@hyperlane-xyz/sdk';
+import { ChainName, ChainStatus } from '@hyperlane-xyz/sdk';
+import { ProtocolType } from '@hyperlane-xyz/utils';
 import { useMemo } from 'react';
+import { config } from '../../consts/config';
 import { useStore } from '../store';
 import { getChainDisplayName } from './utils';
 
@@ -35,6 +37,9 @@ export interface ChainInfo {
   name: string;
   displayName: string;
   chainId: ChainId;
+  protocol: ProtocolType;
+  isTestnet: boolean;
+  disabled: boolean;
 }
 
 export function useChainInfos(): ChainInfo[] {
@@ -45,6 +50,9 @@ export function useChainInfos(): ChainInfo[] {
       name: chain.name,
       displayName: chain.displayName || chain.name,
       chainId: chain.chainId,
+      protocol: chain.protocol,
+      isTestnet: !!chain.isTestnet,
+      disabled: config.shouldDisableChains && chain.availability?.status === ChainStatus.Disabled,
     }));
     chainInfos.sort((a, b) => a.displayName.localeCompare(b.displayName));
     return chainInfos;

@@ -2,6 +2,13 @@ import { ChainName } from '@hyperlane-xyz/sdk';
 import { PencilIcon } from '@hyperlane-xyz/widgets';
 import { useMemo } from 'react';
 import { ChainLogo } from '../../components/icons/ChainLogo';
+import {
+  ChainFilterState,
+  SortState,
+  chainSearch,
+  defaultFilterState,
+  defaultSortState,
+} from './chainFilterSort';
 import { ChainInfo, useChainInfos } from './hooks';
 
 interface ChainListProps {
@@ -9,6 +16,8 @@ interface ChainListProps {
   selectedChain: ChainName | null;
   onSelectChain: (chain: ChainInfo | null) => void;
   isEditMode?: boolean;
+  filterState?: ChainFilterState;
+  sortState?: SortState;
 }
 
 export function ChainList({
@@ -16,18 +25,16 @@ export function ChainList({
   selectedChain,
   onSelectChain,
   isEditMode,
+  filterState = defaultFilterState,
+  sortState = defaultSortState,
 }: ChainListProps) {
   const allChains = useChainInfos();
 
-  // Filter by search query - only re-filters when searchQuery changes
-  const chains = useMemo(() => {
-    const q = searchQuery?.trim().toLowerCase();
-    if (!q) return allChains;
-    return allChains.filter(
-      (chain) =>
-        chain.displayName.toLowerCase().includes(q) || chain.name.toLowerCase().includes(q),
-    );
-  }, [searchQuery, allChains]);
+  const chains = useMemo(
+    () =>
+      chainSearch({ data: allChains, query: searchQuery, sort: sortState, filter: filterState }),
+    [searchQuery, allChains, filterState, sortState],
+  );
 
   return (
     <div className="relative flex-1 overflow-hidden">
@@ -55,6 +62,7 @@ export function ChainList({
             icon={<ChainLogo chainName={chain.name} size={28} />}
             label={chain.displayName}
             showEditIcon={isEditMode}
+            disabled={chain.disabled}
           />
         ))}
 
@@ -76,20 +84,25 @@ function ChainButton({
   icon,
   label,
   showEditIcon,
+  disabled,
 }: {
   isSelected: boolean;
   onClick: () => void;
   icon: React.ReactNode;
   label: string;
   showEditIcon?: boolean;
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
+      disabled={disabled}
       className={`${styles.label} flex w-full items-center gap-3 border-l-2 px-4 py-2.5 transition-colors ${
-        isSelected
-          ? 'border-primary-500 bg-primary-500/10 text-primary-700'
-          : 'border-transparent text-black hover:bg-gray-200'
+        disabled
+          ? 'border-transparent opacity-50'
+          : isSelected
+            ? 'border-primary-500 bg-primary-500/10 text-primary-700'
+            : 'border-transparent text-black hover:bg-gray-200'
       }`}
       onClick={onClick}
     >

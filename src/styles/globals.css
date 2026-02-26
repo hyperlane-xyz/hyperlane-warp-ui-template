@@ -295,7 +295,7 @@ ChainDetailsMenu to match v2 styling
 
 .chain-edit-container input[type='text']:focus,
 .chain-edit-container textarea:focus {
-  border-color: #9a0dff;
+  border-color: var(--color-primary-500, #9a0dff);
   outline: none;
 }
 
@@ -306,7 +306,7 @@ ChainDetailsMenu to match v2 styling
 
 /* Links */
 .chain-edit-container a {
-  color: #9a0dff;
+  color: var(--color-primary-500, #9a0dff);
 }
 
 .chain-edit-container a:hover {

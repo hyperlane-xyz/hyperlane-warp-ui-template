@@ -30,8 +30,8 @@ export function MobileChainQuickSelect({
       // Get preferred chains that exist, maintaining preferred order
       const preferred = preferredChains
         .filter((name) => chainNameSet.has(name))
-        .map((name) => allChains.find((c) => c.name === name)!)
-        .filter(Boolean);
+        .map((name) => allChains.find((c) => c.name === name))
+        .filter((c): c is ChainInfo => !!c);
 
       // Fill remaining slots with other chains (not in preferred list)
       const remaining = allChains.filter((c) => !preferredSet.has(c.name));

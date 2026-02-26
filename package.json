@@ -20,13 +20,26 @@
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
     "@headlessui/react": "^2.2.0",
+<<<<<<< HEAD
     "@hyperlane-xyz/registry": "23.7.0",
     "@hyperlane-xyz/sdk": "19.13.0",
     "@hyperlane-xyz/utils": "19.13.0",
     "@hyperlane-xyz/widgets": "19.13.0",
+=======
+    "@hyperlane-xyz/registry": "24.0.0",
+    "@hyperlane-xyz/sdk": "25.3.2",
+    "@hyperlane-xyz/utils": "25.3.2",
+    "@hyperlane-xyz/widgets": "25.3.2",
+>>>>>>> origin/main
     "@interchain-ui/react": "^1.23.28",
+    "@intercom/messenger-js-sdk": "^0.0.18",
     "@metamask/post-message-stream": "6.1.2",
     "@metamask/providers": "10.2.1",
+<<<<<<< HEAD
+=======
+    "@provablehq/aleo-wallet-adaptor-react": "0.3.0-alpha.1",
+    "@provablehq/aleo-wallet-adaptor-shield": "0.3.0-alpha.1",
+>>>>>>> origin/main
     "@radixdlt/babylon-gateway-api-sdk": "^1.10.1",
     "@radixdlt/radix-dapp-toolkit": "^2.2.1",
     "@rainbow-me/rainbowkit": "2.2.0",
@@ -63,6 +76,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-toastify": "^10.0.6",
+    "refiner-js": "1.2.4",
     "starknetkit": "2.6.1",
     "viem": "^2.21.41",
     "wagmi": "^2.12.26",
@@ -73,8 +87,13 @@
     "@eslint/eslintrc": "^3.3.3",
     "@eslint/js": "^9.39.1",
     "@next/bundle-analyzer": "^15.0.2",
+    "@next/eslint-plugin-next": "^15.5.7",
     "@tanstack/eslint-plugin-query": "^5.59.20",
+<<<<<<< HEAD
     "@types/node": "^22.13.14",
+=======
+    "@types/node": "^24.10.9",
+>>>>>>> origin/main
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@typescript-eslint/eslint-plugin": "^8.13.0",
@@ -83,6 +102,13 @@
     "eslint": "^9.14.0",
     "eslint-config-next": "^15.0.2",
     "eslint-config-prettier": "^9.1.0",
+<<<<<<< HEAD
+=======
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
+>>>>>>> origin/main
     "globals": "^14.0.0",
     "postcss": "^8.4.47",
     "prettier": "^3.2.5",
@@ -93,8 +119,15 @@
     "typescript": "5.6.3",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "3.0.5",
+<<<<<<< HEAD
+=======
+    "@aws-sdk/client-s3": "^3.967.0",
+>>>>>>> origin/main
     "yaml": "^2.6.0",
     "yaml-loader": "^0.8.1"
+  },
+  "engines": {
+    "node": ">=24"
   },
   "homepage": "https://www.hyperlane.xyz",
   "license": "Apache-2.0",
@@ -107,17 +140,26 @@
   },
   "scripts": {
     "clean": "rm -rf dist cache .next",
+    "predev": "node scripts/fetch-fonts.mjs",
     "dev": "next dev",
+    "prebuild": "node scripts/fetch-fonts.mjs",
+    "fetch-fonts": "node --env-file-if-exists=.env.local scripts/fetch-fonts.mjs",
     "build": "next build",
     "typecheck": "tsc",
     "lint": "next lint",
     "start": "next start",
     "test": "vitest --watch false",
-    "prettier": "prettier --write ./src"
+    "prettier": "prettier --write ./src",
+    "link:monorepo": "node scripts/link-monorepo.js utils provider-sdk deploy-sdk sdk widgets",
+    "unlink:monorepo": "node scripts/unlink-monorepo.js"
   },
   "types": "dist/src/index.d.ts",
   "pnpm": {
     "overrides": {
+<<<<<<< HEAD
+=======
+      "tronweb>ethers": "^6.13.5",
+>>>>>>> origin/main
       "@solana/web3.js": "^1.95.4",
       "axios": "^1.7.9",
       "bignumber": "9.1.2",
@@ -136,8 +178,12 @@
       "form-data": "4.0.4"
     },
     "patchedDependencies": {
+<<<<<<< HEAD
       "starknetkit@2.6.1": "patches/starknetkit@2.6.1.patch",
       "@cosmjs/cosmwasm-stargate@0.32.4": "patches/@cosmjs-cosmwasm-stargate-npm-0.32.4-f9dd51429c.patch"
+=======
+      "starknetkit@2.6.1": "patches/starknetkit@2.6.1.patch"
+>>>>>>> origin/main
     },
     "onlyBuiltDependencies": []
   }

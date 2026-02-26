@@ -37,3 +37,10 @@ npm-debug.log*
 *.tsbuildinfo
 
 .idea
+.monorepo-tarballs
+
+.opencode
+.sisyphus
+
+# fonts (downloaded via scripts/fetch-fonts.mjs)
+public/fonts/

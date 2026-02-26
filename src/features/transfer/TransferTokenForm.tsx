@@ -1,5 +1,9 @@
 import { Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
 import {
+<<<<<<< HEAD
+=======
+  KnownProtocolType,
+>>>>>>> origin/main
   ProtocolType,
   convertToScaledAmount,
   eqAddress,
@@ -7,7 +11,11 @@ import {
   fromWei,
   isNullish,
   isValidAddressEvm,
+<<<<<<< HEAD
   objKeys,
+=======
+  normalizeAddress,
+>>>>>>> origin/main
   toWei,
 } from '@hyperlane-xyz/utils';
 import {
@@ -31,10 +39,22 @@ import { SolidButton } from '../../components/buttons/SolidButton';
 import { TextField } from '../../components/input/TextField';
 import { WARP_QUERY_PARAMS } from '../../consts/args';
 import { config } from '../../consts/config';
+import { defaultMultiCollateralRoutes } from '../../consts/defaultMultiCollateralRoutes';
 import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
 import { getQueryParams, updateQueryParam } from '../../utils/queryParams';
 import { trackTransactionFailedEvent } from '../analytics/utils';
+<<<<<<< HEAD
+=======
+import { UsdLabel } from '../balances/UsdLabel';
+import {
+  getDestinationNativeBalance,
+  useDestinationBalance,
+  useOriginBalance,
+} from '../balances/hooks';
+import { useFeePrices } from '../balances/useFeePrices';
+import { formatUsd } from '../balances/utils';
+>>>>>>> origin/main
 import { ChainConnectionWarning } from '../chains/ChainConnectionWarning';
 import { ChainSelectField } from '../chains/ChainSelectField';
 import { ChainWalletWarning } from '../chains/ChainWalletWarning';
@@ -42,27 +62,38 @@ import { useChainDisplayName, useMultiProvider } from '../chains/hooks';
 import { getNumRoutesWithSelectedChain, tryGetValidChainName } from '../chains/utils';
 import { isMultiCollateralLimitExceeded } from '../limits/utils';
 import { useIsAccountSanctioned } from '../sanctions/hooks/useIsAccountSanctioned';
-import { useStore } from '../store';
+import { RouterAddressInfo, useStore } from '../store';
 import { SelectOrInputTokenIds } from '../tokens/SelectOrInputTokenIds';
 import { TokenSelectField } from '../tokens/TokenSelectField';
 import { useIsApproveRequired } from '../tokens/approval';
 import {
+<<<<<<< HEAD
   getDestinationNativeBalance,
   useDestinationBalance,
   useOriginBalance,
 } from '../tokens/balances';
 import {
+=======
+>>>>>>> origin/main
   getIndexForToken,
   getInitialTokenIndex,
   getTokenByIndex,
   getTokenIndexFromChains,
   useWarpCore,
 } from '../tokens/hooks';
+<<<<<<< HEAD
 import { useTokenPrice } from '../tokens/useTokenPrice';
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { FeeSectionButton } from './FeeSectionButton';
 import { RecipientConfirmationModal } from './RecipientConfirmationModal';
 import { getInterchainQuote, getLowestFeeTransferToken, getTotalFee } from './fees';
+=======
+import { useTokenPrices } from '../tokens/useTokenPrice';
+import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
+import { FeeSectionButton } from './FeeSectionButton';
+import { RecipientConfirmationModal } from './RecipientConfirmationModal';
+import { getInterchainQuote, getTotalFee, getTransferToken } from './fees';
+>>>>>>> origin/main
 import { useFetchMaxAmount } from './maxAmount';
 import { TransferFormValues } from './types';
 import { useRecipientBalanceWatcher } from './useBalanceWatcher';
@@ -282,7 +313,7 @@ function TokenSection({
 }) {
   return (
     <div className="flex-1">
-      <label htmlFor="tokenIndex" className="block pl-0.5 text-sm text-gray-600">
+      <label htmlFor="tokenIndex" className="block pl-0.5 font-secondary text-sm text-gray-600">
         Token
       </label>
       <TokenSelectField name="tokenIndex" disabled={isReview} setIsNft={setIsNft} />
@@ -293,7 +324,14 @@ function TokenSection({
 function AmountSection({ isNft, isReview }: { isNft: boolean; isReview: boolean }) {
   const { values } = useFormikContext<TransferFormValues>();
   const { balance } = useOriginBalance(values);
+<<<<<<< HEAD
   const { tokenPrice, isLoading } = useTokenPrice(values);
+=======
+  const warpCore = useWarpCore();
+  const { prices, isLoading } = useTokenPrices();
+  const originToken = getTokenByIndex(warpCore, values.tokenIndex);
+  const tokenPrice = originToken?.coinGeckoId ? prices[originToken.coinGeckoId] : undefined;
+>>>>>>> origin/main
 
   const amount = parseFloat(values.amount);
   const totalTokenPrice = !isNullish(tokenPrice) && !isNaN(amount) ? amount * tokenPrice : 0;
@@ -302,7 +340,7 @@ function AmountSection({ isNft, isReview }: { isNft: boolean; isReview: boolean 
   return (
     <div className="flex-1">
       <div className="flex justify-between pr-1">
-        <label htmlFor="amount" className="block pl-0.5 text-sm text-gray-600">
+        <label htmlFor="amount" className="block pl-0.5 font-secondary text-sm text-gray-600">
           Amount
         </label>
         <TokenBalance label="My balance" balance={balance} />
@@ -321,11 +359,15 @@ function AmountSection({ isNft, isReview }: { isNft: boolean; isReview: boolean 
           />
           {shouldShowPrice && !isLoading && (
             <div className="absolute bottom-[-18px] left-1 max-w-52 overflow-hidden text-ellipsis whitespace-nowrap text-xxs text-gray-500">
+<<<<<<< HEAD
               ≈$
               {totalTokenPrice.toLocaleString('en-US', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}
+=======
+              {formatUsd(totalTokenPrice, true)}
+>>>>>>> origin/main
             </div>
           )}
           <MaxButton disabled={isReview} balance={balance} />
@@ -343,7 +385,7 @@ function RecipientSection({ isReview }: { isReview: boolean }) {
   return (
     <div className="mt-4">
       <div className="flex justify-between pr-1">
-        <label htmlFor="recipient" className="block pl-0.5 text-sm text-gray-600">
+        <label htmlFor="recipient" className="block pl-0.5 font-secondary text-sm text-gray-600">
           Recipient address
         </label>
         <TokenBalance label="Remote balance" balance={balance} />
@@ -362,7 +404,11 @@ function RecipientSection({ isReview }: { isReview: boolean }) {
 }
 
 function TokenBalance({ label, balance }: { label: string; balance?: TokenAmount | null }) {
-  const value = balance?.getDecimalFormattedAmount().toFixed(5) || '0';
+  const value =
+    balance?.getDecimalFormattedAmount().toLocaleString('en-US', {
+      maximumFractionDigits: 6,
+      useGrouping: false,
+    }) || '0';
   return <div className="text-right text-xs text-gray-600">{`${label}: ${value}`}</div>;
 }
 
@@ -391,6 +437,7 @@ function ButtonSection({
     values.origin,
     accounts,
   );
+<<<<<<< HEAD
 
   // Confirming recipient address
   const [{ addressConfirmed, showWarning }, setRecipientInfos] = useState({
@@ -469,10 +516,90 @@ function ButtonSection({
     // resetForm();
   };
   const { triggerTransactions } = useTokenTransfer(onDoneTransactions);
+=======
+
+  // Confirming recipient address
+  const [{ addressConfirmed, showWarning }, setRecipientInfos] = useState({
+    showWarning: false,
+    addressConfirmed: true,
+  });
+
+  useEffect(() => {
+    const checkSameEVMRecipient = async (recipient: string) => {
+      if (!connectedWallet) {
+        // Hide warning banner if entering a recipient address and then disconnect wallet
+        setRecipientInfos({ showWarning: false, addressConfirmed: true });
+        return;
+      }
+
+      const { protocol: destinationProtocol } = multiProvider.getChainMetadata(values.destination);
+      const { protocol: sourceProtocol } = multiProvider.getChainMetadata(values.origin);
+
+      // Check if we are only dealing with bridging between two EVM chains
+      if (
+        sourceProtocol !== ProtocolType.Ethereum ||
+        destinationProtocol !== ProtocolType.Ethereum
+      ) {
+        setRecipientInfos({ showWarning: false, addressConfirmed: true });
+        return;
+      }
+
+      if (!isValidAddressEvm(recipient)) {
+        setRecipientInfos({ showWarning: false, addressConfirmed: true });
+        return;
+      }
+
+      // check first if the address on origin is a smart contract
+      const { isContract: isSenderSmartContract, error: senderCheckError } = await isSmartContract(
+        multiProvider,
+        values.origin,
+        connectedWallet,
+      );
+
+      const { isContract: isRecipientSmartContract, error: recipientCheckError } =
+        await isSmartContract(multiProvider, values.destination, recipient);
+
+      const isSelfRecipient = eqAddress(recipient, connectedWallet);
+
+      // Hide warning banners if entering a recipient address and then disconnect wallet
+      if (senderCheckError || recipientCheckError) {
+        toast.error(senderCheckError || recipientCheckError);
+        setRecipientInfos({ addressConfirmed: true, showWarning: false });
+        return;
+      }
+
+      if (isSelfRecipient && isSenderSmartContract && !isRecipientSmartContract) {
+        const msg = `The recipient address is the same as the connected wallet, but it does not exist as a smart contract on ${chainDisplayName}.`;
+        logger.warn(msg);
+        setRecipientInfos({ showWarning: true, addressConfirmed: false });
+      } else {
+        setRecipientInfos({ showWarning: false, addressConfirmed: true });
+      }
+    };
+    checkSameEVMRecipient(values.recipient);
+  }, [
+    values.recipient,
+    connectedWallet,
+    multiProvider,
+    values.destination,
+    values.origin,
+    chainDisplayName,
+  ]);
+
+  const isSanctioned = useIsAccountSanctioned();
+>>>>>>> origin/main
 
   const { setTransferLoading } = useStore((s) => ({
     setTransferLoading: s.setTransferLoading,
   }));
+
+  const onDoneTransactions = () => {
+    setIsReview(false);
+    setTransferLoading(false);
+    cleanOverrideToken();
+    // resetForm();
+  };
+  const { triggerTransactions } = useTokenTransfer(onDoneTransactions);
 
   const triggerTransactionsHandler = async () => {
     if (isSanctioned) {
@@ -515,7 +642,11 @@ function ButtonSection({
           disabled={!addressConfirmed}
           chainName={values.origin}
           text={isValidating ? 'Validating...' : 'Continue'}
+<<<<<<< HEAD
           classes={`${isReview ? 'mt-4' : 'mt-0'} px-3 py-1.5`}
+=======
+          classes={`${isReview ? 'mt-4' : 'mt-0'} px-3 py-1.5 font-secondary`}
+>>>>>>> origin/main
         />
       </>
     );
@@ -540,7 +671,11 @@ function ButtonSection({
           type="button"
           color="primary"
           onClick={onEdit}
+<<<<<<< HEAD
           className="px-6 py-1.5"
+=======
+          className="px-6 py-1.5 font-secondary"
+>>>>>>> origin/main
           icon={<ChevronIcon direction="w" width={10} height={6} color={Color.white} />}
         >
           <span>Edit</span>
@@ -550,7 +685,11 @@ function ButtonSection({
           type="button"
           color="accent"
           onClick={triggerTransactionsHandler}
+<<<<<<< HEAD
           className="flex-1 px-3 py-1.5"
+=======
+          className="flex-1 px-3 py-1.5 font-secondary text-white"
+>>>>>>> origin/main
         >
           {`Send to ${chainDisplayName}`}
         </SolidButton>
@@ -571,8 +710,9 @@ function MaxButton({ balance, disabled }: { balance?: TokenAmount; disabled?: bo
     const maxAmount = await fetchMaxAmount({ balance, origin, destination, accounts });
     if (isNullish(maxAmount)) return;
     const decimalsAmount = maxAmount.getDecimalFormattedAmount();
-    const roundedAmount = new BigNumber(decimalsAmount).toFixed(4, BigNumber.ROUND_FLOOR);
-    setFieldValue('amount', roundedAmount);
+    const roundedAmount = new BigNumber(decimalsAmount).toFixed(8, BigNumber.ROUND_FLOOR);
+    const trimmedAmount = roundedAmount.replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
+    setFieldValue('amount', trimmedAmount);
   };
 
   return (
@@ -670,6 +810,11 @@ function ReviewDetails({
     !isReview,
   );
 
+  const { prices } = useTokenPrices();
+  const feePrices = useFeePrices(feeQuotes ?? null, warpCore.tokens, prices);
+  const tokenPrice = originToken?.coinGeckoId ? prices[originToken.coinGeckoId] : undefined;
+  const parsedAmount = parseFloat(amount);
+  const transferUsd = tokenPrice && !isNaN(parsedAmount) ? parsedAmount * tokenPrice : 0;
   const isLoading = isApproveLoading || isQuoteLoading;
 
   const fees = useMemo(() => {
@@ -695,7 +840,18 @@ function ReviewDetails({
 
   return (
     <>
+<<<<<<< HEAD
       {!isReview && <FeeSectionButton visible={!isReview} fees={fees} isLoading={isLoading} />}
+=======
+      {!isReview && (
+        <FeeSectionButton
+          fees={fees}
+          isLoading={isLoading}
+          feePrices={feePrices}
+          transferUsd={transferUsd}
+        />
+      )}
+>>>>>>> origin/main
 
       <div
         className={`${
@@ -744,25 +900,46 @@ function ReviewDetails({
                   {fees?.localQuote && fees.localQuote.amount > 0n && (
                     <p className="flex">
                       <span className="min-w-[7.5rem]">Local Gas (est.)</span>
+<<<<<<< HEAD
                       <span>{`${fees.localQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${
                         fees.localQuote.token.symbol || ''
                       }`}</span>
+=======
+                      <span>
+                        {`${fees.localQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${fees.localQuote.token.symbol || ''}`}
+                        <UsdLabel tokenAmount={fees.localQuote} feePrices={feePrices} />
+                      </span>
+>>>>>>> origin/main
                     </p>
                   )}
                   {fees?.interchainQuote && fees.interchainQuote.amount > 0n && (
                     <p className="flex">
                       <span className="min-w-[7.5rem]">Interchain Gas</span>
+<<<<<<< HEAD
                       <span>{`${fees.interchainQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${
                         fees.interchainQuote.token.symbol || ''
                       }`}</span>
+=======
+                      <span>
+                        {`${fees.interchainQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${fees.interchainQuote.token.symbol || ''}`}
+                        <UsdLabel tokenAmount={fees.interchainQuote} feePrices={feePrices} />
+                      </span>
+>>>>>>> origin/main
                     </p>
                   )}
                   {fees?.tokenFeeQuote && fees.tokenFeeQuote.amount > 0n && (
                     <p className="flex">
                       <span className="min-w-[7.5rem]">Token Fee</span>
+<<<<<<< HEAD
                       <span>{`${fees.tokenFeeQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${
                         fees.tokenFeeQuote.token.symbol || ''
                       }`}</span>
+=======
+                      <span>
+                        {`${fees.tokenFeeQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${fees.tokenFeeQuote.token.symbol || ''}`}
+                        <UsdLabel tokenAmount={fees.tokenFeeQuote} feePrices={feePrices} />
+                      </span>
+>>>>>>> origin/main
                     </p>
                   )}
                 </div>
@@ -835,8 +1012,13 @@ const emptyAccountErrMsg = /AccountNotFound/i;
 async function validateForm(
   warpCore: WarpCore,
   values: TransferFormValues,
+<<<<<<< HEAD
   accounts: Record<ProtocolType, AccountInfo>,
   routerAddressesByChainMap: Record<ChainName, Set<string>>,
+=======
+  accounts: Record<KnownProtocolType, AccountInfo>,
+  routerAddressesByChainMap: Record<ChainName, Record<string, RouterAddressInfo>>,
+>>>>>>> origin/main
 ): Promise<[Record<string, string> | null, Token | null]> {
   // returns a tuple, where first value is validation result
   // and second value is token override
@@ -846,6 +1028,7 @@ async function validateForm(
     if (!token) return [{ token: 'Token is required' }, null];
     const destinationToken = token.getConnectionForChain(destination)?.token;
     if (!destinationToken) return [{ token: 'Token is required' }, null];
+<<<<<<< HEAD
 
     if (
       objKeys(routerAddressesByChainMap).includes(destination) &&
@@ -870,6 +1053,30 @@ async function validateForm(
     );
     const multiCollateralLimit = isMultiCollateralLimitExceeded(token, destination, amountWei);
 
+=======
+
+    if (routerAddressesByChainMap[destination]?.[normalizeAddress(recipient)]) {
+      return [{ recipient: 'Warp Route address is not valid as recipient' }, null];
+    }
+
+    const { address: sender, publicKey: senderPubKey } = getAccountAddressAndPubKey(
+      warpCore.multiProvider,
+      origin,
+      accounts,
+    );
+    const amountWei = toWei(amount, token.decimals);
+    const transferToken = await getTransferToken(
+      warpCore,
+      token,
+      destinationToken,
+      amountWei,
+      recipient,
+      sender,
+      defaultMultiCollateralRoutes,
+    );
+    const multiCollateralLimit = isMultiCollateralLimitExceeded(token, destination, amountWei);
+
+>>>>>>> origin/main
     if (multiCollateralLimit) {
       return [
         {
@@ -879,15 +1086,34 @@ async function validateForm(
       ];
     }
 
+    const originTokenAmount = transferToken.amount(amountWei);
     const result = await warpCore.validateTransfer({
+<<<<<<< HEAD
       originTokenAmount: transferToken.amount(amountWei),
+=======
+      originTokenAmount,
+>>>>>>> origin/main
       destination,
       recipient,
       sender: sender || '',
       senderPubKey: await senderPubKey,
     });
 
+<<<<<<< HEAD
     if (!isNullish(result)) return [result, null];
+=======
+    if (!isNullish(result)) {
+      const enriched = await enrichBalanceError(
+        warpCore,
+        result,
+        originTokenAmount,
+        destination,
+        sender || '',
+        recipient,
+      );
+      return [enriched, null];
+    }
+>>>>>>> origin/main
 
     if (transferToken.addressOrDenom === token.addressOrDenom) return [null, null];
 
@@ -897,8 +1123,52 @@ async function validateForm(
     let errorMsg = errorToString(error, 40);
     const fullError = `${errorMsg} ${error.message}`;
     if (insufficientFundsErrMsg.test(fullError) || emptyAccountErrMsg.test(fullError)) {
-      errorMsg = 'Insufficient funds for gas fees';
+      const chainMetadata = warpCore.multiProvider.getChainMetadata(values.origin);
+      const nativeToken = Token.FromChainMetadataNativeToken(chainMetadata);
+      errorMsg = `Insufficient ${nativeToken.symbol} for gas fees`;
     }
     return [{ form: errorMsg }, null];
   }
+}
+
+const igpErrorPattern = /^Insufficient (\S+) for interchain gas$/;
+
+async function enrichBalanceError(
+  warpCore: WarpCore,
+  result: Record<string, string>,
+  originTokenAmount: TokenAmount,
+  destination: string,
+  sender: string,
+  recipient: string,
+): Promise<Record<string, string>> {
+  if (!result.amount) return result;
+  const igpErrorMatch = igpErrorPattern.exec(result.amount);
+  if (!igpErrorMatch) return result;
+
+  try {
+    const { igpQuote } = await warpCore.getInterchainTransferFee({
+      originTokenAmount,
+      destination,
+      sender,
+      recipient,
+    });
+
+    // Symbol in validateTransfer message is sourced from igpQuote.token.symbol.
+    if (igpErrorMatch[1] !== igpQuote.token.symbol) return result;
+
+    const balance = originTokenAmount.token.isFungibleWith(igpQuote.token)
+      ? await originTokenAmount.token.getBalance(warpCore.multiProvider, sender)
+      : await igpQuote.token.getBalance(warpCore.multiProvider, sender);
+    const deficit = igpQuote.amount - balance.amount;
+    if (deficit > 0n) {
+      const deficitAmount = new TokenAmount(deficit, igpQuote.token);
+      return {
+        ...result,
+        amount: `Insufficient ${igpQuote.token.symbol} for interchain gas (need ${deficitAmount.getDecimalFormattedAmount().toFixed(4)} more ${igpQuote.token.symbol})`,
+      };
+    }
+  } catch (e) {
+    logger.warn('Failed to enrich balance error', e);
+  }
+  return result;
 }

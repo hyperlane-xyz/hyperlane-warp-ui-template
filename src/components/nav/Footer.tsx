@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import {
   DiscordIcon,
   DocsIcon,
@@ -45,6 +46,16 @@ export function Footer() {
     <footer className="relative">
       <div className="relative px-8 pb-5 pt-2 sm:pt-0">
         <div className="flex flex-col items-end justify-between gap-8 sm:flex-row sm:gap-10">
+=======
+import { HyperlaneGradientLogo } from '../icons/HyperlaneGradientLogo';
+import { NavItem, navLinks } from './Nav';
+
+export function Footer() {
+  return (
+    <footer className="relative text-white">
+      <div className="relative px-8 pb-5 pt-2 sm:pt-0">
+        <div className="flex flex-col items-center justify-between gap-4">
+>>>>>>> origin/main
           <FooterLogo />
           <FooterNav />
         </div>
@@ -55,6 +66,7 @@ export function Footer() {
 
 function FooterLogo() {
   return (
+<<<<<<< HEAD
     <div className="flex items-center justify-center space-x-2 py-1">
       <div className="flex items-center space-x-1">
         <span>Built with</span>
@@ -68,27 +80,30 @@ function FooterLogo() {
           <span>Caldera</span>
         </Link>
       </div>
+=======
+    <div className="flex items-center justify-center">
+      <HyperlaneGradientLogo width={219} height={18} />
+>>>>>>> origin/main
     </div>
   );
 }
 
 function FooterNav() {
   return (
+<<<<<<< HEAD
     <nav className="text-sm">
       <ul
         style={{ gridTemplateColumns: 'auto auto auto auto', gridAutoFlow: 'column' }}
         className="grid grid-rows-2 gap-x-3 gap-y-1.5"
       >
         {footerLinks.map((item) => (
+=======
+    <nav className="hidden text-md font-medium lg:block">
+      <ul className="flex gap-9">
+        {navLinks.map((item) => (
+>>>>>>> origin/main
           <li key={item.title}>
-            <Link
-              className="flex items-center capitalize underline-offset-2 hover:underline"
-              target={item.external ? '_blank' : '_self'}
-              href={item.url}
-            >
-              {item?.icon && <div className="mr-3 mt-1 w-4">{item?.icon}</div>}
-              {!item?.icon && <div>{item.title}</div>}
-            </Link>
+            <NavItem item={item} />
           </li>
         ))}
       </ul>

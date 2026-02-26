@@ -1,5 +1,4 @@
 import ConfirmedIcon from '../../images/icons/confirmed-icon.svg';
-import DeliveredIcon from '../../images/icons/delivered-icon.svg';
 import ErrorCircleIcon from '../../images/icons/error-circle.svg';
 import { FinalTransferStatuses, SentTransferStatuses, TransferStatus } from './types';
 
@@ -58,7 +57,6 @@ export const STATUSES_WITH_ICON = [
 export function getIconByTransferStatus(status: TransferStatus) {
   switch (status) {
     case TransferStatus.Delivered:
-      return DeliveredIcon;
     case TransferStatus.ConfirmedTransfer:
       return ConfirmedIcon;
     case TransferStatus.Failed:

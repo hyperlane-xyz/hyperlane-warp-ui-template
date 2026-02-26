@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { HyperlaneLogo, TwitterIcon } from '@hyperlane-xyz/widgets';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -21,12 +22,16 @@ const footerLinks: FooterLink[] = [
   { title: 'Blog', url: links.blog, external: true },
   { title: 'Twitter', url: links.twitter, external: true, icon: <TwitterIcon color="#fff" /> },
 ];
+=======
+import { HyperlaneGradientLogo } from '../icons/HyperlaneGradientLogo';
+import { NavItem, navLinks } from './Nav';
+>>>>>>> origin/main
 
 export function Footer() {
   return (
     <footer className="relative text-white">
-      <div className="relative bg-gradient-to-b from-transparent to-black/40 px-8 pb-5 pt-2 sm:pt-0">
-        <div className="flex flex-col items-center justify-between gap-8 sm:flex-row sm:gap-10">
+      <div className="relative px-8 pb-5 pt-2 sm:pt-0">
+        <div className="flex flex-col items-center justify-between gap-4">
           <FooterLogo />
           <FooterNav />
         </div>
@@ -37,6 +42,7 @@ export function Footer() {
 
 function FooterLogo() {
   return (
+<<<<<<< HEAD
     <div className="ml-6 flex items-center justify-center gap-1.5 text-xs font-medium xs:text-md sm:text-xs md:text-base lg:text-xl">
       <span>Built with</span>
       <Image src="/logos/celo.svg" alt="" width={18} height={18} />
@@ -45,24 +51,27 @@ function FooterLogo() {
       <span>Chainlink and</span>
       <HyperlaneLogo color={Color.white} width={18} height={18} />
       <span>Hyperlane</span>
+=======
+    <div className="flex items-center justify-center">
+      <HyperlaneGradientLogo width={219} height={18} />
+>>>>>>> origin/main
     </div>
   );
 }
 
 function FooterNav() {
   return (
+<<<<<<< HEAD
     <nav className="text-md font-medium sm:text-xs md:text-md">
       <ul className="grid grid-flow-col grid-rows-3 gap-x-7 gap-y-1.5">
         {footerLinks.map((item) => (
+=======
+    <nav className="hidden text-md font-medium lg:block">
+      <ul className="flex gap-9">
+        {navLinks.map((item) => (
+>>>>>>> origin/main
           <li key={item.title}>
-            <Link
-              className="flex items-center capitalize underline-offset-2 hover:underline"
-              target={item.external ? '_blank' : '_self'}
-              href={item.url}
-            >
-              {item?.icon && <div className="mr-3 mt-1 w-4">{item?.icon}</div>}
-              {!item?.icon && <div>{item.title}</div>}
-            </Link>
+            <NavItem item={item} />
           </li>
         ))}
       </ul>

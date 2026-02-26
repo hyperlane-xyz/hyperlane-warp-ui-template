@@ -1,4 +1,5 @@
 import { ChainName } from '@hyperlane-xyz/sdk';
+import { PencilIcon } from '@hyperlane-xyz/widgets';
 import { useMemo } from 'react';
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import { ChainInfo, useChainInfos } from './hooks';
@@ -7,9 +8,15 @@ interface ChainListProps {
   searchQuery: string;
   selectedChain: ChainName | null;
   onSelectChain: (chain: ChainInfo | null) => void;
+  isEditMode?: boolean;
 }
 
-export function ChainList({ searchQuery, selectedChain, onSelectChain }: ChainListProps) {
+export function ChainList({
+  searchQuery,
+  selectedChain,
+  onSelectChain,
+  isEditMode,
+}: ChainListProps) {
   const allChains = useChainInfos();
 
   // Filter by search query - only re-filters when searchQuery changes
@@ -25,26 +32,29 @@ export function ChainList({ searchQuery, selectedChain, onSelectChain }: ChainLi
   return (
     <div className="relative flex-1 overflow-hidden">
       <div className="h-full overflow-auto">
-        {/* All Chains option */}
-        <ChainButton
-          isSelected={selectedChain === null}
-          onClick={() => onSelectChain(null)}
-          icon={
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-purple-500 text-[10px] font-bold text-white">
-              ALL
-            </div>
-          }
-          label="All Chains"
-        />
+        {/* All Chains option - hidden in edit mode */}
+        {!isEditMode && (
+          <ChainButton
+            isSelected={selectedChain === null}
+            onClick={() => onSelectChain(null)}
+            icon={
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-purple-500 text-[10px] font-bold text-white">
+                ALL
+              </div>
+            }
+            label="All Chains"
+          />
+        )}
 
         {/* Individual chains */}
         {chains.map((chain) => (
           <ChainButton
             key={chain.name}
-            isSelected={selectedChain === chain.name}
+            isSelected={!isEditMode && selectedChain === chain.name}
             onClick={() => onSelectChain(chain)}
             icon={<ChainLogo chainName={chain.name} size={28} />}
             label={chain.displayName}
+            showEditIcon={isEditMode}
           />
         ))}
 
@@ -65,11 +75,13 @@ function ChainButton({
   onClick,
   icon,
   label,
+  showEditIcon,
 }: {
   isSelected: boolean;
   onClick: () => void;
   icon: React.ReactNode;
   label: string;
+  showEditIcon?: boolean;
 }) {
   return (
     <button
@@ -82,7 +94,8 @@ function ChainButton({
       onClick={onClick}
     >
       {icon}
-      <span className="truncate text-sm font-medium">{label}</span>
+      <span className="min-w-0 flex-1 truncate text-sm font-medium">{label}</span>
+      {showEditIcon && <PencilIcon width={14} height={14} color="#6b7280" />}
     </button>
   );
 }

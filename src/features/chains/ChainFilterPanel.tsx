@@ -1,4 +1,5 @@
-import { ChevronIcon } from '@hyperlane-xyz/widgets';
+import { ChevronIcon, PencilIcon } from '@hyperlane-xyz/widgets';
+import { useState } from 'react';
 import { SearchInput } from '../../components/input/SearchInput';
 import { ChainList } from './ChainList';
 import { ChainInfo } from './hooks';
@@ -8,6 +9,8 @@ interface ChainFilterPanelProps {
   onSearchChange: (s: string) => void;
   selectedChain: ChainName | null;
   onSelectChain: (chain: ChainInfo | null) => void;
+  /** Called when user clicks a chain in edit mode */
+  onEditChain?: (chainName: string) => void;
   /** Mobile only: show back button */
   showBackButton?: boolean;
   onBack?: () => void;
@@ -18,9 +21,20 @@ export function ChainFilterPanel({
   onSearchChange,
   selectedChain,
   onSelectChain,
+  onEditChain,
   showBackButton,
   onBack,
 }: ChainFilterPanelProps) {
+  const [isEditMode, setIsEditMode] = useState(false);
+
+  const handleChainClick = (chain: ChainInfo | null) => {
+    if (isEditMode && chain && onEditChain) {
+      onEditChain(chain.name);
+    } else {
+      onSelectChain(chain);
+    }
+  };
+
   return (
     <div className="flex w-full flex-col rounded-sm bg-gray-100 md:w-[282px]">
       <div className="relative shrink-0 px-4 py-4">
@@ -41,13 +55,22 @@ export function ChainFilterPanel({
           aria-label="Search chains"
         />
       </div>
-      <div className="px-4 pb-2">
+      <div className="flex items-center justify-between px-4 pb-2">
         <h3 className="font-secondary text-sm font-normal text-black">Chain Selection</h3>
+        <button
+          type="button"
+          onClick={() => setIsEditMode((prev) => !prev)}
+          title={isEditMode ? 'Exit edit mode' : 'Edit chain metadata'}
+          className="flex h-6 w-6 items-center justify-center rounded transition-colors hover:bg-gray-200"
+        >
+          <PencilIcon width={14} height={14} color={isEditMode ? '#9A0DFF' : '#6b7280'} />
+        </button>
       </div>
       <ChainList
         searchQuery={searchQuery}
         selectedChain={selectedChain}
-        onSelectChain={onSelectChain}
+        onSelectChain={handleChainClick}
+        isEditMode={isEditMode}
       />
     </div>
   );

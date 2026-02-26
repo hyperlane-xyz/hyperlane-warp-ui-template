@@ -262,3 +262,53 @@ Needs to be higher than Intercom chatbox (z-index: 2147483000)
 #refiner-widget-wrapper {
   z-index: 2147483001 !important;
 }
+
+/*
+Chain Edit Modal - Widget style overrides
+==========================================
+Override htw- prefixed Tailwind classes from @hyperlane-xyz/widgets
+ChainDetailsMenu to match v2 styling
+*/
+.chain-edit-container {
+  font-family: var(--font-secondary, 'PP Valve', system-ui, sans-serif);
+}
+
+/* Section headers */
+.chain-edit-container h2 {
+  font-family: var(--font-secondary, 'PP Valve', system-ui, sans-serif);
+  font-size: 1rem;
+}
+
+.chain-edit-container h3 {
+  font-family: var(--font-secondary, 'PP Valve', system-ui, sans-serif);
+  color: #6b7280;
+}
+
+/* Text inputs */
+.chain-edit-container input[type='text'],
+.chain-edit-container textarea {
+  font-family: var(--font-primary, 'PP Fraktion Mono', monospace);
+  border-color: #d1d5db;
+  border-radius: 4px;
+  font-size: 0.8125rem;
+}
+
+.chain-edit-container input[type='text']:focus,
+.chain-edit-container textarea:focus {
+  border-color: #9a0dff;
+  outline: none;
+}
+
+/* Buttons inside the widget */
+.chain-edit-container button {
+  font-family: var(--font-secondary, 'PP Valve', system-ui, sans-serif);
+}
+
+/* Links */
+.chain-edit-container a {
+  color: #9a0dff;
+}
+
+.chain-edit-container a:hover {
+  text-decoration: underline;
+}

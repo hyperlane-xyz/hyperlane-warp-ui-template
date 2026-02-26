@@ -1,8 +1,10 @@
 import { ChainMetadata, isRpcHealthy } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
 import { FormWarningBanner } from '../../components/banner/FormWarningBanner';
 import { logger } from '../../utils/logger';
+import { ChainEditModal } from './ChainEditModal';
 import { useMultiProvider } from './hooks';
 import { getChainDisplayName } from './utils';
 
@@ -14,6 +16,7 @@ export function ChainConnectionWarning({
   destination: ChainName;
 }) {
   const multiProvider = useMultiProvider();
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const originMetadata = multiProvider.getChainMetadata(origin);
   const destinationMetadata = multiProvider.getChainMetadata(destination);
 
@@ -35,15 +38,26 @@ export function ChainConnectionWarning({
 
   const displayName = getChainDisplayName(
     multiProvider,
-    unhealthyChain?.name || originMetadata.name,
+    unhealthyChain?.name ?? originMetadata.name,
     true,
   );
 
   return (
     <>
-      <FormWarningBanner isVisible={!!unhealthyChain}>
+      <FormWarningBanner
+        isVisible={!!unhealthyChain}
+        cta="Edit"
+        onClick={() => unhealthyChain && setIsEditOpen(true)}
+      >
         {`Connection to ${displayName} is unstable. Consider adding a more reliable RPC URL.`}
       </FormWarningBanner>
+      {unhealthyChain && (
+        <ChainEditModal
+          isOpen={isEditOpen}
+          close={() => setIsEditOpen(false)}
+          chainName={unhealthyChain.name}
+        />
+      )}
     </>
   );
 }

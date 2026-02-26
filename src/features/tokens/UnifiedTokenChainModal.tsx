@@ -17,6 +17,8 @@ interface Props {
   counterpartToken?: Token;
   /** Recipient address for destination balance lookups */
   recipient?: string;
+  /** Called when user clicks a chain in edit mode - closes this modal first */
+  onEditChain?: (chainName: string) => void;
 }
 
 export function UnifiedTokenChainModal({
@@ -26,6 +28,7 @@ export function UnifiedTokenChainModal({
   selectionMode,
   counterpartToken,
   recipient,
+  onEditChain,
 }: Props) {
   const [chainSearch, setChainSearch] = useState('');
   const [tokenSearch, setTokenSearch] = useState('');
@@ -63,6 +66,11 @@ export function UnifiedTokenChainModal({
     setShowMobileChainList(false);
   };
 
+  const handleEditChain = (chainName: string) => {
+    onClose();
+    onEditChain?.(chainName);
+  };
+
   return (
     <Modal
       isOpen={isOpen}
@@ -78,6 +86,7 @@ export function UnifiedTokenChainModal({
             onSearchChange={setChainSearch}
             selectedChain={selectedChain?.name ?? null}
             onSelectChain={handleSelectChainMobile}
+            onEditChain={handleEditChain}
             showBackButton={showMobileChainList}
             onBack={() => setShowMobileChainList(false)}
           />

@@ -1,7 +1,7 @@
 import { IToken } from '@hyperlane-xyz/sdk';
 import { ChevronIcon } from '@hyperlane-xyz/widgets';
 import { useField, useFormikContext } from 'formik';
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { TokenIcon } from '../../components/icons/TokenIcon';
 
 import { WARP_QUERY_PARAMS } from '../../consts/args';
@@ -22,16 +22,15 @@ export function TokenSelectField({ name, disabled, setIsNft }: Props) {
   const { values, setValues } = useFormikContext<TransferFormValues>();
   const [field, , helpers] = useField<number | undefined>(name);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isAutomaticSelection, setIsAutomaticSelection] = useState(false);
 
   const warpCore = useWarpCore();
   const multiProvider = useMultiProvider();
 
   const { origin, destination } = values;
-  useEffect(() => {
+  const isAutomaticSelection = useMemo(() => {
     const tokensWithRoute = warpCore.getTokensForRoute(origin, destination);
-    setIsAutomaticSelection(tokensWithRoute.length <= 1);
-  }, [warpCore, origin, destination, helpers]);
+    return tokensWithRoute.length <= 1;
+  }, [warpCore, origin, destination]);
 
   const onSelectToken = (newToken: IToken) => {
     // Set the token address value in formik state
@@ -110,7 +109,7 @@ function TokenButton({
     >
       <div className="flex items-center">
         {token && <TokenIcon token={token} size={20} />}
-        <span className={`ml-2 ${!token?.symbol && 'text-slate-400'}`}>
+        <span className={`ml-2 font-secondary ${!token?.symbol ? 'text-slate-400' : ''}`}>
           {token?.symbol || (isAutomatic ? 'No routes available' : 'Select Token')}
         </span>
       </div>

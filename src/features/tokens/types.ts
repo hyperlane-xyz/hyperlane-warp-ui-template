@@ -20,3 +20,5 @@ export interface TokenWithFee {
   tokenFee?: TokenAmount;
   balance: bigint;
 }
+
+export type DefaultMultiCollateralRoutes = Record<ChainName, Record<Address, Address>>;

@@ -17,8 +17,8 @@ const explorerApiUrl =
 interface Config {
   addressBlacklist: string[]; // A list of addresses that are blacklisted and cannot be used in the app
   chainWalletWhitelists: ChainMap<string[]>; // A map of chain names to a list of wallet names that work for it
-  defaultOriginChain: string | undefined; // The initial origin chain to show when app first loads
-  defaultDestinationChain: string | undefined; // The initial destination chain to show when app first loads
+  defaultOriginToken: string | undefined; // The initial origin token to show when app first loads (format: chainName-symbol, e.g. "ethereum-hyper")
+  defaultDestinationToken: string | undefined; // The initial destination token to show when app first loads (format: chainName-symbol, e.g. "bsc-hyper")
   enableExplorerLink: boolean; // Include a link to the hyperlane explorer in the transfer modal
   explorerApiUrl: string; // URL for the Hyperlane Explorer GraphQL API
   isDevMode: boolean; // Enables some debug features in the app
@@ -36,6 +36,7 @@ interface Config {
   walletProtocols: ProtocolType[] | undefined; // Wallet Protocols to show in the wallet connect modal. Leave undefined to include all of them
   rpcOverrides: string; // JSON string containing a map of chain names to an object with an URL for RPC overrides (For an example check the .env.example file)
   enableTrackingEvents: boolean; // Allow tracking events to happen on some actions;
+  featuredTokens: string[]; // List of featured tokens to prioritize in token picker (format: "chainName-symbol")
 }
 
 export const config: Config = Object.freeze({
@@ -43,8 +44,8 @@ export const config: Config = Object.freeze({
   chainWalletWhitelists,
   enableExplorerLink: false,
   explorerApiUrl,
-  defaultOriginChain: undefined,
-  defaultDestinationChain: undefined,
+  defaultOriginToken: undefined,
+  defaultDestinationToken: undefined,
   isDevMode,
   registryUrl,
   registryBranch,
@@ -67,4 +68,24 @@ export const config: Config = Object.freeze({
   shouldDisableChains: false,
   rpcOverrides,
   enableTrackingEvents: false,
+  featuredTokens: [
+    'ethereum-ETH',
+    'ethereum-USDC',
+    'ethereum-USDT',
+    'ethereum-WETH',
+    'ethereum-WBTC',
+    'base-ETH',
+    'base-USDC',
+    'base-CBBTC',
+    'arbitrum-ETH',
+    'arbitrum-USDC',
+    'arbitrum-USDT',
+    'optimism-ETH',
+    'optimism-USDC',
+    'solanamainnet-SOL',
+    'solanamainnet-USDC',
+    'polygon-USDC',
+    'bsc-USDC',
+    'bsc-BNB',
+  ],
 });

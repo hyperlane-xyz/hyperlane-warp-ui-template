@@ -10,6 +10,7 @@ import {
   ChainMetadata,
   ChainName,
   MultiProtocolProvider,
+  Token,
   WarpCore,
   WarpCoreConfig,
 } from '@hyperlane-xyz/sdk';
@@ -21,7 +22,12 @@ import { config } from '../consts/config';
 import { logger } from '../utils/logger';
 import { assembleChainMetadata } from './chains/metadata';
 import { TokenChainMap } from './tokens/types';
-import { assembleTokensBySymbolChainMap } from './tokens/utils';
+import {
+  assembleTokensBySymbolChainMap,
+  buildTokensArray,
+  getTokenKey,
+  groupTokensByCollateral,
+} from './tokens/utils';
 import { FinalTransferStatuses, TransferContext, TransferStatus } from './transfer/types';
 import { assembleWarpCoreConfig } from './warpCore/warpCoreConfig';
 
@@ -40,6 +46,12 @@ interface WarpContext {
   multiProvider: MultiProtocolProvider;
   warpCore: WarpCore;
   tokensBySymbolChainMap: Record<string, TokenChainMap>;
+  /** Unified tokens array (deduplicated, can be origin or destination) */
+  tokens: Token[];
+  /** Pre-computed collateral groups for fast route checking */
+  collateralGroups: Map<string, Token[]>;
+  /** Pre-computed token key to Token map for O(1) lookups */
+  tokenByKeyMap: Map<string, Token>;
   // Map of chain -> address -> router info
   routerAddressesByChainMap: Record<ChainName, Record<string, RouterAddressInfo>>;
   // Deduplicated, sorted CoinGecko IDs for all tokens
@@ -84,6 +96,15 @@ export interface AppState {
   originChainName: ChainName;
   setOriginChainName: (originChainName: ChainName) => void;
   tokensBySymbolChainMap: Record<string, TokenChainMap>;
+  // instead of moving the TipCard component inside the formik and an useEffect can be set to watch for it
+  isTipCardActionTriggered: boolean;
+  setIsTipCardActionTriggered: (isTipCardActionTriggered: boolean) => void;
+  /** Unified tokens array (deduplicated, can be origin or destination) */
+  tokens: Token[];
+  /** Pre-computed collateral groups for fast route checking */
+  collateralGroups: Map<string, Token[]>;
+  /** Pre-computed token key to Token map for O(1) lookups */
+  tokenByKeyMap: Map<string, Token>;
   // Map of chain -> address -> router info
   // Used to: 1) prevent sending to warp route addresses, 2) format amounts with correct decimals
   routerAddressesByChainMap: Record<ChainName, Record<string, RouterAddressInfo>>;
@@ -108,6 +129,9 @@ export const useStore = create<AppState>()(
           warpCore,
           routerAddressesByChainMap,
           tokensBySymbolChainMap,
+          tokens,
+          collateralGroups,
+          tokenByKeyMap,
           coinGeckoIds,
         } = await initWarpContext({
           ...get(),
@@ -119,6 +143,9 @@ export const useStore = create<AppState>()(
           warpCore,
           tokensBySymbolChainMap,
           routerAddressesByChainMap,
+          tokens,
+          collateralGroups,
+          tokenByKeyMap,
           coinGeckoIds,
         });
       },
@@ -130,6 +157,9 @@ export const useStore = create<AppState>()(
           warpCore,
           routerAddressesByChainMap,
           tokensBySymbolChainMap,
+          tokens,
+          collateralGroups,
+          tokenByKeyMap,
           coinGeckoIds,
         } = await initWarpContext({
           ...get(),
@@ -141,6 +171,9 @@ export const useStore = create<AppState>()(
           warpCore,
           tokensBySymbolChainMap,
           routerAddressesByChainMap,
+          tokens,
+          collateralGroups,
+          tokenByKeyMap,
           coinGeckoIds,
         });
       },
@@ -203,6 +236,13 @@ export const useStore = create<AppState>()(
       },
       tokensBySymbolChainMap: {},
       routerAddressesByChainMap: {},
+      isTipCardActionTriggered: false,
+      setIsTipCardActionTriggered: (isTipCardActionTriggered: boolean) => {
+        set(() => ({ isTipCardActionTriggered }));
+      },
+      tokens: [],
+      collateralGroups: new Map(),
+      tokenByKeyMap: new Map(),
       coinGeckoIds: [],
     }),
 
@@ -273,6 +313,17 @@ async function initWarpContext({
     const warpCore = WarpCore.FromConfig(multiProvider, coreConfig);
 
     const tokensBySymbolChainMap = assembleTokensBySymbolChainMap(warpCore.tokens, multiProvider);
+
+    // Build unified tokens array (deduplicated by collateral at startup)
+    const tokens = buildTokensArray(warpCore.tokens);
+    // Build collateral groups for fast route checking
+    const collateralGroups = groupTokensByCollateral(warpCore.tokens);
+    // Build token by key map for O(1) lookups
+    const tokenByKeyMap = new Map<string, Token>();
+    for (const token of tokens) {
+      tokenByKeyMap.set(getTokenKey(token), token);
+    }
+
     const routerAddressesByChainMap = getRouterAddressesByChain(warpCore.tokens, wireDecimalsMap);
     const coinGeckoIds = Array.from(
       new Set(coreConfig.tokens.map((t) => t.coinGeckoId).filter(Boolean)),
@@ -284,6 +335,9 @@ async function initWarpContext({
       warpCore,
       tokensBySymbolChainMap,
       routerAddressesByChainMap,
+      tokens,
+      collateralGroups,
+      tokenByKeyMap,
       coinGeckoIds,
     };
   } catch (error) {
@@ -296,6 +350,9 @@ async function initWarpContext({
       warpCore: new WarpCore(new MultiProtocolProvider({}), []),
       tokensBySymbolChainMap: {},
       routerAddressesByChainMap: {},
+      tokens: [],
+      collateralGroups: new Map(),
+      tokenByKeyMap: new Map(),
       coinGeckoIds: [],
     };
   }

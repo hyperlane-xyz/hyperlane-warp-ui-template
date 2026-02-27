@@ -2,5 +2,175 @@
 # These configs will be merged with the warp routes in the configured registry
 # The input here is typically the output of the Hyperlane CLI warp deploy command
 ---
-tokens: []
+tokens:
+  # SOL/celestia: Native SOL on Solana <-> Synthetic SOL on Celestia
+  - addressOrDenom: '0x726f757465725f6170700000000000000000000000000002000000000000000a'
+    chainName: celestia
+    connections:
+      - token: sealevel|solanamainnet|4Acwq4Sw8Y7rZT8traFYmYsxZ86MAe2pQtGgkjh1mHP6
+    decimals: 9
+    name: SOL
+    standard: CosmosNativeHypSynthetic
+    symbol: SOL
+  - addressOrDenom: 4Acwq4Sw8Y7rZT8traFYmYsxZ86MAe2pQtGgkjh1mHP6
+    chainName: solanamainnet
+    connections:
+      - token: cosmosnative|celestia|0x726f757465725f6170700000000000000000000000000002000000000000000a
+    decimals: 9
+    name: SOL
+    standard: SealevelHypNative
+    symbol: SOL
+  # SOL/eden: Collateral SOL on Celestia <-> Synthetic SOL on Eden
+  - addressOrDenom: '0x726f757465725f6170700000000000000000000000000001000000000000000c'
+    chainName: celestia
+    collateralAddressOrDenom: hyperlane/0x726f757465725f6170700000000000000000000000000002000000000000000a
+    connections:
+      - token: ethereum|eden|0x16eD50F96ea655Cb03638d7054e62e42Afb7b4fA
+    decimals: 9
+    name: SOL
+    standard: CosmosNativeHypCollateral
+    symbol: SOL
+  - addressOrDenom: '0x16eD50F96ea655Cb03638d7054e62e42Afb7b4fA'
+    chainName: eden
+    connections:
+      - token: cosmosnative|celestia|0x726f757465725f6170700000000000000000000000000001000000000000000c
+    decimals: 9
+    name: SOL
+    standard: EvmHypSynthetic
+    symbol: SOL
+  # ETH/celestia: Native ETH on Ethereum <-> Synthetic ETH on Celestia
+  - addressOrDenom: '0x726f757465725f6170700000000000000000000000000002000000000000000b'
+    chainName: celestia
+    connections:
+      - token: ethereum|ethereum|0x26Cba9F11119892a7540a26b67cBcB9c08F586cD
+    decimals: 18
+    name: Ether
+    standard: CosmosNativeHypSynthetic
+    symbol: ETH
+  - addressOrDenom: '0x26Cba9F11119892a7540a26b67cBcB9c08F586cD'
+    chainName: ethereum
+    coinGeckoId: ethereum
+    connections:
+      - token: cosmosnative|celestia|0x726f757465725f6170700000000000000000000000000002000000000000000b
+    decimals: 18
+    name: Ether
+    standard: EvmHypNative
+    symbol: ETH
+  # ETH/eden: Collateral ETH on Celestia <-> Synthetic ETH on Eden
+  - addressOrDenom: '0x726f757465725f61707000000000000000000000000000010000000000000010'
+    chainName: celestia
+    coinGeckoId: ethereum
+    collateralAddressOrDenom: hyperlane/0x726f757465725f6170700000000000000000000000000002000000000000000b
+    connections:
+      - token: ethereum|eden|0x23958cBa555AC52C9495Df9b121ff73003e39dBb
+    decimals: 18
+    name: Ether
+    standard: CosmosNativeHypCollateral
+    symbol: ETH
+  - addressOrDenom: '0x23958cBa555AC52C9495Df9b121ff73003e39dBb'
+    chainName: eden
+    connections:
+      - token: cosmosnative|celestia|0x726f757465725f61707000000000000000000000000000010000000000000010
+    decimals: 18
+    name: Ether
+    standard: EvmHypSynthetic
+    symbol: ETH
+  # WBTC/celestia: LBTC Collateral on Ethereum <-> Synthetic BTC on Celestia
+  - addressOrDenom: '0x726f757465725f6170700000000000000000000000000002000000000000000e'
+    chainName: celestia
+    connections:
+      - token: ethereum|ethereum|0x02D28685e808A962aF327180AD55cEE32Eb94C94
+    decimals: 8
+    name: BTC
+    standard: CosmosNativeHypSynthetic
+    symbol: BTC
+  - addressOrDenom: '0x02D28685e808A962aF327180AD55cEE32Eb94C94'
+    chainName: ethereum
+    coinGeckoId: wrapped-bitcoin
+    collateralAddressOrDenom: '0x8236a87084f8B84306f72007F36F2618A5634494'
+    connections:
+      - token: cosmosnative|celestia|0x726f757465725f6170700000000000000000000000000002000000000000000e
+    decimals: 8
+    name: Lombard Staked Bitcoin
+    standard: EvmHypCollateral
+    symbol: LBTC
+  # WBTC/eden: Collateral BTC on Celestia <-> Synthetic BTC on Eden
+  - addressOrDenom: '0x726f757465725f61707000000000000000000000000000010000000000000011'
+    chainName: celestia
+    collateralAddressOrDenom: hyperlane/0x726f757465725f6170700000000000000000000000000002000000000000000e
+    connections:
+      - token: ethereum|eden|0xFA3198ecF05303a6d96E57a45E6c815055D255b1
+    decimals: 8
+    name: BTC
+    standard: CosmosNativeHypCollateral
+    symbol: BTC
+  - addressOrDenom: '0xFA3198ecF05303a6d96E57a45E6c815055D255b1'
+    chainName: eden
+    connections:
+      - token: cosmosnative|celestia|0x726f757465725f61707000000000000000000000000000010000000000000011
+    decimals: 8
+    name: BTC
+    standard: EvmHypSynthetic
+    symbol: BTC
+  # TIA/eden: Collateral TIA on Celestia <-> Native TIA on Eden
+  - addressOrDenom: '0x726f757465725f61707000000000000000000000000000010000000000000009'
+    chainName: celestia
+    connections:
+      - token: ethereum|eden|0x4A60C46f671A3b86D78E9c0b793235C2D502d44E
+    decimals: 6
+    name: TIA
+    standard: CosmosNativeHypCollateral
+    symbol: TIA
+  - addressOrDenom: '0x4A60C46f671A3b86D78E9c0b793235C2D502d44E'
+    chainName: eden
+    connections:
+      - token: cosmosnative|celestia|0x726f757465725f61707000000000000000000000000000010000000000000009
+    decimals: 18
+    name: TIA
+    standard: EvmNative
+    symbol: TIA
+    # eUSD/celestia: Collateral eUSD on Ethereum <-> Synthetic eUSD on Celestia
+  - addressOrDenom: '0x726f757465725f61707000000000000000000000000000020000000000000013'
+    chainName: celestia
+    connections:
+      - token: ethereum|ethereum|0x129b6d0b13e04a3de4c3e133ca926c174fdcec7d
+    decimals: 18
+    logoURI: /deployments/warp_routes/eUSD/logo.svg
+    name: eUSD
+    standard: CosmosNativeHypSynthetic
+    symbol: eUSD
+  - addressOrDenom: '0x129b6d0b13e04a3de4c3e133ca926c174fdcec7d'
+    chainName: ethereum
+    # no info on coingecko for this token yet but will assume its usdc priced
+    coinGeckoId: usd-coin
+    collateralAddressOrDenom: '0x399cc65703e01c7fdefdf27093f84e7eb4b3f8b6'
+    connections:
+      - token: cosmosnative|celestia|0x726f757465725f61707000000000000000000000000000020000000000000013
+    decimals: 18
+    logoURI: /deployments/warp_routes/eUSD/logo.svg
+    name: eUSD
+    standard: EvmHypCollateral
+    symbol: eUSD
+  # eUSD/eden: Collateral eUSD on Celestia <-> Synthetic eUSD on Eden
+  - addressOrDenom: '0x726f757465725f61707000000000000000000000000000010000000000000014'
+    chainName: celestia
+    # no info on coingecko for this token yet but will assume its usdc priced
+    coinGeckoId: usd-coin
+    collateralAddressOrDenom: hyperlane/0x726f757465725f61707000000000000000000000000000020000000000000013
+    connections:
+      - token: ethereum|eden|0xF4e644772b17b6c57327F4D111a73D68C8cC731B
+    decimals: 18
+    logoURI: /deployments/warp_routes/eUSD/logo.svg
+    name: eUSD
+    standard: CosmosNativeHypCollateral
+    symbol: eUSD
+  - addressOrDenom: '0xF4e644772b17b6c57327F4D111a73D68C8cC731B'
+    chainName: eden
+    connections:
+      - token: cosmosnative|celestia|0x726f757465725f61707000000000000000000000000000010000000000000014
+    decimals: 18
+    logoURI: /deployments/warp_routes/eUSD/logo.svg
+    name: eUSD
+    standard: EvmHypSynthetic
+    symbol: eUSD
 options: {}

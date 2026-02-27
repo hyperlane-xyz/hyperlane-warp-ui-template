@@ -2,8 +2,12 @@
 // Warp Route IDs use format `SYMBOL/chainname1-chainname2...` where chains are ordered alphabetically
 // If left null, all warp routes in the configured registry will be included
 // If set to a list (including an empty list), only the specified routes will be included
-export const warpRouteWhitelist: Array<string> | null = null;
-// Example:
-// [
-//   // 'ETH/ethereum-viction'
-// ];
+export const warpRouteWhitelist: Array<string> | null = [
+  'SOL/celestia-solanamainnet',
+  'SOL/celestia-eden',
+  'ETH/celestia-ethereum',
+  'ETH/celestia-eden',
+  'WBTC/celestia-ethereum',
+  'WBTC/celestia-eden',
+  'TIA/celestia-eden',
+];

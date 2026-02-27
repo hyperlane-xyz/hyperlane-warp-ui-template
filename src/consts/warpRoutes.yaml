@@ -3,20 +3,20 @@
 # The input here is typically the output of the Hyperlane CLI warp deploy command
 ---
 tokens:
-  - chainName: seismiclocal
+  - chainName: seismictestnet
     standard: EvmHypSynthetic
     decimals: 18
     symbol: ETH
     name: Ether
-    addressOrDenom: "0xc007244B1d94e2d7525848FDb00e36F4e595aaE9"
+    addressOrDenom: "0xFCc646A6395C50FfECf5B467E649Fb6D1928Ff51"
     connections:
-      - token: ethereum|sepolia|0x9eA7A8eC301C81115Cb6d4f4A909420a657378f3
+      - token: ethereum|sepolia|0x77bBfE9fE446593B191eCBAe6544aF8C0cC54bec
   - chainName: sepolia
     standard: EvmHypNative
     decimals: 18
     symbol: ETH
     name: Ether
-    addressOrDenom: "0x9eA7A8eC301C81115Cb6d4f4A909420a657378f3"
+    addressOrDenom: "0x77bBfE9fE446593B191eCBAe6544aF8C0cC54bec"
     connections:
-      - token: ethereum|seismiclocal|0xc007244B1d94e2d7525848FDb00e36F4e595aaE9
+      - token: ethereum|seismictestnet|0xFCc646A6395C50FfECf5B467E649Fb6D1928Ff51
 options: {}

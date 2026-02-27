@@ -3,59 +3,31 @@
 # Chains already in the SDK need not be included here unless you want to override some fields
 # Schema here: https://github.com/hyperlane-xyz/hyperlane-monorepo/blob/main/typescript/sdk/src/metadata/chainMetadataTypes.ts
 ---
-sepolia:
+seismictestnet:
   blockExplorers:
     - apiKey: n
-      apiUrl: https://api-sepolia.etherscan.io/api
+      apiUrl: https://seismic-testnet.socialscan.io/api
       family: etherscan
       name: Etherscan
-      url: https://sepolia.etherscan.io
+      url: https://seismic-testnet.socialscan.io/
   blocks:
     confirmations: 1
     estimateBlockTime: 13
     reorgPeriod: 2
-  chainId: 11155111
+  chainId: 5124
   deployer:
     name: Abacus Works
     url: https://www.hyperlane.xyz
-  displayName: Sepolia
-  domainId: 11155111
+  displayName: Seismic Testnet
+  domainId: 5124
   gasCurrencyCoinGeckoId: ethereum
   gnosisSafeTransactionServiceUrl: https://safe-transaction-sepolia.safe.global
   isTestnet: true
-  name: sepolia
+  name: seismictestnet
   nativeToken:
     decimals: 18
     name: Ether
     symbol: ETH
   protocol: ethereum
   rpcUrls:
-    - http: https://api-ethereum-sepolia.n.dwellir.com/98585163-c7e8-4a24-b0fa-47cf300bc305
-seismiclocal:
-  blockExplorers:
-    - apiKey: n
-      apiUrl: https://api-sepolia.etherscan.io/api
-      family: etherscan
-      name: Etherscan
-      url: https://sepolia.etherscan.io
-  blocks:
-    confirmations: 1
-    estimateBlockTime: 13
-    reorgPeriod: 2
-  chainId: 31337
-  deployer:
-    name: Abacus Works
-    url: https://www.hyperlane.xyz
-  displayName: Seismic Local
-  domainId: 31337
-  gasCurrencyCoinGeckoId: ethereum
-  gnosisSafeTransactionServiceUrl: https://safe-transaction-sepolia.safe.global
-  isTestnet: true
-  name: seismiclocal
-  nativeToken:
-    decimals: 18
-    name: Ether
-    symbol: ETH
-  protocol: ethereum
-  rpcUrls:
-    - http: http://127.0.0.1:8545
+    - http: https://gcp-2.seismictest.net/rpc

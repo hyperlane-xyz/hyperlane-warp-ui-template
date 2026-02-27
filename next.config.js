@@ -103,15 +103,15 @@ const nextConfig = {
     };
 
     // TODO: Remove when @hyperlane-xyz/core fixes ethers v5/v6 compat in typechain.
-    // core's typechain does `import { utils } from 'ethers'` (v5 API) which fails
-    // during barrel optimization with webpackBuildWorker enabled. Stub out the
-    // third-party typechain barrels that re-export the broken factories.
+    // core@11's typechain does `import { utils } from 'ethers'` (v5 API) which fails
+    // during barrel optimization with webpackBuildWorker. Stub out the entire typechain
+    // barrel — this app doesn't use contract factories directly.
     // See: https://github.com/hyperlane-xyz/hyperlane-warp-ui-template/pull/976
     config.resolve.alias = {
       ...config.resolve.alias,
+      '@hyperlane-xyz/core/dist/typechain': false,
       '@hyperlane-xyz/core/dist/tron': false,
-      '@hyperlane-xyz/core/dist/typechain/@arbitrum': false,
-      '@hyperlane-xyz/core/dist/typechain/@chainlink': false,
+      '@hyperlane-xyz/core/dist/buildArtifact.js': false,
     };
 
     if (isServer) {

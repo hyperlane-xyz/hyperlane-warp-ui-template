@@ -1,4 +1,4 @@
-import { Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
+import { PredicateAttestation, Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
 import {
   KnownProtocolType,
   ProtocolType,
@@ -33,6 +33,7 @@ import { TextField } from '../../components/input/TextField';
 import { WARP_QUERY_PARAMS } from '../../consts/args';
 import { config } from '../../consts/config';
 import { defaultMultiCollateralRoutes } from '../../consts/defaultMultiCollateralRoutes';
+import { getPredicateClient } from '../../lib/predicateClient';
 import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
 import { getQueryParams, updateQueryParam } from '../../utils/queryParams';
@@ -902,12 +903,48 @@ async function validateForm(
     }
 
     const originTokenAmount = transferToken.amount(amountWei);
+
+    // Check if predicate attestation needed for validation
+    let attestation: PredicateAttestation | undefined;
+    const predicateClient = getPredicateClient();
+    if (predicateClient) {
+      const needsAttestation = await warpCore.isPredicateSupported(transferToken, destination);
+
+      if (needsAttestation) {
+        // Get wrapper address for attestation request
+        const adapter = transferToken.getAdapter(warpCore.multiProvider) as any;
+        const wrapperAddress = await adapter.getPredicateWrapperAddress();
+
+        // Build temp tx to get calldata for attestation
+        const tempTxs = await warpCore.getTransferRemoteTxs({
+          originTokenAmount,
+          destination,
+          sender: sender || '',
+          recipient,
+          senderPubKey: await senderPubKey,
+        });
+        const tempTx = tempTxs[0] as any;
+
+        const attestationRequest = {
+          to: wrapperAddress!,
+          from: sender || '',
+          data: tempTx.transaction.data?.toString() || '0x',
+          msg_value: tempTx.transaction.value?.toString() || '0',
+          chain: origin,
+        };
+
+        const response = await predicateClient.fetchAttestation(attestationRequest);
+        attestation = response.attestation;
+      }
+    }
+
     const result = await warpCore.validateTransfer({
       originTokenAmount,
       destination,
       recipient,
       sender: sender || '',
       senderPubKey: await senderPubKey,
+      attestation,
     });
 
     if (!isNullish(result)) {

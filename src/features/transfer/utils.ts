@@ -14,6 +14,8 @@ export function getTransferStatusLabel(
   else if (status === TransferStatus.Preparing)
     statusDescription = 'Preparing for token transfer...';
   else if (status === TransferStatus.CreatingTxs) statusDescription = 'Creating transactions...';
+  else if (status === TransferStatus.FetchingAttestation)
+    statusDescription = 'Verifying compliance attestation...';
   else if (status === TransferStatus.SigningApprove)
     statusDescription = `Sign approve transaction in ${connectorName} to continue.`;
   else if (status === TransferStatus.ConfirmingApprove)

@@ -1,8 +1,9 @@
-import { Token, WarpCore, WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
+import { type PredicateAttestation, Token, WarpCore, WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
 import { HexString, toWei } from '@hyperlane-xyz/utils';
 import { getAccountAddressAndPubKey, useAccounts, useDebounce } from '@hyperlane-xyz/widgets';
 import { useQuery } from '@tanstack/react-query';
 import { defaultMultiCollateralRoutes } from '../../consts/defaultMultiCollateralRoutes';
+import { getPredicateClient } from '../../lib/predicateClient';
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { useWarpCore } from '../tokens/hooks';
@@ -92,6 +93,12 @@ async function fetchFeeQuotes(
   }
 
   const originTokenAmount = transferToken.amount(amountWei);
+
+  // TEMPORARY: Skip Predicate for fee estimation to debug
+  // The circular dependency issue: need tx to get attestation, need attestation to build tx
+  let attestation: PredicateAttestation | undefined;
+  logger.debug('Skipping Predicate attestation for fee estimation (temporary debug)');
+
   logger.debug('Fetching fee quotes');
   return warpCore.estimateTransferRemoteFees({
     originTokenAmount,
@@ -99,5 +106,6 @@ async function fetchFeeQuotes(
     sender,
     senderPubKey: await senderPubKey,
     recipient: recipient,
+    attestation,
   });
 }

@@ -114,7 +114,9 @@ export function TokenList({
 
   // All route tokens (stable — only changes on origin/destination change, NOT on search)
   const allRouteTokens = useMemo(() => {
-    const multiChainTokens = warpCore.tokens.filter((t) => t.isMultiChainToken());
+    const multiChainTokens = warpCore.tokens.filter(
+      (t) => t.isMultiChainToken() || t.getConnections().length > 0,
+    );
     const tokensWithRoute = warpCore.getTokensForRoute(origin, destination);
     const items = multiChainTokens
       .map((t) => ({ token: t, disabled: !tokensWithRoute.includes(t) }))

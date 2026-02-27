@@ -1490,7 +1490,7 @@ packages:
         optional: true
 
   '@hyperlane-xyz/core@file:.monorepo-tarballs/hyperlane-xyz-core-10.1.5.tgz':
-    resolution: {integrity: sha512-+0s7tmYWZavH6SmjVg3/ullToQzw8zrnEVT8ujC6sCpyhNo1lKcXunQ/4XfozawK9MXkr7nEOmi06pOqh4SkIA==, tarball: file:.monorepo-tarballs/hyperlane-xyz-core-10.1.5.tgz}
+    resolution: {integrity: sha512-3Ks5uTfVvoSVoTQ1lfkKCwtlB0peXBNXy71E/bGpCfKvK+2VXlbUQ5vtgzIf6+7MBnZvKtk91aYKzzWYMQS6qQ==, tarball: file:.monorepo-tarballs/hyperlane-xyz-core-10.1.5.tgz}
     version: 10.1.5
     engines: {node: '>=16'}
     peerDependencies:
@@ -1505,7 +1505,7 @@ packages:
     resolution: {integrity: sha512-Lgd3YPnkXHVE4QeZ2yq3+/CHuIL1DI16M8/VZPb17hDweRCje74Efa+M36t5IieuCrcqv+7km9H7vnvL+aBYhg==}
 
   '@hyperlane-xyz/deploy-sdk@file:.monorepo-tarballs/hyperlane-xyz-deploy-sdk-1.3.2.tgz':
-    resolution: {integrity: sha512-jRdhmfP5gszQgscUeF86aCKk/0YL/OeYUQMO5RIOW8l4MK2BXWjdjzBxRw0oNdnyt4P0CEmotEm5Z7eeDyWcEg==, tarball: file:.monorepo-tarballs/hyperlane-xyz-deploy-sdk-1.3.2.tgz}
+    resolution: {integrity: sha512-+wM67YQ+LVaWrra1IfXoxEIDtuMyHamP3pFzVVD6JNxAFFAsxtJfKb7/SJ+5R3pIkS5mp98PG9NWPJilotDjFQ==, tarball: file:.monorepo-tarballs/hyperlane-xyz-deploy-sdk-1.3.2.tgz}
     version: 1.3.2
 
   '@hyperlane-xyz/provider-sdk@file:.monorepo-tarballs/hyperlane-xyz-provider-sdk-1.3.2.tgz':
@@ -1520,7 +1520,7 @@ packages:
     engines: {node: '>=24'}
 
   '@hyperlane-xyz/sdk@file:.monorepo-tarballs/hyperlane-xyz-sdk-25.1.0.tgz':
-    resolution: {integrity: sha512-SUUWEbgeX7kdzq8L5N9/fj4OuAA/nzNHdhQcofiqEeGv/lXf2X3l8/N7uvSS06vEu1QOeqUCaroKGUbA0zgyRQ==, tarball: file:.monorepo-tarballs/hyperlane-xyz-sdk-25.1.0.tgz}
+    resolution: {integrity: sha512-rqF6SHsXvWYeanstL5kd76sMZITrG2m10E4pvTdKlgJm+Mhl0eZuEzluohvB5ueMnKauxobRMNmOqQmGxrxAqA==, tarball: file:.monorepo-tarballs/hyperlane-xyz-sdk-25.1.0.tgz}
     version: 25.1.0
     engines: {node: '>=16'}
     peerDependencies:
@@ -1543,7 +1543,7 @@ packages:
         optional: true
 
   '@hyperlane-xyz/widgets@file:.monorepo-tarballs/hyperlane-xyz-widgets-25.1.0.tgz':
-    resolution: {integrity: sha512-Hj3OsQxiX9Hwl/hTBxDY8QYC0l8C24Ju/8BA0cKxLDv11gI+Dt21UZaSU7us5U5RdXZ9o406xOBxBcVndbobIQ==, tarball: file:.monorepo-tarballs/hyperlane-xyz-widgets-25.1.0.tgz}
+    resolution: {integrity: sha512-5hkQRSk2tuPM+t2LbKC0kQWZI3B3WMKL/2rAublvMr5oSFaosKvS2st4s/IwhlW4Tx5Cq3ZcpGNlCShphQlPkA==, tarball: file:.monorepo-tarballs/hyperlane-xyz-widgets-25.1.0.tgz}
     version: 25.1.0
     peerDependencies:
       react: ^18

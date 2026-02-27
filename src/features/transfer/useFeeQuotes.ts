@@ -94,10 +94,39 @@ async function fetchFeeQuotes(
 
   const originTokenAmount = transferToken.amount(amountWei);
 
-  // TEMPORARY: Skip Predicate for fee estimation to debug
-  // The circular dependency issue: need tx to get attestation, need attestation to build tx
+  // Check if predicate attestation needed for fee estimation
   let attestation: PredicateAttestation | undefined;
-  logger.debug('Skipping Predicate attestation for fee estimation (temporary debug)');
+  const predicateClient = getPredicateClient();
+  if (predicateClient) {
+    const needsAttestation = await warpCore.isPredicateSupported(transferToken, destination);
+
+    if (needsAttestation) {
+      // Get wrapper address for attestation request
+      const adapter = transferToken.getAdapter(warpCore.multiProvider) as any;
+      const wrapperAddress = await adapter.getPredicateWrapperAddress();
+
+      // Build temp tx to get calldata for attestation
+      const tempTxs = await warpCore.getTransferRemoteTxs({
+        originTokenAmount,
+        destination,
+        sender,
+        recipient,
+        senderPubKey: await senderPubKey,
+      });
+      const tempTx = tempTxs[0] as any;
+
+      const attestationRequest = {
+        to: wrapperAddress!,
+        from: sender,
+        data: tempTx.transaction.data?.toString() || '0x',
+        msg_value: tempTx.transaction.value?.toString() || '0',
+        chain: originToken.chainName,
+      };
+
+      const response = await predicateClient.fetchAttestation(attestationRequest);
+      attestation = response.attestation;
+    }
+  }
 
   logger.debug('Fetching fee quotes');
   return warpCore.estimateTransferRemoteFees({

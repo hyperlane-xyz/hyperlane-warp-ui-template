@@ -144,7 +144,7 @@ export function TransferTokenForm() {
       validateOnBlur={false}
     >
       {({ isValidating }) => (
-        <Form className="flex w-full flex-col items-stretch">
+        <Form className="transfer-form flex w-full flex-col items-stretch">
           <WarningBanners />
           <ChainSelectSection isReview={isReview} />
           <div className="mt-2.5 flex items-end justify-between space-x-4">
@@ -196,11 +196,15 @@ function SwapChainsButton({
       width={20}
       height={20}
       title="Swap chains"
-      className={!disabled ? 'hover:rotate-180' : undefined}
+      className={
+        disabled
+          ? 'swap-chains-button transition-transform'
+          : 'swap-chains-button transition-transform hover:rotate-180'
+      }
       onClick={onClick}
       disabled={disabled}
     >
-      <SwapIcon width={20} height={20} />
+      <SwapIcon width={20} height={20} className="swap-chains-icon" />
     </IconButton>
   );
 }
@@ -254,7 +258,7 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
   };
 
   return (
-    <div className="mt-2 flex items-center justify-between gap-4">
+    <div className="mt-3.5 flex items-center justify-between gap-4">
       <ChainSelectField
         name="origin"
         label="From"
@@ -287,7 +291,10 @@ function TokenSection({
 }) {
   return (
     <div className="flex-1">
-      <label htmlFor="tokenIndex" className="block pl-0.5 font-secondary text-sm text-gray-600">
+      <label
+        htmlFor="tokenIndex"
+        className="transfer-field-label block pl-0.5 font-secondary text-sm text-gray-600"
+      >
         Token
       </label>
       <TokenSelectField name="tokenIndex" disabled={isReview} setIsNft={setIsNft} />
@@ -310,7 +317,10 @@ function AmountSection({ isNft, isReview }: { isNft: boolean; isReview: boolean 
   return (
     <div className="flex-1">
       <div className="flex justify-between pr-1">
-        <label htmlFor="amount" className="block pl-0.5 font-secondary text-sm text-gray-600">
+        <label
+          htmlFor="amount"
+          className="transfer-field-label block pl-0.5 font-secondary text-sm text-gray-600"
+        >
           Amount
         </label>
         <TokenBalance label="My balance" balance={balance} />
@@ -322,7 +332,7 @@ function AmountSection({ isNft, isReview }: { isNft: boolean; isReview: boolean 
           <TextField
             name="amount"
             placeholder="0.00"
-            className="w-full"
+            className="transfer-text-input w-full"
             type="number"
             step="any"
             disabled={isReview}
@@ -347,7 +357,10 @@ function RecipientSection({ isReview }: { isReview: boolean }) {
   return (
     <div className="mt-4">
       <div className="flex justify-between pr-1">
-        <label htmlFor="recipient" className="block pl-0.5 font-secondary text-sm text-gray-600">
+        <label
+          htmlFor="recipient"
+          className="transfer-field-label block pl-0.5 font-secondary text-sm text-gray-600"
+        >
           Recipient address
         </label>
         <TokenBalance label="Remote balance" balance={balance} />
@@ -356,7 +369,7 @@ function RecipientSection({ isReview }: { isReview: boolean }) {
         <TextField
           name="recipient"
           placeholder="0x123456..."
-          className="w-full"
+          className="transfer-text-input w-full"
           disabled={isReview}
         />
         <SelfButton disabled={isReview} />
@@ -371,7 +384,9 @@ function TokenBalance({ label, balance }: { label: string; balance?: TokenAmount
       maximumFractionDigits: 6,
       useGrouping: false,
     }) || '0';
-  return <div className="text-right text-xs text-gray-600">{`${label}: ${value}`}</div>;
+  return (
+    <div className="transfer-balance text-right text-xs text-gray-600">{`${label}: ${value}`}</div>
+  );
 }
 
 function ButtonSection({
@@ -724,7 +739,7 @@ function ReviewDetails({
         } overflow-hidden transition-all`}
       >
         <label className="mt-4 block pl-0.5 text-sm text-gray-600">Transactions</label>
-        <div className="mt-1.5 space-y-2 break-all rounded border border-gray-400 bg-gray-150 px-2.5 py-2 text-sm">
+        <div className="transfer-review-panel mt-1.5 space-y-2 break-all rounded border border-gray-400 bg-gray-150 px-2.5 py-2 text-sm">
           {isLoading ? (
             <div className="flex items-center justify-center py-6">
               <SpinnerIcon className="h-5 w-5" />
@@ -802,8 +817,8 @@ function ReviewDetails({
 function WarningBanners() {
   const { values } = useFormikContext<TransferFormValues>();
   return (
-    // Max height to prevent double padding if multiple warnings are visible
-    <div className="max-h-10">
+    // Cap space to one visible banner since warning layers are absolutely positioned at the top.
+    <div className="max-h-12 overflow-hidden sm:max-h-10">
       <ChainWalletWarning origin={values.origin} />
       <ChainConnectionWarning origin={values.origin} destination={values.destination} />
       <WalletConnectionWarning origin={values.origin} />

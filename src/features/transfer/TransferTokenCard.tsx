@@ -3,7 +3,7 @@ import { TransferTokenForm } from './TransferTokenForm';
 
 export function TransferTokenCard() {
   return (
-    <Card className="w-100 sm:w-[31rem]">
+    <Card className="transfer-card w-100 sm:w-[31rem]">
       <TransferTokenForm />
     </Card>
   );

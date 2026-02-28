@@ -56,7 +56,7 @@ export function TokenListModal({
     <Modal
       isOpen={isOpen}
       close={onClose}
-      panelClassname="px-2 py-3 max-w-100 sm:max-w-[31rem] max-h-none overflow-auto"
+      panelClassname="token-picker-modal px-2 py-3 max-w-100 sm:max-w-[31rem] max-h-none overflow-auto"
     >
       <SearchBar search={search} setSearch={setSearch} />
       <TokenList
@@ -77,11 +77,11 @@ function SearchBar({ search, setSearch }: { search: string; setSearch: (s: strin
   }, []);
 
   return (
-    <div className="relative px-2">
+    <div className="token-picker-search relative px-2">
       <SearchIcon
         width={20}
         height={20}
-        className="absolute left-5 top-1/2 -translate-y-1/2 pb-1 opacity-50"
+        className="token-picker-search-icon absolute left-5 top-1/2 -translate-y-1/2 pb-1 opacity-50"
       />
       <TextInput
         ref={inputRef}
@@ -89,7 +89,7 @@ function SearchBar({ search, setSearch }: { search: string; setSearch: (s: strin
         onChange={setSearch}
         placeholder="Token name, symbol, or address"
         name="token-search"
-        className="mb-4 mt-3 w-full pl-10 all:border-gray-200 all:py-3 all:focus:border-gray-400"
+        className="token-picker-search-input mb-4 mt-3 w-full pl-10 all:border-gray-200 all:py-3 all:focus:border-gray-400"
         autoComplete="off"
       />
     </div>
@@ -107,7 +107,7 @@ export function TokenList({
   destination: ChainName;
   searchQuery: string;
   onSelect: (token: IToken) => void;
-  onSelectUnsupportedRoute: (token: Token, origin: string) => void;
+  onSelectUnsupportedRoute: (token: IToken, origin: string) => void;
 }) {
   const warpCore = useWarpCore();
   const tokensBySymbolChainMap = useStore((s) => s.tokensBySymbolChainMap);
@@ -149,6 +149,9 @@ export function TokenList({
     const disabled = filtered.filter((t) => t.disabled);
 
     enabled.sort((a, b) => {
+      // Keep initial render stable/fast while balances are still hydrating.
+      if (balancesLoading) return 0;
+
       const aBal = balances[tokenKey(a.token)] ?? 0n;
       const bBal = balances[tokenKey(b.token)] ?? 0n;
       if (aBal > 0n && bBal === 0n) return -1;
@@ -162,7 +165,7 @@ export function TokenList({
     });
 
     return { tokens: filtered, sortedTokens: [...enabled, ...disabled] };
-  }, [allRouteTokens, searchQuery, balances, prices]);
+  }, [allRouteTokens, searchQuery, balances, balancesLoading, prices]);
 
   const unsupportedRouteTokensBySymbolMap = useMemo(() => {
     const tokenSymbols = tokens.map((item) => item.token.symbol);
@@ -183,12 +186,12 @@ export function TokenList({
   const noTokensFound = tokens.length === 0 && isObjEmpty(unsupportedRouteTokensBySymbolMap);
 
   return (
-    <div className="no-scrollbar flex max-h-[80vh] min-h-[24rem] flex-col items-stretch overflow-auto px-2">
+    <div className="token-picker-list no-scrollbar flex max-h-[80vh] min-h-[24rem] flex-col items-stretch overflow-auto px-2">
       {sortedTokens.map((t) => {
         const key = tokenKey(t.token);
         return (
           <button
-            className={`-mx-2 mb-2 flex items-center rounded px-2 py-2 ${
+            className={`token-picker-row -mx-2 mb-2 flex items-center rounded px-2 py-2 ${
               t.disabled ? 'opacity-50' : 'hover:bg-gray-200'
             } duration-250 transition-all`}
             key={key}
@@ -200,8 +203,12 @@ export function TokenList({
               <TokenIcon token={t.token} size={30} />
             </div>
             <div className="ml-2 min-w-0 text-left">
-              <div className="truncate text-sm">{t.token.symbol || 'Unknown'}</div>
-              <div className="truncate text-xs text-gray-500">{t.token.name || 'Unknown'}</div>
+              <div className="token-picker-symbol truncate text-sm">
+                {t.token.symbol || 'Unknown'}
+              </div>
+              <div className="token-picker-name truncate text-xs text-gray-500">
+                {t.token.name || 'Unknown'}
+              </div>
             </div>
             <div className="ml-auto shrink-0 text-right">
               <TokenBalanceCell
@@ -222,7 +229,7 @@ export function TokenList({
         onSelectUnsupportedRoute={onSelectUnsupportedRoute}
       />
       {noTokensFound && (
-        <div className="my-8 text-center text-gray-500">
+        <div className="token-picker-empty my-8 text-center text-gray-500">
           <div>No tokens found</div>
           <div className="mt-2 text-sm">Try a different destination chain or search query</div>
         </div>
@@ -278,7 +285,7 @@ function UnsupportedRouteTokenList({
   unsupportedRouteTokensBySymbolMap: Record<string, TokenChainMap>;
   origin: ChainName;
   destination: ChainName;
-  onSelectUnsupportedRoute: (token: Token, origin: string) => void;
+  onSelectUnsupportedRoute: (token: IToken, origin: string) => void;
 }) {
   const [open, setOpen] = useState<string | null>(null);
   const multiProvider = useMultiProvider();
@@ -287,7 +294,7 @@ function UnsupportedRouteTokenList({
     ([symbol, { chains, tokenInformation }]) => (
       <React.Fragment key={symbol}>
         <button
-          className="duration-250 -mx-2 mb-2 flex items-center rounded px-2 py-2 opacity-50 transition-all hover:bg-gray-200"
+          className="token-picker-row duration-250 -mx-2 mb-2 flex items-center rounded px-2 py-2 opacity-50 transition-all hover:bg-gray-200"
           type="button"
           onClick={() => setOpen((prevSymbol) => (prevSymbol === symbol ? null : symbol))}
         >
@@ -295,13 +302,17 @@ function UnsupportedRouteTokenList({
             <TokenIcon token={tokenInformation} size={30} />
           </div>
           <div className="ml-2 shrink-0 text-left">
-            <div className="text-sm">{tokenInformation.symbol || 'Unknown'}</div>
-            <div className="text-xs text-gray-500">{tokenInformation.name || 'Unknown'}</div>
+            <div className="token-picker-symbol text-sm">
+              {tokenInformation.symbol || 'Unknown'}
+            </div>
+            <div className="token-picker-name text-xs text-gray-500">
+              {tokenInformation.name || 'Unknown'}
+            </div>
           </div>
           <Image
             src={InfoIcon}
             alt="Unsupported route for origin and destination"
-            className="ml-auto mr-1"
+            className="token-picker-info-icon ml-auto mr-1"
             data-te-toggle="tooltip"
             title={`Route not supported for ${getChainDisplayName(
               multiProvider,
@@ -327,7 +338,7 @@ function UnsupportedRouteChainList({
   onSelectUnsupportedRoute,
 }: {
   chains: ChainMap<{ token: Token; metadata: ChainMetadata | null }>;
-  onSelectUnsupportedRoute: (token: Token, origin: string) => void;
+  onSelectUnsupportedRoute: (token: IToken, origin: string) => void;
 }) {
   return (
     <motion.div
@@ -339,13 +350,15 @@ function UnsupportedRouteChainList({
       {Object.entries(chains).map(([chainName, chain]) => (
         <button
           key={chainName}
-          className="flex w-full items-center gap-4 rounded border-b border-gray-100 px-4 py-2 hover:bg-gray-200"
+          className="token-picker-chain-row flex w-full items-center gap-4 rounded border-b border-gray-100 px-4 py-2 hover:bg-gray-200"
           onClick={() => onSelectUnsupportedRoute(chain.token, chainName)}
         >
           <div className="shrink-0">
             <ChainLogo chainName={chainName} size={16} />
           </div>
-          <div className="text-xs">{chain.metadata?.displayName || chainName}</div>
+          <div className="token-picker-chain-name text-xs">
+            {chain.metadata?.displayName || chainName}
+          </div>
         </button>
       ))}
     </motion.div>

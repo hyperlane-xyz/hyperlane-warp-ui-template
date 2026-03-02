@@ -67,7 +67,7 @@ export function UnifiedTokenChainModal({
   };
 
   const handleEditChain = (chainName: string) => {
-    onClose();
+    close();
     onEditChain?.(chainName);
   };
 

@@ -29,6 +29,12 @@ const chains: ChainInfo[] = [
     chainId: 1399811149,
     protocol: ProtocolType.Sealevel,
   }),
+  makeChain({
+    name: 'cosmoshub',
+    displayName: 'Cosmos Hub',
+    chainId: 'cosmoshub-4',
+    protocol: ProtocolType.Cosmos,
+  }),
   makeChain({ name: 'sepolia', displayName: 'Sepolia', chainId: 11155111, isTestnet: true }),
   makeChain({ name: 'disabled-chain', displayName: 'Disabled', chainId: 999, disabled: true }),
 ];
@@ -68,6 +74,13 @@ describe('chainSearch', () => {
       expect(result).toHaveLength(1);
       expect(result[0].name).toBe('polygon');
     });
+
+    it('matches broadly by chainId substring', () => {
+      // '1' appears in chainIds: 1, 137, 42161, 1399811149, 11155111, 999 → all except 999
+      const result = search({ query: '1' });
+      expect(result.map((c) => c.name)).not.toContain('disabled-chain');
+      expect(result.length).toBeGreaterThan(1);
+    });
   });
 
   describe('filter', () => {
@@ -99,7 +112,14 @@ describe('chainSearch', () => {
     it('sorts by name ascending (default)', () => {
       const result = search({});
       const names = result.filter((c) => !c.disabled).map((c) => c.name);
-      expect(names).toEqual([...names].sort());
+      expect(names).toEqual([
+        'arbitrum',
+        'cosmoshub',
+        'ethereum',
+        'polygon',
+        'sepolia',
+        'solanamainnet',
+      ]);
     });
 
     it('sorts by name descending', () => {
@@ -107,21 +127,45 @@ describe('chainSearch', () => {
         sort: { sortBy: ChainSortBy.Name, sortOrder: SortOrder.Desc },
       });
       const names = result.filter((c) => !c.disabled).map((c) => c.name);
-      expect(names).toEqual([...names].sort().reverse());
+      expect(names).toEqual([
+        'solanamainnet',
+        'sepolia',
+        'polygon',
+        'ethereum',
+        'cosmoshub',
+        'arbitrum',
+      ]);
     });
 
     it('sorts by chainId ascending', () => {
       const result = search({
         sort: { sortBy: ChainSortBy.ChainId, sortOrder: SortOrder.Asc },
       });
-      const ids = result.filter((c) => !c.disabled).map((c) => Number(c.chainId));
-      expect(ids).toEqual([...ids].sort((a, b) => a - b));
+      // localeCompare string sort: "1" < "11155111" < "137" < ... < "cosmoshub-4"
+      const ids = result.filter((c) => !c.disabled).map((c) => c.chainId.toString());
+      expect(ids).toEqual(['1', '11155111', '137', '1399811149', '42161', 'cosmoshub-4']);
+    });
+
+    it('sorts by protocol', () => {
+      const result = search({
+        sort: { sortBy: ChainSortBy.Protocol, sortOrder: SortOrder.Asc },
+      });
+      const protocols = result.filter((c) => !c.disabled).map((c) => c.protocol);
+      expect(protocols).toEqual([
+        ProtocolType.Cosmos,
+        ProtocolType.Ethereum,
+        ProtocolType.Ethereum,
+        ProtocolType.Ethereum,
+        ProtocolType.Ethereum,
+        ProtocolType.Sealevel,
+      ]);
     });
 
     it('sorts disabled chains to the bottom', () => {
       const result = search({});
       const lastChain = result[result.length - 1];
       expect(lastChain.disabled).toBe(true);
+      expect(lastChain.name).toBe('disabled-chain');
     });
   });
 });

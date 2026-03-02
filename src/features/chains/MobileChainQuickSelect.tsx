@@ -33,8 +33,8 @@ export function MobileChainQuickSelect({
         .map((name) => allChains.find((c) => c.name === name))
         .filter((c): c is ChainInfo => !!c);
 
-      // Fill remaining slots with other chains (not in preferred list)
-      const remaining = allChains.filter((c) => !preferredSet.has(c.name));
+      // Fill remaining slots with non-preferred, non-disabled chains
+      const remaining = allChains.filter((c) => !preferredSet.has(c.name) && !c.disabled);
       const slotsToFill = DEFAULT_MAX_VISIBLE_CHAINS - preferred.length;
       const fillers = remaining.slice(0, Math.max(0, slotsToFill));
 
@@ -46,7 +46,7 @@ export function MobileChainQuickSelect({
       };
     }
 
-    // Otherwise use first N chains alphabetically
+    // Otherwise use first N chains
     return {
       visibleChains: allChains.slice(0, DEFAULT_MAX_VISIBLE_CHAINS),
       hasMore: allChains.length > DEFAULT_MAX_VISIBLE_CHAINS,

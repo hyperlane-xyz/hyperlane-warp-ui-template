@@ -203,11 +203,7 @@ export function TransfersDetailsModal({
         ) : (
           <div className="flex flex-col items-center justify-center py-4">
             <SpinnerIcon width={60} height={60} className="mt-3" />
-            <div
-              className={`mt-5 text-center text-sm ${isFailed ? 'text-red-600' : 'text-gray-600'}`}
-            >
-              {statusDescription}
-            </div>
+            <div className="mt-5 text-center text-sm text-gray-600">{statusDescription}</div>
             {showSignWarning && (
               <div className="mt-3 text-center text-sm text-gray-600">
                 If your wallet does not show a transaction request or never confirms, please try the

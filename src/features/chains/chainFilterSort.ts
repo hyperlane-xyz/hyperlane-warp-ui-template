@@ -66,7 +66,7 @@ export function chainSearch({
           !q ||
           chain.name.toLowerCase().includes(q) ||
           chain.displayName.toLowerCase().includes(q) ||
-          chain.chainId.toString().includes(q),
+          chain.chainId.toString().toLowerCase().includes(q),
       )
       // Filter options
       .filter((chain) => {

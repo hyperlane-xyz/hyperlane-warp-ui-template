@@ -52,6 +52,7 @@ export function RecipientAddressModal({
         <h2 className="text-lg font-medium text-gray-900">Receive Address</h2>
         <button
           type="button"
+          aria-label="Close"
           onClick={handleClose}
           className="text-gray-400 transition-colors hover:text-gray-600"
         >

@@ -53,11 +53,9 @@ export function UnifiedTokenChainModal({
   );
 
   const handleSelectChain = (chain: ChainInfo | null) => {
-    setSelectedChain((prev) => {
-      if (prev?.name === chain?.name) return prev;
-      trackChainSelectionEvent(selectionMode, chain, prev);
-      return chain;
-    });
+    if (selectedChain?.name === chain?.name) return;
+    trackChainSelectionEvent(selectionMode, chain, selectedChain);
+    setSelectedChain(chain);
   };
 
   // Mobile: when selecting a chain from the full list, go back to tokens

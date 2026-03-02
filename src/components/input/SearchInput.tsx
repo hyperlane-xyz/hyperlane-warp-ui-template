@@ -7,11 +7,13 @@ export function SearchInput({
   value,
   onChange,
   placeholder,
+  'aria-label': ariaLabel,
 }: {
   inputRef?: Ref<HTMLInputElement>;
   value: string;
   onChange: (s: string) => void;
   placeholder: string;
+  'aria-label'?: string;
 }) {
   return (
     <div className="relative w-full">
@@ -25,6 +27,7 @@ export function SearchInput({
         value={value}
         onChange={onChange}
         placeholder={placeholder}
+        aria-label={ariaLabel}
         name="search"
         className="!mt-0 w-full pl-9 pr-8 all:border-gray-300 all:py-2 all:text-sm all:focus:border-blue-400"
         autoComplete="off"

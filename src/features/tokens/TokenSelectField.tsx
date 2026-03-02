@@ -110,11 +110,7 @@ export function TokenSelectField({
   return (
     <>
       <div className="flex flex-col">
-        {showLabel && label && (
-          <label htmlFor={name} className="mb-1 pl-0.5 text-sm text-gray-600">
-            {label}
-          </label>
-        )}
+        {showLabel && label && <span className="mb-1 pl-0.5 text-sm text-gray-600">{label}</span>}
         <TokenButton
           token={selectedToken}
           disabled={disabled}

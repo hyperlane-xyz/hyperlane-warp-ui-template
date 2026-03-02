@@ -107,7 +107,11 @@ export function getInitialTokenKeys(
     const connectedChain = firstConnection?.token?.chainName;
     const connectedSymbol = firstConnection?.token?.symbol;
     destinationToken = connectedChain
-      ? tokens.find((t) => t.chainName === connectedChain && t.symbol === connectedSymbol)
+      ? tokens.find(
+          (t) =>
+            t.chainName === connectedChain &&
+            t.symbol.toLowerCase() === connectedSymbol?.toLowerCase(),
+        )
       : undefined;
   }
 

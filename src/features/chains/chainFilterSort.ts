@@ -86,7 +86,9 @@ export function chainSearch({
         if (!c1.disabled && c2.disabled) return -1;
 
         if (sort.sortBy === ChainSortBy.ChainId) {
-          const result = c1.chainId.toString().localeCompare(c2.chainId.toString());
+          const result = c1.chainId
+            .toString()
+            .localeCompare(c2.chainId.toString(), undefined, { numeric: true });
           return sort.sortOrder === SortOrder.Asc ? result : -result;
         }
 

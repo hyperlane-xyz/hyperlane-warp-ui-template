@@ -141,9 +141,9 @@ describe('chainSearch', () => {
       const result = search({
         sort: { sortBy: ChainSortBy.ChainId, sortOrder: SortOrder.Asc },
       });
-      // localeCompare string sort: "1" < "11155111" < "137" < ... < "cosmoshub-4"
+      // Numeric sort: 1 < 137 < 42161 < ... then string IDs like "cosmoshub-4"
       const ids = result.filter((c) => !c.disabled).map((c) => c.chainId.toString());
-      expect(ids).toEqual(['1', '11155111', '137', '1399811149', '42161', 'cosmoshub-4']);
+      expect(ids).toEqual(['1', '137', '42161', '11155111', '1399811149', 'cosmoshub-4']);
     });
 
     it('sorts by protocol', () => {

@@ -2,6 +2,7 @@ import { IToken, Token, WarpCore, WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk
 import { HexString, toWei } from '@hyperlane-xyz/utils';
 import { getAccountAddressAndPubKey, useAccounts, useDebounce } from '@hyperlane-xyz/widgets';
 import { useQuery } from '@tanstack/react-query';
+import { defaultMultiCollateralRoutes } from '../../consts/defaultMultiCollateralRoutes';
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { useWarpCore } from '../tokens/hooks';
@@ -97,6 +98,7 @@ async function fetchFeeQuotes(
       amountWei,
       recipient,
       sender,
+      defaultMultiCollateralRoutes,
     );
   }
 

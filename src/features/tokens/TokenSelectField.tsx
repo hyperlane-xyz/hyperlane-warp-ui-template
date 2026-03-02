@@ -10,7 +10,7 @@ import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { TransferFormValues } from '../transfer/types';
 import { shouldClearAddress } from '../transfer/utils';
-import { getTokenByKey, useTokens } from './hooks';
+import { getTokenByKeyFromMap, useTokenByKeyMap } from './hooks';
 import { TokenChainIcon } from './TokenChainIcon';
 import { TokenSelectionMode } from './types';
 import { UnifiedTokenChainModal } from './UnifiedTokenChainModal';
@@ -44,24 +44,24 @@ export function TokenSelectField({
   };
 
   const multiProvider = useMultiProvider();
-  const tokens = useTokens();
+  const tokenMap = useTokenByKeyMap();
 
   // Get the current token
-  const selectedToken = getTokenByKey(tokens, tokenKey);
+  const selectedToken = getTokenByKeyFromMap(tokenMap, tokenKey);
 
   // Get the counterpart token (destination when selecting origin, origin when selecting destination)
   const counterpartToken =
     selectionMode === 'origin'
-      ? getTokenByKey(tokens, values.destinationTokenKey)
-      : getTokenByKey(tokens, values.originTokenKey);
+      ? getTokenByKeyFromMap(tokenMap, values.destinationTokenKey)
+      : getTokenByKeyFromMap(tokenMap, values.originTokenKey);
 
   const handleSelectToken = (newToken: Token) => {
     const newTokenKey = getTokenKey(newToken);
     setTokenKey(newTokenKey);
 
     // Track analytics - derive origin and destination from current tokens
-    const originToken = getTokenByKey(tokens, values.originTokenKey);
-    const destToken = getTokenByKey(tokens, values.destinationTokenKey);
+    const originToken = getTokenByKeyFromMap(tokenMap, values.originTokenKey);
+    const destToken = getTokenByKeyFromMap(tokenMap, values.destinationTokenKey);
     const origin = selectionMode === 'origin' ? newToken.chainName : originToken?.chainName || '';
     const destination =
       selectionMode === 'destination' ? newToken.chainName : destToken?.chainName || '';

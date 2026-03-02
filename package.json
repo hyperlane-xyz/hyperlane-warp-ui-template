@@ -21,9 +21,15 @@
     "@emotion/styled": "^11.13.0",
     "@headlessui/react": "^2.2.0",
     "@hyperlane-xyz/registry": "24.0.0",
+<<<<<<< HEAD
     "@hyperlane-xyz/sdk": "25.3.2",
     "@hyperlane-xyz/utils": "25.3.2",
     "@hyperlane-xyz/widgets": "25.3.2",
+=======
+    "@hyperlane-xyz/sdk": "25.4.0",
+    "@hyperlane-xyz/utils": "25.4.0",
+    "@hyperlane-xyz/widgets": "25.4.0",
+>>>>>>> origin/main
     "@interchain-ui/react": "^1.23.28",
     "@intercom/messenger-js-sdk": "^0.0.18",
     "@metamask/post-message-stream": "6.1.2",

@@ -112,6 +112,7 @@ const nextConfig = {
 };
 
 const sentryOptions = {
+  url: 'https://sentry.pruv.finance',
   org: 'd3labs',
   project: 'pruv-bridge-web',
   authToken: process.env.SENTRY_AUTH_TOKEN,
@@ -130,4 +131,7 @@ const sentryOptions = {
   },
 };
 
-module.exports = withBundleAnalyzer(withSentryConfig(nextConfig, sentryOptions));
+const baseConfig = withBundleAnalyzer(nextConfig);
+module.exports = process.env.SENTRY_AUTH_TOKEN
+  ? withBundleAnalyzer(withSentryConfig(nextConfig, sentryOptions))
+  : baseConfig;

@@ -53,22 +53,22 @@ jobs:
       - name: 'Convert JSON to .env'
         env:
           NEXT_PUBLIC_RPC_OVERRIDES: '{"chain1":{"http":"https://..."}}'
-          # NEXT_PUBLIC_SENTRY_DSN: '${{ secrets.NEXT_PUBLIC_SENTRY_DSN }}'
-          # SENTRY_AUTH_TOKEN: '${{ secrets.SENTRY_AUTH_TOKEN }}'
+          NEXT_PUBLIC_SENTRY_DSN: '${{ secrets.NEXT_PUBLIC_SENTRY_DSN }}'
+          SENTRY_AUTH_TOKEN: '${{ secrets.SENTRY_AUTH_TOKEN }}'
           # NODE_ENV: 'production'
         run: |
           echo "Write env file..."
           jq -r 'to_entries|map("\(.key)=\(.value)")|.[]' secret.json > .env
           echo "NEXT_PUBLIC_RPC_OVERRIDES='${NEXT_PUBLIC_RPC_OVERRIDES}'" >> .env
-          # echo "NEXT_PUBLIC_SENTRY_DSN='${NEXT_PUBLIC_SENTRY_DSN}'" >> .env
-          # echo "SENTRY_AUTH_TOKEN='${SENTRY_AUTH_TOKEN}'" >> .env
+          echo "NEXT_PUBLIC_SENTRY_DSN='${NEXT_PUBLIC_SENTRY_DSN}'" >> .env
+          echo "SENTRY_AUTH_TOKEN='${SENTRY_AUTH_TOKEN}'" >> .env
           # echo "NODE_ENV='${NODE_ENV}'" >> .env
 
       - name: Build and Push Container
         run: |-
           git_hash=$(git rev-parse --short HEAD)
 
-          docker build -t hyperlane-warp . 
+          docker build -t hyperlane-warp --build-arg SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }} .
           # git hash tagging
           docker tag hyperlane-warp ${{ env.AR_URL }}/hyperlane-warp:${git_hash}
           docker push ${{ env.AR_URL }}/hyperlane-warp:${git_hash}

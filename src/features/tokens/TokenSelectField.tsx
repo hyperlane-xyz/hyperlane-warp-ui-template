@@ -184,6 +184,6 @@ function TokenButton({
 
 const styles = {
   base: 'w-full py-2 flex items-center justify-between transition-all rounded-xl px-1.5 border duration-150 border-gray-400/25 shadow-sm group',
-  enabled: 'hover:bg-gray-50 cursor pointer',
+  enabled: 'hover:bg-gray-50 cursor-pointer',
   disabled: 'cursor-not-allowed opacity-60',
 };

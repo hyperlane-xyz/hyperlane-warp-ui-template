@@ -5,7 +5,7 @@ import { config } from '../../consts/config';
 import { useTokenBalances } from '../balances/hooks';
 import { tokenKey } from '../balances/tokens';
 import { formatBalance, formatUsd, getUsdValue } from '../balances/utils';
-import { useMultiProvider } from '../chains/hooks';
+import { useDisabledChains, useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { useCollateralGroups, useTokens } from './hooks';
 import { TokenChainIcon } from './TokenChainIcon';
@@ -52,7 +52,15 @@ export function TokenList({
   recipient,
 }: TokenListProps) {
   const multiProvider = useMultiProvider();
-  const allTokens = useTokens();
+  const disabledChains = useDisabledChains();
+  const _allTokens = useTokens();
+  const allTokens = useMemo(
+    () =>
+      disabledChains.size > 0
+        ? _allTokens.filter((t) => !disabledChains.has(t.chainName))
+        : _allTokens,
+    [_allTokens, disabledChains],
+  );
   const collateralGroups = useCollateralGroups();
   const debouncedSearch = useDebounce(searchQuery, 300);
   const scrollRef = useRef<HTMLDivElement>(null);

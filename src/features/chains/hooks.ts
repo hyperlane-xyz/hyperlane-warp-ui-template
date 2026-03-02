@@ -57,3 +57,11 @@ export function useChainInfos(): ChainInfo[] {
     return chainInfos;
   }, [chainMetadata]);
 }
+
+export function useDisabledChains(): Set<string> {
+  const chainInfos = useChainInfos();
+  return useMemo(
+    () => new Set(chainInfos.filter((c) => c.disabled).map((c) => c.name)),
+    [chainInfos],
+  );
+}

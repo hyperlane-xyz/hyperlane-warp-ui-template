@@ -27,11 +27,11 @@ export function MobileChainQuickSelect({
       const chainNameSet = new Set(allChains.map((c) => c.name));
       const preferredSet = new Set(preferredChains);
 
-      // Get preferred chains that exist, maintaining preferred order
+      // Get preferred chains that exist and are enabled, maintaining preferred order
       const preferred = preferredChains
         .filter((name) => chainNameSet.has(name))
         .map((name) => allChains.find((c) => c.name === name))
-        .filter((c): c is ChainInfo => !!c);
+        .filter((c): c is ChainInfo => !!c && !c.disabled);
 
       // Fill remaining slots with non-preferred, non-disabled chains
       const remaining = allChains.filter((c) => !preferredSet.has(c.name) && !c.disabled);
@@ -46,10 +46,11 @@ export function MobileChainQuickSelect({
       };
     }
 
-    // Otherwise use first N chains
+    // Otherwise use first N enabled chains
+    const enabledChains = allChains.filter((c) => !c.disabled);
     return {
-      visibleChains: allChains.slice(0, DEFAULT_MAX_VISIBLE_CHAINS),
-      hasMore: allChains.length > DEFAULT_MAX_VISIBLE_CHAINS,
+      visibleChains: enabledChains.slice(0, DEFAULT_MAX_VISIBLE_CHAINS),
+      hasMore: enabledChains.length > DEFAULT_MAX_VISIBLE_CHAINS,
     };
   }, [allChains, preferredChains]);
 

@@ -70,7 +70,18 @@ export function getInitialTokenKeys(
     originToken = findTokenByChainSymbol(tokens, config.defaultOriginToken);
   }
 
-  // 3. Last resort: First available token with connections (can be origin)
+  // 3. Third priority: First featured token with connections
+  if (!originToken && config.featuredTokens.length > 0) {
+    for (const ft of config.featuredTokens) {
+      const candidate = findTokenByChainSymbol(tokens, ft);
+      if (candidate?.connections?.length) {
+        originToken = candidate;
+        break;
+      }
+    }
+  }
+
+  // 4. Last resort: First available token with connections
   if (!originToken) {
     originToken = tokens.find((t) => t.connections && t.connections.length > 0);
   }

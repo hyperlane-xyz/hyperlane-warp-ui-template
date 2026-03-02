@@ -61,7 +61,7 @@ export const config: Config = Object.freeze({
   ],
   shouldDisableChains: false,
   rpcOverrides,
-  enableTrackingEvents: false,
+  enableTrackingEvents: true,
   featuredTokens: [
     'ethereum-ETH',
     'ethereum-USDC',

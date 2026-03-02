@@ -3,7 +3,7 @@ import { ProtocolType } from '@hyperlane-xyz/utils';
 import { ADDRESS_BLACKLIST } from './blacklist';
 
 const isDevMode = process?.env?.NODE_ENV === 'development';
-const version = process?.env?.NEXT_PUBLIC_VERSION || '0.0.0';
+const version = process?.env?.NEXT_PUBLIC_VERSION || '2.0.0';
 const registryUrl = process?.env?.NEXT_PUBLIC_REGISTRY_URL || undefined;
 const registryBranch = process?.env?.NEXT_PUBLIC_REGISTRY_BRANCH || undefined;
 const registryProxyUrl = process?.env?.NEXT_PUBLIC_GITHUB_PROXY || 'https://proxy.hyperlane.xyz';
@@ -25,9 +25,6 @@ interface Config {
   registryUrl: string | undefined; // Optional URL to use a custom registry instead of the published canonical version
   registryBranch?: string | undefined; // Optional customization of the registry branch instead of main
   registryProxyUrl?: string; // Optional URL to use a custom proxy for the GithubRegistry
-  showAddRouteButton: boolean; // Show/Hide the add route config icon in the button strip
-  showAddChainButton: boolean; // Show/Hide add custom chain in the chain search menu
-  showDisabledTokens: boolean; // Show/Hide invalid token options in the selection modal
   showTipBox: boolean; // Show/Hide the blue tip box above the transfer form
   shouldDisableChains: boolean; // Enable chain disabling for ChainSearchMenu. When true it will deactivate chains that have disabled status
   transferBlacklist: string; // comma-separated list of routes between which transfers are disabled. Expects Caip2Id-Caip2Id (e.g. ethereum:1-sealevel:1399811149)
@@ -50,9 +47,6 @@ export const config: Config = Object.freeze({
   registryUrl,
   registryBranch,
   registryProxyUrl,
-  showAddRouteButton: true,
-  showAddChainButton: true,
-  showDisabledTokens: false,
   showTipBox: true,
   version,
   transferBlacklist,

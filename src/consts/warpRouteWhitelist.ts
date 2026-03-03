@@ -81,7 +81,6 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // WBTC routes
   'WBTC/eclipsemainnet-ethereum',
-  'WBTC/ethereum-hyperevm',
   'WBTC/coti-ethereum',
 
   // ORCA routes

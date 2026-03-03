@@ -35,7 +35,26 @@ export async function assembleWarpCoreConfig(
   try {
     if (config.registryUrl) {
       logger.debug('Using custom registry warp routes from:', config.registryUrl);
-      registryWarpRoutes = await registry.getWarpRoutes();
+      // Fetch explicitly whitelisted routes by ID from the registry tree.
+      // This supports routes that exist as per-route files but are not yet present
+      // in the aggregated warpRouteConfigs.yaml.
+      if (warpRouteWhitelist?.length) {
+        const routeEntries = await Promise.all(
+          warpRouteWhitelist.map(
+            async (routeId): Promise<[string, WarpCoreConfig | null]> => [
+              routeId,
+              await registry.getWarpRoute(routeId),
+            ],
+          ),
+        );
+        registryWarpRoutes = routeEntries.reduce<Record<string, WarpCoreConfig>>((acc, item) => {
+          const [routeId, routeConfig] = item;
+          if (routeConfig) acc[routeId] = routeConfig;
+          return acc;
+        }, {});
+      } else {
+        registryWarpRoutes = await registry.getWarpRoutes();
+      }
       if (isObjEmpty(registryWarpRoutes)) throw new Error('Warp routes empty');
     } else {
       throw new Error('No custom registry URL provided');

@@ -150,6 +150,7 @@ async function executeTransfer({
     const isCollateralSufficient = await warpCore.isDestinationCollateralSufficient({
       originTokenAmount,
       destination,
+      destinationToken: connectedDestinationToken,
     });
     if (!isCollateralSufficient) {
       toast.error('Insufficient collateral on destination for transfer');
@@ -175,6 +176,7 @@ async function executeTransfer({
       destination,
       sender,
       recipient,
+      destinationToken: connectedDestinationToken,
     });
 
     const hashes: string[] = [];

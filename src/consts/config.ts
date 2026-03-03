@@ -4,8 +4,10 @@ import { ADDRESS_BLACKLIST } from './blacklist';
 
 const isDevMode = process?.env?.NODE_ENV === 'development';
 const version = process?.env?.NEXT_PUBLIC_VERSION || '2.0.0';
-const registryUrl = process?.env?.NEXT_PUBLIC_REGISTRY_URL || undefined;
-const registryBranch = process?.env?.NEXT_PUBLIC_REGISTRY_BRANCH || undefined;
+const DEFAULT_REGISTRY_URL = 'https://github.com/hyperlane-xyz/hyperlane-registry';
+const DEFAULT_REGISTRY_BRANCH = 'nambrot/multi-collateral-deploy';
+const registryUrl = process?.env?.NEXT_PUBLIC_REGISTRY_URL || DEFAULT_REGISTRY_URL;
+const registryBranch = process?.env?.NEXT_PUBLIC_REGISTRY_BRANCH || DEFAULT_REGISTRY_BRANCH;
 const registryProxyUrl = process?.env?.NEXT_PUBLIC_GITHUB_PROXY || 'https://proxy.hyperlane.xyz';
 const walletConnectProjectId = process?.env?.NEXT_PUBLIC_WALLET_CONNECT_ID || '';
 const transferBlacklist = process?.env?.NEXT_PUBLIC_TRANSFER_BLACKLIST || '';

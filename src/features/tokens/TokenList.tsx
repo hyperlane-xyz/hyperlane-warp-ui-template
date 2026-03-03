@@ -269,9 +269,7 @@ export function TokenList({
 
           {isLimited && (
             <div className="mx-1 mb-3 mt-2 rounded-lg bg-blue-50 px-3 py-4 text-center">
-              <p className="text-sm text-blue-600">
-                Use search or select a chain to see more tokens
-              </p>
+              <p className="text-sm text-blue-600">Search or select a chain to see more tokens</p>
             </div>
           )}
           {/* Spacer for fade effect */}

@@ -917,6 +917,9 @@ describe('findRouteToken', () => {
 
     const result = findRouteToken(warpCore, origin, 'arbitrum');
 
+    // Verify preconditions: neither collateral nor symbol matched origin
+    expect(routeToken.collateralAddressOrDenom).not.toBe(origin.collateralAddressOrDenom);
+    expect(routeToken.symbol).not.toBe(origin.symbol);
     expect(result).toBe(routeToken);
   });
 });

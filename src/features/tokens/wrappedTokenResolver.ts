@@ -49,6 +49,6 @@ export async function resolveWrappedCollateralTokens(
     }
   });
 
-  await Promise.allSettled(resolvePromises);
+  await Promise.all(resolvePromises);
   return result;
 }

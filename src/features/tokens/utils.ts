@@ -13,7 +13,23 @@ import { DefaultMultiCollateralRoutes, TokenChainMap } from './types';
 // Module-level caches for expensive key computations
 // WeakMap allows automatic garbage collection when token objects are no longer referenced
 const tokenKeyCache = new WeakMap<IToken, string>();
-const collateralKeyCache = new WeakMap<IToken, string>();
+let collateralKeyCache = new WeakMap<IToken, string>();
+
+// Resolved underlying addresses for lockbox/vault tokens.
+// Set once during initWarpContext via setResolvedUnderlyingMap().
+// getCollateralKey() uses this to group lockbox/vault tokens with their
+// non-wrapper counterparts (e.g., lockbox USDT grouped with regular USDT).
+let resolvedUnderlyingMap: Map<string, string> = new Map();
+
+/**
+ * Set the resolved underlying address map for lockbox/vault tokens.
+ * Must be called before buildTokensArray/groupTokensByCollateral.
+ * Clears the collateral key cache since keys may change.
+ */
+export function setResolvedUnderlyingMap(map: Map<string, string>) {
+  resolvedUnderlyingMap = map;
+  collateralKeyCache = new WeakMap();
+}
 
 // Map of token symbols and token chain map
 // Symbols are not duplicated to avoid the same symbol from being shown
@@ -233,6 +249,10 @@ export function groupTokensByCollateral(tokens: Token[]): Map<string, Token[]> {
  * Get a unique collateral identifier for a token
  * Used to determine if two tokens share the same underlying collateral
  *
+ * For lockbox/vault tokens whose collateralAddressOrDenom points to a wrapper,
+ * uses the resolved underlying address (from resolvedUnderlyingMap) so they
+ * group with their non-wrapper counterparts.
+ *
  * Results are cached by token object reference for O(1) subsequent lookups.
  */
 export function getCollateralKey(token: IToken): string {
@@ -248,7 +268,11 @@ export function getCollateralKey(token: IToken): string {
   // For collateralized tokens, use the collateral address
   if (TOKEN_COLLATERALIZED_STANDARDS.includes(token.standard)) {
     if (token.collateralAddressOrDenom) {
-      key = `${chainName}-${symbol}-${normalizeAddress(token.collateralAddressOrDenom, protocol)}`;
+      // Check if this token has a resolved underlying address (lockbox/vault)
+      const tokenId = getTokenKey(token);
+      const resolvedUnderlying = resolvedUnderlyingMap.get(tokenId);
+      const collateralAddress = resolvedUnderlying ?? token.collateralAddressOrDenom;
+      key = `${chainName}-${symbol}-${normalizeAddress(collateralAddress, protocol)}`;
     } else {
       // For HypNative tokens without collateralAddressOrDenom
       key = `${chainName}-${symbol}-hypnative-${protocol}`;
@@ -315,23 +339,13 @@ export function findRouteToken(
   const routeTokens = warpCore.getTokensForRoute(originToken.chainName, destinationChain);
   if (routeTokens.length === 0) return undefined;
 
-  const normalizedOriginCollateral = originToken.collateralAddressOrDenom
-    ? normalizeAddress(originToken.collateralAddressOrDenom, originToken.protocol)
-    : null;
+  const originCollateralKey = getCollateralKey(originToken);
 
-  // Find a route token that shares collateral with the origin token
-  const matchingToken = routeTokens.find((t) => {
-    const normalizedRouteCollateral = t.collateralAddressOrDenom
-      ? normalizeAddress(t.collateralAddressOrDenom, t.protocol)
-      : null;
-    // Match by collateral address if both have one, otherwise match by symbol
-    if (normalizedOriginCollateral && normalizedRouteCollateral) {
-      return normalizedOriginCollateral === normalizedRouteCollateral;
-    }
-    return t.symbol === originToken.symbol;
-  });
+  // Find a route token that shares the same collateral key (resolved-underlying-aware)
+  const matchingToken = routeTokens.find((t) => getCollateralKey(t) === originCollateralKey);
 
-  return matchingToken || routeTokens[0];
+  // Fallback: match by symbol on same chain
+  return matchingToken || routeTokens.find((t) => t.symbol === originToken.symbol);
 }
 
 // Returns the default origin token from tokensWithSameCollateralAddresses if:

@@ -27,7 +27,9 @@ import {
   buildTokensArray,
   getTokenKey,
   groupTokensByCollateral,
+  setResolvedUnderlyingMap,
 } from './tokens/utils';
+import { resolveWrappedCollateralTokens } from './tokens/wrappedTokenResolver';
 import { FinalTransferStatuses, TransferContext, TransferStatus } from './transfer/types';
 import { assembleWarpCoreConfig } from './warpCore/warpCoreConfig';
 
@@ -313,6 +315,11 @@ async function initWarpContext({
     const warpCore = WarpCore.FromConfig(multiProvider, coreConfig);
 
     const tokensBySymbolChainMap = assembleTokensBySymbolChainMap(warpCore.tokens, multiProvider);
+
+    // Resolve underlying addresses for lockbox/vault tokens so they group
+    // with their non-wrapper counterparts (e.g., lockbox USDT = regular USDT)
+    const resolvedMap = await resolveWrappedCollateralTokens(warpCore.tokens, multiProvider);
+    setResolvedUnderlyingMap(resolvedMap);
 
     // Build unified tokens array (deduplicated by collateral at startup)
     const tokens = buildTokensArray(warpCore.tokens);

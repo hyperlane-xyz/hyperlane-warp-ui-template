@@ -2,7 +2,7 @@ import { getAccountAddressAndPubKey, Modal, useAccounts } from '@hyperlane-xyz/w
 import { useFormikContext } from 'formik';
 import { SolidButton } from '../../components/buttons/SolidButton';
 import { useMultiProvider } from '../chains/hooks';
-import { getTokenByKey, useTokens } from '../tokens/hooks';
+import { getTokenByKeyFromMap, useTokenByKeyMap } from '../tokens/hooks';
 import { TransferFormValues } from './types';
 
 export function RecipientConfirmationModal({
@@ -16,9 +16,9 @@ export function RecipientConfirmationModal({
 }) {
   const { values } = useFormikContext<TransferFormValues>();
   const multiProvider = useMultiProvider();
-  const tokens = useTokens();
+  const tokenMap = useTokenByKeyMap();
   const { accounts } = useAccounts(multiProvider);
-  const destinationToken = getTokenByKey(tokens, values.destinationTokenKey);
+  const destinationToken = getTokenByKeyFromMap(tokenMap, values.destinationTokenKey);
 
   // Get recipient (form value or fallback to connected wallet for destination)
   const { address: connectedDestAddress } = getAccountAddressAndPubKey(

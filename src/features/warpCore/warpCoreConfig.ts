@@ -35,25 +35,31 @@ export async function assembleWarpCoreConfig(
   try {
     if (config.registryUrl) {
       logger.debug('Using custom registry warp routes from:', config.registryUrl);
-      // Fetch explicitly whitelisted routes by ID from the registry tree.
-      // This supports routes that exist as per-route files but are not yet present
-      // in the aggregated warpRouteConfigs.yaml.
+      registryWarpRoutes = await registry.getWarpRoutes();
+
+      // Safety fallback for whitelisted routes that may exist as per-route files
+      // before they are generated into warpRouteConfigs.yaml.
       if (warpRouteWhitelist?.length) {
-        const routeEntries = await Promise.all(
-          warpRouteWhitelist.map(
-            async (routeId): Promise<[string, WarpCoreConfig | null]> => [
-              routeId,
-              await registry.getWarpRoute(routeId),
-            ],
-          ),
+        const uppercaseRouteIds = new Set(
+          Object.keys(registryWarpRoutes).map((routeId) => routeId.toUpperCase()),
         );
-        registryWarpRoutes = routeEntries.reduce<Record<string, WarpCoreConfig>>((acc, item) => {
-          const [routeId, routeConfig] = item;
-          if (routeConfig) acc[routeId] = routeConfig;
-          return acc;
-        }, {});
-      } else {
-        registryWarpRoutes = await registry.getWarpRoutes();
+        const missingRouteIds = warpRouteWhitelist.filter(
+          (routeId) => !uppercaseRouteIds.has(routeId.toUpperCase()),
+        );
+
+        if (missingRouteIds.length) {
+          const routeEntries = await Promise.all(
+            missingRouteIds.map(
+              async (routeId): Promise<[string, WarpCoreConfig | null]> => [
+                routeId,
+                await registry.getWarpRoute(routeId),
+              ],
+            ),
+          );
+          for (const [routeId, routeConfig] of routeEntries) {
+            if (routeConfig) registryWarpRoutes[routeId] = routeConfig;
+          }
+        }
       }
       if (isObjEmpty(registryWarpRoutes)) throw new Error('Warp routes empty');
     } else {

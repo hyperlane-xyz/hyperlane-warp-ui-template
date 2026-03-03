@@ -16,22 +16,10 @@ test('warpRouteWhitelist', async () => {
     branch: config.registryBranch,
     proxyUrl: config.registryProxyUrl,
   });
-  let warpRouteConfigs: Record<string, WarpCoreConfig> = {};
+  let warpRouteConfigs: Record<string, WarpCoreConfig>;
 
   try {
-    const routeEntries = await Promise.all(
-      warpRouteWhitelist.map(
-        async (routeId): Promise<[string, WarpCoreConfig | null]> => [
-          routeId,
-          await registry.getWarpRoute(routeId),
-        ],
-      ),
-    );
-    warpRouteConfigs = routeEntries.reduce<Record<string, WarpCoreConfig>>((acc, item) => {
-      const [routeId, routeConfig] = item;
-      if (routeConfig) acc[routeId] = routeConfig;
-      return acc;
-    }, {});
+    warpRouteConfigs = await registry.getWarpRoutes();
   } catch {
     warpRouteConfigs = publishedWarpRouteConfigs;
   }

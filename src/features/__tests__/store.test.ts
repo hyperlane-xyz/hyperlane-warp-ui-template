@@ -50,6 +50,15 @@ vi.mock('@hyperlane-xyz/sdk', () => {
     if (!result?.success) throw new Error('Invalid schema');
     return result.data;
   };
+  const ProviderType = {
+    EthersV5: 'ethers-v5',
+    Viem: 'viem',
+    SolanaWeb3: 'solana-web3',
+    CosmJs: 'cosmjs',
+    CosmJsNative: 'cosmjs-native',
+    CosmJsWasm: 'cosmjs-wasm',
+  } as const;
+
   // Utility types only; in tests we just need the shape, not real typings
   return {
     MultiProtocolProvider,
@@ -57,6 +66,8 @@ vi.mock('@hyperlane-xyz/sdk', () => {
     ChainName: String as unknown as { new (): string },
     WarpCoreConfigSchema,
     validateZodResult,
+    ProviderType,
+    defaultProviderBuilderMap: {},
   };
 });
 

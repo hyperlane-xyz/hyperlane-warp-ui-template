@@ -5,7 +5,7 @@ import {
   WarpCore,
   WarpTxCategory,
 } from '@hyperlane-xyz/sdk';
-import { toTitleCase, toWei } from '@hyperlane-xyz/utils';
+import { ProtocolType, toTitleCase, toWei } from '@hyperlane-xyz/utils';
 import {
   getAccountAddressForChain,
   useAccounts,
@@ -14,10 +14,12 @@ import {
 } from '@hyperlane-xyz/widgets';
 import { useCallback, useState } from 'react';
 import { toast } from 'react-toastify';
+import { type Config as WagmiConfig, useConfig } from 'wagmi';
 import { toastTxSuccess } from '../../components/toast/TxSuccessToast';
 import { config } from '../../consts/config';
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
+import { preEstimateGasForEvmTxs } from '../chains/rpcUtils';
 import { getChainDisplayName } from '../chains/utils';
 import { AppState, useStore } from '../store';
 import { getTokenByIndex, useWarpCore } from '../tokens/hooks';
@@ -48,6 +50,7 @@ export function useTokenTransfer(onDone?: () => void) {
   const activeAccounts = useAccounts(multiProvider);
   const activeChains = useActiveChains(multiProvider);
   const transactionFns = useTransactionFns(multiProvider);
+  const wagmiConfig = useConfig();
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -61,6 +64,7 @@ export function useTokenTransfer(onDone?: () => void) {
         activeAccounts,
         activeChains,
         transactionFns,
+        wagmiConfig,
         addTransfer,
         updateTransferStatus,
         setIsLoading,
@@ -72,6 +76,7 @@ export function useTokenTransfer(onDone?: () => void) {
       activeAccounts,
       activeChains,
       transactionFns,
+      wagmiConfig,
       setIsLoading,
       addTransfer,
       updateTransferStatus,
@@ -92,6 +97,7 @@ async function executeTransfer({
   activeAccounts,
   activeChains,
   transactionFns,
+  wagmiConfig,
   addTransfer,
   updateTransferStatus,
   setIsLoading,
@@ -103,6 +109,7 @@ async function executeTransfer({
   activeAccounts: ReturnType<typeof useAccounts>;
   activeChains: ReturnType<typeof useActiveChains>;
   transactionFns: ReturnType<typeof useTransactionFns>;
+  wagmiConfig: WagmiConfig;
   addTransfer: (t: TransferContext) => void;
   updateTransferStatus: AppState['updateTransferStatus'];
   setIsLoading: (b: boolean) => void;
@@ -231,6 +238,13 @@ async function executeTransfer({
 
       // Insert the usdc approval transaction at the beginning
       txs.unshift(usdcApprovalTx);
+    }
+
+    // Pre-estimate gas via the CORS-resilient public client so wagmi doesn't
+    // attempt estimation through the WalletConnect connector's rpcMap.
+    if (originProtocol === ProtocolType.Ethereum) {
+      const chainId = multiProvider.getChainMetadata(origin).chainId as number;
+      await preEstimateGasForEvmTxs(wagmiConfig, chainId, sender, txs as any);
     }
 
     const hashes: string[] = [];

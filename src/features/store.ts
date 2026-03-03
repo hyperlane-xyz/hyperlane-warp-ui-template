@@ -4,8 +4,10 @@ import {
   ChainMetadata,
   ChainName,
   MultiProtocolProvider,
+  ProviderType,
   WarpCore,
   WarpCoreConfig,
+  defaultProviderBuilderMap,
 } from '@hyperlane-xyz/sdk';
 import { objFilter } from '@hyperlane-xyz/utils';
 import { toast } from 'react-toastify';
@@ -14,6 +16,7 @@ import { persist } from 'zustand/middleware';
 import { config } from '../consts/config';
 import { logger } from '../utils/logger';
 import { assembleChainMetadata } from './chains/metadata';
+import { raceViemProviderBuilder } from './chains/rpcUtils';
 import { TokenChainMap } from './tokens/types';
 import { assembleTokensBySymbolChainMap } from './tokens/utils';
 import { FinalTransferStatuses, TransferContext, TransferStatus } from './transfer/types';
@@ -225,7 +228,12 @@ async function initWarpContext({
       registry,
       chainMetadataOverrides,
     );
-    const multiProvider = new MultiProtocolProvider(chainMetadataWithOverrides);
+    const multiProvider = new MultiProtocolProvider(chainMetadataWithOverrides, {
+      providerBuilders: {
+        ...defaultProviderBuilderMap,
+        [ProviderType.Viem]: raceViemProviderBuilder,
+      },
+    });
     const warpCore = WarpCore.FromConfig(multiProvider, coreConfig);
 
     const tokensBySymbolChainMap = assembleTokensBySymbolChainMap(warpCore.tokens, multiProvider);

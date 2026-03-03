@@ -14,15 +14,17 @@ import {
   walletConnectWallet,
 } from '@rainbow-me/rainbowkit/wallets';
 import { PropsWithChildren, useMemo } from 'react';
-import { createClient, fallback, http } from 'viem';
+import { createClient } from 'viem';
 import { WagmiProvider, createConfig } from 'wagmi';
 import { APP_NAME } from '../../../consts/app';
 import { config } from '../../../consts/config';
 import { Color } from '../../../styles/Color';
 import { useMultiProvider } from '../../chains/hooks';
+import { raceTransport, withWcRpcFirst } from '../../chains/rpcUtils';
 
 function initWagmi(multiProvider: MultiProtocolProvider) {
-  const chains = getWagmiChainConfigs(multiProvider);
+  const rawChains = getWagmiChainConfigs(multiProvider);
+  const chains = withWcRpcFirst(rawChains, config.walletConnectProjectId);
 
   const connectors = connectorsForWallets(
     [
@@ -43,8 +45,7 @@ function initWagmi(multiProvider: MultiProtocolProvider) {
     chains: [chains[0], ...chains.splice(1)],
     connectors,
     client({ chain }) {
-      const transport = fallback(chain.rpcUrls.default.http.map((chainHttp) => http(chainHttp)));
-      return createClient({ chain, transport });
+      return createClient({ chain, transport: raceTransport(chain.rpcUrls.default.http) });
     },
   });
 

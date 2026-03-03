@@ -171,6 +171,14 @@ vi.mock('@hyperlane-xyz/widgets', () => ({
   getAccountAddressForChain: getAccountAddressForChainMock,
 }));
 
+vi.mock('wagmi', () => ({
+  useConfig: () => ({}),
+}));
+
+vi.mock('@wagmi/core', () => ({
+  getPublicClient: () => undefined,
+}));
+
 describe('useTokenTransfer', () => {
   const originToken = {
     protocol: 'evm',

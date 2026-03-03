@@ -6,13 +6,17 @@ import {
   checkTokenHasRoute,
   dedupeTokensByCollateral,
   findRouteToken,
+  getTokenKey,
   groupTokensByCollateral,
   isValidMultiCollateralToken,
+  setResolvedUnderlyingMap,
   tryGetDefaultOriginToken,
 } from './utils';
 
 beforeEach(() => {
   vi.restoreAllMocks();
+  // Reset resolved underlying map between tests
+  setResolvedUnderlyingMap(new Map());
 });
 
 describe('isValidMultiCollateralToken', () => {
@@ -896,7 +900,7 @@ describe('findRouteToken', () => {
     expect(result).toBe(routeToken);
   });
 
-  test('should fall back to first route token when no collateral or symbol match', () => {
+  test('should return undefined when no collateral or symbol match', () => {
     const origin = createMockToken({
       chainName: 'ethereum',
       symbol: 'USDC',
@@ -917,9 +921,300 @@ describe('findRouteToken', () => {
 
     const result = findRouteToken(warpCore, origin, 'arbitrum');
 
-    // Verify preconditions: neither collateral nor symbol matched origin
-    expect(routeToken.collateralAddressOrDenom).not.toBe(origin.collateralAddressOrDenom);
-    expect(routeToken.symbol).not.toBe(origin.symbol);
-    expect(result).toBe(routeToken);
+    // No collateral or symbol match — should not blindly pick first token
+    expect(result).toBeUndefined();
+  });
+
+  test('should match lockbox token via resolved collateral key, not symbol fallback', () => {
+    const UNDERLYING_USDT = '0xdAC17F958D2ee523a2206206994597C13D831ec7';
+    const LOCKBOX_WRAPPER = '0x6D265C7dD8d76F25155F1a7687C693FDC1220D12';
+    const WRONG_COLLATERAL = '0xDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD';
+
+    // Regular USDT (displayed, no connection to optimism)
+    const origin = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USDT',
+      addressOrDenom: ADDR_1,
+      collateralAddressOrDenom: UNDERLYING_USDT,
+      connections: [],
+    });
+    // Lockbox USDT — resolved collateral matches origin
+    const lockboxToken = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USDT',
+      standard: TokenStandard.EvmHypXERC20Lockbox,
+      addressOrDenom: ADDR_2,
+      collateralAddressOrDenom: LOCKBOX_WRAPPER,
+      connections: [
+        createTokenConnectionMock(undefined, { chainName: 'optimism', addressOrDenom: ADDR_3 }),
+      ],
+    });
+    // Decoy: same symbol but wrong collateral — symbol fallback would pick this
+    const decoyToken = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USDT',
+      addressOrDenom: '0x5555555555555555555555555555555555555555',
+      collateralAddressOrDenom: WRONG_COLLATERAL,
+      connections: [
+        createTokenConnectionMock(undefined, {
+          chainName: 'optimism',
+          addressOrDenom: '0x6666666666666666666666666666666666666666',
+        }),
+      ],
+    });
+
+    // Set resolved map: lockbox wrapper resolves to real USDT
+    const resolvedMap = new Map([[getTokenKey(lockboxToken), UNDERLYING_USDT.toLowerCase()]]);
+    setResolvedUnderlyingMap(resolvedMap);
+
+    // Decoy listed first — if symbol fallback ran first, it would pick decoy
+    const warpCore = createMockWarpCore([decoyToken, lockboxToken]);
+    const result = findRouteToken(warpCore, origin, 'optimism');
+
+    // Must pick lockbox (collateral key match), not decoy (symbol match)
+    expect(result).toBe(lockboxToken);
+  });
+
+  test('should match OwnerCollateral token via resolved collateral key, not symbol fallback', () => {
+    const UNDERLYING_USDT = '0xdAC17F958D2ee523a2206206994597C13D831ec7';
+    const VAULT_ADDRESS = '0x04DA4b99FFc82f0e44DEd14c3539A6fDaD08E2fE';
+    const WRONG_COLLATERAL = '0xDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD';
+
+    const origin = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USDT',
+      addressOrDenom: ADDR_1,
+      collateralAddressOrDenom: UNDERLYING_USDT,
+      connections: [],
+    });
+    // Vault token — resolved collateral matches origin
+    const vaultToken = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USDT',
+      standard: TokenStandard.EvmHypOwnerCollateral,
+      addressOrDenom: ADDR_2,
+      collateralAddressOrDenom: VAULT_ADDRESS,
+      connections: [
+        createTokenConnectionMock(undefined, { chainName: 'incentiv', addressOrDenom: ADDR_3 }),
+      ],
+    });
+    // Decoy: same symbol but wrong collateral
+    const decoyToken = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USDT',
+      addressOrDenom: '0x5555555555555555555555555555555555555555',
+      collateralAddressOrDenom: WRONG_COLLATERAL,
+      connections: [
+        createTokenConnectionMock(undefined, {
+          chainName: 'incentiv',
+          addressOrDenom: '0x6666666666666666666666666666666666666666',
+        }),
+      ],
+    });
+
+    const resolvedMap = new Map([[getTokenKey(vaultToken), UNDERLYING_USDT.toLowerCase()]]);
+    setResolvedUnderlyingMap(resolvedMap);
+
+    // Decoy listed first — symbol fallback would pick it
+    const warpCore = createMockWarpCore([decoyToken, vaultToken]);
+    const result = findRouteToken(warpCore, origin, 'incentiv');
+
+    // Must pick vault (collateral key match), not decoy
+    expect(result).toBe(vaultToken);
+  });
+});
+
+describe('resolved underlying map integration', () => {
+  const UNDERLYING = '0xdAC17F958D2ee523a2206206994597C13D831ec7';
+  const WRAPPER = '0x6D265C7dD8d76F25155F1a7687C693FDC1220D12';
+  const ADDR_1 = '0x1111111111111111111111111111111111111111';
+  const ADDR_2 = '0x2222222222222222222222222222222222222222';
+  const ADDR_3 = '0x3333333333333333333333333333333333333333';
+
+  test('dedupeTokensByCollateral should dedup lockbox against regular collateral', () => {
+    const regularUsdt = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USDT',
+      standard: TokenStandard.EvmHypCollateral,
+      addressOrDenom: ADDR_1,
+      collateralAddressOrDenom: UNDERLYING,
+    });
+    const lockboxUsdt = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USDT',
+      standard: TokenStandard.EvmHypXERC20Lockbox,
+      addressOrDenom: ADDR_2,
+      collateralAddressOrDenom: WRAPPER,
+    });
+
+    // Without resolved map: both survive (different collateral addresses)
+    expect(dedupeTokensByCollateral([regularUsdt, lockboxUsdt])).toHaveLength(2);
+
+    // With resolved map: lockbox resolves to same underlying, gets deduped
+    const resolvedMap = new Map([[getTokenKey(lockboxUsdt), UNDERLYING.toLowerCase()]]);
+    setResolvedUnderlyingMap(resolvedMap);
+
+    const result = dedupeTokensByCollateral([regularUsdt, lockboxUsdt]);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toBe(regularUsdt);
+  });
+
+  test('dedupeTokensByCollateral should dedup VSXERC20Lockbox against regular collateral', () => {
+    const regularUsdt = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USDT',
+      standard: TokenStandard.EvmHypCollateral,
+      addressOrDenom: ADDR_1,
+      collateralAddressOrDenom: UNDERLYING,
+    });
+    const vsLockboxUsdt = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USDT',
+      standard: TokenStandard.EvmHypVSXERC20Lockbox,
+      addressOrDenom: ADDR_2,
+      collateralAddressOrDenom: WRAPPER,
+    });
+
+    const resolvedMap = new Map([[getTokenKey(vsLockboxUsdt), UNDERLYING.toLowerCase()]]);
+    setResolvedUnderlyingMap(resolvedMap);
+
+    const result = dedupeTokensByCollateral([regularUsdt, vsLockboxUsdt]);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toBe(regularUsdt);
+  });
+
+  test('dedupeTokensByCollateral should dedup OwnerCollateral against regular collateral', () => {
+    const regularUsdt = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USDT',
+      standard: TokenStandard.EvmHypCollateral,
+      addressOrDenom: ADDR_1,
+      collateralAddressOrDenom: UNDERLYING,
+    });
+    const vaultUsdt = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USDT',
+      standard: TokenStandard.EvmHypOwnerCollateral,
+      addressOrDenom: ADDR_2,
+      collateralAddressOrDenom: WRAPPER,
+    });
+
+    const resolvedMap = new Map([[getTokenKey(vaultUsdt), UNDERLYING.toLowerCase()]]);
+    setResolvedUnderlyingMap(resolvedMap);
+
+    const result = dedupeTokensByCollateral([regularUsdt, vaultUsdt]);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toBe(regularUsdt);
+  });
+
+  test('dedupeTokensByCollateral should keep lockbox if no regular counterpart exists', () => {
+    const lockboxUsdt = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USDT',
+      standard: TokenStandard.EvmHypXERC20Lockbox,
+      addressOrDenom: ADDR_1,
+      collateralAddressOrDenom: WRAPPER,
+    });
+
+    const resolvedMap = new Map([[getTokenKey(lockboxUsdt), UNDERLYING.toLowerCase()]]);
+    setResolvedUnderlyingMap(resolvedMap);
+
+    const result = dedupeTokensByCollateral([lockboxUsdt]);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toBe(lockboxUsdt);
+  });
+
+  test('groupTokensByCollateral should group lockbox with regular collateral', () => {
+    const regularUsdt = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USDT',
+      standard: TokenStandard.EvmHypCollateral,
+      addressOrDenom: ADDR_1,
+      collateralAddressOrDenom: UNDERLYING,
+    });
+    const lockboxUsdt = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USDT',
+      standard: TokenStandard.EvmHypXERC20Lockbox,
+      addressOrDenom: ADDR_2,
+      collateralAddressOrDenom: WRAPPER,
+    });
+
+    // Without resolved map: separate groups
+    const groupsBefore = groupTokensByCollateral([regularUsdt, lockboxUsdt]);
+    expect(groupsBefore.size).toBe(2);
+
+    // With resolved map: same group
+    const resolvedMap = new Map([[getTokenKey(lockboxUsdt), UNDERLYING.toLowerCase()]]);
+    setResolvedUnderlyingMap(resolvedMap);
+
+    const groupsAfter = groupTokensByCollateral([regularUsdt, lockboxUsdt]);
+    expect(groupsAfter.size).toBe(1);
+    const group = Array.from(groupsAfter.values())[0];
+    expect(group).toHaveLength(2);
+    expect(group).toContain(regularUsdt);
+    expect(group).toContain(lockboxUsdt);
+  });
+
+  test('checkTokenHasRoute should find route via lockbox in same collateral group', () => {
+    const regularUsdt = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USDT',
+      standard: TokenStandard.EvmHypCollateral,
+      addressOrDenom: ADDR_1,
+      collateralAddressOrDenom: UNDERLYING,
+      connections: [], // no direct connection to optimism
+    });
+    const lockboxUsdt = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USDT',
+      standard: TokenStandard.EvmHypXERC20Lockbox,
+      addressOrDenom: ADDR_2,
+      collateralAddressOrDenom: WRAPPER,
+      connections: [
+        createTokenConnectionMock(undefined, {
+          chainName: 'optimism',
+          symbol: 'USDT',
+          addressOrDenom: ADDR_3,
+          collateralAddressOrDenom: UNDERLYING,
+        }),
+      ],
+    });
+    const destToken = createMockToken({
+      chainName: 'optimism',
+      symbol: 'USDT',
+      standard: TokenStandard.EvmHypCollateral,
+      addressOrDenom: ADDR_3,
+      collateralAddressOrDenom: UNDERLYING,
+    });
+
+    const resolvedMap = new Map([[getTokenKey(lockboxUsdt), UNDERLYING.toLowerCase()]]);
+    setResolvedUnderlyingMap(resolvedMap);
+
+    const groups = groupTokensByCollateral([regularUsdt, lockboxUsdt, destToken]);
+    // regularUsdt has no connection, but lockboxUsdt in same group does
+    expect(checkTokenHasRoute(regularUsdt, destToken, groups)).toBe(true);
+  });
+
+  test('checkTokenHasRoute should return false when no resolved route exists', () => {
+    const regularUsdt = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USDT',
+      standard: TokenStandard.EvmHypCollateral,
+      addressOrDenom: ADDR_1,
+      collateralAddressOrDenom: UNDERLYING,
+      connections: [],
+    });
+    const destToken = createMockToken({
+      chainName: 'optimism',
+      symbol: 'USDT',
+      standard: TokenStandard.EvmHypCollateral,
+      addressOrDenom: ADDR_3,
+      collateralAddressOrDenom: UNDERLYING,
+    });
+
+    // No lockbox token, no connection — should be false
+    const groups = groupTokensByCollateral([regularUsdt, destToken]);
+    expect(checkTokenHasRoute(regularUsdt, destToken, groups)).toBe(false);
   });
 });

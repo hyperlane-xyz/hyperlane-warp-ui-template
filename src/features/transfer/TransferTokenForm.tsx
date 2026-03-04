@@ -341,6 +341,7 @@ function DestinationTokenCard({ isReview }: { isReview: boolean }) {
   const multiProvider = useMultiProvider();
 
   const destinationToken = getTokenByKeyFromMap(tokenMap, values.destinationTokenKey);
+  const destinationCollateralTooltip = useDestinationRouterCollateralTooltip(destinationToken);
 
   const connectedDestAddress = useAccountAddressForChain(
     multiProvider,
@@ -371,6 +372,7 @@ function DestinationTokenCard({ isReview }: { isReview: boolean }) {
           selectionMode="destination"
           disabled={isReview}
           showLabel={false}
+          hoverTooltipContent={destinationCollateralTooltip}
         />
 
         <div className="my-2.5 h-px bg-primary-50" />
@@ -379,6 +381,60 @@ function DestinationTokenCard({ isReview }: { isReview: boolean }) {
       </div>
     </div>
   );
+}
+
+// TEMP(mc-preview-collateral-tooltip): Remove once destination collateral hover debugging is no longer needed.
+function useDestinationRouterCollateralTooltip(destinationToken?: Token): string | undefined {
+  const warpCore = useWarpCore();
+  const [collateralAmount, setCollateralAmount] = useState<TokenAmount | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    if (!destinationToken) {
+      setCollateralAmount(null);
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+    setCollateralAmount(null);
+
+    warpCore
+      .getTokenCollateral(destinationToken)
+      .then((amount) => {
+        if (isCancelled) return;
+        setCollateralAmount(new TokenAmount(amount, destinationToken));
+      })
+      .catch((error) => {
+        logger.debug('Failed to fetch destination router collateral', error);
+        if (isCancelled) return;
+        setCollateralAmount(null);
+      })
+      .finally(() => {
+        if (isCancelled) return;
+        setIsLoading(false);
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [
+    warpCore,
+    destinationToken?.chainName,
+    destinationToken?.addressOrDenom,
+    destinationToken?.symbol,
+  ]);
+
+  return useMemo(() => {
+    if (!destinationToken) return undefined;
+    if (isLoading) return 'TEMP: Loading destination router collateral...';
+    if (!collateralAmount) return 'TEMP: Destination router collateral unavailable';
+    return `TEMP: Destination router collateral: ${collateralAmount
+      .getDecimalFormattedAmount()
+      .toFixed(4)} ${destinationToken.symbol}`;
+  }, [destinationToken, isLoading, collateralAmount]);
 }
 
 function MaxButton({

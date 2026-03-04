@@ -113,8 +113,10 @@ export async function getTransferToken(
   // Find the actual warpCore token that has the route
   // Because we deduplicated tokens with the same collateral, the current token pair
   // might not be correct, so it is necessary to get the correct token pair.
-  // Make sure to have used `checkTokenHasRoute` before calling getLowestFeeTransferToken
+  // Make sure to have used `checkTokenHasRoute` before calling getTransferToken
   // as that will validate that the token pair actually refer to the same asset
+  // originRouteToken may differ from originToken due to collateral dedup —
+  // it's the actual warpCore token with the connection to destinationChain
   const originRouteToken = findRouteToken(warpCore, originToken, destinationChain);
   if (!originRouteToken) {
     // No route exists, return original token (validation will catch this)

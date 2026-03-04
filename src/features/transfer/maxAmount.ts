@@ -57,7 +57,12 @@ async function fetchMaxAmount(
     const recipient = formRecipient || connectedDestAddress || address;
 
     // Find the actual warpCore token that has the route (handles deduplicated tokens)
-    const originRouteToken = findRouteToken(warpCore, originToken, destination);
+    const originRouteToken = findRouteToken(
+      warpCore,
+      originToken,
+      destination,
+      selectedDestinationToken,
+    );
     if (!originRouteToken) return undefined;
 
     const connectedDestinationToken = findConnectedDestinationToken(

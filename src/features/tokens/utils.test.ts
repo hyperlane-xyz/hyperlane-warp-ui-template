@@ -870,6 +870,45 @@ describe('findRouteToken', () => {
     expect(warpCore.getTokensForRoute).not.toHaveBeenCalled();
   });
 
+  test('should prefer route token that matches specific destination token on same chain', () => {
+    const destinationCollateralA = '0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+    const destinationCollateralB = '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB';
+    const origin = createMockToken({
+      chainName: 'ethereum',
+      addressOrDenom: ADDR_1,
+      collateralAddressOrDenom: COLLATERAL,
+      connections: [
+        createTokenConnectionMock(undefined, {
+          chainName: 'arbitrum',
+          addressOrDenom: ADDR_2,
+          collateralAddressOrDenom: destinationCollateralA,
+        }),
+      ],
+    });
+    const selectedDestination = createMockToken({
+      chainName: 'arbitrum',
+      addressOrDenom: ADDR_3,
+      collateralAddressOrDenom: destinationCollateralB,
+    });
+    const routeToken = createMockToken({
+      chainName: 'ethereum',
+      addressOrDenom: '0x4444444444444444444444444444444444444444',
+      collateralAddressOrDenom: COLLATERAL,
+      connections: [
+        createTokenConnectionMock(undefined, {
+          chainName: 'arbitrum',
+          addressOrDenom: ADDR_3,
+          collateralAddressOrDenom: destinationCollateralB,
+        }),
+      ],
+    });
+    const warpCore = createMockWarpCore([routeToken]);
+
+    const result = findRouteToken(warpCore, origin, 'arbitrum', selectedDestination);
+
+    expect(result).toBe(routeToken);
+  });
+
   test('should return undefined when no routes exist', () => {
     const origin = createMockToken({
       chainName: 'ethereum',

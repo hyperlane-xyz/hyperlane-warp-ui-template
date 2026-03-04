@@ -721,7 +721,12 @@ function ReviewDetails({
   // Finding actual token pair for the given tokens
   const originToken =
     destinationTokenByKey && originTokenByKey
-      ? findRouteToken(warpCore, originTokenByKey, destinationTokenByKey.chainName)
+      ? findRouteToken(
+          warpCore,
+          originTokenByKey,
+          destinationTokenByKey.chainName,
+          destinationTokenByKey,
+        )
       : undefined;
   const destinationToken = destinationTokenByKey
     ? originToken && findConnectedDestinationToken(originToken, destinationTokenByKey)

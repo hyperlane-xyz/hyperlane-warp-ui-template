@@ -362,9 +362,15 @@ export function findRouteToken(
   warpCore: WarpCore,
   originToken: Token,
   destinationChain: string,
+  destinationToken?: IToken,
 ): Token | undefined {
+  const hasMatchingDestination = (token: Token) => {
+    if (destinationToken) return !!findConnectedDestinationToken(token, destinationToken);
+    return !!token.getConnectionForChain(destinationChain);
+  };
+
   // First check if the passed token already has the connection
-  if (originToken.getConnectionForChain(destinationChain)) {
+  if (hasMatchingDestination(originToken)) {
     return originToken;
   }
 
@@ -372,13 +378,23 @@ export function findRouteToken(
   const routeTokens = warpCore.getTokensForRoute(originToken.chainName, destinationChain);
   if (routeTokens.length === 0) return undefined;
 
+  // If the destination token is provided, prioritize route tokens that can connect to it.
+  if (destinationToken) {
+    const destinationMatch = routeTokens.find(hasMatchingDestination);
+    if (destinationMatch) return destinationMatch;
+  }
   const originCollateralKey = getCollateralKey(originToken);
 
   // Find a route token that shares the same collateral key (resolved-underlying-aware)
   const matchingToken = routeTokens.find((t) => getCollateralKey(t) === originCollateralKey);
 
-  // Fallback: match by symbol on same chain
-  return matchingToken || routeTokens.find((t) => t.symbol === originToken.symbol);
+  // Fallback: match by destination route first, then by symbol on same chain.
+  return (
+    matchingToken ||
+    routeTokens.find(hasMatchingDestination) ||
+    routeTokens.find((t) => t.symbol === originToken.symbol) ||
+    routeTokens[0]
+  );
 }
 
 // Returns the default origin token from tokensWithSameCollateralAddresses if:

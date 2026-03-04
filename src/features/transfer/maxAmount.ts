@@ -8,7 +8,7 @@ import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { isMultiCollateralLimitExceeded } from '../limits/utils';
 import { useWarpCore } from '../tokens/hooks';
-import { findRouteToken } from '../tokens/utils';
+import { findConnectedDestinationToken, findRouteToken } from '../tokens/utils';
 import { getTransferToken } from './fees';
 
 interface FetchMaxParams {
@@ -16,6 +16,7 @@ interface FetchMaxParams {
   balance: TokenAmount;
   origin: ChainName;
   destination: ChainName;
+  destinationToken: Token;
   recipient?: string;
 }
 
@@ -33,7 +34,14 @@ export function useFetchMaxAmount() {
 async function fetchMaxAmount(
   multiProvider: MultiProtocolProvider,
   warpCore: WarpCore,
-  { accounts, balance, destination, origin, recipient: formRecipient }: FetchMaxParams,
+  {
+    accounts,
+    balance,
+    destination,
+    destinationToken: selectedDestinationToken,
+    origin,
+    recipient: formRecipient,
+  }: FetchMaxParams,
 ) {
   try {
     const { address, publicKey } = getAccountAddressAndPubKey(multiProvider, origin, accounts);
@@ -52,18 +60,26 @@ async function fetchMaxAmount(
     const originRouteToken = findRouteToken(warpCore, originToken, destination);
     if (!originRouteToken) return undefined;
 
-    const destinationToken = originRouteToken.getConnectionForChain(destination)?.token;
-    if (!destinationToken) return undefined;
+    const connectedDestinationToken = findConnectedDestinationToken(
+      originRouteToken,
+      selectedDestinationToken,
+    );
+    if (!connectedDestinationToken) return undefined;
 
     const transferToken = await getTransferToken(
       warpCore,
       originToken,
-      destinationToken,
+      connectedDestinationToken,
       balance.amount.toString(),
       recipient,
       address,
       defaultMultiCollateralRoutes,
     );
+    const transferDestinationToken = findConnectedDestinationToken(
+      transferToken,
+      selectedDestinationToken,
+    );
+    if (!transferDestinationToken) return undefined;
     const tokenAmount = new TokenAmount(balance.amount, transferToken);
     const maxAmount = await warpCore.getMaxTransferAmount({
       balance: tokenAmount,
@@ -71,6 +87,7 @@ async function fetchMaxAmount(
       sender: address,
       senderPubKey: await publicKey,
       recipient,
+      destinationToken: transferDestinationToken,
     });
 
     const multiCollateralLimit = isMultiCollateralLimitExceeded(

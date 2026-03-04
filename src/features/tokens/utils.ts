@@ -92,6 +92,31 @@ export function isValidMultiCollateralToken(
   return true;
 }
 
+/**
+ * Resolve the connected destination token from originToken that matches the selected destination token.
+ * For multi-collateral routes, there can be multiple connections for the same destination chain.
+ * In that case we prioritize collateral-key matching, then address matching.
+ */
+export function findConnectedDestinationToken(
+  originToken: Token | IToken,
+  destinationToken: Token | IToken,
+): Token | undefined {
+  const destinationCandidates = originToken
+    .getConnections()
+    .filter((connection) => connection.token.chainName === destinationToken.chainName)
+    .map((connection) => connection.token as Token);
+
+  if (!destinationCandidates.length) return undefined;
+
+  const destinationCollateralKey = getCollateralKey(destinationToken);
+  return (
+    destinationCandidates.find(
+      (candidate) => getCollateralKey(candidate) === destinationCollateralKey,
+    ) ||
+    destinationCandidates.find((candidate) => eqAddress(candidate.addressOrDenom, destinationToken.addressOrDenom))
+  );
+}
+
 export function getTokensWithSameCollateralAddresses(
   warpCore: WarpCore,
   origin: Token,
@@ -114,7 +139,7 @@ export function getTokensWithSameCollateralAddresses(
   return warpCore
     .getTokensForRoute(origin.chainName, destination.chainName)
     .map((originToken) => {
-      const destinationToken = originToken.getConnectionForChain(destination.chainName)?.token;
+      const destinationToken = findConnectedDestinationToken(originToken, destination);
       return { originToken, destinationToken };
     })
     .filter((tokens): tokens is { originToken: Token; destinationToken: Token } => {

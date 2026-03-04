@@ -5,6 +5,7 @@ import {
   buildTokensArray,
   checkTokenHasRoute,
   dedupeTokensByCollateral,
+  findConnectedDestinationToken,
   findRouteToken,
   getTokenKey,
   groupTokensByCollateral,
@@ -1246,5 +1247,51 @@ describe('resolved underlying map integration', () => {
     // No lockbox token, no connection — should be false
     const groups = groupTokensByCollateral([regularUsdt, destToken]);
     expect(checkTokenHasRoute(regularUsdt, destToken, groups)).toBe(false);
+  });
+});
+
+describe('findConnectedDestinationToken', () => {
+  test('should match later same-chain connection by collateral key', () => {
+    const COLLATERAL_A = '0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+    const COLLATERAL_B = '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB';
+    const origin = createMockToken({
+      chainName: 'ethereum',
+      collateralAddressOrDenom: COLLATERAL_A,
+      connections: [
+        createTokenConnectionMock(undefined, {
+          chainName: 'arbitrum',
+          addressOrDenom: '0x1111111111111111111111111111111111111111',
+          collateralAddressOrDenom: '0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC',
+        }),
+        createTokenConnectionMock(undefined, {
+          chainName: 'arbitrum',
+          addressOrDenom: '0x2222222222222222222222222222222222222222',
+          collateralAddressOrDenom: COLLATERAL_B,
+        }),
+      ],
+    });
+    const selectedDestination = createMockToken({
+      chainName: 'arbitrum',
+      addressOrDenom: '0x3333333333333333333333333333333333333333',
+      collateralAddressOrDenom: COLLATERAL_B,
+    });
+
+    const matched = findConnectedDestinationToken(origin, selectedDestination);
+    expect(matched?.addressOrDenom).toBe('0x2222222222222222222222222222222222222222');
+  });
+
+  test('should return undefined when there is no destination-chain connection', () => {
+    const origin = createMockToken({
+      chainName: 'ethereum',
+      connections: [
+        createTokenConnectionMock(undefined, {
+          chainName: 'optimism',
+        }),
+      ],
+    });
+    const selectedDestination = createMockToken({ chainName: 'arbitrum' });
+
+    const matched = findConnectedDestinationToken(origin, selectedDestination);
+    expect(matched).toBeUndefined();
   });
 });

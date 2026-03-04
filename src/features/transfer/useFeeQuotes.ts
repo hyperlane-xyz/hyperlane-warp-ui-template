@@ -6,6 +6,7 @@ import { defaultMultiCollateralRoutes } from '../../consts/defaultMultiCollatera
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { useWarpCore } from '../tokens/hooks';
+import { findConnectedDestinationToken } from '../tokens/utils';
 import { getTransferToken } from './fees';
 import { TransferFormValues } from './types';
 
@@ -103,6 +104,8 @@ async function fetchFeeQuotes(
   }
 
   const originTokenAmount = transferToken.amount(amountWei);
+  const connectedDestinationToken = findConnectedDestinationToken(transferToken, destinationToken);
+  if (!connectedDestinationToken) return null;
   logger.debug('Fetching fee quotes');
   return warpCore.estimateTransferRemoteFees({
     originTokenAmount,
@@ -110,5 +113,6 @@ async function fetchFeeQuotes(
     sender,
     senderPubKey: await senderPubKey,
     recipient: recipient,
+    destinationToken: connectedDestinationToken,
   });
 }

@@ -21,9 +21,9 @@
     "@emotion/styled": "^11.13.0",
     "@headlessui/react": "^2.2.0",
     "@hyperlane-xyz/registry": "24.0.0",
-    "@hyperlane-xyz/sdk": "25.4.0",
-    "@hyperlane-xyz/utils": "25.4.0",
-    "@hyperlane-xyz/widgets": "25.4.0",
+    "@hyperlane-xyz/sdk": "25.5.0",
+    "@hyperlane-xyz/utils": "25.5.0",
+    "@hyperlane-xyz/widgets": "25.5.0",
     "@interchain-ui/react": "^1.23.28",
     "@intercom/messenger-js-sdk": "^0.0.18",
     "@metamask/post-message-stream": "6.1.2",
@@ -74,6 +74,7 @@
     "zustand": "^4.4.7"
   },
   "devDependencies": {
+    "@aws-sdk/client-s3": "^3.967.0",
     "@eslint/eslintrc": "^3.3.3",
     "@eslint/js": "^9.39.1",
     "@next/bundle-analyzer": "^15.0.2",
@@ -102,7 +103,6 @@
     "typescript": "5.6.3",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "3.0.5",
-    "@aws-sdk/client-s3": "^3.967.0",
     "yaml": "^2.6.0",
     "yaml-loader": "^0.8.1"
   },

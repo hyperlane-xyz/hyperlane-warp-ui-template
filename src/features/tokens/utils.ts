@@ -133,17 +133,18 @@ export function getTokensWithSameCollateralAddresses(
         ? normalizeAddress(destinationToken.collateralAddressOrDenom, destinationToken.protocol)
         : null;
 
-      // For HypNative tokens if both addresses are null then it matches, otherwise check with eqAddress
+      // For HypNative tokens both collateral addresses are null — match by symbol
+      // to avoid treating different native deployments (e.g. ETH vs ETHSTAGE) as interchangeable
       const originMatches =
         isNullish(originCollateralAddress) && isNullish(currentOriginCollateralAddress)
-          ? true
+          ? originToken.symbol === origin.symbol
           : originCollateralAddress && currentOriginCollateralAddress
             ? eqAddress(originCollateralAddress, currentOriginCollateralAddress)
             : false;
 
       const destinationMatches =
         isNullish(destinationCollateralAddress) && isNullish(currentDestinationCollateralAddress)
-          ? true
+          ? destinationToken.symbol === destination.symbol
           : destinationCollateralAddress && currentDestinationCollateralAddress
             ? eqAddress(destinationCollateralAddress, currentDestinationCollateralAddress)
             : false;

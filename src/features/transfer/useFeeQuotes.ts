@@ -1,5 +1,5 @@
 import { IToken, Token, WarpCore, WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
-import { HexString, toWei } from '@hyperlane-xyz/utils';
+import { HexString, ProtocolType, toWei } from '@hyperlane-xyz/utils';
 import { getAccountAddressAndPubKey, useAccounts, useDebounce } from '@hyperlane-xyz/widgets';
 import { useQuery } from '@tanstack/react-query';
 import { defaultMultiCollateralRoutes } from '../../consts/defaultMultiCollateralRoutes';
@@ -11,6 +11,7 @@ import { getTransferToken } from './fees';
 import { TransferFormValues } from './types';
 
 const FEE_QUOTE_REFRESH_INTERVAL = 30_000; // 30s
+const EVM_FEE_QUOTE_FALLBACK_ADDRESS = '0x000000000000000000000000000000000000dEaD';
 
 export function useFeeQuotes(
   { originTokenKey, destinationTokenKey, amount, recipient: formRecipient }: TransferFormValues,
@@ -31,15 +32,23 @@ export function useFeeQuotes(
     accounts,
   );
 
+  const isEvmToEvmRoute =
+    originToken?.protocol === ProtocolType.Ethereum &&
+    destinationToken?.protocol === ProtocolType.Ethereum;
+  const effectiveSender = sender || (isEvmToEvmRoute ? EVM_FEE_QUOTE_FALLBACK_ADDRESS : undefined);
+
   // Get effective recipient (form value or fallback to connected wallet for destination)
   const { address: connectedDestAddress } = getAccountAddressAndPubKey(
     multiProvider,
     destinationToken?.chainName,
     accounts,
   );
-  const recipient = formRecipient || connectedDestAddress || '';
+  const recipient =
+    formRecipient ||
+    connectedDestAddress ||
+    (isEvmToEvmRoute ? EVM_FEE_QUOTE_FALLBACK_ADDRESS : '');
 
-  const isFormValid = !!(originToken && destination && debouncedAmount && recipient && sender);
+  const isFormValid = !!(originToken && destination && debouncedAmount && recipient && effectiveSender);
   const shouldFetch = enabled && isFormValid;
 
   const { isLoading, isError, data, isFetching } = useQuery({
@@ -49,7 +58,7 @@ export function useFeeQuotes(
       'useFeeQuotes',
       originTokenKey,
       destinationTokenKey,
-      sender,
+      effectiveSender,
       senderPubKey,
       debouncedAmount,
       recipient,
@@ -60,7 +69,7 @@ export function useFeeQuotes(
         originToken,
         destinationToken,
         destination,
-        sender,
+        effectiveSender,
         senderPubKey,
         debouncedAmount,
         recipient,

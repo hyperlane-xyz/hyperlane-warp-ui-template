@@ -3,7 +3,6 @@ import { Tooltip, useDebounce } from '@hyperlane-xyz/widgets';
 import React, { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import { config } from '../../consts/config';
 import { useTokenBalances } from '../balances/hooks';
-import { tokenKey } from '../balances/tokens';
 import { formatBalance, formatUsd, getUsdValue } from '../balances/utils';
 import { useDisabledChains, useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
@@ -120,13 +119,12 @@ export function TokenList({
     const bMap = new Map<string, bigint>();
     const uMap = new Map<string, number>();
     for (const token of balanceTokens) {
-      const tKey = tokenKey(token);
-      const gKey = getTokenKey(token);
-      const bal = balances[tKey];
+      const key = getTokenKey(token);
+      const bal = balances[key];
       if (bal != null && bal > 0n) {
-        bMap.set(gKey, bal);
+        bMap.set(key, bal);
         const usd = getUsdValue(token, balances, prices);
-        if (usd != null && usd > 0) uMap.set(gKey, usd);
+        if (usd != null && usd > 0) uMap.set(key, usd);
       }
     }
     return { balanceMap: bMap, usdMap: uMap };

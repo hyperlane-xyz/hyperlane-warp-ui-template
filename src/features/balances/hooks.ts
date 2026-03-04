@@ -14,9 +14,10 @@ import { useToastError } from '../../components/toast/useToastError';
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
+import { getTokenKey } from '../tokens/utils';
 import { fetchChainBalances, groupEvmTokensByChain } from './evm';
 import { fetchSealevelChainBalances, groupSealevelTokensByChain } from './svm';
-import { fetchSdkBalance, tokenKey } from './tokens';
+import { fetchSdkBalance } from './tokens';
 
 export function useBalance(chain?: ChainName, token?: IToken, address?: Address) {
   const multiProvider = useMultiProvider();
@@ -121,7 +122,7 @@ function useWalletAddresses(multiProvider: MultiProtocolProvider): Map<ProtocolT
 export function useTokenBalances(tokens: Token[], scope: string, addressOverride?: string) {
   const multiProvider = useMultiProvider();
   const walletAddresses = useWalletAddresses(multiProvider);
-  const tokenKeys = useMemo(() => tokens.map((t) => tokenKey(t)), [tokens]);
+  const tokenKeys = useMemo(() => tokens.map((t) => getTokenKey(t)), [tokens]);
 
   // When an address override is provided (e.g. pasted recipient),
   // detect its protocol and use it instead of the connected wallet address

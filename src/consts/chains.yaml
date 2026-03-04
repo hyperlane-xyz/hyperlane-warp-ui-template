@@ -182,3 +182,31 @@ mantapacific:
     - http: https://pacific-rpc.manta.network/http
     - http: https://manta.nirvanalabs.xyz/mantapublic
   technicalStack: opstack
+kaia:
+  # yaml-language-server: $schema=../schema.json
+  blockExplorers:
+    - apiUrl: https://mainnet-oapi.kaiascan.io/api
+      family: etherscan
+      name: Kaiascan
+      url: https://kaiascan.io
+  blocks:
+    confirmations: 1
+    estimateBlockTime: 1
+    reorgPeriod: 5
+  chainId: 8217
+  deployer:
+    name: Abacus Works
+    url: https://www.hyperlane.xyz
+  displayName: Kaia
+  domainId: 8217
+  gasCurrencyCoinGeckoId: kaia
+  logoURI: /images/chains/kaia/logo.svg
+  name: kaia
+  nativeToken:
+    decimals: 18
+    name: Kaia
+    symbol: KAIA
+  protocol: ethereum
+  rpcUrls:
+    - http: https://public-en.node.kaia.io
+  technicalStack: other

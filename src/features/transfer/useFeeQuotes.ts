@@ -131,8 +131,11 @@ export async function fetchFeeQuotes(
       destinationToken: connectedDestinationToken,
     });
   } catch (error) {
-    // Some wallet/provider combinations fail local gas estimation when using the connected sender.
-    // Retry with the same EVM fallback sender used pre-connection to keep fee quotes available.
+    // Connected wallets switch fee simulation from a neutral fallback sender to the user's real
+    // account. Some RPC/wallet combinations intermittently fail estimateGas in that mode (e.g.
+    // sender-specific state checks), which makes fees disappear in the UI.
+    // Retry with the pre-connect fallback sender so fee display remains stable.
+    // This only affects quote estimation; transfer submission still uses the real connected account.
     if (!isEvmToEvmRoute || sender === EVM_FEE_QUOTE_FALLBACK_ADDRESS) throw error;
     logger.warn('Fee quote failed with connected sender, retrying with fallback sender', error);
     return warpCore.estimateTransferRemoteFees({

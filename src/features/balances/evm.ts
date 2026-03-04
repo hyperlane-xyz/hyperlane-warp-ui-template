@@ -11,7 +11,8 @@ import {
   multicall3Abi,
 } from 'viem';
 import { logger } from '../../utils/logger';
-import { TokenEntry, fetchSdkBalance, tokenKey } from './tokens';
+import { getTokenKey } from '../tokens/utils';
+import { TokenEntry, fetchSdkBalance } from './tokens';
 
 const MULTICALL3_ADDRESS = '0xca11bde05977b3631167028862be2a173976ca11' as Hex;
 
@@ -82,7 +83,7 @@ export function groupEvmTokensByChain(
   for (const token of tokens) {
     if (token.protocol !== ProtocolType.Ethereum) continue;
 
-    const key = tokenKey(token);
+    const key = getTokenKey(token);
     const chainMeta = multiProvider.tryGetChainMetadata(token.chainName);
     if (!chainMeta?.chainId) continue;
     const chainId = Number(chainMeta.chainId);

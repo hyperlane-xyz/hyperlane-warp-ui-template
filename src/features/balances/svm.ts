@@ -3,7 +3,8 @@ import { ProtocolType } from '@hyperlane-xyz/utils';
 import { TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { logger } from '../../utils/logger';
-import { TokenEntry, tokenKey } from './tokens';
+import { getTokenKey } from '../tokens/utils';
+import { TokenEntry } from './tokens';
 
 type SealevelTokenClassification = 'spl' | 'spl2022' | 'native' | 'unknown';
 
@@ -47,7 +48,7 @@ export function groupSealevelTokensByChain(tokens: Token[]): Map<string, Sealeve
   for (const token of tokens) {
     if (token.protocol !== ProtocolType.Sealevel) continue;
 
-    const key = tokenKey(token);
+    const key = getTokenKey(token);
     const classification = classifySealevelToken(token);
     if (classification.type === 'unknown') continue;
 

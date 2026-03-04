@@ -880,7 +880,7 @@ function useIsRouteSupported(): boolean {
   }, [originToken, destinationToken, collateralGroups]);
 }
 
-const insufficientFundsErrMsg = /insufficient.[funds|lamports]/i;
+const insufficientFundsErrMsg = /insufficient.(funds|lamports)/i;
 const emptyAccountErrMsg = /AccountNotFound/i;
 
 async function validateForm(

@@ -33,12 +33,16 @@ export function refinerIdentifyAndShowTransferForm(params: {
 }): void {
   if (!config.enableTrackingEvents || !refiner || !REFINER_TRANSFER_FORM_ID) return;
 
-  refiner('identifyUser', {
-    id: params.walletAddress,
-    // eslint-disable-next-line camelcase
-    wallet_address: params.walletAddress,
-    protocol: params.protocol,
-    chain: params.chain,
-  });
-  refiner('showForm', REFINER_TRANSFER_FORM_ID);
+  try {
+    refiner('identifyUser', {
+      id: params.walletAddress,
+      // eslint-disable-next-line camelcase
+      wallet_address: params.walletAddress,
+      protocol: params.protocol,
+      chain: params.chain,
+    });
+    refiner('showForm', REFINER_TRANSFER_FORM_ID);
+  } catch (error) {
+    logger.warn('Failed to show Refiner form:', error);
+  }
 }

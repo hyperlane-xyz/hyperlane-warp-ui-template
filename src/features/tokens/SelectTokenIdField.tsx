@@ -4,10 +4,10 @@ import { useState } from 'react';
 
 type Props = {
   name: string;
-  tokenIndex?: number;
   disabled?: boolean;
 };
 
+// TODO: fix or remove NFT token path
 export function SelectTokenIdField({ name, disabled }: Props) {
   const [, , helpers] = useField<number>(name);
   const [tokenId, setTokenId] = useState<string | undefined>(undefined);

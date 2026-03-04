@@ -82,7 +82,7 @@ export function useFeeQuotes(
   return { isLoading: isLoading || isFetching, isError, fees: data };
 }
 
-async function fetchFeeQuotes(
+export async function fetchFeeQuotes(
   warpCore: WarpCore,
   originToken: Token | undefined,
   destinationToken: IToken | undefined,
@@ -115,13 +115,32 @@ async function fetchFeeQuotes(
   const originTokenAmount = transferToken.amount(amountWei);
   const connectedDestinationToken = findConnectedDestinationToken(transferToken, destinationToken);
   if (!connectedDestinationToken) return null;
+  const isEvmToEvmRoute =
+    originToken.protocol === ProtocolType.Ethereum &&
+    destinationToken.protocol === ProtocolType.Ethereum;
+  const senderPubKeyValue = await senderPubKey;
+
   logger.debug('Fetching fee quotes');
-  return warpCore.estimateTransferRemoteFees({
-    originTokenAmount,
-    destination,
-    sender,
-    senderPubKey: await senderPubKey,
-    recipient: recipient,
-    destinationToken: connectedDestinationToken,
-  });
+  try {
+    return await warpCore.estimateTransferRemoteFees({
+      originTokenAmount,
+      destination,
+      sender,
+      senderPubKey: senderPubKeyValue,
+      recipient: recipient,
+      destinationToken: connectedDestinationToken,
+    });
+  } catch (error) {
+    // Some wallet/provider combinations fail local gas estimation when using the connected sender.
+    // Retry with the same EVM fallback sender used pre-connection to keep fee quotes available.
+    if (!isEvmToEvmRoute || sender === EVM_FEE_QUOTE_FALLBACK_ADDRESS) throw error;
+    logger.warn('Fee quote failed with connected sender, retrying with fallback sender', error);
+    return warpCore.estimateTransferRemoteFees({
+      originTokenAmount,
+      destination,
+      sender: EVM_FEE_QUOTE_FALLBACK_ADDRESS,
+      recipient: recipient,
+      destinationToken: connectedDestinationToken,
+    });
+  }
 }

@@ -312,11 +312,18 @@ export function checkTokenHasRoute(
   const destCollateralKey = getCollateralKey(destToken);
   const originGroup = collateralGroups.get(originCollateralKey) || [];
 
-  // Check if any token in origin's collateral group connects to destination's collateral group
+  // Check if any token in origin's collateral group has a matching connection
+  // to the specific destination token collateral.
+  // NOTE: For multi-collateral routes, a token can have multiple connections on
+  // the same destination chain, so we must inspect all connections (not only the first).
   return originGroup.some((token) => {
-    const destConnection = token.getConnectionForChain(destToken.chainName);
-    if (!destConnection?.token) return false;
-    return getCollateralKey(destConnection.token) === destCollateralKey;
+    return (
+      token.connections?.some((connection) => {
+        const connectedToken = connection.token as Token;
+        if (connectedToken.chainName !== destToken.chainName) return false;
+        return getCollateralKey(connectedToken) === destCollateralKey;
+      }) ?? false
+    );
   });
 }
 

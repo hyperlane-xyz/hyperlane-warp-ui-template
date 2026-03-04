@@ -46,6 +46,9 @@ NEXT_PUBLIC_WALLET_CONNECT_ID=<projectId> pnpm run dev
 ### Test
 
 ```sh
+# Run tests
+pnpm test
+
 # Lint check code
 pnpm run lint
 

@@ -43,21 +43,12 @@ export const config: Config = Object.freeze({
   defaultOriginChain: 'ethereum',
   defaultDestinationChain: 'bsc',
   explorerApiUrl,
-<<<<<<< HEAD
-=======
   defaultOriginToken: 'ethereum-HYPER',
   defaultDestinationToken: 'bsc-HYPER',
->>>>>>> origin/main
   isDevMode,
   registryUrl,
   registryBranch,
   registryProxyUrl,
-<<<<<<< HEAD
-  showAddRouteButton: false,
-  showAddChainButton: false,
-  showDisabledTokens: false,
-=======
->>>>>>> origin/main
   showTipBox: true,
   version,
   transferBlacklist,
@@ -72,10 +63,7 @@ export const config: Config = Object.freeze({
   ],
   shouldDisableChains: true,
   rpcOverrides,
-<<<<<<< HEAD
   enableTrackingEvents: true,
-=======
-  enableTrackingEvents: false,
   featuredTokens: [
     // USDC
     'arbitrum-USDC',
@@ -136,5 +124,4 @@ export const config: Config = Object.freeze({
     'bsc-stHYPER',
     'ethereum-stHYPER',
   ],
->>>>>>> origin/main
 });

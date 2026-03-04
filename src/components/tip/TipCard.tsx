@@ -22,33 +22,15 @@ export function TipCard() {
         </IconButton>
       </div>
 
-<<<<<<< HEAD
-      <h2 className="pr-6 font-secondary text-sm font-normal text-gray-900 sm:text-lg">
-        Bridge ETH
-      </h2>
-      <p className="mt-1 text-xs text-gray-600 sm:mt-2 sm:text-sm">
+      <h2 className="pr-6 font-secondary text-lg font-normal text-gray-900">Bridge ETH</h2>
+      <p className="mt-2 text-sm text-gray-600">
         Bridge and get real ETH in seconds, no unwrapping needed. Starting with Arbitrum, Base,
         Ethereum, Optimism.
       </p>
 
       <Button
-        className="mt-2 inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-2 py-1 font-secondary text-xs text-gray-700 transition-colors hover:bg-gray-50 sm:mt-3 sm:px-3 sm:py-1.5 sm:text-sm"
-        onClick={() => setIsTipCardActionTriggered(true)}
-=======
-      <h2 className="pr-6 font-secondary text-lg font-normal text-gray-900">
-        Bridge Tokens with Hyperlane Warp Routes!
-      </h2>
-      <p className="mt-2 text-sm text-gray-600">
-        Warp Routes make it easy to permissionlessly take your tokens interchain. Fork this template
-        to get started!
-      </p>
-
-      <a
-        href={links.github}
-        target="_blank"
-        rel="noopener noreferrer"
         className="mt-3 inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 font-secondary text-sm text-gray-700 transition-colors hover:bg-gray-50"
->>>>>>> origin/main
+        onClick={() => setIsTipCardActionTriggered(true)}
       >
         <span>Bridge</span>
         <Image src={SendIcon} width={16} alt="" />

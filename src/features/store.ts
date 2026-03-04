@@ -112,9 +112,6 @@ export interface AppState {
   routerAddressesByChainMap: Record<ChainName, Record<string, RouterAddressInfo>>;
   // Deduplicated, sorted CoinGecko IDs for all tokens (used by useTokenPrices)
   coinGeckoIds: string[];
-  // instead of moving the TipCard component inside the formik and an useEffect can be set to watch for it
-  isTipCardActionTriggered: boolean;
-  setIsTipCardActionTriggered: (isTipCardActionTriggered: boolean) => void;
 }
 
 export const useStore = create<AppState>()(
@@ -249,10 +246,6 @@ export const useStore = create<AppState>()(
       collateralGroups: new Map(),
       tokenByKeyMap: new Map(),
       coinGeckoIds: [],
-      isTipCardActionTriggered: false,
-      setIsTipCardActionTriggered: (isTipCardActionTriggered: boolean) => {
-        set(() => ({ isTipCardActionTriggered }));
-      },
     }),
 
     // Store config

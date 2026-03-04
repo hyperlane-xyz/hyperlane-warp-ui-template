@@ -29,22 +29,13 @@ import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareS
 import { SolidButton } from '../../components/buttons/SolidButton';
 import { SwapIcon } from '../../components/icons/SwapIcon';
 import { TextField } from '../../components/input/TextField';
-import {
-  TIP_CARD_ACTION_ADDRESS_OR_DENOM,
-  TIP_CARD_ACTION_DESTINATION,
-  TIP_CARD_ACTION_ORIGIN,
-  TIP_CARD_ACTION_TOKEN,
-} from '../../components/tip/const';
+import { TIP_CARD_ACTION_DESTINATION, TIP_CARD_ACTION_ORIGIN } from '../../components/tip/const';
 import { WARP_QUERY_PARAMS } from '../../consts/args';
 import { config } from '../../consts/config';
 import { defaultMultiCollateralRoutes } from '../../consts/defaultMultiCollateralRoutes';
 import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
-<<<<<<< HEAD
-import { getQueryParams, updateQueryParam, updateQueryParams } from '../../utils/queryParams';
-=======
 import { updateQueryParams } from '../../utils/queryParams';
->>>>>>> origin/main
 import { trackTransactionFailedEvent } from '../analytics/utils';
 import { UsdLabel } from '../balances/UsdLabel';
 import {
@@ -63,6 +54,7 @@ import { ImportTokenButton } from '../tokens/ImportTokenButton';
 import { TokenSelectField } from '../tokens/TokenSelectField';
 import { useIsApproveRequired } from '../tokens/approval';
 import {
+  findTokenByChainSymbol,
   getInitialTokenKeys,
   getTokenByKeyFromMap,
   useCollateralGroups,
@@ -71,7 +63,7 @@ import {
   useWarpCore,
 } from '../tokens/hooks';
 import { useTokenPrices } from '../tokens/useTokenPrice';
-import { checkTokenHasRoute, findRouteToken } from '../tokens/utils';
+import { checkTokenHasRoute, findRouteToken, getTokenKey } from '../tokens/utils';
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { WalletDropdown } from '../wallet/WalletDropdown';
 import { FeeSectionButton } from './FeeSectionButton';
@@ -98,10 +90,6 @@ export function TransferTokenForm() {
 
   const initialValues = useFormInitialValues();
   const { accounts } = useAccounts(multiProvider, config.addressBlacklist);
-
-  if (!originChainName) {
-    setOriginChainName(initialValues.origin);
-  }
 
   // Flag for if form is in input vs review mode
   const [isReview, setIsReview] = useState(false);
@@ -200,6 +188,7 @@ export function TransferTokenForm() {
             cleanOverrideToken={() => setRouteTokenOverride(null)}
             routeOverrideToken={routeOverrideToken}
           />
+          <TipCardActionHandler />
           <RecipientConfirmationModal
             isOpen={isConfirmationModalOpen}
             close={closeConfirmationModal}
@@ -209,6 +198,40 @@ export function TransferTokenForm() {
       )}
     </Formik>
   );
+}
+
+function TipCardActionHandler() {
+  const { setValues } = useFormikContext<TransferFormValues>();
+  const tokens = useTokens();
+  const { isTipCardActionTriggered, setIsTipCardActionTriggered } = useStore((s) => ({
+    isTipCardActionTriggered: s.isTipCardActionTriggered,
+    setIsTipCardActionTriggered: s.setIsTipCardActionTriggered,
+  }));
+
+  useEffect(() => {
+    if (!isTipCardActionTriggered) return;
+
+    const originToken = findTokenByChainSymbol(tokens, TIP_CARD_ACTION_ORIGIN);
+    const destToken = findTokenByChainSymbol(tokens, TIP_CARD_ACTION_DESTINATION);
+
+    if (originToken && destToken) {
+      setValues((prev) => ({
+        ...prev,
+        originTokenKey: getTokenKey(originToken),
+        destinationTokenKey: getTokenKey(destToken),
+      }));
+      updateQueryParams({
+        [WARP_QUERY_PARAMS.ORIGIN]: originToken.chainName,
+        [WARP_QUERY_PARAMS.ORIGIN_TOKEN]: originToken.symbol,
+        [WARP_QUERY_PARAMS.DESTINATION]: destToken.chainName,
+        [WARP_QUERY_PARAMS.DESTINATION_TOKEN]: destToken.symbol,
+      });
+    }
+
+    setIsTipCardActionTriggered(false);
+  }, [isTipCardActionTriggered, setIsTipCardActionTriggered, setValues, tokens]);
+
+  return null;
 }
 
 function SwapTokensButton({ disabled }: { disabled?: boolean }) {
@@ -225,17 +248,6 @@ function SwapTokensButton({ disabled }: { disabled?: boolean }) {
 
     if (!originToken || !destToken) return;
 
-<<<<<<< HEAD
-  const { setOriginChainName, isTipCardActionTriggered, setIsTipCardActionTriggered } = useStore(
-    (s) => ({
-      setOriginChainName: s.setOriginChainName,
-      setIsTipCardActionTriggered: s.setIsTipCardActionTriggered,
-      isTipCardActionTriggered: s.isTipCardActionTriggered,
-    }),
-  );
-
-  const { values, setFieldValue, setValues } = useFormikContext<TransferFormValues>();
-=======
     // After swap, origin becomes the new destination - validate recipient for new destination protocol
     const shouldClearRecipient = shouldClearAddress(
       multiProvider,
@@ -250,7 +262,6 @@ function SwapTokensButton({ disabled }: { disabled?: boolean }) {
       destinationTokenKey: originTokenKey,
       recipient: shouldClearRecipient ? '' : prevValues.recipient,
     }));
->>>>>>> origin/main
 
     // Update URL params
     if (originToken && destToken) {
@@ -262,33 +273,6 @@ function SwapTokensButton({ disabled }: { disabled?: boolean }) {
       });
     }
   }, [disabled, values, tokenMap, setValues, multiProvider]);
-
-  const onTipCardActionTriggered = useCallback(() => {
-    const tokenIndex = getTokenIndexFromChains(
-      warpCore,
-      TIP_CARD_ACTION_ADDRESS_OR_DENOM,
-      TIP_CARD_ACTION_ORIGIN,
-      TIP_CARD_ACTION_DESTINATION,
-    );
-    setValues((prevValues) => ({
-      ...prevValues,
-      origin: TIP_CARD_ACTION_ORIGIN,
-      destination: TIP_CARD_ACTION_DESTINATION,
-      tokenIndex,
-    }));
-    updateQueryParams({
-      [WARP_QUERY_PARAMS.ORIGIN]: TIP_CARD_ACTION_ORIGIN,
-      [WARP_QUERY_PARAMS.DESTINATION]: TIP_CARD_ACTION_DESTINATION,
-      [WARP_QUERY_PARAMS.TOKEN]: TIP_CARD_ACTION_TOKEN,
-    });
-  }, [setValues, warpCore]);
-
-  useEffect(() => {
-    if (!isTipCardActionTriggered) return;
-
-    onTipCardActionTriggered();
-    setIsTipCardActionTriggered(false);
-  }, [isTipCardActionTriggered, onTipCardActionTriggered, setIsTipCardActionTriggered]);
 
   return (
     <div className="relative z-10 -my-3 flex justify-center">

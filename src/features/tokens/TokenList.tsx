@@ -230,7 +230,7 @@ export function TokenList({
 
   if (tokens.length === 0) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center px-4 py-12 text-gray-500">
+      <div className="token-picker-empty flex flex-1 flex-col items-center justify-center px-4 py-12 text-gray-500">
         <div className="text-base font-medium">No tokens found</div>
         <div className="mt-2 text-sm">Try a different search or chain filter</div>
       </div>
@@ -321,17 +321,17 @@ const TokenButton = React.memo(function TokenButton({
   return (
     <button
       type="button"
-      className="group mb-2 flex h-[60px] w-full items-center rounded-[3px] px-3 transition-colors hover:bg-gray-100"
+      className="token-picker-row group mb-2 flex h-[60px] w-full items-center rounded-[3px] px-3 transition-colors hover:bg-gray-100"
       onClick={() => onSelect(token)}
     >
       <TokenChainIcon token={token} size={36} />
 
       <div className="ml-3 min-w-0 flex-1 text-left">
         <div className="flex items-center gap-2">
-          <span className={`${styles.base} text-base text-black`}>{token.symbol || 'Unknown'}</span>
-          <span className="text-xs text-gray-500">{chainDisplayName}</span>
+          <span className={`token-picker-symbol ${styles.base} text-base text-black`}>{token.symbol || 'Unknown'}</span>
+          <span className="token-picker-chain-name text-xs text-gray-500">{chainDisplayName}</span>
         </div>
-        <div className={`${styles.base} mt-0.5 truncate text-xs text-gray-500`}>
+        <div className={`token-picker-name ${styles.base} mt-0.5 truncate text-xs text-gray-500`}>
           {token.name || 'Unknown Token'}
         </div>
       </div>
@@ -341,9 +341,9 @@ const TokenButton = React.memo(function TokenButton({
           <div className="mb-1 ml-auto h-4 w-14 animate-pulse rounded bg-gray-100" />
         ) : primaryValue ? (
           <>
-            <div className={`${styles.base} text-sm font-medium text-black`}>{primaryValue}</div>
+            <div className={`token-picker-usd ${styles.base} text-sm font-medium text-black`}>{primaryValue}</div>
             {secondaryValue && (
-              <div className={`${styles.base} text-xs text-gray-400`}>{secondaryValue}</div>
+              <div className={`token-picker-meta ${styles.base} text-xs text-gray-400`}>{secondaryValue}</div>
             )}
           </>
         ) : null}
@@ -353,7 +353,7 @@ const TokenButton = React.memo(function TokenButton({
             <Tooltip
               content={routeTooltipMessage}
               id={`route-tooltip-${getTokenKey(token)}`}
-              tooltipClassName="max-w-[200px]"
+              tooltipClassName="token-picker-info-icon max-w-[200px]"
               onClick={(e) => e.stopPropagation()}
             />
           </div>

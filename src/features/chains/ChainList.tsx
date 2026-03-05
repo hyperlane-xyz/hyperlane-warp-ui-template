@@ -98,7 +98,7 @@ function ChainButton({
     <button
       type="button"
       disabled={disabled}
-      className={`${styles.label} flex w-full items-center gap-3 border-l-2 px-4 py-2.5 transition-colors ${
+      className={`token-picker-chain-row ${styles.label} flex w-full items-center gap-3 border-l-2 px-4 py-2.5 transition-colors ${
         disabled
           ? 'border-transparent opacity-50'
           : isSelected

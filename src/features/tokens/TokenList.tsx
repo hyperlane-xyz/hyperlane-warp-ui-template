@@ -92,17 +92,20 @@ export function TokenList({
       });
     }
 
-    // No filter: cap at 50, routable first
-    const maxDefault = 50;
-    if (defaultTokens.length <= maxDefault) return defaultTokens;
-
+    // No filter: routable first, then featured tokens (no cap)
+    // Without featured tokens: routable first, capped at 50
     const routable: Token[] = [];
     const rest: Token[] = [];
     for (const t of defaultTokens) {
       const hasRoute = tokenRouteMap ? (tokenRouteMap.get(getTokenKey(t)) ?? true) : true;
       (hasRoute ? routable : rest).push(t);
     }
-    return [...routable, ...rest].slice(0, maxDefault);
+
+    if (featuredSet.size > 0) return [...routable, ...rest];
+
+    const maxDefault = 50;
+    const combined = [...routable, ...rest];
+    return combined.length <= maxDefault ? combined : combined.slice(0, maxDefault);
   }, [debouncedSearch, chainFilter, allTokens, defaultTokens, tokenRouteMap, multiProvider]);
 
   // Fetch balances — use recipient address override only in destination mode
@@ -184,9 +187,10 @@ export function TokenList({
       return a.chainName.localeCompare(b.chainName);
     });
 
-    // No filter: cap display at 50
+    // No filter: cap display at 50 only when no featured tokens
     const maxDisplay = 50;
-    const isLimited = !hasFilter && sorted.length > maxDisplay;
+    const shouldCap = !hasFilter && featuredSet.size === 0;
+    const isLimited = shouldCap && sorted.length > maxDisplay;
     const displayTokens = isLimited ? sorted.slice(0, maxDisplay) : sorted;
 
     return { tokens: displayTokens, isLimited };
@@ -353,7 +357,7 @@ const TokenButton = React.memo(function TokenButton({
             <Tooltip
               content={routeTooltipMessage}
               id={`route-tooltip-${getTokenKey(token)}`}
-              tooltipClassName="max-w-[200px]"
+              tooltipClassName="max-w-[280px]"
               onClick={(e) => e.stopPropagation()}
             />
           </div>

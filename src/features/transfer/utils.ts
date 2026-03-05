@@ -1,5 +1,18 @@
+import {
+  ChainMap,
+  CoreAddresses,
+  MultiProtocolCore,
+  MultiProtocolProvider,
+  ProviderType,
+  TypedTransactionReceipt,
+  ViemProvider,
+} from '@hyperlane-xyz/sdk';
+import { isValidAddress, isValidAddressEvm } from '@hyperlane-xyz/utils';
+import { getAddress } from 'viem';
 import ConfirmedIcon from '../../images/icons/confirmed-icon.svg';
 import ErrorCircleIcon from '../../images/icons/error-circle.svg';
+import { logger } from '../../utils/logger';
+import { getChainDisplayName } from '../chains/utils';
 import { FinalTransferStatuses, SentTransferStatuses, TransferStatus } from './types';
 
 export function getTransferStatusLabel(
@@ -65,20 +78,6 @@ export function getIconByTransferStatus(status: TransferStatus) {
       return ErrorCircleIcon;
   }
 }
-
-import {
-  ChainMap,
-  CoreAddresses,
-  MultiProtocolCore,
-  MultiProtocolProvider,
-  ProviderType,
-  TypedTransactionReceipt,
-  ViemProvider,
-} from '@hyperlane-xyz/sdk';
-import { isValidAddress, isValidAddressEvm } from '@hyperlane-xyz/utils';
-import { getAddress } from 'viem';
-import { logger } from '../../utils/logger';
-import { getChainDisplayName } from '../chains/utils';
 
 export function tryGetMsgIdFromTransferReceipt(
   multiProvider: MultiProtocolProvider,

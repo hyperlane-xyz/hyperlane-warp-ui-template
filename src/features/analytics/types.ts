@@ -1,5 +1,8 @@
+<<<<<<< HEAD
 import { TokenStandard } from '@hyperlane-xyz/sdk';
 
+=======
+>>>>>>> origin/main
 import { ProtocolType } from '@hyperlane-xyz/utils';
 
 export enum EVENT_NAME {
@@ -19,6 +22,7 @@ export type EventProperties = {
   [EVENT_NAME.PAGE_VIEWED]: Record<string, never>;
   [EVENT_NAME.CHAIN_SELECTED]: {
     chainType: string;
+<<<<<<< HEAD
     chainId: ChainId;
     chainName: string;
     previousChainId: ChainId;
@@ -28,6 +32,17 @@ export type EventProperties = {
     tokenSymbol: string;
     tokenAddress: string;
     standard: TokenStandard;
+=======
+    chainId: ChainId | null;
+    chainName: string | null;
+    previousChainId: ChainId | null;
+    previousChainName: string | null;
+  };
+  [EVENT_NAME.TOKEN_SELECTED]: {
+    tokenType: string;
+    originTokenSymbol: string;
+    destinationToken: string;
+>>>>>>> origin/main
     origin: string;
     originChainId: ChainId;
     destination: string;

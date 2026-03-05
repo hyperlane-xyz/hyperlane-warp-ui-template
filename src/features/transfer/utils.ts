@@ -1,6 +1,18 @@
+import {
+  ChainMap,
+  CoreAddresses,
+  MultiProtocolCore,
+  MultiProtocolProvider,
+  ProviderType,
+  TypedTransactionReceipt,
+  ViemProvider,
+} from '@hyperlane-xyz/sdk';
+import { isValidAddress, isValidAddressEvm } from '@hyperlane-xyz/utils';
+import { getAddress } from 'viem';
 import ConfirmedIcon from '../../images/icons/confirmed-icon.svg';
-import DeliveredIcon from '../../images/icons/delivered-icon.svg';
 import ErrorCircleIcon from '../../images/icons/error-circle.svg';
+import { logger } from '../../utils/logger';
+import { getChainDisplayName } from '../chains/utils';
 import { FinalTransferStatuses, SentTransferStatuses, TransferStatus } from './types';
 
 export function getTransferStatusLabel(
@@ -58,7 +70,6 @@ export const STATUSES_WITH_ICON = [
 export function getIconByTransferStatus(status: TransferStatus) {
   switch (status) {
     case TransferStatus.Delivered:
-      return DeliveredIcon;
     case TransferStatus.ConfirmedTransfer:
       return ConfirmedIcon;
     case TransferStatus.Failed:
@@ -68,6 +79,7 @@ export function getIconByTransferStatus(status: TransferStatus) {
   }
 }
 
+<<<<<<< HEAD
 import {
   ChainMap,
   CoreAddresses,
@@ -82,6 +94,8 @@ import { getAddress } from 'viem';
 import { logger } from '../../utils/logger';
 import { getChainDisplayName } from '../chains/utils';
 
+=======
+>>>>>>> origin/main
 export function tryGetMsgIdFromTransferReceipt(
   multiProvider: MultiProtocolProvider,
   origin: ChainName,
@@ -182,3 +196,17 @@ export async function isSmartContract(
     return { isContract: false, error: msg };
   }
 }
+<<<<<<< HEAD
+=======
+
+// Returns if the recipient should be cleared by checking if it is valid address from the current chain protocol
+export function shouldClearAddress(
+  multiProvider: MultiProtocolProvider,
+  recipient: string,
+  chainName: string,
+) {
+  const protocol = multiProvider.tryGetProtocol(chainName);
+  if (recipient && protocol && !isValidAddress(recipient, protocol)) return true;
+  return false;
+}
+>>>>>>> origin/main

@@ -38,7 +38,7 @@ export function ChainEditModal({ isOpen, close, chainName, onClickBack }: Props)
     if (!isOpen || !containerRef.current) return;
     const observer = observeDarkLogosInContainer(containerRef.current);
     return () => observer?.disconnect();
-  }, [isOpen, chainName]);
+  }, [isOpen, chainName, !!metadata]);
 
   if (!metadata) return null;
 

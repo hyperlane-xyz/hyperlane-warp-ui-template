@@ -502,11 +502,10 @@ html[data-theme-mode='dark'] .floating-btn {
 }
 
 html[data-theme-mode='dark'] .transfer-card {
-  background: rgba(13, 6, 18, 0.82) !important;
+  background: rgba(13, 6, 18, 0.65) !important;
   box-shadow:
-    0 20px 40px rgba(0, 0, 0, 0.35),
-    inset 0 0 0 1px rgba(185, 89, 255, 0.25),
-    inset 0 0 0 2px rgba(255, 255, 255, 0.03);
+    0 16px 32px rgba(0, 0, 0, 0.25),
+    inset 0 0 0 1px rgba(185, 89, 255, 0.2);
 }
 
 html[data-theme-mode='dark'] .transfer-field-label,
@@ -529,22 +528,42 @@ html[data-theme-mode='dark'] .swap-chains-icon {
   filter: brightness(0) invert(1) drop-shadow(0 0 8px rgba(255, 255, 255, 0.55));
 }
 
-html[data-theme-mode='dark'] .transfer-chain-field,
-html[data-theme-mode='dark'] .transfer-token-field,
-html[data-theme-mode='dark'] .transfer-text-input,
-html[data-theme-mode='dark'] .transfer-review-panel {
-  border-color: rgba(185, 89, 255, 0.28) !important;
-  background: rgba(255, 255, 255, 0.05) !important;
+/* Chain field: transparent so it merges with the card — border-only delineation */
+html[data-theme-mode='dark'] .transfer-chain-field {
+  border-color: rgba(185, 89, 255, 0.18) !important;
+  background: transparent !important;
+  box-shadow: none !important;
   color: #f2e4ff !important;
 }
 
-html[data-theme-mode='dark'] .transfer-chain-field:hover,
-html[data-theme-mode='dark'] .transfer-token-field:hover,
-html[data-theme-mode='dark'] .transfer-chain-field:focus,
-html[data-theme-mode='dark'] .transfer-token-field:focus,
+/* Token button: transparent bg, subtle border only */
+html[data-theme-mode='dark'] .transfer-token-field {
+  border-color: rgba(185, 89, 255, 0.25) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #f2e4ff !important;
+}
+
+html[data-theme-mode='dark'] .transfer-token-field:hover {
+  border-color: rgba(185, 89, 255, 0.5) !important;
+  background: rgba(185, 89, 255, 0.08) !important;
+}
+
+html[data-theme-mode='dark'] .transfer-text-input {
+  border-color: transparent !important;
+  background: transparent !important;
+  color: #f2e4ff !important;
+}
+
 html[data-theme-mode='dark'] .transfer-text-input:focus {
-  border-color: rgba(185, 89, 255, 0.55) !important;
-  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: transparent !important;
+  background: transparent !important;
+}
+
+html[data-theme-mode='dark'] .transfer-review-panel {
+  border-color: rgba(185, 89, 255, 0.22) !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  color: #f2e4ff !important;
 }
 
 html[data-theme-mode='dark'] .transfer-text-input::placeholder {
@@ -553,17 +572,19 @@ html[data-theme-mode='dark'] .transfer-text-input::placeholder {
 
 /* Chevron circle button inside token selector */
 html[data-theme-mode='dark'] .transfer-token-chevron {
-  background: rgba(255, 255, 255, 0.1) !important;
-  border-color: rgba(185, 89, 255, 0.4) !important;
+  background: rgba(185, 89, 255, 0.15) !important;
+  border-color: rgba(185, 89, 255, 0.35) !important;
+  box-shadow: none !important;
   color: #f2e4ff !important;
 }
 
 html[data-theme-mode='dark'] .transfer-token-chevron svg {
-  filter: brightness(0) invert(1);
+  filter: brightness(0) invert(1) opacity(0.8);
 }
 
 html[data-theme-mode='dark'] .transfer-token-field:hover .transfer-token-chevron {
-  background: rgba(185, 89, 255, 0.22) !important;
+  background: rgba(185, 89, 255, 0.28) !important;
+  border-color: rgba(185, 89, 255, 0.5) !important;
 }
 
 /* Horizontal dividers inside transfer cards */

@@ -74,10 +74,12 @@
     "zustand": "^4.4.7"
   },
   "devDependencies": {
+    "@aws-sdk/client-s3": "^3.967.0",
     "@eslint/eslintrc": "^3.3.3",
     "@eslint/js": "^9.39.1",
     "@next/bundle-analyzer": "^15.0.2",
     "@next/eslint-plugin-next": "^15.5.7",
+    "@playwright/test": "^1.58.2",
     "@tanstack/eslint-plugin-query": "^5.59.20",
     "@types/node": "^24.10.9",
     "@types/react": "^18.3.12",
@@ -102,7 +104,6 @@
     "typescript": "5.6.3",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "3.0.5",
-    "@aws-sdk/client-s3": "^3.967.0",
     "yaml": "^2.6.0",
     "yaml-loader": "^0.8.1"
   },

@@ -572,6 +572,12 @@ html[data-theme-mode='dark'] .transfer-text-input:focus {
   background: transparent !important;
 }
 
+/* Chain badge on token icons — dark bg so white logos stay visible */
+html[data-theme-mode='dark'] .token-chain-badge {
+  border-color: rgba(var(--dark-accent-rgb), 0.3) !important;
+  background: #1a0e28 !important;
+}
+
 html[data-theme-mode='dark'] .transfer-review-panel {
   border-color: rgba(185, 89, 255, 0.22) !important;
   background: rgba(255, 255, 255, 0.04) !important;

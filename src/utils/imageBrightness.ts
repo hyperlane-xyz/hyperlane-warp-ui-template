@@ -39,7 +39,7 @@ function toDarkVariantSrc(src: string): string | null {
     const url = new URL(src, window.location.href);
     const lastSlash = url.pathname.lastIndexOf('/');
     const filename = url.pathname.substring(lastSlash + 1);
-    if (!filename || filename.startsWith('darkmode-')) return null;
+    if (!filename || filename.toLowerCase().startsWith('darkmode-')) return null;
     url.pathname = url.pathname.substring(0, lastSlash + 1) + 'darkmode-' + filename;
     return url.toString();
   } catch {

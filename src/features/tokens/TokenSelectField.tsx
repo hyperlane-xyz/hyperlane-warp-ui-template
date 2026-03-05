@@ -171,7 +171,7 @@ function TokenButton({
       ) : (
         <span className="text-sm text-gray-400">Select token</span>
       )}
-      <div className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-400 bg-white drop-shadow-button transition-colors duration-150 group-hover:bg-gray-50">
+      <div className="transfer-token-chevron flex h-10 w-10 items-center justify-center rounded-full border border-gray-400 bg-white drop-shadow-button transition-colors duration-150 group-hover:bg-gray-50">
         <ChevronLargeIcon width={14} height={18} />
       </div>
     </button>

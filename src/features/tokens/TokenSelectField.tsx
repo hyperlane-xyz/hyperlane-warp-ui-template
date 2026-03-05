@@ -10,11 +10,11 @@ import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { TransferFormValues } from '../transfer/types';
 import { shouldClearAddress } from '../transfer/utils';
-import { getTokenByKeyFromMap, useTokenByKeyMap } from './hooks';
+import { getTokenByKeyFromMap, useCollateralGroups, useTokenByKeyMap, useTokens } from './hooks';
 import { TokenChainIcon } from './TokenChainIcon';
 import { TokenSelectionMode } from './types';
 import { UnifiedTokenChainModal } from './UnifiedTokenChainModal';
-import { getTokenKey } from './utils';
+import { checkTokenHasRoute, getTokenKey } from './utils';
 
 type Props = {
   name: string;
@@ -37,6 +37,8 @@ export function TokenSelectField({
   const [{ value: tokenKey }, , { setValue: setTokenKey }] = useField<string | undefined>(name);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingChain, setEditingChain] = useState<string | null>(null);
+  const collateralGroups = useCollateralGroups();
+  const tokens = useTokens();
 
   const handleEditBack = () => {
     setEditingChain(null);
@@ -79,10 +81,29 @@ export function TokenSelectField({
     // Update URL query params based on selection mode
     if (selectionMode === 'origin') {
       setFieldValue('amount', '');
-      updateQueryParams({
+
+      // Auto-select destination if current one has no route from new origin
+      const currentDest = getTokenByKeyFromMap(tokenMap, values.destinationTokenKey);
+      const hasValidRoute =
+        currentDest && checkTokenHasRoute(newToken, currentDest, collateralGroups);
+      const queryParams: Record<string, string> = {
         [WARP_QUERY_PARAMS.ORIGIN]: newToken.chainName,
         [WARP_QUERY_PARAMS.ORIGIN_TOKEN]: newToken.symbol,
-      });
+      };
+
+      if (!hasValidRoute) {
+        const firstDest = tokens.find(
+          (t) =>
+            t.chainName !== newToken.chainName && checkTokenHasRoute(newToken, t, collateralGroups),
+        );
+        if (firstDest) {
+          setFieldValue('destinationTokenKey', getTokenKey(firstDest));
+          queryParams[WARP_QUERY_PARAMS.DESTINATION] = firstDest.chainName;
+          queryParams[WARP_QUERY_PARAMS.DESTINATION_TOKEN] = firstDest.symbol;
+        }
+      }
+
+      updateQueryParams(queryParams);
     } else {
       // When destination changes, validate and clear custom recipient if protocol changed
       const shouldClearRecipient = shouldClearAddress(

@@ -357,7 +357,7 @@ const TokenButton = React.memo(function TokenButton({
             <Tooltip
               content={routeTooltipMessage}
               id={`route-tooltip-${getTokenKey(token)}`}
-              tooltipClassName="max-w-[200px]"
+              tooltipClassName="max-w-[280px]"
               onClick={(e) => e.stopPropagation()}
             />
           </div>

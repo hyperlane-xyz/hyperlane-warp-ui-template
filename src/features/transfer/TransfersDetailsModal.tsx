@@ -119,7 +119,7 @@ export function TransfersDetailsModal({
   const explorerLink = getHypExplorerLink(multiProvider, origin, msgId);
 
   return (
-    <Modal isOpen={isOpen} close={onClose} panelClassname="max-w-sm">
+    <Modal isOpen={isOpen} close={onClose} panelClassname="transfer-details-modal max-w-sm">
       <ModalHeader className="h-8 shadow-accent-glow" />
       <div className="p-4">
         {isFinal && (
@@ -203,7 +203,7 @@ export function TransfersDetailsModal({
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-4">
-            <SpinnerIcon width={60} height={60} className="mt-3" />
+            <SpinnerIcon width={60} height={60} className="transfer-details-spinner mt-3" />
             <div className="mt-5 text-center text-sm text-gray-600">{statusDescription}</div>
             {showSignWarning && (
               <div className="mt-3 text-center text-sm text-gray-600">

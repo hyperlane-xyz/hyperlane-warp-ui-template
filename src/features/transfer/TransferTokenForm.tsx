@@ -167,7 +167,7 @@ export function TransferTokenForm() {
       validateOnBlur={false}
     >
       {({ isValidating }) => (
-        <Form className="flex w-full flex-col items-stretch gap-1.5">
+        <Form className="transfer-form flex w-full flex-col items-stretch gap-1.5">
           <WarningBanners />
 
           <TransferSection label="Send">
@@ -243,12 +243,12 @@ function SwapTokensButton({ disabled }: { disabled?: boolean }) {
         type="button"
         onClick={onSwap}
         disabled={disabled}
-        className="group flex h-8 w-8 items-center justify-center rounded border border-gray-400/50 bg-white shadow-button transition-all hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+        className="swap-chains-button group flex h-8 w-8 items-center justify-center rounded-md border border-gray-400/50 bg-white shadow-button transition-all hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
       >
         <SwapIcon
           width={18}
           height={24}
-          className="transition-transform duration-300 group-hover:rotate-180 group-disabled:rotate-0"
+          className="swap-chains-icon transition-transform duration-300 group-hover:rotate-180 group-disabled:rotate-0"
         />
       </button>
     </div>
@@ -292,7 +292,7 @@ function OriginTokenCard({
         <ImportTokenButton token={originToken} />
       </div>
 
-      <div className="rounded-[7px] border border-gray-400/25 bg-white p-3 shadow-input">
+      <div className="transfer-chain-field rounded-lg border border-gray-400/25 bg-white p-3 shadow-input">
         <TokenSelectField
           name="originTokenKey"
           selectionMode="origin"
@@ -301,20 +301,20 @@ function OriginTokenCard({
           showLabel={false}
         />
 
-        <div className="my-2.5 h-px bg-primary-50" />
+        <div className="transfer-divider my-2.5 h-px bg-primary-50" />
 
         <div className="flex items-center justify-between gap-2">
           <TextField
             name="amount"
             placeholder="0"
-            className="w-full flex-1 border-none bg-transparent font-secondary text-xl font-normal text-gray-900 outline-none placeholder:text-gray-900"
+            className="transfer-text-input w-full flex-1 border-none bg-transparent font-secondary text-xl font-normal text-gray-900 outline-none placeholder:text-gray-900"
             type="number"
             step="any"
             disabled={isReview}
           />
           <MaxButton balance={balance} disabled={isReview} isRouteSupported={isRouteSupported} />
         </div>
-        <div className="mt-1 flex items-center justify-between text-xs leading-[18px] text-gray-450">
+        <div className="transfer-balance mt-1 flex items-center justify-between text-xs leading-[18px] text-gray-450">
           <span>
             {shouldShowPrice && !isPriceLoading ? (
               <>
@@ -365,7 +365,7 @@ function DestinationTokenCard({ isReview }: { isReview: boolean }) {
         <ImportTokenButton token={destinationToken} />
       </div>
 
-      <div className="rounded-[7px] border border-gray-400/25 bg-white p-3 shadow-input">
+      <div className="transfer-chain-field rounded-lg border border-gray-400/25 bg-white p-3 shadow-input">
         <TokenSelectField
           name="destinationTokenKey"
           selectionMode="destination"
@@ -373,7 +373,7 @@ function DestinationTokenCard({ isReview }: { isReview: boolean }) {
           showLabel={false}
         />
 
-        <div className="my-2.5 h-px bg-primary-50" />
+        <div className="transfer-divider my-2.5 h-px bg-primary-50" />
 
         <TokenBalance label="Remote Balance" balance={balance} />
       </div>
@@ -422,7 +422,7 @@ function MaxButton({
       type="button"
       onClick={onClick}
       disabled={isDisabled}
-      className="rounded border border-gray-300 px-2 py-0.5 font-secondary text-sm text-gray-450 transition-colors hover:border-gray-400 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50"
+      className="transfer-max-btn rounded border border-gray-300 px-2 py-0.5 font-secondary text-sm text-gray-450 transition-colors hover:border-gray-400 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50"
     >
       {isLoading ? <SpinnerIcon className="h-4 w-4" /> : 'Max'}
     </button>
@@ -755,8 +755,10 @@ function ReviewDetails({
           isReview ? 'max-h-screen duration-1000 ease-in' : 'max-h-0 duration-500'
         } overflow-hidden transition-all`}
       >
-        <label className="mt-4 block pl-0.5 text-sm text-gray-600">Transactions</label>
-        <div className="mt-1.5 space-y-2 break-all rounded border border-gray-400 bg-gray-150 px-2.5 py-2 text-sm">
+        <label className="transfer-field-label mt-4 block pl-0.5 text-sm text-gray-600">
+          Transactions
+        </label>
+        <div className="transfer-review-panel mt-1.5 space-y-2 break-all rounded-md border border-gray-400 bg-gray-150 px-2.5 py-2 text-sm">
           {isLoading ? (
             <div className="flex items-center justify-center py-6">
               <SpinnerIcon className="h-5 w-5" />
@@ -838,8 +840,8 @@ function WarningBanners() {
   const destinationToken = getTokenByKeyFromMap(tokenMap, values.destinationTokenKey);
 
   return (
-    // Max height to prevent double padding if multiple warnings are visible
-    <div className="max-h-10">
+    // Cap space to one visible banner since warning layers are absolutely positioned at the top.
+    <div className="max-h-12 overflow-hidden sm:max-h-10">
       <ChainWalletWarning origin={originToken?.chainName || ''} />
       <ChainConnectionWarning
         origin={originToken?.chainName || ''}

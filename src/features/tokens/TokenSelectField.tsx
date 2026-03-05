@@ -171,7 +171,7 @@ function TokenButton({
       ) : (
         <span className="text-sm text-gray-400">Select token</span>
       )}
-      <div className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-400 bg-white drop-shadow-button transition-colors duration-150 group-hover:bg-gray-50">
+      <div className="transfer-token-chevron flex h-10 w-10 items-center justify-center rounded-full border border-gray-400 bg-white drop-shadow-button transition-colors duration-150 group-hover:bg-gray-50">
         <ChevronLargeIcon width={14} height={18} />
       </div>
     </button>
@@ -179,7 +179,7 @@ function TokenButton({
 }
 
 const styles = {
-  base: 'w-full py-2 flex items-center justify-between transition-all rounded-xl px-1.5 border duration-150 border-gray-400/25 shadow-sm group',
+  base: 'transfer-token-field w-full py-2 flex items-center justify-between transition-all rounded-md px-1.5 border duration-150 border-gray-400/25 shadow-sm group',
   enabled: 'hover:bg-gray-50 cursor-pointer',
   disabled: 'cursor-not-allowed opacity-60',
 };

@@ -1,16 +1,9 @@
 import { MultiProtocolProvider, Token } from '@hyperlane-xyz/sdk';
-import { normalizeAddress } from '@hyperlane-xyz/utils';
 import { logger } from '../../utils/logger';
 
 export interface TokenEntry {
   token: Token;
   key: string;
-}
-
-/** Includes symbol to distinguish tokens sharing the same addressOrDenom
- *  (e.g. M0PortalLite wM/mUSD/USDSC all use the same portal contract). */
-export function tokenKey(token: Token): string {
-  return `${token.chainName}-${normalizeAddress(token.addressOrDenom, token.protocol)}-${token.symbol}`;
 }
 
 /** Fetch a single token balance via SDK fallback. */

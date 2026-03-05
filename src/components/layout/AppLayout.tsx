@@ -1,5 +1,5 @@
 import Head from 'next/head';
-import { PropsWithChildren, useCallback, useEffect, useState } from 'react';
+import { PropsWithChildren, useCallback, useEffect, useLayoutEffect, useState } from 'react';
 import {
   APP_NAME,
   DEFAULT_UI_THEME_MODE,
@@ -77,7 +77,9 @@ export function AppLayout({ children }: PropsWithChildren) {
     trackEvent(EVENT_NAME.PAGE_VIEWED, {});
   }, []);
 
-  useEffect(() => {
+  // useLayoutEffect so the data-theme-mode attribute is set before paint,
+  // avoiding a single-frame flash when toggling themes.
+  useLayoutEffect(() => {
     if (typeof window === 'undefined') return;
     document.documentElement.dataset.themeMode = themeMode;
     if (hasExplicitThemePreference) persistThemeMode(themeMode);

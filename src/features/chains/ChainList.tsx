@@ -109,7 +109,11 @@ function ChainButton({
     >
       {icon}
       <span className="min-w-0 flex-1 truncate text-sm font-medium">{label}</span>
-      {showEditIcon && <PencilIcon width={14} height={14} color={Color.gray['500']} />}
+      {showEditIcon && (
+        <span className="chain-picker-edit-icon">
+          <PencilIcon width={14} height={14} color={Color.gray['500']} />
+        </span>
+      )}
     </button>
   );
 }

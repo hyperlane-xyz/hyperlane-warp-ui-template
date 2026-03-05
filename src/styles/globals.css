@@ -847,6 +847,12 @@ html[data-theme-mode='dark'] .chain-picker-modal .text-black {
   color: #f2e4ff !important;
 }
 
+/* Toolbar + edit icons: brighten gray-500 SVG fills for dark bg */
+html[data-theme-mode='dark'] .chain-picker-toolbar svg path,
+html[data-theme-mode='dark'] .chain-picker-edit-icon path {
+  fill: #c9b5df !important;
+}
+
 html[data-theme-mode='dark']
   .chain-picker-modal
   .htw-divide-gray-100

@@ -100,6 +100,10 @@ export function TokenSelectField({
           setFieldValue('destinationTokenKey', getTokenKey(firstDest));
           queryParams[WARP_QUERY_PARAMS.DESTINATION] = firstDest.chainName;
           queryParams[WARP_QUERY_PARAMS.DESTINATION_TOKEN] = firstDest.symbol;
+          // Clear recipient if new destination protocol doesn't match
+          if (shouldClearAddress(multiProvider, values.recipient, firstDest.chainName)) {
+            setFieldValue('recipient', '');
+          }
         }
       }
 

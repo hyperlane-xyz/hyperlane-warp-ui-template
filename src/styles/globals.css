@@ -329,6 +329,15 @@ Many selectors below target widget internals (.htw-*); revisit during @hyperlane
   text-decoration: underline;
 }
 
+/* Chain edit modal: tone down bright white toggle/info icons */
+html[data-theme-mode='dark'] .chain-edit-container .htw-rounded-full {
+  opacity: 0.7;
+}
+
+html[data-theme-mode='dark'] .chain-edit-container .htw-rounded-full:hover {
+  opacity: 0.9;
+}
+
 html[data-theme-mode='dark'] .theme-toggle {
   @apply border-primary-300/45 bg-black/75 text-primary-50;
 }

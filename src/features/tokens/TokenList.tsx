@@ -240,7 +240,7 @@ export function TokenList({
   return (
     <div className="relative flex-1 overflow-hidden">
       <div ref={scrollRef} className="h-full overflow-auto">
-        <div className="sticky top-0 z-10 border-b border-primary-50 bg-white px-4 pb-2 pt-2">
+        <div className="token-picker-header sticky top-0 z-10 border-b border-primary-50 bg-white px-4 pb-2 pt-2">
           <h3 className={`${styles.base} text-sm text-black`}>Token Selection</h3>
         </div>
         <div className="py-2 md:px-3">
@@ -266,7 +266,7 @@ export function TokenList({
           })}
 
           {isLimited && (
-            <div className="mx-1 mb-3 mt-2 rounded-lg bg-blue-50 px-3 py-4 text-center">
+            <div className="token-picker-hint mx-1 mb-3 mt-2 rounded-lg bg-blue-50 px-3 py-4 text-center">
               <p className="text-sm text-blue-600">Search or select a chain to see more tokens</p>
             </div>
           )}
@@ -275,7 +275,7 @@ export function TokenList({
         </div>
       </div>
       {/* Bottom fade effect */}
-      <div className="pointer-events-none absolute bottom-0 left-0 right-0 hidden h-12 bg-gradient-to-b from-transparent to-cream-200 md:block" />
+      <div className="token-picker-fade pointer-events-none absolute bottom-0 left-0 right-0 hidden h-12 bg-gradient-to-b from-transparent to-cream-200 md:block" />
     </div>
   );
 }
@@ -340,7 +340,7 @@ const TokenButton = React.memo(function TokenButton({
 
       <div className="ml-2 shrink-0 text-right">
         {isBalanceLoading && !primaryValue ? (
-          <div className="mb-1 ml-auto h-4 w-14 animate-pulse rounded bg-gray-100" />
+          <div className="token-picker-shimmer mb-1 ml-auto h-4 w-14 animate-pulse rounded bg-gray-100" />
         ) : primaryValue ? (
           <>
             <div className={`token-picker-usd ${styles.base} text-sm font-medium text-black`}>

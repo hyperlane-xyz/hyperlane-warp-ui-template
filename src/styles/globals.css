@@ -763,6 +763,50 @@ html[data-theme-mode='dark'] .token-picker-chain-row:hover {
   background: rgba(185, 89, 255, 0.16) !important;
 }
 
+/* Token list panel inner backgrounds */
+html[data-theme-mode='dark'] .token-picker-header {
+  background: rgba(20, 10, 30, 0.96) !important;
+  border-color: rgba(185, 89, 255, 0.22) !important;
+}
+
+html[data-theme-mode='dark'] .token-picker-header h3 {
+  color: #c9b5df !important;
+}
+
+html[data-theme-mode='dark'] .token-picker-row .text-black {
+  color: #f2e4ff !important;
+}
+
+html[data-theme-mode='dark'] .token-picker-fade {
+  background: linear-gradient(to bottom, transparent, rgba(20, 10, 30, 0.96)) !important;
+}
+
+html[data-theme-mode='dark'] .chain-picker-fade {
+  background: linear-gradient(to bottom, transparent, rgba(20, 10, 30, 0.96)) !important;
+}
+
+html[data-theme-mode='dark'] .token-picker-shimmer {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+html[data-theme-mode='dark'] .token-picker-hint {
+  background: rgba(185, 89, 255, 0.12) !important;
+}
+
+html[data-theme-mode='dark'] .token-picker-hint p {
+  color: #c9b5df !important;
+}
+
+/* Chain list selected state */
+html[data-theme-mode='dark'] .token-picker-chain-row .text-black {
+  color: #f2e4ff !important;
+}
+
+/* Token row hover override (replaces hover:bg-gray-100) */
+html[data-theme-mode='dark'] .token-picker-row.hover\:bg-gray-100:hover {
+  background: rgba(185, 89, 255, 0.16) !important;
+}
+
 html[data-theme-mode='dark'] .chain-picker-modal .htw-border-gray-200,
 html[data-theme-mode='dark'] .chain-picker-modal .htw-border-gray-100,
 html[data-theme-mode='dark'] .token-picker-modal .border-gray-200,
@@ -770,8 +814,37 @@ html[data-theme-mode='dark'] .token-picker-modal .border-gray-100 {
   border-color: rgba(185, 89, 255, 0.3) !important;
 }
 
-html[data-theme-mode='dark'] .chain-picker-modal .htw-bg-gray-100 {
-  background: rgba(255, 255, 255, 0.1) !important;
+html[data-theme-mode='dark'] .chain-picker-modal .htw-bg-gray-100,
+html[data-theme-mode='dark'] .chain-picker-modal .bg-gray-100,
+html[data-theme-mode='dark'] .chain-picker-modal.bg-gray-100 {
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* Chain filter/sort dropdown panels */
+html[data-theme-mode='dark'] .chain-picker-modal .bg-white {
+  background: rgba(20, 10, 30, 0.98) !important;
+}
+
+html[data-theme-mode='dark'] .chain-picker-modal .border-gray-200 {
+  border-color: rgba(185, 89, 255, 0.3) !important;
+}
+
+html[data-theme-mode='dark'] .chain-picker-modal .text-gray-700,
+html[data-theme-mode='dark'] .chain-picker-modal .text-gray-600,
+html[data-theme-mode='dark'] .chain-picker-modal .text-gray-500 {
+  color: #c9b5df !important;
+}
+
+html[data-theme-mode='dark'] .chain-picker-modal .hover\:bg-gray-200:hover {
+  background: rgba(185, 89, 255, 0.16) !important;
+}
+
+html[data-theme-mode='dark'] .chain-picker-modal .hover\:bg-gray-100:hover {
+  background: rgba(185, 89, 255, 0.12) !important;
+}
+
+html[data-theme-mode='dark'] .chain-picker-modal .text-black {
+  color: #f2e4ff !important;
 }
 
 html[data-theme-mode='dark']

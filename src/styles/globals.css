@@ -341,13 +341,51 @@ Many selectors below target widget internals (.htw-*); revisit during @hyperlane
   text-decoration: underline;
 }
 
-/* Chain edit modal: tone down bright white toggle/info icons */
-html[data-theme-mode='dark'] .chain-edit-container .htw-rounded-full {
-  opacity: 0.7;
+/* Chain edit modal dark mode overrides */
+
+/* Tooltip ? icons — brighten the background circle for visibility */
+html[data-theme-mode='dark'] .chain-edit-container [data-tooltip-id] .htw-rounded-full {
+  background: rgba(var(--dark-accent-rgb), 0.3) !important;
+  border: 1px solid rgba(var(--dark-accent-rgb), 0.45);
 }
 
-html[data-theme-mode='dark'] .chain-edit-container .htw-rounded-full:hover {
-  opacity: 0.9;
+html[data-theme-mode='dark'] .chain-edit-container [data-tooltip-id] svg {
+  opacity: 0.9 !important;
+  filter: brightness(0) invert(1);
+}
+
+/* Status circles (green/red/gray) — brighter with glow */
+html[data-theme-mode='dark'] .chain-edit-container .htw-bg-green-500 {
+  background-color: #4ade80 !important;
+  box-shadow: 0 0 6px rgba(74, 222, 128, 0.5);
+}
+
+html[data-theme-mode='dark'] .chain-edit-container .htw-bg-red-500 {
+  background-color: #f87171 !important;
+  box-shadow: 0 0 6px rgba(248, 113, 113, 0.5);
+}
+
+html[data-theme-mode='dark'] .chain-edit-container .htw-bg-gray-400 {
+  background-color: #9ca3af !important;
+  box-shadow: 0 0 4px rgba(156, 163, 175, 0.3);
+}
+
+/* "Add new rpc/explorer" — tone down the plus icon */
+html[data-theme-mode='dark'] .chain-edit-container .htw-gap-3 > svg path {
+  fill: var(--dark-text-secondary) !important;
+}
+
+html[data-theme-mode='dark'] .chain-edit-container .htw-gap-3:hover > svg path {
+  fill: var(--dark-text-primary) !important;
+}
+
+/* "Add new" text — muted to match icon */
+html[data-theme-mode='dark'] .chain-edit-container .htw-gap-3 .htw-text-sm {
+  color: var(--dark-text-secondary) !important;
+}
+
+html[data-theme-mode='dark'] .chain-edit-container .htw-gap-3:hover .htw-text-sm {
+  color: var(--dark-text-primary) !important;
 }
 
 html[data-theme-mode='dark'] .theme-toggle {

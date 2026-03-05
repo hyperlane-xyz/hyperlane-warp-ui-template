@@ -605,8 +605,12 @@ html[data-theme-mode='dark'] .wallet-connect-link:hover {
   text-decoration-color: rgba(212, 184, 240, 0.5) !important;
 }
 
-html[data-theme-mode='dark'] .wallet-connect-link [class*='fill-primary'] {
+html[data-theme-mode='dark'] .wallet-connect-link path {
   fill: #b494d6 !important;
+}
+
+html[data-theme-mode='dark'] .wallet-connect-link:hover path {
+  fill: #d4b8f0 !important;
 }
 
 /* Import token button */
@@ -618,11 +622,11 @@ html[data-theme-mode='dark'] .transfer-import-token:hover {
   color: #d4b8f0 !important;
 }
 
-html[data-theme-mode='dark'] .transfer-import-token [class*='fill-primary'] {
+html[data-theme-mode='dark'] .transfer-import-token path {
   fill: #b494d6 !important;
 }
 
-html[data-theme-mode='dark'] .transfer-import-token:hover [class*='fill-primary'] {
+html[data-theme-mode='dark'] .transfer-import-token:hover path {
   fill: #d4b8f0 !important;
 }
 

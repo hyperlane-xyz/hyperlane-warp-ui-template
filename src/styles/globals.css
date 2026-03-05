@@ -43,6 +43,18 @@ html[data-theme-mode='dark'] {
   --app-bg-image:
     url('/backgrounds/main-dark.svg'),
     radial-gradient(ellipse 200% 150% at 50% 100%, #5e1396 0%, #1a0a28 40%, #0d0612 100%);
+
+  /* Dark mode semantic palette — single source of truth */
+  --dark-text-primary: #f2e4ff;
+  --dark-text-secondary: #c9b5df;
+  --dark-text-muted: #b494d6;
+  --dark-surface: rgba(20, 10, 30, 0.96);
+  --dark-surface-card: rgba(13, 6, 18, 0.65);
+  --dark-border: rgba(185, 89, 255, 0.25);
+  --dark-border-hover: rgba(185, 89, 255, 0.5);
+  --dark-border-subtle: rgba(185, 89, 255, 0.18);
+  --dark-hover: rgba(185, 89, 255, 0.16);
+  --dark-accent-rgb: 185, 89, 255;
 }
 
 html,
@@ -406,13 +418,13 @@ html[data-theme-mode='dark'] .sidebar-menu .bg-gray-100 {
 
 html[data-theme-mode='dark'] .sidebar-menu .text-gray-900,
 html[data-theme-mode='dark'] .sidebar-menu .text-gray-800 {
-  color: #f2e4ff !important;
+  color: var(--dark-text-primary) !important;
 }
 
 html[data-theme-mode='dark'] .sidebar-menu .text-gray-600,
 html[data-theme-mode='dark'] .sidebar-menu .text-gray-500,
 html[data-theme-mode='dark'] .sidebar-menu .text-gray-400 {
-  color: #c9b5df !important;
+  color: var(--dark-text-secondary) !important;
 }
 
 .tip-card {
@@ -450,11 +462,11 @@ html[data-theme-mode='dark'] .tip-card {
 }
 
 html[data-theme-mode='dark'] .tip-card-close {
-  color: #c9b5df !important;
+  color: var(--dark-text-secondary) !important;
 }
 
 html[data-theme-mode='dark'] .tip-card-close:hover {
-  color: #f2e4ff !important;
+  color: var(--dark-text-primary) !important;
 }
 
 html[data-theme-mode='dark'] .tip-card-title {
@@ -519,7 +531,7 @@ html[data-theme-mode='dark'] .transfer-card {
 
 html[data-theme-mode='dark'] .transfer-field-label,
 html[data-theme-mode='dark'] .transfer-balance {
-  color: #c9b5df !important;
+  color: var(--dark-text-secondary) !important;
 }
 
 html[data-theme-mode='dark'] .swap-chains-button {
@@ -542,7 +554,7 @@ html[data-theme-mode='dark'] .transfer-chain-field {
   border-color: rgba(185, 89, 255, 0.18) !important;
   background: transparent !important;
   box-shadow: none !important;
-  color: #f2e4ff !important;
+  color: var(--dark-text-primary) !important;
 }
 
 /* Token button: transparent bg, subtle border only */
@@ -550,7 +562,7 @@ html[data-theme-mode='dark'] .transfer-token-field {
   border-color: rgba(185, 89, 255, 0.25) !important;
   background: transparent !important;
   box-shadow: none !important;
-  color: #f2e4ff !important;
+  color: var(--dark-text-primary) !important;
 }
 
 html[data-theme-mode='dark'] .transfer-token-field:hover {
@@ -561,7 +573,7 @@ html[data-theme-mode='dark'] .transfer-token-field:hover {
 html[data-theme-mode='dark'] .transfer-text-input {
   border-color: transparent !important;
   background: transparent !important;
-  color: #f2e4ff !important;
+  color: var(--dark-text-primary) !important;
 }
 
 html[data-theme-mode='dark'] .transfer-text-input:focus {
@@ -572,11 +584,11 @@ html[data-theme-mode='dark'] .transfer-text-input:focus {
 html[data-theme-mode='dark'] .transfer-review-panel {
   border-color: rgba(185, 89, 255, 0.22) !important;
   background: rgba(255, 255, 255, 0.04) !important;
-  color: #f2e4ff !important;
+  color: var(--dark-text-primary) !important;
 }
 
 html[data-theme-mode='dark'] .transfer-text-input::placeholder {
-  color: #c9b5df;
+  color: var(--dark-text-secondary);
 }
 
 /* Chevron circle button inside token selector */
@@ -584,7 +596,7 @@ html[data-theme-mode='dark'] .transfer-token-chevron {
   background: rgba(185, 89, 255, 0.15) !important;
   border-color: rgba(185, 89, 255, 0.35) !important;
   box-shadow: none !important;
-  color: #f2e4ff !important;
+  color: var(--dark-text-primary) !important;
 }
 
 html[data-theme-mode='dark'] .transfer-token-chevron svg {
@@ -604,17 +616,17 @@ html[data-theme-mode='dark'] .transfer-divider {
 /* Max button */
 html[data-theme-mode='dark'] .transfer-max-btn {
   border-color: rgba(185, 89, 255, 0.4) !important;
-  color: #c9b5df !important;
+  color: var(--dark-text-secondary) !important;
 }
 
 html[data-theme-mode='dark'] .transfer-max-btn:hover:not(:disabled) {
   border-color: rgba(185, 89, 255, 0.65) !important;
-  color: #f2e4ff !important;
+  color: var(--dark-text-primary) !important;
 }
 
 /* Wallet connect link & dropdown */
 html[data-theme-mode='dark'] .wallet-connect-link {
-  color: #b494d6 !important;
+  color: var(--dark-text-muted) !important;
   text-decoration-color: rgba(180, 148, 214, 0.35) !important;
 }
 
@@ -624,7 +636,7 @@ html[data-theme-mode='dark'] .wallet-connect-link:hover {
 }
 
 html[data-theme-mode='dark'] .wallet-connect-link path {
-  fill: #b494d6 !important;
+  fill: var(--dark-text-muted) !important;
 }
 
 html[data-theme-mode='dark'] .wallet-connect-link:hover path {
@@ -633,7 +645,7 @@ html[data-theme-mode='dark'] .wallet-connect-link:hover path {
 
 /* Import token button */
 html[data-theme-mode='dark'] .transfer-import-token {
-  color: #b494d6 !important;
+  color: var(--dark-text-muted) !important;
 }
 
 html[data-theme-mode='dark'] .transfer-import-token:hover {
@@ -641,7 +653,7 @@ html[data-theme-mode='dark'] .transfer-import-token:hover {
 }
 
 html[data-theme-mode='dark'] .transfer-import-token path {
-  fill: #b494d6 !important;
+  fill: var(--dark-text-muted) !important;
 }
 
 html[data-theme-mode='dark'] .transfer-import-token:hover path {
@@ -650,12 +662,12 @@ html[data-theme-mode='dark'] .transfer-import-token:hover path {
 
 html[data-theme-mode='dark'] .wallet-dropdown-menu {
   border-color: rgba(185, 89, 255, 0.38) !important;
-  background: rgba(20, 10, 30, 0.96) !important;
+  background: var(--dark-surface) !important;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
 }
 
 html[data-theme-mode='dark'] .wallet-dropdown-item {
-  color: #f2e4ff !important;
+  color: var(--dark-text-primary) !important;
 }
 
 html[data-theme-mode='dark'] .wallet-dropdown-item:hover {
@@ -668,29 +680,29 @@ html[data-theme-mode='dark'] .wallet-dropdown-separator {
 
 html[data-theme-mode='dark'] .transfer-form .text-gray-900,
 html[data-theme-mode='dark'] .transfer-form .text-gray-800 {
-  color: #f2e4ff !important;
+  color: var(--dark-text-primary) !important;
 }
 
 html[data-theme-mode='dark'] .transfer-form .text-gray-700,
 html[data-theme-mode='dark'] .transfer-form .text-gray-600,
 html[data-theme-mode='dark'] .transfer-form .text-gray-500 {
-  color: #c9b5df !important;
+  color: var(--dark-text-secondary) !important;
 }
 
 html[data-theme-mode='dark'] .fee-section-btn {
-  color: #c9b5df !important;
+  color: var(--dark-text-secondary) !important;
 }
 
 html[data-theme-mode='dark'] .fee-section-btn path {
-  fill: #c9b5df !important;
+  fill: var(--dark-text-secondary) !important;
 }
 
 html[data-theme-mode='dark'] .fee-section-btn:hover {
-  color: #f2e4ff !important;
+  color: var(--dark-text-primary) !important;
 }
 
 html[data-theme-mode='dark'] .fee-section-btn:hover path {
-  fill: #f2e4ff !important;
+  fill: var(--dark-text-primary) !important;
 }
 
 html[data-theme-mode='dark'] .sidebar-menu-arrow {
@@ -730,7 +742,7 @@ html[data-theme-mode='dark'] .footer-nav-item svg {
 html[data-theme-mode='dark'] .chain-picker-modal,
 html[data-theme-mode='dark'] .token-picker-modal {
   border: 1px solid rgba(185, 89, 255, 0.38) !important;
-  background: rgba(20, 10, 30, 0.96) !important;
+  background: var(--dark-surface) !important;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
 }
 
@@ -738,16 +750,16 @@ html[data-theme-mode='dark'] .chain-picker-modal input,
 html[data-theme-mode='dark'] .token-picker-search-input {
   border-color: rgba(185, 89, 255, 0.45) !important;
   background: rgba(255, 255, 255, 0.08) !important;
-  color: #f2e4ff !important;
+  color: var(--dark-text-primary) !important;
 }
 
 html[data-theme-mode='dark'] .chain-picker-modal input::placeholder,
 html[data-theme-mode='dark'] .token-picker-search-input::placeholder {
-  color: #c9b5df !important;
+  color: var(--dark-text-secondary) !important;
 }
 
 html[data-theme-mode='dark'] .chain-picker-modal button {
-  color: #f2e4ff;
+  color: var(--dark-text-primary);
 }
 
 html[data-theme-mode='dark'] .chain-picker-modal .htw-h-7 {
@@ -774,16 +786,16 @@ html[data-theme-mode='dark'] .token-picker-chain-row:hover {
 
 /* Token list panel inner backgrounds */
 html[data-theme-mode='dark'] .token-picker-header {
-  background: rgba(20, 10, 30, 0.96) !important;
+  background: var(--dark-surface) !important;
   border-color: rgba(185, 89, 255, 0.22) !important;
 }
 
 html[data-theme-mode='dark'] .token-picker-header h3 {
-  color: #c9b5df !important;
+  color: var(--dark-text-secondary) !important;
 }
 
 html[data-theme-mode='dark'] .token-picker-row .text-black {
-  color: #f2e4ff !important;
+  color: var(--dark-text-primary) !important;
 }
 
 html[data-theme-mode='dark'] .token-picker-fade {
@@ -804,12 +816,12 @@ html[data-theme-mode='dark'] .token-picker-hint {
 }
 
 html[data-theme-mode='dark'] .token-picker-hint p {
-  color: #c9b5df !important;
+  color: var(--dark-text-secondary) !important;
 }
 
 /* Chain list selected state */
 html[data-theme-mode='dark'] .token-picker-chain-row .text-black {
-  color: #f2e4ff !important;
+  color: var(--dark-text-primary) !important;
 }
 
 /* Token row hover override (replaces hover:bg-gray-100) */
@@ -842,7 +854,7 @@ html[data-theme-mode='dark'] .chain-picker-modal .border-gray-200 {
 html[data-theme-mode='dark'] .chain-picker-modal .text-gray-700,
 html[data-theme-mode='dark'] .chain-picker-modal .text-gray-600,
 html[data-theme-mode='dark'] .chain-picker-modal .text-gray-500 {
-  color: #c9b5df !important;
+  color: var(--dark-text-secondary) !important;
 }
 
 html[data-theme-mode='dark'] .chain-picker-modal .hover\:bg-gray-200:hover {
@@ -854,13 +866,13 @@ html[data-theme-mode='dark'] .chain-picker-modal .hover\:bg-gray-100:hover {
 }
 
 html[data-theme-mode='dark'] .chain-picker-modal .text-black {
-  color: #f2e4ff !important;
+  color: var(--dark-text-primary) !important;
 }
 
 /* Toolbar + edit icons: brighten gray-500 SVG fills for dark bg */
 html[data-theme-mode='dark'] .chain-picker-toolbar svg path[fill='#6b7280' i],
 html[data-theme-mode='dark'] .chain-picker-edit-icon path[fill='#6b7280' i] {
-  fill: #c9b5df !important;
+  fill: var(--dark-text-secondary) !important;
 }
 
 html[data-theme-mode='dark'] .chain-picker-toolbar svg path[fill='#9A0DFF' i] {
@@ -881,11 +893,11 @@ html[data-theme-mode='dark'] .chain-picker-modal .htw-text-gray-500,
 html[data-theme-mode='dark'] .chain-picker-modal .htw-text-gray-400,
 html[data-theme-mode='dark'] .token-picker-modal .text-gray-500,
 html[data-theme-mode='dark'] .token-picker-modal .text-gray-400 {
-  color: #c9b5df !important;
+  color: var(--dark-text-secondary) !important;
 }
 
 html[data-theme-mode='dark'] .chain-picker-modal h2 {
-  color: #f2e4ff !important;
+  color: var(--dark-text-primary) !important;
 }
 
 html[data-theme-mode='dark'] .chain-picker-modal a {
@@ -899,11 +911,11 @@ html[data-theme-mode='dark'] .chain-picker-modal .htw-space-y-4 {
 html[data-theme-mode='dark'] .chain-picker-modal textarea {
   border-color: rgba(185, 89, 255, 0.45) !important;
   background: rgba(255, 255, 255, 0.08) !important;
-  color: #f2e4ff !important;
+  color: var(--dark-text-primary) !important;
 }
 
 html[data-theme-mode='dark'] .chain-picker-modal textarea::placeholder {
-  color: #c9b5df !important;
+  color: var(--dark-text-secondary) !important;
 }
 
 html[data-theme-mode='dark'] .chain-picker-modal .htw-space-y-4 svg {
@@ -915,12 +927,12 @@ html[data-theme-mode='dark'] .token-picker-usd,
 html[data-theme-mode='dark'] .token-picker-address,
 html[data-theme-mode='dark'] .token-picker-chain-name,
 html[data-theme-mode='dark'] .token-picker-empty {
-  color: #f2e4ff !important;
+  color: var(--dark-text-primary) !important;
 }
 
 html[data-theme-mode='dark'] .token-picker-name,
 html[data-theme-mode='dark'] .token-picker-meta {
-  color: #c9b5df !important;
+  color: var(--dark-text-secondary) !important;
 }
 
 html[data-theme-mode='dark'] .token-picker-info-icon {
@@ -945,7 +957,7 @@ html[data-theme-mode='dark'] .sidebar-menu-list > :not([hidden]) ~ :not([hidden]
 }
 
 html[data-theme-mode='dark'] .sidebar-menu-refresh {
-  color: #f2e4ff;
+  color: var(--dark-text-primary);
 }
 
 html[data-theme-mode='dark'] .sidebar-menu-chain-badge {
@@ -962,8 +974,8 @@ html[data-theme-mode='dark'] .sidebar-menu-end {
 
 html[data-theme-mode='dark'] .transfer-details-modal {
   border: 1px solid rgba(185, 89, 255, 0.42) !important;
-  background: rgba(20, 10, 30, 0.96) !important;
-  color: #f2e4ff !important;
+  background: var(--dark-surface) !important;
+  color: var(--dark-text-primary) !important;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
 }
 
@@ -974,26 +986,26 @@ html[data-theme-mode='dark'] .transfer-details-modal .bg-primary-200 {
 html[data-theme-mode='dark'] .transfer-details-modal .text-gray-600,
 html[data-theme-mode='dark'] .transfer-details-modal .text-gray-500,
 html[data-theme-mode='dark'] .transfer-details-modal .text-gray-350 {
-  color: #c9b5df !important;
+  color: var(--dark-text-secondary) !important;
 }
 
 html[data-theme-mode='dark'] .transfer-details-modal a {
-  color: #f2e4ff !important;
+  color: var(--dark-text-primary) !important;
 }
 
 html[data-theme-mode='dark'] .transfer-details-spinner {
-  color: #f2e4ff !important;
+  color: var(--dark-text-primary) !important;
 }
 
 html[data-theme-mode='dark'] .transfer-fee-modal {
   border: 1px solid rgba(185, 89, 255, 0.42) !important;
-  background: rgba(20, 10, 30, 0.96) !important;
-  color: #f2e4ff !important;
+  background: var(--dark-surface) !important;
+  color: var(--dark-text-primary) !important;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
 }
 
 html[data-theme-mode='dark'] .transfer-fee-modal-content {
-  color: #f2e4ff !important;
+  color: var(--dark-text-primary) !important;
 }
 
 /* Fix wallet icons being cropped to circles by widget's htw-rounded-full + htw-overflow-hidden */
@@ -1002,7 +1014,7 @@ html[data-theme-mode='dark'] .transfer-fee-modal-content {
 }
 
 html[data-theme-mode='dark'] .sidebar-menu .htw-rounded-sm {
-  color: #f2e4ff !important;
+  color: var(--dark-text-primary) !important;
   border: 1px solid rgba(185, 89, 255, 0.32);
   background: rgba(255, 255, 255, 0.06);
 }
@@ -1012,12 +1024,12 @@ html[data-theme-mode='dark'] .sidebar-menu .htw-rounded-sm:hover {
 }
 
 html[data-theme-mode='dark'] .sidebar-menu .htw-rounded-sm .htw-text-gray-800 {
-  color: #f2e4ff !important;
+  color: var(--dark-text-primary) !important;
 }
 
 html[data-theme-mode='dark'] .sidebar-menu .htw-rounded-sm .htw-text-gray-500,
 html[data-theme-mode='dark'] .sidebar-menu .htw-rounded-sm .htw-text-xs {
-  color: #c9b5df !important;
+  color: var(--dark-text-secondary) !important;
 }
 
 html[data-theme-mode='dark'] .sidebar-menu .htw-rounded-sm svg path {
@@ -1025,12 +1037,12 @@ html[data-theme-mode='dark'] .sidebar-menu .htw-rounded-sm svg path {
 }
 
 html[data-theme-mode='dark'] .sidebar-menu .htw-relative > .htw-absolute svg path {
-  fill: #c9b5df !important;
+  fill: var(--dark-text-secondary) !important;
 }
 
 html[data-theme-mode='dark'] .sidebar-menu .htw-bg-gray-600 {
   background: rgba(255, 255, 255, 0.18) !important;
-  color: #f2e4ff !important;
+  color: var(--dark-text-primary) !important;
 }
 
 html[data-theme-mode='dark'] .app-header {
@@ -1060,7 +1072,7 @@ html[data-theme-mode='dark'] .app-header-menu-btn[data-open] {
 
 html[data-theme-mode='dark'] .app-header-menu {
   border: 1px solid rgba(185, 89, 255, 0.35);
-  background: rgba(20, 10, 30, 0.96) !important;
+  background: var(--dark-surface) !important;
   box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
 }
 
@@ -1127,13 +1139,13 @@ html[data-theme-mode='dark'] .wallet-protocol-card:hover {
 }
 
 html[data-theme-mode='dark'] .wallet-protocol-title {
-  color: #f2e4ff !important;
+  color: var(--dark-text-primary) !important;
 }
 
 html[data-theme-mode='dark'] .wallet-protocol-aleo-logo polygon {
-  fill: #f2e4ff !important;
+  fill: var(--dark-text-primary) !important;
 }
 
 html[data-theme-mode='dark'] .wallet-protocol-subtitle {
-  color: #c9b5df !important;
+  color: var(--dark-text-secondary) !important;
 }

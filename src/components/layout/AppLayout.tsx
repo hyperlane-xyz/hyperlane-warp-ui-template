@@ -64,7 +64,6 @@ export function AppLayout({ children }: PropsWithChildren) {
     document.documentElement.dataset.themeSwitching = 'true';
     setThemeMode((prevThemeMode) => {
       const nextMode: UiThemeMode = prevThemeMode === 'dark' ? 'light' : 'dark';
-      persistThemeMode(nextMode);
       return nextMode;
     });
     setHasExplicitThemePreference(true);
@@ -81,6 +80,7 @@ export function AppLayout({ children }: PropsWithChildren) {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     document.documentElement.dataset.themeMode = themeMode;
+    if (hasExplicitThemePreference) persistThemeMode(themeMode);
     const knownLogoImages = document.querySelectorAll(
       'img[data-logo-handlers-bound="true"], img[data-logo-original-src], img[data-logo-dark-src]',
     );
@@ -90,7 +90,7 @@ export function AppLayout({ children }: PropsWithChildren) {
       delete document.documentElement.dataset.themeSwitching;
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [themeMode]);
+  }, [themeMode, hasExplicitThemePreference]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;

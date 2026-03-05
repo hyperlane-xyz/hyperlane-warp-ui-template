@@ -456,8 +456,17 @@ html[data-theme-mode='dark'] .tip-card-close {
   color: var(--dark-text-secondary) !important;
 }
 
-html[data-theme-mode='dark'] .tip-card-close:hover {
+html[data-theme-mode='dark'] .tip-card-close svg,
+html[data-theme-mode='dark'] .tip-card-close path {
+  color: var(--dark-text-secondary) !important;
+  fill: var(--dark-text-secondary) !important;
+}
+
+html[data-theme-mode='dark'] .tip-card-close:hover,
+html[data-theme-mode='dark'] .tip-card-close:hover svg,
+html[data-theme-mode='dark'] .tip-card-close:hover path {
   color: var(--dark-text-primary) !important;
+  fill: var(--dark-text-primary) !important;
 }
 
 html[data-theme-mode='dark'] .tip-card-title {

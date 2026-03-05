@@ -17,6 +17,10 @@ jobs:
           cache: 'pnpm'
       - name: Install dependencies
         run: pnpm install
+      - name: Build app
+        run: pnpm build
+        env:
+          NEXT_PUBLIC_WALLET_CONNECT_ID: ${{ secrets.NEXT_PUBLIC_WALLET_CONNECT_ID }}
       - name: Install Playwright Browsers
         run: pnpm exec playwright install --with-deps chromium
       - name: Run Playwright tests

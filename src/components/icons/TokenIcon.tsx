@@ -28,7 +28,7 @@ export function TokenIcon({ token, size = 32 }: Props) {
       : undefined;
 
   function handleImageLoad(event: SyntheticEvent<HTMLImageElement>) {
-    scheduleDarkLogoProcessing(event.currentTarget);
+    processDarkLogoImage(event.currentTarget);
   }
 
   function handleImageError(event: SyntheticEvent<HTMLImageElement>) {
@@ -89,14 +89,3 @@ function getImageSrc(token?: IToken | null) {
   return null;
 }
 
-function scheduleDarkLogoProcessing(img: HTMLImageElement) {
-  if (typeof window === 'undefined') return;
-  const win = window as Window & {
-    requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
-  };
-  if (typeof win.requestIdleCallback === 'function') {
-    win.requestIdleCallback(() => processDarkLogoImage(img), { timeout: 200 });
-    return;
-  }
-  window.setTimeout(() => processDarkLogoImage(img), 0);
-}

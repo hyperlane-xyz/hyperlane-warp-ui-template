@@ -243,7 +243,7 @@ function SwapTokensButton({ disabled }: { disabled?: boolean }) {
         type="button"
         onClick={onSwap}
         disabled={disabled}
-        className="swap-chains-button group flex h-8 w-8 items-center justify-center rounded border border-gray-400/50 bg-white shadow-button transition-all hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+        className="swap-chains-button group flex h-8 w-8 items-center justify-center rounded-md border border-gray-400/50 bg-white shadow-button transition-all hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
       >
         <SwapIcon
           width={18}
@@ -292,7 +292,7 @@ function OriginTokenCard({
         <ImportTokenButton token={originToken} />
       </div>
 
-      <div className="transfer-chain-field rounded-[7px] border border-gray-400/25 bg-white p-3 shadow-input">
+      <div className="transfer-chain-field rounded-lg border border-gray-400/25 bg-white p-3 shadow-input">
         <TokenSelectField
           name="originTokenKey"
           selectionMode="origin"
@@ -365,7 +365,7 @@ function DestinationTokenCard({ isReview }: { isReview: boolean }) {
         <ImportTokenButton token={destinationToken} />
       </div>
 
-      <div className="transfer-chain-field rounded-[7px] border border-gray-400/25 bg-white p-3 shadow-input">
+      <div className="transfer-chain-field rounded-lg border border-gray-400/25 bg-white p-3 shadow-input">
         <TokenSelectField
           name="destinationTokenKey"
           selectionMode="destination"
@@ -758,7 +758,7 @@ function ReviewDetails({
         <label className="transfer-field-label mt-4 block pl-0.5 text-sm text-gray-600">
           Transactions
         </label>
-        <div className="transfer-review-panel mt-1.5 space-y-2 break-all rounded border border-gray-400 bg-gray-150 px-2.5 py-2 text-sm">
+        <div className="transfer-review-panel mt-1.5 space-y-2 break-all rounded-md border border-gray-400 bg-gray-150 px-2.5 py-2 text-sm">
           {isLoading ? (
             <div className="flex items-center justify-center py-6">
               <SpinnerIcon className="h-5 w-5" />

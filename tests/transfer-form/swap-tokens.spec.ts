@@ -12,8 +12,9 @@ test.describe('Transfer Form - Swap Tokens', () => {
     // Click swap button (between Send and Receive sections)
     await page.locator('div.-my-3 > button').click();
 
-    // After swap: origin should be BSC, destination should be Ethereum
-    await expect(page.getByRole('button', { name: /bsc HYPER/i }).first()).toBeVisible();
-    await expect(page.getByRole('button', { name: /ethereum HYPER/i }).first()).toBeVisible();
+    // After swap: origin (first) should be BSC, destination (second) should be Ethereum
+    const tokenButtons = page.getByRole('button', { name: /(ethereum|bsc) HYPER/i });
+    await expect(tokenButtons.nth(0)).toHaveAccessibleName(/bsc HYPER Binance Smart Chain/i);
+    await expect(tokenButtons.nth(1)).toHaveAccessibleName(/ethereum HYPER Ethereum/i);
   });
 });

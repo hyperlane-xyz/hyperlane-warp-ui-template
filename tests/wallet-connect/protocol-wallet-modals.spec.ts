@@ -20,9 +20,12 @@ async function selectToken(
     'Search Name, Symbol, or Contract Address',
   );
   await searchBox.fill(tokenSearch);
-  await page.waitForTimeout(1000);
+  await page
+    .getByRole('button', { name: tokenButtonName })
+    .first()
+    .waitFor({ state: 'visible' });
   await page.getByRole('button', { name: tokenButtonName }).first().click();
-  await page.waitForTimeout(500);
+  await expect(page.getByText('Select Token')).not.toBeVisible();
 }
 
 test.describe('Wallet Connect - Protocol Modals', () => {

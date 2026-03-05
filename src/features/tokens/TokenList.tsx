@@ -325,7 +325,7 @@ const TokenButton = React.memo(function TokenButton({
   return (
     <button
       type="button"
-      className="token-picker-row group mb-2 flex h-[60px] w-full items-center rounded-[3px] px-3 transition-colors hover:bg-gray-100"
+      className="token-picker-row group mb-2 flex h-[60px] w-full items-center rounded-md px-3 transition-colors hover:bg-gray-100"
       onClick={() => onSelect(token)}
     >
       <TokenChainIcon token={token} size={36} />

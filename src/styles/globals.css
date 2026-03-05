@@ -790,7 +790,8 @@ html[data-theme-mode='dark'] .token-picker-shimmer {
 }
 
 html[data-theme-mode='dark'] .token-picker-hint {
-  background: rgba(185, 89, 255, 0.12) !important;
+  background: transparent !important;
+  border: 1px solid rgba(185, 89, 255, 0.25);
 }
 
 html[data-theme-mode='dark'] .token-picker-hint p {

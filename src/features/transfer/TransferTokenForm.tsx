@@ -755,7 +755,9 @@ function ReviewDetails({
           isReview ? 'max-h-screen duration-1000 ease-in' : 'max-h-0 duration-500'
         } overflow-hidden transition-all`}
       >
-        <label className="transfer-field-label mt-4 block pl-0.5 text-sm text-gray-600">Transactions</label>
+        <label className="transfer-field-label mt-4 block pl-0.5 text-sm text-gray-600">
+          Transactions
+        </label>
         <div className="transfer-review-panel mt-1.5 space-y-2 break-all rounded border border-gray-400 bg-gray-150 px-2.5 py-2 text-sm">
           {isLoading ? (
             <div className="flex items-center justify-center py-6">

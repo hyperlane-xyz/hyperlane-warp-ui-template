@@ -332,7 +332,9 @@ const TokenButton = React.memo(function TokenButton({
 
       <div className="ml-3 min-w-0 flex-1 text-left">
         <div className="flex items-center gap-2">
-          <span className={`token-picker-symbol ${styles.base} text-base text-black`}>{token.symbol || 'Unknown'}</span>
+          <span className={`token-picker-symbol ${styles.base} text-base text-black`}>
+            {token.symbol || 'Unknown'}
+          </span>
           <span className="token-picker-chain-name text-xs text-gray-500">{chainDisplayName}</span>
         </div>
         <div className={`token-picker-name ${styles.base} mt-0.5 truncate text-xs text-gray-500`}>
@@ -345,9 +347,13 @@ const TokenButton = React.memo(function TokenButton({
           <div className="mb-1 ml-auto h-4 w-14 animate-pulse rounded bg-gray-100" />
         ) : primaryValue ? (
           <>
-            <div className={`token-picker-usd ${styles.base} text-sm font-medium text-black`}>{primaryValue}</div>
+            <div className={`token-picker-usd ${styles.base} text-sm font-medium text-black`}>
+              {primaryValue}
+            </div>
             {secondaryValue && (
-              <div className={`token-picker-meta ${styles.base} text-xs text-gray-400`}>{secondaryValue}</div>
+              <div className={`token-picker-meta ${styles.base} text-xs text-gray-400`}>
+                {secondaryValue}
+              </div>
             )}
           </>
         ) : null}

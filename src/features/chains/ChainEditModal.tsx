@@ -35,7 +35,11 @@ export function ChainEditModal({ isOpen, close, chainName, onClickBack }: Props)
   if (!metadata) return null;
 
   return (
-    <Modal isOpen={isOpen} close={close} panelClassname="chain-picker-modal p-0 max-w-lg overflow-hidden">
+    <Modal
+      isOpen={isOpen}
+      close={close}
+      panelClassname="chain-picker-modal p-0 max-w-lg overflow-hidden"
+    >
       <ModalHeader>{`Edit ${displayName}`}</ModalHeader>
       <div className="chain-edit-container max-h-[80vh] overflow-auto p-4">
         <ChainDetailsMenu

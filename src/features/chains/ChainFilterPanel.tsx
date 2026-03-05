@@ -83,7 +83,7 @@ export function ChainFilterPanel({
       {/* Toolbar: label + filter/sort/edit icons */}
       <div className="flex items-center justify-between px-4 pb-2">
         <h3 className="font-secondary text-sm font-normal text-black">Chain Selection</h3>
-        <div className="flex items-center gap-1">
+        <div className="chain-picker-toolbar flex items-center gap-1">
           <FilterButton
             filterState={filterState}
             onChange={setFilterState}

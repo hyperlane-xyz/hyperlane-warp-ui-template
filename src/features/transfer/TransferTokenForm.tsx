@@ -301,7 +301,7 @@ function OriginTokenCard({
           showLabel={false}
         />
 
-        <div className="my-2.5 h-px bg-primary-50" />
+        <div className="transfer-divider my-2.5 h-px bg-primary-50" />
 
         <div className="flex items-center justify-between gap-2">
           <TextField
@@ -373,7 +373,7 @@ function DestinationTokenCard({ isReview }: { isReview: boolean }) {
           showLabel={false}
         />
 
-        <div className="my-2.5 h-px bg-primary-50" />
+        <div className="transfer-divider my-2.5 h-px bg-primary-50" />
 
         <TokenBalance label="Remote Balance" balance={balance} />
       </div>
@@ -422,7 +422,7 @@ function MaxButton({
       type="button"
       onClick={onClick}
       disabled={isDisabled}
-      className="rounded border border-gray-300 px-2 py-0.5 font-secondary text-sm text-gray-450 transition-colors hover:border-gray-400 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50"
+      className="transfer-max-btn rounded border border-gray-300 px-2 py-0.5 font-secondary text-sm text-gray-450 transition-colors hover:border-gray-400 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50"
     >
       {isLoading ? <SpinnerIcon className="h-4 w-4" /> : 'Max'}
     </button>

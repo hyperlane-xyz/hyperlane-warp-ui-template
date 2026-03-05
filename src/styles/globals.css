@@ -507,9 +507,13 @@ html[data-theme-mode='dark'] .transfer-balance {
 
 html[data-theme-mode='dark'] .swap-chains-button {
   border-radius: 0.5rem;
-  border: 1px solid transparent;
-  background: transparent;
+  border: 1px solid rgba(185, 89, 255, 0.35);
+  background: rgba(13, 6, 18, 0.9);
   box-shadow: none;
+}
+
+html[data-theme-mode='dark'] .swap-chains-button:hover {
+  background: rgba(185, 89, 255, 0.18);
 }
 
 html[data-theme-mode='dark'] .swap-chains-icon {
@@ -520,8 +524,8 @@ html[data-theme-mode='dark'] .transfer-chain-field,
 html[data-theme-mode='dark'] .transfer-token-field,
 html[data-theme-mode='dark'] .transfer-text-input,
 html[data-theme-mode='dark'] .transfer-review-panel {
-  border-color: rgba(185, 89, 255, 0.38) !important;
-  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(185, 89, 255, 0.28) !important;
+  background: rgba(255, 255, 255, 0.05) !important;
   color: #f2e4ff !important;
 }
 
@@ -530,12 +534,74 @@ html[data-theme-mode='dark'] .transfer-token-field:hover,
 html[data-theme-mode='dark'] .transfer-chain-field:focus,
 html[data-theme-mode='dark'] .transfer-token-field:focus,
 html[data-theme-mode='dark'] .transfer-text-input:focus {
-  border-color: rgba(185, 89, 255, 0.7) !important;
-  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(185, 89, 255, 0.55) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
 }
 
 html[data-theme-mode='dark'] .transfer-text-input::placeholder {
   color: #c9b5df;
+}
+
+/* Chevron circle button inside token selector */
+html[data-theme-mode='dark'] .transfer-token-chevron {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(185, 89, 255, 0.4) !important;
+  color: #f2e4ff !important;
+}
+
+html[data-theme-mode='dark'] .transfer-token-chevron svg {
+  filter: brightness(0) invert(1);
+}
+
+html[data-theme-mode='dark'] .transfer-token-field:hover .transfer-token-chevron {
+  background: rgba(185, 89, 255, 0.22) !important;
+}
+
+/* Horizontal dividers inside transfer cards */
+html[data-theme-mode='dark'] .transfer-divider {
+  background: rgba(185, 89, 255, 0.22) !important;
+}
+
+/* Max button */
+html[data-theme-mode='dark'] .transfer-max-btn {
+  border-color: rgba(185, 89, 255, 0.4) !important;
+  color: #c9b5df !important;
+}
+
+html[data-theme-mode='dark'] .transfer-max-btn:hover:not(:disabled) {
+  border-color: rgba(185, 89, 255, 0.65) !important;
+  color: #f2e4ff !important;
+}
+
+/* Wallet connect link & dropdown */
+html[data-theme-mode='dark'] .wallet-connect-link {
+  color: #c9a0ff !important;
+}
+
+html[data-theme-mode='dark'] .wallet-connect-link:hover {
+  color: #e0c4ff !important;
+}
+
+html[data-theme-mode='dark'] .wallet-connect-link [class*='fill-primary'] {
+  fill: #c9a0ff !important;
+}
+
+html[data-theme-mode='dark'] .wallet-dropdown-menu {
+  border-color: rgba(185, 89, 255, 0.38) !important;
+  background: rgba(20, 10, 30, 0.96) !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+html[data-theme-mode='dark'] .wallet-dropdown-item {
+  color: #f2e4ff !important;
+}
+
+html[data-theme-mode='dark'] .wallet-dropdown-item:hover {
+  background: rgba(185, 89, 255, 0.16) !important;
+}
+
+html[data-theme-mode='dark'] .wallet-dropdown-separator {
+  background: rgba(185, 89, 255, 0.22) !important;
 }
 
 html[data-theme-mode='dark'] .transfer-form .text-gray-900,
@@ -782,6 +848,11 @@ html[data-theme-mode='dark'] .transfer-fee-modal {
 
 html[data-theme-mode='dark'] .transfer-fee-modal-content {
   color: #f2e4ff !important;
+}
+
+/* Fix wallet icons being cropped to circles by widget's htw-rounded-full + htw-overflow-hidden */
+.sidebar-menu .htw-rounded-full.htw-overflow-hidden {
+  border-radius: 0.375rem;
 }
 
 html[data-theme-mode='dark'] .sidebar-menu .htw-rounded-sm {

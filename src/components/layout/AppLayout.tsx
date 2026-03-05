@@ -115,7 +115,6 @@ export function AppLayout({ children }: PropsWithChildren) {
         <title>{APP_NAME}</title>
       </Head>
       <div
-        style={styles.container}
         id="app-content"
         data-theme-mode={themeMode}
         suppressHydrationWarning
@@ -144,11 +143,3 @@ export function AppLayout({ children }: PropsWithChildren) {
     </>
   );
 }
-
-const styles = {
-  container: {
-    backgroundSize: 'cover',
-    backgroundRepeat: 'no-repeat',
-    backgroundPosition: 'center',
-  },
-};

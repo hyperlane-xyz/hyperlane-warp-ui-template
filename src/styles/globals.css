@@ -840,9 +840,13 @@ html[data-theme-mode='dark'] .chain-picker-modal .text-black {
 }
 
 /* Toolbar + edit icons: brighten gray-500 SVG fills for dark bg */
-html[data-theme-mode='dark'] .chain-picker-toolbar svg path,
-html[data-theme-mode='dark'] .chain-picker-edit-icon path {
+html[data-theme-mode='dark'] .chain-picker-toolbar svg path[fill='#6b7280' i],
+html[data-theme-mode='dark'] .chain-picker-edit-icon path[fill='#6b7280' i] {
   fill: #c9b5df !important;
+}
+
+html[data-theme-mode='dark'] .chain-picker-toolbar svg path[fill='#9A0DFF' i] {
+  fill: #c9a0ff !important;
 }
 
 html[data-theme-mode='dark']

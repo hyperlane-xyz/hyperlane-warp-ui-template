@@ -106,12 +106,21 @@ tokens:
     collateralAddressOrDenom: '0x61e888dca318affa03ae5966f7a675861cc7a7f4'
     connections:
       - token: ethereum|ethereum|0xD35C3a284F29274DAA5a32148aE0E2F69c420fba
+      - token: ethereum|polygon|0xF8158CC824E5794fc35e31D777476e98b51498C0
   - chainName: ethereum
     standard: EvmHypSynthetic
     decimals: 6
     symbol: GSF
     name: 'Garuda Sports Fund '
     addressOrDenom: '0xD35C3a284F29274DAA5a32148aE0E2F69c420fba'
+    connections:
+      - token: ethereum|pruv|0x3E8b4A5050B54D648993a2B15f76B415A34A9c9F
+  - chainName: polygon
+    standard: EvmHypSynthetic
+    decimals: 6
+    symbol: GSF
+    name: 'Garuda Sports Fund '
+    addressOrDenom: '0xF8158CC824E5794fc35e31D777476e98b51498C0'
     connections:
       - token: ethereum|pruv|0x3E8b4A5050B54D648993a2B15f76B415A34A9c9F
 ## GSF

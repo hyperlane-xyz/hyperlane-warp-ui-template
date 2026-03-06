@@ -10,8 +10,8 @@ test.describe('Token Selection - Select Destination Token', () => {
     await getDestinationTokenButton(page).click();
     await expect(page.getByText('Select Token')).toBeVisible();
 
-    // Click on USDC Arbitrum token (exact name to avoid matching 'Route unavailable' variant)
-    await page.getByRole('button', { name: 'arbitrum USDC Arbitrum USD Coin', exact: true }).click();
+    // Click on USDC Arbitrum token
+    await page.getByRole('button', { name: 'arbitrum USDC Arbitrum USD Coin' }).first().click();
 
     // Modal should close
     await expect(page.getByText('Select Token')).not.toBeVisible();

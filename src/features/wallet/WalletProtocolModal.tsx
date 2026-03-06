@@ -54,6 +54,7 @@ export function WalletProtocolModal({
       <div className="wallet-protocol-grid grid grid-cols-2 gap-2.5 py-2 sm:grid-cols-3">
         {PROTOCOL_OPTIONS.filter((option) => includesProtocol(option.protocol)).map((option) => {
           const Logo = PROTOCOL_TO_LOGO[option.protocol];
+          if (!Logo) return null;
           return (
             <button
               key={option.protocol}

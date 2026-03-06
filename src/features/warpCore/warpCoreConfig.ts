@@ -36,13 +36,76 @@ export async function assembleWarpCoreConfig(
     if (config.registryUrl) {
       logger.debug('Using custom registry warp routes from:', config.registryUrl);
       registryWarpRoutes = await registry.getWarpRoutes();
+
+      // Safety fallback for whitelisted routes that may exist as per-route files
+      // before they are generated into warpRouteConfigs.yaml.
+      if (warpRouteWhitelist?.length) {
+        const uppercaseRouteIds = new Set(
+          Object.keys(registryWarpRoutes).map((routeId) => routeId.toUpperCase()),
+        );
+        const missingRouteIds = warpRouteWhitelist.filter(
+          (routeId) => !uppercaseRouteIds.has(routeId.toUpperCase()),
+        );
+
+        if (missingRouteIds.length) {
+          const routeEntries = await Promise.all(
+            missingRouteIds.map(
+              async (routeId): Promise<[string, WarpCoreConfig | null]> => [
+                routeId,
+                await registry.getWarpRoute(routeId),
+              ],
+            ),
+          );
+          for (const [routeId, routeConfig] of routeEntries) {
+            if (routeConfig) registryWarpRoutes[routeId] = routeConfig;
+          }
+        }
+      }
       if (isObjEmpty(registryWarpRoutes)) throw new Error('Warp routes empty');
     } else {
       throw new Error('No custom registry URL provided');
     }
-  } catch {
-    logger.debug('Using default published registry for warp routes');
-    registryWarpRoutes = publishedRegistryWarpRoutes;
+  } catch (error) {
+    // Browser/runtime environments can occasionally fail on getWarpRoutes() due to large payloads,
+    // rate limits, or transport issues. For whitelisted flows, try fetching routes one-by-one.
+    if (config.registryUrl && warpRouteWhitelist?.length) {
+      try {
+        logger.debug(
+          'getWarpRoutes() failed; attempting per-route registry fallback for whitelist IDs',
+          error,
+        );
+        const routeEntries = await Promise.all(
+          warpRouteWhitelist.map(
+            async (routeId): Promise<[string, WarpCoreConfig | null]> => [
+              routeId,
+              await registry.getWarpRoute(routeId),
+            ],
+          ),
+        );
+        const fallbackRoutes = routeEntries.reduce<Record<string, WarpCoreConfig>>(
+          (acc, [routeId, routeConfig]) => {
+            if (routeConfig) acc[routeId] = routeConfig;
+            return acc;
+          },
+          {},
+        );
+        if (!isObjEmpty(fallbackRoutes)) {
+          logger.debug('Using per-route whitelist fallback from registry.getWarpRoute');
+          registryWarpRoutes = fallbackRoutes;
+        } else {
+          throw new Error('Per-route fallback returned no warp routes');
+        }
+      } catch (routeError) {
+        logger.debug(
+          'Per-route whitelist fallback failed; using published registry routes',
+          routeError,
+        );
+        registryWarpRoutes = publishedRegistryWarpRoutes;
+      }
+    } else {
+      logger.debug('Using default published registry for warp routes');
+      registryWarpRoutes = publishedRegistryWarpRoutes;
+    }
   }
 
   let filteredRegistryConfigMap = warpRouteWhitelist

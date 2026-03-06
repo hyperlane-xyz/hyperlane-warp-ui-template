@@ -48,7 +48,13 @@ export function useFeeQuotes(
     connectedDestAddress ||
     (isEvmToEvmRoute ? EVM_FEE_QUOTE_FALLBACK_ADDRESS : '');
 
-  const isFormValid = !!(originToken && destination && debouncedAmount && recipient && effectiveSender);
+  const isFormValid = !!(
+    originToken &&
+    destination &&
+    debouncedAmount &&
+    recipient &&
+    effectiveSender
+  );
   const shouldFetch = enabled && isFormValid;
 
   const { isLoading, isError, data, isFetching } = useQuery({

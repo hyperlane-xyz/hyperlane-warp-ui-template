@@ -14,7 +14,7 @@ function mockOriginToken(protocol: ProtocolType): Token {
   return {
     protocol,
     decimals: 6,
-    amount: vi.fn((amount) => ({ amount: BigInt(amount), token: {} } as unknown as TokenAmount)),
+    amount: vi.fn((amount) => ({ amount: BigInt(amount), token: {} }) as unknown as TokenAmount),
   } as unknown as Token;
 }
 

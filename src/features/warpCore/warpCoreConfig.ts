@@ -96,7 +96,10 @@ export async function assembleWarpCoreConfig(
           throw new Error('Per-route fallback returned no warp routes');
         }
       } catch (routeError) {
-        logger.debug('Per-route whitelist fallback failed; using published registry routes', routeError);
+        logger.debug(
+          'Per-route whitelist fallback failed; using published registry routes',
+          routeError,
+        );
         registryWarpRoutes = publishedRegistryWarpRoutes;
       }
     } else {

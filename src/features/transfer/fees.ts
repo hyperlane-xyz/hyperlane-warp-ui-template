@@ -115,7 +115,12 @@ export async function getTransferToken(
   // might not be correct, so it is necessary to get the correct token pair.
   // Make sure to have used `checkTokenHasRoute` before calling getTransferToken
   // as that will validate that the token pair actually refer to the same asset
-  const originRouteToken = findRouteToken(warpCore, originToken, destinationChain, destinationToken);
+  const originRouteToken = findRouteToken(
+    warpCore,
+    originToken,
+    destinationChain,
+    destinationToken,
+  );
   if (!originRouteToken) {
     // No route exists, return original token (validation will catch this)
     return originToken;

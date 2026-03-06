@@ -1005,7 +1005,10 @@ async function validateForm(
     );
 
     // This should not happen since we already checked the route above, but keep as safety check
-    const connectedDestinationToken = findConnectedDestinationToken(transferToken, destinationToken);
+    const connectedDestinationToken = findConnectedDestinationToken(
+      transferToken,
+      destinationToken,
+    );
     if (!connectedDestinationToken) {
       return [{ destinationTokenKey: 'Route is not supported' }, null];
     }

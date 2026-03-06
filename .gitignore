@@ -45,3 +45,12 @@ npm-debug.log*
 
 # fonts (downloaded via scripts/fetch-fonts.mjs)
 public/fonts/
+
+# Playwright
+node_modules/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+/.playwright-mcp/

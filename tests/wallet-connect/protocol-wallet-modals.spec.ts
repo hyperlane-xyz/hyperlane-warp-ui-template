@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { getOriginTokenButton } from '../helpers/locators';
 
 // Helper to select a token from a given chain via the token selector
 async function selectToken(
@@ -7,12 +8,7 @@ async function selectToken(
   tokenButtonName: RegExp,
 ) {
   // Open origin token selector
-  const sendSection = page.locator('main');
-  const originTokenBtn = sendSection
-    .locator('button')
-    .filter({ hasText: /Ethereum|Solana|Neutron|Aleo|Radix|Starknet/ })
-    .first();
-  await originTokenBtn.click();
+  await getOriginTokenButton(page).click();
   await page.getByText('Select Token').waitFor({ state: 'visible' });
 
   // Search and select the token

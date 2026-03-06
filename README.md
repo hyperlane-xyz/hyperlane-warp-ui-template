@@ -49,7 +49,7 @@ NEXT_PUBLIC_WALLET_CONNECT_ID=<projectId> pnpm run dev
 # Run unit tests
 pnpm test
 
-# Run E2E tests (requires dev server or builds one automatically)
+# Run E2E tests (reuses running dev server, or starts one via Playwright)
 pnpm test:e2e
 
 # Run E2E tests with headed browser and slow motion for debugging

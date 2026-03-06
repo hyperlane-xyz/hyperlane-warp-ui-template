@@ -3,6 +3,7 @@ import '@hyperlane-xyz/widgets/styles.css';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Analytics } from '@vercel/analytics/react';
 import type { AppProps } from 'next/app';
+import { useRouter } from 'next/router';
 import { ToastContainer, Zoom } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import '../../sentry.client.config';
@@ -28,6 +29,9 @@ const reactQueryClient = new QueryClient({
 });
 
 export default function App({ Component, pageProps }: AppProps) {
+  const router = useRouter();
+  const isEmbedRoute = router.pathname === '/embed';
+
   // Disable app SSR for now as it's not needed and
   // complicates wallet and graphql integrations
   const isSsr = useIsSsr();
@@ -46,10 +50,14 @@ export default function App({ Component, pageProps }: AppProps) {
                   <StarknetWalletContext>
                     <RadixWalletContext>
                       <AleoWalletContext>
-                        <AppLayout>
+                        {isEmbedRoute ? (
                           <Component {...pageProps} />
-                          <Analytics />
-                        </AppLayout>
+                        ) : (
+                          <AppLayout>
+                            <Component {...pageProps} />
+                            <Analytics />
+                          </AppLayout>
+                        )}
                       </AleoWalletContext>
                     </RadixWalletContext>
                   </StarknetWalletContext>

@@ -60,6 +60,7 @@ const cspHeader = `
 `
   .replace(/\s{2,}/g, ' ')
   .trim();
+const embedCspHeader = cspHeader.replace("frame-ancestors 'none';", "frame-ancestors *;");
 
 const securityHeaders = [
   {
@@ -88,6 +89,11 @@ const securityHeaders = [
       ]
     : []),
 ];
+const embedSecurityHeaders = securityHeaders
+  .filter((header) => header.key !== 'X-Frame-Options')
+  .map((header) =>
+    header.key === 'Content-Security-Policy' ? { ...header, value: embedCspHeader } : header,
+  );
 
 const nextConfig = {
   webpack(config, { isServer }) {
@@ -116,7 +122,11 @@ const nextConfig = {
   async headers() {
     return [
       {
-        source: '/(.*)',
+        source: '/embed',
+        headers: embedSecurityHeaders,
+      },
+      {
+        source: '/((?!embed$).*)',
         headers: securityHeaders,
       },
     ];

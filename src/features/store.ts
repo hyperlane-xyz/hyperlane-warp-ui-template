@@ -114,6 +114,36 @@ export interface AppState {
   coinGeckoIds: string[];
 }
 
+function createInitialRegistry(): IRegistry {
+  try {
+    return new GithubRegistry({
+      uri: config.registryUrl,
+      branch: config.registryBranch,
+      proxyUrl: config.registryProxyUrl,
+    });
+  } catch (error) {
+    logger.error(
+      'Invalid registry configuration. Falling back to default GithubRegistry settings.',
+      error,
+    );
+    try {
+      return new GithubRegistry({
+        branch: config.registryBranch,
+        proxyUrl: config.registryProxyUrl,
+      });
+    } catch (fallbackError) {
+      logger.error(
+        'Failed to initialize fallback GithubRegistry. Falling back to embedded PartialRegistry.',
+        fallbackError,
+      );
+      return new PartialRegistry({
+        chainAddresses,
+        chainMetadata,
+      });
+    }
+  }
+}
+
 export const useStore = create<AppState>()(
   persist(
     // Store reducers
@@ -180,11 +210,7 @@ export const useStore = create<AppState>()(
         });
       },
       multiProvider: new MultiProtocolProvider({}),
-      registry: new GithubRegistry({
-        uri: config.registryUrl,
-        branch: config.registryBranch,
-        proxyUrl: config.registryProxyUrl,
-      }),
+      registry: createInitialRegistry(),
       warpCore: new WarpCore(new MultiProtocolProvider({}), []),
       setWarpContext: (context) => {
         logger.debug('Setting warp context in store');

@@ -23,19 +23,26 @@ import { useMultiProvider } from '../../chains/hooks';
 
 function initWagmi(multiProvider: MultiProtocolProvider) {
   const chains = getWagmiChainConfigs(multiProvider);
+  const hasWalletConnectProjectId = !!config.walletConnectProjectId;
+  const recommendedWallets = [metaMaskWallet, injectedWallet, ledgerWallet];
+  if (hasWalletConnectProjectId) recommendedWallets.splice(2, 0, walletConnectWallet);
 
   const connectors = connectorsForWallets(
     [
       {
         groupName: 'Recommended',
-        wallets: [metaMaskWallet, injectedWallet, walletConnectWallet, ledgerWallet],
+        wallets: recommendedWallets,
       },
       {
         groupName: 'More',
         wallets: [binanceWallet, coinbaseWallet, rainbowWallet, trustWallet, argentWallet],
       },
     ],
-    { appName: APP_NAME, projectId: config.walletConnectProjectId },
+    {
+      appName: APP_NAME,
+      // Keep non-empty to satisfy connector setup; WalletConnect entry is omitted when ID is missing.
+      projectId: config.walletConnectProjectId || 'walletconnect-project-id-missing',
+    },
   );
 
   const wagmiConfig = createConfig({

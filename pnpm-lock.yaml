@@ -25,9 +25,6 @@ overrides:
   '@hyperlane-xyz/core': 11.0.1
 
 patchedDependencies:
-  '@hyperlane-xyz/multicollateral@0.1.0-mc-public.70e12c844ad2ff1111074a23dba575e20ffade5e':
-    hash: fcaa0bcfe95ea3dcd1066b6fe16107dea5d19331a2978a0f9bb33d79210c5428
-    path: patches/@hyperlane-xyz__multicollateral@0.1.0-mc-public.70e12c844ad2ff1111074a23dba575e20ffade5e.patch
   starknetkit@2.6.1:
     hash: d8d81d77fa623989f021747f735ecef191f7ef8744e03c5f475cc1e9314d79d7
     path: patches/starknetkit@2.6.1.patch
@@ -12267,7 +12264,7 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@hyperlane-xyz/multicollateral@0.1.0-mc-public.70e12c844ad2ff1111074a23dba575e20ffade5e(patch_hash=fcaa0bcfe95ea3dcd1066b6fe16107dea5d19331a2978a0f9bb33d79210c5428)(@ethersproject/abi@5.8.0)(@ethersproject/providers@5.8.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(@types/sinon-chai@4.0.0)':
+  '@hyperlane-xyz/multicollateral@0.1.0-mc-public.70e12c844ad2ff1111074a23dba575e20ffade5e(@ethersproject/abi@5.8.0)(@ethersproject/providers@5.8.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(@types/sinon-chai@4.0.0)':
     dependencies:
       '@ethersproject/abi': 5.8.0
       '@ethersproject/providers': 5.8.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
@@ -12336,7 +12333,7 @@ snapshots:
       '@hyperlane-xyz/core': 11.0.1(@ethersproject/abi@5.8.0)(@ethersproject/providers@5.8.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(@types/sinon-chai@4.0.0)
       '@hyperlane-xyz/cosmos-sdk': 25.4.2-mc-public.70e12c844ad2ff1111074a23dba575e20ffade5e(bufferutil@4.0.9)(typescript@5.6.3)(utf-8-validate@5.0.10)
       '@hyperlane-xyz/deploy-sdk': 1.5.0-mc-public.70e12c844ad2ff1111074a23dba575e20ffade5e(@types/sinon-chai@4.0.0)(bufferutil@4.0.9)(typescript@5.6.3)(utf-8-validate@5.0.10)
-      '@hyperlane-xyz/multicollateral': 0.1.0-mc-public.70e12c844ad2ff1111074a23dba575e20ffade5e(patch_hash=fcaa0bcfe95ea3dcd1066b6fe16107dea5d19331a2978a0f9bb33d79210c5428)(@ethersproject/abi@5.8.0)(@ethersproject/providers@5.8.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(@types/sinon-chai@4.0.0)
+      '@hyperlane-xyz/multicollateral': 0.1.0-mc-public.70e12c844ad2ff1111074a23dba575e20ffade5e(@ethersproject/abi@5.8.0)(@ethersproject/providers@5.8.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(@types/sinon-chai@4.0.0)
       '@hyperlane-xyz/provider-sdk': 1.5.0-mc-public.70e12c844ad2ff1111074a23dba575e20ffade5e(bufferutil@4.0.9)(typescript@5.6.3)(utf-8-validate@5.0.10)
       '@hyperlane-xyz/radix-sdk': 25.4.2-mc-public.70e12c844ad2ff1111074a23dba575e20ffade5e(bufferutil@4.0.9)(typescript@5.6.3)(utf-8-validate@5.0.10)
       '@hyperlane-xyz/starknet-core': 25.4.2-mc-public.70e12c844ad2ff1111074a23dba575e20ffade5e

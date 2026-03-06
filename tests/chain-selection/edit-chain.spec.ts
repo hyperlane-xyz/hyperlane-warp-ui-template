@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { getOriginTokenButton } from '../helpers/locators';
 
 test.describe('Chain Selection - Edit Chain', () => {
   test('should enter edit mode and open chain edit modal', async ({ page }) => {
@@ -6,7 +7,7 @@ test.describe('Chain Selection - Edit Chain', () => {
     await page.getByText('Send').first().waitFor({ state: 'visible' });
 
     // Open token selector
-    await page.getByRole('button', { name: 'ethereum HYPER Ethereum' }).click();
+    await getOriginTokenButton(page).click();
     await expect(page.getByText('Select Token')).toBeVisible();
 
     // Click edit mode pencil button
@@ -42,7 +43,7 @@ test.describe('Chain Selection - Edit Chain', () => {
     await page.goto('http://localhost:3000');
     await page.getByText('Send').first().waitFor({ state: 'visible' });
 
-    await page.getByRole('button', { name: 'ethereum HYPER Ethereum' }).click();
+    await getOriginTokenButton(page).click();
     await page.getByRole('button', { name: 'Edit chain metadata' }).click();
     await page.getByRole('button', { name: 'ethereum Ethereum', exact: true }).click();
 
@@ -61,7 +62,7 @@ test.describe('Chain Selection - Edit Chain', () => {
     await page.goto('http://localhost:3000');
     await page.getByText('Send').first().waitFor({ state: 'visible' });
 
-    await page.getByRole('button', { name: 'ethereum HYPER Ethereum' }).click();
+    await getOriginTokenButton(page).click();
 
     // Enter edit mode
     await page.getByRole('button', { name: 'Edit chain metadata' }).click();

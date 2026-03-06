@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { getDestinationTokenButton } from '../helpers/locators';
 
 test.describe('Token Selection - Select Destination Token', () => {
   test('should select a different destination token', async ({ page }) => {
@@ -6,16 +7,16 @@ test.describe('Token Selection - Select Destination Token', () => {
     await page.getByText('Send').first().waitFor({ state: 'visible' });
 
     // Open destination token selector
-    await page.getByRole('button', { name: 'bsc HYPER Binance Smart Chain' }).click();
+    await getDestinationTokenButton(page).click();
     await expect(page.getByText('Select Token')).toBeVisible();
 
-    // Click on HYPER Arbitrum token
-    await page.getByRole('button', { name: 'HYPER Arbitrum Hyperlane' }).click();
+    // Click on USDC Arbitrum token (exact name to avoid matching 'Route unavailable' variant)
+    await page.getByRole('button', { name: 'arbitrum USDC Arbitrum USD Coin', exact: true }).click();
 
     // Modal should close
     await expect(page.getByText('Select Token')).not.toBeVisible();
 
-    // Destination token should now show HYPER on Arbitrum
-    await expect(page.getByRole('button', { name: /HYPER Arbitrum/i })).toBeVisible();
+    // Destination token should now show USDC on Arbitrum
+    await expect(page.getByRole('button', { name: /USDC Arbitrum/i })).toBeVisible();
   });
 });

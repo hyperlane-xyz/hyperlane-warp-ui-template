@@ -1,11 +1,12 @@
 import { test, expect } from '@playwright/test';
+import { getOriginTokenButton } from '../helpers/locators';
 
 test.describe('Chain Selection - Sort Chains', () => {
   test('should open sort dropdown and show sort options', async ({ page }) => {
     await page.goto('http://localhost:3000');
     await page.getByText('Send').first().waitFor({ state: 'visible' });
 
-    await page.getByRole('button', { name: 'ethereum HYPER Ethereum' }).click();
+    await getOriginTokenButton(page).click();
     await expect(page.getByText('Select Token')).toBeVisible();
 
     // Open sort dropdown
@@ -23,7 +24,7 @@ test.describe('Chain Selection - Sort Chains', () => {
     await page.goto('http://localhost:3000');
     await page.getByText('Send').first().waitFor({ state: 'visible' });
 
-    await page.getByRole('button', { name: 'ethereum HYPER Ethereum' }).click();
+    await getOriginTokenButton(page).click();
 
     // Get first chain in default (Name asc) sort
     const chainButtons = page.locator('button[class*="border-l-2"]');
@@ -42,7 +43,7 @@ test.describe('Chain Selection - Sort Chains', () => {
     await page.goto('http://localhost:3000');
     await page.getByText('Send').first().waitFor({ state: 'visible' });
 
-    await page.getByRole('button', { name: 'ethereum HYPER Ethereum' }).click();
+    await getOriginTokenButton(page).click();
 
     // Default sort is Name (asc) - first chain should start with 'A'
     const chainButtons = page.locator('button[class*="border-l-2"]');

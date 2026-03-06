@@ -46,8 +46,14 @@ NEXT_PUBLIC_WALLET_CONNECT_ID=<projectId> pnpm run dev
 ### Test
 
 ```sh
-# Run tests
+# Run unit tests
 pnpm test
+
+# Run E2E tests (requires dev server or builds one automatically)
+pnpm test:e2e
+
+# Run E2E tests with headed browser and slow motion for debugging
+SLOW_MO=2000 pnpm test:e2e -- --headed --workers=1
 
 # Lint check code
 pnpm run lint

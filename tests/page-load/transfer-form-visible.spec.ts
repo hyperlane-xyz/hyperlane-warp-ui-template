@@ -16,7 +16,7 @@ test.describe('Page Load - Transfer Form', () => {
     await expect(page.getByRole('button', { name: 'Connect wallet' }).first()).toBeVisible();
 
     // Send section: default origin token
-    await expect(page.getByRole('button', { name: 'ethereum HYPER Ethereum' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'ethereum USDC Ethereum' })).toBeVisible();
 
     // Amount input visible
     const amountInput = page.getByRole('spinbutton');
@@ -32,7 +32,7 @@ test.describe('Page Load - Transfer Form', () => {
     await expect(page.getByText('Balance: 0.00', { exact: true })).toBeVisible();
 
     // Receive section: default destination token
-    await expect(page.getByRole('button', { name: 'bsc HYPER Binance Smart Chain' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'base USDC Base' })).toBeVisible();
     await expect(page.getByText('Remote Balance: 0.00')).toBeVisible();
   });
 });

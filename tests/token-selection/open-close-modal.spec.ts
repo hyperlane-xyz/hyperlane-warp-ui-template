@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { getOriginTokenButton } from '../helpers/locators';
 
 test.describe('Token Selection - Open and Close Modal', () => {
   test('should open and close token selection modal', async ({ page }) => {
@@ -6,7 +7,7 @@ test.describe('Token Selection - Open and Close Modal', () => {
     await page.getByText('Send').first().waitFor({ state: 'visible' });
 
     // Open origin token selector
-    await page.getByRole('button', { name: 'ethereum HYPER Ethereum' }).click();
+    await getOriginTokenButton(page).click();
 
     // Modal should open
     await expect(page.getByText('Select Token')).toBeVisible();

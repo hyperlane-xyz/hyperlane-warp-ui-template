@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { getOriginTokenButton } from '../helpers/locators';
 
 test.describe('Token Selection - Filter Chains', () => {
   test('should filter chains by search', async ({ page }) => {
@@ -6,7 +7,7 @@ test.describe('Token Selection - Filter Chains', () => {
     await page.getByText('Send').first().waitFor({ state: 'visible' });
 
     // Open origin token selector
-    await page.getByRole('button', { name: 'ethereum HYPER Ethereum' }).click();
+    await getOriginTokenButton(page).click();
     await expect(page.getByText('Select Token')).toBeVisible();
 
     // Type in chain search

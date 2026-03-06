@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { getOriginTokenButton } from '../helpers/locators';
 
 test.describe('Chain Selection - Filter by Type', () => {
   test('should filter chains by Testnet type', async ({ page }) => {
@@ -6,7 +7,7 @@ test.describe('Chain Selection - Filter by Type', () => {
     await page.getByText('Send').first().waitFor({ state: 'visible' });
 
     // Open token selector
-    await page.getByRole('button', { name: 'ethereum HYPER Ethereum' }).click();
+    await getOriginTokenButton(page).click();
     await expect(page.getByText('Select Token')).toBeVisible();
 
     // Open filter dropdown
@@ -32,7 +33,7 @@ test.describe('Chain Selection - Filter by Type', () => {
     await page.getByText('Send').first().waitFor({ state: 'visible' });
 
     // Open token selector and filter dropdown
-    await page.getByRole('button', { name: 'ethereum HYPER Ethereum' }).click();
+    await getOriginTokenButton(page).click();
     await page.getByRole('button', { name: 'Filter chains' }).click();
 
     // Click Mainnet filter

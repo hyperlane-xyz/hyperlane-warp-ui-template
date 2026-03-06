@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { getOriginTokenButton } from '../helpers/locators';
 
 test.describe('Chain Selection - Filter by Protocol', () => {
   test('should filter chains by Sealevel protocol', async ({ page }) => {
@@ -6,7 +7,7 @@ test.describe('Chain Selection - Filter by Protocol', () => {
     await page.getByText('Send').first().waitFor({ state: 'visible' });
 
     // Open token selector
-    await page.getByRole('button', { name: 'ethereum HYPER Ethereum' }).click();
+    await getOriginTokenButton(page).click();
     await expect(page.getByText('Select Token')).toBeVisible();
 
     // Open filter dropdown
@@ -26,7 +27,7 @@ test.describe('Chain Selection - Filter by Protocol', () => {
     await page.goto('http://localhost:3000');
     await page.getByText('Send').first().waitFor({ state: 'visible' });
 
-    await page.getByRole('button', { name: 'ethereum HYPER Ethereum' }).click();
+    await getOriginTokenButton(page).click();
     await page.getByRole('button', { name: 'Filter chains' }).click();
 
     // Click Cosmos protocol filter
@@ -40,7 +41,7 @@ test.describe('Chain Selection - Filter by Protocol', () => {
     await page.goto('http://localhost:3000');
     await page.getByText('Send').first().waitFor({ state: 'visible' });
 
-    await page.getByRole('button', { name: 'ethereum HYPER Ethereum' }).click();
+    await getOriginTokenButton(page).click();
     await page.getByRole('button', { name: 'Filter chains' }).click();
 
     // Apply a filter

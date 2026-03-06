@@ -46,11 +46,14 @@ jobs:
         env:
           NEXT_PUBLIC_WALLET_CONNECT_ID: ${{ secrets.NEXT_PUBLIC_WALLET_CONNECT_ID }}
 
+      - name: Package build output
+        run: tar -czf build-output.tar.gz .next/
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: build-output
-          path: .next/
+          path: build-output.tar.gz
           retention-days: 1
 
   typecheck:
@@ -178,8 +181,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shardIndex: [1, 2, 3, 4]
-        shardTotal: [4]
+        shardIndex: [1, 2]
+        shardTotal: [2]
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v4
@@ -207,10 +210,27 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-output
-          path: .next/
+
+      - name: Extract build output
+        run: tar -xzf build-output.tar.gz
+
+      - name: Get Playwright version
+        id: pw-version
+        run: echo "version=$(pnpm exec playwright --version)" >> $GITHUB_OUTPUT
+
+      - name: Cache Playwright browsers
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ steps.pw-version.outputs.version }}
 
       - name: Install Playwright browsers
-        run: pnpm exec playwright install --with-deps chromium
+        if: steps.pw-cache.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install chromium
+
+      - name: Install Playwright system dependencies
+        run: pnpm exec playwright install-deps chromium
 
       - name: Run Playwright tests
         run: pnpm exec playwright test --project=chromium --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}

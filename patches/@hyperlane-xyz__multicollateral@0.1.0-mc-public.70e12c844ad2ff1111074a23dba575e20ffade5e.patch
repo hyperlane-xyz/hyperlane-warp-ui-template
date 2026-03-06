@@ -1,5 +1,5 @@
 diff --git a/dist/typechain/factories/MultiCollateralRoutingFee__factory.js b/dist/typechain/factories/MultiCollateralRoutingFee__factory.js
-index e08c57cd988b2a45208421ae8c6d56a72e6a3182..da9bf46c5b6ed528363cc9066f6a5dc79fd669f4 100644
+index e08c57cd988b2a45208421ae8c6d56a72e6a3182..5a99274bfedd00fa0eee4c92708118a5693657c1 100644
 --- a/dist/typechain/factories/MultiCollateralRoutingFee__factory.js
 +++ b/dist/typechain/factories/MultiCollateralRoutingFee__factory.js
 @@ -1,7 +1,10 @@
@@ -7,10 +7,10 @@ index e08c57cd988b2a45208421ae8c6d56a72e6a3182..da9bf46c5b6ed528363cc9066f6a5dc7
  /* tslint:disable */
  /* eslint-disable */
 -import { utils, Contract, ContractFactory } from "ethers";
-+import * as ethers from "ethers";
-+const Contract = ethers.Contract;
-+const ContractFactory = ethers.ContractFactory;
-+const Interface = "utils" in ethers ? ethers.utils.Interface : ethers.Interface;
++import * as ethersNamespace from "ethers";
++import { Interface } from "@ethersproject/abi";
++const Contract = ethersNamespace["Contract"];
++const ContractFactory = ethersNamespace["ContractFactory"];
  const _abi = [
      {
          type: "constructor",
@@ -24,7 +24,7 @@ index e08c57cd988b2a45208421ae8c6d56a72e6a3182..da9bf46c5b6ed528363cc9066f6a5dc7
      static connect(address, signerOrProvider) {
          return new Contract(address, _abi, signerOrProvider);
 diff --git a/dist/typechain/factories/MultiCollateral__factory.js b/dist/typechain/factories/MultiCollateral__factory.js
-index 7e24957dc79f2a308d7360ac7aa01aaf8312ee65..751d971dcedb177fe45b7817e643fe8e96175403 100644
+index 7e24957dc79f2a308d7360ac7aa01aaf8312ee65..1de72cc1b502088d6e0646b5f399cba83759b680 100644
 --- a/dist/typechain/factories/MultiCollateral__factory.js
 +++ b/dist/typechain/factories/MultiCollateral__factory.js
 @@ -1,7 +1,10 @@
@@ -32,10 +32,10 @@ index 7e24957dc79f2a308d7360ac7aa01aaf8312ee65..751d971dcedb177fe45b7817e643fe8e
  /* tslint:disable */
  /* eslint-disable */
 -import { utils, Contract, ContractFactory, } from "ethers";
-+import * as ethers from "ethers";
-+const Contract = ethers.Contract;
-+const ContractFactory = ethers.ContractFactory;
-+const Interface = "utils" in ethers ? ethers.utils.Interface : ethers.Interface;
++import * as ethersNamespace from "ethers";
++import { Interface } from "@ethersproject/abi";
++const Contract = ethersNamespace["Contract"];
++const ContractFactory = ethersNamespace["ContractFactory"];
  const _abi = [
      {
          type: "constructor",

@@ -159,7 +159,7 @@
     },
     "patchedDependencies": {
       "starknetkit@2.6.1": "patches/starknetkit@2.6.1.patch",
-      "@hyperlane-xyz/multicollateral@0.1.0-mc-public.70e12c844ad2ff1111074a23dba575e20ffade5e": "patches/@hyperlane-xyz__multicollateral.patch"
+      "@hyperlane-xyz/multicollateral@0.1.0-mc-public.70e12c844ad2ff1111074a23dba575e20ffade5e": "patches/@hyperlane-xyz__multicollateral@0.1.0-mc-public.70e12c844ad2ff1111074a23dba575e20ffade5e.patch"
     },
     "onlyBuiltDependencies": []
   }

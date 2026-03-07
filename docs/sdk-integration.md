@@ -124,7 +124,44 @@ Notes:
 - Event bridge ignores messages not coming from the configured widget origin.
 - Event bridge ignores messages not coming from the mounted widget iframe window.
 
-## 6) Verify integration locally
+## 6) URL param customization (embed route)
+
+The embed route now supports URL-driven styling:
+
+- `accent` / `accentColor`
+- `accentSoft`
+- `accentTo`
+- `bg` / `backgroundColor`
+- `card` / `cardColor`
+- `text` / `textColor`
+- `border` / `borderColor`
+- `buttonText` / `buttonTextColor`
+
+You can pass these either:
+
+- as direct query params on `/embed`, or
+- inside `config.theme` when using `HyperlaneWarpWidget` / `createWarpIframe`.
+
+Example direct URL:
+
+```text
+/embed?accent=%23B79F87&accentTo=%238E7866&bg=%23141518&card=%231B1C20&text=%23ECE6DE&border=%233B332D&buttonText=%23F8F2EC
+```
+
+Default chain/token params can be passed with:
+
+- `origin`
+- `destination`
+- `originToken`
+- `destinationToken`
+
+Example:
+
+```text
+/embed?origin=ethereum&destination=base&originToken=USDC&destinationToken=USDC
+```
+
+## 7) Verify integration locally
 
 This repository includes a concrete host fixture:
 

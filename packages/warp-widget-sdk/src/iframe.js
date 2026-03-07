@@ -32,8 +32,13 @@ export function createWarpIframe(container, options) {
   if (typeof defaults?.destinationChain === 'string' && defaults.destinationChain) {
     url.searchParams.set('destination', defaults.destinationChain);
   }
-  if (typeof defaults?.token === 'string' && defaults.token) {
-    url.searchParams.set('token', defaults.token);
+  if (typeof defaults?.originAsset === 'string' && defaults.originAsset) {
+    url.searchParams.set('originToken', defaults.originAsset);
+  }
+  if (typeof defaults?.destinationAsset === 'string' && defaults.destinationAsset) {
+    url.searchParams.set('destinationToken', defaults.destinationAsset);
+  } else if (typeof defaults?.token === 'string' && defaults.token) {
+    url.searchParams.set('originToken', defaults.token);
   }
 
   const iframe = document.createElement('iframe');

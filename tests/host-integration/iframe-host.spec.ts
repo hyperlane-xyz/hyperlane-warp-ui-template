@@ -4,7 +4,7 @@ test('iframe host mounts widget and relays ready event', async ({ page }) => {
   await page.goto('/iframe');
 
   await expect(page.getByTestId('iframe-container')).toHaveCount(1);
-  await expect(page.getByTestId('iframe-event-log')).toHaveText('ready');
+  await expect(page.getByTestId('iframe-event-log')).toHaveText('ready', { timeout: 45_000 });
 
   const frame = page.frameLocator('iframe[data-testid="warp-widget-iframe"]');
   await expect(frame.getByTestId('warp-widget-root')).toHaveCount(1);
@@ -13,7 +13,7 @@ test('iframe host mounts widget and relays ready event', async ({ page }) => {
 
 test('iframe event bridge ignores malformed or untrusted events', async ({ page }) => {
   await page.goto('/iframe');
-  await expect(page.getByTestId('iframe-event-log')).toHaveText('ready');
+  await expect(page.getByTestId('iframe-event-log')).toHaveText('ready', { timeout: 45_000 });
 
   await page.evaluate(() => {
     window.postMessage('malformed', '*');

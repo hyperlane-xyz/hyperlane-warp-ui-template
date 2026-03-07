@@ -15,8 +15,18 @@ export default function IframePage() {
     const iframe = createWarpIframe(containerRef.current, {
       iframeUrl: WIDGET_URL,
       config: {
-        theme: { accentColor: '#5B46FE' },
-        defaults: { originChain: 'ethereum', destinationChain: 'base' },
+        theme: {
+          accentColor: '#5B46FE',
+          accentTo: '#7B68FF',
+          backgroundColor: '#F6F7FB',
+          cardColor: '#FFFFFF',
+        },
+        defaults: {
+          originChain: 'ethereum',
+          destinationChain: 'base',
+          originAsset: 'USDC',
+          destinationAsset: 'USDC',
+        },
       },
       onEvent: (event) => setLatestEvent(event?.type || 'unknown'),
     });

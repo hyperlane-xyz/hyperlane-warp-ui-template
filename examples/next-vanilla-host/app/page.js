@@ -11,6 +11,12 @@ export default function HomePage() {
         <li>
           <Link href="/iframe">Iframe helper integration</Link>
         </li>
+        <li>
+          <Link href="/showcase/mantrausd">mantraUSD-style showcase</Link>
+        </li>
+        <li>
+          <Link href="/showcase/usdai">USD.AI-style showcase</Link>
+        </li>
       </ul>
     </main>
   );

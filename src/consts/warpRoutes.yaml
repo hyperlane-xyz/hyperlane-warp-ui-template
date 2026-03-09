@@ -2,21 +2,5 @@
 # These configs will be merged with the warp routes in the configured registry
 # The input here is typically the output of the Hyperlane CLI warp deploy command
 ---
-tokens:
-  - chainName: seismictestnet
-    standard: EvmHypSynthetic
-    decimals: 18
-    symbol: ETH
-    name: Ether
-    addressOrDenom: "0xFCc646A6395C50FfECf5B467E649Fb6D1928Ff51"
-    connections:
-      - token: ethereum|sepolia|0x77bBfE9fE446593B191eCBAe6544aF8C0cC54bec
-  - chainName: sepolia
-    standard: EvmHypNative
-    decimals: 18
-    symbol: ETH
-    name: Ether
-    addressOrDenom: "0x77bBfE9fE446593B191eCBAe6544aF8C0cC54bec"
-    connections:
-      - token: ethereum|seismictestnet|0xFCc646A6395C50FfECf5B467E649Fb6D1928Ff51
+tokens: []
 options: {}

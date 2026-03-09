@@ -44,18 +44,11 @@ let predicateClientInstance: PredicateProxyClient | null = null;
 
 /**
  * Get or create singleton PredicateProxyClient instance
- * Returns null if API key not configured
+ * Always returns instance - API route will handle missing key validation
  */
-export function getPredicateClient(): PredicateProxyClient | null {
+export function getPredicateClient(): PredicateProxyClient {
   if (predicateClientInstance) {
     return predicateClientInstance;
-  }
-
-  const apiKey = process.env.NEXT_PUBLIC_PREDICATE_API_KEY;
-
-  if (!apiKey) {
-    logger.debug('Predicate API key not configured, attestation support disabled');
-    return null;
   }
 
   predicateClientInstance = new PredicateProxyClient();

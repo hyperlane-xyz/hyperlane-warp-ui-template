@@ -176,12 +176,11 @@ async function executeTransfer({
     let attestation: PredicateAttestation | undefined;
     const predicateClient = getPredicateClient();
 
-    if (predicateClient) {
-      try {
-        const needsAttestation = await warpCore.isPredicateSupported(originToken, destination);
-        logger.debug('Predicate support check:', { needsAttestation, origin, destination });
+    try {
+      const needsAttestation = await warpCore.isPredicateSupported(originToken, destination);
+      logger.debug('Predicate support check:', { needsAttestation, origin, destination });
 
-        if (needsAttestation) {
+      if (needsAttestation) {
           logger.debug('Route requires Predicate attestation, fetching...');
           updateTransferStatus(transferIndex, (transferStatus = TransferStatus.FetchingAttestation));
 
@@ -217,14 +216,11 @@ async function executeTransfer({
           attestation = response.attestation;
           logger.debug('Predicate attestation received:', attestation.uuid);
         }
-      } catch (error: any) {
-        logger.error('Predicate attestation error:', error);
-        // If route requires attestation, fail the transfer
-        toast.error('Compliance verification failed. Transfer cannot proceed.');
-        throw new Error(`Predicate attestation failed: ${error.message || 'Unknown error'}`);
-      }
-    } else {
-      logger.debug('Predicate client not configured, skipping attestation check');
+    } catch (error: any) {
+      logger.error('Predicate attestation error:', error);
+      // If route requires attestation, fail the transfer
+      toast.error('Compliance verification failed. Transfer cannot proceed.');
+      throw new Error(`Predicate attestation failed: ${error.message || 'Unknown error'}`);
     }
 
     const txs = await warpCore.getTransferRemoteTxs({

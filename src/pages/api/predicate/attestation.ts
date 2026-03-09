@@ -1,8 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-const PREDICATE_API_KEY = process.env.NEXT_PUBLIC_PREDICATE_API_KEY;
+const PREDICATE_API_KEY = process.env.PREDICATE_API_KEY;
 const PREDICATE_API_URL =
-  process.env.NEXT_PUBLIC_PREDICATE_API_URL || 'https://api.predicate.io/v2/attestation';
+  process.env.PREDICATE_API_URL || 'https://api.predicate.io/v2/attestation';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {

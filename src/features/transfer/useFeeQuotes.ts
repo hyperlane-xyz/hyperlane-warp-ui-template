@@ -108,7 +108,8 @@ async function fetchFeeQuotes(
   // Check if predicate attestation needed for fee estimation
   let attestation: PredicateAttestation | undefined;
   const predicateClient = getPredicateClient();
-  if (predicateClient) {
+
+  try {
     const needsAttestation = await warpCore.isPredicateSupported(transferToken, destination);
 
     if (needsAttestation) {
@@ -137,6 +138,9 @@ async function fetchFeeQuotes(
       const response = await predicateClient.fetchAttestation(attestationRequest);
       attestation = response.attestation;
     }
+  } catch (error: any) {
+    logger.warn('Failed to fetch attestation for fee estimation, continuing without it:', error);
+    // Continue without attestation - fee estimation will proceed
   }
 
   logger.debug('Fetching fee quotes');

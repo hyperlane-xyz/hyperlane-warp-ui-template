@@ -965,7 +965,8 @@ async function validateForm(
     // Check if predicate attestation needed for validation
     let attestation: PredicateAttestation | undefined;
     const predicateClient = getPredicateClient();
-    if (predicateClient) {
+
+    try {
       const needsAttestation = await warpCore.isPredicateSupported(transferToken, destination);
 
       if (needsAttestation) {
@@ -994,6 +995,9 @@ async function validateForm(
         const response = await predicateClient.fetchAttestation(attestationRequest);
         attestation = response.attestation;
       }
+    } catch (error: any) {
+      logger.warn('Failed to fetch attestation for validation, continuing without it:', error);
+      // Continue without attestation - validation will proceed
     }
 
     const result = await warpCore.validateTransfer({

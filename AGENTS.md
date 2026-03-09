@@ -110,7 +110,7 @@ We handle ONLY the most important cases. Don't add functionality unless it's sma
 
 ## Code Review
 
-For code review guidelines, see `.github/prompts/code-review.md`.
+For code review guidelines, see `REVIEW.md`.
 
 ### PR Review Comment Format
 

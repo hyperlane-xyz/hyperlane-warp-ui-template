@@ -68,12 +68,10 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          prompt: Run /claude-review
+          prompt: "Use agent teams to run /claude-review"
           track_progress: true
-          use_sticky_comment: true
-          claude_args: |
-            --model ${{ env.CLAUDE_OPUS_MODEL }}
-            --max-turns 30
+          use_sticky_comment: false
+          claude_args: "--model ${{ env.CLAUDE_OPUS_MODEL }}"
 
   security-review:
     if: |
@@ -197,7 +195,5 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           track_progress: true
-          use_sticky_comment: true
-          claude_args: |
-            --model ${{ env.CLAUDE_SONNET_MODEL }}
-            --max-turns 20
+          use_sticky_comment: false
+          claude_args: "--model ${{ env.CLAUDE_SONNET_MODEL }}"

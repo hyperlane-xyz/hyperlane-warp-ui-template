@@ -91,6 +91,12 @@
     "yaml": "^2.6.0",
     "yaml-loader": "^0.8.1"
   },
+  "browserList": [
+    "not dead",
+    "ie 11",
+    "ios_saf 10",
+    "android 4.4"
+  ],
   "homepage": "https://www.hyperlane.xyz",
   "license": "Apache-2.0",
   "main": "dist/src/index.js",

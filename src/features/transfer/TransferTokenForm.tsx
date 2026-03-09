@@ -140,7 +140,7 @@ export function TransferTokenForm() {
         <Form className="flex w-full flex-col items-stretch">
           <WarningBanners />
           <ChainSelectSection isReview={isReview} />
-          <div className="mt-2.5 flex items-end justify-between space-x-4">
+          <div className="mt-2.5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-0 sm:space-x-4">
             <TokenSection setIsNft={setIsNft} isReview={isReview} />
             <AmountSection isNft={isNft} isReview={isReview} />
           </div>
@@ -521,12 +521,12 @@ function ButtonSection({
           }
         />
       </div>
-      <div className="mt-4 flex items-center justify-between space-x-4">
+      <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-0 sm:space-x-4">
         <SolidButton
           type="button"
           color="accent"
           onClick={onEdit}
-          className="px-6 py-1.5"
+          className="w-full px-6 py-1.5 sm:w-auto"
           icon={<ChevronIcon direction="w" width={10} height={6} color={Color.white} />}
         >
           <span>Edit</span>
@@ -536,7 +536,7 @@ function ButtonSection({
           type="button"
           color="primary"
           onClick={triggerTransactionsHandler}
-          className="flex-1 px-3 py-1.5"
+          className="w-full px-3 py-1.5 sm:flex-1"
         >
           {`Send to ${chainDisplayName}`}
         </SolidButton>

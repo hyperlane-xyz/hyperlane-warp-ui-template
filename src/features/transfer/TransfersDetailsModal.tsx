@@ -82,11 +82,11 @@ export function TransfersDetailsModal({
   }, [sender, recipient, originTxHash, multiProvider, origin, destination]);
 
   useEffect(() => {
-    if (!transfer) return;
+    if (!transfer || !isOpen) return;
     getMessageUrls().catch((err) =>
       logger.error('Error getting message URLs for details modal', err),
     );
-  }, [transfer, getMessageUrls]);
+  }, [transfer, isOpen, getMessageUrls]);
 
   const isAccountReady = !!account?.isReady;
   const connectorName = walletDetails.name || 'wallet';
@@ -276,7 +276,7 @@ function useSignIssueWarning(status: TransferStatus) {
     if (status === TransferStatus.SigningTransfer || status === TransferStatus.ConfirmingTransfer)
       setShowWarning(true);
   }, [status, setShowWarning]);
-  useTimeout(warningCallback, 20_000);
+  useTimeout(warningCallback, 20000);
   return showWarning;
 }
 

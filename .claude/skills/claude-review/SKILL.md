@@ -15,7 +15,7 @@ Use this skill to review code changes against Hyperlane Warp UI standards.
 
 ## Instructions
 
-Read and apply the guidelines from `.github/prompts/code-review.md` to review the code changes.
+Read and apply the guidelines from `REVIEW.md` to review the code changes.
 
 ### For PR Reviews
 

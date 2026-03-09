@@ -24,7 +24,7 @@ export type EventProperties = {
   };
   [EVENT_NAME.TOKEN_SELECTED]: {
     tokenType: string;
-    originTokenSymbol: string;
+    originToken: string;
     destinationToken: string;
     origin: string;
     originChainId: ChainId;

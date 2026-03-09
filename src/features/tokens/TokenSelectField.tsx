@@ -62,21 +62,14 @@ export function TokenSelectField({
     setTokenKey(newTokenKey);
 
     // Track analytics - derive origin and destination from current tokens
-    const originToken = getTokenByKeyFromMap(tokenMap, values.originTokenKey);
-    const destToken = getTokenByKeyFromMap(tokenMap, values.destinationTokenKey);
-    const origin = selectionMode === 'origin' ? newToken.chainName : originToken?.chainName || '';
-    const destination =
-      selectionMode === 'destination' ? newToken.chainName : destToken?.chainName || '';
-    const destinationTokenSymbol =
-      selectionMode === 'destination' ? newToken.symbol : destToken?.symbol || '';
-    trackTokenSelectionEvent(
-      selectionMode,
-      newToken,
-      destinationTokenSymbol,
-      origin,
-      destination,
-      multiProvider,
-    );
+    const originToken =
+      selectionMode === 'origin' ? newToken : getTokenByKeyFromMap(tokenMap, values.originTokenKey);
+    const destToken =
+      selectionMode === 'destination'
+        ? newToken
+        : getTokenByKeyFromMap(tokenMap, values.destinationTokenKey);
+
+    trackTokenSelectionEvent(selectionMode, originToken, destToken, multiProvider);
 
     // Update URL query params based on selection mode
     if (selectionMode === 'origin') {

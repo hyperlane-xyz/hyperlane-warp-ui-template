@@ -1,5 +1,18 @@
+import {
+  ChainMap,
+  CoreAddresses,
+  MultiProtocolCore,
+  MultiProtocolProvider,
+  ProviderType,
+  TypedTransactionReceipt,
+  ViemProvider,
+} from '@hyperlane-xyz/sdk';
+import { isValidAddress, isValidAddressEvm } from '@hyperlane-xyz/utils';
+import { getAddress } from 'viem';
 import ConfirmedIcon from '../../images/icons/confirmed-icon.svg';
 import ErrorCircleIcon from '../../images/icons/error-circle.svg';
+import { logger } from '../../utils/logger';
+import { getChainDisplayName } from '../chains/utils';
 import { FinalTransferStatuses, SentTransferStatuses, TransferStatus } from './types';
 
 export function getTransferStatusLabel(
@@ -67,20 +80,6 @@ export function getIconByTransferStatus(status: TransferStatus) {
       return ErrorCircleIcon;
   }
 }
-
-import {
-  ChainMap,
-  CoreAddresses,
-  MultiProtocolCore,
-  MultiProtocolProvider,
-  ProviderType,
-  TypedTransactionReceipt,
-  ViemProvider,
-} from '@hyperlane-xyz/sdk';
-import { isValidAddressEvm } from '@hyperlane-xyz/utils';
-import { getAddress } from 'viem';
-import { logger } from '../../utils/logger';
-import { getChainDisplayName } from '../chains/utils';
 
 export function tryGetMsgIdFromTransferReceipt(
   multiProvider: MultiProtocolProvider,
@@ -181,4 +180,15 @@ export async function isSmartContract(
     logger.error(msg, error);
     return { isContract: false, error: msg };
   }
+}
+
+// Returns if the recipient should be cleared by checking if it is valid address from the current chain protocol
+export function shouldClearAddress(
+  multiProvider: MultiProtocolProvider,
+  recipient: string,
+  chainName: string,
+) {
+  const protocol = multiProvider.tryGetProtocol(chainName);
+  if (recipient && protocol && !isValidAddress(recipient, protocol)) return true;
+  return false;
 }

@@ -9,6 +9,7 @@ import {
   TokenWithFee,
 } from '../tokens/types';
 import {
+  findRouteToken,
   getTokensWithSameCollateralAddresses,
   isValidMultiCollateralToken,
   tryGetDefaultOriginToken,
@@ -107,16 +108,33 @@ export async function getTransferToken(
   sender: string | undefined,
   defaultMultiCollateralRoutes?: DefaultMultiCollateralRoutes,
 ) {
-  if (!isValidMultiCollateralToken(originToken, destinationToken)) return originToken;
+  const destinationChain = destinationToken.chainName;
+
+  // Find the actual warpCore token that has the route
+  // Because we deduplicated tokens with the same collateral, the current token pair
+  // might not be correct, so it is necessary to get the correct token pair.
+  // Make sure to have used `checkTokenHasRoute` before calling getTransferToken
+  // as that will validate that the token pair actually refer to the same asset
+  // originRouteToken may differ from originToken due to collateral dedup —
+  // it's the actual warpCore token with the connection to destinationChain
+  const originRouteToken = findRouteToken(warpCore, originToken, destinationChain);
+  if (!originRouteToken) {
+    // No route exists, return original token (validation will catch this)
+    return originToken;
+  }
+
+  if (!isValidMultiCollateralToken(originRouteToken, destinationToken)) {
+    return originRouteToken;
+  }
 
   const tokensWithSameCollateralAddresses = getTokensWithSameCollateralAddresses(
     warpCore,
-    originToken,
+    originRouteToken,
     destinationToken,
   );
 
   // if only one token exists then just return that one
-  if (tokensWithSameCollateralAddresses.length <= 1) return originToken;
+  if (tokensWithSameCollateralAddresses.length <= 1) return originRouteToken;
 
   logger.debug(
     'Multiple multi-collateral tokens found for same collateral address, retrieving routes with collateral balance...',
@@ -149,7 +167,7 @@ export async function getTransferToken(
   const validBalanceResults = getPromisesFulfilledValues(balanceResults);
 
   const tokenBalances = filterAndSortTokensByBalance(validBalanceResults, BigInt(amountWei));
-  if (!tokenBalances.length) return originToken;
+  if (!tokenBalances.length) return originRouteToken;
 
   logger.debug('Retrieving fees for multi-collateral routes...');
   // fetch each route fees

@@ -111,3 +111,25 @@ export function trackTransactionFailedEvent(
     error: firstError,
   });
 }
+
+export function trackUnsupportedRouteEvent(
+  originToken: Token | undefined,
+  destinationToken: Token | undefined,
+  multiProvider: MultiProtocolProvider,
+) {
+  if (!originToken || !destinationToken) return;
+
+  const origin = originToken.chainName;
+  const destination = destinationToken.chainName;
+  const originChainId = multiProvider.getChainId(origin);
+  const destinationChainId = multiProvider.getChainId(destination);
+
+  trackEvent(EVENT_NAME.UNSUPPORTED_ROUTE_SELECTED, {
+    originToken: originToken.symbol,
+    destinationToken: destinationToken.symbol,
+    origin,
+    destination,
+    originChainId,
+    destinationChainId,
+  });
+}

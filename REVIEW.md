@@ -1,31 +1,40 @@
 # Code Review Guidelines
 
-## Always flag
-- XSS vulnerabilities: unsanitized user input rendered in the DOM
-- Secrets, private keys, or API keys committed in code or logs
-- Introduction of `as` type assertions, `as any`, `as unknown as X`, or `!` non-null assertions
-- Silent error swallowing (empty catch blocks or catch-and-ignore)
-- Token amount or balance calculations without proper decimal handling
-- Missing input validation on transfer parameters (addresses, amounts)
-- New external script/resource URLs without CSP header updates in `next.config.js`
-- State mutations outside of Zustand store actions
-- Direct wallet interactions bypassing WarpCore abstraction
-- Address handling that doesn't account for multi-protocol differences (EVM lowercase vs Solana/Cosmos case-sensitive)
-- Changes to transfer flow (`useTokenTransfer`) without corresponding test updates
-- New dependencies added without justification
+## Code Quality
 
-## Never flag
-- Formatting or style issues (handled by prettier and eslint)
-- Missing documentation or comments on self-evident code
-- Existing patterns that are intentional (check git history if unsure)
-- Minor naming preferences when existing convention is followed
-- Tailwind class ordering (handled by prettier plugin)
-- Import ordering
+- Logic errors and potential bugs
+- Error handling and edge cases
+- Code clarity and maintainability
+- Adherence to existing patterns in the codebase
+- **Use existing utilities** - Search codebase before adding new helpers
+- **Prefer `??` over `||`** - Preserves zero/empty string as valid values
 
-## Skip these paths
-- `node_modules/`
-- `.next/`
-- `dist/`
-- `*.lock` files
-- `public/` static assets
-- `examples/` directory
+## Architecture
+
+- Consistency with existing architecture patterns
+- Breaking changes or backward compatibility issues
+- API contract changes
+- **Deduplicate** - Move repeated code/types to shared files
+- **Extract utilities** - Shared functions belong in utils packages
+
+## Testing
+
+- Test coverage for new/modified code
+- Edge cases that should be tested
+- **New utility functions need unit tests**
+
+## Performance
+
+- Unnecessary re-renders or computations
+- Bundle size impact of new dependencies
+
+## Frontend-Specific
+
+- **Use existing utilities** - Check `src/utils/` before adding (normalizeAddress, etc.)
+- **Chain-aware addresses** - Only lowercase EVM hex; Solana/Cosmos are case-sensitive
+- **CSP updates required** - New external scripts/styles need `next.config.js` CSP updates
+- **Avoid floating promises** - In useEffect, use IIFE or separate async function
+- **Use useQuery refetch** - Don't reinvent; use built-in refetch from TanStack Query
+- **Flatten rendering logic** - Avoid nested if; use early returns instead
+- **Zustand patterns** - Follow existing store patterns in `src/features/store.ts`
+- **Constants outside functions** - Move config/constants outside component functions

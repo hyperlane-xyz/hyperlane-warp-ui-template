@@ -7,7 +7,7 @@ on:
 jobs:
   build:
     # Only build when triggered standalone (workflow_dispatch).
-    # When called from ci.yml (workflow_call), the build artifact is already available.
+    # When called from ci.yml (workflow_call), the build cache is already populated.
     if: ${{ github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     steps:
@@ -33,20 +33,18 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Cache build output
+        id: build-cache
+        uses: actions/cache@v4
+        with:
+          path: .next/
+          key: ${{ runner.os }}-nextjs-build-${{ hashFiles('src/**', 'pnpm-lock.yaml', 'next.config.js', 'tsconfig.json') }}
+
       - name: build
+        if: steps.build-cache.outputs.cache-hit != 'true'
         run: pnpm run build
         env:
           NEXT_PUBLIC_WALLET_CONNECT_ID: ${{ secrets.NEXT_PUBLIC_WALLET_CONNECT_ID }}
-
-      - name: Package build output
-        run: tar -czf build-output.tar.gz .next/
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-output
-          path: build-output.tar.gz
-          retention-days: 1
 
   e2e:
     timeout-minutes: 10
@@ -81,13 +79,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
+      - name: Restore build cache
+        uses: actions/cache/restore@v4
         with:
-          name: build-output
-
-      - name: Extract build output
-        run: tar -xzf build-output.tar.gz
+          path: .next/
+          key: ${{ runner.os }}-nextjs-build-${{ hashFiles('src/**', 'pnpm-lock.yaml', 'next.config.js', 'tsconfig.json') }}
 
       - name: Get Playwright version
         id: pw-version

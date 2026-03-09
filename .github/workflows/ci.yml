@@ -41,20 +41,18 @@ jobs:
             exit 1
           fi
 
+      - name: Cache build output
+        id: build-cache
+        uses: actions/cache@v4
+        with:
+          path: .next/
+          key: ${{ runner.os }}-nextjs-build-${{ hashFiles('src/**', 'pnpm-lock.yaml', 'next.config.js', 'tsconfig.json') }}
+
       - name: build
+        if: steps.build-cache.outputs.cache-hit != 'true'
         run: pnpm run build
         env:
           NEXT_PUBLIC_WALLET_CONNECT_ID: ${{ secrets.NEXT_PUBLIC_WALLET_CONNECT_ID }}
-
-      - name: Package build output
-        run: tar -czf build-output.tar.gz .next/
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-output
-          path: build-output.tar.gz
-          retention-days: 1
 
   typecheck:
     runs-on: ubuntu-latest

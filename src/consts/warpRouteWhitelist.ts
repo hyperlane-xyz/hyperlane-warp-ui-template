@@ -32,9 +32,6 @@ export const warpRouteWhitelist: Array<string> | null = [
   // weETHs routes
   'weETHs/eclipsemainnet-ethereum',
 
-  // ECLIP routes
-  'ECLIP/arbitrum-neutron',
-
   // USDC routes
   'USDC/ethereum-inevm',
   'USDC/ancient8-ethereum',

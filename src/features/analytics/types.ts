@@ -8,6 +8,7 @@ export enum EVENT_NAME {
   TRANSACTION_SUBMISSION_FAILED = 'Transaction Submission Failed',
   WALLET_CONNECTION_INITIATED = 'Wallet Connection Initiated',
   WALLET_CONNECTED = 'Wallet Connected',
+  UNSUPPORTED_ROUTE_SELECTED = 'Unsupported Route Selected',
 }
 
 export type AllowedPropertyValues = string | number | boolean | null;
@@ -56,5 +57,13 @@ export type EventProperties = {
     walletAddress: string | null;
     recipient: string;
     error: string;
+  };
+  [EVENT_NAME.UNSUPPORTED_ROUTE_SELECTED]: {
+    originToken: string;
+    destinationToken: string;
+    origin: string;
+    destination: string;
+    originChainId: ChainId;
+    destinationChainId: ChainId;
   };
 };

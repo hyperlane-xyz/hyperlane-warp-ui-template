@@ -1,4 +1,4 @@
-import { IToken, MultiProtocolProvider, Token, WarpCore } from '@hyperlane-xyz/sdk';
+import { MultiProtocolProvider, Token, WarpCore } from '@hyperlane-xyz/sdk';
 import { KnownProtocolType, objLength } from '@hyperlane-xyz/utils';
 import { AccountInfo, getAccountAddressAndPubKey } from '@hyperlane-xyz/widgets';
 import { track } from '@vercel/analytics';
@@ -22,18 +22,21 @@ export function trackEvent<T extends EVENT_NAME>(eventName: T, properties: Event
 
 export function trackTokenSelectionEvent(
   tokenType: string,
-  token: IToken,
-  destinationTokenSymbol: string,
-  origin: string,
-  destination: string,
+  originToken: Token | undefined,
+  destinationToken: Token | undefined,
   multiProvider: MultiProtocolProvider,
 ) {
+  if (!originToken || !destinationToken) return;
+
+  const origin = originToken.chainName;
+  const destination = destinationToken.chainName;
   const originChainId = multiProvider.getChainId(origin);
   const destinationChainId = multiProvider.getChainId(destination);
+
   trackEvent(EVENT_NAME.TOKEN_SELECTED, {
     tokenType,
-    originTokenSymbol: token.symbol,
-    destinationToken: destinationTokenSymbol,
+    originToken: originToken.symbol,
+    destinationToken: destinationToken.symbol,
     origin,
     destination,
     originChainId,

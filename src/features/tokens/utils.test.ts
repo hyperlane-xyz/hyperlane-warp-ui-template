@@ -5,6 +5,7 @@ import {
   buildTokensArray,
   checkTokenHasRoute,
   dedupeTokensByCollateral,
+  findConnectedDestinationToken,
   findRouteToken,
   getTokenKey,
   groupTokensByCollateral,
@@ -722,6 +723,36 @@ describe('checkTokenHasRoute', () => {
     expect(checkTokenHasRoute(origin, dest, groups)).toBe(true);
   });
 
+  test('should return true when a later same-chain connection matches dest collateral', () => {
+    const origin = createMockToken({
+      chainName: 'ethereum',
+      addressOrDenom: ADDR_1,
+      collateralAddressOrDenom: COLLATERAL_A,
+      connections: [
+        createTokenConnectionMock(undefined, {
+          chainName: 'arbitrum',
+          addressOrDenom: '0x3333333333333333333333333333333333333333',
+          // First same-chain connection points to a different collateral
+          collateralAddressOrDenom: '0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC',
+        }),
+        createTokenConnectionMock(undefined, {
+          chainName: 'arbitrum',
+          addressOrDenom: ADDR_2,
+          // Second same-chain connection is the intended collateral
+          collateralAddressOrDenom: COLLATERAL_B,
+        }),
+      ],
+    });
+    const dest = createMockToken({
+      chainName: 'arbitrum',
+      addressOrDenom: ADDR_2,
+      collateralAddressOrDenom: COLLATERAL_B,
+    });
+
+    const groups = groupTokensByCollateral([origin, dest]);
+    expect(checkTokenHasRoute(origin, dest, groups)).toBe(true);
+  });
+
   test('should return false when no connection to dest chain', () => {
     const origin = createMockToken({
       chainName: 'ethereum',
@@ -837,6 +868,45 @@ describe('findRouteToken', () => {
 
     expect(result).toBe(origin);
     expect(warpCore.getTokensForRoute).not.toHaveBeenCalled();
+  });
+
+  test('should prefer route token that matches specific destination token on same chain', () => {
+    const destinationCollateralA = '0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+    const destinationCollateralB = '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB';
+    const origin = createMockToken({
+      chainName: 'ethereum',
+      addressOrDenom: ADDR_1,
+      collateralAddressOrDenom: COLLATERAL,
+      connections: [
+        createTokenConnectionMock(undefined, {
+          chainName: 'arbitrum',
+          addressOrDenom: ADDR_2,
+          collateralAddressOrDenom: destinationCollateralA,
+        }),
+      ],
+    });
+    const selectedDestination = createMockToken({
+      chainName: 'arbitrum',
+      addressOrDenom: ADDR_3,
+      collateralAddressOrDenom: destinationCollateralB,
+    });
+    const routeToken = createMockToken({
+      chainName: 'ethereum',
+      addressOrDenom: '0x4444444444444444444444444444444444444444',
+      collateralAddressOrDenom: COLLATERAL,
+      connections: [
+        createTokenConnectionMock(undefined, {
+          chainName: 'arbitrum',
+          addressOrDenom: ADDR_3,
+          collateralAddressOrDenom: destinationCollateralB,
+        }),
+      ],
+    });
+    const warpCore = createMockWarpCore([routeToken]);
+
+    const result = findRouteToken(warpCore, origin, 'arbitrum', selectedDestination);
+
+    expect(result).toBe(routeToken);
   });
 
   test('should return undefined when no routes exist', () => {
@@ -1216,5 +1286,51 @@ describe('resolved underlying map integration', () => {
     // No lockbox token, no connection — should be false
     const groups = groupTokensByCollateral([regularUsdt, destToken]);
     expect(checkTokenHasRoute(regularUsdt, destToken, groups)).toBe(false);
+  });
+});
+
+describe('findConnectedDestinationToken', () => {
+  test('should match later same-chain connection by collateral key', () => {
+    const COLLATERAL_A = '0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+    const COLLATERAL_B = '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB';
+    const origin = createMockToken({
+      chainName: 'ethereum',
+      collateralAddressOrDenom: COLLATERAL_A,
+      connections: [
+        createTokenConnectionMock(undefined, {
+          chainName: 'arbitrum',
+          addressOrDenom: '0x1111111111111111111111111111111111111111',
+          collateralAddressOrDenom: '0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC',
+        }),
+        createTokenConnectionMock(undefined, {
+          chainName: 'arbitrum',
+          addressOrDenom: '0x2222222222222222222222222222222222222222',
+          collateralAddressOrDenom: COLLATERAL_B,
+        }),
+      ],
+    });
+    const selectedDestination = createMockToken({
+      chainName: 'arbitrum',
+      addressOrDenom: '0x3333333333333333333333333333333333333333',
+      collateralAddressOrDenom: COLLATERAL_B,
+    });
+
+    const matched = findConnectedDestinationToken(origin, selectedDestination);
+    expect(matched?.addressOrDenom).toBe('0x2222222222222222222222222222222222222222');
+  });
+
+  test('should return undefined when there is no destination-chain connection', () => {
+    const origin = createMockToken({
+      chainName: 'ethereum',
+      connections: [
+        createTokenConnectionMock(undefined, {
+          chainName: 'optimism',
+        }),
+      ],
+    });
+    const selectedDestination = createMockToken({ chainName: 'arbitrum' });
+
+    const matched = findConnectedDestinationToken(origin, selectedDestination);
+    expect(matched).toBeUndefined();
   });
 });

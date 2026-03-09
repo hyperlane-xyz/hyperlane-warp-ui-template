@@ -242,12 +242,12 @@ export function TokenList({
   }
 
   return (
-    <div className="relative flex-1 overflow-hidden">
-      <div ref={scrollRef} className="h-full overflow-auto">
+    <div className="relative flex-1 overflow-hidden bg-white">
+      <div ref={scrollRef} className="h-full overflow-auto bg-white">
         <div className="sticky top-0 z-10 border-b border-primary-50 bg-white px-4 pb-2 pt-2">
           <h3 className={`${styles.base} text-sm text-black`}>Token Selection</h3>
         </div>
-        <div className="py-2 md:px-3">
+        <div className="bg-white py-2 md:px-3">
           {tokens.map((token) => {
             const key = getTokenKey(token);
             const hasRoute = tokenRouteMap ? (tokenRouteMap.get(key) ?? true) : true;
@@ -325,7 +325,7 @@ const TokenButton = React.memo(function TokenButton({
   return (
     <button
       type="button"
-      className="group mb-2 flex h-[60px] w-full items-center rounded-[3px] px-3 transition-colors hover:bg-gray-100"
+      className="group mb-2 flex h-[60px] w-full items-center rounded-[3px] bg-white px-3 transition-colors hover:bg-gray-100"
       onClick={() => onSelect(token)}
     >
       <TokenChainIcon token={token} size={36} />

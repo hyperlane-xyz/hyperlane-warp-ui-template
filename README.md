@@ -56,6 +56,21 @@ pnpm run lint
 pnpm run typecheck
 ```
 
+### Vanilla Next.js host integration example
+
+This repo includes a plain Next.js host fixture at `examples/next-vanilla-host` with two integration pages:
+
+- `/sdk` uses `HyperlaneWarpWidget` from `@hyperlane-xyz/warp-widget-sdk`
+- `/iframe` uses `createWarpIframe` helper directly
+
+Run automated host integration smoke tests with:
+
+```sh
+pnpm run test:e2e:host
+```
+
+Full guide: [docs/sdk-integration.md](./docs/sdk-integration.md)
+
 ### Format
 
 ```sh

@@ -73,7 +73,7 @@ export function UnifiedTokenChainModal({
     <Modal
       isOpen={isOpen}
       close={onClose}
-      panelClassname="p-0 max-w-sm md:max-w-[800px] overflow-hidden"
+      panelClassname="bg-white p-0 max-w-sm md:max-w-[800px] overflow-hidden"
     >
       <ModalHeader>Select Token</ModalHeader>
       <div className="flex h-[80vh] gap-4 p-4 md:h-[582px]">

@@ -115,9 +115,12 @@ export async function getTransferToken(
   // might not be correct, so it is necessary to get the correct token pair.
   // Make sure to have used `checkTokenHasRoute` before calling getTransferToken
   // as that will validate that the token pair actually refer to the same asset
-  // originRouteToken may differ from originToken due to collateral dedup —
-  // it's the actual warpCore token with the connection to destinationChain
-  const originRouteToken = findRouteToken(warpCore, originToken, destinationChain);
+  const originRouteToken = findRouteToken(
+    warpCore,
+    originToken,
+    destinationChain,
+    destinationToken,
+  );
   if (!originRouteToken) {
     // No route exists, return original token (validation will catch this)
     return originToken;
@@ -133,8 +136,12 @@ export async function getTransferToken(
     destinationToken,
   );
 
-  // if only one token exists then just return that one
-  if (tokensWithSameCollateralAddresses.length <= 1) return originRouteToken;
+  if (!tokensWithSameCollateralAddresses.length) return originRouteToken;
+
+  // if only one token exists then return that exact matched route token
+  if (tokensWithSameCollateralAddresses.length === 1) {
+    return tokensWithSameCollateralAddresses[0].originToken;
+  }
 
   logger.debug(
     'Multiple multi-collateral tokens found for same collateral address, retrieving routes with collateral balance...',
@@ -180,6 +187,7 @@ export async function getTransferToken(
           destination: destinationToken.chainName,
           recipient,
           sender,
+          destinationToken,
         });
         return { token: originToken, fees, balance };
       } catch {

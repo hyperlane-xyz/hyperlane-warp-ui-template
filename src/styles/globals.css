@@ -240,10 +240,17 @@ Toasts
 /*
 Timeline tweaks
 ===============
+Override the MessageTimeline widget from @hyperlane-xyz/widgets
+to match the v2 purple gradient design with icons inside the bar.
 */
 
+/* Timeline stage bar: uses the same accent gradient as ModalHeader */
+.timeline-stage-bar {
+  background: radial-gradient(61.48% 118.8% at 50.08% 92%, #c97eff 0%, #9a0dff 100%) !important;
+}
+
 .timeline-container h4 {
-  font-size: clamp(0.75rem, 0.825rem, 0.9rem);
+  font-size: clamp(0.625rem, 0.7rem, 0.75rem);
 }
 
 /*

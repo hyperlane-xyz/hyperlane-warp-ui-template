@@ -274,7 +274,8 @@ export function TransfersDetailsModal({
         </div>
 
         {showTimeline && (
-          <div className="mt-4">
+          <div className="mt-4 rounded border border-gray-400/25 bg-card-gradient p-3 shadow-card">
+            <h4 className="mb-1 font-secondary text-sm text-gray-900">Status</h4>
             <div className="timeline-container flex w-full flex-col items-center justify-center">
               <MessageTimeline
                 status={messageStatus}
@@ -282,6 +283,9 @@ export function TransfersDetailsModal({
                 timings={timings}
                 timestampSent={delivery.originTimestamp}
                 hideDescriptions={true}
+                iconPosition="inline"
+                barClassName="timeline-stage-bar"
+                chevronColor="#A62AFF"
               />
             </div>
             {showEta && etaSeconds && (

@@ -43,3 +43,8 @@ export function postgresByteaToTxHash(
   const bytes = Buffer.from(strip0x(hexString), 'hex');
   return bufferToBase58(bytes);
 }
+
+export function parseTimestamp(t: string): number {
+  const asUtc = t.at(-1) === 'Z' ? t : t + 'Z';
+  return new Date(asUtc).getTime();
+}

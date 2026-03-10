@@ -37,6 +37,12 @@ import {
   isTransferSent,
 } from './utils';
 
+const DEFAULT_TIMINGS: StageTimings = {
+  [MessageStage.Finalized]: null,
+  [MessageStage.Validated]: null,
+  [MessageStage.Relayed]: null,
+};
+
 export function TransfersDetailsModal({
   isOpen,
   onClose,
@@ -94,25 +100,59 @@ export function TransfersDetailsModal({
   // Determine message stage from delivery data + transfer status
   // We use our own logic instead of the widget's useMessageStage to avoid
   // broken Explorer REST API dependencies (queryExplorerForBlock, /latest-nonce)
-  const { stage, timings } = useMemo((): { stage: MessageStage; timings: StageTimings } => {
-    const defaultTimings: StageTimings = {
-      [MessageStage.Finalized]: null,
-      [MessageStage.Validated]: null,
-      [MessageStage.Relayed]: null,
-    };
-
-    if (delivery.isDelivered) {
-      return { stage: MessageStage.Relayed, timings: defaultTimings };
-    }
-    // Once origin tx is confirmed, we're at least at Sent stage
-    if (isSent && originTxHash) {
-      return { stage: MessageStage.Sent, timings: defaultTimings };
-    }
-    return { stage: MessageStage.Preparing, timings: defaultTimings };
+  const stage = useMemo((): MessageStage => {
+    if (delivery.isDelivered) return MessageStage.Relayed;
+    if (isSent && originTxHash) return MessageStage.Sent;
+    return MessageStage.Preparing;
   }, [delivery.isDelivered, isSent, originTxHash]);
 
-  // Update store when delivery is confirmed
+  // Resolve the destination tx hash from either store or live query
+  const destinationTxHash = storedDestTxHash || delivery.destinationTxHash;
+
+  const isAccountReady = !!account?.isReady;
+  const connectorName = walletDetails.name || 'wallet';
+  const token = tryFindToken(warpCore, origin, originTokenAddressOrDenom);
+  const isPermissionlessRoute = hasPermissionlessChain(multiProvider, [destination, origin]);
+  const isFinal = isSent || isFailed;
+  const currentStatus = delivery.isDelivered ? TransferStatus.Delivered : status;
+  const statusDescription = getTransferStatusLabel(
+    currentStatus,
+    connectorName,
+    isPermissionlessRoute,
+    isAccountReady,
+  );
+  const showSignWarning = useSignIssueWarning(status);
+
+  const date = useMemo(
+    () => (timestamp ? formatTimestamp(timestamp) : formatTimestamp(new Date().getTime())),
+    [timestamp],
+  );
+
+  const explorerLink = getHypExplorerLink(multiProvider, origin, msgId);
+
+  // ETA: only show when confirmed on origin but not yet delivered
+  const showEta =
+    currentStatus === TransferStatus.ConfirmedTransfer && !delivery.isDelivered && !isFailed;
+  const etaSeconds = useMemo(
+    () => (showEta ? estimateDeliverySeconds(origin, destination, multiProvider) : null),
+    [showEta, origin, destination, multiProvider],
+  );
+
+  // Show timeline for sent (non-failed) transfers that have an origin tx hash
+  const showTimeline = isSent && !isFailed && !!originTxHash;
+  const messageStatus = delivery.isDelivered
+    ? MessageStatus.Delivered
+    : isFailed
+      ? MessageStatus.Failing
+      : MessageStatus.Pending;
+
+  // Reset delivery tracking when viewing a different transfer
   const hasUpdatedDelivery = useRef(false);
+  useEffect(() => {
+    hasUpdatedDelivery.current = false;
+  }, [msgId]);
+
+  // Update store when delivery is confirmed
   useEffect(() => {
     if (
       delivery.isDelivered &&
@@ -133,9 +173,7 @@ export function TransfersDetailsModal({
     updateTransferStatus,
   ]);
 
-  // Resolve the destination tx hash from either store or live query
-  const destinationTxHash = storedDestTxHash || delivery.destinationTxHash;
-
+  // Fetch explorer URLs for addresses and transactions
   useEffect(() => {
     if (!transfer) return;
     let cancelled = false;
@@ -182,43 +220,6 @@ export function TransfersDetailsModal({
     sender,
     recipient,
   ]);
-
-  const isAccountReady = !!account?.isReady;
-  const connectorName = walletDetails.name || 'wallet';
-  const token = tryFindToken(warpCore, origin, originTokenAddressOrDenom);
-  const isPermissionlessRoute = hasPermissionlessChain(multiProvider, [destination, origin]);
-  const isFinal = isSent || isFailed;
-  const currentStatus = delivery.isDelivered ? TransferStatus.Delivered : status;
-  const statusDescription = getTransferStatusLabel(
-    currentStatus,
-    connectorName,
-    isPermissionlessRoute,
-    isAccountReady,
-  );
-  const showSignWarning = useSignIssueWarning(status);
-
-  const date = useMemo(
-    () => (timestamp ? formatTimestamp(timestamp) : formatTimestamp(new Date().getTime())),
-    [timestamp],
-  );
-
-  const explorerLink = getHypExplorerLink(multiProvider, origin, msgId);
-
-  // ETA: only show when confirmed on origin but not yet delivered
-  const showEta =
-    currentStatus === TransferStatus.ConfirmedTransfer && !delivery.isDelivered && !isFailed;
-  const etaSeconds = useMemo(
-    () => (showEta ? estimateDeliverySeconds(origin, destination, multiProvider) : null),
-    [showEta, origin, destination, multiProvider],
-  );
-
-  // Show timeline for sent (non-failed) transfers that have an origin tx hash
-  const showTimeline = isSent && !isFailed && !!originTxHash;
-  const messageStatus = delivery.isDelivered
-    ? MessageStatus.Delivered
-    : isFailed
-      ? MessageStatus.Failing
-      : MessageStatus.Pending;
 
   return (
     <Modal isOpen={isOpen} close={onClose} panelClassname="max-w-sm">
@@ -280,7 +281,7 @@ export function TransfersDetailsModal({
               <MessageTimeline
                 status={messageStatus}
                 stage={stage}
-                timings={timings}
+                timings={DEFAULT_TIMINGS}
                 timestampSent={delivery.originTimestamp}
                 hideDescriptions={true}
                 iconPosition="inline"

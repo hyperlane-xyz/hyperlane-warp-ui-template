@@ -79,10 +79,10 @@ test.describe('Wallet Connect - Protocol Modals', () => {
     await expect(dialog).not.toBeVisible();
   });
 
-  test('Cosmos: should show Cosmos wallet modal for Neutron', async ({
+  test('Cosmos: should show Cosmos wallet modal', async ({
     page,
   }) => {
-    await selectToken(page, 'ECLIP', /neutron ECLIP Neutron/);
+    await selectToken(page, 'TIA', /celestia TIA Celestia/);
 
     await page
       .getByRole('main')

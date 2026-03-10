@@ -71,19 +71,13 @@ export function SideBarMenu({
   return (
     <>
       <div
-        className={`fixed inset-0 z-10 bg-black/30 transition-opacity duration-200 ${
-          isMenuOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
-        }`}
-        onClick={onClose}
-      />
-      <div
-        className={`fixed right-0 top-0 h-full w-full max-w-full transform bg-white bg-opacity-100 shadow-lg transition-transform duration-200 ease-in-out sm:w-88 sm:bg-opacity-95 ${
-          isMenuOpen ? 'z-30 translate-x-0' : 'pointer-events-none translate-x-full'
+        className={`fixed right-0 top-0 h-full w-88 transform bg-white bg-opacity-95 shadow-lg transition-transform duration-100 ease-in ${
+          isMenuOpen ? 'z-10 translate-x-0' : 'z-0 translate-x-full'
         }`}
       >
         {isMenuOpen && (
           <button
-            className="absolute left-0 top-0 hidden h-full w-9 -translate-x-full items-center justify-center rounded-l-md bg-white bg-opacity-60 transition-all hover:bg-opacity-80 sm:flex"
+            className="absolute left-0 top-0 flex h-full w-9 -translate-x-full items-center justify-center rounded-l-md bg-white bg-opacity-60 transition-all hover:bg-opacity-80"
             onClick={() => onClose()}
           >
             <Image src={CollapseIcon} width={15} height={24} alt="" />

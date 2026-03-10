@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { ChevronLargeIcon } from '../../components/icons/ChevronLargeIcon';
 import { WARP_QUERY_PARAMS } from '../../consts/args';
 import { updateQueryParams } from '../../utils/queryParams';
-import { trackTokenSelectionEvent } from '../analytics/utils';
+import { trackTokenSelectionEvent, trackUnsupportedRouteEvent } from '../analytics/utils';
 import { ChainEditModal } from '../chains/ChainEditModal';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
@@ -62,30 +62,21 @@ export function TokenSelectField({
     setTokenKey(newTokenKey);
 
     // Track analytics - derive origin and destination from current tokens
-    const originToken = getTokenByKeyFromMap(tokenMap, values.originTokenKey);
-    const destToken = getTokenByKeyFromMap(tokenMap, values.destinationTokenKey);
-    const origin = selectionMode === 'origin' ? newToken.chainName : originToken?.chainName || '';
-    const destination =
-      selectionMode === 'destination' ? newToken.chainName : destToken?.chainName || '';
-    const destinationTokenSymbol =
-      selectionMode === 'destination' ? newToken.symbol : destToken?.symbol || '';
-    trackTokenSelectionEvent(
-      selectionMode,
-      newToken,
-      destinationTokenSymbol,
-      origin,
-      destination,
-      multiProvider,
-    );
+    const originToken =
+      selectionMode === 'origin' ? newToken : getTokenByKeyFromMap(tokenMap, values.originTokenKey);
+    const destToken =
+      selectionMode === 'destination'
+        ? newToken
+        : getTokenByKeyFromMap(tokenMap, values.destinationTokenKey);
+
+    trackTokenSelectionEvent(selectionMode, originToken, destToken, multiProvider);
 
     // Update URL query params based on selection mode
     if (selectionMode === 'origin') {
       setFieldValue('amount', '');
 
       // Auto-select destination if current one has no route from new origin
-      const currentDest = getTokenByKeyFromMap(tokenMap, values.destinationTokenKey);
-      const hasValidRoute =
-        currentDest && checkTokenHasRoute(newToken, currentDest, collateralGroups);
+      const hasValidRoute = destToken && checkTokenHasRoute(newToken, destToken, collateralGroups);
       const queryParams: Record<string, string> = {
         [WARP_QUERY_PARAMS.ORIGIN]: newToken.chainName,
         [WARP_QUERY_PARAMS.ORIGIN_TOKEN]: newToken.symbol,
@@ -116,6 +107,15 @@ export function TokenSelectField({
         newToken.chainName,
       );
       if (shouldClearRecipient) setFieldValue('recipient', '');
+
+      // fire an event for unsupported route
+      // this will only happen for destination selection
+      // the origin selection will always pick a routable token pair by default
+      if (originToken) {
+        const tokenHasRoute = checkTokenHasRoute(originToken, newToken, collateralGroups);
+        if (!tokenHasRoute) trackUnsupportedRouteEvent(originToken, newToken, multiProvider);
+      }
+
       updateQueryParams({
         [WARP_QUERY_PARAMS.DESTINATION]: newToken.chainName,
         [WARP_QUERY_PARAMS.DESTINATION_TOKEN]: newToken.symbol,

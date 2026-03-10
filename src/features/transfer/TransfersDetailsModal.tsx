@@ -276,7 +276,7 @@ export function TransfersDetailsModal({
         {showTimeline && (
           <div className="mt-4 rounded border border-gray-400/25 bg-card-gradient p-3 shadow-card">
             <h4 className="mb-1 font-secondary text-sm text-gray-900">Status</h4>
-            <div className="timeline-container flex w-full flex-col items-center justify-center">
+            <div className="flex w-full flex-col items-center justify-center [&_h4]:text-[clamp(0.625rem,0.7rem,0.75rem)]">
               <MessageTimeline
                 status={messageStatus}
                 stage={stage}
@@ -284,7 +284,7 @@ export function TransfersDetailsModal({
                 timestampSent={delivery.originTimestamp}
                 hideDescriptions={true}
                 iconPosition="inline"
-                barClassName="timeline-stage-bar"
+                barClassName="bg-accent-gradient"
                 chevronColor="#A62AFF"
               />
             </div>

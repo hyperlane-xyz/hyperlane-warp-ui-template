@@ -53,7 +53,10 @@ pnpm test
 pnpm test:e2e
 
 # Run E2E tests with headed browser and slow motion for debugging
-SLOW_MO=2000 pnpm test:e2e -- --headed --workers=1
+SLOW_MO=2000 pnpm test:e2e --headed --workers=1
+
+# Run a single E2E test file with headed browser
+SLOW_MO=2000 pnpm test:e2e --headed --workers=1 tests/wallet-connect/protocol-wallet-modals.spec.ts
 
 # Lint check code
 pnpm run lint

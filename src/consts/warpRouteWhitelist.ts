@@ -387,4 +387,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'USAD/aleo',
   'SOL/aleo',
   'WBTC/aleo',
+
+  // citrea
+  'ctUSD/citrea',
 ];

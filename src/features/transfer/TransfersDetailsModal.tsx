@@ -13,9 +13,8 @@ import {
 } from '@hyperlane-xyz/widgets';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ChainLogo } from '../../components/icons/ChainLogo';
-import { TokenIcon } from '../../components/icons/TokenIcon';
 import { ModalHeader } from '../../components/layout/ModalHeader';
+import ArrowRightIcon from '../../images/icons/arrow-right.svg';
 import LinkIcon from '../../images/icons/external-link-icon.svg';
 import { Color } from '../../styles/Color';
 import { formatTimestamp } from '../../utils/date';
@@ -24,6 +23,7 @@ import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName, hasPermissionlessChain } from '../chains/utils';
 import { tryFindToken, useWarpCore } from '../tokens/hooks';
+import { TokenChainIcon } from '../tokens/TokenChainIcon';
 import { TransferContext, TransferStatus } from './types';
 import {
   getIconByTransferStatus,
@@ -53,6 +53,7 @@ export function TransfersDetailsModal({
     sender,
     recipient,
     originTokenAddressOrDenom,
+    destTokenAddressOrDenom,
     originTxHash,
     msgId,
     timestamp,
@@ -99,6 +100,7 @@ export function TransfersDetailsModal({
   const isAccountReady = !!account?.isReady;
   const connectorName = walletDetails.name || 'wallet';
   const token = tryFindToken(warpCore, origin, originTokenAddressOrDenom);
+  const destToken = tryFindToken(warpCore, destination, destTokenAddressOrDenom);
   const isPermissionlessRoute = hasPermissionlessChain(multiProvider, [destination, origin]);
   const isSent = isTransferSent(status);
   const isFailed = isTransferFailed(status);
@@ -144,17 +146,24 @@ export function TransfersDetailsModal({
 
         <div>
           <div className="mt-4 flex w-full items-center justify-center rounded-sm border border-gray-400/25 bg-card-gradient py-2 shadow-card">
-            <TokenIcon token={token} size={24} />
-            <div className="items ml-2 flex items-baseline font-secondary text-sm font-normal">
+            <div className="flex items-baseline font-secondary text-sm font-normal">
               <span>{amount}</span>
-              <span className="ml-1">{token?.symbol}</span>
+              <span className="ml-1">{token?.symbol || ''}</span>
+              {destToken && (
+                <>
+                  <Image className="mx-2" src={ArrowRightIcon} width={10} height={10} alt="" />
+                  <span>{amount}</span>
+                  <span className="ml-1">{destToken.symbol}</span>
+                </>
+              )}
             </div>
           </div>
 
           <div className="-mt-2 flex items-center justify-around rounded-sm border border-gray-400/25 bg-card-gradient py-5 shadow-card">
             <div className="ml-2 flex flex-col items-center">
-              <ChainLogo chainName={origin} size={36} />
-              <span className="mt-1 text-xs font-normal tracking-wider">
+              {token && <TokenChainIcon token={token} size={36} />}
+              <span className="mt-1 text-xs font-medium tracking-wider">{token?.symbol || ''}</span>
+              <span className="text-xxs font-normal tracking-wider text-gray-500">
                 {getChainDisplayName(multiProvider, origin, true)}
               </span>
             </div>
@@ -163,8 +172,11 @@ export function TransfersDetailsModal({
               <WideChevron />
             </div>
             <div className="mr-2 flex flex-col items-center">
-              <ChainLogo chainName={destination} size={36} />
-              <span className="mt-1 text-xs font-normal tracking-wider">
+              {destToken && <TokenChainIcon token={destToken} size={36} />}
+              <span className="mt-1 text-xs font-medium tracking-wider">
+                {destToken?.symbol || ''}
+              </span>
+              <span className="text-xxs font-normal tracking-wider text-gray-500">
                 {getChainDisplayName(multiProvider, destination, true)}
               </span>
             </div>

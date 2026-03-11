@@ -13,6 +13,7 @@ import {
 } from '@hyperlane-xyz/widgets';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ChainLogo } from '../../components/icons/ChainLogo';
 import { ModalHeader } from '../../components/layout/ModalHeader';
 import ArrowRightIcon from '../../images/icons/arrow-right.svg';
 import LinkIcon from '../../images/icons/external-link-icon.svg';
@@ -161,7 +162,11 @@ export function TransfersDetailsModal({
 
           <div className="-mt-2 flex items-center justify-around rounded-sm border border-gray-400/25 bg-card-gradient py-5 shadow-card">
             <div className="ml-2 flex flex-col items-center">
-              {token && <TokenChainIcon token={token} size={36} />}
+              {token ? (
+                <TokenChainIcon token={token} size={36} />
+              ) : (
+                <ChainLogo chainName={origin} size={36} />
+              )}
               <span className="mt-1 text-xs font-medium tracking-wider">{token?.symbol || ''}</span>
               <span className="text-xxs font-normal tracking-wider text-gray-500">
                 {getChainDisplayName(multiProvider, origin, true)}
@@ -172,7 +177,11 @@ export function TransfersDetailsModal({
               <WideChevron />
             </div>
             <div className="mr-2 flex flex-col items-center">
-              {destToken && <TokenChainIcon token={destToken} size={36} />}
+              {destToken ? (
+                <TokenChainIcon token={destToken} size={36} />
+              ) : (
+                <ChainLogo chainName={destination} size={36} />
+              )}
               <span className="mt-1 text-xs font-medium tracking-wider">
                 {destToken?.symbol || ''}
               </span>
@@ -187,9 +196,6 @@ export function TransfersDetailsModal({
           <div className="mt-5 flex flex-col space-y-4">
             <TransferProperty name="Sender Address" value={sender} url={fromUrl} />
             <TransferProperty name="Recipient Address" value={recipient} url={toUrl} />
-            {/* {token?.addressOrDenom && (
-              <TransferProperty name="Token Address or Denom" value={token.addressOrDenom} />
-            )} */}
             {originTxHash && (
               <TransferProperty
                 name="Origin Transaction Hash"

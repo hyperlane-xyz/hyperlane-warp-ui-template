@@ -4,9 +4,11 @@ import { AccountList, RefreshIcon, SpinnerIcon, useAccounts } from '@hyperlane-x
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
+import { ChainLogo } from '../../components/icons/ChainLogo';
 import { config } from '../../consts/config';
 import ArrowRightIcon from '../../images/icons/arrow-right.svg';
 import CollapseIcon from '../../images/icons/collapse-icon.svg';
+import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { MessageStatus } from '../messages/types';
@@ -278,8 +280,8 @@ function TransferSummary({
       const wireDecimals = routerInfo?.wireDecimals ?? token.decimals;
       try {
         amount = fromWei(msg.warpTransfer.amount, wireDecimals);
-      } catch {
-        // Failed to format amount
+      } catch (err) {
+        logger.error('Failed to format warp transfer amount', err);
       }
     }
 
@@ -294,13 +296,17 @@ function TransferSummary({
       token,
       destToken: tryFindToken(warpCore, destChain, msg.recipient),
     };
-  }, [item, multiProvider, warpCore, routerAddressesByChainMap]);
+  }, [item.type, item.data, multiProvider, warpCore, routerAddressesByChainMap]);
 
   return (
     <button onClick={onClick} className={`${styles.btn} justify-between py-3`}>
       <div className="flex gap-2.5">
         <div className="flex h-[2.25rem] w-[2.25rem] items-center justify-center">
-          {token && <TokenChainIcon token={token} size={32} />}
+          {token ? (
+            <TokenChainIcon token={token} size={32} />
+          ) : (
+            <ChainLogo chainName={originChain} size={32} />
+          )}
         </div>
         <div className="flex flex-col">
           <div className="flex items-baseline">

@@ -15,21 +15,15 @@ Use this skill to review code changes against Hyperlane Warp UI standards.
 
 ## Instructions
 
-Read and apply the guidelines from `.github/prompts/code-review.md` to review the code changes.
+Read and apply the guidelines from `REVIEW.md` to review the code changes.
 
 ### For PR Reviews
 
-When reviewing a PR, deliver feedback using `/inline-pr-comments` to post inline comments on specific lines.
+When reviewing a PR, deliver feedback as a **single consolidated GitHub review** using `/inline-pr-comments`. Each run produces a separate review — nothing is overwritten.
 
-**Delivery format:**
-
-1. **Inline comments** - For all issues on lines IN the diff
-2. **Summary body** - For:
-   - Overall assessment
-   - Architecture concerns
-   - Issues found OUTSIDE the diff (use "## Observations Outside This PR" section)
-
-GitHub API limitation: Can only post inline comments on changed lines. Issues in unchanged code go in the summary body.
+1. **Fetch prior reviews first** — the `/inline-pr-comments` skill fetches existing reviews/comments so you can avoid duplicating feedback and stay aware of ongoing discussions
+2. **Review body** — Overall assessment, architecture concerns, and issues found outside the diff
+3. **Inline comments** — Specific issues on changed lines (attached to the same review)
 
 ### For Self-Review
 
@@ -38,5 +32,3 @@ When reviewing your own changes before committing:
 1. Run `git diff` to see changes
 2. Apply the code review guidelines
 3. Fix issues directly rather than commenting
-
-Security issues should use `/claude-security-review` instead.

@@ -141,6 +141,7 @@ export function TokenSelectField({
           disabled={disabled}
           onClick={openTokenSelectModal}
           multiProvider={multiProvider}
+          testId={`token-select-${selectionMode}`}
         />
       </div>
 
@@ -170,11 +171,13 @@ function TokenButton({
   disabled,
   onClick,
   multiProvider,
+  testId,
 }: {
   token?: Token;
   disabled?: boolean;
   onClick: () => void;
   multiProvider: ReturnType<typeof useMultiProvider>;
+  testId?: string;
 }) {
   const chainDisplayName = token ? getChainDisplayName(multiProvider, token.chainName) : '';
 
@@ -184,6 +187,7 @@ function TokenButton({
       className={`${styles.base} ${disabled ? styles.disabled : styles.enabled}`}
       onClick={onClick}
       disabled={disabled}
+      data-testid={testId}
     >
       {token ? (
         <div className="flex min-w-0 flex-1 items-center gap-2.5">

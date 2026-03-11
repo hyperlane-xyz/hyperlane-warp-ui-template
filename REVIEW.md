@@ -1,4 +1,4 @@
-Review this pull request. Focus on:
+# Code Review Guidelines
 
 ## Code Quality
 
@@ -38,7 +38,3 @@ Review this pull request. Focus on:
 - **Flatten rendering logic** - Avoid nested if; use early returns instead
 - **Zustand patterns** - Follow existing store patterns in `src/features/store.ts`
 - **Constants outside functions** - Move config/constants outside component functions
-
-Provide actionable feedback with specific line references.
-Be concise. For minor style issues, group them together.
-Security issues are handled by a separate dedicated review.

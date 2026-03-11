@@ -1,4 +1,4 @@
-import { PredicateAttestation, Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
+import { Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
 import {
   KnownProtocolType,
   ProtocolType,
@@ -32,7 +32,6 @@ import { TextField } from '../../components/input/TextField';
 import { WARP_QUERY_PARAMS } from '../../consts/args';
 import { config } from '../../consts/config';
 import { defaultMultiCollateralRoutes } from '../../consts/defaultMultiCollateralRoutes';
-import { getPredicateClient } from '../../lib/predicateClient';
 import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
 import { updateQueryParams } from '../../utils/queryParams';
@@ -63,6 +62,7 @@ import {
 } from '../tokens/hooks';
 import { useTokenPrices } from '../tokens/useTokenPrice';
 import { checkTokenHasRoute, findRouteToken } from '../tokens/utils';
+import { fetchPredicateAttestation } from './predicate';
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { WalletDropdown } from '../wallet/WalletDropdown';
 import { FeeSectionButton } from './FeeSectionButton';
@@ -963,38 +963,17 @@ async function validateForm(
     const originTokenAmount = transferToken.amount(amountWei);
 
     // Check if predicate attestation needed for validation
-    let attestation: PredicateAttestation | undefined;
-    const predicateClient = getPredicateClient();
+    let attestation: any;
 
     try {
-      const needsAttestation = await warpCore.isPredicateSupported(transferToken, destination);
-
-      if (needsAttestation) {
-        // Get wrapper address for attestation request
-        const adapter = transferToken.getAdapter(warpCore.multiProvider) as any;
-        const wrapperAddress = await adapter.getPredicateWrapperAddress();
-
-        // Build temp tx to get calldata for attestation
-        const tempTxs = await warpCore.getTransferRemoteTxs({
-          originTokenAmount,
-          destination,
-          sender: sender || '',
-          recipient,
-          senderPubKey: await senderPubKey,
-        });
-        const tempTx = tempTxs[0] as any;
-
-        const attestationRequest = {
-          to: wrapperAddress!,
-          from: sender || '',
-          data: tempTx.transaction.data?.toString() || '0x',
-          msg_value: tempTx.transaction.value?.toString() || '0',
-          chain: origin,
-        };
-
-        const response = await predicateClient.fetchAttestation(attestationRequest);
-        attestation = response.attestation;
-      }
+      attestation = await fetchPredicateAttestation({
+        warpCore,
+        token: transferToken,
+        destination,
+        sender: sender || '',
+        recipient,
+        amount: originTokenAmount,
+      });
     } catch (error: any) {
       logger.warn('Failed to fetch attestation for validation, continuing without it:', error);
       // Continue without attestation - validation will proceed

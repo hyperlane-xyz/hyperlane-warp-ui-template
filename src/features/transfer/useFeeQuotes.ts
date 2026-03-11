@@ -1,13 +1,13 @@
-import { type PredicateAttestation, IToken, Token, WarpCore, WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
+import { IToken, Token, WarpCore, WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
 import { HexString, toWei } from '@hyperlane-xyz/utils';
 import { getAccountAddressAndPubKey, useAccounts, useDebounce } from '@hyperlane-xyz/widgets';
 import { useQuery } from '@tanstack/react-query';
 import { defaultMultiCollateralRoutes } from '../../consts/defaultMultiCollateralRoutes';
-import { getPredicateClient } from '../../lib/predicateClient';
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { useWarpCore } from '../tokens/hooks';
 import { getTransferToken } from './fees';
+import { fetchPredicateAttestation } from './predicate';
 import { TransferFormValues } from './types';
 
 const FEE_QUOTE_REFRESH_INTERVAL = 30_000; // 30s
@@ -106,38 +106,17 @@ async function fetchFeeQuotes(
   const originTokenAmount = transferToken.amount(amountWei);
 
   // Check if predicate attestation needed for fee estimation
-  let attestation: PredicateAttestation | undefined;
-  const predicateClient = getPredicateClient();
+  let attestation: any;
 
   try {
-    const needsAttestation = await warpCore.isPredicateSupported(transferToken, destination);
-
-    if (needsAttestation) {
-      // Get wrapper address for attestation request
-      const adapter = transferToken.getAdapter(warpCore.multiProvider) as any;
-      const wrapperAddress = await adapter.getPredicateWrapperAddress();
-
-      // Build temp tx to get calldata for attestation
-      const tempTxs = await warpCore.getTransferRemoteTxs({
-        originTokenAmount,
-        destination,
-        sender,
-        recipient,
-        senderPubKey: await senderPubKey,
-      });
-      const tempTx = tempTxs[0] as any;
-
-      const attestationRequest = {
-        to: wrapperAddress!,
-        from: sender,
-        data: tempTx.transaction.data?.toString() || '0x',
-        msg_value: tempTx.transaction.value?.toString() || '0',
-        chain: originToken.chainName,
-      };
-
-      const response = await predicateClient.fetchAttestation(attestationRequest);
-      attestation = response.attestation;
-    }
+    attestation = await fetchPredicateAttestation({
+      warpCore,
+      token: transferToken,
+      destination,
+      sender,
+      recipient,
+      amount: originTokenAmount,
+    });
   } catch (error: any) {
     logger.warn('Failed to fetch attestation for fee estimation, continuing without it:', error);
     // Continue without attestation - fee estimation will proceed

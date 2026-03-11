@@ -1,5 +1,4 @@
 import {
-  type PredicateAttestation,
   ProviderType,
   Token,
   TypedTransactionReceipt,
@@ -16,7 +15,6 @@ import {
 import { useCallback, useState } from 'react';
 import { toast } from 'react-toastify';
 import { toastTxSuccess } from '../../components/toast/TxSuccessToast';
-import { getPredicateClient } from '../../lib/predicateClient';
 import { logger } from '../../utils/logger';
 import { refinerIdentifyAndShowTransferForm } from '../analytics/refiner';
 import { EVENT_NAME } from '../analytics/types';
@@ -25,6 +23,7 @@ import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { AppState, useStore } from '../store';
 import { getTokenByKey, useWarpCore } from '../tokens/hooks';
+import { fetchPredicateAttestation } from './predicate';
 import { TransferContext, TransferFormValues, TransferStatus } from './types';
 import { tryGetMsgIdFromTransferReceipt } from './utils';
 
@@ -173,52 +172,20 @@ async function executeTransfer({
     updateTransferStatus(transferIndex, (transferStatus = TransferStatus.CreatingTxs));
 
     // Check if Predicate attestation is needed
-    let attestation: PredicateAttestation | undefined;
-    const predicateClient = getPredicateClient();
+    let attestation: any;
 
     try {
-      const needsAttestation = await warpCore.isPredicateSupported(originToken, destination);
-      logger.debug('Predicate support check:', { needsAttestation, origin, destination });
-
-      if (needsAttestation) {
-          logger.debug('Route requires Predicate attestation, fetching...');
-          updateTransferStatus(transferIndex, (transferStatus = TransferStatus.FetchingAttestation));
-
-          // Get wrapper address for attestation request
-          const adapter = originToken.getAdapter(multiProvider) as any;
-          const wrapperAddress = await adapter.getPredicateWrapperAddress();
-
-          // Build temporary transaction to get calldata
-          const tempTxs = await warpCore.getTransferRemoteTxs({
-            originTokenAmount,
-            destination,
-            sender,
-            recipient,
-          });
-
-          const tempTx = tempTxs[0] as any;
-
-          logger.debug('Fetching attestation for tx:', {
-            to: wrapperAddress,
-            from: sender,
-            chain: origin,
-          });
-
-          // Fetch attestation from Predicate API
-          const response = await predicateClient.fetchAttestation({
-            to: wrapperAddress!,
-            from: sender,
-            data: tempTx.transaction.data!.toString(),
-            msg_value: tempTx.transaction.value?.toString() || '0',
-            chain: origin,
-          });
-
-          attestation = response.attestation;
-          logger.debug('Predicate attestation received:', attestation.uuid);
-        }
+      updateTransferStatus(transferIndex, (transferStatus = TransferStatus.FetchingAttestation));
+      attestation = await fetchPredicateAttestation({
+        warpCore,
+        token: originToken,
+        destination,
+        sender,
+        recipient,
+        amount: originTokenAmount,
+      });
     } catch (error: any) {
       logger.error('Predicate attestation error:', error);
-      // If route requires attestation, fail the transfer
       toast.error('Compliance verification failed. Transfer cannot proceed.');
       throw new Error(`Predicate attestation failed: ${error.message || 'Unknown error'}`);
     }

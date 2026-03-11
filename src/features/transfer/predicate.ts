@@ -1,7 +1,7 @@
 import type { Token, WarpCore } from '@hyperlane-xyz/sdk';
 import { TokenAmount } from '@hyperlane-xyz/sdk';
 import { assert } from '@hyperlane-xyz/utils';
-import { getPredicateClient } from '../../lib/predicateClient';
+import { fetchAttestation as fetchAttestationFromProxy } from '../../lib/predicateClient';
 import { logger } from '../../utils/logger';
 
 // TODO: Import from SDK when available
@@ -31,8 +31,6 @@ export async function fetchPredicateAttestation({
   recipient,
   amount,
 }: FetchAttestationParams): Promise<PredicateAttestation | undefined> {
-  const predicateClient = getPredicateClient();
-
   // TODO: Use proper types when SDK updated
   const needsAttestation = await (warpCore as any).isPredicateSupported(token, destination);
 
@@ -84,7 +82,7 @@ export async function fetchPredicateAttestation({
   });
 
   // Fetch attestation from Predicate API via proxy
-  const response = await predicateClient.fetchAttestation({
+  const response = await fetchAttestationFromProxy({
     to: wrapperAddress,
     from: sender,
     data: txData,

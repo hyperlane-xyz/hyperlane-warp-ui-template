@@ -62,7 +62,6 @@ import {
 } from '../tokens/hooks';
 import { useTokenPrices } from '../tokens/useTokenPrice';
 import { checkTokenHasRoute, findRouteToken } from '../tokens/utils';
-import { fetchPredicateAttestation } from './predicate';
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { WalletDropdown } from '../wallet/WalletDropdown';
 import { FeeSectionButton } from './FeeSectionButton';
@@ -70,6 +69,7 @@ import { RecipientConfirmationModal } from './RecipientConfirmationModal';
 import { TransferSection } from './TransferSection';
 import { getInterchainQuote, getTotalFee, getTransferToken } from './fees';
 import { useFetchMaxAmount } from './maxAmount';
+import { fetchPredicateAttestation } from './predicate';
 import { TransferFormValues } from './types';
 import { useRecipientBalanceWatcher } from './useBalanceWatcher';
 import { useFeeQuotes } from './useFeeQuotes';

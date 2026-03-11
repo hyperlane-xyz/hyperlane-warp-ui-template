@@ -15,7 +15,7 @@ interface FetchMaxParams {
   accounts: Record<KnownProtocolType, AccountInfo>;
   balance: TokenAmount;
   origin: ChainName;
-  destination: ChainName;
+  destinationToken: Token;
   recipient?: string;
 }
 
@@ -33,9 +33,16 @@ export function useFetchMaxAmount() {
 async function fetchMaxAmount(
   multiProvider: MultiProtocolProvider,
   warpCore: WarpCore,
-  { accounts, balance, destination, origin, recipient: formRecipient }: FetchMaxParams,
+  {
+    accounts,
+    balance,
+    destinationToken: destToken,
+    origin,
+    recipient: formRecipient,
+  }: FetchMaxParams,
 ) {
   try {
+    const destination = destToken.chainName;
     const { address, publicKey } = getAccountAddressAndPubKey(multiProvider, origin, accounts);
     if (!address) return balance;
     const originToken = new Token(balance.token);
@@ -49,16 +56,16 @@ async function fetchMaxAmount(
     const recipient = formRecipient || connectedDestAddress || address;
 
     // Find the actual warpCore token that has the route (handles deduplicated tokens)
-    const originRouteToken = findRouteToken(warpCore, originToken, destination);
+    const originRouteToken = findRouteToken(warpCore, originToken, destToken);
     if (!originRouteToken) return undefined;
 
-    const destinationToken = originRouteToken.getConnectionForChain(destination)?.token;
-    if (!destinationToken) return undefined;
+    const resolvedDestToken = originRouteToken.getConnectionForChain(destination)?.token;
+    if (!resolvedDestToken) return undefined;
 
     const transferToken = await getTransferToken(
       warpCore,
       originToken,
-      destinationToken,
+      resolvedDestToken,
       balance.amount.toString(),
       recipient,
       address,

@@ -287,6 +287,7 @@ export function TransfersDetailsModal({
                 iconPosition="inline"
                 barClassName="bg-accent-gradient"
                 chevronColor="#A62AFF"
+                showTooltips
               />
             </div>
             {showEta && etaSeconds && (

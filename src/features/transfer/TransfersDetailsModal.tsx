@@ -100,15 +100,18 @@ export function TransfersDetailsModal({
     multiProvider,
   );
 
+  // Combine store + live query to avoid flicker when reopening modal
+  const isDelivered = status === TransferStatus.Delivered || delivery.isDelivered;
+
   // Determine message stage from delivery data + transfer status
   // We use our own logic instead of the widget's useMessageStage to avoid
   // broken Explorer REST API dependencies (queryExplorerForBlock, /latest-nonce)
   const stage = useMemo((): MessageStage => {
-    if (delivery.isDelivered) return MessageStage.Relayed;
+    if (isDelivered) return MessageStage.Relayed;
     if (isTransferSent(transfer?.status) && transfer?.originTxHash)
       return MessageStage.Sent;
     return MessageStage.Preparing;
-  }, [delivery.isDelivered, transfer]);
+  }, [isDelivered, transfer]);
 
   // Resolve the destination tx hash from either store or live query
   const destinationTxHash = storedDestTxHash || delivery.destinationTxHash;
@@ -119,7 +122,7 @@ export function TransfersDetailsModal({
   const destToken = tryFindToken(warpCore, destination, destTokenAddressOrDenom);
   const isPermissionlessRoute = hasPermissionlessChain(multiProvider, [destination, origin]);
   const isFinal = isSent || isFailed;
-  const currentStatus = delivery.isDelivered ? TransferStatus.Delivered : status;
+  const currentStatus = isDelivered ? TransferStatus.Delivered : status;
   const statusDescription = getTransferStatusLabel(
     currentStatus,
     connectorName,
@@ -137,7 +140,7 @@ export function TransfersDetailsModal({
 
   // ETA: only show when confirmed on origin but not yet delivered
   const showEta =
-    currentStatus === TransferStatus.ConfirmedTransfer && !delivery.isDelivered && !isFailed;
+    currentStatus === TransferStatus.ConfirmedTransfer && !isDelivered && !isFailed;
   const etaSeconds = useMemo(
     () => (showEta ? estimateDeliverySeconds(origin, destination, multiProvider) : null),
     [showEta, origin, destination, multiProvider],
@@ -145,7 +148,7 @@ export function TransfersDetailsModal({
 
   // Show timeline for sent (non-failed) transfers that have an origin tx hash
   const showTimeline = isSent && !isFailed && !!originTxHash;
-  const messageStatus = delivery.isDelivered
+  const messageStatus = isDelivered
     ? MessageStatus.Delivered
     : isFailed
       ? MessageStatus.Failing
@@ -235,7 +238,7 @@ export function TransfersDetailsModal({
             <h2 className="text-xs font-normal text-gray-900">{date}</h2>
             <div className="flex items-center text-xs font-normal">
               {isSent ? (
-                <h3 className="text-green-50">{delivery.isDelivered ? 'Delivered' : 'Sent'}</h3>
+                <h3 className="text-green-50">{isDelivered ? 'Delivered' : 'Sent'}</h3>
               ) : (
                 <h3 className="text-red-500">Failed</h3>
               )}

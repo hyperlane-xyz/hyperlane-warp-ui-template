@@ -9,7 +9,7 @@ import {
   strip0x,
 } from '@hyperlane-xyz/utils';
 
-function stringToPostgresBytea(hexString: string): string {
+export function stringToPostgresBytea(hexString: string): string {
   const trimmed = strip0x(hexString).toLowerCase();
   return `\\x${trimmed}`;
 }

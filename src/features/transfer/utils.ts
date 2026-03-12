@@ -1,6 +1,5 @@
 import {
   ChainMap,
-  ChainName,
   CoreAddresses,
   MultiProtocolCore,
   MultiProtocolProvider,
@@ -212,7 +211,8 @@ export function estimateDeliverySeconds(
     const relayTime = destBlockTime * 1.5;
 
     return Math.ceil(finalityTime + VALIDATION_TIME_EST + relayTime);
-  } catch {
+  } catch (error) {
+    logger.error('Failed to estimate delivery ETA', error);
     return null;
   }
 }

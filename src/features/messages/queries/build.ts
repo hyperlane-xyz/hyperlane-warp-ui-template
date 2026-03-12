@@ -1,4 +1,4 @@
-import { addressToPostgresBytea } from './encoding';
+import { addressToPostgresBytea, stringToPostgresBytea } from './encoding';
 import { messageDetailFragment, messageStubFragment } from './fragments';
 
 // Query defined at module level to avoid recreation on each call
@@ -86,12 +86,12 @@ const MESSAGE_BY_ID_QUERY = `
  */
 export function buildMessageByIdQuery(msgId: string): {
   query: string;
-  variables: Record<string, unknown>;
+  variables: { msgId: string };
 } {
   return {
     query: MESSAGE_BY_ID_QUERY,
     variables: {
-      msgId: `\\x${msgId.replace(/^0x/, '').toLowerCase()}`,
+      msgId: stringToPostgresBytea(msgId),
     },
   };
 }

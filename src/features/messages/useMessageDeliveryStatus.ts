@@ -67,7 +67,7 @@ export function useMessageDeliveryStatus(
 function parseDeliveryResult(
   entry: MessageStubEntry,
   multiProvider: MultiProtocolProvider,
-): MessageDeliveryResult {
+): Omit<MessageDeliveryResult, 'isLoading'> {
   const destMetadata = multiProvider.tryGetChainMetadata(entry.destination_domain_id);
 
   return {
@@ -77,6 +77,5 @@ function parseDeliveryResult(
         ? postgresByteaToTxHash(entry.destination_tx_hash, destMetadata)
         : undefined,
     originTimestamp: parseTimestamp(entry.send_occurred_at),
-    isLoading: false,
   };
 }

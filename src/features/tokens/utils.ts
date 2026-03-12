@@ -329,11 +329,21 @@ export function checkTokenHasRoute(
 export function findRouteToken(
   warpCore: WarpCore,
   originToken: Token,
-  destinationChain: string,
+  destinationToken: IToken,
 ): Token | undefined {
-  // First check if the passed token already has the connection
-  if (originToken.getConnectionForChain(destinationChain)) {
-    return originToken;
+  const destinationChain = destinationToken.chainName;
+
+  // First check if the passed token already has the right connection.
+  // Must verify the connected token matches the intended destination — not just any
+  // connection to that chain — because the same origin can connect to different
+  // destination tokens on the same chain (e.g. USDC->USDC vs USDC->XO on Solana)
+  const existingConnection = originToken.getConnectionForChain(destinationChain);
+  if (existingConnection?.token) {
+    const connCollateralKey = getCollateralKey(existingConnection.token);
+    const destCollateralKey = getCollateralKey(destinationToken);
+    if (connCollateralKey === destCollateralKey) {
+      return originToken;
+    }
   }
 
   // Otherwise, find all the tokens from warpCore that has a route with the origin and destination
@@ -341,12 +351,22 @@ export function findRouteToken(
   if (routeTokens.length === 0) return undefined;
 
   const originCollateralKey = getCollateralKey(originToken);
+  const collateralMatches = routeTokens.filter((t) => getCollateralKey(t) === originCollateralKey);
 
-  // Find a route token that shares the same collateral key (resolved-underlying-aware)
-  const matchingToken = routeTokens.find((t) => getCollateralKey(t) === originCollateralKey);
+  // When multiple routes share the same origin collateral but connect to different
+  // destination tokens (e.g. USDC->USDC vs USDC->XO), use the destination token
+  // to pick the correct route
+  if (collateralMatches.length > 1) {
+    const destCollateralKey = getCollateralKey(destinationToken);
+    const exactMatch = collateralMatches.find((t) => {
+      const conn = t.getConnectionForChain(destinationChain);
+      return conn?.token && getCollateralKey(conn.token) === destCollateralKey;
+    });
+    if (exactMatch) return exactMatch;
+  }
 
-  // Fallback: match by symbol on same chain
-  return matchingToken || routeTokens.find((t) => t.symbol === originToken.symbol);
+  // Fallback: first collateral match, then symbol match
+  return collateralMatches[0] || routeTokens.find((t) => t.symbol === originToken.symbol);
 }
 
 // Returns the default origin token from tokensWithSameCollateralAddresses if:

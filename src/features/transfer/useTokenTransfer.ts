@@ -15,6 +15,7 @@ import {
 import { useCallback, useState } from 'react';
 import { toast } from 'react-toastify';
 import { toastTxSuccess } from '../../components/toast/TxSuccessToast';
+import { initiateRelay } from '../../lib/relayerClient';
 import { logger } from '../../utils/logger';
 import { refinerIdentifyAndShowTransferForm } from '../analytics/refiner';
 import { EVENT_NAME } from '../analytics/types';
@@ -233,6 +234,30 @@ async function executeTransfer({
       originTxHash,
       msgId,
     });
+
+    // Initiate relay for cross-chain delivery
+    if (originTxHash) {
+      try {
+        console.log('[Relay] Initiating relay for tx:', originTxHash, 'on chain:', origin);
+        updateTransferStatus(transferIndex, (transferStatus = TransferStatus.Relaying));
+        const relayResponse = await initiateRelay({
+          origin_chain: origin,
+          tx_hash: originTxHash,
+        });
+
+        console.log('[Relay] Relay initiated successfully, job_id:', relayResponse.job_id);
+        updateTransferStatus(transferIndex, transferStatus, {
+          relayJobId: relayResponse.job_id,
+        });
+
+        logger.debug('Relay initiated successfully, job_id:', relayResponse.job_id);
+      } catch (error: any) {
+        console.error('[Relay] Failed to initiate relay:', error);
+        logger.error('Failed to initiate relay:', error);
+        // Don't fail the transfer if relay fails to start - just log it
+        // User can still track via message ID
+      }
+    }
 
     // track event after tx submission
     const originChainId = warpCore.multiProvider.getChainId(origin);

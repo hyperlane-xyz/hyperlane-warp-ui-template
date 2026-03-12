@@ -72,6 +72,7 @@ import { useFetchMaxAmount } from './maxAmount';
 import { TransferFormValues } from './types';
 import { useRecipientBalanceWatcher } from './useBalanceWatcher';
 import { useFeeQuotes } from './useFeeQuotes';
+import { useRelayStatusPoller } from './useRelayStatus';
 import { useTokenTransfer } from './useTokenTransfer';
 import { isSmartContract, shouldClearAddress } from './utils';
 
@@ -85,6 +86,9 @@ export function TransferTokenForm() {
     setOriginChainName: s.setOriginChainName,
     routerAddressesByChainMap: s.routerAddressesByChainMap,
   }));
+
+  // Poll relay status for active transfers
+  useRelayStatusPoller();
 
   const initialValues = useFormInitialValues();
   const { accounts } = useAccounts(multiProvider, config.addressBlacklist);

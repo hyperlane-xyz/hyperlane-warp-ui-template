@@ -83,7 +83,7 @@ export interface AppState {
   updateTransferStatus: (
     i: number,
     s: TransferStatus,
-    options?: { msgId?: string; originTxHash?: string },
+    options?: { msgId?: string; originTxHash?: string; relayJobId?: string; destTxHash?: string },
   ) => void;
   failUnconfirmedTransfers: () => void;
 
@@ -206,6 +206,8 @@ export const useStore = create<AppState>()(
           txs[i].status = s;
           txs[i].msgId ||= options?.msgId;
           txs[i].originTxHash ||= options?.originTxHash;
+          txs[i].relayJobId ||= options?.relayJobId;
+          txs[i].destTxHash ||= options?.destTxHash;
           return {
             transfers: txs,
           };

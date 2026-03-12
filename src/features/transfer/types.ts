@@ -15,6 +15,8 @@ export enum TransferStatus {
   SigningTransfer = 'signing-transfer',
   ConfirmingTransfer = 'confirming-transfer',
   ConfirmedTransfer = 'confirmed-transfer',
+  FetchingAttestation = 'fetching-attestation',
+  Relaying = 'relaying',
   Delivered = 'delivered',
   Failed = 'failed',
 }
@@ -34,6 +36,8 @@ export interface TransferContext {
   sender: Address;
   recipient: Address;
   originTxHash?: string;
+  destTxHash?: string;
   msgId?: string;
+  relayJobId?: string;
   timestamp: number;
 }

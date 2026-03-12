@@ -11,6 +11,7 @@ import { logger } from '../../utils/logger';
 import { executeGraphQLQuery } from './graphqlClient';
 import { buildMessageHistoryQuery } from './queries/build';
 import {
+  parseTimestamp,
   postgresByteaToAddress,
   postgresByteaToString,
   postgresByteaToTxHash,
@@ -196,9 +197,4 @@ function parseMessageEntry(
     logger.error('Failed to parse message entry', entry.id, err);
     return null;
   }
-}
-
-function parseTimestamp(t: string): number {
-  const asUtc = t.at(-1) === 'Z' ? t : t + 'Z';
-  return new Date(asUtc).getTime();
 }

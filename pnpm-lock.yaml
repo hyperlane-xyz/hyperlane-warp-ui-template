@@ -179,6 +179,9 @@ importers:
       '@tanstack/react-query':
         specifier: ^5.59.20
         version: 5.90.21(react@18.3.1)
+      '@tronweb3/tronwallet-adapter-react-hooks':
+        specifier: ^1.1.11
+        version: 1.1.11(bufferutil@4.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(utf-8-validate@6.0.6)
       '@vercel/analytics':
         specifier: ^1.4.0
         version: 1.6.1(next@15.5.12(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)

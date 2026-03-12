@@ -80,8 +80,7 @@ export function TransfersDetailsModal({
 
   // Find the index of this transfer in the store (for updating status)
   const transferIndex = useMemo(
-    () =>
-      transfers.findIndex((t) => t === transfer || (t.msgId && t.msgId === transfer?.msgId)),
+    () => transfers.findIndex((t) => t === transfer || (t.msgId && t.msgId === transfer?.msgId)),
     [transfers, transfer],
   );
 
@@ -108,8 +107,7 @@ export function TransfersDetailsModal({
   // broken Explorer REST API dependencies (queryExplorerForBlock, /latest-nonce)
   const stage = useMemo((): MessageStage => {
     if (isDelivered) return MessageStage.Relayed;
-    if (isTransferSent(transfer?.status) && transfer?.originTxHash)
-      return MessageStage.Sent;
+    if (isTransferSent(transfer?.status) && transfer?.originTxHash) return MessageStage.Sent;
     return MessageStage.Preparing;
   }, [isDelivered, transfer]);
 
@@ -139,8 +137,7 @@ export function TransfersDetailsModal({
   const explorerLink = getHypExplorerLink(multiProvider, origin, msgId);
 
   // ETA: only show when confirmed on origin but not yet delivered
-  const showEta =
-    currentStatus === TransferStatus.ConfirmedTransfer && !isDelivered && !isFailed;
+  const showEta = currentStatus === TransferStatus.ConfirmedTransfer && !isDelivered && !isFailed;
   const etaSeconds = useMemo(
     () => (showEta ? estimateDeliverySeconds(origin, destination, multiProvider) : null),
     [showEta, origin, destination, multiProvider],

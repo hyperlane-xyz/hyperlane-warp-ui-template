@@ -81,17 +81,17 @@ importers:
         specifier: ^2.2.0
         version: 2.2.9(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@hyperlane-xyz/registry':
-        specifier: 24.0.0
-        version: 24.0.0
+        specifier: 24.1.0
+        version: 24.1.0
       '@hyperlane-xyz/sdk':
-        specifier: 27.0.0
-        version: 27.0.0(@ethersproject/abi@5.8.0)(@ethersproject/providers@5.8.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(@react-native-async-storage/async-storage@1.24.0(react-native@0.84.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@6.0.6)))(@types/sinon-chai@4.0.0)(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.18))(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.6.3)(utf-8-validate@6.0.6)
+        specifier: 27.1.0
+        version: 27.1.0(@ethersproject/abi@5.8.0)(@ethersproject/providers@5.8.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(@react-native-async-storage/async-storage@1.24.0(react-native@0.84.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@6.0.6)))(@types/sinon-chai@4.0.0)(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.18))(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.6.3)(utf-8-validate@6.0.6)
       '@hyperlane-xyz/utils':
-        specifier: 27.0.0
-        version: 27.0.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
+        specifier: 27.1.0
+        version: 27.1.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
       '@hyperlane-xyz/widgets':
-        specifier: 27.0.0
-        version: 27.0.0(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@ethersproject/abi@5.8.0)(@ethersproject/providers@5.8.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(@react-native-async-storage/async-storage@1.24.0(react-native@0.84.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@6.0.6)))(@tanstack/query-core@5.90.20)(@tanstack/react-query@5.90.21(react@18.3.1))(@types/node@24.12.0)(@types/react-dom@18.3.7(@types/react@18.3.28))(@types/react@18.3.28)(@types/sinon-chai@4.0.0)(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.18))(babel-plugin-macros@3.1.0)(bs58@5.0.0)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(get-starknet-core@4.0.0)(immer@10.2.0)(react-dom@18.3.1(react@18.3.1))(react-native@0.84.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@6.0.6))(react@18.3.1)(ts-node@10.9.2(@types/node@24.12.0)(typescript@5.6.3))(typescript@5.6.3)(utf-8-validate@6.0.6)(zod@3.21.4)
+        specifier: 27.1.0
+        version: 27.1.0(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@ethersproject/abi@5.8.0)(@ethersproject/providers@5.8.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(@react-native-async-storage/async-storage@1.24.0(react-native@0.84.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@6.0.6)))(@tanstack/query-core@5.90.20)(@tanstack/react-query@5.90.21(react@18.3.1))(@types/node@24.12.0)(@types/react-dom@18.3.7(@types/react@18.3.28))(@types/react@18.3.28)(@types/sinon-chai@4.0.0)(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.18))(babel-plugin-macros@3.1.0)(bs58@5.0.0)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(get-starknet-core@4.0.0)(immer@10.2.0)(react-dom@18.3.1(react@18.3.1))(react-native@0.84.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@6.0.6))(react@18.3.1)(ts-node@10.9.2(@types/node@24.12.0)(typescript@5.6.3))(typescript@5.6.3)(utf-8-validate@6.0.6)(zod@3.21.4)
       '@interchain-ui/react':
         specifier: ^1.23.28
         version: 1.26.3(@types/react@18.3.28)(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -1510,8 +1510,8 @@ packages:
     resolution: {integrity: sha512-bV0Tgo9K4hfPCek+aMAn81RppFKv2ySDQeMoSZuvTASywNTnVJCArCZE2FWqpvIatKu7VMRLWlR1EazvVhDyhQ==}
     engines: {node: '>=18.18'}
 
-  '@hyperlane-xyz/aleo-sdk@27.0.0':
-    resolution: {integrity: sha512-3Pu1wv23o2fzK7s6Lhb2Q6wdffUV7cn4i7zcWw/DzgO95wNIx1qoJzq9+qjF4A1jFobs76X7DTN42N9c3YYNCg==}
+  '@hyperlane-xyz/aleo-sdk@27.1.0':
+    resolution: {integrity: sha512-X8uymaoN+AVoIvfx7vK0wCkBlBjKHxHkFoW34if+q6jCZE9FQ/fppiikdnjgMs9Nuc+xIpe+LTSxMpFZNBazdQ==}
     peerDependencies:
       testcontainers: 11.7.0
     peerDependenciesMeta:
@@ -1526,14 +1526,14 @@ packages:
       '@ethersproject/providers': '*'
       '@types/sinon-chai': '*'
 
-  '@hyperlane-xyz/cosmos-sdk@27.0.0':
-    resolution: {integrity: sha512-6g6Gp+8Pc1qw91i2tpOcR6rZdg27b8v2cbDJ77gkPKnBqya2VSe885m7ZmJZJagyty0AXUCZ9IGoBgeQyZCRsw==}
+  '@hyperlane-xyz/cosmos-sdk@27.1.0':
+    resolution: {integrity: sha512-nSqM+U1xPffekRnyCry1ioqWyGSGOhGvLGGW6h6crD1h8WZcG+5zQWMCoo5ex4yimfWEkHZM5re3vF/pNFchFg==}
 
-  '@hyperlane-xyz/cosmos-types@27.0.0':
-    resolution: {integrity: sha512-7zW5Bwa/4wE0/c960nIFC+lDorP61d+8sSm9OLSUVm/yabjjDX3P55IiwzcU2ZtFVWi8q8G/Na07vuE5pdnPxQ==}
+  '@hyperlane-xyz/cosmos-types@27.1.0':
+    resolution: {integrity: sha512-lwYURklklNcQ2Y2+uwhk1sEwUIAkNMonarrOfv9rjm0Tafrv0PmeslaEiFH48SWpXY6Wq3kRRrUGemEPw6MXIg==}
 
-  '@hyperlane-xyz/deploy-sdk@3.0.1':
-    resolution: {integrity: sha512-m9AYLjjQTDzKvZRP/0mq50co0mwqhF7yKEb7k1a+9omxjpSgap1BfOoNgwm9OwOwrMebA2GM9cBv1GkYl35etw==}
+  '@hyperlane-xyz/deploy-sdk@3.1.0':
+    resolution: {integrity: sha512-NXMVBFH9semSLSdBJKqfU/jMVj8c3Ab9wwsTmcOOtydM8h9RsMNtDO/xUGO5zLyg/Vi2Khk7Tf+Zd1Mk4Ag4xw==}
 
   '@hyperlane-xyz/multicollateral@0.2.0':
     resolution: {integrity: sha512-1pBLIxZT7Vr9bk1SIS7PEhmA/H9ZFckxSBdJhUrAhX0h6yKohZaXzMAykpLAkTlQ+SlQ+tmPwqYpBlCZUElDQw==}
@@ -1542,37 +1542,37 @@ packages:
       '@ethersproject/abi': '*'
       '@ethersproject/providers': '*'
 
-  '@hyperlane-xyz/provider-sdk@3.0.1':
-    resolution: {integrity: sha512-SyrkE9gqyN6XUc+ObWNwVZVLTo12tNW6ySVoDRvw0sumwSM1gHB/EBKtHXlm/1Aa3QnSWVKFV3iTOw7g/pt8iA==}
+  '@hyperlane-xyz/provider-sdk@3.1.0':
+    resolution: {integrity: sha512-TxwD+GecCi5TpT2oPaC0YKCNp44+bGGwfTJHyV7qQLidKwKLQJ/oK2MwGW1asB2HQTZN5MybH8CbV7GlJIeN0Q==}
 
-  '@hyperlane-xyz/radix-sdk@27.0.0':
-    resolution: {integrity: sha512-rZ32GKOlnjqOLNeVmin/ruHacQ5oetURVzCbW8RjnRJAA6KOmxYODKmVqtpQBUb6tMERxT+e4b67V2R+uuZZKw==}
+  '@hyperlane-xyz/radix-sdk@27.1.0':
+    resolution: {integrity: sha512-sjnymnRtBKOOahkNlx2RMXtQTH0SS+UJjHfFR51D6QJI8gxe7D6rj1iSAws4JKI+/oEPHWeoh4bpMhQ031nEsQ==}
 
   '@hyperlane-xyz/registry@23.12.0':
     resolution: {integrity: sha512-KK3N2wC35xZhF8KFHD3awQ/GEPwT4G6Fquwcb3bjXaPPh/JwMRzHfeoyLQeTx2lA4cfSeODkDPRgmkrXDo2JqQ==}
     engines: {node: '>=24'}
 
-  '@hyperlane-xyz/registry@24.0.0':
-    resolution: {integrity: sha512-C/aw3qUSVzJZ6/MbKHJhB2Sgh3gPzSkQFAjzlFAyiyJxRfI0f46lzCgas5CI/OHG0ZAxcezHut5WH/IvHZncuQ==}
+  '@hyperlane-xyz/registry@24.1.0':
+    resolution: {integrity: sha512-tFwFrIKRBNVxTPcLbmV7lPGhih0ItLbS/MfU2IJDI4sYybV6cgIYbqc2gOidLnUVwDJ5m/8BprZGePYwzuHmlA==}
     engines: {node: '>=24'}
 
-  '@hyperlane-xyz/sdk@27.0.0':
-    resolution: {integrity: sha512-cgdh49HNHsUsC4Ac7EDdzJtAcYOyv/XqC96WJDowiJu7O2gFC97kmyI0mLaFiGnKqQojYC9LxIxMbpeCEGe0Iw==}
+  '@hyperlane-xyz/sdk@27.1.0':
+    resolution: {integrity: sha512-0mLjlH2Wojox/4HRAzknzziGKbnF/M5ImzOHwEG+9gcjBDe2ZF8jP3nQrjQiTsI96QKzwrk6GrfTpaUQ6iu2dg==}
     engines: {node: '>=16'}
     peerDependencies:
       '@ethersproject/abi': '*'
 
-  '@hyperlane-xyz/sealevel-sdk@27.0.0':
-    resolution: {integrity: sha512-w1U//h40lBp0+mz9yHk6bpmKXkUnB6yR+3ZKw1Jtucdfdo3eNt4oEmLoEUaDDR9Pt4Q4JtaQpR8+G5KqnffYVg==}
+  '@hyperlane-xyz/sealevel-sdk@27.1.0':
+    resolution: {integrity: sha512-RyLas2hHmqBnaDSkHqDpITKihkbQY0vuLw2u6IcGVOyVGVomLYbI0JsX16bD7sTySjwa/PhNUK3rlwieB7vWMA==}
 
-  '@hyperlane-xyz/starknet-core@27.0.0':
-    resolution: {integrity: sha512-7fA+dQj0UD9L7jQWioMSE5T3W250+eY+B91C0JrG6YdVKBX8j1MTSYFk65ypis4kz5VWpiwZhbiZA3riDM0PfA==}
+  '@hyperlane-xyz/starknet-core@27.1.0':
+    resolution: {integrity: sha512-lC9mo50NDdwVFck91eSVdh7A2Bs0xDOSQ2xz8jBAd7H70r0APitMN4H2u+d0JNY0cKgiQHOXOSq6grbKUzsB7Q==}
 
-  '@hyperlane-xyz/tron-sdk@22.1.0':
-    resolution: {integrity: sha512-yPqli2rHJKM4IdNt1fu2sP5HvJJjrfgRbwZdLmB3A+8s+WoI3zuRRQ3F0l9ZtmNguyfq9L7YIRlizQf4qcccBw==}
+  '@hyperlane-xyz/tron-sdk@22.1.1':
+    resolution: {integrity: sha512-MOty/LJAwBmutNLSaSio3d9R2S87iKMaDhry6TTz+HNK+5DxNS3L4LtYbhMlO/HzjyvLCDbIe+RfNkg+3Jyi9g==}
 
-  '@hyperlane-xyz/utils@27.0.0':
-    resolution: {integrity: sha512-c15OZDIs1wNCpXIY1UJrEdAUFqRa7ZCAK2kNMp+0L77qkiGTa1tSqS37iO9fMXXU1S9DwSUlRrH+FjAV59jVHQ==}
+  '@hyperlane-xyz/utils@27.1.0':
+    resolution: {integrity: sha512-08ErGLaBBUwQnZMjrkRBJaJCNcjDAKvoeJ7YbEqKP+DTJahO2/1OBM+3YXqNpOfiVsB9W1o/VzaJZoEyVs3qng==}
     engines: {node: '>=16'}
     peerDependencies:
       '@google-cloud/pino-logging-gcp-config': ^1.3.0
@@ -1583,8 +1583,8 @@ packages:
       pino-pretty:
         optional: true
 
-  '@hyperlane-xyz/widgets@27.0.0':
-    resolution: {integrity: sha512-Ggk/Tn+GHbWvCht0rfJNhHji4zcSrTGXzMT85wUpM38SRKW5kLHu/jWB4TWbCCACz7N0NDXXRyYJclwHk/9xNQ==}
+  '@hyperlane-xyz/widgets@27.1.0':
+    resolution: {integrity: sha512-JmwhBvqnqJ1gbm/9lMYei7HNXtk7dTStp0+vRUbCt24/Ppk8ID1NsvA1l+YL0Czhv+IYbvBW8rVAZwAosVu+3w==}
     peerDependencies:
       react: ^18
       react-dom: ^18
@@ -13493,10 +13493,10 @@ snapshots:
 
   '@humanwhocodes/retry@0.4.3': {}
 
-  '@hyperlane-xyz/aleo-sdk@27.0.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)':
+  '@hyperlane-xyz/aleo-sdk@27.1.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)':
     dependencies:
-      '@hyperlane-xyz/provider-sdk': 3.0.1(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
-      '@hyperlane-xyz/utils': 27.0.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
+      '@hyperlane-xyz/provider-sdk': 3.1.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
+      '@hyperlane-xyz/utils': 27.1.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
       '@provablehq/sdk': 0.9.15
       bignumber.js: 9.3.1
       unzipper: 0.12.3
@@ -13514,16 +13514,16 @@ snapshots:
       '@ethersproject/providers': 5.8.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       '@types/sinon-chai': 4.0.0
 
-  '@hyperlane-xyz/cosmos-sdk@27.0.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)':
+  '@hyperlane-xyz/cosmos-sdk@27.1.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)':
     dependencies:
       '@cosmjs/amino': 0.32.4
       '@cosmjs/math': 0.32.4
       '@cosmjs/proto-signing': 0.32.4
       '@cosmjs/stargate': 0.32.4(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       '@cosmjs/tendermint-rpc': 0.32.4(bufferutil@4.1.0)(utf-8-validate@6.0.6)
-      '@hyperlane-xyz/cosmos-types': 27.0.0
-      '@hyperlane-xyz/provider-sdk': 3.0.1(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
-      '@hyperlane-xyz/utils': 27.0.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
+      '@hyperlane-xyz/cosmos-types': 27.1.0
+      '@hyperlane-xyz/provider-sdk': 3.1.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
+      '@hyperlane-xyz/utils': 27.1.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
     transitivePeerDependencies:
       - '@google-cloud/pino-logging-gcp-config'
       - bufferutil
@@ -13533,20 +13533,20 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@hyperlane-xyz/cosmos-types@27.0.0':
+  '@hyperlane-xyz/cosmos-types@27.1.0':
     dependencies:
       long: 5.3.2
       protobufjs: 7.5.4
 
-  '@hyperlane-xyz/deploy-sdk@3.0.1(@types/sinon-chai@4.0.0)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.6.3)(utf-8-validate@6.0.6)':
+  '@hyperlane-xyz/deploy-sdk@3.1.0(@types/sinon-chai@4.0.0)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.6.3)(utf-8-validate@6.0.6)':
     dependencies:
-      '@hyperlane-xyz/aleo-sdk': 27.0.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
-      '@hyperlane-xyz/cosmos-sdk': 27.0.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
-      '@hyperlane-xyz/provider-sdk': 3.0.1(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
-      '@hyperlane-xyz/radix-sdk': 27.0.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
-      '@hyperlane-xyz/sealevel-sdk': 27.0.0(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.6.3)(utf-8-validate@6.0.6)
-      '@hyperlane-xyz/tron-sdk': 22.1.0(@types/sinon-chai@4.0.0)(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
-      '@hyperlane-xyz/utils': 27.0.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
+      '@hyperlane-xyz/aleo-sdk': 27.1.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
+      '@hyperlane-xyz/cosmos-sdk': 27.1.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
+      '@hyperlane-xyz/provider-sdk': 3.1.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
+      '@hyperlane-xyz/radix-sdk': 27.1.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
+      '@hyperlane-xyz/sealevel-sdk': 27.1.0(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.6.3)(utf-8-validate@6.0.6)
+      '@hyperlane-xyz/tron-sdk': 22.1.1(@types/sinon-chai@4.0.0)(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
+      '@hyperlane-xyz/utils': 27.1.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
       zod: 3.21.4
     transitivePeerDependencies:
       - '@google-cloud/pino-logging-gcp-config'
@@ -13568,9 +13568,9 @@ snapshots:
     transitivePeerDependencies:
       - '@types/sinon-chai'
 
-  '@hyperlane-xyz/provider-sdk@3.0.1(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)':
+  '@hyperlane-xyz/provider-sdk@3.1.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)':
     dependencies:
-      '@hyperlane-xyz/utils': 27.0.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
+      '@hyperlane-xyz/utils': 27.1.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
       pino: 8.21.0
       zod: 3.21.4
     transitivePeerDependencies:
@@ -13581,10 +13581,10 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@hyperlane-xyz/radix-sdk@27.0.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)':
+  '@hyperlane-xyz/radix-sdk@27.1.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)':
     dependencies:
-      '@hyperlane-xyz/provider-sdk': 3.0.1(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
-      '@hyperlane-xyz/utils': 27.0.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
+      '@hyperlane-xyz/provider-sdk': 3.1.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
+      '@hyperlane-xyz/utils': 27.1.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
       '@radixdlt/babylon-core-api-sdk': 1.3.0
       '@radixdlt/babylon-gateway-api-sdk': 1.10.1
       '@radixdlt/radix-engine-toolkit': 1.0.6
@@ -13605,13 +13605,13 @@ snapshots:
       yaml: 2.4.5
       zod: 3.21.4
 
-  '@hyperlane-xyz/registry@24.0.0':
+  '@hyperlane-xyz/registry@24.1.0':
     dependencies:
       jszip: 3.10.1
       yaml: 2.4.5
       zod: 3.21.4
 
-  '@hyperlane-xyz/sdk@27.0.0(@ethersproject/abi@5.8.0)(@ethersproject/providers@5.8.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(@react-native-async-storage/async-storage@1.24.0(react-native@0.84.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@6.0.6)))(@types/sinon-chai@4.0.0)(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.18))(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.6.3)(utf-8-validate@6.0.6)':
+  '@hyperlane-xyz/sdk@27.1.0(@ethersproject/abi@5.8.0)(@ethersproject/providers@5.8.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(@react-native-async-storage/async-storage@1.24.0(react-native@0.84.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@6.0.6)))(@types/sinon-chai@4.0.0)(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.18))(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.6.3)(utf-8-validate@6.0.6)':
     dependencies:
       '@arbitrum/sdk': 4.0.4(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       '@aws-sdk/client-s3': 3.1007.0
@@ -13625,16 +13625,16 @@ snapshots:
       '@cosmjs/stargate': 0.32.4(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       '@cosmjs/tendermint-rpc': 0.32.4(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       '@ethersproject/abi': 5.8.0
-      '@hyperlane-xyz/aleo-sdk': 27.0.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
+      '@hyperlane-xyz/aleo-sdk': 27.1.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
       '@hyperlane-xyz/core': 11.0.2(@ethersproject/abi@5.8.0)(@ethersproject/providers@5.8.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(@types/sinon-chai@4.0.0)
-      '@hyperlane-xyz/cosmos-sdk': 27.0.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
-      '@hyperlane-xyz/deploy-sdk': 3.0.1(@types/sinon-chai@4.0.0)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.6.3)(utf-8-validate@6.0.6)
+      '@hyperlane-xyz/cosmos-sdk': 27.1.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
+      '@hyperlane-xyz/deploy-sdk': 3.1.0(@types/sinon-chai@4.0.0)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.6.3)(utf-8-validate@6.0.6)
       '@hyperlane-xyz/multicollateral': 0.2.0(@ethersproject/abi@5.8.0)(@ethersproject/providers@5.8.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(@types/sinon-chai@4.0.0)
-      '@hyperlane-xyz/provider-sdk': 3.0.1(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
-      '@hyperlane-xyz/radix-sdk': 27.0.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
-      '@hyperlane-xyz/starknet-core': 27.0.0
-      '@hyperlane-xyz/tron-sdk': 22.1.0(@types/sinon-chai@4.0.0)(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
-      '@hyperlane-xyz/utils': 27.0.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
+      '@hyperlane-xyz/provider-sdk': 3.1.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
+      '@hyperlane-xyz/radix-sdk': 27.1.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
+      '@hyperlane-xyz/starknet-core': 27.1.0
+      '@hyperlane-xyz/tron-sdk': 22.1.1(@types/sinon-chai@4.0.0)(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
+      '@hyperlane-xyz/utils': 27.1.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
       '@safe-global/api-kit': 4.0.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)(zod@3.21.4)
       '@safe-global/protocol-kit': 6.1.1(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)(zod@3.21.4)
       '@safe-global/safe-core-sdk-types': 5.1.0(typescript@5.6.3)(zod@3.21.4)
@@ -13691,10 +13691,10 @@ snapshots:
       - uploadthing
       - utf-8-validate
 
-  '@hyperlane-xyz/sealevel-sdk@27.0.0(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.6.3)(utf-8-validate@6.0.6)':
+  '@hyperlane-xyz/sealevel-sdk@27.1.0(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.6.3)(utf-8-validate@6.0.6)':
     dependencies:
-      '@hyperlane-xyz/provider-sdk': 3.0.1(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
-      '@hyperlane-xyz/utils': 27.0.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
+      '@hyperlane-xyz/provider-sdk': 3.1.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
+      '@hyperlane-xyz/utils': 27.1.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
       '@noble/hashes': 1.8.0
       '@solana-program/loader-v3': 0.3.0(@solana/kit@6.3.0(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.6.3)(utf-8-validate@6.0.6))
       '@solana-program/system': 0.12.0(@solana/kit@6.3.0(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.6.3)(utf-8-validate@6.0.6))
@@ -13708,18 +13708,18 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@hyperlane-xyz/starknet-core@27.0.0':
+  '@hyperlane-xyz/starknet-core@27.1.0':
     dependencies:
       starknet: 7.6.4
 
-  '@hyperlane-xyz/tron-sdk@22.1.0(@types/sinon-chai@4.0.0)(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)':
+  '@hyperlane-xyz/tron-sdk@22.1.1(@types/sinon-chai@4.0.0)(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)':
     dependencies:
       '@ethersproject/abi': 5.8.0
       '@ethersproject/providers': 5.8.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       '@hyperlane-xyz/core': 11.0.2(@ethersproject/abi@5.8.0)(@ethersproject/providers@5.8.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(@types/sinon-chai@4.0.0)
-      '@hyperlane-xyz/provider-sdk': 3.0.1(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
+      '@hyperlane-xyz/provider-sdk': 3.1.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
       '@hyperlane-xyz/registry': 23.12.0
-      '@hyperlane-xyz/utils': 27.0.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
+      '@hyperlane-xyz/utils': 27.1.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
       bignumber.js: 9.3.1
       ethers: 5.8.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       tronweb: 6.2.2(bufferutil@4.1.0)(utf-8-validate@6.0.6)
@@ -13733,7 +13733,7 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@hyperlane-xyz/utils@27.0.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)':
+  '@hyperlane-xyz/utils@27.1.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)':
     dependencies:
       '@cosmjs/encoding': 0.32.4
       '@ethersproject/bytes': 5.8.0
@@ -13753,19 +13753,19 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@hyperlane-xyz/widgets@27.0.0(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@ethersproject/abi@5.8.0)(@ethersproject/providers@5.8.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(@react-native-async-storage/async-storage@1.24.0(react-native@0.84.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@6.0.6)))(@tanstack/query-core@5.90.20)(@tanstack/react-query@5.90.21(react@18.3.1))(@types/node@24.12.0)(@types/react-dom@18.3.7(@types/react@18.3.28))(@types/react@18.3.28)(@types/sinon-chai@4.0.0)(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.18))(babel-plugin-macros@3.1.0)(bs58@5.0.0)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(get-starknet-core@4.0.0)(immer@10.2.0)(react-dom@18.3.1(react@18.3.1))(react-native@0.84.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@6.0.6))(react@18.3.1)(ts-node@10.9.2(@types/node@24.12.0)(typescript@5.6.3))(typescript@5.6.3)(utf-8-validate@6.0.6)(zod@3.21.4)':
+  '@hyperlane-xyz/widgets@27.1.0(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@ethersproject/abi@5.8.0)(@ethersproject/providers@5.8.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(@react-native-async-storage/async-storage@1.24.0(react-native@0.84.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@6.0.6)))(@tanstack/query-core@5.90.20)(@tanstack/react-query@5.90.21(react@18.3.1))(@types/node@24.12.0)(@types/react-dom@18.3.7(@types/react@18.3.28))(@types/react@18.3.28)(@types/sinon-chai@4.0.0)(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.18))(babel-plugin-macros@3.1.0)(bs58@5.0.0)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(get-starknet-core@4.0.0)(immer@10.2.0)(react-dom@18.3.1(react@18.3.1))(react-native@0.84.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@6.0.6))(react@18.3.1)(ts-node@10.9.2(@types/node@24.12.0)(typescript@5.6.3))(typescript@5.6.3)(utf-8-validate@6.0.6)(zod@3.21.4)':
     dependencies:
       '@chain-registry/types': 0.50.317
       '@cosmjs/stargate': 0.32.4(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       '@cosmos-kit/react': 2.18.0(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.36.2)(@interchain-ui/react@1.26.3(@types/react@18.3.28)(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@react-native-async-storage/async-storage@1.24.0(react-native@0.84.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@6.0.6)))(@types/react-dom@18.3.7(@types/react@18.3.28))(@types/react@18.3.28)(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.18))(bufferutil@4.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(utf-8-validate@6.0.6)
       '@headlessui/react': 2.2.9(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@hyperlane-xyz/aleo-sdk': 27.0.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
-      '@hyperlane-xyz/cosmos-sdk': 27.0.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
-      '@hyperlane-xyz/provider-sdk': 3.0.1(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
-      '@hyperlane-xyz/radix-sdk': 27.0.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
-      '@hyperlane-xyz/sdk': 27.0.0(@ethersproject/abi@5.8.0)(@ethersproject/providers@5.8.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(@react-native-async-storage/async-storage@1.24.0(react-native@0.84.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@6.0.6)))(@types/sinon-chai@4.0.0)(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.18))(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.6.3)(utf-8-validate@6.0.6)
-      '@hyperlane-xyz/tron-sdk': 22.1.0(@types/sinon-chai@4.0.0)(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
-      '@hyperlane-xyz/utils': 27.0.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
+      '@hyperlane-xyz/aleo-sdk': 27.1.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
+      '@hyperlane-xyz/cosmos-sdk': 27.1.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
+      '@hyperlane-xyz/provider-sdk': 3.1.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
+      '@hyperlane-xyz/radix-sdk': 27.1.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
+      '@hyperlane-xyz/sdk': 27.1.0(@ethersproject/abi@5.8.0)(@ethersproject/providers@5.8.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(@react-native-async-storage/async-storage@1.24.0(react-native@0.84.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@6.0.6)))(@types/sinon-chai@4.0.0)(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.18))(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.6.3)(utf-8-validate@6.0.6)
+      '@hyperlane-xyz/tron-sdk': 22.1.1(@types/sinon-chai@4.0.0)(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
+      '@hyperlane-xyz/utils': 27.1.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
       '@interchain-ui/react': 1.26.3(@types/react@18.3.28)(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@provablehq/aleo-types': 0.3.0-alpha.1
       '@provablehq/aleo-wallet-adaptor-react': 0.3.0-alpha.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -14638,7 +14638,7 @@ snapshots:
       '@noble/hashes': 1.8.0
       '@scure/base': 1.2.6
       '@types/debug': 4.1.12
-      debug: 4.3.4
+      debug: 4.4.3
       pony-cause: 2.1.11
       semver: 7.7.4
       uuid: 9.0.1
@@ -14652,7 +14652,7 @@ snapshots:
       '@noble/hashes': 1.8.0
       '@scure/base': 1.2.6
       '@types/debug': 4.1.12
-      debug: 4.3.4
+      debug: 4.4.3
       pony-cause: 2.1.11
       semver: 7.7.4
       uuid: 9.0.1
@@ -17366,7 +17366,7 @@ snapshots:
 
   '@scure/bip32@1.7.0':
     dependencies:
-      '@noble/curves': 1.9.1
+      '@noble/curves': 1.9.7
       '@noble/hashes': 1.8.0
       '@scure/base': 1.2.6
 
@@ -24068,7 +24068,7 @@ snapshots:
 
   extension-port-stream@3.0.0:
     dependencies:
-      readable-stream: 3.6.2
+      readable-stream: 4.7.0
       webextension-polyfill: 0.10.0
 
   eyes@0.1.8: {}
@@ -26762,7 +26762,7 @@ snapshots:
     dependencies:
       debug: 4.4.3
       module-details-from-path: 1.0.4
-      resolve: 1.22.8
+      resolve: 1.22.11
     transitivePeerDependencies:
       - supports-color
 

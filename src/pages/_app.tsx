@@ -15,6 +15,7 @@ import { EvmWalletContext } from '../features/wallet/context/EvmWalletContext';
 import { RadixWalletContext } from '../features/wallet/context/RadixWalletContext';
 import { SolanaWalletContext } from '../features/wallet/context/SolanaWalletContext';
 import { StarknetWalletContext } from '../features/wallet/context/StarknetWalletContext';
+import { TronWalletContext } from '../features/wallet/context/TronWalletContext';
 import '../styles/globals.css';
 import '../vendor/inpage-metamask';
 import '../vendor/polyfill';
@@ -46,10 +47,12 @@ export default function App({ Component, pageProps }: AppProps) {
                   <StarknetWalletContext>
                     <RadixWalletContext>
                       <AleoWalletContext>
-                        <AppLayout>
-                          <Component {...pageProps} />
-                          <Analytics />
-                        </AppLayout>
+                        <TronWalletContext>
+                          <AppLayout>
+                            <Component {...pageProps} />
+                            <Analytics />
+                          </AppLayout>
+                        </TronWalletContext>
                       </AleoWalletContext>
                     </RadixWalletContext>
                   </StarknetWalletContext>

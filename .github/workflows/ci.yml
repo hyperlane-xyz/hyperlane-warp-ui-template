@@ -174,5 +174,10 @@ jobs:
 
   e2e:
     needs: [build]
+    if: >-
+      github.base_ref == 'main' ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      github.event_name == 'merge_group' ||
+      github.event_name == 'workflow_dispatch'
     uses: ./.github/workflows/e2e.yml
     secrets: inherit

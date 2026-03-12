@@ -80,8 +80,9 @@ export function TransfersDetailsModal({
 
   // Find the index of this transfer in the store (for updating status)
   const transferIndex = useMemo(
-    () => transfers.findIndex((t) => t === transfer || (t.msgId && t.msgId === msgId)),
-    [transfers, transfer, msgId],
+    () =>
+      transfers.findIndex((t) => t === transfer || (t.msgId && t.msgId === transfer?.msgId)),
+    [transfers, transfer],
   );
 
   const isChainKnown = multiProvider.hasChain(origin);
@@ -89,8 +90,8 @@ export function TransfersDetailsModal({
   const walletDetails = useWalletDetails()[account?.protocol || ProtocolType.Ethereum];
 
   // Query delivery status from GraphQL when modal is open for sent transfers
-  const isSent = isTransferSent(status);
-  const isFailed = isTransferFailed(status);
+  const isSent = isTransferSent(transfer?.status);
+  const isFailed = isTransferFailed(transfer?.status);
   const shouldTrackDelivery = isSent && !isFailed && !!msgId;
 
   const delivery = useMessageDeliveryStatus(
@@ -104,9 +105,10 @@ export function TransfersDetailsModal({
   // broken Explorer REST API dependencies (queryExplorerForBlock, /latest-nonce)
   const stage = useMemo((): MessageStage => {
     if (delivery.isDelivered) return MessageStage.Relayed;
-    if (isSent && originTxHash) return MessageStage.Sent;
+    if (isTransferSent(transfer?.status) && transfer?.originTxHash)
+      return MessageStage.Sent;
     return MessageStage.Preparing;
-  }, [delivery.isDelivered, isSent, originTxHash]);
+  }, [delivery.isDelivered, transfer]);
 
   // Resolve the destination tx hash from either store or live query
   const destinationTxHash = storedDestTxHash || delivery.destinationTxHash;

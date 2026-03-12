@@ -67,6 +67,7 @@ export function TransfersDetailsModal({
     recipient,
     originTokenAddressOrDenom,
     originTxHash,
+    destTokenAddressOrDenom,
     msgId,
     timestamp,
     destinationTxHash: storedDestTxHash,
@@ -113,6 +114,7 @@ export function TransfersDetailsModal({
   const isAccountReady = !!account?.isReady;
   const connectorName = walletDetails.name || 'wallet';
   const token = tryFindToken(warpCore, origin, originTokenAddressOrDenom);
+  const destToken = tryFindToken(warpCore, destination, destTokenAddressOrDenom);
   const isPermissionlessRoute = hasPermissionlessChain(multiProvider, [destination, origin]);
   const isFinal = isSent || isFailed;
   const currentStatus = delivery.isDelivered ? TransferStatus.Delivered : status;

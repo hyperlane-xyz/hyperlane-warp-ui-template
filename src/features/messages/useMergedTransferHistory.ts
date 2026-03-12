@@ -60,6 +60,7 @@ export function messageToTransferContext(
     msgId: msg.msgId,
     timestamp: msg.origin.timestamp,
     originTokenAddressOrDenom: msg.sender,
+    destTokenAddressOrDenom: msg.recipient,
   };
 }
 

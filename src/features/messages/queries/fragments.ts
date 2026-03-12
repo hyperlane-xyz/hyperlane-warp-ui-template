@@ -24,6 +24,14 @@ export const messageStubFragment = `
 `;
 
 /**
+ * Extended fragment for single message detail queries (includes block height for stage tracking)
+ */
+export const messageDetailFragment = `
+  ${messageStubFragment}
+  origin_block_height
+`;
+
+/**
  * Raw message entry from GraphQL
  */
 export interface MessageStubEntry {
@@ -46,4 +54,5 @@ export interface MessageStubEntry {
   destination_tx_sender: string | null; // bytea
   destination_tx_recipient: string | null; // bytea
   message_body: string | null; // bytea - contains recipient and amount for warp transfers
+  origin_block_height?: number; // Only present in detail queries
 }

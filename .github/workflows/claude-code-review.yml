@@ -71,7 +71,9 @@ jobs:
           prompt: "Use agent teams to run /claude-review, then use /inline-pr-comments to post findings as a consolidated PR review with inline comments"
           track_progress: true
           use_sticky_comment: false
-          claude_args: '--model ${{ env.CLAUDE_OPUS_MODEL }} --allowedTools "Bash(gh api:*)"'
+          claude_args: |
+            --model ${{ env.CLAUDE_OPUS_MODEL }}
+            --allowedTools "Bash(gh api:*)"
 
   security-review:
     if: |

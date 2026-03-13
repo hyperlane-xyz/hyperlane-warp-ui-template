@@ -533,14 +533,18 @@ html[data-theme-mode='dark'] .tip-card-logo {
   opacity: 0.16;
   -webkit-mask-image: linear-gradient(
     to top,
-    rgba(0, 0, 0, 1) 20%,
+    transparent 0%,
+    rgba(0, 0, 0, 0.6) 12%,
+    rgba(0, 0, 0, 1) 24%,
     rgba(0, 0, 0, 0.58) 56%,
     rgba(0, 0, 0, 0.12) 86%,
     transparent 100%
   );
   mask-image: linear-gradient(
     to top,
-    rgba(0, 0, 0, 1) 20%,
+    transparent 0%,
+    rgba(0, 0, 0, 0.6) 12%,
+    rgba(0, 0, 0, 1) 24%,
     rgba(0, 0, 0, 0.58) 56%,
     rgba(0, 0, 0, 0.12) 86%,
     transparent 100%
@@ -619,10 +623,10 @@ html[data-theme-mode='dark'] .transfer-text-input:focus {
   background: transparent !important;
 }
 
-/* Chain badge on token icons — dark bg so white logos stay visible */
+/* Chain badge on token icons — visible surface so badge stands out on dark backgrounds */
 html[data-theme-mode='dark'] .token-chain-badge {
-  border-color: rgba(var(--dark-accent-rgb), 0.3) !important;
-  background: #1a0e28 !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
+  background: #2a1e3e !important;
 }
 
 html[data-theme-mode='dark'] .transfer-review-panel {
@@ -1027,10 +1031,100 @@ html[data-theme-mode='dark'] .transfer-details-modal .bg-primary-200 {
   background: rgba(185, 89, 255, 0.2) !important;
 }
 
+html[data-theme-mode='dark'] .transfer-details-modal .text-gray-900,
+html[data-theme-mode='dark'] .transfer-details-modal .text-gray-800 {
+  color: var(--dark-text-primary) !important;
+}
+
 html[data-theme-mode='dark'] .transfer-details-modal .text-gray-600,
 html[data-theme-mode='dark'] .transfer-details-modal .text-gray-500,
 html[data-theme-mode='dark'] .transfer-details-modal .text-gray-350 {
   color: var(--dark-text-secondary) !important;
+}
+
+/* Card gradient and shadow — dark surface variant */
+html[data-theme-mode='dark'] .transfer-details-modal .bg-card-gradient {
+  background: linear-gradient(
+    180deg,
+    var(--dark-surface-card) 0%,
+    rgba(20, 10, 30, 0.8) 100%
+  ) !important;
+}
+
+html[data-theme-mode='dark'] .transfer-details-modal .shadow-card {
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.3) !important;
+}
+
+html[data-theme-mode='dark'] .transfer-details-modal .border-gray-400\/25 {
+  border-color: var(--dark-border) !important;
+}
+
+/* Timeline section — text and icons */
+html[data-theme-mode='dark'] .transfer-details-modal h4 {
+  color: var(--dark-text-primary) !important;
+}
+
+/* Timeline stage labels (Sent, Finalized, Validated, Relayed) */
+html[data-theme-mode='dark'] .transfer-details-modal .htw-text-gray-700 {
+  color: var(--dark-text-primary) !important;
+}
+
+/* Timeline bar and icon circles — accent purple instead of blue */
+html[data-theme-mode='dark'] .transfer-details-modal .htw-bg-blue-500 {
+  background-color: rgb(var(--dark-accent-rgb)) !important;
+}
+
+/* Timeline — arrow-shaped segments via clip-path [=> >=> >=> >=] */
+/* Middle segments: V-notch left, point right */
+.transfer-details-modal .htw-bg-blue-500 {
+  clip-path: polygon(
+    0 0,
+    calc(100% - 10px) 0,
+    100% 50%,
+    calc(100% - 10px) 100%,
+    0 100%,
+    10px 50%
+  ) !important;
+}
+
+/* First segment: flat left, point right */
+.transfer-details-modal .htw-flex-1:first-child .htw-bg-blue-500 {
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 0 100%) !important;
+}
+
+/* Last segment: V-notch left, flat right */
+.transfer-details-modal .htw-flex-1:last-child .htw-bg-blue-500 {
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 10px 50%) !important;
+}
+
+/* Hide widget chevrons — clip-path handles the shape */
+.transfer-details-modal .htw-bg-blue-500 > :not(:first-child) {
+  opacity: 0 !important;
+}
+
+/* Close gaps between arrow segments */
+.transfer-details-modal .htw-flex-0 {
+  width: 0 !important;
+}
+
+/* Arrow between amount/ticker pairs (e.g. "1 USDC → 1 USDC") */
+html[data-theme-mode='dark'] .transfer-details-modal .font-secondary img {
+  filter: brightness(0) invert(1) opacity(0.85);
+}
+
+/* Wide chevrons between origin/dest token icons */
+html[data-theme-mode='dark'] .transfer-details-modal .mb-6 svg path {
+  fill: rgba(185, 89, 255, 0.6) !important;
+}
+
+/* Link icons */
+html[data-theme-mode='dark'] .transfer-details-modal a img {
+  filter: brightness(0) invert(1) opacity(0.82);
+}
+
+html[data-theme-mode='dark'] .transfer-details-modal .opacity-40 {
+  opacity: 0.7 !important;
+  filter: brightness(0) invert(1);
 }
 
 html[data-theme-mode='dark'] .transfer-details-modal a {
@@ -1039,6 +1133,14 @@ html[data-theme-mode='dark'] .transfer-details-modal a {
 
 html[data-theme-mode='dark'] .transfer-details-spinner {
   color: var(--dark-text-primary) !important;
+}
+
+html[data-theme-mode='dark'] .transfer-details-spinner circle {
+  stroke: rgba(185, 89, 255, 0.35) !important;
+}
+
+html[data-theme-mode='dark'] .transfer-details-spinner path {
+  fill: rgb(var(--dark-accent-rgb)) !important;
 }
 
 html[data-theme-mode='dark'] .transfer-fee-modal {
@@ -1057,14 +1159,41 @@ html[data-theme-mode='dark'] .transfer-fee-modal-content {
   border-radius: 0.375rem;
 }
 
+/* Wallet rows — full width, flat, dividers between items to match transfer history */
+.sidebar-menu .htw-space-y-2 {
+  gap: 0 !important;
+}
+
+.sidebar-menu .htw-space-y-2 > * + * {
+  margin-top: 0 !important;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-menu .htw-space-y-2 > *:last-child {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-menu .htw-rounded-sm {
+  border-radius: 0 !important;
+  padding-left: 0.875rem !important; /* px-3.5 */
+  padding-right: 0.875rem !important;
+}
+
+html[data-theme-mode='dark'] .sidebar-menu .htw-space-y-2 > * + * {
+  border-color: rgba(185, 89, 255, 0.18);
+}
+
+html[data-theme-mode='dark'] .sidebar-menu .htw-space-y-2 > *:last-child {
+  border-color: rgba(185, 89, 255, 0.18);
+}
+
 html[data-theme-mode='dark'] .sidebar-menu .htw-rounded-sm {
   color: var(--dark-text-primary) !important;
-  border: 1px solid rgba(185, 89, 255, 0.32);
-  background: rgba(255, 255, 255, 0.06);
+  background: transparent;
 }
 
 html[data-theme-mode='dark'] .sidebar-menu .htw-rounded-sm:hover {
-  background: rgba(185, 89, 255, 0.16) !important;
+  background: rgba(185, 89, 255, 0.12) !important;
 }
 
 html[data-theme-mode='dark'] .sidebar-menu .htw-rounded-sm .htw-text-gray-800 {

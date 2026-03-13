@@ -178,7 +178,7 @@ export function SideBarMenu({
             multiProvider={multiProvider}
             onClickConnectWallet={onClickConnectWallet}
             onCopySuccess={onCopySuccess}
-            className="pb-1 pt-2"
+            className=""
             chainName={originChainName}
           />
           <div className="sidebar-menu-header flex w-full items-center justify-between bg-accent-gradient px-3.5 py-2 shadow-accent-glow">

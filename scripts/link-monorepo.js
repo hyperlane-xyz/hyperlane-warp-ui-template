@@ -7,6 +7,7 @@ const MONOREPO_NAME = 'hyperlane-monorepo';
 const REACT_APP_DIR = process.cwd();
 const MONOREPO_PATH = path.resolve(REACT_APP_DIR, '..', MONOREPO_NAME);
 const TYPESCRIPT_DIR = path.join(MONOREPO_PATH, 'typescript');
+const SOLIDITY_DIR = path.join(MONOREPO_PATH, 'solidity');
 const LOCAL_TARBALLS_DIR = path.join(REACT_APP_DIR, '.monorepo-tarballs');
 
 const args = process.argv.slice(2);
@@ -144,6 +145,63 @@ args.forEach((folder) => {
   console.log(`   ✅ Created and moved: ${tarballName}`);
   console.log(`      Location: ${relativePath}\n`);
 });
+
+/**
+ * Hardcoded: Pack @hyperlane-xyz/core from solidity directory
+ */
+console.log('📦 Packing hardcoded package: @hyperlane-xyz/core (from solidity/)');
+
+const solidityCorePath = SOLIDITY_DIR;
+if (fs.existsSync(solidityCorePath)) {
+  const pkgJsonPath = path.join(solidityCorePath, 'package.json');
+  if (fs.existsSync(pkgJsonPath)) {
+    const pkgJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'));
+    const packageName = pkgJson.name;
+    const packageVersion = pkgJson.version;
+
+    console.log(`   Package: ${packageName}@${packageVersion}`);
+
+    // Remove old tarballs
+    const oldTarballs = fs.readdirSync(solidityCorePath).filter(f => f.endsWith('.tgz'));
+    oldTarballs.forEach(tarball => {
+      fs.unlinkSync(path.join(solidityCorePath, tarball));
+    });
+
+    // Pack the package
+    if (run('pnpm pack', solidityCorePath)) {
+      // Find the generated tarball
+      const tarballs = fs.readdirSync(solidityCorePath).filter(f => f.endsWith('.tgz'));
+      if (tarballs.length > 0) {
+        const tarballName = tarballs[0];
+        const sourceTarballPath = path.join(solidityCorePath, tarballName);
+        const destTarballPath = path.join(LOCAL_TARBALLS_DIR, tarballName);
+
+        // Move tarball
+        fs.copyFileSync(sourceTarballPath, destTarballPath);
+        fs.unlinkSync(sourceTarballPath);
+
+        const relativePath = path.relative(REACT_APP_DIR, destTarballPath);
+
+        packedPackages.push({
+          name: packageName,
+          version: packageVersion,
+          tarballPath: relativePath,
+        });
+
+        console.log(`   ✅ Created and moved: ${tarballName}`);
+        console.log(`      Location: ${relativePath}\n`);
+      } else {
+        console.warn(`   ⚠️  No tarball found for ${packageName}\n`);
+      }
+    } else {
+      console.warn(`   ⚠️  Failed to pack ${packageName}\n`);
+    }
+  } else {
+    console.warn(`   ⚠️  package.json not found in solidity/\n`);
+  }
+} else {
+  console.warn(`   ⚠️  Solidity directory not found at ${solidityCorePath}\n`);
+}
 
 if (packedPackages.length === 0) {
   console.error('❌ No packages were packed successfully.');

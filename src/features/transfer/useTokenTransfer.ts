@@ -23,6 +23,7 @@ import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { AppState, useStore } from '../store';
 import { getTokenByKey, useWarpCore } from '../tokens/hooks';
+import { fetchPredicateAttestation } from './predicate';
 import { TransferContext, TransferFormValues, TransferStatus } from './types';
 import { tryGetMsgIdFromTransferReceipt } from './utils';
 
@@ -170,11 +171,31 @@ async function executeTransfer({
 
     updateTransferStatus(transferIndex, (transferStatus = TransferStatus.CreatingTxs));
 
+    // Check if Predicate attestation is needed
+    let attestation: any;
+
+    try {
+      updateTransferStatus(transferIndex, (transferStatus = TransferStatus.FetchingAttestation));
+      attestation = await fetchPredicateAttestation({
+        warpCore,
+        token: originToken,
+        destination,
+        sender,
+        recipient,
+        amount: originTokenAmount,
+      });
+    } catch (error: any) {
+      logger.error('Predicate attestation error:', error);
+      toast.error('Compliance verification failed. Transfer cannot proceed.');
+      throw new Error(`Predicate attestation failed: ${error.message || 'Unknown error'}`);
+    }
+
     const txs = await warpCore.getTransferRemoteTxs({
       originTokenAmount,
       destination,
       sender,
       recipient,
+      attestation,
     });
 
     const hashes: string[] = [];
@@ -279,6 +300,7 @@ async function executeTransfer({
 const errorMessages: Partial<Record<TransferStatus, string>> = {
   [TransferStatus.Preparing]: 'Error while preparing the transactions.',
   [TransferStatus.CreatingTxs]: 'Error while creating the transactions.',
+  [TransferStatus.FetchingAttestation]: 'Error while fetching compliance attestation.',
   [TransferStatus.SigningApprove]: 'Error while signing the approve transaction.',
   [TransferStatus.ConfirmingApprove]: 'Error while confirming the approve transaction.',
   [TransferStatus.SigningTransfer]: 'Error while signing the transfer transaction.',

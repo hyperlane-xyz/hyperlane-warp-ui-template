@@ -88,4 +88,3 @@ function getImageSrc(token?: IToken | null) {
   if (isRelativeUrl(token.logoURI)) return `${links.imgPath}${token.logoURI}`;
   return null;
 }
-

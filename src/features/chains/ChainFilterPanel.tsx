@@ -61,7 +61,7 @@ export function ChainFilterPanel({
     sortState.sortOrder !== defaultSortState.sortOrder;
 
   return (
-    <div className="chain-picker-panel flex w-full flex-col rounded-md bg-gray-100 md:w-[282px]">
+    <div className="chain-picker-modal flex w-full flex-col rounded-md bg-gray-100 md:w-[282px]">
       <div className="relative shrink-0 px-4 py-4">
         {showBackButton && (
           <button

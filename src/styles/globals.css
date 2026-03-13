@@ -787,7 +787,7 @@ html[data-theme-mode='dark'] .footer-nav-item svg {
   opacity: 0.95;
 }
 
-html[data-theme-mode='dark'] .chain-picker-modal,
+html[data-theme-mode='dark'] .chain-picker-modal:not(.bg-gray-100),
 html[data-theme-mode='dark'] .token-picker-modal {
   border: 1px solid rgba(185, 89, 255, 0.38) !important;
   background: var(--dark-surface) !important;
@@ -886,7 +886,7 @@ html[data-theme-mode='dark'] .token-picker-modal .border-gray-100 {
 
 html[data-theme-mode='dark'] .chain-picker-modal .htw-bg-gray-100,
 html[data-theme-mode='dark'] .chain-picker-modal .bg-gray-100,
-html[data-theme-mode='dark'] .chain-picker-panel.bg-gray-100 {
+html[data-theme-mode='dark'] .chain-picker-modal.bg-gray-100 {
   background: rgba(255, 255, 255, 0.06) !important;
 }
 

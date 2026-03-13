@@ -9,6 +9,7 @@ import { config } from '../../consts/config';
 import ArrowRightIcon from '../../images/icons/arrow-right.svg';
 import CollapseIcon from '../../images/icons/collapse-icon.svg';
 import { formatTransferHistoryTimestamp } from '../../utils/date';
+import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { MessageStatus } from '../messages/types';
@@ -21,6 +22,7 @@ import {
 import { useMessageHistory } from '../messages/useMessageHistory';
 import { RouterAddressInfo, useStore } from '../store';
 import { tryFindToken, useWarpCore } from '../tokens/hooks';
+import { TokenChainIcon } from '../tokens/TokenChainIcon';
 import { TransfersDetailsModal } from '../transfer/TransfersDetailsModal';
 import { TransferContext, TransferStatus } from '../transfer/types';
 import { getIconByTransferStatus, STATUSES_WITH_ICON } from '../transfer/utils';
@@ -176,7 +178,7 @@ export function SideBarMenu({
             multiProvider={multiProvider}
             onClickConnectWallet={onClickConnectWallet}
             onCopySuccess={onCopySuccess}
-            className="px-3 py-3"
+            className="pb-1 pt-2"
             chainName={originChainName}
           />
           <div className="sidebar-menu-header flex w-full items-center justify-between bg-accent-gradient px-3.5 py-2 shadow-accent-glow">
@@ -270,142 +272,109 @@ function TransferSummary({
   routerAddressesByChainMap: Record<ChainName, Record<string, RouterAddressInfo>>;
   nowMs: number;
 }) {
-  if (item.type === TransferItemType.Local) {
-    return (
-      <LocalTransferSummary
-        transfer={item.data}
-        onClick={onClick}
-        multiProvider={multiProvider}
-        warpCore={warpCore}
-        nowMs={nowMs}
-      />
-    );
-  }
+  const { originChain, destChain, amount, status, token, destToken, timestamp } = useMemo(() => {
+    if (item.type === TransferItemType.Local) {
+      const t = item.data;
+      return {
+        originChain: t.origin,
+        destChain: t.destination,
+        amount: t.amount,
+        status: t.status,
+        token: tryFindToken(warpCore, t.origin, t.originTokenAddressOrDenom),
+        destToken: tryFindToken(warpCore, t.destination, t.destTokenAddressOrDenom),
+        timestamp: t.timestamp,
+      };
+    }
+    const msg = item.data;
+    const originChain = multiProvider.tryGetChainName(msg.originDomainId) || '';
+    const destChain = multiProvider.tryGetChainName(msg.destinationDomainId) || '';
+    const token = tryFindToken(warpCore, originChain, msg.sender);
 
-  const msg = item.data;
-  const originChain = multiProvider.tryGetChainName(msg.originDomainId) || '';
-  const destChain = multiProvider.tryGetChainName(msg.destinationDomainId) || '';
-  const status =
-    msg.status === MessageStatus.Delivered
-      ? TransferStatus.Delivered
-      : TransferStatus.ConfirmedTransfer;
+    let amount = '';
+    if (msg.warpTransfer?.amount && token) {
+      const normalizedSender = normalizeAddress(msg.sender);
+      const routerInfo = routerAddressesByChainMap[originChain]?.[normalizedSender];
+      const wireDecimals = routerInfo?.wireDecimals ?? token.decimals;
+      try {
+        amount = fromWei(msg.warpTransfer.amount, wireDecimals);
+      } catch (err) {
+        logger.error('Failed to format warp transfer amount', err);
+      }
+    }
 
-  // Find token by sender (origin warp route address - the token contract)
-  const token = tryFindToken(warpCore, originChain, msg.sender);
-
-  // Format amount using wire decimals from precomputed map
-  let formattedAmount = '';
-  if (msg.warpTransfer?.amount && token) {
-    const normalizedSender = normalizeAddress(msg.sender);
-    const routerInfo = routerAddressesByChainMap[originChain]?.[normalizedSender];
-    const wireDecimals = routerInfo?.wireDecimals ?? token.decimals;
-    formattedAmount = fromWei(msg.warpTransfer.amount, wireDecimals);
-  }
+    return {
+      originChain,
+      destChain,
+      amount,
+      status:
+        msg.status === MessageStatus.Delivered
+          ? TransferStatus.Delivered
+          : TransferStatus.ConfirmedTransfer,
+      token,
+      destToken: tryFindToken(warpCore, destChain, msg.recipient),
+      timestamp: msg.origin.timestamp,
+    };
+  }, [item.type, item.data, multiProvider, warpCore, routerAddressesByChainMap]);
 
   return (
     <button onClick={onClick} className={`${styles.btn} justify-between py-3`}>
       <div className="flex gap-2.5">
-        <div className="sidebar-menu-chain-badge flex h-[2.25rem] w-[2.25rem] flex-col items-center justify-center rounded-full bg-gray-100 px-1.5">
-          <ChainLogo chainName={originChain} size={20} />
+        <div className="flex h-[2.25rem] w-[2.25rem] items-center justify-center">
+          {token ? (
+            <TokenChainIcon token={token} size={32} />
+          ) : (
+            <ChainLogo chainName={originChain} size={32} />
+          )}
         </div>
         <div className="flex flex-col">
-          <div className="flex flex-col">
-            <div className="items flex items-baseline">
-              {formattedAmount && (
-                <span className="sidebar-menu-token-text text-sm font-normal text-gray-800">
-                  {formattedAmount}
-                </span>
-              )}
-              <span
-                className={`sidebar-menu-token-text text-sm font-normal text-gray-800 ${
-                  formattedAmount ? 'ml-1' : ''
-                }`}
-              >
-                {token?.symbol || 'Unknown token'}
-              </span>
-            </div>
-            <div className="mt-1 flex flex-row items-center">
-              <span className="sidebar-menu-route-text text-xxs font-normal tracking-wide text-gray-900">
-                {getChainDisplayName(multiProvider, originChain, true)}
-              </span>
-              <Image
-                className="sidebar-menu-arrow mx-1"
-                src={ArrowRightIcon}
-                width={10}
-                height={10}
-                alt=""
-              />
-              <span className="sidebar-menu-route-text text-xxs font-normal tracking-wide text-gray-900">
-                {getChainDisplayName(multiProvider, destChain, true)}
-              </span>
-            </div>
-            <div className="sidebar-menu-time mt-1 w-full text-left text-xxs font-normal text-gray-500">
-              {formatTransferHistoryTimestamp(msg.origin.timestamp, nowMs)}
-            </div>
-          </div>
-        </div>
-      </div>
-      <div className="flex h-5 w-5">
-        {STATUSES_WITH_ICON.includes(status) ? (
-          <Image src={getIconByTransferStatus(status)} width={25} height={25} alt="" />
-        ) : (
-          <SpinnerIcon className="-ml-1 mr-3 h-5 w-5" />
-        )}
-      </div>
-    </button>
-  );
-}
-
-function LocalTransferSummary({
-  transfer,
-  onClick,
-  multiProvider,
-  warpCore,
-  nowMs,
-}: {
-  transfer: TransferContext;
-  onClick: () => void;
-  multiProvider: ReturnType<typeof useMultiProvider>;
-  warpCore: ReturnType<typeof useWarpCore>;
-  nowMs: number;
-}) {
-  const { amount, origin, destination, status, timestamp, originTokenAddressOrDenom } = transfer;
-  const token = tryFindToken(warpCore, origin, originTokenAddressOrDenom);
-
-  return (
-    <button key={timestamp} onClick={onClick} className={`${styles.btn} justify-between py-3`}>
-      <div className="flex gap-2.5">
-        <div className="sidebar-menu-chain-badge flex h-[2.25rem] w-[2.25rem] flex-col items-center justify-center rounded-full bg-gray-100 px-1.5">
-          <ChainLogo chainName={origin} size={20} />
-        </div>
-        <div className="flex flex-col">
-          <div className="flex flex-col">
-            <div className="items flex items-baseline">
+          <div className="flex items-baseline">
+            {amount && (
               <span className="sidebar-menu-token-text text-sm font-normal text-gray-800">
                 {amount}
               </span>
-              <span className="sidebar-menu-token-text ml-1 text-sm font-normal text-gray-800">
-                {token?.symbol || ''}
-              </span>
-            </div>
-            <div className="mt-1 flex flex-row items-center">
-              <span className="sidebar-menu-route-text text-xxs font-normal tracking-wide text-gray-900">
-                {getChainDisplayName(multiProvider, origin, true)}
-              </span>
-              <Image
-                className="sidebar-menu-arrow mx-1"
-                src={ArrowRightIcon}
-                width={10}
-                height={10}
-                alt=""
-              />
-              <span className="sidebar-menu-route-text text-xxs font-normal tracking-wide text-gray-900">
-                {getChainDisplayName(multiProvider, destination, true)}
-              </span>
-            </div>
-            <div className="sidebar-menu-time mt-1 w-full text-left text-xxs font-normal text-gray-500">
-              {formatTransferHistoryTimestamp(timestamp, nowMs)}
-            </div>
+            )}
+            <span
+              className={`sidebar-menu-token-text text-sm font-normal text-gray-800 ${amount ? 'ml-1' : ''}`}
+            >
+              {token?.symbol || 'Unknown token'}
+            </span>
+            {destToken && destToken.symbol !== token?.symbol && (
+              <>
+                <Image
+                  className="sidebar-menu-arrow mx-1"
+                  src={ArrowRightIcon}
+                  width={10}
+                  height={10}
+                  alt=""
+                />
+                {amount && (
+                  <span className="sidebar-menu-token-text text-sm font-normal text-gray-800">
+                    {amount}
+                  </span>
+                )}
+                <span className="sidebar-menu-token-text ml-1 text-sm font-normal text-gray-800">
+                  {destToken.symbol}
+                </span>
+              </>
+            )}
+          </div>
+          <div className="mt-1 flex items-center">
+            <span className="sidebar-menu-route-text text-xxs font-normal tracking-wide text-gray-900">
+              {getChainDisplayName(multiProvider, originChain, true)}
+            </span>
+            <Image
+              className="sidebar-menu-arrow mx-1"
+              src={ArrowRightIcon}
+              width={10}
+              height={10}
+              alt=""
+            />
+            <span className="sidebar-menu-route-text text-xxs font-normal tracking-wide text-gray-900">
+              {getChainDisplayName(multiProvider, destChain, true)}
+            </span>
+          </div>
+          <div className="sidebar-menu-time mt-1 w-full text-left text-xxs font-normal text-gray-500">
+            {formatTransferHistoryTimestamp(timestamp, nowMs)}
           </div>
         </div>
       </div>

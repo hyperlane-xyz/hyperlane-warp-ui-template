@@ -178,6 +178,7 @@ async function executeTransfer({
     /*
      If origin is a pruv chain and the token is USDC (IS_ORIGIN_DEFAULT),
      change the approval amount to (user input amount) + (bridge USDC fee).
+     Skip if allowance is already sufficient.
     */
     if (IS_ORIGIN_DEFAULT) {
       const bridgeFee = config.pruvOriginFeeUSDC[destination];
@@ -188,56 +189,65 @@ async function executeTransfer({
       const tokenAdapter = new EvmTokenAdapter(origin, multiProvider, {
         token: originToken.collateralAddressOrDenom || originToken.addressOrDenom,
       });
-      const approvalTx = await tokenAdapter.populateApproveTx({
-        weiAmountOrId: approvalAmountWei,
-        recipient: routerAddress,
-      });
 
-      // Replace the original approval transaction so we do not send two approvals
+      const needsApproval = await tokenAdapter.isApproveRequired(
+        sender,
+        routerAddress,
+        approvalAmountWei,
+      );
       const approvalIndex = txs.findIndex((tx) => tx.category === WarpTxCategory.Approval);
 
-      if (approvalIndex >= 0) {
-        txs[approvalIndex] = {
-          ...txs[approvalIndex],
-          transaction: approvalTx,
-        } as any;
-      } else {
-        const approvalTxObj = {
-          category: WarpTxCategory.Approval,
-          type: multiProvider.getProvider(origin).type,
-          transaction: approvalTx,
-        } as any;
-        txs.unshift(approvalTxObj);
+      if (needsApproval) {
+        const approvalTx = await tokenAdapter.populateApproveTx({
+          weiAmountOrId: approvalAmountWei,
+          recipient: routerAddress,
+        });
+
+        if (approvalIndex >= 0) {
+          txs[approvalIndex] = {
+            ...txs[approvalIndex],
+            transaction: approvalTx,
+          } as any;
+        } else {
+          const approvalTxObj = {
+            category: WarpTxCategory.Approval,
+            type: multiProvider.getProvider(origin).type,
+            transaction: approvalTx,
+          } as any;
+          txs.unshift(approvalTxObj);
+        }
+      } else if (approvalIndex >= 0) {
+        // Remove the SDK-added approval since sufficient allowance exists
+        txs.splice(approvalIndex, 1);
       }
     } else if (IS_NON_ORIGIN_DEFAULT) {
       // Add extra USDC approval transaction if origin is pruv and token is not USDC
-      const originProviderType = multiProvider.getProvider(origin).type;
-
-      // Get the bridge fee for the destination chain from config
       const bridgeFeeUSDC = config.pruvOriginFeeUSDC[destination];
-
-      // Calculate amount with USDC decimals: bridgeFee * 10^decimals
       const usdcAmount = bridgeFeeUSDC * Math.pow(10, config.pruvUSDCMetadata.decimals);
 
-      // Create EvmTokenAdapter for USDC contract
       const usdcTokenAdapter = new EvmTokenAdapter(origin, multiProvider, {
         token: config.pruvUSDCMetadata.address,
       });
 
-      // Use populateApproveTx to create the approval transaction
-      const populatedApprovalTx = await usdcTokenAdapter.populateApproveTx({
-        weiAmountOrId: usdcAmount.toString(),
-        recipient: originToken.addressOrDenom, // spender address
-      });
+      // Check if USDC approval is actually needed
+      const needsUSDCApproval = await usdcTokenAdapter.isApproveRequired(
+        sender,
+        originToken.addressOrDenom,
+        usdcAmount.toString(),
+      );
 
-      const usdcApprovalTx = {
-        category: WarpTxCategory.Approval,
-        type: originProviderType,
-        transaction: populatedApprovalTx,
-      } as any; // Type assertion to bypass TypeScript strict checking
+      if (needsUSDCApproval) {
+        const populatedApprovalTx = await usdcTokenAdapter.populateApproveTx({
+          weiAmountOrId: usdcAmount.toString(),
+          recipient: originToken.addressOrDenom,
+        });
 
-      // Insert the usdc approval transaction at the beginning
-      txs.unshift(usdcApprovalTx);
+        txs.unshift({
+          category: WarpTxCategory.Approval,
+          type: multiProvider.getProvider(origin).type,
+          transaction: populatedApprovalTx,
+        } as any);
+      }
     }
 
     // Pre-estimate gas via the CORS-resilient public client so wagmi doesn't

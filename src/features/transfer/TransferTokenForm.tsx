@@ -45,7 +45,7 @@ import { useIsAccountSanctioned } from '../sanctions/hooks/useIsAccountSanctione
 import { useStore } from '../store';
 import { SelectOrInputTokenIds } from '../tokens/SelectOrInputTokenIds';
 import { TokenSelectField } from '../tokens/TokenSelectField';
-import { useIsApproveRequired } from '../tokens/approval';
+import { useIsApproveRequired, useIsUSDCBridgeFeeApproveRequired } from '../tokens/approval';
 import {
   getDestinationNativeBalance,
   useDestinationBalance,
@@ -690,7 +690,18 @@ function ReviewDetails({
     };
   }, [amount, originToken, destinationToken, visible]);
 
-  const amountWei = isNft ? amount.toString() : toWei(amount, originToken?.decimals);
+  const isBridgeFeeUSDC = config.enablePruvOriginFeeUSDC && values.origin.startsWith('pruv');
+
+  // For USDC from pruv, include bridge fee in the approval amount check
+  let amountWei = isNft ? amount.toString() : toWei(amount, originToken?.decimals);
+  if (isBridgeFeeUSDC && originTokenSymbol === 'USDC') {
+    const bridgeFee = config.pruvOriginFeeUSDC[destination];
+    const parsedAmount = parseFloat(amount);
+    if (bridgeFee && !isNaN(parsedAmount)) {
+      const totalAmount = parsedAmount + bridgeFee;
+      amountWei = toWei(totalAmount.toString(), originToken?.decimals);
+    }
+  }
 
   const { isLoading: isApproveLoading, isApproveRequired } = useIsApproveRequired(
     originToken,
@@ -699,12 +710,18 @@ function ReviewDetails({
   );
   const { isLoading: isQuoteLoading, fees } = useFeeQuotes(values, visible);
 
-  const isLoading = isApproveLoading || isQuoteLoading;
+  // Check if USDC bridge fee approval is needed (for non-USDC tokens from pruv)
+  const { isLoading: isUSDCApproveLoading, isUSDCApproveRequired } =
+    useIsUSDCBridgeFeeApproveRequired(
+      values.origin,
+      destination,
+      originToken?.addressOrDenom,
+      visible && isBridgeFeeUSDC && originTokenSymbol !== 'USDC',
+    );
 
-  const isBridgeFeeUSDC = config.enablePruvOriginFeeUSDC && values.origin.startsWith('pruv');
+  const isLoading = isApproveLoading || isQuoteLoading || isUSDCApproveLoading;
 
-  // Check if we need to show usdc approval for pruv
-  const needAdditionalUSDCApproval = isBridgeFeeUSDC && originTokenSymbol !== 'USDC';
+  const needAdditionalUSDCApproval = isUSDCApproveRequired;
   const totalApprovals = (isApproveRequired ? 1 : 0) + (needAdditionalUSDCApproval ? 1 : 0);
   const receivedAmount = amount;
 

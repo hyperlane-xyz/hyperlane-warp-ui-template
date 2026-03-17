@@ -89,8 +89,12 @@ const securityHeaders = [
     : []),
 ];
 
-// Embed page headers: allow framing from any origin
-const embedCspHeader = cspHeader.replace("frame-ancestors 'none'", 'frame-ancestors *');
+// Embed page headers: allow framing from specified origins (default: any)
+const embedAllowedOrigins = process.env.NEXT_PUBLIC_EMBED_ALLOWED_ORIGINS || '*';
+const embedCspHeader = cspHeader.replace(
+  "frame-ancestors 'none'",
+  `frame-ancestors ${embedAllowedOrigins}`,
+);
 const embedSecurityHeaders = [
   {
     key: 'X-XSS-Protection',

@@ -26,7 +26,7 @@ const ALLOWED_PARAMS = new Set([
 ]);
 
 /** Strict hex color validation: 3, 4, 6, or 8 hex chars only. */
-const HEX_COLOR_RE = /^[0-9a-fA-F]{3}([0-9a-fA-F])?([0-9a-fA-F]{2})?([0-9a-fA-F]{2})?$/;
+const HEX_COLOR_RE = /^([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
 
 /**
  * Safely parse a hex color from a URL param.
@@ -40,8 +40,31 @@ function parseHexParam(params: URLSearchParams, name: string): string | null {
   return `#${value.toLowerCase()}`;
 }
 
-function shiftColor(hex: string, amount: number): string {
-  const num = parseInt(hex.replace('#', ''), 16);
+/** Normalize hex to 6-digit format. Expands 3-digit shorthand, strips alpha from 8-digit. */
+export function normalizeHex(hex: string): string {
+  let cleaned = hex.replace('#', '').toLowerCase();
+  if (cleaned.length === 3) {
+    cleaned = cleaned
+      .split('')
+      .map((c) => c + c)
+      .join('');
+  }
+  if (cleaned.length === 4) {
+    cleaned = cleaned
+      .slice(0, 3)
+      .split('')
+      .map((c) => c + c)
+      .join('');
+  }
+  if (cleaned.length === 8) {
+    cleaned = cleaned.slice(0, 6);
+  }
+  return `#${cleaned}`;
+}
+
+export function shiftColor(hex: string, amount: number): string {
+  const normalized = normalizeHex(hex);
+  const num = parseInt(normalized.replace('#', ''), 16);
   const r = Math.min(255, Math.max(0, ((num >> 16) & 0xff) + amount));
   const g = Math.min(255, Math.max(0, ((num >> 8) & 0xff) + amount));
   const b = Math.min(255, Math.max(0, (num & 0xff) + amount));

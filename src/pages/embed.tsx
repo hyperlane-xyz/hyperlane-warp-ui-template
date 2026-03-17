@@ -1,8 +1,11 @@
 import type { NextPage } from 'next';
 import Head from 'next/head';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { APP_NAME } from '../consts/app';
+import { useStore } from '../features/store';
 import { TransferTokenCard } from '../features/transfer/TransferTokenCard';
+import { TransfersDetailsModal } from '../features/transfer/TransfersDetailsModal';
+import { TransferContext } from '../features/transfer/types';
 import { parseEmbedTheme, themeToCssVars } from '../styles/embedTheme';
 
 /**
@@ -39,9 +42,37 @@ function usePostMessageBridge() {
   }, []);
 }
 
+/** Auto-opens TransfersDetailsModal when a new transfer starts. */
+function useAutoTransferModal() {
+  const transfers = useStore((s) => s.transfers);
+  const transferLoading = useStore((s) => s.transferLoading);
+  const [selectedTransfer, setSelectedTransfer] = useState<TransferContext | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const didMountRef = useRef(false);
+
+  useEffect(() => {
+    if (!didMountRef.current) {
+      didMountRef.current = true;
+      return;
+    } else if (transferLoading) {
+      setSelectedTransfer(transfers[transfers.length - 1]);
+      setIsOpen(true);
+    }
+    // Same pattern as SideBarMenu — open modal when new transfer detected
+  }, [transfers, transferLoading]);
+
+  const close = () => {
+    setIsOpen(false);
+    setSelectedTransfer(null);
+  };
+
+  return { selectedTransfer, isOpen, close };
+}
+
 const EmbedPage: NextPage = () => {
   usePostMessageBridge();
   const cssVars = useMemo(() => themeToCssVars(parseEmbedTheme()), []);
+  const { selectedTransfer, isOpen: isModalOpen, close: closeModal } = useAutoTransferModal();
 
   return (
     <>
@@ -55,6 +86,13 @@ const EmbedPage: NextPage = () => {
           <TransferTokenCard />
         </div>
       </div>
+      {selectedTransfer && (
+        <TransfersDetailsModal
+          isOpen={isModalOpen}
+          onClose={closeModal}
+          transfer={selectedTransfer}
+        />
+      )}
     </>
   );
 };

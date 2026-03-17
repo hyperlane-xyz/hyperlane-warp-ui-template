@@ -12,11 +12,31 @@ export interface EmbedTheme {
   error: string;
 }
 
-const HEX_COLOR_RE = /^[0-9a-fA-F]{3,8}$/;
+/** Only these param names are read from the URL. Anything else is ignored. */
+const ALLOWED_PARAMS = new Set([
+  'accent',
+  'bg',
+  'card',
+  'text',
+  'buttonText',
+  'border',
+  'error',
+  'mode',
+]);
 
+/** Strict hex color validation: 3, 4, 6, or 8 hex chars only. */
+const HEX_COLOR_RE = /^[0-9a-fA-F]{3}([0-9a-fA-F])?([0-9a-fA-F]{2})?([0-9a-fA-F]{2})?$/;
+
+/**
+ * Safely parse a hex color from a URL param.
+ * Returns null if the param is missing, not in the allowlist, or fails validation.
+ */
 function parseHexParam(params: URLSearchParams, name: string): string | null {
+  if (!ALLOWED_PARAMS.has(name)) return null;
   const value = params.get(name);
-  return value && HEX_COLOR_RE.test(value) ? `#${value}` : null;
+  if (!value || !HEX_COLOR_RE.test(value)) return null;
+  // Normalize to lowercase to prevent case-based injection tricks
+  return `#${value.toLowerCase()}`;
 }
 
 function shiftColor(hex: string, amount: number): string {
@@ -28,21 +48,21 @@ function shiftColor(hex: string, amount: number): string {
 }
 
 const LIGHT_DEFAULTS: EmbedTheme = {
-  accent: '#9A0DFF',
-  accentLight: '#C97EFF',
-  accentDark: '#7211B9',
+  accent: '#9a0dff',
+  accentLight: '#c97eff',
+  accentDark: '#7211b9',
   bg: 'transparent',
   card: '#ffffff',
   text: '#010101',
   buttonText: '#ffffff',
-  border: '#BFBFBF40',
+  border: '#bfbfbf40',
   error: '#dc2626',
 };
 
 const DARK_DEFAULTS: EmbedTheme = {
-  accent: '#9A0DFF',
-  accentLight: '#C97EFF',
-  accentDark: '#7211B9',
+  accent: '#9a0dff',
+  accentLight: '#c97eff',
+  accentDark: '#7211b9',
   bg: '#1a1a2e',
   card: '#16213e',
   text: '#e0e0e0',
@@ -51,12 +71,17 @@ const DARK_DEFAULTS: EmbedTheme = {
   error: '#ef4444',
 };
 
-/** Parse embed theme from current URL query params. */
+/** Allowed values for the mode param. */
+const ALLOWED_MODES = new Set(['dark', 'light']);
+
+/** Parse embed theme from current URL query params. Only allowlisted params are read. */
 export function parseEmbedTheme(): EmbedTheme {
   if (typeof window === 'undefined') return LIGHT_DEFAULTS;
 
   const params = getQueryParams();
-  const defaults = params.get('mode') === 'dark' ? DARK_DEFAULTS : LIGHT_DEFAULTS;
+  const mode = params.get('mode');
+  const defaults =
+    mode && ALLOWED_MODES.has(mode) && mode === 'dark' ? DARK_DEFAULTS : LIGHT_DEFAULTS;
   const accent = parseHexParam(params, 'accent') || defaults.accent;
 
   return {

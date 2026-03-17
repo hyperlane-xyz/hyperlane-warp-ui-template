@@ -27,8 +27,9 @@ body.embed-mode .bg-primary-500 {
   color: var(--embed-button-text) !important;
   box-shadow: none !important;
 }
-body.embed-mode .bg-accent-gradient:hover,
-body.embed-mode .bg-primary-500:hover,
+/* Hover only on interactive elements — not section headers or timeline bars */
+body.embed-mode button.bg-accent-gradient:hover,
+body.embed-mode button.bg-primary-500:hover,
 body.embed-mode .hover\:bg-primary-600:hover {
   background-color: var(--embed-accent-dark) !important;
 }
@@ -67,9 +68,11 @@ body.embed-mode .hover\:text-primary-700:hover path {
   fill: var(--embed-accent-dark) !important;
 }
 
-/* Hardcoded primary hex in SVG attributes */
+/* Hardcoded primary/accent hex in SVG attributes */
 body.embed-mode svg path[fill='#9A0DFF'],
-body.embed-mode svg path[fill='#9a0dff'] {
+body.embed-mode svg path[fill='#9a0dff'],
+body.embed-mode svg path[fill='#A62AFF'],
+body.embed-mode svg path[fill='#a62aff'] {
   fill: var(--embed-accent) !important;
 }
 

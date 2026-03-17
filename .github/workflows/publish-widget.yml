@@ -1,0 +1,107 @@
+name: Publish Warp Widget
+
+on:
+  # Phase 1: Create release PR when widget code changes land on nexus
+  push:
+    branches: [nexus]
+    paths:
+      - 'packages/warp-widget/**'
+
+  # Manual publish for testing
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g. 0.1.0). Leave empty to use package.json version.'
+        required: false
+        type: string
+
+jobs:
+  # Phase 1: Create a release PR
+  prepare-release:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get current version
+        id: version
+        run: |
+          VERSION=$(node -p "require('./packages/warp-widget/package.json').version")
+          echo "current=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Check if release PR already exists
+        id: check_pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          EXISTING=$(gh pr list --base nexus --head release/warp-widget --json number --jq '.[0].number // empty')
+          echo "exists=$EXISTING" >> $GITHUB_OUTPUT
+
+      - name: Skip if release PR exists
+        if: steps.check_pr.outputs.exists != ''
+        run: echo "Release PR #${{ steps.check_pr.outputs.exists }} already exists, skipping."
+
+      - name: Create release branch and PR
+        if: steps.check_pr.outputs.exists == ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=${{ steps.version.outputs.current }}
+          git checkout -b release/warp-widget
+          git push origin release/warp-widget
+          gh pr create \
+            --base nexus \
+            --head release/warp-widget \
+            --title "chore: release @hyperlane-xyz/warp-widget v${VERSION}" \
+            --body "## Release @hyperlane-xyz/warp-widget v${VERSION}
+
+          Merge this PR to publish \`@hyperlane-xyz/warp-widget@${VERSION}\` to npm."
+
+  # Phase 2: Publish when release PR is merged
+  publish:
+    if: >
+      (github.event_name == 'push' &&
+       contains(github.event.head_commit.message, 'chore: release @hyperlane-xyz/warp-widget')) ||
+      github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Set version from input
+        if: github.event.inputs.version != ''
+        working-directory: packages/warp-widget
+        run: npm version ${{ github.event.inputs.version }} --no-git-tag-version
+
+      - name: Build
+        working-directory: packages/warp-widget
+        run: pnpm build
+
+      - name: Publish to npm
+        working-directory: packages/warp-widget
+        run: pnpm publish --access public --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create git tag
+        run: |
+          VERSION=$(node -p "require('./packages/warp-widget/package.json').version")
+          git tag "warp-widget-v${VERSION}"
+          git push origin "warp-widget-v${VERSION}"

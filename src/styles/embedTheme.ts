@@ -22,6 +22,7 @@ const ALLOWED_PARAMS = new Set([
   'border',
   'error',
   'mode',
+  'routes',
 ]);
 
 /** Strict hex color validation: 3, 4, 6, or 8 hex chars only. */

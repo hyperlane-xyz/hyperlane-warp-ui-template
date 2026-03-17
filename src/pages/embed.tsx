@@ -1,3 +1,4 @@
+import { HyperlaneLogo } from '@hyperlane-xyz/widgets';
 import type { NextPage } from 'next';
 import Head from 'next/head';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -83,7 +84,14 @@ const EmbedPage: NextPage = () => {
       </Head>
       <div className="embed-container" style={cssVars as React.CSSProperties}>
         <div className="flex min-h-screen items-center justify-center p-2">
-          <TransferTokenCard />
+          <div>
+            <TransferTokenCard />
+            <div className="mt-2 flex items-center justify-end gap-1 pr-1 opacity-50">
+              <span className="text-xxs tracking-wide">Powered by</span>
+              <HyperlaneLogo width={12} height={12} color="currentColor" className="-mt-[2px]" />
+              <span className="text-xxs font-medium tracking-wide">Hyperlane</span>
+            </div>
+          </div>
         </div>
       </div>
       {selectedTransfer && (

@@ -89,6 +89,32 @@ const securityHeaders = [
     : []),
 ];
 
+// Embed page headers: allow framing from any origin
+const embedCspHeader = cspHeader.replace("frame-ancestors 'none'", 'frame-ancestors *');
+const embedSecurityHeaders = [
+  {
+    key: 'X-XSS-Protection',
+    value: '1; mode=block',
+  },
+  // No X-Frame-Options — allow embedding
+  {
+    key: 'X-Content-Type-Options',
+    value: 'nosniff',
+  },
+  {
+    key: 'Referrer-Policy',
+    value: 'strict-origin-when-cross-origin',
+  },
+  ...(ENABLE_CSP_HEADER
+    ? [
+        {
+          key: 'Content-Security-Policy',
+          value: embedCspHeader,
+        },
+      ]
+    : []),
+];
+
 const nextConfig = {
   webpack(config, { isServer }) {
     config.module.rules.push({
@@ -116,7 +142,11 @@ const nextConfig = {
   async headers() {
     return [
       {
-        source: '/(.*)',
+        source: '/embed',
+        headers: embedSecurityHeaders,
+      },
+      {
+        source: '/((?!embed).*)',
         headers: securityHeaders,
       },
     ];

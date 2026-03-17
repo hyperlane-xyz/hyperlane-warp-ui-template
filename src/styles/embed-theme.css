@@ -1,0 +1,243 @@
+/*
+ * Embed Theme Overrides
+ * =====================
+ * Applied when the embed page is active (body.embed-mode).
+ * Overrides Tailwind utility classes with CSS custom properties
+ * so integrators can theme the widget via URL params.
+ *
+ * CSS variables are set on both .embed-container (inline styles)
+ * and body (via useEmbedBodyClass) so portaled modals are also themed.
+ */
+
+/* --- Base container --- */
+.embed-container {
+  background-color: var(--embed-bg);
+  color: var(--embed-text);
+}
+
+/* ===================
+   Accent / Primary
+   =================== */
+
+/* Gradient buttons → solid accent */
+body.embed-mode .bg-accent-gradient,
+body.embed-mode .bg-primary-500 {
+  background-image: none !important;
+  background-color: var(--embed-accent) !important;
+  color: var(--embed-button-text) !important;
+  box-shadow: none !important;
+}
+body.embed-mode .bg-accent-gradient:hover,
+body.embed-mode .bg-primary-500:hover,
+body.embed-mode .hover\:bg-primary-600:hover {
+  background-color: var(--embed-accent-dark) !important;
+}
+
+/* Accent glow (section headers) */
+body.embed-mode .shadow-accent-glow {
+  box-shadow: none !important;
+}
+
+/* Primary-colored text (links, labels, active states) */
+body.embed-mode .text-primary-500 {
+  color: var(--embed-accent) !important;
+}
+body.embed-mode .text-primary-600,
+body.embed-mode .text-primary-700,
+body.embed-mode .hover\:text-primary-600:hover,
+body.embed-mode .hover\:text-primary-700:hover {
+  color: var(--embed-accent-dark) !important;
+}
+
+/* SVG fills via Tailwind arbitrary [&_path] selectors */
+body.embed-mode .\[\&_path\]\:fill-primary-500 path {
+  fill: var(--embed-accent) !important;
+}
+body.embed-mode .\[\&_path\]\:hover\:fill-primary-700:hover path {
+  fill: var(--embed-accent-dark) !important;
+}
+
+/* SVG fills via inline color={Color.primary[500]} props */
+body.embed-mode .text-primary-500 svg path,
+body.embed-mode .text-primary-500 path {
+  fill: var(--embed-accent) !important;
+}
+body.embed-mode .hover\:text-primary-700:hover svg path,
+body.embed-mode .hover\:text-primary-700:hover path {
+  fill: var(--embed-accent-dark) !important;
+}
+
+/* Hardcoded primary hex in SVG attributes */
+body.embed-mode svg path[fill='#9A0DFF'],
+body.embed-mode svg path[fill='#9a0dff'] {
+  fill: var(--embed-accent) !important;
+}
+
+/* Primary borders */
+body.embed-mode .border-primary-500 {
+  border-color: var(--embed-accent) !important;
+}
+body.embed-mode .border-primary-50 {
+  border-color: var(--embed-accent) !important;
+}
+
+/* Primary backgrounds (dividers, selected chain highlight) */
+body.embed-mode .bg-primary-50 {
+  background-color: var(--embed-border) !important;
+}
+body.embed-mode [class*='bg-primary-500/10'],
+body.embed-mode [class*='bg-primary-500\\/10'] {
+  background-color: color-mix(in srgb, var(--embed-accent) 10%, transparent) !important;
+}
+
+/* "All Chains" badge gradient */
+body.embed-mode .from-blue-400 {
+  --tw-gradient-from: var(--embed-accent-light) !important;
+}
+body.embed-mode .to-purple-500 {
+  --tw-gradient-to: var(--embed-accent) !important;
+}
+
+/* ===================
+   Error
+   =================== */
+body.embed-mode .bg-error-gradient {
+  background-image: none !important;
+  background-color: var(--embed-error) !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+}
+body.embed-mode .bg-error-gradient svg path {
+  fill: #ffffff !important;
+}
+
+/* ===================
+   Surfaces & Cards
+   =================== */
+body.embed-mode .bg-card-gradient {
+  background-image: none !important;
+  background-color: var(--embed-card) !important;
+}
+body.embed-mode .bg-white,
+body.embed-mode .htw-bg-white {
+  background-color: var(--embed-card) !important;
+}
+body.embed-mode .bg-gray-100 {
+  background-color: color-mix(in srgb, var(--embed-card) 95%, var(--embed-text) 5%) !important;
+}
+body.embed-mode .bg-gray-150 {
+  background-color: color-mix(in srgb, var(--embed-card) 90%, var(--embed-text) 10%) !important;
+}
+body.embed-mode .to-gray-100 {
+  --tw-gradient-to: color-mix(in srgb, var(--embed-card) 95%, var(--embed-text) 5%) !important;
+}
+
+/* Disabled buttons */
+body.embed-mode button:disabled {
+  background-image: none !important;
+}
+
+/* ===================
+   Shadows
+   =================== */
+body.embed-mode .shadow-card {
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1) !important;
+}
+body.embed-mode .shadow-input {
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.08) !important;
+}
+body.embed-mode .shadow-button {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* ===================
+   Text Colors
+   =================== */
+body.embed-mode .text-black {
+  color: var(--embed-text) !important;
+}
+body.embed-mode .text-gray-900 {
+  color: var(--embed-text) !important;
+}
+body.embed-mode .text-gray-700 {
+  color: color-mix(in srgb, var(--embed-text) 80%, transparent) !important;
+}
+body.embed-mode .text-gray-600 {
+  color: color-mix(in srgb, var(--embed-text) 70%, transparent) !important;
+}
+body.embed-mode .text-gray-500 {
+  color: color-mix(in srgb, var(--embed-text) 55%, transparent) !important;
+}
+body.embed-mode .text-gray-450 {
+  color: color-mix(in srgb, var(--embed-text) 60%, transparent) !important;
+}
+body.embed-mode .text-gray-400 {
+  color: color-mix(in srgb, var(--embed-text) 45%, transparent) !important;
+}
+body.embed-mode .text-cream-100 {
+  color: var(--embed-button-text) !important;
+}
+
+/* Token select chevron — inline fill={Color.gray[900]} */
+body.embed-mode .drop-shadow-button svg path {
+  fill: var(--embed-text) !important;
+}
+
+/* ===================
+   Borders
+   =================== */
+body.embed-mode .border-gray-400\/25,
+body.embed-mode .border-gray-400\/50,
+body.embed-mode .border-gray-400 {
+  border-color: var(--embed-border) !important;
+}
+body.embed-mode .border-gray-200,
+body.embed-mode .border-gray-300 {
+  border-color: var(--embed-border) !important;
+}
+body.embed-mode .border-gray-100 {
+  border-color: color-mix(in srgb, var(--embed-border) 50%, transparent) !important;
+}
+
+/* ===================
+   Hover States
+   =================== */
+body.embed-mode .hover\:bg-gray-50:hover {
+  background-color: color-mix(in srgb, var(--embed-card) 95%, var(--embed-text) 5%) !important;
+}
+body.embed-mode .hover\:bg-gray-100:hover {
+  background-color: color-mix(in srgb, var(--embed-card) 90%, var(--embed-text) 10%) !important;
+}
+body.embed-mode .hover\:bg-gray-200:hover {
+  background-color: color-mix(in srgb, var(--embed-card) 85%, var(--embed-text) 15%) !important;
+}
+
+/* ===================
+   Inputs
+   =================== */
+body.embed-mode input:focus {
+  border-color: var(--embed-accent) !important;
+}
+
+/* ===================
+   Chain Edit Modal
+   =================== */
+body.embed-mode .chain-edit-container a {
+  color: var(--embed-accent) !important;
+}
+body.embed-mode .chain-edit-container a:hover {
+  color: var(--embed-accent-dark) !important;
+}
+
+/* ===================
+   Scrollbar
+   =================== */
+body.embed-mode {
+  scrollbar-color: var(--embed-accent-light) transparent;
+}
+body.embed-mode ::-webkit-scrollbar-thumb {
+  background: var(--embed-accent-light) !important;
+}
+body.embed-mode ::-webkit-scrollbar-track {
+  background: transparent !important;
+}

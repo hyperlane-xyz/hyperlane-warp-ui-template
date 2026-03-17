@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Analytics } from '@vercel/analytics/react';
 import type { AppProps } from 'next/app';
 import { useRouter } from 'next/router';
+import { useEffect } from 'react';
 import { ToastContainer, Zoom } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import '../../sentry.client.config';
@@ -18,6 +19,7 @@ import { SolanaWalletContext } from '../features/wallet/context/SolanaWalletCont
 import { StarknetWalletContext } from '../features/wallet/context/StarknetWalletContext';
 import { TronWalletContext } from '../features/wallet/context/TronWalletContext';
 import '../styles/embed-theme.css';
+import { parseEmbedTheme } from '../styles/embedTheme';
 import '../styles/globals.css';
 import '../vendor/inpage-metamask';
 import '../vendor/polyfill';
@@ -30,9 +32,29 @@ const reactQueryClient = new QueryClient({
   },
 });
 
+/**
+ * Sets embed-mode class + CSS variables on <body> early so the loading
+ * screen (WarpContextInitGate) is also themed.
+ */
+function useEarlyEmbedMode(isEmbed: boolean) {
+  useEffect(() => {
+    if (!isEmbed) return;
+    document.body.classList.add('embed-mode');
+    const theme = parseEmbedTheme();
+    const { style } = document.body;
+    for (const [key, value] of Object.entries(theme)) {
+      const varName = `--embed-${key.replace(/[A-Z]/g, (c) => '-' + c.toLowerCase())}`;
+      style.setProperty(varName, value);
+    }
+    return () => document.body.classList.remove('embed-mode');
+  }, [isEmbed]);
+}
+
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
   const isEmbed = router.pathname === '/embed';
+
+  useEarlyEmbedMode(isEmbed);
 
   // Disable app SSR for now as it's not needed and
   // complicates wallet and graphql integrations

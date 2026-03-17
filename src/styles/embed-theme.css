@@ -114,6 +114,22 @@ body.embed-mode .bg-error-gradient svg path {
 /* ===================
    Surfaces & Cards
    =================== */
+
+/* Loading screen (WarpContextInitGate) */
+body.embed-mode .bg-app-gradient {
+  background-image: none !important;
+  background-color: var(--embed-bg, transparent) !important;
+}
+/* Spinner: circle = light ring (stroke only), path = spinning arc (fill only) */
+body.embed-mode .bg-app-gradient svg circle {
+  stroke: var(--embed-accent) !important;
+  fill: none !important;
+}
+body.embed-mode .bg-app-gradient svg path {
+  fill: var(--embed-accent) !important;
+  stroke: none !important;
+}
+
 body.embed-mode .bg-card-gradient {
   background-image: none !important;
   background-color: var(--embed-card) !important;

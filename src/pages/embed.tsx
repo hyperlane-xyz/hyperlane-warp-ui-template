@@ -1,6 +1,6 @@
 import type { NextPage } from 'next';
 import Head from 'next/head';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { type CSSProperties, useEffect, useMemo, useRef, useState } from 'react';
 import { APP_NAME } from '../consts/app';
 import { useStore } from '../features/store';
 import { TransferTokenCard } from '../features/transfer/TransferTokenCard';
@@ -81,7 +81,7 @@ const EmbedPage: NextPage = () => {
         <title>{APP_NAME}</title>
         <meta name="robots" content="noindex, nofollow" />
       </Head>
-      <div className="embed-container" style={cssVars as React.CSSProperties}>
+      <div className="embed-container" style={cssVars as CSSProperties}>
         <div className="flex min-h-screen items-center justify-center p-2">
           <TransferTokenCard />
         </div>

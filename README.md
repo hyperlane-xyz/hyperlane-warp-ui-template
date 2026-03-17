@@ -110,7 +110,7 @@ Once deployed (e.g., to Vercel), the embed is available at `/embed`:
 
 You can pre-select transfer routes using query params:
 
-```
+```text
 /embed?origin=ethereum&destination=arbitrum&originToken=USDC&destinationToken=USDC
 ```
 
@@ -164,11 +164,19 @@ window.addEventListener('message', (event) => {
 
 If your site has a Content Security Policy that blocks iframes, you'll need to allow the Warp UI origin in your CSP `frame-src` directive:
 
-```
+```text
 Content-Security-Policy: frame-src https://your-warp-ui-domain.com;
 ```
 
 For sites where you can't modify CSP headers (e.g., WordPress, Shopify), check if the platform has an iframe allowlist setting, or use a reverse proxy to serve the embed from your own domain.
+
+If you self-host the Warp UI and want to restrict which sites can embed it, set the `NEXT_PUBLIC_EMBED_ALLOWED_ORIGINS` environment variable:
+
+```text
+NEXT_PUBLIC_EMBED_ALLOWED_ORIGINS=https://app-a.com https://app-b.com
+```
+
+If not set, any site can embed the widget (default: `*`).
 
 ## Deployment
 

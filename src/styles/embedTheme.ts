@@ -12,8 +12,8 @@ export interface EmbedTheme {
   error: string;
 }
 
-/** Only these param names are read from the URL. Anything else is ignored. */
-const ALLOWED_PARAMS = new Set([
+/** Known URL params recognized by the embed page. Anything else is ignored. */
+const KNOWN_URL_PARAMS = new Set([
   'accent',
   'bg',
   'card',
@@ -33,7 +33,7 @@ const HEX_COLOR_RE = /^([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]
  * Returns null if the param is missing, not in the allowlist, or fails validation.
  */
 function parseHexParam(params: URLSearchParams, name: string): string | null {
-  if (!ALLOWED_PARAMS.has(name)) return null;
+  if (!KNOWN_URL_PARAMS.has(name)) return null;
   const value = params.get(name);
   if (!value || !HEX_COLOR_RE.test(value)) return null;
   // Normalize to lowercase to prevent case-based injection tricks

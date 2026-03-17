@@ -16,8 +16,12 @@
     }
   },
   "files": ["/dist"],
+  "sideEffects": false,
   "scripts": {
     "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/",
+    "prettier": "prettier --write src/",
     "clean": "rm -rf dist",
     "prepublishOnly": "pnpm build"
   },
@@ -30,7 +34,12 @@
     }
   },
   "devDependencies": {
+    "@eslint/js": "^9.0.0",
     "@types/react": "^18.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint": "^9.0.0",
+    "prettier": "^3.2.5",
     "react": "^18.0.0",
     "typescript": "^5.0.0"
   },

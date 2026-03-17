@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { type CSSProperties, useEffect, useMemo, useRef } from 'react';
 import { createWarpWidget } from './index.js';
 import type { WarpWidgetConfig, WarpWidgetEvent } from './types.js';
 
@@ -21,7 +21,16 @@ interface HyperlaneWarpWidgetProps {
   /** CSS class name for the container div */
   className?: string;
   /** Inline styles for the container div */
-  style?: React.CSSProperties;
+  style?: CSSProperties;
+}
+
+/** Stable JSON serialization with sorted keys to avoid spurious iframe re-mounts. */
+function stableStringify(value: unknown): string {
+  return JSON.stringify(value, (_, v) =>
+    v && typeof v === 'object' && !Array.isArray(v)
+      ? Object.fromEntries(Object.entries(v).sort(([a], [b]) => a.localeCompare(b)))
+      : v,
+  );
 }
 
 /**
@@ -47,18 +56,27 @@ export function HyperlaneWarpWidget({
   style,
 }: HyperlaneWarpWidgetProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const configRef = useRef(config);
   const onEventRef = useRef(onEvent);
+  configRef.current = config;
   onEventRef.current = onEvent;
 
-  // Serialize config for stable dependency comparison
-  const configKey = JSON.stringify(config ?? {});
+  // Memoize config key for stable dependency — avoids iframe recreation on identical configs
+  const configKey = useMemo(() => stableStringify(config ?? {}), [config]);
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
-    const widget = createWarpWidget({ container, config, width, height });
+    const widget = createWarpWidget({
+      container,
+      config: configRef.current,
+      width,
+      height,
+    });
 
+    // Subscribe to known event types.
+    // When new events are added to the embed protocol, add subscriptions here.
     const unsubReady = widget.on('ready', (payload) => {
       onEventRef.current?.({ type: 'ready', payload });
     });

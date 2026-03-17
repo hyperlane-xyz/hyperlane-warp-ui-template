@@ -1,8 +1,7 @@
 import type { WarpWidgetConfig } from './types.js';
 
-export const EMBED_BASE_URL =
-  'https://hyperlane-warp-template-git-xaroz-warp-widget-sdk-abacus-works.vercel.app/embed';
-const HEX_RE = /^#?[0-9a-fA-F]{3,8}$/;
+export const EMBED_BASE_URL = 'https://nexus.hyperlane.xyz/embed';
+const HEX_RE = /^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
 
 /** Strip leading # from hex color values */
 function normalizeHex(value: string): string {

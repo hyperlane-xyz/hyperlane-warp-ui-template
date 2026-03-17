@@ -1,7 +1,14 @@
 import type { WarpWidgetEvent, WarpWidgetInstance, WarpWidgetOptions } from './types.js';
 import { EMBED_BASE_URL, buildEmbedUrl } from './url.js';
 
-export type { WarpWidgetConfig, WarpWidgetDefaults, WarpWidgetEvent, WarpWidgetInstance, WarpWidgetOptions, WarpWidgetTheme } from './types.js';
+export type {
+  WarpWidgetConfig,
+  WarpWidgetDefaults,
+  WarpWidgetEvent,
+  WarpWidgetInstance,
+  WarpWidgetOptions,
+  WarpWidgetTheme,
+} from './types.js';
 export { buildEmbedUrl } from './url.js';
 
 const WIDGET_MESSAGE_TYPE = 'hyperlane-warp-widget';
@@ -42,6 +49,7 @@ export function createWarpWidget(options: WarpWidgetOptions): WarpWidgetInstance
   container.appendChild(iframe);
 
   // Event system
+  let destroyed = false;
   const listeners = new Map<string, Set<(payload?: Record<string, unknown>) => void>>();
 
   const onMessage = (event: MessageEvent) => {
@@ -64,12 +72,14 @@ export function createWarpWidget(options: WarpWidgetOptions): WarpWidgetInstance
   window.addEventListener('message', onMessage);
 
   const destroy = () => {
+    destroyed = true;
     window.removeEventListener('message', onMessage);
     listeners.clear();
     iframe.remove();
   };
 
   const on = (event: string, cb: (payload?: Record<string, unknown>) => void): (() => void) => {
+    if (destroyed) return () => {};
     if (!listeners.has(event)) {
       listeners.set(event, new Set());
     }

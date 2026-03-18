@@ -58,7 +58,11 @@ export function ConnectAwareSubmitButton<FormValues = any>({
 
   return (
     <SolidButton
+<<<<<<< HEAD
       disabled={disabled}
+=======
+      disabled={disabled && isAccountReady}
+>>>>>>> origin/main
       type={type}
       color={color}
       onClick={onClick}

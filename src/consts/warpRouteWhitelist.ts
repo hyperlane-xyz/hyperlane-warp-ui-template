@@ -7,3 +7,21 @@ export const warpRouteWhitelist: Array<string> | null = null;
 // [
 //   // 'ETH/ethereum-viction'
 // ];
+
+/**
+ * Returns the effective warp route whitelist.
+ * On the /embed route, the `routes` URL param overrides the static whitelist.
+ */
+export function getWarpRouteWhitelist(): Array<string> | null {
+  if (typeof window !== 'undefined' && window.location.pathname === '/embed') {
+    const params = new URLSearchParams(window.location.search);
+    const routes = params.get('routes');
+    if (routes) {
+      return routes
+        .split(',')
+        .map((id) => id.trim())
+        .filter(Boolean);
+    }
+  }
+  return warpRouteWhitelist;
+}

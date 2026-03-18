@@ -2,17 +2,27 @@ import { WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
 import { Modal, Skeleton, Tooltip } from '@hyperlane-xyz/widgets';
 import Link from 'next/link';
 import { links } from '../../consts/links';
+<<<<<<< HEAD
+=======
+import { UsdLabel } from '../balances/UsdLabel';
+import { FeePrices } from '../balances/useFeePrices';
+>>>>>>> origin/main
 
 export function TransferFeeModal({
   isOpen,
   close,
   fees,
   isLoading,
+<<<<<<< HEAD
+=======
+  feePrices,
+>>>>>>> origin/main
 }: {
   isOpen: boolean;
   close: () => void;
   fees: WarpCoreFeeEstimate | null;
   isLoading: boolean;
+<<<<<<< HEAD
 }) {
   return (
     <Modal
@@ -23,6 +33,16 @@ export function TransferFeeModal({
       showCloseButton
     >
       <div className="flex w-full flex-col items-start gap-2 text-sm">
+=======
+  feePrices: FeePrices;
+}) {
+  return (
+    <Modal isOpen={isOpen} close={close} panelClassname="p-0 max-w-sm md:max-w-128 overflow-hidden">
+      <div className="w-full bg-accent-gradient px-4 py-2.5 font-secondary text-base font-normal tracking-wider text-white shadow-accent-glow">
+        Fee Details
+      </div>
+      <div className="flex w-full flex-col items-start gap-2 p-4 text-sm">
+>>>>>>> origin/main
         {fees?.localQuote && fees.localQuote.amount > 0n && (
           <div className="flex gap-4">
             <span className="flex min-w-[7.5rem] items-center gap-1">
@@ -34,11 +54,20 @@ export function TransferFeeModal({
               />
             </span>
             {isLoading ? (
+<<<<<<< HEAD
               <Skeleton className="h-4 w-52" />
             ) : (
               <span>{`${fees.localQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${
                 fees.localQuote.token.symbol || ''
               }`}</span>
+=======
+              <Skeleton className="h-4 w-40 sm:w-72" />
+            ) : (
+              <span>
+                {`${fees.localQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${fees.localQuote.token.symbol || ''}`}
+                <UsdLabel tokenAmount={fees.localQuote} feePrices={feePrices} />
+              </span>
+>>>>>>> origin/main
             )}
           </div>
         )}
@@ -53,11 +82,20 @@ export function TransferFeeModal({
               />
             </span>
             {isLoading ? (
+<<<<<<< HEAD
               <Skeleton className="h-4 w-52" />
             ) : (
               <span>{`${fees.interchainQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${
                 fees.interchainQuote.token.symbol || ''
               }`}</span>
+=======
+              <Skeleton className="h-4 w-40 sm:w-72" />
+            ) : (
+              <span>
+                {`${fees.interchainQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${fees.interchainQuote.token.symbol || ''}`}
+                <UsdLabel tokenAmount={fees.interchainQuote} feePrices={feePrices} />
+              </span>
+>>>>>>> origin/main
             )}
           </div>
         )}
@@ -67,11 +105,20 @@ export function TransferFeeModal({
               Token Fee <Tooltip content="Variable fee based on amount" id="token-fee-tooltip" />
             </span>
             {isLoading ? (
+<<<<<<< HEAD
               <Skeleton className="h-4 w-52" />
             ) : (
               <span>{`${fees.tokenFeeQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${
                 fees.tokenFeeQuote.token.symbol || ''
               }`}</span>
+=======
+              <Skeleton className="h-4 w-40 sm:w-72" />
+            ) : (
+              <span>
+                {`${fees.tokenFeeQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${fees.tokenFeeQuote.token.symbol || ''}`}
+                <UsdLabel tokenAmount={fees.tokenFeeQuote} feePrices={feePrices} />
+              </span>
+>>>>>>> origin/main
             )}
           </div>
         )}

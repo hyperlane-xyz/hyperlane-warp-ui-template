@@ -46,6 +46,18 @@ NEXT_PUBLIC_WALLET_CONNECT_ID=<projectId> pnpm run dev
 ### Test
 
 ```sh
+# Run unit tests
+pnpm test
+
+# Run E2E tests (reuses running dev server, or starts one via Playwright)
+pnpm test:e2e
+
+# Run E2E tests with headed browser and slow motion for debugging
+SLOW_MO=2000 pnpm test:e2e --headed --workers=1
+
+# Run a single E2E test file with headed browser
+SLOW_MO=2000 pnpm test:e2e --headed --workers=1 tests/wallet-connect/protocol-wallet-modals.spec.ts
+
 # Lint check code
 pnpm run lint
 
@@ -65,6 +77,18 @@ pnpm run prettier
 ```sh
 # Delete build artifacts to start fresh
 pnpm run clean
+```
+
+### Local package linking to hyperlane-monorepo
+
+If you have to make changes to the widgets package to edit e.g. the Connect Button or other components linking
+the widgets package locally to test it is necessary. To do that you can run the following commands
+
+```sh
+# Link monorepo packages with the warp-ui
+pnpm link:monorepo
+# Unlink packages again after testing
+pnpm unlink:monorepo
 ```
 
 ## Deployment

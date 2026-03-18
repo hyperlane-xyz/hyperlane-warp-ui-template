@@ -3,8 +3,17 @@ import { objKeys } from '@hyperlane-xyz/utils';
 import { chainsRentEstimate } from '../../consts/chains';
 import { logger } from '../../utils/logger';
 import { getPromisesFulfilledValues } from '../../utils/promises';
-import { TokensWithDestinationBalance, TokenWithFee } from '../tokens/types';
-import { getTokensWithSameCollateralAddresses, isValidMultiCollateralToken } from '../tokens/utils';
+import {
+  DefaultMultiCollateralRoutes,
+  TokensWithDestinationBalance,
+  TokenWithFee,
+} from '../tokens/types';
+import {
+  findRouteToken,
+  getTokensWithSameCollateralAddresses,
+  isValidMultiCollateralToken,
+  tryGetDefaultOriginToken,
+} from '../tokens/utils';
 
 // Compare two objects with balance field in descending order (highest first)
 export function compareByBalanceDesc(a: { balance: bigint }, b: { balance: bigint }) {
@@ -87,32 +96,59 @@ export function getInterchainQuote(
     : interchainQuote;
 }
 
-// Checks if a token is a multi-collateral token and if so
-// look for other tokens that are the same and returns
-// the one with the lowest fee
-export async function getLowestFeeTransferToken(
+// Checks if a token is a multi-collateral token and returns:
+// 1. The default token if configured in defaultMultiCollateralRoutes (bypasses fee lookup)
+// 2. Otherwise, the token with the lowest fee from tokens with same collateral
+export async function getTransferToken(
   warpCore: WarpCore,
   originToken: Token,
   destinationToken: IToken,
   amountWei: string,
   recipient: string,
   sender: string | undefined,
+  defaultMultiCollateralRoutes?: DefaultMultiCollateralRoutes,
 ) {
-  if (!isValidMultiCollateralToken(originToken, destinationToken)) return originToken;
+  // Find the actual warpCore token that has the route
+  // Because we deduplicated tokens with the same collateral, the current token pair
+  // might not be correct, so it is necessary to get the correct token pair.
+  // Make sure to have used `checkTokenHasRoute` before calling getTransferToken
+  // as that will validate that the token pair actually refer to the same asset
+  // originRouteToken may differ from originToken due to collateral dedup —
+  // it's the actual warpCore token with the connection to destinationChain
+  const originRouteToken = findRouteToken(warpCore, originToken, destinationToken);
+  if (!originRouteToken) {
+    // No route exists, return original token (validation will catch this)
+    return originToken;
+  }
+
+  if (!isValidMultiCollateralToken(originRouteToken, destinationToken)) {
+    return originRouteToken;
+  }
 
   const tokensWithSameCollateralAddresses = getTokensWithSameCollateralAddresses(
     warpCore,
-    originToken,
+    originRouteToken,
     destinationToken,
   );
 
   // if only one token exists then just return that one
-  if (tokensWithSameCollateralAddresses.length <= 1) return originToken;
+  if (tokensWithSameCollateralAddresses.length <= 1) return originRouteToken;
 
   logger.debug(
     'Multiple multi-collateral tokens found for same collateral address, retrieving routes with collateral balance...',
   );
 
+  // Check for default multi-collateral route first (bypasses fee lookup)
+  const defaultToken = tryGetDefaultOriginToken(
+    originToken,
+    destinationToken,
+    defaultMultiCollateralRoutes,
+    tokensWithSameCollateralAddresses,
+  );
+  if (defaultToken) {
+    logger.debug('Using default multi-collateral route');
+    return defaultToken;
+  }
   // fetch each destination token balance
   const balanceResults = await Promise.allSettled(
     tokensWithSameCollateralAddresses.map(async ({ originToken, destinationToken }) => {
@@ -128,7 +164,7 @@ export async function getLowestFeeTransferToken(
   const validBalanceResults = getPromisesFulfilledValues(balanceResults);
 
   const tokenBalances = filterAndSortTokensByBalance(validBalanceResults, BigInt(amountWei));
-  if (!tokenBalances.length) return originToken;
+  if (!tokenBalances.length) return originRouteToken;
 
   logger.debug('Retrieving fees for multi-collateral routes...');
   // fetch each route fees

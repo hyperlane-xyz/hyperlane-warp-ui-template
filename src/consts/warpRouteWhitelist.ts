@@ -390,4 +390,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // citrea
   'ctUSD/citrea',
+
+  // paradex
+  'DIME/paradex',
 ];

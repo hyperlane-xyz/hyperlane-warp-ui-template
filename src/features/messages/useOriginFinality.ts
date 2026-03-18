@@ -17,7 +17,7 @@ export function useOriginFinality(
   const multiProvider = useMultiProvider();
 
   const { data } = useQuery({
-    // eslint-disable-next-line @tanstack/query/exhaustive-deps -- multiProvider is stable
+    // eslint-disable-next-line @tanstack/query/exhaustive-deps -- multiProvider is not serializable
     queryKey: ['originFinality', origin, originBlockNumber],
     queryFn: async () => {
       if (!origin || !originBlockNumber) return false;

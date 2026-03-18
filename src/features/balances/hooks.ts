@@ -141,6 +141,7 @@ export function useTokenBalances(tokens: Token[], scope: string, addressOverride
   );
 
   const { data: balances = {}, isLoading } = useQuery({
+    // eslint-disable-next-line @tanstack/query/exhaustive-deps -- effectiveAddresses derived from addressEntries; tokens covered by tokenKeys; multiProvider is not serializable
     queryKey: ['tokenBalances', addressEntries, scope, tokenKeys],
     queryFn: async (): Promise<Record<string, bigint>> => {
       const promises: Promise<Record<string, bigint>>[] = [];

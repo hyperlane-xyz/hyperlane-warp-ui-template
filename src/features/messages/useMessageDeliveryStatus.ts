@@ -15,6 +15,8 @@ export interface MessageDeliveryResult {
   destinationTxHash?: string;
   /** Origin timestamp in ms */
   originTimestamp?: number;
+  /** Origin block height from GraphQL (fallback for page refresh) */
+  originBlockHeight?: number;
   /** Loading state */
   isLoading: boolean;
 }
@@ -60,6 +62,7 @@ export function useMessageDeliveryStatus(
     isDelivered: data?.isDelivered ?? false,
     destinationTxHash: data?.destinationTxHash,
     originTimestamp: data?.originTimestamp,
+    originBlockHeight: data?.originBlockHeight,
     isLoading,
   };
 }
@@ -77,5 +80,6 @@ function parseDeliveryResult(
         ? postgresByteaToTxHash(entry.destination_tx_hash, destMetadata)
         : undefined,
     originTimestamp: parseTimestamp(entry.send_occurred_at),
+    originBlockHeight: entry.origin_block_height,
   };
 }

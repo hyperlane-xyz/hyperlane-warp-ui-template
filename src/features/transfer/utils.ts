@@ -182,7 +182,7 @@ export async function isSmartContract(
 
 const VALIDATION_TIME_EST = 5; // seconds
 const DEFAULT_BLOCK_TIME_EST = 3; // seconds
-const DEFAULT_FINALITY_BLOCKS = 3;
+export const DEFAULT_FINALITY_BLOCKS = 3;
 
 /**
  * Estimate total delivery time in seconds using chain metadata.

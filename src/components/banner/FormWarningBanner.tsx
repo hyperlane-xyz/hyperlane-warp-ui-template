@@ -10,7 +10,7 @@ export function FormWarningBanner({
   return (
     <div>
       <WarningBanner
-        className={clsx('absolute left-0 right-0 top-0 z-10', className)}
+        className={clsx('absolute -top-4 left-0 right-0 z-10', className)}
         isVisible={isVisible}
         {...props}
       />

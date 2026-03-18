@@ -1,3 +1,7 @@
+import { ChainName, ChainStatus } from '@hyperlane-xyz/sdk';
+import { ProtocolType } from '@hyperlane-xyz/utils';
+import { useMemo } from 'react';
+import { config } from '../../consts/config';
 import { useStore } from '../store';
 import { getChainDisplayName } from './utils';
 
@@ -27,4 +31,37 @@ export function useChainProtocol(chainName?: ChainName) {
 export function useChainDisplayName(chainName: ChainName, shortName = false) {
   const multiProvider = useMultiProvider();
   return getChainDisplayName(multiProvider, chainName, shortName);
+}
+
+export interface ChainInfo {
+  name: string;
+  displayName: string;
+  chainId: ChainId;
+  protocol: ProtocolType;
+  isTestnet: boolean;
+  disabled: boolean;
+}
+
+export function useChainInfos(): ChainInfo[] {
+  const chainMetadata = useStore((s) => s.chainMetadata);
+
+  return useMemo(() => {
+    const chainInfos = Object.values(chainMetadata).map((chain) => ({
+      name: chain.name,
+      displayName: chain.displayName || chain.name,
+      chainId: chain.chainId,
+      protocol: chain.protocol,
+      isTestnet: !!chain.isTestnet,
+      disabled: config.shouldDisableChains && chain.availability?.status === ChainStatus.Disabled,
+    }));
+    return chainInfos;
+  }, [chainMetadata]);
+}
+
+export function useDisabledChains(): Set<string> {
+  const chainInfos = useChainInfos();
+  return useMemo(
+    () => new Set(chainInfos.filter((c) => c.disabled).map((c) => c.name)),
+    [chainInfos],
+  );
 }

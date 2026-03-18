@@ -57,6 +57,7 @@ export function useMessageHistory(
 
   const { data, isLoading, isFetchingNextPage, error, hasNextPage, fetchNextPage } =
     useInfiniteQuery({
+      // eslint-disable-next-line @tanstack/query/exhaustive-deps -- multiProvider is not serializable
       queryKey,
       queryFn: async ({ pageParam }): Promise<PageResult> => {
         const wallets = JSON.parse(walletKey);

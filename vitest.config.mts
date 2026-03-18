@@ -5,6 +5,6 @@ export default defineConfig({
   plugins: [tsconfigPaths()],
   assetsInclude: ['**/*.yaml'],
   test: {
-    exclude: ['tests/**', 'node_modules/**', 'packages/**/node_modules/**'],
+    exclude: ['tests/**', 'node_modules/**'],
   },
 });

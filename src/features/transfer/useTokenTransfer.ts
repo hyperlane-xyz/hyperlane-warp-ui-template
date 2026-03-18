@@ -229,8 +229,13 @@ async function executeTransfer({
       : undefined;
 
     const originTxHash = hashes.at(-1);
+    const originBlockNumber =
+      txReceipt?.receipt && 'blockNumber' in txReceipt.receipt
+        ? Number(txReceipt.receipt.blockNumber)
+        : undefined;
     updateTransferStatus(transferIndex, (transferStatus = TransferStatus.ConfirmedTransfer), {
       originTxHash,
+      originBlockNumber,
       msgId,
     });
 

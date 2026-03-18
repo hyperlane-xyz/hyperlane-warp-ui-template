@@ -25,6 +25,7 @@ import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName, hasPermissionlessChain } from '../chains/utils';
 import { useMessageDeliveryStatus } from '../messages/useMessageDeliveryStatus';
+import { useOriginFinality } from '../messages/useOriginFinality';
 import { useStore } from '../store';
 import { tryFindToken, useWarpCore } from '../tokens/hooks';
 import { TokenChainIcon } from '../tokens/TokenChainIcon';
@@ -102,14 +103,21 @@ export function TransfersDetailsModal({
   // Combine store + live query to avoid flicker when reopening modal
   const isDelivered = status === TransferStatus.Delivered || delivery.isDelivered;
 
-  // Determine message stage from delivery data + transfer status
-  // We use our own logic instead of the widget's useMessageStage to avoid
-  // broken Explorer REST API dependencies (queryExplorerForBlock, /latest-nonce)
+  // Origin block number: prefer store (hot path), fall back to GraphQL (cold path after refresh)
+  const originBlockNumber = transfer?.originBlockNumber ?? delivery.originBlockHeight;
+
+  const isFinalized = useOriginFinality(
+    origin,
+    originBlockNumber,
+    isSent && !isFailed && !isDelivered && !!originBlockNumber && isOpen,
+  );
+
   const stage = useMemo((): MessageStage => {
     if (isDelivered) return MessageStage.Relayed;
+    if (isFinalized) return MessageStage.Finalized;
     if (isTransferSent(transfer?.status) && transfer?.originTxHash) return MessageStage.Sent;
     return MessageStage.Preparing;
-  }, [isDelivered, transfer]);
+  }, [isDelivered, isFinalized, transfer]);
 
   // Resolve the destination tx hash from either store or live query
   const destinationTxHash = storedDestTxHash || delivery.destinationTxHash;

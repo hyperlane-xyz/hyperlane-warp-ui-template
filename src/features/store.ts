@@ -83,7 +83,12 @@ export interface AppState {
   updateTransferStatus: (
     i: number,
     s: TransferStatus,
-    options?: { msgId?: string; originTxHash?: string; destinationTxHash?: string },
+    options?: {
+      msgId?: string;
+      originTxHash?: string;
+      originBlockNumber?: number;
+      destinationTxHash?: string;
+    },
   ) => void;
   failUnconfirmedTransfers: () => void;
 
@@ -206,6 +211,7 @@ export const useStore = create<AppState>()(
           txs[i].status = s;
           txs[i].msgId ||= options?.msgId;
           txs[i].originTxHash ||= options?.originTxHash;
+          txs[i].originBlockNumber ||= options?.originBlockNumber;
           txs[i].destinationTxHash ||= options?.destinationTxHash;
           return {
             transfers: txs,

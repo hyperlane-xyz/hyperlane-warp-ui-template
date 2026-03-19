@@ -89,6 +89,46 @@ const securityHeaders = [
     : []),
 ];
 
+// Embed page headers: allow framing from specified origins (default: any)
+// Accepts space or comma-separated origins, e.g. "https://a.com https://b.com" or "https://a.com,https://b.com"
+const rawEmbedAllowedOrigins = process.env.NEXT_PUBLIC_EMBED_ALLOWED_ORIGINS || '*';
+const embedAllowedOrigins = rawEmbedAllowedOrigins
+  .split(/[,\s]+/)
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+if (embedAllowedOrigins.some((origin) => /[;\r\n]/.test(origin))) {
+  throw new Error('Invalid NEXT_PUBLIC_EMBED_ALLOWED_ORIGINS: contains forbidden characters');
+}
+
+const embedCspHeader = cspHeader.replace(
+  "frame-ancestors 'none'",
+  `frame-ancestors ${embedAllowedOrigins.join(' ')}`,
+);
+const embedSecurityHeaders = [
+  {
+    key: 'X-XSS-Protection',
+    value: '1; mode=block',
+  },
+  // No X-Frame-Options — allow embedding
+  {
+    key: 'X-Content-Type-Options',
+    value: 'nosniff',
+  },
+  {
+    key: 'Referrer-Policy',
+    value: 'strict-origin-when-cross-origin',
+  },
+  ...(ENABLE_CSP_HEADER
+    ? [
+        {
+          key: 'Content-Security-Policy',
+          value: embedCspHeader,
+        },
+      ]
+    : []),
+];
+
 const nextConfig = {
   webpack(config, { isServer }) {
     config.module.rules.push({
@@ -116,7 +156,11 @@ const nextConfig = {
   async headers() {
     return [
       {
-        source: '/(.*)',
+        source: '/embed',
+        headers: embedSecurityHeaders,
+      },
+      {
+        source: '/((?!embed).*)',
         headers: securityHeaders,
       },
     ];

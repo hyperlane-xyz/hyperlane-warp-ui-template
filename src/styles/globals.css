@@ -551,15 +551,6 @@ html[data-theme-mode='dark'] .tip-card-logo {
   );
 }
 
-.floating-btn {
-  border: 1px solid transparent;
-}
-
-html[data-theme-mode='dark'] .floating-btn {
-  background: #1a0e28 !important;
-  border-color: rgba(185, 89, 255, 0.3);
-}
-
 .transfer-card {
   border: 0;
 }

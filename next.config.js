@@ -90,10 +90,20 @@ const securityHeaders = [
 ];
 
 // Embed page headers: allow framing from specified origins (default: any)
-const embedAllowedOrigins = process.env.NEXT_PUBLIC_EMBED_ALLOWED_ORIGINS || '*';
+// Accepts space or comma-separated origins, e.g. "https://a.com https://b.com" or "https://a.com,https://b.com"
+const rawEmbedAllowedOrigins = process.env.NEXT_PUBLIC_EMBED_ALLOWED_ORIGINS || '*';
+const embedAllowedOrigins = rawEmbedAllowedOrigins
+  .split(/[,\s]+/)
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+if (embedAllowedOrigins.some((origin) => /[;\r\n]/.test(origin))) {
+  throw new Error('Invalid NEXT_PUBLIC_EMBED_ALLOWED_ORIGINS: contains forbidden characters');
+}
+
 const embedCspHeader = cspHeader.replace(
   "frame-ancestors 'none'",
-  `frame-ancestors ${embedAllowedOrigins}`,
+  `frame-ancestors ${embedAllowedOrigins.join(' ')}`,
 );
 const embedSecurityHeaders = [
   {

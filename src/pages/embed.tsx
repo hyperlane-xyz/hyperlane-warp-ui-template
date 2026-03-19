@@ -8,6 +8,7 @@ import { TransferTokenCard } from '../features/transfer/TransferTokenCard';
 import { TransfersDetailsModal } from '../features/transfer/TransfersDetailsModal';
 import { TransferContext } from '../features/transfer/types';
 import { parseEmbedTheme, themeToCssVars } from '../styles/embedTheme';
+import { logger } from '../utils/logger';
 
 /**
  * Embeddable widget page — renders the transfer form in a minimal, chrome-less
@@ -56,7 +57,12 @@ function useAutoTransferModal() {
       didMountRef.current = true;
       return;
     } else if (transferLoading) {
-      setSelectedTransfer(transfers[transfers.length - 1]);
+      const latestTransfer = transfers[transfers.length - 1];
+      if (!latestTransfer) {
+        logger.error('Expected latest transfer while transferLoading is true', transfers);
+        return;
+      }
+      setSelectedTransfer(latestTransfer);
       setIsOpen(true);
     }
     // Same pattern as SideBarMenu — open modal when new transfer detected

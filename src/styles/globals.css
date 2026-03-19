@@ -1102,6 +1102,25 @@ html[data-theme-mode='dark'] .transfer-details-modal .htw-bg-blue-500 {
   opacity: 0 !important;
 }
 
+/* Center icons within clip-path chevron shapes */
+/* First segment (flat left, arrow right): visual center is ~5px left of CSS center */
+.transfer-details-modal .htw-flex-1:first-child .htw-bg-blue-500 > :first-child {
+  transform: translateX(-5px);
+}
+
+/* Middle segments: cancel widget's htw-pl-2 that pushes icons right */
+.transfer-details-modal
+  .htw-flex-1:not(:first-child):not(:last-child)
+  .htw-bg-blue-500
+  > :first-child {
+  padding-left: 0 !important;
+}
+
+/* Last segment (V-notch left, flat right): visual center is ~5px right of CSS center */
+.transfer-details-modal .htw-flex-1:last-child .htw-bg-blue-500 > :first-child {
+  transform: translateX(5px);
+}
+
 /* Close gaps between arrow segments */
 .transfer-details-modal .htw-flex-0 {
   width: 0 !important;

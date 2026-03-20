@@ -10,12 +10,12 @@ export function TipCard() {
   const [show, setShow] = useState(config.showTipBox);
   if (!show) return null;
   return (
-    <div className="tip-card relative w-full overflow-hidden rounded bg-tip-card-gradient px-4 pb-4 pt-4 shadow-card xl:w-72 xl:pb-24">
+    <div className="tip-card relative w-full overflow-hidden rounded bg-tip-card-gradient px-4 pb-4 pt-4 shadow-card xl:w-72 xl:pb-24 dark:bg-[linear-gradient(0deg,rgba(154,13,255,0.3)_0%,rgba(17,17,17,0.95)_100%)] dark:shadow-[0_4px_6px_rgba(34,26,45,0.25),inset_0_0_0_1px_rgba(154,13,255,0.5)]">
       <div className="absolute right-2 top-2">
         <IconButton
           onClick={() => setShow(false)}
           title="Hide tip"
-          className="tip-card-close text-gray-400 hover:text-gray-600"
+          className="text-gray-400 hover:text-gray-600 dark:text-[var(--dark-text-secondary)] dark:hover:text-[var(--dark-text-primary)] dark:[&_path]:fill-current"
         >
           <XCircleIcon width={14} height={14} />
         </IconButton>

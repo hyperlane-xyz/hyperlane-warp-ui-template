@@ -15,7 +15,7 @@ export function Header() {
   const nextThemeLabel = nextThemeMode === 'dark' ? 'Lights out' : 'Lights on';
 
   return (
-    <header className="app-header relative flex w-full items-center justify-between bg-primary-25 px-4 py-3 shadow-[0px_4px_7px_rgba(0,0,0,0.05)] lg:justify-center lg:bg-transparent lg:px-6 lg:pb-2 lg:pt-3 lg:shadow-none">
+    <header className="relative flex w-full items-center justify-between bg-primary-25 px-4 py-3 shadow-[0px_4px_7px_rgba(0,0,0,0.05)] lg:justify-center lg:bg-transparent lg:px-6 lg:pb-2 lg:pt-3 lg:shadow-none dark:border-b dark:border-primary-300/25 dark:bg-[rgba(13,6,18,0.88)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.35)] lg:dark:border-b-0 lg:dark:bg-transparent lg:dark:shadow-none">
       {/* Mobile/Tablet: Logo + Hamburger Menu */}
       <div className="flex items-center gap-3 lg:hidden">
         <Link href="/" aria-label="Homepage">
@@ -23,13 +23,13 @@ export function Header() {
         </Link>
         <DropdownMenu
           button={<HamburgerIcon width={20} height={19} />}
-          buttonClassname="app-header-menu-btn rounded p-2 text-primary-500 data-[open]:bg-primary-25 data-[open]:shadow-[inset_4px_4px_4px_rgba(154,13,255,0.1)] data-[open]:text-white"
-          menuClassname="app-header-menu py-4"
+          buttonClassname="rounded p-2 text-primary-500 data-[open]:bg-primary-25 data-[open]:shadow-[inset_4px_4px_4px_rgba(154,13,255,0.1)] data-[open]:text-white dark:bg-white/10 dark:text-[#e9d8ff] dark:data-[open]:bg-primary-300/25 dark:data-[open]:shadow-[inset_0_0_0_1px_rgba(185,89,255,0.45)] dark:data-[open]:text-white"
+          menuClassname="py-4 dark:border dark:border-primary-300/35 dark:bg-[var(--dark-surface)] dark:shadow-[0_16px_36px_rgba(0,0,0,0.45)]"
           menuItems={navLinks.map((item) => (
             <NavItem
               key={item.title}
               item={item}
-              className="app-header-menu-item w-full gap-3 px-6 py-2 hover:bg-primary-50 hover:bg-opacity-30"
+              className="w-full gap-3 px-6 py-2 hover:bg-primary-50 hover:bg-opacity-30 dark:text-[#e9d8ff] dark:hover:bg-primary-300/15 dark:[&_path]:fill-[#e9d8ff] dark:[&_path]:stroke-[#e9d8ff]"
             />
           ))}
         />
@@ -62,5 +62,5 @@ export function Header() {
 
 const styles = {
   themeToggle:
-    'rounded-md border border-primary-500/35 bg-white/85 px-2.5 py-1 text-xs font-medium capitalize text-primary-900 transition-[background-color,border-color,color,box-shadow] duration-200 hover:border-primary-300/70 hover:bg-gray-950/90 hover:text-primary-25 focus-visible:outline-none focus-visible:shadow-[0_0_0_2px_rgba(154,13,255,0.25)]',
+    'rounded-md border border-primary-500/35 bg-white/85 px-2.5 py-1 text-xs font-medium capitalize text-primary-900 transition-[background-color,border-color,color,box-shadow] duration-200 hover:border-primary-300/70 hover:bg-gray-950/90 hover:text-primary-25 focus-visible:outline-none focus-visible:shadow-[0_0_0_2px_rgba(154,13,255,0.25)] dark:border-primary-300/45 dark:bg-black/75 dark:text-primary-50 dark:hover:border-primary-500/55 dark:hover:bg-white/95 dark:hover:text-primary-900 dark:focus-visible:shadow-[0_0_0_2px_rgba(185,89,255,0.35)]',
 };

@@ -1,5 +1,5 @@
-import { addressToPostgresBytea } from './encoding';
-import { messageStubFragment } from './fragments';
+import { addressToPostgresBytea, stringToPostgresBytea } from './encoding';
+import { messageDetailFragment, messageStubFragment } from './fragments';
 
 // Query defined at module level to avoid recreation on each call
 const MESSAGE_HISTORY_QUERY = `
@@ -66,6 +66,32 @@ export function buildMessageHistoryQuery(
       warpRoutes: warpRouteBytea,
       limit,
       offset,
+    },
+  };
+}
+
+const MESSAGE_BY_ID_QUERY = `
+  query MessageById($msgId: bytea!) @cached(ttl: 5) {
+    message_view(
+      where: {msg_id: {_eq: $msgId}},
+      limit: 1
+    ) {
+      ${messageDetailFragment}
+    }
+  }
+`;
+
+/**
+ * Build a query to fetch a single message by its Hyperlane message ID
+ */
+export function buildMessageByIdQuery(msgId: string): {
+  query: string;
+  variables: { msgId: string };
+} {
+  return {
+    query: MESSAGE_BY_ID_QUERY,
+    variables: {
+      msgId: stringToPostgresBytea(msgId),
     },
   };
 }

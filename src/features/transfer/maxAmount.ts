@@ -15,7 +15,6 @@ interface FetchMaxParams {
   accounts: Record<KnownProtocolType, AccountInfo>;
   balance: TokenAmount;
   origin: ChainName;
-  destination: ChainName;
   destinationToken: Token;
   recipient?: string;
 }
@@ -37,13 +36,13 @@ async function fetchMaxAmount(
   {
     accounts,
     balance,
-    destination,
-    destinationToken: selectedDestinationToken,
+    destinationToken: destToken,
     origin,
     recipient: formRecipient,
   }: FetchMaxParams,
 ) {
   try {
+    const destination = destToken.chainName;
     const { address, publicKey } = getAccountAddressAndPubKey(multiProvider, origin, accounts);
     if (!address) return balance;
     const originToken = new Token(balance.token);
@@ -57,18 +56,10 @@ async function fetchMaxAmount(
     const recipient = formRecipient || connectedDestAddress || address;
 
     // Find the actual warpCore token that has the route (handles deduplicated tokens)
-    const originRouteToken = findRouteToken(
-      warpCore,
-      originToken,
-      destination,
-      selectedDestinationToken,
-    );
+    const originRouteToken = findRouteToken(warpCore, originToken, destToken);
     if (!originRouteToken) return undefined;
 
-    const connectedDestinationToken = findConnectedDestinationToken(
-      originRouteToken,
-      selectedDestinationToken,
-    );
+    const connectedDestinationToken = findConnectedDestinationToken(originRouteToken, destToken);
     if (!connectedDestinationToken) return undefined;
 
     const transferToken = await getTransferToken(
@@ -80,10 +71,7 @@ async function fetchMaxAmount(
       address,
       defaultMultiCollateralRoutes,
     );
-    const transferDestinationToken = findConnectedDestinationToken(
-      transferToken,
-      selectedDestinationToken,
-    );
+    const transferDestinationToken = findConnectedDestinationToken(transferToken, destToken);
     if (!transferDestinationToken) return undefined;
     const tokenAmount = new TokenAmount(balance.amount, transferToken);
     const maxAmount = await warpCore.getMaxTransferAmount({

@@ -463,7 +463,6 @@ function MaxButton({
     const maxAmount = await fetchMaxAmount({
       balance,
       origin: originToken.chainName,
-      destination: destinationToken.chainName,
       destinationToken,
       accounts,
       recipient: values.recipient,
@@ -721,12 +720,16 @@ function ReviewDetails({
   // Finding actual token pair for the given tokens
   const originToken =
     destinationTokenByKey && originTokenByKey
+<<<<<<< HEAD
       ? findRouteToken(
           warpCore,
           originTokenByKey,
           destinationTokenByKey.chainName,
           destinationTokenByKey,
         )
+=======
+      ? findRouteToken(warpCore, originTokenByKey, destinationTokenByKey)
+>>>>>>> main
       : undefined;
   const destinationToken = destinationTokenByKey
     ? originToken && findConnectedDestinationToken(originToken, destinationTokenByKey)

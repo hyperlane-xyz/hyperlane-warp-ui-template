@@ -9,7 +9,7 @@ import {
   strip0x,
 } from '@hyperlane-xyz/utils';
 
-function stringToPostgresBytea(hexString: string): string {
+export function stringToPostgresBytea(hexString: string): string {
   const trimmed = strip0x(hexString).toLowerCase();
   return `\\x${trimmed}`;
 }
@@ -42,4 +42,9 @@ export function postgresByteaToTxHash(
   if (chainMetadata?.protocol !== ProtocolType.Sealevel) return hexString;
   const bytes = Buffer.from(strip0x(hexString), 'hex');
   return bufferToBase58(bytes);
+}
+
+export function parseTimestamp(t: string): number {
+  const asUtc = t.at(-1) === 'Z' ? t : t + 'Z';
+  return new Date(asUtc).getTime();
 }

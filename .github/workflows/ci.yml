@@ -41,7 +41,15 @@ jobs:
             exit 1
           fi
 
+      - name: Cache build output
+        id: build-cache
+        uses: actions/cache@v4
+        with:
+          path: .next/
+          key: ${{ runner.os }}-nextjs-build-${{ hashFiles('src/**', 'pnpm-lock.yaml', 'next.config.js', 'tsconfig.json') }}
+
       - name: build
+        if: steps.build-cache.outputs.cache-hit != 'true'
         run: pnpm run build
         env:
           NEXT_PUBLIC_WALLET_CONNECT_ID: ${{ secrets.NEXT_PUBLIC_WALLET_CONNECT_ID }}
@@ -163,3 +171,13 @@ jobs:
 
       - name: test
         run: pnpm run test
+
+  e2e:
+    needs: [build]
+    if: >-
+      github.base_ref == 'main' ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      github.event_name == 'merge_group' ||
+      github.event_name == 'workflow_dispatch'
+    uses: ./.github/workflows/e2e.yml
+    secrets: inherit

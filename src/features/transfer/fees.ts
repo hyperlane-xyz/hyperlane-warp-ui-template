@@ -108,19 +108,15 @@ export async function getTransferToken(
   sender: string | undefined,
   defaultMultiCollateralRoutes?: DefaultMultiCollateralRoutes,
 ) {
-  const destinationChain = destinationToken.chainName;
-
   // Find the actual warpCore token that has the route
   // Because we deduplicated tokens with the same collateral, the current token pair
   // might not be correct, so it is necessary to get the correct token pair.
   // Make sure to have used `checkTokenHasRoute` before calling getTransferToken
   // as that will validate that the token pair actually refer to the same asset
-  const originRouteToken = findRouteToken(
-    warpCore,
-    originToken,
-    destinationChain,
-    destinationToken,
-  );
+
+  // originRouteToken may differ from originToken due to collateral dedup —
+  // it's the actual warpCore token with the connection to destinationChain
+  const originRouteToken = findRouteToken(warpCore, originToken, destinationToken);
   if (!originRouteToken) {
     // No route exists, return original token (validation will catch this)
     return originToken;
@@ -158,7 +154,6 @@ export async function getTransferToken(
     logger.debug('Using default multi-collateral route');
     return defaultToken;
   }
-
   // fetch each destination token balance
   const balanceResults = await Promise.allSettled(
     tokensWithSameCollateralAddresses.map(async ({ originToken, destinationToken }) => {

@@ -847,24 +847,37 @@ describe('findRouteToken', () => {
   const ADDR_1 = '0x1111111111111111111111111111111111111111';
   const ADDR_2 = '0x2222222222222222222222222222222222222222';
   const ADDR_3 = '0x3333333333333333333333333333333333333333';
+  const ADDR_4 = '0x4444444444444444444444444444444444444444';
+  const ADDR_5 = '0x5555555555555555555555555555555555555555';
+  const ADDR_6 = '0x6666666666666666666666666666666666666666';
   const COLLATERAL = '0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+  const COLLATERAL_B = '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB';
 
   const createMockWarpCore = (routeTokens: ReturnType<typeof createMockToken>[]) =>
     ({
       getTokensForRoute: vi.fn().mockReturnValue(routeTokens),
     }) as unknown as WarpCore;
 
-  test('should return originToken if it already has the connection', () => {
+  test('should return originToken if it already has the matching connection', () => {
+    const destToken = createMockToken({
+      chainName: 'arbitrum',
+      addressOrDenom: ADDR_2,
+      collateralAddressOrDenom: COLLATERAL,
+    });
     const origin = createMockToken({
       chainName: 'ethereum',
       addressOrDenom: ADDR_1,
       connections: [
-        createTokenConnectionMock(undefined, { chainName: 'arbitrum', addressOrDenom: ADDR_2 }),
+        createTokenConnectionMock(undefined, {
+          chainName: 'arbitrum',
+          addressOrDenom: ADDR_2,
+          collateralAddressOrDenom: COLLATERAL,
+        }),
       ],
     });
     const warpCore = createMockWarpCore([]);
 
-    const result = findRouteToken(warpCore, origin, 'arbitrum');
+    const result = findRouteToken(warpCore, origin, destToken);
 
     expect(result).toBe(origin);
     expect(warpCore.getTokensForRoute).not.toHaveBeenCalled();
@@ -910,6 +923,10 @@ describe('findRouteToken', () => {
   });
 
   test('should return undefined when no routes exist', () => {
+    const destToken = createMockToken({
+      chainName: 'arbitrum',
+      addressOrDenom: ADDR_2,
+    });
     const origin = createMockToken({
       chainName: 'ethereum',
       addressOrDenom: ADDR_1,
@@ -917,12 +934,16 @@ describe('findRouteToken', () => {
     });
     const warpCore = createMockWarpCore([]);
 
-    const result = findRouteToken(warpCore, origin, 'arbitrum');
+    const result = findRouteToken(warpCore, origin, destToken);
 
     expect(result).toBeUndefined();
   });
 
   test('should match by collateral address', () => {
+    const destToken = createMockToken({
+      chainName: 'arbitrum',
+      addressOrDenom: ADDR_3,
+    });
     const origin = createMockToken({
       chainName: 'ethereum',
       addressOrDenom: ADDR_1,
@@ -939,12 +960,19 @@ describe('findRouteToken', () => {
     });
     const warpCore = createMockWarpCore([routeToken]);
 
-    const result = findRouteToken(warpCore, origin, 'arbitrum');
+    const result = findRouteToken(warpCore, origin, destToken);
 
     expect(result).toBe(routeToken);
   });
 
   test('should match by symbol when no collateral address', () => {
+    const destToken = createMockToken({
+      chainName: 'arbitrum',
+      symbol: 'ETH',
+      standard: TokenStandard.EvmHypNative,
+      addressOrDenom: ADDR_3,
+      collateralAddressOrDenom: undefined,
+    });
     const origin = createMockToken({
       chainName: 'ethereum',
       symbol: 'ETH',
@@ -965,12 +993,16 @@ describe('findRouteToken', () => {
     });
     const warpCore = createMockWarpCore([routeToken]);
 
-    const result = findRouteToken(warpCore, origin, 'arbitrum');
+    const result = findRouteToken(warpCore, origin, destToken);
 
     expect(result).toBe(routeToken);
   });
 
   test('should return undefined when no collateral or symbol match', () => {
+    const destToken = createMockToken({
+      chainName: 'arbitrum',
+      addressOrDenom: ADDR_3,
+    });
     const origin = createMockToken({
       chainName: 'ethereum',
       symbol: 'USDC',
@@ -989,7 +1021,7 @@ describe('findRouteToken', () => {
     });
     const warpCore = createMockWarpCore([routeToken]);
 
-    const result = findRouteToken(warpCore, origin, 'arbitrum');
+    const result = findRouteToken(warpCore, origin, destToken);
 
     // No collateral or symbol match — should not blindly pick first token
     expect(result).toBeUndefined();
@@ -1000,6 +1032,12 @@ describe('findRouteToken', () => {
     const LOCKBOX_WRAPPER = '0x6D265C7dD8d76F25155F1a7687C693FDC1220D12';
     const WRONG_COLLATERAL = '0xDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD';
 
+    const destToken = createMockToken({
+      chainName: 'optimism',
+      symbol: 'USDT',
+      addressOrDenom: ADDR_3,
+      collateralAddressOrDenom: UNDERLYING_USDT,
+    });
     // Regular USDT (displayed, no connection to optimism)
     const origin = createMockToken({
       chainName: 'ethereum',
@@ -1023,12 +1061,12 @@ describe('findRouteToken', () => {
     const decoyToken = createMockToken({
       chainName: 'ethereum',
       symbol: 'USDT',
-      addressOrDenom: '0x5555555555555555555555555555555555555555',
+      addressOrDenom: ADDR_5,
       collateralAddressOrDenom: WRONG_COLLATERAL,
       connections: [
         createTokenConnectionMock(undefined, {
           chainName: 'optimism',
-          addressOrDenom: '0x6666666666666666666666666666666666666666',
+          addressOrDenom: ADDR_6,
         }),
       ],
     });
@@ -1039,7 +1077,7 @@ describe('findRouteToken', () => {
 
     // Decoy listed first — if symbol fallback ran first, it would pick decoy
     const warpCore = createMockWarpCore([decoyToken, lockboxToken]);
-    const result = findRouteToken(warpCore, origin, 'optimism');
+    const result = findRouteToken(warpCore, origin, destToken);
 
     // Must pick lockbox (collateral key match), not decoy (symbol match)
     expect(result).toBe(lockboxToken);
@@ -1050,6 +1088,12 @@ describe('findRouteToken', () => {
     const VAULT_ADDRESS = '0x04DA4b99FFc82f0e44DEd14c3539A6fDaD08E2fE';
     const WRONG_COLLATERAL = '0xDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD';
 
+    const destToken = createMockToken({
+      chainName: 'incentiv',
+      symbol: 'USDT',
+      addressOrDenom: ADDR_3,
+      collateralAddressOrDenom: UNDERLYING_USDT,
+    });
     const origin = createMockToken({
       chainName: 'ethereum',
       symbol: 'USDT',
@@ -1072,12 +1116,12 @@ describe('findRouteToken', () => {
     const decoyToken = createMockToken({
       chainName: 'ethereum',
       symbol: 'USDT',
-      addressOrDenom: '0x5555555555555555555555555555555555555555',
+      addressOrDenom: ADDR_5,
       collateralAddressOrDenom: WRONG_COLLATERAL,
       connections: [
         createTokenConnectionMock(undefined, {
           chainName: 'incentiv',
-          addressOrDenom: '0x6666666666666666666666666666666666666666',
+          addressOrDenom: ADDR_6,
         }),
       ],
     });
@@ -1087,10 +1131,278 @@ describe('findRouteToken', () => {
 
     // Decoy listed first — symbol fallback would pick it
     const warpCore = createMockWarpCore([decoyToken, vaultToken]);
-    const result = findRouteToken(warpCore, origin, 'incentiv');
+    const result = findRouteToken(warpCore, origin, destToken);
 
     // Must pick vault (collateral key match), not decoy
     expect(result).toBe(vaultToken);
+  });
+
+  // --- Multi-collateral disambiguation tests (USDC->USDC vs USDC->XO bug) ---
+
+  test('should not return origin when it has a connection to the chain but wrong destination collateral', () => {
+    // Origin (deduped USDC) has a connection to solanamainnet -> standard USDC
+    // But user selected XO Cash (different collateral) as destination
+    const xoCashDest = createMockToken({
+      chainName: 'solanamainnet',
+      symbol: 'XO',
+      name: 'XO Cash',
+      addressOrDenom: ADDR_4,
+      collateralAddressOrDenom: COLLATERAL_B, // XO collateral
+    });
+    const origin = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USDC',
+      addressOrDenom: ADDR_1,
+      collateralAddressOrDenom: COLLATERAL,
+      connections: [
+        // This connection goes to standard USDC on solanamainnet, NOT XO Cash
+        createTokenConnectionMock(undefined, {
+          chainName: 'solanamainnet',
+          symbol: 'USDC',
+          addressOrDenom: ADDR_3,
+          collateralAddressOrDenom: COLLATERAL, // standard USDC collateral
+        }),
+      ],
+    });
+    // The correct route token connects to XO Cash
+    const xoRouteToken = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USDC',
+      addressOrDenom: ADDR_2,
+      collateralAddressOrDenom: COLLATERAL,
+      connections: [
+        createTokenConnectionMock(undefined, {
+          chainName: 'solanamainnet',
+          symbol: 'XO',
+          addressOrDenom: ADDR_4,
+          collateralAddressOrDenom: COLLATERAL_B,
+        }),
+      ],
+    });
+    const warpCore = createMockWarpCore([origin, xoRouteToken]);
+
+    const result = findRouteToken(warpCore, origin, xoCashDest);
+
+    // Must NOT return origin (wrong destination), must find xoRouteToken
+    expect(result).toBe(xoRouteToken);
+    expect(result).not.toBe(origin);
+  });
+
+  test('should pick correct route among multiple collateral matches by destination token', () => {
+    // Two route tokens on ethereum with same USDC collateral, each connecting
+    // to different tokens on solanamainnet
+    const standardUsdcDest = createMockToken({
+      chainName: 'solanamainnet',
+      symbol: 'USDC',
+      addressOrDenom: ADDR_3,
+      collateralAddressOrDenom: COLLATERAL,
+    });
+    const xoCashDest = createMockToken({
+      chainName: 'solanamainnet',
+      symbol: 'XO',
+      addressOrDenom: ADDR_4,
+      collateralAddressOrDenom: COLLATERAL_B,
+    });
+    const origin = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USDC',
+      addressOrDenom: ADDR_1,
+      collateralAddressOrDenom: COLLATERAL,
+      connections: [],
+    });
+    const usdcRoute = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USDC',
+      addressOrDenom: ADDR_2,
+      collateralAddressOrDenom: COLLATERAL,
+      connections: [
+        createTokenConnectionMock(undefined, {
+          chainName: 'solanamainnet',
+          symbol: 'USDC',
+          addressOrDenom: ADDR_3,
+          collateralAddressOrDenom: COLLATERAL,
+        }),
+      ],
+    });
+    const xoRoute = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USDC',
+      addressOrDenom: ADDR_5,
+      collateralAddressOrDenom: COLLATERAL,
+      connections: [
+        createTokenConnectionMock(undefined, {
+          chainName: 'solanamainnet',
+          symbol: 'XO',
+          addressOrDenom: ADDR_4,
+          collateralAddressOrDenom: COLLATERAL_B,
+        }),
+      ],
+    });
+
+    // USDC route listed first — without fix, .find() would always pick it
+    const warpCore = createMockWarpCore([usdcRoute, xoRoute]);
+
+    // Selecting XO Cash as destination should pick xoRoute
+    const resultXo = findRouteToken(warpCore, origin, xoCashDest);
+    expect(resultXo).toBe(xoRoute);
+
+    // Selecting standard USDC as destination should pick usdcRoute
+    const resultUsdc = findRouteToken(warpCore, origin, standardUsdcDest);
+    expect(resultUsdc).toBe(usdcRoute);
+  });
+
+  test('should work with synthetic (non-collateral) destination tokens', () => {
+    // Origin is collateral on ethereum, destination is synthetic on arbitrum
+    const syntheticDest = createMockToken({
+      chainName: 'arbitrum',
+      symbol: 'USDC',
+      standard: TokenStandard.EvmHypSynthetic,
+      addressOrDenom: ADDR_3,
+      collateralAddressOrDenom: undefined,
+    });
+    const origin = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USDC',
+      addressOrDenom: ADDR_1,
+      collateralAddressOrDenom: COLLATERAL,
+      connections: [],
+    });
+    const routeToken = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USDC',
+      addressOrDenom: ADDR_2,
+      collateralAddressOrDenom: COLLATERAL,
+      connections: [
+        createTokenConnectionMock(undefined, {
+          chainName: 'arbitrum',
+          symbol: 'USDC',
+          standard: TokenStandard.EvmHypSynthetic,
+          addressOrDenom: ADDR_3,
+          collateralAddressOrDenom: undefined,
+        }),
+      ],
+    });
+    const warpCore = createMockWarpCore([routeToken]);
+
+    const result = findRouteToken(warpCore, origin, syntheticDest);
+
+    expect(result).toBe(routeToken);
+  });
+
+  test('should disambiguate when origin has synthetic connection but user wants collateral dest', () => {
+    // Origin has connection to synthetic USDC on arbitrum
+    // But user selected a collateral USDC on arbitrum (different route)
+    const collateralDest = createMockToken({
+      chainName: 'arbitrum',
+      symbol: 'USDC',
+      addressOrDenom: ADDR_4,
+      collateralAddressOrDenom: COLLATERAL_B,
+    });
+    const origin = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USDC',
+      addressOrDenom: ADDR_1,
+      collateralAddressOrDenom: COLLATERAL,
+      connections: [
+        // Existing connection goes to synthetic
+        createTokenConnectionMock(undefined, {
+          chainName: 'arbitrum',
+          symbol: 'USDC',
+          standard: TokenStandard.EvmHypSynthetic,
+          addressOrDenom: ADDR_3,
+          collateralAddressOrDenom: undefined,
+        }),
+      ],
+    });
+    // Route token that connects to the collateral destination
+    const collateralRoute = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USDC',
+      addressOrDenom: ADDR_2,
+      collateralAddressOrDenom: COLLATERAL,
+      connections: [
+        createTokenConnectionMock(undefined, {
+          chainName: 'arbitrum',
+          symbol: 'USDC',
+          addressOrDenom: ADDR_4,
+          collateralAddressOrDenom: COLLATERAL_B,
+        }),
+      ],
+    });
+    const warpCore = createMockWarpCore([origin, collateralRoute]);
+
+    const result = findRouteToken(warpCore, origin, collateralDest);
+
+    // Must not return origin (its connection is synthetic, not the collateral dest)
+    expect(result).toBe(collateralRoute);
+  });
+
+  test('should return origin when its connection matches the destination collateral', () => {
+    // Origin already has the right connection — should short-circuit
+    const dest = createMockToken({
+      chainName: 'arbitrum',
+      symbol: 'USDC',
+      addressOrDenom: ADDR_3,
+      collateralAddressOrDenom: COLLATERAL_B,
+    });
+    const origin = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USDC',
+      addressOrDenom: ADDR_1,
+      collateralAddressOrDenom: COLLATERAL,
+      connections: [
+        createTokenConnectionMock(undefined, {
+          chainName: 'arbitrum',
+          symbol: 'USDC',
+          addressOrDenom: ADDR_3,
+          collateralAddressOrDenom: COLLATERAL_B,
+        }),
+      ],
+    });
+    const warpCore = createMockWarpCore([]);
+
+    const result = findRouteToken(warpCore, origin, dest);
+
+    expect(result).toBe(origin);
+    expect(warpCore.getTokensForRoute).not.toHaveBeenCalled();
+  });
+
+  test('should handle single collateral match connecting to correct synthetic dest', () => {
+    // Only one route token exists, connects to synthetic — should return it
+    const syntheticDest = createMockToken({
+      chainName: 'arbitrum',
+      symbol: 'USDC',
+      standard: TokenStandard.EvmHypSynthetic,
+      addressOrDenom: ADDR_3,
+      collateralAddressOrDenom: undefined,
+    });
+    const origin = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USDC',
+      addressOrDenom: ADDR_1,
+      collateralAddressOrDenom: COLLATERAL,
+      connections: [],
+    });
+    const routeToken = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USDC',
+      addressOrDenom: ADDR_2,
+      collateralAddressOrDenom: COLLATERAL,
+      connections: [
+        createTokenConnectionMock(undefined, {
+          chainName: 'arbitrum',
+          symbol: 'USDC',
+          standard: TokenStandard.EvmHypSynthetic,
+          addressOrDenom: ADDR_3,
+          collateralAddressOrDenom: undefined,
+        }),
+      ],
+    });
+    const warpCore = createMockWarpCore([routeToken]);
+
+    const result = findRouteToken(warpCore, origin, syntheticDest);
+
+    expect(result).toBe(routeToken);
   });
 });
 

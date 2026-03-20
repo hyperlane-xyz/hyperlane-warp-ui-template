@@ -321,22 +321,12 @@ export function checkTokenHasRoute(
   collateralGroups: Map<string, Token[]>,
 ): boolean {
   const originCollateralKey = getCollateralKey(originToken);
-  const destCollateralKey = getCollateralKey(destToken);
   const originGroup = collateralGroups.get(originCollateralKey) || [];
 
   // Check if any token in origin's collateral group has a matching connection
-  // to the specific destination token collateral.
-  // NOTE: For multi-collateral routes, a token can have multiple connections on
-  // the same destination chain, so we must inspect all connections (not only the first).
-  return originGroup.some((token) => {
-    return (
-      token.connections?.some((connection) => {
-        const connectedToken = connection.token as Token;
-        if (connectedToken.chainName !== destToken.chainName) return false;
-        return getCollateralKey(connectedToken) === destCollateralKey;
-      }) ?? false
-    );
-  });
+  // to the specific destination token. Uses findConnectedDestinationToken to stay
+  // consistent with the transfer flow's matching logic (collateral key + address fallback).
+  return originGroup.some((token) => Boolean(findConnectedDestinationToken(token, destToken)));
 }
 
 /**

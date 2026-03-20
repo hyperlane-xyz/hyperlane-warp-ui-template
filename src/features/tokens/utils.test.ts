@@ -750,7 +750,9 @@ describe('checkTokenHasRoute', () => {
     expect(checkTokenHasRoute(origin, dest, groups)).toBe(false);
   });
 
-  test('should return false when connection exists but collateral keys differ', () => {
+  test('should return true when connection exists with same address but different collateral keys', () => {
+    // Even though collateral keys differ, the connection exists (same addressOrDenom),
+    // so findConnectedDestinationToken matches via address fallback — route is valid.
     const origin = createMockToken({
       chainName: 'ethereum',
       addressOrDenom: ADDR_1,
@@ -759,7 +761,6 @@ describe('checkTokenHasRoute', () => {
         createTokenConnectionMock(undefined, {
           chainName: 'arbitrum',
           addressOrDenom: ADDR_2,
-          // Different collateral than dest token
           collateralAddressOrDenom: '0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC',
         }),
       ],
@@ -771,7 +772,7 @@ describe('checkTokenHasRoute', () => {
     });
 
     const groups = groupTokensByCollateral([origin, dest]);
-    expect(checkTokenHasRoute(origin, dest, groups)).toBe(false);
+    expect(checkTokenHasRoute(origin, dest, groups)).toBe(true);
   });
 
   test('should return false when origin token not in any collateral group', () => {

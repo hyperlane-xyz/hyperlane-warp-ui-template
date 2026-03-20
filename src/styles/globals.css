@@ -64,7 +64,6 @@ body {
   background-color: var(--app-bg-color);
 }
 
-body,
 .warp-init-gate,
 #app-content {
   background-color: var(--app-bg-color);

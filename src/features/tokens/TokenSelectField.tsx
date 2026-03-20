@@ -137,7 +137,7 @@ export function TokenSelectField({
     <>
       <div className="flex flex-col">
         {showLabel && label && (
-          <span className="mb-1 pl-0.5 text-sm text-gray-600 dark:text-[var(--dark-text-secondary)]">
+          <span className="mb-1 pl-0.5 text-sm text-gray-600 dark:text-text-secondary">
             {label}
           </span>
         )}
@@ -198,20 +198,16 @@ function TokenButton({
         <div className="flex min-w-0 flex-1 items-center gap-2.5">
           <TokenChainIcon token={token} size={36} />
           <div className="flex min-w-0 flex-col items-start">
-            <span className="font-secondary text-lg font-normal text-gray-900 dark:text-[var(--dark-text-primary)]">
+            <span className="font-secondary text-lg font-normal text-gray-900 dark:text-text-primary">
               {token.symbol}
             </span>
-            <span className="text-sm text-gray-900 dark:text-[var(--dark-text-primary)]">
-              {chainDisplayName}
-            </span>
+            <span className="text-sm text-gray-900 dark:text-text-primary">{chainDisplayName}</span>
           </div>
         </div>
       ) : (
-        <span className="text-sm text-gray-400 dark:text-[var(--dark-text-secondary)]">
-          Select token
-        </span>
+        <span className="text-sm text-gray-400 dark:text-text-secondary">Select token</span>
       )}
-      <div className="transfer-token-chevron flex h-10 w-10 items-center justify-center rounded-full border border-gray-400 bg-white drop-shadow-button transition-colors duration-150 group-hover:bg-gray-50 dark:border-primary-300/35 dark:bg-primary-300/15 dark:text-[var(--dark-text-primary)] dark:group-hover:bg-primary-300/30 dark:[&_path]:fill-current">
+      <div className="transfer-token-chevron flex h-10 w-10 items-center justify-center rounded-full border border-gray-400 bg-white drop-shadow-button transition-colors duration-150 group-hover:bg-gray-50 dark:border-primary-300/35 dark:bg-primary-300/15 dark:text-text-primary dark:group-hover:bg-primary-300/30 dark:[&_path]:fill-current">
         <ChevronLargeIcon width={14} height={18} className="dark:[&_path]:fill-current" />
       </div>
     </button>
@@ -219,7 +215,7 @@ function TokenButton({
 }
 
 const styles = {
-  base: 'transfer-token-field group flex w-full items-center justify-between rounded-[7px] border border-gray-400/25 px-1.5 py-2 shadow-sm transition-all duration-150 dark:border-primary-300/25 dark:bg-transparent dark:text-[var(--dark-text-primary)]',
+  base: 'transfer-token-field group flex w-full items-center justify-between rounded-[7px] border border-gray-400/25 px-1.5 py-2 shadow-sm transition-all duration-150 dark:border-primary-300/25 dark:bg-transparent dark:text-text-primary',
   enabled:
     'cursor-pointer hover:bg-gray-50 dark:hover:border-primary-300/50 dark:hover:bg-primary-300/10',
   disabled: 'cursor-not-allowed opacity-60',

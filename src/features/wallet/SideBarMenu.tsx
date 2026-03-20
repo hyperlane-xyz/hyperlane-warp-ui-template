@@ -156,7 +156,7 @@ export function SideBarMenu({
   return (
     <>
       <div
-        className={`sidebar-menu fixed right-0 top-0 h-full w-88 transform bg-white bg-opacity-95 shadow-lg transition-transform duration-100 ease-in dark:border-l dark:border-primary-300/35 dark:bg-[rgba(13,6,18,0.95)] ${
+        className={`sidebar-menu fixed right-0 top-0 h-full w-88 transform bg-white bg-opacity-95 shadow-lg transition-transform duration-100 ease-in dark:border-l dark:border-primary-300/35 dark:bg-surface/95 ${
           isMenuOpen
             ? 'z-10 translate-x-0 dark:shadow-[-8px_0_32px_rgba(0,0,0,0.45)]'
             : 'z-0 translate-x-full'
@@ -164,7 +164,7 @@ export function SideBarMenu({
       >
         {isMenuOpen && (
           <button
-            className="sidebar-menu-collapse absolute left-0 top-0 flex h-full w-9 -translate-x-full items-center justify-center rounded-l bg-accent-50/30 backdrop-blur-[1.5px] transition-all dark:border-r dark:border-primary-300/25 dark:bg-[rgba(13,6,18,0.7)]"
+            className="sidebar-menu-collapse absolute left-0 top-0 flex h-full w-9 -translate-x-full items-center justify-center rounded-l bg-accent-50/30 backdrop-blur-[1.5px] transition-all dark:border-r dark:border-primary-300/25 dark:bg-surface/70"
             onClick={() => onClose()}
           >
             <Image
@@ -218,7 +218,7 @@ export function SideBarMenu({
               <>
                 <div className="sidebar-menu-list flex w-full grow flex-col divide-y">
                   {mergedTransfers.length === 0 && !isLoading && (
-                    <div className="sidebar-menu-empty px-3.5 py-6 text-center text-sm text-gray-500 dark:text-[#e9d8ff]">
+                    <div className="sidebar-menu-empty px-3.5 py-6 text-center text-sm text-gray-500 dark:text-text-primary">
                       No transfers yet
                     </div>
                   )}
@@ -244,7 +244,7 @@ export function SideBarMenu({
                   </div>
                 )}
                 {!hasMore && mergedTransfers.length > 0 && (
-                  <div className="sidebar-menu-end px-3.5 py-3 text-center text-xs text-gray-400 dark:text-[#e9d8ff]">
+                  <div className="sidebar-menu-end px-3.5 py-3 text-center text-xs text-gray-400 dark:text-text-primary">
                     No more transfers
                   </div>
                 )}
@@ -339,12 +339,12 @@ function TransferSummary({
         <div className="flex flex-col">
           <div className="flex items-baseline">
             {amount && (
-              <span className="sidebar-menu-token-text text-sm font-normal text-gray-800 dark:text-[#e9d8ff]">
+              <span className="sidebar-menu-token-text text-sm font-normal text-gray-800 dark:text-text-primary">
                 {amount}
               </span>
             )}
             <span
-              className={`sidebar-menu-token-text text-sm font-normal text-gray-800 dark:text-[#e9d8ff] ${amount ? 'ml-1' : ''}`}
+              className={`sidebar-menu-token-text text-sm font-normal text-gray-800 dark:text-text-primary ${amount ? 'ml-1' : ''}`}
             >
               {token?.symbol || 'Unknown token'}
             </span>
@@ -358,18 +358,18 @@ function TransferSummary({
                   alt=""
                 />
                 {amount && (
-                  <span className="sidebar-menu-token-text text-sm font-normal text-gray-800 dark:text-[#e9d8ff]">
+                  <span className="sidebar-menu-token-text text-sm font-normal text-gray-800 dark:text-text-primary">
                     {amount}
                   </span>
                 )}
-                <span className="sidebar-menu-token-text ml-1 text-sm font-normal text-gray-800 dark:text-[#e9d8ff]">
+                <span className="sidebar-menu-token-text ml-1 text-sm font-normal text-gray-800 dark:text-text-primary">
                   {destToken.symbol}
                 </span>
               </>
             )}
           </div>
           <div className="mt-1 flex items-center">
-            <span className="sidebar-menu-route-text text-xxs font-normal tracking-wide text-gray-900 dark:text-[#e9d8ff]">
+            <span className="sidebar-menu-route-text text-xxs font-normal tracking-wide text-gray-900 dark:text-text-primary">
               {getChainDisplayName(multiProvider, originChain, true)}
             </span>
             <Image
@@ -379,11 +379,11 @@ function TransferSummary({
               height={10}
               alt=""
             />
-            <span className="sidebar-menu-route-text text-xxs font-normal tracking-wide text-gray-900 dark:text-[#e9d8ff]">
+            <span className="sidebar-menu-route-text text-xxs font-normal tracking-wide text-gray-900 dark:text-text-primary">
               {getChainDisplayName(multiProvider, destChain, true)}
             </span>
           </div>
-          <div className="sidebar-menu-time mt-1 w-full text-left text-xxs font-normal text-gray-500 dark:text-[#e9d8ff]">
+          <div className="sidebar-menu-time mt-1 w-full text-left text-xxs font-normal text-gray-500 dark:text-text-primary">
             {formatTransferHistoryTimestamp(timestamp, nowMs)}
           </div>
         </div>

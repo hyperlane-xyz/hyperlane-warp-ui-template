@@ -58,6 +58,7 @@ export function ThemeProvider({ children }: PropsWithChildren) {
 
   useLayoutEffect(() => {
     if (typeof window === 'undefined') return;
+    document.documentElement.dataset.theme = themeMode;
     document.documentElement.dataset.themeMode = themeMode;
     if (hasExplicitThemePreference) persistThemeMode(themeMode);
     const knownLogoImages = document.querySelectorAll(

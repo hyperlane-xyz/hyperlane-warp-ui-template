@@ -21,64 +21,10 @@ beforeEach(() => {
 });
 
 describe('isValidMultiCollateralToken', () => {
-  test('should return false if originToken has no collateralAddressOrDenom and is not HypNative', () => {
-    const token = createMockToken({
-      collateralAddressOrDenom: undefined,
-      standard: TokenStandard.EvmHypCollateral,
-    });
-    expect(isValidMultiCollateralToken(token, 'destination')).toBe(false);
-  });
-
-  test('should return true if originToken is HypNative even without collateralAddressOrDenom', () => {
-    const token = createMockToken({
-      collateralAddressOrDenom: undefined,
-      standard: TokenStandard.EvmHypNative,
-      connections: [
-        createTokenConnectionMock(undefined, {
-          standard: TokenStandard.EvmHypNative,
-          collateralAddressOrDenom: undefined,
-        }),
-      ],
-    });
-    expect(isValidMultiCollateralToken(token, TestChainName.test2)).toBe(true);
-  });
-
   test('should return false if originToken is not collateralized', () => {
     const token = createMockToken({ standard: TokenStandard.CosmosIbc });
-    expect(isValidMultiCollateralToken(token, 'destination')).toBe(false);
-  });
-
-  test('should return false if destinationToken is not found via chain name', () => {
-    const token = createMockToken({ connections: [createTokenConnectionMock()] });
-    expect(isValidMultiCollateralToken(token, 'destination')).toBe(false);
-  });
-
-  test('should return true if destinationToken standard is in TOKEN_COLLATERALIZED_STANDARDS even without collateralAddressOrDenom', () => {
-    const token = createMockToken({
-      connections: [
-        createTokenConnectionMock(undefined, {
-          collateralAddressOrDenom: undefined,
-          standard: TokenStandard.EvmHypCollateral,
-        }),
-      ],
-    });
-    // EvmHypCollateral is in TOKEN_COLLATERALIZED_STANDARDS, so this should return true
-    expect(isValidMultiCollateralToken(token, TestChainName.test2)).toBe(true);
-  });
-
-  test('should return true if destinationToken is HypNative even without collateralAddressOrDenom', () => {
-    const token = createMockToken({
-      standard: TokenStandard.EvmHypNative,
-      collateralAddressOrDenom: undefined,
-      connections: [
-        createTokenConnectionMock(undefined, {
-          standard: TokenStandard.EvmHypNative,
-          collateralAddressOrDenom: undefined,
-        }),
-      ],
-    });
-    const destinationToken = token.getConnectionForChain(TestChainName.test2)!.token;
-    expect(isValidMultiCollateralToken(token, destinationToken)).toBe(true);
+    const destToken = createMockToken({ chainName: TestChainName.test2 });
+    expect(isValidMultiCollateralToken(token, destToken)).toBe(false);
   });
 
   test('should return false if destinationToken is not collateralized', () => {
@@ -90,17 +36,51 @@ describe('isValidMultiCollateralToken', () => {
         }),
       ],
     });
-    expect(isValidMultiCollateralToken(token, TestChainName.test2)).toBe(false);
-  });
-
-  test('should return true when tokens are valid with destinationToken as a string', () => {
-    const token = createMockToken({
-      connections: [createTokenConnectionMock()],
+    const destToken = createMockToken({
+      chainName: TestChainName.test2,
+      standard: TokenStandard.CosmosIbc,
+      collateralAddressOrDenom: undefined,
     });
-    expect(isValidMultiCollateralToken(token, TestChainName.test2)).toBe(true);
+    expect(isValidMultiCollateralToken(token, destToken)).toBe(false);
   });
 
-  test('should return true when tokens are valid with destinationToken as a IToken', () => {
+  test('should return true if originToken is HypNative even without collateralAddressOrDenom', () => {
+    const token = createMockToken({
+      collateralAddressOrDenom: undefined,
+      standard: TokenStandard.EvmHypNative,
+    });
+    const destToken = createMockToken({
+      chainName: TestChainName.test2,
+      standard: TokenStandard.EvmHypNative,
+      collateralAddressOrDenom: undefined,
+    });
+    expect(isValidMultiCollateralToken(token, destToken)).toBe(true);
+  });
+
+  test('should return true if destinationToken is HypNative even without collateralAddressOrDenom', () => {
+    const token = createMockToken({
+      standard: TokenStandard.EvmHypNative,
+      collateralAddressOrDenom: undefined,
+    });
+    const destToken = createMockToken({
+      chainName: TestChainName.test2,
+      standard: TokenStandard.EvmHypNative,
+      collateralAddressOrDenom: undefined,
+    });
+    expect(isValidMultiCollateralToken(token, destToken)).toBe(true);
+  });
+
+  test('should return true if destinationToken standard is in TOKEN_COLLATERALIZED_STANDARDS even without collateralAddressOrDenom', () => {
+    const token = createMockToken();
+    const destToken = createMockToken({
+      chainName: TestChainName.test2,
+      collateralAddressOrDenom: undefined,
+      standard: TokenStandard.EvmHypCollateral,
+    });
+    expect(isValidMultiCollateralToken(token, destToken)).toBe(true);
+  });
+
+  test('should return true when both tokens are collateralized', () => {
     const token = createMockToken({
       connections: [createTokenConnectionMock()],
     });

@@ -85,7 +85,7 @@ async function fetchMaxAmount(
 
     const multiCollateralLimit = isMultiCollateralLimitExceeded(
       maxAmount.token,
-      destination,
+      transferDestinationToken,
       maxAmount.amount.toString(),
     );
     if (multiCollateralLimit) return new TokenAmount(multiCollateralLimit, maxAmount.token);

@@ -1,5 +1,4 @@
 import {
-  ChainName,
   IToken,
   MultiProtocolProvider,
   Token,
@@ -74,18 +73,10 @@ export function assembleTokensBySymbolChainMap(
 
 export function isValidMultiCollateralToken(
   originToken: Token | IToken,
-  destination: ChainName | IToken,
+  destinationToken: Token | IToken,
 ) {
   if (!isCollateralizedToken(originToken)) return false;
-
-  const destinationToken =
-    typeof destination === 'string'
-      ? originToken.getConnectionForChain(destination)?.token
-      : destination;
-  if (!destinationToken) return false;
-
   if (!isCollateralizedToken(destinationToken)) return false;
-
   return true;
 }
 

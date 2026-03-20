@@ -1002,7 +1002,11 @@ async function validateForm(
       return [{ destinationTokenKey: 'Route is not supported' }, null];
     }
 
-    const multiCollateralLimit = isMultiCollateralLimitExceeded(token, destination, amountWei);
+    const multiCollateralLimit = isMultiCollateralLimitExceeded(
+      token,
+      connectedDestinationToken,
+      amountWei,
+    );
 
     if (multiCollateralLimit) {
       return [

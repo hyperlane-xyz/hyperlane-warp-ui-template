@@ -3,6 +3,7 @@ import {
   MultiProtocolProvider,
   Token,
   TOKEN_COLLATERALIZED_STANDARDS,
+  TokenStandard,
   WarpCore,
 } from '@hyperlane-xyz/sdk';
 import { eqAddress, isNullish, normalizeAddress, objKeys } from '@hyperlane-xyz/utils';
@@ -19,7 +20,7 @@ let collateralKeyCache = new WeakMap<IToken, string>();
 // getCollateralKey() uses this to group lockbox/vault tokens with their
 // non-wrapper counterparts (e.g., lockbox USDT grouped with regular USDT).
 let resolvedUnderlyingMap: Map<string, string> = new Map();
-const EXTRA_COLLATERALIZED_STANDARDS = new Set(['EvmHypOwnerCollateral', 'EvmHypCollateralFiat']);
+const EXTRA_COLLATERALIZED_STANDARDS = new Set([TokenStandard.EvmHypCollateralFiat]);
 
 /**
  * Set the resolved underlying address map for lockbox/vault tokens.
@@ -34,7 +35,7 @@ export function setResolvedUnderlyingMap(map: Map<string, string>) {
 function isCollateralizedToken(token: IToken): boolean {
   return (
     TOKEN_COLLATERALIZED_STANDARDS.includes(token.standard) ||
-    EXTRA_COLLATERALIZED_STANDARDS.has(token.standard as string) ||
+    EXTRA_COLLATERALIZED_STANDARDS.has(token.standard) ||
     token.isHypNative()
   );
 }

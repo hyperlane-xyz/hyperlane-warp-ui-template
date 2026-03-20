@@ -22,7 +22,6 @@ overrides:
   elliptic: 6.6.1
   pbkdf2: 3.1.3
   form-data: 4.0.4
-  '@hyperlane-xyz/core': 11.0.3
 
 patchedDependencies:
   starknetkit@2.6.1:
@@ -81,15 +80,9 @@ importers:
       '@headlessui/react':
         specifier: ^2.2.0
         version: 2.2.9(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@hyperlane-xyz/deploy-sdk':
-        specifier: 4.0.0
-        version: 4.0.0(@types/sinon-chai@4.0.0)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.6.3)(utf-8-validate@6.0.6)
-      '@hyperlane-xyz/provider-sdk':
-        specifier: 4.0.0
-        version: 4.0.0(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@6.0.6)
       '@hyperlane-xyz/registry':
-        specifier: 24.0.0
-        version: 24.0.0
+        specifier: 24.1.0
+        version: 24.1.0
       '@hyperlane-xyz/sdk':
         specifier: 28.0.0
         version: 28.0.0(@ethersproject/abi@5.8.0)(@ethersproject/providers@5.8.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(@react-native-async-storage/async-storage@1.24.0(react-native@0.84.1(@babel/core@7.29.0)(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@6.0.6)))(@types/sinon-chai@4.0.0)(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.20))(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.6.3)(utf-8-validate@6.0.6)
@@ -1559,8 +1552,8 @@ packages:
     resolution: {integrity: sha512-KK3N2wC35xZhF8KFHD3awQ/GEPwT4G6Fquwcb3bjXaPPh/JwMRzHfeoyLQeTx2lA4cfSeODkDPRgmkrXDo2JqQ==}
     engines: {node: '>=24'}
 
-  '@hyperlane-xyz/registry@24.0.0':
-    resolution: {integrity: sha512-C/aw3qUSVzJZ6/MbKHJhB2Sgh3gPzSkQFAjzlFAyiyJxRfI0f46lzCgas5CI/OHG0ZAxcezHut5WH/IvHZncuQ==}
+  '@hyperlane-xyz/registry@24.1.0':
+    resolution: {integrity: sha512-tFwFrIKRBNVxTPcLbmV7lPGhih0ItLbS/MfU2IJDI4sYybV6cgIYbqc2gOidLnUVwDJ5m/8BprZGePYwzuHmlA==}
     engines: {node: '>=24'}
 
   '@hyperlane-xyz/sdk@28.0.0':
@@ -13602,7 +13595,7 @@ snapshots:
       yaml: 2.4.5
       zod: 3.21.4
 
-  '@hyperlane-xyz/registry@24.0.0':
+  '@hyperlane-xyz/registry@24.1.0':
     dependencies:
       jszip: 3.10.1
       yaml: 2.4.5

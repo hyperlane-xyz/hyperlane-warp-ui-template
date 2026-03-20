@@ -181,7 +181,7 @@ export function SideBarMenu({
           onScroll={handleScroll}
           className="flex h-full w-full flex-col overflow-y-auto"
         >
-          <div className="sidebar-menu-header w-full bg-accent-gradient px-3.5 py-2 text-base font-normal tracking-wider text-white shadow-accent-glow dark:shadow-none">
+          <div className="sidebar-menu-header w-full bg-accent-gradient px-3.5 py-2 text-base font-normal tracking-wider text-white shadow-accent-glow dark:!shadow-none">
             Connected Wallets
           </div>
           <AccountList
@@ -191,7 +191,7 @@ export function SideBarMenu({
             className=""
             chainName={originChainName}
           />
-          <div className="sidebar-menu-header flex w-full items-center justify-between bg-accent-gradient px-3.5 py-2 shadow-accent-glow dark:shadow-none">
+          <div className="sidebar-menu-header flex w-full items-center justify-between bg-accent-gradient px-3.5 py-2 shadow-accent-glow dark:!shadow-none">
             <span className="text-base font-normal tracking-wider text-white">
               Transfer History
             </span>

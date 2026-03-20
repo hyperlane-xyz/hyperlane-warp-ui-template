@@ -44,6 +44,8 @@ Normalization
   --color-text-primary-rgb: 1 1 1;
   --color-text-secondary: #6b6b6b;
   --color-text-secondary-rgb: 107 107 107;
+  --color-text-muted: #6b6b6b;
+  --color-text-muted-rgb: 107 107 107;
   --color-border: #d9d9d9;
   --color-border-rgb: 217 217 217;
 }
@@ -62,13 +64,15 @@ html[data-theme-mode='dark'] {
   --color-text-primary-rgb: 253 251 255;
   --color-text-secondary: #b6b6b6;
   --color-text-secondary-rgb: 182 182 182;
+  --color-text-muted: #d1d5db;
+  --color-text-muted-rgb: 209 213 219;
   --color-border: #404040;
   --color-border-rgb: 64 64 64;
 
   /* Compatibility aliases for remaining selector-level/widget overrides */
   --dark-text-primary: var(--color-text-primary);
   --dark-text-secondary: var(--color-text-secondary);
-  --dark-text-muted: var(--color-text-secondary);
+  --dark-text-muted: var(--color-text-muted);
   --dark-surface: rgb(var(--color-surface-rgb) / 0.96);
   --dark-surface-card: rgb(var(--color-background-rgb) / 0.65);
   --dark-border: rgba(185, 89, 255, 0.25);

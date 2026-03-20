@@ -65,7 +65,12 @@ export function WalletProtocolModal({
               <Logo
                 width={34}
                 height={34}
-                className={`${option.logoClassName || ''} dark:text-text-primary dark:[&_polygon]:fill-current`}
+                className={[
+                  option.logoClassName,
+                  option.logoClassName && 'dark:text-text-primary dark:[&_polygon]:fill-current',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
               />
               <div className="wallet-protocol-title tracking-wide text-gray-800 dark:text-text-primary">
                 {option.title}

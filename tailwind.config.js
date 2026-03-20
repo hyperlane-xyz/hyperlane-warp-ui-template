@@ -91,6 +91,7 @@ module.exports = {
         surface: 'rgb(var(--color-surface-rgb) / <alpha-value>)',
         'text-primary': 'rgb(var(--color-text-primary-rgb) / <alpha-value>)',
         'text-secondary': 'rgb(var(--color-text-secondary-rgb) / <alpha-value>)',
+        'text-muted': 'rgb(var(--color-text-muted-rgb) / <alpha-value>)',
         border: 'rgb(var(--color-border-rgb) / <alpha-value>)',
       },
       fontSize: {

@@ -5,6 +5,7 @@ const defaultColors = require('tailwindcss/colors');
 
 module.exports = {
   content: ['./src/**/*.{js,ts,jsx,tsx}'],
+  darkMode: ['selector', '[data-theme-mode="dark"]'],
   theme: {
     fontFamily: {
       primary: ['PP Fraktion Mono', 'system-ui', 'sans-serif'],

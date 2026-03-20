@@ -22,10 +22,10 @@ export function TipCard() {
         </IconButton>
       </div>
 
-      <h2 className="tip-card-title pr-6 font-secondary text-lg font-normal text-gray-900">
+      <h2 className="pr-6 font-secondary text-lg font-normal text-gray-900 dark:text-white">
         Bridge Tokens with Hyperlane Warp Routes!
       </h2>
-      <p className="tip-card-copy mt-2 text-sm text-gray-600">
+      <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
         Warp Routes make it easy to permissionlessly take your tokens interchain. Fork this template
         to get started!
       </p>
@@ -34,9 +34,9 @@ export function TipCard() {
         href={links.github}
         target="_blank"
         rel="noopener noreferrer"
-        className="tip-card-more mt-3 inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 font-secondary text-sm text-gray-700 transition-colors hover:bg-gray-50"
+        className="mt-3 inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 font-secondary text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:border-primary-500/80 dark:bg-primary-500/20 dark:text-white dark:hover:bg-primary-500/30"
       >
-        <Image src={InfoCircle} width={12} alt="" className="tip-card-more-icon" />
+        <Image src={InfoCircle} width={12} alt="" className="dark:invert" />
         <span>More</span>
       </a>
 

@@ -502,28 +502,6 @@ html[data-theme-mode='dark'] .tip-card-close:hover path {
   fill: var(--dark-text-primary) !important;
 }
 
-html[data-theme-mode='dark'] .tip-card-title {
-  color: #ffffff !important;
-}
-
-html[data-theme-mode='dark'] .tip-card-copy {
-  color: #d1d5db !important;
-}
-
-html[data-theme-mode='dark'] .tip-card-more {
-  border-color: rgba(154, 13, 255, 0.8) !important;
-  background: rgba(154, 13, 255, 0.2) !important;
-  color: #ffffff !important;
-}
-
-html[data-theme-mode='dark'] .tip-card-more:hover {
-  background: rgba(154, 13, 255, 0.3) !important;
-}
-
-html[data-theme-mode='dark'] .tip-card-more-icon {
-  filter: invert(1);
-}
-
 html[data-theme-mode='dark'] .tip-card-logo {
   opacity: 0.16;
   -webkit-mask-image: linear-gradient(

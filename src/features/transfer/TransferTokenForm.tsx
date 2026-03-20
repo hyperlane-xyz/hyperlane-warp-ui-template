@@ -61,7 +61,7 @@ import {
   useWarpCore,
 } from '../tokens/hooks';
 import { useTokenPrices } from '../tokens/useTokenPrice';
-import { checkTokenHasRoute, findRouteToken } from '../tokens/utils';
+import { checkTokenHasRoute, findConnectedDestinationToken, findRouteToken } from '../tokens/utils';
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { WalletDropdown } from '../wallet/WalletDropdown';
 import { FeeSectionButton } from './FeeSectionButton';
@@ -341,6 +341,7 @@ function DestinationTokenCard({ isReview }: { isReview: boolean }) {
   const multiProvider = useMultiProvider();
 
   const destinationToken = getTokenByKeyFromMap(tokenMap, values.destinationTokenKey);
+  const destinationCollateralTooltip = useDestinationRouterCollateralTooltip(destinationToken);
 
   const connectedDestAddress = useAccountAddressForChain(
     multiProvider,
@@ -371,6 +372,7 @@ function DestinationTokenCard({ isReview }: { isReview: boolean }) {
           selectionMode="destination"
           disabled={isReview}
           showLabel={false}
+          hoverTooltipContent={destinationCollateralTooltip}
         />
 
         <div className="my-2.5 h-px bg-primary-50" />
@@ -379,6 +381,55 @@ function DestinationTokenCard({ isReview }: { isReview: boolean }) {
       </div>
     </div>
   );
+}
+
+// TEMP(mc-preview-collateral-tooltip): Remove once destination collateral hover debugging is no longer needed.
+function useDestinationRouterCollateralTooltip(destinationToken?: Token): string | undefined {
+  const warpCore = useWarpCore();
+  const [collateralAmount, setCollateralAmount] = useState<TokenAmount | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    if (!destinationToken) {
+      setCollateralAmount(null);
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+    setCollateralAmount(null);
+
+    warpCore
+      .getTokenCollateral(destinationToken)
+      .then((amount) => {
+        if (isCancelled) return;
+        setCollateralAmount(new TokenAmount(amount, destinationToken));
+      })
+      .catch((error) => {
+        logger.debug('Failed to fetch destination router collateral', error);
+        if (isCancelled) return;
+        setCollateralAmount(null);
+      })
+      .finally(() => {
+        if (isCancelled) return;
+        setIsLoading(false);
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [warpCore, destinationToken]);
+
+  return useMemo(() => {
+    if (!destinationToken) return undefined;
+    if (isLoading) return 'TEMP: Loading destination router collateral...';
+    if (!collateralAmount) return 'TEMP: Destination router collateral unavailable';
+    return `TEMP: Destination router collateral: ${collateralAmount
+      .getDecimalFormattedAmount()
+      .toFixed(4)} ${destinationToken.symbol}`;
+  }, [destinationToken, isLoading, collateralAmount]);
 }
 
 function MaxButton({
@@ -667,7 +718,7 @@ function ReviewDetails({
       ? findRouteToken(warpCore, originTokenByKey, destinationTokenByKey)
       : undefined;
   const destinationToken = destinationTokenByKey
-    ? originToken?.getConnectionForChain(destinationTokenByKey.chainName)?.token
+    ? originToken && findConnectedDestinationToken(originToken, destinationTokenByKey)
     : undefined;
   const originTokenSymbol = originToken?.symbol || '';
   const isNft = originToken?.isNft();
@@ -943,12 +994,19 @@ async function validateForm(
     );
 
     // This should not happen since we already checked the route above, but keep as safety check
-    const connection = transferToken.getConnectionForChain(destination);
-    if (!connection) {
+    const connectedDestinationToken = findConnectedDestinationToken(
+      transferToken,
+      destinationToken,
+    );
+    if (!connectedDestinationToken) {
       return [{ destinationTokenKey: 'Route is not supported' }, null];
     }
 
-    const multiCollateralLimit = isMultiCollateralLimitExceeded(token, destination, amountWei);
+    const multiCollateralLimit = isMultiCollateralLimitExceeded(
+      token,
+      connectedDestinationToken,
+      amountWei,
+    );
 
     if (multiCollateralLimit) {
       return [
@@ -966,6 +1024,7 @@ async function validateForm(
       recipient,
       sender: sender || '',
       senderPubKey: await senderPubKey,
+      destinationToken: connectedDestinationToken,
     });
 
     if (!isNullish(result)) {
@@ -976,6 +1035,7 @@ async function validateForm(
         destination,
         sender || '',
         recipient,
+        connectedDestinationToken,
       );
       return [enriched, null];
     }
@@ -1008,6 +1068,7 @@ async function enrichBalanceError(
   destination: string,
   sender: string,
   recipient: string,
+  destinationToken: Token,
 ): Promise<Record<string, string>> {
   if (!result.amount) return result;
   const igpErrorMatch = igpErrorPattern.exec(result.amount);
@@ -1019,6 +1080,7 @@ async function enrichBalanceError(
       destination,
       sender,
       recipient,
+      destinationToken,
     });
 
     // Symbol in validateTransfer message is sourced from igpQuote.token.symbol.

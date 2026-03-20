@@ -4,7 +4,7 @@ Find below instructions for customizing the token list and branding assets of th
 
 ## Registry
 
-By default, the app will use the canonical Hyperlane registry published on NPM. See `package.json` for the precise version.
+By default, this branch uses the Hyperlane GitHub registry at `https://github.com/hyperlane-xyz/hyperlane-registry` on branch `nambrot/multi-collateral-deploy`.
 
 To use custom chains or custom warp routes, you can either configure a different registry using the `NEXT_PUBLIC_REGISTRY_URL` environment variable or define them manually (see the next two sections).
 

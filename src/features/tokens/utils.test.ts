@@ -5,6 +5,7 @@ import {
   buildTokensArray,
   checkTokenHasRoute,
   dedupeTokensByCollateral,
+  findConnectedDestinationToken,
   findRouteToken,
   getTokenKey,
   groupTokensByCollateral,
@@ -20,64 +21,10 @@ beforeEach(() => {
 });
 
 describe('isValidMultiCollateralToken', () => {
-  test('should return false if originToken has no collateralAddressOrDenom and is not HypNative', () => {
-    const token = createMockToken({
-      collateralAddressOrDenom: undefined,
-      standard: TokenStandard.EvmHypCollateral,
-    });
-    expect(isValidMultiCollateralToken(token, 'destination')).toBe(false);
-  });
-
-  test('should return true if originToken is HypNative even without collateralAddressOrDenom', () => {
-    const token = createMockToken({
-      collateralAddressOrDenom: undefined,
-      standard: TokenStandard.EvmHypNative,
-      connections: [
-        createTokenConnectionMock(undefined, {
-          standard: TokenStandard.EvmHypNative,
-          collateralAddressOrDenom: undefined,
-        }),
-      ],
-    });
-    expect(isValidMultiCollateralToken(token, TestChainName.test2)).toBe(true);
-  });
-
   test('should return false if originToken is not collateralized', () => {
     const token = createMockToken({ standard: TokenStandard.CosmosIbc });
-    expect(isValidMultiCollateralToken(token, 'destination')).toBe(false);
-  });
-
-  test('should return false if destinationToken is not found via chain name', () => {
-    const token = createMockToken({ connections: [createTokenConnectionMock()] });
-    expect(isValidMultiCollateralToken(token, 'destination')).toBe(false);
-  });
-
-  test('should return true if destinationToken standard is in TOKEN_COLLATERALIZED_STANDARDS even without collateralAddressOrDenom', () => {
-    const token = createMockToken({
-      connections: [
-        createTokenConnectionMock(undefined, {
-          collateralAddressOrDenom: undefined,
-          standard: TokenStandard.EvmHypCollateral,
-        }),
-      ],
-    });
-    // EvmHypCollateral is in TOKEN_COLLATERALIZED_STANDARDS, so this should return true
-    expect(isValidMultiCollateralToken(token, TestChainName.test2)).toBe(true);
-  });
-
-  test('should return true if destinationToken is HypNative even without collateralAddressOrDenom', () => {
-    const token = createMockToken({
-      standard: TokenStandard.EvmHypNative,
-      collateralAddressOrDenom: undefined,
-      connections: [
-        createTokenConnectionMock(undefined, {
-          standard: TokenStandard.EvmHypNative,
-          collateralAddressOrDenom: undefined,
-        }),
-      ],
-    });
-    const destinationToken = token.getConnectionForChain(TestChainName.test2)!.token;
-    expect(isValidMultiCollateralToken(token, destinationToken)).toBe(true);
+    const destToken = createMockToken({ chainName: TestChainName.test2 });
+    expect(isValidMultiCollateralToken(token, destToken)).toBe(false);
   });
 
   test('should return false if destinationToken is not collateralized', () => {
@@ -89,17 +36,51 @@ describe('isValidMultiCollateralToken', () => {
         }),
       ],
     });
-    expect(isValidMultiCollateralToken(token, TestChainName.test2)).toBe(false);
-  });
-
-  test('should return true when tokens are valid with destinationToken as a string', () => {
-    const token = createMockToken({
-      connections: [createTokenConnectionMock()],
+    const destToken = createMockToken({
+      chainName: TestChainName.test2,
+      standard: TokenStandard.CosmosIbc,
+      collateralAddressOrDenom: undefined,
     });
-    expect(isValidMultiCollateralToken(token, TestChainName.test2)).toBe(true);
+    expect(isValidMultiCollateralToken(token, destToken)).toBe(false);
   });
 
-  test('should return true when tokens are valid with destinationToken as a IToken', () => {
+  test('should return true if originToken is HypNative even without collateralAddressOrDenom', () => {
+    const token = createMockToken({
+      collateralAddressOrDenom: undefined,
+      standard: TokenStandard.EvmHypNative,
+    });
+    const destToken = createMockToken({
+      chainName: TestChainName.test2,
+      standard: TokenStandard.EvmHypNative,
+      collateralAddressOrDenom: undefined,
+    });
+    expect(isValidMultiCollateralToken(token, destToken)).toBe(true);
+  });
+
+  test('should return true if destinationToken is HypNative even without collateralAddressOrDenom', () => {
+    const token = createMockToken({
+      standard: TokenStandard.EvmHypNative,
+      collateralAddressOrDenom: undefined,
+    });
+    const destToken = createMockToken({
+      chainName: TestChainName.test2,
+      standard: TokenStandard.EvmHypNative,
+      collateralAddressOrDenom: undefined,
+    });
+    expect(isValidMultiCollateralToken(token, destToken)).toBe(true);
+  });
+
+  test('should return true if destinationToken standard is in TOKEN_COLLATERALIZED_STANDARDS even without collateralAddressOrDenom', () => {
+    const token = createMockToken();
+    const destToken = createMockToken({
+      chainName: TestChainName.test2,
+      collateralAddressOrDenom: undefined,
+      standard: TokenStandard.EvmHypCollateral,
+    });
+    expect(isValidMultiCollateralToken(token, destToken)).toBe(true);
+  });
+
+  test('should return true when both tokens are collateralized', () => {
     const token = createMockToken({
       connections: [createTokenConnectionMock()],
     });
@@ -722,6 +703,36 @@ describe('checkTokenHasRoute', () => {
     expect(checkTokenHasRoute(origin, dest, groups)).toBe(true);
   });
 
+  test('should return true when a later same-chain connection matches dest collateral', () => {
+    const origin = createMockToken({
+      chainName: 'ethereum',
+      addressOrDenom: ADDR_1,
+      collateralAddressOrDenom: COLLATERAL_A,
+      connections: [
+        createTokenConnectionMock(undefined, {
+          chainName: 'arbitrum',
+          addressOrDenom: '0x3333333333333333333333333333333333333333',
+          // First same-chain connection points to a different collateral
+          collateralAddressOrDenom: '0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC',
+        }),
+        createTokenConnectionMock(undefined, {
+          chainName: 'arbitrum',
+          addressOrDenom: ADDR_2,
+          // Second same-chain connection is the intended collateral
+          collateralAddressOrDenom: COLLATERAL_B,
+        }),
+      ],
+    });
+    const dest = createMockToken({
+      chainName: 'arbitrum',
+      addressOrDenom: ADDR_2,
+      collateralAddressOrDenom: COLLATERAL_B,
+    });
+
+    const groups = groupTokensByCollateral([origin, dest]);
+    expect(checkTokenHasRoute(origin, dest, groups)).toBe(true);
+  });
+
   test('should return false when no connection to dest chain', () => {
     const origin = createMockToken({
       chainName: 'ethereum',
@@ -739,7 +750,9 @@ describe('checkTokenHasRoute', () => {
     expect(checkTokenHasRoute(origin, dest, groups)).toBe(false);
   });
 
-  test('should return false when connection exists but collateral keys differ', () => {
+  test('should return true when connection exists with same address but different collateral keys', () => {
+    // Even though collateral keys differ, the connection exists (same addressOrDenom),
+    // so findConnectedDestinationToken matches via address fallback — route is valid.
     const origin = createMockToken({
       chainName: 'ethereum',
       addressOrDenom: ADDR_1,
@@ -748,7 +761,6 @@ describe('checkTokenHasRoute', () => {
         createTokenConnectionMock(undefined, {
           chainName: 'arbitrum',
           addressOrDenom: ADDR_2,
-          // Different collateral than dest token
           collateralAddressOrDenom: '0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC',
         }),
       ],
@@ -760,7 +772,7 @@ describe('checkTokenHasRoute', () => {
     });
 
     const groups = groupTokensByCollateral([origin, dest]);
-    expect(checkTokenHasRoute(origin, dest, groups)).toBe(false);
+    expect(checkTokenHasRoute(origin, dest, groups)).toBe(true);
   });
 
   test('should return false when origin token not in any collateral group', () => {
@@ -850,6 +862,45 @@ describe('findRouteToken', () => {
 
     expect(result).toBe(origin);
     expect(warpCore.getTokensForRoute).not.toHaveBeenCalled();
+  });
+
+  test('should prefer route token that matches specific destination token on same chain', () => {
+    const destinationCollateralA = '0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+    const destinationCollateralB = '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB';
+    const origin = createMockToken({
+      chainName: 'ethereum',
+      addressOrDenom: ADDR_1,
+      collateralAddressOrDenom: COLLATERAL,
+      connections: [
+        createTokenConnectionMock(undefined, {
+          chainName: 'arbitrum',
+          addressOrDenom: ADDR_2,
+          collateralAddressOrDenom: destinationCollateralA,
+        }),
+      ],
+    });
+    const selectedDestination = createMockToken({
+      chainName: 'arbitrum',
+      addressOrDenom: ADDR_3,
+      collateralAddressOrDenom: destinationCollateralB,
+    });
+    const routeToken = createMockToken({
+      chainName: 'ethereum',
+      addressOrDenom: '0x4444444444444444444444444444444444444444',
+      collateralAddressOrDenom: COLLATERAL,
+      connections: [
+        createTokenConnectionMock(undefined, {
+          chainName: 'arbitrum',
+          addressOrDenom: ADDR_3,
+          collateralAddressOrDenom: destinationCollateralB,
+        }),
+      ],
+    });
+    const warpCore = createMockWarpCore([routeToken]);
+
+    const result = findRouteToken(warpCore, origin, selectedDestination);
+
+    expect(result).toBe(routeToken);
   });
 
   test('should return undefined when no routes exist', () => {
@@ -1528,5 +1579,51 @@ describe('resolved underlying map integration', () => {
     // No lockbox token, no connection — should be false
     const groups = groupTokensByCollateral([regularUsdt, destToken]);
     expect(checkTokenHasRoute(regularUsdt, destToken, groups)).toBe(false);
+  });
+});
+
+describe('findConnectedDestinationToken', () => {
+  test('should match later same-chain connection by collateral key', () => {
+    const COLLATERAL_A = '0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+    const COLLATERAL_B = '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB';
+    const origin = createMockToken({
+      chainName: 'ethereum',
+      collateralAddressOrDenom: COLLATERAL_A,
+      connections: [
+        createTokenConnectionMock(undefined, {
+          chainName: 'arbitrum',
+          addressOrDenom: '0x1111111111111111111111111111111111111111',
+          collateralAddressOrDenom: '0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC',
+        }),
+        createTokenConnectionMock(undefined, {
+          chainName: 'arbitrum',
+          addressOrDenom: '0x2222222222222222222222222222222222222222',
+          collateralAddressOrDenom: COLLATERAL_B,
+        }),
+      ],
+    });
+    const selectedDestination = createMockToken({
+      chainName: 'arbitrum',
+      addressOrDenom: '0x3333333333333333333333333333333333333333',
+      collateralAddressOrDenom: COLLATERAL_B,
+    });
+
+    const matched = findConnectedDestinationToken(origin, selectedDestination);
+    expect(matched?.addressOrDenom).toBe('0x2222222222222222222222222222222222222222');
+  });
+
+  test('should return undefined when there is no destination-chain connection', () => {
+    const origin = createMockToken({
+      chainName: 'ethereum',
+      connections: [
+        createTokenConnectionMock(undefined, {
+          chainName: 'optimism',
+        }),
+      ],
+    });
+    const selectedDestination = createMockToken({ chainName: 'arbitrum' });
+
+    const matched = findConnectedDestinationToken(origin, selectedDestination);
+    expect(matched).toBeUndefined();
   });
 });

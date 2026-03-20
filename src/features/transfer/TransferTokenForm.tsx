@@ -420,12 +420,7 @@ function useDestinationRouterCollateralTooltip(destinationToken?: Token): string
     return () => {
       isCancelled = true;
     };
-  }, [
-    warpCore,
-    destinationToken?.chainName,
-    destinationToken?.addressOrDenom,
-    destinationToken?.symbol,
-  ]);
+  }, [warpCore, destinationToken]);
 
   return useMemo(() => {
     if (!destinationToken) return undefined;
@@ -720,16 +715,7 @@ function ReviewDetails({
   // Finding actual token pair for the given tokens
   const originToken =
     destinationTokenByKey && originTokenByKey
-<<<<<<< HEAD
-      ? findRouteToken(
-          warpCore,
-          originTokenByKey,
-          destinationTokenByKey.chainName,
-          destinationTokenByKey,
-        )
-=======
       ? findRouteToken(warpCore, originTokenByKey, destinationTokenByKey)
->>>>>>> main
       : undefined;
   const destinationToken = destinationTokenByKey
     ? originToken && findConnectedDestinationToken(originToken, destinationTokenByKey)

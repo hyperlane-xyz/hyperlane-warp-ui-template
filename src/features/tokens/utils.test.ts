@@ -917,7 +917,7 @@ describe('findRouteToken', () => {
     });
     const warpCore = createMockWarpCore([routeToken]);
 
-    const result = findRouteToken(warpCore, origin, 'arbitrum', selectedDestination);
+    const result = findRouteToken(warpCore, origin, selectedDestination);
 
     expect(result).toBe(routeToken);
   });

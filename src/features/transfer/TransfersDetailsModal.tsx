@@ -263,7 +263,7 @@ export function TransfersDetailsModal({
             <div className="flex items-center font-secondary text-sm font-normal">
               <span>{amount}</span>
               <span className="ml-1">{token?.symbol || ''}</span>
-              {destToken && destToken.symbol !== token?.symbol && (
+              {destToken && (
                 <>
                   <Image className="mx-2" src={ArrowRightIcon} width={10} height={10} alt="" />
                   <span>{amount}</span>

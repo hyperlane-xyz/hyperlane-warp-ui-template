@@ -338,7 +338,7 @@ function TransferSummary({
             >
               {token?.symbol || 'Unknown token'}
             </span>
-            {destToken && destToken.symbol !== token?.symbol && (
+            {destToken && (
               <>
                 <Image
                   className="sidebar-menu-arrow mx-1"

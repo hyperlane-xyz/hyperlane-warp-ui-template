@@ -1,7 +1,7 @@
 import { DropdownMenu } from '@hyperlane-xyz/widgets';
 import Image from 'next/image';
 import Link from 'next/link';
-import { UiThemeMode } from '../../consts/app';
+import { useTheme } from '../../features/theme/ThemeContext';
 import { ConnectWalletButton } from '../../features/wallet/ConnectWalletButton';
 import Logo from '../../images/logos/app-logo.svg';
 import Name from '../../images/logos/app-name.svg';
@@ -9,12 +9,8 @@ import Title from '../../images/logos/app-title.svg';
 import { HamburgerIcon } from '../icons/HamburgerIcon';
 import { NavItem, navLinks } from './Nav';
 
-interface HeaderProps {
-  themeMode: UiThemeMode;
-  onToggleTheme: () => void;
-}
-
-export function Header({ themeMode, onToggleTheme }: HeaderProps) {
+export function Header() {
+  const { themeMode, toggleThemeMode } = useTheme();
   const nextThemeMode = themeMode === 'dark' ? 'light' : 'dark';
   const nextThemeLabel = nextThemeMode === 'dark' ? 'Lights out' : 'Lights on';
 
@@ -52,7 +48,7 @@ export function Header({ themeMode, onToggleTheme }: HeaderProps) {
         <button
           type="button"
           className={`${styles.themeToggle} theme-toggle`}
-          onClick={onToggleTheme}
+          onClick={toggleThemeMode}
           aria-label={`Switch to ${nextThemeMode} mode`}
           title={`Switch to ${nextThemeMode} mode`}
         >

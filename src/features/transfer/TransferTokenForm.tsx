@@ -243,7 +243,7 @@ function SwapTokensButton({ disabled }: { disabled?: boolean }) {
         type="button"
         onClick={onSwap}
         disabled={disabled}
-        className="swap-chains-button group flex h-8 w-8 items-center justify-center rounded border border-gray-400/50 bg-white shadow-button transition-all hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-primary-300/35 dark:bg-[rgba(13,6,18,0.9)] dark:shadow-none dark:hover:bg-primary-300/20"
+        className="swap-chains-button group flex h-8 w-8 items-center justify-center rounded border border-gray-400/50 bg-white shadow-button transition-all hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-primary-300/35 dark:bg-background/90 dark:shadow-none dark:hover:bg-primary-300/20"
       >
         <SwapIcon
           width={18}
@@ -307,14 +307,14 @@ function OriginTokenCard({
           <TextField
             name="amount"
             placeholder="0"
-            className="transfer-text-input w-full flex-1 border-none bg-transparent font-secondary text-xl font-normal text-gray-900 outline-none placeholder:text-gray-900 dark:text-[var(--dark-text-primary)] dark:placeholder:text-[var(--dark-text-secondary)]"
+            className="transfer-text-input w-full flex-1 border-none bg-transparent font-secondary text-xl font-normal text-gray-900 outline-none placeholder:text-gray-900 dark:text-text-primary dark:placeholder:text-text-secondary"
             type="number"
             step="any"
             disabled={isReview}
           />
           <MaxButton balance={balance} disabled={isReview} isRouteSupported={isRouteSupported} />
         </div>
-        <div className="transfer-balance mt-1 flex items-center justify-between text-xs leading-[18px] text-gray-450 dark:text-[var(--dark-text-secondary)]">
+        <div className="transfer-balance mt-1 flex items-center justify-between text-xs leading-[18px] text-gray-450 dark:text-text-secondary">
           <span>
             {shouldShowPrice && !isPriceLoading ? (
               <>
@@ -422,7 +422,7 @@ function MaxButton({
       type="button"
       onClick={onClick}
       disabled={isDisabled}
-      className="transfer-max-btn rounded border border-gray-300 px-2 py-0.5 font-secondary text-sm text-gray-450 transition-colors hover:border-gray-400 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50 dark:border-primary-300/40 dark:text-[var(--dark-text-secondary)] dark:hover:border-primary-300/65 dark:hover:text-[var(--dark-text-primary)]"
+      className="transfer-max-btn rounded border border-gray-300 px-2 py-0.5 font-secondary text-sm text-gray-450 transition-colors hover:border-gray-400 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50 dark:border-primary-300/40 dark:text-text-secondary dark:hover:border-primary-300/65 dark:hover:text-text-primary"
     >
       {isLoading ? <SpinnerIcon className="h-4 w-4" /> : 'Max'}
     </button>
@@ -437,7 +437,7 @@ function TokenBalance({
   balance: TokenAmount | null | undefined;
 }) {
   return (
-    <span className="text-xs leading-[18px] text-gray-450 dark:text-[var(--dark-text-secondary)]">
+    <span className="text-xs leading-[18px] text-gray-450 dark:text-text-secondary">
       {balance ? (
         <>
           {label}: {balance.getDecimalFormattedAmount().toFixed(4)} {balance.token.symbol}
@@ -755,10 +755,10 @@ function ReviewDetails({
           isReview ? 'max-h-screen duration-1000 ease-in' : 'max-h-0 duration-500'
         } overflow-hidden transition-all`}
       >
-        <label className="transfer-field-label mt-4 block pl-0.5 text-sm text-gray-600 dark:text-[var(--dark-text-secondary)]">
+        <label className="transfer-field-label mt-4 block pl-0.5 text-sm text-gray-600 dark:text-text-secondary">
           Transactions
         </label>
-        <div className="transfer-review-panel mt-1.5 space-y-2 break-all rounded border border-gray-400 bg-gray-150 px-2.5 py-2 text-sm dark:border-primary-300/25 dark:bg-white/5 dark:text-[var(--dark-text-primary)]">
+        <div className="transfer-review-panel mt-1.5 space-y-2 break-all rounded border border-gray-400 bg-gray-150 px-2.5 py-2 text-sm dark:border-primary-300/25 dark:bg-background/40 dark:text-text-primary">
           {isLoading ? (
             <div className="flex items-center justify-center py-6">
               <SpinnerIcon className="h-5 w-5" />

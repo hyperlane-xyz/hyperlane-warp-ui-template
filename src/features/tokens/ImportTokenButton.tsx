@@ -29,7 +29,7 @@ export function ImportTokenButton({ token }: ImportTokenButtonProps) {
   return (
     <button
       type="button"
-      className="flex items-center text-sm text-primary-500 hover:text-primary-700 disabled:opacity-50 dark:text-[var(--dark-text-muted)] dark:hover:text-[#d4b8f0] [&_path]:fill-primary-500 [&_path]:hover:fill-primary-700 dark:[&_path]:fill-current"
+      className="flex items-center text-sm text-primary-500 hover:text-primary-700 disabled:opacity-50 dark:text-text-secondary dark:hover:text-text-primary [&_path]:fill-primary-500 [&_path]:hover:fill-primary-700 dark:[&_path]:fill-current"
       onClick={handleAddToken}
       disabled={isLoading}
     >

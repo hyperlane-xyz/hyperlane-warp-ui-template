@@ -445,6 +445,12 @@ html[data-theme-mode='dark'] .sidebar-menu .text-gray-400 {
   color: var(--dark-text-secondary) !important;
 }
 
+html[data-theme-mode='dark'] .sidebar-menu-empty,
+html[data-theme-mode='dark'] .sidebar-menu-end,
+html[data-theme-mode='dark'] .sidebar-menu-time {
+  color: var(--dark-text-primary) !important;
+}
+
 .tip-card-logo {
   opacity: 0.38;
   clip-path: inset(0 0 1px 0);

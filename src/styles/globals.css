@@ -445,9 +445,9 @@ html[data-theme-mode='dark'] .sidebar-menu .text-gray-400 {
   color: var(--dark-text-secondary) !important;
 }
 
-html[data-theme-mode='dark'] .sidebar-menu-empty,
-html[data-theme-mode='dark'] .sidebar-menu-end,
-html[data-theme-mode='dark'] .sidebar-menu-time {
+html[data-theme-mode='dark'] .sidebar-menu .sidebar-menu-empty.text-gray-500,
+html[data-theme-mode='dark'] .sidebar-menu .sidebar-menu-end.text-gray-400,
+html[data-theme-mode='dark'] .sidebar-menu .sidebar-menu-time.text-gray-500 {
   color: var(--dark-text-primary) !important;
 }
 

@@ -3,20 +3,21 @@
 # The input here is typically the output of the Hyperlane CLI warp deploy command
 ---
 tokens:
-  - addressOrDenom: '0x59b670e9fA9D0A427751Af201D676719a970857b'
-    chainName: ethereumlocal2
+  - chainName: cosmoslocal
+    standard: CosmosNativeHypCollateral
+    decimals: 6
+    symbol: TEST
+    name: TEST
+    addressOrDenom: '0x726f757465725f61707000000000000000000000000000010000000000000000'
+    collateralAddressOrDenom: uhyp
     connections:
-      - token: ethereum|test4|0x59b670e9fA9D0A427751Af201D676719a970857b
-    decimals: 18
-    name: Ether
+      - token: ethereum|ethereumlocal2|0x4A679253410272dd5232B3Ff7cF5dbB88f295319
+  - chainName: ethereumlocal2
     standard: EvmHypSynthetic
-    symbol: ETH
-  - addressOrDenom: '0x59b670e9fA9D0A427751Af201D676719a970857b'
-    chainName: test4
+    decimals: 6
+    symbol: TEST
+    name: TEST
+    addressOrDenom: '0x4A679253410272dd5232B3Ff7cF5dbB88f295319'
     connections:
-      - token: ethereum|ethereumlocal2|0x59b670e9fA9D0A427751Af201D676719a970857b
-    decimals: 18
-    name: Ether
-    standard: EvmHypNative
-    symbol: ETH
+      - token: cosmosnative|cosmoslocal|0x726f757465725f61707000000000000000000000000000010000000000000000
 options: {}

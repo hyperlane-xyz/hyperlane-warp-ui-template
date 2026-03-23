@@ -97,6 +97,10 @@ const embedAllowedOrigins = rawEmbedAllowedOrigins
   .map((origin) => origin.trim())
   .filter(Boolean);
 
+if (embedAllowedOrigins.length === 0) {
+  throw new Error('Invalid NEXT_PUBLIC_EMBED_ALLOWED_ORIGINS: no valid origins provided');
+}
+
 if (embedAllowedOrigins.some((origin) => /[;\r\n]/.test(origin))) {
   throw new Error('Invalid NEXT_PUBLIC_EMBED_ALLOWED_ORIGINS: contains forbidden characters');
 }

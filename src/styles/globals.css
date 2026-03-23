@@ -512,6 +512,10 @@ html[data-theme-mode='dark'] .transfer-form .text-gray-500 {
   color: var(--dark-text-secondary) !important;
 }
 
+html[data-theme-mode='dark'] .transfer-form .fee-section-btn.text-gray-700:hover {
+  color: var(--dark-text-primary) !important;
+}
+
 html[data-theme-mode='dark'] .chain-picker-modal:not(.bg-gray-100),
 html[data-theme-mode='dark'] .token-picker-modal {
   border: 1px solid rgba(185, 89, 255, 0.38) !important;

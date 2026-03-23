@@ -16,7 +16,7 @@ export function TipCard() {
         <IconButton
           onClick={() => setShow(false)}
           title="Hide tip"
-          className="text-gray-400 hover:text-gray-600 dark:text-text-secondary dark:hover:text-text-primary dark:[&_path]:fill-current"
+          className="text-gray-400 hover:text-gray-600 dark:text-foreground-secondary dark:hover:text-foreground-primary dark:[&_path]:fill-current"
         >
           <XCircleIcon width={14} height={14} />
         </IconButton>
@@ -25,7 +25,7 @@ export function TipCard() {
       <h2 className="pr-6 font-secondary text-lg font-normal text-gray-900 dark:text-white">
         Bridge Tokens with Hyperlane Warp Routes!
       </h2>
-      <p className="mt-2 text-sm text-gray-600 dark:text-text-muted">
+      <p className="mt-2 text-sm text-gray-600 dark:text-foreground-muted">
         Warp Routes make it easy to permissionlessly take your tokens interchain. Fork this template
         to get started!
       </p>

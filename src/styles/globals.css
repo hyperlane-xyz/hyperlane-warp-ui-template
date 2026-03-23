@@ -50,7 +50,6 @@ Normalization
   --color-border-rgb: 217 217 217;
 }
 
-html[data-theme='dark'],
 html[data-theme-mode='dark'] {
   --app-bg-color: #0d0612;
   --app-bg-image:

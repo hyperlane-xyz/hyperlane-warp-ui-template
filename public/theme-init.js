@@ -18,6 +18,5 @@
   }
 
   const themeMode = storedTheme === 'dark' || storedTheme === 'light' ? storedTheme : getSystemTheme();
-  document.documentElement.dataset.theme = themeMode;
   document.documentElement.dataset.themeMode = themeMode;
 })();

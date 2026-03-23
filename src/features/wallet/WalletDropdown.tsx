@@ -155,7 +155,7 @@ function ConnectWalletButton({ chainName }: { chainName?: string }) {
     <button
       type="button"
       onClick={onConnect}
-      className="wallet-connect-link flex items-center gap-1.5 text-sm text-primary-500 underline decoration-current transition-colors hover:text-primary-600 dark:text-text-secondary dark:hover:text-text-primary dark:[&_path]:fill-current dark:[&_path]:stroke-current"
+      className="wallet-connect-link flex items-center gap-1.5 text-sm text-primary-500 underline decoration-current transition-colors hover:text-primary-600 dark:text-foreground-secondary dark:hover:text-foreground-primary dark:[&_path]:fill-current dark:[&_path]:stroke-current"
     >
       <XIcon width={8} height={8} color={Color.red[500]} />
       <span>Connect Wallet</span>
@@ -177,7 +177,7 @@ function ConnectMenuItem({ protocol }: { protocol: ProtocolType }) {
     <button
       type="button"
       onClick={onConnect}
-      className="wallet-dropdown-item w-full px-4 py-2.5 text-left text-sm text-gray-900 hover:bg-gray-100 dark:text-text-primary dark:hover:bg-primary-300/15"
+      className="wallet-dropdown-item w-full px-4 py-2.5 text-left text-sm text-gray-900 hover:bg-gray-100 dark:text-foreground-primary dark:hover:bg-primary-300/15"
     >
       Connect wallet
     </button>
@@ -186,13 +186,13 @@ function ConnectMenuItem({ protocol }: { protocol: ProtocolType }) {
 
 function DropdownWalletButton({ address }: { address: string }) {
   return (
-    <div className="wallet-connect-link flex items-center gap-2 text-sm underline decoration-current dark:text-text-secondary dark:hover:text-text-primary dark:[&_path]:fill-current dark:[&_path]:stroke-current">
+    <div className="wallet-connect-link flex items-center gap-2 text-sm underline decoration-current dark:text-foreground-secondary dark:hover:text-foreground-primary dark:[&_path]:fill-current dark:[&_path]:stroke-current">
       {address ? (
         <div className="h-2 w-2 rounded-full bg-green-50" />
       ) : (
         <XIcon width={8} height={8} color={Color.red[500]} />
       )}
-      <div className="flex items-center gap-2 text-primary-500 transition-colors duration-150 hover:text-primary-700 dark:text-text-secondary dark:hover:text-text-primary [&_path]:fill-primary-500 [&_path]:hover:fill-primary-700 dark:[&_path]:fill-current dark:[&_path]:stroke-current dark:hover:[&_path]:fill-current dark:hover:[&_path]:stroke-current">
+      <div className="flex items-center gap-2 text-primary-500 transition-colors duration-150 hover:text-primary-700 dark:text-foreground-secondary dark:hover:text-foreground-primary [&_path]:fill-primary-500 [&_path]:hover:fill-primary-700 dark:[&_path]:fill-current dark:[&_path]:stroke-current dark:hover:[&_path]:fill-current dark:hover:[&_path]:stroke-current">
         <span>{address || 'Connect Wallet'}</span>
         <ChevronIcon width={10} height={6} direction="s" />
       </div>
@@ -205,7 +205,7 @@ function MenuItemButton({ onClick, children }: { onClick: () => void; children: 
     <button
       type="button"
       onClick={onClick}
-      className="wallet-dropdown-item w-full px-4 py-2.5 text-left text-sm text-gray-900 hover:bg-gray-100 dark:text-text-primary dark:hover:bg-primary-300/15"
+      className="wallet-dropdown-item w-full px-4 py-2.5 text-left text-sm text-gray-900 hover:bg-gray-100 dark:text-foreground-primary dark:hover:bg-primary-300/15"
     >
       {children}
     </button>

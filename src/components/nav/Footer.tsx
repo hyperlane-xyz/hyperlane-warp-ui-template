@@ -34,7 +34,7 @@ function FooterNav() {
           <li key={item.title}>
             <NavItem
               item={item}
-              className="dark:text-text-primary dark:hover:text-white dark:[&_path]:fill-current dark:[&_path]:stroke-current dark:[&_svg]:opacity-95 dark:[&_svg]:brightness-[1.22] dark:[&_svg]:saturate-[0.82]"
+              className="dark:text-foreground-primary dark:hover:text-white dark:[&_path]:fill-current dark:[&_path]:stroke-current dark:[&_svg]:opacity-95 dark:[&_svg]:brightness-[1.22] dark:[&_svg]:saturate-[0.82]"
             />
           </li>
         ))}

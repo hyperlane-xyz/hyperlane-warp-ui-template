@@ -50,7 +50,7 @@ export function WalletProtocolModal({
       isOpen={isOpen}
       close={close}
       dialogClassname="wallet-protocol-dialog"
-      panelClassname="wallet-protocol-modal max-w-[44rem] p-4 dark:border dark:border-border/60 dark:bg-surface dark:text-text-primary dark:shadow-[0_16px_40px_rgba(0,0,0,0.45)]"
+      panelClassname="wallet-protocol-modal max-w-[44rem] p-4 dark:border dark:border-border/60 dark:bg-surface dark:text-foreground-primary dark:shadow-[0_16px_40px_rgba(0,0,0,0.45)]"
     >
       <div className="wallet-protocol-grid flex flex-wrap justify-center gap-2.5 py-2">
         {PROTOCOL_OPTIONS.filter((option) => includesProtocol(option.protocol)).map((option) => {
@@ -67,15 +67,16 @@ export function WalletProtocolModal({
                 height={34}
                 className={[
                   option.logoClassName,
-                  option.logoClassName && 'dark:text-text-primary dark:[&_polygon]:fill-current',
+                  option.protocol === ProtocolType.Aleo &&
+                    'dark:text-foreground-primary dark:[&_polygon]:fill-current',
                 ]
                   .filter(Boolean)
                   .join(' ')}
               />
-              <div className="wallet-protocol-title tracking-wide text-gray-800 dark:text-text-primary">
+              <div className="wallet-protocol-title tracking-wide text-gray-800 dark:text-foreground-primary">
                 {option.title}
               </div>
-              <div className="wallet-protocol-subtitle text-sm text-gray-500 dark:text-text-secondary">
+              <div className="wallet-protocol-subtitle text-sm text-gray-500 dark:text-foreground-secondary">
                 {`Connect to ${option.subtitle}-compatible wallet`}
               </div>
             </button>

@@ -1,8 +1,8 @@
-import { IToken, QuotedCallsParams, SubmitQuoteCommand, Token, TokenPullMode, WarpCore } from '@hyperlane-xyz/sdk';
+import { IToken, QuotedCallsParams, SubmitQuoteCommand, Token, TokenPullMode, WarpCore, computeScopedSalt } from '@hyperlane-xyz/sdk';
 import { ProtocolType, addressToBytes32, toWei } from '@hyperlane-xyz/utils';
 import { getAccountAddressAndPubKey, useAccounts, useDebounce } from '@hyperlane-xyz/widgets';
 import { useQuery } from '@tanstack/react-query';
-import { type Address, type Hex, encodeAbiParameters, keccak256, toHex } from 'viem';
+import { type Address, type Hex, toHex } from 'viem';
 
 import { config } from '../../consts/config';
 import { logger } from '../../utils/logger';
@@ -89,15 +89,6 @@ function generateClientSalt(): Hex {
   return toHex(bytes);
 }
 
-function computeSalt(sender: Address, clientSalt: Hex): Hex {
-  return keccak256(
-    encodeAbiParameters(
-      [{ type: 'address' }, { type: 'bytes32' }],
-      [sender, clientSalt],
-    ),
-  );
-}
-
 async function fetchQuotedCallsFees(
   warpCore: WarpCore,
   registry: import('@hyperlane-xyz/registry').IRegistry,
@@ -125,7 +116,7 @@ async function fetchQuotedCallsFees(
 
   // Generate salt
   const clientSalt = generateClientSalt();
-  const salt = computeSalt(sender as Address, clientSalt);
+  const salt = computeScopedSalt(sender as Address, clientSalt);
 
   // Get destination domain ID
   const destinationDomainId = warpCore.multiProvider.getDomainId(destination);

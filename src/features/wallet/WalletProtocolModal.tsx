@@ -52,7 +52,7 @@ export function WalletProtocolModal({
       dialogClassname="wallet-protocol-dialog"
       panelClassname="wallet-protocol-modal max-w-[44rem] p-4"
     >
-      <div className="wallet-protocol-grid grid grid-cols-2 gap-2.5 py-2 sm:grid-cols-3">
+      <div className="wallet-protocol-grid flex flex-wrap justify-center gap-2.5 py-2">
         {PROTOCOL_OPTIONS.filter((option) => includesProtocol(option.protocol)).map((option) => {
           const Logo = PROTOCOL_TO_LOGO[option.protocol];
           if (!Logo) return null;
@@ -60,7 +60,7 @@ export function WalletProtocolModal({
             <button
               key={option.protocol}
               onClick={() => onClickProtocol(option.protocol)}
-              className="wallet-protocol-card flex w-full flex-col items-center space-y-2.5 rounded-lg border border-gray-200 py-3.5 transition-all hover:bg-gray-100 active:scale-95"
+              className="wallet-protocol-card flex basis-[calc(50%-0.5rem)] flex-col items-center space-y-2.5 rounded-lg border border-gray-200 py-3.5 transition-all hover:bg-gray-100 active:scale-95 sm:basis-[calc(33.333%-0.5rem)]"
             >
               <Logo width={34} height={34} className={option.logoClassName} />
               <div className="wallet-protocol-title tracking-wide text-gray-800">

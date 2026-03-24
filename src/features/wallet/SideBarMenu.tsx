@@ -26,6 +26,7 @@ import { TokenChainIcon } from '../tokens/TokenChainIcon';
 import { TransfersDetailsModal } from '../transfer/TransfersDetailsModal';
 import { TransferContext, TransferStatus } from '../transfer/types';
 import { getIconByTransferStatus, STATUSES_WITH_ICON } from '../transfer/utils';
+import { startRelativeTimeTicker } from './relativeTimeTicker';
 
 export function SideBarMenu({
   onClickConnectWallet,
@@ -146,9 +147,9 @@ export function SideBarMenu({
 
   useEffect(() => {
     if (!isMenuOpen) return;
-    setNowMs(Date.now());
-    const intervalId = window.setInterval(() => setNowMs(Date.now()), 30000);
-    return () => window.clearInterval(intervalId);
+    return startRelativeTimeTicker({
+      onTick: () => setNowMs(Date.now()),
+    });
   }, [isMenuOpen]);
 
   return (

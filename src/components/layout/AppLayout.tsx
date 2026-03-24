@@ -1,7 +1,6 @@
-import { MultiProtocolWalletModal } from '@hyperlane-xyz/widgets';
 import Head from 'next/head';
 import { PropsWithChildren, useEffect } from 'react';
-import { APP_NAME, BACKGROUND_COLOR, BACKGROUND_IMAGE } from '../../consts/app';
+import { APP_NAME } from '../../consts/app';
 import { config } from '../../consts/config';
 import { initIntercom } from '../../features/analytics/intercom';
 import { initRefiner } from '../../features/analytics/refiner';
@@ -10,6 +9,7 @@ import { useWalletConnectionTracking } from '../../features/analytics/useWalletC
 import { trackEvent } from '../../features/analytics/utils';
 import { useStore } from '../../features/store';
 import { SideBarMenu } from '../../features/wallet/SideBarMenu';
+import { WalletProtocolModal } from '../../features/wallet/WalletProtocolModal';
 import { Footer } from '../nav/Footer';
 import { Header } from '../nav/Header';
 
@@ -39,7 +39,6 @@ export function AppLayout({ children }: PropsWithChildren) {
         <title>{APP_NAME}</title>
       </Head>
       <div
-        style={styles.container}
         id="app-content"
         className="min-w-screen relative flex h-full min-h-screen w-full flex-col justify-between"
       >
@@ -50,7 +49,7 @@ export function AppLayout({ children }: PropsWithChildren) {
         <Footer />
       </div>
 
-      <MultiProtocolWalletModal
+      <WalletProtocolModal
         isOpen={showEnvSelectModal}
         close={() => setShowEnvSelectModal(false)}
         protocols={config.walletProtocols}
@@ -66,13 +65,3 @@ export function AppLayout({ children }: PropsWithChildren) {
     </>
   );
 }
-
-const styles = {
-  container: {
-    backgroundColor: BACKGROUND_COLOR,
-    backgroundImage: BACKGROUND_IMAGE,
-    backgroundSize: 'cover',
-    backgroundRepeat: 'no-repeat',
-    backgroundPosition: 'center',
-  },
-};

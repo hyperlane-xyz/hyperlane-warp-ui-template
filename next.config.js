@@ -91,7 +91,7 @@ const securityHeaders = [
 
 // Embed page headers: allow framing from specified origins (default: any)
 // Accepts space or comma-separated origins, e.g. "https://a.com https://b.com" or "https://a.com,https://b.com"
-const rawEmbedAllowedOrigins = process.env.NEXT_PUBLIC_EMBED_ALLOWED_ORIGINS || '*';
+const rawEmbedAllowedOrigins = process.env.NEXT_PUBLIC_EMBED_ALLOWED_ORIGINS ?? '*';
 const embedAllowedOrigins = rawEmbedAllowedOrigins
   .split(/[,\s]+/)
   .map((origin) => origin.trim())
@@ -164,7 +164,7 @@ const nextConfig = {
         headers: embedSecurityHeaders,
       },
       {
-        source: '/((?!embed).*)',
+        source: '/((?!embed$).*)',
         headers: securityHeaders,
       },
     ];

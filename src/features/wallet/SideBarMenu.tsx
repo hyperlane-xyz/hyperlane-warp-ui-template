@@ -172,7 +172,7 @@ export function SideBarMenu({
               width={15}
               height={24}
               alt=""
-              className="dark:brightness-0 dark:opacity-85 dark:invert"
+              className="dark:opacity-85 dark:brightness-0 dark:invert"
             />
           </button>
         )}
@@ -351,7 +351,7 @@ function TransferSummary({
             {destToken && (
               <>
                 <Image
-                  className="sidebar-menu-arrow mx-1 dark:brightness-0 dark:opacity-85 dark:invert"
+                  className="sidebar-menu-arrow mx-1 dark:opacity-85 dark:brightness-0 dark:invert"
                   src={ArrowRightIcon}
                   width={10}
                   height={10}
@@ -373,7 +373,7 @@ function TransferSummary({
               {getChainDisplayName(multiProvider, originChain, true)}
             </span>
             <Image
-              className="sidebar-menu-arrow mx-1 dark:brightness-0 dark:opacity-85 dark:invert"
+              className="sidebar-menu-arrow mx-1 dark:opacity-85 dark:brightness-0 dark:invert"
               src={ArrowRightIcon}
               width={10}
               height={10}

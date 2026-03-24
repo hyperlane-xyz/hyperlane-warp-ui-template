@@ -2,7 +2,6 @@
 // Warp Route IDs use format `SYMBOL/chainname1-chainname2...` where chains are ordered alphabetically
 // If left null, all warp routes in the configured registry will be included
 // If set to a list (including an empty list), only the specified routes will be included
-<<<<<<< HEAD
 export const warpRouteWhitelist: Array<string> | null = [
   // TIA routes
   'TIA/eclipsemainnet-stride',
@@ -396,12 +395,6 @@ export const warpRouteWhitelist: Array<string> | null = [
   // paradex
   'DIME/paradex',
 ];
-=======
-export const warpRouteWhitelist: Array<string> | null = null;
-// Example:
-// [
-//   // 'ETH/ethereum-viction'
-// ];
 
 /**
  * Returns the effective warp route whitelist.
@@ -428,4 +421,3 @@ export function getWarpRouteWhitelist(): Array<string> | null {
   }
   return warpRouteWhitelist;
 }
->>>>>>> origin/main

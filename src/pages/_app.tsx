@@ -11,6 +11,7 @@ import '../../sentry.client.config';
 import { ErrorBoundary } from '../components/errors/ErrorBoundary';
 import { AppLayout } from '../components/layout/AppLayout';
 import { WarpContextInitGate } from '../features/WarpContextInitGate';
+import { ThemeProvider } from '../features/theme/ThemeContext';
 import { AleoWalletContext } from '../features/wallet/context/AleoWalletContext';
 import { CosmosWalletContext } from '../features/wallet/context/CosmosWalletContext';
 import { EvmWalletContext } from '../features/wallet/context/EvmWalletContext';
@@ -83,7 +84,9 @@ export default function App({ Component, pageProps }: AppProps) {
                   <StarknetWalletContext>
                     <RadixWalletContext>
                       <AleoWalletContext>
-                        <TronWalletContext>{content}</TronWalletContext>
+                        <TronWalletContext>
+                          <ThemeProvider>{content}</ThemeProvider>
+                        </TronWalletContext>
                       </AleoWalletContext>
                     </RadixWalletContext>
                   </StarknetWalletContext>

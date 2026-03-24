@@ -74,7 +74,7 @@ export function ChainList({
         <div className="h-10" />
       </div>
       {/* Bottom fade effect */}
-      <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-b from-transparent to-gray-100" />
+      <div className="chain-picker-fade pointer-events-none absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-b from-transparent to-gray-100" />
     </div>
   );
 }
@@ -98,7 +98,7 @@ function ChainButton({
     <button
       type="button"
       disabled={disabled}
-      className={`${styles.label} flex w-full items-center gap-3 border-l-2 px-4 py-2.5 transition-colors ${
+      className={`token-picker-chain-row ${styles.label} flex w-full items-center gap-3 border-l-2 px-4 py-2.5 transition-colors ${
         disabled
           ? 'border-transparent opacity-50'
           : isSelected
@@ -109,7 +109,11 @@ function ChainButton({
     >
       {icon}
       <span className="min-w-0 flex-1 truncate text-sm font-medium">{label}</span>
-      {showEditIcon && <PencilIcon width={14} height={14} color={Color.gray['500']} />}
+      {showEditIcon && (
+        <span className="chain-picker-edit-icon">
+          <PencilIcon width={14} height={14} color={Color.gray['500']} />
+        </span>
+      )}
     </button>
   );
 }

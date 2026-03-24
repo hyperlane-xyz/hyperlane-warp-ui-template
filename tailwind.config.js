@@ -92,7 +92,7 @@ module.exports = {
         'foreground-primary': 'rgb(var(--color-text-primary-rgb) / <alpha-value>)',
         'foreground-secondary': 'rgb(var(--color-text-secondary-rgb) / <alpha-value>)',
         'foreground-muted': 'rgb(var(--color-text-muted-rgb) / <alpha-value>)',
-        border: 'rgb(var(--color-border-rgb) / <alpha-value>)',
+        edge: 'rgb(var(--color-border-rgb) / <alpha-value>)',
       },
       fontSize: {
         xxs: '0.7rem',

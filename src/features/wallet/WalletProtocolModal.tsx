@@ -50,7 +50,7 @@ export function WalletProtocolModal({
       isOpen={isOpen}
       close={close}
       dialogClassname="wallet-protocol-dialog"
-      panelClassname="wallet-protocol-modal max-w-[44rem] p-4 dark:border dark:border-border/60 dark:bg-surface dark:text-foreground-primary dark:shadow-[0_16px_40px_rgba(0,0,0,0.45)]"
+      panelClassname="wallet-protocol-modal max-w-[44rem] p-4 dark:border dark:border-edge/60 dark:bg-surface dark:text-foreground-primary dark:shadow-[0_16px_40px_rgba(0,0,0,0.45)]"
     >
       <div className="wallet-protocol-grid flex flex-wrap justify-center gap-2.5 py-2">
         {PROTOCOL_OPTIONS.filter((option) => includesProtocol(option.protocol)).map((option) => {
@@ -60,7 +60,7 @@ export function WalletProtocolModal({
             <button
               key={option.protocol}
               onClick={() => onClickProtocol(option.protocol)}
-              className="wallet-protocol-card flex w-full flex-col items-center space-y-2.5 rounded-lg border border-gray-200 py-3.5 transition-all hover:bg-gray-100 active:scale-95 dark:border-border/60 dark:bg-background/80 dark:hover:bg-surface/85"
+              className="wallet-protocol-card flex w-full flex-col items-center space-y-2.5 rounded-lg border border-gray-200 py-3.5 transition-all hover:bg-gray-100 active:scale-95 dark:border-edge/60 dark:bg-background/80 dark:hover:bg-surface/85"
             >
               <Logo
                 width={34}

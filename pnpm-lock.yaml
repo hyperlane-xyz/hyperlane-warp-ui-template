@@ -25,7 +25,6 @@ overrides:
   '@hyperlane-xyz/utils': link:../monorepo/typescript/utils
   '@hyperlane-xyz/widgets': link:../monorepo/typescript/widgets
   '@hyperlane-xyz/sdk': link:../monorepo/typescript/sdk
-  '@hyperlane-xyz/fee-quoting': link:../monorepo/typescript/fee-quoting
 
 patchedDependencies:
   starknetkit@2.6.1:

@@ -134,7 +134,7 @@
     "test": "vitest --watch false",
     "test:e2e": "playwright test --project=chromium",
     "prettier": "prettier --write ./src",
-    "link:monorepo": "node scripts/link-monorepo.js utils sdk widgets fee-quoting",
+    "link:monorepo": "node scripts/link-monorepo.js utils sdk widgets",
     "unlink:monorepo": "node scripts/unlink-monorepo.js"
   },
   "types": "dist/src/index.d.ts",
@@ -159,8 +159,7 @@
       "form-data": "4.0.4",
       "@hyperlane-xyz/utils": "link:../monorepo/typescript/utils",
       "@hyperlane-xyz/widgets": "link:../monorepo/typescript/widgets",
-      "@hyperlane-xyz/sdk": "link:../monorepo/typescript/sdk",
-      "@hyperlane-xyz/fee-quoting": "link:../monorepo/typescript/fee-quoting"
+      "@hyperlane-xyz/sdk": "link:../monorepo/typescript/sdk"
     },
     "patchedDependencies": {
       "starknetkit@2.6.1": "patches/starknetkit@2.6.1.patch"

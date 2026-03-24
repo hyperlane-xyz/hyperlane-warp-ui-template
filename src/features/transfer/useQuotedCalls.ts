@@ -1,5 +1,4 @@
 import { IToken, QuotedCallsParams, SubmitQuoteCommand, Token, TokenPullMode, WarpCore } from '@hyperlane-xyz/sdk';
-import type { QuoteResponse } from '@hyperlane-xyz/fee-quoting';
 import { ProtocolType, addressToBytes32, toWei } from '@hyperlane-xyz/utils';
 import { getAccountAddressAndPubKey, useAccounts, useDebounce } from '@hyperlane-xyz/widgets';
 import { useQuery } from '@tanstack/react-query';
@@ -149,7 +148,7 @@ async function fetchQuotedCallsFees(
     throw new Error(`Fee quote proxy failed (${res.status}): ${(body as any).message ?? res.statusText}`);
   }
 
-  const { quotes } = (await res.json()) as QuoteResponse;
+  const { quotes } = (await res.json()) as { quotes: SubmitQuoteCommand[] };
 
   // Build QuotedCallsParams
   const quotedCallsParams: QuotedCallsParams = {

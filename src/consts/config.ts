@@ -5,7 +5,7 @@ import { ADDRESS_BLACKLIST } from './blacklist';
 const isDevMode = process?.env?.NODE_ENV === 'development';
 const version = process?.env?.NEXT_PUBLIC_VERSION || '2.0.0';
 const DEFAULT_REGISTRY_URL = 'https://github.com/hyperlane-xyz/hyperlane-registry';
-const DEFAULT_REGISTRY_BRANCH = 'nambrot/cross-collateral-deploy';
+const DEFAULT_REGISTRY_BRANCH = 'codex/nambrot-cross-collateral-deploy';
 // Keep registry source pinned in code for this MC preview flow.
 // We intentionally do not allow NEXT_PUBLIC_REGISTRY_* env overrides.
 const registryUrl = DEFAULT_REGISTRY_URL;

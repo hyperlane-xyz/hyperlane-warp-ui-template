@@ -39,7 +39,9 @@ interface Config {
 export const config: Config = Object.freeze({
   addressBlacklist: ADDRESS_BLACKLIST.map((address) => address.toLowerCase()),
   chainWalletWhitelists,
-  enableExplorerLink: false,
+  enableExplorerLink: true,
+  defaultOriginChain: 'ethereum',
+  defaultDestinationChain: 'bsc',
   explorerApiUrl,
   defaultOriginToken: 'ethereum-USDC',
   defaultDestinationToken: 'base-USDC',
@@ -60,9 +62,9 @@ export const config: Config = Object.freeze({
     ProtocolType.Tron,
     ProtocolType.Aleo,
   ],
-  shouldDisableChains: false,
+  shouldDisableChains: true,
   rpcOverrides,
-  enableTrackingEvents: false,
+  enableTrackingEvents: true,
   featuredTokens: [
     // USDC
     'arbitrum-USDC',

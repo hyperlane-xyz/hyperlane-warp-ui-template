@@ -29,6 +29,7 @@ import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareS
 import { SolidButton } from '../../components/buttons/SolidButton';
 import { SwapIcon } from '../../components/icons/SwapIcon';
 import { TextField } from '../../components/input/TextField';
+import { TIP_CARD_ACTION_DESTINATION, TIP_CARD_ACTION_ORIGIN } from '../../components/tip/const';
 import { WARP_QUERY_PARAMS } from '../../consts/args';
 import { config } from '../../consts/config';
 import { defaultMultiCollateralRoutes } from '../../consts/defaultMultiCollateralRoutes';
@@ -53,6 +54,7 @@ import { ImportTokenButton } from '../tokens/ImportTokenButton';
 import { TokenSelectField } from '../tokens/TokenSelectField';
 import { useIsApproveRequired } from '../tokens/approval';
 import {
+  findTokenByChainSymbol,
   getInitialTokenKeys,
   getTokenByKeyFromMap,
   useCollateralGroups,
@@ -61,7 +63,7 @@ import {
   useWarpCore,
 } from '../tokens/hooks';
 import { useTokenPrices } from '../tokens/useTokenPrice';
-import { checkTokenHasRoute, findRouteToken } from '../tokens/utils';
+import { checkTokenHasRoute, findRouteToken, getTokenKey } from '../tokens/utils';
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { WalletDropdown } from '../wallet/WalletDropdown';
 import { FeeSectionButton } from './FeeSectionButton';
@@ -186,6 +188,7 @@ export function TransferTokenForm() {
             cleanOverrideToken={() => setRouteTokenOverride(null)}
             routeOverrideToken={routeOverrideToken}
           />
+          <TipCardActionHandler />
           <RecipientConfirmationModal
             isOpen={isConfirmationModalOpen}
             close={closeConfirmationModal}
@@ -195,6 +198,40 @@ export function TransferTokenForm() {
       )}
     </Formik>
   );
+}
+
+function TipCardActionHandler() {
+  const { setValues } = useFormikContext<TransferFormValues>();
+  const tokens = useTokens();
+  const { isTipCardActionTriggered, setIsTipCardActionTriggered } = useStore((s) => ({
+    isTipCardActionTriggered: s.isTipCardActionTriggered,
+    setIsTipCardActionTriggered: s.setIsTipCardActionTriggered,
+  }));
+
+  useEffect(() => {
+    if (!isTipCardActionTriggered) return;
+
+    const originToken = findTokenByChainSymbol(tokens, TIP_CARD_ACTION_ORIGIN);
+    const destToken = findTokenByChainSymbol(tokens, TIP_CARD_ACTION_DESTINATION);
+
+    if (originToken && destToken) {
+      setValues((prev) => ({
+        ...prev,
+        originTokenKey: getTokenKey(originToken),
+        destinationTokenKey: getTokenKey(destToken),
+      }));
+      updateQueryParams({
+        [WARP_QUERY_PARAMS.ORIGIN]: originToken.chainName,
+        [WARP_QUERY_PARAMS.ORIGIN_TOKEN]: originToken.symbol,
+        [WARP_QUERY_PARAMS.DESTINATION]: destToken.chainName,
+        [WARP_QUERY_PARAMS.DESTINATION_TOKEN]: destToken.symbol,
+      });
+    }
+
+    setIsTipCardActionTriggered(false);
+  }, [isTipCardActionTriggered, setIsTipCardActionTriggered, setValues, tokens]);
+
+  return null;
 }
 
 function SwapTokensButton({ disabled }: { disabled?: boolean }) {

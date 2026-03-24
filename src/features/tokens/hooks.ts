@@ -21,7 +21,7 @@ export function getTokenByKey(tokens: Token[], key: string | undefined): Token |
 }
 
 // Helper to find token by chainName-symbol format
-function findTokenByChainSymbol(tokens: Token[], chainSymbol: string): Token | undefined {
+export function findTokenByChainSymbol(tokens: Token[], chainSymbol: string): Token | undefined {
   const [chainName, symbol] = chainSymbol.split('-');
   if (!chainName || !symbol) return undefined;
   return tokens.find(

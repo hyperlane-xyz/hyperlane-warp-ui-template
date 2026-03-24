@@ -1,8 +1,8 @@
 import { ChainLogo as ChainLogoInner } from '@hyperlane-xyz/widgets';
-import Image from 'next/image';
-import { useMemo } from 'react';
+import { useEffect, useRef } from 'react';
 import { useChainMetadata } from '../../features/chains/hooks';
 import { useStore } from '../../features/store';
+import { observeDarkLogosInContainer } from '../../utils/imageBrightness';
 
 export function ChainLogo({
   chainName,
@@ -15,27 +15,27 @@ export function ChainLogo({
 }) {
   const registry = useStore((s) => s.registry);
   const chainMetadata = useChainMetadata(chainName);
-  const { name, Icon } = useMemo(() => {
-    const name = chainMetadata?.name || '';
-    const logoUri = chainMetadata?.logoURI;
-    const Icon = logoUri
-      ? (props: { width: number; height: number; title?: string }) => (
-          <Image src={logoUri} alt="" {...props} />
-        )
-      : undefined;
-    return {
-      name,
-      Icon,
-    };
-  }, [chainMetadata]);
+  const wrapperRef = useRef<HTMLSpanElement>(null);
+  const name = chainMetadata?.name || '';
+  const logoUri = chainMetadata?.logoURI;
+
+  // Process immediately; keep a short-lived observer until the logo image first appears.
+  useEffect(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+    const logoObserver = observeDarkLogosInContainer(el, { disconnectOnFirstImage: true });
+    return () => logoObserver?.disconnect();
+  }, [chainName, logoUri]);
 
   return (
-    <ChainLogoInner
-      chainName={name}
-      registry={registry}
-      size={size}
-      background={background}
-      Icon={Icon}
-    />
+    <span ref={wrapperRef} className="inline-flex">
+      <ChainLogoInner
+        chainName={name}
+        logoUri={logoUri}
+        registry={registry}
+        size={size}
+        background={background}
+      />
+    </span>
   );
 }

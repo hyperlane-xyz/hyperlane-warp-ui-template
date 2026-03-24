@@ -3,33 +3,44 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { config } from '../../consts/config';
 import { useStore } from '../../features/store';
-import ExternalIcon from '../../images/icons/external-link-icon.svg';
-import { Card } from '../layout/Card';
+import SendIcon from '../../images/icons/send-icon.svg';
+import { HyperlaneTransparentLogo } from '../icons/HyperlaneTransparentLogo';
 
 export function TipCard() {
   const [show, setShow] = useState(config.showTipBox);
   const setIsTipCardActionTriggered = useStore((s) => s.setIsTipCardActionTriggered);
   if (!show) return null;
   return (
-    <Card className="w-100 p-2 sm:w-[31rem]">
-      <h2 className="text-primary-500">Bridge USDC with zero slippage</h2>
-      <div className="flex items-end justify-between">
-        <p className="mt-1 max-w-[75%] text-justify text-xs">
-          Move between Solana, Base, Arbitrum, Optimism, Ethereum, Unichain, and more.
-        </p>
-        <Button
-          className="ml-2 flex items-center rounded-lg bg-gray-100 px-3 py-1.5 text-xs text-primary-500 transition-all hover:bg-gray-200 active:bg-gray-300 sm:text-sm"
-          onClick={() => setIsTipCardActionTriggered(true)}
+    <div className="tip-card relative w-full overflow-hidden rounded bg-tip-card-gradient px-4 pb-4 pt-4 shadow-card xl:w-72 xl:pb-24">
+      <div className="absolute right-2 top-2">
+        <IconButton
+          onClick={() => setShow(false)}
+          title="Hide tip"
+          className="tip-card-close text-gray-400 hover:text-gray-600"
         >
-          <Image src={ExternalIcon} width={12} alt="" />
-          <span className="ml-1.5 hidden text-sm sm:inline">Bridge</span>
-        </Button>
-      </div>
-      <div className="absolute right-3 top-3">
-        <IconButton onClick={() => setShow(false)} title="Hide tip" className="hover:rotate-90">
-          <XCircleIcon width={16} height={16} />
+          <XCircleIcon width={14} height={14} />
         </IconButton>
       </div>
-    </Card>
+
+      <h2 className="tip-card-title pr-6 font-secondary text-lg font-normal text-gray-900">
+        Bridge ETH
+      </h2>
+      <p className="tip-card-copy mt-2 text-sm text-gray-600">
+        Bridge and get real ETH in seconds, no unwrapping needed. Starting with Arbitrum, Base,
+        Ethereum, Optimism.
+      </p>
+
+      <Button
+        className="tip-card-more mt-3 inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 font-secondary text-sm text-gray-700 transition-colors hover:bg-gray-50"
+        onClick={() => setIsTipCardActionTriggered(true)}
+      >
+        <span>Bridge</span>
+        <Image src={SendIcon} width={16} alt="" className="tip-card-more-icon" />
+      </Button>
+
+      <div className="tip-card-logo pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2">
+        <HyperlaneTransparentLogo />
+      </div>
+    </div>
   );
 }

@@ -19,9 +19,9 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // ETH routes
   'ETH/ethereum-hyperevm',
-  'ETH/ethereum-viction',
   'ETH/arbitrum-base-ethereum-lumiaprism-optimism-polygon',
   'ETH/coti-ethereum',
+  'ETH/paradex',
 
   // tETH routes
   'tETH/eclipsemainnet-ethereum',
@@ -32,20 +32,15 @@ export const warpRouteWhitelist: Array<string> | null = [
   // weETHs routes
   'weETHs/eclipsemainnet-ethereum',
 
-  // ECLIP routes
-  'ECLIP/arbitrum-neutron',
-
   // USDC routes
   'USDC/ethereum-inevm',
   'USDC/ancient8-ethereum',
   'USDC/ethereum-viction',
-  'USDC/eclipsemainnet-ethereum-solanamainnet',
   'USDC/appchain-base',
   'USDC/arbitrum-base-endurance',
-  'USDC/ethereum-form',
   'USDC/artela-base',
   'USDC/solanamainnet-sonicsvm',
-  'USDC/arbitrum-base-ethereum-ink-optimism-solanamainnet-superseed',
+  'USDC/superseed',
   'USDC/subtensor',
   'USDC/lumia',
   'USDC/matchain',
@@ -53,7 +48,6 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // USDT routes
   'USDT/eclipsemainnet-ethereum-solanamainnet',
-  'USDT/ethereum-form',
   'USDT/ethereum-hyperevm',
   'USDT/ethereum-inevm',
   'USDT/ethereum-lumiaprism',
@@ -84,8 +78,6 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // WBTC routes
   'WBTC/eclipsemainnet-ethereum',
-  'WBTC/ethereum-form',
-  'WBTC/ethereum-hyperevm',
   'WBTC/coti-ethereum',
 
   // ORCA routes
@@ -99,9 +91,6 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // PNDR
   'PNDR/bsc-ethereum-lumiaprism',
-
-  // USDC ink
-  'USDC/ethereum-ink',
 
   // Bonk routes
   'Bonk/solanamainnet-soon',
@@ -137,15 +126,6 @@ export const warpRouteWhitelist: Array<string> | null = [
   // ezETH routes
   'ezETH/renzo-prod',
 
-  // GAME routes
-  'GAME/base-form',
-
-  // AIXBT routes
-  'AIXBT/base-form',
-
-  // wstETH routes
-  'wstETH/ethereum-form',
-
   // pzETH routes
   'pzETH/berachain-ethereum-swell-unichain-zircuit',
 
@@ -163,9 +143,6 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // CDX routes
   'CDX/base-solanamainnet-sophon',
-
-  // Mint routes
-  'MINT/mint-solanamainnet',
 
   // lrtsSOL routes
   'lrtsSOL/solanamainnet-sonicsvm',
@@ -215,9 +192,6 @@ export const warpRouteWhitelist: Array<string> | null = [
   'HYPER/arbitrum-base-bsc-ethereum-optimism',
   'stHYPER/bsc-ethereum',
 
-  // MILK route
-  'MILK/bsc-milkyway',
-
   // Fragmetric routes
   'wfragSOL/fragmetric',
   'wfragJTO/fragmetric',
@@ -256,9 +230,6 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // CHILL routes
   'CHILL/solanamainnet-sonicsvm',
-
-  // SMOL route
-  'SMOL/arbitrum-abstract-ethereum-solanamainnet-base',
 
   // MAGIC route
   'MAGIC/arbitrum-abstract-ronin-base',
@@ -377,4 +348,76 @@ export const warpRouteWhitelist: Array<string> | null = [
   'wM/wrapped-m',
 
   'BEST/ethereum',
+
+  // Lazai routes
+  'METIS/lazai',
+
+  // Carrchain routes
+  'USDC/carrchain',
+  'USDT/carrchain',
+  'WBTC/carrchain',
+  'WETH/carrchain',
+
+  // Krown routes
+  'ETH/krown',
+  'USDC/krown',
+  'USDT/krown',
+  'BNB/krown',
+  'WBTC/krown',
+  'KROWN/krown',
+
+  // ENI routes
+  'ETH/eni',
+  'USDC/eni',
+  'USDT/eni',
+  'WBTC/eni',
+  'ROAM/eni',
+  'USD1/eni',
+  'QUILL/eni',
+  'BNB/eni',
+
+  // First Party Warp Routes
+  'ETH/viction',
+  'USDC/eclipsemainnet',
+
+  // Aleo warp routes
+  'ALEO/aleo',
+  'ETH/aleo',
+  'USDC/aleo',
+  'USDT/aleo',
+  'USAD/aleo',
+  'SOL/aleo',
+  'WBTC/aleo',
+
+  // citrea
+  'ctUSD/citrea',
+
+  // paradex
+  'DIME/paradex',
 ];
+
+/**
+ * Returns the effective warp route whitelist.
+ * On the /embed route, the `routes` URL param can filter routes.
+ * If a static whitelist exists, URL routes are intersected with it
+ * (only routes in BOTH are shown). If static whitelist is null,
+ * URL routes are used as-is.
+ */
+export function getWarpRouteWhitelist(): Array<string> | null {
+  if (typeof window !== 'undefined' && window.location.pathname === '/embed') {
+    const params = new URLSearchParams(window.location.search);
+    const routes = params.get('routes');
+    if (routes) {
+      const urlRoutes = routes
+        .split(',')
+        .map((id) => id.trim())
+        .filter(Boolean);
+      // Intersect with static whitelist if it exists
+      if (warpRouteWhitelist) {
+        return urlRoutes.filter((r) => warpRouteWhitelist.includes(r));
+      }
+      return urlRoutes;
+    }
+  }
+  return warpRouteWhitelist;
+}

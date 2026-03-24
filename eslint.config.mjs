@@ -25,6 +25,7 @@ export default [
       '**/next.config.js',
       '**/tailwind.config.js',
       '**/sentry.*',
+      'eslint.config.mjs',
     ],
   },
   ...compat.extends(
@@ -67,6 +68,9 @@ export default [
       'no-constant-condition': ['off'],
       'no-multiple-empty-lines': ['error'],
       'jsx-a11y/alt-text': ['off'],
+
+      // React Compiler rule - downgrade to warning for valid useEffect patterns
+      'react-hooks/set-state-in-effect': ['warn'],
 
       '@typescript-eslint/ban-ts-comment': ['off'],
       '@typescript-eslint/explicit-module-boundary-types': ['off'],

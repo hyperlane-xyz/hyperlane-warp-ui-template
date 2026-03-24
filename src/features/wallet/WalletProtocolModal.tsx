@@ -8,12 +8,13 @@ interface WalletProtocolModalProps {
   onProtocolSelected?: (protocol: ProtocolType) => void;
 }
 
-const PROTOCOL_OPTIONS = [
+export const PROTOCOL_OPTIONS = [
   { protocol: ProtocolType.Ethereum, title: 'EVM', subtitle: 'an EVM' },
   { protocol: ProtocolType.Sealevel, title: 'Solana', subtitle: 'a Solana' },
   { protocol: ProtocolType.Cosmos, title: 'Cosmos', subtitle: 'a Cosmos' },
   { protocol: ProtocolType.Starknet, title: 'Starknet', subtitle: 'a Starknet' },
   { protocol: ProtocolType.Radix, title: 'Radix', subtitle: 'a Radix' },
+  { protocol: ProtocolType.Tron, title: 'Tron', subtitle: 'a Tron' },
   {
     protocol: ProtocolType.Aleo,
     title: 'Aleo',

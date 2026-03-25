@@ -1,4 +1,6 @@
-import { IToken, MultiProtocolProvider, Token } from '@hyperlane-xyz/sdk';
+import type { IToken } from '@hyperlane-xyz/sdk/token/IToken';
+import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProtocolProvider';
+import type { Token } from '@hyperlane-xyz/sdk/token/Token';
 import { ProtocolType, getAddressProtocolType, isValidAddress } from '@hyperlane-xyz/utils';
 import { useCosmosAccount } from '@hyperlane-xyz/widgets/walletIntegrations/cosmos';
 import { useEthereumAccount } from '@hyperlane-xyz/widgets/walletIntegrations/ethereum';
@@ -13,6 +15,7 @@ import { useBalance as useWagmiBalance } from 'wagmi';
 import { useToastError } from '../../components/toast/useToastError';
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
+import { getSdkToken } from '../hyperlane/sdkTokenRuntime';
 import { getChainDisplayName } from '../chains/utils';
 import { getTokenKey } from '../tokens/utils';
 import { fetchCosmosChainBalances, groupCosmosTokensByChain } from './cosmos';
@@ -67,6 +70,7 @@ export async function getDestinationNativeBalance(
 ) {
   try {
     const chainMetadata = multiProvider.getChainMetadata(destination);
+    const Token = await getSdkToken();
     const token = Token.FromChainMetadataNativeToken(chainMetadata);
     const balance = await token.getBalance(multiProvider, recipient);
     return balance.amount;

@@ -1,4 +1,8 @@
-import { IToken, Token, WarpCore } from '@hyperlane-xyz/sdk';
+import type { IToken } from '@hyperlane-xyz/sdk/token/IToken';
+import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProtocolProvider';
+import type { Token } from '@hyperlane-xyz/sdk/token/Token';
+import type { ChainName } from '@hyperlane-xyz/sdk/types';
+import type { WarpCore } from '@hyperlane-xyz/sdk/warp/WarpCore';
 import {
   useAccountForChain,
   useActiveChains,
@@ -15,7 +19,11 @@ import { useStore } from '../store';
 import { getTokenKey } from './utils';
 
 export function useWarpCore() {
-  return useStore((s) => s.warpCore);
+  const warpCore = useStore((s) => s.warpCore);
+  if (!warpCore) {
+    throw new Error('Warp context not ready');
+  }
+  return warpCore;
 }
 /**
  * Find a token by its key from a WarpCore or Token array
@@ -49,13 +57,14 @@ export function getInitialTokenKeys(
 
   // 1. First priority: URL params
   const params = getQueryParams();
+  const multiProvider = warpCore.multiProvider as MultiProtocolProvider;
   const originChainQuery = tryGetValidChainName(
     params.get(WARP_QUERY_PARAMS.ORIGIN),
-    warpCore.multiProvider,
+    multiProvider,
   );
   const destinationChainQuery = tryGetValidChainName(
     params.get(WARP_QUERY_PARAMS.DESTINATION),
-    warpCore.multiProvider,
+    multiProvider,
   );
   const originTokenSymbol = params.get(WARP_QUERY_PARAMS.ORIGIN_TOKEN);
   const destinationTokenSymbol = params.get(WARP_QUERY_PARAMS.DESTINATION_TOKEN);

@@ -1,16 +1,16 @@
 import { isAbacusWorksChain } from '@hyperlane-xyz/registry';
-import { ChainMap, ChainMetadata, ChainStatus, WarpCore } from '@hyperlane-xyz/sdk';
+import type { ChainMetadata } from '@hyperlane-xyz/sdk/metadata/chainMetadataTypes';
+import { ChainStatus } from '@hyperlane-xyz/sdk/metadata/chainMetadataTypes';
+import type { MultiProviderAdapter as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProviderAdapter';
+import type { ChainMap } from '@hyperlane-xyz/sdk/types';
+import type { WarpCore } from '@hyperlane-xyz/sdk/warp/WarpCore';
 import { toTitleCase, trimToLength } from '@hyperlane-xyz/utils';
 import type { ChainSearchMenuProps } from '@hyperlane-xyz/widgets/chains/ChainSearchMenu';
+
 import { config } from '../../consts/config';
 
-type ChainMetadataProvider = Pick<
-  WarpCore['multiProvider'],
-  'metadata' | 'tryGetChainMetadata' | 'tryGetChainName'
->;
-
 export function getChainDisplayName(
-  multiProvider: ChainMetadataProvider,
+  multiProvider: MultiProtocolProvider,
   chain: ChainName,
   shortName = false,
 ) {
@@ -21,13 +21,13 @@ export function getChainDisplayName(
   return displayName || metadata.displayName || toTitleCase(metadata.name);
 }
 
-export function isPermissionlessChain(multiProvider: ChainMetadataProvider, chain: ChainName) {
+export function isPermissionlessChain(multiProvider: MultiProtocolProvider, chain: ChainName) {
   if (!chain) return true;
   const metadata = multiProvider.tryGetChainMetadata(chain);
   return !metadata || !isAbacusWorksChain(metadata);
 }
 
-export function hasPermissionlessChain(multiProvider: ChainMetadataProvider, ids: ChainName[]) {
+export function hasPermissionlessChain(multiProvider: MultiProtocolProvider, ids: ChainName[]) {
   return !ids.every((c) => !isPermissionlessChain(multiProvider, c));
 }
 
@@ -40,7 +40,7 @@ export function getNumRoutesWithSelectedChain(
   selectedChain: ChainName,
   isSelectedChainOrigin: boolean,
 ): ChainSearchMenuProps['customListItemField'] {
-  const multiProvider = warpCore.multiProvider;
+  const multiProvider = warpCore.multiProvider as MultiProtocolProvider;
   const chains = multiProvider.metadata;
   const selectedChainDisplayName = trimToLength(
     getChainDisplayName(multiProvider, selectedChain, true),
@@ -80,7 +80,7 @@ export function isChainDisabled(chainMetadata: ChainMetadata | null) {
  */
 export function tryGetValidChainName(
   chainName: string | null,
-  multiProvider: ChainMetadataProvider,
+  multiProvider: MultiProtocolProvider,
 ): string | undefined {
   const validChainName = chainName && multiProvider.tryGetChainName(chainName);
   const chainMetadata = validChainName ? multiProvider.tryGetChainMetadata(chainName) : null;

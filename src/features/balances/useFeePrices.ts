@@ -1,4 +1,6 @@
-import { Token, WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
+import type { ITokenMetadata } from '@hyperlane-xyz/sdk/token/ITokenMetadata';
+import type { Token } from '@hyperlane-xyz/sdk/token/Token';
+import type { WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk/warp/types';
 import { isNullish } from '@hyperlane-xyz/utils';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
@@ -13,7 +15,7 @@ export type FeePrices = Record<string, number>;
 // SDK fee tokens lack coinGeckoId. Resolve it by matching against warp core
 // tokens which carry coinGeckoId from config.
 function resolveCoinGeckoId(
-  feeToken: WarpCoreFeeEstimate['localQuote']['token'],
+  feeToken: ITokenMetadata,
   knownTokens: Token[],
   resolvedSymbols: Record<string, string>,
 ): string | undefined {

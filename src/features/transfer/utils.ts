@@ -1,11 +1,10 @@
+import type { MultiProviderAdapter as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProviderAdapter';
 import {
-  ChainMap,
-  CoreAddresses,
-  MultiProtocolCore,
   ProviderType,
-  TypedTransactionReceipt,
-  ViemProvider,
-} from '@hyperlane-xyz/sdk';
+  type TypedTransactionReceipt,
+  type ViemProvider,
+} from '@hyperlane-xyz/sdk/providers/ProviderType';
+import type { ChainMap } from '@hyperlane-xyz/sdk/types';
 import { isValidAddress, isValidAddressEvm } from '@hyperlane-xyz/utils';
 import { getAddress } from 'viem';
 
@@ -15,7 +14,23 @@ import { logger } from '../../utils/logger';
 import { getChainDisplayName } from '../chains/utils';
 import { FinalTransferStatuses, SentTransferStatuses, TransferStatus } from './types';
 
-type MultiProvider = MultiProtocolCore['multiProvider'];
+type CoreAddressStub = {
+  validatorAnnounce: string;
+  proxyAdmin: string;
+  mailbox: string;
+  quotedCalls: string;
+};
+
+let multiProtocolCorePromise:
+  | Promise<typeof import('@hyperlane-xyz/sdk').MultiProtocolCore>
+  | undefined;
+
+function getMultiProtocolCore() {
+  multiProtocolCorePromise ??= import('@hyperlane-xyz/sdk').then(
+    ({ MultiProtocolCore }) => MultiProtocolCore,
+  );
+  return multiProtocolCorePromise;
+}
 
 export function getTransferStatusLabel(
   status: TransferStatus,
@@ -81,8 +96,8 @@ export function getIconByTransferStatus(status: TransferStatus) {
   }
 }
 
-export function tryGetMsgIdFromTransferReceipt(
-  multiProvider: MultiProvider,
+export async function tryGetMsgIdFromTransferReceipt(
+  multiProvider: MultiProtocolProvider,
   origin: ChainName,
   receipt: TypedTransactionReceipt,
 ) {
@@ -108,7 +123,7 @@ export function tryGetMsgIdFromTransferReceipt(
 
     const addressStubs = multiProvider
       .getKnownChainNames()
-      .reduce<ChainMap<CoreAddresses>>((acc, chainName) => {
+      .reduce<ChainMap<CoreAddressStub>>((acc, chainName) => {
         // Actual core addresses not required for the id extraction
         acc[chainName] = {
           validatorAnnounce: '',
@@ -118,6 +133,7 @@ export function tryGetMsgIdFromTransferReceipt(
         };
         return acc;
       }, {});
+    const MultiProtocolCore = await getMultiProtocolCore();
     const core = new MultiProtocolCore(multiProvider, addressStubs);
     const messages = core.extractMessageIds(origin, receipt);
     if (messages.length) {
@@ -149,7 +165,7 @@ export async function isEvmContractAddress(
 
 const eip7702AccountSelector = '0xef0100';
 export async function isSmartContract(
-  multiProvider: MultiProvider,
+  multiProvider: MultiProtocolProvider,
   chain: string,
   address: string,
 ): Promise<{ isContract: boolean; error?: string }> {
@@ -194,7 +210,7 @@ export const DEFAULT_FINALITY_BLOCKS = 3;
 export function estimateDeliverySeconds(
   origin: ChainName,
   destination: ChainName,
-  multiProvider: MultiProvider,
+  multiProvider: MultiProtocolProvider,
 ): number | null {
   try {
     const originMeta = multiProvider.tryGetChainMetadata(origin);
@@ -231,7 +247,7 @@ export function formatEta(seconds: number): string {
 
 // Returns if the recipient should be cleared by checking if it is valid address from the current chain protocol
 export function shouldClearAddress(
-  multiProvider: MultiProvider,
+  multiProvider: MultiProtocolProvider,
   recipient: string,
   chainName: string,
 ) {

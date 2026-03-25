@@ -1,11 +1,11 @@
 import { IRegistry, chainMetadata as publishedChainMetadata } from '@hyperlane-xyz/registry';
 import {
-  ChainMap,
   ChainMetadata,
   ChainMetadataSchema,
   mergeChainMetadataMap,
   RpcUrlSchema,
-} from '@hyperlane-xyz/sdk';
+} from '@hyperlane-xyz/sdk/metadata/chainMetadataTypes';
+import type { ChainMap } from '@hyperlane-xyz/sdk/types';
 import {
   objFilter,
   objMap,

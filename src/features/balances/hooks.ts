@@ -1,5 +1,5 @@
+import type { MultiProviderAdapter as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProviderAdapter';
 import type { IToken } from '@hyperlane-xyz/sdk/token/IToken';
-import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProtocolProvider';
 import type { Token } from '@hyperlane-xyz/sdk/token/Token';
 import { ProtocolType, getAddressProtocolType, isValidAddress } from '@hyperlane-xyz/utils';
 import { useCosmosAccount } from '@hyperlane-xyz/widgets/walletIntegrations/cosmos';
@@ -15,8 +15,8 @@ import { useBalance as useWagmiBalance } from 'wagmi';
 import { useToastError } from '../../components/toast/useToastError';
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
-import { getSdkToken } from '../hyperlane/sdkTokenRuntime';
 import { getChainDisplayName } from '../chains/utils';
+import { getSdkToken } from '../hyperlane/sdkTokenRuntime';
 import { getTokenKey } from '../tokens/utils';
 import { fetchCosmosChainBalances, groupCosmosTokensByChain } from './cosmos';
 import { fetchChainBalances, groupEvmTokensByChain } from './evm';
@@ -37,6 +37,7 @@ export function useBalance(chain?: ChainName, token?: IToken, address?: Address)
     ],
     queryFn: () => {
       if (!chain || !token || !address || !isValidAddress(address, token.protocol)) return null;
+      if (!('getBalance' in token) || typeof token.getBalance !== 'function') return null;
       return token.getBalance(multiProvider, address);
     },
     staleTime: 30_000,

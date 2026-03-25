@@ -1,8 +1,9 @@
+import type { MultiProviderAdapter as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProviderAdapter';
 import type { IToken } from '@hyperlane-xyz/sdk/token/IToken';
-import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProtocolProvider';
 import type { Token } from '@hyperlane-xyz/sdk/token/Token';
 import type { ChainName } from '@hyperlane-xyz/sdk/types';
 import type { WarpCore } from '@hyperlane-xyz/sdk/warp/WarpCore';
+import { normalizeAddress } from '@hyperlane-xyz/utils';
 import {
   useAccountForChain,
   useActiveChains,
@@ -24,6 +25,10 @@ export function useWarpCore() {
     throw new Error('Warp context not ready');
   }
   return warpCore;
+}
+
+export function useReadyWarpCore() {
+  return useStore((s) => s.warpCore);
 }
 /**
  * Find a token by its key from a WarpCore or Token array
@@ -47,7 +52,7 @@ function findTokenByChainSymbol(tokens: Token[], chainSymbol: string): Token | u
  * Returns { originTokenKey, destinationTokenKey } for form initialization
  */
 export function getInitialTokenKeys(
-  warpCore: WarpCore,
+  multiProvider: MultiProtocolProvider,
   tokens: Token[],
 ): { originTokenKey: string | undefined; destinationTokenKey: string | undefined } {
   // Early return if no tokens
@@ -57,7 +62,6 @@ export function getInitialTokenKeys(
 
   // 1. First priority: URL params
   const params = getQueryParams();
-  const multiProvider = warpCore.multiProvider as MultiProtocolProvider;
   const originChainQuery = tryGetValidChainName(
     params.get(WARP_QUERY_PARAMS.ORIGIN),
     multiProvider,
@@ -176,6 +180,22 @@ export function tryFindToken(
   } catch {
     return null;
   }
+}
+
+export function tryFindTokenInTokens(
+  tokens: IToken[],
+  chain: ChainName,
+  addressOrDenom?: string,
+): IToken | null {
+  if (!addressOrDenom) return null;
+  const normalized = normalizeAddress(addressOrDenom);
+  return (
+    tokens.find(
+      (token) =>
+        token.chainName === chain &&
+        normalizeAddress(token.addressOrDenom, token.protocol) === normalized,
+    ) || null
+  );
 }
 
 export function tryFindTokenConnection(token: Token, chainName: string) {

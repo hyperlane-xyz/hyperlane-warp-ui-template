@@ -1,8 +1,8 @@
+import type { MultiProviderAdapter as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProviderAdapter';
 import {
   ProviderType,
   type TypedTransactionReceipt,
 } from '@hyperlane-xyz/sdk/providers/ProviderType';
-import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProtocolProvider';
 import type { Token } from '@hyperlane-xyz/sdk/token/Token';
 import { WarpTxCategory } from '@hyperlane-xyz/sdk/warp/types';
 import type { WarpCore } from '@hyperlane-xyz/sdk/warp/WarpCore';
@@ -24,7 +24,7 @@ import { trackEvent } from '../analytics/utils';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { AppState, useStore } from '../store';
-import { getTokenByKey, useWarpCore } from '../tokens/hooks';
+import { getTokenByKey } from '../tokens/hooks';
 import { findConnectedDestinationToken } from '../tokens/utils';
 import { TransferContext, TransferFormValues, TransferStatus } from './types';
 import { tryGetMsgIdFromTransferReceipt } from './utils';
@@ -42,7 +42,7 @@ export function useTokenTransfer(onDone?: () => void) {
   const transferIndex = transfers.length;
 
   const multiProvider = useMultiProvider();
-  const warpCore = useWarpCore();
+  const ensureWarpRuntime = useStore((s) => s.ensureWarpRuntime);
 
   const activeAccounts = useAccounts(multiProvider);
   const activeChains = useActiveChains(multiProvider);
@@ -53,21 +53,23 @@ export function useTokenTransfer(onDone?: () => void) {
   // TODO implement cancel callback for when modal is closed?
   const triggerTransactions = useCallback(
     (values: TransferFormValues, routeOverrideToken: Token | null) =>
-      executeTransfer({
-        warpCore,
-        values,
-        transferIndex,
-        activeAccounts,
-        activeChains,
-        transactionFns,
-        addTransfer,
-        updateTransferStatus,
-        setIsLoading,
-        onDone,
-        routeOverrideToken,
+      ensureWarpRuntime().then((warpCore) => {
+        if (!warpCore) throw new Error('Warp runtime not ready');
+        return executeTransfer({
+          warpCore,
+          values,
+          transferIndex,
+          activeAccounts,
+          activeChains,
+          transactionFns,
+          addTransfer,
+          updateTransferStatus,
+          setIsLoading,
+          onDone,
+          routeOverrideToken,
+        });
       }),
     [
-      warpCore,
       transferIndex,
       activeAccounts,
       activeChains,
@@ -76,6 +78,7 @@ export function useTokenTransfer(onDone?: () => void) {
       addTransfer,
       updateTransferStatus,
       onDone,
+      ensureWarpRuntime,
     ],
   );
 

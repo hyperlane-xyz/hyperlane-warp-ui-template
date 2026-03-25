@@ -1,4 +1,4 @@
-import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProtocolProvider';
+import type { ConfiguredMultiProtocolProvider as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/ConfiguredMultiProtocolProvider';
 import { useQuery } from '@tanstack/react-query';
 
 import { logger } from '../../utils/logger';

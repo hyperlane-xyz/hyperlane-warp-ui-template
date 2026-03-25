@@ -19,8 +19,11 @@ export function useMultiProvider(): MultiProtocolProvider {
 // Ensures that the multiProvider has been populated during the onRehydrateStorage hook above,
 // otherwise returns undefined
 export function useReadyMultiProvider(): MultiProtocolProvider | undefined {
-  const multiProvider = useStore((s) => s.multiProvider);
-  if (!multiProvider?.getKnownChainNames().length) return undefined;
+  const { isWarpContextReady, multiProvider } = useStore((s) => ({
+    isWarpContextReady: s.isWarpContextReady,
+    multiProvider: s.multiProvider,
+  }));
+  if (!isWarpContextReady || !multiProvider) return undefined;
   return multiProvider;
 }
 

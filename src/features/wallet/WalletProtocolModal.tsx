@@ -60,7 +60,7 @@ export function WalletProtocolModal({
             <button
               key={option.protocol}
               onClick={() => onClickProtocol(option.protocol)}
-              className="wallet-protocol-card flex w-full flex-col items-center space-y-2.5 rounded-lg border border-gray-200 py-3.5 transition-all hover:bg-gray-100 active:scale-95 dark:border-edge/60 dark:bg-background/80 dark:hover:bg-surface/85"
+              className="wallet-protocol-card flex basis-[calc(50%-0.5rem)] flex-col items-center space-y-2.5 rounded-lg border border-gray-200 py-3.5 transition-all hover:bg-gray-100 active:scale-95 sm:basis-[calc(33.333%-0.5rem)] dark:border-edge/60 dark:bg-background/80 dark:hover:bg-surface/85"
             >
               <Logo
                 width={34}

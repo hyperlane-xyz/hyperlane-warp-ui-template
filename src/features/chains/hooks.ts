@@ -1,5 +1,5 @@
 import { ChainStatus } from '@hyperlane-xyz/sdk/metadata/chainMetadataTypes';
-import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProtocolProvider';
+import type { ConfiguredMultiProtocolProvider as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/ConfiguredMultiProtocolProvider';
 import type { ChainName } from '@hyperlane-xyz/sdk/types';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 import { useMemo } from 'react';

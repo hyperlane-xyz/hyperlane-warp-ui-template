@@ -1,4 +1,4 @@
-import { Token } from '@hyperlane-xyz/sdk';
+import type { Token } from '@hyperlane-xyz/sdk/token/Token';
 import { Modal } from '@hyperlane-xyz/widgets/layout/Modal';
 import { useCallback, useState } from 'react';
 

@@ -1,4 +1,7 @@
-import { Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
+import type { Token } from '@hyperlane-xyz/sdk/token/Token';
+import { TokenAmount } from '@hyperlane-xyz/sdk/token/TokenAmount';
+import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProtocolProvider';
+import type { WarpCore } from '@hyperlane-xyz/sdk/warp/WarpCore';
 import {
   KnownProtocolType,
   ProtocolType,
@@ -897,6 +900,7 @@ async function validateForm(
   // returns a tuple, where first value is validation result
   // and second value is token override
   try {
+    const multiProvider = warpCore.multiProvider as MultiProtocolProvider;
     const { originTokenKey, destinationTokenKey, amount, recipient: formRecipient } = values;
 
     // Look up tokens from the pre-computed map
@@ -909,7 +913,7 @@ async function validateForm(
 
     // Use form recipient if set, otherwise fallback to connected wallet for destination chain
     const { address: connectedDestAddress } = getAccountAddressAndPubKey(
-      warpCore.multiProvider,
+      multiProvider,
       destinationToken.chainName,
       accounts,
     );
@@ -929,7 +933,7 @@ async function validateForm(
     }
 
     const { address: sender, publicKey: senderPubKey } = getAccountAddressAndPubKey(
-      warpCore.multiProvider,
+      multiProvider,
       token.chainName,
       accounts,
     );

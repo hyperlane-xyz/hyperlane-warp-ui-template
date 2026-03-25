@@ -1,11 +1,11 @@
 import {
-  IToken,
-  MultiProtocolProvider,
-  Token,
   TOKEN_COLLATERALIZED_STANDARDS,
   TokenStandard,
-  WarpCore,
-} from '@hyperlane-xyz/sdk';
+} from '@hyperlane-xyz/sdk/token/TokenStandard';
+import type { IToken } from '@hyperlane-xyz/sdk/token/IToken';
+import type { Token } from '@hyperlane-xyz/sdk/token/Token';
+import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProtocolProvider';
+import type { WarpCore } from '@hyperlane-xyz/sdk/warp/WarpCore';
 import { eqAddress, isNullish, normalizeAddress, objKeys } from '@hyperlane-xyz/utils';
 
 import { isChainDisabled } from '../chains/utils';

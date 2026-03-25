@@ -1,4 +1,5 @@
-import { Token, TokenStandard } from '@hyperlane-xyz/sdk';
+import type { Token } from '@hyperlane-xyz/sdk/token/Token';
+import { TokenStandard } from '@hyperlane-xyz/sdk/token/TokenStandard';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 import { TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { Connection, PublicKey } from '@solana/web3.js';

@@ -5,15 +5,12 @@ import {
   IRegistry,
   PartialRegistry,
 } from '@hyperlane-xyz/registry';
-import {
-  ChainMap,
-  ChainMetadata,
-  ChainName,
-  MultiProtocolProvider,
-  Token,
-  WarpCore,
-  WarpCoreConfig,
-} from '@hyperlane-xyz/sdk';
+import type { ChainMetadata } from '@hyperlane-xyz/sdk/metadata/chainMetadataTypes';
+import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProtocolProvider';
+import type { Token } from '@hyperlane-xyz/sdk/token/Token';
+import type { ChainMap, ChainName } from '@hyperlane-xyz/sdk/types';
+import type { WarpCoreConfig } from '@hyperlane-xyz/sdk/warp/types';
+import type { WarpCore } from '@hyperlane-xyz/sdk/warp/WarpCore';
 import { normalizeAddress, objFilter } from '@hyperlane-xyz/utils';
 import { toast } from 'react-toastify';
 import { create } from 'zustand';
@@ -22,6 +19,7 @@ import { persist } from 'zustand/middleware';
 import { config } from '../consts/config';
 import { logger } from '../utils/logger';
 import { assembleChainMetadata } from './chains/metadata';
+import { getSdkRuntime } from './hyperlane/sdkRuntime';
 import { TokenChainMap } from './tokens/types';
 import {
   assembleTokensBySymbolChainMap,
@@ -46,8 +44,8 @@ export interface RouterAddressInfo {
 interface WarpContext {
   registry: IRegistry;
   chainMetadata: ChainMap<ChainMetadata>;
-  multiProvider: MultiProtocolProvider;
-  warpCore: WarpCore;
+  multiProvider: MultiProtocolProvider | undefined;
+  warpCore: WarpCore | undefined;
   tokensBySymbolChainMap: Record<string, TokenChainMap>;
   /** Unified tokens array (deduplicated, can be origin or destination) */
   tokens: Token[];
@@ -72,9 +70,9 @@ export interface AppState {
   // Overrides to warp core configs added by user
   warpCoreConfigOverrides: WarpCoreConfig[];
   setWarpCoreConfigOverrides: (overrides?: WarpCoreConfig[] | undefined) => void;
-  multiProvider: MultiProtocolProvider;
+  multiProvider: MultiProtocolProvider | undefined;
   registry: IRegistry;
-  warpCore: WarpCore;
+  warpCore: WarpCore | undefined;
   setWarpContext: (context: WarpContext) => void;
 
   // User history
@@ -185,13 +183,13 @@ export const useStore = create<AppState>()(
           coinGeckoIds,
         });
       },
-      multiProvider: new MultiProtocolProvider({}),
+      multiProvider: undefined,
       registry: new GithubRegistry({
         uri: config.registryUrl,
         branch: config.registryBranch,
         proxyUrl: config.registryProxyUrl,
       }),
-      warpCore: new WarpCore(new MultiProtocolProvider({}), []),
+      warpCore: undefined,
       setWarpContext: (context) => {
         logger.debug('Setting warp context in store');
         set(context);
@@ -292,6 +290,7 @@ async function initWarpContext({
   chainMetadataOverrides: ChainMap<Partial<ChainMetadata> | undefined>;
   warpCoreConfigOverrides: WarpCoreConfig[];
 }): Promise<WarpContext> {
+  const { MultiProtocolProvider, WarpCore } = await getSdkRuntime();
   let currentRegistry = registry;
   try {
     // Pre-load registry content to avoid repeated requests
@@ -361,8 +360,8 @@ async function initWarpContext({
     return {
       registry,
       chainMetadata: {},
-      multiProvider: new MultiProtocolProvider({}),
-      warpCore: new WarpCore(new MultiProtocolProvider({}), []),
+      multiProvider: undefined,
+      warpCore: undefined,
       tokensBySymbolChainMap: {},
       routerAddressesByChainMap: {},
       tokens: [],

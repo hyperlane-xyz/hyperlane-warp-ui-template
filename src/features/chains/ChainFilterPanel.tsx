@@ -1,4 +1,4 @@
-import { ChainName } from '@hyperlane-xyz/sdk';
+import type { ChainName } from '@hyperlane-xyz/sdk/types';
 import { ProtocolType, toTitleCase } from '@hyperlane-xyz/utils';
 import { ArrowIcon } from '@hyperlane-xyz/widgets/icons/Arrow';
 import { ChevronIcon } from '@hyperlane-xyz/widgets/icons/Chevron';

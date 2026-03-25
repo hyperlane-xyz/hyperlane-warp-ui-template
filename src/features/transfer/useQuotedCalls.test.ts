@@ -1,6 +1,6 @@
 import { computeScopedSalt } from '@hyperlane-xyz/sdk';
-import { describe, expect, test } from 'vitest';
 import { encodePacked, keccak256 } from 'viem';
+import { describe, expect, test } from 'vitest';
 
 describe('computeScopedSalt', () => {
   test('matches QuotedCalls._scopeSalt (abi.encodePacked)', () => {
@@ -10,9 +10,7 @@ describe('computeScopedSalt', () => {
 
     const result = computeScopedSalt(sender, clientSalt);
 
-    const expected = keccak256(
-      encodePacked(['address', 'bytes32'], [sender, clientSalt]),
-    );
+    const expected = keccak256(encodePacked(['address', 'bytes32'], [sender, clientSalt]));
     expect(result).toBe(expected);
   });
 

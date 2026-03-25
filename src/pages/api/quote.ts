@@ -3,7 +3,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { FeeQuotingClient, type QuotedCallsCommand } from '@hyperlane-xyz/fee-quoting';
 
 const apiKey = process.env.FEE_QUOTING_API_KEY;
-const baseUrl = process.env.NEXT_PUBLIC_FEE_QUOTING_URL;
+const baseUrl = process.env.NEXT_PUBLIC_FEE_QUOTING_URL || 'https://quoting.services.hyperlane.xyz';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') return res.status(405).json({ message: 'Method not allowed' });

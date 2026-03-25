@@ -181,7 +181,11 @@ export function TransferTokenForm() {
             <DestinationTokenCard isReview={isReview} />
           </TransferSection>
 
-          <ReviewDetails isReview={isReview} routeOverrideToken={routeOverrideToken} quotedCallsParamsRef={quotedCallsParamsRef} />
+          <ReviewDetails
+            isReview={isReview}
+            routeOverrideToken={routeOverrideToken}
+            quotedCallsParamsRef={quotedCallsParamsRef}
+          />
           <ButtonSection
             isReview={isReview}
             isValidating={isValidating}
@@ -705,11 +709,6 @@ function ReviewDetails({
 
   const amountWei = isNft ? amount.toString() : toWei(amount, originToken?.decimals);
 
-  const { isLoading: isApproveLoading, isApproveRequired } = useIsApproveRequired(
-    originToken,
-    amountWei,
-    isReview,
-  );
   // Offchain fee quoting (when configured)
   const {
     isLoading: isOffchainQuoteLoading,
@@ -717,18 +716,27 @@ function ReviewDetails({
     quotedCallsParams,
   } = useQuotedCallsFeeQuotes(values, isRouteSupported, originToken, destinationToken);
 
-  // Onchain fee quoting (used when offchain not configured or unavailable)
-  const enableOnchain = !config.feeQuotingUrl;
+  // Onchain fee quoting: used as fallback when offchain isn't available for this route
+  const offchainSettled = !isOffchainQuoteLoading;
+  const offchainUnavailable = !config.feeQuotingUrl || (offchainSettled && !offchainFeeQuotes);
   const { isLoading: isOnchainQuoteLoading, fees: onchainFeeQuotes } = useFeeQuotes(
     values,
-    isRouteSupported && enableOnchain,
+    isRouteSupported && offchainUnavailable,
     originToken,
     destinationToken,
     !isReview,
   );
 
   const feeQuotes = offchainFeeQuotes ?? onchainFeeQuotes;
-  const isQuoteLoading = config.feeQuotingUrl ? isOffchainQuoteLoading : isOnchainQuoteLoading;
+  const isQuoteLoading = offchainUnavailable ? isOnchainQuoteLoading : isOffchainQuoteLoading;
+
+  // Approval check: uses quotedCalls address as spender when offchain quoting is active
+  const { isLoading: isApproveLoading, isApproveRequired } = useIsApproveRequired(
+    originToken,
+    amountWei,
+    isReview,
+    quotedCallsParams,
+  );
 
   // Pass quotedCallsParams to parent via ref for use in transfer execution
   quotedCallsParamsRef.current = quotedCallsParams ?? null;
@@ -791,8 +799,8 @@ function ReviewDetails({
                 <div>
                   <h4>Transaction 1: Approve Transfer</h4>
                   <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs">
-                    <p>{`Router Address: ${originToken?.addressOrDenom}`}</p>
-                    {originToken?.collateralAddressOrDenom && (
+                    <p>{`Spender: ${quotedCallsParams?.address ?? originToken?.addressOrDenom}`}</p>
+                    {!quotedCallsParams && originToken?.collateralAddressOrDenom && (
                       <p>{`Collateral Address: ${originToken.collateralAddressOrDenom}`}</p>
                     )}
                   </div>

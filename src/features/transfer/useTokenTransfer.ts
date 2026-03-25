@@ -50,7 +50,11 @@ export function useTokenTransfer(onDone?: () => void) {
 
   // TODO implement cancel callback for when modal is closed?
   const triggerTransactions = useCallback(
-    (values: TransferFormValues, routeOverrideToken: Token | null, quotedCallsParams?: QuotedCallsParams | null) =>
+    (
+      values: TransferFormValues,
+      routeOverrideToken: Token | null,
+      quotedCallsParams?: QuotedCallsParams | null,
+    ) =>
       executeTransfer({
         warpCore,
         values,

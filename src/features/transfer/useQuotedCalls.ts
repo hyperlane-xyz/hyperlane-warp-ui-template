@@ -1,4 +1,12 @@
-import { IToken, QuotedCallsParams, SubmitQuoteCommand, Token, TokenPullMode, WarpCore, computeScopedSalt } from '@hyperlane-xyz/sdk';
+import {
+  IToken,
+  QuotedCallsParams,
+  SubmitQuoteCommand,
+  Token,
+  TokenPullMode,
+  WarpCore,
+  computeScopedSalt,
+} from '@hyperlane-xyz/sdk';
 import { ProtocolType, addressToBytes32, toWei } from '@hyperlane-xyz/utils';
 import { getAccountAddressAndPubKey, useAccounts, useDebounce } from '@hyperlane-xyz/widgets';
 import { useQuery } from '@tanstack/react-query';
@@ -78,7 +86,13 @@ export function useQuotedCallsFeeQuotes(
   return {
     isLoading: isLoading || isFetching,
     isError,
-    fees: data ? { interchainQuote: data.interchainQuote, localQuote: data.localQuote, tokenFeeQuote: data.tokenFeeQuote } : null,
+    fees: data
+      ? {
+          interchainQuote: data.interchainQuote,
+          localQuote: data.localQuote,
+          tokenFeeQuote: data.tokenFeeQuote,
+        }
+      : null,
     quotedCallsParams: data?.quotedCallsParams ?? null,
   };
 }
@@ -136,7 +150,9 @@ async function fetchQuotedCallsFees(
   const res = await fetch(`/api/quote?${params}`);
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error(`Fee quote proxy failed (${res.status}): ${(body as any).message ?? res.statusText}`);
+    throw new Error(
+      `Fee quote proxy failed (${res.status}): ${(body as any).message ?? res.statusText}`,
+    );
   }
 
   const { quotes } = (await res.json()) as { quotes: SubmitQuoteCommand[] };

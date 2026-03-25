@@ -1,5 +1,6 @@
 import { isValidAddress, ProtocolType } from '@hyperlane-xyz/utils';
-import { Modal, XIcon } from '@hyperlane-xyz/widgets';
+import { XIcon } from '@hyperlane-xyz/widgets/icons/X';
+import { Modal } from '@hyperlane-xyz/widgets/layout/Modal';
 import { useState } from 'react';
 
 import { SolidButton } from '../../components/buttons/SolidButton';

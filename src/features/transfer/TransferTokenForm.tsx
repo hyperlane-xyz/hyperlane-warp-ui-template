@@ -11,15 +11,15 @@ import {
   normalizeAddress,
   toWei,
 } from '@hyperlane-xyz/utils';
+import { ChevronIcon } from '@hyperlane-xyz/widgets/icons/Chevron';
+import { SpinnerIcon } from '@hyperlane-xyz/widgets/icons/Spinner';
+import { useModal } from '@hyperlane-xyz/widgets/layout/Modal';
 import {
-  AccountInfo,
-  ChevronIcon,
-  SpinnerIcon,
   getAccountAddressAndPubKey,
   useAccountAddressForChain,
   useAccounts,
-  useModal,
-} from '@hyperlane-xyz/widgets';
+} from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
+import type { AccountInfo } from '@hyperlane-xyz/widgets/walletIntegrations/types';
 import BigNumber from 'bignumber.js';
 import { Form, Formik, useFormikContext } from 'formik';
 import { useCallback, useEffect, useMemo, useState } from 'react';

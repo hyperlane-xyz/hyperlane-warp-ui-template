@@ -7,8 +7,7 @@ import {
   WarpCore,
 } from '@hyperlane-xyz/sdk';
 import { toTitleCase, trimToLength } from '@hyperlane-xyz/utils';
-import { ChainSearchMenuProps } from '@hyperlane-xyz/widgets';
-
+import type { ChainSearchMenuProps } from '@hyperlane-xyz/widgets/chains/ChainSearchMenu';
 import { config } from '../../consts/config';
 
 export function getChainDisplayName(

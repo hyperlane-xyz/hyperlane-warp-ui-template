@@ -1,4 +1,4 @@
-import { WarningIcon } from '@hyperlane-xyz/widgets';
+import { WarningIcon } from '@hyperlane-xyz/widgets/icons/Warning';
 
 export function RecipientWarningBanner({
   destinationChain,

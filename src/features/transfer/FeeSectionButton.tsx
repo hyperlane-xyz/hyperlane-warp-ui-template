@@ -1,5 +1,7 @@
 import { WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
-import { ChevronIcon, FuelPumpIcon, useModal } from '@hyperlane-xyz/widgets';
+import { ChevronIcon } from '@hyperlane-xyz/widgets/icons/Chevron';
+import { FuelPumpIcon } from '@hyperlane-xyz/widgets/icons/FuelPump';
+import { useModal } from '@hyperlane-xyz/widgets/layout/Modal';
 import { useEffect, useState } from 'react';
 
 import { getFeePercentage, getTotalFeesUsdRaw } from '../balances/feeUsdDisplay';

@@ -1,14 +1,14 @@
 import { ProtocolType, shortenAddress } from '@hyperlane-xyz/utils';
+import { ChevronIcon } from '@hyperlane-xyz/widgets/icons/Chevron';
+import { XIcon } from '@hyperlane-xyz/widgets/icons/X';
+import { DropdownMenu } from '@hyperlane-xyz/widgets/layout/DropdownMenu';
+import { useModal } from '@hyperlane-xyz/widgets/layout/Modal';
 import {
-  ChevronIcon,
-  DropdownMenu,
   useAccountAddressForChain,
   useAccountForChain,
   useConnectFns,
   useDisconnectFns,
-  useModal,
-  XIcon,
-} from '@hyperlane-xyz/widgets';
+} from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import React, { useCallback, useMemo } from 'react';
 
 import { Color } from '../../styles/Color';

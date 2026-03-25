@@ -1,9 +1,9 @@
+import { AccountProvider } from '@hyperlane-xyz/widgets/walletIntegrations/radix/AccountContext';
 import {
-  AccountProvider,
   GatewayApiProvider,
   PopupProvider,
   RdtProvider,
-} from '@hyperlane-xyz/widgets';
+} from '@hyperlane-xyz/widgets/walletIntegrations/radix/RadixProviders';
 import '@interchain-ui/react/styles';
 import { GatewayApiClient } from '@radixdlt/babylon-gateway-api-sdk';
 import { RadixDappToolkit, RadixNetwork } from '@radixdlt/radix-dapp-toolkit';

@@ -6,12 +6,17 @@ import {
   PartialRegistry,
 } from '@hyperlane-xyz/registry';
 import type { ChainMetadata } from '@hyperlane-xyz/sdk/metadata/chainMetadataTypes';
-import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProtocolProvider';
+import type { ConfiguredMultiProtocolProvider as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/ConfiguredMultiProtocolProvider';
 import type { Token } from '@hyperlane-xyz/sdk/token/Token';
 import type { ChainMap, ChainName } from '@hyperlane-xyz/sdk/types';
 import type { WarpCoreConfig } from '@hyperlane-xyz/sdk/warp/types';
 import type { WarpCore } from '@hyperlane-xyz/sdk/warp/WarpCore';
-import { normalizeAddress, objFilter } from '@hyperlane-xyz/utils';
+import {
+  type KnownProtocolType,
+  normalizeAddress,
+  objFilter,
+  ProtocolType,
+} from '@hyperlane-xyz/utils';
 import { toast } from 'react-toastify';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
@@ -297,7 +302,6 @@ async function initWarpContext({
   chainMetadataOverrides: ChainMap<Partial<ChainMetadata> | undefined>;
   warpCoreConfigOverrides: WarpCoreConfig[];
 }): Promise<WarpContext> {
-  const { MultiProtocolProvider, WarpCore } = await getSdkRuntime();
   let currentRegistry = registry;
   try {
     // Pre-load registry content to avoid repeated requests
@@ -325,7 +329,15 @@ async function initWarpContext({
       currentRegistry,
       chainMetadataOverrides,
     );
-    const multiProvider = new MultiProtocolProvider(chainMetadataWithOverrides);
+    const protocols = Array.from(
+      new Set(
+        Object.values(chainMetadataWithOverrides)
+          .map((metadata) => metadata.protocol)
+          .filter((protocol): protocol is KnownProtocolType => protocol !== ProtocolType.Unknown),
+      ),
+    );
+    const { createMultiProvider, WarpCore } = await getSdkRuntime(protocols);
+    const multiProvider = createMultiProvider(chainMetadataWithOverrides);
     const warpCore = WarpCore.FromConfig(multiProvider, coreConfig);
 
     const tokensBySymbolChainMap = assembleTokensBySymbolChainMap(warpCore.tokens, multiProvider);

@@ -4,7 +4,7 @@ import {
 } from '@hyperlane-xyz/sdk/token/TokenStandard';
 import type { IToken } from '@hyperlane-xyz/sdk/token/IToken';
 import type { Token } from '@hyperlane-xyz/sdk/token/Token';
-import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProtocolProvider';
+import type { MultiProviderAdapter as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProviderAdapter';
 import type { WarpCore } from '@hyperlane-xyz/sdk/warp/WarpCore';
 import { eqAddress, isNullish, normalizeAddress, objKeys } from '@hyperlane-xyz/utils';
 

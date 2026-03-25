@@ -1,11 +1,12 @@
 import { isAbacusWorksChain } from '@hyperlane-xyz/registry';
-import { ChainStatus } from '@hyperlane-xyz/sdk/metadata/chainMetadataTypes';
 import type { ChainMetadata } from '@hyperlane-xyz/sdk/metadata/chainMetadataTypes';
-import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProtocolProvider';
+import { ChainStatus } from '@hyperlane-xyz/sdk/metadata/chainMetadataTypes';
+import type { MultiProviderAdapter as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProviderAdapter';
 import type { ChainMap } from '@hyperlane-xyz/sdk/types';
 import type { WarpCore } from '@hyperlane-xyz/sdk/warp/WarpCore';
 import { toTitleCase, trimToLength } from '@hyperlane-xyz/utils';
 import type { ChainSearchMenuProps } from '@hyperlane-xyz/widgets/chains/ChainSearchMenu';
+
 import { config } from '../../consts/config';
 
 export function getChainDisplayName(

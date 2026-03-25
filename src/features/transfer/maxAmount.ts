@@ -1,6 +1,7 @@
-import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProtocolProvider';
-import { TokenAmount } from '@hyperlane-xyz/sdk/token/TokenAmount';
+import type { MultiProviderAdapter as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProviderAdapter';
 import type { Token } from '@hyperlane-xyz/sdk/token/Token';
+import { TokenAmount } from '@hyperlane-xyz/sdk/token/TokenAmount';
+import type { ChainName } from '@hyperlane-xyz/sdk/types';
 import type { WarpCore } from '@hyperlane-xyz/sdk/warp/WarpCore';
 import { KnownProtocolType } from '@hyperlane-xyz/utils';
 import { getAccountAddressAndPubKey } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
@@ -13,10 +14,10 @@ import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { getSdkToken } from '../hyperlane/sdkTokenRuntime';
 import { isMultiCollateralLimitExceeded } from '../limits/utils';
-import { useWarpCore } from '../tokens/hooks';
+import { findConnectedDestinationToken, findRouteToken } from '../tokens/utils';
+import { useStore } from '../store';
 import { findConnectedDestinationToken, findRouteToken } from '../tokens/utils';
 import { getTransferToken } from './fees';
-import type { ChainName } from '@hyperlane-xyz/sdk/types';
 
 interface FetchMaxParams {
   accounts: Record<KnownProtocolType, AccountInfo>;
@@ -28,10 +29,14 @@ interface FetchMaxParams {
 
 export function useFetchMaxAmount() {
   const multiProvider = useMultiProvider();
-  const warpCore = useWarpCore();
+  const ensureWarpRuntime = useStore((s) => s.ensureWarpRuntime);
 
   const mutation = useMutation({
-    mutationFn: (params: FetchMaxParams) => fetchMaxAmount(multiProvider, warpCore, params),
+    mutationFn: async (params: FetchMaxParams) => {
+      const warpCore = await ensureWarpRuntime();
+      if (!warpCore) return undefined;
+      return fetchMaxAmount(multiProvider, warpCore, params);
+    },
   });
 
   return { fetchMaxAmount: mutation.mutateAsync, isLoading: mutation.isPending };

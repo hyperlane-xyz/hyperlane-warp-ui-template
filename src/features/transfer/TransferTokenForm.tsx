@@ -69,6 +69,7 @@ import { RecipientConfirmationModal } from './RecipientConfirmationModal';
 import { TransferSection } from './TransferSection';
 import { getInterchainQuote, getTotalFee, getTransferToken } from './fees';
 import { useFetchMaxAmount } from './maxAmount';
+import { fetchPredicateAttestation } from './predicate';
 import { TransferFormValues } from './types';
 import { useRecipientBalanceWatcher } from './useBalanceWatcher';
 import { useFeeQuotes } from './useFeeQuotes';
@@ -962,12 +963,31 @@ async function validateForm(
     }
 
     const originTokenAmount = transferToken.amount(amountWei);
+
+    // Check if predicate attestation needed for validation
+    let attestation: any;
+
+    try {
+      attestation = await fetchPredicateAttestation({
+        warpCore,
+        token: transferToken,
+        destination,
+        sender: sender || '',
+        recipient,
+        amount: originTokenAmount,
+      });
+    } catch (error: any) {
+      logger.warn('Failed to fetch attestation for validation, continuing without it:', error);
+      // Continue without attestation - validation will proceed
+    }
+
     const result = await warpCore.validateTransfer({
       originTokenAmount,
       destination,
       recipient,
       sender: sender || '',
       senderPubKey: await senderPubKey,
+      attestation,
     });
 
     if (!isNullish(result)) {

@@ -7,6 +7,7 @@ import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { useWarpCore } from '../tokens/hooks';
 import { getTransferToken } from './fees';
+import { fetchPredicateAttestation } from './predicate';
 import { TransferFormValues } from './types';
 
 const FEE_QUOTE_REFRESH_INTERVAL = 30_000; // 30s
@@ -103,6 +104,24 @@ async function fetchFeeQuotes(
   }
 
   const originTokenAmount = transferToken.amount(amountWei);
+
+  // Check if predicate attestation needed for fee estimation
+  let attestation: any;
+
+  try {
+    attestation = await fetchPredicateAttestation({
+      warpCore,
+      token: transferToken,
+      destination,
+      sender,
+      recipient,
+      amount: originTokenAmount,
+    });
+  } catch (error: any) {
+    logger.warn('Failed to fetch attestation for fee estimation, continuing without it:', error);
+    // Continue without attestation - fee estimation will proceed
+  }
+
   logger.debug('Fetching fee quotes');
   return warpCore.estimateTransferRemoteFees({
     originTokenAmount,
@@ -110,5 +129,6 @@ async function fetchFeeQuotes(
     sender,
     senderPubKey: await senderPubKey,
     recipient: recipient,
+    attestation,
   });
 }

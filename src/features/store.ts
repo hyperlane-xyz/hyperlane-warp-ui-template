@@ -42,6 +42,7 @@ export interface RouterAddressInfo {
 }
 
 interface WarpContext {
+  isWarpContextReady: boolean;
   registry: IRegistry;
   chainMetadata: ChainMap<ChainMetadata>;
   multiProvider: MultiProtocolProvider | undefined;
@@ -70,6 +71,7 @@ export interface AppState {
   // Overrides to warp core configs added by user
   warpCoreConfigOverrides: WarpCoreConfig[];
   setWarpCoreConfigOverrides: (overrides?: WarpCoreConfig[] | undefined) => void;
+  isWarpContextReady: boolean;
   multiProvider: MultiProtocolProvider | undefined;
   registry: IRegistry;
   warpCore: WarpCore | undefined;
@@ -124,12 +126,14 @@ export const useStore = create<AppState>()(
       // Chains and providers
       chainMetadata: {},
       chainMetadataOverrides: {},
+      isWarpContextReady: false,
       setChainMetadataOverrides: async (
         overrides: ChainMap<Partial<ChainMetadata> | undefined> = {},
       ) => {
         logger.debug('Setting chain overrides in store');
         const filtered = objFilter(overrides, (_, metadata) => !!metadata);
         const {
+          isWarpContextReady,
           multiProvider,
           warpCore,
           routerAddressesByChainMap,
@@ -143,6 +147,7 @@ export const useStore = create<AppState>()(
         });
         set({
           chainMetadataOverrides: filtered,
+          isWarpContextReady,
           multiProvider,
           warpCore,
           routerAddressesByChainMap,
@@ -156,6 +161,7 @@ export const useStore = create<AppState>()(
       setWarpCoreConfigOverrides: async (overrides: WarpCoreConfig[] | undefined = []) => {
         logger.debug('Setting warp core config overrides in store');
         const {
+          isWarpContextReady,
           multiProvider,
           warpCore,
           routerAddressesByChainMap,
@@ -169,6 +175,7 @@ export const useStore = create<AppState>()(
         });
         set({
           warpCoreConfigOverrides: overrides,
+          isWarpContextReady,
           multiProvider,
           warpCore,
           routerAddressesByChainMap,
@@ -335,6 +342,7 @@ async function initWarpContext({
       new Set(coreConfig.tokens.map((t) => t.coinGeckoId).filter(Boolean)),
     ).sort() as string[];
     return {
+      isWarpContextReady: true,
       registry: currentRegistry,
       chainMetadata,
       multiProvider,
@@ -349,6 +357,7 @@ async function initWarpContext({
     toast.error('Error initializing warp context. Please check connection status and configs.');
     logger.error('Error initializing warp context', error);
     return {
+      isWarpContextReady: false,
       registry,
       chainMetadata: {},
       multiProvider: undefined,

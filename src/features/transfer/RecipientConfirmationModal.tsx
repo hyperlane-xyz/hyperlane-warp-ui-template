@@ -1,4 +1,4 @@
-import { Modal } from '@hyperlane-xyz/widgets';
+import { Modal } from '@hyperlane-xyz/widgets/layout/Modal';
 import {
   getAccountAddressAndPubKey,
   useAccounts,

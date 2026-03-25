@@ -1,6 +1,10 @@
-import { IToken, Token, WarpCore, WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
+import type { IToken } from '@hyperlane-xyz/sdk/token/IToken';
+import type { Token } from '@hyperlane-xyz/sdk/token/Token';
+import type { ChainName } from '@hyperlane-xyz/sdk/types';
+import type { WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk/warp/types';
+import type { WarpCore } from '@hyperlane-xyz/sdk/warp/WarpCore';
 import { HexString, ProtocolType, toWei } from '@hyperlane-xyz/utils';
-import { useDebounce } from '@hyperlane-xyz/widgets';
+import { useDebounce } from '@hyperlane-xyz/widgets/utils/debounce';
 import {
   getAccountAddressAndPubKey,
   useAccounts,
@@ -10,7 +14,8 @@ import { useQuery } from '@tanstack/react-query';
 import { defaultMultiCollateralRoutes } from '../../consts/defaultMultiCollateralRoutes';
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
-import { useWarpCore } from '../tokens/hooks';
+import { useStore } from '../store';
+import { useReadyWarpCore } from '../tokens/hooks';
 import { findConnectedDestinationToken } from '../tokens/utils';
 import { getTransferToken } from './fees';
 import { TransferFormValues } from './types';
@@ -26,7 +31,8 @@ export function useFeeQuotes(
   searchForLowestFee: boolean = false,
 ) {
   const multiProvider = useMultiProvider();
-  const warpCore = useWarpCore();
+  const warpCore = useReadyWarpCore();
+  const ensureWarpRuntime = useStore((s) => s.ensureWarpRuntime);
   const debouncedAmount = useDebounce(amount, 500);
   const destination = destinationToken?.chainName;
 
@@ -74,9 +80,9 @@ export function useFeeQuotes(
       debouncedAmount,
       recipient,
     ],
-    queryFn: () =>
+    queryFn: async () =>
       fetchFeeQuotes(
-        warpCore,
+        warpCore || (await ensureWarpRuntime()),
         originToken,
         destinationToken,
         destination,
@@ -94,7 +100,7 @@ export function useFeeQuotes(
 }
 
 export async function fetchFeeQuotes(
-  warpCore: WarpCore,
+  warpCore: WarpCore | undefined,
   originToken: Token | undefined,
   destinationToken: IToken | undefined,
   destination?: ChainName,
@@ -104,8 +110,10 @@ export async function fetchFeeQuotes(
   recipient?: string,
   searchForLowestFee: boolean = false,
 ): Promise<WarpCoreFeeEstimate | null> {
-  if (!originToken || !destinationToken || !destination || !sender || !amount || !recipient)
+  if (!originToken || !destinationToken || !destination || !sender || !amount || !recipient) {
     return null;
+  }
+  if (!warpCore) throw new Error('Warp runtime not ready');
 
   let transferToken = originToken;
   const amountWei = toWei(amount, transferToken.decimals);

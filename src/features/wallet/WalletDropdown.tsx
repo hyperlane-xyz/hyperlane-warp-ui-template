@@ -1,5 +1,8 @@
 import { ProtocolType, shortenAddress } from '@hyperlane-xyz/utils';
-import { ChevronIcon, DropdownMenu, useModal, XIcon } from '@hyperlane-xyz/widgets';
+import { ChevronIcon } from '@hyperlane-xyz/widgets/icons/Chevron';
+import { XIcon } from '@hyperlane-xyz/widgets/icons/X';
+import { DropdownMenu } from '@hyperlane-xyz/widgets/layout/DropdownMenu';
+import { useModal } from '@hyperlane-xyz/widgets/layout/Modal';
 import {
   useAccountAddressForChain,
   useAccountForChain,
@@ -35,6 +38,8 @@ export function WalletDropdown({
   const isConnected = account?.isReady;
   const connectedAddress = useAccountAddressForChain(multiProvider, chainName);
 
+  const connectFns = useConnectFns();
+  const connectFn = connectFns[protocol];
   const disconnectFns = useDisconnectFns();
   const disconnectFn = disconnectFns[protocol];
 
@@ -47,6 +52,14 @@ export function WalletDropdown({
       logger.error('Failed to disconnect wallet', err);
     }
   }, [disconnectFn]);
+
+  const onConnect = useCallback(() => {
+    if (!connectFn) {
+      logger.error('Missing connect handler for protocol', protocol);
+      return;
+    }
+    connectFn();
+  }, [connectFn, protocol]);
 
   const onSaveRecipient = useCallback(
     (address: string) => {
@@ -70,7 +83,7 @@ export function WalletDropdown({
 
     // when there is not a wallet connected, show the current chain wallet connect modal
     if (!isConnected) {
-      items.push(<ConnectMenuItem key="connect" protocol={protocol} />);
+      items.push(<ConnectMenuItem key="connect" onConnect={onConnect} />);
     }
 
     if (isDestination) {
@@ -106,15 +119,15 @@ export function WalletDropdown({
     isDestination,
     hasCustomRecipient,
     isConnected,
-    protocol,
     onDisconnect,
     onUseConnectedWallet,
     openModal,
+    onConnect,
   ]);
 
   // Origin mode, not connected - simple button without dropdown
   if (!isConnected && !isDestination) {
-    return <ConnectWalletButton chainName={chainName} />;
+    return <ConnectWalletButton onConnect={onConnect} />;
   }
 
   // All other cases - use dropdown
@@ -138,16 +151,7 @@ export function WalletDropdown({
   );
 }
 
-// Self-contained connect button with its own hooks
-function ConnectWalletButton({ chainName }: { chainName?: string }) {
-  const protocol = useChainProtocol(chainName || '') || ProtocolType.Ethereum;
-  const connectFns = useConnectFns();
-  const connectFn = connectFns[protocol];
-
-  const onConnect = useCallback(() => {
-    connectFn?.();
-  }, [connectFn]);
-
+function ConnectWalletButton({ onConnect }: { onConnect: () => void }) {
   return (
     <button
       type="button"
@@ -161,15 +165,7 @@ function ConnectWalletButton({ chainName }: { chainName?: string }) {
   );
 }
 
-// Self-contained connect menu item with its own hooks
-function ConnectMenuItem({ protocol }: { protocol: ProtocolType }) {
-  const connectFns = useConnectFns();
-  const connectFn = connectFns[protocol];
-
-  const onConnect = useCallback(() => {
-    connectFn?.();
-  }, [connectFn]);
-
+function ConnectMenuItem({ onConnect }: { onConnect: () => void }) {
   return (
     <button type="button" onClick={onConnect} className={menuItemClass}>
       Connect wallet

@@ -1,5 +1,5 @@
 import { ProtocolType } from '@hyperlane-xyz/utils';
-import { useTimeout } from '@hyperlane-xyz/widgets';
+import { useTimeout } from '@hyperlane-xyz/widgets/utils/timeout';
 import {
   useAccountForChain,
   useConnectFns,

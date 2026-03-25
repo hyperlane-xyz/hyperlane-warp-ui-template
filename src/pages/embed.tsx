@@ -1,4 +1,4 @@
-import { HyperlaneLogo } from '@hyperlane-xyz/widgets';
+import { HyperlaneLogo } from '@hyperlane-xyz/widgets/logos/Hyperlane';
 import type { NextPage } from 'next';
 import Head from 'next/head';
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from 'react';

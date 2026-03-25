@@ -1,4 +1,4 @@
-import { TokenAmount } from '@hyperlane-xyz/sdk';
+import type { TokenAmount } from '@hyperlane-xyz/sdk/token/TokenAmount';
 import { useEffect, useRef } from 'react';
 import { toast } from 'react-toastify';
 

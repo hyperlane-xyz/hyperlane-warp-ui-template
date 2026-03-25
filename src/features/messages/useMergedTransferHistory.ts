@@ -1,4 +1,6 @@
-import type { ChainName, MultiProtocolProvider, WarpCore } from '@hyperlane-xyz/sdk';
+import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProtocolProvider';
+import type { ChainName } from '@hyperlane-xyz/sdk/types';
+import type { WarpCore } from '@hyperlane-xyz/sdk/warp/WarpCore';
 import { fromWei, normalizeAddress } from '@hyperlane-xyz/utils';
 import { useMemo } from 'react';
 

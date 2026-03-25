@@ -1,12 +1,10 @@
+import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProtocolProvider';
 import {
-  ChainMap,
-  CoreAddresses,
-  MultiProtocolCore,
-  MultiProtocolProvider,
   ProviderType,
-  TypedTransactionReceipt,
-  ViemProvider,
-} from '@hyperlane-xyz/sdk';
+  type TypedTransactionReceipt,
+  type ViemProvider,
+} from '@hyperlane-xyz/sdk/providers/ProviderType';
+import type { ChainMap } from '@hyperlane-xyz/sdk/types';
 import { isValidAddress, isValidAddressEvm } from '@hyperlane-xyz/utils';
 import { getAddress } from 'viem';
 
@@ -15,6 +13,23 @@ import ErrorCircleIcon from '../../images/icons/error-circle.svg';
 import { logger } from '../../utils/logger';
 import { getChainDisplayName } from '../chains/utils';
 import { FinalTransferStatuses, SentTransferStatuses, TransferStatus } from './types';
+
+type CoreAddressStub = {
+  validatorAnnounce: string;
+  proxyAdmin: string;
+  mailbox: string;
+};
+
+let multiProtocolCorePromise:
+  | Promise<typeof import('@hyperlane-xyz/sdk').MultiProtocolCore>
+  | undefined;
+
+function getMultiProtocolCore() {
+  multiProtocolCorePromise ??= import('@hyperlane-xyz/sdk').then(
+    ({ MultiProtocolCore }) => MultiProtocolCore,
+  );
+  return multiProtocolCorePromise;
+}
 
 export function getTransferStatusLabel(
   status: TransferStatus,
@@ -80,7 +95,7 @@ export function getIconByTransferStatus(status: TransferStatus) {
   }
 }
 
-export function tryGetMsgIdFromTransferReceipt(
+export async function tryGetMsgIdFromTransferReceipt(
   multiProvider: MultiProtocolProvider,
   origin: ChainName,
   receipt: TypedTransactionReceipt,
@@ -107,7 +122,7 @@ export function tryGetMsgIdFromTransferReceipt(
 
     const addressStubs = multiProvider
       .getKnownChainNames()
-      .reduce<ChainMap<CoreAddresses>>((acc, chainName) => {
+      .reduce<ChainMap<CoreAddressStub>>((acc, chainName) => {
         // Actual core addresses not required for the id extraction
         acc[chainName] = {
           validatorAnnounce: '',
@@ -116,6 +131,7 @@ export function tryGetMsgIdFromTransferReceipt(
         };
         return acc;
       }, {});
+    const MultiProtocolCore = await getMultiProtocolCore();
     const core = new MultiProtocolCore(multiProvider, addressStubs);
     const messages = core.extractMessageIds(origin, receipt);
     if (messages.length) {

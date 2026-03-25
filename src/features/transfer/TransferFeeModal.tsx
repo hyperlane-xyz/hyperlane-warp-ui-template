@@ -1,11 +1,11 @@
-import { WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
+import type { WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk/warp/types';
 import { Tooltip } from '@hyperlane-xyz/widgets/components/Tooltip';
 import { Modal } from '@hyperlane-xyz/widgets/layout/Modal';
 import Link from 'next/link';
 
 import { links } from '../../consts/links';
 import { UsdLabel } from '../balances/UsdLabel';
-import { FeePrices } from '../balances/useFeePrices';
+import type { FeePrices } from '../balances/useFeePrices';
 
 function LoadingSkeleton({ className }: { className: string }) {
   return <div className={`rounded bg-gray-200/70 ${className}`} />;

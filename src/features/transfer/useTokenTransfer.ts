@@ -1,10 +1,11 @@
 import {
   ProviderType,
-  Token,
-  TypedTransactionReceipt,
-  WarpCore,
-  WarpTxCategory,
-} from '@hyperlane-xyz/sdk';
+  type TypedTransactionReceipt,
+} from '@hyperlane-xyz/sdk/providers/ProviderType';
+import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProtocolProvider';
+import type { Token } from '@hyperlane-xyz/sdk/token/Token';
+import { WarpTxCategory } from '@hyperlane-xyz/sdk/warp/types';
+import type { WarpCore } from '@hyperlane-xyz/sdk/warp/WarpCore';
 import { toTitleCase, toWei } from '@hyperlane-xyz/utils';
 import {
   getAccountAddressForChain,
@@ -115,7 +116,7 @@ async function executeTransfer({
   updateTransferStatus(transferIndex, transferStatus);
 
   const { originTokenKey, destinationTokenKey, amount, recipient: formRecipient } = values;
-  const multiProvider = warpCore.multiProvider;
+  const multiProvider = warpCore.multiProvider as MultiProtocolProvider;
 
   try {
     const originToken = routeOverrideToken || getTokenByKey(warpCore.tokens, originTokenKey);
@@ -227,7 +228,7 @@ async function executeTransfer({
     }
 
     const msgId = txReceipt
-      ? tryGetMsgIdFromTransferReceipt(multiProvider, origin, txReceipt)
+      ? await tryGetMsgIdFromTransferReceipt(multiProvider, origin, txReceipt)
       : undefined;
 
     const originTxHash = hashes.at(-1);

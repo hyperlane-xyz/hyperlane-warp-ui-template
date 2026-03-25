@@ -1,4 +1,7 @@
-import { MultiProtocolProvider, Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
+import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProtocolProvider';
+import { TokenAmount } from '@hyperlane-xyz/sdk/token/TokenAmount';
+import type { Token } from '@hyperlane-xyz/sdk/token/Token';
+import type { WarpCore } from '@hyperlane-xyz/sdk/warp/WarpCore';
 import { KnownProtocolType } from '@hyperlane-xyz/utils';
 import { getAccountAddressAndPubKey } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import type { AccountInfo } from '@hyperlane-xyz/widgets/walletIntegrations/types';
@@ -8,10 +11,12 @@ import { toast } from 'react-toastify';
 import { defaultMultiCollateralRoutes } from '../../consts/defaultMultiCollateralRoutes';
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
+import { getSdkToken } from '../hyperlane/sdkTokenRuntime';
 import { isMultiCollateralLimitExceeded } from '../limits/utils';
 import { useWarpCore } from '../tokens/hooks';
 import { findConnectedDestinationToken } from '../tokens/utils';
 import { getTransferToken } from './fees';
+import type { ChainName } from '@hyperlane-xyz/sdk/types';
 
 interface FetchMaxParams {
   accounts: Record<KnownProtocolType, AccountInfo>;
@@ -47,6 +52,7 @@ async function fetchMaxAmount(
     const destination = destToken.chainName;
     const { address, publicKey } = getAccountAddressAndPubKey(multiProvider, origin, accounts);
     if (!address) return balance;
+    const Token = await getSdkToken();
     const originToken = new Token(balance.token);
 
     // Get recipient (form value or fallback to connected wallet for destination)

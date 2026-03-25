@@ -1,4 +1,7 @@
-import { IToken, Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
+import type { IToken } from '@hyperlane-xyz/sdk/token/IToken';
+import type { Token } from '@hyperlane-xyz/sdk/token/Token';
+import { TokenAmount } from '@hyperlane-xyz/sdk/token/TokenAmount';
+import type { WarpCore } from '@hyperlane-xyz/sdk/warp/WarpCore';
 import { objKeys } from '@hyperlane-xyz/utils';
 
 import { chainsRentEstimate } from '../../consts/chains';

@@ -1,4 +1,4 @@
-import type { ChainName } from '@hyperlane-xyz/sdk';
+import type { ChainName } from '@hyperlane-xyz/sdk/types';
 import { fromWei, normalizeAddress } from '@hyperlane-xyz/utils';
 import { RefreshIcon } from '@hyperlane-xyz/widgets/icons/Refresh';
 import { SpinnerIcon } from '@hyperlane-xyz/widgets/icons/Spinner';

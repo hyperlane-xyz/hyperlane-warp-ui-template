@@ -1,4 +1,6 @@
-import { IToken, Token, WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
+import type { IToken } from '@hyperlane-xyz/sdk/token/IToken';
+import type { Token } from '@hyperlane-xyz/sdk/token/Token';
+import type { WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk/warp/types';
 import { isNullish } from '@hyperlane-xyz/utils';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';

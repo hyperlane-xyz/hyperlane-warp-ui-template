@@ -3,14 +3,13 @@ import {
   warpRouteConfigs as publishedRegistryWarpRoutes,
 } from '@hyperlane-xyz/registry';
 import {
-  ChainName,
   TOKEN_STANDARD_TO_PROTOCOL,
   TokenStandard,
-  WarpCoreConfig,
-  WarpCoreConfigSchema,
-  getTokenConnectionId,
-  validateZodResult,
-} from '@hyperlane-xyz/sdk';
+} from '@hyperlane-xyz/sdk/token/TokenStandard';
+import { getTokenConnectionId } from '@hyperlane-xyz/sdk/token/TokenConnection';
+import type { ChainName } from '@hyperlane-xyz/sdk/types';
+import type { WarpCoreConfig } from '@hyperlane-xyz/sdk/warp/types';
+import { WarpCoreConfigSchema } from '@hyperlane-xyz/sdk/warp/types';
 import { isObjEmpty, normalizeAddress, objFilter, objMerge } from '@hyperlane-xyz/utils';
 
 import { config } from '../../consts/config.ts';
@@ -22,14 +21,25 @@ import { logger } from '../../utils/logger.ts';
 // Map of chain -> address -> wireDecimals
 export type WireDecimalsMap = Record<ChainName, Record<string, number>>;
 
+function validateWarpCoreConfigResult(
+  result: ReturnType<typeof WarpCoreConfigSchema.safeParse>,
+  desc: string,
+): WarpCoreConfig {
+  if (!result.success) {
+    logger.warn(`Invalid ${desc}`, result.error);
+    throw new Error(`Invalid ${desc}: ${result.error.toString()}`);
+  }
+  return result.data;
+}
+
 export async function assembleWarpCoreConfig(
   storeOverrides: WarpCoreConfig[],
   registry: IRegistry,
 ): Promise<{ config: WarpCoreConfig; wireDecimalsMap: WireDecimalsMap }> {
   const yamlResult = WarpCoreConfigSchema.safeParse(yamlWarpRoutes);
-  const yamlConfig = validateZodResult(yamlResult, 'warp core yaml config');
+  const yamlConfig = validateWarpCoreConfigResult(yamlResult, 'warp core yaml config');
   const tsResult = WarpCoreConfigSchema.safeParse(tsWarpRoutes);
-  const tsConfig = validateZodResult(tsResult, 'warp core typescript config');
+  const tsConfig = validateWarpCoreConfigResult(tsResult, 'warp core typescript config');
 
   let registryWarpRoutes: Record<string, WarpCoreConfig>;
 

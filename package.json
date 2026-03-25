@@ -20,10 +20,11 @@
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
     "@headlessui/react": "^2.2.0",
+    "@hyperlane-xyz/fee-quoting": "link:../monorepo/typescript/fee-quoting",
     "@hyperlane-xyz/registry": "24.1.0",
-    "@hyperlane-xyz/sdk": "29.0.0",
-    "@hyperlane-xyz/utils": "29.0.0",
-    "@hyperlane-xyz/widgets": "29.0.0",
+    "@hyperlane-xyz/sdk": "link:../monorepo/typescript/sdk",
+    "@hyperlane-xyz/utils": "link:../monorepo/typescript/utils",
+    "@hyperlane-xyz/widgets": "link:../monorepo/typescript/widgets",
     "@interchain-ui/react": "^1.23.28",
     "@intercom/messenger-js-sdk": "^0.0.18",
     "@metamask/post-message-stream": "6.1.2",
@@ -133,7 +134,7 @@
     "test": "vitest --watch false",
     "test:e2e": "playwright test --project=chromium",
     "prettier": "prettier --write ./src",
-    "link:monorepo": "node scripts/link-monorepo.js utils provider-sdk deploy-sdk sdk widgets",
+    "link:monorepo": "node scripts/link-monorepo.js utils sdk widgets",
     "unlink:monorepo": "node scripts/unlink-monorepo.js"
   },
   "types": "dist/src/index.d.ts",
@@ -155,7 +156,10 @@
       "cipher-base": "1.0.5",
       "elliptic": "6.6.1",
       "pbkdf2": "3.1.3",
-      "form-data": "4.0.4"
+      "form-data": "4.0.4",
+      "@hyperlane-xyz/utils": "link:../monorepo/typescript/utils",
+      "@hyperlane-xyz/widgets": "link:../monorepo/typescript/widgets",
+      "@hyperlane-xyz/sdk": "link:../monorepo/typescript/sdk"
     },
     "patchedDependencies": {
       "starknetkit@2.6.1": "patches/starknetkit@2.6.1.patch"

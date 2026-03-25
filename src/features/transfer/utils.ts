@@ -112,6 +112,7 @@ export function tryGetMsgIdFromTransferReceipt(
           validatorAnnounce: '',
           proxyAdmin: '',
           mailbox: '',
+          quotedCalls: '',
         };
         return acc;
       }, {});

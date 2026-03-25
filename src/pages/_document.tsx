@@ -30,15 +30,13 @@ export default function Document() {
         <meta property="og:image" content={`${APP_URL}/logo.png`} />
         <meta property="og:description" content={APP_DESCRIPTION} />
 
+        {/* Synchronous same-origin script — blocks rendering to set theme before first paint. */}
+        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
+        <script src="/theme-init.js" />
         <script
           defer
           data-domain="nexus.hyperlane.xyz"
           src="https://plausible.io/js/script.outbound-links.tagged-events.js"
-        ></script>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `window.plausible = window.plausible || function() { (window.plausible.q = window.plausible.q || []).push(arguments) }`,
-          }}
         />
       </Head>
       <body className="font-primary text-black">

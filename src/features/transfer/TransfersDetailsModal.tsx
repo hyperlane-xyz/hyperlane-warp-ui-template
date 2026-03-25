@@ -235,7 +235,7 @@ export function TransfersDetailsModal({
   ]);
 
   return (
-    <Modal isOpen={isOpen} close={onClose} panelClassname="max-w-sm">
+    <Modal isOpen={isOpen} close={onClose} panelClassname="transfer-details-modal max-w-sm">
       <ModalHeader className="h-8 shadow-accent-glow" />
       <div className="p-4">
         {isFinal && (
@@ -260,7 +260,7 @@ export function TransfersDetailsModal({
 
         <div>
           <div className="mt-4 flex w-full items-center justify-center rounded-sm border border-gray-400/25 bg-card-gradient py-2 shadow-card">
-            <div className="flex items-baseline font-secondary text-sm font-normal">
+            <div className="flex items-center font-secondary text-sm font-normal">
               <span>{amount}</span>
               <span className="ml-1">{token?.symbol || ''}</span>
               {destToken && (
@@ -273,8 +273,8 @@ export function TransfersDetailsModal({
             </div>
           </div>
 
-          <div className="-mt-2 flex items-center justify-around rounded-sm border border-gray-400/25 bg-card-gradient py-5 shadow-card">
-            <div className="ml-2 flex flex-col items-center">
+          <div className="-mt-2 grid grid-cols-[1fr_auto_1fr] items-center rounded-sm border border-gray-400/25 bg-card-gradient py-5 shadow-card">
+            <div className="flex flex-col items-center">
               {token ? (
                 <TokenChainIcon token={token} size={36} />
               ) : (
@@ -285,11 +285,11 @@ export function TransfersDetailsModal({
                 {getChainDisplayName(multiProvider, origin, true)}
               </span>
             </div>
-            <div className="mb-6 flex sm:space-x-1.5">
+            <div className="mb-6 flex justify-center sm:space-x-1.5">
               <WideChevron />
               <WideChevron />
             </div>
-            <div className="mr-2 flex flex-col items-center">
+            <div className="flex flex-col items-center">
               {destToken ? (
                 <TokenChainIcon token={destToken} size={36} />
               ) : (
@@ -317,8 +317,6 @@ export function TransfersDetailsModal({
                 hideDescriptions={true}
                 iconPosition="inline"
                 barClassName="bg-accent-gradient"
-                chevronColor="#A62AFF"
-                showTooltips
               />
             </div>
             {showEta && etaSeconds && (
@@ -365,7 +363,7 @@ export function TransfersDetailsModal({
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-4">
-            <SpinnerIcon width={60} height={60} className="mt-3" />
+            <SpinnerIcon width={60} height={60} className="transfer-details-spinner mt-3" />
             <div className="mt-5 text-center text-sm text-gray-600">{statusDescription}</div>
             {showSignWarning && (
               <div className="mt-3 text-center text-sm text-gray-600">

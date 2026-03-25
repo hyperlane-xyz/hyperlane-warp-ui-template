@@ -125,7 +125,7 @@ export function WalletDropdown({
       <DropdownMenu
         button={<DropdownWalletButton address={truncatedAddress} />}
         buttonClassname="flex items-center"
-        menuClassname="mt-2 min-w-[200px] rounded-lg border border-gray-200 bg-white py-1 shadow-md"
+        menuClassname="wallet-dropdown-menu mt-2 min-w-[200px] rounded-lg border border-gray-200 bg-white py-1 shadow-md"
         menuItems={menuItems}
         buttonProps={{ disabled }}
       />
@@ -154,7 +154,7 @@ function ConnectWalletButton({ chainName }: { chainName?: string }) {
     <button
       type="button"
       onClick={onConnect}
-      className="flex items-center gap-1.5 text-sm text-primary-500 underline transition-colors hover:text-primary-600"
+      className="wallet-connect-link flex items-center gap-1.5 text-sm text-primary-500 underline transition-colors hover:text-primary-600"
     >
       <XIcon width={8} height={8} color={Color.red[500]} />
       <span>Connect Wallet</span>
@@ -176,7 +176,7 @@ function ConnectMenuItem({ protocol }: { protocol: ProtocolType }) {
     <button
       type="button"
       onClick={onConnect}
-      className="w-full px-4 py-2.5 text-left text-sm text-gray-900 hover:bg-gray-100"
+      className="wallet-dropdown-item w-full px-4 py-2.5 text-left text-sm text-gray-900 hover:bg-gray-100"
     >
       Connect wallet
     </button>
@@ -185,7 +185,7 @@ function ConnectMenuItem({ protocol }: { protocol: ProtocolType }) {
 
 function DropdownWalletButton({ address }: { address: string }) {
   return (
-    <div className="flex items-center gap-2 text-sm underline">
+    <div className="wallet-connect-link flex items-center gap-2 text-sm underline">
       {address ? (
         <div className="h-2 w-2 rounded-full bg-green-50" />
       ) : (
@@ -204,7 +204,7 @@ function MenuItemButton({ onClick, children }: { onClick: () => void; children: 
     <button
       type="button"
       onClick={onClick}
-      className="w-full px-4 py-2.5 text-left text-sm text-gray-900 hover:bg-gray-100"
+      className="wallet-dropdown-item w-full px-4 py-2.5 text-left text-sm text-gray-900 hover:bg-gray-100"
     >
       {children}
     </button>
@@ -212,5 +212,5 @@ function MenuItemButton({ onClick, children }: { onClick: () => void; children: 
 }
 
 function MenuSeparator() {
-  return <div className="mx-2 my-1 h-px bg-primary-50" />;
+  return <div className="wallet-dropdown-separator mx-2 my-1 h-px bg-primary-50" />;
 }

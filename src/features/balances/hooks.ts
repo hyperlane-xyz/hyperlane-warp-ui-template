@@ -1,10 +1,8 @@
 import { IToken, MultiProtocolProvider, Token } from '@hyperlane-xyz/sdk';
 import { ProtocolType, getAddressProtocolType, isValidAddress } from '@hyperlane-xyz/utils';
-import {
-  useAccountAddressForChain,
-  useEthereumAccount,
-  useSolanaAccount,
-} from '@hyperlane-xyz/widgets';
+import { useEthereumAccount } from '@hyperlane-xyz/widgets/walletIntegrations/ethereum';
+import { useAccountAddressForChain } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
+import { useSolanaAccount } from '@hyperlane-xyz/widgets/walletIntegrations/solana';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { toast } from 'react-toastify';

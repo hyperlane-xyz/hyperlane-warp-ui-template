@@ -1,5 +1,7 @@
 import { ProtocolType } from '@hyperlane-xyz/utils';
-import { Modal, PROTOCOL_TO_LOGO, useConnectFns } from '@hyperlane-xyz/widgets';
+import { Modal } from '@hyperlane-xyz/widgets/layout/Modal';
+import { PROTOCOL_TO_LOGO } from '@hyperlane-xyz/widgets/logos/protocols';
+import { useConnectFns } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 
 interface WalletProtocolModalProps {
   isOpen: boolean;

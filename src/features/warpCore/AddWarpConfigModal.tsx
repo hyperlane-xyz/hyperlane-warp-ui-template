@@ -1,7 +1,12 @@
 import { BaseRegistry } from '@hyperlane-xyz/registry';
 import { MultiProtocolProvider, WarpCoreConfig, WarpCoreConfigSchema } from '@hyperlane-xyz/sdk';
 import { failure, Result, success, tryParseJsonOrYaml } from '@hyperlane-xyz/utils';
-import { Button, CopyButton, IconButton, Modal, PlusIcon, XIcon } from '@hyperlane-xyz/widgets';
+import { Button } from '@hyperlane-xyz/widgets/components/Button';
+import { CopyButton } from '@hyperlane-xyz/widgets/components/CopyButton';
+import { IconButton } from '@hyperlane-xyz/widgets/components/IconButton';
+import { PlusIcon } from '@hyperlane-xyz/widgets/icons/Plus';
+import { XIcon } from '@hyperlane-xyz/widgets/icons/X';
+import { Modal } from '@hyperlane-xyz/widgets/layout/Modal';
 import clsx from 'clsx';
 import { useState } from 'react';
 import { toast } from 'react-toastify';

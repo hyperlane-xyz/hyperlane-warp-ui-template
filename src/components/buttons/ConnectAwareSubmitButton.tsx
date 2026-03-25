@@ -1,5 +1,9 @@
 import { ProtocolType } from '@hyperlane-xyz/utils';
-import { useAccountForChain, useConnectFns, useTimeout } from '@hyperlane-xyz/widgets';
+import { useTimeout } from '@hyperlane-xyz/widgets/utils/timeout';
+import {
+  useAccountForChain,
+  useConnectFns,
+} from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import { useFormikContext } from 'formik';
 import { useCallback } from 'react';
 import { EVENT_NAME } from '../../features/analytics/types';

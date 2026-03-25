@@ -1,4 +1,5 @@
-import { IconButton, XCircleIcon } from '@hyperlane-xyz/widgets';
+import { IconButton } from '@hyperlane-xyz/widgets/components/IconButton';
+import { XCircleIcon } from '@hyperlane-xyz/widgets/icons/XCircle';
 import Image from 'next/image';
 import { useState } from 'react';
 import { config } from '../../consts/config';

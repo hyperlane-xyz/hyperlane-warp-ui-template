@@ -1,6 +1,6 @@
 import { starknetsepolia } from '@hyperlane-xyz/registry';
 import { chainMetadataToStarknetChain } from '@hyperlane-xyz/sdk';
-import { getStarknetChains } from '@hyperlane-xyz/widgets';
+import { getStarknetChains } from '@hyperlane-xyz/widgets/walletIntegrations/starknet';
 import { Chain } from '@starknet-react/chains';
 import { StarknetConfig, publicProvider, voyager } from '@starknet-react/core';
 import { PropsWithChildren, useMemo } from 'react';

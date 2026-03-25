@@ -1,4 +1,5 @@
-import { SpinnerIcon, useTimeout } from '@hyperlane-xyz/widgets';
+import { SpinnerIcon } from '@hyperlane-xyz/widgets/icons/Spinner';
+import { useTimeout } from '@hyperlane-xyz/widgets/utils/timeout';
 import { PropsWithChildren, useState } from 'react';
 import { Color } from '../styles/Color';
 import { useReadyMultiProvider } from './chains/hooks';

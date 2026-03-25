@@ -1,6 +1,7 @@
 import { MultiProtocolProvider, Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
 import { KnownProtocolType } from '@hyperlane-xyz/utils';
-import { AccountInfo, getAccountAddressAndPubKey } from '@hyperlane-xyz/widgets';
+import { getAccountAddressAndPubKey } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
+import type { AccountInfo } from '@hyperlane-xyz/widgets/walletIntegrations/types';
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
 import { defaultMultiCollateralRoutes } from '../../consts/defaultMultiCollateralRoutes';

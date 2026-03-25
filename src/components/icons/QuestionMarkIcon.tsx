@@ -1,4 +1,4 @@
-import { DefaultIconProps } from '@hyperlane-xyz/widgets';
+import type { DefaultIconProps } from '@hyperlane-xyz/widgets/icons/types';
 import { memo } from 'react';
 
 import { Color } from '../../styles/Color';

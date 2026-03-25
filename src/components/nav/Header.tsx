@@ -1,4 +1,4 @@
-import { DropdownMenu } from '@hyperlane-xyz/widgets';
+import { DropdownMenu } from '@hyperlane-xyz/widgets/layout/DropdownMenu';
 import Image from 'next/image';
 import Link from 'next/link';
 

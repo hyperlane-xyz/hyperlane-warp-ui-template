@@ -1,4 +1,4 @@
-import { GithubIcon } from '@hyperlane-xyz/widgets';
+import { GithubIcon } from '@hyperlane-xyz/widgets/icons/Github';
 import clsx from 'clsx';
 import Link from 'next/link';
 import { forwardRef, ReactNode } from 'react';

@@ -1,4 +1,4 @@
-import { ChainLogo as ChainLogoInner } from '@hyperlane-xyz/widgets';
+import { ChainLogo as ChainLogoInner } from '@hyperlane-xyz/widgets/chains/ChainLogo';
 import { useEffect, useRef } from 'react';
 
 import { useChainMetadata } from '../../features/chains/hooks';

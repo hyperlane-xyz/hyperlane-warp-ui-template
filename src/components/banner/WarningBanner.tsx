@@ -1,4 +1,4 @@
-import { WarningIcon } from '@hyperlane-xyz/widgets';
+import { WarningIcon } from '@hyperlane-xyz/widgets/icons/Warning';
 import { PropsWithChildren, ReactNode } from 'react';
 
 export function WarningBanner({

@@ -1,4 +1,5 @@
-import { SearchIcon, XIcon } from '@hyperlane-xyz/widgets';
+import { SearchIcon } from '@hyperlane-xyz/widgets/icons/Search';
+import { XIcon } from '@hyperlane-xyz/widgets/icons/X';
 import { Ref } from 'react';
 
 import { TextInput } from './TextField';

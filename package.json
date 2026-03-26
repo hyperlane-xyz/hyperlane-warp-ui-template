@@ -108,10 +108,10 @@
   "scripts": {
     "clean": "rm -rf dist cache .next",
     "predev": "node scripts/fetch-fonts.mjs",
-    "dev": "next dev --webpack",
+    "dev": "next dev",
     "prebuild": "node scripts/fetch-fonts.mjs",
     "fetch-fonts": "node --env-file-if-exists=.env.local scripts/fetch-fonts.mjs",
-    "build": "next build --webpack",
+    "build": "next build",
     "typecheck": "tsc",
     "lint": "oxlint ./src",
     "start": "next start",
@@ -143,7 +143,9 @@
       "form-data": "4.0.4"
     },
     "patchedDependencies": {
-      "starknetkit@2.6.1": "patches/starknetkit@2.6.1.patch"
+      "starknetkit@2.6.1": "patches/starknetkit@2.6.1.patch",
+      "@provablehq/wasm@0.9.18": "patches/@provablehq__wasm@0.9.18.patch",
+      "@provablehq/sdk@0.9.15": "patches/@provablehq__sdk@0.9.15.patch"
     },
     "onlyBuiltDependencies": []
   }

@@ -157,6 +157,22 @@ const nextConfig = {
     return config;
   },
 
+  turbopack: {
+    rules: {
+      '*.yaml': {
+        loaders: ['yaml-loader'],
+        as: '*.js',
+      },
+      '*.yml': {
+        loaders: ['yaml-loader'],
+        as: '*.js',
+      },
+    },
+    resolveAlias: {
+      pino: './src/utils/pino-noop.js',
+    },
+  },
+
   async headers() {
     return [
       {
@@ -177,7 +193,7 @@ const nextConfig = {
 
   reactStrictMode: true,
 
-  serverExternalPackages: ['@sentry/nextjs'],
+  serverExternalPackages: ['@sentry/nextjs', '@provablehq/wasm', '@provablehq/sdk'],
 
   // Exclude heavy client-only chain SDKs from serverless function file tracing.
   // These packages are only used client-side and not needed in serverless functions.

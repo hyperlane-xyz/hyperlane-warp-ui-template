@@ -30,7 +30,7 @@ export function Header() {
             <NavItem
               key={item.title}
               item={item}
-              className="w-full gap-3 px-6 py-2 hover:bg-primary-50 hover:bg-opacity-30 dark:text-foreground-primary dark:hover:bg-primary-300/[0.16] dark:[&_path]:fill-current dark:[&_path]:stroke-current"
+              className="w-full gap-3 px-6 py-2 hover:bg-primary-50/30 dark:text-foreground-primary dark:hover:bg-primary-300/[0.16] dark:[&_path]:fill-current dark:[&_path]:stroke-current"
             />
           ))}
         />

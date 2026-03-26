@@ -156,7 +156,7 @@ export function SideBarMenu({
   return (
     <>
       <div
-        className={`sidebar-menu fixed right-0 top-0 h-full w-88 transform bg-white bg-opacity-95 shadow-lg transition-transform duration-100 ease-in dark:border-l dark:border-primary-300/35 dark:bg-surface/95 ${
+        className={`sidebar-menu fixed right-0 top-0 h-full w-88 transform bg-white/95 shadow-lg transition-transform duration-100 ease-in dark:border-l dark:border-primary-300/35 dark:bg-surface/95 ${
           isMenuOpen
             ? 'z-10 translate-x-0 dark:shadow-[-8px_0_32px_rgba(0,0,0,0.45)]'
             : 'z-0 translate-x-full'

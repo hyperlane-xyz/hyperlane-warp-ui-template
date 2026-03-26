@@ -174,11 +174,7 @@ function ConnectMenuItem({ protocol }: { protocol: ProtocolType }) {
   }, [connectFn]);
 
   return (
-    <button
-      type="button"
-      onClick={onConnect}
-      className="wallet-dropdown-item w-full px-4 py-2.5 text-left text-sm text-gray-900 hover:bg-gray-100 dark:text-foreground-primary dark:hover:bg-primary-300/[0.16]"
-    >
+    <button type="button" onClick={onConnect} className={menuItemClass}>
       Connect wallet
     </button>
   );
@@ -200,13 +196,12 @@ function DropdownWalletButton({ address }: { address: string }) {
   );
 }
 
+const menuItemClass =
+  'wallet-dropdown-item w-full px-4 py-2.5 text-left text-sm text-gray-900 hover:bg-gray-100 dark:text-foreground-primary dark:hover:bg-primary-300/[0.16]';
+
 function MenuItemButton({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="wallet-dropdown-item w-full px-4 py-2.5 text-left text-sm text-gray-900 hover:bg-gray-100 dark:text-foreground-primary dark:hover:bg-primary-300/[0.16]"
-    >
+    <button type="button" onClick={onClick} className={menuItemClass}>
       {children}
     </button>
   );

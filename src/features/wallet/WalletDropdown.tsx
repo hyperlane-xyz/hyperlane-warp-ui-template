@@ -177,7 +177,7 @@ function ConnectMenuItem({ protocol }: { protocol: ProtocolType }) {
     <button
       type="button"
       onClick={onConnect}
-      className="wallet-dropdown-item w-full px-4 py-2.5 text-left text-sm text-gray-900 hover:bg-gray-100 dark:text-foreground-primary dark:hover:bg-primary-300/15"
+      className="wallet-dropdown-item w-full px-4 py-2.5 text-left text-sm text-gray-900 hover:bg-gray-100 dark:text-foreground-primary dark:hover:bg-primary-300/[0.16]"
     >
       Connect wallet
     </button>
@@ -205,7 +205,7 @@ function MenuItemButton({ onClick, children }: { onClick: () => void; children: 
     <button
       type="button"
       onClick={onClick}
-      className="wallet-dropdown-item w-full px-4 py-2.5 text-left text-sm text-gray-900 hover:bg-gray-100 dark:text-foreground-primary dark:hover:bg-primary-300/15"
+      className="wallet-dropdown-item w-full px-4 py-2.5 text-left text-sm text-gray-900 hover:bg-gray-100 dark:text-foreground-primary dark:hover:bg-primary-300/[0.16]"
     >
       {children}
     </button>

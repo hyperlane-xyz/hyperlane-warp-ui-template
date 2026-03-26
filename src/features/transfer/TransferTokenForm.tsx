@@ -244,7 +244,7 @@ function SwapTokensButton({ disabled }: { disabled?: boolean }) {
         type="button"
         onClick={onSwap}
         disabled={disabled}
-        className="swap-chains-button group flex h-8 w-8 items-center justify-center rounded border border-gray-400/50 bg-white shadow-button transition-all hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-primary-300/35 dark:bg-background/90 dark:shadow-none dark:hover:bg-primary-300/20"
+        className="swap-chains-button group flex h-8 w-8 items-center justify-center rounded border border-gray-400/50 bg-white shadow-button transition-all hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-primary-300/35 dark:bg-background/90 dark:shadow-none dark:hover:bg-primary-300/[0.18]"
       >
         <SwapIcon
           width={18}
@@ -293,7 +293,7 @@ function OriginTokenCard({
         <ImportTokenButton token={originToken} />
       </div>
 
-      <div className="transfer-chain-field rounded-[7px] border border-gray-400/25 bg-white p-3 shadow-input dark:border-primary-300/20 dark:bg-transparent dark:shadow-none">
+      <div className="transfer-chain-field rounded-[7px] border border-gray-400/25 bg-white p-3 shadow-input dark:border-primary-300/[0.18] dark:bg-transparent dark:shadow-none">
         <TokenSelectField
           name="originTokenKey"
           selectionMode="origin"
@@ -302,7 +302,7 @@ function OriginTokenCard({
           showLabel={false}
         />
 
-        <div className="transfer-divider my-2.5 h-px bg-primary-50 dark:bg-primary-300/20" />
+        <div className="transfer-divider my-2.5 h-px bg-primary-50 dark:bg-primary-300/[0.22]" />
 
         <div className="flex items-center justify-between gap-2">
           <TextField
@@ -366,7 +366,7 @@ function DestinationTokenCard({ isReview }: { isReview: boolean }) {
         <ImportTokenButton token={destinationToken} />
       </div>
 
-      <div className="transfer-chain-field rounded-[7px] border border-gray-400/25 bg-white p-3 shadow-input dark:border-primary-300/20 dark:bg-transparent dark:shadow-none">
+      <div className="transfer-chain-field rounded-[7px] border border-gray-400/25 bg-white p-3 shadow-input dark:border-primary-300/[0.18] dark:bg-transparent dark:shadow-none">
         <TokenSelectField
           name="destinationTokenKey"
           selectionMode="destination"
@@ -374,7 +374,7 @@ function DestinationTokenCard({ isReview }: { isReview: boolean }) {
           showLabel={false}
         />
 
-        <div className="transfer-divider my-2.5 h-px bg-primary-50 dark:bg-primary-300/20" />
+        <div className="transfer-divider my-2.5 h-px bg-primary-50 dark:bg-primary-300/[0.22]" />
 
         <TokenBalance label="Remote Balance" balance={balance} />
       </div>

@@ -16,7 +16,7 @@ export function Footer() {
 
 function FooterLogo() {
   return (
-    <div className="flex items-center justify-center rounded-full border border-transparent bg-transparent px-[0.8rem] py-[0.35rem] dark:border-primary-300/40 dark:bg-surface/30 dark:shadow-[0_0_22px_rgba(154,13,255,0.24)]">
+    <div className="flex items-center justify-center rounded-full border border-transparent bg-transparent px-[0.8rem] py-[0.35rem] dark:border-primary-300/40 dark:bg-white/[0.08] dark:shadow-[0_0_22px_rgba(154,13,255,0.24)]">
       <HyperlaneGradientLogo
         className="dark:[filter:saturate(1.2)_brightness(1.2)_drop-shadow(0_0_10px_rgba(185,89,255,0.45))]"
         width={219}
@@ -34,7 +34,7 @@ function FooterNav() {
           <li key={item.title}>
             <NavItem
               item={item}
-              className="dark:text-foreground-primary dark:hover:text-white dark:[&_path]:fill-current dark:[&_path]:stroke-current dark:[&_svg]:opacity-95 dark:[&_svg]:brightness-[1.22] dark:[&_svg]:saturate-[0.82]"
+              className="dark:text-[#e9d8ff] dark:hover:text-white dark:[&_path]:fill-current dark:[&_path]:stroke-current dark:[&_svg]:opacity-95 dark:[&_svg]:brightness-[1.22] dark:[&_svg]:saturate-[0.82]"
             />
           </li>
         ))}

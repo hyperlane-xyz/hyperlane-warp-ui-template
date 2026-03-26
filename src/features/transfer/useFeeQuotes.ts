@@ -14,7 +14,9 @@ import { useQuery } from '@tanstack/react-query';
 import { defaultMultiCollateralRoutes } from '../../consts/defaultMultiCollateralRoutes';
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
-import { useWarpCore } from '../tokens/hooks';
+import { findConnectedDestinationToken } from '../tokens/utils';
+import { useStore } from '../store';
+import { useReadyWarpCore } from '../tokens/hooks';
 import { findConnectedDestinationToken } from '../tokens/utils';
 import { getTransferToken } from './fees';
 import { TransferFormValues } from './types';
@@ -30,7 +32,8 @@ export function useFeeQuotes(
   searchForLowestFee: boolean = false,
 ) {
   const multiProvider = useMultiProvider();
-  const warpCore = useWarpCore();
+  const warpCore = useReadyWarpCore();
+  const ensureWarpRuntime = useStore((s) => s.ensureWarpRuntime);
   const debouncedAmount = useDebounce(amount, 500);
   const destination = destinationToken?.chainName;
 
@@ -78,9 +81,9 @@ export function useFeeQuotes(
       debouncedAmount,
       recipient,
     ],
-    queryFn: () =>
+    queryFn: async () =>
       fetchFeeQuotes(
-        warpCore,
+        warpCore || (await ensureWarpRuntime()),
         originToken,
         destinationToken,
         destination,
@@ -98,7 +101,7 @@ export function useFeeQuotes(
 }
 
 export async function fetchFeeQuotes(
-  warpCore: WarpCore,
+  warpCore: WarpCore | undefined,
   originToken: Token | undefined,
   destinationToken: IToken | undefined,
   destination?: ChainName,
@@ -108,7 +111,7 @@ export async function fetchFeeQuotes(
   recipient?: string,
   searchForLowestFee: boolean = false,
 ): Promise<WarpCoreFeeEstimate | null> {
-  if (!originToken || !destinationToken || !destination || !sender || !amount || !recipient)
+  if (!warpCore || !originToken || !destinationToken || !destination || !sender || !amount || !recipient)
     return null;
 
   let transferToken = originToken;

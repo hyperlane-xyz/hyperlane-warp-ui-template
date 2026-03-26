@@ -5,7 +5,7 @@ import { wallets as keplrWallets } from '@cosmos-kit/keplr';
 import { wallets as leapWallets } from '@cosmos-kit/leap';
 import { ChainProvider } from '@cosmos-kit/react';
 import { cosmoshub } from '@hyperlane-xyz/registry';
-import { ConfiguredMultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/ConfiguredMultiProtocolProvider';
+import { MultiProviderAdapter } from '@hyperlane-xyz/sdk/providers/MultiProviderAdapter';
 import { getCosmosKitChainConfigs } from '@hyperlane-xyz/widgets/walletIntegrations/cosmos';
 import '@interchain-ui/react/styles';
 import { PropsWithChildren, useMemo } from 'react';
@@ -24,7 +24,7 @@ const theme = extendTheme({
 export function CosmosWalletContext({ children }: PropsWithChildren<unknown>) {
   const chainMetadata = useMultiProvider().metadata;
   const { chains, assets } = useMemo(() => {
-    const multiProvider = new ConfiguredMultiProtocolProvider({ ...chainMetadata, cosmoshub });
+    const multiProvider = new MultiProviderAdapter({ ...chainMetadata, cosmoshub });
     return getCosmosKitChainConfigs(
       multiProvider as unknown as Parameters<typeof getCosmosKitChainConfigs>[0],
     );

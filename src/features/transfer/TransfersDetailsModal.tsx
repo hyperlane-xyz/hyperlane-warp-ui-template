@@ -27,7 +27,7 @@ import { getChainDisplayName, hasPermissionlessChain } from '../chains/utils';
 import { useMessageDeliveryStatus } from '../messages/useMessageDeliveryStatus';
 import { useOriginFinality } from '../messages/useOriginFinality';
 import { useStore } from '../store';
-import { tryFindToken, useWarpCore } from '../tokens/hooks';
+import { tryFindTokenInTokens, useTokens } from '../tokens/hooks';
 import { TokenChainIcon } from '../tokens/TokenChainIcon';
 import { TransferContext, TransferStatus } from './types';
 import {
@@ -75,7 +75,7 @@ export function TransfersDetailsModal({
   } = transfer || {};
 
   const multiProvider = useMultiProvider();
-  const warpCore = useWarpCore();
+  const tokens = useTokens();
   const transfers = useStore((s) => s.transfers);
   const updateTransferStatus = useStore((s) => s.updateTransferStatus);
 
@@ -124,8 +124,8 @@ export function TransfersDetailsModal({
 
   const isAccountReady = !!account?.isReady;
   const connectorName = walletDetails.name || 'wallet';
-  const token = tryFindToken(warpCore, origin, originTokenAddressOrDenom);
-  const destToken = tryFindToken(warpCore, destination, destTokenAddressOrDenom);
+  const token = tryFindTokenInTokens(tokens, origin, originTokenAddressOrDenom);
+  const destToken = tryFindTokenInTokens(tokens, destination, destTokenAddressOrDenom);
   const isPermissionlessRoute = hasPermissionlessChain(multiProvider, [destination, origin]);
   const isFinal = isSent || isFailed;
   const currentStatus = isDelivered ? TransferStatus.Delivered : status;

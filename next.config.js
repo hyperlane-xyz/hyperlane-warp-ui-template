@@ -155,7 +155,6 @@ const nextConfig = {
       },
     },
   },
-
   turbopack: {
     rules: {
       '*.yaml': {

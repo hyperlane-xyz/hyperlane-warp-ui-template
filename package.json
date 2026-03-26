@@ -108,10 +108,10 @@
   "scripts": {
     "clean": "rm -rf dist cache .next",
     "predev": "node scripts/fetch-fonts.mjs",
-    "dev": "next dev",
+    "dev": "next dev --webpack",
     "prebuild": "node scripts/fetch-fonts.mjs",
     "fetch-fonts": "node --env-file-if-exists=.env.local scripts/fetch-fonts.mjs",
-    "build": "next build",
+    "build": "next build --webpack",
     "typecheck": "tsc",
     "lint": "oxlint ./src",
     "start": "next start",

@@ -55,7 +55,10 @@ export function WalletProtocolModal({
       <div className="wallet-protocol-grid flex flex-wrap justify-center gap-2.5 py-2">
         {PROTOCOL_OPTIONS.filter((option) => includesProtocol(option.protocol)).map((option) => {
           const Logo = PROTOCOL_TO_LOGO[option.protocol];
-          if (!Logo) return null;
+          if (!Logo) {
+            console.error(`Missing protocol logo mapping for: ${option.protocol}`);
+            return null;
+          }
           return (
             <button
               type="button"

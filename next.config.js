@@ -210,7 +210,7 @@ const nextConfig = {
   },
 
   experimental: {
-    webpackBuildWorker: true,
+    turbopackFileSystemCacheForBuild: true,
     parallelServerBuildTraces: true,
     optimizePackageImports: [
       '@hyperlane-xyz/registry',

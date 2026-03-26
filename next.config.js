@@ -149,7 +149,6 @@ const nextConfig = {
       pino: './src/utils/pino-noop.js',
     },
   },
-
   turbopack: {
     rules: {
       '*.yaml': {

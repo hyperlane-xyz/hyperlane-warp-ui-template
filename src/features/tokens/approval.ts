@@ -4,11 +4,13 @@ import { useQuery } from '@tanstack/react-query';
 
 import { useToastError } from '../../components/toast/useToastError';
 import { useMultiProvider } from '../chains/hooks';
-import { useWarpCore } from './hooks';
+import { useStore } from '../store';
+import { useReadyWarpCore } from './hooks';
 
 export function useIsApproveRequired(token?: IToken, amount?: string, enabled = true) {
   const multiProvider = useMultiProvider();
-  const warpCore = useWarpCore();
+  const warpCore = useReadyWarpCore();
+  const ensureWarpRuntime = useStore((s) => s.ensureWarpRuntime);
 
   const owner = useAccountAddressForChain(multiProvider, token?.chainName);
 
@@ -17,8 +19,10 @@ export function useIsApproveRequired(token?: IToken, amount?: string, enabled = 
     // eslint-disable-next-line @tanstack/query/exhaustive-deps
     queryKey: ['useIsApproveRequired', owner, amount, token?.addressOrDenom],
     queryFn: async () => {
+      const readyWarpCore = warpCore || (await ensureWarpRuntime());
+      if (!readyWarpCore) return false;
       if (!token || !owner || !amount) return false;
-      return warpCore.isApproveRequired({ originTokenAmount: token.amount(amount), owner });
+      return readyWarpCore.isApproveRequired({ originTokenAmount: token.amount(amount), owner });
     },
     enabled,
   });

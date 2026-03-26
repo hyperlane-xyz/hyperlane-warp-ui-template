@@ -1,5 +1,6 @@
 import { SearchIcon, XIcon } from '@hyperlane-xyz/widgets';
 import { Ref } from 'react';
+
 import { TextInput } from './TextField';
 
 export function SearchInput({

@@ -2,6 +2,7 @@ import { IToken, Token, WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
 import { isNullish } from '@hyperlane-xyz/utils';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
+
 import { fetchPrices } from '../tokens/useTokenPrice';
 
 const FEE_PRICE_REFRESH_INTERVAL = 300_000; // 5 min, matches PRICE_STALE_TIME

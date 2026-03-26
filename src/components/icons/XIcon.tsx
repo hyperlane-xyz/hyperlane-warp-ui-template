@@ -1,5 +1,6 @@
 import { DefaultIconProps } from '@hyperlane-xyz/widgets';
 import { memo } from 'react';
+
 import { Color } from '../../styles/Color';
 
 function _XIcon({ color, ...props }: DefaultIconProps) {

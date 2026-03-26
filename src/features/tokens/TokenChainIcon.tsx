@@ -1,4 +1,5 @@
 import { IToken } from '@hyperlane-xyz/sdk';
+
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import { TokenIcon } from '../../components/icons/TokenIcon';
 

@@ -2,10 +2,11 @@ import { HyperlaneLogo } from '@hyperlane-xyz/widgets';
 import type { NextPage } from 'next';
 import Head from 'next/head';
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from 'react';
+
 import { APP_NAME } from '../consts/app';
 import { useStore } from '../features/store';
-import { TransferTokenCard } from '../features/transfer/TransferTokenCard';
 import { TransfersDetailsModal } from '../features/transfer/TransfersDetailsModal';
+import { TransferTokenCard } from '../features/transfer/TransferTokenCard';
 import { TransferContext } from '../features/transfer/types';
 import { parseEmbedTheme, themeToCssVars } from '../styles/embedTheme';
 import { logger } from '../utils/logger';

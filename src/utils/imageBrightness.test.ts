@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
+
 import {
   markDarkLogoMissing,
   processDarkLogoImage,

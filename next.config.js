@@ -204,8 +204,7 @@ const nextConfig = {
     ],
   },
 
-  // Skip linting and type checking during builds — CI runs these separately
-  eslint: { ignoreDuringBuilds: true },
+  // Skip type checking during builds — CI runs these separately
   typescript: { ignoreBuildErrors: true },
 };
 

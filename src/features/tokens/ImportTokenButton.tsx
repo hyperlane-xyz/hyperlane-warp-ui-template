@@ -2,6 +2,7 @@ import { Token } from '@hyperlane-xyz/sdk';
 import { PlusIcon } from '@hyperlane-xyz/widgets';
 import { useCallback } from 'react';
 import { toast } from 'react-toastify';
+
 import { logger } from '../../utils/logger';
 import { useAddToken } from './hooks';
 

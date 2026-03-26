@@ -1,5 +1,6 @@
 import { TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
+
 import { createMockToken } from '../../utils/test';
 import { TokensWithDestinationBalance, TokenWithFee } from '../tokens/types';
 import * as tokenUtils from '../tokens/utils';

@@ -10,6 +10,7 @@ import {
   http,
   multicall3Abi,
 } from 'viem';
+
 import { logger } from '../../utils/logger';
 import { getTokenKey } from '../tokens/utils';
 import { TokenEntry, fetchSdkBalance } from './tokens';

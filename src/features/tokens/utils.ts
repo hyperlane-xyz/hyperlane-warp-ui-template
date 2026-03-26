@@ -7,6 +7,7 @@ import {
   WarpCore,
 } from '@hyperlane-xyz/sdk';
 import { eqAddress, isNullish, normalizeAddress, objKeys } from '@hyperlane-xyz/utils';
+
 import { isChainDisabled } from '../chains/utils';
 import { DefaultMultiCollateralRoutes, TokenChainMap } from './types';
 

@@ -10,6 +10,7 @@ import { useMemo } from 'react';
 import { toast } from 'react-toastify';
 import { Hex } from 'viem';
 import { useBalance as useWagmiBalance } from 'wagmi';
+
 import { useToastError } from '../../components/toast/useToastError';
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';

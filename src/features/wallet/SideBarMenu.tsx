@@ -4,6 +4,7 @@ import { AccountList, RefreshIcon, SpinnerIcon, useAccounts } from '@hyperlane-x
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
+
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import { config } from '../../consts/config';
 import ArrowRightIcon from '../../images/icons/arrow-right.svg';

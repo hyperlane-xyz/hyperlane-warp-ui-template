@@ -55,16 +55,16 @@ html[data-theme-mode='dark'] {
   --app-bg-image:
     url('/backgrounds/main-dark.svg'),
     radial-gradient(ellipse 200% 150% at 50% 100%, #5e1396 0%, #1a0a28 40%, #0d0612 100%);
-  --color-background: #221a2d;
-  --color-background-rgb: 34 26 45;
-  --color-surface: #332840;
-  --color-surface-rgb: 51 40 64;
-  --color-text-primary: #fdfbff;
-  --color-text-primary-rgb: 253 251 255;
-  --color-text-secondary: #b6b6b6;
-  --color-text-secondary-rgb: 182 182 182;
-  --color-text-muted: #d1d5db;
-  --color-text-muted-rgb: 209 213 219;
+  --color-background: #0d0612;
+  --color-background-rgb: 13 6 18;
+  --color-surface: #140a1e;
+  --color-surface-rgb: 20 10 30;
+  --color-text-primary: #f2e4ff;
+  --color-text-primary-rgb: 242 228 255;
+  --color-text-secondary: #c9b5df;
+  --color-text-secondary-rgb: 201 181 223;
+  --color-text-muted: #b494d6;
+  --color-text-muted-rgb: 180 148 214;
   --color-border: #404040;
   --color-border-rgb: 64 64 64;
 

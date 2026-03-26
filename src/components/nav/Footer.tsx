@@ -32,10 +32,7 @@ function FooterNav() {
       <ul className="flex gap-9">
         {navLinks.map((item) => (
           <li key={item.title}>
-            <NavItem
-              item={item}
-              className="dark:text-[#e9d8ff] dark:hover:text-white dark:[&_path]:fill-current dark:[&_path]:stroke-current dark:[&_svg]:opacity-95 dark:[&_svg]:[filter:saturate(0.82)_brightness(1.22)]"
-            />
+            <NavItem item={item} className="dark:text-[#e9d8ff] dark:hover:text-white" />
           </li>
         ))}
       </ul>

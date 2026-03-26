@@ -496,6 +496,12 @@ html[data-theme-mode='dark'] .tip-card-logo {
   );
 }
 
+/* Footer nav icons — filter-based recoloring (SVGs have hardcoded fills) */
+html[data-theme-mode='dark'] .footer-root nav a svg {
+  filter: saturate(0.82) brightness(1.22);
+  opacity: 0.95;
+}
+
 /* Horizontal dividers inside transfer cards */
 html[data-theme-mode='dark'] .transfer-divider {
   background: rgba(185, 89, 255, 0.22) !important;

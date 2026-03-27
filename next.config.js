@@ -134,27 +134,20 @@ const embedSecurityHeaders = [
 ];
 
 const nextConfig = {
-  webpack(config, { isServer }) {
-    config.module.rules.push({
-      test: /\.ya?ml$/,
-      use: 'yaml-loader',
-    });
-
-    config.experiments = {
-      ...config.experiments,
-      asyncWebAssembly: true,
-      layers: true,
-    };
-
-    if (isServer) {
-      config.resolve.alias = {
-        ...config.resolve.alias,
-        '@provablehq/wasm': false,
-        '@provablehq/sdk': false,
-      };
-    }
-
-    return config;
+  turbopack: {
+    rules: {
+      '*.yaml': {
+        loaders: ['yaml-loader'],
+        as: '*.js',
+      },
+      '*.yml': {
+        loaders: ['yaml-loader'],
+        as: '*.js',
+      },
+    },
+    resolveAlias: {
+      pino: './src/utils/pino-noop.js',
+    },
   },
 
   async headers() {
@@ -194,7 +187,8 @@ const nextConfig = {
   },
 
   experimental: {
-    webpackBuildWorker: true,
+    turbopackFileSystemCacheForBuild: true,
+    parallelServerCompiles: true,
     parallelServerBuildTraces: true,
     optimizePackageImports: [
       '@hyperlane-xyz/registry',
@@ -204,8 +198,7 @@ const nextConfig = {
     ],
   },
 
-  // Skip linting and type checking during builds — CI runs these separately
-  eslint: { ignoreDuringBuilds: true },
+  // Skip type checking during builds — CI runs these separately
   typescript: { ignoreBuildErrors: true },
 };
 

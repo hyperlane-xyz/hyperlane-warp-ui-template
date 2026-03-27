@@ -1,6 +1,7 @@
 import { DropdownMenu } from '@hyperlane-xyz/widgets';
 import Image from 'next/image';
 import Link from 'next/link';
+
 import { useTheme } from '../../features/theme/ThemeContext';
 import { ConnectWalletButton } from '../../features/wallet/ConnectWalletButton';
 import Logo from '../../images/logos/app-logo.svg';

@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest';
+
 import { normalizeHex, shiftColor } from './embedTheme';
 
 describe('normalizeHex', () => {

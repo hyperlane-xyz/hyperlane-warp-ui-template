@@ -1,4 +1,5 @@
 import { Head, Html, Main, NextScript } from 'next/document';
+
 import { APP_DESCRIPTION, APP_NAME, APP_URL, BRAND_COLOR } from '../consts/app';
 
 export default function Document() {

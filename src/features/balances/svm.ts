@@ -2,6 +2,7 @@ import { Token, TokenStandard } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 import { TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { Connection, PublicKey } from '@solana/web3.js';
+
 import { logger } from '../../utils/logger';
 import { getTokenKey } from '../tokens/utils';
 import { TokenEntry } from './tokens';

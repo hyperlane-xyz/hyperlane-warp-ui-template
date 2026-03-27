@@ -1,6 +1,7 @@
 import { ChainName } from '@hyperlane-xyz/sdk';
 import { PencilIcon } from '@hyperlane-xyz/widgets';
 import { useMemo } from 'react';
+
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import { Color } from '../../styles/Color';
 import {

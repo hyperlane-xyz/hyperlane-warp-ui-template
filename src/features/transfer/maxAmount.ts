@@ -14,7 +14,6 @@ import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { getSdkToken } from '../hyperlane/sdkTokenRuntime';
 import { isMultiCollateralLimitExceeded } from '../limits/utils';
-import { findConnectedDestinationToken, findRouteToken } from '../tokens/utils';
 import { useStore } from '../store';
 import { getTransferToken } from './fees';
 

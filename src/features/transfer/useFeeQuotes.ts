@@ -14,7 +14,6 @@ import { useQuery } from '@tanstack/react-query';
 import { defaultMultiCollateralRoutes } from '../../consts/defaultMultiCollateralRoutes';
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
-import { findConnectedDestinationToken } from '../tokens/utils';
 import { useStore } from '../store';
 import { useReadyWarpCore } from '../tokens/hooks';
 import { findConnectedDestinationToken } from '../tokens/utils';

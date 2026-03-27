@@ -1,13 +1,14 @@
 import { TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
+
 import { createMockToken } from '../../utils/test';
 import { TokensWithDestinationBalance, TokenWithFee } from '../tokens/types';
 import * as tokenUtils from '../tokens/utils';
 import {
   compareByBalanceDesc,
   filterAndSortTokensByBalance,
-  getLowestFeeTransferToken,
   getTotalFee,
+  getTransferToken,
   sortTokensByFee,
 } from './fees';
 
@@ -423,11 +424,16 @@ describe('sortTokensByFee', () => {
   });
 });
 
-describe('getLowestFeeTransferToken', () => {
-  const createMockWarpCore = (overrides?: Partial<WarpCore>) =>
+describe('getTransferToken', () => {
+  const createMockWarpCore = (
+    overrides?: Partial<WarpCore>,
+    originToken?: ReturnType<typeof createMockToken>,
+  ) =>
     ({
       getTokenCollateral: vi.fn(),
       getInterchainTransferFee: vi.fn(),
+      // Return the origin token from getTokensForRoute so findRouteToken can find a match
+      getTokensForRoute: vi.fn().mockReturnValue(originToken ? [originToken] : []),
       ...overrides,
     }) as unknown as WarpCore;
 
@@ -437,8 +443,8 @@ describe('getLowestFeeTransferToken', () => {
 
     vi.spyOn(tokenUtils, 'isValidMultiCollateralToken').mockReturnValue(false);
 
-    const result = await getLowestFeeTransferToken(
-      createMockWarpCore(),
+    const result = await getTransferToken(
+      createMockWarpCore({}, originToken),
       originToken,
       destinationToken,
       LARGE_TRANSFER_AMOUNT,
@@ -458,8 +464,8 @@ describe('getLowestFeeTransferToken', () => {
       { originToken, destinationToken },
     ]);
 
-    const result = await getLowestFeeTransferToken(
-      createMockWarpCore(),
+    const result = await getTransferToken(
+      createMockWarpCore({}, originToken),
       originToken,
       destinationToken,
       LARGE_TRANSFER_AMOUNT,
@@ -468,6 +474,30 @@ describe('getLowestFeeTransferToken', () => {
     );
 
     expect(result).toBe(originToken);
+  });
+
+  test('should return the matched collateral route token when only one candidate exists', async () => {
+    const originToken = createMockToken({ symbol: 'PYUSD', chainName: 'arbitrum' });
+    const routeToken = createMockToken({ symbol: 'PYUSD', chainName: 'arbitrum' });
+    const destinationToken = createMockToken({ symbol: 'USDC', chainName: 'base' });
+    const matchedRouteToken = createMockToken({ symbol: 'PYUSD', chainName: 'arbitrum' });
+
+    vi.spyOn(tokenUtils, 'findRouteToken').mockReturnValue(routeToken);
+    vi.spyOn(tokenUtils, 'isValidMultiCollateralToken').mockReturnValue(true);
+    vi.spyOn(tokenUtils, 'getTokensWithSameCollateralAddresses').mockReturnValue([
+      { originToken: matchedRouteToken, destinationToken },
+    ]);
+
+    const result = await getTransferToken(
+      createMockWarpCore({}, originToken),
+      originToken,
+      destinationToken,
+      LARGE_TRANSFER_AMOUNT,
+      MOCK_RECIPIENT,
+      MOCK_SENDER,
+    );
+
+    expect(result).toBe(matchedRouteToken);
   });
 
   test('should return originToken if no tokens have sufficient collateral balance', async () => {
@@ -482,11 +512,14 @@ describe('getLowestFeeTransferToken', () => {
       { originToken: originToken2, destinationToken: destinationToken2 },
     ]);
 
-    const warpCore = createMockWarpCore({
-      getTokenCollateral: vi.fn().mockResolvedValue(BALANCE_TINY),
-    });
+    const warpCore = createMockWarpCore(
+      {
+        getTokenCollateral: vi.fn().mockResolvedValue(BALANCE_TINY),
+      },
+      originToken,
+    );
 
-    const result = await getLowestFeeTransferToken(
+    const result = await getTransferToken(
       warpCore,
       originToken,
       destinationToken,
@@ -510,15 +543,18 @@ describe('getLowestFeeTransferToken', () => {
       { originToken: originToken2, destinationToken: destinationToken2 },
     ]);
 
-    const warpCore = createMockWarpCore({
-      getTokenCollateral: vi
-        .fn()
-        .mockResolvedValueOnce(BALANCE_LARGE)
-        .mockResolvedValueOnce(BALANCE_XLARGE),
-      getInterchainTransferFee: vi.fn().mockRejectedValue(new Error('Fee fetch failed')),
-    });
+    const warpCore = createMockWarpCore(
+      {
+        getTokenCollateral: vi
+          .fn()
+          .mockResolvedValueOnce(BALANCE_LARGE)
+          .mockResolvedValueOnce(BALANCE_XLARGE),
+        getInterchainTransferFee: vi.fn().mockRejectedValue(new Error('Fee fetch failed')),
+      },
+      originToken,
+    );
 
-    const result = await getLowestFeeTransferToken(
+    const result = await getTransferToken(
       warpCore,
       originToken,
       destinationToken,
@@ -545,15 +581,18 @@ describe('getLowestFeeTransferToken', () => {
 
     const feeToken = createMockToken({ symbol: 'FEE' });
 
-    const warpCore = createMockWarpCore({
-      getTokenCollateral: vi.fn().mockResolvedValue(BALANCE_XLARGE),
-      getInterchainTransferFee: vi
-        .fn()
-        .mockResolvedValueOnce({ tokenFeeQuote: new TokenAmount(FEE_HIGH, feeToken) })
-        .mockResolvedValueOnce({ tokenFeeQuote: new TokenAmount(FEE_LOW, feeToken) }),
-    });
+    const warpCore = createMockWarpCore(
+      {
+        getTokenCollateral: vi.fn().mockResolvedValue(BALANCE_XLARGE),
+        getInterchainTransferFee: vi
+          .fn()
+          .mockResolvedValueOnce({ tokenFeeQuote: new TokenAmount(FEE_HIGH, feeToken) })
+          .mockResolvedValueOnce({ tokenFeeQuote: new TokenAmount(FEE_LOW, feeToken) }),
+      },
+      originToken,
+    );
 
-    const result = await getLowestFeeTransferToken(
+    const result = await getTransferToken(
       warpCore,
       originToken,
       destinationToken,
@@ -579,15 +618,18 @@ describe('getLowestFeeTransferToken', () => {
 
     const feeToken = createMockToken({ symbol: 'FEE' });
 
-    const warpCore = createMockWarpCore({
-      getTokenCollateral: vi.fn().mockResolvedValue(BALANCE_XLARGE),
-      getInterchainTransferFee: vi
-        .fn()
-        .mockResolvedValueOnce({ tokenFeeQuote: new TokenAmount(FEE_LOW, feeToken) })
-        .mockResolvedValueOnce({ tokenFeeQuote: undefined }),
-    });
+    const warpCore = createMockWarpCore(
+      {
+        getTokenCollateral: vi.fn().mockResolvedValue(BALANCE_XLARGE),
+        getInterchainTransferFee: vi
+          .fn()
+          .mockResolvedValueOnce({ tokenFeeQuote: new TokenAmount(FEE_LOW, feeToken) })
+          .mockResolvedValueOnce({ tokenFeeQuote: undefined }),
+      },
+      originToken,
+    );
 
-    const result = await getLowestFeeTransferToken(
+    const result = await getTransferToken(
       warpCore,
       originToken,
       destinationToken,
@@ -613,17 +655,20 @@ describe('getLowestFeeTransferToken', () => {
 
     const feeToken = createMockToken({ symbol: 'FEE' });
 
-    const warpCore = createMockWarpCore({
-      getTokenCollateral: vi
-        .fn()
-        .mockRejectedValueOnce(new Error('Failed to fetch collateral'))
-        .mockResolvedValueOnce(BALANCE_XXLARGE),
-      getInterchainTransferFee: vi.fn().mockResolvedValue({
-        tokenFeeQuote: new TokenAmount(FEE_LOW, feeToken),
-      }),
-    });
+    const warpCore = createMockWarpCore(
+      {
+        getTokenCollateral: vi
+          .fn()
+          .mockRejectedValueOnce(new Error('Failed to fetch collateral'))
+          .mockResolvedValueOnce(BALANCE_XXLARGE),
+        getInterchainTransferFee: vi.fn().mockResolvedValue({
+          tokenFeeQuote: new TokenAmount(FEE_LOW, feeToken),
+        }),
+      },
+      originToken,
+    );
 
-    const result = await getLowestFeeTransferToken(
+    const result = await getTransferToken(
       warpCore,
       originToken,
       destinationToken,
@@ -649,15 +694,18 @@ describe('getLowestFeeTransferToken', () => {
 
     const feeToken = createMockToken({ symbol: 'FEE' });
 
-    const warpCore = createMockWarpCore({
-      getTokenCollateral: vi.fn().mockResolvedValue(BALANCE_XXLARGE),
-      getInterchainTransferFee: vi
-        .fn()
-        .mockRejectedValueOnce(new Error('Fee fetch failed'))
-        .mockResolvedValueOnce({ tokenFeeQuote: new TokenAmount(FEE_LOW, feeToken) }),
-    });
+    const warpCore = createMockWarpCore(
+      {
+        getTokenCollateral: vi.fn().mockResolvedValue(BALANCE_XXLARGE),
+        getInterchainTransferFee: vi
+          .fn()
+          .mockRejectedValueOnce(new Error('Fee fetch failed'))
+          .mockResolvedValueOnce({ tokenFeeQuote: new TokenAmount(FEE_LOW, feeToken) }),
+      },
+      originToken,
+    );
 
-    const result = await getLowestFeeTransferToken(
+    const result = await getTransferToken(
       warpCore,
       originToken,
       destinationToken,
@@ -667,5 +715,139 @@ describe('getLowestFeeTransferToken', () => {
     );
 
     expect(result).toBe(originToken2);
+  });
+
+  test('should return default token when configured in defaultMultiCollateralRoutes', async () => {
+    const originToken = createMockToken({
+      symbol: 'USDC',
+      chainName: 'ethereum',
+      collateralAddressOrDenom: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+    });
+    const destinationToken = createMockToken({
+      symbol: 'USDC',
+      chainName: 'arbitrum',
+      collateralAddressOrDenom: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
+    });
+    const defaultOriginToken = createMockToken({
+      symbol: 'USDC',
+      addressOrDenom: '0xe1De9910fe71cC216490AC7FCF019e13a34481D7',
+      chainName: 'ethereum',
+      collateralAddressOrDenom: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+    });
+    const defaultDestToken = createMockToken({
+      symbol: 'USDC',
+      addressOrDenom: '0xAd4350Ee0f9f5b85BaB115425426086Ae8384ebb',
+      chainName: 'arbitrum',
+      collateralAddressOrDenom: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
+    });
+
+    vi.spyOn(tokenUtils, 'isValidMultiCollateralToken').mockReturnValue(true);
+    vi.spyOn(tokenUtils, 'getTokensWithSameCollateralAddresses').mockReturnValue([
+      { originToken, destinationToken },
+      { originToken: defaultOriginToken, destinationToken: defaultDestToken },
+    ]);
+
+    const defaultRoutes = {
+      ethereum: {
+        '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48': '0xe1De9910fe71cC216490AC7FCF019e13a34481D7',
+      },
+      arbitrum: {
+        '0xaf88d065e77c8cC2239327C5EDb3A432268e5831': '0xAd4350Ee0f9f5b85BaB115425426086Ae8384ebb',
+      },
+    };
+
+    const warpCore = createMockWarpCore(
+      {
+        // These should NOT be called because default route bypasses fee lookup
+        getTokenCollateral: vi.fn(),
+        getInterchainTransferFee: vi.fn(),
+      },
+      originToken,
+    );
+
+    const result = await getTransferToken(
+      warpCore,
+      originToken,
+      destinationToken,
+      TRANSFER_AMOUNT,
+      MOCK_RECIPIENT,
+      MOCK_SENDER,
+      defaultRoutes,
+    );
+
+    expect(result).toBe(defaultOriginToken);
+    // Verify fee lookup was not called (bypassed)
+    expect(warpCore.getTokenCollateral).not.toHaveBeenCalled();
+    expect(warpCore.getInterchainTransferFee).not.toHaveBeenCalled();
+  });
+
+  test('should fall back to fee-based selection when default token not found in same collateral addresses', async () => {
+    const originToken = createMockToken({
+      symbol: 'USDC',
+      chainName: 'ethereum',
+      collateralAddressOrDenom: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+    });
+    const destinationToken = createMockToken({
+      symbol: 'USDC',
+      chainName: 'arbitrum',
+      collateralAddressOrDenom: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
+    });
+    const originToken2 = createMockToken({
+      symbol: 'USDC',
+      addressOrDenom: '0xDifferentWarpRoute',
+      chainName: 'ethereum',
+      collateralAddressOrDenom: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+    });
+    const destinationToken2 = createMockToken({
+      symbol: 'USDC',
+      addressOrDenom: '0xDifferentDestWarpRoute',
+      chainName: 'arbitrum',
+      collateralAddressOrDenom: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
+    });
+
+    vi.spyOn(tokenUtils, 'isValidMultiCollateralToken').mockReturnValue(true);
+    // tokensWithSameCollateralAddresses does NOT include the default token addressOrDenom
+    vi.spyOn(tokenUtils, 'getTokensWithSameCollateralAddresses').mockReturnValue([
+      { originToken, destinationToken },
+      { originToken: originToken2, destinationToken: destinationToken2 },
+    ]);
+
+    // Default routes are configured but point to addresses not in tokensWithSameCollateralAddresses
+    const defaultRoutes = {
+      ethereum: {
+        '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48': '0xNonExistentWarpRoute',
+      },
+      arbitrum: {
+        '0xaf88d065e77c8cC2239327C5EDb3A432268e5831': '0xNonExistentDestWarpRoute',
+      },
+    };
+
+    const feeToken = createMockToken({ symbol: 'FEE' });
+
+    const warpCore = createMockWarpCore(
+      {
+        getTokenCollateral: vi.fn().mockResolvedValue(BALANCE_XLARGE),
+        getInterchainTransferFee: vi
+          .fn()
+          .mockResolvedValueOnce({ tokenFeeQuote: new TokenAmount(FEE_HIGH, feeToken) })
+          .mockResolvedValueOnce({ tokenFeeQuote: new TokenAmount(FEE_LOW, feeToken) }),
+      },
+      originToken,
+    );
+
+    const result = await getTransferToken(
+      warpCore,
+      originToken,
+      destinationToken,
+      TRANSFER_AMOUNT,
+      MOCK_RECIPIENT,
+      MOCK_SENDER,
+      defaultRoutes,
+    );
+
+    // Should fall back to fee-based selection and return token2 (lowest fee)
+    expect(result).toBe(originToken2);
+    // Verify fee lookup WAS called (fallback behavior)
+    expect(warpCore.getTokenCollateral).toHaveBeenCalled();
   });
 });

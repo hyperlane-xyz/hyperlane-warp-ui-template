@@ -1,25 +1,22 @@
 name: ci
 
 on:
-  # Triggers the workflow on push or pull request events but only for the main branch
   push:
     branches: [main, nautilus, nexus, injective, trump, ousdt]
   pull_request:
     branches: [main, nautilus, nexus, injective, trump, ousdt]
   merge_group:
-
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 jobs:
-  install:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version-file: 'package.json'
+          node-version-file: '.nvmrc'
 
       - name: Get pnpm store directory
         id: pnpm-store
@@ -34,7 +31,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
-      - name: pnpm-install
+      - name: Install dependencies
         run: |
           pnpm install --frozen-lockfile
           CHANGES=$(git status -s)
@@ -44,46 +41,27 @@ jobs:
             exit 1
           fi
 
-  build:
-    runs-on: ubuntu-latest
-    needs: [install]
-    steps:
-      - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v6
-        with:
-          node-version-file: 'package.json'
-
-      - name: Get pnpm store directory
-        id: pnpm-store
-        shell: bash
-        run: echo "path=$(pnpm store path)" >> $GITHUB_OUTPUT
-
-      - name: Cache pnpm store
+      - name: Cache build output
+        id: build-cache
         uses: actions/cache@v4
         with:
-          path: ${{ steps.pnpm-store.outputs.path }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+          path: .next/
+          key: ${{ runner.os }}-nextjs-build-${{ hashFiles('src/**', 'pnpm-lock.yaml', 'next.config.js', 'tsconfig.json') }}
 
       - name: build
+        if: steps.build-cache.outputs.cache-hit != 'true'
         run: pnpm run build
         env:
           NEXT_PUBLIC_WALLET_CONNECT_ID: ${{ secrets.NEXT_PUBLIC_WALLET_CONNECT_ID }}
 
-  prettier:
+  typecheck:
     runs-on: ubuntu-latest
-    needs: [install]
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version-file: 'package.json'
+          node-version-file: '.nvmrc'
 
       - name: Get pnpm store directory
         id: pnpm-store
@@ -101,9 +79,37 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: prettier
+      - name: typecheck
+        run: pnpm run typecheck
+
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Get pnpm store directory
+        id: pnpm-store
+        shell: bash
+        run: echo "path=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: format
         run: |
-          pnpm run prettier
+          pnpm run format
           CHANGES=$(git status -s)
           if [[ ! -z $CHANGES ]]; then
             echo "Changes found: $CHANGES"
@@ -112,13 +118,12 @@ jobs:
 
   lint:
     runs-on: ubuntu-latest
-    needs: [install]
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version-file: 'package.json'
+          node-version-file: '.nvmrc'
 
       - name: Get pnpm store directory
         id: pnpm-store
@@ -141,13 +146,12 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
-    needs: [build]
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version-file: 'package.json'
+          node-version-file: '.nvmrc'
 
       - name: Get pnpm store directory
         id: pnpm-store
@@ -167,3 +171,13 @@ jobs:
 
       - name: test
         run: pnpm run test
+
+  e2e:
+    needs: [build]
+    if: >-
+      github.base_ref == 'main' ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      github.event_name == 'merge_group' ||
+      github.event_name == 'workflow_dispatch'
+    uses: ./.github/workflows/e2e.yml
+    secrets: inherit

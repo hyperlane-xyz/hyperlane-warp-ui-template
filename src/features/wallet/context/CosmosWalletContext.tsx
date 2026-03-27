@@ -9,6 +9,7 @@ import { MultiProtocolProvider } from '@hyperlane-xyz/sdk';
 import { getCosmosKitChainConfigs } from '@hyperlane-xyz/widgets';
 import '@interchain-ui/react/styles';
 import { PropsWithChildren, useMemo } from 'react';
+
 import { APP_DESCRIPTION, APP_NAME, APP_URL } from '../../../consts/app';
 import { config } from '../../../consts/config';
 import { useMultiProvider } from '../../chains/hooks';

@@ -23,8 +23,6 @@ type Props = {
   disabled?: boolean;
   setIsNft?: (value: boolean) => void;
   showLabel?: boolean;
-  // TEMP(mc-preview-collateral-tooltip): Remove once temporary collateral hover UI is no longer needed.
-  hoverTooltipContent?: string;
 };
 
 export function TokenSelectField({
@@ -34,7 +32,6 @@ export function TokenSelectField({
   disabled,
   setIsNft,
   showLabel = true,
-  hoverTooltipContent,
 }: Props) {
   const { values, setFieldValue } = useFormikContext<TransferFormValues>();
   const [{ value: tokenKey }, , { setValue: setTokenKey }] = useField<string | undefined>(name);
@@ -144,7 +141,6 @@ export function TokenSelectField({
           disabled={disabled}
           onClick={openTokenSelectModal}
           multiProvider={multiProvider}
-          hoverTooltipContent={hoverTooltipContent}
           testId={`token-select-${selectionMode}`}
         />
       </div>
@@ -175,14 +171,12 @@ function TokenButton({
   disabled,
   onClick,
   multiProvider,
-  hoverTooltipContent,
   testId,
 }: {
   token?: Token;
   disabled?: boolean;
   onClick: () => void;
   multiProvider: ReturnType<typeof useMultiProvider>;
-  hoverTooltipContent?: string;
   testId?: string;
 }) {
   const chainDisplayName = token ? getChainDisplayName(multiProvider, token.chainName) : '';
@@ -195,11 +189,6 @@ function TokenButton({
       disabled={disabled}
       data-testid={testId}
     >
-      {hoverTooltipContent && (
-        <span className="pointer-events-none absolute -top-2 left-1/2 z-20 w-max max-w-[260px] -translate-x-1/2 -translate-y-full rounded-md bg-gray-900 px-2 py-1 text-left font-secondary text-xs leading-tight text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100">
-          {hoverTooltipContent}
-        </span>
-      )}
       {token ? (
         <div className="flex min-w-0 flex-1 items-center gap-2.5">
           <TokenChainIcon token={token} size={36} />

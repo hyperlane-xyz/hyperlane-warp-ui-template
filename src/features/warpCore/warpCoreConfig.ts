@@ -13,7 +13,7 @@ import {
 } from '@hyperlane-xyz/sdk';
 import { isObjEmpty, normalizeAddress, objFilter, objMerge } from '@hyperlane-xyz/utils';
 import { config } from '../../consts/config.ts';
-import { getWarpRouteWhitelist } from '../../consts/warpRouteWhitelist.ts';
+import { getWarpRouteWhitelist, warpRouteWhitelist } from '../../consts/warpRouteWhitelist.ts';
 import { warpRouteConfigs as tsWarpRoutes } from '../../consts/warpRoutes.ts';
 import yamlWarpRoutes from '../../consts/warpRoutes.yaml';
 import { logger } from '../../utils/logger.ts';

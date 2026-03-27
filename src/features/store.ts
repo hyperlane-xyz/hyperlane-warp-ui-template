@@ -50,6 +50,8 @@ let initWarpContextModulePromise: Promise<{ initWarpContext: typeof InitWarpCont
 let runtimeContextLoader: (() => Promise<WarpRuntimeContext>) | undefined;
 let runtimeContextPromise: Promise<WarpRuntimeContext> | undefined;
 let runtimeContextVersion = 0;
+let storeSetState: ((partial: Partial<AppState>) => void) | undefined;
+let storeGetState: (() => AppState) | undefined;
 
 async function loadWarpContextModule() {
   initWarpContextModulePromise ||= import('./storeInit');
@@ -152,7 +154,10 @@ export interface AppState {
 export const useStore = create<AppState>()(
   persist(
     // Store reducers
-    (set, get) => ({
+    (set, get) => {
+      storeSetState = set;
+      storeGetState = get;
+      return {
       // Chains and providers
       chainMetadata: {},
       chainMetadataOverrides: {},
@@ -257,7 +262,8 @@ export const useStore = create<AppState>()(
       collateralGroups: new Map(),
       tokenByKeyMap: new Map(),
       coinGeckoIds: [],
-    }),
+      };
+    },
 
     // Store config
     {
@@ -276,14 +282,18 @@ export const useStore = create<AppState>()(
             logger.error('Error during hydration', error);
             return;
           }
+          if (!storeSetState || !storeGetState) {
+            logger.error('Store API not ready during hydration', new Error('Store API unavailable'));
+            return;
+          }
           refreshWarpContext(
             {
               registry: state.registry,
               chainMetadataOverrides: state.chainMetadataOverrides,
               warpCoreConfigOverrides: state.warpCoreConfigOverrides,
             },
-            useStore.setState,
-            useStore.getState,
+            storeSetState,
+            storeGetState,
           ).then(() => {
             logger.debug('Rehydration complete');
           });

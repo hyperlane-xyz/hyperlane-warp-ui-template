@@ -1,19 +1,30 @@
 import { useIsSsr } from '@hyperlane-xyz/widgets';
+
 import '@hyperlane-xyz/widgets/styles.css';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Analytics } from '@vercel/analytics/react';
 import type { AppProps } from 'next/app';
+import { useRouter } from 'next/router';
+import { useEffect } from 'react';
 import { ToastContainer, Zoom } from 'react-toastify';
+
 import 'react-toastify/dist/ReactToastify.css';
+import '../../sentry.client.config';
 import { ErrorBoundary } from '../components/errors/ErrorBoundary';
 import { AppLayout } from '../components/layout/AppLayout';
-import { MAIN_FONT } from '../consts/app';
-import { WarpContextInitGate } from '../features/WarpContextInitGate';
+import { ThemeProvider } from '../features/theme/ThemeContext';
+import { AleoWalletContext } from '../features/wallet/context/AleoWalletContext';
 import { CosmosWalletContext } from '../features/wallet/context/CosmosWalletContext';
 import { EvmWalletContext } from '../features/wallet/context/EvmWalletContext';
 import { RadixWalletContext } from '../features/wallet/context/RadixWalletContext';
 import { SolanaWalletContext } from '../features/wallet/context/SolanaWalletContext';
 import { StarknetWalletContext } from '../features/wallet/context/StarknetWalletContext';
+import { TronWalletContext } from '../features/wallet/context/TronWalletContext';
+import { WarpContextInitGate } from '../features/WarpContextInitGate';
+
+import '../styles/embed-theme.css';
+import { parseEmbedTheme } from '../styles/embedTheme';
+
 import '../styles/globals.css';
 import '../vendor/inpage-metamask';
 import '../vendor/polyfill';
@@ -26,7 +37,30 @@ const reactQueryClient = new QueryClient({
   },
 });
 
+/**
+ * Sets embed-mode class + CSS variables on <body> early so the loading
+ * screen (WarpContextInitGate) is also themed.
+ */
+function useEarlyEmbedMode(isEmbed: boolean) {
+  useEffect(() => {
+    if (!isEmbed) return;
+    document.body.classList.add('embed-mode');
+    const theme = parseEmbedTheme();
+    const { style } = document.body;
+    for (const [key, value] of Object.entries(theme)) {
+      const varName = `--embed-${key.replace(/[A-Z]/g, (c) => '-' + c.toLowerCase())}`;
+      style.setProperty(varName, value);
+    }
+    return () => document.body.classList.remove('embed-mode');
+  }, [isEmbed]);
+}
+
 export default function App({ Component, pageProps }: AppProps) {
+  const router = useRouter();
+  const isEmbed = router.pathname === '/embed';
+
+  useEarlyEmbedMode(isEmbed);
+
   // Disable app SSR for now as it's not needed and
   // complicates wallet and graphql integrations
   const isSsr = useIsSsr();
@@ -34,10 +68,17 @@ export default function App({ Component, pageProps }: AppProps) {
     return <div></div>;
   }
 
-  // Note, the font definition is required both here and in _document.tsx
-  // Otherwise Next.js will not load the font
+  const content = isEmbed ? (
+    <Component {...pageProps} />
+  ) : (
+    <AppLayout>
+      <Component {...pageProps} />
+      <Analytics />
+    </AppLayout>
+  );
+
   return (
-    <div className={`${MAIN_FONT.variable} font-sans text-black`}>
+    <div className="font-primary text-black">
       <ErrorBoundary>
         <QueryClientProvider client={reactQueryClient}>
           <WarpContextInitGate>
@@ -46,10 +87,18 @@ export default function App({ Component, pageProps }: AppProps) {
                 <CosmosWalletContext>
                   <StarknetWalletContext>
                     <RadixWalletContext>
+<<<<<<< HEAD
                       <AppLayout>
                         <Component {...pageProps} />
                         <Analytics />
                       </AppLayout>
+=======
+                      <AleoWalletContext>
+                        <TronWalletContext>
+                          <ThemeProvider>{content}</ThemeProvider>
+                        </TronWalletContext>
+                      </AleoWalletContext>
+>>>>>>> origin/main
                     </RadixWalletContext>
                   </StarknetWalletContext>
                 </CosmosWalletContext>

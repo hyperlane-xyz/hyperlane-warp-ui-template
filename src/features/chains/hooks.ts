@@ -1,6 +1,7 @@
 import { ChainName, ChainStatus } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 import { useMemo } from 'react';
+
 import { config } from '../../consts/config';
 import { useStore } from '../store';
 import { getChainDisplayName } from './utils';

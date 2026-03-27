@@ -36,6 +36,21 @@ Normalization
   --app-bg-image:
     url('/backgrounds/main.svg'),
     radial-gradient(120% 80% at 50% 100%, #e8caff 0%, #f2e4ff 60%, #f8f2ff 100%);
+<<<<<<< HEAD
+=======
+  --color-background: #f8f8ff;
+  --color-background-rgb: 248 248 255;
+  --color-surface: #ffffff;
+  --color-surface-rgb: 255 255 255;
+  --color-text-primary: #010101;
+  --color-text-primary-rgb: 1 1 1;
+  --color-text-secondary: #6b6b6b;
+  --color-text-secondary-rgb: 107 107 107;
+  --color-text-muted: #6b6b6b;
+  --color-text-muted-rgb: 107 107 107;
+  --color-border: #d9d9d9;
+  --color-border-rgb: 217 217 217;
+>>>>>>> origin/main
 }
 
 html[data-theme-mode='dark'] {
@@ -43,6 +58,7 @@ html[data-theme-mode='dark'] {
   --app-bg-image:
     url('/backgrounds/main-dark.svg'),
     radial-gradient(ellipse 200% 150% at 50% 100%, #5e1396 0%, #1a0a28 40%, #0d0612 100%);
+<<<<<<< HEAD
 
   /* Dark mode semantic palette — single source of truth */
   --dark-text-primary: #f2e4ff;
@@ -50,6 +66,27 @@ html[data-theme-mode='dark'] {
   --dark-text-muted: #b494d6;
   --dark-surface: rgba(20, 10, 30, 0.96);
   --dark-surface-card: rgba(13, 6, 18, 0.65);
+=======
+  --color-background: #0d0612;
+  --color-background-rgb: 13 6 18;
+  --color-surface: #140a1e;
+  --color-surface-rgb: 20 10 30;
+  --color-text-primary: #f2e4ff;
+  --color-text-primary-rgb: 242 228 255;
+  --color-text-secondary: #c9b5df;
+  --color-text-secondary-rgb: 201 181 223;
+  --color-text-muted: #b494d6;
+  --color-text-muted-rgb: 180 148 214;
+  --color-border: #404040;
+  --color-border-rgb: 64 64 64;
+
+  /* Compatibility aliases for remaining selector-level/widget overrides */
+  --dark-text-primary: var(--color-text-primary);
+  --dark-text-secondary: var(--color-text-secondary);
+  --dark-text-muted: var(--color-text-muted);
+  --dark-surface: rgb(var(--color-surface-rgb) / 0.96);
+  --dark-surface-card: rgb(var(--color-background-rgb) / 0.65);
+>>>>>>> origin/main
   --dark-border: rgba(185, 89, 255, 0.25);
   --dark-border-hover: rgba(185, 89, 255, 0.5);
   --dark-border-subtle: rgba(185, 89, 255, 0.18);
@@ -387,6 +424,7 @@ html[data-theme-mode='dark'] .chain-edit-container .htw-gap-3:hover .htw-text-sm
   color: var(--dark-text-primary) !important;
 }
 
+<<<<<<< HEAD
 html[data-theme-mode='dark'] .theme-toggle {
   @apply border-primary-300/45 bg-black/75 text-primary-50;
 }
@@ -399,6 +437,8 @@ html[data-theme-mode='dark'] .theme-toggle:focus-visible {
   box-shadow: 0 0 0 2px rgba(185, 89, 255, 0.35);
 }
 
+=======
+>>>>>>> origin/main
 html[data-theme-switching='true'] *,
 html[data-theme-switching='true'] *::before,
 html[data-theme-switching='true'] *::after {
@@ -418,6 +458,7 @@ html[data-theme-mode='dark'] .shadow-error-glow {
   box-shadow: inset 0 0 20px 0 rgba(255, 13, 126, 0.28) !important;
 }
 
+<<<<<<< HEAD
 html[data-theme-mode='dark'] .sidebar-menu {
   border-left: 1px solid rgba(185, 89, 255, 0.35);
   background: rgba(13, 6, 18, 0.95) !important;
@@ -440,6 +481,8 @@ html[data-theme-mode='dark'] .sidebar-menu-item:hover {
   background-color: rgba(185, 89, 255, 0.14) !important;
 }
 
+=======
+>>>>>>> origin/main
 html[data-theme-mode='dark'] .sidebar-menu .bg-gray-100 {
   background-color: rgba(255, 255, 255, 0.1) !important;
 }
@@ -455,6 +498,15 @@ html[data-theme-mode='dark'] .sidebar-menu .text-gray-400 {
   color: var(--dark-text-secondary) !important;
 }
 
+<<<<<<< HEAD
+=======
+html[data-theme-mode='dark'] .sidebar-menu .sidebar-menu-empty.text-gray-500,
+html[data-theme-mode='dark'] .sidebar-menu .sidebar-menu-end.text-gray-400,
+html[data-theme-mode='dark'] .sidebar-menu .sidebar-menu-time.text-gray-500 {
+  color: var(--dark-text-primary) !important;
+}
+
+>>>>>>> origin/main
 .tip-card-logo {
   opacity: 0.38;
   clip-path: inset(0 0 1px 0);
@@ -478,6 +530,7 @@ html[data-theme-mode='dark'] .sidebar-menu .text-gray-400 {
   display: block;
 }
 
+<<<<<<< HEAD
 html[data-theme-mode='dark'] .tip-card {
   background: linear-gradient(0deg, rgba(154, 13, 255, 0.3) 0%, rgba(17, 17, 17, 0.95) 100%);
   box-shadow:
@@ -524,6 +577,8 @@ html[data-theme-mode='dark'] .tip-card-more-icon {
   filter: invert(1);
 }
 
+=======
+>>>>>>> origin/main
 html[data-theme-mode='dark'] .tip-card-logo {
   opacity: 0.16;
   -webkit-mask-image: linear-gradient(
@@ -546,6 +601,7 @@ html[data-theme-mode='dark'] .tip-card-logo {
   );
 }
 
+<<<<<<< HEAD
 .transfer-card {
   border: 0;
 }
@@ -640,6 +696,12 @@ html[data-theme-mode='dark'] .transfer-token-chevron svg {
 html[data-theme-mode='dark'] .transfer-token-field:hover .transfer-token-chevron {
   background: rgba(185, 89, 255, 0.28) !important;
   border-color: rgba(185, 89, 255, 0.5) !important;
+=======
+/* Footer nav icons — filter-based recoloring (SVGs have hardcoded fills) */
+html[data-theme-mode='dark'] .footer-root nav a svg {
+  filter: saturate(0.82) brightness(1.22);
+  opacity: 0.95;
+>>>>>>> origin/main
 }
 
 /* Horizontal dividers inside transfer cards */
@@ -647,6 +709,7 @@ html[data-theme-mode='dark'] .transfer-divider {
   background: rgba(185, 89, 255, 0.22) !important;
 }
 
+<<<<<<< HEAD
 /* Max button */
 html[data-theme-mode='dark'] .transfer-max-btn {
   border-color: rgba(185, 89, 255, 0.4) !important;
@@ -712,6 +775,8 @@ html[data-theme-mode='dark'] .wallet-dropdown-separator {
   background: rgba(185, 89, 255, 0.22) !important;
 }
 
+=======
+>>>>>>> origin/main
 html[data-theme-mode='dark'] .transfer-form .text-gray-900,
 html[data-theme-mode='dark'] .transfer-form .text-gray-800 {
   color: var(--dark-text-primary) !important;
@@ -723,6 +788,7 @@ html[data-theme-mode='dark'] .transfer-form .text-gray-500 {
   color: var(--dark-text-secondary) !important;
 }
 
+<<<<<<< HEAD
 html[data-theme-mode='dark'] .fee-section-btn {
   color: var(--dark-text-secondary) !important;
 }
@@ -773,6 +839,12 @@ html[data-theme-mode='dark'] .footer-nav-item svg {
   opacity: 0.95;
 }
 
+=======
+html[data-theme-mode='dark'] .transfer-form .fee-section-btn.text-gray-700:hover {
+  color: var(--dark-text-primary) !important;
+}
+
+>>>>>>> origin/main
 html[data-theme-mode='dark'] .chain-picker-modal:not(.bg-gray-100),
 html[data-theme-mode='dark'] .token-picker-modal {
   border: 1px solid rgba(185, 89, 255, 0.38) !important;
@@ -977,6 +1049,7 @@ html[data-theme-mode='dark'] .token-picker-chain-row {
   border-color: rgba(185, 89, 255, 0.2) !important;
 }
 
+<<<<<<< HEAD
 html[data-theme-mode='dark'] .sidebar-menu-collapse {
   background: rgba(13, 6, 18, 0.7) !important;
   border-right: 1px solid rgba(185, 89, 255, 0.26);
@@ -986,18 +1059,24 @@ html[data-theme-mode='dark'] .sidebar-menu-collapse img {
   filter: brightness(0) invert(1) opacity(0.85);
 }
 
+=======
+>>>>>>> origin/main
 html[data-theme-mode='dark'] .sidebar-menu-list > :not([hidden]) ~ :not([hidden]) {
   border-color: rgba(185, 89, 255, 0.22);
 }
 
+<<<<<<< HEAD
 html[data-theme-mode='dark'] .sidebar-menu-refresh {
   color: var(--dark-text-primary);
 }
 
+=======
+>>>>>>> origin/main
 html[data-theme-mode='dark'] .sidebar-menu-chain-badge {
   background: rgba(255, 255, 255, 0.12) !important;
 }
 
+<<<<<<< HEAD
 html[data-theme-mode='dark'] .sidebar-menu-token-text,
 html[data-theme-mode='dark'] .sidebar-menu-route-text,
 html[data-theme-mode='dark'] .sidebar-menu-time,
@@ -1006,6 +1085,8 @@ html[data-theme-mode='dark'] .sidebar-menu-end {
   color: #e9d8ff !important;
 }
 
+=======
+>>>>>>> origin/main
 html[data-theme-mode='dark'] .transfer-details-modal {
   border: 1px solid rgba(185, 89, 255, 0.42) !important;
   background: var(--dark-surface) !important;
@@ -1148,6 +1229,7 @@ html[data-theme-mode='dark'] .transfer-details-spinner path {
   fill: rgb(var(--dark-accent-rgb)) !important;
 }
 
+<<<<<<< HEAD
 html[data-theme-mode='dark'] .transfer-fee-modal {
   border: 1px solid rgba(185, 89, 255, 0.42) !important;
   background: var(--dark-surface) !important;
@@ -1159,6 +1241,8 @@ html[data-theme-mode='dark'] .transfer-fee-modal-content {
   color: var(--dark-text-primary) !important;
 }
 
+=======
+>>>>>>> origin/main
 /* Fix wallet icons being cropped to circles by widget's htw-rounded-full + htw-overflow-hidden */
 .sidebar-menu .htw-rounded-full.htw-overflow-hidden {
   border-radius: 0.375rem;
@@ -1223,6 +1307,7 @@ html[data-theme-mode='dark'] .sidebar-menu .htw-bg-gray-600 {
   color: var(--dark-text-primary) !important;
 }
 
+<<<<<<< HEAD
 html[data-theme-mode='dark'] .app-header {
   background: rgba(13, 6, 18, 0.88) !important;
   border-bottom: 1px solid rgba(185, 89, 255, 0.24);
@@ -1266,6 +1351,8 @@ html[data-theme-mode='dark'] .app-header-menu .app-header-menu-item svg path {
   fill: #e9d8ff !important;
 }
 
+=======
+>>>>>>> origin/main
 .wallet-protocol-grid {
   align-items: stretch;
 }
@@ -1300,6 +1387,7 @@ html[data-theme-mode='dark'] .wallet-protocol-dialog .htw-bg-black\/25 {
     rgba(4, 2, 8, 0.9) 100%
   ) !important;
 }
+<<<<<<< HEAD
 
 html[data-theme-mode='dark'] .wallet-protocol-modal {
   border: 1px solid #8d58be !important;
@@ -1327,3 +1415,5 @@ html[data-theme-mode='dark'] .wallet-protocol-aleo-logo polygon {
 html[data-theme-mode='dark'] .wallet-protocol-subtitle {
   color: var(--dark-text-secondary) !important;
 }
+=======
+>>>>>>> origin/main

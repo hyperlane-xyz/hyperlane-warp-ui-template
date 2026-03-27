@@ -2,6 +2,7 @@ import { GithubIcon } from '@hyperlane-xyz/widgets';
 import clsx from 'clsx';
 import Link from 'next/link';
 import { forwardRef, ReactNode } from 'react';
+
 import { links } from '../../consts/links';
 import { Color } from '../../styles/Color';
 import { BookIcon } from '../icons/BookIcon';

@@ -9,6 +9,7 @@ import {
   XIcon,
 } from '@hyperlane-xyz/widgets';
 import { useCallback, useEffect, useRef, useState } from 'react';
+
 import { SearchInput } from '../../components/input/SearchInput';
 import { Color } from '../../styles/Color';
 import {

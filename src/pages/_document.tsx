@@ -1,4 +1,5 @@
 import { Head, Html, Main, NextScript } from 'next/document';
+
 import { APP_DESCRIPTION, APP_NAME, APP_URL, BRAND_COLOR } from '../consts/app';
 
 export default function Document() {
@@ -29,6 +30,7 @@ export default function Document() {
         <meta property="og:type" content="website" />
         <meta property="og:image" content={`${APP_URL}/logo.png`} />
         <meta property="og:description" content={APP_DESCRIPTION} />
+<<<<<<< HEAD
 
         {/* Synchronous same-origin script — blocks rendering to set theme before first paint. */}
         {/* eslint-disable-next-line @next/next/no-sync-scripts */}
@@ -38,6 +40,12 @@ export default function Document() {
           data-domain="nexus.hyperlane.xyz"
           src="https://plausible.io/js/script.outbound-links.tagged-events.js"
         />
+=======
+        {/* Synchronous same-origin script — blocks rendering to set theme before first paint.
+            Inline version would be blocked by CSP (no unsafe-inline in script-src). */}
+        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
+        <script src="/theme-init.js" />
+>>>>>>> origin/main
       </Head>
       <body className="font-primary text-black">
         <Main />

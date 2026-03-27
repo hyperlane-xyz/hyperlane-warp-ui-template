@@ -14,6 +14,7 @@ import {
 } from '@hyperlane-xyz/widgets';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import { ModalHeader } from '../../components/layout/ModalHeader';
 import ArrowRightIcon from '../../images/icons/arrow-right.svg';

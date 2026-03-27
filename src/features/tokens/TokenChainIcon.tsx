@@ -1,4 +1,5 @@
 import { IToken } from '@hyperlane-xyz/sdk';
+
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import { TokenIcon } from '../../components/icons/TokenIcon';
 
@@ -17,7 +18,11 @@ export function TokenChainIcon({ token, size = 32 }: Props) {
     <div className="relative inline-block" style={{ width: size, height: size }}>
       <TokenIcon token={token} size={size} />
       <div
+<<<<<<< HEAD
         className="token-chain-badge absolute -bottom-0.5 -right-0.5 rounded-full border border-white bg-white"
+=======
+        className="absolute -bottom-0.5 -right-0.5 rounded-full border border-white bg-white dark:border-white/[0.22] dark:bg-surface"
+>>>>>>> origin/main
         style={{
           width: chainLogoContainerSize,
           height: chainLogoContainerSize,

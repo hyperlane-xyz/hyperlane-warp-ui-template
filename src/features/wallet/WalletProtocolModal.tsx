@@ -1,5 +1,6 @@
 import { ProtocolType } from '@hyperlane-xyz/utils';
 import { Modal, PROTOCOL_TO_LOGO, useConnectFns } from '@hyperlane-xyz/widgets';
+import clsx from 'clsx';
 
 import { logger } from '../../utils/logger';
 
@@ -71,13 +72,11 @@ export function WalletProtocolModal({
               <Logo
                 width={34}
                 height={34}
-                className={[
+                className={clsx(
                   option.logoClassName,
                   option.protocol === ProtocolType.Aleo &&
                     'dark:text-foreground-primary dark:[&_polygon]:fill-current',
-                ]
-                  .filter(Boolean)
-                  .join(' ')}
+                )}
               />
               <div className="wallet-protocol-title tracking-wide text-gray-800 dark:text-foreground-primary">
                 {option.title}

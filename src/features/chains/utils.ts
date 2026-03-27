@@ -10,6 +10,8 @@ import { toTitleCase, trimToLength } from '@hyperlane-xyz/utils';
 import { ChainSearchMenuProps } from '@hyperlane-xyz/widgets';
 import { config } from '../../consts/config';
 
+import { config } from '../../consts/config';
+
 export function getChainDisplayName(
   multiProvider: MultiProtocolProvider,
   chain: ChainName,

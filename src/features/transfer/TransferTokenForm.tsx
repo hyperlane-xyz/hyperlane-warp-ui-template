@@ -1,5 +1,9 @@
 import { Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
 import {
+<<<<<<< HEAD
+=======
+  KnownProtocolType,
+>>>>>>> origin/main
   ProtocolType,
   convertToScaledAmount,
   eqAddress,
@@ -7,15 +11,17 @@ import {
   fromWei,
   isNullish,
   isValidAddressEvm,
+<<<<<<< HEAD
   objKeys,
+=======
+  normalizeAddress,
+>>>>>>> origin/main
   toWei,
 } from '@hyperlane-xyz/utils';
 import {
   AccountInfo,
   ChevronIcon,
-  IconButton,
   SpinnerIcon,
-  SwapIcon,
   getAccountAddressAndPubKey,
   useAccountAddressForChain,
   useAccounts,
@@ -23,16 +29,23 @@ import {
 } from '@hyperlane-xyz/widgets';
 import BigNumber from 'bignumber.js';
 import { Form, Formik, useFormikContext } from 'formik';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/main
 import { RecipientWarningBanner } from '../../components/banner/RecipientWarningBanner';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
 import { SolidButton } from '../../components/buttons/SolidButton';
+import { SwapIcon } from '../../components/icons/SwapIcon';
 import { TextField } from '../../components/input/TextField';
 import { WARP_QUERY_PARAMS } from '../../consts/args';
 import { config } from '../../consts/config';
+import { defaultMultiCollateralRoutes } from '../../consts/defaultMultiCollateralRoutes';
 import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
+<<<<<<< HEAD
 import { getQueryParams, updateQueryParam } from '../../utils/queryParams';
 import { trackTransactionFailedEvent } from '../analytics/utils';
 import { ChainConnectionWarning } from '../chains/ChainConnectionWarning';
@@ -46,12 +59,26 @@ import { useStore } from '../store';
 import { SelectOrInputTokenIds } from '../tokens/SelectOrInputTokenIds';
 import { TokenSelectField } from '../tokens/TokenSelectField';
 import { useIsApproveRequired } from '../tokens/approval';
+=======
+import { updateQueryParams } from '../../utils/queryParams';
+import { trackTransactionFailedEvent } from '../analytics/utils';
+>>>>>>> origin/main
 import {
   getDestinationNativeBalance,
   useDestinationBalance,
   useOriginBalance,
-} from '../tokens/balances';
+} from '../balances/hooks';
+import { UsdLabel } from '../balances/UsdLabel';
+import { useFeePrices } from '../balances/useFeePrices';
+import { ChainConnectionWarning } from '../chains/ChainConnectionWarning';
+import { ChainWalletWarning } from '../chains/ChainWalletWarning';
+import { useChainDisplayName, useMultiProvider } from '../chains/hooks';
+import { isMultiCollateralLimitExceeded } from '../limits/utils';
+import { useIsAccountSanctioned } from '../sanctions/hooks/useIsAccountSanctioned';
+import { RouterAddressInfo, useStore } from '../store';
+import { useIsApproveRequired } from '../tokens/approval';
 import {
+<<<<<<< HEAD
   getIndexForToken,
   getInitialTokenIndex,
   getTokenByIndex,
@@ -63,19 +90,43 @@ import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { FeeSectionButton } from './FeeSectionButton';
 import { RecipientConfirmationModal } from './RecipientConfirmationModal';
 import { getInterchainQuote, getLowestFeeTransferToken, getTotalFee } from './fees';
+=======
+  getInitialTokenKeys,
+  getTokenByKeyFromMap,
+  useCollateralGroups,
+  useTokenByKeyMap,
+  useTokens,
+  useWarpCore,
+} from '../tokens/hooks';
+import { ImportTokenButton } from '../tokens/ImportTokenButton';
+import { TokenSelectField } from '../tokens/TokenSelectField';
+import { useTokenPrices } from '../tokens/useTokenPrice';
+import { checkTokenHasRoute, findConnectedDestinationToken, findRouteToken } from '../tokens/utils';
+import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
+import { WalletDropdown } from '../wallet/WalletDropdown';
+import { getInterchainQuote, getTotalFee, getTransferToken } from './fees';
+import { FeeSectionButton } from './FeeSectionButton';
+>>>>>>> origin/main
 import { useFetchMaxAmount } from './maxAmount';
+import { RecipientConfirmationModal } from './RecipientConfirmationModal';
+import { TransferSection } from './TransferSection';
 import { TransferFormValues } from './types';
 import { useRecipientBalanceWatcher } from './useBalanceWatcher';
 import { useFeeQuotes } from './useFeeQuotes';
 import { useTokenTransfer } from './useTokenTransfer';
+<<<<<<< HEAD
 import { isSmartContract } from './utils';
+=======
+import { isSmartContract, shouldClearAddress } from './utils';
+>>>>>>> origin/main
 
 export function TransferTokenForm() {
   const multiProvider = useMultiProvider();
   const warpCore = useWarpCore();
+  const tokenMap = useTokenByKeyMap();
+  const collateralGroups = useCollateralGroups();
 
-  const { originChainName, setOriginChainName, routerAddressesByChainMap } = useStore((s) => ({
-    originChainName: s.originChainName,
+  const { setOriginChainName, routerAddressesByChainMap } = useStore((s) => ({
     setOriginChainName: s.setOriginChainName,
     routerAddressesByChainMap: s.routerAddressesByChainMap,
   }));
@@ -85,8 +136,13 @@ export function TransferTokenForm() {
 
   // Flag for if form is in input vs review mode
   const [isReview, setIsReview] = useState(false);
+<<<<<<< HEAD
   // Flag for check current type of token
   const [isNft, setIsNft] = useState(false);
+=======
+  // Flag for check current type of token (setter used by TokenSelectField)
+  const [, setIsNft] = useState(false);
+>>>>>>> origin/main
   // This state is used for when the formik token is different from
   // the token with highest collateral in a multi-collateral token setup
   const [routeOverrideToken, setRouteTokenOverride] = useState<Token | null>(null);
@@ -100,6 +156,11 @@ export function TransferTokenForm() {
   const validate = async (values: TransferFormValues) => {
     const [result, overrideToken] = await validateForm(
       warpCore,
+<<<<<<< HEAD
+=======
+      tokenMap,
+      collateralGroups,
+>>>>>>> origin/main
       values,
       accounts,
       routerAddressesByChainMap,
@@ -114,11 +175,27 @@ export function TransferTokenForm() {
   };
 
   const onSubmitForm = async (values: TransferFormValues) => {
-    logger.debug('Checking destination native balance for:', values.destination, values.recipient);
-    const balance = await getDestinationNativeBalance(multiProvider, values);
+    const originToken = getTokenByKeyFromMap(tokenMap, values.originTokenKey);
+    const destinationToken = getTokenByKeyFromMap(tokenMap, values.destinationTokenKey);
+    if (!originToken || !destinationToken) return;
+
+    // Get recipient (form value or fallback to connected wallet)
+    const { address: connectedDestAddress } = getAccountAddressAndPubKey(
+      multiProvider,
+      destinationToken.chainName,
+      accounts,
+    );
+    const recipient = values.recipient || connectedDestAddress || '';
+    if (!recipient) return;
+
+    logger.debug('Checking destination native balance for:', destinationToken.chainName, recipient);
+    const balance = await getDestinationNativeBalance(multiProvider, {
+      destination: destinationToken.chainName,
+      recipient,
+    });
     if (isNullish(balance)) return;
     else if (balance > 0n) {
-      logger.debug('Reviewing transfer form values for:', values.origin, values.destination);
+      logger.debug('Reviewing transfer form values');
       setIsReview(true);
     } else {
       logger.debug('Recipient has no balance on destination. Confirming address.');
@@ -126,9 +203,13 @@ export function TransferTokenForm() {
     }
   };
 
+  // Update origin chain name in store when origin token changes
   useEffect(() => {
-    if (!originChainName) setOriginChainName(initialValues.origin);
-  }, [initialValues.origin, originChainName, setOriginChainName]);
+    const originToken = getTokenByKeyFromMap(tokenMap, initialValues.originTokenKey);
+    if (originToken) {
+      setOriginChainName(originToken.chainName);
+    }
+  }, [initialValues.originTokenKey, tokenMap, setOriginChainName]);
 
   return (
     <Formik<TransferFormValues>
@@ -139,14 +220,26 @@ export function TransferTokenForm() {
       validateOnBlur={false}
     >
       {({ isValidating }) => (
-        <Form className="flex w-full flex-col items-stretch">
+        <Form className="transfer-form flex w-full flex-col items-stretch gap-1.5">
           <WarningBanners />
+<<<<<<< HEAD
           <ChainSelectSection isReview={isReview} />
           <div className="mt-2.5 flex items-end justify-between space-x-4">
             <TokenSection setIsNft={setIsNft} isReview={isReview} />
             <AmountSection isNft={isNft} isReview={isReview} />
           </div>
           <RecipientSection isReview={isReview} />
+=======
+
+          <TransferSection label="Send">
+            <OriginTokenCard isReview={isReview} setIsNft={setIsNft} />
+          </TransferSection>
+          <SwapTokensButton disabled={isReview} />
+          <TransferSection label="Receive">
+            <DestinationTokenCard isReview={isReview} />
+          </TransferSection>
+
+>>>>>>> origin/main
           <ReviewDetails isReview={isReview} routeOverrideToken={routeOverrideToken} />
           <ButtonSection
             isReview={isReview}
@@ -154,7 +247,10 @@ export function TransferTokenForm() {
             setIsReview={setIsReview}
             cleanOverrideToken={() => setRouteTokenOverride(null)}
             routeOverrideToken={routeOverrideToken}
+<<<<<<< HEAD
             warpCore={warpCore}
+=======
+>>>>>>> origin/main
           />
           <RecipientConfirmationModal
             isOpen={isConfirmationModalOpen}
@@ -167,48 +263,36 @@ export function TransferTokenForm() {
   );
 }
 
-function SwapChainsButton({
-  disabled,
-  onSwapChain,
-}: {
-  disabled?: boolean;
-  onSwapChain: (origin: string, destination: string) => void;
-}) {
-  const { values, setFieldValue } = useFormikContext<TransferFormValues>();
-  const { origin, destination } = values;
+function SwapTokensButton({ disabled }: { disabled?: boolean }) {
+  const { values, setValues } = useFormikContext<TransferFormValues>();
+  const tokenMap = useTokenByKeyMap();
+  const multiProvider = useMultiProvider();
 
-  const onClick = () => {
+  const onSwap = useCallback(() => {
     if (disabled) return;
-    setFieldValue('origin', destination);
-    setFieldValue('destination', origin);
-    // Reset other fields on chain change
-    setFieldValue('recipient', '');
-    onSwapChain(destination, origin);
-  };
 
-  return (
-    <IconButton
-      width={20}
-      height={20}
-      title="Swap chains"
-      className={!disabled ? 'hover:rotate-180' : undefined}
-      onClick={onClick}
-      disabled={disabled}
-    >
-      <SwapIcon width={20} height={20} />
-    </IconButton>
-  );
-}
+    const { originTokenKey, destinationTokenKey, recipient } = values;
+    const originToken = getTokenByKeyFromMap(tokenMap, originTokenKey);
+    const destToken = getTokenByKeyFromMap(tokenMap, destinationTokenKey);
 
-function ChainSelectSection({ isReview }: { isReview: boolean }) {
-  const warpCore = useWarpCore();
+    if (!originToken || !destToken) return;
 
-  const { setOriginChainName } = useStore((s) => ({
-    setOriginChainName: s.setOriginChainName,
-  }));
+    // After swap, origin becomes the new destination - validate recipient for new destination protocol
+    const shouldClearRecipient = shouldClearAddress(
+      multiProvider,
+      recipient,
+      originToken.chainName,
+    );
 
-  const { values, setFieldValue } = useFormikContext<TransferFormValues>();
+    setValues((prevValues) => ({
+      ...prevValues,
+      amount: '',
+      originTokenKey: destinationTokenKey,
+      destinationTokenKey: originTokenKey,
+      recipient: shouldClearRecipient ? '' : prevValues.recipient,
+    }));
 
+<<<<<<< HEAD
   const originRouteCounts = useMemo(() => {
     return getNumRoutesWithSelectedChain(warpCore, values.origin, true);
   }, [values.origin, warpCore]);
@@ -237,18 +321,21 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
       setOriginChainName(chainName);
     } else if (fieldName === WARP_QUERY_PARAMS.DESTINATION) {
       setTokenOnChainChange(values.origin, chainName);
+=======
+    // Update URL params
+    if (originToken && destToken) {
+      updateQueryParams({
+        [WARP_QUERY_PARAMS.ORIGIN]: destToken.chainName,
+        [WARP_QUERY_PARAMS.ORIGIN_TOKEN]: destToken.symbol,
+        [WARP_QUERY_PARAMS.DESTINATION]: originToken.chainName,
+        [WARP_QUERY_PARAMS.DESTINATION_TOKEN]: originToken.symbol,
+      });
+>>>>>>> origin/main
     }
-    updateQueryParam(fieldName, chainName);
-  };
-
-  const onSwapChain = (origin: string, destination: string) => {
-    updateQueryParam(WARP_QUERY_PARAMS.ORIGIN, origin);
-    updateQueryParam(WARP_QUERY_PARAMS.DESTINATION, destination);
-    setTokenOnChainChange(origin, destination);
-    setOriginChainName(origin);
-  };
+  }, [disabled, values, tokenMap, setValues, multiProvider]);
 
   return (
+<<<<<<< HEAD
     <div className="mt-2 flex items-center justify-between gap-4">
       <ChainSelectField
         name="origin"
@@ -269,56 +356,88 @@ function ChainSelectSection({ isReview }: { isReview: boolean }) {
         onChange={handleChange}
         token={destinationToken}
       />
+=======
+    <div className="relative z-10 -my-3 flex justify-center">
+      <button
+        type="button"
+        onClick={onSwap}
+        disabled={disabled}
+        className="swap-chains-button group flex h-8 w-8 items-center justify-center rounded border border-gray-400/50 bg-white shadow-button transition-all hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-primary-300/35 dark:bg-background/90 dark:shadow-none dark:hover:bg-primary-300/[0.18]"
+      >
+        <SwapIcon
+          width={18}
+          height={24}
+          className="swap-chains-icon transition-transform duration-300 group-hover:rotate-180 group-disabled:rotate-0 dark:drop-shadow-[0_0_8px_rgba(255,255,255,0.55)] dark:[&_path]:fill-white"
+        />
+      </button>
+>>>>>>> origin/main
     </div>
   );
 }
 
-function TokenSection({
-  setIsNft,
+function OriginTokenCard({
   isReview,
+  setIsNft,
 }: {
-  setIsNft: (b: boolean) => void;
   isReview: boolean;
+  setIsNft?: (b: boolean) => void;
 }) {
-  return (
-    <div className="flex-1">
-      <label htmlFor="tokenIndex" className="block pl-0.5 text-sm text-gray-600">
-        Token
-      </label>
-      <TokenSelectField name="tokenIndex" disabled={isReview} setIsNft={setIsNft} />
-    </div>
-  );
-}
-
-function AmountSection({ isNft, isReview }: { isNft: boolean; isReview: boolean }) {
   const { values } = useFormikContext<TransferFormValues>();
+<<<<<<< HEAD
   const { balance } = useOriginBalance(values);
   const { tokenPrice, isLoading } = useTokenPrice(values);
+=======
+  const tokenMap = useTokenByKeyMap();
+  const collateralGroups = useCollateralGroups();
+
+  const originToken = getTokenByKeyFromMap(tokenMap, values.originTokenKey);
+  const destinationToken = getTokenByKeyFromMap(tokenMap, values.destinationTokenKey);
+  const { balance } = useOriginBalance(originToken);
+  const { prices, isLoading: isPriceLoading } = useTokenPrices();
+  const tokenPrice = originToken?.coinGeckoId ? prices[originToken.coinGeckoId] : undefined;
+
+  const isRouteSupported = useMemo(() => {
+    if (!originToken || !destinationToken) return true;
+    return checkTokenHasRoute(originToken, destinationToken, collateralGroups);
+  }, [originToken, destinationToken, collateralGroups]);
+>>>>>>> origin/main
 
   const amount = parseFloat(values.amount);
   const totalTokenPrice = !isNullish(tokenPrice) && !isNaN(amount) ? amount * tokenPrice : 0;
   const shouldShowPrice = totalTokenPrice >= 0.01;
 
   return (
-    <div className="flex-1">
-      <div className="flex justify-between pr-1">
-        <label htmlFor="amount" className="block pl-0.5 text-sm text-gray-600">
-          Amount
-        </label>
-        <TokenBalance label="My balance" balance={balance} />
+    <div>
+      <div className="mb-2 flex items-center justify-between">
+        <WalletDropdown
+          chainName={originToken?.chainName}
+          selectionMode="origin"
+          disabled={isReview}
+        />
+        <ImportTokenButton token={originToken} />
       </div>
-      {isNft ? (
-        <SelectOrInputTokenIds disabled={isReview} />
-      ) : (
-        <div className="relative w-full">
+
+      <div className="transfer-chain-field rounded-[7px] border border-gray-400/25 bg-white p-3 shadow-input dark:border-primary-300/[0.18] dark:bg-transparent dark:shadow-none">
+        <TokenSelectField
+          name="originTokenKey"
+          selectionMode="origin"
+          disabled={isReview}
+          setIsNft={setIsNft}
+          showLabel={false}
+        />
+
+        <div className="transfer-divider my-2.5 h-px bg-primary-50 dark:bg-primary-300/[0.22]" />
+
+        <div className="flex items-center justify-between gap-2">
           <TextField
             name="amount"
-            placeholder="0.00"
-            className="w-full"
+            placeholder="0"
+            className="transfer-text-input w-full flex-1 border-none bg-transparent font-secondary text-xl font-normal text-gray-900 outline-none placeholder:text-gray-900 dark:text-foreground-primary dark:placeholder:text-foreground-secondary"
             type="number"
             step="any"
             disabled={isReview}
           />
+<<<<<<< HEAD
           {shouldShowPrice && !isLoading && (
             <div className="absolute bottom-[-18px] left-1 max-w-52 overflow-hidden text-ellipsis whitespace-nowrap text-xxs text-gray-500">
               ≈$
@@ -329,38 +448,78 @@ function AmountSection({ isNft, isReview }: { isNft: boolean; isReview: boolean 
             </div>
           )}
           <MaxButton disabled={isReview} balance={balance} />
+=======
+          <MaxButton balance={balance} disabled={isReview} isRouteSupported={isRouteSupported} />
+>>>>>>> origin/main
         </div>
-      )}
+        <div className="transfer-balance mt-1 flex items-center justify-between text-xs leading-[18px] text-gray-450 dark:text-foreground-secondary">
+          <span>
+            {shouldShowPrice && !isPriceLoading ? (
+              <>
+                $
+                {totalTokenPrice.toLocaleString('en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </>
+            ) : (
+              '$0.00'
+            )}
+          </span>
+          <TokenBalance label="Balance" balance={balance} />
+        </div>
+      </div>
     </div>
   );
 }
 
-function RecipientSection({ isReview }: { isReview: boolean }) {
-  const { values } = useFormikContext<TransferFormValues>();
-  const { balance } = useDestinationBalance(values);
-  useRecipientBalanceWatcher(values.recipient, balance);
+function DestinationTokenCard({ isReview }: { isReview: boolean }) {
+  const { values, setFieldValue } = useFormikContext<TransferFormValues>();
+  const tokenMap = useTokenByKeyMap();
+  const multiProvider = useMultiProvider();
+
+  const destinationToken = getTokenByKeyFromMap(tokenMap, values.destinationTokenKey);
+
+  const connectedDestAddress = useAccountAddressForChain(
+    multiProvider,
+    destinationToken?.chainName,
+  );
+  const recipient = values.recipient || connectedDestAddress;
+
+  const { balance } = useDestinationBalance(recipient, destinationToken);
+
+  useRecipientBalanceWatcher(recipient, balance);
 
   return (
-    <div className="mt-4">
-      <div className="flex justify-between pr-1">
-        <label htmlFor="recipient" className="block pl-0.5 text-sm text-gray-600">
-          Recipient address
-        </label>
-        <TokenBalance label="Remote balance" balance={balance} />
-      </div>
-      <div className="relative w-full">
-        <TextField
-          name="recipient"
-          placeholder="0x123456..."
-          className="w-full"
+    <div>
+      <div className="mb-2 flex items-center justify-between">
+        <WalletDropdown
+          chainName={destinationToken?.chainName}
+          selectionMode="destination"
+          recipient={values.recipient}
+          onRecipientChange={(addr: string) => setFieldValue('recipient', addr)}
           disabled={isReview}
         />
-        <SelfButton disabled={isReview} />
+        <ImportTokenButton token={destinationToken} />
+      </div>
+
+      <div className="transfer-chain-field rounded-[7px] border border-gray-400/25 bg-white p-3 shadow-input dark:border-primary-300/[0.18] dark:bg-transparent dark:shadow-none">
+        <TokenSelectField
+          name="destinationTokenKey"
+          selectionMode="destination"
+          disabled={isReview}
+          showLabel={false}
+        />
+
+        <div className="transfer-divider my-2.5 h-px bg-primary-50 dark:bg-primary-300/[0.22]" />
+
+        <TokenBalance label="Remote Balance" balance={balance} />
       </div>
     </div>
   );
 }
 
+<<<<<<< HEAD
 function TokenBalance({ label, balance }: { label: string; balance?: TokenAmount | null }) {
   const value = balance?.getDecimalFormattedAmount().toFixed(5) || '0';
   return <div className="text-right text-xs text-gray-600">{`${label}: ${value}`}</div>;
@@ -560,15 +719,38 @@ function ButtonSection({
 }
 
 function MaxButton({ balance, disabled }: { balance?: TokenAmount; disabled?: boolean }) {
+=======
+function MaxButton({
+  balance,
+  disabled,
+  isRouteSupported,
+}: {
+  balance?: TokenAmount;
+  disabled?: boolean;
+  isRouteSupported: boolean;
+}) {
+>>>>>>> origin/main
   const { values, setFieldValue } = useFormikContext<TransferFormValues>();
-  const { origin, destination, tokenIndex } = values;
+  const { originTokenKey, destinationTokenKey } = values;
+  const tokenMap = useTokenByKeyMap();
+  const originToken = getTokenByKeyFromMap(tokenMap, originTokenKey);
+  const destinationToken = getTokenByKeyFromMap(tokenMap, destinationTokenKey);
   const multiProvider = useMultiProvider();
   const { accounts } = useAccounts(multiProvider);
   const { fetchMaxAmount, isLoading } = useFetchMaxAmount();
 
+  const isDisabled =
+    disabled || !isRouteSupported || isLoading || !balance || !originToken || !destinationToken;
+
   const onClick = async () => {
-    if (!balance || isNullish(tokenIndex) || disabled) return;
-    const maxAmount = await fetchMaxAmount({ balance, origin, destination, accounts });
+    if (isDisabled) return;
+    const maxAmount = await fetchMaxAmount({
+      balance,
+      origin: originToken.chainName,
+      destinationToken,
+      accounts,
+      recipient: values.recipient,
+    });
     if (isNullish(maxAmount)) return;
     const decimalsAmount = maxAmount.getDecimalFormattedAmount();
     const roundedAmount = new BigNumber(decimalsAmount).toFixed(4, BigNumber.ROUND_FLOOR);
@@ -576,48 +758,239 @@ function MaxButton({ balance, disabled }: { balance?: TokenAmount; disabled?: bo
   };
 
   return (
-    <SolidButton
+    <button
       type="button"
       onClick={onClick}
-      color="primary"
-      disabled={disabled}
-      className="absolute bottom-1 right-1 top-2.5 px-2 text-xs opacity-90 all:rounded"
+      disabled={isDisabled}
+      className="transfer-max-btn rounded border border-gray-300 px-2 py-0.5 font-secondary text-sm text-gray-450 transition-colors hover:border-gray-400 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50 dark:border-primary-300/40 dark:text-foreground-secondary dark:hover:border-primary-300/65 dark:hover:text-foreground-primary"
     >
-      {isLoading ? (
-        <div className="flex items-center">
-          <SpinnerIcon className="h-5 w-5" color="white" />
-        </div>
-      ) : (
-        'Max'
-      )}
-    </SolidButton>
+      {isLoading ? <SpinnerIcon className="h-4 w-4" /> : 'Max'}
+    </button>
   );
 }
 
-function SelfButton({ disabled }: { disabled?: boolean }) {
-  const { values, setFieldValue } = useFormikContext<TransferFormValues>();
-  const multiProvider = useMultiProvider();
-  const chainDisplayName = useChainDisplayName(values.destination);
-  const address = useAccountAddressForChain(multiProvider, values.destination);
-  const onClick = () => {
-    if (disabled) return;
-    if (address) setFieldValue('recipient', address);
-    else
-      toast.warn(`No account found for for chain ${chainDisplayName}, is your wallet connected?`);
-  };
+function TokenBalance({
+  label,
+  balance,
+}: {
+  label: string;
+  balance: TokenAmount | null | undefined;
+}) {
   return (
-    <SolidButton
-      type="button"
-      onClick={onClick}
-      color="primary"
-      disabled={disabled}
-      className="absolute bottom-1 right-1 top-2.5 px-2 text-xs opacity-90 all:rounded"
-    >
-      Self
-    </SolidButton>
+    <span className="text-xs leading-[18px] text-gray-450 dark:text-foreground-secondary">
+      {balance ? (
+        <>
+          {label}: {balance.getDecimalFormattedAmount().toFixed(4)} {balance.token.symbol}
+        </>
+      ) : (
+        <>{label}: 0.00</>
+      )}
+    </span>
   );
 }
 
+<<<<<<< HEAD
+=======
+function ButtonSection({
+  isReview,
+  isValidating,
+  setIsReview,
+  cleanOverrideToken,
+  routeOverrideToken,
+}: {
+  isReview: boolean;
+  isValidating: boolean;
+  setIsReview: (b: boolean) => void;
+  cleanOverrideToken: () => void;
+  routeOverrideToken: Token | null;
+}) {
+  const { values } = useFormikContext<TransferFormValues>();
+  const multiProvider = useMultiProvider();
+  const tokenMap = useTokenByKeyMap();
+  const originToken = routeOverrideToken || getTokenByKeyFromMap(tokenMap, values.originTokenKey);
+  const destinationToken = getTokenByKeyFromMap(tokenMap, values.destinationTokenKey);
+  const chainDisplayName = useChainDisplayName(destinationToken?.chainName || '');
+  const isRouteSupported = useIsRouteSupported();
+
+  const { accounts } = useAccounts(multiProvider, config.addressBlacklist);
+  const { address: connectedWallet } = getAccountAddressAndPubKey(
+    multiProvider,
+    originToken?.chainName,
+    accounts,
+  );
+
+  // Get recipient (form value or fallback to connected wallet for destination)
+  const { address: connectedDestAddress } = getAccountAddressAndPubKey(
+    multiProvider,
+    destinationToken?.chainName,
+    accounts,
+  );
+  const recipient = values.recipient || connectedDestAddress || '';
+
+  // Confirming recipient address
+  const [{ addressConfirmed, showWarning }, setRecipientInfos] = useState({
+    showWarning: false,
+    addressConfirmed: true,
+  });
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const checkSameEVMRecipient = async (recipient: string) => {
+      if (!connectedWallet || !originToken || !destinationToken) {
+        setRecipientInfos({ showWarning: false, addressConfirmed: true });
+        return;
+      }
+
+      const { protocol: destinationProtocol } = multiProvider.getChainMetadata(
+        destinationToken.chainName,
+      );
+      const { protocol: sourceProtocol } = multiProvider.getChainMetadata(originToken.chainName);
+
+      if (
+        sourceProtocol !== ProtocolType.Ethereum ||
+        destinationProtocol !== ProtocolType.Ethereum
+      ) {
+        setRecipientInfos({ showWarning: false, addressConfirmed: true });
+        return;
+      }
+
+      if (!isValidAddressEvm(recipient)) {
+        setRecipientInfos({ showWarning: false, addressConfirmed: true });
+        return;
+      }
+
+      const { isContract: isSenderSmartContract, error: senderCheckError } = await isSmartContract(
+        multiProvider,
+        originToken.chainName,
+        connectedWallet,
+      );
+      if (!isMounted) return;
+
+      const { isContract: isRecipientSmartContract, error: recipientCheckError } =
+        await isSmartContract(multiProvider, destinationToken.chainName, recipient);
+      if (!isMounted) return;
+
+      const isSelfRecipient = eqAddress(recipient, connectedWallet);
+
+      if (senderCheckError || recipientCheckError) {
+        toast.error(senderCheckError || recipientCheckError);
+        setRecipientInfos({ addressConfirmed: true, showWarning: false });
+        return;
+      }
+
+      if (isSelfRecipient && isSenderSmartContract && !isRecipientSmartContract) {
+        const msg = `The recipient address is the same as the connected wallet, but it does not exist as a smart contract on ${chainDisplayName}.`;
+        logger.warn(msg);
+        setRecipientInfos({ showWarning: true, addressConfirmed: false });
+      } else {
+        setRecipientInfos({ showWarning: false, addressConfirmed: true });
+      }
+    };
+    checkSameEVMRecipient(recipient);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [recipient, connectedWallet, multiProvider, originToken, destinationToken, chainDisplayName]);
+
+  const isSanctioned = useIsAccountSanctioned();
+
+  const { setTransferLoading } = useStore((s) => ({
+    setTransferLoading: s.setTransferLoading,
+  }));
+
+  const onDoneTransactions = () => {
+    setIsReview(false);
+    cleanOverrideToken();
+  };
+  const { triggerTransactions } = useTokenTransfer(onDoneTransactions);
+
+  const triggerTransactionsHandler = async () => {
+    if (isSanctioned || !originToken || !destinationToken) return;
+    setIsReview(false);
+    setTransferLoading(true);
+
+    await triggerTransactions(values, routeOverrideToken);
+    setTransferLoading(false);
+  };
+
+  const onEdit = () => {
+    setIsReview(false);
+    cleanOverrideToken();
+  };
+
+  const text = !isRouteSupported
+    ? 'Route is not supported'
+    : isValidating
+      ? 'Validating...'
+      : 'Continue';
+
+  if (!isReview) {
+    return (
+      <>
+        <div
+          className={`gap-2 bg-amber-400 px-4 text-sm ${
+            showWarning ? 'max-h-38 py-2' : 'max-h-0'
+          } overflow-hidden transition-all duration-500`}
+        >
+          <RecipientWarningBanner
+            destinationChain={chainDisplayName}
+            confirmRecipientHandler={(checked) =>
+              setRecipientInfos((state) => ({ ...state, addressConfirmed: checked }))
+            }
+          />
+        </div>
+
+        <ConnectAwareSubmitButton
+          disabled={!addressConfirmed || !isRouteSupported}
+          chainName={originToken?.chainName || ''}
+          text={text}
+          classes="w-full mb-4 px-3 py-2.5 font-secondary text-xl text-cream-100"
+        />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <div
+        className={`gap-2 bg-amber-400 px-4 text-sm ${
+          showWarning ? 'max-h-38 py-2' : 'max-h-0'
+        } overflow-hidden transition-all duration-500`}
+      >
+        <RecipientWarningBanner
+          destinationChain={chainDisplayName}
+          confirmRecipientHandler={(checked) =>
+            setRecipientInfos((state) => ({ ...state, addressConfirmed: checked }))
+          }
+        />
+      </div>
+      <div className="mb-4 mt-4 flex items-center justify-between space-x-4">
+        <SolidButton
+          type="button"
+          color="primary"
+          onClick={onEdit}
+          className="px-6 py-1.5 font-secondary"
+          icon={<ChevronIcon direction="w" width={10} height={6} color={Color.white} />}
+        >
+          <span>Edit</span>
+        </SolidButton>
+        <SolidButton
+          disabled={!addressConfirmed || isSanctioned}
+          type="button"
+          color="accent"
+          onClick={triggerTransactionsHandler}
+          className="flex-1 px-3 py-1.5 font-secondary text-white"
+        >
+          {`Send to ${chainDisplayName}`}
+        </SolidButton>
+      </div>
+    </>
+  );
+}
+
+>>>>>>> origin/main
 function ReviewDetails({
   isReview,
   routeOverrideToken,
@@ -626,13 +999,48 @@ function ReviewDetails({
   routeOverrideToken: Token | null;
 }) {
   const { values } = useFormikContext<TransferFormValues>();
-  const { amount, destination, tokenIndex } = values;
   const warpCore = useWarpCore();
+<<<<<<< HEAD
   const originToken = routeOverrideToken || getTokenByIndex(warpCore, tokenIndex);
+=======
+  const { amount, originTokenKey, destinationTokenKey } = values;
+  const tokenMap = useTokenByKeyMap();
+  const originTokenByKey = routeOverrideToken || getTokenByKeyFromMap(tokenMap, originTokenKey);
+  const destinationTokenByKey = getTokenByKeyFromMap(tokenMap, destinationTokenKey);
+  // Finding actual token pair for the given tokens
+  const originToken =
+    destinationTokenByKey && originTokenByKey
+      ? findRouteToken(warpCore, originTokenByKey, destinationTokenByKey)
+      : undefined;
+  const destinationToken = destinationTokenByKey
+    ? originToken && findConnectedDestinationToken(originToken, destinationTokenByKey)
+    : undefined;
+>>>>>>> origin/main
   const originTokenSymbol = originToken?.symbol || '';
-  const connection = originToken?.getConnectionForChain(destination);
-  const destinationToken = connection?.token;
   const isNft = originToken?.isNft();
+  const isRouteSupported = useIsRouteSupported();
+
+  const scaledAmount = useMemo(() => {
+    if (!originToken?.scale || !destinationToken?.scale) return null;
+    if (!isReview || originToken.scale === destinationToken.scale) return null;
+
+    const amountWei = toWei(amount, originToken.decimals);
+    const precisionFactor = 100000;
+
+    const convertedAmount = convertToScaledAmount({
+      amount: BigInt(amountWei),
+      fromScale: originToken.scale,
+      toScale: destinationToken.scale,
+      precisionFactor,
+    });
+    const value = convertedAmount / BigInt(precisionFactor);
+
+    return {
+      value: fromWei(value.toString(), originToken.decimals),
+      originScale: originToken.scale,
+      destinationScale: destinationToken.scale,
+    };
+  }, [amount, originToken, destinationToken, isReview]);
 
   const scaledAmount = useMemo(() => {
     if (!originToken?.scale || !destinationToken?.scale) return null;
@@ -663,13 +1071,27 @@ function ReviewDetails({
     amountWei,
     isReview,
   );
+<<<<<<< HEAD
   const { isLoading: isQuoteLoading, fees: feeQuotes } = useFeeQuotes(
     values,
     true,
     originToken,
+=======
+  // Only fetch fees if route is supported
+  const { isLoading: isQuoteLoading, fees: feeQuotes } = useFeeQuotes(
+    values,
+    isRouteSupported,
+    originToken,
+    destinationToken,
+>>>>>>> origin/main
     !isReview,
   );
 
+  const { prices } = useTokenPrices();
+  const feePrices = useFeePrices(feeQuotes ?? null, warpCore.tokens, prices);
+  const tokenPrice = originToken?.coinGeckoId ? prices[originToken.coinGeckoId] : undefined;
+  const parsedAmount = parseFloat(amount);
+  const transferUsd = tokenPrice && !isNaN(parsedAmount) ? parsedAmount * tokenPrice : 0;
   const isLoading = isApproveLoading || isQuoteLoading;
 
   const fees = useMemo(() => {
@@ -695,15 +1117,33 @@ function ReviewDetails({
 
   return (
     <>
+<<<<<<< HEAD
       {!isReview && <FeeSectionButton visible={!isReview} fees={fees} isLoading={isLoading} />}
+=======
+      {!isReview && (
+        <FeeSectionButton
+          fees={fees}
+          isLoading={isLoading}
+          feePrices={feePrices}
+          transferUsd={transferUsd}
+        />
+      )}
+>>>>>>> origin/main
 
       <div
         className={`${
           isReview ? 'max-h-screen duration-1000 ease-in' : 'max-h-0 duration-500'
         } overflow-hidden transition-all`}
       >
+<<<<<<< HEAD
         <label className="mt-4 block pl-0.5 text-sm text-gray-600">Transactions</label>
         <div className="mt-1.5 space-y-2 break-all rounded border border-gray-400 bg-gray-150 px-2.5 py-2 text-sm">
+=======
+        <label className="transfer-field-label mt-4 block pl-0.5 text-sm text-gray-600 dark:text-foreground-secondary">
+          Transactions
+        </label>
+        <div className="transfer-review-panel mt-1.5 space-y-2 break-all rounded border border-gray-400 bg-gray-150 px-2.5 py-2 text-sm dark:border-primary-300/25 dark:bg-background/40 dark:text-foreground-primary">
+>>>>>>> origin/main
           {isLoading ? (
             <div className="flex items-center justify-center py-6">
               <SpinnerIcon className="h-5 w-5" />
@@ -713,7 +1153,11 @@ function ReviewDetails({
               {isApproveRequired && (
                 <div>
                   <h4>Transaction 1: Approve Transfer</h4>
+<<<<<<< HEAD
                   <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs">
+=======
+                  <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs dark:border-primary-300/25">
+>>>>>>> origin/main
                     <p>{`Router Address: ${originToken?.addressOrDenom}`}</p>
                     {originToken?.collateralAddressOrDenom && (
                       <p>{`Collateral Address: ${originToken.collateralAddressOrDenom}`}</p>
@@ -723,7 +1167,11 @@ function ReviewDetails({
               )}
               <div>
                 <h4>{`Transaction${isApproveRequired ? ' 2' : ''}: Transfer Remote`}</h4>
+<<<<<<< HEAD
                 <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs">
+=======
+                <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs dark:border-primary-300/25">
+>>>>>>> origin/main
                   {destinationToken?.addressOrDenom && (
                     <p className="flex">
                       <span className="min-w-[7.5rem]">Remote Token</span>
@@ -744,25 +1192,46 @@ function ReviewDetails({
                   {fees?.localQuote && fees.localQuote.amount > 0n && (
                     <p className="flex">
                       <span className="min-w-[7.5rem]">Local Gas (est.)</span>
+<<<<<<< HEAD
                       <span>{`${fees.localQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${
                         fees.localQuote.token.symbol || ''
                       }`}</span>
+=======
+                      <span>
+                        {`${fees.localQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${fees.localQuote.token.symbol || ''}`}
+                        <UsdLabel tokenAmount={fees.localQuote} feePrices={feePrices} />
+                      </span>
+>>>>>>> origin/main
                     </p>
                   )}
                   {fees?.interchainQuote && fees.interchainQuote.amount > 0n && (
                     <p className="flex">
                       <span className="min-w-[7.5rem]">Interchain Gas</span>
+<<<<<<< HEAD
                       <span>{`${fees.interchainQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${
                         fees.interchainQuote.token.symbol || ''
                       }`}</span>
+=======
+                      <span>
+                        {`${fees.interchainQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${fees.interchainQuote.token.symbol || ''}`}
+                        <UsdLabel tokenAmount={fees.interchainQuote} feePrices={feePrices} />
+                      </span>
+>>>>>>> origin/main
                     </p>
                   )}
                   {fees?.tokenFeeQuote && fees.tokenFeeQuote.amount > 0n && (
                     <p className="flex">
                       <span className="min-w-[7.5rem]">Token Fee</span>
+<<<<<<< HEAD
                       <span>{`${fees.tokenFeeQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${
                         fees.tokenFeeQuote.token.symbol || ''
                       }`}</span>
+=======
+                      <span>
+                        {`${fees.tokenFeeQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${fees.tokenFeeQuote.token.symbol || ''}`}
+                        <UsdLabel tokenAmount={fees.tokenFeeQuote} feePrices={feePrices} />
+                      </span>
+>>>>>>> origin/main
                     </p>
                   )}
                 </div>
@@ -777,70 +1246,81 @@ function ReviewDetails({
 
 function WarningBanners() {
   const { values } = useFormikContext<TransferFormValues>();
+  const tokenMap = useTokenByKeyMap();
+  const originToken = getTokenByKeyFromMap(tokenMap, values.originTokenKey);
+  const destinationToken = getTokenByKeyFromMap(tokenMap, values.destinationTokenKey);
+
   return (
+<<<<<<< HEAD
     // Max height to prevent double padding if multiple warnings are visible
     <div className="max-h-10">
       <ChainWalletWarning origin={values.origin} />
       <ChainConnectionWarning origin={values.origin} destination={values.destination} />
       <WalletConnectionWarning origin={values.origin} />
+=======
+    // Cap space to one visible banner since warning layers are absolutely positioned at the top.
+    <div className="max-h-12 overflow-hidden sm:max-h-10">
+      <ChainWalletWarning origin={originToken?.chainName || ''} />
+      <ChainConnectionWarning
+        origin={originToken?.chainName || ''}
+        destination={destinationToken?.chainName || ''}
+      />
+      <WalletConnectionWarning origin={originToken?.chainName || ''} />
+>>>>>>> origin/main
     </div>
   );
 }
 
 function useFormInitialValues(): TransferFormValues {
   const warpCore = useWarpCore();
-  const params = getQueryParams();
+  const tokens = useTokens();
 
-  const originQuery = tryGetValidChainName(
-    params.get(WARP_QUERY_PARAMS.ORIGIN),
-    warpCore.multiProvider,
-  );
-  const destinationQuery = tryGetValidChainName(
-    params.get(WARP_QUERY_PARAMS.DESTINATION),
-    warpCore.multiProvider,
-  );
-  const defaultOriginToken = config.defaultOriginChain
-    ? warpCore.getTokensForChain(config.defaultOriginChain)?.[0]
-    : undefined;
+  const { originTokenKey, destinationTokenKey } = getInitialTokenKeys(warpCore, tokens);
 
-  const tokenIndex = getInitialTokenIndex(
-    warpCore,
-    params.get(WARP_QUERY_PARAMS.TOKEN),
-    originQuery,
-    destinationQuery,
-    defaultOriginToken,
-    config.defaultDestinationChain,
-  );
-
-  return useMemo(() => {
-    const firstToken = defaultOriginToken || warpCore.tokens[0];
-    const connectedToken = firstToken.connections?.[0];
-    const chainsValid = originQuery && destinationQuery;
-
-    return {
-      origin: chainsValid ? originQuery : firstToken.chainName,
-      destination: chainsValid
-        ? destinationQuery
-        : config.defaultDestinationChain || connectedToken?.token?.chainName || '',
-      tokenIndex: tokenIndex,
+  return useMemo(
+    () => ({
+      originTokenKey,
+      destinationTokenKey,
       amount: '',
       recipient: '',
-    };
-  }, [warpCore, destinationQuery, originQuery, tokenIndex, defaultOriginToken]);
+    }),
+    [originTokenKey, destinationTokenKey],
+  );
 }
 
-const insufficientFundsErrMsg = /insufficient.[funds|lamports]/i;
+function useIsRouteSupported(): boolean {
+  const { values } = useFormikContext<TransferFormValues>();
+  const tokenMap = useTokenByKeyMap();
+  const collateralGroups = useCollateralGroups();
+  const originToken = getTokenByKeyFromMap(tokenMap, values.originTokenKey);
+  const destinationToken = getTokenByKeyFromMap(tokenMap, values.destinationTokenKey);
+
+  return useMemo(() => {
+    if (!originToken || !destinationToken) return true;
+    return checkTokenHasRoute(originToken, destinationToken, collateralGroups);
+  }, [originToken, destinationToken, collateralGroups]);
+}
+
+const insufficientFundsErrMsg = /insufficient.(funds|lamports)/i;
 const emptyAccountErrMsg = /AccountNotFound/i;
 
 async function validateForm(
   warpCore: WarpCore,
+  tokenMap: Map<string, Token>,
+  collateralGroups: Map<string, Token[]>,
   values: TransferFormValues,
+<<<<<<< HEAD
   accounts: Record<ProtocolType, AccountInfo>,
   routerAddressesByChainMap: Record<ChainName, Set<string>>,
+=======
+  accounts: Record<KnownProtocolType, AccountInfo>,
+  routerAddressesByChainMap: Record<ChainName, Record<string, RouterAddressInfo>>,
+>>>>>>> origin/main
 ): Promise<[Record<string, string> | null, Token | null]> {
   // returns a tuple, where first value is validation result
   // and second value is token override
   try {
+<<<<<<< HEAD
     const { origin, destination, tokenIndex, amount, recipient } = values;
     const token = getTokenByIndex(warpCore, tokenIndex);
     if (!token) return [{ token: 'Token is required' }, null];
@@ -861,12 +1341,54 @@ async function validateForm(
     );
     const amountWei = toWei(amount, token.decimals);
     const transferToken = await getLowestFeeTransferToken(
+=======
+    const { originTokenKey, destinationTokenKey, amount, recipient: formRecipient } = values;
+
+    // Look up tokens from the pre-computed map
+    const token = getTokenByKeyFromMap(tokenMap, originTokenKey);
+    const destinationToken = getTokenByKeyFromMap(tokenMap, destinationTokenKey);
+
+    if (!amount) return [{ amount: 'Invalid amount' }, null];
+    if (!token) return [{ originTokenKey: 'Origin token is required' }, null];
+    if (!destinationToken) return [{ destinationTokenKey: 'Destination token is required' }, null];
+
+    // Use form recipient if set, otherwise fallback to connected wallet for destination chain
+    const { address: connectedDestAddress } = getAccountAddressAndPubKey(
+      warpCore.multiProvider,
+      destinationToken.chainName,
+      accounts,
+    );
+    const recipient = formRecipient || connectedDestAddress || '';
+
+    if (!recipient) return [{ amount: 'Invalid recipient' }, null];
+
+    // Early route check using collateral groups - validates origin token can reach destination token
+    if (!checkTokenHasRoute(token, destinationToken, collateralGroups)) {
+      return [{ destinationTokenKey: 'Route is not supported' }, null];
+    }
+
+    const destination = destinationToken.chainName;
+
+    if (routerAddressesByChainMap[destination]?.[normalizeAddress(recipient)]) {
+      return [{ recipient: 'Warp Route address is not valid as recipient' }, null];
+    }
+
+    const { address: sender, publicKey: senderPubKey } = getAccountAddressAndPubKey(
+      warpCore.multiProvider,
+      token.chainName,
+      accounts,
+    );
+
+    const amountWei = toWei(amount, token.decimals);
+    const transferToken = await getTransferToken(
+>>>>>>> origin/main
       warpCore,
       token,
       destinationToken,
       amountWei,
       recipient,
       sender,
+<<<<<<< HEAD
     );
     const multiCollateralLimit = isMultiCollateralLimitExceeded(token, destination, amountWei);
 
@@ -877,17 +1399,65 @@ async function validateForm(
         },
         null,
       ];
+=======
+      defaultMultiCollateralRoutes,
+    );
+
+    // This should not happen since we already checked the route above, but keep as safety check
+    const connectedDestinationToken = findConnectedDestinationToken(
+      transferToken,
+      destinationToken,
+    );
+    if (!connectedDestinationToken) {
+      return [{ destinationTokenKey: 'Route is not supported' }, null];
+>>>>>>> origin/main
     }
 
+    const multiCollateralLimit = isMultiCollateralLimitExceeded(
+      token,
+      connectedDestinationToken,
+      amountWei,
+    );
+
+    if (multiCollateralLimit) {
+      return [
+        {
+          amount: `Transfer limit is ${fromWei(multiCollateralLimit.toString(), token.decimals)} ${token.symbol}`,
+        },
+        null,
+      ];
+    }
+
+    const originTokenAmount = transferToken.amount(amountWei);
     const result = await warpCore.validateTransfer({
+<<<<<<< HEAD
       originTokenAmount: transferToken.amount(amountWei),
+=======
+      originTokenAmount,
+>>>>>>> origin/main
       destination,
       recipient,
       sender: sender || '',
       senderPubKey: await senderPubKey,
+      destinationToken: connectedDestinationToken,
     });
 
+<<<<<<< HEAD
     if (!isNullish(result)) return [result, null];
+=======
+    if (!isNullish(result)) {
+      const enriched = await enrichBalanceError(
+        warpCore,
+        result,
+        originTokenAmount,
+        destination,
+        sender || '',
+        recipient,
+        connectedDestinationToken,
+      );
+      return [enriched, null];
+    }
+>>>>>>> origin/main
 
     if (transferToken.addressOrDenom === token.addressOrDenom) return [null, null];
 
@@ -897,8 +1467,57 @@ async function validateForm(
     let errorMsg = errorToString(error, 40);
     const fullError = `${errorMsg} ${error.message}`;
     if (insufficientFundsErrMsg.test(fullError) || emptyAccountErrMsg.test(fullError)) {
-      errorMsg = 'Insufficient funds for gas fees';
+      const originToken = getTokenByKeyFromMap(tokenMap, values.originTokenKey);
+      const chainMetadata = originToken
+        ? warpCore.multiProvider.tryGetChainMetadata(originToken.chainName)
+        : null;
+      const symbol = chainMetadata?.nativeToken?.symbol || 'funds';
+      errorMsg = `Insufficient ${symbol} for gas fees`;
     }
     return [{ form: errorMsg }, null];
   }
+}
+
+const igpErrorPattern = /^Insufficient (\S+) for interchain gas$/;
+
+async function enrichBalanceError(
+  warpCore: WarpCore,
+  result: Record<string, string>,
+  originTokenAmount: TokenAmount,
+  destination: string,
+  sender: string,
+  recipient: string,
+  destinationToken: Token,
+): Promise<Record<string, string>> {
+  if (!result.amount) return result;
+  const igpErrorMatch = igpErrorPattern.exec(result.amount);
+  if (!igpErrorMatch) return result;
+
+  try {
+    const { igpQuote } = await warpCore.getInterchainTransferFee({
+      originTokenAmount,
+      destination,
+      sender,
+      recipient,
+      destinationToken,
+    });
+
+    // Symbol in validateTransfer message is sourced from igpQuote.token.symbol.
+    if (igpErrorMatch[1] !== igpQuote.token.symbol) return result;
+
+    const balance = originTokenAmount.token.isFungibleWith(igpQuote.token)
+      ? await originTokenAmount.token.getBalance(warpCore.multiProvider, sender)
+      : await igpQuote.token.getBalance(warpCore.multiProvider, sender);
+    const deficit = igpQuote.amount - balance.amount;
+    if (deficit > 0n) {
+      const deficitAmount = new TokenAmount(deficit, igpQuote.token);
+      return {
+        ...result,
+        amount: `Insufficient ${igpQuote.token.symbol} for interchain gas (need ${deficitAmount.getDecimalFormattedAmount().toFixed(4)} more ${igpQuote.token.symbol})`,
+      };
+    }
+  } catch (e) {
+    logger.warn('Failed to enrich balance error', e);
+  }
+  return result;
 }

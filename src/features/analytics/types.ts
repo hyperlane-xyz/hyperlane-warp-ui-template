@@ -1,5 +1,8 @@
+<<<<<<< HEAD
 import { TokenStandard } from '@hyperlane-xyz/sdk';
 
+=======
+>>>>>>> origin/main
 import { ProtocolType } from '@hyperlane-xyz/utils';
 
 export enum EVENT_NAME {
@@ -10,6 +13,10 @@ export enum EVENT_NAME {
   TRANSACTION_SUBMISSION_FAILED = 'Transaction Submission Failed',
   WALLET_CONNECTION_INITIATED = 'Wallet Connection Initiated',
   WALLET_CONNECTED = 'Wallet Connected',
+<<<<<<< HEAD
+=======
+  UNSUPPORTED_ROUTE_SELECTED = 'Unsupported Route Selected',
+>>>>>>> origin/main
 }
 
 export type AllowedPropertyValues = string | number | boolean | null;
@@ -19,6 +26,7 @@ export type EventProperties = {
   [EVENT_NAME.PAGE_VIEWED]: Record<string, never>;
   [EVENT_NAME.CHAIN_SELECTED]: {
     chainType: string;
+<<<<<<< HEAD
     chainId: ChainId;
     chainName: string;
     previousChainId: ChainId;
@@ -28,6 +36,17 @@ export type EventProperties = {
     tokenSymbol: string;
     tokenAddress: string;
     standard: TokenStandard;
+=======
+    chainId: ChainId | null;
+    chainName: string | null;
+    previousChainId: ChainId | null;
+    previousChainName: string | null;
+  };
+  [EVENT_NAME.TOKEN_SELECTED]: {
+    tokenType: string;
+    originToken: string;
+    destinationToken: string;
+>>>>>>> origin/main
     origin: string;
     originChainId: ChainId;
     destination: string;
@@ -59,4 +78,15 @@ export type EventProperties = {
     recipient: string;
     error: string;
   };
+<<<<<<< HEAD
+=======
+  [EVENT_NAME.UNSUPPORTED_ROUTE_SELECTED]: {
+    originToken: string;
+    destinationToken: string;
+    origin: string;
+    destination: string;
+    originChainId: ChainId;
+    destinationChainId: ChainId;
+  };
+>>>>>>> origin/main
 };

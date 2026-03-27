@@ -8,6 +8,10 @@ import '@interchain-ui/react/styles';
 import { GatewayApiClient } from '@radixdlt/babylon-gateway-api-sdk';
 import { RadixDappToolkit, RadixNetwork } from '@radixdlt/radix-dapp-toolkit';
 import { PropsWithChildren } from 'react';
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/main
 import { APP_NAME } from '../../../consts/app';
 
 export function RadixWalletContext({ children }: PropsWithChildren<unknown>) {

@@ -1,10 +1,18 @@
+<<<<<<< HEAD
 import { Token, WarpCore, WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
 import { HexString, toWei } from '@hyperlane-xyz/utils';
+=======
+import { IToken, Token, WarpCore, WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
+import { HexString, ProtocolType, toWei } from '@hyperlane-xyz/utils';
+>>>>>>> origin/main
 import { getAccountAddressAndPubKey, useAccounts, useDebounce } from '@hyperlane-xyz/widgets';
 import { useQuery } from '@tanstack/react-query';
+
+import { defaultMultiCollateralRoutes } from '../../consts/defaultMultiCollateralRoutes';
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { useWarpCore } from '../tokens/hooks';
+<<<<<<< HEAD
 import { getLowestFeeTransferToken } from './fees';
 import { TransferFormValues } from './types';
 
@@ -14,11 +22,29 @@ export function useFeeQuotes(
   { destination, amount, recipient, tokenIndex }: TransferFormValues,
   enabled: boolean,
   originToken: Token | undefined,
+=======
+import { findConnectedDestinationToken } from '../tokens/utils';
+import { getTransferToken } from './fees';
+import { TransferFormValues } from './types';
+
+const FEE_QUOTE_REFRESH_INTERVAL = 30_000; // 30s
+const EVM_FEE_QUOTE_FALLBACK_ADDRESS = '0x000000000000000000000000000000000000dEaD';
+
+export function useFeeQuotes(
+  { originTokenKey, destinationTokenKey, amount, recipient: formRecipient }: TransferFormValues,
+  enabled: boolean,
+  originToken: Token | undefined,
+  destinationToken: IToken | undefined,
+>>>>>>> origin/main
   searchForLowestFee: boolean = false,
 ) {
   const multiProvider = useMultiProvider();
   const warpCore = useWarpCore();
   const debouncedAmount = useDebounce(amount, 500);
+<<<<<<< HEAD
+=======
+  const destination = destinationToken?.chainName;
+>>>>>>> origin/main
 
   const { accounts } = useAccounts(multiProvider);
   const { address: sender, publicKey: senderPubKey } = getAccountAddressAndPubKey(
@@ -27,7 +53,33 @@ export function useFeeQuotes(
     accounts,
   );
 
+<<<<<<< HEAD
   const isFormValid = !!(originToken && destination && debouncedAmount && recipient && sender);
+=======
+  const isEvmToEvmRoute =
+    originToken?.protocol === ProtocolType.Ethereum &&
+    destinationToken?.protocol === ProtocolType.Ethereum;
+  const effectiveSender = sender || (isEvmToEvmRoute ? EVM_FEE_QUOTE_FALLBACK_ADDRESS : undefined);
+
+  // Get effective recipient (form value or fallback to connected wallet for destination)
+  const { address: connectedDestAddress } = getAccountAddressAndPubKey(
+    multiProvider,
+    destinationToken?.chainName,
+    accounts,
+  );
+  const recipient =
+    formRecipient ||
+    connectedDestAddress ||
+    (isEvmToEvmRoute ? EVM_FEE_QUOTE_FALLBACK_ADDRESS : '');
+
+  const isFormValid = !!(
+    originToken &&
+    destination &&
+    debouncedAmount &&
+    recipient &&
+    effectiveSender
+  );
+>>>>>>> origin/main
   const shouldFetch = enabled && isFormValid;
 
   const { isLoading, isError, data, isFetching } = useQuery({
@@ -35,9 +87,15 @@ export function useFeeQuotes(
     // eslint-disable-next-line @tanstack/query/exhaustive-deps
     queryKey: [
       'useFeeQuotes',
+<<<<<<< HEAD
       tokenIndex,
       destination,
       sender,
+=======
+      originTokenKey,
+      destinationTokenKey,
+      effectiveSender,
+>>>>>>> origin/main
       senderPubKey,
       debouncedAmount,
       recipient,
@@ -46,8 +104,14 @@ export function useFeeQuotes(
       fetchFeeQuotes(
         warpCore,
         originToken,
+<<<<<<< HEAD
         destination,
         sender,
+=======
+        destinationToken,
+        destination,
+        effectiveSender,
+>>>>>>> origin/main
         senderPubKey,
         debouncedAmount,
         recipient,
@@ -60,9 +124,13 @@ export function useFeeQuotes(
   return { isLoading: isLoading || isFetching, isError, fees: data };
 }
 
-async function fetchFeeQuotes(
+export async function fetchFeeQuotes(
   warpCore: WarpCore,
   originToken: Token | undefined,
+<<<<<<< HEAD
+=======
+  destinationToken: IToken | undefined,
+>>>>>>> origin/main
   destination?: ChainName,
   sender?: Address,
   senderPubKey?: Promise<HexString>,
@@ -70,6 +138,7 @@ async function fetchFeeQuotes(
   recipient?: string,
   searchForLowestFee: boolean = false,
 ): Promise<WarpCoreFeeEstimate | null> {
+<<<<<<< HEAD
   if (!originToken || !destination || !sender || !originToken || !amount || !recipient) return null;
   let transferToken = originToken;
   const amountWei = toWei(amount, transferToken.decimals);
@@ -98,4 +167,59 @@ async function fetchFeeQuotes(
     senderPubKey: await senderPubKey,
     recipient: recipient,
   });
+=======
+  if (!originToken || !destinationToken || !destination || !sender || !amount || !recipient)
+    return null;
+
+  let transferToken = originToken;
+  const amountWei = toWei(amount, transferToken.decimals);
+
+  // when true attempt to get route with lowest fee (or use default if configured)
+  if (searchForLowestFee) {
+    transferToken = await getTransferToken(
+      warpCore,
+      originToken,
+      destinationToken,
+      amountWei,
+      recipient,
+      sender,
+      defaultMultiCollateralRoutes,
+    );
+  }
+
+  const originTokenAmount = transferToken.amount(amountWei);
+  const connectedDestinationToken = findConnectedDestinationToken(transferToken, destinationToken);
+  if (!connectedDestinationToken) return null;
+  const isEvmToEvmRoute =
+    originToken.protocol === ProtocolType.Ethereum &&
+    destinationToken.protocol === ProtocolType.Ethereum;
+  const senderPubKeyValue = await senderPubKey;
+
+  logger.debug('Fetching fee quotes');
+  try {
+    return await warpCore.estimateTransferRemoteFees({
+      originTokenAmount,
+      destination,
+      sender,
+      senderPubKey: senderPubKeyValue,
+      recipient: recipient,
+      destinationToken: connectedDestinationToken,
+    });
+  } catch (error) {
+    // Connected wallets switch fee simulation from a neutral fallback sender to the user's real
+    // account. Some RPC/wallet combinations intermittently fail estimateGas in that mode (e.g.
+    // sender-specific state checks), which makes fees disappear in the UI.
+    // Retry with the pre-connect fallback sender so fee display remains stable.
+    // This only affects quote estimation; transfer submission still uses the real connected account.
+    if (!isEvmToEvmRoute || sender === EVM_FEE_QUOTE_FALLBACK_ADDRESS) throw error;
+    logger.warn('Fee quote failed with connected sender, retrying with fallback sender', error);
+    return warpCore.estimateTransferRemoteFees({
+      originTokenAmount,
+      destination,
+      sender: EVM_FEE_QUOTE_FALLBACK_ADDRESS,
+      recipient: recipient,
+      destinationToken: connectedDestinationToken,
+    });
+  }
+>>>>>>> origin/main
 }

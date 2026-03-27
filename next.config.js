@@ -155,21 +155,6 @@ const nextConfig = {
       },
     },
   },
-  turbopack: {
-    rules: {
-      '*.yaml': {
-        loaders: ['yaml-loader'],
-        as: '*.js',
-      },
-      '*.yml': {
-        loaders: ['yaml-loader'],
-        as: '*.js',
-      },
-    },
-    resolveAlias: {
-      pino: './src/utils/pino-noop.js',
-    },
-  },
 
   async headers() {
     return [

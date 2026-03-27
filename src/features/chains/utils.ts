@@ -8,6 +8,7 @@ import {
 } from '@hyperlane-xyz/sdk';
 import { toTitleCase, trimToLength } from '@hyperlane-xyz/utils';
 import { ChainSearchMenuProps } from '@hyperlane-xyz/widgets';
+
 import { config } from '../../consts/config';
 
 export function getChainDisplayName(

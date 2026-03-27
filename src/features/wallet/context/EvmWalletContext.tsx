@@ -1,6 +1,7 @@
 import { MultiProtocolProvider } from '@hyperlane-xyz/sdk';
 import { getWagmiChainConfigs } from '@hyperlane-xyz/widgets';
 import { RainbowKitProvider, connectorsForWallets, lightTheme } from '@rainbow-me/rainbowkit';
+
 import '@rainbow-me/rainbowkit/styles.css';
 import {
   argentWallet,
@@ -16,6 +17,7 @@ import {
 import { PropsWithChildren, useMemo } from 'react';
 import { createClient, fallback, http } from 'viem';
 import { WagmiProvider, createConfig } from 'wagmi';
+
 import { APP_NAME } from '../../../consts/app';
 import { config } from '../../../consts/config';
 import { Color } from '../../../styles/Color';

@@ -46,6 +46,18 @@ NEXT_PUBLIC_WALLET_CONNECT_ID=<projectId> pnpm run dev
 ### Test
 
 ```sh
+# Run unit tests
+pnpm test
+
+# Run E2E tests (reuses running dev server, or starts one via Playwright)
+pnpm test:e2e
+
+# Run E2E tests with headed browser and slow motion for debugging
+SLOW_MO=2000 pnpm test:e2e --headed --workers=1
+
+# Run a single E2E test file with headed browser
+SLOW_MO=2000 pnpm test:e2e --headed --workers=1 tests/wallet-connect/protocol-wallet-modals.spec.ts
+
 # Lint check code
 pnpm run lint
 
@@ -66,6 +78,105 @@ pnpm run prettier
 # Delete build artifacts to start fresh
 pnpm run clean
 ```
+
+### Local package linking to hyperlane-monorepo
+
+If you have to make changes to the widgets package to edit e.g. the Connect Button or other components linking
+the widgets package locally to test it is necessary. To do that you can run the following commands
+
+```sh
+# Link monorepo packages with the warp-ui
+pnpm link:monorepo
+# Unlink packages again after testing
+pnpm unlink:monorepo
+```
+
+## Embed Widget
+
+The Warp UI can be embedded as an iframe on any website, giving your users a bridge experience directly in your app.
+
+### Setup
+
+Once deployed (e.g., to Vercel), the embed is available at `/embed`:
+
+```html
+<iframe
+  src="https://your-domain.com/embed"
+  width="420"
+  height="600"
+  style="border: none; border-radius: 12px;"
+/>
+```
+
+You can pre-select transfer routes using query params:
+
+```text
+/embed?origin=ethereum&destination=arbitrum&originToken=USDC&destinationToken=USDC
+```
+
+### Theme Customization
+
+Customize colors via URL params (hex values without `#`):
+
+| Param        | Description                                    | Default (light) |
+| ------------ | ---------------------------------------------- | --------------- |
+| `accent`     | Primary/accent color (buttons, headers, links) | `9A0DFF`        |
+| `bg`         | Page background                                | transparent     |
+| `card`       | Card/surface background                        | `ffffff`        |
+| `text`       | Text color                                     | `010101`        |
+| `buttonText` | Button text color                              | `ffffff`        |
+| `border`     | Border color                                   | `BFBFBF40`      |
+| `error`      | Error state color                              | `dc2626`        |
+| `mode`       | `dark` or `light` — applies preset defaults    | `light`         |
+
+**Examples:**
+
+```html
+<!-- Blue accent -->
+<iframe src="https://your-domain.com/embed?accent=3b82f6" ... />
+
+<!-- Dark mode with green accent -->
+<iframe src="https://your-domain.com/embed?mode=dark&accent=22c55e" ... />
+
+<!-- Fully custom theme -->
+<iframe
+  src="https://your-domain.com/embed?bg=0f172a&card=1e293b&text=e2e8f0&accent=8b5cf6&buttonText=ffffff&border=334155"
+  ...
+/>
+```
+
+### PostMessage Events
+
+The embed page sends events to the parent window via `postMessage`:
+
+```js
+window.addEventListener('message', (event) => {
+  if (event.data?.type !== 'hyperlane-warp-widget') return;
+
+  const { type, payload } = event.data.event;
+  if (type === 'ready') {
+    console.log('Widget ready at', payload.timestamp);
+  }
+});
+```
+
+### Solving CSP Issues
+
+If your site has a Content Security Policy that blocks iframes, you'll need to allow the Warp UI origin in your CSP `frame-src` directive:
+
+```text
+Content-Security-Policy: frame-src https://your-warp-ui-domain.com;
+```
+
+For sites where you can't modify CSP headers (e.g., WordPress, Shopify), check if the platform has an iframe allowlist setting, or use a reverse proxy to serve the embed from your own domain.
+
+If you self-host the Warp UI and want to restrict which sites can embed it, set the `NEXT_PUBLIC_EMBED_ALLOWED_ORIGINS` environment variable:
+
+```text
+NEXT_PUBLIC_EMBED_ALLOWED_ORIGINS=https://app-a.com https://app-b.com
+```
+
+If not set, any site can embed the widget (default: `*`).
 
 ## Deployment
 

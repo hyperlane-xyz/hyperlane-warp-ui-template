@@ -5,6 +5,7 @@ import { Chain } from '@starknet-react/chains';
 import { StarknetConfig, publicProvider, voyager } from '@starknet-react/core';
 import { PropsWithChildren, useMemo } from 'react';
 import { InjectedConnector } from 'starknetkit/injected';
+
 import { useMultiProvider } from '../../chains/hooks';
 
 const initialChain = chainMetadataToStarknetChain(starknetsepolia);

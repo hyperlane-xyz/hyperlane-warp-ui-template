@@ -1,5 +1,5 @@
-import { MultiProtocolProvider } from '@hyperlane-xyz/sdk';
-import { getWagmiChainConfigs } from '@hyperlane-xyz/widgets';
+import type { MultiProviderAdapter as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProviderAdapter';
+import { getWagmiChainConfigs } from '@hyperlane-xyz/widgets/walletIntegrations/ethereum';
 import { RainbowKitProvider, connectorsForWallets, lightTheme } from '@rainbow-me/rainbowkit';
 
 import '@rainbow-me/rainbowkit/styles.css';

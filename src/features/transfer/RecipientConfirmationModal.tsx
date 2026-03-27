@@ -1,4 +1,8 @@
-import { getAccountAddressAndPubKey, Modal, useAccounts } from '@hyperlane-xyz/widgets';
+import { Modal } from '@hyperlane-xyz/widgets/layout/Modal';
+import {
+  getAccountAddressAndPubKey,
+  useAccounts,
+} from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import { useFormikContext } from 'formik';
 
 import { SolidButton } from '../../components/buttons/SolidButton';

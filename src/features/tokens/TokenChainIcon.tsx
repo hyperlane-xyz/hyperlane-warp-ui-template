@@ -1,4 +1,4 @@
-import { IToken } from '@hyperlane-xyz/sdk';
+import type { IToken } from '@hyperlane-xyz/sdk/token/IToken';
 
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import { TokenIcon } from '../../components/icons/TokenIcon';

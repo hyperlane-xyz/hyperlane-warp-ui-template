@@ -1,4 +1,4 @@
-import { ChainMap } from '@hyperlane-xyz/sdk';
+import type { ChainMap } from '@hyperlane-xyz/sdk/types';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 
 import { ADDRESS_BLACKLIST } from './blacklist';

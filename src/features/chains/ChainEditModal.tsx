@@ -1,5 +1,6 @@
-import { ChainMetadata } from '@hyperlane-xyz/sdk';
-import { ChainDetailsMenu, Modal } from '@hyperlane-xyz/widgets';
+import type { ChainMetadata } from '@hyperlane-xyz/sdk/metadata/chainMetadataTypes';
+import { ChainDetailsMenu } from '@hyperlane-xyz/widgets/chains/ChainDetailsMenu';
+import { Modal } from '@hyperlane-xyz/widgets/layout/Modal';
 import { useCallback, useEffect, useRef } from 'react';
 
 import { ModalHeader } from '../../components/layout/ModalHeader';

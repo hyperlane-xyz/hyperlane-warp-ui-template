@@ -1,13 +1,11 @@
 import { isAbacusWorksChain } from '@hyperlane-xyz/registry';
-import {
-  ChainMap,
-  ChainMetadata,
-  ChainStatus,
-  MultiProtocolProvider,
-  WarpCore,
-} from '@hyperlane-xyz/sdk';
+import type { ChainMetadata } from '@hyperlane-xyz/sdk/metadata/chainMetadataTypes';
+import { ChainStatus } from '@hyperlane-xyz/sdk/metadata/chainMetadataTypes';
+import type { MultiProviderAdapter as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProviderAdapter';
+import type { ChainMap } from '@hyperlane-xyz/sdk/types';
+import type { WarpCore } from '@hyperlane-xyz/sdk/warp/WarpCore';
 import { toTitleCase, trimToLength } from '@hyperlane-xyz/utils';
-import { ChainSearchMenuProps } from '@hyperlane-xyz/widgets';
+import type { ChainSearchMenuProps } from '@hyperlane-xyz/widgets/chains/ChainSearchMenu';
 
 import { config } from '../../consts/config';
 
@@ -42,7 +40,7 @@ export function getNumRoutesWithSelectedChain(
   selectedChain: ChainName,
   isSelectedChainOrigin: boolean,
 ): ChainSearchMenuProps['customListItemField'] {
-  const multiProvider = warpCore.multiProvider;
+  const multiProvider = warpCore.multiProvider as MultiProtocolProvider;
   const chains = multiProvider.metadata;
   const selectedChainDisplayName = trimToLength(
     getChainDisplayName(multiProvider, selectedChain, true),

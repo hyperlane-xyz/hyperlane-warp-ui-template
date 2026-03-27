@@ -1,6 +1,9 @@
-import type { ChainName } from '@hyperlane-xyz/sdk';
+import type { ChainName } from '@hyperlane-xyz/sdk/types';
 import { fromWei, normalizeAddress } from '@hyperlane-xyz/utils';
-import { AccountList, RefreshIcon, SpinnerIcon, useAccounts } from '@hyperlane-xyz/widgets';
+import { RefreshIcon } from '@hyperlane-xyz/widgets/icons/Refresh';
+import { SpinnerIcon } from '@hyperlane-xyz/widgets/icons/Spinner';
+import { AccountList } from '@hyperlane-xyz/widgets/walletIntegrations/AccountList';
+import { useAccounts } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
@@ -22,7 +25,7 @@ import {
 } from '../messages/useMergedTransferHistory';
 import { useMessageHistory } from '../messages/useMessageHistory';
 import { RouterAddressInfo, useStore } from '../store';
-import { tryFindToken, useWarpCore } from '../tokens/hooks';
+import { tryFindTokenInTokens, useTokens } from '../tokens/hooks';
 import { TokenChainIcon } from '../tokens/TokenChainIcon';
 import { TransfersDetailsModal } from '../transfer/TransfersDetailsModal';
 import { TransferContext, TransferStatus } from '../transfer/types';
@@ -91,7 +94,7 @@ export function SideBarMenu({
   );
 
   // Merge local transfers with API messages
-  const warpCore = useWarpCore();
+  const tokens = useTokens();
   const allMergedTransfers = useMergedTransferHistory(transfers, messages);
 
   // Filter out API messages with unknown tokens
@@ -101,9 +104,9 @@ export function SideBarMenu({
         if (item.type === TransferItemType.Local) return true;
         const originChain = multiProvider.tryGetChainName(item.data.originDomainId);
         if (!originChain) return false;
-        return !!tryFindToken(warpCore, originChain, item.data.sender);
+        return !!tryFindTokenInTokens(tokens, originChain, item.data.sender);
       }),
-    [allMergedTransfers, multiProvider, warpCore],
+    [allMergedTransfers, multiProvider, tokens],
   );
 
   // Infinite scroll handler
@@ -126,7 +129,7 @@ export function SideBarMenu({
       setSelectedTransfer(item.data);
     } else {
       setSelectedTransfer(
-        messageToTransferContext(item.data, multiProvider, warpCore, routerAddressesByChainMap),
+        messageToTransferContext(item.data, multiProvider, tokens, routerAddressesByChainMap),
       );
     }
     setIsModalOpen(true);
@@ -232,7 +235,7 @@ export function SideBarMenu({
                       item={item}
                       onClick={() => handleItemClick(item)}
                       multiProvider={multiProvider}
-                      warpCore={warpCore}
+                      tokens={tokens}
                       routerAddressesByChainMap={routerAddressesByChainMap}
                       nowMs={nowMs}
                     />
@@ -271,14 +274,14 @@ function TransferSummary({
   item,
   onClick,
   multiProvider,
-  warpCore,
+  tokens,
   routerAddressesByChainMap,
   nowMs,
 }: {
   item: TransferItem;
   onClick: () => void;
   multiProvider: ReturnType<typeof useMultiProvider>;
-  warpCore: ReturnType<typeof useWarpCore>;
+  tokens: ReturnType<typeof useTokens>;
   routerAddressesByChainMap: Record<ChainName, Record<string, RouterAddressInfo>>;
   nowMs: number;
 }) {
@@ -290,15 +293,15 @@ function TransferSummary({
         destChain: t.destination,
         amount: t.amount,
         status: t.status,
-        token: tryFindToken(warpCore, t.origin, t.originTokenAddressOrDenom),
-        destToken: tryFindToken(warpCore, t.destination, t.destTokenAddressOrDenom),
+        token: tryFindTokenInTokens(tokens, t.origin, t.originTokenAddressOrDenom),
+        destToken: tryFindTokenInTokens(tokens, t.destination, t.destTokenAddressOrDenom),
         timestamp: t.timestamp,
       };
     }
     const msg = item.data;
     const originChain = multiProvider.tryGetChainName(msg.originDomainId) || '';
     const destChain = multiProvider.tryGetChainName(msg.destinationDomainId) || '';
-    const token = tryFindToken(warpCore, originChain, msg.sender);
+    const token = tryFindTokenInTokens(tokens, originChain, msg.sender);
 
     let amount = '';
     if (msg.warpTransfer?.amount && token) {
@@ -321,10 +324,10 @@ function TransferSummary({
           ? TransferStatus.Delivered
           : TransferStatus.ConfirmedTransfer,
       token,
-      destToken: tryFindToken(warpCore, destChain, msg.recipient),
+      destToken: tryFindTokenInTokens(tokens, destChain, msg.recipient),
       timestamp: msg.origin.timestamp,
     };
-  }, [item.type, item.data, multiProvider, warpCore, routerAddressesByChainMap]);
+  }, [item.type, item.data, multiProvider, tokens, routerAddressesByChainMap]);
 
   return (
     <button onClick={onClick} className={`${styles.btn} justify-between py-3`}>

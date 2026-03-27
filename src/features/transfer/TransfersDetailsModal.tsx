@@ -1,17 +1,16 @@
 import { ProtocolType } from '@hyperlane-xyz/utils';
+import { CopyButton } from '@hyperlane-xyz/widgets/components/CopyButton';
+import { SpinnerIcon } from '@hyperlane-xyz/widgets/icons/Spinner';
+import { WideChevronIcon } from '@hyperlane-xyz/widgets/icons/WideChevron';
+import { Modal } from '@hyperlane-xyz/widgets/layout/Modal';
+import { MessageTimeline } from '@hyperlane-xyz/widgets/messages/MessageTimeline';
+import type { StageTimings } from '@hyperlane-xyz/widgets/messages/types';
+import { MessageStage, MessageStatus } from '@hyperlane-xyz/widgets/messages/types';
+import { useTimeout } from '@hyperlane-xyz/widgets/utils/timeout';
 import {
-  CopyButton,
-  MessageStage,
-  MessageStatus,
-  MessageTimeline,
-  Modal,
-  SpinnerIcon,
-  type StageTimings,
   useAccountForChain,
-  useTimeout,
   useWalletDetails,
-  WideChevronIcon,
-} from '@hyperlane-xyz/widgets';
+} from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -28,7 +27,7 @@ import { getChainDisplayName, hasPermissionlessChain } from '../chains/utils';
 import { useMessageDeliveryStatus } from '../messages/useMessageDeliveryStatus';
 import { useOriginFinality } from '../messages/useOriginFinality';
 import { useStore } from '../store';
-import { tryFindToken, useWarpCore } from '../tokens/hooks';
+import { tryFindTokenInTokens, useTokens } from '../tokens/hooks';
 import { TokenChainIcon } from '../tokens/TokenChainIcon';
 import { TransferContext, TransferStatus } from './types';
 import {
@@ -76,7 +75,7 @@ export function TransfersDetailsModal({
   } = transfer || {};
 
   const multiProvider = useMultiProvider();
-  const warpCore = useWarpCore();
+  const tokens = useTokens();
   const transfers = useStore((s) => s.transfers);
   const updateTransferStatus = useStore((s) => s.updateTransferStatus);
 
@@ -125,8 +124,8 @@ export function TransfersDetailsModal({
 
   const isAccountReady = !!account?.isReady;
   const connectorName = walletDetails.name || 'wallet';
-  const token = tryFindToken(warpCore, origin, originTokenAddressOrDenom);
-  const destToken = tryFindToken(warpCore, destination, destTokenAddressOrDenom);
+  const token = tryFindTokenInTokens(tokens, origin, originTokenAddressOrDenom);
+  const destToken = tryFindTokenInTokens(tokens, destination, destTokenAddressOrDenom);
   const isPermissionlessRoute = hasPermissionlessChain(multiProvider, [destination, origin]);
   const isFinal = isSent || isFailed;
   const currentStatus = isDelivered ? TransferStatus.Delivered : status;

@@ -1,5 +1,5 @@
-import { ChainName } from '@hyperlane-xyz/sdk';
-import { PencilIcon } from '@hyperlane-xyz/widgets';
+import type { ChainName } from '@hyperlane-xyz/sdk/types';
+import { PencilIcon } from '@hyperlane-xyz/widgets/icons/Pencil';
 import { useMemo } from 'react';
 
 import { ChainLogo } from '../../components/icons/ChainLogo';

@@ -1,6 +1,9 @@
-import { MultiProtocolProvider, Token, WarpCore } from '@hyperlane-xyz/sdk';
+import type { MultiProviderAdapter as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProviderAdapter';
+import type { Token } from '@hyperlane-xyz/sdk/token/Token';
+import type { WarpCore } from '@hyperlane-xyz/sdk/warp/WarpCore';
 import { KnownProtocolType, objLength } from '@hyperlane-xyz/utils';
-import { AccountInfo, getAccountAddressAndPubKey } from '@hyperlane-xyz/widgets';
+import { getAccountAddressAndPubKey } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
+import type { AccountInfo } from '@hyperlane-xyz/widgets/walletIntegrations/types';
 import { track } from '@vercel/analytics';
 
 import { config } from '../../consts/config';
@@ -84,8 +87,9 @@ export function trackTransactionFailedEvent(
   const token = overrideToken || warpCore.tokens.find((t) => getTokenKey(t) === originTokenKey);
   if (!token) return;
 
+  const multiProvider = warpCore.multiProvider as MultiProtocolProvider;
   const origin = token.chainName;
-  const { address } = getAccountAddressAndPubKey(warpCore.multiProvider, origin, accounts);
+  const { address } = getAccountAddressAndPubKey(multiProvider, origin, accounts);
 
   // Find destination token to get destination chain
   const destToken = warpCore.tokens.find((t) => getTokenKey(t) === destinationTokenKey);
@@ -94,14 +98,14 @@ export function trackTransactionFailedEvent(
 
   // Get recipient (form value or fallback to connected wallet for destination)
   const { address: connectedDestAddress } = getAccountAddressAndPubKey(
-    warpCore.multiProvider,
+    multiProvider,
     destination,
     accounts,
   );
   const recipient = formRecipient || connectedDestAddress || '';
 
-  const originChainId = warpCore.multiProvider.tryGetChainId(origin);
-  const destinationChainId = destination ? warpCore.multiProvider.tryGetChainId(destination) : null;
+  const originChainId = multiProvider.tryGetChainId(origin);
+  const destinationChainId = destination ? multiProvider.tryGetChainId(destination) : null;
   return trackEvent(EVENT_NAME.TRANSACTION_SUBMISSION_FAILED, {
     amount,
     chains: `${origin}|${originChainId}|${destination}|${destinationChainId}`,

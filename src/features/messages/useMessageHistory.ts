@@ -1,4 +1,4 @@
-import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk';
+import type { MultiProviderAdapter as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProviderAdapter';
 import {
   assert,
   bytesToProtocolAddress,

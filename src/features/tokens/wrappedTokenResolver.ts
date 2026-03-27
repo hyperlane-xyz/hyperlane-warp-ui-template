@@ -1,10 +1,6 @@
-import {
-  IHypTokenAdapter,
-  LOCKBOX_STANDARDS,
-  MultiProtocolProvider,
-  Token,
-  TokenStandard,
-} from '@hyperlane-xyz/sdk';
+import type { MultiProviderAdapter as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProviderAdapter';
+import type { Token } from '@hyperlane-xyz/sdk/token/Token';
+import { LOCKBOX_STANDARDS, TokenStandard } from '@hyperlane-xyz/sdk/token/TokenStandard';
 import { ProtocolType, normalizeAddress } from '@hyperlane-xyz/utils';
 
 import { logger } from '../../utils/logger';
@@ -39,7 +35,7 @@ export async function resolveWrappedCollateralTokens(
 
   const resolvePromises = eligibleTokens.map(async (token) => {
     try {
-      const adapter = token.getHypAdapter(multiProvider) as IHypTokenAdapter<unknown> & {
+      const adapter = token.getHypAdapter(multiProvider) as {
         getWrappedTokenAddress?: () => Promise<string>;
       };
       if (!adapter.getWrappedTokenAddress) return;

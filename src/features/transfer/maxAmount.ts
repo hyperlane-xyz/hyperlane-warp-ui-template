@@ -1,14 +1,20 @@
-import { MultiProtocolProvider, Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
+import type { MultiProviderAdapter as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProviderAdapter';
+import type { Token } from '@hyperlane-xyz/sdk/token/Token';
+import { TokenAmount } from '@hyperlane-xyz/sdk/token/TokenAmount';
+import type { ChainName } from '@hyperlane-xyz/sdk/types';
+import type { WarpCore } from '@hyperlane-xyz/sdk/warp/WarpCore';
 import { KnownProtocolType } from '@hyperlane-xyz/utils';
-import { AccountInfo, getAccountAddressAndPubKey } from '@hyperlane-xyz/widgets';
+import { getAccountAddressAndPubKey } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
+import type { AccountInfo } from '@hyperlane-xyz/widgets/walletIntegrations/types';
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
 
 import { defaultMultiCollateralRoutes } from '../../consts/defaultMultiCollateralRoutes';
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
+import { getSdkToken } from '../hyperlane/sdkTokenRuntime';
 import { isMultiCollateralLimitExceeded } from '../limits/utils';
-import { useWarpCore } from '../tokens/hooks';
+import { useStore } from '../store';
 import { findConnectedDestinationToken, findRouteToken } from '../tokens/utils';
 import { getTransferToken } from './fees';
 
@@ -22,10 +28,14 @@ interface FetchMaxParams {
 
 export function useFetchMaxAmount() {
   const multiProvider = useMultiProvider();
-  const warpCore = useWarpCore();
+  const ensureWarpRuntime = useStore((s) => s.ensureWarpRuntime);
 
   const mutation = useMutation({
-    mutationFn: (params: FetchMaxParams) => fetchMaxAmount(multiProvider, warpCore, params),
+    mutationFn: async (params: FetchMaxParams) => {
+      const warpCore = await ensureWarpRuntime();
+      if (!warpCore) return undefined;
+      return fetchMaxAmount(multiProvider, warpCore, params);
+    },
   });
 
   return { fetchMaxAmount: mutation.mutateAsync, isLoading: mutation.isPending };
@@ -46,6 +56,7 @@ async function fetchMaxAmount(
     const destination = destToken.chainName;
     const { address, publicKey } = getAccountAddressAndPubKey(multiProvider, origin, accounts);
     if (!address) return balance;
+    const Token = await getSdkToken();
     const originToken = new Token(balance.token);
 
     // Get recipient (form value or fallback to connected wallet for destination)

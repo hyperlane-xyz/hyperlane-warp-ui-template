@@ -1,10 +1,12 @@
-import type { ChainName, MultiProtocolProvider, WarpCore } from '@hyperlane-xyz/sdk';
+import type { MultiProviderAdapter as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProviderAdapter';
+import type { IToken } from '@hyperlane-xyz/sdk/token/IToken';
+import type { ChainName } from '@hyperlane-xyz/sdk/types';
 import { fromWei, normalizeAddress } from '@hyperlane-xyz/utils';
 import { useMemo } from 'react';
 
 import { logger } from '../../utils/logger';
 import { RouterAddressInfo } from '../store';
-import { tryFindToken } from '../tokens/hooks';
+import { tryFindTokenInTokens } from '../tokens/hooks';
 import { TransferContext, TransferStatus } from '../transfer/types';
 import { MessageStatus, MessageStub } from './types';
 
@@ -23,7 +25,7 @@ export type TransferItem =
 export function messageToTransferContext(
   msg: MessageStub,
   multiProvider: MultiProtocolProvider,
-  warpCore: WarpCore,
+  tokens: IToken[],
   routerAddressesByChainMap: Record<ChainName, Record<string, RouterAddressInfo>>,
 ): TransferContext {
   const originChain = multiProvider.tryGetChainName(msg.originDomainId) || '';
@@ -35,7 +37,7 @@ export function messageToTransferContext(
 
   // Format amount using wire decimals from precomputed map
   let formattedAmount = '';
-  const token = tryFindToken(warpCore, originChain, msg.sender);
+  const token = tryFindTokenInTokens(tokens, originChain, msg.sender);
   if (msg.warpTransfer?.amount && token) {
     const normalizedSender = normalizeAddress(msg.sender);
     const routerInfo = routerAddressesByChainMap[originChain]?.[normalizedSender];

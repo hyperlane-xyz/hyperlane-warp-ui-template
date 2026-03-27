@@ -170,7 +170,7 @@ const nextConfig = {
 
   reactStrictMode: true,
 
-  serverExternalPackages: ['@sentry/nextjs'],
+  serverExternalPackages: ['@sentry/nextjs', '@provablehq/wasm', '@provablehq/sdk'],
 
   // Exclude heavy client-only chain SDKs from serverless function file tracing.
   // These packages are only used client-side and not needed in serverless functions.

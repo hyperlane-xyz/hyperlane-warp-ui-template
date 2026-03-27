@@ -1,13 +1,11 @@
-import { ChainName } from '@hyperlane-xyz/sdk';
+import type { ChainName } from '@hyperlane-xyz/sdk/types';
 import { ProtocolType, toTitleCase } from '@hyperlane-xyz/utils';
-import {
-  ArrowIcon,
-  ChevronIcon,
-  FunnelIcon,
-  PencilIcon,
-  UpDownArrowsIcon,
-  XIcon,
-} from '@hyperlane-xyz/widgets';
+import { ArrowIcon } from '@hyperlane-xyz/widgets/icons/Arrow';
+import { ChevronIcon } from '@hyperlane-xyz/widgets/icons/Chevron';
+import { FunnelIcon } from '@hyperlane-xyz/widgets/icons/Funnel';
+import { PencilIcon } from '@hyperlane-xyz/widgets/icons/Pencil';
+import { UpDownArrowsIcon } from '@hyperlane-xyz/widgets/icons/UpDownArrows';
+import { XIcon } from '@hyperlane-xyz/widgets/icons/X';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { SearchInput } from '../../components/input/SearchInput';

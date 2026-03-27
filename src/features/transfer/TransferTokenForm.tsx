@@ -1,4 +1,8 @@
-import { Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
+import type { MultiProviderAdapter as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProviderAdapter';
+import type { IToken } from '@hyperlane-xyz/sdk/token/IToken';
+import type { Token } from '@hyperlane-xyz/sdk/token/Token';
+import { TokenAmount } from '@hyperlane-xyz/sdk/token/TokenAmount';
+import type { WarpCore } from '@hyperlane-xyz/sdk/warp/WarpCore';
 import {
   KnownProtocolType,
   ProtocolType,
@@ -11,15 +15,15 @@ import {
   normalizeAddress,
   toWei,
 } from '@hyperlane-xyz/utils';
+import { ChevronIcon } from '@hyperlane-xyz/widgets/icons/Chevron';
+import { SpinnerIcon } from '@hyperlane-xyz/widgets/icons/Spinner';
+import { useModal } from '@hyperlane-xyz/widgets/layout/Modal';
 import {
-  AccountInfo,
-  ChevronIcon,
-  SpinnerIcon,
   getAccountAddressAndPubKey,
   useAccountAddressForChain,
   useAccounts,
-  useModal,
-} from '@hyperlane-xyz/widgets';
+} from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
+import type { AccountInfo } from '@hyperlane-xyz/widgets/walletIntegrations/types';
 import BigNumber from 'bignumber.js';
 import { Form, Formik, useFormikContext } from 'formik';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -55,9 +59,9 @@ import {
   getInitialTokenKeys,
   getTokenByKeyFromMap,
   useCollateralGroups,
+  useReadyWarpCore,
   useTokenByKeyMap,
   useTokens,
-  useWarpCore,
 } from '../tokens/hooks';
 import { ImportTokenButton } from '../tokens/ImportTokenButton';
 import { TokenSelectField } from '../tokens/TokenSelectField';
@@ -78,11 +82,11 @@ import { isSmartContract, shouldClearAddress } from './utils';
 
 export function TransferTokenForm() {
   const multiProvider = useMultiProvider();
-  const warpCore = useWarpCore();
   const tokenMap = useTokenByKeyMap();
   const collateralGroups = useCollateralGroups();
 
-  const { setOriginChainName, routerAddressesByChainMap } = useStore((s) => ({
+  const { ensureWarpRuntime, setOriginChainName, routerAddressesByChainMap } = useStore((s) => ({
+    ensureWarpRuntime: s.ensureWarpRuntime,
     setOriginChainName: s.setOriginChainName,
     routerAddressesByChainMap: s.routerAddressesByChainMap,
   }));
@@ -105,6 +109,8 @@ export function TransferTokenForm() {
   } = useModal();
 
   const validate = async (values: TransferFormValues) => {
+    const warpCore = await ensureWarpRuntime();
+    if (!warpCore) return { amount: 'Transfer runtime is still loading' };
     const [result, overrideToken] = await validateForm(
       warpCore,
       tokenMap,
@@ -657,16 +663,16 @@ function ReviewDetails({
   routeOverrideToken: Token | null;
 }) {
   const { values } = useFormikContext<TransferFormValues>();
-  const warpCore = useWarpCore();
+  const warpCore = useReadyWarpCore();
   const { amount, originTokenKey, destinationTokenKey } = values;
   const tokenMap = useTokenByKeyMap();
   const originTokenByKey = routeOverrideToken || getTokenByKeyFromMap(tokenMap, originTokenKey);
   const destinationTokenByKey = getTokenByKeyFromMap(tokenMap, destinationTokenKey);
   // Finding actual token pair for the given tokens
   const originToken =
-    destinationTokenByKey && originTokenByKey
+    warpCore && destinationTokenByKey && originTokenByKey
       ? findRouteToken(warpCore, originTokenByKey, destinationTokenByKey)
-      : undefined;
+      : originTokenByKey;
   const destinationToken = destinationTokenByKey
     ? originToken && findConnectedDestinationToken(originToken, destinationTokenByKey)
     : undefined;
@@ -706,14 +712,14 @@ function ReviewDetails({
   // Only fetch fees if route is supported
   const { isLoading: isQuoteLoading, fees: feeQuotes } = useFeeQuotes(
     values,
-    isRouteSupported,
+    isRouteSupported && !!warpCore,
     originToken,
     destinationToken,
     !isReview,
   );
 
   const { prices } = useTokenPrices();
-  const feePrices = useFeePrices(feeQuotes ?? null, warpCore.tokens, prices);
+  const feePrices = useFeePrices(feeQuotes ?? null, warpCore?.tokens || [], prices);
   const tokenPrice = originToken?.coinGeckoId ? prices[originToken.coinGeckoId] : undefined;
   const parsedAmount = parseFloat(amount);
   const transferUsd = tokenPrice && !isNaN(parsedAmount) ? parsedAmount * tokenPrice : 0;
@@ -854,10 +860,10 @@ function WarningBanners() {
 }
 
 function useFormInitialValues(): TransferFormValues {
-  const warpCore = useWarpCore();
+  const multiProvider = useMultiProvider();
   const tokens = useTokens();
 
-  const { originTokenKey, destinationTokenKey } = getInitialTokenKeys(warpCore, tokens);
+  const { originTokenKey, destinationTokenKey } = getInitialTokenKeys(multiProvider, tokens);
 
   return useMemo(
     () => ({
@@ -897,6 +903,7 @@ async function validateForm(
   // returns a tuple, where first value is validation result
   // and second value is token override
   try {
+    const multiProvider = warpCore.multiProvider as MultiProtocolProvider;
     const { originTokenKey, destinationTokenKey, amount, recipient: formRecipient } = values;
 
     // Look up tokens from the pre-computed map
@@ -909,7 +916,7 @@ async function validateForm(
 
     // Use form recipient if set, otherwise fallback to connected wallet for destination chain
     const { address: connectedDestAddress } = getAccountAddressAndPubKey(
-      warpCore.multiProvider,
+      multiProvider,
       destinationToken.chainName,
       accounts,
     );
@@ -929,7 +936,7 @@ async function validateForm(
     }
 
     const { address: sender, publicKey: senderPubKey } = getAccountAddressAndPubKey(
-      warpCore.multiProvider,
+      multiProvider,
       token.chainName,
       accounts,
     );
@@ -1016,7 +1023,7 @@ const igpErrorPattern = /^Insufficient (\S+) for interchain gas$/;
 async function enrichBalanceError(
   warpCore: WarpCore,
   result: Record<string, string>,
-  originTokenAmount: TokenAmount,
+  originTokenAmount: TokenAmount<IToken>,
   destination: string,
   sender: string,
   recipient: string,

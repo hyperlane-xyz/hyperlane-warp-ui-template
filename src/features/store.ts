@@ -1,38 +1,19 @@
-import {
-  chainAddresses,
-  chainMetadata,
-  GithubRegistry,
-  IRegistry,
-  PartialRegistry,
-} from '@hyperlane-xyz/registry';
-import {
-  ChainMap,
-  ChainMetadata,
-  ChainName,
-  MultiProtocolProvider,
-  Token,
-  WarpCore,
-  WarpCoreConfig,
-} from '@hyperlane-xyz/sdk';
-import { normalizeAddress, objFilter } from '@hyperlane-xyz/utils';
-import { toast } from 'react-toastify';
+import { GithubRegistry, IRegistry } from '@hyperlane-xyz/registry';
+import type { ChainMetadata } from '@hyperlane-xyz/sdk/metadata/chainMetadataTypes';
+import type { MultiProviderAdapter as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProviderAdapter';
+import type { Token } from '@hyperlane-xyz/sdk/token/Token';
+import type { ChainMap, ChainName } from '@hyperlane-xyz/sdk/types';
+import type { WarpCoreConfig } from '@hyperlane-xyz/sdk/warp/types';
+import type { WarpCore } from '@hyperlane-xyz/sdk/warp/WarpCore';
+import { objFilter } from '@hyperlane-xyz/utils';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 import { config } from '../consts/config';
 import { logger } from '../utils/logger';
-import { assembleChainMetadata } from './chains/metadata';
+import type { initWarpContext as InitWarpContextFn, WarpRuntimeContext } from './storeInit';
 import { TokenChainMap } from './tokens/types';
-import {
-  assembleTokensBySymbolChainMap,
-  buildTokensArray,
-  getTokenKey,
-  groupTokensByCollateral,
-  setResolvedUnderlyingMap,
-} from './tokens/utils';
-import { resolveWrappedCollateralTokens } from './tokens/wrappedTokenResolver';
 import { FinalTransferStatuses, TransferContext, TransferStatus } from './transfer/types';
-import { assembleWarpCoreConfig } from './warpCore/warpCoreConfig';
 
 // Increment this when persist state has breaking changes
 const PERSIST_STATE_VERSION = 2;
@@ -44,10 +25,11 @@ export interface RouterAddressInfo {
 }
 
 interface WarpContext {
+  isWarpContextReady: boolean;
   registry: IRegistry;
   chainMetadata: ChainMap<ChainMetadata>;
-  multiProvider: MultiProtocolProvider;
-  warpCore: WarpCore;
+  multiProvider: MultiProtocolProvider | undefined;
+  warpCore: WarpCore | undefined;
   tokensBySymbolChainMap: Record<string, TokenChainMap>;
   /** Unified tokens array (deduplicated, can be origin or destination) */
   tokens: Token[];
@@ -61,6 +43,52 @@ interface WarpContext {
   coinGeckoIds: string[];
 }
 
+let initWarpContextModulePromise:
+  | Promise<{ initWarpContext: typeof InitWarpContextFn }>
+  | undefined;
+let runtimeContextLoader: (() => Promise<WarpRuntimeContext>) | undefined;
+let runtimeContextPromise: Promise<WarpRuntimeContext> | undefined;
+let runtimeContextVersion = 0;
+let storeSetState: ((partial: Partial<AppState>) => void) | undefined;
+let storeGetState: (() => AppState) | undefined;
+
+async function loadWarpContextModule() {
+  initWarpContextModulePromise ||= import('./storeInit');
+  return initWarpContextModulePromise;
+}
+
+async function loadAndSetWarpRuntime(
+  set: (partial: Partial<AppState>) => void,
+  get: () => AppState,
+  version = runtimeContextVersion,
+) {
+  if (get().warpCore) return get().warpCore;
+  if (!runtimeContextLoader) return undefined;
+
+  runtimeContextPromise ||= runtimeContextLoader();
+  const runtimeContext = await runtimeContextPromise;
+  if (version !== runtimeContextVersion) return get().warpCore;
+
+  set(runtimeContext);
+  return runtimeContext.warpCore;
+}
+
+async function refreshWarpContext(
+  nextState: Pick<AppState, 'registry' | 'chainMetadataOverrides' | 'warpCoreConfigOverrides'>,
+  set: (partial: Partial<AppState>) => void,
+  get: () => AppState,
+) {
+  const { initWarpContext } = await loadWarpContextModule();
+  const { context, loadRuntime } = await initWarpContext(nextState);
+
+  runtimeContextVersion += 1;
+  runtimeContextLoader = loadRuntime;
+  runtimeContextPromise = undefined;
+
+  set(context);
+  void loadAndSetWarpRuntime(set, get, runtimeContextVersion);
+}
+
 // Keeping everything here for now as state is simple
 // Will refactor into slices as necessary
 export interface AppState {
@@ -72,10 +100,12 @@ export interface AppState {
   // Overrides to warp core configs added by user
   warpCoreConfigOverrides: WarpCoreConfig[];
   setWarpCoreConfigOverrides: (overrides?: WarpCoreConfig[] | undefined) => void;
-  multiProvider: MultiProtocolProvider;
+  isWarpContextReady: boolean;
+  multiProvider: MultiProtocolProvider | undefined;
   registry: IRegistry;
-  warpCore: WarpCore;
+  warpCore: WarpCore | undefined;
   setWarpContext: (context: WarpContext) => void;
+  ensureWarpRuntime: () => Promise<WarpCore | undefined>;
 
   // User history
   transfers: TransferContext[];
@@ -123,138 +153,118 @@ export interface AppState {
 export const useStore = create<AppState>()(
   persist(
     // Store reducers
-    (set, get) => ({
-      // Chains and providers
-      chainMetadata: {},
-      chainMetadataOverrides: {},
-      setChainMetadataOverrides: async (
-        overrides: ChainMap<Partial<ChainMetadata> | undefined> = {},
-      ) => {
-        logger.debug('Setting chain overrides in store');
-        const filtered = objFilter(overrides, (_, metadata) => !!metadata);
-        const {
-          multiProvider,
-          warpCore,
-          routerAddressesByChainMap,
-          tokensBySymbolChainMap,
-          tokens,
-          collateralGroups,
-          tokenByKeyMap,
-          coinGeckoIds,
-        } = await initWarpContext({
-          ...get(),
-          chainMetadataOverrides: filtered,
-        });
-        set({
-          chainMetadataOverrides: filtered,
-          multiProvider,
-          warpCore,
-          tokensBySymbolChainMap,
-          routerAddressesByChainMap,
-          tokens,
-          collateralGroups,
-          tokenByKeyMap,
-          coinGeckoIds,
-        });
-      },
-      warpCoreConfigOverrides: [],
-      setWarpCoreConfigOverrides: async (overrides: WarpCoreConfig[] | undefined = []) => {
-        logger.debug('Setting warp core config overrides in store');
-        const {
-          multiProvider,
-          warpCore,
-          routerAddressesByChainMap,
-          tokensBySymbolChainMap,
-          tokens,
-          collateralGroups,
-          tokenByKeyMap,
-          coinGeckoIds,
-        } = await initWarpContext({
-          ...get(),
-          warpCoreConfigOverrides: overrides,
-        });
-        set({
-          warpCoreConfigOverrides: overrides,
-          multiProvider,
-          warpCore,
-          tokensBySymbolChainMap,
-          routerAddressesByChainMap,
-          tokens,
-          collateralGroups,
-          tokenByKeyMap,
-          coinGeckoIds,
-        });
-      },
-      multiProvider: new MultiProtocolProvider({}),
-      registry: new GithubRegistry({
-        uri: config.registryUrl,
-        branch: config.registryBranch,
-        proxyUrl: config.registryProxyUrl,
-      }),
-      warpCore: new WarpCore(new MultiProtocolProvider({}), []),
-      setWarpContext: (context) => {
-        logger.debug('Setting warp context in store');
-        set(context);
-      },
+    (set, get) => {
+      storeSetState = set;
+      storeGetState = get;
+      return {
+        // Chains and providers
+        chainMetadata: {},
+        chainMetadataOverrides: {},
+        isWarpContextReady: false,
+        setChainMetadataOverrides: async (
+          overrides: ChainMap<Partial<ChainMetadata> | undefined> = {},
+        ) => {
+          logger.debug('Setting chain overrides in store');
+          const filtered = objFilter(overrides, (_, metadata) => !!metadata);
+          await refreshWarpContext(
+            {
+              registry: get().registry,
+              chainMetadataOverrides: filtered,
+              warpCoreConfigOverrides: get().warpCoreConfigOverrides,
+            },
+            set,
+            get,
+          );
+          set({ chainMetadataOverrides: filtered });
+        },
+        warpCoreConfigOverrides: [],
+        setWarpCoreConfigOverrides: async (overrides: WarpCoreConfig[] | undefined = []) => {
+          logger.debug('Setting warp core config overrides in store');
+          await refreshWarpContext(
+            {
+              registry: get().registry,
+              chainMetadataOverrides: get().chainMetadataOverrides,
+              warpCoreConfigOverrides: overrides,
+            },
+            set,
+            get,
+          );
+          set({ warpCoreConfigOverrides: overrides });
+        },
+        multiProvider: undefined,
+        registry: new GithubRegistry({
+          uri: config.registryUrl,
+          branch: config.registryBranch,
+          proxyUrl: config.registryProxyUrl,
+        }),
+        warpCore: undefined,
+        setWarpContext: (context) => {
+          logger.debug('Setting warp context in store');
+          set(context);
+        },
+        ensureWarpRuntime: () => loadAndSetWarpRuntime(set, get),
 
-      // User history
-      transfers: [],
-      addTransfer: (t) => {
-        set((state) => ({ transfers: [...state.transfers, t] }));
-      },
-      resetTransfers: () => {
-        set(() => ({ transfers: [] }));
-      },
-      updateTransferStatus: (i, s, options) => {
-        set((state) => {
-          if (i >= state.transfers.length) return state;
-          const txs = [...state.transfers];
-          txs[i].status = s;
-          txs[i].msgId ||= options?.msgId;
-          txs[i].originTxHash ||= options?.originTxHash;
-          txs[i].originBlockNumber ||= options?.originBlockNumber;
-          txs[i].destinationTxHash ||= options?.destinationTxHash;
-          return {
-            transfers: txs,
-          };
-        });
-      },
-      failUnconfirmedTransfers: () => {
-        set((state) => ({
-          transfers: state.transfers.map((t) =>
-            FinalTransferStatuses.includes(t.status) ? t : { ...t, status: TransferStatus.Failed },
-          ),
-        }));
-      },
+        // User history
+        transfers: [],
+        addTransfer: (t) => {
+          set((state) => ({ transfers: [...state.transfers, t] }));
+        },
+        resetTransfers: () => {
+          set(() => ({ transfers: [] }));
+        },
+        updateTransferStatus: (i, s, options) => {
+          set((state) => {
+            if (i >= state.transfers.length) return state;
+            const txs = [...state.transfers];
+            txs[i].status = s;
+            txs[i].msgId ||= options?.msgId;
+            txs[i].originTxHash ||= options?.originTxHash;
+            txs[i].originBlockNumber ||= options?.originBlockNumber;
+            txs[i].destinationTxHash ||= options?.destinationTxHash;
+            return {
+              transfers: txs,
+            };
+          });
+        },
+        failUnconfirmedTransfers: () => {
+          set((state) => ({
+            transfers: state.transfers.map((t) =>
+              FinalTransferStatuses.includes(t.status)
+                ? t
+                : { ...t, status: TransferStatus.Failed },
+            ),
+          }));
+        },
 
-      // Shared component state
-      transferLoading: false,
-      setTransferLoading: (isLoading) => {
-        set(() => ({ transferLoading: isLoading }));
-      },
-      isSideBarOpen: false,
-      setIsSideBarOpen: (isSideBarOpen) => {
-        set(() => ({ isSideBarOpen }));
-      },
-      showEnvSelectModal: false,
-      setShowEnvSelectModal: (showEnvSelectModal) => {
-        set(() => ({ showEnvSelectModal }));
-      },
-      originChainName: '',
-      setOriginChainName: (originChainName: ChainName) => {
-        set(() => ({ originChainName }));
-      },
-      tokensBySymbolChainMap: {},
-      routerAddressesByChainMap: {},
-      isTipCardActionTriggered: false,
-      setIsTipCardActionTriggered: (isTipCardActionTriggered: boolean) => {
-        set(() => ({ isTipCardActionTriggered }));
-      },
-      tokens: [],
-      collateralGroups: new Map(),
-      tokenByKeyMap: new Map(),
-      coinGeckoIds: [],
-    }),
+        // Shared component state
+        transferLoading: false,
+        setTransferLoading: (isLoading) => {
+          set(() => ({ transferLoading: isLoading }));
+        },
+        isSideBarOpen: false,
+        setIsSideBarOpen: (isSideBarOpen) => {
+          set(() => ({ isSideBarOpen }));
+        },
+        showEnvSelectModal: false,
+        setShowEnvSelectModal: (showEnvSelectModal) => {
+          set(() => ({ showEnvSelectModal }));
+        },
+        originChainName: '',
+        setOriginChainName: (originChainName: ChainName) => {
+          set(() => ({ originChainName }));
+        },
+        tokensBySymbolChainMap: {},
+        routerAddressesByChainMap: {},
+        isTipCardActionTriggered: false,
+        setIsTipCardActionTriggered: (isTipCardActionTriggered: boolean) => {
+          set(() => ({ isTipCardActionTriggered }));
+        },
+        tokens: [],
+        collateralGroups: new Map(),
+        tokenByKeyMap: new Map(),
+        coinGeckoIds: [],
+      };
+    },
 
     // Store config
     {
@@ -273,8 +283,22 @@ export const useStore = create<AppState>()(
             logger.error('Error during hydration', error);
             return;
           }
-          initWarpContext(state).then((context) => {
-            state.setWarpContext(context);
+          if (!storeSetState || !storeGetState) {
+            logger.error(
+              'Store API not ready during hydration',
+              new Error('Store API unavailable'),
+            );
+            return;
+          }
+          refreshWarpContext(
+            {
+              registry: state.registry,
+              chainMetadataOverrides: state.chainMetadataOverrides,
+              warpCoreConfigOverrides: state.warpCoreConfigOverrides,
+            },
+            storeSetState,
+            storeGetState,
+          ).then(() => {
             logger.debug('Rehydration complete');
           });
         };
@@ -282,111 +306,3 @@ export const useStore = create<AppState>()(
     },
   ),
 );
-
-async function initWarpContext({
-  registry,
-  chainMetadataOverrides,
-  warpCoreConfigOverrides,
-}: {
-  registry: IRegistry;
-  chainMetadataOverrides: ChainMap<Partial<ChainMetadata> | undefined>;
-  warpCoreConfigOverrides: WarpCoreConfig[];
-}): Promise<WarpContext> {
-  let currentRegistry = registry;
-  try {
-    // Pre-load registry content to avoid repeated requests
-    await currentRegistry.listRegistryContent();
-  } catch (error) {
-    currentRegistry = new PartialRegistry({
-      chainAddresses: chainAddresses,
-      chainMetadata: chainMetadata,
-    });
-    logger.warn(
-      'Failed to list registry content using GithubRegistry, will continue with PartialRegistry.',
-      error,
-    );
-  }
-
-  try {
-    const { config: coreConfig, wireDecimalsMap } = await assembleWarpCoreConfig(
-      warpCoreConfigOverrides,
-      currentRegistry,
-    );
-
-    const chainsInTokens = Array.from(new Set(coreConfig.tokens.map((t) => t.chainName)));
-    const { chainMetadata, chainMetadataWithOverrides } = await assembleChainMetadata(
-      chainsInTokens,
-      currentRegistry,
-      chainMetadataOverrides,
-    );
-    const multiProvider = new MultiProtocolProvider(chainMetadataWithOverrides);
-    const warpCore = WarpCore.FromConfig(multiProvider, coreConfig);
-
-    const tokensBySymbolChainMap = assembleTokensBySymbolChainMap(warpCore.tokens, multiProvider);
-
-    // Resolve underlying addresses for lockbox/vault tokens so they group
-    // with their non-wrapper counterparts (e.g., lockbox USDT = regular USDT)
-    const resolvedMap = await resolveWrappedCollateralTokens(warpCore.tokens, multiProvider);
-    setResolvedUnderlyingMap(resolvedMap);
-
-    // Build unified tokens array (deduplicated by collateral at startup)
-    const tokens = buildTokensArray(warpCore.tokens);
-    // Build collateral groups for fast route checking
-    const collateralGroups = groupTokensByCollateral(warpCore.tokens);
-    // Build token by key map for O(1) lookups
-    const tokenByKeyMap = new Map<string, Token>();
-    for (const token of tokens) {
-      tokenByKeyMap.set(getTokenKey(token), token);
-    }
-
-    const routerAddressesByChainMap = getRouterAddressesByChain(warpCore.tokens, wireDecimalsMap);
-    const coinGeckoIds = Array.from(
-      new Set(coreConfig.tokens.map((t) => t.coinGeckoId).filter(Boolean)),
-    ).sort() as string[];
-    return {
-      registry: currentRegistry,
-      chainMetadata,
-      multiProvider,
-      warpCore,
-      tokensBySymbolChainMap,
-      routerAddressesByChainMap,
-      tokens,
-      collateralGroups,
-      tokenByKeyMap,
-      coinGeckoIds,
-    };
-  } catch (error) {
-    toast.error('Error initializing warp context. Please check connection status and configs.');
-    logger.error('Error initializing warp context', error);
-    return {
-      registry,
-      chainMetadata: {},
-      multiProvider: new MultiProtocolProvider({}),
-      warpCore: new WarpCore(new MultiProtocolProvider({}), []),
-      tokensBySymbolChainMap: {},
-      routerAddressesByChainMap: {},
-      tokens: [],
-      collateralGroups: new Map(),
-      tokenByKeyMap: new Map(),
-      coinGeckoIds: [],
-    };
-  }
-}
-
-// Build map of chain -> address -> router info using precomputed wireDecimals
-function getRouterAddressesByChain(
-  tokens: WarpCore['tokens'],
-  wireDecimalsMap: Record<ChainName, Record<string, number>>,
-): Record<ChainName, Record<string, RouterAddressInfo>> {
-  return tokens.reduce<Record<ChainName, Record<string, RouterAddressInfo>>>((acc, token) => {
-    if (!token.addressOrDenom) return acc;
-    const normalizedAddr = normalizeAddress(token.addressOrDenom);
-
-    // Use precomputed wireDecimals from config, fallback to token decimals
-    const wireDecimals = wireDecimalsMap[token.chainName]?.[normalizedAddr] ?? token.decimals;
-
-    acc[token.chainName] ||= {};
-    acc[token.chainName][normalizedAddr] = { wireDecimals };
-    return acc;
-  }, {});
-}

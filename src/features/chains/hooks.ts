@@ -1,4 +1,6 @@
-import { ChainName, ChainStatus } from '@hyperlane-xyz/sdk';
+import { ChainStatus } from '@hyperlane-xyz/sdk/metadata/chainMetadataTypes';
+import type { MultiProviderAdapter as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProviderAdapter';
+import type { ChainName } from '@hyperlane-xyz/sdk/types';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 import { useMemo } from 'react';
 
@@ -6,15 +8,22 @@ import { config } from '../../consts/config';
 import { useStore } from '../store';
 import { getChainDisplayName } from './utils';
 
-export function useMultiProvider() {
-  return useStore((s) => s.multiProvider);
+export function useMultiProvider(): MultiProtocolProvider {
+  const multiProvider = useStore((s) => s.multiProvider);
+  if (!multiProvider) {
+    throw new Error('Warp context not ready');
+  }
+  return multiProvider;
 }
 
 // Ensures that the multiProvider has been populated during the onRehydrateStorage hook above,
 // otherwise returns undefined
-export function useReadyMultiProvider() {
-  const multiProvider = useMultiProvider();
-  if (!multiProvider.getKnownChainNames().length) return undefined;
+export function useReadyMultiProvider(): MultiProtocolProvider | undefined {
+  const { isWarpContextReady, multiProvider } = useStore((s) => ({
+    isWarpContextReady: s.isWarpContextReady,
+    multiProvider: s.multiProvider,
+  }));
+  if (!isWarpContextReady || !multiProvider) return undefined;
   return multiProvider;
 }
 

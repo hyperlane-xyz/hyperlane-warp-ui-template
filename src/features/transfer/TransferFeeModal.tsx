@@ -1,10 +1,15 @@
-import { WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
-import { Modal, Skeleton, Tooltip } from '@hyperlane-xyz/widgets';
+import type { WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk/warp/types';
+import { Tooltip } from '@hyperlane-xyz/widgets/components/Tooltip';
+import { Modal } from '@hyperlane-xyz/widgets/layout/Modal';
 import Link from 'next/link';
 
 import { links } from '../../consts/links';
 import { UsdLabel } from '../balances/UsdLabel';
-import { FeePrices } from '../balances/useFeePrices';
+import type { FeePrices } from '../balances/useFeePrices';
+
+function LoadingSkeleton({ className }: { className: string }) {
+  return <div className={`rounded bg-gray-200/70 ${className}`} />;
+}
 
 export function TransferFeeModal({
   isOpen,
@@ -40,7 +45,7 @@ export function TransferFeeModal({
               />
             </span>
             {isLoading ? (
-              <Skeleton className="h-4 w-40 sm:w-72" />
+              <LoadingSkeleton className="h-4 w-40 sm:w-72" />
             ) : (
               <span>
                 {`${fees.localQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${fees.localQuote.token.symbol || ''}`}
@@ -60,7 +65,7 @@ export function TransferFeeModal({
               />
             </span>
             {isLoading ? (
-              <Skeleton className="h-4 w-40 sm:w-72" />
+              <LoadingSkeleton className="h-4 w-40 sm:w-72" />
             ) : (
               <span>
                 {`${fees.interchainQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${fees.interchainQuote.token.symbol || ''}`}
@@ -75,7 +80,7 @@ export function TransferFeeModal({
               Token Fee <Tooltip content="Variable fee based on amount" id="token-fee-tooltip" />
             </span>
             {isLoading ? (
-              <Skeleton className="h-4 w-40 sm:w-72" />
+              <LoadingSkeleton className="h-4 w-40 sm:w-72" />
             ) : (
               <span>
                 {`${fees.tokenFeeQuote.getDecimalFormattedAmount().toFixed(8) || '0'} ${fees.tokenFeeQuote.token.symbol || ''}`}

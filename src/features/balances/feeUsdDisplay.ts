@@ -1,4 +1,4 @@
-import { TokenAmount } from '@hyperlane-xyz/sdk';
+import type { TokenAmount } from '@hyperlane-xyz/sdk/token/TokenAmount';
 import { isNullish } from '@hyperlane-xyz/utils';
 
 import type { FeePrices } from './useFeePrices';

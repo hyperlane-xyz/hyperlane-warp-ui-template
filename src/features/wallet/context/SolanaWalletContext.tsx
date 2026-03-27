@@ -2,8 +2,6 @@ import { SnapWalletAdapter } from '@drift-labs/snap-wallet-adapter';
 import { WalletAdapterNetwork, WalletError } from '@solana/wallet-adapter-base';
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
-
-import '@solana/wallet-adapter-react-ui/styles.css';
 import {
   LedgerWalletAdapter,
   SalmonWalletAdapter,

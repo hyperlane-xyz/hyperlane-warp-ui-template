@@ -1,10 +1,10 @@
-import { IToken, MultiProtocolProvider, Token } from '@hyperlane-xyz/sdk';
+import type { MultiProviderAdapter as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProviderAdapter';
+import type { IToken } from '@hyperlane-xyz/sdk/token/IToken';
+import type { Token } from '@hyperlane-xyz/sdk/token/Token';
 import { ProtocolType, getAddressProtocolType, isValidAddress } from '@hyperlane-xyz/utils';
-import {
-  useAccountAddressForChain,
-  useEthereumAccount,
-  useSolanaAccount,
-} from '@hyperlane-xyz/widgets';
+import { useEthereumAccount } from '@hyperlane-xyz/widgets/walletIntegrations/ethereum';
+import { useAccountAddressForChain } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
+import { useSolanaAccount } from '@hyperlane-xyz/widgets/walletIntegrations/solana';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { toast } from 'react-toastify';
@@ -15,6 +15,7 @@ import { useToastError } from '../../components/toast/useToastError';
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
+import { getSdkToken } from '../hyperlane/sdkTokenRuntime';
 import { getTokenKey } from '../tokens/utils';
 import { fetchChainBalances, groupEvmTokensByChain } from './evm';
 import { fetchSealevelChainBalances, groupSealevelTokensByChain } from './svm';
@@ -34,6 +35,7 @@ export function useBalance(chain?: ChainName, token?: IToken, address?: Address)
     ],
     queryFn: () => {
       if (!chain || !token || !address || !isValidAddress(address, token.protocol)) return null;
+      if (!('getBalance' in token) || typeof token.getBalance !== 'function') return null;
       return token.getBalance(multiProvider, address);
     },
     staleTime: 30_000,
@@ -67,6 +69,7 @@ export async function getDestinationNativeBalance(
 ) {
   try {
     const chainMetadata = multiProvider.getChainMetadata(destination);
+    const Token = await getSdkToken();
     const token = Token.FromChainMetadataNativeToken(chainMetadata);
     const balance = await token.getBalance(multiProvider, recipient);
     return balance.amount;

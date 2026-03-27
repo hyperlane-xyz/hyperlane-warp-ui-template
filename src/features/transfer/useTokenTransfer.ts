@@ -1,17 +1,18 @@
+import type { MultiProviderAdapter as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProviderAdapter';
 import {
   ProviderType,
-  Token,
-  TypedTransactionReceipt,
-  WarpCore,
-  WarpTxCategory,
-} from '@hyperlane-xyz/sdk';
+  type TypedTransactionReceipt,
+} from '@hyperlane-xyz/sdk/providers/ProviderType';
+import type { Token } from '@hyperlane-xyz/sdk/token/Token';
+import { WarpTxCategory } from '@hyperlane-xyz/sdk/warp/types';
+import type { WarpCore } from '@hyperlane-xyz/sdk/warp/WarpCore';
 import { toTitleCase, toWei } from '@hyperlane-xyz/utils';
 import {
   getAccountAddressForChain,
   useAccounts,
   useActiveChains,
   useTransactionFns,
-} from '@hyperlane-xyz/widgets';
+} from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import { useCallback, useState } from 'react';
 import { toast } from 'react-toastify';
 
@@ -23,7 +24,7 @@ import { trackEvent } from '../analytics/utils';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { AppState, useStore } from '../store';
-import { getTokenByKey, useWarpCore } from '../tokens/hooks';
+import { getTokenByKey } from '../tokens/hooks';
 import { findConnectedDestinationToken } from '../tokens/utils';
 import { TransferContext, TransferFormValues, TransferStatus } from './types';
 import { tryGetMsgIdFromTransferReceipt } from './utils';
@@ -41,7 +42,7 @@ export function useTokenTransfer(onDone?: () => void) {
   const transferIndex = transfers.length;
 
   const multiProvider = useMultiProvider();
-  const warpCore = useWarpCore();
+  const ensureWarpRuntime = useStore((s) => s.ensureWarpRuntime);
 
   const activeAccounts = useAccounts(multiProvider);
   const activeChains = useActiveChains(multiProvider);
@@ -52,21 +53,23 @@ export function useTokenTransfer(onDone?: () => void) {
   // TODO implement cancel callback for when modal is closed?
   const triggerTransactions = useCallback(
     (values: TransferFormValues, routeOverrideToken: Token | null) =>
-      executeTransfer({
-        warpCore,
-        values,
-        transferIndex,
-        activeAccounts,
-        activeChains,
-        transactionFns,
-        addTransfer,
-        updateTransferStatus,
-        setIsLoading,
-        onDone,
-        routeOverrideToken,
+      ensureWarpRuntime().then((warpCore) => {
+        if (!warpCore) throw new Error('Warp runtime not ready');
+        return executeTransfer({
+          warpCore,
+          values,
+          transferIndex,
+          activeAccounts,
+          activeChains,
+          transactionFns,
+          addTransfer,
+          updateTransferStatus,
+          setIsLoading,
+          onDone,
+          routeOverrideToken,
+        });
       }),
     [
-      warpCore,
       transferIndex,
       activeAccounts,
       activeChains,
@@ -75,6 +78,7 @@ export function useTokenTransfer(onDone?: () => void) {
       addTransfer,
       updateTransferStatus,
       onDone,
+      ensureWarpRuntime,
     ],
   );
 
@@ -115,7 +119,7 @@ async function executeTransfer({
   updateTransferStatus(transferIndex, transferStatus);
 
   const { originTokenKey, destinationTokenKey, amount, recipient: formRecipient } = values;
-  const multiProvider = warpCore.multiProvider;
+  const multiProvider = warpCore.multiProvider as MultiProtocolProvider;
 
   try {
     const originToken = routeOverrideToken || getTokenByKey(warpCore.tokens, originTokenKey);
@@ -227,7 +231,7 @@ async function executeTransfer({
     }
 
     const msgId = txReceipt
-      ? tryGetMsgIdFromTransferReceipt(multiProvider, origin, txReceipt)
+      ? await tryGetMsgIdFromTransferReceipt(multiProvider, origin, txReceipt)
       : undefined;
 
     const originTxHash = hashes.at(-1);

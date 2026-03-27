@@ -4,9 +4,9 @@ Find below instructions for customizing the token list and branding assets of th
 
 ## Registry
 
-By default, the app will use the canonical Hyperlane Github at `https://github.com/hyperlane-xyz/hyperlane-registry` and fallbacks to the registry published on NPM. See `package.json` for the precise version.
+By default, the app will use the canonical Hyperlane registry published on NPM. See `package.json` for the precise version.
 
-To use custom chains or custom warp routes, you can either configure a different registry using the `NEXT_PUBLIC_REGISTRY_URL` environment variable or define them manually (see the next two sections).
+To use custom chains or custom warp routes, you can either configure a different registry using the `NEXT_PUBLIC_REGISTRY_URL` and `NEXT_PUBLIC_REGISTRY_BRANCH` environment variables or define them manually (see the next two sections).
 
 ## Custom Warp Route Configs
 

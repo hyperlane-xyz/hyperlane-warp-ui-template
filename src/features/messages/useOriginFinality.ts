@@ -1,5 +1,6 @@
 import { ProtocolType } from '@hyperlane-xyz/utils';
 import { useQuery } from '@tanstack/react-query';
+
 import { useMultiProvider } from '../chains/hooks';
 import { DEFAULT_FINALITY_BLOCKS } from '../transfer/utils';
 

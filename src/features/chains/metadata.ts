@@ -14,6 +14,7 @@ import {
   tryParseJsonOrYaml,
 } from '@hyperlane-xyz/utils';
 import { z } from 'zod';
+
 import { chains as ChainsTS } from '../../consts/chains.ts';
 import ChainsYaml from '../../consts/chains.yaml';
 import { config } from '../../consts/config.ts';

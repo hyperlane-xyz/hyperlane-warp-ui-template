@@ -3,6 +3,7 @@ import { isHttpsUrl, isRelativeUrl } from '@hyperlane-xyz/utils';
 import { Circle } from '@hyperlane-xyz/widgets';
 import type { SyntheticEvent } from 'react';
 import { useState } from 'react';
+
 import { links } from '../../consts/links';
 import {
   markDarkLogoMissing,

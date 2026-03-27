@@ -1,6 +1,7 @@
 import { isValidAddress, ProtocolType } from '@hyperlane-xyz/utils';
 import { Modal, XIcon } from '@hyperlane-xyz/widgets';
 import { useState } from 'react';
+
 import { SolidButton } from '../../components/buttons/SolidButton';
 
 interface RecipientAddressModalProps {

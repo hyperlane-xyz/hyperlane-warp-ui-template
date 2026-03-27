@@ -1,5 +1,9 @@
 import { ChainLogo as ChainLogoInner } from '@hyperlane-xyz/widgets';
 import { useEffect, useRef } from 'react';
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/main
 import { useChainMetadata } from '../../features/chains/hooks';
 import { useStore } from '../../features/store';
 import { observeDarkLogosInContainer } from '../../utils/imageBrightness';

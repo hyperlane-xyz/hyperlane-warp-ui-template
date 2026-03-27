@@ -111,7 +111,15 @@ export async function fetchFeeQuotes(
   recipient?: string,
   searchForLowestFee: boolean = false,
 ): Promise<WarpCoreFeeEstimate | null> {
-  if (!warpCore || !originToken || !destinationToken || !destination || !sender || !amount || !recipient)
+  if (
+    !warpCore ||
+    !originToken ||
+    !destinationToken ||
+    !destination ||
+    !sender ||
+    !amount ||
+    !recipient
+  )
     return null;
 
   let transferToken = originToken;

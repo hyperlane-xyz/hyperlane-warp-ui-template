@@ -1,6 +1,7 @@
 import { ProtocolType } from '@hyperlane-xyz/utils';
 import { useAccounts, useWalletDetails } from '@hyperlane-xyz/widgets';
 import { useEffect, useRef } from 'react';
+
 import { config } from '../../consts/config';
 import { useMultiProvider } from '../chains/hooks';
 import { EVENT_NAME } from './types';

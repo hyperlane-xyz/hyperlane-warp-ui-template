@@ -1,6 +1,7 @@
 import { eqAddress } from '@hyperlane-xyz/utils';
 import { useEthereumAccount } from '@hyperlane-xyz/widgets';
 import { useQuery } from '@tanstack/react-query';
+
 import { useMultiProvider } from '../../chains/hooks';
 
 const OFAC_SANCTIONED_ADDRESSES_ENDPOINT =

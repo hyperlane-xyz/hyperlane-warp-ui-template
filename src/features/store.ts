@@ -11,12 +11,9 @@ import { persist } from 'zustand/middleware';
 
 import { config } from '../consts/config';
 import { logger } from '../utils/logger';
+import type { initWarpContext as InitWarpContextFn, WarpRuntimeContext } from './storeInit';
 import { TokenChainMap } from './tokens/types';
 import { FinalTransferStatuses, TransferContext, TransferStatus } from './transfer/types';
-import type {
-  initWarpContext as InitWarpContextFn,
-  WarpRuntimeContext,
-} from './storeInit';
 
 // Increment this when persist state has breaking changes
 const PERSIST_STATE_VERSION = 2;
@@ -46,7 +43,9 @@ interface WarpContext {
   coinGeckoIds: string[];
 }
 
-let initWarpContextModulePromise: Promise<{ initWarpContext: typeof InitWarpContextFn }> | undefined;
+let initWarpContextModulePromise:
+  | Promise<{ initWarpContext: typeof InitWarpContextFn }>
+  | undefined;
 let runtimeContextLoader: (() => Promise<WarpRuntimeContext>) | undefined;
 let runtimeContextPromise: Promise<WarpRuntimeContext> | undefined;
 let runtimeContextVersion = 0;
@@ -158,110 +157,112 @@ export const useStore = create<AppState>()(
       storeSetState = set;
       storeGetState = get;
       return {
-      // Chains and providers
-      chainMetadata: {},
-      chainMetadataOverrides: {},
-      isWarpContextReady: false,
-      setChainMetadataOverrides: async (
-        overrides: ChainMap<Partial<ChainMetadata> | undefined> = {},
-      ) => {
-        logger.debug('Setting chain overrides in store');
-        const filtered = objFilter(overrides, (_, metadata) => !!metadata);
-        await refreshWarpContext(
-          {
-            registry: get().registry,
-            chainMetadataOverrides: filtered,
-            warpCoreConfigOverrides: get().warpCoreConfigOverrides,
-          },
-          set,
-          get,
-        );
-        set({ chainMetadataOverrides: filtered });
-      },
-      warpCoreConfigOverrides: [],
-      setWarpCoreConfigOverrides: async (overrides: WarpCoreConfig[] | undefined = []) => {
-        logger.debug('Setting warp core config overrides in store');
-        await refreshWarpContext(
-          {
-            registry: get().registry,
-            chainMetadataOverrides: get().chainMetadataOverrides,
-            warpCoreConfigOverrides: overrides,
-          },
-          set,
-          get,
-        );
-        set({ warpCoreConfigOverrides: overrides });
-      },
-      multiProvider: undefined,
-      registry: new GithubRegistry({
-        uri: config.registryUrl,
-        branch: config.registryBranch,
-        proxyUrl: config.registryProxyUrl,
-      }),
-      warpCore: undefined,
-      setWarpContext: (context) => {
-        logger.debug('Setting warp context in store');
-        set(context);
-      },
-      ensureWarpRuntime: () => loadAndSetWarpRuntime(set, get),
+        // Chains and providers
+        chainMetadata: {},
+        chainMetadataOverrides: {},
+        isWarpContextReady: false,
+        setChainMetadataOverrides: async (
+          overrides: ChainMap<Partial<ChainMetadata> | undefined> = {},
+        ) => {
+          logger.debug('Setting chain overrides in store');
+          const filtered = objFilter(overrides, (_, metadata) => !!metadata);
+          await refreshWarpContext(
+            {
+              registry: get().registry,
+              chainMetadataOverrides: filtered,
+              warpCoreConfigOverrides: get().warpCoreConfigOverrides,
+            },
+            set,
+            get,
+          );
+          set({ chainMetadataOverrides: filtered });
+        },
+        warpCoreConfigOverrides: [],
+        setWarpCoreConfigOverrides: async (overrides: WarpCoreConfig[] | undefined = []) => {
+          logger.debug('Setting warp core config overrides in store');
+          await refreshWarpContext(
+            {
+              registry: get().registry,
+              chainMetadataOverrides: get().chainMetadataOverrides,
+              warpCoreConfigOverrides: overrides,
+            },
+            set,
+            get,
+          );
+          set({ warpCoreConfigOverrides: overrides });
+        },
+        multiProvider: undefined,
+        registry: new GithubRegistry({
+          uri: config.registryUrl,
+          branch: config.registryBranch,
+          proxyUrl: config.registryProxyUrl,
+        }),
+        warpCore: undefined,
+        setWarpContext: (context) => {
+          logger.debug('Setting warp context in store');
+          set(context);
+        },
+        ensureWarpRuntime: () => loadAndSetWarpRuntime(set, get),
 
-      // User history
-      transfers: [],
-      addTransfer: (t) => {
-        set((state) => ({ transfers: [...state.transfers, t] }));
-      },
-      resetTransfers: () => {
-        set(() => ({ transfers: [] }));
-      },
-      updateTransferStatus: (i, s, options) => {
-        set((state) => {
-          if (i >= state.transfers.length) return state;
-          const txs = [...state.transfers];
-          txs[i].status = s;
-          txs[i].msgId ||= options?.msgId;
-          txs[i].originTxHash ||= options?.originTxHash;
-          txs[i].originBlockNumber ||= options?.originBlockNumber;
-          txs[i].destinationTxHash ||= options?.destinationTxHash;
-          return {
-            transfers: txs,
-          };
-        });
-      },
-      failUnconfirmedTransfers: () => {
-        set((state) => ({
-          transfers: state.transfers.map((t) =>
-            FinalTransferStatuses.includes(t.status) ? t : { ...t, status: TransferStatus.Failed },
-          ),
-        }));
-      },
+        // User history
+        transfers: [],
+        addTransfer: (t) => {
+          set((state) => ({ transfers: [...state.transfers, t] }));
+        },
+        resetTransfers: () => {
+          set(() => ({ transfers: [] }));
+        },
+        updateTransferStatus: (i, s, options) => {
+          set((state) => {
+            if (i >= state.transfers.length) return state;
+            const txs = [...state.transfers];
+            txs[i].status = s;
+            txs[i].msgId ||= options?.msgId;
+            txs[i].originTxHash ||= options?.originTxHash;
+            txs[i].originBlockNumber ||= options?.originBlockNumber;
+            txs[i].destinationTxHash ||= options?.destinationTxHash;
+            return {
+              transfers: txs,
+            };
+          });
+        },
+        failUnconfirmedTransfers: () => {
+          set((state) => ({
+            transfers: state.transfers.map((t) =>
+              FinalTransferStatuses.includes(t.status)
+                ? t
+                : { ...t, status: TransferStatus.Failed },
+            ),
+          }));
+        },
 
-      // Shared component state
-      transferLoading: false,
-      setTransferLoading: (isLoading) => {
-        set(() => ({ transferLoading: isLoading }));
-      },
-      isSideBarOpen: false,
-      setIsSideBarOpen: (isSideBarOpen) => {
-        set(() => ({ isSideBarOpen }));
-      },
-      showEnvSelectModal: false,
-      setShowEnvSelectModal: (showEnvSelectModal) => {
-        set(() => ({ showEnvSelectModal }));
-      },
-      originChainName: '',
-      setOriginChainName: (originChainName: ChainName) => {
-        set(() => ({ originChainName }));
-      },
-      tokensBySymbolChainMap: {},
-      routerAddressesByChainMap: {},
-      isTipCardActionTriggered: false,
-      setIsTipCardActionTriggered: (isTipCardActionTriggered: boolean) => {
-        set(() => ({ isTipCardActionTriggered }));
-      },
-      tokens: [],
-      collateralGroups: new Map(),
-      tokenByKeyMap: new Map(),
-      coinGeckoIds: [],
+        // Shared component state
+        transferLoading: false,
+        setTransferLoading: (isLoading) => {
+          set(() => ({ transferLoading: isLoading }));
+        },
+        isSideBarOpen: false,
+        setIsSideBarOpen: (isSideBarOpen) => {
+          set(() => ({ isSideBarOpen }));
+        },
+        showEnvSelectModal: false,
+        setShowEnvSelectModal: (showEnvSelectModal) => {
+          set(() => ({ showEnvSelectModal }));
+        },
+        originChainName: '',
+        setOriginChainName: (originChainName: ChainName) => {
+          set(() => ({ originChainName }));
+        },
+        tokensBySymbolChainMap: {},
+        routerAddressesByChainMap: {},
+        isTipCardActionTriggered: false,
+        setIsTipCardActionTriggered: (isTipCardActionTriggered: boolean) => {
+          set(() => ({ isTipCardActionTriggered }));
+        },
+        tokens: [],
+        collateralGroups: new Map(),
+        tokenByKeyMap: new Map(),
+        coinGeckoIds: [],
       };
     },
 
@@ -283,7 +284,10 @@ export const useStore = create<AppState>()(
             return;
           }
           if (!storeSetState || !storeGetState) {
-            logger.error('Store API not ready during hydration', new Error('Store API unavailable'));
+            logger.error(
+              'Store API not ready during hydration',
+              new Error('Store API unavailable'),
+            );
             return;
           }
           refreshWarpContext(

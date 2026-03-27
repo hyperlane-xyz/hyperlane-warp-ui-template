@@ -1,5 +1,5 @@
-import { TokenMetadata } from '@hyperlane-xyz/sdk/token/TokenMetadata';
 import { parseTokenConnectionId } from '@hyperlane-xyz/sdk/token/TokenConnection';
+import { TokenMetadata } from '@hyperlane-xyz/sdk/token/TokenMetadata';
 import type { WarpCoreConfig } from '@hyperlane-xyz/sdk/warp/types';
 
 export function buildRouteTokens(config: WarpCoreConfig): TokenMetadata[] {

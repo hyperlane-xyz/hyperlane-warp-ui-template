@@ -5,6 +5,7 @@ const defaultColors = require('tailwindcss/colors');
 
 module.exports = {
   content: ['./src/**/*.{js,ts,jsx,tsx}'],
+  darkMode: ['selector', '[data-theme-mode="dark"]'],
   theme: {
     fontFamily: {
       primary: ['PP Fraktion Mono', 'system-ui', 'sans-serif'],
@@ -86,6 +87,12 @@ module.exports = {
           800: '#17462E',
           900: '#0F2F1E',
         },
+        background: 'rgb(var(--color-background-rgb) / <alpha-value>)',
+        surface: 'rgb(var(--color-surface-rgb) / <alpha-value>)',
+        'foreground-primary': 'rgb(var(--color-text-primary-rgb) / <alpha-value>)',
+        'foreground-secondary': 'rgb(var(--color-text-secondary-rgb) / <alpha-value>)',
+        'foreground-muted': 'rgb(var(--color-text-muted-rgb) / <alpha-value>)',
+        edge: 'rgb(var(--color-border-rgb) / <alpha-value>)',
       },
       fontSize: {
         xxs: '0.7rem',
@@ -127,7 +134,10 @@ module.exports = {
         'error-glow': `inset 2px 2px 13px 2px ${theme('colors.accent.100')}`,
         card: `0px 4px 6px ${theme('colors.gray.950')}1A`,
         button: `0 4px 6px ${theme('colors.gray.950')}1A`,
+        'app-header': '0px 4px 7px rgba(0,0,0,0.05)',
+        'app-header-dark': '0 8px 24px rgba(0,0,0,0.35)',
         input: `0 0 4px ${theme('colors.gray.400')}4D`,
+        'menu-dark': '0 16px 36px rgba(0,0,0,0.45)',
       }),
       dropShadow: ({ theme }) => ({
         button: `0 4px 6px ${theme('colors.gray.950')}0D`,

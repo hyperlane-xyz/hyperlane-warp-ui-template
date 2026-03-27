@@ -31,10 +31,46 @@ Place font files in public/fonts/ directory
 Normalization
 =============
 */
+:root {
+  --app-bg-color: #f8f8ff;
+  --app-bg-image:
+    url('/backgrounds/main.svg'),
+    radial-gradient(120% 80% at 50% 100%, #e8caff 0%, #f2e4ff 60%, #f8f2ff 100%);
+}
+
+html[data-theme-mode='dark'] {
+  --app-bg-color: #0d0612;
+  --app-bg-image:
+    url('/backgrounds/main-dark.svg'),
+    radial-gradient(ellipse 200% 150% at 50% 100%, #5e1396 0%, #1a0a28 40%, #0d0612 100%);
+
+  /* Dark mode semantic palette — single source of truth */
+  --dark-text-primary: #f2e4ff;
+  --dark-text-secondary: #c9b5df;
+  --dark-text-muted: #b494d6;
+  --dark-surface: rgba(20, 10, 30, 0.96);
+  --dark-surface-card: rgba(13, 6, 18, 0.65);
+  --dark-border: rgba(185, 89, 255, 0.25);
+  --dark-border-hover: rgba(185, 89, 255, 0.5);
+  --dark-border-subtle: rgba(185, 89, 255, 0.18);
+  --dark-hover: rgba(185, 89, 255, 0.16);
+  --dark-accent-rgb: 185, 89, 255;
+}
+
 html,
 body {
   padding: 0;
   margin: 0;
+  background-color: var(--app-bg-color);
+}
+
+.warp-init-gate,
+#app-content {
+  background-color: var(--app-bg-color);
+  background-image: var(--app-bg-image);
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
 }
 
 a {
@@ -255,10 +291,10 @@ Needs to be higher than Intercom chatbox (z-index: 2147483000)
 }
 
 /*
-Chain Edit Modal - Widget style overrides
-==========================================
-Override htw- prefixed Tailwind classes from @hyperlane-xyz/widgets
-ChainDetailsMenu to match v2 styling
+Theme mode
+==========
+Chain Edit Modal widget style overrides.
+Many selectors below target widget internals (.htw-*); revisit during @hyperlane-xyz/widgets upgrades.
 */
 .chain-edit-container {
   font-family: var(--font-secondary, 'PP Valve', system-ui, sans-serif);
@@ -302,4 +338,992 @@ ChainDetailsMenu to match v2 styling
 
 .chain-edit-container a:hover {
   text-decoration: underline;
+}
+
+/* Chain edit modal dark mode overrides */
+
+/* Tooltip ? icons — brighten the background circle for visibility */
+html[data-theme-mode='dark'] .chain-edit-container [data-tooltip-id] .htw-rounded-full {
+  background: rgba(var(--dark-accent-rgb), 0.3) !important;
+  border: 1px solid rgba(var(--dark-accent-rgb), 0.45);
+}
+
+html[data-theme-mode='dark'] .chain-edit-container [data-tooltip-id] svg {
+  opacity: 0.9 !important;
+  filter: brightness(0) invert(1);
+}
+
+/* Status circles (green/red/gray) — brighter with glow */
+html[data-theme-mode='dark'] .chain-edit-container .htw-bg-green-500 {
+  background-color: #4ade80 !important;
+  box-shadow: 0 0 6px rgba(74, 222, 128, 0.5);
+}
+
+html[data-theme-mode='dark'] .chain-edit-container .htw-bg-red-500 {
+  background-color: #f87171 !important;
+  box-shadow: 0 0 6px rgba(248, 113, 113, 0.5);
+}
+
+html[data-theme-mode='dark'] .chain-edit-container .htw-bg-gray-400 {
+  background-color: #9ca3af !important;
+  box-shadow: 0 0 4px rgba(156, 163, 175, 0.3);
+}
+
+/* "Add new rpc/explorer" — tone down the plus icon */
+html[data-theme-mode='dark'] .chain-edit-container .htw-gap-3 > svg path {
+  fill: var(--dark-text-secondary) !important;
+}
+
+html[data-theme-mode='dark'] .chain-edit-container .htw-gap-3:hover > svg path {
+  fill: var(--dark-text-primary) !important;
+}
+
+/* "Add new" text — muted to match icon */
+html[data-theme-mode='dark'] .chain-edit-container .htw-gap-3 .htw-text-sm {
+  color: var(--dark-text-secondary) !important;
+}
+
+html[data-theme-mode='dark'] .chain-edit-container .htw-gap-3:hover .htw-text-sm {
+  color: var(--dark-text-primary) !important;
+}
+
+html[data-theme-mode='dark'] .theme-toggle {
+  @apply border-primary-300/45 bg-black/75 text-primary-50;
+}
+
+html[data-theme-mode='dark'] .theme-toggle:hover {
+  @apply border-primary-500/55 bg-white/95 text-primary-900;
+}
+
+html[data-theme-mode='dark'] .theme-toggle:focus-visible {
+  box-shadow: 0 0 0 2px rgba(185, 89, 255, 0.35);
+}
+
+html[data-theme-switching='true'] *,
+html[data-theme-switching='true'] *::before,
+html[data-theme-switching='true'] *::after {
+  transition: none !important;
+  animation: none !important;
+}
+
+html[data-theme-mode='dark'] {
+  color-scheme: dark;
+}
+
+html[data-theme-mode='dark'] .shadow-accent-glow {
+  box-shadow: inset 0 0 20px 0 rgba(154, 13, 255, 0.35) !important;
+}
+
+html[data-theme-mode='dark'] .shadow-error-glow {
+  box-shadow: inset 0 0 20px 0 rgba(255, 13, 126, 0.28) !important;
+}
+
+html[data-theme-mode='dark'] .sidebar-menu {
+  border-left: 1px solid rgba(185, 89, 255, 0.35);
+  background: rgba(13, 6, 18, 0.95) !important;
+}
+
+html[data-theme-mode='dark'] .sidebar-menu.translate-x-0 {
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.45);
+}
+
+html[data-theme-mode='dark'] .sidebar-menu-header {
+  background-image: radial-gradient(
+    61.48% 118.8% at 50.08% 92%,
+    #c97eff 0%,
+    #9a0dff 100%
+  ) !important;
+  box-shadow: none !important;
+}
+
+html[data-theme-mode='dark'] .sidebar-menu-item:hover {
+  background-color: rgba(185, 89, 255, 0.14) !important;
+}
+
+html[data-theme-mode='dark'] .sidebar-menu .bg-gray-100 {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+html[data-theme-mode='dark'] .sidebar-menu .text-gray-900,
+html[data-theme-mode='dark'] .sidebar-menu .text-gray-800 {
+  color: var(--dark-text-primary) !important;
+}
+
+html[data-theme-mode='dark'] .sidebar-menu .text-gray-600,
+html[data-theme-mode='dark'] .sidebar-menu .text-gray-500,
+html[data-theme-mode='dark'] .sidebar-menu .text-gray-400 {
+  color: var(--dark-text-secondary) !important;
+}
+
+.tip-card-logo {
+  opacity: 0.38;
+  clip-path: inset(0 0 1px 0);
+  -webkit-mask-image: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.98) 22%,
+    rgba(0, 0, 0, 0.52) 58%,
+    rgba(0, 0, 0, 0.1) 86%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.98) 22%,
+    rgba(0, 0, 0, 0.52) 58%,
+    rgba(0, 0, 0, 0.1) 86%,
+    transparent 100%
+  );
+}
+
+.tip-card-logo svg {
+  display: block;
+}
+
+html[data-theme-mode='dark'] .tip-card {
+  background: linear-gradient(0deg, rgba(154, 13, 255, 0.3) 0%, rgba(17, 17, 17, 0.95) 100%);
+  box-shadow:
+    0 4px 6px rgba(34, 26, 45, 0.25),
+    inset 0 0 0 1px rgba(154, 13, 255, 0.5);
+}
+
+html[data-theme-mode='dark'] .tip-card-close {
+  color: var(--dark-text-secondary) !important;
+}
+
+html[data-theme-mode='dark'] .tip-card-close svg,
+html[data-theme-mode='dark'] .tip-card-close path {
+  color: var(--dark-text-secondary) !important;
+  fill: var(--dark-text-secondary) !important;
+}
+
+html[data-theme-mode='dark'] .tip-card-close:hover,
+html[data-theme-mode='dark'] .tip-card-close:hover svg,
+html[data-theme-mode='dark'] .tip-card-close:hover path {
+  color: var(--dark-text-primary) !important;
+  fill: var(--dark-text-primary) !important;
+}
+
+html[data-theme-mode='dark'] .tip-card-title {
+  color: #ffffff !important;
+}
+
+html[data-theme-mode='dark'] .tip-card-copy {
+  color: #d1d5db !important;
+}
+
+html[data-theme-mode='dark'] .tip-card-more {
+  border-color: rgba(154, 13, 255, 0.8) !important;
+  background: rgba(154, 13, 255, 0.2) !important;
+  color: #ffffff !important;
+}
+
+html[data-theme-mode='dark'] .tip-card-more:hover {
+  background: rgba(154, 13, 255, 0.3) !important;
+}
+
+html[data-theme-mode='dark'] .tip-card-more-icon {
+  filter: invert(1);
+}
+
+html[data-theme-mode='dark'] .tip-card-logo {
+  opacity: 0.16;
+  -webkit-mask-image: linear-gradient(
+    to top,
+    transparent 0%,
+    rgba(0, 0, 0, 0.6) 12%,
+    rgba(0, 0, 0, 1) 24%,
+    rgba(0, 0, 0, 0.58) 56%,
+    rgba(0, 0, 0, 0.12) 86%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to top,
+    transparent 0%,
+    rgba(0, 0, 0, 0.6) 12%,
+    rgba(0, 0, 0, 1) 24%,
+    rgba(0, 0, 0, 0.58) 56%,
+    rgba(0, 0, 0, 0.12) 86%,
+    transparent 100%
+  );
+}
+
+.transfer-card {
+  border: 0;
+}
+
+html[data-theme-mode='dark'] .transfer-card {
+  background: rgba(13, 6, 18, 0.65) !important;
+  box-shadow:
+    0 16px 32px rgba(0, 0, 0, 0.25),
+    inset 0 0 0 1px rgba(185, 89, 255, 0.2);
+}
+
+html[data-theme-mode='dark'] .transfer-field-label,
+html[data-theme-mode='dark'] .transfer-balance {
+  color: var(--dark-text-secondary) !important;
+}
+
+html[data-theme-mode='dark'] .swap-chains-button {
+  border-radius: 0.5rem;
+  border: 1px solid rgba(185, 89, 255, 0.35);
+  background: rgba(13, 6, 18, 0.9);
+  box-shadow: none;
+}
+
+html[data-theme-mode='dark'] .swap-chains-button:hover {
+  background: rgba(185, 89, 255, 0.18);
+}
+
+html[data-theme-mode='dark'] .swap-chains-icon {
+  filter: brightness(0) invert(1) drop-shadow(0 0 8px rgba(255, 255, 255, 0.55));
+}
+
+/* Chain field: transparent so it merges with the card — border-only delineation */
+html[data-theme-mode='dark'] .transfer-chain-field {
+  border-color: rgba(185, 89, 255, 0.18) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--dark-text-primary) !important;
+}
+
+/* Token button: transparent bg, subtle border only */
+html[data-theme-mode='dark'] .transfer-token-field {
+  border-color: rgba(185, 89, 255, 0.25) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--dark-text-primary) !important;
+}
+
+html[data-theme-mode='dark'] .transfer-token-field:hover {
+  border-color: rgba(185, 89, 255, 0.5) !important;
+  background: rgba(185, 89, 255, 0.08) !important;
+}
+
+html[data-theme-mode='dark'] .transfer-text-input {
+  border-color: transparent !important;
+  background: transparent !important;
+  color: var(--dark-text-primary) !important;
+}
+
+html[data-theme-mode='dark'] .transfer-text-input:focus {
+  border-color: transparent !important;
+  background: transparent !important;
+}
+
+/* Chain badge on token icons — visible surface so badge stands out on dark backgrounds */
+html[data-theme-mode='dark'] .token-chain-badge {
+  border-color: rgba(255, 255, 255, 0.22) !important;
+  background: #2a1e3e !important;
+}
+
+html[data-theme-mode='dark'] .transfer-review-panel {
+  border-color: rgba(185, 89, 255, 0.22) !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  color: var(--dark-text-primary) !important;
+}
+
+html[data-theme-mode='dark'] .transfer-text-input::placeholder {
+  color: var(--dark-text-secondary);
+}
+
+/* Chevron circle button inside token selector */
+html[data-theme-mode='dark'] .transfer-token-chevron {
+  background: rgba(185, 89, 255, 0.15) !important;
+  border-color: rgba(185, 89, 255, 0.35) !important;
+  box-shadow: none !important;
+  color: var(--dark-text-primary) !important;
+}
+
+html[data-theme-mode='dark'] .transfer-token-chevron svg {
+  filter: brightness(0) invert(1) opacity(0.8);
+}
+
+html[data-theme-mode='dark'] .transfer-token-field:hover .transfer-token-chevron {
+  background: rgba(185, 89, 255, 0.28) !important;
+  border-color: rgba(185, 89, 255, 0.5) !important;
+}
+
+/* Horizontal dividers inside transfer cards */
+html[data-theme-mode='dark'] .transfer-divider {
+  background: rgba(185, 89, 255, 0.22) !important;
+}
+
+/* Max button */
+html[data-theme-mode='dark'] .transfer-max-btn {
+  border-color: rgba(185, 89, 255, 0.4) !important;
+  color: var(--dark-text-secondary) !important;
+}
+
+html[data-theme-mode='dark'] .transfer-max-btn:hover:not(:disabled) {
+  border-color: rgba(185, 89, 255, 0.65) !important;
+  color: var(--dark-text-primary) !important;
+}
+
+/* Wallet connect link & dropdown */
+html[data-theme-mode='dark'] .wallet-connect-link {
+  color: var(--dark-text-muted) !important;
+  text-decoration-color: rgba(180, 148, 214, 0.35) !important;
+}
+
+html[data-theme-mode='dark'] .wallet-connect-link:hover {
+  color: #d4b8f0 !important;
+  text-decoration-color: rgba(212, 184, 240, 0.5) !important;
+}
+
+html[data-theme-mode='dark'] .wallet-connect-link path {
+  fill: var(--dark-text-muted) !important;
+}
+
+html[data-theme-mode='dark'] .wallet-connect-link:hover path {
+  fill: #d4b8f0 !important;
+}
+
+/* Import token button */
+html[data-theme-mode='dark'] .transfer-import-token {
+  color: var(--dark-text-muted) !important;
+}
+
+html[data-theme-mode='dark'] .transfer-import-token:hover {
+  color: #d4b8f0 !important;
+}
+
+html[data-theme-mode='dark'] .transfer-import-token path {
+  fill: var(--dark-text-muted) !important;
+}
+
+html[data-theme-mode='dark'] .transfer-import-token:hover path {
+  fill: #d4b8f0 !important;
+}
+
+html[data-theme-mode='dark'] .wallet-dropdown-menu {
+  border-color: rgba(185, 89, 255, 0.38) !important;
+  background: var(--dark-surface) !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+html[data-theme-mode='dark'] .wallet-dropdown-item {
+  color: var(--dark-text-primary) !important;
+}
+
+html[data-theme-mode='dark'] .wallet-dropdown-item:hover {
+  background: rgba(185, 89, 255, 0.16) !important;
+}
+
+html[data-theme-mode='dark'] .wallet-dropdown-separator {
+  background: rgba(185, 89, 255, 0.22) !important;
+}
+
+html[data-theme-mode='dark'] .transfer-form .text-gray-900,
+html[data-theme-mode='dark'] .transfer-form .text-gray-800 {
+  color: var(--dark-text-primary) !important;
+}
+
+html[data-theme-mode='dark'] .transfer-form .text-gray-700,
+html[data-theme-mode='dark'] .transfer-form .text-gray-600,
+html[data-theme-mode='dark'] .transfer-form .text-gray-500 {
+  color: var(--dark-text-secondary) !important;
+}
+
+html[data-theme-mode='dark'] .fee-section-btn {
+  color: var(--dark-text-secondary) !important;
+}
+
+html[data-theme-mode='dark'] .fee-section-btn path {
+  fill: var(--dark-text-secondary) !important;
+}
+
+html[data-theme-mode='dark'] .fee-section-btn:hover {
+  color: var(--dark-text-primary) !important;
+}
+
+html[data-theme-mode='dark'] .fee-section-btn:hover path {
+  fill: var(--dark-text-primary) !important;
+}
+
+html[data-theme-mode='dark'] .sidebar-menu-arrow {
+  filter: brightness(0) invert(1) opacity(0.85);
+}
+
+.footer-logo-wrap {
+  border: 1px solid transparent;
+  border-radius: 9999px;
+  background: transparent;
+  padding: 0.35rem 0.8rem;
+}
+
+html[data-theme-mode='dark'] .footer-logo-wrap {
+  border-color: rgba(185, 89, 255, 0.4);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 22px rgba(154, 13, 255, 0.24);
+}
+
+html[data-theme-mode='dark'] .footer-logo {
+  filter: saturate(1.2) brightness(1.2) drop-shadow(0 0 10px rgba(185, 89, 255, 0.45));
+}
+
+html[data-theme-mode='dark'] .footer-nav-item {
+  color: #e9d8ff !important;
+}
+
+html[data-theme-mode='dark'] .footer-nav-item:hover {
+  color: #ffffff !important;
+}
+
+html[data-theme-mode='dark'] .footer-nav-item svg {
+  filter: saturate(0.82) brightness(1.22);
+  opacity: 0.95;
+}
+
+html[data-theme-mode='dark'] .chain-picker-modal:not(.bg-gray-100),
+html[data-theme-mode='dark'] .token-picker-modal {
+  border: 1px solid rgba(185, 89, 255, 0.38) !important;
+  background: var(--dark-surface) !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+}
+
+html[data-theme-mode='dark'] .chain-picker-modal input,
+html[data-theme-mode='dark'] .token-picker-search-input {
+  border-color: rgba(185, 89, 255, 0.45) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: var(--dark-text-primary) !important;
+}
+
+html[data-theme-mode='dark'] .chain-picker-modal input::placeholder,
+html[data-theme-mode='dark'] .token-picker-search-input::placeholder {
+  color: var(--dark-text-secondary) !important;
+}
+
+html[data-theme-mode='dark'] .chain-picker-modal button {
+  color: var(--dark-text-primary);
+}
+
+html[data-theme-mode='dark'] .chain-picker-modal .htw-h-7 {
+  border-color: rgba(185, 89, 255, 0.4) !important;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+html[data-theme-mode='dark'] .chain-picker-modal .htw-h-7 span {
+  color: #e9d8ff !important;
+}
+
+html[data-theme-mode='dark'] .chain-picker-modal .htw-relative > svg,
+html[data-theme-mode='dark'] .chain-picker-modal .htw-h-7 svg,
+html[data-theme-mode='dark'] .chain-picker-modal .htw-mr-0\.5 svg,
+html[data-theme-mode='dark'] .token-picker-search-icon {
+  filter: brightness(0) invert(1) opacity(0.82);
+}
+
+html[data-theme-mode='dark'] .chain-picker-modal button:hover,
+html[data-theme-mode='dark'] .token-picker-row:hover,
+html[data-theme-mode='dark'] .token-picker-chain-row:hover {
+  background: rgba(185, 89, 255, 0.16) !important;
+}
+
+/* Token list panel inner backgrounds */
+html[data-theme-mode='dark'] .token-picker-header {
+  background: var(--dark-surface) !important;
+  border-color: rgba(185, 89, 255, 0.22) !important;
+}
+
+html[data-theme-mode='dark'] .token-picker-header h3 {
+  color: var(--dark-text-secondary) !important;
+}
+
+html[data-theme-mode='dark'] .token-picker-row .text-black {
+  color: var(--dark-text-primary) !important;
+}
+
+html[data-theme-mode='dark'] .token-picker-fade {
+  background: linear-gradient(to bottom, transparent, rgba(20, 10, 30, 0.96)) !important;
+}
+
+html[data-theme-mode='dark'] .chain-picker-fade {
+  background: linear-gradient(to bottom, transparent, rgba(20, 10, 30, 0.96)) !important;
+}
+
+html[data-theme-mode='dark'] .token-picker-shimmer {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+html[data-theme-mode='dark'] .token-picker-hint {
+  background: transparent !important;
+  border: 1px solid rgba(185, 89, 255, 0.25);
+}
+
+html[data-theme-mode='dark'] .token-picker-hint p {
+  color: var(--dark-text-secondary) !important;
+}
+
+/* Chain list selected state */
+html[data-theme-mode='dark'] .token-picker-chain-row .text-black {
+  color: var(--dark-text-primary) !important;
+}
+
+/* Token row hover override (replaces hover:bg-gray-100) */
+html[data-theme-mode='dark'] .token-picker-row.hover\:bg-gray-100:hover {
+  background: rgba(185, 89, 255, 0.16) !important;
+}
+
+html[data-theme-mode='dark'] .chain-picker-modal .htw-border-gray-200,
+html[data-theme-mode='dark'] .chain-picker-modal .htw-border-gray-100,
+html[data-theme-mode='dark'] .token-picker-modal .border-gray-200,
+html[data-theme-mode='dark'] .token-picker-modal .border-gray-100 {
+  border-color: rgba(185, 89, 255, 0.3) !important;
+}
+
+html[data-theme-mode='dark'] .chain-picker-modal .htw-bg-gray-100,
+html[data-theme-mode='dark'] .chain-picker-modal .bg-gray-100,
+html[data-theme-mode='dark'] .chain-picker-modal.bg-gray-100 {
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* Chain filter/sort dropdown panels */
+html[data-theme-mode='dark'] .chain-picker-modal .bg-white {
+  background: rgba(20, 10, 30, 0.98) !important;
+}
+
+html[data-theme-mode='dark'] .chain-picker-modal .border-gray-200 {
+  border-color: rgba(185, 89, 255, 0.3) !important;
+}
+
+html[data-theme-mode='dark'] .chain-picker-modal .text-gray-700,
+html[data-theme-mode='dark'] .chain-picker-modal .text-gray-600,
+html[data-theme-mode='dark'] .chain-picker-modal .text-gray-500 {
+  color: var(--dark-text-secondary) !important;
+}
+
+html[data-theme-mode='dark'] .chain-picker-modal .hover\:bg-gray-200:hover {
+  background: rgba(185, 89, 255, 0.16) !important;
+}
+
+html[data-theme-mode='dark'] .chain-picker-modal .hover\:bg-gray-100:hover {
+  background: rgba(185, 89, 255, 0.12) !important;
+}
+
+html[data-theme-mode='dark'] .chain-picker-modal .text-black {
+  color: var(--dark-text-primary) !important;
+}
+
+/* Toolbar + edit icons: brighten gray-500 SVG fills for dark bg */
+html[data-theme-mode='dark'] .chain-picker-toolbar svg path[fill='#6b7280' i],
+html[data-theme-mode='dark'] .chain-picker-edit-icon path[fill='#6b7280' i] {
+  fill: var(--dark-text-secondary) !important;
+}
+
+html[data-theme-mode='dark'] .chain-picker-toolbar svg path[fill='#9A0DFF' i] {
+  fill: #c9a0ff !important;
+}
+
+html[data-theme-mode='dark']
+  .chain-picker-modal
+  .htw-divide-gray-100
+  > :not([hidden])
+  ~ :not([hidden]) {
+  border-color: rgba(185, 89, 255, 0.2) !important;
+}
+
+html[data-theme-mode='dark'] .chain-picker-modal .htw-text-gray-700,
+html[data-theme-mode='dark'] .chain-picker-modal .htw-text-gray-600,
+html[data-theme-mode='dark'] .chain-picker-modal .htw-text-gray-500,
+html[data-theme-mode='dark'] .chain-picker-modal .htw-text-gray-400,
+html[data-theme-mode='dark'] .token-picker-modal .text-gray-500,
+html[data-theme-mode='dark'] .token-picker-modal .text-gray-400 {
+  color: var(--dark-text-secondary) !important;
+}
+
+html[data-theme-mode='dark'] .chain-picker-modal h2 {
+  color: var(--dark-text-primary) !important;
+}
+
+html[data-theme-mode='dark'] .chain-picker-modal a {
+  color: #e9d8ff !important;
+}
+
+html[data-theme-mode='dark'] .chain-picker-modal .htw-space-y-4 {
+  color: #e9d8ff;
+}
+
+html[data-theme-mode='dark'] .chain-picker-modal textarea {
+  border-color: rgba(185, 89, 255, 0.45) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: var(--dark-text-primary) !important;
+}
+
+html[data-theme-mode='dark'] .chain-picker-modal textarea::placeholder {
+  color: var(--dark-text-secondary) !important;
+}
+
+html[data-theme-mode='dark'] .chain-picker-modal .htw-space-y-4 svg {
+  filter: brightness(0) invert(1) opacity(0.82);
+}
+
+html[data-theme-mode='dark'] .token-picker-symbol,
+html[data-theme-mode='dark'] .token-picker-usd,
+html[data-theme-mode='dark'] .token-picker-address,
+html[data-theme-mode='dark'] .token-picker-chain-name,
+html[data-theme-mode='dark'] .token-picker-empty {
+  color: var(--dark-text-primary) !important;
+}
+
+html[data-theme-mode='dark'] .token-picker-name,
+html[data-theme-mode='dark'] .token-picker-meta {
+  color: var(--dark-text-secondary) !important;
+}
+
+html[data-theme-mode='dark'] .token-picker-info-icon {
+  filter: brightness(0) invert(1) opacity(0.7);
+}
+
+html[data-theme-mode='dark'] .token-picker-chain-row {
+  border-color: rgba(185, 89, 255, 0.2) !important;
+}
+
+html[data-theme-mode='dark'] .sidebar-menu-collapse {
+  background: rgba(13, 6, 18, 0.7) !important;
+  border-right: 1px solid rgba(185, 89, 255, 0.26);
+}
+
+html[data-theme-mode='dark'] .sidebar-menu-collapse img {
+  filter: brightness(0) invert(1) opacity(0.85);
+}
+
+html[data-theme-mode='dark'] .sidebar-menu-list > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgba(185, 89, 255, 0.22);
+}
+
+html[data-theme-mode='dark'] .sidebar-menu-refresh {
+  color: var(--dark-text-primary);
+}
+
+html[data-theme-mode='dark'] .sidebar-menu-chain-badge {
+  background: rgba(255, 255, 255, 0.12) !important;
+}
+
+html[data-theme-mode='dark'] .sidebar-menu-token-text,
+html[data-theme-mode='dark'] .sidebar-menu-route-text,
+html[data-theme-mode='dark'] .sidebar-menu-time,
+html[data-theme-mode='dark'] .sidebar-menu-empty,
+html[data-theme-mode='dark'] .sidebar-menu-end {
+  color: #e9d8ff !important;
+}
+
+html[data-theme-mode='dark'] .transfer-details-modal {
+  border: 1px solid rgba(185, 89, 255, 0.42) !important;
+  background: var(--dark-surface) !important;
+  color: var(--dark-text-primary) !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+}
+
+html[data-theme-mode='dark'] .transfer-details-modal .bg-primary-200 {
+  background: rgba(185, 89, 255, 0.2) !important;
+}
+
+html[data-theme-mode='dark'] .transfer-details-modal .text-gray-900,
+html[data-theme-mode='dark'] .transfer-details-modal .text-gray-800 {
+  color: var(--dark-text-primary) !important;
+}
+
+html[data-theme-mode='dark'] .transfer-details-modal .text-gray-600,
+html[data-theme-mode='dark'] .transfer-details-modal .text-gray-500,
+html[data-theme-mode='dark'] .transfer-details-modal .text-gray-350 {
+  color: var(--dark-text-secondary) !important;
+}
+
+/* Card gradient and shadow — dark surface variant */
+html[data-theme-mode='dark'] .transfer-details-modal .bg-card-gradient {
+  background: linear-gradient(
+    180deg,
+    var(--dark-surface-card) 0%,
+    rgba(20, 10, 30, 0.8) 100%
+  ) !important;
+}
+
+html[data-theme-mode='dark'] .transfer-details-modal .shadow-card {
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.3) !important;
+}
+
+html[data-theme-mode='dark'] .transfer-details-modal .border-gray-400\/25 {
+  border-color: var(--dark-border) !important;
+}
+
+/* Timeline section — text and icons */
+html[data-theme-mode='dark'] .transfer-details-modal h4 {
+  color: var(--dark-text-primary) !important;
+}
+
+/* Timeline stage labels (Sent, Finalized, Validated, Relayed) */
+html[data-theme-mode='dark'] .transfer-details-modal .htw-text-gray-700 {
+  color: var(--dark-text-primary) !important;
+}
+
+/* Timeline bar and icon circles — accent purple instead of blue */
+html[data-theme-mode='dark'] .transfer-details-modal .htw-bg-blue-500 {
+  background-color: rgb(var(--dark-accent-rgb)) !important;
+}
+
+/* Timeline — arrow-shaped segments via clip-path [=> >=> >=> >=] */
+/* Middle segments: V-notch left, point right */
+.transfer-details-modal .htw-bg-blue-500 {
+  clip-path: polygon(
+    0 0,
+    calc(100% - 10px) 0,
+    100% 50%,
+    calc(100% - 10px) 100%,
+    0 100%,
+    10px 50%
+  ) !important;
+}
+
+/* First segment: flat left, point right */
+.transfer-details-modal .htw-flex-1:first-child .htw-bg-blue-500 {
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 0 100%) !important;
+}
+
+/* Last segment: V-notch left, flat right */
+.transfer-details-modal .htw-flex-1:last-child .htw-bg-blue-500 {
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 10px 50%) !important;
+}
+
+/* Hide widget chevrons — clip-path handles the shape */
+.transfer-details-modal .htw-bg-blue-500 > :not(:first-child) {
+  opacity: 0 !important;
+}
+
+/* Center icons within clip-path chevron shapes */
+/* First segment (flat left, arrow right): visual center is ~5px left of CSS center */
+.transfer-details-modal .htw-flex-1:first-child .htw-bg-blue-500 > :first-child {
+  transform: translateX(-5px);
+}
+
+/* Middle segments: cancel widget's htw-pl-2 that pushes icons right */
+.transfer-details-modal
+  .htw-flex-1:not(:first-child):not(:last-child)
+  .htw-bg-blue-500
+  > :first-child {
+  padding-left: 0 !important;
+}
+
+/* Last segment (V-notch left, flat right): visual center is ~5px right of CSS center */
+.transfer-details-modal .htw-flex-1:last-child .htw-bg-blue-500 > :first-child {
+  transform: translateX(5px);
+}
+
+/* Close gaps between arrow segments */
+.transfer-details-modal .htw-flex-0 {
+  width: 0 !important;
+}
+
+/* Arrow between amount/ticker pairs (e.g. "1 USDC → 1 USDC") */
+html[data-theme-mode='dark'] .transfer-details-modal .font-secondary img {
+  filter: brightness(0) invert(1) opacity(0.85);
+}
+
+/* Wide chevrons between origin/dest token icons */
+html[data-theme-mode='dark'] .transfer-details-modal .mb-6 svg path {
+  fill: rgba(185, 89, 255, 0.6) !important;
+}
+
+/* Link icons */
+html[data-theme-mode='dark'] .transfer-details-modal a img {
+  filter: brightness(0) invert(1) opacity(0.82);
+}
+
+html[data-theme-mode='dark'] .transfer-details-modal .opacity-40 {
+  opacity: 0.7 !important;
+  filter: brightness(0) invert(1);
+}
+
+html[data-theme-mode='dark'] .transfer-details-modal a {
+  color: var(--dark-text-primary) !important;
+}
+
+html[data-theme-mode='dark'] .transfer-details-spinner {
+  color: var(--dark-text-primary) !important;
+}
+
+html[data-theme-mode='dark'] .transfer-details-spinner circle {
+  stroke: rgba(185, 89, 255, 0.35) !important;
+}
+
+html[data-theme-mode='dark'] .transfer-details-spinner path {
+  fill: rgb(var(--dark-accent-rgb)) !important;
+}
+
+html[data-theme-mode='dark'] .transfer-fee-modal {
+  border: 1px solid rgba(185, 89, 255, 0.42) !important;
+  background: var(--dark-surface) !important;
+  color: var(--dark-text-primary) !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+}
+
+html[data-theme-mode='dark'] .transfer-fee-modal-content {
+  color: var(--dark-text-primary) !important;
+}
+
+/* Fix wallet icons being cropped to circles by widget's htw-rounded-full + htw-overflow-hidden */
+.sidebar-menu .htw-rounded-full.htw-overflow-hidden {
+  border-radius: 0.375rem;
+}
+
+/* Wallet rows — full width, flat, dividers between items to match transfer history */
+.sidebar-menu .htw-space-y-2 {
+  gap: 0 !important;
+}
+
+.sidebar-menu .htw-space-y-2 > * + * {
+  margin-top: 0 !important;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-menu .htw-space-y-2 > *:last-child {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-menu .htw-rounded-sm {
+  border-radius: 0 !important;
+  padding-left: 0.875rem !important; /* px-3.5 */
+  padding-right: 0.875rem !important;
+}
+
+html[data-theme-mode='dark'] .sidebar-menu .htw-space-y-2 > * + * {
+  border-color: rgba(185, 89, 255, 0.18);
+}
+
+html[data-theme-mode='dark'] .sidebar-menu .htw-space-y-2 > *:last-child {
+  border-color: rgba(185, 89, 255, 0.18);
+}
+
+html[data-theme-mode='dark'] .sidebar-menu .htw-rounded-sm {
+  color: var(--dark-text-primary) !important;
+  background: transparent;
+}
+
+html[data-theme-mode='dark'] .sidebar-menu .htw-rounded-sm:hover {
+  background: rgba(185, 89, 255, 0.12) !important;
+}
+
+html[data-theme-mode='dark'] .sidebar-menu .htw-rounded-sm .htw-text-gray-800 {
+  color: var(--dark-text-primary) !important;
+}
+
+html[data-theme-mode='dark'] .sidebar-menu .htw-rounded-sm .htw-text-gray-500,
+html[data-theme-mode='dark'] .sidebar-menu .htw-rounded-sm .htw-text-xs {
+  color: var(--dark-text-secondary) !important;
+}
+
+html[data-theme-mode='dark'] .sidebar-menu .htw-rounded-sm svg path {
+  fill: currentcolor !important;
+}
+
+html[data-theme-mode='dark'] .sidebar-menu .htw-relative > .htw-absolute svg path {
+  fill: var(--dark-text-secondary) !important;
+}
+
+html[data-theme-mode='dark'] .sidebar-menu .htw-bg-gray-600 {
+  background: rgba(255, 255, 255, 0.18) !important;
+  color: var(--dark-text-primary) !important;
+}
+
+html[data-theme-mode='dark'] .app-header {
+  background: rgba(13, 6, 18, 0.88) !important;
+  border-bottom: 1px solid rgba(185, 89, 255, 0.24);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+@media (min-width: 1024px) {
+  html[data-theme-mode='dark'] .app-header {
+    background: transparent !important;
+    border-bottom: none;
+    box-shadow: none;
+  }
+}
+
+html[data-theme-mode='dark'] .app-header-menu-btn {
+  color: #e9d8ff !important;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+html[data-theme-mode='dark'] .app-header-menu-btn[data-open] {
+  background: rgba(185, 89, 255, 0.24) !important;
+  box-shadow: inset 0 0 0 1px rgba(185, 89, 255, 0.45) !important;
+  color: #ffffff !important;
+}
+
+html[data-theme-mode='dark'] .app-header-menu {
+  border: 1px solid rgba(185, 89, 255, 0.35);
+  background: var(--dark-surface) !important;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
+}
+
+html[data-theme-mode='dark'] .app-header-menu .app-header-menu-item {
+  color: #e9d8ff !important;
+}
+
+html[data-theme-mode='dark'] .app-header-menu .app-header-menu-item:hover {
+  background: rgba(185, 89, 255, 0.16) !important;
+}
+
+html[data-theme-mode='dark'] .app-header-menu .app-header-menu-item svg path {
+  fill: #e9d8ff !important;
+}
+
+.wallet-protocol-grid {
+  align-items: stretch;
+}
+
+.wallet-protocol-card {
+  min-height: 9.75rem;
+  justify-content: center;
+}
+
+.wallet-protocol-title {
+  font-weight: 500;
+}
+
+.wallet-protocol-subtitle {
+  display: flex;
+  min-height: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.wallet-protocol-dialog .htw-flex.htw-min-h-full {
+  align-items: center;
+}
+
+html[data-theme-mode='dark'] .wallet-protocol-dialog .htw-bg-black\/25 {
+  background: radial-gradient(
+    circle at 50% 45%,
+    rgba(46, 16, 77, 0.28) 0%,
+    rgba(10, 4, 16, 0.78) 55%,
+    rgba(4, 2, 8, 0.9) 100%
+  ) !important;
+}
+
+html[data-theme-mode='dark'] .wallet-protocol-modal {
+  border: 1px solid #8d58be !important;
+  background: #140a1e !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+}
+
+html[data-theme-mode='dark'] .wallet-protocol-card {
+  border-color: #7f49b2 !important;
+  background: #261438;
+}
+
+html[data-theme-mode='dark'] .wallet-protocol-card:hover {
+  background: #351d4e !important;
+}
+
+html[data-theme-mode='dark'] .wallet-protocol-title {
+  color: var(--dark-text-primary) !important;
+}
+
+html[data-theme-mode='dark'] .wallet-protocol-aleo-logo polygon {
+  fill: var(--dark-text-primary) !important;
+}
+
+html[data-theme-mode='dark'] .wallet-protocol-subtitle {
+  color: var(--dark-text-secondary) !important;
 }

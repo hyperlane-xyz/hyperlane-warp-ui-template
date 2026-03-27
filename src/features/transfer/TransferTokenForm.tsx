@@ -61,7 +61,7 @@ import {
   useWarpCore,
 } from '../tokens/hooks';
 import { useTokenPrices } from '../tokens/useTokenPrice';
-import { checkTokenHasRoute, findRouteToken } from '../tokens/utils';
+import { checkTokenHasRoute, findConnectedDestinationToken, findRouteToken } from '../tokens/utils';
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { WalletDropdown } from '../wallet/WalletDropdown';
 import { FeeSectionButton } from './FeeSectionButton';
@@ -667,7 +667,7 @@ function ReviewDetails({
       ? findRouteToken(warpCore, originTokenByKey, destinationTokenByKey)
       : undefined;
   const destinationToken = destinationTokenByKey
-    ? originToken?.getConnectionForChain(destinationTokenByKey.chainName)?.token
+    ? originToken && findConnectedDestinationToken(originToken, destinationTokenByKey)
     : undefined;
   const originTokenSymbol = originToken?.symbol || '';
   const isNft = originToken?.isNft();
@@ -945,12 +945,19 @@ async function validateForm(
     );
 
     // This should not happen since we already checked the route above, but keep as safety check
-    const connection = transferToken.getConnectionForChain(destination);
-    if (!connection) {
+    const connectedDestinationToken = findConnectedDestinationToken(
+      transferToken,
+      destinationToken,
+    );
+    if (!connectedDestinationToken) {
       return [{ destinationTokenKey: 'Route is not supported' }, null];
     }
 
-    const multiCollateralLimit = isMultiCollateralLimitExceeded(token, destination, amountWei);
+    const multiCollateralLimit = isMultiCollateralLimitExceeded(
+      token,
+      connectedDestinationToken,
+      amountWei,
+    );
 
     if (multiCollateralLimit) {
       return [
@@ -968,6 +975,7 @@ async function validateForm(
       recipient,
       sender: sender || '',
       senderPubKey: await senderPubKey,
+      destinationToken: connectedDestinationToken,
     });
 
     if (!isNullish(result)) {
@@ -978,6 +986,7 @@ async function validateForm(
         destination,
         sender || '',
         recipient,
+        connectedDestinationToken,
       );
       return [enriched, null];
     }
@@ -1010,6 +1019,7 @@ async function enrichBalanceError(
   destination: string,
   sender: string,
   recipient: string,
+  destinationToken: Token,
 ): Promise<Record<string, string>> {
   if (!result.amount) return result;
   const igpErrorMatch = igpErrorPattern.exec(result.amount);
@@ -1021,6 +1031,7 @@ async function enrichBalanceError(
       destination,
       sender,
       recipient,
+      destinationToken,
     });
 
     // Symbol in validateTransfer message is sourced from igpQuote.token.symbol.

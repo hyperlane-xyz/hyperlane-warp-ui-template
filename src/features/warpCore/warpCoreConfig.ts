@@ -2,11 +2,8 @@ import {
   IRegistry,
   warpRouteConfigs as publishedRegistryWarpRoutes,
 } from '@hyperlane-xyz/registry';
-import {
-  TOKEN_STANDARD_TO_PROTOCOL,
-  TokenStandard,
-} from '@hyperlane-xyz/sdk/token/TokenStandard';
 import { getTokenConnectionId } from '@hyperlane-xyz/sdk/token/TokenConnection';
+import { TOKEN_STANDARD_TO_PROTOCOL, TokenStandard } from '@hyperlane-xyz/sdk/token/TokenStandard';
 import type { ChainName } from '@hyperlane-xyz/sdk/types';
 import type { WarpCoreConfig } from '@hyperlane-xyz/sdk/warp/types';
 import { WarpCoreConfigSchema } from '@hyperlane-xyz/sdk/warp/types';

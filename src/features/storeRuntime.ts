@@ -3,8 +3,10 @@ import type { Token } from '@hyperlane-xyz/sdk/token/Token';
 import type { ChainMap, ChainName } from '@hyperlane-xyz/sdk/types';
 import type { WarpCoreConfig } from '@hyperlane-xyz/sdk/warp/types';
 import { type KnownProtocolType, normalizeAddress, ProtocolType } from '@hyperlane-xyz/utils';
-import type { RouterAddressInfo } from './store';
+
 import { getSdkRuntime } from './hyperlane/sdkRuntime';
+import type { RouterAddressInfo } from './store';
+import type { WarpRuntimeContext } from './storeInit';
 import {
   assembleTokensBySymbolChainMap,
   buildTokensArray,
@@ -13,7 +15,6 @@ import {
   setResolvedUnderlyingMap,
 } from './tokens/utils';
 import { resolveWrappedCollateralTokens } from './tokens/wrappedTokenResolver';
-import type { WarpRuntimeContext } from './storeInit';
 
 type InitWarpRuntimeArgs = {
   chainMetadataWithOverrides: ChainMap<ChainMetadata>;

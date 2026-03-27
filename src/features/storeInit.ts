@@ -1,9 +1,4 @@
-import {
-  chainAddresses,
-  chainMetadata,
-  IRegistry,
-  PartialRegistry,
-} from '@hyperlane-xyz/registry';
+import { chainAddresses, chainMetadata, IRegistry, PartialRegistry } from '@hyperlane-xyz/registry';
 import type { ChainMetadata } from '@hyperlane-xyz/sdk/metadata/chainMetadataTypes';
 import { MultiProviderAdapter } from '@hyperlane-xyz/sdk/providers/MultiProviderAdapter';
 import type { Token } from '@hyperlane-xyz/sdk/token/Token';
@@ -11,9 +6,10 @@ import type { ChainMap, ChainName } from '@hyperlane-xyz/sdk/types';
 import type { WarpCoreConfig } from '@hyperlane-xyz/sdk/warp/types';
 import { normalizeAddress } from '@hyperlane-xyz/utils';
 import { toast } from 'react-toastify';
+
 import { logger } from '../utils/logger';
-import type { AppState, RouterAddressInfo } from './store';
 import { assembleChainMetadata } from './chains/metadata';
+import type { AppState, RouterAddressInfo } from './store';
 import { buildRouteTokens } from './tokens/routeTokens';
 import {
   assembleTokensBySymbolChainMap,

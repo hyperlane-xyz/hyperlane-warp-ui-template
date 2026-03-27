@@ -375,6 +375,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'USD1/eni',
   'QUILL/eni',
   'BNB/eni',
+  '1Piece/eni',
 
   // First Party Warp Routes
   'ETH/viction',

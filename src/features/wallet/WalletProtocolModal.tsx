@@ -1,6 +1,8 @@
 import { ProtocolType } from '@hyperlane-xyz/utils';
 import { Modal, PROTOCOL_TO_LOGO, useConnectFns } from '@hyperlane-xyz/widgets';
 
+import { logger } from '../../utils/logger';
+
 interface WalletProtocolModalProps {
   isOpen: boolean;
   close: () => void;
@@ -56,7 +58,7 @@ export function WalletProtocolModal({
         {PROTOCOL_OPTIONS.filter((option) => includesProtocol(option.protocol)).map((option) => {
           const Logo = PROTOCOL_TO_LOGO[option.protocol];
           if (!Logo) {
-            console.error(`Missing protocol logo mapping for: ${option.protocol}`);
+            logger.error('Missing protocol logo mapping for', option.protocol);
             return null;
           }
           return (

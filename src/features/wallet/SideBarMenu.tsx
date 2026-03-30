@@ -41,7 +41,7 @@ export function SideBarMenu({
 }) {
   const didMountRef = useRef(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [isMenuOpen, setIsMenuOpen] = useState(true);
+  const [isMenuOpen, setIsMenuOpen] = useState(isOpen);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTransfer, setSelectedTransfer] = useState<TransferContext | null>(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
@@ -133,7 +133,7 @@ export function SideBarMenu({
   }, [transfers, transferLoading]);
 
   useEffect(() => {
-    if (isOpen) setIsMenuOpen(true);
+    setIsMenuOpen(isOpen);
   }, [isOpen]);
 
   useEffect(() => {

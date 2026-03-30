@@ -274,33 +274,27 @@ function RouteAccountsCommit({
   setRouteAccounts: (routeAccounts: RouteAccounts) => void;
 }) {
   const currentRouteAccounts = useStore((s) => s.routeAccounts);
-  const routeAccounts = useMemo(
+  const readyAccounts = useMemo(
     () =>
-      buildRouteAccounts(
-        [originAccount, destinationAccount].filter(
-          (account): account is AccountInfo => !!account?.isReady,
-        ),
+      [originAccount, destinationAccount].filter(
+        (account): account is AccountInfo =>
+          !!account?.isReady &&
+          !account.addresses.some((address) =>
+            config.addressBlacklist.includes(address.address.toLowerCase()),
+          ),
       ),
     [destinationAccount, originAccount],
   );
-  const routeAccountsKey = useMemo(() => getRouteAccountsKey(routeAccounts), [routeAccounts]);
-
-  const hasBlacklistedAddress = useMemo(
-    () =>
-      Object.values(routeAccounts)
-        .flatMap((account) => account?.addresses ?? [])
-        .some((address) => config.addressBlacklist.includes(address.address.toLowerCase())),
-    [routeAccounts],
+  const routeAccounts = useMemo(
+    () => buildRouteAccounts(readyAccounts),
+    [readyAccounts],
   );
+  const routeAccountsKey = useMemo(() => getRouteAccountsKey(routeAccounts), [routeAccounts]);
 
   useEffect(() => {
     if (areRouteAccountsEqual(currentRouteAccounts, routeAccounts)) return;
     setRouteAccounts(routeAccounts);
   }, [currentRouteAccounts, routeAccounts, routeAccountsKey, setRouteAccounts]);
-
-  if (hasBlacklistedAddress) {
-    throw new Error('Wallet address is blacklisted');
-  }
 
   return null;
 }

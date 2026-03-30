@@ -1,7 +1,13 @@
 import { ProtocolType } from '@hyperlane-xyz/utils';
 import { Modal } from '@hyperlane-xyz/widgets/layout/Modal';
 import { PROTOCOL_TO_LOGO } from '@hyperlane-xyz/widgets/logos/protocols';
-import { useConnectFns } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
+import { useAleoConnectFn } from '@hyperlane-xyz/widgets/walletIntegrations/aleoWallet';
+import { useCosmosConnectFn } from '@hyperlane-xyz/widgets/walletIntegrations/cosmosWallet';
+import { useEthereumConnectFn } from '@hyperlane-xyz/widgets/walletIntegrations/ethereumWallet';
+import { useRadixConnectFn } from '@hyperlane-xyz/widgets/walletIntegrations/radixWallet';
+import { useSolanaConnectFn } from '@hyperlane-xyz/widgets/walletIntegrations/solanaWallet';
+import { useStarknetConnectFn } from '@hyperlane-xyz/widgets/walletIntegrations/starknetWallet';
+import { useTronConnectFn } from '@hyperlane-xyz/widgets/walletIntegrations/tronWallet';
 import clsx from 'clsx';
 
 import { logger } from '../../utils/logger';
@@ -34,7 +40,15 @@ export function WalletProtocolModal({
   protocols,
   onProtocolSelected,
 }: WalletProtocolModalProps) {
-  const connectFns = useConnectFns();
+  const connectFns: Partial<Record<ProtocolType, (() => void) | undefined>> = {
+    [ProtocolType.Ethereum]: useEthereumConnectFn(),
+    [ProtocolType.Sealevel]: useSolanaConnectFn(),
+    [ProtocolType.Cosmos]: useCosmosConnectFn(),
+    [ProtocolType.Starknet]: useStarknetConnectFn(),
+    [ProtocolType.Radix]: useRadixConnectFn(),
+    [ProtocolType.Tron]: useTronConnectFn(),
+    [ProtocolType.Aleo]: useAleoConnectFn(),
+  };
 
   const onClickProtocol = (protocol: ProtocolType) => {
     const connectFn = connectFns[protocol];

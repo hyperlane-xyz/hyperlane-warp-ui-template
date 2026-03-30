@@ -1,4 +1,3 @@
-import { ProtocolType } from '@hyperlane-xyz/utils';
 import { CopyButton } from '@hyperlane-xyz/widgets/components/CopyButton';
 import { SpinnerIcon } from '@hyperlane-xyz/widgets/icons/Spinner';
 import { WideChevronIcon } from '@hyperlane-xyz/widgets/icons/WideChevron';
@@ -7,10 +6,7 @@ import { MessageTimeline } from '@hyperlane-xyz/widgets/messages/MessageTimeline
 import type { StageTimings } from '@hyperlane-xyz/widgets/messages/types';
 import { MessageStage, MessageStatus } from '@hyperlane-xyz/widgets/messages/types';
 import { useTimeout } from '@hyperlane-xyz/widgets/utils/timeout';
-import {
-  useAccountForChain,
-  useWalletDetails,
-} from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
+import type { AccountInfo, WalletDetails } from '@hyperlane-xyz/widgets/walletIntegrations/types';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -29,6 +25,7 @@ import { useOriginFinality } from '../messages/useOriginFinality';
 import { useStore } from '../store';
 import { tryFindTokenInTokens, useTokens } from '../tokens/hooks';
 import { TokenChainIcon } from '../tokens/TokenChainIcon';
+import { ProtocolWalletBridge } from '../wallet/ProtocolWalletBridge';
 import { TransferContext, TransferStatus } from './types';
 import {
   estimateDeliverySeconds,
@@ -54,6 +51,44 @@ export function TransfersDetailsModal({
   onClose: () => void;
   transfer: TransferContext;
 }) {
+  const multiProvider = useMultiProvider();
+  const protocol = transfer.origin ? multiProvider.tryGetProtocol(transfer.origin) : undefined;
+
+  return (
+    <ProtocolWalletBridge
+      protocol={protocol}
+      multiProvider={multiProvider}
+      chainName={transfer.origin}
+    >
+      {({ account, walletDetails }) => (
+        <TransfersDetailsModalContent
+          isOpen={isOpen}
+          onClose={onClose}
+          transfer={transfer}
+          multiProvider={multiProvider}
+          account={account}
+          walletDetails={walletDetails}
+        />
+      )}
+    </ProtocolWalletBridge>
+  );
+}
+
+function TransfersDetailsModalContent({
+  isOpen,
+  onClose,
+  transfer,
+  multiProvider,
+  account,
+  walletDetails,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  transfer: TransferContext;
+  multiProvider: ReturnType<typeof useMultiProvider>;
+  account?: AccountInfo;
+  walletDetails?: WalletDetails;
+}) {
   const [fromUrl, setFromUrl] = useState<string>('');
   const [toUrl, setToUrl] = useState<string>('');
   const [originTxUrl, setOriginTxUrl] = useState<string>('');
@@ -74,7 +109,6 @@ export function TransfersDetailsModal({
     destinationTxHash: storedDestTxHash,
   } = transfer || {};
 
-  const multiProvider = useMultiProvider();
   const tokens = useTokens();
   const transfers = useStore((s) => s.transfers);
   const updateTransferStatus = useStore((s) => s.updateTransferStatus);
@@ -84,10 +118,6 @@ export function TransfersDetailsModal({
     () => transfers.findIndex((t) => t === transfer || (t.msgId && t.msgId === transfer?.msgId)),
     [transfers, transfer],
   );
-
-  const isChainKnown = multiProvider.hasChain(origin);
-  const account = useAccountForChain(multiProvider, isChainKnown ? origin : undefined);
-  const walletDetails = useWalletDetails()[account?.protocol || ProtocolType.Ethereum];
 
   // Query delivery status from GraphQL when modal is open for sent transfers
   const isSent = isTransferSent(transfer?.status);
@@ -123,7 +153,7 @@ export function TransfersDetailsModal({
   const destinationTxHash = storedDestTxHash || delivery.destinationTxHash;
 
   const isAccountReady = !!account?.isReady;
-  const connectorName = walletDetails.name || 'wallet';
+  const connectorName = walletDetails?.name || 'wallet';
   const token = tryFindTokenInTokens(tokens, origin, originTokenAddressOrDenom);
   const destToken = tryFindTokenInTokens(tokens, destination, destTokenAddressOrDenom);
   const isPermissionlessRoute = hasPermissionlessChain(multiProvider, [destination, origin]);

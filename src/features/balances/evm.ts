@@ -1,5 +1,5 @@
 import { chainAddresses } from '@hyperlane-xyz/registry';
-import type { MultiProviderAdapter as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProviderAdapter';
+import type { ConfiguredMultiProtocolProvider as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/ConfiguredMultiProtocolProvider';
 import type { Token } from '@hyperlane-xyz/sdk/token/Token';
 import { ProtocolType, normalizeAddress } from '@hyperlane-xyz/utils';
 import {

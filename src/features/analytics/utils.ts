@@ -1,14 +1,13 @@
-import type { MultiProviderAdapter as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProviderAdapter';
+import type { ConfiguredMultiProtocolProvider as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/ConfiguredMultiProtocolProvider';
 import type { Token } from '@hyperlane-xyz/sdk/token/Token';
 import type { WarpCore } from '@hyperlane-xyz/sdk/warp/WarpCore';
-import { KnownProtocolType, objLength } from '@hyperlane-xyz/utils';
-import { getAccountAddressAndPubKey } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
-import type { AccountInfo } from '@hyperlane-xyz/widgets/walletIntegrations/types';
+import { objLength } from '@hyperlane-xyz/utils';
 import { track } from '@vercel/analytics';
 
 import { config } from '../../consts/config';
 import { getTokenKey } from '../tokens/utils';
 import { TransferFormValues } from '../transfer/types';
+import { getRouteAccountAddressAndPubKey, type RouteAccounts } from '../wallet/routeAccounts';
 import { EVENT_NAME, EventProperties } from './types';
 
 const sessionId =
@@ -74,7 +73,7 @@ export function trackTransactionFailedEvent(
   errors: Record<string, string> | null,
   warpCore: WarpCore,
   { originTokenKey, destinationTokenKey, amount, recipient: formRecipient }: TransferFormValues,
-  accounts: Record<KnownProtocolType, AccountInfo>,
+  accounts: RouteAccounts,
   overrideToken: Token | null,
 ) {
   if (!errors || objLength(errors) < 1) return;
@@ -89,7 +88,7 @@ export function trackTransactionFailedEvent(
 
   const multiProvider = warpCore.multiProvider as MultiProtocolProvider;
   const origin = token.chainName;
-  const { address } = getAccountAddressAndPubKey(multiProvider, origin, accounts);
+  const { address } = getRouteAccountAddressAndPubKey(multiProvider, origin, accounts);
 
   // Find destination token to get destination chain
   const destToken = warpCore.tokens.find((t) => getTokenKey(t) === destinationTokenKey);
@@ -97,7 +96,7 @@ export function trackTransactionFailedEvent(
   const destination = destToken.chainName;
 
   // Get recipient (form value or fallback to connected wallet for destination)
-  const { address: connectedDestAddress } = getAccountAddressAndPubKey(
+  const { address: connectedDestAddress } = getRouteAccountAddressAndPubKey(
     multiProvider,
     destination,
     accounts,

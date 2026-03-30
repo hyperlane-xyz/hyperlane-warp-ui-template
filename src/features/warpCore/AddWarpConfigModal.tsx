@@ -1,5 +1,5 @@
 import { BaseRegistry } from '@hyperlane-xyz/registry';
-import type { MultiProviderAdapter as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProviderAdapter';
+import type { ConfiguredMultiProtocolProvider as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/ConfiguredMultiProtocolProvider';
 import type { WarpCoreConfig } from '@hyperlane-xyz/sdk/warp/types';
 import { WarpCoreConfigSchema } from '@hyperlane-xyz/sdk/warp/types';
 import { failure, Result, success, tryParseJsonOrYaml } from '@hyperlane-xyz/utils';

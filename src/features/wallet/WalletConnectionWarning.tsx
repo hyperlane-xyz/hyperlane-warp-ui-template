@@ -1,29 +1,29 @@
 import { ProtocolType } from '@hyperlane-xyz/utils';
-import { useWalletDetails } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
-import { useMemo } from 'react';
 
 import { FormWarningBanner } from '../../components/banner/FormWarningBanner';
 import { useMultiProvider } from '../chains/hooks';
+import { ProtocolWalletBridge } from './ProtocolWalletBridge';
 
 export function WalletConnectionWarning({ origin }: { origin: ChainName }) {
   const multiProvider = useMultiProvider();
-  const walletDetails = useWalletDetails();
+  const protocol = multiProvider.tryGetProtocol(origin);
 
-  const message = useMemo(() => {
-    const protocol = multiProvider.tryGetProtocol(origin);
+  if (!protocol) return null;
 
-    if (protocol && walletDetails[protocol] && walletWarnings[protocol]) {
-      const protocolWalletDetail = walletDetails[protocol];
-      const walletWarning = walletWarnings[protocol];
-
-      if (protocolWalletDetail.name && walletWarning[protocolWalletDetail.name])
-        return walletWarning[protocolWalletDetail.name];
-    }
-
-    return null;
-  }, [multiProvider, origin, walletDetails]);
-
-  return <FormWarningBanner isVisible={!!message}>{message}</FormWarningBanner>;
+  return (
+    <ProtocolWalletBridge
+      protocol={protocol}
+      multiProvider={multiProvider}
+      chainName={origin}
+    >
+      {({ walletDetails }) => {
+        const walletWarning = walletWarnings[protocol];
+        const message =
+          walletDetails?.name && walletWarning ? walletWarning[walletDetails.name] : null;
+        return <FormWarningBanner isVisible={!!message}>{message}</FormWarningBanner>;
+      }}
+    </ProtocolWalletBridge>
+  );
 }
 
 type WalletWarning = Partial<Record<ProtocolType, Record<string, string>>>;

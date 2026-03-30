@@ -1,25 +1,30 @@
 import type { IToken } from '@hyperlane-xyz/sdk/token/IToken';
-import { useAccountAddressForChain } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import { useQuery } from '@tanstack/react-query';
 
 import { useToastError } from '../../components/toast/useToastError';
 import { useMultiProvider } from '../chains/hooks';
+import { getRuntimeProtocols } from '../hyperlane/runtimeProtocols';
 import { useStore } from '../store';
+import { getRouteAccountAddressForChain } from '../wallet/routeAccounts';
 import { useReadyWarpCore } from './hooks';
 
 export function useIsApproveRequired(token?: IToken, amount?: string, enabled = true) {
   const multiProvider = useMultiProvider();
   const warpCore = useReadyWarpCore();
-  const ensureWarpRuntime = useStore((s) => s.ensureWarpRuntime);
+  const { ensureWarpRuntime, routeAccounts } = useStore((s) => ({
+    ensureWarpRuntime: s.ensureWarpRuntime,
+    routeAccounts: s.routeAccounts,
+  }));
 
-  const owner = useAccountAddressForChain(multiProvider, token?.chainName);
+  const owner = getRouteAccountAddressForChain(multiProvider, token?.chainName, routeAccounts);
+  const runtimeProtocols = getRuntimeProtocols([token?.protocol]);
 
   const { isLoading, isError, error, data } = useQuery({
     // The Token class is not serializable, so we can't use it as a key
     // eslint-disable-next-line @tanstack/query/exhaustive-deps
     queryKey: ['useIsApproveRequired', owner, amount, token?.addressOrDenom],
     queryFn: async () => {
-      const readyWarpCore = warpCore || (await ensureWarpRuntime());
+      const readyWarpCore = warpCore || (await ensureWarpRuntime(runtimeProtocols));
       if (!readyWarpCore) return false;
       if (!token || !owner || !amount) return false;
       return readyWarpCore.isApproveRequired({ originTokenAmount: token.amount(amount), owner });

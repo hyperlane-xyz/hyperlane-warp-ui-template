@@ -3,18 +3,13 @@ import { ChevronIcon } from '@hyperlane-xyz/widgets/icons/Chevron';
 import { XIcon } from '@hyperlane-xyz/widgets/icons/X';
 import { DropdownMenu } from '@hyperlane-xyz/widgets/layout/DropdownMenu';
 import { useModal } from '@hyperlane-xyz/widgets/layout/Modal';
-import {
-  useAccountAddressForChain,
-  useAccountForChain,
-  useConnectFns,
-  useDisconnectFns,
-} from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback } from 'react';
 
 import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
 import { useChainProtocol, useMultiProvider } from '../chains/hooks';
 import { RecipientAddressModal } from './RecipientAddressModal';
+import { ProtocolWalletBridge } from './ProtocolWalletBridge';
 
 interface WalletDropdownProps {
   chainName: string | undefined;
@@ -33,23 +28,8 @@ export function WalletDropdown({
 }: WalletDropdownProps) {
   const multiProvider = useMultiProvider();
   const protocol = useChainProtocol(chainName || '') || ProtocolType.Ethereum;
-
-  const account = useAccountForChain(multiProvider, chainName);
-  const isConnected = account?.isReady;
-  const connectedAddress = useAccountAddressForChain(multiProvider, chainName);
-
-  const disconnectFns = useDisconnectFns();
-  const disconnectFn = disconnectFns[protocol];
-
   const { isOpen: isModalOpen, open: openModal, close: closeModal } = useModal();
-
-  const onDisconnect = useCallback(async () => {
-    try {
-      await disconnectFn?.();
-    } catch (err) {
-      logger.error('Failed to disconnect wallet', err);
-    }
-  }, [disconnectFn]);
+  const normalizedRecipient = recipient === 'Unknown' ? '' : recipient;
 
   const onSaveRecipient = useCallback(
     (address: string) => {
@@ -62,95 +42,91 @@ export function WalletDropdown({
     onRecipientChange?.('');
   }, [onRecipientChange]);
 
-  const isDestination = selectionMode === 'destination';
-  const hasCustomRecipient = isDestination && !!recipient && recipient !== connectedAddress;
-  const displayAddress = hasCustomRecipient ? recipient : connectedAddress;
-  const truncatedAddress = displayAddress ? shortenAddress(displayAddress) : '';
-
-  // Build menu items based on state
-  const menuItems = useMemo(() => {
-    const items: React.ReactNode[] = [];
-
-    // when there is not a wallet connected, show the current chain wallet connect modal
-    if (!isConnected) {
-      items.push(<ConnectMenuItem key="connect" protocol={protocol} />);
-    }
-
-    if (isDestination) {
-      if (items.length > 0) items.push(<MenuSeparator key="sep-1" />);
-      items.push(
-        <MenuItemButton key="paste" onClick={openModal}>
-          Paste wallet address
-        </MenuItemButton>,
-      );
-    }
-
-    if (hasCustomRecipient && isConnected) {
-      items.push(<MenuSeparator key="sep-2" />);
-      items.push(
-        <MenuItemButton key="use-connected" onClick={onUseConnectedWallet}>
-          Use connected wallet
-        </MenuItemButton>,
-      );
-    }
-
-    // Only show disconnect if actually connected
-    if (isConnected) {
-      if (items.length > 0) items.push(<MenuSeparator key="sep-3" />);
-      items.push(
-        <MenuItemButton key="disconnect" onClick={onDisconnect}>
-          Disconnect wallet
-        </MenuItemButton>,
-      );
-    }
-
-    return items;
-  }, [
-    isDestination,
-    hasCustomRecipient,
-    isConnected,
-    protocol,
-    onDisconnect,
-    onUseConnectedWallet,
-    openModal,
-  ]);
-
-  // Origin mode, not connected - simple button without dropdown
-  if (!isConnected && !isDestination) {
-    return <ConnectWalletButton chainName={chainName} />;
-  }
-
-  // All other cases - use dropdown
   return (
-    <>
-      <DropdownMenu
-        button={<DropdownWalletButton address={truncatedAddress} />}
-        buttonClassname="flex items-center"
-        menuClassname="wallet-dropdown-menu mt-2 min-w-[200px] rounded-lg border border-gray-200 bg-white py-1 shadow-md dark:border-primary-300/40 dark:bg-surface dark:shadow-[0_12px_32px_rgba(0,0,0,0.45)]"
-        menuItems={menuItems}
-        buttonProps={{ disabled }}
-      />
-      <RecipientAddressModal
-        isOpen={isModalOpen}
-        close={closeModal}
-        onSave={onSaveRecipient}
-        initialValue={recipient}
-        protocol={protocol}
-      />
-    </>
+    <ProtocolWalletBridge
+      protocol={protocol}
+      multiProvider={multiProvider}
+      chainName={chainName}
+    >
+      {({ account, address: connectedAddress, connectFn, disconnectFn }) => {
+        const isConnected =
+          !!account?.isReady && !!connectedAddress && connectedAddress !== 'Unknown';
+        const isDestination = selectionMode === 'destination';
+        const walletAddress = isConnected ? connectedAddress : undefined;
+        const hasCustomRecipient =
+          isDestination && !!normalizedRecipient && normalizedRecipient !== walletAddress;
+        const displayAddress = hasCustomRecipient ? normalizedRecipient : walletAddress;
+        const truncatedAddress = displayAddress ? shortenAddress(displayAddress) : '';
+
+        const onDisconnect = async () => {
+          try {
+            await disconnectFn?.();
+          } catch (err) {
+            logger.error('Failed to disconnect wallet', err);
+          }
+        };
+
+        const menuItems: React.ReactNode[] = [];
+        if (!isConnected) {
+          menuItems.push(
+            <MenuItemButton key="connect" onClick={() => connectFn?.()}>
+              Connect wallet
+            </MenuItemButton>,
+          );
+        }
+        if (isDestination) {
+          if (menuItems.length > 0) menuItems.push(<MenuSeparator key="sep-1" />);
+          menuItems.push(
+            <MenuItemButton key="paste" onClick={openModal}>
+              Paste wallet address
+            </MenuItemButton>,
+          );
+        }
+        if (hasCustomRecipient && isConnected) {
+          menuItems.push(<MenuSeparator key="sep-2" />);
+          menuItems.push(
+            <MenuItemButton key="use-connected" onClick={onUseConnectedWallet}>
+              Use connected wallet
+            </MenuItemButton>,
+          );
+        }
+        if (isConnected) {
+          if (menuItems.length > 0) menuItems.push(<MenuSeparator key="sep-3" />);
+          menuItems.push(
+            <MenuItemButton key="disconnect" onClick={onDisconnect}>
+              Disconnect wallet
+            </MenuItemButton>,
+          );
+        }
+
+        if (!isConnected && !isDestination) {
+          return <ConnectWalletButton onConnect={() => connectFn?.()} />;
+        }
+
+        return (
+          <>
+            <DropdownMenu
+              button={<DropdownWalletButton address={truncatedAddress} />}
+              buttonClassname="flex items-center"
+              menuClassname="wallet-dropdown-menu mt-2 min-w-[200px] rounded-lg border border-gray-200 bg-white py-1 shadow-md dark:border-primary-300/40 dark:bg-surface dark:shadow-[0_12px_32px_rgba(0,0,0,0.45)]"
+              menuItems={menuItems}
+              buttonProps={{ disabled }}
+            />
+            <RecipientAddressModal
+              isOpen={isModalOpen}
+              close={closeModal}
+              onSave={onSaveRecipient}
+              initialValue={normalizedRecipient}
+              protocol={protocol}
+            />
+          </>
+        );
+      }}
+    </ProtocolWalletBridge>
   );
 }
 
-// Self-contained connect button with its own hooks
-function ConnectWalletButton({ chainName }: { chainName?: string }) {
-  const protocol = useChainProtocol(chainName || '') || ProtocolType.Ethereum;
-  const connectFns = useConnectFns();
-  const connectFn = connectFns[protocol];
-
-  const onConnect = useCallback(() => {
-    connectFn?.();
-  }, [connectFn]);
-
+function ConnectWalletButton({ onConnect }: { onConnect: () => void }) {
   return (
     <button
       type="button"
@@ -160,22 +136,6 @@ function ConnectWalletButton({ chainName }: { chainName?: string }) {
       <XIcon width={8} height={8} color={Color.red[500]} />
       <span>Connect Wallet</span>
       <ChevronIcon width={10} height={8} direction="s" color={Color.primary[500]} />
-    </button>
-  );
-}
-
-// Self-contained connect menu item with its own hooks
-function ConnectMenuItem({ protocol }: { protocol: ProtocolType }) {
-  const connectFns = useConnectFns();
-  const connectFn = connectFns[protocol];
-
-  const onConnect = useCallback(() => {
-    connectFn?.();
-  }, [connectFn]);
-
-  return (
-    <button type="button" onClick={onConnect} className={menuItemClass}>
-      Connect wallet
     </button>
   );
 }

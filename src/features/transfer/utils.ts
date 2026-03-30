@@ -1,4 +1,4 @@
-import type { MultiProviderAdapter as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProviderAdapter';
+import type { ConfiguredMultiProtocolProvider as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/ConfiguredMultiProtocolProvider';
 import {
   ProviderType,
   type TypedTransactionReceipt,
@@ -21,11 +21,11 @@ type CoreAddressStub = {
 };
 
 let multiProtocolCorePromise:
-  | Promise<typeof import('@hyperlane-xyz/sdk').MultiProtocolCore>
+  | Promise<typeof import('@hyperlane-xyz/sdk/core/MultiProtocolCore').MultiProtocolCore>
   | undefined;
 
 function getMultiProtocolCore() {
-  multiProtocolCorePromise ??= import('@hyperlane-xyz/sdk').then(
+  multiProtocolCorePromise ??= import('@hyperlane-xyz/sdk/core/MultiProtocolCore').then(
     ({ MultiProtocolCore }) => MultiProtocolCore,
   );
   return multiProtocolCorePromise;

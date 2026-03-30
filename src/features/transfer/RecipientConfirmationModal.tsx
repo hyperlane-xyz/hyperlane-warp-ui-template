@@ -1,13 +1,11 @@
 import { Modal } from '@hyperlane-xyz/widgets/layout/Modal';
-import {
-  getAccountAddressAndPubKey,
-  useAccounts,
-} from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import { useFormikContext } from 'formik';
 
 import { SolidButton } from '../../components/buttons/SolidButton';
 import { useMultiProvider } from '../chains/hooks';
+import { useStore } from '../store';
 import { getTokenByKeyFromMap, useTokenByKeyMap } from '../tokens/hooks';
+import { getRouteAccountAddressAndPubKey } from '../wallet/routeAccounts';
 import { TransferFormValues } from './types';
 
 export function RecipientConfirmationModal({
@@ -22,14 +20,14 @@ export function RecipientConfirmationModal({
   const { values } = useFormikContext<TransferFormValues>();
   const multiProvider = useMultiProvider();
   const tokenMap = useTokenByKeyMap();
-  const { accounts } = useAccounts(multiProvider);
+  const routeAccounts = useStore((s) => s.routeAccounts);
   const destinationToken = getTokenByKeyFromMap(tokenMap, values.destinationTokenKey);
 
   // Get recipient (form value or fallback to connected wallet for destination)
-  const { address: connectedDestAddress } = getAccountAddressAndPubKey(
+  const { address: connectedDestAddress } = getRouteAccountAddressAndPubKey(
     multiProvider,
     destinationToken?.chainName,
-    accounts,
+    routeAccounts,
   );
   const recipient = values.recipient || connectedDestAddress || '';
 

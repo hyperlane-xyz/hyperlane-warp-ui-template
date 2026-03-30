@@ -1,4 +1,4 @@
-import type { MultiProviderAdapter as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProviderAdapter';
+import type { ConfiguredMultiProtocolProvider as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/ConfiguredMultiProtocolProvider';
 import { getWagmiChainConfigs } from '@hyperlane-xyz/widgets/walletIntegrations/ethereum';
 import { RainbowKitProvider, connectorsForWallets, lightTheme } from '@rainbow-me/rainbowkit';
 
@@ -53,7 +53,14 @@ function initWagmi(multiProvider: MultiProtocolProvider) {
   return { wagmiConfig, chains };
 }
 
-export function EvmWalletContext({ children }: PropsWithChildren<unknown>) {
+type WalletContextProps = PropsWithChildren<{ enabled?: boolean }>;
+
+export function EvmWalletContext({ children, enabled = true }: WalletContextProps) {
+  if (!enabled) return <>{children}</>;
+  return <EnabledEvmWalletContext>{children}</EnabledEvmWalletContext>;
+}
+
+function EnabledEvmWalletContext({ children }: PropsWithChildren<unknown>) {
   const multiProvider = useMultiProvider();
   const { wagmiConfig } = useMemo(() => initWagmi(multiProvider), [multiProvider]);
 

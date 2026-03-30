@@ -1,5 +1,5 @@
 import type { ChainMetadata } from '@hyperlane-xyz/sdk/metadata/chainMetadataTypes';
-import type { MultiProviderAdapter } from '@hyperlane-xyz/sdk/providers/MultiProviderAdapter';
+import type { ConfiguredMultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/ConfiguredMultiProtocolProvider';
 import type {
   ProviderBuilderFn,
   ProviderBuilderMap,
@@ -9,7 +9,7 @@ import { ProviderType } from '@hyperlane-xyz/sdk/providers/ProviderType';
 import type { ChainMap } from '@hyperlane-xyz/sdk/types';
 import { type KnownProtocolType, ProtocolType } from '@hyperlane-xyz/utils';
 
-type RuntimeMultiProvider = MultiProviderAdapter<{ mailbox?: string }>;
+type RuntimeMultiProvider = ConfiguredMultiProtocolProvider<{ mailbox?: string }>;
 
 type SdkRuntime = {
   createMultiProvider: (
@@ -31,8 +31,8 @@ export function getSdkRuntime(protocols: KnownProtocolType[]): Promise<SdkRuntim
 }
 
 async function createSdkRuntime(protocols: KnownProtocolType[]): Promise<SdkRuntime> {
-  const [{ MultiProviderAdapter }, { WarpCore }, providerBuilders] = await Promise.all([
-    import('@hyperlane-xyz/sdk/providers/MultiProviderAdapter'),
+  const [{ ConfiguredMultiProtocolProvider }, { WarpCore }, providerBuilders] = await Promise.all([
+    import('@hyperlane-xyz/sdk/providers/ConfiguredMultiProtocolProvider'),
     import('@hyperlane-xyz/sdk/warp/WarpCore'),
     getProviderBuilders(protocols),
   ]);
@@ -41,9 +41,9 @@ async function createSdkRuntime(protocols: KnownProtocolType[]): Promise<SdkRunt
     ? (await import('@hyperlane-xyz/sdk/providers/builders/tron')).defaultTronEthersProviderBuilder
     : undefined;
 
-  class RuntimeMultiProviderAdapter<
+  class RuntimeConfiguredMultiProtocolProvider<
     MetaExt extends object = object,
-  > extends MultiProviderAdapter<MetaExt> {
+  > extends ConfiguredMultiProtocolProvider<MetaExt> {
     protected override getProviderBuilder(
       protocol: ProtocolType,
       type: ProviderType,
@@ -65,7 +65,7 @@ async function createSdkRuntime(protocols: KnownProtocolType[]): Promise<SdkRunt
 
   return {
     createMultiProvider: (chainMetadata) =>
-      new RuntimeMultiProviderAdapter(chainMetadata, {
+      new RuntimeConfiguredMultiProtocolProvider(chainMetadata, {
         providerBuilders,
       }),
     WarpCore,

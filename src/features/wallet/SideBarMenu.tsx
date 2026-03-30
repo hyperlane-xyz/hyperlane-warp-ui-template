@@ -1,15 +1,11 @@
 import type { ChainName } from '@hyperlane-xyz/sdk/types';
-import { fromWei, normalizeAddress } from '@hyperlane-xyz/utils';
+import { fromWei, normalizeAddress, shortenAddress } from '@hyperlane-xyz/utils';
 import { RefreshIcon } from '@hyperlane-xyz/widgets/icons/Refresh';
 import { SpinnerIcon } from '@hyperlane-xyz/widgets/icons/Spinner';
-import { AccountList } from '@hyperlane-xyz/widgets/walletIntegrations/AccountList';
-import { useAccounts } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { toast } from 'react-toastify';
 
 import { ChainLogo } from '../../components/icons/ChainLogo';
-import { config } from '../../consts/config';
 import ArrowRightIcon from '../../images/icons/arrow-right.svg';
 import CollapseIcon from '../../images/icons/collapse-icon.svg';
 import { formatTransferHistoryTimestamp } from '../../utils/date';
@@ -30,6 +26,8 @@ import { TokenChainIcon } from '../tokens/TokenChainIcon';
 import { TransfersDetailsModal } from '../transfer/TransfersDetailsModal';
 import { TransferContext, TransferStatus } from '../transfer/types';
 import { getIconByTransferStatus, STATUSES_WITH_ICON } from '../transfer/utils';
+import { ProtocolWalletBridge } from './ProtocolWalletBridge';
+import { RouteAccounts } from './routeAccounts';
 import { startRelativeTimeTicker } from './relativeTimeTicker';
 
 export function SideBarMenu({
@@ -43,37 +41,30 @@ export function SideBarMenu({
 }) {
   const didMountRef = useRef(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTransfer, setSelectedTransfer] = useState<TransferContext | null>(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
 
   const multiProvider = useMultiProvider();
 
-  const { transfers, transferLoading, originChainName, routerAddressesByChainMap } = useStore(
-    (s) => ({
-      transfers: s.transfers,
-      transferLoading: s.transferLoading,
-      originChainName: s.originChainName,
-      routerAddressesByChainMap: s.routerAddressesByChainMap,
-    }),
-  );
+  const {
+    transfers,
+    transferLoading,
+    originChainName,
+    destinationChainName,
+    routeAccounts,
+    routerAddressesByChainMap,
+  } = useStore((s) => ({
+    transfers: s.transfers,
+    transferLoading: s.transferLoading,
+    originChainName: s.originChainName,
+    destinationChainName: s.destinationChainName,
+    routeAccounts: s.routeAccounts,
+    routerAddressesByChainMap: s.routerAddressesByChainMap,
+  }));
 
-  // Get all connected wallet addresses (normalized for consistent matching)
-  const { accounts } = useAccounts(multiProvider, config.addressBlacklist);
-  const walletAddresses = useMemo(() => {
-    const addresses: string[] = [];
-    for (const accountInfo of Object.values(accounts)) {
-      if (accountInfo.addresses) {
-        for (const addrInfo of accountInfo.addresses) {
-          if (addrInfo.address) {
-            addresses.push(normalizeAddress(addrInfo.address));
-          }
-        }
-      }
-    }
-    return addresses;
-  }, [accounts]);
+  const walletAddresses = useMemo(() => getWalletAddresses(routeAccounts), [routeAccounts]);
 
   // Get all warp route addresses from configured routes (normalized)
   const warpRouteAddresses = useMemo(() => {
@@ -120,10 +111,6 @@ export function SideBarMenu({
     }
   }, [isLoading, hasMore, loadMore]);
 
-  const onCopySuccess = () => {
-    toast.success('Address copied to clipboard', { autoClose: 2000 });
-  };
-
   const handleItemClick = (item: TransferItem) => {
     if (item.type === TransferItemType.Local) {
       setSelectedTransfer(item.data);
@@ -146,7 +133,7 @@ export function SideBarMenu({
   }, [transfers, transferLoading]);
 
   useEffect(() => {
-    setIsMenuOpen(isOpen);
+    if (isOpen) setIsMenuOpen(true);
   }, [isOpen]);
 
   useEffect(() => {
@@ -187,12 +174,12 @@ export function SideBarMenu({
           <div className="sidebar-menu-header w-full bg-accent-gradient px-3.5 py-2 text-base font-normal tracking-wider text-white shadow-accent-glow dark:!shadow-none">
             Connected Wallets
           </div>
-          <AccountList
+          <SidebarWalletSection
             multiProvider={multiProvider}
+            originChainName={originChainName}
+            destinationChainName={destinationChainName}
+            routeAccounts={routeAccounts}
             onClickConnectWallet={onClickConnectWallet}
-            onCopySuccess={onCopySuccess}
-            className=""
-            chainName={originChainName}
           />
           <div className="sidebar-menu-header flex w-full items-center justify-between bg-accent-gradient px-3.5 py-2 shadow-accent-glow dark:!shadow-none">
             <span className="text-base font-normal tracking-wider text-white">
@@ -268,6 +255,129 @@ export function SideBarMenu({
       )}
     </>
   );
+}
+
+function SidebarWalletSection({
+  multiProvider,
+  originChainName,
+  destinationChainName,
+  routeAccounts,
+  onClickConnectWallet,
+}: {
+  multiProvider: ReturnType<typeof useMultiProvider>;
+  originChainName: ChainName;
+  destinationChainName: ChainName;
+  routeAccounts: RouteAccounts;
+  onClickConnectWallet: () => void;
+}) {
+  const accounts = useMemo(() => getConnectedRouteAccounts(routeAccounts), [routeAccounts]);
+  const originProtocol = originChainName ? multiProvider.tryGetProtocol(originChainName) : undefined;
+  const destinationProtocol = destinationChainName
+    ? multiProvider.tryGetProtocol(destinationChainName)
+    : undefined;
+
+  return (
+    <ProtocolWalletBridge
+      protocol={originProtocol}
+      multiProvider={multiProvider}
+      chainName={originChainName}
+    >
+      {({ disconnectFn: disconnectOrigin }) => (
+        <ProtocolWalletBridge
+          protocol={destinationProtocol}
+          multiProvider={multiProvider}
+          chainName={destinationChainName}
+        >
+          {({ disconnectFn: disconnectDestination }) => (
+            <SidebarWalletSectionContent
+              accounts={accounts}
+              onClickConnectWallet={onClickConnectWallet}
+              onDisconnectAll={async () => {
+                const disconnectFns = [disconnectOrigin, disconnectDestination].filter(
+                  (fn): fn is NonNullable<typeof fn> => !!fn,
+                );
+                await Promise.allSettled(disconnectFns.map((fn) => fn()));
+              }}
+            />
+          )}
+        </ProtocolWalletBridge>
+      )}
+    </ProtocolWalletBridge>
+  );
+}
+
+function SidebarWalletSectionContent({
+  accounts,
+  onClickConnectWallet,
+  onDisconnectAll,
+}: {
+  accounts: Array<{ protocol: string; address: string }>;
+  onClickConnectWallet: () => void;
+  onDisconnectAll: () => Promise<void>;
+}) {
+  return (
+    <div className="flex flex-col">
+      {accounts.length ? (
+        <div className="divide-y">
+          {accounts.map((account) => (
+            <div
+              key={`${account.protocol}:${account.address}`}
+              className="flex items-center justify-between px-3.5 py-2"
+            >
+              <span className="text-sm text-gray-800 dark:text-foreground-primary">
+                {account.protocol}
+              </span>
+              <span className="text-xs text-gray-500 dark:text-foreground-secondary">
+                {shortenAddress(account.address)}
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="px-3.5 py-3 text-sm text-gray-500 dark:text-foreground-secondary">
+          No wallets connected
+        </div>
+      )}
+      <div className="flex flex-col gap-2 px-3.5 py-3">
+        <button
+          type="button"
+          onClick={onClickConnectWallet}
+          className="rounded-sm border border-gray-200 px-3 py-2 text-left text-sm text-gray-800 hover:bg-gray-100 dark:border-primary-300/25 dark:text-foreground-primary dark:hover:bg-primary-300/10"
+        >
+          Connect wallet
+        </button>
+        <button
+          type="button"
+          onClick={() => void onDisconnectAll()}
+          className="rounded-sm border border-gray-200 px-3 py-2 text-left text-sm text-gray-800 hover:bg-gray-100 dark:border-primary-300/25 dark:text-foreground-primary dark:hover:bg-primary-300/10"
+        >
+          Disconnect all wallets
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function getWalletAddresses(routeAccounts: RouteAccounts) {
+  return getConnectedRouteAccounts(routeAccounts).map((account) => normalizeAddress(account.address));
+}
+
+function getConnectedRouteAccounts(routeAccounts: RouteAccounts) {
+  const seen = new Set<string>();
+  const connected: Array<{ protocol: string; address: string }> = [];
+
+  for (const account of Object.values(routeAccounts)) {
+    if (!account?.isReady) continue;
+    for (const addressInfo of account.addresses || []) {
+      if (!addressInfo.address) continue;
+      const key = `${account.protocol}:${addressInfo.address}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      connected.push({ protocol: account.protocol, address: addressInfo.address });
+    }
+  }
+
+  return connected;
 }
 
 function TransferSummary({

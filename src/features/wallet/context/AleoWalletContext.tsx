@@ -2,7 +2,10 @@ import { AleoPopupProvider } from '@hyperlane-xyz/widgets/walletIntegrations/ale
 import { AleoWalletProvider } from '@provablehq/aleo-wallet-adaptor-react';
 import { ShieldWalletAdapter } from '@provablehq/aleo-wallet-adaptor-shield';
 import { PropsWithChildren } from 'react';
-export function AleoWalletContext({ children }: PropsWithChildren<unknown>) {
+type WalletContextProps = PropsWithChildren<{ enabled?: boolean }>;
+
+export function AleoWalletContext({ children, enabled = true }: WalletContextProps) {
+  if (!enabled) return <>{children}</>;
   const wallets = [new ShieldWalletAdapter()];
 
   return (

@@ -5,17 +5,15 @@ import type { WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk/warp/types';
 import type { WarpCore } from '@hyperlane-xyz/sdk/warp/WarpCore';
 import { HexString, ProtocolType, toWei } from '@hyperlane-xyz/utils';
 import { useDebounce } from '@hyperlane-xyz/widgets/utils/debounce';
-import {
-  getAccountAddressAndPubKey,
-  useAccounts,
-} from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import { useQuery } from '@tanstack/react-query';
 
 import { defaultMultiCollateralRoutes } from '../../consts/defaultMultiCollateralRoutes';
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
+import { getRuntimeProtocols } from '../hyperlane/runtimeProtocols';
 import { useStore } from '../store';
 import { useReadyWarpCore } from '../tokens/hooks';
+import { getRouteAccountAddressAndPubKey } from '../wallet/routeAccounts';
 import { findConnectedDestinationToken } from '../tokens/utils';
 import { getTransferToken } from './fees';
 import { TransferFormValues } from './types';
@@ -32,15 +30,17 @@ export function useFeeQuotes(
 ) {
   const multiProvider = useMultiProvider();
   const warpCore = useReadyWarpCore();
-  const ensureWarpRuntime = useStore((s) => s.ensureWarpRuntime);
+  const { ensureWarpRuntime, routeAccounts } = useStore((s) => ({
+    ensureWarpRuntime: s.ensureWarpRuntime,
+    routeAccounts: s.routeAccounts,
+  }));
   const debouncedAmount = useDebounce(amount, 500);
   const destination = destinationToken?.chainName;
 
-  const { accounts } = useAccounts(multiProvider);
-  const { address: sender, publicKey: senderPubKey } = getAccountAddressAndPubKey(
+  const { address: sender, publicKey: senderPubKey } = getRouteAccountAddressAndPubKey(
     multiProvider,
     originToken?.chainName,
-    accounts,
+    routeAccounts,
   );
 
   const isEvmToEvmRoute =
@@ -49,10 +49,10 @@ export function useFeeQuotes(
   const effectiveSender = sender || (isEvmToEvmRoute ? EVM_FEE_QUOTE_FALLBACK_ADDRESS : undefined);
 
   // Get effective recipient (form value or fallback to connected wallet for destination)
-  const { address: connectedDestAddress } = getAccountAddressAndPubKey(
+  const { address: connectedDestAddress } = getRouteAccountAddressAndPubKey(
     multiProvider,
     destinationToken?.chainName,
-    accounts,
+    routeAccounts,
   );
   const recipient =
     formRecipient ||
@@ -67,6 +67,7 @@ export function useFeeQuotes(
     effectiveSender
   );
   const shouldFetch = enabled && isFormValid;
+  const runtimeProtocols = getRuntimeProtocols([originToken?.protocol, destinationToken?.protocol]);
 
   const { isLoading, isError, data, isFetching } = useQuery({
     // The WarpCore class is not serializable, so we can't use it as a key
@@ -82,7 +83,7 @@ export function useFeeQuotes(
     ],
     queryFn: async () =>
       fetchFeeQuotes(
-        warpCore || (await ensureWarpRuntime()),
+        warpCore || (await ensureWarpRuntime(runtimeProtocols)),
         originToken,
         destinationToken,
         destination,

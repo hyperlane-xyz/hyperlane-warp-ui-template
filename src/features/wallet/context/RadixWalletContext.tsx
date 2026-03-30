@@ -11,7 +11,10 @@ import { PropsWithChildren } from 'react';
 
 import { APP_NAME } from '../../../consts/app';
 
-export function RadixWalletContext({ children }: PropsWithChildren<unknown>) {
+type WalletContextProps = PropsWithChildren<{ enabled?: boolean }>;
+
+export function RadixWalletContext({ children, enabled = true }: WalletContextProps) {
+  if (!enabled) return <>{children}</>;
   const rdt = RadixDappToolkit({
     networkId: RadixNetwork.Mainnet,
     applicationVersion: '1.0.0',

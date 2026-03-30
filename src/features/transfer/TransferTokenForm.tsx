@@ -1,10 +1,9 @@
-import type { MultiProviderAdapter as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProviderAdapter';
+import type { ConfiguredMultiProtocolProvider as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/ConfiguredMultiProtocolProvider';
 import type { IToken } from '@hyperlane-xyz/sdk/token/IToken';
 import type { Token } from '@hyperlane-xyz/sdk/token/Token';
 import { TokenAmount } from '@hyperlane-xyz/sdk/token/TokenAmount';
 import type { WarpCore } from '@hyperlane-xyz/sdk/warp/WarpCore';
 import {
-  KnownProtocolType,
   ProtocolType,
   convertToScaledAmount,
   eqAddress,
@@ -18,15 +17,10 @@ import {
 import { ChevronIcon } from '@hyperlane-xyz/widgets/icons/Chevron';
 import { SpinnerIcon } from '@hyperlane-xyz/widgets/icons/Spinner';
 import { useModal } from '@hyperlane-xyz/widgets/layout/Modal';
-import {
-  getAccountAddressAndPubKey,
-  useAccountAddressForChain,
-  useAccounts,
-} from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import type { AccountInfo } from '@hyperlane-xyz/widgets/walletIntegrations/types';
 import BigNumber from 'bignumber.js';
 import { Form, Formik, useFormikContext } from 'formik';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import { RecipientWarningBanner } from '../../components/banner/RecipientWarningBanner';
@@ -51,12 +45,13 @@ import { useFeePrices } from '../balances/useFeePrices';
 import { ChainConnectionWarning } from '../chains/ChainConnectionWarning';
 import { ChainWalletWarning } from '../chains/ChainWalletWarning';
 import { useChainDisplayName, useMultiProvider } from '../chains/hooks';
+import { getRuntimeProtocols } from '../hyperlane/runtimeProtocols';
 import { isMultiCollateralLimitExceeded } from '../limits/utils';
 import { useIsAccountSanctioned } from '../sanctions/hooks/useIsAccountSanctioned';
 import { RouterAddressInfo, useStore } from '../store';
 import { useIsApproveRequired } from '../tokens/approval';
+import { getInitialTokenKeys } from '../tokens/initialTokenKeys';
 import {
-  getInitialTokenKeys,
   getTokenByKeyFromMap,
   useCollateralGroups,
   useReadyWarpCore,
@@ -69,6 +64,16 @@ import { useTokenPrices } from '../tokens/useTokenPrice';
 import { checkTokenHasRoute, findConnectedDestinationToken, findRouteToken } from '../tokens/utils';
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { WalletDropdown } from '../wallet/WalletDropdown';
+import { ProtocolAccountBridge } from '../wallet/ProtocolWalletBridge';
+import { ProtocolTransactionBridge } from '../wallet/ProtocolTransactionBridge';
+import {
+  areRouteAccountsEqual,
+  buildRouteAccounts,
+  getRouteAccountAddressAndPubKey,
+  getRouteAccountAddressForChain,
+  getRouteAccountsKey,
+  type RouteAccounts,
+} from '../wallet/routeAccounts';
 import { getInterchainQuote, getTotalFee, getTransferToken } from './fees';
 import { FeeSectionButton } from './FeeSectionButton';
 import { useFetchMaxAmount } from './maxAmount';
@@ -85,14 +90,13 @@ export function TransferTokenForm() {
   const tokenMap = useTokenByKeyMap();
   const collateralGroups = useCollateralGroups();
 
-  const { ensureWarpRuntime, setOriginChainName, routerAddressesByChainMap } = useStore((s) => ({
+  const { ensureWarpRuntime, routerAddressesByChainMap, routeAccounts } = useStore((s) => ({
     ensureWarpRuntime: s.ensureWarpRuntime,
-    setOriginChainName: s.setOriginChainName,
     routerAddressesByChainMap: s.routerAddressesByChainMap,
+    routeAccounts: s.routeAccounts,
   }));
 
   const initialValues = useFormInitialValues();
-  const { accounts } = useAccounts(multiProvider, config.addressBlacklist);
 
   // Flag for if form is in input vs review mode
   const [isReview, setIsReview] = useState(false);
@@ -109,18 +113,22 @@ export function TransferTokenForm() {
   } = useModal();
 
   const validate = async (values: TransferFormValues) => {
-    const warpCore = await ensureWarpRuntime();
+    const originToken = getTokenByKeyFromMap(tokenMap, values.originTokenKey);
+    const destinationToken = getTokenByKeyFromMap(tokenMap, values.destinationTokenKey);
+    const warpCore = await ensureWarpRuntime(
+      getRuntimeProtocols([originToken?.protocol, destinationToken?.protocol]),
+    );
     if (!warpCore) return { amount: 'Transfer runtime is still loading' };
     const [result, overrideToken] = await validateForm(
       warpCore,
       tokenMap,
       collateralGroups,
       values,
-      accounts,
+      routeAccounts,
       routerAddressesByChainMap,
     );
 
-    trackTransactionFailedEvent(result, warpCore, values, accounts, overrideToken);
+    trackTransactionFailedEvent(result, warpCore, values, routeAccounts, overrideToken);
 
     // Unless this is done, the review and the transfer would contain
     // the selected token rather than collateral with highest balance
@@ -134,10 +142,10 @@ export function TransferTokenForm() {
     if (!originToken || !destinationToken) return;
 
     // Get recipient (form value or fallback to connected wallet)
-    const { address: connectedDestAddress } = getAccountAddressAndPubKey(
+    const { address: connectedDestAddress } = getRouteAccountAddressAndPubKey(
       multiProvider,
       destinationToken.chainName,
-      accounts,
+      routeAccounts,
     );
     const recipient = values.recipient || connectedDestAddress || '';
     if (!recipient) return;
@@ -157,14 +165,6 @@ export function TransferTokenForm() {
     }
   };
 
-  // Update origin chain name in store when origin token changes
-  useEffect(() => {
-    const originToken = getTokenByKeyFromMap(tokenMap, initialValues.originTokenKey);
-    if (originToken) {
-      setOriginChainName(originToken.chainName);
-    }
-  }, [initialValues.originTokenKey, tokenMap, setOriginChainName]);
-
   return (
     <Formik<TransferFormValues>
       initialValues={initialValues}
@@ -175,6 +175,8 @@ export function TransferTokenForm() {
     >
       {({ isValidating }) => (
         <Form className="transfer-form flex w-full flex-col items-stretch gap-1.5">
+          <SyncSelectedChains />
+          <SyncRouteAccounts />
           <WarningBanners />
 
           <TransferSection label="Send">
@@ -202,6 +204,105 @@ export function TransferTokenForm() {
       )}
     </Formik>
   );
+}
+
+function SyncSelectedChains() {
+  const { values } = useFormikContext<TransferFormValues>();
+  const tokenMap = useTokenByKeyMap();
+  const { setOriginChainName, setDestinationChainName } = useStore((s) => ({
+    setOriginChainName: s.setOriginChainName,
+    setDestinationChainName: s.setDestinationChainName,
+  }));
+
+  const originToken = getTokenByKeyFromMap(tokenMap, values.originTokenKey);
+  const destinationToken = getTokenByKeyFromMap(tokenMap, values.destinationTokenKey);
+
+  useLayoutEffect(() => {
+    setOriginChainName(originToken?.chainName || '');
+    setDestinationChainName(destinationToken?.chainName || '');
+  }, [
+    destinationToken?.chainName,
+    originToken?.chainName,
+    setDestinationChainName,
+    setOriginChainName,
+  ]);
+
+  return null;
+}
+
+function SyncRouteAccounts() {
+  const { values } = useFormikContext<TransferFormValues>();
+  const tokenMap = useTokenByKeyMap();
+  const multiProvider = useMultiProvider();
+  const setRouteAccounts = useStore((s) => s.setRouteAccounts);
+
+  const originToken = getTokenByKeyFromMap(tokenMap, values.originTokenKey);
+  const destinationToken = getTokenByKeyFromMap(tokenMap, values.destinationTokenKey);
+
+  return (
+    <ProtocolAccountBridge
+      protocol={originToken?.protocol}
+      multiProvider={multiProvider}
+      chainName={originToken?.chainName}
+    >
+      {({ account: originAccount }) => (
+        <ProtocolAccountBridge
+          protocol={destinationToken?.protocol}
+          multiProvider={multiProvider}
+          chainName={destinationToken?.chainName}
+        >
+          {({ account: destinationAccount }) => (
+            <RouteAccountsCommit
+              originAccount={originAccount}
+              destinationAccount={destinationAccount}
+              setRouteAccounts={setRouteAccounts}
+            />
+          )}
+        </ProtocolAccountBridge>
+      )}
+    </ProtocolAccountBridge>
+  );
+}
+
+function RouteAccountsCommit({
+  originAccount,
+  destinationAccount,
+  setRouteAccounts,
+}: {
+  originAccount?: AccountInfo;
+  destinationAccount?: AccountInfo;
+  setRouteAccounts: (routeAccounts: RouteAccounts) => void;
+}) {
+  const currentRouteAccounts = useStore((s) => s.routeAccounts);
+  const routeAccounts = useMemo(
+    () =>
+      buildRouteAccounts(
+        [originAccount, destinationAccount].filter(
+          (account): account is AccountInfo => !!account?.isReady,
+        ),
+      ),
+    [destinationAccount, originAccount],
+  );
+  const routeAccountsKey = useMemo(() => getRouteAccountsKey(routeAccounts), [routeAccounts]);
+
+  const hasBlacklistedAddress = useMemo(
+    () =>
+      Object.values(routeAccounts)
+        .flatMap((account) => account?.addresses ?? [])
+        .some((address) => config.addressBlacklist.includes(address.address.toLowerCase())),
+    [routeAccounts],
+  );
+
+  useEffect(() => {
+    if (areRouteAccountsEqual(currentRouteAccounts, routeAccounts)) return;
+    setRouteAccounts(routeAccounts);
+  }, [currentRouteAccounts, routeAccounts, routeAccountsKey, setRouteAccounts]);
+
+  if (hasBlacklistedAddress) {
+    throw new Error('Wallet address is blacklisted');
+  }
+
+  return null;
 }
 
 function SwapTokensButton({ disabled }: { disabled?: boolean }) {
@@ -346,12 +447,14 @@ function DestinationTokenCard({ isReview }: { isReview: boolean }) {
   const { values, setFieldValue } = useFormikContext<TransferFormValues>();
   const tokenMap = useTokenByKeyMap();
   const multiProvider = useMultiProvider();
+  const routeAccounts = useStore((s) => s.routeAccounts);
 
   const destinationToken = getTokenByKeyFromMap(tokenMap, values.destinationTokenKey);
 
-  const connectedDestAddress = useAccountAddressForChain(
+  const connectedDestAddress = getRouteAccountAddressForChain(
     multiProvider,
     destinationToken?.chainName,
+    routeAccounts,
   );
   const recipient = values.recipient || connectedDestAddress;
 
@@ -402,8 +505,7 @@ function MaxButton({
   const tokenMap = useTokenByKeyMap();
   const originToken = getTokenByKeyFromMap(tokenMap, originTokenKey);
   const destinationToken = getTokenByKeyFromMap(tokenMap, destinationTokenKey);
-  const multiProvider = useMultiProvider();
-  const { accounts } = useAccounts(multiProvider);
+  const routeAccounts = useStore((s) => s.routeAccounts);
   const { fetchMaxAmount, isLoading } = useFetchMaxAmount();
 
   const isDisabled =
@@ -415,7 +517,7 @@ function MaxButton({
       balance,
       origin: originToken.chainName,
       destinationToken,
-      accounts,
+      accounts: routeAccounts,
       recipient: values.recipient,
     });
     if (isNullish(maxAmount)) return;
@@ -476,19 +578,19 @@ function ButtonSection({
   const destinationToken = getTokenByKeyFromMap(tokenMap, values.destinationTokenKey);
   const chainDisplayName = useChainDisplayName(destinationToken?.chainName || '');
   const isRouteSupported = useIsRouteSupported();
+  const routeAccounts = useStore((s) => s.routeAccounts);
 
-  const { accounts } = useAccounts(multiProvider, config.addressBlacklist);
-  const { address: connectedWallet } = getAccountAddressAndPubKey(
+  const { address: connectedWallet } = getRouteAccountAddressAndPubKey(
     multiProvider,
     originToken?.chainName,
-    accounts,
+    routeAccounts,
   );
 
   // Get recipient (form value or fallback to connected wallet for destination)
-  const { address: connectedDestAddress } = getAccountAddressAndPubKey(
+  const { address: connectedDestAddress } = getRouteAccountAddressAndPubKey(
     multiProvider,
     destinationToken?.chainName,
-    accounts,
+    routeAccounts,
   );
   const recipient = values.recipient || connectedDestAddress || '';
 
@@ -565,21 +667,6 @@ function ButtonSection({
     setTransferLoading: s.setTransferLoading,
   }));
 
-  const onDoneTransactions = () => {
-    setIsReview(false);
-    cleanOverrideToken();
-  };
-  const { triggerTransactions } = useTokenTransfer(onDoneTransactions);
-
-  const triggerTransactionsHandler = async () => {
-    if (isSanctioned || !originToken || !destinationToken) return;
-    setIsReview(false);
-    setTransferLoading(true);
-
-    await triggerTransactions(values, routeOverrideToken);
-    setTransferLoading(false);
-  };
-
   const onEdit = () => {
     setIsReview(false);
     cleanOverrideToken();
@@ -641,17 +728,89 @@ function ButtonSection({
         >
           <span>Edit</span>
         </SolidButton>
-        <SolidButton
-          disabled={!addressConfirmed || isSanctioned}
-          type="button"
-          color="accent"
-          onClick={triggerTransactionsHandler}
-          className="flex-1 px-3 py-1.5 font-secondary text-white"
-        >
-          {`Send to ${chainDisplayName}`}
-        </SolidButton>
+        <ReviewTransferButton
+          isSanctioned={isSanctioned}
+          addressConfirmed={addressConfirmed}
+          originToken={originToken}
+          destinationToken={destinationToken}
+          values={values}
+          routeOverrideToken={routeOverrideToken}
+          chainDisplayName={chainDisplayName}
+          cleanOverrideToken={cleanOverrideToken}
+          setIsReview={setIsReview}
+          setTransferLoading={setTransferLoading}
+        />
       </div>
     </>
+  );
+}
+
+function ReviewTransferButton({
+  isSanctioned,
+  addressConfirmed,
+  originToken,
+  destinationToken,
+  values,
+  routeOverrideToken,
+  chainDisplayName,
+  cleanOverrideToken,
+  setIsReview,
+  setTransferLoading,
+}: {
+  isSanctioned: boolean;
+  addressConfirmed: boolean;
+  originToken?: Token;
+  destinationToken?: IToken;
+  values: TransferFormValues;
+  routeOverrideToken: Token | null;
+  chainDisplayName: string;
+  cleanOverrideToken: () => void;
+  setIsReview: (value: boolean) => void;
+  setTransferLoading: (value: boolean) => void;
+}) {
+  const multiProvider = useMultiProvider();
+  const routeAccounts = useStore((s) => s.routeAccounts);
+  const onDoneTransactions = () => {
+    setIsReview(false);
+    cleanOverrideToken();
+  };
+  const { triggerTransactions } = useTokenTransfer(onDoneTransactions);
+
+  return (
+    <ProtocolTransactionBridge
+      protocol={originToken?.protocol}
+      multiProvider={multiProvider}
+      chainName={originToken?.chainName}
+    >
+      {({ activeChain, transactionFns }) => {
+        const triggerTransactionsHandler = async () => {
+          if (!originToken || !destinationToken || !transactionFns || isSanctioned) return;
+          setIsReview(false);
+          setTransferLoading(true);
+          await triggerTransactions(
+            values,
+            routeOverrideToken,
+            getRuntimeProtocols([originToken.protocol, destinationToken.protocol]),
+            routeAccounts,
+            activeChain,
+            transactionFns,
+          );
+          setTransferLoading(false);
+        };
+
+        return (
+          <SolidButton
+            disabled={!addressConfirmed || isSanctioned || !transactionFns}
+            type="button"
+            color="accent"
+            onClick={triggerTransactionsHandler}
+            className="flex-1 px-3 py-1.5 font-secondary text-white"
+          >
+            {`Send to ${chainDisplayName}`}
+          </SolidButton>
+        );
+      }}
+    </ProtocolTransactionBridge>
   );
 }
 
@@ -712,7 +871,7 @@ function ReviewDetails({
   // Only fetch fees if route is supported
   const { isLoading: isQuoteLoading, fees: feeQuotes } = useFeeQuotes(
     values,
-    isRouteSupported && !!warpCore,
+    isRouteSupported,
     originToken,
     destinationToken,
     !isReview,
@@ -897,7 +1056,7 @@ async function validateForm(
   tokenMap: Map<string, Token>,
   collateralGroups: Map<string, Token[]>,
   values: TransferFormValues,
-  accounts: Record<KnownProtocolType, AccountInfo>,
+  accounts: RouteAccounts,
   routerAddressesByChainMap: Record<ChainName, Record<string, RouterAddressInfo>>,
 ): Promise<[Record<string, string> | null, Token | null]> {
   // returns a tuple, where first value is validation result
@@ -915,7 +1074,7 @@ async function validateForm(
     if (!destinationToken) return [{ destinationTokenKey: 'Destination token is required' }, null];
 
     // Use form recipient if set, otherwise fallback to connected wallet for destination chain
-    const { address: connectedDestAddress } = getAccountAddressAndPubKey(
+    const { address: connectedDestAddress } = getRouteAccountAddressAndPubKey(
       multiProvider,
       destinationToken.chainName,
       accounts,
@@ -935,7 +1094,7 @@ async function validateForm(
       return [{ recipient: 'Warp Route address is not valid as recipient' }, null];
     }
 
-    const { address: sender, publicKey: senderPubKey } = getAccountAddressAndPubKey(
+    const { address: sender, publicKey: senderPubKey } = getRouteAccountAddressAndPubKey(
       multiProvider,
       token.chainName,
       accounts,

@@ -19,28 +19,37 @@ import { resolveWrappedCollateralTokens } from './tokens/wrappedTokenResolver';
 type InitWarpRuntimeArgs = {
   chainMetadataWithOverrides: ChainMap<ChainMetadata>;
   coreConfig: WarpCoreConfig;
+  protocols?: KnownProtocolType[];
   wireDecimalsMap: Record<ChainName, Record<string, number>>;
 };
 
 export async function initWarpRuntime({
   chainMetadataWithOverrides,
   coreConfig,
+  protocols: requestedProtocols,
   wireDecimalsMap,
 }: InitWarpRuntimeArgs): Promise<WarpRuntimeContext> {
-  const protocols = Array.from(
-    new Set(
-      Object.values(chainMetadataWithOverrides)
-        .map((metadata) => metadata.protocol)
-        .filter((protocol): protocol is KnownProtocolType => protocol !== ProtocolType.Unknown),
-    ),
-  );
+  const protocols =
+    requestedProtocols && requestedProtocols.length
+      ? requestedProtocols
+      : Array.from(
+          new Set(
+            Object.values(chainMetadataWithOverrides)
+              .map((metadata) => metadata.protocol)
+              .filter(
+                (protocol): protocol is KnownProtocolType => protocol !== ProtocolType.Unknown,
+              ),
+          ),
+        );
 
   const { createMultiProvider, WarpCore } = await getSdkRuntime(protocols);
   const multiProvider = createMultiProvider(chainMetadataWithOverrides);
   const warpCore = WarpCore.FromConfig(multiProvider, coreConfig);
 
   const tokensBySymbolChainMap = assembleTokensBySymbolChainMap(warpCore.tokens, multiProvider);
-  const resolvedMap = await resolveWrappedCollateralTokens(warpCore.tokens, multiProvider);
+  const resolvedMap = protocols.includes(ProtocolType.Ethereum)
+    ? await resolveWrappedCollateralTokens(warpCore.tokens, multiProvider)
+    : new Map();
   setResolvedUnderlyingMap(resolvedMap);
 
   const tokens = buildTokensArray(warpCore.tokens);

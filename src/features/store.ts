@@ -1,19 +1,22 @@
 import { GithubRegistry, IRegistry } from '@hyperlane-xyz/registry';
 import type { ChainMetadata } from '@hyperlane-xyz/sdk/metadata/chainMetadataTypes';
-import type { MultiProviderAdapter as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProviderAdapter';
+import type { ConfiguredMultiProtocolProvider as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/ConfiguredMultiProtocolProvider';
 import type { Token } from '@hyperlane-xyz/sdk/token/Token';
 import type { ChainMap, ChainName } from '@hyperlane-xyz/sdk/types';
 import type { WarpCoreConfig } from '@hyperlane-xyz/sdk/warp/types';
 import type { WarpCore } from '@hyperlane-xyz/sdk/warp/WarpCore';
-import { objFilter } from '@hyperlane-xyz/utils';
+import { type KnownProtocolType, objFilter } from '@hyperlane-xyz/utils';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 import { config } from '../consts/config';
 import { logger } from '../utils/logger';
 import type { initWarpContext as InitWarpContextFn, WarpRuntimeContext } from './storeInit';
+import { getInitialTokenKeys } from './tokens/initialTokenKeys';
 import { TokenChainMap } from './tokens/types';
 import { FinalTransferStatuses, TransferContext, TransferStatus } from './transfer/types';
+import { areRouteAccountsEqual, RouteAccounts } from './wallet/routeAccounts';
+import { TokenSelectionMode } from './tokens/types';
 
 // Increment this when persist state has breaking changes
 const PERSIST_STATE_VERSION = 2;
@@ -46,11 +49,18 @@ interface WarpContext {
 let initWarpContextModulePromise:
   | Promise<{ initWarpContext: typeof InitWarpContextFn }>
   | undefined;
-let runtimeContextLoader: (() => Promise<WarpRuntimeContext>) | undefined;
-let runtimeContextPromise: Promise<WarpRuntimeContext> | undefined;
+let runtimeContextLoader:
+  | ((protocols?: KnownProtocolType[]) => Promise<WarpRuntimeContext>)
+  | undefined;
+let runtimeContextPromises = new Map<string, Promise<WarpRuntimeContext>>();
+let runtimeProtocolsKey = '';
 let runtimeContextVersion = 0;
 let storeSetState: ((partial: Partial<AppState>) => void) | undefined;
 let storeGetState: (() => AppState) | undefined;
+
+function getRuntimeProtocolsKey(protocols?: KnownProtocolType[]) {
+  return protocols?.length ? [...new Set(protocols)].sort().join(',') : '*';
+}
 
 async function loadWarpContextModule() {
   initWarpContextModulePromise ||= import('./storeInit');
@@ -60,16 +70,26 @@ async function loadWarpContextModule() {
 async function loadAndSetWarpRuntime(
   set: (partial: Partial<AppState>) => void,
   get: () => AppState,
+  protocols?: KnownProtocolType[],
   version = runtimeContextVersion,
 ) {
-  if (get().warpCore) return get().warpCore;
+  const requestedProtocolsKey = getRuntimeProtocolsKey(protocols);
+  if (get().warpCore) {
+    if (runtimeProtocolsKey === '*') return get().warpCore;
+    if (requestedProtocolsKey !== '*' && runtimeProtocolsKey === requestedProtocolsKey) {
+      return get().warpCore;
+    }
+  }
   if (!runtimeContextLoader) return undefined;
 
-  runtimeContextPromise ||= runtimeContextLoader();
+  const runtimeContextPromise =
+    runtimeContextPromises.get(requestedProtocolsKey) || runtimeContextLoader(protocols);
+  runtimeContextPromises.set(requestedProtocolsKey, runtimeContextPromise);
   const runtimeContext = await runtimeContextPromise;
   if (version !== runtimeContextVersion) return get().warpCore;
 
   set(runtimeContext);
+  runtimeProtocolsKey = requestedProtocolsKey;
   return runtimeContext.warpCore;
 }
 
@@ -83,10 +103,36 @@ async function refreshWarpContext(
 
   runtimeContextVersion += 1;
   runtimeContextLoader = loadRuntime;
-  runtimeContextPromise = undefined;
+  runtimeContextPromises = new Map();
+  runtimeProtocolsKey = '';
 
-  set(context);
-  void loadAndSetWarpRuntime(set, get, runtimeContextVersion);
+  set({
+    ...context,
+    ...getInitialSelectedChains(context, get()),
+  });
+}
+
+function getInitialSelectedChains(
+  context: Pick<WarpContext, 'multiProvider' | 'tokenByKeyMap' | 'tokens'>,
+  state: Pick<AppState, 'originChainName' | 'destinationChainName'>,
+): Pick<AppState, 'originChainName' | 'destinationChainName'> | {} {
+  if (!context.multiProvider) return {};
+  if (state.originChainName && state.destinationChainName) return {};
+
+  const { originTokenKey, destinationTokenKey } = getInitialTokenKeys(
+    context.multiProvider,
+    context.tokens,
+  );
+  const originChainName =
+    state.originChainName || (originTokenKey && context.tokenByKeyMap.get(originTokenKey)?.chainName);
+  const destinationChainName =
+    state.destinationChainName ||
+    (destinationTokenKey && context.tokenByKeyMap.get(destinationTokenKey)?.chainName);
+
+  return {
+    originChainName: originChainName || '',
+    destinationChainName: destinationChainName || '',
+  };
 }
 
 // Keeping everything here for now as state is simple
@@ -105,7 +151,7 @@ export interface AppState {
   registry: IRegistry;
   warpCore: WarpCore | undefined;
   setWarpContext: (context: WarpContext) => void;
-  ensureWarpRuntime: () => Promise<WarpCore | undefined>;
+  ensureWarpRuntime: (protocols?: KnownProtocolType[]) => Promise<WarpCore | undefined>;
 
   // User history
   transfers: TransferContext[];
@@ -130,9 +176,17 @@ export interface AppState {
   setIsSideBarOpen: (isOpen: boolean) => void;
   showEnvSelectModal: boolean;
   setShowEnvSelectModal: (show: boolean) => void;
+  showTokenSelectionModal: boolean;
+  setShowTokenSelectionModal: (show: boolean) => void;
+  activeTokenSelectionMode: TokenSelectionMode | null;
+  setActiveTokenSelectionMode: (mode: TokenSelectionMode | null) => void;
 
   originChainName: ChainName;
   setOriginChainName: (originChainName: ChainName) => void;
+  destinationChainName: ChainName;
+  setDestinationChainName: (destinationChainName: ChainName) => void;
+  routeAccounts: RouteAccounts;
+  setRouteAccounts: (routeAccounts: RouteAccounts) => void;
   tokensBySymbolChainMap: Record<string, TokenChainMap>;
   // instead of moving the TipCard component inside the formik and an useEffect can be set to watch for it
   isTipCardActionTriggered: boolean;
@@ -202,7 +256,7 @@ export const useStore = create<AppState>()(
           logger.debug('Setting warp context in store');
           set(context);
         },
-        ensureWarpRuntime: () => loadAndSetWarpRuntime(set, get),
+        ensureWarpRuntime: (protocols) => loadAndSetWarpRuntime(set, get, protocols),
 
         // User history
         transfers: [],
@@ -249,9 +303,27 @@ export const useStore = create<AppState>()(
         setShowEnvSelectModal: (showEnvSelectModal) => {
           set(() => ({ showEnvSelectModal }));
         },
+        showTokenSelectionModal: false,
+        setShowTokenSelectionModal: (showTokenSelectionModal) => {
+          set(() => ({ showTokenSelectionModal }));
+        },
+        activeTokenSelectionMode: null,
+        setActiveTokenSelectionMode: (activeTokenSelectionMode) => {
+          set(() => ({ activeTokenSelectionMode }));
+        },
         originChainName: '',
         setOriginChainName: (originChainName: ChainName) => {
           set(() => ({ originChainName }));
+        },
+        destinationChainName: '',
+        setDestinationChainName: (destinationChainName: ChainName) => {
+          set(() => ({ destinationChainName }));
+        },
+        routeAccounts: {},
+        setRouteAccounts: (routeAccounts: RouteAccounts) => {
+          set((state) =>
+            areRouteAccountsEqual(state.routeAccounts, routeAccounts) ? state : { routeAccounts },
+          );
         },
         tokensBySymbolChainMap: {},
         routerAddressesByChainMap: {},

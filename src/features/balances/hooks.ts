@@ -1,11 +1,7 @@
-import type { MultiProviderAdapter as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProviderAdapter';
+import type { ConfiguredMultiProtocolProvider as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/ConfiguredMultiProtocolProvider';
 import type { IToken } from '@hyperlane-xyz/sdk/token/IToken';
 import type { Token } from '@hyperlane-xyz/sdk/token/Token';
 import { ProtocolType, getAddressProtocolType, isValidAddress } from '@hyperlane-xyz/utils';
-import { useCosmosAccount } from '@hyperlane-xyz/widgets/walletIntegrations/cosmos';
-import { useEthereumAccount } from '@hyperlane-xyz/widgets/walletIntegrations/ethereum';
-import { useAccountAddressForChain } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
-import { useSolanaAccount } from '@hyperlane-xyz/widgets/walletIntegrations/solana';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { toast } from 'react-toastify';
@@ -17,8 +13,9 @@ import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { getSdkToken } from '../hyperlane/sdkTokenRuntime';
+import { useStore } from '../store';
 import { getTokenKey } from '../tokens/utils';
-import { fetchCosmosChainBalances, groupCosmosTokensByChain } from './cosmos';
+import { getRouteAccountAddressForChain } from '../wallet/routeAccounts';
 import { fetchChainBalances, groupEvmTokensByChain } from './evm';
 import { fetchSealevelChainBalances, groupSealevelTokensByChain } from './svm';
 import { fetchSdkBalance } from './tokens';
@@ -55,8 +52,9 @@ export function useBalance(chain?: ChainName, token?: IToken, address?: Address)
 
 export function useOriginBalance(originToken?: Token) {
   const multiProvider = useMultiProvider();
+  const routeAccounts = useStore((s) => s.routeAccounts);
   const origin = originToken?.chainName;
-  const address = useAccountAddressForChain(multiProvider, origin);
+  const address = getRouteAccountAddressForChain(multiProvider, origin, routeAccounts);
   return useBalance(origin, originToken, address);
 }
 
@@ -90,7 +88,8 @@ export function useEvmWalletBalance(
   refetchEnabled: boolean,
 ) {
   const multiProvider = useMultiProvider();
-  const address = useAccountAddressForChain(multiProvider, chainName);
+  const routeAccounts = useStore((s) => s.routeAccounts);
+  const address = getRouteAccountAddressForChain(multiProvider, chainName, routeAccounts);
   const allowRefetch = Boolean(address) && refetchEnabled;
 
   const { data, isError, isLoading } = useWagmiBalance({
@@ -108,15 +107,18 @@ export function useEvmWalletBalance(
 
 /** Returns a Map<ProtocolType, string> of all connected wallet addresses. */
 function useWalletAddresses(multiProvider: MultiProtocolProvider): Map<ProtocolType, string> {
-  const evmAddress = useEthereumAccount(multiProvider).addresses[0]?.address;
-  const solanaAddress = useSolanaAccount(multiProvider).addresses[0]?.address;
+  const routeAccounts = useStore((s) => s.routeAccounts);
 
   return useMemo(() => {
     const map = new Map<ProtocolType, string>();
-    if (evmAddress) map.set(ProtocolType.Ethereum, evmAddress);
-    if (solanaAddress) map.set(ProtocolType.Sealevel, solanaAddress);
+    for (const protocol of Object.values(ProtocolType)) {
+      if (protocol === ProtocolType.Unknown) continue;
+      const account = routeAccounts[protocol];
+      const address = account?.addresses[0]?.address;
+      if (address) map.set(protocol, address);
+    }
     return map;
-  }, [evmAddress, solanaAddress]);
+  }, [routeAccounts]);
 }
 
 /**

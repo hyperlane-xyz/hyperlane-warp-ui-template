@@ -1,4 +1,4 @@
-import type { MultiProviderAdapter as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProviderAdapter';
+import type { ConfiguredMultiProtocolProvider as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/ConfiguredMultiProtocolProvider';
 import {
   ProviderType,
   type TypedTransactionReceipt,
@@ -7,12 +7,10 @@ import type { Token } from '@hyperlane-xyz/sdk/token/Token';
 import { WarpTxCategory } from '@hyperlane-xyz/sdk/warp/types';
 import type { WarpCore } from '@hyperlane-xyz/sdk/warp/WarpCore';
 import { toTitleCase, toWei } from '@hyperlane-xyz/utils';
-import {
-  getAccountAddressForChain,
-  useAccounts,
-  useActiveChains,
-  useTransactionFns,
-} from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
+import type {
+  ActiveChainInfo,
+  ChainTransactionFns,
+} from '@hyperlane-xyz/widgets/walletIntegrations/types';
 import { useCallback, useState } from 'react';
 import { toast } from 'react-toastify';
 
@@ -21,11 +19,15 @@ import { logger } from '../../utils/logger';
 import { refinerIdentifyAndShowTransferForm } from '../analytics/refiner';
 import { EVENT_NAME } from '../analytics/types';
 import { trackEvent } from '../analytics/utils';
-import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
+import { getRuntimeProtocols } from '../hyperlane/runtimeProtocols';
 import { AppState, useStore } from '../store';
 import { getTokenByKey } from '../tokens/hooks';
 import { findConnectedDestinationToken } from '../tokens/utils';
+import {
+  getRouteAccountAddressForChain,
+  type RouteAccounts,
+} from '../wallet/routeAccounts';
 import { TransferContext, TransferFormValues, TransferStatus } from './types';
 import { tryGetMsgIdFromTransferReceipt } from './utils';
 
@@ -41,26 +43,28 @@ export function useTokenTransfer(onDone?: () => void) {
   }));
   const transferIndex = transfers.length;
 
-  const multiProvider = useMultiProvider();
   const ensureWarpRuntime = useStore((s) => s.ensureWarpRuntime);
-
-  const activeAccounts = useAccounts(multiProvider);
-  const activeChains = useActiveChains(multiProvider);
-  const transactionFns = useTransactionFns(multiProvider);
 
   const [isLoading, setIsLoading] = useState(false);
 
   // TODO implement cancel callback for when modal is closed?
   const triggerTransactions = useCallback(
-    (values: TransferFormValues, routeOverrideToken: Token | null) =>
-      ensureWarpRuntime().then((warpCore) => {
+    (
+      values: TransferFormValues,
+      routeOverrideToken: Token | null,
+      protocols: ReturnType<typeof getRuntimeProtocols>,
+      accounts: RouteAccounts,
+      activeChain: ActiveChainInfo | undefined,
+      transactionFns: ChainTransactionFns,
+    ) =>
+      ensureWarpRuntime(protocols).then((warpCore) => {
         if (!warpCore) throw new Error('Warp runtime not ready');
         return executeTransfer({
           warpCore,
           values,
           transferIndex,
-          activeAccounts,
-          activeChains,
+          accounts,
+          activeChain,
           transactionFns,
           addTransfer,
           updateTransferStatus,
@@ -68,12 +72,9 @@ export function useTokenTransfer(onDone?: () => void) {
           onDone,
           routeOverrideToken,
         });
-      }),
+    }),
     [
       transferIndex,
-      activeAccounts,
-      activeChains,
-      transactionFns,
       setIsLoading,
       addTransfer,
       updateTransferStatus,
@@ -88,12 +89,12 @@ export function useTokenTransfer(onDone?: () => void) {
   };
 }
 
-async function executeTransfer({
+export async function executeTransfer({
   warpCore,
   values,
   transferIndex,
-  activeAccounts,
-  activeChains,
+  accounts,
+  activeChain,
   transactionFns,
   addTransfer,
   updateTransferStatus,
@@ -104,9 +105,9 @@ async function executeTransfer({
   warpCore: WarpCore;
   values: TransferFormValues;
   transferIndex: number;
-  activeAccounts: ReturnType<typeof useAccounts>;
-  activeChains: ReturnType<typeof useActiveChains>;
-  transactionFns: ReturnType<typeof useTransactionFns>;
+  accounts: RouteAccounts;
+  activeChain: ActiveChainInfo | undefined;
+  transactionFns: ChainTransactionFns;
   addTransfer: (t: TransferContext) => void;
   updateTransferStatus: AppState['updateTransferStatus'];
   setIsLoading: (b: boolean) => void;
@@ -127,10 +128,10 @@ async function executeTransfer({
     if (!originToken || !destinationToken) throw new Error('No token route found between chains');
 
     // Get effective recipient (form value or fallback to connected wallet for destination)
-    const connectedDestAddress = getAccountAddressForChain(
+    const connectedDestAddress = getRouteAccountAddressForChain(
       multiProvider,
       destinationToken.chainName,
-      activeAccounts.accounts,
+      accounts,
     );
     const recipient = formRecipient || connectedDestAddress || '';
     if (!recipient) throw new Error('No recipient address available');
@@ -145,11 +146,15 @@ async function executeTransfer({
     const weiAmountOrId = isNft ? amount : toWei(amount, originToken.decimals);
     const originTokenAmount = originToken.amount(weiAmountOrId);
 
-    const sendTransaction = transactionFns[originProtocol].sendTransaction;
-    const sendMultiTransaction = transactionFns[originProtocol].sendMultiTransaction;
-    const activeChain = activeChains.chains[originProtocol];
-    const sender = getAccountAddressForChain(multiProvider, origin, activeAccounts.accounts);
+    const sendTransaction = transactionFns.sendTransaction;
+    const sendMultiTransaction = transactionFns.sendMultiTransaction;
+    const sender = getRouteAccountAddressForChain(
+      multiProvider,
+      origin,
+      accounts,
+    );
     if (!sender) throw new Error('No active account found for origin chain');
+    if (!activeChain?.chainName) throw new Error('No active chain found for origin protocol');
 
     const isCollateralSufficient = await warpCore.isDestinationCollateralSufficient({
       originTokenAmount,
@@ -191,11 +196,11 @@ async function executeTransfer({
         transferIndex,
         (transferStatus = txCategoryToStatuses[WarpTxCategory.Transfer][0]),
       );
-      const { hash, confirm } = await sendMultiTransaction({
-        txs,
-        chainName: origin,
-        activeChainName: activeChain.chainName,
-      });
+        const { hash, confirm } = await sendMultiTransaction({
+          txs,
+          chainName: origin,
+          activeChainName: activeChain.chainName,
+        });
       updateTransferStatus(
         transferIndex,
         (transferStatus = txCategoryToStatuses[WarpTxCategory.Transfer][1]),

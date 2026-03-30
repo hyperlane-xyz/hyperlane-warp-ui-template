@@ -14,7 +14,14 @@ import { toast } from 'react-toastify';
 
 import { logger } from '../../../utils/logger';
 
-export function SolanaWalletContext({ children }: PropsWithChildren<unknown>) {
+type WalletContextProps = PropsWithChildren<{ enabled?: boolean }>;
+
+export function SolanaWalletContext({ children, enabled = true }: WalletContextProps) {
+  if (!enabled) return <>{children}</>;
+  return <EnabledSolanaWalletContext>{children}</EnabledSolanaWalletContext>;
+}
+
+function EnabledSolanaWalletContext({ children }: PropsWithChildren<unknown>) {
   // TODO support multiple networks
   const network = WalletAdapterNetwork.Mainnet;
   const endpoint = useMemo(() => clusterApiUrl(network), [network]);

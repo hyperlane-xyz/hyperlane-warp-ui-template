@@ -9,6 +9,7 @@ import { trackTokenSelectionEvent, trackUnsupportedRouteEvent } from '../analyti
 import { ChainEditModal } from '../chains/ChainEditModal';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
+import { useStore } from '../store';
 import { TransferFormValues } from '../transfer/types';
 import { shouldClearAddress } from '../transfer/utils';
 import { getTokenByKeyFromMap, useCollateralGroups, useTokenByKeyMap, useTokens } from './hooks';
@@ -36,14 +37,44 @@ export function TokenSelectField({
 }: Props) {
   const { values, setFieldValue } = useFormikContext<TransferFormValues>();
   const [{ value: tokenKey }, , { setValue: setTokenKey }] = useField<string | undefined>(name);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingChain, setEditingChain] = useState<string | null>(null);
+  const {
+    activeTokenSelectionMode,
+    setActiveTokenSelectionMode,
+    setShowTokenSelectionModal,
+    setOriginChainName,
+    setDestinationChainName,
+  } = useStore((s) => ({
+      activeTokenSelectionMode: s.activeTokenSelectionMode,
+      setActiveTokenSelectionMode: s.setActiveTokenSelectionMode,
+      setShowTokenSelectionModal: s.setShowTokenSelectionModal,
+      setOriginChainName: s.setOriginChainName,
+      setDestinationChainName: s.setDestinationChainName,
+    }));
   const collateralGroups = useCollateralGroups();
   const tokens = useTokens();
 
   const handleEditBack = () => {
     setEditingChain(null);
-    setIsModalOpen(true);
+    setActiveTokenSelectionMode(selectionMode);
+    setShowTokenSelectionModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setActiveTokenSelectionMode(null);
+    setShowTokenSelectionModal(false);
+  };
+
+  const handleOpenChainEdit = (chainName: string) => {
+    setActiveTokenSelectionMode(null);
+    setShowTokenSelectionModal(true);
+    setEditingChain(chainName);
+  };
+
+  const handleCloseChainEdit = () => {
+    setEditingChain(null);
+    setActiveTokenSelectionMode(null);
+    setShowTokenSelectionModal(false);
   };
 
   const multiProvider = useMultiProvider();
@@ -75,6 +106,7 @@ export function TokenSelectField({
     // Update URL query params based on selection mode
     if (selectionMode === 'origin') {
       setFieldValue('amount', '');
+      let nextDestinationChainName = destToken?.chainName || '';
 
       // Auto-select destination if current one has no route from new origin
       const hasValidRoute = destToken && checkTokenHasRoute(newToken, destToken, collateralGroups);
@@ -90,6 +122,7 @@ export function TokenSelectField({
         );
         if (firstDest) {
           setFieldValue('destinationTokenKey', getTokenKey(firstDest));
+          nextDestinationChainName = firstDest.chainName;
           queryParams[WARP_QUERY_PARAMS.DESTINATION] = firstDest.chainName;
           queryParams[WARP_QUERY_PARAMS.DESTINATION_TOKEN] = firstDest.symbol;
           // Clear recipient if new destination protocol doesn't match
@@ -100,6 +133,8 @@ export function TokenSelectField({
       }
 
       updateQueryParams(queryParams);
+      setOriginChainName(newToken.chainName);
+      setDestinationChainName(nextDestinationChainName);
     } else {
       // When destination changes, validate and clear custom recipient if protocol changed
       const shouldClearRecipient = shouldClearAddress(
@@ -121,6 +156,7 @@ export function TokenSelectField({
         [WARP_QUERY_PARAMS.DESTINATION]: newToken.chainName,
         [WARP_QUERY_PARAMS.DESTINATION_TOKEN]: newToken.symbol,
       });
+      setDestinationChainName(newToken.chainName);
     }
 
     // Update NFT state if callback provided
@@ -130,7 +166,9 @@ export function TokenSelectField({
   };
 
   const openTokenSelectModal = () => {
-    if (!disabled) setIsModalOpen(true);
+    if (disabled) return;
+    setActiveTokenSelectionMode(selectionMode);
+    setShowTokenSelectionModal(true);
   };
 
   return (
@@ -151,18 +189,18 @@ export function TokenSelectField({
       </div>
 
       <UnifiedTokenChainModal
-        isOpen={isModalOpen}
-        close={() => setIsModalOpen(false)}
+        isOpen={activeTokenSelectionMode === selectionMode}
+        close={handleCloseModal}
         onSelect={handleSelectToken}
         selectionMode={selectionMode}
         counterpartToken={counterpartToken}
         recipient={values.recipient}
-        onEditChain={setEditingChain}
+        onEditChain={handleOpenChainEdit}
       />
       {editingChain && (
         <ChainEditModal
           isOpen={!!editingChain}
-          close={() => setEditingChain(null)}
+          close={handleCloseChainEdit}
           onClickBack={handleEditBack}
           chainName={editingChain}
         />

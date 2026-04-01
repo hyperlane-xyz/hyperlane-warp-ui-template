@@ -75,6 +75,24 @@ export function findConnectedDestinationToken(
   );
 }
 
+// Match collateral addresses, or fall back to symbol matching for HypNative tokens
+// (which have null collateral addresses) to avoid treating different native
+// deployments (e.g. ETH vs ETHSTAGE) as interchangeable.
+function matchesCollateral(
+  referenceAddress: string | null,
+  candidateAddress: string | null,
+  referenceSymbol: string,
+  candidateSymbol: string,
+): boolean {
+  if (isNullish(referenceAddress) && isNullish(candidateAddress)) {
+    return candidateSymbol === referenceSymbol;
+  }
+  if (referenceAddress && candidateAddress) {
+    return eqAddress(referenceAddress, candidateAddress);
+  }
+  return false;
+}
+
 export function getTokensWithSameCollateralAddresses(
   warpCore: WarpCore,
   origin: Token,
@@ -112,21 +130,18 @@ export function getTokensWithSameCollateralAddresses(
         ? normalizeAddress(destinationToken.collateralAddressOrDenom, destinationToken.protocol)
         : null;
 
-      // For HypNative tokens both collateral addresses are null — match by symbol
-      // to avoid treating different native deployments (e.g. ETH vs ETHSTAGE) as interchangeable
-      const originMatches =
-        isNullish(originCollateralAddress) && isNullish(currentOriginCollateralAddress)
-          ? originToken.symbol === origin.symbol
-          : originCollateralAddress && currentOriginCollateralAddress
-            ? eqAddress(originCollateralAddress, currentOriginCollateralAddress)
-            : false;
-
-      const destinationMatches =
-        isNullish(destinationCollateralAddress) && isNullish(currentDestinationCollateralAddress)
-          ? destinationToken.symbol === destination.symbol
-          : destinationCollateralAddress && currentDestinationCollateralAddress
-            ? eqAddress(destinationCollateralAddress, currentDestinationCollateralAddress)
-            : false;
+      const originMatches = matchesCollateral(
+        originCollateralAddress,
+        currentOriginCollateralAddress,
+        origin.symbol,
+        originToken.symbol,
+      );
+      const destinationMatches = matchesCollateral(
+        destinationCollateralAddress,
+        currentDestinationCollateralAddress,
+        destination.symbol,
+        destinationToken.symbol,
+      );
 
       return originMatches && destinationMatches;
     });
@@ -341,9 +356,7 @@ export function tryGetDefaultOriginToken(
   defaultMultiCollateralRoutes: DefaultMultiCollateralRoutes | undefined,
   tokensWithSameCollateralAddresses: { originToken: Token; destinationToken: Token }[],
 ): Token | null {
-  // this call might be repeated with getTransferToken but it ensures we are only dealing with valid
-  // multi-collateral tokens here
-  if (!isValidMultiCollateralToken(originToken, destinationToken)) return null;
+  // Caller (getTransferToken) already validated isValidMultiCollateralToken
   if (!defaultMultiCollateralRoutes) return null;
 
   const originChainName = originToken.chainName;

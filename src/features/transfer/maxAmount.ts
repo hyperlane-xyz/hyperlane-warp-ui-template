@@ -9,7 +9,7 @@ import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { isMultiCollateralLimitExceeded } from '../limits/utils';
 import { useWarpCore } from '../tokens/hooks';
-import { findConnectedDestinationToken, findRouteToken } from '../tokens/utils';
+import { findConnectedDestinationToken } from '../tokens/utils';
 import { getTransferToken } from './fees';
 
 interface FetchMaxParams {
@@ -56,17 +56,10 @@ async function fetchMaxAmount(
     );
     const recipient = formRecipient || connectedDestAddress || address;
 
-    // Find the actual warpCore token that has the route (handles deduplicated tokens)
-    const originRouteToken = findRouteToken(warpCore, originToken, destToken);
-    if (!originRouteToken) return undefined;
-
-    const connectedDestinationToken = findConnectedDestinationToken(originRouteToken, destToken);
-    if (!connectedDestinationToken) return undefined;
-
     const transferToken = await getTransferToken(
       warpCore,
-      originRouteToken,
-      connectedDestinationToken,
+      originToken,
+      destToken,
       balance.amount.toString(),
       recipient,
       address,

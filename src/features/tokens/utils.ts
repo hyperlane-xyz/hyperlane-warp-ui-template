@@ -356,7 +356,9 @@ export function tryGetDefaultOriginToken(
   defaultMultiCollateralRoutes: DefaultMultiCollateralRoutes | undefined,
   tokensWithSameCollateralAddresses: { originToken: Token; destinationToken: Token }[],
 ): Token | null {
-  // Caller (getTransferToken) already validated isValidMultiCollateralToken
+  // this call might be repeated with getTransferToken but it ensures we are only dealing with valid
+  // multi-collateral tokens here
+  if (!isValidMultiCollateralToken(originToken, destinationToken)) return null;
   if (!defaultMultiCollateralRoutes) return null;
 
   const originChainName = originToken.chainName;

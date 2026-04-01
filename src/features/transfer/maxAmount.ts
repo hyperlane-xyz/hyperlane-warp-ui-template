@@ -65,7 +65,7 @@ async function fetchMaxAmount(
 
     const transferToken = await getTransferToken(
       warpCore,
-      originToken,
+      originRouteToken,
       connectedDestinationToken,
       balance.amount.toString(),
       recipient,

@@ -1,6 +1,5 @@
 import {
   IToken,
-  MultiProtocolProvider,
   Token,
   TOKEN_COLLATERALIZED_STANDARDS,
   TokenStandard,
@@ -8,8 +7,7 @@ import {
 } from '@hyperlane-xyz/sdk';
 import { eqAddress, isNullish, normalizeAddress, objKeys } from '@hyperlane-xyz/utils';
 
-import { isChainDisabled } from '../chains/utils';
-import { DefaultMultiCollateralRoutes, TokenChainMap } from './types';
+import { DefaultMultiCollateralRoutes } from './types';
 
 // Module-level caches for expensive key computations
 // WeakMap allows automatic garbage collection when token objects are no longer referenced
@@ -39,38 +37,6 @@ function isCollateralizedToken(token: IToken): boolean {
     EXTRA_COLLATERALIZED_STANDARDS.has(token.standard) ||
     token.isHypNative()
   );
-}
-
-// Map of token symbols and token chain map
-// Symbols are not duplicated to avoid the same symbol from being shown
-// TokenChainMap: An object containing token information and a map
-// chain names with its metadata and the related token
-export function assembleTokensBySymbolChainMap(
-  tokens: Token[],
-  multiProvider: MultiProtocolProvider,
-): Record<string, TokenChainMap> {
-  const multiChainTokens = tokens.filter((t) => t.isMultiChainToken());
-  return multiChainTokens.reduce<Record<string, TokenChainMap>>((acc, token) => {
-    if (!token.connections || !token.connections.length) return acc;
-
-    if (!acc[token.symbol]) {
-      acc[token.symbol] = {
-        chains: {},
-        tokenInformation: token,
-      };
-    }
-    if (!acc[token.symbol].chains[token.chainName]) {
-      const chainMetadata = multiProvider.tryGetChainMetadata(token.chainName);
-
-      // remove chain from map if it is disabled
-      const chainDisabled = isChainDisabled(chainMetadata);
-      if (chainDisabled) return acc;
-
-      acc[token.symbol].chains[token.chainName] = { token, metadata: chainMetadata };
-    }
-
-    return acc;
-  }, {});
 }
 
 export function isValidMultiCollateralToken(
@@ -301,13 +267,6 @@ export function getCollateralKey(token: IToken): string {
 }
 
 /**
- * Check if two tokens share the same collateral
- */
-export function sharesCollateral(tokenA: IToken, tokenB: IToken): boolean {
-  return getCollateralKey(tokenA) === getCollateralKey(tokenB);
-}
-
-/**
  * Check if a route exists between origin and destination tokens
  * Uses pre-computed collateral groups for fast O(1) lookups
  *
@@ -368,8 +327,7 @@ export function findRouteToken(
     if (exactMatch) return exactMatch;
   }
 
-  // Fallback: first collateral match, then symbol match
-  return collateralMatches[0] || routeTokens.find((t) => t.symbol === originToken.symbol);
+  return collateralMatches[0];
 }
 
 // Returns the default origin token from tokensWithSameCollateralAddresses if:

@@ -395,6 +395,9 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // paradex
   'DIME/paradex',
+
+  // rise
+  'RISE/bsc-ethereum',
 ];
 
 /**

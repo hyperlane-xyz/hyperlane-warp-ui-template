@@ -1,7 +1,8 @@
 import type { ChainMetadata } from '@hyperlane-xyz/sdk/metadata/chainMetadataTypes';
 import type { Token } from '@hyperlane-xyz/sdk/token/Token';
 import type { TokenAmount } from '@hyperlane-xyz/sdk/token/TokenAmount';
-import type { ChainMap } from '@hyperlane-xyz/sdk/types';
+import type { ChainMap, ChainName } from '@hyperlane-xyz/sdk/types';
+import type { Address } from '@hyperlane-xyz/utils';
 
 export type MultiCollateralTokenMap = Record<string, Record<string, Token[]>>;
 

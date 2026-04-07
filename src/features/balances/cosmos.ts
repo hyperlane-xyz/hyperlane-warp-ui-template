@@ -85,8 +85,8 @@ export async function fetchCosmosChainBalances(
 ): Promise<Record<string, bigint>> {
   if (group.bankTokens.length === 0) return {};
 
+  const client = await StargateClient.connect(rpcUrl);
   try {
-    const client = await StargateClient.connect(rpcUrl);
     const allCoins = await client.getAllBalances(address);
     const coinMap = new Map(allCoins.map((c) => [c.denom, BigInt(c.amount)]));
 
@@ -101,5 +101,7 @@ export async function fetchCosmosChainBalances(
   } catch (err) {
     logger.warn(`Bank allBalances failed on ${group.chainName}`, err);
     return {};
+  } finally {
+    client.disconnect();
   }
 }

@@ -11,7 +11,6 @@
     "@chakra-ui/theme-utils": "^2.0.21",
     "@cosmjs/cosmwasm-stargate": "^0.32.4",
     "@cosmjs/stargate": "^0.32.4",
-    "@cosmjs/tendermint-rpc": "^0.32.4",
     "@cosmos-kit/core": "^2.13.1",
     "@cosmos-kit/cosmostation": "^2.11.2",
     "@cosmos-kit/keplr": "^2.12.2",

@@ -59,9 +59,6 @@ importers:
       '@cosmjs/stargate':
         specifier: ^0.32.4
         version: 0.32.4(bufferutil@4.1.0)(utf-8-validate@6.0.6)
-      '@cosmjs/tendermint-rpc':
-        specifier: ^0.32.4
-        version: 0.32.4(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       '@cosmos-kit/core':
         specifier: ^2.13.1
         version: 2.18.1(@react-native-async-storage/async-storage@1.24.0(react-native@0.84.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@6.0.6)))(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.20))(bufferutil@4.1.0)(utf-8-validate@6.0.6)

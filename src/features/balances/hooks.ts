@@ -1,7 +1,6 @@
 import { IToken, MultiProtocolProvider, Token } from '@hyperlane-xyz/sdk';
 import { ProtocolType, getAddressProtocolType, isValidAddress } from '@hyperlane-xyz/utils';
 import {
-  ChainAddress,
   useAccountAddressForChain,
   useCosmosAccount,
   useEthereumAccount,
@@ -118,24 +117,15 @@ function useWalletAddresses(multiProvider: MultiProtocolProvider): Map<ProtocolT
 }
 
 /**
- * Returns per-chain cosmos addresses from the connected cosmos wallet.
- * Cosmos uses different bech32 addresses per chain, so we can't use a single address.
- */
-function useCosmosAddresses(multiProvider: MultiProtocolProvider): ChainAddress[] {
-  const cosmosAccount = useCosmosAccount(multiProvider);
-  return cosmosAccount.addresses;
-}
-
-/**
- * Batch-fetch token balances for EVM, Sealevel, and Cosmos protocols.
- * - EVM: multicall3.aggregate3 — one eth_call per chain
- * - Sealevel: getParsedTokenAccountsByOwner — 2-3 RPC calls per SVM chain
- * - Cosmos: bank.allBalances for native/IBC + HttpBatchClient for CW20
+ * Batch-fetch token balances across protocols.
+ * - EVM: multicall3 — one eth_call per chain
+ * - Sealevel: getParsedTokenAccountsByOwner per chain
+ * - Cosmos: bank.allBalances per chain (with SDK fallback for CwHypNative)
  */
 export function useTokenBalances(tokens: Token[], scope: string, addressOverride?: string) {
   const multiProvider = useMultiProvider();
   const walletAddresses = useWalletAddresses(multiProvider);
-  const cosmosAddresses = useCosmosAddresses(multiProvider);
+  const cosmosAddresses = useCosmosAccount(multiProvider).addresses;
   const tokenKeys = useMemo(() => tokens.map((t) => getTokenKey(t)), [tokens]);
 
   // When an address override is provided (e.g. pasted recipient),
@@ -154,7 +144,6 @@ export function useTokenBalances(tokens: Token[], scope: string, addressOverride
     [effectiveAddresses],
   );
 
-  // Stable serializable key for cosmos addresses
   const cosmosAddressKey = useMemo(
     () => cosmosAddresses.map((a) => `${a.chainName}:${a.address}`).sort(),
     [cosmosAddresses],
@@ -168,6 +157,7 @@ export function useTokenBalances(tokens: Token[], scope: string, addressOverride
     queryFn: async (): Promise<Record<string, bigint>> => {
       const promises: Promise<Record<string, bigint>>[] = [];
 
+      // EVM
       const evmAddr = effectiveAddresses.get(ProtocolType.Ethereum);
       if (evmAddr) {
         const { chainGroups, fallbackTokens } = groupEvmTokensByChain(tokens, multiProvider);
@@ -179,6 +169,7 @@ export function useTokenBalances(tokens: Token[], scope: string, addressOverride
         }
       }
 
+      // Sealevel
       const solAddr = effectiveAddresses.get(ProtocolType.Sealevel);
       if (solAddr) {
         const sealevelGroups = groupSealevelTokensByChain(tokens);
@@ -190,7 +181,7 @@ export function useTokenBalances(tokens: Token[], scope: string, addressOverride
         }
       }
 
-      // Cosmos — per-chain address lookup
+      // Cosmos — per-chain bech32 address lookup
       if (cosmosAddresses.length > 0) {
         const cosmosGroups = groupCosmosTokensByChain(tokens);
         for (const [, group] of cosmosGroups) {
@@ -199,7 +190,6 @@ export function useTokenBalances(tokens: Token[], scope: string, addressOverride
           const rpcUrl = multiProvider.tryGetChainMetadata(group.chainName)?.rpcUrls?.[0]?.http;
           if (!rpcUrl) continue;
           promises.push(fetchCosmosChainBalances(group, rpcUrl, addr));
-          // SDK fallback for tokens that need dynamic denom resolution
           for (const { token, key } of group.fallbackTokens) {
             promises.push(fetchSdkBalance(token, multiProvider, addr, key));
           }

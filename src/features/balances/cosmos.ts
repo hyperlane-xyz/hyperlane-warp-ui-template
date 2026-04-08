@@ -19,12 +19,12 @@ const BANK_DENOM_FROM_ADDRESS: TokenStandard[] = [
   TokenStandard.CosmosIcs20,
   TokenStandard.CWNative,
   TokenStandard.CW20,
-  TokenStandard.CwHypSynthetic,
 ];
 
 /** Standards where the bank denom is `collateralAddressOrDenom`. */
 const BANK_DENOM_FROM_COLLATERAL: TokenStandard[] = [
   TokenStandard.CwHypCollateral,
+  TokenStandard.CwHypSynthetic,
   TokenStandard.CosmNativeHypCollateral,
 ];
 

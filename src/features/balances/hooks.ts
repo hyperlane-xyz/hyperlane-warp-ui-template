@@ -182,10 +182,16 @@ export function useTokenBalances(tokens: Token[], scope: string, addressOverride
       }
 
       // Cosmos — per-chain bech32 address lookup
-      if (cosmosAddresses.length > 0) {
+      // addressOverride: match bech32 prefix to chain metadata to find the right chain
+      const cosmosOverride = effectiveAddresses.get(ProtocolType.Cosmos);
+      if (cosmosAddresses.length > 0 || cosmosOverride) {
         const cosmosGroups = groupCosmosTokensByChain(tokens);
         for (const [, group] of cosmosGroups) {
-          const addr = cosmosAddresses.find((a) => a.chainName === group.chainName)?.address;
+          let addr = cosmosAddresses.find((a) => a.chainName === group.chainName)?.address;
+          if (!addr && cosmosOverride) {
+            const chainPrefix = multiProvider.tryGetChainMetadata(group.chainName)?.bech32Prefix;
+            if (chainPrefix && cosmosOverride.startsWith(chainPrefix)) addr = cosmosOverride;
+          }
           if (!addr) continue;
           const rpcUrl = multiProvider.tryGetChainMetadata(group.chainName)?.rpcUrls?.[0]?.http;
           if (!rpcUrl) continue;

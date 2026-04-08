@@ -85,7 +85,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'WBTC/coti-ethereum',
 
   // CCBTC routes
-  'CCBTC/igra',
+  'CBBTC/igra',
 
   // wstETH routes
   'WSTETH/igra',

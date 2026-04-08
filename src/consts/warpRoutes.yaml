@@ -2,5 +2,400 @@
 # These configs will be merged with the warp routes in the configured registry
 # The input here is typically the output of the Hyperlane CLI warp deploy command
 ---
-tokens: []
+tokens:
+  - addressOrDenom: "0xAd4350Ee0f9f5b85BaB115425426086Ae8384ebb"
+    chainName: arbitrum
+    coinGeckoId: usd-coin
+    collateralAddressOrDenom: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"
+    connections:
+      - token: ethereum|avalanche|0x252833ad2daa5BCb7C251Aa8E12ce97D6Bd4765E
+      - token: ethereum|base|0x37e637891A558B5b621723cbf8Fc771525f280C1
+      - token: ethereum|bsc|0x1eebF9d94a5E707E30f18b9aB3295D963C111fb7
+      - token: sealevel|eclipsemainnet|EqRSt9aUDMKYKhzd1DGMderr3KNp29VZH3x5P7LFTC8m
+      - token: ethereum|ethereum|0xe1De9910fe71cC216490AC7FCF019e13a34481D7
+      - token: ethereum|hyperevm|0xA1B10De5b3A131B02bcE94864943426d901d98B5
+      - token: ethereum|ink|0x0DE665377A5B0D390469d0ea0FCae55e0c14f4c4
+      - token: ethereum|katana|0x680e8ECB908A2040232ef139A0A52cbE47b9F15B
+      - token: ethereum|linea|0x34eaC2132BB041B3F789cC7B5665dAbdF6ac3f12
+      - token: ethereum|monad|0xC2e074F6AeC27c39FA9423E2D5752C31a7b0a75E
+      - token: ethereum|optimism|0x02bFd67829317D666dc7dFA030F18eaCC12c2cfb
+      - token: ethereum|polygon|0xCb9F833f4d6D9Bb9767CDb25c487DA54D67731D6
+      - token: sealevel|solanamainnet|3EpVCPUgyjq2MfGeCttyey6bs5zya5wjYZ2BE6yDg6bm
+      - token: ethereum|unichain|0xa7E4dC4078bAc6e97Eec52a4F7642fF51cbb17C1
+      - token: ethereum|worldchain|0x485dE5Aa437d46B925D800929CcCA587e6e9d2c3
+    decimals: 6
+    logoURI: /deployments/warp_routes/USDC/logo.svg
+    name: USD Coin
+    standard: EvmHypCollateral
+    symbol: USDC
+  - addressOrDenom: "0x252833ad2daa5BCb7C251Aa8E12ce97D6Bd4765E"
+    chainName: avalanche
+    coinGeckoId: usd-coin
+    collateralAddressOrDenom: "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E"
+    connections:
+      - token: ethereum|arbitrum|0xAd4350Ee0f9f5b85BaB115425426086Ae8384ebb
+      - token: ethereum|base|0x37e637891A558B5b621723cbf8Fc771525f280C1
+      - token: ethereum|bsc|0x1eebF9d94a5E707E30f18b9aB3295D963C111fb7
+      - token: sealevel|eclipsemainnet|EqRSt9aUDMKYKhzd1DGMderr3KNp29VZH3x5P7LFTC8m
+      - token: ethereum|ethereum|0xe1De9910fe71cC216490AC7FCF019e13a34481D7
+      - token: ethereum|hyperevm|0xA1B10De5b3A131B02bcE94864943426d901d98B5
+      - token: ethereum|ink|0x0DE665377A5B0D390469d0ea0FCae55e0c14f4c4
+      - token: ethereum|katana|0x680e8ECB908A2040232ef139A0A52cbE47b9F15B
+      - token: ethereum|linea|0x34eaC2132BB041B3F789cC7B5665dAbdF6ac3f12
+      - token: ethereum|monad|0xC2e074F6AeC27c39FA9423E2D5752C31a7b0a75E
+      - token: ethereum|optimism|0x02bFd67829317D666dc7dFA030F18eaCC12c2cfb
+      - token: ethereum|polygon|0xCb9F833f4d6D9Bb9767CDb25c487DA54D67731D6
+      - token: sealevel|solanamainnet|3EpVCPUgyjq2MfGeCttyey6bs5zya5wjYZ2BE6yDg6bm
+      - token: ethereum|unichain|0xa7E4dC4078bAc6e97Eec52a4F7642fF51cbb17C1
+      - token: ethereum|worldchain|0x485dE5Aa437d46B925D800929CcCA587e6e9d2c3
+    decimals: 6
+    logoURI: /deployments/warp_routes/USDC/logo.svg
+    name: USD Coin
+    standard: EvmHypCollateral
+    symbol: USDC
+  - addressOrDenom: "0x37e637891A558B5b621723cbf8Fc771525f280C1"
+    chainName: base
+    coinGeckoId: usd-coin
+    collateralAddressOrDenom: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
+    connections:
+      - token: ethereum|arbitrum|0xAd4350Ee0f9f5b85BaB115425426086Ae8384ebb
+      - token: ethereum|avalanche|0x252833ad2daa5BCb7C251Aa8E12ce97D6Bd4765E
+      - token: ethereum|bsc|0x1eebF9d94a5E707E30f18b9aB3295D963C111fb7
+      - token: sealevel|eclipsemainnet|EqRSt9aUDMKYKhzd1DGMderr3KNp29VZH3x5P7LFTC8m
+      - token: ethereum|ethereum|0xe1De9910fe71cC216490AC7FCF019e13a34481D7
+      - token: ethereum|hyperevm|0xA1B10De5b3A131B02bcE94864943426d901d98B5
+      - token: ethereum|ink|0x0DE665377A5B0D390469d0ea0FCae55e0c14f4c4
+      - token: ethereum|katana|0x680e8ECB908A2040232ef139A0A52cbE47b9F15B
+      - token: ethereum|linea|0x34eaC2132BB041B3F789cC7B5665dAbdF6ac3f12
+      - token: ethereum|monad|0xC2e074F6AeC27c39FA9423E2D5752C31a7b0a75E
+      - token: ethereum|optimism|0x02bFd67829317D666dc7dFA030F18eaCC12c2cfb
+      - token: ethereum|polygon|0xCb9F833f4d6D9Bb9767CDb25c487DA54D67731D6
+      - token: sealevel|solanamainnet|3EpVCPUgyjq2MfGeCttyey6bs5zya5wjYZ2BE6yDg6bm
+      - token: ethereum|unichain|0xa7E4dC4078bAc6e97Eec52a4F7642fF51cbb17C1
+      - token: ethereum|worldchain|0x485dE5Aa437d46B925D800929CcCA587e6e9d2c3
+    decimals: 6
+    logoURI: /deployments/warp_routes/USDC/logo.svg
+    name: USD Coin
+    standard: EvmHypCollateral
+    symbol: USDC
+  - addressOrDenom: "0x1eebF9d94a5E707E30f18b9aB3295D963C111fb7"
+    chainName: bsc
+    collateralAddressOrDenom: "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d"
+    connections:
+      - token: ethereum|arbitrum|0xAd4350Ee0f9f5b85BaB115425426086Ae8384ebb
+      - token: ethereum|avalanche|0x252833ad2daa5BCb7C251Aa8E12ce97D6Bd4765E
+      - token: ethereum|base|0x37e637891A558B5b621723cbf8Fc771525f280C1
+      - token: sealevel|eclipsemainnet|EqRSt9aUDMKYKhzd1DGMderr3KNp29VZH3x5P7LFTC8m
+      - token: ethereum|ethereum|0xe1De9910fe71cC216490AC7FCF019e13a34481D7
+      - token: ethereum|hyperevm|0xA1B10De5b3A131B02bcE94864943426d901d98B5
+      - token: ethereum|ink|0x0DE665377A5B0D390469d0ea0FCae55e0c14f4c4
+      - token: ethereum|katana|0x680e8ECB908A2040232ef139A0A52cbE47b9F15B
+      - token: ethereum|linea|0x34eaC2132BB041B3F789cC7B5665dAbdF6ac3f12
+      - token: ethereum|monad|0xC2e074F6AeC27c39FA9423E2D5752C31a7b0a75E
+      - token: ethereum|optimism|0x02bFd67829317D666dc7dFA030F18eaCC12c2cfb
+      - token: ethereum|polygon|0xCb9F833f4d6D9Bb9767CDb25c487DA54D67731D6
+      # - token: sealevel|solanamainnet|3EpVCPUgyjq2MfGeCttyey6bs5zya5wjYZ2BE6yDg6bm
+      - token: ethereum|unichain|0xa7E4dC4078bAc6e97Eec52a4F7642fF51cbb17C1
+      - token: ethereum|worldchain|0x485dE5Aa437d46B925D800929CcCA587e6e9d2c3
+    decimals: 18
+    name: USD Coin
+    logoURI: /deployments/warp_routes/USDC/logo.svg
+    standard: EvmHypCollateral
+    symbol: USDC
+  - addressOrDenom: EqRSt9aUDMKYKhzd1DGMderr3KNp29VZH3x5P7LFTC8m
+    chainName: eclipsemainnet
+    connections:
+      - token: ethereum|arbitrum|0xAd4350Ee0f9f5b85BaB115425426086Ae8384ebb
+      - token: ethereum|avalanche|0x252833ad2daa5BCb7C251Aa8E12ce97D6Bd4765E
+      - token: ethereum|base|0x37e637891A558B5b621723cbf8Fc771525f280C1
+      - token: ethereum|bsc|0x1eebF9d94a5E707E30f18b9aB3295D963C111fb7
+      - token: ethereum|ethereum|0xe1De9910fe71cC216490AC7FCF019e13a34481D7
+      - token: ethereum|hyperevm|0xA1B10De5b3A131B02bcE94864943426d901d98B5
+      - token: ethereum|ink|0x0DE665377A5B0D390469d0ea0FCae55e0c14f4c4
+      - token: ethereum|katana|0x680e8ECB908A2040232ef139A0A52cbE47b9F15B
+      - token: ethereum|linea|0x34eaC2132BB041B3F789cC7B5665dAbdF6ac3f12
+      - token: ethereum|monad|0xC2e074F6AeC27c39FA9423E2D5752C31a7b0a75E
+      - token: ethereum|optimism|0x02bFd67829317D666dc7dFA030F18eaCC12c2cfb
+      - token: ethereum|polygon|0xCb9F833f4d6D9Bb9767CDb25c487DA54D67731D6
+      # - token: sealevel|solanamainnet|3EpVCPUgyjq2MfGeCttyey6bs5zya5wjYZ2BE6yDg6bm
+      - token: ethereum|unichain|0xa7E4dC4078bAc6e97Eec52a4F7642fF51cbb17C1
+      - token: ethereum|worldchain|0x485dE5Aa437d46B925D800929CcCA587e6e9d2c3
+    decimals: 6
+    logoURI: /deployments/warp_routes/USDC/logo.svg
+    name: USD Coin
+    standard: SealevelHypSynthetic
+    symbol: USDC
+  - addressOrDenom: "0xe1De9910fe71cC216490AC7FCF019e13a34481D7"
+    chainName: ethereum
+    coinGeckoId: usd-coin
+    collateralAddressOrDenom: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
+    connections:
+      - token: ethereum|arbitrum|0xAd4350Ee0f9f5b85BaB115425426086Ae8384ebb
+      - token: ethereum|avalanche|0x252833ad2daa5BCb7C251Aa8E12ce97D6Bd4765E
+      - token: ethereum|base|0x37e637891A558B5b621723cbf8Fc771525f280C1
+      - token: ethereum|bsc|0x1eebF9d94a5E707E30f18b9aB3295D963C111fb7
+      - token: sealevel|eclipsemainnet|EqRSt9aUDMKYKhzd1DGMderr3KNp29VZH3x5P7LFTC8m
+      - token: ethereum|hyperevm|0xA1B10De5b3A131B02bcE94864943426d901d98B5
+      - token: ethereum|ink|0x0DE665377A5B0D390469d0ea0FCae55e0c14f4c4
+      - token: ethereum|katana|0x680e8ECB908A2040232ef139A0A52cbE47b9F15B
+      - token: ethereum|linea|0x34eaC2132BB041B3F789cC7B5665dAbdF6ac3f12
+      - token: ethereum|monad|0xC2e074F6AeC27c39FA9423E2D5752C31a7b0a75E
+      - token: ethereum|optimism|0x02bFd67829317D666dc7dFA030F18eaCC12c2cfb
+      - token: ethereum|polygon|0xCb9F833f4d6D9Bb9767CDb25c487DA54D67731D6
+      - token: sealevel|solanamainnet|3EpVCPUgyjq2MfGeCttyey6bs5zya5wjYZ2BE6yDg6bm
+      - token: ethereum|unichain|0xa7E4dC4078bAc6e97Eec52a4F7642fF51cbb17C1
+      - token: ethereum|worldchain|0x485dE5Aa437d46B925D800929CcCA587e6e9d2c3
+    decimals: 6
+    logoURI: /deployments/warp_routes/USDC/logo.svg
+    name: USD Coin
+    standard: EvmHypCollateral
+    symbol: USDC
+  - addressOrDenom: "0xA1B10De5b3A131B02bcE94864943426d901d98B5"
+    chainName: hyperevm
+    collateralAddressOrDenom: "0xb88339CB7199b77E23DB6E890353E22632Ba630f"
+    connections:
+      - token: ethereum|arbitrum|0xAd4350Ee0f9f5b85BaB115425426086Ae8384ebb
+      - token: ethereum|avalanche|0x252833ad2daa5BCb7C251Aa8E12ce97D6Bd4765E
+      - token: ethereum|base|0x37e637891A558B5b621723cbf8Fc771525f280C1
+      - token: ethereum|bsc|0x1eebF9d94a5E707E30f18b9aB3295D963C111fb7
+      - token: sealevel|eclipsemainnet|EqRSt9aUDMKYKhzd1DGMderr3KNp29VZH3x5P7LFTC8m
+      - token: ethereum|ethereum|0xe1De9910fe71cC216490AC7FCF019e13a34481D7
+      - token: ethereum|ink|0x0DE665377A5B0D390469d0ea0FCae55e0c14f4c4
+      - token: ethereum|katana|0x680e8ECB908A2040232ef139A0A52cbE47b9F15B
+      - token: ethereum|linea|0x34eaC2132BB041B3F789cC7B5665dAbdF6ac3f12
+      - token: ethereum|monad|0xC2e074F6AeC27c39FA9423E2D5752C31a7b0a75E
+      - token: ethereum|optimism|0x02bFd67829317D666dc7dFA030F18eaCC12c2cfb
+      - token: ethereum|polygon|0xCb9F833f4d6D9Bb9767CDb25c487DA54D67731D6
+      - token: sealevel|solanamainnet|3EpVCPUgyjq2MfGeCttyey6bs5zya5wjYZ2BE6yDg6bm
+      - token: ethereum|unichain|0xa7E4dC4078bAc6e97Eec52a4F7642fF51cbb17C1
+      - token: ethereum|worldchain|0x485dE5Aa437d46B925D800929CcCA587e6e9d2c3
+    decimals: 6
+    logoURI: /deployments/warp_routes/USDC/logo.svg
+    name: USDC
+    standard: EvmHypCollateral
+    symbol: USDC
+  - addressOrDenom: "0x0DE665377A5B0D390469d0ea0FCae55e0c14f4c4"
+    chainName: ink
+    coinGeckoId: usd-coin
+    collateralAddressOrDenom: "0x2D270e6886d130D724215A266106e6832161EAEd"
+    connections:
+      - token: ethereum|arbitrum|0xAd4350Ee0f9f5b85BaB115425426086Ae8384ebb
+      - token: ethereum|avalanche|0x252833ad2daa5BCb7C251Aa8E12ce97D6Bd4765E
+      - token: ethereum|base|0x37e637891A558B5b621723cbf8Fc771525f280C1
+      - token: ethereum|bsc|0x1eebF9d94a5E707E30f18b9aB3295D963C111fb7
+      - token: sealevel|eclipsemainnet|EqRSt9aUDMKYKhzd1DGMderr3KNp29VZH3x5P7LFTC8m
+      - token: ethereum|ethereum|0xe1De9910fe71cC216490AC7FCF019e13a34481D7
+      - token: ethereum|hyperevm|0xA1B10De5b3A131B02bcE94864943426d901d98B5
+      - token: ethereum|katana|0x680e8ECB908A2040232ef139A0A52cbE47b9F15B
+      - token: ethereum|linea|0x34eaC2132BB041B3F789cC7B5665dAbdF6ac3f12
+      - token: ethereum|monad|0xC2e074F6AeC27c39FA9423E2D5752C31a7b0a75E
+      - token: ethereum|optimism|0x02bFd67829317D666dc7dFA030F18eaCC12c2cfb
+      - token: ethereum|polygon|0xCb9F833f4d6D9Bb9767CDb25c487DA54D67731D6
+      - token: sealevel|solanamainnet|3EpVCPUgyjq2MfGeCttyey6bs5zya5wjYZ2BE6yDg6bm
+      - token: ethereum|unichain|0xa7E4dC4078bAc6e97Eec52a4F7642fF51cbb17C1
+      - token: ethereum|worldchain|0x485dE5Aa437d46B925D800929CcCA587e6e9d2c3
+    decimals: 6
+    logoURI: /deployments/warp_routes/USDC/logo.svg
+    name: USDC
+    standard: EvmHypCollateral
+    symbol: USDC
+  - addressOrDenom: "0x680e8ECB908A2040232ef139A0A52cbE47b9F15B"
+    chainName: katana
+    collateralAddressOrDenom: "0x203A662b0BD271A6ed5a60EdFbd04bFce608FD36"
+    connections:
+      - token: ethereum|arbitrum|0xAd4350Ee0f9f5b85BaB115425426086Ae8384ebb
+      - token: ethereum|avalanche|0x252833ad2daa5BCb7C251Aa8E12ce97D6Bd4765E
+      - token: ethereum|base|0x37e637891A558B5b621723cbf8Fc771525f280C1
+      - token: ethereum|bsc|0x1eebF9d94a5E707E30f18b9aB3295D963C111fb7
+      - token: sealevel|eclipsemainnet|EqRSt9aUDMKYKhzd1DGMderr3KNp29VZH3x5P7LFTC8m
+      - token: ethereum|ethereum|0xe1De9910fe71cC216490AC7FCF019e13a34481D7
+      - token: ethereum|hyperevm|0xA1B10De5b3A131B02bcE94864943426d901d98B5
+      - token: ethereum|ink|0x0DE665377A5B0D390469d0ea0FCae55e0c14f4c4
+      - token: ethereum|linea|0x34eaC2132BB041B3F789cC7B5665dAbdF6ac3f12
+      - token: ethereum|monad|0xC2e074F6AeC27c39FA9423E2D5752C31a7b0a75E
+      - token: ethereum|optimism|0x02bFd67829317D666dc7dFA030F18eaCC12c2cfb
+      - token: ethereum|polygon|0xCb9F833f4d6D9Bb9767CDb25c487DA54D67731D6
+      # - token: sealevel|solanamainnet|3EpVCPUgyjq2MfGeCttyey6bs5zya5wjYZ2BE6yDg6bm
+      - token: ethereum|unichain|0xa7E4dC4078bAc6e97Eec52a4F7642fF51cbb17C1
+      - token: ethereum|worldchain|0x485dE5Aa437d46B925D800929CcCA587e6e9d2c3
+    decimals: 6
+    logoURI: /deployments/warp_routes/USDC/logo.svg
+    name: Vault Bridge USDC
+    standard: EvmHypCollateral
+    symbol: USDC
+  - addressOrDenom: "0x34eaC2132BB041B3F789cC7B5665dAbdF6ac3f12"
+    chainName: linea
+    coinGeckoId: usd-coin
+    collateralAddressOrDenom: "0x176211869cA2b568f2A7D4EE941E073a821EE1ff"
+    connections:
+      - token: ethereum|arbitrum|0xAd4350Ee0f9f5b85BaB115425426086Ae8384ebb
+      - token: ethereum|avalanche|0x252833ad2daa5BCb7C251Aa8E12ce97D6Bd4765E
+      - token: ethereum|base|0x37e637891A558B5b621723cbf8Fc771525f280C1
+      - token: ethereum|bsc|0x1eebF9d94a5E707E30f18b9aB3295D963C111fb7
+      - token: sealevel|eclipsemainnet|EqRSt9aUDMKYKhzd1DGMderr3KNp29VZH3x5P7LFTC8m
+      - token: ethereum|ethereum|0xe1De9910fe71cC216490AC7FCF019e13a34481D7
+      - token: ethereum|hyperevm|0xA1B10De5b3A131B02bcE94864943426d901d98B5
+      - token: ethereum|ink|0x0DE665377A5B0D390469d0ea0FCae55e0c14f4c4
+      - token: ethereum|katana|0x680e8ECB908A2040232ef139A0A52cbE47b9F15B
+      - token: ethereum|monad|0xC2e074F6AeC27c39FA9423E2D5752C31a7b0a75E
+      - token: ethereum|optimism|0x02bFd67829317D666dc7dFA030F18eaCC12c2cfb
+      - token: ethereum|polygon|0xCb9F833f4d6D9Bb9767CDb25c487DA54D67731D6
+      - token: sealevel|solanamainnet|3EpVCPUgyjq2MfGeCttyey6bs5zya5wjYZ2BE6yDg6bm
+      - token: ethereum|unichain|0xa7E4dC4078bAc6e97Eec52a4F7642fF51cbb17C1
+      - token: ethereum|worldchain|0x485dE5Aa437d46B925D800929CcCA587e6e9d2c3
+    decimals: 6
+    logoURI: /deployments/warp_routes/USDC/logo.svg
+    name: USDC
+    standard: EvmHypCollateral
+    symbol: USDC
+  - addressOrDenom: "0xC2e074F6AeC27c39FA9423E2D5752C31a7b0a75E"
+    chainName: monad
+    coinGeckoId: usd-coin
+    collateralAddressOrDenom: "0x754704Bc059F8C67012fEd69BC8A327a5aafb603"
+    connections:
+      - token: ethereum|arbitrum|0xAd4350Ee0f9f5b85BaB115425426086Ae8384ebb
+      - token: ethereum|avalanche|0x252833ad2daa5BCb7C251Aa8E12ce97D6Bd4765E
+      - token: ethereum|base|0x37e637891A558B5b621723cbf8Fc771525f280C1
+      - token: ethereum|bsc|0x1eebF9d94a5E707E30f18b9aB3295D963C111fb7
+      - token: sealevel|eclipsemainnet|EqRSt9aUDMKYKhzd1DGMderr3KNp29VZH3x5P7LFTC8m
+      - token: ethereum|ethereum|0xe1De9910fe71cC216490AC7FCF019e13a34481D7
+      - token: ethereum|hyperevm|0xA1B10De5b3A131B02bcE94864943426d901d98B5
+      - token: ethereum|ink|0x0DE665377A5B0D390469d0ea0FCae55e0c14f4c4
+      - token: ethereum|katana|0x680e8ECB908A2040232ef139A0A52cbE47b9F15B
+      - token: ethereum|linea|0x34eaC2132BB041B3F789cC7B5665dAbdF6ac3f12
+      - token: ethereum|optimism|0x02bFd67829317D666dc7dFA030F18eaCC12c2cfb
+      - token: ethereum|polygon|0xCb9F833f4d6D9Bb9767CDb25c487DA54D67731D6
+      - token: sealevel|solanamainnet|3EpVCPUgyjq2MfGeCttyey6bs5zya5wjYZ2BE6yDg6bm
+      - token: ethereum|unichain|0xa7E4dC4078bAc6e97Eec52a4F7642fF51cbb17C1
+      - token: ethereum|worldchain|0x485dE5Aa437d46B925D800929CcCA587e6e9d2c3
+    decimals: 6
+    logoURI: /deployments/warp_routes/USDC/logo.svg
+    name: USDC
+    standard: EvmHypCollateral
+    symbol: USDC
+  - addressOrDenom: "0x02bFd67829317D666dc7dFA030F18eaCC12c2cfb"
+    chainName: optimism
+    coinGeckoId: usd-coin
+    collateralAddressOrDenom: "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85"
+    connections:
+      - token: ethereum|arbitrum|0xAd4350Ee0f9f5b85BaB115425426086Ae8384ebb
+      - token: ethereum|avalanche|0x252833ad2daa5BCb7C251Aa8E12ce97D6Bd4765E
+      - token: ethereum|base|0x37e637891A558B5b621723cbf8Fc771525f280C1
+      - token: ethereum|bsc|0x1eebF9d94a5E707E30f18b9aB3295D963C111fb7
+      - token: sealevel|eclipsemainnet|EqRSt9aUDMKYKhzd1DGMderr3KNp29VZH3x5P7LFTC8m
+      - token: ethereum|ethereum|0xe1De9910fe71cC216490AC7FCF019e13a34481D7
+      - token: ethereum|hyperevm|0xA1B10De5b3A131B02bcE94864943426d901d98B5
+      - token: ethereum|ink|0x0DE665377A5B0D390469d0ea0FCae55e0c14f4c4
+      - token: ethereum|katana|0x680e8ECB908A2040232ef139A0A52cbE47b9F15B
+      - token: ethereum|linea|0x34eaC2132BB041B3F789cC7B5665dAbdF6ac3f12
+      - token: ethereum|monad|0xC2e074F6AeC27c39FA9423E2D5752C31a7b0a75E
+      - token: ethereum|polygon|0xCb9F833f4d6D9Bb9767CDb25c487DA54D67731D6
+      - token: sealevel|solanamainnet|3EpVCPUgyjq2MfGeCttyey6bs5zya5wjYZ2BE6yDg6bm
+      - token: ethereum|unichain|0xa7E4dC4078bAc6e97Eec52a4F7642fF51cbb17C1
+      - token: ethereum|worldchain|0x485dE5Aa437d46B925D800929CcCA587e6e9d2c3
+    decimals: 6
+    logoURI: /deployments/warp_routes/USDC/logo.svg
+    name: USD Coin
+    standard: EvmHypCollateral
+    symbol: USDC
+  - addressOrDenom: "0xCb9F833f4d6D9Bb9767CDb25c487DA54D67731D6"
+    chainName: polygon
+    coinGeckoId: usd-coin
+    collateralAddressOrDenom: "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359"
+    connections:
+      - token: ethereum|arbitrum|0xAd4350Ee0f9f5b85BaB115425426086Ae8384ebb
+      - token: ethereum|avalanche|0x252833ad2daa5BCb7C251Aa8E12ce97D6Bd4765E
+      - token: ethereum|base|0x37e637891A558B5b621723cbf8Fc771525f280C1
+      - token: ethereum|bsc|0x1eebF9d94a5E707E30f18b9aB3295D963C111fb7
+      - token: sealevel|eclipsemainnet|EqRSt9aUDMKYKhzd1DGMderr3KNp29VZH3x5P7LFTC8m
+      - token: ethereum|ethereum|0xe1De9910fe71cC216490AC7FCF019e13a34481D7
+      - token: ethereum|hyperevm|0xA1B10De5b3A131B02bcE94864943426d901d98B5
+      - token: ethereum|ink|0x0DE665377A5B0D390469d0ea0FCae55e0c14f4c4
+      - token: ethereum|katana|0x680e8ECB908A2040232ef139A0A52cbE47b9F15B
+      - token: ethereum|linea|0x34eaC2132BB041B3F789cC7B5665dAbdF6ac3f12
+      - token: ethereum|monad|0xC2e074F6AeC27c39FA9423E2D5752C31a7b0a75E
+      - token: ethereum|optimism|0x02bFd67829317D666dc7dFA030F18eaCC12c2cfb
+      - token: sealevel|solanamainnet|3EpVCPUgyjq2MfGeCttyey6bs5zya5wjYZ2BE6yDg6bm
+      - token: ethereum|unichain|0xa7E4dC4078bAc6e97Eec52a4F7642fF51cbb17C1
+      - token: ethereum|worldchain|0x485dE5Aa437d46B925D800929CcCA587e6e9d2c3
+    decimals: 6
+    logoURI: /deployments/warp_routes/USDC/logo.svg
+    name: USD Coin
+    standard: EvmHypCollateral
+    symbol: USDC
+  - addressOrDenom: 3EpVCPUgyjq2MfGeCttyey6bs5zya5wjYZ2BE6yDg6bm
+    chainName: solanamainnet
+    coinGeckoId: usd-coin
+    collateralAddressOrDenom: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+    connections:
+      - token: ethereum|arbitrum|0xAd4350Ee0f9f5b85BaB115425426086Ae8384ebb
+      - token: ethereum|avalanche|0x252833ad2daa5BCb7C251Aa8E12ce97D6Bd4765E
+      - token: ethereum|base|0x37e637891A558B5b621723cbf8Fc771525f280C1
+      # - token: ethereum|bsc|0x1eebF9d94a5E707E30f18b9aB3295D963C111fb7
+      # - token: sealevel|eclipsemainnet|EqRSt9aUDMKYKhzd1DGMderr3KNp29VZH3x5P7LFTC8m
+      - token: ethereum|ethereum|0xe1De9910fe71cC216490AC7FCF019e13a34481D7
+      - token: ethereum|hyperevm|0xA1B10De5b3A131B02bcE94864943426d901d98B5
+      - token: ethereum|ink|0x0DE665377A5B0D390469d0ea0FCae55e0c14f4c4
+      # - token: ethereum|katana|0x680e8ECB908A2040232ef139A0A52cbE47b9F15B
+      - token: ethereum|linea|0x34eaC2132BB041B3F789cC7B5665dAbdF6ac3f12
+      - token: ethereum|monad|0xC2e074F6AeC27c39FA9423E2D5752C31a7b0a75E
+      - token: ethereum|optimism|0x02bFd67829317D666dc7dFA030F18eaCC12c2cfb
+      - token: ethereum|polygon|0xCb9F833f4d6D9Bb9767CDb25c487DA54D67731D6
+      - token: ethereum|unichain|0xa7E4dC4078bAc6e97Eec52a4F7642fF51cbb17C1
+      - token: ethereum|worldchain|0x485dE5Aa437d46B925D800929CcCA587e6e9d2c3
+    decimals: 6
+    logoURI: /deployments/warp_routes/USDC/logo.svg
+    name: USD Coin
+    standard: SealevelHypCollateral
+    symbol: USDC
+  - addressOrDenom: "0xa7E4dC4078bAc6e97Eec52a4F7642fF51cbb17C1"
+    chainName: unichain
+    coinGeckoId: usd-coin
+    collateralAddressOrDenom: "0x078D782b760474a361dDA0AF3839290b0EF57AD6"
+    connections:
+      - token: ethereum|arbitrum|0xAd4350Ee0f9f5b85BaB115425426086Ae8384ebb
+      - token: ethereum|avalanche|0x252833ad2daa5BCb7C251Aa8E12ce97D6Bd4765E
+      - token: ethereum|base|0x37e637891A558B5b621723cbf8Fc771525f280C1
+      - token: ethereum|bsc|0x1eebF9d94a5E707E30f18b9aB3295D963C111fb7
+      - token: sealevel|eclipsemainnet|EqRSt9aUDMKYKhzd1DGMderr3KNp29VZH3x5P7LFTC8m
+      - token: ethereum|ethereum|0xe1De9910fe71cC216490AC7FCF019e13a34481D7
+      - token: ethereum|hyperevm|0xA1B10De5b3A131B02bcE94864943426d901d98B5
+      - token: ethereum|ink|0x0DE665377A5B0D390469d0ea0FCae55e0c14f4c4
+      - token: ethereum|katana|0x680e8ECB908A2040232ef139A0A52cbE47b9F15B
+      - token: ethereum|linea|0x34eaC2132BB041B3F789cC7B5665dAbdF6ac3f12
+      - token: ethereum|monad|0xC2e074F6AeC27c39FA9423E2D5752C31a7b0a75E
+      - token: ethereum|optimism|0x02bFd67829317D666dc7dFA030F18eaCC12c2cfb
+      - token: ethereum|polygon|0xCb9F833f4d6D9Bb9767CDb25c487DA54D67731D6
+      - token: sealevel|solanamainnet|3EpVCPUgyjq2MfGeCttyey6bs5zya5wjYZ2BE6yDg6bm
+      - token: ethereum|worldchain|0x485dE5Aa437d46B925D800929CcCA587e6e9d2c3
+    decimals: 6
+    logoURI: /deployments/warp_routes/USDC/logo.svg
+    name: USDC
+    standard: EvmHypCollateral
+    symbol: USDC
+  - addressOrDenom: "0x485dE5Aa437d46B925D800929CcCA587e6e9d2c3"
+    chainName: worldchain
+    coinGeckoId: usd-coin
+    collateralAddressOrDenom: "0x79A02482A880bCE3F13e09Da970dC34db4CD24d1"
+    connections:
+      - token: ethereum|arbitrum|0xAd4350Ee0f9f5b85BaB115425426086Ae8384ebb
+      - token: ethereum|avalanche|0x252833ad2daa5BCb7C251Aa8E12ce97D6Bd4765E
+      - token: ethereum|base|0x37e637891A558B5b621723cbf8Fc771525f280C1
+      - token: ethereum|bsc|0x1eebF9d94a5E707E30f18b9aB3295D963C111fb7
+      - token: sealevel|eclipsemainnet|EqRSt9aUDMKYKhzd1DGMderr3KNp29VZH3x5P7LFTC8m
+      - token: ethereum|ethereum|0xe1De9910fe71cC216490AC7FCF019e13a34481D7
+      - token: ethereum|hyperevm|0xA1B10De5b3A131B02bcE94864943426d901d98B5
+      - token: ethereum|ink|0x0DE665377A5B0D390469d0ea0FCae55e0c14f4c4
+      - token: ethereum|katana|0x680e8ECB908A2040232ef139A0A52cbE47b9F15B
+      - token: ethereum|linea|0x34eaC2132BB041B3F789cC7B5665dAbdF6ac3f12
+      - token: ethereum|monad|0xC2e074F6AeC27c39FA9423E2D5752C31a7b0a75E
+      - token: ethereum|optimism|0x02bFd67829317D666dc7dFA030F18eaCC12c2cfb
+      - token: ethereum|polygon|0xCb9F833f4d6D9Bb9767CDb25c487DA54D67731D6
+      - token: sealevel|solanamainnet|3EpVCPUgyjq2MfGeCttyey6bs5zya5wjYZ2BE6yDg6bm
+      - token: ethereum|unichain|0xa7E4dC4078bAc6e97Eec52a4F7642fF51cbb17C1
+    decimals: 6
+    logoURI: /deployments/warp_routes/USDC/logo.svg
+    name: USDC
+    standard: EvmHypCollateral
+    symbol: USDC
 options: {}

@@ -45,6 +45,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'USDC/lumia',
   'USDC/matchain',
   'USDC/paradex',
+  'USDC/igra',
 
   // USDT routes
   'USDT/eclipsemainnet-ethereum-solanamainnet',
@@ -60,6 +61,9 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // oXAUT routes
   'oXAUT/production',
+
+  // IKAS routes
+  'IKAS/igra',
 
   // INJ routes
   'INJ/inevm-injective',
@@ -79,6 +83,12 @@ export const warpRouteWhitelist: Array<string> | null = [
   // WBTC routes
   'WBTC/eclipsemainnet-ethereum',
   'WBTC/coti-ethereum',
+
+  // CBBTC routes
+  'CBBTC/igra',
+
+  // wstETH routes
+  'WSTETH/igra',
 
   // ORCA routes
   'ORCA/eclipsemainnet-solanamainnet',

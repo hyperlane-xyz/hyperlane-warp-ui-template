@@ -118,7 +118,7 @@
     "test": "vitest --watch false",
     "test:e2e": "playwright test --project=chromium",
     "format": "oxfmt ./src",
-    "link:monorepo": "node scripts/link-monorepo.js utils provider-sdk deploy-sdk sdk widgets",
+    "link:monorepo": "node scripts/link-monorepo.js",
     "unlink:monorepo": "node scripts/unlink-monorepo.js"
   },
   "types": "dist/src/index.d.ts",

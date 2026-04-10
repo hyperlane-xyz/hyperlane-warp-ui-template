@@ -9,11 +9,23 @@ const MONOREPO_PATH = path.resolve(REACT_APP_DIR, '..', MONOREPO_NAME);
 const TYPESCRIPT_DIR = path.join(MONOREPO_PATH, 'typescript');
 const LOCAL_TARBALLS_DIR = path.join(REACT_APP_DIR, '.monorepo-tarballs');
 
-const args = process.argv.slice(2);
-if (args.length === 0) {
-  console.error('❌ Please specify package folders (e.g., utils sdk widgets)');
-  process.exit(1);
-}
+// Default packages to link. Add new entries here as needed.
+const DEFAULT_PACKAGES = [
+  'aleo-sdk',
+  'cosmos-sdk',
+  'deploy-sdk',
+  'provider-sdk',
+  'radix-sdk',
+  'sdk',
+  'starknet-sdk',
+  'svm-sdk',
+  'tron-sdk',
+  'utils',
+  'widgets',
+];
+
+// Allow overriding via CLI args, e.g.: node link-monorepo.js sdk utils
+const args = process.argv.slice(2).length > 0 ? process.argv.slice(2) : DEFAULT_PACKAGES;
 
 /**
  * Helper to run commands

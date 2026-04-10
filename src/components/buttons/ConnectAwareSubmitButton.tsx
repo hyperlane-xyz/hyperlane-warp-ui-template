@@ -2,6 +2,7 @@ import { ProtocolType } from '@hyperlane-xyz/utils';
 import { useAccountForChain, useConnectFns, useTimeout } from '@hyperlane-xyz/widgets';
 import { useFormikContext } from 'formik';
 import { useCallback } from 'react';
+
 import { EVENT_NAME } from '../../features/analytics/types';
 import { trackEvent } from '../../features/analytics/utils';
 import { useChainProtocol, useMultiProvider } from '../../features/chains/hooks';

@@ -6,6 +6,7 @@ import {
   TokenStandard,
 } from '@hyperlane-xyz/sdk';
 import { ProtocolType, normalizeAddress } from '@hyperlane-xyz/utils';
+
 import { logger } from '../../utils/logger';
 import { getTokenKey } from './utils';
 

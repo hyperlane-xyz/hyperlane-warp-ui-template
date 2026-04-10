@@ -1,4 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/main
 import { startRelativeTimeTicker } from './relativeTimeTicker';
 
 function createFakeDocument(initialVisibilityState: DocumentVisibilityState = 'visible') {

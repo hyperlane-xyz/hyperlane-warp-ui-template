@@ -1,4 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/main
 import {
   markDarkLogoMissing,
   processDarkLogoImage,

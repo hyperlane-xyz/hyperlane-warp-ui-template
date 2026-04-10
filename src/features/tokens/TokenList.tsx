@@ -1,6 +1,7 @@
 import { ChainName, Token } from '@hyperlane-xyz/sdk';
 import { Tooltip, useDebounce } from '@hyperlane-xyz/widgets';
 import React, { useEffect, useMemo, useRef, useState, useTransition } from 'react';
+
 import { config } from '../../consts/config';
 import { useTokenBalances } from '../balances/hooks';
 import { formatBalance, formatUsd, getUsdValue } from '../balances/utils';

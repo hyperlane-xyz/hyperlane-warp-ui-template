@@ -1,4 +1,5 @@
 import Intercom from '@intercom/messenger-js-sdk';
+
 import { logger } from '../../utils/logger';
 
 export const INTERCOM_APP_ID = process.env.NEXT_PUBLIC_INTERCOM_APP_ID || '';

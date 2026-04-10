@@ -9,6 +9,7 @@ import {
 } from '@hyperlane-xyz/sdk';
 import { isValidAddress, isValidAddressEvm } from '@hyperlane-xyz/utils';
 import { getAddress } from 'viem';
+
 import ConfirmedIcon from '../../images/icons/confirmed-icon.svg';
 import ErrorCircleIcon from '../../images/icons/error-circle.svg';
 import { logger } from '../../utils/logger';

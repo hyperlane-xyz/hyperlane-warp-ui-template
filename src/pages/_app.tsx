@@ -1,4 +1,5 @@
 import { useIsSsr } from '@hyperlane-xyz/widgets';
+
 import '@hyperlane-xyz/widgets/styles.css';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Analytics } from '@vercel/analytics/react';
@@ -6,11 +7,15 @@ import type { AppProps } from 'next/app';
 import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 import { ToastContainer, Zoom } from 'react-toastify';
+
 import 'react-toastify/dist/ReactToastify.css';
 import '../../sentry.client.config';
 import { ErrorBoundary } from '../components/errors/ErrorBoundary';
 import { AppLayout } from '../components/layout/AppLayout';
+<<<<<<< HEAD
 import { WarpContextInitGate } from '../features/WarpContextInitGate';
+=======
+>>>>>>> origin/main
 import { ThemeProvider } from '../features/theme/ThemeContext';
 import { AleoWalletContext } from '../features/wallet/context/AleoWalletContext';
 import { CosmosWalletContext } from '../features/wallet/context/CosmosWalletContext';
@@ -19,8 +24,11 @@ import { RadixWalletContext } from '../features/wallet/context/RadixWalletContex
 import { SolanaWalletContext } from '../features/wallet/context/SolanaWalletContext';
 import { StarknetWalletContext } from '../features/wallet/context/StarknetWalletContext';
 import { TronWalletContext } from '../features/wallet/context/TronWalletContext';
+import { WarpContextInitGate } from '../features/WarpContextInitGate';
+
 import '../styles/embed-theme.css';
 import { parseEmbedTheme } from '../styles/embedTheme';
+
 import '../styles/globals.css';
 import '../vendor/inpage-metamask';
 import '../vendor/polyfill';

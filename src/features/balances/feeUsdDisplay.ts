@@ -1,5 +1,6 @@
 import { TokenAmount } from '@hyperlane-xyz/sdk';
 import { isNullish } from '@hyperlane-xyz/utils';
+
 import type { FeePrices } from './useFeePrices';
 import { formatUsd } from './utils';
 

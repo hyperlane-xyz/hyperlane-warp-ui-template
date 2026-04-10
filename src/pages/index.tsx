@@ -1,4 +1,5 @@
 import type { NextPage } from 'next';
+
 import { TipCard } from '../components/tip/TipCard';
 import { TransferTokenCard } from '../features/transfer/TransferTokenCard';
 

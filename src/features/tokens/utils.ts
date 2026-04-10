@@ -1,14 +1,13 @@
 import {
-  ChainName,
   IToken,
-  MultiProtocolProvider,
   Token,
   TOKEN_COLLATERALIZED_STANDARDS,
+  TokenStandard,
   WarpCore,
 } from '@hyperlane-xyz/sdk';
 import { eqAddress, isNullish, normalizeAddress, objKeys } from '@hyperlane-xyz/utils';
-import { isChainDisabled } from '../chains/utils';
-import { DefaultMultiCollateralRoutes, TokenChainMap } from './types';
+
+import { DefaultMultiCollateralRoutes } from './types';
 
 // Module-level caches for expensive key computations
 // WeakMap allows automatic garbage collection when token objects are no longer referenced
@@ -20,6 +19,7 @@ let collateralKeyCache = new WeakMap<IToken, string>();
 // getCollateralKey() uses this to group lockbox/vault tokens with their
 // non-wrapper counterparts (e.g., lockbox USDT grouped with regular USDT).
 let resolvedUnderlyingMap: Map<string, string> = new Map();
+const EXTRA_COLLATERALIZED_STANDARDS = new Set([TokenStandard.EvmHypCollateralFiat]);
 
 /**
  * Set the resolved underlying address map for lockbox/vault tokens.
@@ -31,65 +31,66 @@ export function setResolvedUnderlyingMap(map: Map<string, string>) {
   collateralKeyCache = new WeakMap();
 }
 
-// Map of token symbols and token chain map
-// Symbols are not duplicated to avoid the same symbol from being shown
-// TokenChainMap: An object containing token information and a map
-// chain names with its metadata and the related token
-export function assembleTokensBySymbolChainMap(
-  tokens: Token[],
-  multiProvider: MultiProtocolProvider,
-): Record<string, TokenChainMap> {
-  const multiChainTokens = tokens.filter((t) => t.isMultiChainToken());
-  return multiChainTokens.reduce<Record<string, TokenChainMap>>((acc, token) => {
-    if (!token.connections || !token.connections.length) return acc;
-
-    if (!acc[token.symbol]) {
-      acc[token.symbol] = {
-        chains: {},
-        tokenInformation: token,
-      };
-    }
-    if (!acc[token.symbol].chains[token.chainName]) {
-      const chainMetadata = multiProvider.tryGetChainMetadata(token.chainName);
-
-      // remove chain from map if it is disabled
-      const chainDisabled = isChainDisabled(chainMetadata);
-      if (chainDisabled) return acc;
-
-      acc[token.symbol].chains[token.chainName] = { token, metadata: chainMetadata };
-    }
-
-    return acc;
-  }, {});
+function isCollateralizedToken(token: IToken): boolean {
+  return (
+    TOKEN_COLLATERALIZED_STANDARDS.includes(token.standard) ||
+    EXTRA_COLLATERALIZED_STANDARDS.has(token.standard) ||
+    token.isHypNative()
+  );
 }
 
 export function isValidMultiCollateralToken(
   originToken: Token | IToken,
-  destination: ChainName | IToken,
+  destinationToken: Token | IToken,
 ) {
-  // HypNative tokens are Collaterized but does not contain collateralAddressOrDenom (most of the time)
-  if (
-    (!originToken.collateralAddressOrDenom && !originToken.isHypNative()) ||
-    !TOKEN_COLLATERALIZED_STANDARDS.includes(originToken.standard)
-  )
-    return false;
-
-  const destinationToken =
-    typeof destination === 'string'
-      ? originToken.getConnectionForChain(destination)?.token
-      : destination;
-  if (!destinationToken) return false;
-
-  // Check if destination is collateralized - has collateral address, is HypNative, or is in SDK's list
-  // Note: Some standards like EvmHypCollateralFiat may not be in TOKEN_COLLATERALIZED_STANDARDS
-  const isDestCollateralized =
-    !!destinationToken.collateralAddressOrDenom ||
-    destinationToken.isHypNative() ||
-    TOKEN_COLLATERALIZED_STANDARDS.includes(destinationToken.standard);
-
-  if (!isDestCollateralized) return false;
-
+  if (!isCollateralizedToken(originToken)) return false;
+  if (!isCollateralizedToken(destinationToken)) return false;
   return true;
+}
+
+/**
+ * Resolve the connected destination token from originToken that matches the selected destination token.
+ * For multi-collateral routes, there can be multiple connections for the same destination chain.
+ * In that case we prioritize collateral-key matching, then address matching.
+ */
+export function findConnectedDestinationToken(
+  originToken: Token | IToken,
+  destinationToken: Token | IToken,
+): Token | undefined {
+  const destinationCandidates = originToken
+    .getConnections()
+    .filter((connection) => connection.token.chainName === destinationToken.chainName)
+    .map((connection) => connection.token as Token);
+
+  if (!destinationCandidates.length) return undefined;
+
+  const destinationCollateralKey = getCollateralKey(destinationToken);
+  return (
+    destinationCandidates.find(
+      (candidate) => getCollateralKey(candidate) === destinationCollateralKey,
+    ) ||
+    destinationCandidates.find((candidate) =>
+      eqAddress(candidate.addressOrDenom, destinationToken.addressOrDenom),
+    )
+  );
+}
+
+// Match collateral addresses, or fall back to symbol matching for HypNative tokens
+// (which have null collateral addresses) to avoid treating different native
+// deployments (e.g. ETH vs ETHSTAGE) as interchangeable.
+function matchesCollateral(
+  referenceAddress: string | null,
+  candidateAddress: string | null,
+  referenceSymbol: string,
+  candidateSymbol: string,
+): boolean {
+  if (isNullish(referenceAddress) && isNullish(candidateAddress)) {
+    return candidateSymbol === referenceSymbol;
+  }
+  if (referenceAddress && candidateAddress) {
+    return eqAddress(referenceAddress, candidateAddress);
+  }
+  return false;
 }
 
 export function getTokensWithSameCollateralAddresses(
@@ -97,11 +98,7 @@ export function getTokensWithSameCollateralAddresses(
   origin: Token,
   destination: IToken,
 ) {
-  if (
-    !TOKEN_COLLATERALIZED_STANDARDS.includes(origin.standard) ||
-    !TOKEN_COLLATERALIZED_STANDARDS.includes(destination.standard)
-  )
-    return [];
+  if (!isCollateralizedToken(origin) || !isCollateralizedToken(destination)) return [];
 
   // For HypNative tokens, use null as identifier since they don't have collateralAddressOrDenom
   const originCollateralAddress = origin.collateralAddressOrDenom
@@ -114,7 +111,7 @@ export function getTokensWithSameCollateralAddresses(
   return warpCore
     .getTokensForRoute(origin.chainName, destination.chainName)
     .map((originToken) => {
-      const destinationToken = originToken.getConnectionForChain(destination.chainName)?.token;
+      const destinationToken = findConnectedDestinationToken(originToken, destination);
       return { originToken, destinationToken };
     })
     .filter((tokens): tokens is { originToken: Token; destinationToken: Token } => {
@@ -133,21 +130,18 @@ export function getTokensWithSameCollateralAddresses(
         ? normalizeAddress(destinationToken.collateralAddressOrDenom, destinationToken.protocol)
         : null;
 
-      // For HypNative tokens both collateral addresses are null — match by symbol
-      // to avoid treating different native deployments (e.g. ETH vs ETHSTAGE) as interchangeable
-      const originMatches =
-        isNullish(originCollateralAddress) && isNullish(currentOriginCollateralAddress)
-          ? originToken.symbol === origin.symbol
-          : originCollateralAddress && currentOriginCollateralAddress
-            ? eqAddress(originCollateralAddress, currentOriginCollateralAddress)
-            : false;
-
-      const destinationMatches =
-        isNullish(destinationCollateralAddress) && isNullish(currentDestinationCollateralAddress)
-          ? destinationToken.symbol === destination.symbol
-          : destinationCollateralAddress && currentDestinationCollateralAddress
-            ? eqAddress(destinationCollateralAddress, currentDestinationCollateralAddress)
-            : false;
+      const originMatches = matchesCollateral(
+        originCollateralAddress,
+        currentOriginCollateralAddress,
+        origin.symbol,
+        originToken.symbol,
+      );
+      const destinationMatches = matchesCollateral(
+        destinationCollateralAddress,
+        currentDestinationCollateralAddress,
+        destination.symbol,
+        destinationToken.symbol,
+      );
 
       return originMatches && destinationMatches;
     });
@@ -182,7 +176,7 @@ export function dedupeTokensByCollateral(tokens: Token[]): Token[] {
 
   return tokens.filter((token) => {
     // If not a collateralized token, include it
-    if (!TOKEN_COLLATERALIZED_STANDARDS.includes(token.standard)) {
+    if (!isCollateralizedToken(token)) {
       return true;
     }
 
@@ -267,7 +261,7 @@ export function getCollateralKey(token: IToken): string {
   let key: string;
 
   // For collateralized tokens, use the collateral address
-  if (TOKEN_COLLATERALIZED_STANDARDS.includes(token.standard)) {
+  if (isCollateralizedToken(token)) {
     if (token.collateralAddressOrDenom) {
       // Check if this token has a resolved underlying address (lockbox/vault)
       const tokenId = getTokenKey(token);
@@ -288,13 +282,6 @@ export function getCollateralKey(token: IToken): string {
 }
 
 /**
- * Check if two tokens share the same collateral
- */
-export function sharesCollateral(tokenA: IToken, tokenB: IToken): boolean {
-  return getCollateralKey(tokenA) === getCollateralKey(tokenB);
-}
-
-/**
  * Check if a route exists between origin and destination tokens
  * Uses pre-computed collateral groups for fast O(1) lookups
  *
@@ -309,15 +296,12 @@ export function checkTokenHasRoute(
   collateralGroups: Map<string, Token[]>,
 ): boolean {
   const originCollateralKey = getCollateralKey(originToken);
-  const destCollateralKey = getCollateralKey(destToken);
   const originGroup = collateralGroups.get(originCollateralKey) || [];
 
-  // Check if any token in origin's collateral group connects to destination's collateral group
-  return originGroup.some((token) => {
-    const destConnection = token.getConnectionForChain(destToken.chainName);
-    if (!destConnection?.token) return false;
-    return getCollateralKey(destConnection.token) === destCollateralKey;
-  });
+  // Check if any token in origin's collateral group has a matching connection
+  // to the specific destination token. Uses findConnectedDestinationToken to stay
+  // consistent with the transfer flow's matching logic (collateral key + address fallback).
+  return originGroup.some((token) => Boolean(findConnectedDestinationToken(token, destToken)));
 }
 
 /**
@@ -337,14 +321,8 @@ export function findRouteToken(
   // Must verify the connected token matches the intended destination — not just any
   // connection to that chain — because the same origin can connect to different
   // destination tokens on the same chain (e.g. USDC->USDC vs USDC->XO on Solana)
-  const existingConnection = originToken.getConnectionForChain(destinationChain);
-  if (existingConnection?.token) {
-    const connCollateralKey = getCollateralKey(existingConnection.token);
-    const destCollateralKey = getCollateralKey(destinationToken);
-    if (connCollateralKey === destCollateralKey) {
-      return originToken;
-    }
-  }
+  const existingConnection = findConnectedDestinationToken(originToken, destinationToken);
+  if (existingConnection) return originToken;
 
   // Otherwise, find all the tokens from warpCore that has a route with the origin and destination
   const routeTokens = warpCore.getTokensForRoute(originToken.chainName, destinationChain);
@@ -357,16 +335,14 @@ export function findRouteToken(
   // destination tokens (e.g. USDC->USDC vs USDC->XO), use the destination token
   // to pick the correct route
   if (collateralMatches.length > 1) {
-    const destCollateralKey = getCollateralKey(destinationToken);
     const exactMatch = collateralMatches.find((t) => {
-      const conn = t.getConnectionForChain(destinationChain);
-      return conn?.token && getCollateralKey(conn.token) === destCollateralKey;
+      const connectedToken = findConnectedDestinationToken(t, destinationToken);
+      return connectedToken;
     });
     if (exactMatch) return exactMatch;
   }
 
-  // Fallback: first collateral match, then symbol match
-  return collateralMatches[0] || routeTokens.find((t) => t.symbol === originToken.symbol);
+  return collateralMatches[0];
 }
 
 // Returns the default origin token from tokensWithSameCollateralAddresses if:

@@ -2,6 +2,7 @@ import { IToken, MultiProtocolProvider, Token } from '@hyperlane-xyz/sdk';
 import { ProtocolType, getAddressProtocolType, isValidAddress } from '@hyperlane-xyz/utils';
 import {
   useAccountAddressForChain,
+  useCosmosAccount,
   useEthereumAccount,
   useSolanaAccount,
 } from '@hyperlane-xyz/widgets';
@@ -10,11 +11,13 @@ import { useMemo } from 'react';
 import { toast } from 'react-toastify';
 import { Hex } from 'viem';
 import { useBalance as useWagmiBalance } from 'wagmi';
+
 import { useToastError } from '../../components/toast/useToastError';
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { getTokenKey } from '../tokens/utils';
+import { fetchCosmosChainBalances, groupCosmosTokensByChain } from './cosmos';
 import { fetchChainBalances, groupEvmTokensByChain } from './evm';
 import { fetchSealevelChainBalances, groupSealevelTokensByChain } from './svm';
 import { fetchSdkBalance } from './tokens';
@@ -114,14 +117,15 @@ function useWalletAddresses(multiProvider: MultiProtocolProvider): Map<ProtocolT
 }
 
 /**
- * Batch-fetch token balances for EVM and Sealevel protocols.
- * - EVM: multicall3.aggregate3 — one eth_call per chain
- * - Sealevel: getParsedTokenAccountsByOwner — 2-3 RPC calls per SVM chain
- * - Other VMs are not supported and silently skipped.
+ * Batch-fetch token balances across protocols.
+ * - EVM: multicall3 — one eth_call per chain
+ * - Sealevel: getParsedTokenAccountsByOwner per chain
+ * - Cosmos: bank.allBalances per chain (with SDK fallback for CwHypNative)
  */
 export function useTokenBalances(tokens: Token[], scope: string, addressOverride?: string) {
   const multiProvider = useMultiProvider();
   const walletAddresses = useWalletAddresses(multiProvider);
+  const cosmosAddresses = useCosmosAccount(multiProvider).addresses;
   const tokenKeys = useMemo(() => tokens.map((t) => getTokenKey(t)), [tokens]);
 
   // When an address override is provided (e.g. pasted recipient),
@@ -140,12 +144,20 @@ export function useTokenBalances(tokens: Token[], scope: string, addressOverride
     [effectiveAddresses],
   );
 
+  const cosmosAddressKey = useMemo(
+    () => cosmosAddresses.map((a) => `${a.chainName}:${a.address}`).sort(),
+    [cosmosAddresses],
+  );
+
+  const hasAnyAddress = effectiveAddresses.size > 0 || cosmosAddresses.length > 0;
+
   const { data: balances = {}, isLoading } = useQuery({
     // eslint-disable-next-line @tanstack/query/exhaustive-deps -- effectiveAddresses derived from addressEntries; tokens covered by tokenKeys; multiProvider is not serializable
-    queryKey: ['tokenBalances', addressEntries, scope, tokenKeys],
+    queryKey: ['tokenBalances', addressEntries, cosmosAddressKey, scope, tokenKeys],
     queryFn: async (): Promise<Record<string, bigint>> => {
       const promises: Promise<Record<string, bigint>>[] = [];
 
+      // EVM
       const evmAddr = effectiveAddresses.get(ProtocolType.Ethereum);
       if (evmAddr) {
         const { chainGroups, fallbackTokens } = groupEvmTokensByChain(tokens, multiProvider);
@@ -157,6 +169,7 @@ export function useTokenBalances(tokens: Token[], scope: string, addressOverride
         }
       }
 
+      // Sealevel
       const solAddr = effectiveAddresses.get(ProtocolType.Sealevel);
       if (solAddr) {
         const sealevelGroups = groupSealevelTokensByChain(tokens);
@@ -168,13 +181,34 @@ export function useTokenBalances(tokens: Token[], scope: string, addressOverride
         }
       }
 
+      // Cosmos — per-chain bech32 address lookup
+      // addressOverride: match bech32 prefix to chain metadata to find the right chain
+      const cosmosOverride = effectiveAddresses.get(ProtocolType.Cosmos);
+      if (cosmosAddresses.length > 0 || cosmosOverride) {
+        const cosmosGroups = groupCosmosTokensByChain(tokens);
+        for (const [, group] of cosmosGroups) {
+          let addr = cosmosAddresses.find((a) => a.chainName === group.chainName)?.address;
+          if (!addr && cosmosOverride) {
+            const chainPrefix = multiProvider.tryGetChainMetadata(group.chainName)?.bech32Prefix;
+            if (chainPrefix && cosmosOverride.startsWith(chainPrefix)) addr = cosmosOverride;
+          }
+          if (!addr) continue;
+          const rpcUrl = multiProvider.tryGetChainMetadata(group.chainName)?.rpcUrls?.[0]?.http;
+          if (!rpcUrl) continue;
+          promises.push(fetchCosmosChainBalances(group, rpcUrl, addr));
+          for (const { token, key } of group.fallbackTokens) {
+            promises.push(fetchSdkBalance(token, multiProvider, addr, key));
+          }
+        }
+      }
+
       const partials = await Promise.all(promises);
       return Object.assign({}, ...partials);
     },
-    enabled: tokens.length > 0 && effectiveAddresses.size > 0,
+    enabled: tokens.length > 0 && hasAnyAddress,
     staleTime: 30_000,
     refetchInterval: 30_000,
   });
 
-  return { balances, isLoading, hasAnyAddress: effectiveAddresses.size > 0 };
+  return { balances, isLoading, hasAnyAddress };
 }

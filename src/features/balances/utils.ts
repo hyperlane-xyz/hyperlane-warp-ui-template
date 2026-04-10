@@ -1,5 +1,6 @@
 import { Token } from '@hyperlane-xyz/sdk';
 import { fromWeiRounded } from '@hyperlane-xyz/utils';
+
 import { getTokenKey } from '../tokens/utils';
 
 export function formatBalance(balance: bigint, decimals: number): string {

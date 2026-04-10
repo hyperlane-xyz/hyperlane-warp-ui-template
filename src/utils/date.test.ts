@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest';
+
 import { formatTimestamp, formatTransferHistoryTimestamp } from './date';
 
 describe('formatTransferHistoryTimestamp', () => {

@@ -1,5 +1,6 @@
 import { ChainName, Token } from '@hyperlane-xyz/sdk';
 import { useEffect, useRef } from 'react';
+
 import { SearchInput } from '../../components/input/SearchInput';
 import { ChainInfo } from '../chains/hooks';
 import { MobileChainQuickSelect } from '../chains/MobileChainQuickSelect';

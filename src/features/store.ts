@@ -18,12 +18,11 @@ import { normalizeAddress, objFilter } from '@hyperlane-xyz/utils';
 import { toast } from 'react-toastify';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+
 import { config } from '../consts/config';
 import { logger } from '../utils/logger';
 import { assembleChainMetadata } from './chains/metadata';
-import { TokenChainMap } from './tokens/types';
 import {
-  assembleTokensBySymbolChainMap,
   buildTokensArray,
   getTokenKey,
   groupTokensByCollateral,
@@ -47,7 +46,6 @@ interface WarpContext {
   chainMetadata: ChainMap<ChainMetadata>;
   multiProvider: MultiProtocolProvider;
   warpCore: WarpCore;
-  tokensBySymbolChainMap: Record<string, TokenChainMap>;
   /** Unified tokens array (deduplicated, can be origin or destination) */
   tokens: Token[];
   /** Pre-computed collateral groups for fast route checking */
@@ -102,7 +100,6 @@ export interface AppState {
 
   originChainName: ChainName;
   setOriginChainName: (originChainName: ChainName) => void;
-  tokensBySymbolChainMap: Record<string, TokenChainMap>;
   // instead of moving the TipCard component inside the formik and an useEffect can be set to watch for it
   isTipCardActionTriggered: boolean;
   setIsTipCardActionTriggered: (isTipCardActionTriggered: boolean) => void;
@@ -135,7 +132,6 @@ export const useStore = create<AppState>()(
           multiProvider,
           warpCore,
           routerAddressesByChainMap,
-          tokensBySymbolChainMap,
           tokens,
           collateralGroups,
           tokenByKeyMap,
@@ -148,7 +144,6 @@ export const useStore = create<AppState>()(
           chainMetadataOverrides: filtered,
           multiProvider,
           warpCore,
-          tokensBySymbolChainMap,
           routerAddressesByChainMap,
           tokens,
           collateralGroups,
@@ -163,7 +158,6 @@ export const useStore = create<AppState>()(
           multiProvider,
           warpCore,
           routerAddressesByChainMap,
-          tokensBySymbolChainMap,
           tokens,
           collateralGroups,
           tokenByKeyMap,
@@ -176,7 +170,6 @@ export const useStore = create<AppState>()(
           warpCoreConfigOverrides: overrides,
           multiProvider,
           warpCore,
-          tokensBySymbolChainMap,
           routerAddressesByChainMap,
           tokens,
           collateralGroups,
@@ -243,7 +236,6 @@ export const useStore = create<AppState>()(
       setOriginChainName: (originChainName: ChainName) => {
         set(() => ({ originChainName }));
       },
-      tokensBySymbolChainMap: {},
       routerAddressesByChainMap: {},
       isTipCardActionTriggered: false,
       setIsTipCardActionTriggered: (isTipCardActionTriggered: boolean) => {
@@ -321,8 +313,6 @@ async function initWarpContext({
     const multiProvider = new MultiProtocolProvider(chainMetadataWithOverrides);
     const warpCore = WarpCore.FromConfig(multiProvider, coreConfig);
 
-    const tokensBySymbolChainMap = assembleTokensBySymbolChainMap(warpCore.tokens, multiProvider);
-
     // Resolve underlying addresses for lockbox/vault tokens so they group
     // with their non-wrapper counterparts (e.g., lockbox USDT = regular USDT)
     const resolvedMap = await resolveWrappedCollateralTokens(warpCore.tokens, multiProvider);
@@ -347,7 +337,6 @@ async function initWarpContext({
       chainMetadata,
       multiProvider,
       warpCore,
-      tokensBySymbolChainMap,
       routerAddressesByChainMap,
       tokens,
       collateralGroups,
@@ -362,7 +351,6 @@ async function initWarpContext({
       chainMetadata: {},
       multiProvider: new MultiProtocolProvider({}),
       warpCore: new WarpCore(new MultiProtocolProvider({}), []),
-      tokensBySymbolChainMap: {},
       routerAddressesByChainMap: {},
       tokens: [],
       collateralGroups: new Map(),

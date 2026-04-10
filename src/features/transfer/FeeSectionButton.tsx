@@ -1,6 +1,7 @@
 import { WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
 import { ChevronIcon, FuelPumpIcon, useModal } from '@hyperlane-xyz/widgets';
 import { useEffect, useState } from 'react';
+
 import { getFeePercentage, getTotalFeesUsdRaw } from '../balances/feeUsdDisplay';
 import { FeePrices } from '../balances/useFeePrices';
 import { formatUsd } from '../balances/utils';
@@ -50,7 +51,7 @@ export function FeeSectionButton({
     <>
       <div className="mb-2 mt-2 h-2">
         <button
-          className={`fee-section-btn flex w-fit items-center font-secondary text-xxs text-gray-700 [&_path]:fill-gray-700 ${isClickable ? 'hover:text-gray-900 [&_path]:hover:fill-gray-900' : 'pointer-events-none cursor-default'}`}
+          className={`fee-section-btn flex w-fit items-center font-secondary text-xxs text-gray-700 dark:text-foreground-secondary [&_path]:fill-gray-700 dark:[&_path]:fill-current ${isClickable ? 'hover:text-gray-900 dark:hover:text-foreground-primary [&_path]:hover:fill-gray-900 dark:hover:[&_path]:fill-current' : 'pointer-events-none cursor-default'}`}
           type="button"
           onClick={isClickable ? open : undefined}
           disabled={!isClickable}
@@ -58,7 +59,7 @@ export function FeeSectionButton({
           <FuelPumpIcon width={14} height={14} className="mr-1" />
           Fees: {feeText}
           {isClickable && totalUsd && (
-            <span className="ml-1 text-gray-500">
+            <span className="ml-1 text-gray-500 dark:text-foreground-secondary">
               {totalUsd}
               {pct ? ` (${pct})` : ''}
             </span>

@@ -1,8 +1,5 @@
 import { describe, expect, test } from 'vitest';
-<<<<<<< HEAD
-=======
 
->>>>>>> origin/main
 import { formatTimestamp, formatTransferHistoryTimestamp } from './date';
 
 describe('formatTransferHistoryTimestamp', () => {

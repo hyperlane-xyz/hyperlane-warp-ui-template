@@ -1,8 +1,33 @@
 {
   "name": "@hyperlane-xyz/warp-ui-template",
-  "description": "A web app template for building Hyperlane Warp Route UIs",
   "version": "13.0.0",
+  "private": true,
+  "description": "A web app template for building Hyperlane Warp Route UIs",
+  "homepage": "https://www.hyperlane.xyz",
+  "license": "Apache-2.0",
   "author": "J M Rossy",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hyperlane-xyz/hyperlane-warp-ui-template"
+  },
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "scripts": {
+    "clean": "rm -rf dist cache .next",
+    "predev": "node scripts/fetch-fonts.mjs",
+    "dev": "next dev",
+    "prebuild": "node scripts/fetch-fonts.mjs",
+    "fetch-fonts": "node --env-file-if-exists=.env.local scripts/fetch-fonts.mjs",
+    "build": "next build",
+    "typecheck": "tsc",
+    "lint": "oxlint ./src",
+    "start": "next start",
+    "test": "vitest --watch false",
+    "test:e2e": "playwright test --project=chromium",
+    "format": "oxfmt ./src",
+    "link:monorepo": "node scripts/link-monorepo.js",
+    "unlink:monorepo": "node scripts/unlink-monorepo.js"
+  },
   "dependencies": {
     "@chakra-ui/next-js": "^2.4.2",
     "@chakra-ui/provider": "^2.4.2",
@@ -96,32 +121,7 @@
   "engines": {
     "node": ">=24"
   },
-  "homepage": "https://www.hyperlane.xyz",
-  "license": "Apache-2.0",
-  "main": "dist/src/index.js",
   "packageManager": "pnpm@10.25.0",
-  "private": true,
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/hyperlane-xyz/hyperlane-warp-ui-template"
-  },
-  "scripts": {
-    "clean": "rm -rf dist cache .next",
-    "predev": "node scripts/fetch-fonts.mjs",
-    "dev": "next dev",
-    "prebuild": "node scripts/fetch-fonts.mjs",
-    "fetch-fonts": "node --env-file-if-exists=.env.local scripts/fetch-fonts.mjs",
-    "build": "next build",
-    "typecheck": "tsc",
-    "lint": "oxlint ./src",
-    "start": "next start",
-    "test": "vitest --watch false",
-    "test:e2e": "playwright test --project=chromium",
-    "format": "oxfmt ./src",
-    "link:monorepo": "node scripts/link-monorepo.js",
-    "unlink:monorepo": "node scripts/unlink-monorepo.js"
-  },
-  "types": "dist/src/index.d.ts",
   "pnpm": {
     "overrides": {
       "tronweb>ethers": "^6.13.5",
@@ -144,12 +144,9 @@
     },
     "patchedDependencies": {
       "starknetkit@2.6.1": "patches/starknetkit@2.6.1.patch",
-<<<<<<< HEAD
-      "@cosmjs/cosmwasm-stargate@0.32.4": "patches/@cosmjs-cosmwasm-stargate-npm-0.32.4-f9dd51429c.patch"
-=======
+      "@cosmjs/cosmwasm-stargate@0.32.4": "patches/@cosmjs-cosmwasm-stargate-npm-0.32.4-f9dd51429c.patch",
       "@provablehq/wasm@0.9.18": "patches/@provablehq__wasm@0.9.18.patch",
       "@provablehq/sdk@0.9.15": "patches/@provablehq__sdk@0.9.15.patch"
->>>>>>> origin/main
     },
     "onlyBuiltDependencies": []
   }

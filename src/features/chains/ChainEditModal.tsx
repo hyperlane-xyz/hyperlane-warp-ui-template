@@ -1,10 +1,7 @@
 import { ChainMetadata } from '@hyperlane-xyz/sdk';
 import { ChainDetailsMenu, Modal } from '@hyperlane-xyz/widgets';
 import { useCallback, useEffect, useRef } from 'react';
-<<<<<<< HEAD
-=======
 
->>>>>>> origin/main
 import { ModalHeader } from '../../components/layout/ModalHeader';
 import { observeDarkLogosInContainer } from '../../utils/imageBrightness';
 import { useStore } from '../store';

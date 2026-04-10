@@ -7,10 +7,7 @@ import {
   useLayoutEffect,
   useState,
 } from 'react';
-<<<<<<< HEAD
-=======
 
->>>>>>> origin/main
 import { DEFAULT_UI_THEME_MODE, UI_THEME_STORAGE_KEY, UiThemeMode } from '../../consts/app';
 import { processDarkLogoImage } from '../../utils/imageBrightness';
 import { getSystemUiThemeMode, parseUiThemeMode } from '../../utils/theme';

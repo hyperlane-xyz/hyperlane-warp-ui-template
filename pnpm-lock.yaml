@@ -24,18 +24,15 @@ overrides:
   form-data: 4.0.4
 
 patchedDependencies:
-<<<<<<< HEAD
   '@cosmjs/cosmwasm-stargate@0.32.4':
     hash: c77d7da4aa556dced41baab8b5007d5363a0db1ad1fd795ca66ce2a4757e3f1e
     path: patches/@cosmjs-cosmwasm-stargate-npm-0.32.4-f9dd51429c.patch
-=======
   '@provablehq/sdk@0.9.15':
     hash: c3b67b6e17970e4e71124b375f996bb58f69b19e6deba7d2dd82a7809373358b
     path: patches/@provablehq__sdk@0.9.15.patch
   '@provablehq/wasm@0.9.18':
     hash: 9af61d89e033cd3d4a4659b1412e680fe485647bc975037fd7ac764298eb5ca8
     path: patches/@provablehq__wasm@0.9.18.patch
->>>>>>> origin/main
   starknetkit@2.6.1:
     hash: d8d81d77fa623989f021747f735ecef191f7ef8744e03c5f475cc1e9314d79d7
     path: patches/starknetkit@2.6.1.patch

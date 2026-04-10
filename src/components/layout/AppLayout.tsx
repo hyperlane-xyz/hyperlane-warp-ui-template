@@ -1,9 +1,6 @@
 import Head from 'next/head';
 import { PropsWithChildren, useEffect } from 'react';
-<<<<<<< HEAD
-=======
 
->>>>>>> origin/main
 import { APP_NAME } from '../../consts/app';
 import { config } from '../../consts/config';
 import { initIntercom } from '../../features/analytics/intercom';

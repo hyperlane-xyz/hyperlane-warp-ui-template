@@ -209,11 +209,7 @@ function TokenButton({
       ) : (
         <span className="text-sm text-gray-400 dark:text-foreground-secondary">Select token</span>
       )}
-<<<<<<< HEAD
-      <div className="transfer-token-chevron flex h-10 w-10 items-center justify-center rounded-full border border-gray-400 bg-white drop-shadow-button transition-colors duration-150 group-hover:bg-gray-50">
-=======
       <div className="transfer-token-chevron flex h-10 w-10 items-center justify-center rounded-full border border-gray-400 bg-white drop-shadow-button transition-colors duration-150 group-hover:bg-gray-50 dark:border-primary-300/35 dark:bg-primary-300/15 dark:text-foreground-primary dark:group-hover:bg-primary-300/[0.28] dark:[&_path]:fill-current">
->>>>>>> origin/main
         <ChevronLargeIcon width={14} height={18} />
       </div>
     </button>
@@ -221,13 +217,8 @@ function TokenButton({
 }
 
 const styles = {
-<<<<<<< HEAD
-  base: 'transfer-token-field w-full py-2 flex items-center justify-between transition-all rounded-[7px] px-1.5 border duration-150 border-gray-400/25 shadow-sm group',
-  enabled: 'hover:bg-gray-50 cursor-pointer',
-=======
   base: 'transfer-token-field group flex w-full items-center justify-between rounded-[7px] border border-gray-400/25 px-1.5 py-2 shadow-sm transition-all duration-150 dark:border-primary-300/25 dark:bg-transparent dark:text-foreground-primary',
   enabled:
     'cursor-pointer hover:bg-gray-50 dark:hover:border-primary-300/50 dark:hover:bg-primary-300/[0.08]',
->>>>>>> origin/main
   disabled: 'cursor-not-allowed opacity-60',
 };

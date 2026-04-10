@@ -16,17 +16,12 @@ export function Footer() {
 
 function FooterLogo() {
   return (
-<<<<<<< HEAD
-    <div className="footer-logo-wrap flex items-center justify-center">
-      <HyperlaneGradientLogo className="footer-logo" width={219} height={18} />
-=======
     <div className="flex items-center justify-center rounded-full border border-transparent bg-transparent px-[0.8rem] py-[0.35rem] dark:border-primary-300/40 dark:bg-white/[0.08] dark:shadow-[0_0_22px_rgba(154,13,255,0.24)]">
       <HyperlaneGradientLogo
         className="dark:[filter:saturate(1.2)_brightness(1.2)_drop-shadow(0_0_10px_rgba(185,89,255,0.45))]"
         width={219}
         height={18}
       />
->>>>>>> origin/main
     </div>
   );
 }
@@ -37,11 +32,7 @@ function FooterNav() {
       <ul className="flex gap-9">
         {navLinks.map((item) => (
           <li key={item.title}>
-<<<<<<< HEAD
-            <NavItem item={item} className="footer-nav-item" />
-=======
             <NavItem item={item} className="dark:text-primary-50 dark:hover:text-white" />
->>>>>>> origin/main
           </li>
         ))}
       </ul>

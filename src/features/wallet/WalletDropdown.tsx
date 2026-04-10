@@ -126,11 +126,7 @@ export function WalletDropdown({
       <DropdownMenu
         button={<DropdownWalletButton address={truncatedAddress} />}
         buttonClassname="flex items-center"
-<<<<<<< HEAD
-        menuClassname="wallet-dropdown-menu mt-2 min-w-[200px] rounded-lg border border-gray-200 bg-white py-1 shadow-md"
-=======
         menuClassname="wallet-dropdown-menu mt-2 min-w-[200px] rounded-lg border border-gray-200 bg-white py-1 shadow-md dark:border-primary-300/40 dark:bg-surface dark:shadow-[0_12px_32px_rgba(0,0,0,0.45)]"
->>>>>>> origin/main
         menuItems={menuItems}
         buttonProps={{ disabled }}
       />
@@ -159,11 +155,7 @@ function ConnectWalletButton({ chainName }: { chainName?: string }) {
     <button
       type="button"
       onClick={onConnect}
-<<<<<<< HEAD
-      className="wallet-connect-link flex items-center gap-1.5 text-sm text-primary-500 underline transition-colors hover:text-primary-600"
-=======
       className="wallet-connect-link flex items-center gap-1.5 text-sm text-primary-500 underline decoration-current transition-colors hover:text-primary-600 dark:text-foreground-secondary dark:hover:text-foreground-primary dark:[&_path]:fill-current dark:[&_path]:stroke-current"
->>>>>>> origin/main
     >
       <XIcon width={8} height={8} color={Color.red[500]} />
       <span>Connect Wallet</span>
@@ -182,15 +174,7 @@ function ConnectMenuItem({ protocol }: { protocol: ProtocolType }) {
   }, [connectFn]);
 
   return (
-<<<<<<< HEAD
-    <button
-      type="button"
-      onClick={onConnect}
-      className="wallet-dropdown-item w-full px-4 py-2.5 text-left text-sm text-gray-900 hover:bg-gray-100"
-    >
-=======
     <button type="button" onClick={onConnect} className={menuItemClass}>
->>>>>>> origin/main
       Connect wallet
     </button>
   );
@@ -198,11 +182,7 @@ function ConnectMenuItem({ protocol }: { protocol: ProtocolType }) {
 
 function DropdownWalletButton({ address }: { address: string }) {
   return (
-<<<<<<< HEAD
-    <div className="wallet-connect-link flex items-center gap-2 text-sm underline">
-=======
     <div className="wallet-connect-link flex items-center gap-2 text-sm underline decoration-current dark:text-foreground-secondary dark:hover:text-foreground-primary dark:[&_path]:fill-current dark:[&_path]:stroke-current">
->>>>>>> origin/main
       {address ? (
         <div className="h-2 w-2 rounded-full bg-green-50" />
       ) : (
@@ -221,26 +201,14 @@ const menuItemClass =
 
 function MenuItemButton({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
   return (
-<<<<<<< HEAD
-    <button
-      type="button"
-      onClick={onClick}
-      className="wallet-dropdown-item w-full px-4 py-2.5 text-left text-sm text-gray-900 hover:bg-gray-100"
-    >
-=======
     <button type="button" onClick={onClick} className={menuItemClass}>
->>>>>>> origin/main
       {children}
     </button>
   );
 }
 
 function MenuSeparator() {
-<<<<<<< HEAD
-  return <div className="wallet-dropdown-separator mx-2 my-1 h-px bg-primary-50" />;
-=======
   return (
     <div className="wallet-dropdown-separator mx-2 my-1 h-px bg-primary-50 dark:bg-primary-300/20" />
   );
->>>>>>> origin/main
 }

@@ -12,10 +12,6 @@ import 'react-toastify/dist/ReactToastify.css';
 import '../../sentry.client.config';
 import { ErrorBoundary } from '../components/errors/ErrorBoundary';
 import { AppLayout } from '../components/layout/AppLayout';
-<<<<<<< HEAD
-import { WarpContextInitGate } from '../features/WarpContextInitGate';
-=======
->>>>>>> origin/main
 import { ThemeProvider } from '../features/theme/ThemeContext';
 import { AleoWalletContext } from '../features/wallet/context/AleoWalletContext';
 import { CosmosWalletContext } from '../features/wallet/context/CosmosWalletContext';

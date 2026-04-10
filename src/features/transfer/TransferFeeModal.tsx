@@ -23,20 +23,12 @@ export function TransferFeeModal({
     <Modal
       isOpen={isOpen}
       close={close}
-<<<<<<< HEAD
-      panelClassname="transfer-fee-modal p-0 max-w-sm md:max-w-128 overflow-hidden"
-=======
       panelClassname="transfer-fee-modal max-w-sm overflow-hidden p-0 dark:border dark:border-primary-300/40 dark:bg-surface dark:text-foreground-primary dark:shadow-[0_16px_40px_rgba(0,0,0,0.45)] md:max-w-128"
->>>>>>> origin/main
     >
       <div className="w-full bg-accent-gradient px-4 py-2.5 font-secondary text-base font-normal tracking-wider text-white shadow-accent-glow">
         Fee Details
       </div>
-<<<<<<< HEAD
-      <div className="transfer-fee-modal-content flex w-full flex-col items-start gap-2 p-4 text-sm">
-=======
       <div className="transfer-fee-modal-content flex w-full flex-col items-start gap-2 p-4 text-sm dark:text-foreground-primary">
->>>>>>> origin/main
         {fees?.localQuote && fees.localQuote.amount > 0n && (
           <div className="flex gap-4">
             <span className="flex min-w-[7.5rem] items-center gap-1">

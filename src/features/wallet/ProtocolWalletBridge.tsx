@@ -1,4 +1,4 @@
-import type { ConfiguredMultiProtocolProvider as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/ConfiguredMultiProtocolProvider';
+import type { MultiProviderAdapter as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProviderAdapter';
 import type { ChainName } from '@hyperlane-xyz/sdk/types';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 import { getAddressFromAccountAndChain } from '@hyperlane-xyz/widgets/walletIntegrations/accountUtils';

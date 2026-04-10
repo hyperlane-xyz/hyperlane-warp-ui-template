@@ -1,7 +1,8 @@
-import type { ConfiguredMultiProtocolProvider as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/ConfiguredMultiProtocolProvider';
+import type { MultiProviderAdapter as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProviderAdapter';
 import type { IToken } from '@hyperlane-xyz/sdk/token/IToken';
 import type { Token } from '@hyperlane-xyz/sdk/token/Token';
 import { ProtocolType, getAddressProtocolType, isValidAddress } from '@hyperlane-xyz/utils';
+import { useCosmosAccount } from '@hyperlane-xyz/widgets/walletIntegrations/cosmos';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { toast } from 'react-toastify';
@@ -16,6 +17,7 @@ import { getSdkToken } from '../hyperlane/sdkTokenRuntime';
 import { useStore } from '../store';
 import { getTokenKey } from '../tokens/utils';
 import { getRouteAccountAddressForChain } from '../wallet/routeAccounts';
+import { fetchCosmosChainBalances, groupCosmosTokensByChain } from './cosmos';
 import { fetchChainBalances, groupEvmTokensByChain } from './evm';
 import { fetchSealevelChainBalances, groupSealevelTokensByChain } from './svm';
 import { fetchSdkBalance } from './tokens';

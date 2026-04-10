@@ -1,6 +1,6 @@
 import { GithubRegistry, IRegistry } from '@hyperlane-xyz/registry';
 import type { ChainMetadata } from '@hyperlane-xyz/sdk/metadata/chainMetadataTypes';
-import type { ConfiguredMultiProtocolProvider as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/ConfiguredMultiProtocolProvider';
+import type { MultiProviderAdapter as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProviderAdapter';
 import type { Token } from '@hyperlane-xyz/sdk/token/Token';
 import type { ChainMap, ChainName } from '@hyperlane-xyz/sdk/types';
 import type { WarpCoreConfig } from '@hyperlane-xyz/sdk/warp/types';

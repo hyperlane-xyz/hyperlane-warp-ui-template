@@ -1,4 +1,4 @@
-import type { ConfiguredMultiProtocolProvider as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/ConfiguredMultiProtocolProvider';
+import type { MultiProviderAdapter as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProviderAdapter';
 import type { Token } from '@hyperlane-xyz/sdk/token/Token';
 import { TokenAmount } from '@hyperlane-xyz/sdk/token/TokenAmount';
 import type { ChainName } from '@hyperlane-xyz/sdk/types';
@@ -75,10 +75,16 @@ async function fetchMaxAmount(
     );
     const recipient = formRecipient || connectedDestAddress || address;
 
+    const originRouteToken = findRouteToken(warpCore, originToken, destToken);
+    if (!originRouteToken) return undefined;
+
+    const connectedDestinationToken = findConnectedDestinationToken(originRouteToken, destToken);
+    if (!connectedDestinationToken) return undefined;
+
     const transferToken = await getTransferToken(
       warpCore,
       originToken,
-      destToken,
+      connectedDestinationToken,
       balance.amount.toString(),
       recipient,
       address,

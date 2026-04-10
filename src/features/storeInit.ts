@@ -1,6 +1,6 @@
 import { chainAddresses, chainMetadata, IRegistry, PartialRegistry } from '@hyperlane-xyz/registry';
 import type { ChainMetadata } from '@hyperlane-xyz/sdk/metadata/chainMetadataTypes';
-import { ConfiguredMultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/ConfiguredMultiProtocolProvider';
+import { MultiProviderAdapter } from '@hyperlane-xyz/sdk/providers/MultiProviderAdapter';
 import type { Token } from '@hyperlane-xyz/sdk/token/Token';
 import type { ChainMap, ChainName } from '@hyperlane-xyz/sdk/types';
 import type { WarpCoreConfig } from '@hyperlane-xyz/sdk/warp/types';
@@ -87,7 +87,7 @@ export async function initWarpContext({
       currentRegistry,
       chainMetadataOverrides,
     );
-    const multiProvider = new ConfiguredMultiProtocolProvider(chainMetadataWithOverrides);
+    const multiProvider = new MultiProviderAdapter(chainMetadataWithOverrides);
     const routeTokens = buildRouteTokens(coreConfig) as unknown as Token[];
     const tokensBySymbolChainMap = assembleTokensBySymbolChainMap(routeTokens, multiProvider);
     const tokens = buildTokensArray(routeTokens);

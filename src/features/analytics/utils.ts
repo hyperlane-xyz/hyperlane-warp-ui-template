@@ -1,4 +1,4 @@
-import type { ConfiguredMultiProtocolProvider as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/ConfiguredMultiProtocolProvider';
+import type { MultiProviderAdapter as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProviderAdapter';
 import type { Token } from '@hyperlane-xyz/sdk/token/Token';
 import type { WarpCore } from '@hyperlane-xyz/sdk/warp/WarpCore';
 import { objLength } from '@hyperlane-xyz/utils';

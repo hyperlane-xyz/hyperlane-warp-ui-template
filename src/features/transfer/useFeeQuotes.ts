@@ -106,7 +106,7 @@ export async function fetchFeeQuotes(
   destinationToken: IToken | undefined,
   destination?: ChainName,
   sender?: Address,
-  senderPubKey?: Promise<HexString>,
+  senderPubKey?: Promise<HexString | undefined>,
   amount?: string,
   recipient?: string,
   searchForLowestFee: boolean = false,

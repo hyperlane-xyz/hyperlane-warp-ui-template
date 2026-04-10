@@ -1,4 +1,4 @@
-import type { ConfiguredMultiProtocolProvider as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/ConfiguredMultiProtocolProvider';
+import type { MultiProviderAdapter as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProviderAdapter';
 import {
   ProviderType,
   type TypedTransactionReceipt,
@@ -18,14 +18,15 @@ type CoreAddressStub = {
   validatorAnnounce: string;
   proxyAdmin: string;
   mailbox: string;
+  quotedCalls: string;
 };
 
 let multiProtocolCorePromise:
-  | Promise<typeof import('@hyperlane-xyz/sdk/core/MultiProtocolCore').MultiProtocolCore>
+  | Promise<typeof import('@hyperlane-xyz/sdk').MultiProtocolCore>
   | undefined;
 
 function getMultiProtocolCore() {
-  multiProtocolCorePromise ??= import('@hyperlane-xyz/sdk/core/MultiProtocolCore').then(
+  multiProtocolCorePromise ??= import('@hyperlane-xyz/sdk').then(
     ({ MultiProtocolCore }) => MultiProtocolCore,
   );
   return multiProtocolCorePromise;
@@ -128,6 +129,7 @@ export async function tryGetMsgIdFromTransferReceipt(
           validatorAnnounce: '',
           proxyAdmin: '',
           mailbox: '',
+          quotedCalls: '',
         };
         return acc;
       }, {});

@@ -1,4 +1,4 @@
-import type { ConfiguredMultiProtocolProvider as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/ConfiguredMultiProtocolProvider';
+import type { MultiProviderAdapter as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProviderAdapter';
 import type { IToken } from '@hyperlane-xyz/sdk/token/IToken';
 import type { Token } from '@hyperlane-xyz/sdk/token/Token';
 import { TokenAmount } from '@hyperlane-xyz/sdk/token/TokenAmount';

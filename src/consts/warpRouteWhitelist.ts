@@ -47,10 +47,14 @@ export const warpRouteWhitelist: Array<string> | null = [
   'USDC/paradex',
   'USDC/igra',
 
+  // USDS routes
+  'USDS/ethereum-igra',
+
   // USDT routes
   'USDT/eclipsemainnet-ethereum-solanamainnet',
   'USDT/ethereum-hyperevm',
   'USDT/ethereum-inevm',
+  'USDT/ethereum-igra',
   'USDT/ethereum-lumiaprism',
   'USDT/ethereum-viction',
   'USDT/matchain',
@@ -125,6 +129,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // WETH routes
   'WETH/artela-base',
+  'WETH/ethereum-igra',
 
   // fastUSD routes
   'fastUSD/ethereum-sei',

@@ -31,7 +31,7 @@ export function ConnectAwareSubmitButton<FormValues = any>({
 
   const { errors, setErrors, touched, setTouched } = useFormikContext<FormValues>();
 
-  const hasError = Object.keys(touched).length > 0 && Object.keys(errors).length > 0;
+  const hasError = Object.keys(errors).length > 0;
   const firstError = `${Object.values(errors)[0]}` || 'Unknown error';
 
   const color = hasError ? 'red' : 'accent';

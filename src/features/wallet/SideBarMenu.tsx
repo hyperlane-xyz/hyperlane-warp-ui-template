@@ -1,6 +1,5 @@
 import type { ChainName } from '@hyperlane-xyz/sdk';
-import { localAmountFromMessage } from '@hyperlane-xyz/sdk';
-import { fromWei, normalizeAddress } from '@hyperlane-xyz/utils';
+import { normalizeAddress } from '@hyperlane-xyz/utils';
 import { RefreshIcon, SpinnerIcon } from '@hyperlane-xyz/widgets';
 import { AccountList } from '@hyperlane-xyz/widgets/walletIntegrations/AccountList';
 import { useAccounts } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
@@ -27,7 +26,7 @@ import { useMessageHistory } from '../messages/useMessageHistory';
 import { RouterAddressInfo, useStore } from '../store';
 import { tryFindToken, useWarpCore } from '../tokens/hooks';
 import { TokenChainIcon } from '../tokens/TokenChainIcon';
-import { computeDestAmount } from '../transfer/scaleUtils';
+import { computeDestAmount, formatMessageAmount } from '../transfer/scaleUtils';
 import { TransfersDetailsModal } from '../transfer/TransfersDetailsModal';
 import { TransferContext, TransferStatus } from '../transfer/types';
 import { getIconByTransferStatus, STATUSES_WITH_ICON } from '../transfer/utils';
@@ -296,11 +295,7 @@ function TransferSummary({
           originChain: t.origin,
           destChain: t.destination,
           amount: t.amount,
-          destAmount: computeDestAmount(
-            t.amount,
-            originToken || undefined,
-            destinationToken || undefined,
-          ),
+          destAmount: computeDestAmount(t.amount, originToken, destinationToken),
           status: t.status,
           token: originToken,
           destToken: destinationToken,
@@ -315,16 +310,12 @@ function TransferSummary({
       let amount = '';
       if (msg.warpTransfer?.amount && token) {
         try {
-          if (token.scale) {
-            const messageAmount = BigInt(msg.warpTransfer.amount);
-            const localAmount = localAmountFromMessage(messageAmount, token.scale);
-            amount = fromWei(localAmount.toString(), token.decimals);
-          } else {
-            const normalizedSender = normalizeAddress(msg.sender);
-            const routerInfo = routerAddressesByChainMap[originChain]?.[normalizedSender];
-            const wireDecimals = routerInfo?.wireDecimals ?? token.decimals;
-            amount = fromWei(msg.warpTransfer.amount, wireDecimals);
-          }
+          amount = formatMessageAmount(
+            msg.warpTransfer.amount,
+            { ...token, addressOrDenom: msg.sender },
+            routerAddressesByChainMap,
+            originChain,
+          );
         } catch (err) {
           logger.error('Failed to format warp transfer amount', err);
         }
@@ -336,7 +327,7 @@ function TransferSummary({
         originChain,
         destChain,
         amount,
-        destAmount: computeDestAmount(amount, token || undefined, destToken || undefined),
+        destAmount: computeDestAmount(amount, token, destToken),
         status:
           msg.status === MessageStatus.Delivered
             ? TransferStatus.Delivered

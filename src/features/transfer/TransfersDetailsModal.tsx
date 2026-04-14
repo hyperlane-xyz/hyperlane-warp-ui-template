@@ -130,7 +130,7 @@ export function TransfersDetailsModal({
   const connectorName = walletDetails.name || 'wallet';
   const token = tryFindToken(warpCore, origin, originTokenAddressOrDenom);
   const destToken = tryFindToken(warpCore, destination, destTokenAddressOrDenom);
-  const destAmount = computeDestAmount(amount || '', token || undefined, destToken || undefined);
+  const destAmount = computeDestAmount(amount || '', token, destToken);
   const isPermissionlessRoute = hasPermissionlessChain(multiProvider, [destination, origin]);
   const isFinal = isSent || isFailed;
   const currentStatus = isDelivered ? TransferStatus.Delivered : status;

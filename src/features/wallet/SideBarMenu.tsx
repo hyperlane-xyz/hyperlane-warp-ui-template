@@ -1,5 +1,5 @@
 import type { ChainName } from '@hyperlane-xyz/sdk';
-import { fromWei, normalizeAddress } from '@hyperlane-xyz/utils';
+import { normalizeAddress } from '@hyperlane-xyz/utils';
 import { RefreshIcon, SpinnerIcon } from '@hyperlane-xyz/widgets';
 import { AccountList } from '@hyperlane-xyz/widgets/walletIntegrations/AccountList';
 import { useAccounts } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
@@ -26,6 +26,7 @@ import { useMessageHistory } from '../messages/useMessageHistory';
 import { RouterAddressInfo, useStore } from '../store';
 import { tryFindToken, useWarpCore } from '../tokens/hooks';
 import { TokenChainIcon } from '../tokens/TokenChainIcon';
+import { computeDestAmount, formatMessageAmount } from '../transfer/scaleUtils';
 import { TransfersDetailsModal } from '../transfer/TransfersDetailsModal';
 import { TransferContext, TransferStatus } from '../transfer/types';
 import { getIconByTransferStatus, STATUSES_WITH_ICON } from '../transfer/utils';
@@ -284,49 +285,58 @@ function TransferSummary({
   routerAddressesByChainMap: Record<ChainName, Record<string, RouterAddressInfo>>;
   nowMs: number;
 }) {
-  const { originChain, destChain, amount, status, token, destToken, timestamp } = useMemo(() => {
-    if (item.type === TransferItemType.Local) {
-      const t = item.data;
-      return {
-        originChain: t.origin,
-        destChain: t.destination,
-        amount: t.amount,
-        status: t.status,
-        token: tryFindToken(warpCore, t.origin, t.originTokenAddressOrDenom),
-        destToken: tryFindToken(warpCore, t.destination, t.destTokenAddressOrDenom),
-        timestamp: t.timestamp,
-      };
-    }
-    const msg = item.data;
-    const originChain = multiProvider.tryGetChainName(msg.originDomainId) || '';
-    const destChain = multiProvider.tryGetChainName(msg.destinationDomainId) || '';
-    const token = tryFindToken(warpCore, originChain, msg.sender);
-
-    let amount = '';
-    if (msg.warpTransfer?.amount && token) {
-      const normalizedSender = normalizeAddress(msg.sender);
-      const routerInfo = routerAddressesByChainMap[originChain]?.[normalizedSender];
-      const wireDecimals = routerInfo?.wireDecimals ?? token.decimals;
-      try {
-        amount = fromWei(msg.warpTransfer.amount, wireDecimals);
-      } catch (err) {
-        logger.error('Failed to format warp transfer amount', err);
+  const { originChain, destChain, amount, destAmount, status, token, destToken, timestamp } =
+    useMemo(() => {
+      if (item.type === TransferItemType.Local) {
+        const t = item.data;
+        const originToken = tryFindToken(warpCore, t.origin, t.originTokenAddressOrDenom);
+        const destinationToken = tryFindToken(warpCore, t.destination, t.destTokenAddressOrDenom);
+        return {
+          originChain: t.origin,
+          destChain: t.destination,
+          amount: t.amount,
+          destAmount: computeDestAmount(t.amount, originToken, destinationToken),
+          status: t.status,
+          token: originToken,
+          destToken: destinationToken,
+          timestamp: t.timestamp,
+        };
       }
-    }
+      const msg = item.data;
+      const originChain = multiProvider.tryGetChainName(msg.originDomainId) || '';
+      const destChain = multiProvider.tryGetChainName(msg.destinationDomainId) || '';
+      const token = tryFindToken(warpCore, originChain, msg.sender);
 
-    return {
-      originChain,
-      destChain,
-      amount,
-      status:
-        msg.status === MessageStatus.Delivered
-          ? TransferStatus.Delivered
-          : TransferStatus.ConfirmedTransfer,
-      token,
-      destToken: tryFindToken(warpCore, destChain, msg.recipient),
-      timestamp: msg.origin.timestamp,
-    };
-  }, [item.type, item.data, multiProvider, warpCore, routerAddressesByChainMap]);
+      let amount = '';
+      if (msg.warpTransfer?.amount && token) {
+        try {
+          amount = formatMessageAmount(
+            msg.warpTransfer.amount,
+            { ...token, addressOrDenom: msg.sender },
+            routerAddressesByChainMap,
+            originChain,
+          );
+        } catch (err) {
+          logger.error('Failed to format warp transfer amount', err);
+        }
+      }
+
+      const destToken = tryFindToken(warpCore, destChain, msg.recipient);
+
+      return {
+        originChain,
+        destChain,
+        amount,
+        destAmount: computeDestAmount(amount, token, destToken),
+        status:
+          msg.status === MessageStatus.Delivered
+            ? TransferStatus.Delivered
+            : TransferStatus.ConfirmedTransfer,
+        token,
+        destToken,
+        timestamp: msg.origin.timestamp,
+      };
+    }, [item.type, item.data, multiProvider, warpCore, routerAddressesByChainMap]);
 
   return (
     <button onClick={onClick} className={`${styles.btn} justify-between py-3`}>
@@ -359,9 +369,9 @@ function TransferSummary({
                   height={10}
                   alt=""
                 />
-                {amount && (
+                {(destAmount || amount) && (
                   <span className="sidebar-menu-token-text text-sm font-normal text-gray-800 dark:text-foreground-primary">
-                    {amount}
+                    {destAmount || amount}
                   </span>
                 )}
                 <span className="sidebar-menu-token-text ml-1 text-sm font-normal text-gray-800 dark:text-foreground-primary">

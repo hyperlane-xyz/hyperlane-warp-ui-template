@@ -32,6 +32,7 @@ import { useOriginFinality } from '../messages/useOriginFinality';
 import { useStore } from '../store';
 import { tryFindToken, useWarpCore } from '../tokens/hooks';
 import { TokenChainIcon } from '../tokens/TokenChainIcon';
+import { computeDestAmount } from './scaleUtils';
 import { TransferContext, TransferStatus } from './types';
 import {
   estimateDeliverySeconds,
@@ -129,6 +130,7 @@ export function TransfersDetailsModal({
   const connectorName = walletDetails.name || 'wallet';
   const token = tryFindToken(warpCore, origin, originTokenAddressOrDenom);
   const destToken = tryFindToken(warpCore, destination, destTokenAddressOrDenom);
+  const destAmount = computeDestAmount(amount || '', token, destToken);
   const isPermissionlessRoute = hasPermissionlessChain(multiProvider, [destination, origin]);
   const isFinal = isSent || isFailed;
   const currentStatus = isDelivered ? TransferStatus.Delivered : status;
@@ -269,7 +271,7 @@ export function TransfersDetailsModal({
               {destToken && (
                 <>
                   <Image className="mx-2" src={ArrowRightIcon} width={10} height={10} alt="" />
-                  <span>{amount}</span>
+                  <span>{destAmount || amount}</span>
                   <span className="ml-1">{destToken.symbol}</span>
                 </>
               )}

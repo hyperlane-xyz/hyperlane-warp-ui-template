@@ -2,7 +2,6 @@ import { Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
 import {
   KnownProtocolType,
   ProtocolType,
-  convertToScaledAmount,
   eqAddress,
   errorToString,
   fromWei,
@@ -67,6 +66,7 @@ import { getInterchainQuote, getTotalFee, getTransferToken } from './fees';
 import { FeeSectionButton } from './FeeSectionButton';
 import { useFetchMaxAmount } from './maxAmount';
 import { RecipientConfirmationModal } from './RecipientConfirmationModal';
+import { computeDestAmount } from './scaleUtils';
 import { TransferSection } from './TransferSection';
 import { TransferFormValues } from './types';
 import { useRecipientBalanceWatcher } from './useBalanceWatcher';
@@ -672,26 +672,9 @@ function ReviewDetails({
   const isNft = originToken?.isNft();
   const isRouteSupported = useIsRouteSupported();
 
-  const scaledAmount = useMemo(() => {
-    if (!originToken?.scale || !destinationToken?.scale) return null;
-    if (!isReview || originToken.scale === destinationToken.scale) return null;
-
-    const amountWei = toWei(amount, originToken.decimals);
-    const precisionFactor = 100000;
-
-    const convertedAmount = convertToScaledAmount({
-      amount: BigInt(amountWei),
-      fromScale: originToken.scale,
-      toScale: destinationToken.scale,
-      precisionFactor,
-    });
-    const value = convertedAmount / BigInt(precisionFactor);
-
-    return {
-      value: fromWei(value.toString(), originToken.decimals),
-      originScale: originToken.scale,
-      destinationScale: destinationToken.scale,
-    };
+  const destAmount = useMemo(() => {
+    if (!isReview) return null;
+    return computeDestAmount(amount, originToken, destinationToken);
   }, [amount, originToken, destinationToken, isReview]);
 
   const amountWei = isNft ? amount.toString() : toWei(amount, originToken?.decimals);
@@ -789,10 +772,10 @@ function ReviewDetails({
                     <span className="min-w-[7.5rem]">{isNft ? 'Token ID' : 'Amount'}</span>
                     <span>{`${amount} ${originTokenSymbol}`}</span>
                   </p>
-                  {scaledAmount && (
+                  {destAmount && (
                     <p className="flex">
                       <span className="min-w-[7.5rem]">Received Amount</span>
-                      <span>{`${scaledAmount.value} ${originTokenSymbol} (scaled from ${scaledAmount.originScale} to ${scaledAmount.destinationScale})`}</span>
+                      <span>{`${destAmount} ${destinationToken?.symbol || ''}`}</span>
                     </p>
                   )}
                   {fees?.localQuote && fees.localQuote.amount > 0n && (

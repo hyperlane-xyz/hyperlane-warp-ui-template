@@ -66,12 +66,12 @@ import { getInterchainQuote, getTotalFee, getTransferToken } from './fees';
 import { FeeSectionButton } from './FeeSectionButton';
 import { useFetchMaxAmount } from './maxAmount';
 import { RecipientConfirmationModal } from './RecipientConfirmationModal';
+import { computeDestAmount } from './scaleUtils';
 import { TransferSection } from './TransferSection';
 import { TransferFormValues } from './types';
 import { useRecipientBalanceWatcher } from './useBalanceWatcher';
 import { useFeeQuotes } from './useFeeQuotes';
 import { useTokenTransfer } from './useTokenTransfer';
-import { computeDestAmount } from './scaleUtils';
 import { isSmartContract, shouldClearAddress } from './utils';
 
 export function TransferTokenForm() {

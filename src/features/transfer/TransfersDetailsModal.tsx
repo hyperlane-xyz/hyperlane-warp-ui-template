@@ -1,5 +1,4 @@
 import { ProtocolType } from '@hyperlane-xyz/utils';
-import { computeDestAmount } from './scaleUtils';
 import {
   CopyButton,
   MessageStage,
@@ -33,6 +32,7 @@ import { useOriginFinality } from '../messages/useOriginFinality';
 import { useStore } from '../store';
 import { tryFindToken, useWarpCore } from '../tokens/hooks';
 import { TokenChainIcon } from '../tokens/TokenChainIcon';
+import { computeDestAmount } from './scaleUtils';
 import { TransferContext, TransferStatus } from './types';
 import {
   estimateDeliverySeconds,

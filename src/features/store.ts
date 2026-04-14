@@ -11,6 +11,7 @@ import { persist } from 'zustand/middleware';
 
 import { config } from '../consts/config';
 import { logger } from '../utils/logger';
+import type { RouterAddressInfo } from './routerAddresses';
 import type { initWarpContext as InitWarpContextFn, WarpRuntimeContext } from './storeInit';
 import { TokenChainMap } from './tokens/types';
 import { setResolvedUnderlyingMap } from './tokens/utils';
@@ -18,12 +19,6 @@ import { FinalTransferStatuses, TransferContext, TransferStatus } from './transf
 
 // Increment this when persist state has breaking changes
 const PERSIST_STATE_VERSION = 2;
-
-// Info stored per router address
-export interface RouterAddressInfo {
-  // Max decimals across all tokens in the warp route (for amount formatting)
-  wireDecimals: number;
-}
 
 interface WarpContext {
   isWarpContextReady: boolean;

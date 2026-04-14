@@ -2,10 +2,10 @@ import type { ChainMetadata } from '@hyperlane-xyz/sdk/metadata/chainMetadataTyp
 import type { Token } from '@hyperlane-xyz/sdk/token/Token';
 import type { ChainMap, ChainName } from '@hyperlane-xyz/sdk/types';
 import type { WarpCoreConfig } from '@hyperlane-xyz/sdk/warp/types';
-import { type KnownProtocolType, normalizeAddress, ProtocolType } from '@hyperlane-xyz/utils';
+import { type KnownProtocolType, ProtocolType } from '@hyperlane-xyz/utils';
 
 import { getSdkRuntime } from './hyperlane/sdkRuntime';
-import type { RouterAddressInfo } from './store';
+import { getRouterAddressesByChain } from './routerAddresses';
 import type { WarpRuntimeContext } from './storeInit';
 import {
   assembleTokensBySymbolChainMap,
@@ -61,19 +61,4 @@ export async function initWarpRuntime({
     tokenByKeyMap,
     resolvedUnderlyingMap: resolvedMap,
   };
-}
-
-function getRouterAddressesByChain(
-  tokens: Token[],
-  wireDecimalsMap: Record<ChainName, Record<string, number>>,
-): Record<ChainName, Record<string, RouterAddressInfo>> {
-  return tokens.reduce<Record<ChainName, Record<string, RouterAddressInfo>>>((acc, token) => {
-    if (!token.addressOrDenom) return acc;
-    const normalizedAddr = normalizeAddress(token.addressOrDenom, token.protocol);
-    const wireDecimals = wireDecimalsMap[token.chainName]?.[normalizedAddr] ?? token.decimals;
-
-    acc[token.chainName] ||= {};
-    acc[token.chainName][normalizedAddr] = { wireDecimals };
-    return acc;
-  }, {});
 }

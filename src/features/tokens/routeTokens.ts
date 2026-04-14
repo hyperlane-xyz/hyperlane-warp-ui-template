@@ -1,5 +1,6 @@
 import { parseTokenConnectionId } from '@hyperlane-xyz/sdk/token/TokenConnection';
 import { TokenMetadata } from '@hyperlane-xyz/sdk/token/TokenMetadata';
+import { assert } from '@hyperlane-xyz/utils';
 import type { WarpCoreConfig } from '@hyperlane-xyz/sdk/warp/types';
 
 export function buildRouteTokens(config: WarpCoreConfig): TokenMetadata[] {
@@ -25,9 +26,7 @@ export function buildRouteTokens(config: WarpCoreConfig): TokenMetadata[] {
           (!token.warpRouteId || candidate.warpRouteId === token.warpRouteId),
       );
 
-      if (!connectedToken) {
-        throw new Error(`Connected token not found: ${chainName} ${addressOrDenom}`);
-      }
+      assert(connectedToken, `Connected token not found: ${chainName} ${addressOrDenom}`);
 
       token.addConnection({
         ...connection,

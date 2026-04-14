@@ -15,7 +15,7 @@ type SdkRuntime = {
   createMultiProvider: (
     chainMetadata: ChainMap<ChainMetadata<{ mailbox?: string }>>,
   ) => RuntimeMultiProvider;
-  WarpCore: typeof import('@hyperlane-xyz/sdk/warp/WarpCore').WarpCore;
+  warpCore: typeof import('@hyperlane-xyz/sdk/warp/WarpCore').WarpCore;
 };
 
 const sdkRuntimePromises = new Map<string, Promise<SdkRuntime>>();
@@ -71,7 +71,7 @@ async function createSdkRuntime(protocols: KnownProtocolType[]): Promise<SdkRunt
       new RuntimeMultiProviderAdapter(chainMetadata, {
         providerBuilders,
       }),
-    WarpCore,
+    warpCore: WarpCore,
   };
 }
 

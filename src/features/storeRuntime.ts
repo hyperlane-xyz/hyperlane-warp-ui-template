@@ -34,15 +34,18 @@ export async function initWarpRuntime({
     ),
   );
 
-  const { createMultiProvider, WarpCore } = await getSdkRuntime(protocols);
+  const { createMultiProvider, warpCore } = await getSdkRuntime(protocols);
   const multiProvider = createMultiProvider(chainMetadataWithOverrides);
-  const warpCore = WarpCore.FromConfig(multiProvider, coreConfig);
+  const runtimeWarpCore = warpCore.FromConfig(multiProvider, coreConfig);
 
-  const tokensBySymbolChainMap = assembleTokensBySymbolChainMap(warpCore.tokens, multiProvider);
-  const resolvedMap = await resolveWrappedCollateralTokens(warpCore.tokens, multiProvider);
+  const tokensBySymbolChainMap = assembleTokensBySymbolChainMap(
+    runtimeWarpCore.tokens,
+    multiProvider,
+  );
+  const resolvedMap = await resolveWrappedCollateralTokens(runtimeWarpCore.tokens, multiProvider);
 
-  const tokens = buildTokensArray(warpCore.tokens);
-  const collateralGroups = groupTokensByCollateral(warpCore.tokens);
+  const tokens = buildTokensArray(runtimeWarpCore.tokens);
+  const collateralGroups = groupTokensByCollateral(runtimeWarpCore.tokens);
   const tokenByKeyMap = new Map<string, Token>();
   for (const token of tokens) {
     tokenByKeyMap.set(getTokenKey(token), token);
@@ -50,9 +53,9 @@ export async function initWarpRuntime({
 
   return {
     multiProvider,
-    warpCore,
+    warpCore: runtimeWarpCore,
     tokensBySymbolChainMap,
-    routerAddressesByChainMap: getRouterAddressesByChain(warpCore.tokens, wireDecimalsMap),
+    routerAddressesByChainMap: getRouterAddressesByChain(runtimeWarpCore.tokens, wireDecimalsMap),
     tokens,
     collateralGroups,
     tokenByKeyMap,

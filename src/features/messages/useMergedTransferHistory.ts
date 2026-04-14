@@ -1,4 +1,5 @@
 import type { ChainName, MultiProtocolProvider, WarpCore } from '@hyperlane-xyz/sdk';
+import { localAmountFromMessage } from '@hyperlane-xyz/sdk';
 import { fromWei, normalizeAddress } from '@hyperlane-xyz/utils';
 import { useMemo } from 'react';
 
@@ -33,15 +34,21 @@ export function messageToTransferContext(
   const actualSender = msg.origin.from;
   const actualRecipient = msg.warpTransfer?.recipient || msg.recipient;
 
-  // Format amount using wire decimals from precomputed map
+  // Format amount: message-body amount → local units via scale, then human-readable
   let formattedAmount = '';
   const token = tryFindToken(warpCore, originChain, msg.sender);
   if (msg.warpTransfer?.amount && token) {
-    const normalizedSender = normalizeAddress(msg.sender);
-    const routerInfo = routerAddressesByChainMap[originChain]?.[normalizedSender];
-    const wireDecimals = routerInfo?.wireDecimals ?? token.decimals;
     try {
-      formattedAmount = fromWei(msg.warpTransfer.amount, wireDecimals);
+      if (token.scale) {
+        const messageAmount = BigInt(msg.warpTransfer.amount);
+        const localAmount = localAmountFromMessage(messageAmount, token.scale);
+        formattedAmount = fromWei(localAmount.toString(), token.decimals);
+      } else {
+        const normalizedSender = normalizeAddress(msg.sender);
+        const routerInfo = routerAddressesByChainMap[originChain]?.[normalizedSender];
+        const wireDecimals = routerInfo?.wireDecimals ?? token.decimals;
+        formattedAmount = fromWei(msg.warpTransfer.amount, wireDecimals);
+      }
     } catch (err) {
       logger.error('Failed to format warp transfer amount', err);
     }

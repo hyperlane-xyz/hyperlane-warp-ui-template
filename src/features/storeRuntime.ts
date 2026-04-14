@@ -7,12 +7,7 @@ import { type KnownProtocolType, ProtocolType } from '@hyperlane-xyz/utils';
 import { getSdkRuntime } from './hyperlane/sdkRuntime';
 import { getRouterAddressesByChain } from './routerAddresses';
 import type { WarpRuntimeContext } from './storeInit';
-import {
-  assembleTokensBySymbolChainMap,
-  buildTokensArray,
-  getTokenKey,
-  groupTokensByCollateral,
-} from './tokens/utils';
+import { buildTokensArray, getTokenKey, groupTokensByCollateral } from './tokens/utils';
 import { resolveWrappedCollateralTokens } from './tokens/wrappedTokenResolver';
 
 type InitWarpRuntimeArgs = {
@@ -38,10 +33,6 @@ export async function initWarpRuntime({
   const multiProvider = createMultiProvider(chainMetadataWithOverrides);
   const runtimeWarpCore = warpCore.FromConfig(multiProvider, coreConfig);
 
-  const tokensBySymbolChainMap = assembleTokensBySymbolChainMap(
-    runtimeWarpCore.tokens,
-    multiProvider,
-  );
   const resolvedMap = await resolveWrappedCollateralTokens(runtimeWarpCore.tokens, multiProvider);
 
   const tokens = buildTokensArray(runtimeWarpCore.tokens);
@@ -54,7 +45,7 @@ export async function initWarpRuntime({
   return {
     multiProvider,
     warpCore: runtimeWarpCore,
-    tokensBySymbolChainMap,
+    routeTokens: runtimeWarpCore.tokens,
     routerAddressesByChainMap: getRouterAddressesByChain(runtimeWarpCore.tokens, wireDecimalsMap),
     tokens,
     collateralGroups,

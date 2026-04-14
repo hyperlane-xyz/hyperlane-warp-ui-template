@@ -151,6 +151,10 @@ export function useTokens() {
   return useStore((s) => s.tokens);
 }
 
+export function useRouteTokens() {
+  return useStore((s) => s.routeTokens);
+}
+
 export function useCollateralGroups() {
   return useStore((s) => s.collateralGroups);
 }

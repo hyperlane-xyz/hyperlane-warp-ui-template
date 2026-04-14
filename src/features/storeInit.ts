@@ -11,12 +11,7 @@ import { assembleChainMetadata } from './chains/metadata';
 import { getRouterAddressesByChain } from './routerAddresses';
 import type { AppState } from './store';
 import { buildRouteTokens } from './tokens/routeTokens';
-import {
-  assembleTokensBySymbolChainMap,
-  buildTokensArray,
-  getTokenKey,
-  groupTokensByCollateral,
-} from './tokens/utils';
+import { buildTokensArray, getTokenKey, groupTokensByCollateral } from './tokens/utils';
 import { assembleWarpCoreConfig } from './warpCore/warpCoreConfig';
 
 type InitWarpContextArgs = {
@@ -32,7 +27,7 @@ type WarpContext = Pick<
   | 'chainMetadata'
   | 'multiProvider'
   | 'warpCore'
-  | 'tokensBySymbolChainMap'
+  | 'routeTokens'
   | 'tokens'
   | 'collateralGroups'
   | 'tokenByKeyMap'
@@ -44,7 +39,7 @@ export type WarpRuntimeContext = Pick<
   AppState,
   | 'multiProvider'
   | 'warpCore'
-  | 'tokensBySymbolChainMap'
+  | 'routeTokens'
   | 'tokens'
   | 'collateralGroups'
   | 'tokenByKeyMap'
@@ -91,7 +86,6 @@ export async function initWarpContext({
     );
     const multiProvider = new MultiProviderAdapter(chainMetadataWithOverrides);
     const routeTokens = buildRouteTokens(coreConfig) as unknown as Token[];
-    const tokensBySymbolChainMap = assembleTokensBySymbolChainMap(routeTokens, multiProvider);
     const tokens = buildTokensArray(routeTokens);
     const collateralGroups = groupTokensByCollateral(routeTokens);
     const tokenByKeyMap = new Map<string, Token>();
@@ -111,7 +105,7 @@ export async function initWarpContext({
         chainMetadata,
         multiProvider,
         warpCore: undefined,
-        tokensBySymbolChainMap,
+        routeTokens,
         routerAddressesByChainMap,
         tokens,
         collateralGroups,
@@ -137,7 +131,7 @@ export async function initWarpContext({
         chainMetadata: {},
         multiProvider: undefined,
         warpCore: undefined,
-        tokensBySymbolChainMap: {},
+        routeTokens: [],
         routerAddressesByChainMap: {},
         tokens: [],
         collateralGroups: new Map(),
@@ -147,7 +141,7 @@ export async function initWarpContext({
       loadRuntime: async () => ({
         multiProvider: undefined,
         warpCore: undefined,
-        tokensBySymbolChainMap: {},
+        routeTokens: [],
         routerAddressesByChainMap: {},
         tokens: [],
         collateralGroups: new Map(),

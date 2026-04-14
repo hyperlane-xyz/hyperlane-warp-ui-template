@@ -13,7 +13,6 @@ import { config } from '../consts/config';
 import { logger } from '../utils/logger';
 import type { RouterAddressInfo } from './routerAddresses';
 import type { initWarpContext as InitWarpContextFn, WarpRuntimeContext } from './storeInit';
-import { TokenChainMap } from './tokens/types';
 import { setResolvedUnderlyingMap } from './tokens/utils';
 import { FinalTransferStatuses, TransferContext, TransferStatus } from './transfer/types';
 
@@ -26,7 +25,8 @@ interface WarpContext {
   chainMetadata: ChainMap<ChainMetadata>;
   multiProvider: MultiProtocolProvider | undefined;
   warpCore: WarpCore | undefined;
-  tokensBySymbolChainMap: Record<string, TokenChainMap>;
+  /** Raw route-token metadata used for route-specific address lookups. */
+  routeTokens: Token[];
   /** Unified tokens array (deduplicated, can be origin or destination) */
   tokens: Token[];
   /** Pre-computed collateral groups for fast route checking */
@@ -137,7 +137,7 @@ export interface AppState {
 
   originChainName: ChainName;
   setOriginChainName: (originChainName: ChainName) => void;
-  tokensBySymbolChainMap: Record<string, TokenChainMap>;
+  routeTokens: Token[];
   // instead of moving the TipCard component inside the formik and an useEffect can be set to watch for it
   isTipCardActionTriggered: boolean;
   setIsTipCardActionTriggered: (isTipCardActionTriggered: boolean) => void;
@@ -257,7 +257,7 @@ export const useStore = create<AppState>()(
         setOriginChainName: (originChainName: ChainName) => {
           set(() => ({ originChainName }));
         },
-        tokensBySymbolChainMap: {},
+        routeTokens: [],
         routerAddressesByChainMap: {},
         isTipCardActionTriggered: false,
         setIsTipCardActionTriggered: (isTipCardActionTriggered: boolean) => {

@@ -7,9 +7,7 @@ import {
 import type { WarpCore } from '@hyperlane-xyz/sdk/warp/WarpCore';
 import { eqAddress, isNullish, normalizeAddress, objKeys } from '@hyperlane-xyz/utils';
 
-import { isChainDisabled } from '../chains/utils';
 import { DefaultMultiCollateralRoutes } from './types';
-import type { TokenChainMap } from './types';
 
 // Module-level caches for expensive key computations
 // WeakMap allows automatic garbage collection when token objects are no longer referenced
@@ -39,32 +37,6 @@ function isCollateralizedToken(token: IToken): boolean {
     EXTRA_COLLATERALIZED_STANDARDS.has(token.standard) ||
     token.isHypNative()
   );
-}
-
-export function assembleTokensBySymbolChainMap(
-  tokens: Token[],
-  multiProvider: {
-    tryGetChainMetadata: (chainName: string) => TokenChainMap['chains'][string]['metadata'];
-  },
-): Record<string, TokenChainMap> {
-  return tokens
-    .filter((token) => token.isMultiChainToken())
-    .reduce<Record<string, TokenChainMap>>((acc, token) => {
-      if (!token.connections?.length) return acc;
-
-      const tokenChainMap = (acc[token.symbol] ??= {
-        chains: {},
-        tokenInformation: token,
-      });
-
-      if (tokenChainMap.chains[token.chainName]) return acc;
-
-      const chainMetadata = multiProvider.tryGetChainMetadata(token.chainName);
-      if (isChainDisabled(chainMetadata)) return acc;
-
-      tokenChainMap.chains[token.chainName] = { token, metadata: chainMetadata };
-      return acc;
-    }, {});
 }
 
 export function isValidMultiCollateralToken(

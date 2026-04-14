@@ -7,11 +7,13 @@ import {
   Modal,
   SpinnerIcon,
   type StageTimings,
-  useAccountForChain,
   useTimeout,
-  useWalletDetails,
   WideChevronIcon,
 } from '@hyperlane-xyz/widgets';
+import {
+  useAccountForChain,
+  useWalletDetails,
+} from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 

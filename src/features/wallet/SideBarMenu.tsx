@@ -1,6 +1,8 @@
 import type { ChainName } from '@hyperlane-xyz/sdk';
 import { fromWei, normalizeAddress } from '@hyperlane-xyz/utils';
-import { AccountList, RefreshIcon, SpinnerIcon, useAccounts } from '@hyperlane-xyz/widgets';
+import { RefreshIcon, SpinnerIcon } from '@hyperlane-xyz/widgets';
+import { AccountList } from '@hyperlane-xyz/widgets/walletIntegrations/AccountList';
+import { useAccounts } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';

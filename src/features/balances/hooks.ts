@@ -185,16 +185,13 @@ function useDirectEvmBalance(chain?: ChainName, token?: IToken, address?: Addres
   const chainMetadata = useStore((s) => (chain ? s.chainMetadata[chain] : undefined));
   const chainId =
     chainMetadata?.protocol === ProtocolType.Ethereum ? chainMetadata.chainId : undefined;
+  const tokenAddress = getDirectEvmBalanceTokenAddress(token);
   const isEnabled =
     Boolean(chainId) &&
     token?.protocol === ProtocolType.Ethereum &&
     Boolean(address) &&
-    isValidAddressEvm(address as Address);
-
-  const tokenAddress =
-    token?.addressOrDenom && isValidAddressEvm(token.addressOrDenom as Address)
-      ? (token.addressOrDenom as Hex)
-      : undefined;
+    isValidAddressEvm(address as Address) &&
+    (!token || token.isHypNative() || Boolean(tokenAddress));
 
   const { data, error, isError, isLoading } = useWagmiBalance({
     address: isEnabled ? (address as Hex) : undefined,
@@ -214,6 +211,29 @@ function useDirectEvmBalance(chain?: ChainName, token?: IToken, address?: Addres
     isLoading,
     balance: data && token ? new TokenAmount(data.value, token) : undefined,
   };
+}
+
+function getDirectEvmBalanceTokenAddress(token?: IToken): Hex | undefined {
+  if (!token || token.protocol !== ProtocolType.Ethereum || token.isHypNative()) {
+    return undefined;
+  }
+
+  if (token.standard.includes('Lockbox')) {
+    return undefined;
+  }
+
+  if (
+    token.collateralAddressOrDenom &&
+    isValidAddressEvm(token.collateralAddressOrDenom as Address)
+  ) {
+    return token.collateralAddressOrDenom as Hex;
+  }
+
+  if (token.standard.includes('Synthetic') && isValidAddressEvm(token.addressOrDenom as Address)) {
+    return token.addressOrDenom as Hex;
+  }
+
+  return undefined;
 }
 
 /** Returns a Map<ProtocolType, string> of all connected wallet addresses. */

@@ -1,5 +1,6 @@
 import { ProtocolType } from '@hyperlane-xyz/utils';
-import { Modal, PROTOCOL_TO_LOGO, useConnectFns } from '@hyperlane-xyz/widgets';
+import { Modal, PROTOCOL_TO_LOGO } from '@hyperlane-xyz/widgets';
+import { useConnectFns } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import clsx from 'clsx';
 
 import { logger } from '../../utils/logger';

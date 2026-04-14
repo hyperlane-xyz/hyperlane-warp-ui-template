@@ -11,15 +11,13 @@ import {
   normalizeAddress,
   toWei,
 } from '@hyperlane-xyz/utils';
+import { ChevronIcon, SpinnerIcon, useModal } from '@hyperlane-xyz/widgets';
 import {
-  AccountInfo,
-  ChevronIcon,
-  SpinnerIcon,
   getAccountAddressAndPubKey,
   useAccountAddressForChain,
   useAccounts,
-  useModal,
-} from '@hyperlane-xyz/widgets';
+} from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
+import { type AccountInfo } from '@hyperlane-xyz/widgets/walletIntegrations/types';
 import BigNumber from 'bignumber.js';
 import { Form, Formik, useFormikContext } from 'formik';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -1016,7 +1014,7 @@ const igpErrorPattern = /^Insufficient (\S+) for interchain gas$/;
 async function enrichBalanceError(
   warpCore: WarpCore,
   result: Record<string, string>,
-  originTokenAmount: TokenAmount,
+  originTokenAmount: TokenAmount<Token>,
   destination: string,
   sender: string,
   recipient: string,

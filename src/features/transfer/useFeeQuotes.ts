@@ -1,6 +1,10 @@
 import { IToken, Token, WarpCore, WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
 import { HexString, ProtocolType, toWei } from '@hyperlane-xyz/utils';
-import { getAccountAddressAndPubKey, useAccounts, useDebounce } from '@hyperlane-xyz/widgets';
+import { useDebounce } from '@hyperlane-xyz/widgets';
+import {
+  getAccountAddressAndPubKey,
+  useAccounts,
+} from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import { useQuery } from '@tanstack/react-query';
 
 import { defaultMultiCollateralRoutes } from '../../consts/defaultMultiCollateralRoutes';
@@ -95,7 +99,7 @@ export async function fetchFeeQuotes(
   destinationToken: IToken | undefined,
   destination?: ChainName,
   sender?: Address,
-  senderPubKey?: Promise<HexString>,
+  senderPubKey?: Promise<HexString | undefined>,
   amount?: string,
   recipient?: string,
   searchForLowestFee: boolean = false,

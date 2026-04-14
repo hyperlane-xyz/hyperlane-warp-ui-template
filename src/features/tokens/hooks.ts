@@ -27,6 +27,8 @@ export function useWarpCore() {
   return warpCore;
 }
 
+// Read-only render paths should use this to observe whether runtime is already ready.
+// Async action paths should call ensureWarpRuntime() instead of forcing runtime during render.
 export function useReadyWarpCore() {
   return useStore((s) => s.warpCore);
 }

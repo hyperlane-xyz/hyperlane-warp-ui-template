@@ -164,7 +164,9 @@ function useDirectWalletAddresses(
 
 function getAddressForChain(addresses: ChainAddress[] | undefined, chainName?: ChainName) {
   if (!addresses?.length) return undefined;
-  return addresses.find((address) => address.chainName === chainName)?.address ?? addresses[0]?.address;
+  return (
+    addresses.find((address) => address.chainName === chainName)?.address ?? addresses[0]?.address
+  );
 }
 
 function useWalletAddressForChain(
@@ -181,7 +183,8 @@ function useWalletAddressForChain(
 
 function useDirectEvmBalance(chain?: ChainName, token?: IToken, address?: Address) {
   const chainMetadata = useStore((s) => (chain ? s.chainMetadata[chain] : undefined));
-  const chainId = chainMetadata?.protocol === ProtocolType.Ethereum ? chainMetadata.chainId : undefined;
+  const chainId =
+    chainMetadata?.protocol === ProtocolType.Ethereum ? chainMetadata.chainId : undefined;
   const isEnabled =
     Boolean(chainId) &&
     token?.protocol === ProtocolType.Ethereum &&

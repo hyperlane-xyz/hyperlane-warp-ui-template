@@ -21,6 +21,10 @@ import { logger } from '../../utils/logger.ts';
 
 // Map of chain -> address -> wireDecimals
 export type WireDecimalsMap = Record<ChainName, Record<string, number>>;
+type WarpCoreToken = WarpCoreConfig['tokens'][number];
+type NullableAddressWarpCoreToken = Omit<WarpCoreToken, 'addressOrDenom'> & {
+  addressOrDenom: string | null;
+};
 
 export async function assembleWarpCoreConfig(
   storeOverrides: WarpCoreConfig[],
@@ -202,8 +206,8 @@ function filterToIds(
 
 // Separate warp configs may contain duplicate definitions of the same token.
 // E.g. an IBC token that gets used for interchain gas in many different routes.
-function dedupeTokens(tokens: WarpCoreConfig['tokens']): WarpCoreConfig['tokens'] {
-  const idToToken: Record<string, WarpCoreConfig['tokens'][number]> = {};
+function dedupeTokens(tokens: NullableAddressWarpCoreToken[]): NullableAddressWarpCoreToken[] {
+  const idToToken: Record<string, NullableAddressWarpCoreToken> = {};
   for (const token of tokens) {
     let id = '';
     // Temporary fix issue for M0 routes where addressOrDenom can be the same
@@ -229,7 +233,7 @@ function reduceOptions(optionsList: Array<WarpCoreConfig['options']>): WarpCoreC
 }
 
 // Remove tokens that have no connections from the token list, but preserve tokens that are destinations
-function filterUnconnectedToken(tokens: WarpCoreConfig['tokens']): WarpCoreConfig['tokens'] {
+function filterUnconnectedToken(tokens: NullableAddressWarpCoreToken[]): WarpCoreToken[] {
   const destinationTokenIds = new Set<string>();
 
   tokens.forEach((token) => {
@@ -241,8 +245,7 @@ function filterUnconnectedToken(tokens: WarpCoreConfig['tokens']): WarpCoreConfi
   });
 
   // Keep tokens with connections OR tokens that are destinations
-  return tokens.filter((token) => {
-    // remove null addresses if they exist
+  return tokens.filter((token): token is WarpCoreToken => {
     if (!token.addressOrDenom) return false;
     // Has connections - keep it
     if (token.connections?.length) return true;

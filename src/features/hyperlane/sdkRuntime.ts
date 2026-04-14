@@ -44,6 +44,8 @@ async function createSdkRuntime(protocols: KnownProtocolType[]): Promise<SdkRunt
     ? (await import('@hyperlane-xyz/sdk/providers/builders/tron')).defaultTronEthersProviderBuilder
     : undefined;
 
+  // Keep this class scoped to the lazy runtime loader. Moving it to module scope would
+  // require a top-level value import of MultiProviderAdapter and defeat the split.
   class RuntimeMultiProviderAdapter<
     MetaExt extends object = object,
   > extends MultiProviderAdapter<MetaExt> {

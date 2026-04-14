@@ -1,7 +1,7 @@
 import { parseTokenConnectionId } from '@hyperlane-xyz/sdk/token/TokenConnection';
 import { TokenMetadata } from '@hyperlane-xyz/sdk/token/TokenMetadata';
-import { assert } from '@hyperlane-xyz/utils';
 import type { WarpCoreConfig } from '@hyperlane-xyz/sdk/warp/types';
+import { assert } from '@hyperlane-xyz/utils';
 
 // Metadata-first bootstrap needs token connectivity before the full runtime WarpCore exists.
 // This reconstructs the lightweight TokenMetadata graph from config so init paths can build

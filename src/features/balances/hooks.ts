@@ -15,7 +15,7 @@ import { useRadixAccount } from '@hyperlane-xyz/widgets/walletIntegrations/radix
 import { useSolanaAccount } from '@hyperlane-xyz/widgets/walletIntegrations/solanaWallet';
 import { useStarknetAccount } from '@hyperlane-xyz/widgets/walletIntegrations/starknetWallet';
 import { useTronAccount } from '@hyperlane-xyz/widgets/walletIntegrations/tronWallet';
-import type { ChainAddress } from '@hyperlane-xyz/widgets/walletIntegrations/types';
+import { getAddressForChain } from '@hyperlane-xyz/widgets/walletIntegrations/walletAddresses';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { toast } from 'react-toastify';
@@ -127,15 +127,6 @@ export function useEvmWalletBalance(
   return { balance: data, isError, isLoading };
 }
 
-function getAddressForChain(addresses: ChainAddress[] | undefined, chainName?: ChainName) {
-  if (!addresses?.length) return undefined;
-  // Intentional fallback: same-protocol wallets often reuse one address across chains.
-  // Callers should prefer useWalletAddressForChain so protocol filtering happens earlier.
-  return (
-    addresses.find((address) => address.chainName === chainName)?.address ?? addresses[0]?.address
-  );
-}
-
 function useWalletAddressForChain(
   multiProvider: MultiProtocolProvider,
   chainName?: ChainName,
@@ -153,20 +144,20 @@ function useWalletAddressForChain(
     if (!chainName || !protocol) return undefined;
     switch (protocol) {
       case ProtocolType.Ethereum:
-        return getAddressForChain(evmAddresses, chainName);
+        return getAddressForChain(evmAddresses, protocol, chainName);
       case ProtocolType.Sealevel:
-        return getAddressForChain(solanaAddresses, chainName);
+        return getAddressForChain(solanaAddresses, protocol, chainName);
       case ProtocolType.Cosmos:
       case ProtocolType.CosmosNative:
-        return getAddressForChain(cosmosAddresses, chainName);
+        return getAddressForChain(cosmosAddresses, protocol, chainName);
       case ProtocolType.Starknet:
-        return getAddressForChain(starknetAddresses, chainName);
+        return getAddressForChain(starknetAddresses, protocol, chainName);
       case ProtocolType.Radix:
-        return getAddressForChain(radixAddresses, chainName);
+        return getAddressForChain(radixAddresses, protocol, chainName);
       case ProtocolType.Aleo:
-        return getAddressForChain(aleoAddresses, chainName);
+        return getAddressForChain(aleoAddresses, protocol, chainName);
       case ProtocolType.Tron:
-        return getAddressForChain(tronAddresses, chainName);
+        return getAddressForChain(tronAddresses, protocol, chainName);
       default:
         return undefined;
     }
@@ -245,8 +236,8 @@ function useWalletAddresses(multiProvider: MultiProtocolProvider): Map<ProtocolT
 
   return useMemo(() => {
     const map = new Map<ProtocolType, string>();
-    const evmAddress = getAddressForChain(evmAddresses);
-    const solanaAddress = getAddressForChain(solanaAddresses);
+    const evmAddress = getAddressForChain(evmAddresses, ProtocolType.Ethereum);
+    const solanaAddress = getAddressForChain(solanaAddresses, ProtocolType.Sealevel);
     if (evmAddress) map.set(ProtocolType.Ethereum, evmAddress);
     if (solanaAddress) map.set(ProtocolType.Sealevel, solanaAddress);
     return map;

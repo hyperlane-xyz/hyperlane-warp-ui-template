@@ -127,41 +127,6 @@ export function useEvmWalletBalance(
   return { balance: data, isError, isLoading };
 }
 
-function useDirectWalletAddresses(
-  multiProvider: MultiProtocolProvider,
-): Map<ProtocolType, ChainAddress[]> {
-  const evmAddresses = useEthereumAccount(multiProvider).addresses;
-  const solanaAddresses = useSolanaAccount(multiProvider).addresses;
-  const cosmosAddresses = useCosmosAccount(multiProvider).addresses;
-  const starknetAddresses = useStarknetAccount(multiProvider).addresses;
-  const radixAddresses = useRadixAccount(multiProvider).addresses;
-  const aleoAddresses = useAleoAccount(multiProvider).addresses;
-  const tronAddresses = useTronAccount(multiProvider).addresses;
-
-  return useMemo(() => {
-    const map = new Map<ProtocolType, ChainAddress[]>();
-    if (evmAddresses.length) map.set(ProtocolType.Ethereum, evmAddresses);
-    if (solanaAddresses.length) map.set(ProtocolType.Sealevel, solanaAddresses);
-    if (cosmosAddresses.length) {
-      map.set(ProtocolType.Cosmos, cosmosAddresses);
-      map.set(ProtocolType.CosmosNative, cosmosAddresses);
-    }
-    if (starknetAddresses.length) map.set(ProtocolType.Starknet, starknetAddresses);
-    if (radixAddresses.length) map.set(ProtocolType.Radix, radixAddresses);
-    if (aleoAddresses.length) map.set(ProtocolType.Aleo, aleoAddresses);
-    if (tronAddresses.length) map.set(ProtocolType.Tron, tronAddresses);
-    return map;
-  }, [
-    aleoAddresses,
-    cosmosAddresses,
-    evmAddresses,
-    radixAddresses,
-    solanaAddresses,
-    starknetAddresses,
-    tronAddresses,
-  ]);
-}
-
 function getAddressForChain(addresses: ChainAddress[] | undefined, chainName?: ChainName) {
   if (!addresses?.length) return undefined;
   // Intentional fallback: same-protocol wallets often reuse one address across chains.
@@ -176,11 +141,46 @@ function useWalletAddressForChain(
   chainName?: ChainName,
   protocol?: ProtocolType,
 ) {
-  const walletAddresses = useDirectWalletAddresses(multiProvider);
+  const evmAddresses = useEthereumAccount(multiProvider).addresses;
+  const solanaAddresses = useSolanaAccount(multiProvider).addresses;
+  const cosmosAddresses = useCosmosAccount(multiProvider).addresses;
+  const starknetAddresses = useStarknetAccount(multiProvider).addresses;
+  const radixAddresses = useRadixAccount(multiProvider).addresses;
+  const aleoAddresses = useAleoAccount(multiProvider).addresses;
+  const tronAddresses = useTronAccount(multiProvider).addresses;
+
   return useMemo(() => {
     if (!chainName || !protocol) return undefined;
-    return getAddressForChain(walletAddresses.get(protocol), chainName);
-  }, [chainName, protocol, walletAddresses]);
+    switch (protocol) {
+      case ProtocolType.Ethereum:
+        return getAddressForChain(evmAddresses, chainName);
+      case ProtocolType.Sealevel:
+        return getAddressForChain(solanaAddresses, chainName);
+      case ProtocolType.Cosmos:
+      case ProtocolType.CosmosNative:
+        return getAddressForChain(cosmosAddresses, chainName);
+      case ProtocolType.Starknet:
+        return getAddressForChain(starknetAddresses, chainName);
+      case ProtocolType.Radix:
+        return getAddressForChain(radixAddresses, chainName);
+      case ProtocolType.Aleo:
+        return getAddressForChain(aleoAddresses, chainName);
+      case ProtocolType.Tron:
+        return getAddressForChain(tronAddresses, chainName);
+      default:
+        return undefined;
+    }
+  }, [
+    aleoAddresses,
+    chainName,
+    cosmosAddresses,
+    evmAddresses,
+    protocol,
+    radixAddresses,
+    solanaAddresses,
+    starknetAddresses,
+    tronAddresses,
+  ]);
 }
 
 function useDirectEvmBalance(chain?: ChainName, token?: IToken, address?: Address) {
@@ -240,16 +240,17 @@ function getDirectEvmBalanceTokenAddress(token?: IToken): Hex | undefined {
 
 /** Returns a Map<ProtocolType, string> of all connected wallet addresses. */
 function useWalletAddresses(multiProvider: MultiProtocolProvider): Map<ProtocolType, string> {
-  const walletAddresses = useDirectWalletAddresses(multiProvider);
+  const evmAddresses = useEthereumAccount(multiProvider).addresses;
+  const solanaAddresses = useSolanaAccount(multiProvider).addresses;
 
   return useMemo(() => {
     const map = new Map<ProtocolType, string>();
-    const evmAddress = getAddressForChain(walletAddresses.get(ProtocolType.Ethereum));
-    const solanaAddress = getAddressForChain(walletAddresses.get(ProtocolType.Sealevel));
+    const evmAddress = getAddressForChain(evmAddresses);
+    const solanaAddress = getAddressForChain(solanaAddresses);
     if (evmAddress) map.set(ProtocolType.Ethereum, evmAddress);
     if (solanaAddress) map.set(ProtocolType.Sealevel, solanaAddress);
     return map;
-  }, [walletAddresses]);
+  }, [evmAddresses, solanaAddresses]);
 }
 
 /**

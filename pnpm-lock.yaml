@@ -117,6 +117,12 @@ importers:
       '@provablehq/aleo-wallet-adaptor-shield':
         specifier: 0.3.0-alpha.1
         version: 0.3.0-alpha.1
+      '@provablehq/sdk':
+        specifier: 0.9.15
+        version: 0.9.15(patch_hash=c3b67b6e17970e4e71124b375f996bb58f69b19e6deba7d2dd82a7809373358b)
+      '@provablehq/wasm':
+        specifier: 0.9.18
+        version: 0.9.18(patch_hash=9af61d89e033cd3d4a4659b1412e680fe485647bc975037fd7ac764298eb5ca8)
       '@radixdlt/babylon-gateway-api-sdk':
         specifier: ^1.10.1
         version: 1.10.1

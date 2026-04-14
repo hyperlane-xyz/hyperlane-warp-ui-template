@@ -188,12 +188,12 @@ export function tryFindTokenInTokens(
   addressOrDenom?: string,
 ): IToken | null {
   if (!addressOrDenom) return null;
-  const normalized = normalizeAddress(addressOrDenom);
   return (
     tokens.find(
       (token) =>
         token.chainName === chain &&
-        normalizeAddress(token.addressOrDenom, token.protocol) === normalized,
+        normalizeAddress(token.addressOrDenom, token.protocol) ===
+          normalizeAddress(addressOrDenom, token.protocol),
     ) || null
   );
 }

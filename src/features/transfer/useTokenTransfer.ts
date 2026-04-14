@@ -267,6 +267,7 @@ async function executeTransfer({
   } catch (error: any) {
     logger.error(`Error at stage ${transferStatus}`, error);
     const errorDetails = error.message || error.toString();
+    const originDisplayName = origin ? getChainDisplayName(multiProvider, origin) : 'origin chain';
     updateTransferStatus(transferIndex, TransferStatus.Failed);
     if (errorDetails.includes(CHAIN_MISMATCH_ERROR)) {
       // Wagmi switchNetwork call helps prevent this but isn't foolproof
@@ -275,9 +276,7 @@ async function executeTransfer({
       errorDetails.includes(TRANSFER_TIMEOUT_ERROR1) ||
       errorDetails.includes(TRANSFER_TIMEOUT_ERROR2)
     ) {
-      toast.error(
-        `Transaction timed out, ${getChainDisplayName(multiProvider, origin)} may be busy. Please try again.`,
-      );
+      toast.error(`Transaction timed out, ${originDisplayName} may be busy. Please try again.`);
     } else {
       toast.error(errorMessages[transferStatus] || 'Unable to transfer tokens.');
     }

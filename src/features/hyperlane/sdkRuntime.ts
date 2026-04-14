@@ -25,7 +25,10 @@ export function getSdkRuntime(protocols: KnownProtocolType[]): Promise<SdkRuntim
   const cached = sdkRuntimePromises.get(key);
   if (cached) return cached;
 
-  const runtimePromise = createSdkRuntime(protocols);
+  const runtimePromise = createSdkRuntime(protocols).catch((error) => {
+    sdkRuntimePromises.delete(key);
+    throw error;
+  });
   sdkRuntimePromises.set(key, runtimePromise);
   return runtimePromise;
 }

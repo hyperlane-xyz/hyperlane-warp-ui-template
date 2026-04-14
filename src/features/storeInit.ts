@@ -49,7 +49,9 @@ export type WarpRuntimeContext = Pick<
   | 'collateralGroups'
   | 'tokenByKeyMap'
   | 'routerAddressesByChainMap'
->;
+> & {
+  resolvedUnderlyingMap: Map<string, string>;
+};
 
 export type InitWarpContextResult = {
   context: WarpContext;
@@ -150,6 +152,7 @@ export async function initWarpContext({
         tokens: [],
         collateralGroups: new Map(),
         tokenByKeyMap: new Map(),
+        resolvedUnderlyingMap: new Map(),
       }),
     };
   }
@@ -161,7 +164,7 @@ function getRouterAddressesByChain(
 ): Record<ChainName, Record<string, RouterAddressInfo>> {
   return tokens.reduce<Record<ChainName, Record<string, RouterAddressInfo>>>((acc, token) => {
     if (!token.addressOrDenom) return acc;
-    const normalizedAddr = normalizeAddress(token.addressOrDenom);
+    const normalizedAddr = normalizeAddress(token.addressOrDenom, token.protocol);
     const wireDecimals = wireDecimalsMap[token.chainName]?.[normalizedAddr] ?? token.decimals;
 
     acc[token.chainName] ||= {};

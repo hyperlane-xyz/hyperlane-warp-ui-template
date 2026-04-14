@@ -24,10 +24,11 @@ const theme = extendTheme({
 export function CosmosWalletContext({ children }: PropsWithChildren<unknown>) {
   const chainMetadata = useMultiProvider().metadata;
   const { chains, assets } = useMemo(() => {
-    const multiProvider = new MultiProviderAdapter({ ...chainMetadata, cosmoshub });
-    return getCosmosKitChainConfigs(
-      multiProvider as unknown as Parameters<typeof getCosmosKitChainConfigs>[0],
-    );
+    const multiProvider: Parameters<typeof getCosmosKitChainConfigs>[0] = new MultiProviderAdapter({
+      ...chainMetadata,
+      cosmoshub,
+    });
+    return getCosmosKitChainConfigs(multiProvider);
   }, [chainMetadata]);
   const leapWithoutSnap = leapWallets.filter((wallet) => !wallet.walletName.includes('snap'));
   // TODO replace Chakra here with a custom modal for ChainProvider

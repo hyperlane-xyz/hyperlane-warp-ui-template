@@ -164,6 +164,8 @@ function useDirectWalletAddresses(
 
 function getAddressForChain(addresses: ChainAddress[] | undefined, chainName?: ChainName) {
   if (!addresses?.length) return undefined;
+  // Intentional fallback: same-protocol wallets often reuse one address across chains.
+  // Callers should prefer useWalletAddressForChain so protocol filtering happens earlier.
   return (
     addresses.find((address) => address.chainName === chainName)?.address ?? addresses[0]?.address
   );

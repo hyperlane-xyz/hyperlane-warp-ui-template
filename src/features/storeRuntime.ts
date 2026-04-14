@@ -12,7 +12,6 @@ import {
   buildTokensArray,
   getTokenKey,
   groupTokensByCollateral,
-  setResolvedUnderlyingMap,
 } from './tokens/utils';
 import { resolveWrappedCollateralTokens } from './tokens/wrappedTokenResolver';
 
@@ -41,7 +40,6 @@ export async function initWarpRuntime({
 
   const tokensBySymbolChainMap = assembleTokensBySymbolChainMap(warpCore.tokens, multiProvider);
   const resolvedMap = await resolveWrappedCollateralTokens(warpCore.tokens, multiProvider);
-  setResolvedUnderlyingMap(resolvedMap);
 
   const tokens = buildTokensArray(warpCore.tokens);
   const collateralGroups = groupTokensByCollateral(warpCore.tokens);
@@ -58,6 +56,7 @@ export async function initWarpRuntime({
     tokens,
     collateralGroups,
     tokenByKeyMap,
+    resolvedUnderlyingMap: resolvedMap,
   };
 }
 
@@ -67,7 +66,7 @@ function getRouterAddressesByChain(
 ): Record<ChainName, Record<string, RouterAddressInfo>> {
   return tokens.reduce<Record<ChainName, Record<string, RouterAddressInfo>>>((acc, token) => {
     if (!token.addressOrDenom) return acc;
-    const normalizedAddr = normalizeAddress(token.addressOrDenom);
+    const normalizedAddr = normalizeAddress(token.addressOrDenom, token.protocol);
     const wireDecimals = wireDecimalsMap[token.chainName]?.[normalizedAddr] ?? token.decimals;
 
     acc[token.chainName] ||= {};

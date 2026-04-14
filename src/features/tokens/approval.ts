@@ -19,9 +19,9 @@ export function useIsApproveRequired(token?: IToken, amount?: string, enabled = 
     // eslint-disable-next-line @tanstack/query/exhaustive-deps
     queryKey: ['useIsApproveRequired', owner, amount, token?.addressOrDenom],
     queryFn: async () => {
+      if (!token || !owner || !amount) return false;
       const readyWarpCore = warpCore || (await ensureWarpRuntime());
       if (!readyWarpCore) return false;
-      if (!token || !owner || !amount) return false;
       return readyWarpCore.isApproveRequired({ originTokenAmount: token.amount(amount), owner });
     },
     enabled,

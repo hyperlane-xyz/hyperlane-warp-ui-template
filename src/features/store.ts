@@ -13,6 +13,7 @@ import { config } from '../consts/config';
 import { logger } from '../utils/logger';
 import type { initWarpContext as InitWarpContextFn, WarpRuntimeContext } from './storeInit';
 import { TokenChainMap } from './tokens/types';
+import { setResolvedUnderlyingMap } from './tokens/utils';
 import { FinalTransferStatuses, TransferContext, TransferStatus } from './transfer/types';
 
 // Increment this when persist state has breaking changes
@@ -66,10 +67,18 @@ async function loadAndSetWarpRuntime(
   if (!runtimeContextLoader) return undefined;
 
   runtimeContextPromise ||= runtimeContextLoader();
-  const runtimeContext = await runtimeContextPromise;
+  let runtimeContext: WarpRuntimeContext;
+  try {
+    runtimeContext = await runtimeContextPromise;
+  } catch (error) {
+    runtimeContextPromise = undefined;
+    throw error;
+  }
   if (version !== runtimeContextVersion) return get().warpCore;
 
-  set(runtimeContext);
+  const { resolvedUnderlyingMap, ...nextRuntimeContext } = runtimeContext;
+  setResolvedUnderlyingMap(resolvedUnderlyingMap);
+  set(nextRuntimeContext);
   return runtimeContext.warpCore;
 }
 

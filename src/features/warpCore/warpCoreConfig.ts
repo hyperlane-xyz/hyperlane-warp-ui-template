@@ -171,7 +171,9 @@ function buildWireDecimalsMap(routes: Record<string, WarpCoreConfig>): WireDecim
     for (const token of routeConfig.tokens) {
       if (!token.addressOrDenom) continue;
       map[token.chainName] ||= {};
-      map[token.chainName][normalizeAddress(token.addressOrDenom)] = wireDecimals;
+      map[token.chainName][
+        normalizeAddress(token.addressOrDenom, TOKEN_STANDARD_TO_PROTOCOL[token.standard])
+      ] = wireDecimals;
     }
   }
   return map;

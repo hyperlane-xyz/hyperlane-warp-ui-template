@@ -1,6 +1,7 @@
 import { MultiProtocolProvider, Token, WarpCore } from '@hyperlane-xyz/sdk';
 import { KnownProtocolType, objLength } from '@hyperlane-xyz/utils';
-import { AccountInfo, getAccountAddressAndPubKey } from '@hyperlane-xyz/widgets';
+import { getAccountAddressAndPubKey } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
+import { type AccountInfo } from '@hyperlane-xyz/widgets/walletIntegrations/types';
 import { track } from '@vercel/analytics';
 
 import { config } from '../../consts/config';

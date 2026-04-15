@@ -1,14 +1,11 @@
 import { ProtocolType, shortenAddress } from '@hyperlane-xyz/utils';
+import { ChevronIcon, DropdownMenu, useModal, XIcon } from '@hyperlane-xyz/widgets';
 import {
-  ChevronIcon,
-  DropdownMenu,
   useAccountAddressForChain,
   useAccountForChain,
   useConnectFns,
   useDisconnectFns,
-  useModal,
-  XIcon,
-} from '@hyperlane-xyz/widgets';
+} from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import React, { useCallback, useMemo } from 'react';
 
 import { Color } from '../../styles/Color';

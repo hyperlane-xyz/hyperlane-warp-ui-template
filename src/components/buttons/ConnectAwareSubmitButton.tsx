@@ -1,5 +1,9 @@
 import { ProtocolType } from '@hyperlane-xyz/utils';
-import { useAccountForChain, useConnectFns, useTimeout } from '@hyperlane-xyz/widgets';
+import { useTimeout } from '@hyperlane-xyz/widgets';
+import {
+  useAccountForChain,
+  useConnectFns,
+} from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import { useFormikContext } from 'formik';
 import { useCallback } from 'react';
 
@@ -31,7 +35,7 @@ export function ConnectAwareSubmitButton<FormValues = any>({
 
   const { errors, setErrors, touched, setTouched } = useFormikContext<FormValues>();
 
-  const hasError = Object.keys(touched).length > 0 && Object.keys(errors).length > 0;
+  const hasError = Object.keys(errors).length > 0;
   const firstError = `${Object.values(errors)[0]}` || 'Unknown error';
 
   const color = hasError ? 'red' : 'accent';

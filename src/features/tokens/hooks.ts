@@ -1,5 +1,9 @@
 import { IToken, Token, WarpCore } from '@hyperlane-xyz/sdk';
-import { useAccountForChain, useActiveChains, useWatchAsset } from '@hyperlane-xyz/widgets';
+import {
+  useAccountForChain,
+  useActiveChains,
+  useWatchAsset,
+} from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import { useMutation } from '@tanstack/react-query';
 
 import { ADD_ASSET_SUPPORTED_PROTOCOLS, WARP_QUERY_PARAMS } from '../../consts/args';

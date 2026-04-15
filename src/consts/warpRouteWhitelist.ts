@@ -51,7 +51,6 @@ export const warpRouteWhitelist: Array<string> | null = [
   'USDS/ethereum-igra',
 
   // USDT routes
-  'USDT/eclipsemainnet-ethereum-solanamainnet',
   'USDT/ethereum-hyperevm',
   'USDT/ethereum-inevm',
   'USDT/ethereum-igra',
@@ -395,6 +394,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   // First Party Warp Routes
   'ETH/viction',
   'USDC/eclipsemainnet',
+  'USDT/eclipsemainnet',
 
   // Aleo warp routes
   'ALEO/aleo',

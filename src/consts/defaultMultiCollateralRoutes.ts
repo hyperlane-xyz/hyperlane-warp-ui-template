@@ -14,6 +14,8 @@ export const defaultMultiCollateralRoutes: DefaultMultiCollateralRoutes | undefi
     '0xaf88d065e77c8cC2239327C5EDb3A432268e5831': '0xAd4350Ee0f9f5b85BaB115425426086Ae8384ebb',
     // ETH
     native: '0xbcDAA686CD93188527A6020ba3D75f926f9e3c92',
+    //USDT
+    '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9': '0x42B794FbF2Ae97d7E9001e21D36B0A5595B51B11',
   },
   avalanche: {
     // USDC:
@@ -25,11 +27,17 @@ export const defaultMultiCollateralRoutes: DefaultMultiCollateralRoutes | undefi
     // ETH
     native: '0xD3b9dDaC349E808B07845e01bae3Bf3464FB45b3',
   },
+  bsc: {
+    //USDT
+    '0x55d398326f99059fF775485246999027B3197955': '0xc13d466B9E196AfdE472856923E857cc298EDf1b',
+  },
   ethereum: {
     // USDC
     '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48': '0xe1De9910fe71cC216490AC7FCF019e13a34481D7',
     // ETH
     native: '0x7DCA030594C6695fc24b874917d0beAA38715639',
+    //USDT
+    '0xdac17f958d2ee523a2206206994597c13d831ec7': '0x647C621CEb36853Ef6A907E397Adf18568E70543',
   },
   hyperevm: {
     // USDC
@@ -53,6 +61,10 @@ export const defaultMultiCollateralRoutes: DefaultMultiCollateralRoutes | undefi
     // ETH
     native: '0xEF096995d7C4FE68abF9C96042521A61bEdd596D',
   },
+  plasma: {
+    //USDT
+    '0xb8ce59fc3717ada4c02eadf9682a9e934f625ebb': '0xa119087116aDC61ade063105644795cb7BC0009D',
+  },
   polygon: {
     // USDC
     '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359': '0xCb9F833f4d6D9Bb9767CDb25c487DA54D67731D6',
@@ -60,6 +72,11 @@ export const defaultMultiCollateralRoutes: DefaultMultiCollateralRoutes | undefi
   solanamainnet: {
     // USDC
     EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v: '3EpVCPUgyjq2MfGeCttyey6bs5zya5wjYZ2BE6yDg6bm',
+    // USDT
+    Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB: 'Bk79wMjvpPCh5iQcCEjPWFcG1V2TfgdwaBsWBEYFYSNU',
+  },
+  tron: {
+    '0xa614f803b6fd780986a42c78ec9c7f77e6ded13c': '0xbf8078818627110fD05827Ca0aa9E4518d3421ec',
   },
   unichain: {
     // USDC

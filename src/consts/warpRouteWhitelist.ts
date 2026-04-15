@@ -394,7 +394,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // First Party Warp Routes
   'ETH/viction',
-  'USDC/eclipsemainnet',
+  // 'USDC/eclipsemainnet',
 
   // Aleo warp routes
   'ALEO/aleo',

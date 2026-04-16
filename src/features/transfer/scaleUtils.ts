@@ -1,5 +1,5 @@
 import type { ScaleInput } from '@hyperlane-xyz/sdk';
-import { normalizeScale, scalesEqual } from '@hyperlane-xyz/sdk';
+import { localAmountFromMessage, messageAmountFromLocal, scalesEqual } from '@hyperlane-xyz/sdk';
 import { fromWei, normalizeAddress, toWei } from '@hyperlane-xyz/utils';
 
 import { logger } from '../../utils/logger';
@@ -27,10 +27,8 @@ export function computeDestAmount(
 
   try {
     const originWei = BigInt(toWei(amount, originToken.decimals));
-    const originScale = normalizeScale(originToken.scale);
-    const messageAmount = (originWei * originScale.numerator) / originScale.denominator;
-    const destScale = normalizeScale(destToken.scale);
-    const destWei = (messageAmount * destScale.denominator) / destScale.numerator;
+    const messageAmount = messageAmountFromLocal(originWei, originToken.scale);
+    const destWei = localAmountFromMessage(messageAmount, destToken.scale);
     return fromWei(destWei.toString(), destToken.decimals);
   } catch (e) {
     logger.error('Failed to compute dest amount', e);
@@ -51,8 +49,7 @@ export function formatMessageAmount(
 ): string {
   if (token.scale) {
     const messageAmount = BigInt(rawAmount);
-    const scale = normalizeScale(token.scale);
-    const localAmount = (messageAmount * scale.denominator) / scale.numerator;
+    const localAmount = localAmountFromMessage(messageAmount, token.scale);
     return fromWei(localAmount.toString(), token.decimals);
   }
   const normalizedAddr = token.addressOrDenom ? normalizeAddress(token.addressOrDenom) : '';

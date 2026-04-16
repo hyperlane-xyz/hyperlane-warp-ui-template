@@ -3,7 +3,7 @@ import { localAmountFromMessage, messageAmountFromLocal, scalesEqual } from '@hy
 import { fromWei, normalizeAddress, toWei } from '@hyperlane-xyz/utils';
 
 import { logger } from '../../utils/logger';
-import type { RouterAddressInfo } from '../store';
+import type { RouterAddressInfo } from '../routerAddresses';
 
 export interface ScaledToken {
   decimals: number;

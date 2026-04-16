@@ -129,12 +129,14 @@ export async function assembleWarpCoreConfig(
   const storeOverrideTokens = storeOverrides.map((c) => c.tokens).flat();
   const storeOverrideOptions = storeOverrides.map((c) => c.options).flat();
 
+  // Type assertion needed: Zod's z.infer widens {numerator: bigint} to
+  // {numerator: string | bigint} when tokens are spread across arrays.
   const combinedTokens = [
     ...filteredRegistryTokens,
     ...tsConfig.tokens,
     ...yamlConfig.tokens,
     ...storeOverrideTokens,
-  ];
+  ] as NullableAddressWarpCoreToken[];
   const tokens = filterUnconnectedToken(dedupeTokens(combinedTokens));
 
   const combinedOptions = [

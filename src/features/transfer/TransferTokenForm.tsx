@@ -1,4 +1,3 @@
-import { normalizeScale, scalesEqual } from '@hyperlane-xyz/sdk';
 import type { MultiProviderAdapter as MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProviderAdapter';
 import type { IToken } from '@hyperlane-xyz/sdk/token/IToken';
 import type { Token } from '@hyperlane-xyz/sdk/token/Token';
@@ -74,6 +73,7 @@ import { getInterchainQuote, getTotalFee, getTransferToken } from './fees';
 import { FeeSectionButton } from './FeeSectionButton';
 import { useFetchMaxAmount } from './maxAmount';
 import { RecipientConfirmationModal } from './RecipientConfirmationModal';
+import { computeDestAmount } from './scaleUtils';
 import { TransferSection } from './TransferSection';
 import { TransferFormValues } from './types';
 import { useRecipientBalanceWatcher } from './useBalanceWatcher';
@@ -698,24 +698,9 @@ function ReviewDetails({
   const isRouteSupported = useIsRouteSupported();
 
   const scaledAmount = useMemo(() => {
-    if (!originToken?.scale || !destinationToken?.scale) return null;
-    if (!isReview || scalesEqual(originToken.scale, destinationToken.scale)) return null;
-
-    const amountWei = toWei(amount, originToken.decimals);
-    const precisionFactor = 100000;
-    const fromScale = normalizeScale(originToken.scale);
-    const toScale = normalizeScale(destinationToken.scale);
-
-    const convertedAmount =
-      (BigInt(amountWei) * fromScale.numerator * toScale.denominator * BigInt(precisionFactor)) /
-      (fromScale.denominator * toScale.numerator);
-    const value = convertedAmount / BigInt(precisionFactor);
-
-    return {
-      value: fromWei(value.toString(), originToken.decimals),
-      originScale: originToken.scale,
-      destinationScale: destinationToken.scale,
-    };
+    const value = computeDestAmount(amount, originToken, destinationToken);
+    if (!isReview || !value) return null;
+    return { value };
   }, [amount, originToken, destinationToken, isReview]);
 
   const amountWei = isNft ? amount.toString() : toWei(amount, originToken?.decimals);
@@ -816,7 +801,7 @@ function ReviewDetails({
                   {scaledAmount && (
                     <p className="flex">
                       <span className="min-w-[7.5rem]">Received Amount</span>
-                      <span>{`${scaledAmount.value} ${originTokenSymbol} (scaled from ${scaledAmount.originScale} to ${scaledAmount.destinationScale})`}</span>
+                      <span>{`${scaledAmount.value} ${destinationToken?.symbol || originTokenSymbol}`}</span>
                     </p>
                   )}
                   {fees?.localQuote && fees.localQuote.amount > 0n && (

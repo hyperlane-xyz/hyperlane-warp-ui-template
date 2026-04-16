@@ -29,6 +29,7 @@ import { useOriginFinality } from '../messages/useOriginFinality';
 import { useStore } from '../store';
 import { tryFindTokenInTokens, useRouteTokens } from '../tokens/hooks';
 import { TokenChainIcon } from '../tokens/TokenChainIcon';
+import { computeDestAmount } from './scaleUtils';
 import { TransferContext, TransferStatus } from './types';
 import {
   estimateDeliverySeconds,
@@ -143,6 +144,10 @@ export function TransfersDetailsModal({
   );
 
   const explorerLink = getHypExplorerLink(multiProvider, origin, msgId);
+  const destAmount = useMemo(
+    () => computeDestAmount(amount, token, destToken) ?? amount,
+    [amount, token, destToken],
+  );
 
   // ETA: only show when confirmed on origin but not yet delivered
   const showEta = currentStatus === TransferStatus.ConfirmedTransfer && !isDelivered && !isFailed;
@@ -266,7 +271,7 @@ export function TransfersDetailsModal({
               {destToken && (
                 <>
                   <Image className="mx-2" src={ArrowRightIcon} width={10} height={10} alt="" />
-                  <span>{amount}</span>
+                  <span>{destAmount}</span>
                   <span className="ml-1">{destToken.symbol}</span>
                 </>
               )}

@@ -39,7 +39,7 @@ export function messageToTransferContext(
   let formattedAmount = '';
   const token = tryFindTokenInTokens(tokens, originChain, msg.sender);
   if (msg.warpTransfer?.amount && token) {
-    const normalizedSender = normalizeAddress(msg.sender);
+    const normalizedSender = token ? normalizeAddress(msg.sender, token.protocol) : msg.sender;
     const routerInfo = routerAddressesByChainMap[originChain]?.[normalizedSender];
     const wireDecimals = routerInfo?.wireDecimals ?? token.decimals;
     try {

@@ -1,5 +1,6 @@
 import type { ScaleInput } from '@hyperlane-xyz/sdk';
 import { localAmountFromMessage, messageAmountFromLocal, scalesEqual } from '@hyperlane-xyz/sdk';
+import type { ProtocolType } from '@hyperlane-xyz/utils';
 import { fromWei, normalizeAddress, toWei } from '@hyperlane-xyz/utils';
 
 import { logger } from '../../utils/logger';
@@ -43,7 +44,7 @@ export function computeDestAmount(
  */
 export function formatMessageAmount(
   rawAmount: string,
-  token: ScaledToken & { addressOrDenom?: string },
+  token: ScaledToken & { addressOrDenom?: string; protocol?: ProtocolType },
   routerAddressesByChainMap: Record<string, Record<string, RouterAddressInfo>>,
   chainName: string,
 ): string {
@@ -52,7 +53,9 @@ export function formatMessageAmount(
     const localAmount = localAmountFromMessage(messageAmount, token.scale);
     return fromWei(localAmount.toString(), token.decimals);
   }
-  const normalizedAddr = token.addressOrDenom ? normalizeAddress(token.addressOrDenom) : '';
+  const normalizedAddr = token.addressOrDenom
+    ? normalizeAddress(token.addressOrDenom, token.protocol)
+    : '';
   const routerInfo = routerAddressesByChainMap[chainName]?.[normalizedAddr];
   const wireDecimals = routerInfo?.wireDecimals ?? token.decimals;
   return fromWei(rawAmount, wireDecimals);

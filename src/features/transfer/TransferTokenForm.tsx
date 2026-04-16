@@ -932,7 +932,11 @@ async function validateForm(
 
     const destination = destinationToken.chainName;
 
-    if (routerAddressesByChainMap[destination]?.[normalizeAddress(recipient)]) {
+    if (
+      routerAddressesByChainMap[destination]?.[
+        normalizeAddress(recipient, destinationToken.protocol)
+      ]
+    ) {
       return [{ recipient: 'Warp Route address is not valid as recipient' }, null];
     }
 

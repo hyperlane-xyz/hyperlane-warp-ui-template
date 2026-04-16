@@ -25,6 +25,7 @@ import { getChainDisplayName } from '../chains/utils';
 import { AppState, useStore } from '../store';
 import { getTokenByKey, useWarpCore } from '../tokens/hooks';
 import { findConnectedDestinationToken } from '../tokens/utils';
+import { submitToRelayApi } from './relayApi';
 import { TransferContext, TransferFormValues, TransferStatus } from './types';
 import { tryGetMsgIdFromTransferReceipt } from './utils';
 
@@ -240,6 +241,10 @@ async function executeTransfer({
       originBlockNumber,
       msgId,
     });
+
+    // Submit to relay API for fast processing. Fire-and-forget: never blocks or fails the transfer.
+    // TODO: restrict to CCTP messages only once testing is complete.
+    if (originTxHash) submitToRelayApi(origin, originTxHash);
 
     // track event after tx submission
     const originChainId = warpCore.multiProvider.getChainId(origin);

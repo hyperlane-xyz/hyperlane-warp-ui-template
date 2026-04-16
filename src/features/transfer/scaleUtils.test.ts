@@ -53,6 +53,12 @@ describe('computeDestAmount', () => {
     expect(computeDestAmount('1', origin, dest)).toBe('1');
   });
 
+  test('computes dest amount with bigint scale values', () => {
+    const origin = { decimals: 18, scale: { numerator: 1n, denominator: 1_000_000_000_000n } };
+    const dest = { decimals: 6 };
+    expect(computeDestAmount('1', origin, dest)).toBe('1');
+  });
+
   test('handles fractional amounts', () => {
     const origin = { decimals: 18, scale: 10 };
     const dest = { decimals: 18, scale: 1 };
@@ -72,6 +78,14 @@ describe('formatMessageAmount', () => {
       scale: { numerator: 1, denominator: 1_000_000_000_000 },
     };
     expect(formatMessageAmount('1000000', token, emptyRouterMap, 'bsc')).toBe('1');
+  });
+
+  test('converts message amount using numeric scale (VRA-style)', () => {
+    // VRA: ETH scale=1, BSC scale=10
+    // Message amount 10e18 (10 VRA in message space with scale=10)
+    // Local = 10e18 / 10 = 1e18 → "1" in 18 decimals
+    const token = { decimals: 18, scale: 10 };
+    expect(formatMessageAmount('10000000000000000000', token, {}, 'bsc')).toBe('1');
   });
 
   test('falls back to wireDecimals for tokens without scale', () => {

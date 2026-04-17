@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { APP_NAME } from '../../src/consts/app';
 import { config } from '../../src/consts/config';
+import { getDestinationTokenButton, getOriginTokenButton } from '../helpers/locators';
 
 test.describe('Page Load - Transfer Form', () => {
   test('should display the transfer form on page load', async ({ page }) => {
@@ -17,11 +18,13 @@ test.describe('Page Load - Transfer Form', () => {
     // Connect wallet button visible
     await expect(page.getByRole('button', { name: 'Connect wallet' }).first()).toBeVisible();
 
-    // Send section: default origin token
+    // Send section: default origin token (only assert when configured; otherwise the app
+    // falls back to featuredTokens / first routable token — covered elsewhere)
+    const originButton = getOriginTokenButton(page);
+    await expect(originButton).toBeVisible();
     if (config.defaultOriginToken) {
       const [originChain, originSymbol] = config.defaultOriginToken.split('-');
-      const originButton = page.getByRole('button', { name: new RegExp(originSymbol, 'i') }).first();
-      await expect(originButton).toBeVisible();
+      await expect(originButton).toContainText(originSymbol);
       await expect(originButton).toContainText(originChain, { ignoreCase: true });
     }
 
@@ -39,10 +42,11 @@ test.describe('Page Load - Transfer Form', () => {
     await expect(page.getByText('Balance: 0.00', { exact: true })).toBeVisible();
 
     // Receive section: default destination token
+    const destButton = getDestinationTokenButton(page);
+    await expect(destButton).toBeVisible();
     if (config.defaultDestinationToken) {
       const [destChain, destSymbol] = config.defaultDestinationToken.split('-');
-      const destButton = page.getByRole('button', { name: new RegExp(destSymbol, 'i') }).last();
-      await expect(destButton).toBeVisible();
+      await expect(destButton).toContainText(destSymbol);
       await expect(destButton).toContainText(destChain, { ignoreCase: true });
     }
     await expect(page.getByText('Remote Balance: 0.00')).toBeVisible();

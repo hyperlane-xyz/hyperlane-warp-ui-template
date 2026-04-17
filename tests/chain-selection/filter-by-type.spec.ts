@@ -6,6 +6,12 @@ import { getOriginTokenButton } from '../helpers/locators';
 // Chain rows in the ChainFilterPanel use the .token-picker-chain-row class.
 const defaultOriginChain = config.defaultOriginToken?.split('-')[0];
 
+const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+// Anchor to start and follow with word boundary so short names (e.g. "eth") don't match "ethereum"
+const chainRowRegex = defaultOriginChain
+  ? new RegExp(`^${escapeRegex(defaultOriginChain)}\\b`, 'i')
+  : null;
+
 test.describe('Chain Selection - Filter by Type', () => {
   test('should filter chains by Testnet type', async ({ page }) => {
     test.skip(!defaultOriginChain, 'No defaultOriginToken configured');
@@ -19,7 +25,7 @@ test.describe('Chain Selection - Filter by Type', () => {
 
     const defaultChainRow = page
       .locator('.token-picker-chain-row')
-      .filter({ hasText: new RegExp(defaultOriginChain!, 'i') });
+      .filter({ hasText: chainRowRegex! });
 
     // Baseline: default origin (mainnet) chain row is visible before filtering
     await expect(defaultChainRow.first()).toBeVisible();
@@ -56,7 +62,7 @@ test.describe('Chain Selection - Filter by Type', () => {
     await expect(
       page
         .locator('.token-picker-chain-row')
-        .filter({ hasText: new RegExp(defaultOriginChain!, 'i') })
+        .filter({ hasText: chainRowRegex! })
         .first(),
     ).toBeVisible();
   });

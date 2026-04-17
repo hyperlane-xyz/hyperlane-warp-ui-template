@@ -146,7 +146,13 @@ const nextConfig = {
       },
     },
     resolveAlias: {
-      pino: './src/utils/pino-noop.js',
+      // Only shim pino on SSR (Node) where its transport/worker resolution breaks
+      // under Turbopack. In the browser use the real pino browser build, which
+      // exports `levels` that @walletconnect/logger depends on.
+      pino: {
+        browser: 'pino/browser.js',
+        default: './src/utils/pino-noop.js',
+      },
     },
   },
 

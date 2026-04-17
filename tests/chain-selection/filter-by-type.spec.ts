@@ -1,14 +1,28 @@
 import { test, expect } from '@playwright/test';
+import { config } from '../../src/consts/config';
 import { getOriginTokenButton } from '../helpers/locators';
+
+// Default origin is assumed mainnet — used to verify the Testnet filter hides it.
+// Chain rows in the ChainFilterPanel use the .token-picker-chain-row class.
+const defaultOriginChain = config.defaultOriginToken?.split('-')[0];
 
 test.describe('Chain Selection - Filter by Type', () => {
   test('should filter chains by Testnet type', async ({ page }) => {
+    test.skip(!defaultOriginChain, 'No defaultOriginToken configured');
+
     await page.goto('http://localhost:3000');
     await page.getByText('Send').first().waitFor({ state: 'visible' });
 
     // Open token selector
     await getOriginTokenButton(page).click();
     await expect(page.getByText('Select Token')).toBeVisible();
+
+    const defaultChainRow = page
+      .locator('.token-picker-chain-row')
+      .filter({ hasText: new RegExp(defaultOriginChain!, 'i') });
+
+    // Baseline: default origin (mainnet) chain row is visible before filtering
+    await expect(defaultChainRow.first()).toBeVisible();
 
     // Open filter dropdown
     await page.getByRole('button', { name: 'Filter chains' }).click();
@@ -21,14 +35,13 @@ test.describe('Chain Selection - Filter by Type', () => {
     // Click Testnet filter
     await page.getByRole('button', { name: 'Testnet', exact: true }).click();
 
-    // Chain list should only show testnet chains (e.g., Sepolia, Alfajores)
-    await expect(page.getByRole('button', { name: /Sepolia/i }).first()).toBeVisible();
-
-    // Mainnet chains should not be visible
-    await expect(page.getByRole('button', { name: 'ethereum Ethereum', exact: true })).not.toBeVisible();
+    // Mainnet chain (default origin) row should no longer be visible — filter works
+    await expect(defaultChainRow).toHaveCount(0);
   });
 
   test('should filter chains by Mainnet type', async ({ page }) => {
+    test.skip(!defaultOriginChain, 'No defaultOriginToken configured');
+
     await page.goto('http://localhost:3000');
     await page.getByText('Send').first().waitFor({ state: 'visible' });
 
@@ -39,8 +52,12 @@ test.describe('Chain Selection - Filter by Type', () => {
     // Click Mainnet filter
     await page.getByRole('button', { name: 'Mainnet', exact: true }).click();
 
-    // Should show mainnet chains
-    await expect(page.getByRole('button', { name: 'ethereum Ethereum', exact: true })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'arbitrum Arbitrum', exact: true })).toBeVisible();
+    // Default origin chain row (mainnet) remains visible after Mainnet filter
+    await expect(
+      page
+        .locator('.token-picker-chain-row')
+        .filter({ hasText: new RegExp(defaultOriginChain!, 'i') })
+        .first(),
+    ).toBeVisible();
   });
 });

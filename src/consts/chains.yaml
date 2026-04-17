@@ -3,18 +3,109 @@
 # Chains already in the SDK need not be included here unless you want to override some fields
 # Schema here: https://github.com/hyperlane-xyz/hyperlane-monorepo/blob/main/typescript/sdk/src/metadata/chainMetadataTypes.ts
 ---
-# Example using local anvil chain:
-# anvil1:
-#   chainId: 31337
-#   domainId: 31337
-#   name: anvil1
-#   protocol: ethereum
-#   rpcUrls:
-#     - http: http://127.0.0.1:8545
-# anvil2:
-#   chainId: 31338
-#   domainId: 31338
-#   name: anvil2
-#   protocol: ethereum
-#   rpcUrls:
-#     - http: http://127.0.0.1:8555
+arbitrum:
+  blockExplorers:
+    - apiKey: GP69JEAP2W7YFJT9ZJTEPGQT6Y6KMW44ZN
+      apiUrl: https://api.etherscan.io/v2/api?chainid=42161
+      family: etherscan
+      name: Arbiscan
+      url: https://arbiscan.io
+  blocks:
+    confirmations: 1
+    estimateBlockTime: 0.25
+    reorgPeriod: 5
+  chainId: 42161
+  deployer:
+    name: Abacus Works
+    url: https://www.hyperlane.xyz
+  displayName: Arbitrum
+  domainId: 42161
+  gasCurrencyCoinGeckoId: ethereum
+  gnosisSafeTransactionServiceUrl: https://safe-transaction-arbitrum.safe.global/
+  index:
+    # Arbitrum Nitro flavored chains record the L1 block number they were deployed at,
+    # not the L2 block number. See https://docs.arbitrum.io/build-decentralized-apps/arbitrum-vs-ethereum/block-numbers-and-time#ethereum-block-numbers-within-arbitrum.
+    # This is the block that the Mailbox was deployed at:
+    # https://arbiscan.io/tx/0x946b241bfa1465d8de7247c155a533d2ee9437a2763a0399f1ca458f13b5efa5
+    from: 143649797
+  name: arbitrum
+  nativeToken:
+    decimals: 18
+    name: Ether
+    symbol: ETH
+  protocol: ethereum
+  rpcUrls:
+    - http: https://arb1.arbitrum.io/rpc
+  technicalStack: arbitrumnitro
+base:
+  blockExplorers:
+    - apiKey: GP69JEAP2W7YFJT9ZJTEPGQT6Y6KMW44ZN
+      apiUrl: https://api.etherscan.io/v2/api?chainid=8453
+      family: etherscan
+      name: BaseScan
+      url: https://basescan.org
+    - apiUrl: https://api.routescan.io/v2/network/mainnet/evm/8453/etherscan/api
+      family: routescan
+      name: Base Explorer
+      url: https://base.thesuperscan.io
+    - apiUrl: https://base.blockscout.com/api
+      family: blockscout
+      name: Base Mainnet explorer
+      url: https://base.blockscout.com
+  blocks:
+    confirmations: 3
+    estimateBlockTime: 2
+    reorgPeriod: 10
+  chainId: 8453
+  deployer:
+    name: Abacus Works
+    url: https://www.hyperlane.xyz
+  displayName: Base
+  domainId: 8453
+  gasCurrencyCoinGeckoId: ethereum
+  gnosisSafeTransactionServiceUrl: https://safe-transaction-base.safe.global/
+  name: base
+  nativeToken:
+    decimals: 18
+    name: Ether
+    symbol: ETH
+  protocol: ethereum
+  rpcUrls:
+    - http: https://base.drpc.org
+  technicalStack: opstack
+ethereum:
+  blockExplorers:
+    - apiKey: GP69JEAP2W7YFJT9ZJTEPGQT6Y6KMW44ZN
+      apiUrl: https://api.etherscan.io/v2/api?chainid=1
+      family: etherscan
+      name: Etherscan
+      url: https://etherscan.io
+    - apiUrl: https://eth.blockscout.com/api
+      family: blockscout
+      name: Blockscout
+      url: https://blockscout.com/eth/mainnet
+    - apiUrl: https://api.routescan.io/v2/network/mainnet/evm/1/etherscan/api
+      family: routescan
+      name: Ethereum Explorer
+      url: https://1.routescan.io
+  blocks:
+    confirmations: 2
+    estimateBlockTime: 13
+    reorgPeriod: 15
+  chainId: 1
+  deployer:
+    name: Abacus Works
+    url: https://www.hyperlane.xyz
+  displayName: Ethereum
+  domainId: 1
+  gasCurrencyCoinGeckoId: ethereum
+  gnosisSafeTransactionServiceUrl: https://safe-transaction-mainnet.safe.global/
+  name: ethereum
+  nativeToken:
+    decimals: 18
+    name: Ether
+    symbol: ETH
+  protocol: ethereum
+  rpcUrls:
+    - http: https://ethereum.publicnode.com
+  technicalStack: other

@@ -18,10 +18,12 @@ export async function submitToRelayApi(originChain: string, txHash: string): Pro
   if (!config.relayApiUrl) return;
 
   try {
+    const payload = { origin_chain: originChain, tx_hash: txHash };
+    console.log('[RelayAPI] Requesting relay', { url: `${config.relayApiUrl}/relay`, payload });
     const response = await fetch(`${config.relayApiUrl}/relay`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ origin_chain: originChain, tx_hash: txHash }),
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {

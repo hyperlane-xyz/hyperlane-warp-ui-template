@@ -32,7 +32,11 @@ const WalletProviders = dynamic(
   {
     loading: () => (
       <div className="warp-init-gate flex h-screen items-center justify-center">
-        <SpinnerIcon width={80} height={80} color={Color.primary['500']} />
+        <SpinnerIcon
+          width={80}
+          height={80}
+          color={`var(--embed-accent, ${Color.primary['500']})`}
+        />
       </div>
     ),
     ssr: false,

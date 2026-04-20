@@ -10,6 +10,7 @@ import type { ChainMap } from '@hyperlane-xyz/sdk/types';
 import { type KnownProtocolType, ProtocolType } from '@hyperlane-xyz/utils';
 
 type RuntimeMultiProvider = MultiProviderAdapter<{ mailbox?: string }>;
+type TronBuildersModule = typeof import('@hyperlane-xyz/sdk/providers/builders/tron');
 
 type SdkRuntime = {
   createMultiProvider: (
@@ -34,15 +35,20 @@ export function getSdkRuntime(protocols: KnownProtocolType[]): Promise<SdkRuntim
 }
 
 async function createSdkRuntime(protocols: KnownProtocolType[]): Promise<SdkRuntime> {
-  const [{ MultiProviderAdapter }, { WarpCore }, providerBuilders] = await Promise.all([
-    import('@hyperlane-xyz/sdk/providers/MultiProviderAdapter'),
-    import('@hyperlane-xyz/sdk/warp/WarpCore'),
-    getProviderBuilders(protocols),
-  ]);
+  const tronBuildersModulePromise = protocols.includes(ProtocolType.Tron)
+    ? import('@hyperlane-xyz/sdk/providers/builders/tron')
+    : Promise.resolve(undefined);
+  const [{ MultiProviderAdapter }, { WarpCore }, tronBuildersModule, providerBuilders] =
+    await Promise.all([
+      import('@hyperlane-xyz/sdk/providers/MultiProviderAdapter'),
+      import('@hyperlane-xyz/sdk/warp/WarpCore'),
+      tronBuildersModulePromise,
+      tronBuildersModulePromise.then((tronBuildersModule) =>
+        getProviderBuilders(protocols, tronBuildersModule),
+      ),
+    ]);
 
-  const defaultTronEthersProviderBuilder = protocols.includes(ProtocolType.Tron)
-    ? (await import('@hyperlane-xyz/sdk/providers/builders/tron')).defaultTronEthersProviderBuilder
-    : undefined;
+  const defaultTronEthersProviderBuilder = tronBuildersModule?.defaultTronEthersProviderBuilder;
 
   // Keep this class scoped to the lazy runtime loader. Moving it to module scope would
   // require a top-level value import of MultiProviderAdapter and defeat the split.
@@ -79,6 +85,7 @@ async function createSdkRuntime(protocols: KnownProtocolType[]): Promise<SdkRunt
 
 async function getProviderBuilders(
   protocols: KnownProtocolType[],
+  tronBuildersModule?: TronBuildersModule,
 ): Promise<Partial<ProviderBuilderMap>> {
   const uniqueProtocols = new Set(protocols);
   const providerBuilders: Partial<ProviderBuilderMap> = {};
@@ -129,7 +136,7 @@ async function getProviderBuilders(
 
   if (uniqueProtocols.has(ProtocolType.Tron)) {
     const { defaultTronProviderBuilder } =
-      await import('@hyperlane-xyz/sdk/providers/builders/tron');
+      tronBuildersModule || (await import('@hyperlane-xyz/sdk/providers/builders/tron'));
     providerBuilders[ProviderType.Tron] = defaultTronProviderBuilder;
   }
 

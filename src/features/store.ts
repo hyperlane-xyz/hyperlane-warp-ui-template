@@ -94,15 +94,19 @@ async function refreshWarpContext(
   set: (partial: Partial<AppState>) => void,
   get: () => AppState,
 ) {
-  const { initWarpContext } = await loadWarpContextModule();
-  const { context, loadRuntime } = await initWarpContext(nextState);
-
-  runtimeContextVersion += 1;
-  runtimeContextLoader = loadRuntime;
+  const nextVersion = runtimeContextVersion + 1;
+  runtimeContextVersion = nextVersion;
+  runtimeContextLoader = undefined;
   runtimeContextPromise = undefined;
 
+  const { initWarpContext } = await loadWarpContextModule();
+  const { context, loadRuntime } = await initWarpContext(nextState);
+  if (nextVersion !== runtimeContextVersion) return;
+  runtimeContextLoader = loadRuntime;
   set(context);
-  void loadAndSetWarpRuntime(set, get, runtimeContextVersion);
+  void loadAndSetWarpRuntime(set, get, nextVersion).catch((error) => {
+    logger.error('Failed to warm Warp runtime after context refresh', error);
+  });
 }
 
 // Keeping everything here for now as state is simple
@@ -314,9 +318,13 @@ export const useStore = create<AppState>()(
             },
             storeSetState,
             storeGetState,
-          ).then(() => {
-            logger.debug('Rehydration complete');
-          });
+          )
+            .then(() => {
+              logger.debug('Rehydration complete');
+            })
+            .catch((refreshError) => {
+              logger.error('Error refreshing Warp context during hydration', refreshError);
+            });
         };
       },
     },

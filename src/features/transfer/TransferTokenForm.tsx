@@ -111,23 +111,28 @@ export function TransferTokenForm() {
   } = useModal();
 
   const validate = async (values: TransferFormValues) => {
-    const warpCore = await ensureWarpRuntime();
-    if (!warpCore) return { amount: 'Transfer runtime is still loading' };
-    const [result, overrideToken] = await validateForm(
-      warpCore,
-      tokenMap,
-      collateralGroups,
-      values,
-      accounts,
-      routerAddressesByChainMap,
-    );
+    try {
+      const warpCore = await ensureWarpRuntime();
+      if (!warpCore) return { amount: 'Transfer runtime is still loading' };
+      const [result, overrideToken] = await validateForm(
+        warpCore,
+        tokenMap,
+        collateralGroups,
+        values,
+        accounts,
+        routerAddressesByChainMap,
+      );
 
-    trackTransactionFailedEvent(result, warpCore, values, accounts, overrideToken);
+      trackTransactionFailedEvent(result, warpCore, values, accounts, overrideToken);
 
-    // Unless this is done, the review and the transfer would contain
-    // the selected token rather than collateral with highest balance
-    setRouteTokenOverride(overrideToken);
-    return result;
+      // Unless this is done, the review and the transfer would contain
+      // the selected token rather than collateral with highest balance
+      setRouteTokenOverride(overrideToken);
+      return result;
+    } catch (error) {
+      logger.error('Failed to initialize transfer runtime during validation', error);
+      return { amount: errorToString(error) || 'Transfer runtime is still loading' };
+    }
   };
 
   const onSubmitForm = async (values: TransferFormValues) => {
@@ -505,61 +510,64 @@ function ButtonSection({
     let isMounted = true;
 
     const checkSameEVMRecipient = async (recipient: string) => {
-      if (!connectedWallet || !originToken || !destinationToken) {
-        setRecipientInfos({ showWarning: false, addressConfirmed: true });
-        return;
-      }
+      try {
+        if (!connectedWallet || !originToken || !destinationToken) {
+          setRecipientInfos({ showWarning: false, addressConfirmed: true });
+          return;
+        }
 
-      if (
-        originToken.protocol !== ProtocolType.Ethereum ||
-        destinationToken.protocol !== ProtocolType.Ethereum
-      ) {
-        setRecipientInfos({ showWarning: false, addressConfirmed: true });
-        return;
-      }
+        if (
+          originToken.protocol !== ProtocolType.Ethereum ||
+          destinationToken.protocol !== ProtocolType.Ethereum
+        ) {
+          setRecipientInfos({ showWarning: false, addressConfirmed: true });
+          return;
+        }
 
-      if (!isValidAddressEvm(recipient)) {
-        setRecipientInfos({ showWarning: false, addressConfirmed: true });
-        return;
-      }
+        if (!isValidAddressEvm(recipient)) {
+          setRecipientInfos({ showWarning: false, addressConfirmed: true });
+          return;
+        }
 
-      const runtimeWarpCore = await ensureWarpRuntime();
-      if (!isMounted) return;
-      if (!runtimeWarpCore) {
-        logger.warn(
-          'Cannot verify recipient smart-contract safety because warp runtime is unavailable',
-        );
+        const runtimeWarpCore = await ensureWarpRuntime();
+        if (!isMounted) return;
+        if (!runtimeWarpCore) {
+          logger.warn(
+            'Cannot verify recipient smart-contract safety because warp runtime is unavailable',
+          );
+          setRecipientInfos({ showWarning: false, addressConfirmed: false });
+          return;
+        }
+
+        const runtimeMultiProvider = runtimeWarpCore.multiProvider as MultiProtocolProvider;
+
+        const { isContract: isSenderSmartContract, error: senderCheckError } =
+          await isSmartContract(runtimeMultiProvider, originToken.chainName, connectedWallet);
+        if (!isMounted) return;
+
+        const { isContract: isRecipientSmartContract, error: recipientCheckError } =
+          await isSmartContract(runtimeMultiProvider, destinationToken.chainName, recipient);
+        if (!isMounted) return;
+
+        const isSelfRecipient = eqAddress(recipient, connectedWallet);
+
+        if (senderCheckError || recipientCheckError) {
+          toast.error(senderCheckError || recipientCheckError);
+          setRecipientInfos({ addressConfirmed: true, showWarning: false });
+          return;
+        }
+
+        if (isSelfRecipient && isSenderSmartContract && !isRecipientSmartContract) {
+          const msg = `The recipient address is the same as the connected wallet, but it does not exist as a smart contract on ${chainDisplayName}.`;
+          logger.warn(msg);
+          setRecipientInfos({ showWarning: true, addressConfirmed: false });
+        } else {
+          setRecipientInfos({ showWarning: false, addressConfirmed: true });
+        }
+      } catch (error) {
+        if (!isMounted) return;
+        logger.error('Failed to verify recipient smart-contract safety', error);
         setRecipientInfos({ showWarning: false, addressConfirmed: false });
-        return;
-      }
-
-      const runtimeMultiProvider = runtimeWarpCore.multiProvider as MultiProtocolProvider;
-
-      const { isContract: isSenderSmartContract, error: senderCheckError } = await isSmartContract(
-        runtimeMultiProvider,
-        originToken.chainName,
-        connectedWallet,
-      );
-      if (!isMounted) return;
-
-      const { isContract: isRecipientSmartContract, error: recipientCheckError } =
-        await isSmartContract(runtimeMultiProvider, destinationToken.chainName, recipient);
-      if (!isMounted) return;
-
-      const isSelfRecipient = eqAddress(recipient, connectedWallet);
-
-      if (senderCheckError || recipientCheckError) {
-        toast.error(senderCheckError || recipientCheckError);
-        setRecipientInfos({ addressConfirmed: true, showWarning: false });
-        return;
-      }
-
-      if (isSelfRecipient && isSenderSmartContract && !isRecipientSmartContract) {
-        const msg = `The recipient address is the same as the connected wallet, but it does not exist as a smart contract on ${chainDisplayName}.`;
-        logger.warn(msg);
-        setRecipientInfos({ showWarning: true, addressConfirmed: false });
-      } else {
-        setRecipientInfos({ showWarning: false, addressConfirmed: true });
       }
     };
     checkSameEVMRecipient(recipient);

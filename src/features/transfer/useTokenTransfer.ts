@@ -1,4 +1,5 @@
 import {
+  PredicateAttestation,
   ProviderType,
   Token,
   TypedTransactionReceipt,
@@ -173,7 +174,7 @@ async function executeTransfer({
     updateTransferStatus(transferIndex, (transferStatus = TransferStatus.CreatingTxs));
 
     // Check if Predicate attestation is needed
-    let attestation: any;
+    let attestation: PredicateAttestation | undefined;
 
     try {
       updateTransferStatus(transferIndex, (transferStatus = TransferStatus.FetchingAttestation));
@@ -186,9 +187,10 @@ async function executeTransfer({
         amount: originTokenAmount,
         destinationToken: connectedDestinationToken,
       });
-    } catch (error: any) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
       logger.error('Predicate attestation error:', error);
-      throw new Error(`Predicate attestation failed: ${error.message || 'Unknown error'}`);
+      throw new Error(`Predicate attestation failed: ${message}`);
     }
 
     const txs = await warpCore.getTransferRemoteTxs({

@@ -1,7 +1,9 @@
 import { ChainMetadata } from '@hyperlane-xyz/sdk';
 import { ChainDetailsMenu, Modal } from '@hyperlane-xyz/widgets';
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
+
 import { ModalHeader } from '../../components/layout/ModalHeader';
+import { observeDarkLogosInContainer } from '../../utils/imageBrightness';
 import { useStore } from '../store';
 
 interface Props {
@@ -31,13 +33,24 @@ export function ChainEditModal({ isOpen, close, chainName, onClickBack }: Props)
   );
 
   const displayName = metadata?.displayName ?? metadata?.name ?? chainName;
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen || !containerRef.current) return;
+    const observer = observeDarkLogosInContainer(containerRef.current);
+    return () => observer?.disconnect();
+  }, [isOpen, chainName, !!metadata]);
 
   if (!metadata) return null;
 
   return (
-    <Modal isOpen={isOpen} close={close} panelClassname="p-0 max-w-lg overflow-hidden">
+    <Modal
+      isOpen={isOpen}
+      close={close}
+      panelClassname="chain-picker-modal p-0 max-w-lg overflow-hidden"
+    >
       <ModalHeader>{`Edit ${displayName}`}</ModalHeader>
-      <div className="chain-edit-container max-h-[80vh] overflow-auto p-4">
+      <div ref={containerRef} className="chain-edit-container max-h-[80vh] overflow-auto p-4">
         <ChainDetailsMenu
           chainMetadata={metadata}
           overrideChainMetadata={overrides}

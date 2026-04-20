@@ -1,14 +1,16 @@
 import { MultiProtocolProvider, Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
 import { KnownProtocolType } from '@hyperlane-xyz/utils';
-import { AccountInfo, getAccountAddressAndPubKey } from '@hyperlane-xyz/widgets';
+import { getAccountAddressAndPubKey } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
+import { type AccountInfo } from '@hyperlane-xyz/widgets/walletIntegrations/types';
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
+
 import { defaultMultiCollateralRoutes } from '../../consts/defaultMultiCollateralRoutes';
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { isMultiCollateralLimitExceeded } from '../limits/utils';
 import { useWarpCore } from '../tokens/hooks';
-import { findRouteToken } from '../tokens/utils';
+import { findConnectedDestinationToken } from '../tokens/utils';
 import { getTransferToken } from './fees';
 
 interface FetchMaxParams {
@@ -55,22 +57,17 @@ async function fetchMaxAmount(
     );
     const recipient = formRecipient || connectedDestAddress || address;
 
-    // Find the actual warpCore token that has the route (handles deduplicated tokens)
-    const originRouteToken = findRouteToken(warpCore, originToken, destToken);
-    if (!originRouteToken) return undefined;
-
-    const resolvedDestToken = originRouteToken.getConnectionForChain(destination)?.token;
-    if (!resolvedDestToken) return undefined;
-
     const transferToken = await getTransferToken(
       warpCore,
       originToken,
-      resolvedDestToken,
+      destToken,
       balance.amount.toString(),
       recipient,
       address,
       defaultMultiCollateralRoutes,
     );
+    const transferDestinationToken = findConnectedDestinationToken(transferToken, destToken);
+    if (!transferDestinationToken) return undefined;
     const tokenAmount = new TokenAmount(balance.amount, transferToken);
     const maxAmount = await warpCore.getMaxTransferAmount({
       balance: tokenAmount,
@@ -78,11 +75,12 @@ async function fetchMaxAmount(
       sender: address,
       senderPubKey: await publicKey,
       recipient,
+      destinationToken: transferDestinationToken,
     });
 
     const multiCollateralLimit = isMultiCollateralLimitExceeded(
       maxAmount.token,
-      destination,
+      transferDestinationToken,
       maxAmount.amount.toString(),
     );
     if (multiCollateralLimit) return new TokenAmount(multiCollateralLimit, maxAmount.token);

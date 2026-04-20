@@ -1,13 +1,14 @@
+import { AccountProvider } from '@hyperlane-xyz/widgets/walletIntegrations/radix/AccountContext';
+import '@interchain-ui/react/styles';
 import {
-  AccountProvider,
   GatewayApiProvider,
   PopupProvider,
   RdtProvider,
-} from '@hyperlane-xyz/widgets';
-import '@interchain-ui/react/styles';
+} from '@hyperlane-xyz/widgets/walletIntegrations/radix/RadixProviders';
 import { GatewayApiClient } from '@radixdlt/babylon-gateway-api-sdk';
 import { RadixDappToolkit, RadixNetwork } from '@radixdlt/radix-dapp-toolkit';
 import { PropsWithChildren } from 'react';
+
 import { APP_NAME } from '../../../consts/app';
 
 export function RadixWalletContext({ children }: PropsWithChildren<unknown>) {

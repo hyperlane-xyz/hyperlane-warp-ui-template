@@ -36,8 +36,8 @@ export interface TransferContext {
   sender: Address;
   recipient: Address;
   originTxHash?: string;
-  destTxHash?: string;
+  originBlockNumber?: number;
   msgId?: string;
-  relayJobId?: string;
+  destinationTxHash?: string;
   timestamp: number;
 }

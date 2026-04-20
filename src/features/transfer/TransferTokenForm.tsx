@@ -2,7 +2,6 @@ import { Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
 import {
   KnownProtocolType,
   ProtocolType,
-  convertToScaledAmount,
   eqAddress,
   errorToString,
   fromWei,
@@ -11,19 +10,18 @@ import {
   normalizeAddress,
   toWei,
 } from '@hyperlane-xyz/utils';
+import { ChevronIcon, SpinnerIcon, useModal } from '@hyperlane-xyz/widgets';
 import {
-  AccountInfo,
-  ChevronIcon,
-  SpinnerIcon,
   getAccountAddressAndPubKey,
   useAccountAddressForChain,
   useAccounts,
-  useModal,
-} from '@hyperlane-xyz/widgets';
+} from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
+import { type AccountInfo } from '@hyperlane-xyz/widgets/walletIntegrations/types';
 import BigNumber from 'bignumber.js';
 import { Form, Formik, useFormikContext } from 'formik';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
+
 import { RecipientWarningBanner } from '../../components/banner/RecipientWarningBanner';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
 import { SolidButton } from '../../components/buttons/SolidButton';
@@ -36,12 +34,12 @@ import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
 import { updateQueryParams } from '../../utils/queryParams';
 import { trackTransactionFailedEvent } from '../analytics/utils';
-import { UsdLabel } from '../balances/UsdLabel';
 import {
   getDestinationNativeBalance,
   useDestinationBalance,
   useOriginBalance,
 } from '../balances/hooks';
+import { UsdLabel } from '../balances/UsdLabel';
 import { useFeePrices } from '../balances/useFeePrices';
 import { ChainConnectionWarning } from '../chains/ChainConnectionWarning';
 import { ChainWalletWarning } from '../chains/ChainWalletWarning';
@@ -49,8 +47,6 @@ import { useChainDisplayName, useMultiProvider } from '../chains/hooks';
 import { isMultiCollateralLimitExceeded } from '../limits/utils';
 import { useIsAccountSanctioned } from '../sanctions/hooks/useIsAccountSanctioned';
 import { RouterAddressInfo, useStore } from '../store';
-import { ImportTokenButton } from '../tokens/ImportTokenButton';
-import { TokenSelectField } from '../tokens/TokenSelectField';
 import { useIsApproveRequired } from '../tokens/approval';
 import {
   getInitialTokenKeys,
@@ -60,15 +56,18 @@ import {
   useTokens,
   useWarpCore,
 } from '../tokens/hooks';
+import { ImportTokenButton } from '../tokens/ImportTokenButton';
+import { TokenSelectField } from '../tokens/TokenSelectField';
 import { useTokenPrices } from '../tokens/useTokenPrice';
-import { checkTokenHasRoute, findRouteToken } from '../tokens/utils';
+import { checkTokenHasRoute, findConnectedDestinationToken, findRouteToken } from '../tokens/utils';
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { WalletDropdown } from '../wallet/WalletDropdown';
-import { FeeSectionButton } from './FeeSectionButton';
-import { RecipientConfirmationModal } from './RecipientConfirmationModal';
-import { TransferSection } from './TransferSection';
 import { getInterchainQuote, getTotalFee, getTransferToken } from './fees';
+import { FeeSectionButton } from './FeeSectionButton';
 import { useFetchMaxAmount } from './maxAmount';
+import { RecipientConfirmationModal } from './RecipientConfirmationModal';
+import { computeDestAmount } from './scaleUtils';
+import { TransferSection } from './TransferSection';
 import { TransferFormValues } from './types';
 import { useRecipientBalanceWatcher } from './useBalanceWatcher';
 import { useFeeQuotes } from './useFeeQuotes';
@@ -171,7 +170,7 @@ export function TransferTokenForm() {
       validateOnBlur={false}
     >
       {({ isValidating }) => (
-        <Form className="flex w-full flex-col items-stretch gap-1.5">
+        <Form className="transfer-form flex w-full flex-col items-stretch gap-1.5">
           <WarningBanners />
 
           <TransferSection label="Send">
@@ -247,12 +246,12 @@ function SwapTokensButton({ disabled }: { disabled?: boolean }) {
         type="button"
         onClick={onSwap}
         disabled={disabled}
-        className="group flex h-8 w-8 items-center justify-center rounded border border-gray-400/50 bg-white shadow-button transition-all hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+        className="swap-chains-button group flex h-8 w-8 items-center justify-center rounded border border-gray-400/50 bg-white shadow-button transition-all hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-primary-300/35 dark:bg-background/90 dark:shadow-none dark:hover:bg-primary-300/[0.18]"
       >
         <SwapIcon
           width={18}
           height={24}
-          className="transition-transform duration-300 group-hover:rotate-180 group-disabled:rotate-0"
+          className="swap-chains-icon transition-transform duration-300 group-hover:rotate-180 group-disabled:rotate-0 dark:drop-shadow-[0_0_8px_rgba(255,255,255,0.55)] dark:[&_path]:fill-white"
         />
       </button>
     </div>
@@ -296,7 +295,7 @@ function OriginTokenCard({
         <ImportTokenButton token={originToken} />
       </div>
 
-      <div className="rounded-[7px] border border-gray-400/25 bg-white p-3 shadow-input">
+      <div className="transfer-chain-field rounded-[7px] border border-gray-400/25 bg-white p-3 shadow-input dark:border-primary-300/[0.18] dark:bg-transparent dark:shadow-none">
         <TokenSelectField
           name="originTokenKey"
           selectionMode="origin"
@@ -305,20 +304,20 @@ function OriginTokenCard({
           showLabel={false}
         />
 
-        <div className="my-2.5 h-px bg-primary-50" />
+        <div className="transfer-divider my-2.5 h-px bg-primary-50 dark:bg-primary-300/[0.22]" />
 
         <div className="flex items-center justify-between gap-2">
           <TextField
             name="amount"
             placeholder="0"
-            className="w-full flex-1 border-none bg-transparent font-secondary text-xl font-normal text-gray-900 outline-none placeholder:text-gray-900"
+            className="transfer-text-input w-full flex-1 border-none bg-transparent font-secondary text-xl font-normal text-gray-900 outline-none placeholder:text-gray-900 dark:text-foreground-primary dark:placeholder:text-foreground-secondary"
             type="number"
             step="any"
             disabled={isReview}
           />
           <MaxButton balance={balance} disabled={isReview} isRouteSupported={isRouteSupported} />
         </div>
-        <div className="mt-1 flex items-center justify-between text-xs leading-[18px] text-gray-450">
+        <div className="transfer-balance mt-1 flex items-center justify-between text-xs leading-[18px] text-gray-450 dark:text-foreground-secondary">
           <span>
             {shouldShowPrice && !isPriceLoading ? (
               <>
@@ -369,7 +368,7 @@ function DestinationTokenCard({ isReview }: { isReview: boolean }) {
         <ImportTokenButton token={destinationToken} />
       </div>
 
-      <div className="rounded-[7px] border border-gray-400/25 bg-white p-3 shadow-input">
+      <div className="transfer-chain-field rounded-[7px] border border-gray-400/25 bg-white p-3 shadow-input dark:border-primary-300/[0.18] dark:bg-transparent dark:shadow-none">
         <TokenSelectField
           name="destinationTokenKey"
           selectionMode="destination"
@@ -377,7 +376,7 @@ function DestinationTokenCard({ isReview }: { isReview: boolean }) {
           showLabel={false}
         />
 
-        <div className="my-2.5 h-px bg-primary-50" />
+        <div className="transfer-divider my-2.5 h-px bg-primary-50 dark:bg-primary-300/[0.22]" />
 
         <TokenBalance label="Remote Balance" balance={balance} />
       </div>
@@ -426,7 +425,7 @@ function MaxButton({
       type="button"
       onClick={onClick}
       disabled={isDisabled}
-      className="rounded border border-gray-300 px-2 py-0.5 font-secondary text-sm text-gray-450 transition-colors hover:border-gray-400 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50"
+      className="transfer-max-btn rounded border border-gray-300 px-2 py-0.5 font-secondary text-sm text-gray-450 transition-colors hover:border-gray-400 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50 dark:border-primary-300/40 dark:text-foreground-secondary dark:hover:border-primary-300/65 dark:hover:text-foreground-primary"
     >
       {isLoading ? <SpinnerIcon className="h-4 w-4" /> : 'Max'}
     </button>
@@ -441,7 +440,7 @@ function TokenBalance({
   balance: TokenAmount | null | undefined;
 }) {
   return (
-    <span className="text-xs leading-[18px] text-gray-450">
+    <span className="text-xs leading-[18px] text-gray-450 dark:text-foreground-secondary">
       {balance ? (
         <>
           {label}: {balance.getDecimalFormattedAmount().toFixed(4)} {balance.token.symbol}
@@ -671,32 +670,15 @@ function ReviewDetails({
       ? findRouteToken(warpCore, originTokenByKey, destinationTokenByKey)
       : undefined;
   const destinationToken = destinationTokenByKey
-    ? originToken?.getConnectionForChain(destinationTokenByKey.chainName)?.token
+    ? originToken && findConnectedDestinationToken(originToken, destinationTokenByKey)
     : undefined;
   const originTokenSymbol = originToken?.symbol || '';
   const isNft = originToken?.isNft();
   const isRouteSupported = useIsRouteSupported();
 
-  const scaledAmount = useMemo(() => {
-    if (!originToken?.scale || !destinationToken?.scale) return null;
-    if (!isReview || originToken.scale === destinationToken.scale) return null;
-
-    const amountWei = toWei(amount, originToken.decimals);
-    const precisionFactor = 100000;
-
-    const convertedAmount = convertToScaledAmount({
-      amount: BigInt(amountWei),
-      fromScale: originToken.scale,
-      toScale: destinationToken.scale,
-      precisionFactor,
-    });
-    const value = convertedAmount / BigInt(precisionFactor);
-
-    return {
-      value: fromWei(value.toString(), originToken.decimals),
-      originScale: originToken.scale,
-      destinationScale: destinationToken.scale,
-    };
+  const destAmount = useMemo(() => {
+    if (!isReview) return null;
+    return computeDestAmount(amount, originToken, destinationToken);
   }, [amount, originToken, destinationToken, isReview]);
 
   const amountWei = isNft ? amount.toString() : toWei(amount, originToken?.decimals);
@@ -759,8 +741,10 @@ function ReviewDetails({
           isReview ? 'max-h-screen duration-1000 ease-in' : 'max-h-0 duration-500'
         } overflow-hidden transition-all`}
       >
-        <label className="mt-4 block pl-0.5 text-sm text-gray-600">Transactions</label>
-        <div className="mt-1.5 space-y-2 break-all rounded border border-gray-400 bg-gray-150 px-2.5 py-2 text-sm">
+        <label className="transfer-field-label mt-4 block pl-0.5 text-sm text-gray-600 dark:text-foreground-secondary">
+          Transactions
+        </label>
+        <div className="transfer-review-panel mt-1.5 space-y-2 break-all rounded border border-gray-400 bg-gray-150 px-2.5 py-2 text-sm dark:border-primary-300/25 dark:bg-background/40 dark:text-foreground-primary">
           {isLoading ? (
             <div className="flex items-center justify-center py-6">
               <SpinnerIcon className="h-5 w-5" />
@@ -770,7 +754,7 @@ function ReviewDetails({
               {isApproveRequired && (
                 <div>
                   <h4>Transaction 1: Approve Transfer</h4>
-                  <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs">
+                  <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs dark:border-primary-300/25">
                     <p>{`Router Address: ${originToken?.addressOrDenom}`}</p>
                     {originToken?.collateralAddressOrDenom && (
                       <p>{`Collateral Address: ${originToken.collateralAddressOrDenom}`}</p>
@@ -780,7 +764,7 @@ function ReviewDetails({
               )}
               <div>
                 <h4>{`Transaction${isApproveRequired ? ' 2' : ''}: Transfer Remote`}</h4>
-                <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs">
+                <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs dark:border-primary-300/25">
                   {destinationToken?.addressOrDenom && (
                     <p className="flex">
                       <span className="min-w-[7.5rem]">Remote Token</span>
@@ -792,10 +776,10 @@ function ReviewDetails({
                     <span className="min-w-[7.5rem]">{isNft ? 'Token ID' : 'Amount'}</span>
                     <span>{`${amount} ${originTokenSymbol}`}</span>
                   </p>
-                  {scaledAmount && (
+                  {destAmount && (
                     <p className="flex">
                       <span className="min-w-[7.5rem]">Received Amount</span>
-                      <span>{`${scaledAmount.value} ${originTokenSymbol} (scaled from ${scaledAmount.originScale} to ${scaledAmount.destinationScale})`}</span>
+                      <span>{`${destAmount} ${destinationToken?.symbol || ''}`}</span>
                     </p>
                   )}
                   {fees?.localQuote && fees.localQuote.amount > 0n && (
@@ -842,8 +826,8 @@ function WarningBanners() {
   const destinationToken = getTokenByKeyFromMap(tokenMap, values.destinationTokenKey);
 
   return (
-    // Max height to prevent double padding if multiple warnings are visible
-    <div className="max-h-10">
+    // Cap space to one visible banner since warning layers are absolutely positioned at the top.
+    <div className="max-h-12 overflow-hidden sm:max-h-10">
       <ChainWalletWarning origin={originToken?.chainName || ''} />
       <ChainConnectionWarning
         origin={originToken?.chainName || ''}
@@ -947,12 +931,19 @@ async function validateForm(
     );
 
     // This should not happen since we already checked the route above, but keep as safety check
-    const connection = transferToken.getConnectionForChain(destination);
-    if (!connection) {
+    const connectedDestinationToken = findConnectedDestinationToken(
+      transferToken,
+      destinationToken,
+    );
+    if (!connectedDestinationToken) {
       return [{ destinationTokenKey: 'Route is not supported' }, null];
     }
 
-    const multiCollateralLimit = isMultiCollateralLimitExceeded(token, destination, amountWei);
+    const multiCollateralLimit = isMultiCollateralLimitExceeded(
+      token,
+      connectedDestinationToken,
+      amountWei,
+    );
 
     if (multiCollateralLimit) {
       return [
@@ -970,6 +961,7 @@ async function validateForm(
       recipient,
       sender: sender || '',
       senderPubKey: await senderPubKey,
+      destinationToken: connectedDestinationToken,
     });
 
     if (!isNullish(result)) {
@@ -980,6 +972,7 @@ async function validateForm(
         destination,
         sender || '',
         recipient,
+        connectedDestinationToken,
       );
       return [enriched, null];
     }
@@ -1008,10 +1001,11 @@ const igpErrorPattern = /^Insufficient (\S+) for interchain gas$/;
 async function enrichBalanceError(
   warpCore: WarpCore,
   result: Record<string, string>,
-  originTokenAmount: TokenAmount,
+  originTokenAmount: TokenAmount<Token>,
   destination: string,
   sender: string,
   recipient: string,
+  destinationToken: Token,
 ): Promise<Record<string, string>> {
   if (!result.amount) return result;
   const igpErrorMatch = igpErrorPattern.exec(result.amount);
@@ -1023,6 +1017,7 @@ async function enrichBalanceError(
       destination,
       sender,
       recipient,
+      destinationToken,
     });
 
     // Symbol in validateTransfer message is sourced from igpQuote.token.symbol.

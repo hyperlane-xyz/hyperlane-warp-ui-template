@@ -7,10 +7,12 @@ import {
 } from '@hyperlane-xyz/utils';
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo, useState } from 'react';
+
 import { logger } from '../../utils/logger';
 import { executeGraphQLQuery } from './graphqlClient';
 import { buildMessageHistoryQuery } from './queries/build';
 import {
+  parseTimestamp,
   postgresByteaToAddress,
   postgresByteaToString,
   postgresByteaToTxHash,
@@ -56,6 +58,7 @@ export function useMessageHistory(
 
   const { data, isLoading, isFetchingNextPage, error, hasNextPage, fetchNextPage } =
     useInfiniteQuery({
+      // eslint-disable-next-line @tanstack/query/exhaustive-deps -- multiProvider is not serializable
       queryKey,
       queryFn: async ({ pageParam }): Promise<PageResult> => {
         const wallets = JSON.parse(walletKey);
@@ -196,9 +199,4 @@ function parseMessageEntry(
     logger.error('Failed to parse message entry', entry.id, err);
     return null;
   }
-}
-
-function parseTimestamp(t: string): number {
-  const asUtc = t.at(-1) === 'Z' ? t : t + 'Z';
-  return new Date(asUtc).getTime();
 }

@@ -9,6 +9,7 @@ import {
   XIcon,
 } from '@hyperlane-xyz/widgets';
 import { useCallback, useEffect, useRef, useState } from 'react';
+
 import { SearchInput } from '../../components/input/SearchInput';
 import { Color } from '../../styles/Color';
 import {
@@ -61,7 +62,7 @@ export function ChainFilterPanel({
     sortState.sortOrder !== defaultSortState.sortOrder;
 
   return (
-    <div className="flex w-full flex-col rounded-sm bg-gray-100 md:w-[282px]">
+    <div className="chain-picker-modal flex w-full flex-col rounded-md bg-gray-100 md:w-[282px]">
       <div className="relative shrink-0 px-4 py-4">
         {showBackButton && (
           <button
@@ -83,7 +84,7 @@ export function ChainFilterPanel({
       {/* Toolbar: label + filter/sort/edit icons */}
       <div className="flex items-center justify-between px-4 pb-2">
         <h3 className="font-secondary text-sm font-normal text-black">Chain Selection</h3>
-        <div className="flex items-center gap-1">
+        <div className="chain-picker-toolbar flex items-center gap-1">
           <FilterButton
             filterState={filterState}
             onChange={setFilterState}

@@ -1,9 +1,10 @@
 import type { ChainName, MultiProtocolProvider, WarpCore } from '@hyperlane-xyz/sdk';
-import { fromWei, normalizeAddress } from '@hyperlane-xyz/utils';
 import { useMemo } from 'react';
+
 import { logger } from '../../utils/logger';
 import { RouterAddressInfo } from '../store';
 import { tryFindToken } from '../tokens/hooks';
+import { formatMessageAmount } from '../transfer/scaleUtils';
 import { TransferContext, TransferStatus } from '../transfer/types';
 import { MessageStatus, MessageStub } from './types';
 
@@ -32,15 +33,17 @@ export function messageToTransferContext(
   const actualSender = msg.origin.from;
   const actualRecipient = msg.warpTransfer?.recipient || msg.recipient;
 
-  // Format amount using wire decimals from precomputed map
+  // Format amount: message-body amount → local units via scale, then human-readable
   let formattedAmount = '';
   const token = tryFindToken(warpCore, originChain, msg.sender);
   if (msg.warpTransfer?.amount && token) {
-    const normalizedSender = normalizeAddress(msg.sender);
-    const routerInfo = routerAddressesByChainMap[originChain]?.[normalizedSender];
-    const wireDecimals = routerInfo?.wireDecimals ?? token.decimals;
     try {
-      formattedAmount = fromWei(msg.warpTransfer.amount, wireDecimals);
+      formattedAmount = formatMessageAmount(
+        msg.warpTransfer.amount,
+        { ...token, addressOrDenom: msg.sender },
+        routerAddressesByChainMap,
+        originChain,
+      );
     } catch (err) {
       logger.error('Failed to format warp transfer amount', err);
     }
@@ -60,6 +63,7 @@ export function messageToTransferContext(
     msgId: msg.msgId,
     timestamp: msg.origin.timestamp,
     originTokenAddressOrDenom: msg.sender,
+    destTokenAddressOrDenom: msg.recipient,
   };
 }
 

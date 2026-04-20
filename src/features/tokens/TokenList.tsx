@@ -1,6 +1,7 @@
 import { ChainName, Token } from '@hyperlane-xyz/sdk';
 import { Tooltip, useDebounce } from '@hyperlane-xyz/widgets';
 import React, { useEffect, useMemo, useRef, useState, useTransition } from 'react';
+
 import { config } from '../../consts/config';
 import { useTokenBalances } from '../balances/hooks';
 import { formatBalance, formatUsd, getUsdValue } from '../balances/utils';
@@ -234,7 +235,7 @@ export function TokenList({
 
   if (tokens.length === 0) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center px-4 py-12 text-gray-500">
+      <div className="token-picker-empty flex flex-1 flex-col items-center justify-center px-4 py-12 text-gray-500">
         <div className="text-base font-medium">No tokens found</div>
         <div className="mt-2 text-sm">Try a different search or chain filter</div>
       </div>
@@ -244,7 +245,7 @@ export function TokenList({
   return (
     <div className="relative flex-1 overflow-hidden">
       <div ref={scrollRef} className="h-full overflow-auto">
-        <div className="sticky top-0 z-10 border-b border-primary-50 bg-white px-4 pb-2 pt-2">
+        <div className="token-picker-header sticky top-0 z-10 border-b border-primary-50 bg-white px-4 pb-2 pt-2">
           <h3 className={`${styles.base} text-sm text-black`}>Token Selection</h3>
         </div>
         <div className="py-2 md:px-3">
@@ -270,7 +271,7 @@ export function TokenList({
           })}
 
           {isLimited && (
-            <div className="mx-1 mb-3 mt-2 rounded-lg bg-blue-50 px-3 py-4 text-center">
+            <div className="token-picker-hint mx-1 mb-3 mt-2 rounded-lg bg-blue-50 px-3 py-4 text-center">
               <p className="text-sm text-blue-600">Search or select a chain to see more tokens</p>
             </div>
           )}
@@ -279,7 +280,7 @@ export function TokenList({
         </div>
       </div>
       {/* Bottom fade effect */}
-      <div className="pointer-events-none absolute bottom-0 left-0 right-0 hidden h-12 bg-gradient-to-b from-transparent to-cream-200 md:block" />
+      <div className="token-picker-fade pointer-events-none absolute bottom-0 left-0 right-0 hidden h-12 bg-gradient-to-b from-transparent to-cream-200 md:block" />
     </div>
   );
 }
@@ -325,29 +326,35 @@ const TokenButton = React.memo(function TokenButton({
   return (
     <button
       type="button"
-      className="group mb-2 flex h-[60px] w-full items-center rounded-[3px] px-3 transition-colors hover:bg-gray-100"
+      className="token-picker-row group mb-2 flex h-[60px] w-full items-center rounded-md px-3 transition-colors hover:bg-gray-100"
       onClick={() => onSelect(token)}
     >
       <TokenChainIcon token={token} size={36} />
 
       <div className="ml-3 min-w-0 flex-1 text-left">
         <div className="flex items-center gap-2">
-          <span className={`${styles.base} text-base text-black`}>{token.symbol || 'Unknown'}</span>
-          <span className="text-xs text-gray-500">{chainDisplayName}</span>
+          <span className={`token-picker-symbol ${styles.base} text-base text-black`}>
+            {token.symbol || 'Unknown'}
+          </span>
+          <span className="token-picker-chain-name text-xs text-gray-500">{chainDisplayName}</span>
         </div>
-        <div className={`${styles.base} mt-0.5 truncate text-xs text-gray-500`}>
+        <div className={`token-picker-name ${styles.base} mt-0.5 truncate text-xs text-gray-500`}>
           {token.name || 'Unknown Token'}
         </div>
       </div>
 
       <div className="ml-2 shrink-0 text-right">
         {isBalanceLoading && !primaryValue ? (
-          <div className="mb-1 ml-auto h-4 w-14 animate-pulse rounded bg-gray-100" />
+          <div className="token-picker-shimmer mb-1 ml-auto h-4 w-14 animate-pulse rounded bg-gray-100" />
         ) : primaryValue ? (
           <>
-            <div className={`${styles.base} text-sm font-medium text-black`}>{primaryValue}</div>
+            <div className={`token-picker-usd ${styles.base} text-sm font-medium text-black`}>
+              {primaryValue}
+            </div>
             {secondaryValue && (
-              <div className={`${styles.base} text-xs text-gray-400`}>{secondaryValue}</div>
+              <div className={`token-picker-meta ${styles.base} text-xs text-gray-400`}>
+                {secondaryValue}
+              </div>
             )}
           </>
         ) : null}
@@ -357,7 +364,7 @@ const TokenButton = React.memo(function TokenButton({
             <Tooltip
               content={routeTooltipMessage}
               id={`route-tooltip-${getTokenKey(token)}`}
-              tooltipClassName="max-w-[280px]"
+              tooltipClassName="token-picker-info-icon max-w-[280px]"
               onClick={(e) => e.stopPropagation()}
             />
           </div>

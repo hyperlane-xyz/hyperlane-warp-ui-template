@@ -8,6 +8,7 @@ export async function register() {
       Sentry.init({ ...sentryDefaultConfig, defaultIntegrations: false });
     }
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Failed to load Sentry instrumentation:', error);
   }
 }

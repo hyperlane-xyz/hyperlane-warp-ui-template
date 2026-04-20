@@ -1,5 +1,6 @@
 import { ChainName, Token } from '@hyperlane-xyz/sdk';
 import { useEffect, useRef } from 'react';
+
 import { SearchInput } from '../../components/input/SearchInput';
 import { ChainInfo } from '../chains/hooks';
 import { MobileChainQuickSelect } from '../chains/MobileChainQuickSelect';
@@ -43,7 +44,7 @@ export function TokenListPanel({
   }, []);
 
   return (
-    <div className="flex min-w-0 flex-1 flex-col bg-white">
+    <div className="token-picker-modal flex min-w-0 flex-1 flex-col bg-white">
       <div className="shrink-0 md:p-4">
         <SearchInput
           inputRef={inputRef}

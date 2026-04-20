@@ -6,9 +6,10 @@ import { wallets as leapWallets } from '@cosmos-kit/leap';
 import { ChainProvider } from '@cosmos-kit/react';
 import { cosmoshub } from '@hyperlane-xyz/registry';
 import { MultiProtocolProvider } from '@hyperlane-xyz/sdk';
-import { getCosmosKitChainConfigs } from '@hyperlane-xyz/widgets';
+import { getCosmosKitChainConfigs } from '@hyperlane-xyz/widgets/walletIntegrations/cosmos';
 import '@interchain-ui/react/styles';
 import { PropsWithChildren, useMemo } from 'react';
+
 import { APP_DESCRIPTION, APP_NAME, APP_URL } from '../../../consts/app';
 import { config } from '../../../consts/config';
 import { useMultiProvider } from '../../chains/hooks';

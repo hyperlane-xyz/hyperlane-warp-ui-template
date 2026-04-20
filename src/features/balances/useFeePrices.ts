@@ -1,7 +1,8 @@
-import { IToken, Token, WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
+import { Token, WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
 import { isNullish } from '@hyperlane-xyz/utils';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
+
 import { fetchPrices } from '../tokens/useTokenPrice';
 
 const FEE_PRICE_REFRESH_INTERVAL = 300_000; // 5 min, matches PRICE_STALE_TIME
@@ -12,7 +13,7 @@ export type FeePrices = Record<string, number>;
 // SDK fee tokens lack coinGeckoId. Resolve it by matching against warp core
 // tokens which carry coinGeckoId from config.
 function resolveCoinGeckoId(
-  feeToken: IToken,
+  feeToken: WarpCoreFeeEstimate['localQuote']['token'],
   knownTokens: Token[],
   resolvedSymbols: Record<string, string>,
 ): string | undefined {

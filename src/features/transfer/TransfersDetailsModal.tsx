@@ -1,21 +1,25 @@
 import { ProtocolType } from '@hyperlane-xyz/utils';
 import {
   CopyButton,
+  MessageStage,
   MessageStatus,
   MessageTimeline,
   Modal,
   SpinnerIcon,
-  useAccountForChain,
-  useMessageTimeline,
+  type StageTimings,
   useTimeout,
-  useWalletDetails,
   WideChevronIcon,
 } from '@hyperlane-xyz/widgets';
+import {
+  useAccountForChain,
+  useWalletDetails,
+} from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import Image from 'next/image';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
 import { ChainLogo } from '../../components/icons/ChainLogo';
-import { TokenIcon } from '../../components/icons/TokenIcon';
 import { ModalHeader } from '../../components/layout/ModalHeader';
+import ArrowRightIcon from '../../images/icons/arrow-right.svg';
 import LinkIcon from '../../images/icons/external-link-icon.svg';
 import { Color } from '../../styles/Color';
 import { formatTimestamp } from '../../utils/date';
@@ -23,14 +27,27 @@ import { getHypExplorerLink } from '../../utils/links';
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName, hasPermissionlessChain } from '../chains/utils';
+import { useMessageDeliveryStatus } from '../messages/useMessageDeliveryStatus';
+import { useOriginFinality } from '../messages/useOriginFinality';
+import { useStore } from '../store';
 import { tryFindToken, useWarpCore } from '../tokens/hooks';
+import { TokenChainIcon } from '../tokens/TokenChainIcon';
+import { computeDestAmount } from './scaleUtils';
 import { TransferContext, TransferStatus } from './types';
 import {
+  estimateDeliverySeconds,
+  formatEta,
   getIconByTransferStatus,
   getTransferStatusLabel,
   isTransferFailed,
   isTransferSent,
 } from './utils';
+
+const DEFAULT_TIMINGS: StageTimings = {
+  [MessageStage.Finalized]: null,
+  [MessageStage.Validated]: null,
+  [MessageStage.Relayed]: null,
+};
 
 export function TransfersDetailsModal({
   isOpen,
@@ -44,6 +61,7 @@ export function TransfersDetailsModal({
   const [fromUrl, setFromUrl] = useState<string>('');
   const [toUrl, setToUrl] = useState<string>('');
   const [originTxUrl, setOriginTxUrl] = useState<string>('');
+  const [destTxUrl, setDestTxUrl] = useState<string>('');
 
   const {
     status,
@@ -54,17 +72,126 @@ export function TransfersDetailsModal({
     recipient,
     originTokenAddressOrDenom,
     originTxHash,
+    destTokenAddressOrDenom,
     msgId,
     timestamp,
+    destinationTxHash: storedDestTxHash,
   } = transfer || {};
 
   const multiProvider = useMultiProvider();
   const warpCore = useWarpCore();
+  const transfers = useStore((s) => s.transfers);
+  const updateTransferStatus = useStore((s) => s.updateTransferStatus);
+
+  // Find the index of this transfer in the store (for updating status)
+  const transferIndex = useMemo(
+    () => transfers.findIndex((t) => t === transfer || (t.msgId && t.msgId === transfer?.msgId)),
+    [transfers, transfer],
+  );
 
   const isChainKnown = multiProvider.hasChain(origin);
   const account = useAccountForChain(multiProvider, isChainKnown ? origin : undefined);
   const walletDetails = useWalletDetails()[account?.protocol || ProtocolType.Ethereum];
 
+  // Query delivery status from GraphQL when modal is open for sent transfers
+  const isSent = isTransferSent(transfer?.status);
+  const isFailed = isTransferFailed(transfer?.status);
+  const shouldTrackDelivery = isSent && !isFailed && !!msgId;
+
+  const delivery = useMessageDeliveryStatus(
+    shouldTrackDelivery ? msgId : undefined,
+    isOpen,
+    multiProvider,
+  );
+
+  // Combine store + live query to avoid flicker when reopening modal
+  const isDelivered = status === TransferStatus.Delivered || delivery.isDelivered;
+
+  // Origin block number: prefer store (hot path), fall back to GraphQL (cold path after refresh)
+  const originBlockNumber = transfer?.originBlockNumber ?? delivery.originBlockHeight;
+
+  const isFinalized = useOriginFinality(
+    origin,
+    originBlockNumber,
+    isSent && !isFailed && !isDelivered && !!originBlockNumber && isOpen,
+  );
+
+  const stage = useMemo((): MessageStage => {
+    if (isDelivered) return MessageStage.Relayed;
+    if (isFinalized) return MessageStage.Finalized;
+    if (isTransferSent(transfer?.status) && transfer?.originTxHash) return MessageStage.Sent;
+    return MessageStage.Preparing;
+  }, [isDelivered, isFinalized, transfer]);
+
+  // Resolve the destination tx hash from either store or live query
+  const destinationTxHash = storedDestTxHash || delivery.destinationTxHash;
+
+  const isAccountReady = !!account?.isReady;
+  const connectorName = walletDetails.name || 'wallet';
+  const token = tryFindToken(warpCore, origin, originTokenAddressOrDenom);
+  const destToken = tryFindToken(warpCore, destination, destTokenAddressOrDenom);
+  const destAmount = computeDestAmount(amount || '', token, destToken);
+  const isPermissionlessRoute = hasPermissionlessChain(multiProvider, [destination, origin]);
+  const isFinal = isSent || isFailed;
+  const currentStatus = isDelivered ? TransferStatus.Delivered : status;
+  const statusDescription = getTransferStatusLabel(
+    currentStatus,
+    connectorName,
+    isPermissionlessRoute,
+    isAccountReady,
+  );
+  const showSignWarning = useSignIssueWarning(status);
+
+  const date = useMemo(
+    () => (timestamp ? formatTimestamp(timestamp) : formatTimestamp(new Date().getTime())),
+    [timestamp],
+  );
+
+  const explorerLink = getHypExplorerLink(multiProvider, origin, msgId);
+
+  // ETA: only show when confirmed on origin but not yet delivered
+  const showEta = currentStatus === TransferStatus.ConfirmedTransfer && !isDelivered && !isFailed;
+  const etaSeconds = useMemo(
+    () => (showEta ? estimateDeliverySeconds(origin, destination, multiProvider) : null),
+    [showEta, origin, destination, multiProvider],
+  );
+
+  // Show timeline for sent (non-failed) transfers that have an origin tx hash
+  const showTimeline = isSent && !isFailed && !!originTxHash;
+  const messageStatus = isDelivered
+    ? MessageStatus.Delivered
+    : isFailed
+      ? MessageStatus.Failing
+      : MessageStatus.Pending;
+
+  // Reset delivery tracking when viewing a different transfer
+  const hasUpdatedDelivery = useRef(false);
+  useEffect(() => {
+    hasUpdatedDelivery.current = false;
+  }, [msgId]);
+
+  // Update store when delivery is confirmed
+  useEffect(() => {
+    if (
+      delivery.isDelivered &&
+      !hasUpdatedDelivery.current &&
+      status !== TransferStatus.Delivered &&
+      transferIndex >= 0
+    ) {
+      hasUpdatedDelivery.current = true;
+      updateTransferStatus(transferIndex, TransferStatus.Delivered, {
+        destinationTxHash: delivery.destinationTxHash,
+      });
+    }
+  }, [
+    delivery.isDelivered,
+    delivery.destinationTxHash,
+    transferIndex,
+    status,
+    updateTransferStatus,
+  ]);
+
+  // Fetch explorer URLs for addresses and transactions
   useEffect(() => {
     if (!transfer) return;
     let cancelled = false;
@@ -74,9 +201,16 @@ export function TransfersDetailsModal({
         setFromUrl('');
         setToUrl('');
         setOriginTxUrl('');
+        setDestTxUrl('');
         if (originTxHash) {
           const txUrl = multiProvider.tryGetExplorerTxUrl(origin, { hash: originTxHash });
           if (txUrl && !cancelled) setOriginTxUrl(fixDoubleSlash(txUrl));
+        }
+        if (destinationTxHash) {
+          const txUrl = multiProvider.tryGetExplorerTxUrl(destination, {
+            hash: destinationTxHash,
+          });
+          if (txUrl && !cancelled) setDestTxUrl(fixDoubleSlash(txUrl));
         }
         const [fetchedFromUrl, fetchedToUrl] = await Promise.all([
           multiProvider.tryGetExplorerAddressUrl(origin, sender),
@@ -94,32 +228,19 @@ export function TransfersDetailsModal({
     return () => {
       cancelled = true;
     };
-  }, [transfer, multiProvider, origin, destination, originTxHash, sender, recipient]);
-
-  const isAccountReady = !!account?.isReady;
-  const connectorName = walletDetails.name || 'wallet';
-  const token = tryFindToken(warpCore, origin, originTokenAddressOrDenom);
-  const isPermissionlessRoute = hasPermissionlessChain(multiProvider, [destination, origin]);
-  const isSent = isTransferSent(status);
-  const isFailed = isTransferFailed(status);
-  const isFinal = isSent || isFailed;
-  const statusDescription = getTransferStatusLabel(
-    status,
-    connectorName,
-    isPermissionlessRoute,
-    isAccountReady,
-  );
-  const showSignWarning = useSignIssueWarning(status);
-
-  const date = useMemo(
-    () => (timestamp ? formatTimestamp(timestamp) : formatTimestamp(new Date().getTime())),
-    [timestamp],
-  );
-
-  const explorerLink = getHypExplorerLink(multiProvider, origin, msgId);
+  }, [
+    transfer,
+    multiProvider,
+    origin,
+    destination,
+    originTxHash,
+    destinationTxHash,
+    sender,
+    recipient,
+  ]);
 
   return (
-    <Modal isOpen={isOpen} close={onClose} panelClassname="max-w-sm">
+    <Modal isOpen={isOpen} close={onClose} panelClassname="transfer-details-modal max-w-sm">
       <ModalHeader className="h-8 shadow-accent-glow" />
       <div className="p-4">
         {isFinal && (
@@ -127,12 +248,12 @@ export function TransfersDetailsModal({
             <h2 className="text-xs font-normal text-gray-900">{date}</h2>
             <div className="flex items-center text-xs font-normal">
               {isSent ? (
-                <h3 className="text-green-50">Sent</h3>
+                <h3 className="text-green-50">{isDelivered ? 'Delivered' : 'Sent'}</h3>
               ) : (
                 <h3 className="text-red-500">Failed</h3>
               )}
               <Image
-                src={getIconByTransferStatus(status)}
+                src={getIconByTransferStatus(currentStatus)}
                 width={16}
                 height={16}
                 alt=""
@@ -144,45 +265,89 @@ export function TransfersDetailsModal({
 
         <div>
           <div className="mt-4 flex w-full items-center justify-center rounded-sm border border-gray-400/25 bg-card-gradient py-2 shadow-card">
-            <TokenIcon token={token} size={24} />
-            <div className="items ml-2 flex items-baseline font-secondary text-sm font-normal">
+            <div className="flex items-center font-secondary text-sm font-normal">
               <span>{amount}</span>
-              <span className="ml-1">{token?.symbol}</span>
+              <span className="ml-1">{token?.symbol || ''}</span>
+              {destToken && (
+                <>
+                  <Image className="mx-2" src={ArrowRightIcon} width={10} height={10} alt="" />
+                  <span>{destAmount || amount}</span>
+                  <span className="ml-1">{destToken.symbol}</span>
+                </>
+              )}
             </div>
           </div>
 
-          <div className="-mt-2 flex items-center justify-around rounded-sm border border-gray-400/25 bg-card-gradient py-5 shadow-card">
-            <div className="ml-2 flex flex-col items-center">
-              <ChainLogo chainName={origin} size={36} />
-              <span className="mt-1 text-xs font-normal tracking-wider">
+          <div className="-mt-2 grid grid-cols-[1fr_auto_1fr] items-center rounded-sm border border-gray-400/25 bg-card-gradient py-5 shadow-card">
+            <div className="flex flex-col items-center">
+              {token ? (
+                <TokenChainIcon token={token} size={36} />
+              ) : (
+                <ChainLogo chainName={origin} size={36} />
+              )}
+              <span className="mt-1 text-xs font-medium tracking-wider">{token?.symbol || ''}</span>
+              <span className="text-xxs font-normal tracking-wider text-gray-500">
                 {getChainDisplayName(multiProvider, origin, true)}
               </span>
             </div>
-            <div className="mb-6 flex sm:space-x-1.5">
+            <div className="mb-6 flex justify-center sm:space-x-1.5">
               <WideChevron />
               <WideChevron />
             </div>
-            <div className="mr-2 flex flex-col items-center">
-              <ChainLogo chainName={destination} size={36} />
-              <span className="mt-1 text-xs font-normal tracking-wider">
+            <div className="flex flex-col items-center">
+              {destToken ? (
+                <TokenChainIcon token={destToken} size={36} />
+              ) : (
+                <ChainLogo chainName={destination} size={36} />
+              )}
+              <span className="mt-1 text-xs font-medium tracking-wider">
+                {destToken?.symbol || ''}
+              </span>
+              <span className="text-xxs font-normal tracking-wider text-gray-500">
                 {getChainDisplayName(multiProvider, destination, true)}
               </span>
             </div>
           </div>
         </div>
 
+        {showTimeline && (
+          <div className="mt-4 rounded border border-gray-400/25 bg-card-gradient p-3 shadow-card">
+            <h4 className="mb-1 font-secondary text-sm text-gray-900">Status</h4>
+            <div className="flex w-full flex-col items-center justify-center [&_h4]:text-[clamp(0.625rem,0.7rem,0.75rem)]">
+              <MessageTimeline
+                status={messageStatus}
+                stage={stage}
+                timings={DEFAULT_TIMINGS}
+                timestampSent={delivery.originTimestamp}
+                hideDescriptions={true}
+                iconPosition="inline"
+                barClassName="bg-accent-gradient"
+              />
+            </div>
+            {showEta && etaSeconds && (
+              <p className="mt-2 text-center text-xs text-gray-500">
+                Est. delivery: {formatEta(etaSeconds)}
+              </p>
+            )}
+          </div>
+        )}
+
         {isFinal ? (
           <div className="mt-5 flex flex-col space-y-4">
             <TransferProperty name="Sender Address" value={sender} url={fromUrl} />
             <TransferProperty name="Recipient Address" value={recipient} url={toUrl} />
-            {/* {token?.addressOrDenom && (
-              <TransferProperty name="Token Address or Denom" value={token.addressOrDenom} />
-            )} */}
             {originTxHash && (
               <TransferProperty
                 name="Origin Transaction Hash"
                 value={originTxHash}
                 url={originTxUrl}
+              />
+            )}
+            {destinationTxHash && (
+              <TransferProperty
+                name="Destination Transaction Hash"
+                value={destinationTxHash}
+                url={destTxUrl}
               />
             )}
             {msgId && <TransferProperty name="Message ID" value={msgId} />}
@@ -203,7 +368,7 @@ export function TransfersDetailsModal({
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-4">
-            <SpinnerIcon width={60} height={60} className="mt-3" />
+            <SpinnerIcon width={60} height={60} className="transfer-details-spinner mt-3" />
             <div className="mt-5 text-center text-sm text-gray-600">{statusDescription}</div>
             {showSignWarning && (
               <div className="mt-3 text-center text-sm text-gray-600">
@@ -215,35 +380,6 @@ export function TransfersDetailsModal({
         )}
       </div>
     </Modal>
-  );
-}
-
-// TODO consider re-enabling timeline
-export function Timeline({
-  transferStatus,
-  originTxHash,
-}: {
-  transferStatus: TransferStatus;
-  originTxHash?: string;
-}) {
-  const isFailed = transferStatus === TransferStatus.Failed;
-  const multiProtocolProvider = useMultiProvider();
-  const { stage, timings, message } = useMessageTimeline({
-    originTxHash: isFailed ? undefined : originTxHash,
-    multiProvider: multiProtocolProvider.toMultiProvider(),
-  });
-  const messageStatus = isFailed ? MessageStatus.Failing : message?.status || MessageStatus.Pending;
-
-  return (
-    <div className="timeline-container mb-2 mt-6 flex w-full flex-col items-center justify-center">
-      <MessageTimeline
-        status={messageStatus}
-        stage={stage}
-        timings={timings}
-        timestampSent={message?.origin?.timestamp}
-        hideDescriptions={true}
-      />
-    </div>
   );
 }
 

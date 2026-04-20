@@ -1,5 +1,6 @@
 import { TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
+
 import { createMockToken } from '../../utils/test';
 import { TokensWithDestinationBalance, TokenWithFee } from '../tokens/types';
 import * as tokenUtils from '../tokens/utils';
@@ -473,6 +474,30 @@ describe('getTransferToken', () => {
     );
 
     expect(result).toBe(originToken);
+  });
+
+  test('should return the matched collateral route token when only one candidate exists', async () => {
+    const originToken = createMockToken({ symbol: 'PYUSD', chainName: 'arbitrum' });
+    const routeToken = createMockToken({ symbol: 'PYUSD', chainName: 'arbitrum' });
+    const destinationToken = createMockToken({ symbol: 'USDC', chainName: 'base' });
+    const matchedRouteToken = createMockToken({ symbol: 'PYUSD', chainName: 'arbitrum' });
+
+    vi.spyOn(tokenUtils, 'findRouteToken').mockReturnValue(routeToken);
+    vi.spyOn(tokenUtils, 'isValidMultiCollateralToken').mockReturnValue(true);
+    vi.spyOn(tokenUtils, 'getTokensWithSameCollateralAddresses').mockReturnValue([
+      { originToken: matchedRouteToken, destinationToken },
+    ]);
+
+    const result = await getTransferToken(
+      createMockWarpCore({}, originToken),
+      originToken,
+      destinationToken,
+      LARGE_TRANSFER_AMOUNT,
+      MOCK_RECIPIENT,
+      MOCK_SENDER,
+    );
+
+    expect(result).toBe(matchedRouteToken);
   });
 
   test('should return originToken if no tokens have sufficient collateral balance', async () => {

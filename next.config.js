@@ -89,34 +89,81 @@ const securityHeaders = [
     : []),
 ];
 
+// Embed page headers: allow framing from specified origins (default: any)
+// Accepts space or comma-separated origins, e.g. "https://a.com https://b.com" or "https://a.com,https://b.com"
+const rawEmbedAllowedOrigins = process.env.NEXT_PUBLIC_EMBED_ALLOWED_ORIGINS ?? '*';
+const embedAllowedOrigins = rawEmbedAllowedOrigins
+  .split(/[,\s]+/)
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+if (embedAllowedOrigins.length === 0) {
+  throw new Error('Invalid NEXT_PUBLIC_EMBED_ALLOWED_ORIGINS: no valid origins provided');
+}
+
+if (embedAllowedOrigins.some((origin) => /[;\r\n]/.test(origin))) {
+  throw new Error('Invalid NEXT_PUBLIC_EMBED_ALLOWED_ORIGINS: contains forbidden characters');
+}
+
+const embedCspHeader = cspHeader.replace(
+  "frame-ancestors 'none'",
+  `frame-ancestors ${embedAllowedOrigins.join(' ')}`,
+);
+const embedSecurityHeaders = [
+  {
+    key: 'X-XSS-Protection',
+    value: '1; mode=block',
+  },
+  // No X-Frame-Options — allow embedding
+  {
+    key: 'X-Content-Type-Options',
+    value: 'nosniff',
+  },
+  {
+    key: 'Referrer-Policy',
+    value: 'strict-origin-when-cross-origin',
+  },
+  ...(ENABLE_CSP_HEADER
+    ? [
+        {
+          key: 'Content-Security-Policy',
+          value: embedCspHeader,
+        },
+      ]
+    : []),
+];
+
 const nextConfig = {
-  webpack(config, { isServer }) {
-    config.module.rules.push({
-      test: /\.ya?ml$/,
-      use: 'yaml-loader',
-    });
-
-    config.experiments = {
-      ...config.experiments,
-      asyncWebAssembly: true,
-      layers: true,
-    };
-
-    if (isServer) {
-      config.resolve.alias = {
-        ...config.resolve.alias,
-        '@provablehq/wasm': false,
-        '@provablehq/sdk': false,
-      };
-    }
-
-    return config;
+  turbopack: {
+    rules: {
+      '*.yaml': {
+        loaders: ['yaml-loader'],
+        as: '*.js',
+      },
+      '*.yml': {
+        loaders: ['yaml-loader'],
+        as: '*.js',
+      },
+    },
+    resolveAlias: {
+      // Only shim pino on SSR (Node) where its transport/worker resolution breaks
+      // under Turbopack. In the browser use the real pino browser build, which
+      // exports `levels` that @walletconnect/logger depends on.
+      pino: {
+        browser: 'pino/browser.js',
+        default: './src/utils/pino-noop.js',
+      },
+    },
   },
 
   async headers() {
     return [
       {
-        source: '/(.*)',
+        source: '/embed',
+        headers: embedSecurityHeaders,
+      },
+      {
+        source: '/((?!embed$).*)',
         headers: securityHeaders,
       },
     ];
@@ -146,7 +193,8 @@ const nextConfig = {
   },
 
   experimental: {
-    webpackBuildWorker: true,
+    turbopackFileSystemCacheForBuild: true,
+    parallelServerCompiles: true,
     parallelServerBuildTraces: true,
     optimizePackageImports: [
       '@hyperlane-xyz/registry',
@@ -156,8 +204,7 @@ const nextConfig = {
     ],
   },
 
-  // Skip linting and type checking during builds — CI runs these separately
-  eslint: { ignoreDuringBuilds: true },
+  // Skip type checking during builds — CI runs these separately
   typescript: { ignoreBuildErrors: true },
 };
 

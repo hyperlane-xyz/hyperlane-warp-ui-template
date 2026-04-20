@@ -1,5 +1,10 @@
-import { getAccountAddressAndPubKey, Modal, useAccounts } from '@hyperlane-xyz/widgets';
+import { Modal } from '@hyperlane-xyz/widgets';
+import {
+  getAccountAddressAndPubKey,
+  useAccounts,
+} from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import { useFormikContext } from 'formik';
+
 import { SolidButton } from '../../components/buttons/SolidButton';
 import { useMultiProvider } from '../chains/hooks';
 import { getTokenByKeyFromMap, useTokenByKeyMap } from '../tokens/hooks';

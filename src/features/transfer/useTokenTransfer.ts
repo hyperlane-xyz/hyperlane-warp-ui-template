@@ -11,9 +11,10 @@ import {
   useAccounts,
   useActiveChains,
   useTransactionFns,
-} from '@hyperlane-xyz/widgets';
+} from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import { useCallback, useState } from 'react';
 import { toast } from 'react-toastify';
+
 import { toastTxSuccess } from '../../components/toast/TxSuccessToast';
 import { initiateRelay } from '../../lib/relayerClient';
 import { logger } from '../../utils/logger';
@@ -24,6 +25,7 @@ import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { AppState, useStore } from '../store';
 import { getTokenByKey, useWarpCore } from '../tokens/hooks';
+import { findConnectedDestinationToken } from '../tokens/utils';
 import { TransferContext, TransferFormValues, TransferStatus } from './types';
 import { tryGetMsgIdFromTransferReceipt } from './utils';
 
@@ -129,10 +131,8 @@ async function executeTransfer({
     );
     const recipient = formRecipient || connectedDestAddress || '';
     if (!recipient) throw new Error('No recipient address available');
-    // Find the actual connected token from the origin and destination chains
-    const connectedDestinationToken = originToken?.getConnectionForChain(
-      destinationToken.chainName,
-    )?.token;
+    // Resolve the connected destination token that matches the selected destination token.
+    const connectedDestinationToken = findConnectedDestinationToken(originToken, destinationToken);
     if (!connectedDestinationToken) throw new Error('No token connection found between chains');
     const origin = originToken.chainName;
     const destination = connectedDestinationToken.chainName;
@@ -151,6 +151,7 @@ async function executeTransfer({
     const isCollateralSufficient = await warpCore.isDestinationCollateralSufficient({
       originTokenAmount,
       destination,
+      destinationToken: connectedDestinationToken,
     });
     if (!isCollateralSufficient) {
       toast.error('Insufficient collateral on destination for transfer');
@@ -176,6 +177,7 @@ async function executeTransfer({
       destination,
       sender,
       recipient,
+      destinationToken: connectedDestinationToken,
     });
 
     const hashes: string[] = [];
@@ -230,8 +232,13 @@ async function executeTransfer({
       : undefined;
 
     const originTxHash = hashes.at(-1);
+    const originBlockNumber =
+      txReceipt?.receipt && 'blockNumber' in txReceipt.receipt
+        ? Number(txReceipt.receipt.blockNumber)
+        : undefined;
     updateTransferStatus(transferIndex, (transferStatus = TransferStatus.ConfirmedTransfer), {
       originTxHash,
+      originBlockNumber,
       msgId,
     });
 

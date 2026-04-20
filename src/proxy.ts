@@ -44,7 +44,7 @@ const BLOCKED_REGIONS = [
   },
 ];
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const { country, region } = geolocation(req);
 
   if (country && BLOCKED_COUNTRIES.includes(country)) {

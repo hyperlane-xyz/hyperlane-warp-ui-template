@@ -1,5 +1,6 @@
 import { DefaultIconProps } from '@hyperlane-xyz/widgets';
 import { memo } from 'react';
+
 import { Color } from '../../styles/Color';
 
 function _ChevronLargeIcon({ color, ...props }: DefaultIconProps) {

@@ -56,29 +56,17 @@ export async function fetchPredicateAttestation({
   const wrapperAddress = await adapter.getPredicateWrapperAddress();
   assert(wrapperAddress, 'Predicate wrapper address not found');
 
-  // Use a dummy attestation so getTransferRemoteTxs generates the actual on-chain calldata
-  // shape — i.e. PredicateWrapper.transferRemoteWithAttestation(attestation, ...) — rather
-  // than the plain HypERC20.transferRemote(...) path. The two calls have different `to`
-  // addresses, selectors, and ABI encoding, so attesting over the wrong shape would produce
-  // calldata the Predicate verifier never sees.
-  //
-  // The on-chain verifier necessarily excludes the attestation bytes when computing the
-  // attested digest (attesting over data that includes the attestation would be circular).
-  // TODO(sdk): expose a `populateForAttestation` primitive that makes this contract explicit.
-  const dummyAttestation: PredicateAttestation = {
-    uuid: '0x' + '00'.repeat(32),
-    expiration: 0,
-    attester: '0x0000000000000000000000000000000000000000',
-    signature: '0x' + '00'.repeat(65),
-  };
-
+  // Build the transfer tx WITHOUT an attestation to obtain the inner transferRemote calldata.
+  // The on-chain PredicateWrapper.transferRemoteWithAttestation() reconstructs that same
+  // inner calldata and passes it to Predicate.validateAttestation() — it cannot include the
+  // attestation bytes in what it verifies (that would be circular). Empirically, a dummy-
+  // attestation approach produces different calldata that the verifier rejects at estimateGas.
   const tempTxs = await warpCore.getTransferRemoteTxs({
     originTokenAmount: amount,
     destination,
     sender,
     recipient,
     destinationToken,
-    attestation: dummyAttestation,
   });
 
   assert(tempTxs.length > 0, 'No transactions returned for transfer');

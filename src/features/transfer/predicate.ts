@@ -1,13 +1,14 @@
 import type { IToken, Token, WarpCore } from '@hyperlane-xyz/sdk';
-import { TokenAmount } from '@hyperlane-xyz/sdk';
-import { assert } from '@hyperlane-xyz/utils';
+import {
+  PredicateAttestation,
+  TokenAmount,
+  WarpTxCategory,
+  isPredicateCapableAdapter,
+} from '@hyperlane-xyz/sdk';
+import { ProtocolType, assert } from '@hyperlane-xyz/utils';
 
 import { fetchAttestation as fetchAttestationFromProxy } from '../../lib/predicateClient';
 import { logger } from '../../utils/logger';
-
-// TODO: Import from SDK when available
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type PredicateAttestation = any;
 
 interface FetchAttestationParams {
   warpCore: WarpCore;
@@ -34,11 +35,11 @@ export async function fetchPredicateAttestation({
   amount,
   destinationToken,
 }: FetchAttestationParams): Promise<PredicateAttestation | undefined> {
-  const warpCoreAny = warpCore as any;
-  const needsAttestation: boolean =
-    typeof warpCoreAny.isPredicateSupported === 'function'
-      ? !!(await warpCoreAny.isPredicateSupported(token, destination))
-      : false;
+  if (token.protocol !== ProtocolType.Ethereum) {
+    return undefined;
+  }
+
+  const needsAttestation = await warpCore.isPredicateSupported(token, destination);
 
   if (!needsAttestation) {
     return undefined;
@@ -46,33 +47,44 @@ export async function fetchPredicateAttestation({
 
   logger.debug('Route requires Predicate attestation, fetching...');
 
-  // Get adapter with type safety
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const adapter = token.getAdapter(warpCore.multiProvider as any) as any;
+  const adapter = token.getHypAdapter(warpCore.multiProvider);
 
-  // Type guard: ensure adapter has predicate methods (will exist when SDK updated)
-  if (typeof adapter.getPredicateWrapperAddress !== 'function') {
-    throw new Error(
-      `Token adapter for ${token.chainName} does not support Predicate (missing getPredicateWrapperAddress)`,
-    );
+  if (!isPredicateCapableAdapter(adapter)) {
+    throw new Error(`Token adapter for ${token.chainName} does not support Predicate`);
   }
 
   const wrapperAddress = await adapter.getPredicateWrapperAddress();
   assert(wrapperAddress, 'Predicate wrapper address not found');
 
-  // Build temporary transaction to get calldata
+  // Use a dummy attestation so getTransferRemoteTxs generates the actual on-chain calldata
+  // shape — i.e. PredicateWrapper.transferRemoteWithAttestation(attestation, ...) — rather
+  // than the plain HypERC20.transferRemote(...) path. The two calls have different `to`
+  // addresses, selectors, and ABI encoding, so attesting over the wrong shape would produce
+  // calldata the Predicate verifier never sees.
+  //
+  // The on-chain verifier necessarily excludes the attestation bytes when computing the
+  // attested digest (attesting over data that includes the attestation would be circular).
+  // TODO(sdk): expose a `populateForAttestation` primitive that makes this contract explicit.
+  const dummyAttestation: PredicateAttestation = {
+    uuid: '0x' + '00'.repeat(32),
+    expiration: 0,
+    attester: '0x0000000000000000000000000000000000000000',
+    signature: '0x' + '00'.repeat(65),
+  };
+
   const tempTxs = await warpCore.getTransferRemoteTxs({
     originTokenAmount: amount,
     destination,
     sender,
     recipient,
     destinationToken,
+    attestation: dummyAttestation,
   });
 
   assert(tempTxs.length > 0, 'No transactions returned for transfer');
 
-  // Type guard: ensure transaction has required structure
-  const tempTx = tempTxs[0];
+  // Use last tx: preTransferRemoteTxs (approval/revoke) are prepended before the transfer tx
+  const tempTx = tempTxs.find((tx) => (tx as any).category === WarpTxCategory.Transfer) ?? tempTxs[tempTxs.length - 1];
   assert(tempTx && typeof tempTx === 'object', 'Invalid transaction object');
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

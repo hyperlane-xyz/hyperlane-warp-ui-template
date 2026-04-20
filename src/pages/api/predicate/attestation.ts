@@ -1,11 +1,11 @@
+import { PredicateApiClient } from '@hyperlane-xyz/sdk';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 const PREDICATE_API_KEY = process.env.PREDICATE_API_KEY;
-const PREDICATE_API_URL =
-  process.env.PREDICATE_API_URL || 'https://api.predicate.io/v2/attestation';
+const PREDICATE_API_URL = process.env.PREDICATE_API_URL;
 const ALLOWED_PREDICATE_DOMAINS = ['api.predicate.io', 'predicate.io'];
 
-// Validate PREDICATE_API_URL to prevent SSRF
+// Validate PREDICATE_API_URL override to prevent SSRF
 function validateApiUrl(url: string): boolean {
   try {
     const parsed = new URL(url);
@@ -20,17 +20,40 @@ function validateApiUrl(url: string): boolean {
   }
 }
 
+// In-memory sliding-window rate limiter: 10 req / IP / 60s.
+// Per-instance only (no Redis), which is sufficient to slow automated abuse
+// against any single warm serverless instance.
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_MAX = 10;
+const ipRequestLog = new Map<string, number[]>();
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const timestamps = (ipRequestLog.get(ip) ?? []).filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
+  if (timestamps.length >= RATE_LIMIT_MAX) return true;
+  timestamps.push(now);
+  ipRequestLog.set(ip, timestamps);
+  return false;
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  const ip =
+    (req.headers['x-real-ip'] as string | undefined) ||
+    req.socket?.remoteAddress ||
+    'unknown';
+  if (isRateLimited(ip)) {
+    return res.status(429).json({ error: 'Too many requests' });
   }
 
   if (!PREDICATE_API_KEY) {
     return res.status(500).json({ error: 'Predicate API key not configured' });
   }
 
-  // Validate API URL to prevent SSRF
-  if (!validateApiUrl(PREDICATE_API_URL)) {
+  if (PREDICATE_API_URL && !validateApiUrl(PREDICATE_API_URL)) {
     console.error('Invalid PREDICATE_API_URL:', PREDICATE_API_URL);
     return res.status(500).json({ error: 'Invalid API configuration' });
   }
@@ -43,7 +66,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
   }
 
-  // Validate field types
   if (
     typeof to !== 'string' ||
     typeof from !== 'string' ||
@@ -55,28 +77,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const response = await fetch(PREDICATE_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': PREDICATE_API_KEY,
-      },
-      body: JSON.stringify({ to, from, data, msg_value, chain }),
-    });
-
-    const responseData = await response.json();
-
-    if (!response.ok) {
-      // Sanitize error response - don't leak Predicate API internals
-      console.error('Predicate API error:', response.status, responseData);
-      return res.status(response.status >= 500 ? 502 : response.status).json({
-        error: 'Failed to fetch attestation',
-      });
-    }
-
-    return res.status(200).json(responseData);
+    const client = new PredicateApiClient(PREDICATE_API_KEY, PREDICATE_API_URL);
+    const result = await client.fetchAttestation({ to, from, data, msg_value, chain });
+    return res.status(200).json(result);
   } catch (error) {
-    console.error('Predicate API proxy error:', error);
-    return res.status(500).json({ error: 'Failed to fetch attestation' });
+    console.error('Predicate API error:', error);
+    return res.status(502).json({ error: 'Failed to fetch attestation' });
   }
 }

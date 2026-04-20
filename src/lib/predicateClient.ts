@@ -1,17 +1,6 @@
-export interface AttestationRequest {
-  to: string;
-  from: string;
-  data: string;
-  msg_value: string;
-  chain: string;
-}
+import { PredicateAttestationRequest, PredicateAttestationResponse } from '@hyperlane-xyz/sdk';
 
-export interface AttestationResponse {
-  attestation: {
-    uuid: string;
-    [key: string]: any;
-  };
-}
+export type AttestationRequest = PredicateAttestationRequest;
 
 const PREDICATE_PROXY_URL = '/api/predicate/attestation';
 
@@ -19,7 +8,9 @@ const PREDICATE_PROXY_URL = '/api/predicate/attestation';
  * Fetches Predicate attestation via Next.js API proxy route
  * Routes through backend to avoid CORS and keep API key server-side
  */
-export async function fetchAttestation(request: AttestationRequest): Promise<AttestationResponse> {
+export async function fetchAttestation(
+  request: AttestationRequest,
+): Promise<PredicateAttestationResponse> {
   const response = await fetch(PREDICATE_PROXY_URL, {
     method: 'POST',
     headers: {

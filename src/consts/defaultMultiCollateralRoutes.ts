@@ -28,6 +28,8 @@ export const defaultMultiCollateralRoutes: DefaultMultiCollateralRoutes | undefi
     native: '0xD3b9dDaC349E808B07845e01bae3Bf3464FB45b3',
   },
   bsc: {
+    // USDC
+    '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d': '0x1eebF9d94a5E707E30f18b9aB3295D963C111fb7',
     //USDT
     '0x55d398326f99059fF775485246999027B3197955': '0xc13d466B9E196AfdE472856923E857cc298EDf1b',
   },
@@ -46,6 +48,10 @@ export const defaultMultiCollateralRoutes: DefaultMultiCollateralRoutes | undefi
   ink: {
     // USDC
     '0x2D270e6886d130D724215A266106e6832161EAEd': '0x0DE665377A5B0D390469d0ea0FCae55e0c14f4c4',
+  },
+  katana: {
+    // USDC
+    '0x203A662b0BD271A6ed5a60EdFbd04bFce608FD36': '0x680e8ECB908A2040232ef139A0A52cbE47b9F15B',
   },
   linea: {
     // USDC

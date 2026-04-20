@@ -1,4 +1,4 @@
-import { IToken, Token, WarpCore, WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
+import { IToken, PredicateAttestation, Token, WarpCore, WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
 import { HexString, ProtocolType, toWei } from '@hyperlane-xyz/utils';
 import { useDebounce } from '@hyperlane-xyz/widgets';
 import {
@@ -13,6 +13,7 @@ import { useMultiProvider } from '../chains/hooks';
 import { useWarpCore } from '../tokens/hooks';
 import { findConnectedDestinationToken } from '../tokens/utils';
 import { getTransferToken } from './fees';
+import { fetchPredicateAttestation } from './predicate';
 import { TransferFormValues } from './types';
 
 const FEE_QUOTE_REFRESH_INTERVAL = 30_000; // 30s
@@ -132,6 +133,29 @@ export async function fetchFeeQuotes(
     destinationToken.protocol === ProtocolType.Ethereum;
   const senderPubKeyValue = await senderPubKey;
 
+  // Predicate routes require the wrapper path (transferRemoteWithAttestation) — estimating
+  // fees without a valid attestation reverts on-chain. But attestation needs a real sender
+  // address; skip fee display when only the fallback address is available.
+  let attestation: PredicateAttestation | undefined;
+  const isPredicateRoute = await warpCore.isPredicateSupported(transferToken, destination);
+  if (isPredicateRoute) {
+    if (sender === EVM_FEE_QUOTE_FALLBACK_ADDRESS) return null;
+    try {
+      attestation = await fetchPredicateAttestation({
+        warpCore,
+        token: transferToken,
+        destination,
+        sender,
+        recipient,
+        amount: originTokenAmount,
+        destinationToken: connectedDestinationToken,
+      });
+    } catch (error: any) {
+      logger.error('Predicate attestation failed during fee estimation', error);
+      return null;
+    }
+  }
+
   logger.debug('Fetching fee quotes');
   try {
     return await warpCore.estimateTransferRemoteFees({
@@ -140,7 +164,7 @@ export async function fetchFeeQuotes(
       sender,
       senderPubKey: senderPubKeyValue,
       recipient: recipient,
-      attestation: undefined,
+      attestation,
       destinationToken: connectedDestinationToken,
     });
   } catch (error) {

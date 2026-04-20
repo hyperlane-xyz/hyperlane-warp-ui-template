@@ -1,6 +1,8 @@
 import { PredicateApiClient } from '@hyperlane-xyz/sdk';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
+import { logger } from '../../../utils/logger';
+
 const PREDICATE_API_KEY = process.env.PREDICATE_API_KEY;
 const PREDICATE_API_URL = process.env.PREDICATE_API_URL;
 const ALLOWED_PREDICATE_DOMAINS = ['api.predicate.io', 'predicate.io'];
@@ -54,7 +56,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (PREDICATE_API_URL && !validateApiUrl(PREDICATE_API_URL)) {
-    console.error('Invalid PREDICATE_API_URL:', PREDICATE_API_URL);
+    logger.error('Invalid PREDICATE_API_URL', new Error(PREDICATE_API_URL));
     return res.status(500).json({ error: 'Invalid API configuration' });
   }
 
@@ -81,7 +83,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const result = await client.fetchAttestation({ to, from, data, msg_value, chain });
     return res.status(200).json(result);
   } catch (error) {
-    console.error('Predicate API error:', error);
+    logger.error('Predicate API error', error);
     return res.status(502).json({ error: 'Failed to fetch attestation' });
   }
 }

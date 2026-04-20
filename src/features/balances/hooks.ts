@@ -222,7 +222,7 @@ function getDirectEvmBalanceTokenAddress(token?: IToken): Hex | undefined {
     return token.collateralAddressOrDenom as Hex;
   }
 
-  if (token.standard.includes('Synthetic') && isValidAddressEvm(token.addressOrDenom as Address)) {
+  if (isValidAddressEvm(token.addressOrDenom as Address)) {
     return token.addressOrDenom as Hex;
   }
 

@@ -44,9 +44,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const ip =
-    (req.headers['x-real-ip'] as string | undefined) ||
-    req.socket?.remoteAddress ||
-    'unknown';
+    (req.headers['x-real-ip'] as string | undefined) || req.socket?.remoteAddress || 'unknown';
   if (isRateLimited(ip)) {
     return res.status(429).json({ error: 'Too many requests' });
   }

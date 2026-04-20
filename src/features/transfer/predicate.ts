@@ -72,7 +72,9 @@ export async function fetchPredicateAttestation({
   assert(tempTxs.length > 0, 'No transactions returned for transfer');
 
   // Use last tx: preTransferRemoteTxs (approval/revoke) are prepended before the transfer tx
-  const tempTx = tempTxs.find((tx) => (tx as any).category === WarpTxCategory.Transfer) ?? tempTxs[tempTxs.length - 1];
+  const tempTx =
+    tempTxs.find((tx) => (tx as any).category === WarpTxCategory.Transfer) ??
+    tempTxs[tempTxs.length - 1];
   assert(tempTx && typeof tempTx === 'object', 'Invalid transaction object');
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

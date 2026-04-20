@@ -65,6 +65,7 @@ import { WalletDropdown } from '../wallet/WalletDropdown';
 import { getInterchainQuote, getTotalFee, getTransferToken } from './fees';
 import { FeeSectionButton } from './FeeSectionButton';
 import { useFetchMaxAmount } from './maxAmount';
+import { fetchPredicateAttestation } from './predicate';
 import { RecipientConfirmationModal } from './RecipientConfirmationModal';
 import { computeDestAmount } from './scaleUtils';
 import { TransferSection } from './TransferSection';
@@ -951,12 +952,24 @@ async function validateForm(
     }
 
     const originTokenAmount = transferToken.amount(amountWei);
+
+    const attestation = await fetchPredicateAttestation({
+      warpCore,
+      token: transferToken,
+      destination,
+      sender: sender || '',
+      recipient,
+      amount: originTokenAmount,
+      destinationToken: connectedDestinationToken,
+    });
+
     const result = await warpCore.validateTransfer({
       originTokenAmount,
       destination,
       recipient,
       sender: sender || '',
       senderPubKey: await senderPubKey,
+      attestation,
       destinationToken: connectedDestinationToken,
     });
 

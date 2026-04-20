@@ -41,7 +41,10 @@ describe('fetchFeeQuotes', () => {
       .fn()
       .mockRejectedValueOnce(new Error('insufficient funds for gas * price + value'))
       .mockResolvedValueOnce(expectedFees);
-    const warpCore = { estimateTransferRemoteFees } as unknown as WarpCore;
+    const warpCore = {
+      estimateTransferRemoteFees,
+      isPredicateSupported: vi.fn().mockResolvedValue(false),
+    } as unknown as WarpCore;
 
     const result = await fetchFeeQuotes(
       warpCore,
@@ -71,7 +74,10 @@ describe('fetchFeeQuotes', () => {
     mockFindConnectedDestinationToken.mockReturnValue(destinationToken as unknown as Token);
 
     const estimateTransferRemoteFees = vi.fn().mockRejectedValueOnce(new Error('quote failed'));
-    const warpCore = { estimateTransferRemoteFees } as unknown as WarpCore;
+    const warpCore = {
+      estimateTransferRemoteFees,
+      isPredicateSupported: vi.fn().mockResolvedValue(false),
+    } as unknown as WarpCore;
 
     await expect(
       fetchFeeQuotes(
@@ -96,7 +102,10 @@ describe('fetchFeeQuotes', () => {
     mockFindConnectedDestinationToken.mockReturnValue(destinationToken as unknown as Token);
 
     const estimateTransferRemoteFees = vi.fn().mockRejectedValueOnce(new Error('quote failed'));
-    const warpCore = { estimateTransferRemoteFees } as unknown as WarpCore;
+    const warpCore = {
+      estimateTransferRemoteFees,
+      isPredicateSupported: vi.fn().mockResolvedValue(false),
+    } as unknown as WarpCore;
 
     await expect(
       fetchFeeQuotes(

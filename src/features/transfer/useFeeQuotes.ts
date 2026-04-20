@@ -6,6 +6,7 @@ import {
   useAccounts,
 } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import { useQuery } from '@tanstack/react-query';
+import { toast } from 'react-toastify';
 
 import { defaultMultiCollateralRoutes } from '../../consts/defaultMultiCollateralRoutes';
 import { logger } from '../../utils/logger';
@@ -13,6 +14,7 @@ import { useMultiProvider } from '../chains/hooks';
 import { useWarpCore } from '../tokens/hooks';
 import { findConnectedDestinationToken } from '../tokens/utils';
 import { getTransferToken } from './fees';
+import { fetchPredicateAttestation } from './predicate';
 import { TransferFormValues } from './types';
 
 const FEE_QUOTE_REFRESH_INTERVAL = 30_000; // 30s
@@ -124,12 +126,30 @@ export async function fetchFeeQuotes(
   }
 
   const originTokenAmount = transferToken.amount(amountWei);
+
   const connectedDestinationToken = findConnectedDestinationToken(transferToken, destinationToken);
   if (!connectedDestinationToken) return null;
   const isEvmToEvmRoute =
     originToken.protocol === ProtocolType.Ethereum &&
     destinationToken.protocol === ProtocolType.Ethereum;
   const senderPubKeyValue = await senderPubKey;
+
+  // Check if predicate attestation needed for fee estimation
+  let attestation: any;
+  try {
+    attestation = await fetchPredicateAttestation({
+      warpCore,
+      token: transferToken,
+      destination,
+      sender,
+      recipient,
+      amount: originTokenAmount,
+      destinationToken: connectedDestinationToken,
+    });
+  } catch (error: any) {
+    toast.error('Compliance verification failed. Unable to estimate fees.');
+    throw error;
+  }
 
   logger.debug('Fetching fee quotes');
   try {
@@ -139,6 +159,7 @@ export async function fetchFeeQuotes(
       sender,
       senderPubKey: senderPubKeyValue,
       recipient: recipient,
+      attestation,
       destinationToken: connectedDestinationToken,
     });
   } catch (error) {
@@ -154,6 +175,7 @@ export async function fetchFeeQuotes(
       destination,
       sender: EVM_FEE_QUOTE_FALLBACK_ADDRESS,
       recipient: recipient,
+      attestation,
       destinationToken: connectedDestinationToken,
     });
   }

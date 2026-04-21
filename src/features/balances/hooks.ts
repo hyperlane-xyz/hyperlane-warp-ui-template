@@ -126,7 +126,7 @@ export function useEvmWalletBalance(
   const normalizedAddress = !isNullish(address)
     ? (normalizeAddress(address, ProtocolType.Ethereum) as Hex)
     : undefined;
-  const normalizedToken = !isNullish(token)
+  const normalizedToken = token
     ? (normalizeAddress(token, ProtocolType.Ethereum) as Hex)
     : undefined;
 

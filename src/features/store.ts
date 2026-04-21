@@ -93,7 +93,7 @@ async function refreshWarpContext(
   const { context, loadRuntime } = await initWarpContext(nextState);
   if (nextVersion !== runtimeContextVersion) return;
   runtimeContextLoader = loadRuntime;
-  set(context);
+  set({ ...context, warpContextVersion: nextVersion });
   void loadAndSetWarpRuntime(set, get, nextVersion).catch((error) => {
     logger.error('Failed to warm Warp runtime after context refresh', error);
   });
@@ -103,6 +103,7 @@ async function refreshWarpContext(
 // Will refactor into slices as necessary
 export interface AppState {
   // Chains and providers
+  warpContextVersion: number;
   chainMetadata: ChainMap<ChainMetadata>;
   // Overrides to chain metadata set by user via the chain picker
   chainMetadataOverrides: ChainMap<Partial<ChainMetadata>>;
@@ -168,6 +169,7 @@ export const useStore = create<AppState>()(
       storeGetState = get;
       return {
         // Chains and providers
+        warpContextVersion: 0,
         chainMetadata: {},
         chainMetadataOverrides: {},
         isWarpContextReady: false,
@@ -210,7 +212,7 @@ export const useStore = create<AppState>()(
         warpCore: undefined,
         setWarpContext: (context) => {
           logger.debug('Setting warp context in store');
-          set(context);
+          set((state) => ({ ...context, warpContextVersion: state.warpContextVersion }));
         },
         ensureWarpRuntime: () => loadAndSetWarpRuntime(set, get),
 

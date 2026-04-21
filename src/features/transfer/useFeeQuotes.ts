@@ -32,6 +32,7 @@ export function useFeeQuotes(
 ) {
   const multiProvider = useMultiProvider();
   const warpCore = useReadyWarpCore();
+  const warpContextVersion = useStore((s) => s.warpContextVersion);
   const ensureWarpRuntime = useStore((s) => s.ensureWarpRuntime);
   const debouncedAmount = useDebounce(amount, 500);
   const destination = destinationToken?.chainName;
@@ -75,6 +76,7 @@ export function useFeeQuotes(
       'useFeeQuotes',
       originTokenKey,
       destinationTokenKey,
+      warpContextVersion,
       effectiveSender,
       senderPubKey,
       debouncedAmount,

@@ -1,5 +1,5 @@
 import type { ChainName } from '@hyperlane-xyz/sdk/types';
-import { fromWei, normalizeAddress } from '@hyperlane-xyz/utils';
+import { normalizeAddress } from '@hyperlane-xyz/utils';
 import { RefreshIcon } from '@hyperlane-xyz/widgets/icons/Refresh';
 import { SpinnerIcon } from '@hyperlane-xyz/widgets/icons/Spinner';
 import { AccountList } from '@hyperlane-xyz/widgets/walletIntegrations/AccountList';
@@ -29,6 +29,7 @@ import { useStore } from '../store';
 import { tryFindTokenInTokens, useRouteTokens } from '../tokens/hooks';
 import { TokenChainIcon } from '../tokens/TokenChainIcon';
 import { computeDestAmount } from '../transfer/scaleUtils';
+import { formatMessageAmount } from '../transfer/scaleUtils';
 import { TransfersDetailsModal } from '../transfer/TransfersDetailsModal';
 import { TransferContext, TransferStatus } from '../transfer/types';
 import { getIconByTransferStatus, STATUSES_WITH_ICON } from '../transfer/utils';
@@ -312,11 +313,13 @@ function TransferSummary({
 
       let amount = '';
       if (msg.warpTransfer?.amount && token) {
-        const normalizedSender = normalizeAddress(msg.sender, token.protocol);
-        const routerInfo = routerAddressesByChainMap[originChain]?.[normalizedSender];
-        const wireDecimals = routerInfo?.wireDecimals ?? token.decimals;
         try {
-          amount = fromWei(msg.warpTransfer.amount, wireDecimals);
+          amount = formatMessageAmount(
+            msg.warpTransfer.amount,
+            token,
+            routerAddressesByChainMap,
+            originChain,
+          );
         } catch (err) {
           logger.error('Failed to format warp transfer amount', err);
         }

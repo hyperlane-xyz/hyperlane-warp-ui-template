@@ -171,7 +171,10 @@ export function getTokenKey(token: IToken): string {
  * Returns only one token per unique collateral address per chain
  * Used for both origin and destination token arrays at startup
  */
-export function dedupeTokensByCollateral(tokens: Token[]): Token[] {
+export function dedupeTokensByCollateral(
+  tokens: Token[],
+  resolvedMap: Map<string, string> = resolvedUnderlyingMap,
+): Token[] {
   const seenCollaterals = new Map<string, Token>();
 
   return tokens.filter((token) => {
@@ -180,7 +183,7 @@ export function dedupeTokensByCollateral(tokens: Token[]): Token[] {
       return true;
     }
 
-    const collateralKey = getCollateralKey(token);
+    const collateralKey = getCollateralKey(token, resolvedMap);
 
     // If we haven't seen this collateral on this chain, include it
     if (!seenCollaterals.has(collateralKey)) {
@@ -197,7 +200,10 @@ export function dedupeTokensByCollateral(tokens: Token[]): Token[] {
  * Build a unified tokens array containing all tokens that can participate in transfers
  * (either as origin or destination). Deduplicates by address and by collateral.
  */
-export function buildTokensArray(warpCoreTokens: Token[]): Token[] {
+export function buildTokensArray(
+  warpCoreTokens: Token[],
+  resolvedMap: Map<string, string> = resolvedUnderlyingMap,
+): Token[] {
   const tokenMap = new Map<string, Token>();
 
   // Add all tokens that have connections (can be origins)
@@ -222,17 +228,20 @@ export function buildTokensArray(warpCoreTokens: Token[]): Token[] {
   }
 
   // Deduplicate tokens that have same collateral address on the same chain
-  return dedupeTokensByCollateral(Array.from(tokenMap.values()));
+  return dedupeTokensByCollateral(Array.from(tokenMap.values()), resolvedMap);
 }
 
 /**
  * Build collateral groups - groups tokens by their collateral key for O(1) lookup
  * Used for fast route checking in the token selection modal
  */
-export function groupTokensByCollateral(tokens: Token[]): Map<string, Token[]> {
+export function groupTokensByCollateral(
+  tokens: Token[],
+  resolvedMap: Map<string, string> = resolvedUnderlyingMap,
+): Map<string, Token[]> {
   const groups = new Map<string, Token[]>();
   for (const token of tokens) {
-    const key = getCollateralKey(token);
+    const key = getCollateralKey(token, resolvedMap);
     const existing = groups.get(key) || [];
     existing.push(token);
     groups.set(key, existing);
@@ -250,7 +259,10 @@ export function groupTokensByCollateral(tokens: Token[]): Map<string, Token[]> {
  *
  * Results are cached by token object reference for O(1) subsequent lookups.
  */
-export function getCollateralKey(token: IToken): string {
+export function getCollateralKey(
+  token: IToken,
+  resolvedMap: Map<string, string> = resolvedUnderlyingMap,
+): string {
   const cached = collateralKeyCache.get(token);
   if (!isNullish(cached)) return cached;
 
@@ -265,7 +277,7 @@ export function getCollateralKey(token: IToken): string {
     if (token.collateralAddressOrDenom) {
       // Check if this token has a resolved underlying address (lockbox/vault)
       const tokenId = getTokenKey(token);
-      const resolvedUnderlying = resolvedUnderlyingMap.get(tokenId);
+      const resolvedUnderlying = resolvedMap.get(tokenId);
       const collateralAddress = resolvedUnderlying ?? token.collateralAddressOrDenom;
       key = `${chainName}-${symbol}-${normalizeAddress(collateralAddress, protocol)}`;
     } else {

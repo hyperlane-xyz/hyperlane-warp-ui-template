@@ -35,8 +35,8 @@ export async function initWarpRuntime({
 
   const resolvedMap = await resolveWrappedCollateralTokens(runtimeWarpCore.tokens, multiProvider);
 
-  const tokens = buildTokensArray(runtimeWarpCore.tokens);
-  const collateralGroups = groupTokensByCollateral(runtimeWarpCore.tokens);
+  const tokens = buildTokensArray(runtimeWarpCore.tokens, resolvedMap);
+  const collateralGroups = groupTokensByCollateral(runtimeWarpCore.tokens, resolvedMap);
   const tokenByKeyMap = new Map<string, Token>();
   for (const token of tokens) {
     tokenByKeyMap.set(getTokenKey(token), token);

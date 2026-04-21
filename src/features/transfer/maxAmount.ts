@@ -56,8 +56,8 @@ async function fetchMaxAmount(
     const destination = destToken.chainName;
     const { address, publicKey } = getAccountAddressAndPubKey(multiProvider, origin, accounts);
     if (!address) return balance;
-    const Token = await getSdkToken();
-    const originToken = new Token(balance.token);
+    const SdkToken = await getSdkToken();
+    const originToken = new SdkToken(balance.token);
 
     // Get recipient (form value or fallback to connected wallet for destination)
     const { address: connectedDestAddress } = getAccountAddressAndPubKey(

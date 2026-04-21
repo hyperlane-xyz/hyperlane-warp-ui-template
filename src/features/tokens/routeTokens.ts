@@ -15,19 +15,23 @@ export function buildRouteTokens(config: WarpCoreConfig): TokenMetadata[] {
         connections: undefined,
       }),
   );
+  const tokensByConnectionId = new Map<string, TokenMetadata[]>();
+  for (const token of tokens) {
+    const key = `${token.chainName}|${token.addressOrDenom}`;
+    const existing = tokensByConnectionId.get(key) || [];
+    existing.push(token);
+    tokensByConnectionId.set(key, existing);
+  }
 
   config.tokens.forEach((tokenConfig, index) => {
     for (const connection of tokenConfig.connections || []) {
       const token = tokens[index];
-      if (!token) throw new Error(`Token config missing at index ${index}`);
+      assert(token, `Token config missing at index ${index}`);
 
       const { chainName, addressOrDenom } = parseTokenConnectionId(connection.token);
-      const connectedToken = tokens.find(
-        (candidate) =>
-          candidate.chainName === chainName &&
-          candidate.addressOrDenom === addressOrDenom &&
-          (!token.warpRouteId || candidate.warpRouteId === token.warpRouteId),
-      );
+      const connectedToken = (
+        tokensByConnectionId.get(`${chainName}|${addressOrDenom}`) || []
+      ).find((candidate) => !token.warpRouteId || candidate.warpRouteId === token.warpRouteId);
 
       assert(connectedToken, `Connected token not found: ${chainName} ${addressOrDenom}`);
 

@@ -26,9 +26,12 @@ let multiProtocolCorePromise:
   | undefined;
 
 function getMultiProtocolCore() {
-  multiProtocolCorePromise ??= import('@hyperlane-xyz/sdk').then(
-    ({ MultiProtocolCore }) => MultiProtocolCore,
-  );
+  multiProtocolCorePromise ??= import('@hyperlane-xyz/sdk')
+    .then(({ MultiProtocolCore }) => MultiProtocolCore)
+    .catch((error) => {
+      multiProtocolCorePromise = undefined;
+      throw error;
+    });
   return multiProtocolCorePromise;
 }
 

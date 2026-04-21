@@ -120,6 +120,8 @@ async function executeTransfer({
 
   const { originTokenKey, destinationTokenKey, amount, recipient: formRecipient } = values;
   const multiProvider = warpCore.multiProvider as MultiProtocolProvider;
+  let origin: ChainName | undefined;
+  let originDisplayName = 'origin chain';
 
   try {
     const originToken = routeOverrideToken || getTokenByKey(warpCore.tokens, originTokenKey);
@@ -137,8 +139,9 @@ async function executeTransfer({
     // Resolve the connected destination token that matches the selected destination token.
     const connectedDestinationToken = findConnectedDestinationToken(originToken, destinationToken);
     if (!connectedDestinationToken) throw new Error('No token connection found between chains');
-    const origin = originToken.chainName;
+    origin = originToken.chainName;
     const destination = connectedDestinationToken.chainName;
+    originDisplayName = getChainDisplayName(multiProvider, origin);
 
     const originProtocol = originToken.protocol;
     const isNft = originToken.isNft();
@@ -267,7 +270,6 @@ async function executeTransfer({
   } catch (error: any) {
     logger.error(`Error at stage ${transferStatus}`, error);
     const errorDetails = error.message || error.toString();
-    const originDisplayName = origin ? getChainDisplayName(multiProvider, origin) : 'origin chain';
     updateTransferStatus(transferIndex, TransferStatus.Failed);
     if (errorDetails.includes(CHAIN_MISMATCH_ERROR)) {
       // Wagmi switchNetwork call helps prevent this but isn't foolproof

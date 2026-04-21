@@ -140,20 +140,37 @@ export function TransferTokenForm() {
     const destinationToken = getTokenByKeyFromMap(tokenMap, values.destinationTokenKey);
     if (!originToken || !destinationToken) return;
 
-    // Get recipient (form value or fallback to connected wallet)
-    const { address: connectedDestAddress } = getAccountAddressAndPubKey(
-      multiProvider,
-      destinationToken.chainName,
-      accounts,
-    );
-    const recipient = values.recipient || connectedDestAddress || '';
-    if (!recipient) return;
+    let runtimeMultiProvider = multiProvider;
+    let recipient = values.recipient || '';
+    let balance: bigint | undefined;
 
-    logger.debug('Checking destination native balance for:', destinationToken.chainName, recipient);
-    const balance = await getDestinationNativeBalance(multiProvider, {
-      destination: destinationToken.chainName,
-      recipient,
-    });
+    try {
+      const runtimeWarpCore = await ensureWarpRuntime();
+      if (!runtimeWarpCore) return;
+      runtimeMultiProvider = runtimeWarpCore.multiProvider;
+
+      const { address: connectedDestAddress } = getAccountAddressAndPubKey(
+        runtimeMultiProvider,
+        destinationToken.chainName,
+        accounts,
+      );
+      recipient ||= connectedDestAddress || '';
+      if (!recipient) return;
+
+      logger.debug(
+        'Checking destination native balance for:',
+        destinationToken.chainName,
+        recipient,
+      );
+      balance = await getDestinationNativeBalance(runtimeMultiProvider, {
+        destination: destinationToken.chainName,
+        recipient,
+      });
+    } catch (error) {
+      logger.error('Failed to ensure transfer runtime before submit', error);
+      return;
+    }
+
     if (isNullish(balance)) return;
     else if (balance > 0n) {
       logger.debug('Reviewing transfer form values');

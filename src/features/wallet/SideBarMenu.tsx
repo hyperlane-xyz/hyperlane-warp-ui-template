@@ -26,7 +26,7 @@ import {
 import { useMessageHistory } from '../messages/useMessageHistory';
 import type { RouterAddressInfo } from '../routerAddresses';
 import { useStore } from '../store';
-import { tryFindTokenInTokens, useRouteTokens, useTokens } from '../tokens/hooks';
+import { tryFindTokenInTokens, useRouteTokens } from '../tokens/hooks';
 import { TokenChainIcon } from '../tokens/TokenChainIcon';
 import { computeDestAmount } from '../transfer/scaleUtils';
 import { TransfersDetailsModal } from '../transfer/TransfersDetailsModal';
@@ -96,7 +96,6 @@ export function SideBarMenu({
   );
 
   // Merge local transfers with API messages
-  const tokens = useTokens();
   const routeTokens = useRouteTokens();
   const allMergedTransfers = useMergedTransferHistory(transfers, messages);
 
@@ -238,7 +237,7 @@ export function SideBarMenu({
                       item={item}
                       onClick={() => handleItemClick(item)}
                       multiProvider={multiProvider}
-                      tokens={tokens}
+                      tokens={routeTokens}
                       routerAddressesByChainMap={routerAddressesByChainMap}
                       nowMs={nowMs}
                     />
@@ -284,7 +283,7 @@ function TransferSummary({
   item: TransferItem;
   onClick: () => void;
   multiProvider: ReturnType<typeof useMultiProvider>;
-  tokens: ReturnType<typeof useTokens>;
+  tokens: ReturnType<typeof useRouteTokens>;
   routerAddressesByChainMap: Record<ChainName, Record<string, RouterAddressInfo>>;
   nowMs: number;
 }) {

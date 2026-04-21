@@ -5,8 +5,10 @@ import { TokenAmount } from '@hyperlane-xyz/sdk/token/TokenAmount';
 import {
   ProtocolType,
   getAddressProtocolType,
+  isNullish,
   isValidAddress,
   isValidAddressEvm,
+  normalizeAddress,
 } from '@hyperlane-xyz/utils';
 import { useAleoAccount } from '@hyperlane-xyz/widgets/walletIntegrations/aleoWallet';
 import { useCosmosAccount } from '@hyperlane-xyz/widgets/walletIntegrations/cosmosWallet';
@@ -37,6 +39,8 @@ import { fetchSdkBalance } from './tokens';
 export function useBalance(chain?: ChainName, token?: IToken, address?: Address) {
   const multiProvider = useMultiProvider();
   const directEvmBalance = useDirectEvmBalance(chain, token, address);
+  const hasBalanceFetcher =
+    'getBalance' in (token || {}) && typeof token?.getBalance === 'function';
   const { isLoading, isError, error, data } = useQuery({
     // The Token and Multiprovider classes are not serializable, so we can't use it as a key
     // eslint-disable-next-line @tanstack/query/exhaustive-deps
@@ -46,18 +50,24 @@ export function useBalance(chain?: ChainName, token?: IToken, address?: Address)
       address,
       token?.addressOrDenom,
       token?.collateralAddressOrDenom,
+      hasBalanceFetcher,
     ],
     queryFn: () => {
       if (!chain || !token || !address || !isValidAddress(address, token.protocol)) return null;
-      if (!('getBalance' in token) || typeof token.getBalance !== 'function') return null;
+      if (!hasBalanceFetcher) {
+        throw new Error('Token balance fetcher missing for enabled balance query');
+      }
       return token.getBalance(multiProvider, address);
     },
-    enabled: !directEvmBalance.isEnabled,
+    enabled: hasBalanceFetcher && !directEvmBalance.isEnabled,
     staleTime: 30_000,
     refetchInterval: 30_000,
   });
 
-  useToastError(directEvmBalance.error ?? error, 'Error fetching balance');
+  useToastError(
+    directEvmBalance.isEnabled ? directEvmBalance.error : error,
+    'Error fetching balance',
+  );
 
   if (directEvmBalance.isEnabled) {
     return {
@@ -113,10 +123,16 @@ export function useEvmWalletBalance(
   const multiProvider = useMultiProvider();
   const address = useWalletAddressForChain(multiProvider, chainName, ProtocolType.Ethereum);
   const allowRefetch = Boolean(address) && refetchEnabled;
+  const normalizedAddress = !isNullish(address)
+    ? (normalizeAddress(address, ProtocolType.Ethereum) as Hex)
+    : undefined;
+  const normalizedToken = !isNullish(token)
+    ? (normalizeAddress(token, ProtocolType.Ethereum) as Hex)
+    : undefined;
 
   const { data, isError, isLoading } = useWagmiBalance({
-    address: address ? (address as Hex) : undefined,
-    token: token ? (token as Hex) : undefined,
+    address: normalizedAddress,
+    token: normalizedToken,
     chainId: chainId,
     query: {
       refetchInterval: allowRefetch ? 5000 : false,
@@ -185,10 +201,17 @@ function useDirectEvmBalance(chain?: ChainName, token?: IToken, address?: Addres
     Boolean(address) &&
     isValidAddressEvm(address as Address) &&
     (!token || token.isHypNative() || Boolean(tokenAddress));
+  const normalizedAddress = isEnabled
+    ? (normalizeAddress(address as Address, ProtocolType.Ethereum) as Hex)
+    : undefined;
+  const normalizedTokenAddress =
+    isEnabled && tokenAddress
+      ? (normalizeAddress(tokenAddress, ProtocolType.Ethereum) as Hex)
+      : undefined;
 
   const { data, error, isError, isLoading } = useWagmiBalance({
-    address: isEnabled ? (address as Hex) : undefined,
-    token: isEnabled ? tokenAddress : undefined,
+    address: normalizedAddress,
+    token: normalizedTokenAddress,
     chainId: isEnabled ? chainId : undefined,
     query: {
       enabled: isEnabled,

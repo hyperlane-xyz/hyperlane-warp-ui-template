@@ -200,7 +200,7 @@ function useDirectEvmBalance(chain?: ChainName, token?: IToken, address?: Addres
     token?.protocol === ProtocolType.Ethereum &&
     Boolean(address) &&
     isValidAddressEvm(address as Address) &&
-    (!token || token.isHypNative() || Boolean(tokenAddress));
+    (token.isHypNative() || Boolean(tokenAddress));
   const normalizedAddress = isEnabled
     ? (normalizeAddress(address as Address, ProtocolType.Ethereum) as Hex)
     : undefined;

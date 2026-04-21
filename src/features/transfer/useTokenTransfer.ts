@@ -34,12 +34,10 @@ const TRANSFER_TIMEOUT_ERROR1 = 'block height exceeded';
 const TRANSFER_TIMEOUT_ERROR2 = 'timeout';
 
 export function useTokenTransfer(onDone?: () => void) {
-  const { transfers, addTransfer, updateTransferStatus } = useStore((s) => ({
-    transfers: s.transfers,
+  const { addTransfer, updateTransferStatus } = useStore((s) => ({
     addTransfer: s.addTransfer,
     updateTransferStatus: s.updateTransferStatus,
   }));
-  const transferIndex = transfers.length;
 
   const multiProvider = useMultiProvider();
   const ensureWarpRuntime = useStore((s) => s.ensureWarpRuntime);
@@ -56,6 +54,7 @@ export function useTokenTransfer(onDone?: () => void) {
       try {
         const warpCore = await ensureWarpRuntime();
         if (!warpCore) throw new Error('Warp runtime not ready');
+        const transferIndex = useStore.getState().transfers.length;
         await executeTransfer({
           warpCore,
           values,
@@ -71,14 +70,12 @@ export function useTokenTransfer(onDone?: () => void) {
         });
       } catch (error) {
         logger.error('Failed to initialize transfer runtime', error);
-        updateTransferStatus(transferIndex, TransferStatus.Failed);
         toast.error('Unable to initialize transfer runtime.');
         setIsLoading(false);
         if (onDone) onDone();
       }
     },
     [
-      transferIndex,
       activeAccounts,
       activeChains,
       transactionFns,

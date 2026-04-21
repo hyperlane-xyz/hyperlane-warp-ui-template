@@ -106,6 +106,9 @@ export async function initWarpContext({
       routeTokens = buildRouteTokens(coreConfig, SdkToken);
       resolvedUnderlyingMap = await resolveWrappedCollateralTokens(routeTokens, multiProvider);
     } else {
+      // CAST: bootstrap read paths only use TokenMetadata methods already present here
+      // (e.g. isHypNative, amount, connection accessors). Runtime-only adapter methods
+      // are only used after loadRuntime swaps these for real Token instances.
       routeTokens = buildRouteTokens(coreConfig) as unknown as Token[];
     }
 

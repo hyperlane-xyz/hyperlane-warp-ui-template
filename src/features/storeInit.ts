@@ -151,7 +151,7 @@ export async function initWarpContext({
     return {
       context: {
         isWarpContextReady: false,
-        registry,
+        registry: currentRegistry,
         chainMetadata: {},
         multiProvider: undefined,
         warpCore: undefined,

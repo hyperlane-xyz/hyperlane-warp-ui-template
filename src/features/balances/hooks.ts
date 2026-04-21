@@ -2,6 +2,7 @@ import type { MultiProviderAdapter as MultiProtocolProvider } from '@hyperlane-x
 import type { IToken } from '@hyperlane-xyz/sdk/token/IToken';
 import type { Token } from '@hyperlane-xyz/sdk/token/Token';
 import { TokenAmount } from '@hyperlane-xyz/sdk/token/TokenAmount';
+import { LOCKBOX_STANDARDS } from '@hyperlane-xyz/sdk/token/TokenStandard';
 import {
   ProtocolType,
   getAddressProtocolType,
@@ -234,7 +235,7 @@ function getDirectEvmBalanceTokenAddress(token?: IToken): Hex | undefined {
     return undefined;
   }
 
-  if (token.standard.includes('Lockbox')) {
+  if (LOCKBOX_STANDARDS.includes(token.standard)) {
     return undefined;
   }
 

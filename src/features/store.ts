@@ -92,8 +92,10 @@ async function refreshWarpContext(
   const { initWarpContext } = await loadWarpContextModule();
   const { context, loadRuntime } = await initWarpContext(nextState);
   if (nextVersion !== runtimeContextVersion) return;
+  setResolvedUnderlyingMap(context.resolvedUnderlyingMap);
+  const { resolvedUnderlyingMap, ...nextContext } = context;
   runtimeContextLoader = loadRuntime;
-  set({ ...context, warpContextVersion: nextVersion });
+  set({ ...nextContext, warpContextVersion: nextVersion });
   void loadAndSetWarpRuntime(set, get, nextVersion).catch((error) => {
     logger.error('Failed to warm Warp runtime after context refresh', error);
   });

@@ -617,9 +617,11 @@ function ButtonSection({
     if (isSanctioned || !originToken || !destinationToken) return;
     setIsReview(false);
     setTransferLoading(true);
-
-    await triggerTransactions(values, routeOverrideToken);
-    setTransferLoading(false);
+    try {
+      await triggerTransactions(values, routeOverrideToken);
+    } finally {
+      setTransferLoading(false);
+    }
   };
 
   const onEdit = () => {

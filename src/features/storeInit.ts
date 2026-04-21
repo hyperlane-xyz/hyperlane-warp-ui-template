@@ -2,16 +2,19 @@ import { chainAddresses, chainMetadata, IRegistry, PartialRegistry } from '@hype
 import type { ChainMetadata } from '@hyperlane-xyz/sdk/metadata/chainMetadataTypes';
 import { MultiProviderAdapter } from '@hyperlane-xyz/sdk/providers/MultiProviderAdapter';
 import type { Token } from '@hyperlane-xyz/sdk/token/Token';
+import { LOCKBOX_STANDARDS, TokenStandard } from '@hyperlane-xyz/sdk/token/TokenStandard';
 import type { ChainMap } from '@hyperlane-xyz/sdk/types';
 import type { WarpCoreConfig } from '@hyperlane-xyz/sdk/warp/types';
 import { toast } from 'react-toastify';
 
 import { logger } from '../utils/logger';
 import { assembleChainMetadata } from './chains/metadata';
+import { getSdkToken } from './hyperlane/sdkTokenRuntime';
 import { getRouterAddressesByChain } from './routerAddresses';
 import type { AppState } from './store';
 import { buildRouteTokens } from './tokens/routeTokens';
 import { buildTokensArray, getTokenKey, groupTokensByCollateral } from './tokens/utils';
+import { resolveWrappedCollateralTokens } from './tokens/wrappedTokenResolver';
 import { assembleWarpCoreConfig } from './warpCore/warpCoreConfig';
 
 type InitWarpContextArgs = {
@@ -33,7 +36,9 @@ type WarpContext = Pick<
   | 'tokenByKeyMap'
   | 'routerAddressesByChainMap'
   | 'coinGeckoIds'
->;
+> & {
+  resolvedUnderlyingMap: Map<string, string>;
+};
 
 export type WarpRuntimeContext = Pick<
   AppState,
@@ -52,6 +57,14 @@ export type InitWarpContextResult = {
   context: WarpContext;
   loadRuntime: () => Promise<WarpRuntimeContext>;
 };
+
+function needsBootstrapWrappedResolution(coreConfig: WarpCoreConfig): boolean {
+  return coreConfig.tokens.some(
+    (token) =>
+      token.standard === TokenStandard.EvmHypOwnerCollateral ||
+      LOCKBOX_STANDARDS.includes(token.standard),
+  );
+}
 
 export async function initWarpContext({
   registry,
@@ -85,9 +98,19 @@ export async function initWarpContext({
       chainMetadataOverrides,
     );
     const multiProvider = new MultiProviderAdapter(chainMetadataWithOverrides);
-    const routeTokens = buildRouteTokens(coreConfig) as unknown as Token[];
-    const tokens = buildTokensArray(routeTokens);
-    const collateralGroups = groupTokensByCollateral(routeTokens);
+    let routeTokens: Token[];
+    let resolvedUnderlyingMap = new Map<string, string>();
+
+    if (needsBootstrapWrappedResolution(coreConfig)) {
+      const SdkToken = await getSdkToken();
+      routeTokens = buildRouteTokens(coreConfig, SdkToken);
+      resolvedUnderlyingMap = await resolveWrappedCollateralTokens(routeTokens, multiProvider);
+    } else {
+      routeTokens = buildRouteTokens(coreConfig) as unknown as Token[];
+    }
+
+    const tokens = buildTokensArray(routeTokens, resolvedUnderlyingMap);
+    const collateralGroups = groupTokensByCollateral(routeTokens, resolvedUnderlyingMap);
     const tokenByKeyMap = new Map<string, Token>();
     for (const token of tokens) {
       tokenByKeyMap.set(getTokenKey(token), token);
@@ -111,6 +134,7 @@ export async function initWarpContext({
         collateralGroups,
         tokenByKeyMap,
         coinGeckoIds,
+        resolvedUnderlyingMap,
       },
       loadRuntime: async () => {
         const { initWarpRuntime } = await import('./storeRuntime');
@@ -137,6 +161,7 @@ export async function initWarpContext({
         collateralGroups: new Map(),
         tokenByKeyMap: new Map(),
         coinGeckoIds: [],
+        resolvedUnderlyingMap: new Map(),
       },
       loadRuntime: async () => ({
         multiProvider: undefined,

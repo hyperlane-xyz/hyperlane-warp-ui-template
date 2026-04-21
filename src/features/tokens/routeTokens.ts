@@ -3,19 +3,28 @@ import { TokenMetadata } from '@hyperlane-xyz/sdk/token/TokenMetadata';
 import type { WarpCoreConfig } from '@hyperlane-xyz/sdk/warp/types';
 import { assert } from '@hyperlane-xyz/utils';
 
+type TokenCtor<T extends TokenMetadata> = new (
+  args: ConstructorParameters<typeof TokenMetadata>[0],
+) => T;
+
 // Metadata-first bootstrap needs token connectivity before the full runtime WarpCore exists.
 // This reconstructs the lightweight TokenMetadata graph from config so init paths can build
 // token lists, collateral groups, and router-address maps without eagerly loading runtime code.
-export function buildRouteTokens(config: WarpCoreConfig): TokenMetadata[] {
+export function buildRouteTokens<T extends TokenMetadata = TokenMetadata>(
+  config: WarpCoreConfig,
+  // CAST: defaulting a generic constructor parameter to TokenMetadata needs an
+  // explicit bridge because T may be instantiated as a subtype at callsites.
+  TokenCtor: TokenCtor<T> = TokenMetadata as unknown as TokenCtor<T>,
+): T[] {
   const tokens = config.tokens.map(
     (token) =>
-      new TokenMetadata({
+      new TokenCtor({
         ...token,
         addressOrDenom: token.addressOrDenom || '',
         connections: undefined,
       }),
   );
-  const tokensByConnectionId = new Map<string, TokenMetadata[]>();
+  const tokensByConnectionId = new Map<string, T[]>();
   for (const token of tokens) {
     const key = `${token.chainName}|${token.addressOrDenom}`;
     const existing = tokensByConnectionId.get(key) || [];

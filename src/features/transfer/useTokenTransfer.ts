@@ -52,10 +52,11 @@ export function useTokenTransfer(onDone?: () => void) {
 
   // TODO implement cancel callback for when modal is closed?
   const triggerTransactions = useCallback(
-    (values: TransferFormValues, routeOverrideToken: Token | null) =>
-      ensureWarpRuntime().then((warpCore) => {
+    async (values: TransferFormValues, routeOverrideToken: Token | null) => {
+      try {
+        const warpCore = await ensureWarpRuntime();
         if (!warpCore) throw new Error('Warp runtime not ready');
-        return executeTransfer({
+        await executeTransfer({
           warpCore,
           values,
           transferIndex,
@@ -68,7 +69,14 @@ export function useTokenTransfer(onDone?: () => void) {
           onDone,
           routeOverrideToken,
         });
-      }),
+      } catch (error) {
+        logger.error('Failed to initialize transfer runtime', error);
+        updateTransferStatus(transferIndex, TransferStatus.Failed);
+        toast.error('Unable to initialize transfer runtime.');
+        setIsLoading(false);
+        if (onDone) onDone();
+      }
+    },
     [
       transferIndex,
       activeAccounts,

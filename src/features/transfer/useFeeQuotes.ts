@@ -142,12 +142,14 @@ export async function fetchFeeQuotes(
   // Predicate routes require the wrapper path (transferRemoteWithAttestation) — estimating
   // fees without a valid attestation reverts on-chain. But attestation needs a real sender
   // address; skip fee display when only the fallback address is available.
+  let pinnedInterchainFee: WarpCoreFeeEstimate['interchainQuote'] | undefined;
+  let pinnedTokenFeeQuote: WarpCoreFeeEstimate['tokenFeeQuote'] | undefined;
   let attestation: PredicateAttestation | undefined;
   const isPredicateRoute = await warpCore.isPredicateSupported(transferToken, destination);
   if (isPredicateRoute) {
     if (sender === EVM_FEE_QUOTE_FALLBACK_ADDRESS) return null;
     try {
-      attestation = await fetchPredicateAttestation({
+      const result = await fetchPredicateAttestation({
         warpCore,
         token: transferToken,
         destination,
@@ -156,6 +158,9 @@ export async function fetchFeeQuotes(
         amount: originTokenAmount,
         destinationToken: connectedDestinationToken,
       });
+      attestation = result?.attestation;
+      pinnedInterchainFee = result?.interchainFee;
+      pinnedTokenFeeQuote = result?.tokenFeeQuote;
     } catch (error: any) {
       logger.error('Predicate attestation failed during fee estimation', error);
       return null;
@@ -164,7 +169,7 @@ export async function fetchFeeQuotes(
 
   logger.debug('Fetching fee quotes');
   try {
-    return await warpCore.estimateTransferRemoteFees({
+    const feeEstimate = await warpCore.estimateTransferRemoteFees({
       originTokenAmount,
       destination,
       sender,
@@ -173,6 +178,14 @@ export async function fetchFeeQuotes(
       attestation,
       destinationToken: connectedDestinationToken,
     });
+    // Override interchainQuote with the value pinned at attestation-build time.
+    // estimateTransferRemoteFees re-quotes IGP internally; if the price drifted since
+    // the attestation was fetched, the displayed fee would diverge from the attested
+    // msg_value and the submit tx would revert on _authorizeTransaction.
+    if (pinnedInterchainFee) {
+      return { ...feeEstimate, interchainQuote: pinnedInterchainFee, tokenFeeQuote: pinnedTokenFeeQuote ?? feeEstimate.tokenFeeQuote };
+    }
+    return feeEstimate;
   } catch (error) {
     // Connected wallets switch fee simulation from a neutral fallback sender to the user's real
     // account. Some RPC/wallet combinations intermittently fail estimateGas in that mode (e.g.

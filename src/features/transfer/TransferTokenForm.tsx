@@ -65,7 +65,6 @@ import { WalletDropdown } from '../wallet/WalletDropdown';
 import { getInterchainQuote, getTotalFee, getTransferToken } from './fees';
 import { FeeSectionButton } from './FeeSectionButton';
 import { useFetchMaxAmount } from './maxAmount';
-import { fetchPredicateAttestation } from './predicate';
 import { RecipientConfirmationModal } from './RecipientConfirmationModal';
 import { computeDestAmount } from './scaleUtils';
 import { TransferSection } from './TransferSection';
@@ -953,25 +952,25 @@ async function validateForm(
 
     const originTokenAmount = transferToken.amount(amountWei);
 
-    const attestation = await fetchPredicateAttestation({
-      warpCore,
-      token: transferToken,
-      destination,
-      sender: sender || '',
-      recipient,
-      amount: originTokenAmount,
-      destinationToken: connectedDestinationToken,
-    });
-
-    const result = await warpCore.validateTransfer({
-      originTokenAmount,
-      destination,
-      recipient,
-      sender: sender || '',
-      senderPubKey: await senderPubKey,
-      attestation,
-      destinationToken: connectedDestinationToken,
-    });
+    // Don't fetch a Predicate attestation here — that doubles API spend on every debounced
+    // form change. Gas simulation inside validateTransfer may fail without one, so we catch
+    // and swallow simulation errors only for Predicate routes; balance/collateral/recipient
+    // checks have already run by the time gas sim is reached.
+    let result;
+    try {
+      result = await warpCore.validateTransfer({
+        originTokenAmount,
+        destination,
+        recipient,
+        sender: sender || '',
+        senderPubKey: await senderPubKey,
+        destinationToken: connectedDestinationToken,
+      });
+    } catch (error) {
+      const isPredicateRoute = await warpCore.isPredicateSupported(transferToken, destination);
+      if (!isPredicateRoute) throw error;
+      result = null;
+    }
 
     if (!isNullish(result)) {
       const enriched = await enrichBalanceError(

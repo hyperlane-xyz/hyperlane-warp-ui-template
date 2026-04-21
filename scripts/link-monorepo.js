@@ -98,6 +98,58 @@ if (!fs.existsSync(LOCAL_TARBALLS_DIR)) {
 }
 
 /**
+ * Packs the package at pkgPath and moves the tarball to LOCAL_TARBALLS_DIR.
+ * Returns the packed package info, or null on failure.
+ */
+function packPackage(pkgPath) {
+  if (!fs.existsSync(pkgPath)) {
+    console.warn(`⚠️  Directory not found: ${pkgPath}`);
+    return null;
+  }
+
+  const pkgJsonPath = path.join(pkgPath, 'package.json');
+  if (!fs.existsSync(pkgJsonPath)) {
+    console.warn(`⚠️  package.json not found in ${pkgPath}`);
+    return null;
+  }
+
+  const pkgJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'));
+  const packageName = pkgJson.name;
+  const packageVersion = pkgJson.version;
+
+  console.log(`📦 Packing: ${packageName}@${packageVersion}`);
+
+  // Remove old tarballs first
+  fs.readdirSync(pkgPath).filter(f => f.endsWith('.tgz')).forEach(tarball => {
+    fs.unlinkSync(path.join(pkgPath, tarball));
+  });
+
+  if (!run('pnpm pack', pkgPath)) {
+    console.error(`❌ Failed to pack ${packageName}`);
+    return null;
+  }
+
+  const tarballs = fs.readdirSync(pkgPath).filter(f => f.endsWith('.tgz'));
+  if (tarballs.length === 0) {
+    console.error(`❌ No tarball found after packing ${packageName}`);
+    return null;
+  }
+
+  const tarballName = tarballs[0];
+  const sourceTarballPath = path.join(pkgPath, tarballName);
+  const destTarballPath = path.join(LOCAL_TARBALLS_DIR, tarballName);
+
+  fs.copyFileSync(sourceTarballPath, destTarballPath);
+  fs.unlinkSync(sourceTarballPath);
+
+  const relativePath = path.relative(REACT_APP_DIR, destTarballPath);
+  console.log(`   ✅ Created and moved: ${tarballName}`);
+  console.log(`      Location: ${relativePath}\n`);
+
+  return { name: packageName, version: packageVersion, tarballPath: relativePath };
+}
+
+/**
  * 4. Pack each specified package
  */
 const packedPackages = [];
@@ -106,114 +158,13 @@ console.log('------------------------------------------');
 console.log('📦 Packing packages...\n');
 
 args.forEach((folder) => {
-  const pkgPath = validatePackagePath(folder);
-  if (!fs.existsSync(pkgPath)) {
-    console.warn(`⚠️  Folder not found: ${pkgPath}`);
-    return;
-  }
-
-  const pkgJsonPath = path.join(pkgPath, 'package.json');
-  const pkgJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'));
-  const packageName = pkgJson.name;
-  const packageVersion = pkgJson.version;
-
-  console.log(`📦 Packing: ${packageName}@${packageVersion}`);
-
-  // Remove old tarballs first
-  const oldTarballs = fs.readdirSync(pkgPath).filter(f => f.endsWith('.tgz'));
-  oldTarballs.forEach(tarball => {
-    fs.unlinkSync(path.join(pkgPath, tarball));
-  });
-
-  // Pack the package
-  if (!run('pnpm pack', pkgPath)) {
-    console.error(`❌ Failed to pack ${packageName}`);
-    return;
-  }
-
-  // Find the generated tarball
-  const tarballs = fs.readdirSync(pkgPath).filter(f => f.endsWith('.tgz'));
-  if (tarballs.length === 0) {
-    console.error(`❌ No tarball found for ${packageName}`);
-    return;
-  }
-
-  const tarballName = tarballs[0];
-  const sourceTarballPath = path.join(pkgPath, tarballName);
-  const destTarballPath = path.join(LOCAL_TARBALLS_DIR, tarballName);
-
-  // Move tarball from monorepo to local directory
-  fs.copyFileSync(sourceTarballPath, destTarballPath);
-  fs.unlinkSync(sourceTarballPath);
-
-  const relativePath = path.relative(REACT_APP_DIR, destTarballPath);
-
-  packedPackages.push({
-    name: packageName,
-    version: packageVersion,
-    tarballPath: relativePath,
-  });
-
-  console.log(`   ✅ Created and moved: ${tarballName}`);
-  console.log(`      Location: ${relativePath}\n`);
+  const result = packPackage(validatePackagePath(folder));
+  if (result) packedPackages.push(result);
 });
 
-/**
- * Hardcoded: Pack @hyperlane-xyz/core from solidity directory
- */
 console.log('📦 Packing hardcoded package: @hyperlane-xyz/core (from solidity/)');
-
-const solidityCorePath = SOLIDITY_DIR;
-if (fs.existsSync(solidityCorePath)) {
-  const pkgJsonPath = path.join(solidityCorePath, 'package.json');
-  if (fs.existsSync(pkgJsonPath)) {
-    const pkgJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'));
-    const packageName = pkgJson.name;
-    const packageVersion = pkgJson.version;
-
-    console.log(`   Package: ${packageName}@${packageVersion}`);
-
-    // Remove old tarballs
-    const oldTarballs = fs.readdirSync(solidityCorePath).filter(f => f.endsWith('.tgz'));
-    oldTarballs.forEach(tarball => {
-      fs.unlinkSync(path.join(solidityCorePath, tarball));
-    });
-
-    // Pack the package
-    if (run('pnpm pack', solidityCorePath)) {
-      // Find the generated tarball
-      const tarballs = fs.readdirSync(solidityCorePath).filter(f => f.endsWith('.tgz'));
-      if (tarballs.length > 0) {
-        const tarballName = tarballs[0];
-        const sourceTarballPath = path.join(solidityCorePath, tarballName);
-        const destTarballPath = path.join(LOCAL_TARBALLS_DIR, tarballName);
-
-        // Move tarball
-        fs.copyFileSync(sourceTarballPath, destTarballPath);
-        fs.unlinkSync(sourceTarballPath);
-
-        const relativePath = path.relative(REACT_APP_DIR, destTarballPath);
-
-        packedPackages.push({
-          name: packageName,
-          version: packageVersion,
-          tarballPath: relativePath,
-        });
-
-        console.log(`   ✅ Created and moved: ${tarballName}`);
-        console.log(`      Location: ${relativePath}\n`);
-      } else {
-        console.warn(`   ⚠️  No tarball found for ${packageName}\n`);
-      }
-    } else {
-      console.warn(`   ⚠️  Failed to pack ${packageName}\n`);
-    }
-  } else {
-    console.warn(`   ⚠️  package.json not found in solidity/\n`);
-  }
-} else {
-  console.warn(`   ⚠️  Solidity directory not found at ${solidityCorePath}\n`);
-}
+const coreResult = packPackage(SOLIDITY_DIR);
+if (coreResult) packedPackages.push(coreResult);
 
 if (packedPackages.length === 0) {
   console.error('❌ No packages were packed successfully.');

@@ -22,31 +22,13 @@ function validateApiUrl(url: string): boolean {
   }
 }
 
-// In-memory sliding-window rate limiter: 10 req / IP / 60s.
-// Per-instance only (no Redis), which is sufficient to slow automated abuse
-// against any single warm serverless instance.
-const RATE_LIMIT_WINDOW_MS = 60_000;
-const RATE_LIMIT_MAX = 10;
-const ipRequestLog = new Map<string, number[]>();
-
-function isRateLimited(ip: string): boolean {
-  const now = Date.now();
-  const timestamps = (ipRequestLog.get(ip) ?? []).filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
-  if (timestamps.length >= RATE_LIMIT_MAX) return true;
-  timestamps.push(now);
-  ipRequestLog.set(ip, timestamps);
-  return false;
-}
+// Rate limiting is handled by Vercel firewall rules at the edge layer.
+// Do not add in-memory rate limiting here — serverless instances are ephemeral
+// and load-balanced, so module-level state is not shared across invocations.
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  const ip =
-    (req.headers['x-real-ip'] as string | undefined) || req.socket?.remoteAddress || 'unknown';
-  if (isRateLimited(ip)) {
-    return res.status(429).json({ error: 'Too many requests' });
   }
 
   if (!PREDICATE_API_KEY) {

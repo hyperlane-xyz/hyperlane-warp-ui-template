@@ -1,5 +1,4 @@
 import {
-  PredicateAttestation,
   ProviderType,
   Token,
   TypedTransactionReceipt,
@@ -26,7 +25,7 @@ import { getChainDisplayName } from '../chains/utils';
 import { AppState, useStore } from '../store';
 import { getTokenByKey, useWarpCore } from '../tokens/hooks';
 import { findConnectedDestinationToken } from '../tokens/utils';
-import { fetchPredicateAttestation } from './predicate';
+import { fetchPredicateAttestation, PredicateAttestationResult } from './predicate';
 import { TransferContext, TransferFormValues, TransferStatus } from './types';
 import { tryGetMsgIdFromTransferReceipt } from './utils';
 
@@ -174,11 +173,11 @@ async function executeTransfer({
     updateTransferStatus(transferIndex, (transferStatus = TransferStatus.CreatingTxs));
 
     // Check if Predicate attestation is needed
-    let attestation: PredicateAttestation | undefined;
+    let attestationResult: PredicateAttestationResult | undefined;
 
     try {
       updateTransferStatus(transferIndex, (transferStatus = TransferStatus.FetchingAttestation));
-      attestation = await fetchPredicateAttestation({
+      attestationResult = await fetchPredicateAttestation({
         warpCore,
         token: originToken,
         destination,
@@ -198,7 +197,11 @@ async function executeTransfer({
       destination,
       sender,
       recipient,
-      attestation,
+      attestation: attestationResult?.attestation,
+      // Pin the IGP quote captured at attestation time so msg_value matches the
+      // attested Statement preimage — prevents _authorizeTransaction revert on drift.
+      interchainFee: attestationResult?.interchainFee,
+      tokenFeeQuote: attestationResult?.tokenFeeQuote,
       destinationToken: connectedDestinationToken,
     });
 

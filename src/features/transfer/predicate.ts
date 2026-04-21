@@ -3,6 +3,7 @@ import {
   PredicateAttestation,
   TokenAmount,
   WarpTxCategory,
+  WarpTypedTransaction,
   isPredicateCapableAdapter,
 } from '@hyperlane-xyz/sdk';
 import { ProtocolType, assert } from '@hyperlane-xyz/utils';
@@ -20,6 +21,14 @@ interface FetchAttestationParams {
   destinationToken?: IToken;
 }
 
+export interface PredicateAttestationResult {
+  attestation: PredicateAttestation;
+  // Pinned at attestation-build time so callers can pass the same value
+  // to getTransferRemoteTxs / estimateTransferRemoteFees and avoid IGP drift.
+  interchainFee: TokenAmount<IToken>;
+  tokenFeeQuote: TokenAmount<IToken> | undefined;
+}
+
 /**
  * Fetches Predicate attestation for a token transfer if required.
  * Returns undefined if attestation is not needed or fails.
@@ -34,7 +43,7 @@ export async function fetchPredicateAttestation({
   recipient,
   amount,
   destinationToken,
-}: FetchAttestationParams): Promise<PredicateAttestation | undefined> {
+}: FetchAttestationParams): Promise<PredicateAttestationResult | undefined> {
   if (token.protocol !== ProtocolType.Ethereum) {
     return undefined;
   }
@@ -56,6 +65,18 @@ export async function fetchPredicateAttestation({
   const wrapperAddress = await adapter.getPredicateWrapperAddress();
   assert(wrapperAddress, 'Predicate wrapper address not found');
 
+  // Quote IGP once here so the same value is pinned into the calldata AND returned to callers.
+  // Both getTransferRemoteTxs (calldata build) and the downstream submit/fee-estimate calls
+  // must use the identical msg_value; the Predicate wrapper hashes it into the Statement
+  // preimage, so any IGP drift between the two calls causes _authorizeTransaction to revert.
+  const { igpQuote, tokenFeeQuote } = await warpCore.getInterchainTransferFee({
+    originTokenAmount: amount,
+    destination,
+    sender,
+    recipient,
+    destinationToken,
+  });
+
   // Build the transfer tx WITHOUT an attestation to obtain the inner transferRemote calldata.
   // The on-chain PredicateWrapper.transferRemoteWithAttestation() reconstructs that same
   // inner calldata and passes it to Predicate.validateAttestation() — it cannot include the
@@ -66,6 +87,8 @@ export async function fetchPredicateAttestation({
     destination,
     sender,
     recipient,
+    interchainFee: igpQuote,
+    tokenFeeQuote,
     destinationToken,
   });
 
@@ -73,12 +96,11 @@ export async function fetchPredicateAttestation({
 
   // Use last tx: preTransferRemoteTxs (approval/revoke) are prepended before the transfer tx
   const tempTx =
-    tempTxs.find((tx) => (tx as any).category === WarpTxCategory.Transfer) ??
+    tempTxs.find((tx) => tx.category === WarpTxCategory.Transfer) ??
     tempTxs[tempTxs.length - 1];
   assert(tempTx && typeof tempTx === 'object', 'Invalid transaction object');
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const transaction = (tempTx as any).transaction;
+  const transaction = (tempTx as WarpTypedTransaction).transaction;
   assert(transaction, 'Transfer transaction missing');
 
   const txData = transaction.data?.toString();
@@ -100,5 +122,5 @@ export async function fetchPredicateAttestation({
   });
 
   logger.debug('Predicate attestation received:', response.attestation.uuid);
-  return response.attestation;
+  return { attestation: response.attestation, interchainFee: igpQuote, tokenFeeQuote };
 }

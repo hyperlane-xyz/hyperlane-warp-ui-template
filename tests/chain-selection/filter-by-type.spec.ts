@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { config } from '../../src/consts/config';
-import { resolveChainDisplayName } from '../helpers/constants';
+import { isTestnetChain, resolveChainDisplayName } from '../helpers/constants';
 import { getOriginTokenButton } from '../helpers/locators';
 
 // Default origin is assumed mainnet — used to verify the Testnet filter hides it.
@@ -10,6 +10,10 @@ const defaultOriginChain = config.defaultOriginToken?.split('-')[0];
 test.describe('Chain Selection - Filter by Type', () => {
   test('should filter chains by Testnet type', async ({ page }) => {
     test.skip(!defaultOriginChain, 'No defaultOriginToken configured');
+    test.skip(
+      await isTestnetChain(defaultOriginChain!),
+      'Default origin is a testnet chain — test assumes mainnet default',
+    );
     const defaultChainDisplayName = await resolveChainDisplayName(defaultOriginChain!);
 
     await page.goto('http://localhost:3000');
@@ -46,6 +50,10 @@ test.describe('Chain Selection - Filter by Type', () => {
 
   test('should filter chains by Mainnet type', async ({ page }) => {
     test.skip(!defaultOriginChain, 'No defaultOriginToken configured');
+    test.skip(
+      await isTestnetChain(defaultOriginChain!),
+      'Default origin is a testnet chain — test assumes mainnet default',
+    );
     const defaultChainDisplayName = await resolveChainDisplayName(defaultOriginChain!);
 
     await page.goto('http://localhost:3000');

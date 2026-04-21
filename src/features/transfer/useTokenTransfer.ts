@@ -192,6 +192,8 @@ async function executeTransfer({
       throw new Error(`Predicate attestation failed: ${message}`);
     }
 
+    updateTransferStatus(transferIndex, (transferStatus = TransferStatus.CreatingTxs));
+
     const txs = await warpCore.getTransferRemoteTxs({
       originTokenAmount,
       destination,

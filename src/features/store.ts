@@ -41,7 +41,6 @@ interface WarpContext {
 
 // Module-level coordination state for lazy init/runtime upgrades.
 // This is intentionally outside Zustand state so concurrent callers share the same loaders/promises.
-// Exported reset exists for tests/manual module resets when the file is reloaded in dev.
 let initWarpContextModulePromise:
   | Promise<{ initWarpContext: typeof InitWarpContextFn }>
   | undefined;
@@ -50,15 +49,6 @@ let runtimeContextPromise: Promise<WarpRuntimeContext> | undefined;
 let runtimeContextVersion = 0;
 let storeSetState: ((partial: Partial<AppState>) => void) | undefined;
 let storeGetState: (() => AppState) | undefined;
-
-export function resetStoreModuleState() {
-  initWarpContextModulePromise = undefined;
-  runtimeContextLoader = undefined;
-  runtimeContextPromise = undefined;
-  runtimeContextVersion = 0;
-  storeSetState = undefined;
-  storeGetState = undefined;
-}
 
 async function loadWarpContextModule() {
   initWarpContextModulePromise ||= import('./storeInit');

@@ -40,7 +40,7 @@ export function getNumRoutesWithSelectedChain(
   selectedChain: ChainName,
   isSelectedChainOrigin: boolean,
 ): ChainSearchMenuProps['customListItemField'] {
-  const multiProvider = warpCore.multiProvider as MultiProtocolProvider;
+  const multiProvider = warpCore.multiProvider;
   const chains = multiProvider.metadata;
   const selectedChainDisplayName = trimToLength(
     getChainDisplayName(multiProvider, selectedChain, true),

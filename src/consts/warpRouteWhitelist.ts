@@ -417,7 +417,7 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // fluent
   'BLEND/fluent',
-  'USDnr/fluent',
+  'USDnr/usdnr',
 ];
 
 /**

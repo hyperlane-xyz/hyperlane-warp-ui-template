@@ -1,34 +1,36 @@
 import { test, expect } from '@playwright/test';
 import { config } from '../../src/consts/config';
-import { isTestnetChain, resolveChainDisplayName } from '../helpers/constants';
 import { getOriginTokenButton } from '../helpers/locators';
 
-// Default origin is assumed mainnet — used to verify the Testnet filter hides it.
-// Match chain rows by displayName (what the UI renders), not by the internal slug.
+// Match chain rows by the `data-chain` slug (what ChainList renders) instead of
+// reconstructing a displayName at test time.
 const defaultOriginChain = config.defaultOriginToken?.split('-')[0];
 
 test.describe('Chain Selection - Filter by Type', () => {
   test('should filter chains by Testnet type', async ({ page }) => {
     test.skip(!defaultOriginChain, 'No defaultOriginToken configured');
-    test.skip(
-      await isTestnetChain(defaultOriginChain!),
-      'Default origin is a testnet chain — test assumes mainnet default',
-    );
-    const defaultChainDisplayName = await resolveChainDisplayName(defaultOriginChain!);
 
     await page.goto('http://localhost:3000');
     await page.getByText('Send').first().waitFor({ state: 'visible' });
 
+    // Read default origin's testnet status directly from the token select button's data attribute
+    const originButton = getOriginTokenButton(page);
+    await expect(originButton).toBeVisible();
+    test.skip(
+      (await originButton.getAttribute('data-is-testnet')) === 'true',
+      'Default origin is a testnet chain — test assumes mainnet default',
+    );
+
     // Open token selector
-    await getOriginTokenButton(page).click();
+    await originButton.click();
     await expect(page.getByText('Select Token')).toBeVisible();
 
-    const defaultChainRow = page
-      .locator('.token-picker-chain-row')
-      .filter({ hasText: defaultChainDisplayName });
+    const defaultChainRow = page.locator(
+      `.token-picker-chain-row[data-chain="${defaultOriginChain}"]`,
+    );
 
     // Baseline: default origin (mainnet) chain row is visible before filtering
-    await expect(defaultChainRow.first()).toBeVisible();
+    await expect(defaultChainRow).toBeVisible();
 
     // Open filter dropdown
     await page.getByRole('button', { name: 'Filter chains' }).click();
@@ -44,23 +46,27 @@ test.describe('Chain Selection - Filter by Type', () => {
     // Clear button appears only when a filter is active — confirms click took effect
     await expect(page.getByRole('button', { name: 'Clear' })).toBeVisible();
 
-    // Mainnet chain (default origin) row should no longer be visible
-    await expect(defaultChainRow).toHaveCount(0);
+    // No mainnet chain rows should remain visible — covers more than just the default
+    await expect(
+      page.locator('.token-picker-chain-row[data-is-testnet="false"]'),
+    ).toHaveCount(0);
   });
 
   test('should filter chains by Mainnet type', async ({ page }) => {
     test.skip(!defaultOriginChain, 'No defaultOriginToken configured');
-    test.skip(
-      await isTestnetChain(defaultOriginChain!),
-      'Default origin is a testnet chain — test assumes mainnet default',
-    );
-    const defaultChainDisplayName = await resolveChainDisplayName(defaultOriginChain!);
 
     await page.goto('http://localhost:3000');
     await page.getByText('Send').first().waitFor({ state: 'visible' });
 
+    const originButton = getOriginTokenButton(page);
+    await expect(originButton).toBeVisible();
+    test.skip(
+      (await originButton.getAttribute('data-is-testnet')) === 'true',
+      'Default origin is a testnet chain — test assumes mainnet default',
+    );
+
     // Open token selector and filter dropdown
-    await getOriginTokenButton(page).click();
+    await originButton.click();
     await page.getByRole('button', { name: 'Filter chains' }).click();
 
     // Click Mainnet filter
@@ -71,10 +77,12 @@ test.describe('Chain Selection - Filter by Type', () => {
 
     // Default origin chain row (mainnet) remains visible after Mainnet filter
     await expect(
-      page
-        .locator('.token-picker-chain-row')
-        .filter({ hasText: defaultChainDisplayName })
-        .first(),
+      page.locator(`.token-picker-chain-row[data-chain="${defaultOriginChain}"]`),
     ).toBeVisible();
+
+    // Negative check: no testnet chain rows should remain
+    await expect(
+      page.locator('.token-picker-chain-row[data-is-testnet="true"]'),
+    ).toHaveCount(0);
   });
 });

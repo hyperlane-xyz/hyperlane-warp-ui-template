@@ -15,19 +15,3 @@ export function resolveTestRoutes(): { primary: string; secondary: string; skip:
     skip: false,
   };
 }
-
-// Mirrors ChainList's rendered label (`chain.displayName || chain.name`, see
-// src/features/chains/hooks.ts:52). Can't import the source `getChainDisplayName`
-// directly because its file transitively pulls in @hyperlane-xyz/registry,
-// whose barrel includes aleo/@provablehq/wasm TLA and breaks Playwright's CJS
-// test loader.
-export async function resolveChainDisplayName(slug: string): Promise<string> {
-  const { chainMetadata } = await import('@hyperlane-xyz/registry');
-  const metadata = chainMetadata[slug];
-  return metadata?.displayName || metadata?.name || slug;
-}
-
-export async function isTestnetChain(slug: string): Promise<boolean> {
-  const { chainMetadata } = await import('@hyperlane-xyz/registry');
-  return !!chainMetadata[slug]?.isTestnet;
-}

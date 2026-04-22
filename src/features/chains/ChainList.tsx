@@ -59,6 +59,8 @@ export function ChainList({
         {chains.map((chain) => (
           <ChainButton
             key={chain.name}
+            chainName={chain.name}
+            isTestnet={chain.isTestnet}
             isSelected={!isEditMode && selectedChain === chain.name}
             onClick={() => onSelectChain(chain)}
             icon={<ChainLogo chainName={chain.name} size={28} />}
@@ -81,6 +83,8 @@ export function ChainList({
 }
 
 function ChainButton({
+  chainName,
+  isTestnet,
   isSelected,
   onClick,
   icon,
@@ -88,6 +92,8 @@ function ChainButton({
   showEditIcon,
   disabled,
 }: {
+  chainName?: string;
+  isTestnet?: boolean;
   isSelected: boolean;
   onClick: () => void;
   icon: React.ReactNode;
@@ -99,6 +105,8 @@ function ChainButton({
     <button
       type="button"
       disabled={disabled}
+      data-chain={chainName}
+      data-is-testnet={chainName ? String(!!isTestnet) : undefined}
       className={`token-picker-chain-row ${styles.label} flex w-full items-center gap-3 border-l-2 px-4 py-2.5 transition-colors ${
         disabled
           ? 'border-transparent opacity-50'

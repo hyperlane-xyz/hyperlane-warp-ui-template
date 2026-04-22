@@ -1,7 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { APP_NAME } from '../../src/consts/app';
 import { config } from '../../src/consts/config';
-import { resolveChainDisplayName } from '../helpers/constants';
 import { getDestinationTokenButton, getOriginTokenButton } from '../helpers/locators';
 
 test.describe('Page Load - Transfer Form', () => {
@@ -25,9 +24,8 @@ test.describe('Page Load - Transfer Form', () => {
     await expect(originButton).toBeVisible();
     if (config.defaultOriginToken) {
       const [originChain, originSymbol] = config.defaultOriginToken.split('-');
-      const originChainDisplay = await resolveChainDisplayName(originChain);
+      await expect(originButton).toHaveAttribute('data-chain', originChain);
       await expect(originButton).toContainText(originSymbol);
-      await expect(originButton).toContainText(originChainDisplay);
     }
 
     // Amount input visible
@@ -48,9 +46,8 @@ test.describe('Page Load - Transfer Form', () => {
     await expect(destButton).toBeVisible();
     if (config.defaultDestinationToken) {
       const [destChain, destSymbol] = config.defaultDestinationToken.split('-');
-      const destChainDisplay = await resolveChainDisplayName(destChain);
+      await expect(destButton).toHaveAttribute('data-chain', destChain);
       await expect(destButton).toContainText(destSymbol);
-      await expect(destButton).toContainText(destChainDisplay);
     }
     await expect(page.getByText('Remote Balance: 0.00')).toBeVisible();
   });

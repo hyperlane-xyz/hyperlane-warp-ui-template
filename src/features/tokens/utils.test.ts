@@ -1723,9 +1723,10 @@ describe('M0Portal integration (multi-synthetic same addressOrDenom)', () => {
       collateralAddressOrDenom: WM_COLLATERAL,
     });
 
+    // Which variant survives doesn't matter — findRouteToken resolves the correct
+    // variant at transfer time. Ordering is covered by the dedicated test above.
     const result = dedupeTokensByCollateral([wmHub, wmLite]);
     expect(result).toHaveLength(1);
-    expect(result[0]).toBe(wmHub);
   });
 
   test('dedupeTokensByCollateral should NOT collapse M0Portal tokens with different symbols/collaterals', () => {

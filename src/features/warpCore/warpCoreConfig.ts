@@ -22,7 +22,7 @@ import { logger } from '../../utils/logger.ts';
 // Map of chain -> address -> wireDecimals
 export type WireDecimalsMap = Record<ChainName, Record<string, number>>;
 type WarpCoreToken = WarpCoreConfig['tokens'][number];
-type NullableAddressWarpCoreToken = Omit<WarpCoreToken, 'addressOrDenom'> & {
+export type NullableAddressWarpCoreToken = Omit<WarpCoreToken, 'addressOrDenom'> & {
   addressOrDenom: string | null;
 };
 

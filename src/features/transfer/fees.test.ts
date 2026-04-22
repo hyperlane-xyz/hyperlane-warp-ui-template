@@ -1,4 +1,4 @@
-import { TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
+import { Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { createMockToken } from '../../utils/test';
@@ -800,15 +800,19 @@ describe('getTransferToken', () => {
     ]);
 
     const feeToken = createMockToken({ symbol: 'FEE' });
+    // Key mocks by token identity so tests are resilient to production-side iteration order changes
+    const feeByOrigin = new Map<Token, bigint>([
+      [t1, FEE_HIGH],
+      [t2, FEE_MEDIUM],
+      [t3, FEE_LOW],
+      [t4, FEE_MEDIUM],
+    ]);
     const warpCore = createMockWarpCore(
       {
         getTokenCollateral: vi.fn().mockResolvedValue(BALANCE_XXLARGE),
-        getInterchainTransferFee: vi
-          .fn()
-          .mockResolvedValueOnce({ tokenFeeQuote: new TokenAmount(FEE_HIGH, feeToken) })
-          .mockResolvedValueOnce({ tokenFeeQuote: new TokenAmount(FEE_MEDIUM, feeToken) })
-          .mockResolvedValueOnce({ tokenFeeQuote: new TokenAmount(FEE_LOW, feeToken) })
-          .mockResolvedValueOnce({ tokenFeeQuote: new TokenAmount(FEE_MEDIUM, feeToken) }),
+        getInterchainTransferFee: vi.fn(async ({ originTokenAmount }) => ({
+          tokenFeeQuote: new TokenAmount(feeByOrigin.get(originTokenAmount.token)!, feeToken),
+        })),
       },
       t1,
     );
@@ -844,18 +848,22 @@ describe('getTransferToken', () => {
     ]);
 
     const feeToken = createMockToken({ symbol: 'FEE' });
+    const balanceByDest = new Map<Token, bigint>([
+      [d1, BALANCE_TINY],
+      [d2, BALANCE_XLARGE],
+      [d3, BALANCE_XLARGE],
+    ]);
+    const feeByOrigin = new Map<Token, bigint>([
+      [t2, FEE_MEDIUM],
+      [t3, FEE_LOW],
+    ]);
     const warpCore = createMockWarpCore(
       {
-        getTokenCollateral: vi
-          .fn()
-          .mockResolvedValueOnce(BALANCE_TINY) // t1 — below TRANSFER_AMOUNT
-          .mockResolvedValueOnce(BALANCE_XLARGE) // t2
-          .mockResolvedValueOnce(BALANCE_XLARGE), // t3
+        getTokenCollateral: vi.fn(async (token) => balanceByDest.get(token) ?? 0n),
         // Only t2 + t3 reach fee fetch (t1 filtered by balance)
-        getInterchainTransferFee: vi
-          .fn()
-          .mockResolvedValueOnce({ tokenFeeQuote: new TokenAmount(FEE_MEDIUM, feeToken) })
-          .mockResolvedValueOnce({ tokenFeeQuote: new TokenAmount(FEE_LOW, feeToken) }),
+        getInterchainTransferFee: vi.fn(async ({ originTokenAmount }) => ({
+          tokenFeeQuote: new TokenAmount(feeByOrigin.get(originTokenAmount.token)!, feeToken),
+        })),
       },
       t1,
     );
@@ -925,14 +933,14 @@ describe('getTransferToken', () => {
       { originToken: t3, destinationToken: d3 },
     ]);
 
+    const balanceByDest = new Map<Token, bigint>([
+      [d1, BALANCE_LARGE],
+      [d2, BALANCE_XLARGE],
+      [d3, BALANCE_XXLARGE], // highest
+    ]);
     const warpCore = createMockWarpCore(
       {
-        // Ascending balances, sort will put t3 first (highest)
-        getTokenCollateral: vi
-          .fn()
-          .mockResolvedValueOnce(BALANCE_LARGE) // t1
-          .mockResolvedValueOnce(BALANCE_XLARGE) // t2
-          .mockResolvedValueOnce(BALANCE_XXLARGE), // t3 — highest
+        getTokenCollateral: vi.fn(async (token) => balanceByDest.get(token) ?? 0n),
         getInterchainTransferFee: vi.fn().mockRejectedValue(new Error('fee fetch failed')),
       },
       t1,
@@ -968,15 +976,22 @@ describe('getTransferToken', () => {
     ]);
 
     const feeToken = createMockToken({ symbol: 'FEE' });
+    // t3 → undefined fee (should win); others → concrete fees
+    const feeByOrigin = new Map<Token, bigint | undefined>([
+      [t1, FEE_HIGH],
+      [t2, FEE_LOW],
+      [t3, undefined],
+      [t4, FEE_MEDIUM],
+    ]);
     const warpCore = createMockWarpCore(
       {
         getTokenCollateral: vi.fn().mockResolvedValue(BALANCE_XXLARGE),
-        getInterchainTransferFee: vi
-          .fn()
-          .mockResolvedValueOnce({ tokenFeeQuote: new TokenAmount(FEE_HIGH, feeToken) })
-          .mockResolvedValueOnce({ tokenFeeQuote: new TokenAmount(FEE_LOW, feeToken) })
-          .mockResolvedValueOnce({ tokenFeeQuote: undefined }) // t3 — no fee, should win
-          .mockResolvedValueOnce({ tokenFeeQuote: new TokenAmount(FEE_MEDIUM, feeToken) }),
+        getInterchainTransferFee: vi.fn(async ({ originTokenAmount }) => {
+          const fee = feeByOrigin.get(originTokenAmount.token);
+          return {
+            tokenFeeQuote: fee != null ? new TokenAmount(fee, feeToken) : undefined,
+          };
+        }),
       },
       t1,
     );
@@ -1091,14 +1106,17 @@ describe('getTransferToken', () => {
     };
 
     const feeToken = createMockToken({ symbol: 'FEE' });
+    const feeByOrigin = new Map<Token, bigint>([
+      [t1, FEE_HIGH],
+      [t2, FEE_LOW], // winner
+      [t3, FEE_MEDIUM],
+    ]);
     const warpCore = createMockWarpCore(
       {
         getTokenCollateral: vi.fn().mockResolvedValue(BALANCE_XXLARGE),
-        getInterchainTransferFee: vi
-          .fn()
-          .mockResolvedValueOnce({ tokenFeeQuote: new TokenAmount(FEE_HIGH, feeToken) })
-          .mockResolvedValueOnce({ tokenFeeQuote: new TokenAmount(FEE_LOW, feeToken) }) // winner
-          .mockResolvedValueOnce({ tokenFeeQuote: new TokenAmount(FEE_MEDIUM, feeToken) }),
+        getInterchainTransferFee: vi.fn(async ({ originTokenAmount }) => ({
+          tokenFeeQuote: new TokenAmount(feeByOrigin.get(originTokenAmount.token)!, feeToken),
+        })),
       },
       t1,
     );

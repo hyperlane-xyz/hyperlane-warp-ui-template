@@ -1,17 +1,16 @@
 import { TokenStandard } from '@hyperlane-xyz/sdk';
 import { describe, expect, test } from 'vitest';
 
-import { dedupeTokens } from './warpCoreConfig';
+import { dedupeTokens, NullableAddressWarpCoreToken } from './warpCoreConfig';
 
-// The dedupeTokens function operates on raw warp core config tokens (pre-Token
-// instantiation). Use a loose shape; the function only reads standard, chainName,
-// symbol, addressOrDenom.
-const makeToken = (overrides: Record<string, unknown>) =>
+const makeToken = (
+  overrides: Partial<NullableAddressWarpCoreToken>,
+): NullableAddressWarpCoreToken =>
   ({
     decimals: 6,
     name: 'Mock',
     ...overrides,
-  }) as any;
+  }) as NullableAddressWarpCoreToken;
 
 describe('dedupeTokens', () => {
   test('should dedupe non-M0 tokens by chainName|addressOrDenom', () => {

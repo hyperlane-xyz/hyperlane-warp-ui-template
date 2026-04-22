@@ -19,6 +19,9 @@ let collateralKeyCache = new WeakMap<IToken, string>();
 // getCollateralKey() uses this to group lockbox/vault tokens with their
 // non-wrapper counterparts (e.g., lockbox USDT grouped with regular USDT).
 let resolvedUnderlyingMap: Map<string, string> = new Map();
+// Standards the UI treats as collateralized on top of the SDK's
+// TOKEN_COLLATERALIZED_STANDARDS. Kept local since we don't necessarily
+// want these promoted upstream in the SDK.
 const EXTRA_COLLATERALIZED_STANDARDS = new Set([
   TokenStandard.EvmHypCollateralFiat,
   TokenStandard.EvmM0Portal,
@@ -78,7 +81,7 @@ export function findConnectedDestinationToken(
     // so address alone is not a reliable identity check.
     destinationCandidates.find(
       (candidate) =>
-        candidate.symbol === destinationToken.symbol &&
+        candidate.symbol.toLowerCase() === destinationToken.symbol.toLowerCase() &&
         eqAddress(candidate.addressOrDenom, destinationToken.addressOrDenom),
     )
   );

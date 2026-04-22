@@ -117,8 +117,8 @@ class MockCosmosClient implements WalletClient {
               chainId: signDoc.chainId,
             }),
           });
-        } catch {
-          /* capture is best-effort */
+        } catch (error) {
+          console.error('Failed to capture mock Cosmos tx', error);
         }
         const underlying = await this.getSignerFor(prefix);
         return underlying.signDirect(signerAddress, signDoc);

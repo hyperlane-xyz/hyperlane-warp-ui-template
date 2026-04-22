@@ -70,10 +70,7 @@ describe('messageToTransferContext', () => {
     // `normalizeAddress(sender, protocol)` (EIP-55 checksummed for EVM), not
     // `.toLowerCase()`. Use wireDecimals that DIFFERS from token.decimals so
     // the test can distinguish the router-info path from the token fallback.
-    const normalizedRouter = normalizeAddress(
-      matchingRouteToken.addressOrDenom,
-      ProtocolType.Ethereum,
-    );
+    const normalizedRouter = normalizeAddress(matchingRouteToken.addressOrDenom);
     const routerAddressesByChainMap: Record<string, Record<string, RouterAddressInfo>> = {
       ethereum: {
         [normalizedRouter]: { wireDecimals: 9 },

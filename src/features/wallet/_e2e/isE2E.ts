@@ -1,7 +1,8 @@
-// E2E test gate. Activated by `?_e2e=1` query param at runtime so prod builds
-// never hit mock code paths (the param is absent in prod URLs). Runtime check
-// (not NEXT_PUBLIC_*) so the same build serves prod and E2E.
+// E2E test gate. Only active on local test hosts plus `?_e2e=1`, so deployed
+// prod/preview URLs cannot switch wallet contexts over to mocks.
 export function isE2EMode(): boolean {
   if (typeof window === 'undefined') return false;
-  return new URLSearchParams(window.location.search).has('_e2e');
+  const isLocalHost =
+    window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  return isLocalHost && new URLSearchParams(window.location.search).has('_e2e');
 }

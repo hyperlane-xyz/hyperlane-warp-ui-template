@@ -177,7 +177,11 @@ function handleOne(itemUnknown: unknown, ctx: HandleCtx): unknown {
         },
       });
     default:
-      return { jsonrpc: '2.0', id: item.id ?? null, result: null };
+      return {
+        jsonrpc: '2.0',
+        id: item.id ?? null,
+        error: { code: -32601, message: `Method not found: ${method}` },
+      };
   }
 }
 

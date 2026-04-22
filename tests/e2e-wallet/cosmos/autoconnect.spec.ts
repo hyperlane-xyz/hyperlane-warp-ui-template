@@ -17,10 +17,8 @@ test.describe('Cosmos mock wallet: auto-connect', () => {
       .click({ timeout: 30_000 });
     await page.getByText('Select Token').waitFor({ state: 'hidden', timeout: 30_000 });
 
-    // Origin-card WalletDropdown flips from "Connect Wallet" to a shortened
-    // address once the mock auto-connects. For celestia-prefixed bech32 that
-    // is `celes...XXXX` (5 + '...' + 4, lowercased by shortenAddress).
-    const shortened = page.getByText(/^celes\.\.\.[a-z0-9]{4}$/).first();
+    // Pinned from the fixed mnemonic re-encoded with the `celestia` prefix.
+    const shortened = page.getByText('celes...ud9c').first();
     await expect(shortened).toBeVisible({ timeout: 20_000 });
   });
 });

@@ -20,13 +20,22 @@ describe('getRouterAddressesByChain', () => {
       addressOrDenom: 'So11111111111111111111111111111111111111112',
       decimals: 9,
     });
+    const cosmosToken = createMockToken({
+      chainName: 'cosmoshub',
+      standard: TokenStandard.CosmosIbc,
+      addressOrDenom: 'ibc/27394FB092D2A2A821B4B8C3670D8E4C0A9D1C6A1BDAA1F4B1C7E7DA4D5E6F70',
+      decimals: 6,
+    });
 
-    const result = getRouterAddressesByChain([evmToken, sealevelToken], {
+    const result = getRouterAddressesByChain([evmToken, sealevelToken, cosmosToken], {
       ethereum: {
         [VALID_EVM_ADDRESS]: 18,
       },
       solanamainnet: {
         [sealevelToken.addressOrDenom]: 9,
+      },
+      cosmoshub: {
+        [cosmosToken.addressOrDenom]: 6,
       },
     });
 
@@ -36,6 +45,9 @@ describe('getRouterAddressesByChain', () => {
     expect(result.ethereum?.['0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48']).toBeUndefined();
     expect(result.solanamainnet?.[sealevelToken.addressOrDenom]).toEqual({
       wireDecimals: 9,
+    });
+    expect(result.cosmoshub?.[cosmosToken.addressOrDenom]).toEqual({
+      wireDecimals: 6,
     });
   });
 });

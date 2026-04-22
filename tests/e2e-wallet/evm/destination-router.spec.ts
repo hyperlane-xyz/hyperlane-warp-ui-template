@@ -32,23 +32,21 @@ test.describe('EVM destination router selection', () => {
     },
   };
 
-  test('Base destination resolves a non-empty remote-token address', async ({ page }) => {
-    await installEvmRpcMock(page, rpcConfig);
-    await openE2EApp(page);
-    await expect(page.getByText('0xe2e...e2ee').first()).toBeVisible({ timeout: 15_000 });
-    const addr = await captureRemoteAddress(page, /base USDC/i);
-    expect(addr).toMatch(REMOTE_ADDRESS_RE);
-    expect(addr).not.toMatch(/^0x0+$/);
-  });
-
-  test('Arbitrum destination resolves a different remote-token address than Base', async ({
+  test('Base and Arbitrum destinations resolve distinct non-empty remote-token addresses', async ({
     page,
   }) => {
     await installEvmRpcMock(page, rpcConfig);
     await openE2EApp(page);
     await expect(page.getByText('0xe2e...e2ee').first()).toBeVisible({ timeout: 15_000 });
+    const baseAddr = await captureRemoteAddress(page, /base USDC/i);
+    expect(baseAddr).toMatch(REMOTE_ADDRESS_RE);
+    expect(baseAddr).not.toMatch(/^0x0+$/);
+
+    await openE2EApp(page);
+    await expect(page.getByText('0xe2e...e2ee').first()).toBeVisible({ timeout: 15_000 });
     const arbAddr = await captureRemoteAddress(page, /arbitrum USDC/i);
     expect(arbAddr).toMatch(REMOTE_ADDRESS_RE);
     expect(arbAddr).not.toMatch(/^0x0+$/);
+    expect(arbAddr).not.toBe(baseAddr);
   });
 });

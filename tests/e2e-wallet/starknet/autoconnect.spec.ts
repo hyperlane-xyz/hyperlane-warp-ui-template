@@ -15,11 +15,7 @@ test.describe('Starknet mock connector: auto-connect', () => {
     const sendSection = page.getByText('Send').first().locator('../..');
     await expect(sendSection.getByText('Connect Wallet')).toBeHidden({ timeout: 20_000 });
 
-    // Starknet hex address is 32 bytes, rendered lowercase by shortenAddress
-    // (no capitalize flag in WalletDropdown). MOCK_STARKNET_ADDRESS starts
-    // `0x07e2…e2e2`, giving shortened `0x07e...e2e2` — match the prefix and
-    // 4-char tail shape.
-    const shortened = page.getByText(/^0x07e\.\.\.[a-f0-9]{4}$/i).first();
+    const shortened = page.getByText('0x07e...E2E2').first();
     await expect(shortened).toBeVisible({ timeout: 5_000 });
   });
 });

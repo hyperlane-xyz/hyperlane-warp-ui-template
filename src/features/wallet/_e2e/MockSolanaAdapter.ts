@@ -98,8 +98,8 @@ function captureTx(transaction: Transaction | VersionedTransaction): void {
       programIds = transaction.instructions.map((ix) => ix.programId.toBase58());
     }
     pushSolanaTx({ feePayer, serializedBase64, programIds });
-  } catch {
-    // Best-effort capture; don't break the signer on serialization issues.
+  } catch (error) {
+    console.error('Failed to capture mock Solana tx', error);
   }
 }
 

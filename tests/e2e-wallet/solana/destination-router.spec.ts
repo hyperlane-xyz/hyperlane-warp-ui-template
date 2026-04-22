@@ -14,7 +14,7 @@ const EXPECTED_ROUTE_ENDPOINTS: Array<{ chain: string; addressOrDenom: string }>
   { chain: 'eclipsemainnet', addressOrDenom: 'EqRSt9aUDMKYKhzd1DGMderr3KNp29VZH3x5P7LFTC8m' },
   // Base HypSynthetic router for the solanamainnet ↔ base USDC warp route
   // on EiUymjh... (a different Solana router than the Eclipse one).
-  { chain: 'base', addressOrDenom: '0xB46930ca998587A95D9Ee000FA73A071ADD56B64' },
+  { chain: 'base', addressOrDenom: '0xb46930ca998587a95d9ee000fa73a071add56b64' },
 ];
 
 test.describe('Solana destination router identity', () => {
@@ -45,14 +45,21 @@ test.describe('Solana destination router identity', () => {
         endpoints,
       };
     });
+    const normalizedEndpoints = info.endpoints.map((endpoint) => ({
+      ...endpoint,
+      addressOrDenom:
+        endpoint.chain === 'base' ? endpoint.addressOrDenom.toLowerCase() : endpoint.addressOrDenom,
+    }));
 
     // All solanamainnet USDC warp-route tokens must pin the same underlying
     // SPL mint (the canonical USDC). If this drifts, an unrelated token
     // snuck in and the rest of the assertion is meaningless.
-    expect(info.collaterals).toContain(SOLANAMAINNET_USDC_MINT);
+    expect(info.collaterals).toEqual([SOLANAMAINNET_USDC_MINT]);
 
     for (const expected of EXPECTED_ROUTE_ENDPOINTS) {
-      expect(info.endpoints, `expected endpoint for ${expected.chain}`).toContainEqual(expected);
+      expect(normalizedEndpoints, `expected endpoint for ${expected.chain}`).toContainEqual(
+        expected,
+      );
     }
   });
 

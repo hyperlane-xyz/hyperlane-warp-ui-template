@@ -12,8 +12,6 @@ const TRANSFER_REMOTE_SELECTORS = [
   '0x51debffc', // transferRemote(uint32,bytes32,uint256,bytes,address)
   '0xb96da154', // transferRemote(uint32,bytes32,uint256,uint256)
 ];
-const APPROVE_SELECTOR = '0x095ea7b3';
-
 test.describe('EVM tx payload capture', () => {
   // Full review + send flow needs extra time for fee resolution and tx confirmation.
   test.setTimeout(180_000);
@@ -69,8 +67,6 @@ test.describe('EVM tx payload capture', () => {
     expect(captured.to).toMatch(/^0x[0-9a-fA-F]{40}$/);
     expect(captured.data).toBeDefined();
     const selector = captured.data!.slice(0, 10).toLowerCase();
-    const matchesTransfer = TRANSFER_REMOTE_SELECTORS.some((s) => selector === s);
-    const matchesApprove = selector === APPROVE_SELECTOR;
-    expect(matchesTransfer || matchesApprove).toBe(true);
+    expect(TRANSFER_REMOTE_SELECTORS).toContain(selector);
   });
 });

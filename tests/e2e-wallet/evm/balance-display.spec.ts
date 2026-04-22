@@ -4,9 +4,6 @@ import { installEvmRpcMock } from '../helpers/evmRpc';
 import { selectOriginToken } from '../helpers/formFlow';
 import { openE2EApp } from '../helpers/page-setup';
 
-// Ethereum USDC contract (canonical mainnet address).
-const USDC_ETHEREUM = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48';
-
 test.describe('EVM balance display', () => {
   test('renders mocked ERC20 balance in transfer form', async ({ page }) => {
     await installEvmRpcMock(page, {

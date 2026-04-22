@@ -96,8 +96,7 @@ export async function fetchPredicateAttestation({
 
   // Use last tx: preTransferRemoteTxs (approval/revoke) are prepended before the transfer tx
   const tempTx =
-    tempTxs.find((tx) => tx.category === WarpTxCategory.Transfer) ??
-    tempTxs[tempTxs.length - 1];
+    tempTxs.find((tx) => tx.category === WarpTxCategory.Transfer) ?? tempTxs[tempTxs.length - 1];
   assert(tempTx && typeof tempTx === 'object', 'Invalid transaction object');
 
   const transaction = (tempTx as WarpTypedTransaction).transaction;

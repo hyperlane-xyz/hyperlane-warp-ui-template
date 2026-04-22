@@ -187,28 +187,27 @@ describe('fetchFeeQuotes', () => {
     expect(estimateTransferRemoteFees).not.toHaveBeenCalled();
   });
 
-  it('pins interchainFee from attestation and passes attestation to estimateTransferRemoteFees', async () => {
+  it('pins interchainFee from attestation and calls getLocalTransferFeeAmount with attestation', async () => {
     const originToken = mockOriginToken(ProtocolType.Ethereum);
     const destinationToken = mockDestinationToken(ProtocolType.Ethereum);
     mockFindConnectedDestinationToken.mockReturnValue(destinationToken as unknown as Token);
 
     const pinnedInterchainFee = { amount: 100n } as unknown as TokenAmount;
-    const mockAttestation = { uuid: 'test-uuid' } as unknown as import('@hyperlane-xyz/sdk').PredicateAttestation;
+    const mockAttestation = {
+      uuid: 'test-uuid',
+    } as unknown as import('@hyperlane-xyz/sdk').PredicateAttestation;
     mockFetchPredicateAttestation.mockResolvedValue({
       attestation: mockAttestation,
       interchainFee: pinnedInterchainFee,
       tokenFeeQuote: undefined,
     });
 
-    const driftedInterchainQuote = { amount: 200n } as unknown as TokenAmount;
     const localQuote = { amount: 5n } as unknown as TokenAmount;
-    const estimateTransferRemoteFees = vi.fn().mockResolvedValue({
-      interchainQuote: driftedInterchainQuote,
-      localQuote,
-      tokenFeeQuote: undefined,
-    } as WarpCoreFeeEstimate);
+    const estimateTransferRemoteFees = vi.fn();
+    const getLocalTransferFeeAmount = vi.fn().mockResolvedValue(localQuote);
     const warpCore = {
       estimateTransferRemoteFees,
+      getLocalTransferFeeAmount,
       isPredicateSupported: vi.fn().mockResolvedValue(true),
     } as unknown as WarpCore;
 
@@ -224,10 +223,15 @@ describe('fetchFeeQuotes', () => {
       false,
     );
 
-    expect(estimateTransferRemoteFees).toHaveBeenCalledWith(
-      expect.objectContaining({ attestation: mockAttestation }),
+    // estimateTransferRemoteFees re-quotes IGP and would drift from attested msg_value;
+    // predicate path must call getLocalTransferFeeAmount directly with pinned values.
+    expect(estimateTransferRemoteFees).not.toHaveBeenCalled();
+    expect(getLocalTransferFeeAmount).toHaveBeenCalledWith(
+      expect.objectContaining({
+        attestation: mockAttestation,
+        interchainFee: pinnedInterchainFee,
+      }),
     );
-    // Pinned value must win over the freshly re-quoted interchainQuote
     expect(result?.interchainQuote).toBe(pinnedInterchainFee);
     expect(result?.localQuote).toBe(localQuote);
   });

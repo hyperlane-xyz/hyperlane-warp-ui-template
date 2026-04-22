@@ -185,7 +185,11 @@ export async function fetchFeeQuotes(
         amount: originTokenAmount.amount,
         destinationToken: connectedDestinationToken,
       });
-      return { interchainQuote: pinnedInterchainFee, localQuote, tokenFeeQuote: pinnedTokenFeeQuote };
+      return {
+        interchainQuote: pinnedInterchainFee,
+        localQuote,
+        tokenFeeQuote: pinnedTokenFeeQuote,
+      };
     }
     const feeEstimate = await warpCore.estimateTransferRemoteFees({
       originTokenAmount,

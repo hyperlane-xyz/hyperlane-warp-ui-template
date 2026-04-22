@@ -183,7 +183,7 @@ export function dedupeTokensByCollateral(
       return true;
     }
 
-    const collateralKey = getCollateralKey(token, resolvedMap);
+    const collateralKey = getCollateralKeyWithResolvedMap(token, resolvedMap);
 
     // If we haven't seen this collateral on this chain, include it
     if (!seenCollaterals.has(collateralKey)) {
@@ -241,7 +241,7 @@ export function groupTokensByCollateral(
 ): Map<string, Token[]> {
   const groups = new Map<string, Token[]>();
   for (const token of tokens) {
-    const key = getCollateralKey(token, resolvedMap);
+    const key = getCollateralKeyWithResolvedMap(token, resolvedMap);
     const existing = groups.get(key) || [];
     existing.push(token);
     groups.set(key, existing);
@@ -259,10 +259,11 @@ export function groupTokensByCollateral(
  *
  * Results are cached by token object reference for O(1) subsequent lookups.
  */
-export function getCollateralKey(
-  token: IToken,
-  resolvedMap: Map<string, string> = resolvedUnderlyingMap,
-): string {
+export function getCollateralKey(token: IToken): string {
+  return getCollateralKeyWithResolvedMap(token, resolvedUnderlyingMap);
+}
+
+function getCollateralKeyWithResolvedMap(token: IToken, resolvedMap: Map<string, string>): string {
   const cached = collateralKeyCache.get(token);
   if (!isNullish(cached)) return cached;
 

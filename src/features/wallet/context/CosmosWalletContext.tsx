@@ -13,6 +13,9 @@ import { PropsWithChildren, useMemo } from 'react';
 import { APP_DESCRIPTION, APP_NAME, APP_URL } from '../../../consts/app';
 import { config } from '../../../consts/config';
 import { useMultiProvider } from '../../chains/hooks';
+import { E2EAutoConnectCosmos } from '../_e2e/E2EAutoConnectCosmos';
+import { isE2EMode } from '../_e2e/isE2E';
+import { MockCosmosWallet } from '../_e2e/MockCosmosWallet';
 
 const theme = extendTheme({
   fonts: {
@@ -28,6 +31,16 @@ export function CosmosWalletContext({ children }: PropsWithChildren<unknown>) {
     return getCosmosKitChainConfigs(multiProvider);
   }, [chainMetadata]);
   const leapWithoutSnap = leapWallets.filter((wallet) => !wallet.walletName.includes('snap'));
+  const e2e = isE2EMode();
+  // In E2E mode use mock-only — the real Keplr/Cosmostation/Leap adapters
+  // each poll for their extension at mount and spam console errors when not
+  // installed, polluting test traces. They are not needed when the mock is
+  // driving the flow.
+  const walletsList = useMemo(() => {
+    if (e2e) return [new MockCosmosWallet()];
+    return [...keplrWallets, ...cosmostationWallets, ...leapWithoutSnap];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [e2e]);
   // TODO replace Chakra here with a custom modal for ChainProvider
   // Using Chakra + @cosmos-kit/react instead of @cosmos-kit/react-lite adds about 600Kb to the bundle
   return (
@@ -35,7 +48,7 @@ export function CosmosWalletContext({ children }: PropsWithChildren<unknown>) {
       <ChainProvider
         chains={chains}
         assetLists={assets}
-        wallets={[...keplrWallets, ...cosmostationWallets, ...leapWithoutSnap]}
+        wallets={walletsList}
         walletConnectOptions={{
           signClient: {
             projectId: config.walletConnectProjectId,
@@ -63,6 +76,7 @@ export function CosmosWalletContext({ children }: PropsWithChildren<unknown>) {
         }}
         modalTheme={{ defaultTheme: 'light' }}
       >
+        {e2e && <E2EAutoConnectCosmos />}
         {children}
       </ChainProvider>
     </ChakraProvider>

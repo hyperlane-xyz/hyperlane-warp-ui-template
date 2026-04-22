@@ -13,6 +13,7 @@ import '../../sentry.client.config';
 import { ErrorBoundary } from '../components/errors/ErrorBoundary';
 import { AppLayout } from '../components/layout/AppLayout';
 import { ThemeProvider } from '../features/theme/ThemeContext';
+import { initE2EStateIfEnabled } from '../features/wallet/_e2e/windowState';
 import { AleoWalletContext } from '../features/wallet/context/AleoWalletContext';
 import { CosmosWalletContext } from '../features/wallet/context/CosmosWalletContext';
 import { EvmWalletContext } from '../features/wallet/context/EvmWalletContext';
@@ -60,6 +61,14 @@ export default function App({ Component, pageProps }: AppProps) {
   const isEmbed = router.pathname === '/embed';
 
   useEarlyEmbedMode(isEmbed);
+
+  // Init once on mount. Tests gate on page.waitForFunction(() =>
+  // Boolean(window.__WARP_E2E__)) so the post-commit effect timing is fine;
+  // the previous render-time call violated React's purity expectation even
+  // though it was idempotent in practice.
+  useEffect(() => {
+    initE2EStateIfEnabled();
+  }, []);
 
   // Disable app SSR for now as it's not needed and
   // complicates wallet and graphql integrations

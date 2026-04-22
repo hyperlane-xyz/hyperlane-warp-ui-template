@@ -413,6 +413,9 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // rise
   'RISE/bsc-ethereum',
+
+  // fluent
+  'BLEND/fluent',
 ];
 
 /**

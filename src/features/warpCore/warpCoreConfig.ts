@@ -208,7 +208,9 @@ function filterToIds(
 
 // Separate warp configs may contain duplicate definitions of the same token.
 // E.g. an IBC token that gets used for interchain gas in many different routes.
-function dedupeTokens(tokens: NullableAddressWarpCoreToken[]): NullableAddressWarpCoreToken[] {
+export function dedupeTokens(
+  tokens: NullableAddressWarpCoreToken[],
+): NullableAddressWarpCoreToken[] {
   const idToToken: Record<string, NullableAddressWarpCoreToken> = {};
   for (const token of tokens) {
     let id = '';

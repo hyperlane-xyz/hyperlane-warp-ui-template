@@ -1627,4 +1627,219 @@ describe('findConnectedDestinationToken', () => {
     const matched = findConnectedDestinationToken(origin, selectedDestination);
     expect(matched).toBeUndefined();
   });
+
+  // --- M0 Portal case: multiple synthetic tokens share the same addressOrDenom ---
+  // wM, USDSC, USDnr on ethereum all use portal contract 0xD925... but wrap
+  // different collaterals and have different symbols. Address alone cannot
+  // identify a token — symbol must match too.
+  test('should NOT match via address fallback when symbol differs (M0Portal case)', () => {
+    const M0_PORTAL_ADDR = '0xD925C84b55E4e44a53749fF5F2a5A13F63D128fd';
+    const WM_COLLATERAL = '0x437cc33344a0B27A429f795ff6B469C72698B291';
+    const USDSC_COLLATERAL = '0x3f99231dD03a9F0E7e3421c92B7b90fbe012985a';
+
+    // Origin is wM on ethereum, connected to wM on soneium (same portal addr)
+    const wmOrigin = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'wM',
+      standard: TokenStandard.EvmM0Portal,
+      addressOrDenom: M0_PORTAL_ADDR,
+      collateralAddressOrDenom: WM_COLLATERAL,
+      connections: [
+        createTokenConnectionMock(undefined, {
+          chainName: 'soneium',
+          symbol: 'wM',
+          standard: TokenStandard.EvmM0Portal,
+          addressOrDenom: M0_PORTAL_ADDR,
+          collateralAddressOrDenom: WM_COLLATERAL,
+        }),
+      ],
+    });
+    // User selects USDSC on soneium — same portal addr, different symbol/collateral
+    const usdscDestination = createMockToken({
+      chainName: 'soneium',
+      symbol: 'USDSC',
+      standard: TokenStandard.EvmM0Portal,
+      addressOrDenom: M0_PORTAL_ADDR,
+      collateralAddressOrDenom: USDSC_COLLATERAL,
+    });
+
+    // Must not impersonate USDSC via shared addressOrDenom
+    expect(findConnectedDestinationToken(wmOrigin, usdscDestination)).toBeUndefined();
+  });
+
+  test('should still match via address fallback when symbol matches', () => {
+    // Control case: when symbols match, address fallback is still valid
+    // (e.g. a single route between two chains with same addressOrDenom).
+    const ADDR = '0x1111111111111111111111111111111111111111';
+    const CONN_COLLATERAL = '0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC';
+    const DEST_COLLATERAL = '0xDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD';
+
+    const origin = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USDC',
+      connections: [
+        createTokenConnectionMock(undefined, {
+          chainName: 'arbitrum',
+          symbol: 'USDC',
+          addressOrDenom: ADDR,
+          collateralAddressOrDenom: CONN_COLLATERAL,
+        }),
+      ],
+    });
+    // Same address + same symbol, but different collateral key — address fallback should match
+    const destination = createMockToken({
+      chainName: 'arbitrum',
+      symbol: 'USDC',
+      addressOrDenom: ADDR,
+      collateralAddressOrDenom: DEST_COLLATERAL,
+    });
+
+    expect(findConnectedDestinationToken(origin, destination)?.addressOrDenom).toBe(ADDR);
+  });
+});
+
+describe('M0Portal integration (multi-synthetic same addressOrDenom)', () => {
+  const M0_HUB = '0xD925C84b55E4e44a53749fF5F2a5A13F63D128fd';
+  const M0_LITE = '0x36f586A30502AE3afb555b8aA4dCc05d233c2ecE';
+  const WM_COLLATERAL = '0x437cc33344a0B27A429f795ff6B469C72698B291';
+  const USDSC_COLLATERAL = '0x3f99231dD03a9F0E7e3421c92B7b90fbe012985a';
+  const USDNR_COLLATERAL = '0xD48e565561416dE59DA1050ED70b8d75e8eF28f9';
+
+  test('dedupeTokensByCollateral should collapse M0Portal tokens sharing collateral on same chain', () => {
+    // Two wM ethereum definitions (one EvmM0Portal, one EvmM0PortalLite) with different
+    // addresses but SAME collateral — these are the real wM dupes that should collapse.
+    const wmHub = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'wM',
+      standard: TokenStandard.EvmM0Portal,
+      addressOrDenom: M0_HUB,
+      collateralAddressOrDenom: WM_COLLATERAL,
+    });
+    const wmLite = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'wM',
+      standard: TokenStandard.EvmM0PortalLite,
+      addressOrDenom: M0_LITE,
+      collateralAddressOrDenom: WM_COLLATERAL,
+    });
+
+    const result = dedupeTokensByCollateral([wmHub, wmLite]);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toBe(wmHub);
+  });
+
+  test('dedupeTokensByCollateral should NOT collapse M0Portal tokens with different symbols/collaterals', () => {
+    // wM, USDSC, USDnr all share the SAME addressOrDenom on ethereum but wrap
+    // different collaterals. They must remain distinct.
+    const wm = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'wM',
+      standard: TokenStandard.EvmM0Portal,
+      addressOrDenom: M0_HUB,
+      collateralAddressOrDenom: WM_COLLATERAL,
+    });
+    const usdsc = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USDSC',
+      standard: TokenStandard.EvmM0Portal,
+      addressOrDenom: M0_HUB,
+      collateralAddressOrDenom: USDSC_COLLATERAL,
+    });
+    const usdnr = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USDnr',
+      standard: TokenStandard.EvmM0Portal,
+      addressOrDenom: M0_HUB,
+      collateralAddressOrDenom: USDNR_COLLATERAL,
+    });
+
+    const result = dedupeTokensByCollateral([wm, usdsc, usdnr]);
+    expect(result).toHaveLength(3);
+    expect(result).toContain(wm);
+    expect(result).toContain(usdsc);
+    expect(result).toContain(usdnr);
+  });
+
+  test('findRouteToken should pick correct M0Portal token by destination chain connectivity', () => {
+    // wM on ethereum routes to mantra (via EvmM0Portal) and bsc (via EvmM0PortalLite).
+    // When user picks origin=wM ethereum + destination=wM bsc, findRouteToken must
+    // return the Lite variant (only one with a bsc connection).
+    const wmMantraConn = {
+      chainName: 'mantra',
+      symbol: 'wM',
+      standard: TokenStandard.EvmM0Portal,
+      addressOrDenom: M0_HUB,
+      collateralAddressOrDenom: WM_COLLATERAL,
+    };
+    const wmBscConn = {
+      chainName: 'bsc',
+      symbol: 'wM',
+      standard: TokenStandard.EvmM0PortalLite,
+      addressOrDenom: M0_LITE,
+      collateralAddressOrDenom: WM_COLLATERAL,
+    };
+
+    // Origin displayed in UI is the Hub variant (survives dedup)
+    const wmHubEth = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'wM',
+      standard: TokenStandard.EvmM0Portal,
+      addressOrDenom: M0_HUB,
+      collateralAddressOrDenom: WM_COLLATERAL,
+      connections: [createTokenConnectionMock(undefined, wmMantraConn)],
+    });
+    // Lite variant exists in WarpCore with the bsc connection
+    const wmLiteEth = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'wM',
+      standard: TokenStandard.EvmM0PortalLite,
+      addressOrDenom: M0_LITE,
+      collateralAddressOrDenom: WM_COLLATERAL,
+      connections: [createTokenConnectionMock(undefined, wmBscConn)],
+    });
+
+    const wmBscDest = createMockToken(wmBscConn);
+
+    const warpCore = {
+      getTokensForRoute: vi.fn().mockReturnValue([wmLiteEth]),
+    } as unknown as WarpCore;
+
+    const result = findRouteToken(warpCore, wmHubEth, wmBscDest);
+    expect(result).toBe(wmLiteEth);
+  });
+
+  test('checkTokenHasRoute should reject wM origin -> USDSC dest (different symbols, shared portal addr)', () => {
+    // Origin wM ethereum connected to wM soneium (same addressOrDenom as USDSC soneium!).
+    // User selects USDSC soneium as dest — the symbol mismatch must block the route.
+    const wmSoneiumConn = {
+      chainName: 'soneium',
+      symbol: 'wM',
+      standard: TokenStandard.EvmM0Portal,
+      addressOrDenom: M0_HUB,
+      collateralAddressOrDenom: WM_COLLATERAL,
+    };
+    const wmEth = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'wM',
+      standard: TokenStandard.EvmM0Portal,
+      addressOrDenom: M0_HUB,
+      collateralAddressOrDenom: WM_COLLATERAL,
+      connections: [createTokenConnectionMock(undefined, wmSoneiumConn)],
+    });
+
+    const usdscSoneium = createMockToken({
+      chainName: 'soneium',
+      symbol: 'USDSC',
+      standard: TokenStandard.EvmM0Portal,
+      addressOrDenom: M0_HUB,
+      collateralAddressOrDenom: USDSC_COLLATERAL,
+    });
+
+    // Collateral groups built from full warpCore.tokens (not UI-deduped)
+    const groups = groupTokensByCollateral([wmEth, usdscSoneium]);
+
+    // wmEth's only connection is wM soneium (same address as USDSC soneium but
+    // different symbol/collateral). Pre-fix this would falsely match via address.
+    expect(checkTokenHasRoute(wmEth, usdscSoneium, groups)).toBe(false);
+  });
 });

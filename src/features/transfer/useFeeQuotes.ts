@@ -2,6 +2,7 @@ import {
   IToken,
   PredicateAttestation,
   Token,
+  TokenAmount,
   WarpCore,
   WarpCoreFeeEstimate,
 } from '@hyperlane-xyz/sdk';
@@ -169,6 +170,23 @@ export async function fetchFeeQuotes(
 
   logger.debug('Fetching fee quotes');
   try {
+    // Predicate routes: estimateTransferRemoteFees re-quotes IGP internally; a drifted
+    // fresh quote diverges from the attested msg_value and reverts in _authorizeTransaction.
+    // Call getLocalTransferFeeAmount directly with pinned values to avoid the re-quote.
+    if (pinnedInterchainFee) {
+      const localQuote = await warpCore.getLocalTransferFeeAmount({
+        originToken: originTokenAmount.token,
+        destination,
+        sender,
+        senderPubKey: senderPubKeyValue,
+        interchainFee: pinnedInterchainFee as TokenAmount<IToken>,
+        tokenFeeQuote: pinnedTokenFeeQuote as TokenAmount<IToken> | undefined,
+        attestation,
+        amount: originTokenAmount.amount,
+        destinationToken: connectedDestinationToken,
+      });
+      return { interchainQuote: pinnedInterchainFee, localQuote, tokenFeeQuote: pinnedTokenFeeQuote };
+    }
     const feeEstimate = await warpCore.estimateTransferRemoteFees({
       originTokenAmount,
       destination,
@@ -178,13 +196,6 @@ export async function fetchFeeQuotes(
       attestation,
       destinationToken: connectedDestinationToken,
     });
-    // Override interchainQuote with the value pinned at attestation-build time.
-    // estimateTransferRemoteFees re-quotes IGP internally; if the price drifted since
-    // the attestation was fetched, the displayed fee would diverge from the attested
-    // msg_value and the submit tx would revert on _authorizeTransaction.
-    if (pinnedInterchainFee) {
-      return { ...feeEstimate, interchainQuote: pinnedInterchainFee, tokenFeeQuote: pinnedTokenFeeQuote ?? feeEstimate.tokenFeeQuote };
-    }
     return feeEstimate;
   } catch (error) {
     // Connected wallets switch fee simulation from a neutral fallback sender to the user's real

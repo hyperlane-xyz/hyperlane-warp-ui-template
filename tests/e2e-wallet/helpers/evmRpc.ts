@@ -38,6 +38,9 @@ export interface InstallEvmRpcMockOptions {
   // Hyperlane HypCollateral routers call `wrappedToken()` to discover the
   // underlying ERC20. Mock returns this address per chainId.
   wrappedTokenByChainId?: Record<number, string>;
+  // routers(uint32) result keyed by remote domain. Falls back to a
+  // deterministic address derived from the requested domain.
+  routerByDomain?: Record<number, string>;
 }
 
 export interface EvmRpcMockHandle {
@@ -280,7 +283,15 @@ function handleEthCall(call: { to?: string; data?: string }, ctx: HandleCtx): st
   // quoteGasPayment(uint32) / destinationGas(uint32) — uint256, 0 is a fine default.
   if (data.startsWith('0xf2ed8c53') || data.startsWith('0x775313a1')) return padHex('0x0');
   // routers(uint32) — bytes32 router address on remote domain.
-  if (data.startsWith('0x2ead72f6')) return padHex('0x' + 'a'.repeat(40));
+  if (data.startsWith('0x2ead72f6')) {
+    const domain = readUint32Arg(data);
+    const router =
+      domain == null
+        ? '0x' + 'a'.repeat(40)
+        : (ctx.opts.routerByDomain?.[domain] ??
+          `0x${domain.toString(16).padStart(40, '0')}`);
+    return padHex(router);
+  }
   // domains() — uint32[]; empty array works (SDK has .catch fallback).
   if (data.startsWith('0x440df4f4')) return '0x' + '20'.padStart(64, '0') + '0'.repeat(64);
   // Multicall3 aggregate3 — empty Result[] forces SDK to use individual getBalance calls.
@@ -302,4 +313,10 @@ function encodeString(s: string): string {
   const offset = '20'.padStart(64, '0');
   const padded = (bytes + '0'.repeat(64)).slice(0, Math.ceil(bytes.length / 64) * 64 || 64);
   return '0x' + offset + len + padded;
+}
+
+function readUint32Arg(data: string): number | undefined {
+  const word = data.slice(10, 74);
+  if (word.length !== 64) return undefined;
+  return Number.parseInt(word.slice(56), 16);
 }

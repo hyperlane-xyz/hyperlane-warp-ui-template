@@ -150,13 +150,14 @@ function handleOne(itemUnknown: unknown, ctx: HandleCtx): unknown {
         (acc, v) => acc + BigInt(v),
         0n,
       );
+      const formatted = formatUiAmount(total, 6);
       return ok({
         context: { slot: 1 },
         value: {
           amount: total.toString(),
           decimals: 6,
-          uiAmount: Number(total) / 1e6,
-          uiAmountString: (Number(total) / 1e6).toString(),
+          uiAmount: formatted.uiAmount,
+          uiAmountString: formatted.uiAmountString,
         },
       });
     }
@@ -194,6 +195,7 @@ function buildParsedAccount({
   mint: string;
   amount: string;
 }): unknown {
+  const formatted = formatUiAmount(BigInt(amount), 6);
   // Synthesize the getParsedTokenAccountsByOwner shape the SDK/app consume.
   // `pubkey` is usually the derived ATA; the reader only cares that the entry
   // is associated with this mint + has the right parsed amount, so a
@@ -209,8 +211,8 @@ function buildParsedAccount({
             tokenAmount: {
               amount,
               decimals: 6,
-              uiAmount: Number(amount) / 1e6,
-              uiAmountString: (Number(amount) / 1e6).toString(),
+              uiAmount: formatted.uiAmount,
+              uiAmountString: formatted.uiAmountString,
             },
           },
           type: 'account',
@@ -231,4 +233,19 @@ function deriveSyntheticAta(owner: string, mint: string): string {
   // base58 of reasonable length.
   const seed = (owner + mint).slice(0, 32).padEnd(32, 'x');
   return 'Mock' + seed;
+}
+
+function formatUiAmount(
+  amount: bigint,
+  decimals: number,
+): { uiAmount: number | null; uiAmountString: string } {
+  const divisor = 10n ** BigInt(decimals);
+  const whole = amount / divisor;
+  const fraction = (amount % divisor).toString().padStart(decimals, '0');
+  const uiAmountString = `${whole}.${fraction}`.replace(/\.?0+$/, '') || '0';
+  const uiAmountNumber = Number(uiAmountString);
+  return {
+    uiAmount: Number.isFinite(uiAmountNumber) ? uiAmountNumber : null,
+    uiAmountString,
+  };
 }

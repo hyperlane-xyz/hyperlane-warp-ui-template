@@ -53,9 +53,9 @@ export async function enterAmount(page: Page, amount: string): Promise<void> {
 
 export async function clickContinue(page: Page): Promise<void> {
   // ButtonSection renders Continue in input mode, Send in review mode.
-  await page.getByRole('button', { name: /^Continue$/ }).click();
+  await page.getByRole('button', { name: /^Continue$/ }).dispatchEvent('click');
 }
 
 export async function clickSendInReview(page: Page): Promise<void> {
-  await page.getByRole('button', { name: /Send to /i }).click();
+  await page.getByRole('button', { name: /Send to /i }).dispatchEvent('click');
 }

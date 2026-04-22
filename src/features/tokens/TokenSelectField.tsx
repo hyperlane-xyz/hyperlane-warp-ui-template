@@ -185,6 +185,7 @@ function TokenButton({
   testId?: string;
 }) {
   const chainDisplayName = token ? getChainDisplayName(multiProvider, token.chainName) : '';
+  const chainMetadata = token ? multiProvider.tryGetChainMetadata(token.chainName) : null;
 
   return (
     <button
@@ -193,6 +194,8 @@ function TokenButton({
       onClick={onClick}
       disabled={disabled}
       data-testid={testId}
+      data-chain={token?.chainName}
+      data-is-testnet={token ? String(!!chainMetadata?.isTestnet) : undefined}
     >
       {token ? (
         <div className="flex min-w-0 flex-1 items-center gap-2.5">

@@ -213,7 +213,10 @@ function dedupeTokens(tokens: NullableAddressWarpCoreToken[]): NullableAddressWa
   for (const token of tokens) {
     let id = '';
     // Temporary fix issue for M0 routes where addressOrDenom can be the same
-    if (token.standard === TokenStandard.EvmM0PortalLite) {
+    if (
+      token.standard === TokenStandard.EvmM0PortalLite ||
+      token.standard === TokenStandard.EvmM0Portal
+    ) {
       id = `${token.chainName}|${token.symbol}|${token.addressOrDenom?.toLowerCase()}`;
     } else {
       id = `${token.chainName}|${token.addressOrDenom?.toLowerCase()}`;

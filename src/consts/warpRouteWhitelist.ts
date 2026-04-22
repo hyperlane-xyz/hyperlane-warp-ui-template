@@ -76,6 +76,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'SOL/solanamainnet-soon',
   'SOL/hyperevm-solanamainnet',
   'SOL/solanamainnet-sonicsvm',
+  'SOL/igra',
 
   // ezSOL routes
   'ezSOL/eclipsemainnet-solanamainnet',

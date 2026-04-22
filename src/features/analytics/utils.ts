@@ -87,7 +87,7 @@ export function trackTransactionFailedEvent(
   const token = overrideToken || warpCore.tokens.find((t) => getTokenKey(t) === originTokenKey);
   if (!token) return;
 
-  const multiProvider = warpCore.multiProvider as MultiProtocolProvider;
+  const multiProvider = warpCore.multiProvider;
   const origin = token.chainName;
   const { address } = getAccountAddressAndPubKey(multiProvider, origin, accounts);
 

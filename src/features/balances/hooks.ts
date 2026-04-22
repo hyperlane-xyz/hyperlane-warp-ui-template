@@ -159,25 +159,16 @@ function useWalletAddressForChain(
 
   return useMemo(() => {
     if (!chainName || !protocol) return undefined;
-    switch (protocol) {
-      case ProtocolType.Ethereum:
-        return getAddressForChain(evmAddresses, protocol, chainName);
-      case ProtocolType.Sealevel:
-        return getAddressForChain(solanaAddresses, protocol, chainName);
-      case ProtocolType.Cosmos:
-      case ProtocolType.CosmosNative:
-        return getAddressForChain(cosmosAddresses, protocol, chainName);
-      case ProtocolType.Starknet:
-        return getAddressForChain(starknetAddresses, protocol, chainName);
-      case ProtocolType.Radix:
-        return getAddressForChain(radixAddresses, protocol, chainName);
-      case ProtocolType.Aleo:
-        return getAddressForChain(aleoAddresses, protocol, chainName);
-      case ProtocolType.Tron:
-        return getAddressForChain(tronAddresses, protocol, chainName);
-      default:
-        return undefined;
-    }
+    const addresses = getAddressesForProtocol(protocol, {
+      evmAddresses,
+      solanaAddresses,
+      cosmosAddresses,
+      starknetAddresses,
+      radixAddresses,
+      aleoAddresses,
+      tronAddresses,
+    });
+    return getAddressForChain(addresses, protocol, chainName);
   }, [
     aleoAddresses,
     chainName,
@@ -189,6 +180,47 @@ function useWalletAddressForChain(
     starknetAddresses,
     tronAddresses,
   ]);
+}
+
+function getAddressesForProtocol(
+  protocol: ProtocolType,
+  {
+    evmAddresses,
+    solanaAddresses,
+    cosmosAddresses,
+    starknetAddresses,
+    radixAddresses,
+    aleoAddresses,
+    tronAddresses,
+  }: {
+    evmAddresses: ReturnType<typeof useEthereumAccount>['addresses'];
+    solanaAddresses: ReturnType<typeof useSolanaAccount>['addresses'];
+    cosmosAddresses: ReturnType<typeof useCosmosAccount>['addresses'];
+    starknetAddresses: ReturnType<typeof useStarknetAccount>['addresses'];
+    radixAddresses: ReturnType<typeof useRadixAccount>['addresses'];
+    aleoAddresses: ReturnType<typeof useAleoAccount>['addresses'];
+    tronAddresses: ReturnType<typeof useTronAccount>['addresses'];
+  },
+) {
+  switch (protocol) {
+    case ProtocolType.Ethereum:
+      return evmAddresses;
+    case ProtocolType.Sealevel:
+      return solanaAddresses;
+    case ProtocolType.Cosmos:
+    case ProtocolType.CosmosNative:
+      return cosmosAddresses;
+    case ProtocolType.Starknet:
+      return starknetAddresses;
+    case ProtocolType.Radix:
+      return radixAddresses;
+    case ProtocolType.Aleo:
+      return aleoAddresses;
+    case ProtocolType.Tron:
+      return tronAddresses;
+    default:
+      return undefined;
+  }
 }
 
 function useDirectEvmBalance(chain?: ChainName, token?: IToken, address?: Address) {

@@ -1,14 +1,15 @@
-import { IconButton, XCircleIcon } from '@hyperlane-xyz/widgets';
+import { Button, IconButton, XCircleIcon } from '@hyperlane-xyz/widgets';
 import Image from 'next/image';
 import { useState } from 'react';
 
 import { config } from '../../consts/config';
-import { links } from '../../consts/links';
-import InfoCircle from '../../images/icons/info-circle.svg';
+import { useStore } from '../../features/store';
+import SendIcon from '../../images/icons/send-icon.svg';
 import { HyperlaneTransparentLogo } from '../icons/HyperlaneTransparentLogo';
 
 export function TipCard() {
   const [show, setShow] = useState(config.showTipBox);
+  const setIsTipCardActionTriggered = useStore((s) => s.setIsTipCardActionTriggered);
   if (!show) return null;
   return (
     <div
@@ -26,22 +27,20 @@ export function TipCard() {
       </div>
 
       <h2 className="pr-6 font-secondary text-lg font-normal text-gray-900 dark:text-white">
-        Bridge Tokens with Hyperlane Warp Routes!
+        Bridge ETH
       </h2>
       <p className="mt-2 text-sm text-gray-600 dark:text-foreground-muted">
-        Warp Routes make it easy to permissionlessly take your tokens interchain. Fork this template
-        to get started!
+        Bridge and get real ETH in seconds, no unwrapping needed. Starting with Arbitrum, Base,
+        Ethereum, Optimism.
       </p>
 
-      <a
-        href={links.github}
-        target="_blank"
-        rel="noopener noreferrer"
+      <Button
         className="mt-3 inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 font-secondary text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:border-primary-500/80 dark:bg-primary-500/20 dark:text-white dark:hover:bg-primary-500/30"
+        onClick={() => setIsTipCardActionTriggered(true)}
       >
-        <Image src={InfoCircle} width={12} alt="" className="dark:invert" />
-        <span>More</span>
-      </a>
+        <span>Bridge</span>
+        <Image src={SendIcon} width={16} alt="" className="tip-card-more-icon" />
+      </Button>
 
       <div className="tip-card-logo pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2">
         <HyperlaneTransparentLogo />

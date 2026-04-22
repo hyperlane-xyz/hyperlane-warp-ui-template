@@ -22,7 +22,7 @@ import { logger } from '../../utils/logger.ts';
 // Map of chain -> address -> wireDecimals
 export type WireDecimalsMap = Record<ChainName, Record<string, number>>;
 type WarpCoreToken = WarpCoreConfig['tokens'][number];
-type NullableAddressWarpCoreToken = Omit<WarpCoreToken, 'addressOrDenom'> & {
+export type NullableAddressWarpCoreToken = Omit<WarpCoreToken, 'addressOrDenom'> & {
   addressOrDenom: string | null;
 };
 
@@ -208,7 +208,9 @@ function filterToIds(
 
 // Separate warp configs may contain duplicate definitions of the same token.
 // E.g. an IBC token that gets used for interchain gas in many different routes.
-function dedupeTokens(tokens: NullableAddressWarpCoreToken[]): NullableAddressWarpCoreToken[] {
+export function dedupeTokens(
+  tokens: NullableAddressWarpCoreToken[],
+): NullableAddressWarpCoreToken[] {
   const idToToken: Record<string, NullableAddressWarpCoreToken> = {};
   for (const token of tokens) {
     let id = '';

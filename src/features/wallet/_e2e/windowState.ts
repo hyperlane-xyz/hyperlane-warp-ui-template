@@ -74,10 +74,12 @@ export function initE2EStateIfEnabled(): void {
 // connector-level capture path.
 
 export function pushSolanaTx(tx: CapturedSolanaTx): void {
+  if (typeof window === 'undefined') return;
   if (window.__WARP_E2E__) window.__WARP_E2E__.solanaTxs.push(tx);
 }
 
 export function pushCosmosTx(tx: CapturedCosmosTx): void {
+  if (typeof window === 'undefined') return;
   if (window.__WARP_E2E__) window.__WARP_E2E__.cosmosTxs.push(tx);
 }
 

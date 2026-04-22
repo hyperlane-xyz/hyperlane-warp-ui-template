@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { MOCK_EVM_ADDRESS } from '../helpers/constants';
 import { installEvmRpcMock } from '../helpers/evmRpc';
-import { enterAmount, selectDestinationToken } from '../helpers/formFlow';
+import { clickContinue, enterAmount, selectDestinationToken } from '../helpers/formFlow';
 import { openE2EApp } from '../helpers/page-setup';
 
 const USDC_ETHEREUM = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48';
@@ -11,11 +11,11 @@ test.describe('EVM destination router selection', () => {
   async function captureRemoteAddress(page: Page, destPattern: RegExp) {
     await selectDestinationToken(page, destPattern);
     await enterAmount(page, '1');
-    await page.getByRole('button', { name: /^Continue$/ }).click();
+    await clickContinue(page);
     const reviewPanel = page.locator('.transfer-review-panel').first();
     await expect(reviewPanel).toContainText(/Transfer Remote/i, { timeout: 30_000 });
     const text = await reviewPanel.innerText();
-    return text.match(REMOTE_ADDRESS_RE)?.[0];
+    return text.split('Transfer Remote')[1]?.match(REMOTE_ADDRESS_RE)?.[0];
   }
 
   const rpcConfig = {

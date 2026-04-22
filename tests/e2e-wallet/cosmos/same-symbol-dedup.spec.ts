@@ -43,6 +43,9 @@ test.describe('Cosmos same-symbol dedup', () => {
 
     await expect(origin).toContainText(/Stride/i);
     await expect(origin).not.toContainText(/Celestia/i);
+    await expect
+      .poll(() => destination.innerText(), { timeout: 10_000, intervals: [250] })
+      .not.toBe(celestiaDestText);
     const strideDestText = await destination.innerText();
 
     // Same-symbol correctness: the destination flipped because the underlying

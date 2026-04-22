@@ -1,4 +1,5 @@
 import { TokenStandard } from '@hyperlane-xyz/sdk/token/TokenStandard';
+import { normalizeAddress } from '@hyperlane-xyz/utils';
 import { describe, expect, test } from 'vitest';
 
 import { createMockToken } from '../utils/test';
@@ -38,8 +39,9 @@ describe('getRouterAddressesByChain', () => {
         [cosmosToken.addressOrDenom]: 6,
       },
     });
+    const normalizedEvmAddress = normalizeAddress(VALID_EVM_ADDRESS);
 
-    expect(result.ethereum?.[VALID_EVM_ADDRESS]).toEqual({
+    expect(result.ethereum?.[normalizedEvmAddress]).toEqual({
       wireDecimals: 18,
     });
     expect(result.ethereum?.['0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48']).toBeUndefined();

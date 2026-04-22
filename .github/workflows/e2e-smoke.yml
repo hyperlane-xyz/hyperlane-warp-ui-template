@@ -1,7 +1,7 @@
 name: e2e-smoke
 
 # Fast subset of the wallet-connected E2E suite. Runs on every PR as a gate.
-# The full wallet E2E matrix runs nightly (see nightly.yml) across all browsers.
+# The full wallet E2E matrix runs from .github/workflows/e2e-wallet-full.yml.
 
 on:
   workflow_call:

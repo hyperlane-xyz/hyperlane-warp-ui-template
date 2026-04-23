@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
-import { getE2EState } from './helpers/captured';
-import { openE2EApp } from './helpers/page-setup';
+import { getE2EState } from '../helpers/captured';
+import { openE2EApp } from '../helpers/page-setup';
 
 test.describe('E2E wallet scaffolding smoke', () => {
   test('initializes __WARP_E2E__ global when ?_e2e=1 is set', async ({ page }) => {

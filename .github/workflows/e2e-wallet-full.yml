@@ -15,7 +15,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        browser: [chromium, firefox, webkit]
+        # webkit disabled: prod build serves CSP `upgrade-insecure-requests`,
+        # which webkit strictly honors on localhost (chromium/firefox special-
+        # case it). All chunks get upgraded to https://localhost and fail SSL,
+        # so the app never hydrates. Re-enable once we have a build path that
+        # drops the upgrade directive for e2e without weakening prod CSP.
+        browser: [chromium, firefox]
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v4

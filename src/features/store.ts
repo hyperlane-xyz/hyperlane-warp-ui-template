@@ -30,6 +30,11 @@ import {
 } from './tokens/utils';
 import { resolveWrappedCollateralTokens } from './tokens/wrappedTokenResolver';
 import { FinalTransferStatuses, TransferContext, TransferStatus } from './transfer/types';
+import {
+  type E2ETokenSnapshot,
+  initE2EStateIfEnabled,
+  markE2ERuntimeReady,
+} from './wallet/_e2e/windowState';
 import { assembleWarpCoreConfig } from './warpCore/warpCoreConfig';
 
 // Increment this when persist state has breaking changes
@@ -58,6 +63,18 @@ interface WarpContext {
   coinGeckoIds: string[];
 }
 
+function buildE2ETokenSnapshot(tokens: Token[] | undefined): E2ETokenSnapshot[] | undefined {
+  if (!tokens?.length) return undefined;
+  return tokens.map((t) => ({
+    key: getTokenKey(t),
+    chain: t.chainName,
+    symbol: t.symbol,
+    standard: t.standard,
+    addressOrDenom: t.addressOrDenom,
+    collateralAddressOrDenom: t.collateralAddressOrDenom,
+    connectionKeys: (t.connections ?? []).map((c) => getTokenKey(c.token as Token)),
+  }));
+}
 // Keeping everything here for now as state is simple
 // Will refactor into slices as necessary
 export interface AppState {
@@ -332,6 +349,8 @@ async function initWarpContext({
     const coinGeckoIds = Array.from(
       new Set(coreConfig.tokens.map((t) => t.coinGeckoId).filter(Boolean)),
     ).sort() as string[];
+    initE2EStateIfEnabled();
+    markE2ERuntimeReady(() => buildE2ETokenSnapshot(warpCore.tokens));
     return {
       registry: currentRegistry,
       chainMetadata,
@@ -361,7 +380,7 @@ async function initWarpContext({
 }
 
 // Build map of chain -> address -> router info using precomputed wireDecimals
-function getRouterAddressesByChain(
+export function getRouterAddressesByChain(
   tokens: WarpCore['tokens'],
   wireDecimalsMap: Record<ChainName, Record<string, number>>,
 ): Record<ChainName, Record<string, RouterAddressInfo>> {

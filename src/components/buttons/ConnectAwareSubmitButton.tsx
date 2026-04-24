@@ -1,7 +1,15 @@
 import { ProtocolType } from '@hyperlane-xyz/utils';
-import { useAccountForChain, useConnectFns, useTimeout } from '@hyperlane-xyz/widgets';
+import { useTimeout } from '@hyperlane-xyz/widgets';
+import {
+  useAccountForChain,
+  useConnectFns,
+} from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import { useFormikContext } from 'formik';
 import { useCallback } from 'react';
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/main
 import { EVENT_NAME } from '../../features/analytics/types';
 import { trackEvent } from '../../features/analytics/utils';
 import { useChainProtocol, useMultiProvider } from '../../features/chains/hooks';
@@ -30,7 +38,7 @@ export function ConnectAwareSubmitButton<FormValues = any>({
 
   const { errors, setErrors, touched, setTouched } = useFormikContext<FormValues>();
 
-  const hasError = Object.keys(touched).length > 0 && Object.keys(errors).length > 0;
+  const hasError = Object.keys(errors).length > 0;
   const firstError = `${Object.values(errors)[0]}` || 'Unknown error';
 
   const color = hasError ? 'red' : 'primary';
@@ -58,7 +66,11 @@ export function ConnectAwareSubmitButton<FormValues = any>({
 
   return (
     <SolidButton
+<<<<<<< HEAD
       disabled={disabled}
+=======
+      disabled={disabled && isAccountReady}
+>>>>>>> origin/main
       type={type}
       color={color}
       onClick={onClick}

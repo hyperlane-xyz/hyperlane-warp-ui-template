@@ -3,6 +3,10 @@ import {
   warpRouteConfigs as publishedRegistryWarpRoutes,
 } from '@hyperlane-xyz/registry';
 import {
+<<<<<<< HEAD
+=======
+  ChainName,
+>>>>>>> origin/main
   TOKEN_STANDARD_TO_PROTOCOL,
   TokenStandard,
   WarpCoreConfig,
@@ -10,6 +14,7 @@ import {
   getTokenConnectionId,
   validateZodResult,
 } from '@hyperlane-xyz/sdk';
+<<<<<<< HEAD
 import { isObjEmpty, objFilter, objMerge } from '@hyperlane-xyz/utils';
 import { config } from '../../consts/config.ts';
 import { warpRouteWhitelist } from '../../consts/warpRouteWhitelist.ts';
@@ -21,6 +26,27 @@ export async function assembleWarpCoreConfig(
   storeOverrides: WarpCoreConfig[],
   registry: IRegistry,
 ): Promise<WarpCoreConfig> {
+=======
+import { isObjEmpty, normalizeAddress, objFilter, objMerge } from '@hyperlane-xyz/utils';
+
+import { config } from '../../consts/config.ts';
+import { warpRouteConfigs as tsWarpRoutes } from '../../consts/warpRoutes.ts';
+import yamlWarpRoutes from '../../consts/warpRoutes.yaml';
+import { getWarpRouteWhitelist, warpRouteWhitelist } from '../../consts/warpRouteWhitelist.ts';
+import { logger } from '../../utils/logger.ts';
+
+// Map of chain -> address -> wireDecimals
+export type WireDecimalsMap = Record<ChainName, Record<string, number>>;
+type WarpCoreToken = WarpCoreConfig['tokens'][number];
+export type NullableAddressWarpCoreToken = Omit<WarpCoreToken, 'addressOrDenom'> & {
+  addressOrDenom: string | null;
+};
+
+export async function assembleWarpCoreConfig(
+  storeOverrides: WarpCoreConfig[],
+  registry: IRegistry,
+): Promise<{ config: WarpCoreConfig; wireDecimalsMap: WireDecimalsMap }> {
+>>>>>>> origin/main
   const yamlResult = WarpCoreConfigSchema.safeParse(yamlWarpRoutes);
   const yamlConfig = validateZodResult(yamlResult, 'warp core yaml config');
   const tsResult = WarpCoreConfigSchema.safeParse(tsWarpRoutes);
@@ -32,10 +58,39 @@ export async function assembleWarpCoreConfig(
     if (config.registryUrl) {
       logger.debug('Using custom registry warp routes from:', config.registryUrl);
       registryWarpRoutes = await registry.getWarpRoutes();
+<<<<<<< HEAD
+=======
+
+      // Safety fallback for whitelisted routes that may exist as per-route files
+      // before they are generated into warpRouteConfigs.yaml.
+      if (warpRouteWhitelist?.length) {
+        const uppercaseRouteIds = new Set(
+          Object.keys(registryWarpRoutes).map((routeId) => routeId.toUpperCase()),
+        );
+        const missingRouteIds = warpRouteWhitelist.filter(
+          (routeId) => !uppercaseRouteIds.has(routeId.toUpperCase()),
+        );
+
+        if (missingRouteIds.length) {
+          const routeEntries = await Promise.all(
+            missingRouteIds.map(
+              async (routeId): Promise<[string, WarpCoreConfig | null]> => [
+                routeId,
+                await registry.getWarpRoute(routeId),
+              ],
+            ),
+          );
+          for (const [routeId, routeConfig] of routeEntries) {
+            if (routeConfig) registryWarpRoutes[routeId] = routeConfig;
+          }
+        }
+      }
+>>>>>>> origin/main
       if (isObjEmpty(registryWarpRoutes)) throw new Error('Warp routes empty');
     } else {
       throw new Error('No custom registry URL provided');
     }
+<<<<<<< HEAD
   } catch {
     logger.debug('Using default published registry for warp routes');
     registryWarpRoutes = publishedRegistryWarpRoutes;
@@ -45,6 +100,60 @@ export async function assembleWarpCoreConfig(
     ? filterToIds(registryWarpRoutes, warpRouteWhitelist)
     : registryWarpRoutes;
   filteredRegistryConfigMap = fillMissingCoinGeckoIds(filteredRegistryConfigMap);
+=======
+  } catch (error) {
+    // Browser/runtime environments can occasionally fail on getWarpRoutes() due to large payloads,
+    // rate limits, or transport issues. For whitelisted flows, try fetching routes one-by-one.
+    if (config.registryUrl && warpRouteWhitelist?.length) {
+      try {
+        logger.debug(
+          'getWarpRoutes() failed; attempting per-route registry fallback for whitelist IDs',
+          error,
+        );
+        const routeEntries = await Promise.all(
+          warpRouteWhitelist.map(
+            async (routeId): Promise<[string, WarpCoreConfig | null]> => [
+              routeId,
+              await registry.getWarpRoute(routeId),
+            ],
+          ),
+        );
+        const fallbackRoutes = routeEntries.reduce<Record<string, WarpCoreConfig>>(
+          (acc, [routeId, routeConfig]) => {
+            if (routeConfig) acc[routeId] = routeConfig;
+            return acc;
+          },
+          {},
+        );
+        if (!isObjEmpty(fallbackRoutes)) {
+          logger.debug('Using per-route whitelist fallback from registry.getWarpRoute');
+          registryWarpRoutes = fallbackRoutes;
+        } else {
+          throw new Error('Per-route fallback returned no warp routes');
+        }
+      } catch (routeError) {
+        logger.debug(
+          'Per-route whitelist fallback failed; using published registry routes',
+          routeError,
+        );
+        registryWarpRoutes = publishedRegistryWarpRoutes;
+      }
+    } else {
+      logger.debug('Using default published registry for warp routes');
+      registryWarpRoutes = publishedRegistryWarpRoutes;
+    }
+  }
+
+  const effectiveWhitelist = getWarpRouteWhitelist();
+  let filteredRegistryConfigMap = effectiveWhitelist
+    ? filterToIds(registryWarpRoutes, effectiveWhitelist)
+    : registryWarpRoutes;
+  filteredRegistryConfigMap = fillMissingCoinGeckoIds(filteredRegistryConfigMap);
+
+  // Build wireDecimalsMap BEFORE flattening - this preserves route grouping
+  const wireDecimalsMap = buildWireDecimalsMap(filteredRegistryConfigMap);
+
+>>>>>>> origin/main
   const filteredRegistryConfigValues = Object.values(filteredRegistryConfigMap);
   const filteredRegistryTokens = filteredRegistryConfigValues.map((c) => c.tokens).flat();
   const filteredRegistryOptions = filteredRegistryConfigValues.map((c) => c.options).flat();
@@ -52,12 +161,18 @@ export async function assembleWarpCoreConfig(
   const storeOverrideTokens = storeOverrides.map((c) => c.tokens).flat();
   const storeOverrideOptions = storeOverrides.map((c) => c.options).flat();
 
+  // Type assertion needed: Zod's z.infer widens {numerator: bigint} to
+  // {numerator: string | bigint} when tokens are spread across arrays.
   const combinedTokens = [
     ...filteredRegistryTokens,
     ...tsConfig.tokens,
     ...yamlConfig.tokens,
     ...storeOverrideTokens,
+<<<<<<< HEAD
   ];
+=======
+  ] as NullableAddressWarpCoreToken[];
+>>>>>>> origin/main
   const tokens = filterUnconnectedToken(dedupeTokens(combinedTokens));
 
   const combinedOptions = [
@@ -73,7 +188,49 @@ export async function assembleWarpCoreConfig(
       'No warp route configs provided. Please check your registry, warp route whitelist, and custom route configs for issues.',
     );
 
-  return { tokens, options };
+  return { config: { tokens, options }, wireDecimalsMap };
+}
+
+// Build map of chain -> address -> wireDecimals before tokens are flattened
+// wireDecimals = max decimals across all tokens in a warp route
+function buildWireDecimalsMap(routes: Record<string, WarpCoreConfig>): WireDecimalsMap {
+  const map: WireDecimalsMap = {};
+  for (const routeConfig of Object.values(routes)) {
+    const wireDecimals = Math.max(...routeConfig.tokens.map((t) => t.decimals ?? 18));
+    for (const token of routeConfig.tokens) {
+      if (!token.addressOrDenom) continue;
+      map[token.chainName] ||= {};
+      map[token.chainName][normalizeAddress(token.addressOrDenom)] = wireDecimals;
+    }
+  }
+  return map;
+}
+
+// Fill missing coinGeckoIds within each warp route
+// For each route, if any token has a coinGeckoId, apply it to tokens without one
+function fillMissingCoinGeckoIds(
+  routes: Record<string, WarpCoreConfig>,
+): Record<string, WarpCoreConfig> {
+  return Object.entries(routes).reduce<Record<string, WarpCoreConfig>>((acc, [routeId, config]) => {
+    // Find first coinGeckoId in this route's tokens
+    const coinGeckoId = config.tokens.find((token) => token.coinGeckoId)?.coinGeckoId;
+
+    if (coinGeckoId) {
+      // Apply coinGeckoId to all tokens in this route that don't have one
+      const updatedTokens = config.tokens.map((token) => ({
+        ...token,
+        coinGeckoId: token.coinGeckoId || coinGeckoId,
+      }));
+      acc[routeId] = {
+        ...config,
+        tokens: updatedTokens,
+      };
+    } else {
+      // No coinGeckoId found, keep route as is
+      acc[routeId] = config;
+    }
+    return acc;
+  }, {});
 }
 
 // Fill missing coinGeckoIds within each warp route
@@ -114,12 +271,21 @@ function filterToIds(
 
 // Separate warp configs may contain duplicate definitions of the same token.
 // E.g. an IBC token that gets used for interchain gas in many different routes.
-function dedupeTokens(tokens: WarpCoreConfig['tokens']): WarpCoreConfig['tokens'] {
-  const idToToken: Record<string, WarpCoreConfig['tokens'][number]> = {};
+export function dedupeTokens(
+  tokens: NullableAddressWarpCoreToken[],
+): NullableAddressWarpCoreToken[] {
+  const idToToken: Record<string, NullableAddressWarpCoreToken> = {};
   for (const token of tokens) {
     let id = '';
     // Temporary fix issue for M0 routes where addressOrDenom can be the same
+<<<<<<< HEAD
     if (token.standard === TokenStandard.EvmM0PortalLite) {
+=======
+    if (
+      token.standard === TokenStandard.EvmM0PortalLite ||
+      token.standard === TokenStandard.EvmM0Portal
+    ) {
+>>>>>>> origin/main
       id = `${token.chainName}|${token.symbol}|${token.addressOrDenom?.toLowerCase()}`;
     } else {
       id = `${token.chainName}|${token.addressOrDenom?.toLowerCase()}`;
@@ -141,7 +307,11 @@ function reduceOptions(optionsList: Array<WarpCoreConfig['options']>): WarpCoreC
 }
 
 // Remove tokens that have no connections from the token list, but preserve tokens that are destinations
+<<<<<<< HEAD
 function filterUnconnectedToken(tokens: WarpCoreConfig['tokens']): WarpCoreConfig['tokens'] {
+=======
+function filterUnconnectedToken(tokens: NullableAddressWarpCoreToken[]): WarpCoreToken[] {
+>>>>>>> origin/main
   const destinationTokenIds = new Set<string>();
 
   tokens.forEach((token) => {
@@ -153,8 +323,12 @@ function filterUnconnectedToken(tokens: WarpCoreConfig['tokens']): WarpCoreConfi
   });
 
   // Keep tokens with connections OR tokens that are destinations
+<<<<<<< HEAD
   return tokens.filter((token) => {
     // remove null addresses if they exist
+=======
+  return tokens.filter((token): token is WarpCoreToken => {
+>>>>>>> origin/main
     if (!token.addressOrDenom) return false;
     // Has connections - keep it
     if (token.connections?.length) return true;

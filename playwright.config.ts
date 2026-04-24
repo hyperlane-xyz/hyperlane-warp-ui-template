@@ -77,9 +77,17 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: process.env.CI ? 'pnpm start' : 'pnpm dev',
+    // `pnpm dev` is fast to iterate against but renders Next's <nextjs-portal>
+    // dev-tools web component, which intermittently intercepts picker clicks.
+    // CI always uses the prod build via `pnpm start`; set E2E_USE_PROD=1
+    // locally to match CI if you're chasing dev-only flakes.
+    command: process.env.CI || process.env.E2E_USE_PROD === '1' ? 'pnpm start' : 'pnpm dev',
     url: 'http://localhost:3000',
-    timeout: 120_000,
+    timeout: 180_000,
     reuseExistingServer: !process.env.CI,
+    // Kill the Next dev-tools <nextjs-portal> so picker clicks aren't
+    // intermittently intercepted in dev. CI uses the prod build where the
+    // portal doesn't render, so this only matters locally.
+    env: { DISABLE_NEXT_DEV_INDICATORS: '1' },
   },
 });

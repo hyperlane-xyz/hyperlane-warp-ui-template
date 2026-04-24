@@ -2,13 +2,14 @@ import { expect, test, type Page } from '@playwright/test';
 import { MOCK_EVM_ADDRESS } from '../helpers/constants';
 import { installEvmRpcMock } from '../helpers/evmRpc';
 import { clickContinue, enterAmount, selectDestinationToken } from '../helpers/formFlow';
-import { openE2EApp } from '../helpers/page-setup';
+import { openE2EApp, waitForWarpRuntime } from '../helpers/page-setup';
 
 const USDC_ETHEREUM = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48';
 const REMOTE_ADDRESS_RE = /0x[0-9a-fA-F]{40}/;
 
 test.describe('EVM destination router selection', () => {
   async function captureRemoteAddress(page: Page, destPattern: RegExp) {
+    await waitForWarpRuntime(page);
     await selectDestinationToken(page, destPattern);
     await enterAmount(page, '1');
     await clickContinue(page);

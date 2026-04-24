@@ -1,0 +1,69 @@
+import { PredicateApiClient } from '@hyperlane-xyz/sdk';
+import type { NextApiRequest, NextApiResponse } from 'next';
+
+import { logger } from '../../../utils/logger';
+
+const PREDICATE_API_KEY = process.env.PREDICATE_API_KEY;
+const PREDICATE_API_URL = process.env.PREDICATE_API_URL;
+const ALLOWED_PREDICATE_DOMAINS = ['api.predicate.io', 'predicate.io'];
+
+// Validate PREDICATE_API_URL override to prevent SSRF
+function validateApiUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return (
+      parsed.protocol === 'https:' &&
+      ALLOWED_PREDICATE_DOMAINS.some(
+        (domain) => parsed.hostname === domain || parsed.hostname.endsWith('.' + domain),
+      )
+    );
+  } catch {
+    return false;
+  }
+}
+
+// Rate limiting is handled by Vercel firewall rules at the edge layer.
+// Do not add in-memory rate limiting here — serverless instances are ephemeral
+// and load-balanced, so module-level state is not shared across invocations.
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  if (!PREDICATE_API_KEY) {
+    return res.status(500).json({ error: 'Predicate API key not configured' });
+  }
+
+  if (PREDICATE_API_URL && !validateApiUrl(PREDICATE_API_URL)) {
+    logger.error('Invalid PREDICATE_API_URL', new Error(PREDICATE_API_URL));
+    return res.status(500).json({ error: 'Invalid API configuration' });
+  }
+
+  // Input validation
+  const { to, from, data, msg_value, chain } = req.body || {};
+  if (!to || !from || !data || !msg_value || !chain) {
+    return res.status(400).json({
+      error: 'Missing required fields: to, from, data, msg_value, chain',
+    });
+  }
+
+  if (
+    typeof to !== 'string' ||
+    typeof from !== 'string' ||
+    typeof data !== 'string' ||
+    typeof msg_value !== 'string' ||
+    typeof chain !== 'string'
+  ) {
+    return res.status(400).json({ error: 'Invalid field types' });
+  }
+
+  try {
+    const client = new PredicateApiClient(PREDICATE_API_KEY, PREDICATE_API_URL);
+    const result = await client.fetchAttestation({ to, from, data, msg_value, chain });
+    return res.status(200).json(result);
+  } catch (error) {
+    logger.error('Predicate API error', error);
+    return res.status(502).json({ error: 'Failed to fetch attestation' });
+  }
+}

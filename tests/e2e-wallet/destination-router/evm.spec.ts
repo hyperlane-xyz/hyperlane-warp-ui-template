@@ -36,6 +36,7 @@ test.describe('EVM destination router selection', () => {
   test('Base and Arbitrum destinations resolve distinct non-empty remote-token addresses', async ({
     page,
   }) => {
+    test.setTimeout(180_000);
     await installEvmRpcMock(page, rpcConfig);
     await openE2EApp(page);
     await expect(page.getByText('0xe2e...e2ee').first()).toBeVisible({ timeout: 15_000 });

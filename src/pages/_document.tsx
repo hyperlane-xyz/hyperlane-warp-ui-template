@@ -1,5 +1,6 @@
 import { Head, Html, Main, NextScript } from 'next/document';
-import { APP_DESCRIPTION, APP_NAME, APP_URL, BRAND_COLOR, MAIN_FONT } from '../consts/app';
+
+import { APP_DESCRIPTION, APP_NAME, APP_URL, BRAND_COLOR } from '../consts/app';
 
 export default function Document() {
   return (
@@ -29,8 +30,12 @@ export default function Document() {
         <meta property="og:type" content="website" />
         <meta property="og:image" content={`${APP_URL}/logo.png`} />
         <meta property="og:description" content={APP_DESCRIPTION} />
+        {/* Synchronous same-origin script — blocks rendering to set theme before first paint.
+            Inline version would be blocked by CSP (no unsafe-inline in script-src). */}
+        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
+        <script src="/theme-init.js" />
       </Head>
-      <body className={`${MAIN_FONT.variable} font-sans text-black`}>
+      <body className="font-primary text-black">
         <Main />
         <NextScript />
       </body>

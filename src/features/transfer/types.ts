@@ -1,7 +1,6 @@
 export interface TransferFormValues {
-  origin: ChainName;
-  destination: ChainName;
-  tokenIndex: number | undefined;
+  originTokenKey: string | undefined;
+  destinationTokenKey: string | undefined;
   amount: string;
   recipient: Address;
 }
@@ -35,6 +34,8 @@ export interface TransferContext {
   sender: Address;
   recipient: Address;
   originTxHash?: string;
+  originBlockNumber?: number;
   msgId?: string;
+  destinationTxHash?: string;
   timestamp: number;
 }

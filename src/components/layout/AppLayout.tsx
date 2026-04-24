@@ -1,13 +1,21 @@
-import { MultiProtocolWalletModal } from '@hyperlane-xyz/widgets';
 import Head from 'next/head';
 import { PropsWithChildren, useEffect } from 'react';
+<<<<<<< HEAD
 import { APP_NAME } from '../../consts/app';
 import { config } from '../../consts/config';
+=======
+
+import { APP_NAME } from '../../consts/app';
+import { config } from '../../consts/config';
+import { initIntercom } from '../../features/analytics/intercom';
+import { initRefiner } from '../../features/analytics/refiner';
+>>>>>>> origin/main
 import { EVENT_NAME } from '../../features/analytics/types';
 import { useWalletConnectionTracking } from '../../features/analytics/useWalletConnectionTracking';
 import { trackEvent } from '../../features/analytics/utils';
 import { useStore } from '../../features/store';
 import { SideBarMenu } from '../../features/wallet/SideBarMenu';
+import { WalletProtocolModal } from '../../features/wallet/WalletProtocolModal';
 import { Footer } from '../nav/Footer';
 import { Header } from '../nav/Header';
 
@@ -24,6 +32,11 @@ export function AppLayout({ children }: PropsWithChildren) {
   useWalletConnectionTracking();
 
   useEffect(() => {
+<<<<<<< HEAD
+=======
+    initIntercom();
+    initRefiner();
+>>>>>>> origin/main
     trackEvent(EVENT_NAME.PAGE_VIEWED, {});
   }, []);
 
@@ -45,7 +58,7 @@ export function AppLayout({ children }: PropsWithChildren) {
         <Footer />
       </div>
 
-      <MultiProtocolWalletModal
+      <WalletProtocolModal
         isOpen={showEnvSelectModal}
         close={() => setShowEnvSelectModal(false)}
         protocols={config.walletProtocols}
@@ -61,6 +74,7 @@ export function AppLayout({ children }: PropsWithChildren) {
     </>
   );
 }
+<<<<<<< HEAD
 
 // const styles = {
 //   container: {
@@ -71,3 +85,5 @@ export function AppLayout({ children }: PropsWithChildren) {
 //     backgroundPosition: 'center',
 //   },
 // };
+=======
+>>>>>>> origin/main

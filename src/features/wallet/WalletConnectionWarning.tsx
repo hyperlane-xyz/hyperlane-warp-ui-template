@@ -1,6 +1,12 @@
 import { ProtocolType } from '@hyperlane-xyz/utils';
+<<<<<<< HEAD
 import { useWalletDetails } from '@hyperlane-xyz/widgets';
 import { useMemo } from 'react';
+=======
+import { useWalletDetails } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
+import { useMemo } from 'react';
+
+>>>>>>> origin/main
 import { FormWarningBanner } from '../../components/banner/FormWarningBanner';
 import { useMultiProvider } from '../chains/hooks';
 

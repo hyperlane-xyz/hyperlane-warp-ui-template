@@ -15,21 +15,28 @@ import { PropsWithChildren, useCallback, useMemo } from 'react';
 import { toast } from 'react-toastify';
 
 import { logger } from '../../../utils/logger';
+import { E2EAutoConnectSolana } from '../_e2e/E2EAutoConnectSolana';
+import { isE2EMode } from '../_e2e/isE2E';
+import { MockSolanaAdapter } from '../_e2e/MockSolanaAdapter';
 
 export function SolanaWalletContext({ children }: PropsWithChildren<unknown>) {
   // TODO support multiple networks
   const network = WalletAdapterNetwork.Mainnet;
   const endpoint = useMemo(() => clusterApiUrl(network), [network]);
+  const e2e = isE2EMode();
   const wallets = useMemo(
-    () => [
-      new SolflareWalletAdapter(),
-      new SalmonWalletAdapter(),
-      new SnapWalletAdapter(),
-      new TrustWalletAdapter(),
-      new LedgerWalletAdapter(),
-    ],
+    () => {
+      const real = [
+        new SolflareWalletAdapter(),
+        new SalmonWalletAdapter(),
+        new SnapWalletAdapter(),
+        new TrustWalletAdapter(),
+        new LedgerWalletAdapter(),
+      ];
+      return e2e ? [new MockSolanaAdapter()] : real;
+    },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [network],
+    [network, e2e],
   );
 
   const onError = useCallback((error: WalletError) => {
@@ -40,7 +47,10 @@ export function SolanaWalletContext({ children }: PropsWithChildren<unknown>) {
   return (
     <ConnectionProvider endpoint={endpoint}>
       <WalletProvider wallets={wallets} onError={onError} autoConnect>
-        <WalletModalProvider>{children}</WalletModalProvider>
+        <WalletModalProvider>
+          {e2e && <E2EAutoConnectSolana />}
+          {children}
+        </WalletModalProvider>
       </WalletProvider>
     </ConnectionProvider>
   );

@@ -1,6 +1,13 @@
 import { Modal } from '@hyperlane-xyz/widgets';
+import {
+  getAccountAddressAndPubKey,
+  useAccounts,
+} from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import { useFormikContext } from 'formik';
+
 import { SolidButton } from '../../components/buttons/SolidButton';
+import { useMultiProvider } from '../chains/hooks';
+import { getTokenByKeyFromMap, useTokenByKeyMap } from '../tokens/hooks';
 import { TransferFormValues } from './types';
 
 export function RecipientConfirmationModal({
@@ -13,6 +20,19 @@ export function RecipientConfirmationModal({
   onConfirm: () => void;
 }) {
   const { values } = useFormikContext<TransferFormValues>();
+  const multiProvider = useMultiProvider();
+  const tokenMap = useTokenByKeyMap();
+  const { accounts } = useAccounts(multiProvider);
+  const destinationToken = getTokenByKeyFromMap(tokenMap, values.destinationTokenKey);
+
+  // Get recipient (form value or fallback to connected wallet for destination)
+  const { address: connectedDestAddress } = getAccountAddressAndPubKey(
+    multiProvider,
+    destinationToken?.chainName,
+    accounts,
+  );
+  const recipient = values.recipient || connectedDestAddress || '';
+
   return (
     <Modal
       isOpen={isOpen}
@@ -23,7 +43,7 @@ export function RecipientConfirmationModal({
       <p className="text-center text-sm">
         The recipient address has no funds on the destination chain. Is this address correct?
       </p>
-      <p className="rounded-lg bg-primary-500/5 p-2 text-center text-sm">{values.recipient}</p>
+      <p className="rounded-lg bg-primary-500/5 p-2 text-center text-sm">{recipient}</p>
       <div className="flex items-center justify-center gap-12">
         <SolidButton onClick={close} color="gray" className="min-w-24 px-4 py-1">
           Cancel

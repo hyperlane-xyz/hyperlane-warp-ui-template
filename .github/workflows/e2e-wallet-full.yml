@@ -1,0 +1,95 @@
+name: e2e-wallet-full
+
+# Full wallet-connected E2E suite across chromium/firefox/webkit.
+# Called from ci.yml on push-to-main/merge_group/workflow_dispatch.
+# On PR, only the smoke subset runs (see e2e-smoke.yml).
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  e2e-wallet:
+    timeout-minutes: 25
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Get pnpm store directory
+        id: pnpm-store
+        shell: bash
+        run: echo "path=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Restore build cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .next/
+          key: ${{ runner.os }}-nextjs-build-${{ hashFiles('src/**', 'pnpm-lock.yaml', 'next.config.js', 'tsconfig.json') }}
+
+      - name: Get Playwright version
+        id: pw-version
+        run: echo "version=$(pnpm exec playwright --version)" >> $GITHUB_OUTPUT
+
+      - name: Cache Playwright browsers
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ steps.pw-version.outputs.version }}-${{ matrix.browser }}
+
+      - name: Install Playwright browsers
+        if: steps.pw-cache.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install ${{ matrix.browser }}
+
+      - name: Install Playwright system dependencies
+        run: pnpm exec playwright install-deps ${{ matrix.browser }}
+
+      - name: Run E2E wallet tests
+        run: pnpm exec playwright test tests/e2e-wallet --project=${{ matrix.browser }}
+        env:
+          NEXT_PUBLIC_WALLET_CONNECT_ID: ${{ secrets.NEXT_PUBLIC_WALLET_CONNECT_ID }}
+
+      - name: Upload report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-wallet-report-${{ matrix.browser }}-${{ github.run_attempt }}
+          path: playwright-report
+          retention-days: 14
+
+  notify-failure:
+    if: ${{ always() && needs.e2e-wallet.result == 'failure' }}
+    needs: [e2e-wallet]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Slack on e2e-wallet failure
+        uses: slackapi/slack-github-action@v3
+        with:
+          webhook: ${{ secrets.E2E_SLACK_WEBHOOK }}
+          webhook-type: incoming-webhook
+          payload: |
+            text: ":alert: Warp UI full e2e-wallet matrix failed — see workflow run for details"
+            blocks:
+              - type: "section"
+                text:
+                  type: "mrkdwn"
+                  text: ":alert: *Warp UI e2e-wallet full matrix failed*\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow run #${{ github.run_number }}> on `${{ github.ref_name }}` @ ${{ github.sha }}"

@@ -105,10 +105,17 @@ export async function fetchPredicateAttestation({
   const txData = transaction.data?.toString();
   assert(txData, 'Transfer tx missing calldata');
 
+  let chainName = token.chainName;
+
+  // Only necessary for this one testnet
+  if (chainName === 'basesepolia') {
+    chainName = 'base-sepolia';
+  }
+
   logger.debug('Fetching attestation for tx:', {
     to: wrapperAddress,
     from: sender,
-    chain: token.chainName,
+    chain: chainName,
   });
 
   // Fetch attestation from Predicate API via proxy
@@ -117,7 +124,7 @@ export async function fetchPredicateAttestation({
     from: sender,
     data: txData,
     msg_value: transaction.value?.toString() || '0',
-    chain: token.chainName,
+    chain: chainName,
   });
 
   logger.debug('Predicate attestation received:', response.attestation.uuid);

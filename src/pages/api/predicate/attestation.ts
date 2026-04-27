@@ -63,7 +63,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const result = await client.fetchAttestation({ to, from, data, msg_value, chain });
     return res.status(200).json(result);
   } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to fetch attestation';
     logger.error('Predicate API error', error);
-    return res.status(502).json({ error: 'Failed to fetch attestation' });
+    return res.status(502).json({ error: message });
   }
 }

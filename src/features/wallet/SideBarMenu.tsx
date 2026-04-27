@@ -1,4 +1,3 @@
-import type { ChainName } from '@hyperlane-xyz/sdk';
 import { normalizeAddress } from '@hyperlane-xyz/utils';
 import { RefreshIcon, SpinnerIcon } from '@hyperlane-xyz/widgets';
 import { AccountList } from '@hyperlane-xyz/widgets/walletIntegrations/AccountList';
@@ -23,7 +22,7 @@ import {
   useMergedTransferHistory,
 } from '../messages/useMergedTransferHistory';
 import { useMessageHistory } from '../messages/useMessageHistory';
-import { RouterAddressInfo, useStore } from '../store';
+import { useStore } from '../store';
 import { tryFindToken, useWarpCore } from '../tokens/hooks';
 import { TokenChainIcon } from '../tokens/TokenChainIcon';
 import { computeDestAmount, formatMessageAmount } from '../transfer/scaleUtils';
@@ -75,12 +74,12 @@ export function SideBarMenu({
     return addresses;
   }, [accounts]);
 
-  // Get all warp route addresses from configured routes (normalized)
+  // Get all warp route addresses from configured routes (already normalized)
   const warpRouteAddresses = useMemo(() => {
     const addresses: string[] = [];
-    for (const addressMap of Object.values(routerAddressesByChainMap)) {
-      for (const addr of Object.keys(addressMap)) {
-        addresses.push(normalizeAddress(addr));
+    for (const addressSet of Object.values(routerAddressesByChainMap)) {
+      for (const addr of addressSet) {
+        addresses.push(addr);
       }
     }
     return addresses;
@@ -128,9 +127,7 @@ export function SideBarMenu({
     if (item.type === TransferItemType.Local) {
       setSelectedTransfer(item.data);
     } else {
-      setSelectedTransfer(
-        messageToTransferContext(item.data, multiProvider, warpCore, routerAddressesByChainMap),
-      );
+      setSelectedTransfer(messageToTransferContext(item.data, multiProvider, warpCore));
     }
     setIsModalOpen(true);
   };
@@ -236,7 +233,6 @@ export function SideBarMenu({
                       onClick={() => handleItemClick(item)}
                       multiProvider={multiProvider}
                       warpCore={warpCore}
-                      routerAddressesByChainMap={routerAddressesByChainMap}
                       nowMs={nowMs}
                     />
                   ))}
@@ -275,14 +271,12 @@ function TransferSummary({
   onClick,
   multiProvider,
   warpCore,
-  routerAddressesByChainMap,
   nowMs,
 }: {
   item: TransferItem;
   onClick: () => void;
   multiProvider: ReturnType<typeof useMultiProvider>;
   warpCore: ReturnType<typeof useWarpCore>;
-  routerAddressesByChainMap: Record<ChainName, Record<string, RouterAddressInfo>>;
   nowMs: number;
 }) {
   const { originChain, destChain, amount, destAmount, status, token, destToken, timestamp } =
@@ -310,12 +304,7 @@ function TransferSummary({
       let amount = '';
       if (msg.warpTransfer?.amount && token) {
         try {
-          amount = formatMessageAmount(
-            msg.warpTransfer.amount,
-            { ...token, addressOrDenom: msg.sender },
-            routerAddressesByChainMap,
-            originChain,
-          );
+          amount = formatMessageAmount(msg.warpTransfer.amount, token);
         } catch (err) {
           logger.error('Failed to format warp transfer amount', err);
         }
@@ -336,7 +325,7 @@ function TransferSummary({
         destToken,
         timestamp: msg.origin.timestamp,
       };
-    }, [item.type, item.data, multiProvider, warpCore, routerAddressesByChainMap]);
+    }, [item.type, item.data, multiProvider, warpCore]);
 
   return (
     <button onClick={onClick} className={`${styles.btn} justify-between py-3`}>

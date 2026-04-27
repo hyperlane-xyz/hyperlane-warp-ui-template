@@ -1,8 +1,7 @@
-import type { ChainName, MultiProtocolProvider, WarpCore } from '@hyperlane-xyz/sdk';
+import type { MultiProtocolProvider, WarpCore } from '@hyperlane-xyz/sdk';
 import { useMemo } from 'react';
 
 import { logger } from '../../utils/logger';
-import { RouterAddressInfo } from '../store';
 import { tryFindToken } from '../tokens/hooks';
 import { formatMessageAmount } from '../transfer/scaleUtils';
 import { TransferContext, TransferStatus } from '../transfer/types';
@@ -24,7 +23,6 @@ export function messageToTransferContext(
   msg: MessageStub,
   multiProvider: MultiProtocolProvider,
   warpCore: WarpCore,
-  routerAddressesByChainMap: Record<ChainName, Record<string, RouterAddressInfo>>,
 ): TransferContext {
   const originChain = multiProvider.tryGetChainName(msg.originDomainId) || '';
   const destChain = multiProvider.tryGetChainName(msg.destinationDomainId) || '';
@@ -38,12 +36,7 @@ export function messageToTransferContext(
   const token = tryFindToken(warpCore, originChain, msg.sender);
   if (msg.warpTransfer?.amount && token) {
     try {
-      formattedAmount = formatMessageAmount(
-        msg.warpTransfer.amount,
-        { ...token, addressOrDenom: msg.sender },
-        routerAddressesByChainMap,
-        originChain,
-      );
+      formattedAmount = formatMessageAmount(msg.warpTransfer.amount, token);
     } catch (err) {
       logger.error('Failed to format warp transfer amount', err);
     }

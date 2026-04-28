@@ -34,12 +34,13 @@ export function ChainEditModal({ isOpen, close, chainName, onClickBack }: Props)
 
   const displayName = metadata?.displayName ?? metadata?.name ?? chainName;
   const containerRef = useRef<HTMLDivElement>(null);
+  const hasMetadata = !!metadata;
 
   useEffect(() => {
     if (!isOpen || !containerRef.current) return;
     const observer = observeDarkLogosInContainer(containerRef.current);
     return () => observer?.disconnect();
-  }, [isOpen, chainName, !!metadata]);
+  }, [isOpen, chainName, hasMetadata]);
 
   if (!metadata) return null;
 

@@ -135,6 +135,12 @@ const embedSecurityHeaders = [
 ];
 
 const nextConfig = {
+  // Disable the dev-tools indicator/portal in dev when running under the
+  // e2e harness — its <nextjs-portal> shadow DOM intermittently intercepts
+  // pointer events during picker clicks (observed flake on
+  // `token-select-destination` in full-suite runs). Scope to an explicit
+  // env var so local dev UX is unchanged.
+  ...(process.env.DISABLE_NEXT_DEV_INDICATORS === '1' ? { devIndicators: false } : {}),
   turbopack: {
     rules: {
       '*.yaml': {

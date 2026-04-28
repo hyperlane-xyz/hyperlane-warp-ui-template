@@ -310,6 +310,11 @@ function OriginTokenCard({
             type="number"
             step="any"
             disabled={isReview}
+            min="0"
+            onWheel={(e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur()}
+            onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+              if (e.key === '-' || e.key === 'e') e.preventDefault();
+            }}
           />
           <MaxButton balance={balance} disabled={isReview} isRouteSupported={isRouteSupported} />
         </div>

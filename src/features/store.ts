@@ -10,19 +10,31 @@ import {
   ChainMetadata,
   ChainName,
   MultiProtocolProvider,
+  Token,
   WarpCore,
   WarpCoreConfig,
 } from '@hyperlane-xyz/sdk';
-import { objFilter } from '@hyperlane-xyz/utils';
+import { normalizeAddress, objFilter } from '@hyperlane-xyz/utils';
 import { toast } from 'react-toastify';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+
 import { config } from '../consts/config';
 import { logger } from '../utils/logger';
 import { assembleChainMetadata } from './chains/metadata';
-import { TokenChainMap } from './tokens/types';
-import { assembleTokensBySymbolChainMap } from './tokens/utils';
+import {
+  buildTokensArray,
+  getTokenKey,
+  groupTokensByCollateral,
+  setResolvedUnderlyingMap,
+} from './tokens/utils';
+import { resolveWrappedCollateralTokens } from './tokens/wrappedTokenResolver';
 import { FinalTransferStatuses, TransferContext, TransferStatus } from './transfer/types';
+import {
+  type E2ETokenSnapshot,
+  initE2EStateIfEnabled,
+  markE2ERuntimeReady,
+} from './wallet/_e2e/windowState';
 import { assembleWarpCoreConfig } from './warpCore/warpCoreConfig';
 
 // Increment this when persist state has breaking changes
@@ -33,10 +45,30 @@ interface WarpContext {
   chainMetadata: ChainMap<ChainMetadata>;
   multiProvider: MultiProtocolProvider;
   warpCore: WarpCore;
-  tokensBySymbolChainMap: Record<string, TokenChainMap>;
+  /** Unified tokens array (deduplicated, can be origin or destination) */
+  tokens: Token[];
+  /** Pre-computed collateral groups for fast route checking */
+  collateralGroups: Map<string, Token[]>;
+  /** Pre-computed token key to Token map for O(1) lookups */
+  tokenByKeyMap: Map<string, Token>;
+  // Set of router addresses per chain
   routerAddressesByChainMap: Record<ChainName, Set<string>>;
+  // Deduplicated, sorted CoinGecko IDs for all tokens
+  coinGeckoIds: string[];
 }
 
+function buildE2ETokenSnapshot(tokens: Token[] | undefined): E2ETokenSnapshot[] | undefined {
+  if (!tokens?.length) return undefined;
+  return tokens.map((t) => ({
+    key: getTokenKey(t),
+    chain: t.chainName,
+    symbol: t.symbol,
+    standard: t.standard,
+    addressOrDenom: t.addressOrDenom,
+    collateralAddressOrDenom: t.collateralAddressOrDenom,
+    connectionKeys: (t.connections ?? []).map((c) => getTokenKey(c.token as Token)),
+  }));
+}
 // Keeping everything here for now as state is simple
 // Will refactor into slices as necessary
 export interface AppState {
@@ -60,7 +92,12 @@ export interface AppState {
   updateTransferStatus: (
     i: number,
     s: TransferStatus,
-    options?: { msgId?: string; originTxHash?: string },
+    options?: {
+      msgId?: string;
+      originTxHash?: string;
+      originBlockNumber?: number;
+      destinationTxHash?: string;
+    },
   ) => void;
   failUnconfirmedTransfers: () => void;
 
@@ -74,10 +111,20 @@ export interface AppState {
 
   originChainName: ChainName;
   setOriginChainName: (originChainName: ChainName) => void;
-  tokensBySymbolChainMap: Record<string, TokenChainMap>;
-  // this map is currently used by the transfer token form validation to prevent
-  // users from sending funds to a warp route address in a given destination chain
+  // instead of moving the TipCard component inside the formik and an useEffect can be set to watch for it
+  isTipCardActionTriggered: boolean;
+  setIsTipCardActionTriggered: (isTipCardActionTriggered: boolean) => void;
+  /** Unified tokens array (deduplicated, can be origin or destination) */
+  tokens: Token[];
+  /** Pre-computed collateral groups for fast route checking */
+  collateralGroups: Map<string, Token[]>;
+  /** Pre-computed token key to Token map for O(1) lookups */
+  tokenByKeyMap: Map<string, Token>;
+  // Set of router addresses per chain — used to prevent sending to warp route
+  // addresses and to filter message API results
   routerAddressesByChainMap: Record<ChainName, Set<string>>;
+  // Deduplicated, sorted CoinGecko IDs for all tokens (used by useTokenPrices)
+  coinGeckoIds: string[];
 }
 
 export const useStore = create<AppState>()(
@@ -92,33 +139,53 @@ export const useStore = create<AppState>()(
       ) => {
         logger.debug('Setting chain overrides in store');
         const filtered = objFilter(overrides, (_, metadata) => !!metadata);
-        const { multiProvider, warpCore, routerAddressesByChainMap, tokensBySymbolChainMap } =
-          await initWarpContext({
-            ...get(),
-            chainMetadataOverrides: filtered,
-          });
+        const {
+          multiProvider,
+          warpCore,
+          routerAddressesByChainMap,
+          tokens,
+          collateralGroups,
+          tokenByKeyMap,
+          coinGeckoIds,
+        } = await initWarpContext({
+          ...get(),
+          chainMetadataOverrides: filtered,
+        });
         set({
           chainMetadataOverrides: filtered,
           multiProvider,
           warpCore,
-          tokensBySymbolChainMap,
           routerAddressesByChainMap,
+          tokens,
+          collateralGroups,
+          tokenByKeyMap,
+          coinGeckoIds,
         });
       },
       warpCoreConfigOverrides: [],
       setWarpCoreConfigOverrides: async (overrides: WarpCoreConfig[] | undefined = []) => {
         logger.debug('Setting warp core config overrides in store');
-        const { multiProvider, warpCore, routerAddressesByChainMap, tokensBySymbolChainMap } =
-          await initWarpContext({
-            ...get(),
-            warpCoreConfigOverrides: overrides,
-          });
+        const {
+          multiProvider,
+          warpCore,
+          routerAddressesByChainMap,
+          tokens,
+          collateralGroups,
+          tokenByKeyMap,
+          coinGeckoIds,
+        } = await initWarpContext({
+          ...get(),
+          warpCoreConfigOverrides: overrides,
+        });
         set({
           warpCoreConfigOverrides: overrides,
           multiProvider,
           warpCore,
-          tokensBySymbolChainMap,
           routerAddressesByChainMap,
+          tokens,
+          collateralGroups,
+          tokenByKeyMap,
+          coinGeckoIds,
         });
       },
       multiProvider: new MultiProtocolProvider({}),
@@ -148,6 +215,8 @@ export const useStore = create<AppState>()(
           txs[i].status = s;
           txs[i].msgId ||= options?.msgId;
           txs[i].originTxHash ||= options?.originTxHash;
+          txs[i].originBlockNumber ||= options?.originBlockNumber;
+          txs[i].destinationTxHash ||= options?.destinationTxHash;
           return {
             transfers: txs,
           };
@@ -178,8 +247,15 @@ export const useStore = create<AppState>()(
       setOriginChainName: (originChainName: ChainName) => {
         set(() => ({ originChainName }));
       },
-      tokensBySymbolChainMap: {},
       routerAddressesByChainMap: {},
+      isTipCardActionTriggered: false,
+      setIsTipCardActionTriggered: (isTipCardActionTriggered: boolean) => {
+        set(() => ({ isTipCardActionTriggered }));
+      },
+      tokens: [],
+      collateralGroups: new Map(),
+      tokenByKeyMap: new Map(),
+      coinGeckoIds: [],
     }),
 
     // Store config
@@ -188,7 +264,7 @@ export const useStore = create<AppState>()(
       partialize: (state) => ({
         // fields to persist
         chainMetadataOverrides: state.chainMetadataOverrides,
-        transfers: state.transfers,
+        transfers: state.transfers, // Keep for transfers through non-indexed routes
       }),
       version: PERSIST_STATE_VERSION,
       onRehydrateStorage: () => {
@@ -234,7 +310,10 @@ async function initWarpContext({
   }
 
   try {
-    const coreConfig = await assembleWarpCoreConfig(warpCoreConfigOverrides, currentRegistry);
+    const { config: coreConfig } = await assembleWarpCoreConfig(
+      warpCoreConfigOverrides,
+      currentRegistry,
+    );
 
     const chainsInTokens = Array.from(new Set(coreConfig.tokens.map((t) => t.chainName)));
     const { chainMetadata, chainMetadataWithOverrides } = await assembleChainMetadata(
@@ -245,15 +324,37 @@ async function initWarpContext({
     const multiProvider = new MultiProtocolProvider(chainMetadataWithOverrides);
     const warpCore = WarpCore.FromConfig(multiProvider, coreConfig);
 
-    const tokensBySymbolChainMap = assembleTokensBySymbolChainMap(warpCore.tokens, multiProvider);
-    const routerAddressesByChainMap = getRouterAddressesByChain(coreConfig.tokens);
+    // Resolve underlying addresses for lockbox/vault tokens so they group
+    // with their non-wrapper counterparts (e.g., lockbox USDT = regular USDT)
+    const resolvedMap = await resolveWrappedCollateralTokens(warpCore.tokens, multiProvider);
+    setResolvedUnderlyingMap(resolvedMap);
+
+    // Build unified tokens array (deduplicated by collateral at startup)
+    const tokens = buildTokensArray(warpCore.tokens);
+    // Build collateral groups for fast route checking
+    const collateralGroups = groupTokensByCollateral(warpCore.tokens);
+    // Build token by key map for O(1) lookups
+    const tokenByKeyMap = new Map<string, Token>();
+    for (const token of tokens) {
+      tokenByKeyMap.set(getTokenKey(token), token);
+    }
+
+    const routerAddressesByChainMap = getRouterAddressesByChain(warpCore.tokens);
+    const coinGeckoIds = Array.from(
+      new Set(coreConfig.tokens.map((t) => t.coinGeckoId).filter(Boolean)),
+    ).sort() as string[];
+    initE2EStateIfEnabled();
+    markE2ERuntimeReady(() => buildE2ETokenSnapshot(warpCore.tokens));
     return {
       registry: currentRegistry,
       chainMetadata,
       multiProvider,
       warpCore,
-      tokensBySymbolChainMap,
       routerAddressesByChainMap,
+      tokens,
+      collateralGroups,
+      tokenByKeyMap,
+      coinGeckoIds,
     };
   } catch (error) {
     toast.error('Error initializing warp context. Please check connection status and configs.');
@@ -263,20 +364,23 @@ async function initWarpContext({
       chainMetadata: {},
       multiProvider: new MultiProtocolProvider({}),
       warpCore: new WarpCore(new MultiProtocolProvider({}), []),
-      tokensBySymbolChainMap: {},
       routerAddressesByChainMap: {},
+      tokens: [],
+      collateralGroups: new Map(),
+      tokenByKeyMap: new Map(),
+      coinGeckoIds: [],
     };
   }
 }
 
-// this weird type (WarpCoreConfig['tokens']) is to match what is being used in dedupeTokens at assembleWarpCoreConfig.ts
-// returns a set with all the warp route addressOrDenom known to the registry
-function getRouterAddressesByChain(
-  tokens: WarpCoreConfig['tokens'],
+// Build map of chain -> set of router addresses
+export function getRouterAddressesByChain(
+  tokens: WarpCore['tokens'],
 ): Record<ChainName, Set<string>> {
   return tokens.reduce<Record<ChainName, Set<string>>>((acc, token) => {
+    if (!token.addressOrDenom) return acc;
     acc[token.chainName] ||= new Set<string>();
-    if (token.addressOrDenom) acc[token.chainName].add(token.addressOrDenom);
+    acc[token.chainName].add(normalizeAddress(token.addressOrDenom));
     return acc;
   }, {});
 }

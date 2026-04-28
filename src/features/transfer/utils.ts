@@ -1,7 +1,21 @@
+import {
+  ChainMap,
+  CoreAddresses,
+  MultiProtocolCore,
+  ProviderType,
+  TypedTransactionReceipt,
+  ViemProvider,
+} from '@hyperlane-xyz/sdk';
+import { isValidAddress, isValidAddressEvm } from '@hyperlane-xyz/utils';
+import { getAddress } from 'viem';
+
 import ConfirmedIcon from '../../images/icons/confirmed-icon.svg';
-import DeliveredIcon from '../../images/icons/delivered-icon.svg';
 import ErrorCircleIcon from '../../images/icons/error-circle.svg';
+import { logger } from '../../utils/logger';
+import { getChainDisplayName } from '../chains/utils';
 import { FinalTransferStatuses, SentTransferStatuses, TransferStatus } from './types';
+
+type MultiProvider = MultiProtocolCore['multiProvider'];
 
 export function getTransferStatusLabel(
   status: TransferStatus,
@@ -15,6 +29,8 @@ export function getTransferStatusLabel(
   else if (status === TransferStatus.Preparing)
     statusDescription = 'Preparing for token transfer...';
   else if (status === TransferStatus.CreatingTxs) statusDescription = 'Creating transactions...';
+  else if (status === TransferStatus.FetchingAttestation)
+    statusDescription = 'Verifying compliance attestation...';
   else if (status === TransferStatus.SigningApprove)
     statusDescription = `Sign approve transaction in ${connectorName} to continue.`;
   else if (status === TransferStatus.ConfirmingApprove)
@@ -58,7 +74,6 @@ export const STATUSES_WITH_ICON = [
 export function getIconByTransferStatus(status: TransferStatus) {
   switch (status) {
     case TransferStatus.Delivered:
-      return DeliveredIcon;
     case TransferStatus.ConfirmedTransfer:
       return ConfirmedIcon;
     case TransferStatus.Failed:
@@ -68,22 +83,8 @@ export function getIconByTransferStatus(status: TransferStatus) {
   }
 }
 
-import {
-  ChainMap,
-  CoreAddresses,
-  MultiProtocolCore,
-  MultiProtocolProvider,
-  ProviderType,
-  TypedTransactionReceipt,
-  ViemProvider,
-} from '@hyperlane-xyz/sdk';
-import { isValidAddressEvm } from '@hyperlane-xyz/utils';
-import { getAddress } from 'viem';
-import { logger } from '../../utils/logger';
-import { getChainDisplayName } from '../chains/utils';
-
 export function tryGetMsgIdFromTransferReceipt(
-  multiProvider: MultiProtocolProvider,
+  multiProvider: MultiProvider,
   origin: ChainName,
   receipt: TypedTransactionReceipt,
 ) {
@@ -115,6 +116,7 @@ export function tryGetMsgIdFromTransferReceipt(
           validatorAnnounce: '',
           proxyAdmin: '',
           mailbox: '',
+          quotedCalls: '',
         };
         return acc;
       }, {});
@@ -149,7 +151,7 @@ export async function isEvmContractAddress(
 
 const eip7702AccountSelector = '0xef0100';
 export async function isSmartContract(
-  multiProvider: MultiProtocolProvider,
+  multiProvider: MultiProvider,
   chain: string,
   address: string,
 ): Promise<{ isContract: boolean; error?: string }> {
@@ -181,4 +183,61 @@ export async function isSmartContract(
     logger.error(msg, error);
     return { isContract: false, error: msg };
   }
+}
+
+const VALIDATION_TIME_EST = 5; // seconds
+const DEFAULT_BLOCK_TIME_EST = 3; // seconds
+export const DEFAULT_FINALITY_BLOCKS = 3;
+
+/**
+ * Estimate total delivery time in seconds using chain metadata.
+ * Returns null if metadata is unavailable.
+ */
+export function estimateDeliverySeconds(
+  origin: ChainName,
+  destination: ChainName,
+  multiProvider: MultiProvider,
+): number | null {
+  try {
+    const originMeta = multiProvider.tryGetChainMetadata(origin);
+    const destMeta = multiProvider.tryGetChainMetadata(destination);
+    if (!originMeta || !destMeta) return null;
+
+    const originBlockTime = originMeta.blocks?.estimateBlockTime ?? DEFAULT_BLOCK_TIME_EST;
+    const destBlockTime = destMeta.blocks?.estimateBlockTime ?? DEFAULT_BLOCK_TIME_EST;
+    const confirmations = originMeta.blocks?.confirmations ?? DEFAULT_FINALITY_BLOCKS;
+
+    // reorgPeriod can be a number or string block tag like "finalized"
+    let reorgBlocks = 0;
+    const reorgPeriod = originMeta.blocks?.reorgPeriod;
+    if (typeof reorgPeriod === 'number') reorgBlocks = reorgPeriod;
+
+    const finalityTime = (confirmations + reorgBlocks) * originBlockTime;
+    const relayTime = destBlockTime * 1.5;
+
+    return Math.ceil(finalityTime + VALIDATION_TIME_EST + relayTime);
+  } catch (error) {
+    logger.error('Failed to estimate delivery ETA', error);
+    return null;
+  }
+}
+
+/**
+ * Format seconds into a human-readable ETA string.
+ */
+export function formatEta(seconds: number): string {
+  if (seconds < 60) return `~${seconds}s`;
+  const minutes = Math.ceil(seconds / 60);
+  return `~${minutes} min`;
+}
+
+// Returns if the recipient should be cleared by checking if it is valid address from the current chain protocol
+export function shouldClearAddress(
+  multiProvider: MultiProvider,
+  recipient: string,
+  chainName: string,
+) {
+  const protocol = multiProvider.tryGetProtocol(chainName);
+  if (recipient && protocol && !isValidAddress(recipient, protocol)) return true;
+  return false;
 }

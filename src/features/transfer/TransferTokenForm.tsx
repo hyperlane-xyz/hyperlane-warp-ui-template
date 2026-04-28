@@ -46,7 +46,7 @@ import { ChainWalletWarning } from '../chains/ChainWalletWarning';
 import { useChainDisplayName, useMultiProvider } from '../chains/hooks';
 import { isMultiCollateralLimitExceeded } from '../limits/utils';
 import { useIsAccountSanctioned } from '../sanctions/hooks/useIsAccountSanctioned';
-import { RouterAddressInfo, useStore } from '../store';
+import { useStore } from '../store';
 import { useIsApproveRequired } from '../tokens/approval';
 import {
   getInitialTokenKeys,
@@ -873,7 +873,7 @@ async function validateForm(
   collateralGroups: Map<string, Token[]>,
   values: TransferFormValues,
   accounts: Record<KnownProtocolType, AccountInfo>,
-  routerAddressesByChainMap: Record<ChainName, Record<string, RouterAddressInfo>>,
+  routerAddressesByChainMap: Record<ChainName, Set<string>>,
 ): Promise<[Record<string, string> | null, Token | null]> {
   // returns a tuple, where first value is validation result
   // and second value is token override
@@ -905,7 +905,7 @@ async function validateForm(
 
     const destination = destinationToken.chainName;
 
-    if (routerAddressesByChainMap[destination]?.[normalizeAddress(recipient)]) {
+    if (routerAddressesByChainMap[destination]?.has(normalizeAddress(recipient))) {
       return [{ recipient: 'Warp Route address is not valid as recipient' }, null];
     }
 

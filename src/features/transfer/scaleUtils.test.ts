@@ -67,8 +67,6 @@ describe('computeDestAmount', () => {
 });
 
 describe('formatMessageAmount', () => {
-  const emptyRouterMap = {};
-
   test('uses localAmountFromMessage for tokens with scale', () => {
     // BSC USDT: 18 decimals, scale {1, 1e12}
     // Message amount 1000000 (1 USDT in 6-dec message space)
@@ -77,7 +75,7 @@ describe('formatMessageAmount', () => {
       decimals: 18,
       scale: { numerator: 1, denominator: 1_000_000_000_000 },
     };
-    expect(formatMessageAmount('1000000', token, emptyRouterMap, 'bsc')).toBe('1');
+    expect(formatMessageAmount('1000000', token)).toBe('1');
   });
 
   test('converts message amount using numeric scale (VRA-style)', () => {
@@ -85,18 +83,11 @@ describe('formatMessageAmount', () => {
     // Message amount 10e18 (10 VRA in message space with scale=10)
     // Local = 10e18 / 10 = 1e18 → "1" in 18 decimals
     const token = { decimals: 18, scale: 10 };
-    expect(formatMessageAmount('10000000000000000000', token, {}, 'bsc')).toBe('1');
+    expect(formatMessageAmount('10000000000000000000', token)).toBe('1');
   });
 
-  test('falls back to wireDecimals for tokens without scale', () => {
-    const token = { decimals: 6, addressOrDenom: '0xabc' };
-    const routerMap = { eth: { '0xabc': { wireDecimals: 6 } } };
-    // 1000000 in 6 decimals = 1
-    expect(formatMessageAmount('1000000', token, routerMap, 'eth')).toBe('1');
-  });
-
-  test('falls back to token.decimals when no routerInfo', () => {
-    const token = { decimals: 6, addressOrDenom: '0xabc' };
-    expect(formatMessageAmount('1000000', token, emptyRouterMap, 'eth')).toBe('1');
+  test('uses token.decimals when token has no scale', () => {
+    const token = { decimals: 6 };
+    expect(formatMessageAmount('1000000', token)).toBe('1');
   });
 });

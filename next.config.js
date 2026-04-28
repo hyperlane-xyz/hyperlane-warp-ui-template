@@ -134,6 +134,12 @@ const embedSecurityHeaders = [
 ];
 
 const nextConfig = {
+  // Disable the dev-tools indicator/portal in dev when running under the
+  // e2e harness — its <nextjs-portal> shadow DOM intermittently intercepts
+  // pointer events during picker clicks (observed flake on
+  // `token-select-destination` in full-suite runs). Scope to an explicit
+  // env var so local dev UX is unchanged.
+  ...(process.env.DISABLE_NEXT_DEV_INDICATORS === '1' ? { devIndicators: false } : {}),
   turbopack: {
     rules: {
       '*.yaml': {
@@ -146,7 +152,13 @@ const nextConfig = {
       },
     },
     resolveAlias: {
-      pino: './src/utils/pino-noop.js',
+      // Only shim pino on SSR (Node) where its transport/worker resolution breaks
+      // under Turbopack. In the browser use the real pino browser build, which
+      // exports `levels` that @walletconnect/logger depends on.
+      pino: {
+        browser: 'pino/browser.js',
+        default: './src/utils/pino-noop.js',
+      },
     },
   },
 

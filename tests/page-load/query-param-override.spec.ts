@@ -36,16 +36,16 @@ test.describe('Page Load - Query Param Token Override', () => {
     await expect(originButton).toBeVisible();
     if (config.defaultOriginToken) {
       const [originChain, originSymbol] = config.defaultOriginToken.split('-');
+      await expect(originButton).toHaveAttribute('data-chain', originChain);
       await expect(originButton).toContainText(originSymbol);
-      await expect(originButton).toContainText(originChain, { ignoreCase: true });
     }
 
     const destButton = getDestinationTokenButton(page);
     await expect(destButton).toBeVisible();
     if (config.defaultDestinationToken) {
       const [destChain, destSymbol] = config.defaultDestinationToken.split('-');
+      await expect(destButton).toHaveAttribute('data-chain', destChain);
       await expect(destButton).toContainText(destSymbol);
-      await expect(destButton).toContainText(destChain, { ignoreCase: true });
     }
   });
 

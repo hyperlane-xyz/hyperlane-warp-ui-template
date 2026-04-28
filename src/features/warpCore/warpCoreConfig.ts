@@ -22,7 +22,7 @@ import { logger } from '../../utils/logger.ts';
 // Map of chain -> address -> wireDecimals
 export type WireDecimalsMap = Record<ChainName, Record<string, number>>;
 type WarpCoreToken = WarpCoreConfig['tokens'][number];
-type NullableAddressWarpCoreToken = Omit<WarpCoreToken, 'addressOrDenom'> & {
+export type NullableAddressWarpCoreToken = Omit<WarpCoreToken, 'addressOrDenom'> & {
   addressOrDenom: string | null;
 };
 
@@ -129,12 +129,14 @@ export async function assembleWarpCoreConfig(
   const storeOverrideTokens = storeOverrides.map((c) => c.tokens).flat();
   const storeOverrideOptions = storeOverrides.map((c) => c.options).flat();
 
+  // Type assertion needed: Zod's z.infer widens {numerator: bigint} to
+  // {numerator: string | bigint} when tokens are spread across arrays.
   const combinedTokens = [
     ...filteredRegistryTokens,
     ...tsConfig.tokens,
     ...yamlConfig.tokens,
     ...storeOverrideTokens,
-  ];
+  ] as NullableAddressWarpCoreToken[];
   const tokens = filterUnconnectedToken(dedupeTokens(combinedTokens));
 
   const combinedOptions = [
@@ -206,12 +208,17 @@ function filterToIds(
 
 // Separate warp configs may contain duplicate definitions of the same token.
 // E.g. an IBC token that gets used for interchain gas in many different routes.
-function dedupeTokens(tokens: NullableAddressWarpCoreToken[]): NullableAddressWarpCoreToken[] {
+export function dedupeTokens(
+  tokens: NullableAddressWarpCoreToken[],
+): NullableAddressWarpCoreToken[] {
   const idToToken: Record<string, NullableAddressWarpCoreToken> = {};
   for (const token of tokens) {
     let id = '';
     // Temporary fix issue for M0 routes where addressOrDenom can be the same
-    if (token.standard === TokenStandard.EvmM0PortalLite) {
+    if (
+      token.standard === TokenStandard.EvmM0PortalLite ||
+      token.standard === TokenStandard.EvmM0Portal
+    ) {
       id = `${token.chainName}|${token.symbol}|${token.addressOrDenom?.toLowerCase()}`;
     } else {
       id = `${token.chainName}|${token.addressOrDenom?.toLowerCase()}`;

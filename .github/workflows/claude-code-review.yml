@@ -9,8 +9,8 @@ on:
     types: [created]
 
 env:
-  CLAUDE_OPUS_MODEL: claude-opus-4-6
-  CLAUDE_SONNET_MODEL: claude-sonnet-4-5
+  CLAUDE_OPUS_MODEL: claude-opus-4-7
+  CLAUDE_SONNET_MODEL: claude-sonnet-4-6
 
 concurrency:
   group: claude-review-${{ github.event.pull_request.number || github.event.issue.number }}

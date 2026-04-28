@@ -27,11 +27,13 @@ function useLoadingDots(isLoading: boolean, intervalMs = 1000) {
 
 export function FeeSectionButton({
   isLoading,
+  isError,
   fees,
   feePrices,
   transferUsd,
 }: {
   isLoading: boolean;
+  isError: boolean;
   fees: (WarpCoreFeeEstimate & { totalFees: string }) | null;
   feePrices: FeePrices;
   transferUsd: number;
@@ -42,7 +44,7 @@ export function FeeSectionButton({
   // Determine display text and whether button is clickable
   const hasFees = fees !== null;
   const isClickable = hasFees && !isLoading;
-  const feeText = isLoading ? loadingText : hasFees ? fees.totalFees : '-';
+  const feeText = isLoading ? loadingText : isError ? 'Estimation failed' : hasFees ? fees.totalFees : '-';
   const totalUsdRaw = hasFees ? getTotalFeesUsdRaw(fees, feePrices) : 0;
   const totalUsd = totalUsdRaw > 0 ? formatUsd(totalUsdRaw, true) : null;
   const pct = hasFees ? getFeePercentage(totalUsdRaw, transferUsd) : null;

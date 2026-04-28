@@ -951,14 +951,31 @@ async function validateForm(
     }
 
     const originTokenAmount = transferToken.amount(amountWei);
-    const result = await warpCore.validateTransfer({
-      originTokenAmount,
-      destination,
-      recipient,
-      sender: sender || '',
-      senderPubKey: await senderPubKey,
-      destinationToken: connectedDestinationToken,
-    });
+
+    // Don't fetch a Predicate attestation here — that doubles API spend on every debounced
+    // form change. Gas simulation inside validateTransfer may fail without one, so we catch
+    // and swallow simulation errors only for Predicate routes; balance/collateral/recipient
+    // checks have already run by the time gas sim is reached.
+    let result;
+    try {
+      result = await warpCore.validateTransfer({
+        originTokenAmount,
+        destination,
+        recipient,
+        sender: sender || '',
+        senderPubKey: await senderPubKey,
+        destinationToken: connectedDestinationToken,
+      });
+    } catch (error) {
+      const isPredicateRoute = await warpCore.isPredicateSupported(transferToken, destination);
+      if (!isPredicateRoute) throw error;
+      // Only swallow EVM execution reverts (predicate wrapper rejecting without attestation).
+      // Rethrow provider/RPC/network errors so they surface rather than silently
+      // appearing as "validation passed" and failing at submit-time.
+      const causeCode = (error as any)?.cause?.code;
+      if (causeCode !== 'CALL_EXCEPTION' && causeCode !== 'UNPREDICTABLE_GAS_LIMIT') throw error;
+      result = null;
+    }
 
     if (!isNullish(result)) {
       const enriched = await enrichBalanceError(

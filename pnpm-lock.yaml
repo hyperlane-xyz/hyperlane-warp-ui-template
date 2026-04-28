@@ -59,14 +59,10 @@ importers:
         version: 2.0.21
       '@cosmjs/cosmwasm-stargate':
         specifier: ^0.32.4
-<<<<<<< HEAD
         version: 0.32.4(patch_hash=c77d7da4aa556dced41baab8b5007d5363a0db1ad1fd795ca66ce2a4757e3f1e)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
-=======
-        version: 0.32.4(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       '@cosmjs/proto-signing':
         specifier: ^0.32.4
         version: 0.32.4
->>>>>>> origin/main
       '@cosmjs/stargate':
         specifier: ^0.32.4
         version: 0.32.4(bufferutil@4.1.0)(utf-8-validate@6.0.6)

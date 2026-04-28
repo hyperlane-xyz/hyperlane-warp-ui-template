@@ -24,6 +24,8 @@
     "start": "next start",
     "test": "vitest --watch false",
     "test:e2e": "playwright test --project=chromium",
+    "test:e2e:wallet": "playwright test tests/e2e-wallet --project=chromium",
+    "test:e2e:wallet:smoke": "playwright test tests/e2e-wallet/smoke/gate.spec.ts tests/e2e-wallet/autoconnect/evm.spec.ts tests/e2e-wallet/balance-display/evm.spec.ts tests/e2e-wallet/autoconnect/solana.spec.ts --project=chromium",
     "format": "oxfmt ./src",
     "link:monorepo": "node scripts/link-monorepo.js",
     "unlink:monorepo": "node scripts/unlink-monorepo.js"
@@ -125,33 +127,6 @@
     "node": ">=24"
   },
   "packageManager": "pnpm@10.25.0",
-<<<<<<< HEAD
-=======
-  "private": true,
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/hyperlane-xyz/hyperlane-warp-ui-template"
-  },
-  "scripts": {
-    "clean": "rm -rf dist cache .next",
-    "predev": "node scripts/fetch-fonts.mjs",
-    "dev": "next dev",
-    "prebuild": "node scripts/fetch-fonts.mjs",
-    "fetch-fonts": "node --env-file-if-exists=.env.local scripts/fetch-fonts.mjs",
-    "build": "next build",
-    "typecheck": "tsc",
-    "lint": "oxlint ./src",
-    "start": "next start",
-    "test": "vitest --watch false",
-    "test:e2e": "playwright test --project=chromium",
-    "test:e2e:wallet": "playwright test tests/e2e-wallet --project=chromium",
-    "test:e2e:wallet:smoke": "playwright test tests/e2e-wallet/smoke/gate.spec.ts tests/e2e-wallet/autoconnect/evm.spec.ts tests/e2e-wallet/balance-display/evm.spec.ts tests/e2e-wallet/autoconnect/solana.spec.ts --project=chromium",
-    "format": "oxfmt ./src",
-    "link:monorepo": "node scripts/link-monorepo.js",
-    "unlink:monorepo": "node scripts/unlink-monorepo.js"
-  },
-  "types": "dist/src/index.d.ts",
->>>>>>> origin/main
   "pnpm": {
     "overrides": {
       "tronweb>ethers": "^6.13.5",

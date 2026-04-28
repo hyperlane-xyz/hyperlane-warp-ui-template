@@ -181,3 +181,20 @@ jobs:
       github.event_name == 'workflow_dispatch'
     uses: ./.github/workflows/e2e.yml
     secrets: inherit
+
+  # Fast wallet-connected E2E subset, gates every PR.
+  e2e-smoke:
+    needs: [build]
+    uses: ./.github/workflows/e2e-smoke.yml
+    secrets: inherit
+
+  # Full wallet-connected E2E matrix (chromium/firefox/webkit). Main-only so
+  # PRs stay fast; merge_group runs it as a final gate before landing.
+  e2e-wallet-full:
+    needs: [build]
+    if: >-
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      github.event_name == 'merge_group' ||
+      github.event_name == 'workflow_dispatch'
+    uses: ./.github/workflows/e2e-wallet-full.yml
+    secrets: inherit

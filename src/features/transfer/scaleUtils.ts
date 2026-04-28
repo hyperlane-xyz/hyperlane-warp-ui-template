@@ -1,9 +1,8 @@
 import type { ScaleInput } from '@hyperlane-xyz/sdk';
 import { localAmountFromMessage, messageAmountFromLocal, scalesEqual } from '@hyperlane-xyz/sdk';
-import { fromWei, normalizeAddress, toWei } from '@hyperlane-xyz/utils';
+import { fromWei, toWei } from '@hyperlane-xyz/utils';
 
 import { logger } from '../../utils/logger';
-import type { RouterAddressInfo } from '../store';
 
 export interface ScaledToken {
   decimals: number;
@@ -39,21 +38,12 @@ export function computeDestAmount(
 /**
  * Formats a raw message-body amount into a human-readable local amount string.
  * For tokens with scale, converts from message-space to local units first.
- * Falls back to wireDecimals for tokens without scale.
  */
-export function formatMessageAmount(
-  rawAmount: string,
-  token: ScaledToken & { addressOrDenom?: string },
-  routerAddressesByChainMap: Record<string, Record<string, RouterAddressInfo>>,
-  chainName: string,
-): string {
+export function formatMessageAmount(rawAmount: string, token: ScaledToken): string {
   if (token.scale) {
     const messageAmount = BigInt(rawAmount);
     const localAmount = localAmountFromMessage(messageAmount, token.scale);
     return fromWei(localAmount.toString(), token.decimals);
   }
-  const normalizedAddr = token.addressOrDenom ? normalizeAddress(token.addressOrDenom) : '';
-  const routerInfo = routerAddressesByChainMap[chainName]?.[normalizedAddr];
-  const wireDecimals = routerInfo?.wireDecimals ?? token.decimals;
-  return fromWei(rawAmount, wireDecimals);
+  return fromWei(rawAmount, token.decimals);
 }

@@ -10,6 +10,8 @@ import { RadixDappToolkit, RadixNetwork } from '@radixdlt/radix-dapp-toolkit';
 import { PropsWithChildren } from 'react';
 
 import { APP_NAME } from '../../../consts/app';
+import { E2EAutoConnectRadix } from '../_e2e/E2EAutoConnectRadix';
+import { isE2EMode } from '../_e2e/isE2E';
 
 export function RadixWalletContext({ children }: PropsWithChildren<unknown>) {
   const rdt = RadixDappToolkit({
@@ -26,7 +28,10 @@ export function RadixWalletContext({ children }: PropsWithChildren<unknown>) {
     <RdtProvider value={rdt}>
       <GatewayApiProvider value={gatewayApi}>
         <AccountProvider>
-          <PopupProvider>{children}</PopupProvider>
+          <PopupProvider>
+            {isE2EMode() && <E2EAutoConnectRadix />}
+            {children}
+          </PopupProvider>
         </AccountProvider>
       </GatewayApiProvider>
     </RdtProvider>

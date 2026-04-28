@@ -1,4 +1,11 @@
-import { IToken, Token, WarpCore, WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
+import {
+  IToken,
+  PredicateAttestation,
+  Token,
+  TokenAmount,
+  WarpCore,
+  WarpCoreFeeEstimate,
+} from '@hyperlane-xyz/sdk';
 import { HexString, ProtocolType, toWei } from '@hyperlane-xyz/utils';
 import { useDebounce } from '@hyperlane-xyz/widgets';
 import {
@@ -13,6 +20,7 @@ import { useMultiProvider } from '../chains/hooks';
 import { useWarpCore } from '../tokens/hooks';
 import { findConnectedDestinationToken } from '../tokens/utils';
 import { getTransferToken } from './fees';
+import { fetchPredicateAttestation } from './predicate';
 import { TransferFormValues } from './types';
 
 const FEE_QUOTE_REFRESH_INTERVAL = 30_000; // 30s
@@ -124,6 +132,7 @@ export async function fetchFeeQuotes(
   }
 
   const originTokenAmount = transferToken.amount(amountWei);
+
   const connectedDestinationToken = findConnectedDestinationToken(transferToken, destinationToken);
   if (!connectedDestinationToken) return null;
   const isEvmToEvmRoute =
@@ -131,16 +140,67 @@ export async function fetchFeeQuotes(
     destinationToken.protocol === ProtocolType.Ethereum;
   const senderPubKeyValue = await senderPubKey;
 
+  // Predicate routes require the wrapper path (transferRemoteWithAttestation) — estimating
+  // fees without a valid attestation reverts on-chain. But attestation needs a real sender
+  // address; skip fee display when only the fallback address is available.
+  let pinnedInterchainFee: WarpCoreFeeEstimate['interchainQuote'] | undefined;
+  let pinnedTokenFeeQuote: WarpCoreFeeEstimate['tokenFeeQuote'] | undefined;
+  let attestation: PredicateAttestation | undefined;
+  const isPredicateRoute = await warpCore.isPredicateSupported(transferToken, destination);
+  if (isPredicateRoute) {
+    if (sender === EVM_FEE_QUOTE_FALLBACK_ADDRESS) return null;
+    try {
+      const result = await fetchPredicateAttestation({
+        warpCore,
+        token: transferToken,
+        destination,
+        sender,
+        recipient,
+        amount: originTokenAmount,
+        destinationToken: connectedDestinationToken,
+      });
+      attestation = result?.attestation;
+      pinnedInterchainFee = result?.interchainFee;
+      pinnedTokenFeeQuote = result?.tokenFeeQuote;
+    } catch (error: any) {
+      logger.error('Predicate attestation failed during fee estimation', error);
+      return null;
+    }
+  }
+
   logger.debug('Fetching fee quotes');
   try {
-    return await warpCore.estimateTransferRemoteFees({
+    // Predicate routes: estimateTransferRemoteFees re-quotes IGP internally; a drifted
+    // fresh quote diverges from the attested msg_value and reverts in _authorizeTransaction.
+    // Call getLocalTransferFeeAmount directly with pinned values to avoid the re-quote.
+    if (pinnedInterchainFee) {
+      const localQuote = await warpCore.getLocalTransferFeeAmount({
+        originToken: originTokenAmount.token,
+        destination,
+        sender,
+        senderPubKey: senderPubKeyValue,
+        interchainFee: pinnedInterchainFee as TokenAmount<IToken>,
+        tokenFeeQuote: pinnedTokenFeeQuote as TokenAmount<IToken> | undefined,
+        attestation,
+        amount: originTokenAmount.amount,
+        destinationToken: connectedDestinationToken,
+      });
+      return {
+        interchainQuote: pinnedInterchainFee,
+        localQuote,
+        tokenFeeQuote: pinnedTokenFeeQuote,
+      };
+    }
+    const feeEstimate = await warpCore.estimateTransferRemoteFees({
       originTokenAmount,
       destination,
       sender,
       senderPubKey: senderPubKeyValue,
       recipient: recipient,
+      attestation,
       destinationToken: connectedDestinationToken,
     });
+    return feeEstimate;
   } catch (error) {
     // Connected wallets switch fee simulation from a neutral fallback sender to the user's real
     // account. Some RPC/wallet combinations intermittently fail estimateGas in that mode (e.g.
@@ -154,6 +214,7 @@ export async function fetchFeeQuotes(
       destination,
       sender: EVM_FEE_QUOTE_FALLBACK_ADDRESS,
       recipient: recipient,
+      attestation: undefined,
       destinationToken: connectedDestinationToken,
     });
   }

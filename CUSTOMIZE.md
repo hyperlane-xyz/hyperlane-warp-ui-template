@@ -6,7 +6,7 @@ Find below instructions for customizing the token list and branding assets of th
 
 By default, the app will use the canonical Hyperlane registry published on NPM. See `package.json` for the precise version.
 
-To use custom chains or custom warp routes, you can either configure a different registry using the `NEXT_PUBLIC_REGISTRY_URL` environment variable or define them manually (see the next two sections).
+To use custom chains or custom warp routes, you can either configure a different registry using the `NEXT_PUBLIC_REGISTRY_URL` and `NEXT_PUBLIC_REGISTRY_BRANCH` environment variables or define them manually (see the next two sections).
 
 ## Custom Warp Route Configs
 
@@ -19,6 +19,12 @@ In addition to defining your warp route configs, you can control which routes di
 By default, the app will use only the chains that are included in the configured registry and included in your warp routes.
 
 To add support for additional chains, or to override a chain's properties (such as RPC URLs), add chain metadata to either `./src/consts/chains.ts` or `./src/consts/chains.yaml`. The same chain configs used in the [Hyperlane CLI](https://www.npmjs.com/package/@hyperlane-xyz/cli) will work here. You may also add an optional `logoURI` field to a chain config to show a custom logo image in the app.
+
+## Default Multi-Collateral Warp Route
+
+By default, if there are multiples multi-collateral routes surfacing the same asset, the application will pick the token with the lowest fee and the highest collateral in the destination.
+
+You can override this behavior by updating the file `./src/consts/defaultMultiCollateralRoutes.ts` with an object that includes the `chainName`, `collateralAddressOrDenom` (or just `native` as key) and the default `addressOrDenom`. If there is a matching `origin` and `destination`, `getTransferToken` will pick this route as a priority.
 
 ## Tip Card
 

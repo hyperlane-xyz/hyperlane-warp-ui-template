@@ -5,7 +5,7 @@ import {
   WarpCore,
   WarpTxCategory,
 } from '@hyperlane-xyz/sdk';
-import { toTitleCase, toWei } from '@hyperlane-xyz/utils';
+import { ProtocolType, toTitleCase, toWei } from '@hyperlane-xyz/utils';
 import {
   getAccountAddressForChain,
   useAccounts,
@@ -28,6 +28,10 @@ import { findConnectedDestinationToken } from '../tokens/utils';
 import { submitToRelayApi } from './relayApi';
 import { TransferContext, TransferFormValues, TransferStatus } from './types';
 import { tryGetMsgIdFromTransferReceipt } from './utils';
+
+// CCTP v2 DepositForBurn event topic
+const DEPOSIT_FOR_BURN_TOPIC_V2 =
+  '0x0c8c1cbdc5190613ebd485511d4e2812cfa45eecb79d845893331fedad5130a5';
 
 const CHAIN_MISMATCH_ERROR = 'ChainMismatchError';
 const TRANSFER_TIMEOUT_ERROR1 = 'block height exceeded';
@@ -242,9 +246,13 @@ async function executeTransfer({
       msgId,
     });
 
-    // Submit to relay API for fast processing. Fire-and-forget: never blocks or fails the transfer.
-    // TODO: restrict to CCTP messages only once testing is complete.
-    if (originTxHash) submitToRelayApi(origin, originTxHash);
+    // Submit to relay API for fast CCTP processing. Fire-and-forget: never blocks or fails the transfer.
+    const isCctp =
+      originProtocol === ProtocolType.Ethereum &&
+      txReceipt != null &&
+      (txReceipt.type === ProviderType.EthersV5 || txReceipt.type === ProviderType.Viem) &&
+      txReceipt.receipt.logs.some((log) => log.topics[0] === DEPOSIT_FOR_BURN_TOPIC_V2);
+    if (originTxHash && isCctp) submitToRelayApi(origin, originTxHash);
 
     // track event after tx submission
     const originChainId = warpCore.multiProvider.getChainId(origin);

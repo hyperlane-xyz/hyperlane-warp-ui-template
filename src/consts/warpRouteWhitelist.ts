@@ -46,6 +46,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'USDC/matchain',
   'USDC/paradex',
   'USDC/igra',
+  'USDC/lukso',
 
   // USDS routes
   'USDS/ethereum-igra',

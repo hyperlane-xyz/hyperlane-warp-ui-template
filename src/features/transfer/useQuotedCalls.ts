@@ -8,7 +8,9 @@ import {
   computeScopedSalt,
 } from '@hyperlane-xyz/sdk';
 import { ProtocolType, addressToBytes32, toWei } from '@hyperlane-xyz/utils';
-import { getAccountAddressAndPubKey, useAccounts, useDebounce } from '@hyperlane-xyz/widgets';
+import { useDebounce } from '@hyperlane-xyz/widgets';
+import { useAccounts } from '@hyperlane-xyz/widgets/walletIntegrations/accounts';
+import { getAccountAddressAndPubKey } from '@hyperlane-xyz/widgets/walletIntegrations/accountUtils';
 import { useQuery } from '@tanstack/react-query';
 import { type Address, type Hex, toHex } from 'viem';
 

@@ -1,5 +1,6 @@
 import {
   ProviderType,
+  QuotedCallsParams,
   Token,
   TypedTransactionReceipt,
   WarpCore,
@@ -52,7 +53,11 @@ export function useTokenTransfer(onDone?: () => void) {
 
   // TODO implement cancel callback for when modal is closed?
   const triggerTransactions = useCallback(
-    (values: TransferFormValues, routeOverrideToken: Token | null) =>
+    (
+      values: TransferFormValues,
+      routeOverrideToken: Token | null,
+      quotedCallsParams?: QuotedCallsParams | null,
+    ) =>
       executeTransfer({
         warpCore,
         values,
@@ -65,6 +70,7 @@ export function useTokenTransfer(onDone?: () => void) {
         setIsLoading,
         onDone,
         routeOverrideToken,
+        quotedCallsParams: quotedCallsParams ?? undefined,
       }),
     [
       warpCore,
@@ -97,6 +103,7 @@ async function executeTransfer({
   setIsLoading,
   onDone,
   routeOverrideToken,
+  quotedCallsParams,
 }: {
   warpCore: WarpCore;
   values: TransferFormValues;
@@ -109,6 +116,7 @@ async function executeTransfer({
   setIsLoading: (b: boolean) => void;
   onDone?: () => void;
   routeOverrideToken: Token | null;
+  quotedCallsParams?: QuotedCallsParams;
 }) {
   logger.debug('Preparing transfer transaction(s)');
   setIsLoading(true);
@@ -199,6 +207,7 @@ async function executeTransfer({
       destination,
       sender,
       recipient,
+      quotedCalls: quotedCallsParams,
       attestation: attestationResult?.attestation,
       // Pin the IGP quote captured at attestation time so msg_value matches the
       // attested Statement preimage — prevents _authorizeTransaction revert on drift.

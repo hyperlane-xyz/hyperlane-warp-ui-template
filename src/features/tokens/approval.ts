@@ -1,4 +1,4 @@
-import { IToken } from '@hyperlane-xyz/sdk';
+import { IToken, QuotedCallsParams } from '@hyperlane-xyz/sdk';
 import { useAccountAddressForChain } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import { useQuery } from '@tanstack/react-query';
 
@@ -6,7 +6,12 @@ import { useToastError } from '../../components/toast/useToastError';
 import { useMultiProvider } from '../chains/hooks';
 import { useWarpCore } from './hooks';
 
-export function useIsApproveRequired(token?: IToken, amount?: string, enabled = true) {
+export function useIsApproveRequired(
+  token?: IToken,
+  amount?: string,
+  enabled = true,
+  quotedCallsParams?: QuotedCallsParams | null,
+) {
   const multiProvider = useMultiProvider();
   const warpCore = useWarpCore();
 
@@ -15,9 +20,20 @@ export function useIsApproveRequired(token?: IToken, amount?: string, enabled = 
   const { isLoading, isError, error, data } = useQuery({
     // The Token class is not serializable, so we can't use it as a key
     // eslint-disable-next-line @tanstack/query/exhaustive-deps
-    queryKey: ['useIsApproveRequired', owner, amount, token?.addressOrDenom],
+    queryKey: [
+      'useIsApproveRequired',
+      owner,
+      amount,
+      token?.addressOrDenom,
+      quotedCallsParams?.address,
+    ],
     queryFn: async () => {
       if (!token || !owner || !amount) return false;
+      // QuotedCalls: approval target is the quotedCalls contract, not the router
+      if (quotedCallsParams?.address) {
+        const adapter = token.getAdapter(warpCore.multiProvider);
+        return adapter.isApproveRequired(owner, quotedCallsParams.address, amount);
+      }
       return warpCore.isApproveRequired({ originTokenAmount: token.amount(amount), owner });
     },
     enabled,

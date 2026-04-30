@@ -1,4 +1,5 @@
 import { ProtocolType } from '@hyperlane-xyz/utils';
+
 import { ChainInfo } from './hooks';
 
 // ── Sort ────────────────────────────────────────────────────────────

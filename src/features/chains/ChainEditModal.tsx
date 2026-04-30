@@ -1,6 +1,7 @@
 import { ChainMetadata } from '@hyperlane-xyz/sdk';
 import { ChainDetailsMenu, Modal } from '@hyperlane-xyz/widgets';
 import { useCallback, useEffect, useRef } from 'react';
+
 import { ModalHeader } from '../../components/layout/ModalHeader';
 import { observeDarkLogosInContainer } from '../../utils/imageBrightness';
 import { useStore } from '../store';
@@ -33,12 +34,13 @@ export function ChainEditModal({ isOpen, close, chainName, onClickBack }: Props)
 
   const displayName = metadata?.displayName ?? metadata?.name ?? chainName;
   const containerRef = useRef<HTMLDivElement>(null);
+  const hasMetadata = !!metadata;
 
   useEffect(() => {
     if (!isOpen || !containerRef.current) return;
     const observer = observeDarkLogosInContainer(containerRef.current);
     return () => observer?.disconnect();
-  }, [isOpen, chainName, !!metadata]);
+  }, [isOpen, chainName, hasMetadata]);
 
   if (!metadata) return null;
 

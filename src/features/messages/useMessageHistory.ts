@@ -7,6 +7,7 @@ import {
 } from '@hyperlane-xyz/utils';
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo, useState } from 'react';
+
 import { logger } from '../../utils/logger';
 import { executeGraphQLQuery } from './graphqlClient';
 import { buildMessageHistoryQuery } from './queries/build';

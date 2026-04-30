@@ -1,5 +1,6 @@
 import { ErrorBoundary as ErrorBoundaryInner } from '@hyperlane-xyz/widgets';
 import { PropsWithChildren } from 'react';
+
 import { links } from '../../consts/links';
 
 export function ErrorBoundary({ children }: PropsWithChildren<unknown>) {

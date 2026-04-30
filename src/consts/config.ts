@@ -1,16 +1,17 @@
 import { ChainMap } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
+
 import { ADDRESS_BLACKLIST } from './blacklist';
 
-const isDevMode = process?.env?.NODE_ENV === 'development';
-const version = process?.env?.NEXT_PUBLIC_VERSION || '2.0.0';
-const registryUrl = process?.env?.NEXT_PUBLIC_REGISTRY_URL || undefined;
-const registryBranch = process?.env?.NEXT_PUBLIC_REGISTRY_BRANCH || undefined;
-const registryProxyUrl = process?.env?.NEXT_PUBLIC_GITHUB_PROXY || 'https://proxy.hyperlane.xyz';
-const walletConnectProjectId = process?.env?.NEXT_PUBLIC_WALLET_CONNECT_ID || '';
-const transferBlacklist = process?.env?.NEXT_PUBLIC_TRANSFER_BLACKLIST || '';
-const chainWalletWhitelists = JSON.parse(process?.env?.NEXT_PUBLIC_CHAIN_WALLET_WHITELISTS || '{}');
-const rpcOverrides = process?.env?.NEXT_PUBLIC_RPC_OVERRIDES || '';
+const isDevMode = process.env.NODE_ENV === 'development';
+const version = process.env.NEXT_PUBLIC_VERSION || '2.0.0';
+const registryUrl = process.env.NEXT_PUBLIC_REGISTRY_URL || undefined;
+const registryBranch = process.env.NEXT_PUBLIC_REGISTRY_BRANCH || undefined;
+const registryProxyUrl = process.env.NEXT_PUBLIC_GITHUB_PROXY || 'https://proxy.hyperlane.xyz';
+const walletConnectProjectId = process.env.NEXT_PUBLIC_WALLET_CONNECT_ID || '';
+const transferBlacklist = process.env.NEXT_PUBLIC_TRANSFER_BLACKLIST || '';
+const chainWalletWhitelists = JSON.parse(process.env.NEXT_PUBLIC_CHAIN_WALLET_WHITELISTS || '{}');
+const rpcOverrides = process.env.NEXT_PUBLIC_RPC_OVERRIDES || '';
 const explorerApiUrl =
   process?.env?.NEXT_PUBLIC_EXPLORER_API_URL || 'https://explorer4.hasura.app/v1/graphql';
 const feeQuotingUrl =

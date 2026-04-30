@@ -7,13 +7,16 @@ import {
   Modal,
   SpinnerIcon,
   type StageTimings,
-  useAccountForChain,
   useTimeout,
-  useWalletDetails,
   WideChevronIcon,
 } from '@hyperlane-xyz/widgets';
+import {
+  useAccountForChain,
+  useWalletDetails,
+} from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import { ModalHeader } from '../../components/layout/ModalHeader';
 import ArrowRightIcon from '../../images/icons/arrow-right.svg';
@@ -29,6 +32,7 @@ import { useOriginFinality } from '../messages/useOriginFinality';
 import { useStore } from '../store';
 import { tryFindToken, useWarpCore } from '../tokens/hooks';
 import { TokenChainIcon } from '../tokens/TokenChainIcon';
+import { computeDestAmount } from './scaleUtils';
 import { TransferContext, TransferStatus } from './types';
 import {
   estimateDeliverySeconds,
@@ -126,6 +130,7 @@ export function TransfersDetailsModal({
   const connectorName = walletDetails.name || 'wallet';
   const token = tryFindToken(warpCore, origin, originTokenAddressOrDenom);
   const destToken = tryFindToken(warpCore, destination, destTokenAddressOrDenom);
+  const destAmount = computeDestAmount(amount || '', token, destToken);
   const isPermissionlessRoute = hasPermissionlessChain(multiProvider, [destination, origin]);
   const isFinal = isSent || isFailed;
   const currentStatus = isDelivered ? TransferStatus.Delivered : status;
@@ -266,7 +271,7 @@ export function TransfersDetailsModal({
               {destToken && (
                 <>
                   <Image className="mx-2" src={ArrowRightIcon} width={10} height={10} alt="" />
-                  <span>{amount}</span>
+                  <span>{destAmount || amount}</span>
                   <span className="ml-1">{destToken.symbol}</span>
                 </>
               )}

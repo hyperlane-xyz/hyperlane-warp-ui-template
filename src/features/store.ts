@@ -18,12 +18,11 @@ import { normalizeAddress, objFilter } from '@hyperlane-xyz/utils';
 import { toast } from 'react-toastify';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+
 import { config } from '../consts/config';
 import { logger } from '../utils/logger';
 import { assembleChainMetadata } from './chains/metadata';
-import { TokenChainMap } from './tokens/types';
 import {
-  assembleTokensBySymbolChainMap,
   buildTokensArray,
   getTokenKey,
   groupTokensByCollateral,
@@ -31,35 +30,45 @@ import {
 } from './tokens/utils';
 import { resolveWrappedCollateralTokens } from './tokens/wrappedTokenResolver';
 import { FinalTransferStatuses, TransferContext, TransferStatus } from './transfer/types';
+import {
+  type E2ETokenSnapshot,
+  initE2EStateIfEnabled,
+  markE2ERuntimeReady,
+} from './wallet/_e2e/windowState';
 import { assembleWarpCoreConfig } from './warpCore/warpCoreConfig';
 
 // Increment this when persist state has breaking changes
 const PERSIST_STATE_VERSION = 2;
-
-// Info stored per router address
-export interface RouterAddressInfo {
-  // Max decimals across all tokens in the warp route (for amount formatting)
-  wireDecimals: number;
-}
 
 interface WarpContext {
   registry: IRegistry;
   chainMetadata: ChainMap<ChainMetadata>;
   multiProvider: MultiProtocolProvider;
   warpCore: WarpCore;
-  tokensBySymbolChainMap: Record<string, TokenChainMap>;
   /** Unified tokens array (deduplicated, can be origin or destination) */
   tokens: Token[];
   /** Pre-computed collateral groups for fast route checking */
   collateralGroups: Map<string, Token[]>;
   /** Pre-computed token key to Token map for O(1) lookups */
   tokenByKeyMap: Map<string, Token>;
-  // Map of chain -> address -> router info
-  routerAddressesByChainMap: Record<ChainName, Record<string, RouterAddressInfo>>;
+  // Set of router addresses per chain
+  routerAddressesByChainMap: Record<ChainName, Set<string>>;
   // Deduplicated, sorted CoinGecko IDs for all tokens
   coinGeckoIds: string[];
 }
 
+function buildE2ETokenSnapshot(tokens: Token[] | undefined): E2ETokenSnapshot[] | undefined {
+  if (!tokens?.length) return undefined;
+  return tokens.map((t) => ({
+    key: getTokenKey(t),
+    chain: t.chainName,
+    symbol: t.symbol,
+    standard: t.standard,
+    addressOrDenom: t.addressOrDenom,
+    collateralAddressOrDenom: t.collateralAddressOrDenom,
+    connectionKeys: (t.connections ?? []).map((c) => getTokenKey(c.token as Token)),
+  }));
+}
 // Keeping everything here for now as state is simple
 // Will refactor into slices as necessary
 export interface AppState {
@@ -102,7 +111,6 @@ export interface AppState {
 
   originChainName: ChainName;
   setOriginChainName: (originChainName: ChainName) => void;
-  tokensBySymbolChainMap: Record<string, TokenChainMap>;
   // instead of moving the TipCard component inside the formik and an useEffect can be set to watch for it
   isTipCardActionTriggered: boolean;
   setIsTipCardActionTriggered: (isTipCardActionTriggered: boolean) => void;
@@ -112,9 +120,9 @@ export interface AppState {
   collateralGroups: Map<string, Token[]>;
   /** Pre-computed token key to Token map for O(1) lookups */
   tokenByKeyMap: Map<string, Token>;
-  // Map of chain -> address -> router info
-  // Used to: 1) prevent sending to warp route addresses, 2) format amounts with correct decimals
-  routerAddressesByChainMap: Record<ChainName, Record<string, RouterAddressInfo>>;
+  // Set of router addresses per chain — used to prevent sending to warp route
+  // addresses and to filter message API results
+  routerAddressesByChainMap: Record<ChainName, Set<string>>;
   // Deduplicated, sorted CoinGecko IDs for all tokens (used by useTokenPrices)
   coinGeckoIds: string[];
 }
@@ -135,7 +143,6 @@ export const useStore = create<AppState>()(
           multiProvider,
           warpCore,
           routerAddressesByChainMap,
-          tokensBySymbolChainMap,
           tokens,
           collateralGroups,
           tokenByKeyMap,
@@ -148,7 +155,6 @@ export const useStore = create<AppState>()(
           chainMetadataOverrides: filtered,
           multiProvider,
           warpCore,
-          tokensBySymbolChainMap,
           routerAddressesByChainMap,
           tokens,
           collateralGroups,
@@ -163,7 +169,6 @@ export const useStore = create<AppState>()(
           multiProvider,
           warpCore,
           routerAddressesByChainMap,
-          tokensBySymbolChainMap,
           tokens,
           collateralGroups,
           tokenByKeyMap,
@@ -176,7 +181,6 @@ export const useStore = create<AppState>()(
           warpCoreConfigOverrides: overrides,
           multiProvider,
           warpCore,
-          tokensBySymbolChainMap,
           routerAddressesByChainMap,
           tokens,
           collateralGroups,
@@ -243,7 +247,6 @@ export const useStore = create<AppState>()(
       setOriginChainName: (originChainName: ChainName) => {
         set(() => ({ originChainName }));
       },
-      tokensBySymbolChainMap: {},
       routerAddressesByChainMap: {},
       isTipCardActionTriggered: false,
       setIsTipCardActionTriggered: (isTipCardActionTriggered: boolean) => {
@@ -307,7 +310,7 @@ async function initWarpContext({
   }
 
   try {
-    const { config: coreConfig, wireDecimalsMap } = await assembleWarpCoreConfig(
+    const { config: coreConfig } = await assembleWarpCoreConfig(
       warpCoreConfigOverrides,
       currentRegistry,
     );
@@ -320,8 +323,6 @@ async function initWarpContext({
     );
     const multiProvider = new MultiProtocolProvider(chainMetadataWithOverrides);
     const warpCore = WarpCore.FromConfig(multiProvider, coreConfig);
-
-    const tokensBySymbolChainMap = assembleTokensBySymbolChainMap(warpCore.tokens, multiProvider);
 
     // Resolve underlying addresses for lockbox/vault tokens so they group
     // with their non-wrapper counterparts (e.g., lockbox USDT = regular USDT)
@@ -338,16 +339,17 @@ async function initWarpContext({
       tokenByKeyMap.set(getTokenKey(token), token);
     }
 
-    const routerAddressesByChainMap = getRouterAddressesByChain(warpCore.tokens, wireDecimalsMap);
+    const routerAddressesByChainMap = getRouterAddressesByChain(warpCore.tokens);
     const coinGeckoIds = Array.from(
       new Set(coreConfig.tokens.map((t) => t.coinGeckoId).filter(Boolean)),
     ).sort() as string[];
+    initE2EStateIfEnabled();
+    markE2ERuntimeReady(() => buildE2ETokenSnapshot(warpCore.tokens));
     return {
       registry: currentRegistry,
       chainMetadata,
       multiProvider,
       warpCore,
-      tokensBySymbolChainMap,
       routerAddressesByChainMap,
       tokens,
       collateralGroups,
@@ -362,7 +364,6 @@ async function initWarpContext({
       chainMetadata: {},
       multiProvider: new MultiProtocolProvider({}),
       warpCore: new WarpCore(new MultiProtocolProvider({}), []),
-      tokensBySymbolChainMap: {},
       routerAddressesByChainMap: {},
       tokens: [],
       collateralGroups: new Map(),
@@ -372,20 +373,14 @@ async function initWarpContext({
   }
 }
 
-// Build map of chain -> address -> router info using precomputed wireDecimals
-function getRouterAddressesByChain(
+// Build map of chain -> set of router addresses
+export function getRouterAddressesByChain(
   tokens: WarpCore['tokens'],
-  wireDecimalsMap: Record<ChainName, Record<string, number>>,
-): Record<ChainName, Record<string, RouterAddressInfo>> {
-  return tokens.reduce<Record<ChainName, Record<string, RouterAddressInfo>>>((acc, token) => {
+): Record<ChainName, Set<string>> {
+  return tokens.reduce<Record<ChainName, Set<string>>>((acc, token) => {
     if (!token.addressOrDenom) return acc;
-    const normalizedAddr = normalizeAddress(token.addressOrDenom);
-
-    // Use precomputed wireDecimals from config, fallback to token decimals
-    const wireDecimals = wireDecimalsMap[token.chainName]?.[normalizedAddr] ?? token.decimals;
-
-    acc[token.chainName] ||= {};
-    acc[token.chainName][normalizedAddr] = { wireDecimals };
+    acc[token.chainName] ||= new Set<string>();
+    acc[token.chainName].add(normalizeAddress(token.addressOrDenom));
     return acc;
   }, {});
 }

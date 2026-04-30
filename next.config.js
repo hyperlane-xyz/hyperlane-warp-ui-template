@@ -134,27 +134,32 @@ const embedSecurityHeaders = [
 ];
 
 const nextConfig = {
-  webpack(config, { isServer }) {
-    config.module.rules.push({
-      test: /\.ya?ml$/,
-      use: 'yaml-loader',
-    });
-
-    config.experiments = {
-      ...config.experiments,
-      asyncWebAssembly: true,
-      layers: true,
-    };
-
-    if (isServer) {
-      config.resolve.alias = {
-        ...config.resolve.alias,
-        '@provablehq/wasm': false,
-        '@provablehq/sdk': false,
-      };
-    }
-
-    return config;
+  // Disable the dev-tools indicator/portal in dev when running under the
+  // e2e harness — its <nextjs-portal> shadow DOM intermittently intercepts
+  // pointer events during picker clicks (observed flake on
+  // `token-select-destination` in full-suite runs). Scope to an explicit
+  // env var so local dev UX is unchanged.
+  ...(process.env.DISABLE_NEXT_DEV_INDICATORS === '1' ? { devIndicators: false } : {}),
+  turbopack: {
+    rules: {
+      '*.yaml': {
+        loaders: ['yaml-loader'],
+        as: '*.js',
+      },
+      '*.yml': {
+        loaders: ['yaml-loader'],
+        as: '*.js',
+      },
+    },
+    resolveAlias: {
+      // Only shim pino on SSR (Node) where its transport/worker resolution breaks
+      // under Turbopack. In the browser use the real pino browser build, which
+      // exports `levels` that @walletconnect/logger depends on.
+      pino: {
+        browser: 'pino/browser.js',
+        default: './src/utils/pino-noop.js',
+      },
+    },
   },
 
   async headers() {
@@ -194,7 +199,8 @@ const nextConfig = {
   },
 
   experimental: {
-    webpackBuildWorker: true,
+    turbopackFileSystemCacheForBuild: true,
+    parallelServerCompiles: true,
     parallelServerBuildTraces: true,
     optimizePackageImports: [
       '@hyperlane-xyz/registry',
@@ -204,8 +210,7 @@ const nextConfig = {
     ],
   },
 
-  // Skip linting and type checking during builds — CI runs these separately
-  eslint: { ignoreDuringBuilds: true },
+  // Skip type checking during builds — CI runs these separately
   typescript: { ignoreBuildErrors: true },
 };
 

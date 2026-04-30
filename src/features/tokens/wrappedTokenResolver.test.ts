@@ -1,6 +1,7 @@
 import { MultiProtocolProvider, TokenStandard } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 import { describe, expect, test, vi } from 'vitest';
+
 import { createMockToken } from '../../utils/test';
 import { resolveWrappedCollateralTokens } from './wrappedTokenResolver';
 

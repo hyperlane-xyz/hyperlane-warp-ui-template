@@ -1,5 +1,6 @@
 import { TokenAmount } from '@hyperlane-xyz/sdk';
 import { describe, expect, test } from 'vitest';
+
 import { createMockToken } from '../../utils/test';
 import {
   getFeePercentage,

@@ -7,3 +7,7 @@ export function getOriginTokenButton(page: Page): Locator {
 export function getDestinationTokenButton(page: Page): Locator {
   return page.getByTestId('token-select-destination');
 }
+
+export function getTipCard(page: Page): Locator {
+  return page.getByTestId('tip-card');
+}

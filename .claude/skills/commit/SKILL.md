@@ -11,7 +11,7 @@ Use this skill when committing changes to ensure quality and correctness.
 
 Run these in order. **Do not commit if any fail.**
 
-1. **`pnpm prettier`** — Format all source files
+1. **`pnpm format`** — Format all source files
 2. **`pnpm lint`** — Check for ESLint errors
 3. **`pnpm typecheck`** — Verify TypeScript compiles
 4. **`pnpm build`** — Ensure production build succeeds (optional for small changes, required before PR)
@@ -35,12 +35,12 @@ Run these in order. **Do not commit if any fail.**
 
 - **Secrets**: Never commit `.env`, credentials, or API keys
 - **Large files**: Don't commit binaries, build artifacts, or font files (check `.gitignore`)
-- **Formatting drift**: If prettier changed files you didn't touch, stage them separately or skip them
+- **Formatting drift**: If oxfmt changed files you didn't touch, stage them separately or skip them
 
 ## Example Flow
 
 ```bash
-pnpm prettier
+pnpm format
 pnpm lint
 pnpm typecheck
 git status                    # review what changed

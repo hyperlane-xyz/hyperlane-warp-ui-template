@@ -2,18 +2,20 @@ import {
   ChainMap,
   CoreAddresses,
   MultiProtocolCore,
-  MultiProtocolProvider,
   ProviderType,
   TypedTransactionReceipt,
   ViemProvider,
 } from '@hyperlane-xyz/sdk';
 import { isValidAddress, isValidAddressEvm } from '@hyperlane-xyz/utils';
 import { getAddress } from 'viem';
+
 import ConfirmedIcon from '../../images/icons/confirmed-icon.svg';
 import ErrorCircleIcon from '../../images/icons/error-circle.svg';
 import { logger } from '../../utils/logger';
 import { getChainDisplayName } from '../chains/utils';
 import { FinalTransferStatuses, SentTransferStatuses, TransferStatus } from './types';
+
+type MultiProvider = MultiProtocolCore['multiProvider'];
 
 export function getTransferStatusLabel(
   status: TransferStatus,
@@ -27,6 +29,8 @@ export function getTransferStatusLabel(
   else if (status === TransferStatus.Preparing)
     statusDescription = 'Preparing for token transfer...';
   else if (status === TransferStatus.CreatingTxs) statusDescription = 'Creating transactions...';
+  else if (status === TransferStatus.FetchingAttestation)
+    statusDescription = 'Verifying compliance attestation...';
   else if (status === TransferStatus.SigningApprove)
     statusDescription = `Sign approve transaction in ${connectorName} to continue.`;
   else if (status === TransferStatus.ConfirmingApprove)
@@ -80,7 +84,7 @@ export function getIconByTransferStatus(status: TransferStatus) {
 }
 
 export function tryGetMsgIdFromTransferReceipt(
-  multiProvider: MultiProtocolProvider,
+  multiProvider: MultiProvider,
   origin: ChainName,
   receipt: TypedTransactionReceipt,
 ) {
@@ -147,7 +151,7 @@ export async function isEvmContractAddress(
 
 const eip7702AccountSelector = '0xef0100';
 export async function isSmartContract(
-  multiProvider: MultiProtocolProvider,
+  multiProvider: MultiProvider,
   chain: string,
   address: string,
 ): Promise<{ isContract: boolean; error?: string }> {
@@ -192,7 +196,7 @@ export const DEFAULT_FINALITY_BLOCKS = 3;
 export function estimateDeliverySeconds(
   origin: ChainName,
   destination: ChainName,
-  multiProvider: MultiProtocolProvider,
+  multiProvider: MultiProvider,
 ): number | null {
   try {
     const originMeta = multiProvider.tryGetChainMetadata(origin);
@@ -229,7 +233,7 @@ export function formatEta(seconds: number): string {
 
 // Returns if the recipient should be cleared by checking if it is valid address from the current chain protocol
 export function shouldClearAddress(
-  multiProvider: MultiProtocolProvider,
+  multiProvider: MultiProvider,
   recipient: string,
   chainName: string,
 ) {

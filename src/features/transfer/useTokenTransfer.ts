@@ -207,16 +207,13 @@ async function executeTransfer({
       destination,
       sender,
       recipient,
-<<<<<<< HEAD
       quotedCalls: quotedCallsParams,
-=======
       attestation: attestationResult?.attestation,
       // Pin the IGP quote captured at attestation time so msg_value matches the
       // attested Statement preimage — prevents _authorizeTransaction revert on drift.
       interchainFee: attestationResult?.interchainFee,
       tokenFeeQuote: attestationResult?.tokenFeeQuote,
       destinationToken: connectedDestinationToken,
->>>>>>> main
     });
 
     const hashes: string[] = [];

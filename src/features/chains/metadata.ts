@@ -37,7 +37,7 @@ export async function assembleChainMetadata(
   }
   const filesystemMetadata = result.data as ChainMap<ChainMetadata>;
 
-  let registryChainMetadata: ChainMap<ChainMetadata>;
+  let registryChainMetadata: ChainMap<ChainMetadata> | undefined;
   if (config.registryUrl) {
     try {
       logger.debug('Using custom registry chain metadata from:', config.registryUrl);
@@ -47,10 +47,11 @@ export async function assembleChainMetadata(
         'Failed fetching chain metadata from GH registry, using published registry',
         config.registryUrl,
       );
-      registryChainMetadata = (await import('@hyperlane-xyz/registry')).chainMetadata;
     }
   } else {
     logger.debug('Using default published registry for chain metadata');
+  }
+  if (!registryChainMetadata) {
     registryChainMetadata = (await import('@hyperlane-xyz/registry')).chainMetadata;
   }
 

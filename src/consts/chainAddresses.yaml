@@ -3,6 +3,11 @@
 # override registry entries per key, mirroring how chains.yaml extends chains.
 # Schema: any contract addresses you'd find in a registry chain's addresses.yaml
 # (e.g. mailbox, quotedCalls, validatorAnnounce, ...)
+# Full set of valid keys: https://github.com/hyperlane-xyz/hyperlane-registry/blob/main/chains/ethereum/addresses.yaml
+# (or the ChainAddresses type from @hyperlane-xyz/registry)
+#
+# Note: schema validation runs at app init — a typo here will throw and
+# block the whole warp context init, not just balance fetching.
 ---
 # Example using local anvil chain:
 # anvil1:

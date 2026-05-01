@@ -144,6 +144,8 @@ export const useStore = create<AppState>()(
         logger.debug('Setting chain overrides in store');
         const filtered = objFilter(overrides, (_, metadata) => !!metadata);
         const {
+          chainMetadata,
+          chainAddresses,
           multiProvider,
           warpCore,
           routerAddressesByChainMap,
@@ -157,6 +159,8 @@ export const useStore = create<AppState>()(
         });
         set({
           chainMetadataOverrides: filtered,
+          chainMetadata,
+          chainAddresses,
           multiProvider,
           warpCore,
           routerAddressesByChainMap,
@@ -170,6 +174,8 @@ export const useStore = create<AppState>()(
       setWarpCoreConfigOverrides: async (overrides: WarpCoreConfig[] | undefined = []) => {
         logger.debug('Setting warp core config overrides in store');
         const {
+          chainMetadata,
+          chainAddresses,
           multiProvider,
           warpCore,
           routerAddressesByChainMap,
@@ -183,6 +189,8 @@ export const useStore = create<AppState>()(
         });
         set({
           warpCoreConfigOverrides: overrides,
+          chainMetadata,
+          chainAddresses,
           multiProvider,
           warpCore,
           routerAddressesByChainMap,

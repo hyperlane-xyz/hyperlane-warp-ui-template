@@ -22,7 +22,7 @@ export async function assembleChainAddresses(
   }
   const filesystemAddresses = result.data;
 
-  let registryChainAddresses: ChainMap<ChainAddresses>;
+  let registryChainAddresses: ChainMap<ChainAddresses> | undefined;
   if (config.registryUrl) {
     try {
       logger.debug('Using custom registry chain addresses from:', config.registryUrl);
@@ -32,10 +32,11 @@ export async function assembleChainAddresses(
         'Failed fetching chain addresses from GH registry, using published addresses',
         config.registryUrl,
       );
-      registryChainAddresses = (await import('@hyperlane-xyz/registry')).chainAddresses;
     }
   } else {
     logger.debug('Using default published registry for chain addresses');
+  }
+  if (!registryChainAddresses) {
     registryChainAddresses = (await import('@hyperlane-xyz/registry')).chainAddresses;
   }
 

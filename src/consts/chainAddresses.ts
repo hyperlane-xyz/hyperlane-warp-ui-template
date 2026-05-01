@@ -6,7 +6,7 @@ import { ChainMap } from '@hyperlane-xyz/sdk';
 // you need TypeScript-side imports (e.g. importing pre-built `*Addresses`
 // constants from `@hyperlane-xyz/registry`).
 //
-// For YAML-friendly definitions, use `addresses.yaml` instead.
+// For YAML-friendly definitions, use `chainAddresses.yaml` instead.
 // Schema: any contract addresses you'd find in a registry chain's addresses.yaml
 // (e.g. mailbox, quotedCalls, validatorAnnounce, ...)
 export const addresses: ChainMap<ChainAddresses> = {

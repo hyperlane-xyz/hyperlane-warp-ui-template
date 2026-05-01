@@ -179,8 +179,23 @@ async function fetchQuotedCallsFees(
   // Attach feeQuotes to params for later use in getTransferRemoteTxs
   quotedCallsParams.feeQuotes = feeQuotes;
 
-  // localQuote is zero for QuotedCalls (gas is part of the execute tx)
-  const localQuote = igpQuote.token.amount(0n);
+  // Estimate local gas for the actual QuotedCalls.execute() tx so the UI
+  // pre-shows the gas cost the user will see in MetaMask.
+  let localQuote = igpQuote.token.amount(0n);
+  try {
+    localQuote = await warpCore.getLocalTransferFeeAmount({
+      originToken,
+      destination,
+      sender,
+      interchainFee: igpQuote,
+      tokenFeeQuote,
+      amount: originTokenAmount.amount,
+      destinationToken,
+      quotedCalls: quotedCallsParams,
+    });
+  } catch (e) {
+    logger.warn('Failed to estimate local gas for QuotedCalls', e);
+  }
 
   return {
     interchainQuote: igpQuote,

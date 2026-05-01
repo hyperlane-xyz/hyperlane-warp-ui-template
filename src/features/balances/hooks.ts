@@ -14,6 +14,7 @@ import { useToastError } from '../../components/toast/useToastError';
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
+import { useStore } from '../store';
 import { getTokenKey } from '../tokens/utils';
 import { fetchCosmosChainBalances, groupCosmosTokensByChain } from './cosmos';
 import { fetchChainBalances, groupEvmTokensByChain } from './evm';
@@ -122,6 +123,7 @@ function useWalletAddresses(multiProvider: MultiProtocolProvider): Map<ProtocolT
  */
 export function useTokenBalances(tokens: Token[], scope: string, addressOverride?: string) {
   const multiProvider = useMultiProvider();
+  const chainAddresses = useStore((s) => s.chainAddresses);
   const walletAddresses = useWalletAddresses(multiProvider);
   const cosmosAddresses = useCosmosAccount(multiProvider).addresses;
   const tokenKeys = useMemo(() => tokens.map((t) => getTokenKey(t)), [tokens]);
@@ -160,7 +162,9 @@ export function useTokenBalances(tokens: Token[], scope: string, addressOverride
       if (evmAddr) {
         const { chainGroups, fallbackTokens } = groupEvmTokensByChain(tokens, multiProvider);
         for (const [chainId, group] of chainGroups) {
-          promises.push(fetchChainBalances(chainId, group, multiProvider, evmAddr as Hex));
+          promises.push(
+            fetchChainBalances(chainId, group, multiProvider, evmAddr as Hex, chainAddresses),
+          );
         }
         for (const { token, key } of fallbackTokens) {
           promises.push(fetchSdkBalance(token, multiProvider, evmAddr, key));

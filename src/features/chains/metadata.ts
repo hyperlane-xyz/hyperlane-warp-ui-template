@@ -1,4 +1,4 @@
-import { IRegistry, chainMetadata as publishedChainMetadata } from '@hyperlane-xyz/registry';
+import { IRegistry } from '@hyperlane-xyz/registry';
 import {
   ChainMap,
   ChainMetadata,
@@ -47,11 +47,11 @@ export async function assembleChainMetadata(
         'Failed fetching chain metadata from GH registry, using published registry',
         config.registryUrl,
       );
-      registryChainMetadata = publishedChainMetadata;
+      registryChainMetadata = (await import('@hyperlane-xyz/registry')).chainMetadata;
     }
   } else {
     logger.debug('Using default published registry for chain metadata');
-    registryChainMetadata = publishedChainMetadata;
+    registryChainMetadata = (await import('@hyperlane-xyz/registry')).chainMetadata;
   }
 
   // Filter out chains that are not in the tokens config

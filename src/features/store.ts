@@ -1,6 +1,5 @@
 import {
   ChainAddresses,
-  chainMetadata,
   GithubRegistry,
   IRegistry,
   PartialRegistry,
@@ -304,8 +303,8 @@ async function initWarpContext({
     // Pre-load registry content to avoid repeated requests
     await currentRegistry.listRegistryContent();
   } catch (error) {
-    // Lazy-load the published chainAddresses constant so it stays out of the initial bundle
-    const { chainAddresses } = await import('@hyperlane-xyz/registry');
+    // Lazy-load the published constants so they stay out of the initial bundle
+    const { chainAddresses, chainMetadata } = await import('@hyperlane-xyz/registry');
     currentRegistry = new PartialRegistry({
       chainAddresses,
       chainMetadata,

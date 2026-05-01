@@ -1,5 +1,5 @@
 import {
-  chainAddresses,
+  ChainAddresses,
   chainMetadata,
   GithubRegistry,
   IRegistry,
@@ -21,6 +21,7 @@ import { persist } from 'zustand/middleware';
 
 import { config } from '../consts/config';
 import { logger } from '../utils/logger';
+import { assembleChainAddresses } from './chains/addresses';
 import { assembleChainMetadata } from './chains/metadata';
 import {
   buildTokensArray,
@@ -43,6 +44,7 @@ const PERSIST_STATE_VERSION = 2;
 interface WarpContext {
   registry: IRegistry;
   chainMetadata: ChainMap<ChainMetadata>;
+  chainAddresses: ChainMap<ChainAddresses>;
   multiProvider: MultiProtocolProvider;
   warpCore: WarpCore;
   /** Unified tokens array (deduplicated, can be origin or destination) */
@@ -74,6 +76,8 @@ function buildE2ETokenSnapshot(tokens: Token[] | undefined): E2ETokenSnapshot[] 
 export interface AppState {
   // Chains and providers
   chainMetadata: ChainMap<ChainMetadata>;
+  // Per-chain contract addresses, merged from registry + filesystem (addresses.yaml)
+  chainAddresses: ChainMap<ChainAddresses>;
   // Overrides to chain metadata set by user via the chain picker
   chainMetadataOverrides: ChainMap<Partial<ChainMetadata>>;
   setChainMetadataOverrides: (overrides?: ChainMap<Partial<ChainMetadata> | undefined>) => void;
@@ -133,6 +137,7 @@ export const useStore = create<AppState>()(
     (set, get) => ({
       // Chains and providers
       chainMetadata: {},
+      chainAddresses: {},
       chainMetadataOverrides: {},
       setChainMetadataOverrides: async (
         overrides: ChainMap<Partial<ChainMetadata> | undefined> = {},
@@ -299,9 +304,11 @@ async function initWarpContext({
     // Pre-load registry content to avoid repeated requests
     await currentRegistry.listRegistryContent();
   } catch (error) {
+    // Lazy-load the published chainAddresses constant so it stays out of the initial bundle
+    const { chainAddresses } = await import('@hyperlane-xyz/registry');
     currentRegistry = new PartialRegistry({
-      chainAddresses: chainAddresses,
-      chainMetadata: chainMetadata,
+      chainAddresses,
+      chainMetadata,
     });
     logger.warn(
       'Failed to list registry content using GithubRegistry, will continue with PartialRegistry.',
@@ -316,11 +323,10 @@ async function initWarpContext({
     );
 
     const chainsInTokens = Array.from(new Set(coreConfig.tokens.map((t) => t.chainName)));
-    const { chainMetadata, chainMetadataWithOverrides } = await assembleChainMetadata(
-      chainsInTokens,
-      currentRegistry,
-      chainMetadataOverrides,
-    );
+    const [{ chainMetadata, chainMetadataWithOverrides }, chainAddresses] = await Promise.all([
+      assembleChainMetadata(chainsInTokens, currentRegistry, chainMetadataOverrides),
+      assembleChainAddresses(chainsInTokens, currentRegistry),
+    ]);
     const multiProvider = new MultiProtocolProvider(chainMetadataWithOverrides);
     const warpCore = WarpCore.FromConfig(multiProvider, coreConfig);
 
@@ -348,6 +354,7 @@ async function initWarpContext({
     return {
       registry: currentRegistry,
       chainMetadata,
+      chainAddresses,
       multiProvider,
       warpCore,
       routerAddressesByChainMap,
@@ -362,6 +369,7 @@ async function initWarpContext({
     return {
       registry,
       chainMetadata: {},
+      chainAddresses: {},
       multiProvider: new MultiProtocolProvider({}),
       warpCore: new WarpCore(new MultiProtocolProvider({}), []),
       routerAddressesByChainMap: {},

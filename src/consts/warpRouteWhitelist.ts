@@ -51,6 +51,9 @@ export const warpRouteWhitelist: Array<string> | null = [
   // USDS routes
   'USDS/ethereum-igra',
 
+  // USDe routes
+  'USDe/igra',
+
   // USDT routes
   'USDT/ethereum-hyperevm',
   'USDT/ethereum-inevm',
@@ -68,6 +71,9 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // IKAS routes
   'IKAS/igra',
+
+  // TIBBIR routes
+  'TIBBIR/igra',
 
   // INJ routes
   'INJ/inevm-injective',

@@ -33,7 +33,6 @@ interface QuotedCallsFetchResult {
 
 export interface QuotedCallsFeeQuotesResult {
   isLoading: boolean;
-  isError: boolean;
   fees: {
     interchainQuote: TokenAmount;
     localQuote: TokenAmount;
@@ -73,11 +72,23 @@ export function useQuotedCallsFeeQuotes(
     : undefined;
 
   const isEvm = originToken?.protocol === ProtocolType.Ethereum;
+  // TODO: cross-collateral routes need command='transferRemoteTo' + targetRouter
+  // wired through to /api/quote. Short-circuit until that's done so they fall
+  // through to the onchain quoting path instead of getting an incorrect quote.
+  const isCrossCollateral =
+    !!originToken &&
+    !!destinationToken &&
+    warpCore.isCrossCollateralTransfer(originToken, destinationToken);
   const isFormValid = !!(originToken && destination && debouncedAmount && recipient && sender);
   const shouldFetch =
-    enabled && isFormValid && isEvm && !!config.feeQuotingUrl && !!quotedCallsAddress;
+    enabled &&
+    isFormValid &&
+    isEvm &&
+    !isCrossCollateral &&
+    !!config.feeQuotingUrl &&
+    !!quotedCallsAddress;
 
-  const { isLoading, isError, data } = useQuery({
+  const { isLoading, data } = useQuery({
     // eslint-disable-next-line @tanstack/query/exhaustive-deps -- queryFn also
     // closes over (warpCore, originToken, destinationToken, destination) which
     // are class instances and can't be safely stringified into a query key.
@@ -110,7 +121,6 @@ export function useQuotedCallsFeeQuotes(
 
   return {
     isLoading,
-    isError,
     fees: data
       ? {
           interchainQuote: data.interchainQuote,
@@ -203,22 +213,20 @@ async function fetchQuotedCallsFees(
   const quotedCallsParams: QuotedCallsParams = { ...baseQuotedCallsParams, feeQuotes };
 
   // Estimate local gas for the actual QuotedCalls.execute() tx so the UI
-  // pre-shows the gas cost the user will see in MetaMask.
-  let localQuote = igpQuote.token.amount(0n);
-  try {
-    localQuote = await warpCore.getLocalTransferFeeAmount({
-      originToken,
-      destination,
-      sender,
-      interchainFee: igpQuote,
-      tokenFeeQuote,
-      amount: originTokenAmount.amount,
-      destinationToken,
-      quotedCalls: quotedCallsParams,
-    });
-  } catch (e) {
-    logger.warn('Failed to estimate local gas for QuotedCalls', e);
-  }
+  // pre-shows the gas cost the user will see in MetaMask. No silent fallback —
+  // a throw here drops the whole offchain result (fees + quotedCallsParams),
+  // so the consumer falls through to the plain transferRemote path with its
+  // own matching local-gas estimate.
+  const localQuote = await warpCore.getLocalTransferFeeAmount({
+    originToken,
+    destination,
+    sender,
+    interchainFee: igpQuote,
+    tokenFeeQuote,
+    amount: originTokenAmount.amount,
+    destinationToken,
+    quotedCalls: quotedCallsParams,
+  });
 
   return {
     interchainQuote: igpQuote,

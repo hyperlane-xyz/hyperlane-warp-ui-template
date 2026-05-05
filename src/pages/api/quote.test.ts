@@ -63,13 +63,40 @@ describe('quote API handler', () => {
     });
   });
 
-  test('returns 502 on upstream error', async () => {
-    mockGetQuote.mockRejectedValue(new Error('upstream failure'));
+  test('returns 400 when command is not in the allowlist', async () => {
+    const { req, res } = mockReqRes('GET', { ...validQuery, command: 'foo/../admin' });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ message: 'Invalid command' });
+    expect(mockGetQuote).not.toHaveBeenCalled();
+  });
+
+  test('returns 400 when destination is not a positive integer', async () => {
+    const { req, res } = mockReqRes('GET', { ...validQuery, destination: 'abc' });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      message: 'destination must be a positive integer domain id',
+    });
+    expect(mockGetQuote).not.toHaveBeenCalled();
+  });
+
+  test('returns 400 when warp command is missing recipient', async () => {
+    const { recipient: _omitted, ...noRecipient } = validQuery;
+    const { req, res } = mockReqRes('GET', noRecipient);
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ message: 'recipient required for warp commands' });
+    expect(mockGetQuote).not.toHaveBeenCalled();
+  });
+
+  test('returns 502 with a generic message on upstream error (no leak)', async () => {
+    mockGetQuote.mockRejectedValue(new Error('Invalid API key'));
 
     const { req, res } = mockReqRes('GET', validQuery);
     await handler(req, res);
 
     expect(res.status).toHaveBeenCalledWith(502);
-    expect(res.json).toHaveBeenCalledWith({ message: 'upstream failure' });
+    expect(res.json).toHaveBeenCalledWith({ message: 'Fee quoting request failed' });
   });
 });

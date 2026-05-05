@@ -59,7 +59,7 @@ import {
 import { ImportTokenButton } from '../tokens/ImportTokenButton';
 import { TokenSelectField } from '../tokens/TokenSelectField';
 import { useTokenPrices } from '../tokens/useTokenPrice';
-import { checkTokenHasRoute, findConnectedDestinationToken, findRouteToken } from '../tokens/utils';
+import { checkTokenHasRoute, findConnectedDestinationToken } from '../tokens/utils';
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { WalletDropdown } from '../wallet/WalletDropdown';
 import { getInterchainQuote, getTotalFee, getTransferToken } from './fees';
@@ -467,20 +467,20 @@ function TransferCheckout({
   cleanOverrideToken: () => void;
 }) {
   const { values } = useFormikContext<TransferFormValues>();
-  const warpCore = useWarpCore();
   const tokenMap = useTokenByKeyMap();
   const isRouteSupported = useIsRouteSupported();
 
-  const originTokenByKey =
-    routeOverrideToken || getTokenByKeyFromMap(tokenMap, values.originTokenKey);
+  // Use the same origin-token resolution as ButtonSection / executeTransfer so
+  // the offchain quote is bound to the same router the transfer will actually
+  // call. validateForm has already produced the multi-collateral / cross-asset
+  // optimal token and stored it in routeOverrideToken — no extra findRouteToken
+  // pass here.
+  const originToken = routeOverrideToken || getTokenByKeyFromMap(tokenMap, values.originTokenKey);
   const destinationTokenByKey = getTokenByKeyFromMap(tokenMap, values.destinationTokenKey);
-  const originToken =
-    destinationTokenByKey && originTokenByKey
-      ? findRouteToken(warpCore, originTokenByKey, destinationTokenByKey)
+  const destinationToken =
+    originToken && destinationTokenByKey
+      ? findConnectedDestinationToken(originToken, destinationTokenByKey)
       : undefined;
-  const destinationToken = destinationTokenByKey
-    ? originToken && findConnectedDestinationToken(originToken, destinationTokenByKey)
-    : undefined;
 
   const quotedCalls = useQuotedCallsFeeQuotes(
     values,
@@ -825,7 +825,7 @@ function ReviewDetails({
                   <h4>Transaction 1: Approve Transfer</h4>
                   <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs">
                     <p>{`Spender: ${quotedCallsParams?.address ?? originToken?.addressOrDenom}`}</p>
-                    {!quotedCallsParams && originToken?.collateralAddressOrDenom && (
+                    {originToken?.collateralAddressOrDenom && (
                       <p>{`Collateral Address: ${originToken.collateralAddressOrDenom}`}</p>
                     )}
                   </div>

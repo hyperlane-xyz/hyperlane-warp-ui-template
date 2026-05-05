@@ -758,10 +758,21 @@ function ReviewDetails({
   const feeQuotes = offchainFeeQuotes ?? onchainFeeQuotes;
   const isQuoteLoading = offchainUnavailable ? isOnchainQuoteLoading : isOffchainQuoteLoading;
 
+  // QuotedCalls pulls amount + tokenFeeQuote when the fee is denominated in
+  // the transferred token. Inflate the approval check so a user with allowance
+  // == amount doesn't revert on the token pull.
+  const sameTokenFeeAmount =
+    quotedCallsParams && feeQuotes?.tokenFeeQuote?.token.equals(originToken)
+      ? feeQuotes.tokenFeeQuote.amount
+      : 0n;
+  const approvalAmountWei = isNft
+    ? amountWei
+    : (BigInt(amountWei || '0') + sameTokenFeeAmount).toString();
+
   // Approval check: uses quotedCalls address as spender when offchain quoting is active
   const { isLoading: isApproveLoading, isApproveRequired } = useIsApproveRequired(
     originToken,
-    amountWei,
+    approvalAmountWei,
     isReview,
     quotedCallsParams,
   );

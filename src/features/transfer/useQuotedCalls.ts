@@ -23,12 +23,17 @@ import { useWarpCore } from '../tokens/hooks';
 import { TransferFormValues } from './types';
 
 const FEE_QUOTE_REFRESH_INTERVAL = 30_000;
+// Upstream quote expires at ~5 min; cap consumption at 4 min so a tab that was
+// backgrounded past the refetchInterval can't submit on a stale quote between
+// returning to focus and the focus-refetch completing.
+const MAX_QUOTE_AGE_MS = 4 * 60_000;
 
 interface QuotedCallsFetchResult {
   interchainQuote: TokenAmount;
   localQuote: TokenAmount;
   tokenFeeQuote?: TokenAmount;
   quotedCallsParams: QuotedCallsParams;
+  issuedAt: number;
 }
 
 export interface QuotedCallsFeeQuotesResult {
@@ -88,7 +93,7 @@ export function useQuotedCallsFeeQuotes(
     !!config.feeQuotingUrl &&
     !!quotedCallsAddress;
 
-  const { isLoading, data } = useQuery({
+  const { isLoading, isFetching, data } = useQuery({
     // eslint-disable-next-line @tanstack/query/exhaustive-deps -- queryFn also
     // closes over (warpCore, originToken, destinationToken, destination) which
     // are class instances and can't be safely stringified into a query key.
@@ -99,6 +104,10 @@ export function useQuotedCallsFeeQuotes(
       'useQuotedCallsFeeQuotes',
       originTokenKey,
       destinationTokenKey,
+      // addressOrDenom is the actual router used in the API call; include it so
+      // a token swap that keeps the *Key proxy stable still busts the cache.
+      originToken?.addressOrDenom,
+      destinationToken?.addressOrDenom,
       sender,
       debouncedAmount,
       recipient,
@@ -119,16 +128,28 @@ export function useQuotedCallsFeeQuotes(
     refetchInterval: FEE_QUOTE_REFRESH_INTERVAL,
   });
 
+  // useQuery keeps `data` after `enabled` flips false (stale form) and after
+  // failed refetches (stale issuedAt). Suppress the cached value in both cases
+  // so the consumer doesn't replay an expired quote. When stale and a fresh
+  // fetch is in flight, report isLoading: isFetching so the form stays in
+  // offchain mode; once retries are exhausted (or interval is paused),
+  // isFetching → false and the consumer falls back to onchain quoting.
+  const isStale = !!data && Date.now() - data.issuedAt > MAX_QUOTE_AGE_MS;
+  if (!shouldFetch || !data || isStale) {
+    return {
+      isLoading: isStale ? isFetching : isLoading,
+      fees: null,
+      quotedCallsParams: null,
+    };
+  }
   return {
     isLoading,
-    fees: data
-      ? {
-          interchainQuote: data.interchainQuote,
-          localQuote: data.localQuote,
-          tokenFeeQuote: data.tokenFeeQuote,
-        }
-      : null,
-    quotedCallsParams: data?.quotedCallsParams ?? null,
+    fees: {
+      interchainQuote: data.interchainQuote,
+      localQuote: data.localQuote,
+      tokenFeeQuote: data.tokenFeeQuote,
+    },
+    quotedCallsParams: data.quotedCallsParams,
   };
 }
 
@@ -233,5 +254,6 @@ async function fetchQuotedCallsFees(
     localQuote,
     tokenFeeQuote,
     quotedCallsParams,
+    issuedAt: Date.now(),
   };
 }

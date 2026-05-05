@@ -207,7 +207,9 @@ async function executeTransfer({
       destination,
       sender,
       recipient,
-      quotedCalls: quotedCallsParams,
+      // quotedCalls and attestation are mutually exclusive in the SDK; predicate
+      // routes take the wrapper path, plain routes can use offchain quoting.
+      quotedCalls: attestationResult ? undefined : quotedCallsParams,
       attestation: attestationResult?.attestation,
       // Pin the IGP quote captured at attestation time so msg_value matches the
       // attested Statement preimage — prevents _authorizeTransaction revert on drift.

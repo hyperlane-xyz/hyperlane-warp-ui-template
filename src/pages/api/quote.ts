@@ -8,6 +8,12 @@ const baseUrl = process.env.NEXT_PUBLIC_FEE_QUOTING_URL || undefined;
 // would be a path-injection surface.
 const ALLOWED_COMMANDS = new Set<FeeQuotingCommand>(Object.values(FeeQuotingCommand));
 
+// Rate limiting: this proxy is browser-reachable and FEE_QUOTING_API_KEY is
+// only held server-side, so abuse protection lives in front of this handler
+// (Vercel rate-limiting) and at the upstream Hyperlane fee quoting service.
+// Don't add an app-layer limiter here — it would double-count against the
+// same per-IP / per-key budget that the platform layer already enforces.
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') return res.status(405).json({ message: 'Method not allowed' });
   if (!apiKey || !baseUrl) return res.status(503).json({ message: 'Fee quoting not configured' });

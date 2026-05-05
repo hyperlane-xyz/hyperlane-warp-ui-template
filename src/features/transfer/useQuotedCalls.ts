@@ -38,7 +38,7 @@ export function useQuotedCallsFeeQuotes(
 ) {
   const multiProvider = useMultiProvider();
   const warpCore = useWarpCore();
-  const registry = useStore((s) => s.registry);
+  const chainAddresses = useStore((s) => s.chainAddresses);
   const debouncedAmount = useDebounce(amount, 500);
   const destination = destinationToken?.chainName;
 
@@ -56,9 +56,14 @@ export function useQuotedCallsFeeQuotes(
   );
   const recipient = formRecipient || connectedDestAddress || '';
 
+  const quotedCallsAddress = originToken
+    ? chainAddresses[originToken.chainName]?.quotedCalls
+    : undefined;
+
   const isEvm = originToken?.protocol === ProtocolType.Ethereum;
   const isFormValid = !!(originToken && destination && debouncedAmount && recipient && sender);
-  const shouldFetch = enabled && isFormValid && isEvm && !!config.feeQuotingUrl;
+  const shouldFetch =
+    enabled && isFormValid && isEvm && !!config.feeQuotingUrl && !!quotedCallsAddress;
 
   const { isLoading, isError, data, isFetching } = useQuery({
     // eslint-disable-next-line @tanstack/query/exhaustive-deps
@@ -69,11 +74,12 @@ export function useQuotedCallsFeeQuotes(
       sender,
       debouncedAmount,
       recipient,
+      quotedCallsAddress,
     ],
     queryFn: () =>
       fetchQuotedCallsFees(
         warpCore,
-        registry,
+        quotedCallsAddress,
         originToken,
         destinationToken,
         destination,
@@ -107,7 +113,7 @@ function generateClientSalt(): Hex {
 
 async function fetchQuotedCallsFees(
   warpCore: WarpCore,
-  registry: import('@hyperlane-xyz/registry').IRegistry,
+  quotedCallsAddress: Address | undefined,
   originToken: Token | undefined,
   destinationToken: IToken | undefined,
   destination: string | undefined,
@@ -115,17 +121,16 @@ async function fetchQuotedCallsFees(
   amount: string | undefined,
   recipient: string | undefined,
 ): Promise<QuotedCallsFeeResult | null> {
-  if (!originToken || !destinationToken || !destination || !sender || !amount || !recipient)
+  if (
+    !originToken ||
+    !destinationToken ||
+    !destination ||
+    !sender ||
+    !amount ||
+    !recipient ||
+    !quotedCallsAddress
+  )
     return null;
-
-  // Look up quotedCalls address from registry
-  const addresses = await registry.getAddresses();
-  const chainAddresses = addresses[originToken.chainName];
-  const quotedCallsAddress = chainAddresses?.quotedCalls as Address | undefined;
-  if (!quotedCallsAddress) {
-    logger.debug('No quotedCalls address found for chain', originToken.chainName);
-    return null;
-  }
 
   const amountWei = toWei(amount, originToken.decimals);
   const originTokenAmount = originToken.amount(amountWei);

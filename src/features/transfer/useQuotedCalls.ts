@@ -77,8 +77,13 @@ export function useQuotedCallsFeeQuotes(
   const shouldFetch =
     enabled && isFormValid && isEvm && !!config.feeQuotingUrl && !!quotedCallsAddress;
 
-  const { isLoading, isError, data, isFetching } = useQuery({
-    // eslint-disable-next-line @tanstack/query/exhaustive-deps
+  const { isLoading, isError, data } = useQuery({
+    // eslint-disable-next-line @tanstack/query/exhaustive-deps -- queryFn also
+    // closes over (warpCore, originToken, destinationToken, destination) which
+    // are class instances and can't be safely stringified into a query key.
+    // (originToken, destinationToken, destination) identity is covered by the
+    // *Key proxies (originTokenKey, destinationTokenKey) already in the key;
+    // warpCore is a store singleton that's stable for the session.
     queryKey: [
       'useQuotedCallsFeeQuotes',
       originTokenKey,
@@ -104,7 +109,7 @@ export function useQuotedCallsFeeQuotes(
   });
 
   return {
-    isLoading: isLoading || isFetching,
+    isLoading,
     isError,
     fees: data
       ? {
@@ -147,7 +152,8 @@ async function fetchQuotedCallsFees(
   const amountWei = toWei(amount, originToken.decimals);
   const originTokenAmount = originToken.amount(amountWei);
 
-  // Generate salt
+  // Generate per-attempt salt and scope it to the sender so the on-chain
+  // QuotedCalls contract can verify keccak256(msg.sender, clientSalt) == quote.salt.
   const clientSalt = generateClientSalt();
   const salt = computeScopedSalt(sender as Address, clientSalt);
 
@@ -176,8 +182,8 @@ async function fetchQuotedCallsFees(
 
   const { quotes } = (await res.json()) as { quotes: SubmitQuoteCommand[] };
 
-  // Build QuotedCallsParams
-  const quotedCallsParams: QuotedCallsParams = {
+  // Build QuotedCallsParams (without feeQuotes — they come from the quoteExecute below)
+  const baseQuotedCallsParams: QuotedCallsParams = {
     address: quotedCallsAddress,
     quotes: quotes as SubmitQuoteCommand[],
     clientSalt,
@@ -190,11 +196,11 @@ async function fetchQuotedCallsFees(
     destination,
     sender,
     recipient,
-    quotedCalls: quotedCallsParams,
+    quotedCalls: baseQuotedCallsParams,
   });
 
-  // Attach feeQuotes to params for later use in getTransferRemoteTxs
-  quotedCallsParams.feeQuotes = feeQuotes;
+  // Attach feeQuotes for later use in getTransferRemoteTxs (avoids re-quoting).
+  const quotedCallsParams: QuotedCallsParams = { ...baseQuotedCallsParams, feeQuotes };
 
   // Estimate local gas for the actual QuotedCalls.execute() tx so the UI
   // pre-shows the gas cost the user will see in MetaMask.

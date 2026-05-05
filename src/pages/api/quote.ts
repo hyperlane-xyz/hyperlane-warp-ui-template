@@ -1,8 +1,8 @@
-import { FeeQuotingClient, type FeeQuotingCommand } from '@hyperlane-xyz/sdk';
+import { FeeQuotingClient, type FeeQuotingCommand, WARP_FEE_COMMANDS } from '@hyperlane-xyz/sdk';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 const apiKey = process.env.FEE_QUOTING_API_KEY;
-const baseUrl = process.env.NEXT_PUBLIC_FEE_QUOTING_URL || 'https://quoting.services.hyperlane.xyz';
+const baseUrl = process.env.NEXT_PUBLIC_FEE_QUOTING_URL || undefined;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') return res.status(405).json({ message: 'Method not allowed' });
@@ -18,6 +18,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (!command || !origin || !router || !destination || !salt) {
     return res.status(400).json({ message: 'Missing required query parameters' });
+  }
+  // Warp commands (transferRemote / transferRemoteTo) require a recipient.
+  if (WARP_FEE_COMMANDS.has(command as FeeQuotingCommand) && !recipient) {
+    return res.status(400).json({ message: 'recipient required for warp commands' });
   }
 
   const client = new FeeQuotingClient({ baseUrl, apiKey });

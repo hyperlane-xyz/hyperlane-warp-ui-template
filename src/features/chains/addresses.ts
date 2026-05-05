@@ -27,10 +27,11 @@ export async function assembleChainAddresses(
     try {
       logger.debug('Using custom registry chain addresses from:', config.registryUrl);
       registryChainAddresses = await registry.getAddresses();
-    } catch {
-      logger.debug(
+    } catch (error) {
+      logger.warn(
         'Failed fetching chain addresses from GH registry, using published addresses',
         config.registryUrl,
+        error,
       );
     }
   } else {

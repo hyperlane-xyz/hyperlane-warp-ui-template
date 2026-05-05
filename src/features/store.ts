@@ -144,6 +144,7 @@ export const useStore = create<AppState>()(
         logger.debug('Setting chain overrides in store');
         const filtered = objFilter(overrides, (_, metadata) => !!metadata);
         const {
+          registry,
           chainMetadata,
           chainAddresses,
           multiProvider,
@@ -159,6 +160,7 @@ export const useStore = create<AppState>()(
         });
         set({
           chainMetadataOverrides: filtered,
+          registry,
           chainMetadata,
           chainAddresses,
           multiProvider,
@@ -174,6 +176,7 @@ export const useStore = create<AppState>()(
       setWarpCoreConfigOverrides: async (overrides: WarpCoreConfig[] | undefined = []) => {
         logger.debug('Setting warp core config overrides in store');
         const {
+          registry,
           chainMetadata,
           chainAddresses,
           multiProvider,
@@ -189,6 +192,7 @@ export const useStore = create<AppState>()(
         });
         set({
           warpCoreConfigOverrides: overrides,
+          registry,
           chainMetadata,
           chainAddresses,
           multiProvider,

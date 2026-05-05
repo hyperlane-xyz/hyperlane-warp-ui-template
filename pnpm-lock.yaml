@@ -91,8 +91,8 @@ importers:
         specifier: ^2.2.0
         version: 2.2.9(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@hyperlane-xyz/registry':
-        specifier: 25.0.0
-        version: 25.0.0
+        specifier: 24.3.0
+        version: 24.3.0
       '@hyperlane-xyz/sdk':
         specifier: 33.1.0
         version: 33.1.0(@ethersproject/abi@5.8.0)(@ethersproject/providers@5.8.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(@react-native-async-storage/async-storage@1.24.0(react-native@0.84.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.1.0)(react@19.2.4)(utf-8-validate@6.0.6)))(@types/sinon-chai@4.0.0)(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.20))(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@6.0.2)(utf-8-validate@6.0.6)
@@ -1427,10 +1427,6 @@ packages:
 
   '@hyperlane-xyz/registry@24.3.0':
     resolution: {integrity: sha512-nd0ndJf7HmakuFCwm0gKOZoVXQukEaVponXecjCuIGM8apGA0M9AhhBbsRD2f+JjKmOcZ2vehQaQfd270tGBXQ==}
-    engines: {node: '>=24'}
-
-  '@hyperlane-xyz/registry@25.0.0':
-    resolution: {integrity: sha512-V39zhKQkCF0UcbFoJu+KR7a28G+8JVdpp61XrlvG6taZyxuMVksJthPCmRJUlojZCZLPhrzX2fK9NIDHie59cw==}
     engines: {node: '>=24'}
 
   '@hyperlane-xyz/sdk@33.1.0':
@@ -12265,12 +12261,6 @@ snapshots:
       - utf-8-validate
 
   '@hyperlane-xyz/registry@24.3.0':
-    dependencies:
-      jszip: 3.10.1
-      yaml: 2.4.5
-      zod: 3.21.4
-
-  '@hyperlane-xyz/registry@25.0.0':
     dependencies:
       jszip: 3.10.1
       yaml: 2.4.5

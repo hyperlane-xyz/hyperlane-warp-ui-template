@@ -42,10 +42,11 @@ export async function assembleChainMetadata(
     try {
       logger.debug('Using custom registry chain metadata from:', config.registryUrl);
       registryChainMetadata = await registry.getMetadata();
-    } catch {
-      logger.debug(
+    } catch (error) {
+      logger.warn(
         'Failed fetching chain metadata from GH registry, using published registry',
         config.registryUrl,
+        error,
       );
     }
   } else {

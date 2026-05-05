@@ -1,4 +1,4 @@
-import { QuotedCallsParams, Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
+import { IToken, QuotedCallsParams, Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
 import {
   KnownProtocolType,
   ProtocolType,
@@ -19,7 +19,7 @@ import {
 import { type AccountInfo } from '@hyperlane-xyz/widgets/walletIntegrations/types';
 import BigNumber from 'bignumber.js';
 import { Form, Formik, useFormikContext } from 'formik';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import { RecipientWarningBanner } from '../../components/banner/RecipientWarningBanner';
@@ -71,7 +71,7 @@ import { TransferSection } from './TransferSection';
 import { TransferFormValues } from './types';
 import { useRecipientBalanceWatcher } from './useBalanceWatcher';
 import { useFeeQuotes } from './useFeeQuotes';
-import { useQuotedCallsFeeQuotes } from './useQuotedCalls';
+import { type QuotedCallsFeeQuotesResult, useQuotedCallsFeeQuotes } from './useQuotedCalls';
 import { useTokenTransfer } from './useTokenTransfer';
 import { isSmartContract, shouldClearAddress } from './utils';
 
@@ -96,8 +96,6 @@ export function TransferTokenForm() {
   // This state is used for when the formik token is different from
   // the token with highest collateral in a multi-collateral token setup
   const [routeOverrideToken, setRouteTokenOverride] = useState<Token | null>(null);
-  // Ref for passing QuotedCallsParams from ReviewDetails to ButtonSection
-  const quotedCallsParamsRef = useRef<QuotedCallsParams | null>(null);
   // Modal for confirming address
   const {
     open: openConfirmationModal,
@@ -180,18 +178,12 @@ export function TransferTokenForm() {
             <DestinationTokenCard isReview={isReview} />
           </TransferSection>
 
-          <ReviewDetails
-            isReview={isReview}
-            routeOverrideToken={routeOverrideToken}
-            quotedCallsParamsRef={quotedCallsParamsRef}
-          />
-          <ButtonSection
+          <TransferCheckout
             isReview={isReview}
             isValidating={isValidating}
             setIsReview={setIsReview}
-            cleanOverrideToken={() => setRouteTokenOverride(null)}
             routeOverrideToken={routeOverrideToken}
-            quotedCallsParamsRef={quotedCallsParamsRef}
+            cleanOverrideToken={() => setRouteTokenOverride(null)}
           />
           <RecipientConfirmationModal
             isOpen={isConfirmationModalOpen}
@@ -461,20 +453,77 @@ function TokenBalance({
   );
 }
 
+function TransferCheckout({
+  isReview,
+  isValidating,
+  setIsReview,
+  routeOverrideToken,
+  cleanOverrideToken,
+}: {
+  isReview: boolean;
+  isValidating: boolean;
+  setIsReview: (b: boolean) => void;
+  routeOverrideToken: Token | null;
+  cleanOverrideToken: () => void;
+}) {
+  const { values } = useFormikContext<TransferFormValues>();
+  const warpCore = useWarpCore();
+  const tokenMap = useTokenByKeyMap();
+  const isRouteSupported = useIsRouteSupported();
+
+  const originTokenByKey =
+    routeOverrideToken || getTokenByKeyFromMap(tokenMap, values.originTokenKey);
+  const destinationTokenByKey = getTokenByKeyFromMap(tokenMap, values.destinationTokenKey);
+  const originToken =
+    destinationTokenByKey && originTokenByKey
+      ? findRouteToken(warpCore, originTokenByKey, destinationTokenByKey)
+      : undefined;
+  const destinationToken = destinationTokenByKey
+    ? originToken && findConnectedDestinationToken(originToken, destinationTokenByKey)
+    : undefined;
+
+  const quotedCalls = useQuotedCallsFeeQuotes(
+    values,
+    isRouteSupported,
+    originToken,
+    destinationToken,
+  );
+
+  return (
+    <>
+      <ReviewDetails
+        isReview={isReview}
+        originToken={originToken}
+        destinationToken={destinationToken}
+        isRouteSupported={isRouteSupported}
+        quotedCalls={quotedCalls}
+      />
+      <ButtonSection
+        isReview={isReview}
+        isValidating={isValidating}
+        setIsReview={setIsReview}
+        cleanOverrideToken={cleanOverrideToken}
+        routeOverrideToken={routeOverrideToken}
+        quotedCallsParams={quotedCalls.quotedCallsParams}
+      />
+    </>
+  );
+}
+
 function ButtonSection({
   isReview,
   isValidating,
   setIsReview,
   cleanOverrideToken,
   routeOverrideToken,
-  quotedCallsParamsRef,
+  quotedCallsParams,
 }: {
   isReview: boolean;
   isValidating: boolean;
   setIsReview: (b: boolean) => void;
   cleanOverrideToken: () => void;
   routeOverrideToken: Token | null;
-  quotedCallsParamsRef: React.MutableRefObject<QuotedCallsParams | null>;
+  quotedCallsParams: QuotedCallsParams | null;
 }) {
   const { values } = useFormikContext<TransferFormValues>();
   const multiProvider = useMultiProvider();
@@ -583,7 +632,7 @@ function ButtonSection({
     setIsReview(false);
     setTransferLoading(true);
 
-    await triggerTransactions(values, routeOverrideToken, quotedCallsParamsRef.current);
+    await triggerTransactions(values, routeOverrideToken, quotedCallsParams);
     setTransferLoading(false);
   };
 
@@ -664,30 +713,22 @@ function ButtonSection({
 
 function ReviewDetails({
   isReview,
-  routeOverrideToken,
-  quotedCallsParamsRef,
+  originToken,
+  destinationToken,
+  isRouteSupported,
+  quotedCalls,
 }: {
   isReview: boolean;
-  routeOverrideToken: Token | null;
-  quotedCallsParamsRef: React.MutableRefObject<QuotedCallsParams | null>;
+  originToken: Token | undefined;
+  destinationToken: IToken | undefined;
+  isRouteSupported: boolean;
+  quotedCalls: QuotedCallsFeeQuotesResult;
 }) {
   const { values } = useFormikContext<TransferFormValues>();
   const warpCore = useWarpCore();
-  const { amount, originTokenKey, destinationTokenKey } = values;
-  const tokenMap = useTokenByKeyMap();
-  const originTokenByKey = routeOverrideToken || getTokenByKeyFromMap(tokenMap, originTokenKey);
-  const destinationTokenByKey = getTokenByKeyFromMap(tokenMap, destinationTokenKey);
-  // Finding actual token pair for the given tokens
-  const originToken =
-    destinationTokenByKey && originTokenByKey
-      ? findRouteToken(warpCore, originTokenByKey, destinationTokenByKey)
-      : undefined;
-  const destinationToken = destinationTokenByKey
-    ? originToken && findConnectedDestinationToken(originToken, destinationTokenByKey)
-    : undefined;
+  const { amount } = values;
   const originTokenSymbol = originToken?.symbol || '';
   const isNft = originToken?.isNft();
-  const isRouteSupported = useIsRouteSupported();
 
   const destAmount = useMemo(() => {
     if (!isReview) return null;
@@ -696,12 +737,12 @@ function ReviewDetails({
 
   const amountWei = isNft ? amount.toString() : toWei(amount, originToken?.decimals);
 
-  // Offchain fee quoting (when configured)
+  // Offchain fee quoting (when configured) — owned by TransferCheckout
   const {
     isLoading: isOffchainQuoteLoading,
     fees: offchainFeeQuotes,
     quotedCallsParams,
-  } = useQuotedCallsFeeQuotes(values, isRouteSupported, originToken, destinationToken);
+  } = quotedCalls;
 
   // Onchain fee quoting: used as fallback when offchain isn't available for this route
   const offchainSettled = !isOffchainQuoteLoading;
@@ -724,9 +765,6 @@ function ReviewDetails({
     isReview,
     quotedCallsParams,
   );
-
-  // Pass quotedCallsParams to parent via ref for use in transfer execution
-  quotedCallsParamsRef.current = quotedCallsParams ?? null;
 
   const { prices } = useTokenPrices();
   const feePrices = useFeePrices(feeQuotes ?? null, warpCore.tokens, prices);

@@ -30,6 +30,8 @@ export function useIsApproveRequired(
     queryFn: async () => {
       if (!token || !owner || !amount) return false;
       // QuotedCalls: approval target is the quotedCalls contract, not the router
+      // TODO: upstream a `spender` override to WarpCore.isApproveRequired so this
+      // parallel adapter call can be removed.
       if (quotedCallsParams?.address) {
         const adapter = token.getAdapter(warpCore.multiProvider);
         return adapter.isApproveRequired(owner, quotedCallsParams.address, amount);

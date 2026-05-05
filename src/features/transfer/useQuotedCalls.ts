@@ -3,6 +3,7 @@ import {
   QuotedCallsParams,
   SubmitQuoteCommand,
   Token,
+  TokenAmount,
   TokenPullMode,
   WarpCore,
   computeScopedSalt,
@@ -23,11 +24,22 @@ import { TransferFormValues } from './types';
 
 const FEE_QUOTE_REFRESH_INTERVAL = 30_000;
 
-interface QuotedCallsFeeResult {
-  interchainQuote: import('@hyperlane-xyz/sdk').TokenAmount;
-  localQuote: import('@hyperlane-xyz/sdk').TokenAmount;
-  tokenFeeQuote?: import('@hyperlane-xyz/sdk').TokenAmount;
+interface QuotedCallsFetchResult {
+  interchainQuote: TokenAmount;
+  localQuote: TokenAmount;
+  tokenFeeQuote?: TokenAmount;
   quotedCallsParams: QuotedCallsParams;
+}
+
+export interface QuotedCallsFeeQuotesResult {
+  isLoading: boolean;
+  isError: boolean;
+  fees: {
+    interchainQuote: TokenAmount;
+    localQuote: TokenAmount;
+    tokenFeeQuote?: TokenAmount;
+  } | null;
+  quotedCallsParams: QuotedCallsParams | null;
 }
 
 export function useQuotedCallsFeeQuotes(
@@ -35,7 +47,7 @@ export function useQuotedCallsFeeQuotes(
   enabled: boolean,
   originToken: Token | undefined,
   destinationToken: IToken | undefined,
-) {
+): QuotedCallsFeeQuotesResult {
   const multiProvider = useMultiProvider();
   const warpCore = useWarpCore();
   const chainAddresses = useStore((s) => s.chainAddresses);
@@ -120,7 +132,7 @@ async function fetchQuotedCallsFees(
   sender: string | undefined,
   amount: string | undefined,
   recipient: string | undefined,
-): Promise<QuotedCallsFeeResult | null> {
+): Promise<QuotedCallsFetchResult | null> {
   if (
     !originToken ||
     !destinationToken ||

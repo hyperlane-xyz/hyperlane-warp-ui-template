@@ -14,8 +14,7 @@ const chainWalletWhitelists = JSON.parse(process.env.NEXT_PUBLIC_CHAIN_WALLET_WH
 const rpcOverrides = process.env.NEXT_PUBLIC_RPC_OVERRIDES || '';
 const explorerApiUrl =
   process?.env?.NEXT_PUBLIC_EXPLORER_API_URL || 'https://explorer4.hasura.app/v1/graphql';
-const feeQuotingUrl =
-  process?.env?.NEXT_PUBLIC_FEE_QUOTING_URL || 'https://quoting.services.hyperlane.xyz';
+const feeQuotingUrl = process?.env?.NEXT_PUBLIC_FEE_QUOTING_URL || undefined;
 
 interface Config {
   addressBlacklist: string[]; // A list of addresses that are blacklisted and cannot be used in the app

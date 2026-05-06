@@ -23,13 +23,16 @@ function mockReqRes(method: string, query: Record<string, string> = {}) {
 beforeEach(() => vi.clearAllMocks());
 
 describe('quote API handler', () => {
+  const ROUTER = '0x1234567890123456789012345678901234567890';
+  const SALT = '0x' + 'a'.repeat(64);
+  const RECIPIENT = '0x' + 'b'.repeat(64);
   const validQuery = {
     command: 'transferRemote',
     origin: 'ethereum',
-    router: '0x1234',
+    router: ROUTER,
     destination: '1',
-    salt: '0xabcd',
-    recipient: '0x5678',
+    salt: SALT,
+    recipient: RECIPIENT,
   };
 
   test('rejects non-GET methods', async () => {
@@ -56,10 +59,10 @@ describe('quote API handler', () => {
     expect(mockGetQuote).toHaveBeenCalledWith({
       command: 'transferRemote',
       origin: 'ethereum',
-      router: '0x1234',
+      router: ROUTER,
       destination: 1,
-      salt: '0xabcd',
-      recipient: '0x5678',
+      salt: SALT,
+      recipient: RECIPIENT,
     });
   });
 
@@ -87,6 +90,30 @@ describe('quote API handler', () => {
     await handler(req, res);
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith({ message: 'recipient required for warp commands' });
+    expect(mockGetQuote).not.toHaveBeenCalled();
+  });
+
+  test('returns 400 when router is not a valid EVM address', async () => {
+    const { req, res } = mockReqRes('GET', { ...validQuery, router: '0x1234' });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ message: 'router must be a valid EVM address' });
+    expect(mockGetQuote).not.toHaveBeenCalled();
+  });
+
+  test('returns 400 when salt is not 32-byte hex', async () => {
+    const { req, res } = mockReqRes('GET', { ...validQuery, salt: '0xabcd' });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ message: 'salt must be 32-byte hex' });
+    expect(mockGetQuote).not.toHaveBeenCalled();
+  });
+
+  test('returns 400 when recipient is not 32-byte hex', async () => {
+    const { req, res } = mockReqRes('GET', { ...validQuery, recipient: '0x5678' });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ message: 'recipient must be 32-byte hex' });
     expect(mockGetQuote).not.toHaveBeenCalled();
   });
 

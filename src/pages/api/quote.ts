@@ -1,4 +1,5 @@
 import { FeeQuotingClient, FeeQuotingCommand, WARP_FEE_COMMANDS } from '@hyperlane-xyz/sdk';
+import { isValidAddressEvm } from '@hyperlane-xyz/utils';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 const apiKey = process.env.FEE_QUOTING_API_KEY;
@@ -7,6 +8,10 @@ const baseUrl = process.env.NEXT_PUBLIC_FEE_QUOTING_URL || undefined;
 // by FeeQuotingClient (`${baseUrl}/quote/${command}?...`), so a bare type-cast
 // would be a path-injection surface.
 const ALLOWED_COMMANDS = new Set<FeeQuotingCommand>(Object.values(FeeQuotingCommand));
+
+// salt, recipient and targetRouter are bytes32 wire encodings (keccak hash /
+// addressToBytes32 padding), not canonical addresses — validate as 32-byte hex.
+const HEX_BYTES32 = /^0x[0-9a-fA-F]{64}$/;
 
 // Rate limiting: this proxy is browser-reachable and FEE_QUOTING_API_KEY is
 // only held server-side, so abuse protection lives in front of this handler
@@ -39,6 +44,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // Warp commands (transferRemote / transferRemoteTo) require a recipient.
   if (WARP_FEE_COMMANDS.has(command as FeeQuotingCommand) && !recipient) {
     return res.status(400).json({ message: 'recipient required for warp commands' });
+  }
+  if (!isValidAddressEvm(router)) {
+    return res.status(400).json({ message: 'router must be a valid EVM address' });
+  }
+  if (!HEX_BYTES32.test(salt)) {
+    return res.status(400).json({ message: 'salt must be 32-byte hex' });
+  }
+  if (recipient && !HEX_BYTES32.test(recipient)) {
+    return res.status(400).json({ message: 'recipient must be 32-byte hex' });
+  }
+  if (targetRouter && !HEX_BYTES32.test(targetRouter)) {
+    return res.status(400).json({ message: 'targetRouter must be 32-byte hex' });
   }
 
   const client = new FeeQuotingClient({ baseUrl, apiKey });

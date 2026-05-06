@@ -504,7 +504,7 @@ function TransferCheckout({
         setIsReview={setIsReview}
         cleanOverrideToken={cleanOverrideToken}
         routeOverrideToken={routeOverrideToken}
-        quotedCallsParams={quotedCalls.quotedCallsParams}
+        getQuotedCallsParams={quotedCalls.getQuotedCallsParams}
       />
     </>
   );
@@ -516,14 +516,14 @@ function ButtonSection({
   setIsReview,
   cleanOverrideToken,
   routeOverrideToken,
-  quotedCallsParams,
+  getQuotedCallsParams,
 }: {
   isReview: boolean;
   isValidating: boolean;
   setIsReview: (b: boolean) => void;
   cleanOverrideToken: () => void;
   routeOverrideToken: Token | null;
-  quotedCallsParams: QuotedCallsParams | null;
+  getQuotedCallsParams: () => Promise<QuotedCallsParams | null>;
 }) {
   const { values } = useFormikContext<TransferFormValues>();
   const multiProvider = useMultiProvider();
@@ -632,6 +632,10 @@ function ButtonSection({
     setIsReview(false);
     setTransferLoading(true);
 
+    // Wait for any in-flight offchain quote to settle so a quick Send-click
+    // during the first-load / refetch window doesn't fall through to the
+    // plain transferRemote path.
+    const quotedCallsParams = await getQuotedCallsParams();
     await triggerTransactions(values, routeOverrideToken, quotedCallsParams);
     setTransferLoading(false);
   };

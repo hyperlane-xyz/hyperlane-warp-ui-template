@@ -44,6 +44,11 @@ export interface QuotedCallsFeeQuotesResult {
     tokenFeeQuote?: TokenAmount;
   } | null;
   quotedCallsParams: QuotedCallsParams | null;
+  // Submit handlers call this to retrieve quotedCallsParams that may still be
+  // in flight. Returns the cached value when settled, or awaits the active
+  // fetch otherwise — prevents a click on Send during the first-load /
+  // stale-refetch window from silently falling through to plain transferRemote.
+  getQuotedCallsParams: () => Promise<QuotedCallsParams | null>;
 }
 
 export function useQuotedCallsFeeQuotes(
@@ -93,7 +98,7 @@ export function useQuotedCallsFeeQuotes(
     !!config.feeQuotingUrl &&
     !!quotedCallsAddress;
 
-  const { isLoading, isFetching, data } = useQuery({
+  const { isLoading, isFetching, data, refetch } = useQuery({
     // eslint-disable-next-line @tanstack/query/exhaustive-deps -- queryFn also
     // closes over (warpCore, originToken, destinationToken, destination) which
     // are class instances and can't be safely stringified into a query key.
@@ -135,11 +140,22 @@ export function useQuotedCallsFeeQuotes(
   // offchain mode; once retries are exhausted (or interval is paused),
   // isFetching → false and the consumer falls back to onchain quoting.
   const isStale = !!data && Date.now() - data.issuedAt > MAX_QUOTE_AGE_MS;
+  const effectiveLoading = !shouldFetch || !data || isStale ? isFetching : isLoading;
+
+  const getQuotedCallsParams = async (): Promise<QuotedCallsParams | null> => {
+    if (!effectiveLoading) {
+      return !shouldFetch || !data || isStale ? null : data.quotedCallsParams;
+    }
+    const result = await refetch();
+    return result.data?.quotedCallsParams ?? null;
+  };
+
   if (!shouldFetch || !data || isStale) {
     return {
-      isLoading: isStale ? isFetching : isLoading,
+      isLoading: effectiveLoading,
       fees: null,
       quotedCallsParams: null,
+      getQuotedCallsParams,
     };
   }
   return {
@@ -150,6 +166,7 @@ export function useQuotedCallsFeeQuotes(
       tokenFeeQuote: data.tokenFeeQuote,
     },
     quotedCallsParams: data.quotedCallsParams,
+    getQuotedCallsParams,
   };
 }
 
@@ -179,6 +196,13 @@ async function fetchQuotedCallsFees(
     !quotedCallsAddress
   )
     return null;
+
+  // Predicate routes take the wrapper path at submit time (see useTokenTransfer
+  // where quotedCalls is dropped when an attestation is present). Skip the
+  // offchain quote here so ReviewDetails falls back to onchain quoting and
+  // previews the same path the user will actually sign. The adapter memoizes
+  // the wrapper lookup, so this is one RPC on first quote and free thereafter.
+  if (await warpCore.isPredicateSupported(originToken, destination)) return null;
 
   const amountWei = toWei(amount, originToken.decimals);
   const originTokenAmount = originToken.amount(amountWei);

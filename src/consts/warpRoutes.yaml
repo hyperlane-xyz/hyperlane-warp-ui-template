@@ -2,5 +2,142 @@
 # These configs will be merged with the warp routes in the configured registry
 # The input here is typically the output of the Hyperlane CLI warp deploy command
 ---
-tokens: []
+# yaml-language-server: $schema=../schema.json
+tokens:
+  - addressOrDenom: "0xeBC079D41C41a0ef7e54aa7Af867df9a621C9bE0"
+    chainName: arbitrum
+    coinGeckoId: usd-coin
+    collateralAddressOrDenom: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"
+    connections:
+      - token: ethereum|base|0x253821543C24623ecD3ceBCEd704359AF16CF38f
+      - token: ethereum|citrea|0x2bef59e84615371304bd731601f6344F5F304504
+      - token: ethereum|ethereum|0xA9C9a8FB36Ce3e5ffBAC3757dA7141262723541F
+      - token: sealevel|solanamainnet|HW9NfLGo6YMoM6o5auTvn5h26tWJPpsroUDfGFwvsQsU
+      - token: ethereum|arbitrum|0x75a9297db5F0349fd1d6f4030953Fe17175e06d4
+      - token: ethereum|base|0x7abBb4ea8a5895127500CF0C15830C9Eb9f61F96
+      - token: ethereum|ethereum|0xeB1b48b238E15A62e1858a601B6BfFdf41163AE3
+    decimals: 6
+    logoURI: /deployments/warp_routes/USDC/logo.svg
+    name: USD Coin
+    standard: EvmHypCrossCollateralRouter
+    symbol: USDC
+  - addressOrDenom: "0x253821543C24623ecD3ceBCEd704359AF16CF38f"
+    chainName: base
+    coinGeckoId: usd-coin
+    collateralAddressOrDenom: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
+    connections:
+      - token: ethereum|arbitrum|0xeBC079D41C41a0ef7e54aa7Af867df9a621C9bE0
+      - token: ethereum|citrea|0x2bef59e84615371304bd731601f6344F5F304504
+      - token: ethereum|ethereum|0xA9C9a8FB36Ce3e5ffBAC3757dA7141262723541F
+      - token: sealevel|solanamainnet|HW9NfLGo6YMoM6o5auTvn5h26tWJPpsroUDfGFwvsQsU
+      - token: ethereum|arbitrum|0x75a9297db5F0349fd1d6f4030953Fe17175e06d4
+      - token: ethereum|base|0x7abBb4ea8a5895127500CF0C15830C9Eb9f61F96
+      - token: ethereum|ethereum|0xeB1b48b238E15A62e1858a601B6BfFdf41163AE3
+    decimals: 6
+    logoURI: /deployments/warp_routes/USDC/logo.svg
+    name: USD Coin
+    standard: EvmHypCrossCollateralRouter
+    symbol: USDC
+  - addressOrDenom: "0x2bef59e84615371304bd731601f6344F5F304504"
+    chainName: citrea
+    coinGeckoId: citrea-usd
+    collateralAddressOrDenom: "0x8D82c4E3c936C7B5724A382a9c5a4E6Eb7aB6d5D"
+    connections:
+      - token: ethereum|arbitrum|0xeBC079D41C41a0ef7e54aa7Af867df9a621C9bE0
+      - token: ethereum|base|0x253821543C24623ecD3ceBCEd704359AF16CF38f
+      - token: ethereum|ethereum|0xA9C9a8FB36Ce3e5ffBAC3757dA7141262723541F
+      - token: sealevel|solanamainnet|HW9NfLGo6YMoM6o5auTvn5h26tWJPpsroUDfGFwvsQsU
+      - token: ethereum|arbitrum|0x75a9297db5F0349fd1d6f4030953Fe17175e06d4
+      - token: ethereum|base|0x7abBb4ea8a5895127500CF0C15830C9Eb9f61F96
+      - token: ethereum|ethereum|0xeB1b48b238E15A62e1858a601B6BfFdf41163AE3
+    decimals: 6
+    logoURI: /deployments/warp_routes/ctUSD/logo.svg
+    name: Citrea USD
+    standard: EvmHypCrossCollateralRouter
+    symbol: ctUSD
+  - addressOrDenom: "0xA9C9a8FB36Ce3e5ffBAC3757dA7141262723541F"
+    chainName: ethereum
+    coinGeckoId: usd-coin
+    collateralAddressOrDenom: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
+    connections:
+      - token: ethereum|arbitrum|0xeBC079D41C41a0ef7e54aa7Af867df9a621C9bE0
+      - token: ethereum|base|0x253821543C24623ecD3ceBCEd704359AF16CF38f
+      - token: ethereum|citrea|0x2bef59e84615371304bd731601f6344F5F304504
+      - token: sealevel|solanamainnet|HW9NfLGo6YMoM6o5auTvn5h26tWJPpsroUDfGFwvsQsU
+      - token: ethereum|arbitrum|0x75a9297db5F0349fd1d6f4030953Fe17175e06d4
+      - token: ethereum|base|0x7abBb4ea8a5895127500CF0C15830C9Eb9f61F96
+      - token: ethereum|ethereum|0xeB1b48b238E15A62e1858a601B6BfFdf41163AE3
+    decimals: 6
+    logoURI: /deployments/warp_routes/USDC/logo.svg
+    name: USD Coin
+    standard: EvmHypCrossCollateralRouter
+    symbol: USDC
+  - addressOrDenom: HW9NfLGo6YMoM6o5auTvn5h26tWJPpsroUDfGFwvsQsU
+    chainName: solanamainnet
+    coinGeckoId: xo-cash
+    collateralAddressOrDenom: xoUSDq85Rjsb6SbUwJyreFgeWQvxdkT7R3c3g7s6p5Y
+    connections:
+      - token: ethereum|arbitrum|0xeBC079D41C41a0ef7e54aa7Af867df9a621C9bE0
+      - token: ethereum|base|0x253821543C24623ecD3ceBCEd704359AF16CF38f
+      - token: ethereum|citrea|0x2bef59e84615371304bd731601f6344F5F304504
+      - token: ethereum|ethereum|0xA9C9a8FB36Ce3e5ffBAC3757dA7141262723541F
+      - token: ethereum|arbitrum|0x75a9297db5F0349fd1d6f4030953Fe17175e06d4
+      - token: ethereum|base|0x7abBb4ea8a5895127500CF0C15830C9Eb9f61F96
+      - token: ethereum|ethereum|0xeB1b48b238E15A62e1858a601B6BfFdf41163AE3
+    decimals: 6
+    logoURI: /deployments/warp_routes/XO/logo.png
+    name: XO Cash
+    standard: SealevelHypCrossCollateral
+    symbol: XO
+  - addressOrDenom: "0x75a9297db5F0349fd1d6f4030953Fe17175e06d4"
+    chainName: arbitrum
+    coinGeckoId: tether
+    collateralAddressOrDenom: "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"
+    connections:
+      - token: ethereum|arbitrum|0xeBC079D41C41a0ef7e54aa7Af867df9a621C9bE0
+      - token: ethereum|base|0x253821543C24623ecD3ceBCEd704359AF16CF38f
+      - token: ethereum|citrea|0x2bef59e84615371304bd731601f6344F5F304504
+      - token: ethereum|ethereum|0xA9C9a8FB36Ce3e5ffBAC3757dA7141262723541F
+      - token: sealevel|solanamainnet|HW9NfLGo6YMoM6o5auTvn5h26tWJPpsroUDfGFwvsQsU
+      - token: ethereum|base|0x7abBb4ea8a5895127500CF0C15830C9Eb9f61F96
+      - token: ethereum|ethereum|0xeB1b48b238E15A62e1858a601B6BfFdf41163AE3
+    decimals: 6
+    logoURI: /deployments/warp_routes/USDT/logo.svg
+    name: USD₮0
+    standard: EvmHypCrossCollateralRouter
+    symbol: USD₮0
+  - addressOrDenom: "0x7abBb4ea8a5895127500CF0C15830C9Eb9f61F96"
+    chainName: base
+    coinGeckoId: tether
+    collateralAddressOrDenom: "0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2"
+    connections:
+      - token: ethereum|arbitrum|0xeBC079D41C41a0ef7e54aa7Af867df9a621C9bE0
+      - token: ethereum|base|0x253821543C24623ecD3ceBCEd704359AF16CF38f
+      - token: ethereum|citrea|0x2bef59e84615371304bd731601f6344F5F304504
+      - token: ethereum|ethereum|0xA9C9a8FB36Ce3e5ffBAC3757dA7141262723541F
+      - token: sealevel|solanamainnet|HW9NfLGo6YMoM6o5auTvn5h26tWJPpsroUDfGFwvsQsU
+      - token: ethereum|arbitrum|0x75a9297db5F0349fd1d6f4030953Fe17175e06d4
+      - token: ethereum|ethereum|0xeB1b48b238E15A62e1858a601B6BfFdf41163AE3
+    decimals: 6
+    logoURI: /deployments/warp_routes/USDT/logo.svg
+    name: Tether USD
+    standard: EvmHypCrossCollateralRouter
+    symbol: USDT
+  - addressOrDenom: "0xeB1b48b238E15A62e1858a601B6BfFdf41163AE3"
+    chainName: ethereum
+    coinGeckoId: tether
+    collateralAddressOrDenom: "0xdac17f958d2ee523a2206206994597c13d831ec7"
+    connections:
+      - token: ethereum|arbitrum|0xeBC079D41C41a0ef7e54aa7Af867df9a621C9bE0
+      - token: ethereum|base|0x253821543C24623ecD3ceBCEd704359AF16CF38f
+      - token: ethereum|citrea|0x2bef59e84615371304bd731601f6344F5F304504
+      - token: ethereum|ethereum|0xA9C9a8FB36Ce3e5ffBAC3757dA7141262723541F
+      - token: sealevel|solanamainnet|HW9NfLGo6YMoM6o5auTvn5h26tWJPpsroUDfGFwvsQsU
+      - token: ethereum|arbitrum|0x75a9297db5F0349fd1d6f4030953Fe17175e06d4
+      - token: ethereum|base|0x7abBb4ea8a5895127500CF0C15830C9Eb9f61F96
+    decimals: 6
+    logoURI: /deployments/warp_routes/USDT/logo.svg
+    name: Tether USD
+    standard: EvmHypCrossCollateralRouter
+    symbol: USDT
 options: {}

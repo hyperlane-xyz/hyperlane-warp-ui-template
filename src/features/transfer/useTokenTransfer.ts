@@ -30,7 +30,6 @@ import { submitToRelayApi } from './relayApi';
 import { TransferContext, TransferFormValues, TransferStatus } from './types';
 import { tryGetMsgIdFromTransferReceipt } from './utils';
 
-
 const CHAIN_MISMATCH_ERROR = 'ChainMismatchError';
 const TRANSFER_TIMEOUT_ERROR1 = 'block height exceeded';
 const TRANSFER_TIMEOUT_ERROR2 = 'timeout';

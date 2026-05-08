@@ -1,5 +1,5 @@
 import { ProviderType, TypedTransactionReceipt } from '@hyperlane-xyz/sdk';
-import { ProtocolType } from '@hyperlane-xyz/utils';
+import { ProtocolType, isNullish } from '@hyperlane-xyz/utils';
 
 import { config } from '../../consts/config';
 import { logger } from '../../utils/logger';
@@ -37,21 +37,22 @@ export async function submitToRelayApi(
 ): Promise<void> {
   if (!config.relayApiUrl) return;
 
-  const isCctp =
-    originProtocol === ProtocolType.Ethereum &&
-    txReceipt != null &&
-    (txReceipt.type === ProviderType.EthersV5 || txReceipt.type === ProviderType.Viem) &&
-    txReceipt.receipt.logs.some(
-      (log) =>
-        log.topics[0] === MESSAGE_SENT_TOPIC &&
-        MESSAGE_TRANSMITTER_V2_ADDRESSES.has(log.address.toLowerCase()),
-    );
-  if (!isCctp) return;
-
   try {
+    const isCctp =
+      originProtocol === ProtocolType.Ethereum &&
+      !isNullish(txReceipt) &&
+      (txReceipt.type === ProviderType.EthersV5 || txReceipt.type === ProviderType.Viem) &&
+      txReceipt.receipt.logs.some(
+        (log) =>
+          log.topics[0] === MESSAGE_SENT_TOPIC &&
+          MESSAGE_TRANSMITTER_V2_ADDRESSES.has(log.address.toLowerCase()),
+      );
+    if (!isCctp) return;
+
+    const baseUrl = config.relayApiUrl.replace(/\/$/, '');
     const payload = { origin_chain: originChain, tx_hash: txHash };
-    logger.debug('[RelayAPI] Requesting relay', { url: `${config.relayApiUrl}/relay`, payload });
-    const response = await fetch(`${config.relayApiUrl}/relay`, {
+    logger.debug('[RelayAPI] Requesting relay', { url: `${baseUrl}/relay`, payload });
+    const response = await fetch(`${baseUrl}/relay`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),

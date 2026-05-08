@@ -690,13 +690,11 @@ function ReviewDetails({
     isReview,
   );
   // Only fetch fees if route is supported
-  const { isLoading: isQuoteLoading, fees: feeQuotes } = useFeeQuotes(
-    values,
-    isRouteSupported,
-    originToken,
-    destinationToken,
-    !isReview,
-  );
+  const {
+    isLoading: isQuoteLoading,
+    isError: isFeeQuoteError,
+    fees: feeQuotes,
+  } = useFeeQuotes(values, isRouteSupported, originToken, destinationToken, !isReview);
 
   const { prices } = useTokenPrices();
   const feePrices = useFeePrices(feeQuotes ?? null, warpCore.tokens, prices);
@@ -732,6 +730,7 @@ function ReviewDetails({
         <FeeSectionButton
           fees={fees}
           isLoading={isLoading}
+          isError={isFeeQuoteError}
           feePrices={feePrices}
           transferUsd={transferUsd}
         />

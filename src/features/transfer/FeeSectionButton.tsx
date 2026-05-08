@@ -1,6 +1,6 @@
 import { WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
 import { ChevronIcon, FuelPumpIcon, useModal } from '@hyperlane-xyz/widgets';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { getFeePercentage, getTotalFeesUsdRaw } from '../balances/feeUsdDisplay';
 import { FeePrices } from '../balances/useFeePrices';
@@ -41,16 +41,14 @@ export function FeeSectionButton({
   const { close, isOpen, open } = useModal();
   const loadingText = useLoadingDots(isLoading);
 
-  // Determine display text and whether button is clickable
   const hasFees = fees !== null;
   const isClickable = hasFees && !isLoading;
-  const feeText = isLoading
-    ? loadingText
-    : isError
-      ? 'Estimation failed'
-      : hasFees
-        ? fees.totalFees
-        : '-';
+  const feeText = useMemo(() => {
+    if (isLoading) return loadingText;
+    if (isError) return 'Estimation failed';
+    if (hasFees) return fees.totalFees;
+    return '-';
+  }, [isLoading, isError, hasFees, fees, loadingText]);
   const totalUsdRaw = hasFees ? getTotalFeesUsdRaw(fees, feePrices) : 0;
   const totalUsd = totalUsdRaw > 0 ? formatUsd(totalUsdRaw, true) : null;
   const pct = hasFees ? getFeePercentage(totalUsdRaw, transferUsd) : null;

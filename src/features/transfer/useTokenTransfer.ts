@@ -5,7 +5,7 @@ import {
   WarpCore,
   WarpTxCategory,
 } from '@hyperlane-xyz/sdk';
-import { ProtocolType, toTitleCase, toWei } from '@hyperlane-xyz/utils';
+import { toTitleCase, toWei } from '@hyperlane-xyz/utils';
 import {
   getAccountAddressForChain,
   useAccounts,
@@ -30,17 +30,6 @@ import { submitToRelayApi } from './relayApi';
 import { TransferContext, TransferFormValues, TransferStatus } from './types';
 import { tryGetMsgIdFromTransferReceipt } from './utils';
 
-// keccak256("MessageSent(bytes)") — emitted by MessageTransmitter V2 for both native USDC
-// transfers (depositForBurn) and GMP-only messages. Covers CCTP V2 GMP that lacks DepositForBurn.
-const MESSAGE_SENT_TOPIC = '0x8c5261668696ce22758910d05bab8f186d6eb247ceac2af2e82c7dc17669b036';
-
-// Circle's MessageTransmitter V2 addresses (lowercase for comparison).
-// Source: https://developers.circle.com/cctp/references/contract-addresses#messagetransmitterv2
-const MESSAGE_TRANSMITTER_V2_ADDRESSES = new Set([
-  '0x81d40f21f12a8f0e3252bccb954d722d4c464b64', // mainnet (all chains except EDGE)
-  '0x5b61381fc9e58e70efc13a4a97516997019198ee', // mainnet EDGE
-  '0xe737e5cebeeba77efe34d4aa090756590b1ce275', // testnet (all chains)
-]);
 
 const CHAIN_MISMATCH_ERROR = 'ChainMismatchError';
 const TRANSFER_TIMEOUT_ERROR1 = 'block height exceeded';
@@ -282,17 +271,7 @@ async function executeTransfer({
       msgId,
     });
 
-    // Submit to relay API for fast CCTP processing. Fire-and-forget: never blocks or fails the transfer.
-    const isCctp =
-      originProtocol === ProtocolType.Ethereum &&
-      txReceipt != null &&
-      (txReceipt.type === ProviderType.EthersV5 || txReceipt.type === ProviderType.Viem) &&
-      txReceipt.receipt.logs.some(
-        (log) =>
-          log.topics[0] === MESSAGE_SENT_TOPIC &&
-          MESSAGE_TRANSMITTER_V2_ADDRESSES.has(log.address.toLowerCase()),
-      );
-    if (originTxHash && isCctp) submitToRelayApi(origin, originTxHash);
+    if (originTxHash) submitToRelayApi(origin, originTxHash, originProtocol, txReceipt);
 
     // track event after tx submission
     const originChainId = warpCore.multiProvider.getChainId(origin);

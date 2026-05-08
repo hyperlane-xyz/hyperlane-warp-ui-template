@@ -1,6 +1,5 @@
 import {
-  chainAddresses,
-  chainMetadata,
+  ChainAddresses,
   GithubRegistry,
   IRegistry,
   PartialRegistry,
@@ -21,6 +20,7 @@ import { persist } from 'zustand/middleware';
 
 import { config } from '../consts/config';
 import { logger } from '../utils/logger';
+import { assembleChainAddresses } from './chains/addresses';
 import { assembleChainMetadata } from './chains/metadata';
 import {
   buildTokensArray,
@@ -40,15 +40,10 @@ import { assembleWarpCoreConfig } from './warpCore/warpCoreConfig';
 // Increment this when persist state has breaking changes
 const PERSIST_STATE_VERSION = 2;
 
-// Info stored per router address
-export interface RouterAddressInfo {
-  // Max decimals across all tokens in the warp route (for amount formatting)
-  wireDecimals: number;
-}
-
 interface WarpContext {
   registry: IRegistry;
   chainMetadata: ChainMap<ChainMetadata>;
+  chainAddresses: ChainMap<ChainAddresses>;
   multiProvider: MultiProtocolProvider;
   warpCore: WarpCore;
   /** Unified tokens array (deduplicated, can be origin or destination) */
@@ -57,8 +52,8 @@ interface WarpContext {
   collateralGroups: Map<string, Token[]>;
   /** Pre-computed token key to Token map for O(1) lookups */
   tokenByKeyMap: Map<string, Token>;
-  // Map of chain -> address -> router info
-  routerAddressesByChainMap: Record<ChainName, Record<string, RouterAddressInfo>>;
+  // Set of router addresses per chain
+  routerAddressesByChainMap: Record<ChainName, Set<string>>;
   // Deduplicated, sorted CoinGecko IDs for all tokens
   coinGeckoIds: string[];
 }
@@ -80,6 +75,8 @@ function buildE2ETokenSnapshot(tokens: Token[] | undefined): E2ETokenSnapshot[] 
 export interface AppState {
   // Chains and providers
   chainMetadata: ChainMap<ChainMetadata>;
+  // Per-chain contract addresses, merged from registry + filesystem (addresses.yaml)
+  chainAddresses: ChainMap<ChainAddresses>;
   // Overrides to chain metadata set by user via the chain picker
   chainMetadataOverrides: ChainMap<Partial<ChainMetadata>>;
   setChainMetadataOverrides: (overrides?: ChainMap<Partial<ChainMetadata> | undefined>) => void;
@@ -126,9 +123,9 @@ export interface AppState {
   collateralGroups: Map<string, Token[]>;
   /** Pre-computed token key to Token map for O(1) lookups */
   tokenByKeyMap: Map<string, Token>;
-  // Map of chain -> address -> router info
-  // Used to: 1) prevent sending to warp route addresses, 2) format amounts with correct decimals
-  routerAddressesByChainMap: Record<ChainName, Record<string, RouterAddressInfo>>;
+  // Set of router addresses per chain — used to prevent sending to warp route
+  // addresses and to filter message API results
+  routerAddressesByChainMap: Record<ChainName, Set<string>>;
   // Deduplicated, sorted CoinGecko IDs for all tokens (used by useTokenPrices)
   coinGeckoIds: string[];
 }
@@ -139,6 +136,7 @@ export const useStore = create<AppState>()(
     (set, get) => ({
       // Chains and providers
       chainMetadata: {},
+      chainAddresses: {},
       chainMetadataOverrides: {},
       setChainMetadataOverrides: async (
         overrides: ChainMap<Partial<ChainMetadata> | undefined> = {},
@@ -146,6 +144,9 @@ export const useStore = create<AppState>()(
         logger.debug('Setting chain overrides in store');
         const filtered = objFilter(overrides, (_, metadata) => !!metadata);
         const {
+          registry,
+          chainMetadata,
+          chainAddresses,
           multiProvider,
           warpCore,
           routerAddressesByChainMap,
@@ -159,6 +160,9 @@ export const useStore = create<AppState>()(
         });
         set({
           chainMetadataOverrides: filtered,
+          registry,
+          chainMetadata,
+          chainAddresses,
           multiProvider,
           warpCore,
           routerAddressesByChainMap,
@@ -172,6 +176,9 @@ export const useStore = create<AppState>()(
       setWarpCoreConfigOverrides: async (overrides: WarpCoreConfig[] | undefined = []) => {
         logger.debug('Setting warp core config overrides in store');
         const {
+          registry,
+          chainMetadata,
+          chainAddresses,
           multiProvider,
           warpCore,
           routerAddressesByChainMap,
@@ -185,6 +192,9 @@ export const useStore = create<AppState>()(
         });
         set({
           warpCoreConfigOverrides: overrides,
+          registry,
+          chainMetadata,
+          chainAddresses,
           multiProvider,
           warpCore,
           routerAddressesByChainMap,
@@ -305,9 +315,11 @@ async function initWarpContext({
     // Pre-load registry content to avoid repeated requests
     await currentRegistry.listRegistryContent();
   } catch (error) {
+    // Lazy-load the published constants so they stay out of the initial bundle
+    const { chainAddresses, chainMetadata } = await import('@hyperlane-xyz/registry');
     currentRegistry = new PartialRegistry({
-      chainAddresses: chainAddresses,
-      chainMetadata: chainMetadata,
+      chainAddresses,
+      chainMetadata,
     });
     logger.warn(
       'Failed to list registry content using GithubRegistry, will continue with PartialRegistry.',
@@ -316,17 +328,16 @@ async function initWarpContext({
   }
 
   try {
-    const { config: coreConfig, wireDecimalsMap } = await assembleWarpCoreConfig(
+    const { config: coreConfig } = await assembleWarpCoreConfig(
       warpCoreConfigOverrides,
       currentRegistry,
     );
 
     const chainsInTokens = Array.from(new Set(coreConfig.tokens.map((t) => t.chainName)));
-    const { chainMetadata, chainMetadataWithOverrides } = await assembleChainMetadata(
-      chainsInTokens,
-      currentRegistry,
-      chainMetadataOverrides,
-    );
+    const [{ chainMetadata, chainMetadataWithOverrides }, chainAddresses] = await Promise.all([
+      assembleChainMetadata(chainsInTokens, currentRegistry, chainMetadataOverrides),
+      assembleChainAddresses(chainsInTokens, currentRegistry),
+    ]);
     const multiProvider = new MultiProtocolProvider(chainMetadataWithOverrides);
     const warpCore = WarpCore.FromConfig(multiProvider, coreConfig);
 
@@ -345,7 +356,7 @@ async function initWarpContext({
       tokenByKeyMap.set(getTokenKey(token), token);
     }
 
-    const routerAddressesByChainMap = getRouterAddressesByChain(warpCore.tokens, wireDecimalsMap);
+    const routerAddressesByChainMap = getRouterAddressesByChain(warpCore.tokens);
     const coinGeckoIds = Array.from(
       new Set(coreConfig.tokens.map((t) => t.coinGeckoId).filter(Boolean)),
     ).sort() as string[];
@@ -354,6 +365,7 @@ async function initWarpContext({
     return {
       registry: currentRegistry,
       chainMetadata,
+      chainAddresses,
       multiProvider,
       warpCore,
       routerAddressesByChainMap,
@@ -368,6 +380,7 @@ async function initWarpContext({
     return {
       registry,
       chainMetadata: {},
+      chainAddresses: {},
       multiProvider: new MultiProtocolProvider({}),
       warpCore: new WarpCore(new MultiProtocolProvider({}), []),
       routerAddressesByChainMap: {},
@@ -379,20 +392,14 @@ async function initWarpContext({
   }
 }
 
-// Build map of chain -> address -> router info using precomputed wireDecimals
+// Build map of chain -> set of router addresses
 export function getRouterAddressesByChain(
   tokens: WarpCore['tokens'],
-  wireDecimalsMap: Record<ChainName, Record<string, number>>,
-): Record<ChainName, Record<string, RouterAddressInfo>> {
-  return tokens.reduce<Record<ChainName, Record<string, RouterAddressInfo>>>((acc, token) => {
+): Record<ChainName, Set<string>> {
+  return tokens.reduce<Record<ChainName, Set<string>>>((acc, token) => {
     if (!token.addressOrDenom) return acc;
-    const normalizedAddr = normalizeAddress(token.addressOrDenom);
-
-    // Use precomputed wireDecimals from config, fallback to token decimals
-    const wireDecimals = wireDecimalsMap[token.chainName]?.[normalizedAddr] ?? token.decimals;
-
-    acc[token.chainName] ||= {};
-    acc[token.chainName][normalizedAddr] = { wireDecimals };
+    acc[token.chainName] ||= new Set<string>();
+    acc[token.chainName].add(normalizeAddress(token.addressOrDenom));
     return acc;
   }, {});
 }

@@ -28,28 +28,12 @@ describe('getRouterAddressesByChain', () => {
       decimals: 6,
     });
 
-    const result = getRouterAddressesByChain([evmToken, sealevelToken, cosmosToken], {
-      ethereum: {
-        [VALID_EVM_ADDRESS]: 18,
-      },
-      solanamainnet: {
-        [sealevelToken.addressOrDenom]: 9,
-      },
-      cosmoshub: {
-        [cosmosToken.addressOrDenom]: 6,
-      },
-    });
+    const result = getRouterAddressesByChain([evmToken, sealevelToken, cosmosToken]);
     const normalizedEvmAddress = normalizeAddress(VALID_EVM_ADDRESS);
 
-    expect(result.ethereum?.[normalizedEvmAddress]).toEqual({
-      wireDecimals: 18,
-    });
-    expect(result.ethereum?.['0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48']).toBeUndefined();
-    expect(result.solanamainnet?.[sealevelToken.addressOrDenom]).toEqual({
-      wireDecimals: 9,
-    });
-    expect(result.cosmoshub?.[cosmosToken.addressOrDenom]).toEqual({
-      wireDecimals: 6,
-    });
+    expect(result.ethereum?.has(normalizedEvmAddress)).toBe(true);
+    expect(result.ethereum?.has('0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48')).toBe(false);
+    expect(result.solanamainnet?.has(sealevelToken.addressOrDenom)).toBe(true);
+    expect(result.cosmoshub?.has(cosmosToken.addressOrDenom)).toBe(true);
   });
 });

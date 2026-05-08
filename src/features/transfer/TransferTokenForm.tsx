@@ -46,7 +46,7 @@ import { ChainWalletWarning } from '../chains/ChainWalletWarning';
 import { useChainDisplayName, useMultiProvider } from '../chains/hooks';
 import { isMultiCollateralLimitExceeded } from '../limits/utils';
 import { useIsAccountSanctioned } from '../sanctions/hooks/useIsAccountSanctioned';
-import { RouterAddressInfo, useStore } from '../store';
+import { useStore } from '../store';
 import { useIsApproveRequired } from '../tokens/approval';
 import {
   getInitialTokenKeys,
@@ -310,6 +310,11 @@ function OriginTokenCard({
             type="number"
             step="any"
             disabled={isReview}
+            min="0"
+            onWheel={(e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur()}
+            onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+              if (e.key === '-' || e.key === 'e') e.preventDefault();
+            }}
           />
           <MaxButton balance={balance} disabled={isReview} isRouteSupported={isRouteSupported} />
         </div>
@@ -872,7 +877,7 @@ async function validateForm(
   collateralGroups: Map<string, Token[]>,
   values: TransferFormValues,
   accounts: Record<KnownProtocolType, AccountInfo>,
-  routerAddressesByChainMap: Record<ChainName, Record<string, RouterAddressInfo>>,
+  routerAddressesByChainMap: Record<ChainName, Set<string>>,
 ): Promise<[Record<string, string> | null, Token | null]> {
   // returns a tuple, where first value is validation result
   // and second value is token override
@@ -904,7 +909,7 @@ async function validateForm(
 
     const destination = destinationToken.chainName;
 
-    if (routerAddressesByChainMap[destination]?.[normalizeAddress(recipient)]) {
+    if (routerAddressesByChainMap[destination]?.has(normalizeAddress(recipient))) {
       return [{ recipient: 'Warp Route address is not valid as recipient' }, null];
     }
 
@@ -950,14 +955,31 @@ async function validateForm(
     }
 
     const originTokenAmount = transferToken.amount(amountWei);
-    const result = await warpCore.validateTransfer({
-      originTokenAmount,
-      destination,
-      recipient,
-      sender: sender || '',
-      senderPubKey: await senderPubKey,
-      destinationToken: connectedDestinationToken,
-    });
+
+    // Don't fetch a Predicate attestation here — that doubles API spend on every debounced
+    // form change. Gas simulation inside validateTransfer may fail without one, so we catch
+    // and swallow simulation errors only for Predicate routes; balance/collateral/recipient
+    // checks have already run by the time gas sim is reached.
+    let result;
+    try {
+      result = await warpCore.validateTransfer({
+        originTokenAmount,
+        destination,
+        recipient,
+        sender: sender || '',
+        senderPubKey: await senderPubKey,
+        destinationToken: connectedDestinationToken,
+      });
+    } catch (error) {
+      const isPredicateRoute = await warpCore.isPredicateSupported(transferToken, destination);
+      if (!isPredicateRoute) throw error;
+      // Only swallow EVM execution reverts (predicate wrapper rejecting without attestation).
+      // Rethrow provider/RPC/network errors so they surface rather than silently
+      // appearing as "validation passed" and failing at submit-time.
+      const causeCode = (error as any)?.cause?.code;
+      if (causeCode !== 'CALL_EXCEPTION' && causeCode !== 'UNPREDICTABLE_GAS_LIMIT') throw error;
+      result = null;
+    }
 
     if (!isNullish(result)) {
       const enriched = await enrichBalanceError(

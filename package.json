@@ -1,8 +1,35 @@
 {
   "name": "@hyperlane-xyz/warp-ui-template",
-  "description": "A web app template for building Hyperlane Warp Route UIs",
   "version": "13.0.0",
+  "private": true,
+  "description": "A web app template for building Hyperlane Warp Route UIs",
+  "homepage": "https://www.hyperlane.xyz",
+  "license": "Apache-2.0",
   "author": "J M Rossy",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hyperlane-xyz/hyperlane-warp-ui-template"
+  },
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "scripts": {
+    "clean": "rm -rf dist cache .next",
+    "predev": "node scripts/fetch-fonts.mjs",
+    "dev": "next dev",
+    "prebuild": "node scripts/fetch-fonts.mjs",
+    "fetch-fonts": "node --env-file-if-exists=.env.local scripts/fetch-fonts.mjs",
+    "build": "next build",
+    "typecheck": "tsc",
+    "lint": "oxlint ./src",
+    "start": "next start",
+    "test": "vitest --watch false",
+    "test:e2e": "playwright test --project=chromium",
+    "test:e2e:wallet": "playwright test tests/e2e-wallet --project=chromium",
+    "test:e2e:wallet:smoke": "playwright test tests/e2e-wallet/smoke/gate.spec.ts tests/e2e-wallet/autoconnect/evm.spec.ts tests/e2e-wallet/balance-display/evm.spec.ts tests/e2e-wallet/autoconnect/solana.spec.ts --project=chromium",
+    "format": "oxfmt ./src",
+    "link:monorepo": "node scripts/link-monorepo.js",
+    "unlink:monorepo": "node scripts/unlink-monorepo.js"
+  },
   "dependencies": {
     "@chakra-ui/next-js": "^2.4.2",
     "@chakra-ui/provider": "^2.4.2",
@@ -22,9 +49,9 @@
     "@emotion/styled": "^11.13.0",
     "@headlessui/react": "^2.2.0",
     "@hyperlane-xyz/registry": "24.3.0",
-    "@hyperlane-xyz/sdk": "33.0.2",
-    "@hyperlane-xyz/utils": "33.0.2",
-    "@hyperlane-xyz/widgets": "33.0.2",
+    "@hyperlane-xyz/sdk": "33.1.0",
+    "@hyperlane-xyz/utils": "33.1.0",
+    "@hyperlane-xyz/widgets": "33.1.0",
     "@interchain-ui/react": "^1.23.28",
     "@intercom/messenger-js-sdk": "^0.0.18",
     "@metamask/post-message-stream": "6.1.2",
@@ -99,34 +126,7 @@
   "engines": {
     "node": ">=24"
   },
-  "homepage": "https://www.hyperlane.xyz",
-  "license": "Apache-2.0",
-  "main": "dist/src/index.js",
   "packageManager": "pnpm@10.25.0",
-  "private": true,
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/hyperlane-xyz/hyperlane-warp-ui-template"
-  },
-  "scripts": {
-    "clean": "rm -rf dist cache .next",
-    "predev": "node scripts/fetch-fonts.mjs",
-    "dev": "next dev",
-    "prebuild": "node scripts/fetch-fonts.mjs",
-    "fetch-fonts": "node --env-file-if-exists=.env.local scripts/fetch-fonts.mjs",
-    "build": "next build",
-    "typecheck": "tsc",
-    "lint": "oxlint ./src",
-    "start": "next start",
-    "test": "vitest --watch false",
-    "test:e2e": "playwright test --project=chromium",
-    "test:e2e:wallet": "playwright test tests/e2e-wallet --project=chromium",
-    "test:e2e:wallet:smoke": "playwright test tests/e2e-wallet/smoke/gate.spec.ts tests/e2e-wallet/autoconnect/evm.spec.ts tests/e2e-wallet/balance-display/evm.spec.ts tests/e2e-wallet/autoconnect/solana.spec.ts --project=chromium",
-    "format": "oxfmt ./src",
-    "link:monorepo": "node scripts/link-monorepo.js",
-    "unlink:monorepo": "node scripts/unlink-monorepo.js"
-  },
-  "types": "dist/src/index.d.ts",
   "pnpm": {
     "overrides": {
       "tronweb>ethers": "^6.13.5",

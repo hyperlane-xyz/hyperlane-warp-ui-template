@@ -1,11 +1,10 @@
 import { MultiProtocolProvider, WarpCore } from '@hyperlane-xyz/sdk';
 import type { ChainMetadata } from '@hyperlane-xyz/sdk/metadata/chainMetadataTypes';
 import type { ChainMap } from '@hyperlane-xyz/sdk/types';
-import { ProtocolType, normalizeAddress } from '@hyperlane-xyz/utils';
+import { ProtocolType } from '@hyperlane-xyz/utils';
 import { describe, expect, test } from 'vitest';
 
 import { createMockToken } from '../../utils/test';
-import type { RouterAddressInfo } from '../store';
 import { MessageStatus, type MessageStub } from './types';
 import { messageToTransferContext } from './useMergedTransferHistory';
 
@@ -66,29 +65,12 @@ describe('messageToTransferContext', () => {
         amount: '1000000',
       },
     };
-    // Key format must match production: messageToTransferContext uses
-    // `normalizeAddress(sender, protocol)` (EIP-55 checksummed for EVM), not
-    // `.toLowerCase()`. Use wireDecimals that DIFFERS from token.decimals so
-    // the test can distinguish the router-info path from the token fallback.
-    const normalizedRouter = normalizeAddress(matchingRouteToken.addressOrDenom);
-    const routerAddressesByChainMap: Record<string, Record<string, RouterAddressInfo>> = {
-      ethereum: {
-        [normalizedRouter]: { wireDecimals: 9 },
-      },
-    };
-
-    const result = messageToTransferContext(
-      msg,
-      multiProvider,
-      warpCore,
-      routerAddressesByChainMap,
-    );
+    const result = messageToTransferContext(msg, multiProvider, warpCore);
 
     expect(result.origin).toBe('ethereum');
     expect(result.destination).toBe('arbitrum');
-    // 1_000_000 wire units with wireDecimals=9 → "0.001". If the router-info
-    // lookup failed and we fell back to token.decimals=6, this would be "1".
-    expect(result.amount).toBe('0.001');
+    // 1_000_000 wire units formatted with token.decimals=6 → "1"
+    expect(result.amount).toBe('1');
     expect(result.originTokenAddressOrDenom).toBe(matchingRouteToken.addressOrDenom);
     expect(result.destTokenAddressOrDenom).toBe(msg.recipient);
   });

@@ -27,6 +27,7 @@ import { AppState, useStore } from '../store';
 import { getTokenByKey, useWarpCore } from '../tokens/hooks';
 import { findConnectedDestinationToken } from '../tokens/utils';
 import { fetchPredicateAttestation, PredicateAttestationResult } from './predicate';
+import { submitToRelayApi } from './relayApi';
 import { TransferContext, TransferFormValues, TransferStatus } from './types';
 import { tryGetMsgIdFromTransferReceipt } from './utils';
 
@@ -279,6 +280,8 @@ async function executeTransfer({
       originBlockNumber,
       msgId,
     });
+
+    if (originTxHash) submitToRelayApi(origin, originTxHash, originProtocol, txReceipt);
 
     // track event after tx submission
     const originChainId = warpCore.multiProvider.getChainId(origin);

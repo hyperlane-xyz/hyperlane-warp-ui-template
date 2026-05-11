@@ -15,6 +15,7 @@ const rpcOverrides = process.env.NEXT_PUBLIC_RPC_OVERRIDES || '';
 const explorerApiUrl =
   process.env.NEXT_PUBLIC_EXPLORER_API_URL || 'https://explorer4.hasura.app/v1/graphql';
 const feeQuotingUrl = process.env.NEXT_PUBLIC_FEE_QUOTING_URL || undefined;
+const relayApiUrl = process.env.NEXT_PUBLIC_RELAY_API_URL || undefined;
 
 interface Config {
   addressBlacklist: string[]; // A list of addresses that are blacklisted and cannot be used in the app
@@ -23,6 +24,7 @@ interface Config {
   defaultDestinationToken: string | undefined; // The initial destination token to show when app first loads (format: chainName-symbol, e.g. "bsc-hyper")
   enableExplorerLink: boolean; // Include a link to the hyperlane explorer in the transfer modal
   explorerApiUrl: string; // URL for the Hyperlane Explorer GraphQL API
+  relayApiUrl: string | undefined; // Optional URL for the Hyperlane Relayer API
   isDevMode: boolean; // Enables some debug features in the app
   registryUrl: string | undefined; // Optional URL to use a custom registry instead of the published canonical version
   registryBranch?: string | undefined; // Optional customization of the registry branch instead of main
@@ -44,6 +46,7 @@ export const config: Config = Object.freeze({
   chainWalletWhitelists,
   enableExplorerLink: false,
   explorerApiUrl,
+  relayApiUrl,
   defaultOriginToken: 'ethereum-USDC',
   defaultDestinationToken: 'base-USDC',
   isDevMode,

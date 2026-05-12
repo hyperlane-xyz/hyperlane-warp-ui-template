@@ -70,7 +70,7 @@ export function useFeeQuotes(
   );
   const shouldFetch = enabled && isFormValid;
 
-  const { isLoading, isError, data, isFetching } = useQuery({
+  const { isLoading, isError, data } = useQuery({
     // The WarpCore class is not serializable, so we can't use it as a key
     // eslint-disable-next-line @tanstack/query/exhaustive-deps
     queryKey: [
@@ -98,7 +98,7 @@ export function useFeeQuotes(
     refetchInterval: FEE_QUOTE_REFRESH_INTERVAL,
   });
 
-  return { isLoading: isLoading || isFetching, isError, fees: data };
+  return { isLoading, isError, fees: data };
 }
 
 export async function fetchFeeQuotes(

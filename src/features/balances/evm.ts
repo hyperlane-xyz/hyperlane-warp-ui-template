@@ -1,5 +1,5 @@
-import { chainAddresses } from '@hyperlane-xyz/registry';
-import { MultiProtocolProvider, Token } from '@hyperlane-xyz/sdk';
+import { ChainAddresses } from '@hyperlane-xyz/registry';
+import { ChainMap, MultiProtocolProvider, Token } from '@hyperlane-xyz/sdk';
 import { ProtocolType, normalizeAddress } from '@hyperlane-xyz/utils';
 import {
   Hex,
@@ -62,8 +62,8 @@ function classifyToken(token: Token): { type: TokenClassification; erc20Address?
  * Prefer the registry's batchContractAddress when available — some chains
  * (e.g. ancient8, viction) have the standard multicall3 address compromised.
  */
-function getBatchAddress(chainName: string): Hex {
-  const addresses = (chainAddresses as Record<string, Record<string, string>>)[chainName];
+function getBatchAddress(chainName: string, chainAddresses: ChainMap<ChainAddresses>): Hex {
+  const addresses = chainAddresses[chainName];
   if (addresses?.batchContractAddress) {
     return addresses.batchContractAddress.toLowerCase() as Hex;
   }
@@ -224,6 +224,7 @@ export async function fetchChainBalances(
   group: ChainGroup,
   multiProvider: MultiProtocolProvider,
   evmAddress: Hex,
+  chainAddresses: ChainMap<ChainAddresses>,
 ): Promise<Record<string, bigint>> {
   const rpcUrl = multiProvider.tryGetChainMetadata(group.chainName)?.rpcUrls?.[0]?.http;
   if (!rpcUrl) {
@@ -232,7 +233,7 @@ export async function fetchChainBalances(
   }
 
   const client = createPublicClient({ transport: http(rpcUrl) });
-  const batchAddress = getBatchAddress(group.chainName);
+  const batchAddress = getBatchAddress(group.chainName, chainAddresses);
   const balanceOfCallData = encodeFunctionData({
     abi: erc20Abi,
     functionName: 'balanceOf',

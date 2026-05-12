@@ -4,8 +4,8 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { createMockToken, createTokenConnectionMock } from '../../utils/test';
 import {
   buildTokensArray,
-  checkTokenPickerHasRoute,
   checkTokenHasRoute,
+  checkTokenPickerHasRoute,
   dedupeTokensByCollateral,
   findConnectedDestinationToken,
   findRouteToken,
@@ -890,6 +890,39 @@ describe('checkTokenPickerHasRoute', () => {
         groups,
       ),
     ).toBe(false);
+  });
+
+  test('destination mode with a null counterpart returns false', () => {
+    const token = createMockToken({
+      chainName: TestChainName.test1,
+      addressOrDenom: '0x1111111111111111111111111111111111111111',
+    });
+    const groups = groupTokensByCollateral([token]);
+
+    expect(checkTokenPickerHasRoute(token, null, 'destination', [token], groups)).toBe(false);
+    expect(checkTokenPickerHasRoute(token, undefined, 'destination', [token], groups)).toBe(false);
+  });
+
+  test('origin mode resolves based on allTokens when counterpart is null', () => {
+    const routableDestination = createMockToken({
+      chainName: TestChainName.test2,
+      addressOrDenom: '0x2222222222222222222222222222222222222222',
+      collateralAddressOrDenom: '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
+    });
+    const origin = createMockToken({
+      chainName: TestChainName.test1,
+      addressOrDenom: '0x1111111111111111111111111111111111111111',
+      collateralAddressOrDenom: '0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+      connections: [createTokenConnectionMock(undefined, routableDestination)],
+    });
+    const groups = groupTokensByCollateral([origin, routableDestination]);
+
+    expect(
+      checkTokenPickerHasRoute(origin, null, 'origin', [origin, routableDestination], groups),
+    ).toBe(true);
+    expect(
+      checkTokenPickerHasRoute(origin, undefined, 'origin', [origin, routableDestination], groups),
+    ).toBe(true);
   });
 
   test('should keep destination selection strict to current origin', () => {

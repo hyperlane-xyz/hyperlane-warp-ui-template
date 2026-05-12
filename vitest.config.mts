@@ -4,5 +4,7 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   plugins: [tsconfigPaths()],
   assetsInclude: ['**/*.yaml'],
-  test: {},
+  test: {
+    exclude: ['tests/**', 'node_modules/**'],
+  },
 });

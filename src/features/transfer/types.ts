@@ -1,7 +1,6 @@
 export interface TransferFormValues {
-  origin: ChainName;
-  destination: ChainName;
-  tokenIndex: number | undefined;
+  originTokenKey: string | undefined;
+  destinationTokenKey: string | undefined;
   amount: string;
   recipient: Address;
 }
@@ -9,6 +8,7 @@ export interface TransferFormValues {
 export enum TransferStatus {
   Preparing = 'preparing',
   CreatingTxs = 'creating-txs',
+  FetchingAttestation = 'fetching-attestation',
   SigningApprove = 'signing-approve',
   SigningRevoke = 'signing-revoke',
   ConfirmingRevoke = 'confirming-revoke',
@@ -35,6 +35,8 @@ export interface TransferContext {
   sender: Address;
   recipient: Address;
   originTxHash?: string;
+  originBlockNumber?: number;
   msgId?: string;
+  destinationTxHash?: string;
   timestamp: number;
 }

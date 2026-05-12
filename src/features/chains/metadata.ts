@@ -1,4 +1,4 @@
-import { IRegistry, chainMetadata as publishedChainMetadata } from '@hyperlane-xyz/registry';
+import { IRegistry } from '@hyperlane-xyz/registry';
 import {
   ChainMap,
   ChainMetadata,
@@ -14,6 +14,7 @@ import {
   tryParseJsonOrYaml,
 } from '@hyperlane-xyz/utils';
 import { z } from 'zod';
+
 import { chains as ChainsTS } from '../../consts/chains.ts';
 import ChainsYaml from '../../consts/chains.yaml';
 import { config } from '../../consts/config.ts';
@@ -36,21 +37,32 @@ export async function assembleChainMetadata(
   }
   const filesystemMetadata = result.data as ChainMap<ChainMetadata>;
 
-  let registryChainMetadata: ChainMap<ChainMetadata>;
+  let registryChainMetadata: ChainMap<ChainMetadata> | undefined;
   if (config.registryUrl) {
     try {
       logger.debug('Using custom registry chain metadata from:', config.registryUrl);
       registryChainMetadata = await registry.getMetadata();
+<<<<<<< HEAD
     } catch {
       logger.debug(
         'Failed fetching chain metadata from GH registry, using published registry',
         config.registryUrl,
       );
       registryChainMetadata = publishedChainMetadata;
+=======
+    } catch (error) {
+      logger.warn(
+        'Failed fetching chain metadata from GH registry, using published registry',
+        config.registryUrl,
+        error,
+      );
+>>>>>>> origin/main
     }
   } else {
     logger.debug('Using default published registry for chain metadata');
-    registryChainMetadata = publishedChainMetadata;
+  }
+  if (!registryChainMetadata) {
+    registryChainMetadata = (await import('@hyperlane-xyz/registry')).chainMetadata;
   }
 
   // Filter out chains that are not in the tokens config

@@ -236,6 +236,10 @@ export function TokenList({
       setTokenRouteMap(routeMap);
     });
     // counterpartToken intentionally omitted: counterpartDep gates this effect.
+    // INVARIANT: checkTokenPickerHasRoute MUST stay counterpart-independent in
+    // origin mode. If that ever changes (e.g. ranking biases on destination),
+    // drop the mask and put counterpartToken back in the deps array — otherwise
+    // tokenRouteMap will silently go stale.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allTokens, counterpartDep, selectionMode, collateralGroups]);
 

@@ -892,6 +892,28 @@ describe('checkTokenPickerHasRoute', () => {
     ).toBe(false);
   });
 
+  test('origin mode skips same-chain peers when checking routability', () => {
+    // Two tokens on the same chain, both with no cross-chain connections.
+    // The picker-level same-chain filter should reject the peer outright,
+    // not rely on checkTokenHasRoute for the rejection.
+    const origin = createMockToken({
+      chainName: TestChainName.test1,
+      addressOrDenom: '0x1111111111111111111111111111111111111111',
+      collateralAddressOrDenom: '0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+    });
+    const sameChainPeer = createMockToken({
+      chainName: TestChainName.test1,
+      symbol: 'PEER',
+      addressOrDenom: '0x2222222222222222222222222222222222222222',
+      collateralAddressOrDenom: '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
+    });
+    const groups = groupTokensByCollateral([origin, sameChainPeer]);
+
+    expect(checkTokenPickerHasRoute(origin, null, 'origin', [origin, sameChainPeer], groups)).toBe(
+      false,
+    );
+  });
+
   test('destination mode with a null counterpart returns false', () => {
     const token = createMockToken({
       chainName: TestChainName.test1,

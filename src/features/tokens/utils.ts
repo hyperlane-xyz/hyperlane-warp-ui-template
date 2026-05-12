@@ -323,6 +323,10 @@ export function checkTokenHasRoute(
  * auto-switch destination, so only mark an origin unavailable when it has no
  * route to any other listed token. In origin mode counterpartToken is unused and
  * the result depends only on token + allTokens + collateralGroups.
+ *
+ * Caller contract: `allTokens` is expected to already be filtered to listed
+ * (non-disabled) tokens. We iterate it as-is, so a disabled counterpart that
+ * isn't in this set can't surface a token as routable.
  */
 export function checkTokenPickerHasRoute(
   token: Token,
@@ -336,8 +340,6 @@ export function checkTokenPickerHasRoute(
     return checkTokenHasRoute(counterpartToken, token, collateralGroups);
   }
 
-  // Only consider listed (non-disabled) destinations so a disabled counterpart
-  // can't surface a token as routable.
   return allTokens.some(
     (destinationToken) =>
       destinationToken.chainName !== token.chainName &&

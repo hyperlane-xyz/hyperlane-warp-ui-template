@@ -1,9 +1,11 @@
-import { IToken, MultiProtocolProvider, Token, WarpCore } from '@hyperlane-xyz/sdk';
-import { objLength, ProtocolType } from '@hyperlane-xyz/utils';
-import { AccountInfo, getAccountAddressAndPubKey } from '@hyperlane-xyz/widgets';
+import { MultiProtocolProvider, Token, WarpCore } from '@hyperlane-xyz/sdk';
+import { KnownProtocolType, objLength } from '@hyperlane-xyz/utils';
+import { getAccountAddressAndPubKey } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
+import { type AccountInfo } from '@hyperlane-xyz/widgets/walletIntegrations/types';
 import { track } from '@vercel/analytics';
+
 import { config } from '../../consts/config';
-import { getTokenByIndex } from '../tokens/hooks';
+import { getTokenKey } from '../tokens/utils';
 import { TransferFormValues } from '../transfer/types';
 import { EVENT_NAME, EventProperties } from './types';
 
@@ -21,17 +23,22 @@ export function trackEvent<T extends EVENT_NAME>(eventName: T, properties: Event
 }
 
 export function trackTokenSelectionEvent(
-  token: IToken,
-  origin: string,
-  destination: string,
+  tokenType: string,
+  originToken: Token | undefined,
+  destinationToken: Token | undefined,
   multiProvider: MultiProtocolProvider,
 ) {
+  if (!originToken || !destinationToken) return;
+
+  const origin = originToken.chainName;
+  const destination = destinationToken.chainName;
   const originChainId = multiProvider.getChainId(origin);
   const destinationChainId = multiProvider.getChainId(destination);
+
   trackEvent(EVENT_NAME.TOKEN_SELECTED, {
-    standard: token.standard,
-    tokenAddress: token.addressOrDenom,
-    tokenSymbol: token.symbol,
+    tokenType,
+    originToken: originToken.symbol,
+    destinationToken: destinationToken.symbol,
     origin,
     destination,
     originChainId,
@@ -39,14 +46,33 @@ export function trackTokenSelectionEvent(
   });
 }
 
+export function trackChainSelectionEvent(
+  chainType: string,
+  chain: { name: string; chainId: ChainId } | null,
+  previousChain: { name: string; chainId: ChainId } | null,
+) {
+  trackEvent(EVENT_NAME.CHAIN_SELECTED, {
+    chainType,
+    chainId: chain?.chainId ?? null,
+    chainName: chain?.name ?? null,
+    previousChainId: previousChain?.chainId ?? null,
+    previousChainName: previousChain?.name ?? null,
+  });
+}
+
 // errors that happen because of form not being filled correctly
-const SKIPPED_ERRORS = ['Token is required', 'Invalid amount'];
+const SKIPPED_ERRORS = [
+  'Token is required',
+  'Origin token is required',
+  'Destination token is required',
+  'Invalid amount',
+];
 
 export function trackTransactionFailedEvent(
   errors: Record<string, string> | null,
   warpCore: WarpCore,
-  { tokenIndex, origin, destination, amount, recipient }: TransferFormValues,
-  accounts: Record<ProtocolType, AccountInfo>,
+  { originTokenKey, destinationTokenKey, amount, recipient: formRecipient }: TransferFormValues,
+  accounts: Record<KnownProtocolType, AccountInfo>,
   overrideToken: Token | null,
 ) {
   if (!errors || objLength(errors) < 1) return;
@@ -55,13 +81,28 @@ export function trackTransactionFailedEvent(
 
   if (SKIPPED_ERRORS.includes(firstError)) return;
 
-  const { address } = getAccountAddressAndPubKey(warpCore.multiProvider, origin, accounts);
-  const token = overrideToken || getTokenByIndex(warpCore, tokenIndex);
-
+  // Find token from warpCore tokens by key
+  const token = overrideToken || warpCore.tokens.find((t) => getTokenKey(t) === originTokenKey);
   if (!token) return;
 
-  const originChainId = warpCore.multiProvider.getChainId(origin);
-  const destinationChainId = warpCore.multiProvider.getChainId(destination);
+  const origin = token.chainName;
+  const { address } = getAccountAddressAndPubKey(warpCore.multiProvider, origin, accounts);
+
+  // Find destination token to get destination chain
+  const destToken = warpCore.tokens.find((t) => getTokenKey(t) === destinationTokenKey);
+  if (!destToken) return;
+  const destination = destToken.chainName;
+
+  // Get recipient (form value or fallback to connected wallet for destination)
+  const { address: connectedDestAddress } = getAccountAddressAndPubKey(
+    warpCore.multiProvider,
+    destination,
+    accounts,
+  );
+  const recipient = formRecipient || connectedDestAddress || '';
+
+  const originChainId = warpCore.multiProvider.tryGetChainId(origin);
+  const destinationChainId = destination ? warpCore.multiProvider.tryGetChainId(destination) : null;
   return trackEvent(EVENT_NAME.TRANSACTION_SUBMISSION_FAILED, {
     amount,
     chains: `${origin}|${originChainId}|${destination}|${destinationChainId}`,
@@ -70,5 +111,27 @@ export function trackTransactionFailedEvent(
     tokenSymbol: token.symbol,
     recipient,
     error: firstError,
+  });
+}
+
+export function trackUnsupportedRouteEvent(
+  originToken: Token | undefined,
+  destinationToken: Token | undefined,
+  multiProvider: MultiProtocolProvider,
+) {
+  if (!originToken || !destinationToken) return;
+
+  const origin = originToken.chainName;
+  const destination = destinationToken.chainName;
+  const originChainId = multiProvider.getChainId(origin);
+  const destinationChainId = multiProvider.getChainId(destination);
+
+  trackEvent(EVENT_NAME.UNSUPPORTED_ROUTE_SELECTED, {
+    originToken: originToken.symbol,
+    destinationToken: destinationToken.symbol,
+    origin,
+    destination,
+    originChainId,
+    destinationChainId,
   });
 }

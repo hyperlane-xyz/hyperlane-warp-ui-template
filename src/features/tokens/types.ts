@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { ChainMap, ChainMetadata, Token, TokenAmount } from '@hyperlane-xyz/sdk';
 
 export type MultiCollateralTokenMap = Record<string, Record<string, Token[]>>;
@@ -8,6 +9,9 @@ export type TokenChainMap = {
 };
 
 export type Tokens = Array<{ token: Token; disabled: boolean }>;
+=======
+import { Token, TokenAmount } from '@hyperlane-xyz/sdk';
+>>>>>>> origin/main
 
 export interface TokensWithDestinationBalance {
   originToken: Token;
@@ -20,3 +24,9 @@ export interface TokenWithFee {
   tokenFee?: TokenAmount;
   balance: bigint;
 }
+<<<<<<< HEAD
+=======
+
+export type TokenSelectionMode = 'origin' | 'destination';
+export type DefaultMultiCollateralRoutes = Record<ChainName, Record<Address, Address>>;
+>>>>>>> origin/main

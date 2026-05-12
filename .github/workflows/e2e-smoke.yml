@@ -1,0 +1,72 @@
+name: e2e-smoke
+
+# Fast subset of the wallet-connected E2E suite. Runs on every PR as a gate.
+# The full wallet E2E matrix runs from .github/workflows/e2e-wallet-full.yml.
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  e2e-smoke:
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Get pnpm store directory
+        id: pnpm-store
+        shell: bash
+        run: echo "path=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Restore build cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .next/
+          key: ${{ runner.os }}-nextjs-build-${{ hashFiles('src/**', 'pnpm-lock.yaml', 'next.config.js', 'tsconfig.json') }}
+
+      - name: Get Playwright version
+        id: pw-version
+        run: echo "version=$(pnpm exec playwright --version)" >> $GITHUB_OUTPUT
+
+      - name: Cache Playwright browsers
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ steps.pw-version.outputs.version }}
+
+      - name: Install Playwright browsers
+        if: steps.pw-cache.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install chromium
+
+      - name: Install Playwright system dependencies
+        run: pnpm exec playwright install-deps chromium
+
+      - name: Run E2E wallet smoke
+        run: pnpm run test:e2e:wallet:smoke
+        env:
+          NEXT_PUBLIC_WALLET_CONNECT_ID: ${{ secrets.NEXT_PUBLIC_WALLET_CONNECT_ID }}
+
+      - name: Upload report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-smoke-report-${{ github.run_attempt }}
+          path: playwright-report
+          retention-days: 7

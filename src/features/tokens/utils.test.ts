@@ -845,7 +845,11 @@ describe('checkTokenPickerHasRoute', () => {
       addressOrDenom: '0x3333333333333333333333333333333333333333',
       collateralAddressOrDenom: '0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC',
     });
-    const groups = groupTokensByCollateral([origin, routableDestination, currentDefaultDestination]);
+    const groups = groupTokensByCollateral([
+      origin,
+      routableDestination,
+      currentDefaultDestination,
+    ]);
 
     expect(
       checkTokenPickerHasRoute(
@@ -856,6 +860,36 @@ describe('checkTokenPickerHasRoute', () => {
         groups,
       ),
     ).toBe(true);
+  });
+
+  test('should mark origin unavailable when it has no routes to any listed destination', () => {
+    const isolatedOrigin = createMockToken({
+      chainName: TestChainName.test1,
+      addressOrDenom: '0x1111111111111111111111111111111111111111',
+      collateralAddressOrDenom: '0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+    });
+    const otherListed = createMockToken({
+      chainName: TestChainName.test2,
+      addressOrDenom: '0x2222222222222222222222222222222222222222',
+      collateralAddressOrDenom: '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
+    });
+    const counterpart = createMockToken({
+      chainName: 'base',
+      symbol: 'USDC',
+      addressOrDenom: '0x3333333333333333333333333333333333333333',
+      collateralAddressOrDenom: '0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC',
+    });
+    const groups = groupTokensByCollateral([isolatedOrigin, otherListed, counterpart]);
+
+    expect(
+      checkTokenPickerHasRoute(
+        isolatedOrigin,
+        counterpart,
+        'origin',
+        [isolatedOrigin, otherListed, counterpart],
+        groups,
+      ),
+    ).toBe(false);
   });
 
   test('should keep destination selection strict to current origin', () => {

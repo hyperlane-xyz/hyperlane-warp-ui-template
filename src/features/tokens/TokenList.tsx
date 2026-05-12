@@ -206,10 +206,15 @@ export function TokenList({
     balanceMap,
   ]);
 
+  // In origin mode the result is counterpart-independent, so exclude
+  // counterpartToken from the effect deps to avoid recomputing the whole
+  // route map when only the destination changes.
+  const counterpartDep = selectionMode === 'destination' ? counterpartToken : null;
+
   // Compute route map in a transition (non-blocking)
   useEffect(() => {
     startTransition(() => {
-      if (!counterpartToken) {
+      if (selectionMode === 'destination' && !counterpartDep) {
         setTokenRouteMap(null);
         return;
       }
@@ -220,7 +225,7 @@ export function TokenList({
         const key = getTokenKey(token);
         const hasRoute = checkTokenPickerHasRoute(
           token,
-          counterpartToken,
+          counterpartDep,
           selectionMode,
           allTokens,
           collateralGroups,
@@ -230,7 +235,7 @@ export function TokenList({
 
       setTokenRouteMap(routeMap);
     });
-  }, [allTokens, counterpartToken, selectionMode, collateralGroups]);
+  }, [allTokens, counterpartDep, selectionMode, collateralGroups]);
 
   // Reset scroll when user changes search or chain filter
   useEffect(() => {

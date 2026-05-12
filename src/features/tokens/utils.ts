@@ -321,21 +321,23 @@ export function checkTokenHasRoute(
  *
  * Destination selection is strict against the current origin. Origin selection can
  * auto-switch destination, so only mark an origin unavailable when it has no
- * route to any other listed token.
+ * route to any other listed token. In origin mode counterpartToken is unused and
+ * the result depends only on token + allTokens + collateralGroups.
  */
 export function checkTokenPickerHasRoute(
   token: Token,
-  counterpartToken: Token,
+  counterpartToken: Token | null | undefined,
   selectionMode: TokenSelectionMode,
   allTokens: Token[],
   collateralGroups: Map<string, Token[]>,
 ): boolean {
   if (selectionMode === 'destination') {
+    if (!counterpartToken) return false;
     return checkTokenHasRoute(counterpartToken, token, collateralGroups);
   }
 
-  if (checkTokenHasRoute(token, counterpartToken, collateralGroups)) return true;
-
+  // Only consider listed (non-disabled) destinations so a disabled counterpart
+  // can't surface a token as routable.
   return allTokens.some(
     (destinationToken) =>
       destinationToken.chainName !== token.chainName &&

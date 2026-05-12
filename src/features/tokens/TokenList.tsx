@@ -11,7 +11,7 @@ import { useCollateralGroups, useTokens } from './hooks';
 import { TokenChainIcon } from './TokenChainIcon';
 import { TokenSelectionMode } from './types';
 import { useTokenPrices } from './useTokenPrice';
-import { checkTokenHasRoute, getTokenKey } from './utils';
+import { checkTokenPickerHasRoute, getTokenKey } from './utils';
 
 const featuredSet = new Set(config.featuredTokens.map((t) => t.toLowerCase()));
 
@@ -218,9 +218,13 @@ export function TokenList({
 
       for (const token of allTokens) {
         const key = getTokenKey(token);
-        const originToken = selectionMode === 'origin' ? token : counterpartToken;
-        const destToken = selectionMode === 'origin' ? counterpartToken : token;
-        const hasRoute = checkTokenHasRoute(originToken, destToken, collateralGroups);
+        const hasRoute = checkTokenPickerHasRoute(
+          token,
+          counterpartToken,
+          selectionMode,
+          allTokens,
+          collateralGroups,
+        );
         routeMap.set(key, hasRoute);
       }
 
@@ -310,9 +314,10 @@ const TokenButton = React.memo(function TokenButton({
     ? getChainDisplayName(multiProvider, counterpartToken.chainName)
     : '';
 
-  const routeDirection = selectionMode === 'destination' ? 'from' : 'to';
   const routeTooltipMessage = counterpartToken
-    ? `No route ${routeDirection} ${counterpartToken.symbol} on ${counterpartChainName}`
+    ? selectionMode === 'destination'
+      ? `No route from ${counterpartToken.symbol} on ${counterpartChainName}`
+      : `No available destination from ${token.symbol} on ${chainDisplayName}`
     : '';
 
   const formattedBalance = balance != null ? formatBalance(balance, token.decimals) : null;

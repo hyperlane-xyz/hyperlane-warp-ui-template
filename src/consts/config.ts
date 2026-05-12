@@ -70,12 +70,8 @@ export const config: Config = Object.freeze({
   ],
   shouldDisableChains: true,
   rpcOverrides,
-<<<<<<< HEAD
   enableTrackingEvents: true,
-=======
-  enableTrackingEvents: false,
   feeQuotingUrl,
->>>>>>> origin/main
   featuredTokens: [
     // USDC
     'arbitrum-USDC',

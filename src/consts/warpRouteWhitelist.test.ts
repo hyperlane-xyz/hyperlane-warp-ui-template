@@ -5,12 +5,18 @@ import {
 import { WarpCoreConfig } from '@hyperlane-xyz/sdk';
 import { objKeys } from '@hyperlane-xyz/utils';
 import { assert, test } from 'vitest';
+
+import { config } from './config';
 import { warpRouteWhitelist } from './warpRouteWhitelist';
 
 test('warpRouteWhitelist', async () => {
   if (!warpRouteWhitelist) return;
 
-  const registry = new GithubRegistry();
+  const registry = new GithubRegistry({
+    uri: config.registryUrl,
+    branch: config.registryBranch,
+    proxyUrl: config.registryProxyUrl,
+  });
   let warpRouteConfigs: Record<string, WarpCoreConfig>;
 
   try {

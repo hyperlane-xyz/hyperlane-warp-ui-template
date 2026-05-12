@@ -1,5 +1,7 @@
 import {
   ProviderType,
+  QuotedCallsParams,
+  Token,
   TypedTransactionReceipt,
   WarpCore,
   WarpTxCategory,
@@ -10,17 +12,25 @@ import {
   useAccounts,
   useActiveChains,
   useTransactionFns,
-} from '@hyperlane-xyz/widgets';
+} from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import { useCallback, useState } from 'react';
 import { toast } from 'react-toastify';
+
 import { toastTxSuccess } from '../../components/toast/TxSuccessToast';
 import { logger } from '../../utils/logger';
+<<<<<<< HEAD
+=======
+import { refinerIdentifyAndShowTransferForm } from '../analytics/refiner';
+>>>>>>> origin/main
 import { EVENT_NAME } from '../analytics/types';
 import { trackEvent } from '../analytics/utils';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { AppState, useStore } from '../store';
-import { getTokenByIndex, useWarpCore } from '../tokens/hooks';
+import { getTokenByKey, useWarpCore } from '../tokens/hooks';
+import { findConnectedDestinationToken } from '../tokens/utils';
+import { fetchPredicateAttestation, PredicateAttestationResult } from './predicate';
+import { submitToRelayApi } from './relayApi';
 import { TransferContext, TransferFormValues, TransferStatus } from './types';
 import { tryGetMsgIdFromTransferReceipt } from './utils';
 
@@ -47,7 +57,11 @@ export function useTokenTransfer(onDone?: () => void) {
 
   // TODO implement cancel callback for when modal is closed?
   const triggerTransactions = useCallback(
-    (values: TransferFormValues) =>
+    (
+      values: TransferFormValues,
+      routeOverrideToken: Token | null,
+      quotedCallsParams?: QuotedCallsParams | null,
+    ) =>
       executeTransfer({
         warpCore,
         values,
@@ -59,6 +73,8 @@ export function useTokenTransfer(onDone?: () => void) {
         updateTransferStatus,
         setIsLoading,
         onDone,
+        routeOverrideToken,
+        quotedCallsParams: quotedCallsParams ?? undefined,
       }),
     [
       warpCore,
@@ -90,6 +106,8 @@ async function executeTransfer({
   updateTransferStatus,
   setIsLoading,
   onDone,
+  routeOverrideToken,
+  quotedCallsParams,
 }: {
   warpCore: WarpCore;
   values: TransferFormValues;
@@ -101,19 +119,35 @@ async function executeTransfer({
   updateTransferStatus: AppState['updateTransferStatus'];
   setIsLoading: (b: boolean) => void;
   onDone?: () => void;
+  routeOverrideToken: Token | null;
+  quotedCallsParams?: QuotedCallsParams;
 }) {
   logger.debug('Preparing transfer transaction(s)');
   setIsLoading(true);
   let transferStatus: TransferStatus = TransferStatus.Preparing;
   updateTransferStatus(transferIndex, transferStatus);
 
-  const { origin, destination, tokenIndex, amount, recipient } = values;
+  const { originTokenKey, destinationTokenKey, amount, recipient: formRecipient } = values;
   const multiProvider = warpCore.multiProvider;
 
   try {
-    const originToken = getTokenByIndex(warpCore, tokenIndex);
-    const connection = originToken?.getConnectionForChain(destination);
-    if (!originToken || !connection) throw new Error('No token route found between chains');
+    const originToken = routeOverrideToken || getTokenByKey(warpCore.tokens, originTokenKey);
+    const destinationToken = getTokenByKey(warpCore.tokens, destinationTokenKey);
+    if (!originToken || !destinationToken) throw new Error('No token route found between chains');
+
+    // Get effective recipient (form value or fallback to connected wallet for destination)
+    const connectedDestAddress = getAccountAddressForChain(
+      multiProvider,
+      destinationToken.chainName,
+      activeAccounts.accounts,
+    );
+    const recipient = formRecipient || connectedDestAddress || '';
+    if (!recipient) throw new Error('No recipient address available');
+    // Resolve the connected destination token that matches the selected destination token.
+    const connectedDestinationToken = findConnectedDestinationToken(originToken, destinationToken);
+    if (!connectedDestinationToken) throw new Error('No token connection found between chains');
+    const origin = originToken.chainName;
+    const destination = connectedDestinationToken.chainName;
 
     const originProtocol = originToken.protocol;
     const isNft = originToken.isNft();
@@ -129,6 +163,7 @@ async function executeTransfer({
     const isCollateralSufficient = await warpCore.isDestinationCollateralSufficient({
       originTokenAmount,
       destination,
+      destinationToken: connectedDestinationToken,
     });
     if (!isCollateralSufficient) {
       toast.error('Insufficient collateral on destination for transfer');
@@ -141,11 +176,33 @@ async function executeTransfer({
       origin,
       destination,
       originTokenAddressOrDenom: originToken.addressOrDenom,
-      destTokenAddressOrDenom: connection.token.addressOrDenom,
+      destTokenAddressOrDenom: connectedDestinationToken.addressOrDenom,
       sender,
       recipient,
       amount,
     });
+
+    updateTransferStatus(transferIndex, (transferStatus = TransferStatus.CreatingTxs));
+
+    // Check if Predicate attestation is needed
+    let attestationResult: PredicateAttestationResult | undefined;
+
+    try {
+      updateTransferStatus(transferIndex, (transferStatus = TransferStatus.FetchingAttestation));
+      attestationResult = await fetchPredicateAttestation({
+        warpCore,
+        token: originToken,
+        destination,
+        sender,
+        recipient,
+        amount: originTokenAmount,
+        destinationToken: connectedDestinationToken,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      logger.error('Predicate attestation error:', error);
+      throw new Error(`Predicate attestation failed: ${message}`);
+    }
 
     updateTransferStatus(transferIndex, (transferStatus = TransferStatus.CreatingTxs));
 
@@ -154,6 +211,15 @@ async function executeTransfer({
       destination,
       sender,
       recipient,
+      // quotedCalls and attestation are mutually exclusive in the SDK; predicate
+      // routes take the wrapper path, plain routes can use offchain quoting.
+      quotedCalls: attestationResult ? undefined : quotedCallsParams,
+      attestation: attestationResult?.attestation,
+      // Pin the IGP quote captured at attestation time so msg_value matches the
+      // attested Statement preimage — prevents _authorizeTransaction revert on drift.
+      interchainFee: attestationResult?.interchainFee,
+      tokenFeeQuote: attestationResult?.tokenFeeQuote,
+      destinationToken: connectedDestinationToken,
     });
 
     const hashes: string[] = [];
@@ -208,11 +274,26 @@ async function executeTransfer({
       : undefined;
 
     const originTxHash = hashes.at(-1);
+<<<<<<< HEAD
     updateTransferStatus(transferIndex, (transferStatus = TransferStatus.ConfirmedTransfer), {
       originTxHash,
       msgId,
     });
 
+=======
+    const originBlockNumber =
+      txReceipt?.receipt && 'blockNumber' in txReceipt.receipt
+        ? Number(txReceipt.receipt.blockNumber)
+        : undefined;
+    updateTransferStatus(transferIndex, (transferStatus = TransferStatus.ConfirmedTransfer), {
+      originTxHash,
+      originBlockNumber,
+      msgId,
+    });
+
+    if (originTxHash) submitToRelayApi(origin, originTxHash, originProtocol, txReceipt);
+
+>>>>>>> origin/main
     // track event after tx submission
     const originChainId = warpCore.multiProvider.getChainId(origin);
     const destinationChainId = warpCore.multiProvider.getChainId(destination);
@@ -225,6 +306,16 @@ async function executeTransfer({
       walletAddress: sender,
       transactionHash: originTxHash || '',
     });
+<<<<<<< HEAD
+=======
+
+    // Identify user and show Refiner survey form after successful transfer
+    refinerIdentifyAndShowTransferForm({
+      walletAddress: sender,
+      protocol: originProtocol,
+      chain: origin,
+    });
+>>>>>>> origin/main
   } catch (error: any) {
     logger.error(`Error at stage ${transferStatus}`, error);
     const errorDetails = error.message || error.toString();
@@ -251,6 +342,7 @@ async function executeTransfer({
 const errorMessages: Partial<Record<TransferStatus, string>> = {
   [TransferStatus.Preparing]: 'Error while preparing the transactions.',
   [TransferStatus.CreatingTxs]: 'Error while creating the transactions.',
+  [TransferStatus.FetchingAttestation]: 'Error while fetching compliance attestation.',
   [TransferStatus.SigningApprove]: 'Error while signing the approve transaction.',
   [TransferStatus.ConfirmingApprove]: 'Error while confirming the approve transaction.',
   [TransferStatus.SigningTransfer]: 'Error while signing the transfer transaction.',

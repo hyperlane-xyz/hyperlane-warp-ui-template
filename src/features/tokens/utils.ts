@@ -178,6 +178,21 @@ export function getTokenKey(token: IToken): string {
   return key;
 }
 
+export function getDefaultTokens(
+  allTokens: Token[],
+  featuredTokens: string[],
+  tokenRouteMap: Map<string, boolean> | null,
+): Token[] {
+  if (featuredTokens.length === 0) return allTokens;
+
+  const featuredSet = new Set(featuredTokens.map((token) => token.toLowerCase()));
+  return allTokens.filter((token) => {
+    if (featuredSet.has(`${token.chainName}-${token.symbol}`.toLowerCase())) return true;
+    if (tokenRouteMap) return tokenRouteMap.get(getTokenKey(token)) ?? false;
+    return false;
+  });
+}
+
 /**
  * De-duplicate tokens by collateral address on the same chain
  * Returns only one token per unique collateral address per chain

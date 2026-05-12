@@ -11,13 +11,12 @@ import { useCollateralGroups, useTokens } from './hooks';
 import { TokenChainIcon } from './TokenChainIcon';
 import { TokenSelectionMode } from './types';
 import { useTokenPrices } from './useTokenPrice';
-import { checkTokenPairHasRoute, checkTokenPickerHasRoute, getTokenKey } from './utils';
-
-const featuredSet = new Set(config.featuredTokens.map((t) => t.toLowerCase()));
-
-function isFeaturedToken(token: Token): boolean {
-  return featuredSet.has(`${token.chainName}-${token.symbol}`.toLowerCase());
-}
+import {
+  checkTokenPairHasRoute,
+  checkTokenPickerHasRoute,
+  getDefaultTokens,
+  getTokenKey,
+} from './utils';
 
 function matchesSearch(
   token: Token,
@@ -74,12 +73,7 @@ export function TokenList({
 
   // Default token set: featured+routable when featured defined, all tokens otherwise
   const defaultTokens = useMemo(() => {
-    if (featuredSet.size === 0) return allTokens;
-    return allTokens.filter((t) => {
-      if (isFeaturedToken(t)) return true;
-      if (tokenRouteMap) return tokenRouteMap.get(getTokenKey(t)) ?? false;
-      return false;
-    });
+    return getDefaultTokens(allTokens, config.featuredTokens, tokenRouteMap);
   }, [allTokens, tokenRouteMap]);
 
   // Tokens to fetch balances for:
@@ -105,7 +99,7 @@ export function TokenList({
       (hasRoute ? routable : rest).push(t);
     }
 
-    if (featuredSet.size > 0) return [...routable, ...rest];
+    if (config.featuredTokens.length > 0) return [...routable, ...rest];
 
     const maxDefault = 50;
     const combined = [...routable, ...rest];
@@ -193,7 +187,7 @@ export function TokenList({
 
     // No filter: cap display at 50 only when no featured tokens
     const maxDisplay = 50;
-    const shouldCap = !hasFilter && featuredSet.size === 0;
+    const shouldCap = !hasFilter && config.featuredTokens.length === 0;
     const isLimited = shouldCap && sorted.length > maxDisplay;
     const displayTokens = isLimited ? sorted.slice(0, maxDisplay) : sorted;
 

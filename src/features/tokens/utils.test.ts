@@ -10,6 +10,7 @@ import {
   dedupeTokensByCollateral,
   findConnectedDestinationToken,
   findRouteToken,
+  getDefaultTokens,
   getTokenKey,
   groupTokensByCollateral,
   isValidMultiCollateralToken,
@@ -980,6 +981,38 @@ describe('checkTokenPickerHasRoute', () => {
         groups,
       ),
     ).toBe(false);
+  });
+});
+
+describe('getDefaultTokens', () => {
+  test('should keep default list gated by featured tokens and strict current-pair routes', () => {
+    const featured = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USDC',
+      addressOrDenom: '0x1111111111111111111111111111111111111111',
+    });
+    const strictRoutable = createMockToken({
+      chainName: 'base',
+      symbol: 'USDC',
+      addressOrDenom: '0x2222222222222222222222222222222222222222',
+    });
+    const pickerOnlyRoutable = createMockToken({
+      chainName: 'fluent',
+      symbol: 'BLEND',
+      addressOrDenom: '0x3333333333333333333333333333333333333333',
+    });
+    const strictRouteMap = new Map([
+      [getTokenKey(strictRoutable), true],
+      [getTokenKey(pickerOnlyRoutable), false],
+    ]);
+
+    expect(
+      getDefaultTokens(
+        [featured, strictRoutable, pickerOnlyRoutable],
+        ['ethereum-USDC'],
+        strictRouteMap,
+      ),
+    ).toEqual([featured, strictRoutable]);
   });
 });
 

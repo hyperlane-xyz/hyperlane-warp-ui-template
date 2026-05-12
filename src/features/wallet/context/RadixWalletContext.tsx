@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import {
   AccountProvider,
   GatewayApiProvider,
@@ -9,6 +10,22 @@ import { GatewayApiClient } from '@radixdlt/babylon-gateway-api-sdk';
 import { RadixDappToolkit, RadixNetwork } from '@radixdlt/radix-dapp-toolkit';
 import { PropsWithChildren } from 'react';
 import { APP_NAME } from '../../../consts/app';
+=======
+import { AccountProvider } from '@hyperlane-xyz/widgets/walletIntegrations/radix/AccountContext';
+import '@interchain-ui/react/styles';
+import {
+  GatewayApiProvider,
+  PopupProvider,
+  RdtProvider,
+} from '@hyperlane-xyz/widgets/walletIntegrations/radix/RadixProviders';
+import { GatewayApiClient } from '@radixdlt/babylon-gateway-api-sdk';
+import { RadixDappToolkit, RadixNetwork } from '@radixdlt/radix-dapp-toolkit';
+import { PropsWithChildren } from 'react';
+
+import { APP_NAME } from '../../../consts/app';
+import { E2EAutoConnectRadix } from '../_e2e/E2EAutoConnectRadix';
+import { isE2EMode } from '../_e2e/isE2E';
+>>>>>>> origin/main
 
 export function RadixWalletContext({ children }: PropsWithChildren<unknown>) {
   const rdt = RadixDappToolkit({
@@ -25,7 +42,14 @@ export function RadixWalletContext({ children }: PropsWithChildren<unknown>) {
     <RdtProvider value={rdt}>
       <GatewayApiProvider value={gatewayApi}>
         <AccountProvider>
+<<<<<<< HEAD
           <PopupProvider>{children}</PopupProvider>
+=======
+          <PopupProvider>
+            {isE2EMode() && <E2EAutoConnectRadix />}
+            {children}
+          </PopupProvider>
+>>>>>>> origin/main
         </AccountProvider>
       </GatewayApiProvider>
     </RdtProvider>

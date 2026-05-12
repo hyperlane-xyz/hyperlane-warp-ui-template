@@ -1,4 +1,5 @@
 import { isAbacusWorksChain } from '@hyperlane-xyz/registry';
+<<<<<<< HEAD
 import {
   ChainMap,
   ChainMetadata,
@@ -6,12 +7,22 @@ import {
   MultiProtocolProvider,
   WarpCore,
 } from '@hyperlane-xyz/sdk';
+=======
+import { ChainMap, ChainMetadata, ChainStatus, WarpCore } from '@hyperlane-xyz/sdk';
+>>>>>>> origin/main
 import { toTitleCase, trimToLength } from '@hyperlane-xyz/utils';
 import { ChainSearchMenuProps } from '@hyperlane-xyz/widgets';
 import { config } from '../../consts/config';
 
+import { config } from '../../consts/config';
+
+type ChainMetadataProvider = Pick<
+  WarpCore['multiProvider'],
+  'metadata' | 'tryGetChainMetadata' | 'tryGetChainName'
+>;
+
 export function getChainDisplayName(
-  multiProvider: MultiProtocolProvider,
+  multiProvider: ChainMetadataProvider,
   chain: ChainName,
   shortName = false,
 ) {
@@ -22,13 +33,13 @@ export function getChainDisplayName(
   return displayName || metadata.displayName || toTitleCase(metadata.name);
 }
 
-export function isPermissionlessChain(multiProvider: MultiProtocolProvider, chain: ChainName) {
+export function isPermissionlessChain(multiProvider: ChainMetadataProvider, chain: ChainName) {
   if (!chain) return true;
   const metadata = multiProvider.tryGetChainMetadata(chain);
   return !metadata || !isAbacusWorksChain(metadata);
 }
 
-export function hasPermissionlessChain(multiProvider: MultiProtocolProvider, ids: ChainName[]) {
+export function hasPermissionlessChain(multiProvider: ChainMetadataProvider, ids: ChainName[]) {
   return !ids.every((c) => !isPermissionlessChain(multiProvider, c));
 }
 
@@ -81,7 +92,7 @@ export function isChainDisabled(chainMetadata: ChainMetadata | null) {
  */
 export function tryGetValidChainName(
   chainName: string | null,
-  multiProvider: MultiProtocolProvider,
+  multiProvider: ChainMetadataProvider,
 ): string | undefined {
   const validChainName = chainName && multiProvider.tryGetChainName(chainName);
   const chainMetadata = validChainName ? multiProvider.tryGetChainMetadata(chainName) : null;

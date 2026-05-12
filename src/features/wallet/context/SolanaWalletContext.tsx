@@ -9,6 +9,8 @@ import {
   SalmonWalletAdapter,
   SolflareWalletAdapter,
   TrustWalletAdapter,
+  PhantomWalletAdapter,
+  BackpackWalletAdapter,
 } from '@solana/wallet-adapter-wallets';
 import { clusterApiUrl } from '@solana/web3.js';
 import { PropsWithChildren, useCallback, useMemo } from 'react';
@@ -27,6 +29,8 @@ export function SolanaWalletContext({ children }: PropsWithChildren<unknown>) {
   const wallets = useMemo(
     () => {
       const real = [
+        new PhantomWalletAdapter(),
+        new BackpackWalletAdapter(),
         new SolflareWalletAdapter(),
         new SalmonWalletAdapter(),
         new SnapWalletAdapter(),

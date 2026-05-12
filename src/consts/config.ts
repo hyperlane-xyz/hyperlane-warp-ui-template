@@ -14,6 +14,8 @@ const chainWalletWhitelists = JSON.parse(process.env.NEXT_PUBLIC_CHAIN_WALLET_WH
 const rpcOverrides = process.env.NEXT_PUBLIC_RPC_OVERRIDES || '';
 const explorerApiUrl =
   process.env.NEXT_PUBLIC_EXPLORER_API_URL || 'https://explorer4.hasura.app/v1/graphql';
+const feeQuotingUrl = process.env.NEXT_PUBLIC_FEE_QUOTING_URL || undefined;
+const relayApiUrl = process.env.NEXT_PUBLIC_RELAY_API_URL || undefined;
 
 interface Config {
   addressBlacklist: string[]; // A list of addresses that are blacklisted and cannot be used in the app
@@ -22,6 +24,7 @@ interface Config {
   defaultDestinationToken: string | undefined; // The initial destination token to show when app first loads (format: chainName-symbol, e.g. "bsc-hyper")
   enableExplorerLink: boolean; // Include a link to the hyperlane explorer in the transfer modal
   explorerApiUrl: string; // URL for the Hyperlane Explorer GraphQL API
+  relayApiUrl: string | undefined; // Optional URL for the Hyperlane Relayer API
   isDevMode: boolean; // Enables some debug features in the app
   registryUrl: string | undefined; // Optional URL to use a custom registry instead of the published canonical version
   registryBranch?: string | undefined; // Optional customization of the registry branch instead of main
@@ -35,6 +38,7 @@ interface Config {
   rpcOverrides: string; // JSON string containing a map of chain names to an object with an URL for RPC overrides (For an example check the .env.example file)
   enableTrackingEvents: boolean; // Allow tracking events to happen on some actions;
   featuredTokens: string[]; // List of featured tokens to prioritize in token picker (format: "chainName-symbol")
+  feeQuotingUrl: string | undefined; // Offchain fee quoting service base URL
 }
 
 export const config: Config = Object.freeze({
@@ -44,6 +48,7 @@ export const config: Config = Object.freeze({
   defaultOriginChain: 'ethereum',
   defaultDestinationChain: 'bsc',
   explorerApiUrl,
+  relayApiUrl,
   defaultOriginToken: 'ethereum-USDC',
   defaultDestinationToken: 'base-USDC',
   isDevMode,
@@ -66,6 +71,7 @@ export const config: Config = Object.freeze({
   shouldDisableChains: true,
   rpcOverrides,
   enableTrackingEvents: true,
+  feeQuotingUrl,
   featuredTokens: [
     // USDC
     'arbitrum-USDC',

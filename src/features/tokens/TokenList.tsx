@@ -11,13 +11,12 @@ import { useCollateralGroups, useTokens } from './hooks';
 import { TokenChainIcon } from './TokenChainIcon';
 import { TokenSelectionMode } from './types';
 import { useTokenPrices } from './useTokenPrice';
-import { checkTokenHasRoute, getTokenKey } from './utils';
-
-const featuredSet = new Set(config.featuredTokens.map((t) => t.toLowerCase()));
-
-function isFeaturedToken(token: Token): boolean {
-  return featuredSet.has(`${token.chainName}-${token.symbol}`.toLowerCase());
-}
+import {
+  checkTokenPairHasRoute,
+  checkTokenPickerHasRoute,
+  getDefaultTokens,
+  getTokenKey,
+} from './utils';
 
 function matchesSearch(
   token: Token,
@@ -67,16 +66,12 @@ export function TokenList({
 
   // Deferred state for route map - allows UI to render immediately
   const [tokenRouteMap, setTokenRouteMap] = useState<Map<string, boolean> | null>(null);
+  const [tokenPickerRouteMap, setTokenPickerRouteMap] = useState<Map<string, boolean> | null>(null);
   const [, startTransition] = useTransition();
 
   // Default token set: featured+routable when featured defined, all tokens otherwise
   const defaultTokens = useMemo(() => {
-    if (featuredSet.size === 0) return allTokens;
-    return allTokens.filter((t) => {
-      if (isFeaturedToken(t)) return true;
-      if (tokenRouteMap) return tokenRouteMap.get(getTokenKey(t)) ?? false;
-      return false;
-    });
+    return getDefaultTokens(allTokens, config.featuredTokens, tokenRouteMap);
   }, [allTokens, tokenRouteMap]);
 
   // Tokens to fetch balances for:
@@ -102,7 +97,7 @@ export function TokenList({
       (hasRoute ? routable : rest).push(t);
     }
 
-    if (featuredSet.size > 0) return [...routable, ...rest];
+    if (config.featuredTokens.length > 0) return [...routable, ...rest];
 
     const maxDefault = 50;
     const combined = [...routable, ...rest];
@@ -190,7 +185,7 @@ export function TokenList({
 
     // No filter: cap display at 50 only when no featured tokens
     const maxDisplay = 50;
-    const shouldCap = !hasFilter && featuredSet.size === 0;
+    const shouldCap = !hasFilter && config.featuredTokens.length === 0;
     const isLimited = shouldCap && sorted.length > maxDisplay;
     const displayTokens = isLimited ? sorted.slice(0, maxDisplay) : sorted;
 
@@ -206,7 +201,7 @@ export function TokenList({
     balanceMap,
   ]);
 
-  // Compute route map in a transition (non-blocking)
+  // Compute strict current-pair route map for default list gating and sorting.
   useEffect(() => {
     startTransition(() => {
       if (!counterpartToken) {
@@ -218,15 +213,55 @@ export function TokenList({
 
       for (const token of allTokens) {
         const key = getTokenKey(token);
-        const originToken = selectionMode === 'origin' ? token : counterpartToken;
-        const destToken = selectionMode === 'origin' ? counterpartToken : token;
-        const hasRoute = checkTokenHasRoute(originToken, destToken, collateralGroups);
+        const hasRoute = checkTokenPairHasRoute(
+          token,
+          counterpartToken,
+          selectionMode,
+          collateralGroups,
+        );
         routeMap.set(key, hasRoute);
       }
 
       setTokenRouteMap(routeMap);
     });
   }, [allTokens, counterpartToken, selectionMode, collateralGroups]);
+
+  // In origin mode the picker warning is counterpart-independent, so gate
+  // this effect on a masked counterpart to avoid rebuilding the display map
+  // when only the destination changes.
+  const counterpartDep = selectionMode === 'destination' ? counterpartToken : null;
+
+  // Compute picker display route map in a transition (non-blocking)
+  useEffect(() => {
+    startTransition(() => {
+      if (selectionMode === 'destination' && !counterpartToken) {
+        setTokenPickerRouteMap(null);
+        return;
+      }
+
+      const routeMap = new Map<string, boolean>();
+
+      for (const token of allTokens) {
+        const key = getTokenKey(token);
+        const hasRoute = checkTokenPickerHasRoute(
+          token,
+          counterpartToken,
+          selectionMode,
+          allTokens,
+          collateralGroups,
+        );
+        routeMap.set(key, hasRoute);
+      }
+
+      setTokenPickerRouteMap(routeMap);
+    });
+    // counterpartToken intentionally omitted: counterpartDep gates this effect.
+    // INVARIANT: checkTokenPickerHasRoute MUST stay counterpart-independent in
+    // origin mode. If that ever changes (e.g. ranking biases on destination),
+    // drop the mask and put counterpartToken back in the deps array — otherwise
+    // tokenRouteMap will silently go stale.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allTokens, counterpartDep, selectionMode, collateralGroups]);
 
   // Reset scroll when user changes search or chain filter
   useEffect(() => {
@@ -251,7 +286,7 @@ export function TokenList({
         <div className="py-2 md:px-3">
           {tokens.map((token) => {
             const key = getTokenKey(token);
-            const hasRoute = tokenRouteMap ? (tokenRouteMap.get(key) ?? true) : true;
+            const hasRoute = tokenPickerRouteMap ? (tokenPickerRouteMap.get(key) ?? true) : true;
             const balance = balanceMap.get(key);
             const usdValue = usdMap.get(key) ?? null;
 
@@ -310,9 +345,10 @@ const TokenButton = React.memo(function TokenButton({
     ? getChainDisplayName(multiProvider, counterpartToken.chainName)
     : '';
 
-  const routeDirection = selectionMode === 'destination' ? 'from' : 'to';
   const routeTooltipMessage = counterpartToken
-    ? `No route ${routeDirection} ${counterpartToken.symbol} on ${counterpartChainName}`
+    ? selectionMode === 'destination'
+      ? `No route from ${counterpartToken.symbol} on ${counterpartChainName}`
+      : `No available destination from ${token.symbol} on ${chainDisplayName}`
     : '';
 
   const formattedBalance = balance != null ? formatBalance(balance, token.decimals) : null;
@@ -331,44 +367,50 @@ const TokenButton = React.memo(function TokenButton({
     >
       <TokenChainIcon token={token} size={36} />
 
-      <div className="ml-3 min-w-0 flex-1 text-left">
-        <div className="flex items-center gap-2">
-          <span className={`token-picker-symbol ${styles.base} text-base text-black`}>
-            {token.symbol || 'Unknown'}
-          </span>
-          <span className="token-picker-chain-name text-xs text-gray-500">{chainDisplayName}</span>
-        </div>
-        <div className={`token-picker-name ${styles.base} mt-0.5 truncate text-xs text-gray-500`}>
-          {token.name || 'Unknown Token'}
-        </div>
-      </div>
-
-      <div className="ml-2 shrink-0 text-right">
-        {isBalanceLoading && !primaryValue ? (
-          <div className="token-picker-shimmer mb-1 ml-auto h-4 w-14 animate-pulse rounded bg-gray-100" />
-        ) : primaryValue ? (
-          <>
-            <div className={`token-picker-usd ${styles.base} text-sm font-medium text-black`}>
-              {primaryValue}
-            </div>
-            {secondaryValue && (
-              <div className={`token-picker-meta ${styles.base} text-xs text-gray-400`}>
-                {secondaryValue}
-              </div>
-            )}
-          </>
-        ) : null}
-        {showRouteUnavailable && (
-          <div className="flex items-center justify-end gap-1 whitespace-nowrap text-[10px] text-gray-400">
-            <span>Route unavailable</span>
-            <Tooltip
-              content={routeTooltipMessage}
-              id={`route-tooltip-${getTokenKey(token)}`}
-              tooltipClassName="token-picker-info-icon max-w-[280px]"
-              onClick={(e) => e.stopPropagation()}
-            />
+      <div className="ml-3 grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(6.75rem,max-content)] items-center gap-3">
+        <div className="min-w-0 text-left">
+          <div className="flex min-w-0 items-center gap-2">
+            <span
+              className={`token-picker-symbol ${styles.base} max-w-[8rem] shrink-0 truncate text-base text-black`}
+            >
+              {token.symbol || 'Unknown'}
+            </span>
+            <span className="token-picker-chain-name min-w-0 truncate text-xs text-gray-500">
+              {chainDisplayName}
+            </span>
           </div>
-        )}
+          <div className={`token-picker-name ${styles.base} mt-0.5 truncate text-xs text-gray-500`}>
+            {token.name || 'Unknown Token'}
+          </div>
+        </div>
+
+        <div className="min-w-[6.75rem] justify-self-end text-right tabular-nums">
+          {isBalanceLoading && !primaryValue ? (
+            <div className="token-picker-shimmer mb-1 ml-auto h-4 w-14 animate-pulse rounded bg-gray-100" />
+          ) : primaryValue ? (
+            <>
+              <div className={`token-picker-usd ${styles.base} text-sm font-medium text-black`}>
+                {primaryValue}
+              </div>
+              {secondaryValue && (
+                <div className={`token-picker-meta ${styles.base} text-xs text-gray-400`}>
+                  {secondaryValue}
+                </div>
+              )}
+            </>
+          ) : null}
+          {showRouteUnavailable && (
+            <div className="flex items-center justify-end gap-1 whitespace-nowrap text-[10px] text-gray-400">
+              <span>Route unavailable</span>
+              <Tooltip
+                content={routeTooltipMessage}
+                id={`route-tooltip-${getTokenKey(token)}`}
+                tooltipClassName="token-picker-info-icon max-w-[280px]"
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+          )}
+        </div>
       </div>
     </button>
   );

@@ -853,9 +853,7 @@ describe('checkTokenPickerHasRoute', () => {
       currentDefaultDestination,
     ]);
 
-    expect(checkTokenPairHasRoute(origin, currentDefaultDestination, 'origin', groups)).toBe(
-      false,
-    );
+    expect(checkTokenPairHasRoute(origin, currentDefaultDestination, 'origin', groups)).toBe(false);
 
     expect(
       checkTokenPickerHasRoute(

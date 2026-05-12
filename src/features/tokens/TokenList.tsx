@@ -11,7 +11,7 @@ import { useCollateralGroups, useTokens } from './hooks';
 import { TokenChainIcon } from './TokenChainIcon';
 import { TokenSelectionMode } from './types';
 import { useTokenPrices } from './useTokenPrice';
-import { checkTokenPickerHasRoute, getTokenKey } from './utils';
+import { checkTokenPairHasRoute, checkTokenPickerHasRoute, getTokenKey } from './utils';
 
 const featuredSet = new Set(config.featuredTokens.map((t) => t.toLowerCase()));
 
@@ -67,6 +67,9 @@ export function TokenList({
 
   // Deferred state for route map - allows UI to render immediately
   const [tokenRouteMap, setTokenRouteMap] = useState<Map<string, boolean> | null>(null);
+  const [tokenPickerRouteMap, setTokenPickerRouteMap] = useState<Map<string, boolean> | null>(
+    null,
+  );
   const [, startTransition] = useTransition();
 
   // Default token set: featured+routable when featured defined, all tokens otherwise
@@ -206,16 +209,41 @@ export function TokenList({
     balanceMap,
   ]);
 
-  // In origin mode the result is counterpart-independent, so gate the
-  // effect on a masked counterpart to avoid rebuilding the route map when
-  // only the destination changes.
+  // Compute strict current-pair route map for default list gating and sorting.
+  useEffect(() => {
+    startTransition(() => {
+      if (!counterpartToken) {
+        setTokenRouteMap(null);
+        return;
+      }
+
+      const routeMap = new Map<string, boolean>();
+
+      for (const token of allTokens) {
+        const key = getTokenKey(token);
+        const hasRoute = checkTokenPairHasRoute(
+          token,
+          counterpartToken,
+          selectionMode,
+          collateralGroups,
+        );
+        routeMap.set(key, hasRoute);
+      }
+
+      setTokenRouteMap(routeMap);
+    });
+  }, [allTokens, counterpartToken, selectionMode, collateralGroups]);
+
+  // In origin mode the picker warning is counterpart-independent, so gate
+  // this effect on a masked counterpart to avoid rebuilding the display map
+  // when only the destination changes.
   const counterpartDep = selectionMode === 'destination' ? counterpartToken : null;
 
-  // Compute route map in a transition (non-blocking)
+  // Compute picker display route map in a transition (non-blocking)
   useEffect(() => {
     startTransition(() => {
       if (selectionMode === 'destination' && !counterpartToken) {
-        setTokenRouteMap(null);
+        setTokenPickerRouteMap(null);
         return;
       }
 
@@ -233,7 +261,7 @@ export function TokenList({
         routeMap.set(key, hasRoute);
       }
 
-      setTokenRouteMap(routeMap);
+      setTokenPickerRouteMap(routeMap);
     });
     // counterpartToken intentionally omitted: counterpartDep gates this effect.
     // INVARIANT: checkTokenPickerHasRoute MUST stay counterpart-independent in
@@ -266,7 +294,9 @@ export function TokenList({
         <div className="py-2 md:px-3">
           {tokens.map((token) => {
             const key = getTokenKey(token);
-            const hasRoute = tokenRouteMap ? (tokenRouteMap.get(key) ?? true) : true;
+            const hasRoute = tokenPickerRouteMap
+              ? (tokenPickerRouteMap.get(key) ?? true)
+              : true;
             const balance = balanceMap.get(key);
             const usdValue = usdMap.get(key) ?? null;
 

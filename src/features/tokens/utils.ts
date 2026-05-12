@@ -316,6 +316,17 @@ export function checkTokenHasRoute(
   return originGroup.some((token) => Boolean(findConnectedDestinationToken(token, destToken)));
 }
 
+export function checkTokenPairHasRoute(
+  token: Token,
+  counterpartToken: Token,
+  selectionMode: TokenSelectionMode,
+  collateralGroups: Map<string, Token[]>,
+): boolean {
+  const originToken = selectionMode === 'origin' ? token : counterpartToken;
+  const destToken = selectionMode === 'origin' ? counterpartToken : token;
+  return checkTokenHasRoute(originToken, destToken, collateralGroups);
+}
+
 /**
  * Route availability as used by the token picker.
  *

@@ -5,6 +5,7 @@ import { createMockToken, createTokenConnectionMock } from '../../utils/test';
 import {
   buildTokensArray,
   checkTokenHasRoute,
+  checkTokenPairHasRoute,
   checkTokenPickerHasRoute,
   dedupeTokensByCollateral,
   findConnectedDestinationToken,
@@ -850,6 +851,10 @@ describe('checkTokenPickerHasRoute', () => {
       routableDestination,
       currentDefaultDestination,
     ]);
+
+    expect(checkTokenPairHasRoute(origin, currentDefaultDestination, 'origin', groups)).toBe(
+      false,
+    );
 
     expect(
       checkTokenPickerHasRoute(

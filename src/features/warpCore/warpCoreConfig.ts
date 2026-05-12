@@ -200,7 +200,7 @@ export function dedupeTokens(
     ) {
       id = `${token.chainName}|${token.symbol}|${token.addressOrDenom?.toLowerCase()}`;
     } else {
-      id = `${token.chainName}|${token.addressOrDenom?.toLowerCase()}`;
+      id = `${token.chainName}|${token.symbol}|${token.addressOrDenom?.toLowerCase()}`;
     }
     idToToken[id] = objMerge(idToToken[id] || {}, token);
   }

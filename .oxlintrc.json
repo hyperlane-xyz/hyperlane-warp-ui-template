@@ -1,0 +1,42 @@
+{
+  "plugins": ["typescript", "import", "react", "nextjs", "jsx-a11y"],
+  "rules": {
+    "camelcase": "error",
+    "guard-for-in": "error",
+    "import/no-cycle": "error",
+    "import/no-self-import": "error",
+    "no-console": "warn",
+    "no-eval": "error",
+    "no-ex-assign": "error",
+    "no-extra-boolean-cast": "error",
+    "no-constant-condition": "off",
+    "typescript/ban-ts-comment": "off",
+    "typescript/explicit-module-boundary-types": "off",
+    "typescript/no-explicit-any": "off",
+    "typescript/no-non-null-assertion": "off",
+    "typescript/no-require-imports": "warn",
+    "typescript/no-unused-vars": [
+      "error",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "caughtErrorsIgnorePattern": "^_"
+      }
+    ],
+    "no-unused-vars": "off",
+    "nextjs/no-img-element": "off",
+    "jsx-a11y/alt-text": "off",
+    "jsx-a11y/label-has-associated-control": "off"
+  },
+  "ignorePatterns": [
+    "node_modules",
+    "dist",
+    "build",
+    "coverage",
+    ".next",
+    "postcss.config.js",
+    "next.config.js",
+    "tailwind.config.js",
+    "sentry.*"
+  ]
+}

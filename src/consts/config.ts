@@ -37,6 +37,7 @@ interface Config {
   walletProtocols: ProtocolType[] | undefined; // Wallet Protocols to show in the wallet connect modal. Leave undefined to include all of them
   rpcOverrides: string; // JSON string containing a map of chain names to an object with an URL for RPC overrides (For an example check the .env.example file)
   enableTrackingEvents: boolean; // Allow tracking events to happen on some actions;
+  featuredChains: string[]; // Chains to pin at the top of the default chain picker sort
   featuredTokens: string[]; // List of featured tokens to prioritize in token picker (format: "chainName-symbol")
   feeQuotingUrl: string | undefined; // Offchain fee quoting service base URL
 }
@@ -70,6 +71,23 @@ export const config: Config = Object.freeze({
   rpcOverrides,
   enableTrackingEvents: false,
   feeQuotingUrl,
+  featuredChains: [
+    'ethereum',
+    'base',
+    'arbitrum',
+    'solanamainnet',
+    'optimism',
+    'bsc',
+    'polygon',
+    'avalanche',
+    'unichain',
+    'hyperevm',
+    'linea',
+    'worldchain',
+    'eclipsemainnet',
+    'ink',
+    'monad',
+  ],
   featuredTokens: [
     // USDC
     'arbitrum-USDC',

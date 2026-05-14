@@ -38,6 +38,7 @@ interface Config {
   rpcOverrides: string; // JSON string containing a map of chain names to an object with an URL for RPC overrides (For an example check the .env.example file)
   enableTrackingEvents: boolean; // Allow tracking events to happen on some actions;
   featuredTokens: string[]; // List of featured tokens to prioritize in token picker (format: "chainName-symbol")
+  featuredChains: string[]; // List of featured chain names shown first (in this order) when sorting by "featured"
   feeQuotingUrl: string | undefined; // Offchain fee quoting service base URL
 }
 
@@ -129,5 +130,27 @@ export const config: Config = Object.freeze({
     // stHYPER
     'bsc-stHYPER',
     'ethereum-stHYPER',
+  ],
+  featuredChains: [
+    'ethereum',
+    'solanamainnet',
+    'base',
+    'arbitrum',
+    'optimism',
+    'hyperevm',
+    'bsc',
+    'polygon',
+    'avalanche',
+    'eclipsemainnet',
+    'unichain',
+    'linea',
+    'monad',
+    'ink',
+    'worldchain',
+    'starknet',
+    'radix',
+    'aleo',
+    'sonicsvm',
+    'matchain',
   ],
 });

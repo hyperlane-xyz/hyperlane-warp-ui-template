@@ -110,8 +110,10 @@ describe('chainSearch', () => {
   });
 
   describe('sort', () => {
-    it('sorts by name ascending (default)', () => {
-      const result = search({});
+    it('sorts by name ascending', () => {
+      const result = search({
+        sort: { sortBy: ChainSortBy.Name, sortOrder: SortOrder.Asc },
+      });
       const names = result.filter((c) => !c.disabled).map((c) => c.name);
       expect(names).toEqual([
         'arbitrum',
@@ -121,6 +123,57 @@ describe('chainSearch', () => {
         'sepolia',
         'solanamainnet',
       ]);
+    });
+
+    describe('sort featured', () => {
+      it('sorts featured chains first in config order by default', () => {
+        const result = search({});
+        const names = result.filter((c) => !c.disabled).map((c) => c.name);
+
+        expect(names).toEqual([
+          'ethereum',
+          'solanamainnet',
+          'arbitrum',
+          'polygon',
+          'cosmoshub',
+          'sepolia',
+        ]);
+      });
+
+      it('sorts non-featured chains alphabetically after featured chains', () => {
+        const result = search({
+          sort: { sortBy: ChainSortBy.Featured, sortOrder: SortOrder.Asc },
+        });
+        const names = result.filter((c) => !c.disabled).map((c) => c.name);
+
+        expect(names.slice(4)).toEqual(['cosmoshub', 'sepolia']);
+      });
+
+      it('sorts disabled chains to the bottom when sorting featured', () => {
+        const result = search({
+          sort: { sortBy: ChainSortBy.Featured, sortOrder: SortOrder.Asc },
+        });
+        const lastChain = result[result.length - 1];
+
+        expect(lastChain.disabled).toBe(true);
+        expect(lastChain.name).toBe('disabled-chain');
+      });
+
+      it('reverses featured sorting for descending order', () => {
+        const result = search({
+          sort: { sortBy: ChainSortBy.Featured, sortOrder: SortOrder.Desc },
+        });
+        const names = result.filter((c) => !c.disabled).map((c) => c.name);
+
+        expect(names).toEqual([
+          'sepolia',
+          'cosmoshub',
+          'polygon',
+          'arbitrum',
+          'solanamainnet',
+          'ethereum',
+        ]);
+      });
     });
 
     it('sorts by name descending', () => {

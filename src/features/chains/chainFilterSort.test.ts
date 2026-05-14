@@ -110,8 +110,23 @@ describe('chainSearch', () => {
   });
 
   describe('sort', () => {
-    it('sorts by name ascending (default)', () => {
+    it('sorts featured chains first by default', () => {
       const result = search({});
+      const names = result.filter((c) => !c.disabled).map((c) => c.name);
+      expect(names).toEqual([
+        'ethereum',
+        'arbitrum',
+        'solanamainnet',
+        'polygon',
+        'cosmoshub',
+        'sepolia',
+      ]);
+    });
+
+    it('sorts by name ascending', () => {
+      const result = search({
+        sort: { sortBy: ChainSortBy.Name, sortOrder: SortOrder.Asc },
+      });
       const names = result.filter((c) => !c.disabled).map((c) => c.name);
       expect(names).toEqual([
         'arbitrum',

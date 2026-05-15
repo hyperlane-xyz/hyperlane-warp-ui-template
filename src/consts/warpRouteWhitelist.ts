@@ -381,12 +381,12 @@ export const warpRouteWhitelist: Array<string> | null = [
   'WETH/carrchain',
 
   // Krown routes
-  // 'ETH/krown',
-  // 'USDC/krown',
-  // 'USDT/krown',
-  // 'BNB/krown',
-  // 'WBTC/krown',
-  // 'KROWN/krown',
+  'ETH/krown',
+  'USDC/krown',
+  'USDT/krown',
+  'BNB/krown',
+  'WBTC/krown',
+  'KROWN/krown',
 
   // ENI routes
   'ETH/eni',

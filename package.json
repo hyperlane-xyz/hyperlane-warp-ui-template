@@ -150,6 +150,7 @@
     },
     "patchedDependencies": {
       "starknetkit@2.6.1": "patches/starknetkit@2.6.1.patch",
+      "@cosmjs/cosmwasm-stargate@0.32.4": "patches/@cosmjs-cosmwasm-stargate-npm-0.32.4-f9dd51429c.patch",
       "@provablehq/wasm@0.9.18": "patches/@provablehq__wasm@0.9.18.patch",
       "@provablehq/sdk@0.9.15": "patches/@provablehq__sdk@0.9.15.patch"
     },

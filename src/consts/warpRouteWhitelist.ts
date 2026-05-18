@@ -413,9 +413,6 @@ export const warpRouteWhitelist: Array<string> | null = [
   'SOL/aleo',
   'WBTC/aleo',
 
-  // citrea
-  'ctUSD/citrea',
-
   // paradex
   'DIME/paradex',
 

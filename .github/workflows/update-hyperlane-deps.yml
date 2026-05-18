@@ -44,7 +44,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '22'
+          node-version-file: .nvmrc
 
       - name: Get latest SDK, Utils, Registry, and Widgets versions
         id: get-versions

@@ -27,7 +27,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ steps.pnpm-store.outputs.path }}
-          key: ${{ runner.os }}-pnpm-11-store-${{ hashFiles('package.json', '**/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-pnpm-11-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-11-store-
 
@@ -46,7 +46,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .next/
-          key: ${{ runner.os }}-nextjs-build-${{ hashFiles('src/**', 'package.json', 'pnpm-lock.yaml', 'next.config.js', 'tsconfig.json') }}
+          key: ${{ runner.os }}-nextjs-build-${{ hashFiles('src/**', 'pnpm-lock.yaml', 'next.config.js', 'tsconfig.json') }}
 
       - name: build
         if: steps.build-cache.outputs.cache-hit != 'true'
@@ -72,7 +72,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ steps.pnpm-store.outputs.path }}
-          key: ${{ runner.os }}-pnpm-11-store-${{ hashFiles('package.json', '**/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-pnpm-11-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-11-store-
 
@@ -100,7 +100,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ steps.pnpm-store.outputs.path }}
-          key: ${{ runner.os }}-pnpm-11-store-${{ hashFiles('package.json', '**/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-pnpm-11-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-11-store-
 
@@ -134,7 +134,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ steps.pnpm-store.outputs.path }}
-          key: ${{ runner.os }}-pnpm-11-store-${{ hashFiles('package.json', '**/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-pnpm-11-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-11-store-
 
@@ -162,7 +162,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ steps.pnpm-store.outputs.path }}
-          key: ${{ runner.os }}-pnpm-11-store-${{ hashFiles('package.json', '**/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-pnpm-11-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-11-store-
 

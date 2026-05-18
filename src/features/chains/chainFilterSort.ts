@@ -53,16 +53,21 @@ export const sortOptions = [
   ChainSortBy.Protocol,
 ];
 
-const featuredChainRank = new Map<string, number>();
-for (const [i, chainName] of config.featuredChains.entries()) {
-  const existingRank = featuredChainRank.get(chainName);
-  if (existingRank !== undefined) {
-    throw new Error(
-      `Duplicate featured chain in config.featuredChains: ${chainName} at indices ${existingRank} and ${i}`,
-    );
+function buildFeaturedChainRank(): Map<string, number> {
+  const rank = new Map<string, number>();
+  for (const [i, chainName] of config.featuredChains.entries()) {
+    const existing = rank.get(chainName);
+    if (existing !== undefined) {
+      throw new Error(
+        `Duplicate featured chain in config.featuredChains: ${chainName} at indices ${existing} and ${i}`,
+      );
+    }
+    rank.set(chainName, i);
   }
-  featuredChainRank.set(chainName, i);
+  return rank;
 }
+
+const featuredChainRank = buildFeaturedChainRank();
 
 // ── Combined search + filter + sort (mirrors widgets' chainSearch) ──
 export function chainSearch({

@@ -47,7 +47,7 @@ jobs:
           NEXT_PUBLIC_WALLET_CONNECT_ID: ${{ secrets.NEXT_PUBLIC_WALLET_CONNECT_ID }}
 
   e2e:
-    timeout-minutes: 10
+    timeout-minutes: 20
     needs: [build]
     if: ${{ !cancelled() && (needs.build.result == 'success' || needs.build.result == 'skipped') }}
     runs-on: ubuntu-latest

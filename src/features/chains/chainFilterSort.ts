@@ -101,7 +101,7 @@ export function chainSearch({
           const c1Featured = c1Rank !== undefined;
           const c2Featured = c2Rank !== undefined;
 
-          if (c1Featured && c2Featured && c1Rank !== c2Rank) {
+          if (c1Featured && c2Featured) {
             return sort.sortOrder === SortOrder.Asc ? c1Rank - c2Rank : c2Rank - c1Rank;
           }
           if (c1Featured && !c2Featured) return -1;

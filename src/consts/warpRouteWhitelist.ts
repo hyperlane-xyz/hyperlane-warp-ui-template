@@ -381,12 +381,12 @@ export const warpRouteWhitelist: Array<string> | null = [
   'WETH/carrchain',
 
   // Krown routes
-  // 'ETH/krown',
-  // 'USDC/krown',
-  // 'USDT/krown',
-  // 'BNB/krown',
-  // 'WBTC/krown',
-  // 'KROWN/krown',
+  'ETH/krown',
+  'USDC/krown',
+  'USDT/krown',
+  'BNB/krown',
+  'WBTC/krown',
+  'KROWN/krown',
 
   // ENI routes
   'ETH/eni',
@@ -419,12 +419,18 @@ export const warpRouteWhitelist: Array<string> | null = [
   // paradex
   'DIME/paradex',
 
+  // NEX routes
+  'NEX/bsc',
+
   // rise
   'RISE/bsc-ethereum',
 
   // fluent
   'BLEND/fluent',
   'USDnr/usdnr',
+
+  // CROSS routes
+  'CROSS/moonpay',
 ];
 
 /**

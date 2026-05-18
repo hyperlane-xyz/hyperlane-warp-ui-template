@@ -7,7 +7,7 @@ import {
 } from '@hyperlane-xyz/sdk';
 import { eqAddress, isNullish, normalizeAddress, objKeys } from '@hyperlane-xyz/utils';
 
-import { DefaultMultiCollateralRoutes } from './types';
+import { DefaultMultiCollateralRoutes, TokenSelectionMode } from './types';
 
 // Module-level caches for expensive key computations
 // WeakMap allows automatic garbage collection when token objects are no longer referenced
@@ -178,6 +178,21 @@ export function getTokenKey(token: IToken): string {
   return key;
 }
 
+export function getDefaultTokens(
+  allTokens: Token[],
+  featuredTokens: string[],
+  tokenRouteMap: Map<string, boolean> | null,
+): Token[] {
+  if (featuredTokens.length === 0) return allTokens;
+
+  const featuredSet = new Set(featuredTokens.map((token) => token.toLowerCase()));
+  return allTokens.filter((token) => {
+    if (featuredSet.has(`${token.chainName}-${token.symbol}`.toLowerCase())) return true;
+    if (tokenRouteMap) return tokenRouteMap.get(getTokenKey(token)) ?? false;
+    return false;
+  });
+}
+
 /**
  * De-duplicate tokens by collateral address on the same chain
  * Returns only one token per unique collateral address per chain
@@ -314,6 +329,48 @@ export function checkTokenHasRoute(
   // to the specific destination token. Uses findConnectedDestinationToken to stay
   // consistent with the transfer flow's matching logic (collateral key + address fallback).
   return originGroup.some((token) => Boolean(findConnectedDestinationToken(token, destToken)));
+}
+
+export function checkTokenPairHasRoute(
+  token: Token,
+  counterpartToken: Token,
+  selectionMode: TokenSelectionMode,
+  collateralGroups: Map<string, Token[]>,
+): boolean {
+  const originToken = selectionMode === 'origin' ? token : counterpartToken;
+  const destToken = selectionMode === 'origin' ? counterpartToken : token;
+  return checkTokenHasRoute(originToken, destToken, collateralGroups);
+}
+
+/**
+ * Route availability as used by the token picker.
+ *
+ * Destination selection is strict against the current origin. Origin selection can
+ * auto-switch destination, so only mark an origin unavailable when it has no
+ * route to any other listed token. In origin mode counterpartToken is unused and
+ * the result depends only on token + allTokens + collateralGroups.
+ *
+ * Caller contract: `allTokens` is expected to already be filtered to listed
+ * (non-disabled) tokens. We iterate it as-is, so a disabled counterpart that
+ * isn't in this set can't surface a token as routable.
+ */
+export function checkTokenPickerHasRoute(
+  token: Token,
+  counterpartToken: Token | null | undefined,
+  selectionMode: TokenSelectionMode,
+  allTokens: Token[],
+  collateralGroups: Map<string, Token[]>,
+): boolean {
+  if (selectionMode === 'destination') {
+    if (!counterpartToken) return false;
+    return checkTokenHasRoute(counterpartToken, token, collateralGroups);
+  }
+
+  return allTokens.some(
+    (destinationToken) =>
+      destinationToken.chainName !== token.chainName &&
+      checkTokenHasRoute(token, destinationToken, collateralGroups),
+  );
 }
 
 /**

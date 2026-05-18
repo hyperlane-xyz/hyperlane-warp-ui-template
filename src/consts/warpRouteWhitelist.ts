@@ -428,6 +428,9 @@ export const warpRouteWhitelist: Array<string> | null = [
   // fluent
   'BLEND/fluent',
   'USDnr/usdnr',
+
+  // CROSS routes
+  'CROSS/moonpay',
 ];
 
 /**

@@ -237,7 +237,17 @@ function reduceOptions(optionsList: Array<WarpCoreConfig['options']>): WarpCoreC
   return optionsList.reduce<WarpCoreConfig['options']>((acc, o) => {
     if (!o || !acc) return acc;
     for (const key of Object.keys(o)) {
-      acc[key] = (acc[key] || []).concat(o[key] || []);
+      const incoming = o[key];
+      const current = acc[key];
+      // Array-valued options (e.g., interchainFeeConstants) concatenate;
+      // object-valued options (e.g., sealevel.altAddresses) deep-merge last-wins.
+      if (Array.isArray(incoming)) {
+        acc[key] = (Array.isArray(current) ? current : []).concat(incoming);
+      } else if (incoming && typeof incoming === 'object') {
+        acc[key] = { ...(current && typeof current === 'object' ? current : {}), ...incoming };
+      } else if (incoming !== undefined) {
+        acc[key] = incoming;
+      }
     }
     return acc;
   }, {});

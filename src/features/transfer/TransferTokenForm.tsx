@@ -27,6 +27,7 @@ import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareS
 import { SolidButton } from '../../components/buttons/SolidButton';
 import { SwapIcon } from '../../components/icons/SwapIcon';
 import { TextField } from '../../components/input/TextField';
+import { TransferSection } from '../../components/layout/TransferSection';
 import { WARP_QUERY_PARAMS } from '../../consts/args';
 import { config } from '../../consts/config';
 import { defaultMultiCollateralRoutes } from '../../consts/defaultMultiCollateralRoutes';
@@ -44,6 +45,7 @@ import { useFeePrices } from '../balances/useFeePrices';
 import { ChainConnectionWarning } from '../chains/ChainConnectionWarning';
 import { ChainWalletWarning } from '../chains/ChainWalletWarning';
 import { useChainDisplayName, useMultiProvider } from '../chains/hooks';
+import { getChainDisplayName } from '../chains/utils';
 import { isMultiCollateralLimitExceeded } from '../limits/utils';
 import { useIsAccountSanctioned } from '../sanctions/hooks/useIsAccountSanctioned';
 import { useStore } from '../store';
@@ -60,14 +62,13 @@ import { ImportTokenButton } from '../tokens/ImportTokenButton';
 import { TokenSelectField } from '../tokens/TokenSelectField';
 import { useTokenPrices } from '../tokens/useTokenPrice';
 import { checkTokenHasRoute, findConnectedDestinationToken } from '../tokens/utils';
+import { RecipientConfirmationModal } from '../wallet/RecipientConfirmationModal';
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { WalletDropdown } from '../wallet/WalletDropdown';
 import { getInterchainQuote, getTotalFee, getTransferToken } from './fees';
 import { FeeSectionButton } from './FeeSectionButton';
 import { useFetchMaxAmount } from './maxAmount';
-import { RecipientConfirmationModal } from './RecipientConfirmationModal';
 import { computeDestAmount } from './scaleUtils';
-import { TransferSection } from './TransferSection';
 import { TransferFormValues } from './types';
 import { useRecipientBalanceWatcher } from './useBalanceWatcher';
 import { useFeeQuotes } from './useFeeQuotes';
@@ -185,7 +186,7 @@ export function TransferTokenForm() {
             routeOverrideToken={routeOverrideToken}
             cleanOverrideToken={() => setRouteTokenOverride(null)}
           />
-          <RecipientConfirmationModal
+          <BridgeRecipientConfirmation
             isOpen={isConfirmationModalOpen}
             close={closeConfirmationModal}
             onConfirm={() => setIsReview(true)}
@@ -193,6 +194,40 @@ export function TransferTokenForm() {
         </Form>
       )}
     </Formik>
+  );
+}
+
+function BridgeRecipientConfirmation({
+  isOpen,
+  close,
+  onConfirm,
+}: {
+  isOpen: boolean;
+  close: () => void;
+  onConfirm: () => void;
+}) {
+  const { values } = useFormikContext<TransferFormValues>();
+  const multiProvider = useMultiProvider();
+  const tokenMap = useTokenByKeyMap();
+  const { accounts } = useAccounts(multiProvider);
+  const destinationToken = getTokenByKeyFromMap(tokenMap, values.destinationTokenKey);
+  const { address: connectedDestAddress } = getAccountAddressAndPubKey(
+    multiProvider,
+    destinationToken?.chainName,
+    accounts,
+  );
+  const recipient = values.recipient || connectedDestAddress || '';
+  const destinationChainDisplay = destinationToken
+    ? getChainDisplayName(multiProvider, destinationToken.chainName)
+    : undefined;
+  return (
+    <RecipientConfirmationModal
+      isOpen={isOpen}
+      close={close}
+      onConfirm={onConfirm}
+      recipient={recipient}
+      destinationChainDisplay={destinationChainDisplay}
+    />
   );
 }
 

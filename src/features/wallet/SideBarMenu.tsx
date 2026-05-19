@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import { ChainLogo } from '../../components/icons/ChainLogo';
+import { TokenChainIcon } from '../../components/icons/TokenChainIcon';
 import { config } from '../../consts/config';
 import ArrowRightIcon from '../../images/icons/arrow-right.svg';
 import CollapseIcon from '../../images/icons/collapse-icon.svg';
@@ -24,7 +25,6 @@ import {
 import { useMessageHistory } from '../messages/useMessageHistory';
 import { useStore } from '../store';
 import { tryFindToken, useWarpCore } from '../tokens/hooks';
-import { TokenChainIcon } from '../tokens/TokenChainIcon';
 import { computeDestAmount, formatMessageAmount } from '../transfer/scaleUtils';
 import { TransfersDetailsModal } from '../transfer/TransfersDetailsModal';
 import { TransferContext, TransferStatus } from '../transfer/types';

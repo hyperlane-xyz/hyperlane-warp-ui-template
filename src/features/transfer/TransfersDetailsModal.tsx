@@ -18,6 +18,7 @@ import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { ChainLogo } from '../../components/icons/ChainLogo';
+import { TokenChainIcon } from '../../components/icons/TokenChainIcon';
 import { ModalHeader } from '../../components/layout/ModalHeader';
 import ArrowRightIcon from '../../images/icons/arrow-right.svg';
 import LinkIcon from '../../images/icons/external-link-icon.svg';
@@ -31,7 +32,6 @@ import { useMessageDeliveryStatus } from '../messages/useMessageDeliveryStatus';
 import { useOriginFinality } from '../messages/useOriginFinality';
 import { useStore } from '../store';
 import { tryFindToken, useWarpCore } from '../tokens/hooks';
-import { TokenChainIcon } from '../tokens/TokenChainIcon';
 import { computeDestAmount } from './scaleUtils';
 import { TransferContext, TransferStatus } from './types';
 import {

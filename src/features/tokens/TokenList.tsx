@@ -2,13 +2,13 @@ import { ChainName, Token } from '@hyperlane-xyz/sdk';
 import { Tooltip, useDebounce } from '@hyperlane-xyz/widgets';
 import React, { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 
+import { TokenChainIcon } from '../../components/icons/TokenChainIcon';
 import { config } from '../../consts/config';
 import { useTokenBalances } from '../balances/hooks';
 import { formatBalance, formatUsd, getUsdValue } from '../balances/utils';
 import { useDisabledChains, useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { useCollateralGroups, useTokens } from './hooks';
-import { TokenChainIcon } from './TokenChainIcon';
 import { TokenSelectionMode } from './types';
 import { useTokenPrices } from './useTokenPrice';
 import {

@@ -3,6 +3,7 @@ import { useField, useFormikContext } from 'formik';
 import { useState } from 'react';
 
 import { ChevronLargeIcon } from '../../components/icons/ChevronLargeIcon';
+import { TokenChainIcon } from '../../components/icons/TokenChainIcon';
 import { WARP_QUERY_PARAMS } from '../../consts/args';
 import { updateQueryParams } from '../../utils/queryParams';
 import { trackTokenSelectionEvent, trackUnsupportedRouteEvent } from '../analytics/utils';
@@ -12,7 +13,6 @@ import { getChainDisplayName } from '../chains/utils';
 import { TransferFormValues } from '../transfer/types';
 import { shouldClearAddress } from '../transfer/utils';
 import { getTokenByKeyFromMap, useCollateralGroups, useTokenByKeyMap, useTokens } from './hooks';
-import { TokenChainIcon } from './TokenChainIcon';
 import { TokenSelectionMode } from './types';
 import { UnifiedTokenChainModal } from './UnifiedTokenChainModal';
 import { checkTokenHasRoute, getTokenKey } from './utils';

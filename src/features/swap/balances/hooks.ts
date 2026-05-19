@@ -54,6 +54,7 @@ export function useTokenBalances(
         filtered,
         userAddress!,
         filteredPublicClient,
+        multiProvider,
         batchAddressFor(multiProvider, filtered[0]?.chainName),
       ),
     enabled:
@@ -104,6 +105,7 @@ export function useTokenBalances(
             chainTokens,
             userAddress,
             client as ReturnType<typeof usePublicClient>,
+            multiProvider,
             batchAddressFor(multiProvider, chainTokens[0]?.chainName),
           );
         },
@@ -148,6 +150,7 @@ export function useTokenBalance(token: UiToken | undefined, addressOverride?: st
         [token],
         userAddress,
         publicClient,
+        multiProvider,
         batchAddressFor(multiProvider, token.chainName),
       );
       return balances[getTokenKey(token)] ?? 0n;
@@ -166,6 +169,7 @@ async function dispatchChainBalances(
   tokens: UiToken[],
   userAddress: string,
   publicClient: ReturnType<typeof usePublicClient>,
+  multiProvider: ReturnType<typeof useMultiProvider>,
   multicallAddress?: Address,
 ): Promise<Record<string, bigint>> {
   if (protocol === ProtocolType.Ethereum) {
@@ -173,7 +177,7 @@ async function dispatchChainBalances(
     return fetchEvmChainBalances(publicClient, tokens, userAddress as Address, multicallAddress);
   }
   if (protocol === ProtocolType.Tron) {
-    return fetchTronChainBalances(tokens, userAddress);
+    return fetchTronChainBalances(multiProvider, tokens, userAddress);
   }
   return {};
 }

@@ -44,6 +44,10 @@ export const ChainDiscoverySchema = z.object({
   protocol: z.string(),
   nativeCurrency: NativeCurrencySchema,
   universalRouter: Address,
+  // Permit2 contract the UR pulls funds through. Set as an `immutable` at
+  // UR construction so it's stable per UR — sourced from /v1/chains so the
+  // UI doesn't have to hardcode or read UR.PERMIT2() itself.
+  permit2: Address,
   dex: z.string().nullable(),
   canSwap: z.boolean(),
   canExecute: z.boolean(),

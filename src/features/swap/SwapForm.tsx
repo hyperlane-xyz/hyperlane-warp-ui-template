@@ -26,7 +26,6 @@ import { formatBalance, formatFeeAmount } from './balances/utils';
 import { FeeSectionButton } from './FeeSectionButton';
 import { MaxButton } from './MaxButton';
 import {
-  PERMIT2_ADDRESS,
   Permit2Phase,
   useApproveErc20ToPermit2,
   useApprovePermit2ToRouter,
@@ -98,10 +97,10 @@ function SwapFormContent() {
   const srcToken = getTokenByKeyFromMap(tokenMap, srcTokenKey);
   const dstToken = getTokenByKeyFromMap(tokenMap, dstTokenKey);
 
-  // Engine /v1/chains gives us the UR address per chain.
+  // Engine /v1/chains gives us the UR + Permit2 address per chain.
   const srcChainInfo = chainsResp?.chains.find((c) => c.id === values.srcChain);
   const universalRouter = srcChainInfo?.universalRouter as Address | undefined;
-  const isTronSource = srcChainInfo?.protocol === 'tron';
+  const permit2Address = srcChainInfo?.permit2 as Address | undefined;
 
   const [isReview, setIsReview] = useState(false);
   const [pauseQuote, setPauseQuote] = useState(false);
@@ -131,26 +130,27 @@ function SwapFormContent() {
     return undefined;
   }, [bestRoute]);
 
-  const permit2Status = usePermit2Status({
+  const status = usePermit2Status({
     chainId: values.srcChain ?? undefined,
+    chainName: srcChainName,
     token: srcToken?.address as Address | undefined,
     owner: sender as Address | undefined,
     universalRouter,
+    permit2Address,
     amount: amountAtomic,
-    isNative: isNative || isTronSource,
+    isNative,
   });
-  // TODO: Tron TRC20 sources are not actually "native" — they still need
-  // an approve flow because the engine emits `payerIsUser=true` Permit2
-  // pulls for any ERC20/TRC20 source. We short-circuit here because
-  // usePermit2Status uses wagmi's useReadContract which doesn't speak
-  // Tron RPC, and we don't yet have a TronWeb-based allowance reader.
-  // Wire a Tron allowance path and drop this override.
-  const status = isTronSource ? ({ phase: Permit2Phase.Native } as const) : permit2Status;
 
-  const erc20Approve = useApproveErc20ToPermit2(srcToken?.address as Address | undefined);
+  const erc20Approve = useApproveErc20ToPermit2({
+    token: srcToken?.address as Address | undefined,
+    permit2Address,
+    chainName: srcChainName,
+  });
   const permit2Approve = useApprovePermit2ToRouter({
     token: srcToken?.address as Address | undefined,
     universalRouter,
+    permit2Address,
+    chainName: srcChainName,
   });
   const swap = useSwap();
   useToastError(swap.error, 'Swap failed');
@@ -415,6 +415,7 @@ function SwapFormContent() {
         dstToken={dstToken}
         approvalStatus={status.phase}
         universalRouter={universalRouter}
+        permit2Address={permit2Address}
       />
 
       <ButtonSection
@@ -633,6 +634,7 @@ function ReviewDetails({
   dstToken,
   approvalStatus,
   universalRouter,
+  permit2Address,
 }: {
   isReview: boolean;
   sender: Address | undefined;
@@ -642,6 +644,7 @@ function ReviewDetails({
   dstToken: UiToken | undefined;
   approvalStatus: Permit2Phase;
   universalRouter: Address | undefined;
+  permit2Address: Address | undefined;
 }) {
   return (
     <>
@@ -670,6 +673,7 @@ function ReviewDetails({
               dstToken={dstToken}
               approvalStatus={approvalStatus}
               universalRouter={universalRouter}
+              permit2Address={permit2Address}
             />
           ) : (
             <p className="text-xs text-gray-500">No route to review.</p>
@@ -686,12 +690,14 @@ function ReviewTransactions({
   dstToken,
   approvalStatus,
   universalRouter,
+  permit2Address,
 }: {
   route: AugmentedRoute;
   srcToken: UiToken | undefined;
   dstToken: UiToken | undefined;
   approvalStatus: Permit2Phase;
   universalRouter: Address | undefined;
+  permit2Address: Address | undefined;
 }) {
   const tokenMap = useTokenByKeyMap();
   const multiProvider = useMultiProvider();
@@ -711,7 +717,7 @@ function ReviewTransactions({
           <h4>{`Transaction ${++txNum}: Approve ${symbol} → Permit2`}</h4>
           <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs dark:border-primary-300/25">
             <p>{`Token: ${srcToken?.address}`}</p>
-            <p>{`Spender (Permit2): ${PERMIT2_ADDRESS}`}</p>
+            <p>{`Spender (Permit2): ${permit2Address ?? '—'}`}</p>
             <p>One-time, infinite approval.</p>
           </div>
         </div>

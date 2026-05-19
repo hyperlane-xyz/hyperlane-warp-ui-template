@@ -16,12 +16,18 @@ const PERMIT2_ABI = parseAbi([
   'function approve(address token, address spender, uint160 amount, uint48 expiration)',
 ]);
 
-export type Permit2Status =
-  | { phase: 'idle' }
-  | { phase: 'native' }
-  | { phase: 'needs_erc20_approve' }
-  | { phase: 'needs_permit2_approve' }
-  | { phase: 'ready' };
+// Centralized phase identifiers so callers compare against a named
+// constant instead of a bare string literal — rename-safe.
+export const Permit2Phase = {
+  Idle: 'idle',
+  Native: 'native',
+  NeedsErc20Approve: 'needs_erc20_approve',
+  NeedsPermit2Approve: 'needs_permit2_approve',
+  Ready: 'ready',
+} as const;
+export type Permit2Phase = (typeof Permit2Phase)[keyof typeof Permit2Phase];
+
+export type Permit2Status = { phase: Permit2Phase };
 
 interface AllowanceArgs {
   chainId: number | undefined;
@@ -56,10 +62,10 @@ export function usePermit2Status(args: AllowanceArgs): Permit2Status {
     query: { enabled: enabled && !!owner && !!token && !!universalRouter },
   });
 
-  if (isNative) return { phase: 'native' };
-  if (!enabled || amount == null) return { phase: 'idle' };
+  if (isNative) return { phase: Permit2Phase.Native };
+  if (!enabled || amount == null) return { phase: Permit2Phase.Idle };
 
-  if ((erc20Allowance ?? 0n) < amount) return { phase: 'needs_erc20_approve' };
+  if ((erc20Allowance ?? 0n) < amount) return { phase: Permit2Phase.NeedsErc20Approve };
 
   const [permit2Amount, permit2Expiration] = (permit2Allowance ?? [0n, 0, 0]) as [
     bigint,
@@ -68,9 +74,9 @@ export function usePermit2Status(args: AllowanceArgs): Permit2Status {
   ];
   const nowSeconds = Math.floor(Date.now() / 1000);
   if (permit2Amount < amount || permit2Expiration <= nowSeconds) {
-    return { phase: 'needs_permit2_approve' };
+    return { phase: Permit2Phase.NeedsPermit2Approve };
   }
-  return { phase: 'ready' };
+  return { phase: Permit2Phase.Ready };
 }
 
 export function useApproveErc20ToPermit2(token: Address | undefined) {

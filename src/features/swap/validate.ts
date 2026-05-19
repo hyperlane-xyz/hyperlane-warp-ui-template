@@ -4,6 +4,7 @@ import {
   isEVMLike,
   isValidAddress,
   isZeroishAddress,
+  normalizeAddressEvm,
   ProtocolType,
 } from '@hyperlane-xyz/utils';
 import { parseUnits } from 'viem';
@@ -50,7 +51,7 @@ export async function validateSwapForm(args: {
   } = args;
 
   const chainsResult = validateChains(values, chains);
-  if ('error' in chainsResult) return chainsResult.error;
+  if (!chainsResult.ok) return chainsResult.error;
   const { srcChainInfo, dstChainInfo } = chainsResult;
 
   if (!srcToken) return { srcToken: 'Origin token required' };
@@ -68,7 +69,7 @@ export async function validateSwapForm(args: {
   if (recipientError) return recipientError;
 
   const amountResult = validateAmount(values, srcToken);
-  if ('error' in amountResult) return amountResult.error;
+  if (!amountResult.ok) return amountResult.error;
   const { amountAtomic } = amountResult;
 
   if (!bestRoute) return null;
@@ -87,17 +88,22 @@ export async function validateSwapForm(args: {
   });
 }
 
+export type ValidateChainsResult =
+  | { ok: true; srcChainInfo: ChainDiscovery; dstChainInfo: ChainDiscovery }
+  | { ok: false; error: SwapFormErrors };
+
 export function validateChains(
   values: SwapFormValues,
   chains: ChainDiscovery[] | undefined,
-): { srcChainInfo: ChainDiscovery; dstChainInfo: ChainDiscovery } | { error: SwapFormErrors } {
-  if (values.srcChain == null) return { error: { srcChain: 'Origin chain required' } };
-  if (values.dstChain == null) return { error: { dstChain: 'Destination chain required' } };
+): ValidateChainsResult {
+  if (values.srcChain == null) return { ok: false, error: { srcChain: 'Origin chain required' } };
+  if (values.dstChain == null)
+    return { ok: false, error: { dstChain: 'Destination chain required' } };
   const srcChainInfo = chains?.find((c) => c.id === values.srcChain);
   const dstChainInfo = chains?.find((c) => c.id === values.dstChain);
-  if (!srcChainInfo) return { error: { srcChain: 'Origin chain not supported' } };
-  if (!dstChainInfo) return { error: { dstChain: 'Destination chain not supported' } };
-  return { srcChainInfo, dstChainInfo };
+  if (!srcChainInfo) return { ok: false, error: { srcChain: 'Origin chain not supported' } };
+  if (!dstChainInfo) return { ok: false, error: { dstChain: 'Destination chain not supported' } };
+  return { ok: true, srcChainInfo, dstChainInfo };
 }
 
 export function validateRecipient(
@@ -143,22 +149,23 @@ export function validateQuote(args: {
   return null;
 }
 
-export function validateAmount(
-  values: SwapFormValues,
-  srcToken: UiToken,
-): { amountAtomic: bigint } | { error: SwapFormErrors } {
+export type ValidateAmountResult =
+  | { ok: true; amountAtomic: bigint }
+  | { ok: false; error: SwapFormErrors };
+
+export function validateAmount(values: SwapFormValues, srcToken: UiToken): ValidateAmountResult {
   const amountStr = values.amount?.toString().trim() ?? '';
-  if (!amountStr) return { error: { amount: 'Enter an amount' } };
+  if (!amountStr) return { ok: false, error: { amount: 'Enter an amount' } };
   const amountNum = Number(amountStr);
   if (!Number.isFinite(amountNum) || amountNum <= 0) {
-    return { error: { amount: 'Enter a positive amount' } };
+    return { ok: false, error: { amount: 'Enter a positive amount' } };
   }
   try {
     const a = parseUnits(amountStr, srcToken.decimals);
-    if (a <= 0n) return { error: { amount: 'Enter a positive amount' } };
-    return { amountAtomic: a };
+    if (a <= 0n) return { ok: false, error: { amount: 'Enter a positive amount' } };
+    return { ok: true, amountAtomic: a };
   } catch {
-    return { error: { amount: 'Invalid amount' } };
+    return { ok: false, error: { amount: 'Invalid amount' } };
   }
 }
 
@@ -282,7 +289,7 @@ function toEvmCanonical(addr: string, protocol: ProtocolType): string | null {
       protocol === ProtocolType.Ethereum
         ? addr
         : convertToProtocolAddress(addr, ProtocolType.Ethereum);
-    return hex.toLowerCase();
+    return normalizeAddressEvm(hex);
   } catch {
     return null;
   }

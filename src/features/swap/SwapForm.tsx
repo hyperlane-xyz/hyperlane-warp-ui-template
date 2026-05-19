@@ -1,8 +1,9 @@
+import { objLength } from '@hyperlane-xyz/utils';
 import { useDebounce, useModal } from '@hyperlane-xyz/widgets';
 import { useAccounts } from '@hyperlane-xyz/widgets/walletIntegrations/accounts';
 import { useAccountAddressForChain } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import { Form, Formik, useFormikContext } from 'formik';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { formatUnits, type Address } from 'viem';
 import { usePublicClient } from 'wagmi';
 
@@ -26,6 +27,7 @@ import { FeeSectionButton } from './FeeSectionButton';
 import { MaxButton } from './MaxButton';
 import {
   PERMIT2_ADDRESS,
+  Permit2Phase,
   useApproveErc20ToPermit2,
   useApprovePermit2ToRouter,
   usePermit2Status,
@@ -137,7 +139,13 @@ function SwapFormContent() {
     amount: amountAtomic,
     isNative: isNative || isTronSource,
   });
-  const status = isTronSource ? ({ phase: 'native' } as const) : permit2Status;
+  // TODO: Tron TRC20 sources are not actually "native" — they still need
+  // an approve flow because the engine emits `payerIsUser=true` Permit2
+  // pulls for any ERC20/TRC20 source. We short-circuit here because
+  // usePermit2Status uses wagmi's useReadContract which doesn't speak
+  // Tron RPC, and we don't yet have a TronWeb-based allowance reader.
+  // Wire a Tron allowance path and drop this override.
+  const status = isTronSource ? ({ phase: Permit2Phase.Native } as const) : permit2Status;
 
   const erc20Approve = useApproveErc20ToPermit2(srcToken?.address as Address | undefined);
   const permit2Approve = useApprovePermit2ToRouter({
@@ -156,11 +164,22 @@ function SwapFormContent() {
 
   const [isValidating, setIsValidating] = useState(false);
 
+  // Validate is async; the user can keep editing while it runs. We
+  // capture the values reference at request start and bail on resolve
+  // if the latest Formik values have changed — otherwise we'd flip into
+  // review mode on a form the user has already mutated.
+  const latestValuesRef = useRef(values);
+  useEffect(() => {
+    latestValuesRef.current = values;
+  }, [values]);
+
   const onContinue = useCallback(async () => {
+    const snapshot = values;
     setIsValidating(true);
     try {
       const approvalPending =
-        status.phase === 'needs_erc20_approve' || status.phase === 'needs_permit2_approve';
+        status.phase === Permit2Phase.NeedsErc20Approve ||
+        status.phase === Permit2Phase.NeedsPermit2Approve;
       const result = await validateSwapForm({
         values,
         bestRoute,
@@ -173,6 +192,9 @@ function SwapFormContent() {
         approvalPending,
         quoteExpiresAt: quote?.expiresAt,
       });
+      // Discard the result if the user edited the form while we were
+      // validating — otherwise we'd enter review mode on stale data.
+      if (latestValuesRef.current !== snapshot) return;
       if (result) {
         setErrors(result);
         return;
@@ -201,6 +223,39 @@ function SwapFormContent() {
     if (!sender || !srcToken || !dstToken || !bestRoute || !values.srcChain || !values.dstChain) {
       return;
     }
+
+    // Re-validate before broadcasting. Review mode pauses useQuote, so a
+    // user can sit on review past expiresAt with a stale quote — without
+    // this check we'd happily submit it. Same call as Continue plus the
+    // current quote.expiresAt so the staleness check fires.
+    const snapshot = values;
+    const approvalPending =
+      status.phase === Permit2Phase.NeedsErc20Approve ||
+      status.phase === Permit2Phase.NeedsPermit2Approve;
+    const validationResult = await validateSwapForm({
+      values,
+      bestRoute,
+      srcToken,
+      dstToken,
+      sender,
+      effectiveRecipient,
+      chains: chainsResp?.chains,
+      multiProvider,
+      approvalPending,
+      quoteExpiresAt: quote?.expiresAt,
+    });
+    // Same race as onContinue — if the form changed mid-validation,
+    // discard the result. In practice the inputs are disabled in review
+    // mode, but the wallet dropdown can still change the recipient.
+    if (latestValuesRef.current !== snapshot) return;
+    if (validationResult) {
+      // Bail back to edit mode so the user sees the error and the form
+      // unpauses useQuote to refresh.
+      setErrors(validationResult);
+      setIsReview(false);
+      return;
+    }
+
     setPauseQuote(true);
     setSwapLoading(true);
 
@@ -224,13 +279,16 @@ function SwapFormContent() {
     setActiveSwapIndex(swapIndex);
 
     try {
-      if (status.phase === 'needs_erc20_approve') {
+      if (status.phase === Permit2Phase.NeedsErc20Approve) {
         updateSwapStatus(swapIndex, SwapStatus.SigningApprove);
         const hash = await erc20Approve.send();
         updateSwapStatus(swapIndex, SwapStatus.ConfirmingApprove);
         if (publicClient) await publicClient.waitForTransactionReceipt({ hash });
       }
-      if (status.phase === 'needs_erc20_approve' || status.phase === 'needs_permit2_approve') {
+      if (
+        status.phase === Permit2Phase.NeedsErc20Approve ||
+        status.phase === Permit2Phase.NeedsPermit2Approve
+      ) {
         updateSwapStatus(swapIndex, SwapStatus.SigningApprove);
         const hash = await permit2Approve.send();
         updateSwapStatus(swapIndex, SwapStatus.ConfirmingApprove);
@@ -261,10 +319,12 @@ function SwapFormContent() {
     srcToken,
     dstToken,
     bestRoute,
-    values.srcChain,
-    values.dstChain,
+    values,
     effectiveRecipient,
     status.phase,
+    chainsResp?.chains,
+    multiProvider,
+    quote?.expiresAt,
     erc20Approve,
     permit2Approve,
     swap,
@@ -273,12 +333,13 @@ function SwapFormContent() {
     setActiveSwapIndex,
     updateSwapStatus,
     setSwapLoading,
+    setErrors,
   ]);
 
   // Validation runs on Continue, not on change. Clear stale errors when
   // user edits a relevant field.
   useEffect(() => {
-    if (Object.keys(errors).length === 0) return;
+    if (objLength(errors) === 0) return;
     setErrors({});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -579,7 +640,7 @@ function ReviewDetails({
   quoteLoading: boolean;
   srcToken: UiToken | undefined;
   dstToken: UiToken | undefined;
-  approvalStatus: 'idle' | 'native' | 'needs_erc20_approve' | 'needs_permit2_approve' | 'ready';
+  approvalStatus: Permit2Phase;
   universalRouter: Address | undefined;
 }) {
   return (
@@ -629,14 +690,15 @@ function ReviewTransactions({
   route: AugmentedRoute;
   srcToken: UiToken | undefined;
   dstToken: UiToken | undefined;
-  approvalStatus: 'idle' | 'native' | 'needs_erc20_approve' | 'needs_permit2_approve' | 'ready';
+  approvalStatus: Permit2Phase;
   universalRouter: Address | undefined;
 }) {
   const tokenMap = useTokenByKeyMap();
   const multiProvider = useMultiProvider();
-  const needsErc20 = approvalStatus === 'needs_erc20_approve';
+  const needsErc20 = approvalStatus === Permit2Phase.NeedsErc20Approve;
   const needsPermit2 =
-    approvalStatus === 'needs_permit2_approve' || approvalStatus === 'needs_erc20_approve';
+    approvalStatus === Permit2Phase.NeedsPermit2Approve ||
+    approvalStatus === Permit2Phase.NeedsErc20Approve;
   const symbol = srcToken?.symbol ?? 'token';
   const dstDecimals = dstToken?.decimals ?? 18;
   const dstSymbol = dstToken?.symbol ?? '';

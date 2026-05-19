@@ -3,6 +3,7 @@ import {
   EvmTokenAdapter,
   type MultiProtocolProvider,
 } from '@hyperlane-xyz/sdk';
+import { isNullish } from '@hyperlane-xyz/utils';
 import { type Address, erc20Abi, type PublicClient } from 'viem';
 
 import { logger } from '../../../utils/logger';
@@ -104,8 +105,9 @@ export async function estimateEvmGasCost(
       ? BigInt(feeData.maxPriorityFeePerGas.toString())
       : undefined;
     const legacy = feeData.gasPrice ? BigInt(feeData.gasPrice.toString()) : undefined;
-    const effectiveGasPrice = maxFee != null && priorityFee != null ? maxFee + priorityFee : legacy;
-    if (effectiveGasPrice == null) return 0n;
+    const effectiveGasPrice =
+      !isNullish(maxFee) && !isNullish(priorityFee) ? maxFee + priorityFee : legacy;
+    if (isNullish(effectiveGasPrice)) return 0n;
     return gasUnits * effectiveGasPrice;
   } catch (err) {
     logger.warn('estimateEvmGasCost failed', err as Error);

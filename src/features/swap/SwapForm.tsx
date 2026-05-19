@@ -1,0 +1,819 @@
+import { useDebounce, useModal } from '@hyperlane-xyz/widgets';
+import { useAccounts } from '@hyperlane-xyz/widgets/walletIntegrations/accounts';
+import { useAccountAddressForChain } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
+import { Form, Formik, useFormikContext } from 'formik';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { formatUnits, type Address } from 'viem';
+import { usePublicClient } from 'wagmi';
+
+import { FormWarningBanner } from '../../components/banner/FormWarningBanner';
+import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
+import { SolidButton } from '../../components/buttons/SolidButton';
+import { SwapIcon } from '../../components/icons/SwapIcon';
+import { TextField } from '../../components/input/TextField';
+import { TransferSection } from '../../components/layout/TransferSection';
+import { useToastError } from '../../components/toast/useToastError';
+import { config } from '../../consts/config';
+import { useChains } from '../api/hooks';
+import { useMultiProvider } from '../chains/hooks';
+import { useStore } from '../store';
+import { RecipientConfirmationModal } from '../wallet/RecipientConfirmationModal';
+import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
+import { WalletDropdown } from '../wallet/WalletDropdown';
+import { useTokenBalance } from './balances/hooks';
+import { formatBalance, formatFeeAmount } from './balances/utils';
+import { FeeSectionButton } from './FeeSectionButton';
+import { MaxButton } from './MaxButton';
+import {
+  PERMIT2_ADDRESS,
+  useApproveErc20ToPermit2,
+  useApprovePermit2ToRouter,
+  usePermit2Status,
+} from './permit2';
+import { SlippagePanel } from './SlippagePanel';
+import { TokenBalance } from './TokenBalance';
+import { getTokenByKeyFromMap, useTokenByKeyMap } from './tokens/hooks';
+import { TokenSelectField } from './tokens/TokenSelectField';
+import type { UiToken } from './tokens/types';
+import {
+  FinalSwapStatuses,
+  SwapStatus,
+  type AugmentedRoute,
+  type SwapFormValues,
+  type SwapHistoryItem,
+} from './types';
+import { useFormInitialValues } from './useFormInitialValues';
+import { useQuote } from './useQuote';
+import { useSwap } from './useSwap';
+import { validateSwapForm } from './validate';
+
+export function SwapForm() {
+  const initialValues = useFormInitialValues();
+  return (
+    <Formik<SwapFormValues>
+      initialValues={initialValues}
+      enableReinitialize
+      onSubmit={() => undefined}
+      validateOnChange={false}
+      validateOnBlur={false}
+    >
+      <Form className="swap-form flex w-full flex-col items-stretch gap-1.5">
+        <SwapFormContent />
+      </Form>
+    </Formik>
+  );
+}
+
+function SwapFormContent() {
+  const { values, errors, setErrors, setFieldValue, setValues } =
+    useFormikContext<SwapFormValues>();
+  const multiProvider = useMultiProvider();
+  const tokenMap = useTokenByKeyMap();
+  const publicClient = usePublicClient({ chainId: values.srcChain ?? undefined });
+  const { data: chainsResp } = useChains();
+
+  const srcChainName =
+    values.srcChain != null
+      ? (multiProvider.tryGetChainName(values.srcChain) ?? undefined)
+      : undefined;
+  const dstChainName =
+    values.dstChain != null
+      ? (multiProvider.tryGetChainName(values.dstChain) ?? undefined)
+      : undefined;
+  useAccounts(multiProvider, config.addressBlacklist);
+  const sender = useAccountAddressForChain(multiProvider, srcChainName);
+  const connectedDestAddress = useAccountAddressForChain(multiProvider, dstChainName);
+  const effectiveRecipient = values.recipient || connectedDestAddress || '';
+
+  const srcTokenKey =
+    values.srcChain != null && values.srcToken
+      ? `${values.srcChain}-${values.srcToken.toLowerCase()}`
+      : undefined;
+  const dstTokenKey =
+    values.dstChain != null && values.dstToken
+      ? `${values.dstChain}-${values.dstToken.toLowerCase()}`
+      : undefined;
+  const srcToken = getTokenByKeyFromMap(tokenMap, srcTokenKey);
+  const dstToken = getTokenByKeyFromMap(tokenMap, dstTokenKey);
+
+  // Engine /v1/chains gives us the UR address per chain.
+  const srcChainInfo = chainsResp?.chains.find((c) => c.id === values.srcChain);
+  const universalRouter = srcChainInfo?.universalRouter as Address | undefined;
+  const isTronSource = srcChainInfo?.protocol === 'tron';
+
+  const [isReview, setIsReview] = useState(false);
+  const [pauseQuote, setPauseQuote] = useState(false);
+  const { close: closeConfirmationModal, isOpen: isConfirmationModalOpen } = useModal();
+
+  const debouncedAmount = useDebounce(values.amount, 750);
+  const {
+    quote,
+    isLoading: quoteLoading,
+    error: quoteError,
+    isExpired,
+    isQuoteSettled,
+  } = useQuote({
+    values: { ...values, amount: debouncedAmount, recipient: effectiveRecipient },
+    sender,
+    pause: pauseQuote || isReview,
+  });
+  useToastError(quoteError, 'Quote failed');
+
+  const bestRoute = quote?.routes[0];
+
+  // Permit2 — EVM source only.
+  const isNative = !!srcToken?.isNative;
+  const amountAtomic = useMemo(() => {
+    const initialStep = bestRoute?.raw.steps[0];
+    if (initialStep && 'amountIn' in initialStep) return BigInt(initialStep.amountIn);
+    return undefined;
+  }, [bestRoute]);
+
+  const permit2Status = usePermit2Status({
+    chainId: values.srcChain ?? undefined,
+    token: srcToken?.address as Address | undefined,
+    owner: sender as Address | undefined,
+    universalRouter,
+    amount: amountAtomic,
+    isNative: isNative || isTronSource,
+  });
+  const status = isTronSource ? ({ phase: 'native' } as const) : permit2Status;
+
+  const erc20Approve = useApproveErc20ToPermit2(srcToken?.address as Address | undefined);
+  const permit2Approve = useApprovePermit2ToRouter({
+    token: srcToken?.address as Address | undefined,
+    universalRouter,
+  });
+  const swap = useSwap();
+  useToastError(swap.error, 'Swap failed');
+  const addSwap = useStore((s) => s.addSwap);
+  const setActiveSwapIndex = useStore((s) => s.setActiveSwapIndex);
+  const updateSwapStatus = useStore((s) => s.updateSwapStatus);
+  const setSwapLoading = useStore((s) => s.setSwapLoading);
+
+  const hasAmount = !!values.amount && Number(values.amount) > 0;
+  const hasTokens = !!srcToken && !!dstToken;
+
+  const [isValidating, setIsValidating] = useState(false);
+
+  const onContinue = useCallback(async () => {
+    setIsValidating(true);
+    try {
+      const approvalPending =
+        status.phase === 'needs_erc20_approve' || status.phase === 'needs_permit2_approve';
+      const result = await validateSwapForm({
+        values,
+        bestRoute,
+        srcToken,
+        dstToken,
+        sender,
+        effectiveRecipient,
+        chains: chainsResp?.chains,
+        multiProvider,
+        approvalPending,
+        quoteExpiresAt: quote?.expiresAt,
+      });
+      if (result) {
+        setErrors(result);
+        return;
+      }
+      if (!sender || !srcToken || !dstToken || !bestRoute || !effectiveRecipient) return;
+      setErrors({});
+      setIsReview(true);
+    } finally {
+      setIsValidating(false);
+    }
+  }, [
+    values,
+    bestRoute,
+    srcToken,
+    dstToken,
+    sender,
+    effectiveRecipient,
+    chainsResp?.chains,
+    multiProvider,
+    status.phase,
+    quote?.expiresAt,
+    setErrors,
+  ]);
+
+  const onSendTransactions = useCallback(async () => {
+    if (!sender || !srcToken || !dstToken || !bestRoute || !values.srcChain || !values.dstChain) {
+      return;
+    }
+    setPauseQuote(true);
+    setSwapLoading(true);
+
+    const initialStep = bestRoute.raw.steps[0];
+    const finalStep = bestRoute.raw.steps[bestRoute.raw.steps.length - 1];
+    const item: SwapHistoryItem = {
+      status: SwapStatus.Preparing,
+      timestamp: Date.now(),
+      srcChain: values.srcChain,
+      dstChain: values.dstChain,
+      srcToken: srcToken.address,
+      dstToken: dstToken.address,
+      amountIn:
+        initialStep && 'amountIn' in initialStep ? initialStep.amountIn : bestRoute.raw.output,
+      amountOut: finalStep && 'amountOut' in finalStep ? finalStep.amountOut : bestRoute.raw.output,
+      sender,
+      recipient: effectiveRecipient,
+    };
+    addSwap(item);
+    const swapIndex = useStore.getState().swaps.length - 1;
+    setActiveSwapIndex(swapIndex);
+
+    try {
+      if (status.phase === 'needs_erc20_approve') {
+        updateSwapStatus(swapIndex, SwapStatus.SigningApprove);
+        const hash = await erc20Approve.send();
+        updateSwapStatus(swapIndex, SwapStatus.ConfirmingApprove);
+        if (publicClient) await publicClient.waitForTransactionReceipt({ hash });
+      }
+      if (status.phase === 'needs_erc20_approve' || status.phase === 'needs_permit2_approve') {
+        updateSwapStatus(swapIndex, SwapStatus.SigningApprove);
+        const hash = await permit2Approve.send();
+        updateSwapStatus(swapIndex, SwapStatus.ConfirmingApprove);
+        if (publicClient) await publicClient.waitForTransactionReceipt({ hash });
+      }
+      await swap.execute({
+        swapIndex,
+        route: bestRoute,
+        srcChainId: values.srcChain,
+        dstChainId: values.dstChain,
+        srcToken: srcToken.address,
+        dstToken: dstToken.address,
+        sender,
+        recipient: effectiveRecipient,
+      });
+      setIsReview(false);
+    } catch {
+      const cur = useStore.getState().swaps[swapIndex]?.status;
+      if (cur && !FinalSwapStatuses.includes(cur)) {
+        updateSwapStatus(swapIndex, SwapStatus.Failed);
+      }
+    } finally {
+      setPauseQuote(false);
+      setSwapLoading(false);
+    }
+  }, [
+    sender,
+    srcToken,
+    dstToken,
+    bestRoute,
+    values.srcChain,
+    values.dstChain,
+    effectiveRecipient,
+    status.phase,
+    erc20Approve,
+    permit2Approve,
+    swap,
+    publicClient,
+    addSwap,
+    setActiveSwapIndex,
+    updateSwapStatus,
+    setSwapLoading,
+  ]);
+
+  // Validation runs on Continue, not on change. Clear stale errors when
+  // user edits a relevant field.
+  useEffect(() => {
+    if (Object.keys(errors).length === 0) return;
+    setErrors({});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    values.amount,
+    values.recipient,
+    values.srcChain,
+    values.dstChain,
+    values.srcToken,
+    values.dstToken,
+  ]);
+
+  const onSwapChains = useCallback(() => {
+    if (isReview) return;
+    setValues((prev) => ({
+      ...prev,
+      amount: '',
+      srcChain: prev.dstChain,
+      dstChain: prev.srcChain,
+      srcToken: prev.dstToken,
+      dstToken: prev.srcToken,
+      recipient: '',
+    }));
+  }, [setValues, isReview]);
+
+  const extraErrors = errors as Partial<Record<'form', string>>;
+  const topLevelError =
+    extraErrors.form || errors.srcChain || errors.dstChain || errors.srcToken || errors.dstToken;
+
+  return (
+    <>
+      <WarningBanners
+        srcChainName={srcChainName}
+        isExpired={isExpired}
+        topLevelError={topLevelError}
+      />
+
+      <TransferSection label="Send">
+        <OriginTokenCard
+          isReview={isReview}
+          srcChainName={srcChainName}
+          srcToken={srcToken}
+          amountError={errors.amount}
+        />
+      </TransferSection>
+
+      <SwapTokensButton onClick={onSwapChains} disabled={isReview} />
+
+      <TransferSection label="Receive">
+        <DestinationTokenCard
+          isReview={isReview}
+          dstChainName={dstChainName}
+          dstToken={dstToken}
+          recipient={effectiveRecipient}
+          bestRoute={bestRoute}
+          quoteLoading={quoteLoading}
+          recipientError={errors.recipient}
+        />
+      </TransferSection>
+
+      {!isReview && (
+        <SlippagePanel
+          slippageBps={values.slippageBps}
+          setSlippageBps={(bps) => setFieldValue('slippageBps', bps)}
+        />
+      )}
+
+      <ReviewDetails
+        isReview={isReview}
+        sender={sender as Address | undefined}
+        bestRoute={bestRoute}
+        quoteLoading={quoteLoading}
+        srcToken={srcToken}
+        dstToken={dstToken}
+        approvalStatus={status.phase}
+        universalRouter={universalRouter}
+      />
+
+      <ButtonSection
+        isReview={isReview}
+        setIsReview={setIsReview}
+        srcChainName={srcChainName ?? ''}
+        dstChainName={dstChainName}
+        hasAmount={hasAmount}
+        hasTokens={hasTokens}
+        hasRoute={!!bestRoute}
+        isQuoteSettled={isQuoteSettled}
+        isValidating={isValidating}
+        onSendTransactions={onSendTransactions}
+        sendPending={swap.isPending || erc20Approve.isPending || permit2Approve.isPending}
+      />
+
+      <RecipientConfirmationModal
+        isOpen={isConfirmationModalOpen}
+        close={closeConfirmationModal}
+        onConfirm={() => setIsReview(true)}
+        recipient={effectiveRecipient}
+        destinationChainDisplay={
+          dstChainName ? multiProvider.tryGetChainMetadata(dstChainName)?.displayName : undefined
+        }
+      />
+
+      <FormSubmitDispatcher onContinue={onContinue} isReview={isReview} />
+    </>
+  );
+}
+
+function WarningBanners({
+  srcChainName,
+  isExpired,
+  topLevelError,
+}: {
+  srcChainName: string | undefined;
+  isExpired: boolean;
+  topLevelError: string | undefined;
+}) {
+  return (
+    <div className="max-h-12 overflow-hidden sm:max-h-10">
+      <WalletConnectionWarning origin={srcChainName || ''} />
+      <FormWarningBanner isVisible={isExpired}>Price expired — refreshing…</FormWarningBanner>
+      <FormWarningBanner isVisible={!!topLevelError}>{topLevelError}</FormWarningBanner>
+    </div>
+  );
+}
+
+function OriginTokenCard({
+  isReview,
+  srcChainName,
+  srcToken,
+  amountError,
+}: {
+  isReview: boolean;
+  srcChainName: string | undefined;
+  srcToken: UiToken | undefined;
+  amountError: string | undefined;
+}) {
+  const { data: balance, isLoading: isBalanceLoading } = useTokenBalance(srcToken);
+
+  return (
+    <div>
+      <div className="mb-2 flex items-center justify-between">
+        <WalletDropdown chainName={srcChainName} selectionMode="origin" disabled={isReview} />
+      </div>
+
+      <div className="transfer-chain-field rounded-[7px] border border-gray-400/25 bg-white p-3 shadow-input dark:border-primary-300/[0.18] dark:bg-transparent dark:shadow-none">
+        <TokenSelectField selectionMode="origin" disabled={isReview} />
+
+        <div className="transfer-divider my-2.5 h-px bg-primary-50 dark:bg-primary-300/[0.22]" />
+
+        <div className="flex items-center justify-between gap-2">
+          <TextField
+            name="amount"
+            placeholder="0"
+            type="number"
+            step="any"
+            min="0"
+            disabled={isReview}
+            className="transfer-text-input w-full flex-1 border-none bg-transparent font-secondary text-xl font-normal text-gray-900 outline-none placeholder:text-gray-900 dark:text-foreground-primary dark:placeholder:text-foreground-secondary"
+            onWheel={(e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur()}
+            onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+              if (e.key === '-' || e.key === 'e') e.preventDefault();
+            }}
+          />
+          <MaxButton
+            balance={balance ?? undefined}
+            isLoading={isBalanceLoading}
+            disabled={isReview}
+            token={srcToken}
+          />
+        </div>
+        <div className="transfer-balance mt-1 flex items-center justify-between text-xs leading-[18px] text-gray-450 dark:text-foreground-secondary">
+          <span>$0.00</span>
+          <TokenBalance label="Balance" balance={balance ?? null} token={srcToken} />
+        </div>
+      </div>
+      {amountError && (
+        <p className="transfer-field-error mt-1 pl-1 text-xs text-red-500 dark:text-red-400">
+          {amountError}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function DestinationTokenCard({
+  isReview,
+  dstChainName,
+  dstToken,
+  recipient,
+  bestRoute,
+  quoteLoading,
+  recipientError,
+}: {
+  isReview: boolean;
+  dstChainName: string | undefined;
+  dstToken: UiToken | undefined;
+  recipient: string;
+  bestRoute: AugmentedRoute | undefined;
+  quoteLoading: boolean;
+  recipientError: string | undefined;
+}) {
+  const { values, setFieldValue } = useFormikContext<SwapFormValues>();
+  const { data: balance } = useTokenBalance(dstToken, recipient);
+
+  const outputDisplay = useMemo(() => {
+    if (!bestRoute || !dstToken) return '';
+    try {
+      return formatUnits(BigInt(bestRoute.raw.output), dstToken.decimals);
+    } catch {
+      return '';
+    }
+  }, [bestRoute, dstToken]);
+  const minOutputDisplay = useMemo(() => {
+    if (!bestRoute || !dstToken) return '';
+    if (bestRoute.isBridgeOnly) return '';
+    try {
+      return formatUnits(BigInt(bestRoute.raw.outputMin), dstToken.decimals);
+    } catch {
+      return '';
+    }
+  }, [bestRoute, dstToken]);
+
+  return (
+    <div>
+      <div className="mb-2 flex items-center justify-between">
+        <WalletDropdown
+          chainName={dstChainName}
+          selectionMode="destination"
+          recipient={values.recipient}
+          onRecipientChange={(addr) => setFieldValue('recipient', addr)}
+          disabled={isReview}
+        />
+      </div>
+
+      <div className="transfer-chain-field rounded-[7px] border border-gray-400/25 bg-white p-3 shadow-input dark:border-primary-300/[0.18] dark:bg-transparent dark:shadow-none">
+        <TokenSelectField selectionMode="destination" disabled={isReview} />
+
+        <div className="transfer-divider my-2.5 h-px bg-primary-50 dark:bg-primary-300/[0.22]" />
+
+        <div className="flex items-center justify-between gap-2">
+          <input
+            type="text"
+            readOnly
+            placeholder={quoteLoading ? '…' : '0'}
+            value={outputDisplay}
+            className="transfer-text-output w-full flex-1 cursor-not-allowed border-none bg-transparent font-secondary text-xl font-normal text-gray-900 outline-none placeholder:text-gray-400 dark:text-foreground-primary dark:placeholder:text-foreground-secondary"
+            tabIndex={-1}
+            aria-label="Expected output amount"
+          />
+        </div>
+        <div className="transfer-balance mt-1 flex items-center justify-between text-xs leading-[18px] text-gray-450 dark:text-foreground-secondary">
+          <span>
+            {minOutputDisplay ? `Min: ${minOutputDisplay} ${dstToken?.symbol ?? ''}` : ''}
+          </span>
+          <TokenBalance label="Remote Balance" balance={balance ?? null} token={dstToken} />
+        </div>
+      </div>
+      {recipientError && (
+        <p className="transfer-field-error mt-1 pl-1 text-xs text-red-500 dark:text-red-400">
+          {recipientError}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function SwapTokensButton({ onClick, disabled }: { onClick: () => void; disabled?: boolean }) {
+  return (
+    <div className="relative z-10 -my-3 flex justify-center">
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={disabled}
+        className="swap-chains-button group flex h-8 w-8 items-center justify-center rounded border border-gray-400/50 bg-white shadow-button transition-all hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-primary-300/35 dark:bg-background/90 dark:shadow-none dark:hover:bg-primary-300/[0.18]"
+      >
+        <SwapIcon
+          width={18}
+          height={24}
+          className="swap-chains-icon transition-transform duration-300 group-hover:rotate-180 group-disabled:rotate-0 dark:drop-shadow-[0_0_8px_rgba(255,255,255,0.55)] dark:[&_path]:fill-white"
+        />
+      </button>
+    </div>
+  );
+}
+
+function ReviewDetails({
+  isReview,
+  sender,
+  bestRoute,
+  quoteLoading,
+  srcToken,
+  dstToken,
+  approvalStatus,
+  universalRouter,
+}: {
+  isReview: boolean;
+  sender: Address | undefined;
+  bestRoute: AugmentedRoute | undefined;
+  quoteLoading: boolean;
+  srcToken: UiToken | undefined;
+  dstToken: UiToken | undefined;
+  approvalStatus: 'idle' | 'native' | 'needs_erc20_approve' | 'needs_permit2_approve' | 'ready';
+  universalRouter: Address | undefined;
+}) {
+  return (
+    <>
+      {!isReview && sender && bestRoute && (
+        <div className="mt-2 px-1">
+          <FeeSectionButton feeBreakdown={bestRoute.feeBreakdown} isLoading={quoteLoading} />
+        </div>
+      )}
+      {!isReview && sender && quoteLoading && !bestRoute && (
+        <p className="px-1 text-xs text-gray-500">Quoting…</p>
+      )}
+
+      <div
+        className={`${
+          isReview ? 'max-h-screen duration-1000 ease-in' : 'max-h-0 duration-500'
+        } overflow-hidden transition-all`}
+      >
+        <label className="transfer-field-label mt-4 block pl-0.5 text-sm text-gray-600 dark:text-foreground-secondary">
+          Transactions
+        </label>
+        <div className="transfer-review-panel mt-1.5 space-y-2 break-all rounded border border-gray-400 bg-gray-150 px-2.5 py-2 text-sm dark:border-primary-300/25 dark:bg-background/40 dark:text-foreground-primary">
+          {bestRoute ? (
+            <ReviewTransactions
+              route={bestRoute}
+              srcToken={srcToken}
+              dstToken={dstToken}
+              approvalStatus={approvalStatus}
+              universalRouter={universalRouter}
+            />
+          ) : (
+            <p className="text-xs text-gray-500">No route to review.</p>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
+
+function ReviewTransactions({
+  route,
+  srcToken,
+  dstToken,
+  approvalStatus,
+  universalRouter,
+}: {
+  route: AugmentedRoute;
+  srcToken: UiToken | undefined;
+  dstToken: UiToken | undefined;
+  approvalStatus: 'idle' | 'native' | 'needs_erc20_approve' | 'needs_permit2_approve' | 'ready';
+  universalRouter: Address | undefined;
+}) {
+  const tokenMap = useTokenByKeyMap();
+  const multiProvider = useMultiProvider();
+  const needsErc20 = approvalStatus === 'needs_erc20_approve';
+  const needsPermit2 =
+    approvalStatus === 'needs_permit2_approve' || approvalStatus === 'needs_erc20_approve';
+  const symbol = srcToken?.symbol ?? 'token';
+  const dstDecimals = dstToken?.decimals ?? 18;
+  const dstSymbol = dstToken?.symbol ?? '';
+
+  let txNum = 0;
+  return (
+    <>
+      {needsErc20 && (
+        <div>
+          <h4>{`Transaction ${++txNum}: Approve ${symbol} → Permit2`}</h4>
+          <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs dark:border-primary-300/25">
+            <p>{`Token: ${srcToken?.address}`}</p>
+            <p>{`Spender (Permit2): ${PERMIT2_ADDRESS}`}</p>
+            <p>One-time, infinite approval.</p>
+          </div>
+        </div>
+      )}
+      {needsPermit2 && (
+        <div>
+          <h4>{`Transaction ${++txNum}: Approve Permit2 → Universal Router`}</h4>
+          <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs dark:border-primary-300/25">
+            <p>{`Token: ${srcToken?.address}`}</p>
+            <p>{`Spender (UR): ${universalRouter}`}</p>
+            <p>1-year max160 allowance.</p>
+          </div>
+        </div>
+      )}
+      <div>
+        <h4>{`Transaction ${++txNum}: Swap`}</h4>
+        <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs dark:border-primary-300/25">
+          {dstToken?.address && (
+            <p className="flex">
+              <span className="min-w-[7.5rem]">Output Token</span>
+              <span>{dstToken.address}</span>
+            </p>
+          )}
+          <p className="flex">
+            <span className="min-w-[7.5rem]">Expected Output</span>
+            <span>{`${formatBalance(BigInt(route.raw.output), dstDecimals)} ${dstSymbol}`}</span>
+          </p>
+          {!route.isBridgeOnly && (
+            <p className="flex">
+              <span className="min-w-[7.5rem]">Min Output</span>
+              <span>{`${formatBalance(BigInt(route.raw.outputMin), dstDecimals)} ${dstSymbol}`}</span>
+            </p>
+          )}
+          {route.feeBreakdown.components
+            .filter((c) => c.amount > 0n)
+            .map((c, i) => {
+              const label = c.category === 'bridge' ? 'Bridge Fee' : 'Interchain Gas';
+              const isNative = /^0x0+$/i.test(c.tokenAddress);
+              const componentChainName =
+                multiProvider.tryGetChainName(c.chainId) ?? `chain-${c.chainId}`;
+              const nativeMeta = isNative
+                ? multiProvider.tryGetChainMetadata(componentChainName)?.nativeToken
+                : undefined;
+              const componentToken = isNative
+                ? undefined
+                : getTokenByKeyFromMap(tokenMap, `${c.chainId}-${c.tokenAddress.toLowerCase()}`);
+              const decimals = isNative
+                ? (nativeMeta?.decimals ?? 18)
+                : (componentToken?.decimals ?? 18);
+              const sym = isNative
+                ? (nativeMeta?.symbol ?? 'ETH')
+                : (componentToken?.symbol ?? '???');
+              return (
+                <p key={`${c.category}-${c.chainId}-${c.tokenAddress}-${i}`} className="flex">
+                  <span className="min-w-[7.5rem]">{label}</span>
+                  <span>{`${formatFeeAmount(c.amount, decimals)} ${sym}`}</span>
+                </p>
+              );
+            })}
+        </div>
+      </div>
+    </>
+  );
+}
+
+function ButtonSection({
+  isReview,
+  setIsReview,
+  srcChainName,
+  dstChainName,
+  hasAmount,
+  hasTokens,
+  hasRoute,
+  isQuoteSettled,
+  isValidating,
+  onSendTransactions,
+  sendPending,
+}: {
+  isReview: boolean;
+  setIsReview: (b: boolean) => void;
+  srcChainName: string;
+  dstChainName: string | undefined;
+  hasAmount: boolean;
+  hasTokens: boolean;
+  hasRoute: boolean;
+  isQuoteSettled: boolean;
+  isValidating: boolean;
+  onSendTransactions: () => Promise<void>;
+  sendPending: boolean;
+}) {
+  const multiProvider = useMultiProvider();
+  const dstMetadata = dstChainName ? multiProvider.tryGetChainMetadata(dstChainName) : undefined;
+  const dstDisplay = dstMetadata?.displayName || dstMetadata?.name || dstChainName || 'destination';
+
+  let text = 'Continue';
+  let disabled = false;
+  if (!hasTokens) {
+    text = 'Select tokens';
+    disabled = true;
+  } else if (!hasAmount) {
+    text = 'Enter amount';
+    disabled = true;
+  } else if (hasRoute) {
+    if (isValidating) {
+      text = 'Checking…';
+      disabled = true;
+    } else {
+      text = 'Continue';
+      disabled = false;
+    }
+  } else if (isQuoteSettled) {
+    text = 'Route is not supported';
+    disabled = true;
+  } else {
+    text = 'Fetching quote…';
+    disabled = true;
+  }
+
+  if (!isReview) {
+    return (
+      <ConnectAwareSubmitButton
+        chainName={srcChainName}
+        text={text}
+        disabled={disabled}
+        classes="w-full mb-4 px-3 py-2.5 font-secondary text-xl text-cream-100"
+      />
+    );
+  }
+
+  return (
+    <div className="mb-4 mt-4 flex items-center justify-between space-x-4">
+      <SolidButton
+        type="button"
+        color="primary"
+        onClick={() => setIsReview(false)}
+        className="px-6 py-1.5 font-secondary"
+      >
+        <span>Edit</span>
+      </SolidButton>
+      <SolidButton
+        type="button"
+        color="accent"
+        onClick={onSendTransactions}
+        disabled={sendPending}
+        className="flex-1 px-3 py-1.5 font-secondary text-white"
+      >
+        {sendPending ? 'Sending…' : `Send to ${dstDisplay}`}
+      </SolidButton>
+    </div>
+  );
+}
+
+function FormSubmitDispatcher({
+  onContinue,
+  isReview,
+}: {
+  onContinue: () => void;
+  isReview: boolean;
+}) {
+  const { submitCount } = useFormikContext<SwapFormValues>();
+  useEffect(() => {
+    if (submitCount === 0 || isReview) return;
+    onContinue();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [submitCount]);
+  return null;
+}

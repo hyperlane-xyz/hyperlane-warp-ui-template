@@ -33,6 +33,8 @@ interface ChainFilterPanelProps {
   onEditChain?: (chainName: string) => void;
   showBackButton?: boolean;
   onBack?: () => void;
+  /** Override chain source — passed through to ChainList. */
+  chainInfos?: ChainInfo[];
 }
 
 export function ChainFilterPanel({
@@ -43,6 +45,7 @@ export function ChainFilterPanel({
   onEditChain,
   showBackButton,
   onBack,
+  chainInfos,
 }: ChainFilterPanelProps) {
   const [isEditMode, setIsEditMode] = useState(false);
   const [filterState, setFilterState] = useState<ChainFilterState>(defaultFilterState);
@@ -113,6 +116,7 @@ export function ChainFilterPanel({
         isEditMode={isEditMode}
         filterState={filterState}
         sortState={sortState}
+        chainInfos={chainInfos}
       />
     </div>
   );

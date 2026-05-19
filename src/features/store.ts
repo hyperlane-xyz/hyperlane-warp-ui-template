@@ -22,6 +22,9 @@ import { config } from '../consts/config';
 import { logger } from '../utils/logger';
 import { assembleChainAddresses } from './chains/addresses';
 import { assembleChainMetadata } from './chains/metadata';
+import type { UiToken } from './swap/tokens/types';
+import { getTokenKey as getSwapTokenKey } from './swap/tokens/utils';
+import { FinalSwapStatuses, SwapHistoryItem, SwapStatus } from './swap/types';
 import {
   buildTokensArray,
   getTokenKey,
@@ -104,9 +107,36 @@ export interface AppState {
   ) => void;
   failUnconfirmedTransfers: () => void;
 
+  // Swap history (in-memory only; not persisted). Mirrors `transfers` shape.
+  swaps: SwapHistoryItem[];
+  addSwap: (s: SwapHistoryItem) => void;
+  resetSwaps: () => void;
+  updateSwapStatus: (
+    i: number,
+    status: SwapStatus,
+    options?: {
+      msgId?: string;
+      originTxHash?: string;
+      originBlockNumber?: number;
+      destinationTxHash?: string;
+    },
+  ) => void;
+  failUnconfirmedSwaps: () => void;
+  // Index into `swaps` of the swap currently being viewed in the
+  // SwapDetailsModal. Set by useSwap.execute when a swap starts.
+  activeSwapIndex: number | null;
+  setActiveSwapIndex: (i: number | null) => void;
+  // Accumulated engine-token catalogue. Every useTokens() result funnels
+  // through syncTokens so SwapForm / SwapDetailsModal lookups go through
+  // one place. Keyed by getSwapTokenKey (chainId-address). Not persisted.
+  knownTokens: Map<string, UiToken>;
+  syncTokens: (tokens: UiToken[]) => void;
+
   // Shared component state
   transferLoading: boolean;
   setTransferLoading: (isLoading: boolean) => void;
+  swapLoading: boolean;
+  setSwapLoading: (isLoading: boolean) => void;
   isSideBarOpen: boolean;
   setIsSideBarOpen: (isOpen: boolean) => void;
   showEnvSelectModal: boolean;
@@ -246,10 +276,68 @@ export const useStore = create<AppState>()(
         }));
       },
 
+      // Swap history (in-memory only)
+      swaps: [],
+      addSwap: (s) => {
+        set((state) => ({ swaps: [...state.swaps, s] }));
+      },
+      resetSwaps: () => {
+        set(() => ({ swaps: [] }));
+      },
+      updateSwapStatus: (i, status, options) => {
+        set((state) => {
+          if (i >= state.swaps.length) return state;
+          const swaps = [...state.swaps];
+          swaps[i] = {
+            ...swaps[i],
+            status,
+            msgId: swaps[i].msgId ?? options?.msgId,
+            originTxHash: swaps[i].originTxHash ?? options?.originTxHash,
+            originBlockNumber: swaps[i].originBlockNumber ?? options?.originBlockNumber,
+            destinationTxHash: swaps[i].destinationTxHash ?? options?.destinationTxHash,
+          };
+          return { swaps };
+        });
+      },
+      failUnconfirmedSwaps: () => {
+        // Only mark Failed if the swap never broadcast an origin tx.
+        // A swap with an originTxHash may still be bridging.
+        set((state) => ({
+          swaps: state.swaps.map((s) => {
+            if (FinalSwapStatuses.includes(s.status)) return s;
+            if (s.originTxHash) return s;
+            return { ...s, status: SwapStatus.Failed };
+          }),
+        }));
+      },
+      activeSwapIndex: null,
+      setActiveSwapIndex: (activeSwapIndex) => {
+        set(() => ({ activeSwapIndex }));
+      },
+      knownTokens: new Map(),
+      syncTokens: (newTokens) => {
+        set((state) => {
+          let added = 0;
+          const next = new Map(state.knownTokens);
+          for (const t of newTokens) {
+            const key = getSwapTokenKey(t);
+            if (!next.has(key)) {
+              next.set(key, t);
+              added++;
+            }
+          }
+          return added > 0 ? { knownTokens: next } : state;
+        });
+      },
+
       // Shared component state
       transferLoading: false,
       setTransferLoading: (isLoading) => {
         set(() => ({ transferLoading: isLoading }));
+      },
+      swapLoading: false,
+      setSwapLoading: (isLoading) => {
+        set(() => ({ swapLoading: isLoading }));
       },
       isSideBarOpen: false,
       setIsSideBarOpen: (isSideBarOpen) => {

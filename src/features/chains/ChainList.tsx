@@ -20,6 +20,8 @@ interface ChainListProps {
   isEditMode?: boolean;
   filterState?: ChainFilterState;
   sortState?: SortState;
+  /** Override the chain source (e.g. swap tab uses engine `/v1/chains`). */
+  chainInfos?: ChainInfo[];
 }
 
 export function ChainList({
@@ -29,8 +31,10 @@ export function ChainList({
   isEditMode,
   filterState = defaultFilterState,
   sortState = defaultSortState,
+  chainInfos,
 }: ChainListProps) {
-  const allChains = useChainInfos();
+  const defaultChainInfos = useChainInfos();
+  const allChains = chainInfos ?? defaultChainInfos;
 
   const chains = useMemo(
     () =>

@@ -16,6 +16,13 @@ const explorerApiUrl =
   process.env.NEXT_PUBLIC_EXPLORER_API_URL || 'https://explorer4.hasura.app/v1/graphql';
 const feeQuotingUrl = process.env.NEXT_PUBLIC_FEE_QUOTING_URL || undefined;
 const relayApiUrl = process.env.NEXT_PUBLIC_RELAY_API_URL || undefined;
+const routerApiUrl =
+  process.env.NEXT_PUBLIC_ROUTER_API_URL || 'https://router.services.hyperlane.xyz';
+const ccsUrl = process.env.NEXT_PUBLIC_CCS_URL || 'https://offchain-lookup.services.hyperlane.xyz';
+const permit2ExpirationSeconds = Number(
+  process.env.NEXT_PUBLIC_PERMIT2_EXPIRATION_SECONDS || 31_536_000,
+);
+const defaultSlippageBps = Number(process.env.NEXT_PUBLIC_DEFAULT_SLIPPAGE_BPS || 100);
 
 interface Config {
   addressBlacklist: string[]; // A list of addresses that are blacklisted and cannot be used in the app
@@ -40,6 +47,10 @@ interface Config {
   featuredChains: string[]; // Chains to pin at the top of the default chain picker sort
   featuredTokens: string[]; // List of featured tokens to prioritize in token picker (format: "chainName-symbol")
   feeQuotingUrl: string | undefined; // Offchain fee quoting service base URL
+  routerApiUrl: string; // Universal Router Engine base URL (swap tab)
+  ccsUrl: string; // Call Commitments Service base URL (cross-chain swap reveal)
+  permit2ExpirationSeconds: number; // Default Permit2 allowance expiration (swap tab)
+  defaultSlippageBps: number; // Default swap slippage in basis points
 }
 
 export const config: Config = Object.freeze({
@@ -71,6 +82,10 @@ export const config: Config = Object.freeze({
   rpcOverrides,
   enableTrackingEvents: false,
   feeQuotingUrl,
+  routerApiUrl,
+  ccsUrl,
+  permit2ExpirationSeconds,
+  defaultSlippageBps,
   featuredChains: [
     'ethereum',
     'base',

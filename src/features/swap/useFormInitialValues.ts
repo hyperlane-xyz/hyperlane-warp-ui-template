@@ -16,10 +16,13 @@ const EMPTY_VALUES: SwapFormValues = {
   slippageBps: config.defaultSlippageBps,
 };
 
-// URL → Formik prefill. Reads four warp-ui-compatible params:
-//   ?origin=<chainName>&originToken=<symbol>
-//   ?destination=<chainName>&destinationToken=<symbol>
-// Then fetches matching tokens via /v1/tokens?ids=<chainName-symbol>.
+// URL → Formik prefill. The swap tab's deep-link contract is
+// address-based (engine `/v1/tokens?ids=` keys are `chainName-address`):
+//   ?origin=<chainName>&originToken=<0xAddress>
+//   ?destination=<chainName>&destinationToken=<0xAddress>
+//
+// The bridge tab still uses symbol-based URLs — they're independent
+// pages so the divergence is fine.
 export function useFormInitialValues(): SwapFormValues {
   const ids = useMemo(() => {
     if (typeof window === 'undefined') return [];
@@ -36,6 +39,7 @@ export function useFormInitialValues(): SwapFormValues {
     if (origin) out.push(origin);
     if (destination) out.push(destination);
     return out;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-time read; URL changes after mount intentionally ignored
   }, []);
 
   const { data: tokens } = useTokens(ids.length ? { ids } : {});
@@ -53,12 +57,8 @@ export function useFormInitialValues(): SwapFormValues {
       params.get(WARP_QUERY_PARAMS.DESTINATION_TOKEN),
     );
 
-    const origin = originId
-      ? tokens.find((t) => `${t.chainName}-${t.symbol}` === originId)
-      : undefined;
-    const destination = destinationId
-      ? tokens.find((t) => `${t.chainName}-${t.symbol}` === destinationId)
-      : undefined;
+    const origin = originId ? tokens.find((t) => matchesId(t, originId)) : undefined;
+    const destination = destinationId ? tokens.find((t) => matchesId(t, destinationId)) : undefined;
 
     return {
       ...EMPTY_VALUES,
@@ -72,5 +72,9 @@ export function useFormInitialValues(): SwapFormValues {
 
 function idFromParams(chain: string | null, token: string | null): string | undefined {
   if (!chain || !token) return undefined;
-  return `${chain}-${token}`;
+  return `${chain}-${token.toLowerCase()}`;
+}
+
+function matchesId(t: { chainName: string; address: string }, id: string): boolean {
+  return `${t.chainName}-${t.address.toLowerCase()}` === id;
 }

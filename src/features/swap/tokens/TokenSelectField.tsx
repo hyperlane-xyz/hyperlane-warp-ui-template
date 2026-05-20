@@ -3,6 +3,8 @@ import { useState } from 'react';
 
 import { ChevronLargeIcon } from '../../../components/icons/ChevronLargeIcon';
 import { TokenChainIcon } from '../../../components/icons/TokenChainIcon';
+import { WARP_QUERY_PARAMS } from '../../../consts/args';
+import { updateQueryParams } from '../../../utils/queryParams';
 import { useMultiProvider } from '../../chains/hooks';
 import { getChainDisplayName } from '../../chains/utils';
 import type { SwapFormValues } from '../types';
@@ -49,6 +51,13 @@ export function TokenSelectField({ selectionMode, disabled }: Props) {
       // Reset amount when origin changes (warp UI does the same).
       setFieldValue('amount', '');
     }
+    // Persist to URL so deep-linking matches the picked tokens.
+    // Swap-side contract is chainName-address (see useFormInitialValues).
+    updateQueryParams({
+      [isOrigin ? WARP_QUERY_PARAMS.ORIGIN : WARP_QUERY_PARAMS.DESTINATION]: token.chainName,
+      [isOrigin ? WARP_QUERY_PARAMS.ORIGIN_TOKEN : WARP_QUERY_PARAMS.DESTINATION_TOKEN]:
+        token.address,
+    });
   };
 
   const open = () => {

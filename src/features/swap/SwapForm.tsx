@@ -14,7 +14,9 @@ import { SwapIcon } from '../../components/icons/SwapIcon';
 import { TextField } from '../../components/input/TextField';
 import { TransferSection } from '../../components/layout/TransferSection';
 import { useToastError } from '../../components/toast/useToastError';
+import { WARP_QUERY_PARAMS } from '../../consts/args';
 import { config } from '../../consts/config';
+import { updateQueryParams } from '../../utils/queryParams';
 import { useChains } from '../api/hooks';
 import { useMultiProvider } from '../chains/hooks';
 import { useStore } from '../store';
@@ -362,7 +364,16 @@ function SwapFormContent() {
       dstToken: prev.srcToken,
       recipient: '',
     }));
-  }, [setValues, isReview]);
+    // Mirror the flip in the URL so refresh keeps the same pair.
+    if (srcToken && dstToken) {
+      updateQueryParams({
+        [WARP_QUERY_PARAMS.ORIGIN]: dstToken.chainName,
+        [WARP_QUERY_PARAMS.ORIGIN_TOKEN]: dstToken.address,
+        [WARP_QUERY_PARAMS.DESTINATION]: srcToken.chainName,
+        [WARP_QUERY_PARAMS.DESTINATION_TOKEN]: srcToken.address,
+      });
+    }
+  }, [setValues, isReview, srcToken, dstToken]);
 
   const extraErrors = errors as Partial<Record<'form', string>>;
   const topLevelError =

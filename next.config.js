@@ -28,6 +28,8 @@ const IMG_SRC_HOSTS = [
   'https://downloads.intercomcdn.com',
   'https://uploads.intercomusercontent.com',
   'https://gifs.intercomcdn.com',
+  'https://assets.coingecko.com',
+  'https://tokens.pancakeswap.finance',
 ];
 const SCRIPT_SRC_HOSTS = [
   'https://snaps.consensys.io',

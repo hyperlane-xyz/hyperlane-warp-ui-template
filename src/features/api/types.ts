@@ -3,6 +3,11 @@
 import { z } from 'zod';
 
 export const Address = z.string().regex(/^0x[0-9a-fA-F]{40}$/);
+// Permissive token-address schema mirroring the engine's TokenAddress —
+// length-bounded string so non-EVM addresses (Solana base58 mints,
+// Cosmos bech32) validate. The strict EVM `Address` is still used for
+// request-side fields like sender/recipient.
+export const TokenAddress = z.string().min(1).max(100);
 export const BigIntString = z.string().regex(/^\d+$/);
 export const Hex = z.string().regex(/^0x[0-9a-fA-F]*$/);
 // bytes20 (EVM) or bytes32 (padded EVM / non-EVM pubkey).
@@ -45,9 +50,12 @@ export const ChainDiscoverySchema = z.object({
   nativeCurrency: NativeCurrencySchema,
   universalRouter: Address,
   // Permit2 contract the UR pulls funds through. Set as an `immutable` at
-  // UR construction so it's stable per UR — sourced from /v1/chains so the
-  // UI doesn't have to hardcode or read UR.PERMIT2() itself.
-  permit2: Address,
+  // UR construction so it's stable per UR — sourced from /v1/chains so
+  // the UI doesn't have to hardcode or read UR.PERMIT2() itself.
+  // Optional until production engine redeploys with the field; the swap
+  // form gates approvals on its presence so an undefined value just
+  // surfaces as "Loading Permit2…" instead of crashing the chains list.
+  permit2: Address.optional(),
   dex: z.string().nullable(),
   canSwap: z.boolean(),
   canExecute: z.boolean(),
@@ -64,12 +72,14 @@ export type ChainsResponse = z.infer<typeof ChainsResponseSchema>;
 
 export const TokenDiscoverySchema = z.object({
   chainId: z.number(),
-  address: Address,
+  // Permissive: engine returns non-EVM addresses (Solana base58, Cosmos
+  // bech32) for tokens on those chains.
+  address: TokenAddress,
   symbol: z.string(),
   name: z.string().optional(),
   decimals: z.number().nullable(),
   isNative: z.boolean(),
-  wrappedAddress: Address.optional(),
+  wrappedAddress: TokenAddress.optional(),
   isBridgeToken: z.boolean(),
   isPoolToken: z.boolean(),
   canBridge: z.boolean(),

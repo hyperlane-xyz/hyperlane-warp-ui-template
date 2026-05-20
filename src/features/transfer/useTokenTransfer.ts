@@ -29,7 +29,7 @@ import { findConnectedDestinationToken } from '../tokens/utils';
 import { fetchPredicateAttestation, PredicateAttestationResult } from './predicate';
 import { submitToRelayApi } from './relayApi';
 import { TransferContext, TransferFormValues, TransferStatus } from './types';
-import { tryGetMsgIdFromTransferReceipt } from './utils';
+import { tryGetMsgIdFromTransferReceipt, tryGetSameChainCcrMsgId } from './utils';
 
 const CHAIN_MISMATCH_ERROR = 'ChainMismatchError';
 const TRANSFER_TIMEOUT_ERROR1 = 'block height exceeded';
@@ -145,6 +145,10 @@ async function executeTransfer({
     if (!connectedDestinationToken) throw new Error('No token connection found between chains');
     const origin = originToken.chainName;
     const destination = connectedDestinationToken.chainName;
+    // Same-chain CCR: both tokens are CrossCollateralRouter tokens on the same chain.
+    // The swap is atomic — the scraper stores a synthetic Hyperlane message for explorer display.
+    const isSameChainCcr =
+      origin === destination && warpCore.isCrossCollateralTransfer(originToken, connectedDestinationToken);
 
     const originProtocol = originToken.protocol;
     const isNft = originToken.isNft();
@@ -266,20 +270,38 @@ async function executeTransfer({
       }
     }
 
-    const msgId = txReceipt
-      ? tryGetMsgIdFromTransferReceipt(multiProvider, origin, txReceipt)
-      : undefined;
+    const msgId =
+      txReceipt &&
+      (isSameChainCcr
+        ? tryGetSameChainCcrMsgId(
+            multiProvider,
+            origin,
+            originToken.addressOrDenom,
+            connectedDestinationToken.addressOrDenom,
+            txReceipt,
+          )
+        : tryGetMsgIdFromTransferReceipt(multiProvider, origin, txReceipt));
 
     const originTxHash = hashes.at(-1);
     const originBlockNumber =
       txReceipt?.receipt && 'blockNumber' in txReceipt.receipt
         ? Number(txReceipt.receipt.blockNumber)
         : undefined;
-    updateTransferStatus(transferIndex, (transferStatus = TransferStatus.ConfirmedTransfer), {
-      originTxHash,
-      originBlockNumber,
-      msgId,
-    });
+    // Same-chain CCR swaps are atomic: delivery happens in the same tx, no relay needed.
+    if (isSameChainCcr) {
+      updateTransferStatus(transferIndex, (transferStatus = TransferStatus.Delivered), {
+        originTxHash,
+        originBlockNumber,
+        msgId,
+        destinationTxHash: originTxHash,
+      });
+    } else {
+      updateTransferStatus(transferIndex, (transferStatus = TransferStatus.ConfirmedTransfer), {
+        originTxHash,
+        originBlockNumber,
+        msgId,
+      });
+    }
 
     if (originTxHash) submitToRelayApi(origin, originTxHash, originProtocol, txReceipt);
 

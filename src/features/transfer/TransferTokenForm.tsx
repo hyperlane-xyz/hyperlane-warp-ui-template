@@ -352,7 +352,21 @@ function DestinationTokenCard({ isReview }: { isReview: boolean }) {
   );
   const recipient = values.recipient || connectedDestAddress;
 
-  const { balance } = useDestinationBalance(recipient, destinationToken);
+  const { balance, refetch: refetchBalance } = useDestinationBalance(recipient, destinationToken);
+
+  const transfers = useStore((s) => s.transfers);
+  const latestTransfer = transfers[transfers.length - 1];
+  const latestTxHash = latestTransfer?.originTxHash;
+
+  // For same-chain CCR swaps the delivery is atomic — refetch the balance immediately
+  // so the balance watcher detects the increase and fires the toast without waiting
+  // for the next 30-second poll.
+  useEffect(() => {
+    if (latestTxHash && latestTransfer?.origin === latestTransfer?.destination) {
+      refetchBalance();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [latestTxHash]);
 
   useRecipientBalanceWatcher(recipient, balance);
 

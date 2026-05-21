@@ -13,6 +13,7 @@ import {
   useAccounts,
 } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import { useQuery } from '@tanstack/react-query';
+import { useEffect } from 'react';
 
 import { defaultMultiCollateralRoutes } from '../../consts/defaultMultiCollateralRoutes';
 import { logger } from '../../utils/logger';
@@ -70,7 +71,7 @@ export function useFeeQuotes(
   );
   const shouldFetch = enabled && isFormValid;
 
-  const { isLoading, isError, data } = useQuery({
+  const { isLoading, isError, data, isFetching, error } = useQuery({
     // The WarpCore class is not serializable, so we can't use it as a key
     // eslint-disable-next-line @tanstack/query/exhaustive-deps
     queryKey: [
@@ -98,7 +99,11 @@ export function useFeeQuotes(
     refetchInterval: FEE_QUOTE_REFRESH_INTERVAL,
   });
 
-  return { isLoading, isError, fees: data };
+  useEffect(() => {
+    if (isError) logger.error('Fee quote failed', error);
+  }, [isError, error]);
+
+  return { isLoading: isLoading || isFetching, isError, fees: data };
 }
 
 export async function fetchFeeQuotes(

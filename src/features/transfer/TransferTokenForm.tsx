@@ -751,7 +751,11 @@ function ReviewDetails({
   // Onchain fee quoting: used as fallback when offchain isn't available for this route
   const offchainSettled = !isOffchainQuoteLoading;
   const offchainUnavailable = !config.feeQuotingUrl || (offchainSettled && !offchainFeeQuotes);
-  const { isLoading: isOnchainQuoteLoading, fees: onchainFeeQuotes } = useFeeQuotes(
+  const {
+    isLoading: isOnchainQuoteLoading,
+    isError: isFeeQuoteError,
+    fees: onchainFeeQuotes,
+  } = useFeeQuotes(
     values,
     isRouteSupported && offchainUnavailable,
     originToken,
@@ -815,6 +819,7 @@ function ReviewDetails({
         <FeeSectionButton
           fees={fees}
           isLoading={isLoading}
+          isError={isFeeQuoteError}
           feePrices={feePrices}
           transferUsd={transferUsd}
         />

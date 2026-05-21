@@ -25,15 +25,9 @@ overrides:
   '@ledgerhq/errors': 6.31.0
 
 patchedDependencies:
-  '@provablehq/sdk@0.9.15':
-    hash: c3b67b6e17970e4e71124b375f996bb58f69b19e6deba7d2dd82a7809373358b
-    path: patches/@provablehq__sdk@0.9.15.patch
-  '@provablehq/wasm@0.9.18':
-    hash: 9af61d89e033cd3d4a4659b1412e680fe485647bc975037fd7ac764298eb5ca8
-    path: patches/@provablehq__wasm@0.9.18.patch
-  starknetkit@2.6.1:
-    hash: d8d81d77fa623989f021747f735ecef191f7ef8744e03c5f475cc1e9314d79d7
-    path: patches/starknetkit@2.6.1.patch
+  '@provablehq/sdk@0.9.15': c3b67b6e17970e4e71124b375f996bb58f69b19e6deba7d2dd82a7809373358b
+  '@provablehq/wasm@0.9.18': 9af61d89e033cd3d4a4659b1412e680fe485647bc975037fd7ac764298eb5ca8
+  starknetkit@2.6.1: d8d81d77fa623989f021747f735ecef191f7ef8744e03c5f475cc1e9314d79d7
 
 importers:
 

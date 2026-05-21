@@ -18,7 +18,12 @@ const feeQuotingUrl = process.env.NEXT_PUBLIC_FEE_QUOTING_URL || undefined;
 const relayApiUrl = process.env.NEXT_PUBLIC_RELAY_API_URL || undefined;
 const routerApiUrl =
   process.env.NEXT_PUBLIC_ROUTER_API_URL || 'https://router.services.hyperlane.xyz';
-const ccsUrl = process.env.NEXT_PUBLIC_CCS_URL || 'https://offchain-lookup.services.hyperlane.xyz';
+// CCS lives at the `/callCommitments` mount of the shared offchain-lookup
+// service. Engine emits `callCommitment.ccs.path = '/calls'` relative to
+// this mount, so the base URL must include the mount path.
+const ccsUrl =
+  process.env.NEXT_PUBLIC_CCS_URL ||
+  'https://offchain-lookup.services.hyperlane.xyz/callCommitments';
 const permit2ExpirationSeconds = Number(
   process.env.NEXT_PUBLIC_PERMIT2_EXPIRATION_SECONDS || 31_536_000,
 );

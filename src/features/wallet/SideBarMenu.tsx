@@ -40,8 +40,7 @@ export function SideBarMenu({
   isOpen: boolean;
   onClose: () => void;
 }) {
-  const didMountRef = useRef(false);
-  const prevTransfersLengthRef = useRef(0);
+  const prevTransfersLengthRef = useRef(transfers.length);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -134,18 +133,14 @@ export function SideBarMenu({
   // previous transfer, which would happen if we triggered on transferLoading
   // because addTransfer is called after setTransferLoading(true)).
   useEffect(() => {
-    if (!didMountRef.current) {
-      didMountRef.current = true;
-      prevTransfersLengthRef.current = transfers.length;
-      return;
-    }
     const prev = prevTransfersLengthRef.current;
     prevTransfersLengthRef.current = transfers.length;
     if (transfers.length > prev) {
       setSelectedTransfer(transfers[transfers.length - 1]);
       setIsModalOpen(true);
     }
-  }, [transfers]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- transfers.length increasing guarantees a new transfers ref; listing transfers would re-run on status updates
+  }, [transfers.length]);
 
   useEffect(() => {
     setIsMenuOpen(isOpen);

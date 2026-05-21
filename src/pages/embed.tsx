@@ -58,13 +58,14 @@ function useAutoTransferModal() {
     if (transfers.length > prev) {
       const latestTransfer = transfers[transfers.length - 1];
       if (!latestTransfer) {
-        logger.error('Expected latest transfer on new transfer', transfers);
+        logger.error('Expected latest transfer to exist after transfers.length increased', transfers);
         return;
       }
       setSelectedTransfer(latestTransfer);
       setIsOpen(true);
     }
-  }, [transfers]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- transfers.length increasing guarantees a new transfers ref; listing transfers would re-run on status updates
+  }, [transfers.length]);
 
   const close = () => {
     setIsOpen(false);

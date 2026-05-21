@@ -48,26 +48,23 @@ function usePostMessageBridge() {
 /** Auto-opens TransfersDetailsModal when a new transfer starts. */
 function useAutoTransferModal() {
   const transfers = useStore((s) => s.transfers);
-  const transferLoading = useStore((s) => s.transferLoading);
   const [selectedTransfer, setSelectedTransfer] = useState<TransferContext | null>(null);
   const [isOpen, setIsOpen] = useState(false);
-  const didMountRef = useRef(false);
+  const prevTransfersLengthRef = useRef(transfers.length);
 
   useEffect(() => {
-    if (!didMountRef.current) {
-      didMountRef.current = true;
-      return;
-    } else if (transferLoading) {
+    const prev = prevTransfersLengthRef.current;
+    prevTransfersLengthRef.current = transfers.length;
+    if (transfers.length > prev) {
       const latestTransfer = transfers[transfers.length - 1];
       if (!latestTransfer) {
-        logger.error('Expected latest transfer while transferLoading is true', transfers);
+        logger.error('Expected latest transfer on new transfer', transfers);
         return;
       }
       setSelectedTransfer(latestTransfer);
       setIsOpen(true);
     }
-    // Same pattern as SideBarMenu — open modal when new transfer detected
-  }, [transfers, transferLoading]);
+  }, [transfers]);
 
   const close = () => {
     setIsOpen(false);

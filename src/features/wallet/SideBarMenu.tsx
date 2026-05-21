@@ -41,6 +41,7 @@ export function SideBarMenu({
   onClose: () => void;
 }) {
   const didMountRef = useRef(false);
+  const prevTransfersLengthRef = useRef(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -49,14 +50,11 @@ export function SideBarMenu({
 
   const multiProvider = useMultiProvider();
 
-  const { transfers, transferLoading, originChainName, routerAddressesByChainMap } = useStore(
-    (s) => ({
-      transfers: s.transfers,
-      transferLoading: s.transferLoading,
-      originChainName: s.originChainName,
-      routerAddressesByChainMap: s.routerAddressesByChainMap,
-    }),
-  );
+  const { transfers, originChainName, routerAddressesByChainMap } = useStore((s) => ({
+    transfers: s.transfers,
+    originChainName: s.originChainName,
+    routerAddressesByChainMap: s.routerAddressesByChainMap,
+  }));
 
   // Get all connected wallet addresses (normalized for consistent matching)
   const { accounts } = useAccounts(multiProvider, config.addressBlacklist);
@@ -132,15 +130,22 @@ export function SideBarMenu({
     setIsModalOpen(true);
   };
 
-  // Open modal for new transfer
+  // Open modal when a new transfer is added (avoids showing stale data from the
+  // previous transfer, which would happen if we triggered on transferLoading
+  // because addTransfer is called after setTransferLoading(true)).
   useEffect(() => {
     if (!didMountRef.current) {
       didMountRef.current = true;
-    } else if (transferLoading) {
+      prevTransfersLengthRef.current = transfers.length;
+      return;
+    }
+    const prev = prevTransfersLengthRef.current;
+    prevTransfersLengthRef.current = transfers.length;
+    if (transfers.length > prev) {
       setSelectedTransfer(transfers[transfers.length - 1]);
       setIsModalOpen(true);
     }
-  }, [transfers, transferLoading]);
+  }, [transfers]);
 
   useEffect(() => {
     setIsMenuOpen(isOpen);

@@ -1060,8 +1060,15 @@ async function validateForm(
       // Only swallow EVM execution reverts (predicate wrapper rejecting without attestation).
       // Rethrow provider/RPC/network errors so they surface rather than silently
       // appearing as "validation passed" and failing at submit-time.
-      const causeCode = (error as any)?.cause?.code;
-      if (causeCode !== 'CALL_EXCEPTION' && causeCode !== 'UNPREDICTABLE_GAS_LIMIT') throw error;
+      // The SDK wraps the ethers error 2+ levels deep, so walk the cause chain.
+      const evmRevertCodes = new Set(['CALL_EXCEPTION', 'UNPREDICTABLE_GAS_LIMIT']);
+      let causeCode: string | undefined;
+      let e: any = error;
+      while (e) {
+        if (evmRevertCodes.has(e.code)) { causeCode = e.code; break; }
+        e = e.cause;
+      }
+      if (!causeCode) throw error;
       result = null;
     }
 

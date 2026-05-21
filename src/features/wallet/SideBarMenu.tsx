@@ -40,7 +40,6 @@ export function SideBarMenu({
   isOpen: boolean;
   onClose: () => void;
 }) {
-  const prevTransfersLengthRef = useRef(transfers.length);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -54,6 +53,8 @@ export function SideBarMenu({
     originChainName: s.originChainName,
     routerAddressesByChainMap: s.routerAddressesByChainMap,
   }));
+
+  const prevTransfersLengthRef = useRef(transfers.length);
 
   // Get all connected wallet addresses (normalized for consistent matching)
   const { accounts } = useAccounts(multiProvider, config.addressBlacklist);

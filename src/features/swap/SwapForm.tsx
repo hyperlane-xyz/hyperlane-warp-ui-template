@@ -16,7 +16,6 @@ import { TransferSection } from '../../components/layout/TransferSection';
 import { useToastError } from '../../components/toast/useToastError';
 import { WARP_QUERY_PARAMS } from '../../consts/args';
 import { config } from '../../consts/config';
-import { logger } from '../../utils/logger';
 import { updateQueryParams } from '../../utils/queryParams';
 import { useChains } from '../api/hooks';
 import { useMultiProvider } from '../chains/hooks';
@@ -291,36 +290,21 @@ function SwapFormContent() {
     setActiveSwapIndex(swapIndex);
 
     try {
-      logger.info('[send] start', {
-        swapIndex,
-        phase: status.phase,
-        permit2Address,
-        universalRouter,
-        srcToken: srcToken.address,
-        amountIn: item.amountIn,
-      });
       if (status.phase === Permit2Phase.NeedsErc20Approve) {
         updateSwapStatus(swapIndex, SwapStatus.SigningApprove);
-        logger.info('[send] erc20 approve (to Permit2)');
         const hash = await erc20Approve.send();
-        logger.info('[send] erc20 approve hash', { hash });
         updateSwapStatus(swapIndex, SwapStatus.ConfirmingApprove);
         if (publicClient) await publicClient.waitForTransactionReceipt({ hash });
-        logger.info('[send] erc20 approve confirmed');
       }
       if (
         status.phase === Permit2Phase.NeedsErc20Approve ||
         status.phase === Permit2Phase.NeedsPermit2Approve
       ) {
         updateSwapStatus(swapIndex, SwapStatus.SigningApprove);
-        logger.info('[send] permit2 approve (UR)');
         const hash = await permit2Approve.send();
-        logger.info('[send] permit2 approve hash', { hash });
         updateSwapStatus(swapIndex, SwapStatus.ConfirmingApprove);
         if (publicClient) await publicClient.waitForTransactionReceipt({ hash });
-        logger.info('[send] permit2 approve confirmed');
       }
-      logger.info('[send] invoking swap.execute');
       await swap.execute({
         swapIndex,
         route: bestRoute,
@@ -350,8 +334,6 @@ function SwapFormContent() {
     chainsResp?.chains,
     multiProvider,
     quote?.expiresAt,
-    permit2Address,
-    universalRouter,
     erc20Approve,
     permit2Approve,
     swap,

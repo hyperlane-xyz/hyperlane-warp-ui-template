@@ -53,15 +53,6 @@ export function useSwap() {
       if (!fns) throw new Error(`No transaction handler for protocol ${protocol}`);
 
       try {
-        logger.info('[swap] execute start', {
-          swapIndex,
-          srcChainId,
-          srcChainName,
-          protocol,
-          to: route.raw.tx.to,
-          value: route.raw.tx.value,
-          hasCallCommitment: !!route.raw.callCommitment,
-        });
         if (fns.switchNetwork) {
           try {
             await fns.switchNetwork(srcChainName);
@@ -73,16 +64,11 @@ export function useSwap() {
         // Order is critical: post to CCS BEFORE broadcasting.
         if (route.raw.callCommitment) {
           updateSwapStatus(swapIndex, SwapStatus.CreatingTxs);
-          logger.info('[swap] posting CCS commitment', {
-            commitment: route.raw.callCommitment.commitment,
-          });
           await postCommitment(route.raw.callCommitment);
-          logger.info('[swap] CCS post ok');
         }
 
         updateSwapStatus(swapIndex, SwapStatus.SigningSwap);
         const txType = protocol === ProtocolType.Tron ? ProviderType.Tron : ProviderType.EthersV5;
-        logger.info('[swap] requesting wallet signature', { txType, chainName: srcChainName });
         const { hash, confirm } = await fns.sendTransaction({
           tx: {
             type: txType,
@@ -95,13 +81,10 @@ export function useSwap() {
           } as Parameters<typeof fns.sendTransaction>[0]['tx'],
           chainName: srcChainName,
         });
-        logger.info('[swap] tx broadcast', { hash });
 
         updateSwapStatus(swapIndex, SwapStatus.ConfirmingOrigin, { originTxHash: hash });
 
-        logger.info('[swap] awaiting confirm()', { hash });
         const receipt = await confirm();
-        logger.info('[swap] confirm() returned', { hash, type: receipt.type });
         if (isReverted(receipt)) {
           logger.error('Origin tx reverted', new Error(`tx=${hash}`));
           updateSwapStatus(swapIndex, SwapStatus.Failed, { originTxHash: hash });

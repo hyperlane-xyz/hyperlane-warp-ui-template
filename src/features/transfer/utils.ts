@@ -6,8 +6,8 @@ import {
   TypedTransactionReceipt,
   ViemProvider,
 } from '@hyperlane-xyz/sdk';
-import { isValidAddress, isValidAddressEvm } from '@hyperlane-xyz/utils';
-import { concat, getAddress, keccak256, pad, toHex } from 'viem';
+import { ensure0x, isValidAddress, isValidAddressEvm } from '@hyperlane-xyz/utils';
+import { concat, getAddress, keccak256, toHex } from 'viem';
 import type { Hex } from 'viem';
 
 import ConfirmedIcon from '../../images/icons/confirmed-icon.svg';
@@ -144,22 +144,23 @@ const RECEIVED_TRANSFER_REMOTE_TOPIC = keccak256(
 );
 
 /**
- * For a same-chain CCR swap, compute the synthetic Hyperlane message ID the
- * scraper stores. Finds the ReceivedTransferRemote log emitted by destRouter
- * and applies the same deterministic formula as the scraper:
- *   nonce = keccak256(zeroPad(txHash,64) || toBE(logIndex,8))[0:4] % 2^31
- *   body  = recipient_bytes32 || amountReceived_uint256
- *   msgId = keccak256(version=3 || nonce || domain || srcRouter32 || domain || dstRouter32 || body)
+ * For a same-chain CCR swap, compute the synthetic message ID the scraper stores.
+ * Finds the ReceivedTransferRemote log emitted by destRouter and applies the formula:
+ *
+ *   msgId = 0x00000000 || keccak256("SameChainCCR" || txHash32 || logIndex8)[0..28]
+ *
+ * The 4-byte zero prefix makes synthetic IDs immediately distinguishable from real
+ * Hyperlane message IDs (which are uniform keccak256 outputs).
  */
 export function tryGetSameChainCcrMsgId(
-  multiProvider: MultiProvider,
-  chain: ChainName,
-  sourceRouter: string,
+  _multiProvider: MultiProvider,
+  _chain: ChainName,
+  _sourceRouter: string,
   destRouter: string,
   receipt: TypedTransactionReceipt,
 ): string | undefined {
   try {
-    let logs: Array<{ address: string; topics: string[]; data: string; logIndex: number }>;
+    let logs: Array<{ address: string; topics: string[]; logIndex: number }>;
     let txHash: string;
 
     if (receipt.type === ProviderType.Viem || receipt.type === ProviderType.EthersV5) {
@@ -172,7 +173,6 @@ export function tryGetSameChainCcrMsgId(
 
     if (!txHash) return undefined;
 
-    const domainId = multiProvider.getDomainId(chain);
     const destRouterLower = destRouter.toLowerCase();
 
     for (const log of logs) {
@@ -180,36 +180,11 @@ export function tryGetSameChainCcrMsgId(
       if ((log.topics?.[0] ?? '').toLowerCase() !== RECEIVED_TRANSFER_REMOTE_TOPIC.toLowerCase())
         continue;
 
-      // topic2 = recipient (bytes32, indexed)
-      const recipientBytes32 = log.topics[2] as Hex;
-      // data = amount received (uint256, 32 bytes ABI-encoded)
-      const amountReceived = BigInt(log.data || '0x0');
-      const logIndex = BigInt(log.logIndex ?? 0);
+      const logIndexBytes = toHex(BigInt(log.logIndex ?? 0), { size: 8 });
+      const hash = keccak256(concat([toHex('SameChainCCR'), txHash as Hex, logIndexBytes]));
 
-      // 1. Nonce: keccak256(zeroPad(txHash,64) || toBE(logIndex,8))[0:4] % 2^31
-      const txHashPadded = pad(txHash as Hex, { size: 64, dir: 'left' });
-      const logIndexBytes = toHex(logIndex, { size: 8 });
-      const nonceHash = keccak256(concat([txHashPadded, logIndexBytes]));
-      const nonce = Number(BigInt(nonceHash.slice(0, 10)) % 2_147_483_648n);
-
-      // 2. TokenMessage body: recipient_bytes32 || amountReceived_uint256
-      const amountBytes = toHex(amountReceived, { size: 32 });
-      const body = concat([recipientBytes32, amountBytes]);
-
-      // 3. Encode Hyperlane message (version=3, origin==destination==domain)
-      const sourceBytes32 = pad(sourceRouter as Hex, { size: 32, dir: 'left' });
-      const destBytes32 = pad(destRouter as Hex, { size: 32, dir: 'left' });
-      const encoded = concat([
-        toHex(3, { size: 1 }),        // version
-        toHex(nonce, { size: 4 }),    // nonce
-        toHex(domainId, { size: 4 }), // origin
-        sourceBytes32,                // sender (source CCR router)
-        toHex(domainId, { size: 4 }), // destination (same chain)
-        destBytes32,                  // recipient (dest CCR router)
-        body,
-      ]);
-
-      const msgId = keccak256(encoded);
+      // 4 zero bytes || first 28 bytes of hash
+      const msgId = ensure0x('00'.repeat(4) + hash.slice(2, 58)) as Hex;
       logger.debug('Computed same-chain CCR msg ID', msgId);
       return msgId;
     }

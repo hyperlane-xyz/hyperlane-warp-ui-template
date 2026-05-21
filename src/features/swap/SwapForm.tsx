@@ -16,6 +16,7 @@ import { TransferSection } from '../../components/layout/TransferSection';
 import { useToastError } from '../../components/toast/useToastError';
 import { WARP_QUERY_PARAMS } from '../../consts/args';
 import { config } from '../../consts/config';
+import { logger } from '../../utils/logger';
 import { updateQueryParams } from '../../utils/queryParams';
 import { useChains } from '../api/hooks';
 import { useMultiProvider } from '../chains/hooks';
@@ -105,7 +106,6 @@ function SwapFormContent() {
   const permit2Address = srcChainInfo?.permit2 as Address | undefined;
 
   const [isReview, setIsReview] = useState(false);
-  const [pauseQuote, setPauseQuote] = useState(false);
   const { close: closeConfirmationModal, isOpen: isConfirmationModalOpen } = useModal();
 
   const debouncedAmount = useDebounce(values.amount, 750);
@@ -118,7 +118,7 @@ function SwapFormContent() {
   } = useQuote({
     values: { ...values, amount: debouncedAmount, recipient: effectiveRecipient },
     sender,
-    pause: pauseQuote || isReview,
+    pause: isReview,
   });
   useToastError(quoteError, 'Quote failed');
 
@@ -160,6 +160,14 @@ function SwapFormContent() {
   const setActiveSwapIndex = useStore((s) => s.setActiveSwapIndex);
   const updateSwapStatus = useStore((s) => s.updateSwapStatus);
   const setSwapLoading = useStore((s) => s.setSwapLoading);
+
+  // Send-button gating: derive from the modal's active swap status, not
+  // hook isPending. Closing the modal clears activeSwapIndex so a stuck
+  // confirm() polling loop doesn't permanently lock the button.
+  const activeSwap = useStore((s) =>
+    s.activeSwapIndex != null ? s.swaps[s.activeSwapIndex] : undefined,
+  );
+  const isActiveSwapInFlight = activeSwap != null && !FinalSwapStatuses.includes(activeSwap.status);
 
   const hasAmount = !!values.amount && Number(values.amount) > 0;
   const hasTokens = !!srcToken && !!dstToken;
@@ -258,7 +266,9 @@ function SwapFormContent() {
       return;
     }
 
-    setPauseQuote(true);
+    // Bridge-style: drop review immediately so the form stays editable
+    // while the broadcast chain runs. Modal carries the live status.
+    setIsReview(false);
     setSwapLoading(true);
 
     const initialStep = bestRoute.raw.steps[0];
@@ -281,21 +291,36 @@ function SwapFormContent() {
     setActiveSwapIndex(swapIndex);
 
     try {
+      logger.info('[send] start', {
+        swapIndex,
+        phase: status.phase,
+        permit2Address,
+        universalRouter,
+        srcToken: srcToken.address,
+        amountIn: item.amountIn,
+      });
       if (status.phase === Permit2Phase.NeedsErc20Approve) {
         updateSwapStatus(swapIndex, SwapStatus.SigningApprove);
+        logger.info('[send] erc20 approve (to Permit2)');
         const hash = await erc20Approve.send();
+        logger.info('[send] erc20 approve hash', { hash });
         updateSwapStatus(swapIndex, SwapStatus.ConfirmingApprove);
         if (publicClient) await publicClient.waitForTransactionReceipt({ hash });
+        logger.info('[send] erc20 approve confirmed');
       }
       if (
         status.phase === Permit2Phase.NeedsErc20Approve ||
         status.phase === Permit2Phase.NeedsPermit2Approve
       ) {
         updateSwapStatus(swapIndex, SwapStatus.SigningApprove);
+        logger.info('[send] permit2 approve (UR)');
         const hash = await permit2Approve.send();
+        logger.info('[send] permit2 approve hash', { hash });
         updateSwapStatus(swapIndex, SwapStatus.ConfirmingApprove);
         if (publicClient) await publicClient.waitForTransactionReceipt({ hash });
+        logger.info('[send] permit2 approve confirmed');
       }
+      logger.info('[send] invoking swap.execute');
       await swap.execute({
         swapIndex,
         route: bestRoute,
@@ -306,14 +331,12 @@ function SwapFormContent() {
         sender,
         recipient: effectiveRecipient,
       });
-      setIsReview(false);
     } catch {
       const cur = useStore.getState().swaps[swapIndex]?.status;
       if (cur && !FinalSwapStatuses.includes(cur)) {
         updateSwapStatus(swapIndex, SwapStatus.Failed);
       }
     } finally {
-      setPauseQuote(false);
       setSwapLoading(false);
     }
   }, [
@@ -327,6 +350,8 @@ function SwapFormContent() {
     chainsResp?.chains,
     multiProvider,
     quote?.expiresAt,
+    permit2Address,
+    universalRouter,
     erc20Approve,
     permit2Approve,
     swap,
@@ -411,17 +436,18 @@ function SwapFormContent() {
       </TransferSection>
 
       {!isReview && (
-        <SlippagePanel
-          slippageBps={values.slippageBps}
-          setSlippageBps={(bps) => setFieldValue('slippageBps', bps)}
-        />
+        <div className="mt-2 flex items-center justify-between gap-3 px-1">
+          <FeeSectionButton feeBreakdown={bestRoute?.feeBreakdown} isLoading={quoteLoading} />
+          <SlippagePanel
+            slippageBps={values.slippageBps}
+            setSlippageBps={(bps) => setFieldValue('slippageBps', bps)}
+          />
+        </div>
       )}
 
       <ReviewDetails
         isReview={isReview}
-        sender={sender as Address | undefined}
         bestRoute={bestRoute}
-        quoteLoading={quoteLoading}
         srcToken={srcToken}
         dstToken={dstToken}
         approvalStatus={status.phase}
@@ -440,7 +466,7 @@ function SwapFormContent() {
         isQuoteSettled={isQuoteSettled}
         isValidating={isValidating}
         onSendTransactions={onSendTransactions}
-        sendPending={swap.isPending || erc20Approve.isPending || permit2Approve.isPending}
+        sendPending={isActiveSwapInFlight}
       />
 
       <RecipientConfirmationModal
@@ -638,9 +664,7 @@ function SwapTokensButton({ onClick, disabled }: { onClick: () => void; disabled
 
 function ReviewDetails({
   isReview,
-  sender,
   bestRoute,
-  quoteLoading,
   srcToken,
   dstToken,
   approvalStatus,
@@ -648,9 +672,7 @@ function ReviewDetails({
   permit2Address,
 }: {
   isReview: boolean;
-  sender: Address | undefined;
   bestRoute: AugmentedRoute | undefined;
-  quoteLoading: boolean;
   srcToken: UiToken | undefined;
   dstToken: UiToken | undefined;
   approvalStatus: Permit2Phase;
@@ -659,15 +681,6 @@ function ReviewDetails({
 }) {
   return (
     <>
-      {!isReview && sender && bestRoute && (
-        <div className="mt-2 px-1">
-          <FeeSectionButton feeBreakdown={bestRoute.feeBreakdown} isLoading={quoteLoading} />
-        </div>
-      )}
-      {!isReview && sender && quoteLoading && !bestRoute && (
-        <p className="px-1 text-xs text-gray-500">Quoting…</p>
-      )}
-
       <div
         className={`${
           isReview ? 'max-h-screen duration-1000 ease-in' : 'max-h-0 duration-500'

@@ -10,6 +10,11 @@ test.describe('EVM same-symbol dedup', () => {
   test('selecting Arbitrum USDC resolves the Arbitrum-scoped route (not Ethereum)', async ({
     page,
   }) => {
+    // defaultBalance seeds the destination-collateral check in
+    // WarpCore.validateTransfer. Without it, balanceOf(warpRouter) returns 0
+    // on the destination chain and validate short-circuits with
+    // "Insufficient collateral on destination" before isReview flips true.
+    const COLLATERAL_SEED = '0xffffffffffffffff';
     await installEvmRpcMock(page, {
       chainUrlMap: [
         { chainId: 1, urlMatch: /ethereum\.|eth\.drpc|eth-mainnet/i },
@@ -17,8 +22,10 @@ test.describe('EVM same-symbol dedup', () => {
         { chainId: 42161, urlMatch: /arb1\.arbitrum|arbitrum\.rpc|arbitrum-mainnet/i },
       ],
       erc20: {
+        '*': { decimals: 6, defaultBalance: COLLATERAL_SEED },
         [`42161:${USDC_ARBITRUM}`]: {
           decimals: 6,
+          defaultBalance: COLLATERAL_SEED,
           balances: { [MOCK_EVM_ADDRESS.toLowerCase()]: '0x3b9aca00' }, // 1000 USDC
         },
       },
@@ -36,11 +43,19 @@ test.describe('EVM same-symbol dedup', () => {
     await enterAmount(page, '1');
     await page.getByRole('button', { name: /^Continue$/ }).click();
 
+    // Gate on the Send button — only renders when isReview=true (validate
+    // passed). The .transfer-review-panel element stays in DOM with max-h-0
+    // even when isReview=false, so checking its text directly would silently
+    // succeed on a validate failure and miss the regression below.
+    await expect(page.getByRole('button', { name: /Send to /i })).toBeVisible({
+      timeout: 30_000,
+    });
+
     // Review panel populating with the Transfer Remote section proves the
     // route resolved against the Arbitrum-scoped USDC (a failed dedup would
     // surface a validation error or a different remote token address here).
     const reviewPanel = page.locator('.transfer-review-panel').first();
-    await expect(reviewPanel).toContainText(/Transfer Remote/i, { timeout: 30_000 });
+    await expect(reviewPanel).toContainText(/Transfer Remote/i);
     await expect(reviewPanel).toContainText(/1 USDC/);
     // Remote token must render as a 0x-address (non-empty, not a fallback string).
     await expect(reviewPanel).toContainText(/0x[0-9a-fA-F]{40}/);

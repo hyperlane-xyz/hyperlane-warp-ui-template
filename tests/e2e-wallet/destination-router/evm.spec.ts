@@ -13,12 +13,26 @@ test.describe('EVM destination router selection', () => {
     await selectDestinationToken(page, destPattern);
     await enterAmount(page, '1');
     await clickContinue(page);
+    // Gate on the Send button — only renders when isReview=true (validate
+    // passed). The .transfer-review-panel element stays in DOM with max-h-0
+    // even when isReview=false, so reading its text directly would silently
+    // succeed on a validate failure.
+    await expect(page.getByRole('button', { name: /Send to /i })).toBeVisible({
+      timeout: 30_000,
+    });
+    // Then wait for fee quotes to settle — the panel renders a spinner while
+    // isLoading=true, and the Transfer Remote section only mounts afterwards.
     const reviewPanel = page.locator('.transfer-review-panel').first();
-    await expect(reviewPanel).toContainText(/Transfer Remote/i, { timeout: 30_000 });
+    await expect(reviewPanel).toContainText(/Remote Token/i, { timeout: 30_000 });
     const text = await reviewPanel.innerText();
     return text.split('Transfer Remote')[1]?.match(REMOTE_ADDRESS_RE)?.[0];
   }
 
+  // defaultBalance seeds the destination-collateral check in
+  // WarpCore.validateTransfer. Without it, balanceOf(warpRouter) returns 0
+  // for any USDC route on Base/Arbitrum and validate short-circuits with
+  // "Insufficient collateral on destination" before isReview can flip true.
+  const COLLATERAL_SEED = '0xffffffffffffffff';
   const rpcConfig = {
     chainUrlMap: [
       { chainId: 1, urlMatch: /ethereum\.|eth\.drpc/i },
@@ -26,8 +40,10 @@ test.describe('EVM destination router selection', () => {
       { chainId: 42161, urlMatch: /arb1\.arbitrum|arbitrum\.rpc/i },
     ],
     erc20: {
+      '*': { decimals: 6, defaultBalance: COLLATERAL_SEED },
       [`1:${USDC_ETHEREUM}`]: {
         decimals: 6,
+        defaultBalance: COLLATERAL_SEED,
         balances: { [MOCK_EVM_ADDRESS.toLowerCase()]: '0x3b9aca00' },
       },
     },

@@ -267,7 +267,7 @@ async function executeTransfer({
     }
 
     const msgId = txReceipt
-      ? tryGetMsgIdFromTransferReceipt(multiProvider, origin, txReceipt)
+      ? await tryGetMsgIdFromTransferReceipt(multiProvider, origin, txReceipt)
       : undefined;
 
     const originTxHash = hashes.at(-1);

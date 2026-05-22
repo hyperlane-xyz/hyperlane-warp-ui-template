@@ -1,4 +1,11 @@
-import { IToken, QuotedCallsParams, Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
+import {
+  IToken,
+  QuotedCallsParams,
+  type QuotedTransferProvider,
+  Token,
+  TokenAmount,
+  WarpCore,
+} from '@hyperlane-xyz/sdk';
 import {
   KnownProtocolType,
   ProtocolType,
@@ -71,6 +78,7 @@ import { TransferFormValues, TransferStatus } from './types';
 import { useRecipientBalanceWatcher } from './useBalanceWatcher';
 import { useFeeQuotes } from './useFeeQuotes';
 import { type QuotedCallsFeeQuotesResult, useQuotedCallsFeeQuotes } from './useQuotedCalls';
+import { useSvmQuotedTransfer } from './useSvmQuotedTransfer';
 import { useTokenTransfer } from './useTokenTransfer';
 import { isSmartContract, shouldClearAddress } from './utils';
 
@@ -523,6 +531,16 @@ function TransferCheckout({
     destinationToken,
   );
 
+  // SVM-origin offchain quoting — parallel to `quotedCalls` (EVM). Provider
+  // is memoized once the fee_config is discovered; the actual quote fetch
+  // happens inside `buildQuotedTransferTxs` at submit time, so there's no
+  // pre-flight quote preview to show in `ReviewDetails`.
+  const svmQuotedTransfer = useSvmQuotedTransfer(
+    originToken,
+    destinationToken,
+    isRouteSupported,
+  );
+
   return (
     <>
       <ReviewDetails
@@ -539,6 +557,7 @@ function TransferCheckout({
         cleanOverrideToken={cleanOverrideToken}
         routeOverrideToken={routeOverrideToken}
         getQuotedCallsParams={quotedCalls.getQuotedCallsParams}
+        svmQuotedTransfer={svmQuotedTransfer.quotedTransfer}
       />
     </>
   );
@@ -551,6 +570,7 @@ function ButtonSection({
   cleanOverrideToken,
   routeOverrideToken,
   getQuotedCallsParams,
+  svmQuotedTransfer,
 }: {
   isReview: boolean;
   isValidating: boolean;
@@ -558,6 +578,7 @@ function ButtonSection({
   cleanOverrideToken: () => void;
   routeOverrideToken: Token | null;
   getQuotedCallsParams: () => Promise<QuotedCallsParams | null>;
+  svmQuotedTransfer: QuotedTransferProvider | null;
 }) {
   const { values } = useFormikContext<TransferFormValues>();
   const multiProvider = useMultiProvider();
@@ -668,9 +689,16 @@ function ButtonSection({
 
     // Wait for any in-flight offchain quote to settle so a quick Send-click
     // during the first-load / refetch window doesn't fall through to the
-    // plain transferRemote path.
+    // plain transferRemote path. EVM and SVM offchain paths are mutually
+    // exclusive (only one of `quotedCallsParams` / `svmQuotedTransfer` is
+    // populated based on origin protocol).
     const quotedCallsParams = await getQuotedCallsParams();
-    await triggerTransactions(values, routeOverrideToken, quotedCallsParams);
+    await triggerTransactions(
+      values,
+      routeOverrideToken,
+      quotedCallsParams,
+      svmQuotedTransfer,
+    );
     setTransferLoading(false);
   };
 

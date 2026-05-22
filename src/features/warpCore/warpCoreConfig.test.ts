@@ -1,7 +1,13 @@
-import { TokenStandard } from '@hyperlane-xyz/sdk';
+import { TokenStandard, WarpCoreConfig } from '@hyperlane-xyz/sdk';
 import { describe, expect, test } from 'vitest';
 
-import { dedupeTokens, NullableAddressWarpCoreToken } from './warpCoreConfig';
+import { dedupeTokens, NullableAddressWarpCoreToken, reduceOptions } from './warpCoreConfig';
+
+// The WarpCoreConfig['options'] schema currently only declares array-valued fields,
+// but reduceOptions handles arbitrary keys (registry/yaml/store configs may add their own).
+// Cast the looser test shapes through unknown to exercise all three branches.
+type Options = WarpCoreConfig['options'];
+const opts = (o: Record<string, unknown>): Options => o as unknown as Options;
 
 const makeToken = (
   overrides: Partial<NullableAddressWarpCoreToken>,
@@ -175,5 +181,69 @@ describe('dedupeTokens', () => {
     const result = dedupeTokens([ibc, ibcDup, wm, usdsc]);
     // IBC merged to 1, wM + USDSC stay as 2 → 3 total
     expect(result).toHaveLength(3);
+  });
+});
+
+describe('reduceOptions', () => {
+  test('concatenates array-valued options across configs', () => {
+    const a = opts({
+      interchainFeeConstants: [{ origin: 'ethereum', destination: 'arbitrum', amount: 1n }],
+    });
+    const b = opts({
+      interchainFeeConstants: [{ origin: 'arbitrum', destination: 'ethereum', amount: 2n }],
+    });
+
+    const result = reduceOptions([a, b]) as any;
+    expect(result.interchainFeeConstants).toHaveLength(2);
+    expect(result.interchainFeeConstants[0].origin).toBe('ethereum');
+    expect(result.interchainFeeConstants[1].origin).toBe('arbitrum');
+  });
+
+  test('deep-merges object-valued options last-wins (does not clobber nested keys)', () => {
+    const a = opts({ sealevel: { altAddresses: { eclipsemainnet: '0xAAA' } } });
+    const b = opts({ sealevel: { altAddresses: { solanamainnet: '0xBBB' } } });
+
+    const result = reduceOptions([a, b]) as any;
+    expect(result.sealevel.altAddresses).toEqual({
+      eclipsemainnet: '0xAAA',
+      solanamainnet: '0xBBB',
+    });
+  });
+
+  test('last-write wins for scalar option values', () => {
+    const a = opts({ relayerUrl: 'https://first.example' });
+    const b = opts({ relayerUrl: 'https://second.example' });
+
+    const result = reduceOptions([a, b]) as any;
+    expect(result.relayerUrl).toBe('https://second.example');
+  });
+
+  test('handles inconsistent shapes across configs without throwing', () => {
+    // First config writes an array; second writes an object at the same key.
+    // The object branch should not spread the array as {0: ..., 1: ...}.
+    const a = opts({ feature: [1, 2] });
+    const b = opts({ feature: { enabled: true } });
+
+    const result = reduceOptions([a, b]) as any;
+    expect(result.feature).toEqual({ enabled: true });
+  });
+
+  test('ignores nullish incoming scalars instead of overwriting prior value', () => {
+    const a = opts({ relayerUrl: 'https://first.example' });
+    const b = opts({ relayerUrl: null });
+
+    const result = reduceOptions([a, b]) as any;
+    expect(result.relayerUrl).toBe('https://first.example');
+  });
+
+  test('returns empty options object when given empty list', () => {
+    expect(reduceOptions([])).toEqual({});
+  });
+
+  test('skips undefined entries in the options list', () => {
+    const a = opts({ interchainFeeConstants: [{ origin: 'a', destination: 'b', amount: 1n }] });
+
+    const result = reduceOptions([a, undefined]) as any;
+    expect(result.interchainFeeConstants).toHaveLength(1);
   });
 });

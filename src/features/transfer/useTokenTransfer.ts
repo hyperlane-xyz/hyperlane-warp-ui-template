@@ -306,7 +306,7 @@ async function executeTransfer({
       });
     }
 
-    if (originTxHash) submitToRelayApi(origin, originTxHash, originProtocol, txReceipt);
+    if (originTxHash && !isSameChainCcr) submitToRelayApi(origin, originTxHash, originProtocol, txReceipt);
 
     // track event after tx submission
     const originChainId = warpCore.multiProvider.getChainId(origin);

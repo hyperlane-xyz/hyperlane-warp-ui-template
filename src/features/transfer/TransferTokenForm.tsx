@@ -365,7 +365,7 @@ function DestinationTokenCard({ isReview }: { isReview: boolean }) {
     if (latestTxHash && latestTransfer?.origin === latestTransfer?.destination) {
       refetchBalance();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [latestTxHash]);
 
   useRecipientBalanceWatcher(recipient, balance);

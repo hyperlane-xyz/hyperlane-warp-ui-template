@@ -50,10 +50,16 @@ test.describe('EVM same-symbol dedup', () => {
       timeout: 30_000,
     });
 
+    // Then wait for fee quotes to settle — the panel renders a spinner while
+    // isLoading=true, and the Remote Token row only mounts afterwards. Without
+    // this, the 0x assertion below relies on Playwright's default 5s timeout
+    // which is tight on slow CI runners.
+    const reviewPanel = page.locator('.transfer-review-panel').first();
+    await expect(reviewPanel).toContainText(/Remote Token/i, { timeout: 30_000 });
+
     // Review panel populating with the Transfer Remote section proves the
     // route resolved against the Arbitrum-scoped USDC (a failed dedup would
     // surface a validation error or a different remote token address here).
-    const reviewPanel = page.locator('.transfer-review-panel').first();
     await expect(reviewPanel).toContainText(/Transfer Remote/i);
     await expect(reviewPanel).toContainText(/1 USDC/);
     // Remote token must render as a 0x-address (non-empty, not a fallback string).

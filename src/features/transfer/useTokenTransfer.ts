@@ -148,7 +148,8 @@ async function executeTransfer({
     // Same-chain CCR: both tokens are CrossCollateralRouter tokens on the same chain.
     // The swap is atomic — the scraper stores a synthetic Hyperlane message for explorer display.
     const isSameChainCcr =
-      origin === destination && warpCore.isCrossCollateralTransfer(originToken, connectedDestinationToken);
+      origin === destination &&
+      warpCore.isCrossCollateralTransfer(originToken, connectedDestinationToken);
 
     const originProtocol = originToken.protocol;
     const isNft = originToken.isNft();
@@ -270,9 +271,10 @@ async function executeTransfer({
       }
     }
 
-    const msgId =
-      txReceipt &&
-      (isSameChainCcr
+    let msgId: string | undefined = undefined;
+
+    if (txReceipt) {
+      msgId = isSameChainCcr
         ? tryGetSameChainCcrMsgId(
             multiProvider,
             origin,
@@ -280,7 +282,8 @@ async function executeTransfer({
             connectedDestinationToken.addressOrDenom,
             txReceipt,
           )
-        : tryGetMsgIdFromTransferReceipt(multiProvider, origin, txReceipt));
+        : await tryGetMsgIdFromTransferReceipt(multiProvider, origin, txReceipt);
+    }
 
     const originTxHash = hashes.at(-1);
     const originBlockNumber =

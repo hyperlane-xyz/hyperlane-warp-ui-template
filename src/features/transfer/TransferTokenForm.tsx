@@ -306,7 +306,7 @@ function OriginTokenCard({
           <TextField
             name="amount"
             placeholder="0"
-            className="transfer-text-input w-full flex-1 border-none bg-transparent font-secondary text-xl font-normal text-gray-900 outline-none placeholder:text-gray-900 dark:text-foreground-primary dark:placeholder:text-foreground-secondary"
+            className="transfer-text-input w-full flex-1 border-none bg-transparent font-secondary text-xl font-normal text-gray-900 outline-none placeholder:text-gray-900 dark:text-foreground-primary dark:placeholder:text-foreground-secondary dark:disabled:bg-transparent"
             type="number"
             step="any"
             disabled={isReview}
@@ -765,7 +765,11 @@ function ReviewDetails({
   // Onchain fee quoting: used as fallback when offchain isn't available for this route
   const offchainSettled = !isOffchainQuoteLoading;
   const offchainUnavailable = !config.feeQuotingUrl || (offchainSettled && !offchainFeeQuotes);
-  const { isLoading: isOnchainQuoteLoading, fees: onchainFeeQuotes } = useFeeQuotes(
+  const {
+    isLoading: isOnchainQuoteLoading,
+    isError: isFeeQuoteError,
+    fees: onchainFeeQuotes,
+  } = useFeeQuotes(
     values,
     isRouteSupported && offchainUnavailable,
     originToken,
@@ -829,6 +833,7 @@ function ReviewDetails({
         <FeeSectionButton
           fees={fees}
           isLoading={isLoading}
+          isError={isFeeQuoteError}
           feePrices={feePrices}
           transferUsd={transferUsd}
         />

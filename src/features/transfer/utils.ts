@@ -84,7 +84,7 @@ export function getIconByTransferStatus(status: TransferStatus) {
   }
 }
 
-export function tryGetMsgIdFromTransferReceipt(
+export async function tryGetMsgIdFromTransferReceipt(
   multiProvider: MultiProvider,
   origin: ChainName,
   receipt: TypedTransactionReceipt,
@@ -122,7 +122,7 @@ export function tryGetMsgIdFromTransferReceipt(
         return acc;
       }, {});
     const core = new MultiProtocolCore(multiProvider, addressStubs);
-    const messages = core.extractMessageIds(origin, receipt);
+    const messages = await core.extractMessageIds(origin, receipt);
     if (messages.length) {
       const msgId = messages[0].messageId;
       logger.debug('Message id found in logs', msgId);

@@ -306,7 +306,7 @@ function OriginTokenCard({
           <TextField
             name="amount"
             placeholder="0"
-            className="transfer-text-input w-full flex-1 border-none bg-transparent font-secondary text-xl font-normal text-gray-900 outline-none placeholder:text-gray-900 dark:text-foreground-primary dark:placeholder:text-foreground-secondary"
+            className="transfer-text-input w-full flex-1 border-none bg-transparent font-secondary text-xl font-normal text-gray-900 outline-none placeholder:text-gray-900 dark:text-foreground-primary dark:placeholder:text-foreground-secondary dark:disabled:bg-transparent"
             type="number"
             step="any"
             disabled={isReview}

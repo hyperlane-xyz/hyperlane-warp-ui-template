@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { MOCK_EVM_ADDRESS } from '../helpers/constants';
-import { installEvmRpcMock } from '../helpers/evmRpc';
+import { installEvmRpcMock, ROUTER_COLLATERAL_SEED } from '../helpers/evmRpc';
 import { clickContinue, enterAmount, selectDestinationToken } from '../helpers/formFlow';
 import { openE2EApp, waitForWarpRuntime } from '../helpers/page-setup';
 
@@ -25,14 +25,9 @@ test.describe('EVM destination router selection', () => {
     const reviewPanel = page.locator('.transfer-review-panel').first();
     await expect(reviewPanel).toContainText(/Remote Token/i, { timeout: 30_000 });
     const text = await reviewPanel.innerText();
-    return text.split('Transfer Remote')[1]?.match(REMOTE_ADDRESS_RE)?.[0];
+    return text.split('Remote Token')[1]?.match(REMOTE_ADDRESS_RE)?.[0];
   }
 
-  // defaultBalance seeds the destination-collateral check in
-  // WarpCore.validateTransfer. Without it, balanceOf(warpRouter) returns 0
-  // for any USDC route on Base/Arbitrum and validate short-circuits with
-  // "Insufficient collateral on destination" before isReview can flip true.
-  const COLLATERAL_SEED = '0xffffffffffffffff';
   const rpcConfig = {
     chainUrlMap: [
       { chainId: 1, urlMatch: /ethereum\.|eth\.drpc/i },
@@ -40,10 +35,14 @@ test.describe('EVM destination router selection', () => {
       { chainId: 42161, urlMatch: /arb1\.arbitrum|arbitrum\.rpc/i },
     ],
     erc20: {
-      '*': { decimals: 6, defaultBalance: COLLATERAL_SEED },
+      '*': { decimals: 6, defaultBalance: ROUTER_COLLATERAL_SEED },
       [`1:${USDC_ETHEREUM}`]: {
         decimals: 6,
-        defaultBalance: COLLATERAL_SEED,
+        // Fixture lookup is first-match-wins, not a field merge (see
+        // handleEthCall: erc20[key] ?? erc20[to] ?? erc20['*']) — once this
+        // specific key resolves the '*' wildcard is ignored, so the seed
+        // must be repeated here for owners other than MOCK_EVM_ADDRESS.
+        defaultBalance: ROUTER_COLLATERAL_SEED,
         balances: { [MOCK_EVM_ADDRESS.toLowerCase()]: '0x3b9aca00' },
       },
     },

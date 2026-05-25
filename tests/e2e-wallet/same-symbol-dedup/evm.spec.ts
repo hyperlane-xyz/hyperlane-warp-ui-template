@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { MOCK_EVM_ADDRESS } from '../helpers/constants';
-import { installEvmRpcMock } from '../helpers/evmRpc';
+import { installEvmRpcMock, ROUTER_COLLATERAL_SEED } from '../helpers/evmRpc';
 import { enterAmount, selectOriginToken } from '../helpers/formFlow';
 import { openE2EApp } from '../helpers/page-setup';
 
@@ -10,11 +10,6 @@ test.describe('EVM same-symbol dedup', () => {
   test('selecting Arbitrum USDC resolves the Arbitrum-scoped route (not Ethereum)', async ({
     page,
   }) => {
-    // defaultBalance seeds the destination-collateral check in
-    // WarpCore.validateTransfer. Without it, balanceOf(warpRouter) returns 0
-    // on the destination chain and validate short-circuits with
-    // "Insufficient collateral on destination" before isReview flips true.
-    const COLLATERAL_SEED = '0xffffffffffffffff';
     await installEvmRpcMock(page, {
       chainUrlMap: [
         { chainId: 1, urlMatch: /ethereum\.|eth\.drpc|eth-mainnet/i },
@@ -22,10 +17,14 @@ test.describe('EVM same-symbol dedup', () => {
         { chainId: 42161, urlMatch: /arb1\.arbitrum|arbitrum\.rpc|arbitrum-mainnet/i },
       ],
       erc20: {
-        '*': { decimals: 6, defaultBalance: COLLATERAL_SEED },
+        '*': { decimals: 6, defaultBalance: ROUTER_COLLATERAL_SEED },
         [`42161:${USDC_ARBITRUM}`]: {
           decimals: 6,
-          defaultBalance: COLLATERAL_SEED,
+          // Fixture lookup is first-match-wins, not a field merge (see
+          // handleEthCall: erc20[key] ?? erc20[to] ?? erc20['*']) — once this
+          // specific key resolves the '*' wildcard is ignored, so the seed
+          // must be repeated here for owners other than MOCK_EVM_ADDRESS.
+          defaultBalance: ROUTER_COLLATERAL_SEED,
           balances: { [MOCK_EVM_ADDRESS.toLowerCase()]: '0x3b9aca00' }, // 1000 USDC
         },
       },

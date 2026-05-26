@@ -14,7 +14,7 @@ export function TronWalletContext({ children }: PropsWithChildren<unknown>) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [e2e]);
   return (
-    <WalletProvider adapters={adapters}>
+    <WalletProvider adapters={adapters} autoConnect={false}>
       {e2e && <E2EAutoConnectTron />}
       {children}
     </WalletProvider>

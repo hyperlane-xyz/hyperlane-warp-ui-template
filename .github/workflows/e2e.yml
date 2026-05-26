@@ -26,9 +26,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ steps.pnpm-store.outputs.path }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-pnpm-11-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+            ${{ runner.os }}-pnpm-11-store-
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -47,7 +47,7 @@ jobs:
           NEXT_PUBLIC_WALLET_CONNECT_ID: ${{ secrets.NEXT_PUBLIC_WALLET_CONNECT_ID }}
 
   e2e:
-    timeout-minutes: 10
+    timeout-minutes: 20
     needs: [build]
     if: ${{ !cancelled() && (needs.build.result == 'success' || needs.build.result == 'skipped') }}
     runs-on: ubuntu-latest
@@ -72,9 +72,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ steps.pnpm-store.outputs.path }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-pnpm-11-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+            ${{ runner.os }}-pnpm-11-store-
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile

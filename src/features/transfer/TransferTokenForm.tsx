@@ -70,7 +70,7 @@ import { useFetchMaxAmount } from './maxAmount';
 import { RecipientConfirmationModal } from './RecipientConfirmationModal';
 import { computeDestAmount } from './scaleUtils';
 import { TransferSection } from './TransferSection';
-import { TransferFormValues } from './types';
+import { TransferFormValues, TransferStatus } from './types';
 import { useRecipientBalanceWatcher } from './useBalanceWatcher';
 import { useFeeQuotes } from './useFeeQuotes';
 import { type QuotedCallsFeeQuotesResult, useQuotedCallsFeeQuotes } from './useQuotedCalls';
@@ -343,7 +343,7 @@ function OriginTokenCard({
           <TextField
             name="amount"
             placeholder="0"
-            className="transfer-text-input w-full flex-1 border-none bg-transparent font-secondary text-xl font-normal text-gray-900 outline-none placeholder:text-gray-900 dark:text-foreground-primary dark:placeholder:text-foreground-secondary"
+            className="transfer-text-input w-full flex-1 border-none bg-transparent font-secondary text-xl font-normal text-gray-900 outline-none placeholder:text-gray-900 dark:text-foreground-primary dark:placeholder:text-foreground-secondary dark:disabled:bg-transparent"
             type="number"
             step="any"
             disabled={isReview}
@@ -389,7 +389,31 @@ function DestinationTokenCard({ isReview }: { isReview: boolean }) {
   );
   const recipient = values.recipient || connectedDestAddress;
 
-  const { balance } = useDestinationBalance(recipient, destinationToken);
+  const { balance, refetch: refetchBalance } = useDestinationBalance(recipient, destinationToken);
+
+  const transfers = useStore((s) => s.transfers);
+  const latestTransfer = transfers[transfers.length - 1];
+  // Use the hash string as the dep, not the transfer object: Zustand mutates transfer
+  // objects in place on status transitions, so an object-reference dep would fire on
+  // every status tick rather than only when a new originTxHash appears.
+  const latestTxHash = latestTransfer?.originTxHash;
+
+  // For same-chain CCR swaps the delivery is atomic — refetch the balance immediately
+  // so the balance watcher detects the increase and fires the toast without waiting
+  // for the next 30-second poll.
+  useEffect(() => {
+    if (
+      latestTransfer?.status === TransferStatus.Delivered &&
+      latestTxHash &&
+      latestTransfer?.destinationTxHash === latestTxHash &&
+      latestTransfer?.destination === destinationToken?.chainName &&
+      latestTransfer?.destTokenAddressOrDenom === destinationToken?.addressOrDenom &&
+      latestTransfer?.recipient === recipient
+    ) {
+      refetchBalance();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [latestTxHash]);
 
   useRecipientBalanceWatcher(recipient, balance);
 
@@ -788,7 +812,11 @@ function ReviewDetails({
   // Onchain fee quoting: used as fallback when offchain isn't available for this route
   const offchainSettled = !isOffchainQuoteLoading;
   const offchainUnavailable = !config.feeQuotingUrl || (offchainSettled && !offchainFeeQuotes);
-  const { isLoading: isOnchainQuoteLoading, fees: onchainFeeQuotes } = useFeeQuotes(
+  const {
+    isLoading: isOnchainQuoteLoading,
+    isError: isFeeQuoteError,
+    fees: onchainFeeQuotes,
+  } = useFeeQuotes(
     values,
     isRouteSupported && offchainUnavailable,
     originToken,
@@ -852,6 +880,7 @@ function ReviewDetails({
         <FeeSectionButton
           fees={fees}
           isLoading={isLoading}
+          isError={isFeeQuoteError}
           feePrices={feePrices}
           transferUsd={transferUsd}
         />

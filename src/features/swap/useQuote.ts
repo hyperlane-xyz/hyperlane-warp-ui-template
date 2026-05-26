@@ -1,7 +1,6 @@
-import { convertToProtocolAddress, ProtocolType } from '@hyperlane-xyz/utils';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
-import { bytesToHex, isAddress, parseUnits, type Hex } from 'viem';
+import { bytesToHex, parseUnits, type Hex } from 'viem';
 
 import { routerClient } from '../api/RouterClient';
 import type { QuoteResponse, RouteResponse } from '../api/types';
@@ -27,35 +26,16 @@ const REFRESH_MS = 25_000;
 
 interface UseQuoteArgs {
   values: SwapFormValues;
-  /**
-   * Sender from connected wallet. Tron base58 inputs converted to 0x-hex
-   * at the engine boundary.
-   */
+  /** Sender from connected wallet — passed through as-is. */
   sender: string | undefined;
   /** Pause auto-refresh (e.g. wallet modal open or tx signing). */
   pause?: boolean;
 }
 
 export function useQuote({ values, sender, pause }: UseQuoteArgs) {
-  // Engine validates sender/recipient as 0x-hex EVM canonical. Tron is
-  // base58 — convert at this boundary; form state keeps base58 for display.
-  const engineSender = useMemo<string | undefined>(() => {
-    if (!sender) return undefined;
-    try {
-      return convertToProtocolAddress(sender, ProtocolType.Ethereum);
-    } catch {
-      return undefined;
-    }
-  }, [sender]);
-
-  const engineRecipient = useMemo<string | undefined>(() => {
-    if (!values.recipient) return undefined;
-    try {
-      return convertToProtocolAddress(values.recipient, ProtocolType.Ethereum);
-    } catch {
-      return undefined;
-    }
-  }, [values.recipient]);
+  // Pass sender + recipient through as-is — engine handles per-protocol normalization.
+  const engineSender = sender || undefined;
+  const engineRecipient = values.recipient || undefined;
 
   const enabled = isQuoteRequestReady(values, engineSender) && !pause;
 
@@ -133,9 +113,10 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
 }
 
 function isQuoteRequestReady(v: SwapFormValues, sender: string | undefined): boolean {
-  if (!sender || !isAddress(sender)) return false;
+  // Non-empty checks only — engine validates / normalizes per-protocol address shapes.
+  if (!sender) return false;
   if (v.srcChain == null || v.dstChain == null) return false;
-  if (!isAddress(v.srcToken) || !isAddress(v.dstToken)) return false;
+  if (!v.srcToken || !v.dstToken) return false;
   if (!v.amount || Number(v.amount) <= 0) return false;
   return true;
 }

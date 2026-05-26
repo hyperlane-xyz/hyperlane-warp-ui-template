@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { MOCK_EVM_ADDRESS } from '../helpers/constants';
-import { installEvmRpcMock } from '../helpers/evmRpc';
+import { installEvmRpcMock, ROUTER_COLLATERAL_SEED } from '../helpers/evmRpc';
 import { clickContinue, enterAmount, selectDestinationToken } from '../helpers/formFlow';
 import { openE2EApp, waitForWarpRuntime } from '../helpers/page-setup';
 
@@ -13,10 +13,19 @@ test.describe('EVM destination router selection', () => {
     await selectDestinationToken(page, destPattern);
     await enterAmount(page, '1');
     await clickContinue(page);
+    // Gate on the Send button — only renders when isReview=true (validate
+    // passed). The .transfer-review-panel element stays in DOM with max-h-0
+    // even when isReview=false, so reading its text directly would silently
+    // succeed on a validate failure.
+    await expect(page.getByRole('button', { name: /Send to /i })).toBeVisible({
+      timeout: 30_000,
+    });
+    // Then wait for fee quotes to settle — the panel renders a spinner while
+    // isLoading=true, and the Transfer Remote section only mounts afterwards.
     const reviewPanel = page.locator('.transfer-review-panel').first();
-    await expect(reviewPanel).toContainText(/Transfer Remote/i, { timeout: 30_000 });
+    await expect(reviewPanel).toContainText(/Remote Token/i, { timeout: 30_000 });
     const text = await reviewPanel.innerText();
-    return text.split('Transfer Remote')[1]?.match(REMOTE_ADDRESS_RE)?.[0];
+    return text.split('Remote Token')[1]?.match(REMOTE_ADDRESS_RE)?.[0];
   }
 
   const rpcConfig = {
@@ -26,8 +35,14 @@ test.describe('EVM destination router selection', () => {
       { chainId: 42161, urlMatch: /arb1\.arbitrum|arbitrum\.rpc/i },
     ],
     erc20: {
+      '*': { decimals: 6, defaultBalance: ROUTER_COLLATERAL_SEED },
       [`1:${USDC_ETHEREUM}`]: {
         decimals: 6,
+        // Fixture lookup is first-match-wins, not a field merge (see
+        // handleEthCall: erc20[key] ?? erc20[to] ?? erc20['*']) — once this
+        // specific key resolves the '*' wildcard is ignored, so the seed
+        // must be repeated here for owners other than MOCK_EVM_ADDRESS.
+        defaultBalance: ROUTER_COLLATERAL_SEED,
         balances: { [MOCK_EVM_ADDRESS.toLowerCase()]: '0x3b9aca00' },
       },
     },

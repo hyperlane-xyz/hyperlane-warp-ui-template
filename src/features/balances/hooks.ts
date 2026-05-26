@@ -23,7 +23,7 @@ import { fetchSdkBalance } from './tokens';
 
 export function useBalance(chain?: ChainName, token?: IToken, address?: Address) {
   const multiProvider = useMultiProvider();
-  const { isLoading, isError, error, data } = useQuery({
+  const { isLoading, isError, error, data, refetch } = useQuery({
     // The Token and Multiprovider classes are not serializable, so we can't use it as a key
     // eslint-disable-next-line @tanstack/query/exhaustive-deps
     queryKey: [
@@ -47,6 +47,7 @@ export function useBalance(chain?: ChainName, token?: IToken, address?: Address)
     isLoading,
     isError,
     balance: data ?? undefined,
+    refetch,
   };
 }
 

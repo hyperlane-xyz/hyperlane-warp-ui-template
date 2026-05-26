@@ -68,7 +68,7 @@ import { useFetchMaxAmount } from './maxAmount';
 import { RecipientConfirmationModal } from './RecipientConfirmationModal';
 import { computeDestAmount } from './scaleUtils';
 import { TransferSection } from './TransferSection';
-import { TransferFormValues } from './types';
+import { TransferFormValues, TransferStatus } from './types';
 import { useRecipientBalanceWatcher } from './useBalanceWatcher';
 import { useFeeQuotes } from './useFeeQuotes';
 import { type QuotedCallsFeeQuotesResult, useQuotedCallsFeeQuotes } from './useQuotedCalls';
@@ -356,13 +356,23 @@ function DestinationTokenCard({ isReview }: { isReview: boolean }) {
 
   const transfers = useStore((s) => s.transfers);
   const latestTransfer = transfers[transfers.length - 1];
+  // Use the hash string as the dep, not the transfer object: Zustand mutates transfer
+  // objects in place on status transitions, so an object-reference dep would fire on
+  // every status tick rather than only when a new originTxHash appears.
   const latestTxHash = latestTransfer?.originTxHash;
 
   // For same-chain CCR swaps the delivery is atomic — refetch the balance immediately
   // so the balance watcher detects the increase and fires the toast without waiting
   // for the next 30-second poll.
   useEffect(() => {
-    if (latestTxHash && latestTransfer?.origin === latestTransfer?.destination) {
+    if (
+      latestTransfer?.status === TransferStatus.Delivered &&
+      latestTxHash &&
+      latestTransfer?.destinationTxHash === latestTxHash &&
+      latestTransfer?.destination === destinationToken?.chainName &&
+      latestTransfer?.destTokenAddressOrDenom === destinationToken?.addressOrDenom &&
+      latestTransfer?.recipient === recipient
+    ) {
       refetchBalance();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

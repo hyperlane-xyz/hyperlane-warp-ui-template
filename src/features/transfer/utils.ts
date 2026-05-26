@@ -1,5 +1,6 @@
 import {
   ChainMap,
+  ChainName,
   CoreAddresses,
   MultiProtocolCore,
   ProviderType,
@@ -151,11 +152,15 @@ const RECEIVED_TRANSFER_REMOTE_TOPIC = keccak256(
  *
  * The 4-byte zero prefix makes synthetic IDs immediately distinguishable from real
  * Hyperlane message IDs (which are uniform keccak256 outputs).
+ *
+ * Filters by destRouter address, event topic, indexed origin domain (topics[1]), and
+ * indexed source router (topics[2]) to avoid picking the wrong leg if a tx ever emits
+ * multiple ReceivedTransferRemote logs. Returns undefined on ambiguity.
  */
 export function tryGetSameChainCcrMsgId(
-  _multiProvider: MultiProvider,
-  _chain: ChainName,
-  _sourceRouter: string,
+  multiProvider: MultiProvider,
+  chain: ChainName,
+  sourceRouter: string,
   destRouter: string,
   receipt: TypedTransactionReceipt,
 ): string | undefined {
@@ -174,23 +179,42 @@ export function tryGetSameChainCcrMsgId(
     if (!txHash) return undefined;
 
     const destRouterLower = destRouter.toLowerCase();
+    // topics[1]: abi-encoded uint32 domain ID (left-padded to 32 bytes)
+    const originDomainTopic = toHex(BigInt(multiProvider.getDomainId(chain)), {
+      size: 32,
+    }).toLowerCase();
+    // topics[2]: EVM address cast to bytes32 (left-padded with 12 zero bytes)
+    const sourceRouterTopic = ensure0x(
+      '00'.repeat(12) + sourceRouter.replace(/^0x/i, ''),
+    ).toLowerCase();
 
+    let matchedLog: (typeof logs)[0] | undefined;
     for (const log of logs) {
       if ((log.address ?? '').toLowerCase() !== destRouterLower) continue;
       if ((log.topics?.[0] ?? '').toLowerCase() !== RECEIVED_TRANSFER_REMOTE_TOPIC.toLowerCase())
         continue;
+      if ((log.topics?.[1] ?? '').toLowerCase() !== originDomainTopic) continue;
+      if ((log.topics?.[2] ?? '').toLowerCase() !== sourceRouterTopic) continue;
 
-      const logIndexBytes = toHex(BigInt(log.logIndex ?? 0), { size: 8 });
-      const hash = keccak256(concat([toHex('SameChainCCR'), txHash as Hex, logIndexBytes]));
-
-      // 4 zero bytes || first 28 bytes of hash
-      const msgId = ensure0x('00'.repeat(4) + hash.slice(2, 58)) as Hex;
-      logger.debug('Computed same-chain CCR msg ID', msgId);
-      return msgId;
+      if (matchedLog) {
+        logger.warn('Ambiguous ReceivedTransferRemote logs for same-chain CCR swap');
+        return undefined;
+      }
+      matchedLog = log;
     }
 
-    logger.warn('No ReceivedTransferRemote log found for same-chain CCR swap');
-    return undefined;
+    if (!matchedLog) {
+      logger.warn('No ReceivedTransferRemote log found for same-chain CCR swap');
+      return undefined;
+    }
+
+    const logIndexBytes = toHex(BigInt(matchedLog.logIndex ?? 0), { size: 8 });
+    const hash = keccak256(concat([toHex('SameChainCCR'), txHash as Hex, logIndexBytes]));
+
+    // 4 zero bytes || first 28 bytes of hash
+    const msgId = ensure0x('00'.repeat(4) + hash.slice(2, 58)) as Hex;
+    logger.debug('Computed same-chain CCR msg ID', msgId);
+    return msgId;
   } catch (error) {
     logger.error('Could not compute same-chain CCR msg ID', error);
     return undefined;

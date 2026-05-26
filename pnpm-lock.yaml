@@ -25,24 +25,9 @@ overrides:
   '@ledgerhq/errors': 6.31.0
 
 patchedDependencies:
-<<<<<<< HEAD
-  '@cosmjs/cosmwasm-stargate@0.32.4':
-    hash: c77d7da4aa556dced41baab8b5007d5363a0db1ad1fd795ca66ce2a4757e3f1e
-    path: patches/@cosmjs-cosmwasm-stargate-npm-0.32.4-f9dd51429c.patch
-  '@provablehq/sdk@0.9.15':
-    hash: c3b67b6e17970e4e71124b375f996bb58f69b19e6deba7d2dd82a7809373358b
-    path: patches/@provablehq__sdk@0.9.15.patch
-  '@provablehq/wasm@0.9.18':
-    hash: 9af61d89e033cd3d4a4659b1412e680fe485647bc975037fd7ac764298eb5ca8
-    path: patches/@provablehq__wasm@0.9.18.patch
-  starknetkit@2.6.1:
-    hash: d8d81d77fa623989f021747f735ecef191f7ef8744e03c5f475cc1e9314d79d7
-    path: patches/starknetkit@2.6.1.patch
-=======
   '@provablehq/sdk@0.9.15': c3b67b6e17970e4e71124b375f996bb58f69b19e6deba7d2dd82a7809373358b
   '@provablehq/wasm@0.9.18': 9af61d89e033cd3d4a4659b1412e680fe485647bc975037fd7ac764298eb5ca8
   starknetkit@2.6.1: d8d81d77fa623989f021747f735ecef191f7ef8744e03c5f475cc1e9314d79d7
->>>>>>> origin/main
 
 importers:
 
@@ -65,7 +50,7 @@ importers:
         version: 2.0.21
       '@cosmjs/cosmwasm-stargate':
         specifier: ^0.32.4
-        version: 0.32.4(patch_hash=c77d7da4aa556dced41baab8b5007d5363a0db1ad1fd795ca66ce2a4757e3f1e)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 0.32.4(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       '@cosmjs/proto-signing':
         specifier: ^0.32.4
         version: 0.32.4
@@ -2550,7 +2535,7 @@ packages:
 
   '@paulmillr/qr@0.2.1':
     resolution: {integrity: sha512-IHnV6A+zxU7XwmKFinmYjUcwlyK9+xkG3/s9KcQhI9BjQKycrJ1JRO+FbNYPwZiPKW3je/DR0k7w8/gLa5eaxQ==}
-    deprecated: 'The package is now available as "qr": npm install qr'
+    deprecated: 'Switch to "qr" (new package name) for security updates: npm install qr'
 
   '@peculiar/asn1-cms@2.6.1':
     resolution: {integrity: sha512-vdG4fBF6Lkirkcl53q6eOdn3XYKt+kJTG59edgRZORlg/3atWWEReRCx5rYE1ZzTTX6vLK5zDMjHh7vbrcXGtw==}
@@ -10765,7 +10750,7 @@ snapshots:
       '@cosmjs/math': 0.36.2
       '@cosmjs/utils': 0.36.2
 
-  '@cosmjs/cosmwasm-stargate@0.32.4(patch_hash=c77d7da4aa556dced41baab8b5007d5363a0db1ad1fd795ca66ce2a4757e3f1e)(bufferutil@4.1.0)(utf-8-validate@6.0.6)':
+  '@cosmjs/cosmwasm-stargate@0.32.4(bufferutil@4.1.0)(utf-8-validate@6.0.6)':
     dependencies:
       '@cosmjs/amino': 0.32.4
       '@cosmjs/crypto': 0.32.4
@@ -12161,7 +12146,7 @@ snapshots:
       '@aws-sdk/client-s3': 3.1011.0
       '@chain-registry/types': 0.50.322
       '@cosmjs/amino': 0.32.4
-      '@cosmjs/cosmwasm-stargate': 0.32.4(patch_hash=c77d7da4aa556dced41baab8b5007d5363a0db1ad1fd795ca66ce2a4757e3f1e)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+      '@cosmjs/cosmwasm-stargate': 0.32.4(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       '@cosmjs/crypto': 0.32.4
       '@cosmjs/encoding': 0.32.4
       '@cosmjs/math': 0.32.4

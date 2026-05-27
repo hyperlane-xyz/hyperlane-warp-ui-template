@@ -20,7 +20,6 @@ import { type AccountInfo } from '@hyperlane-xyz/widgets/walletIntegrations/type
 import BigNumber from 'bignumber.js';
 import { Form, Formik, useFormikContext } from 'formik';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { toast } from 'react-toastify';
 
 import { RecipientWarningBanner } from '../../components/banner/RecipientWarningBanner';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
@@ -619,7 +618,7 @@ function ButtonSection({
       const isSelfRecipient = eqAddress(recipient, connectedWallet);
 
       if (senderCheckError || recipientCheckError) {
-        toast.error(senderCheckError || recipientCheckError);
+        logger.warn(senderCheckError || recipientCheckError);
         setRecipientInfos({ addressConfirmed: true, showWarning: false });
         return;
       }

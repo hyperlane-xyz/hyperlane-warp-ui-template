@@ -132,13 +132,6 @@ export interface AppState {
   knownTokens: Map<string, UiToken>;
   syncTokens: (tokens: UiToken[]) => void;
 
-  // Sticky USD price cache, keyed by coinGeckoId. Per-id `fetchedAt` so
-  // chain switches that grow the token catalogue only fetch the deltas.
-  // Entries with `usd` absent are negative-cached (CoinGecko had no
-  // price) so we don't retry in a tight loop.
-  tokenPrices: Record<string, { usd?: number; fetchedAt: number }>;
-  mergeTokenPrices: (requestedIds: string[], fetched: Record<string, number>) => void;
-
   // Shared component state
   transferLoading: boolean;
   setTransferLoading: (isLoading: boolean) => void;
@@ -163,8 +156,16 @@ export interface AppState {
   // Set of router addresses per chain — used to prevent sending to warp route
   // addresses and to filter message API results
   routerAddressesByChainMap: Record<ChainName, Set<string>>;
-  // Deduplicated, sorted CoinGecko IDs for all tokens (used by useTokenPrices)
+  // Deduplicated, sorted CoinGecko IDs for the warpCore token set (built
+  // at WarpContext init). Consumed by the bridge `useTokenPrices` wrapper
+  // which delegates to the shared `useTokenPricesByIds` cache below.
   coinGeckoIds: string[];
+  // Sticky USD price cache, keyed by coinGeckoId. Per-id `fetchedAt` so
+  // chain switches that grow the token catalogue only fetch the deltas.
+  // Entries with `usd` absent are negative-cached (CoinGecko had no
+  // price) so we don't retry in a tight loop.
+  tokenPrices: Record<string, { usd?: number; fetchedAt: number }>;
+  mergeTokenPrices: (requestedIds: string[], fetched: Record<string, number>) => void;
 }
 
 export const useStore = create<AppState>()(

@@ -29,7 +29,9 @@ export function useTokenUsdValue(token: UiToken | undefined, amount: string): nu
   const { prices } = useTokenPrices();
   const price = token?.coinGeckoId ? prices[token.coinGeckoId] : undefined;
   return useMemo(() => {
-    const a = parseFloat(amount);
+    // Coerce + strip grouping separators — Formik may hand us a number/null
+    // and parseFloat("1,234.56") returns 1 without the strip.
+    const a = parseFloat(String(amount ?? '').replace(/,/g, ''));
     if (!price || isNaN(a)) return 0;
     return a * price;
   }, [amount, price]);

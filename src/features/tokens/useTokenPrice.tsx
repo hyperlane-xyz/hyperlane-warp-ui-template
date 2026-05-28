@@ -1,3 +1,4 @@
+import { useDebounce } from '@hyperlane-xyz/widgets';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
@@ -12,37 +13,56 @@ const COINGECKO_BATCH = 250;
 
 type CoinGeckoResponse = Record<string, { usd: number }>;
 
-/** Fetch USD prices from CoinGecko for one or more coinGeckoIds. */
+/**
+ * Fetch USD prices from CoinGecko for one or more coinGeckoIds. Throws on
+ * network or HTTP errors so callers can distinguish a real failure from a
+ * 200-OK-with-missing-ids (legit "CoinGecko has no price for this id").
+ */
 export async function fetchPrices(ids: string[]): Promise<Record<string, number>> {
   if (ids.length === 0) return {};
-  try {
-    const res = await fetch(
-      `https://api.coingecko.com/api/v3/simple/price?ids=${ids.join(',')}&vs_currencies=usd`,
-    );
-    if (!res.ok) {
-      logger.warn(`CoinGecko API error: ${res.status} ${res.statusText}`);
-      return {};
-    }
-    const data: CoinGeckoResponse = await res.json();
-    const result: Record<string, number> = {};
-    for (const [id, priceData] of Object.entries(data)) {
-      if (priceData?.usd != null) result[id] = priceData.usd;
-    }
-    return result;
-  } catch (error) {
-    logger.warn('Failed to fetch token prices', error);
-    return {};
+  const res = await fetch(
+    `https://api.coingecko.com/api/v3/simple/price?ids=${ids.join(',')}&vs_currencies=usd`,
+  );
+  if (!res.ok) {
+    throw new Error(`CoinGecko ${res.status} ${res.statusText}`);
   }
+  const data: CoinGeckoResponse = await res.json();
+  const result: Record<string, number> = {};
+  for (const [id, priceData] of Object.entries(data)) {
+    if (priceData?.usd != null) result[id] = priceData.usd;
+  }
+  return result;
 }
 
-async function fetchPricesBatched(ids: string[]): Promise<Record<string, number>> {
-  if (ids.length === 0) return {};
+interface BatchedFetchResult {
+  /** IDs from chunks that resolved successfully — safe to negative-cache. */
+  requestedIds: string[];
+  prices: Record<string, number>;
+}
+
+// Per-chunk Promise.allSettled so a 429 on one chunk doesn't poison the
+// rest. Only successful chunks contribute to `requestedIds` / `prices`;
+// failed chunks' IDs stay uncached and become eligible for refetch on
+// the next render.
+async function fetchPricesBatched(ids: string[]): Promise<BatchedFetchResult> {
+  if (ids.length === 0) return { requestedIds: [], prices: {} };
   const chunks: string[][] = [];
   for (let i = 0; i < ids.length; i += COINGECKO_BATCH) {
     chunks.push(ids.slice(i, i + COINGECKO_BATCH));
   }
-  const results = await Promise.all(chunks.map(fetchPrices));
-  return Object.assign({}, ...results);
+  const results = await Promise.allSettled(chunks.map(fetchPrices));
+  const requestedIds: string[] = [];
+  const prices: Record<string, number> = {};
+  for (let i = 0; i < results.length; i++) {
+    const r = results[i];
+    if (r.status === 'fulfilled') {
+      requestedIds.push(...chunks[i]);
+      Object.assign(prices, r.value);
+    } else {
+      logger.warn('Failed to fetch token prices chunk', r.reason);
+    }
+  }
+  return { requestedIds, prices };
 }
 
 // Shared core: delta-fetch USD prices for `ids` into the store's
@@ -55,21 +75,34 @@ export function useTokenPricesByIds(ids: string[]): {
 } {
   const tokenPrices = useStore((s) => s.tokenPrices);
   const mergeTokenPrices = useStore((s) => s.mergeTokenPrices);
+  // Debounce the input id set — rapid catalogue growth (e.g. picker
+  // browsing chains) batches into one queryKey update instead of firing
+  // redundant in-flight fetches that all overlap on the same IDs.
+  const debouncedIds = useDebounce(ids, 300);
 
   const idsToFetch = useMemo(() => {
     const now = Date.now();
-    return ids.filter((id) => {
+    return debouncedIds.filter((id) => {
       const entry = tokenPrices[id];
       return !entry || now - entry.fetchedAt > PRICE_CACHE_MS;
     });
-  }, [ids, tokenPrices]);
+  }, [debouncedIds, tokenPrices]);
 
   const { isLoading } = useQuery({
     queryKey: ['tokenPrices', idsToFetch],
     queryFn: async () => {
-      const fresh = await fetchPricesBatched(idsToFetch);
-      mergeTokenPrices(idsToFetch, fresh);
-      return fresh;
+      const { requestedIds, prices } = await fetchPricesBatched(idsToFetch);
+      // Partial: merge what we got. Next render's `idsToFetch` shrinks
+      // to just the still-missing IDs → fresh queryKey fires a follow-up
+      // fetch for those automatically.
+      if (requestedIds.length > 0) {
+        mergeTokenPrices(requestedIds, prices);
+        return prices;
+      }
+      // Total failure: throw so TQ marks errored + retries (default 3x
+      // with exp backoff). Returning {} here would cache an empty
+      // "success" and lock the same queryKey out of refetching.
+      throw new Error('All CoinGecko price chunks failed');
     },
     enabled: idsToFetch.length > 0,
     staleTime: PRICE_CACHE_MS,

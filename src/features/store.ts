@@ -132,6 +132,13 @@ export interface AppState {
   knownTokens: Map<string, UiToken>;
   syncTokens: (tokens: UiToken[]) => void;
 
+  // Sticky USD price cache, keyed by coinGeckoId. Per-id `fetchedAt` so
+  // chain switches that grow the token catalogue only fetch the deltas.
+  // Entries with `usd` absent are negative-cached (CoinGecko had no
+  // price) so we don't retry in a tight loop.
+  tokenPrices: Record<string, { usd?: number; fetchedAt: number }>;
+  mergeTokenPrices: (requestedIds: string[], fetched: Record<string, number>) => void;
+
   // Shared component state
   transferLoading: boolean;
   setTransferLoading: (isLoading: boolean) => void;
@@ -327,6 +334,18 @@ export const useStore = create<AppState>()(
             }
           }
           return added > 0 ? { knownTokens: next } : state;
+        });
+      },
+
+      tokenPrices: {},
+      mergeTokenPrices: (requestedIds, fetched) => {
+        set((state) => {
+          const now = Date.now();
+          const next = { ...state.tokenPrices };
+          for (const id of requestedIds) {
+            next[id] = { usd: fetched[id], fetchedAt: now };
+          }
+          return { tokenPrices: next };
         });
       },
 

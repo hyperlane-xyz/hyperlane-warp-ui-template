@@ -1,6 +1,36 @@
-// Engine doesn't expose token USD prices yet. Shape mirrors warp UI's
-// useTokenPrices so TokenList consumes it without changes; the price
-// map is empty for now.
+import { useMemo } from 'react';
+
+import { useStore } from '../../store';
+import { useTokenPricesByIds } from '../../tokens/useTokenPrice';
+import type { UiToken } from './types';
+
+// Swap-side prices: derive coinGeckoIds from the engine token catalogue
+// (knownTokens grows as the user browses chains/tokens) and delegate to
+// the shared store-backed cache. Overlapping IDs with the bridge tab
+// (ETH, USDC, etc.) are fetched once total.
 export function useTokenPrices(): { prices: Record<string, number>; isLoading: boolean } {
-  return { prices: {}, isLoading: false };
+  const knownTokens = useStore((s) => s.knownTokens);
+
+  const ids = useMemo(() => {
+    const set = new Set<string>();
+    for (const t of knownTokens.values()) {
+      if (t.coinGeckoId) set.add(t.coinGeckoId);
+    }
+    return Array.from(set).sort();
+  }, [knownTokens]);
+
+  return useTokenPricesByIds(ids);
+}
+
+// Convenience: USD value of a decimal-formatted token `amount` string.
+// Returns 0 when token has no coinGeckoId, no cached price, or the
+// amount fails to parse.
+export function useTokenUsdValue(token: UiToken | undefined, amount: string): number {
+  const { prices } = useTokenPrices();
+  const price = token?.coinGeckoId ? prices[token.coinGeckoId] : undefined;
+  return useMemo(() => {
+    const a = parseFloat(amount);
+    if (!price || isNaN(a)) return 0;
+    return a * price;
+  }, [amount, price]);
 }

@@ -24,7 +24,7 @@ import { RecipientConfirmationModal } from '../wallet/RecipientConfirmationModal
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { WalletDropdown } from '../wallet/WalletDropdown';
 import { useTokenBalance } from './balances/hooks';
-import { formatBalance, formatFeeAmount } from './balances/utils';
+import { formatBalance, formatFeeAmount, formatUsd } from './balances/utils';
 import { FeeSectionButton } from './FeeSectionButton';
 import { MaxButton } from './MaxButton';
 import {
@@ -38,6 +38,7 @@ import { TokenBalance } from './TokenBalance';
 import { getTokenByKeyFromMap, useTokenByKeyMap } from './tokens/hooks';
 import { TokenSelectField } from './tokens/TokenSelectField';
 import type { UiToken } from './tokens/types';
+import { useTokenUsdValue } from './tokens/useTokenPrice';
 import {
   FinalSwapStatuses,
   SwapStatus,
@@ -495,7 +496,9 @@ function OriginTokenCard({
   srcToken: UiToken | undefined;
   amountError: string | undefined;
 }) {
+  const { values } = useFormikContext<SwapFormValues>();
   const { data: balance, isLoading: isBalanceLoading } = useTokenBalance(srcToken);
+  const amountUsd = useTokenUsdValue(srcToken, values.amount);
 
   return (
     <div>
@@ -530,7 +533,7 @@ function OriginTokenCard({
           />
         </div>
         <div className="transfer-balance mt-1 flex items-center justify-between text-xs leading-[18px] text-gray-450 dark:text-foreground-secondary">
-          <span>$0.00</span>
+          <span>{formatUsd(amountUsd)}</span>
           <TokenBalance label="Balance" balance={balance ?? null} token={srcToken} />
         </div>
       </div>
@@ -572,14 +575,14 @@ function DestinationTokenCard({
     }
   }, [bestRoute, dstToken]);
   const minOutputDisplay = useMemo(() => {
-    if (!bestRoute || !dstToken) return '';
-    if (bestRoute.isBridgeOnly) return '';
+    if (!bestRoute || !dstToken || bestRoute.isBridgeOnly) return '';
     try {
       return formatUnits(BigInt(bestRoute.raw.outputMin), dstToken.decimals);
     } catch {
       return '';
     }
   }, [bestRoute, dstToken]);
+  const outputUsd = useTokenUsdValue(dstToken, outputDisplay);
 
   return (
     <div>
@@ -611,7 +614,12 @@ function DestinationTokenCard({
         </div>
         <div className="transfer-balance mt-1 flex items-center justify-between text-xs leading-[18px] text-gray-450 dark:text-foreground-secondary">
           <span>
-            {minOutputDisplay ? `Min: ${minOutputDisplay} ${dstToken?.symbol ?? ''}` : ''}
+            {formatUsd(outputUsd)}
+            {minOutputDisplay && (
+              <span className="ml-1.5">
+                · Min: {minOutputDisplay} {dstToken?.symbol ?? ''}
+              </span>
+            )}
           </span>
           <TokenBalance label="Remote Balance" balance={balance ?? null} token={dstToken} />
         </div>

@@ -160,12 +160,14 @@ export interface AppState {
   // at WarpContext init). Consumed by the bridge `useTokenPrices` wrapper
   // which delegates to the shared `useTokenPricesByIds` cache below.
   coinGeckoIds: string[];
-  // Sticky USD price cache, keyed by coinGeckoId. Per-id `fetchedAt` so
-  // chain switches that grow the token catalogue only fetch the deltas.
-  // Entries with `usd` absent are negative-cached (CoinGecko had no
-  // price) so we don't retry in a tight loop.
-  tokenPrices: Record<string, { usd?: number; fetchedAt: number }>;
-  mergeTokenPrices: (requestedIds: string[], fetched: Record<string, number>) => void;
+  // Session-scoped USD price cache, keyed by coinGeckoId. `failedAt`
+  // backs off retries after rate-limit / network failures.
+  tokenPrices: Record<string, { usd?: number; fetchedAt?: number; failedAt?: number }>;
+  mergeTokenPrices: (
+    succeededIds: string[],
+    fetched: Record<string, number>,
+    failedIds: string[],
+  ) => void;
 }
 
 export const useStore = create<AppState>()(
@@ -339,12 +341,15 @@ export const useStore = create<AppState>()(
       },
 
       tokenPrices: {},
-      mergeTokenPrices: (requestedIds, fetched) => {
+      mergeTokenPrices: (succeededIds, fetched, failedIds) => {
         set((state) => {
           const now = Date.now();
           const next = { ...state.tokenPrices };
-          for (const id of requestedIds) {
+          for (const id of succeededIds) {
             next[id] = { usd: fetched[id], fetchedAt: now };
+          }
+          for (const id of failedIds) {
+            next[id] = { ...next[id], failedAt: now };
           }
           return { tokenPrices: next };
         });

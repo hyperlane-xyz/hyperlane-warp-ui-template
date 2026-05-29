@@ -22,15 +22,17 @@ export function useTokenPrices(): { prices: Record<string, number>; isLoading: b
   return useTokenPricesByIds(ids);
 }
 
-// Convenience: USD value of a decimal-formatted token `amount` string.
-// Returns 0 when token has no coinGeckoId, no cached price, or the
-// amount fails to parse.
+// USD value of a token `amount` string. Reads the single price via a
+// parameterized selector so consumers don't re-render on unrelated
+// tokenPrices mutations.
 export function useTokenUsdValue(token: UiToken | undefined, amount: string): number {
-  const { prices } = useTokenPrices();
-  const price = token?.coinGeckoId ? prices[token.coinGeckoId] : undefined;
+  // Side-effect mount: keeps the catalogue-wide fetch hot for deep-linked
+  // URLs where cards render before the picker opens.
+  useTokenPrices();
+  const id = token?.coinGeckoId;
+  const price = useStore((s) => (id ? s.tokenPrices[id]?.usd : undefined));
   return useMemo(() => {
-    // Coerce + strip grouping separators — Formik may hand us a number/null
-    // and parseFloat("1,234.56") returns 1 without the strip.
+    // Strip grouping separators — parseFloat("1,234.56") returns 1 otherwise.
     const a = parseFloat(String(amount ?? '').replace(/,/g, ''));
     if (!price || isNaN(a)) return 0;
     return a * price;

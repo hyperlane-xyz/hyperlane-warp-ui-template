@@ -533,7 +533,7 @@ function OriginTokenCard({
           />
         </div>
         <div className="transfer-balance mt-1 flex items-center justify-between text-xs leading-[18px] text-gray-450 dark:text-foreground-secondary">
-          <span>{formatUsd(amountUsd)}</span>
+          <span>{amountUsd >= 0.01 ? formatUsd(amountUsd) : '$0.00'}</span>
           <TokenBalance label="Balance" balance={balance ?? null} token={srcToken} />
         </div>
       </div>
@@ -574,14 +574,6 @@ function DestinationTokenCard({
       return '';
     }
   }, [bestRoute, dstToken]);
-  const minOutputDisplay = useMemo(() => {
-    if (!bestRoute || !dstToken || bestRoute.isBridgeOnly) return '';
-    try {
-      return formatUnits(BigInt(bestRoute.raw.outputMin), dstToken.decimals);
-    } catch {
-      return '';
-    }
-  }, [bestRoute, dstToken]);
   const outputUsd = useTokenUsdValue(dstToken, outputDisplay);
 
   return (
@@ -613,14 +605,7 @@ function DestinationTokenCard({
           />
         </div>
         <div className="transfer-balance mt-1 flex items-center justify-between text-xs leading-[18px] text-gray-450 dark:text-foreground-secondary">
-          <span>
-            {formatUsd(outputUsd)}
-            {minOutputDisplay && (
-              <span className="ml-1.5">
-                · Min: {minOutputDisplay} {dstToken?.symbol ?? ''}
-              </span>
-            )}
-          </span>
+          <span>{outputUsd >= 0.01 ? formatUsd(outputUsd) : '$0.00'}</span>
           <TokenBalance label="Remote Balance" balance={balance ?? null} token={dstToken} />
         </div>
       </div>

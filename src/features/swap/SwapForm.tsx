@@ -5,7 +5,6 @@ import { useAccountAddressForChain } from '@hyperlane-xyz/widgets/walletIntegrat
 import { Form, Formik, useFormikContext } from 'formik';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { formatUnits, type Address } from 'viem';
-import { usePublicClient } from 'wagmi';
 
 import { FormWarningBanner } from '../../components/banner/FormWarningBanner';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
@@ -23,16 +22,11 @@ import { useStore } from '../store';
 import { RecipientConfirmationModal } from '../wallet/RecipientConfirmationModal';
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { WalletDropdown } from '../wallet/WalletDropdown';
+import { ApprovalPhase, useApprovalStatus } from './approval';
 import { useTokenBalance } from './balances/hooks';
 import { formatBalance, formatFeeAmount } from './balances/utils';
 import { FeeSectionButton } from './FeeSectionButton';
 import { MaxButton } from './MaxButton';
-import {
-  Permit2Phase,
-  useApproveErc20ToPermit2,
-  useApprovePermit2ToRouter,
-  usePermit2Status,
-} from './permit2';
 import { SlippagePanel } from './SlippagePanel';
 import { TokenBalance } from './TokenBalance';
 import { getTokenByKeyFromMap, useTokenByKeyMap } from './tokens/hooks';
@@ -72,7 +66,6 @@ function SwapFormContent() {
     useFormikContext<SwapFormValues>();
   const multiProvider = useMultiProvider();
   const tokenMap = useTokenByKeyMap();
-  const publicClient = usePublicClient({ chainId: values.srcChain ?? undefined });
   const { data: chainsResp } = useChains();
 
   const srcChainName =
@@ -99,10 +92,10 @@ function SwapFormContent() {
   const srcToken = getTokenByKeyFromMap(tokenMap, srcTokenKey);
   const dstToken = getTokenByKeyFromMap(tokenMap, dstTokenKey);
 
-  // Engine /v1/chains gives us the UR + Permit2 address per chain.
+  // Engine /v1/chains gives us the UR per chain. Permit2 address is also
+  // in the response but unused — classic ERC20.approve(UR) doesn't need it.
   const srcChainInfo = chainsResp?.chains.find((c) => c.id === values.srcChain);
   const universalRouter = srcChainInfo?.universalRouter as Address | undefined;
-  const permit2Address = srcChainInfo?.permit2 as Address | undefined;
 
   const [isReview, setIsReview] = useState(false);
   const { close: closeConfirmationModal, isOpen: isConfirmationModalOpen } = useModal();
@@ -123,7 +116,6 @@ function SwapFormContent() {
 
   const bestRoute = quote?.routes[0];
 
-  // Permit2 — EVM source only.
   const isNative = !!srcToken?.isNative;
   const amountAtomic = useMemo(() => {
     const initialStep = bestRoute?.raw.steps[0];
@@ -131,28 +123,15 @@ function SwapFormContent() {
     return undefined;
   }, [bestRoute]);
 
-  const status = usePermit2Status({
-    chainId: values.srcChain ?? undefined,
+  const status = useApprovalStatus({
     chainName: srcChainName,
     token: srcToken?.address as Address | undefined,
-    owner: sender as Address | undefined,
-    universalRouter,
-    permit2Address,
+    owner: sender,
+    spender: universalRouter,
     amount: amountAtomic,
     isNative,
   });
 
-  const erc20Approve = useApproveErc20ToPermit2({
-    token: srcToken?.address as Address | undefined,
-    permit2Address,
-    chainName: srcChainName,
-  });
-  const permit2Approve = useApprovePermit2ToRouter({
-    token: srcToken?.address as Address | undefined,
-    universalRouter,
-    permit2Address,
-    chainName: srcChainName,
-  });
   const swap = useSwap();
   useToastError(swap.error, 'Swap failed');
   const addSwap = useStore((s) => s.addSwap);
@@ -187,8 +166,7 @@ function SwapFormContent() {
     setIsValidating(true);
     try {
       const approvalPending =
-        status.phase === Permit2Phase.NeedsErc20Approve ||
-        status.phase === Permit2Phase.NeedsPermit2Approve;
+        status.phase === ApprovalPhase.NeedsApprove || status.phase === ApprovalPhase.NeedsRevoke;
       const result = await validateSwapForm({
         values,
         bestRoute,
@@ -239,8 +217,7 @@ function SwapFormContent() {
     // current quote.expiresAt so the staleness check fires.
     const snapshot = values;
     const approvalPending =
-      status.phase === Permit2Phase.NeedsErc20Approve ||
-      status.phase === Permit2Phase.NeedsPermit2Approve;
+      status.phase === ApprovalPhase.NeedsApprove || status.phase === ApprovalPhase.NeedsRevoke;
     const validationResult = await validateSwapForm({
       values,
       bestRoute,
@@ -290,21 +267,8 @@ function SwapFormContent() {
     setActiveSwapIndex(swapIndex);
 
     try {
-      if (status.phase === Permit2Phase.NeedsErc20Approve) {
-        updateSwapStatus(swapIndex, SwapStatus.SigningApprove);
-        const hash = await erc20Approve.send();
-        updateSwapStatus(swapIndex, SwapStatus.ConfirmingApprove);
-        if (publicClient) await publicClient.waitForTransactionReceipt({ hash });
-      }
-      if (
-        status.phase === Permit2Phase.NeedsErc20Approve ||
-        status.phase === Permit2Phase.NeedsPermit2Approve
-      ) {
-        updateSwapStatus(swapIndex, SwapStatus.SigningApprove);
-        const hash = await permit2Approve.send();
-        updateSwapStatus(swapIndex, SwapStatus.ConfirmingApprove);
-        if (publicClient) await publicClient.waitForTransactionReceipt({ hash });
-      }
+      // useSwap.execute handles revoke / approve / swap sequencing
+      // internally based on the params below.
       await swap.execute({
         swapIndex,
         route: bestRoute,
@@ -314,6 +278,9 @@ function SwapFormContent() {
         dstToken: dstToken.address,
         sender,
         recipient: effectiveRecipient,
+        spender: universalRouter,
+        approvalAmount: amountAtomic,
+        isNative,
       });
     } catch {
       const cur = useStore.getState().swaps[swapIndex]?.status;
@@ -334,10 +301,10 @@ function SwapFormContent() {
     chainsResp?.chains,
     multiProvider,
     quote?.expiresAt,
-    erc20Approve,
-    permit2Approve,
+    universalRouter,
+    amountAtomic,
+    isNative,
     swap,
-    publicClient,
     addSwap,
     setActiveSwapIndex,
     updateSwapStatus,
@@ -434,7 +401,6 @@ function SwapFormContent() {
         dstToken={dstToken}
         approvalStatus={status.phase}
         universalRouter={universalRouter}
-        permit2Address={permit2Address}
       />
 
       <ButtonSection
@@ -651,15 +617,13 @@ function ReviewDetails({
   dstToken,
   approvalStatus,
   universalRouter,
-  permit2Address,
 }: {
   isReview: boolean;
   bestRoute: AugmentedRoute | undefined;
   srcToken: UiToken | undefined;
   dstToken: UiToken | undefined;
-  approvalStatus: Permit2Phase;
+  approvalStatus: ApprovalPhase;
   universalRouter: Address | undefined;
-  permit2Address: Address | undefined;
 }) {
   return (
     <>
@@ -679,7 +643,6 @@ function ReviewDetails({
               dstToken={dstToken}
               approvalStatus={approvalStatus}
               universalRouter={universalRouter}
-              permit2Address={permit2Address}
             />
           ) : (
             <p className="text-xs text-gray-500">No route to review.</p>
@@ -696,21 +659,18 @@ function ReviewTransactions({
   dstToken,
   approvalStatus,
   universalRouter,
-  permit2Address,
 }: {
   route: AugmentedRoute;
   srcToken: UiToken | undefined;
   dstToken: UiToken | undefined;
-  approvalStatus: Permit2Phase;
+  approvalStatus: ApprovalPhase;
   universalRouter: Address | undefined;
-  permit2Address: Address | undefined;
 }) {
   const tokenMap = useTokenByKeyMap();
   const multiProvider = useMultiProvider();
-  const needsErc20 = approvalStatus === Permit2Phase.NeedsErc20Approve;
-  const needsPermit2 =
-    approvalStatus === Permit2Phase.NeedsPermit2Approve ||
-    approvalStatus === Permit2Phase.NeedsErc20Approve;
+  const needsRevoke = approvalStatus === ApprovalPhase.NeedsRevoke;
+  const needsApprove =
+    approvalStatus === ApprovalPhase.NeedsApprove || approvalStatus === ApprovalPhase.NeedsRevoke;
   const symbol = srcToken?.symbol ?? 'token';
   const dstDecimals = dstToken?.decimals ?? 18;
   const dstSymbol = dstToken?.symbol ?? '';
@@ -718,23 +678,25 @@ function ReviewTransactions({
   let txNum = 0;
   return (
     <>
-      {needsErc20 && (
+      {needsRevoke && (
         <div>
-          <h4>{`Transaction ${++txNum}: Approve ${symbol} → Permit2`}</h4>
+          <h4>{`Transaction ${++txNum}: Revoke ${symbol}`}</h4>
           <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs dark:border-primary-300/25">
             <p>{`Token: ${srcToken?.address}`}</p>
-            <p>{`Spender (Permit2): ${permit2Address ?? '—'}`}</p>
-            <p>One-time, infinite approval.</p>
+            <p>{`Spender (UR): ${universalRouter ?? '—'}`}</p>
+            <p>Reset existing allowance to 0 before re-approving (USDT-style).</p>
           </div>
         </div>
       )}
-      {needsPermit2 && (
+      {needsApprove && (
         <div>
-          <h4>{`Transaction ${++txNum}: Approve Permit2 → Universal Router`}</h4>
+          <h4>{`Transaction ${++txNum}: Approve ${symbol} → Universal Router`}</h4>
           <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs dark:border-primary-300/25">
             <p>{`Token: ${srcToken?.address}`}</p>
-            <p>{`Spender (UR): ${universalRouter}`}</p>
-            <p>1-year max160 allowance.</p>
+            <p>{`Spender (UR): ${universalRouter ?? '—'}`}</p>
+            <p>
+              Amount-based approval — re-prompted when next swap exceeds the remaining allowance.
+            </p>
           </div>
         </div>
       )}

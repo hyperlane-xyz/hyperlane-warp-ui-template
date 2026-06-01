@@ -1,8 +1,8 @@
-import { ProviderType, type TypedTransactionReceipt } from '@hyperlane-xyz/sdk';
+import { EvmTokenAdapter, ProviderType, type TypedTransactionReceipt } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 import { useTransactionFns } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import { useCallback, useState } from 'react';
-import { keccak256, toBytes } from 'viem';
+import { keccak256, toBytes, type Address } from 'viem';
 
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
@@ -20,6 +20,12 @@ interface ExecuteArgs {
   dstToken: string;
   sender: string;
   recipient: string;
+  /** UR address to approve. Skips approval flow if absent or `isNative`. */
+  spender?: Address;
+  /** Amount to approve. Same as `amountAtomic` derived from the quote. */
+  approvalAmount?: bigint;
+  /** Native source skips approval entirely. */
+  isNative?: boolean;
 }
 
 // Hyperlane Mailbox `DispatchId(bytes32 messageId)` topic — msgId = idLog.topics[1].
@@ -59,6 +65,39 @@ export function useSwap() {
           } catch (err) {
             logger.warn(`switchNetwork to ${srcChainName} failed; continuing`, err as Error);
           }
+        }
+
+        // Approve / revoke before the swap tx. Mirrors WarpCore's pattern:
+        // bump non-zero existing allowance to zero first (USDT case), then
+        // approve the new amount.
+        if (args.spender && args.approvalAmount != null && !args.isNative) {
+          const spender = args.spender;
+          const adapter = new EvmTokenAdapter(srcChainName, multiProvider, {
+            token: args.srcToken,
+          });
+          const [needsApprove, needsRevoke] = await Promise.all([
+            adapter.isApproveRequired(args.sender, spender, args.approvalAmount.toString()),
+            adapter.isRevokeApprovalRequired(args.sender, spender),
+          ]);
+          const doApprove = async (amount: bigint) => {
+            updateSwapStatus(swapIndex, SwapStatus.SigningApprove);
+            const populated = await adapter.populateApproveTx({
+              weiAmountOrId: amount.toString(),
+              recipient: spender,
+            });
+            const { confirm } = await fns.sendTransaction({
+              tx: {
+                type: ProviderType.EthersV5,
+                transaction: { to: populated.to!, data: populated.data!, value: '0' },
+                category: 'transfer',
+              } as Parameters<typeof fns.sendTransaction>[0]['tx'],
+              chainName: srcChainName,
+            });
+            updateSwapStatus(swapIndex, SwapStatus.ConfirmingApprove);
+            await confirm();
+          };
+          if (needsApprove && needsRevoke) await doApprove(0n);
+          if (needsApprove) await doApprove(args.approvalAmount);
         }
 
         // Order is critical: post to CCS BEFORE broadcasting.

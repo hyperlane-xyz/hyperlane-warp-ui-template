@@ -54,7 +54,7 @@ export function useApprovalStatus(args: AllowanceArgs): ApprovalStatus {
       'erc20-allowance',
       chainName,
       token?.toLowerCase(),
-      owner?.toLowerCase(),
+      owner,
       spender?.toLowerCase(),
       amount?.toString() ?? null,
     ],

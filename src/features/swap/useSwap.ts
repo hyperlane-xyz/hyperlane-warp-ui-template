@@ -1,5 +1,5 @@
 import { EvmTokenAdapter, ProviderType, type TypedTransactionReceipt } from '@hyperlane-xyz/sdk';
-import { ProtocolType } from '@hyperlane-xyz/utils';
+import { isZeroishAddress, ProtocolType } from '@hyperlane-xyz/utils';
 import { useTransactionFns } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import { useCallback, useState } from 'react';
 import { keccak256, toBytes, type Address } from 'viem';
@@ -58,6 +58,8 @@ export function useSwap() {
       const fns = transactionFns[protocol as keyof typeof transactionFns];
       if (!fns) throw new Error(`No transaction handler for protocol ${protocol}`);
 
+      const txType = protocol === ProtocolType.Tron ? ProviderType.Tron : ProviderType.EthersV5;
+
       try {
         if (fns.switchNetwork) {
           try {
@@ -72,6 +74,9 @@ export function useSwap() {
         // approve the new amount.
         if (args.spender && args.approvalAmount != null && !args.isNative) {
           const spender = args.spender;
+          if (isZeroishAddress(spender)) {
+            throw new Error(`Cannot approve: spender is zero address on ${srcChainName}`);
+          }
           const adapter = new EvmTokenAdapter(srcChainName, multiProvider, {
             token: args.srcToken,
           });
@@ -85,16 +90,20 @@ export function useSwap() {
               weiAmountOrId: amount.toString(),
               recipient: spender,
             });
-            const { confirm } = await fns.sendTransaction({
+            const { hash, confirm } = await fns.sendTransaction({
               tx: {
-                type: ProviderType.EthersV5,
+                type: txType,
                 transaction: { to: populated.to!, data: populated.data!, value: '0' },
                 category: 'transfer',
               } as Parameters<typeof fns.sendTransaction>[0]['tx'],
               chainName: srcChainName,
             });
             updateSwapStatus(swapIndex, SwapStatus.ConfirmingApprove);
-            await confirm();
+            const receipt = await confirm();
+            if (isReverted(receipt)) {
+              logger.error('Approve tx reverted', new Error(`tx=${hash}`));
+              throw new Error('Approve transaction reverted on chain');
+            }
           };
           if (needsApprove && needsRevoke) await doApprove(0n);
           if (needsApprove) await doApprove(args.approvalAmount);
@@ -107,7 +116,6 @@ export function useSwap() {
         }
 
         updateSwapStatus(swapIndex, SwapStatus.SigningSwap);
-        const txType = protocol === ProtocolType.Tron ? ProviderType.Tron : ProviderType.EthersV5;
         const { hash, confirm } = await fns.sendTransaction({
           tx: {
             type: txType,

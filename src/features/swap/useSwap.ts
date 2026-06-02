@@ -187,7 +187,13 @@ export function useSwap() {
 }
 
 function isReverted(receipt: TypedTransactionReceipt): boolean {
-  if (receipt.type !== ProviderType.Viem && receipt.type !== ProviderType.EthersV5) {
+  // Tron receipts wrap an ethers v5 receipt (same `status` shape) — treat
+  // them identically to EVM for the revert check.
+  if (
+    receipt.type !== ProviderType.Viem &&
+    receipt.type !== ProviderType.EthersV5 &&
+    receipt.type !== ProviderType.Tron
+  ) {
     return false;
   }
   const status = (receipt.receipt as { status?: string | number }).status;
@@ -200,7 +206,12 @@ function parseReceipt(receipt: TypedTransactionReceipt): {
   msgId: `0x${string}` | undefined;
   originBlockNumber: number | undefined;
 } {
-  if (receipt.type !== ProviderType.Viem && receipt.type !== ProviderType.EthersV5) {
+  // Tron is EVM-like — emits Hyperlane Dispatch logs in the same shape.
+  if (
+    receipt.type !== ProviderType.Viem &&
+    receipt.type !== ProviderType.EthersV5 &&
+    receipt.type !== ProviderType.Tron
+  ) {
     return { msgId: undefined, originBlockNumber: undefined };
   }
   const logs =

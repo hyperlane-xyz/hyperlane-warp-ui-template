@@ -60,7 +60,12 @@ import {
 import { ImportTokenButton } from '../tokens/ImportTokenButton';
 import { TokenSelectField } from '../tokens/TokenSelectField';
 import { useTokenPrices } from '../tokens/useTokenPrice';
-import { checkTokenHasRoute, findConnectedDestinationToken, getTokenKey } from '../tokens/utils';
+import {
+  checkTokenHasRoute,
+  findConnectedDestinationToken,
+  findRouteToken,
+  getTokenKey,
+} from '../tokens/utils';
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { WalletDropdown } from '../wallet/WalletDropdown';
 import { getInterchainQuote, getTotalFee, getTransferToken } from './fees';
@@ -532,15 +537,22 @@ function TransferCheckout({
 }) {
   const { values } = useFormikContext<TransferFormValues>();
   const tokenMap = useTokenByKeyMap();
+  const warpCore = useWarpCore();
   const isRouteSupported = useIsRouteSupported();
 
-  // Use the same origin-token resolution as ButtonSection / executeTransfer so
-  // the offchain quote is bound to the same router the transfer will actually
-  // call. validateForm has already produced the multi-collateral / cross-asset
-  // optimal token and stored it in routeOverrideToken — no extra findRouteToken
-  // pass here.
-  const originToken = routeOverrideToken || getTokenByKeyFromMap(tokenMap, values.originTokenKey);
+  // Origin router resolution, in priority: routeOverrideToken -> findRouteToken -> raw key token.
+  // routeOverrideToken (set by validateForm on Continue) binds to the exact validated router.
+  // In form state it's null, so findRouteToken resolves the connected route token — the raw key
+  // token may not directly connect to the destination, leaving destinationToken (and quoting) off.
+  // findRouteToken is undefined for unsupported pairs; the raw key token keeps the selection
+  // rendering (quoting stays gated off via destinationToken).
+  const originTokenByKey = getTokenByKeyFromMap(tokenMap, values.originTokenKey);
   const destinationTokenByKey = getTokenByKeyFromMap(tokenMap, values.destinationTokenKey);
+  const routeToken =
+    !routeOverrideToken && originTokenByKey && destinationTokenByKey
+      ? findRouteToken(warpCore, originTokenByKey, destinationTokenByKey)
+      : undefined;
+  const originToken = routeOverrideToken || routeToken || originTokenByKey;
   const destinationToken =
     originToken && destinationTokenByKey
       ? findConnectedDestinationToken(originToken, destinationTokenByKey)

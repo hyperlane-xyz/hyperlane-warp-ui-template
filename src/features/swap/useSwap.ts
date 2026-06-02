@@ -7,6 +7,7 @@ import { keccak256, toBytes, type Address } from 'viem';
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { useStore } from '../store';
+import { submitToRelayApi } from '../transfer/relayApi';
 import { postCommitment } from './ccs';
 import { SwapStatus } from './types';
 import type { AugmentedRoute } from './types';
@@ -162,6 +163,8 @@ export function useSwap() {
           });
           return hash;
         }
+        submitToRelayApi(srcChainName, hash, protocol as ProtocolType, receipt);
+
         updateSwapStatus(swapIndex, SwapStatus.Bridging, {
           msgId: parsed.msgId,
           originBlockNumber: parsed.originBlockNumber,

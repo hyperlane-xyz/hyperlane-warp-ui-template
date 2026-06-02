@@ -424,6 +424,9 @@ export const warpRouteWhitelist: Array<string> | null = [
   // rise
   'RISE/bsc-ethereum',
 
+  // Nesa routes
+  'NES/bsc',
+
   // fluent
   'BLEND/fluent',
   'USDnr/usdnr',

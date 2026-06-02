@@ -60,11 +60,12 @@ import {
 import { ImportTokenButton } from '../tokens/ImportTokenButton';
 import { TokenSelectField } from '../tokens/TokenSelectField';
 import { useTokenPrices } from '../tokens/useTokenPrice';
-<<<<<<< HEAD
-import { checkTokenHasRoute, findConnectedDestinationToken, getTokenKey } from '../tokens/utils';
-=======
-import { checkTokenHasRoute, findConnectedDestinationToken, findRouteToken } from '../tokens/utils';
->>>>>>> origin/main
+import {
+  checkTokenHasRoute,
+  findConnectedDestinationToken,
+  findRouteToken,
+  getTokenKey,
+} from '../tokens/utils';
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { WalletDropdown } from '../wallet/WalletDropdown';
 import { getInterchainQuote, getTotalFee, getTransferToken } from './fees';

@@ -498,19 +498,19 @@ function TransferCheckout({
   const warpCore = useWarpCore();
   const isRouteSupported = useIsRouteSupported();
 
-  // Resolve the origin token to a valid router for the selected pair.
-  // After Continue, validateForm stores the chosen multi-collateral / cross-asset token in
-  // routeOverrideToken, so use it directly to keep the offchain quote bound to the exact
-  // router. Before that (form state) routeOverrideToken is null, so fall back to
-  // findRouteToken — the raw key token may not be directly connected to the selected
-  // destination, which would leave destinationToken undefined and disable fee quoting.
+  // Origin router resolution, in priority: routeOverrideToken -> findRouteToken -> raw key token.
+  // routeOverrideToken (set by validateForm on Continue) binds to the exact validated router.
+  // In form state it's null, so findRouteToken resolves the connected route token — the raw key
+  // token may not directly connect to the destination, leaving destinationToken (and quoting) off.
+  // findRouteToken is undefined for unsupported pairs; the raw key token keeps the selection
+  // rendering (quoting stays gated off via destinationToken).
   const originTokenByKey = getTokenByKeyFromMap(tokenMap, values.originTokenKey);
   const destinationTokenByKey = getTokenByKeyFromMap(tokenMap, values.destinationTokenKey);
-  const originToken =
-    routeOverrideToken ||
-    (originTokenByKey && destinationTokenByKey
+  const routeToken =
+    !routeOverrideToken && originTokenByKey && destinationTokenByKey
       ? findRouteToken(warpCore, originTokenByKey, destinationTokenByKey)
-      : originTokenByKey);
+      : undefined;
+  const originToken = routeOverrideToken || routeToken || originTokenByKey;
   const destinationToken =
     originToken && destinationTokenByKey
       ? findConnectedDestinationToken(originToken, destinationTokenByKey)

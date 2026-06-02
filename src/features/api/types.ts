@@ -202,6 +202,7 @@ export const CallCommitmentBodySchema = z.object({
   originDomain: z.number(),
   destinationDomain: z.number(),
   owner: Address,
+  ismOverride: Address.optional(),
 });
 export type CallCommitmentBody = z.infer<typeof CallCommitmentBodySchema>;
 

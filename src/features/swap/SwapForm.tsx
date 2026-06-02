@@ -38,7 +38,7 @@ import { TokenBalance } from './TokenBalance';
 import { getTokenByKeyFromMap, useTokenByKeyMap } from './tokens/hooks';
 import { TokenSelectField } from './tokens/TokenSelectField';
 import type { UiToken } from './tokens/types';
-import { useTokenUsdValue } from './tokens/useTokenPrice';
+import { useTokenPrices, useTokenUsdValue } from './tokens/useTokenPrice';
 import {
   FinalSwapStatuses,
   SwapStatus,
@@ -69,6 +69,11 @@ export function SwapForm() {
 }
 
 function SwapFormContent() {
+  // Mounts the catalogue-wide price fetch once for the whole form. Cards
+  // and review modal read individual prices via `useTokenUsdValue` (pure
+  // store readers); without this top-level call, deep-linked URLs would
+  // render cards before the picker opens and see empty USD values.
+  useTokenPrices();
   const { values, errors, setErrors, setFieldValue, setValues } =
     useFormikContext<SwapFormValues>();
   const multiProvider = useMultiProvider();
@@ -533,7 +538,7 @@ function OriginTokenCard({
           />
         </div>
         <div className="transfer-balance mt-1 flex items-center justify-between text-xs leading-[18px] text-gray-450 dark:text-foreground-secondary">
-          <span>{amountUsd >= 0.01 ? formatUsd(amountUsd) : '$0.00'}</span>
+          <span>{!amountUsd ? '$0.00' : formatUsd(amountUsd)}</span>
           <TokenBalance label="Balance" balance={balance ?? null} token={srcToken} />
         </div>
       </div>
@@ -605,7 +610,7 @@ function DestinationTokenCard({
           />
         </div>
         <div className="transfer-balance mt-1 flex items-center justify-between text-xs leading-[18px] text-gray-450 dark:text-foreground-secondary">
-          <span>{outputUsd >= 0.01 ? formatUsd(outputUsd) : '$0.00'}</span>
+          <span>{!outputUsd ? '$0.00' : formatUsd(outputUsd)}</span>
           <TokenBalance label="Remote Balance" balance={balance ?? null} token={dstToken} />
         </div>
       </div>

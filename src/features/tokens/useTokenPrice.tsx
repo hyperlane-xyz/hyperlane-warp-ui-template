@@ -5,6 +5,13 @@ import { useMemo } from 'react';
 import { logger } from '../../utils/logger';
 import { useStore } from '../store';
 
+type PriceCache = Record<string, { usd?: number; fetchedAt?: number; failedAt?: number }>;
+type MergeFn = (
+  succeededIds: string[],
+  fetched: Record<string, number>,
+  failedIds: string[],
+) => void;
+
 const PRICE_CACHE_MS = 15 * 60_000;
 const FAILED_BACKOFF_MS = 30_000;
 // 100 keeps the URL well under the ~6KB Cloudflare 414 threshold. Chunks run
@@ -65,8 +72,33 @@ async function fetchPricesBatched(ids: string[]): Promise<BatchedFetchResult> {
   return { requestedIds, prices };
 }
 
-// Shared core: delta-fetch into the store's `tokenPrices` cache. Bridge
+// Filter input IDs against the cache, fetch whatever is missing / stale /
+// past its backoff window, and merge results back into the store. Called
+// by both initial mount and the periodic refetch tick — on first call
+// the cache is empty so every ID flows through.
+async function fetchTokenPrices(ids: string[], cache: PriceCache, merge: MergeFn): Promise<null> {
+  const now = Date.now();
+  const idsToFetch = ids.filter((id) => {
+    const entry = cache[id];
+    if (!entry) return true;
+    if (entry.fetchedAt && now - entry.fetchedAt < PRICE_CACHE_MS) return false;
+    if (entry.failedAt && now - entry.failedAt < FAILED_BACKOFF_MS) return false;
+    return true;
+  });
+  if (idsToFetch.length === 0) return null;
+  const { requestedIds, prices } = await fetchPricesBatched(idsToFetch);
+  const failedIds = idsToFetch.filter((id) => !requestedIds.includes(id));
+  merge(requestedIds, prices, failedIds);
+  if (requestedIds.length === 0) {
+    throw new Error('All CoinGecko price chunks failed');
+  }
+  return null;
+}
+
+// Shared core: keep the store's `tokenPrices` cache fresh for `ids`. Bridge
 // + swap wrap with their own ID sources (warp routes vs engine catalogue).
+// TQ's `refetchInterval` drives periodic re-evaluation against the cache;
+// queryFn is a no-op when nothing is stale.
 export function useTokenPricesByIds(ids: string[]): {
   prices: Record<string, number>;
   isLoading: boolean;
@@ -78,32 +110,12 @@ export function useTokenPricesByIds(ids: string[]): {
   // a leading-edge debounce if it shows up in practice.
   const debouncedIds = useDebounce(ids, 300);
 
-  const idsToFetch = useMemo(() => {
-    const now = Date.now();
-    return debouncedIds.filter((id) => {
-      const entry = tokenPrices[id];
-      if (!entry) return true;
-      if (entry.fetchedAt && now - entry.fetchedAt < PRICE_CACHE_MS) return false;
-      if (entry.failedAt && now - entry.failedAt < FAILED_BACKOFF_MS) return false;
-      return true;
-    });
-  }, [debouncedIds, tokenPrices]);
-
   const { isLoading } = useQuery({
-    queryKey: ['tokenPrices', idsToFetch],
-    queryFn: async () => {
-      const { requestedIds, prices } = await fetchPricesBatched(idsToFetch);
-      const failedIds = idsToFetch.filter((id) => !requestedIds.includes(id));
-      mergeTokenPrices(requestedIds, prices, failedIds);
-      if (requestedIds.length === 0) {
-        throw new Error('All CoinGecko price chunks failed');
-      }
-      // Cache truth lives in Zustand + the idsToFetch filter; TQ is just
-      // a debounced trigger + retry mechanism. No staleTime / refetchOn*
-      // needed — queryKey content shifts on each successful merge.
-      return null;
-    },
-    enabled: idsToFetch.length > 0,
+    queryKey: ['tokenPrices', debouncedIds],
+    queryFn: () => fetchTokenPrices(debouncedIds, tokenPrices, mergeTokenPrices),
+    enabled: debouncedIds.length > 0,
+    refetchInterval: PRICE_CACHE_MS / 2,
+    refetchOnWindowFocus: false,
   });
 
   // Flatten the entry shape → bare USD numbers for consumers.

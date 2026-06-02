@@ -13,7 +13,10 @@ type MergeFn = (
 ) => void;
 
 const PRICE_CACHE_MS = 15 * 60_000;
-const FAILED_BACKOFF_MS = 30_000;
+// 90s clears CoinGecko's rolling 60s rate-limit window with breathing
+// room. Used for both the filter (skip failed IDs within this window)
+// and TQ's retry delay (one retry after this elapses).
+const FAILED_BACKOFF_MS = 90_000;
 // 100 keeps the URL well under the ~6KB Cloudflare 414 threshold. Chunks run
 // sequentially (free tier is ~5-15 req/min, parallel firing burns quota fast).
 const COINGECKO_BATCH = 100;
@@ -89,8 +92,12 @@ async function fetchTokenPrices(ids: string[], cache: PriceCache, merge: MergeFn
   const { requestedIds, prices } = await fetchPricesBatched(idsToFetch);
   const failedIds = idsToFetch.filter((id) => !requestedIds.includes(id));
   merge(requestedIds, prices, failedIds);
-  if (requestedIds.length === 0) {
-    throw new Error('All CoinGecko price chunks failed');
+  // Throw on ANY failed chunk so TQ marks the query errored and schedules
+  // the configured retry (see `retry` / `retryDelay` on useQuery). Successes
+  // are already merged into the store before the throw, so consumers see
+  // partial data immediately.
+  if (failedIds.length > 0) {
+    throw new Error(`CoinGecko fetch incomplete: ${failedIds.length} id(s) failed`);
   }
   return null;
 }
@@ -116,6 +123,10 @@ export function useTokenPricesByIds(ids: string[]): {
     enabled: debouncedIds.length > 0,
     refetchInterval: PRICE_CACHE_MS / 2,
     refetchOnWindowFocus: false,
+    // On partial/total failure: one retry after the rate-limit window
+    // elapses, then fall back to the normal refetchInterval cadence.
+    retry: 1,
+    retryDelay: FAILED_BACKOFF_MS,
   });
 
   // Flatten the entry shape → bare USD numbers for consumers.

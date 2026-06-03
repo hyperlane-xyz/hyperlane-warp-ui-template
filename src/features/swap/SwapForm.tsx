@@ -24,7 +24,7 @@ import { RecipientConfirmationModal } from '../wallet/RecipientConfirmationModal
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { WalletDropdown } from '../wallet/WalletDropdown';
 import { useTokenBalance } from './balances/hooks';
-import { formatBalance, formatFeeAmount } from './balances/utils';
+import { formatBalance, formatFeeAmount, formatUsd } from './balances/utils';
 import { FeeSectionButton } from './FeeSectionButton';
 import { MaxButton } from './MaxButton';
 import {
@@ -38,6 +38,7 @@ import { TokenBalance } from './TokenBalance';
 import { getTokenByKeyFromMap, useTokenByKeyMap } from './tokens/hooks';
 import { TokenSelectField } from './tokens/TokenSelectField';
 import type { UiToken } from './tokens/types';
+import { useTokenPrices, useTokenUsdValue } from './tokens/useTokenPrice';
 import {
   FinalSwapStatuses,
   SwapStatus,
@@ -68,6 +69,11 @@ export function SwapForm() {
 }
 
 function SwapFormContent() {
+  // Mounts the catalogue-wide price fetch once for the whole form. Cards
+  // and review modal read individual prices via `useTokenUsdValue` (pure
+  // store readers); without this top-level call, deep-linked URLs would
+  // render cards before the picker opens and see empty USD values.
+  useTokenPrices();
   const { values, errors, setErrors, setFieldValue, setValues } =
     useFormikContext<SwapFormValues>();
   const multiProvider = useMultiProvider();
@@ -495,7 +501,9 @@ function OriginTokenCard({
   srcToken: UiToken | undefined;
   amountError: string | undefined;
 }) {
+  const { values } = useFormikContext<SwapFormValues>();
   const { data: balance, isLoading: isBalanceLoading } = useTokenBalance(srcToken);
+  const amountUsd = useTokenUsdValue(srcToken, values.amount);
 
   return (
     <div>
@@ -530,7 +538,7 @@ function OriginTokenCard({
           />
         </div>
         <div className="transfer-balance mt-1 flex items-center justify-between text-xs leading-[18px] text-gray-450 dark:text-foreground-secondary">
-          <span>$0.00</span>
+          <span>{!amountUsd ? '$0.00' : formatUsd(amountUsd)}</span>
           <TokenBalance label="Balance" balance={balance ?? null} token={srcToken} />
         </div>
       </div>
@@ -571,15 +579,7 @@ function DestinationTokenCard({
       return '';
     }
   }, [bestRoute, dstToken]);
-  const minOutputDisplay = useMemo(() => {
-    if (!bestRoute || !dstToken) return '';
-    if (bestRoute.isBridgeOnly) return '';
-    try {
-      return formatUnits(BigInt(bestRoute.raw.outputMin), dstToken.decimals);
-    } catch {
-      return '';
-    }
-  }, [bestRoute, dstToken]);
+  const outputUsd = useTokenUsdValue(dstToken, outputDisplay);
 
   return (
     <div>
@@ -610,9 +610,7 @@ function DestinationTokenCard({
           />
         </div>
         <div className="transfer-balance mt-1 flex items-center justify-between text-xs leading-[18px] text-gray-450 dark:text-foreground-secondary">
-          <span>
-            {minOutputDisplay ? `Min: ${minOutputDisplay} ${dstToken?.symbol ?? ''}` : ''}
-          </span>
+          <span>{!outputUsd ? '$0.00' : formatUsd(outputUsd)}</span>
           <TokenBalance label="Remote Balance" balance={balance ?? null} token={dstToken} />
         </div>
       </div>

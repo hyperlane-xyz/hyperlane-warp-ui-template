@@ -156,8 +156,18 @@ export interface AppState {
   // Set of router addresses per chain — used to prevent sending to warp route
   // addresses and to filter message API results
   routerAddressesByChainMap: Record<ChainName, Set<string>>;
-  // Deduplicated, sorted CoinGecko IDs for all tokens (used by useTokenPrices)
+  // Deduplicated, sorted CoinGecko IDs for the warpCore token set (built
+  // at WarpContext init). Consumed by the bridge `useTokenPrices` wrapper
+  // which delegates to the shared `useTokenPricesByIds` cache below.
   coinGeckoIds: string[];
+  // Session-scoped USD price cache, keyed by coinGeckoId. `failedAt`
+  // backs off retries after rate-limit / network failures.
+  tokenPrices: Record<string, { usd?: number; fetchedAt?: number; failedAt?: number }>;
+  mergeTokenPrices: (
+    succeededIds: string[],
+    fetched: Record<string, number>,
+    failedIds: string[],
+  ) => void;
 }
 
 export const useStore = create<AppState>()(
@@ -327,6 +337,21 @@ export const useStore = create<AppState>()(
             }
           }
           return added > 0 ? { knownTokens: next } : state;
+        });
+      },
+
+      tokenPrices: {},
+      mergeTokenPrices: (succeededIds, fetched, failedIds) => {
+        set((state) => {
+          const now = Date.now();
+          const next = { ...state.tokenPrices };
+          for (const id of succeededIds) {
+            next[id] = { usd: fetched[id], fetchedAt: now };
+          }
+          for (const id of failedIds) {
+            next[id] = { ...next[id], failedAt: now };
+          }
+          return { tokenPrices: next };
         });
       },
 

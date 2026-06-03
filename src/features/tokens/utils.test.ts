@@ -5,9 +5,12 @@ import { createMockToken, createTokenConnectionMock } from '../../utils/test';
 import {
   buildTokensArray,
   checkTokenHasRoute,
+  checkTokenPairHasRoute,
+  checkTokenPickerHasRoute,
   dedupeTokensByCollateral,
   findConnectedDestinationToken,
   findRouteToken,
+  getDefaultTokens,
   getTokenKey,
   groupTokensByCollateral,
   isValidMultiCollateralToken,
@@ -822,6 +825,192 @@ describe('checkTokenHasRoute', () => {
 
     const groups = groupTokensByCollateral([originDeduped, originWithRoute, dest]);
     expect(checkTokenHasRoute(originDeduped, dest, groups)).toBe(true);
+  });
+});
+
+describe('checkTokenPickerHasRoute', () => {
+  test('should not mark origin unavailable when another destination is routable', () => {
+    const routableDestination = createMockToken({
+      chainName: TestChainName.test2,
+      addressOrDenom: '0x2222222222222222222222222222222222222222',
+      collateralAddressOrDenom: '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
+    });
+    const origin = createMockToken({
+      chainName: TestChainName.test1,
+      addressOrDenom: '0x1111111111111111111111111111111111111111',
+      collateralAddressOrDenom: '0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+      connections: [createTokenConnectionMock(undefined, routableDestination)],
+    });
+    const currentDefaultDestination = createMockToken({
+      chainName: 'base',
+      symbol: 'USDC',
+      addressOrDenom: '0x3333333333333333333333333333333333333333',
+      collateralAddressOrDenom: '0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC',
+    });
+    const groups = groupTokensByCollateral([
+      origin,
+      routableDestination,
+      currentDefaultDestination,
+    ]);
+
+    expect(checkTokenPairHasRoute(origin, currentDefaultDestination, 'origin', groups)).toBe(false);
+
+    expect(
+      checkTokenPickerHasRoute(
+        origin,
+        currentDefaultDestination,
+        'origin',
+        [origin, routableDestination, currentDefaultDestination],
+        groups,
+      ),
+    ).toBe(true);
+  });
+
+  test('should mark origin unavailable when it has no routes to any listed destination', () => {
+    const isolatedOrigin = createMockToken({
+      chainName: TestChainName.test1,
+      addressOrDenom: '0x1111111111111111111111111111111111111111',
+      collateralAddressOrDenom: '0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+    });
+    const otherListed = createMockToken({
+      chainName: TestChainName.test2,
+      addressOrDenom: '0x2222222222222222222222222222222222222222',
+      collateralAddressOrDenom: '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
+    });
+    const counterpart = createMockToken({
+      chainName: 'base',
+      symbol: 'USDC',
+      addressOrDenom: '0x3333333333333333333333333333333333333333',
+      collateralAddressOrDenom: '0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC',
+    });
+    const groups = groupTokensByCollateral([isolatedOrigin, otherListed, counterpart]);
+
+    expect(
+      checkTokenPickerHasRoute(
+        isolatedOrigin,
+        counterpart,
+        'origin',
+        [isolatedOrigin, otherListed, counterpart],
+        groups,
+      ),
+    ).toBe(false);
+  });
+
+  test('origin mode skips same-chain peers when checking routability', () => {
+    // Two tokens on the same chain, both with no cross-chain connections.
+    // The picker-level same-chain filter should reject the peer outright,
+    // not rely on checkTokenHasRoute for the rejection.
+    const origin = createMockToken({
+      chainName: TestChainName.test1,
+      addressOrDenom: '0x1111111111111111111111111111111111111111',
+      collateralAddressOrDenom: '0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+    });
+    const sameChainPeer = createMockToken({
+      chainName: TestChainName.test1,
+      symbol: 'PEER',
+      addressOrDenom: '0x2222222222222222222222222222222222222222',
+      collateralAddressOrDenom: '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
+    });
+    const groups = groupTokensByCollateral([origin, sameChainPeer]);
+
+    expect(checkTokenPickerHasRoute(origin, null, 'origin', [origin, sameChainPeer], groups)).toBe(
+      false,
+    );
+  });
+
+  test('destination mode with a null counterpart returns false', () => {
+    const token = createMockToken({
+      chainName: TestChainName.test1,
+      addressOrDenom: '0x1111111111111111111111111111111111111111',
+    });
+    const groups = groupTokensByCollateral([token]);
+
+    expect(checkTokenPickerHasRoute(token, null, 'destination', [token], groups)).toBe(false);
+    expect(checkTokenPickerHasRoute(token, undefined, 'destination', [token], groups)).toBe(false);
+  });
+
+  test('origin mode resolves based on allTokens when counterpart is null', () => {
+    const routableDestination = createMockToken({
+      chainName: TestChainName.test2,
+      addressOrDenom: '0x2222222222222222222222222222222222222222',
+      collateralAddressOrDenom: '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
+    });
+    const origin = createMockToken({
+      chainName: TestChainName.test1,
+      addressOrDenom: '0x1111111111111111111111111111111111111111',
+      collateralAddressOrDenom: '0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+      connections: [createTokenConnectionMock(undefined, routableDestination)],
+    });
+    const groups = groupTokensByCollateral([origin, routableDestination]);
+
+    expect(
+      checkTokenPickerHasRoute(origin, null, 'origin', [origin, routableDestination], groups),
+    ).toBe(true);
+    expect(
+      checkTokenPickerHasRoute(origin, undefined, 'origin', [origin, routableDestination], groups),
+    ).toBe(true);
+  });
+
+  test('should keep destination selection strict to current origin', () => {
+    const origin = createMockToken({
+      chainName: TestChainName.test1,
+      addressOrDenom: '0x1111111111111111111111111111111111111111',
+      connections: [
+        createTokenConnectionMock(undefined, {
+          chainName: TestChainName.test2,
+          addressOrDenom: '0x2222222222222222222222222222222222222222',
+        }),
+      ],
+    });
+    const unsupportedDestination = createMockToken({
+      chainName: 'base',
+      symbol: 'USDC',
+      addressOrDenom: '0x3333333333333333333333333333333333333333',
+      collateralAddressOrDenom: '0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC',
+    });
+    const groups = groupTokensByCollateral([origin, unsupportedDestination]);
+
+    expect(
+      checkTokenPickerHasRoute(
+        unsupportedDestination,
+        origin,
+        'destination',
+        [origin, unsupportedDestination],
+        groups,
+      ),
+    ).toBe(false);
+  });
+});
+
+describe('getDefaultTokens', () => {
+  test('should keep default list gated by featured tokens and strict current-pair routes', () => {
+    const featured = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USDC',
+      addressOrDenom: '0x1111111111111111111111111111111111111111',
+    });
+    const strictRoutable = createMockToken({
+      chainName: 'base',
+      symbol: 'USDC',
+      addressOrDenom: '0x2222222222222222222222222222222222222222',
+    });
+    const pickerOnlyRoutable = createMockToken({
+      chainName: 'fluent',
+      symbol: 'BLEND',
+      addressOrDenom: '0x3333333333333333333333333333333333333333',
+    });
+    const strictRouteMap = new Map([
+      [getTokenKey(strictRoutable), true],
+      [getTokenKey(pickerOnlyRoutable), false],
+    ]);
+
+    expect(
+      getDefaultTokens(
+        [featured, strictRoutable, pickerOnlyRoutable],
+        ['ethereum-USDC'],
+        strictRouteMap,
+      ),
+    ).toEqual([featured, strictRoutable]);
   });
 });
 

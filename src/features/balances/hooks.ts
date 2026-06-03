@@ -14,6 +14,7 @@ import { useToastError } from '../../components/toast/useToastError';
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
+import { useStore } from '../store';
 import { getTokenKey } from '../tokens/utils';
 import { fetchCosmosChainBalances, groupCosmosTokensByChain } from './cosmos';
 import { fetchChainBalances, groupEvmTokensByChain } from './evm';
@@ -22,7 +23,7 @@ import { fetchSdkBalance } from './tokens';
 
 export function useBalance(chain?: ChainName, token?: IToken, address?: Address) {
   const multiProvider = useMultiProvider();
-  const { isLoading, isError, error, data } = useQuery({
+  const { isLoading, isError, error, data, refetch } = useQuery({
     // The Token and Multiprovider classes are not serializable, so we can't use it as a key
     // eslint-disable-next-line @tanstack/query/exhaustive-deps
     queryKey: [
@@ -46,6 +47,7 @@ export function useBalance(chain?: ChainName, token?: IToken, address?: Address)
     isLoading,
     isError,
     balance: data ?? undefined,
+    refetch,
   };
 }
 
@@ -122,6 +124,7 @@ function useWalletAddresses(multiProvider: MultiProtocolProvider): Map<ProtocolT
  */
 export function useTokenBalances(tokens: Token[], scope: string, addressOverride?: string) {
   const multiProvider = useMultiProvider();
+  const chainAddresses = useStore((s) => s.chainAddresses);
   const walletAddresses = useWalletAddresses(multiProvider);
   const cosmosAddresses = useCosmosAccount(multiProvider).addresses;
   const tokenKeys = useMemo(() => tokens.map((t) => getTokenKey(t)), [tokens]);
@@ -147,11 +150,29 @@ export function useTokenBalances(tokens: Token[], scope: string, addressOverride
     [cosmosAddresses],
   );
 
+  // fetchChainBalances only reads batchContractAddress per chain. If that
+  // expands, widen this digest accordingly.
+  const chainAddressesKey = useMemo(
+    () =>
+      Object.entries(chainAddresses)
+        .map(([chain, addrs]) => `${chain}:${addrs.batchContractAddress ?? ''}`)
+        .sort()
+        .join('|'),
+    [chainAddresses],
+  );
+
   const hasAnyAddress = effectiveAddresses.size > 0 || cosmosAddresses.length > 0;
 
   const { data: balances = {}, isLoading } = useQuery({
     // eslint-disable-next-line @tanstack/query/exhaustive-deps -- effectiveAddresses derived from addressEntries; tokens covered by tokenKeys; multiProvider is not serializable
-    queryKey: ['tokenBalances', addressEntries, cosmosAddressKey, scope, tokenKeys],
+    queryKey: [
+      'tokenBalances',
+      addressEntries,
+      cosmosAddressKey,
+      scope,
+      tokenKeys,
+      chainAddressesKey,
+    ],
     queryFn: async (): Promise<Record<string, bigint>> => {
       const promises: Promise<Record<string, bigint>>[] = [];
 
@@ -160,7 +181,9 @@ export function useTokenBalances(tokens: Token[], scope: string, addressOverride
       if (evmAddr) {
         const { chainGroups, fallbackTokens } = groupEvmTokensByChain(tokens, multiProvider);
         for (const [chainId, group] of chainGroups) {
-          promises.push(fetchChainBalances(chainId, group, multiProvider, evmAddr as Hex));
+          promises.push(
+            fetchChainBalances(chainId, group, multiProvider, evmAddr as Hex, chainAddresses),
+          );
         }
         for (const { token, key } of fallbackTokens) {
           promises.push(fetchSdkBalance(token, multiProvider, evmAddr, key));

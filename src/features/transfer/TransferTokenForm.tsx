@@ -1,4 +1,4 @@
-import { Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
+import { IToken, QuotedCallsParams, Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
 import {
   KnownProtocolType,
   ProtocolType,
@@ -20,7 +20,6 @@ import { type AccountInfo } from '@hyperlane-xyz/widgets/walletIntegrations/type
 import BigNumber from 'bignumber.js';
 import { Form, Formik, useFormikContext } from 'formik';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { toast } from 'react-toastify';
 
 import { RecipientWarningBanner } from '../../components/banner/RecipientWarningBanner';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
@@ -68,9 +67,10 @@ import { useFetchMaxAmount } from './maxAmount';
 import { RecipientConfirmationModal } from './RecipientConfirmationModal';
 import { computeDestAmount } from './scaleUtils';
 import { TransferSection } from './TransferSection';
-import { TransferFormValues } from './types';
+import { TransferFormValues, TransferStatus } from './types';
 import { useRecipientBalanceWatcher } from './useBalanceWatcher';
 import { useFeeQuotes } from './useFeeQuotes';
+import { type QuotedCallsFeeQuotesResult, useQuotedCallsFeeQuotes } from './useQuotedCalls';
 import { useTokenTransfer } from './useTokenTransfer';
 import { isSmartContract, shouldClearAddress } from './utils';
 
@@ -177,13 +177,12 @@ export function TransferTokenForm() {
             <DestinationTokenCard isReview={isReview} />
           </TransferSection>
 
-          <ReviewDetails isReview={isReview} routeOverrideToken={routeOverrideToken} />
-          <ButtonSection
+          <TransferCheckout
             isReview={isReview}
             isValidating={isValidating}
             setIsReview={setIsReview}
-            cleanOverrideToken={() => setRouteTokenOverride(null)}
             routeOverrideToken={routeOverrideToken}
+            cleanOverrideToken={() => setRouteTokenOverride(null)}
           />
           <RecipientConfirmationModal
             isOpen={isConfirmationModalOpen}
@@ -306,7 +305,7 @@ function OriginTokenCard({
           <TextField
             name="amount"
             placeholder="0"
-            className="transfer-text-input w-full flex-1 border-none bg-transparent font-secondary text-xl font-normal text-gray-900 outline-none placeholder:text-gray-900 dark:text-foreground-primary dark:placeholder:text-foreground-secondary"
+            className="transfer-text-input w-full flex-1 border-none bg-transparent font-secondary text-xl font-normal text-gray-900 outline-none placeholder:text-gray-900 dark:text-foreground-primary dark:placeholder:text-foreground-secondary dark:disabled:bg-transparent"
             type="number"
             step="any"
             disabled={isReview}
@@ -352,7 +351,31 @@ function DestinationTokenCard({ isReview }: { isReview: boolean }) {
   );
   const recipient = values.recipient || connectedDestAddress;
 
-  const { balance } = useDestinationBalance(recipient, destinationToken);
+  const { balance, refetch: refetchBalance } = useDestinationBalance(recipient, destinationToken);
+
+  const transfers = useStore((s) => s.transfers);
+  const latestTransfer = transfers[transfers.length - 1];
+  // Use the hash string as the dep, not the transfer object: Zustand mutates transfer
+  // objects in place on status transitions, so an object-reference dep would fire on
+  // every status tick rather than only when a new originTxHash appears.
+  const latestTxHash = latestTransfer?.originTxHash;
+
+  // For same-chain CCR swaps the delivery is atomic — refetch the balance immediately
+  // so the balance watcher detects the increase and fires the toast without waiting
+  // for the next 30-second poll.
+  useEffect(() => {
+    if (
+      latestTransfer?.status === TransferStatus.Delivered &&
+      latestTxHash &&
+      latestTransfer?.destinationTxHash === latestTxHash &&
+      latestTransfer?.destination === destinationToken?.chainName &&
+      latestTransfer?.destTokenAddressOrDenom === destinationToken?.addressOrDenom &&
+      latestTransfer?.recipient === recipient
+    ) {
+      refetchBalance();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [latestTxHash]);
 
   useRecipientBalanceWatcher(recipient, balance);
 
@@ -428,7 +451,11 @@ function MaxButton({
       disabled={isDisabled}
       className="transfer-max-btn rounded border border-gray-300 px-2 py-0.5 font-secondary text-sm text-gray-450 transition-colors hover:border-gray-400 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50 dark:border-primary-300/40 dark:text-foreground-secondary dark:hover:border-primary-300/65 dark:hover:text-foreground-primary"
     >
-      {isLoading ? <SpinnerIcon className="h-4 w-4" /> : 'Max'}
+      {isLoading ? (
+        <SpinnerIcon className="h-4 w-4" color="currentColor" style={{ color: 'inherit' }} />
+      ) : (
+        'Max'
+      )}
     </button>
   );
 }
@@ -453,18 +480,84 @@ function TokenBalance({
   );
 }
 
+function TransferCheckout({
+  isReview,
+  isValidating,
+  setIsReview,
+  routeOverrideToken,
+  cleanOverrideToken,
+}: {
+  isReview: boolean;
+  isValidating: boolean;
+  setIsReview: (b: boolean) => void;
+  routeOverrideToken: Token | null;
+  cleanOverrideToken: () => void;
+}) {
+  const { values } = useFormikContext<TransferFormValues>();
+  const tokenMap = useTokenByKeyMap();
+  const warpCore = useWarpCore();
+  const isRouteSupported = useIsRouteSupported();
+
+  // Origin router resolution, in priority: routeOverrideToken -> findRouteToken -> raw key token.
+  // routeOverrideToken (set by validateForm on Continue) binds to the exact validated router.
+  // In form state it's null, so findRouteToken resolves the connected route token — the raw key
+  // token may not directly connect to the destination, leaving destinationToken (and quoting) off.
+  // findRouteToken is undefined for unsupported pairs; the raw key token keeps the selection
+  // rendering (quoting stays gated off via destinationToken).
+  const originTokenByKey = getTokenByKeyFromMap(tokenMap, values.originTokenKey);
+  const destinationTokenByKey = getTokenByKeyFromMap(tokenMap, values.destinationTokenKey);
+  const routeToken =
+    !routeOverrideToken && originTokenByKey && destinationTokenByKey
+      ? findRouteToken(warpCore, originTokenByKey, destinationTokenByKey)
+      : undefined;
+  const originToken = routeOverrideToken || routeToken || originTokenByKey;
+  const destinationToken =
+    originToken && destinationTokenByKey
+      ? findConnectedDestinationToken(originToken, destinationTokenByKey)
+      : undefined;
+
+  const quotedCalls = useQuotedCallsFeeQuotes(
+    values,
+    isRouteSupported,
+    originToken,
+    destinationToken,
+  );
+
+  return (
+    <>
+      <ReviewDetails
+        isReview={isReview}
+        originToken={originToken}
+        destinationToken={destinationToken}
+        isRouteSupported={isRouteSupported}
+        quotedCalls={quotedCalls}
+      />
+      <ButtonSection
+        isReview={isReview}
+        isValidating={isValidating}
+        setIsReview={setIsReview}
+        cleanOverrideToken={cleanOverrideToken}
+        routeOverrideToken={routeOverrideToken}
+        getQuotedCallsParams={quotedCalls.getQuotedCallsParams}
+      />
+    </>
+  );
+}
+
 function ButtonSection({
   isReview,
   isValidating,
   setIsReview,
   cleanOverrideToken,
   routeOverrideToken,
+  getQuotedCallsParams,
 }: {
   isReview: boolean;
   isValidating: boolean;
   setIsReview: (b: boolean) => void;
   cleanOverrideToken: () => void;
   routeOverrideToken: Token | null;
+  getQuotedCallsParams: () => Promise<QuotedCallsParams | null>;
 }) {
   const { values } = useFormikContext<TransferFormValues>();
   const multiProvider = useMultiProvider();
@@ -536,7 +629,7 @@ function ButtonSection({
       const isSelfRecipient = eqAddress(recipient, connectedWallet);
 
       if (senderCheckError || recipientCheckError) {
-        toast.error(senderCheckError || recipientCheckError);
+        logger.warn(senderCheckError || recipientCheckError);
         setRecipientInfos({ addressConfirmed: true, showWarning: false });
         return;
       }
@@ -573,7 +666,11 @@ function ButtonSection({
     setIsReview(false);
     setTransferLoading(true);
 
-    await triggerTransactions(values, routeOverrideToken);
+    // Wait for any in-flight offchain quote to settle so a quick Send-click
+    // during the first-load / refetch window doesn't fall through to the
+    // plain transferRemote path.
+    const quotedCallsParams = await getQuotedCallsParams();
+    await triggerTransactions(values, routeOverrideToken, quotedCallsParams);
     setTransferLoading(false);
   };
 
@@ -654,28 +751,22 @@ function ButtonSection({
 
 function ReviewDetails({
   isReview,
-  routeOverrideToken,
+  originToken,
+  destinationToken,
+  isRouteSupported,
+  quotedCalls,
 }: {
   isReview: boolean;
-  routeOverrideToken: Token | null;
+  originToken: Token | undefined;
+  destinationToken: IToken | undefined;
+  isRouteSupported: boolean;
+  quotedCalls: QuotedCallsFeeQuotesResult;
 }) {
   const { values } = useFormikContext<TransferFormValues>();
   const warpCore = useWarpCore();
-  const { amount, originTokenKey, destinationTokenKey } = values;
-  const tokenMap = useTokenByKeyMap();
-  const originTokenByKey = routeOverrideToken || getTokenByKeyFromMap(tokenMap, originTokenKey);
-  const destinationTokenByKey = getTokenByKeyFromMap(tokenMap, destinationTokenKey);
-  // Finding actual token pair for the given tokens
-  const originToken =
-    destinationTokenByKey && originTokenByKey
-      ? findRouteToken(warpCore, originTokenByKey, destinationTokenByKey)
-      : undefined;
-  const destinationToken = destinationTokenByKey
-    ? originToken && findConnectedDestinationToken(originToken, destinationTokenByKey)
-    : undefined;
+  const { amount } = values;
   const originTokenSymbol = originToken?.symbol || '';
   const isNft = originToken?.isNft();
-  const isRouteSupported = useIsRouteSupported();
 
   const destAmount = useMemo(() => {
     if (!isReview) return null;
@@ -684,18 +775,48 @@ function ReviewDetails({
 
   const amountWei = isNft ? amount.toString() : toWei(amount, originToken?.decimals);
 
-  const { isLoading: isApproveLoading, isApproveRequired } = useIsApproveRequired(
-    originToken,
-    amountWei,
-    isReview,
-  );
-  // Only fetch fees if route is supported
-  const { isLoading: isQuoteLoading, fees: feeQuotes } = useFeeQuotes(
+  // Offchain fee quoting (when configured) — owned by TransferCheckout
+  const {
+    isLoading: isOffchainQuoteLoading,
+    fees: offchainFeeQuotes,
+    quotedCallsParams,
+  } = quotedCalls;
+
+  // Onchain fee quoting: used as fallback when offchain isn't available for this route
+  const offchainSettled = !isOffchainQuoteLoading;
+  const offchainUnavailable = !config.feeQuotingUrl || (offchainSettled && !offchainFeeQuotes);
+  const {
+    isLoading: isOnchainQuoteLoading,
+    isError: isFeeQuoteError,
+    fees: onchainFeeQuotes,
+  } = useFeeQuotes(
     values,
-    isRouteSupported,
+    isRouteSupported && offchainUnavailable,
     originToken,
     destinationToken,
     !isReview,
+  );
+
+  const feeQuotes = offchainFeeQuotes ?? onchainFeeQuotes;
+  const isQuoteLoading = offchainUnavailable ? isOnchainQuoteLoading : isOffchainQuoteLoading;
+
+  // QuotedCalls pulls amount + tokenFeeQuote when the fee is denominated in
+  // the transferred token. Inflate the approval check so a user with allowance
+  // == amount doesn't revert on the token pull.
+  const sameTokenFeeAmount =
+    quotedCallsParams && feeQuotes?.tokenFeeQuote?.token.equals(originToken)
+      ? feeQuotes.tokenFeeQuote.amount
+      : 0n;
+  const approvalAmountWei = isNft
+    ? amountWei
+    : (BigInt(amountWei || '0') + sameTokenFeeAmount).toString();
+
+  // Approval check: uses quotedCalls address as spender when offchain quoting is active
+  const { isLoading: isApproveLoading, isApproveRequired } = useIsApproveRequired(
+    originToken,
+    approvalAmountWei,
+    isReview,
+    quotedCallsParams,
   );
 
   const { prices } = useTokenPrices();
@@ -732,6 +853,7 @@ function ReviewDetails({
         <FeeSectionButton
           fees={fees}
           isLoading={isLoading}
+          isError={isFeeQuoteError}
           feePrices={feePrices}
           transferUsd={transferUsd}
         />
@@ -755,8 +877,8 @@ function ReviewDetails({
               {isApproveRequired && (
                 <div>
                   <h4>Transaction 1: Approve Transfer</h4>
-                  <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs dark:border-primary-300/25">
-                    <p>{`Router Address: ${originToken?.addressOrDenom}`}</p>
+                  <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs">
+                    <p>{`Spender: ${quotedCallsParams?.address ?? originToken?.addressOrDenom}`}</p>
                     {originToken?.collateralAddressOrDenom && (
                       <p>{`Collateral Address: ${originToken.collateralAddressOrDenom}`}</p>
                     )}

@@ -1,5 +1,6 @@
 import {
   ProviderType,
+  QuotedCallsParams,
   Token,
   TypedTransactionReceipt,
   WarpCore,
@@ -26,8 +27,9 @@ import { AppState, useStore } from '../store';
 import { getTokenByKey, useWarpCore } from '../tokens/hooks';
 import { findConnectedDestinationToken } from '../tokens/utils';
 import { fetchPredicateAttestation, PredicateAttestationResult } from './predicate';
+import { submitToRelayApi } from './relayApi';
 import { TransferContext, TransferFormValues, TransferStatus } from './types';
-import { tryGetMsgIdFromTransferReceipt } from './utils';
+import { tryGetMsgIdFromTransferReceipt, tryGetSameChainCcrMsgId } from './utils';
 
 const CHAIN_MISMATCH_ERROR = 'ChainMismatchError';
 const TRANSFER_TIMEOUT_ERROR1 = 'block height exceeded';
@@ -52,7 +54,11 @@ export function useTokenTransfer(onDone?: () => void) {
 
   // TODO implement cancel callback for when modal is closed?
   const triggerTransactions = useCallback(
-    (values: TransferFormValues, routeOverrideToken: Token | null) =>
+    (
+      values: TransferFormValues,
+      routeOverrideToken: Token | null,
+      quotedCallsParams?: QuotedCallsParams | null,
+    ) =>
       executeTransfer({
         warpCore,
         values,
@@ -65,6 +71,7 @@ export function useTokenTransfer(onDone?: () => void) {
         setIsLoading,
         onDone,
         routeOverrideToken,
+        quotedCallsParams: quotedCallsParams ?? undefined,
       }),
     [
       warpCore,
@@ -97,6 +104,7 @@ async function executeTransfer({
   setIsLoading,
   onDone,
   routeOverrideToken,
+  quotedCallsParams,
 }: {
   warpCore: WarpCore;
   values: TransferFormValues;
@@ -109,6 +117,7 @@ async function executeTransfer({
   setIsLoading: (b: boolean) => void;
   onDone?: () => void;
   routeOverrideToken: Token | null;
+  quotedCallsParams?: QuotedCallsParams;
 }) {
   logger.debug('Preparing transfer transaction(s)');
   setIsLoading(true);
@@ -136,6 +145,11 @@ async function executeTransfer({
     if (!connectedDestinationToken) throw new Error('No token connection found between chains');
     const origin = originToken.chainName;
     const destination = connectedDestinationToken.chainName;
+    // Same-chain CCR: both tokens are CrossCollateralRouter tokens on the same chain.
+    // The swap is atomic — the scraper stores a synthetic Hyperlane message for explorer display.
+    const isSameChainCcr =
+      origin === destination &&
+      warpCore.isCrossCollateralTransfer(originToken, connectedDestinationToken);
 
     const originProtocol = originToken.protocol;
     const isNft = originToken.isNft();
@@ -199,6 +213,9 @@ async function executeTransfer({
       destination,
       sender,
       recipient,
+      // quotedCalls and attestation are mutually exclusive in the SDK; predicate
+      // routes take the wrapper path, plain routes can use offchain quoting.
+      quotedCalls: attestationResult ? undefined : quotedCallsParams,
       attestation: attestationResult?.attestation,
       // Pin the IGP quote captured at attestation time so msg_value matches the
       // attested Statement preimage — prevents _authorizeTransaction revert on drift.
@@ -254,20 +271,43 @@ async function executeTransfer({
       }
     }
 
-    const msgId = txReceipt
-      ? tryGetMsgIdFromTransferReceipt(multiProvider, origin, txReceipt)
-      : undefined;
+    let msgId: string | undefined = undefined;
+
+    if (txReceipt) {
+      msgId = isSameChainCcr
+        ? tryGetSameChainCcrMsgId(
+            multiProvider,
+            origin,
+            originToken.addressOrDenom,
+            connectedDestinationToken.addressOrDenom,
+            txReceipt,
+          )
+        : await tryGetMsgIdFromTransferReceipt(multiProvider, origin, txReceipt);
+    }
 
     const originTxHash = hashes.at(-1);
     const originBlockNumber =
       txReceipt?.receipt && 'blockNumber' in txReceipt.receipt
         ? Number(txReceipt.receipt.blockNumber)
         : undefined;
-    updateTransferStatus(transferIndex, (transferStatus = TransferStatus.ConfirmedTransfer), {
-      originTxHash,
-      originBlockNumber,
-      msgId,
-    });
+    // Same-chain CCR swaps are atomic: delivery happens in the same tx, no relay needed.
+    if (isSameChainCcr) {
+      updateTransferStatus(transferIndex, (transferStatus = TransferStatus.Delivered), {
+        originTxHash,
+        originBlockNumber,
+        msgId,
+        destinationTxHash: originTxHash,
+      });
+    } else {
+      updateTransferStatus(transferIndex, (transferStatus = TransferStatus.ConfirmedTransfer), {
+        originTxHash,
+        originBlockNumber,
+        msgId,
+      });
+    }
+
+    if (originTxHash && !isSameChainCcr)
+      submitToRelayApi(origin, originTxHash, originProtocol, txReceipt);
 
     // track event after tx submission
     const originChainId = warpCore.multiProvider.getChainId(origin);

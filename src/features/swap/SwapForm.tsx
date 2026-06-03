@@ -9,6 +9,7 @@ import { formatUnits, type Address } from 'viem';
 import { FormWarningBanner } from '../../components/banner/FormWarningBanner';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
 import { SolidButton } from '../../components/buttons/SolidButton';
+import { RouteIcon } from '../../components/icons/RouteIcon';
 import { SwapIcon } from '../../components/icons/SwapIcon';
 import { TextField } from '../../components/input/TextField';
 import { TransferSection } from '../../components/layout/TransferSection';
@@ -24,14 +25,16 @@ import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { WalletDropdown } from '../wallet/WalletDropdown';
 import { ApprovalPhase, useApprovalStatus } from './approval';
 import { useTokenBalance } from './balances/hooks';
-import { formatBalance, formatFeeAmount } from './balances/utils';
+import { formatBalance, formatFeeAmount, formatUsd } from './balances/utils';
 import { FeeSectionButton } from './FeeSectionButton';
 import { MaxButton } from './MaxButton';
+import { RouteSelectionModal } from './routeSelection/RouteSelectionModal';
 import { SlippagePanel } from './SlippagePanel';
 import { TokenBalance } from './TokenBalance';
 import { getTokenByKeyFromMap, useTokenByKeyMap } from './tokens/hooks';
 import { TokenSelectField } from './tokens/TokenSelectField';
 import type { UiToken } from './tokens/types';
+import { useTokenPrices, useTokenUsdValue } from './tokens/useTokenPrice';
 import {
   FinalSwapStatuses,
   SwapStatus,
@@ -67,6 +70,11 @@ function SwapFormContent() {
   const multiProvider = useMultiProvider();
   const tokenMap = useTokenByKeyMap();
   const { data: chainsResp } = useChains();
+  // Mounts the catalogue-wide price fetch once for the whole form. Cards
+  // and review modal read individual prices via `useTokenUsdValue` (pure
+  // store readers); without this top-level call, deep-linked URLs would
+  // render cards before the picker opens and see empty USD values.
+  useTokenPrices();
 
   const srcChainName =
     values.srcChain != null
@@ -99,6 +107,8 @@ function SwapFormContent() {
 
   const [isReview, setIsReview] = useState(false);
   const { close: closeConfirmationModal, isOpen: isConfirmationModalOpen } = useModal();
+  const { isOpen: isRouteModalOpen, open: openRouteModal, close: closeRouteModal } = useModal();
+  const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
 
   const debouncedAmount = useDebounce(values.amount, 750);
   const {
@@ -114,7 +124,14 @@ function SwapFormContent() {
   });
   useToastError(quoteError, 'Quote failed');
 
-  const bestRoute = quote?.routes[0];
+  // Reset to best route when the user changes intent, not on every background refetch.
+  useEffect(() => {
+    setSelectedRouteIndex(0);
+  }, [values.srcChain, values.dstChain, values.srcToken, values.dstToken, debouncedAmount]);
+
+  const routes = quote?.routes ?? [];
+  const safeIndex = selectedRouteIndex < routes.length ? selectedRouteIndex : 0;
+  const bestRoute = routes[safeIndex] ?? routes[0];
 
   const isNative = !!srcToken?.isNative;
   const amountAtomic = useMemo(() => {
@@ -387,12 +404,34 @@ function SwapFormContent() {
       {!isReview && (
         <div className="mt-2 flex items-center justify-between gap-3 px-1">
           <FeeSectionButton feeBreakdown={bestRoute?.feeBreakdown} isLoading={quoteLoading} />
-          <SlippagePanel
-            slippageBps={values.slippageBps}
-            setSlippageBps={(bps) => setFieldValue('slippageBps', bps)}
-          />
+          <div className="flex items-center gap-2">
+            {routes.length > 0 && (
+              <button
+                type="button"
+                onClick={openRouteModal}
+                className="flex items-center gap-1 rounded font-secondary text-xxs text-gray-700 hover:text-gray-900 dark:text-foreground-secondary dark:hover:text-foreground-primary"
+              >
+                <RouteIcon />
+                {routes.length > 1
+                  ? `${routes.length} routes`
+                  : `Route ${safeIndex + 1}/${routes.length}`}
+              </button>
+            )}
+            <SlippagePanel
+              slippageBps={values.slippageBps}
+              setSlippageBps={(bps) => setFieldValue('slippageBps', bps)}
+            />
+          </div>
         </div>
       )}
+      <RouteSelectionModal
+        isOpen={isRouteModalOpen}
+        close={closeRouteModal}
+        routes={routes}
+        selectedIndex={safeIndex}
+        onSelect={setSelectedRouteIndex}
+        dstToken={dstToken}
+      />
 
       <ReviewDetails
         isReview={isReview}
@@ -461,7 +500,9 @@ function OriginTokenCard({
   srcToken: UiToken | undefined;
   amountError: string | undefined;
 }) {
+  const { values } = useFormikContext<SwapFormValues>();
   const { data: balance, isLoading: isBalanceLoading } = useTokenBalance(srcToken);
+  const amountUsd = useTokenUsdValue(srcToken, values.amount);
 
   return (
     <div>
@@ -496,7 +537,7 @@ function OriginTokenCard({
           />
         </div>
         <div className="transfer-balance mt-1 flex items-center justify-between text-xs leading-[18px] text-gray-450 dark:text-foreground-secondary">
-          <span>$0.00</span>
+          <span>{!amountUsd ? '$0.00' : formatUsd(amountUsd)}</span>
           <TokenBalance label="Balance" balance={balance ?? null} token={srcToken} />
         </div>
       </div>

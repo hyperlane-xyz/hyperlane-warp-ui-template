@@ -24,7 +24,7 @@ import { assembleChainAddresses } from './chains/addresses';
 import { assembleChainMetadata } from './chains/metadata';
 import type { UiToken } from './swap/tokens/types';
 import { getTokenKey as getSwapTokenKey } from './swap/tokens/utils';
-import { FinalSwapStatuses, SwapHistoryItem, SwapStatus } from './swap/types';
+import { FinalSwapStatuses, LabeledMsgId, SwapHistoryItem, SwapStatus } from './swap/types';
 import {
   buildTokensArray,
   getTokenKey,
@@ -115,7 +115,7 @@ export interface AppState {
     i: number,
     status: SwapStatus,
     options?: {
-      msgId?: string;
+      msgIds?: LabeledMsgId[];
       originTxHash?: string;
       originBlockNumber?: number;
       destinationTxHash?: string;
@@ -156,8 +156,18 @@ export interface AppState {
   // Set of router addresses per chain — used to prevent sending to warp route
   // addresses and to filter message API results
   routerAddressesByChainMap: Record<ChainName, Set<string>>;
-  // Deduplicated, sorted CoinGecko IDs for all tokens (used by useTokenPrices)
+  // Deduplicated, sorted CoinGecko IDs for the warpCore token set (built
+  // at WarpContext init). Consumed by the bridge `useTokenPrices` wrapper
+  // which delegates to the shared `useTokenPricesByIds` cache below.
   coinGeckoIds: string[];
+  // Session-scoped USD price cache, keyed by coinGeckoId. `failedAt`
+  // backs off retries after rate-limit / network failures.
+  tokenPrices: Record<string, { usd?: number; fetchedAt?: number; failedAt?: number }>;
+  mergeTokenPrices: (
+    succeededIds: string[],
+    fetched: Record<string, number>,
+    failedIds: string[],
+  ) => void;
 }
 
 export const useStore = create<AppState>()(
@@ -291,7 +301,7 @@ export const useStore = create<AppState>()(
           swaps[i] = {
             ...swaps[i],
             status,
-            msgId: swaps[i].msgId ?? options?.msgId,
+            msgIds: swaps[i].msgIds ?? options?.msgIds,
             originTxHash: swaps[i].originTxHash ?? options?.originTxHash,
             originBlockNumber: swaps[i].originBlockNumber ?? options?.originBlockNumber,
             destinationTxHash: swaps[i].destinationTxHash ?? options?.destinationTxHash,
@@ -327,6 +337,21 @@ export const useStore = create<AppState>()(
             }
           }
           return added > 0 ? { knownTokens: next } : state;
+        });
+      },
+
+      tokenPrices: {},
+      mergeTokenPrices: (succeededIds, fetched, failedIds) => {
+        set((state) => {
+          const now = Date.now();
+          const next = { ...state.tokenPrices };
+          for (const id of succeededIds) {
+            next[id] = { usd: fetched[id], fetchedAt: now };
+          }
+          for (const id of failedIds) {
+            next[id] = { ...next[id], failedAt: now };
+          }
+          return { tokenPrices: next };
         });
       },
 

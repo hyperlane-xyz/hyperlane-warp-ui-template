@@ -10,6 +10,7 @@ import {
 } from '@hyperlane-xyz/widgets';
 import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'react-toastify';
 
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import { TokenChainIcon } from '../../components/icons/TokenChainIcon';
@@ -34,6 +35,12 @@ const DEFAULT_TIMINGS: StageTimings = {
   [MessageStage.Relayed]: null,
 };
 
+const LABEL_NAMES: Record<string, string> = {
+  warp: 'Warp Message ID',
+  commit: 'Commit Message ID',
+  reveal: 'Reveal Message ID',
+};
+
 const STATUS_DESCRIPTION: Record<SwapStatus, string> = {
   [SwapStatus.Preparing]: 'Preparing transaction…',
   [SwapStatus.CreatingTxs]: 'Submitting commitment to CCS…',
@@ -50,30 +57,38 @@ const STATUS_DESCRIPTION: Record<SwapStatus, string> = {
 
 export function SwapDetailsModal() {
   const activeSwapIndex = useStore((s) => s.activeSwapIndex);
-  const swap = useStore((s) =>
-    s.activeSwapIndex != null ? s.swaps[s.activeSwapIndex] : undefined,
-  );
+  const swaps = useStore((s) => s.swaps);
   const setActiveSwapIndex = useStore((s) => s.setActiveSwapIndex);
-
-  const isOpen = activeSwapIndex != null && !!swap;
   const close = () => setActiveSwapIndex(null);
 
-  if (!swap) return <Modal isOpen={false} close={close} />;
-  return <SwapDetailsModalInner isOpen={isOpen} close={close} swap={swap} />;
+  const isOpen = activeSwapIndex != null;
+
+  // Keep the last index alive after close so delivery polling continues in background.
+  const lastIndexRef = useRef<number | null>(null);
+  if (activeSwapIndex != null) lastIndexRef.current = activeSwapIndex;
+
+  const renderedIndex = lastIndexRef.current;
+  const swap = renderedIndex != null ? swaps[renderedIndex] : undefined;
+
+  if (!swap || renderedIndex == null) return <Modal isOpen={false} close={close} />;
+  return (
+    <SwapDetailsModalInner isOpen={isOpen} close={close} swap={swap} swapIndex={renderedIndex} />
+  );
 }
 
 function SwapDetailsModalInner({
   isOpen,
   close,
   swap,
+  swapIndex,
 }: {
   isOpen: boolean;
   close: () => void;
   swap: SwapHistoryItem;
+  swapIndex: number;
 }) {
   const multiProvider = useMultiProvider();
   const tokenMap = useTokenByKeyMap();
-  const swapIndex = useStore((s) => s.activeSwapIndex);
   const updateSwapStatus = useStore((s) => s.updateSwapStatus);
 
   const {
@@ -88,7 +103,7 @@ function SwapDetailsModalInner({
     recipient,
     originTxHash,
     destinationTxHash,
-    msgId,
+    msgIds,
     timestamp,
   } = swap;
 
@@ -103,25 +118,27 @@ function SwapDetailsModalInner({
   const isDelivered = status === SwapStatus.ConfirmedDestination;
   const isFinal = FinalSwapStatuses.includes(status);
 
-  // Delivery polling. Same-chain swaps have no msgId — skip polling.
-  const delivery = useMessageDeliveryStatus(msgId, isOpen && !isFinal, multiProvider);
+  // Poll the warp message for timeline/delivery status (fallback to first).
+  // Same-chain swaps have no msgIds — skip polling.
+  const pollingMsgId = (msgIds?.find((m) => m.label === 'warp') ?? msgIds?.[0])?.msgId;
+  const delivery = useMessageDeliveryStatus(pollingMsgId, !isFinal, multiProvider);
 
   const hasUpdatedDelivery = useRef(false);
   useEffect(() => {
     hasUpdatedDelivery.current = false;
-  }, [msgId]);
+  }, [pollingMsgId]);
 
   useEffect(() => {
     if (
       delivery.isDelivered &&
       !hasUpdatedDelivery.current &&
-      status !== SwapStatus.ConfirmedDestination &&
-      swapIndex != null
+      status !== SwapStatus.ConfirmedDestination
     ) {
       hasUpdatedDelivery.current = true;
       updateSwapStatus(swapIndex, SwapStatus.ConfirmedDestination, {
         destinationTxHash: delivery.destinationTxHash,
       });
+      toast.success('Swap complete! Funds have arrived.');
     }
   }, [delivery.isDelivered, delivery.destinationTxHash, swapIndex, status, updateSwapStatus]);
 
@@ -146,8 +163,8 @@ function SwapDetailsModalInner({
       ? MessageStatus.Failing
       : MessageStatus.Pending;
 
-  // Show timeline only for cross-chain swaps (msgId present).
-  const showTimeline = isSent && !isFailed && !!originTxHash && !!msgId;
+  // Show timeline only for cross-chain swaps (msgIds present).
+  const showTimeline = isSent && !isFailed && !!originTxHash && !!pollingMsgId;
 
   const date = useMemo(
     () => (timestamp ? formatTimestamp(timestamp) : formatTimestamp(Date.now())),
@@ -189,8 +206,6 @@ function SwapDetailsModalInner({
       cancelled = true;
     };
   }, [multiProvider, originChain, destChain, originTxHash, destinationTxHash, sender, recipient]);
-
-  const explorerLink = msgId ? getHypExplorerLink(multiProvider, originChain, msgId) : undefined;
 
   return (
     <Modal isOpen={isOpen} close={close} panelClassname="transfer-details-modal max-w-sm">
@@ -301,19 +316,14 @@ function SwapDetailsModalInner({
                 url={destTxUrl}
               />
             )}
-            {msgId && <TransferProperty name="Message ID" value={msgId} />}
-            {explorerLink && (
-              <div className="flex justify-center">
-                <a
-                  className="text-xs leading-normal tracking-wider text-primary-500 underline-offset-2 hover:opacity-80 active:opacity-70"
-                  href={explorerLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  View in Explorer
-                </a>
-              </div>
-            )}
+            {msgIds?.map(({ msgId: id, label }) => (
+              <TransferProperty
+                key={id}
+                name={LABEL_NAMES[label] ?? 'Message ID'}
+                value={id}
+                url={getHypExplorerLink(multiProvider, originChain, id) ?? undefined}
+              />
+            ))}
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-4">

@@ -1,8 +1,13 @@
-import { EvmTokenAdapter, ProviderType, type TypedTransactionReceipt } from '@hyperlane-xyz/sdk';
+import {
+  EvmTokenAdapter,
+  HyperlaneCore,
+  ProviderType,
+  type TypedTransactionReceipt,
+} from '@hyperlane-xyz/sdk';
 import { isZeroishAddress, ProtocolType } from '@hyperlane-xyz/utils';
 import { useTransactionFns } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import { useCallback, useState } from 'react';
-import { keccak256, toBytes, type Address } from 'viem';
+import type { Address } from 'viem';
 
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
@@ -10,7 +15,7 @@ import { useStore } from '../store';
 import { submitToRelayApi } from '../transfer/relayApi';
 import { postCommitment } from './ccs';
 import { SwapStatus } from './types';
-import type { AugmentedRoute } from './types';
+import type { AugmentedRoute, LabeledMsgId } from './types';
 
 interface ExecuteArgs {
   swapIndex: number;
@@ -28,9 +33,6 @@ interface ExecuteArgs {
   /** Native source skips approval entirely. */
   isNative?: boolean;
 }
-
-// Hyperlane Mailbox `DispatchId(bytes32 messageId)` topic — msgId = idLog.topics[1].
-const DISPATCH_ID_SIG = keccak256(toBytes('DispatchId(bytes32)'));
 
 // Single execution path covering EVM + Tron via the SDK's protocol-aware
 // transaction adapters.
@@ -142,7 +144,7 @@ export function useSwap() {
         }
         const parsed = parseReceipt(receipt);
         const expectsBridge = route.raw.steps.some((s) => s.type === 'bridge');
-        if (expectsBridge && !parsed.msgId) {
+        if (expectsBridge && !parsed.messages.length) {
           logger.error('Origin tx confirmed but no Dispatch log emitted', new Error(`tx=${hash}`));
           updateSwapStatus(swapIndex, SwapStatus.Failed, {
             originTxHash: hash,
@@ -166,7 +168,7 @@ export function useSwap() {
         submitToRelayApi(srcChainName, hash, protocol as ProtocolType, receipt);
 
         updateSwapStatus(swapIndex, SwapStatus.Bridging, {
-          msgId: parsed.msgId,
+          msgIds: labelMessages(parsed.messages, route),
           originBlockNumber: parsed.originBlockNumber,
         });
 
@@ -202,8 +204,13 @@ function isReverted(receipt: TypedTransactionReceipt): boolean {
   return false;
 }
 
+interface ParsedMessage {
+  msgId: `0x${string}`;
+  sender: `0x${string}`;
+}
+
 function parseReceipt(receipt: TypedTransactionReceipt): {
-  msgId: `0x${string}` | undefined;
+  messages: ParsedMessage[];
   originBlockNumber: number | undefined;
 } {
   // Tron is EVM-like — emits Hyperlane Dispatch logs in the same shape.
@@ -212,20 +219,49 @@ function parseReceipt(receipt: TypedTransactionReceipt): {
     receipt.type !== ProviderType.EthersV5 &&
     receipt.type !== ProviderType.Tron
   ) {
-    return { msgId: undefined, originBlockNumber: undefined };
+    return { messages: [], originBlockNumber: undefined };
   }
-  const logs =
-    (
-      receipt.receipt as {
-        logs?: Array<{ topics?: readonly string[] }>;
-        blockNumber?: bigint | number;
-      }
-    ).logs ?? [];
-  const blockNumber = (receipt.receipt as { blockNumber?: bigint | number }).blockNumber;
-  const idLog = logs.find((l) => l.topics?.[0] === DISPATCH_ID_SIG);
-  const msgId = (idLog?.topics?.[1] as `0x${string}` | undefined) ?? undefined;
+  const rawReceipt = receipt.receipt as Parameters<
+    typeof HyperlaneCore.getDispatchedMessages
+  >[0] & {
+    blockNumber?: bigint | number;
+  };
+  const dispatched = HyperlaneCore.getDispatchedMessages(rawReceipt);
+  const messages = dispatched.map((m) => ({
+    msgId: m.id as `0x${string}`,
+    sender: m.parsed.sender as `0x${string}`,
+  }));
+  const blockNumber = rawReceipt.blockNumber;
   return {
-    msgId,
+    messages,
     originBlockNumber: blockNumber != null ? Number(blockNumber) : undefined,
   };
+}
+
+function labelMessages(messages: ParsedMessage[], route: AugmentedRoute): LabeledMsgId[] {
+  const bridgeRouters = new Set(
+    route.raw.steps
+      .filter(
+        (s): s is Extract<(typeof route.raw.steps)[number], { type: 'bridge' }> =>
+          s.type === 'bridge',
+      )
+      .map((s) => s.router.toLowerCase()),
+  );
+
+  let nonWarpCount = 0;
+  return messages.map((msg) => {
+    if (bridgeRouters.has(msg.sender.toLowerCase())) {
+      return { msgId: msg.msgId, label: 'warp' as const };
+    }
+    // Commit precedes reveal in the CCS protocol; >2 non-warp messages is unexpected.
+    if (nonWarpCount >= 2) {
+      logger.warn('Unexpected non-warp message count in swap receipt', {
+        nonWarpCount,
+        msgId: msg.msgId,
+      });
+    }
+    const label = nonWarpCount === 0 ? ('commit' as const) : ('reveal' as const);
+    nonWarpCount++;
+    return { msgId: msg.msgId, label };
+  });
 }

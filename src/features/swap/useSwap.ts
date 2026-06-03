@@ -1,7 +1,13 @@
-import { HyperlaneCore, ProviderType, type TypedTransactionReceipt } from '@hyperlane-xyz/sdk';
-import { ProtocolType } from '@hyperlane-xyz/utils';
+import {
+  EvmTokenAdapter,
+  HyperlaneCore,
+  ProviderType,
+  type TypedTransactionReceipt,
+} from '@hyperlane-xyz/sdk';
+import { isZeroishAddress, ProtocolType } from '@hyperlane-xyz/utils';
 import { useTransactionFns } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import { useCallback, useState } from 'react';
+import type { Address } from 'viem';
 
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
@@ -20,6 +26,12 @@ interface ExecuteArgs {
   dstToken: string;
   sender: string;
   recipient: string;
+  /** UR address to approve. Skips approval flow if absent or `isNative`. */
+  spender?: Address;
+  /** Amount to approve. Same as `amountAtomic` derived from the quote. */
+  approvalAmount?: bigint;
+  /** Native source skips approval entirely. */
+  isNative?: boolean;
 }
 
 // Single execution path covering EVM + Tron via the SDK's protocol-aware
@@ -49,6 +61,8 @@ export function useSwap() {
       const fns = transactionFns[protocol as keyof typeof transactionFns];
       if (!fns) throw new Error(`No transaction handler for protocol ${protocol}`);
 
+      const txType = protocol === ProtocolType.Tron ? ProviderType.Tron : ProviderType.EthersV5;
+
       try {
         if (fns.switchNetwork) {
           try {
@@ -58,6 +72,46 @@ export function useSwap() {
           }
         }
 
+        // Approve / revoke before the swap tx. Mirrors WarpCore's pattern:
+        // bump non-zero existing allowance to zero first (USDT case), then
+        // approve the new amount.
+        if (args.spender && args.approvalAmount != null && !args.isNative) {
+          const spender = args.spender;
+          if (isZeroishAddress(spender)) {
+            throw new Error(`Cannot approve: spender is zero address on ${srcChainName}`);
+          }
+          const adapter = new EvmTokenAdapter(srcChainName, multiProvider, {
+            token: args.srcToken,
+          });
+          const [needsApprove, needsRevoke] = await Promise.all([
+            adapter.isApproveRequired(args.sender, spender, args.approvalAmount.toString()),
+            adapter.isRevokeApprovalRequired(args.sender, spender),
+          ]);
+          const doApprove = async (amount: bigint) => {
+            updateSwapStatus(swapIndex, SwapStatus.SigningApprove);
+            const populated = await adapter.populateApproveTx({
+              weiAmountOrId: amount.toString(),
+              recipient: spender,
+            });
+            const { hash, confirm } = await fns.sendTransaction({
+              tx: {
+                type: txType,
+                transaction: { to: populated.to!, data: populated.data!, value: '0' },
+                category: 'transfer',
+              } as Parameters<typeof fns.sendTransaction>[0]['tx'],
+              chainName: srcChainName,
+            });
+            updateSwapStatus(swapIndex, SwapStatus.ConfirmingApprove);
+            const receipt = await confirm();
+            if (isReverted(receipt)) {
+              logger.error('Approve tx reverted', new Error(`tx=${hash}`));
+              throw new Error('Approve transaction reverted on chain');
+            }
+          };
+          if (needsApprove && needsRevoke) await doApprove(0n);
+          if (needsApprove) await doApprove(args.approvalAmount);
+        }
+
         // Order is critical: post to CCS BEFORE broadcasting.
         if (route.raw.callCommitment) {
           updateSwapStatus(swapIndex, SwapStatus.CreatingTxs);
@@ -65,7 +119,6 @@ export function useSwap() {
         }
 
         updateSwapStatus(swapIndex, SwapStatus.SigningSwap);
-        const txType = protocol === ProtocolType.Tron ? ProviderType.Tron : ProviderType.EthersV5;
         const { hash, confirm } = await fns.sendTransaction({
           tx: {
             type: txType,
@@ -136,7 +189,13 @@ export function useSwap() {
 }
 
 function isReverted(receipt: TypedTransactionReceipt): boolean {
-  if (receipt.type !== ProviderType.Viem && receipt.type !== ProviderType.EthersV5) {
+  // Tron receipts wrap an ethers v5 receipt (same `status` shape) — treat
+  // them identically to EVM for the revert check.
+  if (
+    receipt.type !== ProviderType.Viem &&
+    receipt.type !== ProviderType.EthersV5 &&
+    receipt.type !== ProviderType.Tron
+  ) {
     return false;
   }
   const status = (receipt.receipt as { status?: string | number }).status;
@@ -154,7 +213,12 @@ function parseReceipt(receipt: TypedTransactionReceipt): {
   messages: ParsedMessage[];
   originBlockNumber: number | undefined;
 } {
-  if (receipt.type !== ProviderType.Viem && receipt.type !== ProviderType.EthersV5) {
+  // Tron is EVM-like — emits Hyperlane Dispatch logs in the same shape.
+  if (
+    receipt.type !== ProviderType.Viem &&
+    receipt.type !== ProviderType.EthersV5 &&
+    receipt.type !== ProviderType.Tron
+  ) {
     return { messages: [], originBlockNumber: undefined };
   }
   const rawReceipt = receipt.receipt as Parameters<

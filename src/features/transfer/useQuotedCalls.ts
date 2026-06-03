@@ -1,4 +1,6 @@
 import {
+  EvmQuotedTransferProvider,
+  FeeQuotingCommand,
   IToken,
   QuotedCallsParams,
   SubmitQuoteCommand,
@@ -82,19 +84,11 @@ export function useQuotedCallsFeeQuotes(
     : undefined;
 
   const isEvm = originToken?.protocol === ProtocolType.Ethereum;
-  // TODO: cross-collateral routes need command='transferRemoteTo' + targetRouter
-  // wired through to /api/quote. Short-circuit until that's done so they fall
-  // through to the onchain quoting path instead of getting an incorrect quote.
-  const isCrossCollateral =
-    !!originToken &&
-    !!destinationToken &&
-    warpCore.isCrossCollateralTransfer(originToken, destinationToken);
   const isFormValid = !!(originToken && destination && debouncedAmount && recipient && sender);
   const shouldFetch =
     enabled &&
     isFormValid &&
     isEvm &&
-    !isCrossCollateral &&
     !!config.feeQuotingUrl &&
     !!quotedCallsAddress;
 
@@ -212,19 +206,24 @@ async function fetchQuotedCallsFees(
   const clientSalt = generateClientSalt();
   const salt = computeScopedSalt(sender as Address, clientSalt);
 
-  // Get destination domain ID
   const destinationDomainId = warpCore.multiProvider.getDomainId(destination);
 
-  // Fetch quotes from API proxy
+  // CC routes pay the destination-side fee program via `transferRemoteTo` and
+  // must echo the explicit destination router so the server signs the correct
+  // per-leaf fee; non-CC routes auto-resolve via the remote-router map.
+  const isCC = warpCore.isCrossCollateralTransfer(originToken, destinationToken);
   const recipientBytes32 = addressToBytes32(recipient) as Hex;
   const params = new URLSearchParams({
-    command: 'transferRemote',
+    command: isCC ? FeeQuotingCommand.TransferRemoteTo : FeeQuotingCommand.TransferRemote,
     origin: originToken.chainName,
     router: originToken.addressOrDenom,
     destination: String(destinationDomainId),
     salt,
     recipient: recipientBytes32,
   });
+  if (isCC) {
+    params.append('targetRouter', addressToBytes32(destinationToken.addressOrDenom) as Hex);
+  }
 
   logger.debug('Fetching offchain fee quotes');
   const res = await fetch(`/api/quote?${params}`);
@@ -237,25 +236,24 @@ async function fetchQuotedCallsFees(
 
   const { quotes } = (await res.json()) as { quotes: SubmitQuoteCommand[] };
 
-  // Build QuotedCallsParams (without feeQuotes — they come from the quoteExecute below)
-  const baseQuotedCallsParams: QuotedCallsParams = {
+  const quotedCallsParams: QuotedCallsParams = {
     address: quotedCallsAddress,
     quotes: quotes as SubmitQuoteCommand[],
     clientSalt,
     tokenPullMode: TokenPullMode.TransferFrom,
   };
+  const quotedTransfer = new EvmQuotedTransferProvider(quotedCallsParams);
 
-  // Get fee estimates via quoteExecute eth_call
-  const { igpQuote, tokenFeeQuote, feeQuotes } = await warpCore.getQuotedTransferFee({
+  // Display-time fee fetch. Submit (`buildQuotedTransferTxs`) re-runs the same
+  // quoteExecute eth_call independently — both consume the same `quotes` +
+  // `clientSalt` so the result is deterministic and display ↔ submit match.
+  const { igpQuote, tokenFeeQuote } = await warpCore.getQuotedTransferFee({
+    quotedTransfer,
     originTokenAmount,
     destination,
     sender,
     recipient,
-    quotedCalls: baseQuotedCallsParams,
   });
-
-  // Attach feeQuotes for later use in getTransferRemoteTxs (avoids re-quoting).
-  const quotedCallsParams: QuotedCallsParams = { ...baseQuotedCallsParams, feeQuotes };
 
   // Estimate local gas for the actual QuotedCalls.execute() tx so the UI
   // pre-shows the gas cost the user will see in MetaMask. No silent fallback —

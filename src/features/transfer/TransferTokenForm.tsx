@@ -78,7 +78,7 @@ import { TransferFormValues, TransferStatus } from './types';
 import { useRecipientBalanceWatcher } from './useBalanceWatcher';
 import { useFeeQuotes } from './useFeeQuotes';
 import { type QuotedCallsFeeQuotesResult, useQuotedCallsFeeQuotes } from './useQuotedCalls';
-import { useSvmQuotedTransfer } from './useSvmQuotedTransfer';
+import { type SvmQuotedTransferResult, useSvmQuotedTransfer } from './useSvmQuotedTransfer';
 import { useTokenTransfer } from './useTokenTransfer';
 import { isSmartContract, shouldClearAddress } from './utils';
 
@@ -531,11 +531,14 @@ function TransferCheckout({
     destinationToken,
   );
 
-  // SVM-origin offchain quoting — parallel to `quotedCalls` (EVM). Provider
-  // is memoized once the fee_config is discovered; the actual quote fetch
-  // happens inside `buildQuotedTransferTxs` at submit time, so there's no
-  // pre-flight quote preview to show in `ReviewDetails`.
+  // SVM-origin offchain quoting — parallel to `quotedCalls` (EVM). Eagerly
+  // fetches the priced fee via `WarpCore.getQuotedTransferFee` so
+  // `ReviewDetails` can show the actual offchain-quoted value, not the
+  // bps-based on-chain fallback. Submit (`buildQuotedTransferTxs`) re-fetches
+  // independently; both calls hit the same upstream and return matching
+  // values for transient quotes.
   const svmQuotedTransfer = useSvmQuotedTransfer(
+    values,
     originToken,
     destinationToken,
     isRouteSupported,
@@ -549,6 +552,7 @@ function TransferCheckout({
         destinationToken={destinationToken}
         isRouteSupported={isRouteSupported}
         quotedCalls={quotedCalls}
+        svmQuotedTransfer={svmQuotedTransfer}
       />
       <ButtonSection
         isReview={isReview}
@@ -783,12 +787,14 @@ function ReviewDetails({
   destinationToken,
   isRouteSupported,
   quotedCalls,
+  svmQuotedTransfer,
 }: {
   isReview: boolean;
   originToken: Token | undefined;
   destinationToken: IToken | undefined;
   isRouteSupported: boolean;
   quotedCalls: QuotedCallsFeeQuotesResult;
+  svmQuotedTransfer: SvmQuotedTransferResult;
 }) {
   const { values } = useFormikContext<TransferFormValues>();
   const warpCore = useWarpCore();
@@ -803,12 +809,20 @@ function ReviewDetails({
 
   const amountWei = isNft ? amount.toString() : toWei(amount, originToken?.decimals);
 
-  // Offchain fee quoting (when configured) — owned by TransferCheckout
+  // Offchain fee quoting (when configured) — owned by TransferCheckout.
+  // EVM and SVM origins use parallel hooks; only one fires at a time because
+  // each gates on its own origin protocol. Combine here into a single
+  // `offchainFeeQuotes` source-of-truth so the on-chain fallback only kicks
+  // in when both paths have settled with no result.
   const {
-    isLoading: isOffchainQuoteLoading,
-    fees: offchainFeeQuotes,
+    isLoading: isEvmOffchainLoading,
+    fees: evmOffchainFeeQuotes,
     quotedCallsParams,
   } = quotedCalls;
+  const { isLoading: isSvmOffchainLoading, fees: svmOffchainFeeQuotes } =
+    svmQuotedTransfer;
+  const offchainFeeQuotes = evmOffchainFeeQuotes ?? svmOffchainFeeQuotes;
+  const isOffchainQuoteLoading = isEvmOffchainLoading || isSvmOffchainLoading;
 
   // Onchain fee quoting: used as fallback when offchain isn't available for this route
   const offchainSettled = !isOffchainQuoteLoading;

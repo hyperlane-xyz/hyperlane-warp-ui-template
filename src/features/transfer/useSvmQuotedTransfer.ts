@@ -5,8 +5,13 @@ import {
   SealevelHypTokenAdapter,
   SealevelQuotedTransferProvider,
   type Token,
+  TokenAmount,
+  type WarpCore,
 } from '@hyperlane-xyz/sdk';
-import { ProtocolType } from '@hyperlane-xyz/utils';
+import { ProtocolType, toWei } from '@hyperlane-xyz/utils';
+import { useDebounce } from '@hyperlane-xyz/widgets';
+import { useAccounts } from '@hyperlane-xyz/widgets/walletIntegrations/accounts';
+import { getAccountAddressAndPubKey } from '@hyperlane-xyz/widgets/walletIntegrations/accountUtils';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
@@ -15,6 +20,8 @@ import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { useWarpCore } from '../tokens/hooks';
 
+import { TransferFormValues } from './types';
+
 /**
  * Local Next.js API base — the proxy at `/api/v2/quote/[endpoint]` forwards
  * to the upstream fee-quoting service with the server-side API key. The
@@ -22,55 +29,69 @@ import { useWarpCore } from '../tokens/hooks';
  * combined URL hits the proxy route's `[endpoint].ts` handler.
  *
  * `apiKey` is empty for browser-side requests; the proxy injects the real
- * key when forwarding upstream. Same shape as the v1 `/api/quote` proxy.
+ * key when forwarding upstream.
  */
 const PROXY_BASE_URL = '/api';
 
+const FEE_QUOTE_REFRESH_INTERVAL = 30_000;
+
 export interface SvmQuotedTransferResult {
   /**
-   * Memoized `SealevelQuotedTransferProvider` for the current SVM route, or
-   * `null` when the origin isn't Sealevel / route isn't quote-enabled /
-   * fee-quoting config is missing. `useTokenTransfer` passes the value to
+   * `SealevelQuotedTransferProvider` for the current SVM route, or `null`
+   * when the origin isn't Sealevel / route isn't quote-enabled / fee-quoting
+   * config is missing. `useTokenTransfer` passes the value to
    * `WarpCore.getTransferRemoteTxs({ quotedTransfer })` when non-null.
    */
   quotedTransfer: QuotedTransferProvider | null;
+  /**
+   * Priced fee tuple from the offchain quoter, ready to feed into
+   * `ReviewDetails`. `null` when the route isn't quote-enabled / form is
+   * incomplete / the upstream returned no quote. Submit re-fetches
+   * independently inside `buildQuotedTransferTxs`.
+   */
+  fees: {
+    interchainQuote: TokenAmount;
+    tokenFeeQuote?: TokenAmount;
+    localQuote: TokenAmount;
+  } | null;
   isLoading: boolean;
 }
 
 /**
- * Builds a `SealevelQuotedTransferProvider` for Sealevel origins when the
- * fee-quoting proxy is configured. The provider itself defers the warp
- * quote fetch until `buildQuotedTransferTxs` is called at submit time;
- * this hook's job is just to discover the `fee_config` (fee program +
- * fee account PDA) once per route and memoize the provider.
- *
- * Parallel to `useQuotedCallsFeeQuotes` for EVM, but minimal — SVM
- * placeholder pricing means there's no fee preview to show in the UI.
+ * SVM-origin equivalent of `useQuotedCallsFeeQuotes`. Discovers `fee_config`
+ * (one-shot per route), constructs the provider, then eagerly fetches the
+ * offchain warp + IGP quote so `ReviewDetails` can show the priced fee
+ * before submit. Submit (`useTokenTransfer` → `WarpCore.getTransferRemoteTxs`)
+ * re-runs the same fetch inside `buildQuotedTransferTxs` — both calls hit
+ * the same upstream and (for transient 0-fee servers) return identical
+ * values, so display ↔ submit match.
  */
 export function useSvmQuotedTransfer(
+  { amount, recipient: formRecipient }: TransferFormValues,
   originToken: Token | undefined,
   destinationToken: IToken | undefined,
   enabled: boolean,
 ): SvmQuotedTransferResult {
   const multiProvider = useMultiProvider();
   const warpCore = useWarpCore();
+  const debouncedAmount = useDebounce(amount, 500);
 
   const isSealevelOrigin = originToken?.protocol === ProtocolType.Sealevel;
   const destinationName = destinationToken?.chainName;
   const originName = originToken?.chainName;
-  const shouldFetch =
+  const shouldDiscover =
     enabled &&
     isSealevelOrigin &&
     !!destinationName &&
     !!originName &&
     !!config.feeQuotingUrl;
 
-  // Discover fee_config by reading the warp token PDA. Cached per route — the
-  // fee program / fee-account PDA are static for the life of the warp route.
-  const { data: feeConfig, isLoading } = useQuery({
+  // 1. Discover fee_config by reading the warp token PDA. Cached per route —
+  //    the fee program / fee-account PDA are static for the life of the route.
+  const { data: feeConfig, isLoading: isFeeConfigLoading } = useQuery({
     // eslint-disable-next-line @tanstack/query/exhaustive-deps -- queryFn closes
-    // over multiProvider + warpCore + originToken (instances, can't stringify);
-    // chainName + addressOrDenom in the key cover route identity.
+    // over multiProvider + originToken (instances, can't stringify); chainName
+    // + addressOrDenom in the key cover route identity.
     queryKey: [
       'svmFeeConfig',
       originToken?.chainName,
@@ -89,11 +110,13 @@ export function useSvmQuotedTransfer(
       const tokenData = await adapter.getTokenAccountData();
       return tokenData.fee_config ?? null;
     },
-    enabled: shouldFetch,
+    enabled: shouldDiscover,
   });
 
+  // 2. Memoize the provider. Constructed only when fee_config exists —
+  //    submit calls `buildQuotedTransferTxs` on this same instance.
   const quotedTransfer = useMemo<QuotedTransferProvider | null>(() => {
-    if (!shouldFetch || !feeConfig || !originName) return null;
+    if (!shouldDiscover || !feeConfig || !originName) return null;
     return new SealevelQuotedTransferProvider({
       feeQuotingClient: new FeeQuotingV2Client({
         baseUrl: PROXY_BASE_URL,
@@ -101,13 +124,127 @@ export function useSvmQuotedTransfer(
         apiKey: '',
       }),
       connection: multiProvider.getSolanaWeb3Provider(originName),
-      feeProgramId: feeConfig.feeProgram,
-      feeAccount: feeConfig.feeAccount,
     });
-  }, [shouldFetch, feeConfig, originName, multiProvider, warpCore]);
+  }, [shouldDiscover, feeConfig, originName, multiProvider]);
+
+  // 3. Resolve sender + recipient for the display-time fee fetch.
+  const { accounts } = useAccounts(multiProvider);
+  const { address: sender } = getAccountAddressAndPubKey(
+    multiProvider,
+    originName,
+    accounts,
+  );
+  const { address: connectedDestAddress } = getAccountAddressAndPubKey(
+    multiProvider,
+    destinationName,
+    accounts,
+  );
+  const recipient = formRecipient || connectedDestAddress || '';
+
+  const shouldFetchFees =
+    !!quotedTransfer &&
+    !!originToken &&
+    !!destinationToken &&
+    !!destinationName &&
+    !!debouncedAmount &&
+    !!sender &&
+    !!recipient;
+
+  // 4. Eagerly fetch the priced fee tuple from the offchain quoter so
+  //    ReviewDetails can show the actual value the on-chain program will
+  //    apply. Submit re-fetches via the provider's `buildQuotedTransferTxs`;
+  //    transient quotes are server-deterministic for the same input so the
+  //    two fetches resolve to the same fee value.
+  const { data: fees, isLoading: isFeesLoading } = useQuery({
+    // eslint-disable-next-line @tanstack/query/exhaustive-deps -- queryFn
+    // closes over warpCore + quotedTransfer + tokens (instances). Identity is
+    // covered by addressOrDenom + chainName fields below.
+    queryKey: [
+      'svmQuotedTransferFee',
+      originToken?.chainName,
+      originToken?.addressOrDenom,
+      destinationToken?.chainName,
+      destinationToken?.addressOrDenom,
+      sender,
+      recipient,
+      debouncedAmount,
+    ],
+    queryFn: () =>
+      fetchSvmQuotedFees({
+        warpCore,
+        quotedTransfer: quotedTransfer!,
+        originToken: originToken!,
+        destinationToken: destinationToken!,
+        destination: destinationName!,
+        sender: sender!,
+        recipient,
+        amount: debouncedAmount,
+      }),
+    enabled: shouldFetchFees,
+    refetchInterval: FEE_QUOTE_REFRESH_INTERVAL,
+  });
 
   return {
     quotedTransfer,
-    isLoading: shouldFetch && isLoading,
+    fees: fees ?? null,
+    isLoading:
+      (shouldDiscover && isFeeConfigLoading) ||
+      (shouldFetchFees && isFeesLoading),
+  };
+}
+
+async function fetchSvmQuotedFees({
+  warpCore,
+  quotedTransfer,
+  originToken,
+  destinationToken,
+  destination,
+  sender,
+  recipient,
+  amount,
+}: {
+  warpCore: WarpCore;
+  quotedTransfer: QuotedTransferProvider;
+  originToken: Token;
+  destinationToken: IToken;
+  destination: string;
+  sender: string;
+  recipient: string;
+  amount: string;
+}): Promise<{
+  interchainQuote: TokenAmount;
+  tokenFeeQuote?: TokenAmount;
+  localQuote: TokenAmount;
+} | null> {
+  const amountWei = toWei(amount, originToken.decimals);
+  const originTokenAmount = originToken.amount(amountWei);
+
+  const { igpQuote, tokenFeeQuote } = await warpCore.getQuotedTransferFee({
+    quotedTransfer,
+    originTokenAmount,
+    destination,
+    sender,
+    recipient,
+    destinationToken,
+  });
+
+  // Local gas estimate so the UI matches what the user will see in their
+  // wallet. Mirrors `useQuotedCalls`'s post-quote local-gas estimate; throws
+  // here drop the whole offchain result, letting the consumer fall through
+  // to on-chain quoting.
+  const localQuote = await warpCore.getLocalTransferFeeAmount({
+    originToken,
+    destination,
+    sender,
+    interchainFee: igpQuote,
+    tokenFeeQuote,
+    amount: originTokenAmount.amount,
+    destinationToken,
+  });
+
+  return {
+    interchainQuote: igpQuote,
+    tokenFeeQuote,
+    localQuote,
   };
 }

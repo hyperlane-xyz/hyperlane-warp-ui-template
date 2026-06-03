@@ -355,7 +355,6 @@ export const useStore = create<AppState>()(
         });
       },
 
-
       // Shared component state
       transferLoading: false,
       setTransferLoading: (isLoading) => {

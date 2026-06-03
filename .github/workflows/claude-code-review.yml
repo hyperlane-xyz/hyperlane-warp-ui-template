@@ -9,7 +9,7 @@ on:
     types: [created]
 
 env:
-  CLAUDE_OPUS_MODEL: claude-opus-4-7
+  CLAUDE_OPUS_MODEL: claude-opus-4-8
   CLAUDE_SONNET_MODEL: claude-sonnet-4-6
 
 concurrency:

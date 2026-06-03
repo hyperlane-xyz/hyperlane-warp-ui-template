@@ -10,6 +10,7 @@ import { usePublicClient } from 'wagmi';
 import { FormWarningBanner } from '../../components/banner/FormWarningBanner';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
 import { SolidButton } from '../../components/buttons/SolidButton';
+import { RouteIcon } from '../../components/icons/RouteIcon';
 import { SwapIcon } from '../../components/icons/SwapIcon';
 import { TextField } from '../../components/input/TextField';
 import { TransferSection } from '../../components/layout/TransferSection';
@@ -33,6 +34,7 @@ import {
   useApprovePermit2ToRouter,
   usePermit2Status,
 } from './permit2';
+import { RouteSelectionModal } from './routeSelection/RouteSelectionModal';
 import { SlippagePanel } from './SlippagePanel';
 import { TokenBalance } from './TokenBalance';
 import { getTokenByKeyFromMap, useTokenByKeyMap } from './tokens/hooks';
@@ -69,17 +71,17 @@ export function SwapForm() {
 }
 
 function SwapFormContent() {
-  // Mounts the catalogue-wide price fetch once for the whole form. Cards
-  // and review modal read individual prices via `useTokenUsdValue` (pure
-  // store readers); without this top-level call, deep-linked URLs would
-  // render cards before the picker opens and see empty USD values.
-  useTokenPrices();
   const { values, errors, setErrors, setFieldValue, setValues } =
     useFormikContext<SwapFormValues>();
   const multiProvider = useMultiProvider();
   const tokenMap = useTokenByKeyMap();
   const publicClient = usePublicClient({ chainId: values.srcChain ?? undefined });
   const { data: chainsResp } = useChains();
+  // Mounts the catalogue-wide price fetch once for the whole form. Cards
+  // and review modal read individual prices via `useTokenUsdValue` (pure
+  // store readers); without this top-level call, deep-linked URLs would
+  // render cards before the picker opens and see empty USD values.
+  useTokenPrices();
 
   const srcChainName =
     values.srcChain != null
@@ -112,6 +114,8 @@ function SwapFormContent() {
 
   const [isReview, setIsReview] = useState(false);
   const { close: closeConfirmationModal, isOpen: isConfirmationModalOpen } = useModal();
+  const { isOpen: isRouteModalOpen, open: openRouteModal, close: closeRouteModal } = useModal();
+  const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
 
   const debouncedAmount = useDebounce(values.amount, 750);
   const {
@@ -127,7 +131,14 @@ function SwapFormContent() {
   });
   useToastError(quoteError, 'Quote failed');
 
-  const bestRoute = quote?.routes[0];
+  // Reset to best route when the user changes intent, not on every background refetch.
+  useEffect(() => {
+    setSelectedRouteIndex(0);
+  }, [values.srcChain, values.dstChain, values.srcToken, values.dstToken, debouncedAmount]);
+
+  const routes = quote?.routes ?? [];
+  const safeIndex = selectedRouteIndex < routes.length ? selectedRouteIndex : 0;
+  const bestRoute = routes[safeIndex] ?? routes[0];
 
   // Permit2 — EVM source only.
   const isNative = !!srcToken?.isNative;
@@ -426,12 +437,34 @@ function SwapFormContent() {
       {!isReview && (
         <div className="mt-2 flex items-center justify-between gap-3 px-1">
           <FeeSectionButton feeBreakdown={bestRoute?.feeBreakdown} isLoading={quoteLoading} />
-          <SlippagePanel
-            slippageBps={values.slippageBps}
-            setSlippageBps={(bps) => setFieldValue('slippageBps', bps)}
-          />
+          <div className="flex items-center gap-2">
+            {routes.length > 0 && (
+              <button
+                type="button"
+                onClick={openRouteModal}
+                className="flex items-center gap-1 rounded font-secondary text-xxs text-gray-700 hover:text-gray-900 dark:text-foreground-secondary dark:hover:text-foreground-primary"
+              >
+                <RouteIcon />
+                {routes.length > 1
+                  ? `${routes.length} routes`
+                  : `Route ${safeIndex + 1}/${routes.length}`}
+              </button>
+            )}
+            <SlippagePanel
+              slippageBps={values.slippageBps}
+              setSlippageBps={(bps) => setFieldValue('slippageBps', bps)}
+            />
+          </div>
         </div>
       )}
+      <RouteSelectionModal
+        isOpen={isRouteModalOpen}
+        close={closeRouteModal}
+        routes={routes}
+        selectedIndex={safeIndex}
+        onSelect={setSelectedRouteIndex}
+        dstToken={dstToken}
+      />
 
       <ReviewDetails
         isReview={isReview}
@@ -579,7 +612,15 @@ function DestinationTokenCard({
       return '';
     }
   }, [bestRoute, dstToken]);
-  const outputUsd = useTokenUsdValue(dstToken, outputDisplay);
+  const minOutputDisplay = useMemo(() => {
+    if (!bestRoute || !dstToken) return '';
+    if (bestRoute.isBridgeOnly) return '';
+    try {
+      return formatUnits(BigInt(bestRoute.raw.outputMin), dstToken.decimals);
+    } catch {
+      return '';
+    }
+  }, [bestRoute, dstToken]);
 
   return (
     <div>
@@ -610,7 +651,9 @@ function DestinationTokenCard({
           />
         </div>
         <div className="transfer-balance mt-1 flex items-center justify-between text-xs leading-[18px] text-gray-450 dark:text-foreground-secondary">
-          <span>{!outputUsd ? '$0.00' : formatUsd(outputUsd)}</span>
+          <span>
+            {minOutputDisplay ? `Min: ${minOutputDisplay} ${dstToken?.symbol ?? ''}` : ''}
+          </span>
           <TokenBalance label="Remote Balance" balance={balance ?? null} token={dstToken} />
         </div>
       </div>

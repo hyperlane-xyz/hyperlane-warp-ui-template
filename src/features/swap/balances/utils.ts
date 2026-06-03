@@ -11,7 +11,6 @@ export function formatFeeAmount(amount: bigint, decimals: number): string {
   return fromWeiRounded(amount.toString(), decimals, 8);
 }
 
-// Engine now exposes coinGeckoId per token; price map is keyed by it.
 export function getUsdValue(
   token: UiToken,
   balances: Record<string, bigint>,

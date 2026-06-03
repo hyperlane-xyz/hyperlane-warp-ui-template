@@ -157,7 +157,9 @@ function parseReceipt(receipt: TypedTransactionReceipt): {
   if (receipt.type !== ProviderType.Viem && receipt.type !== ProviderType.EthersV5) {
     return { messages: [], originBlockNumber: undefined };
   }
-  const rawReceipt = receipt.receipt as Parameters<typeof HyperlaneCore.getDispatchedMessages>[0] & {
+  const rawReceipt = receipt.receipt as Parameters<
+    typeof HyperlaneCore.getDispatchedMessages
+  >[0] & {
     blockNumber?: bigint | number;
   };
   const dispatched = HyperlaneCore.getDispatchedMessages(rawReceipt);
@@ -175,7 +177,10 @@ function parseReceipt(receipt: TypedTransactionReceipt): {
 function labelMessages(messages: ParsedMessage[], route: AugmentedRoute): LabeledMsgId[] {
   const bridgeRouters = new Set(
     route.raw.steps
-      .filter((s): s is Extract<(typeof route.raw.steps)[number], { type: 'bridge' }> => s.type === 'bridge')
+      .filter(
+        (s): s is Extract<(typeof route.raw.steps)[number], { type: 'bridge' }> =>
+          s.type === 'bridge',
+      )
       .map((s) => s.router.toLowerCase()),
   );
 
@@ -186,7 +191,10 @@ function labelMessages(messages: ParsedMessage[], route: AugmentedRoute): Labele
     }
     // Commit precedes reveal in the CCS protocol; >2 non-warp messages is unexpected.
     if (nonWarpCount >= 2) {
-      logger.warn('Unexpected non-warp message count in swap receipt', { nonWarpCount, msgId: msg.msgId });
+      logger.warn('Unexpected non-warp message count in swap receipt', {
+        nonWarpCount,
+        msgId: msg.msgId,
+      });
     }
     const label = nonWarpCount === 0 ? ('commit' as const) : ('reveal' as const);
     nonWarpCount++;

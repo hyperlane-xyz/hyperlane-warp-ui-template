@@ -72,12 +72,7 @@ export function SwapDetailsModal() {
 
   if (!swap || renderedIndex == null) return <Modal isOpen={false} close={close} />;
   return (
-    <SwapDetailsModalInner
-      isOpen={isOpen}
-      close={close}
-      swap={swap}
-      swapIndex={renderedIndex}
-    />
+    <SwapDetailsModalInner isOpen={isOpen} close={close} swap={swap} swapIndex={renderedIndex} />
   );
 }
 

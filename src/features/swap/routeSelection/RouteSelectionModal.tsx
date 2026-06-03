@@ -1,9 +1,9 @@
 import { IToken } from '@hyperlane-xyz/sdk';
 import { CopyButton, HyperlaneLogo, Modal } from '@hyperlane-xyz/widgets';
-import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { Fragment, useMemo, useState } from 'react';
 
 import { ChainLogo } from '../../../components/icons/ChainLogo';
+import { HoverTooltip } from '../../../components/tooltip/HoverTooltip';
 import { TokenIcon } from '../../../components/icons/TokenIcon';
 import type { QuoteBridgeStep, QuoteStep, QuoteSwapStep } from '../../api/types';
 import { useMultiProvider } from '../../chains/hooks';
@@ -325,14 +325,14 @@ function SwapEdge({
   return (
     <div className="flex items-center gap-1 pb-4">
       <span className="text-sm text-gray-400">→</span>
-      <HoverChip tooltip={tooltip}>
+      <HoverTooltip tooltip={tooltip}>
         <div className="flex items-center gap-1 rounded border border-purple-200 bg-purple-50 px-1.5 py-0.5 dark:border-purple-800/30 dark:bg-purple-900/15">
           <DexLogo meta={meta} dexKey={step.dex} size={13} />
           <span className="font-secondary text-xxs text-purple-700 dark:text-purple-300">
             {meta?.name ?? step.dex}
           </span>
         </div>
-      </HoverChip>
+      </HoverTooltip>
       <span className="text-sm text-gray-400">→</span>
     </div>
   );
@@ -428,70 +428,15 @@ function BridgeEdge({
   return (
     <div className="flex items-center gap-1 pb-4">
       <span className="text-sm text-gray-400">→</span>
-      <HoverChip tooltip={tooltip}>
+      <HoverTooltip tooltip={tooltip}>
         <div className="flex items-center gap-1 rounded border border-blue-200 bg-blue-50 px-1.5 py-0.5 dark:border-blue-800/30 dark:bg-blue-900/15">
           <HyperlaneLogo width={13} height={13} color="currentColor" />
           <span className="max-w-[7rem] truncate font-secondary text-xxs text-blue-700 dark:text-blue-300">
             {routeLabel}
           </span>
         </div>
-      </HoverChip>
+      </HoverTooltip>
       <span className="text-sm text-gray-400">→</span>
-    </div>
-  );
-}
-
-// ── HoverChip — portal-based so overflow containers never clip the tooltip ──
-
-function HoverChip({ children, tooltip }: { children: React.ReactNode; tooltip: React.ReactNode }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
-
-  const computePos = () => {
-    if (!ref.current) return null;
-    const r = ref.current.getBoundingClientRect();
-    const tooltipWidth = 240;
-    const rawLeft = r.left + r.width / 2;
-    const clampedLeft = Math.min(
-      Math.max(rawLeft, tooltipWidth / 2 + 8),
-      window.innerWidth - tooltipWidth / 2 - 8,
-    );
-    return { top: r.bottom + 8, left: clampedLeft };
-  };
-
-  const handleMouseEnter = () => {
-    setPos(computePos());
-  };
-
-  const handleMouseLeave = () => {
-    setPos(null);
-  };
-
-  useEffect(() => {
-    if (!pos) return;
-    const update = () => setPos(computePos());
-    window.addEventListener('scroll', update, true);
-    window.addEventListener('resize', update);
-    return () => {
-      window.removeEventListener('scroll', update, true);
-      window.removeEventListener('resize', update);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [!!pos]);
-
-  return (
-    <div ref={ref} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
-      {children}
-      {pos &&
-        createPortal(
-          <div
-            style={{ position: 'fixed', top: pos.top, left: pos.left, zIndex: 9999 }}
-            className="w-max max-w-[240px] -translate-x-1/2 rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-xs shadow-xl dark:border-primary-300/30 dark:bg-surface dark:text-foreground-primary"
-          >
-            {tooltip}
-          </div>,
-          document.body,
-        )}
     </div>
   );
 }

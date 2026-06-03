@@ -25,7 +25,7 @@ import { RecipientConfirmationModal } from '../wallet/RecipientConfirmationModal
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { WalletDropdown } from '../wallet/WalletDropdown';
 import { useTokenBalance } from './balances/hooks';
-import { formatBalance, formatFeeAmount } from './balances/utils';
+import { formatBalance, formatFeeAmount, formatUsd } from './balances/utils';
 import { FeeSectionButton } from './FeeSectionButton';
 import { MaxButton } from './MaxButton';
 import {
@@ -40,6 +40,7 @@ import { TokenBalance } from './TokenBalance';
 import { getTokenByKeyFromMap, useTokenByKeyMap } from './tokens/hooks';
 import { TokenSelectField } from './tokens/TokenSelectField';
 import type { UiToken } from './tokens/types';
+import { useTokenPrices, useTokenUsdValue } from './tokens/useTokenPrice';
 import {
   FinalSwapStatuses,
   SwapStatus,
@@ -76,6 +77,11 @@ function SwapFormContent() {
   const tokenMap = useTokenByKeyMap();
   const publicClient = usePublicClient({ chainId: values.srcChain ?? undefined });
   const { data: chainsResp } = useChains();
+  // Mounts the catalogue-wide price fetch once for the whole form. Cards
+  // and review modal read individual prices via `useTokenUsdValue` (pure
+  // store readers); without this top-level call, deep-linked URLs would
+  // render cards before the picker opens and see empty USD values.
+  useTokenPrices();
 
   const srcChainName =
     values.srcChain != null
@@ -528,7 +534,9 @@ function OriginTokenCard({
   srcToken: UiToken | undefined;
   amountError: string | undefined;
 }) {
+  const { values } = useFormikContext<SwapFormValues>();
   const { data: balance, isLoading: isBalanceLoading } = useTokenBalance(srcToken);
+  const amountUsd = useTokenUsdValue(srcToken, values.amount);
 
   return (
     <div>
@@ -563,7 +571,7 @@ function OriginTokenCard({
           />
         </div>
         <div className="transfer-balance mt-1 flex items-center justify-between text-xs leading-[18px] text-gray-450 dark:text-foreground-secondary">
-          <span>$0.00</span>
+          <span>{!amountUsd ? '$0.00' : formatUsd(amountUsd)}</span>
           <TokenBalance label="Balance" balance={balance ?? null} token={srcToken} />
         </div>
       </div>

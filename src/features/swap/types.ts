@@ -1,5 +1,12 @@
 import type { QuoteResponse, RouteResponse } from '../api/types';
 
+export type SwapMessageLabel = 'warp' | 'commit' | 'reveal';
+
+export interface LabeledMsgId {
+  msgId: string;
+  label: SwapMessageLabel;
+}
+
 // ── Persisted/in-memory swap history ──────────────────────────────────
 
 // Status of a single submitted swap. Used by SwapDetailsModal to drive
@@ -39,7 +46,7 @@ export interface SwapHistoryItem {
   recipient: string;
   originTxHash?: string;
   destinationTxHash?: string;
-  msgId?: string;
+  msgIds?: LabeledMsgId[];
   originBlockNumber?: number;
 }
 

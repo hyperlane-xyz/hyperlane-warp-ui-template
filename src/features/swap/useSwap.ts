@@ -10,7 +10,7 @@ import { useStore } from '../store';
 import { submitToRelayApi } from '../transfer/relayApi';
 import { postCommitment } from './ccs';
 import { SwapStatus } from './types';
-import type { AugmentedRoute } from './types';
+import type { AugmentedRoute, LabeledMsgId } from './types';
 
 interface ExecuteArgs {
   swapIndex: number;
@@ -23,7 +23,8 @@ interface ExecuteArgs {
   recipient: string;
 }
 
-// Hyperlane Mailbox `DispatchId(bytes32 messageId)` topic — msgId = idLog.topics[1].
+// Hyperlane Mailbox event topic hashes.
+const DISPATCH_SIG = keccak256(toBytes('Dispatch(address,uint32,bytes32,bytes)'));
 const DISPATCH_ID_SIG = keccak256(toBytes('DispatchId(bytes32)'));
 
 // Single execution path covering EVM + Tron via the SDK's protocol-aware
@@ -95,7 +96,7 @@ export function useSwap() {
         }
         const parsed = parseReceipt(receipt);
         const expectsBridge = route.raw.steps.some((s) => s.type === 'bridge');
-        if (expectsBridge && !parsed.msgId) {
+        if (expectsBridge && !parsed.messages.length) {
           logger.error('Origin tx confirmed but no Dispatch log emitted', new Error(`tx=${hash}`));
           updateSwapStatus(swapIndex, SwapStatus.Failed, {
             originTxHash: hash,
@@ -119,7 +120,7 @@ export function useSwap() {
         submitToRelayApi(srcChainName, hash, protocol as ProtocolType, receipt);
 
         updateSwapStatus(swapIndex, SwapStatus.Bridging, {
-          msgId: parsed.msgId,
+          msgIds: labelMessages(parsed.messages, route),
           originBlockNumber: parsed.originBlockNumber,
         });
 
@@ -149,25 +150,82 @@ function isReverted(receipt: TypedTransactionReceipt): boolean {
   return false;
 }
 
+interface ParsedMessage {
+  msgId: `0x${string}`;
+  sender: `0x${string}`;
+  destDomain: number;
+}
+
 function parseReceipt(receipt: TypedTransactionReceipt): {
-  msgId: `0x${string}` | undefined;
+  messages: ParsedMessage[];
   originBlockNumber: number | undefined;
 } {
   if (receipt.type !== ProviderType.Viem && receipt.type !== ProviderType.EthersV5) {
-    return { msgId: undefined, originBlockNumber: undefined };
+    return { messages: [], originBlockNumber: undefined };
   }
-  const logs =
-    (
-      receipt.receipt as {
-        logs?: Array<{ topics?: readonly string[] }>;
-        blockNumber?: bigint | number;
+  const rawReceipt = receipt.receipt as {
+    logs?: Array<{ address?: string; topics?: readonly string[] }>;
+    blockNumber?: bigint | number;
+  };
+  const logs = rawReceipt.logs ?? [];
+  const blockNumber = rawReceipt.blockNumber;
+
+  // The Mailbox emits Dispatch then DispatchId back-to-back for each dispatch() call.
+  // Scan in log order and pair them by queue position per mailbox address.
+  const pendingByContract = new Map<
+    string,
+    Array<{ sender: `0x${string}`; destDomain: number }>
+  >();
+  const messages: ParsedMessage[] = [];
+
+  for (const log of logs) {
+    const topic0 = log.topics?.[0];
+    const contractAddr = (log.address ?? '').toLowerCase();
+
+    if (topic0 === DISPATCH_SIG) {
+      const senderTopic = log.topics?.[1];
+      const destTopic = log.topics?.[2];
+      if (senderTopic && destTopic) {
+        // Indexed address is left-padded to 32 bytes — take last 20 bytes.
+        const sender = `0x${senderTopic.slice(-40)}` as `0x${string}`;
+        const destDomain = parseInt(destTopic, 16);
+        const queue = pendingByContract.get(contractAddr) ?? [];
+        queue.push({ sender, destDomain });
+        pendingByContract.set(contractAddr, queue);
       }
-    ).logs ?? [];
-  const blockNumber = (receipt.receipt as { blockNumber?: bigint | number }).blockNumber;
-  const idLog = logs.find((l) => l.topics?.[0] === DISPATCH_ID_SIG);
-  const msgId = (idLog?.topics?.[1] as `0x${string}` | undefined) ?? undefined;
+    } else if (topic0 === DISPATCH_ID_SIG) {
+      const msgId = log.topics?.[1] as `0x${string}` | undefined;
+      if (msgId) {
+        const queue = pendingByContract.get(contractAddr);
+        const pending = queue?.shift();
+        if (pending) {
+          messages.push({ msgId, sender: pending.sender, destDomain: pending.destDomain });
+        }
+      }
+    }
+  }
+
   return {
-    msgId,
+    messages,
     originBlockNumber: blockNumber != null ? Number(blockNumber) : undefined,
   };
+}
+
+function labelMessages(messages: ParsedMessage[], route: AugmentedRoute): LabeledMsgId[] {
+  const bridgeRouters = new Set(
+    route.raw.steps
+      .filter((s): s is Extract<(typeof route.raw.steps)[number], { type: 'bridge' }> => s.type === 'bridge')
+      .map((s) => s.router.toLowerCase()),
+  );
+
+  let nonWarpCount = 0;
+  return messages.map((msg) => {
+    if (bridgeRouters.has(msg.sender.toLowerCase())) {
+      return { msgId: msg.msgId, label: 'warp' as const };
+    }
+    // Commit precedes reveal in the CCS protocol.
+    const label = nonWarpCount === 0 ? ('commit' as const) : ('reveal' as const);
+    nonWarpCount++;
+    return { msgId: msg.msgId, label };
+  });
 }

@@ -24,7 +24,7 @@ import { assembleChainAddresses } from './chains/addresses';
 import { assembleChainMetadata } from './chains/metadata';
 import type { UiToken } from './swap/tokens/types';
 import { getTokenKey as getSwapTokenKey } from './swap/tokens/utils';
-import { FinalSwapStatuses, SwapHistoryItem, SwapStatus } from './swap/types';
+import { FinalSwapStatuses, LabeledMsgId, SwapHistoryItem, SwapStatus } from './swap/types';
 import {
   buildTokensArray,
   getTokenKey,
@@ -115,7 +115,7 @@ export interface AppState {
     i: number,
     status: SwapStatus,
     options?: {
-      msgId?: string;
+      msgIds?: LabeledMsgId[];
       originTxHash?: string;
       originBlockNumber?: number;
       destinationTxHash?: string;
@@ -291,7 +291,7 @@ export const useStore = create<AppState>()(
           swaps[i] = {
             ...swaps[i],
             status,
-            msgId: swaps[i].msgId ?? options?.msgId,
+            msgIds: swaps[i].msgIds ?? options?.msgIds,
             originTxHash: swaps[i].originTxHash ?? options?.originTxHash,
             originBlockNumber: swaps[i].originBlockNumber ?? options?.originBlockNumber,
             destinationTxHash: swaps[i].destinationTxHash ?? options?.destinationTxHash,

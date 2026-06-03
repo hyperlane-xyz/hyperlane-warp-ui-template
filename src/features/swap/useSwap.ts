@@ -1,8 +1,7 @@
-import { ProviderType, type TypedTransactionReceipt } from '@hyperlane-xyz/sdk';
+import { HyperlaneCore, ProviderType, type TypedTransactionReceipt } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 import { useTransactionFns } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import { useCallback, useState } from 'react';
-import { keccak256, toBytes } from 'viem';
 
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
@@ -22,10 +21,6 @@ interface ExecuteArgs {
   sender: string;
   recipient: string;
 }
-
-// Hyperlane Mailbox event topic hashes.
-const DISPATCH_SIG = keccak256(toBytes('Dispatch(address,uint32,bytes32,bytes)'));
-const DISPATCH_ID_SIG = keccak256(toBytes('DispatchId(bytes32)'));
 
 // Single execution path covering EVM + Tron via the SDK's protocol-aware
 // transaction adapters.
@@ -153,7 +148,6 @@ function isReverted(receipt: TypedTransactionReceipt): boolean {
 interface ParsedMessage {
   msgId: `0x${string}`;
   sender: `0x${string}`;
-  destDomain: number;
 }
 
 function parseReceipt(receipt: TypedTransactionReceipt): {
@@ -163,48 +157,15 @@ function parseReceipt(receipt: TypedTransactionReceipt): {
   if (receipt.type !== ProviderType.Viem && receipt.type !== ProviderType.EthersV5) {
     return { messages: [], originBlockNumber: undefined };
   }
-  const rawReceipt = receipt.receipt as {
-    logs?: Array<{ address?: string; topics?: readonly string[] }>;
+  const rawReceipt = receipt.receipt as Parameters<typeof HyperlaneCore.getDispatchedMessages>[0] & {
     blockNumber?: bigint | number;
   };
-  const logs = rawReceipt.logs ?? [];
+  const dispatched = HyperlaneCore.getDispatchedMessages(rawReceipt);
+  const messages = dispatched.map((m) => ({
+    msgId: m.id as `0x${string}`,
+    sender: m.parsed.sender as `0x${string}`,
+  }));
   const blockNumber = rawReceipt.blockNumber;
-
-  // The Mailbox emits Dispatch then DispatchId back-to-back for each dispatch() call.
-  // Scan in log order and pair them by queue position per mailbox address.
-  const pendingByContract = new Map<
-    string,
-    Array<{ sender: `0x${string}`; destDomain: number }>
-  >();
-  const messages: ParsedMessage[] = [];
-
-  for (const log of logs) {
-    const topic0 = log.topics?.[0];
-    const contractAddr = (log.address ?? '').toLowerCase();
-
-    if (topic0 === DISPATCH_SIG) {
-      const senderTopic = log.topics?.[1];
-      const destTopic = log.topics?.[2];
-      if (senderTopic && destTopic) {
-        // Indexed address is left-padded to 32 bytes — take last 20 bytes.
-        const sender = `0x${senderTopic.slice(-40)}` as `0x${string}`;
-        const destDomain = parseInt(destTopic, 16);
-        const queue = pendingByContract.get(contractAddr) ?? [];
-        queue.push({ sender, destDomain });
-        pendingByContract.set(contractAddr, queue);
-      }
-    } else if (topic0 === DISPATCH_ID_SIG) {
-      const msgId = log.topics?.[1] as `0x${string}` | undefined;
-      if (msgId) {
-        const queue = pendingByContract.get(contractAddr);
-        const pending = queue?.shift();
-        if (pending) {
-          messages.push({ msgId, sender: pending.sender, destDomain: pending.destDomain });
-        }
-      }
-    }
-  }
-
   return {
     messages,
     originBlockNumber: blockNumber != null ? Number(blockNumber) : undefined,
@@ -223,7 +184,10 @@ function labelMessages(messages: ParsedMessage[], route: AugmentedRoute): Labele
     if (bridgeRouters.has(msg.sender.toLowerCase())) {
       return { msgId: msg.msgId, label: 'warp' as const };
     }
-    // Commit precedes reveal in the CCS protocol.
+    // Commit precedes reveal in the CCS protocol; >2 non-warp messages is unexpected.
+    if (nonWarpCount >= 2) {
+      logger.warn('Unexpected non-warp message count in swap receipt', { nonWarpCount, msgId: msg.msgId });
+    }
     const label = nonWarpCount === 0 ? ('commit' as const) : ('reveal' as const);
     nonWarpCount++;
     return { msgId: msg.msgId, label };

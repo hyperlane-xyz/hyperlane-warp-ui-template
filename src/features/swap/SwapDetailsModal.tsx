@@ -35,6 +35,12 @@ const DEFAULT_TIMINGS: StageTimings = {
   [MessageStage.Relayed]: null,
 };
 
+const LABEL_NAMES: Record<string, string> = {
+  warp: 'Warp Message ID',
+  commit: 'Commit Message ID',
+  reveal: 'Reveal Message ID',
+};
+
 const STATUS_DESCRIPTION: Record<SwapStatus, string> = {
   [SwapStatus.Preparing]: 'Preparing transaction…',
   [SwapStatus.CreatingTxs]: 'Submitting commitment to CCS…',
@@ -51,30 +57,43 @@ const STATUS_DESCRIPTION: Record<SwapStatus, string> = {
 
 export function SwapDetailsModal() {
   const activeSwapIndex = useStore((s) => s.activeSwapIndex);
-  const swap = useStore((s) =>
-    s.activeSwapIndex != null ? s.swaps[s.activeSwapIndex] : undefined,
-  );
+  const swaps = useStore((s) => s.swaps);
   const setActiveSwapIndex = useStore((s) => s.setActiveSwapIndex);
-
-  const isOpen = activeSwapIndex != null && !!swap;
   const close = () => setActiveSwapIndex(null);
 
-  if (!swap) return <Modal isOpen={false} close={close} />;
-  return <SwapDetailsModalInner isOpen={isOpen} close={close} swap={swap} />;
+  const isOpen = activeSwapIndex != null;
+
+  // Keep the last index alive after close so delivery polling continues in background.
+  const lastIndexRef = useRef<number | null>(null);
+  if (activeSwapIndex != null) lastIndexRef.current = activeSwapIndex;
+
+  const renderedIndex = lastIndexRef.current;
+  const swap = renderedIndex != null ? swaps[renderedIndex] : undefined;
+
+  if (!swap || renderedIndex == null) return <Modal isOpen={false} close={close} />;
+  return (
+    <SwapDetailsModalInner
+      isOpen={isOpen}
+      close={close}
+      swap={swap}
+      swapIndex={renderedIndex}
+    />
+  );
 }
 
 function SwapDetailsModalInner({
   isOpen,
   close,
   swap,
+  swapIndex,
 }: {
   isOpen: boolean;
   close: () => void;
   swap: SwapHistoryItem;
+  swapIndex: number;
 }) {
   const multiProvider = useMultiProvider();
   const tokenMap = useTokenByKeyMap();
-  const swapIndex = useStore((s) => s.activeSwapIndex);
   const updateSwapStatus = useStore((s) => s.updateSwapStatus);
 
   const {
@@ -107,25 +126,18 @@ function SwapDetailsModalInner({
   // Poll the warp message for timeline/delivery status (fallback to first).
   // Same-chain swaps have no msgIds — skip polling.
   const pollingMsgId = (msgIds?.find((m) => m.label === 'warp') ?? msgIds?.[0])?.msgId;
-  const delivery = useMessageDeliveryStatus(pollingMsgId, isOpen && !isFinal, multiProvider);
+  const delivery = useMessageDeliveryStatus(pollingMsgId, !isFinal, multiProvider);
 
   const hasUpdatedDelivery = useRef(false);
   useEffect(() => {
     hasUpdatedDelivery.current = false;
   }, [pollingMsgId]);
 
-  const LABEL_NAMES: Record<string, string> = {
-    warp: 'Warp Message ID',
-    commit: 'Commit Message ID',
-    reveal: 'Reveal Message ID',
-  };
-
   useEffect(() => {
     if (
       delivery.isDelivered &&
       !hasUpdatedDelivery.current &&
-      status !== SwapStatus.ConfirmedDestination &&
-      swapIndex != null
+      status !== SwapStatus.ConfirmedDestination
     ) {
       hasUpdatedDelivery.current = true;
       updateSwapStatus(swapIndex, SwapStatus.ConfirmedDestination, {
@@ -199,7 +211,6 @@ function SwapDetailsModalInner({
       cancelled = true;
     };
   }, [multiProvider, originChain, destChain, originTxHash, destinationTxHash, sender, recipient]);
-
 
   return (
     <Modal isOpen={isOpen} close={close} panelClassname="transfer-details-modal max-w-sm">

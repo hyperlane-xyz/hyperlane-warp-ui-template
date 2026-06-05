@@ -1,8 +1,11 @@
 import { ChevronIcon, FuelPumpIcon, useModal } from '@hyperlane-xyz/widgets';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
+import { useChains } from '../api/hooks';
+import { getFeePercentage } from '../balances/feeUsdDisplay';
 import { useMultiProvider } from '../chains/hooks';
-import { formatFeeAmount } from './balances/utils';
+import { useStore } from '../store';
+import { formatFeeAmount, formatUsd, getTotalFeeUsd } from './balances/utils';
 import { FeeBreakdownModal } from './FeeBreakdownModal';
 import { getTokenByKeyFromMap, useTokenByKeyMap } from './tokens/hooks';
 import type { UiToken } from './tokens/types';
@@ -11,23 +14,44 @@ import type { FeeBreakdown, FeeComponent } from './types';
 interface Props {
   feeBreakdown: FeeBreakdown | undefined;
   isLoading: boolean;
+  /** USD value of the swap input, used to compute fee-as-% of transfer. */
+  inputUsd: number | null;
 }
 
-// Pill button — fuel-pump icon + "Fees: <total>" + chevron.
-// Fees grouped by fungibility (chainId + token address).
-export function FeeSectionButton({ feeBreakdown, isLoading }: Props) {
+// Pill button — fuel-pump icon + "Fees: <total> <USD> (<pct>)" + chevron.
+// Fees grouped by fungibility (chainId + token address). USD value +
+// percentage mirror the bridge form's FeeSectionButton presentation.
+export function FeeSectionButton({ feeBreakdown, isLoading, inputUsd }: Props) {
   const { isOpen, open, close } = useModal();
   const loadingText = useLoadingDots(isLoading);
   const tokenMap = useTokenByKeyMap();
   const multiProvider = useMultiProvider();
+  const { data: chainsResp } = useChains();
+  const tokenPrices = useStore((s) => s.tokenPrices);
 
-  const components = feeBreakdown?.components ?? [];
+  const components = useMemo(() => feeBreakdown?.components ?? [], [feeBreakdown?.components]);
   const isClickable = components.length > 0 && !isLoading;
 
   let feeText: string;
   if (isLoading) feeText = loadingText;
   else if (components.length === 0) feeText = '-';
   else feeText = formatTotalFee(components, tokenMap, multiProvider);
+
+  // Flat USD price map (coinGeckoId → number) for the fee summer.
+  const priceMap = useMemo(() => {
+    const out: Record<string, number> = {};
+    for (const [id, entry] of Object.entries(tokenPrices)) {
+      if (entry.usd != null) out[id] = entry.usd;
+    }
+    return out;
+  }, [tokenPrices]);
+
+  const feeUsd = useMemo(
+    () => getTotalFeeUsd(components, tokenMap, chainsResp?.chains, priceMap),
+    [components, tokenMap, chainsResp?.chains, priceMap],
+  );
+  const feeUsdText = feeUsd > 0 ? formatUsd(feeUsd, true) : null;
+  const pctText = inputUsd != null ? getFeePercentage(feeUsd, inputUsd) : null;
 
   return (
     <>
@@ -42,7 +66,7 @@ export function FeeSectionButton({ feeBreakdown, isLoading }: Props) {
         disabled={!isClickable}
       >
         <FuelPumpIcon width={14} height={14} className="mr-1" />
-        Fees: {feeText}
+        Fees: {feeUsdText ? `${feeUsdText}${pctText ? ` (${pctText})` : ''}` : feeText}
         {isClickable && <ChevronIcon direction="e" width="0.6rem" height="0.6rem" />}
       </button>
       {feeBreakdown && (

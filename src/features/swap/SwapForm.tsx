@@ -140,6 +140,9 @@ function SwapFormContent() {
     return undefined;
   }, [bestRoute]);
 
+  // Input USD — used by the fee % calculation in FeeSectionButton.
+  const amountUsd = useTokenUsdValue(srcToken, values.amount);
+
   const status = useApprovalStatus({
     chainName: srcChainName,
     token: srcToken?.address as Address | undefined,
@@ -398,12 +401,17 @@ function SwapFormContent() {
           bestRoute={bestRoute}
           quoteLoading={quoteLoading}
           recipientError={errors.recipient}
+          inputUsd={amountUsd}
         />
       </TransferSection>
 
       {!isReview && (
         <div className="mt-2 flex items-center justify-between gap-3 px-1">
-          <FeeSectionButton feeBreakdown={bestRoute?.feeBreakdown} isLoading={quoteLoading} />
+          <FeeSectionButton
+            feeBreakdown={bestRoute?.feeBreakdown}
+            isLoading={quoteLoading}
+            inputUsd={amountUsd}
+          />
           <div className="flex items-center gap-2">
             {routes.length > 0 && (
               <button
@@ -558,6 +566,7 @@ function DestinationTokenCard({
   bestRoute,
   quoteLoading,
   recipientError,
+  inputUsd,
 }: {
   isReview: boolean;
   dstChainName: string | undefined;
@@ -566,6 +575,7 @@ function DestinationTokenCard({
   bestRoute: AugmentedRoute | undefined;
   quoteLoading: boolean;
   recipientError: string | undefined;
+  inputUsd: number | null;
 }) {
   const { values, setFieldValue } = useFormikContext<SwapFormValues>();
   const { data: balance } = useTokenBalance(dstToken, recipient);
@@ -578,15 +588,13 @@ function DestinationTokenCard({
       return '';
     }
   }, [bestRoute, dstToken]);
-  const minOutputDisplay = useMemo(() => {
-    if (!bestRoute || !dstToken) return '';
-    if (bestRoute.isBridgeOnly) return '';
-    try {
-      return formatUnits(BigInt(bestRoute.raw.outputMin), dstToken.decimals);
-    } catch {
-      return '';
-    }
-  }, [bestRoute, dstToken]);
+  const outputUsd = useTokenUsdValue(dstToken, outputDisplay);
+  // Price impact = how much value the swap loses to fees + slippage + spread.
+  // Only meaningful when both sides have USD prices.
+  const priceImpactPct = useMemo(() => {
+    if (!inputUsd || !outputUsd) return null;
+    return ((outputUsd - inputUsd) / inputUsd) * 100;
+  }, [inputUsd, outputUsd]);
 
   return (
     <div>
@@ -618,7 +626,21 @@ function DestinationTokenCard({
         </div>
         <div className="transfer-balance mt-1 flex items-center justify-between text-xs leading-[18px] text-gray-450 dark:text-foreground-secondary">
           <span>
-            {minOutputDisplay ? `Min: ${minOutputDisplay} ${dstToken?.symbol ?? ''}` : ''}
+            {!outputUsd ? '$0.00' : formatUsd(outputUsd)}
+            {priceImpactPct != null && (
+              <span
+                className={`ml-1 ${
+                  priceImpactPct <= -3
+                    ? 'text-red-500'
+                    : priceImpactPct <= -1
+                      ? 'text-amber-600'
+                      : ''
+                }`}
+              >
+                ({priceImpactPct >= 0 ? '+' : ''}
+                {priceImpactPct.toLocaleString('en-US', { maximumFractionDigits: 2 })}%)
+              </span>
+            )}
           </span>
           <TokenBalance label="Remote Balance" balance={balance ?? null} token={dstToken} />
         </div>

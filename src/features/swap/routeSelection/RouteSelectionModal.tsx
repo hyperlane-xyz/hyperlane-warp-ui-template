@@ -3,8 +3,8 @@ import { CopyButton, HyperlaneLogo, Modal } from '@hyperlane-xyz/widgets';
 import { Fragment, useMemo, useState } from 'react';
 
 import { ChainLogo } from '../../../components/icons/ChainLogo';
-import { HoverTooltip } from '../../../components/tooltip/HoverTooltip';
 import { TokenIcon } from '../../../components/icons/TokenIcon';
+import { HoverTooltip } from '../../../components/tooltip/HoverTooltip';
 import type { QuoteBridgeStep, QuoteStep, QuoteSwapStep } from '../../api/types';
 import { useMultiProvider } from '../../chains/hooks';
 import { formatBalance, formatFeeAmount } from '../balances/utils';

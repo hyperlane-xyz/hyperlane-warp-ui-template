@@ -19,7 +19,7 @@ import { config } from '../../consts/config';
 import { updateQueryParams } from '../../utils/queryParams';
 import { useChains } from '../api/hooks';
 import { useMultiProvider } from '../chains/hooks';
-import { useStore } from '../store';
+import { TransactionHistoryItemType, useStore } from '../store';
 import { RecipientConfirmationModal } from '../wallet/RecipientConfirmationModal';
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { WalletDropdown } from '../wallet/WalletDropdown';
@@ -172,7 +172,8 @@ function SwapFormContent() {
       : undefined,
   );
   const isActiveSwapInFlight =
-    activeSwap?.type === 'swap' && !FinalSwapStatuses.includes(activeSwap.data.status);
+    activeSwap?.type === TransactionHistoryItemType.Swap &&
+    !FinalSwapStatuses.includes(activeSwap.data.status);
 
   const hasAmount = !!values.amount && Number(values.amount) > 0;
   const hasTokens = !!srcToken && !!dstToken;
@@ -326,7 +327,10 @@ function SwapFormContent() {
       const cur = useStore
         .getState()
         .transactionHistory.find((historyItem) => historyItem.id === transactionId);
-      if (cur?.type === 'swap' && !FinalSwapStatuses.includes(cur.data.status)) {
+      if (
+        cur?.type === TransactionHistoryItemType.Swap &&
+        !FinalSwapStatuses.includes(cur.data.status)
+      ) {
         updateSwapTransactionStatus(transactionId, SwapStatus.Failed);
       }
     } finally {

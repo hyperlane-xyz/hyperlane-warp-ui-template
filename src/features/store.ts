@@ -263,7 +263,7 @@ export const useStore = create<AppState>()(
       // User transaction history
       transactionHistory: [],
       addBridgeTransaction: (data) => {
-        const id = makeTransactionId(TransactionHistoryItemType.Bridge, data.timestamp);
+        const id = createTransactionId(TransactionHistoryItemType.Bridge, data.timestamp);
         set((state) => ({
           transactionHistory: [
             ...state.transactionHistory,
@@ -273,7 +273,7 @@ export const useStore = create<AppState>()(
         return id;
       },
       addSwapTransaction: (data) => {
-        const id = makeTransactionId(TransactionHistoryItemType.Swap, data.timestamp);
+        const id = createTransactionId(TransactionHistoryItemType.Swap, data.timestamp);
         set((state) => ({
           transactionHistory: [
             ...state.transactionHistory,
@@ -419,21 +419,23 @@ export const useStore = create<AppState>()(
           transfers?: TransferContext[];
           swaps?: SwapHistoryItem[];
         };
-        if (state.transactionHistory) {
+        if (Array.isArray(state.transactionHistory)) {
           return {
             chainMetadataOverrides: state.chainMetadataOverrides ?? {},
             transactionHistory: state.transactionHistory,
           };
         }
 
+        const transfers = Array.isArray(state.transfers) ? state.transfers : [];
+        const swaps = Array.isArray(state.swaps) ? state.swaps : [];
         const transactionHistory: TransactionHistoryItem[] = [
-          ...(state.transfers ?? []).map((data) => ({
-            id: makeTransactionId(TransactionHistoryItemType.Bridge, data.timestamp),
+          ...transfers.map((data) => ({
+            id: createTransactionId(TransactionHistoryItemType.Bridge, data.timestamp),
             type: TransactionHistoryItemType.Bridge,
             data,
           })),
-          ...(state.swaps ?? []).map((data) => ({
-            id: makeTransactionId(TransactionHistoryItemType.Swap, data.timestamp),
+          ...swaps.map((data) => ({
+            id: createTransactionId(TransactionHistoryItemType.Swap, data.timestamp),
             type: TransactionHistoryItemType.Swap,
             data,
           })),
@@ -462,8 +464,11 @@ export const useStore = create<AppState>()(
   ),
 );
 
-function makeTransactionId(type: TransactionHistoryItem['type'], timestamp: number): string {
-  return `${type}-${timestamp}-${Math.random().toString(16).slice(2)}`;
+function createTransactionId(type: TransactionHistoryItem['type'], timestamp: number): string {
+  const suffix =
+    crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+
+  return `${type}-${timestamp}-${suffix}`;
 }
 
 async function initWarpContext({

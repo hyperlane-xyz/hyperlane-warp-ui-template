@@ -30,7 +30,7 @@ import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName, hasPermissionlessChain } from '../chains/utils';
 import { useMessageDeliveryStatus } from '../messages/useMessageDeliveryStatus';
 import { useOriginFinality } from '../messages/useOriginFinality';
-import { useStore } from '../store';
+import { TransactionHistoryItemType, useStore } from '../store';
 import { tryFindToken, useWarpCore } from '../tokens/hooks';
 import { computeDestAmount } from './scaleUtils';
 import { TransferContext, TransferStatus } from './types';
@@ -64,6 +64,13 @@ export function TransfersDetailsModal({
   const [toUrl, setToUrl] = useState<string>('');
   const [originTxUrl, setOriginTxUrl] = useState<string>('');
   const [destTxUrl, setDestTxUrl] = useState<string>('');
+  const liveTransfer = useStore((s): TransferContext | undefined => {
+    if (!transactionId) return undefined;
+    const item = s.transactionHistory.find((entry) => entry.id === transactionId);
+    if (item?.type !== TransactionHistoryItemType.Bridge) return undefined;
+    return item.data;
+  });
+  const tx = liveTransfer ?? transfer;
 
   const {
     status,
@@ -78,7 +85,7 @@ export function TransfersDetailsModal({
     msgId,
     timestamp,
     destinationTxHash: storedDestTxHash,
-  } = transfer || {};
+  } = tx || {};
 
   const multiProvider = useMultiProvider();
   const warpCore = useWarpCore();
@@ -89,8 +96,8 @@ export function TransfersDetailsModal({
   const walletDetails = useWalletDetails()[account?.protocol || ProtocolType.Ethereum];
 
   // Query delivery status from GraphQL when modal is open for sent transfers
-  const isSent = isTransferSent(transfer?.status);
-  const isFailed = isTransferFailed(transfer?.status);
+  const isSent = isTransferSent(tx?.status);
+  const isFailed = isTransferFailed(tx?.status);
   const shouldTrackDelivery = isSent && !isFailed && !!msgId;
 
   const delivery = useMessageDeliveryStatus(
@@ -103,7 +110,7 @@ export function TransfersDetailsModal({
   const isDelivered = status === TransferStatus.Delivered || delivery.isDelivered;
 
   // Origin block number: prefer store (hot path), fall back to GraphQL (cold path after refresh)
-  const originBlockNumber = transfer?.originBlockNumber ?? delivery.originBlockHeight;
+  const originBlockNumber = tx?.originBlockNumber ?? delivery.originBlockHeight;
 
   const isFinalized = useOriginFinality(
     origin,
@@ -114,9 +121,9 @@ export function TransfersDetailsModal({
   const stage = useMemo((): MessageStage => {
     if (isDelivered) return MessageStage.Relayed;
     if (isFinalized) return MessageStage.Finalized;
-    if (isTransferSent(transfer?.status) && transfer?.originTxHash) return MessageStage.Sent;
+    if (isTransferSent(tx?.status) && tx?.originTxHash) return MessageStage.Sent;
     return MessageStage.Preparing;
-  }, [isDelivered, isFinalized, transfer]);
+  }, [isDelivered, isFinalized, tx]);
 
   // Resolve the destination tx hash from either store or live query
   const destinationTxHash = storedDestTxHash || delivery.destinationTxHash;
@@ -188,7 +195,7 @@ export function TransfersDetailsModal({
 
   // Fetch explorer URLs for addresses and transactions
   useEffect(() => {
-    if (!transfer) return;
+    if (!tx) return;
     let cancelled = false;
 
     const fetchUrls = async () => {
@@ -223,16 +230,7 @@ export function TransfersDetailsModal({
     return () => {
       cancelled = true;
     };
-  }, [
-    transfer,
-    multiProvider,
-    origin,
-    destination,
-    originTxHash,
-    destinationTxHash,
-    sender,
-    recipient,
-  ]);
+  }, [tx, multiProvider, origin, destination, originTxHash, destinationTxHash, sender, recipient]);
 
   return (
     <Modal isOpen={isOpen} close={onClose} panelClassname="transfer-details-modal max-w-sm">

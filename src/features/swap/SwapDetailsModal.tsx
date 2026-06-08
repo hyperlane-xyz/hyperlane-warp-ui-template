@@ -24,7 +24,7 @@ import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { useMessageDeliveryStatus } from '../messages/useMessageDeliveryStatus';
-import { useStore } from '../store';
+import { TransactionHistoryItemType, useStore } from '../store';
 import { formatBalance } from './balances/utils';
 import { getTokenByKeyFromMap, useTokenByKeyMap } from './tokens/hooks';
 import { FinalSwapStatuses, SwapStatus, type SwapHistoryItem } from './types';
@@ -55,6 +55,9 @@ const STATUS_DESCRIPTION: Record<SwapStatus, string> = {
   [SwapStatus.Failed]: 'Swap failed',
 };
 
+const CONFIRMING_ORIGIN_HINT_DELAY_MS = 60_000;
+const CONFIRMING_ORIGIN_AUTO_FAIL_DELAY_MS = 120_000;
+
 export function SwapDetailsModal() {
   const selectedTransactionId = useStore((s) => s.selectedTransactionId);
   const transactionHistory = useStore((s) => s.transactionHistory);
@@ -70,7 +73,7 @@ export function SwapDetailsModal() {
   const renderedId = lastIdRef.current;
   const item =
     renderedId != null ? transactionHistory.find((entry) => entry.id === renderedId) : undefined;
-  const swap = item?.type === 'swap' ? item.data : undefined;
+  const swap = item?.type === TransactionHistoryItemType.Swap ? item.data : undefined;
 
   if (!swap || renderedId == null) return <Modal isOpen={false} close={close} />;
   return (
@@ -345,7 +348,9 @@ function SwapDetailsModalInner({
             <div className="mt-5 text-center text-sm text-gray-600 dark:text-foreground-muted">
               {STATUS_DESCRIPTION[status]}
             </div>
-            {status === SwapStatus.ConfirmingOrigin && <ConfirmingOriginHint swap={swap} />}
+            {status === SwapStatus.ConfirmingOrigin && (
+              <ConfirmingOriginHint swap={swap} transactionId={transactionId} />
+            )}
           </div>
         )}
       </div>
@@ -399,22 +404,23 @@ function formatAmount(amount: string, decimals: number | undefined): string {
   }
 }
 
-// Two-stage escalation while stuck in ConfirmingOrigin:
-//   60 s → soft hint ("may have failed in your wallet")
-//   120 s → auto-mark Failed (preserves originTxHash)
-function ConfirmingOriginHint({ swap }: { swap: SwapHistoryItem }) {
+function ConfirmingOriginHint({
+  swap,
+  transactionId,
+}: {
+  swap: SwapHistoryItem;
+  transactionId: string;
+}) {
   const [showHint, setShowHint] = useState(false);
   const updateSwapTransactionStatus = useStore((s) => s.updateSwapTransactionStatus);
-  const transactionId = useStore((s) => s.selectedTransactionId);
 
   useEffect(() => {
-    const hintTimer = setTimeout(() => setShowHint(true), 60_000);
+    const hintTimer = setTimeout(() => setShowHint(true), CONFIRMING_ORIGIN_HINT_DELAY_MS);
     const failTimer = setTimeout(() => {
-      if (transactionId == null) return;
       updateSwapTransactionStatus(transactionId, SwapStatus.Failed, {
         originTxHash: swap.originTxHash,
       });
-    }, 120_000);
+    }, CONFIRMING_ORIGIN_AUTO_FAIL_DELAY_MS);
     return () => {
       clearTimeout(hintTimer);
       clearTimeout(failTimer);

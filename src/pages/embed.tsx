@@ -47,8 +47,10 @@ function usePostMessageBridge() {
 
 /** Auto-opens TransfersDetailsModal when a new transfer starts. */
 function useAutoTransferModal() {
-  const transfers = useStore((s) =>
-    s.transactionHistory.filter((item) => item.type === TransactionHistoryItemType.Bridge),
+  const transactionHistory = useStore((s) => s.transactionHistory);
+  const transfers = useMemo(
+    () => transactionHistory.filter((item) => item.type === TransactionHistoryItemType.Bridge),
+    [transactionHistory],
   );
   const [selectedTransfer, setSelectedTransfer] = useState<{
     id: string;

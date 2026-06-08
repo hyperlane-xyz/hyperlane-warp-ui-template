@@ -31,7 +31,7 @@ import {
 } from '../store';
 import { formatBalance as formatSwapBalance } from '../swap/balances/utils';
 import { getTokenByKeyFromMap } from '../swap/tokens/hooks';
-import { SwapHistoryItem, SwapStatus } from '../swap/types';
+import { FinalSwapStatuses, SwapHistoryItem, SwapStatus } from '../swap/types';
 import { tryFindToken, useWarpCore } from '../tokens/hooks';
 import { computeDestAmount, formatMessageAmount } from '../transfer/scaleUtils';
 import { TransfersDetailsModal } from '../transfer/TransfersDetailsModal';
@@ -131,6 +131,7 @@ export function SideBarMenu({
     const ids = new Set<string>();
     for (const item of transactionHistory) {
       if (item.type !== TransactionHistoryItemType.Swap) continue;
+      if (!FinalSwapStatuses.includes(item.data.status)) continue;
       for (const msg of item.data.msgIds ?? []) ids.add(msg.msgId.toLowerCase());
     }
     return ids;
@@ -173,8 +174,12 @@ export function SideBarMenu({
     });
     const swapItems: HistoryItem[] = transactionHistory
       .filter(
-        (item): item is Extract<TransactionHistoryItem, { type: 'swap' }> =>
-          item.type === TransactionHistoryItemType.Swap,
+        (
+          item,
+        ): item is Extract<
+          TransactionHistoryItem,
+          { type: typeof TransactionHistoryItemType.Swap }
+        > => item.type === TransactionHistoryItemType.Swap,
       )
       .map((item) => ({
         type: HistoryItemType.Swap,
@@ -212,9 +217,8 @@ export function SideBarMenu({
     setIsModalOpen(true);
   };
 
-  // Open modal when a new transfer is added (avoids showing stale data from the
-  // previous transfer, which would happen if we triggered on transferLoading
-  // because addTransfer is called after setTransferLoading(true)).
+  // Open modal when a new bridge transaction is added. Triggering from loading
+  // state can show stale data because addBridgeTransaction runs after loading starts.
   useEffect(() => {
     const prev = prevBridgeTransactionsLengthRef.current;
     prevBridgeTransactionsLengthRef.current = bridgeTransactions.length;
@@ -225,7 +229,7 @@ export function SideBarMenu({
         setIsModalOpen(true);
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- transfers.length increasing guarantees a new transfers ref; listing transfers would re-run on status updates
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- bridgeTransactions.length increasing guarantees a new bridgeTransactions ref; listing bridgeTransactions would re-run on status updates
   }, [bridgeTransactions.length]);
 
   useEffect(() => {

@@ -48,8 +48,7 @@ import { useChainDisplayName, useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { isMultiCollateralLimitExceeded } from '../limits/utils';
 import { useIsAccountSanctioned } from '../sanctions/hooks/useIsAccountSanctioned';
-import { useStore } from '../store';
-import { TransactionHistoryItemType } from '../store';
+import { TransactionHistoryItemType, useStore } from '../store';
 import { useIsApproveRequired } from '../tokens/approval';
 import {
   getInitialTokenKeys,
@@ -397,9 +396,8 @@ function DestinationTokenCard({ isReview }: { isReview: boolean }) {
     }
     return undefined;
   });
-  // Use the hash string as the dep, not the transfer object: Zustand mutates transfer
-  // objects in place on status transitions, so an object-reference dep would fire on
-  // every status tick rather than only when a new originTxHash appears.
+  // Use the hash string as the dep so this only reacts when a new origin tx appears,
+  // not when the latest transaction object is replaced during status updates.
   const latestTxHash = latestTransfer?.originTxHash;
 
   // For same-chain CCR swaps the delivery is atomic — refetch the balance immediately

@@ -160,15 +160,15 @@ function SwapFormContent() {
   useToastError(swap.error, 'Swap failed');
   const addSwapTransaction = useStore((s) => s.addSwapTransaction);
   const setSelectedTransactionId = useStore((s) => s.setSelectedTransactionId);
+  const setActiveSwapTransactionId = useStore((s) => s.setActiveSwapTransactionId);
   const updateSwapTransactionStatus = useStore((s) => s.updateSwapTransactionStatus);
   const setSwapLoading = useStore((s) => s.setSwapLoading);
 
-  // Send-button gating: derive from the modal's active swap status, not
-  // hook isPending. Closing the modal clears selectedTransactionId so a stuck
-  // confirm() polling loop doesn't permanently lock the button.
+  // Send-button gating tracks the active execution, not the transaction selected
+  // for history/modals. Viewing an old pending swap should not disable the form.
   const activeSwap = useStore((s) =>
-    s.selectedTransactionId != null
-      ? s.transactionHistory.find((item) => item.id === s.selectedTransactionId)
+    s.activeSwapTransactionId != null
+      ? s.transactionHistory.find((item) => item.id === s.activeSwapTransactionId)
       : undefined,
   );
   const isActiveSwapInFlight =
@@ -304,6 +304,7 @@ function SwapFormContent() {
     };
     const transactionId = addSwapTransaction(item);
     setSelectedTransactionId(transactionId);
+    setActiveSwapTransactionId(transactionId);
 
     try {
       // useSwap.execute handles revoke / approve / swap sequencing
@@ -329,6 +330,7 @@ function SwapFormContent() {
         updateSwapTransactionStatus(transactionId, SwapStatus.Failed);
       }
     } finally {
+      setActiveSwapTransactionId(null);
       setSwapLoading(false);
     }
   }, [
@@ -348,6 +350,7 @@ function SwapFormContent() {
     swap,
     addSwapTransaction,
     setSelectedTransactionId,
+    setActiveSwapTransactionId,
     updateSwapTransactionStatus,
     setSwapLoading,
     setErrors,

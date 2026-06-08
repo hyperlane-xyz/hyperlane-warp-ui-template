@@ -41,11 +41,12 @@ import { startRelativeTimeTicker } from './relativeTimeTicker';
 
 const HistoryItemType = {
   ...TransferItemType,
-  Swap: 'swap',
+  Swap: TransactionHistoryItemType.Swap,
 } as const;
 
 type HistoryItem =
-  | TransferItem
+  | (Extract<TransferItem, { type: typeof TransferItemType.Local }> & { transactionId?: string })
+  | Extract<TransferItem, { type: typeof TransferItemType.Api }>
   | { type: typeof HistoryItemType.Swap; data: SwapHistoryItem; transactionId: string };
 
 export function SideBarMenu({
@@ -85,6 +86,10 @@ export function SideBarMenu({
           item.type === TransactionHistoryItemType.Bridge,
       ),
     [transactionHistory],
+  );
+  const bridgeTransferData = useMemo(
+    () => bridgeTransactions.map((item) => item.data),
+    [bridgeTransactions],
   );
   const prevBridgeTransactionsLengthRef = useRef(bridgeTransactions.length);
 
@@ -126,22 +131,19 @@ export function SideBarMenu({
     const ids = new Set<string>();
     for (const item of transactionHistory) {
       if (item.type !== TransactionHistoryItemType.Swap) continue;
-      for (const msg of item.data.msgIds ?? []) ids.add(msg.msgId);
+      for (const msg of item.data.msgIds ?? []) ids.add(msg.msgId.toLowerCase());
     }
     return ids;
   }, [transactionHistory]);
 
   const visibleMessages = useMemo(
-    () => messages.filter((message) => !swapMessageIds.has(message.msgId)),
+    () => messages.filter((message) => !swapMessageIds.has(message.msgId.toLowerCase())),
     [messages, swapMessageIds],
   );
 
   // Merge local bridge transactions with API messages
   const warpCore = useWarpCore();
-  const allMergedTransfers = useMergedTransferHistory(
-    bridgeTransactions.map((item) => item.data),
-    visibleMessages,
-  );
+  const allMergedTransfers = useMergedTransferHistory(bridgeTransferData, visibleMessages);
 
   // Filter out API messages with unknown tokens
   const mergedTransfers = useMemo(
@@ -155,7 +157,20 @@ export function SideBarMenu({
     [allMergedTransfers, multiProvider, warpCore],
   );
 
+  const bridgeTransactionIdsByData = useMemo(() => {
+    const ids = new Map<TransferContext, string>();
+    for (const item of bridgeTransactions) ids.set(item.data, item.id);
+    return ids;
+  }, [bridgeTransactions]);
+
   const historyItems = useMemo<HistoryItem[]>(() => {
+    const bridgeItems = mergedTransfers.map((item): HistoryItem => {
+      if (item.type !== TransferItemType.Local) return item;
+      return {
+        ...item,
+        transactionId: bridgeTransactionIdsByData.get(item.data),
+      };
+    });
     const swapItems: HistoryItem[] = transactionHistory
       .filter(
         (item): item is Extract<TransactionHistoryItem, { type: 'swap' }> =>
@@ -166,10 +181,8 @@ export function SideBarMenu({
         data: item.data,
         transactionId: item.id,
       }));
-    return [...mergedTransfers, ...swapItems].sort(
-      (a, b) => getItemTimestamp(b) - getItemTimestamp(a),
-    );
-  }, [mergedTransfers, transactionHistory]);
+    return [...bridgeItems, ...swapItems].sort((a, b) => getItemTimestamp(b) - getItemTimestamp(a));
+  }, [bridgeTransactionIdsByData, mergedTransfers, transactionHistory]);
 
   // Infinite scroll handler
   const handleScroll = useCallback(() => {
@@ -192,8 +205,7 @@ export function SideBarMenu({
       return;
     }
     if (item.type === HistoryItemType.Local) {
-      const transactionId = bridgeTransactions.find((entry) => entry.data === item.data)?.id;
-      setSelectedTransfer({ transactionId, data: item.data });
+      setSelectedTransfer({ transactionId: item.transactionId, data: item.data });
     } else {
       setSelectedTransfer({ data: messageToTransferContext(item.data, multiProvider, warpCore) });
     }

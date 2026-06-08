@@ -128,6 +128,8 @@ export interface AppState {
   failUnconfirmedTransactions: () => void;
   selectedTransactionId: string | null;
   setSelectedTransactionId: (id: string | null) => void;
+  activeSwapTransactionId: string | null;
+  setActiveSwapTransactionId: (id: string | null) => void;
   // Accumulated engine-token catalogue. Every useTokens() result funnels
   // through syncTokens so SwapForm / SwapDetailsModal lookups go through
   // one place. Keyed by getSwapTokenKey (chainId-address). Not persisted.
@@ -335,6 +337,10 @@ export const useStore = create<AppState>()(
       selectedTransactionId: null,
       setSelectedTransactionId: (selectedTransactionId) => {
         set(() => ({ selectedTransactionId }));
+      },
+      activeSwapTransactionId: null,
+      setActiveSwapTransactionId: (activeSwapTransactionId) => {
+        set(() => ({ activeSwapTransactionId }));
       },
       knownTokens: new Map(),
       syncTokens: (newTokens) => {

@@ -3,7 +3,6 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { getFeePercentage } from '../balances/feeUsdDisplay';
 import { useMultiProvider } from '../chains/hooks';
-import { useStore } from '../store';
 import { useTokenPricesByIds } from '../tokens/useTokenPrice';
 import { formatFeeAmount, formatUsd, getTotalFeeUsd, resolveCoinGeckoId } from './balances/utils';
 import { FeeBreakdownModal } from './FeeBreakdownModal';
@@ -26,7 +25,6 @@ export function FeeSectionButton({ feeBreakdown, isLoading, inputUsd }: Props) {
   const loadingText = useLoadingDots(isLoading);
   const tokenMap = useTokenByKeyMap();
   const multiProvider = useMultiProvider();
-  const tokenPrices = useStore((s) => s.tokenPrices);
 
   const components = useMemo(() => feeBreakdown?.components ?? [], [feeBreakdown?.components]);
   const isClickable = components.length > 0 && !isLoading;
@@ -48,16 +46,7 @@ export function FeeSectionButton({ feeBreakdown, isLoading, inputUsd }: Props) {
     }
     return Array.from(ids).sort();
   }, [components, tokenMap]);
-  useTokenPricesByIds(feeCoinGeckoIds);
-
-  // Flat USD price map (coinGeckoId → number) for the fee summer.
-  const priceMap = useMemo(() => {
-    const out: Record<string, number> = {};
-    for (const [id, entry] of Object.entries(tokenPrices)) {
-      if (entry.usd != null) out[id] = entry.usd;
-    }
-    return out;
-  }, [tokenPrices]);
+  const { prices: priceMap } = useTokenPricesByIds(feeCoinGeckoIds);
 
   // `null` when any component is unpriced — caller falls back to the
   // raw token list rather than displaying a misleading partial sum.
@@ -66,8 +55,7 @@ export function FeeSectionButton({ feeBreakdown, isLoading, inputUsd }: Props) {
     [components, tokenMap, priceMap],
   );
   const feeUsdText = feeUsd != null && feeUsd > 0 ? formatUsd(feeUsd, true) : null;
-  const pctText =
-    feeUsd != null && inputUsd != null ? getFeePercentage(feeUsd, inputUsd) : null;
+  const pctText = feeUsd != null && inputUsd != null ? getFeePercentage(feeUsd, inputUsd) : null;
 
   return (
     <>

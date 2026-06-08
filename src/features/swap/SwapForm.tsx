@@ -47,6 +47,10 @@ import { useQuote } from './useQuote';
 import { useSwap } from './useSwap';
 import { validateSwapForm } from './validate';
 
+const PRICE_IMPACT_DANGER_PCT = -3;
+const PRICE_IMPACT_WARN_PCT = -1;
+const PCT_FORMAT_OPTIONS = { minimumFractionDigits: 2, maximumFractionDigits: 2 } as const;
+
 export function SwapForm() {
   const initialValues = useFormInitialValues();
   return (
@@ -630,15 +634,15 @@ function DestinationTokenCard({
             {priceImpactPct != null && (
               <span
                 className={`ml-1 ${
-                  priceImpactPct <= -3
+                  priceImpactPct <= PRICE_IMPACT_DANGER_PCT
                     ? 'text-red-500'
-                    : priceImpactPct <= -1
+                    : priceImpactPct <= PRICE_IMPACT_WARN_PCT
                       ? 'text-amber-600'
                       : ''
                 }`}
               >
                 ({priceImpactPct >= 0 ? '+' : ''}
-                {priceImpactPct.toLocaleString('en-US', { maximumFractionDigits: 2 })}%)
+                {priceImpactPct.toLocaleString('en-US', PCT_FORMAT_OPTIONS)}%)
               </span>
             )}
           </span>

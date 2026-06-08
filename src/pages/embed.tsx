@@ -4,7 +4,7 @@ import Head from 'next/head';
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from 'react';
 
 import { APP_NAME } from '../consts/app';
-import { useStore } from '../features/store';
+import { TransactionHistoryItemType, useStore } from '../features/store';
 import { TransfersDetailsModal } from '../features/transfer/TransfersDetailsModal';
 import { TransferTokenCard } from '../features/transfer/TransferTokenCard';
 import { TransferContext } from '../features/transfer/types';
@@ -47,8 +47,13 @@ function usePostMessageBridge() {
 
 /** Auto-opens TransfersDetailsModal when a new transfer starts. */
 function useAutoTransferModal() {
-  const transfers = useStore((s) => s.transfers);
-  const [selectedTransfer, setSelectedTransfer] = useState<TransferContext | null>(null);
+  const transfers = useStore((s) =>
+    s.transactionHistory.filter((item) => item.type === TransactionHistoryItemType.Bridge),
+  );
+  const [selectedTransfer, setSelectedTransfer] = useState<{
+    id: string;
+    data: TransferContext;
+  } | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const prevTransfersLengthRef = useRef(transfers.length);
 
@@ -64,7 +69,7 @@ function useAutoTransferModal() {
         );
         return;
       }
-      setSelectedTransfer(latestTransfer);
+      setSelectedTransfer({ id: latestTransfer.id, data: latestTransfer.data });
       setIsOpen(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- transfers.length increasing guarantees a new transfers ref; listing transfers would re-run on status updates
@@ -106,7 +111,8 @@ const EmbedPage: NextPage = () => {
         <TransfersDetailsModal
           isOpen={isModalOpen}
           onClose={closeModal}
-          transfer={selectedTransfer}
+          transfer={selectedTransfer.data}
+          transactionId={selectedTransfer.id}
         />
       )}
     </>

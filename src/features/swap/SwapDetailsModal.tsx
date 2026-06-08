@@ -56,23 +56,25 @@ const STATUS_DESCRIPTION: Record<SwapStatus, string> = {
 };
 
 export function SwapDetailsModal() {
-  const activeSwapIndex = useStore((s) => s.activeSwapIndex);
-  const swaps = useStore((s) => s.swaps);
-  const setActiveSwapIndex = useStore((s) => s.setActiveSwapIndex);
-  const close = () => setActiveSwapIndex(null);
+  const selectedTransactionId = useStore((s) => s.selectedTransactionId);
+  const transactionHistory = useStore((s) => s.transactionHistory);
+  const setSelectedTransactionId = useStore((s) => s.setSelectedTransactionId);
+  const close = () => setSelectedTransactionId(null);
 
-  const isOpen = activeSwapIndex != null;
+  const isOpen = selectedTransactionId != null;
 
-  // Keep the last index alive after close so delivery polling continues in background.
-  const lastIndexRef = useRef<number | null>(null);
-  if (activeSwapIndex != null) lastIndexRef.current = activeSwapIndex;
+  // Keep the last id alive after close so delivery polling continues in background.
+  const lastIdRef = useRef<string | null>(null);
+  if (selectedTransactionId != null) lastIdRef.current = selectedTransactionId;
 
-  const renderedIndex = lastIndexRef.current;
-  const swap = renderedIndex != null ? swaps[renderedIndex] : undefined;
+  const renderedId = lastIdRef.current;
+  const item =
+    renderedId != null ? transactionHistory.find((entry) => entry.id === renderedId) : undefined;
+  const swap = item?.type === 'swap' ? item.data : undefined;
 
-  if (!swap || renderedIndex == null) return <Modal isOpen={false} close={close} />;
+  if (!swap || renderedId == null) return <Modal isOpen={false} close={close} />;
   return (
-    <SwapDetailsModalInner isOpen={isOpen} close={close} swap={swap} swapIndex={renderedIndex} />
+    <SwapDetailsModalInner isOpen={isOpen} close={close} swap={swap} transactionId={renderedId} />
   );
 }
 
@@ -80,16 +82,16 @@ function SwapDetailsModalInner({
   isOpen,
   close,
   swap,
-  swapIndex,
+  transactionId,
 }: {
   isOpen: boolean;
   close: () => void;
   swap: SwapHistoryItem;
-  swapIndex: number;
+  transactionId: string;
 }) {
   const multiProvider = useMultiProvider();
   const tokenMap = useTokenByKeyMap();
-  const updateSwapStatus = useStore((s) => s.updateSwapStatus);
+  const updateSwapTransactionStatus = useStore((s) => s.updateSwapTransactionStatus);
 
   const {
     status,
@@ -112,6 +114,10 @@ function SwapDetailsModalInner({
 
   const srcToken = getTokenByKeyFromMap(tokenMap, `${srcChain}-${srcTokenAddr.toLowerCase()}`);
   const dstToken = getTokenByKeyFromMap(tokenMap, `${dstChain}-${dstTokenAddr.toLowerCase()}`);
+  const srcSymbol = srcToken?.symbol ?? swap.srcTokenMeta?.symbol ?? '';
+  const dstSymbol = dstToken?.symbol ?? swap.dstTokenMeta?.symbol ?? '';
+  const srcDecimals = srcToken?.decimals ?? swap.srcTokenMeta?.decimals;
+  const dstDecimals = dstToken?.decimals ?? swap.dstTokenMeta?.decimals;
 
   const isFailed = status === SwapStatus.Failed;
   const isDestFailed = status === SwapStatus.DestSwapFailed;
@@ -141,12 +147,18 @@ function SwapDetailsModalInner({
       status !== SwapStatus.ConfirmedDestination
     ) {
       hasUpdatedDelivery.current = true;
-      updateSwapStatus(swapIndex, SwapStatus.ConfirmedDestination, {
+      updateSwapTransactionStatus(transactionId, SwapStatus.ConfirmedDestination, {
         destinationTxHash: delivery.destinationTxHash,
       });
       toast.success('Swap complete! Funds have arrived.');
     }
-  }, [delivery.isDelivered, delivery.destinationTxHash, swapIndex, status, updateSwapStatus]);
+  }, [
+    delivery.isDelivered,
+    delivery.destinationTxHash,
+    transactionId,
+    status,
+    updateSwapTransactionStatus,
+  ]);
 
   const isSent =
     status === SwapStatus.ConfirmingOrigin ||
@@ -237,11 +249,11 @@ function SwapDetailsModalInner({
         <div>
           <div className="mt-4 flex w-full items-center justify-center rounded-sm border border-gray-400/25 bg-card-gradient py-2 shadow-card">
             <div className="flex items-center font-secondary text-sm font-normal">
-              <span>{formatAmount(amountIn, srcToken?.decimals)}</span>
-              <span className="ml-1">{srcToken?.symbol ?? ''}</span>
+              <span>{formatAmount(amountIn, srcDecimals)}</span>
+              <span className="ml-1">{srcSymbol}</span>
               <Image className="mx-2" src={ArrowRightIcon} width={10} height={10} alt="" />
-              <span>{formatAmount(amountOut, dstToken?.decimals)}</span>
-              <span className="ml-1">{dstToken?.symbol ?? ''}</span>
+              <span>{formatAmount(amountOut, dstDecimals)}</span>
+              <span className="ml-1">{dstSymbol}</span>
             </div>
           </div>
 
@@ -252,9 +264,7 @@ function SwapDetailsModalInner({
               ) : (
                 <ChainLogo chainName={originChain} size={36} />
               )}
-              <span className="mt-1 text-xs font-medium tracking-wider">
-                {srcToken?.symbol ?? ''}
-              </span>
+              <span className="mt-1 text-xs font-medium tracking-wider">{srcSymbol}</span>
               <span className="text-xxs font-normal tracking-wider text-gray-500">
                 {getChainDisplayName(multiProvider, originChain, true)}
               </span>
@@ -269,9 +279,7 @@ function SwapDetailsModalInner({
               ) : (
                 <ChainLogo chainName={destChain} size={36} />
               )}
-              <span className="mt-1 text-xs font-medium tracking-wider">
-                {dstToken?.symbol ?? ''}
-              </span>
+              <span className="mt-1 text-xs font-medium tracking-wider">{dstSymbol}</span>
               <span className="text-xxs font-normal tracking-wider text-gray-500">
                 {getChainDisplayName(multiProvider, destChain, true)}
               </span>
@@ -396,20 +404,22 @@ function formatAmount(amount: string, decimals: number | undefined): string {
 //   120 s → auto-mark Failed (preserves originTxHash)
 function ConfirmingOriginHint({ swap }: { swap: SwapHistoryItem }) {
   const [showHint, setShowHint] = useState(false);
-  const updateSwapStatus = useStore((s) => s.updateSwapStatus);
-  const swapIndex = useStore((s) => s.activeSwapIndex);
+  const updateSwapTransactionStatus = useStore((s) => s.updateSwapTransactionStatus);
+  const transactionId = useStore((s) => s.selectedTransactionId);
 
   useEffect(() => {
     const hintTimer = setTimeout(() => setShowHint(true), 60_000);
     const failTimer = setTimeout(() => {
-      if (swapIndex == null) return;
-      updateSwapStatus(swapIndex, SwapStatus.Failed, { originTxHash: swap.originTxHash });
+      if (transactionId == null) return;
+      updateSwapTransactionStatus(transactionId, SwapStatus.Failed, {
+        originTxHash: swap.originTxHash,
+      });
     }, 120_000);
     return () => {
       clearTimeout(hintTimer);
       clearTimeout(failTimer);
     };
-  }, [swapIndex, swap.originTxHash, updateSwapStatus]);
+  }, [transactionId, swap.originTxHash, updateSwapTransactionStatus]);
 
   if (!showHint) return null;
   return (

@@ -53,10 +53,12 @@ export function TransfersDetailsModal({
   isOpen,
   onClose,
   transfer,
+  transactionId,
 }: {
   isOpen: boolean;
   onClose: () => void;
   transfer: TransferContext;
+  transactionId?: string;
 }) {
   const [fromUrl, setFromUrl] = useState<string>('');
   const [toUrl, setToUrl] = useState<string>('');
@@ -80,14 +82,7 @@ export function TransfersDetailsModal({
 
   const multiProvider = useMultiProvider();
   const warpCore = useWarpCore();
-  const transfers = useStore((s) => s.transfers);
-  const updateTransferStatus = useStore((s) => s.updateTransferStatus);
-
-  // Find the index of this transfer in the store (for updating status)
-  const transferIndex = useMemo(
-    () => transfers.findIndex((t) => t === transfer || (t.msgId && t.msgId === transfer?.msgId)),
-    [transfers, transfer],
-  );
+  const updateBridgeTransactionStatus = useStore((s) => s.updateBridgeTransactionStatus);
 
   const isChainKnown = multiProvider.hasChain(origin);
   const account = useAccountForChain(multiProvider, isChainKnown ? origin : undefined);
@@ -176,19 +171,19 @@ export function TransfersDetailsModal({
       delivery.isDelivered &&
       !hasUpdatedDelivery.current &&
       status !== TransferStatus.Delivered &&
-      transferIndex >= 0
+      transactionId
     ) {
       hasUpdatedDelivery.current = true;
-      updateTransferStatus(transferIndex, TransferStatus.Delivered, {
+      updateBridgeTransactionStatus(transactionId, TransferStatus.Delivered, {
         destinationTxHash: delivery.destinationTxHash,
       });
     }
   }, [
     delivery.isDelivered,
     delivery.destinationTxHash,
-    transferIndex,
+    transactionId,
     status,
-    updateTransferStatus,
+    updateBridgeTransactionStatus,
   ]);
 
   // Fetch explorer URLs for addresses and transactions

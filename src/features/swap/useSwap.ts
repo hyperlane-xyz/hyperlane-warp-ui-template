@@ -18,7 +18,7 @@ import { SwapStatus } from './types';
 import type { AugmentedRoute, LabeledMsgId } from './types';
 
 interface ExecuteArgs {
-  swapIndex: number;
+  transactionId: string;
   route: AugmentedRoute;
   srcChainId: number;
   dstChainId: number;
@@ -39,7 +39,7 @@ interface ExecuteArgs {
 export function useSwap() {
   const multiProvider = useMultiProvider();
   const transactionFns = useTransactionFns(multiProvider);
-  const updateSwapStatus = useStore((s) => s.updateSwapStatus);
+  const updateSwapTransactionStatus = useStore((s) => s.updateSwapTransactionStatus);
   const [error, setError] = useState<Error | null>(null);
   const [isPending, setIsPending] = useState(false);
 
@@ -48,7 +48,7 @@ export function useSwap() {
       setError(null);
       setIsPending(true);
 
-      const { swapIndex, route, srcChainId } = args;
+      const { transactionId, route, srcChainId } = args;
 
       if (!route.raw.tx) throw new Error('Route has no tx');
 
@@ -88,7 +88,7 @@ export function useSwap() {
             adapter.isRevokeApprovalRequired(args.sender, spender),
           ]);
           const doApprove = async (amount: bigint) => {
-            updateSwapStatus(swapIndex, SwapStatus.SigningApprove);
+            updateSwapTransactionStatus(transactionId, SwapStatus.SigningApprove);
             const populated = await adapter.populateApproveTx({
               weiAmountOrId: amount.toString(),
               recipient: spender,
@@ -101,7 +101,7 @@ export function useSwap() {
               } as Parameters<typeof fns.sendTransaction>[0]['tx'],
               chainName: srcChainName,
             });
-            updateSwapStatus(swapIndex, SwapStatus.ConfirmingApprove);
+            updateSwapTransactionStatus(transactionId, SwapStatus.ConfirmingApprove);
             const receipt = await confirm();
             if (isReverted(receipt)) {
               logger.error('Approve tx reverted', new Error(`tx=${hash}`));
@@ -114,11 +114,11 @@ export function useSwap() {
 
         // Order is critical: post to CCS BEFORE broadcasting.
         if (route.raw.callCommitment) {
-          updateSwapStatus(swapIndex, SwapStatus.CreatingTxs);
+          updateSwapTransactionStatus(transactionId, SwapStatus.CreatingTxs);
           await postCommitment(route.raw.callCommitment);
         }
 
-        updateSwapStatus(swapIndex, SwapStatus.SigningSwap);
+        updateSwapTransactionStatus(transactionId, SwapStatus.SigningSwap);
         const { hash, confirm } = await fns.sendTransaction({
           tx: {
             type: txType,
@@ -132,12 +132,14 @@ export function useSwap() {
           chainName: srcChainName,
         });
 
-        updateSwapStatus(swapIndex, SwapStatus.ConfirmingOrigin, { originTxHash: hash });
+        updateSwapTransactionStatus(transactionId, SwapStatus.ConfirmingOrigin, {
+          originTxHash: hash,
+        });
 
         const receipt = await confirm();
         if (isReverted(receipt)) {
           logger.error('Origin tx reverted', new Error(`tx=${hash}`));
-          updateSwapStatus(swapIndex, SwapStatus.Failed, { originTxHash: hash });
+          updateSwapTransactionStatus(transactionId, SwapStatus.Failed, { originTxHash: hash });
           const err = new Error('Origin transaction reverted on chain');
           setError(err);
           throw err;
@@ -146,7 +148,7 @@ export function useSwap() {
         const expectsBridge = route.raw.steps.some((s) => s.type === 'bridge');
         if (expectsBridge && !parsed.messages.length) {
           logger.error('Origin tx confirmed but no Dispatch log emitted', new Error(`tx=${hash}`));
-          updateSwapStatus(swapIndex, SwapStatus.Failed, {
+          updateSwapTransactionStatus(transactionId, SwapStatus.Failed, {
             originTxHash: hash,
             originBlockNumber: parsed.originBlockNumber,
           });
@@ -158,7 +160,7 @@ export function useSwap() {
         }
         // Same-chain swap (no bridge step): finalize on origin confirm.
         if (!expectsBridge) {
-          updateSwapStatus(swapIndex, SwapStatus.ConfirmedDestination, {
+          updateSwapTransactionStatus(transactionId, SwapStatus.ConfirmedDestination, {
             originTxHash: hash,
             destinationTxHash: hash,
             originBlockNumber: parsed.originBlockNumber,
@@ -167,7 +169,7 @@ export function useSwap() {
         }
         submitToRelayApi(srcChainName, hash, protocol as ProtocolType, receipt);
 
-        updateSwapStatus(swapIndex, SwapStatus.Bridging, {
+        updateSwapTransactionStatus(transactionId, SwapStatus.Bridging, {
           msgIds: labelMessages(parsed.messages, route),
           originBlockNumber: parsed.originBlockNumber,
         });
@@ -175,14 +177,14 @@ export function useSwap() {
         return hash;
       } catch (err) {
         logger.error('Swap broadcast failed', err);
-        updateSwapStatus(swapIndex, SwapStatus.Failed);
+        updateSwapTransactionStatus(transactionId, SwapStatus.Failed);
         setError(err as Error);
         throw err;
       } finally {
         setIsPending(false);
       }
     },
-    [transactionFns, multiProvider, updateSwapStatus],
+    [transactionFns, multiProvider, updateSwapTransactionStatus],
   );
 
   return { execute, isPending, error };

@@ -49,6 +49,7 @@ import { getChainDisplayName } from '../chains/utils';
 import { isMultiCollateralLimitExceeded } from '../limits/utils';
 import { useIsAccountSanctioned } from '../sanctions/hooks/useIsAccountSanctioned';
 import { useStore } from '../store';
+import { TransactionHistoryItemType } from '../store';
 import { useIsApproveRequired } from '../tokens/approval';
 import {
   getInitialTokenKeys,
@@ -389,8 +390,13 @@ function DestinationTokenCard({ isReview }: { isReview: boolean }) {
 
   const { balance, refetch: refetchBalance } = useDestinationBalance(recipient, destinationToken);
 
-  const transfers = useStore((s) => s.transfers);
-  const latestTransfer = transfers[transfers.length - 1];
+  const latestTransfer = useStore((s) => {
+    for (let i = s.transactionHistory.length - 1; i >= 0; i--) {
+      const item = s.transactionHistory[i];
+      if (item.type === TransactionHistoryItemType.Bridge) return item.data;
+    }
+    return undefined;
+  });
   // Use the hash string as the dep, not the transfer object: Zustand mutates transfer
   // objects in place on status transitions, so an object-reference dep would fire on
   // every status tick rather than only when a new originTxHash appears.

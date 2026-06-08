@@ -36,12 +36,10 @@ const TRANSFER_TIMEOUT_ERROR1 = 'block height exceeded';
 const TRANSFER_TIMEOUT_ERROR2 = 'timeout';
 
 export function useTokenTransfer(onDone?: () => void) {
-  const { transfers, addTransfer, updateTransferStatus } = useStore((s) => ({
-    transfers: s.transfers,
-    addTransfer: s.addTransfer,
-    updateTransferStatus: s.updateTransferStatus,
+  const { addBridgeTransaction, updateBridgeTransactionStatus } = useStore((s) => ({
+    addBridgeTransaction: s.addBridgeTransaction,
+    updateBridgeTransactionStatus: s.updateBridgeTransactionStatus,
   }));
-  const transferIndex = transfers.length;
 
   const multiProvider = useMultiProvider();
   const warpCore = useWarpCore();
@@ -62,12 +60,11 @@ export function useTokenTransfer(onDone?: () => void) {
       executeTransfer({
         warpCore,
         values,
-        transferIndex,
         activeAccounts,
         activeChains,
         transactionFns,
-        addTransfer,
-        updateTransferStatus,
+        addBridgeTransaction,
+        updateBridgeTransactionStatus,
         setIsLoading,
         onDone,
         routeOverrideToken,
@@ -75,13 +72,12 @@ export function useTokenTransfer(onDone?: () => void) {
       }),
     [
       warpCore,
-      transferIndex,
       activeAccounts,
       activeChains,
       transactionFns,
       setIsLoading,
-      addTransfer,
-      updateTransferStatus,
+      addBridgeTransaction,
+      updateBridgeTransactionStatus,
       onDone,
     ],
   );
@@ -95,12 +91,11 @@ export function useTokenTransfer(onDone?: () => void) {
 async function executeTransfer({
   warpCore,
   values,
-  transferIndex,
   activeAccounts,
   activeChains,
   transactionFns,
-  addTransfer,
-  updateTransferStatus,
+  addBridgeTransaction,
+  updateBridgeTransactionStatus,
   setIsLoading,
   onDone,
   routeOverrideToken,
@@ -108,12 +103,11 @@ async function executeTransfer({
 }: {
   warpCore: WarpCore;
   values: TransferFormValues;
-  transferIndex: number;
   activeAccounts: ReturnType<typeof useAccounts>;
   activeChains: ReturnType<typeof useActiveChains>;
   transactionFns: ReturnType<typeof useTransactionFns>;
-  addTransfer: (t: TransferContext) => void;
-  updateTransferStatus: AppState['updateTransferStatus'];
+  addBridgeTransaction: (t: TransferContext) => string;
+  updateBridgeTransactionStatus: AppState['updateBridgeTransactionStatus'];
   setIsLoading: (b: boolean) => void;
   onDone?: () => void;
   routeOverrideToken: Token | null;
@@ -122,7 +116,7 @@ async function executeTransfer({
   logger.debug('Preparing transfer transaction(s)');
   setIsLoading(true);
   let transferStatus: TransferStatus = TransferStatus.Preparing;
-  updateTransferStatus(transferIndex, transferStatus);
+  let transactionId: string | undefined;
 
   const { originTokenKey, destinationTokenKey, amount, recipient: formRecipient } = values;
   const multiProvider = warpCore.multiProvider;
@@ -172,7 +166,7 @@ async function executeTransfer({
       throw new Error('Insufficient destination collateral');
     }
 
-    addTransfer({
+    transactionId = addBridgeTransaction({
       timestamp: new Date().getTime(),
       status: TransferStatus.Preparing,
       origin,
@@ -184,13 +178,16 @@ async function executeTransfer({
       amount,
     });
 
-    updateTransferStatus(transferIndex, (transferStatus = TransferStatus.CreatingTxs));
+    updateBridgeTransactionStatus(transactionId, (transferStatus = TransferStatus.CreatingTxs));
 
     // Check if Predicate attestation is needed
     let attestationResult: PredicateAttestationResult | undefined;
 
     try {
-      updateTransferStatus(transferIndex, (transferStatus = TransferStatus.FetchingAttestation));
+      updateBridgeTransactionStatus(
+        transactionId,
+        (transferStatus = TransferStatus.FetchingAttestation),
+      );
       attestationResult = await fetchPredicateAttestation({
         warpCore,
         token: originToken,
@@ -206,7 +203,7 @@ async function executeTransfer({
       throw new Error(`Predicate attestation failed: ${message}`);
     }
 
-    updateTransferStatus(transferIndex, (transferStatus = TransferStatus.CreatingTxs));
+    updateBridgeTransactionStatus(transactionId, (transferStatus = TransferStatus.CreatingTxs));
 
     const txs = await warpCore.getTransferRemoteTxs({
       originTokenAmount,
@@ -228,8 +225,8 @@ async function executeTransfer({
     let txReceipt: TypedTransactionReceipt | undefined = undefined;
 
     if (txs.length > 1 && txs.every((tx) => tx.type === ProviderType.Starknet)) {
-      updateTransferStatus(
-        transferIndex,
+      updateBridgeTransactionStatus(
+        transactionId,
         (transferStatus = txCategoryToStatuses[WarpTxCategory.Transfer][0]),
       );
       const { hash, confirm } = await sendMultiTransaction({
@@ -237,8 +234,8 @@ async function executeTransfer({
         chainName: origin,
         activeChainName: activeChain.chainName,
       });
-      updateTransferStatus(
-        transferIndex,
+      updateBridgeTransactionStatus(
+        transactionId,
         (transferStatus = txCategoryToStatuses[WarpTxCategory.Transfer][1]),
       );
       txReceipt = await confirm();
@@ -249,8 +246,8 @@ async function executeTransfer({
       hashes.push(hash);
     } else {
       for (const tx of txs) {
-        updateTransferStatus(
-          transferIndex,
+        updateBridgeTransactionStatus(
+          transactionId,
           (transferStatus = txCategoryToStatuses[tx.category][0]),
         );
         const { hash, confirm } = await sendTransaction({
@@ -258,8 +255,8 @@ async function executeTransfer({
           chainName: origin,
           activeChainName: activeChain.chainName,
         });
-        updateTransferStatus(
-          transferIndex,
+        updateBridgeTransactionStatus(
+          transactionId,
           (transferStatus = txCategoryToStatuses[tx.category][1]),
         );
         txReceipt = await confirm();
@@ -292,18 +289,22 @@ async function executeTransfer({
         : undefined;
     // Same-chain CCR swaps are atomic: delivery happens in the same tx, no relay needed.
     if (isSameChainCcr) {
-      updateTransferStatus(transferIndex, (transferStatus = TransferStatus.Delivered), {
+      updateBridgeTransactionStatus(transactionId, (transferStatus = TransferStatus.Delivered), {
         originTxHash,
         originBlockNumber,
         msgId,
         destinationTxHash: originTxHash,
       });
     } else {
-      updateTransferStatus(transferIndex, (transferStatus = TransferStatus.ConfirmedTransfer), {
-        originTxHash,
-        originBlockNumber,
-        msgId,
-      });
+      updateBridgeTransactionStatus(
+        transactionId,
+        (transferStatus = TransferStatus.ConfirmedTransfer),
+        {
+          originTxHash,
+          originBlockNumber,
+          msgId,
+        },
+      );
     }
 
     if (originTxHash && !isSameChainCcr)
@@ -331,7 +332,7 @@ async function executeTransfer({
   } catch (error: any) {
     logger.error(`Error at stage ${transferStatus}`, error);
     const errorDetails = error.message || error.toString();
-    updateTransferStatus(transferIndex, TransferStatus.Failed);
+    if (transactionId) updateBridgeTransactionStatus(transactionId, TransferStatus.Failed);
     if (errorDetails.includes(CHAIN_MISMATCH_ERROR)) {
       // Wagmi switchNetwork call helps prevent this but isn't foolproof
       toast.error('Wallet must be connected to origin chain');

@@ -158,18 +158,21 @@ function SwapFormContent() {
 
   const swap = useSwap();
   useToastError(swap.error, 'Swap failed');
-  const addSwap = useStore((s) => s.addSwap);
-  const setActiveSwapIndex = useStore((s) => s.setActiveSwapIndex);
-  const updateSwapStatus = useStore((s) => s.updateSwapStatus);
+  const addSwapTransaction = useStore((s) => s.addSwapTransaction);
+  const setSelectedTransactionId = useStore((s) => s.setSelectedTransactionId);
+  const updateSwapTransactionStatus = useStore((s) => s.updateSwapTransactionStatus);
   const setSwapLoading = useStore((s) => s.setSwapLoading);
 
   // Send-button gating: derive from the modal's active swap status, not
-  // hook isPending. Closing the modal clears activeSwapIndex so a stuck
+  // hook isPending. Closing the modal clears selectedTransactionId so a stuck
   // confirm() polling loop doesn't permanently lock the button.
   const activeSwap = useStore((s) =>
-    s.activeSwapIndex != null ? s.swaps[s.activeSwapIndex] : undefined,
+    s.selectedTransactionId != null
+      ? s.transactionHistory.find((item) => item.id === s.selectedTransactionId)
+      : undefined,
   );
-  const isActiveSwapInFlight = activeSwap != null && !FinalSwapStatuses.includes(activeSwap.status);
+  const isActiveSwapInFlight =
+    activeSwap?.type === 'swap' && !FinalSwapStatuses.includes(activeSwap.data.status);
 
   const hasAmount = !!values.amount && Number(values.amount) > 0;
   const hasTokens = !!srcToken && !!dstToken;
@@ -273,28 +276,40 @@ function SwapFormContent() {
 
     const initialStep = bestRoute.raw.steps[0];
     const finalStep = bestRoute.raw.steps[bestRoute.raw.steps.length - 1];
+    const timestamp = Date.now();
     const item: SwapHistoryItem = {
       status: SwapStatus.Preparing,
-      timestamp: Date.now(),
+      timestamp,
       srcChain: values.srcChain,
       dstChain: values.dstChain,
       srcToken: srcToken.address,
       dstToken: dstToken.address,
+      srcTokenMeta: {
+        symbol: srcToken.symbol,
+        decimals: srcToken.decimals,
+        chainName: srcToken.chainName,
+        logoURI: srcToken.logoURI,
+      },
+      dstTokenMeta: {
+        symbol: dstToken.symbol,
+        decimals: dstToken.decimals,
+        chainName: dstToken.chainName,
+        logoURI: dstToken.logoURI,
+      },
       amountIn:
         initialStep && 'amountIn' in initialStep ? initialStep.amountIn : bestRoute.raw.output,
       amountOut: finalStep && 'amountOut' in finalStep ? finalStep.amountOut : bestRoute.raw.output,
       sender,
       recipient: effectiveRecipient,
     };
-    addSwap(item);
-    const swapIndex = useStore.getState().swaps.length - 1;
-    setActiveSwapIndex(swapIndex);
+    const transactionId = addSwapTransaction(item);
+    setSelectedTransactionId(transactionId);
 
     try {
       // useSwap.execute handles revoke / approve / swap sequencing
       // internally based on the params below.
       await swap.execute({
-        swapIndex,
+        transactionId,
         route: bestRoute,
         srcChainId: values.srcChain,
         dstChainId: values.dstChain,
@@ -307,9 +322,11 @@ function SwapFormContent() {
         isNative,
       });
     } catch {
-      const cur = useStore.getState().swaps[swapIndex]?.status;
-      if (cur && !FinalSwapStatuses.includes(cur)) {
-        updateSwapStatus(swapIndex, SwapStatus.Failed);
+      const cur = useStore
+        .getState()
+        .transactionHistory.find((historyItem) => historyItem.id === transactionId);
+      if (cur?.type === 'swap' && !FinalSwapStatuses.includes(cur.data.status)) {
+        updateSwapTransactionStatus(transactionId, SwapStatus.Failed);
       }
     } finally {
       setSwapLoading(false);
@@ -329,9 +346,9 @@ function SwapFormContent() {
     amountAtomic,
     isNative,
     swap,
-    addSwap,
-    setActiveSwapIndex,
-    updateSwapStatus,
+    addSwapTransaction,
+    setSelectedTransactionId,
+    updateSwapTransactionStatus,
     setSwapLoading,
     setErrors,
   ]);

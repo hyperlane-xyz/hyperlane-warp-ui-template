@@ -56,6 +56,8 @@ interface Config {
   ccsUrl: string; // Call Commitments Service base URL (cross-chain swap reveal)
   permit2ExpirationSeconds: number; // Default Permit2 allowance expiration (swap tab)
   defaultSlippageBps: number; // Default swap slippage in basis points
+  defaultSwapOriginToken: string | undefined; // The initial swap origin token to show when /swap first loads (format: chainName-address)
+  defaultSwapDestinationToken: string | undefined; // The initial swap destination token to show when /swap first loads (format: chainName-address)
 }
 
 export const config: Config = Object.freeze({
@@ -66,6 +68,8 @@ export const config: Config = Object.freeze({
   relayApiUrl,
   defaultOriginToken: 'ethereum-USDC',
   defaultDestinationToken: 'base-USDC',
+  defaultSwapOriginToken: 'bsc-0x0000000000000000000000000000000000000000',
+  defaultSwapDestinationToken: 'base-0x0000000000000000000000000000000000000000',
   isDevMode,
   registryUrl,
   registryBranch,

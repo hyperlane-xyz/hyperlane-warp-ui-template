@@ -1,7 +1,8 @@
-import { fromWeiRounded } from '@hyperlane-xyz/utils';
+import { fromWei, fromWeiRounded } from '@hyperlane-xyz/utils';
 
 import type { UiToken } from '../tokens/types';
 import { getTokenKey } from '../tokens/utils';
+import type { FeeComponent } from '../types';
 
 export { formatBalance, formatUsd } from '../../../utils/amount';
 
@@ -21,5 +22,31 @@ export function getUsdValue(
   if (bal == null || !token.coinGeckoId) return null;
   const price = prices[token.coinGeckoId];
   if (price == null) return null;
-  return (Number(bal) / 10 ** token.decimals) * price;
+  return parseFloat(fromWei(bal.toString(), token.decimals)) * price;
+}
+
+export function resolveCoinGeckoId(
+  component: FeeComponent,
+  tokenMap: Map<string, UiToken>,
+): { coinGeckoId: string | undefined; decimals: number } {
+  const t = tokenMap.get(`${component.chainId}-${component.tokenAddress.toLowerCase()}`);
+  return { coinGeckoId: t?.coinGeckoId, decimals: t?.decimals ?? 18 };
+}
+
+// Returns null if any component is unpriced — a partial sum would
+// understate the total and mislead the % readout.
+export function getTotalFeeUsd(
+  components: FeeComponent[],
+  tokenMap: Map<string, UiToken>,
+  prices: Record<string, number>,
+): number | null {
+  let total = 0;
+  for (const c of components) {
+    const { coinGeckoId, decimals } = resolveCoinGeckoId(c, tokenMap);
+    if (!coinGeckoId) return null;
+    const price = prices[coinGeckoId];
+    if (price == null) return null;
+    total += parseFloat(fromWei(c.amount.toString(), decimals)) * price;
+  }
+  return total;
 }

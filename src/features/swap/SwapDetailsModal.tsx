@@ -48,7 +48,7 @@ const STATUS_DESCRIPTION: Record<SwapStatus, string> = {
   [SwapStatus.ConfirmingApprove]: 'Confirming approval on origin chain…',
   [SwapStatus.SigningSwap]: 'Awaiting swap signature in your wallet…',
   [SwapStatus.ConfirmingOrigin]: 'Confirming on origin chain…',
-  [SwapStatus.Bridging]: 'Bridging via Hyperlane…',
+  [SwapStatus.Bridging]: 'Swapping via Hyperlane…',
   [SwapStatus.ConfirmingDestination]: 'Confirming on destination chain…',
   [SwapStatus.ConfirmedDestination]: 'Delivered',
   [SwapStatus.DestSwapFailed]: 'Destination swap reverted',
@@ -118,9 +118,15 @@ function SwapDetailsModalInner({
   const isDelivered = status === SwapStatus.ConfirmedDestination;
   const isFinal = FinalSwapStatuses.includes(status);
 
-  // Poll the warp message for timeline/delivery status (fallback to first).
-  // Same-chain swaps have no msgIds — skip polling.
-  const pollingMsgId = (msgIds?.find((m) => m.label === 'warp') ?? msgIds?.[0])?.msgId;
+  // Poll the reveal message when present — its delivery tx IS the ICA
+  // execution on the destination chain, which is what actually completes
+  // the swap. Pure-bridge routes (no destination swap) have no reveal,
+  // so fall back to the warp message. Same-chain swaps have no msgIds.
+  const pollingMsgId = (
+    msgIds?.find((m) => m.label === 'reveal') ??
+    msgIds?.find((m) => m.label === 'warp') ??
+    msgIds?.[0]
+  )?.msgId;
   const delivery = useMessageDeliveryStatus(pollingMsgId, !isFinal, multiProvider);
 
   const hasUpdatedDelivery = useRef(false);

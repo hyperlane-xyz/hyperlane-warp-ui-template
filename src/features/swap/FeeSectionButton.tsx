@@ -1,8 +1,10 @@
 import { ChevronIcon, FuelPumpIcon, useModal } from '@hyperlane-xyz/widgets';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
+import { getFeePercentage } from '../balances/feeUsdDisplay';
 import { useMultiProvider } from '../chains/hooks';
-import { formatFeeAmount } from './balances/utils';
+import { useTokenPricesByIds } from '../tokens/useTokenPrice';
+import { formatFeeAmount, formatUsd, getTotalFeeUsd, resolveCoinGeckoId } from './balances/utils';
 import { FeeBreakdownModal } from './FeeBreakdownModal';
 import { getTokenByKeyFromMap, useTokenByKeyMap } from './tokens/hooks';
 import type { UiToken } from './tokens/types';
@@ -11,23 +13,49 @@ import type { FeeBreakdown, FeeComponent } from './types';
 interface Props {
   feeBreakdown: FeeBreakdown | undefined;
   isLoading: boolean;
+  /** USD value of the swap input, used to compute fee-as-% of transfer. */
+  inputUsd: number | null;
 }
 
-// Pill button — fuel-pump icon + "Fees: <total>" + chevron.
-// Fees grouped by fungibility (chainId + token address).
-export function FeeSectionButton({ feeBreakdown, isLoading }: Props) {
+// Pill button — fuel-pump icon + "Fees: <total> <USD> (<pct>)" + chevron.
+// Fees grouped by fungibility (chainId + token address). USD value +
+// percentage mirror the bridge form's FeeSectionButton presentation.
+export function FeeSectionButton({ feeBreakdown, isLoading, inputUsd }: Props) {
   const { isOpen, open, close } = useModal();
   const loadingText = useLoadingDots(isLoading);
   const tokenMap = useTokenByKeyMap();
   const multiProvider = useMultiProvider();
 
-  const components = feeBreakdown?.components ?? [];
+  const components = useMemo(() => feeBreakdown?.components ?? [], [feeBreakdown?.components]);
   const isClickable = components.length > 0 && !isLoading;
 
   let feeText: string;
   if (isLoading) feeText = loadingText;
   else if (components.length === 0) feeText = '-';
   else feeText = formatTotalFee(components, tokenMap, multiProvider);
+
+  // Fee tokens often live outside the user's browsed catalogue (e.g. native
+  // ETH on the dest chain for the IGP). Resolve their coinGeckoIds here and
+  // feed the shared cache so the fetcher pulls anything missing. The shared
+  // hook dedupes, debounces, and backs off — no per-component RPC churn.
+  const feeCoinGeckoIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const c of components) {
+      const { coinGeckoId } = resolveCoinGeckoId(c, tokenMap);
+      if (coinGeckoId) ids.add(coinGeckoId);
+    }
+    return Array.from(ids).sort();
+  }, [components, tokenMap]);
+  const { prices: priceMap } = useTokenPricesByIds(feeCoinGeckoIds);
+
+  // `null` when any component is unpriced — caller falls back to the
+  // raw token list rather than displaying a misleading partial sum.
+  const feeUsd = useMemo(
+    () => getTotalFeeUsd(components, tokenMap, priceMap),
+    [components, tokenMap, priceMap],
+  );
+  const feeUsdText = feeUsd != null && feeUsd > 0 ? formatUsd(feeUsd, true) : null;
+  const pctText = feeUsd != null && inputUsd != null ? getFeePercentage(feeUsd, inputUsd) : null;
 
   return (
     <>
@@ -42,7 +70,7 @@ export function FeeSectionButton({ feeBreakdown, isLoading }: Props) {
         disabled={!isClickable}
       >
         <FuelPumpIcon width={14} height={14} className="mr-1" />
-        Fees: {feeText}
+        Fees: {feeUsdText ? `${feeUsdText}${pctText ? ` (${pctText})` : ''}` : feeText}
         {isClickable && <ChevronIcon direction="e" width="0.6rem" height="0.6rem" />}
       </button>
       {feeBreakdown && (

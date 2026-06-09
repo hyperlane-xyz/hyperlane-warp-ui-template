@@ -279,9 +279,6 @@ export const warpRouteWhitelist: Array<string> | null = [
   'FLT/fluence',
   'wpFLT/fluence',
 
-  // H
-  'H/humanity',
-
   // RCADE route
   'RCADE/arbitrum-bsc',
 

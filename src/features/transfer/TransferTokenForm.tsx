@@ -20,7 +20,6 @@ import { type AccountInfo } from '@hyperlane-xyz/widgets/walletIntegrations/type
 import BigNumber from 'bignumber.js';
 import { Form, Formik, useFormikContext } from 'formik';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { toast } from 'react-toastify';
 
 import { RecipientWarningBanner } from '../../components/banner/RecipientWarningBanner';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
@@ -61,7 +60,7 @@ import {
 import { ImportTokenButton } from '../tokens/ImportTokenButton';
 import { TokenSelectField } from '../tokens/TokenSelectField';
 import { useTokenPrices } from '../tokens/useTokenPrice';
-import { checkTokenHasRoute, findConnectedDestinationToken } from '../tokens/utils';
+import { checkTokenHasRoute, findConnectedDestinationToken, findRouteToken } from '../tokens/utils';
 import { RecipientConfirmationModal } from '../wallet/RecipientConfirmationModal';
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { WalletDropdown } from '../wallet/WalletDropdown';
@@ -487,7 +486,11 @@ function MaxButton({
       disabled={isDisabled}
       className="transfer-max-btn rounded border border-gray-300 px-2 py-0.5 font-secondary text-sm text-gray-450 transition-colors hover:border-gray-400 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50 dark:border-primary-300/40 dark:text-foreground-secondary dark:hover:border-primary-300/65 dark:hover:text-foreground-primary"
     >
-      {isLoading ? <SpinnerIcon className="h-4 w-4" /> : 'Max'}
+      {isLoading ? (
+        <SpinnerIcon className="h-4 w-4" color="currentColor" style={{ color: 'inherit' }} />
+      ) : (
+        'Max'
+      )}
     </button>
   );
 }
@@ -527,15 +530,22 @@ function TransferCheckout({
 }) {
   const { values } = useFormikContext<TransferFormValues>();
   const tokenMap = useTokenByKeyMap();
+  const warpCore = useWarpCore();
   const isRouteSupported = useIsRouteSupported();
 
-  // Use the same origin-token resolution as ButtonSection / executeTransfer so
-  // the offchain quote is bound to the same router the transfer will actually
-  // call. validateForm has already produced the multi-collateral / cross-asset
-  // optimal token and stored it in routeOverrideToken — no extra findRouteToken
-  // pass here.
-  const originToken = routeOverrideToken || getTokenByKeyFromMap(tokenMap, values.originTokenKey);
+  // Origin router resolution, in priority: routeOverrideToken -> findRouteToken -> raw key token.
+  // routeOverrideToken (set by validateForm on Continue) binds to the exact validated router.
+  // In form state it's null, so findRouteToken resolves the connected route token — the raw key
+  // token may not directly connect to the destination, leaving destinationToken (and quoting) off.
+  // findRouteToken is undefined for unsupported pairs; the raw key token keeps the selection
+  // rendering (quoting stays gated off via destinationToken).
+  const originTokenByKey = getTokenByKeyFromMap(tokenMap, values.originTokenKey);
   const destinationTokenByKey = getTokenByKeyFromMap(tokenMap, values.destinationTokenKey);
+  const routeToken =
+    !routeOverrideToken && originTokenByKey && destinationTokenByKey
+      ? findRouteToken(warpCore, originTokenByKey, destinationTokenByKey)
+      : undefined;
+  const originToken = routeOverrideToken || routeToken || originTokenByKey;
   const destinationToken =
     originToken && destinationTokenByKey
       ? findConnectedDestinationToken(originToken, destinationTokenByKey)
@@ -654,7 +664,7 @@ function ButtonSection({
       const isSelfRecipient = eqAddress(recipient, connectedWallet);
 
       if (senderCheckError || recipientCheckError) {
-        toast.error(senderCheckError || recipientCheckError);
+        logger.warn(senderCheckError || recipientCheckError);
         setRecipientInfos({ addressConfirmed: true, showWarning: false });
         return;
       }

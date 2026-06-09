@@ -23,13 +23,31 @@ import {
   useMergedTransferHistory,
 } from '../messages/useMergedTransferHistory';
 import { useMessageHistory } from '../messages/useMessageHistory';
-import { useStore } from '../store';
+import {
+  type AppState,
+  type TransactionHistoryItem,
+  TransactionHistoryItemType,
+  useStore,
+} from '../store';
+import { formatBalance as formatSwapBalance } from '../swap/balances/utils';
+import { getTokenByKeyFromMap } from '../swap/tokens/hooks';
+import { FinalSwapStatuses, SwapHistoryItem, SwapStatus } from '../swap/types';
 import { tryFindToken, useWarpCore } from '../tokens/hooks';
 import { computeDestAmount, formatMessageAmount } from '../transfer/scaleUtils';
 import { TransfersDetailsModal } from '../transfer/TransfersDetailsModal';
 import { TransferContext, TransferStatus } from '../transfer/types';
 import { getIconByTransferStatus, STATUSES_WITH_ICON } from '../transfer/utils';
 import { startRelativeTimeTicker } from './relativeTimeTicker';
+
+const HistoryItemType = {
+  ...TransferItemType,
+  Swap: TransactionHistoryItemType.Swap,
+} as const;
+
+type HistoryItem =
+  | (Extract<TransferItem, { type: typeof TransferItemType.Local }> & { transactionId?: string })
+  | Extract<TransferItem, { type: typeof TransferItemType.Api }>
+  | { type: typeof HistoryItemType.Swap; data: SwapHistoryItem; transactionId: string };
 
 export function SideBarMenu({
   onClickConnectWallet,
@@ -43,18 +61,37 @@ export function SideBarMenu({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedTransfer, setSelectedTransfer] = useState<TransferContext | null>(null);
+  const [selectedTransfer, setSelectedTransfer] = useState<{
+    transactionId?: string;
+    data: TransferContext;
+  } | null>(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
 
   const multiProvider = useMultiProvider();
 
-  const { transfers, originChainName, routerAddressesByChainMap } = useStore((s) => ({
-    transfers: s.transfers,
-    originChainName: s.originChainName,
-    routerAddressesByChainMap: s.routerAddressesByChainMap,
-  }));
+  const { transactionHistory, originChainName, routerAddressesByChainMap, knownTokens } = useStore(
+    (s) => ({
+      transactionHistory: s.transactionHistory,
+      originChainName: s.originChainName,
+      routerAddressesByChainMap: s.routerAddressesByChainMap,
+      knownTokens: s.knownTokens,
+    }),
+  );
+  const setSelectedTransactionId = useStore((s) => s.setSelectedTransactionId);
 
-  const prevTransfersLengthRef = useRef(transfers.length);
+  const bridgeTransactions = useMemo(
+    () =>
+      transactionHistory.filter(
+        (item): item is Extract<TransactionHistoryItem, { type: 'bridge' }> =>
+          item.type === TransactionHistoryItemType.Bridge,
+      ),
+    [transactionHistory],
+  );
+  const bridgeTransferData = useMemo(
+    () => bridgeTransactions.map((item) => item.data),
+    [bridgeTransactions],
+  );
+  const prevBridgeTransactionsLengthRef = useRef(bridgeTransactions.length);
 
   // Get all connected wallet addresses (normalized for consistent matching)
   const { accounts } = useAccounts(multiProvider, config.addressBlacklist);
@@ -90,9 +127,24 @@ export function SideBarMenu({
     multiProvider,
   );
 
-  // Merge local transfers with API messages
+  const swapMessageIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const item of transactionHistory) {
+      if (item.type !== TransactionHistoryItemType.Swap) continue;
+      if (!FinalSwapStatuses.includes(item.data.status)) continue;
+      for (const msg of item.data.msgIds ?? []) ids.add(msg.msgId.toLowerCase());
+    }
+    return ids;
+  }, [transactionHistory]);
+
+  const visibleMessages = useMemo(
+    () => messages.filter((message) => !swapMessageIds.has(message.msgId.toLowerCase())),
+    [messages, swapMessageIds],
+  );
+
+  // Merge local bridge transactions with API messages
   const warpCore = useWarpCore();
-  const allMergedTransfers = useMergedTransferHistory(transfers, messages);
+  const allMergedTransfers = useMergedTransferHistory(bridgeTransferData, visibleMessages);
 
   // Filter out API messages with unknown tokens
   const mergedTransfers = useMemo(
@@ -105,6 +157,37 @@ export function SideBarMenu({
       }),
     [allMergedTransfers, multiProvider, warpCore],
   );
+
+  const bridgeTransactionIdsByData = useMemo(() => {
+    const ids = new Map<TransferContext, string>();
+    for (const item of bridgeTransactions) ids.set(item.data, item.id);
+    return ids;
+  }, [bridgeTransactions]);
+
+  const historyItems = useMemo<HistoryItem[]>(() => {
+    const bridgeItems = mergedTransfers.map((item): HistoryItem => {
+      if (item.type !== TransferItemType.Local) return item;
+      return {
+        ...item,
+        transactionId: bridgeTransactionIdsByData.get(item.data),
+      };
+    });
+    const swapItems: HistoryItem[] = transactionHistory
+      .filter(
+        (
+          item,
+        ): item is Extract<
+          TransactionHistoryItem,
+          { type: typeof TransactionHistoryItemType.Swap }
+        > => item.type === TransactionHistoryItemType.Swap,
+      )
+      .map((item) => ({
+        type: HistoryItemType.Swap,
+        data: item.data,
+        transactionId: item.id,
+      }));
+    return [...bridgeItems, ...swapItems].sort((a, b) => getItemTimestamp(b) - getItemTimestamp(a));
+  }, [bridgeTransactionIdsByData, mergedTransfers, transactionHistory]);
 
   // Infinite scroll handler
   const handleScroll = useCallback(() => {
@@ -121,27 +204,33 @@ export function SideBarMenu({
     toast.success('Address copied to clipboard', { autoClose: 2000 });
   };
 
-  const handleItemClick = (item: TransferItem) => {
-    if (item.type === TransferItemType.Local) {
-      setSelectedTransfer(item.data);
+  const handleItemClick = (item: HistoryItem) => {
+    if (item.type === HistoryItemType.Swap) {
+      setSelectedTransactionId(item.transactionId);
+      return;
+    }
+    if (item.type === HistoryItemType.Local) {
+      setSelectedTransfer({ transactionId: item.transactionId, data: item.data });
     } else {
-      setSelectedTransfer(messageToTransferContext(item.data, multiProvider, warpCore));
+      setSelectedTransfer({ data: messageToTransferContext(item.data, multiProvider, warpCore) });
     }
     setIsModalOpen(true);
   };
 
-  // Open modal when a new transfer is added (avoids showing stale data from the
-  // previous transfer, which would happen if we triggered on transferLoading
-  // because addTransfer is called after setTransferLoading(true)).
+  // Open modal when a new bridge transaction is added. Triggering from loading
+  // state can show stale data because addBridgeTransaction runs after loading starts.
   useEffect(() => {
-    const prev = prevTransfersLengthRef.current;
-    prevTransfersLengthRef.current = transfers.length;
-    if (transfers.length > prev) {
-      setSelectedTransfer(transfers[transfers.length - 1]);
-      setIsModalOpen(true);
+    const prev = prevBridgeTransactionsLengthRef.current;
+    prevBridgeTransactionsLengthRef.current = bridgeTransactions.length;
+    if (bridgeTransactions.length > prev) {
+      const latest = bridgeTransactions[bridgeTransactions.length - 1];
+      if (latest) {
+        setSelectedTransfer({ transactionId: latest.id, data: latest.data });
+        setIsModalOpen(true);
+      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- transfers.length increasing guarantees a new transfers ref; listing transfers would re-run on status updates
-  }, [transfers.length]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- bridgeTransactions.length increasing guarantees a new bridgeTransactions ref; listing bridgeTransactions would re-run on status updates
+  }, [bridgeTransactions.length]);
 
   useEffect(() => {
     setIsMenuOpen(isOpen);
@@ -194,7 +283,7 @@ export function SideBarMenu({
           />
           <div className="sidebar-menu-header flex w-full items-center justify-between bg-accent-gradient px-3.5 py-2 shadow-accent-glow dark:!shadow-none">
             <span className="text-base font-normal tracking-wider text-white">
-              Transfer History
+              Transaction History
             </span>
             <button
               onClick={refresh}
@@ -218,22 +307,19 @@ export function SideBarMenu({
             ) : (
               <>
                 <div className="sidebar-menu-list flex w-full grow flex-col divide-y">
-                  {mergedTransfers.length === 0 && !isLoading && (
+                  {historyItems.length === 0 && !isLoading && (
                     <div className="sidebar-menu-empty px-3.5 py-6 text-center text-sm text-gray-500 dark:text-foreground-primary">
-                      No transfers yet
+                      No transactions yet
                     </div>
                   )}
-                  {mergedTransfers.map((item) => (
+                  {historyItems.map((item) => (
                     <TransferSummary
-                      key={
-                        item.type === TransferItemType.Local
-                          ? `local-${item.data.timestamp}-${item.data.originTxHash || item.data.msgId || ''}`
-                          : `api-${item.data.msgId}`
-                      }
+                      key={getItemKey(item)}
                       item={item}
                       onClick={() => handleItemClick(item)}
                       multiProvider={multiProvider}
                       warpCore={warpCore}
+                      knownTokens={knownTokens}
                       nowMs={nowMs}
                     />
                   ))}
@@ -243,9 +329,9 @@ export function SideBarMenu({
                     <SpinnerIcon className="h-5 w-5" />
                   </div>
                 )}
-                {!hasMore && mergedTransfers.length > 0 && (
+                {!hasMore && historyItems.length > 0 && (
                   <div className="sidebar-menu-end px-3.5 py-3 text-center text-xs text-gray-400 dark:text-foreground-primary">
-                    No more transfers
+                    No more transactions
                   </div>
                 )}
               </>
@@ -260,7 +346,8 @@ export function SideBarMenu({
             setIsModalOpen(false);
             setSelectedTransfer(null);
           }}
-          transfer={selectedTransfer}
+          transfer={selectedTransfer.data}
+          transactionId={selectedTransfer.transactionId}
         />
       )}
     </>
@@ -272,61 +359,109 @@ function TransferSummary({
   onClick,
   multiProvider,
   warpCore,
+  knownTokens,
   nowMs,
 }: {
-  item: TransferItem;
+  item: HistoryItem;
   onClick: () => void;
   multiProvider: ReturnType<typeof useMultiProvider>;
   warpCore: ReturnType<typeof useWarpCore>;
+  knownTokens: AppState['knownTokens'];
   nowMs: number;
 }) {
-  const { originChain, destChain, amount, destAmount, status, token, destToken, timestamp } =
-    useMemo(() => {
-      if (item.type === TransferItemType.Local) {
-        const t = item.data;
-        const originToken = tryFindToken(warpCore, t.origin, t.originTokenAddressOrDenom);
-        const destinationToken = tryFindToken(warpCore, t.destination, t.destTokenAddressOrDenom);
-        return {
-          originChain: t.origin,
-          destChain: t.destination,
-          amount: t.amount,
-          destAmount: computeDestAmount(t.amount, originToken, destinationToken),
-          status: t.status,
-          token: originToken,
-          destToken: destinationToken,
-          timestamp: t.timestamp,
-        };
-      }
-      const msg = item.data;
-      const originChain = multiProvider.tryGetChainName(msg.originDomainId) || '';
-      const destChain = multiProvider.tryGetChainName(msg.destinationDomainId) || '';
-      const token = tryFindToken(warpCore, originChain, msg.sender);
-
-      let amount = '';
-      if (msg.warpTransfer?.amount && token) {
-        try {
-          amount = formatMessageAmount(msg.warpTransfer.amount, token);
-        } catch (err) {
-          logger.error('Failed to format warp transfer amount', err);
-        }
-      }
-
-      const destToken = tryFindToken(warpCore, destChain, msg.recipient);
-
+  const {
+    originChain,
+    destChain,
+    amount,
+    destAmount,
+    status,
+    token,
+    destToken,
+    tokenSymbol,
+    destTokenSymbol,
+    timestamp,
+  } = useMemo(() => {
+    if (item.type === HistoryItemType.Swap) {
+      const swap = item.data;
+      const srcToken = getTokenByKeyFromMap(
+        knownTokens,
+        `${swap.srcChain}-${swap.srcToken.toLowerCase()}`,
+      );
+      const dstToken = getTokenByKeyFromMap(
+        knownTokens,
+        `${swap.dstChain}-${swap.dstToken.toLowerCase()}`,
+      );
+      const originChain =
+        srcToken?.chainName ??
+        swap.srcTokenMeta?.chainName ??
+        multiProvider.tryGetChainName(swap.srcChain) ??
+        '';
+      const destChain =
+        dstToken?.chainName ??
+        swap.dstTokenMeta?.chainName ??
+        multiProvider.tryGetChainName(swap.dstChain) ??
+        '';
+      const srcDecimals = srcToken?.decimals ?? swap.srcTokenMeta?.decimals;
+      const dstDecimals = dstToken?.decimals ?? swap.dstTokenMeta?.decimals;
       return {
         originChain,
         destChain,
-        amount,
-        destAmount: computeDestAmount(amount, token, destToken),
-        status:
-          msg.status === MessageStatus.Delivered
-            ? TransferStatus.Delivered
-            : TransferStatus.ConfirmedTransfer,
-        token,
-        destToken,
-        timestamp: msg.origin.timestamp,
+        amount: formatSwapHistoryAmount(swap.amountIn, srcDecimals),
+        destAmount: formatSwapHistoryAmount(swap.amountOut, dstDecimals),
+        status: swapStatusToTransferStatus(swap.status),
+        token: srcToken,
+        destToken: dstToken,
+        tokenSymbol: srcToken?.symbol ?? swap.srcTokenMeta?.symbol,
+        destTokenSymbol: dstToken?.symbol ?? swap.dstTokenMeta?.symbol,
+        timestamp: swap.timestamp,
       };
-    }, [item.type, item.data, multiProvider, warpCore]);
+    }
+    if (item.type === TransferItemType.Local) {
+      const t = item.data;
+      const originToken = tryFindToken(warpCore, t.origin, t.originTokenAddressOrDenom);
+      const destinationToken = tryFindToken(warpCore, t.destination, t.destTokenAddressOrDenom);
+      return {
+        originChain: t.origin,
+        destChain: t.destination,
+        amount: t.amount,
+        destAmount: computeDestAmount(t.amount, originToken, destinationToken),
+        status: t.status,
+        token: originToken,
+        destToken: destinationToken,
+        timestamp: t.timestamp,
+      };
+    }
+    const msg = item.data;
+    const originChain = multiProvider.tryGetChainName(msg.originDomainId) || '';
+    const destChain = multiProvider.tryGetChainName(msg.destinationDomainId) || '';
+    const token = tryFindToken(warpCore, originChain, msg.sender);
+
+    let amount = '';
+    if (msg.warpTransfer?.amount && token) {
+      try {
+        amount = formatMessageAmount(msg.warpTransfer.amount, token);
+      } catch (err) {
+        logger.error('Failed to format warp transfer amount', err);
+      }
+    }
+
+    const destToken = tryFindToken(warpCore, destChain, msg.recipient);
+
+    return {
+      originChain,
+      destChain,
+      amount,
+      destAmount: computeDestAmount(amount, token, destToken),
+      status:
+        msg.status === MessageStatus.Delivered
+          ? TransferStatus.Delivered
+          : TransferStatus.ConfirmedTransfer,
+      token,
+      destToken,
+      timestamp: msg.origin.timestamp,
+    };
+  }, [item.type, item.data, multiProvider, warpCore, knownTokens]);
+  const badgeType = item.type === HistoryItemType.Swap ? 'swap' : 'bridge';
 
   return (
     <button onClick={onClick} className={`${styles.btn} justify-between py-3`}>
@@ -348,9 +483,9 @@ function TransferSummary({
             <span
               className={`sidebar-menu-token-text text-sm font-normal text-gray-800 dark:text-foreground-primary ${amount ? 'ml-1' : ''}`}
             >
-              {token?.symbol || 'Unknown token'}
+              {token?.symbol || tokenSymbol || 'Unknown token'}
             </span>
-            {destToken && (
+            {(destToken || destTokenSymbol) && (
               <>
                 <Image
                   className="sidebar-menu-arrow mx-1 dark:opacity-85 dark:brightness-0 dark:invert"
@@ -365,13 +500,13 @@ function TransferSummary({
                   </span>
                 )}
                 <span className="sidebar-menu-token-text ml-1 text-sm font-normal text-gray-800 dark:text-foreground-primary">
-                  {destToken.symbol}
+                  {destToken?.symbol || destTokenSymbol}
                 </span>
               </>
             )}
           </div>
-          <div className="mt-1 flex items-center">
-            <span className="sidebar-menu-route-text text-xxs font-normal tracking-wide text-gray-900 dark:text-foreground-primary">
+          <div className="mt-1 flex h-4 items-center">
+            <span className="sidebar-menu-route-text text-xxs font-normal leading-4 tracking-wide text-gray-900 dark:text-foreground-primary">
               {getChainDisplayName(multiProvider, originChain, true)}
             </span>
             <Image
@@ -381,24 +516,80 @@ function TransferSummary({
               height={10}
               alt=""
             />
-            <span className="sidebar-menu-route-text text-xxs font-normal tracking-wide text-gray-900 dark:text-foreground-primary">
+            <span className="sidebar-menu-route-text text-xxs font-normal leading-4 tracking-wide text-gray-900 dark:text-foreground-primary">
               {getChainDisplayName(multiProvider, destChain, true)}
             </span>
+            <HistoryTypeBadge type={badgeType} />
           </div>
           <div className="sidebar-menu-time mt-1 w-full text-left text-xxs font-normal text-gray-500 dark:text-foreground-primary">
             {formatTransferHistoryTimestamp(timestamp, nowMs)}
           </div>
         </div>
       </div>
-      <div className="flex h-5 w-5">
-        {STATUSES_WITH_ICON.includes(status) ? (
-          <Image src={getIconByTransferStatus(status)} width={25} height={25} alt="" />
-        ) : (
-          <SpinnerIcon className="-ml-1 mr-3 h-5 w-5" />
-        )}
+      <div className="ml-2 flex shrink-0 items-center">
+        <div className="flex h-5 w-5">
+          {STATUSES_WITH_ICON.includes(status) ? (
+            <Image src={getIconByTransferStatus(status)} width={25} height={25} alt="" />
+          ) : (
+            <SpinnerIcon className="-ml-1 mr-3 h-5 w-5" />
+          )}
+        </div>
       </div>
     </button>
   );
+}
+
+function HistoryTypeBadge({ type }: { type: 'bridge' | 'swap' }) {
+  const isSwap = type === 'swap';
+  return (
+    <span
+      className={`sidebar-menu-type-badge ml-1.5 inline-flex h-3.5 shrink-0 items-center rounded border px-1.5 text-[0.55rem] font-medium leading-none dark:text-foreground-primary ${
+        isSwap
+          ? 'border-accent-500/35 bg-accent-50/25 text-accent-500 dark:border-primary-300/45 dark:bg-primary-300/15'
+          : 'border-blue-500/35 bg-blue-50/70 text-blue-600 dark:border-blue-300/40 dark:bg-blue-400/10'
+      }`}
+    >
+      {isSwap ? 'Swap' : 'Bridge'}
+    </span>
+  );
+}
+
+function getItemTimestamp(item: HistoryItem): number {
+  if (item.type === HistoryItemType.Swap || item.type === HistoryItemType.Local)
+    return item.data.timestamp;
+  return item.data.origin.timestamp;
+}
+
+function getItemKey(item: HistoryItem): string {
+  if (item.type === HistoryItemType.Swap) {
+    return `swap-${item.transactionId}`;
+  }
+  if (item.type === TransferItemType.Local) {
+    return `local-${item.data.timestamp}-${item.data.originTxHash || item.data.msgId || ''}`;
+  }
+  return `api-${item.data.msgId}`;
+}
+
+function formatSwapHistoryAmount(amount: string, decimals: number | undefined): string {
+  if (decimals == null) return '';
+  try {
+    return formatSwapBalance(BigInt(amount), decimals);
+  } catch {
+    return '';
+  }
+}
+
+function swapStatusToTransferStatus(status: SwapStatus): TransferStatus {
+  if (status === SwapStatus.ConfirmedDestination) return TransferStatus.Delivered;
+  if (status === SwapStatus.Failed || status === SwapStatus.DestSwapFailed)
+    return TransferStatus.Failed;
+  if (
+    status === SwapStatus.Bridging ||
+    status === SwapStatus.ConfirmingDestination ||
+    status === SwapStatus.ConfirmingOrigin
+  )
+    return TransferStatus.ConfirmedTransfer;
+  return TransferStatus.ConfirmingTransfer;
 }
 
 const styles = {

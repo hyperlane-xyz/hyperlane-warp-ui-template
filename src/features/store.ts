@@ -41,7 +41,16 @@ import {
 import { assembleWarpCoreConfig } from './warpCore/warpCoreConfig';
 
 // Increment this when persist state has breaking changes
-const PERSIST_STATE_VERSION = 2;
+const PERSIST_STATE_VERSION = 3;
+
+export const TransactionHistoryItemType = {
+  Bridge: 'bridge',
+  Swap: 'swap',
+} as const;
+
+export type TransactionHistoryItem =
+  | { id: string; type: typeof TransactionHistoryItemType.Bridge; data: TransferContext }
+  | { id: string; type: typeof TransactionHistoryItemType.Swap; data: SwapHistoryItem };
 
 interface WarpContext {
   registry: IRegistry;
@@ -91,12 +100,13 @@ export interface AppState {
   warpCore: WarpCore;
   setWarpContext: (context: WarpContext) => void;
 
-  // User history
-  transfers: TransferContext[];
-  addTransfer: (t: TransferContext) => void;
-  resetTransfers: () => void;
-  updateTransferStatus: (
-    i: number,
+  // User transaction history
+  transactionHistory: TransactionHistoryItem[];
+  addBridgeTransaction: (t: TransferContext) => string;
+  addSwapTransaction: (s: SwapHistoryItem) => string;
+  resetTransactionHistory: () => void;
+  updateBridgeTransactionStatus: (
+    id: string,
     s: TransferStatus,
     options?: {
       msgId?: string;
@@ -105,14 +115,8 @@ export interface AppState {
       destinationTxHash?: string;
     },
   ) => void;
-  failUnconfirmedTransfers: () => void;
-
-  // Swap history (in-memory only; not persisted). Mirrors `transfers` shape.
-  swaps: SwapHistoryItem[];
-  addSwap: (s: SwapHistoryItem) => void;
-  resetSwaps: () => void;
-  updateSwapStatus: (
-    i: number,
+  updateSwapTransactionStatus: (
+    id: string,
     status: SwapStatus,
     options?: {
       msgIds?: LabeledMsgId[];
@@ -121,11 +125,11 @@ export interface AppState {
       destinationTxHash?: string;
     },
   ) => void;
-  failUnconfirmedSwaps: () => void;
-  // Index into `swaps` of the swap currently being viewed in the
-  // SwapDetailsModal. Set by useSwap.execute when a swap starts.
-  activeSwapIndex: number | null;
-  setActiveSwapIndex: (i: number | null) => void;
+  failUnconfirmedTransactions: () => void;
+  selectedTransactionId: string | null;
+  setSelectedTransactionId: (id: string | null) => void;
+  activeSwapTransactionId: string | null;
+  setActiveSwapTransactionId: (id: string | null) => void;
   // Accumulated engine-token catalogue. Every useTokens() result funnels
   // through syncTokens so SwapForm / SwapDetailsModal lookups go through
   // one place. Keyed by getSwapTokenKey (chainId-address). Not persisted.
@@ -256,73 +260,87 @@ export const useStore = create<AppState>()(
         set(context);
       },
 
-      // User history
-      transfers: [],
-      addTransfer: (t) => {
-        set((state) => ({ transfers: [...state.transfers, t] }));
-      },
-      resetTransfers: () => {
-        set(() => ({ transfers: [] }));
-      },
-      updateTransferStatus: (i, s, options) => {
-        set((state) => {
-          if (i >= state.transfers.length) return state;
-          const txs = [...state.transfers];
-          txs[i].status = s;
-          txs[i].msgId ||= options?.msgId;
-          txs[i].originTxHash ||= options?.originTxHash;
-          txs[i].originBlockNumber ||= options?.originBlockNumber;
-          txs[i].destinationTxHash ||= options?.destinationTxHash;
-          return {
-            transfers: txs,
-          };
-        });
-      },
-      failUnconfirmedTransfers: () => {
+      // User transaction history
+      transactionHistory: [],
+      addBridgeTransaction: (data) => {
+        const id = createTransactionId(TransactionHistoryItemType.Bridge, data.timestamp);
         set((state) => ({
-          transfers: state.transfers.map((t) =>
-            FinalTransferStatuses.includes(t.status) ? t : { ...t, status: TransferStatus.Failed },
-          ),
+          transactionHistory: [
+            ...state.transactionHistory,
+            { id, type: TransactionHistoryItemType.Bridge, data },
+          ],
         }));
+        return id;
       },
-
-      // Swap history (in-memory only)
-      swaps: [],
-      addSwap: (s) => {
-        set((state) => ({ swaps: [...state.swaps, s] }));
-      },
-      resetSwaps: () => {
-        set(() => ({ swaps: [] }));
-      },
-      updateSwapStatus: (i, status, options) => {
-        set((state) => {
-          if (i >= state.swaps.length) return state;
-          const swaps = [...state.swaps];
-          swaps[i] = {
-            ...swaps[i],
-            status,
-            msgIds: swaps[i].msgIds ?? options?.msgIds,
-            originTxHash: swaps[i].originTxHash ?? options?.originTxHash,
-            originBlockNumber: swaps[i].originBlockNumber ?? options?.originBlockNumber,
-            destinationTxHash: swaps[i].destinationTxHash ?? options?.destinationTxHash,
-          };
-          return { swaps };
-        });
-      },
-      failUnconfirmedSwaps: () => {
-        // Only mark Failed if the swap never broadcast an origin tx.
-        // A swap with an originTxHash may still be bridging.
+      addSwapTransaction: (data) => {
+        const id = createTransactionId(TransactionHistoryItemType.Swap, data.timestamp);
         set((state) => ({
-          swaps: state.swaps.map((s) => {
-            if (FinalSwapStatuses.includes(s.status)) return s;
-            if (s.originTxHash) return s;
-            return { ...s, status: SwapStatus.Failed };
+          transactionHistory: [
+            ...state.transactionHistory,
+            { id, type: TransactionHistoryItemType.Swap, data },
+          ],
+        }));
+        return id;
+      },
+      resetTransactionHistory: () => {
+        set(() => ({ transactionHistory: [] }));
+      },
+      updateBridgeTransactionStatus: (id, status, options) => {
+        set((state) => ({
+          transactionHistory: state.transactionHistory.map((item) => {
+            if (item.id !== id || item.type !== TransactionHistoryItemType.Bridge) return item;
+            return {
+              ...item,
+              data: {
+                ...item.data,
+                status,
+                msgId: item.data.msgId ?? options?.msgId,
+                originTxHash: item.data.originTxHash ?? options?.originTxHash,
+                originBlockNumber: item.data.originBlockNumber ?? options?.originBlockNumber,
+                destinationTxHash: item.data.destinationTxHash ?? options?.destinationTxHash,
+              },
+            };
           }),
         }));
       },
-      activeSwapIndex: null,
-      setActiveSwapIndex: (activeSwapIndex) => {
-        set(() => ({ activeSwapIndex }));
+      updateSwapTransactionStatus: (id, status, options) => {
+        set((state) => ({
+          transactionHistory: state.transactionHistory.map((item) => {
+            if (item.id !== id || item.type !== TransactionHistoryItemType.Swap) return item;
+            return {
+              ...item,
+              data: {
+                ...item.data,
+                status,
+                msgIds: item.data.msgIds ?? options?.msgIds,
+                originTxHash: item.data.originTxHash ?? options?.originTxHash,
+                originBlockNumber: item.data.originBlockNumber ?? options?.originBlockNumber,
+                destinationTxHash: item.data.destinationTxHash ?? options?.destinationTxHash,
+              },
+            };
+          }),
+        }));
+      },
+      failUnconfirmedTransactions: () => {
+        set((state) => ({
+          transactionHistory: state.transactionHistory.map((item) => {
+            if (item.type === TransactionHistoryItemType.Bridge) {
+              if (FinalTransferStatuses.includes(item.data.status)) return item;
+              return { ...item, data: { ...item.data, status: TransferStatus.Failed } };
+            }
+            if (FinalSwapStatuses.includes(item.data.status)) return item;
+            if (item.data.originTxHash) return item;
+            return { ...item, data: { ...item.data, status: SwapStatus.Failed } };
+          }),
+        }));
+      },
+      selectedTransactionId: null,
+      setSelectedTransactionId: (selectedTransactionId) => {
+        set(() => ({ selectedTransactionId }));
+      },
+      activeSwapTransactionId: null,
+      setActiveSwapTransactionId: (activeSwapTransactionId) => {
+        set(() => ({ activeSwapTransactionId }));
       },
       knownTokens: new Map(),
       syncTokens: (newTokens) => {
@@ -393,13 +411,45 @@ export const useStore = create<AppState>()(
       partialize: (state) => ({
         // fields to persist
         chainMetadataOverrides: state.chainMetadataOverrides,
-        transfers: state.transfers, // Keep for transfers through non-indexed routes
+        transactionHistory: state.transactionHistory,
       }),
       version: PERSIST_STATE_VERSION,
+      migrate: (persistedState) => {
+        const state = persistedState as Partial<AppState> & {
+          transfers?: TransferContext[];
+          swaps?: SwapHistoryItem[];
+        };
+        if (Array.isArray(state.transactionHistory)) {
+          return {
+            chainMetadataOverrides: state.chainMetadataOverrides ?? {},
+            transactionHistory: state.transactionHistory,
+          };
+        }
+
+        const transfers = Array.isArray(state.transfers) ? state.transfers : [];
+        const swaps = Array.isArray(state.swaps) ? state.swaps : [];
+        const transactionHistory: TransactionHistoryItem[] = [
+          ...transfers.map((data) => ({
+            id: createTransactionId(TransactionHistoryItemType.Bridge, data.timestamp),
+            type: TransactionHistoryItemType.Bridge,
+            data,
+          })),
+          ...swaps.map((data) => ({
+            id: createTransactionId(TransactionHistoryItemType.Swap, data.timestamp),
+            type: TransactionHistoryItemType.Swap,
+            data,
+          })),
+        ];
+
+        return {
+          chainMetadataOverrides: state.chainMetadataOverrides ?? {},
+          transactionHistory,
+        };
+      },
       onRehydrateStorage: () => {
         logger.debug('Rehydrating state');
         return (state, error) => {
-          state?.failUnconfirmedTransfers();
+          state?.failUnconfirmedTransactions();
           if (error || !state) {
             logger.error('Error during hydration', error);
             return;
@@ -413,6 +463,13 @@ export const useStore = create<AppState>()(
     },
   ),
 );
+
+function createTransactionId(type: TransactionHistoryItem['type'], timestamp: number): string {
+  const suffix =
+    crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+
+  return `${type}-${timestamp}-${suffix}`;
+}
 
 async function initWarpContext({
   registry,

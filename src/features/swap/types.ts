@@ -7,6 +7,13 @@ export interface LabeledMsgId {
   label: SwapMessageLabel;
 }
 
+export interface SwapHistoryTokenMeta {
+  symbol: string;
+  decimals: number;
+  chainName: string;
+  logoURI?: string;
+}
+
 // ── Persisted/in-memory swap history ──────────────────────────────────
 
 // Status of a single submitted swap. Used by SwapDetailsModal to drive
@@ -40,6 +47,8 @@ export interface SwapHistoryItem {
   dstChain: number;
   srcToken: string;
   dstToken: string;
+  srcTokenMeta?: SwapHistoryTokenMeta;
+  dstTokenMeta?: SwapHistoryTokenMeta;
   amountIn: string;
   amountOut: string;
   sender: string;

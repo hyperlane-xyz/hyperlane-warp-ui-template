@@ -461,6 +461,7 @@ function TransferSummary({
       timestamp: msg.origin.timestamp,
     };
   }, [item.type, item.data, multiProvider, warpCore, knownTokens]);
+  const badgeType = item.type === HistoryItemType.Swap ? 'swap' : 'bridge';
 
   return (
     <button onClick={onClick} className={`${styles.btn} justify-between py-3`}>
@@ -504,8 +505,8 @@ function TransferSummary({
               </>
             )}
           </div>
-          <div className="mt-1 flex items-center">
-            <span className="sidebar-menu-route-text text-xxs font-normal tracking-wide text-gray-900 dark:text-foreground-primary">
+          <div className="mt-1 flex h-4 items-center">
+            <span className="sidebar-menu-route-text text-xxs font-normal leading-4 tracking-wide text-gray-900 dark:text-foreground-primary">
               {getChainDisplayName(multiProvider, originChain, true)}
             </span>
             <Image
@@ -515,23 +516,41 @@ function TransferSummary({
               height={10}
               alt=""
             />
-            <span className="sidebar-menu-route-text text-xxs font-normal tracking-wide text-gray-900 dark:text-foreground-primary">
+            <span className="sidebar-menu-route-text text-xxs font-normal leading-4 tracking-wide text-gray-900 dark:text-foreground-primary">
               {getChainDisplayName(multiProvider, destChain, true)}
             </span>
+            <HistoryTypeBadge type={badgeType} />
           </div>
           <div className="sidebar-menu-time mt-1 w-full text-left text-xxs font-normal text-gray-500 dark:text-foreground-primary">
             {formatTransferHistoryTimestamp(timestamp, nowMs)}
           </div>
         </div>
       </div>
-      <div className="flex h-5 w-5">
-        {STATUSES_WITH_ICON.includes(status) ? (
-          <Image src={getIconByTransferStatus(status)} width={25} height={25} alt="" />
-        ) : (
-          <SpinnerIcon className="-ml-1 mr-3 h-5 w-5" />
-        )}
+      <div className="ml-2 flex shrink-0 items-center">
+        <div className="flex h-5 w-5">
+          {STATUSES_WITH_ICON.includes(status) ? (
+            <Image src={getIconByTransferStatus(status)} width={25} height={25} alt="" />
+          ) : (
+            <SpinnerIcon className="-ml-1 mr-3 h-5 w-5" />
+          )}
+        </div>
       </div>
     </button>
+  );
+}
+
+function HistoryTypeBadge({ type }: { type: 'bridge' | 'swap' }) {
+  const isSwap = type === 'swap';
+  return (
+    <span
+      className={`sidebar-menu-type-badge ml-1.5 inline-flex h-3.5 shrink-0 items-center rounded border px-1.5 text-[0.55rem] font-medium leading-none dark:text-foreground-primary ${
+        isSwap
+          ? 'border-accent-500/35 bg-accent-50/25 text-accent-500 dark:border-primary-300/45 dark:bg-primary-300/15'
+          : 'border-blue-500/35 bg-blue-50/70 text-blue-600 dark:border-blue-300/40 dark:bg-blue-400/10'
+      }`}
+    >
+      {isSwap ? 'Swap' : 'Bridge'}
+    </span>
   );
 }
 

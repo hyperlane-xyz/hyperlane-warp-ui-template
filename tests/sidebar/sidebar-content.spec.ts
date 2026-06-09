@@ -8,9 +8,9 @@ test.describe('Sidebar', () => {
     // Connected Wallets section
     await expect(page.getByText('Connected Wallets')).toBeVisible();
 
-    // Transfer History section
-    await expect(page.getByText('Transfer History')).toBeVisible();
-    await expect(page.getByText('No transfers yet')).toBeVisible();
+    // Transaction History section
+    await expect(page.getByText('Transaction History')).toBeVisible();
+    await expect(page.getByText('No transactions yet')).toBeVisible();
 
     // Sidebar buttons
     await expect(page.getByRole('button', { name: 'Connect wallet' }).nth(1)).toBeVisible();

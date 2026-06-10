@@ -11,6 +11,15 @@ export function getHypExplorerLink(
   msgId?: string,
 ) {
   if (!config.enableExplorerLink || !chain || !msgId) return null;
+  return getHypExplorerMessageLink(multiProvider, chain, msgId);
+}
+
+export function getHypExplorerMessageLink(
+  multiProvider: MultiProtocolProvider,
+  chain: ChainName,
+  msgId?: string,
+) {
+  if (!chain || !msgId) return null;
   const baseLink = `${links.explorer}/message/${msgId}`;
 
   if (!isPermissionlessChain(multiProvider, chain)) return baseLink;

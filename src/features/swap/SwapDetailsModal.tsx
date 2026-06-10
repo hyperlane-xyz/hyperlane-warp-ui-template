@@ -28,6 +28,7 @@ import { TransactionHistoryItemType, useStore } from '../store';
 import { formatBalance } from './balances/utils';
 import { getTokenByKeyFromMap, useTokenByKeyMap } from './tokens/hooks';
 import { FinalSwapStatuses, SwapStatus, type SwapHistoryItem } from './types';
+import { useSwapStatus } from './useSwapStatus';
 
 const DEFAULT_TIMINGS: StageTimings = {
   [MessageStage.Finalized]: null,
@@ -52,6 +53,8 @@ const STATUS_DESCRIPTION: Record<SwapStatus, string> = {
   [SwapStatus.ConfirmingDestination]: 'Confirming on destination chain…',
   [SwapStatus.ConfirmedDestination]: 'Delivered',
   [SwapStatus.DestSwapFailed]: 'Destination swap reverted',
+  [SwapStatus.FailedRecovered]: 'Swap reverted — bridge token returned',
+  [SwapStatus.DestFailed]: 'Destination execution failed — funds stranded in ICA',
   [SwapStatus.Failed]: 'Swap failed',
 };
 
@@ -95,6 +98,9 @@ function SwapDetailsModalInner({
   const multiProvider = useMultiProvider();
   const tokenMap = useTokenByKeyMap();
   const updateSwapTransactionStatus = useStore((s) => s.updateSwapTransactionStatus);
+  const isIcaRoute = useStore(
+    (s) => !!s.swapRouteByTransactionId.get(transactionId)?.callCommitment,
+  );
 
   const {
     status,
@@ -122,20 +128,27 @@ function SwapDetailsModalInner({
   const srcDecimals = srcToken?.decimals ?? swap.srcTokenMeta?.decimals;
   const dstDecimals = dstToken?.decimals ?? swap.dstTokenMeta?.decimals;
 
+  // Reads the REVEAL tx receipt once it lands; drives transitions to ConfirmedDestination,
+  // FailedRecovered, and DestFailed by checking Transfer events client-side.
+  useSwapStatus(swap, transactionId);
+
   const isFailed = status === SwapStatus.Failed;
   const isDestFailed = status === SwapStatus.DestSwapFailed;
   const isDelivered = status === SwapStatus.ConfirmedDestination;
+  const isFailedRecovered = status === SwapStatus.FailedRecovered;
+  const isRevealFailed = status === SwapStatus.DestFailed;
   const isFinal = FinalSwapStatuses.includes(status);
 
-  // Poll the reveal message when present — its delivery tx IS the ICA
-  // execution on the destination chain, which is what actually completes
-  // the swap. Pure-bridge routes (no destination swap) have no reveal,
-  // so fall back to the warp message. Same-chain swaps have no msgIds.
+  // For ICA routes, only the reveal message delivery tx is the actual ICA execution.
+  // The warp/bridge message delivery tx is a CCTP bundle — wrong tx for swap detection.
+  // Track reveal separately so we never submit the bridge tx as destinationTxHash.
+  const revealMsgId = msgIds?.find((m) => m.label === 'reveal')?.msgId;
+  // pollingMsgId drives the timeline display — falls back to warp for pure-bridge routes.
   const pollingMsgId = (
-    msgIds?.find((m) => m.label === 'reveal') ??
-    msgIds?.find((m) => m.label === 'warp') ??
-    msgIds?.[0]
-  )?.msgId;
+    revealMsgId ??
+    msgIds?.find((m) => m.label === 'warp')?.msgId ??
+    msgIds?.[0]?.msgId
+  );
   const delivery = useMessageDeliveryStatus(pollingMsgId, !isFinal, multiProvider);
 
   const hasUpdatedDelivery = useRef(false);
@@ -144,12 +157,18 @@ function SwapDetailsModalInner({
   }, [pollingMsgId]);
 
   useEffect(() => {
-    if (
-      delivery.isDelivered &&
-      !hasUpdatedDelivery.current &&
-      status !== SwapStatus.ConfirmedDestination
-    ) {
-      hasUpdatedDelivery.current = true;
+    if (!delivery.isDelivered || hasUpdatedDelivery.current) return;
+    hasUpdatedDelivery.current = true;
+
+    if (isIcaRoute) {
+      // Only pass destinationTxHash when the reveal message delivered — that tx IS
+      // the ICA execution. If we fell back to polling the warp message, the delivery
+      // tx is the CCTP bridge bundle, which is useless for swap outcome detection.
+      const isRevealDelivery = pollingMsgId === revealMsgId;
+      updateSwapTransactionStatus(transactionId, status, {
+        ...(isRevealDelivery ? { destinationTxHash: delivery.destinationTxHash } : {}),
+      });
+    } else {
       updateSwapTransactionStatus(transactionId, SwapStatus.ConfirmedDestination, {
         destinationTxHash: delivery.destinationTxHash,
       });
@@ -160,6 +179,9 @@ function SwapDetailsModalInner({
     delivery.destinationTxHash,
     transactionId,
     status,
+    isIcaRoute,
+    pollingMsgId,
+    revealMsgId,
     updateSwapTransactionStatus,
   ]);
 
@@ -168,7 +190,9 @@ function SwapDetailsModalInner({
     status === SwapStatus.Bridging ||
     status === SwapStatus.ConfirmingDestination ||
     status === SwapStatus.ConfirmedDestination ||
-    isDestFailed;
+    isDestFailed ||
+    isFailedRecovered ||
+    isRevealFailed;
 
   const stage = useMemo<MessageStage>(() => {
     if (isDelivered) return MessageStage.Relayed;
@@ -240,7 +264,9 @@ function SwapDetailsModalInner({
             <div className="flex items-center text-xs font-normal">
               {isDelivered ? (
                 <h3 className="text-green-50">Delivered</h3>
-              ) : isDestFailed ? (
+              ) : isFailedRecovered ? (
+                <h3 className="text-blue-400">Recovered</h3>
+              ) : isDestFailed || isRevealFailed ? (
                 <h3 className="text-amber-600">Stranded</h3>
               ) : (
                 <h3 className="text-red-500">Failed</h3>
@@ -313,8 +339,20 @@ function SwapDetailsModalInner({
           <div className="mt-5 flex flex-col space-y-4">
             {isDestFailed && (
               <div className="rounded border border-amber-300 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">
-                Origin succeeded and the bridge delivered, but the destination swap reverted. Funds
-                are sitting in your ICA — recovery is not yet wired in.
+                Origin succeeded and the bridge delivered, but the destination swap reverted. The
+                fallback swept the bridge token back to your wallet on the destination chain.
+              </div>
+            )}
+            {isFailedRecovered && (
+              <div className="rounded border border-blue-300 bg-blue-50 p-3 text-xs text-blue-800 dark:border-blue-500/40 dark:bg-blue-500/10 dark:text-blue-200">
+                The destination swap reverted and the bridge token was automatically returned to
+                your wallet on the destination chain.
+              </div>
+            )}
+            {isRevealFailed && (
+              <div className="rounded border border-amber-300 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">
+                The destination execution ran but both the swap and fallback failed. Bridge token
+                remains in your ICA. Please contact support.
               </div>
             )}
             <TransferProperty name="Sender Address" value={sender} url={fromUrl} />

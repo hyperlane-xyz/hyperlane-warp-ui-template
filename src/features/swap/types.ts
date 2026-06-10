@@ -31,12 +31,18 @@ export enum SwapStatus {
   // Origin tx confirmed and bridge delivered, but the dest swap step
   // reverted — funds are sitting in the user's ICA on the dest chain.
   DestSwapFailed = 'dest-swap-failed',
+  // Fallback sub-plan swept bridge token to recipient automatically.
+  FailedRecovered = 'failed-recovered',
+  // REVEAL delivered but both swap and fallback sub-plans reverted — funds stranded in ICA.
+  DestFailed = 'dest-failed',
   Failed = 'failed',
 }
 
 export const FinalSwapStatuses = [
   SwapStatus.ConfirmedDestination,
   SwapStatus.DestSwapFailed,
+  SwapStatus.FailedRecovered,
+  SwapStatus.DestFailed,
   SwapStatus.Failed,
 ];
 
@@ -57,6 +63,8 @@ export interface SwapHistoryItem {
   destinationTxHash?: string;
   msgIds?: LabeledMsgId[];
   originBlockNumber?: number;
+  /** Unix seconds when the origin tx was broadcast. */
+  originTxTimestamp?: number;
 }
 
 // ── Form values ──────────────────────────────────────────────────────

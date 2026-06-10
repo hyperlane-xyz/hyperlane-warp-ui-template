@@ -4,6 +4,13 @@ import { ProtocolType } from '@hyperlane-xyz/utils';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef } from 'react';
 import { toast } from 'react-toastify';
+import {
+  decodeFunctionResult,
+  encodeFunctionData,
+  parseAbi,
+  toEventSelector,
+  type Hex,
+} from 'viem';
 
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
@@ -13,10 +20,13 @@ import { TransferStatus } from '../transfer/types';
 import { useMessageDeliveryStatus } from './useMessageDeliveryStatus';
 
 const MAILBOX_DELIVERY_POLL_INTERVAL_MS = 3_000;
-const MAILBOX_DELIVERED_SELECTOR = '0xe495f1d4';
-const MAILBOX_PROCESSED_AT_SELECTOR = '0x07a2fda1';
-const MAILBOX_PROCESS_ID_TOPIC =
-  '0x1cae38cdd3d3919489272725a5ae62a4f48b2989b0dae843d3c279fee18073a9';
+const MAILBOX_ABI = parseAbi([
+  // Mirrors the stable Hyperlane Mailbox delivery surface used by the SDK.
+  'function delivered(bytes32) view returns (bool)',
+  'function processedAt(bytes32) view returns (uint256)',
+  'event ProcessId(bytes32 indexed messageId)',
+]);
+const MAILBOX_PROCESS_ID_TOPIC = toEventSelector('ProcessId(bytes32)');
 
 type BridgeDeliveryTarget = {
   id: string;
@@ -221,20 +231,10 @@ async function getMailboxDeliveryStatus({
       return { isDelivered: false, destinationTxHash: undefined };
     }
     const provider = typedProvider.provider as EthersLikeProvider;
-    const delivered = await callMailboxBoolean(
-      provider,
-      mailbox,
-      MAILBOX_DELIVERED_SELECTOR,
-      msgId,
-    );
+    const delivered = await callMailboxBoolean(provider, mailbox, 'delivered', msgId);
     if (!delivered) return { isDelivered: false, destinationTxHash: undefined };
 
-    const processedAt = await callMailboxUint(
-      provider,
-      mailbox,
-      MAILBOX_PROCESSED_AT_SELECTOR,
-      msgId,
-    );
+    const processedAt = await callMailboxUint(provider, mailbox, 'processedAt', msgId);
     const destinationTxHash =
       processedAt > 0n
         ? await findProcessTxHash(provider, mailbox, msgId, Number(processedAt))
@@ -250,21 +250,35 @@ async function getMailboxDeliveryStatus({
 async function callMailboxBoolean(
   provider: EthersLikeProvider,
   mailbox: string,
-  selector: string,
+  functionName: 'delivered',
   msgId: string,
 ) {
-  const raw = await provider.call({ to: mailbox, data: encodeMailboxCall(selector, msgId) });
-  return BigInt(raw) === 1n;
+  const raw = await provider.call({
+    to: mailbox,
+    data: encodeMailboxCall(functionName, msgId),
+  });
+  return decodeFunctionResult({
+    abi: MAILBOX_ABI,
+    functionName,
+    data: raw as Hex,
+  });
 }
 
 async function callMailboxUint(
   provider: EthersLikeProvider,
   mailbox: string,
-  selector: string,
+  functionName: 'processedAt',
   msgId: string,
 ) {
-  const raw = await provider.call({ to: mailbox, data: encodeMailboxCall(selector, msgId) });
-  return BigInt(raw);
+  const raw = await provider.call({
+    to: mailbox,
+    data: encodeMailboxCall(functionName, msgId),
+  });
+  return decodeFunctionResult({
+    abi: MAILBOX_ABI,
+    functionName,
+    data: raw as Hex,
+  });
 }
 
 async function findProcessTxHash(
@@ -282,8 +296,12 @@ async function findProcessTxHash(
   return log?.transactionHash;
 }
 
-function encodeMailboxCall(selector: string, msgId: string) {
-  return `${selector}${msgId.replace(/^0x/, '')}`;
+function encodeMailboxCall(functionName: 'delivered' | 'processedAt', msgId: string) {
+  return encodeFunctionData({
+    abi: MAILBOX_ABI,
+    functionName,
+    args: [msgId as Hex],
+  });
 }
 
 function getSwapDeliveryMsgId(msgIds: LabeledMsgId[]) {

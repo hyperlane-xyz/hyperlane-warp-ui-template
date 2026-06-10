@@ -15,7 +15,7 @@ import {
   useWalletDetails,
 } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import Image from 'next/image';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import { TokenChainIcon } from '../../components/icons/TokenChainIcon';
@@ -89,7 +89,6 @@ export function TransfersDetailsModal({
 
   const multiProvider = useMultiProvider();
   const warpCore = useWarpCore();
-  const updateBridgeTransactionStatus = useStore((s) => s.updateBridgeTransactionStatus);
 
   const isChainKnown = multiProvider.hasChain(origin);
   const account = useAccountForChain(multiProvider, isChainKnown ? origin : undefined);
@@ -165,33 +164,6 @@ export function TransfersDetailsModal({
     : isFailed
       ? MessageStatus.Failing
       : MessageStatus.Pending;
-
-  // Reset delivery tracking when viewing a different transfer
-  const hasUpdatedDelivery = useRef(false);
-  useEffect(() => {
-    hasUpdatedDelivery.current = false;
-  }, [msgId]);
-
-  // Update store when delivery is confirmed
-  useEffect(() => {
-    if (
-      delivery.isDelivered &&
-      !hasUpdatedDelivery.current &&
-      status !== TransferStatus.Delivered &&
-      transactionId
-    ) {
-      hasUpdatedDelivery.current = true;
-      updateBridgeTransactionStatus(transactionId, TransferStatus.Delivered, {
-        destinationTxHash: delivery.destinationTxHash,
-      });
-    }
-  }, [
-    delivery.isDelivered,
-    delivery.destinationTxHash,
-    transactionId,
-    status,
-    updateBridgeTransactionStatus,
-  ]);
 
   // Fetch explorer URLs for addresses and transactions
   useEffect(() => {

@@ -10,7 +10,6 @@ import {
 } from '@hyperlane-xyz/widgets';
 import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { toast } from 'react-toastify';
 
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import { TokenChainIcon } from '../../components/icons/TokenChainIcon';
@@ -23,7 +22,6 @@ import { getHypExplorerMessageLink } from '../../utils/links';
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
-import { useMessageDeliveryStatus } from '../messages/useMessageDeliveryStatus';
 import { TransactionHistoryItemType, useStore } from '../store';
 import { formatBalance } from './balances/utils';
 import { getTokenByKeyFromMap, useTokenByKeyMap } from './tokens/hooks';
@@ -94,8 +92,6 @@ function SwapDetailsModalInner({
 }) {
   const multiProvider = useMultiProvider();
   const tokenMap = useTokenByKeyMap();
-  const updateSwapTransactionStatus = useStore((s) => s.updateSwapTransactionStatus);
-
   const {
     status,
     srcChain,
@@ -137,32 +133,6 @@ function SwapDetailsModalInner({
     msgIds?.find((m) => m.label === 'warp') ??
     msgIds?.[0]
   )?.msgId;
-  const delivery = useMessageDeliveryStatus(pollingMsgId, !isFinal, multiProvider);
-
-  const hasUpdatedDelivery = useRef(false);
-  useEffect(() => {
-    hasUpdatedDelivery.current = false;
-  }, [pollingMsgId]);
-
-  useEffect(() => {
-    if (
-      delivery.isDelivered &&
-      !hasUpdatedDelivery.current &&
-      status !== SwapStatus.ConfirmedDestination
-    ) {
-      hasUpdatedDelivery.current = true;
-      updateSwapTransactionStatus(transactionId, SwapStatus.ConfirmedDestination, {
-        destinationTxHash: delivery.destinationTxHash,
-      });
-      toast.success('Swap complete! Funds have arrived.');
-    }
-  }, [
-    delivery.isDelivered,
-    delivery.destinationTxHash,
-    transactionId,
-    status,
-    updateSwapTransactionStatus,
-  ]);
 
   const isSent =
     status === SwapStatus.ConfirmingOrigin ||

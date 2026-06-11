@@ -8,12 +8,17 @@ describe('formatDisplayAmount', () => {
     expect(formatDisplayAmount(123456789123456000000n, 18)).toBe('123.4567');
   });
 
-  test('caps normal fractional values at four decimals', () => {
-    expect(formatDisplayAmount(123456789123456000000n, 18)).toBe('123.4567');
+  test('caps normal fractional values at available token decimals', () => {
+    expect(formatDisplayAmount(12345n, 2)).toBe('123.45');
+    expect(formatDisplayAmount(123456n, 3)).toBe('123.456');
   });
 
-  test('trims trailing zeros', () => {
+  test('drops sub-display dust for non-zero integer amounts', () => {
     expect(formatDisplayAmount(1000000000000000001n, 18)).toBe('1');
+  });
+
+  test('formats zero amounts', () => {
+    expect(formatDisplayAmount(0n, 18)).toBe('0');
   });
 
   test('keeps enough precision for tiny non-zero values', () => {

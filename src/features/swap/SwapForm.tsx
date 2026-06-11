@@ -4,7 +4,7 @@ import { useAccounts } from '@hyperlane-xyz/widgets/walletIntegrations/accounts'
 import { useAccountAddressForChain } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import { Form, Formik, useFormikContext } from 'formik';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { Address } from 'viem';
+import { formatUnits, type Address } from 'viem';
 
 import { FormWarningBanner } from '../../components/banner/FormWarningBanner';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
@@ -608,6 +608,14 @@ function DestinationTokenCard({
   const { values, setFieldValue } = useFormikContext<SwapFormValues>();
   const { data: balance } = useTokenBalance(dstToken, recipient);
 
+  const outputExact = useMemo(() => {
+    if (!bestRoute || !dstToken) return '';
+    try {
+      return formatUnits(BigInt(bestRoute.raw.output), dstToken.decimals);
+    } catch {
+      return '';
+    }
+  }, [bestRoute, dstToken]);
   const outputDisplay = useMemo(() => {
     if (!bestRoute || !dstToken) return '';
     try {
@@ -616,7 +624,7 @@ function DestinationTokenCard({
       return '';
     }
   }, [bestRoute, dstToken]);
-  const outputUsd = useTokenUsdValue(dstToken, outputDisplay);
+  const outputUsd = useTokenUsdValue(dstToken, outputExact);
   // Price impact = how much value the swap loses to fees + slippage + spread.
   // Only meaningful when both sides have USD prices.
   const priceImpactPct = useMemo(() => {

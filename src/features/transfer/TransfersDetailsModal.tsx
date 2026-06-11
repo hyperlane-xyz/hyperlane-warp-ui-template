@@ -15,7 +15,7 @@ import {
   useWalletDetails,
 } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import Image from 'next/image';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import { TokenChainIcon } from '../../components/icons/TokenChainIcon';
@@ -128,6 +128,24 @@ export function TransfersDetailsModal({
   // Resolve the destination tx hash from either store or live query
   const destinationTxHash = storedDestTxHash || delivery.destinationTxHash;
 
+  useEffect(() => {
+    if (!transactionId || !delivery.isDelivered) return;
+    if (status === TransferStatus.Delivered && (!delivery.destinationTxHash || storedDestTxHash)) {
+      return;
+    }
+
+    updateBridgeTransactionStatus(transactionId, TransferStatus.Delivered, {
+      destinationTxHash: delivery.destinationTxHash,
+    });
+  }, [
+    delivery.destinationTxHash,
+    delivery.isDelivered,
+    status,
+    storedDestTxHash,
+    transactionId,
+    updateBridgeTransactionStatus,
+  ]);
+
   const isAccountReady = !!account?.isReady;
   const connectorName = walletDetails.name || 'wallet';
   const token = tryFindToken(warpCore, origin, originTokenAddressOrDenom);
@@ -165,33 +183,6 @@ export function TransfersDetailsModal({
     : isFailed
       ? MessageStatus.Failing
       : MessageStatus.Pending;
-
-  // Reset delivery tracking when viewing a different transfer
-  const hasUpdatedDelivery = useRef(false);
-  useEffect(() => {
-    hasUpdatedDelivery.current = false;
-  }, [msgId]);
-
-  // Update store when delivery is confirmed
-  useEffect(() => {
-    if (
-      delivery.isDelivered &&
-      !hasUpdatedDelivery.current &&
-      status !== TransferStatus.Delivered &&
-      transactionId
-    ) {
-      hasUpdatedDelivery.current = true;
-      updateBridgeTransactionStatus(transactionId, TransferStatus.Delivered, {
-        destinationTxHash: delivery.destinationTxHash,
-      });
-    }
-  }, [
-    delivery.isDelivered,
-    delivery.destinationTxHash,
-    transactionId,
-    status,
-    updateBridgeTransactionStatus,
-  ]);
 
   // Fetch explorer URLs for addresses and transactions
   useEffect(() => {

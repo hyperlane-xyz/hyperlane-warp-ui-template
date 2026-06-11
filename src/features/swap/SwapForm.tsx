@@ -4,7 +4,7 @@ import { useAccounts } from '@hyperlane-xyz/widgets/walletIntegrations/accounts'
 import { useAccountAddressForChain } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import { Form, Formik, useFormikContext } from 'formik';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { formatUnits, type Address } from 'viem';
+import type { Address } from 'viem';
 
 import { FormWarningBanner } from '../../components/banner/FormWarningBanner';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
@@ -25,7 +25,7 @@ import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { WalletDropdown } from '../wallet/WalletDropdown';
 import { ApprovalPhase, useApprovalStatus } from './approval';
 import { useTokenBalance } from './balances/hooks';
-import { formatBalance, formatFeeAmount, formatUsd } from './balances/utils';
+import { formatDisplayAmount, formatFeeAmount, formatUsd } from './balances/utils';
 import { FeeSectionButton } from './FeeSectionButton';
 import { MaxButton } from './MaxButton';
 import { RouteSelectionModal } from './routeSelection/RouteSelectionModal';
@@ -611,7 +611,7 @@ function DestinationTokenCard({
   const outputDisplay = useMemo(() => {
     if (!bestRoute || !dstToken) return '';
     try {
-      return formatUnits(BigInt(bestRoute.raw.output), dstToken.decimals);
+      return formatDisplayAmount(BigInt(bestRoute.raw.output), dstToken.decimals);
     } catch {
       return '';
     }
@@ -802,12 +802,12 @@ function ReviewTransactions({
           )}
           <p className="flex">
             <span className="min-w-[7.5rem]">Expected Output</span>
-            <span>{`${formatBalance(BigInt(route.raw.output), dstDecimals)} ${dstSymbol}`}</span>
+            <span>{`${formatDisplayAmount(BigInt(route.raw.output), dstDecimals)} ${dstSymbol}`}</span>
           </p>
           {!route.isBridgeOnly && (
             <p className="flex">
               <span className="min-w-[7.5rem]">Min Output</span>
-              <span>{`${formatBalance(BigInt(route.raw.outputMin), dstDecimals)} ${dstSymbol}`}</span>
+              <span>{`${formatDisplayAmount(BigInt(route.raw.outputMin), dstDecimals)} ${dstSymbol}`}</span>
             </p>
           )}
           {route.feeBreakdown.components

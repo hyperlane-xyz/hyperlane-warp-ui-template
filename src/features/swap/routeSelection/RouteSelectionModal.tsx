@@ -7,7 +7,7 @@ import { TokenIcon } from '../../../components/icons/TokenIcon';
 import { HoverTooltip } from '../../../components/tooltip/HoverTooltip';
 import type { QuoteBridgeStep, QuoteStep, QuoteSwapStep } from '../../api/types';
 import { useMultiProvider } from '../../chains/hooks';
-import { formatBalance, formatFeeAmount } from '../balances/utils';
+import { formatDisplayAmount, formatFeeAmount } from '../balances/utils';
 import { getDexMeta } from '../dexMeta';
 import { getTokenByKeyFromMap, useTokenByKeyMap } from '../tokens/hooks';
 import type { UiToken } from '../tokens/types';
@@ -101,7 +101,7 @@ interface RouteCardProps {
 function RouteCard({ route, index, isSelected, isBest, onSelect, dstToken }: RouteCardProps) {
   const decimals = dstToken?.decimals ?? 18;
   const symbol = dstToken?.symbol ?? '';
-  const outputFormatted = formatBalance(BigInt(route.raw.output), decimals);
+  const outputFormatted = formatDisplayAmount(BigInt(route.raw.output), decimals);
 
   return (
     <button

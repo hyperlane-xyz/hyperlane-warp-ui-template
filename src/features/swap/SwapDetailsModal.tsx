@@ -24,7 +24,7 @@ import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { getSwapDeliveryMsgId } from '../messages/utils';
 import { TransactionHistoryItemType, useStore } from '../store';
-import { formatBalance } from './balances/utils';
+import { formatDisplayAmount } from './balances/utils';
 import { getTokenByKeyFromMap, useTokenByKeyMap } from './tokens/hooks';
 import { FinalSwapStatuses, SwapStatus, type SwapHistoryItem } from './types';
 
@@ -365,7 +365,7 @@ function fixDoubleSlash(url: string) {
 function formatAmount(amount: string, decimals: number | undefined): string {
   if (decimals == null) return `${amount} (atomic)`;
   try {
-    return formatBalance(BigInt(amount), decimals);
+    return formatDisplayAmount(BigInt(amount), decimals);
   } catch {
     return amount;
   }

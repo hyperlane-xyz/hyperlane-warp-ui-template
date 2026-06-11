@@ -4,7 +4,7 @@ import type { UiToken } from '../tokens/types';
 import { getTokenKey } from '../tokens/utils';
 import type { FeeComponent } from '../types';
 
-export { formatBalance, formatUsd } from '../../../utils/amount';
+export { formatBalance, formatDisplayAmount, formatUsd } from '../../../utils/amount';
 
 // Fee amounts need more precision than balances — gas fees can be ~1e-5
 // native units which formatBalance's 4-decimal rounding renders as "0.0000".

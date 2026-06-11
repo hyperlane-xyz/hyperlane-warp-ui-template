@@ -234,11 +234,16 @@ async function getMailboxDeliveryStatus({
     const delivered = await callMailboxBoolean(provider, mailbox, 'delivered', msgId);
     if (!delivered) return { isDelivered: false, destinationTxHash: undefined };
 
-    const processedAt = await callMailboxUint(provider, mailbox, 'processedAt', msgId);
-    const destinationTxHash =
-      processedAt > 0n
-        ? await findProcessTxHash(provider, mailbox, msgId, Number(processedAt))
-        : undefined;
+    let destinationTxHash: string | undefined;
+    try {
+      const processedAt = await callMailboxUint(provider, mailbox, 'processedAt', msgId);
+      destinationTxHash =
+        processedAt > 0n
+          ? await findProcessTxHash(provider, mailbox, msgId, Number(processedAt))
+          : undefined;
+    } catch (err) {
+      logger.warn('Mailbox delivered but process transaction lookup failed', err as Error);
+    }
 
     return { isDelivered: true, destinationTxHash };
   } catch (err) {

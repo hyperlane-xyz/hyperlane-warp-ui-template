@@ -1,7 +1,7 @@
+import { isZeroishAddress } from '@hyperlane-xyz/utils';
 import { useEffect, useRef } from 'react';
 import { toast } from 'react-toastify';
 
-import { isZeroishAddress } from '@hyperlane-xyz/utils';
 import { useMultiProvider } from '../chains/hooks';
 import { useStore } from '../store';
 import { FinalSwapStatuses, SwapStatus, type SwapHistoryItem } from './types';
@@ -23,10 +23,11 @@ async function detectSwapOutcome(
   dstToken: string,
 ): Promise<'success' | 'failed_recovered' | 'dest_failed'> {
   const receipt = await provider.getTransactionReceipt(destinationTxHash);
-  if (!receipt) return 'dest_failed';
+  if (!receipt) throw new Error('Destination transaction receipt not found');
 
   const recipientLower = recipient.toLowerCase();
   const bridgeTokenLower = bridgeToken.toLowerCase();
+  const isNativeOutput = isZeroishAddress(dstToken);
   const dstTokenLower = dstToken.toLowerCase();
 
   let destSwapSucceeded = false;
@@ -44,6 +45,9 @@ async function detectSwapOutcome(
     if (addr === bridgeTokenLower && to === recipientLower) fallbackDelivered = true;
   }
 
+  if (isNativeOutput) {
+    return fallbackDelivered ? 'failed_recovered' : 'success';
+  }
   if (destSwapSucceeded) return 'success';
   if (fallbackDelivered) return 'failed_recovered';
   return 'dest_failed';
@@ -60,30 +64,29 @@ export function useSwapStatus(swap: SwapHistoryItem | undefined, transactionId: 
   const lastProcessedTxRef = useRef<string | null>(null);
 
   useEffect(() => {
-    const { destinationTxHash, status, dstChain, recipient } = swap ?? {};
-    if (!destinationTxHash || !transactionId || !route?.callCommitment) return;
+    const { destinationTxHash, destinationOutcome, status, dstChain, recipient } = swap ?? {};
+    if (!destinationTxHash || !transactionId) return;
     if (status && FinalSwapStatuses.includes(status)) return;
     if (lastProcessedTxRef.current === destinationTxHash) return;
     lastProcessedTxRef.current = destinationTxHash;
 
-    const destSwapStep = route.steps.find((s) => s.type === 'swap' && s.chain === dstChain);
+    const destSwapStep = route?.steps.find(
+      (step): step is Extract<NonNullable<typeof route>['steps'][number], { type: 'swap' }> =>
+        step.type === 'swap' && step.chain === dstChain,
+    );
 
     // No dest swap on this ICA route — bridge delivered, that's a success.
-    if (!destSwapStep || destSwapStep.type !== 'swap') {
+    if (
+      !destinationOutcome &&
+      (!route?.callCommitment || !destSwapStep || destSwapStep.type !== 'swap')
+    ) {
       updateStatus(transactionId, SwapStatus.ConfirmedDestination);
       toast.success('Swap complete! Funds have arrived.');
       return;
     }
 
-    const bridgeToken = destSwapStep.tokenIn;
-    const dstToken = destSwapStep.tokenOut;
-
-    // Native output — Transfer events won't show ETH, optimistically assume success.
-    if (isZeroishAddress(dstToken)) {
-      updateStatus(transactionId, SwapStatus.ConfirmedDestination);
-      toast.success('Swap complete! Funds have arrived.');
-      return;
-    }
+    const bridgeToken = destinationOutcome?.bridgeToken ?? destSwapStep!.tokenIn;
+    const dstToken = destinationOutcome?.dstToken ?? destSwapStep!.tokenOut;
 
     let provider: ReceiptProvider | null = null;
     try {
@@ -119,6 +122,7 @@ export function useSwapStatus(swap: SwapHistoryItem | undefined, transactionId: 
       });
   }, [
     swap?.destinationTxHash,
+    swap?.destinationOutcome,
     swap?.status,
     swap?.dstChain,
     swap?.recipient,

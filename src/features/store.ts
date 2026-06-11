@@ -20,12 +20,12 @@ import { persist } from 'zustand/middleware';
 
 import { config } from '../consts/config';
 import { logger } from '../utils/logger';
+import type { RouteResponse } from './api/types';
 import { assembleChainAddresses } from './chains/addresses';
 import { assembleChainMetadata } from './chains/metadata';
 import type { UiToken } from './swap/tokens/types';
 import { getTokenKey as getSwapTokenKey } from './swap/tokens/utils';
 import { FinalSwapStatuses, LabeledMsgId, SwapHistoryItem, SwapStatus } from './swap/types';
-import type { RouteResponse } from './api/types';
 import {
   buildTokensArray,
   getTokenKey,

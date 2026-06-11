@@ -14,6 +14,11 @@ export interface SwapHistoryTokenMeta {
   logoURI?: string;
 }
 
+export interface SwapDestinationOutcome {
+  bridgeToken: string;
+  dstToken: string;
+}
+
 // ── Persisted/in-memory swap history ──────────────────────────────────
 
 // Status of a single submitted swap. Used by SwapDetailsModal to drive
@@ -61,9 +66,10 @@ export interface SwapHistoryItem {
   recipient: string;
   originTxHash?: string;
   destinationTxHash?: string;
+  destinationOutcome?: SwapDestinationOutcome;
   msgIds?: LabeledMsgId[];
   originBlockNumber?: number;
-  /** Unix seconds when the origin tx was broadcast. */
+  /** Unix seconds when the origin tx was confirmed and bridge polling started. */
   originTxTimestamp?: number;
 }
 

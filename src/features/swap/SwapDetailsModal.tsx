@@ -10,7 +10,6 @@ import {
 } from '@hyperlane-xyz/widgets';
 import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { toast } from 'react-toastify';
 
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import { TokenChainIcon } from '../../components/icons/TokenChainIcon';
@@ -23,12 +22,11 @@ import { getHypExplorerLink } from '../../utils/links';
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
-import { useMessageDeliveryStatus } from '../messages/useMessageDeliveryStatus';
+import { getSwapDeliveryMsgId } from '../messages/utils';
 import { TransactionHistoryItemType, useStore } from '../store';
 import { formatBalance } from './balances/utils';
 import { getTokenByKeyFromMap, useTokenByKeyMap } from './tokens/hooks';
 import { FinalSwapStatuses, SwapStatus, type SwapHistoryItem } from './types';
-import { useSwapStatus } from './useSwapStatus';
 
 const DEFAULT_TIMINGS: StageTimings = {
   [MessageStage.Finalized]: null,
@@ -97,11 +95,6 @@ function SwapDetailsModalInner({
 }) {
   const multiProvider = useMultiProvider();
   const tokenMap = useTokenByKeyMap();
-  const updateSwapTransactionStatus = useStore((s) => s.updateSwapTransactionStatus);
-  const isIcaRoute = useStore(
-    (s) => !!s.swapRouteByTransactionId.get(transactionId)?.callCommitment,
-  );
-
   const {
     status,
     srcChain,
@@ -128,10 +121,6 @@ function SwapDetailsModalInner({
   const srcDecimals = srcToken?.decimals ?? swap.srcTokenMeta?.decimals;
   const dstDecimals = dstToken?.decimals ?? swap.dstTokenMeta?.decimals;
 
-  // Reads the REVEAL tx receipt once it lands; drives transitions to ConfirmedDestination,
-  // FailedRecovered, and DestFailed by checking Transfer events client-side.
-  useSwapStatus(swap, transactionId);
-
   const isFailed = status === SwapStatus.Failed;
   const isDestFailed = status === SwapStatus.DestSwapFailed;
   const isDelivered = status === SwapStatus.ConfirmedDestination;
@@ -139,51 +128,11 @@ function SwapDetailsModalInner({
   const isRevealFailed = status === SwapStatus.DestFailed;
   const isFinal = FinalSwapStatuses.includes(status);
 
-  // For ICA routes, only the reveal message delivery tx is the actual ICA execution.
-  // The warp/bridge message delivery tx is a CCTP bundle — wrong tx for swap detection.
-  // Track reveal separately so we never submit the bridge tx as destinationTxHash.
-  const revealMsgId = msgIds?.find((m) => m.label === 'reveal')?.msgId;
-  // pollingMsgId drives the timeline display — falls back to warp for pure-bridge routes.
-  const pollingMsgId = (
-    revealMsgId ??
-    msgIds?.find((m) => m.label === 'warp')?.msgId ??
-    msgIds?.[0]?.msgId
-  );
-  const delivery = useMessageDeliveryStatus(pollingMsgId, !isFinal, multiProvider);
-
-  const hasUpdatedDelivery = useRef(false);
-  useEffect(() => {
-    hasUpdatedDelivery.current = false;
-  }, [pollingMsgId]);
-
-  useEffect(() => {
-    if (!delivery.isDelivered || hasUpdatedDelivery.current) return;
-    hasUpdatedDelivery.current = true;
-
-    if (isIcaRoute) {
-      // Only pass destinationTxHash when the reveal message delivered — that tx IS
-      // the ICA execution. If we fell back to polling the warp message, the delivery
-      // tx is the CCTP bridge bundle, which is useless for swap outcome detection.
-      const isRevealDelivery = pollingMsgId === revealMsgId;
-      updateSwapTransactionStatus(transactionId, status, {
-        ...(isRevealDelivery ? { destinationTxHash: delivery.destinationTxHash } : {}),
-      });
-    } else {
-      updateSwapTransactionStatus(transactionId, SwapStatus.ConfirmedDestination, {
-        destinationTxHash: delivery.destinationTxHash,
-      });
-      toast.success('Swap complete! Funds have arrived.');
-    }
-  }, [
-    delivery.isDelivered,
-    delivery.destinationTxHash,
-    transactionId,
-    status,
-    isIcaRoute,
-    pollingMsgId,
-    revealMsgId,
-    updateSwapTransactionStatus,
-  ]);
+  // Poll the reveal message when present — its delivery tx IS the ICA
+  // execution on the destination chain, which is what actually completes
+  // the swap. Pure-bridge routes (no destination swap) have no reveal,
+  // so fall back to the warp message. Same-chain swaps have no msgIds.
+  const pollingMsgId = getSwapDeliveryMsgId(msgIds);
 
   const isSent =
     status === SwapStatus.ConfirmingOrigin ||
@@ -195,16 +144,18 @@ function SwapDetailsModalInner({
     isRevealFailed;
 
   const stage = useMemo<MessageStage>(() => {
-    if (isDelivered) return MessageStage.Relayed;
+    if (isDelivered || isDestFailed || isFailedRecovered || isRevealFailed) {
+      return MessageStage.Relayed;
+    }
     if (status === SwapStatus.ConfirmingDestination) return MessageStage.Validated;
     if (status === SwapStatus.Bridging) return MessageStage.Finalized;
     if (status === SwapStatus.ConfirmingOrigin) return MessageStage.Sent;
     return MessageStage.Preparing;
-  }, [status, isDelivered]);
+  }, [status, isDelivered, isDestFailed, isFailedRecovered, isRevealFailed]);
 
   const messageStatus = isDelivered
     ? MessageStatus.Delivered
-    : isFailed || isDestFailed
+    : isFailed || isDestFailed || isFailedRecovered || isRevealFailed
       ? MessageStatus.Failing
       : MessageStatus.Pending;
 
@@ -339,8 +290,8 @@ function SwapDetailsModalInner({
           <div className="mt-5 flex flex-col space-y-4">
             {isDestFailed && (
               <div className="rounded border border-amber-300 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">
-                Origin succeeded and the bridge delivered, but the destination swap reverted. The
-                fallback swept the bridge token back to your wallet on the destination chain.
+                Origin succeeded and the bridge delivered, but the destination swap reverted. Bridge
+                token may remain in your ICA. Please contact support.
               </div>
             )}
             {isFailedRecovered && (

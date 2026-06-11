@@ -277,6 +277,9 @@ function SwapFormContent() {
 
     const initialStep = bestRoute.raw.steps[0];
     const finalStep = bestRoute.raw.steps[bestRoute.raw.steps.length - 1];
+    const destinationSwapStep = bestRoute.raw.steps.find(
+      (step) => step.type === 'swap' && step.chain === values.dstChain,
+    );
     const timestamp = Date.now();
     const item: SwapHistoryItem = {
       status: SwapStatus.Preparing,
@@ -302,6 +305,13 @@ function SwapFormContent() {
       amountOut: finalStep && 'amountOut' in finalStep ? finalStep.amountOut : bestRoute.raw.output,
       sender,
       recipient: effectiveRecipient,
+      destinationOutcome:
+        bestRoute.raw.callCommitment && destinationSwapStep?.type === 'swap'
+          ? {
+              bridgeToken: destinationSwapStep.tokenIn,
+              dstToken: destinationSwapStep.tokenOut,
+            }
+          : undefined,
     };
     const transactionId = addSwapTransaction(item);
     setSelectedTransactionId(transactionId);

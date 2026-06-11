@@ -121,6 +121,7 @@ function DeliveryTargetWatcher({
     multiProvider,
     enabled: target.type === TransactionHistoryItemType.Swap && !graphQlDelivery.isDelivered,
   });
+  // Swap recovery status is centralized here so the modal stays display-only.
   useSwapStatus(swap, target.type === TransactionHistoryItemType.Swap ? target.id : null);
   const hasToasted = useRef(false);
   const hasUpdatedFromGraphQl = useRef(false);

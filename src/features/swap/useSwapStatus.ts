@@ -37,7 +37,7 @@ async function detectSwapOutcome(
     if (log.topics[0] !== TRANSFER_TOPIC) continue;
     if (log.topics.length < 3) continue;
 
-    // topics are 32-byte hex strings; last 40 chars are the address
+    // Indexed addresses are 0x + 24 leading-zero chars + 40 address chars.
     const to = `0x${log.topics[2]!.slice(26)}`.toLowerCase();
     const addr = log.address.toLowerCase();
 
@@ -93,12 +93,11 @@ export function useSwapStatus(swap: SwapHistoryItem | undefined, transactionId: 
       const chainName = multiProvider.tryGetChainName(dstChain!);
       if (chainName) provider = multiProvider.getEthersV5Provider(chainName);
     } catch {
-      // chain not registered — fall through to optimistic success below
+      // chain not registered — keep confirming so a later render can retry
     }
 
     if (!provider) {
-      updateStatus(transactionId, SwapStatus.ConfirmedDestination);
-      toast.success('Swap complete! Funds have arrived.');
+      lastProcessedTxRef.current = null;
       return;
     }
 
@@ -116,9 +115,7 @@ export function useSwapStatus(swap: SwapHistoryItem | undefined, transactionId: 
         }
       })
       .catch(() => {
-        // Receipt read failed — optimistically show success to avoid false negatives.
-        updateStatus(transactionId, SwapStatus.ConfirmedDestination);
-        toast.success('Swap complete! Funds have arrived.');
+        lastProcessedTxRef.current = null;
       });
   }, [
     swap?.destinationTxHash,

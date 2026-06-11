@@ -278,7 +278,8 @@ function SwapFormContent() {
     const initialStep = bestRoute.raw.steps[0];
     const finalStep = bestRoute.raw.steps[bestRoute.raw.steps.length - 1];
     const destinationSwapStep = bestRoute.raw.steps.find(
-      (step) => step.type === 'swap' && step.chain === values.dstChain,
+      (step): step is Extract<(typeof bestRoute.raw.steps)[number], { type: 'swap' }> =>
+        step.type === 'swap' && step.chain === values.dstChain,
     );
     const timestamp = Date.now();
     const item: SwapHistoryItem = {
@@ -306,7 +307,7 @@ function SwapFormContent() {
       sender,
       recipient: effectiveRecipient,
       destinationOutcome:
-        bestRoute.raw.callCommitment && destinationSwapStep?.type === 'swap'
+        bestRoute.raw.callCommitment && destinationSwapStep
           ? {
               bridgeToken: destinationSwapStep.tokenIn,
               dstToken: destinationSwapStep.tokenOut,

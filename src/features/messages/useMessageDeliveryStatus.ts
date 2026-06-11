@@ -1,5 +1,6 @@
 import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk';
 import { useQuery } from '@tanstack/react-query';
+import { useEffect, useRef } from 'react';
 
 import { logger } from '../../utils/logger';
 import { executeGraphQLQuery } from './graphqlClient';
@@ -8,6 +9,7 @@ import { parseTimestamp, postgresByteaToTxHash } from './queries/encoding';
 import type { MessageStubEntry } from './queries/fragments';
 
 const POLL_INTERVAL_MS = 10_000;
+const DELIVERED_HASH_BACKFILL_WINDOW_MS = 2 * 60 * 1_000;
 
 export interface MessageDeliveryResult {
   /** Whether the message has been delivered on destination */
@@ -31,6 +33,12 @@ export function useMessageDeliveryStatus(
   isOpen: boolean,
   multiProvider: MultiProtocolProvider,
 ): MessageDeliveryResult {
+  const deliveredWithoutHashFirstSeenAt = useRef<number | undefined>(undefined);
+
+  useEffect(() => {
+    deliveredWithoutHashFirstSeenAt.current = undefined;
+  }, [msgId]);
+
   const { data, isLoading } = useQuery({
     // eslint-disable-next-line @tanstack/query/exhaustive-deps -- multiProvider is stable, adding it causes unnecessary refetches
     queryKey: ['messageDelivery', msgId],
@@ -52,8 +60,17 @@ export function useMessageDeliveryStatus(
     enabled: !!msgId && isOpen,
     staleTime: 30_000,
     refetchInterval: (query) => {
-      // Stop polling once delivered
-      if (query.state.data?.isDelivered) return false;
+      const result = query.state.data;
+      if (!result?.isDelivered) {
+        deliveredWithoutHashFirstSeenAt.current = undefined;
+        return POLL_INTERVAL_MS;
+      }
+      if (result.destinationTxHash) return false;
+
+      deliveredWithoutHashFirstSeenAt.current ??= Date.now();
+      const backfillElapsedMs = Date.now() - deliveredWithoutHashFirstSeenAt.current;
+      if (backfillElapsedMs >= DELIVERED_HASH_BACKFILL_WINDOW_MS) return false;
+
       return POLL_INTERVAL_MS;
     },
     refetchOnWindowFocus: false,

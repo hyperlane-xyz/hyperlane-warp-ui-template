@@ -19,7 +19,7 @@ import ArrowRightIcon from '../../images/icons/arrow-right.svg';
 import LinkIcon from '../../images/icons/external-link-icon.svg';
 import { Color } from '../../styles/Color';
 import { formatTimestamp } from '../../utils/date';
-import { getHypExplorerMessageLink } from '../../utils/links';
+import { getHypExplorerLink } from '../../utils/links';
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
@@ -27,7 +27,7 @@ import { useMessageDeliveryStatus } from '../messages/useMessageDeliveryStatus';
 import { TransactionHistoryItemType, useStore } from '../store';
 import { formatBalance } from './balances/utils';
 import { getTokenByKeyFromMap, useTokenByKeyMap } from './tokens/hooks';
-import { FinalSwapStatuses, SwapStatus, type LabeledMsgId, type SwapHistoryItem } from './types';
+import { FinalSwapStatuses, SwapStatus, type SwapHistoryItem } from './types';
 
 const DEFAULT_TIMINGS: StageTimings = {
   [MessageStage.Finalized]: null,
@@ -108,10 +108,9 @@ function SwapDetailsModalInner({
     recipient,
     originTxHash,
     destinationTxHash,
-    msgIds: storedMsgIds,
+    msgIds,
     timestamp,
   } = swap;
-  const msgIds = normalizePersistedMsgLabels(storedMsgIds);
 
   const originChain = multiProvider.tryGetChainName(srcChain) ?? `chain ${srcChain}`;
   const destChain = multiProvider.tryGetChainName(dstChain) ?? `chain ${dstChain}`;
@@ -339,7 +338,7 @@ function SwapDetailsModalInner({
                 key={id}
                 name={LABEL_NAMES[label] ?? 'Message ID'}
                 value={id}
-                url={getHypExplorerMessageLink(multiProvider, originChain, id) ?? undefined}
+                url={getHypExplorerLink(multiProvider, originChain, id) ?? undefined}
               />
             ))}
           </div>
@@ -357,20 +356,6 @@ function SwapDetailsModalInner({
       </div>
     </Modal>
   );
-}
-
-function normalizePersistedMsgLabels(
-  msgIds: LabeledMsgId[] | undefined,
-): LabeledMsgId[] | undefined {
-  if (
-    msgIds?.length === 3 &&
-    msgIds[0]?.label === 'commit' &&
-    msgIds[1]?.label === 'reveal' &&
-    msgIds[2]?.label === 'reveal'
-  ) {
-    return [{ ...msgIds[0], label: 'warp' }, { ...msgIds[1], label: 'commit' }, msgIds[2]];
-  }
-  return msgIds;
 }
 
 function TransferProperty({ name, value, url }: { name: string; value: string; url?: string }) {

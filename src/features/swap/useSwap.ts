@@ -253,12 +253,12 @@ function labelMessages(messages: ParsedMessage[], route: AugmentedRoute): Labele
   );
 
   return messages.map((msg) => {
-    const ccsLabel = getCcsMessageLabel(msg.body);
-    if (ccsLabel) return { msgId: msg.msgId, label: ccsLabel };
-
     if (bridgeRouters.has(msg.sender.toLowerCase())) {
       return { msgId: msg.msgId, label: 'warp' as const };
     }
+
+    const ccsLabel = getCcsMessageLabel(msg.body);
+    if (ccsLabel) return { msgId: msg.msgId, label: ccsLabel };
 
     logger.warn('Unexpected swap message shape; labeling as warp', {
       msgId: msg.msgId,
@@ -269,6 +269,7 @@ function labelMessages(messages: ParsedMessage[], route: AugmentedRoute): Labele
 }
 
 function getCcsMessageLabel(body: string): LabeledMsgId['label'] | null {
+  // CCS message bodies use the first byte as the message type.
   if (body.startsWith('0x01')) return 'commit';
   if (body.startsWith('0x02')) return 'reveal';
   return null;

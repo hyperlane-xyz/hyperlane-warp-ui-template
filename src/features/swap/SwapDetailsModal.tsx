@@ -22,6 +22,7 @@ import { getHypExplorerLink } from '../../utils/links';
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
+import { getSwapDeliveryMsgId } from '../messages/utils';
 import { TransactionHistoryItemType, useStore } from '../store';
 import { formatBalance } from './balances/utils';
 import { getTokenByKeyFromMap, useTokenByKeyMap } from './tokens/hooks';
@@ -127,11 +128,7 @@ function SwapDetailsModalInner({
   // execution on the destination chain, which is what actually completes
   // the swap. Pure-bridge routes (no destination swap) have no reveal,
   // so fall back to the warp message. Same-chain swaps have no msgIds.
-  const pollingMsgId = (
-    msgIds?.find((m) => m.label === 'reveal') ??
-    msgIds?.find((m) => m.label === 'warp') ??
-    msgIds?.[0]
-  )?.msgId;
+  const pollingMsgId = getSwapDeliveryMsgId(msgIds);
 
   const isSent =
     status === SwapStatus.ConfirmingOrigin ||

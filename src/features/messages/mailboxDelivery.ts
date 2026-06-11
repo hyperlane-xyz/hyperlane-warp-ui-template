@@ -60,10 +60,10 @@ export async function getMailboxDeliveryStatus({
     let destinationTxHash: string | undefined;
     try {
       const processedAt = await callMailboxUint(provider, mailbox, 'processedAt', msgId);
-      destinationTxHash =
-        processedAt > 0n
-          ? await findProcessTxHash(provider, mailbox, msgId, Number(processedAt))
-          : undefined;
+      const processedBlock = mailboxProcessedBlockToNumber(processedAt);
+      destinationTxHash = processedBlock
+        ? await findProcessTxHash(provider, mailbox, msgId, processedBlock)
+        : undefined;
     } catch (err) {
       logger.warn('Mailbox delivered but process transaction lookup failed', err as Error);
     }
@@ -130,4 +130,9 @@ function encodeMailboxCall(functionName: 'delivered' | 'processedAt', msgId: str
     functionName,
     args: [msgId as Hex],
   });
+}
+
+function mailboxProcessedBlockToNumber(processedAt: bigint) {
+  if (processedAt <= 0n || processedAt > BigInt(Number.MAX_SAFE_INTEGER)) return undefined;
+  return Number(processedAt);
 }

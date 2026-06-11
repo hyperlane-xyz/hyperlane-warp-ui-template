@@ -5,10 +5,11 @@ import { toast } from 'react-toastify';
 
 import { useMultiProvider } from '../chains/hooks';
 import { TransactionHistoryItemType, useStore } from '../store';
-import { FinalSwapStatuses, SwapStatus, type LabeledMsgId } from '../swap/types';
+import { FinalSwapStatuses, SwapStatus } from '../swap/types';
 import { TransferStatus } from '../transfer/types';
 import { useEvmMailboxDeliveryStatus } from './useEvmMailboxDeliveryStatus';
 import { useMessageDeliveryStatus } from './useMessageDeliveryStatus';
+import { getSwapDeliveryMsgId } from './utils';
 
 type BridgeDeliveryTarget = {
   id: string;
@@ -26,6 +27,8 @@ type SwapDeliveryTarget = {
 
 type DeliveryTarget = BridgeDeliveryTarget | SwapDeliveryTarget;
 
+const MAX_BACKGROUND_DELIVERY_TARGETS = 5;
+
 export function TransactionDeliveryWatcher() {
   const multiProvider = useMultiProvider();
   const chainAddresses = useStore((s) => s.chainAddresses);
@@ -33,28 +36,39 @@ export function TransactionDeliveryWatcher() {
 
   const targets = useMemo(
     () =>
-      transactionHistory.flatMap((item): DeliveryTarget[] => {
-        if (item.type === TransactionHistoryItemType.Bridge) {
-          if (
-            item.data.status !== TransferStatus.ConfirmedTransfer ||
-            !item.data.msgId ||
-            item.data.destinationTxHash
-          ) {
-            return [];
+      transactionHistory
+        .flatMap((item): DeliveryTarget[] => {
+          if (item.type === TransactionHistoryItemType.Bridge) {
+            if (
+              item.data.status !== TransferStatus.ConfirmedTransfer ||
+              !item.data.msgId ||
+              item.data.destinationTxHash
+            ) {
+              return [];
+            }
+            return [{ id: item.id, type: item.type, msgId: item.data.msgId }];
           }
-          return [{ id: item.id, type: item.type, msgId: item.data.msgId }];
-        }
 
-        if (!item.data.msgIds?.length) return [];
-        if (FinalSwapStatuses.includes(item.data.status) && item.data.destinationTxHash) return [];
+          if (item.type !== TransactionHistoryItemType.Swap) return [];
 
-        const destinationChain = multiProvider.tryGetChainName(item.data.dstChain);
-        if (!destinationChain) return [];
-        const msgId = getSwapDeliveryMsgId(item.data.msgIds);
-        return msgId
-          ? [{ id: item.id, type: item.type, msgId, destinationChain, status: item.data.status }]
-          : [];
-      }),
+          if (!item.data.msgIds?.length) return [];
+          if (FinalSwapStatuses.includes(item.data.status)) {
+            if (
+              item.data.status !== SwapStatus.ConfirmedDestination ||
+              item.data.destinationTxHash
+            ) {
+              return [];
+            }
+          }
+
+          const destinationChain = multiProvider.tryGetChainName(item.data.dstChain);
+          if (!destinationChain) return [];
+          const msgId = getSwapDeliveryMsgId(item.data.msgIds);
+          return msgId
+            ? [{ id: item.id, type: item.type, msgId, destinationChain, status: item.data.status }]
+            : [];
+        })
+        .slice(-MAX_BACKGROUND_DELIVERY_TARGETS),
     [multiProvider, transactionHistory],
   );
 
@@ -143,12 +157,4 @@ function DeliveryTargetWatcher({
   ]);
 
   return null;
-}
-
-function getSwapDeliveryMsgId(msgIds: LabeledMsgId[]) {
-  return (
-    msgIds.find((m) => m.label === 'reveal') ??
-    msgIds.find((m) => m.label === 'warp') ??
-    msgIds[0]
-  )?.msgId;
 }

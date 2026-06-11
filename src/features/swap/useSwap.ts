@@ -279,10 +279,8 @@ function labelMessages(messages: ParsedMessage[], route: AugmentedRoute): Labele
     }
 
     const ccsLabel = getCcsMessageLabel(msg.body);
-    if (ccsLabel === 'reveal' || msg === revealMsg) {
-      return { msgId: msg.msgId, label: 'reveal' as const };
-    }
-    if (ccsLabel === 'commit') return { msgId: msg.msgId, label: ccsLabel };
+    if (ccsLabel) return { msgId: msg.msgId, label: ccsLabel };
+    if (msg === revealMsg) return { msgId: msg.msgId, label: 'reveal' as const };
 
     logger.warn('Unexpected swap message shape; labeling as commit', {
       msgId: msg.msgId,

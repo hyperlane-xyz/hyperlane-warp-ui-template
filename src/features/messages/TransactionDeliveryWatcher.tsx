@@ -142,7 +142,7 @@ function DeliveryTargetWatcher({
       });
       if (target.status !== SwapStatus.ConfirmedDestination && !hasToasted.current) {
         hasToasted.current = true;
-        toast.success('Swap complete! Finalizing details...');
+        toast.success('Swap complete! Funds have arrived.');
       }
     }
   }, [

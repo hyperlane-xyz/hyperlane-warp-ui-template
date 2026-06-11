@@ -34,6 +34,7 @@ export function useMessageDeliveryStatus(
   multiProvider: MultiProtocolProvider,
 ): MessageDeliveryResult {
   const deliveredWithoutHashFirstSeenAt = useRef<number | undefined>(undefined);
+  const isMultiProviderReady = multiProvider.getKnownChainNames().length > 0;
 
   useEffect(() => {
     deliveredWithoutHashFirstSeenAt.current = undefined;
@@ -41,7 +42,7 @@ export function useMessageDeliveryStatus(
 
   const { data, isLoading } = useQuery({
     // eslint-disable-next-line @tanstack/query/exhaustive-deps -- multiProvider is stable, adding it causes unnecessary refetches
-    queryKey: ['messageDelivery', msgId],
+    queryKey: ['messageDelivery', msgId, isMultiProviderReady],
     queryFn: async () => {
       if (!msgId) return null;
       const queryData = buildMessageByIdQuery(msgId);
@@ -57,7 +58,7 @@ export function useMessageDeliveryStatus(
       if (!entry) return null;
       return parseDeliveryResult(entry, multiProvider);
     },
-    enabled: !!msgId && isOpen,
+    enabled: !!msgId && isOpen && isMultiProviderReady,
     staleTime: 30_000,
     refetchInterval: (query) => {
       const result = query.state.data;

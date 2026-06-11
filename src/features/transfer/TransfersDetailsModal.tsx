@@ -89,6 +89,7 @@ export function TransfersDetailsModal({
 
   const multiProvider = useMultiProvider();
   const warpCore = useWarpCore();
+  const updateBridgeTransactionStatus = useStore((s) => s.updateBridgeTransactionStatus);
 
   const isChainKnown = multiProvider.hasChain(origin);
   const account = useAccountForChain(multiProvider, isChainKnown ? origin : undefined);
@@ -126,6 +127,24 @@ export function TransfersDetailsModal({
 
   // Resolve the destination tx hash from either store or live query
   const destinationTxHash = storedDestTxHash || delivery.destinationTxHash;
+
+  useEffect(() => {
+    if (!transactionId || !delivery.isDelivered) return;
+    if (status === TransferStatus.Delivered && (!delivery.destinationTxHash || storedDestTxHash)) {
+      return;
+    }
+
+    updateBridgeTransactionStatus(transactionId, TransferStatus.Delivered, {
+      destinationTxHash: delivery.destinationTxHash,
+    });
+  }, [
+    delivery.destinationTxHash,
+    delivery.isDelivered,
+    status,
+    storedDestTxHash,
+    transactionId,
+    updateBridgeTransactionStatus,
+  ]);
 
   const isAccountReady = !!account?.isReady;
   const connectorName = walletDetails.name || 'wallet';

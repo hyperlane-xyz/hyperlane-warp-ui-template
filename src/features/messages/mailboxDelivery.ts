@@ -132,7 +132,8 @@ function encodeMailboxCall(functionName: 'delivered' | 'processedAt', msgId: str
   });
 }
 
-function mailboxProcessedBlockToNumber(processedAt: bigint) {
-  if (processedAt <= 0n || processedAt > BigInt(Number.MAX_SAFE_INTEGER)) return undefined;
-  return Number(processedAt);
+function mailboxProcessedBlockToNumber(processedAt: bigint | number) {
+  const processedBlock = BigInt(processedAt);
+  if (processedBlock <= 0n || processedBlock > BigInt(Number.MAX_SAFE_INTEGER)) return undefined;
+  return Number(processedBlock);
 }

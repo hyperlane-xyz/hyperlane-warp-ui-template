@@ -39,11 +39,10 @@ export function TransactionDeliveryWatcher() {
       transactionHistory
         .flatMap((item): DeliveryTarget[] => {
           if (item.type === TransactionHistoryItemType.Bridge) {
-            if (
-              item.data.status !== TransferStatus.ConfirmedTransfer ||
-              !item.data.msgId ||
-              item.data.destinationTxHash
-            ) {
+            const shouldWatchBridge =
+              item.data.status === TransferStatus.ConfirmedTransfer ||
+              item.data.status === TransferStatus.Delivered;
+            if (!shouldWatchBridge || !item.data.msgId || item.data.destinationTxHash) {
               return [];
             }
             return [{ id: item.id, type: item.type, msgId: item.data.msgId }];
@@ -129,7 +128,7 @@ function DeliveryTargetWatcher({
       updateSwapTransactionStatus(target.id, SwapStatus.ConfirmedDestination, {
         destinationTxHash: graphQlDelivery.destinationTxHash,
       });
-      if (!hasToasted.current) {
+      if (target.status !== SwapStatus.ConfirmedDestination && !hasToasted.current) {
         hasToasted.current = true;
         toast.success('Swap complete! Funds have arrived.');
       }
@@ -141,7 +140,7 @@ function DeliveryTargetWatcher({
       updateSwapTransactionStatus(target.id, SwapStatus.ConfirmedDestination, {
         destinationTxHash: mailboxDelivery.destinationTxHash,
       });
-      if (!hasToasted.current) {
+      if (target.status !== SwapStatus.ConfirmedDestination && !hasToasted.current) {
         hasToasted.current = true;
         toast.success('Swap complete! Finalizing details...');
       }

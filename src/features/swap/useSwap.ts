@@ -209,6 +209,7 @@ function isReverted(receipt: TypedTransactionReceipt): boolean {
 interface ParsedMessage {
   msgId: `0x${string}`;
   sender: `0x${string}`;
+  body: string;
 }
 
 function parseReceipt(receipt: TypedTransactionReceipt): {
@@ -232,6 +233,7 @@ function parseReceipt(receipt: TypedTransactionReceipt): {
   const messages = dispatched.map((m) => ({
     msgId: m.id as `0x${string}`,
     sender: m.parsed.sender as `0x${string}`,
+    body: m.parsed.body,
   }));
   const blockNumber = rawReceipt.blockNumber;
   return {
@@ -250,20 +252,25 @@ function labelMessages(messages: ParsedMessage[], route: AugmentedRoute): Labele
       .map((s) => s.router.toLowerCase()),
   );
 
-  let nonWarpCount = 0;
   return messages.map((msg) => {
     if (bridgeRouters.has(msg.sender.toLowerCase())) {
       return { msgId: msg.msgId, label: 'warp' as const };
     }
-    // Commit precedes reveal in the CCS protocol; >2 non-warp messages is unexpected.
-    if (nonWarpCount >= 2) {
-      logger.warn('Unexpected non-warp message count in swap receipt', {
-        nonWarpCount,
-        msgId: msg.msgId,
-      });
-    }
-    const label = nonWarpCount === 0 ? ('commit' as const) : ('reveal' as const);
-    nonWarpCount++;
-    return { msgId: msg.msgId, label };
+
+    const ccsLabel = getCcsMessageLabel(msg.body);
+    if (ccsLabel) return { msgId: msg.msgId, label: ccsLabel };
+
+    logger.warn('Unexpected swap message shape; labeling as warp', {
+      msgId: msg.msgId,
+      sender: msg.sender,
+    });
+    return { msgId: msg.msgId, label: 'warp' as const };
   });
+}
+
+function getCcsMessageLabel(body: string): LabeledMsgId['label'] | null {
+  // CCS message bodies use the first byte as the message type.
+  if (body.startsWith('0x01')) return 'commit';
+  if (body.startsWith('0x02')) return 'reveal';
+  return null;
 }

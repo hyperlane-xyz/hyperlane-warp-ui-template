@@ -161,6 +161,7 @@ export function useTokenBalance(token: UiToken | undefined, addressOverride?: st
       !!protocol &&
       (protocol !== ProtocolType.Ethereum || !!publicClient),
     staleTime: STALE_BALANCE_MS,
+    refetchInterval: STALE_BALANCE_MS,
   });
 }
 

@@ -144,13 +144,13 @@ export const QuoteSwapStepSchema = z.object({
   type: z.literal('swap'),
   chain: z.number(),
   dex: z.string(),
-  tokenIn: Address,
-  tokenOut: Address,
+  tokenIn: TokenAddress,
+  tokenOut: TokenAddress,
   amountIn: BigIntString,
   amountOut: BigIntString,
-  path: z.array(Address),
+  path: z.array(TokenAddress),
   poolCount: z.number(),
-  minPoolTvlUsd: z.number().nullable(),
+  minPoolTvlUsd: z.number().nullable().optional(),
 });
 export type QuoteSwapStep = z.infer<typeof QuoteSwapStepSchema>;
 
@@ -172,23 +172,9 @@ export const QuoteBridgeStepSchema = z.object({
 });
 export type QuoteBridgeStep = z.infer<typeof QuoteBridgeStepSchema>;
 
-export const QuoteSolanaSwapStepSchema = z.object({
-  type: z.literal('solana-swap'),
-  chain: z.number(),
-  dex: z.string(),
-  tokenIn: TokenAddress,
-  tokenOut: TokenAddress,
-  amountIn: BigIntString,
-  amountOut: BigIntString,
-  path: z.array(TokenAddress),
-  poolCount: z.number(),
-});
-export type QuoteSolanaSwapStep = z.infer<typeof QuoteSolanaSwapStepSchema>;
-
 export const QuoteStepSchema = z.discriminatedUnion('type', [
   QuoteSwapStepSchema,
   QuoteBridgeStepSchema,
-  QuoteSolanaSwapStepSchema,
 ]);
 export type QuoteStep = z.infer<typeof QuoteStepSchema>;
 

@@ -25,7 +25,7 @@ import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { WalletDropdown } from '../wallet/WalletDropdown';
 import { ApprovalPhase, useApprovalStatus } from './approval';
 import { useTokenBalance } from './balances/hooks';
-import { formatBalance, formatFeeAmount, formatUsd } from './balances/utils';
+import { formatDisplayAmount, formatFeeAmount, formatUsd } from './balances/utils';
 import { FeeSectionButton } from './FeeSectionButton';
 import { MaxButton } from './MaxButton';
 import { RouteSelectionModal } from './routeSelection/RouteSelectionModal';
@@ -608,7 +608,7 @@ function DestinationTokenCard({
   const { values, setFieldValue } = useFormikContext<SwapFormValues>();
   const { data: balance } = useTokenBalance(dstToken, recipient);
 
-  const outputDisplay = useMemo(() => {
+  const outputExact = useMemo(() => {
     if (!bestRoute || !dstToken) return '';
     try {
       return formatUnits(BigInt(bestRoute.raw.output), dstToken.decimals);
@@ -616,7 +616,15 @@ function DestinationTokenCard({
       return '';
     }
   }, [bestRoute, dstToken]);
-  const outputUsd = useTokenUsdValue(dstToken, outputDisplay);
+  const outputDisplay = useMemo(() => {
+    if (!bestRoute || !dstToken) return '';
+    try {
+      return formatDisplayAmount(BigInt(bestRoute.raw.output), dstToken.decimals);
+    } catch {
+      return '';
+    }
+  }, [bestRoute, dstToken]);
+  const outputUsd = useTokenUsdValue(dstToken, outputExact);
   // Price impact = how much value the swap loses to fees + slippage + spread.
   // Only meaningful when both sides have USD prices.
   const priceImpactPct = useMemo(() => {
@@ -802,12 +810,12 @@ function ReviewTransactions({
           )}
           <p className="flex">
             <span className="min-w-[7.5rem]">Expected Output</span>
-            <span>{`${formatBalance(BigInt(route.raw.output), dstDecimals)} ${dstSymbol}`}</span>
+            <span>{`${formatDisplayAmount(BigInt(route.raw.output), dstDecimals)} ${dstSymbol}`}</span>
           </p>
           {!route.isBridgeOnly && (
             <p className="flex">
               <span className="min-w-[7.5rem]">Min Output</span>
-              <span>{`${formatBalance(BigInt(route.raw.outputMin), dstDecimals)} ${dstSymbol}`}</span>
+              <span>{`${formatDisplayAmount(BigInt(route.raw.outputMin), dstDecimals)} ${dstSymbol}`}</span>
             </p>
           )}
           {route.feeBreakdown.components

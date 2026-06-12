@@ -5,7 +5,12 @@ import { Fragment, useMemo, useState } from 'react';
 import { ChainLogo } from '../../../components/icons/ChainLogo';
 import { TokenIcon } from '../../../components/icons/TokenIcon';
 import { HoverTooltip } from '../../../components/tooltip/HoverTooltip';
-import type { QuoteBridgeStep, QuoteStep, QuoteSwapStep } from '../../api/types';
+import type {
+  QuoteBridgeStep,
+  QuoteSolanaSwapStep,
+  QuoteStep,
+  QuoteSwapStep,
+} from '../../api/types';
 import { useMultiProvider } from '../../chains/hooks';
 import { formatDisplayAmount, formatFeeAmount } from '../balances/utils';
 import { getDexMeta } from '../dexMeta';
@@ -245,6 +250,8 @@ function StepEdge({
 }) {
   if (step.type === 'swap')
     return <SwapEdge step={step} tokenMap={tokenMap} resolvedTokenOut={tokenOut} />;
+  if (step.type === 'solana-swap')
+    return <SolanaSwapEdge step={step} tokenMap={tokenMap} resolvedTokenOut={tokenOut} />;
   return <BridgeEdge step={step} tokenMap={tokenMap} stepIndex={stepIndex} steps={steps} />;
 }
 
@@ -338,6 +345,81 @@ function SwapEdge({
   );
 }
 
+// ── Solana swap edge ───────────────────────────────────────────────────
+
+function SolanaSwapEdge({
+  step,
+  tokenMap,
+  resolvedTokenOut,
+}: {
+  step: QuoteSolanaSwapStep;
+  tokenMap: Map<string, UiToken>;
+  resolvedTokenOut: UiToken | null;
+}) {
+  const meta = getDexMeta(step.dex);
+  const tokenIn = getTokenByKeyFromMap(tokenMap, `${step.chain}-${step.tokenIn.toLowerCase()}`);
+  const tokenOut =
+    getTokenByKeyFromMap(tokenMap, `${step.chain}-${step.tokenOut.toLowerCase()}`) ??
+    resolvedTokenOut;
+
+  const decimalsIn = tokenIn?.decimals ?? 6;
+  const decimalsOut = tokenOut?.decimals ?? 6;
+  const amountIn = formatStepAmount(step.amountIn, decimalsIn);
+  const amountOut = formatStepAmount(step.amountOut, decimalsOut);
+  const rate = computeRate(step.amountIn, decimalsIn, step.amountOut, decimalsOut);
+
+  const tooltip = (
+    <div className="flex flex-col gap-1.5">
+      <div className="font-medium dark:text-foreground-primary">{meta?.name ?? step.dex}</div>
+      <div className="space-y-0.5">
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-gray-400 dark:text-foreground-secondary">Amount in</span>
+          <span className="dark:text-foreground-primary">
+            {amountIn} <span className="text-gray-400">{tokenIn?.symbol ?? '?'}</span>
+          </span>
+        </div>
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-gray-400 dark:text-foreground-secondary">Amount out</span>
+          <span className="dark:text-foreground-primary">
+            {amountOut} <span className="text-gray-400">{tokenOut?.symbol ?? '?'}</span>
+          </span>
+        </div>
+        {rate && (
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-gray-400 dark:text-foreground-secondary">Rate</span>
+            <span className="dark:text-foreground-primary">
+              1 {tokenIn?.symbol ?? '?'} = {rate} {tokenOut?.symbol ?? '?'}
+            </span>
+          </div>
+        )}
+      </div>
+      {step.path.length > 2 && (
+        <div className="space-y-0.5 border-t border-gray-100 pt-1 dark:border-white/10">
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-gray-400 dark:text-foreground-secondary">Hops</span>
+            <span className="dark:text-foreground-primary">{step.path.length - 1}</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="flex items-center gap-1 pb-4">
+      <span className="text-sm text-gray-400">→</span>
+      <HoverTooltip tooltip={tooltip}>
+        <div className="flex items-center gap-1 rounded border border-purple-200 bg-purple-50 px-1.5 py-0.5 dark:border-purple-800/30 dark:bg-purple-900/15">
+          <DexLogo meta={meta} dexKey={step.dex} size={13} />
+          <span className="font-secondary text-xxs text-purple-700 dark:text-purple-300">
+            {meta?.name ?? step.dex}
+          </span>
+        </div>
+      </HoverTooltip>
+      <span className="text-sm text-gray-400">→</span>
+    </div>
+  );
+}
+
 // ── Bridge edge ────────────────────────────────────────────────────────
 
 function BridgeEdge({
@@ -362,9 +444,11 @@ function BridgeEdge({
   const destAsset =
     nextStep?.type === 'swap'
       ? getTokenByKeyFromMap(tokenMap, `${step.destChain}-${nextStep.tokenIn.toLowerCase()}`)
-      : nextStep?.type === 'bridge'
-        ? getTokenByKeyFromMap(tokenMap, `${step.destChain}-${nextStep.asset.toLowerCase()}`)
-        : asset;
+      : nextStep?.type === 'solana-swap'
+        ? getTokenByKeyFromMap(tokenMap, `${step.destChain}-${nextStep.tokenIn.toLowerCase()}`)
+        : nextStep?.type === 'bridge'
+          ? getTokenByKeyFromMap(tokenMap, `${step.destChain}-${nextStep.asset.toLowerCase()}`)
+          : asset;
 
   const amountIn = formatStepAmount(step.amountIn, asset?.decimals ?? 18);
   const amountOut = formatStepAmount(step.amountOut, destAsset?.decimals ?? asset?.decimals ?? 18);

@@ -12,7 +12,7 @@ export function buildFlowNodes(steps: QuoteStep[]): FlowNode[] {
   for (let i = 0; i < steps.length; i++) {
     const step = steps[i];
 
-    if (step.type === 'swap') {
+    if (step.type === 'swap' || step.type === 'solana-swap') {
       if (nodes.length === 0) nodes.push({ tokenAddress: step.tokenIn, chainId: step.chain });
       nodes.push({ tokenAddress: step.tokenOut, chainId: step.chain });
     } else {
@@ -24,7 +24,7 @@ export function buildFlowNodes(steps: QuoteStep[]): FlowNode[] {
       // step's tokenIn is the correct address on destChain — use it when available.
       const nextStep = steps[i + 1];
       const destAddress =
-        nextStep?.type === 'swap'
+        nextStep?.type === 'swap' || nextStep?.type === 'solana-swap'
           ? nextStep.tokenIn
           : nextStep?.type === 'bridge'
             ? nextStep.asset

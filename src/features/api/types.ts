@@ -158,8 +158,8 @@ export const QuoteBridgeStepSchema = z.object({
   type: z.literal('bridge'),
   chain: z.number(),
   destChain: z.number(),
-  asset: Address,
-  router: Address,
+  asset: TokenAddress,
+  router: TokenAddress,
   amountIn: BigIntString,
   amountOut: BigIntString,
   bridgeSymbol: z.string().optional(),
@@ -179,9 +179,15 @@ export const QuoteStepSchema = z.discriminatedUnion('type', [
 export type QuoteStep = z.infer<typeof QuoteStepSchema>;
 
 export const RouteTxSchema = z.object({
-  to: Address,
-  data: Hex,
+  // EVM: 0x-hex contract address; Solana: base58 programId
+  to: z.string().min(1).max(100),
+  // EVM: 0x-hex calldata; Solana: base64 instruction data
+  data: z.string().min(0),
   value: BigIntString,
+  // Solana-only: accounts array for the instruction
+  accounts: z
+    .array(z.object({ pubkey: z.string(), isSigner: z.boolean(), isWritable: z.boolean() }))
+    .optional(),
 });
 export type RouteTx = z.infer<typeof RouteTxSchema>;
 
@@ -224,6 +230,26 @@ export const CallCommitmentSchema = z.object({
 });
 export type CallCommitment = z.infer<typeof CallCommitmentSchema>;
 
+export const SolanaCommitmentSchema = z.object({
+  version: z.literal(1),
+  commitment: Hex,
+  hash: z.object({
+    algorithm: z.literal('keccak256'),
+    preimage: z.string(),
+  }),
+  ccs: z.object({
+    method: z.literal('POST'),
+    path: z.string(),
+    body: z.object({
+      commitment: Hex,
+      calldata: Hex,
+      destinationDomain: z.number(),
+      encoding: z.string(),
+    }),
+  }),
+});
+export type SolanaCommitment = z.infer<typeof SolanaCommitmentSchema>;
+
 export const RouteResponseSchema = z.object({
   steps: z.array(QuoteStepSchema),
   output: BigIntString,
@@ -240,6 +266,7 @@ export const RouteResponseSchema = z.object({
   }),
   tx: RouteTxSchema.nullable(),
   callCommitment: CallCommitmentSchema.optional(),
+  solanaCommitment: SolanaCommitmentSchema.optional(),
 });
 export type RouteResponse = z.infer<typeof RouteResponseSchema>;
 

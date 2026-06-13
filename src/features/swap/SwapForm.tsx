@@ -1,4 +1,5 @@
 import { objLength } from '@hyperlane-xyz/utils';
+import { logger } from '../../utils/logger';
 import { useDebounce, useModal } from '@hyperlane-xyz/widgets';
 import { useAccounts } from '@hyperlane-xyz/widgets/walletIntegrations/accounts';
 import { useAccountAddressForChain } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
@@ -211,12 +212,26 @@ function SwapFormContent() {
       // validating — otherwise we'd enter review mode on stale data.
       if (latestValuesRef.current !== snapshot) return;
       if (result) {
+        logger.error('Continue blocked by validation', result);
         setErrors(result);
         return;
       }
-      if (!sender || !srcToken || !dstToken || !bestRoute || !effectiveRecipient) return;
+      if (!sender || !srcToken || !dstToken || !bestRoute || !effectiveRecipient) {
+        logger.error('Continue blocked: missing required field', {
+          sender,
+          srcToken: !!srcToken,
+          dstToken: !!dstToken,
+          bestRoute: !!bestRoute,
+          effectiveRecipient,
+        });
+        return;
+      }
       setErrors({});
       setIsReview(true);
+    } catch (err) {
+      logger.error('onContinue threw unexpectedly', err as Error);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setErrors({ form: err instanceof Error ? err.message : 'Unexpected error — check console' } as any);
     } finally {
       setIsValidating(false);
     }

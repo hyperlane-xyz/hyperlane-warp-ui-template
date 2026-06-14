@@ -191,6 +191,8 @@ export const RouteTxSchema = z.object({
   // Solana-only: ephemeral keypairs that must co-sign before sending to wallet.
   // Each is a base64-encoded 64-byte Solana keypair (privKey[32] || pubKey[32]).
   additionalSigners: z.array(z.string()).optional(),
+  // Solana-only: Address Lookup Table addresses for V0 transactions.
+  altAddresses: z.array(z.string()).optional(),
 });
 export type RouteTx = z.infer<typeof RouteTxSchema>;
 

@@ -6,7 +6,15 @@ import {
 } from '@hyperlane-xyz/sdk';
 import { isZeroishAddress, ProtocolType } from '@hyperlane-xyz/utils';
 import { useTransactionFns } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
-import { Keypair, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
+import {
+  AddressLookupTableAccount,
+  Connection,
+  Keypair,
+  PublicKey,
+  TransactionInstruction,
+  TransactionMessage,
+  VersionedTransaction,
+} from '@solana/web3.js';
 import { useCallback, useState } from 'react';
 import type { Address } from 'viem';
 
@@ -126,8 +134,9 @@ export function useSwap() {
         }
 
         updateSwapTransactionStatus(transactionId, SwapStatus.SigningSwap);
+        const rpcUrl = multiProvider.getChainMetadata(srcChainName).rpcUrls[0].http;
         const txPayload = isSealevel
-          ? buildSolanaTransaction(route.raw.tx, args.sender)
+          ? await buildSolanaTransaction(route.raw.tx, args.sender, rpcUrl)
           : { to: route.raw.tx.to, data: route.raw.tx.data, value: route.raw.tx.value };
         const { hash, confirm } = await fns.sendTransaction({
           tx: {
@@ -283,7 +292,12 @@ function getCcsMessageLabel(body: string): LabeledMsgId['label'] | null {
   return null;
 }
 
-function buildSolanaTransaction(tx: RouteTx, sender: string): Transaction {
+async function buildSolanaTransaction(
+  tx: RouteTx,
+  sender: string,
+  rpcUrl: string,
+): Promise<VersionedTransaction> {
+  const connection = new Connection(rpcUrl, 'confirmed');
   const programId = new PublicKey(tx.to);
   const data = Buffer.from(tx.data, 'base64');
   const keys = (tx.accounts ?? []).map((a) => ({
@@ -292,18 +306,43 @@ function buildSolanaTransaction(tx: RouteTx, sender: string): Transaction {
     isWritable: a.isWritable,
   }));
   const instruction = new TransactionInstruction({ programId, data, keys });
-  const txn = new Transaction();
-  txn.add(instruction);
-  txn.feePayer = new PublicKey(sender);
+
+  // Fetch blockhash and ALTs in parallel.
+  const [{ blockhash }, altAccounts] = await Promise.all([
+    connection.getLatestBlockhash(),
+    loadAltAccounts(connection, tx.altAddresses ?? []),
+  ]);
+
+  // V0 VersionedTransaction: compiles to a versioned message that references
+  // ALT accounts by 1-byte index instead of 32-byte pubkey, keeping cross-chain
+  // transactions under the 1232-byte wire limit.
+  const message = new TransactionMessage({
+    payerKey: new PublicKey(sender),
+    recentBlockhash: blockhash,
+    instructions: [instruction],
+  }).compileToV0Message(altAccounts);
+
+  const txn = new VersionedTransaction(message);
 
   // Partial-sign with ephemeral keypairs (unique Hyperlane message accounts).
   // Each is a base64-encoded 64-byte Solana keypair (privKey[32] || pubKey[32]).
-  // These must be signed before the wallet signs so the wallet's fee-payer
-  // signature is final on the already-partially-signed transaction.
-  for (const signerB64 of tx.additionalSigners ?? []) {
-    const keypairBytes = Buffer.from(signerB64, 'base64');
-    txn.partialSign(Keypair.fromSecretKey(new Uint8Array(keypairBytes)));
+  if (tx.additionalSigners && tx.additionalSigners.length > 0) {
+    const keypairs = tx.additionalSigners.map((b64) =>
+      Keypair.fromSecretKey(new Uint8Array(Buffer.from(b64, 'base64'))),
+    );
+    txn.sign(keypairs);
   }
 
   return txn;
+}
+
+async function loadAltAccounts(
+  connection: Connection,
+  altAddresses: string[],
+): Promise<AddressLookupTableAccount[]> {
+  if (altAddresses.length === 0) return [];
+  const results = await Promise.all(
+    altAddresses.map((addr) => connection.getAddressLookupTable(new PublicKey(addr))),
+  );
+  return results.flatMap((r) => (r.value ? [r.value] : []));
 }

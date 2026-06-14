@@ -21,6 +21,19 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
     ...solanamainnet,
     // SVM chains require mailbox addresses for the token adapters
     mailbox: solanamainnetAddresses.mailbox,
+    // Route Solana RPC through the server-side proxy (avoids CORS and keeps
+    // the private RPC URL out of the client bundle). The proxy reads
+    // SOLANA_RPC_URL from the server environment.
+    // On the server (SSR) window is undefined — fall back to the public RPC
+    // so that Zod's url() validator passes during server-side rendering.
+    rpcUrls: [
+      {
+        http:
+          typeof window !== 'undefined'
+            ? `${window.location.origin}/api/solana-rpc`
+            : 'https://api.mainnet-beta.solana.com',
+      },
+    ],
   },
   eclipsemainnet: {
     ...eclipsemainnet,

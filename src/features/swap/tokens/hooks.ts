@@ -62,6 +62,7 @@ export function useTokens(query: TokensQuery = {}): UseTokensResult {
     const out: UiToken[] = [];
     for (const t of result.data.tokens) {
       if (t.decimals == null) continue;
+      if (!t.symbol) continue;
       // Skip tokens whose chainId isn't yet in /v1/chains — chainsResp
       // is the source of truth for chainName, and without it the token
       // has no logo / display name. The hook surfaces `chainsLoading`

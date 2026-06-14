@@ -1,5 +1,5 @@
 import { AccountLayout, getAssociatedTokenAddressSync, TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { type Connection, PublicKey } from '@solana/web3.js';
+import { Connection, PublicKey } from '@solana/web3.js';
 
 import { logger } from '../../../utils/logger';
 import type { UiToken } from '../tokens/types';
@@ -7,7 +7,7 @@ import { getTokenKey } from '../tokens/utils';
 
 export async function fetchSolanaChainBalances(
   tokens: UiToken[],
-  connection: Connection,
+  rpcUrl: string,
   ownerAddress: string,
 ): Promise<Record<string, bigint>> {
   let owner: PublicKey;
@@ -18,6 +18,7 @@ export async function fetchSolanaChainBalances(
     return {};
   }
 
+  const connection = new Connection(rpcUrl, 'confirmed');
   const out: Record<string, bigint> = {};
   const splTokens = tokens.filter((t) => !t.isNative);
   const nativeTokens = tokens.filter((t) => t.isNative);
@@ -38,27 +39,32 @@ export async function fetchSolanaChainBalances(
           const ata = getAssociatedTokenAddressSync(mint, owner, false, programId);
           entries.push({ tokenKey: getTokenKey(t), ata });
         } catch {
-          // invalid mint for this program, skip
+          continue;
         }
       }
     }
 
     if (entries.length > 0) {
-      try {
-        const infos = await connection.getMultipleAccountsInfo(entries.map((e) => e.ata));
-        for (let i = 0; i < entries.length; i++) {
-          const info = infos[i];
-          if (!info?.data) continue;
-          try {
-            const { amount } = AccountLayout.decode(info.data);
-            const { tokenKey } = entries[i];
-            out[tokenKey] = (out[tokenKey] ?? 0n) + amount;
-          } catch {
-            // malformed account data, skip
+      // Solana RPC caps getMultipleAccounts at 100 per call.
+      const BATCH_SIZE = 100;
+      for (let start = 0; start < entries.length; start += BATCH_SIZE) {
+        const batch = entries.slice(start, start + BATCH_SIZE);
+        try {
+          const infos = await connection.getMultipleAccountsInfo(batch.map((e) => e.ata));
+          for (let i = 0; i < batch.length; i++) {
+            const info = infos[i];
+            if (!info?.data) continue;
+            try {
+              const { amount } = AccountLayout.decode(info.data);
+              const { tokenKey } = batch[i];
+              out[tokenKey] = (out[tokenKey] ?? 0n) + amount;
+            } catch {
+              // malformed account data, skip
+            }
           }
+        } catch (err) {
+          logger.warn('Solana token balance batch fetch failed', err);
         }
-      } catch (err) {
-        logger.warn('Solana token balance batch fetch failed', err);
       }
     }
   }

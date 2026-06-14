@@ -6,8 +6,11 @@ import {
 } from '@hyperlane-xyz/sdk';
 import { isZeroishAddress, ProtocolType } from '@hyperlane-xyz/utils';
 import { useTransactionFns } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
+import { Keypair, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
 import { useCallback, useState } from 'react';
 import type { Address } from 'viem';
+
+import type { RouteTx } from '../api/types';
 
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
@@ -61,7 +64,12 @@ export function useSwap() {
       const fns = transactionFns[protocol as keyof typeof transactionFns];
       if (!fns) throw new Error(`No transaction handler for protocol ${protocol}`);
 
-      const txType = protocol === ProtocolType.Tron ? ProviderType.Tron : ProviderType.EthersV5;
+      const isSealevel = protocol === ProtocolType.Sealevel;
+      const txType = isSealevel
+        ? ProviderType.SolanaWeb3
+        : protocol === ProtocolType.Tron
+          ? ProviderType.Tron
+          : ProviderType.EthersV5;
 
       try {
         if (fns.switchNetwork) {
@@ -72,10 +80,9 @@ export function useSwap() {
           }
         }
 
-        // Approve / revoke before the swap tx. Mirrors WarpCore's pattern:
-        // bump non-zero existing allowance to zero first (USDT case), then
-        // approve the new amount.
-        if (args.spender && args.approvalAmount != null && !args.isNative) {
+        // ERC20 approval only applies to EVM source chains. Solana uses SPL
+        // token program delegates handled by the UR program itself.
+        if (!isSealevel && args.spender && args.approvalAmount != null && !args.isNative) {
           const spender = args.spender;
           if (isZeroishAddress(spender)) {
             throw new Error(`Cannot approve: spender is zero address on ${srcChainName}`);
@@ -119,14 +126,13 @@ export function useSwap() {
         }
 
         updateSwapTransactionStatus(transactionId, SwapStatus.SigningSwap);
+        const txPayload = isSealevel
+          ? buildSolanaTransaction(route.raw.tx, args.sender)
+          : { to: route.raw.tx.to, data: route.raw.tx.data, value: route.raw.tx.value };
         const { hash, confirm } = await fns.sendTransaction({
           tx: {
             type: txType,
-            transaction: {
-              to: route.raw.tx.to,
-              data: route.raw.tx.data,
-              value: route.raw.tx.value,
-            },
+            transaction: txPayload,
             category: 'transfer',
           } as Parameters<typeof fns.sendTransaction>[0]['tx'],
           chainName: srcChainName,
@@ -146,7 +152,9 @@ export function useSwap() {
         }
         const parsed = parseReceipt(receipt);
         const expectsBridge = route.raw.steps.some((s) => s.type === 'bridge');
-        if (expectsBridge && !parsed.messages.length) {
+        // For Solana source, the Dispatch log is on the Solana side — parseReceipt
+        // only handles EVM receipts, so skip the log check for Sealevel.
+        if (!isSealevel && expectsBridge && !parsed.messages.length) {
           logger.error('Origin tx confirmed but no Dispatch log emitted', new Error(`tx=${hash}`));
           updateSwapTransactionStatus(transactionId, SwapStatus.Failed, {
             originTxHash: hash,
@@ -273,4 +281,29 @@ function getCcsMessageLabel(body: string): LabeledMsgId['label'] | null {
   if (body.startsWith('0x01')) return 'commit';
   if (body.startsWith('0x02')) return 'reveal';
   return null;
+}
+
+function buildSolanaTransaction(tx: RouteTx, sender: string): Transaction {
+  const programId = new PublicKey(tx.to);
+  const data = Buffer.from(tx.data, 'base64');
+  const keys = (tx.accounts ?? []).map((a) => ({
+    pubkey: new PublicKey(a.pubkey),
+    isSigner: a.isSigner,
+    isWritable: a.isWritable,
+  }));
+  const instruction = new TransactionInstruction({ programId, data, keys });
+  const txn = new Transaction();
+  txn.add(instruction);
+  txn.feePayer = new PublicKey(sender);
+
+  // Partial-sign with ephemeral keypairs (unique Hyperlane message accounts).
+  // Each is a base64-encoded 64-byte Solana keypair (privKey[32] || pubKey[32]).
+  // These must be signed before the wallet signs so the wallet's fee-payer
+  // signature is final on the already-partially-signed transaction.
+  for (const signerB64 of tx.additionalSigners ?? []) {
+    const keypairBytes = Buffer.from(signerB64, 'base64');
+    txn.partialSign(Keypair.fromSecretKey(new Uint8Array(keypairBytes)));
+  }
+
+  return txn;
 }

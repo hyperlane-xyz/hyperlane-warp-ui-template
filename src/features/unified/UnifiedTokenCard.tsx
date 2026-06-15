@@ -1,17 +1,19 @@
 import { Token } from '@hyperlane-xyz/sdk';
 import { fromWei, toWei } from '@hyperlane-xyz/utils';
+import { useDebounce } from '@hyperlane-xyz/widgets';
 import { useAccountAddressForChain } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
+import { useQuery } from '@tanstack/react-query';
 import BigNumber from 'bignumber.js';
 import { Form, Formik, useFormikContext } from 'formik';
 import { useMemo, useState } from 'react';
-import { formatUnits, type Address } from 'viem';
+import { type Address } from 'viem';
 
 import { SolidButton } from '../../components/buttons/SolidButton';
 import { SwapIcon } from '../../components/icons/SwapIcon';
 import { TextField } from '../../components/input/TextField';
 import { TransferSection } from '../../components/layout/TransferSection';
 import { config } from '../../consts/config';
-import { defaultMultiCollateralRoutes } from '../../consts/defaultMultiCollateralRoutes';
+import { formatDisplayAmount } from '../../utils/amount';
 import { useChains } from '../api/hooks';
 import { useOriginBalance } from '../balances/hooks';
 import { useMultiProvider } from '../chains/hooks';
@@ -28,12 +30,15 @@ import {
 import { useQuote } from '../swap/useQuote';
 import { useSwap } from '../swap/useSwap';
 import { validateSwapForm } from '../swap/validate';
-import { useCollateralGroups } from '../tokens/hooks';
-import { findConnectedDestinationToken, getTokenKey as getBridgeTokenKey } from '../tokens/utils';
-import { getTransferToken } from '../transfer/fees';
+import { useCollateralGroups, useWarpCore } from '../tokens/hooks';
+import { getTokenKey as getBridgeTokenKey } from '../tokens/utils';
 import { useTokenTransfer } from '../transfer/useTokenTransfer';
+import { shouldClearAddress } from '../transfer/utils';
 import { WalletDropdown } from '../wallet/WalletDropdown';
-import { getExactInputBridgeQuote } from './bridgeExactInput';
+import {
+  getExactInputBridgeTransferQuote,
+  type ExactInputBridgeTransferQuote,
+} from './bridgeExactInput';
 import { useUnifiedTokenByKeyMap, useUnifiedTokens } from './tokens/hooks';
 import { getUnifiedRouteMode, UnifiedRouteMode } from './tokens/routes';
 import { TokenSelectField } from './tokens/TokenSelectField';
@@ -158,6 +163,14 @@ function UnifiedFormContent({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const bridgeTransfer = useTokenTransfer(() => setIsSubmitting(false));
   const swap = useSwap();
+  const bridgeQuote = useBridgeExactInputQuote({
+    routeMode,
+    originToken,
+    destinationToken,
+    amount: values.amount,
+    recipient: effectiveRecipient,
+    sender,
+  });
 
   const onSwapTokens = () => {
     setValues((prev) => ({
@@ -165,7 +178,10 @@ function UnifiedFormContent({
       amount: '',
       originTokenKey: prev.destinationTokenKey,
       destinationTokenKey: prev.originTokenKey,
-      recipient: '',
+      recipient:
+        originToken && shouldClearAddress(multiProvider, prev.recipient, originToken.chainName)
+          ? ''
+          : prev.recipient,
     }));
   };
 
@@ -247,7 +263,8 @@ function UnifiedFormContent({
           engineEnabled={engineEnabled}
           routeMode={routeMode}
           bestRoute={bestRoute}
-          isQuoteLoading={quote.isLoading}
+          bridgeQuote={bridgeQuote.data}
+          isQuoteLoading={quote.isLoading || bridgeQuote.isLoading || bridgeQuote.isFetching}
         />
       </TransferSection>
 
@@ -353,6 +370,7 @@ function DestinationTokenCard({
   engineEnabled,
   routeMode,
   bestRoute,
+  bridgeQuote,
   isQuoteLoading,
 }: {
   token: UnifiedToken | undefined;
@@ -360,21 +378,32 @@ function DestinationTokenCard({
   engineEnabled: boolean;
   routeMode: UnifiedRouteMode | null;
   bestRoute: AugmentedRoute | undefined;
+  bridgeQuote: ExactInputBridgeTransferQuote | undefined;
   isQuoteLoading: boolean;
 }) {
   const output = useMemo(() => {
-    if (routeMode !== UnifiedRouteMode.Swap || !bestRoute || !token) return '';
+    if (!token) return '';
+    if (routeMode === UnifiedRouteMode.Bridge && bridgeQuote) {
+      return formatDisplayAmount(bridgeQuote.transferAmount.amount, token.decimals);
+    }
+    if (routeMode !== UnifiedRouteMode.Swap || !bestRoute) return '';
     try {
-      return formatUnits(BigInt(bestRoute.raw.output), token.decimals);
+      return formatDisplayAmount(BigInt(bestRoute.raw.output), token.decimals);
     } catch {
       return '';
     }
-  }, [bestRoute, routeMode, token]);
+  }, [bestRoute, bridgeQuote, routeMode, token]);
+  const { values, setFieldValue } = useFormikContext<UnifiedFormValues>();
 
   return (
     <div>
       <div className="mb-2 flex items-center justify-between">
-        <WalletDropdown chainName={token?.chainName} selectionMode="destination" />
+        <WalletDropdown
+          chainName={token?.chainName}
+          selectionMode="destination"
+          recipient={values.recipient}
+          onRecipientChange={(addr: string) => setFieldValue('recipient', addr)}
+        />
       </div>
       <div className="transfer-chain-field rounded-[7px] border border-gray-400/25 bg-white p-3 shadow-input dark:border-primary-300/[0.18] dark:bg-transparent dark:shadow-none">
         <TokenSelectField
@@ -414,37 +443,73 @@ async function submitBridge({
   if (!originToken?.bridgeToken || !destinationToken?.bridgeToken || !recipient) return;
   const warpCore = useStore.getState().warpCore;
   const inputAmount = BigInt(toWei(values.amount, originToken.bridgeToken.decimals));
-  const routeToken = await getTransferToken(
+  const quote = await getExactInputBridgeTransferQuote({
     warpCore,
-    new Token(originToken.bridgeToken),
-    destinationToken.bridgeToken,
-    inputAmount.toString(),
-    recipient,
-    sender,
-    defaultMultiCollateralRoutes,
-  );
-  const connectedDestinationToken = findConnectedDestinationToken(
-    routeToken,
-    destinationToken.bridgeToken,
-  );
-  if (!connectedDestinationToken) throw new Error('No token connection found between chains');
-
-  const quote = await getExactInputBridgeQuote({
-    warpCore,
-    originToken: routeToken,
-    destinationToken: connectedDestinationToken,
+    originToken: new Token(originToken.bridgeToken),
+    destinationToken: destinationToken.bridgeToken,
     inputAmount,
-    destination: connectedDestinationToken.chainName,
     recipient,
     sender,
   });
   const transferValues = {
-    originTokenKey: getBridgeTokenKey(routeToken),
+    originTokenKey: getBridgeTokenKey(quote.routeToken),
     destinationTokenKey: getBridgeTokenKey(destinationToken.bridgeToken),
-    amount: fromWei(quote.transferAmount.amount, routeToken.decimals),
+    amount: fromWei(quote.transferAmount.amount, quote.routeToken.decimals),
     recipient,
   };
-  await bridgeTransfer.triggerTransactions(transferValues, routeToken, null);
+  await bridgeTransfer.triggerTransactions(transferValues, quote.routeToken, null);
+}
+
+function useBridgeExactInputQuote({
+  routeMode,
+  originToken,
+  destinationToken,
+  amount,
+  recipient,
+  sender,
+}: {
+  routeMode: UnifiedRouteMode | null;
+  originToken: UnifiedToken | undefined;
+  destinationToken: UnifiedToken | undefined;
+  amount: string;
+  recipient: string;
+  sender: string | undefined;
+}) {
+  const warpCore = useWarpCore();
+  const debouncedAmount = useDebounce(amount, 500);
+  const isAmountValid =
+    !!debouncedAmount &&
+    new BigNumber(debouncedAmount).isFinite() &&
+    new BigNumber(debouncedAmount).gt(0);
+  const enabled = !!(
+    routeMode === UnifiedRouteMode.Bridge &&
+    originToken?.bridgeToken &&
+    destinationToken?.bridgeToken &&
+    recipient &&
+    isAmountValid
+  );
+
+  return useQuery({
+    queryKey: [
+      'unifiedBridgeExactInputQuote',
+      originToken?.key,
+      destinationToken?.key,
+      debouncedAmount,
+      recipient,
+      sender,
+    ],
+    queryFn: () =>
+      getExactInputBridgeTransferQuote({
+        warpCore,
+        originToken: new Token(originToken!.bridgeToken!),
+        destinationToken: destinationToken!.bridgeToken!,
+        inputAmount: BigInt(toWei(debouncedAmount, originToken!.bridgeToken!.decimals)),
+        recipient,
+        sender,
+      }),
+    enabled,
+    refetchInterval: 30_000,
+  });
 }
 
 async function submitSwap({

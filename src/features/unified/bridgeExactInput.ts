@@ -1,9 +1,58 @@
 import type { IToken, Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
 
+import { defaultMultiCollateralRoutes } from '../../consts/defaultMultiCollateralRoutes';
+import { findConnectedDestinationToken } from '../tokens/utils';
+import { getTransferToken } from '../transfer/fees';
+
 interface ExactInputBridgeQuote {
   transferAmount: TokenAmount<Token>;
   interchainQuote: TokenAmount<IToken>;
   tokenFeeQuote?: TokenAmount<IToken>;
+}
+
+export interface ExactInputBridgeTransferQuote extends ExactInputBridgeQuote {
+  routeToken: Token;
+  connectedDestinationToken: Token;
+}
+
+export async function getExactInputBridgeTransferQuote({
+  warpCore,
+  originToken,
+  destinationToken,
+  inputAmount,
+  recipient,
+  sender,
+}: {
+  warpCore: WarpCore;
+  originToken: Token;
+  destinationToken: IToken;
+  inputAmount: bigint;
+  recipient: string;
+  sender?: string;
+}): Promise<ExactInputBridgeTransferQuote> {
+  const routeToken = await getTransferToken(
+    warpCore,
+    originToken,
+    destinationToken,
+    inputAmount.toString(),
+    recipient,
+    sender,
+    defaultMultiCollateralRoutes,
+  );
+  const connectedDestinationToken = findConnectedDestinationToken(routeToken, destinationToken);
+  if (!connectedDestinationToken) throw new Error('No token connection found between chains');
+
+  const quote = await getExactInputBridgeQuote({
+    warpCore,
+    originToken: routeToken,
+    destinationToken: connectedDestinationToken,
+    inputAmount,
+    destination: connectedDestinationToken.chainName,
+    recipient,
+    sender,
+  });
+
+  return { ...quote, routeToken, connectedDestinationToken };
 }
 
 export async function getExactInputBridgeQuote({

@@ -7,6 +7,7 @@ import { WARP_QUERY_PARAMS } from '../../../consts/args';
 import { updateQueryParams } from '../../../utils/queryParams';
 import { useMultiProvider } from '../../chains/hooks';
 import { getChainDisplayName } from '../../chains/utils';
+import { shouldClearAddress } from '../../transfer/utils';
 import type { UnifiedFormValues } from '../types';
 import type { UnifiedToken } from './types';
 import { UnifiedTokenChainModal } from './UnifiedTokenChainModal';
@@ -38,6 +39,12 @@ export function TokenSelectField({
   const handleSelectToken = (token: UnifiedToken) => {
     setTokenKey(token.key);
     if (selectionMode === 'origin') setFieldValue('amount', '');
+    if (
+      selectionMode === 'destination' &&
+      shouldClearAddress(multiProvider, values.recipient, token.chainName)
+    ) {
+      setFieldValue('recipient', '');
+    }
 
     updateQueryParams({
       [selectionMode === 'origin' ? WARP_QUERY_PARAMS.ORIGIN : WARP_QUERY_PARAMS.DESTINATION]:

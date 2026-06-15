@@ -12,6 +12,7 @@ export interface UiToken {
   symbol: string;
   decimals: number; // null in engine schema is normalised to 18 here
   isNative: boolean;
+  wrappedAddress?: string;
   isBridgeToken: boolean;
   isPoolToken: boolean;
   canBridge: boolean;

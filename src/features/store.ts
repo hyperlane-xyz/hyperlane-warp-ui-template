@@ -137,7 +137,7 @@ export interface AppState {
   activeSwapTransactionId: string | null;
   setActiveSwapTransactionId: (id: string | null) => void;
   // Accumulated engine-token catalogue. Every useTokens() result funnels
-  // through syncTokens so SwapForm / SwapDetailsModal lookups go through
+  // through syncTokens so unified swap flows / SwapDetailsModal lookups go through
   // one place. Keyed by getSwapTokenKey (chainId-address). Not persisted.
   knownTokens: Map<string, UiToken>;
   syncTokens: (tokens: UiToken[]) => void;

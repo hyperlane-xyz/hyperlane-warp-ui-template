@@ -1,14 +1,13 @@
-import { SwapTokenCard } from '../../features/swap/SwapTokenCard';
 import { useEngineBootstrap } from '../../features/swap/useEngineBootstrap';
-import { TransferTokenCard } from '../../features/transfer/TransferTokenCard';
-import { ModeTabs, type AppMode } from '../nav/ModeTabs';
+import { UnifiedTokenCard } from '../../features/unified/UnifiedTokenCard';
+import type { AppMode } from '../nav/ModeTabs';
 import { TipCard } from '../tip/TipCard';
 
 interface Props {
   mode: AppMode;
 }
 
-export function HomeView({ mode }: Props) {
+export function HomeView({ mode: _mode }: Props) {
   // Non-blocking engine prefetch — warms /readyz + /v1/tokens caches.
   // Both bridge and swap tabs benefit on first /swap click.
   useEngineBootstrap();
@@ -19,8 +18,7 @@ export function HomeView({ mode }: Props) {
         <TipCard />
       </div>
       <div>
-        <ModeTabs mode={mode} />
-        {mode === 'swap' ? <SwapTokenCard /> : <TransferTokenCard />}
+        <UnifiedTokenCard />
       </div>
     </div>
   );

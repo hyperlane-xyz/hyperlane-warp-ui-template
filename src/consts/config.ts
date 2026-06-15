@@ -16,8 +16,7 @@ const explorerApiUrl =
   process.env.NEXT_PUBLIC_EXPLORER_API_URL || 'https://explorer4.hasura.app/v1/graphql';
 const feeQuotingUrl = process.env.NEXT_PUBLIC_FEE_QUOTING_URL || undefined;
 const relayApiUrl = process.env.NEXT_PUBLIC_RELAY_API_URL || undefined;
-const routerApiUrl =
-  process.env.NEXT_PUBLIC_ROUTER_API_URL || 'https://router.services.hyperlane.xyz';
+const routerApiUrl = process.env.NEXT_PUBLIC_ROUTER_API_URL || undefined;
 // CCS lives at the `/callCommitments` mount of the shared offchain-lookup
 // service. Engine emits `callCommitment.ccs.path = '/calls'` relative to
 // this mount, so the base URL must include the mount path.
@@ -52,7 +51,7 @@ interface Config {
   featuredChains: string[]; // Chains to pin at the top of the default chain picker sort
   featuredTokens: string[]; // List of featured tokens to prioritize in token picker (format: "chainName-symbol")
   feeQuotingUrl: string | undefined; // Offchain fee quoting service base URL
-  routerApiUrl: string; // Universal Router Engine base URL (swap tab)
+  routerApiUrl: string | undefined; // Universal Router Engine base URL (swap tab)
   ccsUrl: string; // Call Commitments Service base URL (cross-chain swap reveal)
   permit2ExpirationSeconds: number; // Default Permit2 allowance expiration (swap tab)
   defaultSlippageBps: number; // Default swap slippage in basis points

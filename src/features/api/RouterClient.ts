@@ -27,7 +27,11 @@ export interface QuoteParams {
 }
 
 export class RouterClient {
-  constructor(private baseUrl: string) {}
+  constructor(private baseUrl: string | undefined) {}
+
+  get isConfigured(): boolean {
+    return !!this.baseUrl;
+  }
 
   async health(): Promise<boolean> {
     try {
@@ -66,6 +70,7 @@ export class RouterClient {
   }
 
   async quote(params: QuoteParams): Promise<QuoteResponse> {
+    if (!this.baseUrl) throw new Error('Router API URL is not configured');
     const res = await fetch(`${this.baseUrl}/v1/quote`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -87,6 +92,7 @@ export class RouterClient {
   }
 
   private async get<T>(path: string, schema: { parse(value: unknown): T }): Promise<T> {
+    if (!this.baseUrl) throw new Error('Router API URL is not configured');
     const res = await fetch(`${this.baseUrl}${path}`);
     const body = await res.text();
     if (!res.ok) throw new Error(`Request failed: ${res.status} ${body}`);

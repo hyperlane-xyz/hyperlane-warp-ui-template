@@ -37,7 +37,7 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
   const engineSender = sender || undefined;
   const engineRecipient = values.recipient || undefined;
 
-  const enabled = isQuoteRequestReady(values, engineSender) && !pause;
+  const enabled = routerClient.isConfigured && isQuoteRequestReady(values, engineSender) && !pause;
 
   const { data: srcTokens } = useTokens(values.srcChain != null ? { chain: values.srcChain } : {});
   const srcTokenInfo = srcTokens.find(

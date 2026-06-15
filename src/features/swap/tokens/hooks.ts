@@ -54,6 +54,7 @@ export function useTokens(query: TokensQuery = {}): UseTokensResult {
   const result = useQuery({
     queryKey: ['router', 'tokens', canonical],
     queryFn: () => routerClient.tokens(canonical),
+    enabled: routerClient.isConfigured,
     staleTime: canonical.search ? STALE_30_SEC : STALE_5_MIN,
   });
 

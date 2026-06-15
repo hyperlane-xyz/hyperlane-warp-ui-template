@@ -119,7 +119,7 @@ function DeliveryTargetWatcher({
       target.type === TransactionHistoryItemType.Swap ? target.destinationChain : undefined,
     chainAddresses,
     multiProvider,
-    enabled: target.type === TransactionHistoryItemType.Swap && !graphQlDelivery.isDelivered,
+    enabled: target.type === TransactionHistoryItemType.Swap && !graphQlDelivery.destinationTxHash,
   });
   // Swap recovery status is centralized here so the modal stays display-only.
   useSwapStatus(swap, target.type === TransactionHistoryItemType.Swap ? target.id : null);

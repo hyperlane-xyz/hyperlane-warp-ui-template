@@ -51,6 +51,8 @@ const STATUS_DESCRIPTION: Record<SwapStatus, string> = {
   [SwapStatus.ConfirmingDestination]: 'Confirming on destination chain…',
   [SwapStatus.ConfirmedDestination]: 'Delivered',
   [SwapStatus.DestSwapFailed]: 'Destination swap reverted',
+  [SwapStatus.FailedRecovered]: 'Swap reverted — bridge token returned',
+  [SwapStatus.DestFailed]: 'Destination execution failed — funds stranded in ICA',
   [SwapStatus.Failed]: 'Swap failed',
 };
 
@@ -122,6 +124,8 @@ function SwapDetailsModalInner({
   const isFailed = status === SwapStatus.Failed;
   const isDestFailed = status === SwapStatus.DestSwapFailed;
   const isDelivered = status === SwapStatus.ConfirmedDestination;
+  const isFailedRecovered = status === SwapStatus.FailedRecovered;
+  const isRevealFailed = status === SwapStatus.DestFailed;
   const isFinal = FinalSwapStatuses.includes(status);
 
   // Poll the reveal message when present — its delivery tx IS the ICA
@@ -135,19 +139,23 @@ function SwapDetailsModalInner({
     status === SwapStatus.Bridging ||
     status === SwapStatus.ConfirmingDestination ||
     status === SwapStatus.ConfirmedDestination ||
-    isDestFailed;
+    isDestFailed ||
+    isFailedRecovered ||
+    isRevealFailed;
 
   const stage = useMemo<MessageStage>(() => {
-    if (isDelivered) return MessageStage.Relayed;
+    if (isDelivered || isDestFailed || isFailedRecovered || isRevealFailed) {
+      return MessageStage.Relayed;
+    }
     if (status === SwapStatus.ConfirmingDestination) return MessageStage.Validated;
     if (status === SwapStatus.Bridging) return MessageStage.Finalized;
     if (status === SwapStatus.ConfirmingOrigin) return MessageStage.Sent;
     return MessageStage.Preparing;
-  }, [status, isDelivered]);
+  }, [status, isDelivered, isDestFailed, isFailedRecovered, isRevealFailed]);
 
   const messageStatus = isDelivered
     ? MessageStatus.Delivered
-    : isFailed || isDestFailed
+    : isFailed || isDestFailed || isFailedRecovered || isRevealFailed
       ? MessageStatus.Failing
       : MessageStatus.Pending;
 
@@ -207,7 +215,9 @@ function SwapDetailsModalInner({
             <div className="flex items-center text-xs font-normal">
               {isDelivered ? (
                 <h3 className="text-green-50">Delivered</h3>
-              ) : isDestFailed ? (
+              ) : isFailedRecovered ? (
+                <h3 className="text-blue-400">Recovered</h3>
+              ) : isDestFailed || isRevealFailed ? (
                 <h3 className="text-amber-600">Stranded</h3>
               ) : (
                 <h3 className="text-red-500">Failed</h3>
@@ -280,8 +290,20 @@ function SwapDetailsModalInner({
           <div className="mt-5 flex flex-col space-y-4">
             {isDestFailed && (
               <div className="rounded border border-amber-300 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">
-                Origin succeeded and the bridge delivered, but the destination swap reverted. Funds
-                are sitting in your ICA — recovery is not yet wired in.
+                Origin succeeded and the bridge delivered, but the destination swap reverted. Bridge
+                token may remain in your ICA. Please contact support.
+              </div>
+            )}
+            {isFailedRecovered && (
+              <div className="rounded border border-blue-300 bg-blue-50 p-3 text-xs text-blue-800 dark:border-blue-500/40 dark:bg-blue-500/10 dark:text-blue-200">
+                The destination swap reverted and the bridge token was automatically returned to
+                your wallet on the destination chain.
+              </div>
+            )}
+            {isRevealFailed && (
+              <div className="rounded border border-amber-300 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">
+                The destination execution ran but both the swap and fallback failed. Bridge token
+                remains in your ICA. Please contact support.
               </div>
             )}
             <TransferProperty name="Sender Address" value={sender} url={fromUrl} />

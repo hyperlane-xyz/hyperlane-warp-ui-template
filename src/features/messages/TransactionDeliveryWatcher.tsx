@@ -7,6 +7,7 @@ import { toast } from 'react-toastify';
 import { useMultiProvider } from '../chains/hooks';
 import { TransactionHistoryItemType, useStore } from '../store';
 import { FinalSwapStatuses, SwapStatus } from '../swap/types';
+import { useSwapStatus } from '../swap/useSwapStatus';
 import { TransferStatus } from '../transfer/types';
 import { useEvmMailboxDeliveryStatus } from './useEvmMailboxDeliveryStatus';
 import { useMessageDeliveryStatus } from './useMessageDeliveryStatus';
@@ -24,6 +25,7 @@ type SwapDeliveryTarget = {
   msgId: string;
   destinationChain: ChainName;
   status: SwapStatus;
+  requiresDestinationOutcome: boolean;
 };
 
 type DeliveryTarget = BridgeDeliveryTarget | SwapDeliveryTarget;
@@ -34,6 +36,7 @@ export function TransactionDeliveryWatcher() {
   const multiProvider = useMultiProvider();
   const chainAddresses = useStore((s) => s.chainAddresses);
   const selectedTransactionId = useStore((s) => s.selectedTransactionId);
+  const swapRouteByTransactionId = useStore((s) => s.swapRouteByTransactionId);
   const transactionHistory = useStore((s) => s.transactionHistory);
 
   const targets = useMemo(() => {
@@ -60,15 +63,26 @@ export function TransactionDeliveryWatcher() {
       const destinationChain = multiProvider.tryGetChainName(item.data.dstChain);
       if (!destinationChain) return [];
       const msgId = getSwapDeliveryMsgId(item.data.msgIds);
-      return msgId
-        ? [{ id: item.id, type: item.type, msgId, destinationChain, status: item.data.status }]
-        : [];
+      if (!msgId) return [];
+
+      return [
+        {
+          id: item.id,
+          type: item.type,
+          msgId,
+          destinationChain,
+          status: item.data.status,
+          requiresDestinationOutcome:
+            !!item.data.destinationOutcome ||
+            !!swapRouteByTransactionId.get(item.id)?.callCommitment,
+        },
+      ];
     });
 
     return prioritizeSelectedTarget(deliveryTargets, selectedTransactionId).slice(
       -MAX_BACKGROUND_DELIVERY_TARGETS,
     );
-  }, [multiProvider, selectedTransactionId, transactionHistory]);
+  }, [multiProvider, selectedTransactionId, swapRouteByTransactionId, transactionHistory]);
 
   return (
     <>
@@ -93,6 +107,11 @@ function DeliveryTargetWatcher({
   const multiProvider = useMultiProvider();
   const updateBridgeTransactionStatus = useStore((s) => s.updateBridgeTransactionStatus);
   const updateSwapTransactionStatus = useStore((s) => s.updateSwapTransactionStatus);
+  const swap = useStore((s) => {
+    if (target.type !== TransactionHistoryItemType.Swap) return undefined;
+    const item = s.transactionHistory.find((entry) => entry.id === target.id);
+    return item?.type === TransactionHistoryItemType.Swap ? item.data : undefined;
+  });
   const graphQlDelivery = useMessageDeliveryStatus(target.msgId, true, multiProvider);
   const mailboxDelivery = useEvmMailboxDeliveryStatus({
     msgId: target.msgId,
@@ -102,6 +121,8 @@ function DeliveryTargetWatcher({
     multiProvider,
     enabled: target.type === TransactionHistoryItemType.Swap && !graphQlDelivery.isDelivered,
   });
+  // Swap recovery status is centralized here so the modal stays display-only.
+  useSwapStatus(swap, target.type === TransactionHistoryItemType.Swap ? target.id : null);
   const hasToasted = useRef(false);
   const hasUpdatedFromGraphQl = useRef(false);
   const hasBackfilledGraphQlHash = useRef(false);
@@ -144,10 +165,17 @@ function DeliveryTargetWatcher({
     ) {
       hasUpdatedFromGraphQl.current = true;
       if (graphQlDelivery.destinationTxHash) hasBackfilledGraphQlHash.current = true;
-      updateSwapTransactionStatus(target.id, SwapStatus.ConfirmedDestination, {
+      const nextStatus = target.requiresDestinationOutcome
+        ? SwapStatus.ConfirmingDestination
+        : SwapStatus.ConfirmedDestination;
+      updateSwapTransactionStatus(target.id, nextStatus, {
         destinationTxHash: graphQlDelivery.destinationTxHash,
       });
-      if (target.status !== SwapStatus.ConfirmedDestination && !hasToasted.current) {
+      if (
+        !target.requiresDestinationOutcome &&
+        target.status !== SwapStatus.ConfirmedDestination &&
+        !hasToasted.current
+      ) {
         hasToasted.current = true;
         toast.success('Swap complete! Funds have arrived.');
       }
@@ -156,10 +184,17 @@ function DeliveryTargetWatcher({
 
     if (mailboxDelivery.isDelivered && !hasUpdatedFromMailbox.current) {
       hasUpdatedFromMailbox.current = true;
-      updateSwapTransactionStatus(target.id, SwapStatus.ConfirmedDestination, {
+      const nextStatus = target.requiresDestinationOutcome
+        ? SwapStatus.ConfirmingDestination
+        : SwapStatus.ConfirmedDestination;
+      updateSwapTransactionStatus(target.id, nextStatus, {
         destinationTxHash: mailboxDelivery.destinationTxHash,
       });
-      if (target.status !== SwapStatus.ConfirmedDestination && !hasToasted.current) {
+      if (
+        !target.requiresDestinationOutcome &&
+        target.status !== SwapStatus.ConfirmedDestination &&
+        !hasToasted.current
+      ) {
         hasToasted.current = true;
         toast.success('Swap complete! Funds have arrived.');
       }

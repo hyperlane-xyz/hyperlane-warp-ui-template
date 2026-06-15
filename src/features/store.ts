@@ -20,6 +20,7 @@ import { persist } from 'zustand/middleware';
 
 import { config } from '../consts/config';
 import { logger } from '../utils/logger';
+import type { RouteResponse } from './api/types';
 import { assembleChainAddresses } from './chains/addresses';
 import { assembleChainMetadata } from './chains/metadata';
 import type { UiToken } from './swap/tokens/types';
@@ -123,8 +124,13 @@ export interface AppState {
       originTxHash?: string;
       originBlockNumber?: number;
       destinationTxHash?: string;
+      originTxTimestamp?: number;
     },
   ) => void;
+  // Non-persisted: routes for active swap transactions, keyed by transactionId.
+  // Cleared on page reload. Used by useSwapStatus.
+  swapRouteByTransactionId: Map<string, RouteResponse>;
+  setSwapRoute: (transactionId: string, route: RouteResponse) => void;
   failUnconfirmedTransactions: () => void;
   selectedTransactionId: string | null;
   setSelectedTransactionId: (id: string | null) => void;
@@ -316,10 +322,19 @@ export const useStore = create<AppState>()(
                 originTxHash: item.data.originTxHash ?? options?.originTxHash,
                 originBlockNumber: item.data.originBlockNumber ?? options?.originBlockNumber,
                 destinationTxHash: item.data.destinationTxHash ?? options?.destinationTxHash,
+                originTxTimestamp: item.data.originTxTimestamp ?? options?.originTxTimestamp,
               },
             };
           }),
         }));
+      },
+      swapRouteByTransactionId: new Map(),
+      setSwapRoute: (transactionId, route) => {
+        set((state) => {
+          const next = new Map(state.swapRouteByTransactionId);
+          next.set(transactionId, route);
+          return { swapRouteByTransactionId: next };
+        });
       },
       failUnconfirmedTransactions: () => {
         set((state) => ({

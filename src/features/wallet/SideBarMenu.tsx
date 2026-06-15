@@ -580,9 +580,15 @@ function formatSwapHistoryAmount(amount: string, decimals: number | undefined): 
 }
 
 function swapStatusToTransferStatus(status: SwapStatus): TransferStatus {
+  const failedSwapStatuses = [
+    SwapStatus.Failed,
+    SwapStatus.DestSwapFailed,
+    SwapStatus.FailedRecovered,
+    SwapStatus.DestFailed,
+  ];
+
   if (status === SwapStatus.ConfirmedDestination) return TransferStatus.Delivered;
-  if (status === SwapStatus.Failed || status === SwapStatus.DestSwapFailed)
-    return TransferStatus.Failed;
+  if (failedSwapStatuses.includes(status)) return TransferStatus.Failed;
   if (
     status === SwapStatus.Bridging ||
     status === SwapStatus.ConfirmingDestination ||

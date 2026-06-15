@@ -40,6 +40,7 @@ export function useSwap() {
   const multiProvider = useMultiProvider();
   const transactionFns = useTransactionFns(multiProvider);
   const updateSwapTransactionStatus = useStore((s) => s.updateSwapTransactionStatus);
+  const setSwapRoute = useStore((s) => s.setSwapRoute);
   const [error, setError] = useState<Error | null>(null);
   const [isPending, setIsPending] = useState(false);
 
@@ -51,6 +52,9 @@ export function useSwap() {
       const { transactionId, route, srcChainId } = args;
 
       if (!route.raw.tx) throw new Error('Route has no tx');
+
+      // Store route for status polling and recovery (non-persisted, session only).
+      setSwapRoute(transactionId, route.raw);
 
       const srcChainName = multiProvider.tryGetChainName(srcChainId);
       const protocol = multiProvider.tryGetProtocol(srcChainId);
@@ -115,7 +119,17 @@ export function useSwap() {
         // Order is critical: post to CCS BEFORE broadcasting.
         if (route.raw.callCommitment) {
           updateSwapTransactionStatus(transactionId, SwapStatus.CreatingTxs);
-          await postCommitment(route.raw.callCommitment);
+          try {
+            await postCommitment(route.raw.callCommitment);
+          } catch (ccsErr) {
+            logger.error('CCS post failed — aborting swap', ccsErr);
+            updateSwapTransactionStatus(transactionId, SwapStatus.Failed);
+            const err = new Error(
+              'Could not register swap with the coordination service. Your funds are safe — please try again.',
+            );
+            setError(err);
+            throw err;
+          }
         }
 
         updateSwapTransactionStatus(transactionId, SwapStatus.SigningSwap);
@@ -172,6 +186,7 @@ export function useSwap() {
         updateSwapTransactionStatus(transactionId, SwapStatus.Bridging, {
           msgIds: labelMessages(parsed.messages, route),
           originBlockNumber: parsed.originBlockNumber,
+          originTxTimestamp: Math.floor(Date.now() / 1000),
         });
 
         return hash;
@@ -184,7 +199,7 @@ export function useSwap() {
         setIsPending(false);
       }
     },
-    [transactionFns, multiProvider, updateSwapTransactionStatus],
+    [transactionFns, multiProvider, updateSwapTransactionStatus, setSwapRoute],
   );
 
   return { execute, isPending, error };
@@ -252,6 +267,12 @@ function labelMessages(messages: ParsedMessage[], route: AugmentedRoute): Labele
       .map((s) => s.router.toLowerCase()),
   );
 
+  const nonWarp = messages.filter((m) => !bridgeRouters.has(m.sender.toLowerCase()));
+  // callRemoteCommitReveal dispatches COMMIT first, REVEAL last. CCTP aggregation
+  // routes prepend an extra internal message, so identify REVEAL as the last
+  // non-warp message rather than counting from the front.
+  const revealMsg = nonWarp.at(-1);
+
   return messages.map((msg) => {
     if (bridgeRouters.has(msg.sender.toLowerCase())) {
       return { msgId: msg.msgId, label: 'warp' as const };
@@ -259,12 +280,13 @@ function labelMessages(messages: ParsedMessage[], route: AugmentedRoute): Labele
 
     const ccsLabel = getCcsMessageLabel(msg.body);
     if (ccsLabel) return { msgId: msg.msgId, label: ccsLabel };
+    if (msg === revealMsg) return { msgId: msg.msgId, label: 'reveal' as const };
 
-    logger.warn('Unexpected swap message shape; labeling as warp', {
+    logger.warn('Unexpected swap message shape; labeling as commit', {
       msgId: msg.msgId,
       sender: msg.sender,
     });
-    return { msgId: msg.msgId, label: 'warp' as const };
+    return { msgId: msg.msgId, label: 'commit' as const };
   });
 }
 

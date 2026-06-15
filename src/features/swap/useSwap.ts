@@ -127,6 +127,9 @@ export function useSwap() {
           if (needsApprove) await doApprove(args.approvalAmount);
         }
 
+        // DEBUG: log full route for manual reveal testing
+        console.log('[swap:route]', JSON.stringify(route.raw, null, 2));
+
         // Order is critical: post to CCS BEFORE broadcasting.
         if (route.raw.callCommitment) {
           updateSwapTransactionStatus(transactionId, SwapStatus.CreatingTxs);
@@ -307,6 +310,21 @@ async function buildSolanaTransaction(
   }));
   const instruction = new TransactionInstruction({ programId, data, keys });
 
+  // Convert pre-instructions (compute budget, idempotent ATA creates) from the
+  // engine response into TransactionInstruction objects to prepend.
+  const preInstructions = (tx.preInstructions ?? []).map(
+    (pi) =>
+      new TransactionInstruction({
+        programId: new PublicKey(pi.programId),
+        keys: pi.accounts.map((a) => ({
+          pubkey: new PublicKey(a.pubkey),
+          isSigner: a.isSigner,
+          isWritable: a.isWritable,
+        })),
+        data: Buffer.from(pi.data, 'base64'),
+      }),
+  );
+
   // Fetch blockhash and ALTs in parallel.
   const [{ blockhash }, altAccounts] = await Promise.all([
     connection.getLatestBlockhash(),
@@ -319,7 +337,7 @@ async function buildSolanaTransaction(
   const message = new TransactionMessage({
     payerKey: new PublicKey(sender),
     recentBlockhash: blockhash,
-    instructions: [instruction],
+    instructions: [...preInstructions, instruction],
   }).compileToV0Message(altAccounts);
 
   const txn = new VersionedTransaction(message);

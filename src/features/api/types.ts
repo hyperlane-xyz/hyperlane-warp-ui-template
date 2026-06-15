@@ -193,6 +193,19 @@ export const RouteTxSchema = z.object({
   additionalSigners: z.array(z.string()).optional(),
   // Solana-only: Address Lookup Table addresses for V0 transactions.
   altAddresses: z.array(z.string()).optional(),
+  // Solana-only: instructions to prepend before the main UR instruction.
+  // Used for compute budget and idempotent ATA creation.
+  preInstructions: z
+    .array(
+      z.object({
+        programId: z.string(),
+        accounts: z.array(
+          z.object({ pubkey: z.string(), isSigner: z.boolean(), isWritable: z.boolean() }),
+        ),
+        data: z.string(), // base64-encoded instruction data
+      }),
+    )
+    .optional(),
 });
 export type RouteTx = z.infer<typeof RouteTxSchema>;
 

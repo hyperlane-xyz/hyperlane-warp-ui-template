@@ -99,58 +99,62 @@ export function UnifiedTokenCard() {
 
 function UnifiedTokenForm() {
   const tokenQuery = useInitialTokenQuery();
-  const { data: tokens, engineEnabled } = useUnifiedTokens(tokenQuery);
+  const {
+    data: tokens,
+    engineEnabled,
+    isLoading: isTokenLoading,
+  } = useUnifiedTokens(tokenQuery.query);
   const tokenMap = useUnifiedTokenByKeyMap(tokens);
-  const collateralGroups = useCollateralGroups();
-
-  const initialValues = useMemo<UnifiedFormValues>(() => {
-    const { originTokenKey, destinationTokenKey } = getInitialUnifiedTokenKeys({
-      tokens,
-      collateralGroups,
-      engineEnabled,
-    });
-
-    return {
-      originTokenKey,
-      destinationTokenKey,
-      amount: '',
-      recipient: '',
-      slippageBps: config.defaultSlippageBps,
-    };
-  }, [tokens, collateralGroups, engineEnabled]);
 
   return (
     <Formik<UnifiedFormValues>
-      initialValues={initialValues}
-      enableReinitialize
+      initialValues={EMPTY_UNIFIED_FORM_VALUES}
       onSubmit={() => undefined}
       validateOnChange={false}
       validateOnBlur={false}
     >
       <Form className="transfer-form flex w-full flex-col items-stretch gap-1.5">
-        <UnifiedFormContent tokenMap={tokenMap} engineEnabled={engineEnabled} />
+        <UnifiedFormContent
+          tokens={tokens}
+          tokenMap={tokenMap}
+          engineEnabled={engineEnabled}
+          isInitialLookupLoading={tokenQuery.hasLookupIds && isTokenLoading}
+        />
       </Form>
     </Formik>
   );
 }
 
-function useInitialTokenQuery(): TokensQuery {
+const EMPTY_UNIFIED_FORM_VALUES: UnifiedFormValues = {
+  originTokenKey: undefined,
+  destinationTokenKey: undefined,
+  amount: '',
+  recipient: '',
+  slippageBps: config.defaultSlippageBps,
+};
+
+function useInitialTokenQuery(): { query: TokensQuery; hasLookupIds: boolean } {
   const [query, setQuery] = useState<TokensQuery>({});
+  const hasLookupIds = !!query.ids?.length;
 
   useEffect(() => {
     const ids = getUnifiedTokenLookupIdsFromParams(getQueryParams());
     if (ids.length) setQuery({ ids });
   }, []);
 
-  return query;
+  return { query, hasLookupIds };
 }
 
 function UnifiedFormContent({
+  tokens,
   tokenMap,
   engineEnabled,
+  isInitialLookupLoading,
 }: {
+  tokens: UnifiedToken[];
   tokenMap: Map<string, UnifiedToken>;
   engineEnabled: boolean;
+  isInitialLookupLoading: boolean;
 }) {
   const { values, errors, setValues, setErrors } = useFormikContext<UnifiedFormValues>();
   const multiProvider = useMultiProvider();
@@ -167,6 +171,17 @@ function UnifiedFormContent({
   const destinationToken = values.destinationTokenKey
     ? tokenMap.get(values.destinationTokenKey)
     : undefined;
+
+  useEffect(() => {
+    if (!tokens.length || isInitialLookupLoading) return;
+    const initialTokenKeys = getInitialUnifiedTokenKeys({
+      tokens,
+      collateralGroups,
+      engineEnabled,
+    });
+    setValues((current) => hydrateInitialUnifiedTokenKeys(current, initialTokenKeys));
+  }, [tokens, collateralGroups, engineEnabled, isInitialLookupLoading, setValues]);
+
   const routeMode = getUnifiedRouteMode({
     originToken,
     destinationToken,
@@ -563,6 +578,20 @@ function UnifiedFormContent({
       />
     </>
   );
+}
+
+export function hydrateInitialUnifiedTokenKeys(
+  values: UnifiedFormValues,
+  initialTokenKeys: ReturnType<typeof getInitialUnifiedTokenKeys>,
+): UnifiedFormValues {
+  if (values.originTokenKey || values.destinationTokenKey) return values;
+  if (!initialTokenKeys.originTokenKey && !initialTokenKeys.destinationTokenKey) return values;
+
+  return {
+    ...values,
+    originTokenKey: initialTokenKeys.originTokenKey,
+    destinationTokenKey: initialTokenKeys.destinationTokenKey,
+  };
 }
 
 function UnifiedWarningBanners({

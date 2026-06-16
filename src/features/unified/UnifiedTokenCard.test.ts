@@ -4,11 +4,54 @@ import { describe, expect, test, vi } from 'vitest';
 import { createMockToken, createTokenConnectionMock } from '../../utils/test';
 import { getTokenKey, groupTokensByCollateral } from '../tokens/utils';
 import { getTransferToken } from '../transfer/fees';
-import { validateUnifiedBridgeTransfer } from './UnifiedTokenCard';
+import { hydrateInitialUnifiedTokenKeys, validateUnifiedBridgeTransfer } from './UnifiedTokenCard';
 
 vi.mock('../transfer/fees', () => ({
   getTransferToken: vi.fn(),
 }));
+
+describe('hydrateInitialUnifiedTokenKeys', () => {
+  test('sets initial token keys without clearing typed fields', () => {
+    const result = hydrateInitialUnifiedTokenKeys(
+      {
+        originTokenKey: undefined,
+        destinationTokenKey: undefined,
+        amount: '123',
+        recipient: '0xrecipient',
+        slippageBps: 100,
+      },
+      {
+        originTokenKey: 'origin',
+        destinationTokenKey: 'destination',
+      },
+    );
+
+    expect(result).toEqual({
+      originTokenKey: 'origin',
+      destinationTokenKey: 'destination',
+      amount: '123',
+      recipient: '0xrecipient',
+      slippageBps: 100,
+    });
+  });
+
+  test('does not overwrite an existing token selection', () => {
+    const values = {
+      originTokenKey: 'selected-origin',
+      destinationTokenKey: undefined,
+      amount: '123',
+      recipient: '0xrecipient',
+      slippageBps: 100,
+    };
+
+    const result = hydrateInitialUnifiedTokenKeys(values, {
+      originTokenKey: 'default-origin',
+      destinationTokenKey: 'default-destination',
+    });
+
+    expect(result).toBe(values);
+  });
+});
 
 describe('validateUnifiedBridgeTransfer', () => {
   test('validates the fee-adjusted bridge amount for exact-input transfers', async () => {

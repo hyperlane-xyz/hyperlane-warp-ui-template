@@ -477,6 +477,7 @@ function UnifiedFormContent({
       <div className="relative z-10 -my-3 flex justify-center">
         <button
           type="button"
+          aria-label="Swap origin and destination tokens"
           onClick={onSwapTokens}
           disabled={isBridgeReview}
           className="swap-chains-button group flex h-8 w-8 items-center justify-center rounded border border-gray-400/50 bg-white shadow-button transition-all hover:bg-gray-50 dark:border-primary-300/35 dark:bg-background/90 dark:shadow-none dark:hover:bg-primary-300/[0.18]"

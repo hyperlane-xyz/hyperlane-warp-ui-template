@@ -21,8 +21,7 @@ test.describe('Transfer Form - Swap Tokens', () => {
     await expect(originBtn).toBeVisible();
     await expect(destBtn).toBeVisible();
 
-    // Click swap button (between Send and Receive sections)
-    await page.locator('div.-my-3 > button').click();
+    await page.getByRole('button', { name: 'Swap origin and destination tokens' }).click();
 
     // After swap: origin and destination should have exchanged their tokens
     await expect(originBtn).toHaveText(initialDestName!);

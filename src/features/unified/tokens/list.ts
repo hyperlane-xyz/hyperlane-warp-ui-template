@@ -58,10 +58,14 @@ export function getVisibleUnifiedTokens({
     return mode;
   };
 
+  const routableTokens = counterpartToken
+    ? allTokens.filter((token) => !!getRouteMode(token))
+    : allTokens;
+
   const defaultTokens =
     !hasFilter && config.featuredTokens.length > 0
-      ? allTokens.filter((token) => getFeaturedTokenIndex(token) >= 0 || !!getRouteMode(token))
-      : allTokens;
+      ? routableTokens.filter((token) => getFeaturedTokenIndex(token) >= 0 || !!getRouteMode(token))
+      : routableTokens;
 
   const sorted = [...defaultTokens].sort((a, b) => {
     const aFeatured = getFeaturedTokenIndex(a);

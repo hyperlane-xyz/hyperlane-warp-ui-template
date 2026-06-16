@@ -1,6 +1,7 @@
-import type { IToken, Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
+import { Token, type IToken, type TokenAmount, type WarpCore } from '@hyperlane-xyz/sdk';
 
 import { defaultMultiCollateralRoutes } from '../../consts/defaultMultiCollateralRoutes';
+import { isMultiCollateralLimitExceeded } from '../limits/utils';
 import { findConnectedDestinationToken } from '../tokens/utils';
 import { getTransferToken } from '../transfer/fees';
 
@@ -53,6 +54,68 @@ export async function getExactInputBridgeTransferQuote({
   });
 
   return { ...quote, routeToken, connectedDestinationToken };
+}
+
+export async function getExactInputBridgeMaxAmount({
+  warpCore,
+  balance,
+  destinationToken,
+  recipient,
+  sender,
+  senderPubKey,
+}: {
+  warpCore: WarpCore;
+  balance: TokenAmount<IToken>;
+  destinationToken: IToken;
+  recipient: string;
+  sender: string;
+  senderPubKey?: string;
+}): Promise<TokenAmount<Token> | undefined> {
+  const originToken = new Token(balance.token);
+  const routeToken = await getTransferToken(
+    warpCore,
+    originToken,
+    destinationToken,
+    balance.amount.toString(),
+    recipient,
+    sender,
+    defaultMultiCollateralRoutes,
+  );
+  const connectedDestinationToken = findConnectedDestinationToken(routeToken, destinationToken);
+  if (!connectedDestinationToken) return undefined;
+
+  const routeBalance = routeToken.amount(balance.amount);
+  let maxTransferAmount = await warpCore.getMaxTransferAmount({
+    balance: routeBalance,
+    destination: connectedDestinationToken.chainName,
+    recipient,
+    sender,
+    senderPubKey,
+    destinationToken: connectedDestinationToken,
+  });
+
+  const multiCollateralLimit = isMultiCollateralLimitExceeded(
+    maxTransferAmount.token,
+    connectedDestinationToken,
+    maxTransferAmount.amount.toString(),
+  );
+  if (multiCollateralLimit) {
+    maxTransferAmount = maxTransferAmount.token.amount(multiCollateralLimit);
+  }
+
+  const { igpQuote, tokenFeeQuote } = await warpCore.getInterchainTransferFee({
+    originTokenAmount: routeToken.amount(maxTransferAmount.amount),
+    destination: connectedDestinationToken.chainName,
+    recipient,
+    sender,
+    destinationToken: connectedDestinationToken,
+  });
+  const sameTokenFees =
+    (routeToken.isFungibleWith(igpQuote.token) ? igpQuote.amount : 0n) +
+    (routeToken.isFungibleWith(tokenFeeQuote?.token) ? (tokenFeeQuote?.amount ?? 0n) : 0n);
+  const inputAmount = maxTransferAmount.amount + sameTokenFees;
+
+  return routeToken.amount(inputAmount > balance.amount ? balance.amount : inputAmount);
 }
 
 export async function getExactInputBridgeQuote({

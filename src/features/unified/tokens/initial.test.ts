@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
+import { createMockToken, createTokenConnectionMock } from '../../../utils/test';
 import type { UiToken } from '../../swap/tokens/types';
+import { groupTokensByCollateral } from '../../tokens/utils';
 import { getInitialUnifiedTokenKeys } from './initial';
 import type { UnifiedToken } from './types';
 
@@ -141,6 +143,105 @@ describe('getInitialUnifiedTokenKeys', () => {
     ).toEqual({
       originTokenKey: 'foo-origin',
       destinationTokenKey: 'bar-destination',
+    });
+  });
+
+  test('uses a routable URL destination token', () => {
+    vi.stubGlobal('window', {
+      location: {
+        search: '?origin=origin&originToken=USDC&destination=destination&destinationToken=USDC',
+      },
+    });
+    const destinationBridgeToken = createMockToken({
+      chainName: 'destination',
+      symbol: 'USDC',
+      addressOrDenom: '0x2222222222222222222222222222222222222222',
+      collateralAddressOrDenom: '0x2222222222222222222222222222222222222222',
+    });
+    const originBridgeToken = createMockToken({
+      chainName: 'origin',
+      symbol: 'USDC',
+      addressOrDenom: '0x1111111111111111111111111111111111111111',
+      collateralAddressOrDenom: '0x1111111111111111111111111111111111111111',
+      connections: [createTokenConnectionMock(undefined, destinationBridgeToken)],
+    });
+    const origin = createUnifiedToken({
+      key: 'origin-usdc',
+      chainName: 'origin',
+      bridgeToken: originBridgeToken,
+      capabilities: { bridge: true, swap: false },
+    });
+    const destination = createUnifiedToken({
+      key: 'destination-usdc',
+      chainName: 'destination',
+      bridgeToken: destinationBridgeToken,
+      capabilities: { bridge: true, swap: false },
+    });
+
+    expect(
+      getInitialUnifiedTokenKeys({
+        tokens: [origin, destination],
+        collateralGroups: groupTokensByCollateral([originBridgeToken]),
+        engineEnabled: false,
+      }),
+    ).toEqual({
+      originTokenKey: 'origin-usdc',
+      destinationTokenKey: 'destination-usdc',
+    });
+  });
+
+  test('repairs an unroutable URL destination token', () => {
+    vi.stubGlobal('window', {
+      location: {
+        search: '?origin=origin&originToken=USDC&destination=unroutable&destinationToken=USDC',
+      },
+    });
+    const routableDestinationBridgeToken = createMockToken({
+      chainName: 'routable',
+      symbol: 'USDC',
+      addressOrDenom: '0x2222222222222222222222222222222222222222',
+      collateralAddressOrDenom: '0x2222222222222222222222222222222222222222',
+    });
+    const originBridgeToken = createMockToken({
+      chainName: 'origin',
+      symbol: 'USDC',
+      addressOrDenom: '0x1111111111111111111111111111111111111111',
+      collateralAddressOrDenom: '0x1111111111111111111111111111111111111111',
+      connections: [createTokenConnectionMock(undefined, routableDestinationBridgeToken)],
+    });
+    const origin = createUnifiedToken({
+      key: 'origin-usdc',
+      chainName: 'origin',
+      bridgeToken: originBridgeToken,
+      capabilities: { bridge: true, swap: false },
+    });
+    const unroutableDestination = createUnifiedToken({
+      key: 'unroutable-usdc',
+      chainName: 'unroutable',
+      bridgeToken: createMockToken({
+        chainName: 'unroutable',
+        symbol: 'USDC',
+        addressOrDenom: '0x3333333333333333333333333333333333333333',
+        collateralAddressOrDenom: '0x3333333333333333333333333333333333333333',
+      }),
+      capabilities: { bridge: true, swap: false },
+    });
+    const routableDestination = createUnifiedToken({
+      key: 'routable-usdc',
+      chainName: 'routable',
+      bridgeToken: routableDestinationBridgeToken,
+      capabilities: { bridge: true, swap: false },
+    });
+
+    expect(
+      getInitialUnifiedTokenKeys({
+        tokens: [origin, unroutableDestination, routableDestination],
+        collateralGroups: groupTokensByCollateral([originBridgeToken]),
+        engineEnabled: false,
+      }),
+    ).toEqual({
+      originTokenKey: 'origin-usdc',
+      destinationTokenKey: 'routable-usdc',
     });
   });
 });

@@ -30,13 +30,14 @@ export function getInitialUnifiedTokenKeys({
     findFirstOriginWithRoute(tokens, collateralGroups, engineEnabled) ??
     tokens[0];
 
+  const destinationParamToken = findTokenFromParams(
+    tokens,
+    params,
+    WARP_QUERY_PARAMS.DESTINATION,
+    WARP_QUERY_PARAMS.DESTINATION_TOKEN,
+  );
   const destinationToken =
-    findTokenFromParams(
-      tokens,
-      params,
-      WARP_QUERY_PARAMS.DESTINATION,
-      WARP_QUERY_PARAMS.DESTINATION_TOKEN,
-    ) ??
+    findRoutableToken(destinationParamToken, originToken, collateralGroups, engineEnabled) ??
     findRoutableConfigToken(
       tokens,
       config.defaultDestinationToken,
@@ -88,6 +89,15 @@ function findRoutableConfigToken(
   engineEnabled: boolean,
 ): UnifiedToken | undefined {
   const token = findTokenFromConfig(tokens, configToken);
+  return findRoutableToken(token, originToken, collateralGroups, engineEnabled);
+}
+
+function findRoutableToken(
+  token: UnifiedToken | undefined,
+  originToken: UnifiedToken | undefined,
+  collateralGroups: Map<string, Token[]>,
+  engineEnabled: boolean,
+): UnifiedToken | undefined {
   if (!token || !originToken) return token;
   return getUnifiedRouteMode({
     originToken,

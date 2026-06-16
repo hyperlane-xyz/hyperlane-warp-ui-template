@@ -1,57 +1,28 @@
 import { expect, test } from '@playwright/test';
+import { searchAndSelectOriginToken } from '../helpers/formFlow';
 import { openE2EApp } from '../helpers/page-setup';
 
-async function openOriginAndSearch(page: import('@playwright/test').Page, query: string) {
-  await page.getByTestId('token-select-origin').click();
-  await page.getByText('Select Token').waitFor({ state: 'visible', timeout: 30_000 });
-  await page.getByLabel('Search tokens').fill(query);
-}
-
 test.describe('Cosmos same-symbol dedup', () => {
-  test('celestia TIA vs stride TIA resolve to distinct destination routes', async ({ page }) => {
+  test('celestia TIA vs stride TIA resolve to distinct origin tokens', async ({ page }) => {
     await openE2EApp(page);
 
-    // Origin = TIA on celestia. The published registry exposes
-    // TIA/celestia-{ethereum,eclipsemainnet,solanamainnet,abstract,base}, so
-    // the auto-resolved destination lives on one of those EVM/SVM chains.
-    await openOriginAndSearch(page, 'celestia');
-    await page
-      .getByRole('button', { name: /celestia TIA/i })
-      .first()
-      .click({ timeout: 30_000 });
-    await page.getByText('Select Token').waitFor({ state: 'hidden', timeout: 30_000 });
+    await searchAndSelectOriginToken(page, 'celestia', /celestia TIA/i);
 
     const origin = page.getByTestId('token-select-origin');
     const destination = page.getByTestId('token-select-destination');
     await expect(origin).toContainText(/Celestia/i);
-    // Destination must not be a cosmos chain — celestia's connections are all
-    // EVM/Sealevel/Abstract. In particular it must not be stride (Stride TIA
-    // would be a different warp route entirely).
-    await expect(destination).not.toContainText(/Stride/i);
-    await expect(destination).not.toContainText(/Celestia/i);
+    await expect(destination).toContainText(/Select token/i);
     const celestiaDestText = await destination.innerText();
 
-    // Origin = TIA on stride. stride-originated TIA routes connect to
-    // eclipsemainnet/forma/celestia — a disjoint destination set from the
-    // celestia-originated side.
-    await openOriginAndSearch(page, 'stride');
-    await page
-      .getByRole('button', { name: /stride TIA/i })
-      .first()
-      .click({ timeout: 30_000 });
-    await page.getByText('Select Token').waitFor({ state: 'hidden', timeout: 30_000 });
+    await searchAndSelectOriginToken(page, 'stride', /stride TIA/i);
 
     await expect(origin).toContainText(/Stride/i);
     await expect(origin).not.toContainText(/Celestia/i);
-    await expect
-      .poll(() => destination.innerText(), { timeout: 10_000, intervals: [250] })
-      .not.toBe(celestiaDestText);
     const strideDestText = await destination.innerText();
 
-    // Same-symbol correctness: the destination flipped because the underlying
-    // warp route differs — NOT because the chain label happened to re-render.
-    // If dedup were broken and stride TIA fell back to the celestia route,
-    // both invocations would leave the destination button identical.
-    expect(strideDestText).not.toBe(celestiaDestText);
+    // The unified form no longer auto-picks the first destination after a new
+    // origin selection; same-symbol correctness here is that the origin label
+    // flips to the selected Cosmos route without falling back to Celestia.
+    expect(strideDestText).toBe(celestiaDestText);
   });
 });

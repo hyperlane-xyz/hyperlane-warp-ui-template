@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { searchAndSelectOriginToken } from '../helpers/formFlow';
 import { openE2EApp } from '../helpers/page-setup';
 
 // MOCK_RADIX_ADDRESS from src/features/wallet/_e2e/E2EAutoConnectRadix.tsx.
@@ -24,14 +25,7 @@ test.describe('Radix mock wallet: auto-connect', () => {
   }) => {
     await openE2EApp(page);
 
-    await page.getByTestId('token-select-origin').click();
-    await page.getByText('Select Token').waitFor({ state: 'visible', timeout: 30_000 });
-    await page.getByLabel('Search tokens').fill('radix');
-    await page
-      .getByRole('button', { name: /radix hSOL/i })
-      .first()
-      .click({ timeout: 30_000 });
-    await page.getByText('Select Token').waitFor({ state: 'hidden', timeout: 30_000 });
+    await searchAndSelectOriginToken(page, 'radix', /radix hSOL/i);
 
     const sendSection = page.getByText('Send').first().locator('../..');
     await expect(sendSection.getByText('Connect Wallet')).toBeHidden({ timeout: 20_000 });

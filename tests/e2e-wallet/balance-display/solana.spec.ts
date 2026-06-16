@@ -1,9 +1,11 @@
 import { expect, test } from '@playwright/test';
-import { selectOriginToken } from '../helpers/formFlow';
+import { searchAndSelectDestinationToken, searchAndSelectOriginToken } from '../helpers/formFlow';
 import { openE2EApp, waitForWarpRuntime } from '../helpers/page-setup';
 import { installSolanaRpcMock } from '../helpers/solanaRpc';
 
 const USDC_MINT_SOLANAMAINNET = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+const USDC_ROUTER_SOLANAMAINNET = 'EiUymjh3vJ2486ozY24s1A1YWXoH6QnSGjWuP95ph35G';
+const USDC_ROUTER_BASE = '0xB46930ca998587A95D9Ee000FA73A071ADD56B64';
 
 test.describe('Solana balance display', () => {
   test('renders mocked SPL balance for solanamainnet USDC in origin card', async ({ page }) => {
@@ -22,7 +24,8 @@ test.describe('Solana balance display', () => {
     await waitForWarpRuntime(page);
     await expect(page.getByText('0xe2e...e2ee').first()).toBeVisible({ timeout: 20_000 });
 
-    await selectOriginToken(page, /solanamainnet USDC/i);
+    await searchAndSelectOriginToken(page, USDC_ROUTER_SOLANAMAINNET, /solanamainnet USDC/i);
+    await searchAndSelectDestinationToken(page, USDC_ROUTER_BASE, /base USDC/i);
 
     const balance = page.locator('.transfer-balance').first();
     await expect(balance).toBeVisible({ timeout: 20_000 });

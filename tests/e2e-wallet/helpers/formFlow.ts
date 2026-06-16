@@ -34,10 +34,42 @@ export async function selectOriginToken(page: Page, buttonName: RegExp): Promise
   await modal.waitFor({ state: 'hidden', timeout: MODAL_TIMEOUT });
 }
 
+export async function searchAndSelectOriginToken(
+  page: Page,
+  query: string,
+  buttonName: RegExp,
+): Promise<void> {
+  await page.getByTestId('token-select-origin').dispatchEvent('click');
+  const modal = tokenPickerModal(page);
+  await modal.waitFor({ state: 'visible', timeout: MODAL_TIMEOUT });
+  await modal.getByLabel('Search tokens').fill(query);
+  await modal
+    .getByRole('button', { name: buttonName })
+    .first()
+    .dispatchEvent('click', undefined, { timeout: MODAL_TIMEOUT });
+  await modal.waitFor({ state: 'hidden', timeout: MODAL_TIMEOUT });
+}
+
 export async function selectDestinationToken(page: Page, buttonName: RegExp): Promise<void> {
   await page.getByTestId('token-select-destination').dispatchEvent('click');
   const modal = tokenPickerModal(page);
   await modal.waitFor({ state: 'visible', timeout: MODAL_TIMEOUT });
+  await modal
+    .getByRole('button', { name: buttonName })
+    .first()
+    .dispatchEvent('click', undefined, { timeout: MODAL_TIMEOUT });
+  await modal.waitFor({ state: 'hidden', timeout: MODAL_TIMEOUT });
+}
+
+export async function searchAndSelectDestinationToken(
+  page: Page,
+  query: string,
+  buttonName: RegExp,
+): Promise<void> {
+  await page.getByTestId('token-select-destination').dispatchEvent('click');
+  const modal = tokenPickerModal(page);
+  await modal.waitFor({ state: 'visible', timeout: MODAL_TIMEOUT });
+  await modal.getByLabel('Search tokens').fill(query);
   await modal
     .getByRole('button', { name: buttonName })
     .first()

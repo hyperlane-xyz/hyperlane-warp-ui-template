@@ -4,8 +4,10 @@ import { describe, expect, test, vi } from 'vitest';
 import { createMockToken, createTokenConnectionMock } from '../../utils/test';
 import { getTokenKey, groupTokensByCollateral } from '../tokens/utils';
 import { getTransferToken } from '../transfer/fees';
+import { UnifiedRouteMode } from './tokens/routes';
 import {
   getInitialUnifiedTokenQuery,
+  getUnifiedSwapIntentKey,
   hydrateInitialUnifiedTokenKeys,
   validateUnifiedBridgeTransfer,
 } from './UnifiedTokenCard';
@@ -79,6 +81,36 @@ describe('hydrateInitialUnifiedTokenKeys', () => {
     });
 
     expect(result).toBe(values);
+  });
+});
+
+describe('getUnifiedSwapIntentKey', () => {
+  const values = {
+    srcChain: 1,
+    dstChain: 2,
+    srcToken: '0x1111111111111111111111111111111111111111',
+    dstToken: '0x2222222222222222222222222222222222222222',
+    amount: '1',
+    recipient: '',
+    slippageBps: 100,
+  };
+
+  test('changes when the quoted swap intent changes', () => {
+    const initial = getUnifiedSwapIntentKey(UnifiedRouteMode.Swap, values, '0xrecipient');
+    const changedAmount = getUnifiedSwapIntentKey(
+      UnifiedRouteMode.Swap,
+      { ...values, amount: '2' },
+      '0xrecipient',
+    );
+    const changedRecipient = getUnifiedSwapIntentKey(UnifiedRouteMode.Swap, values, '0xother');
+
+    expect(changedAmount).not.toBe(initial);
+    expect(changedRecipient).not.toBe(initial);
+  });
+
+  test('uses an empty key outside swap mode', () => {
+    expect(getUnifiedSwapIntentKey(UnifiedRouteMode.Bridge, values, '0xrecipient')).toBe('');
+    expect(getUnifiedSwapIntentKey(null, values, '0xrecipient')).toBe('');
   });
 });
 

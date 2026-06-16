@@ -50,6 +50,7 @@ import {
   FinalSwapStatuses,
   SwapStatus,
   type AugmentedRoute,
+  type SwapFormValues,
   type SwapHistoryItem,
 } from '../swap/types';
 import { useQuote } from '../swap/useQuote';
@@ -232,6 +233,7 @@ function UnifiedFormContent({
   const routes = routeMode === UnifiedRouteMode.Swap ? (quote.quote?.routes ?? []) : [];
   const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
   const [isBridgeReview, setIsBridgeReview] = useState(false);
+  const swapIntentKey = getUnifiedSwapIntentKey(routeMode, swapValues, effectiveRecipient);
   const bestRoute = routes[selectedRouteIndex] ?? routes[0];
 
   const srcChainInfo =
@@ -309,6 +311,10 @@ function UnifiedFormContent({
   useEffect(() => {
     if (selectedRouteIndex >= routes.length) setSelectedRouteIndex(0);
   }, [routes.length, selectedRouteIndex]);
+
+  useEffect(() => {
+    setSelectedRouteIndex(0);
+  }, [swapIntentKey]);
 
   useEffect(() => {
     if (originToken) setOriginChainName(originToken.chainName);
@@ -592,6 +598,23 @@ export function hydrateInitialUnifiedTokenKeys(
     originTokenKey: initialTokenKeys.originTokenKey,
     destinationTokenKey: initialTokenKeys.destinationTokenKey,
   };
+}
+
+export function getUnifiedSwapIntentKey(
+  routeMode: UnifiedRouteMode | null,
+  values: SwapFormValues,
+  effectiveRecipient: string,
+): string {
+  if (routeMode !== UnifiedRouteMode.Swap) return '';
+  return [
+    values.srcChain ?? '',
+    values.dstChain ?? '',
+    values.srcToken,
+    values.dstToken,
+    values.amount,
+    effectiveRecipient,
+    values.slippageBps,
+  ].join('|');
 }
 
 function UnifiedWarningBanners({

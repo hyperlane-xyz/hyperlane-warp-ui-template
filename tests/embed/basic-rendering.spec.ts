@@ -1,10 +1,10 @@
 import { test, expect } from '@playwright/test';
-import { waitForTransferForm } from '../helpers/locators';
+import { waitForUnifiedForm } from '../helpers/locators';
 
 test.describe('Basic Rendering', () => {
   test('should render the unified form', async ({ page }) => {
     await page.goto('http://localhost:3000/embed');
-    await waitForTransferForm(page);
+    await waitForUnifiedForm(page);
 
     await expect(page.getByTestId('token-select-origin')).toBeVisible();
     await expect(page.getByTestId('token-select-destination')).toBeVisible();
@@ -17,7 +17,7 @@ test.describe('Basic Rendering', () => {
 
   test('should add embed-mode class to body', async ({ page }) => {
     await page.goto('http://localhost:3000/embed');
-    await waitForTransferForm(page);
+    await waitForUnifiedForm(page);
 
     await expect(page.locator('body')).toHaveClass(/embed-mode/);
   });

@@ -1,10 +1,10 @@
 import { test, expect } from '@playwright/test';
-import { getOriginTokenButton, waitForTransferForm } from '../helpers/locators';
+import { getOriginTokenButton, waitForUnifiedForm } from '../helpers/locators';
 
 test.describe('Token Selection - Select Origin Token', () => {
   test('should select a different origin token', async ({ page }) => {
     await page.goto('http://localhost:3000');
-    await waitForTransferForm(page);
+    await waitForUnifiedForm(page);
 
     // Open origin token selector
     await getOriginTokenButton(page).click();

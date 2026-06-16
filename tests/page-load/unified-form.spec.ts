@@ -1,11 +1,11 @@
 import { expect, test } from '@playwright/test';
 
-import { getOriginTokenButton, waitForTransferForm } from '../helpers/locators';
+import { getOriginTokenButton, waitForUnifiedForm } from '../helpers/locators';
 
 test.describe('Page Load - Unified Form', () => {
   test('shows the default bridge route', async ({ page }) => {
     await page.goto('http://localhost:3000');
-    await waitForTransferForm(page);
+    await waitForUnifiedForm(page);
 
     await expect(page.getByText('Route: bridge')).toBeVisible();
     await expect(page.getByText('Remote Balance:')).toBeVisible();
@@ -13,7 +13,7 @@ test.describe('Page Load - Unified Form', () => {
 
   test('shows featured tokens first without route tags in the token picker', async ({ page }) => {
     await page.goto('http://localhost:3000');
-    await waitForTransferForm(page);
+    await waitForUnifiedForm(page);
 
     await getOriginTokenButton(page).click();
     await expect(page.getByText('Token Selection')).toBeVisible();
@@ -30,7 +30,7 @@ test.describe('Page Load - Unified Form', () => {
     await page.goto(
       'http://localhost:3000/?origin=bsc&originToken=0x0000000000000000000000000000000000000000&destination=base&destinationToken=0x0000000000000000000000000000000000000000',
     );
-    await waitForTransferForm(page);
+    await waitForUnifiedForm(page);
 
     const swapRoute = page.getByText('Route: swap');
     const hasSwapRoute = await swapRoute.isVisible();

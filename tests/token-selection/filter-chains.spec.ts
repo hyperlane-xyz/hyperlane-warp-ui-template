@@ -1,10 +1,10 @@
 import { test, expect } from '@playwright/test';
-import { getOriginTokenButton, waitForTransferForm } from '../helpers/locators';
+import { getOriginTokenButton, waitForUnifiedForm } from '../helpers/locators';
 
 test.describe('Token Selection - Filter Chains', () => {
   test('should filter chains by search', async ({ page }) => {
     await page.goto('http://localhost:3000');
-    await waitForTransferForm(page);
+    await waitForUnifiedForm(page);
 
     // Open origin token selector
     await getOriginTokenButton(page).click();

@@ -3,13 +3,13 @@ import { config } from '../../src/consts/config';
 import {
   getOriginTokenButton,
   getDestinationTokenButton,
-  waitForTransferForm,
+  waitForUnifiedForm,
 } from '../helpers/locators';
 
 test.describe('Page Load - Default Tokens', () => {
   test('should show config default origin and destination tokens if defined', async ({ page }) => {
     await page.goto('http://localhost:3000');
-    await waitForTransferForm(page);
+    await waitForUnifiedForm(page);
 
     const originButton = getOriginTokenButton(page);
     await expect(originButton).toBeVisible();

@@ -1,10 +1,10 @@
 import { test, expect } from '@playwright/test';
-import { waitForTransferForm } from '../helpers/locators';
+import { waitForUnifiedForm } from '../helpers/locators';
 
 test.describe('Unified Form - Connect Wallet Prompt', () => {
   test('should show connect wallet button when not connected', async ({ page }) => {
     await page.goto('http://localhost:3000');
-    await waitForTransferForm(page);
+    await waitForUnifiedForm(page);
 
     const connectButton = page
       .getByRole('main')

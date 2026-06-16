@@ -4,13 +4,13 @@ import { config } from '../../src/consts/config';
 import {
   getDestinationTokenButton,
   getOriginTokenButton,
-  waitForTransferForm,
+  waitForUnifiedForm,
 } from '../helpers/locators';
 
 test.describe('Page Load - Unified Form', () => {
   test('should display the unified form on page load', async ({ page }) => {
     await page.goto('http://localhost:3000');
-    await waitForTransferForm(page);
+    await waitForUnifiedForm(page);
 
     // Page title
     await expect(page).toHaveTitle(APP_NAME);

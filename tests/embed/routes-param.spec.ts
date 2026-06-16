@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { resolveTestRoutes } from '../helpers/constants';
-import { waitForTransferForm } from '../helpers/locators';
+import { waitForUnifiedForm } from '../helpers/locators';
 
 const { primary, secondary, skip } = resolveTestRoutes();
 
@@ -9,19 +9,19 @@ test.describe('Routes Parameter', () => {
     test.skip(skip, 'warpRouteWhitelist is empty — no valid routes to test');
 
     await page.goto(`http://localhost:3000/embed?routes=${primary}`);
-    await waitForTransferForm(page);
+    await waitForUnifiedForm(page);
   });
 
   test('should load embed page with empty routes param gracefully', async ({ page }) => {
     await page.goto('http://localhost:3000/embed?routes=');
-    await waitForTransferForm(page);
+    await waitForUnifiedForm(page);
   });
 
   test('should load embed page with multiple routes param', async ({ page }) => {
     test.skip(skip, 'warpRouteWhitelist is empty — no valid routes to test');
 
     await page.goto(`http://localhost:3000/embed?routes=${primary},${secondary}`);
-    await waitForTransferForm(page);
+    await waitForUnifiedForm(page);
   });
 
   test('should fail to load with fake/nonexistent route', async ({ page }) => {
@@ -34,6 +34,6 @@ test.describe('Routes Parameter', () => {
     test.skip(skip, 'warpRouteWhitelist is empty — no valid routes to test');
 
     await page.goto(`http://localhost:3000/embed?routes=${primary},FAKE/does-not-exist`);
-    await waitForTransferForm(page);
+    await waitForUnifiedForm(page);
   });
 });

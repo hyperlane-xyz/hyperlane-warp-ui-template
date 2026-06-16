@@ -1,10 +1,10 @@
 import { test, expect } from '@playwright/test';
-import { getOriginTokenButton, waitForTransferForm } from '../helpers/locators';
+import { getOriginTokenButton, waitForUnifiedForm } from '../helpers/locators';
 
 test.describe('Token Selection - Open and Close Modal', () => {
   test('should open and close token selection modal', async ({ page }) => {
     await page.goto('http://localhost:3000');
-    await waitForTransferForm(page);
+    await waitForUnifiedForm(page);
 
     // Open origin token selector
     await getOriginTokenButton(page).click();

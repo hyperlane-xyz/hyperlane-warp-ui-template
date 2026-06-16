@@ -1,10 +1,10 @@
 import { test, expect } from '@playwright/test';
-import { waitForTransferForm } from '../helpers/locators';
+import { waitForUnifiedForm } from '../helpers/locators';
 
 test.describe('Page Load - Header and Footer', () => {
   test('should display header and footer', async ({ page }) => {
     await page.goto('http://localhost:3000');
-    await waitForTransferForm(page);
+    await waitForUnifiedForm(page);
 
     // Header
     await expect(page.getByRole('link', { name: 'Homepage' })).toBeVisible();

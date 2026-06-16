@@ -8,7 +8,7 @@ export function getDestinationTokenButton(page: Page): Locator {
   return page.getByTestId('token-select-destination');
 }
 
-export async function waitForTransferForm(page: Page): Promise<void> {
+export async function waitForUnifiedForm(page: Page): Promise<void> {
   await getOriginTokenButton(page).waitFor({ state: 'visible' });
   await getDestinationTokenButton(page).waitFor({ state: 'visible' });
 }

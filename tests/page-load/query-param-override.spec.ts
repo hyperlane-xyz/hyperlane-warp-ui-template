@@ -6,7 +6,7 @@ import { config } from '../../src/consts/config';
 import {
   getOriginTokenButton,
   getDestinationTokenButton,
-  waitForTransferForm,
+  waitForUnifiedForm,
 } from '../helpers/locators';
 
 test.describe('Page Load - Query Param Token Override', () => {
@@ -16,7 +16,7 @@ test.describe('Page Load - Query Param Token Override', () => {
       'http://localhost:3000?origin=base&originToken=0x0000000000000000000000000000000000000000&destination=ethereum&destinationToken=0x0000000000000000000000000000000000000000',
     );
 
-    await waitForTransferForm(page);
+    await waitForUnifiedForm(page);
 
     // 3. Verify origin: page.getByRole('button', { name: 'base ETH Base' })
     await expect(page.getByRole('button', { name: 'base ETH Base' })).toBeVisible();
@@ -32,7 +32,7 @@ test.describe('Page Load - Query Param Token Override', () => {
     await page.goto(
       'http://localhost:3000?origin=nonexistent&originToken=FAKE&destination=nonexistent&destinationToken=FAKE',
     );
-    await waitForTransferForm(page);
+    await waitForUnifiedForm(page);
 
     // Should fall back to config defaults
     const originButton = getOriginTokenButton(page);
@@ -58,7 +58,7 @@ test.describe('Page Load - Query Param Token Override', () => {
       'http://localhost:3000?origin=base&originToken=0x0000000000000000000000000000000000000000',
     );
 
-    await waitForTransferForm(page);
+    await waitForUnifiedForm(page);
 
     // 3. Verify origin token button picked the query-param token.
     const originButton = getOriginTokenButton(page);

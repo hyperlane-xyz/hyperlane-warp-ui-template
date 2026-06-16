@@ -2,13 +2,13 @@ import { test, expect } from '@playwright/test';
 import {
   getOriginTokenButton,
   getDestinationTokenButton,
-  waitForTransferForm,
+  waitForUnifiedForm,
 } from '../helpers/locators';
 
 test.describe('Unified Form - Swap Tokens', () => {
   test('should swap origin and destination tokens', async ({ page }) => {
     await page.goto('http://localhost:3000');
-    await waitForTransferForm(page);
+    await waitForUnifiedForm(page);
 
     const originBtn = getOriginTokenButton(page);
     const destBtn = getDestinationTokenButton(page);

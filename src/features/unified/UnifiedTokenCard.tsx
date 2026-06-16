@@ -63,6 +63,7 @@ import {
   getExactInputBridgeTransferQuote,
   type ExactInputBridgeTransferQuote,
 } from './bridgeExactInput';
+import { shouldFetchUnifiedBridgeFeeQuote, shouldFetchUnifiedSwapQuote } from './quoteGates';
 import { useUnifiedTokenByKeyMap, useUnifiedTokens } from './tokens/hooks';
 import { getInitialUnifiedTokenKeys } from './tokens/initial';
 import { getUnifiedTokenQueryParams } from './tokens/queryParams';
@@ -183,7 +184,7 @@ function UnifiedFormContent({
   const quote = useQuote({
     values: { ...swapValues, recipient: effectiveRecipient },
     sender,
-    pause: routeMode !== UnifiedRouteMode.Swap,
+    pause: !shouldFetchUnifiedSwapQuote(routeMode),
   });
   const routes = quote.quote?.routes ?? [];
   const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
@@ -229,10 +230,11 @@ function UnifiedFormContent({
       return undefined;
     }
   }, [originToken, routeMode, values.amount]);
-  const isBridgeQuoteCurrent =
+  const isBridgeQuoteCurrent = !!(
     bridgeQuote.data &&
     currentBridgeInputAmount !== undefined &&
-    bridgeQuote.data.inputAmount === currentBridgeInputAmount;
+    bridgeQuote.data.inputAmount === currentBridgeInputAmount
+  );
   const bridgeTransferValues = useMemo(
     () => ({
       originTokenKey: isBridgeQuoteCurrent ? getBridgeTokenKey(bridgeQuote.data.routeToken) : '',
@@ -248,7 +250,7 @@ function UnifiedFormContent({
   );
   const quotedCalls = useQuotedCallsFeeQuotes(
     bridgeTransferValues,
-    routeMode === UnifiedRouteMode.Bridge && !!isBridgeQuoteCurrent,
+    shouldFetchUnifiedBridgeFeeQuote({ routeMode, isBridgeQuoteCurrent }),
     bridgeQuote.data?.routeToken,
     bridgeQuote.data?.connectedDestinationToken,
   );

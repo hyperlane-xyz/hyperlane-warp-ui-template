@@ -149,7 +149,8 @@ describe('getInitialUnifiedTokenKeys', () => {
   test('uses a routable URL destination token', () => {
     vi.stubGlobal('window', {
       location: {
-        search: '?origin=origin&originToken=USDC&destination=destination&destinationToken=USDC',
+        search:
+          '?origin=origin&originToken=0x1111111111111111111111111111111111111111&destination=destination&destinationToken=0x2222222222222222222222222222222222222222',
       },
     });
     const destinationBridgeToken = createMockToken({
@@ -193,7 +194,8 @@ describe('getInitialUnifiedTokenKeys', () => {
   test('repairs an unroutable URL destination token', () => {
     vi.stubGlobal('window', {
       location: {
-        search: '?origin=origin&originToken=USDC&destination=unroutable&destinationToken=USDC',
+        search:
+          '?origin=origin&originToken=0x1111111111111111111111111111111111111111&destination=unroutable&destinationToken=0x3333333333333333333333333333333333333333',
       },
     });
     const routableDestinationBridgeToken = createMockToken({

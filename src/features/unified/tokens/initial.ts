@@ -3,6 +3,7 @@ import type { Token } from '@hyperlane-xyz/sdk';
 import { WARP_QUERY_PARAMS } from '../../../consts/args';
 import { config } from '../../../consts/config';
 import { getQueryParams } from '../../../utils/queryParams';
+import { findUnifiedTokenByConfigRef, findUnifiedTokenByQueryRef } from './queryParams';
 import { getUnifiedRouteMode } from './routes';
 import type { UnifiedToken } from './types';
 
@@ -69,7 +70,7 @@ function findTokenFromParams(
   const chainName = params?.get(chainParam);
   const tokenRef = params?.get(tokenParam);
   if (!chainName || !tokenRef) return undefined;
-  return findToken(tokens, chainName, tokenRef);
+  return findUnifiedTokenByQueryRef(tokens, chainName, tokenRef);
 }
 
 function findTokenFromConfig(
@@ -78,7 +79,7 @@ function findTokenFromConfig(
 ): UnifiedToken | undefined {
   const parsed = parseTokenRef(configToken);
   if (!parsed) return undefined;
-  return findToken(tokens, parsed.chainName, parsed.tokenRef);
+  return findUnifiedTokenByConfigRef(tokens, parsed.chainName, parsed.tokenRef);
 }
 
 function findRoutableConfigToken(
@@ -116,25 +117,6 @@ function parseTokenRef(value: string | undefined): { chainName: string; tokenRef
     chainName: value.slice(0, separator),
     tokenRef: value.slice(separator + 1),
   };
-}
-
-function findToken(
-  tokens: UnifiedToken[],
-  chainName: string,
-  tokenRef: string,
-): UnifiedToken | undefined {
-  const normalizedChain = chainName.toLowerCase();
-  const normalizedToken = tokenRef.toLowerCase();
-  return tokens.find((token) => {
-    if (token.chainName.toLowerCase() !== normalizedChain) return false;
-    return (
-      token.symbol.toLowerCase() === normalizedToken ||
-      token.addressOrDenom.toLowerCase() === normalizedToken ||
-      token.bridgeToken?.addressOrDenom.toLowerCase() === normalizedToken ||
-      token.bridgeToken?.collateralAddressOrDenom?.toLowerCase() === normalizedToken ||
-      token.swapToken?.address.toLowerCase() === normalizedToken
-    );
-  });
 }
 
 function findFirstOriginWithRoute(

@@ -60,8 +60,10 @@ test.describe('Page Load - Query Param Token Override', () => {
 
     await waitForTransferForm(page);
 
-    // 3. Verify origin: page.getByRole('button', { name: 'base ETH Base' })
-    await expect(page.getByRole('button', { name: 'base ETH Base' })).toBeVisible();
+    // 3. Verify origin token button picked the query-param token.
+    const originButton = getOriginTokenButton(page);
+    await expect(originButton).toHaveAttribute('data-chain', 'base');
+    await expect(originButton).toContainText('ETH');
 
     // 4. Verify destination is visible: page.getByTestId('token-select-destination')
     await expect(page.getByTestId('token-select-destination')).toBeVisible();

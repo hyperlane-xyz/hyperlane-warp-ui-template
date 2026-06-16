@@ -48,10 +48,11 @@ test.describe('EVM tx payload capture', () => {
     await page.getByRole('button', { name: /^Continue$/ }).click();
 
     // Review panel ready.
-    await expect(page.locator('.transfer-review-panel').first()).toContainText(
-      /Transfer Remote/i,
-      { timeout: 45_000 },
-    );
+    const reviewPanel = page.locator('.transfer-review-panel').first();
+    await expect(reviewPanel).toContainText(/Transfer Remote/i, { timeout: 45_000 });
+    await expect(reviewPanel).toContainText(/Remote Token/i);
+    await expect(reviewPanel).toContainText(/Amount1 USDC/i);
+    await expect(reviewPanel).toContainText(/Received Amount1\.00000000 USDC/i);
 
     const sendButton = page.getByRole('button', { name: /^Send to/i });
     await sendButton.waitFor({ state: 'visible', timeout: 30_000 });

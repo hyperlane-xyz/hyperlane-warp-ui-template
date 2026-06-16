@@ -210,25 +210,32 @@ function UnifiedFormContent({
     sender,
     pause: !shouldFetchUnifiedSwapQuote(routeMode),
   });
-  const routes = quote.quote?.routes ?? [];
+  const routes = routeMode === UnifiedRouteMode.Swap ? (quote.quote?.routes ?? []) : [];
   const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
   const [isBridgeReview, setIsBridgeReview] = useState(false);
   const bestRoute = routes[selectedRouteIndex] ?? routes[0];
 
-  const srcChainInfo = chainsResp?.chains.find((c) => c.id === swapValues.srcChain);
+  const srcChainInfo =
+    routeMode === UnifiedRouteMode.Swap
+      ? chainsResp?.chains.find((c) => c.id === swapValues.srcChain)
+      : undefined;
   const universalRouter = srcChainInfo?.universalRouter as Address | undefined;
   const amountAtomic = useMemo(() => {
+    if (routeMode !== UnifiedRouteMode.Swap) return undefined;
     const initialStep = bestRoute?.raw.steps[0];
     if (initialStep && 'amountIn' in initialStep) return BigInt(initialStep.amountIn);
     return undefined;
-  }, [bestRoute]);
+  }, [bestRoute, routeMode]);
   const approvalStatus = useApprovalStatus({
-    chainName: originToken?.chainName,
-    token: originToken?.swapToken?.address as Address | undefined,
+    chainName: routeMode === UnifiedRouteMode.Swap ? originToken?.chainName : undefined,
+    token:
+      routeMode === UnifiedRouteMode.Swap
+        ? (originToken?.swapToken?.address as Address | undefined)
+        : undefined,
     owner: sender,
     spender: universalRouter,
     amount: amountAtomic,
-    isNative: !!originToken?.swapToken?.isNative,
+    isNative: routeMode === UnifiedRouteMode.Swap && !!originToken?.swapToken?.isNative,
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);

@@ -130,6 +130,17 @@ export function useSwap() {
         // DEBUG: log full route for manual reveal testing
         console.log('[swap:route]', JSON.stringify(route.raw, null, 2));
 
+        // DEBUG: log solana reveal params for manual reveal via scripts/reveal.mjs
+        if (route.raw.solanaCommitment) {
+          const sc = route.raw.solanaCommitment;
+          console.log('[solana-reveal]', JSON.stringify({
+            commitment: sc.commitment,
+            calldata: sc.ccs.body.calldata,
+            revealSalt: sc.ccs.body.revealSalt,
+            sender: args.sender,
+          }));
+        }
+
         // Order is critical: post to CCS BEFORE broadcasting.
         if (route.raw.callCommitment) {
           updateSwapTransactionStatus(transactionId, SwapStatus.CreatingTxs);
@@ -362,5 +373,16 @@ async function loadAltAccounts(
   const results = await Promise.all(
     altAddresses.map((addr) => connection.getAddressLookupTable(new PublicKey(addr))),
   );
-  return results.flatMap((r) => (r.value ? [r.value] : []));
+  const accounts: AddressLookupTableAccount[] = [];
+  for (let i = 0; i < results.length; i++) {
+    const r = results[i]!;
+    if (!r.value) {
+      throw new Error(
+        `Address Lookup Table not found: ${altAddresses[i]}. ` +
+          'Ensure the ALT is deployed and activated on this network.',
+      );
+    }
+    accounts.push(r.value);
+  }
+  return accounts;
 }

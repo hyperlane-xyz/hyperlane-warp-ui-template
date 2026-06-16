@@ -227,6 +227,7 @@ export const CallCommitmentBodySchema = z.object({
   destinationDomain: z.number(),
   owner: Address,
   ismOverride: Address.optional(),
+  localRouter: Hex.optional(),
 });
 export type CallCommitmentBody = z.infer<typeof CallCommitmentBodySchema>;
 
@@ -263,6 +264,7 @@ export const SolanaCommitmentSchema = z.object({
       calldata: Hex,
       destinationDomain: z.number(),
       encoding: z.string(),
+      revealSalt: Hex.optional(),
     }),
   }),
 });

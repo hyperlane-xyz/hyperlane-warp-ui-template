@@ -39,7 +39,9 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
 
   const enabled = routerClient.isConfigured && isQuoteRequestReady(values, engineSender) && !pause;
 
-  const { data: srcTokens } = useTokens(values.srcChain != null ? { chain: values.srcChain } : {});
+  const { data: srcTokens } = useTokens(values.srcChain != null ? { chain: values.srcChain } : {}, {
+    enabled,
+  });
   const srcTokenInfo = srcTokens.find(
     (t) => t.address.toLowerCase() === values.srcToken.toLowerCase(),
   );

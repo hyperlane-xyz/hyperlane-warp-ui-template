@@ -16,6 +16,10 @@ interface UseTokensResult {
   error: Error | null;
 }
 
+interface UseTokensOptions {
+  enabled?: boolean;
+}
+
 // Single entry point for /v1/tokens. Branches map directly to engine
 // modes (see RouterClient.tokens / TokensQuery):
 //   {}              → featured / trending list
@@ -27,8 +31,12 @@ interface UseTokensResult {
 // Side-effect: each successful response funnels into store.knownTokens
 // so ad-hoc lookups in modals/sidebar can resolve any token the user
 // has touched in this session, not just the featured list.
-export function useTokens(query: TokensQuery = {}): UseTokensResult {
-  const { data: chainsResp, isLoading: chainsLoading } = useChains();
+export function useTokens(
+  query: TokensQuery = {},
+  { enabled = true }: UseTokensOptions = {},
+): UseTokensResult {
+  const shouldFetch = routerClient.isConfigured && enabled;
+  const { data: chainsResp, isLoading: chainsLoading } = useChains({ enabled: shouldFetch });
   const syncTokens = useStore((s) => s.syncTokens);
 
   // Engine chains are the source of truth for what `/v1/tokens` can
@@ -54,7 +62,7 @@ export function useTokens(query: TokensQuery = {}): UseTokensResult {
   const result = useQuery({
     queryKey: ['router', 'tokens', canonical],
     queryFn: () => routerClient.tokens(canonical),
-    enabled: routerClient.isConfigured,
+    enabled: shouldFetch,
     staleTime: canonical.search ? STALE_30_SEC : STALE_5_MIN,
   });
 

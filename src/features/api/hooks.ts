@@ -14,11 +14,11 @@ export function useReadiness() {
   });
 }
 
-export function useChains() {
+export function useChains({ enabled = true }: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: ['router', 'chains'],
     queryFn: () => routerClient.chains(),
-    enabled: routerClient.isConfigured,
+    enabled: routerClient.isConfigured && enabled,
     staleTime: STALE_5_MIN,
   });
 }

@@ -54,6 +54,7 @@ import { useSwap } from '../swap/useSwap';
 import { validateSwapForm } from '../swap/validate';
 import { useCollateralGroups, useTokenByKeyMap, useWarpCore } from '../tokens/hooks';
 import { ImportTokenButton } from '../tokens/ImportTokenButton';
+import { useTokenPrices as useBridgeTokenPrices } from '../tokens/useTokenPrice';
 import { getTokenKey as getBridgeTokenKey } from '../tokens/utils';
 import { useRecipientBalanceWatcher } from '../transfer/useBalanceWatcher';
 import { useQuotedCallsFeeQuotes } from '../transfer/useQuotedCalls';
@@ -689,6 +690,21 @@ function OriginTokenCard({
   const { data: swapBalance, isLoading: isSwapBalanceLoading } = useSwapTokenBalance(
     token?.swapToken,
   );
+  const { prices: bridgePrices, isLoading: isBridgePriceLoading } = useBridgeTokenPrices();
+  const { prices: swapPrices, isLoading: isSwapPriceLoading } = useSwapTokenPrices();
+  const tokenPrice =
+    routeMode === UnifiedRouteMode.Swap
+      ? token?.swapToken?.coinGeckoId
+        ? swapPrices[token.swapToken.coinGeckoId]
+        : undefined
+      : token?.bridgeToken?.coinGeckoId
+        ? bridgePrices[token.bridgeToken.coinGeckoId]
+        : undefined;
+  const amount = parseFloat(values.amount);
+  const totalTokenPrice = !isNullish(tokenPrice) && !isNaN(amount) ? amount * tokenPrice : 0;
+  const isPriceLoading =
+    routeMode === UnifiedRouteMode.Swap ? isSwapPriceLoading : isBridgePriceLoading;
+  const showUsdValue = totalTokenPrice >= 0.01 && !isPriceLoading;
   const balanceLabel =
     routeMode === UnifiedRouteMode.Swap && token?.swapToken
       ? swapBalance == null
@@ -765,7 +781,7 @@ function OriginTokenCard({
           </button>
         </div>
         <div className="transfer-balance mt-1 flex items-center justify-between text-xs leading-[18px] text-gray-450">
-          <span>$0.00</span>
+          <span>{showUsdValue ? formatUsd(totalTokenPrice) : '$0.00'}</span>
           <span>Balance: {balanceLabel}</span>
         </div>
       </div>

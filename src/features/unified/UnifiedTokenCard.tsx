@@ -669,7 +669,7 @@ async function submitBridge({
   await bridgeTransfer.triggerTransactions(transferValues, quote.routeToken, null);
 }
 
-async function validateUnifiedBridgeTransfer({
+export async function validateUnifiedBridgeTransfer({
   warpCore,
   bridgeTokenMap,
   collateralGroups,

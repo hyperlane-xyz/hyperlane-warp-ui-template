@@ -221,22 +221,34 @@ function UnifiedFormContent({
     recipient: effectiveRecipient,
     sender,
   });
+  const currentBridgeInputAmount = useMemo(() => {
+    if (!originToken?.bridgeToken || routeMode !== UnifiedRouteMode.Bridge) return undefined;
+    try {
+      return BigInt(toWei(values.amount || '0', originToken.bridgeToken.decimals));
+    } catch {
+      return undefined;
+    }
+  }, [originToken, routeMode, values.amount]);
+  const isBridgeQuoteCurrent =
+    bridgeQuote.data &&
+    currentBridgeInputAmount !== undefined &&
+    bridgeQuote.data.inputAmount === currentBridgeInputAmount;
   const bridgeTransferValues = useMemo(
     () => ({
-      originTokenKey: bridgeQuote.data ? getBridgeTokenKey(bridgeQuote.data.routeToken) : '',
-      destinationTokenKey: bridgeQuote.data
+      originTokenKey: isBridgeQuoteCurrent ? getBridgeTokenKey(bridgeQuote.data.routeToken) : '',
+      destinationTokenKey: isBridgeQuoteCurrent
         ? getBridgeTokenKey(bridgeQuote.data.connectedDestinationToken)
         : '',
-      amount: bridgeQuote.data
+      amount: isBridgeQuoteCurrent
         ? fromWei(bridgeQuote.data.transferAmount.amount, bridgeQuote.data.routeToken.decimals)
         : '',
       recipient: effectiveRecipient,
     }),
-    [bridgeQuote.data, effectiveRecipient],
+    [bridgeQuote.data, effectiveRecipient, isBridgeQuoteCurrent],
   );
   const quotedCalls = useQuotedCallsFeeQuotes(
     bridgeTransferValues,
-    routeMode === UnifiedRouteMode.Bridge && !!bridgeQuote.data,
+    routeMode === UnifiedRouteMode.Bridge && !!isBridgeQuoteCurrent,
     bridgeQuote.data?.routeToken,
     bridgeQuote.data?.connectedDestinationToken,
   );

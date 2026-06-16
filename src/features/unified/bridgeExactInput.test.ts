@@ -3,7 +3,11 @@ import { describe, expect, test, vi } from 'vitest';
 import { createMockToken } from '../../utils/test';
 import { findConnectedDestinationToken } from '../tokens/utils';
 import { getTransferToken } from '../transfer/fees';
-import { getExactInputBridgeMaxAmount, getExactInputBridgeQuote } from './bridgeExactInput';
+import {
+  getExactInputBridgeMaxAmount,
+  getExactInputBridgeQuote,
+  getExactInputBridgeTransferQuote,
+} from './bridgeExactInput';
 
 vi.mock('../transfer/fees', () => ({
   getTransferToken: vi.fn(),
@@ -86,5 +90,30 @@ describe('getExactInputBridgeMaxAmount', () => {
     });
 
     expect(maxAmount?.amount).toBe(950n);
+  });
+});
+
+describe('getExactInputBridgeTransferQuote', () => {
+  test('keeps the original input amount for stale quote checks', async () => {
+    const token = createMockToken();
+    vi.mocked(getTransferToken).mockResolvedValue(token);
+    vi.mocked(findConnectedDestinationToken).mockReturnValue(token);
+    const warpCore = {
+      getInterchainTransferFee: vi.fn().mockResolvedValue({
+        igpQuote: token.amount(0n),
+        tokenFeeQuote: undefined,
+      }),
+    };
+
+    const quote = await getExactInputBridgeTransferQuote({
+      warpCore: warpCore as any,
+      originToken: token,
+      destinationToken: token,
+      inputAmount: 1_000n,
+      recipient: '0xrecipient',
+      sender: '0xsender',
+    });
+
+    expect(quote.inputAmount).toBe(1_000n);
   });
 });

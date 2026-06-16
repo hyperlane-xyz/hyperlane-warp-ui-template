@@ -12,6 +12,7 @@ interface ExactInputBridgeQuote {
 }
 
 export interface ExactInputBridgeTransferQuote extends ExactInputBridgeQuote {
+  inputAmount: bigint;
   routeToken: Token;
   connectedDestinationToken: Token;
 }
@@ -53,7 +54,7 @@ export async function getExactInputBridgeTransferQuote({
     sender,
   });
 
-  return { ...quote, routeToken, connectedDestinationToken };
+  return { ...quote, inputAmount, routeToken, connectedDestinationToken };
 }
 
 export async function getExactInputBridgeMaxAmount({

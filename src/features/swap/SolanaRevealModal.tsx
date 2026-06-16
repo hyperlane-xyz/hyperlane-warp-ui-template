@@ -309,18 +309,19 @@ async function buildRevealTransaction(
     ...sweepAccts,
   ];
 
-  const createOutputAtaIx = new TransactionInstruction({
-    programId: ATA_PROGRAM,
-    keys: [
-      { pubkey: walletPk, isSigner: true, isWritable: true },
-      { pubkey: pdaOutputAta, isSigner: false, isWritable: true },
-      { pubkey: pendingSwapPDA, isSigner: false, isWritable: false },
-      { pubkey: new PublicKey(actualOutputMint), isSigner: false, isWritable: false },
-      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-      { pubkey: actualOutTokenProg, isSigner: false, isWritable: false },
-    ],
-    data: Buffer.from([1]),
-  });
+  const makeAtaIx = (owner: PublicKey, ata: PublicKey) =>
+    new TransactionInstruction({
+      programId: ATA_PROGRAM,
+      keys: [
+        { pubkey: walletPk, isSigner: true, isWritable: true },
+        { pubkey: ata, isSigner: false, isWritable: true },
+        { pubkey: owner, isSigner: false, isWritable: false },
+        { pubkey: new PublicKey(actualOutputMint), isSigner: false, isWritable: false },
+        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+        { pubkey: actualOutTokenProg, isSigner: false, isWritable: false },
+      ],
+      data: Buffer.from([1]),
+    });
 
   const revealIx = new TransactionInstruction({ programId: PROGRAM_ID, keys, data: ixBuf });
 
@@ -328,7 +329,8 @@ async function buildRevealTransaction(
   const tx = new Transaction({ recentBlockhash: blockhash, feePayer: walletPk });
   tx.add(ComputeBudgetProgram.setComputeUnitLimit({ units: 400_000 }));
   tx.add(ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 5_000 }));
-  tx.add(createOutputAtaIx);
+  tx.add(makeAtaIx(pendingSwapPDA, pdaOutputAta));     // CLMM needs this pre-initialized
+  tx.add(makeAtaIx(recipientPk, recipientOutAta));     // sweep needs this pre-initialized
   tx.add(revealIx);
   return tx;
 }

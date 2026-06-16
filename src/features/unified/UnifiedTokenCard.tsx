@@ -1,4 +1,4 @@
-import { Token } from '@hyperlane-xyz/sdk';
+import { Token, TokenAmount, type WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
 import { errorToString, fromWei, isNullish, toWei } from '@hyperlane-xyz/utils';
 import { ChevronIcon, SpinnerIcon, useDebounce, useModal } from '@hyperlane-xyz/widgets';
 import {
@@ -29,6 +29,7 @@ import {
   useDestinationBalance,
   useOriginBalance,
 } from '../balances/hooks';
+import { useFeePrices } from '../balances/useFeePrices';
 import { ChainConnectionWarning } from '../chains/ChainConnectionWarning';
 import { ChainWalletWarning } from '../chains/ChainWalletWarning';
 import { useMultiProvider } from '../chains/hooks';
@@ -59,6 +60,8 @@ import { useCollateralGroups, useTokenByKeyMap, useWarpCore } from '../tokens/ho
 import { ImportTokenButton } from '../tokens/ImportTokenButton';
 import { useTokenPrices as useBridgeTokenPrices } from '../tokens/useTokenPrice';
 import { getTokenKey as getBridgeTokenKey } from '../tokens/utils';
+import { getTotalFee } from '../transfer/fees';
+import { FeeSectionButton } from '../transfer/FeeSectionButton';
 import { useRecipientBalanceWatcher } from '../transfer/useBalanceWatcher';
 import { useQuotedCallsFeeQuotes } from '../transfer/useQuotedCalls';
 import { useSmartContractRecipientWarning } from '../transfer/useSmartContractRecipientWarning';
@@ -628,29 +631,22 @@ function BridgeFeeSummary({
   quote: ExactInputBridgeTransferQuote | undefined;
   quotedCalls: ReturnType<typeof useQuotedCallsFeeQuotes>;
 }) {
-  const fees = getBridgeFeeItems(quote, quotedCalls);
+  const warpCore = useWarpCore();
+  const { prices } = useBridgeTokenPrices();
+  const fees = getBridgeFeeEstimate(quote, quotedCalls);
+  const feePrices = useFeePrices(fees, warpCore.tokens, prices);
+  const transferUsd = getBridgeTransferUsd(quote, prices);
 
-  if (!fees.length && !quotedCalls.isLoading) return null;
+  if (!fees && !quotedCalls.isLoading) return null;
 
   return (
-    <div className="mb-2 rounded border border-gray-300/60 px-2 py-1.5 text-xs text-gray-500 dark:border-primary-300/25 dark:text-foreground-secondary">
-      <div className="mb-1 flex items-center justify-between gap-2">
-        <span>{quotedCalls.isLoading ? 'Fees loading...' : 'Fees'}</span>
-      </div>
-      {!!fees.length && (
-        <div className="flex flex-wrap gap-1">
-          {fees.map((fee) => (
-            <span
-              key={fee.label}
-              className="rounded border border-gray-300/70 px-1.5 py-0.5 dark:border-primary-300/25"
-            >
-              {fee.label}: {fee.amount.getDecimalFormattedAmount().toFixed(8)}{' '}
-              {fee.amount.token.symbol}
-            </span>
-          ))}
-        </div>
-      )}
-    </div>
+    <FeeSectionButton
+      isLoading={quotedCalls.isLoading}
+      isError={false}
+      fees={fees}
+      feePrices={feePrices}
+      transferUsd={transferUsd}
+    />
   );
 }
 
@@ -765,16 +761,42 @@ function getBridgeFeeItems(
   quote: ExactInputBridgeTransferQuote | undefined,
   quotedCalls: ReturnType<typeof useQuotedCallsFeeQuotes>,
 ) {
+  const fees = getBridgeFeeEstimate(quote, quotedCalls);
+  if (!fees) return [];
+
   return [
-    { label: 'Local Gas (est.)', amount: quotedCalls.fees?.localQuote },
-    {
-      label: 'Interchain Gas',
-      amount: quotedCalls.fees?.interchainQuote ?? quote?.interchainQuote,
-    },
-    { label: 'Token Fee', amount: quotedCalls.fees?.tokenFeeQuote ?? quote?.tokenFeeQuote },
+    { label: 'Local Gas (est.)', amount: fees.localQuote },
+    { label: 'Interchain Gas', amount: fees.interchainQuote },
+    { label: 'Token Fee', amount: fees.tokenFeeQuote },
   ].filter((fee): fee is { label: string; amount: NonNullable<typeof fee.amount> } => {
     return !!fee.amount && fee.amount.amount > 0n;
   });
+}
+
+function getBridgeFeeEstimate(
+  quote: ExactInputBridgeTransferQuote | undefined,
+  quotedCalls: ReturnType<typeof useQuotedCallsFeeQuotes>,
+): (WarpCoreFeeEstimate & { totalFees: string }) | null {
+  const interchainQuote = quotedCalls.fees?.interchainQuote ?? quote?.interchainQuote;
+  if (!interchainQuote) return null;
+
+  const localQuote = quotedCalls.fees?.localQuote ?? new TokenAmount(0n, interchainQuote.token);
+  const tokenFeeQuote = quotedCalls.fees?.tokenFeeQuote ?? quote?.tokenFeeQuote;
+  const totalFees = getTotalFee({ localQuote, interchainQuote, tokenFeeQuote })
+    .map((fee) => `${fee.getDecimalFormattedAmount().toFixed(8)} ${fee.token.symbol}`)
+    .join(', ');
+
+  return { localQuote, interchainQuote, tokenFeeQuote, totalFees };
+}
+
+function getBridgeTransferUsd(
+  quote: ExactInputBridgeTransferQuote | undefined,
+  prices: Record<string, number>,
+): number {
+  if (!quote?.routeToken.coinGeckoId) return 0;
+  const price = prices[quote.routeToken.coinGeckoId];
+  if (!price) return 0;
+  return quote.routeToken.amount(quote.inputAmount).getDecimalFormattedAmount() * price;
 }
 
 function SwapFeeSummary({ route }: { route: AugmentedRoute | undefined }) {

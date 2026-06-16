@@ -173,7 +173,7 @@ function UnifiedFormContent({
   const destinationChainDisplay = destinationToken
     ? getChainDisplayName(multiProvider, destinationToken.chainName)
     : '';
-  const { data: chainsResp } = useChains();
+  const { data: chainsResp } = useChains({ enabled: routeMode === UnifiedRouteMode.Swap });
   const sender = useAccountAddressForChain(multiProvider, originToken?.chainName);
   const connectedDestAddress = useAccountAddressForChain(
     multiProvider,

@@ -17,6 +17,7 @@ interface Props {
   text: string;
   classes?: string;
   disabled?: boolean;
+  onClickWhenReady?: () => void | Promise<void>;
 }
 
 export function ConnectAwareSubmitButton<FormValues = any>({
@@ -24,6 +25,7 @@ export function ConnectAwareSubmitButton<FormValues = any>({
   text,
   classes,
   disabled,
+  onClickWhenReady,
 }: Props) {
   const protocol = useChainProtocol(chainName) || ProtocolType.Ethereum;
   const connectFns = useConnectFns();
@@ -41,12 +43,12 @@ export function ConnectAwareSubmitButton<FormValues = any>({
   const color = hasError ? 'red' : 'accent';
   const content = hasError ? firstError : isAccountReady ? text : 'Connect wallet';
   const type =
-    disabled || !isAccountReady
+    onClickWhenReady || disabled || !isAccountReady
       ? 'button' // never submits when deliberately disabled
       : 'submit';
 
   const onClick = () => {
-    if (isAccountReady) return undefined;
+    if (isAccountReady) return onClickWhenReady?.();
 
     trackEvent(EVENT_NAME.WALLET_CONNECTION_INITIATED, { protocol });
     connectFn();

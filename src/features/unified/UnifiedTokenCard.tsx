@@ -12,7 +12,7 @@ import { Form, Formik, useFormikContext } from 'formik';
 import { useEffect, useMemo, useState } from 'react';
 import { type Address } from 'viem';
 
-import { SolidButton } from '../../components/buttons/SolidButton';
+import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
 import { SwapIcon } from '../../components/icons/SwapIcon';
 import { TextField } from '../../components/input/TextField';
 import { TransferSection } from '../../components/layout/TransferSection';
@@ -266,14 +266,11 @@ function UnifiedFormContent({
     }
   };
 
-  const firstError = Object.values(errors)[0];
-  const buttonText = firstError
-    ? `${firstError}`
-    : !routeMode
-      ? 'Route is not supported'
-      : isSubmitting
-        ? 'Sending...'
-        : `Send ${routeMode}`;
+  const buttonText = !routeMode
+    ? 'Route is not supported'
+    : isSubmitting
+      ? 'Sending...'
+      : `Send ${routeMode}`;
 
   useEffect(() => {
     if (Object.keys(errors).length) setErrors({});
@@ -329,15 +326,13 @@ function UnifiedFormContent({
         {!engineEnabled && <span>Bridge only</span>}
       </div>
 
-      <SolidButton
-        type="button"
-        color={firstError ? 'red' : 'accent'}
-        onClick={onSubmit}
+      <ConnectAwareSubmitButton<UnifiedFormValues>
+        chainName={originToken?.chainName || ''}
+        text={buttonText}
+        onClickWhenReady={onSubmit}
         disabled={isSubmitting}
-        className="mb-4 w-full px-3 py-2.5 font-secondary text-xl text-cream-100"
-      >
-        {buttonText}
-      </SolidButton>
+        classes="mb-4 w-full px-3 py-2.5 font-secondary text-xl text-cream-100"
+      />
     </>
   );
 }

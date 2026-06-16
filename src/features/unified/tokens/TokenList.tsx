@@ -1,4 +1,4 @@
-import { Tooltip, useDebounce } from '@hyperlane-xyz/widgets';
+import { useDebounce } from '@hyperlane-xyz/widgets';
 import React, { useEffect, useMemo, useRef } from 'react';
 
 import { TokenChainIcon } from '../../../components/icons/TokenChainIcon';
@@ -6,7 +6,7 @@ import { useDisabledChains, useMultiProvider } from '../../chains/hooks';
 import { getChainDisplayName } from '../../chains/utils';
 import { useCollateralGroups } from '../../tokens/hooks';
 import { useUnifiedTokens } from './hooks';
-import { getTokenRouteMode, getVisibleUnifiedTokens, type UnifiedTokenRouteMode } from './list';
+import { getVisibleUnifiedTokens } from './list';
 import type { UnifiedToken } from './types';
 
 function matchesSearch(
@@ -107,26 +107,9 @@ export function TokenList({
           <h3 className={`${styles.base} text-sm text-black`}>Token Selection</h3>
         </div>
         <div className="py-2 md:px-3">
-          {tokens.map((token) => {
-            const routeMode = getTokenRouteMode(
-              token,
-              counterpartToken,
-              selectionMode,
-              collateralGroups,
-              engineEnabled,
-            );
-
-            return (
-              <TokenButton
-                key={token.key}
-                token={token}
-                onSelect={onSelect}
-                routeMode={routeMode}
-                counterpartToken={counterpartToken}
-                selectionMode={selectionMode}
-              />
-            );
-          })}
+          {tokens.map((token) => (
+            <TokenButton key={token.key} token={token} onSelect={onSelect} />
+          ))}
 
           {isLimited && (
             <div className="token-picker-hint mx-1 mb-3 mt-2 rounded-lg bg-blue-50 px-3 py-4 text-center">
@@ -144,26 +127,12 @@ export function TokenList({
 const TokenButton = React.memo(function TokenButton({
   token,
   onSelect,
-  routeMode,
-  counterpartToken,
-  selectionMode,
 }: {
   token: UnifiedToken;
   onSelect: (token: UnifiedToken) => void;
-  routeMode: UnifiedTokenRouteMode;
-  counterpartToken?: UnifiedToken;
-  selectionMode: 'origin' | 'destination';
 }) {
   const multiProvider = useMultiProvider();
   const chainDisplayName = getChainDisplayName(multiProvider, token.chainName);
-  const counterpartChainName = counterpartToken
-    ? getChainDisplayName(multiProvider, counterpartToken.chainName)
-    : '';
-  const showRouteUnavailable = !routeMode && counterpartToken;
-  const routeDirection = selectionMode === 'destination' ? 'from' : 'to';
-  const routeTooltipMessage = counterpartToken
-    ? `No route ${routeDirection} ${counterpartToken.symbol} on ${counterpartChainName}`
-    : '';
 
   return (
     <button
@@ -173,35 +142,19 @@ const TokenButton = React.memo(function TokenButton({
     >
       <TokenChainIcon token={token} size={36} />
 
-      <div className="ml-3 grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(4rem,max-content)] items-center gap-3">
-        <div className="min-w-0 text-left">
-          <div className="flex min-w-0 items-center gap-2">
-            <span
-              className={`token-picker-symbol ${styles.base} max-w-[8rem] shrink-0 truncate text-base text-black`}
-            >
-              {token.symbol || 'Unknown'}
-            </span>
-            <span className="token-picker-chain-name min-w-0 truncate text-xs text-gray-500">
-              {chainDisplayName}
-            </span>
-          </div>
-          <div className={`token-picker-name ${styles.base} mt-0.5 truncate text-xs text-gray-500`}>
-            {token.name || 'Unknown Token'}
-          </div>
+      <div className="ml-3 min-w-0 flex-1 text-left">
+        <div className="flex min-w-0 items-center gap-2">
+          <span
+            className={`token-picker-symbol ${styles.base} max-w-[8rem] shrink-0 truncate text-base text-black`}
+          >
+            {token.symbol || 'Unknown'}
+          </span>
+          <span className="token-picker-chain-name min-w-0 truncate text-xs text-gray-500">
+            {chainDisplayName}
+          </span>
         </div>
-
-        <div className="justify-self-end text-right">
-          {showRouteUnavailable && (
-            <div className="flex items-center justify-end gap-1 whitespace-nowrap text-[10px] text-gray-400">
-              <span>Route unavailable</span>
-              <Tooltip
-                content={routeTooltipMessage}
-                id={`route-tooltip-${token.key}`}
-                tooltipClassName="token-picker-info-icon max-w-[280px]"
-                onClick={(e) => e.stopPropagation()}
-              />
-            </div>
-          )}
+        <div className={`token-picker-name ${styles.base} mt-0.5 truncate text-xs text-gray-500`}>
+          {token.name || 'Unknown Token'}
         </div>
       </div>
     </button>

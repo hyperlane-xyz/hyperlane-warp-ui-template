@@ -36,4 +36,37 @@ test.describe('EVM balance display', () => {
     await page.getByRole('button', { name: 'Max' }).click();
     await expect(page.getByRole('spinbutton')).toHaveValue('1234.56789', { timeout: 20_000 });
   });
+
+  test('caps native token Max at the mocked wallet balance', async ({ page }) => {
+    await installEvmRpcMock(page, {
+      chainUrlMap: [
+        { chainId: 1, urlMatch: /ethereum\.|eth\.drpc|eth-mainnet|cloudflare-eth/i },
+        { chainId: 8453, urlMatch: /base\.drpc|base\.org|base-mainnet/i },
+      ],
+      nativeBalances: {
+        [MOCK_EVM_ADDRESS.toLowerCase()]: '0xde0b6b3a7640000',
+      },
+    });
+
+    await openE2EApp(page, {
+      extraQuery: {
+        origin: 'base',
+        originToken: '0x0000000000000000000000000000000000000000',
+        destination: 'ethereum',
+        destinationToken: '0x0000000000000000000000000000000000000000',
+      },
+    });
+
+    await expect(page.getByText(/Route:/)).toBeVisible({ timeout: 20_000 });
+    await expect(page.locator('.transfer-balance').first()).toContainText('1.0000 ETH', {
+      timeout: 20_000,
+    });
+
+    const maxButton = page.getByRole('button', { name: 'Max' });
+    await maxButton.click();
+    await expect(maxButton).toHaveText('Max', { timeout: 20_000 });
+    const value = await page.getByRole('spinbutton').inputValue({ timeout: 20_000 });
+    expect(Number(value)).toBeGreaterThan(0);
+    expect(Number(value)).toBeLessThanOrEqual(1);
+  });
 });

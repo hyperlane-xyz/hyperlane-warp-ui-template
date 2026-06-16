@@ -20,6 +20,8 @@ import { config } from '../../consts/config';
 import { formatDisplayAmount } from '../../utils/amount';
 import { useChains } from '../api/hooks';
 import { useOriginBalance } from '../balances/hooks';
+import { ChainConnectionWarning } from '../chains/ChainConnectionWarning';
+import { ChainWalletWarning } from '../chains/ChainWalletWarning';
 import { useMultiProvider } from '../chains/hooks';
 import { TransactionHistoryItemType, useStore } from '../store';
 import { ApprovalPhase, useApprovalStatus } from '../swap/approval';
@@ -47,6 +49,7 @@ import { getTokenKey as getBridgeTokenKey } from '../tokens/utils';
 import { useTokenTransfer } from '../transfer/useTokenTransfer';
 import { shouldClearAddress } from '../transfer/utils';
 import { validateBridgeTransferForm } from '../transfer/validate';
+import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { WalletDropdown } from '../wallet/WalletDropdown';
 import {
   getExactInputBridgeMaxAmount,
@@ -298,7 +301,7 @@ function UnifiedFormContent({
 
   return (
     <>
-      <div className="max-h-12 overflow-hidden sm:max-h-10" />
+      <UnifiedWarningBanners originToken={originToken} destinationToken={destinationToken} />
 
       <TransferSection label="Send">
         <OriginTokenCard
@@ -357,6 +360,27 @@ function UnifiedFormContent({
         classes="mb-4 w-full px-3 py-2.5 font-secondary text-xl text-cream-100"
       />
     </>
+  );
+}
+
+function UnifiedWarningBanners({
+  originToken,
+  destinationToken,
+}: {
+  originToken: UnifiedToken | undefined;
+  destinationToken: UnifiedToken | undefined;
+}) {
+  const origin = originToken?.chainName;
+  const destination = destinationToken?.chainName;
+
+  return (
+    <div className="max-h-12 overflow-hidden sm:max-h-10">
+      {origin && <ChainWalletWarning origin={origin} />}
+      {origin && destination && (
+        <ChainConnectionWarning origin={origin} destination={destination} />
+      )}
+      {origin && <WalletConnectionWarning origin={origin} />}
+    </div>
   );
 }
 

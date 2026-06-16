@@ -68,9 +68,11 @@ describe('getUnifiedRouteMode', () => {
   test('uses swap when bridge is unavailable and engine is configured', () => {
     const mode = getUnifiedRouteMode({
       originToken: createUnifiedToken({
+        capabilities: { bridge: false, swap: true },
         swapToken: createSwapToken('0x0000000000000000000000000000000000000001'),
       }),
       destinationToken: createUnifiedToken({
+        capabilities: { bridge: false, swap: true },
         swapToken: createSwapToken('0x0000000000000000000000000000000000000002'),
       }),
       collateralGroups: new Map(),
@@ -80,12 +82,31 @@ describe('getUnifiedRouteMode', () => {
     expect(mode).toBe(UnifiedRouteMode.Swap);
   });
 
-  test('does not use swap when engine is not configured', () => {
+  test('does not use swap when engine token metadata is not swappable', () => {
     const mode = getUnifiedRouteMode({
       originToken: createUnifiedToken({
+        capabilities: { bridge: false, swap: false },
         swapToken: createSwapToken('0x0000000000000000000000000000000000000001'),
       }),
       destinationToken: createUnifiedToken({
+        capabilities: { bridge: false, swap: true },
+        swapToken: createSwapToken('0x0000000000000000000000000000000000000002'),
+      }),
+      collateralGroups: new Map(),
+      engineEnabled: true,
+    });
+
+    expect(mode).toBeNull();
+  });
+
+  test('does not use swap when engine is not configured', () => {
+    const mode = getUnifiedRouteMode({
+      originToken: createUnifiedToken({
+        capabilities: { bridge: false, swap: true },
+        swapToken: createSwapToken('0x0000000000000000000000000000000000000001'),
+      }),
+      destinationToken: createUnifiedToken({
+        capabilities: { bridge: false, swap: true },
         swapToken: createSwapToken('0x0000000000000000000000000000000000000002'),
       }),
       collateralGroups: new Map(),

@@ -31,7 +31,13 @@ export function getUnifiedRouteMode({
     return UnifiedRouteMode.Bridge;
   }
 
-  if (engineEnabled && originToken.swapToken && destinationToken.swapToken) {
+  if (
+    engineEnabled &&
+    originToken.capabilities.swap &&
+    destinationToken.capabilities.swap &&
+    originToken.swapToken &&
+    destinationToken.swapToken
+  ) {
     return UnifiedRouteMode.Swap;
   }
 

@@ -43,13 +43,14 @@ export function getVisibleUnifiedTokens({
   engineEnabled: boolean;
   hasFilter: boolean;
 }): { tokens: UnifiedToken[]; isLimited: boolean } {
+  const routeCounterpartToken = selectionMode === 'destination' ? counterpartToken : undefined;
   const routeModes = new Map<string, UnifiedTokenRouteMode>();
   const getRouteMode = (token: UnifiedToken) => {
     const cached = routeModes.get(token.key);
     if (routeModes.has(token.key)) return cached ?? null;
     const mode = getTokenRouteMode(
       token,
-      counterpartToken,
+      routeCounterpartToken,
       selectionMode,
       collateralGroups,
       engineEnabled,
@@ -58,7 +59,7 @@ export function getVisibleUnifiedTokens({
     return mode;
   };
 
-  const routableTokens = counterpartToken
+  const routableTokens = routeCounterpartToken
     ? allTokens.filter((token) => !!getRouteMode(token))
     : allTokens;
 

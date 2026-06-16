@@ -18,6 +18,7 @@ function matchesSearch(
     token.name.toLowerCase().includes(query) ||
     token.symbol.toLowerCase().includes(query) ||
     token.addressOrDenom.toLowerCase().includes(query) ||
+    token.chainName.toLowerCase().includes(query) ||
     getChainDisplayName(multiProvider, token.chainName).toLowerCase().includes(query)
   );
 }
@@ -137,6 +138,7 @@ const TokenButton = React.memo(function TokenButton({
   return (
     <button
       type="button"
+      aria-label={`${token.chainName} ${token.symbol} ${chainDisplayName} ${token.name || 'Unknown Token'}`}
       className="token-picker-row group mb-2 flex h-[60px] w-full items-center rounded-md px-3 transition-colors hover:bg-gray-100"
       onClick={() => onSelect(token)}
     >

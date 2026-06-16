@@ -145,6 +145,34 @@ describe('getVisibleUnifiedTokens', () => {
     expect(result.tokens).toEqual([]);
   });
 
+  test('does not constrain origin selection to the current destination token', () => {
+    const currentDestination = createUnifiedToken({
+      key: 'destination',
+      capabilities: { bridge: false, swap: true },
+      swapToken: createSwapToken({
+        chainName: 'base',
+        address: '0x0000000000000000000000000000000000000002',
+      }),
+    });
+    const alternativeOrigin = createUnifiedToken({
+      key: 'solana-usdc',
+      chainName: 'solanamainnet',
+      symbol: 'USDC',
+      capabilities: { bridge: true, swap: false },
+    });
+
+    const result = getVisibleUnifiedTokens({
+      allTokens: [alternativeOrigin],
+      counterpartToken: currentDestination,
+      selectionMode: 'origin',
+      collateralGroups: new Map(),
+      engineEnabled: true,
+      hasFilter: false,
+    });
+
+    expect(result.tokens).toEqual([alternativeOrigin]);
+  });
+
   test('sorts bridge routes before swap-only routes for a selected counterpart', () => {
     const originBridgeToken = createMockToken({
       chainName: 'ethereum',

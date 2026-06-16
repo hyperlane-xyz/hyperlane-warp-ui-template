@@ -156,6 +156,69 @@ describe('getInitialUnifiedTokenKeys', () => {
     });
   });
 
+  test('uses bridge URL matches before swap-only matches', () => {
+    vi.stubGlobal('window', {
+      location: {
+        search:
+          '?origin=origin&originToken=0x1111111111111111111111111111111111111111&destination=destination&destinationToken=0x2222222222222222222222222222222222222222',
+      },
+    });
+    const destinationBridgeToken = createMockToken({
+      chainName: 'destination',
+      symbol: 'USDC',
+      addressOrDenom: '0x2222222222222222222222222222222222222222',
+      collateralAddressOrDenom: '0x2222222222222222222222222222222222222222',
+    });
+    const originBridgeToken = createMockToken({
+      chainName: 'origin',
+      symbol: 'USDC',
+      addressOrDenom: '0x1111111111111111111111111111111111111111',
+      collateralAddressOrDenom: '0x1111111111111111111111111111111111111111',
+      connections: [createTokenConnectionMock(undefined, destinationBridgeToken)],
+    });
+    const swapOrigin = createUnifiedToken({
+      key: 'swap-origin',
+      chainName: 'origin',
+      swapToken: createSwapToken({
+        chainName: 'origin',
+        address: '0x1111111111111111111111111111111111111111',
+      }),
+      capabilities: { bridge: false, swap: true },
+    });
+    const swapDestination = createUnifiedToken({
+      key: 'swap-destination',
+      chainName: 'destination',
+      swapToken: createSwapToken({
+        chainName: 'destination',
+        address: '0x2222222222222222222222222222222222222222',
+      }),
+      capabilities: { bridge: false, swap: true },
+    });
+    const bridgeOrigin = createUnifiedToken({
+      key: 'bridge-origin',
+      chainName: 'origin',
+      bridgeToken: originBridgeToken,
+      capabilities: { bridge: true, swap: false },
+    });
+    const bridgeDestination = createUnifiedToken({
+      key: 'bridge-destination',
+      chainName: 'destination',
+      bridgeToken: destinationBridgeToken,
+      capabilities: { bridge: true, swap: false },
+    });
+
+    expect(
+      getInitialUnifiedTokenKeys({
+        tokens: [swapOrigin, swapDestination, bridgeDestination, bridgeOrigin],
+        collateralGroups: groupTokensByCollateral([originBridgeToken]),
+        engineEnabled: true,
+      }),
+    ).toEqual({
+      originTokenKey: 'bridge-origin',
+      destinationTokenKey: 'bridge-destination',
+    });
+  });
+
   test('falls back to first routable pair when defaults do not exist', () => {
     const origin = createUnifiedToken({
       key: 'foo-origin',

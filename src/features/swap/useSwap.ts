@@ -133,6 +133,9 @@ export function useSwap() {
         if (route.raw.callCommitment && !route.raw.solanaCommitment) {
           await postCommitment(route.raw.callCommitment);
         }
+        if (route.raw.solanaCommitment) {
+          console.log(JSON.stringify(route.raw, null, 2));
+        }
 
         updateSwapTransactionStatus(transactionId, SwapStatus.SigningSwap);
         const rpcUrl = multiProvider.getChainMetadata(srcChainName).rpcUrls[0].http;

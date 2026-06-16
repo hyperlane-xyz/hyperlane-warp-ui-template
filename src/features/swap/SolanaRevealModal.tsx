@@ -152,7 +152,7 @@ export function SolanaRevealModal() {
   const isOpen = !!pending;
 
   return (
-    <Modal isOpen={isOpen} close={handleDismiss} panelClassname="max-w-sm">
+    <Modal isOpen={isOpen} close={handleDismiss} panelClassname="max-w-sm" dialogProps={{ onClose: () => {} }}>
       <div className="flex flex-col gap-4 p-4">
         <h2 className="text-lg font-semibold">Reveal Solana Swap</h2>
         <div className="rounded border border-yellow-400 bg-yellow-50 p-3 text-sm text-yellow-800">

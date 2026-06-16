@@ -343,37 +343,6 @@ export function checkTokenPairHasRoute(
 }
 
 /**
- * Route availability as used by the token picker.
- *
- * Destination selection is strict against the current origin. Origin selection can
- * auto-switch destination, so only mark an origin unavailable when it has no
- * route to any other listed token. In origin mode counterpartToken is unused and
- * the result depends only on token + allTokens + collateralGroups.
- *
- * Caller contract: `allTokens` is expected to already be filtered to listed
- * (non-disabled) tokens. We iterate it as-is, so a disabled counterpart that
- * isn't in this set can't surface a token as routable.
- */
-export function checkTokenPickerHasRoute(
-  token: Token,
-  counterpartToken: Token | null | undefined,
-  selectionMode: TokenSelectionMode,
-  allTokens: Token[],
-  collateralGroups: Map<string, Token[]>,
-): boolean {
-  if (selectionMode === 'destination') {
-    if (!counterpartToken) return false;
-    return checkTokenHasRoute(counterpartToken, token, collateralGroups);
-  }
-
-  return allTokens.some(
-    (destinationToken) =>
-      destinationToken.chainName !== token.chainName &&
-      checkTokenHasRoute(token, destinationToken, collateralGroups),
-  );
-}
-
-/**
  * Find the actual warpCore token that has a route to the destination.
  * The passed originToken may be from a deduplicated array and may not have
  * the connection, but another token with the same collateral in the warpCore might

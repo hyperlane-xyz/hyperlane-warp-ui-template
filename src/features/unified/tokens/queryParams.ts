@@ -25,6 +25,15 @@ export function getUnifiedTokenQueryParams(
   };
 }
 
+export function getUnifiedTokenLookupIdsFromParams(params: URLSearchParams | undefined): string[] {
+  if (!params) return [];
+
+  return [
+    getLookupId(params, WARP_QUERY_PARAMS.ORIGIN, WARP_QUERY_PARAMS.ORIGIN_TOKEN),
+    getLookupId(params, WARP_QUERY_PARAMS.DESTINATION, WARP_QUERY_PARAMS.DESTINATION_TOKEN),
+  ].filter((id): id is string => !!id);
+}
+
 export function findUnifiedTokenByQueryRef(
   tokens: UnifiedToken[],
   chainName: string,
@@ -77,6 +86,17 @@ export function findUnifiedTokenByConfigRef(
 function matchesRef(value: string | undefined, tokenRef: string, protocol?: ProtocolType): boolean {
   if (!value) return false;
   return normalizeRef(value, protocol) === normalizeRef(tokenRef, protocol);
+}
+
+function getLookupId(
+  params: URLSearchParams,
+  chainParam: WARP_QUERY_PARAMS,
+  tokenParam: WARP_QUERY_PARAMS,
+): string | undefined {
+  const chainName = params.get(chainParam);
+  const tokenRef = params.get(tokenParam);
+  if (!chainName || !tokenRef) return undefined;
+  return `${chainName}-${tokenRef}`;
 }
 
 function normalizeRef(value: string, protocol?: ProtocolType): string {

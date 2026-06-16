@@ -5,6 +5,7 @@ import { createMockToken } from '../../../utils/test';
 import type { UiToken } from '../../swap/tokens/types';
 import {
   findUnifiedTokenByQueryRef,
+  getUnifiedTokenLookupIdsFromParams,
   getUnifiedTokenQueryParams,
   getUnifiedTokenQueryRef,
 } from './queryParams';
@@ -46,6 +47,23 @@ function createUnifiedToken(args: Partial<UnifiedToken> = {}): UnifiedToken {
 }
 
 describe('getUnifiedTokenQueryRef', () => {
+  test('builds engine lookup ids from address query params', () => {
+    const params = new URLSearchParams(
+      'origin=bsc&originToken=0xfb6115445Bff7b52FeB98650C87f44907E58f802&destination=base&destinationToken=0x63706e401c06ac8513145b7687A14804d17f814b',
+    );
+
+    expect(getUnifiedTokenLookupIdsFromParams(params)).toEqual([
+      'bsc-0xfb6115445Bff7b52FeB98650C87f44907E58f802',
+      'base-0x63706e401c06ac8513145b7687A14804d17f814b',
+    ]);
+  });
+
+  test('skips incomplete query token refs when building lookup ids', () => {
+    const params = new URLSearchParams('origin=bsc&destination=base&destinationToken=0x1234');
+
+    expect(getUnifiedTokenLookupIdsFromParams(params)).toEqual(['base-0x1234']);
+  });
+
   test('uses swap token address when available', () => {
     expect(getUnifiedTokenQueryRef(createUnifiedToken({ swapToken: createSwapToken() }))).toBe(
       '0x1111111111111111111111111111111111111111',

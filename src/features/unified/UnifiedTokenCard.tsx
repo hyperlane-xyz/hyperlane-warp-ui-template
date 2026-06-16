@@ -19,8 +19,9 @@ import { TextField } from '../../components/input/TextField';
 import { TransferSection } from '../../components/layout/TransferSection';
 import { config } from '../../consts/config';
 import { formatDisplayAmount } from '../../utils/amount';
-import { updateQueryParams } from '../../utils/queryParams';
+import { getQueryParams, updateQueryParams } from '../../utils/queryParams';
 import { useChains } from '../api/hooks';
+import type { TokensQuery } from '../api/types';
 import {
   getDestinationNativeBalance,
   useDestinationBalance,
@@ -71,7 +72,10 @@ import {
 import { shouldFetchUnifiedBridgeFeeQuote, shouldFetchUnifiedSwapQuote } from './quoteGates';
 import { useUnifiedTokenByKeyMap, useUnifiedTokens } from './tokens/hooks';
 import { getInitialUnifiedTokenKeys } from './tokens/initial';
-import { getUnifiedTokenQueryParams } from './tokens/queryParams';
+import {
+  getUnifiedTokenLookupIdsFromParams,
+  getUnifiedTokenQueryParams,
+} from './tokens/queryParams';
 import { getUnifiedRouteMode, UnifiedRouteMode } from './tokens/routes';
 import { TokenSelectField } from './tokens/TokenSelectField';
 import type { UnifiedToken } from './tokens/types';
@@ -87,7 +91,8 @@ export function UnifiedTokenCard() {
 }
 
 function UnifiedTokenForm() {
-  const { data: tokens, engineEnabled } = useUnifiedTokens();
+  const tokenQuery = useInitialTokenQuery();
+  const { data: tokens, engineEnabled } = useUnifiedTokens(tokenQuery);
   const tokenMap = useUnifiedTokenByKeyMap(tokens);
   const collateralGroups = useCollateralGroups();
 
@@ -120,6 +125,17 @@ function UnifiedTokenForm() {
       </Form>
     </Formik>
   );
+}
+
+function useInitialTokenQuery(): TokensQuery {
+  const [query, setQuery] = useState<TokensQuery>({});
+
+  useEffect(() => {
+    const ids = getUnifiedTokenLookupIdsFromParams(getQueryParams());
+    if (ids.length) setQuery({ ids });
+  }, []);
+
+  return query;
 }
 
 function UnifiedFormContent({
@@ -454,16 +470,18 @@ function UnifiedFormContent({
       )}
       {routeMode === UnifiedRouteMode.Swap && <SwapFeeSummary route={bestRoute} />}
 
-      <div
-        className={`gap-2 bg-amber-400 px-4 text-sm ${
-          showRecipientWarning ? 'max-h-38 py-2' : 'max-h-0'
-        } overflow-hidden transition-all duration-500`}
-      >
-        <RecipientWarningBanner
-          destinationChain={destinationChainDisplay}
-          confirmRecipientHandler={setRecipientAddressConfirmed}
-        />
-      </div>
+      {routeMode === UnifiedRouteMode.Bridge && (
+        <div
+          className={`gap-2 bg-amber-400 px-4 text-sm ${
+            showRecipientWarning ? 'max-h-38 py-2' : 'max-h-0'
+          } overflow-hidden transition-all duration-500`}
+        >
+          <RecipientWarningBanner
+            destinationChain={destinationChainDisplay}
+            confirmRecipientHandler={setRecipientAddressConfirmed}
+          />
+        </div>
+      )}
 
       <ConnectAwareSubmitButton<UnifiedFormValues>
         chainName={originToken?.chainName || ''}

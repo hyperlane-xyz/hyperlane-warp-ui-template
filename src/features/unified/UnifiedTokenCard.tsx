@@ -114,7 +114,7 @@ function UnifiedTokenForm() {
       validateOnChange={false}
       validateOnBlur={false}
     >
-      <Form className="transfer-form flex w-full flex-col items-stretch gap-1.5">
+      <Form className="unified-form flex w-full flex-col items-stretch gap-1.5">
         <UnifiedFormContent
           tokens={tokens}
           tokenMap={tokenMap}

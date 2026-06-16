@@ -507,18 +507,18 @@ html[data-theme-mode='dark'] .transfer-divider {
   background: rgba(185, 89, 255, 0.22) !important;
 }
 
-html[data-theme-mode='dark'] .transfer-form .text-gray-900,
-html[data-theme-mode='dark'] .transfer-form .text-gray-800 {
+html[data-theme-mode='dark'] .unified-form .text-gray-900,
+html[data-theme-mode='dark'] .unified-form .text-gray-800 {
   color: var(--dark-text-primary) !important;
 }
 
-html[data-theme-mode='dark'] .transfer-form .text-gray-700,
-html[data-theme-mode='dark'] .transfer-form .text-gray-600,
-html[data-theme-mode='dark'] .transfer-form .text-gray-500 {
+html[data-theme-mode='dark'] .unified-form .text-gray-700,
+html[data-theme-mode='dark'] .unified-form .text-gray-600,
+html[data-theme-mode='dark'] .unified-form .text-gray-500 {
   color: var(--dark-text-secondary) !important;
 }
 
-html[data-theme-mode='dark'] .transfer-form .fee-section-btn.text-gray-700:hover {
+html[data-theme-mode='dark'] .unified-form .fee-section-btn.text-gray-700:hover {
   color: var(--dark-text-primary) !important;
 }
 

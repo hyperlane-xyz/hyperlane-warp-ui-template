@@ -50,6 +50,7 @@ import { validateSwapForm } from '../swap/validate';
 import { useCollateralGroups, useTokenByKeyMap, useWarpCore } from '../tokens/hooks';
 import { ImportTokenButton } from '../tokens/ImportTokenButton';
 import { getTokenKey as getBridgeTokenKey } from '../tokens/utils';
+import { useQuotedCallsFeeQuotes } from '../transfer/useQuotedCalls';
 import { useSmartContractRecipientWarning } from '../transfer/useSmartContractRecipientWarning';
 import { useTokenTransfer } from '../transfer/useTokenTransfer';
 import { shouldClearAddress } from '../transfer/utils';
@@ -218,6 +219,25 @@ function UnifiedFormContent({
     recipient: effectiveRecipient,
     sender,
   });
+  const bridgeTransferValues = useMemo(
+    () => ({
+      originTokenKey: bridgeQuote.data ? getBridgeTokenKey(bridgeQuote.data.routeToken) : '',
+      destinationTokenKey: bridgeQuote.data
+        ? getBridgeTokenKey(bridgeQuote.data.connectedDestinationToken)
+        : '',
+      amount: bridgeQuote.data
+        ? fromWei(bridgeQuote.data.transferAmount.amount, bridgeQuote.data.routeToken.decimals)
+        : '',
+      recipient: effectiveRecipient,
+    }),
+    [bridgeQuote.data, effectiveRecipient],
+  );
+  const quotedCalls = useQuotedCallsFeeQuotes(
+    bridgeTransferValues,
+    routeMode === UnifiedRouteMode.Bridge && !!bridgeQuote.data,
+    bridgeQuote.data?.routeToken,
+    bridgeQuote.data?.connectedDestinationToken,
+  );
 
   useEffect(() => {
     if (selectedRouteIndex >= routes.length) setSelectedRouteIndex(0);
@@ -300,6 +320,7 @@ function UnifiedFormContent({
           recipient: effectiveRecipient,
           sender,
           bridgeTransfer,
+          getQuotedCallsParams: quotedCalls.getQuotedCallsParams,
         });
         return;
       }
@@ -765,6 +786,7 @@ async function submitBridge({
   recipient,
   sender,
   bridgeTransfer,
+  getQuotedCallsParams,
 }: {
   values: UnifiedFormValues;
   originToken: UnifiedToken | undefined;
@@ -772,6 +794,7 @@ async function submitBridge({
   recipient: string;
   sender: string | undefined;
   bridgeTransfer: ReturnType<typeof useTokenTransfer>;
+  getQuotedCallsParams: ReturnType<typeof useQuotedCallsFeeQuotes>['getQuotedCallsParams'];
 }) {
   if (!originToken?.bridgeToken || !destinationToken?.bridgeToken || !recipient) return;
   const warpCore = useStore.getState().warpCore;
@@ -790,7 +813,8 @@ async function submitBridge({
     amount: fromWei(quote.transferAmount.amount, quote.routeToken.decimals),
     recipient,
   };
-  await bridgeTransfer.triggerTransactions(transferValues, quote.routeToken, null);
+  const quotedCallsParams = await getQuotedCallsParams();
+  await bridgeTransfer.triggerTransactions(transferValues, quote.routeToken, quotedCallsParams);
 }
 
 export async function validateUnifiedBridgeTransfer({

@@ -156,7 +156,8 @@ function UnifiedFormContent({
     pause: routeMode !== UnifiedRouteMode.Swap,
   });
   const routes = quote.quote?.routes ?? [];
-  const bestRoute = routes[0];
+  const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
+  const bestRoute = routes[selectedRouteIndex] ?? routes[0];
 
   const srcChainInfo = chainsResp?.chains.find((c) => c.id === swapValues.srcChain);
   const universalRouter = srcChainInfo?.universalRouter as Address | undefined;
@@ -185,6 +186,10 @@ function UnifiedFormContent({
     recipient: effectiveRecipient,
     sender,
   });
+
+  useEffect(() => {
+    if (selectedRouteIndex >= routes.length) setSelectedRouteIndex(0);
+  }, [routes.length, selectedRouteIndex]);
 
   const onSwapTokens = () => {
     setValues((prev) => ({
@@ -333,6 +338,14 @@ function UnifiedFormContent({
         {routeMode === UnifiedRouteMode.Swap && <SlippageControl />}
         {!engineEnabled && <span>Bridge only</span>}
       </div>
+      {routeMode === UnifiedRouteMode.Swap && (
+        <RouteSelector
+          routes={routes}
+          selectedIndex={selectedRouteIndex}
+          setSelectedIndex={setSelectedRouteIndex}
+          destinationToken={destinationToken}
+        />
+      )}
       {routeMode === UnifiedRouteMode.Swap && <SwapFeeSummary route={bestRoute} />}
 
       <ConnectAwareSubmitButton<UnifiedFormValues>
@@ -343,6 +356,44 @@ function UnifiedFormContent({
         classes="mb-4 w-full px-3 py-2.5 font-secondary text-xl text-cream-100"
       />
     </>
+  );
+}
+
+function RouteSelector({
+  routes,
+  selectedIndex,
+  setSelectedIndex,
+  destinationToken,
+}: {
+  routes: AugmentedRoute[];
+  selectedIndex: number;
+  setSelectedIndex: (index: number) => void;
+  destinationToken: UnifiedToken | undefined;
+}) {
+  if (routes.length <= 1 || !destinationToken) return null;
+
+  return (
+    <div className="mb-2 flex gap-1 overflow-x-auto px-1">
+      {routes.map((route, index) => {
+        const isSelected = index === selectedIndex;
+        const output = formatDisplayAmount(BigInt(route.raw.output), destinationToken.decimals);
+        return (
+          <button
+            key={index}
+            type="button"
+            onClick={() => setSelectedIndex(index)}
+            className={`shrink-0 rounded border px-2 py-1 text-left text-xs transition-colors ${
+              isSelected
+                ? 'border-gray-900 bg-gray-900 text-white dark:border-primary-300 dark:bg-primary-300 dark:text-background'
+                : 'border-gray-300 text-gray-500 hover:bg-gray-100 dark:border-primary-300/25 dark:text-foreground-secondary dark:hover:bg-primary-300/[0.18]'
+            }`}
+          >
+            <span>Route {index + 1}</span>
+            <span className="ml-1 opacity-80">{output}</span>
+          </button>
+        );
+      })}
+    </div>
   );
 }
 

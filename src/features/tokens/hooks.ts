@@ -1,4 +1,4 @@
-import { IToken, Token, WarpCore } from '@hyperlane-xyz/sdk';
+import { IToken, Token, type WarpCore } from '@hyperlane-xyz/sdk';
 import {
   useAccountForChain,
   useActiveChains,
@@ -6,11 +6,8 @@ import {
 } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import { useMutation } from '@tanstack/react-query';
 
-import { ADD_ASSET_SUPPORTED_PROTOCOLS, WARP_QUERY_PARAMS } from '../../consts/args';
-import { config } from '../../consts/config';
-import { getQueryParams } from '../../utils/queryParams';
+import { ADD_ASSET_SUPPORTED_PROTOCOLS } from '../../consts/args';
 import { useMultiProvider } from '../chains/hooks';
-import { tryGetValidChainName } from '../chains/utils';
 import { useStore } from '../store';
 import { getTokenKey } from './utils';
 
@@ -23,112 +20,6 @@ export function useWarpCore() {
 export function getTokenByKey(tokens: Token[], key: string | undefined): Token | undefined {
   if (!key) return undefined;
   return tokens.find((token) => getTokenKey(token) === key);
-}
-
-// Helper to find token by chainName-symbol format
-function findTokenByChainSymbol(tokens: Token[], chainSymbol: string): Token | undefined {
-  const [chainName, symbol] = chainSymbol.split('-');
-  if (!chainName || !symbol) return undefined;
-  return tokens.find(
-    (t) => t.chainName === chainName && t.symbol.toLowerCase() === symbol.toLowerCase(),
-  );
-}
-
-/**
- * Get initial origin and destination token keys from URL params
- * Returns { originTokenKey, destinationTokenKey } for form initialization
- */
-export function getInitialTokenKeys(
-  warpCore: WarpCore,
-  tokens: Token[],
-): { originTokenKey: string | undefined; destinationTokenKey: string | undefined } {
-  // Early return if no tokens
-  if (tokens.length === 0) {
-    return { originTokenKey: undefined, destinationTokenKey: undefined };
-  }
-
-  // 1. First priority: URL params
-  const params = getQueryParams();
-  const originChainQuery = tryGetValidChainName(
-    params.get(WARP_QUERY_PARAMS.ORIGIN),
-    warpCore.multiProvider,
-  );
-  const destinationChainQuery = tryGetValidChainName(
-    params.get(WARP_QUERY_PARAMS.DESTINATION),
-    warpCore.multiProvider,
-  );
-  const originTokenSymbol = params.get(WARP_QUERY_PARAMS.ORIGIN_TOKEN);
-  const destinationTokenSymbol = params.get(WARP_QUERY_PARAMS.DESTINATION_TOKEN);
-
-  // Try to find origin token from URL params (chain + symbol)
-  let originToken: Token | undefined;
-  if (originChainQuery && originTokenSymbol) {
-    originToken = tokens.find(
-      (t) =>
-        t.chainName === originChainQuery &&
-        t.symbol.toLowerCase() === originTokenSymbol.toLowerCase(),
-    );
-  }
-
-  // 2. Second priority: Config default token (format: chainName-symbol)
-  if (!originToken && config.defaultOriginToken) {
-    originToken = findTokenByChainSymbol(tokens, config.defaultOriginToken);
-  }
-
-  // 3. Third priority: First featured token with connections
-  if (!originToken && config.featuredTokens.length > 0) {
-    for (const ft of config.featuredTokens) {
-      const candidate = findTokenByChainSymbol(tokens, ft);
-      if (candidate?.connections?.length) {
-        originToken = candidate;
-        break;
-      }
-    }
-  }
-
-  // 4. Last resort: First available token with connections
-  if (!originToken) {
-    originToken = tokens.find((t) => t.connections && t.connections.length > 0);
-  }
-
-  // Try to find destination token from URL params (chain + symbol)
-  let destinationToken: Token | undefined;
-  if (destinationChainQuery && destinationTokenSymbol) {
-    destinationToken = tokens.find(
-      (t) =>
-        t.chainName === destinationChainQuery &&
-        t.symbol.toLowerCase() === destinationTokenSymbol.toLowerCase(),
-    );
-  }
-
-  // Fallback: use config default token (format: chainName-symbol)
-  if (!destinationToken && config.defaultDestinationToken) {
-    destinationToken = findTokenByChainSymbol(tokens, config.defaultDestinationToken);
-  }
-
-  // Last resort: first connection from origin token
-  if (!destinationToken && originToken) {
-    const firstConnection = originToken.connections?.[0];
-    const connectedChain = firstConnection?.token?.chainName;
-    const connectedSymbol = firstConnection?.token?.symbol;
-    destinationToken = connectedChain
-      ? tokens.find(
-          (t) =>
-            t.chainName === connectedChain &&
-            t.symbol.toLowerCase() === connectedSymbol?.toLowerCase(),
-        )
-      : undefined;
-  }
-
-  return {
-    originTokenKey: originToken ? getTokenKey(originToken) : undefined,
-    destinationTokenKey: destinationToken ? getTokenKey(destinationToken) : undefined,
-  };
-}
-
-/** Raw tokens from WarpCore (not deduplicated) */
-export function useWarpCoreTokens() {
-  return useWarpCore().tokens;
 }
 
 /** Unified tokens array (deduplicated, can be origin or destination) */

@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { routerClient } from '../../api/RouterClient';
 import type { TokensQuery } from '../../api/types';
 import { useMultiProvider } from '../../chains/hooks';
+import { useStore } from '../../store';
 import { useTokens as useSwapTokens } from '../../swap/tokens/hooks';
 import { useTokens as useBridgeTokens } from '../../tokens/hooks';
 import { buildUnifiedTokenCatalog } from './catalog';
@@ -17,18 +18,23 @@ interface UseUnifiedTokensResult {
 export function useUnifiedTokens(query: TokensQuery = {}): UseUnifiedTokensResult {
   const multiProvider = useMultiProvider();
   const bridgeTokens = useBridgeTokens();
+  const knownTokens = useStore((s) => s.knownTokens);
   const { data: swapTokens, isLoading: isSwapLoading } = useSwapTokens(
     routerClient.isConfigured ? query : {},
+  );
+  const allSwapTokens = useMemo(
+    () => (routerClient.isConfigured ? [...knownTokens.values(), ...swapTokens] : []),
+    [knownTokens, swapTokens],
   );
 
   const data = useMemo(
     () =>
       buildUnifiedTokenCatalog({
         bridgeTokens,
-        swapTokens: routerClient.isConfigured ? swapTokens : [],
+        swapTokens: allSwapTokens,
         multiProvider,
       }),
-    [bridgeTokens, swapTokens, multiProvider],
+    [bridgeTokens, allSwapTokens, multiProvider],
   );
 
   return {

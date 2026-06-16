@@ -134,15 +134,13 @@ const EMPTY_UNIFIED_FORM_VALUES: UnifiedFormValues = {
 };
 
 function useInitialTokenQuery(): { query: TokensQuery; hasLookupIds: boolean } {
-  const [query, setQuery] = useState<TokensQuery>({});
-  const hasLookupIds = !!query.ids?.length;
+  const [query] = useState(() => getInitialUnifiedTokenQuery(getQueryParams()));
+  return { query, hasLookupIds: !!query.ids?.length };
+}
 
-  useEffect(() => {
-    const ids = getUnifiedTokenLookupIdsFromParams(getQueryParams());
-    if (ids.length) setQuery({ ids });
-  }, []);
-
-  return { query, hasLookupIds };
+export function getInitialUnifiedTokenQuery(params: URLSearchParams | undefined): TokensQuery {
+  const ids = getUnifiedTokenLookupIdsFromParams(params);
+  return ids.length ? { ids } : {};
 }
 
 function UnifiedFormContent({

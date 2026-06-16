@@ -4,11 +4,40 @@ import { describe, expect, test, vi } from 'vitest';
 import { createMockToken, createTokenConnectionMock } from '../../utils/test';
 import { getTokenKey, groupTokensByCollateral } from '../tokens/utils';
 import { getTransferToken } from '../transfer/fees';
-import { hydrateInitialUnifiedTokenKeys, validateUnifiedBridgeTransfer } from './UnifiedTokenCard';
+import {
+  getInitialUnifiedTokenQuery,
+  hydrateInitialUnifiedTokenKeys,
+  validateUnifiedBridgeTransfer,
+} from './UnifiedTokenCard';
 
 vi.mock('../transfer/fees', () => ({
   getTransferToken: vi.fn(),
 }));
+
+describe('getInitialUnifiedTokenQuery', () => {
+  test('builds the lookup query before form defaults can hydrate', () => {
+    const query = getInitialUnifiedTokenQuery(
+      new URLSearchParams(
+        'origin=bsc&originToken=0xfb6115445Bff7b52FeB98650C87f44907E58f802&destination=base&destinationToken=0x63706e401c06ac8513145b7687A14804d17f814b',
+      ),
+    );
+
+    expect(query).toEqual({
+      ids: [
+        'bsc-0xfb6115445Bff7b52FeB98650C87f44907E58f802',
+        'base-0x63706e401c06ac8513145b7687A14804d17f814b',
+      ],
+    });
+  });
+
+  test('returns an empty query when there are no address-style token refs', () => {
+    expect(
+      getInitialUnifiedTokenQuery(
+        new URLSearchParams('origin=ethereum&originToken=USDC&destination=base'),
+      ),
+    ).toEqual({});
+  });
+});
 
 describe('hydrateInitialUnifiedTokenKeys', () => {
   test('sets initial token keys without clearing typed fields', () => {

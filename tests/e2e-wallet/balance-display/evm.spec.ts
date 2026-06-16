@@ -5,7 +5,7 @@ import { selectOriginToken } from '../helpers/formFlow';
 import { openE2EApp } from '../helpers/page-setup';
 
 test.describe('EVM balance display', () => {
-  test('renders mocked ERC20 balance in transfer form', async ({ page }) => {
+  test('renders mocked ERC20 balance in unified form', async ({ page }) => {
     await installEvmRpcMock(page, {
       chainUrlMap: [
         { chainId: 1, urlMatch: /ethereum\.|eth\.drpc|eth-mainnet|cloudflare-eth/i },

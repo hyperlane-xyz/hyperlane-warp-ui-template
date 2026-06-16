@@ -11,7 +11,7 @@ test.describe('Radix mock wallet: auto-connect', () => {
     await openE2EApp(page);
 
     // E2EAutoConnectRadix seeds the widgets-managed Radix AccountContext on
-    // mount. There is no dedicated Radix UI in the transfer form until a
+    // mount. There is no dedicated Radix UI in the unified form until a
     // Radix-origin token is selected, so validate against the global
     // Connected Wallets dropdown — a browser-level proof that the seeded
     // state reaches the app surface.

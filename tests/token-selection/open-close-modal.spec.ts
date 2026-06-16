@@ -20,7 +20,7 @@ test.describe('Token Selection - Open and Close Modal', () => {
     // Close with Escape
     await page.keyboard.press('Escape');
 
-    // Modal should close, transfer form visible again
+    // Modal should close, unified form visible again
     await expect(page.getByText('Select Token')).not.toBeVisible();
     await expect(getOriginTokenButton(page)).toBeVisible();
   });

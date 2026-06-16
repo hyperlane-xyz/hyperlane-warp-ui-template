@@ -739,7 +739,8 @@ function OriginTokenCard({
   const bridgeMax = useMutation({
     mutationFn: getExactInputBridgeMaxAmount,
   });
-  const { balance: bridgeBalance } = useOriginBalance(token?.bridgeToken);
+  const bridgeBalanceToken = routeMode === UnifiedRouteMode.Bridge ? token?.bridgeToken : undefined;
+  const { balance: bridgeBalance } = useOriginBalance(bridgeBalanceToken);
   const swapBalanceToken = routeMode === UnifiedRouteMode.Swap ? token?.swapToken : undefined;
   const { data: swapBalance, isLoading: isSwapBalanceLoading } =
     useSwapTokenBalance(swapBalanceToken);
@@ -787,7 +788,7 @@ function OriginTokenCard({
     <div>
       <div className="mb-2 flex items-center justify-between">
         <WalletDropdown chainName={token?.chainName} selectionMode="origin" disabled={disabled} />
-        <ImportTokenButton token={token?.bridgeToken} />
+        <ImportTokenButton token={bridgeBalanceToken} />
       </div>
       <div className="transfer-chain-field rounded-[7px] border border-gray-400/25 bg-white p-3 shadow-input dark:border-primary-300/[0.18] dark:bg-transparent dark:shadow-none">
         <TokenSelectField
@@ -921,7 +922,9 @@ function DestinationTokenCard({
           onRecipientChange={(addr: string) => setFieldValue('recipient', addr)}
           disabled={disabled}
         />
-        <ImportTokenButton token={token?.bridgeToken} />
+        <ImportTokenButton
+          token={routeMode === UnifiedRouteMode.Bridge ? token?.bridgeToken : undefined}
+        />
       </div>
       <div className="transfer-chain-field rounded-[7px] border border-gray-400/25 bg-white p-3 shadow-input dark:border-primary-300/[0.18] dark:bg-transparent dark:shadow-none">
         <TokenSelectField

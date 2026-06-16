@@ -4,9 +4,9 @@ import type { UnifiedToken } from './types';
 
 export function getUnifiedTokenQueryRef(token: UnifiedToken): string {
   return (
-    token.swapToken?.address ??
     token.bridgeToken?.collateralAddressOrDenom ??
     token.bridgeToken?.addressOrDenom ??
+    token.swapToken?.address ??
     token.addressOrDenom
   );
 }
@@ -23,14 +23,13 @@ export function findUnifiedTokenByQueryRef(
 
   if (isZeroishRef) {
     return (
-      chainTokens.find((token) => token.swapToken?.isNative) ??
       chainTokens.find((token) => token.bridgeToken?.isHypNative()) ??
+      chainTokens.find((token) => token.swapToken?.isNative) ??
       chainTokens.find((token) => token.isNative)
     );
   }
 
   return (
-    chainTokens.find((token) => matchesRef(token.swapToken?.address, tokenRef)) ??
     chainTokens.find((token) =>
       matchesRef(
         token.bridgeToken?.collateralAddressOrDenom,
@@ -41,6 +40,7 @@ export function findUnifiedTokenByQueryRef(
     chainTokens.find((token) =>
       matchesRef(token.bridgeToken?.addressOrDenom, tokenRef, token.bridgeToken?.protocol),
     ) ??
+    chainTokens.find((token) => matchesRef(token.swapToken?.address, tokenRef)) ??
     chainTokens.find((token) => matchesRef(token.addressOrDenom, tokenRef))
   );
 }

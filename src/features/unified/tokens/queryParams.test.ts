@@ -48,6 +48,16 @@ describe('getUnifiedTokenQueryRef', () => {
     );
   });
 
+  test('uses bridge collateral address before swap address', () => {
+    const bridgeToken = createMockToken({
+      addressOrDenom: '0x2222222222222222222222222222222222222222',
+      collateralAddressOrDenom: '0x3333333333333333333333333333333333333333',
+    });
+    expect(
+      getUnifiedTokenQueryRef(createUnifiedToken({ bridgeToken, swapToken: createSwapToken() })),
+    ).toBe('0x3333333333333333333333333333333333333333');
+  });
+
   test('uses bridge collateral address when available', () => {
     const bridgeToken = createMockToken({
       addressOrDenom: '0x2222222222222222222222222222222222222222',
@@ -74,7 +84,7 @@ describe('getUnifiedTokenQueryRef', () => {
     );
   });
 
-  test('matches swap token address before bridge collateral address', () => {
+  test('still matches swap token address when that is the URL ref', () => {
     const token = createUnifiedToken({
       chainName: 'ethereum',
       swapToken: createSwapToken({ address: '0x1111111111111111111111111111111111111111' }),
@@ -87,6 +97,30 @@ describe('getUnifiedTokenQueryRef', () => {
     expect(
       findUnifiedTokenByQueryRef([token], 'ethereum', '0x1111111111111111111111111111111111111111'),
     ).toBe(token);
+  });
+
+  test('matches bridge token before swap token for the same URL ref', () => {
+    const bridgeToken = createUnifiedToken({
+      key: 'bridge-usdc',
+      chainName: 'ethereum',
+      bridgeToken: createMockToken({
+        chainName: 'ethereum',
+        collateralAddressOrDenom: '0x1111111111111111111111111111111111111111',
+      }),
+    });
+    const swapToken = createUnifiedToken({
+      key: 'swap-usdc',
+      chainName: 'ethereum',
+      swapToken: createSwapToken({ address: '0x1111111111111111111111111111111111111111' }),
+    });
+
+    expect(
+      findUnifiedTokenByQueryRef(
+        [swapToken, bridgeToken],
+        'ethereum',
+        '0x1111111111111111111111111111111111111111',
+      ),
+    ).toBe(bridgeToken);
   });
 
   test('matches bridge collateral address before bridge addressOrDenom', () => {
@@ -125,7 +159,7 @@ describe('getUnifiedTokenQueryRef', () => {
     expect(findUnifiedTokenByQueryRef([token], 'ethereum', 'USDC')).toBeUndefined();
   });
 
-  test('uses native token for zeroish query refs', () => {
+  test('uses HypNative token before engine native for zeroish query refs', () => {
     const nativeToken = createUnifiedToken({
       chainName: 'ethereum',
       isNative: true,
@@ -151,6 +185,6 @@ describe('getUnifiedTokenQueryRef', () => {
         'ethereum',
         '0x0000000000000000000000000000000000000000',
       ),
-    ).toBe(nativeToken);
+    ).toBe(hypNativeToken);
   });
 });

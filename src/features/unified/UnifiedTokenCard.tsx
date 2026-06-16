@@ -418,7 +418,9 @@ function UnifiedFormContent({
           destinationToken={destinationToken}
         />
       )}
-      {routeMode === UnifiedRouteMode.Bridge && <BridgeFeeSummary quote={bridgeQuote.data} />}
+      {routeMode === UnifiedRouteMode.Bridge && (
+        <BridgeFeeSummary quote={bridgeQuote.data} quotedCalls={quotedCalls} />
+      )}
       {routeMode === UnifiedRouteMode.Swap && <SwapFeeSummary route={bestRoute} />}
 
       <div
@@ -512,30 +514,39 @@ function RouteSelector({
   );
 }
 
-function BridgeFeeSummary({ quote }: { quote: ExactInputBridgeTransferQuote | undefined }) {
+function BridgeFeeSummary({
+  quote,
+  quotedCalls,
+}: {
+  quote: ExactInputBridgeTransferQuote | undefined;
+  quotedCalls: ReturnType<typeof useQuotedCallsFeeQuotes>;
+}) {
   const fees = [
-    { label: 'Gas', amount: quote?.interchainQuote },
-    { label: 'Bridge', amount: quote?.tokenFeeQuote },
+    { label: 'Local', amount: quotedCalls.fees?.localQuote },
+    { label: 'Gas', amount: quotedCalls.fees?.interchainQuote ?? quote?.interchainQuote },
+    { label: 'Bridge', amount: quotedCalls.fees?.tokenFeeQuote ?? quote?.tokenFeeQuote },
   ].filter((fee) => fee.amount && fee.amount.amount > 0n);
 
-  if (!fees.length) return null;
+  if (!fees.length && !quotedCalls.isLoading) return null;
 
   return (
     <div className="mb-2 rounded border border-gray-300/60 px-2 py-1.5 text-xs text-gray-500 dark:border-primary-300/25 dark:text-foreground-secondary">
       <div className="mb-1 flex items-center justify-between gap-2">
-        <span>Fees</span>
+        <span>{quotedCalls.isLoading ? 'Fees loading...' : 'Fees'}</span>
       </div>
-      <div className="flex flex-wrap gap-1">
-        {fees.map((fee) => (
-          <span
-            key={fee.label}
-            className="rounded border border-gray-300/70 px-1.5 py-0.5 dark:border-primary-300/25"
-          >
-            {fee.label}: {fee.amount!.getDecimalFormattedAmount().toFixed(8)}{' '}
-            {fee.amount!.token.symbol}
-          </span>
-        ))}
-      </div>
+      {!!fees.length && (
+        <div className="flex flex-wrap gap-1">
+          {fees.map((fee) => (
+            <span
+              key={fee.label}
+              className="rounded border border-gray-300/70 px-1.5 py-0.5 dark:border-primary-300/25"
+            >
+              {fee.label}: {fee.amount!.getDecimalFormattedAmount().toFixed(8)}{' '}
+              {fee.amount!.token.symbol}
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

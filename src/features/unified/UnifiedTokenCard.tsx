@@ -1,6 +1,6 @@
 import { Token } from '@hyperlane-xyz/sdk';
-import { errorToString, fromWei, toWei } from '@hyperlane-xyz/utils';
-import { useDebounce } from '@hyperlane-xyz/widgets';
+import { errorToString, fromWei, isNullish, toWei } from '@hyperlane-xyz/utils';
+import { useDebounce, useModal } from '@hyperlane-xyz/widgets';
 import {
   getAccountAddressAndPubKey,
   useAccountAddressForChain,
@@ -19,10 +19,11 @@ import { TransferSection } from '../../components/layout/TransferSection';
 import { config } from '../../consts/config';
 import { formatDisplayAmount } from '../../utils/amount';
 import { useChains } from '../api/hooks';
-import { useOriginBalance } from '../balances/hooks';
+import { getDestinationNativeBalance, useOriginBalance } from '../balances/hooks';
 import { ChainConnectionWarning } from '../chains/ChainConnectionWarning';
 import { ChainWalletWarning } from '../chains/ChainWalletWarning';
 import { useMultiProvider } from '../chains/hooks';
+import { getChainDisplayName } from '../chains/utils';
 import { TransactionHistoryItemType, useStore } from '../store';
 import { ApprovalPhase, useApprovalStatus } from '../swap/approval';
 import { useTokenBalance as useSwapTokenBalance } from '../swap/balances/hooks';
@@ -49,6 +50,7 @@ import { getTokenKey as getBridgeTokenKey } from '../tokens/utils';
 import { useTokenTransfer } from '../transfer/useTokenTransfer';
 import { shouldClearAddress } from '../transfer/utils';
 import { validateBridgeTransferForm } from '../transfer/validate';
+import { RecipientConfirmationModal } from '../wallet/RecipientConfirmationModal';
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
 import { WalletDropdown } from '../wallet/WalletDropdown';
 import {
@@ -180,6 +182,11 @@ function UnifiedFormContent({
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const {
+    open: openConfirmationModal,
+    close: closeConfirmationModal,
+    isOpen: isConfirmationModalOpen,
+  } = useModal();
   const bridgeTransfer = useTokenTransfer(() => setIsSubmitting(false));
   const swap = useSwap();
   const bridgeQuote = useBridgeExactInputQuote({
@@ -208,7 +215,7 @@ function UnifiedFormContent({
     }));
   };
 
-  const onSubmit = async () => {
+  const onSubmit = async (skipRecipientBalanceCheck = false) => {
     const basicErrors = getUnifiedBasicSubmitErrors({
       routeMode,
       values,
@@ -238,6 +245,17 @@ function UnifiedFormContent({
       if (validationErrors) {
         setErrors(validationErrors);
         return;
+      }
+      if (!skipRecipientBalanceCheck) {
+        const balance = await getDestinationNativeBalance(multiProvider, {
+          destination: destinationToken!.chainName,
+          recipient: effectiveRecipient,
+        });
+        if (isNullish(balance)) return;
+        if (balance === 0n) {
+          openConfirmationModal();
+          return;
+        }
       }
     } else {
       if (!bestRoute) return;
@@ -358,6 +376,15 @@ function UnifiedFormContent({
         onClickWhenReady={onSubmit}
         disabled={isSubmitting}
         classes="mb-4 w-full px-3 py-2.5 font-secondary text-xl text-cream-100"
+      />
+      <RecipientConfirmationModal
+        isOpen={isConfirmationModalOpen}
+        close={closeConfirmationModal}
+        onConfirm={() => void onSubmit(true)}
+        recipient={effectiveRecipient}
+        destinationChainDisplay={
+          destinationToken ? getChainDisplayName(multiProvider, destinationToken.chainName) : ''
+        }
       />
     </>
   );

@@ -839,7 +839,10 @@ function InputUsdValue({
   if (routeMode === UnifiedRouteMode.Swap) {
     return <SwapInputUsdValue token={token} amount={amount} />;
   }
-  return <BridgeInputUsdValue token={token} amount={amount} />;
+  if (routeMode === UnifiedRouteMode.Bridge) {
+    return <BridgeInputUsdValue token={token} amount={amount} />;
+  }
+  return <span>$0.00</span>;
 }
 
 function BridgeInputUsdValue({

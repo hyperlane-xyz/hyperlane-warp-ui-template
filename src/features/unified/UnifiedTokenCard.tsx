@@ -42,6 +42,7 @@ import { useQuote } from '../swap/useQuote';
 import { useSwap } from '../swap/useSwap';
 import { validateSwapForm } from '../swap/validate';
 import { useCollateralGroups, useTokenByKeyMap, useWarpCore } from '../tokens/hooks';
+import { ImportTokenButton } from '../tokens/ImportTokenButton';
 import { getTokenKey as getBridgeTokenKey } from '../tokens/utils';
 import { useTokenTransfer } from '../transfer/useTokenTransfer';
 import { shouldClearAddress } from '../transfer/utils';
@@ -537,6 +538,7 @@ function OriginTokenCard({
     <div>
       <div className="mb-2 flex items-center justify-between">
         <WalletDropdown chainName={token?.chainName} selectionMode="origin" />
+        <ImportTokenButton token={token?.bridgeToken} />
       </div>
       <div className="transfer-chain-field rounded-[7px] border border-gray-400/25 bg-white p-3 shadow-input dark:border-primary-300/[0.18] dark:bg-transparent dark:shadow-none">
         <TokenSelectField
@@ -613,6 +615,7 @@ function DestinationTokenCard({
           recipient={values.recipient}
           onRecipientChange={(addr: string) => setFieldValue('recipient', addr)}
         />
+        <ImportTokenButton token={token?.bridgeToken} />
       </div>
       <div className="transfer-chain-field rounded-[7px] border border-gray-400/25 bg-white p-3 shadow-input dark:border-primary-300/[0.18] dark:bg-transparent dark:shadow-none">
         <TokenSelectField

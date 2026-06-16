@@ -32,5 +32,8 @@ test.describe('EVM balance display', () => {
     const balance = page.locator('.transfer-balance').first();
     await expect(balance).toBeVisible({ timeout: 20_000 });
     await expect(balance).toContainText('1234.5679 USDC', { timeout: 20_000 });
+
+    await page.getByRole('button', { name: 'Max' }).click();
+    await expect(page.getByRole('spinbutton')).toHaveValue('1234.56789', { timeout: 20_000 });
   });
 });

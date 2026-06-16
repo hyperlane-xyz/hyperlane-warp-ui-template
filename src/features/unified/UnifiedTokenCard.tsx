@@ -54,6 +54,7 @@ import {
 import { useQuote } from '../swap/useQuote';
 import { useSwap } from '../swap/useSwap';
 import { validateSwapForm } from '../swap/validate';
+import { useIsApproveRequired } from '../tokens/approval';
 import { useCollateralGroups, useTokenByKeyMap, useWarpCore } from '../tokens/hooks';
 import { ImportTokenButton } from '../tokens/ImportTokenButton';
 import { useTokenPrices as useBridgeTokenPrices } from '../tokens/useTokenPrice';
@@ -664,11 +665,26 @@ function UnifiedBridgeReviewDetails({
   quotedCalls: ReturnType<typeof useQuotedCallsFeeQuotes>;
   isLoading: boolean;
 }) {
-  if (!isReview) return null;
-
   const fees = getBridgeFeeItems(quote, quotedCalls);
   const remoteToken = quote?.connectedDestinationToken;
   const transferToken = quote?.routeToken;
+  const sameTokenFeeAmount =
+    transferToken &&
+    quotedCalls.quotedCallsParams &&
+    quotedCalls.fees?.tokenFeeQuote?.token.equals(transferToken)
+      ? quotedCalls.fees.tokenFeeQuote.amount
+      : 0n;
+  const approvalAmount =
+    quote && transferToken ? (quote.transferAmount.amount + sameTokenFeeAmount).toString() : '';
+  const { isLoading: isApproveLoading, isApproveRequired } = useIsApproveRequired(
+    transferToken,
+    approvalAmount,
+    isReview && !!quote,
+    quotedCalls.quotedCallsParams,
+  );
+
+  if (!isReview) return null;
+
   const receivedAmount =
     quote && remoteToken
       ? `${quote.transferAmount.getDecimalFormattedAmount().toFixed(8)} ${remoteToken.symbol}`
@@ -688,42 +704,57 @@ function UnifiedBridgeReviewDetails({
         Transactions
       </label>
       <div className="transfer-review-panel mt-1.5 space-y-2 break-all rounded border border-gray-400 bg-gray-150 px-2.5 py-2 text-sm dark:border-primary-300/25 dark:bg-background/40 dark:text-foreground-primary">
-        {isLoading || quotedCalls.isLoading || !quote ? (
+        {isLoading || quotedCalls.isLoading || isApproveLoading || !quote ? (
           <div className="flex items-center justify-center py-6">
             <SpinnerIcon className="h-5 w-5" />
           </div>
         ) : (
-          <div>
-            <h4>Transaction: Transfer Remote</h4>
-            <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs dark:border-primary-300/25">
-              {remoteToken?.addressOrDenom && (
-                <p className="flex">
-                  <span className="min-w-[7.5rem]">Remote Token</span>
-                  <span>{remoteToken.addressOrDenom}</span>
-                </p>
-              )}
-              {sentAmount && (
-                <p className="flex">
-                  <span className="min-w-[7.5rem]">Amount</span>
-                  <span>{sentAmount}</span>
-                </p>
-              )}
-              {receivedAmount && (
-                <p className="flex">
-                  <span className="min-w-[7.5rem]">Received Amount</span>
-                  <span>{receivedAmount}</span>
-                </p>
-              )}
-              {fees.map((fee) => (
-                <p key={fee.label} className="flex">
-                  <span className="min-w-[7.5rem]">{fee.label}</span>
-                  <span>
-                    {fee.amount.getDecimalFormattedAmount().toFixed(8)} {fee.amount.token.symbol}
-                  </span>
-                </p>
-              ))}
+          <>
+            {isApproveRequired && (
+              <div>
+                <h4>Transaction 1: Approve Transfer</h4>
+                <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs">
+                  <p>{`Spender: ${
+                    quotedCalls.quotedCallsParams?.address ?? transferToken?.addressOrDenom
+                  }`}</p>
+                  {transferToken?.collateralAddressOrDenom && (
+                    <p>{`Collateral Address: ${transferToken.collateralAddressOrDenom}`}</p>
+                  )}
+                </div>
+              </div>
+            )}
+            <div>
+              <h4>{`Transaction${isApproveRequired ? ' 2' : ''}: Transfer Remote`}</h4>
+              <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs dark:border-primary-300/25">
+                {remoteToken?.addressOrDenom && (
+                  <p className="flex">
+                    <span className="min-w-[7.5rem]">Remote Token</span>
+                    <span>{remoteToken.addressOrDenom}</span>
+                  </p>
+                )}
+                {sentAmount && (
+                  <p className="flex">
+                    <span className="min-w-[7.5rem]">Amount</span>
+                    <span>{sentAmount}</span>
+                  </p>
+                )}
+                {receivedAmount && (
+                  <p className="flex">
+                    <span className="min-w-[7.5rem]">Received Amount</span>
+                    <span>{receivedAmount}</span>
+                  </p>
+                )}
+                {fees.map((fee) => (
+                  <p key={fee.label} className="flex">
+                    <span className="min-w-[7.5rem]">{fee.label}</span>
+                    <span>
+                      {fee.amount.getDecimalFormattedAmount().toFixed(8)} {fee.amount.token.symbol}
+                    </span>
+                  </p>
+                ))}
+              </div>
             </div>
-          </div>
+          </>
         )}
       </div>
     </div>

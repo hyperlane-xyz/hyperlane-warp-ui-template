@@ -1,12 +1,14 @@
 import { test, expect } from '@playwright/test';
+import { waitForTransferForm } from '../helpers/locators';
 
 test.describe('Basic Rendering', () => {
-  test('should render transfer form with Send and Receive sections', async ({ page }) => {
+  test('should render the unified form', async ({ page }) => {
     await page.goto('http://localhost:3000/embed');
-    await page.getByText('Send').first().waitFor({ state: 'visible' });
+    await waitForTransferForm(page);
 
-    await expect(page.getByText('Send').first()).toBeVisible();
-    await expect(page.getByText('Receive').first()).toBeVisible();
+    await expect(page.getByTestId('token-select-origin')).toBeVisible();
+    await expect(page.getByTestId('token-select-destination')).toBeVisible();
+    await expect(page.getByText(/Route:/)).toBeVisible();
     await expect(page.locator('input[type="number"]')).toBeVisible();
     await expect(
       page.getByRole('button', { name: 'Connect wallet', exact: true }),
@@ -15,7 +17,7 @@ test.describe('Basic Rendering', () => {
 
   test('should add embed-mode class to body', async ({ page }) => {
     await page.goto('http://localhost:3000/embed');
-    await page.getByText('Send').first().waitFor({ state: 'visible' });
+    await waitForTransferForm(page);
 
     await expect(page.locator('body')).toHaveClass(/embed-mode/);
   });

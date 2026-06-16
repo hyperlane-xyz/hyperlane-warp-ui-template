@@ -2,14 +2,14 @@
 // seed: tests/seed.spec.ts
 
 import { test, expect } from '@playwright/test';
+import { waitForTransferForm } from '../helpers/locators';
 
 test.describe('No Chrome', () => {
   test('should not show header navigation on embed page', async ({ page }) => {
     // Navigate to the embed page
     await page.goto('http://localhost:3000/embed');
 
-    // Wait for Send text to confirm page loaded
-    await page.getByText('Send').first().waitFor({ state: 'visible' });
+    await waitForTransferForm(page);
 
     // Verify no header element exists on the embed page
     await expect(page.locator('header')).toHaveCount(0);
@@ -19,8 +19,7 @@ test.describe('No Chrome', () => {
     // Navigate to the embed page
     await page.goto('http://localhost:3000/embed');
 
-    // Wait for Send text to confirm page loaded
-    await page.getByText('Send').first().waitFor({ state: 'visible' });
+    await waitForTransferForm(page);
 
     // Verify no footer element exists on the embed page
     await expect(page.locator('footer')).toHaveCount(0);
@@ -30,8 +29,7 @@ test.describe('No Chrome', () => {
     // Navigate to the main app page
     await page.goto('http://localhost:3000/');
 
-    // Wait for page to load
-    await page.getByText('Send').first().waitFor({ state: 'visible' });
+    await waitForTransferForm(page);
 
     // Verify the main app has a header element
     await expect(page.locator('header')).toBeVisible();

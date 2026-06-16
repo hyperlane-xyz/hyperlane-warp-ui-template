@@ -2,14 +2,14 @@
 // seed: tests/seed.spec.ts
 
 import { test, expect } from '@playwright/test';
+import { waitForTransferForm } from '../helpers/locators';
 
 test.describe('Theme Tests', () => {
   test('should apply default light theme CSS variables', async ({ page }) => {
     // Navigate to http://localhost:3000/embed
     await page.goto('http://localhost:3000/embed');
 
-    // Wait for text "Send" to be visible
-    await page.getByText('Send').first().waitFor({ state: 'visible' });
+    await waitForTransferForm(page);
 
     // Evaluate JS: getComputedStyle(document.body).getPropertyValue('--embed-accent').trim()
     const accent = await page.evaluate(() =>
@@ -24,8 +24,7 @@ test.describe('Theme Tests', () => {
     // Navigate to http://localhost:3000/embed?accent=3b82f6
     await page.goto('http://localhost:3000/embed?accent=3b82f6');
 
-    // Wait for text "Send" to be visible
-    await page.getByText('Send').first().waitFor({ state: 'visible' });
+    await waitForTransferForm(page);
 
     // Evaluate: getComputedStyle(document.body).getPropertyValue('--embed-accent').trim()
     const accent = await page.evaluate(() =>
@@ -40,8 +39,7 @@ test.describe('Theme Tests', () => {
     // Navigate to http://localhost:3000/embed?mode=dark
     await page.goto('http://localhost:3000/embed?mode=dark');
 
-    // Wait for text "Send" to be visible
-    await page.getByText('Send').first().waitFor({ state: 'visible' });
+    await waitForTransferForm(page);
 
     // Evaluate: getComputedStyle(document.body).getPropertyValue('--embed-bg').trim()
     const bg = await page.evaluate(() =>
@@ -64,8 +62,7 @@ test.describe('Theme Tests', () => {
     // Navigate to http://localhost:3000/embed?accent=not-a-color
     await page.goto('http://localhost:3000/embed?accent=not-a-color');
 
-    // Wait for text "Send" to be visible
-    await page.getByText('Send').first().waitFor({ state: 'visible' });
+    await waitForTransferForm(page);
 
     // Evaluate: getComputedStyle(document.body).getPropertyValue('--embed-accent').trim()
     const accent = await page.evaluate(() =>
@@ -80,8 +77,7 @@ test.describe('Theme Tests', () => {
     // Navigate to http://localhost:3000/embed?error=ff6600
     await page.goto('http://localhost:3000/embed?error=ff6600');
 
-    // Wait for text "Send" to be visible
-    await page.getByText('Send').first().waitFor({ state: 'visible' });
+    await waitForTransferForm(page);
 
     // Evaluate: getComputedStyle(document.body).getPropertyValue('--embed-error').trim()
     const error = await page.evaluate(() =>

@@ -5,14 +5,16 @@ import { type CSSProperties, useEffect, useMemo, useRef, useState } from 'react'
 
 import { APP_NAME } from '../consts/app';
 import { TransactionHistoryItemType, useStore } from '../features/store';
+import { SwapDetailsModal } from '../features/swap/SwapDetailsModal';
+import { useEngineBootstrap } from '../features/swap/useEngineBootstrap';
 import { TransfersDetailsModal } from '../features/transfer/TransfersDetailsModal';
-import { TransferTokenCard } from '../features/transfer/TransferTokenCard';
 import { TransferContext } from '../features/transfer/types';
+import { UnifiedTokenCard } from '../features/unified/UnifiedTokenCard';
 import { parseEmbedTheme, themeToCssVars } from '../styles/embedTheme';
 import { logger } from '../utils/logger';
 
 /**
- * Embeddable widget page — renders the transfer form in a minimal, chrome-less
+ * Embeddable widget page — renders the unified transfer/swap form in a minimal, chrome-less
  * layout suitable for iframe embedding. Accepts theme overrides via URL params.
  *
  * Usage:
@@ -21,7 +23,7 @@ import { logger } from '../utils/logger';
  * Supported URL params:
  *   - accent, bg, card, text, buttonText, border, error (hex without #)
  *   - mode: "dark" or "light"
- *   - origin, destination, originToken, destinationToken (transfer defaults)
+ *   - origin, destination, originToken, destinationToken (token defaults)
  */
 
 const WIDGET_MESSAGE_TYPE = 'hyperlane-warp-widget';
@@ -87,6 +89,7 @@ function useAutoTransferModal() {
 
 const EmbedPage: NextPage = () => {
   usePostMessageBridge();
+  useEngineBootstrap();
   const cssVars = useMemo(() => themeToCssVars(parseEmbedTheme()), []);
   const { selectedTransfer, isOpen: isModalOpen, close: closeModal } = useAutoTransferModal();
 
@@ -100,7 +103,7 @@ const EmbedPage: NextPage = () => {
       <div className="embed-container" style={cssVars as CSSProperties}>
         <div className="flex min-h-screen items-center justify-center p-2">
           <div>
-            <TransferTokenCard />
+            <UnifiedTokenCard />
             <div className="mt-2 flex items-center justify-end gap-1 pr-1 opacity-50">
               <span className="text-xxs tracking-wide">Powered by</span>
               <HyperlaneLogo width={12} height={12} color="currentColor" className="-mt-[2px]" />
@@ -117,6 +120,7 @@ const EmbedPage: NextPage = () => {
           transactionId={selectedTransfer.id}
         />
       )}
+      <SwapDetailsModal />
     </>
   );
 };

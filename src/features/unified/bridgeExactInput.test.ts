@@ -91,6 +91,30 @@ describe('getExactInputBridgeMaxAmount', () => {
 
     expect(maxAmount?.amount).toBe(950n);
   });
+
+  test('caps exact-input max at the wallet balance when fees exceed the SDK max reserve', async () => {
+    const token = createMockToken();
+    vi.spyOn(token, 'isFungibleWith').mockImplementation((other) => other === token);
+    vi.mocked(getTransferToken).mockResolvedValue(token);
+    vi.mocked(findConnectedDestinationToken).mockReturnValue(token);
+    const warpCore = {
+      getMaxTransferAmount: vi.fn().mockResolvedValue(token.amount(900n)),
+      getInterchainTransferFee: vi.fn().mockResolvedValue({
+        igpQuote: token.amount(100n),
+        tokenFeeQuote: token.amount(50n),
+      }),
+    };
+
+    const maxAmount = await getExactInputBridgeMaxAmount({
+      warpCore: warpCore as any,
+      balance: token.amount(1_000n),
+      destinationToken: token,
+      recipient: '0xrecipient',
+      sender: '0xsender',
+    });
+
+    expect(maxAmount?.amount).toBe(1_000n);
+  });
 });
 
 describe('getExactInputBridgeTransferQuote', () => {

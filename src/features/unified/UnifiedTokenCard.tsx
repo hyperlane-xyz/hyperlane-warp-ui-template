@@ -773,7 +773,10 @@ function DestinationTokenCard({
   const output = useMemo(() => {
     if (!token) return '';
     if (routeMode === UnifiedRouteMode.Bridge && bridgeQuote) {
-      return formatDisplayAmount(bridgeQuote.transferAmount.amount, token.decimals);
+      return formatDisplayAmount(
+        bridgeQuote.transferAmount.amount,
+        bridgeQuote.connectedDestinationToken.decimals,
+      );
     }
     if (routeMode !== UnifiedRouteMode.Swap || !bestRoute) return '';
     try {
@@ -845,7 +848,7 @@ async function submitBridge({
   });
   const transferValues = {
     originTokenKey: getBridgeTokenKey(quote.routeToken),
-    destinationTokenKey: getBridgeTokenKey(destinationToken.bridgeToken),
+    destinationTokenKey: getBridgeTokenKey(quote.connectedDestinationToken),
     amount: fromWei(quote.transferAmount.amount, quote.routeToken.decimals),
     recipient,
   };
@@ -902,7 +905,7 @@ export async function validateUnifiedBridgeTransfer({
     collateralGroups,
     {
       originTokenKey: getBridgeTokenKey(quote.routeToken),
-      destinationTokenKey: getBridgeTokenKey(destinationToken.bridgeToken),
+      destinationTokenKey: getBridgeTokenKey(quote.connectedDestinationToken),
       amount: fromWei(quote.transferAmount.amount, quote.routeToken.decimals),
       recipient,
     },

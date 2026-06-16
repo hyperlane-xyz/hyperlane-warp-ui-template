@@ -40,6 +40,7 @@ import {
   type ExactInputBridgeTransferQuote,
 } from './bridgeExactInput';
 import { useUnifiedTokenByKeyMap, useUnifiedTokens } from './tokens/hooks';
+import { getInitialUnifiedTokenKeys } from './tokens/initial';
 import { getUnifiedRouteMode, UnifiedRouteMode } from './tokens/routes';
 import { TokenSelectField } from './tokens/TokenSelectField';
 import type { UnifiedToken } from './tokens/types';
@@ -59,22 +60,15 @@ function UnifiedTokenForm() {
   const collateralGroups = useCollateralGroups();
 
   const initialValues = useMemo<UnifiedFormValues>(() => {
-    const origin = tokens[0];
-    const destination = tokens.find(
-      (token) =>
-        origin &&
-        token.chainName !== origin.chainName &&
-        getUnifiedRouteMode({
-          originToken: origin,
-          destinationToken: token,
-          collateralGroups,
-          engineEnabled,
-        }),
-    );
+    const { originTokenKey, destinationTokenKey } = getInitialUnifiedTokenKeys({
+      tokens,
+      collateralGroups,
+      engineEnabled,
+    });
 
     return {
-      originTokenKey: origin?.key,
-      destinationTokenKey: destination?.key,
+      originTokenKey,
+      destinationTokenKey,
       amount: '',
       recipient: '',
       slippageBps: config.defaultSlippageBps,

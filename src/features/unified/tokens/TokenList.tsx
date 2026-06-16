@@ -6,7 +6,7 @@ import { useDisabledChains, useMultiProvider } from '../../chains/hooks';
 import { getChainDisplayName } from '../../chains/utils';
 import { useCollateralGroups } from '../../tokens/hooks';
 import { useUnifiedTokens } from './hooks';
-import { getUnifiedRouteMode } from './routes';
+import { getTokenRouteMode, getVisibleUnifiedTokens, type UnifiedTokenRouteMode } from './list';
 import type { UnifiedToken } from './types';
 
 function matchesSearch(
@@ -66,35 +66,14 @@ export function TokenList({
       return matchesSearch(token, trimmedSearch, multiProvider);
     });
 
-    const sorted = [...filtered].sort((a, b) => {
-      const aMode = getTokenRouteMode(
-        a,
-        counterpartToken,
-        selectionMode,
-        collateralGroups,
-        engineEnabled,
-      );
-      const bMode = getTokenRouteMode(
-        b,
-        counterpartToken,
-        selectionMode,
-        collateralGroups,
-        engineEnabled,
-      );
-      if (aMode && !bMode) return -1;
-      if (!aMode && bMode) return 1;
-      if (aMode === 'bridge' && bMode === 'swap') return -1;
-      if (aMode === 'swap' && bMode === 'bridge') return 1;
-
-      const symbolCompare = a.symbol.localeCompare(b.symbol);
-      if (symbolCompare !== 0) return symbolCompare;
-      return a.chainName.localeCompare(b.chainName);
+    return getVisibleUnifiedTokens({
+      allTokens: filtered,
+      counterpartToken,
+      selectionMode,
+      collateralGroups,
+      engineEnabled,
+      hasFilter: !!trimmedSearch || !!chainFilter,
     });
-
-    const hasFilter = !!trimmedSearch || !!chainFilter;
-    const maxDisplay = 50;
-    const isLimited = !hasFilter && sorted.length > maxDisplay;
-    return { tokens: isLimited ? sorted.slice(0, maxDisplay) : sorted, isLimited };
   }, [
     allTokens,
     trimmedSearch,
@@ -162,21 +141,6 @@ export function TokenList({
   );
 }
 
-function getTokenRouteMode(
-  token: UnifiedToken,
-  counterpartToken: UnifiedToken | undefined,
-  selectionMode: 'origin' | 'destination',
-  collateralGroups: Parameters<typeof getUnifiedRouteMode>[0]['collateralGroups'],
-  engineEnabled: boolean,
-) {
-  if (!counterpartToken)
-    return token.capabilities.bridge ? 'bridge' : token.capabilities.swap ? 'swap' : null;
-
-  const originToken = selectionMode === 'origin' ? token : counterpartToken;
-  const destinationToken = selectionMode === 'origin' ? counterpartToken : token;
-  return getUnifiedRouteMode({ originToken, destinationToken, collateralGroups, engineEnabled });
-}
-
 const TokenButton = React.memo(function TokenButton({
   token,
   onSelect,
@@ -186,7 +150,7 @@ const TokenButton = React.memo(function TokenButton({
 }: {
   token: UnifiedToken;
   onSelect: (token: UnifiedToken) => void;
-  routeMode: 'bridge' | 'swap' | null;
+  routeMode: UnifiedTokenRouteMode;
   counterpartToken?: UnifiedToken;
   selectionMode: 'origin' | 'destination';
 }) {
@@ -227,11 +191,6 @@ const TokenButton = React.memo(function TokenButton({
         </div>
 
         <div className="justify-self-end text-right">
-          {routeMode && (
-            <span className="rounded border border-blue-200 px-1.5 py-0.5 text-[10px] capitalize text-blue-600">
-              {routeMode}
-            </span>
-          )}
           {showRouteUnavailable && (
             <div className="flex items-center justify-end gap-1 whitespace-nowrap text-[10px] text-gray-400">
               <span>Route unavailable</span>

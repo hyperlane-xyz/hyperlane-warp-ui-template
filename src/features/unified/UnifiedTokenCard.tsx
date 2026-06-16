@@ -134,7 +134,9 @@ const EMPTY_UNIFIED_FORM_VALUES: UnifiedFormValues = {
 };
 
 function useInitialTokenQuery(): { query: TokensQuery; hasLookupIds: boolean } {
-  const [query] = useState(() => getInitialUnifiedTokenQuery(getQueryParams()));
+  const [query] = useState(() =>
+    getInitialUnifiedTokenQuery(typeof window === 'undefined' ? undefined : getQueryParams()),
+  );
   return { query, hasLookupIds: !!query.ids?.length };
 }
 

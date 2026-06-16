@@ -1,5 +1,5 @@
 // spec: specs/plan.md
-// seed: tests/page-load/transfer-form-visible.spec.ts
+// seed: tests/page-load/unified-form.spec.ts
 
 import { test, expect } from '@playwright/test';
 import { config } from '../../src/consts/config';

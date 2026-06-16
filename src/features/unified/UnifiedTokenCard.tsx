@@ -1,6 +1,6 @@
 import { Token } from '@hyperlane-xyz/sdk';
 import { errorToString, fromWei, isNullish, toWei } from '@hyperlane-xyz/utils';
-import { ChevronIcon, useDebounce, useModal } from '@hyperlane-xyz/widgets';
+import { ChevronIcon, SpinnerIcon, useDebounce, useModal } from '@hyperlane-xyz/widgets';
 import {
   getAccountAddressAndPubKey,
   useAccountAddressForChain,
@@ -490,7 +490,7 @@ function UnifiedFormContent({
           destinationToken={destinationToken}
         />
       )}
-      {routeMode === UnifiedRouteMode.Bridge && (
+      {routeMode === UnifiedRouteMode.Bridge && !isBridgeReview && (
         <BridgeFeeSummary quote={bridgeQuote.data} quotedCalls={quotedCalls} />
       )}
       {routeMode === UnifiedRouteMode.Swap && <SwapFeeSummary route={bestRoute} />}
@@ -506,6 +506,15 @@ function UnifiedFormContent({
             confirmRecipientHandler={setRecipientAddressConfirmed}
           />
         </div>
+      )}
+
+      {routeMode === UnifiedRouteMode.Bridge && (
+        <UnifiedBridgeReviewDetails
+          isReview={isBridgeReview}
+          quote={bridgeQuote.data}
+          quotedCalls={quotedCalls}
+          isLoading={bridgeQuote.isLoading || bridgeQuote.isFetching}
+        />
       )}
 
       {isBridgeReview ? (
@@ -618,11 +627,7 @@ function BridgeFeeSummary({
   quote: ExactInputBridgeTransferQuote | undefined;
   quotedCalls: ReturnType<typeof useQuotedCallsFeeQuotes>;
 }) {
-  const fees = [
-    { label: 'Local', amount: quotedCalls.fees?.localQuote },
-    { label: 'Gas', amount: quotedCalls.fees?.interchainQuote ?? quote?.interchainQuote },
-    { label: 'Bridge', amount: quotedCalls.fees?.tokenFeeQuote ?? quote?.tokenFeeQuote },
-  ].filter((fee) => fee.amount && fee.amount.amount > 0n);
+  const fees = getBridgeFeeItems(quote, quotedCalls);
 
   if (!fees.length && !quotedCalls.isLoading) return null;
 
@@ -638,14 +643,107 @@ function BridgeFeeSummary({
               key={fee.label}
               className="rounded border border-gray-300/70 px-1.5 py-0.5 dark:border-primary-300/25"
             >
-              {fee.label}: {fee.amount!.getDecimalFormattedAmount().toFixed(8)}{' '}
-              {fee.amount!.token.symbol}
+              {fee.label}: {fee.amount.getDecimalFormattedAmount().toFixed(8)}{' '}
+              {fee.amount.token.symbol}
             </span>
           ))}
         </div>
       )}
     </div>
   );
+}
+
+function UnifiedBridgeReviewDetails({
+  isReview,
+  quote,
+  quotedCalls,
+  isLoading,
+}: {
+  isReview: boolean;
+  quote: ExactInputBridgeTransferQuote | undefined;
+  quotedCalls: ReturnType<typeof useQuotedCallsFeeQuotes>;
+  isLoading: boolean;
+}) {
+  if (!isReview) return null;
+
+  const fees = getBridgeFeeItems(quote, quotedCalls);
+  const remoteToken = quote?.connectedDestinationToken;
+  const transferToken = quote?.routeToken;
+  const receivedAmount =
+    quote && remoteToken
+      ? `${quote.transferAmount.getDecimalFormattedAmount().toFixed(8)} ${remoteToken.symbol}`
+      : null;
+  const sentAmount =
+    quote && transferToken
+      ? `${formatDisplayAmount(quote.inputAmount, transferToken.decimals)} ${transferToken.symbol}`
+      : null;
+
+  return (
+    <div
+      className={`${
+        isReview ? 'max-h-screen duration-1000 ease-in' : 'max-h-0 duration-500'
+      } overflow-hidden transition-all`}
+    >
+      <label className="transfer-field-label mt-4 block pl-0.5 text-sm text-gray-600 dark:text-foreground-secondary">
+        Transactions
+      </label>
+      <div className="transfer-review-panel mt-1.5 space-y-2 break-all rounded border border-gray-400 bg-gray-150 px-2.5 py-2 text-sm dark:border-primary-300/25 dark:bg-background/40 dark:text-foreground-primary">
+        {isLoading || quotedCalls.isLoading || !quote ? (
+          <div className="flex items-center justify-center py-6">
+            <SpinnerIcon className="h-5 w-5" />
+          </div>
+        ) : (
+          <div>
+            <h4>Transaction: Transfer Remote</h4>
+            <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs dark:border-primary-300/25">
+              {remoteToken?.addressOrDenom && (
+                <p className="flex">
+                  <span className="min-w-[7.5rem]">Remote Token</span>
+                  <span>{remoteToken.addressOrDenom}</span>
+                </p>
+              )}
+              {sentAmount && (
+                <p className="flex">
+                  <span className="min-w-[7.5rem]">Amount</span>
+                  <span>{sentAmount}</span>
+                </p>
+              )}
+              {receivedAmount && (
+                <p className="flex">
+                  <span className="min-w-[7.5rem]">Received Amount</span>
+                  <span>{receivedAmount}</span>
+                </p>
+              )}
+              {fees.map((fee) => (
+                <p key={fee.label} className="flex">
+                  <span className="min-w-[7.5rem]">{fee.label}</span>
+                  <span>
+                    {fee.amount.getDecimalFormattedAmount().toFixed(8)} {fee.amount.token.symbol}
+                  </span>
+                </p>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function getBridgeFeeItems(
+  quote: ExactInputBridgeTransferQuote | undefined,
+  quotedCalls: ReturnType<typeof useQuotedCallsFeeQuotes>,
+) {
+  return [
+    { label: 'Local Gas (est.)', amount: quotedCalls.fees?.localQuote },
+    {
+      label: 'Interchain Gas',
+      amount: quotedCalls.fees?.interchainQuote ?? quote?.interchainQuote,
+    },
+    { label: 'Token Fee', amount: quotedCalls.fees?.tokenFeeQuote ?? quote?.tokenFeeQuote },
+  ].filter((fee): fee is { label: string; amount: NonNullable<typeof fee.amount> } => {
+    return !!fee.amount && fee.amount.amount > 0n;
+  });
 }
 
 function SwapFeeSummary({ route }: { route: AugmentedRoute | undefined }) {

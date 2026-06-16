@@ -323,6 +323,7 @@ function UnifiedFormContent({
 
       <div className="mb-2 mt-2 flex items-center justify-between px-1 text-xs text-gray-500">
         <span>{routeMode ? `Route: ${routeMode}` : 'No route available'}</span>
+        {routeMode === UnifiedRouteMode.Swap && <SlippageControl />}
         {!engineEnabled && <span>Bridge only</span>}
       </div>
 
@@ -334,6 +335,37 @@ function UnifiedFormContent({
         classes="mb-4 w-full px-3 py-2.5 font-secondary text-xl text-cream-100"
       />
     </>
+  );
+}
+
+const SLIPPAGE_OPTIONS = [50, 100, 300];
+
+function SlippageControl() {
+  const { values, setFieldValue } = useFormikContext<UnifiedFormValues>();
+
+  return (
+    <div className="flex items-center gap-1">
+      <span>Slippage</span>
+      <div className="flex overflow-hidden rounded border border-gray-300 bg-white dark:border-primary-300/30 dark:bg-transparent">
+        {SLIPPAGE_OPTIONS.map((slippageBps) => {
+          const isSelected = values.slippageBps === slippageBps;
+          return (
+            <button
+              key={slippageBps}
+              type="button"
+              onClick={() => setFieldValue('slippageBps', slippageBps)}
+              className={`px-1.5 py-0.5 text-[11px] leading-4 transition-colors ${
+                isSelected
+                  ? 'bg-gray-900 text-white dark:bg-primary-300 dark:text-background'
+                  : 'text-gray-500 hover:bg-gray-100 dark:text-foreground-secondary dark:hover:bg-primary-300/[0.18]'
+              }`}
+            >
+              {slippageBps / 100}%
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 

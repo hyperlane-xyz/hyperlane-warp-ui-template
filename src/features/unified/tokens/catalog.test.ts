@@ -1,4 +1,5 @@
 import { TestChainName, TokenStandard, type MultiProtocolProvider } from '@hyperlane-xyz/sdk';
+import { ProtocolType } from '@hyperlane-xyz/utils';
 import { describe, expect, test } from 'vitest';
 
 import { addressZero, createMockToken, mockCollateralAddress } from '../../../utils/test';
@@ -9,6 +10,7 @@ const multiProvider = {
   tryGetChainMetadata: (chainName: string) => {
     if (chainName === TestChainName.test1) return { chainId: 1 };
     if (chainName === TestChainName.test2) return { chainId: 2 };
+    if (chainName === 'tronmainnet') return { chainId: 728126428, protocol: ProtocolType.Tron };
     return undefined;
   },
 } as MultiProtocolProvider;
@@ -105,5 +107,24 @@ describe('buildUnifiedTokenCatalog', () => {
     expect(result).toHaveLength(1);
     expect(result[0].bridgeToken).toBe(bridgeToken);
     expect(result[0].swapToken).toBe(nativeSwapToken);
+  });
+
+  test('uses chain protocol when creating swap-only token identity', () => {
+    const tronAddress = '0xabcdef0000000000000000000000000000000000';
+    const swapToken = createSwapToken({
+      chainName: 'tronmainnet',
+      chainId: 728126428,
+      address: tronAddress,
+      addressOrDenom: tronAddress,
+    });
+
+    const result = buildUnifiedTokenCatalog({
+      bridgeTokens: [],
+      swapTokens: [swapToken],
+      multiProvider,
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0].key).toBe(`unified-728126428-${tronAddress}`);
   });
 });

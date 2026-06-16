@@ -1,4 +1,5 @@
 import type { MultiProtocolProvider, Token } from '@hyperlane-xyz/sdk';
+import type { ProtocolType } from '@hyperlane-xyz/utils';
 
 import type { UiToken } from '../../swap/tokens/types';
 import { getBridgeTokenIdentity, getSwapTokenIdentity, getUnifiedTokenKey } from './identity';
@@ -27,8 +28,8 @@ function fromBridgeToken(token: Token, multiProvider: MultiProtocolProvider): Un
   };
 }
 
-function fromSwapToken(token: UiToken): UnifiedToken {
-  const identity = getSwapTokenIdentity(token);
+function fromSwapToken(token: UiToken, protocol?: ProtocolType): UnifiedToken {
+  const identity = getSwapTokenIdentity(token, protocol);
 
   return {
     key: getUnifiedTokenKey(identity),
@@ -82,9 +83,13 @@ export function buildUnifiedTokenCatalog({
   }
 
   for (const token of swapTokens) {
-    const identity = getSwapTokenIdentity(token);
+    const protocol = multiProvider.tryGetChainMetadata(token.chainName)?.protocol;
+    const identity = getSwapTokenIdentity(token, protocol);
     const existing = byIdentity.get(identity);
-    byIdentity.set(identity, existing ? mergeToken(existing, token) : fromSwapToken(token));
+    byIdentity.set(
+      identity,
+      existing ? mergeToken(existing, token) : fromSwapToken(token, protocol),
+    );
   }
 
   return Array.from(byIdentity.values());

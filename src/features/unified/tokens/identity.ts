@@ -1,5 +1,5 @@
 import type { MultiProtocolProvider, Token } from '@hyperlane-xyz/sdk';
-import { isZeroishAddress, normalizeAddress } from '@hyperlane-xyz/utils';
+import { isZeroishAddress, normalizeAddress, type ProtocolType } from '@hyperlane-xyz/utils';
 
 import type { UiToken } from '../../swap/tokens/types';
 
@@ -17,12 +17,12 @@ export function getBridgeTokenIdentity(token: Token, multiProvider: MultiProtoco
   return `${chainKey}-${normalizeAddress(address, token.protocol)}`;
 }
 
-export function getSwapTokenIdentity(token: UiToken): string {
+export function getSwapTokenIdentity(token: UiToken, protocol?: ProtocolType): string {
   if (token.isNative || isZeroishAddress(token.address)) {
     return `${token.chainId}-${NATIVE_SUFFIX}-${token.symbol.toLowerCase()}`;
   }
 
-  return `${token.chainId}-${normalizeAddress(token.address)}`;
+  return `${token.chainId}-${normalizeAddress(token.address, protocol)}`;
 }
 
 export function getUnifiedTokenKey(identity: string): string {

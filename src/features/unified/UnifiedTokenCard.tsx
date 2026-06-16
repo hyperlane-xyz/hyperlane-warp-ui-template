@@ -129,8 +129,9 @@ function UnifiedFormContent({
   const collateralGroups = useCollateralGroups();
   const bridgeTokenMap = useTokenByKeyMap();
   const { accounts } = useAccounts(multiProvider, config.addressBlacklist);
-  const { routerAddressesByChainMap, setTransferLoading } = useStore((s) => ({
+  const { routerAddressesByChainMap, setOriginChainName, setTransferLoading } = useStore((s) => ({
     routerAddressesByChainMap: s.routerAddressesByChainMap,
+    setOriginChainName: s.setOriginChainName,
     setTransferLoading: s.setTransferLoading,
   }));
   const originToken = values.originTokenKey ? tokenMap.get(values.originTokenKey) : undefined;
@@ -243,6 +244,10 @@ function UnifiedFormContent({
   useEffect(() => {
     if (selectedRouteIndex >= routes.length) setSelectedRouteIndex(0);
   }, [routes.length, selectedRouteIndex]);
+
+  useEffect(() => {
+    if (originToken) setOriginChainName(originToken.chainName);
+  }, [originToken, setOriginChainName]);
 
   const onSwapTokens = () => {
     if (originToken && destinationToken) {

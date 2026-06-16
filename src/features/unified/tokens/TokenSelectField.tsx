@@ -3,12 +3,15 @@ import { useState } from 'react';
 
 import { ChevronLargeIcon } from '../../../components/icons/ChevronLargeIcon';
 import { TokenChainIcon } from '../../../components/icons/TokenChainIcon';
-import { updateQueryParams } from '../../../utils/queryParams';
+import { WARP_QUERY_PARAMS } from '../../../consts/args';
+import { updateQueryParam, updateQueryParams } from '../../../utils/queryParams';
 import { useMultiProvider } from '../../chains/hooks';
 import { getChainDisplayName } from '../../chains/utils';
+import { useCollateralGroups } from '../../tokens/hooks';
 import { shouldClearAddress } from '../../transfer/utils';
 import type { UnifiedFormValues } from '../types';
 import { getUnifiedTokenQueryParams } from './queryParams';
+import { getUnifiedRouteMode } from './routes';
 import type { UnifiedToken } from './types';
 import { UnifiedTokenChainModal } from './UnifiedTokenChainModal';
 
@@ -35,10 +38,26 @@ export function TokenSelectField({
     selectionMode === 'origin' ? values.destinationTokenKey : values.originTokenKey;
   const counterpartToken = counterpartKey ? tokenMap.get(counterpartKey) : undefined;
   const multiProvider = useMultiProvider();
+  const collateralGroups = useCollateralGroups();
 
   const handleSelectToken = (token: UnifiedToken) => {
     setTokenKey(token.key);
-    if (selectionMode === 'origin') setFieldValue('amount', '');
+    if (selectionMode === 'origin') {
+      setFieldValue('amount', '');
+      if (
+        counterpartToken &&
+        !getUnifiedRouteMode({
+          originToken: token,
+          destinationToken: counterpartToken,
+          collateralGroups,
+          engineEnabled,
+        })
+      ) {
+        setFieldValue('destinationTokenKey', undefined);
+        updateQueryParam(WARP_QUERY_PARAMS.DESTINATION);
+        updateQueryParam(WARP_QUERY_PARAMS.DESTINATION_TOKEN);
+      }
+    }
     if (
       selectionMode === 'destination' &&
       shouldClearAddress(multiProvider, values.recipient, token.chainName)

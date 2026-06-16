@@ -10,6 +10,7 @@ import { FinalSwapStatuses, SwapStatus } from '../swap/types';
 import { TransferStatus } from '../transfer/types';
 import { useEvmMailboxDeliveryStatus } from './useEvmMailboxDeliveryStatus';
 import { useMessageDeliveryStatus } from './useMessageDeliveryStatus';
+import { useSolanaMailboxDeliveryStatus } from './useSolanaMailboxDeliveryStatus';
 import { getSwapDeliveryMsgId } from './utils';
 
 type BridgeDeliveryTarget = {
@@ -94,13 +95,21 @@ function DeliveryTargetWatcher({
   const updateBridgeTransactionStatus = useStore((s) => s.updateBridgeTransactionStatus);
   const updateSwapTransactionStatus = useStore((s) => s.updateSwapTransactionStatus);
   const graphQlDelivery = useMessageDeliveryStatus(target.msgId, true, multiProvider);
+  const isSwapTarget = target.type === TransactionHistoryItemType.Swap;
+  const swapDestChain = isSwapTarget ? target.destinationChain : undefined;
   const mailboxDelivery = useEvmMailboxDeliveryStatus({
     msgId: target.msgId,
-    destinationChain:
-      target.type === TransactionHistoryItemType.Swap ? target.destinationChain : undefined,
+    destinationChain: swapDestChain,
     chainAddresses,
     multiProvider,
-    enabled: target.type === TransactionHistoryItemType.Swap && !graphQlDelivery.isDelivered,
+    enabled: isSwapTarget && !graphQlDelivery.isDelivered,
+  });
+  const solanaMailboxDelivery = useSolanaMailboxDeliveryStatus({
+    msgId: target.msgId,
+    destinationChain: swapDestChain,
+    chainAddresses,
+    multiProvider,
+    enabled: isSwapTarget && !graphQlDelivery.isDelivered && !mailboxDelivery.isDelivered,
   });
   const hasToasted = useRef(false);
   const hasUpdatedFromGraphQl = useRef(false);
@@ -154,10 +163,11 @@ function DeliveryTargetWatcher({
       return;
     }
 
-    if (mailboxDelivery.isDelivered && !hasUpdatedFromMailbox.current) {
+    const directDelivery = mailboxDelivery.isDelivered ? mailboxDelivery : solanaMailboxDelivery;
+    if (directDelivery.isDelivered && !hasUpdatedFromMailbox.current) {
       hasUpdatedFromMailbox.current = true;
       updateSwapTransactionStatus(target.id, SwapStatus.ConfirmedDestination, {
-        destinationTxHash: mailboxDelivery.destinationTxHash,
+        destinationTxHash: directDelivery.destinationTxHash,
       });
       if (target.status !== SwapStatus.ConfirmedDestination && !hasToasted.current) {
         hasToasted.current = true;
@@ -169,6 +179,7 @@ function DeliveryTargetWatcher({
     graphQlDelivery.isDelivered,
     mailboxDelivery.destinationTxHash,
     mailboxDelivery.isDelivered,
+    solanaMailboxDelivery.isDelivered,
     target,
     updateBridgeTransactionStatus,
     updateSwapTransactionStatus,

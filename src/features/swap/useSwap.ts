@@ -18,9 +18,8 @@ import {
 import { useCallback, useState } from 'react';
 import type { Address } from 'viem';
 
-import type { RouteTx } from '../api/types';
-
 import { logger } from '../../utils/logger';
+import type { RouteTx } from '../api/types';
 import { useMultiProvider } from '../chains/hooks';
 import { useStore } from '../store';
 import { submitToRelayApi } from '../transfer/relayApi';
@@ -128,24 +127,8 @@ export function useSwap() {
         }
 
         // DEBUG: log full route for manual reveal testing
-        console.log('[swap:route]', JSON.stringify(route.raw, null, 2));
-
-        // DEBUG: log solana reveal params for manual reveal via scripts/reveal.mjs
-        if (route.raw.solanaCommitment) {
-          const sc = route.raw.solanaCommitment;
-          console.log('[solana-reveal]', JSON.stringify({
-            commitment: sc.commitment,
-            calldata: sc.ccs.body.calldata,
-            revealSalt: sc.ccs.body.revealSalt,
-            sender: args.sender,
-          }));
-        }
-
-        // Order is critical: post to CCS BEFORE broadcasting.
-        if (route.raw.callCommitment) {
-          updateSwapTransactionStatus(transactionId, SwapStatus.CreatingTxs);
-          await postCommitment(route.raw.callCommitment);
-        }
+        // TODO: implement CCS to support solana ixs
+        console.log(JSON.stringify(route.raw, null, 2));
 
         updateSwapTransactionStatus(transactionId, SwapStatus.SigningSwap);
         const rpcUrl = multiProvider.getChainMetadata(srcChainName).rpcUrls[0].http;

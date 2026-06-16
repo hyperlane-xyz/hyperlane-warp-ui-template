@@ -24,7 +24,14 @@ import { useMultiProvider } from '../chains/hooks';
 import { TransactionHistoryItemType, useStore } from '../store';
 import { ApprovalPhase, useApprovalStatus } from '../swap/approval';
 import { useTokenBalance as useSwapTokenBalance } from '../swap/balances/hooks';
-import { formatBalance as formatSwapBalance } from '../swap/balances/utils';
+import {
+  formatBalance as formatSwapBalance,
+  formatFeeAmount,
+  formatUsd,
+  getTotalFeeUsd,
+} from '../swap/balances/utils';
+import { useTokenByKeyMap as useSwapTokenByKeyMap } from '../swap/tokens/hooks';
+import { useTokenPrices as useSwapTokenPrices } from '../swap/tokens/useTokenPrice';
 import {
   FinalSwapStatuses,
   SwapStatus,
@@ -326,6 +333,7 @@ function UnifiedFormContent({
         {routeMode === UnifiedRouteMode.Swap && <SlippageControl />}
         {!engineEnabled && <span>Bridge only</span>}
       </div>
+      {routeMode === UnifiedRouteMode.Swap && <SwapFeeSummary route={bestRoute} />}
 
       <ConnectAwareSubmitButton<UnifiedFormValues>
         chainName={originToken?.chainName || ''}
@@ -335,6 +343,44 @@ function UnifiedFormContent({
         classes="mb-4 w-full px-3 py-2.5 font-secondary text-xl text-cream-100"
       />
     </>
+  );
+}
+
+function SwapFeeSummary({ route }: { route: AugmentedRoute | undefined }) {
+  const tokenMap = useSwapTokenByKeyMap();
+  const { prices } = useSwapTokenPrices();
+  const components = useMemo(() => route?.feeBreakdown.components ?? [], [route]);
+  const totalUsd = useMemo(
+    () => getTotalFeeUsd(components, tokenMap, prices),
+    [components, prices, tokenMap],
+  );
+
+  if (!components.length) return null;
+
+  return (
+    <div className="mb-2 rounded border border-gray-300/60 px-2 py-1.5 text-xs text-gray-500 dark:border-primary-300/25 dark:text-foreground-secondary">
+      <div className="mb-1 flex items-center justify-between gap-2">
+        <span>Fees</span>
+        <span>{totalUsd == null ? '—' : formatUsd(totalUsd)}</span>
+      </div>
+      <div className="flex flex-wrap gap-1">
+        {components.map((component, index) => {
+          const token = tokenMap.get(
+            `${component.chainId}-${component.tokenAddress.toLowerCase()}`,
+          );
+          const label = component.category === 'igp' ? 'Gas' : 'Bridge';
+          return (
+            <span
+              key={`${component.category}-${component.chainId}-${component.tokenAddress}-${index}`}
+              className="rounded border border-gray-300/70 px-1.5 py-0.5 dark:border-primary-300/25"
+            >
+              {label}: {formatFeeAmount(component.amount, token?.decimals ?? 18)}{' '}
+              {token?.symbol ?? 'token'}
+            </span>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 

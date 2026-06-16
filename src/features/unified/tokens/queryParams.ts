@@ -68,6 +68,21 @@ export function findUnifiedTokenByQueryRef(
   );
 }
 
+export function findUnifiedTokenByConfigRef(
+  tokens: UnifiedToken[],
+  chainName: string,
+  tokenRef: string,
+): UnifiedToken | undefined {
+  return (
+    findUnifiedTokenByQueryRef(tokens, chainName, tokenRef) ??
+    tokens.find(
+      (token) =>
+        token.chainName.toLowerCase() === chainName.toLowerCase() &&
+        token.symbol.toLowerCase() === tokenRef.toLowerCase(),
+    )
+  );
+}
+
 function matchesRef(value: string | undefined, tokenRef: string, protocol?: ProtocolType): boolean {
   if (!value) return false;
   return normalizeRef(value, protocol) === normalizeRef(tokenRef, protocol);

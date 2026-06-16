@@ -3,7 +3,7 @@ import type { Token } from '@hyperlane-xyz/sdk';
 import { WARP_QUERY_PARAMS } from '../../../consts/args';
 import { config } from '../../../consts/config';
 import { getQueryParams } from '../../../utils/queryParams';
-import { findUnifiedTokenByQueryRef } from './queryParams';
+import { findUnifiedTokenByConfigRef, findUnifiedTokenByQueryRef } from './queryParams';
 import { getUnifiedRouteMode, UnifiedRouteMode } from './routes';
 import type { UnifiedToken } from './types';
 
@@ -87,7 +87,7 @@ function findTokenFromConfig(
 ): UnifiedToken | undefined {
   const parsed = parseTokenRef(configToken);
   if (!parsed) return undefined;
-  return findUnifiedTokenByQueryRef(tokens, parsed.chainName, parsed.tokenRef);
+  return findUnifiedTokenByConfigRef(tokens, parsed.chainName, parsed.tokenRef);
 }
 
 function findRoutableConfigToken(

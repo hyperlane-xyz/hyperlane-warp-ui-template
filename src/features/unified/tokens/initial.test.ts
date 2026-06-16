@@ -50,7 +50,7 @@ describe('getInitialUnifiedTokenKeys', () => {
     vi.unstubAllGlobals();
   });
 
-  test('falls back to a bridge route before swap defaults when symbol defaults do not resolve', () => {
+  test('uses bridge-style default chain-symbol token refs from config', () => {
     const bridgeDestinationToken = createMockToken({
       chainName: 'base',
       symbol: 'USDC',
@@ -67,6 +67,7 @@ describe('getInitialUnifiedTokenKeys', () => {
     const bridgeOrigin = createUnifiedToken({
       key: 'ethereum-USDC',
       chainName: 'ethereum',
+      symbol: 'USDC',
       bridgeToken: bridgeOriginToken,
       capabilities: { bridge: true, swap: false },
     });
@@ -74,6 +75,7 @@ describe('getInitialUnifiedTokenKeys', () => {
       key: 'base-USDC',
       chainName: 'base',
       chainId: 8453,
+      symbol: 'USDC',
       bridgeToken: bridgeDestinationToken,
       capabilities: { bridge: true, swap: false },
     });

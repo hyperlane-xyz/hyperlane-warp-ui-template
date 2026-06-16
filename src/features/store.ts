@@ -24,7 +24,13 @@ import { assembleChainAddresses } from './chains/addresses';
 import { assembleChainMetadata } from './chains/metadata';
 import type { UiToken } from './swap/tokens/types';
 import { getTokenKey as getSwapTokenKey } from './swap/tokens/utils';
-import { FinalSwapStatuses, LabeledMsgId, SwapHistoryItem, SwapStatus } from './swap/types';
+import {
+  FinalSwapStatuses,
+  LabeledMsgId,
+  SolanaRevealData,
+  SwapHistoryItem,
+  SwapStatus,
+} from './swap/types';
 import {
   buildTokensArray,
   getTokenKey,
@@ -123,8 +129,10 @@ export interface AppState {
       originTxHash?: string;
       originBlockNumber?: number;
       destinationTxHash?: string;
+      solanaReveal?: SolanaRevealData;
     },
   ) => void;
+  dismissSolanaReveal: (id: string) => void;
   failUnconfirmedTransactions: () => void;
   selectedTransactionId: string | null;
   setSelectedTransactionId: (id: string | null) => void;
@@ -316,8 +324,17 @@ export const useStore = create<AppState>()(
                 originTxHash: item.data.originTxHash ?? options?.originTxHash,
                 originBlockNumber: item.data.originBlockNumber ?? options?.originBlockNumber,
                 destinationTxHash: item.data.destinationTxHash ?? options?.destinationTxHash,
+                solanaReveal: item.data.solanaReveal ?? options?.solanaReveal,
               },
             };
+          }),
+        }));
+      },
+      dismissSolanaReveal: (id) => {
+        set((state) => ({
+          transactionHistory: state.transactionHistory.map((item) => {
+            if (item.id !== id || item.type !== TransactionHistoryItemType.Swap) return item;
+            return { ...item, data: { ...item.data, revealDismissed: true } };
           }),
         }));
       },

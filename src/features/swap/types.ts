@@ -40,6 +40,20 @@ export const FinalSwapStatuses = [
   SwapStatus.Failed,
 ];
 
+// Data needed to submit the Solana reveal instruction for EVM→Solana CCS swaps.
+// Stored in swap history so the reveal modal can reconstruct the tx after page reload.
+export interface SolanaRevealData {
+  commitment: `0x${string}`;  // 32-byte keccak256 hash
+  calldata: `0x${string}`;    // Raydium swap calldata (embedded in the reveal ix)
+  revealSalt?: `0x${string}`; // 32-byte salt for commitment verification
+  srcChainId: number;         // EVM origin chain ID (= Hyperlane domain for EVM)
+  evmUr: string;              // EVM UR address (lowercase, no 0x)
+  evmSender: string;          // EVM sender address (fallback salt derivation)
+  tokenIn: string;            // Solana input mint (base58)
+  tokenOut: string;           // Solana output mint (base58)
+  amountIn: string;           // raw input amount
+}
+
 export interface SwapHistoryItem {
   status: SwapStatus;
   timestamp: number;
@@ -57,6 +71,8 @@ export interface SwapHistoryItem {
   destinationTxHash?: string;
   msgIds?: LabeledMsgId[];
   originBlockNumber?: number;
+  solanaReveal?: SolanaRevealData;
+  revealDismissed?: boolean;
 }
 
 // ── Form values ──────────────────────────────────────────────────────

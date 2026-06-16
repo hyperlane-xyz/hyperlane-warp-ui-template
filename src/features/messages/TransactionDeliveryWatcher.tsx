@@ -25,6 +25,9 @@ type SwapDeliveryTarget = {
   msgId: string;
   destinationChain: ChainName;
   status: SwapStatus;
+  // True when a Solana reveal is pending — delivery watcher must not auto-complete;
+  // the reveal modal handles ConfirmedDestination after the reveal tx confirms.
+  hasSolanaReveal: boolean;
 };
 
 type DeliveryTarget = BridgeDeliveryTarget | SwapDeliveryTarget;
@@ -61,8 +64,9 @@ export function TransactionDeliveryWatcher() {
       const destinationChain = multiProvider.tryGetChainName(item.data.dstChain);
       if (!destinationChain) return [];
       const msgId = getSwapDeliveryMsgId(item.data.msgIds);
+      const hasSolanaReveal = !!(item.data.solanaReveal && !item.data.revealDismissed);
       return msgId
-        ? [{ id: item.id, type: item.type, msgId, destinationChain, status: item.data.status }]
+        ? [{ id: item.id, type: item.type, msgId, destinationChain, status: item.data.status, hasSolanaReveal }]
         : [];
     });
 
@@ -140,6 +144,21 @@ function DeliveryTargetWatcher({
       updateBridgeTransactionStatus(target.id, TransferStatus.Delivered, {
         destinationTxHash: graphQlDelivery.destinationTxHash,
       });
+      return;
+    }
+
+    // Solana CCS swaps: warp delivery signals "ready for reveal". Update to
+    // ConfirmingDestination so the reveal modal knows to open. The modal sets
+    // ConfirmedDestination after the reveal tx confirms.
+    if (target.type === TransactionHistoryItemType.Swap && target.hasSolanaReveal) {
+      const directDelivery = mailboxDelivery.isDelivered ? mailboxDelivery : solanaMailboxDelivery;
+      if (
+        (graphQlDelivery.isDelivered || directDelivery.isDelivered) &&
+        !hasUpdatedFromMailbox.current
+      ) {
+        hasUpdatedFromMailbox.current = true;
+        updateSwapTransactionStatus(target.id, SwapStatus.ConfirmingDestination);
+      }
       return;
     }
 

@@ -2,6 +2,7 @@ import {
   EvmTokenAdapter,
   HyperlaneCore,
   ProviderType,
+  SealevelCoreAdapter,
   type TypedTransactionReceipt,
 } from '@hyperlane-xyz/sdk';
 import { isZeroishAddress, ProtocolType } from '@hyperlane-xyz/utils';
@@ -25,7 +26,7 @@ import { useStore } from '../store';
 import { submitToRelayApi } from '../transfer/relayApi';
 import { postCommitment } from './ccs';
 import { SwapStatus } from './types';
-import type { AugmentedRoute, LabeledMsgId } from './types';
+import type { AugmentedRoute, LabeledMsgId, SolanaRevealData } from './types';
 
 interface ExecuteArgs {
   transactionId: string;
@@ -50,6 +51,7 @@ export function useSwap() {
   const multiProvider = useMultiProvider();
   const transactionFns = useTransactionFns(multiProvider);
   const updateSwapTransactionStatus = useStore((s) => s.updateSwapTransactionStatus);
+  const chainAddresses = useStore((s) => s.chainAddresses);
   const [error, setError] = useState<Error | null>(null);
   const [isPending, setIsPending] = useState(false);
 
@@ -126,9 +128,11 @@ export function useSwap() {
           if (needsApprove) await doApprove(args.approvalAmount);
         }
 
-        // DEBUG: log full route for manual reveal testing
-        // TODO: implement CCS to support solana ixs
-        console.log(JSON.stringify(route.raw, null, 2));
+        // Post EVM CCS commitment before signing origin tx. Solana CCS not yet supported
+        // (reveal is handled manually via the reveal modal).
+        if (route.raw.callCommitment && !route.raw.solanaCommitment) {
+          await postCommitment(route.raw.callCommitment);
+        }
 
         updateSwapTransactionStatus(transactionId, SwapStatus.SigningSwap);
         const rpcUrl = multiProvider.getChainMetadata(srcChainName).rpcUrls[0].http;
@@ -183,9 +187,36 @@ export function useSwap() {
         }
         submitToRelayApi(srcChainName, hash, protocol as ProtocolType, receipt);
 
+        // For Sealevel source, parse dispatched message IDs from the Solana tx.
+        // EVM receipts are already parsed via parseReceipt above.
+        let msgIds: LabeledMsgId[];
+        if (isSealevel) {
+          const mailbox = chainAddresses[srcChainName]?.mailbox;
+          if (mailbox) {
+            try {
+              const adapter = new SealevelCoreAdapter(srcChainName, multiProvider, { mailbox });
+              const msgs = await adapter.extractMessageIds(receipt);
+              msgIds = msgs.map(({ messageId }) => ({
+                msgId: messageId as `0x${string}`,
+                label: 'warp' as const,
+              }));
+            } catch (err) {
+              logger.warn('Failed to extract Solana message IDs', err as Error);
+              msgIds = [];
+            }
+          } else {
+            logger.warn('No mailbox address for Solana source chain', new Error(srcChainName));
+            msgIds = [];
+          }
+        } else {
+          msgIds = labelMessages(parsed.messages, route);
+        }
+
+        const solanaReveal = buildSolanaRevealData(route, args.srcChainId, args.sender);
         updateSwapTransactionStatus(transactionId, SwapStatus.Bridging, {
-          msgIds: labelMessages(parsed.messages, route),
+          msgIds,
           originBlockNumber: parsed.originBlockNumber,
+          solanaReveal,
         });
 
         return hash;
@@ -198,7 +229,7 @@ export function useSwap() {
         setIsPending(false);
       }
     },
-    [transactionFns, multiProvider, updateSwapTransactionStatus],
+    [transactionFns, multiProvider, updateSwapTransactionStatus, chainAddresses],
   );
 
   return { execute, isPending, error };
@@ -257,18 +288,29 @@ function parseReceipt(receipt: TypedTransactionReceipt): {
 }
 
 function labelMessages(messages: ParsedMessage[], route: AugmentedRoute): LabeledMsgId[] {
-  const bridgeRouters = new Set(
+  // Dispatch sender is bytes32 (padded EVM address). Strip leading zeros to get the 20-byte address.
+  const addrOf = (sender: string) => sender.replace(/^0x/i, '').toLowerCase().slice(-40);
+
+  const bridgeRouterAddrs = new Set(
     route.raw.steps
       .filter(
         (s): s is Extract<(typeof route.raw.steps)[number], { type: 'bridge' }> =>
           s.type === 'bridge',
       )
-      .map((s) => s.router.toLowerCase()),
+      .map((s) => s.router.replace(/^0x/i, '').toLowerCase()),
   );
+  // For EVM→Solana CCS routes, the EVM UR (tx.to) sends the commit message directly.
+  const urAddr = route.raw.tx?.to?.replace(/^0x/i, '').toLowerCase();
 
   return messages.map((msg) => {
-    if (bridgeRouters.has(msg.sender.toLowerCase())) {
+    const senderAddr = addrOf(msg.sender);
+
+    if (bridgeRouterAddrs.has(senderAddr)) {
       return { msgId: msg.msgId, label: 'warp' as const };
+    }
+
+    if (route.raw.solanaCommitment && urAddr && senderAddr === urAddr) {
+      return { msgId: msg.msgId, label: 'commit' as const };
     }
 
     const ccsLabel = getCcsMessageLabel(msg.body);
@@ -280,6 +322,31 @@ function labelMessages(messages: ParsedMessage[], route: AugmentedRoute): Labele
     });
     return { msgId: msg.msgId, label: 'warp' as const };
   });
+}
+
+function buildSolanaRevealData(
+  route: AugmentedRoute,
+  srcChainId: number,
+  sender: string,
+): SolanaRevealData | undefined {
+  const sc = route.raw.solanaCommitment;
+  if (!sc || !route.raw.tx?.to) return undefined;
+  const swapStep = route.raw.steps.find(
+    (s): s is Extract<(typeof route.raw.steps)[number], { type: 'swap' }> =>
+      s.type === 'swap' && s.chain === sc.ccs.body.destinationDomain,
+  );
+  if (!swapStep) return undefined;
+  return {
+    commitment: sc.commitment as `0x${string}`,
+    calldata: sc.ccs.body.calldata as `0x${string}`,
+    revealSalt: sc.ccs.body.revealSalt as `0x${string}` | undefined,
+    srcChainId,
+    evmUr: route.raw.tx.to.replace(/^0x/i, '').toLowerCase(),
+    evmSender: sender,
+    tokenIn: swapStep.tokenIn,
+    tokenOut: swapStep.tokenOut,
+    amountIn: swapStep.amountIn,
+  };
 }
 
 function getCcsMessageLabel(body: string): LabeledMsgId['label'] | null {

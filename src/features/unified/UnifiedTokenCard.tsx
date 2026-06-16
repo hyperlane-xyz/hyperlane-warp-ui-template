@@ -25,6 +25,7 @@ import { ChainConnectionWarning } from '../chains/ChainConnectionWarning';
 import { ChainWalletWarning } from '../chains/ChainWalletWarning';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
+import { useIsAccountSanctioned } from '../sanctions/hooks/useIsAccountSanctioned';
 import { TransactionHistoryItemType, useStore } from '../store';
 import { ApprovalPhase, useApprovalStatus } from '../swap/approval';
 import { useTokenBalance as useSwapTokenBalance } from '../swap/balances/hooks';
@@ -138,6 +139,7 @@ function UnifiedFormContent({
     collateralGroups,
     engineEnabled,
   });
+  const isSanctioned = useIsAccountSanctioned(routeMode === UnifiedRouteMode.Bridge);
   const { data: chainsResp } = useChains();
   const sender = useAccountAddressForChain(multiProvider, originToken?.chainName);
   const connectedDestAddress = useAccountAddressForChain(
@@ -237,6 +239,7 @@ function UnifiedFormContent({
       setErrors(basicErrors);
       return;
     }
+    if (routeMode === UnifiedRouteMode.Bridge && isSanctioned) return;
 
     if (routeMode === UnifiedRouteMode.Bridge) {
       const validationErrors = await validateUnifiedBridgeTransfer({
@@ -384,7 +387,7 @@ function UnifiedFormContent({
         chainName={originToken?.chainName || ''}
         text={buttonText}
         onClickWhenReady={onSubmit}
-        disabled={isSubmitting}
+        disabled={isSubmitting || (routeMode === UnifiedRouteMode.Bridge && isSanctioned)}
         classes="mb-4 w-full px-3 py-2.5 font-secondary text-xl text-cream-100"
       />
       <RecipientConfirmationModal

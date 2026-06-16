@@ -28,7 +28,7 @@ const ORACLE_ABI = [
 ] as const;
 const ORACLE_ADDRESS = '0x40C57923924B5c5c5455c48D93317139ADDaC8fb';
 
-export function useIsAccountChainalysisSanctioned() {
+export function useIsAccountChainalysisSanctioned(enabled = true) {
   const multiProvider = useMultiProvider();
   const evmAddress = useEthereumAccount(multiProvider).addresses[0]?.address;
 
@@ -38,7 +38,7 @@ export function useIsAccountChainalysisSanctioned() {
     args: [isAddress(evmAddress) ? evmAddress : '0x'],
     chainId: 1,
     address: ORACLE_ADDRESS,
-    query: { enabled: !!evmAddress },
+    query: { enabled: enabled && !!evmAddress },
   });
 
   return !!sanctioned.data;

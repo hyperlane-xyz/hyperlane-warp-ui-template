@@ -96,7 +96,12 @@ function getLookupId(
   const chainName = params.get(chainParam);
   const tokenRef = params.get(tokenParam);
   if (!chainName || !tokenRef) return undefined;
+  if (isLikelySymbolRef(tokenRef)) return undefined;
   return `${chainName}-${tokenRef}`;
+}
+
+function isLikelySymbolRef(value: string): boolean {
+  return /^[A-Z0-9]{2,12}$/.test(value);
 }
 
 function normalizeRef(value: string, protocol?: ProtocolType): string {

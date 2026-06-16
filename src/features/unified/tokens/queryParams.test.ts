@@ -64,6 +64,27 @@ describe('getUnifiedTokenQueryRef', () => {
     expect(getUnifiedTokenLookupIdsFromParams(params)).toEqual(['base-0x1234']);
   });
 
+  test('skips old symbol-style token refs when building engine lookup ids', () => {
+    const params = new URLSearchParams(
+      'origin=ethereum&originToken=USDC&destination=base&destinationToken=0x2222222222222222222222222222222222222222',
+    );
+
+    expect(getUnifiedTokenLookupIdsFromParams(params)).toEqual([
+      'base-0x2222222222222222222222222222222222222222',
+    ]);
+  });
+
+  test('keeps non-EVM token refs when building engine lookup ids', () => {
+    const params = new URLSearchParams(
+      'origin=solanamainnet&originToken=Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB&destination=noble&destinationToken=uusdc',
+    );
+
+    expect(getUnifiedTokenLookupIdsFromParams(params)).toEqual([
+      'solanamainnet-Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+      'noble-uusdc',
+    ]);
+  });
+
   test('uses swap token address when available', () => {
     expect(getUnifiedTokenQueryRef(createUnifiedToken({ swapToken: createSwapToken() }))).toBe(
       '0x1111111111111111111111111111111111111111',

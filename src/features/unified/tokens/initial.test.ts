@@ -219,7 +219,7 @@ describe('getInitialUnifiedTokenKeys', () => {
     });
   });
 
-  test('falls back to first routable pair when defaults do not exist', () => {
+  test('does not invent a destination when defaults do not resolve', () => {
     const origin = createUnifiedToken({
       key: 'foo-origin',
       chainName: 'foo',
@@ -241,7 +241,7 @@ describe('getInitialUnifiedTokenKeys', () => {
       }),
     ).toEqual({
       originTokenKey: 'foo-origin',
-      destinationTokenKey: 'bar-destination',
+      destinationTokenKey: undefined,
     });
   });
 
@@ -290,7 +290,7 @@ describe('getInitialUnifiedTokenKeys', () => {
     });
   });
 
-  test('repairs an unroutable URL destination token', () => {
+  test('does not repair an unroutable URL destination token', () => {
     vi.stubGlobal('window', {
       location: {
         search:
@@ -342,7 +342,7 @@ describe('getInitialUnifiedTokenKeys', () => {
       }),
     ).toEqual({
       originTokenKey: 'origin-usdc',
-      destinationTokenKey: 'routable-usdc',
+      destinationTokenKey: undefined,
     });
   });
 });

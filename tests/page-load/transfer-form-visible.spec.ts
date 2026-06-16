@@ -19,7 +19,7 @@ test.describe('Page Load - Transfer Form', () => {
     await expect(page.getByRole('button', { name: 'Connect wallet' }).first()).toBeVisible();
 
     // Send section: default origin token (only assert when configured; otherwise the app
-    // falls back to featuredTokens / first routable token — covered elsewhere)
+    // falls back to featuredTokens / explicit defaults — covered elsewhere)
     const originButton = getOriginTokenButton(page);
     await expect(originButton).toBeVisible();
     if (config.defaultOriginToken) {

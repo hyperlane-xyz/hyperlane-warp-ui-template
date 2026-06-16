@@ -1,13 +1,5 @@
 import { Token } from '@hyperlane-xyz/sdk';
-import {
-  ProtocolType,
-  eqAddress,
-  errorToString,
-  fromWei,
-  isNullish,
-  isValidAddressEvm,
-  toWei,
-} from '@hyperlane-xyz/utils';
+import { errorToString, fromWei, isNullish, toWei } from '@hyperlane-xyz/utils';
 import { useDebounce, useModal } from '@hyperlane-xyz/widgets';
 import {
   getAccountAddressAndPubKey,
@@ -27,7 +19,6 @@ import { TextField } from '../../components/input/TextField';
 import { TransferSection } from '../../components/layout/TransferSection';
 import { config } from '../../consts/config';
 import { formatDisplayAmount } from '../../utils/amount';
-import { logger } from '../../utils/logger';
 import { updateQueryParams } from '../../utils/queryParams';
 import { useChains } from '../api/hooks';
 import { getDestinationNativeBalance, useOriginBalance } from '../balances/hooks';
@@ -59,8 +50,9 @@ import { validateSwapForm } from '../swap/validate';
 import { useCollateralGroups, useTokenByKeyMap, useWarpCore } from '../tokens/hooks';
 import { ImportTokenButton } from '../tokens/ImportTokenButton';
 import { getTokenKey as getBridgeTokenKey } from '../tokens/utils';
+import { useSmartContractRecipientWarning } from '../transfer/useSmartContractRecipientWarning';
 import { useTokenTransfer } from '../transfer/useTokenTransfer';
-import { isSmartContract, shouldClearAddress } from '../transfer/utils';
+import { shouldClearAddress } from '../transfer/utils';
 import { validateBridgeTransferForm } from '../transfer/validate';
 import { RecipientConfirmationModal } from '../wallet/RecipientConfirmationModal';
 import { WalletConnectionWarning } from '../wallet/WalletConnectionWarning';
@@ -153,10 +145,6 @@ function UnifiedFormContent({
   const destinationChainDisplay = destinationToken
     ? getChainDisplayName(multiProvider, destinationToken.chainName)
     : '';
-  const [{ addressConfirmed, showRecipientWarning }, setRecipientWarning] = useState({
-    addressConfirmed: true,
-    showRecipientWarning: false,
-  });
   const { data: chainsResp } = useChains();
   const sender = useAccountAddressForChain(multiProvider, originToken?.chainName);
   const connectedDestAddress = useAccountAddressForChain(
@@ -164,6 +152,18 @@ function UnifiedFormContent({
     destinationToken?.chainName,
   );
   const effectiveRecipient = values.recipient || connectedDestAddress || '';
+  const {
+    addressConfirmed,
+    showWarning: showRecipientWarning,
+    setAddressConfirmed: setRecipientAddressConfirmed,
+  } = useSmartContractRecipientWarning({
+    enabled: routeMode === UnifiedRouteMode.Bridge,
+    multiProvider,
+    originChainName: originToken?.chainName,
+    destinationChainName: destinationToken?.chainName,
+    connectedWallet: sender,
+    recipient: effectiveRecipient,
+  });
 
   const swapValues = useMemo(
     () => ({
@@ -222,68 +222,6 @@ function UnifiedFormContent({
   useEffect(() => {
     if (selectedRouteIndex >= routes.length) setSelectedRouteIndex(0);
   }, [routes.length, selectedRouteIndex]);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const reset = () =>
-      setRecipientWarning({ addressConfirmed: true, showRecipientWarning: false });
-
-    const checkSameEvmRecipient = async () => {
-      if (
-        routeMode !== UnifiedRouteMode.Bridge ||
-        !sender ||
-        !originToken?.bridgeToken ||
-        !destinationToken?.bridgeToken ||
-        !isValidAddressEvm(effectiveRecipient)
-      ) {
-        reset();
-        return;
-      }
-
-      const { protocol: originProtocol } = multiProvider.getChainMetadata(originToken.chainName);
-      const { protocol: destinationProtocol } = multiProvider.getChainMetadata(
-        destinationToken.chainName,
-      );
-      if (
-        originProtocol !== ProtocolType.Ethereum ||
-        destinationProtocol !== ProtocolType.Ethereum
-      ) {
-        reset();
-        return;
-      }
-
-      const { isContract: isSenderSmartContract, error: senderCheckError } = await isSmartContract(
-        multiProvider,
-        originToken.chainName,
-        sender,
-      );
-      if (!isMounted) return;
-
-      const { isContract: isRecipientSmartContract, error: recipientCheckError } =
-        await isSmartContract(multiProvider, destinationToken.chainName, effectiveRecipient);
-      if (!isMounted) return;
-
-      if (senderCheckError || recipientCheckError) {
-        logger.warn(senderCheckError || recipientCheckError);
-        reset();
-        return;
-      }
-
-      const shouldWarn =
-        eqAddress(effectiveRecipient, sender) && isSenderSmartContract && !isRecipientSmartContract;
-      setRecipientWarning({
-        addressConfirmed: !shouldWarn,
-        showRecipientWarning: shouldWarn,
-      });
-    };
-
-    void checkSameEvmRecipient();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [routeMode, sender, originToken, destinationToken, effectiveRecipient, multiProvider]);
 
   const onSwapTokens = () => {
     if (originToken && destinationToken) {
@@ -469,9 +407,7 @@ function UnifiedFormContent({
       >
         <RecipientWarningBanner
           destinationChain={destinationChainDisplay}
-          confirmRecipientHandler={(checked) =>
-            setRecipientWarning((state) => ({ ...state, addressConfirmed: checked }))
-          }
+          confirmRecipientHandler={setRecipientAddressConfirmed}
         />
       </div>
 

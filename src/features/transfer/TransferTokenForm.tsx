@@ -1,5 +1,5 @@
 import { IToken, QuotedCallsParams, Token, TokenAmount } from '@hyperlane-xyz/sdk';
-import { ProtocolType, eqAddress, isNullish, isValidAddressEvm, toWei } from '@hyperlane-xyz/utils';
+import { isNullish, toWei } from '@hyperlane-xyz/utils';
 import { ChevronIcon, SpinnerIcon, useModal } from '@hyperlane-xyz/widgets';
 import {
   getAccountAddressAndPubKey,
@@ -59,8 +59,9 @@ import { TransferFormValues, TransferStatus } from './types';
 import { useRecipientBalanceWatcher } from './useBalanceWatcher';
 import { useFeeQuotes } from './useFeeQuotes';
 import { type QuotedCallsFeeQuotesResult, useQuotedCallsFeeQuotes } from './useQuotedCalls';
+import { useSmartContractRecipientWarning } from './useSmartContractRecipientWarning';
 import { useTokenTransfer } from './useTokenTransfer';
-import { isSmartContract, shouldClearAddress } from './utils';
+import { shouldClearAddress } from './utils';
 import { validateBridgeTransferForm } from './validate';
 
 export function TransferTokenForm() {
@@ -609,72 +610,17 @@ function ButtonSection({
   );
   const recipient = values.recipient || connectedDestAddress || '';
 
-  // Confirming recipient address
-  const [{ addressConfirmed, showWarning }, setRecipientInfos] = useState({
-    showWarning: false,
-    addressConfirmed: true,
+  const {
+    addressConfirmed,
+    showWarning,
+    setAddressConfirmed: setRecipientAddressConfirmed,
+  } = useSmartContractRecipientWarning({
+    multiProvider,
+    originChainName: originToken?.chainName,
+    destinationChainName: destinationToken?.chainName,
+    connectedWallet,
+    recipient,
   });
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const checkSameEVMRecipient = async (recipient: string) => {
-      if (!connectedWallet || !originToken || !destinationToken) {
-        setRecipientInfos({ showWarning: false, addressConfirmed: true });
-        return;
-      }
-
-      const { protocol: destinationProtocol } = multiProvider.getChainMetadata(
-        destinationToken.chainName,
-      );
-      const { protocol: sourceProtocol } = multiProvider.getChainMetadata(originToken.chainName);
-
-      if (
-        sourceProtocol !== ProtocolType.Ethereum ||
-        destinationProtocol !== ProtocolType.Ethereum
-      ) {
-        setRecipientInfos({ showWarning: false, addressConfirmed: true });
-        return;
-      }
-
-      if (!isValidAddressEvm(recipient)) {
-        setRecipientInfos({ showWarning: false, addressConfirmed: true });
-        return;
-      }
-
-      const { isContract: isSenderSmartContract, error: senderCheckError } = await isSmartContract(
-        multiProvider,
-        originToken.chainName,
-        connectedWallet,
-      );
-      if (!isMounted) return;
-
-      const { isContract: isRecipientSmartContract, error: recipientCheckError } =
-        await isSmartContract(multiProvider, destinationToken.chainName, recipient);
-      if (!isMounted) return;
-
-      const isSelfRecipient = eqAddress(recipient, connectedWallet);
-
-      if (senderCheckError || recipientCheckError) {
-        logger.warn(senderCheckError || recipientCheckError);
-        setRecipientInfos({ addressConfirmed: true, showWarning: false });
-        return;
-      }
-
-      if (isSelfRecipient && isSenderSmartContract && !isRecipientSmartContract) {
-        const msg = `The recipient address is the same as the connected wallet, but it does not exist as a smart contract on ${chainDisplayName}.`;
-        logger.warn(msg);
-        setRecipientInfos({ showWarning: true, addressConfirmed: false });
-      } else {
-        setRecipientInfos({ showWarning: false, addressConfirmed: true });
-      }
-    };
-    checkSameEVMRecipient(recipient);
-
-    return () => {
-      isMounted = false;
-    };
-  }, [recipient, connectedWallet, multiProvider, originToken, destinationToken, chainDisplayName]);
 
   const isSanctioned = useIsAccountSanctioned();
 
@@ -722,9 +668,7 @@ function ButtonSection({
         >
           <RecipientWarningBanner
             destinationChain={chainDisplayName}
-            confirmRecipientHandler={(checked) =>
-              setRecipientInfos((state) => ({ ...state, addressConfirmed: checked }))
-            }
+            confirmRecipientHandler={setRecipientAddressConfirmed}
           />
         </div>
 
@@ -747,9 +691,7 @@ function ButtonSection({
       >
         <RecipientWarningBanner
           destinationChain={chainDisplayName}
-          confirmRecipientHandler={(checked) =>
-            setRecipientInfos((state) => ({ ...state, addressConfirmed: checked }))
-          }
+          confirmRecipientHandler={setRecipientAddressConfirmed}
         />
       </div>
       <div className="mb-4 mt-4 flex items-center justify-between space-x-4">

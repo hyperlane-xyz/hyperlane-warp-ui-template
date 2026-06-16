@@ -50,19 +50,53 @@ describe('getInitialUnifiedTokenKeys', () => {
     vi.unstubAllGlobals();
   });
 
-  test('uses bridge-style default chain-symbol token refs', () => {
-    const origin = createUnifiedToken({ key: 'ethereum-USDC', chainName: 'ethereum' });
-    const destination = createUnifiedToken({
+  test('falls back to a bridge route before swap defaults when symbol defaults do not resolve', () => {
+    const bridgeDestinationToken = createMockToken({
+      chainName: 'base',
+      symbol: 'USDC',
+      addressOrDenom: '0x2222222222222222222222222222222222222222',
+      collateralAddressOrDenom: '0x2222222222222222222222222222222222222222',
+    });
+    const bridgeOriginToken = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USDC',
+      addressOrDenom: '0x1111111111111111111111111111111111111111',
+      collateralAddressOrDenom: '0x1111111111111111111111111111111111111111',
+      connections: [createTokenConnectionMock(undefined, bridgeDestinationToken)],
+    });
+    const bridgeOrigin = createUnifiedToken({
+      key: 'ethereum-USDC',
+      chainName: 'ethereum',
+      bridgeToken: bridgeOriginToken,
+      capabilities: { bridge: true, swap: false },
+    });
+    const bridgeDestination = createUnifiedToken({
       key: 'base-USDC',
       chainName: 'base',
       chainId: 8453,
-      swapToken: createSwapToken({ chainName: 'base', chainId: 8453 }),
+      bridgeToken: bridgeDestinationToken,
+      capabilities: { bridge: true, swap: false },
+    });
+    const swapOrigin = createUnifiedToken({
+      key: 'bsc-native',
+      chainName: 'bsc',
+      chainId: 56,
+      addressOrDenom: '0x0000000000000000000000000000000000000000',
+      symbol: 'BNB',
+      swapToken: createSwapToken({
+        chainName: 'bsc',
+        chainId: 56,
+        address: '0x0000000000000000000000000000000000000000',
+        addressOrDenom: '0x0000000000000000000000000000000000000000',
+        symbol: 'BNB',
+        isNative: true,
+      }),
     });
 
     expect(
       getInitialUnifiedTokenKeys({
-        tokens: [destination, origin],
-        collateralGroups: new Map(),
+        tokens: [swapOrigin, bridgeDestination, bridgeOrigin],
+        collateralGroups: groupTokensByCollateral([bridgeOriginToken]),
         engineEnabled: true,
       }),
     ).toEqual({

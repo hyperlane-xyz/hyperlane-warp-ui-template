@@ -3,8 +3,8 @@ import type { Token } from '@hyperlane-xyz/sdk';
 import { WARP_QUERY_PARAMS } from '../../../consts/args';
 import { config } from '../../../consts/config';
 import { getQueryParams } from '../../../utils/queryParams';
-import { findUnifiedTokenByConfigRef, findUnifiedTokenByQueryRef } from './queryParams';
-import { getUnifiedRouteMode } from './routes';
+import { findUnifiedTokenByQueryRef } from './queryParams';
+import { getUnifiedRouteMode, UnifiedRouteMode } from './routes';
 import type { UnifiedToken } from './types';
 
 export interface InitialUnifiedTokenKeys {
@@ -27,6 +27,7 @@ export function getInitialUnifiedTokenKeys({
   const originToken =
     findTokenFromParams(tokens, params, WARP_QUERY_PARAMS.ORIGIN, WARP_QUERY_PARAMS.ORIGIN_TOKEN) ??
     findTokenFromConfig(tokens, config.defaultOriginToken) ??
+    findFirstOriginWithRoute(tokens, collateralGroups, engineEnabled, UnifiedRouteMode.Bridge) ??
     findTokenFromConfig(tokens, config.defaultSwapOriginToken) ??
     findFirstOriginWithRoute(tokens, collateralGroups, engineEnabled) ??
     tokens[0];
@@ -45,6 +46,13 @@ export function getInitialUnifiedTokenKeys({
       originToken,
       collateralGroups,
       engineEnabled,
+    ) ??
+    findFirstRoutableDestination(
+      originToken,
+      tokens,
+      collateralGroups,
+      engineEnabled,
+      UnifiedRouteMode.Bridge,
     ) ??
     findRoutableConfigToken(
       tokens,
@@ -79,7 +87,7 @@ function findTokenFromConfig(
 ): UnifiedToken | undefined {
   const parsed = parseTokenRef(configToken);
   if (!parsed) return undefined;
-  return findUnifiedTokenByConfigRef(tokens, parsed.chainName, parsed.tokenRef);
+  return findUnifiedTokenByQueryRef(tokens, parsed.chainName, parsed.tokenRef);
 }
 
 function findRoutableConfigToken(
@@ -123,12 +131,16 @@ function findFirstOriginWithRoute(
   tokens: UnifiedToken[],
   collateralGroups: Map<string, Token[]>,
   engineEnabled: boolean,
+  routeMode?: UnifiedRouteMode,
 ): UnifiedToken | undefined {
   return tokens.find((originToken) =>
     tokens.some(
       (destinationToken) =>
         destinationToken.chainName !== originToken.chainName &&
-        !!getUnifiedRouteMode({ originToken, destinationToken, collateralGroups, engineEnabled }),
+        routeMatches(
+          getUnifiedRouteMode({ originToken, destinationToken, collateralGroups, engineEnabled }),
+          routeMode,
+        ),
     ),
   );
 }
@@ -138,11 +150,19 @@ function findFirstRoutableDestination(
   tokens: UnifiedToken[],
   collateralGroups: Map<string, Token[]>,
   engineEnabled: boolean,
+  routeMode?: UnifiedRouteMode,
 ): UnifiedToken | undefined {
   if (!originToken) return undefined;
   return tokens.find(
     (destinationToken) =>
       destinationToken.chainName !== originToken.chainName &&
-      !!getUnifiedRouteMode({ originToken, destinationToken, collateralGroups, engineEnabled }),
+      routeMatches(
+        getUnifiedRouteMode({ originToken, destinationToken, collateralGroups, engineEnabled }),
+        routeMode,
+      ),
   );
+}
+
+function routeMatches(mode: UnifiedRouteMode | null, expected: UnifiedRouteMode | undefined) {
+  return expected ? mode === expected : !!mode;
 }

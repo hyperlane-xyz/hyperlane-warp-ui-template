@@ -3,13 +3,12 @@ import { useState } from 'react';
 
 import { ChevronLargeIcon } from '../../../components/icons/ChevronLargeIcon';
 import { TokenChainIcon } from '../../../components/icons/TokenChainIcon';
-import { WARP_QUERY_PARAMS } from '../../../consts/args';
 import { updateQueryParams } from '../../../utils/queryParams';
 import { useMultiProvider } from '../../chains/hooks';
 import { getChainDisplayName } from '../../chains/utils';
 import { shouldClearAddress } from '../../transfer/utils';
 import type { UnifiedFormValues } from '../types';
-import { getUnifiedTokenQueryRef } from './queryParams';
+import { getUnifiedTokenQueryParams } from './queryParams';
 import type { UnifiedToken } from './types';
 import { UnifiedTokenChainModal } from './UnifiedTokenChainModal';
 
@@ -47,13 +46,7 @@ export function TokenSelectField({
       setFieldValue('recipient', '');
     }
 
-    updateQueryParams({
-      [selectionMode === 'origin' ? WARP_QUERY_PARAMS.ORIGIN : WARP_QUERY_PARAMS.DESTINATION]:
-        token.chainName,
-      [selectionMode === 'origin'
-        ? WARP_QUERY_PARAMS.ORIGIN_TOKEN
-        : WARP_QUERY_PARAMS.DESTINATION_TOKEN]: getUnifiedTokenQueryRef(token),
-    });
+    updateQueryParams(getUnifiedTokenQueryParams(token, selectionMode));
   };
 
   const open = () => {

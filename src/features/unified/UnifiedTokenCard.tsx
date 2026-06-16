@@ -18,6 +18,7 @@ import { TextField } from '../../components/input/TextField';
 import { TransferSection } from '../../components/layout/TransferSection';
 import { config } from '../../consts/config';
 import { formatDisplayAmount } from '../../utils/amount';
+import { updateQueryParams } from '../../utils/queryParams';
 import { useChains } from '../api/hooks';
 import { getDestinationNativeBalance, useOriginBalance } from '../balances/hooks';
 import { ChainConnectionWarning } from '../chains/ChainConnectionWarning';
@@ -60,6 +61,7 @@ import {
 } from './bridgeExactInput';
 import { useUnifiedTokenByKeyMap, useUnifiedTokens } from './tokens/hooks';
 import { getInitialUnifiedTokenKeys } from './tokens/initial';
+import { getUnifiedTokenQueryParams } from './tokens/queryParams';
 import { getUnifiedRouteMode, UnifiedRouteMode } from './tokens/routes';
 import { TokenSelectField } from './tokens/TokenSelectField';
 import type { UnifiedToken } from './tokens/types';
@@ -203,6 +205,13 @@ function UnifiedFormContent({
   }, [routes.length, selectedRouteIndex]);
 
   const onSwapTokens = () => {
+    if (originToken && destinationToken) {
+      updateQueryParams({
+        ...getUnifiedTokenQueryParams(destinationToken, 'origin'),
+        ...getUnifiedTokenQueryParams(originToken, 'destination'),
+      });
+    }
+
     setValues((prev) => ({
       ...prev,
       amount: '',

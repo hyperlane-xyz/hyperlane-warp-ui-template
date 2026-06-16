@@ -3,7 +3,11 @@ import { describe, expect, test } from 'vitest';
 
 import { createMockToken } from '../../../utils/test';
 import type { UiToken } from '../../swap/tokens/types';
-import { findUnifiedTokenByQueryRef, getUnifiedTokenQueryRef } from './queryParams';
+import {
+  findUnifiedTokenByQueryRef,
+  getUnifiedTokenQueryParams,
+  getUnifiedTokenQueryRef,
+} from './queryParams';
 import type { UnifiedToken } from './types';
 
 function createSwapToken(args: Partial<UiToken> = {}): UiToken {
@@ -56,6 +60,27 @@ describe('getUnifiedTokenQueryRef', () => {
     expect(
       getUnifiedTokenQueryRef(createUnifiedToken({ bridgeToken, swapToken: createSwapToken() })),
     ).toBe('0x3333333333333333333333333333333333333333');
+  });
+
+  test('builds destination URL params with bridge-first token refs', () => {
+    const bridgeToken = createMockToken({
+      chainName: 'base',
+      addressOrDenom: '0x2222222222222222222222222222222222222222',
+      collateralAddressOrDenom: '0x3333333333333333333333333333333333333333',
+    });
+    const token = createUnifiedToken({
+      chainName: 'base',
+      bridgeToken,
+      swapToken: createSwapToken({
+        chainName: 'base',
+        address: '0x1111111111111111111111111111111111111111',
+      }),
+    });
+
+    expect(getUnifiedTokenQueryParams(token, 'destination')).toEqual({
+      destination: 'base',
+      destinationToken: '0x3333333333333333333333333333333333333333',
+    });
   });
 
   test('uses bridge collateral address when available', () => {

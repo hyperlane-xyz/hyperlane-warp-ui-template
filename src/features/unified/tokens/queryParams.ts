@@ -1,5 +1,6 @@
 import { isZeroishAddress, normalizeAddress, type ProtocolType } from '@hyperlane-xyz/utils';
 
+import { WARP_QUERY_PARAMS } from '../../../consts/args';
 import type { UnifiedToken } from './types';
 
 export function getUnifiedTokenQueryRef(token: UnifiedToken): string {
@@ -9,6 +10,19 @@ export function getUnifiedTokenQueryRef(token: UnifiedToken): string {
     token.swapToken?.address ??
     token.addressOrDenom
   );
+}
+
+export function getUnifiedTokenQueryParams(
+  token: UnifiedToken,
+  selectionMode: 'origin' | 'destination',
+): Record<string, string> {
+  return {
+    [selectionMode === 'origin' ? WARP_QUERY_PARAMS.ORIGIN : WARP_QUERY_PARAMS.DESTINATION]:
+      token.chainName,
+    [selectionMode === 'origin'
+      ? WARP_QUERY_PARAMS.ORIGIN_TOKEN
+      : WARP_QUERY_PARAMS.DESTINATION_TOKEN]: getUnifiedTokenQueryRef(token),
+  };
 }
 
 export function findUnifiedTokenByQueryRef(

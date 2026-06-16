@@ -129,8 +129,9 @@ function UnifiedFormContent({
   const collateralGroups = useCollateralGroups();
   const bridgeTokenMap = useTokenByKeyMap();
   const { accounts } = useAccounts(multiProvider, config.addressBlacklist);
-  const { routerAddressesByChainMap } = useStore((s) => ({
+  const { routerAddressesByChainMap, setTransferLoading } = useStore((s) => ({
     routerAddressesByChainMap: s.routerAddressesByChainMap,
+    setTransferLoading: s.setTransferLoading,
   }));
   const originToken = values.originTokenKey ? tokenMap.get(values.originTokenKey) : undefined;
   const destinationToken = values.destinationTokenKey
@@ -313,15 +314,20 @@ function UnifiedFormContent({
     setIsSubmitting(true);
     try {
       if (routeMode === UnifiedRouteMode.Bridge) {
-        await submitBridge({
-          values,
-          originToken,
-          destinationToken,
-          recipient: effectiveRecipient,
-          sender,
-          bridgeTransfer,
-          getQuotedCallsParams: quotedCalls.getQuotedCallsParams,
-        });
+        setTransferLoading(true);
+        try {
+          await submitBridge({
+            values,
+            originToken,
+            destinationToken,
+            recipient: effectiveRecipient,
+            sender,
+            bridgeTransfer,
+            getQuotedCallsParams: quotedCalls.getQuotedCallsParams,
+          });
+        } finally {
+          setTransferLoading(false);
+        }
         return;
       }
 

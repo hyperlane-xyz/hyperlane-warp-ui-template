@@ -7,8 +7,8 @@ import {
   waitForTransferForm,
 } from '../helpers/locators';
 
-test.describe('Page Load - Transfer Form', () => {
-  test('should display the transfer form on page load', async ({ page }) => {
+test.describe('Page Load - Unified Form', () => {
+  test('should display the unified form on page load', async ({ page }) => {
     await page.goto('http://localhost:3000');
     await waitForTransferForm(page);
 

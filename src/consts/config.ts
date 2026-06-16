@@ -40,7 +40,7 @@ interface Config {
   registryUrl: string | undefined; // Optional URL to use a custom registry instead of the published canonical version
   registryBranch?: string | undefined; // Optional customization of the registry branch instead of main
   registryProxyUrl?: string; // Optional URL to use a custom proxy for the GithubRegistry
-  showTipBox: boolean; // Show/Hide the blue tip box above the transfer form
+  showTipBox: boolean; // Show/Hide the blue tip box above the unified form
   shouldDisableChains: boolean; // Enable chain disabling for ChainSearchMenu. When true it will deactivate chains that have disabled status
   transferBlacklist: string; // comma-separated list of routes between which transfers are disabled. Expects Caip2Id-Caip2Id (e.g. ethereum:1-sealevel:1399811149)
   version: string; // Matches version number in package.json

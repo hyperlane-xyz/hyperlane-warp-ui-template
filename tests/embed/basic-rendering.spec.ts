@@ -23,9 +23,9 @@ test.describe('Basic Rendering', () => {
   });
 
   test('should set embed-mode class before warp context loads', async ({ page }) => {
-    // Navigate and check body class immediately (before transfer form renders)
+    // Navigate and check body class immediately (before unified form renders)
     await page.goto('http://localhost:3000/embed', { waitUntil: 'domcontentloaded' });
-    // Poll for embed-mode class — should appear before the transfer form
+    // Poll for embed-mode class — should appear before the unified form
     await expect(page.locator('body')).toHaveClass(/embed-mode/, { timeout: 10000 });
   });
 });

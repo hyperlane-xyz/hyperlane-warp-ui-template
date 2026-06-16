@@ -1,9 +1,10 @@
 import { test, expect } from '@playwright/test';
+import { waitForTransferForm } from '../helpers/locators';
 
 test.describe('Transfer Form - Enter Amount', () => {
   test('should enter transfer amount', async ({ page }) => {
     await page.goto('http://localhost:3000');
-    await page.getByText('Send').first().waitFor({ state: 'visible' });
+    await waitForTransferForm(page);
 
     // Click and type in amount input
     const amountInput = page.getByRole('spinbutton');

@@ -1,11 +1,15 @@
 import { test, expect } from '@playwright/test';
 import { config } from '../../src/consts/config';
-import { getOriginTokenButton, getDestinationTokenButton } from '../helpers/locators';
+import {
+  getOriginTokenButton,
+  getDestinationTokenButton,
+  waitForTransferForm,
+} from '../helpers/locators';
 
 test.describe('Page Load - Default Tokens', () => {
   test('should show config default origin and destination tokens if defined', async ({ page }) => {
     await page.goto('http://localhost:3000');
-    await page.getByText('Send').first().waitFor({ state: 'visible' });
+    await waitForTransferForm(page);
 
     const originButton = getOriginTokenButton(page);
     await expect(originButton).toBeVisible();

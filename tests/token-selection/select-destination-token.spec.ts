@@ -1,10 +1,10 @@
 import { test, expect } from '@playwright/test';
-import { getDestinationTokenButton } from '../helpers/locators';
+import { getDestinationTokenButton, waitForTransferForm } from '../helpers/locators';
 
 test.describe('Token Selection - Select Destination Token', () => {
   test('should select a different destination token', async ({ page }) => {
     await page.goto('http://localhost:3000');
-    await page.getByText('Send').first().waitFor({ state: 'visible' });
+    await waitForTransferForm(page);
 
     // Open destination token selector
     await getDestinationTokenButton(page).click();

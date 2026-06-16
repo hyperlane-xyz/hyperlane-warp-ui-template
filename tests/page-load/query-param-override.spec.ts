@@ -3,17 +3,20 @@
 
 import { test, expect } from '@playwright/test';
 import { config } from '../../src/consts/config';
-import { getOriginTokenButton, getDestinationTokenButton } from '../helpers/locators';
+import {
+  getOriginTokenButton,
+  getDestinationTokenButton,
+  waitForTransferForm,
+} from '../helpers/locators';
 
 test.describe('Page Load - Query Param Token Override', () => {
   test('should use query params to set origin and destination tokens', async ({ page }) => {
     // 1. Navigate to app with query params to override origin and destination tokens to ETH
     await page.goto(
-      'http://localhost:3000?origin=base&originToken=ETH&destination=ethereum&destinationToken=ETH',
+      'http://localhost:3000?origin=base&originToken=0x0000000000000000000000000000000000000000&destination=ethereum&destinationToken=0x0000000000000000000000000000000000000000',
     );
 
-    // 2. Wait for 'Send' text visible
-    await page.getByText('Send').first().waitFor({ state: 'visible' });
+    await waitForTransferForm(page);
 
     // 3. Verify origin: page.getByRole('button', { name: 'base ETH Base' })
     await expect(page.getByRole('button', { name: 'base ETH Base' })).toBeVisible();
@@ -29,7 +32,7 @@ test.describe('Page Load - Query Param Token Override', () => {
     await page.goto(
       'http://localhost:3000?origin=nonexistent&originToken=FAKE&destination=nonexistent&destinationToken=FAKE',
     );
-    await page.getByText('Send').first().waitFor({ state: 'visible' });
+    await waitForTransferForm(page);
 
     // Should fall back to config defaults
     const originButton = getOriginTokenButton(page);
@@ -51,10 +54,11 @@ test.describe('Page Load - Query Param Token Override', () => {
 
   test('should handle partial query params (origin only)', async ({ page }) => {
     // 1. Navigate with partial query params (origin only)
-    await page.goto('http://localhost:3000?origin=base&originToken=ETH');
+    await page.goto(
+      'http://localhost:3000?origin=base&originToken=0x0000000000000000000000000000000000000000',
+    );
 
-    // 2. Wait for 'Send' text visible
-    await page.getByText('Send').first().waitFor({ state: 'visible' });
+    await waitForTransferForm(page);
 
     // 3. Verify origin: page.getByRole('button', { name: 'base ETH Base' })
     await expect(page.getByRole('button', { name: 'base ETH Base' })).toBeVisible();

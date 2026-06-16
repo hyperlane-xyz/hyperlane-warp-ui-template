@@ -1,11 +1,14 @@
 import { Token } from '@hyperlane-xyz/sdk';
 import { fromWei, toWei } from '@hyperlane-xyz/utils';
 import { useDebounce } from '@hyperlane-xyz/widgets';
-import { useAccountAddressForChain } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
+import {
+  useAccountAddressForChain,
+  useAccounts,
+} from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import { useQuery } from '@tanstack/react-query';
 import BigNumber from 'bignumber.js';
 import { Form, Formik, useFormikContext } from 'formik';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { type Address } from 'viem';
 
 import { SolidButton } from '../../components/buttons/SolidButton';
@@ -30,10 +33,11 @@ import {
 import { useQuote } from '../swap/useQuote';
 import { useSwap } from '../swap/useSwap';
 import { validateSwapForm } from '../swap/validate';
-import { useCollateralGroups, useWarpCore } from '../tokens/hooks';
+import { useCollateralGroups, useTokenByKeyMap, useWarpCore } from '../tokens/hooks';
 import { getTokenKey as getBridgeTokenKey } from '../tokens/utils';
 import { useTokenTransfer } from '../transfer/useTokenTransfer';
 import { shouldClearAddress } from '../transfer/utils';
+import { validateBridgeTransferForm } from '../transfer/validate';
 import { WalletDropdown } from '../wallet/WalletDropdown';
 import {
   getExactInputBridgeTransferQuote,
@@ -45,6 +49,7 @@ import { getUnifiedRouteMode, UnifiedRouteMode } from './tokens/routes';
 import { TokenSelectField } from './tokens/TokenSelectField';
 import type { UnifiedToken } from './tokens/types';
 import type { UnifiedFormValues } from './types';
+import { getUnifiedBasicSubmitErrors } from './validation';
 
 export function UnifiedTokenCard() {
   return (
@@ -97,9 +102,15 @@ function UnifiedFormContent({
   tokenMap: Map<string, UnifiedToken>;
   engineEnabled: boolean;
 }) {
-  const { values, setValues, setErrors } = useFormikContext<UnifiedFormValues>();
+  const { values, errors, setValues, setErrors } = useFormikContext<UnifiedFormValues>();
   const multiProvider = useMultiProvider();
+  const warpCore = useWarpCore();
   const collateralGroups = useCollateralGroups();
+  const bridgeTokenMap = useTokenByKeyMap();
+  const { accounts } = useAccounts(multiProvider, config.addressBlacklist);
+  const { routerAddressesByChainMap } = useStore((s) => ({
+    routerAddressesByChainMap: s.routerAddressesByChainMap,
+  }));
   const originToken = values.originTokenKey ? tokenMap.get(values.originTokenKey) : undefined;
   const destinationToken = values.destinationTokenKey
     ? tokenMap.get(values.destinationTokenKey)
@@ -180,6 +191,36 @@ function UnifiedFormContent({
   };
 
   const onSubmit = async () => {
+    if (routeMode === UnifiedRouteMode.Bridge) {
+      const validationErrors = await validateUnifiedBridgeTransfer({
+        warpCore,
+        bridgeTokenMap,
+        collateralGroups,
+        values,
+        originToken,
+        destinationToken,
+        accounts,
+        routerAddressesByChainMap,
+      });
+      if (validationErrors) {
+        setErrors(validationErrors);
+        return;
+      }
+    } else {
+      const validationErrors = getUnifiedBasicSubmitErrors({
+        routeMode,
+        values,
+        originToken,
+        destinationToken,
+        recipient: effectiveRecipient,
+        hasSwapRoute: !!bestRoute,
+      });
+      if (validationErrors) {
+        setErrors(validationErrors);
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     try {
       if (routeMode === UnifiedRouteMode.Bridge) {
@@ -219,11 +260,25 @@ function UnifiedFormContent({
     }
   };
 
-  const buttonText = !routeMode
-    ? 'Route is not supported'
-    : isSubmitting
-      ? 'Sending...'
-      : `Send ${routeMode}`;
+  const firstError = Object.values(errors)[0];
+  const buttonText = firstError
+    ? `${firstError}`
+    : !routeMode
+      ? 'Route is not supported'
+      : isSubmitting
+        ? 'Sending...'
+        : `Send ${routeMode}`;
+
+  useEffect(() => {
+    if (Object.keys(errors).length) setErrors({});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    values.originTokenKey,
+    values.destinationTokenKey,
+    values.amount,
+    values.recipient,
+    routeMode,
+  ]);
 
   return (
     <>
@@ -269,9 +324,9 @@ function UnifiedFormContent({
 
       <SolidButton
         type="button"
-        color="accent"
+        color={firstError ? 'red' : 'accent'}
         onClick={onSubmit}
-        disabled={!routeMode || isSubmitting || (routeMode === UnifiedRouteMode.Swap && !bestRoute)}
+        disabled={isSubmitting}
         className="mb-4 w-full px-3 py-2.5 font-secondary text-xl text-cream-100"
       >
         {buttonText}
@@ -452,6 +507,46 @@ async function submitBridge({
     recipient,
   };
   await bridgeTransfer.triggerTransactions(transferValues, quote.routeToken, null);
+}
+
+async function validateUnifiedBridgeTransfer({
+  warpCore,
+  bridgeTokenMap,
+  collateralGroups,
+  values,
+  originToken,
+  destinationToken,
+  accounts,
+  routerAddressesByChainMap,
+}: {
+  warpCore: Parameters<typeof validateBridgeTransferForm>[0];
+  bridgeTokenMap: Parameters<typeof validateBridgeTransferForm>[1];
+  collateralGroups: Parameters<typeof validateBridgeTransferForm>[2];
+  values: UnifiedFormValues;
+  originToken: UnifiedToken | undefined;
+  destinationToken: UnifiedToken | undefined;
+  accounts: Parameters<typeof validateBridgeTransferForm>[4];
+  routerAddressesByChainMap: Parameters<typeof validateBridgeTransferForm>[5];
+}): Promise<Record<string, string> | null> {
+  if (!originToken?.bridgeToken) return { originTokenKey: 'Origin token is required' };
+  if (!destinationToken?.bridgeToken) {
+    return { destinationTokenKey: 'Destination token is required' };
+  }
+
+  const [errors] = await validateBridgeTransferForm(
+    warpCore,
+    bridgeTokenMap,
+    collateralGroups,
+    {
+      originTokenKey: getBridgeTokenKey(originToken.bridgeToken),
+      destinationTokenKey: getBridgeTokenKey(destinationToken.bridgeToken),
+      amount: values.amount,
+      recipient: values.recipient,
+    },
+    accounts,
+    routerAddressesByChainMap,
+  );
+  return errors;
 }
 
 function useBridgeExactInputQuote({

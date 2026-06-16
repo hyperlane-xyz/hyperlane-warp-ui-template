@@ -241,27 +241,10 @@ async function buildRevealTransaction(
   const recipientPk = new PublicKey(pdaInfo.data.subarray(0, 32));
   const pdaInputAta = findATA(pendingSwapPDA, new PublicKey(r.tokenIn), inTokenProg);
 
-  // Raydium quote with retry
-  let hop: ClmmHop | undefined;
-  for (let attempt = 1; attempt <= 5; attempt++) {
-    const data = await fetchRaydiumQuote(r.tokenIn, r.tokenOut, BigInt(r.amountIn));
-    if (!data) throw new Error('Raydium API returned no data');
-    const candidate: ClmmHop = data.routePlan[0] as ClmmHop;
-    if (candidate.outputMint === r.tokenOut) {
-      hop = candidate;
-      break;
-    }
-    if (attempt === 5)
-      throw new Error(
-        `Raydium never returned correct outputMint (expected ${r.tokenOut}, got ${candidate.outputMint})`,
-      );
-    await new Promise<void>((res) => setTimeout(res, 500));
-  }
-  if (!hop) throw new Error('No Raydium route found');
-
-  const poolState = await fetchClmmPoolState(hop.poolId, conn);
-  if (!poolState) throw new Error(`Pool ${hop.poolId} not found on-chain`);
-  hop = { ...hop, ...poolState };
+  if (!r.poolAddress) throw new Error('No pool address in reveal data — re-fetch the quote');
+  const poolState = await fetchClmmPoolState(r.poolAddress, conn);
+  if (!poolState) throw new Error(`Pool ${r.poolAddress} not found on-chain`);
+  const hop: ClmmHop = { poolId: r.poolAddress, inputMint: r.tokenIn, outputMint: r.tokenOut, ...poolState };
 
   const inputIsMint0 = hop.mint0 ? r.tokenIn === hop.mint0 : true;
   const actualOutputMint = inputIsMint0 ? (hop.mint1 ?? r.tokenOut) : (hop.mint0 ?? r.tokenOut);
@@ -428,26 +411,6 @@ function buildClmmAccounts(
   ];
 }
 
-async function fetchRaydiumQuote(
-  tokenIn: string,
-  tokenOut: string,
-  amount: bigint,
-): Promise<{ routePlan: ClmmHop[] } | null> {
-  const url = new URL('https://transaction-v1.raydium.io/compute/swap-base-in');
-  url.searchParams.set('inputMint', tokenIn);
-  url.searchParams.set('outputMint', tokenOut);
-  url.searchParams.set('amount', amount.toString());
-  url.searchParams.set('slippageBps', '100');
-  url.searchParams.set('txVersion', 'LEGACY');
-  url.searchParams.set('onlyDirectRoute', 'true');
-  try {
-    const res = await fetch(url.toString(), { headers: { 'Content-Type': 'application/json' } });
-    const j = (await res.json()) as { success: boolean; data: { routePlan: ClmmHop[] } };
-    return j.success ? j.data : null;
-  } catch {
-    return null;
-  }
-}
 
 async function fetchClmmPoolState(
   poolId: string,

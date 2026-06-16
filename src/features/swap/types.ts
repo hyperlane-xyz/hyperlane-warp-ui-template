@@ -52,6 +52,7 @@ export interface SolanaRevealData {
   tokenIn: string;            // Solana input mint (base58)
   tokenOut: string;           // Solana output mint (base58)
   amountIn: string;           // raw input amount
+  poolAddress?: string;       // Raydium CLMM pool address (base58)
 }
 
 export interface SwapHistoryItem {

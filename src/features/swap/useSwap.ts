@@ -349,6 +349,7 @@ function buildSolanaRevealData(
     tokenIn: swapStep.tokenIn,
     tokenOut: swapStep.tokenOut,
     amountIn: swapStep.amountIn,
+    poolAddress: swapStep.poolAddress,
   };
 }
 

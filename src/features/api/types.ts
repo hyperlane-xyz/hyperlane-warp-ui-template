@@ -151,6 +151,7 @@ export const QuoteSwapStepSchema = z.object({
   path: z.array(TokenAddress),
   poolCount: z.number(),
   minPoolTvlUsd: z.number().nullable().optional(),
+  poolAddress: z.string().optional(),
 });
 export type QuoteSwapStep = z.infer<typeof QuoteSwapStepSchema>;
 

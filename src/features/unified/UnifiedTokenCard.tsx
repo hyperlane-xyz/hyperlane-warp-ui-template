@@ -1,6 +1,6 @@
 import { Token } from '@hyperlane-xyz/sdk';
 import { errorToString, fromWei, isNullish, toWei } from '@hyperlane-xyz/utils';
-import { useDebounce, useModal } from '@hyperlane-xyz/widgets';
+import { ChevronIcon, useDebounce, useModal } from '@hyperlane-xyz/widgets';
 import {
   getAccountAddressAndPubKey,
   useAccountAddressForChain,
@@ -14,10 +14,12 @@ import { type Address } from 'viem';
 
 import { RecipientWarningBanner } from '../../components/banner/RecipientWarningBanner';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
+import { SolidButton } from '../../components/buttons/SolidButton';
 import { SwapIcon } from '../../components/icons/SwapIcon';
 import { TextField } from '../../components/input/TextField';
 import { TransferSection } from '../../components/layout/TransferSection';
 import { config } from '../../consts/config';
+import { Color } from '../../styles/Color';
 import { formatDisplayAmount } from '../../utils/amount';
 import { getQueryParams, updateQueryParams } from '../../utils/queryParams';
 import { useChains } from '../api/hooks';
@@ -210,6 +212,7 @@ function UnifiedFormContent({
   });
   const routes = quote.quote?.routes ?? [];
   const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
+  const [isBridgeReview, setIsBridgeReview] = useState(false);
   const bestRoute = routes[selectedRouteIndex] ?? routes[0];
 
   const srcChainInfo = chainsResp?.chains.find((c) => c.id === swapValues.srcChain);
@@ -348,6 +351,10 @@ function UnifiedFormContent({
           return;
         }
       }
+      if (!isBridgeReview) {
+        setIsBridgeReview(true);
+        return;
+      }
     } else {
       if (!bestRoute) return;
     }
@@ -397,10 +404,21 @@ function UnifiedFormContent({
     }
   };
 
-  const buttonText = !routeMode ? 'Route is not supported' : isSubmitting ? 'Sending...' : 'Send';
+  const onEditBridgeReview = () => {
+    setIsBridgeReview(false);
+  };
+
+  const buttonText = !routeMode
+    ? 'Route is not supported'
+    : isSubmitting
+      ? 'Sending...'
+      : routeMode === UnifiedRouteMode.Bridge
+        ? 'Continue'
+        : 'Send';
 
   useEffect(() => {
     if (Object.keys(errors).length) setErrors({});
+    setIsBridgeReview(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     values.originTokenKey,
@@ -421,12 +439,14 @@ function UnifiedFormContent({
           tokenMap={tokenMap}
           engineEnabled={engineEnabled}
           routeMode={routeMode}
+          disabled={isBridgeReview}
         />
       </TransferSection>
       <div className="relative z-10 -my-3 flex justify-center">
         <button
           type="button"
           onClick={onSwapTokens}
+          disabled={isBridgeReview}
           className="swap-chains-button group flex h-8 w-8 items-center justify-center rounded border border-gray-400/50 bg-white shadow-button transition-all hover:bg-gray-50 dark:border-primary-300/35 dark:bg-background/90 dark:shadow-none dark:hover:bg-primary-300/[0.18]"
         >
           <SwapIcon
@@ -446,6 +466,7 @@ function UnifiedFormContent({
           bridgeQuote={bridgeQuote.data}
           isQuoteLoading={quote.isLoading || bridgeQuote.isLoading || bridgeQuote.isFetching}
           recipient={effectiveRecipient}
+          disabled={isBridgeReview}
         />
       </TransferSection>
 
@@ -480,16 +501,39 @@ function UnifiedFormContent({
         </div>
       )}
 
-      <ConnectAwareSubmitButton<UnifiedFormValues>
-        chainName={originToken?.chainName || ''}
-        text={buttonText}
-        onClickWhenReady={onSubmit}
-        disabled={
-          isSubmitting ||
-          (routeMode === UnifiedRouteMode.Bridge && (isSanctioned || !addressConfirmed))
-        }
-        classes="mb-4 w-full px-3 py-2.5 font-secondary text-xl text-cream-100"
-      />
+      {isBridgeReview ? (
+        <div className="mb-4 mt-4 flex items-center justify-between space-x-4">
+          <SolidButton
+            type="button"
+            color="primary"
+            onClick={onEditBridgeReview}
+            className="px-6 py-1.5 font-secondary"
+            icon={<ChevronIcon direction="w" width={10} height={6} color={Color.white} />}
+          >
+            <span>Edit</span>
+          </SolidButton>
+          <SolidButton
+            disabled={isSubmitting || isSanctioned || !addressConfirmed}
+            type="button"
+            color="accent"
+            onClick={() => void onSubmit(true)}
+            className="flex-1 px-3 py-1.5 font-secondary text-white"
+          >
+            {`Send to ${destinationChainDisplay}`}
+          </SolidButton>
+        </div>
+      ) : (
+        <ConnectAwareSubmitButton<UnifiedFormValues>
+          chainName={originToken?.chainName || ''}
+          text={buttonText}
+          onClickWhenReady={onSubmit}
+          disabled={
+            isSubmitting ||
+            (routeMode === UnifiedRouteMode.Bridge && (isSanctioned || !addressConfirmed))
+          }
+          classes="mb-4 w-full px-3 py-2.5 font-secondary text-xl text-cream-100"
+        />
+      )}
       <RecipientConfirmationModal
         isOpen={isConfirmationModalOpen}
         close={closeConfirmationModal}
@@ -672,12 +716,14 @@ function OriginTokenCard({
   tokenMap,
   engineEnabled,
   routeMode,
+  disabled,
 }: {
   token: UnifiedToken | undefined;
   destinationToken: UnifiedToken | undefined;
   tokenMap: Map<string, UnifiedToken>;
   engineEnabled: boolean;
   routeMode: UnifiedRouteMode | null;
+  disabled?: boolean;
 }) {
   const { values, setFieldValue } = useFormikContext<UnifiedFormValues>();
   const multiProvider = useMultiProvider();
@@ -751,7 +797,7 @@ function OriginTokenCard({
   return (
     <div>
       <div className="mb-2 flex items-center justify-between">
-        <WalletDropdown chainName={token?.chainName} selectionMode="origin" />
+        <WalletDropdown chainName={token?.chainName} selectionMode="origin" disabled={disabled} />
         <ImportTokenButton token={token?.bridgeToken} />
       </div>
       <div className="transfer-chain-field rounded-[7px] border border-gray-400/25 bg-white p-3 shadow-input dark:border-primary-300/[0.18] dark:bg-transparent dark:shadow-none">
@@ -760,6 +806,7 @@ function OriginTokenCard({
           selectionMode="origin"
           tokenMap={tokenMap}
           engineEnabled={engineEnabled}
+          disabled={disabled}
         />
         <div className="transfer-divider my-2.5 h-px bg-primary-50 dark:bg-primary-300/[0.22]" />
         <div className="flex items-center justify-between gap-2">
@@ -769,12 +816,13 @@ function OriginTokenCard({
             type="number"
             step="any"
             min="0"
+            disabled={disabled}
             className="transfer-text-input w-full flex-1 border-none bg-transparent font-secondary text-xl font-normal text-gray-900 outline-none placeholder:text-gray-900 dark:text-foreground-primary dark:placeholder:text-foreground-secondary"
           />
           <button
             type="button"
             onClick={setMax}
-            disabled={!token || isSwapBalanceLoading || bridgeMax.isPending}
+            disabled={disabled || !token || isSwapBalanceLoading || bridgeMax.isPending}
             className="transfer-max-btn rounded border border-gray-300 px-2 py-0.5 font-secondary text-sm text-gray-450 transition-colors hover:border-gray-400 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {bridgeMax.isPending ? '...' : 'Max'}
@@ -798,6 +846,7 @@ function DestinationTokenCard({
   bridgeQuote,
   isQuoteLoading,
   recipient,
+  disabled,
 }: {
   token: UnifiedToken | undefined;
   tokenMap: Map<string, UnifiedToken>;
@@ -807,6 +856,7 @@ function DestinationTokenCard({
   bridgeQuote: ExactInputBridgeTransferQuote | undefined;
   isQuoteLoading: boolean;
   recipient: string;
+  disabled?: boolean;
 }) {
   const destinationBalanceToken =
     routeMode === UnifiedRouteMode.Bridge
@@ -840,6 +890,7 @@ function DestinationTokenCard({
           selectionMode="destination"
           recipient={values.recipient}
           onRecipientChange={(addr: string) => setFieldValue('recipient', addr)}
+          disabled={disabled}
         />
         <ImportTokenButton token={token?.bridgeToken} />
       </div>
@@ -849,6 +900,7 @@ function DestinationTokenCard({
           selectionMode="destination"
           tokenMap={tokenMap}
           engineEnabled={engineEnabled}
+          disabled={disabled}
         />
         <div className="transfer-divider my-2.5 h-px bg-primary-50 dark:bg-primary-300/[0.22]" />
         <input

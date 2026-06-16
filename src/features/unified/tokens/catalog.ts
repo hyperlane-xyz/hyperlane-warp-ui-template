@@ -21,6 +21,7 @@ function fromBridgeToken(token: Token, multiProvider: MultiProtocolProvider): Un
     coinGeckoId: token.coinGeckoId,
     isNative: token.isNative() || token.isHypNative(),
     bridgeToken: token,
+    bridgeRouteTokens: [token],
     capabilities: {
       bridge: true,
       swap: false,
@@ -46,6 +47,22 @@ function fromSwapToken(token: UiToken, protocol?: ProtocolType): UnifiedToken {
     capabilities: {
       bridge: false,
       swap: token.canSwap,
+    },
+  };
+}
+
+function mergeBridgeToken(existing: UnifiedToken, token: Token): UnifiedToken {
+  const bridgeRouteTokens =
+    existing.bridgeRouteTokens ?? (existing.bridgeToken ? [existing.bridgeToken] : []);
+  return {
+    ...existing,
+    bridgeToken: existing.bridgeToken ?? token,
+    bridgeRouteTokens: bridgeRouteTokens.includes(token)
+      ? bridgeRouteTokens
+      : [...bridgeRouteTokens, token],
+    capabilities: {
+      bridge: true,
+      swap: existing.capabilities.swap,
     },
   };
 }
@@ -76,9 +93,11 @@ export function buildUnifiedTokenCatalog({
   const byIdentity = new Map<string, UnifiedToken>();
 
   for (const token of bridgeTokens) {
+    const identity = getBridgeTokenIdentity(token, multiProvider);
+    const existing = byIdentity.get(identity);
     byIdentity.set(
-      getBridgeTokenIdentity(token, multiProvider),
-      fromBridgeToken(token, multiProvider),
+      identity,
+      existing ? mergeBridgeToken(existing, token) : fromBridgeToken(token, multiProvider),
     );
   }
 

@@ -1,12 +1,14 @@
 import { isZeroishAddress, normalizeAddress, type ProtocolType } from '@hyperlane-xyz/utils';
 
 import { WARP_QUERY_PARAMS } from '../../../consts/args';
+import { getUnifiedBridgeTokens } from './routes';
 import type { UnifiedToken } from './types';
 
 export function getUnifiedTokenQueryRef(token: UnifiedToken): string {
+  const bridgeToken = getUnifiedBridgeTokens(token)[0];
   return (
-    token.bridgeToken?.collateralAddressOrDenom ??
-    token.bridgeToken?.addressOrDenom ??
+    bridgeToken?.collateralAddressOrDenom ??
+    bridgeToken?.addressOrDenom ??
     token.swapToken?.address ??
     token.addressOrDenom
   );
@@ -46,7 +48,9 @@ export function findUnifiedTokenByQueryRef(
 
   if (isZeroishRef) {
     return (
-      chainTokens.find((token) => token.bridgeToken?.isHypNative()) ??
+      chainTokens.find((token) =>
+        getUnifiedBridgeTokens(token).some((bridgeToken) => bridgeToken.isHypNative()),
+      ) ??
       chainTokens.find((token) => token.swapToken?.isNative) ??
       chainTokens.find((token) => token.isNative)
     );
@@ -54,14 +58,14 @@ export function findUnifiedTokenByQueryRef(
 
   return (
     chainTokens.find((token) =>
-      matchesRef(
-        token.bridgeToken?.collateralAddressOrDenom,
-        tokenRef,
-        token.bridgeToken?.protocol,
+      getUnifiedBridgeTokens(token).some((bridgeToken) =>
+        matchesRef(bridgeToken.collateralAddressOrDenom, tokenRef, bridgeToken.protocol),
       ),
     ) ??
     chainTokens.find((token) =>
-      matchesRef(token.bridgeToken?.addressOrDenom, tokenRef, token.bridgeToken?.protocol),
+      getUnifiedBridgeTokens(token).some((bridgeToken) =>
+        matchesRef(bridgeToken.addressOrDenom, tokenRef, bridgeToken.protocol),
+      ),
     ) ??
     chainTokens.find((token) => matchesRef(token.swapToken?.address, tokenRef)) ??
     chainTokens.find((token) => matchesRef(token.addressOrDenom, tokenRef))

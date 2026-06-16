@@ -217,6 +217,28 @@ describe('getUnifiedTokenQueryRef', () => {
     ).toBe(token);
   });
 
+  test('matches any same-collateral bridge route address', () => {
+    const primaryBridgeToken = createMockToken({
+      chainName: 'ethereum',
+      addressOrDenom: '0x2222222222222222222222222222222222222222',
+      collateralAddressOrDenom: '0x3333333333333333333333333333333333333333',
+    });
+    const secondaryBridgeToken = createMockToken({
+      chainName: 'ethereum',
+      addressOrDenom: '0x4444444444444444444444444444444444444444',
+      collateralAddressOrDenom: '0x3333333333333333333333333333333333333333',
+    });
+    const token = createUnifiedToken({
+      chainName: 'ethereum',
+      bridgeToken: primaryBridgeToken,
+      bridgeRouteTokens: [primaryBridgeToken, secondaryBridgeToken],
+    });
+
+    expect(
+      findUnifiedTokenByQueryRef([token], 'ethereum', '0x4444444444444444444444444444444444444444'),
+    ).toBe(token);
+  });
+
   test('does not match query params by symbol', () => {
     const token = createUnifiedToken({ chainName: 'ethereum', symbol: 'USDC' });
 

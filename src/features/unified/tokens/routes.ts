@@ -10,6 +10,11 @@ export const UnifiedRouteMode = {
 
 export type UnifiedRouteMode = (typeof UnifiedRouteMode)[keyof typeof UnifiedRouteMode];
 
+export function getUnifiedBridgeTokens(token: UnifiedToken | undefined): Token[] {
+  if (!token) return [];
+  return token.bridgeRouteTokens ?? (token.bridgeToken ? [token.bridgeToken] : []);
+}
+
 export function getUnifiedRouteMode({
   originToken,
   destinationToken,
@@ -23,10 +28,14 @@ export function getUnifiedRouteMode({
 }): UnifiedRouteMode | null {
   if (!originToken || !destinationToken) return null;
 
+  const originBridgeTokens = getUnifiedBridgeTokens(originToken);
+  const destinationBridgeTokens = getUnifiedBridgeTokens(destinationToken);
   if (
-    originToken.bridgeToken &&
-    destinationToken.bridgeToken &&
-    checkTokenHasRoute(originToken.bridgeToken, destinationToken.bridgeToken, collateralGroups)
+    originBridgeTokens.some((origin) =>
+      destinationBridgeTokens.some((destination) =>
+        checkTokenHasRoute(origin, destination, collateralGroups),
+      ),
+    )
   ) {
     return UnifiedRouteMode.Bridge;
   }

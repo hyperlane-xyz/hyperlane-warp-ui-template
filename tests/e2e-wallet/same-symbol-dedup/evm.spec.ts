@@ -1,14 +1,15 @@
 import { expect, test } from '@playwright/test';
 import { MOCK_EVM_ADDRESS } from '../helpers/constants';
 import { installEvmRpcMock, ROUTER_COLLATERAL_SEED } from '../helpers/evmRpc';
-import { searchAndSelectOriginToken } from '../helpers/formFlow';
+import { searchAndSelectDestinationToken, searchAndSelectOriginToken } from '../helpers/formFlow';
 import { openE2EApp } from '../helpers/page-setup';
 
 const USDC_ARBITRUM = '0xaf88d065e77c8cc2239327c5edb3a432268e5831';
 const USDC_ROUTER_ARBITRUM = '0x1FdA66FA15A261F01F1E09228D41bD0A806d7529';
+const USDC_ROUTER_BASE = '0xB46930ca998587A95D9Ee000FA73A071ADD56B64';
 
 test.describe('EVM same-symbol dedup', () => {
-  test('selecting Arbitrum USDC keeps the Arbitrum origin (not Ethereum)', async ({ page }) => {
+  test('selecting Arbitrum USDC keeps Base route destinations available', async ({ page }) => {
     await installEvmRpcMock(page, {
       chainUrlMap: [
         { chainId: 1, urlMatch: /ethereum\.|eth\.drpc|eth-mainnet/i },
@@ -33,10 +34,13 @@ test.describe('EVM same-symbol dedup', () => {
     await expect(page.getByText('0xe2e...e2ee').first()).toBeVisible({ timeout: 15_000 });
 
     await searchAndSelectOriginToken(page, USDC_ROUTER_ARBITRUM, /arbitrum USDC/i);
+    await searchAndSelectDestinationToken(page, USDC_ROUTER_BASE, /base USDC/i);
 
     // The origin token field's accessible label includes the chain — must be
     // Arbitrum, not Ethereum.
     await expect(page.getByTestId('token-select-origin')).toContainText(/Arbitrum/i);
     await expect(page.getByTestId('token-select-origin')).not.toContainText(/Ethereum/i);
+    await expect(page.getByTestId('token-select-destination')).toContainText(/Base/i);
+    await expect(page.getByText('Route: bridge')).toBeVisible();
   });
 });

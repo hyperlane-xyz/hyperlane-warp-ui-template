@@ -65,6 +65,41 @@ describe('getUnifiedRouteMode', () => {
     expect(mode).toBe(UnifiedRouteMode.Bridge);
   });
 
+  test('uses bridge when a secondary same-collateral route member connects', () => {
+    const destinationBridgeToken = createMockToken({ chainName: 'arbitrum' });
+    const dedupedOriginBridgeToken = createMockToken({
+      chainName: 'ethereum',
+      addressOrDenom: '0x1111111111111111111111111111111111111111',
+      collateralAddressOrDenom: '0x9999999999999999999999999999999999999999',
+    });
+    const routedOriginBridgeToken = createMockToken({
+      chainName: 'ethereum',
+      addressOrDenom: '0x2222222222222222222222222222222222222222',
+      collateralAddressOrDenom: '0x9999999999999999999999999999999999999999',
+      connections: [createTokenConnectionMock(undefined, destinationBridgeToken)],
+    });
+    const collateralGroups = groupTokensByCollateral([
+      dedupedOriginBridgeToken,
+      routedOriginBridgeToken,
+      destinationBridgeToken,
+    ]);
+
+    const mode = getUnifiedRouteMode({
+      originToken: createUnifiedToken({
+        bridgeToken: dedupedOriginBridgeToken,
+        bridgeRouteTokens: [dedupedOriginBridgeToken, routedOriginBridgeToken],
+      }),
+      destinationToken: createUnifiedToken({
+        chainName: 'arbitrum',
+        bridgeToken: destinationBridgeToken,
+      }),
+      collateralGroups,
+      engineEnabled: true,
+    });
+
+    expect(mode).toBe(UnifiedRouteMode.Bridge);
+  });
+
   test('uses swap when bridge is unavailable and engine is configured', () => {
     const mode = getUnifiedRouteMode({
       originToken: createUnifiedToken({

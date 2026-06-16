@@ -14,6 +14,7 @@ export interface UnifiedToken {
   coinGeckoId?: string;
   isNative: boolean;
   bridgeToken?: Token;
+  bridgeRouteTokens?: Token[];
   swapToken?: UiToken;
   capabilities: {
     bridge: boolean;

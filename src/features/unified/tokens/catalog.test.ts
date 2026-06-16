@@ -55,6 +55,27 @@ describe('buildUnifiedTokenCatalog', () => {
     expect(result[0].capabilities).toEqual({ bridge: true, swap: true });
   });
 
+  test('preserves same-collateral bridge route members in one unified row', () => {
+    const firstBridgeToken = createMockToken({
+      addressOrDenom: '0x1111111111111111111111111111111111111111',
+      collateralAddressOrDenom: mockCollateralAddress,
+    });
+    const secondBridgeToken = createMockToken({
+      addressOrDenom: '0x2222222222222222222222222222222222222222',
+      collateralAddressOrDenom: mockCollateralAddress,
+    });
+
+    const result = buildUnifiedTokenCatalog({
+      bridgeTokens: [firstBridgeToken, secondBridgeToken],
+      swapTokens: [],
+      multiProvider,
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0].bridgeToken).toBe(firstBridgeToken);
+    expect(result[0].bridgeRouteTokens).toEqual([firstBridgeToken, secondBridgeToken]);
+  });
+
   test('keeps native bridge token separate from wrapped engine token', () => {
     const bridgeToken = createMockToken({
       standard: TokenStandard.EvmHypNative,

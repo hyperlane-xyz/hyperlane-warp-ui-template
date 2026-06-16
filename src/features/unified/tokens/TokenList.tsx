@@ -7,6 +7,7 @@ import { getChainDisplayName } from '../../chains/utils';
 import { useCollateralGroups } from '../../tokens/hooks';
 import { useUnifiedTokens } from './hooks';
 import { getVisibleUnifiedTokens } from './list';
+import { getUnifiedBridgeTokens } from './routes';
 import type { UnifiedToken } from './types';
 
 function matchesSearch(
@@ -18,6 +19,11 @@ function matchesSearch(
     token.name.toLowerCase().includes(query) ||
     token.symbol.toLowerCase().includes(query) ||
     token.addressOrDenom.toLowerCase().includes(query) ||
+    getUnifiedBridgeTokens(token).some(
+      (bridgeToken) =>
+        bridgeToken.addressOrDenom.toLowerCase().includes(query) ||
+        bridgeToken.collateralAddressOrDenom?.toLowerCase().includes(query),
+    ) ||
     token.chainName.toLowerCase().includes(query) ||
     getChainDisplayName(multiProvider, token.chainName).toLowerCase().includes(query)
   );

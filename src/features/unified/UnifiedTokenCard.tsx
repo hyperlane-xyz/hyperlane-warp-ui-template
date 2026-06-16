@@ -396,11 +396,7 @@ function UnifiedFormContent({
     }
   };
 
-  const buttonText = !routeMode
-    ? 'Route is not supported'
-    : isSubmitting
-      ? 'Sending...'
-      : `Send ${routeMode}`;
+  const buttonText = !routeMode ? 'Route is not supported' : isSubmitting ? 'Sending...' : 'Send';
 
   useEffect(() => {
     if (Object.keys(errors).length) setErrors({});

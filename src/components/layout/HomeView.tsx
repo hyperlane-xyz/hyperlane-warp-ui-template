@@ -4,7 +4,6 @@ import { TipCard } from '../tip/TipCard';
 
 export function HomeView() {
   // Non-blocking engine prefetch — warms /readyz + /v1/tokens caches.
-  // Both bridge and swap tabs benefit on first /swap click.
   useEngineBootstrap();
 
   return (

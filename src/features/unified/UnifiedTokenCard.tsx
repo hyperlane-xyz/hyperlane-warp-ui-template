@@ -733,24 +733,9 @@ function OriginTokenCard({
     mutationFn: getExactInputBridgeMaxAmount,
   });
   const { balance: bridgeBalance } = useOriginBalance(token?.bridgeToken);
-  const { data: swapBalance, isLoading: isSwapBalanceLoading } = useSwapTokenBalance(
-    token?.swapToken,
-  );
-  const { prices: bridgePrices, isLoading: isBridgePriceLoading } = useBridgeTokenPrices();
-  const { prices: swapPrices, isLoading: isSwapPriceLoading } = useSwapTokenPrices();
-  const tokenPrice =
-    routeMode === UnifiedRouteMode.Swap
-      ? token?.swapToken?.coinGeckoId
-        ? swapPrices[token.swapToken.coinGeckoId]
-        : undefined
-      : token?.bridgeToken?.coinGeckoId
-        ? bridgePrices[token.bridgeToken.coinGeckoId]
-        : undefined;
-  const amount = parseFloat(values.amount);
-  const totalTokenPrice = !isNullish(tokenPrice) && !isNaN(amount) ? amount * tokenPrice : 0;
-  const isPriceLoading =
-    routeMode === UnifiedRouteMode.Swap ? isSwapPriceLoading : isBridgePriceLoading;
-  const showUsdValue = totalTokenPrice >= 0.01 && !isPriceLoading;
+  const swapBalanceToken = routeMode === UnifiedRouteMode.Swap ? token?.swapToken : undefined;
+  const { data: swapBalance, isLoading: isSwapBalanceLoading } =
+    useSwapTokenBalance(swapBalanceToken);
   const balanceLabel =
     routeMode === UnifiedRouteMode.Swap && token?.swapToken
       ? swapBalance == null
@@ -829,12 +814,52 @@ function OriginTokenCard({
           </button>
         </div>
         <div className="transfer-balance mt-1 flex items-center justify-between text-xs leading-[18px] text-gray-450">
-          <span>{showUsdValue ? formatUsd(totalTokenPrice) : '$0.00'}</span>
+          <InputUsdValue token={token} routeMode={routeMode} amount={values.amount} />
           <span>Balance: {balanceLabel}</span>
         </div>
       </div>
     </div>
   );
+}
+
+function InputUsdValue({
+  token,
+  routeMode,
+  amount,
+}: {
+  token: UnifiedToken | undefined;
+  routeMode: UnifiedRouteMode | null;
+  amount: string;
+}) {
+  if (routeMode === UnifiedRouteMode.Swap) {
+    return <SwapInputUsdValue token={token} amount={amount} />;
+  }
+  return <BridgeInputUsdValue token={token} amount={amount} />;
+}
+
+function BridgeInputUsdValue({
+  token,
+  amount,
+}: {
+  token: UnifiedToken | undefined;
+  amount: string;
+}) {
+  const { prices, isLoading } = useBridgeTokenPrices();
+  const price = token?.bridgeToken?.coinGeckoId ? prices[token.bridgeToken.coinGeckoId] : undefined;
+  return <span>{getInputUsdDisplay(amount, price, isLoading)}</span>;
+}
+
+function SwapInputUsdValue({ token, amount }: { token: UnifiedToken | undefined; amount: string }) {
+  const { prices, isLoading } = useSwapTokenPrices();
+  const price = token?.swapToken?.coinGeckoId ? prices[token.swapToken.coinGeckoId] : undefined;
+  return <span>{getInputUsdDisplay(amount, price, isLoading)}</span>;
+}
+
+function getInputUsdDisplay(amount: string, tokenPrice: number | undefined, isLoading: boolean) {
+  const parsedAmount = parseFloat(amount);
+  const totalTokenPrice =
+    !isNullish(tokenPrice) && !isNaN(parsedAmount) ? parsedAmount * tokenPrice : 0;
+  return totalTokenPrice >= 0.01 && !isLoading ? formatUsd(totalTokenPrice) : '$0.00';
 }
 
 function DestinationTokenCard({

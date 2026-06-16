@@ -20,6 +20,18 @@ export function formatDisplayAmount(atomicAmount: bigint, decimals: number): str
   return visibleFraction ? `${integerPart}.${visibleFraction}` : integerPart;
 }
 
+export function formatInputAmount(atomicAmount: bigint, decimals: number): string {
+  if (decimals <= 0) return atomicAmount.toString();
+
+  const divisor = 10n ** BigInt(decimals);
+  const integerPart = atomicAmount / divisor;
+  const fractionalPart = atomicAmount % divisor;
+  if (fractionalPart === 0n) return integerPart.toString();
+
+  const fraction = fractionalPart.toString().padStart(decimals, '0').replace(/0+$/, '');
+  return `${integerPart}.${fraction}`;
+}
+
 export function formatUsd(value: number, approximate = false): string {
   if (value < 0.01) return '<$0.01';
   const prefix = approximate ? '≈$' : '$';

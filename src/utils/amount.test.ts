@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { formatDisplayAmount } from './amount';
+import { formatDisplayAmount, formatInputAmount } from './amount';
 
 describe('formatDisplayAmount', () => {
   test('converts atomic units with token decimals before truncating', () => {
@@ -25,5 +25,20 @@ describe('formatDisplayAmount', () => {
     expect(formatDisplayAmount(12345678900000n, 18)).toBe('0.00001234');
     expect(formatDisplayAmount(123456789n, 18)).toBe('0.0000000001234');
     expect(formatDisplayAmount(1n, 18)).toBe('0.000000000000000001');
+  });
+});
+
+describe('formatInputAmount', () => {
+  test('formats exact input values without display rounding', () => {
+    expect(formatInputAmount(123456789123456789n, 18)).toBe('0.123456789123456789');
+    expect(formatInputAmount(123456700n, 6)).toBe('123.4567');
+  });
+
+  test('keeps tiny non-zero amounts non-zero', () => {
+    expect(formatInputAmount(1n, 18)).toBe('0.000000000000000001');
+  });
+
+  test('formats zero-decimal amounts', () => {
+    expect(formatInputAmount(123n, 0)).toBe('123');
   });
 });

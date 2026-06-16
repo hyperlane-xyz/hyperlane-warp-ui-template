@@ -20,7 +20,7 @@ import { TextField } from '../../components/input/TextField';
 import { TransferSection } from '../../components/layout/TransferSection';
 import { config } from '../../consts/config';
 import { Color } from '../../styles/Color';
-import { formatDisplayAmount } from '../../utils/amount';
+import { formatDisplayAmount, formatInputAmount } from '../../utils/amount';
 import { getQueryParams, updateQueryParams } from '../../utils/queryParams';
 import { useChains } from '../api/hooks';
 import type { TokensQuery } from '../api/types';
@@ -772,10 +772,7 @@ function OriginTokenCard({
         senderPubKey: await publicKey,
       });
       if (!maxAmount) return;
-      setFieldValue(
-        'amount',
-        new BigNumber(maxAmount.getDecimalFormattedAmount()).toFixed(6, BigNumber.ROUND_FLOOR),
-      );
+      setFieldValue('amount', formatInputAmount(maxAmount.amount, maxAmount.token.decimals));
     }
   };
 

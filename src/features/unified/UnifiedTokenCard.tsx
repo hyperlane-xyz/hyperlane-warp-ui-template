@@ -21,7 +21,11 @@ import { config } from '../../consts/config';
 import { formatDisplayAmount } from '../../utils/amount';
 import { updateQueryParams } from '../../utils/queryParams';
 import { useChains } from '../api/hooks';
-import { getDestinationNativeBalance, useOriginBalance } from '../balances/hooks';
+import {
+  getDestinationNativeBalance,
+  useDestinationBalance,
+  useOriginBalance,
+} from '../balances/hooks';
 import { ChainConnectionWarning } from '../chains/ChainConnectionWarning';
 import { ChainWalletWarning } from '../chains/ChainWalletWarning';
 import { useMultiProvider } from '../chains/hooks';
@@ -50,6 +54,7 @@ import { validateSwapForm } from '../swap/validate';
 import { useCollateralGroups, useTokenByKeyMap, useWarpCore } from '../tokens/hooks';
 import { ImportTokenButton } from '../tokens/ImportTokenButton';
 import { getTokenKey as getBridgeTokenKey } from '../tokens/utils';
+import { useRecipientBalanceWatcher } from '../transfer/useBalanceWatcher';
 import { useQuotedCallsFeeQuotes } from '../transfer/useQuotedCalls';
 import { useSmartContractRecipientWarning } from '../transfer/useSmartContractRecipientWarning';
 import { useTokenTransfer } from '../transfer/useTokenTransfer';
@@ -427,6 +432,7 @@ function UnifiedFormContent({
           bestRoute={bestRoute}
           bridgeQuote={bridgeQuote.data}
           isQuoteLoading={quote.isLoading || bridgeQuote.isLoading || bridgeQuote.isFetching}
+          recipient={effectiveRecipient}
         />
       </TransferSection>
 
@@ -761,6 +767,7 @@ function DestinationTokenCard({
   bestRoute,
   bridgeQuote,
   isQuoteLoading,
+  recipient,
 }: {
   token: UnifiedToken | undefined;
   tokenMap: Map<string, UnifiedToken>;
@@ -769,7 +776,15 @@ function DestinationTokenCard({
   bestRoute: AugmentedRoute | undefined;
   bridgeQuote: ExactInputBridgeTransferQuote | undefined;
   isQuoteLoading: boolean;
+  recipient: string;
 }) {
+  const destinationBalanceToken =
+    routeMode === UnifiedRouteMode.Bridge
+      ? (bridgeQuote?.connectedDestinationToken ?? token?.bridgeToken)
+      : undefined;
+  const { balance: destinationBalance } = useDestinationBalance(recipient, destinationBalanceToken);
+  useRecipientBalanceWatcher(recipient, destinationBalance);
+
   const output = useMemo(() => {
     if (!token) return '';
     if (routeMode === UnifiedRouteMode.Bridge && bridgeQuote) {
@@ -813,6 +828,16 @@ function DestinationTokenCard({
           value={output}
           className="transfer-text-output w-full flex-1 cursor-not-allowed border-none bg-transparent font-secondary text-xl font-normal text-gray-900 outline-none placeholder:text-gray-400 dark:text-foreground-primary dark:placeholder:text-foreground-secondary"
         />
+        {routeMode === UnifiedRouteMode.Bridge && (
+          <div className="transfer-balance mt-1 text-xs leading-[18px] text-gray-450 dark:text-foreground-secondary">
+            Remote Balance:{' '}
+            {destinationBalance
+              ? `${destinationBalance.getDecimalFormattedAmount().toFixed(4)} ${
+                  destinationBalance.token.symbol
+                }`
+              : '0.00'}
+          </div>
+        )}
       </div>
     </div>
   );

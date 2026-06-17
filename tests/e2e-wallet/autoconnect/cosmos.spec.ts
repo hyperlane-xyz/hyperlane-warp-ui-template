@@ -5,9 +5,8 @@ test.describe('Cosmos mock wallet: auto-connect', () => {
   test('connects to MockCosmosWallet and renders a shortened celestia bech32', async ({ page }) => {
     await openE2EApp(page);
 
-    // Switch origin to a Cosmos-origin warp route (TIA on celestia). TIA is
-    // not in the featured-tokens list, so the default picker view hides it
-    // behind the search input — type the chain name to surface it.
+    // Switch origin to a Cosmos-origin token. Type the chain name to surface
+    // it through engine token search.
     await page.getByTestId('token-select-origin').click();
     await page.getByText('Select Token').waitFor({ state: 'visible', timeout: 30_000 });
     await page.getByLabel('Search tokens').fill('celestia');

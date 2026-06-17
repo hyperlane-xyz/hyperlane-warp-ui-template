@@ -1,14 +1,15 @@
 import { test, expect } from '@playwright/test';
 import { config } from '../../src/consts/config';
+import { splitTokenId } from '../helpers/constants';
 import { getOriginTokenButton } from '../helpers/locators';
 
 // Match chain rows by the `data-chain` slug (what ChainList renders) instead of
 // reconstructing a displayName at test time.
-const defaultOriginChain = config.defaultOriginToken?.split('-')[0];
+const defaultOriginChain = splitTokenId(config.defaultSwapOriginToken)?.chainName;
 
 test.describe('Chain Selection - Filter by Type', () => {
   test('should filter chains by Testnet type', async ({ page }) => {
-    test.skip(!defaultOriginChain, 'No defaultOriginToken configured');
+    test.skip(!defaultOriginChain, 'No defaultSwapOriginToken configured');
 
     await page.goto('http://localhost:3000');
     await page.getByText('Send').first().waitFor({ state: 'visible' });
@@ -53,7 +54,7 @@ test.describe('Chain Selection - Filter by Type', () => {
   });
 
   test('should filter chains by Mainnet type', async ({ page }) => {
-    test.skip(!defaultOriginChain, 'No defaultOriginToken configured');
+    test.skip(!defaultOriginChain, 'No defaultSwapOriginToken configured');
 
     await page.goto('http://localhost:3000');
     await page.getByText('Send').first().waitFor({ state: 'visible' });

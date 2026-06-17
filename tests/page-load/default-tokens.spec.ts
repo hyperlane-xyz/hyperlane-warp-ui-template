@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { config } from '../../src/consts/config';
 import { getOriginTokenButton, getDestinationTokenButton } from '../helpers/locators';
+import { splitTokenId } from '../helpers/constants';
 
 test.describe('Page Load - Default Tokens', () => {
   test('should show config default origin and destination tokens if defined', async ({ page }) => {
@@ -9,18 +10,16 @@ test.describe('Page Load - Default Tokens', () => {
 
     const originButton = getOriginTokenButton(page);
     await expect(originButton).toBeVisible();
-    if (config.defaultOriginToken) {
-      const [originChain, originSymbol] = config.defaultOriginToken.split('-');
-      await expect(originButton).toHaveAttribute('data-chain', originChain);
-      await expect(originButton).toContainText(originSymbol);
+    const origin = splitTokenId(config.defaultSwapOriginToken);
+    if (origin) {
+      await expect(originButton).toHaveAttribute('data-chain', origin.chainName);
     }
 
     const destButton = getDestinationTokenButton(page);
     await expect(destButton).toBeVisible();
-    if (config.defaultDestinationToken) {
-      const [destChain, destSymbol] = config.defaultDestinationToken.split('-');
-      await expect(destButton).toHaveAttribute('data-chain', destChain);
-      await expect(destButton).toContainText(destSymbol);
+    const destination = splitTokenId(config.defaultSwapDestinationToken);
+    if (destination) {
+      await expect(destButton).toHaveAttribute('data-chain', destination.chainName);
     }
   });
 });

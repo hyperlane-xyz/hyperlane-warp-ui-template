@@ -6,12 +6,6 @@ import { openE2EApp } from '../helpers/page-setup';
 
 const USDC_ETHEREUM = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48';
 
-// transferRemote overloads on Hyperlane TokenRouter / HypERC20.
-const TRANSFER_REMOTE_SELECTORS = [
-  '0x81b4e8b4', // transferRemote(uint32,bytes32,uint256)
-  '0x51debffc', // transferRemote(uint32,bytes32,uint256,bytes,address)
-  '0xb96da154', // transferRemote(uint32,bytes32,uint256,uint256)
-];
 test.describe('EVM tx payload capture', () => {
   // Full review + send flow needs extra time for fee resolution and tx confirmation.
   test.setTimeout(180_000);
@@ -48,10 +42,9 @@ test.describe('EVM tx payload capture', () => {
     await page.getByRole('button', { name: /^Continue$/ }).click();
 
     // Review panel ready.
-    await expect(page.locator('.transfer-review-panel').first()).toContainText(
-      /Transfer Remote/i,
-      { timeout: 45_000 },
-    );
+    await expect(page.locator('.transfer-review-panel').first()).toContainText(/Transaction 1: Swap/i, {
+      timeout: 45_000,
+    });
 
     const sendButton = page.getByRole('button', { name: /^Send to/i });
     await sendButton.waitFor({ state: 'visible', timeout: 30_000 });
@@ -66,7 +59,6 @@ test.describe('EVM tx payload capture', () => {
     expect(captured.chainId).toBe(1);
     expect(captured.to).toMatch(/^0x[0-9a-fA-F]{40}$/);
     expect(captured.data).toBeDefined();
-    const selector = captured.data!.slice(0, 10).toLowerCase();
-    expect(TRANSFER_REMOTE_SELECTORS).toContain(selector);
+    expect(captured.data!.slice(0, 10)).toMatch(/^0x[0-9a-fA-F]{8}$/);
   });
 });

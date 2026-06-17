@@ -22,11 +22,7 @@ const EMPTY_VALUES: SwapFormValues = {
 //   ?destination=<chainName>&destinationToken=<0xAddress>
 //
 // Falls back to `config.defaultSwapOriginToken` /
-// `defaultSwapDestinationToken` when the URL has no override — mirrors
-// the bridge tab's defaultOriginToken / defaultDestinationToken pattern.
-//
-// The bridge tab still uses symbol-based URLs — they're independent
-// pages so the divergence is fine.
+// `defaultSwapDestinationToken` when the URL has no override.
 export function useFormInitialValues(): SwapFormValues {
   const ids = useMemo(() => {
     const out: string[] = [];

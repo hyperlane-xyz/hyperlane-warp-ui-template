@@ -26,7 +26,7 @@ test.describe('Cosmos same-symbol dedup', () => {
     await expect(origin).toContainText(/Celestia/i);
     // Destination must not be a cosmos chain — celestia's connections are all
     // EVM/Sealevel/Abstract. In particular it must not be stride (Stride TIA
-    // would be a different warp route entirely).
+    // would be a different engine route entirely).
     await expect(destination).not.toContainText(/Stride/i);
     await expect(destination).not.toContainText(/Celestia/i);
     const celestiaDestText = await destination.innerText();
@@ -49,7 +49,7 @@ test.describe('Cosmos same-symbol dedup', () => {
     const strideDestText = await destination.innerText();
 
     // Same-symbol correctness: the destination flipped because the underlying
-    // warp route differs — NOT because the chain label happened to re-render.
+    // engine route differs — NOT because the chain label happened to re-render.
     // If dedup were broken and stride TIA fell back to the celestia route,
     // both invocations would leave the destination button identical.
     expect(strideDestText).not.toBe(celestiaDestText);

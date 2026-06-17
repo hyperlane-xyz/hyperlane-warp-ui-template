@@ -20,12 +20,10 @@ test.describe('EVM destination router selection', () => {
     await expect(page.getByRole('button', { name: /Send to /i })).toBeVisible({
       timeout: 30_000,
     });
-    // Then wait for fee quotes to settle — the panel renders a spinner while
-    // isLoading=true, and the Transfer Remote section only mounts afterwards.
     const reviewPanel = page.locator('.transfer-review-panel').first();
-    await expect(reviewPanel).toContainText(/Remote Token/i, { timeout: 30_000 });
+    await expect(reviewPanel).toContainText(/Output Token/i, { timeout: 30_000 });
     const text = await reviewPanel.innerText();
-    return text.split('Remote Token')[1]?.match(REMOTE_ADDRESS_RE)?.[0];
+    return text.split('Output Token')[1]?.match(REMOTE_ADDRESS_RE)?.[0];
   }
 
   const rpcConfig = {
@@ -48,7 +46,7 @@ test.describe('EVM destination router selection', () => {
     },
   };
 
-  test('Base and Arbitrum destinations resolve distinct non-empty remote-token addresses', async ({
+  test('Base and Arbitrum destinations resolve distinct output token addresses', async ({
     page,
   }) => {
     test.setTimeout(180_000);

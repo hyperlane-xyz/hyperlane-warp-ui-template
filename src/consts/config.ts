@@ -14,7 +14,6 @@ const chainWalletWhitelists = JSON.parse(process.env.NEXT_PUBLIC_CHAIN_WALLET_WH
 const rpcOverrides = process.env.NEXT_PUBLIC_RPC_OVERRIDES || '';
 const explorerApiUrl =
   process.env.NEXT_PUBLIC_EXPLORER_API_URL || 'https://explorer4.hasura.app/v1/graphql';
-const feeQuotingUrl = process.env.NEXT_PUBLIC_FEE_QUOTING_URL || undefined;
 const relayApiUrl = process.env.NEXT_PUBLIC_RELAY_API_URL || undefined;
 const routerApiUrl =
   process.env.NEXT_PUBLIC_ROUTER_API_URL || 'https://router.services.hyperlane.xyz';
@@ -32,8 +31,6 @@ const defaultSlippageBps = Number(process.env.NEXT_PUBLIC_DEFAULT_SLIPPAGE_BPS |
 interface Config {
   addressBlacklist: string[]; // A list of addresses that are blacklisted and cannot be used in the app
   chainWalletWhitelists: ChainMap<string[]>; // A map of chain names to a list of wallet names that work for it
-  defaultOriginToken: string | undefined; // The initial origin token to show when app first loads (format: chainName-symbol, e.g. "ethereum-hyper")
-  defaultDestinationToken: string | undefined; // The initial destination token to show when app first loads (format: chainName-symbol, e.g. "bsc-hyper")
   enableExplorerLink: boolean; // Include a link to the hyperlane explorer in the transfer modal
   explorerApiUrl: string; // URL for the Hyperlane Explorer GraphQL API
   relayApiUrl: string | undefined; // Optional URL for the Hyperlane Relayer API
@@ -50,8 +47,6 @@ interface Config {
   rpcOverrides: string; // JSON string containing a map of chain names to an object with an URL for RPC overrides (For an example check the .env.example file)
   enableTrackingEvents: boolean; // Allow tracking events to happen on some actions;
   featuredChains: string[]; // Chains to pin at the top of the default chain picker sort
-  featuredTokens: string[]; // List of featured tokens to prioritize in token picker (format: "chainName-symbol")
-  feeQuotingUrl: string | undefined; // Offchain fee quoting service base URL
   routerApiUrl: string; // Universal Router Engine base URL (swap tab)
   ccsUrl: string; // Call Commitments Service base URL (cross-chain swap reveal)
   permit2ExpirationSeconds: number; // Default Permit2 allowance expiration (swap tab)
@@ -66,8 +61,6 @@ export const config: Config = Object.freeze({
   enableExplorerLink: true,
   explorerApiUrl,
   relayApiUrl,
-  defaultOriginToken: 'ethereum-USDC',
-  defaultDestinationToken: 'base-USDC',
   defaultSwapOriginToken: 'bsc-0x0000000000000000000000000000000000000000',
   defaultSwapDestinationToken: 'base-0x0000000000000000000000000000000000000000',
   isDevMode,
@@ -90,7 +83,6 @@ export const config: Config = Object.freeze({
   shouldDisableChains: false,
   rpcOverrides,
   enableTrackingEvents: false,
-  feeQuotingUrl,
   routerApiUrl,
   ccsUrl,
   permit2ExpirationSeconds,
@@ -111,65 +103,5 @@ export const config: Config = Object.freeze({
     'eclipsemainnet',
     'ink',
     'monad',
-  ],
-  featuredTokens: [
-    // USDC
-    'arbitrum-USDC',
-    'avalanche-USDC',
-    'base-USDC',
-    'eclipsemainnet-USDC',
-    'ethereum-USDC',
-    'hyperevm-USDC',
-    'ink-USDC',
-    'linea-USDC',
-    'monad-USDC',
-    'optimism-USDC',
-    'polygon-USDC',
-    'solanamainnet-USDC',
-    'unichain-USDC',
-    'worldchain-USDC',
-
-    // ETH
-    'arbitrum-ETH',
-    'base-ETH',
-    'ethereum-ETH',
-    'optimism-ETH',
-    'hyperevm-ETH',
-
-    // USDT
-    'eclipsemainnet-USDT',
-    'ethereum-USDT',
-    'solanamainnet-USDT',
-    'hyperevm-USDT',
-    'aleo-USDT',
-    'bsc-USDT',
-    'matchain-USDT',
-
-    // SOL
-    'eclipsemainnet-SOL',
-    'solanamainnet-SOL',
-    'aleo-SOL',
-    'hyperevm-SOL',
-    'radix-hSOL',
-    'sonicsvm-SOL',
-    'starknet-SOL',
-
-    // WBTC
-    'eclipsemainnet-WBTC',
-    'ethereum-WBTC',
-    'hyperevm-WBTC',
-    'radix-hWBTC',
-    'aleo-WBTC',
-
-    // HYPER
-    'arbitrum-HYPER',
-    'base-HYPER',
-    'bsc-HYPER',
-    'ethereum-HYPER',
-    'optimism-HYPER',
-
-    // stHYPER
-    'bsc-stHYPER',
-    'ethereum-stHYPER',
   ],
 });

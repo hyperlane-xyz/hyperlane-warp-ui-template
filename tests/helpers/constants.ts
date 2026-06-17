@@ -29,7 +29,7 @@ export function resolveTestTokenParams(): {
   };
 }
 
-function splitTokenId(id: string | undefined): { chainName: string; address: string } | null {
+export function splitTokenId(id: string | undefined): { chainName: string; address: string } | null {
   if (!id) return null;
   const separator = id.indexOf('-');
   if (separator === -1) return null;

@@ -1,6 +1,6 @@
 import { fromWei } from '@hyperlane-xyz/utils';
 import { useDebounce } from '@hyperlane-xyz/widgets';
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { TokenChainIcon } from '../../../components/icons/TokenChainIcon';
 import { formatBalance, formatUsd } from '../../../utils/amount';
@@ -22,7 +22,9 @@ import {
 import { getUnifiedBridgeTokens } from './routes';
 import type { UnifiedToken } from './types';
 
-const BALANCE_FETCH_LIMIT = 50;
+const INITIAL_BALANCE_FETCH_LIMIT = 50;
+const BALANCE_FETCH_INCREMENT = 50;
+const BALANCE_FETCH_SCROLL_THRESHOLD_PX = 120;
 
 function matchesSearch(
   token: UnifiedToken,
@@ -69,6 +71,7 @@ export function TokenList({
   const debouncedSearch = useDebounce(searchQuery, 300);
   const trimmedSearch = debouncedSearch?.trim().toLowerCase() || undefined;
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [balanceFetchLimit, setBalanceFetchLimit] = useState(INITIAL_BALANCE_FETCH_LIMIT);
   const collateralGroups = useCollateralGroups();
 
   const { data: fetched, isLoading } = useUnifiedTokens({
@@ -110,8 +113,8 @@ export function TokenList({
 
   const addressOverride = selectionMode === 'destination' ? recipient : undefined;
   const balanceSourceTokens = useMemo(
-    () => routeSortedTokens.slice(0, BALANCE_FETCH_LIMIT),
-    [routeSortedTokens],
+    () => routeSortedTokens.slice(0, balanceFetchLimit),
+    [routeSortedTokens, balanceFetchLimit],
   );
   const bridgeBalanceTokens = useMemo(
     () =>
@@ -181,7 +184,21 @@ export function TokenList({
 
   useEffect(() => {
     scrollRef.current?.scrollTo(0, 0);
-  }, [searchQuery, chainFilter]);
+    setBalanceFetchLimit(INITIAL_BALANCE_FETCH_LIMIT);
+  }, [searchQuery, chainFilter, chainIdFilter, selectionMode, counterpartToken?.key]);
+
+  const maybeFetchMoreBalances = useCallback(
+    (event: React.UIEvent<HTMLDivElement>) => {
+      const target = event.currentTarget;
+      const distanceFromBottom = target.scrollHeight - target.scrollTop - target.clientHeight;
+      if (distanceFromBottom > BALANCE_FETCH_SCROLL_THRESHOLD_PX) return;
+
+      setBalanceFetchLimit((current) =>
+        Math.min(current + BALANCE_FETCH_INCREMENT, routeSortedTokens.length),
+      );
+    },
+    [routeSortedTokens.length],
+  );
 
   if (tokens.length === 0) {
     return (
@@ -196,7 +213,7 @@ export function TokenList({
 
   return (
     <div className="relative flex-1 overflow-hidden">
-      <div ref={scrollRef} className="h-full overflow-auto">
+      <div ref={scrollRef} className="h-full overflow-auto" onScroll={maybeFetchMoreBalances}>
         <div className="token-picker-header sticky top-0 z-10 border-b border-primary-50 bg-white px-4 pb-2 pt-2">
           <h3 className={`${styles.base} text-sm text-black`}>Token Selection</h3>
         </div>

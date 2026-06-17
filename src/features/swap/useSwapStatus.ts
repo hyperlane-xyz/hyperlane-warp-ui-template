@@ -15,7 +15,7 @@ type ReceiptProvider = {
   ): Promise<{ logs: Array<{ topics: string[]; address: string }> } | null>;
 };
 
-async function detectSwapOutcome(
+export async function detectSwapOutcome(
   provider: ReceiptProvider,
   destinationTxHash: string,
   recipient: string,

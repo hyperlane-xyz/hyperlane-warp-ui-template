@@ -9,6 +9,7 @@ test.describe('Page Load - Unified Form', () => {
     await waitForUnifiedForm(page);
 
     await expect(page.getByText('Route: bridge')).toBeVisible();
+    await expect(page.getByText('Bridge only')).not.toBeVisible();
     await expect(page.getByText('Remote Balance:')).toBeVisible();
   });
 

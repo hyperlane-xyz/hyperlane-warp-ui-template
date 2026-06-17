@@ -523,7 +523,6 @@ function UnifiedFormContent({
       <div className="mb-2 mt-2 flex items-center justify-between px-1 text-xs text-gray-500">
         <span>{routeMode ? `Route: ${routeMode}` : 'No route available'}</span>
         {routeMode === UnifiedRouteMode.Swap && <SlippageControl />}
-        {!engineEnabled && <span>Bridge only</span>}
       </div>
       {routeMode === UnifiedRouteMode.Swap && (
         <RouteSelector

@@ -46,7 +46,7 @@ export function useTokenBalances(
       filteredProtocol,
       filteredChainId,
       userAddress,
-      filtered.map((t) => t.address.toLowerCase()).join(','),
+      filtered.map(getTokenKey).join(','),
     ],
     queryFn: () =>
       dispatchChainBalances(
@@ -89,7 +89,7 @@ export function useTokenBalances(
           protocol,
           chainId,
           userAddress,
-          chainTokens.map((t) => t.address.toLowerCase()).join(','),
+          chainTokens.map(getTokenKey).join(','),
         ],
         queryFn: async (): Promise<Record<string, bigint>> => {
           if (!protocol || !userAddress) return {};
@@ -142,7 +142,7 @@ export function useTokenBalance(token: UiToken | undefined, addressOverride?: st
   const protocol = token ? multiProvider.tryGetProtocol(token.chainName) : null;
 
   return useQuery({
-    queryKey: ['balance', protocol, token?.chainId, token?.address.toLowerCase(), userAddress],
+    queryKey: ['balance', protocol, token ? getTokenKey(token) : null, userAddress],
     queryFn: async () => {
       if (!token || !userAddress || !protocol) return null;
       const balances = await dispatchChainBalances(

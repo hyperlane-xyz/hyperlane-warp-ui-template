@@ -12,7 +12,7 @@ vi.mock('@hyperlane-xyz/sdk', async (importOriginal) => ({
 vi.stubEnv('FEE_QUOTING_API_KEY', 'test-api-key');
 vi.stubEnv('NEXT_PUBLIC_FEE_QUOTING_URL', 'https://quoting.test');
 
-const { default: handler } = await import('./quote');
+const { default: handler } = await import('../pages/api/quote');
 
 function mockReqRes(method: string, query: Record<string, string> = {}) {
   const req = { method, query } as any;

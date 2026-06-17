@@ -13,6 +13,7 @@ import { FeeBreakdownModal } from './FeeBreakdownModal';
 import { getTokenByKeyFromMap, useTokenByKeyMap } from './tokens/hooks';
 import type { UiToken } from './tokens/types';
 import { useTokenPricesByIds } from './tokens/useTokenPrice';
+import { tokenKey } from './tokens/utils';
 import type { FeeBreakdown, FeeComponent } from './types';
 
 interface Props {
@@ -92,7 +93,7 @@ function formatTotalFee(
 ): string {
   const groups = new Map<string, { amount: bigint; decimals: number; symbol: string }>();
   for (const c of components) {
-    const key = `${c.chainId}-${c.tokenAddress.toLowerCase()}`;
+    const key = tokenKey(c.chainId, c.tokenAddress);
     const existing = groups.get(key);
     if (existing) {
       existing.amount += c.amount;
@@ -119,10 +120,7 @@ function resolveTokenMeta(
       symbol: meta?.nativeToken?.symbol ?? 'ETH',
     };
   }
-  const ui = getTokenByKeyFromMap(
-    tokenMap,
-    `${component.chainId}-${component.tokenAddress.toLowerCase()}`,
-  );
+  const ui = getTokenByKeyFromMap(tokenMap, tokenKey(component.chainId, component.tokenAddress));
   return {
     decimals: ui?.decimals ?? 18,
     symbol: ui?.symbol ?? '???',

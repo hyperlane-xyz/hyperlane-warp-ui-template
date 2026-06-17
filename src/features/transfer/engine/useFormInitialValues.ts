@@ -76,13 +76,13 @@ function readInitialIds(): { originId: string | undefined; destinationId: string
 
 function idFromParams(chain: string | null, token: string | null): string | undefined {
   if (!chain || !token) return undefined;
-  return `${chain}-${token.toLowerCase()}`;
+  return `${chain}-${token}`;
 }
 
 function normalizeId(id: string | undefined): string | undefined {
-  return id ? id.toLowerCase() : undefined;
+  return id;
 }
 
 function matchesId(t: { chainName: string; address: string }, id: string): boolean {
-  return `${t.chainName}-${t.address.toLowerCase()}` === id;
+  return `${t.chainName}-${t.address}` === id;
 }

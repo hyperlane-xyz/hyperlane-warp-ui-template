@@ -35,6 +35,7 @@ import { getTokenByKeyFromMap, useTokenByKeyMap } from './tokens/hooks';
 import { TokenSelectField } from './tokens/TokenSelectField';
 import type { UiToken } from './tokens/types';
 import { useTokenPrices, useTokenUsdValue } from './tokens/useTokenPrice';
+import { tokenKey } from './tokens/utils';
 import {
   FinalSwapStatuses,
   SwapStatus,
@@ -95,11 +96,11 @@ function SwapFormContent() {
 
   const srcTokenKey =
     values.srcChain != null && values.srcToken
-      ? `${values.srcChain}-${values.srcToken.toLowerCase()}`
+      ? tokenKey(values.srcChain, values.srcToken)
       : undefined;
   const dstTokenKey =
     values.dstChain != null && values.dstToken
-      ? `${values.dstChain}-${values.dstToken.toLowerCase()}`
+      ? tokenKey(values.dstChain, values.dstToken)
       : undefined;
   const srcToken = getTokenByKeyFromMap(tokenMap, srcTokenKey);
   const dstToken = getTokenByKeyFromMap(tokenMap, dstTokenKey);
@@ -837,7 +838,7 @@ function ReviewTransactions({
                 : undefined;
               const componentToken = isNative
                 ? undefined
-                : getTokenByKeyFromMap(tokenMap, `${c.chainId}-${c.tokenAddress.toLowerCase()}`);
+                : getTokenByKeyFromMap(tokenMap, tokenKey(c.chainId, c.tokenAddress));
               const decimals = isNative
                 ? (nativeMeta?.decimals ?? 18)
                 : (componentToken?.decimals ?? 18);

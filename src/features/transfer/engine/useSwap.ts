@@ -49,29 +49,28 @@ export function useSwap() {
 
   const execute = useCallback(
     async (args: ExecuteArgs) => {
+      const { transactionId, route, srcChainId } = args;
       setError(null);
       setIsPending(true);
 
-      const { transactionId, route, srcChainId } = args;
-
-      const routeTxs = route.raw.txs?.length ? route.raw.txs : route.raw.tx ? [route.raw.tx] : [];
-      if (!routeTxs.length) throw new Error('Route has no tx');
-
-      // Store route for status polling and recovery (non-persisted, session only).
-      setSwapRoute(transactionId, route.raw);
-
-      const srcChainName = multiProvider.tryGetChainName(srcChainId);
-      const protocol = multiProvider.tryGetProtocol(srcChainId);
-      if (!srcChainName || !protocol) {
-        throw new Error(`No SDK metadata for chain ${srcChainId} — boot may not have completed.`);
-      }
-
-      const fns = transactionFns[protocol as keyof typeof transactionFns];
-      if (!fns) throw new Error(`No transaction handler for protocol ${protocol}`);
-
-      const txType = protocol === ProtocolType.Tron ? ProviderType.Tron : ProviderType.EthersV5;
-
       try {
+        const routeTxs = route.raw.txs?.length ? route.raw.txs : route.raw.tx ? [route.raw.tx] : [];
+        if (!routeTxs.length) throw new Error('Route has no tx');
+
+        // Store route for status polling and recovery (non-persisted, session only).
+        setSwapRoute(transactionId, route.raw);
+
+        const srcChainName = multiProvider.tryGetChainName(srcChainId);
+        const protocol = multiProvider.tryGetProtocol(srcChainId);
+        if (!srcChainName || !protocol) {
+          throw new Error(`No SDK metadata for chain ${srcChainId} — boot may not have completed.`);
+        }
+
+        const fns = transactionFns[protocol as keyof typeof transactionFns];
+        if (!fns) throw new Error(`No transaction handler for protocol ${protocol}`);
+
+        const txType = protocol === ProtocolType.Tron ? ProviderType.Tron : ProviderType.EthersV5;
+
         if (fns.switchNetwork) {
           try {
             await fns.switchNetwork(srcChainName);

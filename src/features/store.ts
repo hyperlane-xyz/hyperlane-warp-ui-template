@@ -338,20 +338,22 @@ async function initAppContext({
   chainMetadataOverrides: ChainMap<Partial<ChainMetadata> | undefined>;
 }): Promise<AppContext> {
   let currentRegistry = registry;
-  try {
-    // Pre-load registry content to avoid repeated requests
-    await currentRegistry.listRegistryContent();
-  } catch (error) {
-    // Lazy-load the published constants so they stay out of the initial bundle
-    const { chainAddresses, chainMetadata } = await import('@hyperlane-xyz/registry');
-    currentRegistry = new PartialRegistry({
-      chainAddresses,
-      chainMetadata,
-    });
-    logger.warn(
-      'Failed to list registry content using GithubRegistry, will continue with PartialRegistry.',
-      error,
-    );
+  if (config.registryUrl) {
+    try {
+      // Pre-load real custom registry content to avoid repeated requests.
+      await currentRegistry.listRegistryContent();
+    } catch (error) {
+      // Lazy-load the published constants so they stay out of the initial bundle.
+      const { chainAddresses, chainMetadata } = await import('@hyperlane-xyz/registry');
+      currentRegistry = new PartialRegistry({
+        chainAddresses,
+        chainMetadata,
+      });
+      logger.warn(
+        'Failed to list registry content using GithubRegistry, will continue with PartialRegistry.',
+        error,
+      );
+    }
   }
 
   try {

@@ -5,6 +5,7 @@ import { bytesToHex, parseUnits, type Hex } from 'viem';
 import { routerClient } from '../../api/RouterClient';
 import type { QuoteResponse, RouteResponse } from '../../api/types';
 import { useTokens } from './tokens/hooks';
+import { tokenKey } from './tokens/utils';
 import type {
   AugmentedQuote,
   AugmentedRoute,
@@ -41,7 +42,9 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
 
   const { data: srcTokens } = useTokens(values.srcChain != null ? { chain: values.srcChain } : {});
   const srcTokenInfo = srcTokens.find(
-    (t) => t.address.toLowerCase() === values.srcToken.toLowerCase(),
+    (t) =>
+      values.srcChain != null &&
+      tokenKey(t.chainId, t.address) === tokenKey(values.srcChain, values.srcToken),
   );
 
   const amountAtomic = useMemo(() => {

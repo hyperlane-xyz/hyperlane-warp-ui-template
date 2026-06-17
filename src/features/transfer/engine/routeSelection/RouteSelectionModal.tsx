@@ -11,6 +11,7 @@ import { formatDisplayAmount, formatFeeAmount } from '../balances/utils';
 import { getDexMeta } from '../dexMeta';
 import { getTokenByKeyFromMap, useTokenByKeyMap } from '../tokens/hooks';
 import type { UiToken } from '../tokens/types';
+import { tokenKey } from '../tokens/utils';
 import type { AugmentedRoute } from '../types';
 import { useRouteChainTokens } from './hooks';
 import { buildFlowNodes, computeRate, formatStepAmount, formatWarpRouteId } from './utils';
@@ -147,10 +148,7 @@ function RouteFlowDiagram({ steps, dstToken }: { steps: QuoteStep[]; dstToken?: 
   // Resolve all node tokens upfront so step edges can receive their tokenOut
   // directly rather than re-looking it up (avoids misses for dest-chain tokens).
   const resolvedTokens: (UiToken | null)[] = nodes.map((node, i) => {
-    const found = getTokenByKeyFromMap(
-      tokenMap,
-      `${node.chainId}-${node.tokenAddress.toLowerCase()}`,
-    );
+    const found = getTokenByKeyFromMap(tokenMap, tokenKey(node.chainId, node.tokenAddress));
     if (found) return found;
     if (i === lastIdx && dstToken) return dstToken;
     return null;
@@ -260,11 +258,10 @@ function SwapEdge({
   resolvedTokenOut: UiToken | null;
 }) {
   const meta = getDexMeta(step.dex);
-  const tokenIn = getTokenByKeyFromMap(tokenMap, `${step.chain}-${step.tokenIn.toLowerCase()}`);
+  const tokenIn = getTokenByKeyFromMap(tokenMap, tokenKey(step.chain, step.tokenIn));
   // Use the pre-resolved output token (which already has dstToken applied as fallback).
   const tokenOut =
-    getTokenByKeyFromMap(tokenMap, `${step.chain}-${step.tokenOut.toLowerCase()}`) ??
-    resolvedTokenOut;
+    getTokenByKeyFromMap(tokenMap, tokenKey(step.chain, step.tokenOut)) ?? resolvedTokenOut;
 
   const decimalsIn = tokenIn?.decimals ?? 18;
   const decimalsOut = tokenOut?.decimals ?? 18;
@@ -351,19 +348,16 @@ function BridgeEdge({
   stepIndex: number;
   steps: QuoteStep[];
 }) {
-  const asset = getTokenByKeyFromMap(tokenMap, `${step.chain}-${step.asset.toLowerCase()}`);
-  const igpToken = getTokenByKeyFromMap(
-    tokenMap,
-    `${step.chain}-${step.fee.igpToken.toLowerCase()}`,
-  );
+  const asset = getTokenByKeyFromMap(tokenMap, tokenKey(step.chain, step.asset));
+  const igpToken = getTokenByKeyFromMap(tokenMap, tokenKey(step.chain, step.fee.igpToken));
 
   // Use next swap step's tokenIn decimals for amountOut if available (dest-chain address).
   const nextStep = steps[stepIndex + 1];
   const destAsset =
     nextStep?.type === 'swap'
-      ? getTokenByKeyFromMap(tokenMap, `${step.destChain}-${nextStep.tokenIn.toLowerCase()}`)
+      ? getTokenByKeyFromMap(tokenMap, tokenKey(step.destChain, nextStep.tokenIn))
       : nextStep?.type === 'bridge'
-        ? getTokenByKeyFromMap(tokenMap, `${step.destChain}-${nextStep.asset.toLowerCase()}`)
+        ? getTokenByKeyFromMap(tokenMap, tokenKey(step.destChain, nextStep.asset))
         : asset;
 
   const amountIn = formatStepAmount(step.amountIn, asset?.decimals ?? 18);

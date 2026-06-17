@@ -47,7 +47,24 @@ export async function fetchEvmChainBalances(
         if (r.status === 'success') out[getTokenKey(t)] = r.result as bigint;
       });
     } catch (err) {
-      logger.warn('multicall balanceOf failed; skipping ERC20 balances', err as Error);
+      logger.warn(
+        'multicall balanceOf failed; falling back to individual ERC20 reads',
+        err as Error,
+      );
+      await Promise.all(
+        erc20.map(async (t) => {
+          try {
+            out[getTokenKey(t)] = (await client.readContract({
+              address: t.address as Address,
+              abi: erc20Abi,
+              functionName: 'balanceOf',
+              args: [userAddress],
+            })) as bigint;
+          } catch (readErr) {
+            logger.warn(`balanceOf failed for ${t.symbol} on ${t.chainName}`, readErr as Error);
+          }
+        }),
+      );
     }
   }
 

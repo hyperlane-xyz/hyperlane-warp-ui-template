@@ -7,6 +7,7 @@ import { getChainDisplayName } from '../../chains/utils';
 import { formatFeeAmount } from './balances/utils';
 import { getTokenByKeyFromMap, useTokenByKeyMap } from './tokens/hooks';
 import type { UiToken } from './tokens/types';
+import { tokenKey } from './tokens/utils';
 import type { FeeBreakdown, FeeComponent } from './types';
 
 interface Props {
@@ -33,7 +34,7 @@ export function FeeBreakdownModal({ isOpen, close, feeBreakdown }: Props) {
   const rows = feeBreakdown.components
     .filter((c) => c.amount > 0n)
     .map((c, i) => ({
-      key: `${c.category}-${c.chainId}-${c.tokenAddress.toLowerCase()}-${i}`,
+      key: `${c.category}-${tokenKey(c.chainId, c.tokenAddress)}-${i}`,
       component: c,
       meta: resolveTokenMeta(c, tokenMap, multiProvider),
     }));
@@ -103,10 +104,7 @@ function resolveTokenMeta(
       chainName,
     };
   }
-  const ui = getTokenByKeyFromMap(
-    tokenMap,
-    `${component.chainId}-${component.tokenAddress.toLowerCase()}`,
-  );
+  const ui = getTokenByKeyFromMap(tokenMap, tokenKey(component.chainId, component.tokenAddress));
   return {
     decimals: ui?.decimals ?? 18,
     symbol: ui?.symbol ?? '???',

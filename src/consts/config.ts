@@ -5,8 +5,12 @@ import { ADDRESS_BLACKLIST } from './blacklist';
 
 const isDevMode = process.env.NODE_ENV === 'development';
 const version = process.env.NEXT_PUBLIC_VERSION || '2.0.0';
-const registryUrl = process.env.NEXT_PUBLIC_REGISTRY_URL || undefined;
 const registryBranch = process.env.NEXT_PUBLIC_REGISTRY_BRANCH || undefined;
+const rawRegistryUrl = process.env.NEXT_PUBLIC_REGISTRY_URL || undefined;
+const canonicalRegistryUrl = 'https://github.com/hyperlane-xyz/hyperlane-registry';
+const isCanonicalRegistry =
+  rawRegistryUrl === canonicalRegistryUrl && (!registryBranch || registryBranch === 'main');
+const registryUrl = isCanonicalRegistry ? undefined : rawRegistryUrl;
 const registryProxyUrl = process.env.NEXT_PUBLIC_GITHUB_PROXY || 'https://proxy.hyperlane.xyz';
 const walletConnectProjectId = process.env.NEXT_PUBLIC_WALLET_CONNECT_ID || '';
 const transferBlacklist = process.env.NEXT_PUBLIC_TRANSFER_BLACKLIST || '';

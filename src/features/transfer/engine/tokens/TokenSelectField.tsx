@@ -11,6 +11,7 @@ import type { SwapFormValues } from '../types';
 import { getTokenByKeyFromMap, useTokenByKeyMap } from './hooks';
 import type { TokenSelectionMode, UiToken } from './types';
 import { UnifiedTokenChainModal } from './UnifiedTokenChainModal';
+import { tokenKey } from './utils';
 
 type Props = {
   selectionMode: TokenSelectionMode;
@@ -34,11 +35,11 @@ export function TokenSelectField({ selectionMode, disabled }: Props) {
 
   const selectedKey =
     values[chainField] != null && values[tokenField]
-      ? `${values[chainField]}-${values[tokenField].toLowerCase()}`
+      ? tokenKey(values[chainField], values[tokenField])
       : undefined;
   const counterpartKey =
     values[counterpartChainField] != null && values[counterpartTokenField]
-      ? `${values[counterpartChainField]}-${values[counterpartTokenField].toLowerCase()}`
+      ? tokenKey(values[counterpartChainField], values[counterpartTokenField])
       : undefined;
 
   const selectedToken = getTokenByKeyFromMap(tokenMap, selectedKey);

@@ -7,12 +7,14 @@ import { getTransferToken } from '../transfer/fees';
 import { UnifiedRouteMode } from './tokens/routes';
 import {
   getInitialUnifiedTokenQuery,
+  getKnownTotalFees,
   getUnifiedSwapIntentKey,
   hydrateInitialUnifiedTokenKeys,
   validateUnifiedBridgeTransfer,
 } from './UnifiedTokenCard';
 
-vi.mock('../transfer/fees', () => ({
+vi.mock('../transfer/fees', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../transfer/fees')>()),
   getTransferToken: vi.fn(),
 }));
 
@@ -111,6 +113,20 @@ describe('getUnifiedSwapIntentKey', () => {
   test('uses an empty key outside swap mode', () => {
     expect(getUnifiedSwapIntentKey(UnifiedRouteMode.Bridge, values, '0xrecipient')).toBe('');
     expect(getUnifiedSwapIntentKey(null, values, '0xrecipient')).toBe('');
+  });
+});
+
+describe('getKnownTotalFees', () => {
+  test('keeps known interchain fees when local gas is unknown', () => {
+    const token = createMockToken();
+
+    const fees = getKnownTotalFees({
+      interchainQuote: token.amount(100n),
+      tokenFeeQuote: token.amount(50n),
+    });
+
+    expect(fees).toHaveLength(1);
+    expect(fees[0].amount).toBe(150n);
   });
 });
 

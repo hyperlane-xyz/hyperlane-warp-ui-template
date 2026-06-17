@@ -1,4 +1,4 @@
-import { Token, WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
+import { Token, TokenAmount, WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
 import { isNullish } from '@hyperlane-xyz/utils';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
@@ -9,6 +9,11 @@ const FEE_PRICE_REFRESH_INTERVAL = 300_000; // 5 min, matches PRICE_STALE_TIME
 
 // Maps fee token symbol to its CoinGecko USD price
 export type FeePrices = Record<string, number>;
+type FeeEstimateLike = {
+  localQuote?: TokenAmount;
+  interchainQuote?: TokenAmount;
+  tokenFeeQuote?: TokenAmount;
+};
 
 // SDK fee tokens lack coinGeckoId. Resolve it by matching against warp core
 // tokens which carry coinGeckoId from config.
@@ -36,7 +41,7 @@ function resolveCoinGeckoId(
  * then fetches only the missing ones from CoinGecko.
  */
 export function useFeePrices(
-  fees: WarpCoreFeeEstimate | null,
+  fees: FeeEstimateLike | null,
   knownTokens: Token[],
   batchPrices: Record<string, number>,
 ): FeePrices {

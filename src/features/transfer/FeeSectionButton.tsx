@@ -7,6 +7,11 @@ import { FeePrices } from '../balances/useFeePrices';
 import { formatUsd } from '../balances/utils';
 import { TransferFeeModal } from './TransferFeeModal';
 
+export type DisplayFeeEstimate = Omit<WarpCoreFeeEstimate, 'localQuote'> & {
+  localQuote?: WarpCoreFeeEstimate['localQuote'];
+  totalFees: string;
+};
+
 function useLoadingDots(isLoading: boolean, intervalMs = 1000) {
   const [dotCount, setDotCount] = useState(1);
 
@@ -34,7 +39,7 @@ export function FeeSectionButton({
 }: {
   isLoading: boolean;
   isError: boolean;
-  fees: (WarpCoreFeeEstimate & { totalFees: string }) | null;
+  fees: DisplayFeeEstimate | null;
   feePrices: FeePrices;
   transferUsd: number;
 }) {

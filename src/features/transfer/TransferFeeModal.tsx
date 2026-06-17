@@ -6,6 +6,10 @@ import { links } from '../../consts/links';
 import { UsdLabel } from '../balances/UsdLabel';
 import { FeePrices } from '../balances/useFeePrices';
 
+type DisplayFeeEstimate = Omit<WarpCoreFeeEstimate, 'localQuote'> & {
+  localQuote?: WarpCoreFeeEstimate['localQuote'];
+};
+
 export function TransferFeeModal({
   isOpen,
   close,
@@ -15,7 +19,7 @@ export function TransferFeeModal({
 }: {
   isOpen: boolean;
   close: () => void;
-  fees: WarpCoreFeeEstimate | null;
+  fees: DisplayFeeEstimate | null;
   isLoading: boolean;
   feePrices: FeePrices;
 }) {

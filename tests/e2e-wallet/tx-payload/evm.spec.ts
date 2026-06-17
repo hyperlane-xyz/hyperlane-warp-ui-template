@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { MOCK_EVM_ADDRESS } from '../helpers/constants';
 import { installEvmRpcMock } from '../helpers/evmRpc';
-import { enterAmount } from '../helpers/formFlow';
+import { clickContinue, enterAmount } from '../helpers/formFlow';
 import { openE2EApp } from '../helpers/page-setup';
 
 const USDC_ETHEREUM = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48';
@@ -45,7 +45,7 @@ test.describe('EVM tx payload capture', () => {
     await expect(page.getByText('0xe2e...e2ee').first()).toBeVisible({ timeout: 20_000 });
 
     await enterAmount(page, '1');
-    await page.getByRole('button', { name: /^Continue$/ }).click();
+    await clickContinue(page);
 
     // Review panel ready.
     const reviewPanel = page.locator('.transfer-review-panel').first();

@@ -1,4 +1,4 @@
-import { Token, type WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
+import { Token, type TokenAmount } from '@hyperlane-xyz/sdk';
 import { errorToString, fromWei, isNullish, toWei } from '@hyperlane-xyz/utils';
 import { ChevronIcon, SpinnerIcon, useDebounce, useModal } from '@hyperlane-xyz/widgets';
 import {
@@ -64,7 +64,7 @@ import { ImportTokenButton } from '../tokens/ImportTokenButton';
 import { useTokenPrices as useBridgeTokenPrices } from '../tokens/useTokenPrice';
 import { getTokenKey as getBridgeTokenKey } from '../tokens/utils';
 import { getTotalFee } from '../transfer/fees';
-import { FeeSectionButton } from '../transfer/FeeSectionButton';
+import { FeeSectionButton, type DisplayFeeEstimate } from '../transfer/FeeSectionButton';
 import { useRecipientBalanceWatcher } from '../transfer/useBalanceWatcher';
 import { useQuotedCallsFeeQuotes } from '../transfer/useQuotedCalls';
 import { useSmartContractRecipientWarning } from '../transfer/useSmartContractRecipientWarning';
@@ -544,7 +544,7 @@ function UnifiedFormContent({
       {routeMode === UnifiedRouteMode.Bridge && (
         <div
           className={`gap-2 bg-amber-400 px-4 text-sm ${
-            showRecipientWarning ? 'max-h-38 py-2' : 'max-h-0'
+            showRecipientWarning ? 'max-h-56 py-2' : 'max-h-0'
           } overflow-hidden transition-all duration-500`}
         >
           <RecipientWarningBanner
@@ -853,19 +853,33 @@ function getBridgeFeeItems(
 function getBridgeFeeEstimate(
   quote: ExactInputBridgeTransferQuote | undefined,
   quotedCalls: ReturnType<typeof useQuotedCallsFeeQuotes>,
-): (WarpCoreFeeEstimate & { totalFees: string }) | null {
+): DisplayFeeEstimate | null {
   const interchainQuote = quotedCalls.fees?.interchainQuote ?? quote?.interchainQuote;
   if (!interchainQuote) return null;
 
   const localQuote = quotedCalls.fees?.localQuote;
-  if (!localQuote) return null;
-
   const tokenFeeQuote = quotedCalls.fees?.tokenFeeQuote ?? quote?.tokenFeeQuote;
-  const totalFees = getTotalFee({ localQuote, interchainQuote, tokenFeeQuote })
+  const totalFees = getKnownTotalFees({ localQuote, interchainQuote, tokenFeeQuote })
     .map((fee) => `${fee.getDecimalFormattedAmount().toFixed(8)} ${fee.token.symbol}`)
     .join(', ');
 
   return { localQuote, interchainQuote, tokenFeeQuote, totalFees };
+}
+
+export function getKnownTotalFees({
+  localQuote,
+  interchainQuote,
+  tokenFeeQuote,
+}: {
+  localQuote?: TokenAmount;
+  interchainQuote: TokenAmount;
+  tokenFeeQuote?: TokenAmount;
+}): TokenAmount[] {
+  return getTotalFee({
+    localQuote: localQuote ?? interchainQuote.token.amount(0n),
+    interchainQuote,
+    tokenFeeQuote,
+  });
 }
 
 function getBridgeTransferUsd(
@@ -1279,9 +1293,16 @@ export async function validateUnifiedBridgeTransfer({
     return { form: errorToString(error, 40) };
   }
 
+  const quotedBridgeTokenMap = new Map(bridgeTokenMap);
+  quotedBridgeTokenMap.set(getBridgeTokenKey(quote.routeToken), quote.routeToken);
+  quotedBridgeTokenMap.set(
+    getBridgeTokenKey(quote.connectedDestinationToken),
+    quote.connectedDestinationToken,
+  );
+
   const [errors] = await validateBridgeTransferForm(
     warpCore,
-    bridgeTokenMap,
+    quotedBridgeTokenMap,
     collateralGroups,
     {
       originTokenKey: getBridgeTokenKey(quote.routeToken),

@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 
 // Extra patience for token-picker flows — under full-suite load (cosmos-kit
 // module init, multicall fallbacks, etc.) the default 5s locator timeouts
@@ -84,8 +84,19 @@ export async function enterAmount(page: Page, amount: string): Promise<void> {
 }
 
 export async function clickContinue(page: Page): Promise<void> {
+  const recipientWarning = page.getByRole('checkbox', {
+    name: /I have control and want to bridge to this address/i,
+  });
+  if (await recipientWarning.isVisible()) {
+    await recipientWarning.evaluate((element) => {
+      const checkbox = element as HTMLInputElement;
+      if (!checkbox.checked) checkbox.click();
+    });
+  }
   // ButtonSection renders Continue in input mode, Send in review mode.
-  await page.getByRole('button', { name: /^Continue$/ }).dispatchEvent('click');
+  const continueButton = page.getByRole('button', { name: /^Continue$/ });
+  await expect(continueButton).toBeEnabled();
+  await continueButton.evaluate((element) => (element as HTMLButtonElement).click());
 }
 
 export async function clickSendInReview(page: Page): Promise<void> {

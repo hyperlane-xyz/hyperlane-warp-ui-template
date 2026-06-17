@@ -17,7 +17,7 @@ export function getUsdDisplayForFee(
 }
 
 export function getTotalFeesUsdRaw(
-  fees: { localQuote: TokenAmount; interchainQuote: TokenAmount; tokenFeeQuote?: TokenAmount },
+  fees: { localQuote?: TokenAmount; interchainQuote?: TokenAmount; tokenFeeQuote?: TokenAmount },
   feePrices: FeePrices,
 ): number {
   let total = 0;
@@ -31,7 +31,7 @@ export function getTotalFeesUsdRaw(
 }
 
 export function getTotalFeesUsd(
-  fees: { localQuote: TokenAmount; interchainQuote: TokenAmount; tokenFeeQuote?: TokenAmount },
+  fees: { localQuote?: TokenAmount; interchainQuote?: TokenAmount; tokenFeeQuote?: TokenAmount },
   feePrices: FeePrices,
 ): string | null {
   const total = getTotalFeesUsdRaw(fees, feePrices);

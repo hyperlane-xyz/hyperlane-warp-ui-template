@@ -1,7 +1,10 @@
 import { ProtocolType } from '@hyperlane-xyz/utils';
-import { describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { createMockToken, createTokenConnectionMock } from '../../utils/test';
+import { TransactionHistoryItemType, useStore } from '../store';
+import { SwapStatus } from '../swap/types';
+import { validateSwapForm } from '../swap/validate';
 import { getTokenKey, groupTokensByCollateral } from '../tokens/utils';
 import { getTransferToken } from '../transfer/fees';
 import { UnifiedRouteMode } from './tokens/routes';
@@ -10,13 +13,23 @@ import {
   getKnownTotalFees,
   getUnifiedSwapIntentKey,
   hydrateInitialUnifiedTokenKeys,
+  submitSwap,
   validateUnifiedBridgeTransfer,
 } from './UnifiedTokenCard';
+
+vi.mock('../swap/validate', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../swap/validate')>()),
+  validateSwapForm: vi.fn(),
+}));
 
 vi.mock('../transfer/fees', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../transfer/fees')>()),
   getTransferToken: vi.fn(),
 }));
+
+afterEach(() => {
+  vi.clearAllMocks();
+});
 
 describe('getInitialUnifiedTokenQuery', () => {
   test('builds the lookup query before form defaults can hydrate', () => {
@@ -264,5 +277,187 @@ describe('validateUnifiedBridgeTransfer', () => {
         destinationToken: connectedDestinationToken,
       }),
     );
+  });
+});
+
+describe('submitSwap', () => {
+  afterEach(() => {
+    useStore.getState().resetTransactionHistory();
+    useStore.getState().setSelectedTransactionId(null);
+    useStore.getState().setActiveSwapTransactionId(null);
+    useStore.getState().setSwapLoading(false);
+  });
+
+  test('creates local history and executes the selected route', async () => {
+    vi.mocked(validateSwapForm).mockResolvedValue(null);
+
+    const srcAddress = '0x1111111111111111111111111111111111111111';
+    const dstAddress = '0x2222222222222222222222222222222222222222';
+    const sender = '0x3333333333333333333333333333333333333333';
+    const recipient = '0x4444444444444444444444444444444444444444';
+    const universalRouter = '0x5555555555555555555555555555555555555555';
+    const route = {
+      isBridgeOnly: false,
+      feeBreakdown: { components: [], originGas: 0n, destGas: 0n },
+      raw: {
+        steps: [
+          {
+            type: 'swap',
+            chain: 1,
+            dex: 'test-dex',
+            tokenIn: srcAddress,
+            tokenOut: dstAddress,
+            amountIn: '100',
+            amountOut: '95',
+            path: [srcAddress, dstAddress],
+            poolCount: 1,
+            minPoolTvlUsd: null,
+          },
+        ],
+        output: '95',
+        outputMin: '90',
+        connection: null,
+        gas: { originGas: '0', destGas: '0' },
+        tx: { to: universalRouter, data: '0x1234', value: '0' },
+      },
+    } as any;
+    const execute = vi.fn().mockResolvedValue('0xhash');
+    const setErrors = vi.fn();
+
+    await submitSwap({
+      values: {
+        srcChain: 1,
+        dstChain: 2,
+        srcToken: srcAddress,
+        dstToken: dstAddress,
+        amount: '1',
+        recipient,
+        slippageBps: 50,
+      },
+      bestRoute: route,
+      originToken: {
+        key: 'src',
+        chainName: 'ethereum',
+        chainId: 1,
+        addressOrDenom: srcAddress,
+        symbol: 'SRC',
+        name: 'Source',
+        decimals: 18,
+        isNative: false,
+        swapToken: {
+          chainId: 1,
+          chainName: 'ethereum',
+          address: srcAddress,
+          addressOrDenom: srcAddress,
+          symbol: 'SRC',
+          name: 'Source',
+          decimals: 18,
+          isNative: false,
+          canBridge: false,
+          canSwap: true,
+          isBridgeToken: false,
+          isPoolToken: false,
+          bridgeSymbols: [],
+          warpRouteIds: [],
+        },
+        capabilities: { bridge: false, swap: true },
+      },
+      destinationToken: {
+        key: 'dst',
+        chainName: 'base',
+        chainId: 2,
+        addressOrDenom: dstAddress,
+        symbol: 'DST',
+        name: 'Destination',
+        decimals: 18,
+        isNative: false,
+        swapToken: {
+          chainId: 2,
+          chainName: 'base',
+          address: dstAddress,
+          addressOrDenom: dstAddress,
+          symbol: 'DST',
+          name: 'Destination',
+          decimals: 18,
+          isNative: false,
+          canBridge: false,
+          canSwap: true,
+          isBridgeToken: false,
+          isPoolToken: false,
+          bridgeSymbols: [],
+          warpRouteIds: [],
+        },
+        capabilities: { bridge: false, swap: true },
+      },
+      sender,
+      recipient,
+      chains: [
+        {
+          id: 1,
+          name: 'Ethereum',
+          chainName: 'ethereum',
+          protocol: ProtocolType.Ethereum,
+          nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+          universalRouter,
+          dex: 'test-dex',
+          canSwap: true,
+          canExecute: true,
+          supportsNative: true,
+        },
+        {
+          id: 2,
+          name: 'Base',
+          chainName: 'base',
+          protocol: ProtocolType.Ethereum,
+          nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+          universalRouter,
+          dex: 'test-dex',
+          canSwap: true,
+          canExecute: true,
+          supportsNative: true,
+        },
+      ],
+      multiProvider: {} as any,
+      approvalPending: false,
+      quoteExpiresAt: Math.floor(Date.now() / 1000) + 60,
+      universalRouter,
+      amountAtomic: 100n,
+      swap: { execute } as any,
+      setErrors,
+    });
+
+    const state = useStore.getState();
+    const historyItem = state.transactionHistory[0];
+    expect(historyItem.type).toBe(TransactionHistoryItemType.Swap);
+    expect(historyItem.data).toMatchObject({
+      status: SwapStatus.Preparing,
+      srcChain: 1,
+      dstChain: 2,
+      srcToken: srcAddress,
+      dstToken: dstAddress,
+      amountIn: '100',
+      amountOut: '95',
+      sender,
+      recipient,
+    });
+    expect(state.selectedTransactionId).toBe(historyItem.id);
+    expect(state.activeSwapTransactionId).toBeNull();
+    expect(state.swapLoading).toBe(false);
+    expect(execute).toHaveBeenCalledWith(
+      expect.objectContaining({
+        transactionId: historyItem.id,
+        route,
+        srcChainId: 1,
+        dstChainId: 2,
+        srcToken: srcAddress,
+        dstToken: dstAddress,
+        sender,
+        recipient,
+        spender: universalRouter,
+        approvalAmount: 100n,
+        isNative: false,
+      }),
+    );
+    expect(setErrors).not.toHaveBeenCalled();
   });
 });

@@ -1027,6 +1027,14 @@ function OriginTokenCard({
         if (!maxAmount) return;
         setFieldValue('amount', formatInputAmount(maxAmount.amount, maxAmount.token.decimals));
       } catch (error) {
+        if (!bridgeBalance.token.isNative() && !bridgeBalance.token.isHypNative()) {
+          logger.warn('Unified bridge Max quote failed; using token balance fallback', error);
+          setFieldValue(
+            'amount',
+            formatInputAmount(bridgeBalance.amount, bridgeBalance.token.decimals),
+          );
+          return;
+        }
         const chainDisplay = getChainDisplayName(multiProvider, bridgeBalance.token.chainName);
         logger.error('Unified bridge Max failed', error);
         toast.error(
@@ -1368,7 +1376,7 @@ function useBridgeExactInputQuote({
   });
 }
 
-async function submitSwap({
+export async function submitSwap({
   values,
   bestRoute,
   originToken,

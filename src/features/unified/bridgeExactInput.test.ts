@@ -65,6 +65,37 @@ describe('getExactInputBridgeQuote', () => {
 
     expect(quote.transferAmount.amount).toBe(1_000n);
   });
+
+  test('re-quotes the final amount when the fixed-point loop does not converge', async () => {
+    const token = createMockToken();
+    vi.spyOn(token, 'isFungibleWith').mockImplementation((other) => other === token);
+    const feeAmounts = [100n, 101n, 102n, 103n, 104n];
+    const warpCore = {
+      getInterchainTransferFee: vi.fn().mockImplementation(() => ({
+        igpQuote: token.amount(feeAmounts.shift() ?? 104n),
+        tokenFeeQuote: undefined,
+      })),
+    };
+
+    const quote = await getExactInputBridgeQuote({
+      warpCore: warpCore as any,
+      originToken: token,
+      destinationToken: token,
+      inputAmount: 1_000n,
+      destination: token.chainName,
+      recipient: '0xrecipient',
+      sender: '0xsender',
+    });
+
+    expect(warpCore.getInterchainTransferFee).toHaveBeenCalledTimes(5);
+    expect(warpCore.getInterchainTransferFee).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        originTokenAmount: expect.objectContaining({ amount: 897n }),
+      }),
+    );
+    expect(quote.transferAmount.amount).toBe(897n);
+    expect(quote.interchainQuote.amount).toBe(104n);
+  });
 });
 
 describe('getExactInputBridgeMaxAmount', () => {

@@ -139,6 +139,7 @@ export async function getExactInputBridgeQuote({
   let transferAmount = inputAmount;
   let interchainQuote: TokenAmount<IToken> | undefined;
   let tokenFeeQuote: TokenAmount<IToken> | undefined;
+  let hasConverged = false;
 
   for (let i = 0; i < 4; i++) {
     const quote = await warpCore.getInterchainTransferFee({
@@ -155,12 +156,27 @@ export async function getExactInputBridgeQuote({
       (originToken.isFungibleWith(interchainQuote.token) ? interchainQuote.amount : 0n) +
       (originToken.isFungibleWith(tokenFeeQuote?.token) ? (tokenFeeQuote?.amount ?? 0n) : 0n);
     const nextTransferAmount = inputAmount > sameTokenFees ? inputAmount - sameTokenFees : 0n;
-    if (nextTransferAmount === transferAmount) break;
+    if (nextTransferAmount === transferAmount) {
+      hasConverged = true;
+      break;
+    }
     transferAmount = nextTransferAmount;
   }
 
   if (!interchainQuote) {
     throw new Error('Unable to quote bridge fees');
+  }
+
+  if (!hasConverged) {
+    const finalQuote = await warpCore.getInterchainTransferFee({
+      originTokenAmount: originToken.amount(transferAmount),
+      destination,
+      recipient,
+      sender,
+      destinationToken,
+    });
+    interchainQuote = finalQuote.igpQuote;
+    tokenFeeQuote = finalQuote.tokenFeeQuote;
   }
 
   return {

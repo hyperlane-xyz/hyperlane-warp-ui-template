@@ -18,21 +18,43 @@ const feeQuotingUrl = process.env.NEXT_PUBLIC_FEE_QUOTING_URL || undefined;
 const relayApiUrl = process.env.NEXT_PUBLIC_RELAY_API_URL || undefined;
 const routerApiUrl = process.env.NEXT_PUBLIC_ROUTER_API_URL || undefined;
 // CCS lives at the `/callCommitments` mount of the shared offchain-lookup
-// service. Engine emits `callCommitment.ccs.path = '/calls'` relative to
+// service. Engine emits `callCommitment.ccs.path = '/calldata'` relative to
 // this mount, so the base URL must include the mount path.
 const ccsUrl =
   process.env.NEXT_PUBLIC_CCS_URL ||
   'https://offchain-lookup.services.hyperlane.xyz/callCommitments';
-const permit2ExpirationSeconds = Number(
-  process.env.NEXT_PUBLIC_PERMIT2_EXPIRATION_SECONDS || 31_536_000,
+const permit2ExpirationSeconds = parseEnvInt(
+  'NEXT_PUBLIC_PERMIT2_EXPIRATION_SECONDS',
+  process.env.NEXT_PUBLIC_PERMIT2_EXPIRATION_SECONDS,
+  31_536_000,
+  { min: 1 },
 );
-const defaultSlippageBps = Number(process.env.NEXT_PUBLIC_DEFAULT_SLIPPAGE_BPS || 100);
+const defaultSlippageBps = parseEnvInt(
+  'NEXT_PUBLIC_DEFAULT_SLIPPAGE_BPS',
+  process.env.NEXT_PUBLIC_DEFAULT_SLIPPAGE_BPS,
+  100,
+  { min: 0 },
+);
+
+function parseEnvInt(
+  name: string,
+  rawValue: string | undefined,
+  fallback: number,
+  { min }: { min: number },
+): number {
+  if (!rawValue) return fallback;
+  const value = Number(rawValue);
+  if (!Number.isInteger(value) || value < min) {
+    throw new Error(`Invalid ${name}: ${rawValue}`);
+  }
+  return value;
+}
 
 interface Config {
   addressBlacklist: string[]; // A list of addresses that are blacklisted and cannot be used in the app
   chainWalletWhitelists: ChainMap<string[]>; // A map of chain names to a list of wallet names that work for it
-  defaultOriginToken: string | undefined; // The initial origin token to show when app first loads (format: chainName-symbol, e.g. "ethereum-hyper")
-  defaultDestinationToken: string | undefined; // The initial destination token to show when app first loads (format: chainName-symbol, e.g. "bsc-hyper")
+  defaultOriginToken: string | undefined; // The initial origin token (format: chainName-tokenRef, tokenRef can be collateral/address/denom or legacy symbol)
+  defaultDestinationToken: string | undefined; // The initial destination token (format: chainName-tokenRef, tokenRef can be collateral/address/denom or legacy symbol)
   enableExplorerLink: boolean; // Include a link to the hyperlane explorer in the transfer modal
   explorerApiUrl: string; // URL for the Hyperlane Explorer GraphQL API
   relayApiUrl: string | undefined; // Optional URL for the Hyperlane Relayer API
@@ -49,14 +71,12 @@ interface Config {
   rpcOverrides: string; // JSON string containing a map of chain names to an object with an URL for RPC overrides (For an example check the .env.example file)
   enableTrackingEvents: boolean; // Allow tracking events to happen on some actions;
   featuredChains: string[]; // Chains to pin at the top of the default chain picker sort
-  featuredTokens: string[]; // List of featured tokens to prioritize in token picker (format: "chainName-symbol")
+  featuredTokens: string[]; // List of featured tokens to prioritize in token picker (format: chainName-tokenRef; legacy chainName-symbol is supported)
   feeQuotingUrl: string | undefined; // Offchain fee quoting service base URL
-  routerApiUrl: string | undefined; // Universal Router Engine base URL (swap tab)
+  routerApiUrl: string | undefined; // Universal Router Engine base URL
   ccsUrl: string; // Call Commitments Service base URL (cross-chain swap reveal)
-  permit2ExpirationSeconds: number; // Default Permit2 allowance expiration (swap tab)
+  permit2ExpirationSeconds: number; // Default Permit2 allowance expiration
   defaultSlippageBps: number; // Default swap slippage in basis points
-  defaultSwapOriginToken: string | undefined; // The initial swap origin token to show when /swap first loads (format: chainName-address)
-  defaultSwapDestinationToken: string | undefined; // The initial swap destination token to show when /swap first loads (format: chainName-address)
 }
 
 export const config: Config = Object.freeze({
@@ -65,10 +85,8 @@ export const config: Config = Object.freeze({
   enableExplorerLink: true,
   explorerApiUrl,
   relayApiUrl,
-  defaultOriginToken: 'ethereum-USDC',
-  defaultDestinationToken: 'base-USDC',
-  defaultSwapOriginToken: 'bsc-0x0000000000000000000000000000000000000000',
-  defaultSwapDestinationToken: 'base-0x0000000000000000000000000000000000000000',
+  defaultOriginToken: 'ethereum-0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+  defaultDestinationToken: 'base-0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
   isDevMode,
   registryUrl,
   registryBranch,

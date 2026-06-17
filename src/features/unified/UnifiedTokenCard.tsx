@@ -1,4 +1,4 @@
-import { Token, TokenAmount, type WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
+import { Token, type WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
 import { errorToString, fromWei, isNullish, toWei } from '@hyperlane-xyz/utils';
 import { ChevronIcon, SpinnerIcon, useDebounce, useModal } from '@hyperlane-xyz/widgets';
 import {
@@ -10,6 +10,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import BigNumber from 'bignumber.js';
 import { Form, Formik, useFormikContext } from 'formik';
 import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'react-toastify';
 import { type Address } from 'viem';
 
 import { RecipientWarningBanner } from '../../components/banner/RecipientWarningBanner';
@@ -21,6 +22,7 @@ import { TransferSection } from '../../components/layout/TransferSection';
 import { config } from '../../consts/config';
 import { Color } from '../../styles/Color';
 import { formatDisplayAmount, formatInputAmount } from '../../utils/amount';
+import { logger } from '../../utils/logger';
 import { getQueryParams, updateQueryParams } from '../../utils/queryParams';
 import { useChains } from '../api/hooks';
 import type { TokensQuery } from '../api/types';
@@ -163,11 +165,9 @@ function UnifiedFormContent({
   const collateralGroups = useCollateralGroups();
   const bridgeTokenMap = useTokenByKeyMap();
   const { accounts } = useAccounts(multiProvider, config.addressBlacklist);
-  const { routerAddressesByChainMap, setOriginChainName, setTransferLoading } = useStore((s) => ({
-    routerAddressesByChainMap: s.routerAddressesByChainMap,
-    setOriginChainName: s.setOriginChainName,
-    setTransferLoading: s.setTransferLoading,
-  }));
+  const routerAddressesByChainMap = useStore((s) => s.routerAddressesByChainMap);
+  const setOriginChainName = useStore((s) => s.setOriginChainName);
+  const setTransferLoading = useStore((s) => s.setTransferLoading);
   const originToken = values.originTokenKey ? tokenMap.get(values.originTokenKey) : undefined;
   const destinationToken = values.destinationTokenKey
     ? tokenMap.get(values.destinationTokenKey)
@@ -189,7 +189,7 @@ function UnifiedFormContent({
     collateralGroups,
     engineEnabled,
   });
-  const isSanctioned = useIsAccountSanctioned(routeMode === UnifiedRouteMode.Bridge);
+  const isSanctioned = useIsAccountSanctioned(!!routeMode);
   const destinationChainDisplay = destinationToken
     ? getChainDisplayName(multiProvider, destinationToken.chainName)
     : '';
@@ -213,18 +213,29 @@ function UnifiedFormContent({
     recipient: effectiveRecipient,
   });
 
+  const debouncedSwapAmount = useDebounce(values.amount, 750);
   const swapValues = useMemo(
     () => ({
       srcChain: originToken?.swapToken?.chainId ?? null,
       dstChain: destinationToken?.swapToken?.chainId ?? null,
       srcToken: originToken?.swapToken?.address ?? '',
       dstToken: destinationToken?.swapToken?.address ?? '',
-      amount: values.amount,
+      amount: debouncedSwapAmount,
       recipient: values.recipient,
       slippageBps: values.slippageBps,
     }),
-    [originToken, destinationToken, values],
+    [
+      originToken?.swapToken?.address,
+      originToken?.swapToken?.chainId,
+      destinationToken?.swapToken?.address,
+      destinationToken?.swapToken?.chainId,
+      debouncedSwapAmount,
+      values.recipient,
+      values.slippageBps,
+    ],
   );
+  const isSwapQuoteCurrent =
+    routeMode !== UnifiedRouteMode.Swap || debouncedSwapAmount === values.amount;
   const quote = useQuote({
     values: { ...swapValues, recipient: effectiveRecipient },
     sender,
@@ -347,13 +358,14 @@ function UnifiedFormContent({
       originToken,
       destinationToken,
       recipient: effectiveRecipient,
-      hasSwapRoute: !!bestRoute,
+      hasSwapRoute: !!bestRoute && isSwapQuoteCurrent,
     });
     if (basicErrors) {
       setErrors(basicErrors);
       return;
     }
-    if (routeMode === UnifiedRouteMode.Bridge && (isSanctioned || !addressConfirmed)) return;
+    if (isSanctioned) return;
+    if (routeMode === UnifiedRouteMode.Bridge && !addressConfirmed) return;
 
     if (routeMode === UnifiedRouteMode.Bridge) {
       const validationErrors = await validateUnifiedBridgeTransfer({
@@ -388,7 +400,7 @@ function UnifiedFormContent({
         return;
       }
     } else {
-      if (!bestRoute) return;
+      if (!bestRoute || !isSwapQuoteCurrent) return;
     }
 
     setIsSubmitting(true);
@@ -405,6 +417,9 @@ function UnifiedFormContent({
             bridgeTransfer,
             getQuotedCallsParams: quotedCalls.getQuotedCallsParams,
           });
+        } catch (error) {
+          logger.error('Unified bridge submit failed', error);
+          toast.error(errorToString(error, 120) || 'Unable to transfer tokens.');
         } finally {
           setTransferLoading(false);
         }
@@ -457,6 +472,7 @@ function UnifiedFormContent({
     values.destinationTokenKey,
     values.amount,
     values.recipient,
+    values.slippageBps,
     routeMode,
   ]);
 
@@ -517,7 +533,11 @@ function UnifiedFormContent({
         />
       )}
       {routeMode === UnifiedRouteMode.Bridge && !isBridgeReview && (
-        <BridgeFeeSummary quote={bridgeQuote.data} quotedCalls={quotedCalls} />
+        <BridgeFeeSummary
+          quote={bridgeQuote.data}
+          quotedCalls={quotedCalls}
+          isError={bridgeQuote.isError || quotedCalls.isError}
+        />
       )}
       {routeMode === UnifiedRouteMode.Swap && <SwapFeeSummary route={bestRoute} />}
 
@@ -571,7 +591,8 @@ function UnifiedFormContent({
           onClickWhenReady={onSubmit}
           disabled={
             isSubmitting ||
-            (routeMode === UnifiedRouteMode.Bridge && (isSanctioned || !addressConfirmed))
+            isSanctioned ||
+            (routeMode === UnifiedRouteMode.Bridge && !addressConfirmed)
           }
           classes="mb-4 w-full px-3 py-2.5 font-secondary text-xl text-cream-100"
         />
@@ -680,9 +701,11 @@ function RouteSelector({
 function BridgeFeeSummary({
   quote,
   quotedCalls,
+  isError,
 }: {
   quote: ExactInputBridgeTransferQuote | undefined;
   quotedCalls: ReturnType<typeof useQuotedCallsFeeQuotes>;
+  isError: boolean;
 }) {
   const warpCore = useWarpCore();
   const { prices } = useBridgeTokenPrices();
@@ -690,12 +713,12 @@ function BridgeFeeSummary({
   const feePrices = useFeePrices(fees, warpCore.tokens, prices);
   const transferUsd = getBridgeTransferUsd(quote, prices);
 
-  if (!fees && !quotedCalls.isLoading) return null;
+  if (!fees && !quotedCalls.isLoading && !isError) return null;
 
   return (
     <FeeSectionButton
       isLoading={quotedCalls.isLoading}
-      isError={false}
+      isError={isError}
       fees={fees}
       feePrices={feePrices}
       transferUsd={transferUsd}
@@ -717,11 +740,12 @@ function UnifiedBridgeReviewDetails({
   const fees = getBridgeFeeItems(quote, quotedCalls);
   const remoteToken = quote?.connectedDestinationToken;
   const transferToken = quote?.routeToken;
+  const tokenFeeQuote = quotedCalls.fees?.tokenFeeQuote;
   const sameTokenFeeAmount =
-    transferToken &&
-    quotedCalls.quotedCallsParams &&
-    quotedCalls.fees?.tokenFeeQuote?.token.equals(transferToken)
-      ? quotedCalls.fees.tokenFeeQuote.amount
+    transferToken && quotedCalls.quotedCallsParams && tokenFeeQuote?.token
+      ? transferToken.isFungibleWith(tokenFeeQuote.token)
+        ? tokenFeeQuote.amount
+        : 0n
       : 0n;
   const approvalAmount =
     quote && transferToken ? (quote.transferAmount.amount + sameTokenFeeAmount).toString() : '';
@@ -833,7 +857,9 @@ function getBridgeFeeEstimate(
   const interchainQuote = quotedCalls.fees?.interchainQuote ?? quote?.interchainQuote;
   if (!interchainQuote) return null;
 
-  const localQuote = quotedCalls.fees?.localQuote ?? new TokenAmount(0n, interchainQuote.token);
+  const localQuote = quotedCalls.fees?.localQuote;
+  if (!localQuote) return null;
+
   const tokenFeeQuote = quotedCalls.fees?.tokenFeeQuote ?? quote?.tokenFeeQuote;
   const totalFees = getTotalFee({ localQuote, interchainQuote, tokenFeeQuote })
     .map((fee) => `${fee.getDecimalFormattedAmount().toFixed(8)} ${fee.token.symbol}`)
@@ -975,16 +1001,24 @@ function OriginTokenCard({
         accounts,
       );
       const recipient = values.recipient || connectedDestAddress || address;
-      const maxAmount = await bridgeMax.mutateAsync({
-        warpCore,
-        balance: bridgeBalance,
-        destinationToken: destinationToken.bridgeToken,
-        recipient,
-        sender: address,
-        senderPubKey: await publicKey,
-      });
-      if (!maxAmount) return;
-      setFieldValue('amount', formatInputAmount(maxAmount.amount, maxAmount.token.decimals));
+      try {
+        const maxAmount = await bridgeMax.mutateAsync({
+          warpCore,
+          balance: bridgeBalance,
+          destinationToken: destinationToken.bridgeToken,
+          recipient,
+          sender: address,
+          senderPubKey: await publicKey,
+        });
+        if (!maxAmount) return;
+        setFieldValue('amount', formatInputAmount(maxAmount.amount, maxAmount.token.decimals));
+      } catch (error) {
+        const chainDisplay = getChainDisplayName(multiProvider, bridgeBalance.token.chainName);
+        logger.error('Unified bridge Max failed', error);
+        toast.error(
+          `Cannot simulate transfer, ${chainDisplay} native balance may be insufficient.`,
+        );
+      }
     }
   };
 
@@ -1425,7 +1459,10 @@ async function submitSwap({
       approvalAmount: amountAtomic,
       isNative: srcToken.isNative,
     });
-  } catch {
+  } catch (error) {
+    logger.error('Unified swap failed', error);
+    toast.error(errorToString(error, 120) || 'Unable to complete swap.');
+    setErrors({ form: errorToString(error, 40) });
     const cur = useStore
       .getState()
       .transactionHistory.find((historyItem) => historyItem.id === transactionId);

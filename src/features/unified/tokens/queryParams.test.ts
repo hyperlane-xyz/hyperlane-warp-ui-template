@@ -4,6 +4,7 @@ import { describe, expect, test } from 'vitest';
 import { createMockToken } from '../../../utils/test';
 import type { UiToken } from '../../swap/tokens/types';
 import {
+  findUnifiedTokenByConfigRef,
   findUnifiedTokenByQueryRef,
   getUnifiedTokenLookupIdsFromParams,
   getUnifiedTokenQueryParams,
@@ -243,6 +244,12 @@ describe('getUnifiedTokenQueryRef', () => {
     const token = createUnifiedToken({ chainName: 'ethereum', symbol: 'USDC' });
 
     expect(findUnifiedTokenByQueryRef([token], 'ethereum', 'USDC')).toBeUndefined();
+  });
+
+  test('still matches config refs by legacy symbol', () => {
+    const token = createUnifiedToken({ chainName: 'ethereum', symbol: 'USDC' });
+
+    expect(findUnifiedTokenByConfigRef([token], 'ethereum', 'USDC')).toBe(token);
   });
 
   test('uses HypNative token before engine native for zeroish query refs', () => {

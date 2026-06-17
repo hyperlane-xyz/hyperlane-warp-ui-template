@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test } from 'vitest';
 
 import { config } from '../../../consts/config';
 import { createMockToken, createTokenConnectionMock } from '../../../utils/test';
@@ -6,6 +6,12 @@ import type { UiToken } from '../../swap/tokens/types';
 import { groupTokensByCollateral } from '../../tokens/utils';
 import { getVisibleUnifiedTokens } from './list';
 import type { UnifiedToken } from './types';
+
+const originalFeaturedTokens = [...config.featuredTokens];
+
+afterEach(() => {
+  config.featuredTokens.splice(0, config.featuredTokens.length, ...originalFeaturedTokens);
+});
 
 function createSwapToken(args: Partial<UiToken> = {}): UiToken {
   return {
@@ -46,7 +52,7 @@ function createUnifiedToken(args: Partial<UnifiedToken> = {}): UnifiedToken {
 }
 
 describe('getVisibleUnifiedTokens', () => {
-  test('puts featured tokens at the beginning of the default list', () => {
+  test('only shows featured tokens in the default list when featured tokens are configured', () => {
     const firstFeatured = config.featuredTokens[0];
     const [chainName, symbol] = firstFeatured.split('-');
     const regular = createUnifiedToken({
@@ -71,7 +77,7 @@ describe('getVisibleUnifiedTokens', () => {
       hasFilter: false,
     });
 
-    expect(result.tokens.map((token) => token.key)).toEqual([firstFeatured, 'z-regular']);
+    expect(result.tokens.map((token) => token.key)).toEqual([firstFeatured]);
   });
 
   test('does not hide non-featured tokens when searching', () => {
@@ -94,7 +100,31 @@ describe('getVisibleUnifiedTokens', () => {
     expect(result.tokens).toEqual([hiddenWithoutFilter]);
   });
 
-  test('hides unroutable tokens when a counterpart is selected', () => {
+  test('caps the default list when featured tokens are not configured', () => {
+    config.featuredTokens.splice(0, config.featuredTokens.length);
+    const tokens = Array.from({ length: 55 }, (_, index) =>
+      createUnifiedToken({
+        key: `token-${index}`,
+        chainName: 'ethereum',
+        symbol: `T${String(index).padStart(2, '0')}`,
+        capabilities: { bridge: true, swap: false },
+      }),
+    );
+
+    const result = getVisibleUnifiedTokens({
+      allTokens: tokens,
+      counterpartToken: undefined,
+      selectionMode: 'origin',
+      collateralGroups: new Map(),
+      engineEnabled: true,
+      hasFilter: false,
+    });
+
+    expect(result.tokens).toHaveLength(50);
+    expect(result.isLimited).toBe(true);
+  });
+
+  test('hides unroutable tokens when a counterpart is selected while searching', () => {
     const counterpart = createUnifiedToken({
       key: 'counterpart',
       capabilities: { bridge: false, swap: true },
@@ -116,7 +146,7 @@ describe('getVisibleUnifiedTokens', () => {
       selectionMode: 'destination',
       collateralGroups: new Map(),
       engineEnabled: true,
-      hasFilter: false,
+      hasFilter: true,
     });
 
     expect(result.tokens).toEqual([routable]);

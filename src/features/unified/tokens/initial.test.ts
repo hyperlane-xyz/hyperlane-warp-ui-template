@@ -50,18 +50,18 @@ describe('getInitialUnifiedTokenKeys', () => {
     vi.unstubAllGlobals();
   });
 
-  test('uses bridge-style default chain-symbol token refs from config', () => {
+  test('uses bridge-first address token refs from config', () => {
     const bridgeDestinationToken = createMockToken({
       chainName: 'base',
       symbol: 'USDC',
-      addressOrDenom: '0x2222222222222222222222222222222222222222',
-      collateralAddressOrDenom: '0x2222222222222222222222222222222222222222',
+      addressOrDenom: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+      collateralAddressOrDenom: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
     });
     const bridgeOriginToken = createMockToken({
       chainName: 'ethereum',
       symbol: 'USDC',
-      addressOrDenom: '0x1111111111111111111111111111111111111111',
-      collateralAddressOrDenom: '0x1111111111111111111111111111111111111111',
+      addressOrDenom: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+      collateralAddressOrDenom: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
       connections: [createTokenConnectionMock(undefined, bridgeDestinationToken)],
     });
     const bridgeOrigin = createUnifiedToken({

@@ -38,6 +38,7 @@ interface QuotedCallsFetchResult {
 
 export interface QuotedCallsFeeQuotesResult {
   isLoading: boolean;
+  isError: boolean;
   fees: {
     interchainQuote: TokenAmount;
     localQuote: TokenAmount;
@@ -98,7 +99,7 @@ export function useQuotedCallsFeeQuotes(
     !!config.feeQuotingUrl &&
     !!quotedCallsAddress;
 
-  const { isLoading, isFetching, data, refetch } = useQuery({
+  const { isError, isLoading, isFetching, data, refetch } = useQuery({
     // eslint-disable-next-line @tanstack/query/exhaustive-deps -- queryFn also
     // closes over (warpCore, originToken, destinationToken, destination) which
     // are class instances and can't be safely stringified into a query key.
@@ -153,6 +154,7 @@ export function useQuotedCallsFeeQuotes(
   if (!shouldFetch || !data || isStale) {
     return {
       isLoading: effectiveLoading,
+      isError,
       fees: null,
       quotedCallsParams: null,
       getQuotedCallsParams,
@@ -160,6 +162,7 @@ export function useQuotedCallsFeeQuotes(
   }
   return {
     isLoading,
+    isError,
     fees: {
       interchainQuote: data.interchainQuote,
       localQuote: data.localQuote,

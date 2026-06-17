@@ -27,7 +27,6 @@ export function getInitialUnifiedTokenKeys({
   const originToken =
     findTokenFromParams(tokens, params, WARP_QUERY_PARAMS.ORIGIN, WARP_QUERY_PARAMS.ORIGIN_TOKEN) ??
     findTokenFromConfig(tokens, config.defaultOriginToken) ??
-    findTokenFromConfig(tokens, config.defaultSwapOriginToken) ??
     tokens[0];
 
   const destinationParamToken = findTokenFromParams(
@@ -41,13 +40,6 @@ export function getInitialUnifiedTokenKeys({
     findRoutableConfigToken(
       tokens,
       config.defaultDestinationToken,
-      originToken,
-      collateralGroups,
-      engineEnabled,
-    ) ??
-    findRoutableConfigToken(
-      tokens,
-      config.defaultSwapDestinationToken,
       originToken,
       collateralGroups,
       engineEnabled,

@@ -65,7 +65,7 @@ export function getVisibleUnifiedTokens({
 
   const defaultTokens =
     !hasFilter && config.featuredTokens.length > 0
-      ? routableTokens.filter((token) => getFeaturedTokenIndex(token) >= 0 || !!getRouteMode(token))
+      ? routableTokens.filter((token) => getFeaturedTokenIndex(token) >= 0)
       : routableTokens;
 
   const sorted = [...defaultTokens].sort((a, b) => {

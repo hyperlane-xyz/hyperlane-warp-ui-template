@@ -7,6 +7,18 @@ import {
   waitForUnifiedForm,
 } from '../helpers/locators';
 
+function parseConfigTokenRef(value: string): { chainName: string; tokenRef: string } {
+  const separator = value.indexOf('-');
+  return {
+    chainName: value.slice(0, separator),
+    tokenRef: value.slice(separator + 1),
+  };
+}
+
+function isSymbolRef(value: string): boolean {
+  return /^[A-Z0-9]{2,12}$/.test(value);
+}
+
 test.describe('Page Load - Unified Form', () => {
   test('should display the unified form on page load', async ({ page }) => {
     await page.goto('http://localhost:3000');
@@ -23,9 +35,9 @@ test.describe('Page Load - Unified Form', () => {
     const originButton = getOriginTokenButton(page);
     await expect(originButton).toBeVisible();
     if (config.defaultOriginToken) {
-      const [originChain, originSymbol] = config.defaultOriginToken.split('-');
-      await expect(originButton).toHaveAttribute('data-chain', originChain);
-      await expect(originButton).toContainText(originSymbol);
+      const origin = parseConfigTokenRef(config.defaultOriginToken);
+      await expect(originButton).toHaveAttribute('data-chain', origin.chainName);
+      if (isSymbolRef(origin.tokenRef)) await expect(originButton).toContainText(origin.tokenRef);
     }
 
     // Amount input visible
@@ -44,9 +56,10 @@ test.describe('Page Load - Unified Form', () => {
     const destButton = getDestinationTokenButton(page);
     await expect(destButton).toBeVisible();
     if (config.defaultDestinationToken) {
-      const [destChain, destSymbol] = config.defaultDestinationToken.split('-');
-      await expect(destButton).toHaveAttribute('data-chain', destChain);
-      await expect(destButton).toContainText(destSymbol);
+      const destination = parseConfigTokenRef(config.defaultDestinationToken);
+      await expect(destButton).toHaveAttribute('data-chain', destination.chainName);
+      if (isSymbolRef(destination.tokenRef))
+        await expect(destButton).toContainText(destination.tokenRef);
     }
     await expect(page.getByText('Remote Balance: 0.00')).toBeVisible();
   });

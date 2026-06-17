@@ -10,6 +10,7 @@ import { useCallback, useState } from 'react';
 import type { Address } from 'viem';
 
 import { logger } from '../../utils/logger';
+import type { RouteTx } from '../api/types';
 import { useMultiProvider } from '../chains/hooks';
 import { useStore } from '../store';
 import { submitToRelayApi } from '../transfer/relayApi';
@@ -26,11 +27,13 @@ interface ExecuteArgs {
   dstToken: string;
   sender: string;
   recipient: string;
-  /** UR address to approve. Skips approval flow if absent or `isNative`. */
+  /** Token returned by route.approval. Defaults to srcToken for older quotes. */
+  approvalToken?: string;
+  /** Spender returned by route.approval. Skips approval flow if absent or `isNative`. */
   spender?: Address;
-  /** Amount to approve. Same as `amountAtomic` derived from the quote. */
+  /** Amount returned by route.approval. */
   approvalAmount?: bigint;
-  /** Native source skips approval entirely. */
+  /** True when no approval is required. */
   isNative?: boolean;
 }
 
@@ -51,7 +54,8 @@ export function useSwap() {
 
       const { transactionId, route, srcChainId } = args;
 
-      if (!route.raw.tx) throw new Error('Route has no tx');
+      const routeTxs = route.raw.txs?.length ? route.raw.txs : route.raw.tx ? [route.raw.tx] : [];
+      if (!routeTxs.length) throw new Error('Route has no tx');
 
       // Store route for status polling and recovery (non-persisted, session only).
       setSwapRoute(transactionId, route.raw);
@@ -85,7 +89,7 @@ export function useSwap() {
             throw new Error(`Cannot approve: spender is zero address on ${srcChainName}`);
           }
           const adapter = new EvmTokenAdapter(srcChainName, multiProvider, {
-            token: args.srcToken,
+            token: args.approvalToken ?? args.srcToken,
           });
           const [needsApprove, needsRevoke] = await Promise.all([
             adapter.isApproveRequired(args.sender, spender, args.approvalAmount.toString()),
@@ -132,35 +136,35 @@ export function useSwap() {
           }
         }
 
-        updateSwapTransactionStatus(transactionId, SwapStatus.SigningSwap);
-        const { hash, confirm } = await fns.sendTransaction({
-          tx: {
-            type: txType,
-            transaction: {
-              to: route.raw.tx.to,
-              data: route.raw.tx.data,
-              value: route.raw.tx.value,
-            },
-            category: 'transfer',
-          } as Parameters<typeof fns.sendTransaction>[0]['tx'],
-          chainName: srcChainName,
-        });
+        let hash: string | undefined;
+        let receipt: TypedTransactionReceipt | undefined;
+        for (const routeTx of routeTxs) {
+          updateSwapTransactionStatus(transactionId, SwapStatus.SigningSwap);
+          const sent = await fns.sendTransaction({
+            tx: toWalletTx(routeTx, txType) as Parameters<typeof fns.sendTransaction>[0]['tx'],
+            chainName: srcChainName,
+          });
+          hash = sent.hash;
 
-        updateSwapTransactionStatus(transactionId, SwapStatus.ConfirmingOrigin, {
-          originTxHash: hash,
-        });
+          updateSwapTransactionStatus(transactionId, SwapStatus.ConfirmingOrigin, {
+            originTxHash: hash,
+          });
 
-        const receipt = await confirm();
-        if (isReverted(receipt)) {
-          logger.error('Origin tx reverted', new Error(`tx=${hash}`));
-          updateSwapTransactionStatus(transactionId, SwapStatus.Failed, { originTxHash: hash });
-          const err = new Error('Origin transaction reverted on chain');
-          setError(err);
-          throw err;
+          receipt = await sent.confirm();
+          if (isReverted(receipt)) {
+            logger.error('Origin tx reverted', new Error(`tx=${hash}`));
+            updateSwapTransactionStatus(transactionId, SwapStatus.Failed, { originTxHash: hash });
+            const err = new Error('Origin transaction reverted on chain');
+            setError(err);
+            throw err;
+          }
         }
+
+        if (!hash || !receipt) throw new Error('Route transaction did not return a receipt');
         const parsed = parseReceipt(receipt);
         const expectsBridge = route.raw.steps.some((s) => s.type === 'bridge');
-        if (expectsBridge && !parsed.messages.length) {
+        const canReadDispatchLogs = isEvmReceipt(receipt);
+        if (expectsBridge && canReadDispatchLogs && !parsed.messages.length) {
           logger.error('Origin tx confirmed but no Dispatch log emitted', new Error(`tx=${hash}`));
           updateSwapTransactionStatus(transactionId, SwapStatus.Failed, {
             originTxHash: hash,
@@ -219,6 +223,31 @@ function isReverted(receipt: TypedTransactionReceipt): boolean {
   if (typeof status === 'string') return status === 'reverted';
   if (typeof status === 'number') return status === 0;
   return false;
+}
+
+function isEvmReceipt(receipt: TypedTransactionReceipt): boolean {
+  return (
+    receipt.type === ProviderType.Viem ||
+    receipt.type === ProviderType.EthersV5 ||
+    receipt.type === ProviderType.Tron
+  );
+}
+
+function isEvmRouteTx(tx: RouteTx): tx is Extract<RouteTx, { to: string }> {
+  return 'to' in tx;
+}
+
+function toWalletTx(tx: RouteTx, txType: ProviderType): unknown {
+  if (!isEvmRouteTx(tx)) return tx;
+  return {
+    type: txType,
+    transaction: {
+      to: tx.to,
+      data: tx.data,
+      value: tx.value,
+    },
+    category: 'transfer',
+  };
 }
 
 interface ParsedMessage {

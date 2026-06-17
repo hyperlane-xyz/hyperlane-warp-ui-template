@@ -10,8 +10,8 @@ export const Address = z.string().regex(/^0x[0-9a-fA-F]{40}$/);
 export const TokenAddress = z.string().min(1).max(100);
 export const BigIntString = z.string().regex(/^\d+$/);
 export const Hex = z.string().regex(/^0x[0-9a-fA-F]*$/);
-// bytes20 (EVM) or bytes32 (padded EVM / non-EVM pubkey).
-export const Recipient = z.string().regex(/^0x([0-9a-fA-F]{40}|[0-9a-fA-F]{64})$/);
+// bytes20/bytes32 hex or a native non-EVM address. Engine validates per protocol.
+export const Recipient = z.string().min(1).max(100);
 
 export const HealthResponseSchema = z.object({ ok: z.boolean() });
 export type HealthResponse = z.infer<typeof HealthResponseSchema>;
@@ -82,8 +82,10 @@ export const TokenDiscoverySchema = z.object({
   wrappedAddress: TokenAddress.optional(),
   isBridgeToken: z.boolean(),
   isPoolToken: z.boolean(),
+  isUserToken: z.boolean().optional(),
   canBridge: z.boolean(),
   canSwap: z.boolean(),
+  balance: BigIntString.optional(),
   bridgeSymbols: z.array(z.string()),
   warpRouteIds: z.array(z.string()),
   logoURI: z.string().optional(),
@@ -126,10 +128,10 @@ export interface TokensQuery {
 export const QuoteRequestSchema = z.object({
   srcChain: z.number(),
   dstChain: z.number(),
-  srcToken: Address,
-  dstToken: Address,
+  srcToken: TokenAddress,
+  dstToken: TokenAddress,
   amount: BigIntString,
-  sender: Address,
+  sender: Recipient,
   recipient: Recipient.optional(),
   slippageBps: z.number().optional(),
   // Optional client-supplied salt mixed into commitment hash derivation.
@@ -158,16 +160,17 @@ export const QuoteBridgeStepSchema = z.object({
   type: z.literal('bridge'),
   chain: z.number(),
   destChain: z.number(),
-  asset: Address,
-  router: Address,
+  asset: TokenAddress,
+  router: TokenAddress,
   amountIn: BigIntString,
   amountOut: BigIntString,
   bridgeSymbol: z.string().optional(),
   warpRouteId: z.string().optional(),
   fee: z.object({
     tokenFee: BigIntString,
-    igpToken: Address,
+    igpToken: TokenAddress,
     igpAmount: BigIntString,
+    localNativeFee: BigIntString,
   }),
 });
 export type QuoteBridgeStep = z.infer<typeof QuoteBridgeStepSchema>;
@@ -178,11 +181,22 @@ export const QuoteStepSchema = z.discriminatedUnion('type', [
 ]);
 export type QuoteStep = z.infer<typeof QuoteStepSchema>;
 
-export const RouteTxSchema = z.object({
+export const EvmRouteTxSchema = z.object({
   to: Address,
   data: Hex,
   value: BigIntString,
 });
+
+export const SdkRouteTxSchema = z.object({
+  protocol: z.string().min(1),
+  type: z.string().min(1),
+  category: z.string().min(1),
+  transaction: z.unknown(),
+  extraSigners: z.array(z.string()).optional(),
+  metadata: z.record(z.unknown()).optional(),
+});
+
+export const RouteTxSchema = z.union([EvmRouteTxSchema, SdkRouteTxSchema]);
 export type RouteTx = z.infer<typeof RouteTxSchema>;
 
 // CCS payload — engine assembles it server-side. Client just POSTs.
@@ -224,10 +238,20 @@ export const CallCommitmentSchema = z.object({
 });
 export type CallCommitment = z.infer<typeof CallCommitmentSchema>;
 
+export const RouteApprovalSchema = z.object({
+  token: Address,
+  spender: Address,
+  amount: BigIntString,
+  kind: z.enum(['erc20', 'permit2']),
+  permit2Spender: Address.optional(),
+});
+export type RouteApproval = z.infer<typeof RouteApprovalSchema>;
+
 export const RouteResponseSchema = z.object({
   steps: z.array(QuoteStepSchema),
   output: BigIntString,
   outputMin: BigIntString,
+  executionKind: z.enum(['universalRouter', 'warpDirect', 'sdkWarp']),
   connection: z
     .object({
       symbol: z.string(),
@@ -239,6 +263,8 @@ export const RouteResponseSchema = z.object({
     destGas: BigIntString,
   }),
   tx: RouteTxSchema.nullable(),
+  txs: z.array(RouteTxSchema).optional(),
+  approval: RouteApprovalSchema.nullable(),
   callCommitment: CallCommitmentSchema.optional(),
 });
 export type RouteResponse = z.infer<typeof RouteResponseSchema>;

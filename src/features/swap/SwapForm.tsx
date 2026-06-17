@@ -104,11 +104,6 @@ function SwapFormContent() {
   const srcToken = getTokenByKeyFromMap(tokenMap, srcTokenKey);
   const dstToken = getTokenByKeyFromMap(tokenMap, dstTokenKey);
 
-  // Engine /v1/chains gives us the UR per chain. Permit2 address is also
-  // in the response but unused — classic ERC20.approve(UR) doesn't need it.
-  const srcChainInfo = chainsResp?.chains.find((c) => c.id === values.srcChain);
-  const universalRouter = srcChainInfo?.universalRouter as Address | undefined;
-
   const [isReview, setIsReview] = useState(false);
   const { close: closeConfirmationModal, isOpen: isConfirmationModalOpen } = useModal();
   const { isOpen: isRouteModalOpen, open: openRouteModal, close: closeRouteModal } = useModal();
@@ -136,24 +131,23 @@ function SwapFormContent() {
   const routes = quote?.routes ?? [];
   const safeIndex = selectedRouteIndex < routes.length ? selectedRouteIndex : 0;
   const bestRoute = routes[safeIndex] ?? routes[0];
+  const approval = bestRoute?.raw.approval ?? null;
 
-  const isNative = !!srcToken?.isNative;
-  const amountAtomic = useMemo(() => {
-    const initialStep = bestRoute?.raw.steps[0];
-    if (initialStep && 'amountIn' in initialStep) return BigInt(initialStep.amountIn);
-    return undefined;
-  }, [bestRoute]);
+  const approvalAmount = useMemo(
+    () => (approval ? BigInt(approval.amount) : undefined),
+    [approval],
+  );
 
   // Input USD — used by the fee % calculation in FeeSectionButton.
   const amountUsd = useTokenUsdValue(srcToken, values.amount);
 
   const status = useApprovalStatus({
     chainName: srcChainName,
-    token: srcToken?.address as Address | undefined,
+    token: approval?.token as Address | undefined,
     owner: sender,
-    spender: universalRouter,
-    amount: amountAtomic,
-    isNative,
+    spender: approval?.spender as Address | undefined,
+    amount: approvalAmount,
+    isNative: !approval,
   });
 
   const swap = useSwap();
@@ -330,9 +324,10 @@ function SwapFormContent() {
         dstToken: dstToken.address,
         sender,
         recipient: effectiveRecipient,
-        spender: universalRouter,
-        approvalAmount: amountAtomic,
-        isNative,
+        approvalToken: approval?.token,
+        spender: approval?.spender as Address | undefined,
+        approvalAmount,
+        isNative: !approval,
       });
     } catch {
       const cur = useStore
@@ -359,9 +354,8 @@ function SwapFormContent() {
     chainsResp?.chains,
     multiProvider,
     quote?.expiresAt,
-    universalRouter,
-    amountAtomic,
-    isNative,
+    approval,
+    approvalAmount,
     swap,
     addSwapTransaction,
     setSelectedTransactionId,
@@ -486,7 +480,7 @@ function SwapFormContent() {
         srcToken={srcToken}
         dstToken={dstToken}
         approvalStatus={status.phase}
-        universalRouter={universalRouter}
+        approval={approval}
       />
 
       <ButtonSection
@@ -726,14 +720,14 @@ function ReviewDetails({
   srcToken,
   dstToken,
   approvalStatus,
-  universalRouter,
+  approval,
 }: {
   isReview: boolean;
   bestRoute: AugmentedRoute | undefined;
   srcToken: UiToken | undefined;
   dstToken: UiToken | undefined;
   approvalStatus: ApprovalPhase;
-  universalRouter: Address | undefined;
+  approval: AugmentedRoute['raw']['approval'] | null;
 }) {
   return (
     <>
@@ -752,7 +746,7 @@ function ReviewDetails({
               srcToken={srcToken}
               dstToken={dstToken}
               approvalStatus={approvalStatus}
-              universalRouter={universalRouter}
+              approval={approval}
             />
           ) : (
             <p className="text-xs text-gray-500">No route to review.</p>
@@ -768,13 +762,13 @@ function ReviewTransactions({
   srcToken,
   dstToken,
   approvalStatus,
-  universalRouter,
+  approval,
 }: {
   route: AugmentedRoute;
   srcToken: UiToken | undefined;
   dstToken: UiToken | undefined;
   approvalStatus: ApprovalPhase;
-  universalRouter: Address | undefined;
+  approval: AugmentedRoute['raw']['approval'] | null;
 }) {
   const tokenMap = useTokenByKeyMap();
   const multiProvider = useMultiProvider();
@@ -782,6 +776,8 @@ function ReviewTransactions({
   const needsApprove =
     approvalStatus === ApprovalPhase.NeedsApprove || approvalStatus === ApprovalPhase.NeedsRevoke;
   const symbol = srcToken?.symbol ?? 'token';
+  const approvalToken = approval?.token ?? srcToken?.address;
+  const approvalSpender = approval?.spender;
   const dstDecimals = dstToken?.decimals ?? 18;
   const dstSymbol = dstToken?.symbol ?? '';
 
@@ -792,18 +788,18 @@ function ReviewTransactions({
         <div>
           <h4>{`Transaction ${++txNum}: Revoke ${symbol}`}</h4>
           <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs dark:border-primary-300/25">
-            <p>{`Token: ${srcToken?.address}`}</p>
-            <p>{`Spender (UR): ${universalRouter ?? '—'}`}</p>
+            <p>{`Token: ${approvalToken}`}</p>
+            <p>{`Spender: ${approvalSpender ?? '—'}`}</p>
             <p>Reset existing allowance to 0 before re-approving (USDT-style).</p>
           </div>
         </div>
       )}
       {needsApprove && (
         <div>
-          <h4>{`Transaction ${++txNum}: Approve ${symbol} → Universal Router`}</h4>
+          <h4>{`Transaction ${++txNum}: Approve ${symbol}`}</h4>
           <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs dark:border-primary-300/25">
-            <p>{`Token: ${srcToken?.address}`}</p>
-            <p>{`Spender (UR): ${universalRouter ?? '—'}`}</p>
+            <p>{`Token: ${approvalToken}`}</p>
+            <p>{`Spender: ${approvalSpender ?? '—'}`}</p>
             <p>
               Amount-based approval — re-prompted when next swap exceeds the remaining allowance.
             </p>

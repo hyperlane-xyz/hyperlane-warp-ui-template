@@ -150,6 +150,15 @@ function augmentRoute(raw: RouteResponse): AugmentedRoute {
         tokenAddress: step.fee.igpToken,
       });
     }
+    const localNativeFee = BigInt(step.fee.localNativeFee);
+    if (localNativeFee > 0n) {
+      components.push({
+        category: 'igp',
+        amount: localNativeFee,
+        chainId: step.chain,
+        tokenAddress: '0x0000000000000000000000000000000000000000',
+      });
+    }
   }
 
   const feeBreakdown: FeeBreakdown = {

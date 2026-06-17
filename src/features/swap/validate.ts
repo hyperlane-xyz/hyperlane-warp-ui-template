@@ -10,7 +10,7 @@ import {
 import { parseUnits } from 'viem';
 
 import { logger } from '../../utils/logger';
-import type { ChainDiscovery } from '../api/types';
+import type { ChainDiscovery, RouteResponse, RouteTx } from '../api/types';
 import { estimateNativeGasCost, readBalance } from './balances/read';
 import type { UiToken } from './tokens/types';
 import type { AugmentedRoute, FeeComponent, SwapFormValues } from './types';
@@ -143,7 +143,7 @@ export function validateQuote(args: {
   if (quoteExpiresAt != null && quoteExpiresAt * 1000 < Date.now()) {
     return { form: 'Quote has expired — refresh to continue' };
   }
-  if (!bestRoute.raw.tx) {
+  if (!getRouteTxs(bestRoute.raw).length) {
     return { form: 'Route is not executable' };
   }
   return null;
@@ -233,11 +233,12 @@ export async function validateBalances(args: {
     }
   }
 
-  const txValue = bestRoute.raw.tx ? BigInt(bestRoute.raw.tx.value) : 0n;
+  const originTx = getRouteTxs(bestRoute.raw).find(isEvmRouteTx) ?? null;
+  const txValue = originTx ? BigInt(originTx.value) : 0n;
   const gasCost = await estimateNativeGasCost(multiProvider, {
     chainName: srcChainInfo.chainName,
     sender,
-    tx: bestRoute.raw.tx,
+    tx: originTx,
     approvalPending,
   });
   const nativeRequired = txValue + gasCost;
@@ -281,6 +282,14 @@ function balanceKey(chainId: number, address: string): string {
 
 function isNativeAddress(addr: string): boolean {
   return /^0x0+$/i.test(addr);
+}
+
+function getRouteTxs(route: RouteResponse): RouteTx[] {
+  return route.txs?.length ? route.txs : route.tx ? [route.tx] : [];
+}
+
+function isEvmRouteTx(tx: RouteTx): tx is Extract<RouteTx, { to: string }> {
+  return 'to' in tx;
 }
 
 function toEvmCanonical(addr: string, protocol: ProtocolType): string | null {

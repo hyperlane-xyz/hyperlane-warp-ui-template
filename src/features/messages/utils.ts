@@ -1,6 +1,6 @@
 import type { LabeledMsgId } from '../transfer/engine/types';
 
-export function getSwapDeliveryMsgId(msgIds: LabeledMsgId[] | undefined) {
+export function getTransferDeliveryMsgId(msgIds: LabeledMsgId[] | undefined) {
   return (
     msgIds?.find((m) => m.label === 'reveal') ??
     msgIds?.find((m) => m.label === 'warp') ??

@@ -1,4 +1,4 @@
-import { SwapTokenCard } from '../../features/transfer/engine/SwapTokenCard';
+import { TransferTokenCard } from '../../features/transfer/engine/TransferTokenCard';
 import { useEngineBootstrap } from '../../features/transfer/engine/useEngineBootstrap';
 import { TipCard } from '../tip/TipCard';
 
@@ -12,7 +12,7 @@ export function HomeView() {
         <TipCard />
       </div>
       <div>
-        <SwapTokenCard />
+        <TransferTokenCard />
       </div>
     </div>
   );

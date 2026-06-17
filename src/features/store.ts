@@ -17,27 +17,35 @@ import type { RouteResponse } from './api/types';
 import { assembleChainAddresses } from './chains/addresses';
 import { assembleChainMetadata } from './chains/metadata';
 import type { UiToken } from './transfer/engine/tokens/types';
-import { getTokenKey as getSwapTokenKey } from './transfer/engine/tokens/utils';
+import { getTokenKey as getTransferTokenKey } from './transfer/engine/tokens/utils';
 import {
-  FinalSwapStatuses,
+  FinalTransferStatuses,
   LabeledMsgId,
-  SwapHistoryItem,
-  SwapStatus,
+  TransferHistoryItem,
+  TransferStatus,
 } from './transfer/engine/types';
 import { initE2EStateIfEnabled, markE2ERuntimeReady } from './wallet/_e2e/windowState';
 
 // Increment this when persist state has breaking changes
-const PERSIST_STATE_VERSION = 5;
+const PERSIST_STATE_VERSION = 6;
 
 export const TransactionHistoryItemType = {
-  Swap: 'swap',
+  Transfer: 'transfer',
 } as const;
 
 export type TransactionHistoryItem = {
   id: string;
-  type: typeof TransactionHistoryItemType.Swap;
-  data: SwapHistoryItem;
+  type: typeof TransactionHistoryItemType.Transfer;
+  data: TransferHistoryItem;
 };
+
+type PersistedTransactionHistoryItem =
+  | TransactionHistoryItem
+  | {
+      id?: string;
+      type?: string;
+      data?: TransferHistoryItem;
+    };
 
 interface AppContext {
   registry: IRegistry;
@@ -61,11 +69,11 @@ export interface AppState {
 
   // User transaction history
   transactionHistory: TransactionHistoryItem[];
-  addSwapTransaction: (s: SwapHistoryItem) => string;
+  addTransferTransaction: (s: TransferHistoryItem) => string;
   resetTransactionHistory: () => void;
-  updateSwapTransactionStatus: (
+  updateTransferTransactionStatus: (
     id: string,
-    status: SwapStatus,
+    status: TransferStatus,
     options?: {
       msgIds?: LabeledMsgId[];
       originTxHash?: string;
@@ -74,26 +82,24 @@ export interface AppState {
       originTxTimestamp?: number;
     },
   ) => void;
-  // Non-persisted: routes for active swap transactions, keyed by transactionId.
-  // Cleared on page reload. Used by useSwapStatus.
-  swapRouteByTransactionId: Map<string, RouteResponse>;
-  setSwapRoute: (transactionId: string, route: RouteResponse) => void;
+  // Non-persisted: routes for active transfer transactions, keyed by transactionId.
+  // Cleared on page reload. Used by useTransferStatus.
+  transferRouteByTransactionId: Map<string, RouteResponse>;
+  setTransferRoute: (transactionId: string, route: RouteResponse) => void;
   failUnconfirmedTransactions: () => void;
   selectedTransactionId: string | null;
   setSelectedTransactionId: (id: string | null) => void;
-  activeSwapTransactionId: string | null;
-  setActiveSwapTransactionId: (id: string | null) => void;
+  activeTransferTransactionId: string | null;
+  setActiveTransferTransactionId: (id: string | null) => void;
   // Accumulated engine-token catalogue. Every useTokens() result funnels
-  // through syncTokens so SwapForm / SwapDetailsModal lookups go through
-  // one place. Keyed by getSwapTokenKey (chainId-address). Not persisted.
+  // through syncTokens so TransferForm / TransferDetailsModal lookups go through
+  // one place. Keyed by getTransferTokenKey (chainId-address). Not persisted.
   knownTokens: Map<string, UiToken>;
   syncTokens: (tokens: UiToken[]) => void;
 
   // Shared component state
   transferLoading: boolean;
   setTransferLoading: (isLoading: boolean) => void;
-  swapLoading: boolean;
-  setSwapLoading: (isLoading: boolean) => void;
   isSideBarOpen: boolean;
   setIsSideBarOpen: (isOpen: boolean) => void;
   showEnvSelectModal: boolean;
@@ -152,12 +158,12 @@ export const useStore = create<AppState>()(
 
       // User transaction history
       transactionHistory: [],
-      addSwapTransaction: (data) => {
-        const id = createTransactionId(TransactionHistoryItemType.Swap, data.timestamp);
+      addTransferTransaction: (data) => {
+        const id = createTransactionId(TransactionHistoryItemType.Transfer, data.timestamp);
         set((state) => ({
           transactionHistory: [
             ...state.transactionHistory,
-            { id, type: TransactionHistoryItemType.Swap, data },
+            { id, type: TransactionHistoryItemType.Transfer, data },
           ],
         }));
         return id;
@@ -165,10 +171,10 @@ export const useStore = create<AppState>()(
       resetTransactionHistory: () => {
         set(() => ({ transactionHistory: [] }));
       },
-      updateSwapTransactionStatus: (id, status, options) => {
+      updateTransferTransactionStatus: (id, status, options) => {
         set((state) => ({
           transactionHistory: state.transactionHistory.map((item) => {
-            if (item.id !== id || item.type !== TransactionHistoryItemType.Swap) return item;
+            if (item.id !== id || item.type !== TransactionHistoryItemType.Transfer) return item;
             return {
               ...item,
               data: {
@@ -184,20 +190,20 @@ export const useStore = create<AppState>()(
           }),
         }));
       },
-      swapRouteByTransactionId: new Map(),
-      setSwapRoute: (transactionId, route) => {
+      transferRouteByTransactionId: new Map(),
+      setTransferRoute: (transactionId, route) => {
         set((state) => {
-          const next = new Map(state.swapRouteByTransactionId);
+          const next = new Map(state.transferRouteByTransactionId);
           next.set(transactionId, route);
-          return { swapRouteByTransactionId: next };
+          return { transferRouteByTransactionId: next };
         });
       },
       failUnconfirmedTransactions: () => {
         set((state) => ({
           transactionHistory: state.transactionHistory.map((item) => {
-            if (FinalSwapStatuses.includes(item.data.status)) return item;
+            if (FinalTransferStatuses.includes(item.data.status)) return item;
             if (item.data.originTxHash) return item;
-            return { ...item, data: { ...item.data, status: SwapStatus.Failed } };
+            return { ...item, data: { ...item.data, status: TransferStatus.Failed } };
           }),
         }));
       },
@@ -205,9 +211,9 @@ export const useStore = create<AppState>()(
       setSelectedTransactionId: (selectedTransactionId) => {
         set(() => ({ selectedTransactionId }));
       },
-      activeSwapTransactionId: null,
-      setActiveSwapTransactionId: (activeSwapTransactionId) => {
-        set(() => ({ activeSwapTransactionId }));
+      activeTransferTransactionId: null,
+      setActiveTransferTransactionId: (activeTransferTransactionId) => {
+        set(() => ({ activeTransferTransactionId }));
       },
       knownTokens: new Map(),
       syncTokens: (newTokens) => {
@@ -215,7 +221,7 @@ export const useStore = create<AppState>()(
           let added = 0;
           const next = new Map(state.knownTokens);
           for (const t of newTokens) {
-            const key = getSwapTokenKey(t);
+            const key = getTransferTokenKey(t);
             if (!next.has(key)) {
               next.set(key, t);
               added++;
@@ -244,10 +250,6 @@ export const useStore = create<AppState>()(
       transferLoading: false,
       setTransferLoading: (isLoading) => {
         set(() => ({ transferLoading: isLoading }));
-      },
-      swapLoading: false,
-      setSwapLoading: (isLoading) => {
-        set(() => ({ swapLoading: isLoading }));
       },
       isSideBarOpen: false,
       setIsSideBarOpen: (isSideBarOpen) => {
@@ -278,25 +280,24 @@ export const useStore = create<AppState>()(
       version: PERSIST_STATE_VERSION,
       migrate: (persistedState) => {
         const state = persistedState as Partial<AppState> & {
-          swaps?: SwapHistoryItem[];
-          transactionHistory?: Array<TransactionHistoryItem | { type?: string }>;
+          swaps?: TransferHistoryItem[];
+          transactionHistory?: PersistedTransactionHistoryItem[];
         };
         if (Array.isArray(state.transactionHistory)) {
           return {
             chainMetadataOverrides: state.chainMetadataOverrides ?? {},
-            transactionHistory: state.transactionHistory.filter(
-              (item): item is TransactionHistoryItem =>
-                item.type === TransactionHistoryItemType.Swap,
-            ),
+            transactionHistory: state.transactionHistory
+              .map(normalizePersistedTransactionHistoryItem)
+              .filter((item): item is TransactionHistoryItem => !!item),
           };
         }
 
         const swaps = Array.isArray(state.swaps) ? state.swaps : [];
         const transactionHistory: TransactionHistoryItem[] = [
           ...swaps.map((data) => ({
-            id: createTransactionId(TransactionHistoryItemType.Swap, data.timestamp),
-            type: TransactionHistoryItemType.Swap,
-            data,
+            id: createTransactionId(TransactionHistoryItemType.Transfer, data.timestamp),
+            type: TransactionHistoryItemType.Transfer,
+            data: normalizeTransferHistoryItem(data),
           })),
         ];
 
@@ -328,6 +329,38 @@ function createTransactionId(type: TransactionHistoryItem['type'], timestamp: nu
     crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
   return `${type}-${timestamp}-${suffix}`;
+}
+
+function normalizePersistedTransactionHistoryItem(
+  item: PersistedTransactionHistoryItem,
+): TransactionHistoryItem | null {
+  if (!item.data) return null;
+  if (item.type !== TransactionHistoryItemType.Transfer && item.type !== 'swap') return null;
+
+  const data = normalizeTransferHistoryItem(item.data);
+  const id =
+    typeof item.id === 'string'
+      ? item.id.replace(/^swap-/, `${TransactionHistoryItemType.Transfer}-`)
+      : createTransactionId(TransactionHistoryItemType.Transfer, data.timestamp);
+
+  return {
+    id,
+    type: TransactionHistoryItemType.Transfer,
+    data,
+  };
+}
+
+function normalizeTransferHistoryItem(data: TransferHistoryItem): TransferHistoryItem {
+  return {
+    ...data,
+    status: normalizeTransferStatus(data.status),
+  };
+}
+
+function normalizeTransferStatus(status: TransferStatus): TransferStatus {
+  if (status === ('signing-swap' as TransferStatus)) return TransferStatus.SigningTransfer;
+  if (status === ('dest-swap-failed' as TransferStatus)) return TransferStatus.DestTransferFailed;
+  return status;
 }
 
 async function initAppContext({

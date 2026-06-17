@@ -22,12 +22,12 @@ import { getHypExplorerLink } from '../../../utils/links';
 import { logger } from '../../../utils/logger';
 import { useMultiProvider } from '../../chains/hooks';
 import { getChainDisplayName } from '../../chains/utils';
-import { getSwapDeliveryMsgId } from '../../messages/utils';
+import { getTransferDeliveryMsgId } from '../../messages/utils';
 import { TransactionHistoryItemType, useStore } from '../../store';
 import { formatDisplayAmount } from './balances/utils';
 import { getTokenByKeyFromMap, useTokenByKeyMap } from './tokens/hooks';
 import { tokenKey } from './tokens/utils';
-import { FinalSwapStatuses, SwapStatus, type SwapHistoryItem } from './types';
+import { FinalTransferStatuses, TransferStatus, type TransferHistoryItem } from './types';
 
 const DEFAULT_TIMINGS: StageTimings = {
   [MessageStage.Finalized]: null,
@@ -41,26 +41,26 @@ const LABEL_NAMES: Record<string, string> = {
   reveal: 'Reveal Message ID',
 };
 
-const STATUS_DESCRIPTION: Record<SwapStatus, string> = {
-  [SwapStatus.Preparing]: 'Preparing transaction…',
-  [SwapStatus.CreatingTxs]: 'Submitting commitment to CCS…',
-  [SwapStatus.SigningApprove]: 'Awaiting approval signature in your wallet…',
-  [SwapStatus.ConfirmingApprove]: 'Confirming approval on origin chain…',
-  [SwapStatus.SigningSwap]: 'Awaiting swap signature in your wallet…',
-  [SwapStatus.ConfirmingOrigin]: 'Confirming on origin chain…',
-  [SwapStatus.Bridging]: 'Swapping via Hyperlane…',
-  [SwapStatus.ConfirmingDestination]: 'Confirming on destination chain…',
-  [SwapStatus.ConfirmedDestination]: 'Delivered',
-  [SwapStatus.DestSwapFailed]: 'Destination swap reverted',
-  [SwapStatus.FailedRecovered]: 'Swap reverted — bridge token returned',
-  [SwapStatus.DestFailed]: 'Destination execution failed — funds stranded in ICA',
-  [SwapStatus.Failed]: 'Swap failed',
+const STATUS_DESCRIPTION: Record<TransferStatus, string> = {
+  [TransferStatus.Preparing]: 'Preparing transaction…',
+  [TransferStatus.CreatingTxs]: 'Submitting commitment to CCS…',
+  [TransferStatus.SigningApprove]: 'Awaiting approval signature in your wallet…',
+  [TransferStatus.ConfirmingApprove]: 'Confirming approval on origin chain…',
+  [TransferStatus.SigningTransfer]: 'Awaiting transfer signature in your wallet…',
+  [TransferStatus.ConfirmingOrigin]: 'Confirming on origin chain…',
+  [TransferStatus.Bridging]: 'Transferring via Hyperlane…',
+  [TransferStatus.ConfirmingDestination]: 'Confirming on destination chain…',
+  [TransferStatus.ConfirmedDestination]: 'Delivered',
+  [TransferStatus.DestTransferFailed]: 'Destination transfer reverted',
+  [TransferStatus.FailedRecovered]: 'Transfer reverted — bridge token returned',
+  [TransferStatus.DestFailed]: 'Destination execution failed — funds stranded in ICA',
+  [TransferStatus.Failed]: 'Transfer failed',
 };
 
 const CONFIRMING_ORIGIN_HINT_DELAY_MS = 60_000;
 const CONFIRMING_ORIGIN_AUTO_FAIL_DELAY_MS = 120_000;
 
-export function SwapDetailsModal() {
+export function TransferDetailsModal() {
   const selectedTransactionId = useStore((s) => s.selectedTransactionId);
   const transactionHistory = useStore((s) => s.transactionHistory);
   const setSelectedTransactionId = useStore((s) => s.setSelectedTransactionId);
@@ -75,23 +75,28 @@ export function SwapDetailsModal() {
   const renderedId = lastIdRef.current;
   const item =
     renderedId != null ? transactionHistory.find((entry) => entry.id === renderedId) : undefined;
-  const swap = item?.type === TransactionHistoryItemType.Swap ? item.data : undefined;
+  const transfer = item?.type === TransactionHistoryItemType.Transfer ? item.data : undefined;
 
-  if (!swap || renderedId == null) return <Modal isOpen={false} close={close} />;
+  if (!transfer || renderedId == null) return <Modal isOpen={false} close={close} />;
   return (
-    <SwapDetailsModalInner isOpen={isOpen} close={close} swap={swap} transactionId={renderedId} />
+    <TransferDetailsModalInner
+      isOpen={isOpen}
+      close={close}
+      transfer={transfer}
+      transactionId={renderedId}
+    />
   );
 }
 
-function SwapDetailsModalInner({
+function TransferDetailsModalInner({
   isOpen,
   close,
-  swap,
+  transfer,
   transactionId,
 }: {
   isOpen: boolean;
   close: () => void;
-  swap: SwapHistoryItem;
+  transfer: TransferHistoryItem;
   transactionId: string;
 }) {
   const multiProvider = useMultiProvider();
@@ -110,36 +115,36 @@ function SwapDetailsModalInner({
     destinationTxHash,
     msgIds,
     timestamp,
-  } = swap;
+  } = transfer;
 
   const originChain = multiProvider.tryGetChainName(srcChain) ?? `chain ${srcChain}`;
   const destChain = multiProvider.tryGetChainName(dstChain) ?? `chain ${dstChain}`;
 
   const srcToken = getTokenByKeyFromMap(tokenMap, tokenKey(srcChain, srcTokenAddr));
   const dstToken = getTokenByKeyFromMap(tokenMap, tokenKey(dstChain, dstTokenAddr));
-  const srcSymbol = srcToken?.symbol ?? swap.srcTokenMeta?.symbol ?? '';
-  const dstSymbol = dstToken?.symbol ?? swap.dstTokenMeta?.symbol ?? '';
-  const srcDecimals = srcToken?.decimals ?? swap.srcTokenMeta?.decimals;
-  const dstDecimals = dstToken?.decimals ?? swap.dstTokenMeta?.decimals;
+  const srcSymbol = srcToken?.symbol ?? transfer.srcTokenMeta?.symbol ?? '';
+  const dstSymbol = dstToken?.symbol ?? transfer.dstTokenMeta?.symbol ?? '';
+  const srcDecimals = srcToken?.decimals ?? transfer.srcTokenMeta?.decimals;
+  const dstDecimals = dstToken?.decimals ?? transfer.dstTokenMeta?.decimals;
 
-  const isFailed = status === SwapStatus.Failed;
-  const isDestFailed = status === SwapStatus.DestSwapFailed;
-  const isDelivered = status === SwapStatus.ConfirmedDestination;
-  const isFailedRecovered = status === SwapStatus.FailedRecovered;
-  const isRevealFailed = status === SwapStatus.DestFailed;
-  const isFinal = FinalSwapStatuses.includes(status);
+  const isFailed = status === TransferStatus.Failed;
+  const isDestFailed = status === TransferStatus.DestTransferFailed;
+  const isDelivered = status === TransferStatus.ConfirmedDestination;
+  const isFailedRecovered = status === TransferStatus.FailedRecovered;
+  const isRevealFailed = status === TransferStatus.DestFailed;
+  const isFinal = FinalTransferStatuses.includes(status);
 
   // Poll the reveal message when present — its delivery tx IS the ICA
   // execution on the destination chain, which is what actually completes
-  // the swap. Pure-bridge routes (no destination swap) have no reveal,
-  // so fall back to the warp message. Same-chain swaps have no msgIds.
-  const pollingMsgId = getSwapDeliveryMsgId(msgIds);
+  // the transfer. Pure bridge routes have no reveal, so fall back to the
+  // warp message. Same-chain transfers have no msgIds.
+  const pollingMsgId = getTransferDeliveryMsgId(msgIds);
 
   const isSent =
-    status === SwapStatus.ConfirmingOrigin ||
-    status === SwapStatus.Bridging ||
-    status === SwapStatus.ConfirmingDestination ||
-    status === SwapStatus.ConfirmedDestination ||
+    status === TransferStatus.ConfirmingOrigin ||
+    status === TransferStatus.Bridging ||
+    status === TransferStatus.ConfirmingDestination ||
+    status === TransferStatus.ConfirmedDestination ||
     isDestFailed ||
     isFailedRecovered ||
     isRevealFailed;
@@ -148,9 +153,9 @@ function SwapDetailsModalInner({
     if (isDelivered || isDestFailed || isFailedRecovered || isRevealFailed) {
       return MessageStage.Relayed;
     }
-    if (status === SwapStatus.ConfirmingDestination) return MessageStage.Validated;
-    if (status === SwapStatus.Bridging) return MessageStage.Finalized;
-    if (status === SwapStatus.ConfirmingOrigin) return MessageStage.Sent;
+    if (status === TransferStatus.ConfirmingDestination) return MessageStage.Validated;
+    if (status === TransferStatus.Bridging) return MessageStage.Finalized;
+    if (status === TransferStatus.ConfirmingOrigin) return MessageStage.Sent;
     return MessageStage.Preparing;
   }, [status, isDelivered, isDestFailed, isFailedRecovered, isRevealFailed]);
 
@@ -160,7 +165,7 @@ function SwapDetailsModalInner({
       ? MessageStatus.Failing
       : MessageStatus.Pending;
 
-  // Show timeline only for cross-chain swaps (msgIds present).
+  // Show timeline only for cross-chain transfers (msgIds present).
   const showTimeline = isSent && !isFailed && !!originTxHash && !!pollingMsgId;
 
   const date = useMemo(
@@ -291,20 +296,20 @@ function SwapDetailsModalInner({
           <div className="mt-5 flex flex-col space-y-4">
             {isDestFailed && (
               <div className="rounded border border-amber-300 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">
-                Origin succeeded and the bridge delivered, but the destination swap reverted. Bridge
-                token may remain in your ICA. Please contact support.
+                Origin succeeded and delivery completed, but destination execution reverted. Funds
+                may remain in your ICA. Please contact support.
               </div>
             )}
             {isFailedRecovered && (
               <div className="rounded border border-blue-300 bg-blue-50 p-3 text-xs text-blue-800 dark:border-blue-500/40 dark:bg-blue-500/10 dark:text-blue-200">
-                The destination swap reverted and the bridge token was automatically returned to
+                Destination execution reverted and the bridge token was automatically returned to
                 your wallet on the destination chain.
               </div>
             )}
             {isRevealFailed && (
               <div className="rounded border border-amber-300 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">
-                The destination execution ran but both the swap and fallback failed. Bridge token
-                remains in your ICA. Please contact support.
+                The destination execution ran but both the transfer and fallback failed. Bridge
+                token remains in your ICA. Please contact support.
               </div>
             )}
             <TransferProperty name="Sender Address" value={sender} url={fromUrl} />
@@ -338,8 +343,8 @@ function SwapDetailsModalInner({
             <div className="mt-5 text-center text-sm text-gray-600 dark:text-foreground-muted">
               {STATUS_DESCRIPTION[status]}
             </div>
-            {status === SwapStatus.ConfirmingOrigin && (
-              <ConfirmingOriginHint swap={swap} transactionId={transactionId} />
+            {status === TransferStatus.ConfirmingOrigin && (
+              <ConfirmingOriginHint transfer={transfer} transactionId={transactionId} />
             )}
           </div>
         )}
@@ -395,27 +400,27 @@ function formatAmount(amount: string, decimals: number | undefined): string {
 }
 
 function ConfirmingOriginHint({
-  swap,
+  transfer,
   transactionId,
 }: {
-  swap: SwapHistoryItem;
+  transfer: TransferHistoryItem;
   transactionId: string;
 }) {
   const [showHint, setShowHint] = useState(false);
-  const updateSwapTransactionStatus = useStore((s) => s.updateSwapTransactionStatus);
+  const updateTransferTransactionStatus = useStore((s) => s.updateTransferTransactionStatus);
 
   useEffect(() => {
     const hintTimer = setTimeout(() => setShowHint(true), CONFIRMING_ORIGIN_HINT_DELAY_MS);
     const failTimer = setTimeout(() => {
-      updateSwapTransactionStatus(transactionId, SwapStatus.Failed, {
-        originTxHash: swap.originTxHash,
+      updateTransferTransactionStatus(transactionId, TransferStatus.Failed, {
+        originTxHash: transfer.originTxHash,
       });
     }, CONFIRMING_ORIGIN_AUTO_FAIL_DELAY_MS);
     return () => {
       clearTimeout(hintTimer);
       clearTimeout(failTimer);
     };
-  }, [transactionId, swap.originTxHash, updateSwapTransactionStatus]);
+  }, [transactionId, transfer.originTxHash, updateTransferTransactionStatus]);
 
   if (!showHint) return null;
   return (

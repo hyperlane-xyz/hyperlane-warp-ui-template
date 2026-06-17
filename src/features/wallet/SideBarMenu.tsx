@@ -16,7 +16,7 @@ import { getChainDisplayName } from '../chains/utils';
 import { type TransactionHistoryItem, TransactionHistoryItemType, useStore } from '../store';
 import { formatBalance } from '../transfer/engine/balances/utils';
 import { getTokenByKeyFromMap } from '../transfer/engine/tokens/hooks';
-import { FinalSwapStatuses, SwapStatus } from '../transfer/engine/types';
+import { FinalTransferStatuses, TransferStatus } from '../transfer/engine/types';
 import { startRelativeTimeTicker } from './relativeTimeTicker';
 
 export function SideBarMenu({
@@ -49,8 +49,8 @@ export function SideBarMenu({
             item,
           ): item is Extract<
             TransactionHistoryItem,
-            { type: typeof TransactionHistoryItemType.Swap }
-          > => item.type === TransactionHistoryItemType.Swap,
+            { type: typeof TransactionHistoryItemType.Transfer }
+          > => item.type === TransactionHistoryItemType.Transfer,
         )
         .sort((a, b) => b.data.timestamp - a.data.timestamp),
     [transactionHistory],
@@ -146,31 +146,31 @@ function TransferSummary({
   knownTokens: ReturnType<typeof useStore.getState>['knownTokens'];
   nowMs: number;
 }) {
-  const swap = item.data;
+  const transfer = item.data;
   const srcToken = getTokenByKeyFromMap(
     knownTokens,
-    `${swap.srcChain}-${swap.srcToken.toLowerCase()}`,
+    `${transfer.srcChain}-${transfer.srcToken.toLowerCase()}`,
   );
   const dstToken = getTokenByKeyFromMap(
     knownTokens,
-    `${swap.dstChain}-${swap.dstToken.toLowerCase()}`,
+    `${transfer.dstChain}-${transfer.dstToken.toLowerCase()}`,
   );
   const originChain =
     srcToken?.chainName ??
-    swap.srcTokenMeta?.chainName ??
-    multiProvider.tryGetChainName(swap.srcChain) ??
+    transfer.srcTokenMeta?.chainName ??
+    multiProvider.tryGetChainName(transfer.srcChain) ??
     '';
   const destChain =
     dstToken?.chainName ??
-    swap.dstTokenMeta?.chainName ??
-    multiProvider.tryGetChainName(swap.dstChain) ??
+    transfer.dstTokenMeta?.chainName ??
+    multiProvider.tryGetChainName(transfer.dstChain) ??
     '';
-  const srcDecimals = srcToken?.decimals ?? swap.srcTokenMeta?.decimals;
-  const dstDecimals = dstToken?.decimals ?? swap.dstTokenMeta?.decimals;
-  const amount = formatHistoryAmount(swap.amountIn, srcDecimals);
-  const destAmount = formatHistoryAmount(swap.amountOut, dstDecimals);
-  const tokenSymbol = srcToken?.symbol ?? swap.srcTokenMeta?.symbol ?? 'Unknown token';
-  const destTokenSymbol = dstToken?.symbol ?? swap.dstTokenMeta?.symbol;
+  const srcDecimals = srcToken?.decimals ?? transfer.srcTokenMeta?.decimals;
+  const dstDecimals = dstToken?.decimals ?? transfer.dstTokenMeta?.decimals;
+  const amount = formatHistoryAmount(transfer.amountIn, srcDecimals);
+  const destAmount = formatHistoryAmount(transfer.amountOut, dstDecimals);
+  const tokenSymbol = srcToken?.symbol ?? transfer.srcTokenMeta?.symbol ?? 'Unknown token';
+  const destTokenSymbol = dstToken?.symbol ?? transfer.dstTokenMeta?.symbol;
 
   return (
     <button onClick={onClick} className={`${styles.btn} justify-between py-3`}>
@@ -233,14 +233,14 @@ function TransferSummary({
             </span>
           </div>
           <div className="sidebar-menu-time mt-1 w-full text-left text-xxs font-normal text-gray-500 dark:text-foreground-primary">
-            {formatTransferHistoryTimestamp(swap.timestamp, nowMs)}
+            {formatTransferHistoryTimestamp(transfer.timestamp, nowMs)}
           </div>
         </div>
       </div>
       <div className="ml-2 flex shrink-0 items-center">
-        {FinalSwapStatuses.includes(swap.status) ? (
+        {FinalTransferStatuses.includes(transfer.status) ? (
           <span className="text-xs text-gray-500 dark:text-foreground-secondary">
-            {swap.status === SwapStatus.ConfirmedDestination ? 'Done' : 'Failed'}
+            {transfer.status === TransferStatus.ConfirmedDestination ? 'Done' : 'Failed'}
           </span>
         ) : (
           <SpinnerIcon className="-ml-1 mr-3 h-5 w-5" />

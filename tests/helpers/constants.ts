@@ -7,8 +7,8 @@ export function resolveTestTokenParams(): {
   destinationToken: string;
   skip: boolean;
 } {
-  const origin = splitTokenId(config.defaultSwapOriginToken);
-  const destination = splitTokenId(config.defaultSwapDestinationToken);
+  const origin = splitTokenId(config.defaultTransferOriginToken);
+  const destination = splitTokenId(config.defaultTransferDestinationToken);
 
   if (!origin || !destination) {
     return {

@@ -36,8 +36,8 @@ interface AllowanceArgs {
 }
 
 // Reactive read hook used by the review modal to preview "Revoke /
-// Approve / Swap" transactions before the user clicks Send. The actual
-// broadcast logic lives in useSwap.execute (plain async, no hook), so
+// Approve / Transfer" transactions before the user clicks Send. The actual
+// broadcast logic lives in useTransfer.execute (plain async, no hook), so
 // this is purely for UI state.
 //
 // Uses EvmTokenAdapter — works uniformly for EVM and Tron through

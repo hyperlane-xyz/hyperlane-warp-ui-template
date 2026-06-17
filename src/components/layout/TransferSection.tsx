@@ -5,7 +5,7 @@ type TransferSectionProps = {
   children: ReactNode;
 };
 
-// Gradient-headed section wrapper used by both the bridge and swap forms
+// Gradient-headed section wrapper used by both the bridge and transfer forms
 // for the "Send" / "Receive" panels.
 export function TransferSection({ label, children }: TransferSectionProps) {
   return (

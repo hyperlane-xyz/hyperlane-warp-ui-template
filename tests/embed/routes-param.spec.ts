@@ -5,7 +5,7 @@ const { origin, originToken, destination, destinationToken, skip } = resolveTest
 
 test.describe('Embed Token Parameters', () => {
   test('should load embed page with valid token params', async ({ page }) => {
-    test.skip(skip, 'defaultSwapOriginToken/defaultSwapDestinationToken are not configured');
+    test.skip(skip, 'defaultTransferOriginToken/defaultTransferDestinationToken are not configured');
 
     await page.goto(
       `http://localhost:3000/embed?origin=${origin}&originToken=${originToken}&destination=${destination}&destinationToken=${destinationToken}`,

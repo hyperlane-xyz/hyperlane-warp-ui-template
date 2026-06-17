@@ -8,7 +8,7 @@ export interface ScaledToken {
 
 // Formats a raw atomic / message-body amount into a human-readable local
 // amount string. For tokens with `scale`, converts message-space → local
-// before applying decimals. (Not wired into SwapForm display yet.)
+// before applying decimals. (Not wired into TransferForm display yet.)
 export function formatMessageAmount(rawAmount: string, token: ScaledToken): string {
   if (token.scale) {
     const messageAmount = BigInt(rawAmount);

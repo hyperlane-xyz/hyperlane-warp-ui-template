@@ -15,7 +15,7 @@ import { useMultiProvider } from '../../chains/hooks';
 import { useStore } from '../../store';
 import { submitToRelayApi } from '../relayApi';
 import { postCommitment } from './ccs';
-import { SwapStatus } from './types';
+import { TransferStatus } from './types';
 import type { AugmentedRoute, LabeledMsgId } from './types';
 
 interface ExecuteArgs {
@@ -39,11 +39,11 @@ interface ExecuteArgs {
 
 // Single execution path covering EVM + Tron via the SDK's protocol-aware
 // transaction adapters.
-export function useSwap() {
+export function useTransfer() {
   const multiProvider = useMultiProvider();
   const transactionFns = useTransactionFns(multiProvider);
-  const updateSwapTransactionStatus = useStore((s) => s.updateSwapTransactionStatus);
-  const setSwapRoute = useStore((s) => s.setSwapRoute);
+  const updateTransferTransactionStatus = useStore((s) => s.updateTransferTransactionStatus);
+  const setTransferRoute = useStore((s) => s.setTransferRoute);
   const [error, setError] = useState<Error | null>(null);
   const [isPending, setIsPending] = useState(false);
 
@@ -58,7 +58,7 @@ export function useSwap() {
         if (!routeTxs.length) throw new Error('Route has no tx');
 
         // Store route for status polling and recovery (non-persisted, session only).
-        setSwapRoute(transactionId, route.raw);
+        setTransferRoute(transactionId, route.raw);
 
         const srcChainName = multiProvider.tryGetChainName(srcChainId);
         const protocol = multiProvider.tryGetProtocol(srcChainId);
@@ -79,7 +79,7 @@ export function useSwap() {
           }
         }
 
-        // Approve / revoke before the swap tx: bump non-zero existing
+        // Approve / revoke before the transfer tx: bump non-zero existing
         // allowance to zero first (USDT case), then approve the new amount.
         if (args.spender && args.approvalAmount != null && !args.isNative) {
           const spender = args.spender;
@@ -94,7 +94,7 @@ export function useSwap() {
             adapter.isRevokeApprovalRequired(args.sender, spender),
           ]);
           const doApprove = async (amount: bigint) => {
-            updateSwapTransactionStatus(transactionId, SwapStatus.SigningApprove);
+            updateTransferTransactionStatus(transactionId, TransferStatus.SigningApprove);
             const populated = await adapter.populateApproveTx({
               weiAmountOrId: amount.toString(),
               recipient: spender,
@@ -107,7 +107,7 @@ export function useSwap() {
               } as Parameters<typeof fns.sendTransaction>[0]['tx'],
               chainName: srcChainName,
             });
-            updateSwapTransactionStatus(transactionId, SwapStatus.ConfirmingApprove);
+            updateTransferTransactionStatus(transactionId, TransferStatus.ConfirmingApprove);
             const receipt = await confirm();
             if (isReverted(receipt)) {
               logger.error('Approve tx reverted', new Error(`tx=${hash}`));
@@ -120,14 +120,14 @@ export function useSwap() {
 
         // Order is critical: post to CCS BEFORE broadcasting.
         if (route.raw.callCommitment) {
-          updateSwapTransactionStatus(transactionId, SwapStatus.CreatingTxs);
+          updateTransferTransactionStatus(transactionId, TransferStatus.CreatingTxs);
           try {
             await postCommitment(route.raw.callCommitment);
           } catch (ccsErr) {
-            logger.error('CCS post failed — aborting swap', ccsErr);
-            updateSwapTransactionStatus(transactionId, SwapStatus.Failed);
+            logger.error('CCS post failed — aborting transfer', ccsErr);
+            updateTransferTransactionStatus(transactionId, TransferStatus.Failed);
             const err = new Error(
-              'Could not register swap with the coordination service. Your funds are safe — please try again.',
+              'Could not register transfer with the coordination service. Your funds are safe — please try again.',
             );
             setError(err);
             throw err;
@@ -137,21 +137,23 @@ export function useSwap() {
         let hash: string | undefined;
         let receipt: TypedTransactionReceipt | undefined;
         for (const routeTx of routeTxs) {
-          updateSwapTransactionStatus(transactionId, SwapStatus.SigningSwap);
+          updateTransferTransactionStatus(transactionId, TransferStatus.SigningTransfer);
           const sent = await fns.sendTransaction({
             tx: toWalletTx(routeTx, txType) as Parameters<typeof fns.sendTransaction>[0]['tx'],
             chainName: srcChainName,
           });
           hash = sent.hash;
 
-          updateSwapTransactionStatus(transactionId, SwapStatus.ConfirmingOrigin, {
+          updateTransferTransactionStatus(transactionId, TransferStatus.ConfirmingOrigin, {
             originTxHash: hash,
           });
 
           receipt = await sent.confirm();
           if (isReverted(receipt)) {
             logger.error('Origin tx reverted', new Error(`tx=${hash}`));
-            updateSwapTransactionStatus(transactionId, SwapStatus.Failed, { originTxHash: hash });
+            updateTransferTransactionStatus(transactionId, TransferStatus.Failed, {
+              originTxHash: hash,
+            });
             const err = new Error('Origin transaction reverted on chain');
             setError(err);
             throw err;
@@ -164,7 +166,7 @@ export function useSwap() {
         const canReadDispatchLogs = isEvmReceipt(receipt);
         if (expectsBridge && canReadDispatchLogs && !parsed.messages.length) {
           logger.error('Origin tx confirmed but no Dispatch log emitted', new Error(`tx=${hash}`));
-          updateSwapTransactionStatus(transactionId, SwapStatus.Failed, {
+          updateTransferTransactionStatus(transactionId, TransferStatus.Failed, {
             originTxHash: hash,
             originBlockNumber: parsed.originBlockNumber,
           });
@@ -174,9 +176,9 @@ export function useSwap() {
           setError(err);
           throw err;
         }
-        // Same-chain swap (no bridge step): finalize on origin confirm.
+        // Same-chain transfer (no bridge step): finalize on origin confirm.
         if (!expectsBridge) {
-          updateSwapTransactionStatus(transactionId, SwapStatus.ConfirmedDestination, {
+          updateTransferTransactionStatus(transactionId, TransferStatus.ConfirmedDestination, {
             originTxHash: hash,
             destinationTxHash: hash,
             originBlockNumber: parsed.originBlockNumber,
@@ -185,7 +187,7 @@ export function useSwap() {
         }
         submitToRelayApi(srcChainName, hash, protocol as ProtocolType, receipt);
 
-        updateSwapTransactionStatus(transactionId, SwapStatus.Bridging, {
+        updateTransferTransactionStatus(transactionId, TransferStatus.Bridging, {
           msgIds: labelMessages(parsed.messages, route),
           originBlockNumber: parsed.originBlockNumber,
           originTxTimestamp: Math.floor(Date.now() / 1000),
@@ -193,15 +195,15 @@ export function useSwap() {
 
         return hash;
       } catch (err) {
-        logger.error('Swap broadcast failed', err);
-        updateSwapTransactionStatus(transactionId, SwapStatus.Failed);
+        logger.error('Transfer broadcast failed', err);
+        updateTransferTransactionStatus(transactionId, TransferStatus.Failed);
         setError(err as Error);
         throw err;
       } finally {
         setIsPending(false);
       }
     },
-    [transactionFns, multiProvider, updateSwapTransactionStatus, setSwapRoute],
+    [transactionFns, multiProvider, updateTransferTransactionStatus, setTransferRoute],
   );
 
   return { execute, isPending, error };
@@ -309,7 +311,7 @@ function labelMessages(messages: ParsedMessage[], route: AugmentedRoute): Labele
     if (ccsLabel) return { msgId: msg.msgId, label: ccsLabel };
     if (msg === revealMsg) return { msgId: msg.msgId, label: 'reveal' as const };
 
-    logger.warn('Unexpected swap message shape; labeling as commit', {
+    logger.warn('Unexpected transfer message shape; labeling as commit', {
       msgId: msg.msgId,
       sender: msg.sender,
     });

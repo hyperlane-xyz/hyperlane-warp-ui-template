@@ -58,7 +58,7 @@ test.describe('EVM same-symbol dedup', () => {
 
     // Review panel populating with an output token proves the route resolved
     // against the Arbitrum-scoped USDC.
-    await expect(reviewPanel).toContainText(/Transaction 1: Swap/i);
+    await expect(reviewPanel).toContainText(/Transaction 1: Transfer/i);
     await expect(reviewPanel).toContainText(/1 USDC/);
     // Remote token must render as a 0x-address (non-empty, not a fallback string).
     await expect(reviewPanel).toContainText(/0x[0-9a-fA-F]{40}/);

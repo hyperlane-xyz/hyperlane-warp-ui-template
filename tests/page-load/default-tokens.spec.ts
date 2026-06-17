@@ -10,14 +10,14 @@ test.describe('Page Load - Default Tokens', () => {
 
     const originButton = getOriginTokenButton(page);
     await expect(originButton).toBeVisible();
-    const origin = splitTokenId(config.defaultSwapOriginToken);
+    const origin = splitTokenId(config.defaultTransferOriginToken);
     if (origin) {
       await expect(originButton).toHaveAttribute('data-chain', origin.chainName);
     }
 
     const destButton = getDestinationTokenButton(page);
     await expect(destButton).toBeVisible();
-    const destination = splitTokenId(config.defaultSwapDestinationToken);
+    const destination = splitTokenId(config.defaultTransferDestinationToken);
     if (destination) {
       await expect(destButton).toHaveAttribute('data-chain', destination.chainName);
     }

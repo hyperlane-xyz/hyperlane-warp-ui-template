@@ -46,7 +46,7 @@ test.describe('EVM tx payload capture', () => {
     await page.getByRole('button', { name: /^Continue$/ }).click();
 
     // Review panel ready.
-    await expect(page.locator('.transfer-review-panel').first()).toContainText(/Transaction 1: Swap/i, {
+    await expect(page.locator('.transfer-review-panel').first()).toContainText(/Transaction 1: Transfer/i, {
       timeout: 45_000,
     });
 

@@ -5,11 +5,11 @@ import { getOriginTokenButton } from '../helpers/locators';
 
 // Match chain rows by the `data-chain` slug (what ChainList renders) instead of
 // reconstructing a displayName at test time.
-const defaultOriginChain = splitTokenId(config.defaultSwapOriginToken)?.chainName;
+const defaultOriginChain = splitTokenId(config.defaultTransferOriginToken)?.chainName;
 
 test.describe('Chain Selection - Filter by Type', () => {
   test('should filter chains by Testnet type', async ({ page }) => {
-    test.skip(!defaultOriginChain, 'No defaultSwapOriginToken configured');
+    test.skip(!defaultOriginChain, 'No defaultTransferOriginToken configured');
 
     await page.goto('http://localhost:3000');
     await page.getByText('Send').first().waitFor({ state: 'visible' });
@@ -54,7 +54,7 @@ test.describe('Chain Selection - Filter by Type', () => {
   });
 
   test('should filter chains by Mainnet type', async ({ page }) => {
-    test.skip(!defaultOriginChain, 'No defaultSwapOriginToken configured');
+    test.skip(!defaultOriginChain, 'No defaultTransferOriginToken configured');
 
     await page.goto('http://localhost:3000');
     await page.getByText('Send').first().waitFor({ state: 'visible' });

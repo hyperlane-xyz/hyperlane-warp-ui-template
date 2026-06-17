@@ -37,41 +37,41 @@ import type { UiToken } from './tokens/types';
 import { useTokenPrices, useTokenUsdValue } from './tokens/useTokenPrice';
 import { tokenKey } from './tokens/utils';
 import {
-  FinalSwapStatuses,
-  SwapStatus,
+  FinalTransferStatuses,
+  TransferStatus,
   type AugmentedRoute,
-  type SwapFormValues,
-  type SwapHistoryItem,
+  type TransferFormValues,
+  type TransferHistoryItem,
 } from './types';
 import { useFormInitialValues } from './useFormInitialValues';
 import { useQuote } from './useQuote';
-import { useSwap } from './useSwap';
-import { validateSwapForm } from './validate';
+import { useTransfer } from './useTransfer';
+import { validateTransferForm } from './validate';
 
 const PRICE_IMPACT_DANGER_PCT = -3;
 const PRICE_IMPACT_WARN_PCT = -1;
 const PCT_FORMAT_OPTIONS = { minimumFractionDigits: 2, maximumFractionDigits: 2 } as const;
 
-export function SwapForm() {
+export function TransferForm() {
   const initialValues = useFormInitialValues();
   return (
-    <Formik<SwapFormValues>
+    <Formik<TransferFormValues>
       initialValues={initialValues}
       enableReinitialize
       onSubmit={() => undefined}
       validateOnChange={false}
       validateOnBlur={false}
     >
-      <Form className="swap-form flex w-full flex-col items-stretch gap-1.5">
-        <SwapFormContent />
+      <Form className="transfer-form flex w-full flex-col items-stretch gap-1.5">
+        <TransferFormContent />
       </Form>
     </Formik>
   );
 }
 
-function SwapFormContent() {
+function TransferFormContent() {
   const { values, errors, setErrors, setFieldValue, setValues } =
-    useFormikContext<SwapFormValues>();
+    useFormikContext<TransferFormValues>();
   const multiProvider = useMultiProvider();
   const tokenMap = useTokenByKeyMap();
   const { data: chainsResp } = useChains();
@@ -151,24 +151,24 @@ function SwapFormContent() {
     isNative: !approval,
   });
 
-  const swap = useSwap();
-  useToastError(swap.error, 'Swap failed');
-  const addSwapTransaction = useStore((s) => s.addSwapTransaction);
+  const transfer = useTransfer();
+  useToastError(transfer.error, 'Transfer failed');
+  const addTransferTransaction = useStore((s) => s.addTransferTransaction);
   const setSelectedTransactionId = useStore((s) => s.setSelectedTransactionId);
-  const setActiveSwapTransactionId = useStore((s) => s.setActiveSwapTransactionId);
-  const updateSwapTransactionStatus = useStore((s) => s.updateSwapTransactionStatus);
-  const setSwapLoading = useStore((s) => s.setSwapLoading);
+  const setActiveTransferTransactionId = useStore((s) => s.setActiveTransferTransactionId);
+  const updateTransferTransactionStatus = useStore((s) => s.updateTransferTransactionStatus);
+  const setTransferLoading = useStore((s) => s.setTransferLoading);
 
   // Send-button gating tracks the active execution, not the transaction selected
-  // for history/modals. Viewing an old pending swap should not disable the form.
-  const activeSwap = useStore((s) =>
-    s.activeSwapTransactionId != null
-      ? s.transactionHistory.find((item) => item.id === s.activeSwapTransactionId)
+  // for history/modals. Viewing an old pending transfer should not disable the form.
+  const activeTransfer = useStore((s) =>
+    s.activeTransferTransactionId != null
+      ? s.transactionHistory.find((item) => item.id === s.activeTransferTransactionId)
       : undefined,
   );
-  const isActiveSwapInFlight =
-    activeSwap?.type === TransactionHistoryItemType.Swap &&
-    !FinalSwapStatuses.includes(activeSwap.data.status);
+  const isActiveTransferInFlight =
+    activeTransfer?.type === TransactionHistoryItemType.Transfer &&
+    !FinalTransferStatuses.includes(activeTransfer.data.status);
 
   const hasAmount = !!values.amount && Number(values.amount) > 0;
   const hasTokens = !!srcToken && !!dstToken;
@@ -190,7 +190,7 @@ function SwapFormContent() {
     try {
       const approvalPending =
         status.phase === ApprovalPhase.NeedsApprove || status.phase === ApprovalPhase.NeedsRevoke;
-      const result = await validateSwapForm({
+      const result = await validateTransferForm({
         values,
         bestRoute,
         srcToken,
@@ -241,7 +241,7 @@ function SwapFormContent() {
     const snapshot = values;
     const approvalPending =
       status.phase === ApprovalPhase.NeedsApprove || status.phase === ApprovalPhase.NeedsRevoke;
-    const validationResult = await validateSwapForm({
+    const validationResult = await validateTransferForm({
       values,
       bestRoute,
       srcToken,
@@ -268,7 +268,7 @@ function SwapFormContent() {
     // Bridge-style: drop review immediately so the form stays editable
     // while the broadcast chain runs. Modal carries the live status.
     setIsReview(false);
-    setSwapLoading(true);
+    setTransferLoading(true);
 
     const initialStep = bestRoute.raw.steps[0];
     const finalStep = bestRoute.raw.steps[bestRoute.raw.steps.length - 1];
@@ -277,8 +277,8 @@ function SwapFormContent() {
         step.type === 'swap' && step.chain === values.dstChain,
     );
     const timestamp = Date.now();
-    const item: SwapHistoryItem = {
-      status: SwapStatus.Preparing,
+    const item: TransferHistoryItem = {
+      status: TransferStatus.Preparing,
       timestamp,
       srcChain: values.srcChain,
       dstChain: values.dstChain,
@@ -309,14 +309,14 @@ function SwapFormContent() {
             }
           : undefined,
     };
-    const transactionId = addSwapTransaction(item);
+    const transactionId = addTransferTransaction(item);
     setSelectedTransactionId(transactionId);
-    setActiveSwapTransactionId(transactionId);
+    setActiveTransferTransactionId(transactionId);
 
     try {
-      // useSwap.execute handles revoke / approve / swap sequencing
+      // useTransfer.execute handles revoke / approve / transfer sequencing
       // internally based on the params below.
-      await swap.execute({
+      await transfer.execute({
         transactionId,
         route: bestRoute,
         srcChainId: values.srcChain,
@@ -335,14 +335,14 @@ function SwapFormContent() {
         .getState()
         .transactionHistory.find((historyItem) => historyItem.id === transactionId);
       if (
-        cur?.type === TransactionHistoryItemType.Swap &&
-        !FinalSwapStatuses.includes(cur.data.status)
+        cur?.type === TransactionHistoryItemType.Transfer &&
+        !FinalTransferStatuses.includes(cur.data.status)
       ) {
-        updateSwapTransactionStatus(transactionId, SwapStatus.Failed);
+        updateTransferTransactionStatus(transactionId, TransferStatus.Failed);
       }
     } finally {
-      setActiveSwapTransactionId(null);
-      setSwapLoading(false);
+      setActiveTransferTransactionId(null);
+      setTransferLoading(false);
     }
   }, [
     sender,
@@ -357,12 +357,12 @@ function SwapFormContent() {
     quote?.expiresAt,
     approval,
     approvalAmount,
-    swap,
-    addSwapTransaction,
+    transfer,
+    addTransferTransaction,
     setSelectedTransactionId,
-    setActiveSwapTransactionId,
-    updateSwapTransactionStatus,
-    setSwapLoading,
+    setActiveTransferTransactionId,
+    updateTransferTransactionStatus,
+    setTransferLoading,
     setErrors,
   ]);
 
@@ -496,7 +496,7 @@ function SwapFormContent() {
         isQuoteSettled={isQuoteSettled}
         isValidating={isValidating}
         onSendTransactions={onSendTransactions}
-        sendPending={isActiveSwapInFlight}
+        sendPending={isActiveTransferInFlight}
       />
 
       <RecipientConfirmationModal
@@ -545,7 +545,7 @@ function OriginTokenCard({
   sender: string | undefined;
   amountError: string | undefined;
 }) {
-  const { values } = useFormikContext<SwapFormValues>();
+  const { values } = useFormikContext<TransferFormValues>();
   const { data: balance, isLoading: isBalanceLoading } = useTokenBalance(srcToken, sender);
   const amountUsd = useTokenUsdValue(srcToken, values.amount);
 
@@ -614,7 +614,7 @@ function DestinationTokenCard({
   recipientError: string | undefined;
   inputUsd: number | null;
 }) {
-  const { values, setFieldValue } = useFormikContext<SwapFormValues>();
+  const { values, setFieldValue } = useFormikContext<TransferFormValues>();
   const { data: balance } = useTokenBalance(dstToken, recipient);
 
   const outputExact = useMemo(() => {
@@ -634,7 +634,7 @@ function DestinationTokenCard({
     }
   }, [bestRoute, dstToken]);
   const outputUsd = useTokenUsdValue(dstToken, outputExact);
-  // Price impact = how much value the swap loses to fees + slippage + spread.
+  // Price impact = how much value the transfer loses to fees + slippage + spread.
   // Only meaningful when both sides have USD prices.
   const priceImpactPct = useMemo(() => {
     if (!inputUsd || !outputUsd) return null;
@@ -805,13 +805,14 @@ function ReviewTransactions({
             <p>{`Token: ${approvalToken}`}</p>
             <p>{`Spender: ${approvalSpender ?? '—'}`}</p>
             <p>
-              Amount-based approval — re-prompted when next swap exceeds the remaining allowance.
+              Amount-based approval — re-prompted when next transfer exceeds the remaining
+              allowance.
             </p>
           </div>
         </div>
       )}
       <div>
-        <h4>{`Transaction ${++txNum}: Swap`}</h4>
+        <h4>{`Transaction ${++txNum}: Transfer`}</h4>
         <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs dark:border-primary-300/25">
           {dstToken?.address && (
             <p className="flex">
@@ -955,7 +956,7 @@ function FormSubmitDispatcher({
   onContinue: () => void;
   isReview: boolean;
 }) {
-  const { submitCount } = useFormikContext<SwapFormValues>();
+  const { submitCount } = useFormikContext<TransferFormValues>();
   useEffect(() => {
     if (submitCount === 0 || isReview) return;
     onContinue();

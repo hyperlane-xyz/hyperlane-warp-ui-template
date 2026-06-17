@@ -14,11 +14,11 @@ import type { ChainDiscovery, RouteResponse, RouteTx } from '../../api/types';
 import { estimateNativeGasCost, readBalance } from './balances/read';
 import type { UiToken } from './tokens/types';
 import { tokenKey } from './tokens/utils';
-import type { AugmentedRoute, FeeComponent, SwapFormValues } from './types';
+import type { AugmentedRoute, FeeComponent, TransferFormValues } from './types';
 
 const NATIVE_ADDRESS = '0x0000000000000000000000000000000000000000';
 
-export type SwapFormErrors = Partial<
+export type TransferFormErrors = Partial<
   Record<
     'amount' | 'recipient' | 'srcChain' | 'dstChain' | 'srcToken' | 'dstToken' | 'form',
     string
@@ -26,8 +26,8 @@ export type SwapFormErrors = Partial<
 >;
 
 // Top-level validation orchestrator for quote execution.
-export async function validateSwapForm(args: {
-  values: SwapFormValues;
+export async function validateTransferForm(args: {
+  values: TransferFormValues;
   bestRoute: AugmentedRoute | undefined;
   srcToken: UiToken | undefined;
   dstToken: UiToken | undefined;
@@ -37,7 +37,7 @@ export async function validateSwapForm(args: {
   multiProvider: MultiProtocolProvider;
   approvalPending?: boolean;
   quoteExpiresAt?: number;
-}): Promise<SwapFormErrors | null> {
+}): Promise<TransferFormErrors | null> {
   const {
     values,
     bestRoute,
@@ -91,10 +91,10 @@ export async function validateSwapForm(args: {
 
 export type ValidateChainsResult =
   | { ok: true; srcChainInfo: ChainDiscovery; dstChainInfo: ChainDiscovery }
-  | { ok: false; error: SwapFormErrors };
+  | { ok: false; error: TransferFormErrors };
 
 export function validateChains(
-  values: SwapFormValues,
+  values: TransferFormValues,
   chains: ChainDiscovery[] | undefined,
 ): ValidateChainsResult {
   if (values.srcChain == null) return { ok: false, error: { srcChain: 'Origin chain required' } };
@@ -111,7 +111,7 @@ export function validateRecipient(
   recipient: string,
   dstChainInfo: ChainDiscovery,
   multiProvider: MultiProtocolProvider,
-): SwapFormErrors | null {
+): TransferFormErrors | null {
   if (!recipient) {
     return { recipient: 'Enter a recipient or connect a destination wallet' };
   }
@@ -139,7 +139,7 @@ export function validateRecipient(
 export function validateQuote(args: {
   bestRoute: AugmentedRoute;
   quoteExpiresAt: number | undefined;
-}): SwapFormErrors | null {
+}): TransferFormErrors | null {
   const { bestRoute, quoteExpiresAt } = args;
   if (quoteExpiresAt != null && quoteExpiresAt * 1000 < Date.now()) {
     return { form: 'Quote has expired — refresh to continue' };
@@ -152,9 +152,12 @@ export function validateQuote(args: {
 
 export type ValidateAmountResult =
   | { ok: true; amountAtomic: bigint }
-  | { ok: false; error: SwapFormErrors };
+  | { ok: false; error: TransferFormErrors };
 
-export function validateAmount(values: SwapFormValues, srcToken: UiToken): ValidateAmountResult {
+export function validateAmount(
+  values: TransferFormValues,
+  srcToken: UiToken,
+): ValidateAmountResult {
   const amountStr = values.amount?.toString().trim() ?? '';
   if (!amountStr) return { ok: false, error: { amount: 'Enter an amount' } };
   const amountNum = Number(amountStr);
@@ -178,7 +181,7 @@ export async function validateBalances(args: {
   bestRoute: AugmentedRoute;
   amountAtomic: bigint;
   approvalPending?: boolean;
-}): Promise<SwapFormErrors | null> {
+}): Promise<TransferFormErrors | null> {
   const {
     multiProvider,
     srcChainInfo,

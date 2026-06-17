@@ -11,7 +11,7 @@ import type {
   AugmentedRoute,
   FeeBreakdown,
   FeeComponent,
-  SwapFormValues,
+  TransferFormValues,
 } from './types';
 
 // Random 32-byte hex via the browser's crypto API. Salt entropy is owned
@@ -26,7 +26,7 @@ function randomBytes32(): Hex {
 const REFRESH_MS = 25_000;
 
 interface UseQuoteArgs {
-  values: SwapFormValues;
+  values: TransferFormValues;
   /** Sender from connected wallet — passed through as-is. */
   sender: string | undefined;
   /** Pause auto-refresh (e.g. wallet modal open or tx signing). */
@@ -57,7 +57,7 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
     }
   }, [srcTokenInfo, values.amount]);
 
-  // Salt is stable per swap intent. Quote auto-refreshes share the same
+  // Salt is stable per transfer intent. Quote auto-refreshes share the same
   // salt; intent changes mint a fresh one.
   const commitmentSalt = useMemo(
     () => randomBytes32(),
@@ -115,7 +115,7 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
   };
 }
 
-function isQuoteRequestReady(v: SwapFormValues, sender: string | undefined): boolean {
+function isQuoteRequestReady(v: TransferFormValues, sender: string | undefined): boolean {
   // Non-empty checks only — engine validates / normalizes per-protocol address shapes.
   if (!sender) return false;
   if (v.srcChain == null || v.dstChain == null) return false;

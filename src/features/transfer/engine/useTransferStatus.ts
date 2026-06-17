@@ -4,7 +4,7 @@ import { toast } from 'react-toastify';
 
 import { useMultiProvider } from '../../chains/hooks';
 import { useStore } from '../../store';
-import { FinalSwapStatuses, SwapStatus, type SwapHistoryItem } from './types';
+import { FinalTransferStatuses, TransferStatus, type TransferHistoryItem } from './types';
 
 // ERC20 Transfer(address indexed from, address indexed to, uint256 value)
 const TRANSFER_TOPIC = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
@@ -15,7 +15,7 @@ type ReceiptProvider = {
   ): Promise<{ logs: Array<{ topics: string[]; address: string }> } | null>;
 };
 
-async function detectSwapOutcome(
+async function detectDestinationOutcome(
   provider: ReceiptProvider,
   destinationTxHash: string,
   recipient: string,
@@ -30,7 +30,7 @@ async function detectSwapOutcome(
   const isNativeOutput = isZeroishAddress(dstToken);
   const dstTokenLower = dstToken.toLowerCase();
 
-  let destSwapSucceeded = false;
+  let destinationExecutionSucceeded = false;
   let fallbackDelivered = false;
 
   for (const log of receipt.logs) {
@@ -41,52 +41,56 @@ async function detectSwapOutcome(
     const to = `0x${log.topics[2]!.slice(26)}`.toLowerCase();
     const addr = log.address.toLowerCase();
 
-    if (addr === dstTokenLower && to === recipientLower) destSwapSucceeded = true;
+    if (addr === dstTokenLower && to === recipientLower) destinationExecutionSucceeded = true;
     if (addr === bridgeTokenLower && to === recipientLower) fallbackDelivered = true;
   }
 
   if (isNativeOutput) {
     return fallbackDelivered ? 'failed_recovered' : 'success';
   }
-  if (destSwapSucceeded) return 'success';
+  if (destinationExecutionSucceeded) return 'success';
   if (fallbackDelivered) return 'failed_recovered';
   return 'dest_failed';
 }
 
-// Fires once when the REVEAL tx hash lands on a swap. Reads the receipt directly
-// from the destination chain RPC to determine swap outcome without polling the engine.
-export function useSwapStatus(swap: SwapHistoryItem | undefined, transactionId: string | null) {
+// Fires once when the REVEAL tx hash lands on a transfer. Reads the receipt
+// directly from the destination chain RPC to determine outcome without polling
+// the engine.
+export function useTransferStatus(
+  transfer: TransferHistoryItem | undefined,
+  transactionId: string | null,
+) {
   const route = useStore((s) =>
-    transactionId ? s.swapRouteByTransactionId.get(transactionId) : undefined,
+    transactionId ? s.transferRouteByTransactionId.get(transactionId) : undefined,
   );
-  const updateStatus = useStore((s) => s.updateSwapTransactionStatus);
+  const updateStatus = useStore((s) => s.updateTransferTransactionStatus);
   const multiProvider = useMultiProvider();
   const lastProcessedTxRef = useRef<string | null>(null);
 
   useEffect(() => {
-    const { destinationTxHash, destinationOutcome, status, dstChain, recipient } = swap ?? {};
+    const { destinationTxHash, destinationOutcome, status, dstChain, recipient } = transfer ?? {};
     if (!destinationTxHash || !transactionId) return;
-    if (status && FinalSwapStatuses.includes(status)) return;
+    if (status && FinalTransferStatuses.includes(status)) return;
     if (lastProcessedTxRef.current === destinationTxHash) return;
     lastProcessedTxRef.current = destinationTxHash;
 
-    const destSwapStep = route?.steps.find(
+    const destinationSwapStep = route?.steps.find(
       (step): step is Extract<NonNullable<typeof route>['steps'][number], { type: 'swap' }> =>
         step.type === 'swap' && step.chain === dstChain,
     );
 
-    // No dest swap on this ICA route — bridge delivered, that's a success.
+    // No destination swap step on this ICA route: bridge delivery is success.
     if (
       !destinationOutcome &&
-      (!route?.callCommitment || !destSwapStep || destSwapStep.type !== 'swap')
+      (!route?.callCommitment || !destinationSwapStep || destinationSwapStep.type !== 'swap')
     ) {
-      updateStatus(transactionId, SwapStatus.ConfirmedDestination);
-      toast.success('Swap complete! Funds have arrived.');
+      updateStatus(transactionId, TransferStatus.ConfirmedDestination);
+      toast.success('Transfer complete! Funds have arrived.');
       return;
     }
 
-    const bridgeToken = destinationOutcome?.bridgeToken ?? destSwapStep!.tokenIn;
-    const dstToken = destinationOutcome?.dstToken ?? destSwapStep!.tokenOut;
+    const bridgeToken = destinationOutcome?.bridgeToken ?? destinationSwapStep!.tokenIn;
+    const dstToken = destinationOutcome?.dstToken ?? destinationSwapStep!.tokenOut;
 
     let provider: ReceiptProvider | null = null;
     try {
@@ -101,28 +105,28 @@ export function useSwapStatus(swap: SwapHistoryItem | undefined, transactionId: 
       return;
     }
 
-    detectSwapOutcome(provider, destinationTxHash, recipient!, bridgeToken, dstToken)
+    detectDestinationOutcome(provider, destinationTxHash, recipient!, bridgeToken, dstToken)
       .then((outcome) => {
         if (outcome === 'success') {
-          updateStatus(transactionId, SwapStatus.ConfirmedDestination);
-          toast.success('Swap complete! Funds have arrived.');
+          updateStatus(transactionId, TransferStatus.ConfirmedDestination);
+          toast.success('Transfer complete! Funds have arrived.');
         } else if (outcome === 'failed_recovered') {
-          updateStatus(transactionId, SwapStatus.FailedRecovered);
-          toast.success('Swap failed — bridge token returned to your wallet.');
+          updateStatus(transactionId, TransferStatus.FailedRecovered);
+          toast.success('Transfer failed — bridge token returned to your wallet.');
         } else {
-          updateStatus(transactionId, SwapStatus.DestFailed);
-          toast.error('Swap failed — please contact support, your funds may be in your ICA.');
+          updateStatus(transactionId, TransferStatus.DestFailed);
+          toast.error('Transfer failed — please contact support, your funds may be in your ICA.');
         }
       })
       .catch(() => {
         lastProcessedTxRef.current = null;
       });
   }, [
-    swap?.destinationTxHash,
-    swap?.destinationOutcome,
-    swap?.status,
-    swap?.dstChain,
-    swap?.recipient,
+    transfer?.destinationTxHash,
+    transfer?.destinationOutcome,
+    transfer?.status,
+    transfer?.dstChain,
+    transfer?.recipient,
     transactionId,
     route,
     multiProvider,

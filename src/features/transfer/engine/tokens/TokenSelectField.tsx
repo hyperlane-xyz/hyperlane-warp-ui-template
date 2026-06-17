@@ -7,7 +7,7 @@ import { WARP_QUERY_PARAMS } from '../../../../consts/args';
 import { updateQueryParams } from '../../../../utils/queryParams';
 import { useMultiProvider } from '../../../chains/hooks';
 import { getChainDisplayName } from '../../../chains/utils';
-import type { SwapFormValues } from '../types';
+import type { TransferFormValues } from '../types';
 import { getTokenByKeyFromMap, useTokenByKeyMap } from './hooks';
 import type { TokenSelectionMode, UiToken } from './types';
 import { UnifiedTokenChainModal } from './UnifiedTokenChainModal';
@@ -22,7 +22,7 @@ type Props = {
 // (chainId + tokenAddress) and writes both atomically when the user
 // picks one in the modal.
 export function TokenSelectField({ selectionMode, disabled }: Props) {
-  const { values, setFieldValue } = useFormikContext<SwapFormValues>();
+  const { values, setFieldValue } = useFormikContext<TransferFormValues>();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const tokenMap = useTokenByKeyMap();
   const multiProvider = useMultiProvider();
@@ -53,7 +53,7 @@ export function TokenSelectField({ selectionMode, disabled }: Props) {
       setFieldValue('amount', '');
     }
     // Persist to URL so deep-linking matches the picked tokens.
-    // Swap-side contract is chainName-address (see useFormInitialValues).
+    // Transfer-side contract is chainName-address (see useFormInitialValues).
     updateQueryParams({
       [isOrigin ? WARP_QUERY_PARAMS.ORIGIN : WARP_QUERY_PARAMS.DESTINATION]: token.chainName,
       [isOrigin ? WARP_QUERY_PARAMS.ORIGIN_TOKEN : WARP_QUERY_PARAMS.DESTINATION_TOKEN]:

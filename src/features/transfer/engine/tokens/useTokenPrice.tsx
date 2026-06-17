@@ -129,7 +129,7 @@ export function useTokenPrices(): { prices: Record<string, number>; isLoading: b
 // (no coinGeckoId, no cached price, NaN/Infinity amount) so call sites can
 // distinguish "no data → $0.00" from "tiny positive → <$0.01" via formatUsd.
 // Pure read — relies on a parent mounting `useTokenPrices()` to keep the
-// store cache populated (see SwapFormContent). Per-id selector keeps
+// store cache populated (see TransferFormContent). Per-id selector keeps
 // consumers from re-rendering on unrelated tokenPrices mutations.
 export function useTokenUsdValue(token: UiToken | undefined, amount: string): number | null {
   const id = token?.coinGeckoId;

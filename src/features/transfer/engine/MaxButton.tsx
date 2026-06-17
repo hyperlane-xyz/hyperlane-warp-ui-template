@@ -3,7 +3,7 @@ import { useFormikContext } from 'formik';
 
 import { formatBalance } from './balances/utils';
 import type { UiToken } from './tokens/types';
-import type { SwapFormValues } from './types';
+import type { TransferFormValues } from './types';
 
 interface Props {
   balance?: bigint;
@@ -16,7 +16,7 @@ interface Props {
 // Approximates "max" as the raw balance; gas reservation can be layered
 // in later.
 export function MaxButton({ balance, isLoading, disabled, token }: Props) {
-  const { setFieldValue } = useFormikContext<SwapFormValues>();
+  const { setFieldValue } = useFormikContext<TransferFormValues>();
   const isDisabled = disabled || isLoading || balance == null || !token;
 
   const onClick = () => {

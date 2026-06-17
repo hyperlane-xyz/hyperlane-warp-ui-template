@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react';
 import { ModalHeader } from '../../../../components/layout/ModalHeader';
 import { ChainFilterPanel } from '../../../chains/ChainFilterPanel';
 import type { ChainInfo } from '../../../chains/hooks';
-import { useSwapChainInfos } from '../chains/hooks';
+import { useTransferChainInfos } from '../chains/hooks';
 import { TokenListPanel } from './TokenListPanel';
 import type { TokenSelectionMode, UiToken } from './types';
 
@@ -34,7 +34,7 @@ export function UnifiedTokenChainModal({
   const [tokenSearch, setTokenSearch] = useState('');
   const [selectedChain, setSelectedChain] = useState<ChainInfo | null>(null);
   const [showMobileChainList, setShowMobileChainList] = useState(false);
-  const swapChainInfos = useSwapChainInfos();
+  const swapChainInfos = useTransferChainInfos();
 
   const onClose = useCallback(() => {
     close();

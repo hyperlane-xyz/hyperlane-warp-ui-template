@@ -22,7 +22,7 @@ test.describe('Page Load - Transfer Form', () => {
     // Send section: default engine origin token when configured.
     const originButton = getOriginTokenButton(page);
     await expect(originButton).toBeVisible();
-    const origin = splitTokenId(config.defaultSwapOriginToken);
+    const origin = splitTokenId(config.defaultTransferOriginToken);
     if (origin) {
       await expect(originButton).toHaveAttribute('data-chain', origin.chainName);
     }
@@ -42,7 +42,7 @@ test.describe('Page Load - Transfer Form', () => {
     // Receive section: default destination token
     const destButton = getDestinationTokenButton(page);
     await expect(destButton).toBeVisible();
-    const destination = splitTokenId(config.defaultSwapDestinationToken);
+    const destination = splitTokenId(config.defaultTransferDestinationToken);
     if (destination) {
       await expect(destButton).toHaveAttribute('data-chain', destination.chainName);
     }

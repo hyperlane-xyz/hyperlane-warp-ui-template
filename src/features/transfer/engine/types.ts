@@ -1,72 +1,72 @@
 import type { QuoteResponse, RouteResponse } from '../../api/types';
 
-export type SwapMessageLabel = 'warp' | 'commit' | 'reveal';
+export type TransferMessageLabel = 'warp' | 'commit' | 'reveal';
 
 export interface LabeledMsgId {
   msgId: string;
-  label: SwapMessageLabel;
+  label: TransferMessageLabel;
 }
 
-export interface SwapHistoryTokenMeta {
+export interface TransferHistoryTokenMeta {
   symbol: string;
   decimals: number;
   chainName: string;
   logoURI?: string;
 }
 
-export interface SwapDestinationOutcome {
+export interface TransferDestinationOutcome {
   bridgeToken: string;
   dstToken: string;
 }
 
-// ── Persisted/in-memory swap history ──────────────────────────────────
+// ── Persisted/in-memory transfer history ──────────────────────────────────
 
-// Status of a single submitted swap. Used by SwapDetailsModal to drive
-// step-by-step progress UI and by useSwap to drive the broadcast pipeline.
-export enum SwapStatus {
+// Status of a single submitted transfer. Used by TransferDetailsModal to drive
+// step-by-step progress UI and by useTransfer to drive the broadcast pipeline.
+export enum TransferStatus {
   Preparing = 'preparing',
   CreatingTxs = 'creating-txs',
   SigningApprove = 'signing-approve',
   ConfirmingApprove = 'confirming-approve',
-  SigningSwap = 'signing-swap',
+  SigningTransfer = 'signing-transfer',
   ConfirmingOrigin = 'confirming-origin',
   Bridging = 'bridging',
   ConfirmingDestination = 'confirming-destination',
   ConfirmedDestination = 'confirmed-destination',
-  // Origin tx confirmed and bridge delivered, but the dest swap step
+  // Origin tx confirmed and bridge delivered, but the destination execution
   // reverted — funds are sitting in the user's ICA on the dest chain.
-  DestSwapFailed = 'dest-swap-failed',
+  DestTransferFailed = 'dest-transfer-failed',
   // Fallback sub-plan swept bridge token to recipient automatically.
   FailedRecovered = 'failed-recovered',
-  // REVEAL delivered but both swap and fallback sub-plans reverted — funds stranded in ICA.
+  // REVEAL delivered but both transfer and fallback sub-plans reverted — funds stranded in ICA.
   DestFailed = 'dest-failed',
   Failed = 'failed',
 }
 
-export const FinalSwapStatuses = [
-  SwapStatus.ConfirmedDestination,
-  SwapStatus.DestSwapFailed,
-  SwapStatus.FailedRecovered,
-  SwapStatus.DestFailed,
-  SwapStatus.Failed,
+export const FinalTransferStatuses = [
+  TransferStatus.ConfirmedDestination,
+  TransferStatus.DestTransferFailed,
+  TransferStatus.FailedRecovered,
+  TransferStatus.DestFailed,
+  TransferStatus.Failed,
 ];
 
-export interface SwapHistoryItem {
-  status: SwapStatus;
+export interface TransferHistoryItem {
+  status: TransferStatus;
   timestamp: number;
   srcChain: number;
   dstChain: number;
   srcToken: string;
   dstToken: string;
-  srcTokenMeta?: SwapHistoryTokenMeta;
-  dstTokenMeta?: SwapHistoryTokenMeta;
+  srcTokenMeta?: TransferHistoryTokenMeta;
+  dstTokenMeta?: TransferHistoryTokenMeta;
   amountIn: string;
   amountOut: string;
   sender: string;
   recipient: string;
   originTxHash?: string;
   destinationTxHash?: string;
-  destinationOutcome?: SwapDestinationOutcome;
+  destinationOutcome?: TransferDestinationOutcome;
   msgIds?: LabeledMsgId[];
   originBlockNumber?: number;
   /** Unix seconds when the origin tx was confirmed and bridge polling started. */
@@ -77,7 +77,7 @@ export interface SwapHistoryItem {
 
 // amount is a user-typed string — parsed to bigint at quote time so we
 // don't lose decimal precision early.
-export interface SwapFormValues {
+export interface TransferFormValues {
   srcChain: number | null;
   dstChain: number | null;
   srcToken: string;

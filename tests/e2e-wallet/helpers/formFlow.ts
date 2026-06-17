@@ -7,12 +7,14 @@ const MODAL_TIMEOUT = 30_000;
 
 function tokenPickerModal(page: Page) {
   return page
-    .locator('div.token-picker-modal[data-headlessui-state="open"]:not([data-closed])')
+    .locator('#headlessui-portal-root .token-picker-modal')
     .filter({ hasText: 'Select Token' });
 }
 
 async function waitForTokenPickerClosed(page: Page) {
-  await expect(tokenPickerModal(page)).toHaveCount(0, { timeout: MODAL_TIMEOUT });
+  await expect(
+    page.locator('#headlessui-portal-root [role="dialog"]').filter({ hasText: 'Select Token' }),
+  ).toHaveCount(0, { timeout: MODAL_TIMEOUT });
 }
 
 // In dev builds (`pnpm dev`) Next.js renders a <nextjs-portal> web

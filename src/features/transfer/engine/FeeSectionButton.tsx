@@ -19,7 +19,7 @@ import type { FeeBreakdown, FeeComponent } from './types';
 interface Props {
   feeBreakdown: FeeBreakdown | undefined;
   isLoading: boolean;
-  /** USD value of the swap input, used to compute fee-as-% of transfer. */
+  /** USD value of the transfer input, used to compute fee-as-% of transfer. */
   inputUsd: number | null;
 }
 

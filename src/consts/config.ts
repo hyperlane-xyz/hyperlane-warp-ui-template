@@ -51,12 +51,12 @@ interface Config {
   rpcOverrides: string; // JSON string containing a map of chain names to an object with an URL for RPC overrides (For an example check the .env.example file)
   enableTrackingEvents: boolean; // Allow tracking events to happen on some actions;
   featuredChains: string[]; // Chains to pin at the top of the default chain picker sort
-  routerApiUrl: string; // Universal Router Engine base URL (swap tab)
-  ccsUrl: string; // Call Commitments Service base URL (cross-chain swap reveal)
-  permit2ExpirationSeconds: number; // Default Permit2 allowance expiration (swap tab)
-  defaultSlippageBps: number; // Default swap slippage in basis points
-  defaultSwapOriginToken: string | undefined; // The initial swap origin token to show when /swap first loads (format: chainName-address)
-  defaultSwapDestinationToken: string | undefined; // The initial swap destination token to show when /swap first loads (format: chainName-address)
+  routerApiUrl: string; // Universal Router Engine base URL
+  ccsUrl: string; // Call Commitments Service base URL (cross-chain transfer reveal)
+  permit2ExpirationSeconds: number; // Default Permit2 allowance expiration
+  defaultSlippageBps: number; // Default transfer slippage in basis points
+  defaultTransferOriginToken: string | undefined; // Initial origin token for the transfer form (format: chainName-address)
+  defaultTransferDestinationToken: string | undefined; // Initial destination token for the transfer form (format: chainName-address)
 }
 
 export const config: Config = Object.freeze({
@@ -65,8 +65,8 @@ export const config: Config = Object.freeze({
   enableExplorerLink: true,
   explorerApiUrl,
   relayApiUrl,
-  defaultSwapOriginToken: 'bsc-0x0000000000000000000000000000000000000000',
-  defaultSwapDestinationToken: 'base-0x0000000000000000000000000000000000000000',
+  defaultTransferOriginToken: 'bsc-0x0000000000000000000000000000000000000000',
+  defaultTransferDestinationToken: 'base-0x0000000000000000000000000000000000000000',
   isDevMode,
   registryUrl,
   registryBranch,

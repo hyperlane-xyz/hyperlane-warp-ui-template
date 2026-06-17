@@ -4,8 +4,8 @@ import Head from 'next/head';
 import { type CSSProperties, useEffect, useMemo } from 'react';
 
 import { APP_NAME } from '../consts/app';
-import { SwapDetailsModal } from '../features/transfer/engine/SwapDetailsModal';
-import { SwapTokenCard } from '../features/transfer/engine/SwapTokenCard';
+import { TransferDetailsModal } from '../features/transfer/engine/TransferDetailsModal';
+import { TransferTokenCard } from '../features/transfer/engine/TransferTokenCard';
 import { parseEmbedTheme, themeToCssVars } from '../styles/embedTheme';
 
 /**
@@ -56,7 +56,7 @@ const EmbedPage: NextPage = () => {
       <div className="embed-container" style={cssVars as CSSProperties}>
         <div className="flex min-h-screen items-center justify-center p-2">
           <div>
-            <SwapTokenCard />
+            <TransferTokenCard />
             <div className="mt-2 flex items-center justify-end gap-1 pr-1 opacity-50">
               <span className="text-xxs tracking-wide">Powered by</span>
               <HyperlaneLogo width={12} height={12} color="currentColor" className="-mt-[2px]" />
@@ -65,7 +65,7 @@ const EmbedPage: NextPage = () => {
           </div>
         </div>
       </div>
-      <SwapDetailsModal />
+      <TransferDetailsModal />
     </>
   );
 };

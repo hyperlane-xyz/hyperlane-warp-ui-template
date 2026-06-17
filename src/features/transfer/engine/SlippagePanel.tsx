@@ -13,7 +13,7 @@ const PRESETS = [50, 100, 300]; // 0.5%, 1%, 3%
 
 // Compact inline slippage control. "[gear] Slippage: 1% [chevron]" pill
 // that expands into the preset row + custom input when clicked. Designed
-// to live on the same row as the fee pill (see SwapForm).
+// to live on the same row as the fee pill (see TransferForm).
 export function SlippagePanel({ slippageBps, setSlippageBps }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);

@@ -39,6 +39,8 @@ const reactQueryClient = new QueryClient({
   },
 });
 
+const WIDGET_MESSAGE_TYPE = 'hyperlane-warp-widget';
+
 /**
  * Sets embed-mode class + CSS variables on <body> early so the loading
  * screen (WarpContextInitGate) is also themed.
@@ -57,11 +59,27 @@ function useEarlyEmbedMode(isEmbed: boolean) {
   }, [isEmbed]);
 }
 
+function useEmbedPostMessageReady(isEmbed: boolean) {
+  useEffect(() => {
+    if (!isEmbed || window.parent === window) return;
+
+    const send = () =>
+      window.parent.postMessage(
+        { type: WIDGET_MESSAGE_TYPE, event: { type: 'ready', payload: { timestamp: Date.now() } } },
+        '*',
+      );
+    send();
+    const timers = [500, 1500, 3000].map((ms) => setTimeout(send, ms));
+    return () => timers.forEach(clearTimeout);
+  }, [isEmbed]);
+}
+
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
   const isEmbed = router.pathname === '/embed';
 
   useEarlyEmbedMode(isEmbed);
+  useEmbedPostMessageReady(isEmbed);
 
   // Init once on mount. Tests gate on page.waitForFunction(() =>
   // Boolean(window.__WARP_E2E__)) so the post-commit effect timing is fine;

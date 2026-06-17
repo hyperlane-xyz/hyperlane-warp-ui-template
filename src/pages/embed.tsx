@@ -26,27 +26,6 @@ import { logger } from '../utils/logger';
  *   - origin, destination, originToken, destinationToken (token defaults)
  */
 
-const WIDGET_MESSAGE_TYPE = 'hyperlane-warp-widget';
-
-function emitWidgetEvent(eventType: string, payload?: Record<string, unknown>) {
-  if (typeof window === 'undefined' || window.parent === window) return;
-  window.parent.postMessage(
-    { type: WIDGET_MESSAGE_TYPE, event: { type: eventType, payload } },
-    '*',
-  );
-}
-
-function usePostMessageWidget() {
-  useEffect(() => {
-    if (typeof window === 'undefined' || window.parent === window) return;
-
-    const send = () => emitWidgetEvent('ready', { timestamp: Date.now() });
-    send();
-    const timers = [500, 1500, 3000].map((ms) => setTimeout(send, ms));
-    return () => timers.forEach(clearTimeout);
-  }, []);
-}
-
 /** Auto-opens TransfersDetailsModal when a new transfer starts. */
 function useAutoTransferModal() {
   const transactionHistory = useStore((s) => s.transactionHistory);
@@ -88,7 +67,6 @@ function useAutoTransferModal() {
 }
 
 const EmbedPage: NextPage = () => {
-  usePostMessageWidget();
   useEngineBootstrap();
   const cssVars = useMemo(() => themeToCssVars(parseEmbedTheme()), []);
   const { selectedTransfer, isOpen: isModalOpen, close: closeModal } = useAutoTransferModal();

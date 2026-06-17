@@ -30,6 +30,7 @@ const TOKEN_PROGRAM = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA
 const TOKEN_2022_PROG = new PublicKey('TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb');
 const MEMO_PROGRAM = new PublicKey('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr');
 const ATA_PROGRAM = new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
+const WSOL_MINT_STR = 'So11111111111111111111111111111111111111112';
 const PENDING_SWAP_SEED = Buffer.from('pending_swap');
 const FEE_PAYER_SEED = Buffer.from('hyperlane_fee_payer');
 const CLMM_DISC = Buffer.from([247, 237, 227, 245, 215, 195, 222, 70]);
@@ -246,6 +247,18 @@ async function buildRevealTransaction(
   if (!poolState) throw new Error(`Pool ${r.poolAddress} not found on-chain`);
   const hop: ClmmHop = { poolId: r.poolAddress, inputMint: r.tokenIn, outputMint: r.tokenOut, ...poolState };
 
+  // Validate that ta0 is initialized on-chain; pools with uninitialized tick arrays
+  // at the current price will fail simulation with an opaque wallet error.
+  const tickSpacing = hop.tickSpacing ?? RAYDIUM_FEE_TO_TICK_SPACING[hop.feeRate ?? 0] ?? 60;
+  const tickCurrent = hop.tickCurrent ?? 0;
+  const ta0StartIdx = getTickArrayStartIndex(tickCurrent, tickSpacing);
+  const ta0Address = computeTickArrayAddress(r.poolAddress, ta0StartIdx);
+  const ta0Acct = await conn.getAccountInfo(ta0Address);
+  if (!ta0Acct) throw new Error(
+    `Pool ${r.poolAddress} has no initialized tick arrays at current price (tick ${tickCurrent}). ` +
+    `Re-fetch the quote to select a pool with active liquidity.`
+  );
+
   const inputIsMint0 = hop.mint0 ? r.tokenIn === hop.mint0 : true;
   const actualOutputMint = inputIsMint0 ? (hop.mint1 ?? r.tokenOut) : (hop.mint0 ?? r.tokenOut);
 
@@ -257,8 +270,16 @@ async function buildRevealTransaction(
   }
   hop.outputMint = actualOutputMint;
 
+  // For SOL output the commitment encodes SWEEP (PDA wSOL ATA → payer wSOL ATA) +
+  // UNWRAP_WSOL (payer wSOL ATA → recipient). UNWRAP_WSOL on-chain uses the payer as
+  // authority; it cannot sign for a PDA-owned ATA — hence the intermediate SWEEP step.
+  const tokenOutIsSol = actualOutputMint === WSOL_MINT_STR;
+
   const pdaOutputAta = findATA(pendingSwapPDA, new PublicKey(actualOutputMint), actualOutTokenProg);
-  const recipientOutAta = findATA(recipientPk, new PublicKey(actualOutputMint), actualOutTokenProg);
+  const payerWsolAta = tokenOutIsSol ? findATA(walletPk, new PublicKey(WSOL_MINT_STR), TOKEN_PROGRAM) : null;
+  const recipientOutAta = tokenOutIsSol
+    ? null
+    : findATA(recipientPk, new PublicKey(actualOutputMint), actualOutTokenProg);
 
   // Build instruction data (Borsh variant 2 — Reveal)
   const ixBuf = Buffer.alloc(1 + 4 + 32 + 4 + calldataBytes.length + 32);
@@ -275,12 +296,22 @@ async function buildRevealTransaction(
   saltBytes.copy(ixBuf, off);
 
   const clmmAccts = buildClmmAccounts(pendingSwapPDA, hop, inTokenProg, actualOutTokenProg);
-  const sweepAccts: AccountMeta[] = [
-    { pubkey: pdaOutputAta, isSigner: false, isWritable: true },
-    { pubkey: recipientOutAta, isSigner: false, isWritable: true },
-    { pubkey: new PublicKey(actualOutputMint), isSigner: false, isWritable: false },
-    { pubkey: actualOutTokenProg, isSigner: false, isWritable: false },
-  ];
+
+  // SWEEP (4 accts): [src_ata, dst_ata, mint, token_program]
+  // For SOL: SWEEP goes to wallet's wSOL ATA; a separate close_account converts it to native SOL.
+  const finalAccts: AccountMeta[] = tokenOutIsSol
+    ? [
+        { pubkey: pdaOutputAta,                 isSigner: false, isWritable: true },   // src: PDA wSOL ATA
+        { pubkey: payerWsolAta!,                isSigner: false, isWritable: true },   // dst: wallet wSOL ATA
+        { pubkey: new PublicKey(WSOL_MINT_STR), isSigner: false, isWritable: false },  // mint
+        { pubkey: TOKEN_PROGRAM,                isSigner: false, isWritable: false },  // token_prog
+      ]
+    : [
+        { pubkey: pdaOutputAta,                    isSigner: false, isWritable: true },
+        { pubkey: recipientOutAta!,                isSigner: false, isWritable: true },
+        { pubkey: new PublicKey(actualOutputMint), isSigner: false, isWritable: false },
+        { pubkey: actualOutTokenProg,              isSigner: false, isWritable: false },
+      ];
 
   const keys: AccountMeta[] = [
     { pubkey: walletPk, isSigner: true, isWritable: true },
@@ -289,7 +320,7 @@ async function buildRevealTransaction(
     { pubkey: feePayerPDA, isSigner: false, isWritable: true },
     { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
     ...clmmAccts,
-    ...sweepAccts,
+    ...finalAccts,
   ];
 
   const makeAtaIx = (owner: PublicKey, ata: PublicKey) =>
@@ -308,13 +339,32 @@ async function buildRevealTransaction(
 
   const revealIx = new TransactionInstruction({ programId: PROGRAM_ID, keys, data: ixBuf });
 
+  // For SOL: close wallet's wSOL ATA after reveal → recipient gets native SOL.
+  // SPL Token CloseAccount = discriminator 9; wallet signs as authority.
+  const closeWsolIx = tokenOutIsSol
+    ? new TransactionInstruction({
+        programId: TOKEN_PROGRAM,
+        keys: [
+          { pubkey: payerWsolAta!,   isSigner: false, isWritable: true },   // account to close
+          { pubkey: recipientPk,     isSigner: false, isWritable: true },   // lamport destination
+          { pubkey: walletPk,        isSigner: true,  isWritable: false },  // authority (wallet signs)
+        ],
+        data: Buffer.from([9]), // CloseAccount
+      })
+    : null;
+
   const { blockhash } = await conn.getLatestBlockhash();
   const tx = new Transaction({ recentBlockhash: blockhash, feePayer: walletPk });
   tx.add(ComputeBudgetProgram.setComputeUnitLimit({ units: 400_000 }));
   tx.add(ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 5_000 }));
-  tx.add(makeAtaIx(pendingSwapPDA, pdaOutputAta));     // CLMM needs this pre-initialized
-  tx.add(makeAtaIx(recipientPk, recipientOutAta));     // sweep needs this pre-initialized
+  tx.add(makeAtaIx(pendingSwapPDA, pdaOutputAta));       // CLMM needs PDA wSOL ATA pre-initialized
+  if (tokenOutIsSol) {
+    tx.add(makeAtaIx(walletPk, payerWsolAta!));          // SWEEP destination: wallet's wSOL ATA
+  } else {
+    tx.add(makeAtaIx(recipientPk, recipientOutAta!));    // SWEEP needs recipient ATA pre-initialized
+  }
   tx.add(revealIx);
+  if (closeWsolIx) tx.add(closeWsolIx);                  // close wallet's wSOL ATA → native SOL to recipient
   return tx;
 }
 

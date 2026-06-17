@@ -36,7 +36,7 @@ function emitWidgetEvent(eventType: string, payload?: Record<string, unknown>) {
   );
 }
 
-function usePostMessageBridge() {
+function usePostMessageWidget() {
   useEffect(() => {
     if (typeof window === 'undefined' || window.parent === window) return;
 
@@ -88,7 +88,7 @@ function useAutoTransferModal() {
 }
 
 const EmbedPage: NextPage = () => {
-  usePostMessageBridge();
+  usePostMessageWidget();
   useEngineBootstrap();
   const cssVars = useMemo(() => themeToCssVars(parseEmbedTheme()), []);
   const { selectedTransfer, isOpen: isModalOpen, close: closeModal } = useAutoTransferModal();

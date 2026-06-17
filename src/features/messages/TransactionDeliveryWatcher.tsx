@@ -6,8 +6,8 @@ import { toast } from 'react-toastify';
 
 import { useMultiProvider } from '../chains/hooks';
 import { TransactionHistoryItemType, useStore } from '../store';
-import { FinalSwapStatuses, SwapStatus } from '../swap/types';
-import { useSwapStatus } from '../swap/useSwapStatus';
+import { FinalSwapStatuses, SwapStatus } from '../transfer/engine/types';
+import { useSwapStatus } from '../transfer/engine/useSwapStatus';
 import { TransferStatus } from '../transfer/types';
 import { useEvmMailboxDeliveryStatus } from './useEvmMailboxDeliveryStatus';
 import { useMessageDeliveryStatus } from './useMessageDeliveryStatus';

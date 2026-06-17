@@ -29,10 +29,10 @@ import {
   TransactionHistoryItemType,
   useStore,
 } from '../store';
-import { formatBalance as formatSwapBalance } from '../swap/balances/utils';
-import { getTokenByKeyFromMap } from '../swap/tokens/hooks';
-import { FinalSwapStatuses, SwapHistoryItem, SwapStatus } from '../swap/types';
 import { tryFindToken, useWarpCore } from '../tokens/hooks';
+import { formatBalance as formatSwapBalance } from '../transfer/engine/balances/utils';
+import { getTokenByKeyFromMap } from '../transfer/engine/tokens/hooks';
+import { FinalSwapStatuses, SwapHistoryItem, SwapStatus } from '../transfer/engine/types';
 import { computeDestAmount, formatMessageAmount } from '../transfer/scaleUtils';
 import { TransfersDetailsModal } from '../transfer/TransfersDetailsModal';
 import { TransferContext, TransferStatus } from '../transfer/types';

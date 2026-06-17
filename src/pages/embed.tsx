@@ -4,8 +4,8 @@ import Head from 'next/head';
 import { type CSSProperties, useEffect, useMemo } from 'react';
 
 import { APP_NAME } from '../consts/app';
-import { SwapDetailsModal } from '../features/swap/SwapDetailsModal';
-import { SwapTokenCard } from '../features/swap/SwapTokenCard';
+import { SwapDetailsModal } from '../features/transfer/engine/SwapDetailsModal';
+import { SwapTokenCard } from '../features/transfer/engine/SwapTokenCard';
 import { parseEmbedTheme, themeToCssVars } from '../styles/embedTheme';
 
 /**

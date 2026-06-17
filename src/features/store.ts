@@ -23,9 +23,6 @@ import { logger } from '../utils/logger';
 import type { RouteResponse } from './api/types';
 import { assembleChainAddresses } from './chains/addresses';
 import { assembleChainMetadata } from './chains/metadata';
-import type { UiToken } from './swap/tokens/types';
-import { getTokenKey as getSwapTokenKey } from './swap/tokens/utils';
-import { FinalSwapStatuses, LabeledMsgId, SwapHistoryItem, SwapStatus } from './swap/types';
 import {
   buildTokensArray,
   getTokenKey,
@@ -33,6 +30,14 @@ import {
   setResolvedUnderlyingMap,
 } from './tokens/utils';
 import { resolveWrappedCollateralTokens } from './tokens/wrappedTokenResolver';
+import type { UiToken } from './transfer/engine/tokens/types';
+import { getTokenKey as getSwapTokenKey } from './transfer/engine/tokens/utils';
+import {
+  FinalSwapStatuses,
+  LabeledMsgId,
+  SwapHistoryItem,
+  SwapStatus,
+} from './transfer/engine/types';
 import { FinalTransferStatuses, TransferContext, TransferStatus } from './transfer/types';
 import {
   type E2ETokenSnapshot,

@@ -1,5 +1,5 @@
-import { SwapTokenCard } from '../../features/swap/SwapTokenCard';
-import { useEngineBootstrap } from '../../features/swap/useEngineBootstrap';
+import { SwapTokenCard } from '../../features/transfer/engine/SwapTokenCard';
+import { useEngineBootstrap } from '../../features/transfer/engine/useEngineBootstrap';
 import { TipCard } from '../tip/TipCard';
 
 export function HomeView() {

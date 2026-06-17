@@ -1,4 +1,4 @@
-import type { LabeledMsgId } from '../swap/types';
+import type { LabeledMsgId } from '../transfer/engine/types';
 
 export function getSwapDeliveryMsgId(msgIds: LabeledMsgId[] | undefined) {
   return (

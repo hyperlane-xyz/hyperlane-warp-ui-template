@@ -9,7 +9,7 @@ import { EVENT_NAME } from '../../features/analytics/types';
 import { useWalletConnectionTracking } from '../../features/analytics/useWalletConnectionTracking';
 import { trackEvent } from '../../features/analytics/utils';
 import { useStore } from '../../features/store';
-import { SwapDetailsModal } from '../../features/swap/SwapDetailsModal';
+import { SwapDetailsModal } from '../../features/transfer/engine/SwapDetailsModal';
 import { SideBarMenu } from '../../features/wallet/SideBarMenu';
 import { WalletProtocolModal } from '../../features/wallet/WalletProtocolModal';
 import { Footer } from '../nav/Footer';

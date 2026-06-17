@@ -1,7 +1,5 @@
 import type { TokenDiscovery } from '../../api/types';
 
-export type TokenSelectionMode = 'origin' | 'destination';
-
 // UI-side token shape: engine TokenDiscovery + the chainName for display
 // and `addressOrDenom` to satisfy TokenIcon's structural interface
 // (matches warp-ui's IToken-shaped fields the picker actually uses).

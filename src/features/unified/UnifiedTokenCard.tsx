@@ -31,6 +31,7 @@ import {
   useDestinationBalance,
   useOriginBalance,
 } from '../balances/hooks';
+import { UsdLabel } from '../balances/UsdLabel';
 import { useFeePrices } from '../balances/useFeePrices';
 import { ChainConnectionWarning } from '../chains/ChainConnectionWarning';
 import { ChainWalletWarning } from '../chains/ChainWalletWarning';
@@ -737,7 +738,11 @@ function UnifiedBridgeReviewDetails({
   quotedCalls: ReturnType<typeof useQuotedCallsFeeQuotes>;
   isLoading: boolean;
 }) {
-  const fees = getBridgeFeeItems(quote, quotedCalls);
+  const warpCore = useWarpCore();
+  const { prices } = useBridgeTokenPrices();
+  const feeEstimate = getBridgeFeeEstimate(quote, quotedCalls);
+  const feePrices = useFeePrices(feeEstimate, warpCore.tokens, prices);
+  const fees = getBridgeFeeItems(feeEstimate);
   const remoteToken = quote?.connectedDestinationToken;
   const transferToken = quote?.routeToken;
   const tokenFeeQuote = quotedCalls.fees?.tokenFeeQuote;
@@ -822,6 +827,7 @@ function UnifiedBridgeReviewDetails({
                     <span className="min-w-[7.5rem]">{fee.label}</span>
                     <span>
                       {fee.amount.getDecimalFormattedAmount().toFixed(8)} {fee.amount.token.symbol}
+                      <UsdLabel tokenAmount={fee.amount} feePrices={feePrices} />
                     </span>
                   </p>
                 ))}
@@ -834,11 +840,7 @@ function UnifiedBridgeReviewDetails({
   );
 }
 
-function getBridgeFeeItems(
-  quote: ExactInputBridgeTransferQuote | undefined,
-  quotedCalls: ReturnType<typeof useQuotedCallsFeeQuotes>,
-) {
-  const fees = getBridgeFeeEstimate(quote, quotedCalls);
+function getBridgeFeeItems(fees: DisplayFeeEstimate | null) {
   if (!fees) return [];
 
   return [

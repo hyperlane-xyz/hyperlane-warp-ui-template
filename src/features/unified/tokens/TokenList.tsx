@@ -1,14 +1,28 @@
+import { fromWei } from '@hyperlane-xyz/utils';
 import { useDebounce } from '@hyperlane-xyz/widgets';
 import React, { useEffect, useMemo, useRef } from 'react';
 
 import { TokenChainIcon } from '../../../components/icons/TokenChainIcon';
+import { formatBalance, formatUsd } from '../../../utils/amount';
+import { useTokenBalances as useBridgeTokenBalances } from '../../balances/hooks';
 import { useDisabledChains, useMultiProvider } from '../../chains/hooks';
 import { getChainDisplayName } from '../../chains/utils';
+import { useTokenBalances as useSwapTokenBalances } from '../../swap/balances/hooks';
+import { useTokenPrices as useSwapTokenPrices } from '../../swap/tokens/useTokenPrice';
+import { getTokenKey as getSwapTokenKey } from '../../swap/tokens/utils';
 import { useCollateralGroups } from '../../tokens/hooks';
+import { useTokenPrices as useBridgeTokenPrices } from '../../tokens/useTokenPrice';
+import { getTokenKey as getBridgeTokenKey } from '../../tokens/utils';
 import { useUnifiedTokens } from './hooks';
-import { getVisibleUnifiedTokens } from './list';
+import {
+  getVisibleUnifiedTokens,
+  sortUnifiedTokensByBalance,
+  type UnifiedTokenBalanceInfo,
+} from './list';
 import { getUnifiedBridgeTokens } from './routes';
 import type { UnifiedToken } from './types';
+
+const BALANCE_FETCH_LIMIT = 50;
 
 function matchesSearch(
   token: UnifiedToken,
@@ -37,6 +51,7 @@ interface TokenListProps {
   onSelect: (token: UnifiedToken) => void;
   counterpartToken?: UnifiedToken;
   engineEnabled: boolean;
+  recipient?: string;
 }
 
 export function TokenList({
@@ -47,6 +62,7 @@ export function TokenList({
   onSelect,
   counterpartToken,
   engineEnabled,
+  recipient,
 }: TokenListProps) {
   const multiProvider = useMultiProvider();
   const disabledChains = useDisabledChains();
@@ -66,7 +82,7 @@ export function TokenList({
     [fetched, disabledChains],
   );
 
-  const { tokens, isLimited } = useMemo(() => {
+  const { tokens: routeSortedTokens, isLimited } = useMemo(() => {
     const filtered = allTokens.filter((token) => {
       if (chainFilter && token.chainName !== chainFilter) return false;
       if (!trimmedSearch) return true;
@@ -92,6 +108,77 @@ export function TokenList({
     engineEnabled,
   ]);
 
+  const addressOverride = selectionMode === 'destination' ? recipient : undefined;
+  const balanceSourceTokens = useMemo(
+    () => routeSortedTokens.slice(0, BALANCE_FETCH_LIMIT),
+    [routeSortedTokens],
+  );
+  const bridgeBalanceTokens = useMemo(
+    () =>
+      uniqueByKey(
+        balanceSourceTokens.flatMap((token) => getUnifiedBridgeTokens(token)),
+        getBridgeTokenKey,
+      ),
+    [balanceSourceTokens],
+  );
+  const swapBalanceTokens = useMemo(
+    () =>
+      uniqueByKey(
+        balanceSourceTokens.flatMap((token) => (token.swapToken ? [token.swapToken] : [])),
+        getSwapTokenKey,
+      ),
+    [balanceSourceTokens],
+  );
+  const {
+    balances: bridgeBalances,
+    isLoading: isBridgeBalanceLoading,
+    hasAnyAddress: hasBridgeAddress,
+  } = useBridgeTokenBalances(
+    bridgeBalanceTokens,
+    `unified-picker-${selectionMode}`,
+    addressOverride,
+  );
+  const {
+    balances: swapBalances,
+    isLoading: isSwapBalanceLoading,
+    hasAnyAddress: hasSwapAddress,
+  } = useSwapTokenBalances(swapBalanceTokens, chainFilter ?? 'all', addressOverride);
+  const { prices: bridgePrices } = useBridgeTokenPrices();
+  const { prices: swapPrices } = useSwapTokenPrices();
+
+  const balanceInfo = useMemo(() => {
+    const prices = { ...bridgePrices, ...swapPrices };
+    return buildUnifiedTokenBalanceInfo({
+      tokens: routeSortedTokens,
+      bridgeBalances,
+      swapBalances,
+      prices,
+    });
+  }, [routeSortedTokens, bridgeBalances, swapBalances, bridgePrices, swapPrices]);
+
+  const tokens = useMemo(
+    () =>
+      sortUnifiedTokensByBalance({
+        tokens: routeSortedTokens,
+        balanceInfo,
+        counterpartToken,
+        selectionMode,
+        collateralGroups,
+        engineEnabled,
+      }),
+    [
+      routeSortedTokens,
+      balanceInfo,
+      counterpartToken,
+      selectionMode,
+      collateralGroups,
+      engineEnabled,
+    ],
+  );
+
+  const isBalanceLoading =
+    (isBridgeBalanceLoading && hasBridgeAddress) || (isSwapBalanceLoading && hasSwapAddress);
+
   useEffect(() => {
     scrollRef.current?.scrollTo(0, 0);
   }, [searchQuery, chainFilter]);
@@ -115,7 +202,13 @@ export function TokenList({
         </div>
         <div className="py-2 md:px-3">
           {tokens.map((token) => (
-            <TokenButton key={token.key} token={token} onSelect={onSelect} />
+            <TokenButton
+              key={token.key}
+              token={token}
+              onSelect={onSelect}
+              balanceInfo={balanceInfo.get(token.key)}
+              isBalanceLoading={isBalanceLoading}
+            />
           ))}
 
           {isLimited && (
@@ -134,12 +227,21 @@ export function TokenList({
 const TokenButton = React.memo(function TokenButton({
   token,
   onSelect,
+  balanceInfo,
+  isBalanceLoading,
 }: {
   token: UnifiedToken;
   onSelect: (token: UnifiedToken) => void;
+  balanceInfo?: UnifiedTokenBalanceInfo;
+  isBalanceLoading: boolean;
 }) {
   const multiProvider = useMultiProvider();
   const chainDisplayName = getChainDisplayName(multiProvider, token.chainName);
+  const balance = balanceInfo?.balance;
+  const formattedBalance =
+    balance != null && balance > 0n ? formatBalance(balance, token.decimals) : null;
+  const formattedUsd =
+    balanceInfo?.usd != null && balanceInfo.usd > 0 ? formatUsd(balanceInfo.usd) : null;
 
   return (
     <button
@@ -165,9 +267,85 @@ const TokenButton = React.memo(function TokenButton({
           {token.name || 'Unknown Token'}
         </div>
       </div>
+      <div className="ml-2 min-w-[4.5rem] shrink-0 text-right">
+        {isBalanceLoading && !formattedBalance ? (
+          <div className="ml-auto h-4 w-14 animate-pulse rounded bg-gray-100" />
+        ) : formattedUsd || formattedBalance ? (
+          <>
+            {formattedUsd && (
+              <div className={`${styles.base} text-sm text-black`}>{formattedUsd}</div>
+            )}
+            {formattedBalance && (
+              <div className={`${styles.base} text-xs text-gray-400`}>{formattedBalance}</div>
+            )}
+          </>
+        ) : null}
+      </div>
     </button>
   );
 });
+
+function uniqueByKey<T>(items: T[], getKey: (item: T) => string): T[] {
+  const seen = new Set<string>();
+  const unique: T[] = [];
+  for (const item of items) {
+    const key = getKey(item);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    unique.push(item);
+  }
+  return unique;
+}
+
+function buildUnifiedTokenBalanceInfo({
+  tokens,
+  bridgeBalances,
+  swapBalances,
+  prices,
+}: {
+  tokens: UnifiedToken[];
+  bridgeBalances: Record<string, bigint>;
+  swapBalances: Record<string, bigint>;
+  prices: Record<string, number>;
+}): Map<string, UnifiedTokenBalanceInfo> {
+  const result = new Map<string, UnifiedTokenBalanceInfo>();
+
+  for (const token of tokens) {
+    const candidates = [
+      ...getUnifiedBridgeTokens(token).map((bridgeToken) => ({
+        balance: bridgeBalances[getBridgeTokenKey(bridgeToken)],
+        decimals: bridgeToken.decimals,
+        coinGeckoId: bridgeToken.coinGeckoId,
+      })),
+      ...(token.swapToken
+        ? [
+            {
+              balance: swapBalances[getSwapTokenKey(token.swapToken)],
+              decimals: token.swapToken.decimals,
+              coinGeckoId: token.swapToken.coinGeckoId,
+            },
+          ]
+        : []),
+    ];
+
+    const selected =
+      candidates.find((candidate) => candidate.balance != null && candidate.balance > 0n) ??
+      candidates.find((candidate) => candidate.balance != null);
+    if (!selected || selected.balance == null) continue;
+
+    const price = selected.coinGeckoId ? prices[selected.coinGeckoId] : undefined;
+    const usd =
+      price != null
+        ? parseFloat(fromWei(selected.balance.toString(), selected.decimals)) * price
+        : null;
+    result.set(token.key, {
+      balance: selected.balance,
+      usd,
+    });
+  }
+
+  return result;
+}
 
 const styles = {
   base: 'font-secondary font-normal',

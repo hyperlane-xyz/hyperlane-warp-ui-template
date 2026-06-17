@@ -4,7 +4,7 @@ import { config } from '../../../consts/config';
 import { createMockToken, createTokenConnectionMock } from '../../../utils/test';
 import type { UiToken } from '../../swap/tokens/types';
 import { groupTokensByCollateral } from '../../tokens/utils';
-import { getVisibleUnifiedTokens } from './list';
+import { getVisibleUnifiedTokens, sortUnifiedTokensByBalance } from './list';
 import type { UnifiedToken } from './types';
 
 const originalFeaturedTokens = [...config.featuredTokens];
@@ -252,5 +252,113 @@ describe('getVisibleUnifiedTokens', () => {
     });
 
     expect(result.tokens.map((token) => token.key)).toEqual(['bridge', 'swap-only']);
+  });
+
+  test('balance sorting keeps featured tokens before non-featured tokens', () => {
+    const firstFeatured = config.featuredTokens[0];
+    const [chainName, symbol] = firstFeatured.split('-');
+    const featured = createUnifiedToken({
+      key: firstFeatured,
+      chainName,
+      symbol,
+      capabilities: { bridge: false, swap: true },
+      swapToken: createSwapToken({ chainName, symbol }),
+    });
+    const regular = createUnifiedToken({
+      key: 'regular',
+      chainName: 'zzz',
+      symbol: 'AAA',
+      capabilities: { bridge: false, swap: true },
+      swapToken: createSwapToken({ chainName: 'zzz', symbol: 'AAA' }),
+    });
+
+    const result = sortUnifiedTokensByBalance({
+      tokens: [featured, regular],
+      balanceInfo: new Map([
+        [featured.key, { usd: 1, balance: 1n }],
+        [regular.key, { usd: 100, balance: 100n }],
+      ]),
+      counterpartToken: undefined,
+      selectionMode: 'origin',
+      collateralGroups: new Map(),
+      engineEnabled: true,
+    });
+
+    expect(result.map((token) => token.key)).toEqual([featured.key, regular.key]);
+  });
+
+  test('balance sorting keeps bridge routes before swap routes', () => {
+    const originBridgeToken = createMockToken({
+      chainName: 'ethereum',
+      connections: [createTokenConnectionMock(undefined, { chainName: 'arbitrum' })],
+    });
+    const destinationBridgeToken = createMockToken({ chainName: 'arbitrum' });
+    const collateralGroups = groupTokensByCollateral([originBridgeToken, destinationBridgeToken]);
+    const counterpart = createUnifiedToken({
+      key: 'origin',
+      chainName: 'ethereum',
+      capabilities: { bridge: true, swap: true },
+      bridgeToken: originBridgeToken,
+      swapToken: createSwapToken({ chainName: 'ethereum' }),
+    });
+    const bridgeDestination = createUnifiedToken({
+      key: 'bridge',
+      chainName: 'arbitrum',
+      symbol: 'ZZZ',
+      capabilities: { bridge: true, swap: true },
+      bridgeToken: destinationBridgeToken,
+      swapToken: createSwapToken({ chainName: 'arbitrum', symbol: 'ZZZ' }),
+    });
+    const swapDestination = createUnifiedToken({
+      key: 'swap',
+      chainName: 'arbitrum',
+      symbol: 'AAA',
+      capabilities: { bridge: false, swap: true },
+      swapToken: createSwapToken({ chainName: 'arbitrum', symbol: 'AAA' }),
+    });
+
+    const result = sortUnifiedTokensByBalance({
+      tokens: [bridgeDestination, swapDestination],
+      balanceInfo: new Map([
+        [bridgeDestination.key, { usd: 1, balance: 1n }],
+        [swapDestination.key, { usd: 100, balance: 100n }],
+      ]),
+      counterpartToken: counterpart,
+      selectionMode: 'destination',
+      collateralGroups,
+      engineEnabled: true,
+    });
+
+    expect(result.map((token) => token.key)).toEqual(['bridge', 'swap']);
+  });
+
+  test('balance sorting uses usd value within the same priority bucket', () => {
+    config.featuredTokens.splice(0, config.featuredTokens.length);
+    const lowValue = createUnifiedToken({
+      key: 'low-value',
+      symbol: 'AAA',
+      capabilities: { bridge: false, swap: true },
+      swapToken: createSwapToken({ symbol: 'AAA' }),
+    });
+    const highValue = createUnifiedToken({
+      key: 'high-value',
+      symbol: 'BBB',
+      capabilities: { bridge: false, swap: true },
+      swapToken: createSwapToken({ symbol: 'BBB' }),
+    });
+
+    const result = sortUnifiedTokensByBalance({
+      tokens: [lowValue, highValue],
+      balanceInfo: new Map([
+        [lowValue.key, { usd: 1, balance: 100n }],
+        [highValue.key, { usd: 100, balance: 1n }],
+      ]),
+      counterpartToken: undefined,
+      selectionMode: 'origin',
+      collateralGroups: new Map(),
+      engineEnabled: true,
+    });
+
+    expect(result.map((token) => token.key)).toEqual(['high-value', 'low-value']);
   });
 });

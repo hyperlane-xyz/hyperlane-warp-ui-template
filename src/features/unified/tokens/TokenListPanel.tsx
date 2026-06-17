@@ -17,6 +17,7 @@ interface TokenListPanelProps {
   chainIdFilter: number | undefined;
   onSelect: (token: UnifiedToken) => void;
   counterpartToken?: UnifiedToken;
+  recipient?: string;
   selectedChain: ChainName | null;
   onSelectChain: (chain: ChainInfo | null) => void;
   onMoreChainsClick: () => void;
@@ -31,6 +32,7 @@ export function TokenListPanel({
   chainIdFilter,
   onSelect,
   counterpartToken,
+  recipient,
   selectedChain,
   onSelectChain,
   onMoreChainsClick,
@@ -68,6 +70,7 @@ export function TokenListPanel({
         chainIdFilter={chainIdFilter}
         onSelect={onSelect}
         counterpartToken={counterpartToken}
+        recipient={recipient}
         engineEnabled={engineEnabled}
       />
     </div>

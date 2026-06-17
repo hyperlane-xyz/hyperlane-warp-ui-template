@@ -4,6 +4,11 @@ import type { UnifiedToken } from './types';
 
 export type UnifiedTokenRouteMode = UnifiedRouteMode | null;
 
+export interface UnifiedTokenBalanceInfo {
+  balance?: bigint | null;
+  usd?: number | null;
+}
+
 export function getFeaturedTokenIndex(token: UnifiedToken): number {
   const tokenKey = `${token.chainName}-${token.symbol}`.toLowerCase();
   return config.featuredTokens.findIndex((featured) => featured.toLowerCase() === tokenKey);
@@ -93,4 +98,68 @@ export function getVisibleUnifiedTokens({
   const shouldCap = !hasFilter && config.featuredTokens.length === 0;
   const isLimited = shouldCap && sorted.length > maxDisplay;
   return { tokens: isLimited ? sorted.slice(0, maxDisplay) : sorted, isLimited };
+}
+
+export function sortUnifiedTokensByBalance({
+  tokens,
+  balanceInfo,
+  counterpartToken,
+  selectionMode,
+  collateralGroups,
+  engineEnabled,
+}: {
+  tokens: UnifiedToken[];
+  balanceInfo: Map<string, UnifiedTokenBalanceInfo>;
+  counterpartToken: UnifiedToken | undefined;
+  selectionMode: 'origin' | 'destination';
+  collateralGroups: Parameters<typeof getUnifiedRouteMode>[0]['collateralGroups'];
+  engineEnabled: boolean;
+}): UnifiedToken[] {
+  const originalIndex = new Map(tokens.map((token, index) => [token.key, index]));
+
+  return [...tokens].sort((a, b) => {
+    const aFeatured = getFeaturedTokenIndex(a) >= 0;
+    const bFeatured = getFeaturedTokenIndex(b) >= 0;
+    if (aFeatured !== bFeatured) return aFeatured ? -1 : 1;
+
+    const aRoute = getTokenRouteMode(
+      a,
+      counterpartToken,
+      selectionMode,
+      collateralGroups,
+      engineEnabled,
+    );
+    const bRoute = getTokenRouteMode(
+      b,
+      counterpartToken,
+      selectionMode,
+      collateralGroups,
+      engineEnabled,
+    );
+    const routeCompare = getRouteSortRank(aRoute) - getRouteSortRank(bRoute);
+    if (routeCompare !== 0) return routeCompare;
+
+    const aInfo = balanceInfo.get(a.key);
+    const bInfo = balanceInfo.get(b.key);
+    const aUsd = aInfo?.usd ?? 0;
+    const bUsd = bInfo?.usd ?? 0;
+    if (aUsd > 0 || bUsd > 0) {
+      if (aUsd !== bUsd) return bUsd - aUsd;
+    }
+
+    const aBalance = aInfo?.balance ?? 0n;
+    const bBalance = bInfo?.balance ?? 0n;
+    if (aBalance > 0n || bBalance > 0n) {
+      if (aBalance > bBalance) return -1;
+      if (aBalance < bBalance) return 1;
+    }
+
+    return (originalIndex.get(a.key) ?? 0) - (originalIndex.get(b.key) ?? 0);
+  });
+}
+
+function getRouteSortRank(mode: UnifiedTokenRouteMode): number {
+  if (mode === UnifiedRouteMode.Bridge) return 0;
+  if (mode === UnifiedRouteMode.Swap) return 1;
+  return 2;
 }

@@ -15,6 +15,7 @@ interface Props {
   onSelect: (token: UnifiedToken) => void;
   selectionMode: 'origin' | 'destination';
   counterpartToken?: UnifiedToken;
+  recipient?: string;
   engineEnabled: boolean;
 }
 
@@ -24,6 +25,7 @@ export function UnifiedTokenChainModal({
   onSelect,
   selectionMode,
   counterpartToken,
+  recipient,
   engineEnabled,
 }: Props) {
   const multiProvider = useMultiProvider();
@@ -91,6 +93,7 @@ export function UnifiedTokenChainModal({
             chainIdFilter={selectedChainId}
             onSelect={handleSelectToken}
             counterpartToken={counterpartToken}
+            recipient={recipient}
             selectedChain={selectedChain?.name ?? null}
             onSelectChain={handleSelectChain}
             onMoreChainsClick={() => setShowMobileChainList(true)}

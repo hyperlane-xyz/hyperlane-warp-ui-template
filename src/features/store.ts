@@ -38,7 +38,6 @@ import {
   SwapHistoryItem,
   SwapStatus,
 } from './transfer/engine/types';
-import { FinalTransferStatuses, TransferContext, TransferStatus } from './transfer/types';
 import {
   type E2ETokenSnapshot,
   initE2EStateIfEnabled,
@@ -47,16 +46,17 @@ import {
 import { assembleWarpCoreConfig } from './warpCore/warpCoreConfig';
 
 // Increment this when persist state has breaking changes
-const PERSIST_STATE_VERSION = 3;
+const PERSIST_STATE_VERSION = 4;
 
 export const TransactionHistoryItemType = {
-  Bridge: 'bridge',
   Swap: 'swap',
 } as const;
 
-export type TransactionHistoryItem =
-  | { id: string; type: typeof TransactionHistoryItemType.Bridge; data: TransferContext }
-  | { id: string; type: typeof TransactionHistoryItemType.Swap; data: SwapHistoryItem };
+export type TransactionHistoryItem = {
+  id: string;
+  type: typeof TransactionHistoryItemType.Swap;
+  data: SwapHistoryItem;
+};
 
 interface WarpContext {
   registry: IRegistry;
@@ -108,19 +108,8 @@ export interface AppState {
 
   // User transaction history
   transactionHistory: TransactionHistoryItem[];
-  addBridgeTransaction: (t: TransferContext) => string;
   addSwapTransaction: (s: SwapHistoryItem) => string;
   resetTransactionHistory: () => void;
-  updateBridgeTransactionStatus: (
-    id: string,
-    s: TransferStatus,
-    options?: {
-      msgId?: string;
-      originTxHash?: string;
-      originBlockNumber?: number;
-      destinationTxHash?: string;
-    },
-  ) => void;
   updateSwapTransactionStatus: (
     id: string,
     status: SwapStatus,
@@ -273,16 +262,6 @@ export const useStore = create<AppState>()(
 
       // User transaction history
       transactionHistory: [],
-      addBridgeTransaction: (data) => {
-        const id = createTransactionId(TransactionHistoryItemType.Bridge, data.timestamp);
-        set((state) => ({
-          transactionHistory: [
-            ...state.transactionHistory,
-            { id, type: TransactionHistoryItemType.Bridge, data },
-          ],
-        }));
-        return id;
-      },
       addSwapTransaction: (data) => {
         const id = createTransactionId(TransactionHistoryItemType.Swap, data.timestamp);
         set((state) => ({
@@ -295,24 +274,6 @@ export const useStore = create<AppState>()(
       },
       resetTransactionHistory: () => {
         set(() => ({ transactionHistory: [] }));
-      },
-      updateBridgeTransactionStatus: (id, status, options) => {
-        set((state) => ({
-          transactionHistory: state.transactionHistory.map((item) => {
-            if (item.id !== id || item.type !== TransactionHistoryItemType.Bridge) return item;
-            return {
-              ...item,
-              data: {
-                ...item.data,
-                status,
-                msgId: item.data.msgId ?? options?.msgId,
-                originTxHash: item.data.originTxHash ?? options?.originTxHash,
-                originBlockNumber: item.data.originBlockNumber ?? options?.originBlockNumber,
-                destinationTxHash: item.data.destinationTxHash ?? options?.destinationTxHash,
-              },
-            };
-          }),
-        }));
       },
       updateSwapTransactionStatus: (id, status, options) => {
         set((state) => ({
@@ -344,10 +305,6 @@ export const useStore = create<AppState>()(
       failUnconfirmedTransactions: () => {
         set((state) => ({
           transactionHistory: state.transactionHistory.map((item) => {
-            if (item.type === TransactionHistoryItemType.Bridge) {
-              if (FinalTransferStatuses.includes(item.data.status)) return item;
-              return { ...item, data: { ...item.data, status: TransferStatus.Failed } };
-            }
             if (FinalSwapStatuses.includes(item.data.status)) return item;
             if (item.data.originTxHash) return item;
             return { ...item, data: { ...item.data, status: SwapStatus.Failed } };
@@ -436,24 +393,21 @@ export const useStore = create<AppState>()(
       version: PERSIST_STATE_VERSION,
       migrate: (persistedState) => {
         const state = persistedState as Partial<AppState> & {
-          transfers?: TransferContext[];
           swaps?: SwapHistoryItem[];
+          transactionHistory?: Array<TransactionHistoryItem | { type?: string }>;
         };
         if (Array.isArray(state.transactionHistory)) {
           return {
             chainMetadataOverrides: state.chainMetadataOverrides ?? {},
-            transactionHistory: state.transactionHistory,
+            transactionHistory: state.transactionHistory.filter(
+              (item): item is TransactionHistoryItem =>
+                item.type === TransactionHistoryItemType.Swap,
+            ),
           };
         }
 
-        const transfers = Array.isArray(state.transfers) ? state.transfers : [];
         const swaps = Array.isArray(state.swaps) ? state.swaps : [];
         const transactionHistory: TransactionHistoryItem[] = [
-          ...transfers.map((data) => ({
-            id: createTransactionId(TransactionHistoryItemType.Bridge, data.timestamp),
-            type: TransactionHistoryItemType.Bridge,
-            data,
-          })),
           ...swaps.map((data) => ({
             id: createTransactionId(TransactionHistoryItemType.Swap, data.timestamp),
             type: TransactionHistoryItemType.Swap,

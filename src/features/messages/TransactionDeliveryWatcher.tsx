@@ -8,16 +8,9 @@ import { useMultiProvider } from '../chains/hooks';
 import { TransactionHistoryItemType, useStore } from '../store';
 import { FinalSwapStatuses, SwapStatus } from '../transfer/engine/types';
 import { useSwapStatus } from '../transfer/engine/useSwapStatus';
-import { TransferStatus } from '../transfer/types';
 import { useEvmMailboxDeliveryStatus } from './useEvmMailboxDeliveryStatus';
 import { useMessageDeliveryStatus } from './useMessageDeliveryStatus';
 import { getSwapDeliveryMsgId } from './utils';
-
-type BridgeDeliveryTarget = {
-  id: string;
-  type: typeof TransactionHistoryItemType.Bridge;
-  msgId: string;
-};
 
 type SwapDeliveryTarget = {
   id: string;
@@ -28,7 +21,7 @@ type SwapDeliveryTarget = {
   requiresDestinationOutcome: boolean;
 };
 
-type DeliveryTarget = BridgeDeliveryTarget | SwapDeliveryTarget;
+type DeliveryTarget = SwapDeliveryTarget;
 
 const MAX_BACKGROUND_DELIVERY_TARGETS = 5;
 
@@ -41,16 +34,6 @@ export function TransactionDeliveryWatcher() {
 
   const targets = useMemo(() => {
     const deliveryTargets = transactionHistory.flatMap((item): DeliveryTarget[] => {
-      if (item.type === TransactionHistoryItemType.Bridge) {
-        const shouldWatchBridge =
-          item.data.status === TransferStatus.ConfirmedTransfer ||
-          item.data.status === TransferStatus.Delivered;
-        if (!shouldWatchBridge || !item.data.msgId || item.data.destinationTxHash) {
-          return [];
-        }
-        return [{ id: item.id, type: item.type, msgId: item.data.msgId }];
-      }
-
       if (item.type !== TransactionHistoryItemType.Swap) return [];
 
       if (!item.data.msgIds?.length) return [];
@@ -105,7 +88,6 @@ function DeliveryTargetWatcher({
   chainAddresses: ChainMap<ChainAddresses>;
 }) {
   const multiProvider = useMultiProvider();
-  const updateBridgeTransactionStatus = useStore((s) => s.updateBridgeTransactionStatus);
   const updateSwapTransactionStatus = useStore((s) => s.updateSwapTransactionStatus);
   const swap = useStore((s) => {
     if (target.type !== TransactionHistoryItemType.Swap) return undefined;
@@ -115,11 +97,10 @@ function DeliveryTargetWatcher({
   const graphQlDelivery = useMessageDeliveryStatus(target.msgId, true, multiProvider);
   const mailboxDelivery = useEvmMailboxDeliveryStatus({
     msgId: target.msgId,
-    destinationChain:
-      target.type === TransactionHistoryItemType.Swap ? target.destinationChain : undefined,
+    destinationChain: target.destinationChain,
     chainAddresses,
     multiProvider,
-    enabled: target.type === TransactionHistoryItemType.Swap && !graphQlDelivery.destinationTxHash,
+    enabled: !graphQlDelivery.destinationTxHash,
   });
   // Swap recovery status is centralized here so the modal stays display-only.
   useSwapStatus(swap, target.type === TransactionHistoryItemType.Swap ? target.id : null);
@@ -136,25 +117,6 @@ function DeliveryTargetWatcher({
   }, [target.id, target.msgId]);
 
   useEffect(() => {
-    if (target.type === TransactionHistoryItemType.Bridge) {
-      if (
-        !graphQlDelivery.isDelivered ||
-        !shouldUpdateFromDelivery(
-          hasUpdatedFromGraphQl,
-          hasBackfilledGraphQlHash,
-          graphQlDelivery.destinationTxHash,
-        )
-      ) {
-        return;
-      }
-      hasUpdatedFromGraphQl.current = true;
-      if (graphQlDelivery.destinationTxHash) hasBackfilledGraphQlHash.current = true;
-      updateBridgeTransactionStatus(target.id, TransferStatus.Delivered, {
-        destinationTxHash: graphQlDelivery.destinationTxHash,
-      });
-      return;
-    }
-
     if (
       graphQlDelivery.isDelivered &&
       shouldUpdateFromDelivery(
@@ -205,7 +167,6 @@ function DeliveryTargetWatcher({
     mailboxDelivery.destinationTxHash,
     mailboxDelivery.isDelivered,
     target,
-    updateBridgeTransactionStatus,
     updateSwapTransactionStatus,
   ]);
 

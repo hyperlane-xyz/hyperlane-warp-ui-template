@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 
 // Extra patience for token-picker flows — under full-suite load (cosmos-kit
 // module init, multicall fallbacks, etc.) the default 5s locator timeouts
@@ -7,8 +7,12 @@ const MODAL_TIMEOUT = 30_000;
 
 function tokenPickerModal(page: Page) {
   return page
-    .locator('div.token-picker-modal[data-headlessui-state="open"]')
+    .locator('div.token-picker-modal[data-headlessui-state="open"]:not([data-closed])')
     .filter({ hasText: 'Select Token' });
+}
+
+async function waitForTokenPickerClosed(page: Page) {
+  await expect(tokenPickerModal(page)).toHaveCount(0, { timeout: MODAL_TIMEOUT });
 }
 
 // In dev builds (`pnpm dev`) Next.js renders a <nextjs-portal> web
@@ -31,7 +35,7 @@ export async function selectOriginToken(page: Page, buttonName: RegExp): Promise
     .getByRole('button', { name: buttonName })
     .first()
     .dispatchEvent('click', undefined, { timeout: MODAL_TIMEOUT });
-  await modal.waitFor({ state: 'hidden', timeout: MODAL_TIMEOUT });
+  await waitForTokenPickerClosed(page);
 }
 
 export async function selectOriginTokenOnChain(
@@ -50,7 +54,26 @@ export async function selectOriginTokenOnChain(
     .getByRole('button', { name: buttonName })
     .first()
     .dispatchEvent('click', undefined, { timeout: MODAL_TIMEOUT });
-  await modal.waitFor({ state: 'hidden', timeout: MODAL_TIMEOUT });
+  await waitForTokenPickerClosed(page);
+}
+
+export async function selectDestinationTokenOnChain(
+  page: Page,
+  chainName: RegExp,
+  buttonName: RegExp,
+): Promise<void> {
+  await page.getByTestId('token-select-destination').dispatchEvent('click');
+  const modal = tokenPickerModal(page);
+  await modal.waitFor({ state: 'visible', timeout: MODAL_TIMEOUT });
+  await modal
+    .getByRole('button', { name: chainName })
+    .first()
+    .dispatchEvent('click', undefined, { timeout: MODAL_TIMEOUT });
+  await modal
+    .getByRole('button', { name: buttonName })
+    .first()
+    .dispatchEvent('click', undefined, { timeout: MODAL_TIMEOUT });
+  await waitForTokenPickerClosed(page);
 }
 
 export async function selectDestinationToken(page: Page, buttonName: RegExp): Promise<void> {
@@ -61,7 +84,7 @@ export async function selectDestinationToken(page: Page, buttonName: RegExp): Pr
     .getByRole('button', { name: buttonName })
     .first()
     .dispatchEvent('click', undefined, { timeout: MODAL_TIMEOUT });
-  await modal.waitFor({ state: 'hidden', timeout: MODAL_TIMEOUT });
+  await waitForTokenPickerClosed(page);
 }
 
 export async function enterAmount(page: Page, amount: string): Promise<void> {

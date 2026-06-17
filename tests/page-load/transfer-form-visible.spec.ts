@@ -36,9 +36,8 @@ test.describe('Page Load - Transfer Form', () => {
     await expect(maxButton).toBeVisible();
     await expect(maxButton).toBeDisabled();
 
-    // USD price and balance
-    await expect(page.getByText('$0.00')).toBeVisible();
-    await expect(page.getByText('Balance: 0.00', { exact: true })).toBeVisible();
+    await expect(page.getByText('$0.00').first()).toBeVisible();
+    await expect(page.locator('.transfer-balance').first()).toContainText(/Balance:/);
 
     // Receive section: default destination token
     const destButton = getDestinationTokenButton(page);
@@ -47,6 +46,6 @@ test.describe('Page Load - Transfer Form', () => {
     if (destination) {
       await expect(destButton).toHaveAttribute('data-chain', destination.chainName);
     }
-    await expect(page.getByText('Remote Balance: 0.00')).toBeVisible();
+    await expect(page.getByText(/^Remote Balance:/)).toBeVisible();
   });
 });

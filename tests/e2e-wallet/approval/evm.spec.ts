@@ -1,8 +1,9 @@
 import { expect, test } from '@playwright/test';
 import { MOCK_EVM_ADDRESS } from '../helpers/constants';
 import { installEvmRpcMock } from '../helpers/evmRpc';
-import { enterAmount } from '../helpers/formFlow';
+import { enterAmount, selectDestinationToken, selectOriginToken } from '../helpers/formFlow';
 import { openE2EApp } from '../helpers/page-setup';
+import { installQuoteMock } from '../helpers/quote';
 
 const USDC_ETHEREUM = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48';
 const APPROVE_SELECTOR = '0x095ea7b3';
@@ -32,9 +33,12 @@ test.describe('EVM approval flow', () => {
         8453: '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913',
       },
     });
+    await installQuoteMock(page, { approval: 'erc20' });
 
     await openE2EApp(page);
     await expect(page.getByText('0xe2e...e2ee').first()).toBeVisible({ timeout: 20_000 });
+    await selectOriginToken(page, /ethereum USDC/i);
+    await selectDestinationToken(page, /base USDC/i);
 
     await enterAmount(page, '1');
     await page.getByRole('button', { name: /^Continue$/ }).click();

@@ -23,18 +23,16 @@ test.describe('Chain Selection - Filter by Protocol', () => {
     await expect(page.getByRole('button', { name: 'ethereum Ethereum', exact: true })).not.toBeVisible();
   });
 
-  test('should filter chains by Cosmos protocol', async ({ page }) => {
+  test('should filter chains by Tron protocol', async ({ page }) => {
     await page.goto('http://localhost:3000');
     await page.getByText('Send').first().waitFor({ state: 'visible' });
 
     await getOriginTokenButton(page).click();
     await page.getByRole('button', { name: 'Filter chains' }).click();
 
-    // Click Cosmos protocol filter
-    await page.getByRole('button', { name: 'Cosmos', exact: true }).click();
+    await page.getByRole('button', { name: 'Tron', exact: true }).click();
 
-    // Should show Cosmos chains (e.g., Neutron, Osmosis, Stride)
-    await expect(page.getByRole('button', { name: /neutron Neutron/i })).toBeVisible();
+    await expect(page.locator('.token-picker-chain-row[data-chain="tron"]')).toBeVisible();
   });
 
   test('should clear filters', async ({ page }) => {
@@ -54,6 +52,6 @@ test.describe('Chain Selection - Filter by Protocol', () => {
     await page.getByText('Clear').click();
 
     // All chains should be visible again (including mainnet)
-    await expect(page.getByRole('button', { name: 'ethereum Ethereum', exact: true })).toBeVisible();
+    await expect(page.locator('.token-picker-chain-row[data-chain="ethereum"]')).toBeVisible();
   });
 });

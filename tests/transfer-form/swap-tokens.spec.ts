@@ -10,6 +10,9 @@ test.describe('Transfer Form - Swap Tokens', () => {
     const originBtn = getOriginTokenButton(page);
     const destBtn = getDestinationTokenButton(page);
 
+    await expect(originBtn).not.toHaveText(/Select token/i);
+    await expect(destBtn).not.toHaveText(/Select token/i);
+
     const initialOriginName = await originBtn.textContent();
     const initialDestName = await destBtn.textContent();
 

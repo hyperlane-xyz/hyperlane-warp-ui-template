@@ -9,6 +9,7 @@ import { useMultiProvider } from '../../../chains/hooks';
 import type { UiToken } from '../tokens/types';
 import { getTokenKey } from '../tokens/utils';
 import { fetchEvmChainBalances } from './evm';
+import { fetchSealevelChainBalances } from './sealevel';
 import { fetchTronChainBalances } from './tron';
 
 const STALE_BALANCE_MS = 30_000;
@@ -179,6 +180,13 @@ async function dispatchChainBalances(
   }
   if (protocol === ProtocolType.Tron) {
     return fetchTronChainBalances(multiProvider, tokens, userAddress);
+  }
+  if (protocol === ProtocolType.Sealevel) {
+    const rpcUrl = tokens[0]
+      ? multiProvider.tryGetChainMetadata(tokens[0].chainName)?.rpcUrls?.[0]?.http
+      : undefined;
+    if (!rpcUrl) return {};
+    return fetchSealevelChainBalances(rpcUrl, tokens, userAddress);
   }
   return {};
 }

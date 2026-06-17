@@ -420,6 +420,7 @@ function SwapFormContent() {
           isReview={isReview}
           srcChainName={srcChainName}
           srcToken={srcToken}
+          sender={sender}
           amountError={errors.amount}
         />
       </TransferSection>
@@ -535,15 +536,17 @@ function OriginTokenCard({
   isReview,
   srcChainName,
   srcToken,
+  sender,
   amountError,
 }: {
   isReview: boolean;
   srcChainName: string | undefined;
   srcToken: UiToken | undefined;
+  sender: string | undefined;
   amountError: string | undefined;
 }) {
   const { values } = useFormikContext<SwapFormValues>();
-  const { data: balance, isLoading: isBalanceLoading } = useTokenBalance(srcToken);
+  const { data: balance, isLoading: isBalanceLoading } = useTokenBalance(srcToken, sender);
   const amountUsd = useTokenUsdValue(srcToken, values.amount);
 
   return (

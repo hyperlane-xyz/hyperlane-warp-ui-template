@@ -209,12 +209,10 @@ async function buildRevealTransaction(
   const commitmentBytes = Buffer.from(r.commitment.replace('0x', ''), 'hex');
   const calldataBytes = Buffer.from(r.calldata.replace('0x', ''), 'hex');
 
-  let saltBytes: Buffer;
-  if (r.revealSalt) {
-    saltBytes = Buffer.from(r.revealSalt.replace('0x', ''), 'hex');
-  } else {
-    saltBytes = normaliseSalt(r.evmSender);
-  }
+  if (!r.revealSalt) throw new Error('revealSalt missing — re-fetch the quote');
+  if (!r.userSalt) throw new Error('userSalt missing — re-fetch the quote');
+  const saltBytes = Buffer.from(r.revealSalt.replace('0x', ''), 'hex');
+  const userSaltBytes = Buffer.from(r.userSalt.replace('0x', ''), 'hex');
 
   const originLE = Buffer.alloc(4);
   originLE.writeUInt32LE(r.srcChainId, 0);
@@ -222,7 +220,7 @@ async function buildRevealTransaction(
   Buffer.from(r.evmUr, 'hex').copy(evmUrBytes, 12);
 
   const [pendingSwapPDA] = PublicKey.findProgramAddressSync(
-    [PENDING_SWAP_SEED, originLE, evmUrBytes, commitmentBytes],
+    [PENDING_SWAP_SEED, originLE, evmUrBytes, userSaltBytes, commitmentBytes],
     PROGRAM_ID,
   );
   const [feePayerPDA] = PublicKey.findProgramAddressSync([FEE_PAYER_SEED], PROGRAM_ID);
@@ -281,18 +279,22 @@ async function buildRevealTransaction(
     ? null
     : findATA(recipientPk, new PublicKey(actualOutputMint), actualOutTokenProg);
 
-  // Build instruction data (Borsh variant 2 — Reveal)
-  const ixBuf = Buffer.alloc(1 + 4 + 32 + 4 + calldataBytes.length + 32);
+  // Build instruction data (Borsh variant 2 — Reveal) — must match RevealIxn in instruction.rs:
+  //   [0]         u8      variant = 2
+  //   [1..5]      u32     origin (LE)
+  //   [5..37]     [u8;32] sender (EVM UR bytes32)
+  //   [37..69]    [u8;32] user_salt (TypeCasts.addressToBytes32(msgSender()))
+  //   [69..73]    u32     message len (LE)
+  //   [73..73+N]  u8[]    message (= CCS calldata)
+  //   [73+N..105+N] [u8;32] salt (random revealSalt)
+  const ixBuf = Buffer.alloc(1 + 4 + 32 + 32 + 4 + calldataBytes.length + 32);
   let off = 0;
   ixBuf[off++] = 2;
-  ixBuf.writeUInt32LE(r.srcChainId, off);
-  off += 4;
-  evmUrBytes.copy(ixBuf, off);
-  off += 32;
-  ixBuf.writeUInt32LE(calldataBytes.length, off);
-  off += 4;
-  calldataBytes.copy(ixBuf, off);
-  off += calldataBytes.length;
+  ixBuf.writeUInt32LE(r.srcChainId, off); off += 4;
+  evmUrBytes.copy(ixBuf, off); off += 32;
+  userSaltBytes.copy(ixBuf, off); off += 32;
+  ixBuf.writeUInt32LE(calldataBytes.length, off); off += 4;
+  calldataBytes.copy(ixBuf, off); off += calldataBytes.length;
   saltBytes.copy(ixBuf, off);
 
   const clmmAccts = buildClmmAccounts(pendingSwapPDA, hop, inTokenProg, actualOutTokenProg);
@@ -314,13 +316,12 @@ async function buildRevealTransaction(
       ];
 
   const keys: AccountMeta[] = [
-    { pubkey: walletPk, isSigner: true, isWritable: true },
-    { pubkey: pendingSwapPDA, isSigner: false, isWritable: true },
-    { pubkey: pdaInputAta, isSigner: false, isWritable: true },
-    { pubkey: feePayerPDA, isSigner: false, isWritable: true },
-    { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-    ...clmmAccts,
-    ...finalAccts,
+    { pubkey: pendingSwapPDA, isSigner: false, isWritable: true },   // [0] pending_swap
+    { pubkey: pdaInputAta, isSigner: false, isWritable: true },      // [1] pda_token_ata
+    { pubkey: feePayerPDA, isSigner: false, isWritable: true },      // [2] fee_payer_pda
+    { pubkey: SystemProgram.programId, isSigner: false, isWritable: false }, // [3] system_program
+    ...clmmAccts,   // [4..20] CLMM×17
+    ...finalAccts,  // [21..] SWEEP×4 or UNWRAP_WSOL×3+close
   ];
 
   const makeAtaIx = (owner: PublicKey, ata: PublicKey) =>
@@ -366,13 +367,6 @@ async function buildRevealTransaction(
   tx.add(revealIx);
   if (closeWsolIx) tx.add(closeWsolIx);                  // close wallet's wSOL ATA → native SOL to recipient
   return tx;
-}
-
-function normaliseSalt(addr: string): Buffer {
-  const s = addr.replace(/^0x/i, '').toLowerCase();
-  if (s.length === 64) return Buffer.from(s, 'hex');
-  if (s.length === 40) return Buffer.from('000000000000000000000000' + s, 'hex');
-  throw new Error(`Cannot normalise salt from address: ${addr}`);
 }
 
 function findATA(

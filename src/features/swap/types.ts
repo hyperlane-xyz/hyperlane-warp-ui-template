@@ -45,10 +45,10 @@ export const FinalSwapStatuses = [
 export interface SolanaRevealData {
   commitment: `0x${string}`;  // 32-byte keccak256 hash
   calldata: `0x${string}`;    // Raydium swap calldata (embedded in the reveal ix)
-  revealSalt?: `0x${string}`; // 32-byte salt for commitment verification
+  revealSalt: `0x${string}`;  // random bytes32 used in commitment hash (keccak256(calldata || revealSalt))
+  userSalt: `0x${string}`;    // TypeCasts.addressToBytes32(msgSender()) — EVM caller, explicit PDA seed
   srcChainId: number;         // EVM origin chain ID (= Hyperlane domain for EVM)
   evmUr: string;              // EVM UR address (lowercase, no 0x)
-  evmSender: string;          // EVM sender address (fallback salt derivation)
   tokenIn: string;            // Solana input mint (base58)
   tokenOut: string;           // Solana output mint (base58)
   amountIn: string;           // raw input amount

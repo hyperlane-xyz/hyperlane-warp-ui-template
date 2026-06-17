@@ -265,7 +265,8 @@ export const SolanaCommitmentSchema = z.object({
       calldata: Hex,
       destinationDomain: z.number(),
       encoding: z.string(),
-      revealSalt: Hex.optional(),
+      revealSalt: Hex,
+      userSalt: Hex,
     }),
   }),
 });

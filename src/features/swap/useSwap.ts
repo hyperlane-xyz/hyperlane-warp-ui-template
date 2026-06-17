@@ -342,10 +342,10 @@ function buildSolanaRevealData(
   return {
     commitment: sc.commitment as `0x${string}`,
     calldata: sc.ccs.body.calldata as `0x${string}`,
-    revealSalt: sc.ccs.body.revealSalt as `0x${string}` | undefined,
+    revealSalt: sc.ccs.body.revealSalt as `0x${string}`,
+    userSalt: sc.ccs.body.userSalt as `0x${string}`,
     srcChainId,
     evmUr: route.raw.tx.to.replace(/^0x/i, '').toLowerCase(),
-    evmSender: sender,
     tokenIn: swapStep.tokenIn,
     tokenOut: swapStep.tokenOut,
     amountIn: swapStep.amountIn,

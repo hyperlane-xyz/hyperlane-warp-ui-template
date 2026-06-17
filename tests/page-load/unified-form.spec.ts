@@ -28,13 +28,16 @@ test.describe('Page Load - Unified Form', () => {
     page,
   }) => {
     await page.goto(
-      'http://localhost:3000/?origin=bsc&originToken=0x0000000000000000000000000000000000000000&destination=base&destinationToken=0x0000000000000000000000000000000000000000',
+      'http://localhost:3000/?origin=bsc&originToken=0xfb6115445Bff7b52FeB98650C87f44907E58f802&destination=base&destinationToken=0x63706e401c06ac8513145b7687A14804d17f814b',
     );
     await waitForUnifiedForm(page);
 
     const swapRoute = page.getByText('Route: swap');
-    const hasSwapRoute = await swapRoute.isVisible();
-    test.skip(!hasSwapRoute, 'router engine is not configured');
+    const hasSwapRoute = await swapRoute
+      .waitFor({ state: 'visible', timeout: 20_000 })
+      .then(() => true)
+      .catch(() => false);
+    test.skip(!hasSwapRoute, 'router engine is not configured or route lookup is unavailable');
 
     await expect(swapRoute).toBeVisible();
     await expect(page.getByText('Slippage')).toBeVisible();

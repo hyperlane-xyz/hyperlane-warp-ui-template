@@ -1,13 +1,18 @@
 import { ChevronIcon, FuelPumpIcon, useModal } from '@hyperlane-xyz/widgets';
 import { useEffect, useMemo, useState } from 'react';
 
-import { getFeePercentage } from '../../balances/feeUsdDisplay';
 import { useMultiProvider } from '../../chains/hooks';
-import { useTokenPricesByIds } from '../../tokens/useTokenPrice';
-import { formatFeeAmount, formatUsd, getTotalFeeUsd, resolveCoinGeckoId } from './balances/utils';
+import {
+  formatFeeAmount,
+  formatUsd,
+  getFeePercentage,
+  getTotalFeeUsd,
+  resolveCoinGeckoId,
+} from './balances/utils';
 import { FeeBreakdownModal } from './FeeBreakdownModal';
 import { getTokenByKeyFromMap, useTokenByKeyMap } from './tokens/hooks';
 import type { UiToken } from './tokens/types';
+import { useTokenPricesByIds } from './tokens/useTokenPrice';
 import type { FeeBreakdown, FeeComponent } from './types';
 
 interface Props {

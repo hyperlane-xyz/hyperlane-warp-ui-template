@@ -80,9 +80,8 @@ export function useSwap() {
           }
         }
 
-        // Approve / revoke before the swap tx. Mirrors WarpCore's pattern:
-        // bump non-zero existing allowance to zero first (USDT case), then
-        // approve the new amount.
+        // Approve / revoke before the swap tx: bump non-zero existing
+        // allowance to zero first (USDT case), then approve the new amount.
         if (args.spender && args.approvalAmount != null && !args.isNative) {
           const spender = args.spender;
           if (isZeroishAddress(spender)) {

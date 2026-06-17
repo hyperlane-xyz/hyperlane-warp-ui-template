@@ -50,3 +50,11 @@ export function getTotalFeeUsd(
   }
   return total;
 }
+
+export function getFeePercentage(totalFeesUsd: number, transferUsd: number): string | null {
+  if (totalFeesUsd <= 0 || transferUsd <= 0) return null;
+  const pct = (totalFeesUsd / transferUsd) * 100;
+  if (pct < 0.01) return '<0.01%';
+  if (pct >= 100) return '>=100%';
+  return `${pct.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
+}

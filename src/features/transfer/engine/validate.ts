@@ -24,7 +24,7 @@ export type SwapFormErrors = Partial<
   >
 >;
 
-// Top-level orchestrator. Mirrors WarpCore.validateTransfer shape.
+// Top-level validation orchestrator for quote execution.
 export async function validateSwapForm(args: {
   values: SwapFormValues;
   bestRoute: AugmentedRoute | undefined;

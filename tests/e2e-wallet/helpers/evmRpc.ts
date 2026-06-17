@@ -8,11 +8,7 @@ const DEFAULT_GAS_PRICE = '0x3b9aca00'; // 1 gwei
 const DEFAULT_BLOCK_HEX = '0x12345';
 const MAX_UINT256 = '0x' + 'f'.repeat(64);
 
-// Sentinel for "practically infinite collateral" — seed via `defaultBalance`
-// on an Erc20Fixture so `balanceOf(warpRouter)` reports a large value and
-// WarpCore.validateTransfer's destination-collateral check passes. Without
-// this, validate short-circuits with "Insufficient collateral on
-// destination" and the form never enters review state.
+// Sentinel for "practically infinite collateral" on legacy mock fixtures.
 export const ROUTER_COLLATERAL_SEED = MAX_UINT256;
 
 export interface ChainUrlMatcher {
@@ -265,7 +261,7 @@ function handleEthCall(call: { to?: string; data?: string }, ctx: HandleCtx): st
     return encodeString(erc20Fixture?.symbol ?? 'TEST');
   }
   // Hyperlane router probes — without these the SDK throws during
-  // warpCore.getTransferRemoteTxs / estimateTransferRemoteFees (semver parse).
+  // Some SDK helpers parse `web3_clientVersion` semver.
 
   // PACKAGE_VERSION() — string; "6.0.0" passes all compareVersions gates.
   if (data.startsWith('0x93c44847')) return encodeString('6.0.0');

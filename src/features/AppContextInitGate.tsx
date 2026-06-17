@@ -6,18 +6,18 @@ import { useReadyMultiProvider } from './chains/hooks';
 
 const INIT_TIMEOUT = 10_000; // 10 seconds
 
-// A wrapper app to delay rendering children until the warp context is ready
-export function WarpContextInitGate({ children }: PropsWithChildren<unknown>) {
-  const isWarpContextReady = !!useReadyMultiProvider();
+// Delay rendering children until engine-supported chain metadata is ready.
+export function AppContextInitGate({ children }: PropsWithChildren<unknown>) {
+  const isAppContextReady = !!useReadyMultiProvider();
 
   const [isTimedOut, setIsTimedOut] = useState(false);
   useTimeout(() => setIsTimedOut(true), INIT_TIMEOUT);
 
-  if (!isWarpContextReady) {
+  if (!isAppContextReady) {
     if (isTimedOut) {
       // Fallback to outer error boundary
       throw new Error(
-        'Failed to initialize warp context. Please check your registry URL and connection status.',
+        'Failed to initialize app context. Please check your registry URL and connection status.',
       );
     } else {
       return (

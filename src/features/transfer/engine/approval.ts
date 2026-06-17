@@ -4,7 +4,7 @@ import type { Address } from 'viem';
 
 import { useMultiProvider } from '../../chains/hooks';
 
-// Classic ERC20.approve(UR, amount) flow, mirroring WarpCore. The engine
+// Classic ERC20.approve(spender, amount) flow. The engine
 // emits TRANSFER_FROM (with default usePermit2=false), and the UR's
 // other commands (V3_SWAP_EXACT_IN, BRIDGE_TOKEN) fall back from
 // ERC20.transferFrom to Permit2 via the contract's payOrPermit2Transfer
@@ -14,7 +14,7 @@ export const ApprovalPhase = {
   Native: 'native',
   // USDT case: existing allowance > 0 and needs to be bumped. USDT's
   // approve() reverts unless prior allowance is zero, so we revoke
-  // first. Same pattern WarpCore uses for warp-route approvals.
+  // first.
   NeedsRevoke: 'needs_revoke',
   NeedsApprove: 'needs_approve',
   Ready: 'ready',

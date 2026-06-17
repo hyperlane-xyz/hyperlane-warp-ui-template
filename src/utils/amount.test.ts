@@ -1,6 +1,14 @@
 import { describe, expect, test } from 'vitest';
 
-import { formatDisplayAmount, formatInputAmount, formatUsd } from './amount';
+import { formatBalance, formatDisplayAmount, formatInputAmount, formatUsd } from './amount';
+
+describe('formatBalance', () => {
+  test('rejects invalid token decimals', () => {
+    expect(() => formatBalance(123n, -1)).toThrow('Invalid token decimals');
+    expect(() => formatBalance(123n, 256)).toThrow('Invalid token decimals');
+    expect(() => formatBalance(123n, 1.5)).toThrow('Invalid token decimals');
+  });
+});
 
 describe('formatDisplayAmount', () => {
   test('converts atomic units with token decimals before truncating', () => {
@@ -25,6 +33,17 @@ describe('formatDisplayAmount', () => {
     expect(formatDisplayAmount(12345678900000n, 18)).toBe('0.00001234');
     expect(formatDisplayAmount(123456789n, 18)).toBe('0.0000000001234');
     expect(formatDisplayAmount(1n, 18)).toBe('0.000000000000000001');
+  });
+
+  test('caps tiny display precision', () => {
+    expect(formatDisplayAmount(1_000_000_000_000n, 30)).toBe('0.000000000000000001');
+    expect(formatDisplayAmount(1n, 30)).toBe('0');
+  });
+
+  test('rejects invalid token decimals', () => {
+    expect(() => formatDisplayAmount(123n, -1)).toThrow('Invalid token decimals');
+    expect(() => formatDisplayAmount(123n, 256)).toThrow('Invalid token decimals');
+    expect(() => formatDisplayAmount(123n, 1.5)).toThrow('Invalid token decimals');
   });
 });
 

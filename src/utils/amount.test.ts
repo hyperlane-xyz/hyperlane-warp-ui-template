@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { formatDisplayAmount, formatInputAmount } from './amount';
+import { formatDisplayAmount, formatInputAmount, formatUsd } from './amount';
 
 describe('formatDisplayAmount', () => {
   test('converts atomic units with token decimals before truncating', () => {
@@ -40,5 +40,25 @@ describe('formatInputAmount', () => {
 
   test('formats zero-decimal amounts', () => {
     expect(formatInputAmount(123n, 0)).toBe('123');
+  });
+
+  test('rejects invalid token decimals', () => {
+    expect(() => formatInputAmount(123n, -1)).toThrow('Invalid token decimals');
+    expect(() => formatInputAmount(123n, 256)).toThrow('Invalid token decimals');
+    expect(() => formatInputAmount(123n, 1.5)).toThrow('Invalid token decimals');
+  });
+});
+
+describe('formatUsd', () => {
+  test('formats finite USD values', () => {
+    expect(formatUsd(12.3)).toBe('$12.30');
+    expect(formatUsd(12.3, true)).toBe('≈$12.30');
+    expect(formatUsd(0.001)).toBe('<$0.01');
+  });
+
+  test('falls back for invalid USD values', () => {
+    expect(formatUsd(Number.NaN)).toBe('-');
+    expect(formatUsd(Number.POSITIVE_INFINITY)).toBe('-');
+    expect(formatUsd(-1)).toBe('-');
   });
 });

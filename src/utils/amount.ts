@@ -1,5 +1,7 @@
 import { fromWeiRounded } from '@hyperlane-xyz/utils';
 
+const MAX_TOKEN_DECIMALS = 255;
+
 // Shared amount/USD formatters — identical across bridge and swap.
 // Feature-specific `getUsdValue` lives in each feature's balances/utils.ts
 // because price-lookup keys differ (CoinGecko id vs lowercase symbol).
@@ -21,7 +23,10 @@ export function formatDisplayAmount(atomicAmount: bigint, decimals: number): str
 }
 
 export function formatInputAmount(atomicAmount: bigint, decimals: number): string {
-  if (decimals <= 0) return atomicAmount.toString();
+  if (!Number.isInteger(decimals) || decimals < 0 || decimals > MAX_TOKEN_DECIMALS) {
+    throw new Error(`Invalid token decimals: ${decimals}`);
+  }
+  if (decimals === 0) return atomicAmount.toString();
 
   const divisor = 10n ** BigInt(decimals);
   const integerPart = atomicAmount / divisor;
@@ -33,6 +38,7 @@ export function formatInputAmount(atomicAmount: bigint, decimals: number): strin
 }
 
 export function formatUsd(value: number, approximate = false): string {
+  if (!Number.isFinite(value) || value < 0) return '-';
   if (value < 0.01) return '<$0.01';
   const prefix = approximate ? '≈$' : '$';
   return `${prefix}${value.toLocaleString('en-US', {

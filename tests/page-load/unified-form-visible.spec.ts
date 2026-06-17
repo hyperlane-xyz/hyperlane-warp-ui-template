@@ -47,6 +47,7 @@ test.describe('Page Load - Unified Form', () => {
     // Max button visible
     const maxButton = page.getByRole('button', { name: 'Max' });
     await expect(maxButton).toBeVisible();
+    await expect(maxButton).toBeDisabled();
 
     // USD price and balance
     await expect(page.getByText('$0.00')).toBeVisible();

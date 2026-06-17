@@ -990,6 +990,11 @@ function OriginTokenCard({
   const swapBalanceToken = routeMode === UnifiedRouteMode.Swap ? token?.swapToken : undefined;
   const { data: swapBalance, isLoading: isSwapBalanceLoading } =
     useSwapTokenBalance(swapBalanceToken);
+  const maxChainName =
+    routeMode === UnifiedRouteMode.Bridge ? bridgeBalanceToken?.chainName : token?.chainName;
+  const { address: maxAccountAddress } = maxChainName
+    ? getAccountAddressAndPubKey(multiProvider, maxChainName, accounts)
+    : { address: undefined };
   const balanceLabel =
     routeMode === UnifiedRouteMode.Swap && token?.swapToken
       ? swapBalance == null
@@ -1074,7 +1079,13 @@ function OriginTokenCard({
           <button
             type="button"
             onClick={setMax}
-            disabled={disabled || !token || isSwapBalanceLoading || bridgeMax.isPending}
+            disabled={
+              disabled ||
+              !token ||
+              !maxAccountAddress ||
+              isSwapBalanceLoading ||
+              bridgeMax.isPending
+            }
             className="transfer-max-btn rounded border border-gray-300 px-2 py-0.5 font-secondary text-sm text-gray-450 transition-colors hover:border-gray-400 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {bridgeMax.isPending ? '...' : 'Max'}

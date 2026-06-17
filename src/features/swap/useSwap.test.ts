@@ -1,0 +1,109 @@
+import { describe, expect, test } from 'vitest';
+
+import type { AugmentedRoute, LabeledMsgId } from './types';
+import { getCcsMessageLabel, labelMessages, type ParsedMessage } from './useSwap';
+
+const BRIDGE_ROUTER = '0x00000000000000000000000000000000000000aa';
+const OTHER_SENDER = '0x00000000000000000000000000000000000000bb';
+
+function createRoute(router = BRIDGE_ROUTER): AugmentedRoute {
+  return {
+    raw: {
+      tx: {
+        to: '0x0000000000000000000000000000000000000001',
+        data: '0x',
+        value: '0',
+      },
+      output: '1',
+      outputMin: '1',
+      connection: null,
+      gas: {
+        originGas: '0',
+        destGas: '0',
+      },
+      steps: [
+        {
+          type: 'bridge',
+          chain: 1,
+          destChain: 2,
+          asset: '0x0000000000000000000000000000000000000002',
+          router,
+          amountIn: '1',
+          amountOut: '1',
+          fee: {
+            tokenFee: '0',
+            igpToken: '0x0000000000000000000000000000000000000000',
+            igpAmount: '0',
+          },
+        },
+      ],
+    },
+    feeBreakdown: { components: [], originGas: 0n, destGas: 0n },
+    isBridgeOnly: false,
+  } as AugmentedRoute;
+}
+
+function createMessage(msgId: `0x${string}`, sender: `0x${string}`, body: string): ParsedMessage {
+  return { msgId, sender, body };
+}
+
+describe('getCcsMessageLabel', () => {
+  test('reads commit and reveal labels from CCS body prefixes', () => {
+    expect(getCcsMessageLabel('0x01abcdef')).toBe('commit');
+    expect(getCcsMessageLabel('0x02abcdef')).toBe('reveal');
+    expect(getCcsMessageLabel('0x03abcdef')).toBeNull();
+  });
+});
+
+describe('labelMessages', () => {
+  test('labels bridge router dispatches as warp messages', () => {
+    const labels = labelMessages(
+      [
+        createMessage('0x01', OTHER_SENDER, '0x01'),
+        createMessage('0x02', BRIDGE_ROUTER, '0x99'),
+        createMessage('0x03', OTHER_SENDER, '0x02'),
+      ],
+      createRoute(),
+    );
+
+    expect(labels).toEqual<LabeledMsgId[]>([
+      { msgId: '0x01', label: 'commit' },
+      { msgId: '0x02', label: 'warp' },
+      { msgId: '0x03', label: 'reveal' },
+    ]);
+  });
+
+  test('uses explicit CCS body labels instead of message order', () => {
+    const labels = labelMessages(
+      [
+        createMessage('0x01', OTHER_SENDER, '0x02'),
+        createMessage('0x02', BRIDGE_ROUTER, '0x99'),
+        createMessage('0x03', OTHER_SENDER, '0x01'),
+      ],
+      createRoute(),
+    );
+
+    expect(labels).toEqual<LabeledMsgId[]>([
+      { msgId: '0x01', label: 'reveal' },
+      { msgId: '0x02', label: 'warp' },
+      { msgId: '0x03', label: 'commit' },
+    ]);
+  });
+
+  test('falls back to last non-warp message as reveal for legacy bodies', () => {
+    const labels = labelMessages(
+      [
+        createMessage('0x01', OTHER_SENDER, '0x99'),
+        createMessage('0x02', BRIDGE_ROUTER, '0x99'),
+        createMessage('0x03', OTHER_SENDER, '0x99'),
+      ],
+      createRoute(),
+    );
+
+    expect(labels).toEqual<LabeledMsgId[]>([
+      { msgId: '0x01', label: 'commit' },
+      { msgId: '0x02', label: 'warp' },
+      { msgId: '0x03', label: 'reveal' },
+    ]);
+  });
+});

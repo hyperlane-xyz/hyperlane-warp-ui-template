@@ -63,28 +63,28 @@ export function useSwap() {
 
       const { transactionId, route, srcChainId } = args;
 
-      if (!route.raw.tx) throw new Error('Route has no tx');
-
-      // Store route for status polling and recovery (non-persisted, session only).
-      setSwapRoute(transactionId, route.raw);
-
-      const srcChainName = multiProvider.tryGetChainName(srcChainId);
-      const protocol = multiProvider.tryGetProtocol(srcChainId);
-      if (!srcChainName || !protocol) {
-        throw new Error(`No SDK metadata for chain ${srcChainId} — boot may not have completed.`);
-      }
-
-      const fns = transactionFns[protocol as keyof typeof transactionFns];
-      if (!fns) throw new Error(`No transaction handler for protocol ${protocol}`);
-
-      const isSealevel = protocol === ProtocolType.Sealevel;
-      const txType = isSealevel
-        ? ProviderType.SolanaWeb3
-        : protocol === ProtocolType.Tron
-          ? ProviderType.Tron
-          : ProviderType.EthersV5;
-
       try {
+        if (!route.raw.tx) throw new Error('Route has no tx');
+
+        // Store route for status polling and recovery (non-persisted, session only).
+        setSwapRoute(transactionId, route.raw);
+
+        const srcChainName = multiProvider.tryGetChainName(srcChainId);
+        const protocol = multiProvider.tryGetProtocol(srcChainId);
+        if (!srcChainName || !protocol) {
+          throw new Error(`No SDK metadata for chain ${srcChainId} — boot may not have completed.`);
+        }
+
+        const fns = transactionFns[protocol as keyof typeof transactionFns];
+        if (!fns) throw new Error(`No transaction handler for protocol ${protocol}`);
+
+        const isSealevel = protocol === ProtocolType.Sealevel;
+        const txType = isSealevel
+          ? ProviderType.SolanaWeb3
+          : protocol === ProtocolType.Tron
+            ? ProviderType.Tron
+            : ProviderType.EthersV5;
+
         if (fns.switchNetwork) {
           try {
             await fns.switchNetwork(srcChainName);
@@ -93,8 +93,9 @@ export function useSwap() {
           }
         }
 
-        // ERC20 approval only applies to EVM source chains. Solana uses SPL
-        // token program delegates handled by the UR program itself.
+        // Approve / revoke before the swap tx. Mirrors WarpCore's pattern:
+        // bump non-zero existing allowance to zero first (USDT case), then
+        // approve the new amount.
         if (!isSealevel && args.spender && args.approvalAmount != null && !args.isNative) {
           const spender = args.spender;
           if (isZeroishAddress(spender)) {
@@ -132,7 +133,7 @@ export function useSwap() {
           if (needsApprove) await doApprove(args.approvalAmount);
         }
 
-        // Post commitment calldata to CCS before signing origin tx.
+        // Order is critical: post to CCS BEFORE broadcasting.
         if (route.raw.callCommitment) {
           updateSwapTransactionStatus(transactionId, SwapStatus.CreatingTxs);
           try {
@@ -158,7 +159,11 @@ export function useSwap() {
                   throw new Error(`No RPC URL for chain ${srcChainName}`);
                 })(),
             )
-          : { to: route.raw.tx.to, data: route.raw.tx.data, value: route.raw.tx.value };
+          : {
+              to: route.raw.tx.to,
+              data: route.raw.tx.data,
+              value: route.raw.tx.value,
+            };
         const { hash, confirm } = await fns.sendTransaction({
           tx: {
             type: txType,
@@ -182,8 +187,6 @@ export function useSwap() {
         }
         const parsed = parseReceipt(receipt);
         const expectsBridge = route.raw.steps.some((s) => s.type === 'bridge');
-        // For Solana source, the Dispatch log is on the Solana side — parseReceipt
-        // only handles EVM receipts, so skip the log check for Sealevel.
         if (!isSealevel && expectsBridge && !parsed.messages.length) {
           logger.error('Origin tx confirmed but no Dispatch log emitted', new Error(`tx=${hash}`));
           updateSwapTransactionStatus(transactionId, SwapStatus.Failed, {
@@ -207,31 +210,17 @@ export function useSwap() {
         }
         submitToRelayApi(srcChainName, hash, protocol as ProtocolType, receipt);
 
-        // For Sealevel source, parse dispatched message IDs from the Solana tx.
-        // EVM receipts are already parsed via parseReceipt above.
         let msgIds: LabeledMsgId[];
         if (isSealevel) {
           const mailbox = chainAddresses[srcChainName]?.mailbox;
-          if (!mailbox) {
-            const err = new Error(`No mailbox address for Solana source chain ${srcChainName}`);
-            updateSwapTransactionStatus(transactionId, SwapStatus.Failed, { originTxHash: hash });
-            setError(err);
-            throw err;
-          }
+          ensureSolanaMessageExtractionReady(mailbox, srcChainName);
           const adapter = new SealevelCoreAdapter(srcChainName, multiProvider, { mailbox });
-          const msgs = await adapter.extractMessageIds(receipt);
-          msgIds = msgs.map(({ messageId }) => ({
-            msgId: messageId as `0x${string}`,
-            label: 'warp' as const,
-          }));
-          if (expectsBridge && !msgIds.length) {
-            const err = new Error(
-              'Origin Solana tx confirmed but no message IDs extracted — it likely reverted internally',
-            );
-            updateSwapTransactionStatus(transactionId, SwapStatus.Failed, { originTxHash: hash });
-            setError(err);
-            throw err;
-          }
+          const messages = await adapter.extractMessageIds(receipt);
+          msgIds = labelSolanaMessages(
+            messages.map(({ messageId }) => messageId as `0x${string}`),
+            route,
+          );
+          ensureSolanaMessagesExtracted(msgIds, expectsBridge);
         } else {
           msgIds = labelMessages(parsed.messages, route);
         }
@@ -274,7 +263,7 @@ function isReverted(receipt: TypedTransactionReceipt): boolean {
   return false;
 }
 
-interface ParsedMessage {
+export interface ParsedMessage {
   msgId: `0x${string}`;
   sender: `0x${string}`;
   body: string;
@@ -310,11 +299,11 @@ function parseReceipt(receipt: TypedTransactionReceipt): {
   };
 }
 
-function labelMessages(messages: ParsedMessage[], route: AugmentedRoute): LabeledMsgId[] {
+export function labelMessages(messages: ParsedMessage[], route: AugmentedRoute): LabeledMsgId[] {
   // Dispatch sender is bytes32 (padded EVM address). Strip leading zeros to get the 20-byte address.
   const addrOf = (sender: string) => sender.replace(/^0x/i, '').toLowerCase().slice(-40);
 
-  const bridgeRouterAddrs = new Set(
+  const bridgeRouters = new Set(
     route.raw.steps
       .filter(
         (s): s is Extract<(typeof route.raw.steps)[number], { type: 'bridge' }> =>
@@ -322,10 +311,9 @@ function labelMessages(messages: ParsedMessage[], route: AugmentedRoute): Labele
       )
       .map((s) => s.router.replace(/^0x/i, '').toLowerCase()),
   );
-  // For EVM→Solana CCS routes, the EVM UR (tx.to) sends the commit message directly.
   const urAddr = route.raw.tx?.to?.replace(/^0x/i, '').toLowerCase();
 
-  const nonWarp = messages.filter((m) => !bridgeRouterAddrs.has(addrOf(m.sender)));
+  const nonWarp = messages.filter((m) => !bridgeRouters.has(addrOf(m.sender)));
   // callRemoteCommitReveal dispatches COMMIT first, REVEAL last. CCTP aggregation
   // routes prepend an extra internal message, so identify REVEAL as the last
   // non-warp message rather than counting from the front.
@@ -334,18 +322,16 @@ function labelMessages(messages: ParsedMessage[], route: AugmentedRoute): Labele
   return messages.map((msg) => {
     const senderAddr = addrOf(msg.sender);
 
-    if (bridgeRouterAddrs.has(senderAddr)) {
+    if (bridgeRouters.has(senderAddr)) {
       return { msgId: msg.msgId, label: 'warp' as const };
-    }
-
-    // Exclude revealMsg from the urAddr check so the reveal always gets its
-    // correct label below — even when COMMIT and REVEAL share the same sender.
-    if (route.raw.callCommitment && urAddr && senderAddr === urAddr && msg !== revealMsg) {
-      return { msgId: msg.msgId, label: 'commit' as const };
     }
 
     const ccsLabel = getCcsMessageLabel(msg.body);
     if (ccsLabel) return { msgId: msg.msgId, label: ccsLabel };
+
+    if (route.raw.callCommitment && urAddr && senderAddr === urAddr && msg !== revealMsg) {
+      return { msgId: msg.msgId, label: 'commit' as const };
+    }
     if (msg === revealMsg) return { msgId: msg.msgId, label: 'reveal' as const };
 
     logger.warn('Unexpected swap message shape; labeling as commit', {
@@ -356,11 +342,52 @@ function labelMessages(messages: ParsedMessage[], route: AugmentedRoute): Labele
   });
 }
 
-function getCcsMessageLabel(body: string): LabeledMsgId['label'] | null {
+export function labelSolanaMessages(
+  messageIds: `0x${string}`[],
+  route: AugmentedRoute,
+): LabeledMsgId[] {
+  const hasBridge = route.raw.steps.some((s) => s.type === 'bridge');
+  if (!route.raw.callCommitment) {
+    return messageIds.map((msgId) => ({ msgId, label: 'warp' as const }));
+  }
+
+  // Engine Solana encoder dispatches bridge first, then commit/reveal for
+  // destination EVM swaps. The SDK preserves log order from the receipt.
+  const firstCcsIndex = hasBridge ? 1 : 0;
+  const revealIndex = messageIds.length - 1;
+
+  return messageIds.map((msgId, index) => {
+    if (index < firstCcsIndex) return { msgId, label: 'warp' as const };
+    if (index === revealIndex && index >= firstCcsIndex) {
+      return { msgId, label: 'reveal' as const };
+    }
+    return { msgId, label: 'commit' as const };
+  });
+}
+
+export function ensureSolanaMessageExtractionReady(
+  mailbox: string | undefined,
+  srcChainName: string,
+): asserts mailbox is string {
+  if (!mailbox) {
+    throw new Error(`No mailbox address for Solana source chain ${srcChainName}`);
+  }
+}
+
+export function ensureSolanaMessagesExtracted(
+  msgIds: LabeledMsgId[],
+  expectsBridge: boolean,
+): void {
+  if (!expectsBridge || msgIds.length) return;
+  throw new Error(
+    'Origin Solana tx confirmed but no message IDs extracted — it likely reverted internally',
+  );
+}
+
+export function getCcsMessageLabel(body: string): LabeledMsgId['label'] | null {
   // CCS message bodies use the first byte as the message type.
-  // 0x02 (reveal) detection removed — reveals are identified by position
-  // (last non-warp message) via the revealMsg fallback in labelMessages.
   if (body.startsWith('0x01')) return 'commit';
+  if (body.startsWith('0x02')) return 'reveal';
   return null;
 }
 
@@ -372,75 +399,65 @@ async function buildSolanaTransaction(
   const connection = new Connection(rpcUrl, 'confirmed');
   const programId = new PublicKey(tx.to);
   const data = Buffer.from(tx.data, 'base64');
-  const keys = (tx.accounts ?? []).map((a) => ({
-    pubkey: new PublicKey(a.pubkey),
-    isSigner: a.isSigner,
-    isWritable: a.isWritable,
+  const keys = (tx.accounts ?? []).map((account) => ({
+    pubkey: new PublicKey(account.pubkey),
+    isSigner: account.isSigner,
+    isWritable: account.isWritable,
   }));
   const instruction = new TransactionInstruction({ programId, data, keys });
 
-  // Convert pre-instructions (compute budget, idempotent ATA creates) from the
-  // engine response into TransactionInstruction objects to prepend.
   const preInstructions = (tx.preInstructions ?? []).map(
-    (pi) =>
+    (preInstruction) =>
       new TransactionInstruction({
-        programId: new PublicKey(pi.programId),
-        keys: pi.accounts.map((a) => ({
-          pubkey: new PublicKey(a.pubkey),
-          isSigner: a.isSigner,
-          isWritable: a.isWritable,
+        programId: new PublicKey(preInstruction.programId),
+        keys: preInstruction.accounts.map((account) => ({
+          pubkey: new PublicKey(account.pubkey),
+          isSigner: account.isSigner,
+          isWritable: account.isWritable,
         })),
-        data: Buffer.from(pi.data, 'base64'),
+        data: Buffer.from(preInstruction.data, 'base64'),
       }),
   );
 
-  // Fetch blockhash and ALTs in parallel.
   const [{ blockhash }, altAccounts] = await Promise.all([
     connection.getLatestBlockhash(),
     loadAltAccounts(connection, tx.altAddresses ?? []),
   ]);
 
-  // V0 VersionedTransaction: compiles to a versioned message that references
-  // ALT accounts by 1-byte index instead of 32-byte pubkey, keeping cross-chain
-  // transactions under the 1232-byte wire limit.
   const message = new TransactionMessage({
     payerKey: new PublicKey(sender),
     recentBlockhash: blockhash,
     instructions: [...preInstructions, instruction],
   }).compileToV0Message(altAccounts);
 
-  const txn = new VersionedTransaction(message);
-
-  // Partial-sign with ephemeral keypairs (unique Hyperlane message accounts).
-  // Each is a base64-encoded 64-byte Solana keypair (privKey[32] || pubKey[32]).
-  if (tx.additionalSigners && tx.additionalSigners.length > 0) {
-    const keypairs = tx.additionalSigners.map((b64) =>
-      Keypair.fromSecretKey(new Uint8Array(Buffer.from(b64, 'base64'))),
+  const transaction = new VersionedTransaction(message);
+  if (tx.additionalSigners?.length) {
+    transaction.sign(
+      tx.additionalSigners.map((signer) =>
+        Keypair.fromSecretKey(new Uint8Array(Buffer.from(signer, 'base64'))),
+      ),
     );
-    txn.sign(keypairs);
   }
 
-  return txn;
+  return transaction;
 }
 
 async function loadAltAccounts(
   connection: Connection,
   altAddresses: string[],
 ): Promise<AddressLookupTableAccount[]> {
-  if (altAddresses.length === 0) return [];
+  if (!altAddresses.length) return [];
+
   const results = await Promise.all(
-    altAddresses.map((addr) => connection.getAddressLookupTable(new PublicKey(addr))),
+    altAddresses.map((address) => connection.getAddressLookupTable(new PublicKey(address))),
   );
   const accounts: AddressLookupTableAccount[] = [];
-  for (let i = 0; i < results.length; i++) {
-    const r = results[i]!;
-    if (!r.value) {
-      throw new Error(
-        `Address Lookup Table not found: ${altAddresses[i]}. ` +
-          'Ensure the ALT is deployed and activated on this network.',
-      );
+  for (let index = 0; index < results.length; index++) {
+    const result = results[index];
+    if (!result?.value) {
+      throw new Error(`Address Lookup Table not found: ${altAddresses[index]}`);
     }
-    accounts.push(r.value);
+    accounts.push(result.value);
   }
   return accounts;
 }

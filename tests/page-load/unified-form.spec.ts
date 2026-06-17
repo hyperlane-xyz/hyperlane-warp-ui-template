@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 
+import { config } from '../../src/consts/config';
 import { getOriginTokenButton, waitForUnifiedForm } from '../helpers/locators';
 
 test.describe('Page Load - Unified Form', () => {
@@ -19,11 +20,20 @@ test.describe('Page Load - Unified Form', () => {
     await expect(page.getByText('Token Selection')).toBeVisible();
 
     const rows = page.locator('.token-picker-row');
-    await expect(rows.first()).toContainText('USDC');
-    const visibleRows = await rows.all();
-    for (const row of visibleRows) {
+    const rowCount = await rows.count();
+    const featuredSet = new Set(config.featuredTokens.map((token) => token.toLowerCase()));
+
+    expect(rowCount).toBeGreaterThan(0);
+
+    for (let i = 0; i < rowCount; i++) {
+      const row = rows.nth(i);
       await expect(row).not.toContainText('Bridge');
       await expect(row).not.toContainText('Swap');
+
+      const label = await row.getAttribute('aria-label');
+      const [chainName, symbol] = label?.split(' ') ?? [];
+      const tokenKey = `${chainName}-${symbol}`.toLowerCase();
+      expect(featuredSet.has(tokenKey), `${tokenKey} should be configured as featured`).toBe(true);
     }
   });
 

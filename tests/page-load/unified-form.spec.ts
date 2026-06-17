@@ -20,8 +20,11 @@ test.describe('Page Load - Unified Form', () => {
 
     const rows = page.locator('.token-picker-row');
     await expect(rows.first()).toContainText('USDC');
-    await expect(rows.first()).not.toContainText('Bridge');
-    await expect(rows.first()).not.toContainText('Swap');
+    const visibleRows = await rows.all();
+    for (const row of visibleRows) {
+      await expect(row).not.toContainText('Bridge');
+      await expect(row).not.toContainText('Swap');
+    }
   });
 
   test('uses swap route mode for address-style swap deep links when engine is configured', async ({

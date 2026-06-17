@@ -9,6 +9,21 @@ export interface UnifiedTokenBalanceInfo {
   usd?: number | null;
 }
 
+export function getBalanceFetchLimit({
+  tokenCount,
+  requestedLimit,
+  hasFilter,
+  hasFeaturedTokens,
+}: {
+  tokenCount: number;
+  requestedLimit: number;
+  hasFilter: boolean;
+  hasFeaturedTokens: boolean;
+}): number {
+  if (!hasFilter && hasFeaturedTokens) return tokenCount;
+  return Math.min(requestedLimit, tokenCount);
+}
+
 export function getFeaturedTokenIndex(token: UnifiedToken): number {
   const tokenKey = `${token.chainName}-${token.symbol}`.toLowerCase();
   return config.featuredTokens.findIndex((featured) => featured.toLowerCase() === tokenKey);

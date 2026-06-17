@@ -3,6 +3,7 @@ import { useDebounce } from '@hyperlane-xyz/widgets';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { TokenChainIcon } from '../../../components/icons/TokenChainIcon';
+import { config } from '../../../consts/config';
 import { formatBalance, formatUsd } from '../../../utils/amount';
 import { useTokenBalances as useBridgeTokenBalances } from '../../balances/hooks';
 import { useDisabledChains, useMultiProvider } from '../../chains/hooks';
@@ -15,6 +16,7 @@ import { useTokenPrices as useBridgeTokenPrices } from '../../tokens/useTokenPri
 import { getTokenKey as getBridgeTokenKey } from '../../tokens/utils';
 import { useUnifiedTokens } from './hooks';
 import {
+  getBalanceFetchLimit,
   getVisibleUnifiedTokens,
   sortUnifiedTokensByBalance,
   type UnifiedTokenBalanceInfo,
@@ -111,10 +113,17 @@ export function TokenList({
     engineEnabled,
   ]);
 
+  const hasFilter = !!trimmedSearch || !!chainFilter;
+  const effectiveBalanceFetchLimit = getBalanceFetchLimit({
+    tokenCount: routeSortedTokens.length,
+    requestedLimit: balanceFetchLimit,
+    hasFilter,
+    hasFeaturedTokens: config.featuredTokens.length > 0,
+  });
   const addressOverride = selectionMode === 'destination' ? recipient : undefined;
   const balanceSourceTokens = useMemo(
-    () => routeSortedTokens.slice(0, balanceFetchLimit),
-    [routeSortedTokens, balanceFetchLimit],
+    () => routeSortedTokens.slice(0, effectiveBalanceFetchLimit),
+    [routeSortedTokens, effectiveBalanceFetchLimit],
   );
   const bridgeBalanceTokens = useMemo(
     () =>

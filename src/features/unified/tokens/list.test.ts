@@ -4,7 +4,7 @@ import { config } from '../../../consts/config';
 import { createMockToken, createTokenConnectionMock } from '../../../utils/test';
 import type { UiToken } from '../../swap/tokens/types';
 import { groupTokensByCollateral } from '../../tokens/utils';
-import { getVisibleUnifiedTokens, sortUnifiedTokensByBalance } from './list';
+import { getBalanceFetchLimit, getVisibleUnifiedTokens, sortUnifiedTokensByBalance } from './list';
 import type { UnifiedToken } from './types';
 
 const originalFeaturedTokens = [...config.featuredTokens];
@@ -52,6 +52,39 @@ function createUnifiedToken(args: Partial<UnifiedToken> = {}): UnifiedToken {
 }
 
 describe('getVisibleUnifiedTokens', () => {
+  test('fetches balances for the whole default featured list', () => {
+    expect(
+      getBalanceFetchLimit({
+        tokenCount: 61,
+        requestedLimit: 50,
+        hasFilter: false,
+        hasFeaturedTokens: true,
+      }),
+    ).toBe(61);
+  });
+
+  test('keeps progressive balance fetching for filtered lists', () => {
+    expect(
+      getBalanceFetchLimit({
+        tokenCount: 61,
+        requestedLimit: 50,
+        hasFilter: true,
+        hasFeaturedTokens: true,
+      }),
+    ).toBe(50);
+  });
+
+  test('keeps progressive balance fetching when no featured tokens are configured', () => {
+    expect(
+      getBalanceFetchLimit({
+        tokenCount: 80,
+        requestedLimit: 50,
+        hasFilter: false,
+        hasFeaturedTokens: false,
+      }),
+    ).toBe(50);
+  });
+
   test('only shows featured tokens in the default list when featured tokens are configured', () => {
     const firstFeatured = config.featuredTokens[0];
     const [chainName, symbol] = firstFeatured.split('-');

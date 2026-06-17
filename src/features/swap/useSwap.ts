@@ -128,13 +128,9 @@ export function useSwap() {
           if (needsApprove) await doApprove(args.approvalAmount);
         }
 
-        // Post EVM CCS commitment before signing origin tx. Solana CCS not yet supported
-        // (reveal is handled manually via the reveal modal).
-        if (route.raw.callCommitment && !route.raw.solanaCommitment) {
+        // Post commitment calldata to CCS before signing origin tx.
+        if (route.raw.callCommitment) {
           await postCommitment(route.raw.callCommitment);
-        }
-        if (route.raw.solanaCommitment) {
-          console.log(JSON.stringify(route.raw, null, 2));
         }
 
         updateSwapTransactionStatus(transactionId, SwapStatus.SigningSwap);
@@ -215,7 +211,11 @@ export function useSwap() {
           msgIds = labelMessages(parsed.messages, route);
         }
 
-        const solanaReveal = buildSolanaRevealData(route, args.srcChainId, args.sender);
+        const dstProtocol = multiProvider.tryGetProtocol(args.dstChainId);
+        const solanaReveal =
+          dstProtocol === ProtocolType.Sealevel
+            ? buildSolanaRevealData(route, args.srcChainId, args.sender)
+            : undefined;
         updateSwapTransactionStatus(transactionId, SwapStatus.Bridging, {
           msgIds,
           originBlockNumber: parsed.originBlockNumber,
@@ -312,7 +312,7 @@ function labelMessages(messages: ParsedMessage[], route: AugmentedRoute): Labele
       return { msgId: msg.msgId, label: 'warp' as const };
     }
 
-    if (route.raw.solanaCommitment && urAddr && senderAddr === urAddr) {
+    if (route.raw.callCommitment && urAddr && senderAddr === urAddr) {
       return { msgId: msg.msgId, label: 'commit' as const };
     }
 
@@ -332,18 +332,18 @@ function buildSolanaRevealData(
   srcChainId: number,
   sender: string,
 ): SolanaRevealData | undefined {
-  const sc = route.raw.solanaCommitment;
+  const sc = route.raw.callCommitment;
   if (!sc || !route.raw.tx?.to) return undefined;
   const swapStep = route.raw.steps.find(
     (s): s is Extract<(typeof route.raw.steps)[number], { type: 'swap' }> =>
-      s.type === 'swap' && s.chain === sc.ccs.body.destinationDomain,
+      s.type === 'swap' && s.chain !== sc.ccs.body.originDomain,
   );
   if (!swapStep) return undefined;
   return {
     commitment: sc.commitment as `0x${string}`,
-    calldata: sc.ccs.body.calldata as `0x${string}`,
-    revealSalt: sc.ccs.body.revealSalt as `0x${string}`,
-    userSalt: sc.ccs.body.userSalt as `0x${string}`,
+    calldata: sc.ccs.body.data as `0x${string}`,
+    revealSalt: sc.ccs.body.salt as `0x${string}`,
+    userSalt: sc.ccs.body.destinationAccount as `0x${string}`,
     srcChainId,
     evmUr: route.raw.tx.to.replace(/^0x/i, '').toLowerCase(),
     tokenIn: swapStep.tokenIn,

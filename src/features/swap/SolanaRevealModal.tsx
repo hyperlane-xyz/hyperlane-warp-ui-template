@@ -14,9 +14,10 @@ import {
   Transaction,
   TransactionInstruction,
 } from '@solana/web3.js';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 
+import { config } from '../../consts/config';
 import { useMultiProvider } from '../chains/hooks';
 import { TransactionHistoryItemType, useStore } from '../store';
 import { SwapStatus } from './types';
@@ -81,6 +82,7 @@ export function SolanaRevealModal() {
 
   const [isRevealing, setIsRevealing] = useState(false);
   const [revealError, setRevealError] = useState<string | null>(null);
+  const autoRevealedId = useRef<string | null>(null);
 
   const revealData = pending?.data.solanaReveal;
   const dstChain = pending?.data.dstChain;
@@ -92,10 +94,11 @@ export function SolanaRevealModal() {
     : undefined;
   const solanaAddress = useAccountAddressForChain(multiProvider, dstChainName);
 
-  // Reset state when pending swap changes
+  // Reset state when pending swap changes (new swap ID = fresh attempt).
   useEffect(() => {
     setRevealError(null);
     setIsRevealing(false);
+    autoRevealedId.current = null;
   }, [pending?.id]);
 
   const handleDismiss = useCallback(() => {
@@ -150,17 +153,35 @@ export function SolanaRevealModal() {
     updateSwapTransactionStatus,
   ]);
 
-  const isOpen = !!pending;
+  // Auto-reveal: fire once per pending swap when NEXT_PUBLIC_SOLANA_REVEAL_MANUAL is not set.
+  // Falls back to showing the modal on error so the user can retry manually.
+  useEffect(() => {
+    if (config.solanaRevealManual) return;
+    if (!pending) return;
+    if (autoRevealedId.current === pending.id) return;
+    autoRevealedId.current = pending.id;
+    void handleReveal();
+  }, [pending, handleReveal]);
+
+  // Manual mode: open whenever reveal is pending.
+  // Auto mode: only open when auto-reveal failed so the user can retry.
+  const isOpen = config.solanaRevealManual ? !!pending : !!(pending && revealError);
 
   return (
     <Modal isOpen={isOpen} close={handleDismiss} panelClassname="max-w-sm" dialogProps={{ onClose: () => {} }}>
       <div className="flex flex-col gap-4 p-4">
         <h2 className="text-lg font-semibold">Reveal Solana Swap</h2>
-        <div className="rounded border border-yellow-400 bg-yellow-50 p-3 text-sm text-yellow-800">
-          <strong>Demo only.</strong> In production the relayer would submit this automatically, to
-          keep changes for the POC minimal you are submitting the reveal transaction manually
-          completing the destination swap.
-        </div>
+        {config.solanaRevealManual ? (
+          <div className="rounded border border-yellow-400 bg-yellow-50 p-3 text-sm text-yellow-800">
+            <strong>Manual mode.</strong> Set <code>NEXT_PUBLIC_SOLANA_REVEAL_MANUAL=true</code> is
+            active — submit the reveal transaction below to complete the destination swap.
+          </div>
+        ) : (
+          <div className="rounded border border-red-400 bg-red-50 p-3 text-sm text-red-800">
+            <strong>Auto-reveal failed.</strong> The automatic reveal could not be submitted. You
+            can retry manually below.
+          </div>
+        )}
         {revealData && (
           <div className="text-sm text-gray-600">
             <div>

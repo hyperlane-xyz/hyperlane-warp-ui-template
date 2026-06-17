@@ -210,67 +210,30 @@ export const RouteTxSchema = z.object({
 });
 export type RouteTx = z.infer<typeof RouteTxSchema>;
 
-// CCS payload — engine assembles it server-side. Client just POSTs.
-// Mirror of `PostCallsSchema` from @hyperlane-xyz/sdk.
-export const ICACallSchema = z.object({
-  to: z.string().regex(/^0x[0-9a-fA-F]{64}$/), // bytes32
-  value: BigIntString,
-  data: Hex,
-});
-export type ICACall = z.infer<typeof ICACallSchema>;
-
-export const CallCommitmentBodySchema = z.object({
-  calls: z.array(ICACallSchema),
-  relayers: z.array(Address),
-  salt: Hex,
-  userSalt: Hex,
-  originDomain: z.number(),
-  destinationDomain: z.number(),
-  owner: Address,
-  ismOverride: Address.optional(),
-  localRouter: Hex.optional(),
-});
-export type CallCommitmentBody = z.infer<typeof CallCommitmentBodySchema>;
-
 // Engine returns this on routes that need CCS coordination. Pre-built
-// HTTP request — UI just fetches `${CCS_URL}${path}` with method/body.
+// HTTP request — UI just POSTs ccs.body to /calldata.
 export const CallCommitmentSchema = z.object({
   version: z.literal(1),
   commitment: Hex,
   hash: z.object({
     algorithm: z.literal('keccak256'),
     preimage: z.string(),
-    encodedCalls: Hex,
+    encodedCalls: Hex.optional(),
   }),
   ccs: z.object({
     method: z.literal('POST'),
-    path: z.string(),
-    body: CallCommitmentBodySchema,
-  }),
-});
-export type CallCommitment = z.infer<typeof CallCommitmentSchema>;
-
-export const SolanaCommitmentSchema = z.object({
-  version: z.literal(1),
-  commitment: Hex,
-  hash: z.object({
-    algorithm: z.literal('keccak256'),
-    preimage: z.string(),
-  }),
-  ccs: z.object({
-    method: z.literal('POST'),
-    path: z.string(),
+    path: z.literal('/calldata'),
     body: z.object({
       commitment: Hex,
-      calldata: Hex,
-      destinationDomain: z.number(),
-      encoding: z.string(),
-      revealSalt: Hex,
-      userSalt: Hex,
+      originDomain: z.number(),
+      data: Hex,
+      salt: Hex,
+      relayers: z.array(z.string()),
+      destinationAccount: Hex,
     }),
   }),
 });
-export type SolanaCommitment = z.infer<typeof SolanaCommitmentSchema>;
+export type CallCommitment = z.infer<typeof CallCommitmentSchema>;
 
 export const RouteResponseSchema = z.object({
   steps: z.array(QuoteStepSchema),
@@ -288,7 +251,6 @@ export const RouteResponseSchema = z.object({
   }),
   tx: RouteTxSchema.nullable(),
   callCommitment: CallCommitmentSchema.optional(),
-  solanaCommitment: SolanaCommitmentSchema.optional(),
 });
 export type RouteResponse = z.infer<typeof RouteResponseSchema>;
 

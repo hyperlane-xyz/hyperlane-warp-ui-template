@@ -2,8 +2,8 @@ import { ChainName } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
-import { type Address, createPublicClient, http } from 'viem';
-import { useAccount, usePublicClient } from 'wagmi';
+import { type Address, createPublicClient, http, type PublicClient } from 'viem';
+import { useAccount } from 'wagmi';
 
 import { useMultiProvider } from '../../../chains/hooks';
 import type { UiToken } from '../tokens/types';
@@ -38,14 +38,21 @@ export function useTokenBalances(
   }, [tokens, chainFilter]);
 
   const filteredChainId = filtered[0]?.chainId;
+  const filteredChainName = filtered[0]?.chainName;
   const filteredProtocol = filtered[0] ? multiProvider.tryGetProtocol(filtered[0].chainName) : null;
-  const filteredPublicClient = usePublicClient({ chainId: filteredChainId });
+  const filteredRpcUrl = rpcUrlFor(multiProvider, filteredChainName);
+  const filteredPublicClient = useMemo(
+    () =>
+      filteredProtocol === ProtocolType.Ethereum ? evmClientFromRpc(filteredRpcUrl) : undefined,
+    [filteredProtocol, filteredRpcUrl],
+  );
 
   const singleChainQuery = useQuery({
     queryKey: [
       'balances',
       filteredProtocol,
       filteredChainId,
+      filteredRpcUrl,
       userAddress,
       filtered.map(getTokenKey).join(','),
     ],
@@ -89,23 +96,21 @@ export function useTokenBalances(
           'balances',
           protocol,
           chainId,
+          rpcUrlFor(multiProvider, chainTokens[0]?.chainName),
           userAddress,
           chainTokens.map(getTokenKey).join(','),
         ],
         queryFn: async (): Promise<Record<string, bigint>> => {
           if (!protocol || !userAddress) return {};
-          const rpcUrl = chainTokens[0]
-            ? multiProvider.tryGetChainMetadata(chainTokens[0].chainName)?.rpcUrls?.[0]?.http
-            : undefined;
           const client =
-            protocol === ProtocolType.Ethereum && rpcUrl
-              ? createPublicClient({ transport: http(rpcUrl) })
-              : null;
+            protocol === ProtocolType.Ethereum
+              ? evmClientFromRpc(rpcUrlFor(multiProvider, chainTokens[0]?.chainName))
+              : undefined;
           return dispatchChainBalances(
             protocol,
             chainTokens,
             userAddress,
-            client as ReturnType<typeof usePublicClient>,
+            client,
             multiProvider,
             batchAddressFor(multiProvider, chainTokens[0]?.chainName),
           );
@@ -139,11 +144,15 @@ export function useTokenBalance(token: UiToken | undefined, addressOverride?: st
   const multiProvider = useMultiProvider();
   const { address: connectedEvm } = useAccount();
   const userAddress = addressOverride || connectedEvm;
-  const publicClient = usePublicClient({ chainId: token?.chainId });
   const protocol = token ? multiProvider.tryGetProtocol(token.chainName) : null;
+  const rpcUrl = rpcUrlFor(multiProvider, token?.chainName);
+  const publicClient = useMemo(
+    () => (protocol === ProtocolType.Ethereum ? evmClientFromRpc(rpcUrl) : undefined),
+    [protocol, rpcUrl],
+  );
 
   return useQuery({
-    queryKey: ['balance', protocol, token ? getTokenKey(token) : null, userAddress],
+    queryKey: ['balance', protocol, token ? getTokenKey(token) : null, rpcUrl, userAddress],
     queryFn: async () => {
       if (!token || !userAddress || !protocol) return null;
       const balances = await dispatchChainBalances(
@@ -170,7 +179,7 @@ async function dispatchChainBalances(
   protocol: ProtocolType,
   tokens: UiToken[],
   userAddress: string,
-  publicClient: ReturnType<typeof usePublicClient>,
+  publicClient: PublicClient | undefined,
   multiProvider: ReturnType<typeof useMultiProvider>,
   multicallAddress?: Address,
 ): Promise<Record<string, bigint>> {
@@ -182,13 +191,25 @@ async function dispatchChainBalances(
     return fetchTronChainBalances(multiProvider, tokens, userAddress);
   }
   if (protocol === ProtocolType.Sealevel) {
-    const rpcUrl = tokens[0]
-      ? multiProvider.tryGetChainMetadata(tokens[0].chainName)?.rpcUrls?.[0]?.http
-      : undefined;
+    const rpcUrl = rpcUrlFor(multiProvider, tokens[0]?.chainName);
     if (!rpcUrl) return {};
     return fetchSealevelChainBalances(rpcUrl, tokens, userAddress);
   }
   return {};
+}
+
+function rpcUrlFor(
+  multiProvider: ReturnType<typeof useMultiProvider>,
+  chainName: string | undefined,
+): string | undefined {
+  if (!chainName) return undefined;
+  return multiProvider.tryGetChainMetadata(chainName)?.rpcUrls?.[0]?.http;
+}
+
+function evmClientFromRpc(rpcUrl: string | undefined): PublicClient | undefined {
+  return rpcUrl
+    ? (createPublicClient({ transport: http(rpcUrl) }) as unknown as PublicClient)
+    : undefined;
 }
 
 function batchAddressFor(

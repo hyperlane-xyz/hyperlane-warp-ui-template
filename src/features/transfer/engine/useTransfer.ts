@@ -297,6 +297,7 @@ function labelMessages(messages: ParsedMessage[], route: AugmentedRoute): Labele
   );
 
   const nonWarp = messages.filter((m) => !bridgeRouters.has(m.sender.toLowerCase()));
+
   // callRemoteCommitReveal dispatches COMMIT first, REVEAL last. CCTP aggregation
   // routes prepend an extra internal message, so identify REVEAL as the last
   // non-warp message rather than counting from the front.
@@ -309,6 +310,9 @@ function labelMessages(messages: ParsedMessage[], route: AugmentedRoute): Labele
 
     const ccsLabel = getCcsMessageLabel(msg.body);
     if (ccsLabel) return { msgId: msg.msgId, label: ccsLabel };
+    if (nonWarp.length === 1 && msg === nonWarp[0]) {
+      return { msgId: msg.msgId, label: 'bridge' as const };
+    }
     if (msg === revealMsg) return { msgId: msg.msgId, label: 'reveal' as const };
 
     logger.warn('Unexpected transfer message shape; labeling as commit', {

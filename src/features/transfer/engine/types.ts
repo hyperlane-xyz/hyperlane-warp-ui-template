@@ -1,6 +1,6 @@
 import type { QuoteResponse, RouteResponse } from '../../api/types';
 
-export type TransferMessageLabel = 'warp' | 'commit' | 'reveal';
+export type TransferMessageLabel = 'warp' | 'bridge' | 'commit' | 'reveal';
 
 export interface LabeledMsgId {
   msgId: string;

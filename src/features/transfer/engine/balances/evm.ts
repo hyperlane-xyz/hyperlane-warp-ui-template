@@ -42,29 +42,20 @@ export async function fetchEvmChainBalances(
           args: [userAddress] as const,
         })),
       });
+      const failedTokens: UiToken[] = [];
       erc20.forEach((t, i) => {
         const r = results[i];
         if (r.status === 'success') out[getTokenKey(t)] = r.result as bigint;
+        else failedTokens.push(t);
       });
+      if (failedTokens.length)
+        await readErc20BalancesIndividually(client, failedTokens, userAddress, out);
     } catch (err) {
       logger.warn(
         'multicall balanceOf failed; falling back to individual ERC20 reads',
         err as Error,
       );
-      await Promise.all(
-        erc20.map(async (t) => {
-          try {
-            out[getTokenKey(t)] = (await client.readContract({
-              address: t.address as Address,
-              abi: erc20Abi,
-              functionName: 'balanceOf',
-              args: [userAddress],
-            })) as bigint;
-          } catch (readErr) {
-            logger.warn(`balanceOf failed for ${t.symbol} on ${t.chainName}`, readErr as Error);
-          }
-        }),
-      );
+      await readErc20BalancesIndividually(client, erc20, userAddress, out);
     }
   }
 
@@ -78,6 +69,28 @@ export async function fetchEvmChainBalances(
   }
 
   return out;
+}
+
+async function readErc20BalancesIndividually(
+  client: PublicClient,
+  tokens: UiToken[],
+  userAddress: Address,
+  out: Record<string, bigint>,
+): Promise<void> {
+  await Promise.all(
+    tokens.map(async (t) => {
+      try {
+        out[getTokenKey(t)] = (await client.readContract({
+          address: t.address as Address,
+          abi: erc20Abi,
+          functionName: 'balanceOf',
+          args: [userAddress],
+        })) as bigint;
+      } catch (readErr) {
+        logger.warn(`balanceOf failed for ${t.symbol} on ${t.chainName}`, readErr as Error);
+      }
+    }),
+  );
 }
 
 // Single-balance read for the form validator on the Continue path.

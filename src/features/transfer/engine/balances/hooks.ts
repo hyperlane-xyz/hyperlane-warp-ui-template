@@ -163,7 +163,7 @@ export function useTokenBalance(token: UiToken | undefined, addressOverride?: st
         multiProvider,
         batchAddressFor(multiProvider, token.chainName),
       );
-      return balances[getTokenKey(token)] ?? 0n;
+      return balances[getTokenKey(token)] ?? null;
     },
     enabled:
       !!token &&

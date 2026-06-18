@@ -1,7 +1,10 @@
 import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk';
 import { isEVMLike, ProtocolType } from '@hyperlane-xyz/utils';
 
+import { readAleoTokenBalance } from './aleo';
+import { readCosmosTokenBalance } from './cosmos';
 import { estimateEvmGasCost, readEvmBalance } from './evm';
+import { readRadixTokenBalance } from './radix';
 import { readStarknetTokenBalance } from './starknet';
 
 export interface ReadBalanceArgs {
@@ -28,6 +31,11 @@ export async function readBalance(
   if (!protocol) return null;
   if (isEVMLike(protocol)) return readEvmBalance(multiProvider, args);
   if (protocol === ProtocolType.Starknet) return readStarknetTokenBalance(multiProvider, args);
+  if (protocol === ProtocolType.Cosmos || protocol === ProtocolType.CosmosNative) {
+    return readCosmosTokenBalance(multiProvider, args);
+  }
+  if (protocol === ProtocolType.Radix) return readRadixTokenBalance(multiProvider, args);
+  if (protocol === ProtocolType.Aleo) return readAleoTokenBalance(multiProvider, args);
   return null;
 }
 

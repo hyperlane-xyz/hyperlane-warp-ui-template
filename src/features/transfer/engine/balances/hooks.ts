@@ -9,7 +9,10 @@ import { type Address, createPublicClient, http, type PublicClient } from 'viem'
 import { useMultiProvider } from '../../../chains/hooks';
 import type { UiToken } from '../tokens/types';
 import { getTokenKey } from '../tokens/utils';
+import { fetchAleoChainBalances } from './aleo';
+import { fetchCosmosChainBalances } from './cosmos';
 import { fetchEvmChainBalances } from './evm';
+import { fetchRadixChainBalances } from './radix';
 import { fetchSealevelChainBalances } from './sealevel';
 import { fetchStarknetChainBalances } from './starknet';
 import { fetchTronChainBalances } from './tron';
@@ -181,7 +184,7 @@ export function useTokenBalance(token: UiToken | undefined, addressOverride?: st
     [addressOverride],
   );
   const userAddress =
-    addressOverride && (!overrideProtocol || overrideProtocol === protocol)
+    addressOverride && protocol && (!overrideProtocol || protocolsMatch(overrideProtocol, protocol))
       ? addressOverride
       : connectedAddress;
   const rpcUrl = rpcUrlFor(multiProvider, token?.chainName);
@@ -237,6 +240,15 @@ async function dispatchChainBalances(
   if (protocol === ProtocolType.Starknet) {
     return fetchStarknetChainBalances(multiProvider, tokens, userAddress);
   }
+  if (protocol === ProtocolType.Cosmos || protocol === ProtocolType.CosmosNative) {
+    return fetchCosmosChainBalances(multiProvider, tokens, userAddress);
+  }
+  if (protocol === ProtocolType.Radix) {
+    return fetchRadixChainBalances(multiProvider, tokens, userAddress);
+  }
+  if (protocol === ProtocolType.Aleo) {
+    return fetchAleoChainBalances(multiProvider, tokens, userAddress);
+  }
   return {};
 }
 
@@ -250,13 +262,22 @@ function addressForProtocol(
   overrideProtocol: ProtocolType | undefined,
 ): string | undefined {
   if (!protocol) return undefined;
-  if (addressOverride && (!overrideProtocol || overrideProtocol === protocol))
+  if (addressOverride && (!overrideProtocol || protocolsMatch(overrideProtocol, protocol)))
     return addressOverride;
   const account = accounts[protocol];
   if (protocol === ProtocolType.Cosmos || protocol === ProtocolType.CosmosNative) {
     return account?.addresses.find((a) => a.chainName === chainName)?.address;
   }
   return account?.addresses[0]?.address;
+}
+
+function protocolsMatch(left: ProtocolType, right: ProtocolType): boolean {
+  if (left === right) return true;
+  return isCosmosProtocol(left) && isCosmosProtocol(right);
+}
+
+function isCosmosProtocol(protocol: ProtocolType): boolean {
+  return protocol === ProtocolType.Cosmos || protocol === ProtocolType.CosmosNative;
 }
 
 function rpcUrlFor(

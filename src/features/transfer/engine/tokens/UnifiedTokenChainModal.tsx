@@ -1,10 +1,11 @@
 import { Modal } from '@hyperlane-xyz/widgets';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { ModalHeader } from '../../../../components/layout/ModalHeader';
 import { ChainFilterPanel } from '../../../chains/ChainFilterPanel';
 import type { ChainInfo } from '../../../chains/hooks';
 import { useTransferChainInfos } from '../chains/hooks';
+import { useAvailableRouteTokens } from './hooks';
 import { TokenListPanel } from './TokenListPanel';
 import type { TokenSelectionMode, UiToken } from './types';
 
@@ -35,6 +36,15 @@ export function UnifiedTokenChainModal({
   const [selectedChain, setSelectedChain] = useState<ChainInfo | null>(null);
   const [showMobileChainList, setShowMobileChainList] = useState(false);
   const transferChainInfos = useTransferChainInfos();
+  const availableRoutes = useAvailableRouteTokens({
+    selectionMode,
+    counterpartToken,
+    enabled: isOpen,
+  });
+  const priorityChainNames = useMemo(
+    () => [...new Set(availableRoutes.data.map((token) => token.chainName))],
+    [availableRoutes.data],
+  );
 
   const onClose = useCallback(() => {
     close();
@@ -85,6 +95,7 @@ export function UnifiedTokenChainModal({
             showBackButton={showMobileChainList}
             onBack={() => setShowMobileChainList(false)}
             chainInfos={transferChainInfos}
+            priorityChainNames={priorityChainNames}
           />
         </div>
 
@@ -97,6 +108,8 @@ export function UnifiedTokenChainModal({
             onSelect={handleSelectToken}
             counterpartToken={counterpartToken}
             recipient={recipient}
+            availableRouteTokens={availableRoutes.data}
+            hasAvailableRoutesResult={availableRoutes.isFetched && !availableRoutes.error}
             selectedChain={selectedChain?.name ?? null}
             onSelectChain={handleSelectChain}
             onMoreChainsClick={() => setShowMobileChainList(true)}

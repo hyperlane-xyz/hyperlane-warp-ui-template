@@ -17,6 +17,8 @@ interface TokenListPanelProps {
   onSelect: (token: UiToken) => void;
   counterpartToken?: UiToken;
   recipient?: string;
+  availableRouteTokens: UiToken[];
+  hasAvailableRoutesResult: boolean;
   selectedChain: ChainName | null;
   onSelectChain: (chain: ChainInfo | null) => void;
   onMoreChainsClick: () => void;
@@ -30,6 +32,8 @@ export function TokenListPanel({
   onSelect,
   counterpartToken,
   recipient,
+  availableRouteTokens,
+  hasAvailableRoutesResult,
   selectedChain,
   onSelectChain,
   onMoreChainsClick,
@@ -66,6 +70,8 @@ export function TokenListPanel({
         onSelect={onSelect}
         counterpartToken={counterpartToken}
         recipient={recipient}
+        availableRouteTokens={availableRouteTokens}
+        hasAvailableRoutesResult={hasAvailableRoutesResult}
       />
     </div>
   );

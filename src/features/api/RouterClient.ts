@@ -2,10 +2,12 @@
 import { config } from '../../consts/config';
 import {
   ChainsResponseSchema,
+  AvailableRoutesResponseSchema,
   HealthResponseSchema,
   QuoteResponseSchema,
   ReadinessResponseSchema,
   TokensResponseSchema,
+  type AvailableRoutesResponse,
   type ChainsResponse,
   type QuoteResponse,
   type ReadinessResponse,
@@ -25,6 +27,10 @@ export interface QuoteParams {
   /** Optional client-supplied salt; engine generates one if absent. */
   commitmentSalt?: `0x${string}`;
 }
+
+export type AvailableRoutesParams =
+  | { srcChain: number; srcToken: string; dstChain?: never; dstToken?: never }
+  | { dstChain: number; dstToken: string; srcChain?: never; srcToken?: never };
 
 export class RouterClient {
   constructor(private baseUrl: string) {}
@@ -63,6 +69,18 @@ export class RouterClient {
     }
     const qs = params.toString();
     return this.get(`/v1/tokens${qs ? `?${qs}` : ''}`, TokensResponseSchema);
+  }
+
+  availableRoutes(params: AvailableRoutesParams): Promise<AvailableRoutesResponse> {
+    const search = new URLSearchParams();
+    if (params.srcChain != null) {
+      search.set('srcChain', String(params.srcChain));
+      search.set('srcToken', params.srcToken);
+    } else {
+      search.set('dstChain', String(params.dstChain));
+      search.set('dstToken', params.dstToken);
+    }
+    return this.get(`/v1/available-routes?${search.toString()}`, AvailableRoutesResponseSchema);
   }
 
   async quote(params: QuoteParams): Promise<QuoteResponse> {

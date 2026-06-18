@@ -110,6 +110,12 @@ export const TokensResponseSchema = z
   .transform((v) => (Array.isArray(v) ? { tokens: v } : v));
 export type TokensResponse = z.infer<typeof TokensResponseSchema>;
 
+export const AvailableRoutesResponseSchema = z.object({
+  direction: z.enum(['fromSource', 'toDestination']),
+  tokens: z.array(TokenDiscoverySchema),
+});
+export type AvailableRoutesResponse = z.infer<typeof AvailableRoutesResponseSchema>;
+
 // Client-side mirror of engine's TokensQuerySchema. Branches:
 //   {}                       → featured/trending list
 //   { chain }                → per-chain list

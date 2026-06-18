@@ -5,7 +5,7 @@ import { useChains } from '../../../api/hooks';
 import { routerClient } from '../../../api/RouterClient';
 import type { TokensQuery } from '../../../api/types';
 import { useStore } from '../../../store';
-import { tokenDiscoveryToUi, type UiToken } from './types';
+import { tokenDiscoveryToUi, type TokenSelectionMode, type UiToken } from './types';
 
 const STALE_5_MIN = 5 * 60 * 1000;
 const STALE_30_SEC = 30 * 1000;
@@ -14,6 +14,13 @@ interface UseTokensResult {
   data: UiToken[];
   isLoading: boolean;
   error: Error | null;
+}
+
+interface UseAvailableRouteTokensResult {
+  data: UiToken[];
+  isLoading: boolean;
+  error: Error | null;
+  isFetched: boolean;
 }
 
 // Single entry point for /v1/tokens. Branches map directly to engine
@@ -81,6 +88,71 @@ export function useTokens(query: TokensQuery = {}): UseTokensResult {
     data: tokens,
     isLoading: chainsLoading || result.isLoading,
     error: result.error,
+  };
+}
+
+export function useAvailableRouteTokens({
+  selectionMode,
+  counterpartToken,
+  enabled,
+}: {
+  selectionMode: TokenSelectionMode;
+  counterpartToken?: UiToken;
+  enabled: boolean;
+}): UseAvailableRouteTokensResult {
+  const { data: chainsResp, isLoading: chainsLoading } = useChains();
+  const syncTokens = useStore((s) => s.syncTokens);
+
+  const chainIdToName = useMemo(() => {
+    const map = new Map<number, string>();
+    for (const c of chainsResp?.chains ?? []) map.set(c.id, c.chainName);
+    return map;
+  }, [chainsResp]);
+
+  const query = useMemo(() => {
+    if (!counterpartToken) return undefined;
+    return selectionMode === 'destination'
+      ? {
+          srcChain: counterpartToken.chainId,
+          srcToken: counterpartToken.address,
+        }
+      : {
+          dstChain: counterpartToken.chainId,
+          dstToken: counterpartToken.address,
+        };
+  }, [counterpartToken, selectionMode]);
+
+  const result = useQuery({
+    queryKey: ['router', 'available-routes', selectionMode, query],
+    queryFn: () => {
+      if (!query) throw new Error('available routes query is not ready');
+      return routerClient.availableRoutes(query);
+    },
+    enabled: enabled && !!query,
+    staleTime: STALE_30_SEC,
+  });
+
+  const tokens = useMemo<UiToken[]>(() => {
+    if (!result.data) return [];
+    const out: UiToken[] = [];
+    for (const t of result.data.tokens) {
+      if (t.decimals == null) continue;
+      const chainName = chainIdToName.get(t.chainId);
+      if (!chainName) continue;
+      out.push(tokenDiscoveryToUi(t, chainName));
+    }
+    return out;
+  }, [result.data, chainIdToName]);
+
+  useEffect(() => {
+    if (tokens.length) syncTokens(tokens);
+  }, [tokens, syncTokens]);
+
+  return {
+    data: tokens,
+    isLoading: chainsLoading || result.isLoading,
+    error: result.error,
+    isFetched: result.isFetched,
   };
 }
 

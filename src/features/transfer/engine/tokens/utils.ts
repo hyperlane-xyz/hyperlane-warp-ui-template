@@ -9,10 +9,15 @@ export function tokenKey(chainId: number, address: string): string {
   return `${chainId}-${normalizedAddress}`;
 }
 
-// Origin → destination route check. Engine governs availability per
-// (srcChain, srcToken, dstChain, dstToken) tuple; the picker doesn't
-// have early access to that, so this is a permissive heuristic. The
-// authoritative answer comes from /v1/quote.
-export function checkTokenHasRoute(_origin: UiToken, _destination: UiToken): boolean {
-  return true;
+export function mergeRouteTokensFirst(routeTokens: UiToken[], tokens: UiToken[]): UiToken[] {
+  if (!routeTokens.length) return tokens;
+  const seen = new Set<string>();
+  const out: UiToken[] = [];
+  for (const token of [...routeTokens, ...tokens]) {
+    const key = getTokenKey(token);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(token);
+  }
+  return out;
 }

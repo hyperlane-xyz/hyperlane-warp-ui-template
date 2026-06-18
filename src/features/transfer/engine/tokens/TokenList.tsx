@@ -1,6 +1,6 @@
 import { ChainName } from '@hyperlane-xyz/sdk';
 import { Tooltip, useDebounce } from '@hyperlane-xyz/widgets';
-import React, { useEffect, useMemo, useRef, useState, useTransition } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 
 import { TokenChainIcon } from '../../../../components/icons/TokenChainIcon';
 import { useDisabledChains, useMultiProvider } from '../../../chains/hooks';
@@ -10,7 +10,7 @@ import { formatBalance, formatUsd, getUsdValue } from '../balances/utils';
 import { useTokens } from './hooks';
 import type { TokenSelectionMode, UiToken } from './types';
 import { useTokenPrices } from './useTokenPrice';
-import { checkTokenHasRoute, getTokenKey } from './utils';
+import { getTokenKey, mergeRouteTokensFirst } from './utils';
 
 interface TokenListProps {
   selectionMode: TokenSelectionMode;
@@ -20,6 +20,8 @@ interface TokenListProps {
   counterpartToken?: UiToken;
   /** Recipient address for destination balance lookups */
   recipient?: string;
+  availableRouteTokens: UiToken[];
+  hasAvailableRoutesResult: boolean;
 }
 
 export function TokenList({
@@ -29,6 +31,8 @@ export function TokenList({
   onSelect,
   counterpartToken,
   recipient,
+  availableRouteTokens,
+  hasAvailableRoutesResult,
 }: TokenListProps) {
   const multiProvider = useMultiProvider();
   const disabledChains = useDisabledChains();
@@ -50,17 +54,29 @@ export function TokenList({
     chain: chainId,
     search: trimmedSearch,
   });
-  const allTokens = useMemo(
-    () =>
-      disabledChains.size > 0 ? fetched.filter((t) => !disabledChains.has(t.chainName)) : fetched,
-    [fetched, disabledChains],
+  const filteredRouteTokens = useMemo(
+    () => filterTokens(availableRouteTokens, chainId, trimmedSearch, disabledChains),
+    [availableRouteTokens, chainId, trimmedSearch, disabledChains],
   );
+  const allTokens = useMemo(() => {
+    const filteredFetched = filterTokens(fetched, undefined, undefined, disabledChains);
+    return mergeRouteTokensFirst(filteredRouteTokens, filteredFetched);
+  }, [fetched, filteredRouteTokens, disabledChains]);
 
-  // Engine governs route availability per (srcChain, srcToken, dstChain,
-  // dstToken) tuple. Without an engine route-matrix endpoint we treat
-  // every token as routable; the user finds out at /v1/quote time.
-  const [tokenRouteMap, setTokenRouteMap] = useState<Map<string, boolean> | null>(null);
-  const [, startTransition] = useTransition();
+  const directRouteTokenKeys = useMemo(
+    () => new Set(availableRouteTokens.map((token) => getTokenKey(token))),
+    [availableRouteTokens],
+  );
+  const tokenRouteMap = useMemo(() => {
+    if (!counterpartToken || !hasAvailableRoutesResult) return null;
+    if (!counterpartToken.canBridge && !counterpartToken.isBridgeToken) return null;
+
+    const routeMap = new Map<string, boolean>();
+    for (const token of allTokens) {
+      routeMap.set(getTokenKey(token), directRouteTokenKeys.has(getTokenKey(token)));
+    }
+    return routeMap;
+  }, [allTokens, counterpartToken, directRouteTokenKeys, hasAvailableRoutesResult]);
 
   const balanceTokens = allTokens;
 
@@ -125,24 +141,6 @@ export function TokenList({
 
     return { tokens: displayTokens, isLimited };
   }, [allTokens, trimmedSearch, chainFilter, tokenRouteMap, usdMap, balanceMap]);
-
-  useEffect(() => {
-    startTransition(() => {
-      if (!counterpartToken) {
-        setTokenRouteMap(null);
-        return;
-      }
-      const routeMap = new Map<string, boolean>();
-      for (const token of allTokens) {
-        const key = getTokenKey(token);
-        const originToken = selectionMode === 'origin' ? token : counterpartToken;
-        const destToken = selectionMode === 'origin' ? counterpartToken : token;
-        const hasRoute = checkTokenHasRoute(originToken, destToken);
-        routeMap.set(key, hasRoute);
-      }
-      setTokenRouteMap(routeMap);
-    });
-  }, [allTokens, counterpartToken, selectionMode]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo(0, 0);
@@ -289,6 +287,30 @@ const TokenButton = React.memo(function TokenButton({
     </button>
   );
 });
+
+function filterTokens(
+  tokens: UiToken[],
+  chainId: number | undefined,
+  search: string | undefined,
+  disabledChains: Set<string>,
+): UiToken[] {
+  return tokens.filter((token) => {
+    if (disabledChains.has(token.chainName)) return false;
+    if (chainId != null && token.chainId !== chainId) return false;
+    if (search && !matchesTokenSearch(token, search)) return false;
+    return true;
+  });
+}
+
+function matchesTokenSearch(token: UiToken, search: string): boolean {
+  const query = search.toLowerCase();
+  return (
+    token.symbol.toLowerCase().includes(query) ||
+    token.name.toLowerCase().includes(query) ||
+    token.address.toLowerCase().includes(query) ||
+    token.chainName.toLowerCase().includes(query)
+  );
+}
 
 const styles = {
   base: 'font-secondary font-normal',

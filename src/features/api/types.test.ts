@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { QuoteResponseSchema } from './types';
+import { AvailableRoutesResponseSchema, QuoteResponseSchema } from './types';
 
 describe('QuoteResponseSchema', () => {
   test('accepts engine bridge quote metadata', () => {
@@ -57,6 +57,32 @@ describe('QuoteResponseSchema', () => {
               amount: '100',
               kind: 'erc20',
             },
+          },
+        ],
+      }),
+    ).not.toThrow();
+  });
+});
+
+describe('AvailableRoutesResponseSchema', () => {
+  test('accepts engine available route tokens', () => {
+    expect(() =>
+      AvailableRoutesResponseSchema.parse({
+        direction: 'fromSource',
+        tokens: [
+          {
+            chainId: 8453,
+            address: '0x1111111111111111111111111111111111111111',
+            symbol: 'USDC',
+            name: 'USD Coin',
+            decimals: 6,
+            isNative: false,
+            isBridgeToken: true,
+            isPoolToken: false,
+            canBridge: true,
+            canSwap: false,
+            bridgeSymbols: ['USDC'],
+            warpRouteIds: ['USDC/base'],
           },
         ],
       }),

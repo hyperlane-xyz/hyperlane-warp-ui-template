@@ -75,6 +75,7 @@ describe('AvailableRoutesResponseSchema', () => {
             address: '0x1111111111111111111111111111111111111111',
             symbol: 'USDC',
             name: 'USD Coin',
+            standard: 'EvmHypCollateral',
             decimals: 6,
             isNative: false,
             isBridgeToken: true,

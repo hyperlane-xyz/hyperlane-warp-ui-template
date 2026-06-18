@@ -1,6 +1,7 @@
 import { ChainName } from '@hyperlane-xyz/sdk';
 import { getAddressProtocolType, ProtocolType } from '@hyperlane-xyz/utils';
 import { useAccounts } from '@hyperlane-xyz/widgets/walletIntegrations/accounts';
+import { useAccountAddressForChain } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { type Address, createPublicClient, http, type PublicClient } from 'viem';
@@ -173,19 +174,16 @@ export function useTokenBalances(
 // Single-token balance — for OriginTokenCard's balance row + MaxButton.
 export function useTokenBalance(token: UiToken | undefined, addressOverride?: string) {
   const multiProvider = useMultiProvider();
-  const { accounts } = useAccounts(multiProvider);
   const protocol = token ? multiProvider.tryGetProtocol(token.chainName) : null;
+  const connectedAddress = useAccountAddressForChain(multiProvider, token?.chainName);
   const overrideProtocol = useMemo(
     () => (addressOverride ? getAddressProtocolType(addressOverride) : undefined),
     [addressOverride],
   );
-  const userAddress = addressForProtocol(
-    accounts,
-    protocol,
-    token?.chainName,
-    addressOverride,
-    overrideProtocol,
-  );
+  const userAddress =
+    addressOverride && (!overrideProtocol || overrideProtocol === protocol)
+      ? addressOverride
+      : connectedAddress;
   const rpcUrl = rpcUrlFor(multiProvider, token?.chainName);
   const publicClient = useMemo(
     () => (protocol === ProtocolType.Ethereum ? evmClientFromRpc(rpcUrl) : undefined),

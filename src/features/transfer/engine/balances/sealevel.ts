@@ -1,3 +1,4 @@
+import { TokenStandard, type MultiProtocolProvider } from '@hyperlane-xyz/sdk';
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   getAssociatedTokenAddress,
@@ -22,7 +23,7 @@ export async function fetchSealevelChainBalances(
 
   for (const token of tokens) {
     const key = getTokenKey(token);
-    if (token.isNative || ZERO_ADDRESS.test(token.address)) {
+    if (isSealevelNativeBalance(token)) {
       balances[key] = BigInt(await connection.getBalance(ownerKey));
       continue;
     }
@@ -30,6 +31,44 @@ export async function fetchSealevelChainBalances(
   }
 
   return balances;
+}
+
+export async function readSealevelTokenBalance(
+  multiProvider: MultiProtocolProvider,
+  args: {
+    chainName: string;
+    tokenAddress: string;
+    isNative: boolean;
+    owner: string;
+    standard?: string;
+  },
+): Promise<bigint> {
+  const rpcUrl = multiProvider.tryGetChainMetadata(args.chainName)?.rpcUrls?.[0]?.http;
+  if (!rpcUrl) return 0n;
+  const connection = new Connection(rpcUrl, 'confirmed');
+  const ownerKey = new PublicKey(args.owner);
+  if (
+    isSealevelNativeBalance({
+      address: args.tokenAddress,
+      isNative: args.isNative,
+      standard: args.standard,
+    })
+  ) {
+    return BigInt(await connection.getBalance(ownerKey));
+  }
+  return fetchSplBalance(connection, ownerKey, args.tokenAddress);
+}
+
+export function isSealevelNativeBalance(token: {
+  address: string;
+  isNative: boolean;
+  standard?: string;
+}): boolean {
+  return (
+    token.isNative ||
+    ZERO_ADDRESS.test(token.address) ||
+    token.standard === TokenStandard.SealevelHypNative
+  );
 }
 
 async function fetchSplBalance(

@@ -5,6 +5,7 @@ import { readAleoTokenBalance } from './aleo';
 import { readCosmosTokenBalance } from './cosmos';
 import { estimateEvmGasCost, readEvmBalance } from './evm';
 import { readRadixTokenBalance } from './radix';
+import { readSealevelTokenBalance } from './sealevel';
 import { readStarknetTokenBalance } from './starknet';
 
 export interface ReadBalanceArgs {
@@ -30,6 +31,7 @@ export async function readBalance(
   const protocol = multiProvider.tryGetProtocol(args.chainName);
   if (!protocol) return null;
   if (isEVMLike(protocol)) return readEvmBalance(multiProvider, args);
+  if (protocol === ProtocolType.Sealevel) return readSealevelTokenBalance(multiProvider, args);
   if (protocol === ProtocolType.Starknet) return readStarknetTokenBalance(multiProvider, args);
   if (protocol === ProtocolType.Cosmos || protocol === ProtocolType.CosmosNative) {
     return readCosmosTokenBalance(multiProvider, args);

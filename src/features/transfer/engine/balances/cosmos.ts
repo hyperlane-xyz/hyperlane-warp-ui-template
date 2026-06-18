@@ -110,6 +110,12 @@ export function cosmosBankDenomForToken(token: {
 }): string | null {
   if (token.standard === TokenStandard.CwHypNative) return null;
   if (token.standard === TokenStandard.CwHypSynthetic) return null;
+  if (
+    token.standard === TokenStandard.CosmNativeHypCollateral &&
+    isCosmosModuleTokenId(token.address)
+  ) {
+    return null;
+  }
   if (token.standard === TokenStandard.CosmNativeHypSynthetic) {
     return `hyperlane/${token.address}`;
   }
@@ -119,7 +125,14 @@ export function cosmosBankDenomForToken(token: {
 export function resolveCosmosBalanceStandard(standard?: string): TokenStandard {
   if (standard === TokenStandard.CwHypNative) return TokenStandard.CwHypNative;
   if (standard === TokenStandard.CwHypSynthetic) return TokenStandard.CwHypSynthetic;
+  if (standard === TokenStandard.CosmNativeHypCollateral) {
+    return TokenStandard.CosmNativeHypCollateral;
+  }
   return TokenStandard.CosmosNative;
+}
+
+function isCosmosModuleTokenId(address: string): boolean {
+  return /^0x[0-9a-f]+$/i.test(address);
 }
 
 function rpcUrlFor(

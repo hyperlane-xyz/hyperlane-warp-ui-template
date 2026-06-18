@@ -4,6 +4,7 @@ import { describe, expect, test } from 'vitest';
 import { directAleoBalanceDenom, resolveAleoBalanceStandard } from './aleo';
 import { cosmosBankDenomForToken, resolveCosmosBalanceStandard } from './cosmos';
 import { resolveRadixBalanceStandard } from './radix';
+import { isSealevelNativeBalance } from './sealevel';
 
 describe('cosmos balance routing', () => {
   test('uses engine collateral denoms directly', () => {
@@ -33,6 +34,18 @@ describe('cosmos balance routing', () => {
       }),
     ).toBe('hyperlane/0x1234');
   });
+
+  test('keeps Cosmos native collateral module token ids on the SDK adapter', () => {
+    expect(
+      cosmosBankDenomForToken({
+        address: '0x726f757465725f61707000000000000000000000000000010000000000000000',
+        standard: TokenStandard.CosmNativeHypCollateral,
+      }),
+    ).toBeNull();
+    expect(resolveCosmosBalanceStandard(TokenStandard.CosmNativeHypCollateral)).toBe(
+      TokenStandard.CosmNativeHypCollateral,
+    );
+  });
 });
 
 describe('radix balance routing', () => {
@@ -54,6 +67,35 @@ describe('radix balance routing', () => {
         standard: TokenStandard.RadixHypSynthetic,
       }),
     ).toBe(TokenStandard.RadixHypSynthetic);
+  });
+});
+
+describe('sealevel balance routing', () => {
+  test('reads HypNative routes as native lamports even when API token is not marked native', () => {
+    expect(
+      isSealevelNativeBalance({
+        address: '4CMbJtieJ7EboZZGSbXTQjW5i2sL638jFvE3dWTYG3SK',
+        isNative: false,
+        standard: TokenStandard.SealevelHypNative,
+      }),
+    ).toBe(true);
+  });
+
+  test('reads collateral and synthetic mint addresses as SPL balances', () => {
+    expect(
+      isSealevelNativeBalance({
+        address: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+        isNative: false,
+        standard: TokenStandard.SealevelHypCollateral,
+      }),
+    ).toBe(false);
+    expect(
+      isSealevelNativeBalance({
+        address: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+        isNative: false,
+        standard: TokenStandard.SealevelHypCrossCollateral,
+      }),
+    ).toBe(false);
   });
 });
 

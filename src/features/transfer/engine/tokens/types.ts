@@ -10,6 +10,7 @@ export interface UiToken {
   chainId: number;
   address: string;
   symbol: string;
+  standard?: string;
   decimals: number; // null in engine schema is normalised to 18 here
   isNative: boolean;
   isBridgeToken: boolean;

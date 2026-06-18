@@ -207,6 +207,12 @@ export async function validateBalances(args: {
       tokenAddress: srcToken.address,
       isNative: srcToken.isNative,
       owner: sender,
+      standard: srcToken.standard,
+      decimals: srcToken.decimals,
+      symbol: srcToken.symbol,
+      name: srcToken.name,
+      coinGeckoId: srcToken.coinGeckoId,
+      logoURI: srcToken.logoURI,
     });
   } catch (err) {
     logger.warn('Failed to read source balance during validation', err as Error);

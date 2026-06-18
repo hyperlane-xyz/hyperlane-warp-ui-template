@@ -1,15 +1,16 @@
 import { ChainName } from '@hyperlane-xyz/sdk';
-import { ProtocolType } from '@hyperlane-xyz/utils';
+import { getAddressProtocolType, ProtocolType } from '@hyperlane-xyz/utils';
+import { useAccounts } from '@hyperlane-xyz/widgets/walletIntegrations/accounts';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { type Address, createPublicClient, http, type PublicClient } from 'viem';
-import { useAccount } from 'wagmi';
 
 import { useMultiProvider } from '../../../chains/hooks';
 import type { UiToken } from '../tokens/types';
 import { getTokenKey } from '../tokens/utils';
 import { fetchEvmChainBalances } from './evm';
 import { fetchSealevelChainBalances } from './sealevel';
+import { fetchStarknetChainBalances } from './starknet';
 import { fetchTronChainBalances } from './tron';
 
 const STALE_BALANCE_MS = 30_000;
@@ -29,8 +30,11 @@ export function useTokenBalances(
   addressOverride?: string,
 ): UseTokenBalancesResult {
   const multiProvider = useMultiProvider();
-  const { address: connectedEvm } = useAccount();
-  const userAddress = addressOverride || connectedEvm;
+  const { accounts, readyAccounts } = useAccounts(multiProvider);
+  const overrideProtocol = useMemo(
+    () => (addressOverride ? getAddressProtocolType(addressOverride) : undefined),
+    [addressOverride],
+  );
 
   const filtered = useMemo(() => {
     if (chainFilter === 'all') return [];
@@ -40,6 +44,13 @@ export function useTokenBalances(
   const filteredChainId = filtered[0]?.chainId;
   const filteredChainName = filtered[0]?.chainName;
   const filteredProtocol = filtered[0] ? multiProvider.tryGetProtocol(filtered[0].chainName) : null;
+  const filteredUserAddress = addressForProtocol(
+    accounts,
+    filteredProtocol,
+    filteredChainName,
+    addressOverride,
+    overrideProtocol,
+  );
   const filteredRpcUrl = rpcUrlFor(multiProvider, filteredChainName);
   const filteredPublicClient = useMemo(
     () =>
@@ -53,21 +64,21 @@ export function useTokenBalances(
       filteredProtocol,
       filteredChainId,
       filteredRpcUrl,
-      userAddress,
+      filteredUserAddress,
       filtered.map(getTokenKey).join(','),
     ],
     queryFn: () =>
       dispatchChainBalances(
         filteredProtocol!,
         filtered,
-        userAddress!,
+        filteredUserAddress!,
         filteredPublicClient,
         multiProvider,
         batchAddressFor(multiProvider, filtered[0]?.chainName),
       ),
     enabled:
       chainFilter !== 'all' &&
-      !!userAddress &&
+      !!filteredUserAddress &&
       filtered.length > 0 &&
       (filteredProtocol !== ProtocolType.Ethereum || !!filteredPublicClient),
     staleTime: STALE_BALANCE_MS,
@@ -91,12 +102,20 @@ export function useTokenBalances(
       const protocol = chainTokens[0]
         ? multiProvider.tryGetProtocol(chainTokens[0].chainName)
         : null;
+      const chainName = chainTokens[0]?.chainName;
+      const userAddress = addressForProtocol(
+        accounts,
+        protocol,
+        chainName,
+        addressOverride,
+        overrideProtocol,
+      );
       return {
         queryKey: [
           'balances',
           protocol,
           chainId,
-          rpcUrlFor(multiProvider, chainTokens[0]?.chainName),
+          rpcUrlFor(multiProvider, chainName),
           userAddress,
           chainTokens.map(getTokenKey).join(','),
         ],
@@ -104,7 +123,7 @@ export function useTokenBalances(
           if (!protocol || !userAddress) return {};
           const client =
             protocol === ProtocolType.Ethereum
-              ? evmClientFromRpc(rpcUrlFor(multiProvider, chainTokens[0]?.chainName))
+              ? evmClientFromRpc(rpcUrlFor(multiProvider, chainName))
               : undefined;
           return dispatchChainBalances(
             protocol,
@@ -129,22 +148,44 @@ export function useTokenBalances(
         if (q.isLoading) anyLoading = true;
         if (q.data) Object.assign(merged, q.data);
       }
-      return { balances: merged, isLoading: anyLoading, hasAnyAddress: !!userAddress };
+      return {
+        balances: merged,
+        isLoading: anyLoading,
+        hasAnyAddress: !!addressOverride || readyAccounts.length > 0,
+      };
     }
     return {
       balances: singleChainQuery.data ?? {},
       isLoading: singleChainQuery.isLoading,
-      hasAnyAddress: !!userAddress,
+      hasAnyAddress: !!filteredUserAddress,
     };
-  }, [chainFilter, fanoutQueries, singleChainQuery.data, singleChainQuery.isLoading, userAddress]);
+  }, [
+    chainFilter,
+    addressOverride,
+    fanoutQueries,
+    filteredUserAddress,
+    readyAccounts.length,
+    singleChainQuery.data,
+    singleChainQuery.isLoading,
+  ]);
 }
 
 // Single-token balance — for OriginTokenCard's balance row + MaxButton.
 export function useTokenBalance(token: UiToken | undefined, addressOverride?: string) {
   const multiProvider = useMultiProvider();
-  const { address: connectedEvm } = useAccount();
-  const userAddress = addressOverride || connectedEvm;
+  const { accounts } = useAccounts(multiProvider);
   const protocol = token ? multiProvider.tryGetProtocol(token.chainName) : null;
+  const overrideProtocol = useMemo(
+    () => (addressOverride ? getAddressProtocolType(addressOverride) : undefined),
+    [addressOverride],
+  );
+  const userAddress = addressForProtocol(
+    accounts,
+    protocol,
+    token?.chainName,
+    addressOverride,
+    overrideProtocol,
+  );
   const rpcUrl = rpcUrlFor(multiProvider, token?.chainName);
   const publicClient = useMemo(
     () => (protocol === ProtocolType.Ethereum ? evmClientFromRpc(rpcUrl) : undefined),
@@ -195,7 +236,29 @@ async function dispatchChainBalances(
     if (!rpcUrl) return {};
     return fetchSealevelChainBalances(rpcUrl, tokens, userAddress);
   }
+  if (protocol === ProtocolType.Starknet) {
+    return fetchStarknetChainBalances(multiProvider, tokens, userAddress);
+  }
   return {};
+}
+
+type AccountsByProtocol = ReturnType<typeof useAccounts>['accounts'];
+
+function addressForProtocol(
+  accounts: AccountsByProtocol,
+  protocol: ProtocolType | null,
+  chainName: string | undefined,
+  addressOverride: string | undefined,
+  overrideProtocol: ProtocolType | undefined,
+): string | undefined {
+  if (!protocol) return undefined;
+  if (addressOverride && (!overrideProtocol || overrideProtocol === protocol))
+    return addressOverride;
+  const account = accounts[protocol];
+  if (protocol === ProtocolType.Cosmos || protocol === ProtocolType.CosmosNative) {
+    return account?.addresses.find((a) => a.chainName === chainName)?.address;
+  }
+  return account?.addresses[0]?.address;
 }
 
 function rpcUrlFor(

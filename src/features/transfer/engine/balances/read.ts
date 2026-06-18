@@ -2,12 +2,19 @@ import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk';
 import { isEVMLike, ProtocolType } from '@hyperlane-xyz/utils';
 
 import { estimateEvmGasCost, readEvmBalance } from './evm';
+import { readStarknetTokenBalance } from './starknet';
 
 export interface ReadBalanceArgs {
   chainName: string;
   tokenAddress: string;
   isNative: boolean;
   owner: string;
+  standard?: string;
+  decimals?: number;
+  symbol?: string;
+  name?: string;
+  coinGeckoId?: string;
+  logoURI?: string;
 }
 
 // Per-VM dispatch for a single-token balance read.
@@ -20,6 +27,7 @@ export async function readBalance(
   const protocol = multiProvider.tryGetProtocol(args.chainName);
   if (!protocol) return null;
   if (isEVMLike(protocol)) return readEvmBalance(multiProvider, args);
+  if (protocol === ProtocolType.Starknet) return readStarknetTokenBalance(multiProvider, args);
   return null;
 }
 

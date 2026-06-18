@@ -77,6 +77,7 @@ export const TokenDiscoverySchema = z.object({
   address: TokenAddress,
   symbol: z.string(),
   name: z.string().optional(),
+  standard: z.string().optional(),
   decimals: z.number().nullable(),
   isNative: z.boolean(),
   wrappedAddress: TokenAddress.optional(),

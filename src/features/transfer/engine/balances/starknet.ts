@@ -1,10 +1,4 @@
-import {
-  Token,
-  TokenStandard,
-  TOKEN_STANDARD_TO_PROTOCOL,
-  type MultiProtocolProvider,
-} from '@hyperlane-xyz/sdk';
-import { ProtocolType } from '@hyperlane-xyz/utils';
+import { Token, TokenStandard, type MultiProtocolProvider } from '@hyperlane-xyz/sdk';
 
 import { logger } from '../../../../utils/logger';
 import type { UiToken } from '../tokens/types';
@@ -56,7 +50,7 @@ export async function readStarknetTokenBalance(
 ): Promise<bigint> {
   const token = new Token({
     chainName: args.chainName,
-    standard: resolveStarknetStandard(args),
+    standard: resolveStarknetBalanceStandard(),
     addressOrDenom: args.tokenAddress,
     decimals: args.decimals ?? 18,
     symbol: args.symbol ?? '',
@@ -67,19 +61,6 @@ export async function readStarknetTokenBalance(
   return (await token.getBalance(multiProvider, args.owner)).amount;
 }
 
-export function resolveStarknetStandard(args: {
-  standard?: string;
-  isNative: boolean;
-}): TokenStandard {
-  if (args.standard && isStarknetStandard(args.standard)) {
-    return args.standard as TokenStandard;
-  }
-  return args.isNative ? TokenStandard.StarknetNative : TokenStandard.StarknetHypSynthetic;
-}
-
-function isStarknetStandard(standard: string): boolean {
-  return (
-    standard in TokenStandard &&
-    TOKEN_STANDARD_TO_PROTOCOL[standard as TokenStandard] === ProtocolType.Starknet
-  );
+export function resolveStarknetBalanceStandard(): TokenStandard {
+  return TokenStandard.StarknetNative;
 }

@@ -3,8 +3,8 @@ import type { IToken } from '@hyperlane-xyz/sdk';
 import { ChainLogo } from './ChainLogo';
 import { TokenIcon } from './TokenIcon';
 
-// Structural shape — satisfied by both warp-ui's SDK `Token`/`IToken` and
-// swap-ui's engine-derived `UiToken`. Use the lowest-common-denominator
+// Structural shape — satisfied by SDK `Token`/`IToken` and the engine-derived
+// `UiToken`. Use the lowest-common-denominator
 // fields TokenIcon actually accesses so we don't have to depend on either
 // concrete type here.
 interface IconToken {

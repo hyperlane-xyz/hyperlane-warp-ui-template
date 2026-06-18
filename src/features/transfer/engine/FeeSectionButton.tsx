@@ -25,7 +25,7 @@ interface Props {
 
 // Pill button — fuel-pump icon + "Fees: <total> <USD> (<pct>)" + chevron.
 // Fees grouped by fungibility (chainId + token address). USD value +
-// percentage mirror the bridge form's FeeSectionButton presentation.
+// percentage mirror the transfer form presentation.
 export function FeeSectionButton({ feeBreakdown, isLoading, inputUsd }: Props) {
   const { isOpen, open, close } = useModal();
   const loadingText = useLoadingDots(isLoading);

@@ -243,10 +243,10 @@ function StepEdge({
 }) {
   if (step.type === 'swap')
     return <SwapEdge step={step} tokenMap={tokenMap} resolvedTokenOut={tokenOut} />;
-  return <BridgeEdge step={step} tokenMap={tokenMap} stepIndex={stepIndex} steps={steps} />;
+  return <CrossChainEdge step={step} tokenMap={tokenMap} stepIndex={stepIndex} steps={steps} />;
 }
 
-// ── Swap edge ──────────────────────────────────────────────────────────
+// ── Swap step edge ──────────────────────────────────────────────────────
 
 function SwapEdge({
   step,
@@ -335,9 +335,9 @@ function SwapEdge({
   );
 }
 
-// ── Bridge edge ────────────────────────────────────────────────────────
+// ── Cross-chain edge ────────────────────────────────────────────────────
 
-function BridgeEdge({
+function CrossChainEdge({
   step,
   tokenMap,
   stepIndex,
@@ -368,11 +368,11 @@ function BridgeEdge({
   const symbol = asset?.symbol ?? step.bridgeSymbol ?? '?';
   const routeLabel = step.warpRouteId
     ? formatWarpRouteId(step.warpRouteId)
-    : (step.bridgeSymbol ?? 'Bridge');
+    : (step.bridgeSymbol ?? 'Transfer');
 
   const tooltip = (
     <div className="flex flex-col gap-1.5">
-      <div className="font-medium dark:text-foreground-primary">Hyperlane Bridge</div>
+      <div className="font-medium dark:text-foreground-primary">Hyperlane Transfer</div>
       {step.warpRouteId && (
         <div className="font-mono break-all text-gray-400 dark:text-foreground-secondary">
           {step.warpRouteId}
@@ -398,7 +398,7 @@ function BridgeEdge({
         <div className="border-t border-gray-100 pt-1 dark:border-white/10">
           {tokenFee > 0n && (
             <div className="flex items-center justify-between gap-3">
-              <span className="text-gray-400 dark:text-foreground-secondary">Bridge fee</span>
+              <span className="text-gray-400 dark:text-foreground-secondary">Route fee</span>
               <span className="dark:text-foreground-primary">
                 {formatFeeAmount(tokenFee, asset?.decimals ?? 18)}{' '}
                 <span className="text-gray-400">{symbol}</span>

@@ -17,16 +17,16 @@ interface Props {
 }
 
 const CATEGORY_LABEL: Record<FeeComponent['category'], string> = {
-  bridge: 'Bridge Fee',
+  bridge: 'Route Fee',
   igp: 'Interchain Gas',
 };
 
 const CATEGORY_TOOLTIP: Record<FeeComponent['category'], string> = {
-  bridge: 'Variable fee charged by the underlying bridge (e.g. CCTP) for the cross-chain transfer',
+  bridge: 'Variable fee charged by the selected route for the cross-chain transfer',
   igp: 'Gas to deliver and execute the message on the destination chain, including the relayer fee',
 };
 
-// Renders one row per FeeComponent — engine fees are per-bridge-step.
+// Renders one row per fee component emitted by the engine.
 export function FeeBreakdownModal({ isOpen, close, feeBreakdown }: Props) {
   const tokenMap = useTokenByKeyMap();
   const multiProvider = useMultiProvider();

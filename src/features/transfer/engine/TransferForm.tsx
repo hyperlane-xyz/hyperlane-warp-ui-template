@@ -265,8 +265,8 @@ function TransferFormContent() {
       return;
     }
 
-    // Bridge-style: drop review immediately so the form stays editable
-    // while the broadcast chain runs. Modal carries the live status.
+    // Drop review immediately so the form stays editable while the
+    // broadcast chain runs. Modal carries the live status.
     setIsReview(false);
     setTransferLoading(true);
 
@@ -381,7 +381,7 @@ function TransferFormContent() {
     values.dstToken,
   ]);
 
-  const onSwapChains = useCallback(() => {
+  const onFlipTokens = useCallback(() => {
     if (isReview) return;
     setValues((prev) => ({
       ...prev,
@@ -425,7 +425,7 @@ function TransferFormContent() {
         />
       </TransferSection>
 
-      <SwapTokensButton onClick={onSwapChains} disabled={isReview} />
+      <FlipTokensButton onClick={onFlipTokens} disabled={isReview} />
 
       <TransferSection label="Receive">
         <DestinationTokenCard
@@ -699,19 +699,19 @@ function DestinationTokenCard({
   );
 }
 
-function SwapTokensButton({ onClick, disabled }: { onClick: () => void; disabled?: boolean }) {
+function FlipTokensButton({ onClick, disabled }: { onClick: () => void; disabled?: boolean }) {
   return (
     <div className="relative z-10 -my-3 flex justify-center">
       <button
         type="button"
         onClick={onClick}
         disabled={disabled}
-        className="swap-chains-button group flex h-8 w-8 items-center justify-center rounded border border-gray-400/50 bg-white shadow-button transition-all hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-primary-300/35 dark:bg-background/90 dark:shadow-none dark:hover:bg-primary-300/[0.18]"
+        className="flip-tokens-button group flex h-8 w-8 items-center justify-center rounded border border-gray-400/50 bg-white shadow-button transition-all hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-primary-300/35 dark:bg-background/90 dark:shadow-none dark:hover:bg-primary-300/[0.18]"
       >
         <SwapIcon
           width={18}
           height={24}
-          className="swap-chains-icon transition-transform duration-300 group-hover:rotate-180 group-disabled:rotate-0 dark:drop-shadow-[0_0_8px_rgba(255,255,255,0.55)] dark:[&_path]:fill-white"
+          className="flip-tokens-icon transition-transform duration-300 group-hover:rotate-180 group-disabled:rotate-0 dark:drop-shadow-[0_0_8px_rgba(255,255,255,0.55)] dark:[&_path]:fill-white"
         />
       </button>
     </div>
@@ -824,7 +824,7 @@ function ReviewTransactions({
             <span className="min-w-[7.5rem]">Expected Output</span>
             <span>{`${formatDisplayAmount(BigInt(route.raw.output), dstDecimals)} ${dstSymbol}`}</span>
           </p>
-          {!route.isBridgeOnly && (
+          {!route.hasFixedOutput && (
             <p className="flex">
               <span className="min-w-[7.5rem]">Min Output</span>
               <span>{`${formatDisplayAmount(BigInt(route.raw.outputMin), dstDecimals)} ${dstSymbol}`}</span>
@@ -833,7 +833,7 @@ function ReviewTransactions({
           {route.feeBreakdown.components
             .filter((c) => c.amount > 0n)
             .map((c, i) => {
-              const label = c.category === 'bridge' ? 'Bridge Fee' : 'Interchain Gas';
+              const label = c.category === 'bridge' ? 'Route Fee' : 'Interchain Gas';
               const isNative = /^0x0+$/i.test(c.tokenAddress);
               const componentChainName =
                 multiProvider.tryGetChainName(c.chainId) ?? `chain-${c.chainId}`;

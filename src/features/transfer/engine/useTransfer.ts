@@ -162,9 +162,9 @@ export function useTransfer() {
 
         if (!hash || !receipt) throw new Error('Route transaction did not return a receipt');
         const parsed = parseReceipt(receipt);
-        const expectsBridge = route.raw.steps.some((s) => s.type === 'bridge');
+        const hasCrossChainStep = route.raw.steps.some((s) => s.type === 'bridge');
         const canReadDispatchLogs = isEvmReceipt(receipt);
-        if (expectsBridge && canReadDispatchLogs && !parsed.messages.length) {
+        if (hasCrossChainStep && canReadDispatchLogs && !parsed.messages.length) {
           logger.error('Origin tx confirmed but no Dispatch log emitted', new Error(`tx=${hash}`));
           updateTransferTransactionStatus(transactionId, TransferStatus.Failed, {
             originTxHash: hash,
@@ -176,8 +176,8 @@ export function useTransfer() {
           setError(err);
           throw err;
         }
-        // Same-chain transfer (no bridge step): finalize on origin confirm.
-        if (!expectsBridge) {
+        // Same-chain transfer: finalize on origin confirm.
+        if (!hasCrossChainStep) {
           updateTransferTransactionStatus(transactionId, TransferStatus.ConfirmedDestination, {
             originTxHash: hash,
             destinationTxHash: hash,

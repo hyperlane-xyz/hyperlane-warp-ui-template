@@ -26,11 +26,11 @@ export function TipCard() {
       </div>
 
       <h2 className="pr-6 font-secondary text-lg font-normal text-gray-900 dark:text-white">
-        Bridge Tokens with Hyperlane Warp Routes!
+        Transfer Tokens with Hyperlane
       </h2>
       <p className="mt-2 text-sm text-gray-600 dark:text-foreground-muted">
-        Warp Routes make it easy to permissionlessly take your tokens interchain. Fork this template
-        to get started!
+        The Universal Router makes it easy to permissionlessly take your tokens interchain. Fork
+        this template to get started!
       </p>
 
       <a

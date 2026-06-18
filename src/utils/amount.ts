@@ -1,6 +1,6 @@
 import { fromWeiRounded } from '@hyperlane-xyz/utils';
 
-// Shared amount/USD formatters — identical across bridge and swap.
+// Shared amount/USD formatters.
 // Feature-specific `getUsdValue` lives in each feature's balances/utils.ts
 // because price-lookup keys differ (CoinGecko id vs lowercase symbol).
 export function formatBalance(balance: bigint, decimals: number): string {

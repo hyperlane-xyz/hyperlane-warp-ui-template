@@ -52,7 +52,7 @@ const STATUS_DESCRIPTION: Record<TransferStatus, string> = {
   [TransferStatus.ConfirmingDestination]: 'Confirming on destination chain…',
   [TransferStatus.ConfirmedDestination]: 'Delivered',
   [TransferStatus.DestTransferFailed]: 'Destination transfer reverted',
-  [TransferStatus.FailedRecovered]: 'Transfer reverted — bridge token returned',
+  [TransferStatus.FailedRecovered]: 'Transfer reverted — intermediate token returned',
   [TransferStatus.DestFailed]: 'Destination execution failed — funds stranded in ICA',
   [TransferStatus.Failed]: 'Transfer failed',
 };
@@ -136,8 +136,8 @@ function TransferDetailsModalInner({
 
   // Poll the reveal message when present — its delivery tx IS the ICA
   // execution on the destination chain, which is what actually completes
-  // the transfer. Pure bridge routes have no reveal, so fall back to the
-  // warp message. Same-chain transfers have no msgIds.
+  // the transfer. Routes without destination execution have no reveal, so
+  // fall back to the warp message. Same-chain transfers have no msgIds.
   const pollingMsgId = getTransferDeliveryMsgId(msgIds);
 
   const isSent =
@@ -302,14 +302,14 @@ function TransferDetailsModalInner({
             )}
             {isFailedRecovered && (
               <div className="rounded border border-blue-300 bg-blue-50 p-3 text-xs text-blue-800 dark:border-blue-500/40 dark:bg-blue-500/10 dark:text-blue-200">
-                Destination execution reverted and the bridge token was automatically returned to
-                your wallet on the destination chain.
+                Destination execution reverted and the intermediate token was automatically returned
+                to your wallet on the destination chain.
               </div>
             )}
             {isRevealFailed && (
               <div className="rounded border border-amber-300 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">
-                The destination execution ran but both the transfer and fallback failed. Bridge
-                token remains in your ICA. Please contact support.
+                The destination execution ran but both the transfer and fallback failed. The
+                intermediate token remains in your ICA. Please contact support.
               </div>
             )}
             <TransferProperty name="Sender Address" value={sender} url={fromUrl} />

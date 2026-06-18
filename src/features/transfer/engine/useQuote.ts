@@ -126,10 +126,10 @@ function isQuoteRequestReady(v: TransferFormValues, sender: string | undefined):
 
 // Emit per-component fees so each is rendered against its actual token.
 function augmentRoute(raw: RouteResponse): AugmentedRoute {
-  const isBridgeOnly = raw.steps.length > 0 && raw.steps.every((s) => s.type === 'bridge');
+  const hasFixedOutput = raw.steps.length > 0 && raw.steps.every((s) => s.type === 'bridge');
 
-  // Bridge-only routes deliver deterministic amounts — clamp outputMin = output.
-  const adjusted: RouteResponse = isBridgeOnly ? { ...raw, outputMin: raw.output } : raw;
+  // Fixed-output routes deliver deterministic amounts — clamp outputMin = output.
+  const adjusted: RouteResponse = hasFixedOutput ? { ...raw, outputMin: raw.output } : raw;
 
   const components: FeeComponent[] = [];
 
@@ -170,5 +170,5 @@ function augmentRoute(raw: RouteResponse): AugmentedRoute {
     destGas: BigInt(adjusted.gas.destGas),
   };
 
-  return { raw: adjusted, feeBreakdown, isBridgeOnly };
+  return { raw: adjusted, feeBreakdown, hasFixedOutput };
 }

@@ -16,10 +16,10 @@ export function buildFlowNodes(steps: QuoteStep[]): FlowNode[] {
       if (nodes.length === 0) nodes.push({ tokenAddress: step.tokenIn, chainId: step.chain });
       nodes.push({ tokenAddress: step.tokenOut, chainId: step.chain });
     } else {
-      // Bridge: step.asset is the token address on the SOURCE chain.
+      // Cross-chain step: step.asset is the token address on the SOURCE chain.
       if (nodes.length === 0) nodes.push({ tokenAddress: step.asset, chainId: step.chain });
 
-      // After the bridge, the token lives on destChain. Its address may differ
+      // After delivery, the token lives on destChain. Its address may differ
       // from step.asset (e.g. USDC on Ethereum ≠ USDC on Base). The next swap
       // step's tokenIn is the correct address on destChain — use it when available.
       const nextStep = steps[i + 1];

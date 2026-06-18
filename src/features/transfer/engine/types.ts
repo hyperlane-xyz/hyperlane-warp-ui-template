@@ -33,10 +33,10 @@ export enum TransferStatus {
   Bridging = 'bridging',
   ConfirmingDestination = 'confirming-destination',
   ConfirmedDestination = 'confirmed-destination',
-  // Origin tx confirmed and bridge delivered, but the destination execution
+  // Origin tx confirmed and cross-chain delivery completed, but destination execution
   // reverted — funds are sitting in the user's ICA on the dest chain.
   DestTransferFailed = 'dest-transfer-failed',
-  // Fallback sub-plan swept bridge token to recipient automatically.
+  // Fallback sub-plan swept the intermediate token to recipient automatically.
   FailedRecovered = 'failed-recovered',
   // REVEAL delivered but both transfer and fallback sub-plans reverted — funds stranded in ICA.
   DestFailed = 'dest-failed',
@@ -69,7 +69,7 @@ export interface TransferHistoryItem {
   destinationOutcome?: TransferDestinationOutcome;
   msgIds?: LabeledMsgId[];
   originBlockNumber?: number;
-  /** Unix seconds when the origin tx was confirmed and bridge polling started. */
+  /** Unix seconds when origin tx was confirmed and delivery polling started. */
   originTxTimestamp?: number;
 }
 
@@ -90,7 +90,7 @@ export interface TransferFormValues {
 // ── Quote augmentation ───────────────────────────────────────────────
 
 // A single fee component, attributable to a specific token. Engine emits
-// these per bridge step: one for the bridge fee (in the step's `asset`)
+// these per cross-chain step: one for the route fee (in the step's `asset`)
 // and one for the IGP (in `step.fee.igpToken`, which can be native or an
 // ERC20). Origin/dest chain + token address let consumers resolve
 // decimals and symbol from the token map.
@@ -112,10 +112,9 @@ export interface FeeBreakdown {
 export interface AugmentedRoute {
   raw: RouteResponse;
   feeBreakdown: FeeBreakdown;
-  // True when every step is a bridge step (no AMM legs). Used to suppress
-  // slippage-derived UI (Min received) since the delivered amount is
-  // deterministic.
-  isBridgeOnly: boolean;
+  // True when the engine route has deterministic output and no slippage-derived
+  // minimum to show.
+  hasFixedOutput: boolean;
 }
 
 export interface AugmentedQuote {

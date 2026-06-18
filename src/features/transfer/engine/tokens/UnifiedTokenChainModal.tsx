@@ -34,7 +34,7 @@ export function UnifiedTokenChainModal({
   const [tokenSearch, setTokenSearch] = useState('');
   const [selectedChain, setSelectedChain] = useState<ChainInfo | null>(null);
   const [showMobileChainList, setShowMobileChainList] = useState(false);
-  const swapChainInfos = useTransferChainInfos();
+  const transferChainInfos = useTransferChainInfos();
 
   const onClose = useCallback(() => {
     close();
@@ -84,7 +84,7 @@ export function UnifiedTokenChainModal({
             onEditChain={handleEditChain}
             showBackButton={showMobileChainList}
             onBack={() => setShowMobileChainList(false)}
-            chainInfos={swapChainInfos}
+            chainInfos={transferChainInfos}
           />
         </div>
 

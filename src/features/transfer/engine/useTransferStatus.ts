@@ -79,7 +79,7 @@ export function useTransferStatus(
         step.type === 'swap' && step.chain === dstChain,
     );
 
-    // No destination swap step on this ICA route: bridge delivery is success.
+    // No destination execution step on this ICA route: cross-chain delivery is success.
     if (
       !destinationOutcome &&
       (!route?.callCommitment || !destinationSwapStep || destinationSwapStep.type !== 'swap')
@@ -112,7 +112,7 @@ export function useTransferStatus(
           toast.success('Transfer complete! Funds have arrived.');
         } else if (outcome === 'failed_recovered') {
           updateStatus(transactionId, TransferStatus.FailedRecovered);
-          toast.success('Transfer failed — bridge token returned to your wallet.');
+          toast.success('Transfer failed — intermediate token returned to your wallet.');
         } else {
           updateStatus(transactionId, TransferStatus.DestFailed);
           toast.error('Transfer failed — please contact support, your funds may be in your ICA.');

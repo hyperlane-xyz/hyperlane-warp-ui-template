@@ -199,6 +199,7 @@ export async function validateBalances(args: {
   const igpByToken = aggregateIgp(bestRoute.feeBreakdown.components);
   const srcKey = balanceKey(srcToken.chainId, srcToken.address);
   const sameTokenIgp = igpByToken.get(srcKey) ?? 0n;
+  const nativeFee = igpByToken.get(balanceKey(srcChainInfo.id, NATIVE_ADDRESS)) ?? 0n;
 
   let srcBalance: bigint | null;
   try {
@@ -251,7 +252,7 @@ export async function validateBalances(args: {
     tx: originTx,
     approvalPending,
   });
-  const nativeRequired = txValue + gasCost;
+  const nativeRequired = txValue + gasCost + (srcToken.isNative ? 0n : nativeFee);
   if (nativeRequired > 0n) {
     let nativeBalance: bigint | null = srcToken.isNative ? srcBalance : null;
     if (!srcToken.isNative) {

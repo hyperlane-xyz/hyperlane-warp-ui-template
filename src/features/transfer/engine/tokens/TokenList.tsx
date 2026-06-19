@@ -1,5 +1,5 @@
 import { ChainName } from '@hyperlane-xyz/sdk';
-import { Tooltip, useDebounce } from '@hyperlane-xyz/widgets';
+import { useDebounce } from '@hyperlane-xyz/widgets';
 import React, { useEffect, useMemo, useRef } from 'react';
 
 import { TokenChainIcon } from '../../../../components/icons/TokenChainIcon';
@@ -168,7 +168,6 @@ export function TokenList({
         <div className="py-2 md:px-3">
           {tokens.map((token) => {
             const key = getTokenKey(token);
-            const hasRoute = tokenRouteMap ? (tokenRouteMap.get(key) ?? true) : true;
             const balance = balanceMap.get(key);
             const usdValue = usdMap.get(key) ?? null;
 
@@ -177,9 +176,6 @@ export function TokenList({
                 key={key}
                 token={token}
                 onSelect={onSelect}
-                hasRoute={hasRoute}
-                counterpartToken={counterpartToken}
-                selectionMode={selectionMode}
                 balance={balance}
                 usdValue={usdValue}
                 isBalanceLoading={isBalanceLoading && hasAnyAddress}
@@ -203,36 +199,20 @@ export function TokenList({
 const TokenButton = React.memo(function TokenButton({
   token,
   onSelect,
-  hasRoute,
-  counterpartToken,
-  selectionMode,
   balance,
   usdValue,
   isBalanceLoading,
 }: {
   token: UiToken;
   onSelect: (token: UiToken) => void;
-  hasRoute: boolean;
-  counterpartToken?: UiToken;
-  selectionMode: TokenSelectionMode;
   balance?: bigint;
   usdValue?: number | null;
   isBalanceLoading: boolean;
 }) {
   const multiProvider = useMultiProvider();
   const chainDisplayName = getChainDisplayName(multiProvider, token.chainName);
-  const counterpartChainName = counterpartToken
-    ? getChainDisplayName(multiProvider, counterpartToken.chainName)
-    : '';
-
-  const routeDirection = selectionMode === 'destination' ? 'from' : 'to';
-  const routeTooltipMessage = counterpartToken
-    ? `No route ${routeDirection} ${counterpartToken.symbol} on ${counterpartChainName}`
-    : '';
-
   const formattedBalance = balance != null ? formatBalance(balance, token.decimals) : null;
   const formattedUsd = usdValue != null && usdValue > 0 ? formatUsd(usdValue) : null;
-  const showRouteUnavailable = !hasRoute && counterpartToken;
 
   const primaryValue = formattedUsd ?? formattedBalance;
   const secondaryValue = formattedUsd ? formattedBalance : null;
@@ -272,17 +252,6 @@ const TokenButton = React.memo(function TokenButton({
             )}
           </>
         ) : null}
-        {showRouteUnavailable && (
-          <div className="flex items-center justify-end gap-1 whitespace-nowrap text-[10px] text-gray-400">
-            <span>Route unavailable</span>
-            <Tooltip
-              content={routeTooltipMessage}
-              id={`route-tooltip-${getTokenKey(token)}`}
-              tooltipClassName="token-picker-info-icon max-w-[280px]"
-              onClick={(e) => e.stopPropagation()}
-            />
-          </div>
-        )}
       </div>
     </button>
   );

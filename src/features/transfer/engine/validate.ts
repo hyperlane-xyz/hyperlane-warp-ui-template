@@ -37,6 +37,7 @@ export async function validateTransferForm(args: {
   multiProvider: MultiProtocolProvider;
   approvalPending?: boolean;
   quoteExpiresAt?: number;
+  nativeExecutionFee?: bigint;
 }): Promise<TransferFormErrors | null> {
   const {
     values,
@@ -49,6 +50,7 @@ export async function validateTransferForm(args: {
     multiProvider,
     approvalPending,
     quoteExpiresAt,
+    nativeExecutionFee,
   } = args;
 
   const chainsResult = validateChains(values, chains);
@@ -86,6 +88,7 @@ export async function validateTransferForm(args: {
     bestRoute,
     amountAtomic,
     approvalPending,
+    nativeExecutionFee,
   });
 }
 
@@ -181,6 +184,7 @@ export async function validateBalances(args: {
   bestRoute: AugmentedRoute;
   amountAtomic: bigint;
   approvalPending?: boolean;
+  nativeExecutionFee?: bigint;
 }): Promise<TransferFormErrors | null> {
   const {
     multiProvider,
@@ -190,6 +194,7 @@ export async function validateBalances(args: {
     bestRoute,
     amountAtomic,
     approvalPending,
+    nativeExecutionFee = 0n,
   } = args;
 
   const initialStep = bestRoute.raw.steps[0];
@@ -252,7 +257,8 @@ export async function validateBalances(args: {
     tx: originTx,
     approvalPending,
   });
-  const nativeRequired = txValue + gasCost + (srcToken.isNative ? 0n : nativeFee);
+  const quotedNativeDebit = srcToken.isNative ? amountIn + sameTokenIgp : nativeFee;
+  const nativeRequired = maxBigInt(txValue, quotedNativeDebit) + gasCost + nativeExecutionFee;
   if (nativeRequired > 0n) {
     let nativeBalance: bigint | null = srcToken.isNative ? srcBalance : null;
     if (!srcToken.isNative) {
@@ -275,6 +281,10 @@ export async function validateBalances(args: {
   }
 
   return null;
+}
+
+function maxBigInt(a: bigint, b: bigint): bigint {
+  return a > b ? a : b;
 }
 
 function aggregateIgp(components: FeeComponent[]): Map<string, bigint> {

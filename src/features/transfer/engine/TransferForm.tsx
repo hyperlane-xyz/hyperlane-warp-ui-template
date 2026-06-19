@@ -1,7 +1,8 @@
-import { objLength } from '@hyperlane-xyz/utils';
+import { objLength, ProtocolType } from '@hyperlane-xyz/utils';
 import { useDebounce, useModal } from '@hyperlane-xyz/widgets';
 import { useAccounts } from '@hyperlane-xyz/widgets/walletIntegrations/accounts';
 import { useAccountAddressForChain } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
+import { useAccount as useStarknetAccount, type UseAccountResult } from '@starknet-react/core';
 import { Form, Formik, useFormikContext } from 'formik';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { formatUnits, type Address } from 'viem';
@@ -16,8 +17,10 @@ import { TransferSection } from '../../../components/layout/TransferSection';
 import { useToastError } from '../../../components/toast/useToastError';
 import { WARP_QUERY_PARAMS } from '../../../consts/args';
 import { config } from '../../../consts/config';
+import { logger } from '../../../utils/logger';
 import { updateQueryParams } from '../../../utils/queryParams';
 import { useChains } from '../../api/hooks';
+import type { RouteTx } from '../../api/types';
 import { useMultiProvider } from '../../chains/hooks';
 import { TransactionHistoryItemType, useStore } from '../../store';
 import { RecipientConfirmationModal } from '../../wallet/RecipientConfirmationModal';
@@ -75,6 +78,7 @@ function TransferFormContent() {
   const multiProvider = useMultiProvider();
   const tokenMap = useTokenByKeyMap();
   const { data: chainsResp } = useChains();
+  const { account: starknetAccount } = useStarknetAccount();
   // Mounts the catalogue-wide price fetch once for the whole form. Cards
   // and review modal read individual prices via `useTokenUsdValue` (pure
   // store readers); without this top-level call, deep-linked URLs would
@@ -133,6 +137,7 @@ function TransferFormContent() {
   const safeIndex = selectedRouteIndex < routes.length ? selectedRouteIndex : 0;
   const bestRoute = routes[safeIndex] ?? routes[0];
   const approval = bestRoute?.raw.approval ?? null;
+  const srcChainInfo = chainsResp?.chains.find((chain) => chain.id === values.srcChain);
 
   const approvalAmount = useMemo(
     () => (approval ? BigInt(approval.amount) : undefined),
@@ -190,6 +195,11 @@ function TransferFormContent() {
     try {
       const approvalPending =
         status.phase === ApprovalPhase.NeedsApprove || status.phase === ApprovalPhase.NeedsRevoke;
+      const nativeExecutionFee = await estimateStarknetExecutionFee({
+        route: bestRoute,
+        srcProtocol: srcChainInfo?.protocol,
+        account: starknetAccount,
+      });
       const result = await validateTransferForm({
         values,
         bestRoute,
@@ -201,6 +211,7 @@ function TransferFormContent() {
         multiProvider,
         approvalPending,
         quoteExpiresAt: quote?.expiresAt,
+        nativeExecutionFee,
       });
       // Discard the result if the user edited the form while we were
       // validating — otherwise we'd enter review mode on stale data.
@@ -226,6 +237,8 @@ function TransferFormContent() {
     multiProvider,
     status.phase,
     quote?.expiresAt,
+    srcChainInfo?.protocol,
+    starknetAccount,
     setErrors,
   ]);
 
@@ -241,6 +254,11 @@ function TransferFormContent() {
     const snapshot = values;
     const approvalPending =
       status.phase === ApprovalPhase.NeedsApprove || status.phase === ApprovalPhase.NeedsRevoke;
+    const nativeExecutionFee = await estimateStarknetExecutionFee({
+      route: bestRoute,
+      srcProtocol: srcChainInfo?.protocol,
+      account: starknetAccount,
+    });
     const validationResult = await validateTransferForm({
       values,
       bestRoute,
@@ -252,6 +270,7 @@ function TransferFormContent() {
       multiProvider,
       approvalPending,
       quoteExpiresAt: quote?.expiresAt,
+      nativeExecutionFee,
     });
     // Same race as onContinue — if the form changed mid-validation,
     // discard the result. In practice the inputs are disabled in review
@@ -353,6 +372,7 @@ function TransferFormContent() {
     effectiveRecipient,
     status.phase,
     chainsResp?.chains,
+    srcChainInfo?.protocol,
     multiProvider,
     quote?.expiresAt,
     approval,
@@ -364,6 +384,7 @@ function TransferFormContent() {
     updateTransferTransactionStatus,
     setTransferLoading,
     setErrors,
+    starknetAccount,
   ]);
 
   // Validation runs on Continue, not on change. Clear stale errors when
@@ -512,6 +533,42 @@ function TransferFormContent() {
       <FormSubmitDispatcher onContinue={onContinue} isReview={isReview} />
     </>
   );
+}
+
+type StarknetAccount = NonNullable<UseAccountResult['account']>;
+type StarknetCalls = Parameters<StarknetAccount['estimateInvokeFee']>[0];
+
+async function estimateStarknetExecutionFee({
+  route,
+  srcProtocol,
+  account,
+}: {
+  route: AugmentedRoute | undefined;
+  srcProtocol: string | undefined;
+  account: StarknetAccount | undefined;
+}): Promise<bigint> {
+  if (srcProtocol !== ProtocolType.Starknet || !account || !route) return 0n;
+
+  const calls = getRouteTxs(route)
+    .filter(isStarknetRouteTx)
+    .map((tx) => tx.transaction);
+  if (!calls.length) return 0n;
+
+  try {
+    const fee = await account.estimateInvokeFee(calls as StarknetCalls);
+    return fee.suggestedMaxFee ?? fee.overall_fee ?? 0n;
+  } catch (err) {
+    logger.warn('Failed to estimate Starknet execution fee', err as Error);
+    return 0n;
+  }
+}
+
+function getRouteTxs(route: AugmentedRoute): RouteTx[] {
+  return route.raw.txs?.length ? route.raw.txs : route.raw.tx ? [route.raw.tx] : [];
+}
+
+function isStarknetRouteTx(tx: RouteTx): tx is Extract<RouteTx, { protocol: string }> {
+  return 'protocol' in tx && tx.protocol === ProtocolType.Starknet;
 }
 
 function WarningBanners({

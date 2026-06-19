@@ -78,6 +78,44 @@ describe('validateBalances', () => {
     );
   });
 
+  test('adds wallet execution fee to native balance validation', async () => {
+    readBalanceMock
+      .mockResolvedValueOnce(100_000_000n)
+      .mockResolvedValueOnce(10_370_000_000_000_000_000n);
+
+    const errors = await validateBalances({
+      multiProvider: multiProvider(),
+      srcChainInfo: starknetChain(),
+      srcToken: bonkToken(),
+      sender: '0xsender',
+      bestRoute: routeWithNativeFee(10_178_000_000_000_000_000n),
+      amountAtomic: 10_000_000n,
+      nativeExecutionFee: 750_000_000_000_000_000n,
+    });
+
+    expect(errors).toEqual({ amount: 'Insufficient STRK for transaction value and gas' });
+  });
+
+  test('does not double count native quoted fees already included in tx value', async () => {
+    readBalanceMock.mockResolvedValueOnce(100_000_000n).mockResolvedValueOnce(10n);
+    estimateNativeGasCostMock.mockResolvedValueOnce(3n);
+
+    const errors = await validateBalances({
+      multiProvider: multiProvider(ProtocolType.Ethereum),
+      srcChainInfo: evmChain(),
+      srcToken: bonkToken({ chainId: 1, chainName: 'ethereum' }),
+      sender: '0xsender',
+      bestRoute: routeWithNativeFee(7n, 1, {
+        to: '0x0000000000000000000000000000000000000001',
+        data: '0x',
+        value: '7',
+      }),
+      amountAtomic: 10_000_000n,
+    });
+
+    expect(errors).toBeNull();
+  });
+
   test('does not double count native IGP fees for native source tokens', async () => {
     readBalanceMock.mockResolvedValueOnce(10_000_001n);
 
@@ -131,6 +169,21 @@ function solanaChain(): ChainDiscovery {
   };
 }
 
+function evmChain(): ChainDiscovery {
+  return {
+    id: 1,
+    name: 'Ethereum',
+    chainName: 'ethereum',
+    protocol: ProtocolType.Ethereum,
+    nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+    universalRouter: '0x0000000000000000000000000000000000000001',
+    dex: null,
+    canSwap: false,
+    canExecute: true,
+    supportsNative: true,
+  };
+}
+
 function bonkToken(overrides: Partial<UiToken> = {}): UiToken {
   return {
     chainId: 358974494,
@@ -163,7 +216,11 @@ function strkToken(): UiToken {
   };
 }
 
-function routeWithNativeFee(nativeFee: bigint, chainId = 358974494): AugmentedRoute {
+function routeWithNativeFee(
+  nativeFee: bigint,
+  chainId = 358974494,
+  tx: RouteResponse['tx'] = null,
+): AugmentedRoute {
   return {
     raw: {
       steps: [
@@ -190,7 +247,7 @@ function routeWithNativeFee(nativeFee: bigint, chainId = 358974494): AugmentedRo
       executionKind: 'sdkWarp',
       connection: { symbol: 'Bonk', warpRouteId: 'Bonk/starknet' },
       gas: { originGas: '200000', destGas: '0' },
-      tx: null,
+      tx,
       txs: [],
       approval: null,
     } as RouteResponse,

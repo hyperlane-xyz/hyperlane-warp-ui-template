@@ -6,6 +6,7 @@ import {
 } from '@hyperlane-xyz/sdk';
 import { isZeroishAddress, ProtocolType } from '@hyperlane-xyz/utils';
 import { useTransactionFns } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
+import { Keypair, Transaction, VersionedTransaction } from '@solana/web3.js';
 import { useCallback, useState } from 'react';
 import type { Address } from 'viem';
 
@@ -237,8 +238,8 @@ function isEvmRouteTx(tx: RouteTx): tx is Extract<RouteTx, { to: string }> {
   return 'to' in tx;
 }
 
-function toWalletTx(tx: RouteTx, txType: ProviderType): unknown {
-  if (!isEvmRouteTx(tx)) return tx;
+export function toWalletTx(tx: RouteTx, txType: ProviderType): unknown {
+  if (!isEvmRouteTx(tx)) return toSdkWalletTx(tx);
   return {
     type: txType,
     transaction: {
@@ -248,6 +249,58 @@ function toWalletTx(tx: RouteTx, txType: ProviderType): unknown {
     },
     category: 'transfer',
   };
+}
+
+function toSdkWalletTx(tx: Extract<RouteTx, { protocol: string }>): unknown {
+  if (tx.type !== ProviderType.SolanaWeb3) return tx;
+  const transaction = deserializeSolanaTransaction(tx.transaction);
+  const extraSigners = deserializeSolanaExtraSigners(tx.extraSigners);
+  signSolanaTransaction(transaction, extraSigners);
+  return {
+    ...tx,
+    transaction,
+  };
+}
+
+function deserializeSolanaTransaction(raw: unknown): Transaction | VersionedTransaction {
+  const payload = raw as { encoding?: unknown; data?: unknown };
+  if (payload.encoding !== 'base64' || typeof payload.data !== 'string') {
+    throw new Error('Invalid Solana transaction payload from quote');
+  }
+  const bytes = base64ToBytes(payload.data);
+  try {
+    const tx = Transaction.from(bytes);
+    return tx;
+  } catch {
+    return VersionedTransaction.deserialize(bytes);
+  }
+}
+
+function deserializeSolanaExtraSigners(signers: string[] | undefined): Keypair[] | undefined {
+  if (!signers?.length) return undefined;
+  return signers.map((signer) => Keypair.fromSecretKey(base64ToBytes(signer)));
+}
+
+function signSolanaTransaction(
+  transaction: Transaction | VersionedTransaction,
+  signers: Keypair[] | undefined,
+) {
+  if (!signers?.length) return;
+  if (transaction instanceof Transaction) {
+    transaction.partialSign(...signers);
+    return;
+  }
+  transaction.sign(signers);
+}
+
+function base64ToBytes(value: string): Uint8Array {
+  if (typeof atob === 'function') {
+    const bin = atob(value);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return bytes;
+  }
+  return Uint8Array.from(Buffer.from(value, 'base64'));
 }
 
 interface ParsedMessage {

@@ -442,7 +442,6 @@ function TransferFormContent() {
           srcChainName={srcChainName}
           srcToken={srcToken}
           sender={sender}
-          amountError={errors.amount}
         />
       </TransferSection>
 
@@ -456,7 +455,6 @@ function TransferFormContent() {
           recipient={effectiveRecipient}
           bestRoute={bestRoute}
           quoteLoading={quoteLoading}
-          recipientError={errors.recipient}
           inputUsd={amountUsd}
         />
       </TransferSection>
@@ -595,13 +593,11 @@ function OriginTokenCard({
   srcChainName,
   srcToken,
   sender,
-  amountError,
 }: {
   isReview: boolean;
   srcChainName: string | undefined;
   srcToken: UiToken | undefined;
   sender: string | undefined;
-  amountError: string | undefined;
 }) {
   const { values } = useFormikContext<TransferFormValues>();
   const { data: balance, isLoading: isBalanceLoading } = useTokenBalance(srcToken, sender);
@@ -644,11 +640,6 @@ function OriginTokenCard({
           <TokenBalance label="Balance" balance={balance ?? null} token={srcToken} />
         </div>
       </div>
-      {amountError && (
-        <p className="transfer-field-error mt-1 pl-1 text-xs text-red-500 dark:text-red-400">
-          {amountError}
-        </p>
-      )}
     </div>
   );
 }
@@ -660,7 +651,6 @@ function DestinationTokenCard({
   recipient,
   bestRoute,
   quoteLoading,
-  recipientError,
   inputUsd,
 }: {
   isReview: boolean;
@@ -669,7 +659,6 @@ function DestinationTokenCard({
   recipient: string;
   bestRoute: AugmentedRoute | undefined;
   quoteLoading: boolean;
-  recipientError: string | undefined;
   inputUsd: number | null;
 }) {
   const { values, setFieldValue } = useFormikContext<TransferFormValues>();
@@ -748,11 +737,6 @@ function DestinationTokenCard({
           <TokenBalance label="Remote Balance" balance={balance ?? null} token={dstToken} />
         </div>
       </div>
-      {recipientError && (
-        <p className="transfer-field-error mt-1 pl-1 text-xs text-red-500 dark:text-red-400">
-          {recipientError}
-        </p>
-      )}
     </div>
   );
 }

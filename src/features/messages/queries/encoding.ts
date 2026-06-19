@@ -1,10 +1,12 @@
 import type { ChainMetadata } from '@hyperlane-xyz/sdk';
 import {
   addressToByteHexString,
+  base58ToBuffer,
   bufferToBase58,
   bytesToProtocolAddress,
   ensure0x,
   isAddressEvm,
+  isValidTransactionHash,
   ProtocolType,
   strip0x,
 } from '@hyperlane-xyz/utils';
@@ -22,6 +24,38 @@ export function postgresByteaToString(byteString: string): string {
 export function addressToPostgresBytea(address: string): string {
   const hexString = isAddressEvm(address) ? address : addressToByteHexString(address);
   return stringToPostgresBytea(hexString);
+}
+
+export function txHashToPostgresBytea(
+  txHash: string,
+  chainMetadata: ChainMetadata | null | undefined,
+): string | undefined {
+  try {
+    if (chainMetadata?.protocol === ProtocolType.Sealevel) {
+      return stringToPostgresBytea(base58ToBuffer(txHash).toString('hex'));
+    }
+    if (
+      chainMetadata?.protocol &&
+      isHexEncodedTxHashProtocol(chainMetadata.protocol) &&
+      isValidTransactionHash(txHash, chainMetadata.protocol)
+    ) {
+      return stringToPostgresBytea(txHash);
+    }
+    if (/^(0x)?[0-9a-fA-F]+$/.test(txHash)) return stringToPostgresBytea(txHash);
+    return undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function isHexEncodedTxHashProtocol(protocol: ProtocolType) {
+  return [
+    ProtocolType.Ethereum,
+    ProtocolType.Cosmos,
+    ProtocolType.CosmosNative,
+    ProtocolType.Starknet,
+    ProtocolType.Tron,
+  ].includes(protocol);
 }
 
 export function postgresByteaToAddress(

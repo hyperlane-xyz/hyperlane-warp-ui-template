@@ -1,6 +1,9 @@
 import {
+  type ChainMap,
+  type CoreAddresses,
   EvmTokenAdapter,
   HyperlaneCore,
+  MultiProtocolCore,
   ProviderType,
   type TypedTransactionReceipt,
 } from '@hyperlane-xyz/sdk';
@@ -16,8 +19,9 @@ import { useMultiProvider } from '../../chains/hooks';
 import { useStore } from '../../store';
 import { submitToRelayApi } from '../relayApi';
 import { postCommitment } from './ccs';
+import { labelTransferMessages, type ParsedTransferMessage } from './messages';
 import { TransferStatus } from './types';
-import type { AugmentedRoute, LabeledMsgId } from './types';
+import type { AugmentedRoute } from './types';
 
 interface ExecuteArgs {
   transactionId: string;
@@ -43,6 +47,7 @@ interface ExecuteArgs {
 export function useTransfer() {
   const multiProvider = useMultiProvider();
   const transactionFns = useTransactionFns(multiProvider);
+  const chainAddresses = useStore((s) => s.chainAddresses);
   const updateTransferTransactionStatus = useStore((s) => s.updateTransferTransactionStatus);
   const setTransferRoute = useStore((s) => s.setTransferRoute);
   const [error, setError] = useState<Error | null>(null);
@@ -162,7 +167,7 @@ export function useTransfer() {
         }
 
         if (!hash || !receipt) throw new Error('Route transaction did not return a receipt');
-        const parsed = parseReceipt(receipt);
+        const parsed = await parseReceipt(multiProvider, chainAddresses, srcChainName, receipt);
         const hasCrossChainStep = route.raw.steps.some((s) => s.type === 'bridge');
         const canReadDispatchLogs = isEvmReceipt(receipt);
         if (hasCrossChainStep && canReadDispatchLogs && !parsed.messages.length) {
@@ -189,7 +194,7 @@ export function useTransfer() {
         submitToRelayApi(srcChainName, hash, protocol as ProtocolType, receipt);
 
         updateTransferTransactionStatus(transactionId, TransferStatus.Bridging, {
-          msgIds: labelMessages(parsed.messages, route),
+          msgIds: labelTransferMessages(parsed.messages, route.raw),
           originBlockNumber: parsed.originBlockNumber,
           originTxTimestamp: Math.floor(Date.now() / 1000),
         });
@@ -204,7 +209,13 @@ export function useTransfer() {
         setIsPending(false);
       }
     },
-    [transactionFns, multiProvider, updateTransferTransactionStatus, setTransferRoute],
+    [
+      transactionFns,
+      multiProvider,
+      chainAddresses,
+      updateTransferTransactionStatus,
+      setTransferRoute,
+    ],
   );
 
   return { execute, isPending, error };
@@ -303,82 +314,82 @@ function base64ToBytes(value: string): Uint8Array {
   return Uint8Array.from(Buffer.from(value, 'base64'));
 }
 
-interface ParsedMessage {
-  msgId: `0x${string}`;
-  sender: `0x${string}`;
-  body: string;
-}
-
-function parseReceipt(receipt: TypedTransactionReceipt): {
-  messages: ParsedMessage[];
+async function parseReceipt(
+  multiProvider: ReturnType<typeof useMultiProvider>,
+  chainAddresses: ChainMap<Partial<CoreAddresses>>,
+  origin: string,
+  receipt: TypedTransactionReceipt,
+): Promise<{
+  messages: ParsedTransferMessage[];
   originBlockNumber: number | undefined;
-} {
+}> {
   // Tron is EVM-like — emits Hyperlane Dispatch logs in the same shape.
   if (
-    receipt.type !== ProviderType.Viem &&
-    receipt.type !== ProviderType.EthersV5 &&
-    receipt.type !== ProviderType.Tron
+    receipt.type === ProviderType.Viem ||
+    receipt.type === ProviderType.EthersV5 ||
+    receipt.type === ProviderType.Tron
   ) {
-    return { messages: [], originBlockNumber: undefined };
+    const rawReceipt = receipt.receipt as Parameters<
+      typeof HyperlaneCore.getDispatchedMessages
+    >[0] & {
+      blockNumber?: bigint | number;
+    };
+    const dispatched = HyperlaneCore.getDispatchedMessages(rawReceipt);
+    const messages = dispatched.map((m) => ({
+      msgId: m.id,
+      sender: m.parsed.sender,
+      body: m.parsed.body,
+    }));
+    return {
+      messages,
+      originBlockNumber: maybeNumber(rawReceipt.blockNumber),
+    };
   }
-  const rawReceipt = receipt.receipt as Parameters<
-    typeof HyperlaneCore.getDispatchedMessages
-  >[0] & {
+
+  try {
+    const core = new MultiProtocolCore(
+      multiProvider,
+      buildCoreAddresses(multiProvider, chainAddresses),
+    );
+    const messages = await core.extractMessageIds(origin, receipt);
+    return {
+      messages: messages.map((m) => ({ msgId: m.messageId })),
+      originBlockNumber: getReceiptBlockNumber(receipt),
+    };
+  } catch (err) {
+    logger.warn('Could not extract Hyperlane message IDs from origin receipt', err as Error);
+    return {
+      messages: [],
+      originBlockNumber: getReceiptBlockNumber(receipt),
+    };
+  }
+}
+
+function buildCoreAddresses(
+  multiProvider: ReturnType<typeof useMultiProvider>,
+  chainAddresses: ChainMap<Partial<CoreAddresses>>,
+): ChainMap<CoreAddresses> {
+  return multiProvider.getKnownChainNames().reduce<ChainMap<CoreAddresses>>((acc, chainName) => {
+    acc[chainName] = {
+      validatorAnnounce: chainAddresses[chainName]?.validatorAnnounce ?? '',
+      proxyAdmin: chainAddresses[chainName]?.proxyAdmin ?? '',
+      mailbox: chainAddresses[chainName]?.mailbox ?? '',
+      quotedCalls: chainAddresses[chainName]?.quotedCalls ?? '',
+    };
+    return acc;
+  }, {});
+}
+
+function getReceiptBlockNumber(receipt: TypedTransactionReceipt): number | undefined {
+  const raw = receipt.receipt as {
     blockNumber?: bigint | number;
+    block_number?: bigint | number;
+    height?: bigint | number;
   };
-  const dispatched = HyperlaneCore.getDispatchedMessages(rawReceipt);
-  const messages = dispatched.map((m) => ({
-    msgId: m.id as `0x${string}`,
-    sender: m.parsed.sender as `0x${string}`,
-    body: m.parsed.body,
-  }));
-  const blockNumber = rawReceipt.blockNumber;
-  return {
-    messages,
-    originBlockNumber: blockNumber != null ? Number(blockNumber) : undefined,
-  };
+  return maybeNumber(raw.blockNumber ?? raw.block_number ?? raw.height);
 }
 
-function labelMessages(messages: ParsedMessage[], route: AugmentedRoute): LabeledMsgId[] {
-  const bridgeRouters = new Set(
-    route.raw.steps
-      .filter(
-        (s): s is Extract<(typeof route.raw.steps)[number], { type: 'bridge' }> =>
-          s.type === 'bridge',
-      )
-      .map((s) => s.router.toLowerCase()),
-  );
-
-  const nonWarp = messages.filter((m) => !bridgeRouters.has(m.sender.toLowerCase()));
-
-  // callRemoteCommitReveal dispatches COMMIT first, REVEAL last. CCTP aggregation
-  // routes prepend an extra internal message, so identify REVEAL as the last
-  // non-warp message rather than counting from the front.
-  const revealMsg = nonWarp.at(-1);
-
-  return messages.map((msg) => {
-    if (bridgeRouters.has(msg.sender.toLowerCase())) {
-      return { msgId: msg.msgId, label: 'warp' as const };
-    }
-
-    const ccsLabel = getCcsMessageLabel(msg.body);
-    if (ccsLabel) return { msgId: msg.msgId, label: ccsLabel };
-    if (nonWarp.length === 1 && msg === nonWarp[0]) {
-      return { msgId: msg.msgId, label: 'bridge' as const };
-    }
-    if (msg === revealMsg) return { msgId: msg.msgId, label: 'reveal' as const };
-
-    logger.warn('Unexpected transfer message shape; labeling as commit', {
-      msgId: msg.msgId,
-      sender: msg.sender,
-    });
-    return { msgId: msg.msgId, label: 'commit' as const };
-  });
-}
-
-function getCcsMessageLabel(body: string): LabeledMsgId['label'] | null {
-  // CCS message bodies use the first byte as the message type.
-  if (body.startsWith('0x01')) return 'commit';
-  if (body.startsWith('0x02')) return 'reveal';
-  return null;
+function maybeNumber(value: bigint | number | undefined): number | undefined {
+  if (value == null) return undefined;
+  return Number(value);
 }

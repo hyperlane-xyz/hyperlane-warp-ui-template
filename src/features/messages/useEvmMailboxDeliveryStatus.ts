@@ -13,7 +13,7 @@ export function useEvmMailboxDeliveryStatus({
   multiProvider,
   enabled,
 }: {
-  msgId: string;
+  msgId: string | undefined;
   destinationChain: ChainName | undefined;
   chainAddresses: ChainMap<ChainAddresses>;
   multiProvider: MultiProtocolProvider;
@@ -23,10 +23,12 @@ export function useEvmMailboxDeliveryStatus({
   const { data } = useQuery({
     queryKey: ['evmMailboxDelivery', destinationChain, mailbox, msgId],
     queryFn: async () => {
-      if (!destinationChain) return { isDelivered: false, destinationTxHash: undefined };
+      if (!destinationChain || !msgId) {
+        return { isDelivered: false, destinationTxHash: undefined };
+      }
       return getMailboxDeliveryStatus({ msgId, destinationChain, chainAddresses, multiProvider });
     },
-    enabled: enabled && !!destinationChain && !!mailbox,
+    enabled: enabled && !!msgId && !!destinationChain && !!mailbox,
     refetchInterval: (query) => {
       if (query.state.data?.isDelivered) return false;
       return MAILBOX_DELIVERY_POLL_INTERVAL_MS;

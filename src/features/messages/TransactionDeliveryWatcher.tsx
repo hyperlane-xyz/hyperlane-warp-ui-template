@@ -10,12 +10,15 @@ import { FinalTransferStatuses, TransferStatus } from '../transfer/engine/types'
 import { useTransferStatus } from '../transfer/engine/useTransferStatus';
 import { useEvmMailboxDeliveryStatus } from './useEvmMailboxDeliveryStatus';
 import { useMessageDeliveryStatus } from './useMessageDeliveryStatus';
+import { useOriginTxMessages } from './useOriginTxMessages';
 import { getTransferDeliveryMsgId } from './utils';
 
 type TransferDeliveryTarget = {
   id: string;
   type: typeof TransactionHistoryItemType.Transfer;
-  msgId: string;
+  msgId?: string;
+  originTxHash?: string;
+  originDomainId: number;
   destinationChain: ChainName;
   status: TransferStatus;
   requiresDestinationOutcome: boolean;
@@ -36,7 +39,6 @@ export function TransactionDeliveryWatcher() {
     const deliveryTargets = transactionHistory.flatMap((item): DeliveryTarget[] => {
       if (item.type !== TransactionHistoryItemType.Transfer) return [];
 
-      if (!item.data.msgIds?.length) return [];
       if (FinalTransferStatuses.includes(item.data.status)) {
         if (
           item.data.status !== TransferStatus.ConfirmedDestination ||
@@ -49,13 +51,15 @@ export function TransactionDeliveryWatcher() {
       const destinationChain = multiProvider.tryGetChainName(item.data.dstChain);
       if (!destinationChain) return [];
       const msgId = getTransferDeliveryMsgId(item.data.msgIds);
-      if (!msgId) return [];
+      if (!msgId && !item.data.originTxHash) return [];
 
       return [
         {
           id: item.id,
           type: item.type,
           msgId,
+          originTxHash: item.data.originTxHash,
+          originDomainId: item.data.srcChain,
           destinationChain,
           status: item.data.status,
           requiresDestinationOutcome:
@@ -74,7 +78,7 @@ export function TransactionDeliveryWatcher() {
     <>
       {targets.map((target) => (
         <DeliveryTargetWatcher
-          key={`${target.type}-${target.id}-${target.msgId}`}
+          key={`${target.type}-${target.id}-${target.msgId ?? target.originTxHash}`}
           target={target}
           chainAddresses={chainAddresses}
         />
@@ -92,12 +96,20 @@ function DeliveryTargetWatcher({
 }) {
   const multiProvider = useMultiProvider();
   const updateTransferTransactionStatus = useStore((s) => s.updateTransferTransactionStatus);
+  const transferRouteByTransactionId = useStore((s) => s.transferRouteByTransactionId);
   const transfer = useStore((s) => {
     if (target.type !== TransactionHistoryItemType.Transfer) return undefined;
     const item = s.transactionHistory.find((entry) => entry.id === target.id);
     return item?.type === TransactionHistoryItemType.Transfer ? item.data : undefined;
   });
   const graphQlDelivery = useMessageDeliveryStatus(target.msgId, true, multiProvider);
+  const originTxMessages = useOriginTxMessages(
+    target.msgId ? undefined : target.originTxHash,
+    target.originDomainId,
+    transferRouteByTransactionId.get(target.id),
+    !target.msgId,
+    multiProvider,
+  );
   const mailboxDelivery = useEvmMailboxDeliveryStatus({
     msgId: target.msgId,
     destinationChain: target.destinationChain,
@@ -120,9 +132,35 @@ function DeliveryTargetWatcher({
     hasUpdatedFromGraphQl.current = false;
     hasBackfilledGraphQlHash.current = false;
     hasUpdatedFromMailbox.current = false;
-  }, [target.id, target.msgId]);
+  }, [target.id, target.msgId, target.originTxHash]);
 
   useEffect(() => {
+    if (originTxMessages.msgIds?.length) {
+      const nextStatus = originTxMessages.isDelivered
+        ? target.requiresDestinationOutcome
+          ? TransferStatus.ConfirmingDestination
+          : TransferStatus.ConfirmedDestination
+        : TransferStatus.Bridging;
+      updateTransferTransactionStatus(target.id, nextStatus, {
+        msgIds: originTxMessages.msgIds,
+        originBlockNumber: originTxMessages.originBlockHeight,
+        originTxTimestamp: originTxMessages.originTimestamp
+          ? Math.floor(originTxMessages.originTimestamp / 1000)
+          : undefined,
+        destinationTxHash: originTxMessages.destinationTxHash,
+      });
+      if (
+        originTxMessages.isDelivered &&
+        !target.requiresDestinationOutcome &&
+        target.status !== TransferStatus.ConfirmedDestination &&
+        !hasToasted.current
+      ) {
+        hasToasted.current = true;
+        toast.success('Transfer complete! Funds have arrived.');
+      }
+      return;
+    }
+
     if (
       graphQlDelivery.isDelivered &&
       shouldUpdateFromDelivery(
@@ -172,6 +210,11 @@ function DeliveryTargetWatcher({
     graphQlDelivery.isDelivered,
     mailboxDelivery.destinationTxHash,
     mailboxDelivery.isDelivered,
+    originTxMessages.destinationTxHash,
+    originTxMessages.isDelivered,
+    originTxMessages.msgIds,
+    originTxMessages.originBlockHeight,
+    originTxMessages.originTimestamp,
     target,
     updateTransferTransactionStatus,
   ]);

@@ -50,7 +50,7 @@ export async function readStarknetTokenBalance(
 ): Promise<bigint> {
   const token = new Token({
     chainName: args.chainName,
-    standard: resolveStarknetBalanceStandard(),
+    standard: resolveStarknetBalanceStandard(args),
     addressOrDenom: args.tokenAddress,
     decimals: args.decimals ?? 18,
     symbol: args.symbol ?? '',
@@ -61,6 +61,7 @@ export async function readStarknetTokenBalance(
   return (await token.getBalance(multiProvider, args.owner)).amount;
 }
 
-export function resolveStarknetBalanceStandard(): TokenStandard {
+export function resolveStarknetBalanceStandard(args?: { standard?: string }): TokenStandard {
+  if (args?.standard === TokenStandard.StarknetHypNative) return TokenStandard.StarknetHypNative;
   return TokenStandard.StarknetNative;
 }

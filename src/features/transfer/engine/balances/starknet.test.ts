@@ -36,6 +36,12 @@ describe('resolveStarknetBalanceStandard', () => {
   test('uses the normal token adapter because engine token addresses are wallet-held assets', () => {
     expect(resolveStarknetBalanceStandard()).toBe(TokenStandard.StarknetNative);
   });
+
+  test('uses the HypNative adapter for native warp routes', () => {
+    expect(resolveStarknetBalanceStandard({ standard: TokenStandard.StarknetHypNative })).toBe(
+      TokenStandard.StarknetHypNative,
+    );
+  });
 });
 
 describe('fetchStarknetChainBalances', () => {

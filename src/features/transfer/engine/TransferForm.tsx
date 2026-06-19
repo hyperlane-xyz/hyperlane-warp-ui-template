@@ -544,9 +544,9 @@ async function estimateStarknetExecutionFee({
   route: AugmentedRoute | undefined;
   srcProtocol: string | undefined;
   account: StarknetAccount | undefined;
-}): Promise<bigint | null> {
+}): Promise<bigint> {
   if (srcProtocol !== ProtocolType.Starknet || !route) return 0n;
-  if (!account) return null;
+  if (!account) return 0n;
 
   const calls = getRouteTxs(route)
     .filter(isStarknetRouteTx)
@@ -558,7 +558,7 @@ async function estimateStarknetExecutionFee({
     return fee.suggestedMaxFee ?? fee.overall_fee ?? 0n;
   } catch (err) {
     logger.warn('Failed to estimate Starknet execution fee', err as Error);
-    return null;
+    return 0n;
   }
 }
 

@@ -12,6 +12,7 @@ import { parseUnits } from 'viem';
 import { logger } from '../../../utils/logger';
 import type { ChainDiscovery, RouteResponse, RouteTx } from '../../api/types';
 import { estimateNativeGasCost, readBalance } from './balances/read';
+import { formatDisplayAmount } from './balances/utils';
 import type { UiToken } from './tokens/types';
 import { tokenKey } from './tokens/utils';
 import type { AugmentedRoute, FeeComponent, TransferFormValues } from './types';
@@ -226,7 +227,14 @@ export async function validateBalances(args: {
   }
 
   if (srcBalance != null && amountIn + sameTokenIgp > srcBalance) {
-    return { amount: `Insufficient ${srcToken.symbol} balance` };
+    return {
+      amount: formatInsufficientBalanceMessage({
+        base: `Insufficient ${srcToken.symbol} balance`,
+        deficit: amountIn + sameTokenIgp - srcBalance,
+        decimals: srcToken.decimals,
+        symbol: srcToken.symbol,
+      }),
+    };
   }
 
   for (const [key, sum] of igpByToken) {
@@ -276,7 +284,14 @@ export async function validateBalances(args: {
     }
     if (nativeBalance != null && nativeRequired > nativeBalance) {
       const sym = srcChainInfo.nativeCurrency?.symbol ?? 'native';
-      return { amount: `Insufficient ${sym} for transaction value and gas` };
+      return {
+        amount: formatInsufficientBalanceMessage({
+          base: `Insufficient ${sym} for transaction value and gas`,
+          deficit: nativeRequired - nativeBalance,
+          decimals: srcChainInfo.nativeCurrency?.decimals ?? 18,
+          symbol: sym,
+        }),
+      };
     }
   }
 
@@ -285,6 +300,20 @@ export async function validateBalances(args: {
 
 function maxBigInt(a: bigint, b: bigint): bigint {
   return a > b ? a : b;
+}
+
+function formatInsufficientBalanceMessage({
+  base,
+  deficit,
+  decimals,
+  symbol,
+}: {
+  base: string;
+  deficit: bigint;
+  decimals: number;
+  symbol: string;
+}): string {
+  return `${base} (need ${formatDisplayAmount(deficit, decimals)} more ${symbol})`;
 }
 
 function aggregateIgp(components: FeeComponent[]): Map<string, bigint> {

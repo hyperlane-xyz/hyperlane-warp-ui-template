@@ -39,7 +39,9 @@ describe('validateBalances', () => {
       amountAtomic: 10_000_000n,
     });
 
-    expect(errors).toEqual({ amount: 'Insufficient STRK for transaction value and gas' });
+    expect(errors).toEqual({
+      amount: 'Insufficient STRK for transaction value and gas (need 0.048 more STRK)',
+    });
     expect(readBalanceMock).toHaveBeenNthCalledWith(
       2,
       expect.anything(),
@@ -66,7 +68,9 @@ describe('validateBalances', () => {
       amountAtomic: 10_000_000n,
     });
 
-    expect(errors).toEqual({ amount: 'Insufficient SOL for transaction value and gas' });
+    expect(errors).toEqual({
+      amount: 'Insufficient SOL for transaction value and gas (need 0.000000001 more SOL)',
+    });
     expect(readBalanceMock).toHaveBeenNthCalledWith(
       2,
       expect.anything(),
@@ -93,7 +97,9 @@ describe('validateBalances', () => {
       nativeExecutionFee: 750_000_000_000_000_000n,
     });
 
-    expect(errors).toEqual({ amount: 'Insufficient STRK for transaction value and gas' });
+    expect(errors).toEqual({
+      amount: 'Insufficient STRK for transaction value and gas (need 0.558 more STRK)',
+    });
   });
 
   test('does not double count native quoted fees already included in tx value', async () => {

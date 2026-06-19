@@ -38,7 +38,7 @@ export async function validateTransferForm(args: {
   multiProvider: MultiProtocolProvider;
   approvalPending?: boolean;
   quoteExpiresAt?: number;
-  nativeExecutionFee?: bigint;
+  nativeExecutionFee?: bigint | null;
 }): Promise<TransferFormErrors | null> {
   const {
     values,
@@ -185,7 +185,7 @@ export async function validateBalances(args: {
   bestRoute: AugmentedRoute;
   amountAtomic: bigint;
   approvalPending?: boolean;
-  nativeExecutionFee?: bigint;
+  nativeExecutionFee?: bigint | null;
 }): Promise<TransferFormErrors | null> {
   const {
     multiProvider,
@@ -197,6 +197,10 @@ export async function validateBalances(args: {
     approvalPending,
     nativeExecutionFee = 0n,
   } = args;
+
+  if (nativeExecutionFee == null) {
+    return { amount: 'Unable to estimate Starknet transaction fee' };
+  }
 
   const initialStep = bestRoute.raw.steps[0];
   const amountIn =

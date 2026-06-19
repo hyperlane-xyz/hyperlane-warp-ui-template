@@ -48,10 +48,11 @@ export async function readStarknetTokenBalance(
     logoURI?: string;
   },
 ): Promise<bigint> {
+  const tokenAddress = resolveStarknetBalanceAddress(multiProvider, args);
   const token = new Token({
     chainName: args.chainName,
     standard: resolveStarknetBalanceStandard(args),
-    addressOrDenom: args.tokenAddress,
+    addressOrDenom: tokenAddress,
     decimals: args.decimals ?? 18,
     symbol: args.symbol ?? '',
     name: args.name ?? args.symbol ?? '',
@@ -64,4 +65,18 @@ export async function readStarknetTokenBalance(
 export function resolveStarknetBalanceStandard(args?: { standard?: string }): TokenStandard {
   if (args?.standard === TokenStandard.StarknetHypNative) return TokenStandard.StarknetHypNative;
   return TokenStandard.StarknetNative;
+}
+
+function resolveStarknetBalanceAddress(
+  multiProvider: MultiProtocolProvider,
+  args: { chainName: string; tokenAddress: string; isNative: boolean },
+): string {
+  if (!args.isNative && !isZeroAddress(args.tokenAddress)) return args.tokenAddress;
+  const nativeAddress = multiProvider.tryGetChainMetadata(args.chainName)?.nativeToken?.denom;
+  if (!nativeAddress) throw new Error(`Native token address not found for ${args.chainName}`);
+  return nativeAddress;
+}
+
+function isZeroAddress(addr: string): boolean {
+  return /^0x0+$/i.test(addr);
 }

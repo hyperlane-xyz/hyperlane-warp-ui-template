@@ -102,6 +102,22 @@ describe('validateBalances', () => {
     });
   });
 
+  test('blocks Starknet transfers when execution fee estimate is unavailable', async () => {
+    readBalanceMock.mockResolvedValueOnce(100_000_000n);
+
+    const errors = await validateBalances({
+      multiProvider: multiProvider(),
+      srcChainInfo: starknetChain(),
+      srcToken: bonkToken(),
+      sender: '0xsender',
+      bestRoute: routeWithNativeFee(10_178_000_000_000_000_000n),
+      amountAtomic: 10_000_000n,
+      nativeExecutionFee: null,
+    });
+
+    expect(errors).toEqual({ amount: 'Unable to estimate Starknet transaction fee' });
+  });
+
   test('does not double count native quoted fees already included in tx value', async () => {
     readBalanceMock.mockResolvedValueOnce(100_000_000n).mockResolvedValueOnce(10n);
     estimateNativeGasCostMock.mockResolvedValueOnce(3n);

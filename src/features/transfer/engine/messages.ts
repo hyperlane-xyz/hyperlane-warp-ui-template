@@ -40,10 +40,12 @@ export function labelTransferMessages(
     }
     if (msg === revealMsg) return { msgId: msg.msgId, label: 'reveal' as const };
 
-    logger.warn('Unexpected transfer message shape; labeling as commit', {
-      msgId: msg.msgId,
-      sender: msg.sender,
-    });
+    if (msg.sender || msg.body) {
+      logger.warn('Unexpected transfer message shape; labeling as commit', {
+        msgId: msg.msgId,
+        sender: msg.sender,
+      });
+    }
     return { msgId: msg.msgId, label: 'commit' as const };
   });
 }

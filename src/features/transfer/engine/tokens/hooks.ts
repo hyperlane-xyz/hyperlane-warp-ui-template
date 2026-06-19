@@ -110,7 +110,7 @@ export function useAvailableRouteTokens({
   }, [chainsResp]);
 
   const query = useMemo(() => {
-    if (!counterpartToken) return undefined;
+    if (!isBridgeOnlyToken(counterpartToken)) return undefined;
     return selectionMode === 'destination'
       ? {
           srcChain: counterpartToken.chainId,
@@ -154,6 +154,11 @@ export function useAvailableRouteTokens({
     error: result.error,
     isFetched: result.isFetched,
   };
+}
+
+export function isBridgeOnlyToken(token: UiToken | undefined): token is UiToken {
+  if (!token) return false;
+  return (token.canBridge || token.isBridgeToken) && !token.canSwap;
 }
 
 // Bootstrap the featured token list. Returns nothing useful directly —

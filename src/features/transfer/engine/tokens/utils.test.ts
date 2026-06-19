@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
+import { isBridgeOnlyToken } from './hooks';
 import type { UiToken } from './types';
 import { mergeRouteTokensFirst, tokenKey } from './utils';
 
@@ -35,7 +36,33 @@ describe('mergeRouteTokensFirst', () => {
   });
 });
 
-function token(chainId: number, address: string, chainName: string): UiToken {
+describe('isBridgeOnlyToken', () => {
+  test('requires bridge support without swap support', () => {
+    expect(isBridgeOnlyToken(token(1, '0x1111111111111111111111111111111111111111', 'base'))).toBe(
+      true,
+    );
+    expect(
+      isBridgeOnlyToken(
+        token(1, '0x1111111111111111111111111111111111111111', 'base', { canSwap: true }),
+      ),
+    ).toBe(false);
+    expect(
+      isBridgeOnlyToken(
+        token(1, '0x1111111111111111111111111111111111111111', 'base', {
+          canBridge: false,
+          isBridgeToken: false,
+        }),
+      ),
+    ).toBe(false);
+  });
+});
+
+function token(
+  chainId: number,
+  address: string,
+  chainName: string,
+  overrides: Partial<UiToken> = {},
+): UiToken {
   return {
     chainId,
     address,
@@ -51,5 +78,6 @@ function token(chainId: number, address: string, chainName: string): UiToken {
     bridgeSymbols: ['USDC'],
     warpRouteIds: ['USDC/base'],
     addressOrDenom: address,
+    ...overrides,
   };
 }

@@ -11,11 +11,11 @@ import { config } from '../../consts/config';
 import ArrowRightIcon from '../../images/icons/arrow-right.svg';
 import CollapseIcon from '../../images/icons/collapse-icon.svg';
 import { formatTransferHistoryTimestamp } from '../../utils/date';
+import { formatBalance } from '../balances/utils';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { type TransactionHistoryItem, TransactionHistoryItemType, useStore } from '../store';
-import { formatBalance } from '../transfer/engine/balances/utils';
-import { getTokenByKeyFromMap } from '../transfer/engine/tokens/hooks';
+import { getTokenByKeyFromMap } from '../tokens/hooks';
 import { FinalTransferStatuses, TransferStatus } from '../transfer/engine/types';
 import { startRelativeTimeTicker } from './relativeTimeTicker';
 

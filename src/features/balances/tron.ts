@@ -2,9 +2,9 @@ import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk';
 import { convertToProtocolAddress, ProtocolType } from '@hyperlane-xyz/utils';
 import { decodeFunctionResult, encodeFunctionData, erc20Abi, type Address } from 'viem';
 
-import { logger } from '../../../../utils/logger';
-import type { UiToken } from '../tokens/types';
-import { getTokenKey } from '../tokens/utils';
+import { logger } from '../../utils/logger';
+import type { BalanceToken } from './types';
+import { getBalanceTokenKey } from './types';
 
 // Tron balance batcher. wagmi doesn't have a Tron chain so we can't reuse
 // fetchEvmChainBalances directly — but MultiProtocolProvider exposes a
@@ -18,7 +18,7 @@ import { getTokenKey } from '../tokens/utils';
 // trongrid's free-tier limits.
 export async function fetchTronChainBalances(
   multiProvider: MultiProtocolProvider,
-  tokens: UiToken[],
+  tokens: BalanceToken[],
   userAddress: string,
 ): Promise<Record<string, bigint>> {
   const out: Record<string, bigint> = {};
@@ -69,14 +69,14 @@ export async function fetchTronChainBalances(
     }),
   );
   for (const r of erc20Results) {
-    if (r) out[getTokenKey(r.token)] = r.balance;
+    if (r) out[getBalanceTokenKey(r.token)] = r.balance;
   }
 
   if (native.length) {
     try {
       const raw = await provider.getBalance(ownerHex);
       const balance = BigInt(raw.toString());
-      for (const t of native) out[getTokenKey(t)] = balance;
+      for (const t of native) out[getBalanceTokenKey(t)] = balance;
     } catch (err) {
       logger.warn(`Tron native getBalance failed on ${chainName}`, err as Error);
     }

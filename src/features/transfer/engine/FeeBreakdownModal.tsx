@@ -2,12 +2,12 @@ import { Modal, Tooltip } from '@hyperlane-xyz/widgets';
 import Link from 'next/link';
 
 import { links } from '../../../consts/links';
+import { formatFeeAmount } from '../../balances/utils';
 import { useMultiProvider } from '../../chains/hooks';
 import { getChainDisplayName } from '../../chains/utils';
-import { formatFeeAmount } from './balances/utils';
-import { getTokenByKeyFromMap, useTokenByKeyMap } from './tokens/hooks';
-import type { UiToken } from './tokens/types';
-import { tokenKey } from './tokens/utils';
+import { getTokenByKeyFromMap, useTokenByKeyMap } from '../../tokens/hooks';
+import type { UiToken } from '../../tokens/types';
+import { tokenKey } from '../../tokens/utils';
 import type { FeeBreakdown, FeeComponent } from './types';
 
 interface Props {

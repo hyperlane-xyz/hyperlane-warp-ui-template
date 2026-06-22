@@ -22,25 +22,25 @@ import { logger } from '../../../utils/logger';
 import { updateQueryParams } from '../../../utils/queryParams';
 import { useChains } from '../../api/hooks';
 import type { RouteTx } from '../../api/types';
+import { useTokenBalance } from '../../balances/hooks';
+import { readBalance } from '../../balances/read';
+import { formatDisplayAmount, formatFeeAmount, formatUsd } from '../../balances/utils';
 import { useMultiProvider } from '../../chains/hooks';
 import { TransactionHistoryItemType, useStore } from '../../store';
+import { getTokenByKeyFromMap, useTokenByKeyMap } from '../../tokens/hooks';
+import { TokenSelectField } from '../../tokens/TokenSelectField';
+import type { UiToken } from '../../tokens/types';
+import { useTokenPrices, useTokenUsdValue } from '../../tokens/useTokenPrice';
+import { tokenKey } from '../../tokens/utils';
 import { RecipientConfirmationModal } from '../../wallet/RecipientConfirmationModal';
 import { WalletConnectionWarning } from '../../wallet/WalletConnectionWarning';
 import { WalletDropdown } from '../../wallet/WalletDropdown';
 import { ApprovalPhase, useApprovalStatus } from './approval';
-import { useTokenBalance } from './balances/hooks';
-import { readBalance } from './balances/read';
-import { formatDisplayAmount, formatFeeAmount, formatUsd } from './balances/utils';
 import { FeeSectionButton } from './FeeSectionButton';
 import { MaxButton } from './MaxButton';
 import { RouteSelectionModal } from './routeSelection/RouteSelectionModal';
 import { SlippagePanel } from './SlippagePanel';
 import { TokenBalance } from './TokenBalance';
-import { getTokenByKeyFromMap, useTokenByKeyMap } from './tokens/hooks';
-import { TokenSelectField } from './tokens/TokenSelectField';
-import type { UiToken } from './tokens/types';
-import { useTokenPrices, useTokenUsdValue } from './tokens/useTokenPrice';
-import { tokenKey } from './tokens/utils';
 import {
   FinalTransferStatuses,
   TransferStatus,

@@ -11,10 +11,10 @@ import { parseUnits } from 'viem';
 
 import { logger } from '../../../utils/logger';
 import type { ChainDiscovery, RouteResponse, RouteTx } from '../../api/types';
-import { estimateNativeGasCost, readBalance } from './balances/read';
-import { formatDisplayAmount } from './balances/utils';
-import type { UiToken } from './tokens/types';
-import { tokenKey } from './tokens/utils';
+import { estimateNativeGasCost, readBalance } from '../../balances/read';
+import { formatDisplayAmount } from '../../balances/utils';
+import type { UiToken } from '../../tokens/types';
+import { tokenKey } from '../../tokens/utils';
 import type { AugmentedRoute, FeeComponent, TransferFormValues } from './types';
 
 const NATIVE_ADDRESS = '0x0000000000000000000000000000000000000000';

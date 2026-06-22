@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 import type { QuoteStep } from '../../../api/types';
-import { useTokens } from '../tokens/hooks';
+import { useTokens } from '../../../tokens/hooks';
 
 // Triggers useTokens for every chain that appears in a route's steps so route
 // intermediate tokens are loaded into knownTokens. Hooks must be called

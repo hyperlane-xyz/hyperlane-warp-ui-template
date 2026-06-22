@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo } from 'react';
 
-import { useChains } from '../../../api/hooks';
-import { routerClient } from '../../../api/RouterClient';
-import type { TokensQuery } from '../../../api/types';
-import { useStore } from '../../../store';
+import { useChains } from '../api/hooks';
+import { routerClient } from '../api/RouterClient';
+import type { TokensQuery } from '../api/types';
+import { useStore } from '../store';
 import { tokenDiscoveryToUi, type TokenSelectionMode, type UiToken } from './types';
 
 const STALE_5_MIN = 5 * 60 * 1000;

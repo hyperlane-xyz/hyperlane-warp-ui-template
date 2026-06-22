@@ -1,4 +1,4 @@
-import type { TokenDiscovery } from '../../../api/types';
+import type { TokenDiscovery } from '../api/types';
 
 export type TokenSelectionMode = 'origin' | 'destination';
 

@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { WARP_QUERY_PARAMS } from '../../../consts/args';
 import { config } from '../../../consts/config';
 import { getQueryParams } from '../../../utils/queryParams';
-import { useTokens } from './tokens/hooks';
+import { useTokens } from '../../tokens/hooks';
 import type { TransferFormValues } from './types';
 
 const EMPTY_VALUES: TransferFormValues = {

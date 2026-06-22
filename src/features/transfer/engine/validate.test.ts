@@ -2,7 +2,7 @@ import { ProtocolType } from '@hyperlane-xyz/utils';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import type { ChainDiscovery, RouteResponse } from '../../api/types';
-import type { UiToken } from './tokens/types';
+import type { UiToken } from '../../tokens/types';
 import type { AugmentedRoute } from './types';
 import { validateBalances } from './validate';
 
@@ -11,7 +11,7 @@ const { readBalanceMock, estimateNativeGasCostMock } = vi.hoisted(() => ({
   estimateNativeGasCostMock: vi.fn(),
 }));
 
-vi.mock('./balances/read', () => ({
+vi.mock('../../balances/read', () => ({
   readBalance: readBalanceMock,
   estimateNativeGasCost: estimateNativeGasCostMock,
 }));

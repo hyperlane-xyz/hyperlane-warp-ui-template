@@ -6,9 +6,7 @@ import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { type Address, createPublicClient, http, type PublicClient } from 'viem';
 
-import { useMultiProvider } from '../../../chains/hooks';
-import type { UiToken } from '../tokens/types';
-import { getTokenKey } from '../tokens/utils';
+import { useMultiProvider } from '../chains/hooks';
 import { fetchAleoChainBalances } from './aleo';
 import { fetchCosmosChainBalances } from './cosmos';
 import { fetchEvmChainBalances } from './evm';
@@ -16,6 +14,8 @@ import { fetchRadixChainBalances } from './radix';
 import { fetchSealevelChainBalances } from './sealevel';
 import { fetchStarknetChainBalances } from './starknet';
 import { fetchTronChainBalances } from './tron';
+import type { BalanceToken } from './types';
+import { getBalanceTokenKey } from './types';
 
 const STALE_BALANCE_MS = 30_000;
 
@@ -29,7 +29,7 @@ interface UseTokenBalancesResult {
 //   chainFilter = '<chainName>' → one query: multicall for that chain.
 //   chainFilter = 'all'          → fan-out via useQueries, one per unique chain.
 export function useTokenBalances(
-  tokens: UiToken[],
+  tokens: BalanceToken[],
   chainFilter: ChainName | 'all',
   addressOverride?: string,
 ): UseTokenBalancesResult {
@@ -69,7 +69,7 @@ export function useTokenBalances(
       filteredChainId,
       filteredRpcUrl,
       filteredUserAddress,
-      filtered.map(getTokenKey).join(','),
+      filtered.map(getBalanceTokenKey).join(','),
     ],
     queryFn: () =>
       dispatchChainBalances(
@@ -89,8 +89,8 @@ export function useTokenBalances(
   });
 
   const tokensByChain = useMemo(() => {
-    if (chainFilter !== 'all') return new Map<number, UiToken[]>();
-    const map = new Map<number, UiToken[]>();
+    if (chainFilter !== 'all') return new Map<number, BalanceToken[]>();
+    const map = new Map<number, BalanceToken[]>();
     for (const t of tokens) {
       const list = map.get(t.chainId) ?? [];
       list.push(t);
@@ -121,7 +121,7 @@ export function useTokenBalances(
           chainId,
           rpcUrlFor(multiProvider, chainName),
           userAddress,
-          chainTokens.map(getTokenKey).join(','),
+          chainTokens.map(getBalanceTokenKey).join(','),
         ],
         queryFn: async (): Promise<Record<string, bigint>> => {
           if (!protocol || !userAddress) return {};
@@ -175,7 +175,7 @@ export function useTokenBalances(
 }
 
 // Single-token balance — for OriginTokenCard's balance row + MaxButton.
-export function useTokenBalance(token: UiToken | undefined, addressOverride?: string) {
+export function useTokenBalance(token: BalanceToken | undefined, addressOverride?: string) {
   const multiProvider = useMultiProvider();
   const protocol = token ? multiProvider.tryGetProtocol(token.chainName) : null;
   const connectedAddress = useAccountAddressForChain(multiProvider, token?.chainName);
@@ -194,7 +194,7 @@ export function useTokenBalance(token: UiToken | undefined, addressOverride?: st
   );
 
   return useQuery({
-    queryKey: ['balance', protocol, token ? getTokenKey(token) : null, rpcUrl, userAddress],
+    queryKey: ['balance', protocol, token ? getBalanceTokenKey(token) : null, rpcUrl, userAddress],
     queryFn: async () => {
       if (!token || !userAddress || !protocol) return null;
       const balances = await dispatchChainBalances(
@@ -205,7 +205,7 @@ export function useTokenBalance(token: UiToken | undefined, addressOverride?: st
         multiProvider,
         batchAddressFor(multiProvider, token.chainName),
       );
-      return balances[getTokenKey(token)] ?? null;
+      return balances[getBalanceTokenKey(token)] ?? null;
     },
     enabled:
       !!token &&
@@ -219,7 +219,7 @@ export function useTokenBalance(token: UiToken | undefined, addressOverride?: st
 
 async function dispatchChainBalances(
   protocol: ProtocolType,
-  tokens: UiToken[],
+  tokens: BalanceToken[],
   userAddress: string,
   publicClient: PublicClient | undefined,
   multiProvider: ReturnType<typeof useMultiProvider>,

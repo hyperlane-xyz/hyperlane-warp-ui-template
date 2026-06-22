@@ -1,5 +1,5 @@
 import { useReadiness } from '../../api/hooks';
-import { useBootstrapTokens } from './tokens/hooks';
+import { useBootstrapTokens } from '../../tokens/hooks';
 
 // Background prefetch of the engine's /readyz + /v1/chains + featured
 // tokens. Mounted in HomeView (both tabs) so transfer clicks find a warm

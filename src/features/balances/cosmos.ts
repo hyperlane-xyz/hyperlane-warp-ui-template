@@ -1,9 +1,9 @@
 import { StargateClient } from '@cosmjs/stargate';
 import { Token, TokenStandard, type MultiProtocolProvider } from '@hyperlane-xyz/sdk';
 
-import { logger } from '../../../../utils/logger';
-import type { UiToken } from '../tokens/types';
-import { getTokenKey } from '../tokens/utils';
+import { logger } from '../../utils/logger';
+import type { BalanceToken } from './types';
+import { getBalanceTokenKey } from './types';
 
 interface CosmosBalanceArgs {
   chainName: string;
@@ -20,7 +20,7 @@ interface CosmosBalanceArgs {
 
 export async function fetchCosmosChainBalances(
   multiProvider: MultiProtocolProvider,
-  tokens: UiToken[],
+  tokens: BalanceToken[],
   userAddress: string,
 ): Promise<Record<string, bigint>> {
   const out: Record<string, bigint> = {};
@@ -30,14 +30,15 @@ export async function fetchCosmosChainBalances(
   const rpcUrl = rpcUrlFor(multiProvider, chainName);
   const bankTokens = tokens
     .map((token) => ({ token, denom: cosmosBankDenomForToken(token) }))
-    .filter((entry): entry is { token: UiToken; denom: string } => !!entry.denom);
+    .filter((entry): entry is { token: BalanceToken; denom: string } => !!entry.denom);
 
   if (rpcUrl && bankTokens.length > 0) {
     const client = await StargateClient.connect(rpcUrl);
     try {
       const balances = await client.getAllBalances(userAddress);
       const byDenom = new Map(balances.map((balance) => [balance.denom, BigInt(balance.amount)]));
-      for (const { token, denom } of bankTokens) out[getTokenKey(token)] = byDenom.get(denom) ?? 0n;
+      for (const { token, denom } of bankTokens)
+        out[getBalanceTokenKey(token)] = byDenom.get(denom) ?? 0n;
     } catch (err) {
       logger.warn(`Cosmos bank balance read failed for ${chainName}`, err as Error);
     } finally {
@@ -50,7 +51,7 @@ export async function fetchCosmosChainBalances(
       .filter((token) => !cosmosBankDenomForToken(token))
       .map(async (token) => {
         try {
-          out[getTokenKey(token)] = await readCosmosTokenBalance(multiProvider, {
+          out[getBalanceTokenKey(token)] = await readCosmosTokenBalance(multiProvider, {
             chainName: token.chainName,
             tokenAddress: token.address,
             isNative: token.isNative,

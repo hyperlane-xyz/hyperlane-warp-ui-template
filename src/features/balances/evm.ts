@@ -6,9 +6,9 @@ import {
 import { isNullish } from '@hyperlane-xyz/utils';
 import { type Address, erc20Abi, type PublicClient } from 'viem';
 
-import { logger } from '../../../../utils/logger';
-import type { UiToken } from '../tokens/types';
-import { getTokenKey } from '../tokens/utils';
+import { logger } from '../../utils/logger';
+import type { BalanceToken } from './types';
+import { getBalanceTokenKey } from './types';
 
 // Canonical multicall3 address, deployed at this address on most EVM
 // chains. Chains that put multicall3 elsewhere should pass their
@@ -17,11 +17,11 @@ const DEFAULT_MULTICALL3_ADDRESS = '0xcA11bde05977b3631167028862bE2a173976CA11' 
 
 // Per-chain EVM balance batcher. Splits the input into native + ERC20,
 // runs one multicall for ERC20 balanceOf and a single getBalance for
-// native, and returns a getTokenKey-keyed map of bigints. Caller is
+// native, and returns a getBalanceTokenKey-keyed map of bigints. Caller is
 // responsible for filtering input to a single EVM chain.
 export async function fetchEvmChainBalances(
   client: PublicClient,
-  tokens: UiToken[],
+  tokens: BalanceToken[],
   userAddress: Address,
   multicallAddress?: Address,
 ): Promise<Record<string, bigint>> {
@@ -42,10 +42,10 @@ export async function fetchEvmChainBalances(
           args: [userAddress] as const,
         })),
       });
-      const failedTokens: UiToken[] = [];
+      const failedTokens: BalanceToken[] = [];
       erc20.forEach((t, i) => {
         const r = results[i];
-        if (r.status === 'success') out[getTokenKey(t)] = r.result as bigint;
+        if (r.status === 'success') out[getBalanceTokenKey(t)] = r.result as bigint;
         else failedTokens.push(t);
       });
       if (failedTokens.length)
@@ -62,7 +62,7 @@ export async function fetchEvmChainBalances(
   if (native.length) {
     try {
       const balance = await client.getBalance({ address: userAddress });
-      for (const t of native) out[getTokenKey(t)] = balance;
+      for (const t of native) out[getBalanceTokenKey(t)] = balance;
     } catch (err) {
       logger.warn('native getBalance failed', err as Error);
     }
@@ -73,14 +73,14 @@ export async function fetchEvmChainBalances(
 
 async function readErc20BalancesIndividually(
   client: PublicClient,
-  tokens: UiToken[],
+  tokens: BalanceToken[],
   userAddress: Address,
   out: Record<string, bigint>,
 ): Promise<void> {
   await Promise.all(
     tokens.map(async (t) => {
       try {
-        out[getTokenKey(t)] = (await client.readContract({
+        out[getBalanceTokenKey(t)] = (await client.readContract({
           address: t.address as Address,
           abi: erc20Abi,
           functionName: 'balanceOf',

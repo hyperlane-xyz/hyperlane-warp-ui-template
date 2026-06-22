@@ -16,8 +16,8 @@ import { routerClient } from './api/RouterClient';
 import type { RouteResponse } from './api/types';
 import { assembleChainAddresses } from './chains/addresses';
 import { assembleChainMetadata } from './chains/metadata';
-import type { UiToken } from './transfer/engine/tokens/types';
-import { getTokenKey as getTransferTokenKey } from './transfer/engine/tokens/utils';
+import type { UiToken } from './tokens/types';
+import { getTokenKey as getTransferTokenKey } from './tokens/utils';
 import {
   FinalTransferStatuses,
   LabeledMsgId,

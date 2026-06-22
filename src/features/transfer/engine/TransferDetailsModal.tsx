@@ -20,13 +20,13 @@ import { Color } from '../../../styles/Color';
 import { formatTimestamp } from '../../../utils/date';
 import { getHypExplorerLink } from '../../../utils/links';
 import { logger } from '../../../utils/logger';
+import { formatDisplayAmount } from '../../balances/utils';
 import { useMultiProvider } from '../../chains/hooks';
 import { getChainDisplayName } from '../../chains/utils';
 import { getTransferDeliveryMsgId } from '../../messages/utils';
 import { TransactionHistoryItemType, useStore } from '../../store';
-import { formatDisplayAmount } from './balances/utils';
-import { getTokenByKeyFromMap, useTokenByKeyMap } from './tokens/hooks';
-import { tokenKey } from './tokens/utils';
+import { getTokenByKeyFromMap, useTokenByKeyMap } from '../../tokens/hooks';
+import { tokenKey } from '../../tokens/utils';
 import { FinalTransferStatuses, TransferStatus, type TransferHistoryItem } from './types';
 
 const DEFAULT_TIMINGS: StageTimings = {

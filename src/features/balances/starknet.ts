@@ -1,19 +1,19 @@
 import { Token, TokenStandard, type MultiProtocolProvider } from '@hyperlane-xyz/sdk';
 
-import { logger } from '../../../../utils/logger';
-import type { UiToken } from '../tokens/types';
-import { getTokenKey } from '../tokens/utils';
+import { logger } from '../../utils/logger';
+import type { BalanceToken } from './types';
+import { getBalanceTokenKey } from './types';
 
 export async function fetchStarknetChainBalances(
   multiProvider: MultiProtocolProvider,
-  tokens: UiToken[],
+  tokens: BalanceToken[],
   userAddress: string,
 ): Promise<Record<string, bigint>> {
   const out: Record<string, bigint> = {};
   await Promise.all(
     tokens.map(async (token) => {
       try {
-        out[getTokenKey(token)] = await readStarknetTokenBalance(multiProvider, {
+        out[getBalanceTokenKey(token)] = await readStarknetTokenBalance(multiProvider, {
           chainName: token.chainName,
           tokenAddress: token.address,
           isNative: token.isNative,

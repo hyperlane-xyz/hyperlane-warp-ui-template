@@ -1,8 +1,8 @@
 import { SpinnerIcon } from '@hyperlane-xyz/widgets';
 import { useFormikContext } from 'formik';
 
-import { formatBalance } from './balances/utils';
-import type { UiToken } from './tokens/types';
+import { formatBalance } from '../../balances/utils';
+import type { UiToken } from '../../tokens/types';
 import type { TransferFormValues } from './types';
 
 interface Props {

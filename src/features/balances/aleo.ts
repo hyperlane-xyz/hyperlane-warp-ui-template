@@ -1,8 +1,8 @@
 import { Token, TokenStandard, type MultiProtocolProvider } from '@hyperlane-xyz/sdk';
 
-import { logger } from '../../../../utils/logger';
-import type { UiToken } from '../tokens/types';
-import { getTokenKey } from '../tokens/utils';
+import { logger } from '../../utils/logger';
+import type { BalanceToken } from './types';
+import { getBalanceTokenKey } from './types';
 
 interface AleoBalanceArgs {
   chainName: string;
@@ -19,14 +19,14 @@ interface AleoBalanceArgs {
 
 export async function fetchAleoChainBalances(
   multiProvider: MultiProtocolProvider,
-  tokens: UiToken[],
+  tokens: BalanceToken[],
   userAddress: string,
 ): Promise<Record<string, bigint>> {
   const out: Record<string, bigint> = {};
   await Promise.all(
     tokens.map(async (token) => {
       try {
-        out[getTokenKey(token)] = await readAleoTokenBalance(multiProvider, {
+        out[getBalanceTokenKey(token)] = await readAleoTokenBalance(multiProvider, {
           chainName: token.chainName,
           tokenAddress: token.address,
           isNative: token.isNative,

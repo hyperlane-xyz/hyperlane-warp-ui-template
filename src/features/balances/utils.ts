@@ -1,10 +1,15 @@
 import { fromWei, fromWeiRounded } from '@hyperlane-xyz/utils';
 
-import type { UiToken } from '../tokens/types';
-import { getTokenKey, tokenKey } from '../tokens/utils';
-import type { FeeComponent } from '../types';
+import type { BalanceToken } from './types';
+import { balanceTokenKey, getBalanceTokenKey } from './types';
 
-export { formatBalance, formatDisplayAmount, formatUsd } from '../../../../utils/amount';
+export { formatBalance, formatDisplayAmount, formatUsd } from '../../utils/amount';
+
+interface PricedFeeComponent {
+  chainId: number;
+  tokenAddress: string;
+  amount: bigint;
+}
 
 // Fee amounts need more precision than balances — gas fees can be ~1e-5
 // native units which formatBalance's 4-decimal rounding renders as "0.0000".
@@ -13,11 +18,11 @@ export function formatFeeAmount(amount: bigint, decimals: number): string {
 }
 
 export function getUsdValue(
-  token: UiToken,
+  token: BalanceToken,
   balances: Record<string, bigint>,
   prices: Record<string, number>,
 ): number | null {
-  const key = getTokenKey(token);
+  const key = getBalanceTokenKey(token);
   const bal = balances[key];
   if (bal == null || !token.coinGeckoId) return null;
   const price = prices[token.coinGeckoId];
@@ -26,18 +31,18 @@ export function getUsdValue(
 }
 
 export function resolveCoinGeckoId(
-  component: FeeComponent,
-  tokenMap: Map<string, UiToken>,
+  component: PricedFeeComponent,
+  tokenMap: Map<string, BalanceToken>,
 ): { coinGeckoId: string | undefined; decimals: number } {
-  const t = tokenMap.get(tokenKey(component.chainId, component.tokenAddress));
+  const t = tokenMap.get(balanceTokenKey(component.chainId, component.tokenAddress));
   return { coinGeckoId: t?.coinGeckoId, decimals: t?.decimals ?? 18 };
 }
 
 // Returns null if any component is unpriced — a partial sum would
 // understate the total and mislead the % readout.
 export function getTotalFeeUsd(
-  components: FeeComponent[],
-  tokenMap: Map<string, UiToken>,
+  components: PricedFeeComponent[],
+  tokenMap: Map<string, BalanceToken>,
   prices: Record<string, number>,
 ): number | null {
   let total = 0;

@@ -2,8 +2,8 @@ import { useDebounce } from '@hyperlane-xyz/widgets';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { logger } from '../../../../utils/logger';
-import { useStore } from '../../../store';
+import { logger } from '../../utils/logger';
+import { useStore } from '../store';
 import type { UiToken } from './types';
 
 type PriceCache = Record<string, { usd?: number; fetchedAt?: number; failedAt?: number }>;

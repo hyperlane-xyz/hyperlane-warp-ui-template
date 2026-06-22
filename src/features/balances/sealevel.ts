@@ -7,14 +7,14 @@ import {
 } from '@solana/spl-token';
 import { Connection, PublicKey } from '@solana/web3.js';
 
-import type { UiToken } from '../tokens/types';
-import { getTokenKey } from '../tokens/utils';
+import type { BalanceToken } from './types';
+import { getBalanceTokenKey } from './types';
 
 const ZERO_ADDRESS = /^0x0+$/i;
 
 export async function fetchSealevelChainBalances(
   rpcUrl: string,
-  tokens: UiToken[],
+  tokens: BalanceToken[],
   owner: string,
 ): Promise<Record<string, bigint>> {
   const connection = new Connection(rpcUrl, 'confirmed');
@@ -22,7 +22,7 @@ export async function fetchSealevelChainBalances(
   const balances: Record<string, bigint> = {};
 
   for (const token of tokens) {
-    const key = getTokenKey(token);
+    const key = getBalanceTokenKey(token);
     if (isSealevelNativeBalance(token)) {
       balances[key] = BigInt(await connection.getBalance(ownerKey));
       continue;

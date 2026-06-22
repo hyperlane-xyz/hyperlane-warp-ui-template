@@ -1,10 +1,9 @@
 import { ProtocolType } from '@hyperlane-xyz/utils';
 import { useMemo } from 'react';
 
-import { useChains } from '../../../api/hooks';
-import type { ChainDiscovery } from '../../../api/types';
-import { useMultiProvider } from '../../../chains/hooks';
-import type { ChainInfo } from '../../../chains/hooks';
+import { useChains } from '../api/hooks';
+import type { ChainDiscovery } from '../api/types';
+import { useMultiProvider, type ChainInfo } from './hooks';
 
 // Engine-driven chain list for the transfer modal. /v1/chains is the source
 // of truth for what the transfer form can quote against. Fall back to

@@ -1,33 +1,32 @@
 import { describe, expect, test } from 'vitest';
 
-import type { UiToken } from '../tokens/types';
-import type { FeeComponent } from '../types';
+import type { BalanceToken } from './types';
 import { getTotalFeeUsd, resolveCoinGeckoId } from './utils';
 
 const TOKEN_ADDRESS = '0x1234567890123456789012345678901234567890';
 const OTHER_ADDRESS = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd';
 
-function mockToken(overrides: Partial<UiToken>): UiToken {
+function mockToken(overrides: Partial<BalanceToken>): BalanceToken {
   return {
     chainId: 1,
     address: TOKEN_ADDRESS,
     symbol: 'ETH',
     decimals: 18,
     isNative: false,
-    isBridgeToken: false,
-    isPoolToken: false,
-    canBridge: true,
-    canSwap: true,
-    bridgeSymbols: [],
-    warpRouteIds: [],
     chainName: 'ethereum',
     name: 'Ether',
-    addressOrDenom: TOKEN_ADDRESS,
     ...overrides,
   };
 }
 
-function component(overrides: Partial<FeeComponent>): FeeComponent {
+interface TestFeeComponent {
+  category: string;
+  amount: bigint;
+  chainId: number;
+  tokenAddress: string;
+}
+
+function component(overrides: Partial<TestFeeComponent>): TestFeeComponent {
   return {
     category: 'igp',
     amount: 1n,

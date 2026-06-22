@@ -1,10 +1,10 @@
 import { Modal } from '@hyperlane-xyz/widgets';
 import { useCallback, useMemo, useState } from 'react';
 
-import { ModalHeader } from '../../../../components/layout/ModalHeader';
-import { ChainFilterPanel } from '../../../chains/ChainFilterPanel';
-import type { ChainInfo } from '../../../chains/hooks';
-import { useTransferChainInfos } from '../chains/hooks';
+import { ModalHeader } from '../../components/layout/ModalHeader';
+import { ChainFilterPanel } from '../chains/ChainFilterPanel';
+import type { ChainInfo } from '../chains/hooks';
+import { useTransferChainInfos } from '../chains/transferHooks';
 import { useAvailableRouteTokens } from './hooks';
 import { TokenListPanel } from './TokenListPanel';
 import type { TokenSelectionMode, UiToken } from './types';

@@ -1,5 +1,5 @@
-import { formatBalance } from './balances/utils';
-import type { UiToken } from './tokens/types';
+import { formatBalance } from '../../balances/utils';
+import type { UiToken } from '../../tokens/types';
 
 // "Balance: 1.23 ETH" — renders "—" while balance is loading.
 export function TokenBalance({

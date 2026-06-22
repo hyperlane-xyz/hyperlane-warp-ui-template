@@ -1,5 +1,5 @@
 import type { QuoteStep } from '../../../api/types';
-import { formatFeeAmount } from '../balances/utils';
+import { formatFeeAmount } from '../../../balances/utils';
 
 export interface FlowNode {
   tokenAddress: string;

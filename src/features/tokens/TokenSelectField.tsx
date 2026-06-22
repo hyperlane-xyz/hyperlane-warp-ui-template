@@ -1,13 +1,13 @@
 import { useFormikContext } from 'formik';
 import { useState } from 'react';
 
-import { ChevronLargeIcon } from '../../../../components/icons/ChevronLargeIcon';
-import { TokenChainIcon } from '../../../../components/icons/TokenChainIcon';
-import { WARP_QUERY_PARAMS } from '../../../../consts/args';
-import { updateQueryParams } from '../../../../utils/queryParams';
-import { useMultiProvider } from '../../../chains/hooks';
-import { getChainDisplayName } from '../../../chains/utils';
-import type { TransferFormValues } from '../types';
+import { ChevronLargeIcon } from '../../components/icons/ChevronLargeIcon';
+import { TokenChainIcon } from '../../components/icons/TokenChainIcon';
+import { WARP_QUERY_PARAMS } from '../../consts/args';
+import { updateQueryParams } from '../../utils/queryParams';
+import { useMultiProvider } from '../chains/hooks';
+import { getChainDisplayName } from '../chains/utils';
+import type { TransferFormValues } from '../transfer/engine/types';
 import { getTokenByKeyFromMap, useTokenByKeyMap } from './hooks';
 import type { TokenSelectionMode, UiToken } from './types';
 import { UnifiedTokenChainModal } from './UnifiedTokenChainModal';

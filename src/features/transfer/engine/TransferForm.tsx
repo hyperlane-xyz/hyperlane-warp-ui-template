@@ -1,4 +1,4 @@
-import { objLength, ProtocolType } from '@hyperlane-xyz/utils';
+import { eqAddress, isValidAddressEvm, objLength, ProtocolType } from '@hyperlane-xyz/utils';
 import { useDebounce, useModal } from '@hyperlane-xyz/widgets';
 import { useAccounts } from '@hyperlane-xyz/widgets/walletIntegrations/accounts';
 import { useAccountAddressForChain } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
@@ -8,6 +8,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { formatUnits, type Address } from 'viem';
 
 import { FormWarningBanner } from '../../../components/banner/FormWarningBanner';
+import { RecipientWarningBanner } from '../../../components/banner/RecipientWarningBanner';
 import { ConnectAwareSubmitButton } from '../../../components/buttons/ConnectAwareSubmitButton';
 import { SolidButton } from '../../../components/buttons/SolidButton';
 import { RouteIcon } from '../../../components/icons/RouteIcon';
@@ -28,6 +29,7 @@ import { WalletConnectionWarning } from '../../wallet/WalletConnectionWarning';
 import { WalletDropdown } from '../../wallet/WalletDropdown';
 import { ApprovalPhase, useApprovalStatus } from './approval';
 import { useTokenBalance } from './balances/hooks';
+import { readBalance } from './balances/read';
 import { formatDisplayAmount, formatFeeAmount, formatUsd } from './balances/utils';
 import { FeeSectionButton } from './FeeSectionButton';
 import { MaxButton } from './MaxButton';
@@ -54,6 +56,7 @@ import { validateTransferForm } from './validate';
 const PRICE_IMPACT_DANGER_PCT = -3;
 const PRICE_IMPACT_WARN_PCT = -1;
 const PCT_FORMAT_OPTIONS = { minimumFractionDigits: 2, maximumFractionDigits: 2 } as const;
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 export function TransferForm() {
   const initialValues = useFormInitialValues();
@@ -110,7 +113,11 @@ function TransferFormContent() {
   const dstToken = getTokenByKeyFromMap(tokenMap, dstTokenKey);
 
   const [isReview, setIsReview] = useState(false);
-  const { close: closeConfirmationModal, isOpen: isConfirmationModalOpen } = useModal();
+  const {
+    open: openConfirmationModal,
+    close: closeConfirmationModal,
+    isOpen: isConfirmationModalOpen,
+  } = useModal();
   const { isOpen: isRouteModalOpen, open: openRouteModal, close: closeRouteModal } = useModal();
   const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
 
@@ -138,6 +145,7 @@ function TransferFormContent() {
   const bestRoute = routes[safeIndex] ?? routes[0];
   const approval = bestRoute?.raw.approval ?? null;
   const srcChainInfo = chainsResp?.chains.find((chain) => chain.id === values.srcChain);
+  const dstChainInfo = chainsResp?.chains.find((chain) => chain.id === values.dstChain);
 
   const approvalAmount = useMemo(
     () => (approval ? BigInt(approval.amount) : undefined),
@@ -179,6 +187,10 @@ function TransferFormContent() {
   const hasTokens = !!srcToken && !!dstToken;
 
   const [isValidating, setIsValidating] = useState(false);
+  const [{ addressConfirmed, showRecipientWarning }, setRecipientInfos] = useState({
+    addressConfirmed: true,
+    showRecipientWarning: false,
+  });
 
   // Validate is async; the user can keep editing while it runs. We
   // capture the values reference at request start and bail on resolve
@@ -221,6 +233,17 @@ function TransferFormContent() {
         return;
       }
       if (!sender || !srcToken || !dstToken || !bestRoute || !effectiveRecipient) return;
+      const canReview = await shouldReviewRecipient({
+        multiProvider,
+        dstChainName,
+        recipient: effectiveRecipient,
+      });
+      if (latestValuesRef.current !== snapshot) return;
+      if (!canReview) {
+        setErrors({});
+        openConfirmationModal();
+        return;
+      }
       setErrors({});
       setIsReview(true);
     } finally {
@@ -239,8 +262,58 @@ function TransferFormContent() {
     quote?.expiresAt,
     srcChainInfo?.protocol,
     starknetAccount,
+    dstChainName,
+    openConfirmationModal,
     setErrors,
   ]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function checkSameEvmRecipient() {
+      if (!sender || !srcChainName || !dstChainName || !effectiveRecipient) {
+        setRecipientInfos({ addressConfirmed: true, showRecipientWarning: false });
+        return;
+      }
+
+      const sourceProtocol = multiProvider.tryGetProtocol(srcChainName);
+      const destinationProtocol = multiProvider.tryGetProtocol(dstChainName);
+      if (
+        sourceProtocol !== ProtocolType.Ethereum ||
+        destinationProtocol !== ProtocolType.Ethereum ||
+        !isValidAddressEvm(effectiveRecipient)
+      ) {
+        setRecipientInfos({ addressConfirmed: true, showRecipientWarning: false });
+        return;
+      }
+
+      const [senderCheck, recipientCheck] = await Promise.all([
+        isSmartContract(multiProvider, srcChainName, sender),
+        isSmartContract(multiProvider, dstChainName, effectiveRecipient),
+      ]);
+      if (!isMounted) return;
+
+      if (senderCheck.error || recipientCheck.error) {
+        logger.warn(senderCheck.error || recipientCheck.error);
+        setRecipientInfos({ addressConfirmed: true, showRecipientWarning: false });
+        return;
+      }
+
+      const shouldWarn =
+        eqAddress(sender, effectiveRecipient) &&
+        senderCheck.isContract &&
+        !recipientCheck.isContract;
+      setRecipientInfos({
+        addressConfirmed: !shouldWarn,
+        showRecipientWarning: shouldWarn,
+      });
+    }
+
+    checkSameEvmRecipient();
+    return () => {
+      isMounted = false;
+    };
+  }, [sender, srcChainName, dstChainName, effectiveRecipient, multiProvider]);
 
   const onSendTransactions = useCallback(async () => {
     if (!sender || !srcToken || !dstToken || !bestRoute || !values.srcChain || !values.dstChain) {
@@ -504,6 +577,19 @@ function TransferFormContent() {
         approval={approval}
       />
 
+      <div
+        className={`gap-2 bg-amber-400 px-4 text-sm ${
+          showRecipientWarning ? 'max-h-38 py-2' : 'max-h-0'
+        } overflow-hidden transition-all duration-500`}
+      >
+        <RecipientWarningBanner
+          destinationChain={dstChainInfo?.displayName || dstChainName || 'the destination chain'}
+          confirmRecipientHandler={(checked) =>
+            setRecipientInfos((state) => ({ ...state, addressConfirmed: checked }))
+          }
+        />
+      </div>
+
       <ButtonSection
         isReview={isReview}
         setIsReview={setIsReview}
@@ -516,6 +602,7 @@ function TransferFormContent() {
         isValidating={isValidating}
         onSendTransactions={onSendTransactions}
         sendPending={isActiveTransferInFlight}
+        recipientConfirmed={addressConfirmed}
       />
 
       <RecipientConfirmationModal
@@ -568,6 +655,62 @@ function getRouteTxs(route: AugmentedRoute): RouteTx[] {
 
 function isStarknetRouteTx(tx: RouteTx): tx is Extract<RouteTx, { protocol: string }> {
   return 'protocol' in tx && tx.protocol === ProtocolType.Starknet;
+}
+
+async function shouldReviewRecipient({
+  multiProvider,
+  dstChainName,
+  recipient,
+}: {
+  multiProvider: ReturnType<typeof useMultiProvider>;
+  dstChainName: string | undefined;
+  recipient: string;
+}): Promise<boolean> {
+  if (!dstChainName || !recipient) return true;
+  const balance = await getDestinationNativeBalance(multiProvider, dstChainName, recipient);
+  return balance == null || balance > 0n;
+}
+
+async function getDestinationNativeBalance(
+  multiProvider: ReturnType<typeof useMultiProvider>,
+  chainName: string,
+  recipient: string,
+): Promise<bigint | null> {
+  const nativeToken = multiProvider.tryGetChainMetadata(chainName)?.nativeToken;
+  try {
+    return await readBalance(multiProvider, {
+      chainName,
+      tokenAddress: nativeToken?.denom ?? ZERO_ADDRESS,
+      isNative: true,
+      owner: recipient,
+      decimals: nativeToken?.decimals,
+      symbol: nativeToken?.symbol,
+      name: nativeToken?.name,
+    });
+  } catch (err) {
+    logger.warn(`Failed to check recipient native balance on ${chainName}`, err as Error);
+    return null;
+  }
+}
+
+async function isSmartContract(
+  multiProvider: ReturnType<typeof useMultiProvider>,
+  chainName: string,
+  address: string,
+): Promise<{ isContract: boolean; error?: string }> {
+  if (!isValidAddressEvm(address)) return { isContract: false };
+  try {
+    const code = await multiProvider.getViemProvider(chainName).getCode({
+      address: address as Address,
+    });
+    if (!code || code === '0x') return { isContract: false };
+    if (code.startsWith('0xef0100')) return { isContract: false };
+    return { isContract: true };
+  } catch (err) {
+    const error = `Error checking smart contract recipient on ${chainName}`;
+    logger.warn(error, err as Error);
+    return { isContract: false, error };
+  }
 }
 
 function WarningBanners({
@@ -916,6 +1059,7 @@ function ButtonSection({
   isValidating,
   onSendTransactions,
   sendPending,
+  recipientConfirmed,
 }: {
   isReview: boolean;
   setIsReview: (b: boolean) => void;
@@ -928,6 +1072,7 @@ function ButtonSection({
   isValidating: boolean;
   onSendTransactions: () => Promise<void>;
   sendPending: boolean;
+  recipientConfirmed: boolean;
 }) {
   const multiProvider = useMultiProvider();
   const dstMetadata = dstChainName ? multiProvider.tryGetChainMetadata(dstChainName) : undefined;
@@ -962,7 +1107,7 @@ function ButtonSection({
       <ConnectAwareSubmitButton
         chainName={srcChainName}
         text={text}
-        disabled={disabled}
+        disabled={disabled || !recipientConfirmed}
         classes="w-full mb-4 px-3 py-2.5 font-secondary text-xl text-cream-100"
       />
     );
@@ -982,7 +1127,7 @@ function ButtonSection({
         type="button"
         color="accent"
         onClick={onSendTransactions}
-        disabled={sendPending}
+        disabled={sendPending || !recipientConfirmed}
         className="flex-1 px-3 py-1.5 font-secondary text-white"
       >
         {sendPending ? 'Sending…' : `Send to ${dstDisplay}`}

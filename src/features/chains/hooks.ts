@@ -3,6 +3,8 @@ import { ProtocolType } from '@hyperlane-xyz/utils';
 import { useMemo } from 'react';
 
 import { config } from '../../consts/config';
+import { useChains } from '../api/hooks';
+import type { ChainDiscovery } from '../api/types';
 import { useStore } from '../store';
 import { getChainDisplayName } from './utils';
 
@@ -65,4 +67,49 @@ export function useDisabledChains(): Set<string> {
     () => new Set(chainInfos.filter((c) => c.disabled).map((c) => c.name)),
     [chainInfos],
   );
+}
+
+// Engine-driven chain list for the transfer modal. /v1/chains is the source
+// of truth for what the transfer form can quote against. Fall back to
+// multiProvider metadata for display name + protocol when engine entries
+// are missing those fields.
+export function useTransferChainInfos(): ChainInfo[] {
+  const { data } = useChains();
+  const mp = useMultiProvider();
+  return useMemo(() => {
+    const chains: ChainInfo[] = [];
+    for (const c of (data?.chains ?? []) as ChainDiscovery[]) {
+      const meta = mp.tryGetChainMetadata(c.chainName);
+      chains.push({
+        name: c.chainName,
+        displayName: c.displayName || meta?.displayName || c.chainName,
+        chainId: c.id,
+        protocol: (meta?.protocol ?? mapProtocol(c.protocol)) as ProtocolType,
+        isTestnet: !!meta?.isTestnet,
+        disabled: false,
+      });
+    }
+    return chains;
+  }, [data, mp]);
+}
+
+function mapProtocol(p: string): ProtocolType {
+  switch (p.toLowerCase()) {
+    case 'ethereum':
+      return ProtocolType.Ethereum;
+    case 'sealevel':
+      return ProtocolType.Sealevel;
+    case 'cosmos':
+      return ProtocolType.Cosmos;
+    case 'starknet':
+      return ProtocolType.Starknet;
+    case 'radix':
+      return ProtocolType.Radix;
+    case 'tron':
+      return ProtocolType.Tron;
+    case 'aleo':
+      return ProtocolType.Aleo;
+    default:
+      return ProtocolType.Ethereum;
+  }
 }

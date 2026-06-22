@@ -3,8 +3,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { ModalHeader } from '../../components/layout/ModalHeader';
 import { ChainFilterPanel } from '../chains/ChainFilterPanel';
-import type { ChainInfo } from '../chains/hooks';
-import { useTransferChainInfos } from '../chains/transferHooks';
+import { useTransferChainInfos, type ChainInfo } from '../chains/hooks';
 import { useAvailableRouteTokens } from './hooks';
 import { TokenListPanel } from './TokenListPanel';
 import type { TokenSelectionMode, UiToken } from './types';

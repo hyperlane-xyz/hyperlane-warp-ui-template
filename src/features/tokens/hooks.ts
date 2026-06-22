@@ -187,7 +187,7 @@ export function useAddToken(token?: IToken) {
     ? ADD_ASSET_SUPPORTED_PROTOCOLS.includes(token?.protocol)
     : false;
 
-  const canAddAsset = token && isAccountReady && isSupportedProtocol;
+  const canAddAsset = token && isAccountReady && isSupportedProtocol && !token.isHypNative();
 
   const { isPending, mutateAsync } = useMutation({
     mutationFn: () => {

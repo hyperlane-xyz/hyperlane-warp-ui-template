@@ -6,11 +6,15 @@ import { toast } from 'react-toastify';
 
 import { useMultiProvider } from '../chains/hooks';
 import { TransactionHistoryItemType, useStore } from '../store';
-import { FinalTransferStatuses, TransferStatus } from '../transfer/engine/types';
+import {
+  FinalTransferStatuses,
+  TransferStatus,
+  type TransferHistoryItem,
+} from '../transfer/engine/types';
 import { useTransferStatus } from '../transfer/engine/useTransferStatus';
 import { useEvmMailboxDeliveryStatus } from './useEvmMailboxDeliveryStatus';
 import { useMessageDeliveryStatus } from './useMessageDeliveryStatus';
-import { useOriginTxMessages } from './useOriginTxMessages';
+import { type OriginTxMessagesResult, useOriginTxMessages } from './useOriginTxMessages';
 import { getTransferDeliveryMsgId } from './utils';
 
 type TransferDeliveryTarget = {
@@ -141,14 +145,16 @@ function DeliveryTargetWatcher({
           ? TransferStatus.ConfirmingDestination
           : TransferStatus.ConfirmedDestination
         : TransferStatus.Bridging;
-      updateTransferTransactionStatus(target.id, nextStatus, {
-        msgIds: originTxMessages.msgIds,
-        originBlockNumber: originTxMessages.originBlockHeight,
-        originTxTimestamp: originTxMessages.originTimestamp
-          ? Math.floor(originTxMessages.originTimestamp / 1000)
-          : undefined,
-        destinationTxHash: originTxMessages.destinationTxHash,
-      });
+      if (shouldUpdateFromOriginTx(transfer, nextStatus, originTxMessages)) {
+        updateTransferTransactionStatus(target.id, nextStatus, {
+          msgIds: originTxMessages.msgIds,
+          originBlockNumber: originTxMessages.originBlockHeight,
+          originTxTimestamp: originTxMessages.originTimestamp
+            ? Math.floor(originTxMessages.originTimestamp / 1000)
+            : undefined,
+          destinationTxHash: originTxMessages.destinationTxHash,
+        });
+      }
       if (
         originTxMessages.isDelivered &&
         !target.requiresDestinationOutcome &&
@@ -210,12 +216,14 @@ function DeliveryTargetWatcher({
     graphQlDelivery.isDelivered,
     mailboxDelivery.destinationTxHash,
     mailboxDelivery.isDelivered,
+    originTxMessages,
     originTxMessages.destinationTxHash,
     originTxMessages.isDelivered,
     originTxMessages.msgIds,
     originTxMessages.originBlockHeight,
     originTxMessages.originTimestamp,
     target,
+    transfer,
     updateTransferTransactionStatus,
   ]);
 
@@ -229,6 +237,33 @@ function shouldUpdateFromDelivery(
 ) {
   if (!hasUpdated.current) return true;
   return !!destinationTxHash && !hasBackfilledHash.current;
+}
+
+export function shouldUpdateFromOriginTx(
+  transfer: TransferHistoryItem | undefined,
+  nextStatus: TransferStatus,
+  originTxMessages: OriginTxMessagesResult,
+) {
+  const nextOriginTxTimestamp = originTxMessages.originTimestamp
+    ? Math.floor(originTxMessages.originTimestamp / 1000)
+    : undefined;
+
+  return (
+    transfer?.status !== nextStatus ||
+    !sameMsgIds(transfer?.msgIds, originTxMessages.msgIds) ||
+    transfer?.originBlockNumber !== originTxMessages.originBlockHeight ||
+    transfer?.originTxTimestamp !== nextOriginTxTimestamp ||
+    transfer?.destinationTxHash !== originTxMessages.destinationTxHash
+  );
+}
+
+function sameMsgIds(
+  left: Array<{ msgId: string; label: string }> | undefined,
+  right: Array<{ msgId: string; label: string }> | undefined,
+) {
+  if (left === right) return true;
+  if (!left || !right || left.length !== right.length) return false;
+  return left.every((item, i) => item.msgId === right[i]?.msgId && item.label === right[i]?.label);
 }
 
 function prioritizeSelectedTarget<T extends { id: string }>(

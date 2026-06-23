@@ -36,6 +36,13 @@ export function txHashToPostgresBytea(
     }
     if (
       chainMetadata?.protocol &&
+      isBech32mEncodedTxHashProtocol(chainMetadata.protocol) &&
+      isValidTransactionHash(txHash, chainMetadata.protocol)
+    ) {
+      return stringToPostgresBytea(addressToByteHexString(txHash, chainMetadata.protocol));
+    }
+    if (
+      chainMetadata?.protocol &&
       isHexEncodedTxHashProtocol(chainMetadata.protocol) &&
       isValidTransactionHash(txHash, chainMetadata.protocol)
     ) {
@@ -46,6 +53,10 @@ export function txHashToPostgresBytea(
   } catch {
     return undefined;
   }
+}
+
+function isBech32mEncodedTxHashProtocol(protocol: ProtocolType) {
+  return [ProtocolType.Aleo, ProtocolType.Radix].includes(protocol);
 }
 
 function isHexEncodedTxHashProtocol(protocol: ProtocolType) {

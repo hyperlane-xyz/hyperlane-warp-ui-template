@@ -21,15 +21,26 @@ describe('txHashToPostgresBytea', () => {
     expect(txHashToPostgresBytea(txHash, metadata)).toBe(`\\x${'ab'.repeat(32)}`);
   });
 
-  test('does not encode non-hex radix transaction ids as bytea hex', () => {
+  test('converts aleo transaction ids to bytea hex', () => {
+    const metadata = { protocol: ProtocolType.Aleo } as ChainMetadata;
+
+    expect(
+      txHashToPostgresBytea(
+        'at1qypqxpq9qcrsszg2pvxq6rs0zqg3yyc5z5tpwxqergd3c8g7rusqhemxyq',
+        metadata,
+      ),
+    ).toBe(`\\x${byteRangeHex()}`);
+  });
+
+  test('converts radix transaction ids to bytea hex', () => {
     const metadata = { protocol: ProtocolType.Radix } as ChainMetadata;
 
     expect(
       txHashToPostgresBytea(
-        'txid_rdx1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq',
+        'txid_rdx1qypqxpq9qcrsszg2pvxq6rs0zqg3yyc5z5tpwxqergd3c8g7rusq30nj38',
         metadata,
       ),
-    ).toBeUndefined();
+    ).toBe(`\\x${byteRangeHex()}`);
   });
 });
 
@@ -39,4 +50,23 @@ describe('buildMessagesByOriginTxQuery', () => {
 
     expect(buildMessagesByOriginTxQuery('not-a-solana-tx', 1399811149, metadata)).toBeNull();
   });
+
+  test('builds an origin transaction query for aleo transaction ids', () => {
+    const metadata = { protocol: ProtocolType.Aleo } as ChainMetadata;
+
+    expect(
+      buildMessagesByOriginTxQuery(
+        'at1qypqxpq9qcrsszg2pvxq6rs0zqg3yyc5z5tpwxqergd3c8g7rusqhemxyq',
+        1634493807,
+        metadata,
+      )?.variables,
+    ).toEqual({
+      originTxHash: `\\x${byteRangeHex()}`,
+      originDomainId: 1634493807,
+    });
+  });
 });
+
+function byteRangeHex() {
+  return Buffer.from(Array.from({ length: 32 }, (_, i) => i + 1)).toString('hex');
+}

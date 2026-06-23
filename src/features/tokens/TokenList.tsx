@@ -3,6 +3,8 @@ import { useDebounce } from '@hyperlane-xyz/widgets';
 import React, { useEffect, useMemo, useRef } from 'react';
 
 import { TokenChainIcon } from '../../components/icons/TokenChainIcon';
+import { useChains } from '../api/hooks';
+import type { ChainDiscovery } from '../api/types';
 import { useTokenBalances } from '../balances/hooks';
 import { formatBalance, formatUsd, getUsdValue } from '../balances/utils';
 import { useDisabledChains, useMultiProvider } from '../chains/hooks';
@@ -34,19 +36,18 @@ export function TokenList({
   availableRouteTokens,
   hasAvailableRoutesResult,
 }: TokenListProps) {
-  const multiProvider = useMultiProvider();
   const disabledChains = useDisabledChains();
+  const { data: chainsResp } = useChains();
   const debouncedSearch = useDebounce(searchQuery, 300);
   const trimmedSearch = debouncedSearch?.trim() || undefined;
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Map chainName filter → chainId for the engine query. tryGetChainMetadata
-  // returns null until multiProvider hydrates; useTokens internally skips
-  // tokens for unknown chains so an early-render miss is harmless.
+  // Engine token queries must use engine chain ids. Some registry chain
+  // metadata uses VM-local ids, e.g. Aleo has chainId 0 in registry but
+  // domain 1634493807 in /v1/chains.
   const chainId = useMemo(() => {
-    if (!chainFilter) return undefined;
-    return multiProvider.tryGetChainMetadata(chainFilter)?.chainId as number | undefined;
-  }, [chainFilter, multiProvider]);
+    return getEngineChainIdForName(chainsResp?.chains, chainFilter);
+  }, [chainFilter, chainsResp]);
 
   // Server-side filtering — engine handles chain/search; the picker stops
   // doing local matchesSearch + chainFilter predicates.
@@ -269,6 +270,14 @@ function filterTokens(
     if (search && !matchesTokenSearch(token, search)) return false;
     return true;
   });
+}
+
+export function getEngineChainIdForName(
+  chains: ChainDiscovery[] | undefined,
+  chainFilter: ChainName | null,
+): number | undefined {
+  if (!chainFilter) return undefined;
+  return chains?.find((chain) => chain.chainName === chainFilter)?.id;
 }
 
 function matchesTokenSearch(token: UiToken, search: string): boolean {

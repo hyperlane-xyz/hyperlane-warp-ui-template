@@ -67,3 +67,24 @@ describe('RouterClient.availableRoutes', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });
+
+describe('RouterClient.tokens', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  test('serializes string chain selectors', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          chain: null,
+          tokens: [],
+        }),
+      ),
+    );
+
+    await new RouterClient('https://router.test').tokens({ chain: 'ethereum' });
+
+    expect(fetchMock).toHaveBeenCalledWith('https://router.test/v1/tokens?chain=ethereum');
+  });
+});

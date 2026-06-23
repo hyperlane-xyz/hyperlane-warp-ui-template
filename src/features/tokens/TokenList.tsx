@@ -3,8 +3,6 @@ import { useDebounce } from '@hyperlane-xyz/widgets';
 import React, { useEffect, useMemo, useRef } from 'react';
 
 import { TokenChainIcon } from '../../components/icons/TokenChainIcon';
-import { useChains } from '../api/hooks';
-import type { ChainDiscovery } from '../api/types';
 import { useTokenBalances } from '../balances/hooks';
 import { formatBalance, formatUsd, getUsdValue } from '../balances/utils';
 import { useDisabledChains, useMultiProvider } from '../chains/hooks';
@@ -37,30 +35,26 @@ export function TokenList({
   hasAvailableRoutesResult,
 }: TokenListProps) {
   const disabledChains = useDisabledChains();
-  const { data: chainsResp } = useChains();
   const debouncedSearch = useDebounce(searchQuery, 300);
   const trimmedSearch = debouncedSearch?.trim() || undefined;
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Engine token queries must use engine chain ids. Some registry chain
-  // metadata uses VM-local ids, e.g. Aleo has chainId 0 in registry but
-  // domain 1634493807 in /v1/chains.
-  const chainId = useMemo(() => {
-    return getEngineChainIdForName(chainsResp?.chains, chainFilter);
-  }, [chainFilter, chainsResp]);
+  // Chain names avoid cross-VM numeric selector collisions, e.g. Ethereum
+  // and Radix can both be addressed by numeric chain id 1.
+  const chainSelector = chainFilter ?? undefined;
 
   // Server-side filtering — engine handles chain/search; the picker stops
   // doing local matchesSearch + chainFilter predicates.
   const { data: fetched, isLoading: isTokenLoading } = useTokens({
-    chain: chainId,
+    chain: chainSelector,
     search: trimmedSearch,
   });
   const filteredRouteTokens = useMemo(
-    () => filterTokens(availableRouteTokens, chainId, trimmedSearch, disabledChains),
-    [availableRouteTokens, chainId, trimmedSearch, disabledChains],
+    () => filterTokens(availableRouteTokens, chainFilter, trimmedSearch, disabledChains),
+    [availableRouteTokens, chainFilter, trimmedSearch, disabledChains],
   );
   const allTokens = useMemo(() => {
-    const filteredFetched = filterTokens(fetched, undefined, undefined, disabledChains);
+    const filteredFetched = filterTokens(fetched, null, undefined, disabledChains);
     return mergeRouteTokensFirst(filteredRouteTokens, filteredFetched);
   }, [fetched, filteredRouteTokens, disabledChains]);
 
@@ -260,24 +254,16 @@ const TokenButton = React.memo(function TokenButton({
 
 function filterTokens(
   tokens: UiToken[],
-  chainId: number | undefined,
+  chainFilter: ChainName | null,
   search: string | undefined,
   disabledChains: Set<string>,
 ): UiToken[] {
   return tokens.filter((token) => {
     if (disabledChains.has(token.chainName)) return false;
-    if (chainId != null && token.chainId !== chainId) return false;
+    if (chainFilter && token.chainName !== chainFilter) return false;
     if (search && !matchesTokenSearch(token, search)) return false;
     return true;
   });
-}
-
-export function getEngineChainIdForName(
-  chains: ChainDiscovery[] | undefined,
-  chainFilter: ChainName | null,
-): number | undefined {
-  if (!chainFilter) return undefined;
-  return chains?.find((chain) => chain.chainName === chainFilter)?.id;
 }
 
 function matchesTokenSearch(token: UiToken, search: string): boolean {

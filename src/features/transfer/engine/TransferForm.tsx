@@ -20,6 +20,7 @@ import { WARP_QUERY_PARAMS } from '../../../consts/args';
 import { config } from '../../../consts/config';
 import { logger } from '../../../utils/logger';
 import { updateQueryParams } from '../../../utils/queryParams';
+import { trackTransferValidationFailed } from '../../analytics/utils';
 import { useChains } from '../../api/hooks';
 import type { RouteTx } from '../../api/types';
 import { useTokenBalance } from '../../balances/hooks';
@@ -229,6 +230,14 @@ function TransferFormContent() {
       // validating — otherwise we'd enter review mode on stale data.
       if (latestValuesRef.current !== snapshot) return;
       if (result) {
+        trackTransferValidationFailed({
+          errors: result,
+          values,
+          srcToken,
+          dstToken,
+          sender,
+          recipient: effectiveRecipient,
+        });
         setErrors(result);
         return;
       }
@@ -350,6 +359,14 @@ function TransferFormContent() {
     // mode, but the wallet dropdown can still change the recipient.
     if (latestValuesRef.current !== snapshot) return;
     if (validationResult) {
+      trackTransferValidationFailed({
+        errors: validationResult,
+        values,
+        srcToken,
+        dstToken,
+        sender,
+        recipient: effectiveRecipient,
+      });
       // Bail back to edit mode so the user sees the error and the form
       // unpauses useQuote to refresh.
       setErrors(validationResult);

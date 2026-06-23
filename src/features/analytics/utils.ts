@@ -1,6 +1,9 @@
 import { track } from '@vercel/analytics';
 
 import { config } from '../../consts/config';
+import type { UiToken } from '../tokens/types';
+import type { TransferFormValues } from '../transfer/engine/types';
+import type { TransferFormErrors } from '../transfer/engine/validate';
 import { EVENT_NAME, EventProperties } from './types';
 
 const sessionId =
@@ -13,5 +16,92 @@ export function trackEvent<T extends EVENT_NAME>(eventName: T, properties: Event
   track(eventName, {
     sessionId,
     ...properties,
+  });
+}
+
+export function trackTokenSelectionEvent(
+  tokenType: string,
+  originToken: UiToken | undefined,
+  destinationToken: UiToken | undefined,
+) {
+  if (!originToken || !destinationToken) return;
+
+  trackEvent(EVENT_NAME.TOKEN_SELECTED, {
+    tokenType,
+    originToken: originToken.symbol,
+    destinationToken: destinationToken.symbol,
+    origin: originToken.chainName,
+    destination: destinationToken.chainName,
+    originChainId: originToken.chainId,
+    destinationChainId: destinationToken.chainId,
+  });
+}
+
+export function trackChainSelectionEvent(
+  chainType: string,
+  chain: { name: string; chainId: ChainId } | null,
+  previousChain: { name: string; chainId: ChainId } | null,
+) {
+  trackEvent(EVENT_NAME.CHAIN_SELECTED, {
+    chainType,
+    chainId: chain?.chainId ?? null,
+    chainName: chain?.name ?? null,
+    previousChainId: previousChain?.chainId ?? null,
+    previousChainName: previousChain?.name ?? null,
+  });
+}
+
+const SKIPPED_VALIDATION_ERRORS = [
+  'Origin token required',
+  'Destination token required',
+  'Enter an amount',
+  'Enter a positive amount',
+  'Invalid amount',
+];
+
+export function trackTransferValidationFailed({
+  errors,
+  values,
+  srcToken,
+  dstToken,
+  sender,
+  recipient,
+}: {
+  errors: TransferFormErrors | null;
+  values: TransferFormValues;
+  srcToken: UiToken | undefined;
+  dstToken: UiToken | undefined;
+  sender: string | undefined;
+  recipient: string;
+}) {
+  if (!errors || !Object.keys(errors).length || !srcToken || !dstToken) return;
+
+  const firstError = `${Object.values(errors)[0]}` || 'Unknown error';
+  if (SKIPPED_VALIDATION_ERRORS.includes(firstError)) return;
+
+  trackEvent(EVENT_NAME.TRANSACTION_SUBMISSION_FAILED, {
+    amount: values.amount,
+    chains: `${srcToken.chainName}|${srcToken.chainId}|${dstToken.chainName}|${dstToken.chainId}`,
+    walletAddress: sender || null,
+    tokenAddress: srcToken.address,
+    tokenSymbol: srcToken.symbol,
+    recipient,
+    error: firstError,
+  });
+}
+
+export function trackUnsupportedRouteEvent(
+  originToken: UiToken | undefined,
+  destinationToken: UiToken | undefined,
+) {
+  if (!originToken || !destinationToken) return;
+
+  trackEvent(EVENT_NAME.UNSUPPORTED_ROUTE_SELECTED, {
+    originToken: originToken.symbol,
+    destinationToken: destinationToken.symbol,
+    origin: originToken.chainName,
+    destination: destinationToken.chainName,
+    originChainId: originToken.chainId,
+    destinationChainId: destinationToken.chainId,
   });
 }

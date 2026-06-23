@@ -2,6 +2,7 @@ import { Modal } from '@hyperlane-xyz/widgets';
 import { useCallback, useMemo, useState } from 'react';
 
 import { ModalHeader } from '../../components/layout/ModalHeader';
+import { trackChainSelectionEvent } from '../analytics/utils';
 import { ChainFilterPanel } from '../chains/ChainFilterPanel';
 import { useTransferChainInfos, type ChainInfo } from '../chains/hooks';
 import { useAvailableRouteTokens } from './hooks';
@@ -63,6 +64,7 @@ export function UnifiedTokenChainModal({
 
   const handleSelectChain = (chain: ChainInfo | null) => {
     if (selectedChain?.name === chain?.name) return;
+    trackChainSelectionEvent(selectionMode, chain, selectedChain);
     setSelectedChain(chain);
   };
 

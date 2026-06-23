@@ -5,6 +5,7 @@ import { ChevronLargeIcon } from '../../components/icons/ChevronLargeIcon';
 import { TokenChainIcon } from '../../components/icons/TokenChainIcon';
 import { WARP_QUERY_PARAMS } from '../../consts/args';
 import { updateQueryParams } from '../../utils/queryParams';
+import { trackTokenSelectionEvent } from '../analytics/utils';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import type { TransferFormValues } from '../transfer/engine/types';
@@ -48,6 +49,11 @@ export function TokenSelectField({ selectionMode, disabled }: Props) {
   const handleSelectToken = (token: UiToken) => {
     setFieldValue(chainField, token.chainId);
     setFieldValue(tokenField, token.address);
+    trackTokenSelectionEvent(
+      selectionMode,
+      isOrigin ? token : counterpartToken,
+      isOrigin ? counterpartToken : token,
+    );
     if (isOrigin) {
       // Reset amount when origin changes (warp UI does the same).
       setFieldValue('amount', '');

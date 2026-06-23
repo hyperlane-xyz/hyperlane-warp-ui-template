@@ -440,6 +440,9 @@ function TransferFormContent() {
         isNative: !approval,
       });
     } catch {
+      // Read latest Zustand state after execute's async failure handling.
+      // This catch is only a final safety net and must not downgrade a
+      // transfer that already reached a final status.
       const cur = useStore
         .getState()
         .transactionHistory.find((historyItem) => historyItem.id === transactionId);

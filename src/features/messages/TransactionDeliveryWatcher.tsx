@@ -266,7 +266,7 @@ function shouldBackfillMsgIds(
   return !!recovered?.length && (!current || current.length === 0);
 }
 
-function prioritizeSelectedTarget<T extends { id: string }>(
+export function prioritizeSelectedTarget<T extends { id: string }>(
   targets: T[],
   selectedTransactionId: string | null | undefined,
 ) {

@@ -169,7 +169,6 @@ export function useBootstrapTokens(): void {
 }
 
 export function useTokenByKeyMap(): Map<string, UiToken> {
-  useBootstrapTokens();
   return useStore((s) => s.knownTokens);
 }
 

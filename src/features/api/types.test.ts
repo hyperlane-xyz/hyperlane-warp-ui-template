@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { AvailableRoutesResponseSchema, QuoteResponseSchema } from './types';
+import { AvailableRoutesResponseSchema, CcsPathSchema, QuoteResponseSchema } from './types';
 
 describe('QuoteResponseSchema', () => {
   test('accepts engine bridge quote metadata', () => {
@@ -88,5 +88,18 @@ describe('AvailableRoutesResponseSchema', () => {
         ],
       }),
     ).not.toThrow();
+  });
+});
+
+describe('CcsPathSchema', () => {
+  test('accepts simple absolute CCS paths', () => {
+    expect(() => CcsPathSchema.parse('/v1/call-commitments')).not.toThrow();
+    expect(() => CcsPathSchema.parse('/v1/call_commitments/abc-123')).not.toThrow();
+  });
+
+  test('rejects path traversal and URL injection', () => {
+    expect(() => CcsPathSchema.parse('../v1/call-commitments')).toThrow();
+    expect(() => CcsPathSchema.parse('/v1/call-commitments?redirect=https://bad.test')).toThrow();
+    expect(() => CcsPathSchema.parse('https://bad.test/v1/call-commitments')).toThrow();
   });
 });

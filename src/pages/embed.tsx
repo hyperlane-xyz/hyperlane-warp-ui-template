@@ -6,6 +6,7 @@ import { type CSSProperties, useEffect, useMemo } from 'react';
 import { APP_NAME } from '../consts/app';
 import { TransferDetailsModal } from '../features/transfer/engine/TransferDetailsModal';
 import { TransferTokenCard } from '../features/transfer/engine/TransferTokenCard';
+import { useEngineBootstrap } from '../features/transfer/engine/useEngineBootstrap';
 import { parseEmbedTheme, themeToCssVars } from '../styles/embedTheme';
 
 /**
@@ -43,6 +44,7 @@ function usePostMessageBridge() {
 }
 
 const EmbedPage: NextPage = () => {
+  useEngineBootstrap();
   usePostMessageBridge();
   const cssVars = useMemo(() => themeToCssVars(parseEmbedTheme()), []);
 

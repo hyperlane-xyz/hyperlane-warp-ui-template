@@ -6,7 +6,7 @@ import type { RouteTx } from '../../api/types';
 import { toWalletTx } from './useTransfer';
 
 describe('toWalletTx', () => {
-  test('deserializes Solana engine payloads and applies extra signers', () => {
+  test('deserializes Solana engine payloads with existing partial signatures', () => {
     const feePayer = Keypair.generate();
     const extraSigner = Keypair.generate();
     const tx = new Transaction({
@@ -19,6 +19,8 @@ describe('toWalletTx', () => {
         lamports: 1,
       }),
     );
+    tx.partialSign(extraSigner);
+
     const routeTx: RouteTx = {
       protocol: 'sealevel',
       type: ProviderType.SolanaWeb3,
@@ -29,7 +31,6 @@ describe('toWalletTx', () => {
           tx.serialize({ requireAllSignatures: false, verifySignatures: false }),
         ).toString('base64'),
       },
-      extraSigners: [Buffer.from(extraSigner.secretKey).toString('base64')],
     };
 
     const walletTx = toWalletTx(routeTx, ProviderType.SolanaWeb3) as {

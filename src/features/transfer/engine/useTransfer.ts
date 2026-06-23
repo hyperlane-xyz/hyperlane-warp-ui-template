@@ -9,7 +9,7 @@ import {
 } from '@hyperlane-xyz/sdk';
 import { isZeroishAddress, ProtocolType } from '@hyperlane-xyz/utils';
 import { useTransactionFns } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
-import { Keypair, Transaction, VersionedTransaction } from '@solana/web3.js';
+import { Transaction, VersionedTransaction } from '@solana/web3.js';
 import { useCallback, useState } from 'react';
 import type { Address } from 'viem';
 
@@ -265,8 +265,6 @@ export function toWalletTx(tx: RouteTx, txType: ProviderType): unknown {
 function toSdkWalletTx(tx: Extract<RouteTx, { protocol: string }>): unknown {
   if (tx.type !== ProviderType.SolanaWeb3) return tx;
   const transaction = deserializeSolanaTransaction(tx.transaction);
-  const extraSigners = deserializeSolanaExtraSigners(tx.extraSigners);
-  signSolanaTransaction(transaction, extraSigners);
   return {
     ...tx,
     transaction,
@@ -285,23 +283,6 @@ function deserializeSolanaTransaction(raw: unknown): Transaction | VersionedTran
   } catch {
     return VersionedTransaction.deserialize(bytes);
   }
-}
-
-function deserializeSolanaExtraSigners(signers: string[] | undefined): Keypair[] | undefined {
-  if (!signers?.length) return undefined;
-  return signers.map((signer) => Keypair.fromSecretKey(base64ToBytes(signer)));
-}
-
-function signSolanaTransaction(
-  transaction: Transaction | VersionedTransaction,
-  signers: Keypair[] | undefined,
-) {
-  if (!signers?.length) return;
-  if (transaction instanceof Transaction) {
-    transaction.partialSign(...signers);
-    return;
-  }
-  transaction.sign(signers);
 }
 
 function base64ToBytes(value: string): Uint8Array {

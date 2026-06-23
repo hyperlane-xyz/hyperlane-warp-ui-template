@@ -1,5 +1,6 @@
+import { useTimeout } from '@hyperlane-xyz/widgets';
 import { useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { bytesToHex, parseUnits, type Hex } from 'viem';
 
 import { routerClient } from '../../api/RouterClient';
@@ -34,6 +35,8 @@ interface UseQuoteArgs {
 }
 
 export function useQuote({ values, sender, pause }: UseQuoteArgs) {
+  const [now, setNow] = useState(() => Date.now());
+
   // Pass sender + recipient through as-is — engine handles per-protocol normalization.
   const engineSender = sender || undefined;
   const engineRecipient = values.recipient || undefined;
@@ -104,7 +107,15 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
     };
   }, [query.data]);
 
-  const isExpired = augmented ? augmented.expiresAt * 1000 < Date.now() : false;
+  const expiresAt = augmented?.expiresAt;
+  const quoteExpiryDelay = expiresAt == null ? -1 : quoteExpiryDelayMs(expiresAt, Date.now());
+  const refreshNow = useCallback(() => {
+    setNow(Date.now());
+  }, []);
+
+  useTimeout(refreshNow, quoteExpiryDelay);
+
+  const isExpired = augmented ? augmented.expiresAt * 1000 < now : false;
   const isQuoteSettled = query.isSuccess || query.isError;
 
   return {
@@ -113,6 +124,10 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
     isExpired,
     isQuoteSettled,
   };
+}
+
+export function quoteExpiryDelayMs(expiresAt: number, nowMs: number): number {
+  return Math.max(expiresAt * 1000 - nowMs, 0);
 }
 
 function isQuoteRequestReady(v: TransferFormValues, sender: string | undefined): boolean {

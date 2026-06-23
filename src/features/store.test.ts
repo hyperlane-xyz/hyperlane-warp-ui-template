@@ -1,6 +1,12 @@
 import { describe, expect, test } from 'vitest';
 
-import { mergeTransferTransactionUpdate } from './store';
+import type { RouteResponse } from './api/types';
+import {
+  mergeKnownTokens,
+  mergeTransferTransactionUpdate,
+  removeFinalTransferRoute,
+} from './store';
+import type { UiToken } from './tokens/types';
 import { TransferStatus, type TransferHistoryItem } from './transfer/engine/types';
 
 const MSG_ID = `0x${'11'.repeat(32)}`;
@@ -60,6 +66,51 @@ describe('mergeTransferTransactionUpdate', () => {
   });
 });
 
+describe('mergeKnownTokens', () => {
+  test('returns same map when incoming tokens are unchanged', () => {
+    const token = uiToken();
+    const known = new Map([[`${token.chainId}-${token.address.toLowerCase()}`, token]]);
+
+    expect(mergeKnownTokens(known, [token])).toBe(known);
+  });
+
+  test('updates changed token metadata', () => {
+    const token = uiToken({ decimals: 6, logoURI: '/old.svg', canSwap: false });
+    const known = new Map([[`${token.chainId}-${token.address.toLowerCase()}`, token]]);
+    const updated = uiToken({ decimals: 18, logoURI: '/new.svg', canSwap: true });
+
+    const next = mergeKnownTokens(known, [updated]);
+
+    expect(next).not.toBe(known);
+    expect(next.get(`${token.chainId}-${token.address.toLowerCase()}`)).toMatchObject({
+      decimals: 18,
+      logoURI: '/new.svg',
+      canSwap: true,
+    });
+  });
+});
+
+describe('removeFinalTransferRoute', () => {
+  test('keeps active transfer routes', () => {
+    const routes = new Map([['tx-1', routeResponse()]]);
+
+    expect(removeFinalTransferRoute(routes, 'tx-1', TransferStatus.Bridging)).toBe(routes);
+  });
+
+  test('removes route data when transfer is final', () => {
+    const routes = new Map([
+      ['tx-1', routeResponse()],
+      ['tx-2', routeResponse()],
+    ]);
+
+    const next = removeFinalTransferRoute(routes, 'tx-1', TransferStatus.ConfirmedDestination);
+
+    expect(next).not.toBe(routes);
+    expect(next.has('tx-1')).toBe(false);
+    expect(next.has('tx-2')).toBe(true);
+  });
+});
+
 function transferItem(overrides: Partial<TransferHistoryItem>): TransferHistoryItem {
   return {
     status: TransferStatus.ConfirmingOrigin,
@@ -73,5 +124,42 @@ function transferItem(overrides: Partial<TransferHistoryItem>): TransferHistoryI
     sender: 'aleo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq3ljyzc',
     recipient: '0x0000000000000000000000000000000000000002',
     ...overrides,
+  };
+}
+
+function uiToken(overrides: Partial<UiToken> = {}): UiToken {
+  return {
+    chainId: 8453,
+    address: '0x0000000000000000000000000000000000000001',
+    symbol: 'USDC',
+    decimals: 6,
+    isNative: false,
+    isBridgeToken: true,
+    isPoolToken: false,
+    canBridge: true,
+    canSwap: false,
+    bridgeSymbols: ['USDC'],
+    warpRouteIds: ['USDC/base'],
+    chainName: 'base',
+    name: 'USD Coin',
+    addressOrDenom: '0x0000000000000000000000000000000000000001',
+    ...overrides,
+  };
+}
+
+function routeResponse(): RouteResponse {
+  return {
+    steps: [],
+    output: '1',
+    outputMin: '1',
+    executionKind: 'warpDirect',
+    connection: null,
+    gas: {
+      originGas: '0',
+      destGas: '0',
+    },
+    tx: null,
+    txs: [],
+    approval: null,
   };
 }

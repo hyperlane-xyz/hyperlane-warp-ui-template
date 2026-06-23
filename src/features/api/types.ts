@@ -199,7 +199,6 @@ export const SdkRouteTxSchema = z.object({
   type: z.string().min(1),
   category: z.string().min(1),
   transaction: z.unknown(),
-  extraSigners: z.array(z.string()).optional(),
   metadata: z.record(z.unknown()).optional(),
 });
 
@@ -227,6 +226,8 @@ export const CallCommitmentBodySchema = z.object({
 });
 export type CallCommitmentBody = z.infer<typeof CallCommitmentBodySchema>;
 
+export const CcsPathSchema = z.string().regex(/^\/[a-zA-Z0-9/_-]*$/);
+
 // Engine returns this on routes that need CCS coordination. Pre-built
 // HTTP request — UI just fetches `${CCS_URL}${path}` with method/body.
 export const CallCommitmentSchema = z.object({
@@ -239,7 +240,7 @@ export const CallCommitmentSchema = z.object({
   }),
   ccs: z.object({
     method: z.literal('POST'),
-    path: z.string(),
+    path: CcsPathSchema,
     body: CallCommitmentBodySchema,
   }),
 });

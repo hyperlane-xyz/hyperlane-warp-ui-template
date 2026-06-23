@@ -88,7 +88,11 @@ export class RouterClient {
       throw new Error('Available routes requires dstChain and dstToken together');
     }
 
-    if (hasSource === hasDestination) {
+    if (hasSource && hasDestination) {
+      throw new Error('Available routes requires exactly one source or destination token');
+    }
+
+    if (!hasSource && !hasDestination) {
       throw new Error('Available routes requires exactly one source or destination token');
     }
 

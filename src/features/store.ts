@@ -184,7 +184,20 @@ export const useStore = create<AppState>()(
               data,
             };
           });
-          return changed ? { transactionHistory } : state;
+          const transferRouteByTransactionId = removeFinalTransferRoute(
+            state.transferRouteByTransactionId,
+            id,
+            status,
+          );
+          if (!changed && transferRouteByTransactionId === state.transferRouteByTransactionId) {
+            return state;
+          }
+          const patch: Partial<AppState> = {};
+          if (changed) patch.transactionHistory = transactionHistory;
+          if (transferRouteByTransactionId !== state.transferRouteByTransactionId) {
+            patch.transferRouteByTransactionId = transferRouteByTransactionId;
+          }
+          return patch;
         });
       },
       transferRouteByTransactionId: new Map(),
@@ -215,16 +228,8 @@ export const useStore = create<AppState>()(
       knownTokens: new Map(),
       syncTokens: (newTokens) => {
         set((state) => {
-          let added = 0;
-          const next = new Map(state.knownTokens);
-          for (const t of newTokens) {
-            const key = getTransferTokenKey(t);
-            if (!next.has(key)) {
-              next.set(key, t);
-              added++;
-            }
-          }
-          return added > 0 ? { knownTokens: next } : state;
+          const knownTokens = mergeKnownTokens(state.knownTokens, newTokens);
+          return knownTokens === state.knownTokens ? state : { knownTokens };
         });
       },
 
@@ -364,6 +369,61 @@ function isSameTransferHistoryItem(left: TransferHistoryItem, right: TransferHis
     left.destinationTxHash === right.destinationTxHash &&
     left.originTxTimestamp === right.originTxTimestamp
   );
+}
+
+export function removeFinalTransferRoute(
+  routeByTransactionId: Map<string, RouteResponse>,
+  transactionId: string,
+  status: TransferStatus,
+): Map<string, RouteResponse> {
+  if (!FinalTransferStatuses.includes(status)) return routeByTransactionId;
+  if (!routeByTransactionId.has(transactionId)) return routeByTransactionId;
+
+  const next = new Map(routeByTransactionId);
+  next.delete(transactionId);
+  return next;
+}
+
+export function mergeKnownTokens(
+  knownTokens: Map<string, UiToken>,
+  newTokens: UiToken[],
+): Map<string, UiToken> {
+  let next: Map<string, UiToken> | undefined;
+  for (const token of newTokens) {
+    const key = getTransferTokenKey(token);
+    const current = (next ?? knownTokens).get(key);
+    if (current && isSameUiToken(current, token)) continue;
+
+    next ??= new Map(knownTokens);
+    next.set(key, token);
+  }
+  return next ?? knownTokens;
+}
+
+function isSameUiToken(left: UiToken, right: UiToken) {
+  return (
+    left.chainId === right.chainId &&
+    left.address === right.address &&
+    left.symbol === right.symbol &&
+    left.standard === right.standard &&
+    left.decimals === right.decimals &&
+    left.isNative === right.isNative &&
+    left.isBridgeToken === right.isBridgeToken &&
+    left.isPoolToken === right.isPoolToken &&
+    left.canBridge === right.canBridge &&
+    left.canSwap === right.canSwap &&
+    sameStringArray(left.bridgeSymbols, right.bridgeSymbols) &&
+    sameStringArray(left.warpRouteIds, right.warpRouteIds) &&
+    left.coinGeckoId === right.coinGeckoId &&
+    left.chainName === right.chainName &&
+    left.name === right.name &&
+    left.addressOrDenom === right.addressOrDenom &&
+    left.logoURI === right.logoURI
+  );
+}
+
+function sameStringArray(left: string[], right: string[]) {
+  return left.length === right.length && left.every((item, i) => item === right[i]);
 }
 
 function normalizePersistedTransactionHistoryItem(

@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import type { ChainDiscovery, RouteResponse } from '../../api/types';
 import type { UiToken } from '../../tokens/types';
 import type { AugmentedRoute } from './types';
-import { validateBalances } from './validate';
+import { validateBalances, validateQuote } from './validate';
 
 const { readBalanceMock, estimateNativeGasCostMock } = vi.hoisted(() => ({
   readBalanceMock: vi.fn(),
@@ -136,6 +136,38 @@ describe('validateBalances', () => {
 
     expect(errors).toBeNull();
     expect(readBalanceMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('validateQuote', () => {
+  test('rejects expired quotes', () => {
+    const now = Math.floor(Date.now() / 1000);
+
+    expect(
+      validateQuote({
+        bestRoute: routeWithNativeFee(0n, 358974494, {
+          to: '0x0000000000000000000000000000000000000001',
+          data: '0x',
+          value: '0',
+        }),
+        quoteExpiresAt: now - 1,
+      }),
+    ).toEqual({ form: 'Quote has expired — refresh to continue' });
+  });
+
+  test('accepts executable unexpired quotes', () => {
+    const now = Math.floor(Date.now() / 1000);
+
+    expect(
+      validateQuote({
+        bestRoute: routeWithNativeFee(0n, 358974494, {
+          to: '0x0000000000000000000000000000000000000001',
+          data: '0x',
+          value: '0',
+        }),
+        quoteExpiresAt: now + 30,
+      }),
+    ).toBeNull();
   });
 });
 

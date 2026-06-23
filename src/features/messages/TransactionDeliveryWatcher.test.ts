@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 
 import { TransferStatus, type TransferHistoryItem } from '../transfer/engine/types';
-import { shouldUpdateFromOriginTx } from './TransactionDeliveryWatcher';
+import { prioritizeSelectedTarget, shouldUpdateFromOriginTx } from './TransactionDeliveryWatcher';
 import type { OriginTxMessagesResult } from './useOriginTxMessages';
 
 const MSG_ID = `0x${'11'.repeat(32)}`;
@@ -55,6 +55,22 @@ describe('shouldUpdateFromOriginTx', () => {
     expect(shouldUpdateFromOriginTx(transfer, TransferStatus.ConfirmedDestination, origin)).toBe(
       true,
     );
+  });
+});
+
+describe('prioritizeSelectedTarget', () => {
+  test('moves selected target to the end so it survives the background cap', () => {
+    const targets = Array.from({ length: 8 }, (_, i) => ({ id: `tx-${i}` }));
+
+    const capped = prioritizeSelectedTarget(targets, 'tx-1').slice(-5);
+
+    expect(capped.map((target) => target.id)).toEqual(['tx-4', 'tx-5', 'tx-6', 'tx-7', 'tx-1']);
+  });
+
+  test('preserves order when selected target is missing', () => {
+    const targets = [{ id: 'tx-1' }, { id: 'tx-2' }];
+
+    expect(prioritizeSelectedTarget(targets, 'tx-3')).toEqual(targets);
   });
 });
 

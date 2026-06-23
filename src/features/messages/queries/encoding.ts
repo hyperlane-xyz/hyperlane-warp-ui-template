@@ -5,6 +5,8 @@ import {
   bufferToBase58,
   bytesToProtocolAddress,
   ensure0x,
+  hexToBech32mPrefix,
+  hexToRadixCustomPrefix,
   isAddressEvm,
   isValidTransactionHash,
   ProtocolType,
@@ -76,6 +78,7 @@ export function postgresByteaToAddress(
   const hexString = postgresByteaToString(byteString);
   if (!chainMetadata) return hexString;
   const addressBytes = Buffer.from(strip0x(hexString), 'hex');
+  if (!addressBytes.length || addressBytes.every((b) => b === 0)) return hexString;
   return bytesToProtocolAddress(addressBytes, chainMetadata.protocol, chainMetadata.bech32Prefix);
 }
 
@@ -84,9 +87,22 @@ export function postgresByteaToTxHash(
   chainMetadata: ChainMetadata | null | undefined,
 ): string {
   const hexString = postgresByteaToString(byteString);
-  if (chainMetadata?.protocol !== ProtocolType.Sealevel) return hexString;
-  const bytes = Buffer.from(strip0x(hexString), 'hex');
-  return bufferToBase58(bytes);
+  switch (chainMetadata?.protocol) {
+    case ProtocolType.Sealevel: {
+      const bytes = Buffer.from(strip0x(hexString), 'hex');
+      return bufferToBase58(bytes);
+    }
+    case ProtocolType.Radix:
+      return hexToRadixCustomPrefix(hexString, 'txid', chainMetadata.bech32Prefix);
+    case ProtocolType.Cosmos:
+    case ProtocolType.CosmosNative:
+    case ProtocolType.Tron:
+      return strip0x(hexString);
+    case ProtocolType.Aleo:
+      return hexToBech32mPrefix(hexString, 'at');
+    default:
+      return hexString;
+  }
 }
 
 export function parseTimestamp(t: string): number {

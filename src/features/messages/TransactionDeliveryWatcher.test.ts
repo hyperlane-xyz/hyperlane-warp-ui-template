@@ -19,6 +19,30 @@ describe('shouldUpdateFromOriginTx', () => {
     expect(shouldUpdateFromOriginTx(transfer, TransferStatus.Bridging, origin)).toBe(false);
   });
 
+  test('updates once when recovered messages replace an empty message list', () => {
+    const origin = originTxMessages();
+    const transfer = transferItem({
+      status: TransferStatus.Bridging,
+      msgIds: [],
+      originBlockNumber: 999,
+      originTxTimestamp: 111,
+    });
+
+    expect(shouldUpdateFromOriginTx(transfer, TransferStatus.Bridging, origin)).toBe(true);
+  });
+
+  test('does not update again when only preserved origin metadata differs', () => {
+    const origin = originTxMessages();
+    const transfer = transferItem({
+      status: TransferStatus.Bridging,
+      msgIds: origin.msgIds,
+      originBlockNumber: 999,
+      originTxTimestamp: 111,
+    });
+
+    expect(shouldUpdateFromOriginTx(transfer, TransferStatus.Bridging, origin)).toBe(false);
+  });
+
   test('updates when graphql later backfills the destination tx hash', () => {
     const origin = originTxMessages({ destinationTxHash: `0x${'22'.repeat(32)}` });
     const transfer = transferItem({

@@ -172,23 +172,20 @@ export const useStore = create<AppState>()(
         set(() => ({ transactionHistory: [] }));
       },
       updateTransferTransactionStatus: (id, status, options) => {
-        set((state) => ({
-          transactionHistory: state.transactionHistory.map((item) => {
+        set((state) => {
+          let changed = false;
+          const transactionHistory = state.transactionHistory.map((item) => {
             if (item.id !== id || item.type !== TransactionHistoryItemType.Transfer) return item;
+            const data = mergeTransferTransactionUpdate(item.data, status, options);
+            if (data === item.data) return item;
+            changed = true;
             return {
               ...item,
-              data: {
-                ...item.data,
-                status,
-                msgIds: item.data.msgIds ?? options?.msgIds,
-                originTxHash: item.data.originTxHash ?? options?.originTxHash,
-                originBlockNumber: item.data.originBlockNumber ?? options?.originBlockNumber,
-                destinationTxHash: item.data.destinationTxHash ?? options?.destinationTxHash,
-                originTxTimestamp: item.data.originTxTimestamp ?? options?.originTxTimestamp,
-              },
+              data,
             };
-          }),
-        }));
+          });
+          return changed ? { transactionHistory } : state;
+        });
       },
       transferRouteByTransactionId: new Map(),
       setTransferRoute: (transactionId, route) => {
@@ -329,6 +326,44 @@ function createTransactionId(type: TransactionHistoryItem['type'], timestamp: nu
     crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
   return `${type}-${timestamp}-${suffix}`;
+}
+
+type TransferTransactionUpdateOptions = Parameters<AppState['updateTransferTransactionStatus']>[2];
+
+export function mergeTransferTransactionUpdate(
+  data: TransferHistoryItem,
+  status: TransferStatus,
+  options?: TransferTransactionUpdateOptions,
+): TransferHistoryItem {
+  const msgIds = mergeMsgIds(data.msgIds, options?.msgIds);
+  const next: TransferHistoryItem = {
+    ...data,
+    status,
+    msgIds,
+    originTxHash: data.originTxHash ?? options?.originTxHash,
+    originBlockNumber: data.originBlockNumber ?? options?.originBlockNumber,
+    destinationTxHash: data.destinationTxHash ?? options?.destinationTxHash,
+    originTxTimestamp: data.originTxTimestamp ?? options?.originTxTimestamp,
+  };
+
+  return isSameTransferHistoryItem(data, next) ? data : next;
+}
+
+function mergeMsgIds(current: LabeledMsgId[] | undefined, next: LabeledMsgId[] | undefined) {
+  if (!next) return current;
+  if (!current || (current.length === 0 && next.length > 0)) return next;
+  return current;
+}
+
+function isSameTransferHistoryItem(left: TransferHistoryItem, right: TransferHistoryItem) {
+  return (
+    left.status === right.status &&
+    left.msgIds === right.msgIds &&
+    left.originTxHash === right.originTxHash &&
+    left.originBlockNumber === right.originBlockNumber &&
+    left.destinationTxHash === right.destinationTxHash &&
+    left.originTxTimestamp === right.originTxTimestamp
+  );
 }
 
 function normalizePersistedTransactionHistoryItem(

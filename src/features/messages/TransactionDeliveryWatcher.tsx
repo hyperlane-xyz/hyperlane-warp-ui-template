@@ -244,26 +244,26 @@ export function shouldUpdateFromOriginTx(
   nextStatus: TransferStatus,
   originTxMessages: OriginTxMessagesResult,
 ) {
+  if (!transfer) return true;
+
   const nextOriginTxTimestamp = originTxMessages.originTimestamp
     ? Math.floor(originTxMessages.originTimestamp / 1000)
     : undefined;
 
   return (
-    transfer?.status !== nextStatus ||
-    !sameMsgIds(transfer?.msgIds, originTxMessages.msgIds) ||
-    transfer?.originBlockNumber !== originTxMessages.originBlockHeight ||
-    transfer?.originTxTimestamp !== nextOriginTxTimestamp ||
-    transfer?.destinationTxHash !== originTxMessages.destinationTxHash
+    transfer.status !== nextStatus ||
+    shouldBackfillMsgIds(transfer.msgIds, originTxMessages.msgIds) ||
+    (transfer.originBlockNumber == null && originTxMessages.originBlockHeight != null) ||
+    (transfer.originTxTimestamp == null && nextOriginTxTimestamp != null) ||
+    (transfer.destinationTxHash == null && originTxMessages.destinationTxHash != null)
   );
 }
 
-function sameMsgIds(
-  left: Array<{ msgId: string; label: string }> | undefined,
-  right: Array<{ msgId: string; label: string }> | undefined,
+function shouldBackfillMsgIds(
+  current: Array<{ msgId: string; label: string }> | undefined,
+  recovered: Array<{ msgId: string; label: string }> | undefined,
 ) {
-  if (left === right) return true;
-  if (!left || !right || left.length !== right.length) return false;
-  return left.every((item, i) => item.msgId === right[i]?.msgId && item.label === right[i]?.label);
+  return !!recovered?.length && (!current || current.length === 0);
 }
 
 function prioritizeSelectedTarget<T extends { id: string }>(

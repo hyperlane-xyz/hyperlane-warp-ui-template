@@ -230,6 +230,9 @@ export const CallCommitmentSchema = z.object({
       salt: Hex,
       relayers: z.array(z.string()),
       destinationAccount: Hex,
+      revealAccounts: z
+        .array(z.object({ pubkey: z.string(), isWritable: z.boolean(), isSigner: z.boolean() }))
+        .optional(),
     }),
   }),
 });

@@ -26,7 +26,7 @@ import { useStore } from '../store';
 import { submitToRelayApi } from '../transfer/relayApi';
 import { postCommitment } from './ccs';
 import { SwapStatus } from './types';
-import type { AugmentedRoute, LabeledMsgId, SolanaRevealData } from './types';
+import type { AugmentedRoute, LabeledMsgId } from './types';
 
 interface ExecuteArgs {
   transactionId: string;
@@ -211,15 +211,9 @@ export function useSwap() {
           msgIds = labelMessages(parsed.messages, route);
         }
 
-        const dstProtocol = multiProvider.tryGetProtocol(args.dstChainId);
-        const solanaReveal =
-          dstProtocol === ProtocolType.Sealevel
-            ? buildSolanaRevealData(route, args.srcChainId, args.sender)
-            : undefined;
         updateSwapTransactionStatus(transactionId, SwapStatus.Bridging, {
           msgIds,
           originBlockNumber: parsed.originBlockNumber,
-          solanaReveal,
         });
 
         return hash;
@@ -327,36 +321,9 @@ function labelMessages(messages: ParsedMessage[], route: AugmentedRoute): Labele
   });
 }
 
-function buildSolanaRevealData(
-  route: AugmentedRoute,
-  srcChainId: number,
-  sender: string,
-): SolanaRevealData | undefined {
-  const sc = route.raw.callCommitment;
-  if (!sc || !route.raw.tx?.to) return undefined;
-  const swapStep = route.raw.steps.find(
-    (s): s is Extract<(typeof route.raw.steps)[number], { type: 'swap' }> =>
-      s.type === 'swap' && s.chain !== sc.ccs.body.originDomain,
-  );
-  if (!swapStep) return undefined;
-  return {
-    commitment: sc.commitment as `0x${string}`,
-    calldata: sc.ccs.body.data as `0x${string}`,
-    revealSalt: sc.ccs.body.salt as `0x${string}`,
-    userSalt: sc.ccs.body.destinationAccount as `0x${string}`,
-    srcChainId,
-    evmUr: route.raw.tx.to.replace(/^0x/i, '').toLowerCase(),
-    tokenIn: swapStep.tokenIn,
-    tokenOut: swapStep.tokenOut,
-    amountIn: swapStep.amountIn,
-    poolAddress: swapStep.poolAddress,
-  };
-}
-
 function getCcsMessageLabel(body: string): LabeledMsgId['label'] | null {
   // CCS message bodies use the first byte as the message type.
   if (body.startsWith('0x01')) return 'commit';
-  if (body.startsWith('0x02')) return 'reveal';
   return null;
 }
 

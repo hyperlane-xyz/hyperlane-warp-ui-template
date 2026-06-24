@@ -10,6 +10,7 @@ import { FinalSwapStatuses, SwapStatus } from '../swap/types';
 import { TransferStatus } from '../transfer/types';
 import { useEvmMailboxDeliveryStatus } from './useEvmMailboxDeliveryStatus';
 import { useMessageDeliveryStatus } from './useMessageDeliveryStatus';
+import { useSolanaDestSwapStatus } from './useSolanaDestSwapStatus';
 import { useSolanaMailboxDeliveryStatus } from './useSolanaMailboxDeliveryStatus';
 import { getSwapDeliveryMsgId } from './utils';
 
@@ -25,9 +26,7 @@ type SwapDeliveryTarget = {
   msgId: string;
   destinationChain: ChainName;
   status: SwapStatus;
-  // True when a Solana reveal is pending — delivery watcher must not auto-complete;
-  // the reveal modal handles ConfirmedDestination after the reveal tx confirms.
-  hasSolanaReveal: boolean;
+  solanaDestSwapPda: string | undefined;
 };
 
 type DeliveryTarget = BridgeDeliveryTarget | SwapDeliveryTarget;
@@ -64,9 +63,17 @@ export function TransactionDeliveryWatcher() {
       const destinationChain = multiProvider.tryGetChainName(item.data.dstChain);
       if (!destinationChain) return [];
       const msgId = getSwapDeliveryMsgId(item.data.msgIds);
-      const hasSolanaReveal = !!(item.data.solanaReveal && !item.data.revealDismissed);
       return msgId
-        ? [{ id: item.id, type: item.type, msgId, destinationChain, status: item.data.status, hasSolanaReveal }]
+        ? [
+            {
+              id: item.id,
+              type: item.type,
+              msgId,
+              destinationChain,
+              status: item.data.status,
+              solanaDestSwapPda: item.data.solanaDestSwapPda,
+            },
+          ]
         : [];
     });
 
@@ -115,16 +122,40 @@ function DeliveryTargetWatcher({
     multiProvider,
     enabled: isSwapTarget && !graphQlDelivery.isDelivered && !mailboxDelivery.isDelivered,
   });
+
+  // For EVM→Solana dest swaps: the bridge creates the pending_swap PDA on
+  // delivery. The CCS relayer closes it once the Solana swap executes.
+  // Only enable polling after the bridge has delivered — before that, the PDA
+  // doesn't exist yet and getAccountInfo would also return null.
+  const solanaDestSwapPda =
+    isSwapTarget && target.type === TransactionHistoryItemType.Swap
+      ? target.solanaDestSwapPda
+      : undefined;
+  const bridgeDelivered =
+    graphQlDelivery.isDelivered ||
+    mailboxDelivery.isDelivered ||
+    solanaMailboxDelivery.isDelivered ||
+    // ConfirmingDestination means bridge was delivered in a prior session.
+    (isSwapTarget && target.status === SwapStatus.ConfirmingDestination);
+  const solanaDestSwap = useSolanaDestSwapStatus({
+    pdaAddress: solanaDestSwapPda,
+    destinationChain: swapDestChain,
+    multiProvider,
+    enabled: !!solanaDestSwapPda && bridgeDelivered,
+  });
+
   const hasToasted = useRef(false);
   const hasUpdatedFromGraphQl = useRef(false);
   const hasBackfilledGraphQlHash = useRef(false);
   const hasUpdatedFromMailbox = useRef(false);
+  const hasUpdatedFromDestSwap = useRef(false);
 
   useEffect(() => {
     hasToasted.current = false;
     hasUpdatedFromGraphQl.current = false;
     hasBackfilledGraphQlHash.current = false;
     hasUpdatedFromMailbox.current = false;
+    hasUpdatedFromDestSwap.current = false;
   }, [target.id, target.msgId]);
 
   useEffect(() => {
@@ -147,21 +178,6 @@ function DeliveryTargetWatcher({
       return;
     }
 
-    // Solana CCS swaps: warp delivery signals "ready for reveal". Update to
-    // ConfirmingDestination so the reveal modal knows to open. The modal sets
-    // ConfirmedDestination after the reveal tx confirms.
-    if (target.type === TransactionHistoryItemType.Swap && target.hasSolanaReveal) {
-      const directDelivery = mailboxDelivery.isDelivered ? mailboxDelivery : solanaMailboxDelivery;
-      if (
-        (graphQlDelivery.isDelivered || directDelivery.isDelivered) &&
-        !hasUpdatedFromMailbox.current
-      ) {
-        hasUpdatedFromMailbox.current = true;
-        updateSwapTransactionStatus(target.id, SwapStatus.ConfirmingDestination);
-      }
-      return;
-    }
-
     if (
       graphQlDelivery.isDelivered &&
       shouldUpdateFromDelivery(
@@ -172,6 +188,16 @@ function DeliveryTargetWatcher({
     ) {
       hasUpdatedFromGraphQl.current = true;
       if (graphQlDelivery.destinationTxHash) hasBackfilledGraphQlHash.current = true;
+
+      if (solanaDestSwapPda) {
+        // Bridge delivered but Solana dest swap hasn't run yet — hold at
+        // ConfirmingDestination until the PDA closes.
+        updateSwapTransactionStatus(target.id, SwapStatus.ConfirmingDestination, {
+          destinationTxHash: graphQlDelivery.destinationTxHash,
+        });
+        return;
+      }
+
       updateSwapTransactionStatus(target.id, SwapStatus.ConfirmedDestination, {
         destinationTxHash: graphQlDelivery.destinationTxHash,
       });
@@ -185,6 +211,14 @@ function DeliveryTargetWatcher({
     const directDelivery = mailboxDelivery.isDelivered ? mailboxDelivery : solanaMailboxDelivery;
     if (directDelivery.isDelivered && !hasUpdatedFromMailbox.current) {
       hasUpdatedFromMailbox.current = true;
+
+      if (solanaDestSwapPda) {
+        updateSwapTransactionStatus(target.id, SwapStatus.ConfirmingDestination, {
+          destinationTxHash: directDelivery.destinationTxHash,
+        });
+        return;
+      }
+
       updateSwapTransactionStatus(target.id, SwapStatus.ConfirmedDestination, {
         destinationTxHash: directDelivery.destinationTxHash,
       });
@@ -199,10 +233,22 @@ function DeliveryTargetWatcher({
     mailboxDelivery.destinationTxHash,
     mailboxDelivery.isDelivered,
     solanaMailboxDelivery.isDelivered,
+    solanaDestSwapPda,
     target,
     updateBridgeTransactionStatus,
     updateSwapTransactionStatus,
   ]);
+
+  useEffect(() => {
+    if (!solanaDestSwap.isDone || hasUpdatedFromDestSwap.current) return;
+    hasUpdatedFromDestSwap.current = true;
+    updateSwapTransactionStatus(target.id, SwapStatus.ConfirmedDestination);
+    const swapStatus = isSwapTarget ? target.status : undefined;
+    if (swapStatus !== SwapStatus.ConfirmedDestination && !hasToasted.current) {
+      hasToasted.current = true;
+      toast.success('Swap complete! Funds have arrived.');
+    }
+  }, [solanaDestSwap.isDone, isSwapTarget, target, updateSwapTransactionStatus]);
 
   return null;
 }

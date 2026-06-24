@@ -13,7 +13,6 @@ import '../../sentry.client.config';
 import { ErrorBoundary } from '../components/errors/ErrorBoundary';
 import { AppLayout } from '../components/layout/AppLayout';
 import { TransactionDeliveryWatcher } from '../features/messages/TransactionDeliveryWatcher';
-import { SolanaRevealModal } from '../features/swap/SolanaRevealModal';
 import { ThemeProvider } from '../features/theme/ThemeContext';
 import { initE2EStateIfEnabled } from '../features/wallet/_e2e/windowState';
 import { AleoWalletContext } from '../features/wallet/context/AleoWalletContext';
@@ -102,7 +101,6 @@ export default function App({ Component, pageProps }: AppProps) {
                         <TronWalletContext>
                           <ThemeProvider>
                             <TransactionDeliveryWatcher />
-                            <SolanaRevealModal />
                             {content}
                           </ThemeProvider>
                         </TronWalletContext>

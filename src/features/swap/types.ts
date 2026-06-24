@@ -1,6 +1,6 @@
 import type { QuoteResponse, RouteResponse } from '../api/types';
 
-export type SwapMessageLabel = 'warp' | 'commit' | 'reveal';
+export type SwapMessageLabel = 'warp' | 'commit';
 
 export interface LabeledMsgId {
   msgId: string;
@@ -40,21 +40,6 @@ export const FinalSwapStatuses = [
   SwapStatus.Failed,
 ];
 
-// Data needed to submit the Solana reveal instruction for EVM→Solana CCS swaps.
-// Stored in swap history so the reveal modal can reconstruct the tx after page reload.
-export interface SolanaRevealData {
-  commitment: `0x${string}`;  // 32-byte keccak256 hash
-  calldata: `0x${string}`;    // Raydium swap calldata (embedded in the reveal ix)
-  revealSalt: `0x${string}`;  // random bytes32 used in commitment hash (keccak256(calldata || revealSalt))
-  userSalt: `0x${string}`;    // TypeCasts.addressToBytes32(msgSender()) — EVM caller, explicit PDA seed
-  srcChainId: number;         // EVM origin chain ID (= Hyperlane domain for EVM)
-  evmUr: string;              // EVM UR address (lowercase, no 0x)
-  tokenIn: string;            // Solana input mint (base58)
-  tokenOut: string;           // Solana output mint (base58)
-  amountIn: string;           // raw input amount
-  poolAddress?: string;       // Raydium CLMM pool address (base58)
-}
-
 export interface SwapHistoryItem {
   status: SwapStatus;
   timestamp: number;
@@ -72,8 +57,10 @@ export interface SwapHistoryItem {
   destinationTxHash?: string;
   msgIds?: LabeledMsgId[];
   originBlockNumber?: number;
-  solanaReveal?: SolanaRevealData;
-  revealDismissed?: boolean;
+  // pending_swap PDA address for EVM→Solana routes with a destination swap.
+  // Set at quote time from callCommitment.ccs.body.revealAccounts[0].pubkey.
+  // When this account is closed (null) on Solana, the dest swap has completed.
+  solanaDestSwapPda?: string;
 }
 
 // ── Form values ──────────────────────────────────────────────────────

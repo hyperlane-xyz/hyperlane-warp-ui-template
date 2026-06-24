@@ -28,7 +28,6 @@ const permit2ExpirationSeconds = Number(
   process.env.NEXT_PUBLIC_PERMIT2_EXPIRATION_SECONDS || 31_536_000,
 );
 const defaultSlippageBps = Number(process.env.NEXT_PUBLIC_DEFAULT_SLIPPAGE_BPS || 100);
-const solanaRevealManual = process.env.NEXT_PUBLIC_SOLANA_REVEAL_MANUAL === 'true';
 
 interface Config {
   addressBlacklist: string[]; // A list of addresses that are blacklisted and cannot be used in the app
@@ -55,7 +54,6 @@ interface Config {
   feeQuotingUrl: string | undefined; // Offchain fee quoting service base URL
   routerApiUrl: string; // Universal Router Engine base URL (swap tab)
   ccsUrl: string; // Call Commitments Service base URL (cross-chain swap reveal)
-  solanaRevealManual: boolean; // Debug: when true, show reveal modal for manual signing; default auto-submits
   permit2ExpirationSeconds: number; // Default Permit2 allowance expiration (swap tab)
   defaultSlippageBps: number; // Default swap slippage in basis points
   defaultSwapOriginToken: string | undefined; // The initial swap origin token to show when /swap first loads (format: chainName-address)
@@ -95,7 +93,6 @@ export const config: Config = Object.freeze({
   feeQuotingUrl,
   routerApiUrl,
   ccsUrl,
-  solanaRevealManual,
   permit2ExpirationSeconds,
   defaultSlippageBps,
   featuredChains: [

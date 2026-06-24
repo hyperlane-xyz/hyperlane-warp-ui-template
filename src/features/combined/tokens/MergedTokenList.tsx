@@ -69,8 +69,18 @@ export function MergedTokenList({
     for (const t of extraTokens) {
       if (disabledChains.has(t.chainName)) continue;
       // When a chain filter is active, only include WarpCore tokens from that chain.
-      // Without this, scrolling would reveal WarpCore tokens from every chain mixed in.
       if (chainFilter && t.chainName !== chainFilter) continue;
+      // Client-side search filter for WarpCore tokens (the engine filters its own results
+      // server-side, but extraTokens are not sent to the engine).
+      if (trimmedSearch) {
+        const q = trimmedSearch.toLowerCase();
+        const matches =
+          t.symbol.toLowerCase().includes(q) ||
+          t.name?.toLowerCase().includes(q) ||
+          t.address.toLowerCase().includes(q) ||
+          (t.addressOrDenom && t.addressOrDenom.toLowerCase().includes(q));
+        if (!matches) continue;
+      }
       const key = getTokenKey(t);
       if (map.has(key)) {
         // Direct address match: enrich engine token with bridge capability.
@@ -79,7 +89,8 @@ export function MergedTokenList({
         // variant to overwrite the key set by the real token.
         const existing = map.get(key)!;
         const shouldUpdateKey = !existing.warpCoreKey || t.symbol === existing.symbol;
-        map.set(key, { ...existing, warpCoreKey: shouldUpdateKey ? t.warpCoreKey : existing.warpCoreKey, canBridge: true });
+        const newWarpCoreKey = shouldUpdateKey ? t.warpCoreKey : existing.warpCoreKey;
+        map.set(key, { ...existing, warpCoreKey: newWarpCoreKey, canBridge: existing.canBridge || !!newWarpCoreKey });
       } else if (t.isNative) {
         // HypNative secondary dedup: find engine native token on same chain.
         let found = false;
@@ -124,14 +135,16 @@ export function MergedTokenList({
     return { balanceMap: bMap, usdMap: uMap };
   }, [allTokens, balances, prices]);
 
-  const { tokens, isLimited } = useMemo(() => {
+  const tokens = useMemo(() => {
     const sorted = [...allTokens].sort((a, b) => {
       const aKey = getTokenKey(a);
       const bKey = getTokenKey(b);
 
-      // WarpCore-known tokens (canBridge) first within their bucket.
-      if (a.canBridge && !b.canBridge) return -1;
-      if (!a.canBridge && b.canBridge) return 1;
+      // Sort priority: bridge-reachable (2) > WarpCore-known (1) > engine-only (0).
+      // This ensures non-EVM and bridge-only tokens don't get buried under engine tokens.
+      const aPriority = a.canBridge ? 2 : a.isBridgeToken ? 1 : 0;
+      const bPriority = b.canBridge ? 2 : b.isBridgeToken ? 1 : 0;
+      if (aPriority !== bPriority) return bPriority - aPriority;
 
       const aUsd = usdMap.get(aKey) ?? 0;
       const bUsd = usdMap.get(bKey) ?? 0;
@@ -147,11 +160,7 @@ export function MergedTokenList({
       return a.chainName.localeCompare(b.chainName);
     });
 
-    const hasFilter = !!trimmedSearch || !!chainFilter;
-    const maxDisplay = 50;
-    const shouldCap = !hasFilter;
-    const isLimited = shouldCap && sorted.length > maxDisplay;
-    return { tokens: isLimited ? sorted.slice(0, maxDisplay) : sorted, isLimited };
+    return sorted;
   }, [allTokens, trimmedSearch, chainFilter, usdMap, balanceMap]);
 
   useEffect(() => {
@@ -198,11 +207,7 @@ export function MergedTokenList({
               />
             );
           })}
-          {isLimited && (
-            <div className="token-picker-hint mx-1 mb-3 mt-2 rounded-lg bg-blue-50 px-3 py-4 text-center">
-              <p className="text-sm text-blue-600">Search or select a chain to see more tokens</p>
-            </div>
-          )}
+
           <div className="h-10" />
         </div>
       </div>

@@ -64,6 +64,7 @@ export function warpTokenToCombined(
     name: token.name ?? token.symbol,
     addressOrDenom: token.addressOrDenom,
     coinGeckoId: token.coinGeckoId,
+    logoURI: token.logoURI,
     warpCoreKey: getTokenKey(token),
   };
 }

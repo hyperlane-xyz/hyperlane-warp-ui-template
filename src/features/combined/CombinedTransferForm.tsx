@@ -205,6 +205,39 @@ function CombinedFormContent() {
   // WarpCore destinations for the current origin (shown in destination picker).
   const warpDestinations = useWarpDestinations(values.srcChain, values.srcToken, srcToken?.isNative);
 
+  // All WarpCore tokens for the destination picker. Bridge-reachable ones from the current
+  // origin keep their warpCoreKey (→ Bridge badge). Non-reachable ones (e.g. Cosmos, Starknet
+  // on a different route) appear without any badge so they're still visible and selectable.
+  const destinationExtraTokens = useMemo(() => {
+    const reachableKeys = new Set(warpDestinations.map((t) => `${t.chainId}-${t.address.toLowerCase()}`));
+    const reachableNativeChains = new Set(
+      warpDestinations.filter((t) => t.isNative).map((t) => t.chainId),
+    );
+    return allWarpTokens.map((t) => {
+      const key = `${t.chainId}-${t.address.toLowerCase()}`;
+      const isReachable = reachableKeys.has(key) || (t.isNative && reachableNativeChains.has(t.chainId));
+      if (isReachable) {
+        const dst = t.isNative
+          ? warpDestinations.find((d) => d.isNative && d.chainId === t.chainId)
+          : warpDestinations.find((d) => `${d.chainId}-${d.address.toLowerCase()}` === key);
+        return dst ?? t;
+      }
+      return { ...t, warpCoreKey: undefined, canBridge: false };
+    });
+  }, [allWarpTokens, warpDestinations]);
+
+  // When the origin token changes, auto-set destination to the first bridge destination.
+  const prevSrcRef = useRef('');
+  useEffect(() => {
+    const srcKey = `${values.srcChain ?? ''}-${values.srcToken}`;
+    if (srcKey === prevSrcRef.current) return;
+    prevSrcRef.current = srcKey;
+    if (!warpDestinations.length || !values.srcToken) return;
+    const firstDst = warpDestinations[0];
+    setFieldValue('dstChain', firstDst.chainId);
+    setFieldValue('dstToken', firstDst.address);
+  }, [values.srcChain, values.srcToken, warpDestinations, setFieldValue]);
+
   const srcChainInfo = chainsResp?.chains.find((c) => c.id === values.srcChain);
   const universalRouter = srcChainInfo?.universalRouter as Address | undefined;
 
@@ -614,7 +647,7 @@ function CombinedFormContent() {
           recipientError={errors.recipient}
           inputUsd={amountUsd}
           amount={values.amount}
-          warpDestinations={warpDestinations}
+          warpDestinations={destinationExtraTokens}
         />
       </TransferSection>
 

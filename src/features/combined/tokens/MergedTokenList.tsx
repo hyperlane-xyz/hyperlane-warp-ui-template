@@ -250,7 +250,7 @@ const MergedTokenButton = React.memo(function MergedTokenButton({
 
   const showBadges = selectionMode === 'destination';
   const isBridgeable = showBadges && !!token.warpCoreKey;
-  const isSwappable = showBadges && token.canSwap;
+  const isSwappable = showBadges && token.canSwap && !isBridgeable;
 
   return (
     <button

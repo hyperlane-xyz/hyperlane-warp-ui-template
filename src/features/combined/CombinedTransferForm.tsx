@@ -1,5 +1,5 @@
 import type { Token } from '@hyperlane-xyz/sdk';
-import { objLength } from '@hyperlane-xyz/utils';
+import { objLength, toWei } from '@hyperlane-xyz/utils';
 import { useDebounce, useModal } from '@hyperlane-xyz/widgets';
 import { useAccounts } from '@hyperlane-xyz/widgets/walletIntegrations/accounts';
 import { useAccountAddressForChain } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
@@ -10,6 +10,7 @@ import { formatUnits, type Address } from 'viem';
 import { FormWarningBanner } from '../../components/banner/FormWarningBanner';
 import { ConnectAwareSubmitButton } from '../../components/buttons/ConnectAwareSubmitButton';
 import { SolidButton } from '../../components/buttons/SolidButton';
+import { RouteIcon } from '../../components/icons/RouteIcon';
 import { SwapIcon } from '../../components/icons/SwapIcon';
 import { TextField } from '../../components/input/TextField';
 import { TransferSection } from '../../components/layout/TransferSection';
@@ -49,6 +50,7 @@ import { useSwap } from '../swap/useSwap';
 import { validateSwapForm } from '../swap/validate';
 import { TransferFormValues } from '../transfer/types';
 import { useTokenTransfer } from '../transfer/useTokenTransfer';
+import { useIsApproveRequired } from '../tokens/approval';
 import { useWarpCoreTokens } from '../tokens/hooks';
 import { findConnectedDestinationToken, getTokenKey as getWarpTokenKey } from '../tokens/utils';
 import { isHypNativeStandard } from './warpUtils';
@@ -156,7 +158,7 @@ function useBridgeFeeData(
     return { ...merged, totalFees };
   }, [rawFees, originToken]);
 
-  return { isLoading, isError, fees, feePrices, transferUsd };
+  return { isLoading, isError, fees, feePrices, transferUsd, originToken, destinationToken };
 }
 
 function CombinedFormContent() {
@@ -283,6 +285,17 @@ function CombinedFormContent() {
     isNative,
   });
 
+  // ── Bridge approval check ────────────────────────────────────────────
+  const bridgeAmountWei = useMemo(() => {
+    if (!bridgeFee.originToken || !values.amount || isNative) return undefined;
+    try { return toWei(values.amount, bridgeFee.originToken.decimals); } catch { return undefined; }
+  }, [bridgeFee.originToken, values.amount, isNative]);
+  const { isApproveRequired: isBridgeApproveRequired } = useIsApproveRequired(
+    bridgeFee.originToken,
+    bridgeAmountWei,
+    routeMode === 'bridge' && !!bridgeAmountWei,
+  );
+
   // ── Swap (engine) execution ───────────────────────────────────────────
   const swap = useSwap();
   useToastError(swap.error, 'Swap failed');
@@ -378,16 +391,24 @@ function CombinedFormContent() {
   // ── Send ──────────────────────────────────────────────────────────────
   const onSendTransactions = useCallback(async () => {
     if (routeMode === 'bridge') {
-      if (!srcToken?.warpCoreKey || !dstToken?.warpCoreKey) return;
+      // Use the connected token pair from bridgeFee — it already resolved the correct
+      // origin token that has a direct connection to the destination, working around the
+      // multi-route deduplication issue where srcToken.warpCoreKey may point to a token
+      // that doesn't directly connect to the selected destination.
+      const bridgeOrigin = bridgeFee.originToken ?? null;
+      const bridgeDstKey = bridgeFee.destinationToken
+        ? getWarpTokenKey(bridgeFee.destinationToken)
+        : dstToken?.warpCoreKey;
+      if (!bridgeDstKey) return;
       setIsReview(false);
       setTransferLoading(true);
       const bridgeValues: TransferFormValues = {
-        originTokenKey: srcToken.warpCoreKey,
-        destinationTokenKey: dstToken.warpCoreKey,
+        originTokenKey: bridgeOrigin ? getWarpTokenKey(bridgeOrigin) : srcToken?.warpCoreKey,
+        destinationTokenKey: bridgeDstKey,
         amount: values.amount,
         recipient: effectiveRecipient as Address,
       };
-      await triggerTransactions(bridgeValues, null, null);
+      await triggerTransactions(bridgeValues, bridgeOrigin, null);
       return;
     }
 
@@ -625,6 +646,7 @@ function CombinedFormContent() {
                   onClick={openRouteModal}
                   className="flex items-center gap-1 rounded font-secondary text-xxs text-gray-700 hover:text-gray-900 dark:text-foreground-secondary dark:hover:text-foreground-primary"
                 >
+                  <RouteIcon />
                   {routes.length > 1
                     ? `${routes.length} routes`
                     : `Route ${safeIndex + 1}/${routes.length}`}
@@ -659,6 +681,7 @@ function CombinedFormContent() {
         approvalStatus={status.phase}
         universalRouter={universalRouter}
         bridgeAmount={values.amount}
+        isBridgeApproveRequired={isBridgeApproveRequired}
       />
 
       <ButtonSection
@@ -883,6 +906,7 @@ function ReviewSection({
   approvalStatus,
   universalRouter,
   bridgeAmount,
+  isBridgeApproveRequired,
 }: {
   isReview: boolean;
   routeMode: RouteMode;
@@ -892,6 +916,7 @@ function ReviewSection({
   approvalStatus: ApprovalPhase;
   universalRouter: Address | undefined;
   bridgeAmount: string;
+  isBridgeApproveRequired: boolean;
 }) {
   const multiProvider = useMultiProvider();
   const engineTokenMap = useEngineTokenByKeyMap();
@@ -911,6 +936,7 @@ function ReviewSection({
             srcToken={srcToken}
             dstToken={dstToken}
             amount={bridgeAmount}
+            isApproveRequired={isBridgeApproveRequired}
           />
         ) : bestRoute ? (
           <EngineReviewTransactions
@@ -934,29 +960,49 @@ function BridgeReviewTransactions({
   srcToken,
   dstToken,
   amount,
+  isApproveRequired,
 }: {
   srcToken: CombinedToken | undefined;
   dstToken: CombinedToken | undefined;
   amount: string;
+  isApproveRequired: boolean;
 }) {
+  const txNum = isApproveRequired ? 2 : 1;
   return (
-    <div>
-      <h4>Transaction: Bridge via Warp Route</h4>
-      <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs dark:border-primary-300/25">
-        {dstToken?.addressOrDenom && (
+    <div className="space-y-2">
+      {isApproveRequired && (
+        <div>
+          <h4>Transaction 1: Approve Transfer</h4>
+          <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs dark:border-primary-300/25">
+            <p className="flex">
+              <span className="min-w-[7.5rem]">Action</span>
+              <span>Approve {srcToken?.symbol} for transfer</span>
+            </p>
+            <p className="flex">
+              <span className="min-w-[7.5rem]">Amount</span>
+              <span>{amount} {srcToken?.symbol ?? ''}</span>
+            </p>
+          </div>
+        </div>
+      )}
+      <div>
+        <h4>Transaction {txNum}: Bridge via Warp Route</h4>
+        <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs dark:border-primary-300/25">
+          {dstToken?.addressOrDenom && (
+            <p className="flex">
+              <span className="min-w-[7.5rem]">Remote Token</span>
+              <span>{dstToken.addressOrDenom}</span>
+            </p>
+          )}
           <p className="flex">
-            <span className="min-w-[7.5rem]">Remote Token</span>
-            <span>{dstToken.addressOrDenom}</span>
+            <span className="min-w-[7.5rem]">Amount</span>
+            <span>{amount} {srcToken?.symbol ?? ''}</span>
           </p>
-        )}
-        <p className="flex">
-          <span className="min-w-[7.5rem]">Amount</span>
-          <span>{`${amount} ${srcToken?.symbol ?? ''}`}</span>
-        </p>
-        <p className="flex">
-          <span className="min-w-[7.5rem]">Receive</span>
-          <span>{`${amount} ${dstToken?.symbol ?? ''}`}</span>
-        </p>
+          <p className="flex">
+            <span className="min-w-[7.5rem]">Receive</span>
+            <span>{amount} {dstToken?.symbol ?? ''}</span>
+          </p>
+        </div>
       </div>
     </div>
   );

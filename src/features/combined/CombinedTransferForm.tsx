@@ -268,6 +268,10 @@ function CombinedFormContent() {
     [srcToken?.warpCoreKey, dstToken?.warpCoreKey, dstToken?.chainId, dstToken?.address, dstToken?.isNative, warpDestinations],
   );
 
+  // True when the destination token exists but has no bridge or swap route available.
+  // Skips the engine quote and shows "Route not supported" immediately.
+  const isRouteDefinitelyUnavailable = !!dstToken && !dstToken.warpCoreKey && !dstToken.canSwap;
+
   const {
     quote,
     isLoading: quoteLoading,
@@ -277,7 +281,7 @@ function CombinedFormContent() {
   } = useQuote({
     values: { ...values, amount: debouncedAmount, recipient: effectiveRecipient },
     sender,
-    pause: isReview || isDstReachableViaBridge,
+    pause: isReview || isDstReachableViaBridge || isRouteDefinitelyUnavailable,
   });
   useToastError(quoteError, 'Quote failed');
 
@@ -726,6 +730,7 @@ function CombinedFormContent() {
         hasTokens={hasTokens}
         routeMode={routeMode}
         isQuoteSettled={isQuoteSettled}
+        isRouteDefinitelyUnavailable={isRouteDefinitelyUnavailable}
         isValidating={isValidating}
         onSendTransactions={onSendTransactions}
         sendPending={sendPending}
@@ -1143,6 +1148,7 @@ function ButtonSection({
   hasTokens,
   routeMode,
   isQuoteSettled,
+  isRouteDefinitelyUnavailable,
   isValidating,
   onSendTransactions,
   sendPending,
@@ -1155,6 +1161,7 @@ function ButtonSection({
   hasTokens: boolean;
   routeMode: RouteMode;
   isQuoteSettled: boolean;
+  isRouteDefinitelyUnavailable: boolean;
   isValidating: boolean;
   onSendTransactions: () => Promise<void>;
   sendPending: boolean;
@@ -1171,6 +1178,9 @@ function ButtonSection({
   } else if (!hasAmount) {
     text = 'Enter amount';
     disabled = true;
+  } else if (isRouteDefinitelyUnavailable) {
+    text = 'Route not supported';
+    disabled = true;
   } else if (routeMode === 'bridge') {
     text = isValidating ? 'Checking…' : 'Continue';
     disabled = isValidating;
@@ -1178,7 +1188,7 @@ function ButtonSection({
     text = isValidating ? 'Checking…' : 'Continue';
     disabled = isValidating;
   } else if (isQuoteSettled) {
-    text = 'Route is not supported';
+    text = 'Route not supported';
     disabled = true;
   } else {
     text = 'Fetching quote…';

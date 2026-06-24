@@ -7,6 +7,19 @@ import { APP_NAME } from '../consts/app';
 import { CombinedTransferForm } from '../features/combined/CombinedTransferForm';
 import { parseEmbedTheme, themeToCssVars } from '../styles/embedTheme';
 
+/**
+ * Embeddable widget page — renders the transfer form in a minimal, chrome-less
+ * layout suitable for iframe embedding. Accepts theme overrides via URL params.
+ *
+ * Usage:
+ *   <iframe src="https://your-warp-ui.com/embed?accent=3b82f6&bg=ffffff&mode=dark" />
+ *
+ * Supported URL params:
+ *   - accent, bg, card, text, buttonText, border, error (hex without #)
+ *   - mode: "dark" or "light"
+ *   - origin, destination, originToken, destinationToken (transfer defaults)
+ */
+
 const WIDGET_MESSAGE_TYPE = 'hyperlane-warp-widget';
 
 function emitWidgetEvent(eventType: string, payload?: Record<string, unknown>) {
@@ -26,19 +39,6 @@ function usePostMessageBridge() {
     return () => timers.forEach(clearTimeout);
   }, []);
 }
-
-/**
- * Embeddable widget page — renders the transfer form in a minimal, chrome-less
- * layout suitable for iframe embedding. Accepts theme overrides via URL params.
- *
- * Usage:
- *   <iframe src="https://your-warp-ui.com/embed?accent=3b82f6&bg=ffffff&mode=dark" />
- *
- * Supported URL params:
- *   - accent, bg, card, text, buttonText, border, error (hex without #)
- *   - mode: "dark" or "light"
- *   - origin, destination, originToken, destinationToken (transfer defaults)
- */
 
 const EmbedPage: NextPage = () => {
   usePostMessageBridge();

@@ -1,16 +1,9 @@
-import { SwapTokenCard } from '../../features/swap/SwapTokenCard';
+import { CombinedTransferForm } from '../../features/combined/CombinedTransferForm';
 import { useEngineBootstrap } from '../../features/swap/useEngineBootstrap';
-import { TransferTokenCard } from '../../features/transfer/TransferTokenCard';
-import { ModeTabs, type AppMode } from '../nav/ModeTabs';
 import { TipCard } from '../tip/TipCard';
 
-interface Props {
-  mode: AppMode;
-}
-
-export function HomeView({ mode }: Props) {
-  // Non-blocking engine prefetch — warms /readyz + /v1/tokens caches.
-  // Both bridge and swap tabs benefit on first /swap click.
+export function HomeView() {
+  // Warms /readyz + /v1/tokens caches on mount.
   useEngineBootstrap();
 
   return (
@@ -18,9 +11,8 @@ export function HomeView({ mode }: Props) {
       <div className="xl:absolute xl:right-[calc(100%+1rem)] xl:top-1 xl:w-72">
         <TipCard />
       </div>
-      <div>
-        <ModeTabs mode={mode} />
-        {mode === 'swap' ? <SwapTokenCard /> : <TransferTokenCard />}
+      <div className="relative w-100 sm:w-[31rem]">
+        <CombinedTransferForm />
       </div>
     </div>
   );

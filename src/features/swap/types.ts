@@ -1,6 +1,6 @@
 import type { QuoteResponse, RouteResponse } from '../api/types';
 
-export type SwapMessageLabel = 'warp' | 'commit';
+export type SwapMessageLabel = 'warp' | 'commit' | 'reveal';
 
 export interface LabeledMsgId {
   msgId: string;
@@ -12,6 +12,11 @@ export interface SwapHistoryTokenMeta {
   decimals: number;
   chainName: string;
   logoURI?: string;
+}
+
+export interface SwapDestinationOutcome {
+  bridgeToken: string;
+  dstToken: string;
 }
 
 // ── Persisted/in-memory swap history ──────────────────────────────────
@@ -31,12 +36,18 @@ export enum SwapStatus {
   // Origin tx confirmed and bridge delivered, but the dest swap step
   // reverted — funds are sitting in the user's ICA on the dest chain.
   DestSwapFailed = 'dest-swap-failed',
+  // Fallback sub-plan swept bridge token to recipient automatically.
+  FailedRecovered = 'failed-recovered',
+  // REVEAL delivered but both swap and fallback sub-plans reverted — funds stranded in ICA.
+  DestFailed = 'dest-failed',
   Failed = 'failed',
 }
 
 export const FinalSwapStatuses = [
   SwapStatus.ConfirmedDestination,
   SwapStatus.DestSwapFailed,
+  SwapStatus.FailedRecovered,
+  SwapStatus.DestFailed,
   SwapStatus.Failed,
 ];
 
@@ -55,8 +66,11 @@ export interface SwapHistoryItem {
   recipient: string;
   originTxHash?: string;
   destinationTxHash?: string;
+  destinationOutcome?: SwapDestinationOutcome;
   msgIds?: LabeledMsgId[];
   originBlockNumber?: number;
+  /** Unix seconds when the origin tx was confirmed and bridge polling started. */
+  originTxTimestamp?: number;
   // pending_swap PDA address for EVM→Solana routes with a destination swap.
   // Set at quote time from callCommitment.ccs.body.revealAccounts[0].pubkey.
   // When this account is closed (null) on Solana, the dest swap has completed.

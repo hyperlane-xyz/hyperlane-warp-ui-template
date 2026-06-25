@@ -20,7 +20,7 @@ function transferLog(token: string, to: string, amount = 1n) {
   };
 }
 
-function providerWithLogs(logs: Array<{ topics: string[]; address: string }>) {
+function providerWithLogs(logs: Array<{ topics: string[]; address: string; data?: string }>) {
   return {
     getTransactionReceipt: async () => ({ logs }),
   };

@@ -1,8 +1,9 @@
-import type { Token } from '@hyperlane-xyz/sdk';
-import { objLength, toWei } from '@hyperlane-xyz/utils';
-import { useDebounce, useModal } from '@hyperlane-xyz/widgets';
+import { TokenAmount, type Token } from '@hyperlane-xyz/sdk';
+import { isValidAddress, isZeroishAddress, KnownProtocolType, objLength, ProtocolType, toWei } from '@hyperlane-xyz/utils';
+import { SpinnerIcon, useDebounce, useModal } from '@hyperlane-xyz/widgets';
 import { useAccounts } from '@hyperlane-xyz/widgets/walletIntegrations/accounts';
 import { useAccountAddressForChain } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
+import type { AccountInfo } from '@hyperlane-xyz/widgets/walletIntegrations/types';
 import { Form, Formik, useFormikContext } from 'formik';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { formatUnits, type Address } from 'viem';
@@ -19,6 +20,8 @@ import { WARP_QUERY_PARAMS } from '../../consts/args';
 import { config } from '../../consts/config';
 import { updateQueryParams } from '../../utils/queryParams';
 import { useChains } from '../api/hooks';
+import { ChainConnectionWarning } from '../chains/ChainConnectionWarning';
+import { ChainWalletWarning } from '../chains/ChainWalletWarning';
 import { useMultiProvider } from '../chains/hooks';
 import { TransactionHistoryItemType, useStore } from '../store';
 import { RecipientConfirmationModal } from '../wallet/RecipientConfirmationModal';
@@ -48,11 +51,13 @@ import {
 import { useQuote } from '../swap/useQuote';
 import { useSwap } from '../swap/useSwap';
 import { validateSwapForm } from '../swap/validate';
+import { useFetchMaxAmount } from '../transfer/maxAmount';
 import { TransferFormValues } from '../transfer/types';
 import { useTokenTransfer } from '../transfer/useTokenTransfer';
 import { useIsApproveRequired } from '../tokens/approval';
-import { useWarpCoreTokens } from '../tokens/hooks';
+import { useWarpCoreTokens, useWarpCore } from '../tokens/hooks';
 import { findConnectedDestinationToken, getTokenKey as getWarpTokenKey } from '../tokens/utils';
+import { formatBalance } from '../swap/balances/utils';
 import { isHypNativeStandard } from './warpUtils';
 import {
   getCombinedTokenByKey,
@@ -184,7 +189,9 @@ function CombinedFormContent() {
     [values.dstChain, multiProvider],
   );
 
-  useAccounts(multiProvider, config.addressBlacklist);
+  const activeAccounts = useAccounts(multiProvider, config.addressBlacklist);
+  const warpCore = useWarpCore();
+  const routerAddressesByChainMap = useStore((s) => s.routerAddressesByChainMap);
   const sender = useAccountAddressForChain(multiProvider, srcChainName);
   const connectedDestAddress = useAccountAddressForChain(multiProvider, dstChainName);
   const effectiveRecipient = values.recipient || connectedDestAddress || '';
@@ -354,6 +361,7 @@ function CombinedFormContent() {
   // ── Bridge (WarpCore) fallback execution ─────────────────────────────
   const setTransferLoading = useStore((s) => s.setTransferLoading);
   const { triggerTransactions } = useTokenTransfer(() => setTransferLoading(false));
+  const { fetchMaxAmount: fetchBridgeMaxAmount, isLoading: isBridgeMaxLoading } = useFetchMaxAmount();
 
   const hasAmount = !!values.amount && Number(values.amount) > 0;
   const hasTokens = !!srcToken && !!dstToken;
@@ -370,15 +378,60 @@ function CombinedFormContent() {
     setIsValidating(true);
     try {
       if (routeMode === 'bridge') {
-        // Minimal bridge validation — WarpCore validateTransfer runs at exec time.
-        if (!srcToken?.warpCoreKey || !dstToken?.warpCoreKey) {
+        const originToken = bridgeFee.originToken;
+        const destinationToken = bridgeFee.destinationToken;
+        if (!originToken || !destinationToken || !dstChainName) {
           setErrors({ form: 'Bridge route not available' } as any);
           return;
         }
+
+        // Recipient: empty check
         if (!effectiveRecipient) {
-          setErrors({ recipient: 'Recipient required' } as any);
+          setErrors({ recipient: 'Enter a recipient or connect a destination wallet' } as any);
           return;
         }
+
+        // Recipient: format + bech32 prefix for non-EVM chains
+        const dstChainMeta = multiProvider.tryGetChainMetadata(dstChainName);
+        const dstProtocol = (dstChainMeta?.protocol ?? ProtocolType.Ethereum) as ProtocolType;
+        if (!isValidAddress(effectiveRecipient, dstProtocol) || isZeroishAddress(effectiveRecipient)) {
+          setErrors({ recipient: 'Invalid recipient address' } as any);
+          return;
+        }
+        if (dstProtocol === ProtocolType.Cosmos || (dstProtocol as string) === 'CosmosNative') {
+          const prefix = dstChainMeta?.bech32Prefix;
+          if (prefix && !effectiveRecipient.startsWith(prefix)) {
+            setErrors({ recipient: `Recipient must use the ${prefix} prefix` } as any);
+            return;
+          }
+        }
+
+        // Recipient: not a warp route router address
+        const dstRouters = routerAddressesByChainMap[dstChainName];
+        if (dstRouters?.has(effectiveRecipient.toLowerCase())) {
+          setErrors({ recipient: 'Recipient cannot be the warp route router address' } as any);
+          return;
+        }
+
+        // Balance + fee sufficiency via warpCore
+        try {
+          const amountWei = toWei(values.amount, originToken.decimals);
+          const originTokenAmount = new TokenAmount(BigInt(amountWei), originToken);
+          const transferErrors = await warpCore.validateTransfer({
+            originTokenAmount,
+            destination: dstChainName,
+            recipient: effectiveRecipient,
+            sender: sender!,
+            destinationToken,
+          });
+          if (transferErrors && Object.keys(transferErrors).length > 0) {
+            setErrors({ amount: Object.values(transferErrors)[0] } as any);
+            return;
+          }
+        } catch (err) {
+          // Non-fatal: validation failure shouldn't hard-block (e.g. transient RPC issue)
+        }
+
         setErrors({});
         setIsReview(true);
         return;
@@ -415,11 +468,16 @@ function CombinedFormContent() {
     routeMode,
     srcToken,
     dstToken,
+    dstChainName,
+    bridgeFee.originToken,
+    bridgeFee.destinationToken,
     bestRoute,
     sender,
     effectiveRecipient,
     chainsResp?.chains,
     multiProvider,
+    routerAddressesByChainMap,
+    warpCore,
     status.phase,
     quote?.expiresAt,
     setErrors,
@@ -621,6 +679,10 @@ function CombinedFormContent() {
     <>
       <div className="max-h-12 overflow-hidden sm:max-h-10">
         <WalletConnectionWarning origin={srcChainName || ''} />
+        <ChainWalletWarning origin={srcChainName || ''} />
+        {srcChainName && dstChainName && (
+          <ChainConnectionWarning origin={srcChainName} destination={dstChainName} />
+        )}
         <FormWarningBanner isVisible={isExpired}>Price expired — refreshing…</FormWarningBanner>
         <FormWarningBanner isVisible={!!topLevelError}>{topLevelError}</FormWarningBanner>
       </div>
@@ -633,6 +695,13 @@ function CombinedFormContent() {
           amountError={errors.amount}
           counterpartToken={dstToken}
           warpOriginTokens={allWarpTokens}
+          isBridge={routeMode === 'bridge'}
+          bridgeOriginToken={bridgeFee.originToken ?? undefined}
+          bridgeDestToken={bridgeFee.destinationToken ?? undefined}
+          bridgeAccounts={activeAccounts.accounts}
+          bridgeRecipient={effectiveRecipient}
+          isBridgeMaxLoading={isBridgeMaxLoading}
+          fetchBridgeMaxAmount={fetchBridgeMaxAmount}
         />
       </TransferSection>
 
@@ -760,6 +829,13 @@ function OriginCard({
   amountError,
   counterpartToken,
   warpOriginTokens,
+  isBridge,
+  bridgeOriginToken,
+  bridgeDestToken,
+  bridgeAccounts,
+  bridgeRecipient,
+  isBridgeMaxLoading,
+  fetchBridgeMaxAmount,
 }: {
   isReview: boolean;
   srcChainName: string | undefined;
@@ -767,10 +843,38 @@ function OriginCard({
   amountError: string | undefined;
   counterpartToken: CombinedToken | undefined;
   warpOriginTokens: CombinedToken[];
+  isBridge: boolean;
+  bridgeOriginToken?: Token;
+  bridgeDestToken?: Token;
+  bridgeAccounts?: Record<KnownProtocolType, AccountInfo>;
+  bridgeRecipient?: string;
+  isBridgeMaxLoading?: boolean;
+  fetchBridgeMaxAmount?: (params: {
+    accounts: Record<KnownProtocolType, AccountInfo>;
+    balance: TokenAmount;
+    origin: string;
+    destinationToken: Token;
+    recipient?: string;
+  }) => Promise<TokenAmount | undefined>;
 }) {
-  const { values } = useFormikContext<SwapFormValues>();
+  const { values, setFieldValue } = useFormikContext<SwapFormValues>();
   const { data: balance, isLoading: isBalanceLoading } = useTokenBalance(srcToken);
   const amountUsd = useTokenUsdValue(srcToken, values.amount);
+
+  const handleBridgeMax = useCallback(async () => {
+    if (!bridgeOriginToken || !bridgeDestToken || !bridgeAccounts || !srcChainName || balance == null || !fetchBridgeMaxAmount) return;
+    const tokenAmount = new TokenAmount(balance, bridgeOriginToken);
+    const maxAmount = await fetchBridgeMaxAmount({
+      accounts: bridgeAccounts,
+      balance: tokenAmount,
+      origin: srcChainName,
+      destinationToken: bridgeDestToken,
+      recipient: bridgeRecipient,
+    });
+    if (maxAmount) {
+      setFieldValue('amount', formatBalance(maxAmount.amount, maxAmount.token.decimals));
+    }
+  }, [bridgeOriginToken, bridgeDestToken, bridgeAccounts, srcChainName, balance, bridgeRecipient, fetchBridgeMaxAmount, setFieldValue]);
 
   return (
     <div>
@@ -800,12 +904,20 @@ function OriginCard({
               if (e.key === '-' || e.key === 'e') e.preventDefault();
             }}
           />
-          <MaxButton
-            balance={balance ?? undefined}
-            isLoading={isBalanceLoading}
-            disabled={isReview}
-            token={srcToken}
-          />
+          {isBridge && bridgeOriginToken && bridgeDestToken ? (
+            <BridgeMaxButton
+              onClick={handleBridgeMax}
+              isLoading={!!isBridgeMaxLoading}
+              disabled={isReview || balance == null}
+            />
+          ) : (
+            <MaxButton
+              balance={balance ?? undefined}
+              isLoading={isBalanceLoading}
+              disabled={isReview}
+              token={srcToken}
+            />
+          )}
         </div>
         <div className="transfer-balance mt-1 flex items-center justify-between text-xs leading-[18px] text-gray-450 dark:text-foreground-secondary">
           <span>{!amountUsd ? '$0.00' : formatUsd(amountUsd)}</span>
@@ -816,6 +928,27 @@ function OriginCard({
         <p className="mt-1 pl-1 text-xs text-red-500 dark:text-red-400">{amountError}</p>
       )}
     </div>
+  );
+}
+
+function BridgeMaxButton({
+  onClick,
+  isLoading,
+  disabled,
+}: {
+  onClick: () => void;
+  isLoading: boolean;
+  disabled: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled || isLoading}
+      className="transfer-max-btn rounded border border-gray-300 px-2 py-0.5 font-secondary text-sm text-gray-450 transition-colors hover:border-gray-400 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50 dark:border-primary-300/40 dark:text-foreground-secondary dark:hover:border-primary-300/65 dark:hover:text-foreground-primary"
+    >
+      {isLoading ? <SpinnerIcon className="h-4 w-4" /> : 'Max'}
+    </button>
   );
 }
 

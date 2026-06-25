@@ -628,5 +628,20 @@ describe('submitSwap', () => {
       amountIn: '100',
       amountOut: '95',
     });
+    expect(execute).toHaveBeenCalledWith(
+      expect.objectContaining({
+        transactionId: historyItem.id,
+        route,
+        srcChainId: 1,
+        dstChainId: 2,
+        srcToken: srcAddress,
+        dstToken: dstAddress,
+        sender,
+        recipient,
+        spender: universalRouter,
+        approvalAmount: 100n,
+        isNative: false,
+      }),
+    );
   });
 });

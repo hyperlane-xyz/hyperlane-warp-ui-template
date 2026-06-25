@@ -112,11 +112,16 @@ export function useWarpDestinations(
     const srcChainName = multiProvider.tryGetChainName(srcChainId) ?? '';
     const normalizedSrc = srcAddress.toLowerCase();
 
+    // Treat as native if explicitly flagged OR if the address looks like a native
+    // zero-address (engine stores native ETH as 0x000...0 while WarpCore uses the
+    // HypNative router contract — we can't match by address in that case).
+    const isNativeSrc = srcIsNative || /^0x0+$/i.test(normalizedSrc);
+
     const originTokens = rawTokens.filter((t) => {
       if (t.chainName !== srcChainName) return false;
       // Native tokens: the engine stores address as 0x000...0000 but WarpCore HypNative
       // tokens store the router contract. Match by HypNative standard instead of address.
-      if (srcIsNative) return isHypNativeStandard(t.standard);
+      if (isNativeSrc) return isHypNativeStandard(t.standard);
       return (
         t.addressOrDenom.toLowerCase() === normalizedSrc ||
         t.collateralAddressOrDenom?.toLowerCase() === normalizedSrc
@@ -138,7 +143,7 @@ export function useWarpDestinations(
       }
     }
     return results;
-  }, [srcChainId, srcAddress, rawTokens, multiProvider]);
+  }, [srcChainId, srcAddress, rawTokens, multiProvider, srcIsNative]);
 }
 
 // Returns a merged chain list for the token picker's chain filter panel.

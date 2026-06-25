@@ -18,7 +18,7 @@ import { TransferSection } from '../../components/layout/TransferSection';
 import { useToastError } from '../../components/toast/useToastError';
 import { WARP_QUERY_PARAMS } from '../../consts/args';
 import { config } from '../../consts/config';
-import { updateQueryParams } from '../../utils/queryParams';
+import { getQueryParams, updateQueryParams } from '../../utils/queryParams';
 import { useChains } from '../api/hooks';
 import { ChainConnectionWarning } from '../chains/ChainConnectionWarning';
 import { ChainWalletWarning } from '../chains/ChainWalletWarning';
@@ -79,10 +79,43 @@ const EMPTY_VALUES: SwapFormValues = {
   slippageBps: config.defaultSlippageBps,
 };
 
+// Reads origin/destination chain+token from URL params once at mount.
+// Converts chain names to chainIds via multiProvider so the combined
+// token map (keyed by `${chainId}-${address}`) can resolve the tokens.
+function useCombinedFormInitialValues(): SwapFormValues {
+  const multiProvider = useMultiProvider();
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional mount-only read
+  const urlParams = useMemo(() => (typeof window !== 'undefined' ? getQueryParams() : null), []);
+
+  return useMemo(() => {
+    if (!urlParams) return EMPTY_VALUES;
+    const originChain = urlParams.get(WARP_QUERY_PARAMS.ORIGIN);
+    const originToken = urlParams.get(WARP_QUERY_PARAMS.ORIGIN_TOKEN);
+    const destChain = urlParams.get(WARP_QUERY_PARAMS.DESTINATION);
+    const destToken = urlParams.get(WARP_QUERY_PARAMS.DESTINATION_TOKEN);
+    if (!originChain && !destChain) return EMPTY_VALUES;
+
+    const toChainId = (name: string | null): number | null => {
+      if (!name) return null;
+      const meta = multiProvider.tryGetChainMetadata(name);
+      return meta?.chainId ? Number(meta.chainId) : null;
+    };
+
+    return {
+      ...EMPTY_VALUES,
+      srcChain: toChainId(originChain),
+      srcToken: originToken?.toLowerCase() ?? '',
+      dstChain: toChainId(destChain),
+      dstToken: destToken?.toLowerCase() ?? '',
+    };
+  }, [urlParams, multiProvider]);
+}
+
 export function CombinedTransferForm() {
+  const initialValues = useCombinedFormInitialValues();
   return (
     <Formik<SwapFormValues>
-      initialValues={EMPTY_VALUES}
+      initialValues={initialValues}
       enableReinitialize
       onSubmit={() => undefined}
       validateOnChange={false}
@@ -268,7 +301,8 @@ function CombinedFormContent() {
           if (t.chainId !== dstToken.chainId) return false;
           // Native tokens: engine uses 0x000...0000, warpDestinations entries carry the
           // router contract address. Match by (chainId, isNative) instead of address.
-          if (dstToken.isNative) return t.isNative;
+          // Treat as native if flagged or if address is the zero/native address.
+          if (dstToken.isNative || /^0x0+$/i.test(dstToken.address)) return t.isNative;
           return t.address.toLowerCase() === dstToken.address.toLowerCase();
         })
       ),

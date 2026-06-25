@@ -56,7 +56,6 @@ const STATUS_DESCRIPTION: Record<SwapStatus, string> = {
 };
 
 const CONFIRMING_ORIGIN_HINT_DELAY_MS = 60_000;
-const CONFIRMING_ORIGIN_AUTO_FAIL_DELAY_MS = 120_000;
 
 export function SwapDetailsModal() {
   const selectedTransactionId = useStore((s) => s.selectedTransactionId);
@@ -68,9 +67,11 @@ export function SwapDetailsModal() {
 
   // Keep the last id alive after close so delivery polling continues in background.
   const lastIdRef = useRef<string | null>(null);
-  if (selectedTransactionId != null) lastIdRef.current = selectedTransactionId;
+  useEffect(() => {
+    if (selectedTransactionId != null) lastIdRef.current = selectedTransactionId;
+  }, [selectedTransactionId]);
 
-  const renderedId = lastIdRef.current;
+  const renderedId = selectedTransactionId ?? lastIdRef.current;
   const item =
     renderedId != null ? transactionHistory.find((entry) => entry.id === renderedId) : undefined;
   const swap = item?.type === TransactionHistoryItemType.Swap ? item.data : undefined;
@@ -332,9 +333,7 @@ function SwapDetailsModalInner({
             <div className="mt-5 text-center text-sm text-gray-600 dark:text-foreground-muted">
               {STATUS_DESCRIPTION[status]}
             </div>
-            {status === SwapStatus.ConfirmingOrigin && (
-              <ConfirmingOriginHint swap={swap} transactionId={transactionId} />
-            )}
+            {status === SwapStatus.ConfirmingOrigin && <ConfirmingOriginHint />}
           </div>
         )}
       </div>
@@ -388,28 +387,15 @@ function formatAmount(amount: string, decimals: number | undefined): string {
   }
 }
 
-function ConfirmingOriginHint({
-  swap,
-  transactionId,
-}: {
-  swap: SwapHistoryItem;
-  transactionId: string;
-}) {
+function ConfirmingOriginHint() {
   const [showHint, setShowHint] = useState(false);
-  const updateSwapTransactionStatus = useStore((s) => s.updateSwapTransactionStatus);
 
   useEffect(() => {
     const hintTimer = setTimeout(() => setShowHint(true), CONFIRMING_ORIGIN_HINT_DELAY_MS);
-    const failTimer = setTimeout(() => {
-      updateSwapTransactionStatus(transactionId, SwapStatus.Failed, {
-        originTxHash: swap.originTxHash,
-      });
-    }, CONFIRMING_ORIGIN_AUTO_FAIL_DELAY_MS);
     return () => {
       clearTimeout(hintTimer);
-      clearTimeout(failTimer);
     };
-  }, [transactionId, swap.originTxHash, updateSwapTransactionStatus]);
+  }, []);
 
   if (!showHint) return null;
   return (

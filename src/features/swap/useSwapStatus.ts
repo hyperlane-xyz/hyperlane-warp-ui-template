@@ -46,6 +46,10 @@ export async function detectSwapOutcome(
   }
 
   if (isNativeOutput) {
+    // Native payouts do not emit ERC20 Transfer logs, so this receipt
+    // heuristic can only prove fallback recovery. Delivery without a
+    // bridge-token fallback is treated as success until the route exposes a
+    // native-output execution signal.
     return fallbackDelivered ? 'failed_recovered' : 'success';
   }
   if (destSwapSucceeded) return 'success';

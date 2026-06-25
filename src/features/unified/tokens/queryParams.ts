@@ -1,4 +1,4 @@
-import { isZeroishAddress, normalizeAddress, type ProtocolType } from '@hyperlane-xyz/utils';
+import { isZeroishAddress, normalizeAddress, ProtocolType } from '@hyperlane-xyz/utils';
 
 import { WARP_QUERY_PARAMS } from '../../../consts/args';
 import { getUnifiedBridgeTokens } from './routes';
@@ -112,6 +112,13 @@ function normalizeRef(value: string, protocol?: ProtocolType): string {
   try {
     return normalizeAddress(value, protocol);
   } catch {
+    if (
+      protocol === ProtocolType.Sealevel ||
+      protocol === ProtocolType.Cosmos ||
+      protocol === ProtocolType.CosmosNative
+    ) {
+      return value;
+    }
     return value.toLowerCase();
   }
 }

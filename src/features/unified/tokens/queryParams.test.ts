@@ -143,6 +143,23 @@ describe('getUnifiedTokenQueryRef', () => {
     );
   });
 
+  test('preserves case-sensitive bridge refs when normalization fails', () => {
+    const mixedCaseRef = 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB';
+    const bridgeToken = createMockToken({
+      chainName: 'solanamainnet',
+      standard: TokenStandard.SealevelHypCollateral,
+      addressOrDenom: mixedCaseRef,
+      collateralAddressOrDenom: undefined,
+    });
+    const token = createUnifiedToken({
+      chainName: 'solanamainnet',
+      addressOrDenom: mixedCaseRef,
+      bridgeToken,
+    });
+
+    expect(findUnifiedTokenByQueryRef([token], 'solanamainnet', mixedCaseRef)).toBe(token);
+  });
+
   test('falls back to unified address when no source token metadata exists', () => {
     expect(getUnifiedTokenQueryRef(createUnifiedToken())).toBe(
       '0x2222222222222222222222222222222222222222',

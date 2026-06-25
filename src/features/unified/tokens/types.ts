@@ -4,7 +4,7 @@ import type { UiToken } from '../../swap/tokens/types';
 
 export interface UnifiedToken {
   key: string;
-  chainName: string;
+  chainName: ChainName;
   chainId: number | undefined;
   addressOrDenom: string;
   symbol: string;

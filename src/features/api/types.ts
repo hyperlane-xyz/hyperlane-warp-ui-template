@@ -3,15 +3,15 @@
 import { z } from 'zod';
 
 export const Address = z.string().regex(/^0x[0-9a-fA-F]{40}$/);
-// Permissive token-address schema mirroring the engine's TokenAddress —
+// Permissive token-address schema mirroring the engine's Address —
 // length-bounded string so non-EVM addresses (Solana base58 mints,
 // Cosmos bech32) validate. The strict EVM `Address` is still used for
-// request-side fields like sender/recipient.
+// EVM execution fields like Universal Router transactions.
 export const TokenAddress = z.string().min(1).max(100);
 export const BigIntString = z.string().regex(/^\d+$/);
 export const Hex = z.string().regex(/^0x[0-9a-fA-F]*$/);
-// bytes20 (EVM) or bytes32 (padded EVM / non-EVM pubkey).
-export const Recipient = z.string().regex(/^0x([0-9a-fA-F]{40}|[0-9a-fA-F]{64})$/);
+// Engine validates and normalizes per destination protocol.
+export const Recipient = z.string().min(1).max(100);
 
 export const HealthResponseSchema = z.object({ ok: z.boolean() });
 export type HealthResponse = z.infer<typeof HealthResponseSchema>;

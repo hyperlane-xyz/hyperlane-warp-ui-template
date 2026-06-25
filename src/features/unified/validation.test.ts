@@ -29,6 +29,45 @@ function createUnifiedToken(args: Partial<UnifiedToken> = {}): UnifiedToken {
 }
 
 describe('getUnifiedBasicSubmitErrors', () => {
+  test('requires an origin token before reporting route availability', () => {
+    expect(
+      getUnifiedBasicSubmitErrors({
+        routeMode: null,
+        values: { ...values, originTokenKey: undefined },
+        originToken: undefined,
+        destinationToken: createUnifiedToken({ key: 'destination', chainName: 'base' }),
+        recipient: '0x123',
+        hasSwapRoute: false,
+      }),
+    ).toEqual({ originTokenKey: 'Origin token is required' });
+  });
+
+  test('requires a destination token before reporting route availability', () => {
+    expect(
+      getUnifiedBasicSubmitErrors({
+        routeMode: null,
+        values: { ...values, destinationTokenKey: undefined },
+        originToken: createUnifiedToken(),
+        destinationToken: undefined,
+        recipient: '0x123',
+        hasSwapRoute: false,
+      }),
+    ).toEqual({ destinationTokenKey: 'Destination token is required' });
+  });
+
+  test('reports unsupported route after both tokens are selected', () => {
+    expect(
+      getUnifiedBasicSubmitErrors({
+        routeMode: null,
+        values,
+        originToken: createUnifiedToken(),
+        destinationToken: createUnifiedToken({ key: 'destination', chainName: 'base' }),
+        recipient: '0x123',
+        hasSwapRoute: false,
+      }),
+    ).toEqual({ destinationTokenKey: 'Route is not supported' });
+  });
+
   test('requires a valid positive amount', () => {
     expect(
       getUnifiedBasicSubmitErrors({

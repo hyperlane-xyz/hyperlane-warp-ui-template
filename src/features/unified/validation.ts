@@ -19,9 +19,9 @@ export function getUnifiedBasicSubmitErrors({
   recipient: string;
   hasSwapRoute: boolean;
 }): Record<string, string> | null {
-  if (!routeMode) return { destinationTokenKey: 'Route is not supported' };
   if (!originToken) return { originTokenKey: 'Origin token is required' };
   if (!destinationToken) return { destinationTokenKey: 'Destination token is required' };
+  if (!routeMode) return { destinationTokenKey: 'Route is not supported' };
   if (!values.amount || !new BigNumber(values.amount).isFinite()) {
     return { amount: 'Invalid amount' };
   }

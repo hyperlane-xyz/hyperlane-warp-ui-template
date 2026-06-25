@@ -13,6 +13,7 @@ import { logger } from '../../utils/logger';
 import type { ChainDiscovery } from '../api/types';
 import { estimateNativeGasCost, readBalance } from './balances/read';
 import type { UiToken } from './tokens/types';
+import { getTokenKeyByAddress } from './tokens/utils';
 import type { AugmentedRoute, FeeComponent, SwapFormValues } from './types';
 
 const NATIVE_ADDRESS = '0x0000000000000000000000000000000000000000';
@@ -276,7 +277,7 @@ function aggregateIgp(components: FeeComponent[]): Map<string, bigint> {
 }
 
 function balanceKey(chainId: number, address: string): string {
-  return `${chainId}-${address.toLowerCase()}`;
+  return getTokenKeyByAddress(chainId, address);
 }
 
 function isNativeAddress(addr: string): boolean {

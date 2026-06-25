@@ -51,7 +51,7 @@ export function useTokenBalances(
       filteredProtocol,
       filteredChainId,
       filteredAddress,
-      filtered.map((t) => t.address.toLowerCase()).join(','),
+      filtered.map(getTokenKey).join(','),
     ],
     queryFn: () =>
       dispatchChainBalances(
@@ -96,7 +96,7 @@ export function useTokenBalances(
           protocol,
           chainId,
           fanoutAddress,
-          chainTokens.map((t) => t.address.toLowerCase()).join(','),
+          chainTokens.map(getTokenKey).join(','),
         ],
         queryFn: async (): Promise<Record<string, bigint>> => {
           if (!protocol || !fanoutAddress) return {};
@@ -160,7 +160,7 @@ export function useTokenBalance(token: UiToken | undefined, addressOverride?: st
   const publicClient = usePublicClient({ chainId: token?.chainId });
 
   return useQuery({
-    queryKey: ['balance', protocol, token?.chainId, token?.address.toLowerCase(), userAddress],
+    queryKey: ['balance', protocol, token ? getTokenKey(token) : undefined, userAddress],
     queryFn: async () => {
       if (!token || !userAddress || !protocol) return null;
       const balances = await dispatchChainBalances(

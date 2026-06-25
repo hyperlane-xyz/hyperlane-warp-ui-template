@@ -462,4 +462,170 @@ describe('submitSwap', () => {
     );
     expect(setErrors).not.toHaveBeenCalled();
   });
+
+  test('stores destination outcome for CCS destination-swap routes', async () => {
+    vi.mocked(validateSwapForm).mockResolvedValue(null);
+
+    const srcAddress = '0x1111111111111111111111111111111111111111';
+    const bridgeToken = '0x2222222222222222222222222222222222222222';
+    const dstAddress = '0x3333333333333333333333333333333333333333';
+    const sender = '0x4444444444444444444444444444444444444444';
+    const recipient = '0x5555555555555555555555555555555555555555';
+    const universalRouter = '0x6666666666666666666666666666666666666666';
+    const route = {
+      isBridgeOnly: false,
+      feeBreakdown: { components: [], originGas: 0n, destGas: 0n },
+      raw: {
+        steps: [
+          {
+            type: 'bridge',
+            chain: 1,
+            destChain: 2,
+            asset: srcAddress,
+            router: '0x7777777777777777777777777777777777777777',
+            amountIn: '100',
+            amountOut: '98',
+            fee: {
+              tokenFee: '0',
+              igpToken: '0x0000000000000000000000000000000000000000',
+              igpAmount: '0',
+            },
+          },
+          {
+            type: 'swap',
+            chain: 2,
+            dex: 'test-dex',
+            tokenIn: bridgeToken,
+            tokenOut: dstAddress,
+            amountIn: '98',
+            amountOut: '95',
+            path: [bridgeToken, dstAddress],
+            poolCount: 1,
+            minPoolTvlUsd: null,
+          },
+        ],
+        output: '95',
+        outputMin: '90',
+        connection: { symbol: 'USDC', warpRouteId: 'USDC/test' },
+        gas: { originGas: '0', destGas: '0' },
+        tx: { to: universalRouter, data: '0x1234', value: '0' },
+        callCommitment: {
+          version: 1,
+          commitment: '0x1234',
+          hash: { algorithm: 'keccak256', preimage: '0x', encodedCalls: '0x' },
+          ccs: {
+            method: 'POST',
+            path: '/calls',
+            body: {
+              calls: [],
+              relayers: [],
+              salt: '0x1234',
+              userSalt: '0x1234',
+              originDomain: 1,
+              destinationDomain: 2,
+              owner: sender,
+            },
+          },
+        },
+      },
+    } as any;
+    const execute = vi.fn().mockResolvedValue('0xhash');
+
+    await submitSwap({
+      values: {
+        srcChain: 1,
+        dstChain: 2,
+        srcToken: srcAddress,
+        dstToken: dstAddress,
+        amount: '1',
+        recipient,
+        slippageBps: 50,
+      },
+      bestRoute: route,
+      originToken: {
+        chainName: 'ethereum',
+        swapToken: {
+          chainId: 1,
+          chainName: 'ethereum',
+          address: srcAddress,
+          addressOrDenom: srcAddress,
+          symbol: 'SRC',
+          name: 'Source',
+          decimals: 18,
+          isNative: false,
+          canBridge: false,
+          canSwap: true,
+          isBridgeToken: false,
+          isPoolToken: false,
+          bridgeSymbols: [],
+          warpRouteIds: [],
+        },
+      } as any,
+      destinationToken: {
+        chainName: 'base',
+        swapToken: {
+          chainId: 2,
+          chainName: 'base',
+          address: dstAddress,
+          addressOrDenom: dstAddress,
+          symbol: 'DST',
+          name: 'Destination',
+          decimals: 18,
+          isNative: false,
+          canBridge: false,
+          canSwap: true,
+          isBridgeToken: false,
+          isPoolToken: false,
+          bridgeSymbols: [],
+          warpRouteIds: [],
+        },
+      } as any,
+      sender,
+      recipient,
+      chains: [
+        {
+          id: 1,
+          name: 'Ethereum',
+          chainName: 'ethereum',
+          protocol: ProtocolType.Ethereum,
+          nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+          universalRouter,
+          dex: 'test-dex',
+          canSwap: true,
+          canExecute: true,
+          supportsNative: true,
+        },
+        {
+          id: 2,
+          name: 'Base',
+          chainName: 'base',
+          protocol: ProtocolType.Ethereum,
+          nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+          universalRouter,
+          dex: 'test-dex',
+          canSwap: true,
+          canExecute: true,
+          supportsNative: true,
+        },
+      ],
+      multiProvider: {} as any,
+      approvalPending: false,
+      quoteExpiresAt: Math.floor(Date.now() / 1000) + 60,
+      universalRouter,
+      amountAtomic: 100n,
+      swap: { execute } as any,
+      setErrors: vi.fn(),
+    });
+
+    const historyItem = useStore.getState().transactionHistory[0];
+    expect(historyItem.type).toBe(TransactionHistoryItemType.Swap);
+    expect(historyItem.data).toMatchObject({
+      destinationOutcome: {
+        bridgeToken,
+        dstToken: dstAddress,
+      },
+      amountIn: '100',
+      amountOut: '95',
+    });
+  });
 });

@@ -1,4 +1,4 @@
-import type { LabeledMsgId } from '../swap/types';
+import type { LabeledMsgId, SwapHistoryItem } from '../swap/types';
 
 export function getSwapDeliveryMsgId(msgIds: LabeledMsgId[] | undefined) {
   // For CCS routes, track the reveal message delivery — that tx is the one where
@@ -9,4 +9,14 @@ export function getSwapDeliveryMsgId(msgIds: LabeledMsgId[] | undefined) {
     msgIds?.find((m) => m.label === 'warp') ??
     msgIds?.[0]
   )?.msgId;
+}
+
+export function getSwapHistoryMessageIds(
+  swaps: Array<Pick<SwapHistoryItem, 'msgIds'>>,
+): Set<string> {
+  const ids = new Set<string>();
+  for (const swap of swaps) {
+    for (const msg of swap.msgIds ?? []) ids.add(msg.msgId.toLowerCase());
+  }
+  return ids;
 }

@@ -23,6 +23,7 @@ import {
   useMergedTransferHistory,
 } from '../messages/useMergedTransferHistory';
 import { useMessageHistory } from '../messages/useMessageHistory';
+import { getSwapHistoryMessageIds } from '../messages/utils';
 import {
   type AppState,
   type TransactionHistoryItem,
@@ -31,7 +32,7 @@ import {
 } from '../store';
 import { formatBalance as formatSwapBalance } from '../swap/balances/utils';
 import { getTokenByChainAndAddress } from '../swap/tokens/utils';
-import { FinalSwapStatuses, SwapHistoryItem, SwapStatus } from '../swap/types';
+import { SwapHistoryItem, SwapStatus } from '../swap/types';
 import { tryFindToken, useWarpCore } from '../tokens/hooks';
 import { computeDestAmount, formatMessageAmount } from '../transfer/scaleUtils';
 import { TransfersDetailsModal } from '../transfer/TransfersDetailsModal';
@@ -128,13 +129,17 @@ export function SideBarMenu({
   );
 
   const swapMessageIds = useMemo(() => {
-    const ids = new Set<string>();
-    for (const item of transactionHistory) {
-      if (item.type !== TransactionHistoryItemType.Swap) continue;
-      if (!FinalSwapStatuses.includes(item.data.status)) continue;
-      for (const msg of item.data.msgIds ?? []) ids.add(msg.msgId.toLowerCase());
-    }
-    return ids;
+    const swaps = transactionHistory
+      .filter(
+        (
+          item,
+        ): item is Extract<
+          TransactionHistoryItem,
+          { type: typeof TransactionHistoryItemType.Swap }
+        > => item.type === TransactionHistoryItemType.Swap,
+      )
+      .map((item) => item.data);
+    return getSwapHistoryMessageIds(swaps);
   }, [transactionHistory]);
 
   const visibleMessages = useMemo(

@@ -186,4 +186,42 @@ describe('findUnifiedBridgeRoutePair', () => {
 
     expect(pair).toEqual({ originToken: origin, destinationToken: connectedDestination });
   });
+
+  test('keeps same-address different-symbol bridge candidates separate', () => {
+    const sharedAddress = '0x1111111111111111111111111111111111111111';
+    const primaryOrigin = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'AAA',
+      addressOrDenom: sharedAddress,
+      collateralAddressOrDenom: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+    });
+    const routedDestination = createMockToken({
+      chainName: 'arbitrum',
+      symbol: 'BBB',
+      addressOrDenom: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+      collateralAddressOrDenom: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+    });
+    const routedOrigin = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'BBB',
+      addressOrDenom: sharedAddress,
+      collateralAddressOrDenom: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+      connections: [createTokenConnectionMock(undefined, routedDestination)],
+    });
+    const collateralGroups = groupTokensByCollateral([primaryOrigin, routedOrigin]);
+
+    const pair = findUnifiedBridgeRoutePair(
+      createUnifiedToken({
+        bridgeToken: primaryOrigin,
+        bridgeRouteTokens: [routedOrigin, primaryOrigin],
+      }),
+      createUnifiedToken({
+        chainName: 'arbitrum',
+        bridgeToken: routedDestination,
+      }),
+      collateralGroups,
+    );
+
+    expect(pair).toEqual({ originToken: routedOrigin, destinationToken: routedDestination });
+  });
 });

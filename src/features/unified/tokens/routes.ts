@@ -1,6 +1,6 @@
 import type { Token } from '@hyperlane-xyz/sdk';
 
-import { findConnectedDestinationToken, getCollateralKey } from '../../tokens/utils';
+import { findConnectedDestinationToken, getCollateralKey, getTokenKey } from '../../tokens/utils';
 import type { UnifiedToken } from './types';
 
 export const UnifiedRouteMode = {
@@ -55,9 +55,9 @@ export function findUnifiedBridgeRoutePair(
 
   const originCandidates = new Map<string, Token>();
   for (const origin of originBridgeTokens) {
-    originCandidates.set(origin.addressOrDenom, origin);
+    originCandidates.set(getTokenKey(origin), origin);
     for (const groupToken of collateralGroups.get(getCollateralKey(origin)) ?? []) {
-      originCandidates.set(groupToken.addressOrDenom, groupToken);
+      originCandidates.set(getTokenKey(groupToken), groupToken);
     }
   }
 

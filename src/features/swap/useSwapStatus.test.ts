@@ -8,9 +8,10 @@ const BRIDGE_TOKEN = '0x2222222222222222222222222222222222222222';
 const DST_TOKEN = '0x3333333333333333333333333333333333333333';
 const NATIVE_TOKEN = '0x0000000000000000000000000000000000000000';
 
-function transferLog(token: string, to: string) {
+function transferLog(token: string, to: string, amount = 1n) {
   return {
     address: token,
+    data: `0x${amount.toString(16).padStart(64, '0')}`,
     topics: [
       TRANSFER_TOPIC,
       `0x${'0'.repeat(64)}`,
@@ -36,6 +37,48 @@ describe('detectSwapOutcome', () => {
         DST_TOKEN,
       ),
     ).resolves.toBe('success');
+  });
+
+  test('requires destination token transfers to meet the minimum output when known', async () => {
+    await expect(
+      detectSwapOutcome(
+        providerWithLogs([
+          transferLog(DST_TOKEN, RECIPIENT, 40n),
+          transferLog(DST_TOKEN, RECIPIENT, 50n),
+        ]),
+        '0xhash',
+        RECIPIENT,
+        BRIDGE_TOKEN,
+        DST_TOKEN,
+        '90',
+      ),
+    ).resolves.toBe('success');
+
+    await expect(
+      detectSwapOutcome(
+        providerWithLogs([transferLog(DST_TOKEN, RECIPIENT, 89n)]),
+        '0xhash',
+        RECIPIENT,
+        BRIDGE_TOKEN,
+        DST_TOKEN,
+        '90',
+      ),
+    ).resolves.toBe('dest_failed');
+  });
+
+  test('ignores zero-value destination and fallback transfers', async () => {
+    await expect(
+      detectSwapOutcome(
+        providerWithLogs([
+          transferLog(DST_TOKEN, RECIPIENT, 0n),
+          transferLog(BRIDGE_TOKEN, RECIPIENT, 0n),
+        ]),
+        '0xhash',
+        RECIPIENT,
+        BRIDGE_TOKEN,
+        DST_TOKEN,
+      ),
+    ).resolves.toBe('dest_failed');
   });
 
   test('returns failed_recovered when bridge token fallback is transferred to the recipient', async () => {

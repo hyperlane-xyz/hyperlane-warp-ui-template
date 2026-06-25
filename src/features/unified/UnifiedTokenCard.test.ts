@@ -623,6 +623,7 @@ describe('submitSwap', () => {
       destinationOutcome: {
         bridgeToken,
         dstToken: dstAddress,
+        minAmountOut: '90',
       },
       amountIn: '100',
       amountOut: '95',

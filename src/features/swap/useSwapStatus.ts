@@ -12,7 +12,7 @@ const TRANSFER_TOPIC = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a
 type ReceiptProvider = {
   getTransactionReceipt(
     hash: string,
-  ): Promise<{ logs: Array<{ topics: string[]; address: string }> } | null>;
+  ): Promise<{ logs: Array<{ topics: string[]; address: string; data?: string }> } | null>;
 };
 
 export async function detectSwapOutcome(
@@ -21,6 +21,7 @@ export async function detectSwapOutcome(
   recipient: string,
   bridgeToken: string,
   dstToken: string,
+  minAmountOut?: string,
 ): Promise<'success' | 'failed_recovered' | 'dest_failed'> {
   const receipt = await provider.getTransactionReceipt(destinationTxHash);
   if (!receipt) throw new Error('Destination transaction receipt not found');
@@ -29,9 +30,10 @@ export async function detectSwapOutcome(
   const bridgeTokenLower = bridgeToken.toLowerCase();
   const isNativeOutput = isZeroishAddress(dstToken);
   const dstTokenLower = dstToken.toLowerCase();
+  const minAmountOutAtomic = getOptionalBigInt(minAmountOut);
 
-  let destSwapSucceeded = false;
-  let fallbackDelivered = false;
+  let destinationTokenDelivered = 0n;
+  let bridgeTokenDelivered = 0n;
 
   for (const log of receipt.logs) {
     if (log.topics[0] !== TRANSFER_TOPIC) continue;
@@ -40,9 +42,11 @@ export async function detectSwapOutcome(
     // Indexed addresses are 0x + 24 leading-zero chars + 40 address chars.
     const to = `0x${log.topics[2]!.slice(26)}`.toLowerCase();
     const addr = log.address.toLowerCase();
+    const amount = getTransferLogAmount(log.data);
+    if (amount <= 0n) continue;
 
-    if (addr === dstTokenLower && to === recipientLower) destSwapSucceeded = true;
-    if (addr === bridgeTokenLower && to === recipientLower) fallbackDelivered = true;
+    if (addr === dstTokenLower && to === recipientLower) destinationTokenDelivered += amount;
+    if (addr === bridgeTokenLower && to === recipientLower) bridgeTokenDelivered += amount;
   }
 
   if (isNativeOutput) {
@@ -50,11 +54,34 @@ export async function detectSwapOutcome(
     // heuristic can only prove fallback recovery. Delivery without a
     // bridge-token fallback is treated as success until the route exposes a
     // native-output execution signal.
-    return fallbackDelivered ? 'failed_recovered' : 'success';
+    return bridgeTokenDelivered > 0n ? 'failed_recovered' : 'success';
   }
-  if (destSwapSucceeded) return 'success';
-  if (fallbackDelivered) return 'failed_recovered';
+  if (
+    destinationTokenDelivered > 0n &&
+    (minAmountOutAtomic === undefined || destinationTokenDelivered >= minAmountOutAtomic)
+  ) {
+    return 'success';
+  }
+  if (bridgeTokenDelivered > 0n) return 'failed_recovered';
   return 'dest_failed';
+}
+
+function getTransferLogAmount(data: string | undefined): bigint {
+  if (!data || data === '0x') return 0n;
+  try {
+    return BigInt(data);
+  } catch {
+    return 0n;
+  }
+}
+
+function getOptionalBigInt(value: string | undefined): bigint | undefined {
+  if (!value) return undefined;
+  try {
+    return BigInt(value);
+  } catch {
+    return undefined;
+  }
 }
 
 // Fires once when the REVEAL tx hash lands on a swap. Reads the receipt directly
@@ -91,6 +118,7 @@ export function useSwapStatus(swap: SwapHistoryItem | undefined, transactionId: 
 
     const bridgeToken = destinationOutcome?.bridgeToken ?? destSwapStep!.tokenIn;
     const dstToken = destinationOutcome?.dstToken ?? destSwapStep!.tokenOut;
+    const minAmountOut = destinationOutcome?.minAmountOut;
 
     let provider: ReceiptProvider | null = null;
     try {
@@ -105,7 +133,7 @@ export function useSwapStatus(swap: SwapHistoryItem | undefined, transactionId: 
       return;
     }
 
-    detectSwapOutcome(provider, destinationTxHash, recipient!, bridgeToken, dstToken)
+    detectSwapOutcome(provider, destinationTxHash, recipient!, bridgeToken, dstToken, minAmountOut)
       .then((outcome) => {
         if (outcome === 'success') {
           updateStatus(transactionId, SwapStatus.ConfirmedDestination);

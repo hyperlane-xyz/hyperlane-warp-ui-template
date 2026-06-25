@@ -1504,6 +1504,7 @@ export async function submitSwap({
         ? {
             bridgeToken: destinationSwapStep.tokenIn,
             dstToken: destinationSwapStep.tokenOut,
+            minAmountOut: bestRoute.raw.outputMin,
           }
         : undefined,
   };

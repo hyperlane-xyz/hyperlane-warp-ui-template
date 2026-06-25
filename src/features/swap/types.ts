@@ -17,6 +17,7 @@ export interface SwapHistoryTokenMeta {
 export interface SwapDestinationOutcome {
   bridgeToken: string;
   dstToken: string;
+  minAmountOut?: string;
 }
 
 // ── Persisted/in-memory swap history ──────────────────────────────────

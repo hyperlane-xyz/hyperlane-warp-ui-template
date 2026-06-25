@@ -429,38 +429,7 @@ export const useStore = create<AppState>()(
         transactionHistory: state.transactionHistory,
       }),
       version: PERSIST_STATE_VERSION,
-      migrate: (persistedState) => {
-        const state = persistedState as Partial<AppState> & {
-          transfers?: TransferContext[];
-          swaps?: SwapHistoryItem[];
-        };
-        if (Array.isArray(state.transactionHistory)) {
-          return {
-            chainMetadataOverrides: state.chainMetadataOverrides ?? {},
-            transactionHistory: state.transactionHistory,
-          };
-        }
-
-        const transfers = Array.isArray(state.transfers) ? state.transfers : [];
-        const swaps = Array.isArray(state.swaps) ? state.swaps : [];
-        const transactionHistory: TransactionHistoryItem[] = [
-          ...transfers.map((data) => ({
-            id: createTransactionId(TransactionHistoryItemType.Bridge, data.timestamp),
-            type: TransactionHistoryItemType.Bridge,
-            data,
-          })),
-          ...swaps.map((data) => ({
-            id: createTransactionId(TransactionHistoryItemType.Swap, data.timestamp),
-            type: TransactionHistoryItemType.Swap,
-            data,
-          })),
-        ];
-
-        return {
-          chainMetadataOverrides: state.chainMetadataOverrides ?? {},
-          transactionHistory,
-        };
-      },
+      migrate: migratePersistedAppState,
       onRehydrateStorage: () => {
         logger.debug('Rehydrating state');
         return (state, error) => {
@@ -484,6 +453,42 @@ function createTransactionId(type: TransactionHistoryItem['type'], timestamp: nu
     crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
   return `${type}-${timestamp}-${suffix}`;
+}
+
+export function migratePersistedAppState(persistedState: unknown): {
+  chainMetadataOverrides: ChainMap<Partial<ChainMetadata>>;
+  transactionHistory: TransactionHistoryItem[];
+} {
+  const state = persistedState as Partial<AppState> & {
+    transfers?: TransferContext[];
+    swaps?: SwapHistoryItem[];
+  };
+  if (Array.isArray(state.transactionHistory)) {
+    return {
+      chainMetadataOverrides: state.chainMetadataOverrides ?? {},
+      transactionHistory: state.transactionHistory,
+    };
+  }
+
+  const transfers = Array.isArray(state.transfers) ? state.transfers : [];
+  const swaps = Array.isArray(state.swaps) ? state.swaps : [];
+  const transactionHistory: TransactionHistoryItem[] = [
+    ...transfers.map((data) => ({
+      id: createTransactionId(TransactionHistoryItemType.Bridge, data.timestamp),
+      type: TransactionHistoryItemType.Bridge,
+      data,
+    })),
+    ...swaps.map((data) => ({
+      id: createTransactionId(TransactionHistoryItemType.Swap, data.timestamp),
+      type: TransactionHistoryItemType.Swap,
+      data,
+    })),
+  ];
+
+  return {
+    chainMetadataOverrides: state.chainMetadataOverrides ?? {},
+    transactionHistory,
+  };
 }
 
 async function initWarpContext({

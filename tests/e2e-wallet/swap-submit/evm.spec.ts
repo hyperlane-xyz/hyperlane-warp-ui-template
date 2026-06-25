@@ -57,7 +57,7 @@ test.describe('EVM swap submit', () => {
 });
 
 async function installRouterApiMock(page: Page, quoteRequests: unknown[]): Promise<void> {
-  await page.route('https://router.services.hyperlane.xyz/**', async (route: Route) => {
+  await page.route(/.*\/(readyz|v1\/chains|v1\/tokens|v1\/quote).*/, async (route: Route) => {
     const request = route.request();
     const url = new URL(request.url());
 

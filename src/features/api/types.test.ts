@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { QuoteRequestSchema, Recipient } from './types';
+import { QuoteResponseSchema, QuoteRequestSchema, Recipient } from './types';
 
 describe('api schemas', () => {
   test('accepts native non-EVM recipients for quote requests', () => {
@@ -38,5 +38,40 @@ describe('api schemas', () => {
         recipient: '0x4444444444444444444444444444444444444444',
       }),
     ).not.toThrow();
+  });
+
+  test('accepts non-EVM bridge assets in quote responses', () => {
+    const solanaAsset = 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB';
+
+    const parsed = QuoteResponseSchema.parse({
+      routes: [
+        {
+          steps: [
+            {
+              type: 'bridge',
+              chain: 1399811149,
+              destChain: 8453,
+              asset: solanaAsset,
+              router: '0x1111111111111111111111111111111111111111',
+              amountIn: '1000000',
+              amountOut: '990000',
+              fee: {
+                tokenFee: '0',
+                igpToken: '0x0000000000000000000000000000000000000000',
+                igpAmount: '1',
+              },
+            },
+          ],
+          output: '990000',
+          outputMin: '980000',
+          connection: null,
+          gas: { originGas: '0', destGas: '0' },
+          tx: null,
+        },
+      ],
+      expiresAt: 1,
+    });
+
+    expect(parsed.routes[0].steps[0]).toMatchObject({ asset: solanaAsset });
   });
 });

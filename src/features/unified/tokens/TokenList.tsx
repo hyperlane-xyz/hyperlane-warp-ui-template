@@ -1,4 +1,3 @@
-import { fromWei } from '@hyperlane-xyz/utils';
 import { useDebounce } from '@hyperlane-xyz/widgets';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -16,6 +15,7 @@ import { useTokenPrices as useBridgeTokenPrices } from '../../tokens/useTokenPri
 import { getTokenKey as getBridgeTokenKey } from '../../tokens/utils';
 import { useUnifiedTokens } from './hooks';
 import {
+  buildUnifiedTokenBalanceInfo,
   getBalanceFetchLimit,
   getVisibleUnifiedTokens,
   sortUnifiedTokensByBalance,
@@ -265,7 +265,9 @@ const TokenButton = React.memo(function TokenButton({
   const chainDisplayName = getChainDisplayName(multiProvider, token.chainName);
   const balance = balanceInfo?.balance;
   const formattedBalance =
-    balance != null && balance > 0n ? formatBalance(balance, token.decimals) : null;
+    balance != null && balance > 0n
+      ? formatBalance(balance, balanceInfo?.decimals ?? token.decimals)
+      : null;
   const formattedUsd =
     balanceInfo?.usd != null && balanceInfo.usd > 0 ? formatUsd(balanceInfo.usd) : null;
 
@@ -321,56 +323,6 @@ function uniqueByKey<T>(items: T[], getKey: (item: T) => string): T[] {
     unique.push(item);
   }
   return unique;
-}
-
-function buildUnifiedTokenBalanceInfo({
-  tokens,
-  bridgeBalances,
-  swapBalances,
-  prices,
-}: {
-  tokens: UnifiedToken[];
-  bridgeBalances: Record<string, bigint>;
-  swapBalances: Record<string, bigint>;
-  prices: Record<string, number>;
-}): Map<string, UnifiedTokenBalanceInfo> {
-  const result = new Map<string, UnifiedTokenBalanceInfo>();
-
-  for (const token of tokens) {
-    const candidates = [
-      ...getUnifiedBridgeTokens(token).map((bridgeToken) => ({
-        balance: bridgeBalances[getBridgeTokenKey(bridgeToken)],
-        decimals: bridgeToken.decimals,
-        coinGeckoId: bridgeToken.coinGeckoId,
-      })),
-      ...(token.swapToken
-        ? [
-            {
-              balance: swapBalances[getSwapTokenKey(token.swapToken)],
-              decimals: token.swapToken.decimals,
-              coinGeckoId: token.swapToken.coinGeckoId,
-            },
-          ]
-        : []),
-    ];
-
-    const selected =
-      candidates.find((candidate) => candidate.balance != null && candidate.balance > 0n) ??
-      candidates.find((candidate) => candidate.balance != null);
-    if (!selected || selected.balance == null) continue;
-
-    const price = selected.coinGeckoId ? prices[selected.coinGeckoId] : undefined;
-    const usd =
-      price != null
-        ? parseFloat(fromWei(selected.balance.toString(), selected.decimals)) * price
-        : null;
-    result.set(token.key, {
-      balance: selected.balance,
-      usd,
-    });
-  }
-
-  return result;
 }
 
 const styles = {

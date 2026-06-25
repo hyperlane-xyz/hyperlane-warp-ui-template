@@ -1,11 +1,16 @@
+import { fromWei } from '@hyperlane-xyz/utils';
+
 import { config } from '../../../consts/config';
-import { getUnifiedRouteMode, UnifiedRouteMode } from './routes';
+import { getTokenKey as getSwapTokenKey } from '../../swap/tokens/utils';
+import { getTokenKey as getBridgeTokenKey } from '../../tokens/utils';
+import { getUnifiedBridgeTokens, getUnifiedRouteMode, UnifiedRouteMode } from './routes';
 import type { UnifiedToken } from './types';
 
 export type UnifiedTokenRouteMode = UnifiedRouteMode | null;
 
 export interface UnifiedTokenBalanceInfo {
   balance?: bigint | null;
+  decimals?: number | null;
   usd?: number | null;
 }
 
@@ -177,4 +182,55 @@ function getRouteSortRank(mode: UnifiedTokenRouteMode): number {
   if (mode === UnifiedRouteMode.Bridge) return 0;
   if (mode === UnifiedRouteMode.Swap) return 1;
   return 2;
+}
+
+export function buildUnifiedTokenBalanceInfo({
+  tokens,
+  bridgeBalances,
+  swapBalances,
+  prices,
+}: {
+  tokens: UnifiedToken[];
+  bridgeBalances: Record<string, bigint>;
+  swapBalances: Record<string, bigint>;
+  prices: Record<string, number>;
+}): Map<string, UnifiedTokenBalanceInfo> {
+  const result = new Map<string, UnifiedTokenBalanceInfo>();
+
+  for (const token of tokens) {
+    const candidates = [
+      ...getUnifiedBridgeTokens(token).map((bridgeToken) => ({
+        balance: bridgeBalances[getBridgeTokenKey(bridgeToken)],
+        decimals: bridgeToken.decimals,
+        coinGeckoId: bridgeToken.coinGeckoId,
+      })),
+      ...(token.swapToken
+        ? [
+            {
+              balance: swapBalances[getSwapTokenKey(token.swapToken)],
+              decimals: token.swapToken.decimals,
+              coinGeckoId: token.swapToken.coinGeckoId,
+            },
+          ]
+        : []),
+    ];
+
+    const selected =
+      candidates.find((candidate) => candidate.balance != null && candidate.balance > 0n) ??
+      candidates.find((candidate) => candidate.balance != null);
+    if (!selected || selected.balance == null) continue;
+
+    const price = selected.coinGeckoId ? prices[selected.coinGeckoId] : undefined;
+    const usd =
+      price != null
+        ? parseFloat(fromWei(selected.balance.toString(), selected.decimals)) * price
+        : null;
+    result.set(token.key, {
+      balance: selected.balance,
+      decimals: selected.decimals,
+      usd,
+    });
+  }
+
+  return result;
 }

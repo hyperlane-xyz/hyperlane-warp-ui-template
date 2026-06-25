@@ -3,8 +3,13 @@ import { afterEach, describe, expect, test } from 'vitest';
 import { config } from '../../../consts/config';
 import { createMockToken, createTokenConnectionMock } from '../../../utils/test';
 import type { UiToken } from '../../swap/tokens/types';
-import { groupTokensByCollateral } from '../../tokens/utils';
-import { getBalanceFetchLimit, getVisibleUnifiedTokens, sortUnifiedTokensByBalance } from './list';
+import { getTokenKey, groupTokensByCollateral } from '../../tokens/utils';
+import {
+  buildUnifiedTokenBalanceInfo,
+  getBalanceFetchLimit,
+  getVisibleUnifiedTokens,
+  sortUnifiedTokensByBalance,
+} from './list';
 import type { UnifiedToken } from './types';
 
 const originalFeaturedTokens = [...config.featuredTokens];
@@ -393,5 +398,42 @@ describe('getVisibleUnifiedTokens', () => {
     });
 
     expect(result.map((token) => token.key)).toEqual(['high-value', 'low-value']);
+  });
+
+  test('balance info keeps decimals from the selected route member', () => {
+    const primary = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USDC',
+      decimals: 18,
+      addressOrDenom: '0x1111111111111111111111111111111111111111',
+      collateralAddressOrDenom: '0x1111111111111111111111111111111111111111',
+    });
+    const routeMember = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USDC',
+      decimals: 6,
+      addressOrDenom: '0x2222222222222222222222222222222222222222',
+      collateralAddressOrDenom: '0x1111111111111111111111111111111111111111',
+    });
+    const token = createUnifiedToken({
+      key: 'deduped-usdc',
+      decimals: primary.decimals,
+      bridgeToken: primary,
+      bridgeRouteTokens: [primary, routeMember],
+    });
+
+    const result = buildUnifiedTokenBalanceInfo({
+      tokens: [token],
+      bridgeBalances: {
+        [getTokenKey(routeMember)]: 1_000_000n,
+      },
+      swapBalances: {},
+      prices: {},
+    });
+
+    expect(result.get(token.key)).toMatchObject({
+      balance: 1_000_000n,
+      decimals: 6,
+    });
   });
 });

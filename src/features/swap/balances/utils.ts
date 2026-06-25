@@ -1,7 +1,7 @@
 import { fromWei, fromWeiRounded } from '@hyperlane-xyz/utils';
 
 import type { UiToken } from '../tokens/types';
-import { getTokenKey } from '../tokens/utils';
+import { getTokenByChainAndAddress, getTokenKey } from '../tokens/utils';
 import type { FeeComponent } from '../types';
 
 export { formatBalance, formatDisplayAmount, formatUsd } from '../../../utils/amount';
@@ -29,7 +29,7 @@ export function resolveCoinGeckoId(
   component: FeeComponent,
   tokenMap: Map<string, UiToken>,
 ): { coinGeckoId: string | undefined; decimals: number } {
-  const t = tokenMap.get(`${component.chainId}-${component.tokenAddress.toLowerCase()}`);
+  const t = getTokenByChainAndAddress(tokenMap, component.chainId, component.tokenAddress);
   return { coinGeckoId: t?.coinGeckoId, decimals: t?.decimals ?? 18 };
 }
 

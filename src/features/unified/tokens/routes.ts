@@ -1,6 +1,6 @@
 import type { Token } from '@hyperlane-xyz/sdk';
 
-import { checkTokenHasRoute } from '../../tokens/utils';
+import { findConnectedDestinationToken, getCollateralKey } from '../../tokens/utils';
 import type { UnifiedToken } from './types';
 
 export const UnifiedRouteMode = {
@@ -28,15 +28,7 @@ export function getUnifiedRouteMode({
 }): UnifiedRouteMode | null {
   if (!originToken || !destinationToken) return null;
 
-  const originBridgeTokens = getUnifiedBridgeTokens(originToken);
-  const destinationBridgeTokens = getUnifiedBridgeTokens(destinationToken);
-  if (
-    originBridgeTokens.some((origin) =>
-      destinationBridgeTokens.some((destination) =>
-        checkTokenHasRoute(origin, destination, collateralGroups),
-      ),
-    )
-  ) {
+  if (findUnifiedBridgeRoutePair(originToken, destinationToken, collateralGroups)) {
     return UnifiedRouteMode.Bridge;
   }
 
@@ -51,4 +43,30 @@ export function getUnifiedRouteMode({
   }
 
   return null;
+}
+
+export function findUnifiedBridgeRoutePair(
+  originToken: UnifiedToken | undefined,
+  destinationToken: UnifiedToken | undefined,
+  collateralGroups: Map<string, Token[]>,
+): { originToken: Token; destinationToken: Token } | undefined {
+  const originBridgeTokens = getUnifiedBridgeTokens(originToken);
+  const destinationBridgeTokens = getUnifiedBridgeTokens(destinationToken);
+
+  const originCandidates = new Map<string, Token>();
+  for (const origin of originBridgeTokens) {
+    originCandidates.set(origin.addressOrDenom, origin);
+    for (const groupToken of collateralGroups.get(getCollateralKey(origin)) ?? []) {
+      originCandidates.set(groupToken.addressOrDenom, groupToken);
+    }
+  }
+
+  for (const origin of originCandidates.values()) {
+    for (const destination of destinationBridgeTokens) {
+      const connectedDestination = findConnectedDestinationToken(origin, destination);
+      if (connectedDestination)
+        return { originToken: origin, destinationToken: connectedDestination };
+    }
+  }
+  return undefined;
 }

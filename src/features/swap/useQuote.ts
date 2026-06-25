@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { bytesToHex, parseUnits, type Hex } from 'viem';
 
 import { routerClient } from '../api/RouterClient';
-import type { QuoteResponse, RouteResponse } from '../api/types';
+import type { QuoteResponse, RouteResponse, TokenDiscovery } from '../api/types';
 import { useTokens } from './tokens/hooks';
 import type {
   AugmentedQuote,
@@ -42,9 +42,7 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
   const { data: srcTokens } = useTokens(values.srcChain != null ? { chain: values.srcChain } : {}, {
     enabled,
   });
-  const srcTokenInfo = srcTokens.find(
-    (t) => t.address.toLowerCase() === values.srcToken.toLowerCase(),
-  );
+  const srcTokenInfo = findTokenByAddress(srcTokens, values.srcToken);
 
   const amountAtomic = useMemo(() => {
     if (!srcTokenInfo || srcTokenInfo.decimals == null) return null;
@@ -112,6 +110,15 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
     isExpired,
     isQuoteSettled,
   };
+}
+
+function findTokenByAddress(tokens: TokenDiscovery[], address: string): TokenDiscovery | undefined {
+  return (
+    tokens.find((token) => token.address === address) ??
+    (/^0x[a-fA-F0-9]{40}$/.test(address)
+      ? tokens.find((token) => token.address.toLowerCase() === address.toLowerCase())
+      : undefined)
+  );
 }
 
 function isQuoteRequestReady(v: SwapFormValues, sender: string | undefined): boolean {

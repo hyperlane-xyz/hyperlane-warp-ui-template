@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 
 import type { UiToken } from '../tokens/types';
+import { getTokenKey } from '../tokens/utils';
 import type { FeeComponent } from '../types';
 import { getTotalFeeUsd, resolveCoinGeckoId } from './utils';
 
@@ -46,6 +47,39 @@ describe('resolveCoinGeckoId', () => {
     expect(resolveCoinGeckoId(component({}), tokenMap)).toEqual({
       coinGeckoId: 'ethereum',
       decimals: 18,
+    });
+  });
+
+  test('resolves EVM fee token addresses case-insensitively', () => {
+    const mixedCaseAddress = OTHER_ADDRESS.toUpperCase().replace('0X', '0x');
+    const token = mockToken({
+      address: mixedCaseAddress,
+      coinGeckoId: 'ethereum',
+      decimals: 18,
+    });
+    const tokenMap = new Map([[getTokenKey(token), token]]);
+
+    expect(resolveCoinGeckoId(component({ tokenAddress: OTHER_ADDRESS }), tokenMap)).toEqual({
+      coinGeckoId: 'ethereum',
+      decimals: 18,
+    });
+  });
+
+  test('resolves case-sensitive fee token addresses exactly', () => {
+    const solanaAddress = 'Es9vMFrzaCER';
+    const token = mockToken({
+      chainId: 1399811149,
+      address: solanaAddress,
+      coinGeckoId: 'tether',
+      decimals: 6,
+    });
+    const tokenMap = new Map([[getTokenKey(token), token]]);
+
+    expect(
+      resolveCoinGeckoId(component({ chainId: 1399811149, tokenAddress: solanaAddress }), tokenMap),
+    ).toEqual({
+      coinGeckoId: 'tether',
+      decimals: 6,
     });
   });
 

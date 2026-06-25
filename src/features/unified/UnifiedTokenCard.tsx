@@ -49,6 +49,7 @@ import {
 } from '../swap/balances/utils';
 import { useTokenByKeyMap as useSwapTokenByKeyMap } from '../swap/tokens/hooks';
 import { useTokenPrices as useSwapTokenPrices } from '../swap/tokens/useTokenPrice';
+import { getTokenByChainAndAddress } from '../swap/tokens/utils';
 import {
   FinalSwapStatuses,
   SwapStatus,
@@ -87,11 +88,13 @@ import {
   getUnifiedTokenLookupIdsFromParams,
   getUnifiedTokenQueryParams,
 } from './tokens/queryParams';
-import { getUnifiedRouteMode, UnifiedRouteMode } from './tokens/routes';
+import { findUnifiedBridgeRoutePair, getUnifiedRouteMode, UnifiedRouteMode } from './tokens/routes';
 import { TokenSelectField } from './tokens/TokenSelectField';
 import type { UnifiedToken } from './tokens/types';
 import type { UnifiedFormValues } from './types';
 import { getUnifiedBasicSubmitErrors } from './validation';
+
+type UnifiedBridgeRoutePair = { originToken: Token; destinationToken: Token };
 
 export function UnifiedTokenCard() {
   return (
@@ -190,6 +193,13 @@ function UnifiedFormContent({
     collateralGroups,
     engineEnabled,
   });
+  const bridgeRoutePair = useMemo(
+    () =>
+      routeMode === UnifiedRouteMode.Bridge
+        ? findUnifiedBridgeRoutePair(originToken, destinationToken, collateralGroups)
+        : undefined,
+    [collateralGroups, destinationToken, originToken, routeMode],
+  );
   const isSanctioned = useIsAccountSanctioned(!!routeMode);
   const destinationChainDisplay = destinationToken
     ? getChainDisplayName(multiProvider, destinationToken.chainName)
@@ -281,20 +291,19 @@ function UnifiedFormContent({
   const swap = useSwap();
   const bridgeQuote = useBridgeExactInputQuote({
     routeMode,
-    originToken,
-    destinationToken,
+    bridgeRoutePair,
     amount: values.amount,
     recipient: effectiveRecipient,
     sender,
   });
   const currentBridgeInputAmount = useMemo(() => {
-    if (!originToken?.bridgeToken || routeMode !== UnifiedRouteMode.Bridge) return undefined;
+    if (!bridgeRoutePair || routeMode !== UnifiedRouteMode.Bridge) return undefined;
     try {
-      return BigInt(toWei(values.amount || '0', originToken.bridgeToken.decimals));
+      return BigInt(toWei(values.amount || '0', bridgeRoutePair.originToken.decimals));
     } catch {
       return undefined;
     }
-  }, [originToken, routeMode, values.amount]);
+  }, [bridgeRoutePair, routeMode, values.amount]);
   const isBridgeQuoteCurrent = !!(
     bridgeQuote.data &&
     currentBridgeInputAmount !== undefined &&
@@ -376,6 +385,7 @@ function UnifiedFormContent({
         values,
         originToken,
         destinationToken,
+        bridgeRoutePair,
         recipient: effectiveRecipient,
         sender,
         accounts,
@@ -413,6 +423,7 @@ function UnifiedFormContent({
             values,
             originToken,
             destinationToken,
+            bridgeRoutePair,
             recipient: effectiveRecipient,
             sender,
             bridgeTransfer,
@@ -484,10 +495,10 @@ function UnifiedFormContent({
       <TransferSection label="Send">
         <OriginTokenCard
           token={originToken}
-          destinationToken={destinationToken}
           tokenMap={tokenMap}
           engineEnabled={engineEnabled}
           routeMode={routeMode}
+          bridgeRoutePair={bridgeRoutePair}
           disabled={isBridgeReview}
         />
       </TransferSection>
@@ -912,8 +923,10 @@ function SwapFeeSummary({ route }: { route: AugmentedRoute | undefined }) {
       </div>
       <div className="flex flex-wrap gap-1">
         {components.map((component, index) => {
-          const token = tokenMap.get(
-            `${component.chainId}-${component.tokenAddress.toLowerCase()}`,
+          const token = getTokenByChainAndAddress(
+            tokenMap,
+            component.chainId,
+            component.tokenAddress,
           );
           const label = component.category === 'igp' ? 'Gas' : 'Bridge';
           return (
@@ -964,17 +977,17 @@ function SlippageControl() {
 
 function OriginTokenCard({
   token,
-  destinationToken,
   tokenMap,
   engineEnabled,
   routeMode,
+  bridgeRoutePair,
   disabled,
 }: {
   token: UnifiedToken | undefined;
-  destinationToken: UnifiedToken | undefined;
   tokenMap: Map<string, UnifiedToken>;
   engineEnabled: boolean;
   routeMode: UnifiedRouteMode | null;
+  bridgeRoutePair: UnifiedBridgeRoutePair | undefined;
   disabled?: boolean;
 }) {
   const { values, setFieldValue } = useFormikContext<UnifiedFormValues>();
@@ -984,7 +997,8 @@ function OriginTokenCard({
   const bridgeMax = useMutation({
     mutationFn: getExactInputBridgeMaxAmount,
   });
-  const bridgeBalanceToken = routeMode === UnifiedRouteMode.Bridge ? token?.bridgeToken : undefined;
+  const bridgeBalanceToken =
+    routeMode === UnifiedRouteMode.Bridge ? bridgeRoutePair?.originToken : undefined;
   const { balance: bridgeBalance } = useOriginBalance(bridgeBalanceToken);
   const swapBalanceToken = routeMode === UnifiedRouteMode.Swap ? token?.swapToken : undefined;
   const { data: swapBalance, isLoading: isSwapBalanceLoading } =
@@ -1008,7 +1022,7 @@ function OriginTokenCard({
       setFieldValue('amount', formatSwapBalance(swapBalance, token.swapToken.decimals));
       return;
     }
-    if (routeMode === UnifiedRouteMode.Bridge && bridgeBalance && destinationToken?.bridgeToken) {
+    if (routeMode === UnifiedRouteMode.Bridge && bridgeBalance && bridgeRoutePair) {
       const { address, publicKey } = getAccountAddressAndPubKey(
         multiProvider,
         bridgeBalance.token.chainName,
@@ -1017,7 +1031,7 @@ function OriginTokenCard({
       if (!address) return;
       const { address: connectedDestAddress } = getAccountAddressAndPubKey(
         multiProvider,
-        destinationToken.bridgeToken.chainName,
+        bridgeRoutePair.destinationToken.chainName,
         accounts,
       );
       const recipient = values.recipient || connectedDestAddress || address;
@@ -1025,7 +1039,7 @@ function OriginTokenCard({
         const maxAmount = await bridgeMax.mutateAsync({
           warpCore,
           balance: bridgeBalance,
-          destinationToken: destinationToken.bridgeToken,
+          destinationToken: bridgeRoutePair.destinationToken,
           recipient,
           sender: address,
           senderPubKey: await publicKey,
@@ -1236,6 +1250,7 @@ async function submitBridge({
   values,
   originToken,
   destinationToken,
+  bridgeRoutePair,
   recipient,
   sender,
   bridgeTransfer,
@@ -1244,18 +1259,26 @@ async function submitBridge({
   values: UnifiedFormValues;
   originToken: UnifiedToken | undefined;
   destinationToken: UnifiedToken | undefined;
+  bridgeRoutePair: UnifiedBridgeRoutePair | undefined;
   recipient: string;
   sender: string | undefined;
   bridgeTransfer: ReturnType<typeof useTokenTransfer>;
   getQuotedCallsParams: ReturnType<typeof useQuotedCallsFeeQuotes>['getQuotedCallsParams'];
 }) {
-  if (!originToken?.bridgeToken || !destinationToken?.bridgeToken || !recipient) return;
+  if (
+    !originToken?.bridgeToken ||
+    !destinationToken?.bridgeToken ||
+    !bridgeRoutePair ||
+    !recipient
+  ) {
+    return;
+  }
   const warpCore = useStore.getState().warpCore;
-  const inputAmount = BigInt(toWei(values.amount, originToken.bridgeToken.decimals));
+  const inputAmount = BigInt(toWei(values.amount, bridgeRoutePair.originToken.decimals));
   const quote = await getExactInputBridgeTransferQuote({
     warpCore,
-    originToken: new Token(originToken.bridgeToken),
-    destinationToken: destinationToken.bridgeToken,
+    originToken: new Token(bridgeRoutePair.originToken),
+    destinationToken: bridgeRoutePair.destinationToken,
     inputAmount,
     recipient,
     sender,
@@ -1277,6 +1300,7 @@ export async function validateUnifiedBridgeTransfer({
   values,
   originToken,
   destinationToken,
+  bridgeRoutePair,
   recipient,
   sender,
   accounts,
@@ -1288,12 +1312,15 @@ export async function validateUnifiedBridgeTransfer({
   values: UnifiedFormValues;
   originToken: UnifiedToken | undefined;
   destinationToken: UnifiedToken | undefined;
+  bridgeRoutePair: UnifiedBridgeRoutePair | undefined;
   recipient: string;
   sender: string | undefined;
   accounts: Parameters<typeof validateBridgeTransferForm>[4];
   routerAddressesByChainMap: Parameters<typeof validateBridgeTransferForm>[5];
 }): Promise<Record<string, string> | null> {
-  if (!originToken?.bridgeToken) return { originTokenKey: 'Origin token is required' };
+  if (!originToken?.bridgeToken || !bridgeRoutePair) {
+    return { originTokenKey: 'Origin token is required' };
+  }
   if (!destinationToken?.bridgeToken) {
     return { destinationTokenKey: 'Destination token is required' };
   }
@@ -1303,9 +1330,9 @@ export async function validateUnifiedBridgeTransfer({
   try {
     quote = await getExactInputBridgeTransferQuote({
       warpCore,
-      originToken: new Token(originToken.bridgeToken),
-      destinationToken: destinationToken.bridgeToken,
-      inputAmount: BigInt(toWei(values.amount, originToken.bridgeToken.decimals)),
+      originToken: new Token(bridgeRoutePair.originToken),
+      destinationToken: bridgeRoutePair.destinationToken,
+      inputAmount: BigInt(toWei(values.amount, bridgeRoutePair.originToken.decimals)),
       recipient,
       sender,
     });
@@ -1338,15 +1365,13 @@ export async function validateUnifiedBridgeTransfer({
 
 function useBridgeExactInputQuote({
   routeMode,
-  originToken,
-  destinationToken,
+  bridgeRoutePair,
   amount,
   recipient,
   sender,
 }: {
   routeMode: UnifiedRouteMode | null;
-  originToken: UnifiedToken | undefined;
-  destinationToken: UnifiedToken | undefined;
+  bridgeRoutePair: UnifiedBridgeRoutePair | undefined;
   amount: string;
   recipient: string;
   sender: string | undefined;
@@ -1359,8 +1384,7 @@ function useBridgeExactInputQuote({
     new BigNumber(debouncedAmount).gt(0);
   const enabled = !!(
     routeMode === UnifiedRouteMode.Bridge &&
-    originToken?.bridgeToken &&
-    destinationToken?.bridgeToken &&
+    bridgeRoutePair &&
     recipient &&
     isAmountValid
   );
@@ -1368,8 +1392,10 @@ function useBridgeExactInputQuote({
   return useQuery({
     queryKey: [
       'unifiedBridgeExactInputQuote',
-      originToken?.key,
-      destinationToken?.key,
+      bridgeRoutePair?.originToken.chainName,
+      bridgeRoutePair?.originToken.addressOrDenom,
+      bridgeRoutePair?.destinationToken.chainName,
+      bridgeRoutePair?.destinationToken.addressOrDenom,
       debouncedAmount,
       recipient,
       sender,
@@ -1377,9 +1403,9 @@ function useBridgeExactInputQuote({
     queryFn: () =>
       getExactInputBridgeTransferQuote({
         warpCore,
-        originToken: new Token(originToken!.bridgeToken!),
-        destinationToken: destinationToken!.bridgeToken!,
-        inputAmount: BigInt(toWei(debouncedAmount, originToken!.bridgeToken!.decimals)),
+        originToken: new Token(bridgeRoutePair!.originToken),
+        destinationToken: bridgeRoutePair!.destinationToken,
+        inputAmount: BigInt(toWei(debouncedAmount, bridgeRoutePair!.originToken.decimals)),
         recipient,
         sender,
       }),

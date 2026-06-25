@@ -25,7 +25,8 @@ import { getChainDisplayName } from '../chains/utils';
 import { getSwapDeliveryMsgId } from '../messages/utils';
 import { TransactionHistoryItemType, useStore } from '../store';
 import { formatDisplayAmount } from './balances/utils';
-import { getTokenByKeyFromMap, useTokenByKeyMap } from './tokens/hooks';
+import { useTokenByKeyMap } from './tokens/hooks';
+import { getTokenByChainAndAddress } from './tokens/utils';
 import { FinalSwapStatuses, SwapStatus, type SwapHistoryItem } from './types';
 
 const DEFAULT_TIMINGS: StageTimings = {
@@ -114,8 +115,8 @@ function SwapDetailsModalInner({
   const originChain = multiProvider.tryGetChainName(srcChain) ?? `chain ${srcChain}`;
   const destChain = multiProvider.tryGetChainName(dstChain) ?? `chain ${dstChain}`;
 
-  const srcToken = getTokenByKeyFromMap(tokenMap, `${srcChain}-${srcTokenAddr.toLowerCase()}`);
-  const dstToken = getTokenByKeyFromMap(tokenMap, `${dstChain}-${dstTokenAddr.toLowerCase()}`);
+  const srcToken = getTokenByChainAndAddress(tokenMap, srcChain, srcTokenAddr);
+  const dstToken = getTokenByChainAndAddress(tokenMap, dstChain, dstTokenAddr);
   const srcSymbol = srcToken?.symbol ?? swap.srcTokenMeta?.symbol ?? '';
   const dstSymbol = dstToken?.symbol ?? swap.dstTokenMeta?.symbol ?? '';
   const srcDecimals = srcToken?.decimals ?? swap.srcTokenMeta?.decimals;

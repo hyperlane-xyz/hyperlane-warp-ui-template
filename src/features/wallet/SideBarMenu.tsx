@@ -30,7 +30,7 @@ import {
   useStore,
 } from '../store';
 import { formatBalance as formatSwapBalance } from '../swap/balances/utils';
-import { getTokenByKeyFromMap } from '../swap/tokens/hooks';
+import { getTokenByChainAndAddress } from '../swap/tokens/utils';
 import { FinalSwapStatuses, SwapHistoryItem, SwapStatus } from '../swap/types';
 import { tryFindToken, useWarpCore } from '../tokens/hooks';
 import { computeDestAmount, formatMessageAmount } from '../transfer/scaleUtils';
@@ -383,14 +383,8 @@ function TransferSummary({
   } = useMemo(() => {
     if (item.type === HistoryItemType.Swap) {
       const swap = item.data;
-      const srcToken = getTokenByKeyFromMap(
-        knownTokens,
-        `${swap.srcChain}-${swap.srcToken.toLowerCase()}`,
-      );
-      const dstToken = getTokenByKeyFromMap(
-        knownTokens,
-        `${swap.dstChain}-${swap.dstToken.toLowerCase()}`,
-      );
+      const srcToken = getTokenByChainAndAddress(knownTokens, swap.srcChain, swap.srcToken);
+      const dstToken = getTokenByChainAndAddress(knownTokens, swap.dstChain, swap.dstToken);
       const originChain =
         srcToken?.chainName ??
         swap.srcTokenMeta?.chainName ??

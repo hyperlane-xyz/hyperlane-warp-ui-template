@@ -189,6 +189,7 @@ describe('validateUnifiedBridgeTransfer', () => {
       },
       originToken: { bridgeToken: originToken } as any,
       destinationToken: { bridgeToken: destinationToken } as any,
+      bridgeRoutePair: { originToken, destinationToken },
       recipient: '0xrecipient',
       sender: '0xsender',
       accounts: {
@@ -260,6 +261,7 @@ describe('validateUnifiedBridgeTransfer', () => {
       },
       originToken: { bridgeToken: originToken } as any,
       destinationToken: { bridgeToken: selectedDestinationToken } as any,
+      bridgeRoutePair: { originToken, destinationToken: connectedDestinationToken },
       recipient: '0xrecipient',
       sender: '0xsender',
       accounts: {

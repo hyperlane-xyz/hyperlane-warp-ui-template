@@ -3,7 +3,7 @@ import { describe, expect, test } from 'vitest';
 import { createMockToken, createTokenConnectionMock } from '../../../utils/test';
 import type { UiToken } from '../../swap/tokens/types';
 import { groupTokensByCollateral } from '../../tokens/utils';
-import { getUnifiedRouteMode, UnifiedRouteMode } from './routes';
+import { findUnifiedBridgeRoutePair, getUnifiedRouteMode, UnifiedRouteMode } from './routes';
 import type { UnifiedToken } from './types';
 
 function createSwapToken(address: string): UiToken {
@@ -149,5 +149,41 @@ describe('getUnifiedRouteMode', () => {
     });
 
     expect(mode).toBeNull();
+  });
+});
+
+describe('findUnifiedBridgeRoutePair', () => {
+  test('returns the connected secondary destination member for deduped bridge rows', () => {
+    const primaryDestination = createMockToken({
+      chainName: 'arbitrum',
+      addressOrDenom: '0x2222222222222222222222222222222222222222',
+      collateralAddressOrDenom: '0x9999999999999999999999999999999999999999',
+    });
+    const connectedDestination = createMockToken({
+      chainName: 'arbitrum',
+      addressOrDenom: '0x3333333333333333333333333333333333333333',
+      collateralAddressOrDenom: '0x9999999999999999999999999999999999999999',
+    });
+    const origin = createMockToken({
+      chainName: 'ethereum',
+      connections: [createTokenConnectionMock(undefined, connectedDestination)],
+    });
+    const collateralGroups = groupTokensByCollateral([
+      origin,
+      primaryDestination,
+      connectedDestination,
+    ]);
+
+    const pair = findUnifiedBridgeRoutePair(
+      createUnifiedToken({ bridgeToken: origin }),
+      createUnifiedToken({
+        chainName: 'arbitrum',
+        bridgeToken: primaryDestination,
+        bridgeRouteTokens: [primaryDestination, connectedDestination],
+      }),
+      collateralGroups,
+    );
+
+    expect(pair).toEqual({ originToken: origin, destinationToken: connectedDestination });
   });
 });

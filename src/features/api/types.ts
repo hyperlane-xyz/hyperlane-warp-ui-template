@@ -9,7 +9,17 @@ export const Address = z.string().regex(/^0x[0-9a-fA-F]{40}$/);
 // EVM execution fields like Universal Router transactions.
 export const TokenAddress = z.string().min(1).max(100);
 export const BigIntString = z.string().regex(/^\d+$/);
+const MAX_UINT256 = 2n ** 256n - 1n;
+export const PositiveBigIntString = BigIntString.refine(
+  (value) => {
+    if (value.length > 78) return false;
+    const amount = BigInt(value);
+    return amount > 0n && amount <= MAX_UINT256;
+  },
+  { message: 'Expected positive uint256 integer' },
+);
 export const Hex = z.string().regex(/^0x[0-9a-fA-F]*$/);
+export const Bytes32 = z.string().regex(/^0x[0-9a-fA-F]{64}$/);
 // Engine validates and normalizes per destination protocol.
 export const Recipient = z.string().min(1).max(100);
 
@@ -22,6 +32,9 @@ export const ReadinessResponseSchema = z.object({
   graphConnections: z.number(),
   coreConfigChains: z.number(),
   chainCacheHydrated: z.boolean(),
+  activeSnapshotUpdatedAt: z.string().nullable(),
+  activeSnapshotAgeMs: z.number().nullable(),
+  activeSnapshotExpiresAt: z.string().nullable(),
   lastRouteCacheRefreshAt: z.string().nullable(),
   lastRouteCacheRefreshStatus: z.enum(['ok', 'error']).nullable(),
 });
@@ -82,8 +95,10 @@ export const TokenDiscoverySchema = z.object({
   wrappedAddress: TokenAddress.optional(),
   isBridgeToken: z.boolean(),
   isPoolToken: z.boolean(),
+  isUserToken: z.boolean().optional(),
   canBridge: z.boolean(),
   canSwap: z.boolean(),
+  balance: BigIntString.optional(),
   bridgeSymbols: z.array(z.string()),
   warpRouteIds: z.array(z.string()),
   logoURI: z.string().optional(),
@@ -114,7 +129,8 @@ export type TokensResponse = z.infer<typeof TokensResponseSchema>;
 //   { chain, search }        → per-chain filtered
 //   { search }               → cross-chain search
 //   { ids }                  → explicit lookups (max 5; mutually exclusive)
-// Id format: `chainName-symbol` (e.g. "ethereum-USDC").
+// Id format: `chainName-tokenRef`, where tokenRef is an address, denom, or
+// native zero-address ref (e.g. "base-0x0000000000000000000000000000000000000000").
 export interface TokensQuery {
   chain?: number;
   search?: string;
@@ -124,17 +140,18 @@ export interface TokensQuery {
 // ── Quote request ──────────────────────────────────────────────────────
 
 export const QuoteRequestSchema = z.object({
-  srcChain: z.number(),
-  dstChain: z.number(),
+  srcChain: z.number().int().positive(),
+  dstChain: z.number().int().positive(),
   srcToken: TokenAddress,
   dstToken: TokenAddress,
-  amount: BigIntString,
+  amount: PositiveBigIntString,
   sender: TokenAddress,
-  recipient: TokenAddress.optional(),
-  slippageBps: z.number().optional(),
+  recipient: Recipient.optional(),
+  slippageBps: z.number().int().min(0).max(10_000).optional(),
   // Optional client-supplied salt mixed into commitment hash derivation.
   // Engine generates random bytes32 if absent.
-  commitmentSalt: Hex.optional(),
+  commitmentSalt: Bytes32.optional(),
+  usePermit2: z.boolean().optional(),
 });
 export type QuoteRequest = z.infer<typeof QuoteRequestSchema>;
 
@@ -150,7 +167,7 @@ export const QuoteSwapStepSchema = z.object({
   amountOut: BigIntString,
   path: z.array(TokenAddress),
   poolCount: z.number(),
-  minPoolTvlUsd: z.number().nullable().optional(),
+  minPoolTvlUsd: z.number().nullable(),
   poolAddress: z.string().optional(),
 });
 export type QuoteSwapStep = z.infer<typeof QuoteSwapStepSchema>;
@@ -179,42 +196,56 @@ export const QuoteStepSchema = z.discriminatedUnion('type', [
 ]);
 export type QuoteStep = z.infer<typeof QuoteStepSchema>;
 
+export const RouteAccountSchema = z.object({
+  pubkey: z.string(),
+  isSigner: z.boolean(),
+  isWritable: z.boolean(),
+});
+export type RouteAccount = z.infer<typeof RouteAccountSchema>;
+
 export const RouteTxSchema = z.object({
-  // EVM: 0x-hex contract address; Solana: base58 programId
-  to: z.string().min(1).max(100),
-  // EVM: 0x-hex calldata; Solana: base64 instruction data
+  // EVM: contract address + hex calldata. Solana: program id + base64 instruction data.
+  to: z.string(),
   data: z.string(),
   value: BigIntString,
-  // Solana-only: accounts array for the instruction
-  accounts: z
-    .array(z.object({ pubkey: z.string(), isSigner: z.boolean(), isWritable: z.boolean() }))
-    .optional(),
-  // Solana-only: ephemeral keypairs that must co-sign before sending to wallet.
-  // Each is a base64-encoded 64-byte Solana keypair (privKey[32] || pubKey[32]).
+  accounts: z.array(RouteAccountSchema).optional(),
   additionalSigners: z.array(z.string()).optional(),
-  // Solana-only: Address Lookup Table addresses for V0 transactions.
   altAddresses: z.array(z.string()).optional(),
-  // Solana-only: instructions to prepend before the main UR instruction.
-  // Used for compute budget and idempotent ATA creation.
   preInstructions: z
     .array(
       z.object({
         programId: z.string(),
-        accounts: z.array(
-          z.object({ pubkey: z.string(), isSigner: z.boolean(), isWritable: z.boolean() }),
-        ),
-        data: z.string(), // base64-encoded instruction data
+        accounts: z.array(RouteAccountSchema),
+        data: z.string(),
       }),
     )
     .optional(),
 });
 export type RouteTx = z.infer<typeof RouteTxSchema>;
 
+export const RevealAccountSchema = z.object({
+  pubkey: z.string().min(32).max(44),
+  isWritable: z.boolean(),
+  isSigner: z.boolean(),
+});
+export type RevealAccount = z.infer<typeof RevealAccountSchema>;
+
+export const CallCommitmentBodySchema = z.object({
+  commitment: Bytes32,
+  originDomain: z.number(),
+  data: Hex,
+  salt: Bytes32,
+  relayers: z.array(Bytes32),
+  destinationAccount: Bytes32,
+  revealAccounts: z.array(RevealAccountSchema).optional(),
+});
+export type CallCommitmentBody = z.infer<typeof CallCommitmentBodySchema>;
+
 // Engine returns this on routes that need CCS coordination. Pre-built
-// HTTP request — UI just POSTs ccs.body to /calldata.
+// HTTP request — UI just fetches `${CCS_URL}${path}` with method/body.
 export const CallCommitmentSchema = z.object({
   version: z.literal(1),
-  commitment: Hex,
+  commitment: Bytes32,
   hash: z.object({
     algorithm: z.literal('keccak256'),
     preimage: z.string(),
@@ -223,17 +254,7 @@ export const CallCommitmentSchema = z.object({
   ccs: z.object({
     method: z.literal('POST'),
     path: z.literal('/calldata'),
-    body: z.object({
-      commitment: Hex,
-      originDomain: z.number(),
-      data: Hex,
-      salt: Hex,
-      relayers: z.array(z.string()),
-      destinationAccount: Hex,
-      revealAccounts: z
-        .array(z.object({ pubkey: z.string(), isWritable: z.boolean(), isSigner: z.boolean() }))
-        .optional(),
-    }),
+    body: CallCommitmentBodySchema,
   }),
 });
 export type CallCommitment = z.infer<typeof CallCommitmentSchema>;

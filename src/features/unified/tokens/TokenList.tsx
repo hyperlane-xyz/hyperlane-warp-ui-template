@@ -18,6 +18,7 @@ import {
   buildUnifiedTokenBalanceInfo,
   getBalanceFetchLimit,
   getVisibleUnifiedTokens,
+  matchesUnifiedTokenSearch,
   sortUnifiedTokensByBalance,
   type UnifiedTokenBalanceInfo,
 } from './list';
@@ -27,25 +28,6 @@ import type { UnifiedToken } from './types';
 const INITIAL_BALANCE_FETCH_LIMIT = 50;
 const BALANCE_FETCH_INCREMENT = 50;
 const BALANCE_FETCH_SCROLL_THRESHOLD_PX = 120;
-
-function matchesSearch(
-  token: UnifiedToken,
-  query: string,
-  multiProvider: ReturnType<typeof useMultiProvider>,
-): boolean {
-  return (
-    token.name.toLowerCase().includes(query) ||
-    token.symbol.toLowerCase().includes(query) ||
-    token.addressOrDenom.toLowerCase().includes(query) ||
-    getUnifiedBridgeTokens(token).some(
-      (bridgeToken) =>
-        bridgeToken.addressOrDenom.toLowerCase().includes(query) ||
-        bridgeToken.collateralAddressOrDenom?.toLowerCase().includes(query),
-    ) ||
-    token.chainName.toLowerCase().includes(query) ||
-    getChainDisplayName(multiProvider, token.chainName).toLowerCase().includes(query)
-  );
-}
 
 interface TokenListProps {
   selectionMode: 'origin' | 'destination';
@@ -91,7 +73,11 @@ export function TokenList({
     const filtered = allTokens.filter((token) => {
       if (chainFilter && token.chainName !== chainFilter) return false;
       if (!trimmedSearch) return true;
-      return matchesSearch(token, trimmedSearch, multiProvider);
+      return matchesUnifiedTokenSearch({
+        token,
+        query: trimmedSearch,
+        chainDisplayName: getChainDisplayName(multiProvider, token.chainName),
+      });
     });
 
     return getVisibleUnifiedTokens({

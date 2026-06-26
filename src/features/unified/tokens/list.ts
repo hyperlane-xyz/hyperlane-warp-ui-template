@@ -15,6 +15,32 @@ export interface UnifiedTokenBalanceInfo {
   usd?: number | null;
 }
 
+export function matchesUnifiedTokenSearch({
+  token,
+  query,
+  chainDisplayName,
+}: {
+  token: UnifiedToken;
+  query: string;
+  chainDisplayName: string;
+}): boolean {
+  const normalizedQuery = query.toLowerCase();
+  return (
+    token.name.toLowerCase().includes(normalizedQuery) ||
+    token.symbol.toLowerCase().includes(normalizedQuery) ||
+    token.addressOrDenom.toLowerCase().includes(normalizedQuery) ||
+    getUnifiedBridgeTokens(token).some(
+      (bridgeToken) =>
+        bridgeToken.addressOrDenom.toLowerCase().includes(normalizedQuery) ||
+        bridgeToken.collateralAddressOrDenom?.toLowerCase().includes(normalizedQuery),
+    ) ||
+    !!token.swapToken?.address.toLowerCase().includes(normalizedQuery) ||
+    !!token.swapToken?.addressOrDenom.toLowerCase().includes(normalizedQuery) ||
+    token.chainName.toLowerCase().includes(normalizedQuery) ||
+    chainDisplayName.toLowerCase().includes(normalizedQuery)
+  );
+}
+
 export function getBalanceFetchLimit({
   tokenCount,
   requestedLimit,

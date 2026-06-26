@@ -8,6 +8,7 @@ import {
   buildUnifiedTokenBalanceInfo,
   getBalanceFetchLimit,
   getVisibleUnifiedTokens,
+  matchesUnifiedTokenSearch,
   sortUnifiedTokensByBalance,
 } from './list';
 import type { UnifiedToken } from './types';
@@ -57,6 +58,50 @@ function createUnifiedToken(args: Partial<UnifiedToken> = {}): UnifiedToken {
 }
 
 describe('getVisibleUnifiedTokens', () => {
+  test('search matches engine swap token addresses on merged rows', () => {
+    const token = createUnifiedToken({
+      addressOrDenom: '0x1111111111111111111111111111111111111111',
+      bridgeToken: createMockToken({
+        addressOrDenom: '0x2222222222222222222222222222222222222222',
+        collateralAddressOrDenom: '0x3333333333333333333333333333333333333333',
+      }),
+      swapToken: createSwapToken({
+        address: '0x4444444444444444444444444444444444444444',
+        addressOrDenom: '0x4444444444444444444444444444444444444444',
+      }),
+    });
+
+    expect(
+      matchesUnifiedTokenSearch({
+        token,
+        query: '0x4444444444444444444444444444444444444444',
+        chainDisplayName: 'Ethereum',
+      }),
+    ).toBe(true);
+  });
+
+  test('search still ignores unrelated addresses on merged rows', () => {
+    const token = createUnifiedToken({
+      addressOrDenom: '0x1111111111111111111111111111111111111111',
+      bridgeToken: createMockToken({
+        addressOrDenom: '0x2222222222222222222222222222222222222222',
+        collateralAddressOrDenom: '0x3333333333333333333333333333333333333333',
+      }),
+      swapToken: createSwapToken({
+        address: '0x4444444444444444444444444444444444444444',
+        addressOrDenom: '0x4444444444444444444444444444444444444444',
+      }),
+    });
+
+    expect(
+      matchesUnifiedTokenSearch({
+        token,
+        query: '0x5555555555555555555555555555555555555555',
+        chainDisplayName: 'Ethereum',
+      }),
+    ).toBe(false);
+  });
+
   test('fetches balances for the whole default featured list', () => {
     expect(
       getBalanceFetchLimit({

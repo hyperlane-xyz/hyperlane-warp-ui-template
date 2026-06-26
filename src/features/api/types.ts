@@ -183,7 +183,7 @@ export const RouteTxSchema = z.object({
   // EVM: 0x-hex contract address; Solana: base58 programId
   to: z.string().min(1).max(100),
   // EVM: 0x-hex calldata; Solana: base64 instruction data
-  data: z.string().min(0),
+  data: z.string(),
   value: BigIntString,
   // Solana-only: accounts array for the instruction
   accounts: z

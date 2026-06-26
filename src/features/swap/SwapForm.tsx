@@ -212,12 +212,12 @@ function SwapFormContent() {
       // validating — otherwise we'd enter review mode on stale data.
       if (latestValuesRef.current !== snapshot) return;
       if (result) {
-        logger.error('Continue blocked by validation', result);
+        logger.debug('Continue blocked by validation', result);
         setErrors(result);
         return;
       }
       if (!sender || !srcToken || !dstToken || !bestRoute || !effectiveRecipient) {
-        logger.error('Continue blocked: missing required field', {
+        logger.debug('Continue blocked: missing required field', {
           sender,
           srcToken: !!srcToken,
           dstToken: !!dstToken,

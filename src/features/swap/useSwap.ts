@@ -149,9 +149,15 @@ export function useSwap() {
         }
 
         updateSwapTransactionStatus(transactionId, SwapStatus.SigningSwap);
-        const rpcUrl = multiProvider.getChainMetadata(srcChainName).rpcUrls[0].http;
         const txPayload = isSealevel
-          ? await buildSolanaTransaction(route.raw.tx, args.sender, rpcUrl)
+          ? await buildSolanaTransaction(
+              route.raw.tx,
+              args.sender,
+              multiProvider.getChainMetadata(srcChainName).rpcUrls[0]?.http ??
+                (() => {
+                  throw new Error(`No RPC URL for chain ${srcChainName}`);
+                })(),
+            )
           : { to: route.raw.tx.to, data: route.raw.tx.data, value: route.raw.tx.value };
         const { hash, confirm } = await fns.sendTransaction({
           tx: {
@@ -315,7 +321,7 @@ function labelMessages(messages: ParsedMessage[], route: AugmentedRoute): Labele
   // For EVM→Solana CCS routes, the EVM UR (tx.to) sends the commit message directly.
   const urAddr = route.raw.tx?.to?.replace(/^0x/i, '').toLowerCase();
 
-  const nonWarp = messages.filter((m) => !bridgeRouterAddrs.has(m.sender.toLowerCase()));
+  const nonWarp = messages.filter((m) => !bridgeRouterAddrs.has(addrOf(m.sender)));
   // callRemoteCommitReveal dispatches COMMIT first, REVEAL last. CCTP aggregation
   // routes prepend an extra internal message, so identify REVEAL as the last
   // non-warp message rather than counting from the front.

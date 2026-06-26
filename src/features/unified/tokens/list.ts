@@ -275,9 +275,7 @@ export function buildUnifiedTokenBalanceInfo({
         : []),
     ];
 
-    const selected =
-      candidates.find((candidate) => candidate.balance != null && candidate.balance > 0n) ??
-      candidates.find((candidate) => candidate.balance != null);
+    const selected = selectBestBalanceCandidate(candidates, prices);
     if (!selected || selected.balance == null) continue;
 
     const price = selected.coinGeckoId ? prices[selected.coinGeckoId] : undefined;
@@ -293,4 +291,52 @@ export function buildUnifiedTokenBalanceInfo({
   }
 
   return result;
+}
+
+function selectBestBalanceCandidate(
+  candidates: Array<{
+    balance: bigint | undefined;
+    decimals: number;
+    coinGeckoId?: string;
+  }>,
+  prices: Record<string, number>,
+) {
+  const available = candidates.filter(
+    (
+      candidate,
+    ): candidate is {
+      balance: bigint;
+      decimals: number;
+      coinGeckoId?: string;
+    } => candidate.balance != null,
+  );
+  if (!available.length) return undefined;
+
+  const positive = available.filter((candidate) => candidate.balance > 0n);
+  const comparable = positive.length ? positive : available;
+
+  return comparable.reduce((best, candidate) => {
+    const candidatePrice = candidate.coinGeckoId ? prices[candidate.coinGeckoId] : undefined;
+    const bestPrice = best.coinGeckoId ? prices[best.coinGeckoId] : undefined;
+    if (candidatePrice != null || bestPrice != null) {
+      const candidateUsd =
+        candidatePrice != null
+          ? parseFloat(fromWei(candidate.balance.toString(), candidate.decimals)) * candidatePrice
+          : 0;
+      const bestUsd =
+        bestPrice != null
+          ? parseFloat(fromWei(best.balance.toString(), best.decimals)) * bestPrice
+          : 0;
+      return candidateUsd > bestUsd ? candidate : best;
+    }
+
+    return compareDecimalBalances(
+      candidate.balance,
+      candidate.decimals,
+      best.balance,
+      best.decimals,
+    ) < 0
+      ? candidate
+      : best;
+  });
 }

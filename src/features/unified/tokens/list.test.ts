@@ -3,6 +3,7 @@ import { afterEach, describe, expect, test } from 'vitest';
 import { config } from '../../../consts/config';
 import { createMockToken, createTokenConnectionMock } from '../../../utils/test';
 import type { UiToken } from '../../swap/tokens/types';
+import { getTokenKey as getSwapTokenKey } from '../../swap/tokens/utils';
 import { getTokenKey, groupTokensByCollateral } from '../../tokens/utils';
 import {
   buildUnifiedTokenBalanceInfo,
@@ -577,6 +578,82 @@ describe('getVisibleUnifiedTokens', () => {
       tokens: [token],
       bridgeBalances: {
         [getTokenKey(routeMember)]: 1_000_000n,
+      },
+      swapBalances: {},
+      prices: {},
+    });
+
+    expect(result.get(token.key)).toMatchObject({
+      balance: 1_000_000n,
+      decimals: 6,
+    });
+  });
+
+  test('balance info picks the highest priced candidate on merged rows', () => {
+    const bridgeToken = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USDC',
+      decimals: 6,
+      coinGeckoId: 'usd-coin',
+      addressOrDenom: '0x1111111111111111111111111111111111111111',
+      collateralAddressOrDenom: '0x1111111111111111111111111111111111111111',
+    });
+    const swapToken = createSwapToken({
+      symbol: 'USDC',
+      decimals: 6,
+      coinGeckoId: 'usd-coin',
+      address: '0x2222222222222222222222222222222222222222',
+      addressOrDenom: '0x2222222222222222222222222222222222222222',
+    });
+    const token = createUnifiedToken({
+      key: 'merged-usdc',
+      bridgeToken,
+      swapToken,
+    });
+
+    const result = buildUnifiedTokenBalanceInfo({
+      tokens: [token],
+      bridgeBalances: {
+        [getTokenKey(bridgeToken)]: 1n,
+      },
+      swapBalances: {
+        [getSwapTokenKey(swapToken)]: 1_000_000n,
+      },
+      prices: { 'usd-coin': 1 },
+    });
+
+    expect(result.get(token.key)).toMatchObject({
+      balance: 1_000_000n,
+      decimals: 6,
+      usd: 1,
+    });
+  });
+
+  test('balance info picks the highest decimal-normalized candidate without prices', () => {
+    const tinyBridgeToken = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USDC',
+      decimals: 18,
+      addressOrDenom: '0x1111111111111111111111111111111111111111',
+      collateralAddressOrDenom: '0x1111111111111111111111111111111111111111',
+    });
+    const oneUsdcRouteMember = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USDC',
+      decimals: 6,
+      addressOrDenom: '0x2222222222222222222222222222222222222222',
+      collateralAddressOrDenom: '0x1111111111111111111111111111111111111111',
+    });
+    const token = createUnifiedToken({
+      key: 'merged-unpriced-usdc',
+      bridgeRouteTokens: [tinyBridgeToken, oneUsdcRouteMember],
+    });
+
+    const result = buildUnifiedTokenBalanceInfo({
+      tokens: [token],
+      bridgeBalances: {
+        [getTokenKey(tinyBridgeToken)]: 100_000_000_000_000_000n,
+        [getTokenKey(oneUsdcRouteMember)]: 1_000_000n,
       },
       swapBalances: {},
       prices: {},

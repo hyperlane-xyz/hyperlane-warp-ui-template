@@ -83,6 +83,7 @@ export function useApprovalStatus(args: AllowanceArgs): ApprovalStatus {
   });
 
   if (isNative) return { phase: ApprovalPhase.Native };
+  if (!protocol) return { phase: ApprovalPhase.Idle };
   if (!supportsAllowance) return { phase: ApprovalPhase.Ready };
   if (!enabled || !data) return { phase: ApprovalPhase.Idle };
   if (data.needsApprove && data.needsRevoke) return { phase: ApprovalPhase.NeedsRevoke };

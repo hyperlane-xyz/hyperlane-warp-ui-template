@@ -212,21 +212,25 @@ export function useSwap() {
         let msgIds: LabeledMsgId[];
         if (isSealevel) {
           const mailbox = chainAddresses[srcChainName]?.mailbox;
-          if (mailbox) {
-            try {
-              const adapter = new SealevelCoreAdapter(srcChainName, multiProvider, { mailbox });
-              const msgs = await adapter.extractMessageIds(receipt);
-              msgIds = msgs.map(({ messageId }) => ({
-                msgId: messageId as `0x${string}`,
-                label: 'warp' as const,
-              }));
-            } catch (err) {
-              logger.warn('Failed to extract Solana message IDs', err as Error);
-              msgIds = [];
-            }
-          } else {
-            logger.warn('No mailbox address for Solana source chain', new Error(srcChainName));
-            msgIds = [];
+          if (!mailbox) {
+            const err = new Error(`No mailbox address for Solana source chain ${srcChainName}`);
+            updateSwapTransactionStatus(transactionId, SwapStatus.Failed, { originTxHash: hash });
+            setError(err);
+            throw err;
+          }
+          const adapter = new SealevelCoreAdapter(srcChainName, multiProvider, { mailbox });
+          const msgs = await adapter.extractMessageIds(receipt);
+          msgIds = msgs.map(({ messageId }) => ({
+            msgId: messageId as `0x${string}`,
+            label: 'warp' as const,
+          }));
+          if (expectsBridge && !msgIds.length) {
+            const err = new Error(
+              'Origin Solana tx confirmed but no message IDs extracted — it likely reverted internally',
+            );
+            updateSwapTransactionStatus(transactionId, SwapStatus.Failed, { originTxHash: hash });
+            setError(err);
+            throw err;
           }
         } else {
           msgIds = labelMessages(parsed.messages, route);

@@ -126,11 +126,11 @@ export interface TokensQuery {
 export const QuoteRequestSchema = z.object({
   srcChain: z.number(),
   dstChain: z.number(),
-  srcToken: Address,
-  dstToken: Address,
+  srcToken: TokenAddress,
+  dstToken: TokenAddress,
   amount: BigIntString,
-  sender: Address,
-  recipient: Recipient.optional(),
+  sender: TokenAddress,
+  recipient: TokenAddress.optional(),
   slippageBps: z.number().optional(),
   // Optional client-supplied salt mixed into commitment hash derivation.
   // Engine generates random bytes32 if absent.

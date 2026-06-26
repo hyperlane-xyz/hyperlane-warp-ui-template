@@ -58,7 +58,14 @@ export function TransactionDeliveryWatcher() {
 
       if (!item.data.msgIds?.length) return [];
       if (FinalSwapStatuses.includes(item.data.status)) {
-        if (item.data.status !== SwapStatus.ConfirmedDestination || item.data.destinationTxHash) {
+        // Keep ConfirmedDestination swaps without a dest hash so graphQL can
+        // backfill it — but not Solana PDA-completed swaps, which will never
+        // receive a destinationTxHash via graphQL and would occupy watcher slots.
+        if (
+          item.data.status !== SwapStatus.ConfirmedDestination ||
+          item.data.destinationTxHash ||
+          item.data.solanaDestSwapPda
+        ) {
           return [];
         }
       }

@@ -321,6 +321,7 @@ function SwapFormContent() {
       amountOut: finalStep && 'amountOut' in finalStep ? finalStep.amountOut : bestRoute.raw.output,
       sender,
       recipient: effectiveRecipient,
+      // revealAccounts[0] is always the pending_swap PDA per CCS engine spec
       solanaDestSwapPda: bestRoute.raw.callCommitment?.ccs.body.revealAccounts?.[0]?.pubkey,
       destinationOutcome:
         bestRoute.raw.callCommitment && destinationSwapStep

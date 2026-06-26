@@ -352,6 +352,8 @@ function labelMessages(messages: ParsedMessage[], route: AugmentedRoute): Labele
 
 function getCcsMessageLabel(body: string): LabeledMsgId['label'] | null {
   // CCS message bodies use the first byte as the message type.
+  // 0x02 (reveal) detection removed — reveals are identified by position
+  // (last non-warp message) via the revealMsg fallback in labelMessages.
   if (body.startsWith('0x01')) return 'commit';
   return null;
 }

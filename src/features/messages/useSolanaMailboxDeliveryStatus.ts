@@ -49,13 +49,14 @@ export function useSolanaMailboxDeliveryStatus({
   enabled: boolean;
 }) {
   const mailbox = destinationChain ? chainAddresses[destinationChain]?.mailbox : undefined;
+  const destProtocol = destinationChain ? multiProvider.tryGetProtocol(destinationChain) : null;
   const { data } = useQuery({
     queryKey: ['solanaMailboxDelivery', destinationChain, mailbox, msgId],
     queryFn: async () => {
       if (!destinationChain) return { isDelivered: false, destinationTxHash: undefined };
       return getSolanaMailboxDeliveryStatus({ msgId, destinationChain, chainAddresses, multiProvider });
     },
-    enabled: enabled && !!destinationChain && !!mailbox,
+    enabled: enabled && !!destinationChain && !!mailbox && destProtocol === ProtocolType.Sealevel,
     refetchInterval: (query) => {
       if (query.state.data?.isDelivered) return false;
       return MAILBOX_DELIVERY_POLL_INTERVAL_MS;

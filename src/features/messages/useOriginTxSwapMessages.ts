@@ -34,10 +34,17 @@ export function useOriginTxSwapMessages(
   multiProvider: MultiProtocolProvider,
 ): OriginTxSwapMessagesResult {
   const isMultiProviderReady = multiProvider.getKnownChainNames().length > 0;
+  const routeLabelKey = getOriginTxSwapMessagesRouteKey(route);
 
   const { data, isLoading } = useQuery({
-    // eslint-disable-next-line @tanstack/query/exhaustive-deps -- multiProvider is stable, adding it causes unnecessary refetches
-    queryKey: ['originTxSwapMessages', originTxHash, originDomainId, isMultiProviderReady],
+    // eslint-disable-next-line @tanstack/query/exhaustive-deps -- multiProvider is stable; routeLabelKey captures the route data used for recovered labels
+    queryKey: [
+      'originTxSwapMessages',
+      originTxHash,
+      originDomainId,
+      isMultiProviderReady,
+      routeLabelKey,
+    ],
     queryFn: async () => {
       if (!originTxHash || !originDomainId) return null;
       const originMetadata = multiProvider.tryGetChainMetadata(originDomainId);
@@ -72,6 +79,18 @@ export function useOriginTxSwapMessages(
     originBlockHeight: data?.originBlockHeight,
     isLoading,
   };
+}
+
+export function getOriginTxSwapMessagesRouteKey(route: RouteResponse | undefined): string {
+  const bridgeRouters =
+    route?.steps
+      .filter(
+        (step): step is Extract<RouteResponse['steps'][number], { type: 'bridge' }> =>
+          step.type === 'bridge',
+      )
+      .map((step) => `${step.chain}-${step.destChain}-${step.router.toLowerCase()}`) ?? [];
+
+  return bridgeRouters.join('|') || 'none';
 }
 
 export function parseOriginTxSwapMessages(

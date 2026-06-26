@@ -4,7 +4,10 @@ import { describe, expect, test } from 'vitest';
 
 import type { RouteResponse } from '../api/types';
 import type { MessageStubEntry } from './queries/fragments';
-import { parseOriginTxSwapMessages } from './useOriginTxSwapMessages';
+import {
+  getOriginTxSwapMessagesRouteKey,
+  parseOriginTxSwapMessages,
+} from './useOriginTxSwapMessages';
 
 const BRIDGE_ROUTER = '0x00000000000000000000000000000000000000aa';
 const TX_HASH = `0x${'ee'.repeat(32)}`;
@@ -70,6 +73,11 @@ function message(overrides: Partial<MessageStubEntry>): MessageStubEntry {
 }
 
 describe('parseOriginTxSwapMessages', () => {
+  test('keys recovered-label queries by bridge route routers', () => {
+    expect(getOriginTxSwapMessagesRouteKey(undefined)).toBe('none');
+    expect(getOriginTxSwapMessagesRouteKey(createRoute())).toBe(`1-2-${BRIDGE_ROUTER}`);
+  });
+
   test('recovers route-aware warp, commit, and reveal labels from origin tx messages', () => {
     const parsed = parseOriginTxSwapMessages(
       [

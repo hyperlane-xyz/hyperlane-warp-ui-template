@@ -1,6 +1,11 @@
 import { describe, expect, test } from 'vitest';
 
-import { QuoteResponseSchema, QuoteRequestSchema, Recipient } from './types';
+import {
+  QuoteResponseSchema,
+  QuoteRequestSchema,
+  ReadinessResponseSchema,
+  Recipient,
+} from './types';
 
 const bytes32A = `0x${'a'.repeat(64)}`;
 const bytes32B = `0x${'b'.repeat(64)}`;
@@ -8,6 +13,26 @@ const bytes32C = `0x${'c'.repeat(64)}`;
 const bytes32D = `0x${'d'.repeat(64)}`;
 
 describe('api schemas', () => {
+  test('accepts current engine readiness snapshot fields', () => {
+    expect(
+      ReadinessResponseSchema.parse({
+        ok: true,
+        graphReady: true,
+        graphConnections: 42,
+        coreConfigChains: 10,
+        chainCacheHydrated: true,
+        activeSnapshotUpdatedAt: '2026-06-26T00:00:00.000Z',
+        activeSnapshotAgeMs: 1234,
+        activeSnapshotExpiresAt: null,
+        lastRouteCacheRefreshAt: '2026-06-26T00:00:01.000Z',
+        lastRouteCacheRefreshStatus: 'ok',
+      }),
+    ).toMatchObject({
+      activeSnapshotAgeMs: 1234,
+      activeSnapshotExpiresAt: null,
+    });
+  });
+
   test('accepts native non-EVM recipients for quote requests', () => {
     const solanaRecipient = 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB';
 

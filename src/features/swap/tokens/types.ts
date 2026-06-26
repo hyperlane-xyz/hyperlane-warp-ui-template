@@ -13,8 +13,10 @@ export interface UiToken {
   wrappedAddress?: string;
   isBridgeToken: boolean;
   isPoolToken: boolean;
+  isUserToken?: boolean;
   canBridge: boolean;
   canSwap: boolean;
+  balance?: string;
   bridgeSymbols: string[];
   warpRouteIds: string[];
   coinGeckoId?: string;

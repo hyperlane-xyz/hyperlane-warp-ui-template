@@ -34,3 +34,19 @@ export function shouldWatchSwapDeliveryStatus({
   if (!FinalSwapStatuses.includes(status)) return true;
   return status === SwapStatus.ConfirmedDestination && !destinationTxHash && !solanaDestSwapPda;
 }
+
+export function prioritizeSelectedTarget<T extends { id: string }>(
+  targets: T[],
+  selectedTransactionId: string | null | undefined,
+): T[] {
+  if (!selectedTransactionId) return targets;
+
+  const selectedIndex = targets.findIndex((target) => target.id === selectedTransactionId);
+  if (selectedIndex === -1) return targets;
+
+  return [
+    ...targets.slice(0, selectedIndex),
+    ...targets.slice(selectedIndex + 1),
+    targets[selectedIndex],
+  ];
+}

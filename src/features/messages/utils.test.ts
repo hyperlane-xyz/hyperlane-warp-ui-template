@@ -4,6 +4,7 @@ import { SwapStatus, type SwapHistoryItem } from '../swap/types';
 import {
   getSwapDeliveryMsgId,
   getSwapHistoryMessageIds,
+  prioritizeSelectedTarget,
   shouldWatchSwapDeliveryStatus,
 } from './utils';
 
@@ -83,5 +84,25 @@ describe('shouldWatchSwapDeliveryStatus', () => {
         status: SwapStatus.Failed,
       }),
     ).toBe(false);
+  });
+});
+
+describe('prioritizeSelectedTarget', () => {
+  test('moves the selected target to the end so recent-target caps keep it', () => {
+    const targets = [{ id: 'old-selected' }, { id: 'new-1' }, { id: 'new-2' }, { id: 'new-3' }];
+
+    expect(prioritizeSelectedTarget(targets, 'old-selected').map((target) => target.id)).toEqual([
+      'new-1',
+      'new-2',
+      'new-3',
+      'old-selected',
+    ]);
+  });
+
+  test('keeps target order when no selected target matches', () => {
+    const targets = [{ id: 'a' }, { id: 'b' }];
+
+    expect(prioritizeSelectedTarget(targets, null)).toBe(targets);
+    expect(prioritizeSelectedTarget(targets, 'missing')).toBe(targets);
   });
 });

@@ -1,7 +1,11 @@
 import { describe, expect, test } from 'vitest';
 
 import { SwapStatus, type SwapHistoryItem } from '../swap/types';
-import { getSwapDeliveryMsgId, getSwapHistoryMessageIds } from './utils';
+import {
+  getSwapDeliveryMsgId,
+  getSwapHistoryMessageIds,
+  shouldWatchSwapDeliveryStatus,
+} from './utils';
 
 describe('message utils', () => {
   test('prefers reveal then warp message ids for swap delivery', () => {
@@ -41,5 +45,43 @@ describe('message utils', () => {
     ];
 
     expect([...getSwapHistoryMessageIds(swaps)].sort()).toEqual(['0x123', '0xabc', '0xdef']);
+  });
+});
+
+describe('shouldWatchSwapDeliveryStatus', () => {
+  test('watches active swaps', () => {
+    expect(
+      shouldWatchSwapDeliveryStatus({
+        status: SwapStatus.Bridging,
+      }),
+    ).toBe(true);
+  });
+
+  test('keeps confirmed swaps without a destination hash for GraphQL backfill', () => {
+    expect(
+      shouldWatchSwapDeliveryStatus({
+        status: SwapStatus.ConfirmedDestination,
+      }),
+    ).toBe(true);
+  });
+
+  test('skips final swaps that cannot receive more delivery data', () => {
+    expect(
+      shouldWatchSwapDeliveryStatus({
+        status: SwapStatus.ConfirmedDestination,
+        destinationTxHash: '0xtx',
+      }),
+    ).toBe(false);
+    expect(
+      shouldWatchSwapDeliveryStatus({
+        status: SwapStatus.ConfirmedDestination,
+        solanaDestSwapPda: 'SolanaPda111111111111111111111111111111111',
+      }),
+    ).toBe(false);
+    expect(
+      shouldWatchSwapDeliveryStatus({
+        status: SwapStatus.Failed,
+      }),
+    ).toBe(false);
   });
 });

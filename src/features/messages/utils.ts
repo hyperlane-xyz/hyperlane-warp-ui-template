@@ -1,4 +1,9 @@
-import type { LabeledMsgId, SwapHistoryItem } from '../swap/types';
+import {
+  FinalSwapStatuses,
+  SwapStatus,
+  type LabeledMsgId,
+  type SwapHistoryItem,
+} from '../swap/types';
 
 export function getSwapDeliveryMsgId(msgIds: LabeledMsgId[] | undefined) {
   // For CCS routes, track the reveal message delivery — that tx is the one where
@@ -19,4 +24,13 @@ export function getSwapHistoryMessageIds(
     for (const msg of swap.msgIds ?? []) ids.add(msg.msgId.toLowerCase());
   }
   return ids;
+}
+
+export function shouldWatchSwapDeliveryStatus({
+  status,
+  destinationTxHash,
+  solanaDestSwapPda,
+}: Pick<SwapHistoryItem, 'status' | 'destinationTxHash' | 'solanaDestSwapPda'>): boolean {
+  if (!FinalSwapStatuses.includes(status)) return true;
+  return status === SwapStatus.ConfirmedDestination && !destinationTxHash && !solanaDestSwapPda;
 }

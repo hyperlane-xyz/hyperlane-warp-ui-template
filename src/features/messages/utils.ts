@@ -5,6 +5,11 @@ import {
   type SwapHistoryItem,
 } from '../swap/types';
 
+type DeliveryUpdateState = {
+  hasUpdated: boolean;
+  hasBackfilledHash: boolean;
+};
+
 export function getSwapDeliveryMsgId(msgIds: LabeledMsgId[] | undefined) {
   // For CCS routes, track the reveal message delivery — that tx is the one where
   // the ICA executes the swap. For regular warp routes there is no reveal, so
@@ -49,4 +54,12 @@ export function prioritizeSelectedTarget<T extends { id: string }>(
     ...targets.slice(selectedIndex + 1),
     targets[selectedIndex],
   ];
+}
+
+export function shouldUpdateFromDelivery(
+  state: DeliveryUpdateState,
+  destinationTxHash: string | undefined,
+): boolean {
+  if (!state.hasUpdated) return true;
+  return !!destinationTxHash && !state.hasBackfilledHash;
 }

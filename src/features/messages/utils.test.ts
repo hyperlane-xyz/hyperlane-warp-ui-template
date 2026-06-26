@@ -5,6 +5,7 @@ import {
   getSwapDeliveryMsgId,
   getSwapHistoryMessageIds,
   prioritizeSelectedTarget,
+  shouldUpdateFromDelivery,
   shouldWatchSwapDeliveryStatus,
 } from './utils';
 
@@ -104,5 +105,28 @@ describe('prioritizeSelectedTarget', () => {
 
     expect(prioritizeSelectedTarget(targets, null)).toBe(targets);
     expect(prioritizeSelectedTarget(targets, 'missing')).toBe(targets);
+  });
+});
+
+describe('shouldUpdateFromDelivery', () => {
+  test('allows the first delivery update', () => {
+    expect(
+      shouldUpdateFromDelivery({ hasUpdated: false, hasBackfilledHash: false }, undefined),
+    ).toBe(true);
+  });
+
+  test('ignores repeated delivery updates without a new hash', () => {
+    expect(
+      shouldUpdateFromDelivery({ hasUpdated: true, hasBackfilledHash: false }, undefined),
+    ).toBe(false);
+  });
+
+  test('allows one later destination hash backfill', () => {
+    expect(shouldUpdateFromDelivery({ hasUpdated: true, hasBackfilledHash: false }, '0xtx')).toBe(
+      true,
+    );
+    expect(shouldUpdateFromDelivery({ hasUpdated: true, hasBackfilledHash: true }, '0xtx')).toBe(
+      false,
+    );
   });
 });

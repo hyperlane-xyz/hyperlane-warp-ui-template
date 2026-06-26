@@ -12,6 +12,7 @@ import {
 
 const BRIDGE_ROUTER = '0x00000000000000000000000000000000000000aa';
 const OTHER_SENDER = '0x00000000000000000000000000000000000000bb';
+const UNIVERSAL_ROUTER = '0x0000000000000000000000000000000000000001';
 
 function createRoute(router = BRIDGE_ROUTER): AugmentedRoute {
   return {
@@ -81,9 +82,9 @@ function createMessage(msgId: `0x${string}`, sender: `0x${string}`, body: string
 }
 
 describe('getCcsMessageLabel', () => {
-  test('reads commit labels from CCS body prefixes', () => {
+  test('reads commit and reveal labels from CCS body prefixes', () => {
     expect(getCcsMessageLabel('0x01abcdef')).toBe('commit');
-    expect(getCcsMessageLabel('0x02abcdef')).toBeNull();
+    expect(getCcsMessageLabel('0x02abcdef')).toBe('reveal');
     expect(getCcsMessageLabel('0x03abcdef')).toBeNull();
   });
 });
@@ -106,10 +107,27 @@ describe('labelMessages', () => {
     ]);
   });
 
-  test('uses last non-warp message as reveal even when body prefix looks unknown', () => {
+  test('uses CCS body labels before sender-order heuristics', () => {
     const labels = labelMessages(
       [
-        createMessage('0x01', OTHER_SENDER, '0x02'),
+        createMessage('0x01', UNIVERSAL_ROUTER, '0x02'),
+        createMessage('0x02', BRIDGE_ROUTER, '0x99'),
+        createMessage('0x03', OTHER_SENDER, '0x01'),
+      ],
+      createCommitmentRoute(),
+    );
+
+    expect(labels).toEqual<LabeledMsgId[]>([
+      { msgId: '0x01', label: 'reveal' },
+      { msgId: '0x02', label: 'warp' },
+      { msgId: '0x03', label: 'commit' },
+    ]);
+  });
+
+  test('uses last non-warp message as reveal when body prefix looks unknown', () => {
+    const labels = labelMessages(
+      [
+        createMessage('0x01', OTHER_SENDER, '0x03'),
         createMessage('0x02', BRIDGE_ROUTER, '0x99'),
         createMessage('0x03', OTHER_SENDER, '0x03'),
       ],

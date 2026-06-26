@@ -1,5 +1,6 @@
 import type { ChainAddresses } from '@hyperlane-xyz/registry';
 import type { ChainMap, ChainName, MultiProtocolProvider } from '@hyperlane-xyz/sdk';
+import { ProtocolType } from '@hyperlane-xyz/utils';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 
@@ -28,6 +29,9 @@ export function useEvmMailboxDeliveryStatus({
 }) {
   const deliveredWithoutHashFirstSeenAt = useRef<number | undefined>(undefined);
   const mailbox = destinationChain ? chainAddresses[destinationChain]?.mailbox : undefined;
+  const destinationProtocol = destinationChain
+    ? multiProvider.tryGetProtocol(destinationChain)
+    : undefined;
 
   useEffect(() => {
     deliveredWithoutHashFirstSeenAt.current = undefined;
@@ -39,7 +43,12 @@ export function useEvmMailboxDeliveryStatus({
       if (!destinationChain) return { isDelivered: false, destinationTxHash: undefined };
       return getMailboxDeliveryStatus({ msgId, destinationChain, chainAddresses, multiProvider });
     },
-    enabled: enabled && !!destinationChain && !!mailbox,
+    enabled: shouldEnableEvmMailboxDeliveryStatus({
+      enabled,
+      destinationChain,
+      mailbox,
+      destinationProtocol,
+    }),
     refetchInterval: (query) => {
       return getEvmMailboxDeliveryRefetchInterval(
         query.state.data,
@@ -54,6 +63,25 @@ export function useEvmMailboxDeliveryStatus({
     isDelivered: data?.isDelivered ?? false,
     destinationTxHash: data?.destinationTxHash,
   };
+}
+
+export function shouldEnableEvmMailboxDeliveryStatus({
+  enabled,
+  destinationChain,
+  mailbox,
+  destinationProtocol,
+}: {
+  enabled: boolean;
+  destinationChain: ChainName | undefined;
+  mailbox: string | undefined;
+  destinationProtocol: ProtocolType | null | undefined;
+}) {
+  return (
+    enabled &&
+    !!destinationChain &&
+    !!mailbox &&
+    (destinationProtocol === ProtocolType.Ethereum || destinationProtocol === ProtocolType.Tron)
+  );
 }
 
 export function getEvmMailboxDeliveryRefetchInterval(

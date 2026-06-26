@@ -4,7 +4,10 @@ import { encodeFunctionResult, parseAbi, toEventSelector } from 'viem';
 import { describe, expect, test, vi } from 'vitest';
 
 import { getMailboxDeliveryStatus } from './mailboxDelivery';
-import { getEvmMailboxDeliveryRefetchInterval } from './useEvmMailboxDeliveryStatus';
+import {
+  getEvmMailboxDeliveryRefetchInterval,
+  shouldEnableEvmMailboxDeliveryStatus,
+} from './useEvmMailboxDeliveryStatus';
 
 const MAILBOX = '0x0000000000000000000000000000000000000001';
 const MSG_ID = `0x${'01'.repeat(32)}`;
@@ -192,6 +195,70 @@ describe('getEvmMailboxDeliveryRefetchInterval', () => {
         firstSeen,
         121_000,
       ),
+    ).toBe(false);
+  });
+});
+
+describe('shouldEnableEvmMailboxDeliveryStatus', () => {
+  test('enables only EVM-like mailbox polling with a configured mailbox', () => {
+    expect(
+      shouldEnableEvmMailboxDeliveryStatus({
+        enabled: true,
+        destinationChain: CHAIN,
+        mailbox: MAILBOX,
+        destinationProtocol: ProtocolType.Ethereum,
+      }),
+    ).toBe(true);
+    expect(
+      shouldEnableEvmMailboxDeliveryStatus({
+        enabled: true,
+        destinationChain: CHAIN,
+        mailbox: MAILBOX,
+        destinationProtocol: ProtocolType.Tron,
+      }),
+    ).toBe(true);
+    expect(
+      shouldEnableEvmMailboxDeliveryStatus({
+        enabled: true,
+        destinationChain: CHAIN,
+        mailbox: MAILBOX,
+        destinationProtocol: ProtocolType.Sealevel,
+      }),
+    ).toBe(false);
+    expect(
+      shouldEnableEvmMailboxDeliveryStatus({
+        enabled: true,
+        destinationChain: CHAIN,
+        mailbox: MAILBOX,
+        destinationProtocol: ProtocolType.Cosmos,
+      }),
+    ).toBe(false);
+  });
+
+  test('stays disabled without caller enablement, chain, or mailbox', () => {
+    expect(
+      shouldEnableEvmMailboxDeliveryStatus({
+        enabled: false,
+        destinationChain: CHAIN,
+        mailbox: MAILBOX,
+        destinationProtocol: ProtocolType.Ethereum,
+      }),
+    ).toBe(false);
+    expect(
+      shouldEnableEvmMailboxDeliveryStatus({
+        enabled: true,
+        destinationChain: undefined,
+        mailbox: MAILBOX,
+        destinationProtocol: ProtocolType.Ethereum,
+      }),
+    ).toBe(false);
+    expect(
+      shouldEnableEvmMailboxDeliveryStatus({
+        enabled: true,
+        destinationChain: CHAIN,
+        mailbox: undefined,
+        destinationProtocol: ProtocolType.Ethereum,
+      }),
     ).toBe(false);
   });
 });

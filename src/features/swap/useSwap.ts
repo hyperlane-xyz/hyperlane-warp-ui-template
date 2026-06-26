@@ -334,7 +334,9 @@ function labelMessages(messages: ParsedMessage[], route: AugmentedRoute): Labele
       return { msgId: msg.msgId, label: 'warp' as const };
     }
 
-    if (route.raw.callCommitment && urAddr && senderAddr === urAddr) {
+    // Exclude revealMsg from the urAddr check so the reveal always gets its
+    // correct label below — even when COMMIT and REVEAL share the same sender.
+    if (route.raw.callCommitment && urAddr && senderAddr === urAddr && msg !== revealMsg) {
       return { msgId: msg.msgId, label: 'commit' as const };
     }
 

@@ -1,10 +1,13 @@
-import { describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test } from 'vitest';
 
 import {
   migratePersistedAppState,
   TransactionHistoryItemType,
+  useStore,
   type TransactionHistoryItem,
 } from './store';
+import type { UiToken } from './swap/tokens/types';
+import { getTokenKey as getSwapTokenKey } from './swap/tokens/utils';
 import { SwapStatus, type SwapHistoryItem } from './swap/types';
 import { TransferStatus, type TransferContext } from './transfer/types';
 
@@ -38,6 +41,30 @@ function createSwapTransfer(overrides: Partial<SwapHistoryItem> = {}): SwapHisto
     ...overrides,
   };
 }
+
+function createUiToken(overrides: Partial<UiToken> = {}): UiToken {
+  return {
+    chainId: 1,
+    address: '0x1111111111111111111111111111111111111111',
+    symbol: 'SRC',
+    decimals: 18,
+    isNative: false,
+    isBridgeToken: false,
+    isPoolToken: true,
+    canBridge: false,
+    canSwap: true,
+    bridgeSymbols: [],
+    warpRouteIds: [],
+    chainName: 'ethereum',
+    name: 'Source Token',
+    addressOrDenom: '0x1111111111111111111111111111111111111111',
+    ...overrides,
+  };
+}
+
+afterEach(() => {
+  useStore.setState({ knownTokens: new Map() });
+});
 
 describe('migratePersistedAppState', () => {
   test('keeps existing unified transaction history unchanged', () => {
@@ -98,5 +125,33 @@ describe('migratePersistedAppState', () => {
       chainMetadataOverrides: {},
       transactionHistory: [],
     });
+  });
+});
+
+describe('syncTokens', () => {
+  test('refreshes existing engine token metadata', () => {
+    const stale = createUiToken({ coinGeckoId: undefined, logoURI: undefined });
+    const fresh = createUiToken({
+      coinGeckoId: 'source-token',
+      logoURI: 'https://example.com/src.png',
+    });
+
+    useStore.getState().syncTokens([stale]);
+    useStore.getState().syncTokens([fresh]);
+
+    expect(useStore.getState().knownTokens.get(getSwapTokenKey(fresh))).toMatchObject({
+      coinGeckoId: 'source-token',
+      logoURI: 'https://example.com/src.png',
+    });
+  });
+
+  test('keeps known token map stable when metadata is unchanged', () => {
+    const token = createUiToken();
+
+    useStore.getState().syncTokens([token]);
+    const before = useStore.getState().knownTokens;
+    useStore.getState().syncTokens([createUiToken()]);
+
+    expect(useStore.getState().knownTokens).toBe(before);
   });
 });

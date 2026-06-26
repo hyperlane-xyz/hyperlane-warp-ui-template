@@ -360,16 +360,17 @@ export const useStore = create<AppState>()(
       knownTokens: new Map(),
       syncTokens: (newTokens) => {
         set((state) => {
-          let added = 0;
+          let changed = false;
           const next = new Map(state.knownTokens);
           for (const t of newTokens) {
             const key = getSwapTokenKey(t);
-            if (!next.has(key)) {
+            const existing = next.get(key);
+            if (!existing || !areUiTokensEqual(existing, t)) {
               next.set(key, t);
-              added++;
+              changed = true;
             }
           }
-          return added > 0 ? { knownTokens: next } : state;
+          return changed ? { knownTokens: next } : state;
         });
       },
 
@@ -489,6 +490,35 @@ export function migratePersistedAppState(persistedState: unknown): {
     chainMetadataOverrides: state.chainMetadataOverrides ?? {},
     transactionHistory,
   };
+}
+
+function areUiTokensEqual(a: UiToken, b: UiToken): boolean {
+  return (
+    a.chainId === b.chainId &&
+    a.address === b.address &&
+    a.symbol === b.symbol &&
+    a.decimals === b.decimals &&
+    a.isNative === b.isNative &&
+    a.wrappedAddress === b.wrappedAddress &&
+    a.isBridgeToken === b.isBridgeToken &&
+    a.isPoolToken === b.isPoolToken &&
+    a.isUserToken === b.isUserToken &&
+    a.canBridge === b.canBridge &&
+    a.canSwap === b.canSwap &&
+    a.balance === b.balance &&
+    a.chainName === b.chainName &&
+    a.name === b.name &&
+    a.addressOrDenom === b.addressOrDenom &&
+    a.logoURI === b.logoURI &&
+    a.coinGeckoId === b.coinGeckoId &&
+    arraysEqual(a.bridgeSymbols, b.bridgeSymbols) &&
+    arraysEqual(a.warpRouteIds, b.warpRouteIds)
+  );
+}
+
+function arraysEqual(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false;
+  return a.every((value, index) => value === b[index]);
 }
 
 async function initWarpContext({

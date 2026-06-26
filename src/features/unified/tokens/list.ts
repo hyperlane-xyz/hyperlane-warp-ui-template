@@ -3,6 +3,7 @@ import { fromWei } from '@hyperlane-xyz/utils';
 import { config } from '../../../consts/config';
 import { getTokenKey as getSwapTokenKey } from '../../swap/tokens/utils';
 import { getTokenKey as getBridgeTokenKey } from '../../tokens/utils';
+import { findUnifiedTokenByConfigRef } from './queryParams';
 import { getUnifiedBridgeTokens, getUnifiedRouteMode, UnifiedRouteMode } from './routes';
 import type { UnifiedToken } from './types';
 
@@ -30,8 +31,21 @@ export function getBalanceFetchLimit({
 }
 
 export function getFeaturedTokenIndex(token: UnifiedToken): number {
-  const tokenKey = `${token.chainName}-${token.symbol}`.toLowerCase();
-  return config.featuredTokens.findIndex((featured) => featured.toLowerCase() === tokenKey);
+  return config.featuredTokens.findIndex((featured) => {
+    const parsed = parseFeaturedTokenRef(featured);
+    return (
+      !!parsed && findUnifiedTokenByConfigRef([token], parsed.chainName, parsed.tokenRef) === token
+    );
+  });
+}
+
+function parseFeaturedTokenRef(value: string): { chainName: string; tokenRef: string } | null {
+  const separator = value.indexOf('-');
+  if (separator <= 0) return null;
+  return {
+    chainName: value.slice(0, separator),
+    tokenRef: value.slice(separator + 1),
+  };
 }
 
 export function getTokenRouteMode(

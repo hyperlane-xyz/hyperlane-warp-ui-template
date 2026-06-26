@@ -2,6 +2,11 @@ import { describe, expect, test } from 'vitest';
 
 import { QuoteResponseSchema, QuoteRequestSchema, Recipient } from './types';
 
+const bytes32A = `0x${'a'.repeat(64)}`;
+const bytes32B = `0x${'b'.repeat(64)}`;
+const bytes32C = `0x${'c'.repeat(64)}`;
+const bytes32D = `0x${'d'.repeat(64)}`;
+
 describe('api schemas', () => {
   test('accepts native non-EVM recipients for quote requests', () => {
     const solanaRecipient = 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB';
@@ -73,5 +78,99 @@ describe('api schemas', () => {
     });
 
     expect(parsed.routes[0].steps[0]).toMatchObject({ asset: solanaAsset });
+  });
+
+  test('accepts Solana route tx fields from engine main', () => {
+    const solanaProgram = '9xQeWvG816bUx9EPfQ4gZrsWKQZy4vEJ7xmY2p4z9Pq';
+    const solanaAccount = 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB';
+
+    const parsed = QuoteResponseSchema.parse({
+      routes: [
+        {
+          steps: [
+            {
+              type: 'swap',
+              chain: 1399811149,
+              dex: 'test-dex',
+              tokenIn: solanaAccount,
+              tokenOut: 'So11111111111111111111111111111111111111112',
+              amountIn: '1000000',
+              amountOut: '990000',
+              path: [solanaAccount, 'So11111111111111111111111111111111111111112'],
+              poolCount: 1,
+              minPoolTvlUsd: null,
+              poolAddress: solanaProgram,
+            },
+          ],
+          output: '990000',
+          outputMin: '980000',
+          connection: null,
+          gas: { originGas: '0', destGas: '0' },
+          tx: {
+            to: solanaProgram,
+            data: 'AQIDBA==',
+            value: '0',
+            accounts: [{ pubkey: solanaAccount, isSigner: false, isWritable: true }],
+            additionalSigners: ['AQID'],
+            altAddresses: [solanaProgram],
+            preInstructions: [
+              {
+                programId: solanaProgram,
+                accounts: [{ pubkey: solanaAccount, isSigner: false, isWritable: true }],
+                data: 'BQYH',
+              },
+            ],
+          },
+        },
+      ],
+      expiresAt: 1,
+    });
+
+    expect(parsed.routes[0].tx).toMatchObject({
+      to: solanaProgram,
+      accounts: [{ pubkey: solanaAccount, isSigner: false, isWritable: true }],
+    });
+  });
+
+  test('accepts /calldata CCS commitments from engine main', () => {
+    const parsed = QuoteResponseSchema.parse({
+      routes: [
+        {
+          steps: [],
+          output: '0',
+          outputMin: '0',
+          connection: null,
+          gas: { originGas: '0', destGas: '0' },
+          tx: null,
+          callCommitment: {
+            version: 1,
+            commitment: bytes32A,
+            hash: { algorithm: 'keccak256', preimage: '0x', encodedCalls: '0x' },
+            ccs: {
+              method: 'POST',
+              path: '/calldata',
+              body: {
+                commitment: bytes32A,
+                originDomain: 8453,
+                data: '0x1234',
+                salt: bytes32B,
+                relayers: [bytes32C],
+                destinationAccount: bytes32D,
+                revealAccounts: [
+                  {
+                    pubkey: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+                    isWritable: true,
+                    isSigner: false,
+                  },
+                ],
+              },
+            },
+          },
+        },
+      ],
+      expiresAt: 1,
+    });
+
+    expect(parsed.routes[0].callCommitment?.ccs.path).toBe('/calldata');
   });
 });

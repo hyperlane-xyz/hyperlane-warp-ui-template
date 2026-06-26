@@ -1499,6 +1499,7 @@ export async function submitSwap({
     amountOut: finalStep && 'amountOut' in finalStep ? finalStep.amountOut : bestRoute.raw.output,
     sender,
     recipient,
+    solanaDestSwapPda: bestRoute.raw.callCommitment?.ccs.body.revealAccounts?.[0]?.pubkey,
     destinationOutcome:
       bestRoute.raw.callCommitment && destinationSwapStep
         ? {

@@ -10,10 +10,13 @@ import { FinalSwapStatuses, SwapStatus, type SwapHistoryItem } from './types';
 const TRANSFER_TOPIC = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
 
 type ReceiptProvider = {
-  getTransactionReceipt(
-    hash: string,
-  ): Promise<{ logs: Array<{ topics: string[]; address: string; data?: string }> } | null>;
+  getTransactionReceipt(hash: string): Promise<SwapOutcomeReceipt | null>;
 };
+
+interface SwapOutcomeReceipt {
+  logs: Array<{ topics: string[]; address: string; data?: string }>;
+  status?: number | string | boolean | null;
+}
 
 export async function detectSwapOutcome(
   provider: ReceiptProvider,
@@ -25,6 +28,7 @@ export async function detectSwapOutcome(
 ): Promise<'success' | 'failed_recovered' | 'dest_failed'> {
   const receipt = await provider.getTransactionReceipt(destinationTxHash);
   if (!receipt) throw new Error('Destination transaction receipt not found');
+  if (isReceiptReverted(receipt)) return 'dest_failed';
 
   const recipientLower = recipient.toLowerCase();
   const bridgeTokenLower = bridgeToken.toLowerCase();
@@ -64,6 +68,13 @@ export async function detectSwapOutcome(
   }
   if (bridgeTokenDelivered > 0n) return 'failed_recovered';
   return 'dest_failed';
+}
+
+function isReceiptReverted(receipt: SwapOutcomeReceipt): boolean {
+  const status = typeof receipt.status === 'string' ? receipt.status.toLowerCase() : receipt.status;
+  return (
+    status === 0 || status === '0' || status === '0x0' || status === 'reverted' || status === false
+  );
 }
 
 function getTransferLogAmount(data: string | undefined): bigint {

@@ -44,6 +44,7 @@ export function useTokenBalances(
   const filteredAddress =
     addressOverride ||
     (filteredProtocol === ProtocolType.Sealevel ? connectedSolana : connectedEvm);
+  const hasAnyAddress = !!(addressOverride || connectedEvm || connectedSolana);
 
   const singleChainQuery = useQuery({
     queryKey: [
@@ -51,7 +52,7 @@ export function useTokenBalances(
       filteredProtocol,
       filteredChainId,
       filteredAddress,
-      filtered.map(getTokenKey).join(','),
+      filtered.map((token) => token.address.toLowerCase()).join(','),
     ],
     queryFn: () =>
       dispatchChainBalances(
@@ -96,7 +97,7 @@ export function useTokenBalances(
           protocol,
           chainId,
           fanoutAddress,
-          chainTokens.map(getTokenKey).join(','),
+          chainTokens.map((token) => token.address.toLowerCase()).join(','),
         ],
         queryFn: async (): Promise<Record<string, bigint>> => {
           if (!protocol || !fanoutAddress) return {};
@@ -121,8 +122,6 @@ export function useTokenBalances(
       };
     }),
   });
-
-  const hasAnyAddress = !!(connectedEvm || connectedSolana || addressOverride);
 
   return useMemo(() => {
     if (chainFilter === 'all') {
@@ -155,12 +154,12 @@ export function useTokenBalance(token: UiToken | undefined, addressOverride?: st
   const { address: connectedEvm } = useAccount();
   const connectedSolana = useSolanaAccount(multiProvider).addresses[0]?.address;
   const protocol = token ? multiProvider.tryGetProtocol(token.chainName) : null;
-  const connectedForProtocol = protocol === ProtocolType.Sealevel ? connectedSolana : connectedEvm;
-  const userAddress = addressOverride || connectedForProtocol;
+  const userAddress =
+    addressOverride || (protocol === ProtocolType.Sealevel ? connectedSolana : connectedEvm);
   const publicClient = usePublicClient({ chainId: token?.chainId });
 
   return useQuery({
-    queryKey: ['balance', protocol, token ? getTokenKey(token) : undefined, userAddress],
+    queryKey: ['balance', protocol, token?.chainId, token?.address.toLowerCase(), userAddress],
     queryFn: async () => {
       if (!token || !userAddress || !protocol) return null;
       const balances = await dispatchChainBalances(

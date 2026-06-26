@@ -48,9 +48,9 @@ function createMessage(msgId: `0x${string}`, sender: `0x${string}`, body: string
 }
 
 describe('getCcsMessageLabel', () => {
-  test('reads commit and reveal labels from CCS body prefixes', () => {
+  test('reads commit labels from CCS body prefixes', () => {
     expect(getCcsMessageLabel('0x01abcdef')).toBe('commit');
-    expect(getCcsMessageLabel('0x02abcdef')).toBe('reveal');
+    expect(getCcsMessageLabel('0x02abcdef')).toBeNull();
     expect(getCcsMessageLabel('0x03abcdef')).toBeNull();
   });
 });
@@ -73,20 +73,38 @@ describe('labelMessages', () => {
     ]);
   });
 
-  test('uses explicit CCS body labels instead of message order', () => {
+  test('uses last non-warp message as reveal even when body prefix looks unknown', () => {
     const labels = labelMessages(
       [
         createMessage('0x01', OTHER_SENDER, '0x02'),
         createMessage('0x02', BRIDGE_ROUTER, '0x99'),
-        createMessage('0x03', OTHER_SENDER, '0x01'),
+        createMessage('0x03', OTHER_SENDER, '0x03'),
       ],
       createRoute(),
     );
 
     expect(labels).toEqual<LabeledMsgId[]>([
-      { msgId: '0x01', label: 'reveal' },
+      { msgId: '0x01', label: 'commit' },
       { msgId: '0x02', label: 'warp' },
-      { msgId: '0x03', label: 'commit' },
+      { msgId: '0x03', label: 'reveal' },
+    ]);
+  });
+
+  test('normalizes padded dispatch senders before matching bridge routers', () => {
+    const paddedBridgeSender = `0x${'0'.repeat(24)}${BRIDGE_ROUTER.slice(2)}` as `0x${string}`;
+    const labels = labelMessages(
+      [
+        createMessage('0x01', OTHER_SENDER, '0x01'),
+        createMessage('0x02', paddedBridgeSender, '0x99'),
+        createMessage('0x03', OTHER_SENDER, '0x99'),
+      ],
+      createRoute(),
+    );
+
+    expect(labels).toEqual<LabeledMsgId[]>([
+      { msgId: '0x01', label: 'commit' },
+      { msgId: '0x02', label: 'warp' },
+      { msgId: '0x03', label: 'reveal' },
     ]);
   });
 

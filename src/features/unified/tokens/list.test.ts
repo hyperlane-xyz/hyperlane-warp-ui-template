@@ -118,6 +118,82 @@ describe('getVisibleUnifiedTokens', () => {
     expect(result.tokens.map((token) => token.key)).toEqual([firstFeatured]);
   });
 
+  test('matches featured tokens by bridge token refs', () => {
+    config.featuredTokens.splice(
+      0,
+      config.featuredTokens.length,
+      'ethereum-0x1111111111111111111111111111111111111111',
+    );
+    const bridgeToken = createMockToken({
+      chainName: 'ethereum',
+      symbol: 'USDC',
+      addressOrDenom: '0x2222222222222222222222222222222222222222',
+      collateralAddressOrDenom: '0x1111111111111111111111111111111111111111',
+    });
+    const featured = createUnifiedToken({
+      key: 'ethereum-usdc',
+      chainName: 'ethereum',
+      symbol: 'USDC',
+      bridgeToken,
+      capabilities: { bridge: true, swap: false },
+    });
+    const regular = createUnifiedToken({
+      key: 'ethereum-dai',
+      chainName: 'ethereum',
+      symbol: 'DAI',
+      capabilities: { bridge: true, swap: false },
+    });
+
+    const result = getVisibleUnifiedTokens({
+      allTokens: [regular, featured],
+      counterpartToken: undefined,
+      selectionMode: 'origin',
+      collateralGroups: new Map(),
+      engineEnabled: true,
+      hasFilter: false,
+    });
+
+    expect(result.tokens).toEqual([featured]);
+  });
+
+  test('matches featured tokens by swap token refs', () => {
+    config.featuredTokens.splice(
+      0,
+      config.featuredTokens.length,
+      'ethereum-0x3333333333333333333333333333333333333333',
+    );
+    const featured = createUnifiedToken({
+      key: 'ethereum-swap-token',
+      chainName: 'ethereum',
+      symbol: 'SWAP',
+      capabilities: { bridge: false, swap: true },
+      swapToken: createSwapToken({
+        chainName: 'ethereum',
+        address: '0x3333333333333333333333333333333333333333',
+        addressOrDenom: '0x3333333333333333333333333333333333333333',
+        symbol: 'SWAP',
+      }),
+    });
+    const regular = createUnifiedToken({
+      key: 'ethereum-dai',
+      chainName: 'ethereum',
+      symbol: 'DAI',
+      capabilities: { bridge: false, swap: true },
+      swapToken: createSwapToken({ chainName: 'ethereum', symbol: 'DAI' }),
+    });
+
+    const result = getVisibleUnifiedTokens({
+      allTokens: [regular, featured],
+      counterpartToken: undefined,
+      selectionMode: 'origin',
+      collateralGroups: new Map(),
+      engineEnabled: true,
+      hasFilter: false,
+    });
+
+    expect(result.tokens).toEqual([featured]);
+  });
+
   test('does not hide non-featured tokens when searching', () => {
     const hiddenWithoutFilter = createUnifiedToken({
       key: 'non-featured-unrouted',

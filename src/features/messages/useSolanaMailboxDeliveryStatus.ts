@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { logger } from '../../utils/logger';
 
-const MAILBOX_DELIVERY_POLL_INTERVAL_MS = 5_000;
+const SOLANA_MAILBOX_DELIVERY_POLL_INTERVAL_MS = 5_000;
 
 async function getSolanaMailboxDeliveryStatus({
   msgId,
@@ -20,15 +20,16 @@ async function getSolanaMailboxDeliveryStatus({
   multiProvider: MultiProtocolProvider;
 }): Promise<{ isDelivered: boolean; destinationTxHash: undefined }> {
   try {
-    const protocol = multiProvider.tryGetProtocol(destinationChain);
-    if (protocol !== ProtocolType.Sealevel) {
+    if (multiProvider.tryGetProtocol(destinationChain) !== ProtocolType.Sealevel) {
       return { isDelivered: false, destinationTxHash: undefined };
     }
+
     const mailbox = chainAddresses[destinationChain]?.mailbox;
     if (!mailbox) return { isDelivered: false, destinationTxHash: undefined };
+
     const adapter = new SealevelCoreAdapter(destinationChain, multiProvider, { mailbox });
-    const delivered = await adapter.isDelivered(msgId);
-    return { isDelivered: delivered, destinationTxHash: undefined };
+    const isDelivered = await adapter.isDelivered(msgId);
+    return { isDelivered, destinationTxHash: undefined };
   } catch (err) {
     logger.warn('Solana mailbox delivery check failed', err as Error);
     return { isDelivered: false, destinationTxHash: undefined };
@@ -49,7 +50,9 @@ export function useSolanaMailboxDeliveryStatus({
   enabled: boolean;
 }) {
   const mailbox = destinationChain ? chainAddresses[destinationChain]?.mailbox : undefined;
-  const destProtocol = destinationChain ? multiProvider.tryGetProtocol(destinationChain) : null;
+  const destinationProtocol = destinationChain
+    ? multiProvider.tryGetProtocol(destinationChain)
+    : undefined;
   const { data } = useQuery({
     queryKey: ['solanaMailboxDelivery', destinationChain, mailbox, msgId],
     queryFn: async () => {
@@ -61,10 +64,15 @@ export function useSolanaMailboxDeliveryStatus({
         multiProvider,
       });
     },
-    enabled: enabled && !!destinationChain && !!mailbox && destProtocol === ProtocolType.Sealevel,
+    enabled: shouldEnableSolanaMailboxDeliveryStatus({
+      enabled,
+      destinationChain,
+      mailbox,
+      destinationProtocol,
+    }),
     refetchInterval: (query) => {
       if (query.state.data?.isDelivered) return false;
-      return MAILBOX_DELIVERY_POLL_INTERVAL_MS;
+      return SOLANA_MAILBOX_DELIVERY_POLL_INTERVAL_MS;
     },
     refetchOnWindowFocus: false,
   });
@@ -73,4 +81,20 @@ export function useSolanaMailboxDeliveryStatus({
     isDelivered: data?.isDelivered ?? false,
     destinationTxHash: data?.destinationTxHash,
   };
+}
+
+export function shouldEnableSolanaMailboxDeliveryStatus({
+  enabled,
+  destinationChain,
+  mailbox,
+  destinationProtocol,
+}: {
+  enabled: boolean;
+  destinationChain: ChainName | undefined;
+  mailbox: string | undefined;
+  destinationProtocol: ProtocolType | null | undefined;
+}) {
+  return (
+    enabled && !!destinationChain && !!mailbox && destinationProtocol === ProtocolType.Sealevel
+  );
 }

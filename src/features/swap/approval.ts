@@ -1,4 +1,5 @@
 import { EvmTokenAdapter } from '@hyperlane-xyz/sdk';
+import { isEVMLike } from '@hyperlane-xyz/utils';
 import { useQuery } from '@tanstack/react-query';
 import type { Address } from 'viem';
 
@@ -46,8 +47,17 @@ interface AllowanceArgs {
 export function useApprovalStatus(args: AllowanceArgs): ApprovalStatus {
   const { chainName, token, owner, spender, amount, isNative } = args;
   const multiProvider = useMultiProvider();
+  const protocol = chainName ? multiProvider.tryGetProtocol(chainName) : undefined;
+  const supportsAllowance = !!protocol && isEVMLike(protocol);
 
-  const enabled = !!chainName && !!token && !!owner && !!spender && !isNative && amount != null;
+  const enabled =
+    supportsAllowance &&
+    !!chainName &&
+    !!token &&
+    !!owner &&
+    !!spender &&
+    !isNative &&
+    amount != null;
 
   const { data } = useQuery({
     queryKey: [
@@ -73,6 +83,7 @@ export function useApprovalStatus(args: AllowanceArgs): ApprovalStatus {
   });
 
   if (isNative) return { phase: ApprovalPhase.Native };
+  if (!supportsAllowance) return { phase: ApprovalPhase.Ready };
   if (!enabled || !data) return { phase: ApprovalPhase.Idle };
   if (data.needsApprove && data.needsRevoke) return { phase: ApprovalPhase.NeedsRevoke };
   if (data.needsApprove) return { phase: ApprovalPhase.NeedsApprove };

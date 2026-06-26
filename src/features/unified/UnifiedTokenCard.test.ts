@@ -472,6 +472,11 @@ describe('submitSwap', () => {
     const sender = '0x4444444444444444444444444444444444444444';
     const recipient = '0x5555555555555555555555555555555555555555';
     const universalRouter = '0x6666666666666666666666666666666666666666';
+    const commitment = `0x${'a'.repeat(64)}`;
+    const salt = `0x${'b'.repeat(64)}`;
+    const relayer = `0x${'c'.repeat(64)}`;
+    const destinationAccount = `0x${'d'.repeat(64)}`;
+    const solanaDestSwapPda = 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB';
     const route = {
       isBridgeOnly: false,
       feeBreakdown: { components: [], originGas: 0n, destGas: 0n },
@@ -511,19 +516,25 @@ describe('submitSwap', () => {
         tx: { to: universalRouter, data: '0x1234', value: '0' },
         callCommitment: {
           version: 1,
-          commitment: '0x1234',
+          commitment,
           hash: { algorithm: 'keccak256', preimage: '0x', encodedCalls: '0x' },
           ccs: {
             method: 'POST',
-            path: '/calls',
+            path: '/calldata',
             body: {
-              calls: [],
-              relayers: [],
-              salt: '0x1234',
-              userSalt: '0x1234',
+              commitment,
               originDomain: 1,
-              destinationDomain: 2,
-              owner: sender,
+              data: '0x1234',
+              salt,
+              relayers: [relayer],
+              destinationAccount,
+              revealAccounts: [
+                {
+                  pubkey: solanaDestSwapPda,
+                  isWritable: true,
+                  isSigner: false,
+                },
+              ],
             },
           },
         },
@@ -627,6 +638,7 @@ describe('submitSwap', () => {
       },
       amountIn: '100',
       amountOut: '95',
+      solanaDestSwapPda,
     });
     expect(execute).toHaveBeenCalledWith(
       expect.objectContaining({

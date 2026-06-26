@@ -20,9 +20,12 @@ function transferLog(token: string, to: string, amount = 1n) {
   };
 }
 
-function providerWithLogs(logs: Array<{ topics: string[]; address: string; data?: string }>) {
+function providerWithLogs(
+  logs: Array<{ topics: string[]; address: string; data?: string }>,
+  status?: number | string | boolean | null,
+) {
   return {
-    getTransactionReceipt: async () => ({ logs }),
+    getTransactionReceipt: async () => ({ logs, status }),
   };
 }
 
@@ -113,6 +116,48 @@ describe('detectSwapOutcome', () => {
         NATIVE_TOKEN,
       ),
     ).resolves.toBe('failed_recovered');
+  });
+
+  test.each([0, '0', '0x0', 'reverted', 'ReVeRtEd', false])(
+    'does not treat reverted native output receipts as success for status %s',
+    async (status) => {
+      await expect(
+        detectSwapOutcome(
+          providerWithLogs([], status),
+          '0xhash',
+          RECIPIENT,
+          BRIDGE_TOKEN,
+          NATIVE_TOKEN,
+        ),
+      ).resolves.toBe('dest_failed');
+    },
+  );
+
+  test.each([1, '1', '0x1', 'success', true, undefined])(
+    'keeps non-reverted native output receipts optimistic for status %s',
+    async (status) => {
+      await expect(
+        detectSwapOutcome(
+          providerWithLogs([], status),
+          '0xhash',
+          RECIPIENT,
+          BRIDGE_TOKEN,
+          NATIVE_TOKEN,
+        ),
+      ).resolves.toBe('success');
+    },
+  );
+
+  test('checks reverted receipts before ERC20 logs', async () => {
+    await expect(
+      detectSwapOutcome(
+        providerWithLogs([transferLog(DST_TOKEN, RECIPIENT)], 'reverted'),
+        '0xhash',
+        RECIPIENT,
+        BRIDGE_TOKEN,
+        DST_TOKEN,
+      ),
+    ).resolves.toBe('dest_failed');
   });
 
   test('throws when the destination receipt is unavailable', async () => {

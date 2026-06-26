@@ -1,7 +1,12 @@
 import { describe, expect, test } from 'vitest';
 
 import type { AugmentedRoute, LabeledMsgId } from './types';
-import { getCcsMessageLabel, labelMessages, type ParsedMessage } from './useSwap';
+import {
+  getCcsMessageLabel,
+  labelMessages,
+  labelSolanaMessages,
+  type ParsedMessage,
+} from './useSwap';
 
 const BRIDGE_ROUTER = '0x00000000000000000000000000000000000000aa';
 const OTHER_SENDER = '0x00000000000000000000000000000000000000bb';
@@ -41,6 +46,32 @@ function createRoute(router = BRIDGE_ROUTER): AugmentedRoute {
     feeBreakdown: { components: [], originGas: 0n, destGas: 0n },
     isBridgeOnly: false,
   } as AugmentedRoute;
+}
+
+function createCommitmentRoute(): AugmentedRoute {
+  const route = createRoute();
+  route.raw.callCommitment = {
+    version: 1,
+    commitment: `0x${'1'.repeat(64)}`,
+    hash: {
+      algorithm: 'keccak256',
+      preimage: 'salt || abi.encode((bytes32 to,uint256 value,bytes data)[])',
+      encodedCalls: '0x',
+    },
+    ccs: {
+      method: 'POST',
+      path: '/calldata',
+      body: {
+        commitment: `0x${'1'.repeat(64)}`,
+        originDomain: 1,
+        data: '0x',
+        salt: `0x${'2'.repeat(64)}`,
+        relayers: [],
+        destinationAccount: `0x${'3'.repeat(64)}`,
+      },
+    },
+  };
+  return route;
 }
 
 function createMessage(msgId: `0x${string}`, sender: `0x${string}`, body: string): ParsedMessage {
@@ -121,6 +152,25 @@ describe('labelMessages', () => {
     expect(labels).toEqual<LabeledMsgId[]>([
       { msgId: '0x01', label: 'commit' },
       { msgId: '0x02', label: 'warp' },
+      { msgId: '0x03', label: 'reveal' },
+    ]);
+  });
+});
+
+describe('labelSolanaMessages', () => {
+  test('labels Solana bridge-only dispatches as warp messages', () => {
+    expect(labelSolanaMessages(['0x01', '0x02'], createRoute())).toEqual<LabeledMsgId[]>([
+      { msgId: '0x01', label: 'warp' },
+      { msgId: '0x02', label: 'warp' },
+    ]);
+  });
+
+  test('labels Solana bridge, commit, reveal dispatch order for destination swaps', () => {
+    expect(labelSolanaMessages(['0x01', '0x02', '0x03'], createCommitmentRoute())).toEqual<
+      LabeledMsgId[]
+    >([
+      { msgId: '0x01', label: 'warp' },
+      { msgId: '0x02', label: 'commit' },
       { msgId: '0x03', label: 'reveal' },
     ]);
   });

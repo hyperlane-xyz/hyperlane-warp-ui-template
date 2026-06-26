@@ -106,4 +106,32 @@ describe('getUnifiedBasicSubmitErrors', () => {
       }),
     ).toBeNull();
   });
+
+  test('does not report an unsupported swap route while the quote is pending', () => {
+    expect(
+      getUnifiedBasicSubmitErrors({
+        routeMode: UnifiedRouteMode.Swap,
+        values,
+        originToken: createUnifiedToken(),
+        destinationToken: createUnifiedToken({ key: 'destination', chainName: 'base' }),
+        recipient: '0x123',
+        hasSwapRoute: false,
+        isSwapQuotePending: true,
+      }),
+    ).toBeNull();
+  });
+
+  test('reports unsupported swap routes after quote settles without routes', () => {
+    expect(
+      getUnifiedBasicSubmitErrors({
+        routeMode: UnifiedRouteMode.Swap,
+        values,
+        originToken: createUnifiedToken(),
+        destinationToken: createUnifiedToken({ key: 'destination', chainName: 'base' }),
+        recipient: '0x123',
+        hasSwapRoute: false,
+        isSwapQuotePending: false,
+      }),
+    ).toEqual({ destinationTokenKey: 'Route is not supported' });
+  });
 });

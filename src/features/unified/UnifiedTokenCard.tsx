@@ -257,6 +257,12 @@ function UnifiedFormContent({
   const [isBridgeReview, setIsBridgeReview] = useState(false);
   const swapIntentKey = getUnifiedSwapIntentKey(routeMode, swapValues, effectiveRecipient);
   const bestRoute = routes[selectedRouteIndex] ?? routes[0];
+  const hasCurrentSwapRoute =
+    routeMode !== UnifiedRouteMode.Swap || (!!bestRoute && isSwapQuoteCurrent);
+  const isSwapQuotePending =
+    routeMode === UnifiedRouteMode.Swap &&
+    (!isSwapQuoteCurrent ||
+      (!bestRoute && (quote.isLoading || quote.isFetching || !quote.isQuoteSettled)));
 
   const srcChainInfo =
     routeMode === UnifiedRouteMode.Swap
@@ -368,7 +374,8 @@ function UnifiedFormContent({
       originToken,
       destinationToken,
       recipient: effectiveRecipient,
-      hasSwapRoute: !!bestRoute && isSwapQuoteCurrent,
+      hasSwapRoute: hasCurrentSwapRoute,
+      isSwapQuotePending,
     });
     if (basicErrors) {
       setErrors(basicErrors);
@@ -411,7 +418,7 @@ function UnifiedFormContent({
         return;
       }
     } else {
-      if (!bestRoute || !isSwapQuoteCurrent) return;
+      if (!hasCurrentSwapRoute) return;
     }
 
     setIsSubmitting(true);
@@ -471,9 +478,11 @@ function UnifiedFormContent({
     ? 'Route is not supported'
     : isSubmitting
       ? 'Sending...'
-      : routeMode === UnifiedRouteMode.Bridge
-        ? 'Continue'
-        : 'Send';
+      : isSwapQuotePending
+        ? 'Loading quote...'
+        : routeMode === UnifiedRouteMode.Bridge
+          ? 'Continue'
+          : 'Send';
 
   useEffect(() => {
     if (Object.keys(errors).length) setErrors({});
@@ -603,6 +612,7 @@ function UnifiedFormContent({
           disabled={
             isSubmitting ||
             isSanctioned ||
+            isSwapQuotePending ||
             (routeMode === UnifiedRouteMode.Bridge && !addressConfirmed)
           }
           classes="mb-4 w-full px-3 py-2.5 font-secondary text-xl text-cream-100"

@@ -11,6 +11,7 @@ export function getUnifiedBasicSubmitErrors({
   destinationToken,
   recipient,
   hasSwapRoute,
+  isSwapQuotePending = false,
 }: {
   routeMode: UnifiedRouteMode | null;
   values: UnifiedFormValues;
@@ -18,6 +19,7 @@ export function getUnifiedBasicSubmitErrors({
   destinationToken: UnifiedToken | undefined;
   recipient: string;
   hasSwapRoute: boolean;
+  isSwapQuotePending?: boolean;
 }): Record<string, string> | null {
   if (!originToken) return { originTokenKey: 'Origin token is required' };
   if (!destinationToken) return { destinationTokenKey: 'Destination token is required' };
@@ -27,7 +29,7 @@ export function getUnifiedBasicSubmitErrors({
   }
   if (!new BigNumber(values.amount).gt(0)) return { amount: 'Invalid amount' };
   if (!recipient) return { recipient: 'Invalid recipient' };
-  if (routeMode === UnifiedRouteMode.Swap && !hasSwapRoute) {
+  if (routeMode === UnifiedRouteMode.Swap && !hasSwapRoute && !isSwapQuotePending) {
     return { destinationTokenKey: 'Route is not supported' };
   }
   return null;

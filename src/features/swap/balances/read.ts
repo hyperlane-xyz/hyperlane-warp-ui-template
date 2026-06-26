@@ -2,6 +2,7 @@ import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk';
 import { isEVMLike, ProtocolType } from '@hyperlane-xyz/utils';
 
 import { estimateEvmGasCost, readEvmBalance } from './evm';
+import { readSolanaTokenBalance } from './solana';
 
 export interface ReadBalanceArgs {
   chainName: string;
@@ -20,6 +21,16 @@ export async function readBalance(
   const protocol = multiProvider.tryGetProtocol(args.chainName);
   if (!protocol) return null;
   if (isEVMLike(protocol)) return readEvmBalance(multiProvider, args);
+  if (protocol === ProtocolType.Sealevel) {
+    const rpcUrl = multiProvider.tryGetChainMetadata(args.chainName)?.rpcUrls?.[0]?.http;
+    if (!rpcUrl) return null;
+    return readSolanaTokenBalance({
+      tokenAddress: args.tokenAddress,
+      isNative: args.isNative,
+      ownerAddress: args.owner,
+      rpcUrl,
+    });
+  }
   return null;
 }
 

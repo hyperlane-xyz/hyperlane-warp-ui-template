@@ -4,6 +4,7 @@ import { encodeFunctionResult, parseAbi, toEventSelector } from 'viem';
 import { describe, expect, test, vi } from 'vitest';
 
 import { getMailboxDeliveryStatus } from './mailboxDelivery';
+import { getEvmMailboxDeliveryRefetchInterval } from './useEvmMailboxDeliveryStatus';
 
 const MAILBOX = '0x0000000000000000000000000000000000000001';
 const MSG_ID = `0x${'01'.repeat(32)}`;
@@ -150,5 +151,47 @@ describe('getMailboxDeliveryStatus', () => {
     });
 
     expect(result).toEqual({ isDelivered: true, destinationTxHash: undefined });
+  });
+});
+
+describe('getEvmMailboxDeliveryRefetchInterval', () => {
+  test('keeps polling until delivery is observed', () => {
+    const firstSeen = { current: 123 };
+
+    expect(getEvmMailboxDeliveryRefetchInterval(undefined, firstSeen, 1_000)).toBe(3_000);
+    expect(firstSeen.current).toBeUndefined();
+  });
+
+  test('stops polling after delivery with a transaction hash', () => {
+    const firstSeen = { current: undefined };
+
+    expect(
+      getEvmMailboxDeliveryRefetchInterval(
+        { isDelivered: true, destinationTxHash: TX_HASH },
+        firstSeen,
+        1_000,
+      ),
+    ).toBe(false);
+  });
+
+  test('keeps polling briefly after delivery without a transaction hash', () => {
+    const firstSeen = { current: undefined };
+
+    expect(
+      getEvmMailboxDeliveryRefetchInterval(
+        { isDelivered: true, destinationTxHash: undefined },
+        firstSeen,
+        1_000,
+      ),
+    ).toBe(3_000);
+    expect(firstSeen.current).toBe(1_000);
+
+    expect(
+      getEvmMailboxDeliveryRefetchInterval(
+        { isDelivered: true, destinationTxHash: undefined },
+        firstSeen,
+        121_000,
+      ),
+    ).toBe(false);
   });
 });

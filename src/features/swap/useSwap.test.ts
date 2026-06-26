@@ -2,6 +2,8 @@ import { describe, expect, test } from 'vitest';
 
 import type { AugmentedRoute, LabeledMsgId } from './types';
 import {
+  ensureSolanaMessageExtractionReady,
+  ensureSolanaMessagesExtracted,
   getCcsMessageLabel,
   labelMessages,
   labelSolanaMessages,
@@ -173,5 +175,26 @@ describe('labelSolanaMessages', () => {
       { msgId: '0x02', label: 'commit' },
       { msgId: '0x03', label: 'reveal' },
     ]);
+  });
+});
+
+describe('Solana message extraction guards', () => {
+  test('requires a source mailbox before extracting bridged Solana messages', () => {
+    expect(() => ensureSolanaMessageExtractionReady(undefined, 'solanamainnet')).toThrow(
+      'No mailbox address for Solana source chain solanamainnet',
+    );
+    expect(() =>
+      ensureSolanaMessageExtractionReady('11111111111111111111111111111111', 'solanamainnet'),
+    ).not.toThrow();
+  });
+
+  test('fails bridged Solana routes when no message ids are extracted', () => {
+    expect(() => ensureSolanaMessagesExtracted([], true)).toThrow(
+      'Origin Solana tx confirmed but no message IDs extracted',
+    );
+    expect(() => ensureSolanaMessagesExtracted([], false)).not.toThrow();
+    expect(() =>
+      ensureSolanaMessagesExtracted([{ msgId: '0x01', label: 'warp' }], true),
+    ).not.toThrow();
   });
 });

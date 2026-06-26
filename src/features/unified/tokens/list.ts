@@ -184,12 +184,32 @@ export function sortUnifiedTokensByBalance({
     const aBalance = aInfo?.balance ?? 0n;
     const bBalance = bInfo?.balance ?? 0n;
     if (aBalance > 0n || bBalance > 0n) {
-      if (aBalance > bBalance) return -1;
-      if (aBalance < bBalance) return 1;
+      const balanceCompare = compareDecimalBalances(
+        aBalance,
+        aInfo?.decimals,
+        bBalance,
+        bInfo?.decimals,
+      );
+      if (balanceCompare !== 0) return balanceCompare;
     }
 
     return (originalIndex.get(a.key) ?? 0) - (originalIndex.get(b.key) ?? 0);
   });
+}
+
+function compareDecimalBalances(
+  aBalance: bigint,
+  aDecimals: number | null | undefined,
+  bBalance: bigint,
+  bDecimals: number | null | undefined,
+): number {
+  const aScale = 10n ** BigInt(Math.max(bDecimals ?? 0, 0));
+  const bScale = 10n ** BigInt(Math.max(aDecimals ?? 0, 0));
+  const aNormalized = aBalance * aScale;
+  const bNormalized = bBalance * bScale;
+  if (aNormalized > bNormalized) return -1;
+  if (aNormalized < bNormalized) return 1;
+  return 0;
 }
 
 function getRouteSortRank(mode: UnifiedTokenRouteMode): number {

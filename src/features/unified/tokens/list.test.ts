@@ -476,6 +476,36 @@ describe('getVisibleUnifiedTokens', () => {
     expect(result.map((token) => token.key)).toEqual(['high-value', 'low-value']);
   });
 
+  test('balance sorting normalizes token decimals when usd is unavailable', () => {
+    config.featuredTokens.splice(0, config.featuredTokens.length);
+    const oneUsdc = createUnifiedToken({
+      key: 'one-usdc',
+      symbol: 'USDC',
+      capabilities: { bridge: false, swap: true },
+      swapToken: createSwapToken({ symbol: 'USDC', decimals: 6 }),
+    });
+    const pointOneEth = createUnifiedToken({
+      key: 'point-one-eth',
+      symbol: 'ETH',
+      capabilities: { bridge: false, swap: true },
+      swapToken: createSwapToken({ symbol: 'ETH', decimals: 18 }),
+    });
+
+    const result = sortUnifiedTokensByBalance({
+      tokens: [pointOneEth, oneUsdc],
+      balanceInfo: new Map([
+        [pointOneEth.key, { balance: 100_000_000_000_000_000n, decimals: 18, usd: null }],
+        [oneUsdc.key, { balance: 1_000_000n, decimals: 6, usd: null }],
+      ]),
+      counterpartToken: undefined,
+      selectionMode: 'origin',
+      collateralGroups: new Map(),
+      engineEnabled: true,
+    });
+
+    expect(result.map((token) => token.key)).toEqual(['one-usdc', 'point-one-eth']);
+  });
+
   test('balance info keeps decimals from the selected route member', () => {
     const primary = createMockToken({
       chainName: 'ethereum',

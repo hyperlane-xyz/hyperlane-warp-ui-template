@@ -1,0 +1,129 @@
+import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk';
+import { useQuery } from '@tanstack/react-query';
+
+import { logger } from '../../utils/logger';
+import type { RouteResponse } from '../api/types';
+import type { LabeledMsgId } from '../swap/types';
+import { executeGraphQLQuery } from './graphqlClient';
+import { buildMessagesByOriginTxQuery } from './queries/build';
+import {
+  parseTimestamp,
+  postgresByteaToAddress,
+  postgresByteaToString,
+  postgresByteaToTxHash,
+} from './queries/encoding';
+import type { MessageStubEntry } from './queries/fragments';
+import { getSwapDeliveryMsgId } from './utils';
+
+const POLL_INTERVAL_MS = 10_000;
+
+export interface OriginTxSwapMessagesResult {
+  msgIds?: LabeledMsgId[];
+  isDelivered: boolean;
+  destinationTxHash?: string;
+  originTimestamp?: number;
+  originBlockHeight?: number;
+  isLoading: boolean;
+}
+
+export function useOriginTxSwapMessages(
+  originTxHash: string | undefined,
+  originDomainId: number | undefined,
+  route: RouteResponse | undefined,
+  enabled: boolean,
+  multiProvider: MultiProtocolProvider,
+): OriginTxSwapMessagesResult {
+  const isMultiProviderReady = multiProvider.getKnownChainNames().length > 0;
+
+  const { data, isLoading } = useQuery({
+    // eslint-disable-next-line @tanstack/query/exhaustive-deps -- multiProvider is stable, adding it causes unnecessary refetches
+    queryKey: ['originTxSwapMessages', originTxHash, originDomainId, isMultiProviderReady],
+    queryFn: async () => {
+      if (!originTxHash || !originDomainId) return null;
+      const originMetadata = multiProvider.tryGetChainMetadata(originDomainId);
+      const queryData = buildMessagesByOriginTxQuery(originTxHash, originDomainId, originMetadata);
+      if (!queryData) return null;
+      const result = await executeGraphQLQuery<{ message_view: MessageStubEntry[] }>(
+        queryData.query,
+        queryData.variables,
+      );
+      if (result.type === 'error') {
+        logger.error('Failed to query origin transaction messages', result.error);
+        return null;
+      }
+      return parseOriginTxSwapMessages(result.data.message_view ?? [], route, multiProvider);
+    },
+    enabled: enabled && !!originTxHash && !!originDomainId && isMultiProviderReady,
+    staleTime: 30_000,
+    refetchInterval: (query) => {
+      const result = query.state.data;
+      if (!result?.msgIds?.length) return POLL_INTERVAL_MS;
+      if (!result.isDelivered || !result.destinationTxHash) return POLL_INTERVAL_MS;
+      return false;
+    },
+    refetchOnWindowFocus: false,
+  });
+
+  return {
+    msgIds: data?.msgIds,
+    isDelivered: data?.isDelivered ?? false,
+    destinationTxHash: data?.destinationTxHash,
+    originTimestamp: data?.originTimestamp,
+    originBlockHeight: data?.originBlockHeight,
+    isLoading,
+  };
+}
+
+export function parseOriginTxSwapMessages(
+  entries: MessageStubEntry[],
+  route: RouteResponse | undefined,
+  multiProvider: MultiProtocolProvider,
+): Omit<OriginTxSwapMessagesResult, 'isLoading'> {
+  if (!entries.length) return { isDelivered: false };
+
+  const originMetadata = multiProvider.tryGetChainMetadata(entries[0].origin_domain_id);
+  const messages = entries.map((entry) => ({
+    msgId: postgresByteaToString(entry.msg_id),
+    sender: postgresByteaToAddress(entry.sender, originMetadata),
+    body: entry.message_body ? postgresByteaToString(entry.message_body) : undefined,
+  }));
+  const msgIds = labelRecoveredSwapMessages(messages, route);
+  const deliveryMsgId = getSwapDeliveryMsgId(msgIds);
+  const deliveryEntry =
+    entries.find((entry) => postgresByteaToString(entry.msg_id) === deliveryMsgId) ??
+    entries.at(-1)!;
+  const destMetadata = multiProvider.tryGetChainMetadata(deliveryEntry.destination_domain_id);
+
+  return {
+    msgIds,
+    isDelivered: deliveryEntry.is_delivered,
+    destinationTxHash:
+      deliveryEntry.is_delivered && deliveryEntry.destination_tx_hash
+        ? postgresByteaToTxHash(deliveryEntry.destination_tx_hash, destMetadata)
+        : undefined,
+    originTimestamp: parseTimestamp(entries[0].send_occurred_at),
+    originBlockHeight: entries[0].origin_block_height,
+  };
+}
+
+function labelRecoveredSwapMessages(
+  messages: Array<{ msgId: string; sender: string; body?: string }>,
+  route: RouteResponse | undefined,
+): LabeledMsgId[] {
+  const bridgeRouters = new Set(
+    route?.steps
+      .filter(
+        (step): step is Extract<RouteResponse['steps'][number], { type: 'bridge' }> =>
+          step.type === 'bridge',
+      )
+      .map((step) => step.router.replace(/^0x/i, '').toLowerCase()) ?? [],
+  );
+
+  return messages.map((message) => {
+    const senderAddr = message.sender.replace(/^0x/i, '').toLowerCase().slice(-40);
+    if (bridgeRouters.has(senderAddr)) return { msgId: message.msgId, label: 'warp' };
+    if (message.body?.startsWith('0x01')) return { msgId: message.msgId, label: 'commit' };
+    if (message.body?.startsWith('0x02')) return { msgId: message.msgId, label: 'reveal' };
+    return { msgId: message.msgId, label: 'warp' };
+  });
+}

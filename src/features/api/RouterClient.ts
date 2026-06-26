@@ -24,6 +24,7 @@ export interface QuoteParams {
   slippageBps?: number;
   /** Optional client-supplied salt; engine generates one if absent. */
   commitmentSalt?: `0x${string}`;
+  usePermit2?: boolean;
 }
 
 export class RouterClient {
@@ -84,6 +85,7 @@ export class RouterClient {
         ...(params.recipient && { recipient: params.recipient }),
         ...(params.slippageBps != null && { slippageBps: params.slippageBps }),
         ...(params.commitmentSalt && { commitmentSalt: params.commitmentSalt }),
+        usePermit2: params.usePermit2 ?? false,
       }),
     });
     const body = await res.text();

@@ -61,6 +61,20 @@ describe('api schemas', () => {
     expect(() => QuoteRequestSchema.parse({ ...baseRequest, commitmentSalt: '0x1234' })).toThrow();
   });
 
+  test('accepts explicit classic approval quote mode', () => {
+    expect(
+      QuoteRequestSchema.parse({
+        srcChain: 8453,
+        dstChain: 42161,
+        srcToken: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+        dstToken: '0xaf88d065e77c8cc2239327c5edb3a432268e5831',
+        amount: '1000000',
+        sender: '0x4444444444444444444444444444444444444444',
+        usePermit2: false,
+      }).usePermit2,
+    ).toBe(false);
+  });
+
   test('accepts non-EVM bridge assets in quote responses', () => {
     const solanaAsset = 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB';
 

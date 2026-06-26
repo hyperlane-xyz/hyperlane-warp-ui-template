@@ -43,6 +43,7 @@ test.describe('EVM swap submit', () => {
 
     await enterAmount(page, '1');
     await expect.poll(() => quoteRequests.length, { timeout: 20_000 }).toBeGreaterThan(0);
+    expect(quoteRequests.at(-1)).toMatchObject({ usePermit2: false });
 
     await page.getByRole('button', { name: /^Send$/ }).click();
 

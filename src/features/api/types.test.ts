@@ -11,6 +11,14 @@ const bytes32A = `0x${'a'.repeat(64)}`;
 const bytes32B = `0x${'b'.repeat(64)}`;
 const bytes32C = `0x${'c'.repeat(64)}`;
 const bytes32D = `0x${'d'.repeat(64)}`;
+const baseQuoteRequest = {
+  srcChain: 8453,
+  dstChain: 42161,
+  srcToken: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+  dstToken: '0xaf88d065e77c8cc2239327c5edb3a432268e5831',
+  amount: '1000000',
+  sender: '0x4444444444444444444444444444444444444444',
+};
 
 describe('api schemas', () => {
   test('accepts current engine readiness snapshot fields', () => {
@@ -71,30 +79,33 @@ describe('api schemas', () => {
   });
 
   test('requires quote commitment salt to be bytes32', () => {
-    const baseRequest = {
-      srcChain: 8453,
-      dstChain: 42161,
-      srcToken: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
-      dstToken: '0xaf88d065e77c8cc2239327c5edb3a432268e5831',
-      amount: '1000000',
-      sender: '0x4444444444444444444444444444444444444444',
-    };
-
-    expect(QuoteRequestSchema.parse({ ...baseRequest, commitmentSalt: bytes32A })).toMatchObject({
+    expect(
+      QuoteRequestSchema.parse({ ...baseQuoteRequest, commitmentSalt: bytes32A }),
+    ).toMatchObject({
       commitmentSalt: bytes32A,
     });
-    expect(() => QuoteRequestSchema.parse({ ...baseRequest, commitmentSalt: '0x1234' })).toThrow();
+    expect(() =>
+      QuoteRequestSchema.parse({ ...baseQuoteRequest, commitmentSalt: '0x1234' }),
+    ).toThrow();
+  });
+
+  test('matches engine main quote request numeric bounds', () => {
+    expect(() => QuoteRequestSchema.parse(baseQuoteRequest)).not.toThrow();
+    expect(() => QuoteRequestSchema.parse({ ...baseQuoteRequest, srcChain: 0 })).toThrow();
+    expect(() => QuoteRequestSchema.parse({ ...baseQuoteRequest, dstChain: 1.5 })).toThrow();
+    expect(() => QuoteRequestSchema.parse({ ...baseQuoteRequest, amount: '0' })).toThrow();
+    expect(() =>
+      QuoteRequestSchema.parse({ ...baseQuoteRequest, amount: (2n ** 256n).toString() }),
+    ).toThrow();
+    expect(() => QuoteRequestSchema.parse({ ...baseQuoteRequest, slippageBps: -1 })).toThrow();
+    expect(() => QuoteRequestSchema.parse({ ...baseQuoteRequest, slippageBps: 10_001 })).toThrow();
+    expect(() => QuoteRequestSchema.parse({ ...baseQuoteRequest, slippageBps: 100 })).not.toThrow();
   });
 
   test('accepts explicit classic approval quote mode', () => {
     expect(
       QuoteRequestSchema.parse({
-        srcChain: 8453,
-        dstChain: 42161,
-        srcToken: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
-        dstToken: '0xaf88d065e77c8cc2239327c5edb3a432268e5831',
-        amount: '1000000',
-        sender: '0x4444444444444444444444444444444444444444',
+        ...baseQuoteRequest,
         usePermit2: false,
       }).usePermit2,
     ).toBe(false);

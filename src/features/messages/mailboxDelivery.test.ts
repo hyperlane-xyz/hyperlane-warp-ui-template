@@ -8,6 +8,7 @@ import {
   getEvmMailboxDeliveryRefetchInterval,
   shouldEnableEvmMailboxDeliveryStatus,
 } from './useEvmMailboxDeliveryStatus';
+import { shouldEnableSolanaMailboxDeliveryStatus } from './useSolanaMailboxDeliveryStatus';
 
 const MAILBOX = '0x0000000000000000000000000000000000000001';
 const MSG_ID = `0x${'01'.repeat(32)}`;
@@ -258,6 +259,51 @@ describe('shouldEnableEvmMailboxDeliveryStatus', () => {
         destinationChain: CHAIN,
         mailbox: undefined,
         destinationProtocol: ProtocolType.Ethereum,
+      }),
+    ).toBe(false);
+  });
+});
+
+describe('shouldEnableSolanaMailboxDeliveryStatus', () => {
+  test('enables only Solana mailbox polling with a configured mailbox', () => {
+    expect(
+      shouldEnableSolanaMailboxDeliveryStatus({
+        enabled: true,
+        destinationChain: CHAIN,
+        mailbox: MAILBOX,
+        destinationProtocol: ProtocolType.Sealevel,
+      }),
+    ).toBe(true);
+    expect(
+      shouldEnableSolanaMailboxDeliveryStatus({
+        enabled: true,
+        destinationChain: CHAIN,
+        mailbox: MAILBOX,
+        destinationProtocol: ProtocolType.Ethereum,
+      }),
+    ).toBe(false);
+    expect(
+      shouldEnableSolanaMailboxDeliveryStatus({
+        enabled: true,
+        destinationChain: undefined,
+        mailbox: MAILBOX,
+        destinationProtocol: ProtocolType.Sealevel,
+      }),
+    ).toBe(false);
+    expect(
+      shouldEnableSolanaMailboxDeliveryStatus({
+        enabled: true,
+        destinationChain: CHAIN,
+        mailbox: undefined,
+        destinationProtocol: ProtocolType.Sealevel,
+      }),
+    ).toBe(false);
+    expect(
+      shouldEnableSolanaMailboxDeliveryStatus({
+        enabled: false,
+        destinationChain: CHAIN,
+        mailbox: MAILBOX,
+        destinationProtocol: ProtocolType.Sealevel,
       }),
     ).toBe(false);
   });

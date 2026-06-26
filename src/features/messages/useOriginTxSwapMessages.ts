@@ -88,7 +88,9 @@ export function getOriginTxSwapMessagesRouteKey(route: RouteResponse | undefined
         (step): step is Extract<RouteResponse['steps'][number], { type: 'bridge' }> =>
           step.type === 'bridge',
       )
-      .map((step) => `${step.chain}-${step.destChain}-${step.router.toLowerCase()}`) ?? [];
+      .map(
+        (step) => `${step.chain}-${step.destChain}-${normalizeRecoveredAddressRef(step.router)}`,
+      ) ?? [];
 
   return bridgeRouters.join('|') || 'none';
 }
@@ -135,14 +137,22 @@ function labelRecoveredSwapMessages(
         (step): step is Extract<RouteResponse['steps'][number], { type: 'bridge' }> =>
           step.type === 'bridge',
       )
-      .map((step) => step.router.replace(/^0x/i, '').toLowerCase()) ?? [],
+      .map((step) => normalizeRecoveredAddressRef(step.router)) ?? [],
   );
 
   return messages.map((message) => {
-    const senderAddr = message.sender.replace(/^0x/i, '').toLowerCase().slice(-40);
+    const senderAddr = normalizeRecoveredAddressRef(message.sender);
     if (bridgeRouters.has(senderAddr)) return { msgId: message.msgId, label: 'warp' };
     if (message.body?.startsWith('0x01')) return { msgId: message.msgId, label: 'commit' };
     if (message.body?.startsWith('0x02')) return { msgId: message.msgId, label: 'reveal' };
     return { msgId: message.msgId, label: 'warp' };
   });
+}
+
+function normalizeRecoveredAddressRef(address: string): string {
+  const without0x = address.replace(/^0x/i, '');
+  if (address.toLowerCase().startsWith('0x') && /^[0-9a-fA-F]+$/.test(without0x)) {
+    return without0x.toLowerCase().slice(-40);
+  }
+  return address;
 }

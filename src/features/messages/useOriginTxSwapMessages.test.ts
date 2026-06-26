@@ -1,5 +1,5 @@
 import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk';
-import { ProtocolType } from '@hyperlane-xyz/utils';
+import { base58ToBuffer, ProtocolType } from '@hyperlane-xyz/utils';
 import { describe, expect, test } from 'vitest';
 
 import type { RouteResponse } from '../api/types';
@@ -10,13 +10,18 @@ import {
 } from './useOriginTxSwapMessages';
 
 const BRIDGE_ROUTER = '0x00000000000000000000000000000000000000aa';
+const SOLANA_BRIDGE_ROUTER = '9xQeWvG816bUx9EPjHmaT23bxJzS3yL6ssffgCHvTiqP';
 const TX_HASH = `0x${'ee'.repeat(32)}`;
 
 const multiProvider = {
   tryGetChainMetadata: () => ({ protocol: ProtocolType.Ethereum }),
 } as unknown as MultiProtocolProvider;
 
-function createRoute(): RouteResponse {
+const solanaMultiProvider = {
+  tryGetChainMetadata: () => ({ protocol: ProtocolType.Sealevel }),
+} as unknown as MultiProtocolProvider;
+
+function createRoute(router = BRIDGE_ROUTER): RouteResponse {
   return {
     tx: {
       to: '0x0000000000000000000000000000000000000001',
@@ -33,7 +38,7 @@ function createRoute(): RouteResponse {
         chain: 1,
         destChain: 2,
         asset: '0x0000000000000000000000000000000000000002',
-        router: BRIDGE_ROUTER,
+        router,
         amountIn: '1',
         amountOut: '1',
         fee: {
@@ -75,7 +80,10 @@ function message(overrides: Partial<MessageStubEntry>): MessageStubEntry {
 describe('parseOriginTxSwapMessages', () => {
   test('keys recovered-label queries by bridge route routers', () => {
     expect(getOriginTxSwapMessagesRouteKey(undefined)).toBe('none');
-    expect(getOriginTxSwapMessagesRouteKey(createRoute())).toBe(`1-2-${BRIDGE_ROUTER}`);
+    expect(getOriginTxSwapMessagesRouteKey(createRoute())).toBe(`1-2-${BRIDGE_ROUTER.slice(2)}`);
+    expect(getOriginTxSwapMessagesRouteKey(createRoute(SOLANA_BRIDGE_ROUTER))).toBe(
+      `1-2-${SOLANA_BRIDGE_ROUTER}`,
+    );
   });
 
   test('recovers route-aware warp, commit, and reveal labels from origin tx messages', () => {
@@ -132,6 +140,22 @@ describe('parseOriginTxSwapMessages', () => {
     expect(parsed.msgIds).toEqual([{ msgId: `0x${'44'.repeat(32)}`, label: 'warp' }]);
     expect(parsed.destinationTxHash).toBe(TX_HASH);
   });
+
+  test('preserves base58 bridge router case when labeling recovered messages', () => {
+    const parsed = parseOriginTxSwapMessages(
+      [
+        message({
+          msg_id: bytea('55'),
+          sender: solanaAddressBytea(SOLANA_BRIDGE_ROUTER),
+          message_body: bytea('02'),
+        }),
+      ],
+      createRoute(SOLANA_BRIDGE_ROUTER),
+      solanaMultiProvider,
+    );
+
+    expect(parsed.msgIds).toEqual([{ msgId: `0x${'55'.repeat(32)}`, label: 'warp' }]);
+  });
 });
 
 function bytea(byte: string) {
@@ -140,4 +164,8 @@ function bytea(byte: string) {
 
 function paddedAddress(address: string) {
   return `\\x${'00'.repeat(12)}${address.slice(2).toLowerCase()}`;
+}
+
+function solanaAddressBytea(address: string) {
+  return `\\x${base58ToBuffer(address).toString('hex')}`;
 }

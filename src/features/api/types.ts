@@ -199,8 +199,6 @@ export const ChainRouteTxSchema = z.object({
   accounts: z
     .array(z.object({ pubkey: z.string(), isSigner: z.boolean(), isWritable: z.boolean() }))
     .optional(),
-  // Solana-only legacy field. Engine should not return browser-side key material.
-  additionalSigners: z.array(z.string()).optional(),
   // Solana-only: Address Lookup Table addresses for V0 transactions.
   altAddresses: z.array(z.string()).optional(),
   // Solana-only: instructions to prepend before the main UR instruction.

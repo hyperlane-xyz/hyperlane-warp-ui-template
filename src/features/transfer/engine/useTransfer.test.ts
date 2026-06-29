@@ -1,11 +1,21 @@
 import { ProviderType } from '@hyperlane-xyz/sdk';
-import { Keypair, SystemProgram, Transaction } from '@solana/web3.js';
-import { describe, expect, test } from 'vitest';
+import {
+  Connection,
+  Keypair,
+  SystemProgram,
+  Transaction,
+  VersionedTransaction,
+} from '@solana/web3.js';
+import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import type { RouteTx } from '../../api/types';
 import { toWalletTx } from './useTransfer';
 
 describe('toWalletTx', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   test('deserializes Solana engine payloads with existing partial signatures', async () => {
     const feePayer = Keypair.generate();
     const extraSigner = Keypair.generate();
@@ -45,19 +55,32 @@ describe('toWalletTx', () => {
     ).not.toBeNull();
   });
 
-  test('rejects Solana route keypair material', async () => {
+  test('builds Solana route instruction payloads without additional signers', async () => {
+    vi.spyOn(Connection.prototype, 'getLatestBlockhash').mockResolvedValue({
+      blockhash: '11111111111111111111111111111111',
+      lastValidBlockHeight: 1,
+    });
+    const sender = Keypair.generate().publicKey;
     const routeTx: RouteTx = {
-      to: '11111111111111111111111111111111',
+      to: SystemProgram.programId.toBase58(),
       data: '',
       value: '0',
-      additionalSigners: ['secret-keypair-material'],
+      accounts: [{ pubkey: sender.toBase58(), isSigner: true, isWritable: true }],
+      preInstructions: [
+        {
+          programId: SystemProgram.programId.toBase58(),
+          accounts: [],
+          data: '',
+        },
+      ],
     };
 
-    await expect(
-      toWalletTx(routeTx, ProviderType.SolanaWeb3, {
-        sender: '11111111111111111111111111111111',
-        rpcUrl: 'http://localhost:8899',
-      }),
-    ).rejects.toThrow('unsupported additionalSigners');
+    const walletTx = (await toWalletTx(routeTx, ProviderType.SolanaWeb3, {
+      sender: sender.toBase58(),
+      rpcUrl: 'http://localhost:8899',
+    })) as { transaction: VersionedTransaction };
+
+    expect(walletTx.transaction).toBeInstanceOf(VersionedTransaction);
+    expect(typeof walletTx.transaction.serialize).toBe('function');
   });
 });

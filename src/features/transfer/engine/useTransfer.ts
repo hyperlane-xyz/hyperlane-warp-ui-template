@@ -333,9 +333,6 @@ async function buildSolanaTransaction(
 ): Promise<VersionedTransaction> {
   if (!opts.sender) throw new Error('Missing Solana sender for route transaction');
   if (!opts.rpcUrl) throw new Error('Missing Solana RPC URL for route transaction');
-  if (tx.additionalSigners?.length) {
-    throw new Error('Solana route included unsupported additionalSigners');
-  }
 
   const connection = new Connection(opts.rpcUrl, 'confirmed');
   const instruction = new TransactionInstruction({

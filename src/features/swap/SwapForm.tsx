@@ -1,5 +1,4 @@
 import { objLength } from '@hyperlane-xyz/utils';
-import { logger } from '../../utils/logger';
 import { useDebounce, useModal } from '@hyperlane-xyz/widgets';
 import { useAccounts } from '@hyperlane-xyz/widgets/walletIntegrations/accounts';
 import { useAccountAddressForChain } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
@@ -17,6 +16,7 @@ import { TransferSection } from '../../components/layout/TransferSection';
 import { useToastError } from '../../components/toast/useToastError';
 import { WARP_QUERY_PARAMS } from '../../consts/args';
 import { config } from '../../consts/config';
+import { logger } from '../../utils/logger';
 import { updateQueryParams } from '../../utils/queryParams';
 import { useChains } from '../api/hooks';
 import { useMultiProvider } from '../chains/hooks';
@@ -231,7 +231,9 @@ function SwapFormContent() {
     } catch (err) {
       logger.error('onContinue threw unexpectedly', err as Error);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      setErrors({ form: err instanceof Error ? err.message : 'Unexpected error — check console' } as any);
+      setErrors({
+        form: err instanceof Error ? err.message : 'Unexpected error — check console',
+      } as any);
     } finally {
       setIsValidating(false);
     }

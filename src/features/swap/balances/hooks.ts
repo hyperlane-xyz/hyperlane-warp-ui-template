@@ -41,7 +41,9 @@ export function useTokenBalances(
   const filteredChainId = filtered[0]?.chainId;
   const filteredProtocol = filtered[0] ? multiProvider.tryGetProtocol(filtered[0].chainName) : null;
   const filteredPublicClient = usePublicClient({ chainId: filteredChainId });
-  const filteredAddress = addressOverride || (filteredProtocol === ProtocolType.Sealevel ? connectedSolana : connectedEvm);
+  const filteredAddress =
+    addressOverride ||
+    (filteredProtocol === ProtocolType.Sealevel ? connectedSolana : connectedEvm);
 
   const singleChainQuery = useQuery({
     queryKey: [
@@ -137,7 +139,14 @@ export function useTokenBalances(
       isLoading: singleChainQuery.isLoading,
       hasAnyAddress: !!filteredAddress,
     };
-  }, [chainFilter, fanoutQueries, singleChainQuery.data, singleChainQuery.isLoading, filteredAddress, hasAnyAddress]);
+  }, [
+    chainFilter,
+    fanoutQueries,
+    singleChainQuery.data,
+    singleChainQuery.isLoading,
+    filteredAddress,
+    hasAnyAddress,
+  ]);
 }
 
 // Single-token balance — for OriginTokenCard's balance row + MaxButton.
@@ -146,8 +155,7 @@ export function useTokenBalance(token: UiToken | undefined, addressOverride?: st
   const { address: connectedEvm } = useAccount();
   const connectedSolana = useSolanaAccount(multiProvider).addresses[0]?.address;
   const protocol = token ? multiProvider.tryGetProtocol(token.chainName) : null;
-  const connectedForProtocol =
-    protocol === ProtocolType.Sealevel ? connectedSolana : connectedEvm;
+  const connectedForProtocol = protocol === ProtocolType.Sealevel ? connectedSolana : connectedEvm;
   const userAddress = addressOverride || connectedForProtocol;
   const publicClient = usePublicClient({ chainId: token?.chainId });
 

@@ -5,11 +5,7 @@ import { Fragment, useMemo, useState } from 'react';
 import { ChainLogo } from '../../../components/icons/ChainLogo';
 import { TokenIcon } from '../../../components/icons/TokenIcon';
 import { HoverTooltip } from '../../../components/tooltip/HoverTooltip';
-import type {
-  QuoteBridgeStep,
-  QuoteStep,
-  QuoteSwapStep,
-} from '../../api/types';
+import type { QuoteBridgeStep, QuoteStep, QuoteSwapStep } from '../../api/types';
 import { useMultiProvider } from '../../chains/hooks';
 import { formatDisplayAmount, formatFeeAmount } from '../balances/utils';
 import { getDexMeta } from '../dexMeta';

@@ -54,7 +54,12 @@ export function useSolanaMailboxDeliveryStatus({
     queryKey: ['solanaMailboxDelivery', destinationChain, mailbox, msgId],
     queryFn: async () => {
       if (!destinationChain) return { isDelivered: false, destinationTxHash: undefined };
-      return getSolanaMailboxDeliveryStatus({ msgId, destinationChain, chainAddresses, multiProvider });
+      return getSolanaMailboxDeliveryStatus({
+        msgId,
+        destinationChain,
+        chainAddresses,
+        multiProvider,
+      });
     },
     enabled: enabled && !!destinationChain && !!mailbox && destProtocol === ProtocolType.Sealevel,
     refetchInterval: (query) => {

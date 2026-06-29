@@ -23,7 +23,7 @@ import { logger } from '../utils/logger';
  * Supported URL params:
  *   - accent, bg, card, text, buttonText, border, error (hex without #)
  *   - mode: "dark" or "light"
- *   - origin, destination, originToken, destinationToken (token defaults)
+ *   - origin, destination, originToken, destinationToken (address/denom token defaults)
  */
 
 /** Auto-opens TransfersDetailsModal when a new transfer starts. */

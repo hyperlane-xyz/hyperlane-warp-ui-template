@@ -93,7 +93,7 @@ pnpm unlink:monorepo
 
 ## Embed Widget
 
-The Warp UI can be embedded as an iframe on any website, giving your users a bridge experience directly in your app.
+The Warp UI can be embedded as an iframe on any website, giving your users a bridge or swap experience directly in your app.
 
 ### Setup
 
@@ -108,10 +108,10 @@ Once deployed (e.g., to Vercel), the embed is available at `/embed`:
 />
 ```
 
-You can pre-select transfer routes using query params:
+You can pre-select tokens using query params. Token refs should be token addresses, denoms, or native zero-address refs; symbol refs are only supported for local config defaults.
 
 ```text
-/embed?origin=ethereum&destination=arbitrum&originToken=USDC&destinationToken=USDC
+/embed?origin=base&originToken=0x0000000000000000000000000000000000000000&destination=ethereum&destinationToken=0x0000000000000000000000000000000000000000
 ```
 
 ### Theme Customization

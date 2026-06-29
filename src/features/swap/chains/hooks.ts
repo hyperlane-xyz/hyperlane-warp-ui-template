@@ -6,8 +6,8 @@ import type { ChainDiscovery } from '../../api/types';
 import { useMultiProvider } from '../../chains/hooks';
 import type { ChainInfo } from '../../chains/hooks';
 
-// Engine-driven chain list for the swap modal. /v1/chains is the source
-// of truth for what the swap form can quote against. Fall back to
+// Engine-driven chain list for swap routes. /v1/chains is the source
+// of truth for what the engine can quote against. Fall back to
 // multiProvider metadata for display name + protocol when engine entries
 // are missing those fields.
 export function useSwapChainInfos(): ChainInfo[] {

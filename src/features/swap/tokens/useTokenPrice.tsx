@@ -6,8 +6,8 @@ import type { UiToken } from './types';
 
 // Swap-side prices: derive coinGeckoIds from the engine token catalogue
 // (knownTokens grows as the user browses chains/tokens) and delegate to
-// the shared store-backed cache. Overlapping IDs with the bridge tab
-// (ETH, USDC, etc.) are fetched once total.
+// the shared store-backed cache. Overlapping bridge/swap IDs (ETH, USDC,
+// etc.) are fetched once total.
 export function useTokenPrices(): { prices: Record<string, number>; isLoading: boolean } {
   const knownTokens = useStore((s) => s.knownTokens);
 

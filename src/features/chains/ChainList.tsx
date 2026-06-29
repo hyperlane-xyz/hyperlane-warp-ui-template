@@ -20,7 +20,7 @@ interface ChainListProps {
   isEditMode?: boolean;
   filterState?: ChainFilterState;
   sortState?: SortState;
-  /** Override the chain source (e.g. swap tab uses engine `/v1/chains`). */
+  /** Override the chain source (e.g. unified swap routes use engine `/v1/chains`). */
   chainInfos?: ChainInfo[];
 }
 

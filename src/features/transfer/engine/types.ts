@@ -71,6 +71,10 @@ export interface TransferHistoryItem {
   originBlockNumber?: number;
   /** Unix seconds when origin tx was confirmed and delivery polling started. */
   originTxTimestamp?: number;
+  // pending_swap PDA address for EVM→Solana routes with a destination swap.
+  // Set at quote time from callCommitment.ccs.body.revealAccounts[0].pubkey.
+  // When this account is closed (null) on Solana, the dest swap has completed.
+  solanaDestSwapPda?: string;
 }
 
 // ── Form values ──────────────────────────────────────────────────────

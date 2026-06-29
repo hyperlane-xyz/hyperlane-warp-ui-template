@@ -255,6 +255,12 @@ function TransferFormContent() {
       }
       setErrors({});
       setIsReview(true);
+    } catch (err) {
+      logger.error('onContinue threw unexpectedly', err as Error);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setErrors({
+        form: err instanceof Error ? err.message : 'Unexpected error — check console',
+      } as any);
     } finally {
       setIsValidating(false);
     }
@@ -410,6 +416,8 @@ function TransferFormContent() {
       amountOut: finalStep && 'amountOut' in finalStep ? finalStep.amountOut : bestRoute.raw.output,
       sender,
       recipient: effectiveRecipient,
+      // revealAccounts[0] is always the pending_swap PDA per CCS engine spec
+      solanaDestSwapPda: bestRoute.raw.callCommitment?.ccs.body.revealAccounts?.[0]?.pubkey,
       destinationOutcome:
         bestRoute.raw.callCommitment && destinationSwapStep
           ? {

@@ -39,7 +39,6 @@ const LABEL_NAMES: Record<string, string> = {
   warp: 'Warp Message ID',
   bridge: 'Bridge Message ID',
   commit: 'Commit Message ID',
-  reveal: 'Reveal Message ID',
 };
 
 const STATUS_DESCRIPTION: Record<TransferStatus, string> = {

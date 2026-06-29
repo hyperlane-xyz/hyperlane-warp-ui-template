@@ -153,13 +153,14 @@ export const QuoteSwapStepSchema = z.object({
   type: z.literal('swap'),
   chain: z.number(),
   dex: z.string(),
-  tokenIn: Address,
-  tokenOut: Address,
+  tokenIn: TokenAddress,
+  tokenOut: TokenAddress,
   amountIn: BigIntString,
   amountOut: BigIntString,
-  path: z.array(Address),
+  path: z.array(TokenAddress),
   poolCount: z.number(),
-  minPoolTvlUsd: z.number().nullable(),
+  minPoolTvlUsd: z.number().nullable().optional(),
+  poolAddress: z.string().optional(),
 });
 export type QuoteSwapStep = z.infer<typeof QuoteSwapStepSchema>;
 
@@ -188,10 +189,33 @@ export const QuoteStepSchema = z.discriminatedUnion('type', [
 ]);
 export type QuoteStep = z.infer<typeof QuoteStepSchema>;
 
-export const EvmRouteTxSchema = z.object({
-  to: Address,
-  data: Hex,
+export const ChainRouteTxSchema = z.object({
+  // EVM: 0x-hex contract address; Solana: base58 programId
+  to: z.string().min(1).max(100),
+  // EVM: 0x-hex calldata; Solana: base64 instruction data
+  data: z.string(),
   value: BigIntString,
+  // Solana-only: accounts array for the instruction
+  accounts: z
+    .array(z.object({ pubkey: z.string(), isSigner: z.boolean(), isWritable: z.boolean() }))
+    .optional(),
+  // Solana-only legacy field. Engine should not return browser-side key material.
+  additionalSigners: z.array(z.string()).optional(),
+  // Solana-only: Address Lookup Table addresses for V0 transactions.
+  altAddresses: z.array(z.string()).optional(),
+  // Solana-only: instructions to prepend before the main UR instruction.
+  // Used for compute budget and idempotent ATA creation.
+  preInstructions: z
+    .array(
+      z.object({
+        programId: z.string(),
+        accounts: z.array(
+          z.object({ pubkey: z.string(), isSigner: z.boolean(), isWritable: z.boolean() }),
+        ),
+        data: z.string(), // base64-encoded instruction data
+      }),
+    )
+    .optional(),
 });
 
 export const SdkRouteTxSchema = z.object({
@@ -202,46 +226,33 @@ export const SdkRouteTxSchema = z.object({
   metadata: z.record(z.unknown()).optional(),
 });
 
-export const RouteTxSchema = z.union([EvmRouteTxSchema, SdkRouteTxSchema]);
+export const RouteTxSchema = z.union([ChainRouteTxSchema, SdkRouteTxSchema]);
 export type RouteTx = z.infer<typeof RouteTxSchema>;
 
-// CCS payload — engine assembles it server-side. Client just POSTs.
-// Mirror of `PostCallsSchema` from @hyperlane-xyz/sdk.
-export const ICACallSchema = z.object({
-  to: z.string().regex(/^0x[0-9a-fA-F]{64}$/), // bytes32
-  value: BigIntString,
-  data: Hex,
-});
-export type ICACall = z.infer<typeof ICACallSchema>;
-
-export const CallCommitmentBodySchema = z.object({
-  calls: z.array(ICACallSchema),
-  relayers: z.array(Address),
-  salt: Hex,
-  userSalt: Hex,
-  originDomain: z.number(),
-  destinationDomain: z.number(),
-  owner: Address,
-  ismOverride: Address.optional(),
-});
-export type CallCommitmentBody = z.infer<typeof CallCommitmentBodySchema>;
-
-export const CcsPathSchema = z.string().regex(/^\/[a-zA-Z0-9/_-]*$/);
-
 // Engine returns this on routes that need CCS coordination. Pre-built
-// HTTP request — UI just fetches `${CCS_URL}${path}` with method/body.
+// HTTP request — UI just POSTs ccs.body to /calldata.
 export const CallCommitmentSchema = z.object({
   version: z.literal(1),
   commitment: Hex,
   hash: z.object({
     algorithm: z.literal('keccak256'),
     preimage: z.string(),
-    encodedCalls: Hex,
+    encodedCalls: Hex.optional(),
   }),
   ccs: z.object({
     method: z.literal('POST'),
-    path: CcsPathSchema,
-    body: CallCommitmentBodySchema,
+    path: z.literal('/calldata'),
+    body: z.object({
+      commitment: Hex,
+      originDomain: z.number(),
+      data: Hex,
+      salt: Hex,
+      relayers: z.array(z.string()),
+      destinationAccount: Hex,
+      revealAccounts: z
+        .array(z.object({ pubkey: z.string(), isWritable: z.boolean(), isSigner: z.boolean() }))
+        .optional(),
+    }),
   }),
 });
 export type CallCommitment = z.infer<typeof CallCommitmentSchema>;

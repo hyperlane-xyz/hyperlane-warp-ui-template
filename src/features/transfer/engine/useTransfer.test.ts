@@ -6,7 +6,7 @@ import type { RouteTx } from '../../api/types';
 import { toWalletTx } from './useTransfer';
 
 describe('toWalletTx', () => {
-  test('deserializes Solana engine payloads with existing partial signatures', () => {
+  test('deserializes Solana engine payloads with existing partial signatures', async () => {
     const feePayer = Keypair.generate();
     const extraSigner = Keypair.generate();
     const tx = new Transaction({
@@ -33,7 +33,7 @@ describe('toWalletTx', () => {
       },
     };
 
-    const walletTx = toWalletTx(routeTx, ProviderType.SolanaWeb3) as {
+    const walletTx = (await toWalletTx(routeTx, ProviderType.SolanaWeb3)) as {
       transaction: Transaction;
     };
 
@@ -43,5 +43,21 @@ describe('toWalletTx', () => {
       walletTx.transaction.signatures.find((sig) => sig.publicKey.equals(extraSigner.publicKey))
         ?.signature,
     ).not.toBeNull();
+  });
+
+  test('rejects Solana route keypair material', async () => {
+    const routeTx: RouteTx = {
+      to: '11111111111111111111111111111111',
+      data: '',
+      value: '0',
+      additionalSigners: ['secret-keypair-material'],
+    };
+
+    await expect(
+      toWalletTx(routeTx, ProviderType.SolanaWeb3, {
+        sender: '11111111111111111111111111111111',
+        rpcUrl: 'http://localhost:8899',
+      }),
+    ).rejects.toThrow('unsupported additionalSigners');
   });
 });

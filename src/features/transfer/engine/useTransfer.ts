@@ -9,7 +9,15 @@ import {
 } from '@hyperlane-xyz/sdk';
 import { isZeroishAddress, ProtocolType } from '@hyperlane-xyz/utils';
 import { useTransactionFns } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
-import { Transaction, VersionedTransaction } from '@solana/web3.js';
+import {
+  AddressLookupTableAccount,
+  Connection,
+  PublicKey,
+  Transaction,
+  TransactionInstruction,
+  TransactionMessage,
+  VersionedTransaction,
+} from '@solana/web3.js';
 import { useCallback, useState } from 'react';
 import type { Address } from 'viem';
 
@@ -75,7 +83,12 @@ export function useTransfer() {
         const fns = transactionFns[protocol as keyof typeof transactionFns];
         if (!fns) throw new Error(`No transaction handler for protocol ${protocol}`);
 
-        const txType = protocol === ProtocolType.Tron ? ProviderType.Tron : ProviderType.EthersV5;
+        const txType =
+          protocol === ProtocolType.Sealevel
+            ? ProviderType.SolanaWeb3
+            : protocol === ProtocolType.Tron
+              ? ProviderType.Tron
+              : ProviderType.EthersV5;
 
         if (fns.switchNetwork) {
           try {
@@ -87,7 +100,12 @@ export function useTransfer() {
 
         // Approve / revoke before the transfer tx: bump non-zero existing
         // allowance to zero first (USDT case), then approve the new amount.
-        if (args.spender && args.approvalAmount != null && !args.isNative) {
+        if (
+          protocol !== ProtocolType.Sealevel &&
+          args.spender &&
+          args.approvalAmount != null &&
+          !args.isNative
+        ) {
           const spender = args.spender;
           if (isZeroishAddress(spender)) {
             throw new Error(`Cannot approve: spender is zero address on ${srcChainName}`);
@@ -145,7 +163,10 @@ export function useTransfer() {
         for (const routeTx of routeTxs) {
           updateTransferTransactionStatus(transactionId, TransferStatus.SigningTransfer);
           const sent = await fns.sendTransaction({
-            tx: toWalletTx(routeTx, txType) as Parameters<typeof fns.sendTransaction>[0]['tx'],
+            tx: (await toWalletTx(routeTx, txType, {
+              sender: args.sender,
+              rpcUrl: multiProvider.tryGetChainMetadata(srcChainName)?.rpcUrls?.[0]?.http,
+            })) as Parameters<typeof fns.sendTransaction>[0]['tx'],
             chainName: srcChainName,
           });
           hash = sent.hash;
@@ -245,12 +266,23 @@ function isEvmReceipt(receipt: TypedTransactionReceipt): boolean {
   );
 }
 
-function isEvmRouteTx(tx: RouteTx): tx is Extract<RouteTx, { to: string }> {
+function isChainRouteTx(tx: RouteTx): tx is Extract<RouteTx, { to: string }> {
   return 'to' in tx;
 }
 
-export function toWalletTx(tx: RouteTx, txType: ProviderType): unknown {
-  if (!isEvmRouteTx(tx)) return toSdkWalletTx(tx);
+export async function toWalletTx(
+  tx: RouteTx,
+  txType: ProviderType,
+  opts: { sender?: string; rpcUrl?: string } = {},
+): Promise<unknown> {
+  if (!isChainRouteTx(tx)) return toSdkWalletTx(tx);
+  if (txType === ProviderType.SolanaWeb3) {
+    return {
+      type: txType,
+      transaction: await buildSolanaTransaction(tx, opts),
+      category: 'transfer',
+    };
+  }
   return {
     type: txType,
     transaction: {
@@ -293,6 +325,65 @@ function base64ToBytes(value: string): Uint8Array {
     return bytes;
   }
   return Uint8Array.from(Buffer.from(value, 'base64'));
+}
+
+async function buildSolanaTransaction(
+  tx: Extract<RouteTx, { to: string }>,
+  opts: { sender?: string; rpcUrl?: string },
+): Promise<VersionedTransaction> {
+  if (!opts.sender) throw new Error('Missing Solana sender for route transaction');
+  if (!opts.rpcUrl) throw new Error('Missing Solana RPC URL for route transaction');
+  if (tx.additionalSigners?.length) {
+    throw new Error('Solana route included unsupported additionalSigners');
+  }
+
+  const connection = new Connection(opts.rpcUrl, 'confirmed');
+  const instruction = new TransactionInstruction({
+    programId: new PublicKey(tx.to),
+    data: Buffer.from(tx.data, 'base64'),
+    keys: (tx.accounts ?? []).map((account) => ({
+      pubkey: new PublicKey(account.pubkey),
+      isSigner: account.isSigner,
+      isWritable: account.isWritable,
+    })),
+  });
+  const preInstructions = (tx.preInstructions ?? []).map(
+    (preInstruction) =>
+      new TransactionInstruction({
+        programId: new PublicKey(preInstruction.programId),
+        data: Buffer.from(preInstruction.data, 'base64'),
+        keys: preInstruction.accounts.map((account) => ({
+          pubkey: new PublicKey(account.pubkey),
+          isSigner: account.isSigner,
+          isWritable: account.isWritable,
+        })),
+      }),
+  );
+  const [{ blockhash }, altAccounts] = await Promise.all([
+    connection.getLatestBlockhash(),
+    loadAddressLookupTables(connection, tx.altAddresses ?? []),
+  ]);
+  const message = new TransactionMessage({
+    payerKey: new PublicKey(opts.sender),
+    recentBlockhash: blockhash,
+    instructions: [...preInstructions, instruction],
+  }).compileToV0Message(altAccounts);
+
+  return new VersionedTransaction(message);
+}
+
+async function loadAddressLookupTables(
+  connection: Connection,
+  altAddresses: string[],
+): Promise<AddressLookupTableAccount[]> {
+  if (!altAddresses.length) return [];
+  const results = await Promise.all(
+    altAddresses.map((address) => connection.getAddressLookupTable(new PublicKey(address))),
+  );
+  return results.map((result, index) => {
+    if (!result.value) throw new Error(`Address Lookup Table not found: ${altAddresses[index]}`);
+    return result.value;
+  });
 }
 
 async function parseReceipt(

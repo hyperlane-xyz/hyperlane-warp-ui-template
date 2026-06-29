@@ -15,6 +15,8 @@ import { useTransferStatus } from '../transfer/engine/useTransferStatus';
 import { useEvmMailboxDeliveryStatus } from './useEvmMailboxDeliveryStatus';
 import { useMessageDeliveryStatus } from './useMessageDeliveryStatus';
 import { type OriginTxMessagesResult, useOriginTxMessages } from './useOriginTxMessages';
+import { useSolanaDestSwapStatus } from './useSolanaDestSwapStatus';
+import { useSolanaMailboxDeliveryStatus } from './useSolanaMailboxDeliveryStatus';
 import { getTransferDeliveryMsgId } from './utils';
 
 type TransferDeliveryTarget = {
@@ -25,6 +27,7 @@ type TransferDeliveryTarget = {
   originDomainId: number;
   destinationChain: ChainName;
   status: TransferStatus;
+  solanaDestSwapPda: string | undefined;
   requiresDestinationOutcome: boolean;
 };
 
@@ -46,7 +49,8 @@ export function TransactionDeliveryWatcher() {
       if (FinalTransferStatuses.includes(item.data.status)) {
         if (
           item.data.status !== TransferStatus.ConfirmedDestination ||
-          item.data.destinationTxHash
+          item.data.destinationTxHash ||
+          item.data.solanaDestSwapPda
         ) {
           return [];
         }
@@ -66,6 +70,7 @@ export function TransactionDeliveryWatcher() {
           originDomainId: item.data.srcChain,
           destinationChain,
           status: item.data.status,
+          solanaDestSwapPda: item.data.solanaDestSwapPda,
           requiresDestinationOutcome:
             !!item.data.destinationOutcome ||
             !!transferRouteByTransactionId.get(item.id)?.callCommitment,
@@ -119,8 +124,28 @@ function DeliveryTargetWatcher({
     destinationChain: target.destinationChain,
     chainAddresses,
     multiProvider,
-    enabled: !graphQlDelivery.destinationTxHash,
+    enabled: !!target.msgId && !graphQlDelivery.destinationTxHash,
   });
+  const solanaMailboxDelivery = useSolanaMailboxDeliveryStatus({
+    msgId: target.msgId,
+    destinationChain: target.destinationChain,
+    chainAddresses,
+    multiProvider,
+    enabled: !!target.msgId && !graphQlDelivery.isDelivered && !mailboxDelivery.isDelivered,
+  });
+
+  const bridgeDelivered =
+    graphQlDelivery.isDelivered ||
+    mailboxDelivery.isDelivered ||
+    solanaMailboxDelivery.isDelivered ||
+    target.status === TransferStatus.ConfirmingDestination;
+  const solanaDestSwap = useSolanaDestSwapStatus({
+    pdaAddress: target.solanaDestSwapPda,
+    destinationChain: target.destinationChain,
+    multiProvider,
+    enabled: !!target.solanaDestSwapPda && bridgeDelivered,
+  });
+
   // Transfer recovery status is centralized here so the modal stays display-only.
   useTransferStatus(
     transfer,
@@ -130,12 +155,14 @@ function DeliveryTargetWatcher({
   const hasUpdatedFromGraphQl = useRef(false);
   const hasBackfilledGraphQlHash = useRef(false);
   const hasUpdatedFromMailbox = useRef(false);
+  const hasUpdatedFromDestSwap = useRef(false);
 
   useEffect(() => {
     hasToasted.current = false;
     hasUpdatedFromGraphQl.current = false;
     hasBackfilledGraphQlHash.current = false;
     hasUpdatedFromMailbox.current = false;
+    hasUpdatedFromDestSwap.current = false;
   }, [target.id, target.msgId, target.originTxHash]);
 
   useEffect(() => {
@@ -194,13 +221,17 @@ function DeliveryTargetWatcher({
       return;
     }
 
-    if (mailboxDelivery.isDelivered && !hasUpdatedFromMailbox.current) {
+    const isDirectDelivered = mailboxDelivery.isDelivered || solanaMailboxDelivery.isDelivered;
+    const directDeliveryTxHash = mailboxDelivery.isDelivered
+      ? mailboxDelivery.destinationTxHash
+      : solanaMailboxDelivery.destinationTxHash;
+    if (isDirectDelivered && !hasUpdatedFromMailbox.current) {
       hasUpdatedFromMailbox.current = true;
       const nextStatus = target.requiresDestinationOutcome
         ? TransferStatus.ConfirmingDestination
         : TransferStatus.ConfirmedDestination;
       updateTransferTransactionStatus(target.id, nextStatus, {
-        destinationTxHash: mailboxDelivery.destinationTxHash,
+        destinationTxHash: directDeliveryTxHash,
       });
       if (
         !target.requiresDestinationOutcome &&
@@ -222,10 +253,22 @@ function DeliveryTargetWatcher({
     originTxMessages.msgIds,
     originTxMessages.originBlockHeight,
     originTxMessages.originTimestamp,
+    solanaMailboxDelivery.destinationTxHash,
+    solanaMailboxDelivery.isDelivered,
     target,
     transfer,
     updateTransferTransactionStatus,
   ]);
+
+  useEffect(() => {
+    if (!solanaDestSwap.isDone || hasUpdatedFromDestSwap.current) return;
+    hasUpdatedFromDestSwap.current = true;
+    updateTransferTransactionStatus(target.id, TransferStatus.ConfirmedDestination);
+    if (target.status !== TransferStatus.ConfirmedDestination && !hasToasted.current) {
+      hasToasted.current = true;
+      toast.success('Transfer complete! Funds have arrived.');
+    }
+  }, [solanaDestSwap.isDone, target, updateTransferTransactionStatus]);
 
   return null;
 }

@@ -306,7 +306,7 @@ function SwapEdge({
               <span className="dark:text-foreground-primary">{step.path.length - 1}</span>
             </div>
           )}
-          {step.minPoolTvlUsd != null && (
+          {step.minPoolTvlUsd != null && step.minPoolTvlUsd > 0 && (
             <div className="flex items-center justify-between gap-3">
               <span className="text-gray-400 dark:text-foreground-secondary">Min pool TVL</span>
               <span className="dark:text-foreground-primary">

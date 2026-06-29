@@ -1,7 +1,9 @@
 import { TokenStandard, type MultiProtocolProvider } from '@hyperlane-xyz/sdk';
 import {
+  AccountLayout,
   ASSOCIATED_TOKEN_PROGRAM_ID,
   getAssociatedTokenAddress,
+  getAssociatedTokenAddressSync,
   TOKEN_2022_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
@@ -20,15 +22,42 @@ export async function fetchSealevelChainBalances(
   const connection = new Connection(rpcUrl, 'confirmed');
   const ownerKey = new PublicKey(owner);
   const balances: Record<string, bigint> = {};
+  const nativeTokens: BalanceToken[] = [];
+  const splEntries: Array<{ token: BalanceToken; ata: PublicKey }> = [];
 
   for (const token of tokens) {
-    const key = getBalanceTokenKey(token);
     if (isSealevelNativeBalance(token)) {
-      balances[key] = BigInt(await connection.getBalance(ownerKey));
+      nativeTokens.push(token);
       continue;
     }
-    balances[key] = await fetchSplBalance(connection, ownerKey, token.address);
+    let mint: PublicKey;
+    try {
+      mint = new PublicKey(token.address);
+    } catch {
+      continue;
+    }
+    for (const programId of [TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID]) {
+      try {
+        splEntries.push({
+          token,
+          ata: getAssociatedTokenAddressSync(
+            mint,
+            ownerKey,
+            true,
+            programId,
+            ASSOCIATED_TOKEN_PROGRAM_ID,
+          ),
+        });
+      } catch {
+        // Try the next token program.
+      }
+    }
   }
+
+  await Promise.all([
+    fillSplBalances(connection, balances, splEntries),
+    fillNativeBalances(connection, balances, ownerKey, nativeTokens),
+  ]);
 
   return balances;
 }
@@ -93,4 +122,34 @@ async function fetchSplBalance(
     }
   }
   return 0n;
+}
+
+async function fillSplBalances(
+  connection: Connection,
+  balances: Record<string, bigint>,
+  entries: Array<{ token: BalanceToken; ata: PublicKey }>,
+) {
+  const batchSize = 100;
+  for (let start = 0; start < entries.length; start += batchSize) {
+    const batch = entries.slice(start, start + batchSize);
+    const infos = await connection.getMultipleAccountsInfo(batch.map((entry) => entry.ata));
+    for (let i = 0; i < batch.length; i++) {
+      const info = infos[i];
+      if (!info?.data) continue;
+      const { amount } = AccountLayout.decode(info.data);
+      const key = getBalanceTokenKey(batch[i].token);
+      balances[key] = (balances[key] ?? 0n) + amount;
+    }
+  }
+}
+
+async function fillNativeBalances(
+  connection: Connection,
+  balances: Record<string, bigint>,
+  owner: PublicKey,
+  tokens: BalanceToken[],
+) {
+  if (!tokens.length) return;
+  const balance = BigInt(await connection.getBalance(owner));
+  for (const token of tokens) balances[getBalanceTokenKey(token)] = balance;
 }

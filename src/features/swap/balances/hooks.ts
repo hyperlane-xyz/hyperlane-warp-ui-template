@@ -1,5 +1,6 @@
 import { ChainName } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
+import { useSolanaAccount } from '@hyperlane-xyz/widgets/walletIntegrations/solana';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { type Address, createPublicClient, http } from 'viem';
@@ -9,6 +10,7 @@ import { useMultiProvider } from '../../chains/hooks';
 import type { UiToken } from '../tokens/types';
 import { getTokenKey } from '../tokens/utils';
 import { fetchEvmChainBalances } from './evm';
+import { fetchSolanaChainBalances } from './solana';
 import { fetchTronChainBalances } from './tron';
 
 const STALE_BALANCE_MS = 30_000;
@@ -29,7 +31,7 @@ export function useTokenBalances(
 ): UseTokenBalancesResult {
   const multiProvider = useMultiProvider();
   const { address: connectedEvm } = useAccount();
-  const userAddress = addressOverride || connectedEvm;
+  const connectedSolana = useSolanaAccount(multiProvider).addresses[0]?.address;
 
   const filtered = useMemo(() => {
     if (chainFilter === 'all') return [];
@@ -39,27 +41,28 @@ export function useTokenBalances(
   const filteredChainId = filtered[0]?.chainId;
   const filteredProtocol = filtered[0] ? multiProvider.tryGetProtocol(filtered[0].chainName) : null;
   const filteredPublicClient = usePublicClient({ chainId: filteredChainId });
+  const filteredAddress = addressOverride || (filteredProtocol === ProtocolType.Sealevel ? connectedSolana : connectedEvm);
 
   const singleChainQuery = useQuery({
     queryKey: [
       'balances',
       filteredProtocol,
       filteredChainId,
-      userAddress,
+      filteredAddress,
       filtered.map((t) => t.address.toLowerCase()).join(','),
     ],
     queryFn: () =>
       dispatchChainBalances(
         filteredProtocol!,
         filtered,
-        userAddress!,
+        filteredAddress!,
         filteredPublicClient,
         multiProvider,
         batchAddressFor(multiProvider, filtered[0]?.chainName),
       ),
     enabled:
       chainFilter !== 'all' &&
-      !!userAddress &&
+      !!filteredAddress &&
       filtered.length > 0 &&
       (filteredProtocol !== ProtocolType.Ethereum || !!filteredPublicClient),
     staleTime: STALE_BALANCE_MS,
@@ -83,16 +86,18 @@ export function useTokenBalances(
       const protocol = chainTokens[0]
         ? multiProvider.tryGetProtocol(chainTokens[0].chainName)
         : null;
+      const fanoutAddress =
+        addressOverride || (protocol === ProtocolType.Sealevel ? connectedSolana : connectedEvm);
       return {
         queryKey: [
           'balances',
           protocol,
           chainId,
-          userAddress,
+          fanoutAddress,
           chainTokens.map((t) => t.address.toLowerCase()).join(','),
         ],
         queryFn: async (): Promise<Record<string, bigint>> => {
-          if (!protocol || !userAddress) return {};
+          if (!protocol || !fanoutAddress) return {};
           const rpcUrl = chainTokens[0]
             ? multiProvider.tryGetChainMetadata(chainTokens[0].chainName)?.rpcUrls?.[0]?.http
             : undefined;
@@ -103,17 +108,19 @@ export function useTokenBalances(
           return dispatchChainBalances(
             protocol,
             chainTokens,
-            userAddress,
+            fanoutAddress,
             client as ReturnType<typeof usePublicClient>,
             multiProvider,
             batchAddressFor(multiProvider, chainTokens[0]?.chainName),
           );
         },
-        enabled: chainFilter === 'all' && !!userAddress && chainTokens.length > 0,
+        enabled: chainFilter === 'all' && !!fanoutAddress && chainTokens.length > 0,
         staleTime: STALE_BALANCE_MS,
       };
     }),
   });
+
+  const hasAnyAddress = !!(connectedEvm || connectedSolana || addressOverride);
 
   return useMemo(() => {
     if (chainFilter === 'all') {
@@ -123,23 +130,26 @@ export function useTokenBalances(
         if (q.isLoading) anyLoading = true;
         if (q.data) Object.assign(merged, q.data);
       }
-      return { balances: merged, isLoading: anyLoading, hasAnyAddress: !!userAddress };
+      return { balances: merged, isLoading: anyLoading, hasAnyAddress };
     }
     return {
       balances: singleChainQuery.data ?? {},
       isLoading: singleChainQuery.isLoading,
-      hasAnyAddress: !!userAddress,
+      hasAnyAddress: !!filteredAddress,
     };
-  }, [chainFilter, fanoutQueries, singleChainQuery.data, singleChainQuery.isLoading, userAddress]);
+  }, [chainFilter, fanoutQueries, singleChainQuery.data, singleChainQuery.isLoading, filteredAddress, hasAnyAddress]);
 }
 
 // Single-token balance — for OriginTokenCard's balance row + MaxButton.
 export function useTokenBalance(token: UiToken | undefined, addressOverride?: string) {
   const multiProvider = useMultiProvider();
   const { address: connectedEvm } = useAccount();
-  const userAddress = addressOverride || connectedEvm;
-  const publicClient = usePublicClient({ chainId: token?.chainId });
+  const connectedSolana = useSolanaAccount(multiProvider).addresses[0]?.address;
   const protocol = token ? multiProvider.tryGetProtocol(token.chainName) : null;
+  const connectedForProtocol =
+    protocol === ProtocolType.Sealevel ? connectedSolana : connectedEvm;
+  const userAddress = addressOverride || connectedForProtocol;
+  const publicClient = usePublicClient({ chainId: token?.chainId });
 
   return useQuery({
     queryKey: ['balance', protocol, token?.chainId, token?.address.toLowerCase(), userAddress],
@@ -179,6 +189,13 @@ async function dispatchChainBalances(
   }
   if (protocol === ProtocolType.Tron) {
     return fetchTronChainBalances(multiProvider, tokens, userAddress);
+  }
+  if (protocol === ProtocolType.Sealevel) {
+    const rpcUrl = tokens[0]
+      ? multiProvider.tryGetChainMetadata(tokens[0].chainName)?.rpcUrls?.[0]?.http
+      : undefined;
+    if (!rpcUrl) return {};
+    return fetchSolanaChainBalances(tokens, rpcUrl, userAddress);
   }
   return {};
 }

@@ -5,7 +5,11 @@ import { Fragment, useMemo, useState } from 'react';
 import { ChainLogo } from '../../../components/icons/ChainLogo';
 import { TokenIcon } from '../../../components/icons/TokenIcon';
 import { HoverTooltip } from '../../../components/tooltip/HoverTooltip';
-import type { QuoteBridgeStep, QuoteStep, QuoteSwapStep } from '../../api/types';
+import type {
+  QuoteBridgeStep,
+  QuoteStep,
+  QuoteSwapStep,
+} from '../../api/types';
 import { useMultiProvider } from '../../chains/hooks';
 import { formatDisplayAmount, formatFeeAmount } from '../balances/utils';
 import { getDexMeta } from '../dexMeta';
@@ -309,7 +313,7 @@ function SwapEdge({
               <span className="dark:text-foreground-primary">{step.path.length - 1}</span>
             </div>
           )}
-          {step.minPoolTvlUsd != null && (
+          {step.minPoolTvlUsd != null && step.minPoolTvlUsd > 0 && (
             <div className="flex items-center justify-between gap-3">
               <span className="text-gray-400 dark:text-foreground-secondary">Min pool TVL</span>
               <span className="dark:text-foreground-primary">

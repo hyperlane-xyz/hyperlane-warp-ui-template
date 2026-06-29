@@ -25,7 +25,12 @@ import { assembleChainAddresses } from './chains/addresses';
 import { assembleChainMetadata } from './chains/metadata';
 import type { UiToken } from './swap/tokens/types';
 import { getTokenKey as getSwapTokenKey } from './swap/tokens/utils';
-import { FinalSwapStatuses, LabeledMsgId, SwapHistoryItem, SwapStatus } from './swap/types';
+import {
+  FinalSwapStatuses,
+  LabeledMsgId,
+  SwapHistoryItem,
+  SwapStatus,
+} from './swap/types';
 import {
   buildTokensArray,
   getTokenKey,

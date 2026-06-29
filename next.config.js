@@ -30,6 +30,7 @@ const IMG_SRC_HOSTS = [
   'https://gifs.intercomcdn.com',
   'https://assets.coingecko.com',
   'https://tokens.pancakeswap.finance',
+  'https://img-v1.raydium.io',
 ];
 const SCRIPT_SRC_HOSTS = [
   'https://snaps.consensys.io',

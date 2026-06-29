@@ -11,6 +11,8 @@ import { useSwapStatus } from '../swap/useSwapStatus';
 import { TransferStatus } from '../transfer/types';
 import { useEvmMailboxDeliveryStatus } from './useEvmMailboxDeliveryStatus';
 import { useMessageDeliveryStatus } from './useMessageDeliveryStatus';
+import { useSolanaDestSwapStatus } from './useSolanaDestSwapStatus';
+import { useSolanaMailboxDeliveryStatus } from './useSolanaMailboxDeliveryStatus';
 import { getSwapDeliveryMsgId } from './utils';
 
 type BridgeDeliveryTarget = {
@@ -25,6 +27,7 @@ type SwapDeliveryTarget = {
   msgId: string;
   destinationChain: ChainName;
   status: SwapStatus;
+  solanaDestSwapPda: string | undefined;
   requiresDestinationOutcome: boolean;
 };
 
@@ -55,7 +58,14 @@ export function TransactionDeliveryWatcher() {
 
       if (!item.data.msgIds?.length) return [];
       if (FinalSwapStatuses.includes(item.data.status)) {
-        if (item.data.status !== SwapStatus.ConfirmedDestination || item.data.destinationTxHash) {
+        // Keep ConfirmedDestination swaps without a dest hash so graphQL can
+        // backfill it — but not Solana PDA-completed swaps, which will never
+        // receive a destinationTxHash via graphQL and would occupy watcher slots.
+        if (
+          item.data.status !== SwapStatus.ConfirmedDestination ||
+          item.data.destinationTxHash ||
+          item.data.solanaDestSwapPda
+        ) {
           return [];
         }
       }
@@ -72,6 +82,7 @@ export function TransactionDeliveryWatcher() {
           msgId,
           destinationChain,
           status: item.data.status,
+          solanaDestSwapPda: item.data.solanaDestSwapPda,
           requiresDestinationOutcome:
             !!item.data.destinationOutcome ||
             !!swapRouteByTransactionId.get(item.id)?.callCommitment,
@@ -113,26 +124,57 @@ function DeliveryTargetWatcher({
     return item?.type === TransactionHistoryItemType.Swap ? item.data : undefined;
   });
   const graphQlDelivery = useMessageDeliveryStatus(target.msgId, true, multiProvider);
+  const isSwapTarget = target.type === TransactionHistoryItemType.Swap;
+  const swapDestChain = isSwapTarget ? target.destinationChain : undefined;
   const mailboxDelivery = useEvmMailboxDeliveryStatus({
     msgId: target.msgId,
-    destinationChain:
-      target.type === TransactionHistoryItemType.Swap ? target.destinationChain : undefined,
+    destinationChain: swapDestChain,
     chainAddresses,
     multiProvider,
-    enabled: target.type === TransactionHistoryItemType.Swap && !graphQlDelivery.destinationTxHash,
+    enabled: isSwapTarget && !graphQlDelivery.isDelivered,
+  });
+  const solanaMailboxDelivery = useSolanaMailboxDeliveryStatus({
+    msgId: target.msgId,
+    destinationChain: swapDestChain,
+    chainAddresses,
+    multiProvider,
+    enabled: isSwapTarget && !graphQlDelivery.isDelivered && !mailboxDelivery.isDelivered,
+  });
+
+  // For EVM→Solana dest swaps: the bridge creates the pending_swap PDA on
+  // delivery. The CCS relayer closes it once the Solana swap executes.
+  // Only enable polling after the bridge has delivered — before that, the PDA
+  // doesn't exist yet and getAccountInfo would also return null.
+  const solanaDestSwapPda =
+    isSwapTarget && target.type === TransactionHistoryItemType.Swap
+      ? target.solanaDestSwapPda
+      : undefined;
+  const bridgeDelivered =
+    graphQlDelivery.isDelivered ||
+    mailboxDelivery.isDelivered ||
+    solanaMailboxDelivery.isDelivered ||
+    // ConfirmingDestination means bridge was delivered in a prior session.
+    (isSwapTarget && target.status === SwapStatus.ConfirmingDestination);
+  const solanaDestSwap = useSolanaDestSwapStatus({
+    pdaAddress: solanaDestSwapPda,
+    destinationChain: swapDestChain,
+    multiProvider,
+    enabled: !!solanaDestSwapPda && bridgeDelivered,
   });
   // Swap recovery status is centralized here so the modal stays display-only.
-  useSwapStatus(swap, target.type === TransactionHistoryItemType.Swap ? target.id : null);
+  useSwapStatus(swap, isSwapTarget ? target.id : null);
   const hasToasted = useRef(false);
   const hasUpdatedFromGraphQl = useRef(false);
   const hasBackfilledGraphQlHash = useRef(false);
   const hasUpdatedFromMailbox = useRef(false);
+  const hasUpdatedFromDestSwap = useRef(false);
 
   useEffect(() => {
     hasToasted.current = false;
     hasUpdatedFromGraphQl.current = false;
     hasBackfilledGraphQlHash.current = false;
     hasUpdatedFromMailbox.current = false;
+    hasUpdatedFromDestSwap.current = false;
   }, [target.id, target.msgId]);
 
   useEffect(() => {
@@ -182,13 +224,17 @@ function DeliveryTargetWatcher({
       return;
     }
 
-    if (mailboxDelivery.isDelivered && !hasUpdatedFromMailbox.current) {
+    const isDirectDelivered = mailboxDelivery.isDelivered || solanaMailboxDelivery.isDelivered;
+    const directDeliveryTxHash = mailboxDelivery.isDelivered
+      ? mailboxDelivery.destinationTxHash
+      : solanaMailboxDelivery.destinationTxHash;
+    if (isDirectDelivered && !hasUpdatedFromMailbox.current) {
       hasUpdatedFromMailbox.current = true;
-      const nextStatus = target.requiresDestinationOutcome
+      const nextMailboxStatus = target.requiresDestinationOutcome
         ? SwapStatus.ConfirmingDestination
         : SwapStatus.ConfirmedDestination;
-      updateSwapTransactionStatus(target.id, nextStatus, {
-        destinationTxHash: mailboxDelivery.destinationTxHash,
+      updateSwapTransactionStatus(target.id, nextMailboxStatus, {
+        destinationTxHash: directDeliveryTxHash,
       });
       if (
         !target.requiresDestinationOutcome &&
@@ -204,10 +250,23 @@ function DeliveryTargetWatcher({
     graphQlDelivery.isDelivered,
     mailboxDelivery.destinationTxHash,
     mailboxDelivery.isDelivered,
+    solanaMailboxDelivery.destinationTxHash,
+    solanaMailboxDelivery.isDelivered,
     target,
     updateBridgeTransactionStatus,
     updateSwapTransactionStatus,
   ]);
+
+  useEffect(() => {
+    if (!solanaDestSwap.isDone || hasUpdatedFromDestSwap.current) return;
+    hasUpdatedFromDestSwap.current = true;
+    updateSwapTransactionStatus(target.id, SwapStatus.ConfirmedDestination);
+    const swapStatus = isSwapTarget ? target.status : undefined;
+    if (swapStatus !== SwapStatus.ConfirmedDestination && !hasToasted.current) {
+      hasToasted.current = true;
+      toast.success('Swap complete! Funds have arrived.');
+    }
+  }, [solanaDestSwap.isDone, isSwapTarget, target, updateSwapTransactionStatus]);
 
   return null;
 }

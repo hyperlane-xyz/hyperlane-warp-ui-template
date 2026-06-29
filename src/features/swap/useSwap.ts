@@ -2,14 +2,25 @@ import {
   EvmTokenAdapter,
   HyperlaneCore,
   ProviderType,
+  SealevelCoreAdapter,
   type TypedTransactionReceipt,
 } from '@hyperlane-xyz/sdk';
 import { isZeroishAddress, ProtocolType } from '@hyperlane-xyz/utils';
 import { useTransactionFns } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
+import {
+  AddressLookupTableAccount,
+  Connection,
+  Keypair,
+  PublicKey,
+  TransactionInstruction,
+  TransactionMessage,
+  VersionedTransaction,
+} from '@solana/web3.js';
 import { useCallback, useState } from 'react';
 import type { Address } from 'viem';
 
 import { logger } from '../../utils/logger';
+import type { RouteTx } from '../api/types';
 import { useMultiProvider } from '../chains/hooks';
 import { useStore } from '../store';
 import { submitToRelayApi } from '../transfer/relayApi';
@@ -40,6 +51,7 @@ export function useSwap() {
   const multiProvider = useMultiProvider();
   const transactionFns = useTransactionFns(multiProvider);
   const updateSwapTransactionStatus = useStore((s) => s.updateSwapTransactionStatus);
+  const chainAddresses = useStore((s) => s.chainAddresses);
   const setSwapRoute = useStore((s) => s.setSwapRoute);
   const [error, setError] = useState<Error | null>(null);
   const [isPending, setIsPending] = useState(false);
@@ -65,7 +77,12 @@ export function useSwap() {
       const fns = transactionFns[protocol as keyof typeof transactionFns];
       if (!fns) throw new Error(`No transaction handler for protocol ${protocol}`);
 
-      const txType = protocol === ProtocolType.Tron ? ProviderType.Tron : ProviderType.EthersV5;
+      const isSealevel = protocol === ProtocolType.Sealevel;
+      const txType = isSealevel
+        ? ProviderType.SolanaWeb3
+        : protocol === ProtocolType.Tron
+          ? ProviderType.Tron
+          : ProviderType.EthersV5;
 
       try {
         if (fns.switchNetwork) {
@@ -76,10 +93,9 @@ export function useSwap() {
           }
         }
 
-        // Approve / revoke before the swap tx. Mirrors WarpCore's pattern:
-        // bump non-zero existing allowance to zero first (USDT case), then
-        // approve the new amount.
-        if (args.spender && args.approvalAmount != null && !args.isNative) {
+        // ERC20 approval only applies to EVM source chains. Solana uses SPL
+        // token program delegates handled by the UR program itself.
+        if (!isSealevel && args.spender && args.approvalAmount != null && !args.isNative) {
           const spender = args.spender;
           if (isZeroishAddress(spender)) {
             throw new Error(`Cannot approve: spender is zero address on ${srcChainName}`);
@@ -116,7 +132,7 @@ export function useSwap() {
           if (needsApprove) await doApprove(args.approvalAmount);
         }
 
-        // Order is critical: post to CCS BEFORE broadcasting.
+        // Post commitment calldata to CCS before signing origin tx.
         if (route.raw.callCommitment) {
           updateSwapTransactionStatus(transactionId, SwapStatus.CreatingTxs);
           try {
@@ -133,14 +149,20 @@ export function useSwap() {
         }
 
         updateSwapTransactionStatus(transactionId, SwapStatus.SigningSwap);
+        const txPayload = isSealevel
+          ? await buildSolanaTransaction(
+              route.raw.tx,
+              args.sender,
+              multiProvider.getChainMetadata(srcChainName).rpcUrls[0]?.http ??
+                (() => {
+                  throw new Error(`No RPC URL for chain ${srcChainName}`);
+                })(),
+            )
+          : { to: route.raw.tx.to, data: route.raw.tx.data, value: route.raw.tx.value };
         const { hash, confirm } = await fns.sendTransaction({
           tx: {
             type: txType,
-            transaction: {
-              to: route.raw.tx.to,
-              data: route.raw.tx.data,
-              value: route.raw.tx.value,
-            },
+            transaction: txPayload,
             category: 'transfer',
           } as Parameters<typeof fns.sendTransaction>[0]['tx'],
           chainName: srcChainName,
@@ -160,7 +182,9 @@ export function useSwap() {
         }
         const parsed = parseReceipt(receipt);
         const expectsBridge = route.raw.steps.some((s) => s.type === 'bridge');
-        if (expectsBridge && !parsed.messages.length) {
+        // For Solana source, the Dispatch log is on the Solana side — parseReceipt
+        // only handles EVM receipts, so skip the log check for Sealevel.
+        if (!isSealevel && expectsBridge && !parsed.messages.length) {
           logger.error('Origin tx confirmed but no Dispatch log emitted', new Error(`tx=${hash}`));
           updateSwapTransactionStatus(transactionId, SwapStatus.Failed, {
             originTxHash: hash,
@@ -183,8 +207,37 @@ export function useSwap() {
         }
         submitToRelayApi(srcChainName, hash, protocol as ProtocolType, receipt);
 
+        // For Sealevel source, parse dispatched message IDs from the Solana tx.
+        // EVM receipts are already parsed via parseReceipt above.
+        let msgIds: LabeledMsgId[];
+        if (isSealevel) {
+          const mailbox = chainAddresses[srcChainName]?.mailbox;
+          if (!mailbox) {
+            const err = new Error(`No mailbox address for Solana source chain ${srcChainName}`);
+            updateSwapTransactionStatus(transactionId, SwapStatus.Failed, { originTxHash: hash });
+            setError(err);
+            throw err;
+          }
+          const adapter = new SealevelCoreAdapter(srcChainName, multiProvider, { mailbox });
+          const msgs = await adapter.extractMessageIds(receipt);
+          msgIds = msgs.map(({ messageId }) => ({
+            msgId: messageId as `0x${string}`,
+            label: 'warp' as const,
+          }));
+          if (expectsBridge && !msgIds.length) {
+            const err = new Error(
+              'Origin Solana tx confirmed but no message IDs extracted — it likely reverted internally',
+            );
+            updateSwapTransactionStatus(transactionId, SwapStatus.Failed, { originTxHash: hash });
+            setError(err);
+            throw err;
+          }
+        } else {
+          msgIds = labelMessages(parsed.messages, route);
+        }
+
         updateSwapTransactionStatus(transactionId, SwapStatus.Bridging, {
-          msgIds: labelMessages(parsed.messages, route),
+          msgIds,
           originBlockNumber: parsed.originBlockNumber,
           originTxTimestamp: Math.floor(Date.now() / 1000),
         });
@@ -199,7 +252,7 @@ export function useSwap() {
         setIsPending(false);
       }
     },
-    [transactionFns, multiProvider, updateSwapTransactionStatus, setSwapRoute],
+    [transactionFns, multiProvider, updateSwapTransactionStatus, chainAddresses, setSwapRoute],
   );
 
   return { execute, isPending, error };
@@ -258,24 +311,37 @@ function parseReceipt(receipt: TypedTransactionReceipt): {
 }
 
 function labelMessages(messages: ParsedMessage[], route: AugmentedRoute): LabeledMsgId[] {
-  const bridgeRouters = new Set(
+  // Dispatch sender is bytes32 (padded EVM address). Strip leading zeros to get the 20-byte address.
+  const addrOf = (sender: string) => sender.replace(/^0x/i, '').toLowerCase().slice(-40);
+
+  const bridgeRouterAddrs = new Set(
     route.raw.steps
       .filter(
         (s): s is Extract<(typeof route.raw.steps)[number], { type: 'bridge' }> =>
           s.type === 'bridge',
       )
-      .map((s) => s.router.toLowerCase()),
+      .map((s) => s.router.replace(/^0x/i, '').toLowerCase()),
   );
+  // For EVM→Solana CCS routes, the EVM UR (tx.to) sends the commit message directly.
+  const urAddr = route.raw.tx?.to?.replace(/^0x/i, '').toLowerCase();
 
-  const nonWarp = messages.filter((m) => !bridgeRouters.has(m.sender.toLowerCase()));
+  const nonWarp = messages.filter((m) => !bridgeRouterAddrs.has(addrOf(m.sender)));
   // callRemoteCommitReveal dispatches COMMIT first, REVEAL last. CCTP aggregation
   // routes prepend an extra internal message, so identify REVEAL as the last
   // non-warp message rather than counting from the front.
   const revealMsg = nonWarp.at(-1);
 
   return messages.map((msg) => {
-    if (bridgeRouters.has(msg.sender.toLowerCase())) {
+    const senderAddr = addrOf(msg.sender);
+
+    if (bridgeRouterAddrs.has(senderAddr)) {
       return { msgId: msg.msgId, label: 'warp' as const };
+    }
+
+    // Exclude revealMsg from the urAddr check so the reveal always gets its
+    // correct label below — even when COMMIT and REVEAL share the same sender.
+    if (route.raw.callCommitment && urAddr && senderAddr === urAddr && msg !== revealMsg) {
+      return { msgId: msg.msgId, label: 'commit' as const };
     }
 
     const ccsLabel = getCcsMessageLabel(msg.body);
@@ -292,7 +358,89 @@ function labelMessages(messages: ParsedMessage[], route: AugmentedRoute): Labele
 
 function getCcsMessageLabel(body: string): LabeledMsgId['label'] | null {
   // CCS message bodies use the first byte as the message type.
+  // 0x02 (reveal) detection removed — reveals are identified by position
+  // (last non-warp message) via the revealMsg fallback in labelMessages.
   if (body.startsWith('0x01')) return 'commit';
-  if (body.startsWith('0x02')) return 'reveal';
   return null;
+}
+
+async function buildSolanaTransaction(
+  tx: RouteTx,
+  sender: string,
+  rpcUrl: string,
+): Promise<VersionedTransaction> {
+  const connection = new Connection(rpcUrl, 'confirmed');
+  const programId = new PublicKey(tx.to);
+  const data = Buffer.from(tx.data, 'base64');
+  const keys = (tx.accounts ?? []).map((a) => ({
+    pubkey: new PublicKey(a.pubkey),
+    isSigner: a.isSigner,
+    isWritable: a.isWritable,
+  }));
+  const instruction = new TransactionInstruction({ programId, data, keys });
+
+  // Convert pre-instructions (compute budget, idempotent ATA creates) from the
+  // engine response into TransactionInstruction objects to prepend.
+  const preInstructions = (tx.preInstructions ?? []).map(
+    (pi) =>
+      new TransactionInstruction({
+        programId: new PublicKey(pi.programId),
+        keys: pi.accounts.map((a) => ({
+          pubkey: new PublicKey(a.pubkey),
+          isSigner: a.isSigner,
+          isWritable: a.isWritable,
+        })),
+        data: Buffer.from(pi.data, 'base64'),
+      }),
+  );
+
+  // Fetch blockhash and ALTs in parallel.
+  const [{ blockhash }, altAccounts] = await Promise.all([
+    connection.getLatestBlockhash(),
+    loadAltAccounts(connection, tx.altAddresses ?? []),
+  ]);
+
+  // V0 VersionedTransaction: compiles to a versioned message that references
+  // ALT accounts by 1-byte index instead of 32-byte pubkey, keeping cross-chain
+  // transactions under the 1232-byte wire limit.
+  const message = new TransactionMessage({
+    payerKey: new PublicKey(sender),
+    recentBlockhash: blockhash,
+    instructions: [...preInstructions, instruction],
+  }).compileToV0Message(altAccounts);
+
+  const txn = new VersionedTransaction(message);
+
+  // Partial-sign with ephemeral keypairs (unique Hyperlane message accounts).
+  // Each is a base64-encoded 64-byte Solana keypair (privKey[32] || pubKey[32]).
+  if (tx.additionalSigners && tx.additionalSigners.length > 0) {
+    const keypairs = tx.additionalSigners.map((b64) =>
+      Keypair.fromSecretKey(new Uint8Array(Buffer.from(b64, 'base64'))),
+    );
+    txn.sign(keypairs);
+  }
+
+  return txn;
+}
+
+async function loadAltAccounts(
+  connection: Connection,
+  altAddresses: string[],
+): Promise<AddressLookupTableAccount[]> {
+  if (altAddresses.length === 0) return [];
+  const results = await Promise.all(
+    altAddresses.map((addr) => connection.getAddressLookupTable(new PublicKey(addr))),
+  );
+  const accounts: AddressLookupTableAccount[] = [];
+  for (let i = 0; i < results.length; i++) {
+    const r = results[i]!;
+    if (!r.value) {
+      throw new Error(
+        `Address Lookup Table not found: ${altAddresses[i]}. ` +
+          'Ensure the ALT is deployed and activated on this network.',
+      );
+    }
+    accounts.push(r.value);
+  }
+  return accounts;
 }

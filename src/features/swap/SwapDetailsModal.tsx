@@ -37,7 +37,6 @@ const DEFAULT_TIMINGS: StageTimings = {
 const LABEL_NAMES: Record<string, string> = {
   warp: 'Warp Message ID',
   commit: 'Commit Message ID',
-  reveal: 'Reveal Message ID',
 };
 
 const STATUS_DESCRIPTION: Record<SwapStatus, string> = {
@@ -128,10 +127,6 @@ function SwapDetailsModalInner({
   const isRevealFailed = status === SwapStatus.DestFailed;
   const isFinal = FinalSwapStatuses.includes(status);
 
-  // Poll the reveal message when present — its delivery tx IS the ICA
-  // execution on the destination chain, which is what actually completes
-  // the swap. Pure-bridge routes (no destination swap) have no reveal,
-  // so fall back to the warp message. Same-chain swaps have no msgIds.
   const pollingMsgId = getSwapDeliveryMsgId(msgIds);
 
   const isSent =

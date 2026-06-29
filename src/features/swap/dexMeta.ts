@@ -25,6 +25,10 @@ export const DEX_META: Record<string, DexMeta> = {
     name: 'SunSwap',
     logoUri: 'https://assets.coingecko.com/coins/images/12424/standard/RSFOmQ.png?1696512245',
   },
+  raydium: {
+    name: 'Raydium',
+    logoUri: 'https://assets.coingecko.com/coins/images/13928/standard/PSigc4ie_400x400.jpg',
+  },
 };
 
 export function getDexMeta(dexKey: string): DexMeta | undefined {

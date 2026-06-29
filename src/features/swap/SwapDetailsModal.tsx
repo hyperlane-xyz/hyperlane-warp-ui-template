@@ -38,6 +38,7 @@ const DEFAULT_TIMINGS: StageTimings = {
 const LABEL_NAMES: Record<string, string> = {
   warp: 'Warp Message ID',
   commit: 'Commit Message ID',
+  reveal: 'Reveal Message ID',
 };
 
 const STATUS_DESCRIPTION: Record<SwapStatus, string> = {

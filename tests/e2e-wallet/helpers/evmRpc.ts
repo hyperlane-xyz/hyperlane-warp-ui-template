@@ -123,6 +123,9 @@ function handleOne(itemUnknown: unknown, ctx: HandleCtx): unknown {
   switch (method) {
     case 'eth_chainId':
       return ok(chainIdHex);
+    case 'eth_accounts':
+    case 'eth_requestAccounts':
+      return ok([MOCK_EVM_ADDRESS]);
     case 'net_version':
       return ok(String(ctx.chainId ?? 1));
     case 'eth_blockNumber':

@@ -16,6 +16,7 @@ import { routerClient } from './api/RouterClient';
 import type { RouteResponse } from './api/types';
 import { assembleChainAddresses } from './chains/addresses';
 import { assembleChainMetadata } from './chains/metadata';
+import { loadTrustedWarpRoutes, type TrustedWarpRouteMap } from './routeSecurity/trustedWarpRoutes';
 import type { UiToken } from './tokens/types';
 import { getTokenKey as getTransferTokenKey } from './tokens/utils';
 import {
@@ -51,6 +52,7 @@ interface AppContext {
   registry: IRegistry;
   chainMetadata: ChainMap<ChainMetadata>;
   chainAddresses: ChainMap<ChainAddresses>;
+  trustedWarpRoutes: TrustedWarpRouteMap;
   multiProvider: MultiProtocolProvider;
 }
 // Keeping everything here for now as state is simple
@@ -60,6 +62,8 @@ export interface AppState {
   chainMetadata: ChainMap<ChainMetadata>;
   // Per-chain contract addresses, merged from registry + filesystem (addresses.yaml)
   chainAddresses: ChainMap<ChainAddresses>;
+  // Trusted registry warp routes used to gate bridge-only engine quotes.
+  trustedWarpRoutes: TrustedWarpRouteMap;
   // Overrides to chain metadata set by user via the chain picker
   chainMetadataOverrides: ChainMap<Partial<ChainMetadata>>;
   setChainMetadataOverrides: (overrides?: ChainMap<Partial<ChainMetadata> | undefined>) => void;
@@ -133,19 +137,22 @@ export const useStore = create<AppState>()(
       ) => {
         logger.debug('Setting chain overrides in store');
         const filtered = objFilter(overrides, (_, metadata) => !!metadata);
-        const { registry, chainMetadata, chainAddresses, multiProvider } = await initAppContext({
-          ...get(),
-          chainMetadataOverrides: filtered,
-        });
+        const { registry, chainMetadata, chainAddresses, trustedWarpRoutes, multiProvider } =
+          await initAppContext({
+            ...get(),
+            chainMetadataOverrides: filtered,
+          });
         set({
           chainMetadataOverrides: filtered,
           registry,
           chainMetadata,
           chainAddresses,
+          trustedWarpRoutes,
           multiProvider,
         });
       },
       multiProvider: new MultiProtocolProvider({}),
+      trustedWarpRoutes: {},
       registry: new GithubRegistry({
         uri: config.registryUrl,
         branch: config.registryBranch,
@@ -489,10 +496,12 @@ async function initAppContext({
     const chainNames = Array.from(
       new Set(engineChains.chains.map((chain) => chain.chainName as ChainName)),
     );
-    const [{ chainMetadata, chainMetadataWithOverrides }, chainAddresses] = await Promise.all([
-      assembleChainMetadata(chainNames, currentRegistry, chainMetadataOverrides),
-      assembleChainAddresses(chainNames, currentRegistry),
-    ]);
+    const [{ chainMetadata, chainMetadataWithOverrides }, chainAddresses, trustedWarpRoutes] =
+      await Promise.all([
+        assembleChainMetadata(chainNames, currentRegistry, chainMetadataOverrides),
+        assembleChainAddresses(chainNames, currentRegistry),
+        loadTrustedWarpRoutes(currentRegistry),
+      ]);
     const multiProvider = new MultiProtocolProvider(chainMetadataWithOverrides);
 
     initE2EStateIfEnabled();
@@ -501,6 +510,7 @@ async function initAppContext({
       registry: currentRegistry,
       chainMetadata,
       chainAddresses,
+      trustedWarpRoutes,
       multiProvider,
     };
   } catch (error) {
@@ -510,6 +520,7 @@ async function initAppContext({
       registry,
       chainMetadata: {},
       chainAddresses: {},
+      trustedWarpRoutes: {},
       multiProvider: new MultiProtocolProvider({}),
     };
   }

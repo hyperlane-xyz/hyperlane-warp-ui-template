@@ -3,8 +3,11 @@ import { useQuery } from '@tanstack/react-query';
 import { useCallback, useMemo, useState } from 'react';
 import { bytesToHex, parseUnits, type Hex } from 'viem';
 
+import { logger } from '../../../utils/logger';
 import { routerClient } from '../../api/RouterClient';
 import type { QuoteResponse, RouteResponse } from '../../api/types';
+import { validateBridgeOnlyRoute } from '../../routeSecurity/validateBridgeRoute';
+import { useStore } from '../../store';
 import { useTokens } from '../../tokens/hooks';
 import { tokenKey } from '../../tokens/utils';
 import type {
@@ -36,6 +39,8 @@ interface UseQuoteArgs {
 
 export function useQuote({ values, sender, pause }: UseQuoteArgs) {
   const [now, setNow] = useState(() => Date.now());
+  const chainMetadata = useStore((state) => state.chainMetadata);
+  const trustedWarpRoutes = useStore((state) => state.trustedWarpRoutes);
 
   // Pass sender + recipient through as-is — engine handles per-protocol normalization.
   const engineSender = sender || undefined;
@@ -100,12 +105,26 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
 
   const augmented = useMemo<AugmentedQuote | undefined>(() => {
     if (!query.data) return undefined;
+    const routes = query.data.routes.filter((route) => {
+      const validation = validateBridgeOnlyRoute(route, {
+        chainMetadata,
+        trustedWarpRoutes,
+        srcToken: values.srcToken,
+        dstToken: values.dstToken,
+      });
+      if (validation.valid) return true;
+      logger.warn('Filtered unsafe bridge-only route', {
+        reason: validation.reason,
+        warpRouteId: validation.warpRouteId,
+      });
+      return false;
+    });
     return {
-      raw: query.data,
+      raw: { ...query.data, routes },
       expiresAt: query.data.expiresAt,
-      routes: query.data.routes.map(augmentRoute),
+      routes: routes.map(augmentRoute),
     };
-  }, [query.data]);
+  }, [chainMetadata, query.data, trustedWarpRoutes, values.dstToken, values.srcToken]);
 
   const expiresAt = augmented?.expiresAt;
   const quoteExpiryDelay = expiresAt == null ? -1 : quoteExpiryDelayMs(expiresAt, Date.now());

@@ -1,7 +1,7 @@
 import type { ChainMap, ChainMetadata } from '@hyperlane-xyz/sdk';
 import { describe, expect, test } from 'vitest';
 
-import type { RouteResponse } from '../api/types';
+import type { ChainDiscovery, RouteResponse } from '../api/types';
 import type { TrustedWarpRouteMap } from './trustedWarpRoutes';
 import { validateBridgeOnlyRoute } from './validateBridgeRoute';
 
@@ -10,12 +10,20 @@ const ROUTER = '0x1111111111111111111111111111111111111111';
 const COLLATERAL = '0x2222222222222222222222222222222222222222';
 const BAD = '0x3333333333333333333333333333333333333333';
 const DST_ROUTER = '0x4444444444444444444444444444444444444444';
+const UNIVERSAL_ROUTER = '0x5555555555555555555555555555555555555555';
+const PERMIT2 = '0x6666666666666666666666666666666666666666';
 
 const chainMetadata = {
-  ethereum: { domainId: 1 },
-  base: { domainId: 8453 },
-  solanamainnet: { domainId: 1399811149 },
+  ethereum: { chainId: 1, domainId: 1001 },
+  base: { chainId: 8453, domainId: 1002 },
+  solanamainnet: { chainId: 1399811149, domainId: 1003 },
 } as unknown as ChainMap<ChainMetadata>;
+
+const chains = [
+  chain({ id: 1, chainName: 'ethereum' }),
+  chain({ id: 8453, chainName: 'base' }),
+  chain({ id: 1399811149, chainName: 'solanamainnet' }),
+];
 
 describe('validateBridgeOnlyRoute', () => {
   test('accepts a registry-matching native bridge route', () => {
@@ -116,6 +124,51 @@ describe('validateBridgeOnlyRoute', () => {
     });
   });
 
+  test('accepts universal router ERC20 approvals for bridge-only routes', () => {
+    const route = bridgeRoute({
+      asset: COLLATERAL,
+      router: ROUTER,
+      approval: { token: COLLATERAL, spender: UNIVERSAL_ROUTER, amount: '1', kind: 'erc20' },
+      warpRouteId: 'USDC/test',
+      executionKind: 'universalRouter',
+    });
+
+    expect(validateBridgeOnlyRoute(route, context(collateralRoutes()))).toEqual({ valid: true });
+  });
+
+  test('accepts Permit2 approvals that target the universal router', () => {
+    const route = bridgeRoute({
+      asset: COLLATERAL,
+      router: ROUTER,
+      approval: {
+        token: COLLATERAL,
+        spender: PERMIT2,
+        permit2Spender: UNIVERSAL_ROUTER,
+        amount: '1',
+        kind: 'permit2',
+      },
+      warpRouteId: 'USDC/test',
+      executionKind: 'universalRouter',
+    });
+
+    expect(validateBridgeOnlyRoute(route, context(collateralRoutes()))).toEqual({ valid: true });
+  });
+
+  test('rejects Permit2 approvals without a target spender', () => {
+    const route = bridgeRoute({
+      asset: COLLATERAL,
+      router: ROUTER,
+      approval: { token: COLLATERAL, spender: PERMIT2, amount: '1', kind: 'permit2' },
+      warpRouteId: 'USDC/test',
+      executionKind: 'universalRouter',
+    });
+
+    expect(validateBridgeOnlyRoute(route, context(collateralRoutes()))).toMatchObject({
+      valid: false,
+      reason: 'Permit2 approval missing chain contracts',
+    });
+  });
+
   test('rejects collateral routes with a bad approval token', () => {
     const route = bridgeRoute({
       asset: COLLATERAL,
@@ -199,10 +252,30 @@ describe('validateBridgeOnlyRoute', () => {
       reason: 'Bridge router does not match registry route',
     });
   });
+
+  test('falls back to metadata chainId when engine chain discovery is unavailable', () => {
+    const route = bridgeRoute({
+      asset: COLLATERAL,
+      router: ROUTER,
+      approval: null,
+      warpRouteId: 'USDC/test',
+    });
+
+    expect(
+      validateBridgeOnlyRoute(route, context(collateralRoutes(), undefined, undefined, [])),
+    ).toEqual({
+      valid: true,
+    });
+  });
 });
 
-function context(trustedWarpRoutes: TrustedWarpRouteMap, srcToken?: string, dstToken?: string) {
-  return { chainMetadata, trustedWarpRoutes, srcToken, dstToken };
+function context(
+  trustedWarpRoutes: TrustedWarpRouteMap,
+  srcToken?: string,
+  dstToken?: string,
+  chainDiscovery: ChainDiscovery[] = chains,
+) {
+  return { chainMetadata, trustedWarpRoutes, chains: chainDiscovery, srcToken, dstToken };
 }
 
 function nativeRoutes(): TrustedWarpRouteMap {
@@ -258,6 +331,7 @@ function bridgeRoute(args: {
   warpRouteId: string;
   chain?: number;
   destChain?: number;
+  executionKind?: RouteResponse['executionKind'];
 }): RouteResponse {
   return {
     steps: [
@@ -281,10 +355,26 @@ function bridgeRoute(args: {
     ],
     output: '1',
     outputMin: '1',
-    executionKind: 'warpDirect',
+    executionKind: args.executionKind ?? 'warpDirect',
     connection: { symbol: args.warpRouteId.split('/')[0], warpRouteId: args.warpRouteId },
     gas: { originGas: '0', destGas: '0' },
     tx: null,
     approval: args.approval,
+  };
+}
+
+function chain(args: { id: number; chainName: string }): ChainDiscovery {
+  return {
+    id: args.id,
+    name: args.chainName,
+    chainName: args.chainName,
+    protocol: 'ethereum',
+    nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+    universalRouter: UNIVERSAL_ROUTER,
+    permit2: PERMIT2,
+    dex: null,
+    canSwap: true,
+    canExecute: true,
+    supportsNative: true,
   };
 }

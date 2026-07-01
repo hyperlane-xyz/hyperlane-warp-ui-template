@@ -22,11 +22,11 @@ export type TrustedWarpRouteMap = Record<string, TrustedWarpRoute>;
 export async function loadTrustedWarpRoutes(registry: IRegistry): Promise<TrustedWarpRouteMap> {
   try {
     const routes = await registry.getWarpRoutes();
+    if (!Object.keys(routes).length) return loadPublishedWarpRoutes();
     return buildTrustedWarpRouteMap(routes);
   } catch (error) {
     logger.warn('Failed to load trusted warp routes from registry, using published routes', error);
-    const { warpRouteConfigs } = await import('@hyperlane-xyz/registry');
-    return buildTrustedWarpRouteMap(warpRouteConfigs as Record<string, WarpCoreConfig>);
+    return loadPublishedWarpRoutes();
   }
 }
 
@@ -62,4 +62,9 @@ function toTrustedWarpRouteToken(token: WarpRouteToken): TrustedWarpRouteToken |
 
 function routeKey(routeId: string): string {
   return routeId.toLowerCase();
+}
+
+async function loadPublishedWarpRoutes(): Promise<TrustedWarpRouteMap> {
+  const { warpRouteConfigs } = await import('@hyperlane-xyz/registry');
+  return buildTrustedWarpRouteMap(warpRouteConfigs as Record<string, WarpCoreConfig>);
 }

@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { bytesToHex, parseUnits, type Hex } from 'viem';
 
 import { logger } from '../../../utils/logger';
+import { useChains } from '../../api/hooks';
 import { routerClient } from '../../api/RouterClient';
 import type { QuoteResponse, RouteResponse } from '../../api/types';
 import { validateBridgeOnlyRoute } from '../../routeSecurity/validateBridgeRoute';
@@ -41,6 +42,7 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
   const [now, setNow] = useState(() => Date.now());
   const chainMetadata = useStore((state) => state.chainMetadata);
   const trustedWarpRoutes = useStore((state) => state.trustedWarpRoutes);
+  const { data: chainsResp } = useChains();
 
   // Pass sender + recipient through as-is — engine handles per-protocol normalization.
   const engineSender = sender || undefined;
@@ -109,6 +111,7 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
       const validation = validateBridgeOnlyRoute(route, {
         chainMetadata,
         trustedWarpRoutes,
+        chains: chainsResp?.chains,
         srcToken: values.srcToken,
         dstToken: values.dstToken,
       });
@@ -124,7 +127,14 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
       expiresAt: query.data.expiresAt,
       routes: routes.map(augmentRoute),
     };
-  }, [chainMetadata, query.data, trustedWarpRoutes, values.dstToken, values.srcToken]);
+  }, [
+    chainMetadata,
+    chainsResp?.chains,
+    query.data,
+    trustedWarpRoutes,
+    values.dstToken,
+    values.srcToken,
+  ]);
 
   const expiresAt = augmented?.expiresAt;
   const quoteExpiryDelay = expiresAt == null ? -1 : quoteExpiryDelayMs(expiresAt, Date.now());

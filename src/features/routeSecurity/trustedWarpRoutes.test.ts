@@ -41,6 +41,15 @@ describe('loadTrustedWarpRoutes', () => {
       tokens: [{ chainName: 'ethereum', addressOrDenom: ROUTER }],
     });
   });
+
+  test('falls back to package warp routes when registry returns no routes', async () => {
+    const routes = await loadTrustedWarpRoutes(registry({}));
+
+    expect(routes['test/fallback']).toMatchObject({
+      id: 'TEST/fallback',
+      tokens: [{ chainName: 'ethereum', addressOrDenom: ROUTER }],
+    });
+  });
 });
 
 function registry(routes: MockWarpRoutes): IRegistry {

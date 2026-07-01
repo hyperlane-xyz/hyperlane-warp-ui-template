@@ -24,8 +24,9 @@ export async function loadTrustedWarpRoutes(registry: IRegistry): Promise<Truste
     const routes = await registry.getWarpRoutes();
     return buildTrustedWarpRouteMap(routes);
   } catch (error) {
-    logger.warn('Failed to load trusted warp routes from registry', error);
-    return {};
+    logger.warn('Failed to load trusted warp routes from registry, using published routes', error);
+    const { warpRouteConfigs } = await import('@hyperlane-xyz/registry');
+    return buildTrustedWarpRouteMap(warpRouteConfigs as Record<string, WarpCoreConfig>);
   }
 }
 

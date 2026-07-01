@@ -7,7 +7,7 @@ import { logger } from '../../../utils/logger';
 import { useChains } from '../../api/hooks';
 import { routerClient } from '../../api/RouterClient';
 import type { QuoteResponse, RouteResponse } from '../../api/types';
-import { validateBridgeOnlyRoute } from '../../routeSecurity/validateBridgeRoute';
+import { validateWarpRoute } from '../../routeSecurity/validateWarpRoute';
 import { useStore } from '../../store';
 import { useTokens } from '../../tokens/hooks';
 import { tokenKey } from '../../tokens/utils';
@@ -41,7 +41,7 @@ interface UseQuoteArgs {
 export function useQuote({ values, sender, pause }: UseQuoteArgs) {
   const [now, setNow] = useState(() => Date.now());
   const chainMetadata = useStore((state) => state.chainMetadata);
-  const trustedWarpRoutes = useStore((state) => state.trustedWarpRoutes);
+  const registryWarpRoutes = useStore((state) => state.registryWarpRoutes);
   const { data: chainsResp } = useChains();
 
   // Pass sender + recipient through as-is — engine handles per-protocol normalization.
@@ -108,9 +108,9 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
   const augmented = useMemo<AugmentedQuote | undefined>(() => {
     if (!query.data) return undefined;
     const routes = query.data.routes.filter((route) => {
-      const validation = validateBridgeOnlyRoute(route, {
+      const validation = validateWarpRoute(route, {
         chainMetadata,
-        trustedWarpRoutes,
+        registryWarpRoutes,
         chains: chainsResp?.chains,
         srcToken: values.srcToken,
         dstToken: values.dstToken,
@@ -131,7 +131,7 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
     chainMetadata,
     chainsResp?.chains,
     query.data,
-    trustedWarpRoutes,
+    registryWarpRoutes,
     values.dstToken,
     values.srcToken,
   ]);

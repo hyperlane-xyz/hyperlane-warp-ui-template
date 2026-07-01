@@ -1,7 +1,7 @@
 import type { IRegistry } from '@hyperlane-xyz/registry';
 import { describe, expect, test, vi } from 'vitest';
 
-import { loadTrustedWarpRoutes } from './trustedWarpRoutes';
+import { loadRegistryWarpRoutes } from './registryWarpRoutes';
 
 const ROUTER = '0x1111111111111111111111111111111111111111';
 type MockWarpRoutes = Record<
@@ -19,9 +19,9 @@ vi.mock('@hyperlane-xyz/registry', () => ({
   },
 }));
 
-describe('loadTrustedWarpRoutes', () => {
+describe('loadRegistryWarpRoutes', () => {
   test('uses registry warp routes when available', async () => {
-    const routes = await loadTrustedWarpRoutes(
+    const routes = await loadRegistryWarpRoutes(
       registry({
         'TEST/live': {
           tokens: [{ chainName: 'ethereum', addressOrDenom: ROUTER, standard: 'EvmHypCollateral' }],
@@ -34,7 +34,7 @@ describe('loadTrustedWarpRoutes', () => {
   });
 
   test('falls back to package warp routes when registry loading fails', async () => {
-    const routes = await loadTrustedWarpRoutes(failingRegistry());
+    const routes = await loadRegistryWarpRoutes(failingRegistry());
 
     expect(routes['test/fallback']).toMatchObject({
       id: 'TEST/fallback',
@@ -43,7 +43,7 @@ describe('loadTrustedWarpRoutes', () => {
   });
 
   test('falls back to package warp routes when registry returns no routes', async () => {
-    const routes = await loadTrustedWarpRoutes(registry({}));
+    const routes = await loadRegistryWarpRoutes(registry({}));
 
     expect(routes['test/fallback']).toMatchObject({
       id: 'TEST/fallback',

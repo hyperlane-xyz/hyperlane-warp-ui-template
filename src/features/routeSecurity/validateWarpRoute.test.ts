@@ -2,8 +2,8 @@ import type { ChainMap, ChainMetadata } from '@hyperlane-xyz/sdk';
 import { describe, expect, test } from 'vitest';
 
 import type { ChainDiscovery, RouteResponse } from '../api/types';
-import type { TrustedWarpRouteMap } from './trustedWarpRoutes';
-import { validateBridgeOnlyRoute } from './validateBridgeRoute';
+import type { RegistryWarpRouteMap } from '../warpRoutes/registryWarpRoutes';
+import { validateWarpRoute } from './validateWarpRoute';
 
 const NATIVE = '0x0000000000000000000000000000000000000000';
 const ROUTER = '0x1111111111111111111111111111111111111111';
@@ -25,7 +25,7 @@ const chains = [
   chain({ id: 1399811149, chainName: 'solanamainnet' }),
 ];
 
-describe('validateBridgeOnlyRoute', () => {
+describe('validateWarpRoute', () => {
   test('accepts a registry-matching native bridge route', () => {
     const route = bridgeRoute({
       asset: NATIVE,
@@ -34,7 +34,7 @@ describe('validateBridgeOnlyRoute', () => {
       warpRouteId: 'ETH/test',
     });
 
-    expect(validateBridgeOnlyRoute(route, context(nativeRoutes()))).toEqual({ valid: true });
+    expect(validateWarpRoute(route, context(nativeRoutes()))).toEqual({ valid: true });
   });
 
   test('rejects native bridge routes that expose WETH as the asset', () => {
@@ -45,7 +45,7 @@ describe('validateBridgeOnlyRoute', () => {
       warpRouteId: 'ETH/test',
     });
 
-    expect(validateBridgeOnlyRoute(route, context(nativeRoutes()))).toMatchObject({
+    expect(validateWarpRoute(route, context(nativeRoutes()))).toMatchObject({
       valid: false,
       reason: 'Native bridge asset must be native sentinel',
     });
@@ -59,7 +59,7 @@ describe('validateBridgeOnlyRoute', () => {
       warpRouteId: 'ETH/test',
     });
 
-    expect(validateBridgeOnlyRoute(route, context(nativeRoutes()))).toMatchObject({
+    expect(validateWarpRoute(route, context(nativeRoutes()))).toMatchObject({
       valid: false,
       reason: 'Native bridge route must not request approval',
     });
@@ -73,9 +73,9 @@ describe('validateBridgeOnlyRoute', () => {
       warpRouteId: 'USDC/test',
     });
 
-    expect(
-      validateBridgeOnlyRoute(route, context(collateralRoutes(), COLLATERAL, DST_ROUTER)),
-    ).toEqual({ valid: true });
+    expect(validateWarpRoute(route, context(collateralRoutes(), COLLATERAL, DST_ROUTER))).toEqual({
+      valid: true,
+    });
   });
 
   test('rejects routes when the selected source token does not match registry discovery identity', () => {
@@ -86,9 +86,7 @@ describe('validateBridgeOnlyRoute', () => {
       warpRouteId: 'USDC/test',
     });
 
-    expect(
-      validateBridgeOnlyRoute(route, context(collateralRoutes(), BAD, DST_ROUTER)),
-    ).toMatchObject({
+    expect(validateWarpRoute(route, context(collateralRoutes(), BAD, DST_ROUTER))).toMatchObject({
       valid: false,
       reason: 'Source token does not match registry route',
     });
@@ -102,9 +100,7 @@ describe('validateBridgeOnlyRoute', () => {
       warpRouteId: 'USDC/test',
     });
 
-    expect(
-      validateBridgeOnlyRoute(route, context(collateralRoutes(), COLLATERAL, BAD)),
-    ).toMatchObject({
+    expect(validateWarpRoute(route, context(collateralRoutes(), COLLATERAL, BAD))).toMatchObject({
       valid: false,
       reason: 'Destination token does not match registry route',
     });
@@ -118,7 +114,7 @@ describe('validateBridgeOnlyRoute', () => {
       warpRouteId: 'USDC/test',
     });
 
-    expect(validateBridgeOnlyRoute(route, context(collateralRoutes()))).toMatchObject({
+    expect(validateWarpRoute(route, context(collateralRoutes()))).toMatchObject({
       valid: false,
       reason: 'Approval spender does not match registry route',
     });
@@ -133,7 +129,7 @@ describe('validateBridgeOnlyRoute', () => {
       executionKind: 'universalRouter',
     });
 
-    expect(validateBridgeOnlyRoute(route, context(collateralRoutes()))).toEqual({ valid: true });
+    expect(validateWarpRoute(route, context(collateralRoutes()))).toEqual({ valid: true });
   });
 
   test('accepts Permit2 approvals that target the universal router', () => {
@@ -151,7 +147,7 @@ describe('validateBridgeOnlyRoute', () => {
       executionKind: 'universalRouter',
     });
 
-    expect(validateBridgeOnlyRoute(route, context(collateralRoutes()))).toEqual({ valid: true });
+    expect(validateWarpRoute(route, context(collateralRoutes()))).toEqual({ valid: true });
   });
 
   test('rejects Permit2 approvals without a target spender', () => {
@@ -163,7 +159,7 @@ describe('validateBridgeOnlyRoute', () => {
       executionKind: 'universalRouter',
     });
 
-    expect(validateBridgeOnlyRoute(route, context(collateralRoutes()))).toMatchObject({
+    expect(validateWarpRoute(route, context(collateralRoutes()))).toMatchObject({
       valid: false,
       reason: 'Permit2 approval missing chain contracts',
     });
@@ -177,7 +173,7 @@ describe('validateBridgeOnlyRoute', () => {
       warpRouteId: 'USDC/test',
     });
 
-    expect(validateBridgeOnlyRoute(route, context(collateralRoutes()))).toMatchObject({
+    expect(validateWarpRoute(route, context(collateralRoutes()))).toMatchObject({
       valid: false,
       reason: 'Approval token does not match registry route',
     });
@@ -191,7 +187,7 @@ describe('validateBridgeOnlyRoute', () => {
       warpRouteId: 'USDC/test',
     });
 
-    expect(validateBridgeOnlyRoute(route, context(collateralRoutes()))).toMatchObject({
+    expect(validateWarpRoute(route, context(collateralRoutes()))).toMatchObject({
       valid: false,
       reason: 'Bridge router does not match registry route',
     });
@@ -205,7 +201,7 @@ describe('validateBridgeOnlyRoute', () => {
       warpRouteId: 'MISSING/test',
     });
 
-    expect(validateBridgeOnlyRoute(route, context(collateralRoutes()))).toMatchObject({
+    expect(validateWarpRoute(route, context(collateralRoutes()))).toMatchObject({
       valid: false,
       reason: 'Warp route missing from registry',
     });
@@ -234,7 +230,7 @@ describe('validateBridgeOnlyRoute', () => {
       ],
     };
 
-    expect(validateBridgeOnlyRoute(route, context(collateralRoutes()))).toEqual({ valid: true });
+    expect(validateWarpRoute(route, context(collateralRoutes()))).toEqual({ valid: true });
   });
 
   test('compares non-EVM router addresses case-sensitively', () => {
@@ -247,7 +243,7 @@ describe('validateBridgeOnlyRoute', () => {
       destChain: 1,
     });
 
-    expect(validateBridgeOnlyRoute(route, context(nonEvmRoutes()))).toMatchObject({
+    expect(validateWarpRoute(route, context(nonEvmRoutes()))).toMatchObject({
       valid: false,
       reason: 'Bridge router does not match registry route',
     });
@@ -261,24 +257,24 @@ describe('validateBridgeOnlyRoute', () => {
       warpRouteId: 'USDC/test',
     });
 
-    expect(
-      validateBridgeOnlyRoute(route, context(collateralRoutes(), undefined, undefined, [])),
-    ).toEqual({
-      valid: true,
-    });
+    expect(validateWarpRoute(route, context(collateralRoutes(), undefined, undefined, []))).toEqual(
+      {
+        valid: true,
+      },
+    );
   });
 });
 
 function context(
-  trustedWarpRoutes: TrustedWarpRouteMap,
+  registryWarpRoutes: RegistryWarpRouteMap,
   srcToken?: string,
   dstToken?: string,
   chainDiscovery: ChainDiscovery[] = chains,
 ) {
-  return { chainMetadata, trustedWarpRoutes, chains: chainDiscovery, srcToken, dstToken };
+  return { chainMetadata, registryWarpRoutes, chains: chainDiscovery, srcToken, dstToken };
 }
 
-function nativeRoutes(): TrustedWarpRouteMap {
+function nativeRoutes(): RegistryWarpRouteMap {
   return {
     'eth/test': {
       id: 'ETH/test',
@@ -290,7 +286,7 @@ function nativeRoutes(): TrustedWarpRouteMap {
   };
 }
 
-function collateralRoutes(): TrustedWarpRouteMap {
+function collateralRoutes(): RegistryWarpRouteMap {
   return {
     'usdc/test': {
       id: 'USDC/test',
@@ -307,7 +303,7 @@ function collateralRoutes(): TrustedWarpRouteMap {
   };
 }
 
-function nonEvmRoutes(): TrustedWarpRouteMap {
+function nonEvmRoutes(): RegistryWarpRouteMap {
   return {
     'sol/test': {
       id: 'SOL/test',

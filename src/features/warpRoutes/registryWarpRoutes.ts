@@ -5,52 +5,52 @@ import { logger } from '../../utils/logger';
 
 type WarpRouteToken = WarpCoreConfig['tokens'][number];
 
-export interface TrustedWarpRouteToken {
+export interface RegistryWarpRouteToken {
   chainName: string;
   addressOrDenom: string;
   collateralAddressOrDenom?: string;
   standard: string;
 }
 
-export interface TrustedWarpRoute {
+export interface RegistryWarpRoute {
   id: string;
-  tokens: TrustedWarpRouteToken[];
+  tokens: RegistryWarpRouteToken[];
 }
 
-export type TrustedWarpRouteMap = Record<string, TrustedWarpRoute>;
+export type RegistryWarpRouteMap = Record<string, RegistryWarpRoute>;
 
-export async function loadTrustedWarpRoutes(registry: IRegistry): Promise<TrustedWarpRouteMap> {
+export async function loadRegistryWarpRoutes(registry: IRegistry): Promise<RegistryWarpRouteMap> {
   try {
     const routes = await registry.getWarpRoutes();
     if (!Object.keys(routes).length) return loadPublishedWarpRoutes();
-    return buildTrustedWarpRouteMap(routes);
+    return buildRegistryWarpRouteMap(routes);
   } catch (error) {
-    logger.warn('Failed to load trusted warp routes from registry, using published routes', error);
+    logger.warn('Failed to load registry warp routes, using published routes', error);
     return loadPublishedWarpRoutes();
   }
 }
 
-export function buildTrustedWarpRouteMap(
+export function buildRegistryWarpRouteMap(
   routes: Record<string, WarpCoreConfig>,
-): TrustedWarpRouteMap {
-  return Object.entries(routes).reduce<TrustedWarpRouteMap>((acc, [id, route]) => {
+): RegistryWarpRouteMap {
+  return Object.entries(routes).reduce<RegistryWarpRouteMap>((acc, [id, route]) => {
     const tokens = route.tokens
-      .map(toTrustedWarpRouteToken)
-      .filter((token): token is TrustedWarpRouteToken => !!token);
+      .map(toRegistryWarpRouteToken)
+      .filter((token): token is RegistryWarpRouteToken => !!token);
     if (!tokens.length) return acc;
     acc[routeKey(id)] = { id, tokens };
     return acc;
   }, {});
 }
 
-export function getTrustedWarpRoute(
-  routes: TrustedWarpRouteMap,
+export function getRegistryWarpRoute(
+  routes: RegistryWarpRouteMap,
   routeId: string,
-): TrustedWarpRoute | undefined {
+): RegistryWarpRoute | undefined {
   return routes[routeKey(routeId)];
 }
 
-function toTrustedWarpRouteToken(token: WarpRouteToken): TrustedWarpRouteToken | null {
+function toRegistryWarpRouteToken(token: WarpRouteToken): RegistryWarpRouteToken | null {
   if (!token.addressOrDenom) return null;
   return {
     chainName: token.chainName,
@@ -64,7 +64,7 @@ function routeKey(routeId: string): string {
   return routeId.toLowerCase();
 }
 
-async function loadPublishedWarpRoutes(): Promise<TrustedWarpRouteMap> {
+async function loadPublishedWarpRoutes(): Promise<RegistryWarpRouteMap> {
   const { warpRouteConfigs } = await import('@hyperlane-xyz/registry');
-  return buildTrustedWarpRouteMap(warpRouteConfigs as Record<string, WarpCoreConfig>);
+  return buildRegistryWarpRouteMap(warpRouteConfigs as Record<string, WarpCoreConfig>);
 }

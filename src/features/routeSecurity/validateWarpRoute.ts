@@ -2,11 +2,11 @@ import type { ChainMap, ChainMetadata } from '@hyperlane-xyz/sdk';
 
 import type { ChainDiscovery, QuoteBridgeStep, RouteApproval, RouteResponse } from '../api/types';
 import {
-  getTrustedWarpRoute,
-  type TrustedWarpRoute,
-  type TrustedWarpRouteMap,
-  type TrustedWarpRouteToken,
-} from './trustedWarpRoutes';
+  getRegistryWarpRoute,
+  type RegistryWarpRoute,
+  type RegistryWarpRouteMap,
+  type RegistryWarpRouteToken,
+} from '../warpRoutes/registryWarpRoutes';
 
 const NATIVE_TOKEN = '0x0000000000000000000000000000000000000000';
 const EVM_ADDRESS = /^0x[0-9a-fA-F]{40}$/;
@@ -19,22 +19,22 @@ const HYP_NATIVE_STANDARDS = new Set([
   'TronHypNative',
 ]);
 
-export type BridgeRouteValidationResult =
+export type WarpRouteValidationResult =
   | { valid: true }
   | { valid: false; reason: string; warpRouteId?: string };
 
-export interface BridgeRouteValidationContext {
+export interface WarpRouteValidationContext {
   chainMetadata: ChainMap<ChainMetadata>;
-  trustedWarpRoutes: TrustedWarpRouteMap;
+  registryWarpRoutes: RegistryWarpRouteMap;
   chains?: ChainDiscovery[];
   srcToken?: string;
   dstToken?: string;
 }
 
-export function validateBridgeOnlyRoute(
+export function validateWarpRoute(
   route: RouteResponse,
-  context: BridgeRouteValidationContext,
-): BridgeRouteValidationResult {
+  context: WarpRouteValidationContext,
+): WarpRouteValidationResult {
   if (!isBridgeOnlyRoute(route)) return { valid: true };
 
   if (route.steps.length !== 1) {
@@ -56,8 +56,8 @@ export function validateBridgeOnlyRoute(
     return { valid: false, reason: 'Route and bridge step warpRouteId mismatch', warpRouteId };
   }
 
-  const trustedRoute = getTrustedWarpRoute(context.trustedWarpRoutes, warpRouteId);
-  if (!trustedRoute)
+  const registryRoute = getRegistryWarpRoute(context.registryWarpRoutes, warpRouteId);
+  if (!registryRoute)
     return { valid: false, reason: 'Warp route missing from registry', warpRouteId };
 
   const originChain = chainForId(context.chains, step.chain);
@@ -74,8 +74,8 @@ export function validateBridgeOnlyRoute(
     };
   }
 
-  const origin = tokenForChain(trustedRoute, originChainName);
-  const destination = tokenForChain(trustedRoute, destinationChainName);
+  const origin = tokenForChain(registryRoute, originChainName);
+  const destination = tokenForChain(registryRoute, destinationChainName);
   if (!origin || !destination) {
     return { valid: false, reason: 'Warp route endpoint missing from registry', warpRouteId };
   }
@@ -142,17 +142,17 @@ function chainNameForChainId(
 }
 
 function tokenForChain(
-  route: TrustedWarpRoute,
+  route: RegistryWarpRoute,
   chainName: string,
-): TrustedWarpRouteToken | undefined {
+): RegistryWarpRouteToken | undefined {
   return route.tokens.find((token) => token.chainName === chainName);
 }
 
-function expectedSpendToken(token: TrustedWarpRouteToken): string {
+function expectedSpendToken(token: RegistryWarpRouteToken): string {
   return token.collateralAddressOrDenom ?? token.addressOrDenom;
 }
 
-function expectedDiscoveryToken(token: TrustedWarpRouteToken): string {
+function expectedDiscoveryToken(token: RegistryWarpRouteToken): string {
   return isNativeWarpStandard(token.standard) ? NATIVE_TOKEN : expectedSpendToken(token);
 }
 
@@ -163,10 +163,10 @@ function isNativeWarpStandard(standard: string): boolean {
 function validateApprovalSpender(
   route: RouteResponse,
   approval: RouteApproval,
-  origin: TrustedWarpRouteToken,
+  origin: RegistryWarpRouteToken,
   originChain: ChainDiscovery | undefined,
   warpRouteId: string,
-): BridgeRouteValidationResult {
+): WarpRouteValidationResult {
   if (approval.kind === 'permit2') {
     if (route.executionKind !== 'universalRouter') {
       return { valid: false, reason: 'Permit2 approval requires universal router', warpRouteId };

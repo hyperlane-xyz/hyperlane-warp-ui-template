@@ -12,17 +12,21 @@ const BAD = '0x3333333333333333333333333333333333333333';
 const DST_ROUTER = '0x4444444444444444444444444444444444444444';
 const UNIVERSAL_ROUTER = '0x5555555555555555555555555555555555555555';
 const PERMIT2 = '0x6666666666666666666666666666666666666666';
+const STARKNET_ROUTER = '0x074238dfa02063792077820584c925b679a013cbab38e5ca61af5627d1eda736';
+const STARKNET_TOKEN = '0x01a238dfa02063792077820584c925b679a013cbab38e5ca61af5627d1eda736';
 
 const chainMetadata = {
   ethereum: { chainId: 1, domainId: 1001 },
   base: { chainId: 8453, domainId: 1002 },
   solanamainnet: { chainId: 1399811149, domainId: 1003 },
+  starknet: { chainId: 358974494, domainId: 1004 },
 } as unknown as ChainMap<ChainMetadata>;
 
 const chains = [
   chain({ id: 1, chainName: 'ethereum' }),
   chain({ id: 8453, chainName: 'base' }),
   chain({ id: 1399811149, chainName: 'solanamainnet' }),
+  chain({ id: 358974494, chainName: 'starknet' }),
 ];
 
 describe('validateWarpRoute', () => {
@@ -249,6 +253,19 @@ describe('validateWarpRoute', () => {
     });
   });
 
+  test('compares non-EVM hex addresses case-insensitively', () => {
+    const route = bridgeRoute({
+      asset: STARKNET_TOKEN.toUpperCase().replace('X', 'x'),
+      router: STARKNET_ROUTER.toUpperCase().replace('X', 'x'),
+      approval: null,
+      warpRouteId: 'STRK/test',
+      chain: 358974494,
+      destChain: 1,
+    });
+
+    expect(validateWarpRoute(route, context(starknetRoutes()))).toEqual({ valid: true });
+  });
+
   test('falls back to metadata chainId when engine chain discovery is unavailable', () => {
     const route = bridgeRoute({
       asset: COLLATERAL,
@@ -313,6 +330,23 @@ function nonEvmRoutes(): RegistryWarpRouteMap {
           addressOrDenom: 'SolRouter111',
           collateralAddressOrDenom: 'SolMint111',
           standard: 'SealevelHypCollateral',
+        },
+        { chainName: 'ethereum', addressOrDenom: ROUTER, standard: 'EvmHypSynthetic' },
+      ],
+    },
+  };
+}
+
+function starknetRoutes(): RegistryWarpRouteMap {
+  return {
+    'strk/test': {
+      id: 'STRK/test',
+      tokens: [
+        {
+          chainName: 'starknet',
+          addressOrDenom: STARKNET_ROUTER,
+          collateralAddressOrDenom: STARKNET_TOKEN,
+          standard: 'StarknetHypCollateral',
         },
         { chainName: 'ethereum', addressOrDenom: ROUTER, standard: 'EvmHypSynthetic' },
       ],

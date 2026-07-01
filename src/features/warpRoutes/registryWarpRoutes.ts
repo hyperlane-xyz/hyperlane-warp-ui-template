@@ -22,8 +22,8 @@ export type RegistryWarpRouteMap = Record<string, RegistryWarpRoute>;
 export async function loadRegistryWarpRoutes(registry: IRegistry): Promise<RegistryWarpRouteMap> {
   try {
     const routes = await registry.getWarpRoutes();
-    if (!Object.keys(routes).length) return loadPublishedWarpRoutes();
-    return buildRegistryWarpRouteMap(routes);
+    const routeMap = buildRegistryWarpRouteMap(routes);
+    return Object.keys(routeMap).length ? routeMap : loadPublishedWarpRoutes();
   } catch (error) {
     logger.warn('Failed to load registry warp routes, using published routes', error);
     return loadPublishedWarpRoutes();

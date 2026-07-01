@@ -4,10 +4,6 @@ import { describe, expect, test, vi } from 'vitest';
 import { loadRegistryWarpRoutes } from './registryWarpRoutes';
 
 const ROUTER = '0x1111111111111111111111111111111111111111';
-type MockWarpRoutes = Record<
-  string,
-  { tokens: { chainName: string; addressOrDenom: string; standard: string }[] }
->;
 
 vi.mock('../../utils/logger', () => ({ logger: { warn: vi.fn() } }));
 
@@ -50,9 +46,24 @@ describe('loadRegistryWarpRoutes', () => {
       tokens: [{ chainName: 'ethereum', addressOrDenom: ROUTER }],
     });
   });
+
+  test('falls back to package warp routes when registry routes build to an empty map', async () => {
+    const routes = await loadRegistryWarpRoutes(
+      registry({
+        'TEST/malformed': {
+          tokens: [{ chainName: 'ethereum', standard: 'EvmHypCollateral' }],
+        },
+      }),
+    );
+
+    expect(routes['test/fallback']).toMatchObject({
+      id: 'TEST/fallback',
+      tokens: [{ chainName: 'ethereum', addressOrDenom: ROUTER }],
+    });
+  });
 });
 
-function registry(routes: MockWarpRoutes): IRegistry {
+function registry(routes: Record<string, { tokens: Record<string, string>[] }>): IRegistry {
   return { getWarpRoutes: async () => routes } as unknown as IRegistry;
 }
 

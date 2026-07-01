@@ -9,7 +9,6 @@ import {
 } from '../warpRoutes/registryWarpRoutes';
 
 const NATIVE_TOKEN = '0x0000000000000000000000000000000000000000';
-const EVM_ADDRESS = /^0x[0-9a-fA-F]{40}$/;
 const HYP_NATIVE_STANDARDS = new Set([
   'EvmHypNative',
   'SealevelHypNative',
@@ -212,8 +211,12 @@ function validateApprovalSpender(
 }
 
 function sameTokenAddress(left: string, right: string): boolean {
-  if (EVM_ADDRESS.test(left) && EVM_ADDRESS.test(right)) {
+  if (isHexAddressLike(left) && isHexAddressLike(right)) {
     return left.toLowerCase() === right.toLowerCase();
   }
   return left === right;
+}
+
+function isHexAddressLike(address: string): boolean {
+  return /^0x[0-9a-fA-F]+$/.test(address);
 }

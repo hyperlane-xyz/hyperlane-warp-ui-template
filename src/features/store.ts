@@ -25,6 +25,7 @@ import {
   TransferStatus,
 } from './transfer/engine/types';
 import { initE2EStateIfEnabled, markE2ERuntimeReady } from './wallet/_e2e/windowState';
+import { loadRegistryWarpRoutes, type RegistryWarpRouteMap } from './warpRoutes/registryWarpRoutes';
 
 // Increment this when persist state has breaking changes
 const PERSIST_STATE_VERSION = 6;
@@ -51,6 +52,7 @@ interface AppContext {
   registry: IRegistry;
   chainMetadata: ChainMap<ChainMetadata>;
   chainAddresses: ChainMap<ChainAddresses>;
+  registryWarpRoutes: RegistryWarpRouteMap;
   multiProvider: MultiProtocolProvider;
 }
 // Keeping everything here for now as state is simple
@@ -60,6 +62,8 @@ export interface AppState {
   chainMetadata: ChainMap<ChainMetadata>;
   // Per-chain contract addresses, merged from registry + filesystem (addresses.yaml)
   chainAddresses: ChainMap<ChainAddresses>;
+  // Registry warp route configs used by bridge-only route validation.
+  registryWarpRoutes: RegistryWarpRouteMap;
   // Overrides to chain metadata set by user via the chain picker
   chainMetadataOverrides: ChainMap<Partial<ChainMetadata>>;
   setChainMetadataOverrides: (overrides?: ChainMap<Partial<ChainMetadata> | undefined>) => void;
@@ -133,19 +137,22 @@ export const useStore = create<AppState>()(
       ) => {
         logger.debug('Setting chain overrides in store');
         const filtered = objFilter(overrides, (_, metadata) => !!metadata);
-        const { registry, chainMetadata, chainAddresses, multiProvider } = await initAppContext({
-          ...get(),
-          chainMetadataOverrides: filtered,
-        });
+        const { registry, chainMetadata, chainAddresses, registryWarpRoutes, multiProvider } =
+          await initAppContext({
+            ...get(),
+            chainMetadataOverrides: filtered,
+          });
         set({
           chainMetadataOverrides: filtered,
           registry,
           chainMetadata,
           chainAddresses,
+          registryWarpRoutes,
           multiProvider,
         });
       },
       multiProvider: new MultiProtocolProvider({}),
+      registryWarpRoutes: {},
       registry: new GithubRegistry({
         uri: config.registryUrl,
         branch: config.registryBranch,
@@ -489,10 +496,12 @@ async function initAppContext({
     const chainNames = Array.from(
       new Set(engineChains.chains.map((chain) => chain.chainName as ChainName)),
     );
-    const [{ chainMetadata, chainMetadataWithOverrides }, chainAddresses] = await Promise.all([
-      assembleChainMetadata(chainNames, currentRegistry, chainMetadataOverrides),
-      assembleChainAddresses(chainNames, currentRegistry),
-    ]);
+    const [{ chainMetadata, chainMetadataWithOverrides }, chainAddresses, registryWarpRoutes] =
+      await Promise.all([
+        assembleChainMetadata(chainNames, currentRegistry, chainMetadataOverrides),
+        assembleChainAddresses(chainNames, currentRegistry),
+        loadRegistryWarpRoutes(currentRegistry),
+      ]);
     const multiProvider = new MultiProtocolProvider(chainMetadataWithOverrides);
 
     initE2EStateIfEnabled();
@@ -501,6 +510,7 @@ async function initAppContext({
       registry: currentRegistry,
       chainMetadata,
       chainAddresses,
+      registryWarpRoutes,
       multiProvider,
     };
   } catch (error) {
@@ -510,6 +520,7 @@ async function initAppContext({
       registry,
       chainMetadata: {},
       chainAddresses: {},
+      registryWarpRoutes: {},
       multiProvider: new MultiProtocolProvider({}),
     };
   }

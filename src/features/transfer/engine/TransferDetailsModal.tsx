@@ -27,6 +27,7 @@ import { getTransferDeliveryMsgId } from '../../messages/utils';
 import { TransactionHistoryItemType, useStore } from '../../store';
 import { getTokenByKeyFromMap, useTokenByKeyMap } from '../../tokens/hooks';
 import { tokenKey } from '../../tokens/utils';
+import { normalizeLabeledTransferMessages } from './messages';
 import { FinalTransferStatuses, TransferStatus, type TransferHistoryItem } from './types';
 
 const DEFAULT_TIMINGS: StageTimings = {
@@ -36,9 +37,10 @@ const DEFAULT_TIMINGS: StageTimings = {
 };
 
 const LABEL_NAMES: Record<string, string> = {
-  warp: 'Warp Message ID',
+  warp: 'Bridge Message ID',
   bridge: 'Bridge Message ID',
   commit: 'Commit Message ID',
+  reveal: 'Reveal Message ID',
 };
 
 const STATUS_DESCRIPTION: Record<TransferStatus, string> = {
@@ -139,6 +141,7 @@ function TransferDetailsModalInner({
   // the transfer. Direct bridge routes fall back to the bridge/warp
   // message. Same-chain transfers have no msgIds.
   const pollingMsgId = getTransferDeliveryMsgId(msgIds);
+  const displayMsgIds = useMemo(() => normalizeLabeledTransferMessages(msgIds), [msgIds]);
 
   const isSent =
     status === TransferStatus.ConfirmingOrigin ||
@@ -328,7 +331,7 @@ function TransferDetailsModalInner({
                 url={destTxUrl}
               />
             )}
-            {msgIds?.map(({ msgId: id, label }) => (
+            {displayMsgIds?.map(({ msgId: id, label }) => (
               <TransferProperty
                 key={id}
                 name={LABEL_NAMES[label] ?? 'Message ID'}

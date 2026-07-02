@@ -2,11 +2,12 @@ import { describe, expect, test } from 'vitest';
 
 import type { RouteResponse } from '../../api/types';
 import { getTransferDeliveryMsgId } from '../../messages/utils';
-import { labelTransferMessages } from './messages';
+import { labelTransferMessages, normalizeLabeledTransferMessages } from './messages';
 
 const BRIDGE_ID = `0x${'11'.repeat(32)}`;
 const COMMIT_ID = `0x${'22'.repeat(32)}`;
 const REVEAL_ID = `0x${'33'.repeat(32)}`;
+const WARP_BODY = `0x${'00'.repeat(12)}${'44'.repeat(20)}${'00'.repeat(31)}01`;
 
 describe('labelTransferMessages', () => {
   test('labels a single discovered message as bridge', () => {
@@ -27,14 +28,14 @@ describe('labelTransferMessages', () => {
     ]);
   });
 
-  test('labels the last SDK-discovered message as reveal for destination swap routes', () => {
+  test('labels SDK-discovered messages by order for destination swap routes', () => {
     const labels = labelTransferMessages(
       [{ msgId: BRIDGE_ID }, { msgId: COMMIT_ID }, { msgId: REVEAL_ID }],
       routeWithDestinationSwap(),
     );
 
     expect(labels).toEqual([
-      { msgId: BRIDGE_ID, label: 'commit' },
+      { msgId: BRIDGE_ID, label: 'bridge' },
       { msgId: COMMIT_ID, label: 'commit' },
       { msgId: REVEAL_ID, label: 'reveal' },
     ]);
@@ -52,13 +53,13 @@ describe('labelTransferMessages', () => {
     );
 
     expect(labels).toEqual([
-      { msgId: BRIDGE_ID, label: 'warp' },
+      { msgId: BRIDGE_ID, label: 'bridge' },
       { msgId: COMMIT_ID, label: 'commit' },
       { msgId: REVEAL_ID, label: 'reveal' },
     ]);
     expect(getTransferDeliveryMsgId(labels)).toBe(REVEAL_ID);
   });
-  test('labels route router messages as warp', () => {
+  test('labels route router messages as bridge', () => {
     expect(
       labelTransferMessages(
         [{ msgId: BRIDGE_ID, sender: 'CWSVXTp2LadAE77Lk511ntA5jZNVgqiUXkWzUxjHtmeh' }],
@@ -71,7 +72,7 @@ describe('labelTransferMessages', () => {
           ],
         } as RouteResponse,
       ),
-    ).toEqual([{ msgId: BRIDGE_ID, label: 'warp' }]);
+    ).toEqual([{ msgId: BRIDGE_ID, label: 'bridge' }]);
   });
 
   test('keeps non-hex router address comparison case-sensitive', () => {
@@ -88,6 +89,35 @@ describe('labelTransferMessages', () => {
         } as RouteResponse,
       ),
     ).toEqual([{ msgId: BRIDGE_ID, label: 'bridge' }]);
+  });
+
+  test('labels warp route bodies as bridge even without route metadata', () => {
+    expect(
+      labelTransferMessages([
+        { msgId: BRIDGE_ID, body: WARP_BODY },
+        { msgId: COMMIT_ID, body: '0x01abcdef' },
+        { msgId: REVEAL_ID, body: '0x02abcdef' },
+      ]),
+    ).toEqual([
+      { msgId: BRIDGE_ID, label: 'bridge' },
+      { msgId: COMMIT_ID, label: 'commit' },
+      { msgId: REVEAL_ID, label: 'reveal' },
+    ]);
+  });
+
+  test('normalizes stale CCS labels without changing delivery target', () => {
+    const labels = normalizeLabeledTransferMessages([
+      { msgId: BRIDGE_ID, label: 'commit' },
+      { msgId: COMMIT_ID, label: 'commit' },
+      { msgId: REVEAL_ID, label: 'reveal' },
+    ]);
+
+    expect(labels).toEqual([
+      { msgId: BRIDGE_ID, label: 'bridge' },
+      { msgId: COMMIT_ID, label: 'commit' },
+      { msgId: REVEAL_ID, label: 'reveal' },
+    ]);
+    expect(getTransferDeliveryMsgId(labels)).toBe(REVEAL_ID);
   });
 });
 

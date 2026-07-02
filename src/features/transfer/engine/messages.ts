@@ -22,23 +22,19 @@ export function labelTransferMessages(
       .map((s) => normalizeComparableAddress(s.router)) ?? [],
   );
 
-  const nonWarp = messages.filter(
-    (m) => !m.sender || !bridgeRouters.has(normalizeComparableAddress(m.sender)),
-  );
-  const revealMsg = nonWarp.at(-1);
+  const knownLabels = messages.map((msg) => getKnownMessageLabel(msg, bridgeRouters));
+  const fallbackBridgeIndex = getFallbackBridgeIndex(knownLabels, route);
+  const fallbackRevealIndex = route?.callCommitment ? messages.length - 1 : -1;
 
-  return messages.map((msg) => {
-    if (msg.sender && bridgeRouters.has(normalizeComparableAddress(msg.sender))) {
-      return { msgId: msg.msgId, label: 'warp' as const };
-    }
+  return messages.map((msg, index) => {
+    const knownLabel = knownLabels[index];
+    if (knownLabel) return { msgId: msg.msgId, label: knownLabel };
 
-    const ccsLabel = getCcsMessageLabel(msg.body ?? '');
-    if (ccsLabel) return { msgId: msg.msgId, label: ccsLabel };
-
-    if (nonWarp.length === 1 && msg === nonWarp[0]) {
+    if (index === fallbackBridgeIndex) {
       return { msgId: msg.msgId, label: 'bridge' as const };
     }
-    if (msg === revealMsg) return { msgId: msg.msgId, label: 'reveal' as const };
+
+    if (index === fallbackRevealIndex) return { msgId: msg.msgId, label: 'reveal' as const };
 
     if (msg.sender || msg.body) {
       logger.warn('Unexpected transfer message shape; labeling as commit', {
@@ -48,6 +44,51 @@ export function labelTransferMessages(
     }
     return { msgId: msg.msgId, label: 'commit' as const };
   });
+}
+
+export function normalizeLabeledTransferMessages(msgIds: LabeledMsgId[] | undefined) {
+  if (!msgIds?.length) return msgIds;
+  if (msgIds.some((msg) => msg.label === 'bridge' || msg.label === 'warp')) return msgIds;
+  if (!msgIds.some((msg) => msg.label === 'reveal')) return msgIds;
+
+  const bridgeIndex = msgIds.findIndex((msg) => msg.label === 'commit');
+  if (bridgeIndex < 0) return msgIds;
+
+  return msgIds.map((msg, index) =>
+    index === bridgeIndex ? { ...msg, label: 'bridge' as const } : msg,
+  );
+}
+
+function getKnownMessageLabel(
+  msg: ParsedTransferMessage,
+  bridgeRouters: Set<string>,
+): LabeledMsgId['label'] | null {
+  if (msg.sender && bridgeRouters.has(normalizeComparableAddress(msg.sender))) {
+    return 'bridge';
+  }
+
+  if (isWarpRouteMessageBody(msg.body)) return 'bridge';
+
+  return getCcsMessageLabel(msg.body ?? '');
+}
+
+function getFallbackBridgeIndex(
+  knownLabels: Array<LabeledMsgId['label'] | null>,
+  route?: RouteResponse,
+) {
+  const unknownIndexes = knownLabels.flatMap((label, index) => (label ? [] : [index]));
+  if (unknownIndexes.length === 1) return unknownIndexes[0];
+
+  // Some non-EVM SDK extractors only return message IDs. For CCS routes the
+  // bridge message is emitted before the commit/reveal messages.
+  if (route?.callCommitment && unknownIndexes.length >= 3) return unknownIndexes[0];
+
+  return -1;
+}
+
+function isWarpRouteMessageBody(body: string | null | undefined) {
+  // Warp route bodies are recipient bytes32 + amount uint256.
+  return !!body && /^0x[0-9a-fA-F]{128}$/.test(body);
 }
 
 function getCcsMessageLabel(body: string): LabeledMsgId['label'] | null {

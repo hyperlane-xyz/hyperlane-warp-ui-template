@@ -172,36 +172,51 @@ if (packedPackages.length === 0) {
 }
 
 /**
- * 5. Update package.json with file: references
+ * 5. Update package.json and pnpm-workspace.yaml with file: references
+ *
+ * pnpm.overrides in package.json does NOT reliably override transitive deps of
+ * file: tarballs. The pnpm-workspace.yaml overrides section DOES (it's the one
+ * that lands in the lockfile). So we write to both.
  */
 console.log('------------------------------------------');
-console.log('🔧 Updating package.json with packed dependencies...\n');
+console.log('🔧 Updating package.json and pnpm-workspace.yaml with packed dependencies...\n');
 
 const packageJsonPath = path.join(REACT_APP_DIR, 'package.json');
 const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
 
-// Ensure pnpm.overrides exists
-if (!packageJson.pnpm) {
-  packageJson.pnpm = {};
-}
-if (!packageJson.pnpm.overrides) {
-  packageJson.pnpm.overrides = {};
-}
+// Ensure pnpm.overrides exists (kept for IDE tooling / belt-and-suspenders)
+if (!packageJson.pnpm) packageJson.pnpm = {};
+if (!packageJson.pnpm.overrides) packageJson.pnpm.overrides = {};
+
+// Parse pnpm-workspace.yaml (simple line-based upsert — avoids a yaml dep)
+const workspacePath = path.join(REACT_APP_DIR, 'pnpm-workspace.yaml');
+let workspaceContent = fs.existsSync(workspacePath) ? fs.readFileSync(workspacePath, 'utf8') : '';
 
 packedPackages.forEach(({ name, tarballPath }) => {
-  // Update dependencies
-  if (packageJson.dependencies && packageJson.dependencies[name]) {
-    packageJson.dependencies[name] = `file:${tarballPath}`;
-    console.log(`   ${name} -> file:${tarballPath}`);
+  // Direct dep — the only 100% reliable anchor for file: resolution
+  if (!packageJson.dependencies) packageJson.dependencies = {};
+  packageJson.dependencies[name] = `file:${tarballPath}`;
+
+  // pnpm.overrides belt-and-suspenders
+  packageJson.pnpm.overrides[name] = `file:${tarballPath}`;
+
+  // pnpm-workspace.yaml overrides — this is what actually forces transitive resolution
+  const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const linePattern = new RegExp(`^  '${escapedName}':.+$`, 'm');
+  const newLine = `  '${name}': 'file:${tarballPath}'`;
+  if (linePattern.test(workspaceContent)) {
+    workspaceContent = workspaceContent.replace(linePattern, newLine);
+  } else {
+    // Insert after the 'overrides:' line
+    workspaceContent = workspaceContent.replace(/^(overrides:\n)/m, `$1${newLine}\n`);
   }
 
-  // Add to overrides to ensure sub-dependencies use packed version
-  packageJson.pnpm.overrides[name] = `file:${tarballPath}`;
+  console.log(`   ${name} -> file:${tarballPath}`);
 });
 
-// Write updated package.json
 fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n');
-console.log('\n✅ Updated package.json\n');
+fs.writeFileSync(workspacePath, workspaceContent);
+console.log('\n✅ Updated package.json and pnpm-workspace.yaml\n');
 
 /**
  * 6. Clean and reinstall

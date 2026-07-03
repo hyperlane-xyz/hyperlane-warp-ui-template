@@ -1,14 +1,27 @@
 # Reject packages published less than 7 days ago (supply chain protection)
 minimumReleaseAge: 10080
 minimumReleaseAgeExclude:
-  - '@hyperlane-xyz/*'
+  - "@hyperlane-xyz/*"
+  - "@provablehq/*"
 overrides:
+  '@hyperlane-xyz/aleo-sdk': 'file:.monorepo-tarballs/hyperlane-xyz-aleo-sdk-35.2.0.tgz'
+  '@hyperlane-xyz/cosmos-sdk': 'file:.monorepo-tarballs/hyperlane-xyz-cosmos-sdk-35.2.0.tgz'
+  '@hyperlane-xyz/deploy-sdk': 'file:.monorepo-tarballs/hyperlane-xyz-deploy-sdk-6.1.1.tgz'
+  '@hyperlane-xyz/provider-sdk': 'file:.monorepo-tarballs/hyperlane-xyz-provider-sdk-6.1.1.tgz'
+  '@hyperlane-xyz/radix-sdk': 'file:.monorepo-tarballs/hyperlane-xyz-radix-sdk-35.2.0.tgz'
+  '@hyperlane-xyz/sdk': 'file:.monorepo-tarballs/hyperlane-xyz-sdk-35.2.0.tgz'
+  '@hyperlane-xyz/starknet-sdk': 'file:.monorepo-tarballs/hyperlane-xyz-starknet-sdk-28.1.1.tgz'
+  '@hyperlane-xyz/sealevel-sdk': 'file:.monorepo-tarballs/hyperlane-xyz-sealevel-sdk-35.2.0.tgz'
+  '@hyperlane-xyz/tron-sdk': 'file:.monorepo-tarballs/hyperlane-xyz-tron-sdk-23.1.1.tgz'
+  '@hyperlane-xyz/utils': 'file:.monorepo-tarballs/hyperlane-xyz-utils-35.2.0.tgz'
+  '@hyperlane-xyz/widgets': 'file:.monorepo-tarballs/hyperlane-xyz-widgets-35.2.0.tgz'
+  '@hyperlane-xyz/core': 'file:.monorepo-tarballs/hyperlane-xyz-core-11.3.1.tgz'
   tronweb>ethers: ^6.13.5
-  '@solana/web3.js': ^1.95.4
+  "@solana/web3.js": ^1.95.4
   axios: ^1.7.9
   bignumber: 9.1.2
   bn.js: ^5.2
-  cosmjs-types: '0.9'
+  cosmjs-types: "0.9"
   ethers: ^5.8.0
   globals: ^14.0.0
   lit-html: 2.8.0
@@ -20,13 +33,13 @@ overrides:
   elliptic: 6.6.1
   pbkdf2: 3.1.3
   form-data: 4.0.4
-  '@ledgerhq/errors': 6.31.0
+  "@ledgerhq/errors": 6.31.0
 patchedDependencies:
   starknetkit@2.6.1: patches/starknetkit@2.6.1.patch
-  '@provablehq/wasm@0.9.18': patches/@provablehq__wasm@0.9.18.patch
-  '@provablehq/sdk@0.9.15': patches/@provablehq__sdk@0.9.15.patch
+  '@provablehq/sdk@0.11.3': patches/@provablehq__sdk@0.11.3.patch
+  '@provablehq/wasm@0.11.3': patches/@provablehq__wasm@0.11.3.patch
 allowBuilds:
-  '@sentry/cli': false
+  "@sentry/cli": false
   bigint-buffer: false
   bufferutil: false
   core-js: false

@@ -13,7 +13,7 @@ export function validateSdkRouteTx(
     return { valid: false, reason: 'SDK transaction shape is only supported for sdkWarp routes' };
   }
 
-  if (tx.protocol !== srcProtocol) {
+  if (!sameProtocol(tx.protocol, srcProtocol)) {
     return { valid: false, reason: 'SDK transaction protocol does not match source chain' };
   }
 
@@ -47,6 +47,10 @@ function sdkTransactionTarget(transaction: unknown): string | undefined {
   if (typeof transaction.to === 'string') return transaction.to;
   if (typeof transaction.contractAddress === 'string') return transaction.contractAddress;
   return undefined;
+}
+
+function sameProtocol(left: string, right: ProtocolType): boolean {
+  return left.toLowerCase() === right.toLowerCase();
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

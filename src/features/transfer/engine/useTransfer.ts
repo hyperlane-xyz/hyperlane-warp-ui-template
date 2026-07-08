@@ -22,6 +22,7 @@ import { useCallback, useState } from 'react';
 import type { Address } from 'viem';
 
 import { logger } from '../../../utils/logger';
+import { getRouteTxs, isChainRouteTx } from '../../api/routeTx';
 import type { RouteTx } from '../../api/types';
 import { useMultiProvider } from '../../chains/hooks';
 import { useStore } from '../../store';
@@ -30,7 +31,6 @@ import { postCommitment } from './ccs';
 import { labelTransferMessages, type ParsedTransferMessage } from './messages';
 import { TransferStatus } from './types';
 import type { AugmentedRoute } from './types';
-import { getRouteTxs } from './validate';
 
 interface ExecuteArgs {
   transactionId: string;
@@ -265,10 +265,6 @@ function isEvmReceipt(receipt: TypedTransactionReceipt): boolean {
     receipt.type === ProviderType.EthersV5 ||
     receipt.type === ProviderType.Tron
   );
-}
-
-function isChainRouteTx(tx: RouteTx): tx is Extract<RouteTx, { to: string }> {
-  return 'to' in tx;
 }
 
 export async function toWalletTx(

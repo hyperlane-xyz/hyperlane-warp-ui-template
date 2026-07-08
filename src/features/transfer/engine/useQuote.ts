@@ -42,7 +42,7 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
   const [now, setNow] = useState(() => Date.now());
   const chainMetadata = useStore((state) => state.chainMetadata);
   const registryWarpRoutes = useStore((state) => state.registryWarpRoutes);
-  const { data: chainsResp } = useChains();
+  const { data: chainsResp, isError: chainsError } = useChains();
 
   // Pass sender + recipient through as-is — engine handles per-protocol normalization.
   const engineSender = sender || undefined;
@@ -150,18 +150,34 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
   useTimeout(refreshNow, quoteExpiryDelay);
 
   const isExpired = augmented ? augmented.expiresAt * 1000 < now : false;
-  const isQuoteSettled = query.isSuccess || query.isError;
+  const isSecurityContextReady = !!chainsResp?.chains;
+  const isSecurityContextSettled = isSecurityContextReady || chainsError;
+  const isQuoteSettled = isQuoteSettledForSecurity(
+    query.isSuccess,
+    query.isError,
+    isSecurityContextSettled,
+  );
+  const isRouteDataUnavailable = query.isSuccess && chainsError;
 
   return {
     ...query,
     quote: augmented,
     isExpired,
     isQuoteSettled,
+    isRouteDataUnavailable,
   };
 }
 
 export function quoteExpiryDelayMs(expiresAt: number, nowMs: number): number {
   return Math.max(expiresAt * 1000 - nowMs, 0);
+}
+
+export function isQuoteSettledForSecurity(
+  isSuccess: boolean,
+  isError: boolean,
+  isSecurityContextSettled: boolean,
+): boolean {
+  return isError || (isSuccess && isSecurityContextSettled);
 }
 
 function isQuoteRequestReady(v: TransferFormValues, sender: string | undefined): boolean {

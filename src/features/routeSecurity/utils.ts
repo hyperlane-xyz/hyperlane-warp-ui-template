@@ -18,7 +18,7 @@ export function firstBridge(route: RouteResponse): QuoteBridgeStep | undefined {
 }
 
 export function sameTokenAddress(left: string, right: string): boolean {
-  if (eqAddress(left, right)) return true;
+  if (safeEqAddress(left, right)) return true;
   if (isHexAddressLike(left) && isHexAddressLike(right))
     return left.toLowerCase() === right.toLowerCase();
   return left === right;
@@ -30,6 +30,14 @@ export function isEngineNativeToken(address: string): boolean {
 
 export function isUnsetAddress(address: string): boolean {
   return isZeroishAddress(address);
+}
+
+function safeEqAddress(left: string, right: string): boolean {
+  try {
+    return eqAddress(left, right);
+  } catch {
+    return false;
+  }
 }
 
 function isHexAddressLike(address: string): boolean {

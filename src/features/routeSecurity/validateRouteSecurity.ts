@@ -1,11 +1,17 @@
 import { isEVMLike, ProtocolType } from '@hyperlane-xyz/utils';
 
+import { getRouteTxs, isChainRouteTx } from '../api/routeTx';
 import type { ChainDiscovery, QuoteStep, RouteResponse, RouteTx } from '../api/types';
-import { getRouteTxs, isEvmRouteTx } from '../transfer/engine/validate';
 import { validateSdkRouteTx } from './sdk';
 import { validateSealevelRouteTx } from './svm';
 import type { RouteSecurityValidationResult } from './types';
-import { chainForId, firstBridge, isUnsetAddress, sameTokenAddress } from './utils';
+import {
+  chainForId,
+  firstBridge,
+  isEngineNativeToken,
+  isUnsetAddress,
+  sameTokenAddress,
+} from './utils';
 import { validateWarpRoute, type WarpRouteValidationContext } from './validateWarpRoute';
 
 export interface RouteSecurityValidationContext extends WarpRouteValidationContext {
@@ -69,12 +75,24 @@ function validateApproval(
   if (!firstStep) return { valid: false, reason: 'Approval route has no spend step' };
 
   const spendToken = spendTokenForStep(firstStep);
+  if (isEngineNativeToken(spendToken)) {
+    return { valid: false, reason: 'Native route must not request approval' };
+  }
   if (!sameTokenAddress(route.approval.token, spendToken)) {
     return { valid: false, reason: 'Approval token does not match route input token' };
   }
 
-  if (BigInt(route.approval.amount) > BigInt(firstStep.amountIn)) {
+  const approvalAmount = parseRouteAmount(route.approval.amount);
+  const spendAmount = parseRouteAmount(firstStep.amountIn);
+  if (approvalAmount == null || spendAmount == null) {
+    return { valid: false, reason: 'Approval route has invalid amount' };
+  }
+
+  if (approvalAmount > spendAmount) {
     return { valid: false, reason: 'Approval amount exceeds route input amount' };
+  }
+  if (approvalAmount < spendAmount) {
+    return { valid: false, reason: 'Approval amount is below route input amount' };
   }
 
   if (route.executionKind === 'sdkWarp') {
@@ -117,7 +135,7 @@ function validateTxTargets(
   if (!srcProtocol) return { valid: false, reason: 'Route source protocol unavailable' };
 
   for (const tx of txs) {
-    const validation = isEvmRouteTx(tx)
+    const validation = isChainRouteTx(tx)
       ? validateChainRouteTx(route, tx, srcChain, srcProtocol)
       : validateSdkRouteTx(route, tx, srcProtocol);
     if (!validation.valid) return validation;
@@ -168,9 +186,16 @@ function spendTokenForStep(step: QuoteStep): string {
   return step.type === 'swap' ? step.tokenIn : step.asset;
 }
 
+function parseRouteAmount(amount: string): bigint | null {
+  try {
+    return BigInt(amount);
+  } catch {
+    return null;
+  }
+}
+
 function protocolForChain(chain: ChainDiscovery | undefined): ProtocolType | undefined {
   if (!chain) return undefined;
-  return Object.values(ProtocolType).includes(chain.protocol as ProtocolType)
-    ? (chain.protocol as ProtocolType)
-    : undefined;
+  const protocol = chain.protocol.toLowerCase();
+  return Object.values(ProtocolType).find((value) => value.toLowerCase() === protocol);
 }

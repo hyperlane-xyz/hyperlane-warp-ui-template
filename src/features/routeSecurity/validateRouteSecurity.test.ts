@@ -63,6 +63,16 @@ describe('validateRouteSecurity', () => {
     expect(validateRouteSecurity(route, context({ dstChain: ETH }))).toEqual({ valid: true });
   });
 
+  test('accepts chain protocols with different casing', () => {
+    const mixedCaseChains = chains.map((chain) =>
+      chain.id === ETH ? { ...chain, protocol: 'Ethereum' } : chain,
+    );
+
+    expect(
+      validateRouteSecurity(universalRouterRoute(), context({ chains: mixedCaseChains })),
+    ).toEqual({ valid: true });
+  });
+
   test('rejects a route whose path starts on a different chain', () => {
     const route = universalRouterRoute();
     route.steps[0].chain = BASE;
@@ -110,6 +120,43 @@ describe('validateRouteSecurity', () => {
     });
   });
 
+  test('rejects approval amounts below the first route spend', () => {
+    const route = universalRouterRoute({
+      approval: { token: TOKEN, spender: UNIVERSAL_ROUTER, amount: '99', kind: 'erc20' },
+    });
+
+    expect(validateRouteSecurity(route, context())).toMatchObject({
+      valid: false,
+      reason: 'Approval amount is below route input amount',
+    });
+  });
+
+  test('rejects invalid approval amounts without throwing', () => {
+    const route = universalRouterRoute({
+      approval: { token: TOKEN, spender: UNIVERSAL_ROUTER, amount: 'invalid', kind: 'erc20' },
+    });
+
+    expect(() => validateRouteSecurity(route, context())).not.toThrow();
+    expect(validateRouteSecurity(route, context())).toMatchObject({
+      valid: false,
+      reason: 'Approval route has invalid amount',
+    });
+  });
+
+  test('rejects approvals for native first-spend routes', () => {
+    const route = universalRouterRoute({
+      approval: { token: NATIVE, spender: UNIVERSAL_ROUTER, amount: '100', kind: 'erc20' },
+    });
+    if (route.steps[0].type !== 'swap') throw new Error('expected swap first step');
+    route.steps[0].tokenIn = NATIVE;
+    route.steps[0].path = [NATIVE, MID_TOKEN];
+
+    expect(validateRouteSecurity(route, context({ srcToken: NATIVE }))).toMatchObject({
+      valid: false,
+      reason: 'Native route must not request approval',
+    });
+  });
+
   test('rejects universal router approvals to a different spender', () => {
     const route = universalRouterRoute({
       approval: { token: TOKEN, spender: BAD, amount: '100', kind: 'erc20' },
@@ -118,6 +165,23 @@ describe('validateRouteSecurity', () => {
     expect(validateRouteSecurity(route, context())).toMatchObject({
       valid: false,
       reason: 'Approval spender does not match chain universal router',
+    });
+  });
+
+  test('rejects malformed engine token values without throwing', () => {
+    const route = universalRouterRoute({
+      approval: {
+        token: 'not-an-address',
+        spender: UNIVERSAL_ROUTER,
+        amount: '100',
+        kind: 'erc20',
+      },
+    });
+
+    expect(() => validateRouteSecurity(route, context())).not.toThrow();
+    expect(validateRouteSecurity(route, context())).toMatchObject({
+      valid: false,
+      reason: 'Approval token does not match route input token',
     });
   });
 
@@ -142,6 +206,14 @@ describe('validateRouteSecurity', () => {
 
   test('accepts an SDK warp tx with matching protocol and warpRouteId metadata', () => {
     expect(validateRouteSecurity(starknetSdkWarpRoute(), starknetContext())).toEqual({
+      valid: true,
+    });
+  });
+
+  test('accepts SDK warp tx protocols with different casing', () => {
+    expect(
+      validateRouteSecurity(starknetSdkWarpRoute({ protocol: 'Starknet' }), starknetContext()),
+    ).toEqual({
       valid: true,
     });
   });
@@ -315,7 +387,7 @@ function sameChainSwapRoute(): RouteResponse {
 function starknetSdkWarpRoute(
   args: {
     contractAddress?: string;
-    protocol?: ProtocolType;
+    protocol?: string;
     transaction?: unknown;
     warpRouteId?: string;
   } = {},
@@ -434,7 +506,7 @@ function solanaRoutes(): RegistryWarpRouteMap {
 function chain(args: {
   id: number;
   chainName: string;
-  protocol: ProtocolType;
+  protocol: string;
   universalRouter?: string;
   permit2?: string;
 }): ChainDiscovery {

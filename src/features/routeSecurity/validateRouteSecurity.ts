@@ -1,0 +1,176 @@
+import { isEVMLike, ProtocolType } from '@hyperlane-xyz/utils';
+
+import type { ChainDiscovery, QuoteStep, RouteResponse, RouteTx } from '../api/types';
+import { getRouteTxs, isEvmRouteTx } from '../transfer/engine/validate';
+import { validateSdkRouteTx } from './sdk';
+import { validateSealevelRouteTx } from './svm';
+import type { RouteSecurityValidationResult } from './types';
+import { chainForId, firstBridge, isUnsetAddress, sameTokenAddress } from './utils';
+import { validateWarpRoute, type WarpRouteValidationContext } from './validateWarpRoute';
+
+export interface RouteSecurityValidationContext extends WarpRouteValidationContext {
+  srcChain: number;
+  dstChain: number;
+}
+
+export function validateRouteSecurity(
+  route: RouteResponse,
+  context: RouteSecurityValidationContext,
+): RouteSecurityValidationResult {
+  const warpRouteValidation = validateWarpRoute(route, context);
+  if (!warpRouteValidation.valid) return warpRouteValidation;
+
+  const chainPathValidation = validateChainPath(route, context.srcChain, context.dstChain);
+  if (!chainPathValidation.valid) return chainPathValidation;
+
+  const approvalValidation = validateApproval(route, context);
+  if (!approvalValidation.valid) return approvalValidation;
+
+  return validateTxTargets(route, context);
+}
+
+function validateChainPath(
+  route: RouteResponse,
+  srcChain: number,
+  dstChain: number,
+): RouteSecurityValidationResult {
+  if (route.steps.length === 0) {
+    return { valid: false, reason: 'Route has no steps' };
+  }
+
+  let currentChain = srcChain;
+  for (const step of route.steps) {
+    if (step.chain !== currentChain) {
+      return { valid: false, reason: 'Route step chain does not match expected path' };
+    }
+    if (step.type === 'bridge') currentChain = step.destChain;
+  }
+
+  if (currentChain !== dstChain) {
+    return { valid: false, reason: 'Route destination does not match request destination' };
+  }
+
+  return { valid: true };
+}
+
+function validateApproval(
+  route: RouteResponse,
+  context: RouteSecurityValidationContext,
+): RouteSecurityValidationResult {
+  if (!route.approval) return { valid: true };
+
+  // Bridge-only approvals are already registry-checked by validateWarpRoute.
+  // Keep this second pass for swap-led routes and generic approval bounds.
+  if (route.approval.kind !== 'erc20') {
+    return { valid: false, reason: 'Permit2 approvals are not supported by this UI' };
+  }
+
+  const firstStep = route.steps[0];
+  if (!firstStep) return { valid: false, reason: 'Approval route has no spend step' };
+
+  const spendToken = spendTokenForStep(firstStep);
+  if (!sameTokenAddress(route.approval.token, spendToken)) {
+    return { valid: false, reason: 'Approval token does not match route input token' };
+  }
+
+  if (BigInt(route.approval.amount) > BigInt(firstStep.amountIn)) {
+    return { valid: false, reason: 'Approval amount exceeds route input amount' };
+  }
+
+  if (route.executionKind === 'sdkWarp') {
+    return { valid: false, reason: 'SDK warp route must not request approval' };
+  }
+
+  if (route.executionKind === 'universalRouter') {
+    const srcChain = chainForId(context.chains, context.srcChain);
+    if (!srcChain?.universalRouter || isUnsetAddress(srcChain.universalRouter)) {
+      return { valid: false, reason: 'Universal router approval target unavailable' };
+    }
+    if (!sameTokenAddress(route.approval.spender, srcChain.universalRouter)) {
+      return { valid: false, reason: 'Approval spender does not match chain universal router' };
+    }
+    return { valid: true };
+  }
+
+  const firstBridgeStep = firstBridge(route);
+  if (!firstBridgeStep) {
+    return { valid: false, reason: 'Direct warp approval route has no bridge step' };
+  }
+  if (!sameTokenAddress(route.approval.spender, firstBridgeStep.router)) {
+    return { valid: false, reason: 'Approval spender does not match bridge router' };
+  }
+
+  return { valid: true };
+}
+
+function validateTxTargets(
+  route: RouteResponse,
+  context: RouteSecurityValidationContext,
+): RouteSecurityValidationResult {
+  const txs = getRouteTxs(route);
+  if (txs.length === 0) return { valid: false, reason: 'Route has no transactions' };
+
+  const srcChain = chainForId(context.chains, context.srcChain);
+  if (!srcChain) return { valid: false, reason: 'Route source chain unavailable' };
+
+  const srcProtocol = protocolForChain(srcChain);
+  if (!srcProtocol) return { valid: false, reason: 'Route source protocol unavailable' };
+
+  for (const tx of txs) {
+    const validation = isEvmRouteTx(tx)
+      ? validateChainRouteTx(route, tx, srcChain, srcProtocol)
+      : validateSdkRouteTx(route, tx, srcProtocol);
+    if (!validation.valid) return validation;
+  }
+
+  return { valid: true };
+}
+
+function validateChainRouteTx(
+  route: RouteResponse,
+  tx: Extract<RouteTx, { to: string }>,
+  srcChain: ChainDiscovery,
+  srcProtocol: ProtocolType,
+): RouteSecurityValidationResult {
+  if (isEVMLike(srcProtocol)) {
+    const expectedTarget =
+      route.executionKind === 'universalRouter'
+        ? srcChain.universalRouter
+        : route.executionKind === 'warpDirect'
+          ? firstBridge(route)?.router
+          : undefined;
+    if (!expectedTarget || isUnsetAddress(expectedTarget)) {
+      return { valid: false, reason: 'EVM transaction target unavailable' };
+    }
+    if (!sameTokenAddress(tx.to, expectedTarget)) {
+      return { valid: false, reason: 'EVM transaction target does not match route executor' };
+    }
+    return { valid: true };
+  }
+
+  if (srcProtocol === ProtocolType.Sealevel) {
+    if (route.executionKind !== 'universalRouter') {
+      return {
+        valid: false,
+        reason: 'Sealevel chain transaction is only supported for universal router execution',
+      };
+    }
+    return validateSealevelRouteTx(route, tx);
+  }
+
+  return {
+    valid: false,
+    reason: 'Chain transaction shape is not supported for source protocol',
+  };
+}
+
+function spendTokenForStep(step: QuoteStep): string {
+  return step.type === 'swap' ? step.tokenIn : step.asset;
+}
+
+function protocolForChain(chain: ChainDiscovery | undefined): ProtocolType | undefined {
+  if (!chain) return undefined;
+  return Object.values(ProtocolType).includes(chain.protocol as ProtocolType)
+    ? (chain.protocol as ProtocolType)
+    : undefined;
+}

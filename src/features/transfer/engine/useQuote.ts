@@ -7,7 +7,7 @@ import { logger } from '../../../utils/logger';
 import { useChains } from '../../api/hooks';
 import { routerClient } from '../../api/RouterClient';
 import type { QuoteResponse, RouteResponse } from '../../api/types';
-import { validateWarpRoute } from '../../routeSecurity/validateWarpRoute';
+import { validateRouteSecurity } from '../../routeSecurity/validateRouteSecurity';
 import { useStore } from '../../store';
 import { useTokens } from '../../tokens/hooks';
 import { tokenKey } from '../../tokens/utils';
@@ -107,16 +107,19 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
 
   const augmented = useMemo<AugmentedQuote | undefined>(() => {
     if (!query.data) return undefined;
+    if (!chainsResp?.chains) return undefined;
     const routes = query.data.routes.filter((route) => {
-      const validation = validateWarpRoute(route, {
+      const validation = validateRouteSecurity(route, {
         chainMetadata,
         registryWarpRoutes,
-        chains: chainsResp?.chains,
+        chains: chainsResp.chains,
+        srcChain: values.srcChain!,
+        dstChain: values.dstChain!,
         srcToken: values.srcToken,
         dstToken: values.dstToken,
       });
       if (validation.valid) return true;
-      logger.warn('Filtered unsafe bridge-only route', {
+      logger.warn('Filtered unsafe route', {
         reason: validation.reason,
         warpRouteId: validation.warpRouteId,
       });
@@ -132,7 +135,9 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
     chainsResp?.chains,
     query.data,
     registryWarpRoutes,
+    values.dstChain,
     values.dstToken,
+    values.srcChain,
     values.srcToken,
   ]);
 

@@ -7,8 +7,8 @@ import {
   type RegistryWarpRouteMap,
   type RegistryWarpRouteToken,
 } from '../warpRoutes/registryWarpRoutes';
+import { chainForId, ENGINE_NATIVE_TOKEN_SENTINEL, sameTokenAddress } from './utils';
 
-const NATIVE_TOKEN = '0x0000000000000000000000000000000000000000';
 const HYP_NATIVE_STANDARDS = new Set([
   'EvmHypNative',
   'SealevelHypNative',
@@ -94,7 +94,7 @@ export function validateWarpRoute(
   }
 
   if (isNativeWarpStandard(origin.standard)) {
-    if (!sameTokenAddress(step.asset, NATIVE_TOKEN)) {
+    if (!sameTokenAddress(step.asset, ENGINE_NATIVE_TOKEN_SENTINEL)) {
       return { valid: false, reason: 'Native bridge asset must be native sentinel', warpRouteId };
     }
     if (route.approval) {
@@ -126,13 +126,6 @@ export function isBridgeOnlyRoute(
   return route.steps.length > 0 && route.steps.every((step) => step.type === 'bridge');
 }
 
-function chainForId(
-  chains: ChainDiscovery[] | undefined,
-  chainId: number,
-): ChainDiscovery | undefined {
-  return chains?.find((chain) => chain.id === chainId);
-}
-
 function chainNameForChainId(
   chainMetadata: ChainMap<ChainMetadata>,
   chainId: number,
@@ -152,7 +145,9 @@ function expectedSpendToken(token: RegistryWarpRouteToken): string {
 }
 
 function expectedDiscoveryToken(token: RegistryWarpRouteToken): string {
-  return isNativeWarpStandard(token.standard) ? NATIVE_TOKEN : expectedSpendToken(token);
+  return isNativeWarpStandard(token.standard)
+    ? ENGINE_NATIVE_TOKEN_SENTINEL
+    : expectedSpendToken(token);
 }
 
 function isNativeWarpStandard(standard: string): boolean {
@@ -208,15 +203,4 @@ function validateApprovalSpender(
     return { valid: false, reason: 'Approval spender does not match registry route', warpRouteId };
   }
   return { valid: true };
-}
-
-function sameTokenAddress(left: string, right: string): boolean {
-  if (isHexAddressLike(left) && isHexAddressLike(right)) {
-    return left.toLowerCase() === right.toLowerCase();
-  }
-  return left === right;
-}
-
-function isHexAddressLike(address: string): boolean {
-  return /^0x[0-9a-fA-F]+$/.test(address);
 }

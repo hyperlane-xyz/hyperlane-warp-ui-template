@@ -334,11 +334,11 @@ function isNativeAddress(addr: string): boolean {
   return /^0x0+$/i.test(addr);
 }
 
-function getRouteTxs(route: RouteResponse): RouteTx[] {
+export function getRouteTxs(route: RouteResponse): RouteTx[] {
   return route.txs?.length ? route.txs : route.tx ? [route.tx] : [];
 }
 
-function isEvmRouteTx(tx: RouteTx): tx is Extract<RouteTx, { to: string }> {
+export function isEvmRouteTx(tx: RouteTx): tx is Extract<RouteTx, { to: string }> {
   return 'to' in tx;
 }
 

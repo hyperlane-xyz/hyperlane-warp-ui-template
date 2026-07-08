@@ -30,6 +30,7 @@ import { postCommitment } from './ccs';
 import { labelTransferMessages, type ParsedTransferMessage } from './messages';
 import { TransferStatus } from './types';
 import type { AugmentedRoute } from './types';
+import { getRouteTxs } from './validate';
 
 interface ExecuteArgs {
   transactionId: string;
@@ -68,7 +69,7 @@ export function useTransfer() {
       setIsPending(true);
 
       try {
-        const routeTxs = route.raw.txs?.length ? route.raw.txs : route.raw.tx ? [route.raw.tx] : [];
+        const routeTxs = getRouteTxs(route.raw);
         if (!routeTxs.length) throw new Error('Route has no tx');
 
         // Store route for status polling and recovery (non-persisted, session only).

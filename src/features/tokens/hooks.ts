@@ -8,6 +8,7 @@ import { useStore } from '../store';
 import { tokenDiscoveryToUi, type TokenSelectionMode, type UiToken } from './types';
 
 const STALE_5_MIN = 5 * 60 * 1000;
+export const AVAILABLE_ROUTES_STALE_TIME = 10 * 60 * 1000;
 const STALE_30_SEC = 30 * 1000;
 
 interface UseTokensResult {
@@ -109,27 +110,19 @@ export function useAvailableRouteTokens({
     return map;
   }, [chainsResp]);
 
-  const query = useMemo(() => {
-    if (!isBridgeOnlyToken(counterpartToken)) return undefined;
-    return selectionMode === 'destination'
-      ? {
-          srcChain: counterpartToken.chainId,
-          srcToken: counterpartToken.address,
-        }
-      : {
-          dstChain: counterpartToken.chainId,
-          dstToken: counterpartToken.address,
-        };
-  }, [counterpartToken, selectionMode]);
+  const query = useMemo(
+    () => getAvailableRoutesQuery(selectionMode, counterpartToken),
+    [counterpartToken, selectionMode],
+  );
 
   const result = useQuery({
-    queryKey: ['router', 'available-routes', selectionMode, query],
+    queryKey: getAvailableRoutesQueryKey(selectionMode, query),
     queryFn: () => {
       if (!query) throw new Error('available routes query is not ready');
       return routerClient.availableRoutes(query);
     },
     enabled: enabled && !!query,
-    staleTime: STALE_30_SEC,
+    staleTime: AVAILABLE_ROUTES_STALE_TIME,
   });
 
   const tokens = useMemo<UiToken[]>(() => {
@@ -159,6 +152,29 @@ export function useAvailableRouteTokens({
 export function isBridgeOnlyToken(token: UiToken | undefined): token is UiToken {
   if (!token) return false;
   return (token.canBridge || token.isBridgeToken) && !token.canSwap;
+}
+
+export function getAvailableRoutesQueryKey(
+  selectionMode: TokenSelectionMode,
+  query: ReturnType<typeof getAvailableRoutesQuery>,
+) {
+  return ['router', 'available-routes', selectionMode, query] as const;
+}
+
+export function getAvailableRoutesQuery(
+  selectionMode: TokenSelectionMode,
+  counterpartToken?: UiToken,
+) {
+  if (!counterpartToken) return undefined;
+  return selectionMode === 'destination'
+    ? {
+        srcChain: counterpartToken.chainId,
+        srcToken: counterpartToken.address,
+      }
+    : {
+        dstChain: counterpartToken.chainId,
+        dstToken: counterpartToken.address,
+      };
 }
 
 // Bootstrap the featured token list. Returns nothing useful directly —

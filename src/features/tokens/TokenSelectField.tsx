@@ -1,18 +1,30 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useFormikContext } from 'formik';
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
 
 import { ChevronLargeIcon } from '../../components/icons/ChevronLargeIcon';
 import { TokenChainIcon } from '../../components/icons/TokenChainIcon';
 import { WARP_QUERY_PARAMS } from '../../consts/args';
+import { logger } from '../../utils/logger';
 import { updateQueryParams } from '../../utils/queryParams';
 import { trackTokenSelectionEvent } from '../analytics/utils';
+import { useChains } from '../api/hooks';
+import { routerClient } from '../api/RouterClient';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
+import { useStore } from '../store';
 import type { TransferFormValues } from '../transfer/engine/types';
-import { getTokenByKeyFromMap, useTokenByKeyMap } from './hooks';
+import {
+  AVAILABLE_ROUTES_STALE_TIME,
+  getAvailableRoutesQuery,
+  getAvailableRoutesQueryKey,
+  getTokenByKeyFromMap,
+  useTokenByKeyMap,
+} from './hooks';
 import type { TokenSelectionMode, UiToken } from './types';
+import { tokenDiscoveryToUi } from './types';
 import { UnifiedTokenChainModal } from './UnifiedTokenChainModal';
-import { tokenKey } from './utils';
+import { getRoutePrefillToken, tokenKey } from './utils';
 
 type Props = {
   selectionMode: TokenSelectionMode;
@@ -25,8 +37,13 @@ type Props = {
 export function TokenSelectField({ selectionMode, disabled }: Props) {
   const { values, setFieldValue } = useFormikContext<TransferFormValues>();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const queryClient = useQueryClient();
   const tokenMap = useTokenByKeyMap();
   const multiProvider = useMultiProvider();
+  const { data: chainsResp } = useChains();
+  const syncTokens = useStore((s) => s.syncTokens);
+  const latestOriginSelectionRef = useRef<string | undefined>(undefined);
+  const latestCounterpartKeyRef = useRef<string | undefined>(undefined);
 
   const isOrigin = selectionMode === 'origin';
   const chainField = isOrigin ? 'srcChain' : 'dstChain';
@@ -45,6 +62,14 @@ export function TokenSelectField({ selectionMode, disabled }: Props) {
 
   const selectedToken = getTokenByKeyFromMap(tokenMap, selectedKey);
   const counterpartToken = getTokenByKeyFromMap(tokenMap, counterpartKey);
+  useEffect(() => {
+    latestCounterpartKeyRef.current = counterpartKey;
+  }, [counterpartKey]);
+  const chainIdToName = useMemo(() => {
+    const map = new Map<number, string>();
+    for (const c of chainsResp?.chains ?? []) map.set(c.id, c.chainName);
+    return map;
+  }, [chainsResp]);
 
   const handleSelectToken = (token: UiToken) => {
     setFieldValue(chainField, token.chainId);
@@ -57,6 +82,18 @@ export function TokenSelectField({ selectionMode, disabled }: Props) {
     if (isOrigin) {
       // Reset amount when origin changes (warp UI does the same).
       setFieldValue('amount', '');
+      latestOriginSelectionRef.current = tokenKey(token.chainId, token.address);
+      void prefillDestinationForBridgeToken({
+        originToken: token,
+        currentDestinationToken: counterpartToken,
+        chainIdToName,
+        queryClient,
+        syncTokens,
+        latestOriginSelectionRef,
+        latestCounterpartKeyRef,
+        counterpartKeyAtRequestStart: counterpartKey,
+        setFieldValue,
+      });
     }
     // Persist to URL so deep-linking matches the picked tokens.
     // Transfer-side contract is chainName-address (see useFormInitialValues).
@@ -91,6 +128,62 @@ export function TokenSelectField({ selectionMode, disabled }: Props) {
       />
     </>
   );
+}
+
+async function prefillDestinationForBridgeToken({
+  originToken,
+  currentDestinationToken,
+  chainIdToName,
+  queryClient,
+  syncTokens,
+  latestOriginSelectionRef,
+  latestCounterpartKeyRef,
+  counterpartKeyAtRequestStart,
+  setFieldValue,
+}: {
+  originToken: UiToken;
+  currentDestinationToken?: UiToken;
+  chainIdToName: Map<number, string>;
+  queryClient: ReturnType<typeof useQueryClient>;
+  syncTokens: (tokens: UiToken[]) => void;
+  latestOriginSelectionRef: MutableRefObject<string | undefined>;
+  latestCounterpartKeyRef: MutableRefObject<string | undefined>;
+  counterpartKeyAtRequestStart?: string;
+  setFieldValue: (field: string, value: unknown, shouldValidate?: boolean) => void;
+}) {
+  const query = getAvailableRoutesQuery('destination', originToken);
+  if (!query) return;
+
+  try {
+    const result = await queryClient.fetchQuery({
+      queryKey: getAvailableRoutesQueryKey('destination', query),
+      queryFn: () => routerClient.availableRoutes(query),
+      staleTime: AVAILABLE_ROUTES_STALE_TIME,
+    });
+    if (latestOriginSelectionRef.current !== tokenKey(originToken.chainId, originToken.address)) {
+      return;
+    }
+    if (latestCounterpartKeyRef.current !== counterpartKeyAtRequestStart) return;
+
+    const routeTokens = result.tokens.flatMap((token) => {
+      if (token.decimals == null) return [];
+      const chainName = chainIdToName.get(token.chainId);
+      return chainName ? [tokenDiscoveryToUi(token, chainName)] : [];
+    });
+    if (routeTokens.length) syncTokens(routeTokens);
+
+    const prefillToken = getRoutePrefillToken(routeTokens, currentDestinationToken);
+    if (!prefillToken) return;
+
+    setFieldValue('dstChain', prefillToken.chainId);
+    setFieldValue('dstToken', prefillToken.address);
+    updateQueryParams({
+      [WARP_QUERY_PARAMS.DESTINATION]: prefillToken.chainName,
+      [WARP_QUERY_PARAMS.DESTINATION_TOKEN]: prefillToken.address,
+    });
+  } catch (err) {
+    logger.warn('Destination prefill failed', err);
+  }
 }
 
 function TokenButton({

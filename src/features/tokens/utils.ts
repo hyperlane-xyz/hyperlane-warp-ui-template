@@ -1,5 +1,7 @@
 import type { UiToken } from './types';
 
+export type TokenRouteKind = 'bridge' | 'swap';
+
 export function getTokenKey(token: UiToken): string {
   return tokenKey(token.chainId, token.address);
 }
@@ -20,4 +22,27 @@ export function mergeRouteTokensFirst(routeTokens: UiToken[], tokens: UiToken[])
     out.push(token);
   }
   return out;
+}
+
+export function getTokenRouteKind(
+  token: UiToken,
+  directRouteTokenKeys: Set<string>,
+  counterpartToken?: UiToken,
+): TokenRouteKind | undefined {
+  if (directRouteTokenKeys.has(getTokenKey(token))) return 'bridge';
+  if (token.canSwap && counterpartToken?.canSwap) return 'swap';
+  return undefined;
+}
+
+export function getRoutePrefillToken(
+  routeTokens: UiToken[],
+  currentToken?: UiToken,
+): UiToken | undefined {
+  if (!routeTokens.length) return undefined;
+  if (!currentToken) return routeTokens[0];
+
+  const currentKey = getTokenKey(currentToken);
+  return routeTokens.some((token) => getTokenKey(token) === currentKey)
+    ? undefined
+    : routeTokens[0];
 }

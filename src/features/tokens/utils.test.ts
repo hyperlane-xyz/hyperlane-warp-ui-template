@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'vitest';
 
-import { isBridgeOnlyToken } from './hooks';
+import { getAvailableRoutesQuery, isBridgeOnlyToken } from './hooks';
 import type { UiToken } from './types';
-import { mergeRouteTokensFirst, tokenKey } from './utils';
+import { getRoutePrefillToken, getTokenRouteKind, mergeRouteTokensFirst, tokenKey } from './utils';
 
 describe('tokenKey', () => {
   test('lowercases EVM addresses', () => {
@@ -36,6 +36,85 @@ describe('mergeRouteTokensFirst', () => {
   });
 });
 
+describe('getTokenRouteKind', () => {
+  test('marks direct available route tokens as bridge', () => {
+    const routeToken = token(10, '0x1111111111111111111111111111111111111111', 'optimism');
+
+    expect(
+      getTokenRouteKind(
+        routeToken,
+        new Set([tokenKey(routeToken.chainId, routeToken.address)]),
+        token(1, '0x5555555555555555555555555555555555555555', 'ethereum'),
+      ),
+    ).toBe('bridge');
+  });
+
+  test('marks tokens as swap when both sides can swap', () => {
+    const swapToken = token(10, '0x2222222222222222222222222222222222222222', 'optimism', {
+      canBridge: false,
+      isBridgeToken: false,
+      canSwap: true,
+    });
+    const counterpartToken = token(1, '0x5555555555555555555555555555555555555555', 'ethereum', {
+      canSwap: true,
+    });
+
+    expect(getTokenRouteKind(swapToken, new Set(), counterpartToken)).toBe('swap');
+  });
+
+  test('does not badge unsupported tokens', () => {
+    const unsupported = token(10, '0x3333333333333333333333333333333333333333', 'optimism', {
+      canBridge: false,
+      isBridgeToken: false,
+      canSwap: false,
+    });
+
+    expect(
+      getTokenRouteKind(
+        unsupported,
+        new Set(),
+        token(1, '0x5555555555555555555555555555555555555555', 'ethereum', {
+          canSwap: true,
+        }),
+      ),
+    ).toBeUndefined();
+  });
+
+  test('does not mark swap when the counterpart cannot swap', () => {
+    const swapToken = token(42161, '0x4444444444444444444444444444444444444444', 'arbitrum', {
+      canBridge: false,
+      isBridgeToken: false,
+      canSwap: true,
+    });
+    const counterpartToken = token(1, '0x5555555555555555555555555555555555555555', 'ethereum', {
+      canSwap: false,
+    });
+
+    expect(getTokenRouteKind(swapToken, new Set(), counterpartToken)).toBeUndefined();
+  });
+});
+
+describe('getRoutePrefillToken', () => {
+  test('returns the first route token when no destination is selected', () => {
+    const routeToken = token(10, '0x1111111111111111111111111111111111111111', 'optimism');
+
+    expect(getRoutePrefillToken([routeToken])).toBe(routeToken);
+  });
+
+  test('keeps the current destination when it is still directly bridgeable', () => {
+    const routeToken = token(10, '0x1111111111111111111111111111111111111111', 'optimism');
+
+    expect(getRoutePrefillToken([routeToken], { ...routeToken })).toBeUndefined();
+  });
+
+  test('replaces the current destination when it is not directly bridgeable', () => {
+    const routeToken = token(10, '0x1111111111111111111111111111111111111111', 'optimism');
+    const current = token(42161, '0x2222222222222222222222222222222222222222', 'arbitrum');
+
+    expect(getRoutePrefillToken([routeToken], current)).toBe(routeToken);
+  });
+});
+
 describe('isBridgeOnlyToken', () => {
   test('requires bridge support without swap support', () => {
     expect(isBridgeOnlyToken(token(1, '0x1111111111111111111111111111111111111111', 'base'))).toBe(
@@ -54,6 +133,32 @@ describe('isBridgeOnlyToken', () => {
         }),
       ),
     ).toBe(false);
+  });
+});
+
+describe('getAvailableRoutesQuery', () => {
+  test('builds destination route query for bridge tokens that can also swap', () => {
+    const originToken = token(1, '0x1111111111111111111111111111111111111111', 'ethereum', {
+      canBridge: true,
+      canSwap: true,
+    });
+
+    expect(getAvailableRoutesQuery('destination', originToken)).toEqual({
+      srcChain: originToken.chainId,
+      srcToken: originToken.address,
+    });
+  });
+
+  test('builds origin route query from a selected destination token', () => {
+    const destinationToken = token(10, '0x2222222222222222222222222222222222222222', 'optimism', {
+      canBridge: false,
+      canSwap: true,
+    });
+
+    expect(getAvailableRoutesQuery('origin', destinationToken)).toEqual({
+      dstChain: destinationToken.chainId,
+      dstToken: destinationToken.address,
+    });
   });
 });
 

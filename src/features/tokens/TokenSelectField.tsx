@@ -83,7 +83,7 @@ export function TokenSelectField({ selectionMode, disabled }: Props) {
       // Reset amount when origin changes (warp UI does the same).
       setFieldValue('amount', '');
       latestOriginSelectionRef.current = tokenKey(token.chainId, token.address);
-      void prefillDestinationForBridgeToken({
+      void prefillBestDestinationToken({
         originToken: token,
         currentDestinationToken: counterpartToken,
         chainIdToName,
@@ -130,7 +130,7 @@ export function TokenSelectField({ selectionMode, disabled }: Props) {
   );
 }
 
-async function prefillDestinationForBridgeToken({
+async function prefillBestDestinationToken({
   originToken,
   currentDestinationToken,
   chainIdToName,

@@ -8,6 +8,9 @@ import { useStore } from '../store';
 import { tokenDiscoveryToUi, type TokenSelectionMode, type UiToken } from './types';
 
 const STALE_5_MIN = 5 * 60 * 1000;
+// Available-route discovery powers picker hints and origin prefill; keep it
+// warm long enough to avoid repeat calls while quote/submit validation remains
+// the source of truth.
 export const AVAILABLE_ROUTES_STALE_TIME = 10 * 60 * 1000;
 const STALE_30_SEC = 30 * 1000;
 

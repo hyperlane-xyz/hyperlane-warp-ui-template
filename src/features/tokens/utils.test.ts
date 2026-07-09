@@ -113,6 +113,22 @@ describe('getRoutePrefillToken', () => {
 
     expect(getRoutePrefillToken([routeToken], current)).toBe(routeToken);
   });
+
+  test('replaces a swap-only destination with the first direct bridge token', () => {
+    const routeToken = token(10, '0x1111111111111111111111111111111111111111', 'optimism');
+    const swapOnlyDestination = token(
+      10,
+      '0x2222222222222222222222222222222222222222',
+      'optimism',
+      {
+        canBridge: false,
+        isBridgeToken: false,
+        canSwap: true,
+      },
+    );
+
+    expect(getRoutePrefillToken([routeToken], swapOnlyDestination)).toBe(routeToken);
+  });
 });
 
 describe('isBridgeOnlyToken', () => {
@@ -137,7 +153,7 @@ describe('isBridgeOnlyToken', () => {
 });
 
 describe('getAvailableRoutesQuery', () => {
-  test('builds destination route query for bridge tokens that can also swap', () => {
+  test('builds destination route query from any origin token', () => {
     const originToken = token(1, '0x1111111111111111111111111111111111111111', 'ethereum', {
       canBridge: true,
       canSwap: true,

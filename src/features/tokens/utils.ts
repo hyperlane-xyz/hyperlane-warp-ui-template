@@ -42,6 +42,8 @@ export function getRoutePrefillToken(
   if (!currentToken) return routeTokens[0];
 
   const currentKey = getTokenKey(currentToken);
+  // Origin changes prefer a direct bridge destination over preserving a
+  // swap-only destination, so the user lands on the safest known route.
   return routeTokens.some((token) => getTokenKey(token) === currentKey)
     ? undefined
     : routeTokens[0];

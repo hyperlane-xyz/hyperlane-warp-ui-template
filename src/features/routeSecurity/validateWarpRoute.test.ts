@@ -132,7 +132,7 @@ describe('validateWarpRoute', () => {
     },
   );
 
-  test.each([['EvmHypXERC20Lockbox'], ['EvmHypVSXERC20Lockbox']])(
+  test.each([['EvmHypSyntheticRebase'], ['EvmHypXERC20Lockbox'], ['EvmHypVSXERC20Lockbox']])(
     'accepts %s routes using addressOrDenom for spend token',
     (standard) => {
       const route = bridgeRoute({
@@ -151,6 +151,7 @@ describe('validateWarpRoute', () => {
   test.each([
     ['SealevelHypSynthetic', 1399811149, 'solanamainnet', 'SolRouter111', 'SolMint111'],
     ['CwHypSynthetic', 555, 'osmosis', 'cw-router-111', 'cw-token-111'],
+    ['AleoHypSynthetic', 444, 'aleo', 'aleo-router-111', 'aleo-token-111'],
     [
       'CosmosNativeHypSynthetic',
       222,
@@ -173,7 +174,7 @@ describe('validateWarpRoute', () => {
       expect(
         validateWarpRoute(
           route,
-          context(nonEvmAddressLikeRoute(standard, chainName, router, collateral), router, ROUTER),
+          context(nonEvmRoute(standard, chainName, router, collateral), router, ROUTER),
         ),
       ).toEqual({ valid: true });
     },
@@ -197,11 +198,7 @@ describe('validateWarpRoute', () => {
       expect(
         validateWarpRoute(
           route,
-          context(
-            nonEvmCollateralLikeRoute(standard, chainName, router, collateral),
-            collateral,
-            ROUTER,
-          ),
+          context(nonEvmRoute(standard, chainName, router, collateral), collateral, ROUTER),
         ),
       ).toEqual({ valid: true });
     },
@@ -237,11 +234,7 @@ describe('validateWarpRoute', () => {
       expect(
         validateWarpRoute(
           route,
-          context(
-            nonEvmCollateralLikeRoute(standard, chainName, router, collateral),
-            NATIVE,
-            ROUTER,
-          ),
+          context(nonEvmRoute(standard, chainName, router, collateral), NATIVE, ROUTER),
         ),
       ).toEqual({ valid: true });
     },
@@ -530,30 +523,7 @@ function collateralLikeRoutes(standard: string): RegistryWarpRouteMap {
   };
 }
 
-function nonEvmCollateralLikeRoute(
-  standard: string,
-  chainName: string,
-  router: string,
-  collateral: string,
-): RegistryWarpRouteMap {
-  const routeId = `${standard}/test`;
-  return {
-    [routeId.toLowerCase()]: {
-      id: routeId,
-      tokens: [
-        {
-          chainName,
-          addressOrDenom: router,
-          collateralAddressOrDenom: collateral,
-          standard,
-        },
-        { chainName: 'ethereum', addressOrDenom: ROUTER, standard: 'EvmHypSynthetic' },
-      ],
-    },
-  };
-}
-
-function nonEvmAddressLikeRoute(
+function nonEvmRoute(
   standard: string,
   chainName: string,
   router: string,

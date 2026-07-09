@@ -37,11 +37,14 @@ const ADDRESS_OR_DENOM_SPEND_STANDARDS = new Set([
   TokenStandard.TronHypVSXERC20Lockbox,
   TokenStandard.SealevelHypSynthetic,
   TokenStandard.CwHypSynthetic,
-  TokenStandard.CosmNativeHypSynthetic,
+  TokenStandard.CosmNativeHypSynthetic, // SDK key is abbreviated; enum value is "CosmosNativeHypSynthetic".
   TokenStandard.StarknetHypSynthetic,
   TokenStandard.RadixHypSynthetic,
   TokenStandard.AleoHypSynthetic,
 ]);
+// PROTOCOL_TO_HYP_NATIVE_STANDARD maps some native protocols, such as
+// CosmosNative and Radix, to collateral-style standards. After removing true
+// *HypNative standards, the remaining entries spend the protocol native token.
 const PROTOCOL_NATIVE_COLLATERAL_STANDARDS: ReadonlySet<string> = new Set(
   Object.values(PROTOCOL_TO_HYP_NATIVE_STANDARD).filter(
     (standard) => !isNativeWarpStandard(standard),

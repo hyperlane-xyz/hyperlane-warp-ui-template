@@ -70,6 +70,7 @@ export function TokenList({
         : new Set<string>(),
     [availableRouteTokens, hasAvailableRoutesResult],
   );
+  const routePriorityTokenKeys = directRouteTokenKeys;
   const tokenRouteMap = useMemo(() => {
     if (selectionMode !== 'destination') return null;
     if (!counterpartToken) return null;
@@ -113,11 +114,11 @@ export function TokenList({
       const aKey = getTokenKey(a);
       const bKey = getTokenKey(b);
 
-      if (tokenRouteMap) {
-        const aHasRoute = tokenRouteMap.has(aKey);
-        const bHasRoute = tokenRouteMap.has(bKey);
-        if (aHasRoute && !bHasRoute) return -1;
-        if (!aHasRoute && bHasRoute) return 1;
+      if (routePriorityTokenKeys.size > 0) {
+        const aIsDirectRoute = routePriorityTokenKeys.has(aKey);
+        const bIsDirectRoute = routePriorityTokenKeys.has(bKey);
+        if (aIsDirectRoute && !bIsDirectRoute) return -1;
+        if (!aIsDirectRoute && bIsDirectRoute) return 1;
       }
 
       const aUsd = usdMap.get(aKey) ?? 0;
@@ -145,7 +146,7 @@ export function TokenList({
     const displayTokens = isLimited ? sorted.slice(0, maxDisplay) : sorted;
 
     return { tokens: displayTokens, isLimited };
-  }, [allTokens, trimmedSearch, chainFilter, tokenRouteMap, usdMap, balanceMap]);
+  }, [allTokens, trimmedSearch, chainFilter, routePriorityTokenKeys, usdMap, balanceMap]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo(0, 0);

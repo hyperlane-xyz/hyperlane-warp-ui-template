@@ -1,4 +1,9 @@
-import type { ChainMap, ChainMetadata } from '@hyperlane-xyz/sdk';
+import {
+  PROTOCOL_TO_HYP_NATIVE_STANDARD,
+  TokenStandard,
+  type ChainMap,
+  type ChainMetadata,
+} from '@hyperlane-xyz/sdk';
 
 import type { ChainDiscovery, QuoteBridgeStep, RouteApproval, RouteResponse } from '../api/types';
 import {
@@ -17,6 +22,31 @@ const HYP_NATIVE_STANDARDS = new Set([
   'AleoHypNative',
   'TronHypNative',
 ]);
+const ADDRESS_OR_DENOM_SPEND_STANDARDS = new Set([
+  TokenStandard.EvmHypSynthetic,
+  TokenStandard.EvmHypSyntheticRebase,
+  TokenStandard.EvmHypXERC20,
+  TokenStandard.EvmHypXERC20Lockbox,
+  TokenStandard.EvmHypVSXERC20,
+  TokenStandard.EvmHypVSXERC20Lockbox,
+  TokenStandard.TronHypSynthetic,
+  TokenStandard.TronHypSyntheticRebase,
+  TokenStandard.TronHypXERC20,
+  TokenStandard.TronHypXERC20Lockbox,
+  TokenStandard.TronHypVSXERC20,
+  TokenStandard.TronHypVSXERC20Lockbox,
+  TokenStandard.SealevelHypSynthetic,
+  TokenStandard.CwHypSynthetic,
+  TokenStandard.CosmNativeHypSynthetic,
+  TokenStandard.StarknetHypSynthetic,
+  TokenStandard.RadixHypSynthetic,
+  TokenStandard.AleoHypSynthetic,
+]);
+const PROTOCOL_NATIVE_COLLATERAL_STANDARDS: ReadonlySet<string> = new Set(
+  Object.values(PROTOCOL_TO_HYP_NATIVE_STANDARD).filter(
+    (standard) => !isNativeWarpStandard(standard),
+  ),
+);
 
 export type WarpRouteValidationResult =
   | { valid: true }
@@ -148,6 +178,8 @@ function tokenForChain(
 }
 
 function expectedSpendToken(token: RegistryWarpRouteToken): string {
+  if (usesAddressOrDenomAsSpendToken(token.standard)) return token.addressOrDenom;
+  if (PROTOCOL_NATIVE_COLLATERAL_STANDARDS.has(token.standard)) return NATIVE_TOKEN;
   return token.collateralAddressOrDenom ?? token.addressOrDenom;
 }
 
@@ -157,6 +189,10 @@ function expectedDiscoveryToken(token: RegistryWarpRouteToken): string {
 
 function isNativeWarpStandard(standard: string): boolean {
   return HYP_NATIVE_STANDARDS.has(standard);
+}
+
+function usesAddressOrDenomAsSpendToken(standard: string): boolean {
+  return ADDRESS_OR_DENOM_SPEND_STANDARDS.has(standard as TokenStandard);
 }
 
 function validateApprovalSpender(

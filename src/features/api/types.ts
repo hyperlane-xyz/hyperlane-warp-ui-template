@@ -2,11 +2,12 @@
 // extension since the UI doesn't generate spec docs.
 import { z } from 'zod';
 
-export const Address = z.string().regex(/^0x[0-9a-fA-F]{40}$/);
+export const HexAddress = z.string().regex(/^0x[0-9a-fA-F]{40}$/);
+export const Address = z.string().min(1).max(100);
 // Permissive token-address schema mirroring the engine's TokenAddress —
 // length-bounded string so non-EVM addresses (Solana base58 mints,
-// Cosmos bech32) validate. The strict EVM `Address` is still used for
-// request-side fields like sender/recipient.
+// Cosmos bech32) validate. The strict EVM `HexAddress` is still used for
+// EVM-only fields like Permit2 and approval spenders.
 export const TokenAddress = z.string().min(1).max(100);
 export const BigIntString = z.string().regex(/^\d+$/);
 export const Hex = z.string().regex(/^0x[0-9a-fA-F]*$/);
@@ -55,7 +56,7 @@ export const ChainDiscoverySchema = z.object({
   // Optional until production engine redeploys with the field; the swap
   // form gates approvals on its presence so an undefined value just
   // surfaces as "Loading Permit2…" instead of crashing the chains list.
-  permit2: Address.optional(),
+  permit2: HexAddress.optional(),
   dex: z.string().nullable(),
   canSwap: z.boolean(),
   canExecute: z.boolean(),
@@ -256,11 +257,11 @@ export const CallCommitmentSchema = z.object({
 export type CallCommitment = z.infer<typeof CallCommitmentSchema>;
 
 export const RouteApprovalSchema = z.object({
-  token: Address,
-  spender: Address,
+  token: HexAddress,
+  spender: HexAddress,
   amount: BigIntString,
   kind: z.enum(['erc20', 'permit2']),
-  permit2Spender: Address.optional(),
+  permit2Spender: HexAddress.optional(),
 });
 export type RouteApproval = z.infer<typeof RouteApprovalSchema>;
 

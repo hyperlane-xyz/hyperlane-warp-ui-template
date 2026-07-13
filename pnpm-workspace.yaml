@@ -4,18 +4,6 @@ minimumReleaseAgeExclude:
   - "@hyperlane-xyz/*"
   - "@provablehq/*"
 overrides:
-  '@hyperlane-xyz/aleo-sdk': 'file:.monorepo-tarballs/hyperlane-xyz-aleo-sdk-35.2.0.tgz'
-  '@hyperlane-xyz/cosmos-sdk': 'file:.monorepo-tarballs/hyperlane-xyz-cosmos-sdk-35.2.0.tgz'
-  '@hyperlane-xyz/deploy-sdk': 'file:.monorepo-tarballs/hyperlane-xyz-deploy-sdk-6.1.1.tgz'
-  '@hyperlane-xyz/provider-sdk': 'file:.monorepo-tarballs/hyperlane-xyz-provider-sdk-6.1.1.tgz'
-  '@hyperlane-xyz/radix-sdk': 'file:.monorepo-tarballs/hyperlane-xyz-radix-sdk-35.2.0.tgz'
-  '@hyperlane-xyz/sdk': 'file:.monorepo-tarballs/hyperlane-xyz-sdk-35.2.0.tgz'
-  '@hyperlane-xyz/starknet-sdk': 'file:.monorepo-tarballs/hyperlane-xyz-starknet-sdk-28.1.1.tgz'
-  '@hyperlane-xyz/sealevel-sdk': 'file:.monorepo-tarballs/hyperlane-xyz-sealevel-sdk-35.2.0.tgz'
-  '@hyperlane-xyz/tron-sdk': 'file:.monorepo-tarballs/hyperlane-xyz-tron-sdk-23.1.1.tgz'
-  '@hyperlane-xyz/utils': 'file:.monorepo-tarballs/hyperlane-xyz-utils-35.2.0.tgz'
-  '@hyperlane-xyz/widgets': 'file:.monorepo-tarballs/hyperlane-xyz-widgets-35.2.0.tgz'
-  '@hyperlane-xyz/core': 'file:.monorepo-tarballs/hyperlane-xyz-core-11.3.1.tgz'
   tronweb>ethers: ^6.13.5
   "@solana/web3.js": ^1.95.4
   axios: ^1.7.9

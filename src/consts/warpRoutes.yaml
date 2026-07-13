@@ -2,26 +2,5 @@
 # These configs will be merged with the warp routes in the configured registry
 # The input here is typically the output of the Hyperlane CLI warp deploy command
 ---
-tokens:
-  - addressOrDenom: "0x6dC0a1C88C50444DD6097c354dEc639483EC780D"
-    chainName: sepolia
-    coinGeckoId: usd-coin
-    collateralAddressOrDenom: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"
-    connections:
-      - token: aleo|aleotestnet|test_hyp_warp_token_usdc_v2.aleo/aleo18u5acm8s3gzvt60ws9gw65fgqsm90v9y35vrl8l6y7jktwf6tgysz85hc2
-    decimals: 6
-    logoURI: /deployments/warp_routes/USDC/logo.svg
-    name: USDC
-    standard: EvmHypCollateral
-    symbol: USDC
-    tokenType: collateral
-  - addressOrDenom: test_hyp_warp_token_usdc_v2.aleo/aleo18u5acm8s3gzvt60ws9gw65fgqsm90v9y35vrl8l6y7jktwf6tgysz85hc2
-    chainName: aleotestnet
-    connections:
-      - token: ethereum|sepolia|0x6dC0a1C88C50444DD6097c354dEc639483EC780D
-    decimals: 6
-    name: USD Coin
-    standard: AleoHypSynthetic
-    symbol: USDC
-    tokenType: synthetic
+tokens: []
 options: {}

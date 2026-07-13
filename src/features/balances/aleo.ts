@@ -1,4 +1,5 @@
 import { Token, TokenStandard, type MultiProtocolProvider } from '@hyperlane-xyz/sdk';
+import { isZeroishAddress } from '@hyperlane-xyz/utils';
 
 import { logger } from '../../utils/logger';
 import type { BalanceToken } from './types';
@@ -92,7 +93,7 @@ export function directAleoBalanceDenom(
   },
   nativeDenom?: string,
 ): string | null {
-  if (args.isNative && isZeroAddress(args.tokenAddress)) return nativeDenom ?? null;
+  if (args.isNative && isZeroishAddress(args.tokenAddress)) return nativeDenom ?? null;
   if (args.standard === TokenStandard.AleoHypCollateral && !isAleoTokenProgram(args.tokenAddress)) {
     return args.tokenAddress;
   }
@@ -109,8 +110,4 @@ function nativeDenomFor(
 ): string | undefined {
   if (!chainName) return undefined;
   return multiProvider.tryGetChainMetadata(chainName)?.nativeToken?.denom;
-}
-
-function isZeroAddress(address: string): boolean {
-  return /^0x0+$/i.test(address);
 }

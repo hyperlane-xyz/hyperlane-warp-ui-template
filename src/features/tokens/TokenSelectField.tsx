@@ -10,6 +10,7 @@ import { updateQueryParams } from '../../utils/queryParams';
 import { trackTokenSelectionEvent } from '../analytics/utils';
 import { useChains } from '../api/hooks';
 import { routerClient } from '../api/RouterClient';
+import { ChainEditModal } from '../chains/ChainEditModal';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { useStore } from '../store';
@@ -37,6 +38,7 @@ type Props = {
 export function TokenSelectField({ selectionMode, disabled }: Props) {
   const { values, setFieldValue } = useFormikContext<TransferFormValues>();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingChain, setEditingChain] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const tokenMap = useTokenByKeyMap();
   const multiProvider = useMultiProvider();
@@ -108,6 +110,11 @@ export function TokenSelectField({ selectionMode, disabled }: Props) {
     if (!disabled) setIsModalOpen(true);
   };
 
+  const handleEditBack = () => {
+    setEditingChain(null);
+    setIsModalOpen(true);
+  };
+
   return (
     <>
       <TokenButton
@@ -125,7 +132,16 @@ export function TokenSelectField({ selectionMode, disabled }: Props) {
         selectionMode={selectionMode}
         counterpartToken={counterpartToken}
         recipient={values.recipient}
+        onEditChain={setEditingChain}
       />
+      {editingChain && (
+        <ChainEditModal
+          isOpen={!!editingChain}
+          close={() => setEditingChain(null)}
+          onClickBack={handleEditBack}
+          chainName={editingChain}
+        />
+      )}
     </>
   );
 }

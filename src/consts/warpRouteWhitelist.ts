@@ -406,8 +406,6 @@ export const warpRouteWhitelist: Array<string> | null = [
   // Aleo warp routes
   'ALEO/aleo',
   'ETH/aleo',
-  'USDC/aleo',
-  'USDT/aleo',
   'USAD/aleo',
   'SOL/aleo',
   'WBTC/aleo',

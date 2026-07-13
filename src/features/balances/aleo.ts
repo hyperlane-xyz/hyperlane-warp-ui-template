@@ -50,7 +50,7 @@ export async function readAleoTokenBalance(
   multiProvider: MultiProtocolProvider,
   args: AleoBalanceArgs,
 ): Promise<bigint> {
-  const directDenom = directAleoBalanceDenom(args);
+  const directDenom = directAleoBalanceDenom(args, nativeDenomFor(multiProvider, args.chainName));
   if (directDenom) {
     const provider = multiProvider.getProvider(args.chainName).provider as {
       getBalance(input: { address: string; denom: string }): Promise<bigint>;
@@ -84,11 +84,15 @@ export function resolveAleoBalanceStandard(args: {
   return TokenStandard.AleoHypSynthetic;
 }
 
-export function directAleoBalanceDenom(args: {
-  tokenAddress: string;
-  isNative: boolean;
-  standard?: string;
-}): string | null {
+export function directAleoBalanceDenom(
+  args: {
+    tokenAddress: string;
+    isNative: boolean;
+    standard?: string;
+  },
+  nativeDenom?: string,
+): string | null {
+  if (args.isNative && isZeroAddress(args.tokenAddress)) return nativeDenom ?? null;
   if (args.standard === TokenStandard.AleoHypCollateral && !isAleoTokenProgram(args.tokenAddress)) {
     return args.tokenAddress;
   }
@@ -97,4 +101,16 @@ export function directAleoBalanceDenom(args: {
 
 export function isAleoTokenProgram(address: string): boolean {
   return address.includes('.aleo/');
+}
+
+function nativeDenomFor(
+  multiProvider: MultiProtocolProvider,
+  chainName: string | undefined,
+): string | undefined {
+  if (!chainName) return undefined;
+  return multiProvider.tryGetChainMetadata(chainName)?.nativeToken?.denom;
+}
+
+function isZeroAddress(address: string): boolean {
+  return /^0x0+$/i.test(address);
 }

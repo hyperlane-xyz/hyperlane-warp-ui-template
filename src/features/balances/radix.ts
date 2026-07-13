@@ -50,10 +50,11 @@ export async function readRadixTokenBalance(
   multiProvider: MultiProtocolProvider,
   args: RadixBalanceArgs,
 ): Promise<bigint> {
+  const nativeDenom = multiProvider.tryGetChainMetadata(args.chainName)?.nativeToken?.denom;
   const token = new Token({
     chainName: args.chainName,
     standard: resolveRadixBalanceStandard(args),
-    addressOrDenom: args.tokenAddress,
+    addressOrDenom: radixBalanceAddressForToken(args, nativeDenom),
     decimals: args.decimals ?? 18,
     symbol: args.symbol ?? '',
     name: args.name ?? args.symbol ?? '',
@@ -61,6 +62,17 @@ export async function readRadixTokenBalance(
     logoURI: args.logoURI,
   });
   return (await token.getBalance(multiProvider, args.owner)).amount;
+}
+
+export function radixBalanceAddressForToken(
+  args: {
+    tokenAddress: string;
+    isNative: boolean;
+  },
+  nativeDenom?: string,
+): string {
+  if (args.isNative) return nativeDenom ?? args.tokenAddress;
+  return args.tokenAddress;
 }
 
 export function resolveRadixBalanceStandard(args: {

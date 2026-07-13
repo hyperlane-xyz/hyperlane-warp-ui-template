@@ -3,6 +3,7 @@ import { Token, TokenStandard, type MultiProtocolProvider } from '@hyperlane-xyz
 import { logger } from '../../utils/logger';
 import type { BalanceToken } from './types';
 import { getBalanceTokenKey } from './types';
+import { getNativeTokenDenom } from './utils';
 
 interface RadixBalanceArgs {
   chainName: string;
@@ -50,10 +51,11 @@ export async function readRadixTokenBalance(
   multiProvider: MultiProtocolProvider,
   args: RadixBalanceArgs,
 ): Promise<bigint> {
+  const nativeDenom = getNativeTokenDenom(multiProvider, args.chainName);
   const token = new Token({
     chainName: args.chainName,
     standard: resolveRadixBalanceStandard(args),
-    addressOrDenom: args.tokenAddress,
+    addressOrDenom: radixBalanceAddressForToken(args, nativeDenom),
     decimals: args.decimals ?? 18,
     symbol: args.symbol ?? '',
     name: args.name ?? args.symbol ?? '',
@@ -61,6 +63,17 @@ export async function readRadixTokenBalance(
     logoURI: args.logoURI,
   });
   return (await token.getBalance(multiProvider, args.owner)).amount;
+}
+
+export function radixBalanceAddressForToken(
+  args: {
+    tokenAddress: string;
+    isNative: boolean;
+  },
+  nativeDenom?: string,
+): string {
+  if (args.isNative) return nativeDenom ?? args.tokenAddress;
+  return args.tokenAddress;
 }
 
 export function resolveRadixBalanceStandard(args: {

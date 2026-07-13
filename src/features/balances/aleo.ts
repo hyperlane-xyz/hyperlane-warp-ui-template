@@ -1,8 +1,10 @@
 import { Token, TokenStandard, type MultiProtocolProvider } from '@hyperlane-xyz/sdk';
+import { isZeroishAddress } from '@hyperlane-xyz/utils';
 
 import { logger } from '../../utils/logger';
 import type { BalanceToken } from './types';
 import { getBalanceTokenKey } from './types';
+import { getNativeTokenDenom } from './utils';
 
 interface AleoBalanceArgs {
   chainName: string;
@@ -50,7 +52,10 @@ export async function readAleoTokenBalance(
   multiProvider: MultiProtocolProvider,
   args: AleoBalanceArgs,
 ): Promise<bigint> {
-  const directDenom = directAleoBalanceDenom(args);
+  const directDenom = directAleoBalanceDenom(
+    args,
+    getNativeTokenDenom(multiProvider, args.chainName),
+  );
   if (directDenom) {
     const provider = multiProvider.getProvider(args.chainName).provider as {
       getBalance(input: { address: string; denom: string }): Promise<bigint>;
@@ -84,11 +89,15 @@ export function resolveAleoBalanceStandard(args: {
   return TokenStandard.AleoHypSynthetic;
 }
 
-export function directAleoBalanceDenom(args: {
-  tokenAddress: string;
-  isNative: boolean;
-  standard?: string;
-}): string | null {
+export function directAleoBalanceDenom(
+  args: {
+    tokenAddress: string;
+    isNative: boolean;
+    standard?: string;
+  },
+  nativeDenom?: string,
+): string | null {
+  if (args.isNative && isZeroishAddress(args.tokenAddress)) return nativeDenom ?? null;
   if (args.standard === TokenStandard.AleoHypCollateral && !isAleoTokenProgram(args.tokenAddress)) {
     return args.tokenAddress;
   }

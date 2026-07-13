@@ -3,6 +3,7 @@ import { Token, TokenStandard, type MultiProtocolProvider } from '@hyperlane-xyz
 import { logger } from '../../utils/logger';
 import type { BalanceToken } from './types';
 import { getBalanceTokenKey } from './types';
+import { getNativeTokenDenom } from './utils';
 
 export async function fetchStarknetChainBalances(
   multiProvider: MultiProtocolProvider,
@@ -72,7 +73,7 @@ function resolveStarknetBalanceAddress(
   args: { chainName: string; tokenAddress: string; isNative: boolean },
 ): string {
   if (!args.isNative && !isZeroAddress(args.tokenAddress)) return args.tokenAddress;
-  const nativeAddress = multiProvider.tryGetChainMetadata(args.chainName)?.nativeToken?.denom;
+  const nativeAddress = getNativeTokenDenom(multiProvider, args.chainName);
   if (!nativeAddress) throw new Error(`Native token address not found for ${args.chainName}`);
   return nativeAddress;
 }

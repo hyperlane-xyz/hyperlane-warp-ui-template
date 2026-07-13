@@ -35,6 +35,31 @@ describe('cosmos balance routing', () => {
     ).toBe('hyperlane/0x1234');
   });
 
+  test.each(['utia', 'ukyve', 'uosmo'])(
+    'maps native zero-address aliases to the chain native denom %s',
+    (nativeDenom) => {
+      expect(
+        cosmosBankDenomForToken(
+          {
+            address: '0x0000000000000000000000000000000000000000',
+            isNative: true,
+            standard: TokenStandard.CosmNativeHypCollateral,
+          },
+          nativeDenom,
+        ),
+      ).toBe(nativeDenom);
+    },
+  );
+
+  test('does not remap non-native zero-address module token ids', () => {
+    expect(
+      cosmosBankDenomForToken({
+        address: '0x0000000000000000000000000000000000000000',
+        standard: TokenStandard.CosmNativeHypCollateral,
+      }),
+    ).toBeNull();
+  });
+
   test('keeps Cosmos native collateral module token ids on the SDK adapter', () => {
     expect(
       cosmosBankDenomForToken({

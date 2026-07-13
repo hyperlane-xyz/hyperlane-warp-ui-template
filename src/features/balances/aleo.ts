@@ -4,6 +4,7 @@ import { isZeroishAddress } from '@hyperlane-xyz/utils';
 import { logger } from '../../utils/logger';
 import type { BalanceToken } from './types';
 import { getBalanceTokenKey } from './types';
+import { getNativeTokenDenom } from './utils';
 
 interface AleoBalanceArgs {
   chainName: string;
@@ -51,7 +52,10 @@ export async function readAleoTokenBalance(
   multiProvider: MultiProtocolProvider,
   args: AleoBalanceArgs,
 ): Promise<bigint> {
-  const directDenom = directAleoBalanceDenom(args, nativeDenomFor(multiProvider, args.chainName));
+  const directDenom = directAleoBalanceDenom(
+    args,
+    getNativeTokenDenom(multiProvider, args.chainName),
+  );
   if (directDenom) {
     const provider = multiProvider.getProvider(args.chainName).provider as {
       getBalance(input: { address: string; denom: string }): Promise<bigint>;
@@ -102,12 +106,4 @@ export function directAleoBalanceDenom(
 
 export function isAleoTokenProgram(address: string): boolean {
   return address.includes('.aleo/');
-}
-
-function nativeDenomFor(
-  multiProvider: MultiProtocolProvider,
-  chainName: string | undefined,
-): string | undefined {
-  if (!chainName) return undefined;
-  return multiProvider.tryGetChainMetadata(chainName)?.nativeToken?.denom;
 }

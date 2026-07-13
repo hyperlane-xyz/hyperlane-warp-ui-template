@@ -1,9 +1,11 @@
 import { StargateClient } from '@cosmjs/stargate';
 import { Token, TokenStandard, type MultiProtocolProvider } from '@hyperlane-xyz/sdk';
+import { isZeroishAddress } from '@hyperlane-xyz/utils';
 
 import { logger } from '../../utils/logger';
 import type { BalanceToken } from './types';
 import { getBalanceTokenKey } from './types';
+import { getNativeTokenDenom } from './utils';
 
 interface CosmosBalanceArgs {
   chainName: string;
@@ -27,9 +29,10 @@ export async function fetchCosmosChainBalances(
   if (tokens.length === 0) return out;
 
   const chainName = tokens[0]?.chainName;
+  const nativeDenom = getNativeTokenDenom(multiProvider, chainName);
   const rpcUrl = rpcUrlFor(multiProvider, chainName);
   const bankTokens = tokens
-    .map((token) => ({ token, denom: cosmosBankDenomForToken(token) }))
+    .map((token) => ({ token, denom: cosmosBankDenomForToken(token, nativeDenom) }))
     .filter((entry): entry is { token: BalanceToken; denom: string } => !!entry.denom);
 
   if (rpcUrl && bankTokens.length > 0) {
@@ -48,7 +51,7 @@ export async function fetchCosmosChainBalances(
 
   await Promise.all(
     tokens
-      .filter((token) => !cosmosBankDenomForToken(token))
+      .filter((token) => !cosmosBankDenomForToken(token, nativeDenom))
       .map(async (token) => {
         try {
           out[getBalanceTokenKey(token)] = await readCosmosTokenBalance(multiProvider, {
@@ -76,10 +79,14 @@ export async function readCosmosTokenBalance(
   multiProvider: MultiProtocolProvider,
   args: CosmosBalanceArgs,
 ): Promise<bigint> {
-  const denom = cosmosBankDenomForToken({
-    address: args.tokenAddress,
-    standard: args.standard,
-  });
+  const denom = cosmosBankDenomForToken(
+    {
+      address: args.tokenAddress,
+      isNative: args.isNative,
+      standard: args.standard,
+    },
+    getNativeTokenDenom(multiProvider, args.chainName),
+  );
   if (denom) {
     const rpcUrl = rpcUrlFor(multiProvider, args.chainName);
     if (!rpcUrl) return 0n;
@@ -105,12 +112,17 @@ export async function readCosmosTokenBalance(
   return (await token.getBalance(multiProvider, args.owner)).amount;
 }
 
-export function cosmosBankDenomForToken(token: {
-  address: string;
-  standard?: string;
-}): string | null {
+export function cosmosBankDenomForToken(
+  token: {
+    address: string;
+    isNative?: boolean;
+    standard?: string;
+  },
+  nativeDenom?: string,
+): string | null {
   if (token.standard === TokenStandard.CwHypNative) return null;
   if (token.standard === TokenStandard.CwHypSynthetic) return null;
+  if (token.isNative && isZeroishAddress(token.address)) return nativeDenom ?? null;
   if (
     token.standard === TokenStandard.CosmNativeHypCollateral &&
     isCosmosModuleTokenId(token.address)

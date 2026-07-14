@@ -141,11 +141,18 @@ function validateTxTargets(
   const srcProtocol = protocolForChain(srcChain);
   if (!srcProtocol) return { valid: false, reason: 'Route source protocol unavailable' };
 
+  let hasSdkTransferTx = false;
+
   for (const tx of txs) {
+    if (!isChainRouteTx(tx) && tx.category === 'transfer') hasSdkTransferTx = true;
     const validation = isChainRouteTx(tx)
       ? validateChainRouteTx(route, tx, srcChain, srcProtocol, context)
       : validateSdkRouteTx(route, tx, srcProtocol);
     if (!validation.valid) return validation;
+  }
+
+  if (route.executionKind === 'sdkWarp' && !hasSdkTransferTx) {
+    return { valid: false, reason: 'SDK route missing transfer transaction' };
   }
 
   return { valid: true };

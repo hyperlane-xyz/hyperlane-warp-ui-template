@@ -1,5 +1,6 @@
 import type { ChainMap, ChainMetadata } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
+import { encodeFunctionData, erc20Abi } from 'viem';
 import { describe, expect, test } from 'vitest';
 
 import type { ChainDiscovery, RouteResponse } from '../api/types';
@@ -270,6 +271,45 @@ describe('validateRouteSecurity', () => {
     expect(validateRouteSecurity(route, starknetContext())).toEqual({ valid: true });
   });
 
+  test('accepts SDK warp routes with an SDK approval tx before the transfer tx', () => {
+    const route = evmSdkWarpRoute();
+
+    expect(validateRouteSecurity(route, evmSdkWarpContext())).toEqual({ valid: true });
+  });
+
+  test('accepts SDK warp routes with revoke and approve txs before the transfer tx', () => {
+    const route = evmSdkWarpRoute({ includeRevoke: true });
+
+    expect(validateRouteSecurity(route, evmSdkWarpContext())).toEqual({ valid: true });
+  });
+
+  test('rejects SDK warp approval txs with mismatched bridge spender', () => {
+    const route = evmSdkWarpRoute({ approvalSpender: BAD });
+
+    expect(validateRouteSecurity(route, evmSdkWarpContext())).toMatchObject({
+      valid: false,
+      reason: 'SDK approval spender does not match bridge router',
+    });
+  });
+
+  test('rejects SDK warp revoke txs with nonzero amount', () => {
+    const route = evmSdkWarpRoute({ includeRevoke: true, revokeAmount: '1' });
+
+    expect(validateRouteSecurity(route, evmSdkWarpContext())).toMatchObject({
+      valid: false,
+      reason: 'SDK revoke amount must be zero',
+    });
+  });
+
+  test('rejects SDK warp tx lists without a transfer tx', () => {
+    const route = evmSdkWarpRoute({ omitTransfer: true });
+
+    expect(validateRouteSecurity(route, evmSdkWarpContext())).toMatchObject({
+      valid: false,
+      reason: 'SDK route missing transfer transaction',
+    });
+  });
+
   test('accepts Sealevel universal router txs that include bridge router and asset accounts', () => {
     expect(validateRouteSecurity(sealevelUniversalRouterRoute(), solanaContext())).toEqual({
       valid: true,
@@ -362,6 +402,12 @@ function solanaContext(overrides: Partial<RouteSecurityTestContext> = {}) {
   });
 }
 
+function evmSdkWarpContext() {
+  return context({
+    registryWarpRoutes: evmSdkWarpRoutes(),
+  });
+}
+
 type RouteSecurityTestContext = Parameters<typeof validateRouteSecurity>[1];
 
 function universalRouterRoute(
@@ -442,6 +488,74 @@ function sameChainSwapRoute(): RouteResponse {
       amount: '100',
       kind: 'erc20',
     },
+  };
+}
+
+function evmSdkWarpRoute(
+  args: {
+    approvalAmount?: string;
+    approvalSpender?: string;
+    approvalToken?: string;
+    includeRevoke?: boolean;
+    omitTransfer?: boolean;
+    revokeAmount?: string;
+  } = {},
+): RouteResponse {
+  const warpRouteId = 'TEST/sdk';
+  const approvalTx = (category: 'approval' | 'revoke', amount: string) => ({
+    protocol: ProtocolType.Ethereum,
+    type: 'ethers-v5',
+    category,
+    transaction: {
+      to: args.approvalToken ?? TOKEN,
+      data: encodeFunctionData({
+        abi: erc20Abi,
+        functionName: 'approve',
+        args: [(args.approvalSpender ?? BRIDGE_ROUTER) as `0x${string}`, BigInt(amount)],
+      }),
+    },
+    metadata: { warpRouteId },
+  });
+  const approveAmountTx = approvalTx('approval', args.approvalAmount ?? '100');
+  const transferTx = {
+    protocol: ProtocolType.Ethereum,
+    type: 'ethers-v5',
+    category: 'transfer',
+    transaction: {
+      to: BRIDGE_ROUTER,
+      data: '0x',
+      value: '0',
+    },
+    metadata: { warpRouteId },
+  };
+  const approvalTxs = args.includeRevoke
+    ? [approvalTx('revoke', args.revokeAmount ?? '0'), approveAmountTx]
+    : [approveAmountTx];
+  const txs = args.omitTransfer ? approvalTxs : [...approvalTxs, transferTx];
+
+  return {
+    steps: [
+      {
+        type: 'bridge',
+        chain: ETH,
+        destChain: BASE,
+        asset: TOKEN,
+        router: BRIDGE_ROUTER,
+        amountIn: '100',
+        amountOut: '99',
+        bridgeSymbol: 'TEST',
+        warpRouteId,
+        fee: { tokenFee: '1', igpToken: NATIVE, igpAmount: '0', localNativeFee: '0' },
+      },
+    ],
+    output: '99',
+    outputMin: '98',
+    executionKind: 'sdkWarp',
+    connection: { symbol: 'TEST', warpRouteId },
+    gas: { originGas: '0', destGas: '0' },
+    tx: txs[0],
+    txs,
+    approval: null,
   };
 }
 
@@ -545,6 +659,23 @@ function starknetRoutes(): RegistryWarpRouteMap {
           standard: 'StarknetHypCollateral',
         },
         { chainName: 'ethereum', addressOrDenom: DST_ROUTER, standard: 'EvmHypSynthetic' },
+      ],
+    },
+  };
+}
+
+function evmSdkWarpRoutes(): RegistryWarpRouteMap {
+  return {
+    'test/sdk': {
+      id: 'TEST/sdk',
+      tokens: [
+        {
+          chainName: 'ethereum',
+          addressOrDenom: BRIDGE_ROUTER,
+          collateralAddressOrDenom: TOKEN,
+          standard: 'EvmHypCollateral',
+        },
+        { chainName: 'base', addressOrDenom: DST_TOKEN, standard: 'EvmHypSynthetic' },
       ],
     },
   };

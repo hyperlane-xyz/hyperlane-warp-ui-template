@@ -109,8 +109,12 @@ export function validateWarpRoute(
     };
   }
 
-  const origin = tokenForChain(registryRoute, originChainName);
-  const destination = tokenForChain(registryRoute, destinationChainName);
+  const origin = originTokenForBridgeStep(registryRoute, originChainName, step);
+  const destination = destinationTokenForContext(
+    registryRoute,
+    destinationChainName,
+    context.dstToken,
+  );
   if (!origin || !destination) {
     return { valid: false, reason: 'Warp route endpoint missing from registry', warpRouteId };
   }
@@ -176,11 +180,29 @@ function chainNameForChainId(
   return Object.entries(chainMetadata).find(([, metadata]) => metadata.chainId === chainId)?.[0];
 }
 
-function tokenForChain(
+function tokensForChain(route: RegistryWarpRoute, chainName: string): RegistryWarpRouteToken[] {
+  return route.tokens.filter((token) => token.chainName === chainName);
+}
+
+function originTokenForBridgeStep(
   route: RegistryWarpRoute,
   chainName: string,
+  step: QuoteBridgeStep,
 ): RegistryWarpRouteToken | undefined {
-  return route.tokens.find((token) => token.chainName === chainName);
+  const candidates = tokensForChain(route, chainName);
+  if (candidates.length <= 1) return candidates[0];
+  return candidates.find((token) => sameTokenAddress(token.addressOrDenom, step.router));
+}
+
+function destinationTokenForContext(
+  route: RegistryWarpRoute,
+  chainName: string,
+  dstToken: string | undefined,
+): RegistryWarpRouteToken | undefined {
+  const candidates = tokensForChain(route, chainName);
+  if (candidates.length <= 1) return candidates[0];
+  if (!dstToken) return undefined;
+  return candidates.find((token) => sameTokenAddress(dstToken, expectedDiscoveryToken(token)));
 }
 
 function expectedSpendToken(token: RegistryWarpRouteToken): string {

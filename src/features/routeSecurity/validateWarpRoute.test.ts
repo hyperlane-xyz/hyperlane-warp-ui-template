@@ -13,6 +13,8 @@ const DST_ROUTER = '0x4444444444444444444444444444444444444444';
 const DST_COLLATERAL = '0x4545454545454545454545454545454545454545';
 const UNIVERSAL_ROUTER = '0x5555555555555555555555555555555555555555';
 const PERMIT2 = '0x6666666666666666666666666666666666666666';
+const ALT_ROUTER = '0x7777777777777777777777777777777777777777';
+const ALT_COLLATERAL = '0x8888888888888888888888888888888888888888';
 const OP_EZETH = '0xacEB607CdF59EB8022Cc0699eEF3eCF246d149e2';
 const ARB_EZETH = '0xB26bBfC6d1F469C821Ea25099017862e7368F4E8';
 const EZETH_MAINNET_COLLATERAL = '0x2416092f143378750bb29b79eD961ab195CcEea5';
@@ -103,6 +105,19 @@ describe('validateWarpRoute', () => {
     expect(validateWarpRoute(route, context(collateralRoutes(), COLLATERAL, DST_ROUTER))).toEqual({
       valid: true,
     });
+  });
+
+  test('accepts routes with multiple registry tokens on the destination chain', () => {
+    const route = bridgeRoute({
+      asset: COLLATERAL,
+      router: ROUTER,
+      approval: null,
+      warpRouteId: 'MULTI/test',
+    });
+
+    expect(
+      validateWarpRoute(route, context(multiTokenDestinationRoutes(), COLLATERAL, ALT_COLLATERAL)),
+    ).toEqual({ valid: true });
   });
 
   test('accepts non-lockbox XERC20 routes using addressOrDenom for selected token identity', () => {
@@ -507,6 +522,34 @@ function collateralRoutes(): RegistryWarpRouteMap {
           standard: 'EvmHypCollateral',
         },
         { chainName: 'base', addressOrDenom: DST_ROUTER, standard: 'EvmHypSynthetic' },
+      ],
+    },
+  };
+}
+
+function multiTokenDestinationRoutes(): RegistryWarpRouteMap {
+  return {
+    'multi/test': {
+      id: 'MULTI/test',
+      tokens: [
+        {
+          chainName: 'ethereum',
+          addressOrDenom: ROUTER,
+          collateralAddressOrDenom: COLLATERAL,
+          standard: 'EvmHypCrossCollateralRouter',
+        },
+        {
+          chainName: 'base',
+          addressOrDenom: DST_ROUTER,
+          collateralAddressOrDenom: DST_COLLATERAL,
+          standard: 'EvmHypCrossCollateralRouter',
+        },
+        {
+          chainName: 'base',
+          addressOrDenom: ALT_ROUTER,
+          collateralAddressOrDenom: ALT_COLLATERAL,
+          standard: 'EvmHypCrossCollateralRouter',
+        },
       ],
     },
   };

@@ -10,7 +10,8 @@ import {
 import { parseUnits } from 'viem';
 
 import { logger } from '../../../utils/logger';
-import type { ChainDiscovery, RouteResponse, RouteTx } from '../../api/types';
+import { getRouteTxs, isChainRouteTx } from '../../api/routeTx';
+import type { ChainDiscovery } from '../../api/types';
 import { estimateNativeGasCost, readBalance } from '../../balances/read';
 import { formatDisplayAmount } from '../../balances/utils';
 import type { UiToken } from '../../tokens/types';
@@ -257,7 +258,7 @@ export async function validateBalances(args: {
     }
   }
 
-  const originTx = getRouteTxs(bestRoute.raw).find(isEvmRouteTx) ?? null;
+  const originTx = getRouteTxs(bestRoute.raw).find(isChainRouteTx) ?? null;
   const txValue = originTx ? BigInt(originTx.value) : 0n;
   const gasCost = await estimateNativeGasCost(multiProvider, {
     chainName: srcChainInfo.chainName,
@@ -332,14 +333,6 @@ function balanceKey(chainId: number, address: string): string {
 
 function isNativeAddress(addr: string): boolean {
   return /^0x0+$/i.test(addr);
-}
-
-function getRouteTxs(route: RouteResponse): RouteTx[] {
-  return route.txs?.length ? route.txs : route.tx ? [route.tx] : [];
-}
-
-function isEvmRouteTx(tx: RouteTx): tx is Extract<RouteTx, { to: string }> {
-  return 'to' in tx;
 }
 
 function toEvmCanonical(addr: string, protocol: ProtocolType): string | null {

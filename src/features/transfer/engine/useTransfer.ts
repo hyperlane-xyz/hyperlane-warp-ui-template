@@ -22,6 +22,7 @@ import { useCallback, useState } from 'react';
 import type { Address } from 'viem';
 
 import { logger } from '../../../utils/logger';
+import { getRouteTxs, isChainRouteTx } from '../../api/routeTx';
 import type { RouteTx } from '../../api/types';
 import { useMultiProvider } from '../../chains/hooks';
 import { useStore } from '../../store';
@@ -68,7 +69,7 @@ export function useTransfer() {
       setIsPending(true);
 
       try {
-        const routeTxs = route.raw.txs?.length ? route.raw.txs : route.raw.tx ? [route.raw.tx] : [];
+        const routeTxs = getRouteTxs(route.raw);
         if (!routeTxs.length) throw new Error('Route has no tx');
 
         // Store route for status polling and recovery (non-persisted, session only).
@@ -264,10 +265,6 @@ function isEvmReceipt(receipt: TypedTransactionReceipt): boolean {
     receipt.type === ProviderType.EthersV5 ||
     receipt.type === ProviderType.Tron
   );
-}
-
-function isChainRouteTx(tx: RouteTx): tx is Extract<RouteTx, { to: string }> {
-  return 'to' in tx;
 }
 
 export async function toWalletTx(

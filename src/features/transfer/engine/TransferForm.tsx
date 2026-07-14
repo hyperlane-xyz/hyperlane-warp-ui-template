@@ -129,6 +129,7 @@ function TransferFormContent() {
     error: quoteError,
     isExpired,
     isQuoteSettled,
+    isRouteDataUnavailable,
   } = useQuote({
     values: { ...values, amount: debouncedAmount, recipient: effectiveRecipient },
     sender,
@@ -626,6 +627,7 @@ function TransferFormContent() {
         hasAmount={hasAmount}
         hasTokens={hasTokens}
         hasRoute={!!bestRoute}
+        isRouteDataUnavailable={isRouteDataUnavailable}
         isQuoteSettled={isQuoteSettled}
         isValidating={isValidating}
         onSendTransactions={onSendTransactions}
@@ -1083,6 +1085,7 @@ function ButtonSection({
   hasAmount,
   hasTokens,
   hasRoute,
+  isRouteDataUnavailable,
   isQuoteSettled,
   isValidating,
   onSendTransactions,
@@ -1096,6 +1099,7 @@ function ButtonSection({
   hasAmount: boolean;
   hasTokens: boolean;
   hasRoute: boolean;
+  isRouteDataUnavailable: boolean;
   isQuoteSettled: boolean;
   isValidating: boolean;
   onSendTransactions: () => Promise<void>;
@@ -1122,6 +1126,9 @@ function ButtonSection({
       text = 'Continue';
       disabled = false;
     }
+  } else if (isRouteDataUnavailable) {
+    text = 'Route data unavailable';
+    disabled = true;
   } else if (isQuoteSettled) {
     text = 'Route is not supported';
     disabled = true;

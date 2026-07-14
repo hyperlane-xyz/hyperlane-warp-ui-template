@@ -1,7 +1,7 @@
 import type { Page, Route } from '@playwright/test';
 
-export const E2E_ROUTE_TX_TO = '0x1111111111111111111111111111111111111111';
-export const E2E_APPROVAL_SPENDER = '0x2222222222222222222222222222222222222222';
+export const E2E_ROUTE_TX_TO = '0x52dd779c1b5eeb54d5f218EfA72D52117ca04115'.toLowerCase();
+export const E2E_APPROVAL_SPENDER = E2E_ROUTE_TX_TO;
 
 interface InstallQuoteMockOptions {
   approval?: 'erc20' | 'none';
@@ -23,6 +23,55 @@ export async function installQuoteMock(
       amount: string;
     };
 
+    const txTo = opts.txTo ?? E2E_ROUTE_TX_TO;
+    const steps =
+      body.srcChain === body.dstChain
+        ? [
+            {
+              type: 'swap',
+              chain: body.srcChain,
+              dex: 'e2e',
+              tokenIn: body.srcToken,
+              tokenOut: body.dstToken,
+              amountIn: body.amount,
+              amountOut: opts.output ?? body.amount,
+              path: [body.srcToken, body.dstToken],
+              poolCount: 1,
+              minPoolTvlUsd: null,
+            },
+          ]
+        : [
+            {
+              type: 'swap',
+              chain: body.srcChain,
+              dex: 'e2e',
+              tokenIn: body.srcToken,
+              tokenOut: body.srcToken,
+              amountIn: body.amount,
+              amountOut: opts.output ?? body.amount,
+              path: [body.srcToken],
+              poolCount: 1,
+              minPoolTvlUsd: null,
+            },
+            {
+              type: 'bridge',
+              chain: body.srcChain,
+              destChain: body.dstChain,
+              asset: body.srcToken,
+              router: '0x3333333333333333333333333333333333333333',
+              amountIn: opts.output ?? body.amount,
+              amountOut: opts.output ?? body.amount,
+              fee: {
+                tokenFee: '0',
+                igpToken: '0x0000000000000000000000000000000000000000',
+                igpAmount: '0',
+                localNativeFee: '0',
+              },
+              bridgeSymbol: 'E2E',
+              warpRouteId: 'E2E/test',
+            },
+          ];
+
     return route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -30,20 +79,7 @@ export async function installQuoteMock(
         expiresAt: Math.floor(Date.now() / 1000) + 60,
         routes: [
           {
-            steps: [
-              {
-                type: 'swap',
-                chain: body.srcChain,
-                dex: 'e2e',
-                tokenIn: body.srcToken,
-                tokenOut: body.dstToken,
-                amountIn: body.amount,
-                amountOut: opts.output ?? body.amount,
-                path: [body.srcToken, body.dstToken],
-                poolCount: 1,
-                minPoolTvlUsd: null,
-              },
-            ],
+            steps,
             output: opts.output ?? body.amount,
             outputMin: opts.outputMin ?? opts.output ?? body.amount,
             executionKind: 'universalRouter',
@@ -53,13 +89,13 @@ export async function installQuoteMock(
               destGas: '0',
             },
             tx: {
-              to: opts.txTo ?? E2E_ROUTE_TX_TO,
+              to: txTo,
               data: '0x12345678',
               value: '0',
             },
             txs: [
               {
-                to: opts.txTo ?? E2E_ROUTE_TX_TO,
+                to: txTo,
                 data: '0x12345678',
                 value: '0',
               },

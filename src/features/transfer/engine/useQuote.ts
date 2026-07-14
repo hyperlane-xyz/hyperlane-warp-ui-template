@@ -7,7 +7,7 @@ import { logger } from '../../../utils/logger';
 import { useChains } from '../../api/hooks';
 import { routerClient } from '../../api/RouterClient';
 import type { QuoteResponse, RouteResponse } from '../../api/types';
-import { validateWarpRoute } from '../../routeSecurity/validateWarpRoute';
+import { validateRouteSecurity } from '../../routeSecurity/validateRouteSecurity';
 import { useStore } from '../../store';
 import { useTokens } from '../../tokens/hooks';
 import { tokenKey } from '../../tokens/utils';
@@ -41,8 +41,9 @@ interface UseQuoteArgs {
 export function useQuote({ values, sender, pause }: UseQuoteArgs) {
   const [now, setNow] = useState(() => Date.now());
   const chainMetadata = useStore((state) => state.chainMetadata);
+  const chainAddresses = useStore((state) => state.chainAddresses);
   const registryWarpRoutes = useStore((state) => state.registryWarpRoutes);
-  const { data: chainsResp } = useChains();
+  const { data: chainsResp, isError: chainsError } = useChains();
 
   // Pass sender + recipient through as-is — engine handles per-protocol normalization.
   const engineSender = sender || undefined;
@@ -105,18 +106,24 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
     staleTime: REFRESH_MS,
   });
 
+  const hasChainAddresses = Object.keys(chainAddresses).length > 0;
   const augmented = useMemo<AugmentedQuote | undefined>(() => {
     if (!query.data) return undefined;
+    if (!chainsResp?.chains) return undefined;
+    if (!hasChainAddresses) return undefined;
     const routes = query.data.routes.filter((route) => {
-      const validation = validateWarpRoute(route, {
+      const validation = validateRouteSecurity(route, {
         chainMetadata,
+        chainAddresses,
         registryWarpRoutes,
-        chains: chainsResp?.chains,
+        chains: chainsResp.chains,
+        srcChain: values.srcChain!,
+        dstChain: values.dstChain!,
         srcToken: values.srcToken,
         dstToken: values.dstToken,
       });
       if (validation.valid) return true;
-      logger.warn('Filtered unsafe bridge-only route', {
+      logger.warn('Filtered unsafe route', {
         reason: validation.reason,
         warpRouteId: validation.warpRouteId,
       });
@@ -129,10 +136,14 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
     };
   }, [
     chainMetadata,
+    chainAddresses,
     chainsResp?.chains,
+    hasChainAddresses,
     query.data,
     registryWarpRoutes,
+    values.dstChain,
     values.dstToken,
+    values.srcChain,
     values.srcToken,
   ]);
 
@@ -145,18 +156,34 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
   useTimeout(refreshNow, quoteExpiryDelay);
 
   const isExpired = augmented ? augmented.expiresAt * 1000 < now : false;
-  const isQuoteSettled = query.isSuccess || query.isError;
+  const isSecurityContextReady = !!chainsResp?.chains && hasChainAddresses;
+  const isSecurityContextSettled = isSecurityContextReady || chainsError;
+  const isQuoteSettled = isQuoteSettledForSecurity(
+    query.isSuccess,
+    query.isError,
+    isSecurityContextSettled,
+  );
+  const isRouteDataUnavailable = query.isSuccess && chainsError;
 
   return {
     ...query,
     quote: augmented,
     isExpired,
     isQuoteSettled,
+    isRouteDataUnavailable,
   };
 }
 
 export function quoteExpiryDelayMs(expiresAt: number, nowMs: number): number {
   return Math.max(expiresAt * 1000 - nowMs, 0);
+}
+
+export function isQuoteSettledForSecurity(
+  isSuccess: boolean,
+  isError: boolean,
+  isSecurityContextSettled: boolean,
+): boolean {
+  return isError || (isSuccess && isSecurityContextSettled);
 }
 
 function isQuoteRequestReady(v: TransferFormValues, sender: string | undefined): boolean {

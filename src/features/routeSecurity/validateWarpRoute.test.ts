@@ -45,6 +45,13 @@ const chains = [
   chain({ id: 358974494, chainName: 'starknet' }),
 ];
 
+const chainAddresses = {
+  ethereum: { universalRouter: UNIVERSAL_ROUTER },
+  base: { universalRouter: UNIVERSAL_ROUTER },
+  solanamainnet: { universalRouter: UNIVERSAL_ROUTER },
+  starknet: { universalRouter: UNIVERSAL_ROUTER },
+};
+
 describe('validateWarpRoute', () => {
   test('accepts a registry-matching native bridge route', () => {
     const route = bridgeRoute({
@@ -294,6 +301,26 @@ describe('validateWarpRoute', () => {
     expect(validateWarpRoute(route, context(collateralRoutes()))).toEqual({ valid: true });
   });
 
+  test('rejects universal router approvals when engine discovery disagrees with registry addresses', () => {
+    const route = bridgeRoute({
+      asset: COLLATERAL,
+      router: ROUTER,
+      approval: { token: COLLATERAL, spender: UNIVERSAL_ROUTER, amount: '1', kind: 'erc20' },
+      warpRouteId: 'USDC/test',
+      executionKind: 'universalRouter',
+    });
+    const mismatchedChains = chains.map((chain) =>
+      chain.id === 1 ? { ...chain, universalRouter: BAD } : chain,
+    );
+
+    expect(
+      validateWarpRoute(route, context(collateralRoutes(), undefined, undefined, mismatchedChains)),
+    ).toMatchObject({
+      valid: false,
+      reason: 'Chain universal router does not match registry',
+    });
+  });
+
   test('accepts Permit2 approvals that target the universal router', () => {
     const route = bridgeRoute({
       asset: COLLATERAL,
@@ -446,7 +473,14 @@ function context(
   dstToken?: string,
   chainDiscovery: ChainDiscovery[] = chains,
 ) {
-  return { chainMetadata, registryWarpRoutes, chains: chainDiscovery, srcToken, dstToken };
+  return {
+    chainMetadata,
+    chainAddresses,
+    registryWarpRoutes,
+    chains: chainDiscovery,
+    srcToken,
+    dstToken,
+  };
 }
 
 function nativeRoutes(): RegistryWarpRouteMap {

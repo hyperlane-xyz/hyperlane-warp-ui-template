@@ -1,4 +1,4 @@
-import { Token } from '@hyperlane-xyz/sdk';
+import { Token } from '@hyperlane-xyz/sdk/token/Token';
 import { PlusIcon } from '@hyperlane-xyz/widgets';
 import { useCallback } from 'react';
 import { toast } from 'react-toastify';

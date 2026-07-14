@@ -2,14 +2,10 @@ import {
   IRegistry,
   warpRouteConfigs as publishedRegistryWarpRoutes,
 } from '@hyperlane-xyz/registry';
-import {
-  TOKEN_STANDARD_TO_PROTOCOL,
-  TokenStandard,
-  WarpCoreConfig,
-  WarpCoreConfigSchema,
-  getTokenConnectionId,
-  validateZodResult,
-} from '@hyperlane-xyz/sdk';
+import { getTokenConnectionId } from '@hyperlane-xyz/sdk/token/TokenConnection';
+import { TOKEN_STANDARD_TO_PROTOCOL, TokenStandard } from '@hyperlane-xyz/sdk/token/TokenStandard';
+import { validateZodResult } from '@hyperlane-xyz/sdk/utils/schemas';
+import { WarpCoreConfig, WarpCoreConfigSchema } from '@hyperlane-xyz/sdk/warp/types';
 import { isObjEmpty, objFilter, objMerge } from '@hyperlane-xyz/utils';
 
 import { config } from '../../consts/config.ts';

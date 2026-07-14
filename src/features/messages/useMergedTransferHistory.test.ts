@@ -1,6 +1,7 @@
-import { MultiProtocolProvider, WarpCore } from '@hyperlane-xyz/sdk';
 import type { ChainMetadata } from '@hyperlane-xyz/sdk/metadata/chainMetadataTypes';
+import { MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProtocolProvider';
 import type { ChainMap } from '@hyperlane-xyz/sdk/types';
+import { WarpCore } from '@hyperlane-xyz/sdk/warp/WarpCore';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 import { describe, expect, test } from 'vitest';
 

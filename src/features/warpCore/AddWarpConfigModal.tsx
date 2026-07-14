@@ -1,5 +1,6 @@
 import { BaseRegistry } from '@hyperlane-xyz/registry';
-import { MultiProtocolProvider, WarpCoreConfig, WarpCoreConfigSchema } from '@hyperlane-xyz/sdk';
+import { MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProtocolProvider';
+import { WarpCoreConfig, WarpCoreConfigSchema } from '@hyperlane-xyz/sdk/warp/types';
 import { failure, Result, success, tryParseJsonOrYaml } from '@hyperlane-xyz/utils';
 import { Button, CopyButton, IconButton, Modal, PlusIcon, XIcon } from '@hyperlane-xyz/widgets';
 import clsx from 'clsx';

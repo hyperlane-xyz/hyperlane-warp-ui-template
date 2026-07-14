@@ -1,4 +1,5 @@
-import { TestChainName, TokenStandard } from '@hyperlane-xyz/sdk';
+import { TestChainName } from '@hyperlane-xyz/sdk';
+import { TokenStandard } from '@hyperlane-xyz/sdk/token/TokenStandard';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { createMockToken, createTokenConnectionMock } from '../../utils/test';

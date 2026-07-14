@@ -1,5 +1,6 @@
 import { StargateClient } from '@cosmjs/stargate';
-import { Token, TokenStandard } from '@hyperlane-xyz/sdk';
+import { Token } from '@hyperlane-xyz/sdk/token/Token';
+import { TokenStandard } from '@hyperlane-xyz/sdk/token/TokenStandard';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 
 import { logger } from '../../utils/logger';

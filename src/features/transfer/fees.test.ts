@@ -1,4 +1,6 @@
-import { Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
+import { Token } from '@hyperlane-xyz/sdk/token/Token';
+import { TokenAmount } from '@hyperlane-xyz/sdk/token/TokenAmount';
+import { WarpCore } from '@hyperlane-xyz/sdk/warp/WarpCore';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { createMockToken } from '../../utils/test';

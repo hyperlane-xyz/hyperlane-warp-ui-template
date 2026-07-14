@@ -5,7 +5,7 @@ import { wallets as keplrWallets } from '@cosmos-kit/keplr';
 import { wallets as leapWallets } from '@cosmos-kit/leap';
 import { ChainProvider } from '@cosmos-kit/react';
 import { cosmoshub } from '@hyperlane-xyz/registry';
-import { MultiProtocolProvider } from '@hyperlane-xyz/sdk';
+import { MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProtocolProvider';
 import { getCosmosKitChainConfigs } from '@hyperlane-xyz/widgets/walletIntegrations/cosmos';
 import '@interchain-ui/react/styles';
 import { PropsWithChildren, useMemo } from 'react';

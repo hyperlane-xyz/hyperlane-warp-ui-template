@@ -1,5 +1,5 @@
 import { starknetsepolia } from '@hyperlane-xyz/registry';
-import { chainMetadataToStarknetChain } from '@hyperlane-xyz/sdk';
+import { chainMetadataToStarknetChain } from '@hyperlane-xyz/sdk/metadata/chainMetadataConversion';
 import { getStarknetChains } from '@hyperlane-xyz/widgets/walletIntegrations/starknet';
 import { Chain } from '@starknet-react/chains';
 import { StarknetConfig, publicProvider, voyager } from '@starknet-react/core';

@@ -6,6 +6,47 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
 });
 const isDev = process.env.NODE_ENV !== 'production';
 
+// Preserve ergonomic widget barrel imports while compiling them to narrow
+// public entrypoints. Browser SDK value imports use subpaths directly because
+// its public exports are not yet complete enough for a total name-to-path transform.
+const HYPERLANE_WIDGET_IMPORTS = {
+  ArrowIcon: '@hyperlane-xyz/widgets/icons/Arrow',
+  Button: '@hyperlane-xyz/widgets/components/Button',
+  ChainDetailsMenu: '@hyperlane-xyz/widgets/chains/ChainDetailsMenu',
+  ChainLogo: '@hyperlane-xyz/widgets/chains/ChainLogo',
+  ChevronIcon: '@hyperlane-xyz/widgets/icons/Chevron',
+  Circle: '@hyperlane-xyz/widgets/icons/Circle',
+  CopyButton: '@hyperlane-xyz/widgets/components/CopyButton',
+  DropdownMenu: '@hyperlane-xyz/widgets/layout/DropdownMenu',
+  ErrorBoundary: '@hyperlane-xyz/widgets/components/ErrorBoundary',
+  FuelPumpIcon: '@hyperlane-xyz/widgets/icons/FuelPump',
+  FunnelIcon: '@hyperlane-xyz/widgets/icons/Funnel',
+  GithubIcon: '@hyperlane-xyz/widgets/icons/Github',
+  HyperlaneLogo: '@hyperlane-xyz/widgets/logos/Hyperlane',
+  IconButton: '@hyperlane-xyz/widgets/components/IconButton',
+  MessageStage: '@hyperlane-xyz/widgets/messages/types',
+  MessageStatus: '@hyperlane-xyz/widgets/messages/types',
+  MessageTimeline: '@hyperlane-xyz/widgets/messages/MessageTimeline',
+  Modal: '@hyperlane-xyz/widgets/layout/Modal',
+  PROTOCOL_TO_LOGO: '@hyperlane-xyz/widgets/logos/protocols',
+  PencilIcon: '@hyperlane-xyz/widgets/icons/Pencil',
+  PlusIcon: '@hyperlane-xyz/widgets/icons/Plus',
+  RefreshIcon: '@hyperlane-xyz/widgets/icons/Refresh',
+  SearchIcon: '@hyperlane-xyz/widgets/icons/Search',
+  Skeleton: '@hyperlane-xyz/widgets/animations/Skeleton',
+  SpinnerIcon: '@hyperlane-xyz/widgets/icons/Spinner',
+  Tooltip: '@hyperlane-xyz/widgets/components/Tooltip',
+  UpDownArrowsIcon: '@hyperlane-xyz/widgets/icons/UpDownArrows',
+  WarningIcon: '@hyperlane-xyz/widgets/icons/Warning',
+  WideChevronIcon: '@hyperlane-xyz/widgets/icons/WideChevron',
+  XCircleIcon: '@hyperlane-xyz/widgets/icons/XCircle',
+  XIcon: '@hyperlane-xyz/widgets/icons/X',
+  useDebounce: '@hyperlane-xyz/widgets/utils/debounce',
+  useIsSsr: '@hyperlane-xyz/widgets/utils/ssr',
+  useModal: '@hyperlane-xyz/widgets/layout/Modal',
+  useTimeout: '@hyperlane-xyz/widgets/utils/timeout',
+};
+
 // Sometimes useful to disable this during development
 const ENABLE_CSP_HEADER = true;
 const FRAME_SRC_HOSTS = [
@@ -182,6 +223,13 @@ const nextConfig = {
 
   reactStrictMode: true,
 
+  modularizeImports: {
+    '@hyperlane-xyz/widgets': {
+      transform: HYPERLANE_WIDGET_IMPORTS,
+      skipDefaultConversion: true,
+    },
+  },
+
   serverExternalPackages: ['@sentry/nextjs'],
 
   // Exclude heavy client-only chain SDKs from serverless function file tracing.
@@ -202,12 +250,7 @@ const nextConfig = {
     turbopackFileSystemCacheForBuild: true,
     parallelServerCompiles: true,
     parallelServerBuildTraces: true,
-    optimizePackageImports: [
-      '@hyperlane-xyz/registry',
-      '@hyperlane-xyz/sdk',
-      '@hyperlane-xyz/utils',
-      '@hyperlane-xyz/widgets',
-    ],
+    optimizePackageImports: ['@hyperlane-xyz/registry', '@hyperlane-xyz/utils'],
   },
 
   // Skip type checking during builds — CI runs these separately

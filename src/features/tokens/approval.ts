@@ -1,4 +1,5 @@
-import { IToken, QuotedCallsParams } from '@hyperlane-xyz/sdk';
+import type { QuotedCallsParams } from '@hyperlane-xyz/sdk';
+import { IToken } from '@hyperlane-xyz/sdk/token/IToken';
 import { useAccountAddressForChain } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import { useQuery } from '@tanstack/react-query';
 

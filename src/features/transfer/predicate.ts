@@ -1,11 +1,10 @@
-import type { IToken, Token, WarpCore } from '@hyperlane-xyz/sdk';
-import {
-  PredicateAttestation,
-  TokenAmount,
-  WarpTxCategory,
-  WarpTypedTransaction,
-  isPredicateCapableAdapter,
-} from '@hyperlane-xyz/sdk';
+import type { PredicateAttestation } from '@hyperlane-xyz/sdk';
+import { isPredicateCapableAdapter } from '@hyperlane-xyz/sdk/token/adapters/ITokenAdapter';
+import type { IToken } from '@hyperlane-xyz/sdk/token/IToken';
+import type { Token } from '@hyperlane-xyz/sdk/token/Token';
+import { TokenAmount } from '@hyperlane-xyz/sdk/token/TokenAmount';
+import { WarpTxCategory, WarpTypedTransaction } from '@hyperlane-xyz/sdk/warp/types';
+import type { WarpCore } from '@hyperlane-xyz/sdk/warp/WarpCore';
 import { ProtocolType, assert } from '@hyperlane-xyz/utils';
 
 import { fetchAttestation as fetchAttestationFromProxy } from '../../lib/predicateClient';

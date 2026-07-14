@@ -1,4 +1,6 @@
-import { MultiProtocolProvider, Token, WarpCore } from '@hyperlane-xyz/sdk';
+import { MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProtocolProvider';
+import { Token } from '@hyperlane-xyz/sdk/token/Token';
+import { WarpCore } from '@hyperlane-xyz/sdk/warp/WarpCore';
 import { KnownProtocolType, objLength } from '@hyperlane-xyz/utils';
 import { getAccountAddressAndPubKey } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import { type AccountInfo } from '@hyperlane-xyz/widgets/walletIntegrations/types';

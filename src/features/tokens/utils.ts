@@ -1,10 +1,10 @@
+import { IToken } from '@hyperlane-xyz/sdk/token/IToken';
+import { Token } from '@hyperlane-xyz/sdk/token/Token';
 import {
-  IToken,
-  Token,
   TOKEN_COLLATERALIZED_STANDARDS,
   TokenStandard,
-  WarpCore,
-} from '@hyperlane-xyz/sdk';
+} from '@hyperlane-xyz/sdk/token/TokenStandard';
+import { WarpCore } from '@hyperlane-xyz/sdk/warp/WarpCore';
 import { eqAddress, isNullish, normalizeAddress, objKeys } from '@hyperlane-xyz/utils';
 
 import { DefaultMultiCollateralRoutes, TokenSelectionMode } from './types';

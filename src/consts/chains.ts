@@ -10,7 +10,8 @@ import {
   soon,
   soonAddresses,
 } from '@hyperlane-xyz/registry';
-import { ChainMap, ChainMetadata } from '@hyperlane-xyz/sdk';
+import { ChainMetadata } from '@hyperlane-xyz/sdk/metadata/chainMetadataTypes';
+import { ChainMap } from '@hyperlane-xyz/sdk/types';
 
 // A map of chain names to ChainMetadata
 // Chains can be defined here, in chains.json, or in chains.yaml

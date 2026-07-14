@@ -1,12 +1,11 @@
+import { CoreAddresses } from '@hyperlane-xyz/sdk/core/contracts';
+import { MultiProtocolCore } from '@hyperlane-xyz/sdk/core/MultiProtocolCore';
 import {
-  ChainMap,
-  ChainName,
-  CoreAddresses,
-  MultiProtocolCore,
   ProviderType,
   TypedTransactionReceipt,
   ViemProvider,
-} from '@hyperlane-xyz/sdk';
+} from '@hyperlane-xyz/sdk/providers/ProviderType';
+import { ChainMap, ChainName } from '@hyperlane-xyz/sdk/types';
 import { ensure0x, isValidAddress, isValidAddressEvm } from '@hyperlane-xyz/utils';
 import { concat, getAddress, keccak256, toHex } from 'viem';
 import type { Hex } from 'viem';

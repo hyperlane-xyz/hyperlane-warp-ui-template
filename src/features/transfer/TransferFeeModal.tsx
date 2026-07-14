@@ -1,4 +1,4 @@
-import { WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
+import { WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk/warp/types';
 import { Modal, Skeleton, Tooltip } from '@hyperlane-xyz/widgets';
 import Link from 'next/link';
 

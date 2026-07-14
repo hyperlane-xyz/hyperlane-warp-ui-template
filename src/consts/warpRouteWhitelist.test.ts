@@ -2,7 +2,7 @@ import {
   GithubRegistry,
   warpRouteConfigs as publishedWarpRouteConfigs,
 } from '@hyperlane-xyz/registry';
-import { WarpCoreConfig } from '@hyperlane-xyz/sdk';
+import { WarpCoreConfig } from '@hyperlane-xyz/sdk/warp/types';
 import { objKeys } from '@hyperlane-xyz/utils';
 import { assert, test } from 'vitest';
 

@@ -1,4 +1,4 @@
-import { Token } from '@hyperlane-xyz/sdk';
+import { Token } from '@hyperlane-xyz/sdk/token/Token';
 import { fromWeiRounded } from '@hyperlane-xyz/utils';
 
 import { getTokenKey } from '../tokens/utils';

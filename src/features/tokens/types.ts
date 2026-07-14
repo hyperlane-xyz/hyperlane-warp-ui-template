@@ -1,4 +1,5 @@
-import { Token, TokenAmount } from '@hyperlane-xyz/sdk';
+import { Token } from '@hyperlane-xyz/sdk/token/Token';
+import { TokenAmount } from '@hyperlane-xyz/sdk/token/TokenAmount';
 
 export interface TokensWithDestinationBalance {
   originToken: Token;

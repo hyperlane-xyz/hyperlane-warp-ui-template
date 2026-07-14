@@ -1,4 +1,5 @@
-import { IToken, Token } from '@hyperlane-xyz/sdk';
+import { IToken } from '@hyperlane-xyz/sdk/token/IToken';
+import { Token } from '@hyperlane-xyz/sdk/token/Token';
 
 import { isValidMultiCollateralToken } from '../tokens/utils';
 import { multiCollateralTokenLimits } from './const';

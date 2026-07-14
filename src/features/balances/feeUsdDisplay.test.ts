@@ -1,4 +1,4 @@
-import { TokenAmount } from '@hyperlane-xyz/sdk';
+import { TokenAmount } from '@hyperlane-xyz/sdk/token/TokenAmount';
 import { describe, expect, test } from 'vitest';
 
 import { createMockToken } from '../../utils/test';

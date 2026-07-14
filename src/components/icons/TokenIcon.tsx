@@ -1,4 +1,4 @@
-import { IToken } from '@hyperlane-xyz/sdk';
+import { IToken } from '@hyperlane-xyz/sdk/token/IToken';
 import { isHttpsUrl, isRelativeUrl } from '@hyperlane-xyz/utils';
 import { Circle } from '@hyperlane-xyz/widgets';
 import type { SyntheticEvent } from 'react';

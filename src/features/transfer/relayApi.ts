@@ -1,4 +1,4 @@
-import { ProviderType, TypedTransactionReceipt } from '@hyperlane-xyz/sdk';
+import { ProviderType, TypedTransactionReceipt } from '@hyperlane-xyz/sdk/providers/ProviderType';
 import { ProtocolType, isNullish } from '@hyperlane-xyz/utils';
 
 import { config } from '../../consts/config';

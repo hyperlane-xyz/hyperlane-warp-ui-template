@@ -1,4 +1,5 @@
-import { MultiProtocolProvider, Token } from '@hyperlane-xyz/sdk';
+import { MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProtocolProvider';
+import { Token } from '@hyperlane-xyz/sdk/token/Token';
 
 import { logger } from '../../utils/logger';
 

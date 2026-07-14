@@ -1,10 +1,7 @@
-import {
-  IHypTokenAdapter,
-  LOCKBOX_STANDARDS,
-  MultiProtocolProvider,
-  Token,
-  TokenStandard,
-} from '@hyperlane-xyz/sdk';
+import { MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProtocolProvider';
+import { IHypTokenAdapter } from '@hyperlane-xyz/sdk/token/adapters/ITokenAdapter';
+import { Token } from '@hyperlane-xyz/sdk/token/Token';
+import { LOCKBOX_STANDARDS, TokenStandard } from '@hyperlane-xyz/sdk/token/TokenStandard';
 import { ProtocolType, normalizeAddress } from '@hyperlane-xyz/utils';
 
 import { logger } from '../../utils/logger';

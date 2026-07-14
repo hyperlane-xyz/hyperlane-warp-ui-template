@@ -1,5 +1,5 @@
 import { ChainAddresses } from '@hyperlane-xyz/registry';
-import { ChainMap } from '@hyperlane-xyz/sdk';
+import { ChainMap } from '@hyperlane-xyz/sdk/types';
 
 // Per-chain contract addresses to merge with the configured registry's
 // addresses. Entries here override registry entries per key. Useful when

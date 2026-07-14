@@ -19,6 +19,8 @@
     "prebuild": "node scripts/fetch-fonts.mjs",
     "fetch-fonts": "node --env-file-if-exists=.env.local scripts/fetch-fonts.mjs",
     "build": "next build",
+    "postbuild": "pnpm check:bundle",
+    "check:bundle": "node scripts/check-bundle-size.mjs",
     "typecheck": "tsc",
     "lint": "oxlint ./src",
     "start": "next start",

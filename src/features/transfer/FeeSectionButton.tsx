@@ -1,4 +1,4 @@
-import { WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
+import { WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk/warp/types';
 import { ChevronIcon, FuelPumpIcon, useModal } from '@hyperlane-xyz/widgets';
 import { useEffect, useMemo, useState } from 'react';
 

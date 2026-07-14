@@ -1,5 +1,7 @@
 import { ChainAddresses } from '@hyperlane-xyz/registry';
-import { ChainMap, MultiProtocolProvider, Token } from '@hyperlane-xyz/sdk';
+import { MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProtocolProvider';
+import { Token } from '@hyperlane-xyz/sdk/token/Token';
+import { ChainMap } from '@hyperlane-xyz/sdk/types';
 import { ProtocolType, normalizeAddress } from '@hyperlane-xyz/utils';
 import {
   Hex,

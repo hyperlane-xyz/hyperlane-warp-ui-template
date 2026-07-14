@@ -1,4 +1,5 @@
-import { ChainName, ChainStatus } from '@hyperlane-xyz/sdk';
+import { ChainStatus } from '@hyperlane-xyz/sdk/metadata/chainMetadataTypes';
+import { ChainName } from '@hyperlane-xyz/sdk/types';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 import { useMemo } from 'react';
 

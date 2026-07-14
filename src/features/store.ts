@@ -4,15 +4,12 @@ import {
   IRegistry,
   PartialRegistry,
 } from '@hyperlane-xyz/registry';
-import {
-  ChainMap,
-  ChainMetadata,
-  ChainName,
-  MultiProtocolProvider,
-  Token,
-  WarpCore,
-  WarpCoreConfig,
-} from '@hyperlane-xyz/sdk';
+import { ChainMetadata } from '@hyperlane-xyz/sdk/metadata/chainMetadataTypes';
+import { MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProtocolProvider';
+import { Token } from '@hyperlane-xyz/sdk/token/Token';
+import { ChainMap, ChainName } from '@hyperlane-xyz/sdk/types';
+import { WarpCoreConfig } from '@hyperlane-xyz/sdk/warp/types';
+import { WarpCore } from '@hyperlane-xyz/sdk/warp/WarpCore';
 import { normalizeAddress, objFilter } from '@hyperlane-xyz/utils';
 import { toast } from 'react-toastify';
 import { create } from 'zustand';

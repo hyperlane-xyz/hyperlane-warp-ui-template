@@ -1,5 +1,7 @@
 import { isAbacusWorksChain } from '@hyperlane-xyz/registry';
-import { ChainMap, ChainMetadata, ChainStatus, WarpCore } from '@hyperlane-xyz/sdk';
+import { ChainMetadata, ChainStatus } from '@hyperlane-xyz/sdk/metadata/chainMetadataTypes';
+import { ChainMap } from '@hyperlane-xyz/sdk/types';
+import { WarpCore } from '@hyperlane-xyz/sdk/warp/WarpCore';
 import { toTitleCase, trimToLength } from '@hyperlane-xyz/utils';
 import { ChainSearchMenuProps } from '@hyperlane-xyz/widgets';
 

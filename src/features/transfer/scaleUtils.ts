@@ -1,5 +1,9 @@
-import type { ScaleInput } from '@hyperlane-xyz/sdk';
-import { localAmountFromMessage, messageAmountFromLocal, scalesEqual } from '@hyperlane-xyz/sdk';
+import type { ScaleInput } from '@hyperlane-xyz/sdk/utils/decimals';
+import {
+  localAmountFromMessage,
+  messageAmountFromLocal,
+  scalesEqual,
+} from '@hyperlane-xyz/sdk/utils/decimals';
 import { fromWei, toWei } from '@hyperlane-xyz/utils';
 
 import { logger } from '../../utils/logger';

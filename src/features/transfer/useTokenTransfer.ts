@@ -1,11 +1,8 @@
-import {
-  ProviderType,
-  QuotedCallsParams,
-  Token,
-  TypedTransactionReceipt,
-  WarpCore,
-  WarpTxCategory,
-} from '@hyperlane-xyz/sdk';
+import type { QuotedCallsParams } from '@hyperlane-xyz/sdk';
+import { ProviderType, TypedTransactionReceipt } from '@hyperlane-xyz/sdk/providers/ProviderType';
+import { Token } from '@hyperlane-xyz/sdk/token/Token';
+import { WarpTxCategory } from '@hyperlane-xyz/sdk/warp/types';
+import { WarpCore } from '@hyperlane-xyz/sdk/warp/WarpCore';
 import { toTitleCase, toWei } from '@hyperlane-xyz/utils';
 import {
   getAccountAddressForChain,

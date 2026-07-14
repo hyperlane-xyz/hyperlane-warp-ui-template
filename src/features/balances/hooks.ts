@@ -1,4 +1,6 @@
-import { IToken, MultiProtocolProvider, Token } from '@hyperlane-xyz/sdk';
+import { MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProtocolProvider';
+import { IToken } from '@hyperlane-xyz/sdk/token/IToken';
+import { Token } from '@hyperlane-xyz/sdk/token/Token';
 import { ProtocolType, getAddressProtocolType, isValidAddress } from '@hyperlane-xyz/utils';
 import { useCosmosAccount } from '@hyperlane-xyz/widgets/walletIntegrations/cosmos';
 import { useEthereumAccount } from '@hyperlane-xyz/widgets/walletIntegrations/ethereum';

@@ -1,13 +1,8 @@
-import {
-  IToken,
-  QuotedCallsParams,
-  SubmitQuoteCommand,
-  Token,
-  TokenAmount,
-  TokenPullMode,
-  WarpCore,
-  computeScopedSalt,
-} from '@hyperlane-xyz/sdk';
+import type { QuotedCallsParams, SubmitQuoteCommand } from '@hyperlane-xyz/sdk';
+import { IToken } from '@hyperlane-xyz/sdk/token/IToken';
+import { Token } from '@hyperlane-xyz/sdk/token/Token';
+import { TokenAmount } from '@hyperlane-xyz/sdk/token/TokenAmount';
+import { WarpCore } from '@hyperlane-xyz/sdk/warp/WarpCore';
 import { ProtocolType, addressToBytes32, toWei } from '@hyperlane-xyz/utils';
 import { useDebounce } from '@hyperlane-xyz/widgets';
 import { useAccounts } from '@hyperlane-xyz/widgets/walletIntegrations/accounts';
@@ -196,6 +191,11 @@ async function fetchQuotedCallsFees(
     !quotedCallsAddress
   )
     return null;
+
+  // These SDK exports do not yet have public package subpaths. Load the root
+  // barrel only when quoted calls are used instead of pulling its artifacts
+  // into every route's initial browser bundle.
+  const { computeScopedSalt, TokenPullMode } = await import('@hyperlane-xyz/sdk');
 
   // Predicate routes take the wrapper path at submit time (see useTokenTransfer
   // where quotedCalls is dropped when an attestation is present). Skip the

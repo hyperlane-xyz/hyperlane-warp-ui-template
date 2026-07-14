@@ -1,11 +1,9 @@
-import {
-  IToken,
-  PredicateAttestation,
-  Token,
-  TokenAmount,
-  WarpCore,
-  WarpCoreFeeEstimate,
-} from '@hyperlane-xyz/sdk';
+import type { PredicateAttestation } from '@hyperlane-xyz/sdk';
+import { IToken } from '@hyperlane-xyz/sdk/token/IToken';
+import { Token } from '@hyperlane-xyz/sdk/token/Token';
+import { TokenAmount } from '@hyperlane-xyz/sdk/token/TokenAmount';
+import { WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk/warp/types';
+import { WarpCore } from '@hyperlane-xyz/sdk/warp/WarpCore';
 import { HexString, ProtocolType, toWei } from '@hyperlane-xyz/utils';
 import { useDebounce } from '@hyperlane-xyz/widgets';
 import {

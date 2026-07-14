@@ -1,4 +1,4 @@
-import { TokenStandard } from '@hyperlane-xyz/sdk';
+import { TokenStandard } from '@hyperlane-xyz/sdk/token/TokenStandard';
 import { describe, expect, test } from 'vitest';
 
 import { dedupeTokens, NullableAddressWarpCoreToken } from './warpCoreConfig';

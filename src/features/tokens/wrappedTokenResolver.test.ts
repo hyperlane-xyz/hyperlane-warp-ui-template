@@ -1,4 +1,5 @@
-import { MultiProtocolProvider, TokenStandard } from '@hyperlane-xyz/sdk';
+import { MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProtocolProvider';
+import { TokenStandard } from '@hyperlane-xyz/sdk/token/TokenStandard';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 import { describe, expect, test, vi } from 'vitest';
 

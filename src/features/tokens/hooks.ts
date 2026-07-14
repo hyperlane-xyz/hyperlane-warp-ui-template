@@ -1,4 +1,6 @@
-import { IToken, Token, WarpCore } from '@hyperlane-xyz/sdk';
+import { IToken } from '@hyperlane-xyz/sdk/token/IToken';
+import { Token } from '@hyperlane-xyz/sdk/token/Token';
+import { WarpCore } from '@hyperlane-xyz/sdk/warp/WarpCore';
 import {
   useAccountForChain,
   useActiveChains,

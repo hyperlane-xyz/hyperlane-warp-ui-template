@@ -1,5 +1,5 @@
 import { ChainAddresses, ChainAddressesSchema, IRegistry } from '@hyperlane-xyz/registry';
-import { ChainMap, ChainName } from '@hyperlane-xyz/sdk';
+import { ChainMap, ChainName } from '@hyperlane-xyz/sdk/types';
 import { objFilter, objMerge } from '@hyperlane-xyz/utils';
 import { z } from 'zod';
 

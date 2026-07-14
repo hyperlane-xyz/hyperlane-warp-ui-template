@@ -1,4 +1,8 @@
-import type { IToken, Token, TokenAmount, WarpCore, WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk';
+import type { IToken } from '@hyperlane-xyz/sdk/token/IToken';
+import type { Token } from '@hyperlane-xyz/sdk/token/Token';
+import type { TokenAmount } from '@hyperlane-xyz/sdk/token/TokenAmount';
+import type { WarpCoreFeeEstimate } from '@hyperlane-xyz/sdk/warp/types';
+import type { WarpCore } from '@hyperlane-xyz/sdk/warp/WarpCore';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 

@@ -106,9 +106,11 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
     staleTime: REFRESH_MS,
   });
 
+  const hasChainAddresses = Object.keys(chainAddresses).length > 0;
   const augmented = useMemo<AugmentedQuote | undefined>(() => {
     if (!query.data) return undefined;
     if (!chainsResp?.chains) return undefined;
+    if (!hasChainAddresses) return undefined;
     const routes = query.data.routes.filter((route) => {
       const validation = validateRouteSecurity(route, {
         chainMetadata,
@@ -136,6 +138,7 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
     chainMetadata,
     chainAddresses,
     chainsResp?.chains,
+    hasChainAddresses,
     query.data,
     registryWarpRoutes,
     values.dstChain,
@@ -153,7 +156,7 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
   useTimeout(refreshNow, quoteExpiryDelay);
 
   const isExpired = augmented ? augmented.expiresAt * 1000 < now : false;
-  const isSecurityContextReady = !!chainsResp?.chains;
+  const isSecurityContextReady = !!chainsResp?.chains && hasChainAddresses;
   const isSecurityContextSettled = isSecurityContextReady || chainsError;
   const isQuoteSettled = isQuoteSettledForSecurity(
     query.isSuccess,

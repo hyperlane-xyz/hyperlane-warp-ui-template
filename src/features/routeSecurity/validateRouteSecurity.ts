@@ -66,8 +66,8 @@ function validateApproval(
 ): RouteSecurityValidationResult {
   if (!route.approval) return { valid: true };
 
-  // Bridge-only approvals are already registry-checked by validateWarpRoute.
-  // Keep this second pass for swap-led routes and generic approval bounds.
+  // validateWarpRoute handles bridge-only registry consistency; this pass
+  // applies UI-level approval constraints to any approval object.
   if (route.approval.kind !== 'erc20') {
     return { valid: false, reason: 'Permit2 approvals are not supported by this UI' };
   }

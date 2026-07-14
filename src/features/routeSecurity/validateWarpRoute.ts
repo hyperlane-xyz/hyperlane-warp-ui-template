@@ -222,8 +222,8 @@ function validateApprovalSpender(
       mismatchReason: 'Chain universal router does not match registry',
       warpRouteId,
     });
-    if (!originChain?.permit2 || !approval.permit2Spender || !trustedUniversalRouter.valid) {
-      if (!trustedUniversalRouter.valid) return trustedUniversalRouter;
+    if (!trustedUniversalRouter.valid) return trustedUniversalRouter;
+    if (!originChain?.permit2 || !approval.permit2Spender) {
       return { valid: false, reason: 'Permit2 approval missing chain contracts', warpRouteId };
     }
     if (!sameTokenAddress(approval.spender, originChain.permit2)) {

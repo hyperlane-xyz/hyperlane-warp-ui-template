@@ -1,3 +1,4 @@
+import type { ChainAddresses } from '@hyperlane-xyz/registry';
 import type { ChainMap, ChainMetadata } from '@hyperlane-xyz/sdk';
 
 import type { ChainDiscovery, QuoteBridgeStep, RouteApproval, RouteResponse } from '../api/types';
@@ -7,6 +8,7 @@ import {
   type RegistryWarpRouteMap,
   type RegistryWarpRouteToken,
 } from '../warpRoutes/registryWarpRoutes';
+import { trustedUniversalRouterForChain } from './chainContracts';
 import { chainForId, ENGINE_NATIVE_TOKEN_SENTINEL, sameTokenAddress } from './utils';
 
 const HYP_NATIVE_STANDARDS = new Set([
@@ -24,6 +26,7 @@ export type WarpRouteValidationResult =
 
 export interface WarpRouteValidationContext {
   chainMetadata: ChainMap<ChainMetadata>;
+  chainAddresses?: ChainMap<ChainAddresses>;
   registryWarpRoutes: RegistryWarpRouteMap;
   chains?: ChainDiscovery[];
   srcToken?: string;
@@ -117,7 +120,14 @@ export function validateWarpRoute(
     return { valid: false, reason: 'Approval token does not match registry route', warpRouteId };
   }
 
-  return validateApprovalSpender(route, route.approval, origin, originChain, warpRouteId);
+  return validateApprovalSpender(
+    route,
+    route.approval,
+    origin,
+    originChain,
+    context.chainAddresses?.[originChainName],
+    warpRouteId,
+  );
 }
 
 export function isBridgeOnlyRoute(
@@ -159,13 +169,22 @@ function validateApprovalSpender(
   approval: RouteApproval,
   origin: RegistryWarpRouteToken,
   originChain: ChainDiscovery | undefined,
+  originChainAddresses: ChainAddresses | undefined,
   warpRouteId: string,
 ): WarpRouteValidationResult {
   if (approval.kind === 'permit2') {
     if (route.executionKind !== 'universalRouter') {
       return { valid: false, reason: 'Permit2 approval requires universal router', warpRouteId };
     }
-    if (!originChain?.permit2 || !originChain.universalRouter || !approval.permit2Spender) {
+    const trustedUniversalRouter = trustedUniversalRouterForChain({
+      chain: originChain,
+      chainAddresses: originChainAddresses,
+      unavailableReason: 'Permit2 approval missing chain contracts',
+      mismatchReason: 'Chain universal router does not match registry',
+      warpRouteId,
+    });
+    if (!originChain?.permit2 || !approval.permit2Spender || !trustedUniversalRouter.valid) {
+      if (!trustedUniversalRouter.valid) return trustedUniversalRouter;
       return { valid: false, reason: 'Permit2 approval missing chain contracts', warpRouteId };
     }
     if (!sameTokenAddress(approval.spender, originChain.permit2)) {
@@ -175,7 +194,7 @@ function validateApprovalSpender(
         warpRouteId,
       };
     }
-    if (!sameTokenAddress(approval.permit2Spender, originChain.universalRouter)) {
+    if (!sameTokenAddress(approval.permit2Spender, trustedUniversalRouter.universalRouter)) {
       return {
         valid: false,
         reason: 'Permit2 approval target does not match chain universal router',
@@ -186,10 +205,15 @@ function validateApprovalSpender(
   }
 
   if (route.executionKind === 'universalRouter') {
-    if (!originChain?.universalRouter) {
-      return { valid: false, reason: 'Universal router approval target unavailable', warpRouteId };
-    }
-    if (!sameTokenAddress(approval.spender, originChain.universalRouter)) {
+    const trustedUniversalRouter = trustedUniversalRouterForChain({
+      chain: originChain,
+      chainAddresses: originChainAddresses,
+      unavailableReason: 'Universal router approval target unavailable',
+      mismatchReason: 'Chain universal router does not match registry',
+      warpRouteId,
+    });
+    if (!trustedUniversalRouter.valid) return trustedUniversalRouter;
+    if (!sameTokenAddress(approval.spender, trustedUniversalRouter.universalRouter)) {
       return {
         valid: false,
         reason: 'Approval spender does not match chain universal router',

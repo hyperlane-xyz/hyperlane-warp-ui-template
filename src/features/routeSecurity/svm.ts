@@ -5,11 +5,12 @@ import { isEngineNativeToken } from './utils';
 export function validateSealevelRouteTx(
   route: RouteResponse,
   tx: Extract<RouteTx, { to: string }>,
+  trustedUniversalRouter: string,
 ): RouteSecurityValidationResult {
-  // TODO: Pin tx.to (the invoked programId) once registry/local trusted SVM
-  // universal-router program data exists. Account checks below only prove the
-  // expected warp accounts are present; they do not prove the invoked program
-  // is trusted.
+  if (tx.to !== trustedUniversalRouter) {
+    return { valid: false, reason: 'Sealevel transaction target does not match universal router' };
+  }
+
   if (!tx.accounts?.length) {
     return { valid: false, reason: 'Sealevel transaction missing accounts' };
   }

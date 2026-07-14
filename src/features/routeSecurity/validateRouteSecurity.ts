@@ -2,9 +2,10 @@ import { isEVMLike, ProtocolType } from '@hyperlane-xyz/utils';
 
 import { getRouteTxs, isChainRouteTx } from '../api/routeTx';
 import type { ChainDiscovery, QuoteStep, RouteResponse, RouteTx } from '../api/types';
+import { trustedUniversalRouterForChain } from './chainContracts';
 import { validateSdkRouteTx } from './sdk';
 import { validateSealevelRouteTx } from './svm';
-import type { RouteSecurityValidationResult } from './types';
+import type { RouteSecurityValidationFailure, RouteSecurityValidationResult } from './types';
 import {
   chainForId,
   firstBridge,
@@ -101,10 +102,16 @@ function validateApproval(
 
   if (route.executionKind === 'universalRouter') {
     const srcChain = chainForId(context.chains, context.srcChain);
-    if (!srcChain?.universalRouter || isUnsetAddress(srcChain.universalRouter)) {
-      return { valid: false, reason: 'Universal router approval target unavailable' };
-    }
-    if (!sameTokenAddress(route.approval.spender, srcChain.universalRouter)) {
+    const trustedUniversalRouter = trustedUniversalRouterForChain({
+      chain: srcChain,
+      chainAddresses: srcChain?.chainName
+        ? context.chainAddresses?.[srcChain.chainName]
+        : undefined,
+      unavailableReason: 'Universal router approval target unavailable',
+      mismatchReason: 'Chain universal router does not match registry',
+    });
+    if (!trustedUniversalRouter.valid) return trustedUniversalRouter;
+    if (!sameTokenAddress(route.approval.spender, trustedUniversalRouter.universalRouter)) {
       return { valid: false, reason: 'Approval spender does not match chain universal router' };
     }
     return { valid: true };
@@ -136,7 +143,7 @@ function validateTxTargets(
 
   for (const tx of txs) {
     const validation = isChainRouteTx(tx)
-      ? validateChainRouteTx(route, tx, srcChain, srcProtocol)
+      ? validateChainRouteTx(route, tx, srcChain, srcProtocol, context)
       : validateSdkRouteTx(route, tx, srcProtocol);
     if (!validation.valid) return validation;
   }
@@ -149,18 +156,12 @@ function validateChainRouteTx(
   tx: Extract<RouteTx, { to: string }>,
   srcChain: ChainDiscovery,
   srcProtocol: ProtocolType,
+  context: RouteSecurityValidationContext,
 ): RouteSecurityValidationResult {
   if (isEVMLike(srcProtocol)) {
-    const expectedTarget =
-      route.executionKind === 'universalRouter'
-        ? srcChain.universalRouter
-        : route.executionKind === 'warpDirect'
-          ? firstBridge(route)?.router
-          : undefined;
-    if (!expectedTarget || isUnsetAddress(expectedTarget)) {
-      return { valid: false, reason: 'EVM transaction target unavailable' };
-    }
-    if (!sameTokenAddress(tx.to, expectedTarget)) {
+    const expectedTarget = expectedChainTxTarget(route, srcChain, context);
+    if (!expectedTarget.valid) return expectedTarget;
+    if (!sameTokenAddress(tx.to, expectedTarget.target)) {
       return { valid: false, reason: 'EVM transaction target does not match route executor' };
     }
     return { valid: true };
@@ -173,13 +174,47 @@ function validateChainRouteTx(
         reason: 'Sealevel chain transaction is only supported for universal router execution',
       };
     }
-    return validateSealevelRouteTx(route, tx);
+    const trustedUniversalRouter = trustedUniversalRouterForChain({
+      chain: srcChain,
+      chainAddresses: context.chainAddresses?.[srcChain.chainName],
+      unavailableReason: 'Sealevel universal router program unavailable',
+      mismatchReason: 'Chain universal router does not match registry',
+    });
+    if (!trustedUniversalRouter.valid) return trustedUniversalRouter;
+    return validateSealevelRouteTx(route, tx, trustedUniversalRouter.universalRouter);
   }
 
   return {
     valid: false,
     reason: 'Chain transaction shape is not supported for source protocol',
   };
+}
+
+function expectedChainTxTarget(
+  route: RouteResponse,
+  srcChain: ChainDiscovery,
+  context: RouteSecurityValidationContext,
+): RouteSecurityValidationFailure | { valid: true; target: string } {
+  if (route.executionKind === 'universalRouter') {
+    const trustedUniversalRouter = trustedUniversalRouterForChain({
+      chain: srcChain,
+      chainAddresses: context.chainAddresses?.[srcChain.chainName],
+      unavailableReason: 'EVM transaction target unavailable',
+      mismatchReason: 'Chain universal router does not match registry',
+    });
+    if (!trustedUniversalRouter.valid) return trustedUniversalRouter;
+    return { valid: true, target: trustedUniversalRouter.universalRouter };
+  }
+
+  if (route.executionKind === 'warpDirect') {
+    const expectedTarget = firstBridge(route)?.router;
+    if (!expectedTarget || isUnsetAddress(expectedTarget)) {
+      return { valid: false, reason: 'EVM transaction target unavailable' };
+    }
+    return { valid: true, target: expectedTarget };
+  }
+
+  return { valid: false, reason: 'EVM transaction target unavailable' };
 }
 
 function spendTokenForStep(step: QuoteStep): string {

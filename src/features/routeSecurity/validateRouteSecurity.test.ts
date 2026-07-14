@@ -40,7 +40,7 @@ const chains = [
     id: SOL,
     chainName: 'solanamainnet',
     protocol: ProtocolType.Sealevel,
-    universalRouter: NATIVE,
+    universalRouter: SOL_UNIVERSAL_ROUTER_PROGRAM,
     permit2: NATIVE,
   }),
   chain({
@@ -51,6 +51,13 @@ const chains = [
     permit2: NATIVE,
   }),
 ];
+
+const chainAddresses = {
+  ethereum: { universalRouter: UNIVERSAL_ROUTER },
+  base: { universalRouter: UNIVERSAL_ROUTER },
+  solanamainnet: { universalRouter: SOL_UNIVERSAL_ROUTER_PROGRAM },
+  starknet: { universalRouter: NATIVE },
+};
 
 describe('validateRouteSecurity', () => {
   test('accepts a universal router swap and bridge route with matching approval and tx target', () => {
@@ -168,6 +175,18 @@ describe('validateRouteSecurity', () => {
     });
   });
 
+  test('rejects universal router routes when engine discovery disagrees with registry addresses', () => {
+    const route = universalRouterRoute();
+    const mismatchedChains = chains.map((chain) =>
+      chain.id === ETH ? { ...chain, universalRouter: BAD } : chain,
+    );
+
+    expect(validateRouteSecurity(route, context({ chains: mismatchedChains }))).toMatchObject({
+      valid: false,
+      reason: 'Chain universal router does not match registry',
+    });
+  });
+
   test('rejects malformed engine token values without throwing', () => {
     const route = universalRouterRoute({
       approval: {
@@ -257,6 +276,47 @@ describe('validateRouteSecurity', () => {
     });
   });
 
+  test('accepts Sealevel native assets without a token account', () => {
+    const route = sealevelUniversalRouterRoute({
+      accounts: [{ pubkey: SOL_ROUTER }],
+      asset: NATIVE,
+      warpRouteId: 'SOL/native',
+    });
+
+    expect(
+      validateRouteSecurity(
+        route,
+        solanaContext({
+          registryWarpRoutes: solanaNativeRoutes(),
+          srcToken: NATIVE,
+        }),
+      ),
+    ).toEqual({ valid: true });
+  });
+
+  test('rejects Sealevel universal router txs sent to a different program', () => {
+    const route = sealevelUniversalRouterRoute({ txTo: SOL_ROUTER });
+
+    expect(validateRouteSecurity(route, solanaContext())).toMatchObject({
+      valid: false,
+      reason: 'Sealevel transaction target does not match universal router',
+    });
+  });
+
+  test('rejects Sealevel universal router routes when engine discovery disagrees with registry addresses', () => {
+    const route = sealevelUniversalRouterRoute();
+    const mismatchedChains = chains.map((chain) =>
+      chain.id === SOL ? { ...chain, universalRouter: SOL_ROUTER } : chain,
+    );
+
+    expect(validateRouteSecurity(route, solanaContext({ chains: mismatchedChains }))).toMatchObject(
+      {
+        valid: false,
+        reason: 'Chain universal router does not match registry',
+      },
+    );
+  });
+
   test('rejects Sealevel universal router txs missing bridge route accounts', () => {
     const route = sealevelUniversalRouterRoute({ accounts: [{ pubkey: SOL_MINT }] });
 
@@ -272,6 +332,7 @@ function context(routeOverrides: Partial<RouteSecurityTestContext> = {}) {
     chainMetadata,
     registryWarpRoutes: {},
     chains,
+    chainAddresses,
     srcChain: ETH,
     dstChain: BASE,
     srcToken: TOKEN,
@@ -430,28 +491,31 @@ function starknetSdkWarpRoute(
 function sealevelUniversalRouterRoute(
   args: {
     accounts?: Array<{ pubkey: string; isSigner?: boolean; isWritable?: boolean }>;
+    asset?: string;
     txTo?: string;
+    warpRouteId?: string;
   } = {},
 ): RouteResponse {
+  const warpRouteId = args.warpRouteId ?? 'SOL/test';
   return {
     steps: [
       {
         type: 'bridge',
         chain: SOL,
         destChain: ETH,
-        asset: SOL_MINT,
+        asset: args.asset ?? SOL_MINT,
         router: SOL_ROUTER,
         amountIn: '100',
         amountOut: '100',
         bridgeSymbol: 'SOL',
-        warpRouteId: 'SOL/test',
+        warpRouteId,
         fee: { tokenFee: '0', igpToken: NATIVE, igpAmount: '0', localNativeFee: '0' },
       },
     ],
     output: '100',
     outputMin: '100',
     executionKind: 'universalRouter',
-    connection: { symbol: 'SOL', warpRouteId: 'SOL/test' },
+    connection: { symbol: 'SOL', warpRouteId },
     gas: { originGas: '0', destGas: '0' },
     tx: {
       to: args.txTo ?? SOL_UNIVERSAL_ROUTER_PROGRAM,
@@ -479,6 +543,22 @@ function starknetRoutes(): RegistryWarpRouteMap {
           addressOrDenom: STARKNET_ROUTER,
           collateralAddressOrDenom: STARKNET_TOKEN,
           standard: 'StarknetHypCollateral',
+        },
+        { chainName: 'ethereum', addressOrDenom: DST_ROUTER, standard: 'EvmHypSynthetic' },
+      ],
+    },
+  };
+}
+
+function solanaNativeRoutes(): RegistryWarpRouteMap {
+  return {
+    'sol/native': {
+      id: 'SOL/native',
+      tokens: [
+        {
+          chainName: 'solanamainnet',
+          addressOrDenom: SOL_ROUTER,
+          standard: 'SealevelHypNative',
         },
         { chainName: 'ethereum', addressOrDenom: DST_ROUTER, standard: 'EvmHypSynthetic' },
       ],

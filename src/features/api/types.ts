@@ -2,12 +2,11 @@
 // extension since the UI doesn't generate spec docs.
 import { z } from 'zod';
 
-export const Address = z.string().regex(/^0x[0-9a-fA-F]{40}$/);
-// Permissive token-address schema mirroring the engine's TokenAddress —
-// length-bounded string so non-EVM addresses (Solana base58 mints,
-// Cosmos bech32) validate. The strict EVM `Address` is still used for
-// request-side fields like sender/recipient.
-export const TokenAddress = z.string().min(1).max(100);
+export const HexAddress = z.string().regex(/^0x[0-9a-fA-F]{40}$/);
+// Mirrors the engine's Address type: chain-specific contract/token strings,
+// including non-EVM program ids such as Solana universal routers.
+export const Address = z.string().min(1).max(100);
+export const TokenAddress = Address;
 export const BigIntString = z.string().regex(/^\d+$/);
 export const Hex = z.string().regex(/^0x[0-9a-fA-F]*$/);
 // bytes20/bytes32 hex or a native non-EVM address. Engine validates per protocol.
@@ -55,7 +54,7 @@ export const ChainDiscoverySchema = z.object({
   // Optional until production engine redeploys with the field; the swap
   // form gates approvals on its presence so an undefined value just
   // surfaces as "Loading Permit2…" instead of crashing the chains list.
-  permit2: Address.optional(),
+  permit2: HexAddress.optional(),
   dex: z.string().nullable(),
   canSwap: z.boolean(),
   canExecute: z.boolean(),

@@ -41,6 +41,7 @@ interface UseQuoteArgs {
 export function useQuote({ values, sender, pause }: UseQuoteArgs) {
   const [now, setNow] = useState(() => Date.now());
   const chainMetadata = useStore((state) => state.chainMetadata);
+  const chainAddresses = useStore((state) => state.chainAddresses);
   const registryWarpRoutes = useStore((state) => state.registryWarpRoutes);
   const { data: chainsResp, isError: chainsError } = useChains();
 
@@ -111,6 +112,7 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
     const routes = query.data.routes.filter((route) => {
       const validation = validateRouteSecurity(route, {
         chainMetadata,
+        chainAddresses,
         registryWarpRoutes,
         chains: chainsResp.chains,
         srcChain: values.srcChain!,
@@ -132,6 +134,7 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
     };
   }, [
     chainMetadata,
+    chainAddresses,
     chainsResp?.chains,
     query.data,
     registryWarpRoutes,

@@ -107,16 +107,19 @@ describe('validateWarpRoute', () => {
     });
   });
 
-  test('accepts routes with multiple registry tokens on the destination chain', () => {
+  test('accepts routes with multiple registry tokens on the origin and destination chains', () => {
     const route = bridgeRoute({
-      asset: COLLATERAL,
-      router: ROUTER,
+      asset: ALT_COLLATERAL,
+      router: ALT_ROUTER,
       approval: null,
       warpRouteId: 'MULTI/test',
     });
 
     expect(
-      validateWarpRoute(route, context(multiTokenDestinationRoutes(), COLLATERAL, ALT_COLLATERAL)),
+      validateWarpRoute(
+        route,
+        context(multiTokenDestinationRoutes(), ALT_COLLATERAL, ALT_COLLATERAL),
+      ),
     ).toEqual({ valid: true });
   });
 
@@ -536,6 +539,12 @@ function multiTokenDestinationRoutes(): RegistryWarpRouteMap {
           chainName: 'ethereum',
           addressOrDenom: ROUTER,
           collateralAddressOrDenom: COLLATERAL,
+          standard: 'EvmHypCrossCollateralRouter',
+        },
+        {
+          chainName: 'ethereum',
+          addressOrDenom: ALT_ROUTER,
+          collateralAddressOrDenom: ALT_COLLATERAL,
           standard: 'EvmHypCrossCollateralRouter',
         },
         {

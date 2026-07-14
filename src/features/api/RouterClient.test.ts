@@ -1,6 +1,20 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { RouterClient } from './RouterClient';
+import { ChainsResponseSchema } from './types';
+
+const baseChain = {
+  id: 1,
+  name: 'Ethereum',
+  chainName: 'ethereum',
+  protocol: 'ethereum',
+  nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+  universalRouter: '0x1111111111111111111111111111111111111111',
+  dex: null,
+  canSwap: true,
+  canExecute: true,
+  supportsNative: true,
+};
 
 describe('RouterClient.availableRoutes', () => {
   afterEach(() => {
@@ -86,5 +100,38 @@ describe('RouterClient.tokens', () => {
     await new RouterClient('https://router.test').tokens({ chain: 'ethereum' });
 
     expect(fetchMock).toHaveBeenCalledWith('https://router.test/v1/tokens?chain=ethereum');
+  });
+});
+
+describe('ChainsResponseSchema', () => {
+  test('accepts non-EVM universal router identifiers', () => {
+    expect(() =>
+      ChainsResponseSchema.parse({
+        chains: [
+          {
+            ...baseChain,
+            id: 1399811149,
+            name: 'Solana',
+            chainName: 'solanamainnet',
+            protocol: 'sealevel',
+            nativeCurrency: { name: 'Solana', symbol: 'SOL', decimals: 9 },
+            universalRouter: 'ComputeBudget111111111111111111111111111111',
+          },
+        ],
+      }),
+    ).not.toThrow();
+  });
+
+  test('keeps permit2 constrained to EVM hex addresses', () => {
+    expect(() =>
+      ChainsResponseSchema.parse({
+        chains: [
+          {
+            ...baseChain,
+            permit2: 'ComputeBudget111111111111111111111111111111',
+          },
+        ],
+      }),
+    ).toThrow();
   });
 });

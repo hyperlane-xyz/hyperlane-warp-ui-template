@@ -10,7 +10,12 @@ import { getChainDisplayName } from '../chains/utils';
 import { useTokens } from './hooks';
 import type { TokenSelectionMode, UiToken } from './types';
 import { useTokenPrices } from './useTokenPrice';
-import { getTokenKey, mergeRouteTokensFirst } from './utils';
+import {
+  getTokenKey,
+  getTokenRouteKind,
+  mergeRouteTokensFirst,
+  type TokenRouteKind,
+} from './utils';
 
 interface TokenListProps {
   selectionMode: TokenSelectionMode;
@@ -59,19 +64,25 @@ export function TokenList({
   }, [fetched, filteredRouteTokens, disabledChains]);
 
   const directRouteTokenKeys = useMemo(
-    () => new Set(availableRouteTokens.map((token) => getTokenKey(token))),
-    [availableRouteTokens],
+    () =>
+      hasAvailableRoutesResult
+        ? new Set(availableRouteTokens.map((token) => getTokenKey(token)))
+        : new Set<string>(),
+    [availableRouteTokens, hasAvailableRoutesResult],
   );
+  const routePriorityTokenKeys = directRouteTokenKeys;
   const tokenRouteMap = useMemo(() => {
-    if (!counterpartToken || !hasAvailableRoutesResult) return null;
-    if (!counterpartToken.canBridge && !counterpartToken.isBridgeToken) return null;
+    if (selectionMode !== 'destination') return null;
+    if (!counterpartToken) return null;
+    if (!hasAvailableRoutesResult) return null;
 
-    const routeMap = new Map<string, boolean>();
+    const routeMap = new Map<string, TokenRouteKind>();
     for (const token of allTokens) {
-      routeMap.set(getTokenKey(token), directRouteTokenKeys.has(getTokenKey(token)));
+      const routeKind = getTokenRouteKind(token, directRouteTokenKeys, counterpartToken);
+      if (routeKind) routeMap.set(getTokenKey(token), routeKind);
     }
     return routeMap;
-  }, [allTokens, counterpartToken, directRouteTokenKeys, hasAvailableRoutesResult]);
+  }, [allTokens, counterpartToken, directRouteTokenKeys, hasAvailableRoutesResult, selectionMode]);
 
   const balanceTokens = allTokens;
 
@@ -103,11 +114,11 @@ export function TokenList({
       const aKey = getTokenKey(a);
       const bKey = getTokenKey(b);
 
-      if (tokenRouteMap) {
-        const aHasRoute = tokenRouteMap.get(aKey) ?? true;
-        const bHasRoute = tokenRouteMap.get(bKey) ?? true;
-        if (aHasRoute && !bHasRoute) return -1;
-        if (!aHasRoute && bHasRoute) return 1;
+      if (routePriorityTokenKeys.size > 0) {
+        const aIsDirectRoute = routePriorityTokenKeys.has(aKey);
+        const bIsDirectRoute = routePriorityTokenKeys.has(bKey);
+        if (aIsDirectRoute && !bIsDirectRoute) return -1;
+        if (!aIsDirectRoute && bIsDirectRoute) return 1;
       }
 
       const aUsd = usdMap.get(aKey) ?? 0;
@@ -135,7 +146,7 @@ export function TokenList({
     const displayTokens = isLimited ? sorted.slice(0, maxDisplay) : sorted;
 
     return { tokens: displayTokens, isLimited };
-  }, [allTokens, trimmedSearch, chainFilter, tokenRouteMap, usdMap, balanceMap]);
+  }, [allTokens, trimmedSearch, chainFilter, routePriorityTokenKeys, usdMap, balanceMap]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo(0, 0);
@@ -174,6 +185,7 @@ export function TokenList({
                 balance={balance}
                 usdValue={usdValue}
                 isBalanceLoading={isBalanceLoading && hasAnyAddress}
+                routeKind={tokenRouteMap?.get(key)}
               />
             );
           })}
@@ -197,12 +209,14 @@ const TokenButton = React.memo(function TokenButton({
   balance,
   usdValue,
   isBalanceLoading,
+  routeKind,
 }: {
   token: UiToken;
   onSelect: (token: UiToken) => void;
   balance?: bigint;
   usdValue?: number | null;
   isBalanceLoading: boolean;
+  routeKind?: TokenRouteKind;
 }) {
   const multiProvider = useMultiProvider();
   const chainDisplayName = getChainDisplayName(multiProvider, token.chainName);
@@ -226,6 +240,7 @@ const TokenButton = React.memo(function TokenButton({
             {token.symbol || 'Unknown'}
           </span>
           <span className="token-picker-chain-name text-xs text-gray-500">{chainDisplayName}</span>
+          {routeKind && <RouteKindBadge kind={routeKind} />}
         </div>
         <div className={`token-picker-name ${styles.base} mt-0.5 truncate text-xs text-gray-500`}>
           {token.name || 'Unknown Token'}
@@ -251,6 +266,23 @@ const TokenButton = React.memo(function TokenButton({
     </button>
   );
 });
+
+function RouteKindBadge({ kind }: { kind: TokenRouteKind }) {
+  const className =
+    kind === 'bridge'
+      ? 'border-blue-200 bg-blue-50 text-blue-600'
+      : 'border-pink-200 bg-pink-50 text-pink-600';
+
+  return (
+    <span
+      aria-hidden="true"
+      data-route-kind={kind}
+      className={`rounded border px-1.5 py-0.5 text-[10px] leading-none ${className}`}
+    >
+      {kind === 'bridge' ? 'Bridge' : 'Swap'}
+    </span>
+  );
+}
 
 function filterTokens(
   tokens: UiToken[],

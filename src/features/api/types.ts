@@ -3,10 +3,12 @@
 import { z } from 'zod';
 
 export const HexAddress = z.string().regex(/^0x[0-9a-fA-F]{40}$/);
-// Mirrors the engine's Address type: chain-specific contract/token strings,
-// including non-EVM program ids such as Solana universal routers.
 export const Address = z.string().min(1).max(100);
-export const TokenAddress = Address;
+// Permissive token-address schema mirroring the engine's TokenAddress —
+// length-bounded string so non-EVM addresses (Solana base58 mints,
+// Cosmos bech32) validate. The strict EVM `HexAddress` is still used for
+// EVM-only fields like Permit2 and approval spenders.
+export const TokenAddress = z.string().min(1).max(100);
 export const BigIntString = z.string().regex(/^\d+$/);
 export const Hex = z.string().regex(/^0x[0-9a-fA-F]*$/);
 // bytes20/bytes32 hex or a native non-EVM address. Engine validates per protocol.
@@ -255,11 +257,11 @@ export const CallCommitmentSchema = z.object({
 export type CallCommitment = z.infer<typeof CallCommitmentSchema>;
 
 export const RouteApprovalSchema = z.object({
-  token: Address,
-  spender: Address,
+  token: HexAddress,
+  spender: HexAddress,
   amount: BigIntString,
   kind: z.enum(['erc20', 'permit2']),
-  permit2Spender: Address.optional(),
+  permit2Spender: HexAddress.optional(),
 });
 export type RouteApproval = z.infer<typeof RouteApprovalSchema>;
 

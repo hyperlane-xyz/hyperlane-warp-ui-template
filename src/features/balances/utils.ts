@@ -1,3 +1,4 @@
+import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk';
 import { fromWei, fromWeiRounded } from '@hyperlane-xyz/utils';
 
 import type { BalanceToken } from './types';
@@ -62,4 +63,12 @@ export function getFeePercentage(totalFeesUsd: number, transferUsd: number): str
   if (pct < 0.01) return '<0.01%';
   if (pct >= 100) return '>=100%';
   return `${pct.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
+}
+
+export function getNativeTokenDenom(
+  multiProvider: MultiProtocolProvider,
+  chainName: string | undefined,
+): string | undefined {
+  if (!chainName) return undefined;
+  return multiProvider.tryGetChainMetadata(chainName)?.nativeToken?.denom;
 }

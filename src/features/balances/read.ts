@@ -1,12 +1,5 @@
-import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk';
+import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProtocolProvider';
 import { isEVMLike, ProtocolType } from '@hyperlane-xyz/utils';
-
-import { readAleoTokenBalance } from './aleo';
-import { readCosmosTokenBalance } from './cosmos';
-import { estimateEvmGasCost, readEvmBalance } from './evm';
-import { readRadixTokenBalance } from './radix';
-import { readSealevelTokenBalance } from './sealevel';
-import { readStarknetTokenBalance } from './starknet';
 
 export interface ReadBalanceArgs {
   chainName: string;
@@ -30,14 +23,30 @@ export async function readBalance(
 ): Promise<bigint | null> {
   const protocol = multiProvider.tryGetProtocol(args.chainName);
   if (!protocol) return null;
-  if (isEVMLike(protocol)) return readEvmBalance(multiProvider, args);
-  if (protocol === ProtocolType.Sealevel) return readSealevelTokenBalance(multiProvider, args);
-  if (protocol === ProtocolType.Starknet) return readStarknetTokenBalance(multiProvider, args);
+  if (isEVMLike(protocol)) {
+    const { readEvmBalance } = await import('./evm');
+    return readEvmBalance(multiProvider, args);
+  }
+  if (protocol === ProtocolType.Sealevel) {
+    const { readSealevelTokenBalance } = await import('./sealevel');
+    return readSealevelTokenBalance(multiProvider, args);
+  }
+  if (protocol === ProtocolType.Starknet) {
+    const { readStarknetTokenBalance } = await import('./starknet');
+    return readStarknetTokenBalance(multiProvider, args);
+  }
   if (protocol === ProtocolType.Cosmos || protocol === ProtocolType.CosmosNative) {
+    const { readCosmosTokenBalance } = await import('./cosmos');
     return readCosmosTokenBalance(multiProvider, args);
   }
-  if (protocol === ProtocolType.Radix) return readRadixTokenBalance(multiProvider, args);
-  if (protocol === ProtocolType.Aleo) return readAleoTokenBalance(multiProvider, args);
+  if (protocol === ProtocolType.Radix) {
+    const { readRadixTokenBalance } = await import('./radix');
+    return readRadixTokenBalance(multiProvider, args);
+  }
+  if (protocol === ProtocolType.Aleo) {
+    const { readAleoTokenBalance } = await import('./aleo');
+    return readAleoTokenBalance(multiProvider, args);
+  }
   return null;
 }
 
@@ -57,6 +66,7 @@ export async function estimateNativeGasCost(
   if (!args.tx) return 0n;
   const protocol = multiProvider.tryGetProtocol(args.chainName);
   if (protocol !== ProtocolType.Ethereum) return 0n;
+  const { estimateEvmGasCost } = await import('./evm');
   return estimateEvmGasCost(multiProvider, {
     chainName: args.chainName,
     sender: args.sender,

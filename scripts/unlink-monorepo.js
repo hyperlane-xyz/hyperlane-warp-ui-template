@@ -62,11 +62,15 @@ try {
   // Remove matching overrides from pnpm-workspace.yaml. Scanned independently of
   // packOverrides above — link-monorepo.js may only add an override-only entry here
   // (no package.json dependency) for packages that weren't originally direct deps.
+  // Mutated in memory only here; written alongside package.json below, after the
+  // restoration failure check, so a failed restore never leaves the workspace file
+  // stripped while package.json still points at the (soon-to-be-deleted) tarballs.
+  let workspaceDoc = null;
+  let removedWorkspaceCount = 0;
   if (fs.existsSync(workspacePath)) {
-    const workspaceDoc = YAML.parseDocument(fs.readFileSync(workspacePath, 'utf8'));
+    workspaceDoc = YAML.parseDocument(fs.readFileSync(workspacePath, 'utf8'));
     const overridesNode = workspaceDoc.get('overrides');
     if (YAML.isMap(overridesNode)) {
-      let removedWorkspaceCount = 0;
       overridesNode.items
         .map((item) => item.key.value)
         .forEach((name) => {
@@ -75,11 +79,6 @@ try {
             removedWorkspaceCount++;
           }
         });
-
-      if (removedWorkspaceCount > 0) {
-        fs.writeFileSync(workspacePath, String(workspaceDoc));
-        console.log(`🔧 Removed ${removedWorkspaceCount} override(s) from pnpm-workspace.yaml`);
-      }
     }
   }
 
@@ -129,6 +128,11 @@ try {
 
   // Write updated package.json
   fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n');
+
+  if (removedWorkspaceCount > 0) {
+    fs.writeFileSync(workspacePath, String(workspaceDoc));
+    console.log(`🔧 Removed ${removedWorkspaceCount} override(s) from pnpm-workspace.yaml`);
+  }
 
   console.log('\n------------------------------------------');
   console.log('🧹 Cleaning node_modules, lockfile, and tarballs...\n');

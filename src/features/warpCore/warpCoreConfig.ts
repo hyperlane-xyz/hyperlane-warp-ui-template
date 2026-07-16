@@ -8,6 +8,7 @@ import {
   WarpCoreConfig,
   WarpCoreConfigSchema,
   getTokenConnectionId,
+  parseTokenConnectionId,
   validateZodResult,
 } from '@hyperlane-xyz/sdk';
 import { isObjEmpty, objFilter, objMerge } from '@hyperlane-xyz/utils';
@@ -182,12 +183,22 @@ function fillMissingCoinGeckoIds(
 const ALEO_MAINNET_CHAIN = 'aleo';
 const ALEO_TESTNET_CHAIN = 'aleotestnet';
 
-function filterAleoTokensByNetwork(
+export function filterAleoTokensByNetwork(
   tokens: NullableAddressWarpCoreToken[],
+  aleoNetwork: typeof config.aleoNetwork = config.aleoNetwork,
 ): NullableAddressWarpCoreToken[] {
-  const excludedAleoChain =
-    config.aleoNetwork === 'mainnet' ? ALEO_TESTNET_CHAIN : ALEO_MAINNET_CHAIN;
-  return tokens.filter((token) => token.chainName !== excludedAleoChain);
+  const excludedAleoChain = aleoNetwork === 'mainnet' ? ALEO_TESTNET_CHAIN : ALEO_MAINNET_CHAIN;
+  return tokens
+    .filter((token) => token.chainName !== excludedAleoChain)
+    .map((token) => {
+      if (!token.connections?.length) return token;
+      // WarpCore.FromConfig asserts every connection target exists, so a connection
+      // pointing at a token we just excluded must be pruned too, or init throws.
+      const connections = token.connections.filter(
+        (connection) => parseTokenConnectionId(connection.token).chainName !== excludedAleoChain,
+      );
+      return connections.length === token.connections.length ? token : { ...token, connections };
+    });
 }
 
 function filterToIds(

@@ -16,6 +16,7 @@ const explorerApiUrl =
   process.env.NEXT_PUBLIC_EXPLORER_API_URL || 'https://explorer4.hasura.app/v1/graphql';
 const feeQuotingUrl = process.env.NEXT_PUBLIC_FEE_QUOTING_URL || undefined;
 const relayApiUrl = process.env.NEXT_PUBLIC_RELAY_API_URL || undefined;
+const aleoNetwork = process.env.NEXT_PUBLIC_ALEO_NETWORK === 'testnet' ? 'testnet' : 'mainnet';
 
 interface Config {
   addressBlacklist: string[]; // A list of addresses that are blacklisted and cannot be used in the app
@@ -40,10 +41,12 @@ interface Config {
   featuredChains: string[]; // Chains to pin at the top of the default chain picker sort
   featuredTokens: string[]; // List of featured tokens to prioritize in token picker (format: "chainName-symbol")
   feeQuotingUrl: string | undefined; // Offchain fee quoting service base URL
+  aleoNetwork: 'mainnet' | 'testnet'; // Which Aleo network the Shield wallet connects to
 }
 
 export const config: Config = Object.freeze({
   addressBlacklist: ADDRESS_BLACKLIST.map((address) => address.toLowerCase()),
+  aleoNetwork,
   chainWalletWhitelists,
   enableExplorerLink: false,
   explorerApiUrl,

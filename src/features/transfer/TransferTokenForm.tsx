@@ -1084,29 +1084,24 @@ async function validateForm(
     // and swallow simulation errors only for Predicate routes; balance/collateral/recipient
     // checks have already run by the time gas sim is reached.
     let result;
-    if (config.skipTransferValidation) {
-      logger.warn('Skipping transfer validation because NEXT_PUBLIC_SKIP_TRANSFER_VALIDATION is set.');
+    try {
+      result = await warpCore.validateTransfer({
+        originTokenAmount,
+        destination,
+        recipient,
+        sender: sender || '',
+        senderPubKey: await senderPubKey,
+        destinationToken: connectedDestinationToken,
+      });
+    } catch (error) {
+      const isPredicateRoute = await warpCore.isPredicateSupported(transferToken, destination);
+      if (!isPredicateRoute) throw error;
+      // Only swallow EVM execution reverts (predicate wrapper rejecting without attestation).
+      // Rethrow provider/RPC/network errors so they surface rather than silently
+      // appearing as "validation passed" and failing at submit-time.
+      const causeCode = (error as any)?.cause?.code;
+      if (causeCode !== 'CALL_EXCEPTION' && causeCode !== 'UNPREDICTABLE_GAS_LIMIT') throw error;
       result = null;
-    } else {
-      try {
-        result = await warpCore.validateTransfer({
-          originTokenAmount,
-          destination,
-          recipient,
-          sender: sender || '',
-          senderPubKey: await senderPubKey,
-          destinationToken: connectedDestinationToken,
-        });
-      } catch (error) {
-        const isPredicateRoute = await warpCore.isPredicateSupported(transferToken, destination);
-        if (!isPredicateRoute) throw error;
-        // Only swallow EVM execution reverts (predicate wrapper rejecting without attestation).
-        // Rethrow provider/RPC/network errors so they surface rather than silently
-        // appearing as "validation passed" and failing at submit-time.
-        const causeCode = (error as any)?.cause?.code;
-        if (causeCode !== 'CALL_EXCEPTION' && causeCode !== 'UNPREDICTABLE_GAS_LIMIT') throw error;
-        result = null;
-      }
     }
 
     if (!isNullish(result)) {

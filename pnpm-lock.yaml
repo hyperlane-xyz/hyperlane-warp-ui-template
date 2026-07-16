@@ -84,39 +84,12 @@ importers:
       '@headlessui/react':
         specifier: ^2.2.0
         version: 2.2.10(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@hyperlane-xyz/aleo-sdk':
-        specifier: 36.0.0
-        version: 36.0.0(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@6.0.6)
-      '@hyperlane-xyz/core':
-        specifier: 11.3.1
-        version: 11.3.1(@ethersproject/abi@5.8.0)(@ethersproject/providers@5.8.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(@types/sinon-chai@4.0.0)
-      '@hyperlane-xyz/cosmos-sdk':
-        specifier: 36.0.0
-        version: 36.0.0(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@6.0.6)
-      '@hyperlane-xyz/deploy-sdk':
-        specifier: 7.0.0
-        version: 7.0.0(@types/sinon-chai@4.0.0)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@6.0.2)(utf-8-validate@6.0.6)
-      '@hyperlane-xyz/provider-sdk':
-        specifier: 7.0.0
-        version: 7.0.0(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@6.0.6)
-      '@hyperlane-xyz/radix-sdk':
-        specifier: 36.0.0
-        version: 36.0.0(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@6.0.6)
       '@hyperlane-xyz/registry':
         specifier: 25.3.0
         version: 25.3.0
       '@hyperlane-xyz/sdk':
         specifier: 36.0.0
         version: 36.0.0(@ethersproject/abi@5.8.0)(@ethersproject/providers@5.8.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(@react-native-async-storage/async-storage@1.24.0(react-native@0.86.0(@babel/core@7.29.7)(@types/react@19.2.17)(bufferutil@4.1.0)(react@19.2.7)(utf-8-validate@6.0.6)))(@types/sinon-chai@4.0.0)(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.59))(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@6.0.2)(utf-8-validate@6.0.6)
-      '@hyperlane-xyz/sealevel-sdk':
-        specifier: 36.0.0
-        version: 36.0.0(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@6.0.2)(utf-8-validate@6.0.6)
-      '@hyperlane-xyz/starknet-sdk':
-        specifier: 28.1.2
-        version: 28.1.2(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@6.0.6)
-      '@hyperlane-xyz/tron-sdk':
-        specifier: 23.1.2
-        version: 23.1.2(@types/sinon-chai@4.0.0)(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@6.0.6)
       '@hyperlane-xyz/utils':
         specifier: 36.0.0
         version: 36.0.0(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@6.0.6)

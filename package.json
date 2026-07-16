@@ -102,16 +102,7 @@
     "viem": "^2.21.41",
     "wagmi": "^2.12.26",
     "zod": "3.21.4",
-    "zustand": "^4.4.7",
-    "@hyperlane-xyz/aleo-sdk": "36.0.0",
-    "@hyperlane-xyz/cosmos-sdk": "36.0.0",
-    "@hyperlane-xyz/deploy-sdk": "7.0.0",
-    "@hyperlane-xyz/provider-sdk": "7.0.0",
-    "@hyperlane-xyz/radix-sdk": "36.0.0",
-    "@hyperlane-xyz/starknet-sdk": "28.1.2",
-    "@hyperlane-xyz/sealevel-sdk": "36.0.0",
-    "@hyperlane-xyz/tron-sdk": "23.1.2",
-    "@hyperlane-xyz/core": "11.3.1"
+    "zustand": "^4.4.7"
   },
   "devDependencies": {
     "@aws-sdk/client-s3": "^3.967.0",

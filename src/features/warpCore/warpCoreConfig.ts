@@ -131,7 +131,7 @@ export async function assembleWarpCoreConfig(
     ...yamlConfig.tokens,
     ...storeOverrideTokens,
   ] as NullableAddressWarpCoreToken[];
-  const tokens = filterUnconnectedToken(dedupeTokens(combinedTokens));
+  const tokens = filterUnconnectedToken(dedupeTokens(filterAleoTokensByNetwork(combinedTokens)));
 
   const combinedOptions = [
     ...filteredRegistryOptions,
@@ -174,6 +174,20 @@ function fillMissingCoinGeckoIds(
     }
     return acc;
   }, {});
+}
+
+// Shield can only connect to the Aleo network set at build time (config.aleoNetwork), so
+// the opposite Aleo chain must never be selectable or a prepared transfer would submit
+// on a different network than the one it was validated against.
+const ALEO_MAINNET_CHAIN = 'aleo';
+const ALEO_TESTNET_CHAIN = 'aleotestnet';
+
+function filterAleoTokensByNetwork(
+  tokens: NullableAddressWarpCoreToken[],
+): NullableAddressWarpCoreToken[] {
+  const excludedAleoChain =
+    config.aleoNetwork === 'mainnet' ? ALEO_TESTNET_CHAIN : ALEO_MAINNET_CHAIN;
+  return tokens.filter((token) => token.chainName !== excludedAleoChain);
 }
 
 function filterToIds(

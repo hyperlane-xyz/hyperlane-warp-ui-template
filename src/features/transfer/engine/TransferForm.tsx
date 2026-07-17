@@ -683,6 +683,17 @@ function getRouteTxs(route: AugmentedRoute): RouteTx[] {
   return route.raw.txs?.length ? route.raw.txs : route.raw.tx ? [route.raw.tx] : [];
 }
 
+function routeTxReviewLabel(tx: RouteTx, symbol: string, index: number, count: number): string {
+  const category = routeTxCategory(tx);
+  if (category === 'approval') return `Approve ${symbol}`;
+  if (category === 'revoke') return `Revoke ${symbol}`;
+  return `Transfer${count > 1 ? ` ${index + 1}/${count}` : ''}`;
+}
+
+function routeTxCategory(tx: RouteTx): string {
+  return 'category' in tx ? tx.category : 'transfer';
+}
+
 function isStarknetRouteTx(tx: RouteTx): tx is Extract<RouteTx, { protocol: string }> {
   return 'protocol' in tx && tx.protocol === ProtocolType.Starknet;
 }
@@ -1002,13 +1013,16 @@ function ReviewTransactions({
   const approvalSpender = approval?.spender;
   const dstDecimals = dstToken?.decimals ?? 18;
   const dstSymbol = dstToken?.symbol ?? '';
+  const routeTxs = getRouteTxs(route);
 
   let txNum = 0;
   return (
     <>
       {needsRevoke && (
         <div>
-          <h4>{`Transaction ${++txNum}: Revoke ${symbol}`}</h4>
+          <h4 data-testid="transfer-review-transaction" data-category="revoke">
+            {`Transaction ${++txNum}: Revoke ${symbol}`}
+          </h4>
           <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs dark:border-primary-300/25">
             <p>{`Token: ${approvalToken}`}</p>
             <p>{`Spender: ${approvalSpender ?? '—'}`}</p>
@@ -1018,7 +1032,9 @@ function ReviewTransactions({
       )}
       {needsApprove && (
         <div>
-          <h4>{`Transaction ${++txNum}: Approve ${symbol}`}</h4>
+          <h4 data-testid="transfer-review-transaction" data-category="approval">
+            {`Transaction ${++txNum}: Approve ${symbol}`}
+          </h4>
           <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs dark:border-primary-300/25">
             <p>{`Token: ${approvalToken}`}</p>
             <p>{`Spender: ${approvalSpender ?? '—'}`}</p>
@@ -1030,7 +1046,15 @@ function ReviewTransactions({
         </div>
       )}
       <div>
-        <h4>{`Transaction ${++txNum}: Transfer`}</h4>
+        {routeTxs.map((tx, index) => (
+          <h4
+            key={index}
+            data-testid="transfer-review-transaction"
+            data-category={routeTxCategory(tx)}
+          >
+            {`Transaction ${++txNum}: ${routeTxReviewLabel(tx, symbol, index, routeTxs.length)}`}
+          </h4>
+        ))}
         <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs dark:border-primary-300/25">
           {dstToken?.address && (
             <p className="flex">

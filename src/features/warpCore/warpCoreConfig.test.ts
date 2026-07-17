@@ -1,7 +1,12 @@
-import { TokenStandard } from '@hyperlane-xyz/sdk';
+import { TokenStandard, WarpCore, WarpCoreConfig, getTokenConnectionId } from '@hyperlane-xyz/sdk';
+import { ProtocolType } from '@hyperlane-xyz/utils';
 import { describe, expect, test } from 'vitest';
 
-import { dedupeTokens, NullableAddressWarpCoreToken } from './warpCoreConfig';
+import {
+  NullableAddressWarpCoreToken,
+  dedupeTokens,
+  filterAleoTokensByNetwork,
+} from './warpCoreConfig';
 
 const makeToken = (
   overrides: Partial<NullableAddressWarpCoreToken>,
@@ -176,4 +181,70 @@ describe('dedupeTokens', () => {
     // IBC merged to 1, wM + USDSC stay as 2 → 3 total
     expect(result).toHaveLength(3);
   });
+});
+
+describe('filterAleoTokensByNetwork', () => {
+  const ETH_ADDR = '0x1111111111111111111111111111111111111111';
+  const ALEO_ADDR = 'aleo1usdc';
+  const ALEO_TESTNET_ADDR = 'aleo1usdctest';
+
+  const makeAleoConfig = (): NullableAddressWarpCoreToken[] => [
+    makeToken({
+      chainName: 'ethereum',
+      symbol: 'USDC',
+      name: 'USD Coin',
+      standard: TokenStandard.EvmHypCollateral,
+      addressOrDenom: ETH_ADDR,
+      connections: [
+        { token: getTokenConnectionId(ProtocolType.Aleo, 'aleo', ALEO_ADDR) },
+        { token: getTokenConnectionId(ProtocolType.Aleo, 'aleotestnet', ALEO_TESTNET_ADDR) },
+      ],
+    }),
+    makeToken({
+      chainName: 'aleo',
+      symbol: 'USDC',
+      name: 'USD Coin',
+      standard: TokenStandard.AleoHypSynthetic,
+      addressOrDenom: ALEO_ADDR,
+      connections: [{ token: getTokenConnectionId(ProtocolType.Ethereum, 'ethereum', ETH_ADDR) }],
+    }),
+    makeToken({
+      chainName: 'aleotestnet',
+      symbol: 'USDC',
+      name: 'USD Coin',
+      standard: TokenStandard.AleoHypSynthetic,
+      addressOrDenom: ALEO_TESTNET_ADDR,
+      connections: [{ token: getTokenConnectionId(ProtocolType.Ethereum, 'ethereum', ETH_ADDR) }],
+    }),
+  ];
+
+  test.each(['mainnet', 'testnet'] as const)(
+    'keeps only the %s Aleo chain, prunes dangling connections, and WarpCore.FromConfig does not throw',
+    (aleoNetwork) => {
+      const kept = aleoNetwork === 'mainnet' ? 'aleo' : 'aleotestnet';
+      const excluded = aleoNetwork === 'mainnet' ? 'aleotestnet' : 'aleo';
+
+      const filtered = filterAleoTokensByNetwork(makeAleoConfig(), aleoNetwork);
+
+      expect(filtered.map((t) => t.chainName).sort()).toEqual(['ethereum', kept].sort());
+
+      const ethToken = filtered.find((t) => t.chainName === 'ethereum')!;
+      expect(ethToken.connections).toHaveLength(1);
+      expect(ethToken.connections!.some((c) => c.token.includes(`|${excluded}|`))).toBe(false);
+      expect(ethToken.connections!.some((c) => c.token.includes(`|${kept}|`))).toBe(true);
+
+      // Regression check for the bug the reviewer caught: WarpCore.FromConfig asserts
+      // every connection target resolves to a token in the list, so a dangling
+      // connection to the excluded chain would throw 'Connected token not found'.
+      expect(() =>
+        WarpCore.FromConfig(
+          {} as never,
+          {
+            tokens: filtered,
+            options: {},
+          } as unknown as WarpCoreConfig,
+        ),
+      ).not.toThrow();
+    },
+  );
 });

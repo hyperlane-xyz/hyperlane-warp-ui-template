@@ -958,7 +958,10 @@ function ReviewDetails({
         <label className="transfer-field-label mt-4 block pl-0.5 text-sm text-gray-600 dark:text-foreground-secondary">
           Transactions
         </label>
-        <div className="transfer-review-panel mt-1.5 space-y-2 break-all rounded border border-gray-400 bg-gray-150 px-2.5 py-2 text-sm dark:border-primary-300/25 dark:bg-background/40 dark:text-foreground-primary">
+        <div
+          data-testid="transfer-review"
+          className="transfer-review-panel mt-1.5 space-y-2 break-all rounded border border-gray-400 bg-gray-150 px-2.5 py-2 text-sm dark:border-primary-300/25 dark:bg-background/40 dark:text-foreground-primary"
+        >
           {bestRoute ? (
             <ReviewTransactions
               route={bestRoute}
@@ -1159,6 +1162,7 @@ function ButtonSection({
         <span>Edit</span>
       </SolidButton>
       <SolidButton
+        data-testid="transfer-send"
         type="button"
         color="accent"
         onClick={onSendTransactions}

@@ -215,7 +215,7 @@ function TransferDetailsModalInner({
   return (
     <Modal isOpen={isOpen} close={close} panelClassname="transfer-details-modal max-w-sm">
       <ModalHeader className="h-8 shadow-accent-glow" />
-      <div className="p-4">
+      <div data-testid="transfer-details" data-status={status} className="p-4">
         {isFinal && (
           <div className="flex justify-between">
             <h2 className="text-xs font-normal text-gray-900 dark:text-foreground-primary">

@@ -64,6 +64,7 @@ export function ConnectAwareSubmitButton<FormValues = any>({
 
   return (
     <SolidButton
+      data-testid="transfer-submit"
       disabled={disabled && isAccountReady}
       type={type}
       color={color}

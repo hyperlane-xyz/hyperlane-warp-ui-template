@@ -8,6 +8,7 @@ import {
   WarpCoreConfig,
   WarpCoreConfigSchema,
   getTokenConnectionId,
+  parseTokenConnectionId,
   validateZodResult,
 } from '@hyperlane-xyz/sdk';
 import { isObjEmpty, objFilter, objMerge } from '@hyperlane-xyz/utils';
@@ -131,7 +132,7 @@ export async function assembleWarpCoreConfig(
     ...yamlConfig.tokens,
     ...storeOverrideTokens,
   ] as NullableAddressWarpCoreToken[];
-  const tokens = filterUnconnectedToken(dedupeTokens(combinedTokens));
+  const tokens = filterUnconnectedToken(dedupeTokens(filterAleoTokensByNetwork(combinedTokens)));
 
   const combinedOptions = [
     ...filteredRegistryOptions,
@@ -174,6 +175,30 @@ function fillMissingCoinGeckoIds(
     }
     return acc;
   }, {});
+}
+
+// Shield can only connect to the Aleo network set at build time (config.aleoNetwork), so
+// the opposite Aleo chain must never be selectable or a prepared transfer would submit
+// on a different network than the one it was validated against.
+const ALEO_MAINNET_CHAIN = 'aleo';
+const ALEO_TESTNET_CHAIN = 'aleotestnet';
+
+export function filterAleoTokensByNetwork(
+  tokens: NullableAddressWarpCoreToken[],
+  aleoNetwork: typeof config.aleoNetwork = config.aleoNetwork,
+): NullableAddressWarpCoreToken[] {
+  const excludedAleoChain = aleoNetwork === 'mainnet' ? ALEO_TESTNET_CHAIN : ALEO_MAINNET_CHAIN;
+  return tokens
+    .filter((token) => token.chainName !== excludedAleoChain)
+    .map((token) => {
+      if (!token.connections?.length) return token;
+      // WarpCore.FromConfig asserts every connection target exists, so a connection
+      // pointing at a token we just excluded must be pruned too, or init throws.
+      const connections = token.connections.filter(
+        (connection) => parseTokenConnectionId(connection.token).chainName !== excludedAleoChain,
+      );
+      return connections.length === token.connections.length ? token : { ...token, connections };
+    });
 }
 
 function filterToIds(

@@ -1,14 +1,15 @@
 # Reject packages published less than 7 days ago (supply chain protection)
 minimumReleaseAge: 10080
 minimumReleaseAgeExclude:
-  - '@hyperlane-xyz/*'
+  - "@hyperlane-xyz/*"
+  - "@provablehq/*"
 overrides:
   tronweb>ethers: ^6.13.5
-  '@solana/web3.js': ^1.95.4
+  "@solana/web3.js": ^1.95.4
   axios: ^1.7.9
   bignumber: 9.1.2
   bn.js: ^5.2
-  cosmjs-types: '0.9'
+  cosmjs-types: "0.9"
   ethers: ^5.8.0
   globals: ^14.0.0
   lit-html: 2.8.0
@@ -23,10 +24,10 @@ overrides:
   '@ledgerhq/errors': 6.31.0
 patchedDependencies:
   starknetkit@2.6.1: patches/starknetkit@2.6.1.patch
-  '@provablehq/wasm@0.9.18': patches/@provablehq__wasm@0.9.18.patch
-  '@provablehq/sdk@0.9.15': patches/@provablehq__sdk@0.9.15.patch
+  '@provablehq/sdk@0.11.3': patches/@provablehq__sdk@0.11.3.patch
+  '@provablehq/wasm@0.11.3': patches/@provablehq__wasm@0.11.3.patch
 allowBuilds:
-  '@sentry/cli': false
+  "@sentry/cli": false
   bigint-buffer: false
   bufferutil: false
   core-js: false

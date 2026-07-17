@@ -7,11 +7,11 @@ import {
   decodeFunctionResult,
   encodeFunctionData,
   erc20Abi,
-  http,
   multicall3Abi,
 } from 'viem';
 
 import { logger } from '../../utils/logger';
+import { rankedFallbackTransport } from '../../utils/rpcTransport';
 import { getTokenKey } from '../tokens/utils';
 import { TokenEntry, fetchSdkBalance } from './tokens';
 
@@ -226,13 +226,17 @@ export async function fetchChainBalances(
   evmAddress: Hex,
   chainAddresses: ChainMap<ChainAddresses>,
 ): Promise<Record<string, bigint>> {
-  const rpcUrl = multiProvider.tryGetChainMetadata(group.chainName)?.rpcUrls?.[0]?.http;
-  if (!rpcUrl) {
+  const rpcUrls =
+    multiProvider
+      .tryGetChainMetadata(group.chainName)
+      ?.rpcUrls?.map((r) => r.http)
+      .filter((url): url is string => !!url) ?? [];
+  if (!rpcUrls.length) {
     logger.warn(`No RPC URL for chain ${group.chainName}, skipping balance fetch`);
     return {};
   }
 
-  const client = createPublicClient({ transport: http(rpcUrl) });
+  const client = createPublicClient({ transport: rankedFallbackTransport(rpcUrls) });
   const batchAddress = getBatchAddress(group.chainName, chainAddresses);
   const balanceOfCallData = encodeFunctionData({
     abi: erc20Abi,

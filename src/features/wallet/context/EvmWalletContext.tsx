@@ -14,12 +14,13 @@ import {
   walletConnectWallet,
 } from '@rainbow-me/rainbowkit/wallets';
 import { PropsWithChildren, useMemo } from 'react';
-import { createClient, fallback, http } from 'viem';
+import { createClient } from 'viem';
 import { WagmiProvider, createConfig, mock } from 'wagmi';
 
 import { APP_NAME } from '../../../consts/app';
 import { config } from '../../../consts/config';
 import { Color } from '../../../styles/Color';
+import { rankedFallbackTransport } from '../../../utils/rpcTransport';
 import { useMultiProvider } from '../../chains/hooks';
 import { MOCK_EVM_ADDRESS } from '../_e2e/constants';
 import { E2EAutoConnectEvm } from '../_e2e/E2EAutoConnectEvm';
@@ -51,7 +52,7 @@ function initWagmi(multiProvider: MultiProtocolProvider, e2e: boolean) {
     chains: [chains[0], ...chains.splice(1)],
     connectors,
     client({ chain }) {
-      const transport = fallback(chain.rpcUrls.default.http.map((chainHttp) => http(chainHttp)));
+      const transport = rankedFallbackTransport([...chain.rpcUrls.default.http]);
       return createClient({ chain, transport });
     },
   });

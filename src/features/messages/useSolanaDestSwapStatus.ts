@@ -1,5 +1,5 @@
-import type { ChainName, MultiProtocolProvider } from '@hyperlane-xyz/sdk';
-import { Connection, PublicKey } from '@solana/web3.js';
+import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProtocolProvider';
+import type { ChainName } from '@hyperlane-xyz/sdk/types';
 import { useQuery } from '@tanstack/react-query';
 
 import { logger } from '../../utils/logger';
@@ -18,6 +18,7 @@ async function getSolanaDestSwapStatus({
   try {
     const rpcUrl = multiProvider.tryGetChainMetadata(destinationChain)?.rpcUrls?.[0]?.http;
     if (!rpcUrl) return { isDone: false };
+    const { Connection, PublicKey } = await import('@solana/web3.js');
     const connection = new Connection(rpcUrl, 'confirmed');
     const accountInfo = await connection.getAccountInfo(new PublicKey(pdaAddress));
     // PDA is closed (null) once the CCS relayer executes the Reveal instruction

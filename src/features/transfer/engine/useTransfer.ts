@@ -1,21 +1,15 @@
+import type { CoreAddresses } from '@hyperlane-xyz/sdk/core/contracts';
 import {
-  type ChainMap,
-  type CoreAddresses,
-  EvmTokenAdapter,
-  HyperlaneCore,
-  MultiProtocolCore,
   ProviderType,
   type TypedTransactionReceipt,
-} from '@hyperlane-xyz/sdk';
+} from '@hyperlane-xyz/sdk/providers/ProviderType';
+import type { ChainMap } from '@hyperlane-xyz/sdk/types';
 import { isZeroishAddress, ProtocolType } from '@hyperlane-xyz/utils';
 import { useTransactionFns } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
-import {
+import type {
   AddressLookupTableAccount,
   Connection,
-  PublicKey,
   Transaction,
-  TransactionInstruction,
-  TransactionMessage,
   VersionedTransaction,
 } from '@solana/web3.js';
 import { useCallback, useState } from 'react';
@@ -111,6 +105,8 @@ export function useTransfer() {
           if (isZeroishAddress(spender)) {
             throw new Error(`Cannot approve: spender is zero address on ${srcChainName}`);
           }
+          const { EvmTokenAdapter } =
+            await import('@hyperlane-xyz/sdk/token/adapters/EvmTokenAdapter');
           const adapter = new EvmTokenAdapter(srcChainName, multiProvider, {
             token: args.approvalToken ?? args.srcToken,
           });
@@ -291,21 +287,24 @@ export async function toWalletTx(
   };
 }
 
-function toSdkWalletTx(tx: Extract<RouteTx, { protocol: string }>): unknown {
+async function toSdkWalletTx(tx: Extract<RouteTx, { protocol: string }>): Promise<unknown> {
   if (tx.type !== ProviderType.SolanaWeb3) return tx;
-  const transaction = deserializeSolanaTransaction(tx.transaction);
+  const transaction = await deserializeSolanaTransaction(tx.transaction);
   return {
     ...tx,
     transaction,
   };
 }
 
-function deserializeSolanaTransaction(raw: unknown): Transaction | VersionedTransaction {
+async function deserializeSolanaTransaction(
+  raw: unknown,
+): Promise<Transaction | VersionedTransaction> {
   const payload = raw as { encoding?: unknown; data?: unknown };
   if (payload.encoding !== 'base64' || typeof payload.data !== 'string') {
     throw new Error('Invalid Solana transaction payload from quote');
   }
   const bytes = base64ToBytes(payload.data);
+  const { Transaction, VersionedTransaction } = await import('@solana/web3.js');
   try {
     const tx = Transaction.from(bytes);
     return tx;
@@ -331,6 +330,13 @@ async function buildSolanaTransaction(
   if (!opts.sender) throw new Error('Missing Solana sender for route transaction');
   if (!opts.rpcUrl) throw new Error('Missing Solana RPC URL for route transaction');
 
+  const {
+    Connection,
+    PublicKey,
+    TransactionInstruction,
+    TransactionMessage,
+    VersionedTransaction,
+  } = await import('@solana/web3.js');
   const connection = new Connection(opts.rpcUrl, 'confirmed');
   const instruction = new TransactionInstruction({
     programId: new PublicKey(tx.to),
@@ -371,6 +377,7 @@ async function loadAddressLookupTables(
   altAddresses: string[],
 ): Promise<AddressLookupTableAccount[]> {
   if (!altAddresses.length) return [];
+  const { PublicKey } = await import('@solana/web3.js');
   const results = await Promise.all(
     altAddresses.map((address) => connection.getAddressLookupTable(new PublicKey(address))),
   );
@@ -395,6 +402,7 @@ async function parseReceipt(
     receipt.type === ProviderType.EthersV5 ||
     receipt.type === ProviderType.Tron
   ) {
+    const { HyperlaneCore } = await import('@hyperlane-xyz/sdk/core/HyperlaneCore');
     const rawReceipt = receipt.receipt as Parameters<
       typeof HyperlaneCore.getDispatchedMessages
     >[0] & {
@@ -413,6 +421,7 @@ async function parseReceipt(
   }
 
   try {
+    const { MultiProtocolCore } = await import('@hyperlane-xyz/sdk/core/MultiProtocolCore');
     const core = new MultiProtocolCore(
       multiProvider,
       buildCoreAddresses(multiProvider, chainAddresses),

@@ -1,4 +1,3 @@
-import { EvmTokenAdapter } from '@hyperlane-xyz/sdk';
 import { useQuery } from '@tanstack/react-query';
 import type { Address } from 'viem';
 
@@ -60,6 +59,7 @@ export function useApprovalStatus(args: AllowanceArgs): ApprovalStatus {
     ],
     queryFn: async () => {
       if (!chainName || !token || !owner || !spender || amount == null) return null;
+      const { EvmTokenAdapter } = await import('@hyperlane-xyz/sdk/token/adapters/EvmTokenAdapter');
       const adapter = new EvmTokenAdapter(chainName, multiProvider, { token });
       const [needsApprove, needsRevoke] = await Promise.all([
         adapter.isApproveRequired(owner, spender, amount.toString()),

@@ -10,7 +10,6 @@ import {
   objFilter,
   objMap,
   promiseObjAll,
-  ProtocolType,
   tryParseJsonOrYaml,
 } from '@hyperlane-xyz/utils';
 import { z } from 'zod';
@@ -89,11 +88,9 @@ export async function assembleChainMetadata(
 
     if (!overridesUrl) return metadata;
 
-    // Only EVM supports fallback transport, so we are putting the override at the end
-    const rpcUrls =
-      metadata.protocol === ProtocolType.Ethereum
-        ? [...metadata.rpcUrls, overridesUrl]
-        : [overridesUrl, ...metadata.rpcUrls];
+    // Prefer the override as the primary RPC (e.g. a keyed premium endpoint),
+    // keeping the registry's public URLs as fallback for EVM's fallback transport.
+    const rpcUrls = [overridesUrl, ...metadata.rpcUrls];
 
     return { ...metadata, rpcUrls };
   });

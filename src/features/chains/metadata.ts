@@ -6,12 +6,7 @@ import {
   mergeChainMetadataMap,
   RpcUrlSchema,
 } from '@hyperlane-xyz/sdk';
-import {
-  objFilter,
-  objMap,
-  promiseObjAll,
-  tryParseJsonOrYaml,
-} from '@hyperlane-xyz/utils';
+import { objFilter, objMap, promiseObjAll, tryParseJsonOrYaml } from '@hyperlane-xyz/utils';
 import { z } from 'zod';
 
 import { chains as ChainsTS } from '../../consts/chains.ts';

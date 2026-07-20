@@ -7,11 +7,12 @@ import {
   decodeFunctionResult,
   encodeFunctionData,
   erc20Abi,
+  fallback,
+  http,
   multicall3Abi,
 } from 'viem';
 
 import { logger } from '../../utils/logger';
-import { rankedFallbackTransport } from '../../utils/rpcTransport';
 import { getTokenKey } from '../tokens/utils';
 import { TokenEntry, fetchSdkBalance } from './tokens';
 
@@ -236,7 +237,10 @@ export async function fetchChainBalances(
     return {};
   }
 
-  const client = createPublicClient({ transport: rankedFallbackTransport(rpcUrls) });
+  // Plain unranked fallback (no viem rankTransports probe loop): this client is recreated
+  // on every balance refresh, so a ranked transport would leak an unbounded set of probe
+  // loops. A single failed request still fails over across all RPCs within the request.
+  const client = createPublicClient({ transport: fallback(rpcUrls.map((url) => http(url))) });
   const batchAddress = getBatchAddress(group.chainName, chainAddresses);
   const balanceOfCallData = encodeFunctionData({
     abi: erc20Abi,

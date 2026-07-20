@@ -1,7 +1,7 @@
 import { IToken, SealevelTokenAdapter, Token, WarpCore } from '@hyperlane-xyz/sdk';
+import { ACCOUNT_SIZE } from '@solana/spl-token';
 import { describe, expect, test, vi } from 'vitest';
 
-import { chainsRentEstimate } from '../../consts/chains';
 import { createMockToken } from '../../utils/test';
 import { getSameChainAtaRent } from './useSvmQuotedTransfer';
 
@@ -10,10 +10,11 @@ const RECIPIENT = '11111111111111111111111111111111';
 const SVM_CHAIN = 'solanamainnet';
 
 // An object whose prototype chain satisfies `instanceof SealevelTokenAdapter`,
-// with only the method the helper calls stubbed.
+// with only the members the helper touches stubbed. Defaults to classic SPL.
 function mockSealevelAdapter(ata = { toBase58: () => 'ata' }) {
   const adapter = Object.create(SealevelTokenAdapter.prototype);
   adapter.deriveAssociatedTokenAccount = vi.fn().mockResolvedValue(ata);
+  adapter.isSpl2022 = vi.fn().mockResolvedValue(false);
   return adapter;
 }
 
@@ -22,15 +23,20 @@ function makeArgs({
   destination = SVM_CHAIN,
   adapter = mockSealevelAdapter(),
   accountInfo = null as unknown,
+  rentExemptMinimum = 2039280,
 }: {
   originChain?: string;
   destination?: string;
   adapter?: unknown;
   accountInfo?: unknown;
+  rentExemptMinimum?: number;
 }) {
   const getAccountInfo = vi.fn().mockResolvedValue(accountInfo);
+  const getMinimumBalanceForRentExemption = vi.fn().mockResolvedValue(rentExemptMinimum);
   const warpCore = {
-    multiProvider: { getSolanaWeb3Provider: () => ({ getAccountInfo }) },
+    multiProvider: {
+      getSolanaWeb3Provider: () => ({ getAccountInfo, getMinimumBalanceForRentExemption }),
+    },
   } as unknown as WarpCore;
   const originToken = createMockToken({ chainName: originChain }) as Token;
   const destinationToken = {
@@ -38,18 +44,13 @@ function makeArgs({
   } as unknown as IToken;
   return {
     args: { warpCore, originToken, destinationToken, destination, recipient: RECIPIENT },
-    getAccountInfo,
+    getMinimumBalanceForRentExemption,
   };
 }
 
 describe('getSameChainAtaRent', () => {
   test('returns undefined for a cross-chain transfer', async () => {
     const { args } = makeArgs({ originChain: SVM_CHAIN, destination: 'eclipsemainnet' });
-    expect(await getSameChainAtaRent(args)).toBeUndefined();
-  });
-
-  test('returns undefined when the chain has no rent estimate', async () => {
-    const { args } = makeArgs({ originChain: 'ethereum', destination: 'ethereum' });
     expect(await getSameChainAtaRent(args)).toBeUndefined();
   });
 
@@ -63,8 +64,13 @@ describe('getSameChainAtaRent', () => {
     expect(await getSameChainAtaRent(args)).toBeUndefined();
   });
 
-  test('returns the rent estimate when the recipient ATA is missing', async () => {
-    const { args } = makeArgs({ accountInfo: null });
-    expect(await getSameChainAtaRent(args)).toEqual(chainsRentEstimate[SVM_CHAIN]);
+  test('returns the rent-exempt minimum for a classic SPL account when the ATA is missing', async () => {
+    const { args, getMinimumBalanceForRentExemption } = makeArgs({
+      accountInfo: null,
+      rentExemptMinimum: 2039280,
+    });
+
+    expect(await getSameChainAtaRent(args)).toEqual(2039280n);
+    expect(getMinimumBalanceForRentExemption).toHaveBeenCalledWith(ACCOUNT_SIZE);
   });
 });

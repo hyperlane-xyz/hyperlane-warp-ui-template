@@ -213,13 +213,6 @@ async function executeTransfer({
 
     updateTransferStatus(transferIndex, (transferStatus = TransferStatus.CreatingTxs));
 
-    // eslint-disable-next-line no-console
-    console.log('[svm-quoted DEBUG] about to call getTransferRemoteTxs', {
-      hasQuotedTransfer: !!quotedTransfer,
-      hasQuotedCalls: !!quotedCallsParams,
-      hasAttestation: !!attestationResult,
-    });
-
     const txs = await warpCore.getTransferRemoteTxs({
       originTokenAmount,
       destination,
@@ -236,16 +229,6 @@ async function executeTransfer({
       interchainFee: attestationResult?.interchainFee,
       tokenFeeQuote: attestationResult?.tokenFeeQuote,
       destinationToken: connectedDestinationToken,
-    });
-
-    // DEBUG: dump the built tx shape so we can correlate wallet "unknown tx"
-    // failures with what `getTransferRemoteTxs` actually produced. Especially
-    // useful while wiring SVM offchain quoting end-to-end.
-    // eslint-disable-next-line no-console
-    console.log('[svm-quoted DEBUG] Built transfer txs:', {
-      count: txs.length,
-      summaries: txs.map((tx, i) => summarizeTx(tx, i)),
-      raw: txs,
     });
 
     const hashes: string[] = [];
@@ -390,44 +373,3 @@ const txCategoryToStatuses: Record<WarpTxCategory, [TransferStatus, TransferStat
   [WarpTxCategory.Revoke]: [TransferStatus.SigningRevoke, TransferStatus.ConfirmingRevoke],
   [WarpTxCategory.Transfer]: [TransferStatus.SigningTransfer, TransferStatus.ConfirmingTransfer],
 };
-
-/**
- * DEBUG helper — extracts a JSON-safe summary of a built warp transfer tx,
- * suitable for console logging. For SVM `Transaction` / `VersionedTransaction`
- * inputs, dumps the instruction count, program IDs, ALT table count, and fee
- * payer so we can correlate "wallet rejects tx" issues against the actual
- * shape the SDK produced.
- */
-function summarizeTx(tx: { category: string; type: string; transaction: unknown }, index: number) {
-  const base = { index, category: tx.category, type: tx.type };
-  const t = tx.transaction as Record<string, unknown> | undefined;
-  if (!t || typeof t !== 'object') return base;
-
-  // Legacy web3.js Transaction: has `instructions: TransactionInstruction[]`
-  if (Array.isArray((t as { instructions?: unknown }).instructions)) {
-    const ixs = (t as { instructions: Array<{ programId: { toBase58: () => string } }> })
-      .instructions;
-    return {
-      ...base,
-      kind: 'legacy',
-      ixCount: ixs.length,
-      programIds: ixs.map((ix) => ix.programId?.toBase58?.()),
-      feePayer: (t as { feePayer?: { toBase58: () => string } }).feePayer?.toBase58?.(),
-    };
-  }
-
-  // VersionedTransaction: has `message: MessageV0`
-  const message = (t as { message?: Record<string, unknown> }).message;
-  if (message && typeof message === 'object') {
-    const compiledIxs = (message as { compiledInstructions?: unknown[] }).compiledInstructions;
-    const altLookups = (message as { addressTableLookups?: unknown[] }).addressTableLookups;
-    return {
-      ...base,
-      kind: 'v0',
-      ixCount: Array.isArray(compiledIxs) ? compiledIxs.length : undefined,
-      altTableCount: Array.isArray(altLookups) ? altLookups.length : undefined,
-    };
-  }
-
-  return base;
-}

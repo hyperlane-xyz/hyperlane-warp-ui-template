@@ -9,15 +9,20 @@ import {
   TokenAmount,
   type WarpCore,
 } from '@hyperlane-xyz/sdk';
-import { ProtocolType, isNullish, toWei } from '@hyperlane-xyz/utils';
+import { ProtocolType, toWei } from '@hyperlane-xyz/utils';
 import { useDebounce } from '@hyperlane-xyz/widgets';
 import { useAccounts } from '@hyperlane-xyz/widgets/walletIntegrations/accounts';
 import { getAccountAddressAndPubKey } from '@hyperlane-xyz/widgets/walletIntegrations/accountUtils';
+import {
+  ACCOUNT_SIZE,
+  TOKEN_2022_PROGRAM_ID,
+  getAccountLenForMint,
+  getMint,
+} from '@solana/spl-token';
 import { PublicKey } from '@solana/web3.js';
 import { useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
-import { chainsRentEstimate } from '../../consts/chains';
 import { config } from '../../consts/config';
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
@@ -45,6 +50,14 @@ export interface SvmQuotedTransferResult {
    * `WarpCore.getTransferRemoteTxs({ quotedTransfer })` when non-null.
    */
   quotedTransfer: QuotedTransferProvider | null;
+  /**
+   * Await-able provider getter for submit: re-runs `fee_config` discovery and
+   * returns the provider once resolved, so a Send-click during the initial
+   * discovery window doesn't fall through to the plain transfer path (the
+   * memoized `quotedTransfer` is still null then). Mirrors the EVM
+   * `getQuotedCallsParams`. Returns `null` when the route isn't quote-enabled.
+   */
+  getQuotedTransfer: () => Promise<QuotedTransferProvider | null>;
   /**
    * Priced fee tuple from the offchain quoter, ready to feed into
    * `ReviewDetails`. `null` when the route isn't quote-enabled / form is
@@ -86,7 +99,11 @@ export function useSvmQuotedTransfer(
 
   // 1. Discover fee_config by reading the warp token PDA. Cached per route —
   //    the fee program / fee-account PDA are static for the life of the route.
-  const { data: feeConfig, isLoading: isFeeConfigLoading } = useQuery({
+  const {
+    data: feeConfig,
+    isLoading: isFeeConfigLoading,
+    refetch: refetchFeeConfig,
+  } = useQuery({
     // eslint-disable-next-line @tanstack/query/exhaustive-deps -- queryFn closes
     // over multiProvider + originToken (instances, can't stringify); chainName
     // + addressOrDenom in the key cover route identity.
@@ -109,19 +126,27 @@ export function useSvmQuotedTransfer(
     enabled: shouldDiscover,
   });
 
+  // Provider factory — the provider itself only needs the origin connection;
+  // `fee_config` gates whether the route is quote-enabled, not the construction.
+  const buildQuotedTransfer = useCallback(
+    (chainName: string): QuotedTransferProvider =>
+      new SealevelQuotedTransferProvider({
+        feeQuotingClient: new FeeQuotingV2Client({
+          baseUrl: PROXY_BASE_URL,
+          // Browser-side: real key lives in the Next.js proxy at /api/v2/quote.
+          apiKey: '',
+        }),
+        connection: multiProvider.getSolanaWeb3Provider(chainName),
+      }),
+    [multiProvider],
+  );
+
   // 2. Memoize the provider. Constructed only when fee_config exists —
   //    submit calls `buildQuotedTransferTxs` on this same instance.
   const quotedTransfer = useMemo<QuotedTransferProvider | null>(() => {
     if (!shouldDiscover || !feeConfig || !originName) return null;
-    return new SealevelQuotedTransferProvider({
-      feeQuotingClient: new FeeQuotingV2Client({
-        baseUrl: PROXY_BASE_URL,
-        // Browser-side: real key lives in the Next.js proxy at /api/v2/quote.
-        apiKey: '',
-      }),
-      connection: multiProvider.getSolanaWeb3Provider(originName),
-    });
-  }, [shouldDiscover, feeConfig, originName, multiProvider]);
+    return buildQuotedTransfer(originName);
+  }, [shouldDiscover, feeConfig, originName, buildQuotedTransfer]);
 
   // 3. Resolve sender + recipient for the display-time fee fetch.
   const { accounts } = useAccounts(multiProvider);
@@ -147,7 +172,11 @@ export function useSvmQuotedTransfer(
   //    apply. Submit re-fetches via the provider's `buildQuotedTransferTxs`;
   //    transient quotes are server-deterministic for the same input so the
   //    two fetches resolve to the same fee value.
-  const { data: fees, isLoading: isFeesLoading } = useQuery({
+  const {
+    data: fees,
+    isLoading: isFeesLoading,
+    isError: isFeesError,
+  } = useQuery({
     // eslint-disable-next-line @tanstack/query/exhaustive-deps -- queryFn
     // closes over warpCore + quotedTransfer + tokens (instances). Identity is
     // covered by addressOrDenom + chainName fields below.
@@ -176,8 +205,23 @@ export function useSvmQuotedTransfer(
     refetchInterval: FEE_QUOTE_REFRESH_INTERVAL,
   });
 
+  // The display-time quote settled with an error (typed `not_configured` /
+  // retries exhausted). Submit's `buildQuotedTransferTxs` would repeat the same
+  // failing request, so treat the route as not quote-enabled and fall through.
+  const isQuoteUnavailable = shouldFetchFees && !isFeesLoading && isFeesError;
+
+  // Submit-time getter: await `fee_config` discovery (still in-flight on a quick
+  // Send-click) and return the provider only when the route is quote-enabled and
+  // the display quote didn't already fail.
+  const getQuotedTransfer = useCallback(async (): Promise<QuotedTransferProvider | null> => {
+    if (!shouldDiscover || !originName || isQuoteUnavailable) return null;
+    const { data } = await refetchFeeConfig();
+    return data ? buildQuotedTransfer(originName) : null;
+  }, [shouldDiscover, originName, isQuoteUnavailable, refetchFeeConfig, buildQuotedTransfer]);
+
   return {
     quotedTransfer,
+    getQuotedTransfer,
     fees: fees ?? null,
     isLoading: (shouldDiscover && isFeeConfigLoading) || (shouldFetchFees && isFeesLoading),
   };
@@ -218,19 +262,30 @@ async function fetchSvmQuotedFees({
     destinationToken,
   });
 
-  // Local gas estimate so the UI matches what the user will see in their
-  // wallet. Mirrors `useQuotedCalls`'s post-quote local-gas estimate; throws
-  // here drop the whole offchain result, letting the consumer fall through
-  // to on-chain quoting.
-  const localQuote = await warpCore.getLocalTransferFeeAmount({
-    originToken,
+  // Estimate the ACTUAL quoted transaction the user will submit: it prepends
+  // `SubmitFeeQuote` / `SubmitIgpQuote` ixs and extra signers that the SDK's
+  // `getLocalTransferFeeAmount` (no `quotedTransfer` input) omits by building a
+  // plain transfer. Build the same txs as submit and sum their per-tx fees,
+  // reusing the native token from `igpQuote`. A throw here drops the whole
+  // offchain result, letting the consumer fall through to on-chain quoting.
+  const quotedTxs = await warpCore.getTransferRemoteTxs({
+    originTokenAmount,
     destination,
     sender,
-    interchainFee: igpQuote,
-    tokenFeeQuote,
-    amount: originTokenAmount.amount,
+    recipient,
+    quotedTransfer,
     destinationToken,
   });
+  let localFeeAmount = 0n;
+  for (const tx of quotedTxs) {
+    const { fee } = await warpCore.multiProvider.estimateTransactionFee({
+      chainNameOrId: originToken.chainName,
+      transaction: tx,
+      sender,
+    });
+    localFeeAmount += BigInt(fee);
+  }
+  const localQuote = new TokenAmount(localFeeAmount, igpQuote.token);
 
   // On a same-chain swap the recipient's destination-token ATA is created in the
   // same transaction, and its rent-exempt deposit is paid by the sender — a cost
@@ -256,10 +311,12 @@ async function fetchSvmQuotedFees({
 /**
  * Native-token rent (lamports) the sender pays in-transaction to create the
  * recipient's destination-token ATA, returned only for same-chain swaps where
- * that account is missing.
+ * that account is missing. Computed from the rent-exempt minimum for the actual
+ * receive-account size — 165 bytes for classic SPL, or the extension-aware size
+ * derived from the mint for Token-2022 — not a hard-coded estimate.
  *
- * Returns `undefined` when: not same-chain, the chain has no rent estimate, the
- * destination adapter isn't Sealevel, or the ATA already exists on chain.
+ * Returns `undefined` when: not same-chain, the destination adapter isn't
+ * Sealevel, or the ATA already exists on chain.
  */
 export async function getSameChainAtaRent({
   warpCore,
@@ -276,16 +333,19 @@ export async function getSameChainAtaRent({
 }): Promise<bigint | undefined> {
   if (originToken.chainName !== destination) return undefined;
 
-  const rentLamports = chainsRentEstimate[originToken.chainName];
-  if (isNullish(rentLamports)) return undefined;
-
   const adapter = destinationToken.getAdapter(warpCore.multiProvider);
   if (!(adapter instanceof SealevelTokenAdapter)) return undefined;
 
-  const recipientAta = await adapter.deriveAssociatedTokenAccount(new PublicKey(recipient));
   const connection = warpCore.multiProvider.getSolanaWeb3Provider(destination);
+  const recipientAta = await adapter.deriveAssociatedTokenAccount(new PublicKey(recipient));
   const ataInfo = await connection.getAccountInfo(recipientAta);
   if (ataInfo) return undefined;
 
-  return rentLamports;
+  const accountSize = (await adapter.isSpl2022())
+    ? getAccountLenForMint(
+        await getMint(connection, adapter.tokenMintPubKey, undefined, TOKEN_2022_PROGRAM_ID),
+      )
+    : ACCOUNT_SIZE;
+
+  return BigInt(await connection.getMinimumBalanceForRentExemption(accountSize));
 }

@@ -561,7 +561,7 @@ function TransferCheckout({
         cleanOverrideToken={cleanOverrideToken}
         routeOverrideToken={routeOverrideToken}
         getQuotedCallsParams={quotedCalls.getQuotedCallsParams}
-        svmQuotedTransfer={svmQuotedTransfer.quotedTransfer}
+        getQuotedTransfer={svmQuotedTransfer.getQuotedTransfer}
       />
     </>
   );
@@ -574,7 +574,7 @@ function ButtonSection({
   cleanOverrideToken,
   routeOverrideToken,
   getQuotedCallsParams,
-  svmQuotedTransfer,
+  getQuotedTransfer,
 }: {
   isReview: boolean;
   isValidating: boolean;
@@ -582,7 +582,7 @@ function ButtonSection({
   cleanOverrideToken: () => void;
   routeOverrideToken: Token | null;
   getQuotedCallsParams: () => Promise<QuotedCallsParams | null>;
-  svmQuotedTransfer: QuotedTransferProvider | null;
+  getQuotedTransfer: () => Promise<QuotedTransferProvider | null>;
 }) {
   const { values } = useFormikContext<TransferFormValues>();
   const multiProvider = useMultiProvider();
@@ -694,10 +694,12 @@ function ButtonSection({
     // Wait for any in-flight offchain quote to settle so a quick Send-click
     // during the first-load / refetch window doesn't fall through to the
     // plain transferRemote path. EVM and SVM offchain paths are mutually
-    // exclusive (only one of `quotedCallsParams` / `svmQuotedTransfer` is
-    // populated based on origin protocol).
-    const quotedCallsParams = await getQuotedCallsParams();
-    await triggerTransactions(values, routeOverrideToken, quotedCallsParams, svmQuotedTransfer);
+    // exclusive (only one is populated based on origin protocol).
+    const [quotedCallsParams, quotedTransfer] = await Promise.all([
+      getQuotedCallsParams(),
+      getQuotedTransfer(),
+    ]);
+    await triggerTransactions(values, routeOverrideToken, quotedCallsParams, quotedTransfer);
     setTransferLoading(false);
   };
 

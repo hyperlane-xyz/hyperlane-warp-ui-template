@@ -8,6 +8,8 @@ import { Transport, fallback, http } from 'viem';
 const RANK_OPTIONS = { interval: 10_000 } as const;
 
 export function rankedFallbackTransport(httpUrls: string[]): Transport {
+  // With a single endpoint there is nothing to rank; skip the probe loop entirely.
+  if (httpUrls.length === 1) return http(httpUrls[0]);
   return fallback(
     httpUrls.map((url) => http(url)),
     { rank: RANK_OPTIONS },

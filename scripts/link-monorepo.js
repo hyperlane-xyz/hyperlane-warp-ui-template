@@ -1,6 +1,7 @@
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const YAML = require('yaml');
 
 /** --- Configuration --- */
 const MONOREPO_NAME = 'hyperlane-monorepo';
@@ -172,36 +173,52 @@ if (packedPackages.length === 0) {
 }
 
 /**
- * 5. Update package.json with file: references
+ * 5. Update package.json and pnpm-workspace.yaml with file: references
+ *
+ * pnpm.overrides in package.json does NOT reliably override transitive deps of
+ * file: tarballs. The pnpm-workspace.yaml overrides section DOES (it's the one
+ * that lands in the lockfile). So we write to both.
  */
 console.log('------------------------------------------');
-console.log('🔧 Updating package.json with packed dependencies...\n');
+console.log('🔧 Updating package.json and pnpm-workspace.yaml with packed dependencies...\n');
 
 const packageJsonPath = path.join(REACT_APP_DIR, 'package.json');
 const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
 
-// Ensure pnpm.overrides exists
-if (!packageJson.pnpm) {
-  packageJson.pnpm = {};
-}
-if (!packageJson.pnpm.overrides) {
-  packageJson.pnpm.overrides = {};
+// Ensure pnpm.overrides exists (kept for IDE tooling / belt-and-suspenders)
+if (!packageJson.pnpm) packageJson.pnpm = {};
+if (!packageJson.pnpm.overrides) packageJson.pnpm.overrides = {};
+
+// Parse pnpm-workspace.yaml with a real YAML parser (preserves comments/formatting,
+// handles quote/newline variants) instead of a line-based regex upsert.
+const workspacePath = path.join(REACT_APP_DIR, 'pnpm-workspace.yaml');
+const workspaceContent = fs.existsSync(workspacePath) ? fs.readFileSync(workspacePath, 'utf8') : '';
+const workspaceDoc = YAML.parseDocument(workspaceContent);
+if (workspaceDoc.get('overrides') === undefined) workspaceDoc.set('overrides', {});
+if (!YAML.isMap(workspaceDoc.get('overrides'))) {
+  console.error('❌ pnpm-workspace.yaml "overrides" is not a map. Aborting.');
+  process.exit(1);
 }
 
 packedPackages.forEach(({ name, tarballPath }) => {
-  // Update dependencies
+  // Only rewrite an existing direct dependency — preserve original membership so
+  // packages that weren't direct deps don't permanently become one (see unlink script).
   if (packageJson.dependencies && packageJson.dependencies[name]) {
     packageJson.dependencies[name] = `file:${tarballPath}`;
-    console.log(`   ${name} -> file:${tarballPath}`);
   }
 
-  // Add to overrides to ensure sub-dependencies use packed version
+  // pnpm.overrides belt-and-suspenders
   packageJson.pnpm.overrides[name] = `file:${tarballPath}`;
+
+  // pnpm-workspace.yaml overrides — this is what actually forces transitive resolution
+  workspaceDoc.setIn(['overrides', name], `file:${tarballPath}`);
+
+  console.log(`   ${name} -> file:${tarballPath}`);
 });
 
-// Write updated package.json
 fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n');
-console.log('\n✅ Updated package.json\n');
+fs.writeFileSync(workspacePath, String(workspaceDoc));
+console.log('\n✅ Updated package.json and pnpm-workspace.yaml\n');
 
 /**
  * 6. Clean and reinstall

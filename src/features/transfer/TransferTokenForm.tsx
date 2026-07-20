@@ -868,10 +868,15 @@ function ReviewDetails({
   const transferUsd = tokenPrice && !isNaN(parsedAmount) ? parsedAmount * tokenPrice : 0;
   const isLoading = isApproveLoading || isQuoteLoading;
 
+  // Same-chain (e.g. SVM cross-collateral) swaps carry no interchain gas, so the
+  // SVM rent estimate must not be folded into the interchain quote here; any
+  // sender-paid ATA-creation rent is already included in `localQuote` upstream.
+  const isSameChain = !!originToken && originToken.chainName === destinationToken?.chainName;
+
   const fees = useMemo(() => {
     if (!feeQuotes) return null;
 
-    const interchainQuote = getInterchainQuote(originToken, feeQuotes.interchainQuote);
+    const interchainQuote = getInterchainQuote(originToken, feeQuotes.interchainQuote, isSameChain);
     const fees = {
       ...feeQuotes,
       interchainQuote: interchainQuote || feeQuotes.interchainQuote,
@@ -887,7 +892,7 @@ function ReviewDetails({
       ...fees,
       totalFees,
     };
-  }, [feeQuotes, originToken]);
+  }, [feeQuotes, originToken, isSameChain]);
 
   return (
     <>

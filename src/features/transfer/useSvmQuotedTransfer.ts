@@ -4,17 +4,20 @@ import {
   type QuotedTransferProvider,
   SealevelHypTokenAdapter,
   SealevelQuotedTransferProvider,
+  SealevelTokenAdapter,
   type Token,
   TokenAmount,
   type WarpCore,
 } from '@hyperlane-xyz/sdk';
-import { ProtocolType, toWei } from '@hyperlane-xyz/utils';
+import { ProtocolType, isNullish, toWei } from '@hyperlane-xyz/utils';
 import { useDebounce } from '@hyperlane-xyz/widgets';
 import { useAccounts } from '@hyperlane-xyz/widgets/walletIntegrations/accounts';
 import { getAccountAddressAndPubKey } from '@hyperlane-xyz/widgets/walletIntegrations/accountUtils';
+import { PublicKey } from '@solana/web3.js';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
+import { chainsRentEstimate } from '../../consts/chains';
 import { config } from '../../consts/config';
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
@@ -242,9 +245,60 @@ async function fetchSvmQuotedFees({
     destinationToken,
   });
 
+  // On a same-chain swap the recipient's destination-token ATA is created in the
+  // same transaction, and its rent-exempt deposit is paid by the sender — a cost
+  // Solana's `getFeeForMessage` (behind `localQuote`) never reports. Fold it into
+  // the local gas so it's part of the origin-chain cost the wallet will charge,
+  // rather than leaking a protocol-specific fee field. Cross-chain rent is
+  // instead approximated on the interchain quote by `getInterchainQuote`.
+  const rentLamports = await getSameChainAtaRent({
+    warpCore,
+    originToken,
+    destinationToken,
+    destination,
+    recipient,
+  });
+
   return {
     interchainQuote: igpQuote,
     tokenFeeQuote,
-    localQuote,
+    localQuote: rentLamports ? localQuote.plus(rentLamports) : localQuote,
   };
+}
+
+/**
+ * Native-token rent (lamports) the sender pays in-transaction to create the
+ * recipient's destination-token ATA, returned only for same-chain swaps where
+ * that account is missing.
+ *
+ * Returns `undefined` when: not same-chain, the chain has no rent estimate, the
+ * destination adapter isn't Sealevel, or the ATA already exists on chain.
+ */
+export async function getSameChainAtaRent({
+  warpCore,
+  originToken,
+  destinationToken,
+  destination,
+  recipient,
+}: {
+  warpCore: WarpCore;
+  originToken: Token;
+  destinationToken: IToken;
+  destination: string;
+  recipient: string;
+}): Promise<bigint | undefined> {
+  if (originToken.chainName !== destination) return undefined;
+
+  const rentLamports = chainsRentEstimate[originToken.chainName];
+  if (isNullish(rentLamports)) return undefined;
+
+  const adapter = destinationToken.getAdapter(warpCore.multiProvider);
+  if (!(adapter instanceof SealevelTokenAdapter)) return undefined;
+
+  const recipientAta = await adapter.deriveAssociatedTokenAccount(new PublicKey(recipient));
+  const connection = warpCore.multiProvider.getSolanaWeb3Provider(destination);
+  const ataInfo = await connection.getAccountInfo(recipientAta);
+  if (ataInfo) return undefined;
+
+  return rentLamports;
 }

@@ -697,12 +697,7 @@ function ButtonSection({
     // exclusive (only one of `quotedCallsParams` / `svmQuotedTransfer` is
     // populated based on origin protocol).
     const quotedCallsParams = await getQuotedCallsParams();
-    await triggerTransactions(
-      values,
-      routeOverrideToken,
-      quotedCallsParams,
-      svmQuotedTransfer,
-    );
+    await triggerTransactions(values, routeOverrideToken, quotedCallsParams, svmQuotedTransfer);
     setTransferLoading(false);
   };
 
@@ -819,8 +814,7 @@ function ReviewDetails({
     fees: evmOffchainFeeQuotes,
     quotedCallsParams,
   } = quotedCalls;
-  const { isLoading: isSvmOffchainLoading, fees: svmOffchainFeeQuotes } =
-    svmQuotedTransfer;
+  const { isLoading: isSvmOffchainLoading, fees: svmOffchainFeeQuotes } = svmQuotedTransfer;
   const offchainFeeQuotes = evmOffchainFeeQuotes ?? svmOffchainFeeQuotes;
   const isOffchainQuoteLoading = isEvmOffchainLoading || isSvmOffchainLoading;
 

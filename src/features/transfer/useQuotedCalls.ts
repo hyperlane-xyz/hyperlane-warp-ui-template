@@ -86,11 +86,7 @@ export function useQuotedCallsFeeQuotes(
   const isEvm = originToken?.protocol === ProtocolType.Ethereum;
   const isFormValid = !!(originToken && destination && debouncedAmount && recipient && sender);
   const shouldFetch =
-    enabled &&
-    isFormValid &&
-    isEvm &&
-    !!config.feeQuotingUrl &&
-    !!quotedCallsAddress;
+    enabled && isFormValid && isEvm && !!config.feeQuotingUrl && !!quotedCallsAddress;
 
   const { isLoading, isFetching, data, refetch } = useQuery({
     // eslint-disable-next-line @tanstack/query/exhaustive-deps -- queryFn also

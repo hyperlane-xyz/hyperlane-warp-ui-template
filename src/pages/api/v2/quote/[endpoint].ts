@@ -31,8 +31,7 @@ const ALLOWED_ENDPOINTS = new Set<QuoteV2Endpoint>(Object.values(QuoteV2Endpoint
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') return res.status(405).json({ message: 'Method not allowed' });
-  if (!apiKey || !baseUrl)
-    return res.status(503).json({ message: 'Fee quoting not configured' });
+  if (!apiKey || !baseUrl) return res.status(503).json({ message: 'Fee quoting not configured' });
 
   const endpoint = firstString(req.query.endpoint);
   if (!endpoint || !ALLOWED_ENDPOINTS.has(endpoint as QuoteV2Endpoint)) {

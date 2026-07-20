@@ -1,11 +1,10 @@
 import { Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { chainsRentEstimate } from '../../consts/chains';
 import { createMockToken } from '../../utils/test';
 import { TokensWithDestinationBalance, TokenWithFee } from '../tokens/types';
 import * as tokenUtils from '../tokens/utils';
-import { chainsRentEstimate } from '../../consts/chains';
-
 import {
   compareByBalanceDesc,
   filterAndSortTokensByBalance,

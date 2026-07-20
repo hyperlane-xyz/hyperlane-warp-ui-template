@@ -398,10 +398,7 @@ const txCategoryToStatuses: Record<WarpTxCategory, [TransferStatus, TransferStat
  * payer so we can correlate "wallet rejects tx" issues against the actual
  * shape the SDK produced.
  */
-function summarizeTx(
-  tx: { category: string; type: string; transaction: unknown },
-  index: number,
-) {
+function summarizeTx(tx: { category: string; type: string; transaction: unknown }, index: number) {
   const base = { index, category: tx.category, type: tx.type };
   const t = tx.transaction as Record<string, unknown> | undefined;
   if (!t || typeof t !== 'object') return base;
@@ -415,19 +412,15 @@ function summarizeTx(
       kind: 'legacy',
       ixCount: ixs.length,
       programIds: ixs.map((ix) => ix.programId?.toBase58?.()),
-      feePayer: (
-        t as { feePayer?: { toBase58: () => string } }
-      ).feePayer?.toBase58?.(),
+      feePayer: (t as { feePayer?: { toBase58: () => string } }).feePayer?.toBase58?.(),
     };
   }
 
   // VersionedTransaction: has `message: MessageV0`
   const message = (t as { message?: Record<string, unknown> }).message;
   if (message && typeof message === 'object') {
-    const compiledIxs = (message as { compiledInstructions?: unknown[] })
-      .compiledInstructions;
-    const altLookups = (message as { addressTableLookups?: unknown[] })
-      .addressTableLookups;
+    const compiledIxs = (message as { compiledInstructions?: unknown[] }).compiledInstructions;
+    const altLookups = (message as { addressTableLookups?: unknown[] }).addressTableLookups;
     return {
       ...base,
       kind: 'v0',

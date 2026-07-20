@@ -3,7 +3,6 @@ import { describe, expect, test, vi } from 'vitest';
 
 import { chainsRentEstimate } from '../../consts/chains';
 import { createMockToken } from '../../utils/test';
-
 import { getSameChainAtaRent } from './useSvmQuotedTransfer';
 
 // Valid base58 pubkey (system program) so `new PublicKey(recipient)` succeeds.

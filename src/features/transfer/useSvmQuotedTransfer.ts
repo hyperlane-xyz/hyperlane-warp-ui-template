@@ -22,7 +22,6 @@ import { config } from '../../consts/config';
 import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
 import { useWarpCore } from '../tokens/hooks';
-
 import { TransferFormValues } from './types';
 
 /**
@@ -83,11 +82,7 @@ export function useSvmQuotedTransfer(
   const destinationName = destinationToken?.chainName;
   const originName = originToken?.chainName;
   const shouldDiscover =
-    enabled &&
-    isSealevelOrigin &&
-    !!destinationName &&
-    !!originName &&
-    !!config.feeQuotingUrl;
+    enabled && isSealevelOrigin && !!destinationName && !!originName && !!config.feeQuotingUrl;
 
   // 1. Discover fee_config by reading the warp token PDA. Cached per route —
   //    the fee program / fee-account PDA are static for the life of the route.
@@ -105,9 +100,7 @@ export function useSvmQuotedTransfer(
       if (!originToken || !destinationName) return null;
       const adapter = originToken.getHypAdapter(multiProvider, destinationName);
       if (!(adapter instanceof SealevelHypTokenAdapter)) {
-        logger.debug(
-          'useSvmQuotedTransfer: adapter is not Sealevel; skipping fee-config probe',
-        );
+        logger.debug('useSvmQuotedTransfer: adapter is not Sealevel; skipping fee-config probe');
         return null;
       }
       const tokenData = await adapter.getTokenAccountData();
@@ -132,11 +125,7 @@ export function useSvmQuotedTransfer(
 
   // 3. Resolve sender + recipient for the display-time fee fetch.
   const { accounts } = useAccounts(multiProvider);
-  const { address: sender } = getAccountAddressAndPubKey(
-    multiProvider,
-    originName,
-    accounts,
-  );
+  const { address: sender } = getAccountAddressAndPubKey(multiProvider, originName, accounts);
   const { address: connectedDestAddress } = getAccountAddressAndPubKey(
     multiProvider,
     destinationName,
@@ -190,9 +179,7 @@ export function useSvmQuotedTransfer(
   return {
     quotedTransfer,
     fees: fees ?? null,
-    isLoading:
-      (shouldDiscover && isFeeConfigLoading) ||
-      (shouldFetchFees && isFeesLoading),
+    isLoading: (shouldDiscover && isFeeConfigLoading) || (shouldFetchFees && isFeesLoading),
   };
 }
 

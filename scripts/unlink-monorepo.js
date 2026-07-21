@@ -1,6 +1,7 @@
 const { execSync, spawnSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const YAML = require('yaml');
 
 /**
  * Unlink monorepo packages and restore published versions
@@ -8,7 +9,15 @@ const path = require('path');
 
 const REACT_APP_DIR = process.cwd();
 const packageJsonPath = path.join(REACT_APP_DIR, 'package.json');
+const workspacePath = path.join(REACT_APP_DIR, 'pnpm-workspace.yaml');
 const LOCAL_TARBALLS_DIR = path.join(REACT_APP_DIR, '.monorepo-tarballs');
+
+function isPackedTarballRef(value) {
+  return (
+    typeof value === 'string' &&
+    (value.startsWith('file:../hyperlane-monorepo/') || value.startsWith('file:.monorepo-tarballs/'))
+  );
+}
 
 console.log('🔗 Unlinking monorepo packages...\n');
 
@@ -20,9 +29,7 @@ try {
   // Find dependencies pointing to packed tarballs (old or new location)
   if (packageJson.dependencies) {
     Object.entries(packageJson.dependencies).forEach(([name, value]) => {
-      if (typeof value === 'string' &&
-          (value.startsWith('file:../hyperlane-monorepo/') ||
-           value.startsWith('file:.monorepo-tarballs/'))) {
+      if (isPackedTarballRef(value)) {
         packOverrides.push(name);
       }
     });
@@ -41,10 +48,7 @@ try {
   if (packageJson.pnpm && packageJson.pnpm.overrides) {
     let removedCount = 0;
     Object.keys(packageJson.pnpm.overrides).forEach((name) => {
-      const value = packageJson.pnpm.overrides[name];
-      if (typeof value === 'string' &&
-          (value.startsWith('file:../hyperlane-monorepo/') ||
-           value.startsWith('file:.monorepo-tarballs/'))) {
+      if (isPackedTarballRef(packageJson.pnpm.overrides[name])) {
         delete packageJson.pnpm.overrides[name];
         removedCount++;
       }
@@ -52,6 +56,29 @@ try {
 
     if (removedCount > 0) {
       console.log(`\n🔧 Removed ${removedCount} override(s) from package.json`);
+    }
+  }
+
+  // Remove matching overrides from pnpm-workspace.yaml. Scanned independently of
+  // packOverrides above — link-monorepo.js may only add an override-only entry here
+  // (no package.json dependency) for packages that weren't originally direct deps.
+  // Mutated in memory only here; written alongside package.json below, after the
+  // restoration failure check, so a failed restore never leaves the workspace file
+  // stripped while package.json still points at the (soon-to-be-deleted) tarballs.
+  let workspaceDoc = null;
+  let removedWorkspaceCount = 0;
+  if (fs.existsSync(workspacePath)) {
+    workspaceDoc = YAML.parseDocument(fs.readFileSync(workspacePath, 'utf8'));
+    const overridesNode = workspaceDoc.get('overrides');
+    if (YAML.isMap(overridesNode)) {
+      overridesNode.items
+        .map((item) => item.key.value)
+        .forEach((name) => {
+          if (isPackedTarballRef(workspaceDoc.getIn(['overrides', name]))) {
+            workspaceDoc.deleteIn(['overrides', name]);
+            removedWorkspaceCount++;
+          }
+        });
     }
   }
 
@@ -101,6 +128,11 @@ try {
 
   // Write updated package.json
   fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n');
+
+  if (removedWorkspaceCount > 0) {
+    fs.writeFileSync(workspacePath, String(workspaceDoc));
+    console.log(`🔧 Removed ${removedWorkspaceCount} override(s) from pnpm-workspace.yaml`);
+  }
 
   console.log('\n------------------------------------------');
   console.log('🧹 Cleaning node_modules, lockfile, and tarballs...\n');

@@ -1,7 +1,7 @@
 import { getTokenConnectionId } from '@hyperlane-xyz/sdk/token/TokenConnection';
 import { TokenStandard } from '@hyperlane-xyz/sdk/token/TokenStandard';
-import { WarpCore } from '@hyperlane-xyz/sdk/warp/WarpCore';
 import type { WarpCoreConfig } from '@hyperlane-xyz/sdk/warp/types';
+import { WarpCore } from '@hyperlane-xyz/sdk/warp/WarpCore';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 import { describe, expect, test } from 'vitest';
 

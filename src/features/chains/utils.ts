@@ -3,7 +3,7 @@ import { ChainMetadata, ChainStatus } from '@hyperlane-xyz/sdk/metadata/chainMet
 import { ChainMap } from '@hyperlane-xyz/sdk/types';
 import { WarpCore } from '@hyperlane-xyz/sdk/warp/WarpCore';
 import { toTitleCase, trimToLength } from '@hyperlane-xyz/utils';
-import { ChainSearchMenuProps } from '@hyperlane-xyz/widgets';
+import type { ChainSearchMenuProps } from '@hyperlane-xyz/widgets';
 
 import { config } from '../../consts/config';
 

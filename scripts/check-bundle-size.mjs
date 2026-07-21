@@ -1,6 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { gzipSync } from 'node:zlib';
 
+// This is an undocumented Next.js build artifact; fail loudly if its shape or
+// location changes so a framework upgrade cannot silently disable the guard.
 const STATS_PATH = '.next/diagnostics/route-bundle-stats.json';
 const MIB = 1024 * 1024;
 const ROUTE_BUDGETS = {
@@ -28,10 +30,18 @@ for (const [route, budget] of Object.entries(ROUTE_BUDGETS)) {
     continue;
   }
 
-  const gzipBytes = routeStats.firstLoadChunkPaths.reduce(
-    (total, chunkPath) => total + gzipSync(readFileSync(chunkPath)).length,
-    0,
-  );
+  let gzipBytes = 0;
+  try {
+    gzipBytes = routeStats.firstLoadChunkPaths.reduce(
+      (total, chunkPath) => total + gzipSync(readFileSync(chunkPath)).length,
+      0,
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`Unable to calculate gzip size for ${route}: ${message}`);
+    overBudget = true;
+    continue;
+  }
   const rawBytes = routeStats.firstLoadUncompressedJsBytes;
   const status = rawBytes <= budget ? 'PASS' : 'FAIL';
   console.log(

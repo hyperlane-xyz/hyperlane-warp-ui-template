@@ -9,6 +9,8 @@ const isDev = process.env.NODE_ENV !== 'production';
 // Preserve ergonomic widget barrel imports while compiling them to narrow
 // public entrypoints. Browser SDK value imports use subpaths directly because
 // its public exports are not yet complete enough for a total name-to-path transform.
+// Every widget value import must be mapped here. TypeScript does not validate
+// these rewrite targets, so the production build is the validation boundary.
 const HYPERLANE_WIDGET_IMPORTS = {
   ArrowIcon: '@hyperlane-xyz/widgets/icons/Arrow',
   Button: '@hyperlane-xyz/widgets/components/Button',

@@ -8,7 +8,7 @@ import { useDebounce } from '@hyperlane-xyz/widgets';
 import { useAccounts } from '@hyperlane-xyz/widgets/walletIntegrations/accounts';
 import { getAccountAddressAndPubKey } from '@hyperlane-xyz/widgets/walletIntegrations/accountUtils';
 import { useQuery } from '@tanstack/react-query';
-import { type Address, type Hex, toHex } from 'viem';
+import { type Address, type Hex, encodePacked, keccak256, toHex } from 'viem';
 
 import { config } from '../../consts/config';
 import { logger } from '../../utils/logger';
@@ -22,6 +22,9 @@ const FEE_QUOTE_REFRESH_INTERVAL = 30_000;
 // backgrounded past the refetchInterval can't submit on a stale quote between
 // returning to focus and the focus-refetch completing.
 const MAX_QUOTE_AGE_MS = 4 * 60_000;
+// TokenPullMode has no public SDK subpath yet. Keep the runtime root barrel out
+// of the browser while retaining the SDK field type.
+const TRANSFER_FROM_TOKEN_PULL_MODE = 'transferFrom' as QuotedCallsParams['tokenPullMode'];
 
 interface QuotedCallsFetchResult {
   interchainQuote: TokenAmount;
@@ -171,6 +174,11 @@ function generateClientSalt(): Hex {
   return toHex(bytes);
 }
 
+/** Matches QuotedCalls._scopeSalt: keccak256(abi.encodePacked(caller, salt)). */
+export function computeScopedSalt(caller: Address, clientSalt: Hex): Hex {
+  return keccak256(encodePacked(['address', 'bytes32'], [caller, clientSalt]));
+}
+
 async function fetchQuotedCallsFees(
   warpCore: WarpCore,
   quotedCallsAddress: Address | undefined,
@@ -191,11 +199,6 @@ async function fetchQuotedCallsFees(
     !quotedCallsAddress
   )
     return null;
-
-  // These SDK exports do not yet have public package subpaths. Load the root
-  // barrel only when quoted calls are used instead of pulling its artifacts
-  // into every route's initial browser bundle.
-  const { computeScopedSalt, TokenPullMode } = await import('@hyperlane-xyz/sdk');
 
   // Predicate routes take the wrapper path at submit time (see useTokenTransfer
   // where quotedCalls is dropped when an attestation is present). Skip the
@@ -242,7 +245,7 @@ async function fetchQuotedCallsFees(
     address: quotedCallsAddress,
     quotes: quotes as SubmitQuoteCommand[],
     clientSalt,
-    tokenPullMode: TokenPullMode.TransferFrom,
+    tokenPullMode: TRANSFER_FROM_TOKEN_PULL_MODE,
   };
 
   // Get fee estimates via quoteExecute eth_call

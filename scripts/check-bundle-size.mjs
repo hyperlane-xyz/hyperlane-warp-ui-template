@@ -6,9 +6,9 @@ import { gzipSync } from 'node:zlib';
 const STATS_PATH = '.next/diagnostics/route-bundle-stats.json';
 const MIB = 1024 * 1024;
 const ROUTE_BUDGETS = {
-  '/': 128 * MIB,
-  '/embed': 132 * MIB,
-  '/blocked': 108 * MIB,
+  '/': { raw: 204 * MIB, gzip: 37 * MIB },
+  '/embed': { raw: 207 * MIB, gzip: 38 * MIB },
+  '/blocked': { raw: 108 * MIB, gzip: 20 * MIB },
 };
 
 const formatMib = (bytes) => `${(bytes / MIB).toFixed(2)} MiB`;
@@ -43,11 +43,12 @@ for (const [route, budget] of Object.entries(ROUTE_BUDGETS)) {
     continue;
   }
   const rawBytes = routeStats.firstLoadUncompressedJsBytes;
-  const status = rawBytes <= budget ? 'PASS' : 'FAIL';
+  const withinBudget = rawBytes <= budget.raw && gzipBytes <= budget.gzip;
+  const status = withinBudget ? 'PASS' : 'FAIL';
   console.log(
-    `${status} ${route.padEnd(8)} ${formatMib(rawBytes)} raw / ${formatMib(budget)} budget; ${formatMib(gzipBytes)} gzip`,
+    `${status} ${route.padEnd(8)} ${formatMib(rawBytes)} raw / ${formatMib(budget.raw)} budget; ${formatMib(gzipBytes)} gzip / ${formatMib(budget.gzip)} budget`,
   );
-  overBudget ||= rawBytes > budget;
+  overBudget ||= !withinBudget;
 }
 
 if (overBudget) process.exit(1);

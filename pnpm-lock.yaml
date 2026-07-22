@@ -24,6 +24,8 @@ overrides:
   form-data: 4.0.4
   '@ledgerhq/errors': 6.31.0
 
+packageExtensionsChecksum: sha256-jgKSjbPVgwl/g0jYfOkz+jgx4mt+xL/VaUzAF84Cy0Y=
+
 patchedDependencies:
   '@provablehq/sdk@0.11.3': 3b2a635396ffc676f020ff1d35ebeca1e38f3b02007c8f6379a8737f8c76cff8
   '@provablehq/wasm@0.11.3': efdeaa61672f7714beba3be572ffeb7eff209c88f492cb3653642fd053aafd18
@@ -10597,11 +10599,15 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@hyperlane-xyz/core@11.3.1(@ethersproject/abi@5.8.0)(@ethersproject/providers@5.8.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(@types/sinon-chai@4.0.0)':
+  '@hyperlane-xyz/core@11.3.1(@ethersproject/abi@5.8.0)(@ethersproject/providers@5.8.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(@types/sinon-chai@4.0.0)(bufferutil@4.1.0)(utf-8-validate@6.0.6)':
     dependencies:
       '@ethersproject/abi': 5.8.0
       '@ethersproject/providers': 5.8.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       '@types/sinon-chai': 4.0.0
+      ethers: 5.8.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
 
   '@hyperlane-xyz/cosmos-sdk@38.0.0(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@6.0.6)':
     dependencies:
@@ -10710,7 +10716,7 @@ snapshots:
       '@cosmjs/tendermint-rpc': 0.32.4(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       '@ethersproject/abi': 5.8.0
       '@hyperlane-xyz/aleo-sdk': 38.0.0(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@6.0.6)
-      '@hyperlane-xyz/core': 11.3.1(@ethersproject/abi@5.8.0)(@ethersproject/providers@5.8.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(@types/sinon-chai@4.0.0)
+      '@hyperlane-xyz/core': 11.3.1(@ethersproject/abi@5.8.0)(@ethersproject/providers@5.8.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(@types/sinon-chai@4.0.0)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       '@hyperlane-xyz/cosmos-sdk': 38.0.0(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@6.0.6)
       '@hyperlane-xyz/deploy-sdk': 7.2.0(@types/sinon-chai@4.0.0)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@6.0.2)(utf-8-validate@6.0.6)
       '@hyperlane-xyz/provider-sdk': 7.2.0(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@6.0.6)
@@ -10817,7 +10823,7 @@ snapshots:
     dependencies:
       '@ethersproject/abi': 5.8.0
       '@ethersproject/providers': 5.8.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
-      '@hyperlane-xyz/core': 11.3.1(@ethersproject/abi@5.8.0)(@ethersproject/providers@5.8.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(@types/sinon-chai@4.0.0)
+      '@hyperlane-xyz/core': 11.3.1(@ethersproject/abi@5.8.0)(@ethersproject/providers@5.8.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(@types/sinon-chai@4.0.0)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       '@hyperlane-xyz/provider-sdk': 7.2.0(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@6.0.6)
       '@hyperlane-xyz/registry': 24.3.0
       '@hyperlane-xyz/utils': 38.0.0(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@6.0.6)

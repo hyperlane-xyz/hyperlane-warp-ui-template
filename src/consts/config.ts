@@ -30,6 +30,7 @@ const permit2ExpirationSeconds = Number(
   process.env.NEXT_PUBLIC_PERMIT2_EXPIRATION_SECONDS || 31_536_000,
 );
 const defaultSlippageBps = Number(process.env.NEXT_PUBLIC_DEFAULT_SLIPPAGE_BPS || 100);
+const aleoNetwork = process.env.NEXT_PUBLIC_ALEO_NETWORK === 'testnet' ? 'testnet' : 'mainnet';
 
 interface Config {
   addressBlacklist: string[]; // A list of addresses that are blacklisted and cannot be used in the app
@@ -56,10 +57,12 @@ interface Config {
   defaultSlippageBps: number; // Default transfer slippage in basis points
   defaultTransferOriginToken: string | undefined; // Initial origin token for the transfer form (format: chainName-address)
   defaultTransferDestinationToken: string | undefined; // Initial destination token for the transfer form (format: chainName-address)
+  aleoNetwork: 'mainnet' | 'testnet'; // Which Aleo network the Shield wallet connects to
 }
 
 export const config: Config = Object.freeze({
   addressBlacklist: ADDRESS_BLACKLIST.map((address) => address.toLowerCase()),
+  aleoNetwork,
   chainWalletWhitelists,
   enableExplorerLink: true,
   explorerApiUrl,

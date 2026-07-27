@@ -22,6 +22,9 @@ overrides:
   pbkdf2: 3.1.3
   form-data: 4.0.4
   '@ledgerhq/errors': 6.31.0
+  # Pin qr: 0.6.0 added a `border <= 0` throw that crashes the RainbowKit
+  # WalletConnect QR modal (cuer calls encodeQR with border:0).
+  qr: 0.5.5
 patchedDependencies:
   starknetkit@2.6.1: patches/starknetkit@2.6.1.patch
   '@provablehq/sdk@0.11.3': patches/@provablehq__sdk@0.11.3.patch

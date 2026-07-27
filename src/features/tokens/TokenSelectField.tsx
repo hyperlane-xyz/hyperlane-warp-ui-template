@@ -1,154 +1,129 @@
-import { Token } from '@hyperlane-xyz/sdk';
-import { useField, useFormikContext } from 'formik';
-import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useFormikContext } from 'formik';
+import { useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
 
 import { ChevronLargeIcon } from '../../components/icons/ChevronLargeIcon';
 import { TokenChainIcon } from '../../components/icons/TokenChainIcon';
 import { WARP_QUERY_PARAMS } from '../../consts/args';
+import { logger } from '../../utils/logger';
 import { updateQueryParams } from '../../utils/queryParams';
-import { trackTokenSelectionEvent, trackUnsupportedRouteEvent } from '../analytics/utils';
+import { trackTokenSelectionEvent } from '../analytics/utils';
+import { useChains } from '../api/hooks';
+import { routerClient } from '../api/RouterClient';
 import { ChainEditModal } from '../chains/ChainEditModal';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
-import { TransferFormValues } from '../transfer/types';
-import { shouldClearAddress } from '../transfer/utils';
-import { getTokenByKeyFromMap, useCollateralGroups, useTokenByKeyMap, useTokens } from './hooks';
-import { TokenSelectionMode } from './types';
+import { useStore } from '../store';
+import type { TransferFormValues } from '../transfer/engine/types';
+import {
+  AVAILABLE_ROUTES_STALE_TIME,
+  getAvailableRoutesQuery,
+  getAvailableRoutesQueryKey,
+  getTokenByKeyFromMap,
+  useTokenByKeyMap,
+} from './hooks';
+import type { TokenSelectionMode, UiToken } from './types';
+import { tokenDiscoveryToUi } from './types';
 import { UnifiedTokenChainModal } from './UnifiedTokenChainModal';
-import { checkTokenHasRoute, getTokenKey } from './utils';
+import { getRoutePrefillToken, tokenKey } from './utils';
 
 type Props = {
-  name: string;
-  label?: string;
   selectionMode: TokenSelectionMode;
   disabled?: boolean;
-  setIsNft?: (value: boolean) => void;
-  showLabel?: boolean;
 };
 
-export function TokenSelectField({
-  name,
-  label,
-  selectionMode,
-  disabled,
-  setIsNft,
-  showLabel = true,
-}: Props) {
+// Reads source/destination token from form state via two paired fields
+// (chainId + tokenAddress) and writes both atomically when the user
+// picks one in the modal.
+export function TokenSelectField({ selectionMode, disabled }: Props) {
   const { values, setFieldValue } = useFormikContext<TransferFormValues>();
-  const [{ value: tokenKey }, , { setValue: setTokenKey }] = useField<string | undefined>(name);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingChain, setEditingChain] = useState<string | null>(null);
-  const collateralGroups = useCollateralGroups();
-  const tokens = useTokens();
+  const queryClient = useQueryClient();
+  const tokenMap = useTokenByKeyMap();
+  const multiProvider = useMultiProvider();
+  const { data: chainsResp } = useChains();
+  const syncTokens = useStore((s) => s.syncTokens);
+  const latestOriginSelectionRef = useRef<string | undefined>(undefined);
+  const latestCounterpartKeyRef = useRef<string | undefined>(undefined);
+
+  const isOrigin = selectionMode === 'origin';
+  const chainField = isOrigin ? 'srcChain' : 'dstChain';
+  const tokenField = isOrigin ? 'srcToken' : 'dstToken';
+  const counterpartChainField = isOrigin ? 'dstChain' : 'srcChain';
+  const counterpartTokenField = isOrigin ? 'dstToken' : 'srcToken';
+
+  const selectedKey =
+    values[chainField] != null && values[tokenField]
+      ? tokenKey(values[chainField], values[tokenField])
+      : undefined;
+  const counterpartKey =
+    values[counterpartChainField] != null && values[counterpartTokenField]
+      ? tokenKey(values[counterpartChainField], values[counterpartTokenField])
+      : undefined;
+
+  const selectedToken = getTokenByKeyFromMap(tokenMap, selectedKey);
+  const counterpartToken = getTokenByKeyFromMap(tokenMap, counterpartKey);
+  useEffect(() => {
+    latestCounterpartKeyRef.current = counterpartKey;
+  }, [counterpartKey]);
+  const chainIdToName = useMemo(() => {
+    const map = new Map<number, string>();
+    for (const c of chainsResp?.chains ?? []) map.set(c.id, c.chainName);
+    return map;
+  }, [chainsResp]);
+
+  const handleSelectToken = (token: UiToken) => {
+    setFieldValue(chainField, token.chainId);
+    setFieldValue(tokenField, token.address);
+    trackTokenSelectionEvent(
+      selectionMode,
+      isOrigin ? token : counterpartToken,
+      isOrigin ? counterpartToken : token,
+    );
+    if (isOrigin) {
+      // Reset amount when origin changes (warp UI does the same).
+      setFieldValue('amount', '');
+      latestOriginSelectionRef.current = tokenKey(token.chainId, token.address);
+      void prefillBestDestinationToken({
+        originToken: token,
+        currentDestinationToken: counterpartToken,
+        chainIdToName,
+        queryClient,
+        syncTokens,
+        latestOriginSelectionRef,
+        latestCounterpartKeyRef,
+        counterpartKeyAtRequestStart: counterpartKey,
+        setFieldValue,
+      });
+    }
+    // Persist to URL so deep-linking matches the picked tokens.
+    // Transfer-side contract is chainName-address (see useFormInitialValues).
+    updateQueryParams({
+      [isOrigin ? WARP_QUERY_PARAMS.ORIGIN : WARP_QUERY_PARAMS.DESTINATION]: token.chainName,
+      [isOrigin ? WARP_QUERY_PARAMS.ORIGIN_TOKEN : WARP_QUERY_PARAMS.DESTINATION_TOKEN]:
+        token.address,
+    });
+  };
+
+  const open = () => {
+    if (!disabled) setIsModalOpen(true);
+  };
 
   const handleEditBack = () => {
     setEditingChain(null);
     setIsModalOpen(true);
   };
 
-  const multiProvider = useMultiProvider();
-  const tokenMap = useTokenByKeyMap();
-
-  // Get the current token
-  const selectedToken = getTokenByKeyFromMap(tokenMap, tokenKey);
-
-  // Get the counterpart token (destination when selecting origin, origin when selecting destination)
-  const counterpartToken =
-    selectionMode === 'origin'
-      ? getTokenByKeyFromMap(tokenMap, values.destinationTokenKey)
-      : getTokenByKeyFromMap(tokenMap, values.originTokenKey);
-
-  const handleSelectToken = (newToken: Token) => {
-    const newTokenKey = getTokenKey(newToken);
-    setTokenKey(newTokenKey);
-
-    // Track analytics - derive origin and destination from current tokens
-    const originToken =
-      selectionMode === 'origin' ? newToken : getTokenByKeyFromMap(tokenMap, values.originTokenKey);
-    const destToken =
-      selectionMode === 'destination'
-        ? newToken
-        : getTokenByKeyFromMap(tokenMap, values.destinationTokenKey);
-
-    trackTokenSelectionEvent(selectionMode, originToken, destToken, multiProvider);
-
-    // Update URL query params based on selection mode
-    if (selectionMode === 'origin') {
-      setFieldValue('amount', '');
-
-      // Auto-select destination if current one has no route from new origin
-      const hasValidRoute = destToken && checkTokenHasRoute(newToken, destToken, collateralGroups);
-      const queryParams: Record<string, string> = {
-        [WARP_QUERY_PARAMS.ORIGIN]: newToken.chainName,
-        [WARP_QUERY_PARAMS.ORIGIN_TOKEN]: newToken.symbol,
-      };
-
-      if (!hasValidRoute) {
-        const firstDest = tokens.find(
-          (t) =>
-            t.chainName !== newToken.chainName && checkTokenHasRoute(newToken, t, collateralGroups),
-        );
-        if (firstDest) {
-          setFieldValue('destinationTokenKey', getTokenKey(firstDest));
-          queryParams[WARP_QUERY_PARAMS.DESTINATION] = firstDest.chainName;
-          queryParams[WARP_QUERY_PARAMS.DESTINATION_TOKEN] = firstDest.symbol;
-          // Clear recipient if new destination protocol doesn't match
-          if (shouldClearAddress(multiProvider, values.recipient, firstDest.chainName)) {
-            setFieldValue('recipient', '');
-          }
-        }
-      }
-
-      updateQueryParams(queryParams);
-    } else {
-      // When destination changes, validate and clear custom recipient if protocol changed
-      const shouldClearRecipient = shouldClearAddress(
-        multiProvider,
-        values.recipient,
-        newToken.chainName,
-      );
-      if (shouldClearRecipient) setFieldValue('recipient', '');
-
-      // fire an event for unsupported route
-      // this will only happen for destination selection
-      // the origin selection will always pick a routable token pair by default
-      if (originToken) {
-        const tokenHasRoute = checkTokenHasRoute(originToken, newToken, collateralGroups);
-        if (!tokenHasRoute) trackUnsupportedRouteEvent(originToken, newToken, multiProvider);
-      }
-
-      updateQueryParams({
-        [WARP_QUERY_PARAMS.DESTINATION]: newToken.chainName,
-        [WARP_QUERY_PARAMS.DESTINATION_TOKEN]: newToken.symbol,
-      });
-    }
-
-    // Update NFT state if callback provided
-    if (setIsNft) {
-      setIsNft(newToken.isNft());
-    }
-  };
-
-  const openTokenSelectModal = () => {
-    if (!disabled) setIsModalOpen(true);
-  };
-
   return (
     <>
-      <div className="flex flex-col">
-        {showLabel && label && (
-          <span className="mb-1 pl-0.5 text-sm text-gray-600 dark:text-foreground-secondary">
-            {label}
-          </span>
-        )}
-        <TokenButton
-          token={selectedToken}
-          disabled={disabled}
-          onClick={openTokenSelectModal}
-          multiProvider={multiProvider}
-          testId={`token-select-${selectionMode}`}
-        />
-      </div>
+      <TokenButton
+        token={selectedToken}
+        disabled={disabled}
+        onClick={open}
+        multiProvider={multiProvider}
+        testId={`token-select-${selectionMode}`}
+      />
 
       <UnifiedTokenChainModal
         isOpen={isModalOpen}
@@ -171,6 +146,62 @@ export function TokenSelectField({
   );
 }
 
+async function prefillBestDestinationToken({
+  originToken,
+  currentDestinationToken,
+  chainIdToName,
+  queryClient,
+  syncTokens,
+  latestOriginSelectionRef,
+  latestCounterpartKeyRef,
+  counterpartKeyAtRequestStart,
+  setFieldValue,
+}: {
+  originToken: UiToken;
+  currentDestinationToken?: UiToken;
+  chainIdToName: Map<number, string>;
+  queryClient: ReturnType<typeof useQueryClient>;
+  syncTokens: (tokens: UiToken[]) => void;
+  latestOriginSelectionRef: MutableRefObject<string | undefined>;
+  latestCounterpartKeyRef: MutableRefObject<string | undefined>;
+  counterpartKeyAtRequestStart?: string;
+  setFieldValue: (field: string, value: unknown, shouldValidate?: boolean) => void;
+}) {
+  const query = getAvailableRoutesQuery('destination', originToken);
+  if (!query) return;
+
+  try {
+    const result = await queryClient.fetchQuery({
+      queryKey: getAvailableRoutesQueryKey('destination', query),
+      queryFn: () => routerClient.availableRoutes(query),
+      staleTime: AVAILABLE_ROUTES_STALE_TIME,
+    });
+    if (latestOriginSelectionRef.current !== tokenKey(originToken.chainId, originToken.address)) {
+      return;
+    }
+    if (latestCounterpartKeyRef.current !== counterpartKeyAtRequestStart) return;
+
+    const routeTokens = result.tokens.flatMap((token) => {
+      if (token.decimals == null) return [];
+      const chainName = chainIdToName.get(token.chainId);
+      return chainName ? [tokenDiscoveryToUi(token, chainName)] : [];
+    });
+    if (routeTokens.length) syncTokens(routeTokens);
+
+    const prefillToken = getRoutePrefillToken(routeTokens, currentDestinationToken);
+    if (!prefillToken) return;
+
+    setFieldValue('dstChain', prefillToken.chainId);
+    setFieldValue('dstToken', prefillToken.address);
+    updateQueryParams({
+      [WARP_QUERY_PARAMS.DESTINATION]: prefillToken.chainName,
+      [WARP_QUERY_PARAMS.DESTINATION_TOKEN]: prefillToken.address,
+    });
+  } catch (err) {
+    logger.warn('Destination prefill failed', err);
+  }
+}
+
 function TokenButton({
   token,
   disabled,
@@ -178,7 +209,7 @@ function TokenButton({
   multiProvider,
   testId,
 }: {
-  token?: Token;
+  token?: UiToken;
   disabled?: boolean;
   onClick: () => void;
   multiProvider: ReturnType<typeof useMultiProvider>;

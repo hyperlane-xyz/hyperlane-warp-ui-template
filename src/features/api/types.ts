@@ -2,16 +2,17 @@
 // extension since the UI doesn't generate spec docs.
 import { z } from 'zod';
 
-export const Address = z.string().regex(/^0x[0-9a-fA-F]{40}$/);
+export const HexAddress = z.string().regex(/^0x[0-9a-fA-F]{40}$/);
+export const Address = z.string().min(1).max(100);
 // Permissive token-address schema mirroring the engine's TokenAddress —
 // length-bounded string so non-EVM addresses (Solana base58 mints,
-// Cosmos bech32) validate. The strict EVM `Address` is still used for
-// request-side fields like sender/recipient.
+// Cosmos bech32) validate. The strict EVM `HexAddress` is still used for
+// EVM-only fields like Permit2 and approval spenders.
 export const TokenAddress = z.string().min(1).max(100);
 export const BigIntString = z.string().regex(/^\d+$/);
 export const Hex = z.string().regex(/^0x[0-9a-fA-F]*$/);
-// bytes20 (EVM) or bytes32 (padded EVM / non-EVM pubkey).
-export const Recipient = z.string().regex(/^0x([0-9a-fA-F]{40}|[0-9a-fA-F]{64})$/);
+// bytes20/bytes32 hex or a native non-EVM address. Engine validates per protocol.
+export const Recipient = z.string().min(1).max(100);
 
 export const HealthResponseSchema = z.object({ ok: z.boolean() });
 export type HealthResponse = z.infer<typeof HealthResponseSchema>;
@@ -55,7 +56,7 @@ export const ChainDiscoverySchema = z.object({
   // Optional until production engine redeploys with the field; the swap
   // form gates approvals on its presence so an undefined value just
   // surfaces as "Loading Permit2…" instead of crashing the chains list.
-  permit2: Address.optional(),
+  permit2: HexAddress.optional(),
   dex: z.string().nullable(),
   canSwap: z.boolean(),
   canExecute: z.boolean(),
@@ -77,13 +78,16 @@ export const TokenDiscoverySchema = z.object({
   address: TokenAddress,
   symbol: z.string(),
   name: z.string().optional(),
+  standard: z.string().optional(),
   decimals: z.number().nullable(),
   isNative: z.boolean(),
   wrappedAddress: TokenAddress.optional(),
   isBridgeToken: z.boolean(),
   isPoolToken: z.boolean(),
+  isUserToken: z.boolean().optional(),
   canBridge: z.boolean(),
   canSwap: z.boolean(),
+  balance: BigIntString.optional(),
   bridgeSymbols: z.array(z.string()),
   warpRouteIds: z.array(z.string()),
   logoURI: z.string().optional(),
@@ -108,15 +112,21 @@ export const TokensResponseSchema = z
   .transform((v) => (Array.isArray(v) ? { tokens: v } : v));
 export type TokensResponse = z.infer<typeof TokensResponseSchema>;
 
+export const AvailableRoutesResponseSchema = z.object({
+  direction: z.enum(['fromSource', 'toDestination']),
+  tokens: z.array(TokenDiscoverySchema),
+});
+export type AvailableRoutesResponse = z.infer<typeof AvailableRoutesResponseSchema>;
+
 // Client-side mirror of engine's TokensQuerySchema. Branches:
 //   {}                       → featured/trending list
 //   { chain }                → per-chain list
 //   { chain, search }        → per-chain filtered
 //   { search }               → cross-chain search
 //   { ids }                  → explicit lookups (max 5; mutually exclusive)
-// Id format: `chainName-symbol` (e.g. "ethereum-USDC").
+// Id format: `chainName-address` (e.g. "ethereum-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48").
 export interface TokensQuery {
-  chain?: number;
+  chain?: string | number;
   search?: string;
   ids?: string[];
 }
@@ -129,8 +139,8 @@ export const QuoteRequestSchema = z.object({
   srcToken: TokenAddress,
   dstToken: TokenAddress,
   amount: BigIntString,
-  sender: TokenAddress,
-  recipient: TokenAddress.optional(),
+  sender: Recipient,
+  recipient: Recipient.optional(),
   slippageBps: z.number().optional(),
   // Optional client-supplied salt mixed into commitment hash derivation.
   // Engine generates random bytes32 if absent.
@@ -167,8 +177,9 @@ export const QuoteBridgeStepSchema = z.object({
   warpRouteId: z.string().optional(),
   fee: z.object({
     tokenFee: BigIntString,
-    igpToken: Address,
+    igpToken: TokenAddress,
     igpAmount: BigIntString,
+    localNativeFee: BigIntString,
   }),
 });
 export type QuoteBridgeStep = z.infer<typeof QuoteBridgeStepSchema>;
@@ -179,7 +190,7 @@ export const QuoteStepSchema = z.discriminatedUnion('type', [
 ]);
 export type QuoteStep = z.infer<typeof QuoteStepSchema>;
 
-export const RouteTxSchema = z.object({
+export const ChainRouteTxSchema = z.object({
   // EVM: 0x-hex contract address; Solana: base58 programId
   to: z.string().min(1).max(100),
   // EVM: 0x-hex calldata; Solana: base64 instruction data
@@ -189,9 +200,6 @@ export const RouteTxSchema = z.object({
   accounts: z
     .array(z.object({ pubkey: z.string(), isSigner: z.boolean(), isWritable: z.boolean() }))
     .optional(),
-  // Solana-only: ephemeral keypairs that must co-sign before sending to wallet.
-  // Each is a base64-encoded 64-byte Solana keypair (privKey[32] || pubKey[32]).
-  additionalSigners: z.array(z.string()).optional(),
   // Solana-only: Address Lookup Table addresses for V0 transactions.
   altAddresses: z.array(z.string()).optional(),
   // Solana-only: instructions to prepend before the main UR instruction.
@@ -208,6 +216,16 @@ export const RouteTxSchema = z.object({
     )
     .optional(),
 });
+
+export const SdkRouteTxSchema = z.object({
+  protocol: z.string().min(1),
+  type: z.string().min(1),
+  category: z.string().min(1),
+  transaction: z.unknown(),
+  metadata: z.record(z.unknown()).optional(),
+});
+
+export const RouteTxSchema = z.union([ChainRouteTxSchema, SdkRouteTxSchema]);
 export type RouteTx = z.infer<typeof RouteTxSchema>;
 
 // Engine returns this on routes that need CCS coordination. Pre-built
@@ -238,10 +256,20 @@ export const CallCommitmentSchema = z.object({
 });
 export type CallCommitment = z.infer<typeof CallCommitmentSchema>;
 
+export const RouteApprovalSchema = z.object({
+  token: HexAddress,
+  spender: HexAddress,
+  amount: BigIntString,
+  kind: z.enum(['erc20', 'permit2']),
+  permit2Spender: HexAddress.optional(),
+});
+export type RouteApproval = z.infer<typeof RouteApprovalSchema>;
+
 export const RouteResponseSchema = z.object({
   steps: z.array(QuoteStepSchema),
   output: BigIntString,
   outputMin: BigIntString,
+  executionKind: z.enum(['universalRouter', 'warpDirect', 'sdkWarp']),
   connection: z
     .object({
       symbol: z.string(),
@@ -253,6 +281,8 @@ export const RouteResponseSchema = z.object({
     destGas: BigIntString,
   }),
   tx: RouteTxSchema.nullable(),
+  txs: z.array(RouteTxSchema).optional(),
+  approval: RouteApprovalSchema.nullable(),
   callCommitment: CallCommitmentSchema.optional(),
 });
 export type RouteResponse = z.infer<typeof RouteResponseSchema>;

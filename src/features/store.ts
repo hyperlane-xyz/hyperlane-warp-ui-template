@@ -4,84 +4,56 @@ import {
   IRegistry,
   PartialRegistry,
 } from '@hyperlane-xyz/registry';
-import {
-  ChainMap,
-  ChainMetadata,
-  ChainName,
-  MultiProtocolProvider,
-  Token,
-  WarpCore,
-  WarpCoreConfig,
-} from '@hyperlane-xyz/sdk';
-import { normalizeAddress, objFilter } from '@hyperlane-xyz/utils';
+import { ChainMap, ChainMetadata, ChainName, MultiProtocolProvider } from '@hyperlane-xyz/sdk';
+import { objFilter } from '@hyperlane-xyz/utils';
 import { toast } from 'react-toastify';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 import { config } from '../consts/config';
 import { logger } from '../utils/logger';
+import { routerClient } from './api/RouterClient';
 import type { RouteResponse } from './api/types';
 import { assembleChainAddresses } from './chains/addresses';
 import { assembleChainMetadata } from './chains/metadata';
-import type { UiToken } from './swap/tokens/types';
-import { getTokenKey as getSwapTokenKey } from './swap/tokens/utils';
-import { FinalSwapStatuses, LabeledMsgId, SwapHistoryItem, SwapStatus } from './swap/types';
+import type { UiToken } from './tokens/types';
+import { getTokenKey as getTransferTokenKey } from './tokens/utils';
 import {
-  buildTokensArray,
-  getTokenKey,
-  groupTokensByCollateral,
-  setResolvedUnderlyingMap,
-} from './tokens/utils';
-import { resolveWrappedCollateralTokens } from './tokens/wrappedTokenResolver';
-import { FinalTransferStatuses, TransferContext, TransferStatus } from './transfer/types';
-import {
-  type E2ETokenSnapshot,
-  initE2EStateIfEnabled,
-  markE2ERuntimeReady,
-} from './wallet/_e2e/windowState';
-import { assembleWarpCoreConfig } from './warpCore/warpCoreConfig';
+  FinalTransferStatuses,
+  LabeledMsgId,
+  TransferHistoryItem,
+  TransferStatus,
+} from './transfer/engine/types';
+import { initE2EStateIfEnabled, markE2ERuntimeReady } from './wallet/_e2e/windowState';
+import { loadRegistryWarpRoutes, type RegistryWarpRouteMap } from './warpRoutes/registryWarpRoutes';
 
 // Increment this when persist state has breaking changes
-const PERSIST_STATE_VERSION = 3;
+const PERSIST_STATE_VERSION = 6;
 
 export const TransactionHistoryItemType = {
-  Bridge: 'bridge',
-  Swap: 'swap',
+  Transfer: 'transfer',
 } as const;
 
-export type TransactionHistoryItem =
-  | { id: string; type: typeof TransactionHistoryItemType.Bridge; data: TransferContext }
-  | { id: string; type: typeof TransactionHistoryItemType.Swap; data: SwapHistoryItem };
+export type TransactionHistoryItem = {
+  id: string;
+  type: typeof TransactionHistoryItemType.Transfer;
+  data: TransferHistoryItem;
+};
 
-interface WarpContext {
+type PersistedTransactionHistoryItem =
+  | TransactionHistoryItem
+  | {
+      id?: string;
+      type?: string;
+      data?: TransferHistoryItem;
+    };
+
+interface AppContext {
   registry: IRegistry;
   chainMetadata: ChainMap<ChainMetadata>;
   chainAddresses: ChainMap<ChainAddresses>;
+  registryWarpRoutes: RegistryWarpRouteMap;
   multiProvider: MultiProtocolProvider;
-  warpCore: WarpCore;
-  /** Unified tokens array (deduplicated, can be origin or destination) */
-  tokens: Token[];
-  /** Pre-computed collateral groups for fast route checking */
-  collateralGroups: Map<string, Token[]>;
-  /** Pre-computed token key to Token map for O(1) lookups */
-  tokenByKeyMap: Map<string, Token>;
-  // Set of router addresses per chain
-  routerAddressesByChainMap: Record<ChainName, Set<string>>;
-  // Deduplicated, sorted CoinGecko IDs for all tokens
-  coinGeckoIds: string[];
-}
-
-function buildE2ETokenSnapshot(tokens: Token[] | undefined): E2ETokenSnapshot[] | undefined {
-  if (!tokens?.length) return undefined;
-  return tokens.map((t) => ({
-    key: getTokenKey(t),
-    chain: t.chainName,
-    symbol: t.symbol,
-    standard: t.standard,
-    addressOrDenom: t.addressOrDenom,
-    collateralAddressOrDenom: t.collateralAddressOrDenom,
-    connectionKeys: (t.connections ?? []).map((c) => getTokenKey(c.token as Token)),
-  }));
 }
 // Keeping everything here for now as state is simple
 // Will refactor into slices as necessary
@@ -90,35 +62,22 @@ export interface AppState {
   chainMetadata: ChainMap<ChainMetadata>;
   // Per-chain contract addresses, merged from registry + filesystem (addresses.yaml)
   chainAddresses: ChainMap<ChainAddresses>;
+  // Registry warp route configs used by bridge-only route validation.
+  registryWarpRoutes: RegistryWarpRouteMap;
   // Overrides to chain metadata set by user via the chain picker
   chainMetadataOverrides: ChainMap<Partial<ChainMetadata>>;
   setChainMetadataOverrides: (overrides?: ChainMap<Partial<ChainMetadata> | undefined>) => void;
-  // Overrides to warp core configs added by user
-  warpCoreConfigOverrides: WarpCoreConfig[];
-  setWarpCoreConfigOverrides: (overrides?: WarpCoreConfig[] | undefined) => void;
   multiProvider: MultiProtocolProvider;
   registry: IRegistry;
-  warpCore: WarpCore;
-  setWarpContext: (context: WarpContext) => void;
+  setAppContext: (context: AppContext) => void;
 
   // User transaction history
   transactionHistory: TransactionHistoryItem[];
-  addBridgeTransaction: (t: TransferContext) => string;
-  addSwapTransaction: (s: SwapHistoryItem) => string;
+  addTransferTransaction: (s: TransferHistoryItem) => string;
   resetTransactionHistory: () => void;
-  updateBridgeTransactionStatus: (
+  updateTransferTransactionStatus: (
     id: string,
-    s: TransferStatus,
-    options?: {
-      msgId?: string;
-      originTxHash?: string;
-      originBlockNumber?: number;
-      destinationTxHash?: string;
-    },
-  ) => void;
-  updateSwapTransactionStatus: (
-    id: string,
-    status: SwapStatus,
+    status: TransferStatus,
     options?: {
       msgIds?: LabeledMsgId[];
       originTxHash?: string;
@@ -127,26 +86,24 @@ export interface AppState {
       originTxTimestamp?: number;
     },
   ) => void;
-  // Non-persisted: routes for active swap transactions, keyed by transactionId.
-  // Cleared on page reload. Used by useSwapStatus.
-  swapRouteByTransactionId: Map<string, RouteResponse>;
-  setSwapRoute: (transactionId: string, route: RouteResponse) => void;
+  // Non-persisted: routes for active transfer transactions, keyed by transactionId.
+  // Cleared on page reload. Used by useTransferStatus.
+  transferRouteByTransactionId: Map<string, RouteResponse>;
+  setTransferRoute: (transactionId: string, route: RouteResponse) => void;
   failUnconfirmedTransactions: () => void;
   selectedTransactionId: string | null;
   setSelectedTransactionId: (id: string | null) => void;
-  activeSwapTransactionId: string | null;
-  setActiveSwapTransactionId: (id: string | null) => void;
+  activeTransferTransactionId: string | null;
+  setActiveTransferTransactionId: (id: string | null) => void;
   // Accumulated engine-token catalogue. Every useTokens() result funnels
-  // through syncTokens so SwapForm / SwapDetailsModal lookups go through
-  // one place. Keyed by getSwapTokenKey (chainId-address). Not persisted.
+  // through syncTokens so TransferForm / TransferDetailsModal lookups go through
+  // one place. Keyed by getTransferTokenKey (chainId-address). Not persisted.
   knownTokens: Map<string, UiToken>;
   syncTokens: (tokens: UiToken[]) => void;
 
   // Shared component state
   transferLoading: boolean;
   setTransferLoading: (isLoading: boolean) => void;
-  swapLoading: boolean;
-  setSwapLoading: (isLoading: boolean) => void;
   isSideBarOpen: boolean;
   setIsSideBarOpen: (isOpen: boolean) => void;
   showEnvSelectModal: boolean;
@@ -157,19 +114,6 @@ export interface AppState {
   // instead of moving the TipCard component inside the formik and an useEffect can be set to watch for it
   isTipCardActionTriggered: boolean;
   setIsTipCardActionTriggered: (isTipCardActionTriggered: boolean) => void;
-  /** Unified tokens array (deduplicated, can be origin or destination) */
-  tokens: Token[];
-  /** Pre-computed collateral groups for fast route checking */
-  collateralGroups: Map<string, Token[]>;
-  /** Pre-computed token key to Token map for O(1) lookups */
-  tokenByKeyMap: Map<string, Token>;
-  // Set of router addresses per chain — used to prevent sending to warp route
-  // addresses and to filter message API results
-  routerAddressesByChainMap: Record<ChainName, Set<string>>;
-  // Deduplicated, sorted CoinGecko IDs for the warpCore token set (built
-  // at WarpContext init). Consumed by the bridge `useTokenPrices` wrapper
-  // which delegates to the shared `useTokenPricesByIds` cache below.
-  coinGeckoIds: string[];
   // Session-scoped USD price cache, keyed by coinGeckoId. `failedAt`
   // backs off retries after rate-limit / network failures.
   tokenPrices: Record<string, { usd?: number; fetchedAt?: number; failedAt?: number }>;
@@ -193,97 +137,40 @@ export const useStore = create<AppState>()(
       ) => {
         logger.debug('Setting chain overrides in store');
         const filtered = objFilter(overrides, (_, metadata) => !!metadata);
-        const {
-          registry,
-          chainMetadata,
-          chainAddresses,
-          multiProvider,
-          warpCore,
-          routerAddressesByChainMap,
-          tokens,
-          collateralGroups,
-          tokenByKeyMap,
-          coinGeckoIds,
-        } = await initWarpContext({
-          ...get(),
-          chainMetadataOverrides: filtered,
-        });
+        const { registry, chainMetadata, chainAddresses, registryWarpRoutes, multiProvider } =
+          await initAppContext({
+            ...get(),
+            chainMetadataOverrides: filtered,
+          });
         set({
           chainMetadataOverrides: filtered,
           registry,
           chainMetadata,
           chainAddresses,
+          registryWarpRoutes,
           multiProvider,
-          warpCore,
-          routerAddressesByChainMap,
-          tokens,
-          collateralGroups,
-          tokenByKeyMap,
-          coinGeckoIds,
-        });
-      },
-      warpCoreConfigOverrides: [],
-      setWarpCoreConfigOverrides: async (overrides: WarpCoreConfig[] | undefined = []) => {
-        logger.debug('Setting warp core config overrides in store');
-        const {
-          registry,
-          chainMetadata,
-          chainAddresses,
-          multiProvider,
-          warpCore,
-          routerAddressesByChainMap,
-          tokens,
-          collateralGroups,
-          tokenByKeyMap,
-          coinGeckoIds,
-        } = await initWarpContext({
-          ...get(),
-          warpCoreConfigOverrides: overrides,
-        });
-        set({
-          warpCoreConfigOverrides: overrides,
-          registry,
-          chainMetadata,
-          chainAddresses,
-          multiProvider,
-          warpCore,
-          routerAddressesByChainMap,
-          tokens,
-          collateralGroups,
-          tokenByKeyMap,
-          coinGeckoIds,
         });
       },
       multiProvider: new MultiProtocolProvider({}),
+      registryWarpRoutes: {},
       registry: new GithubRegistry({
         uri: config.registryUrl,
         branch: config.registryBranch,
         proxyUrl: config.registryProxyUrl,
       }),
-      warpCore: new WarpCore(new MultiProtocolProvider({}), []),
-      setWarpContext: (context) => {
-        logger.debug('Setting warp context in store');
+      setAppContext: (context) => {
+        logger.debug('Setting app context in store');
         set(context);
       },
 
       // User transaction history
       transactionHistory: [],
-      addBridgeTransaction: (data) => {
-        const id = createTransactionId(TransactionHistoryItemType.Bridge, data.timestamp);
+      addTransferTransaction: (data) => {
+        const id = createTransactionId(TransactionHistoryItemType.Transfer, data.timestamp);
         set((state) => ({
           transactionHistory: [
             ...state.transactionHistory,
-            { id, type: TransactionHistoryItemType.Bridge, data },
-          ],
-        }));
-        return id;
-      },
-      addSwapTransaction: (data) => {
-        const id = createTransactionId(TransactionHistoryItemType.Swap, data.timestamp);
-        set((state) => ({
-          transactionHistory: [
-            ...state.transactionHistory,
-            { id, type: TransactionHistoryItemType.Swap, data },
+            { id, type: TransactionHistoryItemType.Transfer, data },
           ],
         }));
         return id;
@@ -291,61 +178,49 @@ export const useStore = create<AppState>()(
       resetTransactionHistory: () => {
         set(() => ({ transactionHistory: [] }));
       },
-      updateBridgeTransactionStatus: (id, status, options) => {
-        set((state) => ({
-          transactionHistory: state.transactionHistory.map((item) => {
-            if (item.id !== id || item.type !== TransactionHistoryItemType.Bridge) return item;
-            return {
-              ...item,
-              data: {
-                ...item.data,
-                status,
-                msgId: item.data.msgId ?? options?.msgId,
-                originTxHash: item.data.originTxHash ?? options?.originTxHash,
-                originBlockNumber: item.data.originBlockNumber ?? options?.originBlockNumber,
-                destinationTxHash: item.data.destinationTxHash ?? options?.destinationTxHash,
-              },
-            };
-          }),
-        }));
-      },
-      updateSwapTransactionStatus: (id, status, options) => {
-        set((state) => ({
-          transactionHistory: state.transactionHistory.map((item) => {
-            if (item.id !== id || item.type !== TransactionHistoryItemType.Swap) return item;
-            return {
-              ...item,
-              data: {
-                ...item.data,
-                status,
-                msgIds: item.data.msgIds ?? options?.msgIds,
-                originTxHash: item.data.originTxHash ?? options?.originTxHash,
-                originBlockNumber: item.data.originBlockNumber ?? options?.originBlockNumber,
-                destinationTxHash: item.data.destinationTxHash ?? options?.destinationTxHash,
-                originTxTimestamp: item.data.originTxTimestamp ?? options?.originTxTimestamp,
-              },
-            };
-          }),
-        }));
-      },
-      swapRouteByTransactionId: new Map(),
-      setSwapRoute: (transactionId, route) => {
+      updateTransferTransactionStatus: (id, status, options) => {
         set((state) => {
-          const next = new Map(state.swapRouteByTransactionId);
+          let changed = false;
+          const transactionHistory = state.transactionHistory.map((item) => {
+            if (item.id !== id || item.type !== TransactionHistoryItemType.Transfer) return item;
+            const data = mergeTransferTransactionUpdate(item.data, status, options);
+            if (data === item.data) return item;
+            changed = true;
+            return {
+              ...item,
+              data,
+            };
+          });
+          const transferRouteByTransactionId = removeFinalTransferRoute(
+            state.transferRouteByTransactionId,
+            id,
+            status,
+          );
+          if (!changed && transferRouteByTransactionId === state.transferRouteByTransactionId) {
+            return state;
+          }
+          const patch: Partial<AppState> = {};
+          if (changed) patch.transactionHistory = transactionHistory;
+          if (transferRouteByTransactionId !== state.transferRouteByTransactionId) {
+            patch.transferRouteByTransactionId = transferRouteByTransactionId;
+          }
+          return patch;
+        });
+      },
+      transferRouteByTransactionId: new Map(),
+      setTransferRoute: (transactionId, route) => {
+        set((state) => {
+          const next = new Map(state.transferRouteByTransactionId);
           next.set(transactionId, route);
-          return { swapRouteByTransactionId: next };
+          return { transferRouteByTransactionId: next };
         });
       },
       failUnconfirmedTransactions: () => {
         set((state) => ({
           transactionHistory: state.transactionHistory.map((item) => {
-            if (item.type === TransactionHistoryItemType.Bridge) {
-              if (FinalTransferStatuses.includes(item.data.status)) return item;
-              return { ...item, data: { ...item.data, status: TransferStatus.Failed } };
-            }
-            if (FinalSwapStatuses.includes(item.data.status)) return item;
+            if (FinalTransferStatuses.includes(item.data.status)) return item;
             if (item.data.originTxHash) return item;
-            return { ...item, data: { ...item.data, status: SwapStatus.Failed } };
+            return { ...item, data: { ...item.data, status: TransferStatus.Failed } };
           }),
         }));
       },
@@ -353,23 +228,15 @@ export const useStore = create<AppState>()(
       setSelectedTransactionId: (selectedTransactionId) => {
         set(() => ({ selectedTransactionId }));
       },
-      activeSwapTransactionId: null,
-      setActiveSwapTransactionId: (activeSwapTransactionId) => {
-        set(() => ({ activeSwapTransactionId }));
+      activeTransferTransactionId: null,
+      setActiveTransferTransactionId: (activeTransferTransactionId) => {
+        set(() => ({ activeTransferTransactionId }));
       },
       knownTokens: new Map(),
       syncTokens: (newTokens) => {
         set((state) => {
-          let added = 0;
-          const next = new Map(state.knownTokens);
-          for (const t of newTokens) {
-            const key = getSwapTokenKey(t);
-            if (!next.has(key)) {
-              next.set(key, t);
-              added++;
-            }
-          }
-          return added > 0 ? { knownTokens: next } : state;
+          const knownTokens = mergeKnownTokens(state.knownTokens, newTokens);
+          return knownTokens === state.knownTokens ? state : { knownTokens };
         });
       },
 
@@ -393,10 +260,6 @@ export const useStore = create<AppState>()(
       setTransferLoading: (isLoading) => {
         set(() => ({ transferLoading: isLoading }));
       },
-      swapLoading: false,
-      setSwapLoading: (isLoading) => {
-        set(() => ({ swapLoading: isLoading }));
-      },
       isSideBarOpen: false,
       setIsSideBarOpen: (isSideBarOpen) => {
         set(() => ({ isSideBarOpen }));
@@ -409,15 +272,10 @@ export const useStore = create<AppState>()(
       setOriginChainName: (originChainName: ChainName) => {
         set(() => ({ originChainName }));
       },
-      routerAddressesByChainMap: {},
       isTipCardActionTriggered: false,
       setIsTipCardActionTriggered: (isTipCardActionTriggered: boolean) => {
         set(() => ({ isTipCardActionTriggered }));
       },
-      tokens: [],
-      collateralGroups: new Map(),
-      tokenByKeyMap: new Map(),
-      coinGeckoIds: [],
     }),
 
     // Store config
@@ -431,28 +289,24 @@ export const useStore = create<AppState>()(
       version: PERSIST_STATE_VERSION,
       migrate: (persistedState) => {
         const state = persistedState as Partial<AppState> & {
-          transfers?: TransferContext[];
-          swaps?: SwapHistoryItem[];
+          swaps?: TransferHistoryItem[];
+          transactionHistory?: PersistedTransactionHistoryItem[];
         };
         if (Array.isArray(state.transactionHistory)) {
           return {
             chainMetadataOverrides: state.chainMetadataOverrides ?? {},
-            transactionHistory: state.transactionHistory,
+            transactionHistory: state.transactionHistory
+              .map(normalizePersistedTransactionHistoryItem)
+              .filter((item): item is TransactionHistoryItem => !!item),
           };
         }
 
-        const transfers = Array.isArray(state.transfers) ? state.transfers : [];
         const swaps = Array.isArray(state.swaps) ? state.swaps : [];
         const transactionHistory: TransactionHistoryItem[] = [
-          ...transfers.map((data) => ({
-            id: createTransactionId(TransactionHistoryItemType.Bridge, data.timestamp),
-            type: TransactionHistoryItemType.Bridge,
-            data,
-          })),
           ...swaps.map((data) => ({
-            id: createTransactionId(TransactionHistoryItemType.Swap, data.timestamp),
-            type: TransactionHistoryItemType.Swap,
-            data,
+            id: createTransactionId(TransactionHistoryItemType.Transfer, data.timestamp),
+            type: TransactionHistoryItemType.Transfer,
+            data: normalizeTransferHistoryItem(data),
           })),
         ];
 
@@ -469,8 +323,8 @@ export const useStore = create<AppState>()(
             logger.error('Error during hydration', error);
             return;
           }
-          initWarpContext(state).then((context) => {
-            state.setWarpContext(context);
+          initAppContext(state).then((context) => {
+            state.setAppContext(context);
             logger.debug('Rehydration complete');
           });
         };
@@ -486,105 +340,188 @@ function createTransactionId(type: TransactionHistoryItem['type'], timestamp: nu
   return `${type}-${timestamp}-${suffix}`;
 }
 
-async function initWarpContext({
+type TransferTransactionUpdateOptions = Parameters<AppState['updateTransferTransactionStatus']>[2];
+
+export function mergeTransferTransactionUpdate(
+  data: TransferHistoryItem,
+  status: TransferStatus,
+  options?: TransferTransactionUpdateOptions,
+): TransferHistoryItem {
+  const msgIds = mergeMsgIds(data.msgIds, options?.msgIds);
+  const next: TransferHistoryItem = {
+    ...data,
+    status,
+    msgIds,
+    originTxHash: data.originTxHash ?? options?.originTxHash,
+    originBlockNumber: data.originBlockNumber ?? options?.originBlockNumber,
+    destinationTxHash: data.destinationTxHash ?? options?.destinationTxHash,
+    originTxTimestamp: data.originTxTimestamp ?? options?.originTxTimestamp,
+  };
+
+  return isSameTransferHistoryItem(data, next) ? data : next;
+}
+
+function mergeMsgIds(current: LabeledMsgId[] | undefined, next: LabeledMsgId[] | undefined) {
+  if (!next) return current;
+  if (!current || (current.length === 0 && next.length > 0)) return next;
+  return current;
+}
+
+function isSameTransferHistoryItem(left: TransferHistoryItem, right: TransferHistoryItem) {
+  return (
+    left.status === right.status &&
+    left.msgIds === right.msgIds &&
+    left.originTxHash === right.originTxHash &&
+    left.originBlockNumber === right.originBlockNumber &&
+    left.destinationTxHash === right.destinationTxHash &&
+    left.originTxTimestamp === right.originTxTimestamp
+  );
+}
+
+export function removeFinalTransferRoute(
+  routeByTransactionId: Map<string, RouteResponse>,
+  transactionId: string,
+  status: TransferStatus,
+): Map<string, RouteResponse> {
+  if (!FinalTransferStatuses.includes(status)) return routeByTransactionId;
+  if (!routeByTransactionId.has(transactionId)) return routeByTransactionId;
+
+  const next = new Map(routeByTransactionId);
+  next.delete(transactionId);
+  return next;
+}
+
+export function mergeKnownTokens(
+  knownTokens: Map<string, UiToken>,
+  newTokens: UiToken[],
+): Map<string, UiToken> {
+  let next: Map<string, UiToken> | undefined;
+  for (const token of newTokens) {
+    const key = getTransferTokenKey(token);
+    const current = (next ?? knownTokens).get(key);
+    if (current && isSameUiToken(current, token)) continue;
+
+    next ??= new Map(knownTokens);
+    next.set(key, token);
+  }
+  return next ?? knownTokens;
+}
+
+function isSameUiToken(left: UiToken, right: UiToken) {
+  return (
+    left.chainId === right.chainId &&
+    left.address === right.address &&
+    left.symbol === right.symbol &&
+    left.standard === right.standard &&
+    left.decimals === right.decimals &&
+    left.isNative === right.isNative &&
+    left.isBridgeToken === right.isBridgeToken &&
+    left.isPoolToken === right.isPoolToken &&
+    left.canBridge === right.canBridge &&
+    left.canSwap === right.canSwap &&
+    sameStringArray(left.bridgeSymbols, right.bridgeSymbols) &&
+    sameStringArray(left.warpRouteIds, right.warpRouteIds) &&
+    left.coinGeckoId === right.coinGeckoId &&
+    left.chainName === right.chainName &&
+    left.name === right.name &&
+    left.addressOrDenom === right.addressOrDenom &&
+    left.logoURI === right.logoURI
+  );
+}
+
+function sameStringArray(left: string[], right: string[]) {
+  return left.length === right.length && left.every((item, i) => item === right[i]);
+}
+
+function normalizePersistedTransactionHistoryItem(
+  item: PersistedTransactionHistoryItem,
+): TransactionHistoryItem | null {
+  if (!item.data) return null;
+  if (item.type !== TransactionHistoryItemType.Transfer && item.type !== 'swap') return null;
+
+  const data = normalizeTransferHistoryItem(item.data);
+  const id =
+    typeof item.id === 'string'
+      ? item.id.replace(/^swap-/, `${TransactionHistoryItemType.Transfer}-`)
+      : createTransactionId(TransactionHistoryItemType.Transfer, data.timestamp);
+
+  return {
+    id,
+    type: TransactionHistoryItemType.Transfer,
+    data,
+  };
+}
+
+function normalizeTransferHistoryItem(data: TransferHistoryItem): TransferHistoryItem {
+  return {
+    ...data,
+    status: normalizeTransferStatus(data.status),
+  };
+}
+
+function normalizeTransferStatus(status: TransferStatus): TransferStatus {
+  if (status === ('signing-swap' as TransferStatus)) return TransferStatus.SigningTransfer;
+  if (status === ('dest-swap-failed' as TransferStatus)) return TransferStatus.DestTransferFailed;
+  return status;
+}
+
+async function initAppContext({
   registry,
   chainMetadataOverrides,
-  warpCoreConfigOverrides,
 }: {
   registry: IRegistry;
   chainMetadataOverrides: ChainMap<Partial<ChainMetadata> | undefined>;
-  warpCoreConfigOverrides: WarpCoreConfig[];
-}): Promise<WarpContext> {
+}): Promise<AppContext> {
   let currentRegistry = registry;
-  try {
-    // Pre-load registry content to avoid repeated requests
-    await currentRegistry.listRegistryContent();
-  } catch (error) {
-    // Lazy-load the published constants so they stay out of the initial bundle
-    const { chainAddresses, chainMetadata } = await import('@hyperlane-xyz/registry');
-    currentRegistry = new PartialRegistry({
-      chainAddresses,
-      chainMetadata,
-    });
-    logger.warn(
-      'Failed to list registry content using GithubRegistry, will continue with PartialRegistry.',
-      error,
-    );
+  if (config.registryUrl) {
+    try {
+      // Pre-load real custom registry content to avoid repeated requests.
+      await currentRegistry.listRegistryContent();
+    } catch (error) {
+      // Lazy-load the published constants so they stay out of the initial bundle.
+      const { chainAddresses, chainMetadata } = await import('@hyperlane-xyz/registry');
+      currentRegistry = new PartialRegistry({
+        chainAddresses,
+        chainMetadata,
+      });
+      logger.warn(
+        'Failed to list registry content using GithubRegistry, will continue with PartialRegistry.',
+        error,
+      );
+    }
   }
 
   try {
-    const { config: coreConfig } = await assembleWarpCoreConfig(
-      warpCoreConfigOverrides,
-      currentRegistry,
+    const engineChains = await routerClient.chains();
+    const chainNames = Array.from(
+      new Set(engineChains.chains.map((chain) => chain.chainName as ChainName)),
     );
-
-    const chainsInTokens = Array.from(new Set(coreConfig.tokens.map((t) => t.chainName)));
-    const [{ chainMetadata, chainMetadataWithOverrides }, chainAddresses] = await Promise.all([
-      assembleChainMetadata(chainsInTokens, currentRegistry, chainMetadataOverrides),
-      assembleChainAddresses(chainsInTokens, currentRegistry),
-    ]);
+    const [{ chainMetadata, chainMetadataWithOverrides }, chainAddresses, registryWarpRoutes] =
+      await Promise.all([
+        assembleChainMetadata(chainNames, currentRegistry, chainMetadataOverrides),
+        assembleChainAddresses(chainNames, currentRegistry),
+        loadRegistryWarpRoutes(currentRegistry),
+      ]);
     const multiProvider = new MultiProtocolProvider(chainMetadataWithOverrides);
-    const warpCore = WarpCore.FromConfig(multiProvider, coreConfig);
 
-    // Resolve underlying addresses for lockbox/vault tokens so they group
-    // with their non-wrapper counterparts (e.g., lockbox USDT = regular USDT)
-    const resolvedMap = await resolveWrappedCollateralTokens(warpCore.tokens, multiProvider);
-    setResolvedUnderlyingMap(resolvedMap);
-
-    // Build unified tokens array (deduplicated by collateral at startup)
-    const tokens = buildTokensArray(warpCore.tokens);
-    // Build collateral groups for fast route checking
-    const collateralGroups = groupTokensByCollateral(warpCore.tokens);
-    // Build token by key map for O(1) lookups
-    const tokenByKeyMap = new Map<string, Token>();
-    for (const token of tokens) {
-      tokenByKeyMap.set(getTokenKey(token), token);
-    }
-
-    const routerAddressesByChainMap = getRouterAddressesByChain(warpCore.tokens);
-    const coinGeckoIds = Array.from(
-      new Set(coreConfig.tokens.map((t) => t.coinGeckoId).filter(Boolean)),
-    ).sort() as string[];
     initE2EStateIfEnabled();
-    markE2ERuntimeReady(() => buildE2ETokenSnapshot(warpCore.tokens));
+    markE2ERuntimeReady();
     return {
       registry: currentRegistry,
       chainMetadata,
       chainAddresses,
+      registryWarpRoutes,
       multiProvider,
-      warpCore,
-      routerAddressesByChainMap,
-      tokens,
-      collateralGroups,
-      tokenByKeyMap,
-      coinGeckoIds,
     };
   } catch (error) {
-    toast.error('Error initializing warp context. Please check connection status and configs.');
-    logger.error('Error initializing warp context', error);
+    toast.error('Error initializing app context. Please check connection status and configs.');
+    logger.error('Error initializing app context', error);
     return {
       registry,
       chainMetadata: {},
       chainAddresses: {},
+      registryWarpRoutes: {},
       multiProvider: new MultiProtocolProvider({}),
-      warpCore: new WarpCore(new MultiProtocolProvider({}), []),
-      routerAddressesByChainMap: {},
-      tokens: [],
-      collateralGroups: new Map(),
-      tokenByKeyMap: new Map(),
-      coinGeckoIds: [],
     };
   }
-}
-
-// Build map of chain -> set of router addresses
-export function getRouterAddressesByChain(
-  tokens: WarpCore['tokens'],
-): Record<ChainName, Set<string>> {
-  return tokens.reduce<Record<ChainName, Set<string>>>((acc, token) => {
-    if (!token.addressOrDenom) return acc;
-    acc[token.chainName] ||= new Set<string>();
-    acc[token.chainName].add(normalizeAddress(token.addressOrDenom));
-    return acc;
-  }, {});
 }

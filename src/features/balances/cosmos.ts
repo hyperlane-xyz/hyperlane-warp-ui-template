@@ -1,107 +1,157 @@
 import { StargateClient } from '@cosmjs/stargate';
-import { Token, TokenStandard } from '@hyperlane-xyz/sdk';
-import { ProtocolType } from '@hyperlane-xyz/utils';
+import { Token, TokenStandard, type MultiProtocolProvider } from '@hyperlane-xyz/sdk';
+import { isZeroishAddress } from '@hyperlane-xyz/utils';
 
 import { logger } from '../../utils/logger';
-import { getTokenKey } from '../tokens/utils';
-import { TokenEntry } from './tokens';
+import type { BalanceToken } from './types';
+import { getBalanceTokenKey } from './types';
+import { getNativeTokenDenom } from './utils';
 
-export interface CosmosChainGroup {
+interface CosmosBalanceArgs {
   chainName: string;
-  bankTokens: { key: string; denom: string }[];
-  fallbackTokens: TokenEntry[];
+  tokenAddress: string;
+  isNative: boolean;
+  owner: string;
+  standard?: string;
+  decimals?: number;
+  symbol?: string;
+  name?: string;
+  coinGeckoId?: string;
+  logoURI?: string;
 }
 
-/** Standards where the bank denom is `addressOrDenom`. */
-const BANK_DENOM_FROM_ADDRESS: TokenStandard[] = [
-  TokenStandard.CosmosNative,
-  TokenStandard.CosmosIbc,
-  TokenStandard.CosmosIcs20,
-  TokenStandard.CWNative,
-  TokenStandard.CW20,
-];
+export async function fetchCosmosChainBalances(
+  multiProvider: MultiProtocolProvider,
+  tokens: BalanceToken[],
+  userAddress: string,
+): Promise<Record<string, bigint>> {
+  const out: Record<string, bigint> = {};
+  if (tokens.length === 0) return out;
 
-/** Standards where the bank denom is `collateralAddressOrDenom`. */
-const BANK_DENOM_FROM_COLLATERAL: TokenStandard[] = [
-  TokenStandard.CwHypCollateral,
-  TokenStandard.CwHypSynthetic,
-  TokenStandard.CosmNativeHypCollateral,
-];
+  const chainName = tokens[0]?.chainName;
+  const nativeDenom = getNativeTokenDenom(multiProvider, chainName);
+  const rpcUrl = rpcUrlFor(multiProvider, chainName);
+  const bankTokens = tokens
+    .map((token) => ({ token, denom: cosmosBankDenomForToken(token, nativeDenom) }))
+    .filter((entry): entry is { token: BalanceToken; denom: string } => !!entry.denom);
 
-function classifyCosmosToken(token: Token): { type: 'bank' | 'unknown'; denom?: string } {
-  if (BANK_DENOM_FROM_ADDRESS.includes(token.standard)) {
-    return { type: 'bank', denom: token.addressOrDenom };
+  if (rpcUrl && bankTokens.length > 0) {
+    const client = await StargateClient.connect(rpcUrl);
+    try {
+      const balances = await client.getAllBalances(userAddress);
+      const byDenom = new Map(balances.map((balance) => [balance.denom, BigInt(balance.amount)]));
+      for (const { token, denom } of bankTokens)
+        out[getBalanceTokenKey(token)] = byDenom.get(denom) ?? 0n;
+    } catch (err) {
+      logger.warn(`Cosmos bank balance read failed for ${chainName}`, err as Error);
+    } finally {
+      client.disconnect();
+    }
   }
-  if (BANK_DENOM_FROM_COLLATERAL.includes(token.standard)) {
-    return token.collateralAddressOrDenom
-      ? { type: 'bank', denom: token.collateralAddressOrDenom }
-      : { type: 'unknown' };
+
+  await Promise.all(
+    tokens
+      .filter((token) => !cosmosBankDenomForToken(token, nativeDenom))
+      .map(async (token) => {
+        try {
+          out[getBalanceTokenKey(token)] = await readCosmosTokenBalance(multiProvider, {
+            chainName: token.chainName,
+            tokenAddress: token.address,
+            isNative: token.isNative,
+            owner: userAddress,
+            standard: token.standard,
+            decimals: token.decimals,
+            symbol: token.symbol,
+            name: token.name,
+            coinGeckoId: token.coinGeckoId,
+            logoURI: token.logoURI,
+          });
+        } catch (err) {
+          logger.warn(`Cosmos adapter balance read failed for ${token.symbol}`, err as Error);
+        }
+      }),
+  );
+
+  return out;
+}
+
+export async function readCosmosTokenBalance(
+  multiProvider: MultiProtocolProvider,
+  args: CosmosBalanceArgs,
+): Promise<bigint> {
+  const denom = cosmosBankDenomForToken(
+    {
+      address: args.tokenAddress,
+      isNative: args.isNative,
+      standard: args.standard,
+    },
+    getNativeTokenDenom(multiProvider, args.chainName),
+  );
+  if (denom) {
+    const rpcUrl = rpcUrlFor(multiProvider, args.chainName);
+    if (!rpcUrl) return 0n;
+    const client = await StargateClient.connect(rpcUrl);
+    try {
+      const balance = await client.getBalance(args.owner, denom);
+      return BigInt(balance.amount);
+    } finally {
+      client.disconnect();
+    }
+  }
+
+  const token = new Token({
+    chainName: args.chainName,
+    standard: resolveCosmosBalanceStandard(args.standard),
+    addressOrDenom: args.tokenAddress,
+    decimals: args.decimals ?? 18,
+    symbol: args.symbol ?? '',
+    name: args.name ?? args.symbol ?? '',
+    coinGeckoId: args.coinGeckoId,
+    logoURI: args.logoURI,
+  });
+  return (await token.getBalance(multiProvider, args.owner)).amount;
+}
+
+export function cosmosBankDenomForToken(
+  token: {
+    address: string;
+    isNative?: boolean;
+    standard?: string;
+  },
+  nativeDenom?: string,
+): string | null {
+  if (token.standard === TokenStandard.CwHypNative) return null;
+  if (token.standard === TokenStandard.CwHypSynthetic) return null;
+  if (token.isNative && isZeroishAddress(token.address)) return nativeDenom ?? null;
+  if (
+    token.standard === TokenStandard.CosmNativeHypCollateral &&
+    isCosmosModuleTokenId(token.address)
+  ) {
+    return null;
   }
   if (token.standard === TokenStandard.CosmNativeHypSynthetic) {
-    return { type: 'bank', denom: `hyperlane/${token.addressOrDenom}` };
+    return `hyperlane/${token.address}`;
   }
-  // CwHypNative requires dynamic denom resolution via contract — SDK fallback
-  return { type: 'unknown' };
+  return token.address;
 }
 
-/** Group Cosmos/CosmosNative tokens by chain, split into bank-batchable vs SDK fallback. */
-export function groupCosmosTokensByChain(tokens: Token[]): Map<string, CosmosChainGroup> {
-  const groups = new Map<string, CosmosChainGroup>();
-
-  for (const token of tokens) {
-    if (token.protocol !== ProtocolType.Cosmos && token.protocol !== ProtocolType.CosmosNative)
-      continue;
-
-    const key = getTokenKey(token);
-    const { type, denom } = classifyCosmosToken(token);
-
-    if (!groups.has(token.chainName)) {
-      groups.set(token.chainName, {
-        chainName: token.chainName,
-        bankTokens: [],
-        fallbackTokens: [],
-      });
-    }
-    const group = groups.get(token.chainName)!;
-
-    if (type === 'bank' && denom) {
-      group.bankTokens.push({ key, denom });
-    } else {
-      group.fallbackTokens.push({ token, key });
-    }
+export function resolveCosmosBalanceStandard(standard?: string): TokenStandard {
+  if (standard === TokenStandard.CwHypNative) return TokenStandard.CwHypNative;
+  if (standard === TokenStandard.CwHypSynthetic) return TokenStandard.CwHypSynthetic;
+  if (standard === TokenStandard.CosmNativeHypCollateral) {
+    return TokenStandard.CosmNativeHypCollateral;
   }
-
-  return groups;
+  return TokenStandard.CosmosNative;
 }
 
-/**
- * Fetch bank-module token balances for a single cosmos chain via getAllBalances.
- * Fallback tokens (e.g. CwHypNative) are handled by the caller via fetchSdkBalance.
- */
-export async function fetchCosmosChainBalances(
-  group: CosmosChainGroup,
-  rpcUrl: string,
-  address: string,
-): Promise<Record<string, bigint>> {
-  if (group.bankTokens.length === 0) return {};
+function isCosmosModuleTokenId(address: string): boolean {
+  return /^0x[0-9a-f]+$/i.test(address);
+}
 
-  const client = await StargateClient.connect(rpcUrl);
-  try {
-    const allCoins = await client.getAllBalances(address);
-    const coinMap = new Map(allCoins.map((c) => [c.denom, BigInt(c.amount)]));
-
-    const out: Record<string, bigint> = {};
-    for (const { key, denom } of group.bankTokens) {
-      const balance = coinMap.get(denom);
-      if (balance !== undefined) {
-        out[key] = balance;
-      }
-    }
-    return out;
-  } catch (err) {
-    logger.warn(`Bank allBalances failed on ${group.chainName}`, err);
-    return {};
-  } finally {
-    client.disconnect();
-  }
+function rpcUrlFor(
+  multiProvider: MultiProtocolProvider,
+  chainName: string | undefined,
+): string | undefined {
+  if (!chainName) return undefined;
+  return multiProvider.tryGetChainMetadata(chainName)?.rpcUrls?.[0]?.http;
 }

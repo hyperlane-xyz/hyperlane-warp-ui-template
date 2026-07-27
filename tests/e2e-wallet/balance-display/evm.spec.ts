@@ -31,6 +31,6 @@ test.describe('EVM balance display', () => {
     // The .transfer-balance element should eventually show the mocked balance.
     const balance = page.locator('.transfer-balance').first();
     await expect(balance).toBeVisible({ timeout: 20_000 });
-    await expect(balance).toContainText('1234.5679 USDC', { timeout: 20_000 });
+    await expect(balance).toContainText('1234.5678 USDC', { timeout: 20_000 });
   });
 });

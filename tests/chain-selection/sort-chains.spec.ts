@@ -1,6 +1,14 @@
 import { test, expect } from '@playwright/test';
 import { getOriginTokenButton } from '../helpers/locators';
 
+async function visibleChainNames(page: import('@playwright/test').Page): Promise<string[]> {
+  return page.locator('.token-picker-chain-row[data-chain]').evaluateAll((rows) =>
+    rows
+      .map((row) => row.getAttribute('data-chain'))
+      .filter((name): name is string => Boolean(name)),
+  );
+}
+
 test.describe('Chain Selection - Sort Chains', () => {
   test('should open sort dropdown and show sort options', async ({ page }) => {
     await page.goto('http://localhost:3000');
@@ -27,17 +35,14 @@ test.describe('Chain Selection - Sort Chains', () => {
 
     await getOriginTokenButton(page).click();
 
-    // Get first chain in default (Featured asc) sort
-    const chainButtons = page.locator('button[class*="border-l-2"]');
-    const firstChainDefault = await chainButtons.nth(1).textContent();
-
     // Switch to Chain Id sort
     await page.getByRole('button', { name: 'Sort: Featured (asc)' }).click();
     await page.getByRole('button', { name: 'Chain Id', exact: true }).click();
 
-    // First chain should be different after sorting by Chain Id
-    const firstChainById = await chainButtons.nth(1).textContent();
-    expect(firstChainById).not.toBe(firstChainDefault);
+    const names = await visibleChainNames(page);
+    expect(names.indexOf('ethereum')).toBeLessThan(names.indexOf('optimism'));
+    expect(names.indexOf('optimism')).toBeLessThan(names.indexOf('bsc'));
+    expect(names.indexOf('bsc')).toBeLessThan(names.indexOf('base'));
   });
 
   test('should toggle sort order', async ({ page }) => {
@@ -46,20 +51,18 @@ test.describe('Chain Selection - Sort Chains', () => {
 
     await getOriginTokenButton(page).click();
 
-    const chainButtons = page.locator('button[class*="border-l-2"]');
-
     // Switch from default Featured sort to Name asc.
     await page.getByRole('button', { name: 'Sort: Featured (asc)' }).click();
     await page.getByRole('button', { name: 'Name', exact: true }).click();
 
-    // Name asc first chain should start with 'A' or 'B'.
-    await expect(chainButtons.nth(1)).toContainText(/^[A-B]/);
+    const ascNames = await visibleChainNames(page);
+    expect(ascNames).toEqual([...ascNames].sort((a, b) => a.localeCompare(b)));
 
     // Open sort and toggle order to desc
     await page.getByRole('button', { name: 'Sort: Name (asc)' }).click();
     await page.getByRole('button', { name: 'Toggle sort order' }).click();
 
-    // First chain should now start with Z
-    await expect(chainButtons.nth(1)).toContainText(/^[Z]/);
+    const descNames = await visibleChainNames(page);
+    expect(descNames).toEqual([...descNames].sort((a, b) => b.localeCompare(a)));
   });
 });

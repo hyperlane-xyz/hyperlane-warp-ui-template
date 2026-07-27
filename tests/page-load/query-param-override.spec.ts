@@ -2,62 +2,56 @@
 // seed: tests/page-load/transfer-form-visible.spec.ts
 
 import { test, expect } from '@playwright/test';
-import { config } from '../../src/consts/config';
 import { getOriginTokenButton, getDestinationTokenButton } from '../helpers/locators';
 
 test.describe('Page Load - Query Param Token Override', () => {
   test('should use query params to set origin and destination tokens', async ({ page }) => {
-    // 1. Navigate to app with query params to override origin and destination tokens to ETH
+    // 1. Navigate to app with address-based engine token params.
     await page.goto(
-      'http://localhost:3000?origin=base&originToken=ETH&destination=ethereum&destinationToken=ETH',
+      'http://localhost:3000?origin=base&originToken=0x0000000000000000000000000000000000000000&destination=ethereum&destinationToken=0x0000000000000000000000000000000000000000',
     );
 
     // 2. Wait for 'Send' text visible
     await page.getByText('Send').first().waitFor({ state: 'visible' });
 
-    // 3. Verify origin: page.getByRole('button', { name: 'base ETH Base' })
-    await expect(page.getByRole('button', { name: 'base ETH Base' })).toBeVisible();
+    // 3. Verify origin chain.
+    await expect(getOriginTokenButton(page)).toHaveAttribute('data-chain', 'base');
 
-    // 4. Verify destination: page.getByRole('button', { name: 'ethereum ETH Ethereum' })
-    await expect(page.getByRole('button', { name: 'ethereum ETH Ethereum' })).toBeVisible();
+    // 4. Verify destination chain.
+    await expect(getDestinationTokenButton(page)).toHaveAttribute('data-chain', 'ethereum');
 
     // 5. Verify page.url() includes 'origin=base'
     await expect(page).toHaveURL(/origin=base/);
   });
 
-  test('should fall back to config defaults with invalid query params', async ({ page }) => {
+  test('should handle invalid query params gracefully', async ({ page }) => {
     await page.goto(
       'http://localhost:3000?origin=nonexistent&originToken=FAKE&destination=nonexistent&destinationToken=FAKE',
     );
     await page.getByText('Send').first().waitFor({ state: 'visible' });
 
-    // Should fall back to config defaults
     const originButton = getOriginTokenButton(page);
     await expect(originButton).toBeVisible();
-    if (config.defaultOriginToken) {
-      const [originChain, originSymbol] = config.defaultOriginToken.split('-');
-      await expect(originButton).toHaveAttribute('data-chain', originChain);
-      await expect(originButton).toContainText(originSymbol);
-    }
+    await expect(originButton).not.toHaveAttribute('data-chain');
+    await expect(originButton).toContainText('Select token');
 
     const destButton = getDestinationTokenButton(page);
     await expect(destButton).toBeVisible();
-    if (config.defaultDestinationToken) {
-      const [destChain, destSymbol] = config.defaultDestinationToken.split('-');
-      await expect(destButton).toHaveAttribute('data-chain', destChain);
-      await expect(destButton).toContainText(destSymbol);
-    }
+    await expect(destButton).not.toHaveAttribute('data-chain');
+    await expect(destButton).toContainText('Select token');
   });
 
   test('should handle partial query params (origin only)', async ({ page }) => {
     // 1. Navigate with partial query params (origin only)
-    await page.goto('http://localhost:3000?origin=base&originToken=ETH');
+    await page.goto(
+      'http://localhost:3000?origin=base&originToken=0x0000000000000000000000000000000000000000',
+    );
 
     // 2. Wait for 'Send' text visible
     await page.getByText('Send').first().waitFor({ state: 'visible' });
 
-    // 3. Verify origin: page.getByRole('button', { name: 'base ETH Base' })
-    await expect(page.getByRole('button', { name: 'base ETH Base' })).toBeVisible();
+    // 3. Verify origin chain.
+    await expect(getOriginTokenButton(page)).toHaveAttribute('data-chain', 'base');
 
     // 4. Verify destination is visible: page.getByTestId('token-select-destination')
     await expect(page.getByTestId('token-select-destination')).toBeVisible();

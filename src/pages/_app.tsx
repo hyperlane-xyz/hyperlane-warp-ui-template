@@ -12,6 +12,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import '../../sentry.client.config';
 import { ErrorBoundary } from '../components/errors/ErrorBoundary';
 import { AppLayout } from '../components/layout/AppLayout';
+import { AppContextInitGate } from '../features/AppContextInitGate';
 import { TransactionDeliveryWatcher } from '../features/messages/TransactionDeliveryWatcher';
 import { ThemeProvider } from '../features/theme/ThemeContext';
 import { initE2EStateIfEnabled } from '../features/wallet/_e2e/windowState';
@@ -22,7 +23,6 @@ import { RadixWalletContext } from '../features/wallet/context/RadixWalletContex
 import { SolanaWalletContext } from '../features/wallet/context/SolanaWalletContext';
 import { StarknetWalletContext } from '../features/wallet/context/StarknetWalletContext';
 import { TronWalletContext } from '../features/wallet/context/TronWalletContext';
-import { WarpContextInitGate } from '../features/WarpContextInitGate';
 
 import '../styles/embed-theme.css';
 import { parseEmbedTheme } from '../styles/embedTheme';
@@ -41,7 +41,7 @@ const reactQueryClient = new QueryClient({
 
 /**
  * Sets embed-mode class + CSS variables on <body> early so the loading
- * screen (WarpContextInitGate) is also themed.
+ * screen (AppContextInitGate) is also themed.
  */
 function useEarlyEmbedMode(isEmbed: boolean) {
   useEffect(() => {
@@ -91,7 +91,7 @@ export default function App({ Component, pageProps }: AppProps) {
     <div className="font-primary text-black">
       <ErrorBoundary>
         <QueryClientProvider client={reactQueryClient}>
-          <WarpContextInitGate>
+          <AppContextInitGate>
             <EvmWalletContext>
               <SolanaWalletContext>
                 <CosmosWalletContext>
@@ -110,7 +110,7 @@ export default function App({ Component, pageProps }: AppProps) {
                 </CosmosWalletContext>
               </SolanaWalletContext>
             </EvmWalletContext>
-          </WarpContextInitGate>
+          </AppContextInitGate>
         </QueryClientProvider>
         <ToastContainer transition={Zoom} position="bottom-right" limit={2} />
       </ErrorBoundary>

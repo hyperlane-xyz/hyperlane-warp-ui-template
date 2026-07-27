@@ -32,8 +32,7 @@ export function StarknetWalletContext({ children }: PropsWithChildren<unknown>) 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [e2e]);
 
-  // Because at least one chain is required, we need an initial chain here,
-  // because chains are built based on MultiProvider and existing chains from warp routes
+  // StarknetConfig requires at least one chain before async app context loads.
   const uniqueChains = useMemo(() => {
     //
     const combinedChains = [...chainsFromRegistry, initialChain];

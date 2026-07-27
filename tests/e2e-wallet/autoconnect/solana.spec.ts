@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { selectOriginToken } from '../helpers/formFlow';
+import { selectOriginTokenOnChain } from '../helpers/formFlow';
 import { openE2EApp } from '../helpers/page-setup';
 
 // Deterministic Keypair.fromSeed(0xe2... ×32).publicKey shortened via
@@ -12,7 +12,7 @@ test.describe('Solana mock adapter: auto-connect', () => {
     await openE2EApp(page);
 
     // Switch origin to a Solana chain so the Solana wallet dropdown renders.
-    await selectOriginToken(page, /solanamainnet USDC/i);
+    await selectOriginTokenOnChain(page, /solanamainnet Solana/i, /solanamainnet USDC Solana/i);
 
     // Assert the Solana mock's specific shortened pubkey is visible — the
     // previous generic `[1-9A-HJ-NP-Za-km-z]{3,}\.\.\.` matcher also matched

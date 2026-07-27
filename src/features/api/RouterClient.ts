@@ -2,10 +2,12 @@
 import { config } from '../../consts/config';
 import {
   ChainsResponseSchema,
+  AvailableRoutesResponseSchema,
   HealthResponseSchema,
   QuoteResponseSchema,
   ReadinessResponseSchema,
   TokensResponseSchema,
+  type AvailableRoutesResponse,
   type ChainsResponse,
   type QuoteResponse,
   type ReadinessResponse,
@@ -24,6 +26,13 @@ export interface QuoteParams {
   slippageBps?: number;
   /** Optional client-supplied salt; engine generates one if absent. */
   commitmentSalt?: `0x${string}`;
+}
+
+export interface AvailableRoutesParams {
+  srcChain?: string | number | null;
+  srcToken?: string | null;
+  dstChain?: string | number | null;
+  dstToken?: string | null;
 }
 
 export class RouterClient {
@@ -63,6 +72,38 @@ export class RouterClient {
     }
     const qs = params.toString();
     return this.get(`/v1/tokens${qs ? `?${qs}` : ''}`, TokensResponseSchema);
+  }
+
+  availableRoutes(params: AvailableRoutesParams): Promise<AvailableRoutesResponse> {
+    const search = new URLSearchParams();
+    const { srcChain, srcToken, dstChain, dstToken } = params;
+    const hasSource = srcChain != null && srcToken != null;
+    const hasDestination = dstChain != null && dstToken != null;
+
+    if ((srcChain != null) !== (srcToken != null)) {
+      throw new Error('Available routes requires srcChain and srcToken together');
+    }
+
+    if ((dstChain != null) !== (dstToken != null)) {
+      throw new Error('Available routes requires dstChain and dstToken together');
+    }
+
+    if (hasSource && hasDestination) {
+      throw new Error('Available routes requires exactly one source or destination token');
+    }
+
+    if (!hasSource && !hasDestination) {
+      throw new Error('Available routes requires exactly one source or destination token');
+    }
+
+    if (hasSource) {
+      search.set('srcChain', String(srcChain));
+      search.set('srcToken', srcToken);
+    } else if (dstChain != null && dstToken != null) {
+      search.set('dstChain', String(dstChain));
+      search.set('dstToken', dstToken);
+    }
+    return this.get(`/v1/available-routes?${search.toString()}`, AvailableRoutesResponseSchema);
   }
 
   async quote(params: QuoteParams): Promise<QuoteResponse> {

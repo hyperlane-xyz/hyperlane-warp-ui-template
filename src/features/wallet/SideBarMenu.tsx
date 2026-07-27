@@ -1,9 +1,8 @@
-import { normalizeAddress } from '@hyperlane-xyz/utils';
-import { RefreshIcon, SpinnerIcon } from '@hyperlane-xyz/widgets';
+import { SpinnerIcon } from '@hyperlane-xyz/widgets';
 import { AccountList } from '@hyperlane-xyz/widgets/walletIntegrations/AccountList';
 import { useAccounts } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import Image from 'next/image';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import { ChainLogo } from '../../components/icons/ChainLogo';
@@ -12,42 +11,13 @@ import { config } from '../../consts/config';
 import ArrowRightIcon from '../../images/icons/arrow-right.svg';
 import CollapseIcon from '../../images/icons/collapse-icon.svg';
 import { formatTransferHistoryTimestamp } from '../../utils/date';
-import { logger } from '../../utils/logger';
+import { formatBalance } from '../balances/utils';
 import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
-import { MessageStatus } from '../messages/types';
-import {
-  messageToTransferContext,
-  TransferItem,
-  TransferItemType,
-  useMergedTransferHistory,
-} from '../messages/useMergedTransferHistory';
-import { useMessageHistory } from '../messages/useMessageHistory';
-import {
-  type AppState,
-  type TransactionHistoryItem,
-  TransactionHistoryItemType,
-  useStore,
-} from '../store';
-import { formatBalance as formatSwapBalance } from '../swap/balances/utils';
-import { getTokenByKeyFromMap } from '../swap/tokens/hooks';
-import { FinalSwapStatuses, SwapHistoryItem, SwapStatus } from '../swap/types';
-import { tryFindToken, useWarpCore } from '../tokens/hooks';
-import { computeDestAmount, formatMessageAmount } from '../transfer/scaleUtils';
-import { TransfersDetailsModal } from '../transfer/TransfersDetailsModal';
-import { TransferContext, TransferStatus } from '../transfer/types';
-import { getIconByTransferStatus, STATUSES_WITH_ICON } from '../transfer/utils';
+import { type TransactionHistoryItem, TransactionHistoryItemType, useStore } from '../store';
+import { getTokenByKeyFromMap } from '../tokens/hooks';
+import { FinalTransferStatuses, TransferStatus } from '../transfer/engine/types';
 import { startRelativeTimeTicker } from './relativeTimeTicker';
-
-const HistoryItemType = {
-  ...TransferItemType,
-  Swap: TransactionHistoryItemType.Swap,
-} as const;
-
-type HistoryItem =
-  | (Extract<TransferItem, { type: typeof TransferItemType.Local }> & { transactionId?: string })
-  | Extract<TransferItem, { type: typeof TransferItemType.Api }>
-  | { type: typeof HistoryItemType.Swap; data: SwapHistoryItem; transactionId: string };
 
 export function SideBarMenu({
   onClickConnectWallet,
@@ -60,177 +30,35 @@ export function SideBarMenu({
 }) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedTransfer, setSelectedTransfer] = useState<{
-    transactionId?: string;
-    data: TransferContext;
-  } | null>(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
-
   const multiProvider = useMultiProvider();
-
-  const { transactionHistory, originChainName, routerAddressesByChainMap, knownTokens } = useStore(
-    (s) => ({
-      transactionHistory: s.transactionHistory,
-      originChainName: s.originChainName,
-      routerAddressesByChainMap: s.routerAddressesByChainMap,
-      knownTokens: s.knownTokens,
-    }),
-  );
+  const { transactionHistory, originChainName, knownTokens } = useStore((s) => ({
+    transactionHistory: s.transactionHistory,
+    originChainName: s.originChainName,
+    knownTokens: s.knownTokens,
+  }));
   const setSelectedTransactionId = useStore((s) => s.setSelectedTransactionId);
 
-  const bridgeTransactions = useMemo(
+  useAccounts(multiProvider, config.addressBlacklist);
+
+  const historyItems = useMemo(
     () =>
-      transactionHistory.filter(
-        (item): item is Extract<TransactionHistoryItem, { type: 'bridge' }> =>
-          item.type === TransactionHistoryItemType.Bridge,
-      ),
+      transactionHistory
+        .filter(
+          (
+            item,
+          ): item is Extract<
+            TransactionHistoryItem,
+            { type: typeof TransactionHistoryItemType.Transfer }
+          > => item.type === TransactionHistoryItemType.Transfer,
+        )
+        .sort((a, b) => b.data.timestamp - a.data.timestamp),
     [transactionHistory],
   );
-  const bridgeTransferData = useMemo(
-    () => bridgeTransactions.map((item) => item.data),
-    [bridgeTransactions],
-  );
-  const prevBridgeTransactionsLengthRef = useRef(bridgeTransactions.length);
-
-  // Get all connected wallet addresses (normalized for consistent matching)
-  const { accounts } = useAccounts(multiProvider, config.addressBlacklist);
-  const walletAddresses = useMemo(() => {
-    const addresses: string[] = [];
-    for (const accountInfo of Object.values(accounts)) {
-      if (accountInfo.addresses) {
-        for (const addrInfo of accountInfo.addresses) {
-          if (addrInfo.address) {
-            addresses.push(normalizeAddress(addrInfo.address));
-          }
-        }
-      }
-    }
-    return addresses;
-  }, [accounts]);
-
-  // Get all warp route addresses from configured routes (already normalized)
-  const warpRouteAddresses = useMemo(() => {
-    const addresses: string[] = [];
-    for (const addressSet of Object.values(routerAddressesByChainMap)) {
-      for (const addr of addressSet) {
-        addresses.push(addr);
-      }
-    }
-    return addresses;
-  }, [routerAddressesByChainMap]);
-
-  // Fetch message history from API
-  const { messages, isLoading, isRefreshing, hasMore, loadMore, refresh } = useMessageHistory(
-    walletAddresses,
-    warpRouteAddresses,
-    multiProvider,
-  );
-
-  const swapMessageIds = useMemo(() => {
-    const ids = new Set<string>();
-    for (const item of transactionHistory) {
-      if (item.type !== TransactionHistoryItemType.Swap) continue;
-      if (!FinalSwapStatuses.includes(item.data.status)) continue;
-      for (const msg of item.data.msgIds ?? []) ids.add(msg.msgId.toLowerCase());
-    }
-    return ids;
-  }, [transactionHistory]);
-
-  const visibleMessages = useMemo(
-    () => messages.filter((message) => !swapMessageIds.has(message.msgId.toLowerCase())),
-    [messages, swapMessageIds],
-  );
-
-  // Merge local bridge transactions with API messages
-  const warpCore = useWarpCore();
-  const allMergedTransfers = useMergedTransferHistory(bridgeTransferData, visibleMessages);
-
-  // Filter out API messages with unknown tokens
-  const mergedTransfers = useMemo(
-    () =>
-      allMergedTransfers.filter((item) => {
-        if (item.type === TransferItemType.Local) return true;
-        const originChain = multiProvider.tryGetChainName(item.data.originDomainId);
-        if (!originChain) return false;
-        return !!tryFindToken(warpCore, originChain, item.data.sender);
-      }),
-    [allMergedTransfers, multiProvider, warpCore],
-  );
-
-  const bridgeTransactionIdsByData = useMemo(() => {
-    const ids = new Map<TransferContext, string>();
-    for (const item of bridgeTransactions) ids.set(item.data, item.id);
-    return ids;
-  }, [bridgeTransactions]);
-
-  const historyItems = useMemo<HistoryItem[]>(() => {
-    const bridgeItems = mergedTransfers.map((item): HistoryItem => {
-      if (item.type !== TransferItemType.Local) return item;
-      return {
-        ...item,
-        transactionId: bridgeTransactionIdsByData.get(item.data),
-      };
-    });
-    const swapItems: HistoryItem[] = transactionHistory
-      .filter(
-        (
-          item,
-        ): item is Extract<
-          TransactionHistoryItem,
-          { type: typeof TransactionHistoryItemType.Swap }
-        > => item.type === TransactionHistoryItemType.Swap,
-      )
-      .map((item) => ({
-        type: HistoryItemType.Swap,
-        data: item.data,
-        transactionId: item.id,
-      }));
-    return [...bridgeItems, ...swapItems].sort((a, b) => getItemTimestamp(b) - getItemTimestamp(a));
-  }, [bridgeTransactionIdsByData, mergedTransfers, transactionHistory]);
-
-  // Infinite scroll handler
-  const handleScroll = useCallback(() => {
-    const container = scrollContainerRef.current;
-    if (!container || isLoading || !hasMore) return;
-
-    const { scrollTop, scrollHeight, clientHeight } = container;
-    if (scrollHeight - scrollTop - clientHeight < 100) {
-      loadMore();
-    }
-  }, [isLoading, hasMore, loadMore]);
 
   const onCopySuccess = () => {
     toast.success('Address copied to clipboard', { autoClose: 2000 });
   };
-
-  const handleItemClick = (item: HistoryItem) => {
-    if (item.type === HistoryItemType.Swap) {
-      setSelectedTransactionId(item.transactionId);
-      return;
-    }
-    if (item.type === HistoryItemType.Local) {
-      setSelectedTransfer({ transactionId: item.transactionId, data: item.data });
-    } else {
-      setSelectedTransfer({ data: messageToTransferContext(item.data, multiProvider, warpCore) });
-    }
-    setIsModalOpen(true);
-  };
-
-  // Open modal when a new bridge transaction is added. Triggering from loading
-  // state can show stale data because addBridgeTransaction runs after loading starts.
-  useEffect(() => {
-    const prev = prevBridgeTransactionsLengthRef.current;
-    prevBridgeTransactionsLengthRef.current = bridgeTransactions.length;
-    if (bridgeTransactions.length > prev) {
-      const latest = bridgeTransactions[bridgeTransactions.length - 1];
-      if (latest) {
-        setSelectedTransfer({ transactionId: latest.id, data: latest.data });
-        setIsModalOpen(true);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- bridgeTransactions.length increasing guarantees a new bridgeTransactions ref; listing bridgeTransactions would re-run on status updates
-  }, [bridgeTransactions.length]);
 
   useEffect(() => {
     setIsMenuOpen(isOpen);
@@ -244,113 +72,64 @@ export function SideBarMenu({
   }, [isMenuOpen]);
 
   return (
-    <>
-      <div
-        className={`sidebar-menu fixed right-0 top-0 h-full w-88 transform bg-white/95 shadow-lg transition-transform duration-100 ease-in dark:border-l dark:border-primary-300/35 dark:bg-surface/95 ${
-          isMenuOpen
-            ? 'z-10 translate-x-0 dark:shadow-[-8px_0_32px_rgba(0,0,0,0.45)]'
-            : 'z-0 translate-x-full'
-        }`}
-      >
-        {isMenuOpen && (
-          <button
-            className="sidebar-menu-collapse absolute left-0 top-0 flex h-full w-9 -translate-x-full items-center justify-center rounded-l bg-accent-50/30 backdrop-blur-[1.5px] transition-all dark:border-r dark:border-primary-300/25 dark:bg-surface/70"
-            onClick={() => onClose()}
-          >
-            <Image
-              src={CollapseIcon}
-              width={15}
-              height={24}
-              alt=""
-              className="dark:opacity-85 dark:brightness-0 dark:invert"
-            />
-          </button>
-        )}
-        <div
-          ref={scrollContainerRef}
-          onScroll={handleScroll}
-          className="flex h-full w-full flex-col overflow-y-auto"
+    <div
+      className={`sidebar-menu fixed right-0 top-0 h-full w-88 transform bg-white/95 shadow-lg transition-transform duration-100 ease-in dark:border-l dark:border-primary-300/35 dark:bg-surface/95 ${
+        isMenuOpen
+          ? 'z-10 translate-x-0 dark:shadow-[-8px_0_32px_rgba(0,0,0,0.45)]'
+          : 'z-0 translate-x-full'
+      }`}
+    >
+      {isMenuOpen && (
+        <button
+          className="sidebar-menu-collapse absolute left-0 top-0 flex h-full w-9 -translate-x-full items-center justify-center rounded-l bg-accent-50/30 backdrop-blur-[1.5px] transition-all dark:border-r dark:border-primary-300/25 dark:bg-surface/70"
+          onClick={() => onClose()}
         >
-          <div className="sidebar-menu-header w-full bg-accent-gradient px-3.5 py-2 text-base font-normal tracking-wider text-white shadow-accent-glow dark:!shadow-none">
-            Connected Wallets
-          </div>
-          <AccountList
-            multiProvider={multiProvider}
-            onClickConnectWallet={onClickConnectWallet}
-            onCopySuccess={onCopySuccess}
-            className=""
-            chainName={originChainName}
+          <Image
+            src={CollapseIcon}
+            width={15}
+            height={24}
+            alt=""
+            className="dark:opacity-85 dark:brightness-0 dark:invert"
           />
-          <div className="sidebar-menu-header flex w-full items-center justify-between bg-accent-gradient px-3.5 py-2 shadow-accent-glow dark:!shadow-none">
-            <span className="text-base font-normal tracking-wider text-white">
-              Transaction History
-            </span>
-            <button
-              onClick={refresh}
-              disabled={isLoading}
-              className="sidebar-menu-refresh rounded p-1 hover:bg-accent-500/50 disabled:opacity-50"
-              title="Refresh"
-            >
-              <RefreshIcon
-                width={20}
-                height={20}
-                color="white"
-                className={isLoading ? 'animate-spin' : ''}
-              />
-            </button>
-          </div>
-          <div className="flex grow flex-col pb-4">
-            {isRefreshing ? (
-              <div className="flex justify-center px-3.5 py-6">
-                <SpinnerIcon className="h-5 w-5" />
+        </button>
+      )}
+      <div ref={scrollContainerRef} className="flex h-full w-full flex-col overflow-y-auto">
+        <div className="sidebar-menu-header w-full bg-accent-gradient px-3.5 py-2 text-base font-normal tracking-wider text-white shadow-accent-glow dark:!shadow-none">
+          Connected Wallets
+        </div>
+        <AccountList
+          multiProvider={multiProvider}
+          onClickConnectWallet={onClickConnectWallet}
+          onCopySuccess={onCopySuccess}
+          className=""
+          chainName={originChainName}
+        />
+        <div className="sidebar-menu-header flex w-full items-center justify-between bg-accent-gradient px-3.5 py-2 shadow-accent-glow dark:!shadow-none">
+          <span className="text-base font-normal tracking-wider text-white">
+            Transaction History
+          </span>
+        </div>
+        <div className="flex grow flex-col pb-4">
+          <div className="sidebar-menu-list flex w-full grow flex-col divide-y">
+            {historyItems.length === 0 && (
+              <div className="sidebar-menu-empty px-3.5 py-6 text-center text-sm text-gray-500 dark:text-foreground-primary">
+                No transactions yet
               </div>
-            ) : (
-              <>
-                <div className="sidebar-menu-list flex w-full grow flex-col divide-y">
-                  {historyItems.length === 0 && !isLoading && (
-                    <div className="sidebar-menu-empty px-3.5 py-6 text-center text-sm text-gray-500 dark:text-foreground-primary">
-                      No transactions yet
-                    </div>
-                  )}
-                  {historyItems.map((item) => (
-                    <TransferSummary
-                      key={getItemKey(item)}
-                      item={item}
-                      onClick={() => handleItemClick(item)}
-                      multiProvider={multiProvider}
-                      warpCore={warpCore}
-                      knownTokens={knownTokens}
-                      nowMs={nowMs}
-                    />
-                  ))}
-                </div>
-                {isLoading && (
-                  <div className="flex justify-center px-3.5 py-4">
-                    <SpinnerIcon className="h-5 w-5" />
-                  </div>
-                )}
-                {!hasMore && historyItems.length > 0 && (
-                  <div className="sidebar-menu-end px-3.5 py-3 text-center text-xs text-gray-400 dark:text-foreground-primary">
-                    No more transactions
-                  </div>
-                )}
-              </>
             )}
+            {historyItems.map((item) => (
+              <TransferSummary
+                key={item.id}
+                item={item}
+                onClick={() => setSelectedTransactionId(item.id)}
+                multiProvider={multiProvider}
+                knownTokens={knownTokens}
+                nowMs={nowMs}
+              />
+            ))}
           </div>
         </div>
       </div>
-      {selectedTransfer && (
-        <TransfersDetailsModal
-          isOpen={isModalOpen}
-          onClose={() => {
-            setIsModalOpen(false);
-            setSelectedTransfer(null);
-          }}
-          transfer={selectedTransfer.data}
-          transactionId={selectedTransfer.transactionId}
-        />
-      )}
-    </>
+    </div>
   );
 }
 
@@ -358,117 +137,47 @@ function TransferSummary({
   item,
   onClick,
   multiProvider,
-  warpCore,
   knownTokens,
   nowMs,
 }: {
-  item: HistoryItem;
+  item: TransactionHistoryItem;
   onClick: () => void;
   multiProvider: ReturnType<typeof useMultiProvider>;
-  warpCore: ReturnType<typeof useWarpCore>;
-  knownTokens: AppState['knownTokens'];
+  knownTokens: ReturnType<typeof useStore.getState>['knownTokens'];
   nowMs: number;
 }) {
-  const {
-    originChain,
-    destChain,
-    amount,
-    destAmount,
-    status,
-    token,
-    destToken,
-    tokenSymbol,
-    destTokenSymbol,
-    timestamp,
-  } = useMemo(() => {
-    if (item.type === HistoryItemType.Swap) {
-      const swap = item.data;
-      const srcToken = getTokenByKeyFromMap(
-        knownTokens,
-        `${swap.srcChain}-${swap.srcToken.toLowerCase()}`,
-      );
-      const dstToken = getTokenByKeyFromMap(
-        knownTokens,
-        `${swap.dstChain}-${swap.dstToken.toLowerCase()}`,
-      );
-      const originChain =
-        srcToken?.chainName ??
-        swap.srcTokenMeta?.chainName ??
-        multiProvider.tryGetChainName(swap.srcChain) ??
-        '';
-      const destChain =
-        dstToken?.chainName ??
-        swap.dstTokenMeta?.chainName ??
-        multiProvider.tryGetChainName(swap.dstChain) ??
-        '';
-      const srcDecimals = srcToken?.decimals ?? swap.srcTokenMeta?.decimals;
-      const dstDecimals = dstToken?.decimals ?? swap.dstTokenMeta?.decimals;
-      return {
-        originChain,
-        destChain,
-        amount: formatSwapHistoryAmount(swap.amountIn, srcDecimals),
-        destAmount: formatSwapHistoryAmount(swap.amountOut, dstDecimals),
-        status: swapStatusToTransferStatus(swap.status),
-        token: srcToken,
-        destToken: dstToken,
-        tokenSymbol: srcToken?.symbol ?? swap.srcTokenMeta?.symbol,
-        destTokenSymbol: dstToken?.symbol ?? swap.dstTokenMeta?.symbol,
-        timestamp: swap.timestamp,
-      };
-    }
-    if (item.type === TransferItemType.Local) {
-      const t = item.data;
-      const originToken = tryFindToken(warpCore, t.origin, t.originTokenAddressOrDenom);
-      const destinationToken = tryFindToken(warpCore, t.destination, t.destTokenAddressOrDenom);
-      return {
-        originChain: t.origin,
-        destChain: t.destination,
-        amount: t.amount,
-        destAmount: computeDestAmount(t.amount, originToken, destinationToken),
-        status: t.status,
-        token: originToken,
-        destToken: destinationToken,
-        timestamp: t.timestamp,
-      };
-    }
-    const msg = item.data;
-    const originChain = multiProvider.tryGetChainName(msg.originDomainId) || '';
-    const destChain = multiProvider.tryGetChainName(msg.destinationDomainId) || '';
-    const token = tryFindToken(warpCore, originChain, msg.sender);
-
-    let amount = '';
-    if (msg.warpTransfer?.amount && token) {
-      try {
-        amount = formatMessageAmount(msg.warpTransfer.amount, token);
-      } catch (err) {
-        logger.error('Failed to format warp transfer amount', err);
-      }
-    }
-
-    const destToken = tryFindToken(warpCore, destChain, msg.recipient);
-
-    return {
-      originChain,
-      destChain,
-      amount,
-      destAmount: computeDestAmount(amount, token, destToken),
-      status:
-        msg.status === MessageStatus.Delivered
-          ? TransferStatus.Delivered
-          : TransferStatus.ConfirmedTransfer,
-      token,
-      destToken,
-      timestamp: msg.origin.timestamp,
-    };
-  }, [item.type, item.data, multiProvider, warpCore, knownTokens]);
-  const badgeType = item.type === HistoryItemType.Swap ? 'swap' : 'bridge';
+  const transfer = item.data;
+  const srcToken = getTokenByKeyFromMap(
+    knownTokens,
+    `${transfer.srcChain}-${transfer.srcToken.toLowerCase()}`,
+  );
+  const dstToken = getTokenByKeyFromMap(
+    knownTokens,
+    `${transfer.dstChain}-${transfer.dstToken.toLowerCase()}`,
+  );
+  const originChain =
+    srcToken?.chainName ??
+    transfer.srcTokenMeta?.chainName ??
+    multiProvider.tryGetChainName(transfer.srcChain) ??
+    '';
+  const destChain =
+    dstToken?.chainName ??
+    transfer.dstTokenMeta?.chainName ??
+    multiProvider.tryGetChainName(transfer.dstChain) ??
+    '';
+  const srcDecimals = srcToken?.decimals ?? transfer.srcTokenMeta?.decimals;
+  const dstDecimals = dstToken?.decimals ?? transfer.dstTokenMeta?.decimals;
+  const amount = formatHistoryAmount(transfer.amountIn, srcDecimals);
+  const destAmount = formatHistoryAmount(transfer.amountOut, dstDecimals);
+  const tokenSymbol = srcToken?.symbol ?? transfer.srcTokenMeta?.symbol ?? 'Unknown token';
+  const destTokenSymbol = dstToken?.symbol ?? transfer.dstTokenMeta?.symbol;
 
   return (
     <button onClick={onClick} className={`${styles.btn} justify-between py-3`}>
       <div className="flex gap-2.5">
         <div className="flex h-[2.25rem] w-[2.25rem] items-center justify-center">
-          {token ? (
-            <TokenChainIcon token={token} size={32} />
+          {srcToken ? (
+            <TokenChainIcon token={srcToken} size={32} />
           ) : (
             <ChainLogo chainName={originChain} size={32} />
           )}
@@ -483,9 +192,9 @@ function TransferSummary({
             <span
               className={`sidebar-menu-token-text text-sm font-normal text-gray-800 dark:text-foreground-primary ${amount ? 'ml-1' : ''}`}
             >
-              {token?.symbol || tokenSymbol || 'Unknown token'}
+              {tokenSymbol}
             </span>
-            {(destToken || destTokenSymbol) && (
+            {destTokenSymbol && (
               <>
                 <Image
                   className="sidebar-menu-arrow mx-1 dark:opacity-85 dark:brightness-0 dark:invert"
@@ -494,13 +203,13 @@ function TransferSummary({
                   height={10}
                   alt=""
                 />
-                {(destAmount || amount) && (
+                {destAmount && (
                   <span className="sidebar-menu-token-text text-sm font-normal text-gray-800 dark:text-foreground-primary">
-                    {destAmount || amount}
+                    {destAmount}
                   </span>
                 )}
                 <span className="sidebar-menu-token-text ml-1 text-sm font-normal text-gray-800 dark:text-foreground-primary">
-                  {destToken?.symbol || destTokenSymbol}
+                  {destTokenSymbol}
                 </span>
               </>
             )}
@@ -519,83 +228,35 @@ function TransferSummary({
             <span className="sidebar-menu-route-text text-xxs font-normal leading-4 tracking-wide text-gray-900 dark:text-foreground-primary">
               {getChainDisplayName(multiProvider, destChain, true)}
             </span>
-            <HistoryTypeBadge type={badgeType} />
+            <span className="sidebar-menu-type-badge ml-1.5 inline-flex h-3.5 shrink-0 items-center rounded border border-accent-500/35 bg-accent-50/25 px-1.5 text-[0.55rem] font-medium leading-none text-accent-500 dark:border-primary-300/45 dark:bg-primary-300/15 dark:text-foreground-primary">
+              Transfer
+            </span>
           </div>
           <div className="sidebar-menu-time mt-1 w-full text-left text-xxs font-normal text-gray-500 dark:text-foreground-primary">
-            {formatTransferHistoryTimestamp(timestamp, nowMs)}
+            {formatTransferHistoryTimestamp(transfer.timestamp, nowMs)}
           </div>
         </div>
       </div>
       <div className="ml-2 flex shrink-0 items-center">
-        <div className="flex h-5 w-5">
-          {STATUSES_WITH_ICON.includes(status) ? (
-            <Image src={getIconByTransferStatus(status)} width={25} height={25} alt="" />
-          ) : (
-            <SpinnerIcon className="-ml-1 mr-3 h-5 w-5" />
-          )}
-        </div>
+        {FinalTransferStatuses.includes(transfer.status) ? (
+          <span className="text-xs text-gray-500 dark:text-foreground-secondary">
+            {transfer.status === TransferStatus.ConfirmedDestination ? 'Done' : 'Failed'}
+          </span>
+        ) : (
+          <SpinnerIcon className="-ml-1 mr-3 h-5 w-5" />
+        )}
       </div>
     </button>
   );
 }
 
-function HistoryTypeBadge({ type }: { type: 'bridge' | 'swap' }) {
-  const isSwap = type === 'swap';
-  return (
-    <span
-      className={`sidebar-menu-type-badge ml-1.5 inline-flex h-3.5 shrink-0 items-center rounded border px-1.5 text-[0.55rem] font-medium leading-none dark:text-foreground-primary ${
-        isSwap
-          ? 'border-accent-500/35 bg-accent-50/25 text-accent-500 dark:border-primary-300/45 dark:bg-primary-300/15'
-          : 'border-blue-500/35 bg-blue-50/70 text-blue-600 dark:border-blue-300/40 dark:bg-blue-400/10'
-      }`}
-    >
-      {isSwap ? 'Swap' : 'Bridge'}
-    </span>
-  );
-}
-
-function getItemTimestamp(item: HistoryItem): number {
-  if (item.type === HistoryItemType.Swap || item.type === HistoryItemType.Local)
-    return item.data.timestamp;
-  return item.data.origin.timestamp;
-}
-
-function getItemKey(item: HistoryItem): string {
-  if (item.type === HistoryItemType.Swap) {
-    return `swap-${item.transactionId}`;
-  }
-  if (item.type === TransferItemType.Local) {
-    return `local-${item.data.timestamp}-${item.data.originTxHash || item.data.msgId || ''}`;
-  }
-  return `api-${item.data.msgId}`;
-}
-
-function formatSwapHistoryAmount(amount: string, decimals: number | undefined): string {
+function formatHistoryAmount(amount: string, decimals: number | undefined): string {
   if (decimals == null) return '';
   try {
-    return formatSwapBalance(BigInt(amount), decimals);
+    return formatBalance(BigInt(amount), decimals);
   } catch {
     return '';
   }
-}
-
-function swapStatusToTransferStatus(status: SwapStatus): TransferStatus {
-  const failedSwapStatuses = [
-    SwapStatus.Failed,
-    SwapStatus.DestSwapFailed,
-    SwapStatus.FailedRecovered,
-    SwapStatus.DestFailed,
-  ];
-
-  if (status === SwapStatus.ConfirmedDestination) return TransferStatus.Delivered;
-  if (failedSwapStatuses.includes(status)) return TransferStatus.Failed;
-  if (
-    status === SwapStatus.Bridging ||
-    status === SwapStatus.ConfirmingDestination ||
-    status === SwapStatus.ConfirmingOrigin
-  )
-    return TransferStatus.ConfirmedTransfer;
-  return TransferStatus.ConfirmingTransfer;
 }
 
 const styles = {

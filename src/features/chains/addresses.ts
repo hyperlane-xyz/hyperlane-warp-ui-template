@@ -41,7 +41,7 @@ export async function assembleChainAddresses(
     registryChainAddresses = (await import('@hyperlane-xyz/registry')).chainAddresses;
   }
 
-  // Filter to only chains referenced by the configured warp routes
+  // Filter to only chains supported by the engine.
   registryChainAddresses = objFilter(registryChainAddresses, (c, _a): _a is ChainAddresses =>
     chainsInTokens.includes(c),
   );

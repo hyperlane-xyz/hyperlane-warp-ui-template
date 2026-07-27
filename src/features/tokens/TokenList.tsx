@@ -1,45 +1,32 @@
-import { ChainName, Token } from '@hyperlane-xyz/sdk';
-import { Tooltip, useDebounce } from '@hyperlane-xyz/widgets';
-import React, { useEffect, useMemo, useRef, useState, useTransition } from 'react';
+import { ChainName } from '@hyperlane-xyz/sdk';
+import { useDebounce } from '@hyperlane-xyz/widgets';
+import React, { useEffect, useMemo, useRef } from 'react';
 
 import { TokenChainIcon } from '../../components/icons/TokenChainIcon';
-import { config } from '../../consts/config';
 import { useTokenBalances } from '../balances/hooks';
 import { formatBalance, formatUsd, getUsdValue } from '../balances/utils';
 import { useDisabledChains, useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
-import { useCollateralGroups, useTokens } from './hooks';
-import { TokenSelectionMode } from './types';
+import { useTokens } from './hooks';
+import type { TokenSelectionMode, UiToken } from './types';
 import { useTokenPrices } from './useTokenPrice';
 import {
-  checkTokenPairHasRoute,
-  checkTokenPickerHasRoute,
-  getDefaultTokens,
   getTokenKey,
+  getTokenRouteKind,
+  mergeRouteTokensFirst,
+  type TokenRouteKind,
 } from './utils';
-
-function matchesSearch(
-  token: Token,
-  query: string,
-  multiProvider: ReturnType<typeof useMultiProvider>,
-): boolean {
-  return (
-    token.name.toLowerCase().includes(query) ||
-    token.symbol.toLowerCase().includes(query) ||
-    token.addressOrDenom.toLowerCase().includes(query) ||
-    token.collateralAddressOrDenom?.toLowerCase().includes(query) ||
-    getChainDisplayName(multiProvider, token.chainName).toLowerCase().includes(query)
-  );
-}
 
 interface TokenListProps {
   selectionMode: TokenSelectionMode;
   searchQuery: string;
   chainFilter: ChainName | null;
-  onSelect: (token: Token) => void;
-  counterpartToken?: Token;
+  onSelect: (token: UiToken) => void;
+  counterpartToken?: UiToken;
   /** Recipient address for destination balance lookups */
   recipient?: string;
+  availableRouteTokens: UiToken[];
+  hasAvailableRoutesResult: boolean;
 }
 
 export function TokenList({
@@ -49,62 +36,56 @@ export function TokenList({
   onSelect,
   counterpartToken,
   recipient,
+  availableRouteTokens,
+  hasAvailableRoutesResult,
 }: TokenListProps) {
-  const multiProvider = useMultiProvider();
   const disabledChains = useDisabledChains();
-  const _allTokens = useTokens();
-  const allTokens = useMemo(
-    () =>
-      disabledChains.size > 0
-        ? _allTokens.filter((t) => !disabledChains.has(t.chainName))
-        : _allTokens,
-    [_allTokens, disabledChains],
-  );
-  const collateralGroups = useCollateralGroups();
   const debouncedSearch = useDebounce(searchQuery, 300);
+  const trimmedSearch = debouncedSearch?.trim() || undefined;
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Deferred state for route map - allows UI to render immediately
-  const [tokenRouteMap, setTokenRouteMap] = useState<Map<string, boolean> | null>(null);
-  const [tokenPickerRouteMap, setTokenPickerRouteMap] = useState<Map<string, boolean> | null>(null);
-  const [, startTransition] = useTransition();
+  // Chain names avoid cross-VM numeric selector collisions, e.g. Ethereum
+  // and Radix can both be addressed by numeric chain id 1.
+  const chainSelector = chainFilter ?? undefined;
 
-  // Default token set: featured+routable when featured defined, all tokens otherwise
-  const defaultTokens = useMemo(() => {
-    return getDefaultTokens(allTokens, config.featuredTokens, tokenRouteMap);
-  }, [allTokens, tokenRouteMap]);
+  // Server-side filtering — engine handles chain/search; the picker stops
+  // doing local matchesSearch + chainFilter predicates.
+  const { data: fetched, isLoading: isTokenLoading } = useTokens({
+    chain: chainSelector,
+    search: trimmedSearch,
+  });
+  const filteredRouteTokens = useMemo(
+    () => filterTokens(availableRouteTokens, chainFilter, trimmedSearch, disabledChains),
+    [availableRouteTokens, chainFilter, trimmedSearch, disabledChains],
+  );
+  const allTokens = useMemo(() => {
+    const filteredFetched = filterTokens(fetched, null, undefined, disabledChains);
+    return mergeRouteTokensFirst(filteredRouteTokens, filteredFetched);
+  }, [fetched, filteredRouteTokens, disabledChains]);
 
-  // Tokens to fetch balances for:
-  // Filter active → all matching tokens (no cap)
-  // No filter     → defaultTokens, capped at 50 with routable prioritized
-  const balanceTokens = useMemo(() => {
-    const q = debouncedSearch?.trim().toLowerCase();
+  const directRouteTokenKeys = useMemo(
+    () =>
+      hasAvailableRoutesResult
+        ? new Set(availableRouteTokens.map((token) => getTokenKey(token)))
+        : new Set<string>(),
+    [availableRouteTokens, hasAvailableRoutesResult],
+  );
+  const routePriorityTokenKeys = directRouteTokenKeys;
+  const tokenRouteMap = useMemo(() => {
+    if (selectionMode !== 'destination') return null;
+    if (!counterpartToken) return null;
+    if (!hasAvailableRoutesResult) return null;
 
-    if (q || chainFilter) {
-      return allTokens.filter((t) => {
-        const chainMatch = chainFilter && t.chainName === chainFilter;
-        const searchMatch = q && matchesSearch(t, q, multiProvider);
-        return chainMatch || searchMatch;
-      });
+    const routeMap = new Map<string, TokenRouteKind>();
+    for (const token of allTokens) {
+      const routeKind = getTokenRouteKind(token, directRouteTokenKeys, counterpartToken);
+      if (routeKind) routeMap.set(getTokenKey(token), routeKind);
     }
+    return routeMap;
+  }, [allTokens, counterpartToken, directRouteTokenKeys, hasAvailableRoutesResult, selectionMode]);
 
-    // No filter: routable first, then featured tokens (no cap)
-    // Without featured tokens: routable first, capped at 50
-    const routable: Token[] = [];
-    const rest: Token[] = [];
-    for (const t of defaultTokens) {
-      const hasRoute = tokenRouteMap ? (tokenRouteMap.get(getTokenKey(t)) ?? true) : true;
-      (hasRoute ? routable : rest).push(t);
-    }
+  const balanceTokens = allTokens;
 
-    if (config.featuredTokens.length > 0) return [...routable, ...rest];
-
-    const maxDefault = 50;
-    const combined = [...routable, ...rest];
-    return combined.length <= maxDefault ? combined : combined.slice(0, maxDefault);
-  }, [debouncedSearch, chainFilter, allTokens, defaultTokens, tokenRouteMap, multiProvider]);
-
-  // Fetch balances — use recipient address override only in destination mode
   const addressOverride = selectionMode === 'destination' ? recipient : undefined;
   const {
     balances,
@@ -113,14 +94,13 @@ export function TokenList({
   } = useTokenBalances(balanceTokens, chainFilter ?? 'all', addressOverride);
   const { prices } = useTokenPrices();
 
-  // Build lookup maps: getTokenKey → balance/usdValue
   const { balanceMap, usdMap } = useMemo(() => {
     const bMap = new Map<string, bigint>();
     const uMap = new Map<string, number>();
     for (const token of balanceTokens) {
       const key = getTokenKey(token);
       const bal = balances[key];
-      if (bal != null && bal > 0n) {
+      if (bal != null) {
         bMap.set(key, bal);
         const usd = getUsdValue(token, balances, prices);
         if (usd != null && usd > 0) uMap.set(key, usd);
@@ -130,44 +110,23 @@ export function TokenList({
   }, [balanceTokens, balances, prices]);
 
   const { tokens, isLimited } = useMemo(() => {
-    const q = debouncedSearch?.trim().toLowerCase();
-    const hasFilter = !!q || !!chainFilter;
-
-    // Default view: use defaultTokens; filter active: search all tokens
-    const baseTokens = hasFilter ? allTokens : defaultTokens;
-
-    // Filter by chain
-    const chainFiltered = chainFilter
-      ? baseTokens.filter((t) => t.chainName === chainFilter)
-      : baseTokens;
-
-    // Filter by search query
-    const filtered = chainFiltered.filter((t) => {
-      if (!q) return true;
-      return matchesSearch(t, q, multiProvider);
-    });
-
-    // Sort: routable → USD value → balance → no balance → alphabetical
-    const sorted = [...filtered].sort((a, b) => {
+    const sorted = [...allTokens].sort((a, b) => {
       const aKey = getTokenKey(a);
       const bKey = getTokenKey(b);
 
-      // 1. Routable tokens always first
-      if (tokenRouteMap) {
-        const aHasRoute = tokenRouteMap.get(aKey) ?? true;
-        const bHasRoute = tokenRouteMap.get(bKey) ?? true;
-        if (aHasRoute && !bHasRoute) return -1;
-        if (!aHasRoute && bHasRoute) return 1;
+      if (routePriorityTokenKeys.size > 0) {
+        const aIsDirectRoute = routePriorityTokenKeys.has(aKey);
+        const bIsDirectRoute = routePriorityTokenKeys.has(bKey);
+        if (aIsDirectRoute && !bIsDirectRoute) return -1;
+        if (!aIsDirectRoute && bIsDirectRoute) return 1;
       }
 
-      // 2. USD value descending
       const aUsd = usdMap.get(aKey) ?? 0;
       const bUsd = usdMap.get(bKey) ?? 0;
       if (aUsd > 0 || bUsd > 0) {
         if (aUsd !== bUsd) return bUsd - aUsd;
       }
 
-      // 3. Balance without USD descending
       const aBal = balanceMap.get(aKey) ?? 0n;
       const bBal = balanceMap.get(bKey) ?? 0n;
       if (aBal > 0n || bBal > 0n) {
@@ -175,95 +134,20 @@ export function TokenList({
         if (aBal < bBal) return 1;
       }
 
-      // 4. Symbol alphabetical
       const symbolCompare = a.symbol.localeCompare(b.symbol);
       if (symbolCompare !== 0) return symbolCompare;
-
-      // 5. Chain name alphabetical
       return a.chainName.localeCompare(b.chainName);
     });
 
-    // No filter: cap display at 50 only when no featured tokens
+    const hasFilter = !!trimmedSearch || !!chainFilter;
     const maxDisplay = 50;
-    const shouldCap = !hasFilter && config.featuredTokens.length === 0;
+    const shouldCap = !hasFilter;
     const isLimited = shouldCap && sorted.length > maxDisplay;
     const displayTokens = isLimited ? sorted.slice(0, maxDisplay) : sorted;
 
     return { tokens: displayTokens, isLimited };
-  }, [
-    debouncedSearch,
-    chainFilter,
-    allTokens,
-    defaultTokens,
-    multiProvider,
-    tokenRouteMap,
-    usdMap,
-    balanceMap,
-  ]);
+  }, [allTokens, trimmedSearch, chainFilter, routePriorityTokenKeys, usdMap, balanceMap]);
 
-  // Compute strict current-pair route map for default list gating and sorting.
-  useEffect(() => {
-    startTransition(() => {
-      if (!counterpartToken) {
-        setTokenRouteMap(null);
-        return;
-      }
-
-      const routeMap = new Map<string, boolean>();
-
-      for (const token of allTokens) {
-        const key = getTokenKey(token);
-        const hasRoute = checkTokenPairHasRoute(
-          token,
-          counterpartToken,
-          selectionMode,
-          collateralGroups,
-        );
-        routeMap.set(key, hasRoute);
-      }
-
-      setTokenRouteMap(routeMap);
-    });
-  }, [allTokens, counterpartToken, selectionMode, collateralGroups]);
-
-  // In origin mode the picker warning is counterpart-independent, so gate
-  // this effect on a masked counterpart to avoid rebuilding the display map
-  // when only the destination changes.
-  const counterpartDep = selectionMode === 'destination' ? counterpartToken : null;
-
-  // Compute picker display route map in a transition (non-blocking)
-  useEffect(() => {
-    startTransition(() => {
-      if (selectionMode === 'destination' && !counterpartToken) {
-        setTokenPickerRouteMap(null);
-        return;
-      }
-
-      const routeMap = new Map<string, boolean>();
-
-      for (const token of allTokens) {
-        const key = getTokenKey(token);
-        const hasRoute = checkTokenPickerHasRoute(
-          token,
-          counterpartToken,
-          selectionMode,
-          allTokens,
-          collateralGroups,
-        );
-        routeMap.set(key, hasRoute);
-      }
-
-      setTokenPickerRouteMap(routeMap);
-    });
-    // counterpartToken intentionally omitted: counterpartDep gates this effect.
-    // INVARIANT: checkTokenPickerHasRoute MUST stay counterpart-independent in
-    // origin mode. If that ever changes (e.g. ranking biases on destination),
-    // drop the mask and put counterpartToken back in the deps array — otherwise
-    // tokenRouteMap will silently go stale.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allTokens, counterpartDep, selectionMode, collateralGroups]);
-
-  // Reset scroll when user changes search or chain filter
   useEffect(() => {
     scrollRef.current?.scrollTo(0, 0);
   }, [searchQuery, chainFilter]);
@@ -271,8 +155,12 @@ export function TokenList({
   if (tokens.length === 0) {
     return (
       <div className="token-picker-empty flex flex-1 flex-col items-center justify-center px-4 py-12 text-gray-500">
-        <div className="text-base font-medium">No tokens found</div>
-        <div className="mt-2 text-sm">Try a different search or chain filter</div>
+        <div className="text-base font-medium">
+          {isTokenLoading ? 'Loading tokens…' : 'No tokens found'}
+        </div>
+        {!isTokenLoading && (
+          <div className="mt-2 text-sm">Try a different search or chain filter</div>
+        )}
       </div>
     );
   }
@@ -286,7 +174,6 @@ export function TokenList({
         <div className="py-2 md:px-3">
           {tokens.map((token) => {
             const key = getTokenKey(token);
-            const hasRoute = tokenPickerRouteMap ? (tokenPickerRouteMap.get(key) ?? true) : true;
             const balance = balanceMap.get(key);
             const usdValue = usdMap.get(key) ?? null;
 
@@ -295,12 +182,10 @@ export function TokenList({
                 key={key}
                 token={token}
                 onSelect={onSelect}
-                hasRoute={hasRoute}
-                counterpartToken={counterpartToken}
-                selectionMode={selectionMode}
                 balance={balance}
                 usdValue={usdValue}
                 isBalanceLoading={isBalanceLoading && hasAnyAddress}
+                routeKind={tokenRouteMap?.get(key)}
               />
             );
           })}
@@ -310,11 +195,9 @@ export function TokenList({
               <p className="text-sm text-blue-600">Search or select a chain to see more tokens</p>
             </div>
           )}
-          {/* Spacer for fade effect */}
           <div className="h-10" />
         </div>
       </div>
-      {/* Bottom fade effect */}
       <div className="token-picker-fade pointer-events-none absolute bottom-0 left-0 right-0 hidden h-12 bg-gradient-to-b from-transparent to-cream-200 md:block" />
     </div>
   );
@@ -323,39 +206,23 @@ export function TokenList({
 const TokenButton = React.memo(function TokenButton({
   token,
   onSelect,
-  hasRoute,
-  counterpartToken,
-  selectionMode,
   balance,
   usdValue,
   isBalanceLoading,
+  routeKind,
 }: {
-  token: Token;
-  onSelect: (token: Token) => void;
-  hasRoute: boolean;
-  counterpartToken?: Token;
-  selectionMode: TokenSelectionMode;
+  token: UiToken;
+  onSelect: (token: UiToken) => void;
   balance?: bigint;
   usdValue?: number | null;
   isBalanceLoading: boolean;
+  routeKind?: TokenRouteKind;
 }) {
   const multiProvider = useMultiProvider();
   const chainDisplayName = getChainDisplayName(multiProvider, token.chainName);
-  const counterpartChainName = counterpartToken
-    ? getChainDisplayName(multiProvider, counterpartToken.chainName)
-    : '';
-
-  const routeTooltipMessage = counterpartToken
-    ? selectionMode === 'destination'
-      ? `No route from ${counterpartToken.symbol} on ${counterpartChainName}`
-      : `No available destination from ${token.symbol} on ${chainDisplayName}`
-    : '';
-
   const formattedBalance = balance != null ? formatBalance(balance, token.decimals) : null;
   const formattedUsd = usdValue != null && usdValue > 0 ? formatUsd(usdValue) : null;
-  const showRouteUnavailable = !hasRoute && counterpartToken;
 
-  // Primary = USD if available, else balance. Secondary = balance when USD is primary.
   const primaryValue = formattedUsd ?? formattedBalance;
   const secondaryValue = formattedUsd ? formattedBalance : null;
 
@@ -367,54 +234,79 @@ const TokenButton = React.memo(function TokenButton({
     >
       <TokenChainIcon token={token} size={36} />
 
-      <div className="ml-3 grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(6.75rem,max-content)] items-center gap-3">
-        <div className="min-w-0 text-left">
-          <div className="flex min-w-0 items-center gap-2">
-            <span
-              className={`token-picker-symbol ${styles.base} max-w-[8rem] shrink-0 truncate text-base text-black`}
-            >
-              {token.symbol || 'Unknown'}
-            </span>
-            <span className="token-picker-chain-name min-w-0 truncate text-xs text-gray-500">
-              {chainDisplayName}
-            </span>
-          </div>
-          <div className={`token-picker-name ${styles.base} mt-0.5 truncate text-xs text-gray-500`}>
-            {token.name || 'Unknown Token'}
-          </div>
+      <div className="ml-3 min-w-0 flex-1 text-left">
+        <div className="flex items-center gap-2">
+          <span className={`token-picker-symbol ${styles.base} text-base text-black`}>
+            {token.symbol || 'Unknown'}
+          </span>
+          <span className="token-picker-chain-name text-xs text-gray-500">{chainDisplayName}</span>
+          {routeKind && <RouteKindBadge kind={routeKind} />}
         </div>
+        <div className={`token-picker-name ${styles.base} mt-0.5 truncate text-xs text-gray-500`}>
+          {token.name || 'Unknown Token'}
+        </div>
+      </div>
 
-        <div className="min-w-[6.75rem] justify-self-end text-right tabular-nums">
-          {isBalanceLoading && !primaryValue ? (
-            <div className="token-picker-shimmer mb-1 ml-auto h-4 w-14 animate-pulse rounded bg-gray-100" />
-          ) : primaryValue ? (
-            <>
-              <div className={`token-picker-usd ${styles.base} text-sm font-medium text-black`}>
-                {primaryValue}
-              </div>
-              {secondaryValue && (
-                <div className={`token-picker-meta ${styles.base} text-xs text-gray-400`}>
-                  {secondaryValue}
-                </div>
-              )}
-            </>
-          ) : null}
-          {showRouteUnavailable && (
-            <div className="flex items-center justify-end gap-1 whitespace-nowrap text-[10px] text-gray-400">
-              <span>Route unavailable</span>
-              <Tooltip
-                content={routeTooltipMessage}
-                id={`route-tooltip-${getTokenKey(token)}`}
-                tooltipClassName="token-picker-info-icon max-w-[280px]"
-                onClick={(e) => e.stopPropagation()}
-              />
+      <div className="ml-2 shrink-0 text-right">
+        {isBalanceLoading && !primaryValue ? (
+          <div className="token-picker-shimmer mb-1 ml-auto h-4 w-14 animate-pulse rounded bg-gray-100" />
+        ) : primaryValue ? (
+          <>
+            <div className={`token-picker-usd ${styles.base} text-sm font-medium text-black`}>
+              {primaryValue}
             </div>
-          )}
-        </div>
+            {secondaryValue && (
+              <div className={`token-picker-meta ${styles.base} text-xs text-gray-400`}>
+                {secondaryValue}
+              </div>
+            )}
+          </>
+        ) : null}
       </div>
     </button>
   );
 });
+
+function RouteKindBadge({ kind }: { kind: TokenRouteKind }) {
+  const className =
+    kind === 'bridge'
+      ? 'border-blue-200 bg-blue-50 text-blue-600'
+      : 'border-pink-200 bg-pink-50 text-pink-600';
+
+  return (
+    <span
+      aria-hidden="true"
+      data-route-kind={kind}
+      className={`rounded border px-1.5 py-0.5 text-[10px] leading-none ${className}`}
+    >
+      {kind === 'bridge' ? 'Bridge' : 'Swap'}
+    </span>
+  );
+}
+
+function filterTokens(
+  tokens: UiToken[],
+  chainFilter: ChainName | null,
+  search: string | undefined,
+  disabledChains: Set<string>,
+): UiToken[] {
+  return tokens.filter((token) => {
+    if (disabledChains.has(token.chainName)) return false;
+    if (chainFilter && token.chainName !== chainFilter) return false;
+    if (search && !matchesTokenSearch(token, search)) return false;
+    return true;
+  });
+}
+
+function matchesTokenSearch(token: UiToken, search: string): boolean {
+  const query = search.toLowerCase();
+  return (
+    token.symbol.toLowerCase().includes(query) ||
+    token.name.toLowerCase().includes(query) ||
+    token.address.toLowerCase().includes(query) ||
+    token.chainName.toLowerCase().includes(query)
+  );
+}
 
 const styles = {
   base: 'font-secondary font-normal',

@@ -42,7 +42,7 @@ export function useSolanaMailboxDeliveryStatus({
   multiProvider,
   enabled,
 }: {
-  msgId: string;
+  msgId: string | undefined;
   destinationChain: ChainName | undefined;
   chainAddresses: ChainMap<ChainAddresses>;
   multiProvider: MultiProtocolProvider;
@@ -53,7 +53,9 @@ export function useSolanaMailboxDeliveryStatus({
   const { data } = useQuery({
     queryKey: ['solanaMailboxDelivery', destinationChain, mailbox, msgId],
     queryFn: async () => {
-      if (!destinationChain) return { isDelivered: false, destinationTxHash: undefined };
+      if (!destinationChain || !msgId) {
+        return { isDelivered: false, destinationTxHash: undefined };
+      }
       return getSolanaMailboxDeliveryStatus({
         msgId,
         destinationChain,
@@ -61,7 +63,12 @@ export function useSolanaMailboxDeliveryStatus({
         multiProvider,
       });
     },
-    enabled: enabled && !!destinationChain && !!mailbox && destProtocol === ProtocolType.Sealevel,
+    enabled:
+      enabled &&
+      !!msgId &&
+      !!destinationChain &&
+      !!mailbox &&
+      destProtocol === ProtocolType.Sealevel,
     refetchInterval: (query) => {
       if (query.state.data?.isDelivered) return false;
       return MAILBOX_DELIVERY_POLL_INTERVAL_MS;

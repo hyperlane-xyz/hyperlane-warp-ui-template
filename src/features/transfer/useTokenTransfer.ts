@@ -1,11 +1,11 @@
-import {
-  ProviderType,
+import type {
   QuotedCallsParams,
   Token,
   TypedTransactionReceipt,
   WarpCore,
-  WarpTxCategory,
 } from '@hyperlane-xyz/sdk';
+import { ProviderType } from '@hyperlane-xyz/sdk/providers/ProviderType';
+import { WarpTxCategory } from '@hyperlane-xyz/sdk/warp/types';
 import { toTitleCase, toWei } from '@hyperlane-xyz/utils';
 import {
   getAccountAddressForChain,
@@ -213,7 +213,7 @@ async function executeTransfer({
       destination,
       sender,
       recipient,
-      // quotedCalls and attestation are mutually exclusive in the SDK; predicate
+      // Quoted transfers and attestations are mutually exclusive; predicate
       // routes take the wrapper path, plain routes can use offchain quoting.
       quotedCalls: attestationResult ? undefined : quotedCallsParams,
       attestation: attestationResult?.attestation,

@@ -1,12 +1,11 @@
+import type { CoreAddresses } from '@hyperlane-xyz/sdk/core/contracts';
+import type { MultiProtocolCore } from '@hyperlane-xyz/sdk/core/MultiProtocolCore';
 import {
-  ChainMap,
-  ChainName,
-  CoreAddresses,
-  MultiProtocolCore,
   ProviderType,
-  TypedTransactionReceipt,
-  ViemProvider,
-} from '@hyperlane-xyz/sdk';
+  type TypedTransactionReceipt,
+  type ViemProvider,
+} from '@hyperlane-xyz/sdk/providers/ProviderType';
+import type { ChainMap, ChainName } from '@hyperlane-xyz/sdk/types';
 import { ensure0x, isValidAddress, isValidAddressEvm } from '@hyperlane-xyz/utils';
 import { concat, getAddress, keccak256, toHex } from 'viem';
 import type { Hex } from 'viem';
@@ -122,6 +121,7 @@ export async function tryGetMsgIdFromTransferReceipt(
         };
         return acc;
       }, {});
+    const { MultiProtocolCore } = await import('@hyperlane-xyz/sdk/core/MultiProtocolCore');
     const core = new MultiProtocolCore(multiProvider, addressStubs);
     const messages = await core.extractMessageIds(origin, receipt);
     if (messages.length) {

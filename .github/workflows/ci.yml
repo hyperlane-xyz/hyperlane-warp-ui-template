@@ -54,6 +54,9 @@ jobs:
         env:
           NEXT_PUBLIC_WALLET_CONNECT_ID: ${{ secrets.NEXT_PUBLIC_WALLET_CONNECT_ID }}
 
+      - name: Check bundle size
+        run: pnpm check:bundle
+
   typecheck:
     runs-on: ubuntu-latest
     steps:

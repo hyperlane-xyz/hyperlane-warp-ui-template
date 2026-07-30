@@ -430,6 +430,9 @@ export const warpRouteWhitelist: Array<string> | null = [
 
   // CROSS routes
   'CROSS/moonpay',
+
+  // KII routes
+  'KII/kiichain',
 ];
 
 /**

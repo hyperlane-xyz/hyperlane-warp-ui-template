@@ -1,4 +1,6 @@
-import { IToken, MultiProtocolProvider, Token } from '@hyperlane-xyz/sdk';
+import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProtocolProvider';
+import type { IToken } from '@hyperlane-xyz/sdk/token/IToken';
+import type { Token } from '@hyperlane-xyz/sdk/token/Token';
 import { ProtocolType, getAddressProtocolType, isValidAddress } from '@hyperlane-xyz/utils';
 import { useCosmosAccount } from '@hyperlane-xyz/widgets/walletIntegrations/cosmos';
 import { useEthereumAccount } from '@hyperlane-xyz/widgets/walletIntegrations/ethereum';
@@ -16,10 +18,6 @@ import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { useStore } from '../store';
 import { getTokenKey } from '../tokens/utils';
-import { fetchCosmosChainBalances, groupCosmosTokensByChain } from './cosmos';
-import { fetchChainBalances, groupEvmTokensByChain } from './evm';
-import { fetchSealevelChainBalances, groupSealevelTokensByChain } from './svm';
-import { fetchSdkBalance } from './tokens';
 
 export function useBalance(chain?: ChainName, token?: IToken, address?: Address) {
   const multiProvider = useMultiProvider();
@@ -69,6 +67,7 @@ export async function getDestinationNativeBalance(
 ) {
   try {
     const chainMetadata = multiProvider.getChainMetadata(destination);
+    const { Token } = await import('@hyperlane-xyz/sdk/token/Token');
     const token = Token.FromChainMetadataNativeToken(chainMetadata);
     const balance = await token.getBalance(multiProvider, recipient);
     return balance.amount;
@@ -179,12 +178,14 @@ export function useTokenBalances(tokens: Token[], scope: string, addressOverride
       // EVM
       const evmAddr = effectiveAddresses.get(ProtocolType.Ethereum);
       if (evmAddr) {
+        const { fetchChainBalances, groupEvmTokensByChain } = await import('./evm');
         const { chainGroups, fallbackTokens } = groupEvmTokensByChain(tokens, multiProvider);
         for (const [chainId, group] of chainGroups) {
           promises.push(
             fetchChainBalances(chainId, group, multiProvider, evmAddr as Hex, chainAddresses),
           );
         }
+        const { fetchSdkBalance } = await import('./tokens');
         for (const { token, key } of fallbackTokens) {
           promises.push(fetchSdkBalance(token, multiProvider, evmAddr, key));
         }
@@ -193,6 +194,7 @@ export function useTokenBalances(tokens: Token[], scope: string, addressOverride
       // Sealevel
       const solAddr = effectiveAddresses.get(ProtocolType.Sealevel);
       if (solAddr) {
+        const { fetchSealevelChainBalances, groupSealevelTokensByChain } = await import('./svm');
         const sealevelGroups = groupSealevelTokensByChain(tokens);
         for (const [, group] of sealevelGroups) {
           const rpcUrl = multiProvider.tryGetChainMetadata(group.chainName)?.rpcUrls?.[0]?.http;
@@ -206,6 +208,8 @@ export function useTokenBalances(tokens: Token[], scope: string, addressOverride
       // addressOverride: match bech32 prefix to chain metadata to find the right chain
       const cosmosOverride = effectiveAddresses.get(ProtocolType.Cosmos);
       if (cosmosAddresses.length > 0 || cosmosOverride) {
+        const { fetchCosmosChainBalances, groupCosmosTokensByChain } = await import('./cosmos');
+        const { fetchSdkBalance } = await import('./tokens');
         const cosmosGroups = groupCosmosTokensByChain(tokens);
         for (const [, group] of cosmosGroups) {
           let addr = cosmosAddresses.find((a) => a.chainName === group.chainName)?.address;

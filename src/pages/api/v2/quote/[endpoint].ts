@@ -13,6 +13,22 @@ import { type Hex, isHex } from 'viem';
 const apiKey = process.env.FEE_QUOTING_API_KEY;
 const baseUrl = process.env.NEXT_PUBLIC_FEE_QUOTING_URL || undefined;
 
+// Bound how long a browser request waits on the upstream quoter. The
+// `FeeQuotingV2Client` doesn't expose an AbortSignal, so this only bounds the
+// response we send back (a fast 504 instead of hanging until the platform
+// function timeout) — the in-flight upstream fetch itself can't be cancelled.
+const UPSTREAM_TIMEOUT_MS = 10_000;
+
+class UpstreamTimeoutError extends Error {}
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout>;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new UpstreamTimeoutError('Fee quoting request timed out')), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
 // bytes32 wire encoding (e.g. salt, recipient, targetRouter): 0x + 64 hex chars.
 const BYTES32_HEX_LEN = 2 + 64;
 function isBytes32Hex(v: string): v is Hex {
@@ -83,27 +99,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (!isBytes32Hex(targetRouter)) {
         return res.status(400).json({ message: 'targetRouter must be 32-byte hex' });
       }
-      const quote = await client.getWarpQuote({
-        origin,
-        router,
-        destination: destinationDomainId,
-        salt,
-        recipient,
-        targetRouter,
-        txSubmitter,
-      });
+      const quote = await withTimeout(
+        client.getWarpQuote({
+          origin,
+          router,
+          destination: destinationDomainId,
+          salt,
+          recipient,
+          targetRouter,
+          txSubmitter,
+        }),
+        UPSTREAM_TIMEOUT_MS,
+      );
       const response: QuoteV2Response = { quote };
       return res.status(200).json(response);
     }
 
     // endpoint === QuoteV2Endpoint.Igp
-    const quote = await client.getIgpQuote({
-      origin,
-      router,
-      destination: destinationDomainId,
-      salt,
-      txSubmitter,
-    });
+    const quote = await withTimeout(
+      client.getIgpQuote({
+        origin,
+        router,
+        destination: destinationDomainId,
+        salt,
+        txSubmitter,
+      }),
+      UPSTREAM_TIMEOUT_MS,
+    );
     const response: QuoteV2Response = { quote };
     return res.status(200).json(response);
   } catch (err) {
@@ -117,6 +139,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         detail: err.detail,
       };
       return res.status(404).json(body);
+    }
+    if (err instanceof UpstreamTimeoutError) {
+      console.error('v2 fee quoting request timed out');
+      return res.status(504).json({ message: 'Fee quoting request timed out' });
     }
     // Log full error server-side; return generic message to avoid leaking
     // upstream URLs, status text, or auth hints to the browser.

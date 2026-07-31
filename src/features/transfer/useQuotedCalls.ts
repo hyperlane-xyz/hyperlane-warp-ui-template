@@ -249,6 +249,7 @@ async function fetchQuotedCallsFees(
     destination,
     sender,
     recipient,
+    destinationToken,
   });
 
   // Estimate local gas for the actual QuotedCalls.execute() tx so the UI

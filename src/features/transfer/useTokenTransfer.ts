@@ -1,6 +1,5 @@
 import {
   ProviderType,
-  QuotedCallsParams,
   type QuotedTransferProvider,
   Token,
   TypedTransactionReceipt,
@@ -58,7 +57,6 @@ export function useTokenTransfer(onDone?: () => void) {
     (
       values: TransferFormValues,
       routeOverrideToken: Token | null,
-      quotedCallsParams?: QuotedCallsParams | null,
       quotedTransfer?: QuotedTransferProvider | null,
     ) =>
       executeTransfer({
@@ -73,7 +71,6 @@ export function useTokenTransfer(onDone?: () => void) {
         setIsLoading,
         onDone,
         routeOverrideToken,
-        quotedCallsParams: quotedCallsParams ?? undefined,
         quotedTransfer: quotedTransfer ?? undefined,
       }),
     [
@@ -107,7 +104,6 @@ async function executeTransfer({
   setIsLoading,
   onDone,
   routeOverrideToken,
-  quotedCallsParams,
   quotedTransfer,
 }: {
   warpCore: WarpCore;
@@ -121,7 +117,6 @@ async function executeTransfer({
   setIsLoading: (b: boolean) => void;
   onDone?: () => void;
   routeOverrideToken: Token | null;
-  quotedCallsParams?: QuotedCallsParams;
   quotedTransfer?: QuotedTransferProvider;
 }) {
   logger.debug('Preparing transfer transaction(s)');
@@ -219,9 +214,8 @@ async function executeTransfer({
       sender,
       recipient,
       // Quoted transfers and attestation are mutually exclusive in the SDK;
-      // predicate routes take the EVM wrapper path, plain routes can use
-      // offchain quoting (EVM `quotedCalls` or SVM `quotedTransfer`).
-      quotedCalls: attestationResult ? undefined : quotedCallsParams,
+      // predicate routes take the attestation path, plain routes use offchain
+      // quoting via the protocol-agnostic `quotedTransfer` provider (EVM or SVM).
       quotedTransfer: attestationResult ? undefined : quotedTransfer,
       attestation: attestationResult?.attestation,
       // Pin the IGP quote captured at attestation time so msg_value matches the

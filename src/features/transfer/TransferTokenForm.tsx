@@ -1,6 +1,5 @@
 import {
   IToken,
-  QuotedCallsParams,
   type QuotedTransferProvider,
   Token,
   TokenAmount,
@@ -77,8 +76,7 @@ import { TransferSection } from './TransferSection';
 import { TransferFormValues, TransferStatus } from './types';
 import { useRecipientBalanceWatcher } from './useBalanceWatcher';
 import { useFeeQuotes } from './useFeeQuotes';
-import { type QuotedCallsFeeQuotesResult, useQuotedCallsFeeQuotes } from './useQuotedCalls';
-import { type SvmQuotedTransferResult, useSvmQuotedTransfer } from './useSvmQuotedTransfer';
+import { type QuotedTransferResult, useQuotedTransfer } from './useQuotedTransfer';
 import { useTokenTransfer } from './useTokenTransfer';
 import { isSmartContract, shouldClearAddress } from './utils';
 
@@ -524,25 +522,11 @@ function TransferCheckout({
       ? findConnectedDestinationToken(originToken, destinationTokenByKey)
       : undefined;
 
-  const quotedCalls = useQuotedCallsFeeQuotes(
-    values,
-    isRouteSupported,
-    originToken,
-    destinationToken,
-  );
-
-  // SVM-origin offchain quoting — parallel to `quotedCalls` (EVM). Eagerly
-  // fetches the priced fee via `WarpCore.getQuotedTransferFee` so
-  // `ReviewDetails` can show the actual offchain-quoted value, not the
-  // bps-based on-chain fallback. Submit (`buildQuotedTransferTxs`) re-fetches
-  // independently; both calls hit the same upstream and return matching
-  // values for transient quotes.
-  const svmQuotedTransfer = useSvmQuotedTransfer(
-    values,
-    originToken,
-    destinationToken,
-    isRouteSupported,
-  );
+  // Offchain quoting for both EVM and SVM origins behind one protocol-agnostic
+  // hook — it eagerly fetches the priced fee so `ReviewDetails` shows the
+  // actual offchain-quoted value (not the bps-based on-chain fallback), and
+  // exposes a single provider getter for submit.
+  const quotedTransfer = useQuotedTransfer(values, isRouteSupported, originToken, destinationToken);
 
   return (
     <>
@@ -551,8 +535,7 @@ function TransferCheckout({
         originToken={originToken}
         destinationToken={destinationToken}
         isRouteSupported={isRouteSupported}
-        quotedCalls={quotedCalls}
-        svmQuotedTransfer={svmQuotedTransfer}
+        quotedTransfer={quotedTransfer}
       />
       <ButtonSection
         isReview={isReview}
@@ -560,8 +543,7 @@ function TransferCheckout({
         setIsReview={setIsReview}
         cleanOverrideToken={cleanOverrideToken}
         routeOverrideToken={routeOverrideToken}
-        getQuotedCallsParams={quotedCalls.getQuotedCallsParams}
-        getQuotedTransfer={svmQuotedTransfer.getQuotedTransfer}
+        getQuotedTransfer={quotedTransfer.getQuotedTransfer}
       />
     </>
   );
@@ -573,7 +555,6 @@ function ButtonSection({
   setIsReview,
   cleanOverrideToken,
   routeOverrideToken,
-  getQuotedCallsParams,
   getQuotedTransfer,
 }: {
   isReview: boolean;
@@ -581,7 +562,6 @@ function ButtonSection({
   setIsReview: (b: boolean) => void;
   cleanOverrideToken: () => void;
   routeOverrideToken: Token | null;
-  getQuotedCallsParams: () => Promise<QuotedCallsParams | null>;
   getQuotedTransfer: () => Promise<QuotedTransferProvider | null>;
 }) {
   const { values } = useFormikContext<TransferFormValues>();
@@ -692,14 +672,11 @@ function ButtonSection({
     setTransferLoading(true);
 
     // Wait for any in-flight offchain quote to settle so a quick Send-click
-    // during the first-load / refetch window doesn't fall through to the
-    // plain transferRemote path. EVM and SVM offchain paths are mutually
-    // exclusive (only one is populated based on origin protocol).
-    const [quotedCallsParams, quotedTransfer] = await Promise.all([
-      getQuotedCallsParams(),
-      getQuotedTransfer(),
-    ]);
-    await triggerTransactions(values, routeOverrideToken, quotedCallsParams, quotedTransfer);
+    // during the first-load / refetch window doesn't fall through to the plain
+    // transferRemote path. `getQuotedTransfer` resolves the protocol-agnostic
+    // provider (EVM or SVM) for this route.
+    const quotedTransfer = await getQuotedTransfer();
+    await triggerTransactions(values, routeOverrideToken, quotedTransfer);
     setTransferLoading(false);
   };
 
@@ -783,15 +760,13 @@ function ReviewDetails({
   originToken,
   destinationToken,
   isRouteSupported,
-  quotedCalls,
-  svmQuotedTransfer,
+  quotedTransfer,
 }: {
   isReview: boolean;
   originToken: Token | undefined;
   destinationToken: IToken | undefined;
   isRouteSupported: boolean;
-  quotedCalls: QuotedCallsFeeQuotesResult;
-  svmQuotedTransfer: SvmQuotedTransferResult;
+  quotedTransfer: QuotedTransferResult;
 }) {
   const { values } = useFormikContext<TransferFormValues>();
   const warpCore = useWarpCore();
@@ -806,19 +781,15 @@ function ReviewDetails({
 
   const amountWei = isNft ? amount.toString() : toWei(amount, originToken?.decimals);
 
-  // Offchain fee quoting (when configured) — owned by TransferCheckout.
-  // EVM and SVM origins use parallel hooks; only one fires at a time because
-  // each gates on its own origin protocol. Combine here into a single
-  // `offchainFeeQuotes` source-of-truth so the on-chain fallback only kicks
-  // in when both paths have settled with no result.
+  // Offchain fee quoting (when configured) — owned by TransferCheckout via the
+  // unified `useQuotedTransfer` hook, which already resolves the active origin
+  // (EVM/SVM) into one `fees` source. On-chain quoting is the fallback when
+  // this has settled with no result.
   const {
-    isLoading: isEvmOffchainLoading,
-    fees: evmOffchainFeeQuotes,
+    isLoading: isOffchainQuoteLoading,
+    fees: offchainFeeQuotes,
     quotedCallsParams,
-  } = quotedCalls;
-  const { isLoading: isSvmOffchainLoading, fees: svmOffchainFeeQuotes } = svmQuotedTransfer;
-  const offchainFeeQuotes = evmOffchainFeeQuotes ?? svmOffchainFeeQuotes;
-  const isOffchainQuoteLoading = isEvmOffchainLoading || isSvmOffchainLoading;
+  } = quotedTransfer;
 
   // Onchain fee quoting: used as fallback when offchain isn't available for this route
   const offchainSettled = !isOffchainQuoteLoading;

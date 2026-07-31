@@ -1,4 +1,5 @@
 import {
+  FeeQuotingNoQuoteAvailableError,
   FeeQuotingV2Client,
   type IToken,
   type QuotedTransferProvider,
@@ -175,7 +176,7 @@ export function useSvmQuotedTransfer(
   const {
     data: fees,
     isLoading: isFeesLoading,
-    isError: isFeesError,
+    error: feesError,
   } = useQuery({
     // eslint-disable-next-line @tanstack/query/exhaustive-deps -- queryFn
     // closes over warpCore + quotedTransfer + tokens (instances). Identity is
@@ -205,19 +206,24 @@ export function useSvmQuotedTransfer(
     refetchInterval: FEE_QUOTE_REFRESH_INTERVAL,
   });
 
-  // The display-time quote settled with an error (typed `not_configured` /
-  // retries exhausted). Submit's `buildQuotedTransferTxs` would repeat the same
-  // failing request, so treat the route as not quote-enabled and fall through.
-  const isQuoteUnavailable = shouldFetchFees && !isFeesLoading && isFeesError;
+  // Only an explicit no-quote response (the typed `FeeQuotingNoQuoteAvailableError`,
+  // e.g. `not_configured`) means the route can't be quoted — that's the sole
+  // case where submit should fall through to the plain path. Transient failures
+  // (502/timeout, RPC, tx-construction) must NOT downgrade: they leave the
+  // provider in place so submit stays on the quoted path and fails loudly
+  // instead of silently sending a different transaction. This also keeps display
+  // and submit coherent — on a failed background refetch TanStack retains the
+  // prior `fees`, so the review panel keeps showing the offchain quote.
+  const isNoQuoteAvailable =
+    shouldFetchFees && !isFeesLoading && feesError instanceof FeeQuotingNoQuoteAvailableError;
 
   // Submit-time getter: await `fee_config` discovery (still in-flight on a quick
-  // Send-click) and return the provider only when the route is quote-enabled and
-  // the display quote didn't already fail.
+  // Send-click) and return the provider unless the route explicitly has no quote.
   const getQuotedTransfer = useCallback(async (): Promise<QuotedTransferProvider | null> => {
-    if (!shouldDiscover || !originName || isQuoteUnavailable) return null;
+    if (!shouldDiscover || !originName || isNoQuoteAvailable) return null;
     const { data } = await refetchFeeConfig();
     return data ? buildQuotedTransfer(originName) : null;
-  }, [shouldDiscover, originName, isQuoteUnavailable, refetchFeeConfig, buildQuotedTransfer]);
+  }, [shouldDiscover, originName, isNoQuoteAvailable, refetchFeeConfig, buildQuotedTransfer]);
 
   return {
     quotedTransfer,

@@ -1,15 +1,14 @@
-import {
-  EvmQuotedTransferProvider,
-  FeeQuotingCommand,
+import type {
   IToken,
   QuotedCallsParams,
   SubmitQuoteCommand,
   Token,
   TokenAmount,
-  TokenPullMode,
   WarpCore,
-  computeScopedSalt,
 } from '@hyperlane-xyz/sdk';
+import { EvmQuotedTransferProvider } from '@hyperlane-xyz/sdk';
+import { computeScopedSalt } from '@hyperlane-xyz/sdk/quoted-calls/codec';
+import { TokenPullMode } from '@hyperlane-xyz/sdk/quoted-calls/types';
 import { ProtocolType, addressToBytes32, toWei } from '@hyperlane-xyz/utils';
 import { useDebounce } from '@hyperlane-xyz/widgets';
 import { useAccounts } from '@hyperlane-xyz/widgets/walletIntegrations/accounts';
@@ -84,9 +83,21 @@ export function useQuotedCallsFeeQuotes(
     : undefined;
 
   const isEvm = originToken?.protocol === ProtocolType.Ethereum;
+  // TODO: cross-collateral routes need command='transferRemoteTo' + targetRouter
+  // wired through to /api/quote. Short-circuit until that's done so they fall
+  // through to the onchain quoting path instead of getting an incorrect quote.
+  const isCrossCollateral =
+    !!originToken &&
+    !!destinationToken &&
+    warpCore.isCrossCollateralTransfer(originToken, destinationToken);
   const isFormValid = !!(originToken && destination && debouncedAmount && recipient && sender);
   const shouldFetch =
-    enabled && isFormValid && isEvm && !!config.feeQuotingUrl && !!quotedCallsAddress;
+    enabled &&
+    isFormValid &&
+    isEvm &&
+    !isCrossCollateral &&
+    !!config.feeQuotingUrl &&
+    !!quotedCallsAddress;
 
   const { isLoading, isFetching, data, refetch } = useQuery({
     // eslint-disable-next-line @tanstack/query/exhaustive-deps -- queryFn also
@@ -202,24 +213,19 @@ async function fetchQuotedCallsFees(
   const clientSalt = generateClientSalt();
   const salt = computeScopedSalt(sender as Address, clientSalt);
 
+  // Get destination domain ID
   const destinationDomainId = warpCore.multiProvider.getDomainId(destination);
 
-  // CC routes pay the destination-side fee program via `transferRemoteTo` and
-  // must echo the explicit destination router so the server signs the correct
-  // per-leaf fee; non-CC routes auto-resolve via the remote-router map.
-  const isCC = warpCore.isCrossCollateralTransfer(originToken, destinationToken);
+  // Fetch quotes from API proxy
   const recipientBytes32 = addressToBytes32(recipient) as Hex;
   const params = new URLSearchParams({
-    command: isCC ? FeeQuotingCommand.TransferRemoteTo : FeeQuotingCommand.TransferRemote,
+    command: 'transferRemote',
     origin: originToken.chainName,
     router: originToken.addressOrDenom,
     destination: String(destinationDomainId),
     salt,
     recipient: recipientBytes32,
   });
-  if (isCC) {
-    params.append('targetRouter', addressToBytes32(destinationToken.addressOrDenom) as Hex);
-  }
 
   logger.debug('Fetching offchain fee quotes');
   const res = await fetch(`/api/quote?${params}`);
@@ -238,11 +244,8 @@ async function fetchQuotedCallsFees(
     clientSalt,
     tokenPullMode: TokenPullMode.TransferFrom,
   };
-  const quotedTransfer = new EvmQuotedTransferProvider(quotedCallsParams);
 
-  // Display-time fee fetch. Submit (`buildQuotedTransferTxs`) re-runs the same
-  // quoteExecute eth_call independently — both consume the same `quotes` +
-  // `clientSalt` so the result is deterministic and display ↔ submit match.
+  const quotedTransfer = new EvmQuotedTransferProvider(quotedCallsParams);
   const { igpQuote, tokenFeeQuote } = await warpCore.getQuotedTransferFee({
     quotedTransfer,
     originTokenAmount,

@@ -141,6 +141,7 @@ const nextConfig = {
   // env var so local dev UX is unchanged.
   ...(process.env.DISABLE_NEXT_DEV_INDICATORS === '1' ? { devIndicators: false } : {}),
   turbopack: {
+    root: __dirname,
     rules: {
       '*.yaml': {
         loaders: ['yaml-loader'],

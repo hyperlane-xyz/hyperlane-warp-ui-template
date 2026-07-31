@@ -1,11 +1,11 @@
-import {
-  ProviderType,
-  type QuotedTransferProvider,
+import type {
+  QuotedTransferProvider,
   Token,
   TypedTransactionReceipt,
   WarpCore,
-  WarpTxCategory,
 } from '@hyperlane-xyz/sdk';
+import { ProviderType } from '@hyperlane-xyz/sdk/providers/ProviderType';
+import { WarpTxCategory } from '@hyperlane-xyz/sdk/warp/types';
 import { toTitleCase, toWei } from '@hyperlane-xyz/utils';
 import {
   getAccountAddressForChain,

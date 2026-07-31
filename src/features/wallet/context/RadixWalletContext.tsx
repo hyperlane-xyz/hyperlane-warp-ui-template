@@ -7,27 +7,31 @@ import {
 } from '@hyperlane-xyz/widgets/walletIntegrations/radix/RadixProviders';
 import { GatewayApiClient } from '@radixdlt/babylon-gateway-api-sdk';
 import { RadixDappToolkit, RadixNetwork } from '@radixdlt/radix-dapp-toolkit';
-import { type PropsWithChildren, useMemo } from 'react';
+import { type PropsWithChildren, useState } from 'react';
 
 import { APP_NAME } from '../../../consts/app';
 import { E2EAutoConnectRadix } from '../_e2e/E2EAutoConnectRadix';
 import { isE2EMode } from '../_e2e/isE2E';
 
-export function RadixWalletContext({ children }: PropsWithChildren<unknown>) {
-  const { gatewayApi, rdt } = useMemo(() => {
-    const radixDappToolkit = RadixDappToolkit({
-      networkId: RadixNetwork.Mainnet,
-      applicationVersion: '1.0.0',
-      applicationName: APP_NAME,
-      dAppDefinitionAddress: 'account_rdx12ycz0wsuygqa5slye9du6e7wz7fr4pzx39l5r5cznqc6yudpks20cw',
-      useCache: false,
-    });
+const RADIX_DAPP_TOOLKIT_CONFIG = {
+  networkId: RadixNetwork.Mainnet,
+  applicationVersion: '1.0.0',
+  applicationName: APP_NAME,
+  dAppDefinitionAddress: 'account_rdx12ycz0wsuygqa5slye9du6e7wz7fr4pzx39l5r5cznqc6yudpks20cw',
+  useCache: false,
+};
 
-    return {
-      gatewayApi: GatewayApiClient.initialize(radixDappToolkit.gatewayApi.clientConfig),
-      rdt: radixDappToolkit,
-    };
-  }, []);
+function createRadixClients() {
+  const rdt = RadixDappToolkit(RADIX_DAPP_TOOLKIT_CONFIG);
+
+  return {
+    gatewayApi: GatewayApiClient.initialize(rdt.gatewayApi.clientConfig),
+    rdt,
+  };
+}
+
+export function RadixWalletContext({ children }: PropsWithChildren<unknown>) {
+  const [{ gatewayApi, rdt }] = useState(createRadixClients);
 
   return (
     <RdtProvider value={rdt}>

@@ -1,8 +1,8 @@
 diff --git a/dist/mainnet/index.js b/dist/mainnet/index.js
-index 8f903a9e135c06194a171c04b4d840d216571a35..bdd5a69d62b70e8623f1e5d0722dfb0700a96322 100644
+index 656e87042e6a22717ef17ca2fc451e3c1c19daf1..95685550a930f04b04ff58556e18fe69fbff0b8d 100644
 --- a/dist/mainnet/index.js
 +++ b/dist/mainnet/index.js
-@@ -19634,8 +19634,11 @@ async function __wbg_init(module_or_path, memory) {
+@@ -19721,8 +19721,11 @@ async function __wbg_init(module_or_path, memory) {
  }
  
  const module$1 = new URL("aleo_wasm.wasm", import.meta.url);
@@ -17,10 +17,10 @@ index 8f903a9e135c06194a171c04b4d840d216571a35..bdd5a69d62b70e8623f1e5d0722dfb07
  async function initThreadPool(threads) {
      if (threads == null) {
 diff --git a/dist/testnet/index.js b/dist/testnet/index.js
-index 4a6c6a203c843ba5a1efbea875b2a99fe7d27a0d..f046af929dc2488fd434f40719acf7e90c91d78d 100644
+index cca66e1fcf1c3cda22fcdd4774c06b1d01aab33e..930498e5f6860fec48f24e144b38bea9f450468e 100644
 --- a/dist/testnet/index.js
 +++ b/dist/testnet/index.js
-@@ -19634,8 +19634,11 @@ async function __wbg_init(module_or_path, memory) {
+@@ -19721,8 +19721,11 @@ async function __wbg_init(module_or_path, memory) {
  }
  
  const module$1 = new URL("aleo_wasm.wasm", import.meta.url);

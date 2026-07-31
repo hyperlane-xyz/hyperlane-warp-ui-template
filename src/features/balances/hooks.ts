@@ -7,13 +7,6 @@ import { useMemo } from 'react';
 import { type Address, createPublicClient, http, type PublicClient } from 'viem';
 
 import { useMultiProvider } from '../chains/hooks';
-import { fetchAleoChainBalances } from './aleo';
-import { fetchCosmosChainBalances } from './cosmos';
-import { fetchEvmChainBalances } from './evm';
-import { fetchRadixChainBalances } from './radix';
-import { fetchSealevelChainBalances } from './sealevel';
-import { fetchStarknetChainBalances } from './starknet';
-import { fetchTronChainBalances } from './tron';
 import type { BalanceToken } from './types';
 import { getBalanceTokenKey } from './types';
 
@@ -227,26 +220,33 @@ async function dispatchChainBalances(
 ): Promise<Record<string, bigint>> {
   if (protocol === ProtocolType.Ethereum) {
     if (!publicClient) return {};
+    const { fetchEvmChainBalances } = await import('./evm');
     return fetchEvmChainBalances(publicClient, tokens, userAddress as Address, multicallAddress);
   }
   if (protocol === ProtocolType.Tron) {
+    const { fetchTronChainBalances } = await import('./tron');
     return fetchTronChainBalances(multiProvider, tokens, userAddress);
   }
   if (protocol === ProtocolType.Sealevel) {
     const rpcUrl = rpcUrlFor(multiProvider, tokens[0]?.chainName);
     if (!rpcUrl) return {};
+    const { fetchSealevelChainBalances } = await import('./sealevel');
     return fetchSealevelChainBalances(rpcUrl, tokens, userAddress);
   }
   if (protocol === ProtocolType.Starknet) {
+    const { fetchStarknetChainBalances } = await import('./starknet');
     return fetchStarknetChainBalances(multiProvider, tokens, userAddress);
   }
   if (protocol === ProtocolType.Cosmos || protocol === ProtocolType.CosmosNative) {
+    const { fetchCosmosChainBalances } = await import('./cosmos');
     return fetchCosmosChainBalances(multiProvider, tokens, userAddress);
   }
   if (protocol === ProtocolType.Radix) {
+    const { fetchRadixChainBalances } = await import('./radix');
     return fetchRadixChainBalances(multiProvider, tokens, userAddress);
   }
   if (protocol === ProtocolType.Aleo) {
+    const { fetchAleoChainBalances } = await import('./aleo');
     return fetchAleoChainBalances(multiProvider, tokens, userAddress);
   }
   return {};

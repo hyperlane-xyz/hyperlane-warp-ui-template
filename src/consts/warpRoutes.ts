@@ -87,6 +87,215 @@ export const warpRouteConfigs: WarpCoreConfig = {
         },
       ],
     },
+
+    {
+      chainName: 'avalanche',
+      standard: TokenStandard.EvmHypCollateral,
+      name: 'USD Coin',
+      symbol: 'USDC',
+      decimals: 6,
+      addressOrDenom: '0x44c4e1d8872847BBF9Ab1479A994A7bEBF24B957',
+      collateralAddressOrDenom: '0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E',
+      connections: [
+        {
+          token: 'ethereum|optimism|0x40710E1206C15029DB25e07eBad80B4d9246BB46',
+        },
+        {
+          token: 'ethereum|arbitrum|0x52755EE22e6e4D7f144C4fB09c409e2B0A691d6D',
+        },
+        {
+          token: 'ethereum|bsc|0x42DbD98966B4ec9C1CC33c1AA45a0a08a4f772E0',
+        },
+        {
+          token: 'ethereum|unichain|0xE15216b866349d789b17c85A4edC81AadfC410CE',
+        },
+        {
+          token: 'ethereum|base|0xF27A5F084d5546d6e2bf843D3E30dCA4b9bE7dC3',
+        },
+        {
+          token: 'ethereum|ethereum|0x16B16094B018678b9EFa77AEDE41C4cbeF063c7e',
+        },
+      ],
+    },
+
+    {
+      chainName: 'optimism',
+      standard: TokenStandard.EvmHypCollateral,
+      name: 'USD Coin',
+      symbol: 'USDC',
+      decimals: 6,
+      addressOrDenom: '0x40710E1206C15029DB25e07eBad80B4d9246BB46',
+      collateralAddressOrDenom: '0x0b2c639c533813f4aa9d7837caf62653d097ff85',
+      connections: [
+        {
+          token: 'ethereum|avalanche|0x44c4e1d8872847BBF9Ab1479A994A7bEBF24B957',
+        },
+        {
+          token: 'ethereum|arbitrum|0x52755EE22e6e4D7f144C4fB09c409e2B0A691d6D',
+        },
+        {
+          token: 'ethereum|bsc|0x42DbD98966B4ec9C1CC33c1AA45a0a08a4f772E0',
+        },
+        {
+          token: 'ethereum|unichain|0xE15216b866349d789b17c85A4edC81AadfC410CE',
+        },
+        {
+          token: 'ethereum|base|0xF27A5F084d5546d6e2bf843D3E30dCA4b9bE7dC3',
+        },
+        {
+          token: 'ethereum|ethereum|0x16B16094B018678b9EFa77AEDE41C4cbeF063c7e',
+        },
+      ],
+    },
+
+    {
+      chainName: 'arbitrum',
+      standard: TokenStandard.EvmHypCollateral,
+      name: 'USD Coin',
+      symbol: 'USDC',
+      decimals: 6,
+      addressOrDenom: '0x52755EE22e6e4D7f144C4fB09c409e2B0A691d6D',
+      collateralAddressOrDenom: '0xaf88d065e77c8cc2239327c5edb3a432268e5831',
+      connections: [
+        {
+          token: 'ethereum|avalanche|0x44c4e1d8872847BBF9Ab1479A994A7bEBF24B957',
+        },
+        {
+          token: 'ethereum|optimism|0x40710E1206C15029DB25e07eBad80B4d9246BB46',
+        },
+        {
+          token: 'ethereum|bsc|0x42DbD98966B4ec9C1CC33c1AA45a0a08a4f772E0',
+        },
+        {
+          token: 'ethereum|unichain|0xE15216b866349d789b17c85A4edC81AadfC410CE',
+        },
+        {
+          token: 'ethereum|base|0xF27A5F084d5546d6e2bf843D3E30dCA4b9bE7dC3',
+        },
+        {
+          token: 'ethereum|ethereum|0x16B16094B018678b9EFa77AEDE41C4cbeF063c7e',
+        },
+      ],
+    },
+
+    {
+      chainName: 'bsc',
+      standard: TokenStandard.EvmHypSynthetic,
+      name: 'USD Coin',
+      symbol: 'USDC',
+      decimals: 6,
+      addressOrDenom: '0x42DbD98966B4ec9C1CC33c1AA45a0a08a4f772E0',
+      connections: [
+        {
+          token: 'ethereum|avalanche|0x44c4e1d8872847BBF9Ab1479A994A7bEBF24B957',
+        },
+        {
+          token: 'ethereum|optimism|0x40710E1206C15029DB25e07eBad80B4d9246BB46',
+        },
+        {
+          token: 'ethereum|arbitrum|0x52755EE22e6e4D7f144C4fB09c409e2B0A691d6D',
+        },
+        {
+          token: 'ethereum|unichain|0xE15216b866349d789b17c85A4edC81AadfC410CE',
+        },
+        {
+          token: 'ethereum|base|0xF27A5F084d5546d6e2bf843D3E30dCA4b9bE7dC3',
+        },
+        {
+          token: 'ethereum|ethereum|0x16B16094B018678b9EFa77AEDE41C4cbeF063c7e',
+        },
+      ],
+    },
+
+    {
+      chainName: 'unichain',
+      standard: TokenStandard.EvmHypCollateral,
+      name: 'USD Coin',
+      symbol: 'USDC',
+      decimals: 6,
+      addressOrDenom: '0xE15216b866349d789b17c85A4edC81AadfC410CE',
+      collateralAddressOrDenom: '0x078d782b760474a361dda0af3839290b0ef57ad6',
+      connections: [
+        {
+          token: 'ethereum|avalanche|0x44c4e1d8872847BBF9Ab1479A994A7bEBF24B957',
+        },
+        {
+          token: 'ethereum|optimism|0x40710E1206C15029DB25e07eBad80B4d9246BB46',
+        },
+        {
+          token: 'ethereum|arbitrum|0x52755EE22e6e4D7f144C4fB09c409e2B0A691d6D',
+        },
+        {
+          token: 'ethereum|bsc|0x42DbD98966B4ec9C1CC33c1AA45a0a08a4f772E0',
+        },
+        {
+          token: 'ethereum|base|0xF27A5F084d5546d6e2bf843D3E30dCA4b9bE7dC3',
+        },
+        {
+          token: 'ethereum|ethereum|0x16B16094B018678b9EFa77AEDE41C4cbeF063c7e',
+        },
+      ],
+    },
+
+    {
+      chainName: 'base',
+      standard: TokenStandard.EvmHypCollateral,
+      name: 'USD Coin',
+      symbol: 'USDC',
+      decimals: 6,
+      addressOrDenom: '0xF27A5F084d5546d6e2bf843D3E30dCA4b9bE7dC3',
+      collateralAddressOrDenom: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+      connections: [
+        {
+          token: 'ethereum|avalanche|0x44c4e1d8872847BBF9Ab1479A994A7bEBF24B957',
+        },
+        {
+          token: 'ethereum|optimism|0x40710E1206C15029DB25e07eBad80B4d9246BB46',
+        },
+        {
+          token: 'ethereum|arbitrum|0x52755EE22e6e4D7f144C4fB09c409e2B0A691d6D',
+        },
+        {
+          token: 'ethereum|bsc|0x42DbD98966B4ec9C1CC33c1AA45a0a08a4f772E0',
+        },
+        {
+          token: 'ethereum|unichain|0xE15216b866349d789b17c85A4edC81AadfC410CE',
+        },
+        {
+          token: 'ethereum|ethereum|0x16B16094B018678b9EFa77AEDE41C4cbeF063c7e',
+        },
+      ],
+    },
+
+    {
+      chainName: 'ethereum',
+      standard: TokenStandard.EvmHypCollateral,
+      name: 'USD Coin',
+      symbol: 'USDC',
+      decimals: 6,
+      addressOrDenom: '0x16B16094B018678b9EFa77AEDE41C4cbeF063c7e',
+      collateralAddressOrDenom: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+      connections: [
+        {
+          token: 'ethereum|avalanche|0x44c4e1d8872847BBF9Ab1479A994A7bEBF24B957',
+        },
+        {
+          token: 'ethereum|optimism|0x40710E1206C15029DB25e07eBad80B4d9246BB46',
+        },
+        {
+          token: 'ethereum|arbitrum|0x52755EE22e6e4D7f144C4fB09c409e2B0A691d6D',
+        },
+        {
+          token: 'ethereum|bsc|0x42DbD98966B4ec9C1CC33c1AA45a0a08a4f772E0',
+        },
+        {
+          token: 'ethereum|unichain|0xE15216b866349d789b17c85A4edC81AadfC410CE',
+        },
+        {
+          token: 'ethereum|base|0xF27A5F084d5546d6e2bf843D3E30dCA4b9bE7dC3',
+        },
+      ],
+    },
   ],
   options: {
     interchainFeeConstants: [

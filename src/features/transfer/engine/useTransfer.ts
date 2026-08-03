@@ -22,6 +22,8 @@ import { useCallback, useState } from 'react';
 import type { Address } from 'viem';
 
 import { logger } from '../../../utils/logger';
+import { EVENT_NAME } from '../../analytics/types';
+import { getAnalyticsChains, getAnalyticsToken, trackEvent } from '../../analytics/utils';
 import { getRouteTxs, isChainRouteTx } from '../../api/routeTx';
 import type { RouteTx } from '../../api/types';
 import { useMultiProvider } from '../../chains/hooks';
@@ -39,6 +41,9 @@ interface ExecuteArgs {
   dstChainId: number;
   srcToken: string;
   dstToken: string;
+  amount: string;
+  srcTokenSymbol: string;
+  dstTokenSymbol: string;
   sender: string;
   recipient: string;
   /** Token returned by route.approval. Defaults to srcToken for older quotes. */
@@ -64,9 +69,12 @@ export function useTransfer() {
 
   const execute = useCallback(
     async (args: ExecuteArgs) => {
-      const { transactionId, route, srcChainId } = args;
+      const { transactionId, route, srcChainId, dstChainId } = args;
       setError(null);
       setIsPending(true);
+      let analyticsSrcChainName: string | null | undefined;
+      let analyticsDstChainName: string | null | undefined;
+      let submittedAnalytics = false;
 
       try {
         const routeTxs = getRouteTxs(route.raw);
@@ -75,11 +83,16 @@ export function useTransfer() {
         // Store route for status polling and recovery (non-persisted, session only).
         setTransferRoute(transactionId, route.raw);
 
-        const srcChainName = multiProvider.tryGetChainName(srcChainId);
+        analyticsSrcChainName = multiProvider.tryGetChainName(srcChainId);
+        analyticsDstChainName = multiProvider.tryGetChainName(dstChainId);
         const protocol = multiProvider.tryGetProtocol(srcChainId);
-        if (!srcChainName || !protocol) {
-          throw new Error(`No SDK metadata for chain ${srcChainId} — boot may not have completed.`);
+        if (!analyticsSrcChainName || !analyticsDstChainName || !protocol) {
+          throw new Error(
+            `No SDK metadata for route ${srcChainId}->${dstChainId} — boot may not have completed.`,
+          );
         }
+        const srcChainName = analyticsSrcChainName;
+        const dstChainName = analyticsDstChainName;
 
         const fns = transactionFns[protocol as keyof typeof transactionFns];
         if (!fns) throw new Error(`No transaction handler for protocol ${protocol}`);
@@ -204,6 +217,24 @@ export function useTransfer() {
           setError(err);
           throw err;
         }
+
+        trackEvent(EVENT_NAME.TRANSACTION_SUBMITTED, {
+          amount: args.amount,
+          chains: getAnalyticsChains(
+            { chainName: srcChainName, chainId: srcChainId },
+            { chainName: dstChainName, chainId: dstChainId },
+          ),
+          originToken: getAnalyticsToken({ address: args.srcToken, symbol: args.srcTokenSymbol }),
+          destinationToken: getAnalyticsToken({
+            address: args.dstToken,
+            symbol: args.dstTokenSymbol,
+          }),
+          walletAddress: args.sender,
+          transactionHash: hash,
+          recipient: args.recipient,
+        });
+        submittedAnalytics = true;
+
         // Same-chain transfer: finalize on origin confirm.
         if (!hasCrossChainStep) {
           updateTransferTransactionStatus(transactionId, TransferStatus.ConfirmedDestination, {
@@ -224,6 +255,26 @@ export function useTransfer() {
         return hash;
       } catch (err) {
         logger.error('Transfer broadcast failed', err);
+        if (!submittedAnalytics) {
+          trackEvent(EVENT_NAME.TRANSACTION_SUBMISSION_FAILED, {
+            amount: args.amount,
+            chains: getAnalyticsChains(
+              { chainName: analyticsSrcChainName ?? 'unknown', chainId: srcChainId },
+              { chainName: analyticsDstChainName ?? 'unknown', chainId: dstChainId },
+            ),
+            originToken: getAnalyticsToken({
+              address: args.srcToken,
+              symbol: args.srcTokenSymbol,
+            }),
+            destinationToken: getAnalyticsToken({
+              address: args.dstToken,
+              symbol: args.dstTokenSymbol,
+            }),
+            walletAddress: args.sender,
+            recipient: args.recipient,
+            error: err instanceof Error ? err.message : 'Transfer broadcast failed',
+          });
+        }
         updateTransferTransactionStatus(transactionId, TransferStatus.Failed);
         setError(err as Error);
         throw err;

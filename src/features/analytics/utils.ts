@@ -19,6 +19,17 @@ export function trackEvent<T extends EVENT_NAME>(eventName: T, properties: Event
   });
 }
 
+export function getAnalyticsChains(
+  srcChain: Pick<UiToken, 'chainName' | 'chainId'>,
+  dstChain: Pick<UiToken, 'chainName' | 'chainId'>,
+) {
+  return `${srcChain.chainName}|${srcChain.chainId}|${dstChain.chainName}|${dstChain.chainId}`;
+}
+
+export function getAnalyticsToken(token: Pick<UiToken, 'address' | 'symbol'>) {
+  return `${token.address}|${token.symbol}`;
+}
+
 export function trackTokenSelectionEvent(
   tokenType: string,
   originToken: UiToken | undefined,
@@ -28,8 +39,8 @@ export function trackTokenSelectionEvent(
 
   trackEvent(EVENT_NAME.TOKEN_SELECTED, {
     tokenType,
-    originToken: originToken.symbol,
-    destinationToken: destinationToken.symbol,
+    originToken: getAnalyticsToken(originToken),
+    destinationToken: getAnalyticsToken(destinationToken),
     origin: originToken.chainName,
     destination: destinationToken.chainName,
     originChainId: originToken.chainId,
@@ -81,10 +92,10 @@ export function trackTransferValidationFailed({
 
   trackEvent(EVENT_NAME.TRANSACTION_SUBMISSION_FAILED, {
     amount: values.amount,
-    chains: `${srcToken.chainName}|${srcToken.chainId}|${dstToken.chainName}|${dstToken.chainId}`,
+    chains: getAnalyticsChains(srcToken, dstToken),
     walletAddress: sender || null,
-    tokenAddress: srcToken.address,
-    tokenSymbol: srcToken.symbol,
+    originToken: getAnalyticsToken(srcToken),
+    destinationToken: getAnalyticsToken(dstToken),
     recipient,
     error: firstError,
   });
@@ -97,8 +108,8 @@ export function trackUnsupportedRouteEvent(
   if (!originToken || !destinationToken) return;
 
   trackEvent(EVENT_NAME.UNSUPPORTED_ROUTE_SELECTED, {
-    originToken: originToken.symbol,
-    destinationToken: destinationToken.symbol,
+    originToken: getAnalyticsToken(originToken),
+    destinationToken: getAnalyticsToken(destinationToken),
     origin: originToken.chainName,
     destination: destinationToken.chainName,
     originChainId: originToken.chainId,

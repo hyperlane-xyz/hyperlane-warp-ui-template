@@ -2,5 +2,40 @@
 # These configs will be merged with the warp routes in the configured registry
 # The input here is typically the output of the Hyperlane CLI warp deploy command
 ---
-tokens: []
+tokens:
+  - addressOrDenom: "0xe6936C72Cd3Ce5a8Cac4C55AbD82B4Be1D5bCd18"
+    chainName: optimism
+    connections:
+      - token: ethereum|ethereum|0xE0891f43050Eb6Db8AA353DBEBF5Bf4C27e30e67
+      - token: sealevel|solanamainnet|Au2N4xRm5q6fm5htyeB1xxcSjUFq9Wxa4gEDy9W5qUbq
+    decimals: 8
+    name: Hyperlane WBTC
+    standard: EvmHypSynthetic
+    symbol: HWBTC
+    logoURI: /deployments/warp_routes/WBTC/logo.svg
+  - addressOrDenom: "0xE0891f43050Eb6Db8AA353DBEBF5Bf4C27e30e67"
+    chainName: ethereum
+    coinGeckoId: wrapped-bitcoin
+    collateralAddressOrDenom: "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599"
+    connections:
+      - token: ethereum|optimism|0xe6936C72Cd3Ce5a8Cac4C55AbD82B4Be1D5bCd18
+      - token: sealevel|solanamainnet|Au2N4xRm5q6fm5htyeB1xxcSjUFq9Wxa4gEDy9W5qUbq
+    decimals: 8
+    name: Wrapped BTC
+    standard: EvmHypCollateral
+    logoURI: /deployments/warp_routes/WBTC/logo.svg
+    symbol: WBTC
+  - addressOrDenom: Au2N4xRm5q6fm5htyeB1xxcSjUFq9Wxa4gEDy9W5qUbq
+    chainName: solanamainnet
+    coinGeckoId: wrapped-bitcoin
+    collateralAddressOrDenom: 5XZw2LKTyrfvfiskJ78AMpackRjPcyCif1WhUsPDuVqQ
+    connections:
+      - token: ethereum|optimism|0xe6936C72Cd3Ce5a8Cac4C55AbD82B4Be1D5bCd18
+      - token: ethereum|ethereum|0xE0891f43050Eb6Db8AA353DBEBF5Bf4C27e30e67
+    decimals: 8
+    name: Wrapped BTC
+    standard: SealevelHypCollateral
+    symbol: WBTC
+    logoURI: /deployments/warp_routes/WBTC/logo.svg
+
 options: {}

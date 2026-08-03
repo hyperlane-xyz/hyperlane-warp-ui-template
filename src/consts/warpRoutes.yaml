@@ -1,6 +1,33 @@
-# A list of Warp Route token configs
-# These configs will be merged with the warp routes in the configured registry
-# The input here is typically the output of the Hyperlane CLI warp deploy command
----
-tokens: []
-options: {}
+# yaml-language-server: $schema=../schema.json
+options:
+  interchainFeeConstants:
+    - addressOrDenom: ibc/773B4D0A3CD667B2275D5A4A7A2F0909C0BA0F4059C0B9181E680DDF4965DCC7
+      amount: 270000
+      destination: arbitrum
+      origin: neutron
+tokens:
+  - addressOrDenom: "0xD56734d7f9979dD94FAE3d67C7e928234e71cD4C"
+    chainName: arbitrum
+    connections:
+      - token: cosmos|neutron|neutron1jyyjd3x0jhgswgm6nnctxvzla8ypx50tew3ayxxwkrjfxhvje6kqzvzudq
+    decimals: 6
+    logoURI: /deployments/warp_routes/TIA/logo.svg
+    name: TIA.n
+    standard: EvmHypSynthetic
+    symbol: TIA.n
+  - addressOrDenom: neutron1jyyjd3x0jhgswgm6nnctxvzla8ypx50tew3ayxxwkrjfxhvje6kqzvzudq
+    chainName: neutron
+    coinGeckoId: celestia
+    collateralAddressOrDenom: ibc/773B4D0A3CD667B2275D5A4A7A2F0909C0BA0F4059C0B9181E680DDF4965DCC7
+    decimals: 6
+    logoURI: /deployments/warp_routes/TIA/logo.svg
+    name: TIA.n
+    standard: CwHypCollateral
+    symbol: TIA.n
+  - addressOrDenom: ibc/773B4D0A3CD667B2275D5A4A7A2F0909C0BA0F4059C0B9181E680DDF4965DCC7
+    chainName: neutron
+    decimals: 6
+    logoURI: /deployments/warp_routes/TIA/logo.svg
+    name: TIA.n
+    standard: CosmosIbc
+    symbol: TIA.n

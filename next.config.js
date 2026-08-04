@@ -203,6 +203,7 @@ const nextConfig = {
   },
 
   experimental: {
+    useTypeScriptCli: true,
     turbopackFileSystemCacheForBuild: true,
     parallelServerCompiles: true,
     parallelServerBuildTraces: true,

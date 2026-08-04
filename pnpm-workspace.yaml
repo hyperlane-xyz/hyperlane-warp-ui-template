@@ -2,7 +2,11 @@
 minimumReleaseAge: 10080
 minimumReleaseAgeExclude:
   - "@hyperlane-xyz/*"
+  - "@oxfmt/*"
+  - "@oxlint/*"
   - "@provablehq/*"
+  - oxfmt
+  - oxlint
 overrides:
   # 1.53+ imports optional x402 peers into browser bundles even when unused.
   '@coinbase/cdp-sdk': 1.52.0

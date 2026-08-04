@@ -1,13 +1,14 @@
-import {
+import type {
   IToken,
   QuotedCallsParams,
   SubmitQuoteCommand,
   Token,
   TokenAmount,
-  TokenPullMode,
   WarpCore,
-  computeScopedSalt,
 } from '@hyperlane-xyz/sdk';
+import { EvmQuotedTransferProvider } from '@hyperlane-xyz/sdk';
+import { computeScopedSalt } from '@hyperlane-xyz/sdk/quoted-calls/codec';
+import { TokenPullMode } from '@hyperlane-xyz/sdk/quoted-calls/types';
 import { ProtocolType, addressToBytes32, toWei } from '@hyperlane-xyz/utils';
 import { useDebounce } from '@hyperlane-xyz/widgets';
 import { useAccounts } from '@hyperlane-xyz/widgets/walletIntegrations/accounts';
@@ -237,25 +238,22 @@ async function fetchQuotedCallsFees(
 
   const { quotes } = (await res.json()) as { quotes: SubmitQuoteCommand[] };
 
-  // Build QuotedCallsParams (without feeQuotes — they come from the quoteExecute below)
-  const baseQuotedCallsParams: QuotedCallsParams = {
+  const quotedCallsParams: QuotedCallsParams = {
     address: quotedCallsAddress,
     quotes: quotes as SubmitQuoteCommand[],
     clientSalt,
     tokenPullMode: TokenPullMode.TransferFrom,
   };
 
-  // Get fee estimates via quoteExecute eth_call
-  const { igpQuote, tokenFeeQuote, feeQuotes } = await warpCore.getQuotedTransferFee({
+  const quotedTransfer = new EvmQuotedTransferProvider(quotedCallsParams);
+  const { igpQuote, tokenFeeQuote } = await warpCore.getQuotedTransferFee({
+    quotedTransfer,
     originTokenAmount,
     destination,
     sender,
     recipient,
-    quotedCalls: baseQuotedCallsParams,
+    destinationToken,
   });
-
-  // Attach feeQuotes for later use in getTransferRemoteTxs (avoids re-quoting).
-  const quotedCallsParams: QuotedCallsParams = { ...baseQuotedCallsParams, feeQuotes };
 
   // Estimate local gas for the actual QuotedCalls.execute() tx so the UI
   // pre-shows the gas cost the user will see in MetaMask. No silent fallback —

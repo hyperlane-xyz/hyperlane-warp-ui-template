@@ -1,12 +1,14 @@
 import { Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { chainsRentEstimate } from '../../consts/chains';
 import { createMockToken } from '../../utils/test';
 import { TokensWithDestinationBalance, TokenWithFee } from '../tokens/types';
 import * as tokenUtils from '../tokens/utils';
 import {
   compareByBalanceDesc,
   filterAndSortTokensByBalance,
+  getInterchainQuote,
   getTotalFee,
   getTransferToken,
   sortTokensByFee,
@@ -35,7 +37,56 @@ beforeEach(() => {
   vi.restoreAllMocks();
 });
 
+describe('getInterchainQuote', () => {
+  const SOL_RENT = chainsRentEstimate['solanamainnet'];
+
+  test('returns undefined when no interchain quote', () => {
+    const token = createMockToken({ symbol: 'SOL', chainName: 'solanamainnet' });
+    expect(getInterchainQuote(token, undefined)).toBeUndefined();
+  });
+
+  test('adds the SVM rent estimate for a cross-chain SVM origin', () => {
+    const token = createMockToken({ symbol: 'SOL', decimals: 9, chainName: 'solanamainnet' });
+    const interchainQuote = token.amount(0n);
+
+    const result = getInterchainQuote(token, interchainQuote);
+
+    expect(result?.amount).toEqual(SOL_RENT);
+  });
+
+  test('does NOT add rent for a same-chain swap (isSameChain=true)', () => {
+    const token = createMockToken({ symbol: 'SOL', decimals: 9, chainName: 'solanamainnet' });
+    const interchainQuote = token.amount(0n);
+
+    const result = getInterchainQuote(token, interchainQuote, true);
+
+    expect(result?.amount).toEqual(0n);
+  });
+
+  test('leaves non-SVM origins unchanged', () => {
+    const token = createMockToken({ symbol: 'ETH', decimals: 18, chainName: 'ethereum' });
+    const interchainQuote = token.amount(1234n);
+
+    const result = getInterchainQuote(token, interchainQuote);
+
+    expect(result?.amount).toEqual(1234n);
+  });
+});
+
 describe('getTotalFee', () => {
+  test('should exclude zero-amount fees from the breakdown', () => {
+    const solToken = createMockToken({ symbol: 'SOL', decimals: 9, chainName: 'solanamainnet' });
+    vi.spyOn(solToken, 'isFungibleWith').mockReturnValue(false);
+
+    const interchainQuote = solToken.amount(0n);
+    const localQuote = solToken.amount(5000n);
+
+    const result = getTotalFee({ interchainQuote, localQuote });
+
+    expect(result).toHaveLength(1);
+    expect(result[0].amount).toEqual(5000n);
+  });
+
   test('should group fungible tokens and sum their values', () => {
     const token1 = createMockToken({ symbol: 'ETH', decimals: 18 });
     const token2 = createMockToken({ symbol: 'ETH', decimals: 18 });

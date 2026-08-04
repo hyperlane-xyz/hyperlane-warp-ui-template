@@ -11,7 +11,7 @@ import {
   parseTokenConnectionId,
   validateZodResult,
 } from '@hyperlane-xyz/sdk';
-import { isObjEmpty, objFilter, objMerge } from '@hyperlane-xyz/utils';
+import { isNullish, isObjEmpty, objFilter, objMerge } from '@hyperlane-xyz/utils';
 
 import { config } from '../../consts/config.ts';
 import { warpRouteConfigs as tsWarpRoutes } from '../../consts/warpRoutes.ts';
@@ -233,11 +233,26 @@ export function dedupeTokens(
 }
 
 // Combine a list of WarpCore option objects into one single options object
-function reduceOptions(optionsList: Array<WarpCoreConfig['options']>): WarpCoreConfig['options'] {
+export function reduceOptions(
+  optionsList: Array<WarpCoreConfig['options']>,
+): WarpCoreConfig['options'] {
   return optionsList.reduce<WarpCoreConfig['options']>((acc, o) => {
     if (!o || !acc) return acc;
     for (const key of Object.keys(o)) {
-      acc[key] = (acc[key] || []).concat(o[key] || []);
+      const incoming = o[key];
+      const current = acc[key];
+      // Array-valued options (e.g., interchainFeeConstants) concatenate;
+      // object-valued options (e.g., sealevel.altAddresses) deep-merge last-wins.
+      if (Array.isArray(incoming)) {
+        acc[key] = (Array.isArray(current) ? current : []).concat(incoming);
+      } else if (incoming && typeof incoming === 'object') {
+        acc[key] = objMerge(
+          current && typeof current === 'object' && !Array.isArray(current) ? current : {},
+          incoming,
+        );
+      } else if (!isNullish(incoming)) {
+        acc[key] = incoming;
+      }
     }
     return acc;
   }, {});

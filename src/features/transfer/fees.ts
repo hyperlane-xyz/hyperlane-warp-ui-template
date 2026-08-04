@@ -65,6 +65,8 @@ export function getTotalFee({
   }
 
   for (const tokenAmount of tokenAmounts) {
+    if (tokenAmount.amount === 0n) continue;
+
     let foundFungibleGroup = false;
 
     // Check if the current tokenAmount is fungible (same asset) as any token
@@ -89,8 +91,15 @@ export function getTotalFee({
 export function getInterchainQuote(
   originToken: IToken | undefined,
   interchainQuote: TokenAmount | undefined,
+  isSameChain = false,
 ) {
   if (!interchainQuote) return undefined;
+
+  // Same-chain swaps (e.g. SVM cross-collateral) consume no interchain message,
+  // so there's no IGP and no remote-account rent to fold in here — the SVM path
+  // surfaces any sender-paid ATA-creation rent separately. Only inflate the
+  // quote with the SVM rent estimate for genuine cross-chain transfers.
+  if (isSameChain) return interchainQuote;
 
   return originToken && objKeys(chainsRentEstimate).includes(originToken.chainName)
     ? interchainQuote.plus(chainsRentEstimate[originToken.chainName])

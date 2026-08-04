@@ -1,4 +1,10 @@
-import { IToken, QuotedCallsParams, Token, TokenAmount, WarpCore } from '@hyperlane-xyz/sdk';
+import {
+  IToken,
+  type QuotedTransferProvider,
+  Token,
+  TokenAmount,
+  WarpCore,
+} from '@hyperlane-xyz/sdk';
 import {
   KnownProtocolType,
   ProtocolType,
@@ -70,7 +76,7 @@ import { TransferSection } from './TransferSection';
 import { TransferFormValues, TransferStatus } from './types';
 import { useRecipientBalanceWatcher } from './useBalanceWatcher';
 import { useFeeQuotes } from './useFeeQuotes';
-import { type QuotedCallsFeeQuotesResult, useQuotedCallsFeeQuotes } from './useQuotedCalls';
+import { type QuotedTransferResult, useQuotedTransfer } from './useQuotedTransfer';
 import { useTokenTransfer } from './useTokenTransfer';
 import { isSmartContract, shouldClearAddress } from './utils';
 
@@ -516,12 +522,11 @@ function TransferCheckout({
       ? findConnectedDestinationToken(originToken, destinationTokenByKey)
       : undefined;
 
-  const quotedCalls = useQuotedCallsFeeQuotes(
-    values,
-    isRouteSupported,
-    originToken,
-    destinationToken,
-  );
+  // Offchain quoting for both EVM and SVM origins behind one protocol-agnostic
+  // hook — it eagerly fetches the priced fee so `ReviewDetails` shows the
+  // actual offchain-quoted value (not the bps-based on-chain fallback), and
+  // exposes a single provider getter for submit.
+  const quotedTransfer = useQuotedTransfer(values, isRouteSupported, originToken, destinationToken);
 
   return (
     <>
@@ -530,7 +535,7 @@ function TransferCheckout({
         originToken={originToken}
         destinationToken={destinationToken}
         isRouteSupported={isRouteSupported}
-        quotedCalls={quotedCalls}
+        quotedTransfer={quotedTransfer}
       />
       <ButtonSection
         isReview={isReview}
@@ -538,7 +543,7 @@ function TransferCheckout({
         setIsReview={setIsReview}
         cleanOverrideToken={cleanOverrideToken}
         routeOverrideToken={routeOverrideToken}
-        getQuotedCallsParams={quotedCalls.getQuotedCallsParams}
+        getQuotedTransfer={quotedTransfer.getQuotedTransfer}
       />
     </>
   );
@@ -550,14 +555,14 @@ function ButtonSection({
   setIsReview,
   cleanOverrideToken,
   routeOverrideToken,
-  getQuotedCallsParams,
+  getQuotedTransfer,
 }: {
   isReview: boolean;
   isValidating: boolean;
   setIsReview: (b: boolean) => void;
   cleanOverrideToken: () => void;
   routeOverrideToken: Token | null;
-  getQuotedCallsParams: () => Promise<QuotedCallsParams | null>;
+  getQuotedTransfer: () => Promise<QuotedTransferProvider | null>;
 }) {
   const { values } = useFormikContext<TransferFormValues>();
   const multiProvider = useMultiProvider();
@@ -667,10 +672,11 @@ function ButtonSection({
     setTransferLoading(true);
 
     // Wait for any in-flight offchain quote to settle so a quick Send-click
-    // during the first-load / refetch window doesn't fall through to the
-    // plain transferRemote path.
-    const quotedCallsParams = await getQuotedCallsParams();
-    await triggerTransactions(values, routeOverrideToken, quotedCallsParams);
+    // during the first-load / refetch window doesn't fall through to the plain
+    // transferRemote path. `getQuotedTransfer` resolves the protocol-agnostic
+    // provider (EVM or SVM) for this route.
+    const quotedTransfer = await getQuotedTransfer();
+    await triggerTransactions(values, routeOverrideToken, quotedTransfer);
     setTransferLoading(false);
   };
 
@@ -754,13 +760,13 @@ function ReviewDetails({
   originToken,
   destinationToken,
   isRouteSupported,
-  quotedCalls,
+  quotedTransfer,
 }: {
   isReview: boolean;
   originToken: Token | undefined;
   destinationToken: IToken | undefined;
   isRouteSupported: boolean;
-  quotedCalls: QuotedCallsFeeQuotesResult;
+  quotedTransfer: QuotedTransferResult;
 }) {
   const { values } = useFormikContext<TransferFormValues>();
   const warpCore = useWarpCore();
@@ -775,12 +781,15 @@ function ReviewDetails({
 
   const amountWei = isNft ? amount.toString() : toWei(amount, originToken?.decimals);
 
-  // Offchain fee quoting (when configured) — owned by TransferCheckout
+  // Offchain fee quoting (when configured) — owned by TransferCheckout via the
+  // unified `useQuotedTransfer` hook, which already resolves the active origin
+  // (EVM/SVM) into one `fees` source. On-chain quoting is the fallback when
+  // this has settled with no result.
   const {
     isLoading: isOffchainQuoteLoading,
     fees: offchainFeeQuotes,
     quotedCallsParams,
-  } = quotedCalls;
+  } = quotedTransfer;
 
   // Onchain fee quoting: used as fallback when offchain isn't available for this route
   const offchainSettled = !isOffchainQuoteLoading;
@@ -826,10 +835,15 @@ function ReviewDetails({
   const transferUsd = tokenPrice && !isNaN(parsedAmount) ? parsedAmount * tokenPrice : 0;
   const isLoading = isApproveLoading || isQuoteLoading;
 
+  // Same-chain (e.g. SVM cross-collateral) swaps carry no interchain gas, so the
+  // SVM rent estimate must not be folded into the interchain quote here; any
+  // sender-paid ATA-creation rent is already included in `localQuote` upstream.
+  const isSameChain = !!originToken && originToken.chainName === destinationToken?.chainName;
+
   const fees = useMemo(() => {
     if (!feeQuotes) return null;
 
-    const interchainQuote = getInterchainQuote(originToken, feeQuotes.interchainQuote);
+    const interchainQuote = getInterchainQuote(originToken, feeQuotes.interchainQuote, isSameChain);
     const fees = {
       ...feeQuotes,
       interchainQuote: interchainQuote || feeQuotes.interchainQuote,
@@ -845,7 +859,7 @@ function ReviewDetails({
       ...fees,
       totalFees,
     };
-  }, [feeQuotes, originToken]);
+  }, [feeQuotes, originToken, isSameChain]);
 
   return (
     <>

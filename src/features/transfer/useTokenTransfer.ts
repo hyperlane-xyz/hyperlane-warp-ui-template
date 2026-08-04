@@ -1,5 +1,5 @@
 import type {
-  QuotedCallsParams,
+  QuotedTransferProvider,
   Token,
   TypedTransactionReceipt,
   WarpCore,
@@ -57,7 +57,7 @@ export function useTokenTransfer(onDone?: () => void) {
     (
       values: TransferFormValues,
       routeOverrideToken: Token | null,
-      quotedCallsParams?: QuotedCallsParams | null,
+      quotedTransfer?: QuotedTransferProvider | null,
     ) =>
       executeTransfer({
         warpCore,
@@ -71,7 +71,7 @@ export function useTokenTransfer(onDone?: () => void) {
         setIsLoading,
         onDone,
         routeOverrideToken,
-        quotedCallsParams: quotedCallsParams ?? undefined,
+        quotedTransfer: quotedTransfer ?? undefined,
       }),
     [
       warpCore,
@@ -104,7 +104,7 @@ async function executeTransfer({
   setIsLoading,
   onDone,
   routeOverrideToken,
-  quotedCallsParams,
+  quotedTransfer,
 }: {
   warpCore: WarpCore;
   values: TransferFormValues;
@@ -117,7 +117,7 @@ async function executeTransfer({
   setIsLoading: (b: boolean) => void;
   onDone?: () => void;
   routeOverrideToken: Token | null;
-  quotedCallsParams?: QuotedCallsParams;
+  quotedTransfer?: QuotedTransferProvider;
 }) {
   logger.debug('Preparing transfer transaction(s)');
   setIsLoading(true);
@@ -213,9 +213,10 @@ async function executeTransfer({
       destination,
       sender,
       recipient,
-      // Quoted transfers and attestations are mutually exclusive; predicate
-      // routes take the wrapper path, plain routes can use offchain quoting.
-      quotedCalls: attestationResult ? undefined : quotedCallsParams,
+      // Quoted transfers and attestation are mutually exclusive in the SDK;
+      // predicate routes take the attestation path, plain routes use offchain
+      // quoting via the protocol-agnostic `quotedTransfer` provider (EVM or SVM).
+      quotedTransfer: attestationResult ? undefined : quotedTransfer,
       attestation: attestationResult?.attestation,
       // Pin the IGP quote captured at attestation time so msg_value matches the
       // attested Statement preimage — prevents _authorizeTransaction revert on drift.

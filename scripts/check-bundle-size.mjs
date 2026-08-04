@@ -3,10 +3,11 @@ import { gzipSync } from 'node:zlib';
 
 const STATS_PATH = '.next/diagnostics/route-bundle-stats.json';
 const MIB = 1024 * 1024;
+const mibToBytes = (mib) => Math.round(mib * MIB);
 const ROUTE_BUDGETS = {
-  '/': { raw: 130 * MIB, gzip: 25 * MIB },
-  '/embed': { raw: 132 * MIB, gzip: 25.5 * MIB },
-  '/blocked': { raw: 104 * MIB, gzip: 19 * MIB },
+  '/': { raw: mibToBytes(47), gzip: mibToBytes(8.2) },
+  '/embed': { raw: mibToBytes(49), gzip: mibToBytes(8.6) },
+  '/blocked': { raw: mibToBytes(29), gzip: mibToBytes(5.4) },
 };
 
 const formatMib = (bytes) => `${(bytes / MIB).toFixed(2)} MiB`;

@@ -20,7 +20,7 @@ import { WARP_QUERY_PARAMS } from '../../../consts/args';
 import { config } from '../../../consts/config';
 import { logger } from '../../../utils/logger';
 import { updateQueryParams } from '../../../utils/queryParams';
-import { trackTransferValidationFailed } from '../../analytics/utils';
+import { trackTransferValidationFailed, trackUnsupportedRouteEvent } from '../../analytics/utils';
 import { useChains } from '../../api/hooks';
 import type { RouteTx } from '../../api/types';
 import { useTokenBalance } from '../../balances/hooks';
@@ -125,6 +125,7 @@ function TransferFormContent() {
   const debouncedAmount = useDebounce(values.amount, 750);
   const {
     quote,
+    data: quoteResponse,
     isLoading: quoteLoading,
     error: quoteError,
     isExpired,
@@ -189,10 +190,38 @@ function TransferFormContent() {
   const hasTokens = !!srcToken && !!dstToken;
 
   const [isValidating, setIsValidating] = useState(false);
+  const trackedUnsupportedRoutesRef = useRef<Set<string>>(new Set());
   const [{ addressConfirmed, showRecipientWarning }, setRecipientInfos] = useState({
     addressConfirmed: true,
     showRecipientWarning: false,
   });
+
+  useEffect(() => {
+    if (
+      !hasAmount ||
+      !srcToken ||
+      !dstToken ||
+      !quoteResponse ||
+      quoteResponse.routes.length > 0 ||
+      !isQuoteSettled ||
+      isRouteDataUnavailable
+    ) {
+      return;
+    }
+    const key = `${srcTokenKey ?? ''}->${dstTokenKey ?? ''}`;
+    if (trackedUnsupportedRoutesRef.current.has(key)) return;
+    trackedUnsupportedRoutesRef.current.add(key);
+    trackUnsupportedRouteEvent(srcToken, dstToken);
+  }, [
+    dstToken,
+    dstTokenKey,
+    hasAmount,
+    isQuoteSettled,
+    isRouteDataUnavailable,
+    quoteResponse,
+    srcToken,
+    srcTokenKey,
+  ]);
 
   // Validate is async; the user can keep editing while it runs. We
   // capture the values reference at request start and bail on resolve
@@ -441,6 +470,9 @@ function TransferFormContent() {
         dstChainId: values.dstChain,
         srcToken: srcToken.address,
         dstToken: dstToken.address,
+        amount: values.amount,
+        srcTokenSymbol: srcToken.symbol,
+        dstTokenSymbol: dstToken.symbol,
         sender,
         recipient: effectiveRecipient,
         approvalToken: approval?.token,

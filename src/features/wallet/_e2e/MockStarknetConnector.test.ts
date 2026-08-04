@@ -2,9 +2,8 @@ import { describe, expect, test } from 'vitest';
 
 import { MOCK_STARKNET_ADDRESS, createMockStarknetConnector } from './MockStarknetConnector';
 
-// Adapter-smoke coverage for the Starknet mock. UI-level autoconnect is wired
-// (see E2EAutoConnectStarknet) but not covered by a Playwright spec in this
-// push — matrix entry is labeled "adapter smoke" accordingly.
+// Adapter-smoke coverage for the Starknet mock. The UI-level autoconnect path
+// is covered by tests/e2e-wallet/autoconnect/starknet.spec.ts.
 describe('MockStarknetConnector', () => {
   test('connect resolves to the fixed mock address on each chain', async () => {
     const connector = createMockStarknetConnector();

@@ -215,8 +215,6 @@ const nextConfig = {
     ],
   },
 
-  // Skip type checking during builds — CI runs these separately
-  typescript: { ignoreBuildErrors: true },
 };
 
 module.exports = withBundleAnalyzer(nextConfig);

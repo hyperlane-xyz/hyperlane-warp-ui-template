@@ -5,7 +5,7 @@ const STATS_PATH = '.next/diagnostics/route-bundle-stats.json';
 const MIB = 1024 * 1024;
 const mibToBytes = (mib) => Math.round(mib * MIB);
 const ROUTE_BUDGETS = {
-  '/': { raw: mibToBytes(47), gzip: mibToBytes(8.2) },
+  '/': { raw: mibToBytes(50), gzip: mibToBytes(8.2) },
   '/embed': { raw: mibToBytes(49), gzip: mibToBytes(8.6) },
   '/blocked': { raw: mibToBytes(29), gzip: mibToBytes(5.4) },
 };

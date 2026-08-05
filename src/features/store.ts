@@ -6,6 +6,8 @@ import { toast } from 'react-toastify';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+import { chains as ChainsTS } from '../consts/chains';
+import ChainsYaml from '../consts/chains.yaml';
 import { config } from '../consts/config';
 import { logger } from '../utils/logger';
 import { routerClient } from './api/RouterClient';
@@ -570,12 +572,19 @@ async function loadMigrationChainMetadata(
   overrides: ChainMap<Partial<ChainMetadata> | undefined> | undefined,
 ): Promise<ChainMap<Partial<ChainMetadata>>> {
   const { chainMetadata } = await import('@hyperlane-xyz/registry');
-  const merged: ChainMap<Partial<ChainMetadata>> = { ...chainMetadata };
+  const merged = mergeMigrationChainMetadata(chainMetadata, { ...ChainsYaml, ...ChainsTS });
   for (const [chainName, override] of Object.entries(overrides ?? {})) {
     if (!override) continue;
     merged[chainName] = { ...merged[chainName], ...override };
   }
   return merged;
+}
+
+export function mergeMigrationChainMetadata(
+  registryMetadata: ChainMap<Partial<ChainMetadata>>,
+  filesystemMetadata: ChainMap<Partial<ChainMetadata>>,
+): ChainMap<Partial<ChainMetadata>> {
+  return { ...registryMetadata, ...filesystemMetadata };
 }
 
 let publishedRegistryPromise: Promise<IRegistry> | undefined;

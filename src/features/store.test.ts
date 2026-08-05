@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 
 import type { RouteResponse } from './api/types';
 import {
+  mergeMigrationChainMetadata,
   mergeKnownTokens,
   mergeTransferTransactionUpdate,
   migratePersistedAppState,
@@ -185,6 +186,20 @@ describe('migratePersistedAppState', () => {
         srcChain: 123,
         dstChain: 456,
       },
+    });
+  });
+});
+
+describe('mergeMigrationChainMetadata', () => {
+  test('keeps template filesystem chains available for legacy migration', () => {
+    const merged = mergeMigrationChainMetadata(
+      { registrychain: { chainId: 1, domainId: 1 } },
+      { localchain: { chainId: 2, domainId: 22 } },
+    );
+
+    expect(merged).toMatchObject({
+      registrychain: { chainId: 1, domainId: 1 },
+      localchain: { chainId: 2, domainId: 22 },
     });
   });
 });

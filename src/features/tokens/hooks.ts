@@ -64,7 +64,7 @@ export function useTokens(query: TokensQuery = {}): UseTokensResult {
 
   const result = useQuery({
     queryKey: ['router', 'tokens', canonical],
-    queryFn: () => routerClient.tokens(canonical),
+    queryFn: ({ signal }) => routerClient.tokens(canonical, { signal }),
     staleTime: canonical.search ? STALE_30_SEC : STALE_5_MIN,
   });
 
@@ -120,9 +120,9 @@ export function useAvailableRouteTokens({
 
   const result = useQuery({
     queryKey: getAvailableRoutesQueryKey(selectionMode, query),
-    queryFn: () => {
+    queryFn: ({ signal }) => {
       if (!query) throw new Error('available routes query is not ready');
-      return routerClient.availableRoutes(query);
+      return routerClient.availableRoutes(query, { signal });
     },
     enabled: enabled && !!query,
     staleTime: AVAILABLE_ROUTES_STALE_TIME,

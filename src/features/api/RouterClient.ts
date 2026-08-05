@@ -1,5 +1,6 @@
 // Ported from universal-router-engine/src/api/client.ts.
 import { config } from '../../consts/config';
+import { logger } from '../../utils/logger';
 import {
   ChainsResponseSchema,
   AvailableRoutesResponseSchema,
@@ -35,24 +36,31 @@ export interface AvailableRoutesParams {
   dstToken?: string | null;
 }
 
+interface RequestOptions {
+  signal?: AbortSignal;
+}
+
+const REQUEST_TIMEOUT_MS = 15_000;
+
 export class RouterClient {
   constructor(private baseUrl: string) {}
 
-  async health(): Promise<boolean> {
+  async health(options: RequestOptions = {}): Promise<boolean> {
     try {
-      const body = await this.get('/health', HealthResponseSchema);
+      const body = await this.get('/health', HealthResponseSchema, options);
       return body.ok;
-    } catch {
+    } catch (err) {
+      logger.warn('Router health check failed', err as Error);
       return false;
     }
   }
 
-  readiness(): Promise<ReadinessResponse> {
-    return this.get('/readyz', ReadinessResponseSchema);
+  readiness(options: RequestOptions = {}): Promise<ReadinessResponse> {
+    return this.get('/readyz', ReadinessResponseSchema, options);
   }
 
-  chains(): Promise<ChainsResponse> {
-    return this.get('/v1/chains', ChainsResponseSchema);
+  chains(options: RequestOptions = {}): Promise<ChainsResponse> {
+    return this.get('/v1/chains', ChainsResponseSchema, options);
   }
 
   // Branching matches engine TokensQuerySchema:
@@ -62,7 +70,7 @@ export class RouterClient {
   //   { search }      → cross-chain search
   //   { ids }         → explicit lookups (repeated &ids=, max 5)
   // ?ids is mutually exclusive with chain/search.
-  tokens(query: TokensQuery = {}): Promise<TokensResponse> {
+  tokens(query: TokensQuery = {}, options: RequestOptions = {}): Promise<TokensResponse> {
     const params = new URLSearchParams();
     if (query.ids?.length) {
       for (const id of query.ids) params.append('ids', id);
@@ -71,10 +79,13 @@ export class RouterClient {
       if (query.search) params.set('search', query.search);
     }
     const qs = params.toString();
-    return this.get(`/v1/tokens${qs ? `?${qs}` : ''}`, TokensResponseSchema);
+    return this.get(`/v1/tokens${qs ? `?${qs}` : ''}`, TokensResponseSchema, options);
   }
 
-  availableRoutes(params: AvailableRoutesParams): Promise<AvailableRoutesResponse> {
+  availableRoutes(
+    params: AvailableRoutesParams,
+    options: RequestOptions = {},
+  ): Promise<AvailableRoutesResponse> {
     const search = new URLSearchParams();
     const { srcChain, srcToken, dstChain, dstToken } = params;
     const hasSource = srcChain != null && srcToken != null;
@@ -103,35 +114,70 @@ export class RouterClient {
       search.set('dstChain', String(dstChain));
       search.set('dstToken', dstToken);
     }
-    return this.get(`/v1/available-routes?${search.toString()}`, AvailableRoutesResponseSchema);
+    return this.get(
+      `/v1/available-routes?${search.toString()}`,
+      AvailableRoutesResponseSchema,
+      options,
+    );
   }
 
-  async quote(params: QuoteParams): Promise<QuoteResponse> {
-    const res = await fetch(`${this.baseUrl}/v1/quote`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        srcChain: params.srcChain,
-        dstChain: params.dstChain,
-        srcToken: params.srcToken,
-        dstToken: params.dstToken,
-        amount: params.amount.toString(),
-        sender: params.sender,
-        ...(params.recipient && { recipient: params.recipient }),
-        ...(params.slippageBps != null && { slippageBps: params.slippageBps }),
-        ...(params.commitmentSalt && { commitmentSalt: params.commitmentSalt }),
-      }),
-    });
-    const body = await res.text();
-    if (!res.ok) throw new Error(`Quote failed: ${res.status} ${body}`);
-    return QuoteResponseSchema.parse(JSON.parse(body));
+  async quote(params: QuoteParams, options: RequestOptions = {}): Promise<QuoteResponse> {
+    return this.request(
+      '/v1/quote',
+      QuoteResponseSchema,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          srcChain: params.srcChain,
+          dstChain: params.dstChain,
+          srcToken: params.srcToken,
+          dstToken: params.dstToken,
+          amount: params.amount.toString(),
+          sender: params.sender,
+          ...(params.recipient && { recipient: params.recipient }),
+          ...(params.slippageBps != null && { slippageBps: params.slippageBps }),
+          ...(params.commitmentSalt && { commitmentSalt: params.commitmentSalt }),
+        }),
+      },
+      options,
+    );
   }
 
-  private async get<T>(path: string, schema: { parse(value: unknown): T }): Promise<T> {
-    const res = await fetch(`${this.baseUrl}${path}`);
-    const body = await res.text();
-    if (!res.ok) throw new Error(`Request failed: ${res.status} ${body}`);
-    return schema.parse(JSON.parse(body));
+  private async get<T>(
+    path: string,
+    schema: { parse(value: unknown): T },
+    options: RequestOptions,
+  ): Promise<T> {
+    return this.request(path, schema, {}, options);
+  }
+
+  private async request<T>(
+    path: string,
+    schema: { parse(value: unknown): T },
+    init: RequestInit,
+    options: RequestOptions,
+  ): Promise<T> {
+    const controller = new AbortController();
+    const abortFromExternalSignal = () => controller.abort(options.signal?.reason);
+    if (options.signal?.aborted) abortFromExternalSignal();
+    options.signal?.addEventListener('abort', abortFromExternalSignal, { once: true });
+    const timeout = setTimeout(
+      () => controller.abort(new Error('Router request timed out')),
+      REQUEST_TIMEOUT_MS,
+    );
+    try {
+      const res = await fetch(`${this.baseUrl}${path}`, {
+        ...init,
+        signal: controller.signal,
+      });
+      const body = await res.text();
+      if (!res.ok) throw new Error(`Request failed: ${res.status} ${body}`);
+      return schema.parse(JSON.parse(body));
+    } finally {
+      clearTimeout(timeout);
+      options.signal?.removeEventListener('abort', abortFromExternalSignal);
+    }
   }
 }
 

@@ -40,6 +40,7 @@ describe('RouterClient.availableRoutes', () => {
 
     expect(fetchMock).toHaveBeenCalledWith(
       'https://router.test/v1/available-routes?srcChain=1&srcToken=0x1111111111111111111111111111111111111111',
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
     );
   });
 
@@ -62,6 +63,7 @@ describe('RouterClient.availableRoutes', () => {
 
     expect(fetchMock).toHaveBeenCalledWith(
       'https://router.test/v1/available-routes?dstChain=stride-1&dstToken=uusdc',
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
     );
   });
 
@@ -99,7 +101,10 @@ describe('RouterClient.tokens', () => {
 
     await new RouterClient('https://router.test').tokens({ chain: 'ethereum' });
 
-    expect(fetchMock).toHaveBeenCalledWith('https://router.test/v1/tokens?chain=ethereum');
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://router.test/v1/tokens?chain=ethereum',
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
   });
 });
 

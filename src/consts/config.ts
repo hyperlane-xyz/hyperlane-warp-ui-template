@@ -22,10 +22,11 @@ const routerApiUrl =
 const ccsUrl =
   process.env.NEXT_PUBLIC_CCS_URL ||
   'https://offchain-lookup.services.hyperlane.xyz/callCommitments';
-const permit2ExpirationSeconds = Number(
-  process.env.NEXT_PUBLIC_PERMIT2_EXPIRATION_SECONDS || 31_536_000,
+const permit2ExpirationSeconds = parseFiniteEnvNumber(
+  'NEXT_PUBLIC_PERMIT2_EXPIRATION_SECONDS',
+  31_536_000,
 );
-const defaultSlippageBps = Number(process.env.NEXT_PUBLIC_DEFAULT_SLIPPAGE_BPS || 100);
+const defaultSlippageBps = parseFiniteEnvNumber('NEXT_PUBLIC_DEFAULT_SLIPPAGE_BPS', 100);
 const aleoNetwork = process.env.NEXT_PUBLIC_ALEO_NETWORK === 'testnet' ? 'testnet' : 'mainnet';
 
 interface Config {
@@ -107,3 +108,13 @@ export const config: Config = Object.freeze({
     'monad',
   ],
 });
+
+function parseFiniteEnvNumber(name: string, fallback: number): number {
+  const raw = process.env[name];
+  if (raw == null || raw === '') return fallback;
+  const value = Number(raw);
+  if (!Number.isFinite(value)) {
+    throw new Error(`${name} must be a finite number`);
+  }
+  return value;
+}

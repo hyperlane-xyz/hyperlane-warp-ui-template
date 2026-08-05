@@ -629,6 +629,7 @@ function TransferFormContent() {
         routes={routes}
         selectedIndex={safeIndex}
         onSelect={setSelectedRouteIndex}
+        srcToken={srcToken}
         dstToken={dstToken}
       />
 

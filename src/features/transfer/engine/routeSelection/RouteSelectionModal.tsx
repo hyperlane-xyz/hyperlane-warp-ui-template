@@ -1,5 +1,5 @@
 import { IToken } from '@hyperlane-xyz/sdk';
-import { CopyButton, HyperlaneLogo, Modal } from '@hyperlane-xyz/widgets';
+import { CopyButton, HyperlaneLogo, Modal, RefreshIcon } from '@hyperlane-xyz/widgets';
 import { Fragment, useMemo, useState } from 'react';
 
 import { ChainLogo } from '../../../../components/icons/ChainLogo';
@@ -22,6 +22,7 @@ interface Props {
   routes: AugmentedRoute[];
   selectedIndex: number;
   onSelect: (index: number) => void;
+  srcToken?: UiToken | null;
   dstToken?: UiToken | null;
 }
 
@@ -34,6 +35,7 @@ export function RouteSelectionModal({
   routes,
   selectedIndex,
   onSelect,
+  srcToken,
   dstToken,
 }: Props) {
   const [view, setView] = useState<ViewMode>('flow');
@@ -79,6 +81,7 @@ export function RouteSelectionModal({
               isSelected={i === selectedIndex}
               isBest={i === 0}
               onSelect={handleSelect}
+              srcToken={srcToken}
               dstToken={dstToken}
             />
           ))
@@ -96,10 +99,19 @@ interface RouteCardProps {
   isSelected: boolean;
   isBest: boolean;
   onSelect: (i: number) => void;
+  srcToken?: UiToken | null;
   dstToken?: UiToken | null;
 }
 
-function RouteCard({ route, index, isSelected, isBest, onSelect, dstToken }: RouteCardProps) {
+function RouteCard({
+  route,
+  index,
+  isSelected,
+  isBest,
+  onSelect,
+  srcToken,
+  dstToken,
+}: RouteCardProps) {
   const decimals = dstToken?.decimals ?? 18;
   const symbol = dstToken?.symbol ?? '';
   const outputFormatted = formatDisplayAmount(BigInt(route.raw.output), decimals);
@@ -129,12 +141,20 @@ function RouteCard({ route, index, isSelected, isBest, onSelect, dstToken }: Rou
           {outputFormatted} {symbol}
         </span>
       </div>
-      <RouteFlowDiagram steps={route.raw.steps} dstToken={dstToken} />
+      <RouteFlowDiagram steps={route.raw.steps} srcToken={srcToken} dstToken={dstToken} />
     </button>
   );
 }
 
-function RouteFlowDiagram({ steps, dstToken }: { steps: QuoteStep[]; dstToken?: UiToken | null }) {
+function RouteFlowDiagram({
+  steps,
+  srcToken,
+  dstToken,
+}: {
+  steps: QuoteStep[];
+  srcToken?: UiToken | null;
+  dstToken?: UiToken | null;
+}) {
   const tokenMap = useTokenByKeyMap();
   const multiProvider = useMultiProvider();
   // Ensure tokens for every chain that appears in these steps are loaded
@@ -144,39 +164,63 @@ function RouteFlowDiagram({ steps, dstToken }: { steps: QuoteStep[]; dstToken?: 
   useRouteChainTokens(steps);
   const nodes = buildFlowNodes(steps);
   const lastIdx = nodes.length - 1;
+  const firstNode = nodes[0];
+  const lastNode = nodes[lastIdx];
+  const showWrap =
+    !!firstNode && isDisplayWrappedNative(srcToken, firstNode.chainId, firstNode.tokenAddress);
+  const showUnwrap =
+    !!lastNode && isDisplayWrappedNative(dstToken, lastNode.chainId, lastNode.tokenAddress);
 
   // Resolve all node tokens upfront so step edges can receive their tokenOut
   // directly rather than re-looking it up (avoids misses for dest-chain tokens).
   const resolvedTokens: (UiToken | null)[] = nodes.map((node, i) => {
     const found = getTokenByKeyFromMap(tokenMap, tokenKey(node.chainId, node.tokenAddress));
     if (found) return found;
-    if (i === lastIdx && dstToken) return dstToken;
+    if (i === lastIdx && dstToken && !showUnwrap) return dstToken;
     return null;
   });
 
   return (
-    <div className="flex flex-wrap items-end gap-1.5">
-      {nodes.map((node, i) => {
-        const step = i < steps.length ? steps[i] : undefined;
-        const token = resolvedTokens[i];
-        const tokenOut = i + 1 <= lastIdx ? resolvedTokens[i + 1] : null;
-        const chainName = multiProvider.tryGetChainName(node.chainId) ?? undefined;
+    <div className="-mx-1 overflow-x-auto px-1 pb-2">
+      <div className="flex min-w-max flex-nowrap items-end gap-1.5">
+        {showWrap && firstNode && (
+          <>
+            <TokenNode token={srcToken ?? null} chainName={srcToken?.chainName} />
+            <WrapEdge action="wrap" fromToken={srcToken ?? null} toToken={resolvedTokens[0]} />
+          </>
+        )}
+        {nodes.map((node, i) => {
+          const step = i < steps.length ? steps[i] : undefined;
+          const token = resolvedTokens[i];
+          const tokenOut = i + 1 <= lastIdx ? resolvedTokens[i + 1] : null;
+          const chainName = multiProvider.tryGetChainName(node.chainId) ?? undefined;
 
-        return (
-          <Fragment key={i}>
-            <TokenNode token={token} chainName={chainName} />
-            {step && (
-              <StepEdge
-                step={step}
-                tokenMap={tokenMap}
-                tokenOut={tokenOut}
-                stepIndex={i}
-                steps={steps}
-              />
-            )}
-          </Fragment>
-        );
-      })}
+          return (
+            <Fragment key={i}>
+              <TokenNode token={token} chainName={chainName} />
+              {step && (
+                <StepEdge
+                  step={step}
+                  tokenMap={tokenMap}
+                  tokenOut={tokenOut}
+                  stepIndex={i}
+                  steps={steps}
+                />
+              )}
+            </Fragment>
+          );
+        })}
+        {showUnwrap && lastNode && (
+          <>
+            <WrapEdge
+              action="unwrap"
+              fromToken={resolvedTokens[lastIdx]}
+              toToken={dstToken ?? null}
+            />
+            <TokenNode token={dstToken ?? null} chainName={dstToken?.chainName} />
+          </>
+        )}
+      </div>
     </div>
   );
 }
@@ -244,6 +288,80 @@ function StepEdge({
   if (step.type === 'swap')
     return <SwapEdge step={step} tokenMap={tokenMap} resolvedTokenOut={tokenOut} />;
   return <CrossChainEdge step={step} tokenMap={tokenMap} stepIndex={stepIndex} steps={steps} />;
+}
+
+// ── Native wrapper display edge ─────────────────────────────────────────
+
+function WrapEdge({
+  action,
+  fromToken,
+  toToken,
+}: {
+  action: 'wrap' | 'unwrap';
+  fromToken: UiToken | null;
+  toToken: UiToken | null;
+}) {
+  const label = action === 'wrap' ? 'Wrap' : 'Unwrap';
+
+  return (
+    <div className="flex items-center gap-1 pb-4">
+      <span className="text-sm text-gray-400">→</span>
+      <HoverTooltip
+        tooltip={<WrapEdgeTooltip label={label} fromToken={fromToken} toToken={toToken} />}
+      >
+        <div className="flex items-center gap-1 rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 dark:border-white/15 dark:bg-white/10">
+          <RefreshIcon
+            width={13}
+            height={13}
+            color="currentColor"
+            className="text-gray-600 dark:text-foreground-secondary"
+          />
+          <span className="font-secondary text-xxs text-gray-700 dark:text-foreground-secondary">
+            {label}
+          </span>
+        </div>
+      </HoverTooltip>
+      <span className="text-sm text-gray-400">→</span>
+    </div>
+  );
+}
+
+function WrapEdgeTooltip({
+  label,
+  fromToken,
+  toToken,
+}: {
+  label: string;
+  fromToken: UiToken | null;
+  toToken: UiToken | null;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="font-medium dark:text-foreground-primary">{label}</div>
+      <div className="space-y-0.5">
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-gray-400 dark:text-foreground-secondary">From</span>
+          <span className="dark:text-foreground-primary">{fromToken?.symbol ?? '?'}</span>
+        </div>
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-gray-400 dark:text-foreground-secondary">To</span>
+          <span className="dark:text-foreground-primary">{toToken?.symbol ?? '?'}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function isDisplayWrappedNative(
+  selectedToken: UiToken | null | undefined,
+  chainId: number,
+  routeTokenAddress: string,
+): boolean {
+  return (
+    !!selectedToken?.isNative &&
+    !!selectedToken.wrappedAddress &&
+    tokenKey(chainId, routeTokenAddress) === tokenKey(chainId, selectedToken.wrappedAddress)
+  );
 }
 
 // ── Swap step edge ──────────────────────────────────────────────────────

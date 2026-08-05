@@ -1,10 +1,13 @@
 import type { ChainName, MultiProtocolProvider } from '@hyperlane-xyz/sdk';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { useQuery } from '@tanstack/react-query';
+import { useEffect, useRef, useState } from 'react';
 
 import { logger } from '../../utils/logger';
 
 const DEST_SWAP_POLL_INTERVAL_MS = 5_000;
+const CLEAN_MISSING_CONFIRMATIONS = 2;
+const MAX_SOLANA_DEST_SWAP_POLLS = 24;
 const connectionByRpcUrl = new Map<string, Connection>();
 
 function connectionForRpcUrl(rpcUrl: string): Connection {
@@ -47,6 +50,10 @@ export function useSolanaDestSwapStatus({
   multiProvider: MultiProtocolProvider;
   enabled: boolean;
 }) {
+  const cleanMissingCount = useRef(0);
+  const pollCount = useRef(0);
+  const [isDone, setIsDone] = useState(false);
+
   const { data } = useQuery({
     queryKey: ['solanaDestSwapStatus', destinationChain, pdaAddress],
     queryFn: async () => {
@@ -55,11 +62,30 @@ export function useSolanaDestSwapStatus({
     },
     enabled: enabled && !!pdaAddress && !!destinationChain,
     refetchInterval: (query) => {
-      if (query.state.data?.exists === false && !query.state.data.errored) return false;
+      if (isDone || pollCount.current >= MAX_SOLANA_DEST_SWAP_POLLS) return false;
       return DEST_SWAP_POLL_INTERVAL_MS;
     },
     refetchOnWindowFocus: false,
   });
 
-  return { isDone: data?.exists === false && !data.errored };
+  useEffect(() => {
+    cleanMissingCount.current = 0;
+    pollCount.current = 0;
+    setIsDone(false);
+  }, [destinationChain, pdaAddress, enabled]);
+
+  useEffect(() => {
+    if (!enabled || !data) return;
+    pollCount.current += 1;
+    if (data.errored) return;
+    if (data.exists) {
+      cleanMissingCount.current = 0;
+      return;
+    }
+
+    cleanMissingCount.current += 1;
+    if (cleanMissingCount.current >= CLEAN_MISSING_CONFIRMATIONS) setIsDone(true);
+  }, [data, enabled]);
+
+  return { isDone };
 }

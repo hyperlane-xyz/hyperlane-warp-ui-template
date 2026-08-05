@@ -9,6 +9,7 @@ import { FinalTransferStatuses, TransferStatus, type TransferHistoryItem } from 
 // ERC20 Transfer(address indexed from, address indexed to, uint256 value)
 const TRANSFER_TOPIC = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
 const DESTINATION_OUTCOME_RETRY_MS = 5_000;
+const DESTINATION_OUTCOME_SLOW_RETRY_MS = 60_000;
 const MAX_DESTINATION_OUTCOME_RETRIES = 24;
 
 type ReceiptProvider = {
@@ -80,11 +81,14 @@ export function useTransferStatus(
     let cancelled = false;
     let retryTimer: ReturnType<typeof setTimeout> | undefined;
     const scheduleRetry = () => {
-      if (retryAttemptRef.current >= MAX_DESTINATION_OUTCOME_RETRIES) return;
+      const delay =
+        retryAttemptRef.current >= MAX_DESTINATION_OUTCOME_RETRIES
+          ? DESTINATION_OUTCOME_SLOW_RETRY_MS
+          : DESTINATION_OUTCOME_RETRY_MS;
       retryAttemptRef.current += 1;
       retryTimer = setTimeout(() => {
         if (!cancelled) setRetryTick((tick) => tick + 1);
-      }, DESTINATION_OUTCOME_RETRY_MS);
+      }, delay);
     };
 
     const { destinationTxHash, destinationOutcome, status, dstChain, recipient } = transfer ?? {};

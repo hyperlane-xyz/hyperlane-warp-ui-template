@@ -18,8 +18,6 @@ import { validateWarpRoute, type WarpRouteValidationContext } from './validateWa
 export interface RouteSecurityValidationContext extends WarpRouteValidationContext {
   srcChain: number;
   dstChain: number;
-  srcTokenWrappedAddress?: string;
-  dstTokenWrappedAddress?: string;
 }
 
 export function validateRouteSecurity(
@@ -71,14 +69,7 @@ function validateStepBindings(
 ): RouteSecurityValidationResult {
   const firstStep = route.steps[0];
   if (!firstStep) return { valid: false, reason: 'Route has no steps' };
-  if (
-    context.srcToken &&
-    !sameRequestedToken(
-      inputTokenForStep(firstStep),
-      context.srcToken,
-      context.srcTokenWrappedAddress,
-    )
-  ) {
+  if (context.srcToken && !sameTokenAddress(inputTokenForStep(firstStep), context.srcToken)) {
     return { valid: false, reason: 'Route input token does not match request' };
   }
 
@@ -86,7 +77,7 @@ function validateStepBindings(
   if (
     context.dstToken &&
     finalStep.type === 'swap' &&
-    !sameRequestedToken(finalStep.tokenOut, context.dstToken, context.dstTokenWrappedAddress)
+    !sameTokenAddress(finalStep.tokenOut, context.dstToken)
   ) {
     return { valid: false, reason: 'Route output token does not match request' };
   }
@@ -122,10 +113,7 @@ function validateApproval(
   if (!firstStep) return { valid: false, reason: 'Approval route has no spend step' };
 
   const spendToken = spendTokenForStep(firstStep);
-  if (
-    isEngineNativeToken(spendToken) ||
-    sameNativeRequestWrappedToken(spendToken, context.srcToken, context.srcTokenWrappedAddress)
-  ) {
+  if (isEngineNativeToken(spendToken)) {
     return { valid: false, reason: 'Native route must not request approval' };
   }
   if (!sameTokenAddress(route.approval.token, spendToken)) {
@@ -318,28 +306,6 @@ function spendTokenForStep(step: QuoteStep): string {
 
 function inputTokenForStep(step: QuoteStep): string {
   return step.type === 'swap' ? step.tokenIn : step.asset;
-}
-
-function sameRequestedToken(
-  routeToken: string,
-  requestToken: string,
-  requestTokenWrappedAddress: string | undefined,
-): boolean {
-  if (sameTokenAddress(routeToken, requestToken)) return true;
-  return sameNativeRequestWrappedToken(routeToken, requestToken, requestTokenWrappedAddress);
-}
-
-function sameNativeRequestWrappedToken(
-  routeToken: string,
-  requestToken: string | undefined,
-  requestTokenWrappedAddress: string | undefined,
-): boolean {
-  return (
-    !!requestToken &&
-    !!requestTokenWrappedAddress &&
-    isEngineNativeToken(requestToken) &&
-    sameTokenAddress(routeToken, requestTokenWrappedAddress)
-  );
 }
 
 function parseRouteAmount(amount: string): bigint | null {

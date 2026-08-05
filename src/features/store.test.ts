@@ -113,9 +113,9 @@ describe('removeFinalTransferRoute', () => {
 });
 
 describe('migratePersistedAppState', () => {
-  test('converts production v2 transfer history into transfer transaction history', () => {
+  test('converts production v2 transfer history into transfer transaction history', async () => {
     const msgId = `0x${'33'.repeat(32)}`;
-    const migrated = migratePersistedAppState({
+    const migrated = await migratePersistedAppState({
       chainMetadataOverrides: { ethereum: { rpcUrls: [] } },
       transfers: [
         {
@@ -148,6 +148,36 @@ describe('migratePersistedAppState', () => {
         amountIn: '100',
         amountOut: '100',
         msgIds: [{ msgId, label: 'bridge' }],
+      },
+    });
+  });
+
+  test('converts v2 transfer history with custom chain metadata overrides', async () => {
+    const migrated = await migratePersistedAppState({
+      chainMetadataOverrides: {
+        customorigin: { chainId: 123, domainId: 123 },
+        customdestination: { chainId: 456, domainId: 456 },
+      },
+      transfers: [
+        {
+          status: 'fetching-attestation',
+          origin: 'customorigin',
+          destination: 'customdestination',
+          originTokenAddressOrDenom: TOKEN,
+          destTokenAddressOrDenom: DST_TOKEN,
+          amount: '100',
+          sender: '0x0000000000000000000000000000000000000001',
+          recipient: '0x0000000000000000000000000000000000000002',
+          timestamp: 1_718_000_000_000,
+        },
+      ],
+    });
+
+    expect(migrated.transactionHistory[0]).toMatchObject({
+      data: {
+        status: TransferStatus.Bridging,
+        srcChain: 123,
+        dstChain: 456,
       },
     });
   });

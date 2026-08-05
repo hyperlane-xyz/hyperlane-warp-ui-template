@@ -57,13 +57,6 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
       values.srcChain != null &&
       tokenKey(t.chainId, t.address) === tokenKey(values.srcChain, values.srcToken),
   );
-  const { data: dstTokens } = useTokens(values.dstChain != null ? { chain: values.dstChain } : {});
-  const dstTokenInfo = dstTokens.find(
-    (t) =>
-      values.dstChain != null &&
-      tokenKey(t.chainId, t.address) === tokenKey(values.dstChain, values.dstToken),
-  );
-
   const amountAtomic = useMemo(() => {
     if (!srcTokenInfo || srcTokenInfo.decimals == null) return null;
     if (values.amount === '' || values.amount == null) return null;
@@ -138,8 +131,6 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
         dstChain: values.dstChain!,
         srcToken: values.srcToken,
         dstToken: values.dstToken,
-        srcTokenWrappedAddress: srcTokenInfo?.wrappedAddress,
-        dstTokenWrappedAddress: dstTokenInfo?.wrappedAddress,
       });
       if (validation.valid) return true;
       logger.warn('Filtered unsafe route', {
@@ -165,8 +156,6 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
     values.slippageBps,
     values.srcChain,
     values.srcToken,
-    srcTokenInfo?.wrappedAddress,
-    dstTokenInfo?.wrappedAddress,
   ]);
 
   const expiresAt = augmented?.expiresAt;
@@ -227,7 +216,7 @@ export function validateRouteAmounts(
   try {
     const output = BigInt(route.output);
     const outputMin = BigInt(route.outputMin);
-    const expectedMin = compoundSlippageMin(output, slippageBps, swapStepCount);
+    const expectedMin = slippageMin(output, slippageBps);
     if (outputMin < expectedMin) {
       return { valid: false, reason: 'Route minimum output is below slippage tolerance' };
     }
@@ -240,15 +229,8 @@ export function validateRouteAmounts(
   }
 }
 
-function compoundSlippageMin(output: bigint, slippageBps: number, swapStepCount: number): bigint {
-  let numerator = 1n;
-  let denominator = 1n;
-  const ratio = BigInt(10_000 - slippageBps);
-  for (let i = 0; i < swapStepCount; i++) {
-    numerator *= ratio;
-    denominator *= 10_000n;
-  }
-  return (output * numerator) / denominator;
+function slippageMin(output: bigint, slippageBps: number): bigint {
+  return (output * BigInt(10_000 - slippageBps)) / 10_000n;
 }
 
 function isQuoteRequestReady(v: TransferFormValues, sender: string | undefined): boolean {

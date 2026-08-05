@@ -1,9 +1,10 @@
 import type { ChainMap, ChainMetadata } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
+import { PublicKey } from '@solana/web3.js';
 import { encodeFunctionData, erc20Abi } from 'viem';
 import { describe, expect, test } from 'vitest';
 
-import type { ChainDiscovery, RouteResponse } from '../api/types';
+import type { ChainDiscovery, RouteResponse, RouteTx } from '../api/types';
 import type { RegistryWarpRouteMap } from '../warpRoutes/registryWarpRoutes';
 import { validateRouteSecurity } from './validateRouteSecurity';
 
@@ -16,12 +17,13 @@ const BAD = '0x5555555555555555555555555555555555555555';
 const PERMIT2 = '0x6666666666666666666666666666666666666666';
 const BRIDGE_ROUTER = '0x7777777777777777777777777777777777777777';
 const DST_ROUTER = '0x8888888888888888888888888888888888888888';
-const BASE_WETH = '0x4200000000000000000000000000000000000006';
 const STARKNET_ROUTER = '0x074238dfa02063792077820584c925b679a013cbab38e5ca61af5627d1eda736';
 const STARKNET_TOKEN = '0x01a238dfa02063792077820584c925b679a013cbab38e5ca61af5627d1eda736';
 const SOL_UNIVERSAL_ROUTER_PROGRAM = '2CttnaLkYbNHbaFDFnQ8PMCnzUwTGrKnskBxPM4TRWGp';
 const SOL_ROUTER = 'SolRouter1111111111111111111111111111111111';
-const SOL_MINT = 'SolMint111111111111111111111111111111111111';
+const SOL_MINT = 'So11111111111111111111111111111111111111112';
+const SOL_OWNER = 'ApMsTRbsbBpsmzpht4JpzudaBEef4AqW1GfnEf6az6h9';
+const SOL_TOKEN_PROGRAM = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
 
 const ETH = 1;
 const BASE = 8453;
@@ -72,37 +74,16 @@ describe('validateRouteSecurity', () => {
     expect(validateRouteSecurity(route, context({ dstChain: ETH }))).toEqual({ valid: true });
   });
 
-  test('accepts selected native token when route spends and outputs its wrapped token', () => {
+  test('rejects wrapped native route tokens for selected native tokens without a trusted mapping', () => {
     const route = sameChainSwapRoute();
     if (route.steps[0].type !== 'swap') throw new Error('expected swap');
     route.steps[0].chain = BASE;
-    route.steps[0].tokenIn = BASE_WETH;
-    route.steps[0].tokenOut = BASE_WETH;
-    route.steps[0].path = [BASE_WETH, BASE_WETH];
-    route.approval = null;
-
-    expect(
-      validateRouteSecurity(
-        route,
-        context({
-          srcChain: BASE,
-          dstChain: BASE,
-          srcToken: NATIVE,
-          dstToken: NATIVE,
-          srcTokenWrappedAddress: BASE_WETH,
-          dstTokenWrappedAddress: BASE_WETH,
-        }),
-      ),
-    ).toEqual({ valid: true });
-  });
-
-  test('rejects wrapped native route token when selected native token lacks a wrapped address', () => {
-    const route = sameChainSwapRoute();
-    if (route.steps[0].type !== 'swap') throw new Error('expected swap');
-    route.steps[0].chain = BASE;
-    route.steps[0].tokenIn = BASE_WETH;
-    route.steps[0].tokenOut = BASE_WETH;
-    route.steps[0].path = [BASE_WETH, BASE_WETH];
+    route.steps[0].tokenIn = '0x4200000000000000000000000000000000000006';
+    route.steps[0].tokenOut = '0x4200000000000000000000000000000000000006';
+    route.steps[0].path = [
+      '0x4200000000000000000000000000000000000006',
+      '0x4200000000000000000000000000000000000006',
+    ];
     route.approval = null;
 
     expect(
@@ -113,36 +94,6 @@ describe('validateRouteSecurity', () => {
     ).toMatchObject({
       valid: false,
       reason: 'Route input token does not match request',
-    });
-  });
-
-  test('rejects approval when selected source token is native even if route spends wrapped native', () => {
-    const route = sameChainSwapRoute();
-    if (route.steps[0].type !== 'swap') throw new Error('expected swap');
-    route.steps[0].chain = BASE;
-    route.steps[0].tokenIn = BASE_WETH;
-    route.steps[0].tokenOut = DST_TOKEN;
-    route.steps[0].path = [BASE_WETH, DST_TOKEN];
-    route.approval = {
-      token: BASE_WETH,
-      spender: UNIVERSAL_ROUTER,
-      amount: '100',
-      kind: 'erc20',
-    };
-
-    expect(
-      validateRouteSecurity(
-        route,
-        context({
-          srcChain: BASE,
-          dstChain: BASE,
-          srcToken: NATIVE,
-          srcTokenWrappedAddress: BASE_WETH,
-        }),
-      ),
-    ).toMatchObject({
-      valid: false,
-      reason: 'Native route must not request approval',
     });
   });
 
@@ -580,32 +531,35 @@ describe('validateRouteSecurity', () => {
   });
 
   test('accepts Sealevel idempotent ATA setup pre-instructions', () => {
+    const ata = solanaAta(SOL_OWNER, SOL_MINT, SOL_TOKEN_PROGRAM);
     const route = sealevelUniversalRouterRoute();
+    const tx = route.tx as Extract<RouteTx, { to: string }>;
     route.tx = {
-      ...route.tx!,
+      ...tx,
+      accounts: [...(tx.accounts ?? []), { pubkey: ata, isSigner: false, isWritable: true }],
       preInstructions: [
         {
           programId: 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
           accounts: [
             {
-              pubkey: 'User111111111111111111111111111111111111',
+              pubkey: SOL_OWNER,
               isSigner: true,
               isWritable: true,
             },
             {
-              pubkey: 'Ata1111111111111111111111111111111111111',
+              pubkey: ata,
               isSigner: false,
               isWritable: true,
             },
             {
-              pubkey: 'Owner11111111111111111111111111111111111',
+              pubkey: SOL_OWNER,
               isSigner: false,
               isWritable: false,
             },
             { pubkey: SOL_MINT, isSigner: false, isWritable: false },
             { pubkey: '11111111111111111111111111111111', isSigner: false, isWritable: false },
             {
-              pubkey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+              pubkey: SOL_TOKEN_PROGRAM,
               isSigner: false,
               isWritable: false,
             },
@@ -616,6 +570,55 @@ describe('validateRouteSecurity', () => {
     };
 
     expect(validateRouteSecurity(route, solanaContext())).toEqual({ valid: true });
+  });
+
+  test('rejects Sealevel compute budget priority fee pre-instructions', () => {
+    const route = sealevelUniversalRouterRoute();
+    route.tx = {
+      ...route.tx!,
+      preInstructions: [
+        {
+          programId: 'ComputeBudget111111111111111111111111111111',
+          accounts: [],
+          data: 'AwDKmjsAAAAA',
+        },
+      ],
+    };
+
+    expect(validateRouteSecurity(route, solanaContext())).toMatchObject({
+      valid: false,
+      reason: 'Sealevel pre-instruction program is not allowed',
+    });
+  });
+
+  test('rejects Sealevel ATA setup for mints outside the route', () => {
+    const attackerMint = 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263';
+    const ata = solanaAta(SOL_OWNER, attackerMint, SOL_TOKEN_PROGRAM);
+    const route = sealevelUniversalRouterRoute();
+    const tx = route.tx as Extract<RouteTx, { to: string }>;
+    route.tx = {
+      ...tx,
+      accounts: [...(tx.accounts ?? []), { pubkey: ata, isSigner: false, isWritable: true }],
+      preInstructions: [
+        {
+          programId: 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
+          accounts: [
+            { pubkey: SOL_OWNER, isSigner: true, isWritable: true },
+            { pubkey: ata, isSigner: false, isWritable: true },
+            { pubkey: SOL_OWNER, isSigner: false, isWritable: false },
+            { pubkey: attackerMint, isSigner: false, isWritable: false },
+            { pubkey: '11111111111111111111111111111111', isSigner: false, isWritable: false },
+            { pubkey: SOL_TOKEN_PROGRAM, isSigner: false, isWritable: false },
+          ],
+          data: 'AQ==',
+        },
+      ],
+    };
+
+    expect(validateRouteSecurity(route, solanaContext())).toMatchObject({
+      valid: false,
+      reason: 'Sealevel pre-instruction program is not allowed',
+    });
   });
 });
 
@@ -1012,4 +1015,16 @@ function chain(args: {
     canExecute: true,
     supportsNative: true,
   };
+}
+
+function solanaAta(owner: string, mint: string, tokenProgram: string): string {
+  const [address] = PublicKey.findProgramAddressSync(
+    [
+      new PublicKey(owner).toBuffer(),
+      new PublicKey(tokenProgram).toBuffer(),
+      new PublicKey(mint).toBuffer(),
+    ],
+    new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'),
+  );
+  return address.toBase58();
 }

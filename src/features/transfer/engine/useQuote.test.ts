@@ -41,12 +41,27 @@ describe('validateRouteAmounts', () => {
     });
   });
 
-  test('allows slippage to compound across multiple swap legs', () => {
+  test('rejects multi-swap routes below the total user slippage floor', () => {
     expect(
       validateRouteAmounts(
         swapBridgeSwapRoute({
           output: '320016062708842',
           outputMin: '313647743060936',
+        }),
+        100,
+      ),
+    ).toEqual({
+      valid: false,
+      reason: 'Route minimum output is below slippage tolerance',
+    });
+  });
+
+  test('accepts multi-swap routes at the total user slippage floor', () => {
+    expect(
+      validateRouteAmounts(
+        swapBridgeSwapRoute({
+          output: '320016062708842',
+          outputMin: '316815902081753',
         }),
         100,
       ),

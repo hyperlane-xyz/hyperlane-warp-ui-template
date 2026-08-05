@@ -1,11 +1,5 @@
-import {
-  ChainAddresses,
-  GithubRegistry,
-  IRegistry,
-  PartialRegistry,
-  chainAddresses as packageChainAddresses,
-  chainMetadata as packageChainMetadata,
-} from '@hyperlane-xyz/registry';
+import { GithubRegistry, PartialRegistry } from '@hyperlane-xyz/registry';
+import type { ChainAddresses, IRegistry } from '@hyperlane-xyz/registry';
 import { ChainMap, ChainMetadata, ChainName, MultiProtocolProvider } from '@hyperlane-xyz/sdk';
 import { objFilter } from '@hyperlane-xyz/utils';
 import { toast } from 'react-toastify';
@@ -33,11 +27,6 @@ import { loadRegistryWarpRoutes, type RegistryWarpRouteMap } from './warpRoutes/
 const PERSIST_STATE_VERSION = 6;
 const APP_CONTEXT_ENGINE_CHAIN_RETRIES = 3;
 const APP_CONTEXT_ENGINE_CHAIN_TIMEOUT_MS = 2_500;
-
-const defaultRegistry = new PartialRegistry({
-  chainAddresses: packageChainAddresses,
-  chainMetadata: packageChainMetadata,
-});
 
 export const TransactionHistoryItemType = {
   Transfer: 'transfer',
@@ -337,7 +326,7 @@ function createTransactionId(type: TransactionHistoryItem['type'], timestamp: nu
 type TransferTransactionUpdateOptions = Parameters<AppState['updateTransferTransactionStatus']>[2];
 
 function createInitialRegistry(): IRegistry {
-  if (!config.registryUrl && !config.registryBranch) return defaultRegistry;
+  if (!config.registryUrl && !config.registryBranch) return new PartialRegistry({});
   return new GithubRegistry({
     uri: config.registryUrl,
     branch: config.registryBranch,
@@ -345,7 +334,7 @@ function createInitialRegistry(): IRegistry {
   });
 }
 
-export function migratePersistedAppState(persistedState: unknown) {
+export async function migratePersistedAppState(persistedState: unknown) {
   const state = persistedState as Partial<AppState> & {
     swaps?: TransferHistoryItem[];
     transfers?: LegacyTransferContext[];
@@ -362,9 +351,20 @@ export function migratePersistedAppState(persistedState: unknown) {
 
   const legacyTransfers = Array.isArray(state.transfers) ? state.transfers : [];
   const swaps = Array.isArray(state.swaps) ? state.swaps : [];
+  const chainMetadataForMigration = await loadMigrationChainMetadata(state.chainMetadataOverrides);
   const transactionHistory: TransactionHistoryItem[] = [
     ...legacyTransfers.flatMap((data) => {
-      const converted = convertLegacyTransferContext(data);
+      const converted = convertLegacyTransferContext(data, chainMetadataForMigration);
+      if (!converted) {
+        logger.warn(
+          'Dropped legacy transfer during migration because required fields are missing',
+          {
+            origin: data.origin,
+            destination: data.destination,
+            timestamp: data.timestamp,
+          },
+        );
+      }
       return converted ? [converted] : [];
     }),
     ...swaps.map((data) => ({
@@ -503,12 +503,18 @@ function normalizeTransferStatus(status: TransferStatus): TransferStatus {
   if (status === ('confirming-transfer' as TransferStatus)) return TransferStatus.ConfirmingOrigin;
   if (status === ('signing-swap' as TransferStatus)) return TransferStatus.SigningTransfer;
   if (status === ('dest-swap-failed' as TransferStatus)) return TransferStatus.DestTransferFailed;
+  if (status === ('fetching-attestation' as TransferStatus)) return TransferStatus.Bridging;
+  if (status === ('signing-revoke' as TransferStatus)) return TransferStatus.SigningTransfer;
+  if (status === ('confirming-revoke' as TransferStatus)) return TransferStatus.ConfirmingOrigin;
   return status;
 }
 
-function convertLegacyTransferContext(item: LegacyTransferContext): TransactionHistoryItem | null {
-  const srcChain = chainSelectorForChainName(item.origin);
-  const dstChain = chainSelectorForChainName(item.destination);
+function convertLegacyTransferContext(
+  item: LegacyTransferContext,
+  chainMetadataForMigration: ChainMap<Partial<ChainMetadata>>,
+): TransactionHistoryItem | null {
+  const srcChain = chainSelectorForChainName(item.origin, chainMetadataForMigration);
+  const dstChain = chainSelectorForChainName(item.destination, chainMetadataForMigration);
   if (
     srcChain == null ||
     dstChain == null ||
@@ -544,10 +550,44 @@ function convertLegacyTransferContext(item: LegacyTransferContext): TransactionH
   };
 }
 
-function chainSelectorForChainName(chainName: ChainName | undefined): number | null {
+function chainSelectorForChainName(
+  chainName: ChainName | undefined,
+  chainMetadataForMigration: ChainMap<Partial<ChainMetadata>>,
+): number | null {
   if (!chainName) return null;
-  const metadata = packageChainMetadata[chainName];
-  return metadata?.domainId ?? metadata?.chainId ?? null;
+  const metadata = chainMetadataForMigration[chainName];
+  const selector = metadata?.domainId ?? metadata?.chainId;
+  if (typeof selector === 'number') return selector;
+  if (typeof selector === 'string') {
+    const parsed = Number(selector);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+async function loadMigrationChainMetadata(
+  overrides: ChainMap<Partial<ChainMetadata> | undefined> | undefined,
+): Promise<ChainMap<Partial<ChainMetadata>>> {
+  const { chainMetadata } = await import('@hyperlane-xyz/registry');
+  const merged: ChainMap<Partial<ChainMetadata>> = { ...chainMetadata };
+  for (const [chainName, override] of Object.entries(overrides ?? {})) {
+    if (!override) continue;
+    merged[chainName] = { ...merged[chainName], ...override };
+  }
+  return merged;
+}
+
+let publishedRegistryPromise: Promise<IRegistry> | undefined;
+
+async function getPublishedRegistry(): Promise<IRegistry> {
+  publishedRegistryPromise ??= import('@hyperlane-xyz/registry').then(
+    ({ chainAddresses, chainMetadata }) =>
+      new PartialRegistry({
+        chainAddresses,
+        chainMetadata,
+      }),
+  );
+  return publishedRegistryPromise;
 }
 
 async function initAppContext({
@@ -563,7 +603,7 @@ async function initAppContext({
       // Pre-load real custom registry content to avoid repeated requests.
       await currentRegistry.listRegistryContent();
     } catch (error) {
-      currentRegistry = defaultRegistry;
+      currentRegistry = await getPublishedRegistry();
       logger.warn(
         'Failed to list registry content using GithubRegistry, will continue with PartialRegistry.',
         error,

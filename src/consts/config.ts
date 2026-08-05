@@ -109,7 +109,7 @@ export const config: Config = Object.freeze({
   ],
 });
 
-function parseFiniteEnvNumber(name: string, fallback: number): number {
+export function parseFiniteEnvNumber(name: string, fallback: number): number {
   const raw = process.env[name];
   if (raw == null || raw === '') return fallback;
   const value = Number(raw);

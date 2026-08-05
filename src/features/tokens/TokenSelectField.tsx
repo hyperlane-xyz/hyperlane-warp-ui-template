@@ -47,6 +47,7 @@ export function TokenSelectField({ selectionMode, disabled }: Props) {
   const syncTokens = useStore((s) => s.syncTokens);
   const latestOriginSelectionRef = useRef<string | undefined>(undefined);
   const latestCounterpartKeyRef = useRef<string | undefined>(undefined);
+  const latestRecipientRef = useRef(values.recipient);
 
   const isOrigin = selectionMode === 'origin';
   const chainField = isOrigin ? 'srcChain' : 'dstChain';
@@ -68,6 +69,9 @@ export function TokenSelectField({ selectionMode, disabled }: Props) {
   useEffect(() => {
     latestCounterpartKeyRef.current = counterpartKey;
   }, [counterpartKey]);
+  useEffect(() => {
+    latestRecipientRef.current = values.recipient;
+  }, [values.recipient]);
   const chainIdToName = useMemo(() => {
     const map = new Map<number, string>();
     for (const c of chainsResp?.chains ?? []) map.set(c.id, c.chainName);
@@ -89,7 +93,7 @@ export function TokenSelectField({ selectionMode, disabled }: Props) {
       void prefillBestDestinationToken({
         originToken: token,
         currentDestinationToken: counterpartToken,
-        recipient: values.recipient,
+        latestRecipientRef,
         chainIdToName,
         multiProvider,
         queryClient,
@@ -154,7 +158,7 @@ export function TokenSelectField({ selectionMode, disabled }: Props) {
 async function prefillBestDestinationToken({
   originToken,
   currentDestinationToken,
-  recipient,
+  latestRecipientRef,
   chainIdToName,
   multiProvider,
   queryClient,
@@ -166,7 +170,7 @@ async function prefillBestDestinationToken({
 }: {
   originToken: UiToken;
   currentDestinationToken?: UiToken;
-  recipient: string;
+  latestRecipientRef: MutableRefObject<string>;
   chainIdToName: Map<number, string>;
   multiProvider: ReturnType<typeof useMultiProvider>;
   queryClient: ReturnType<typeof useQueryClient>;
@@ -202,6 +206,7 @@ async function prefillBestDestinationToken({
 
     setFieldValue('dstChain', prefillToken.chainId);
     setFieldValue('dstToken', prefillToken.address);
+    const recipient = latestRecipientRef.current;
     if (shouldClearAddress(multiProvider, recipient, prefillToken.chainName)) {
       setFieldValue('recipient', '');
     }

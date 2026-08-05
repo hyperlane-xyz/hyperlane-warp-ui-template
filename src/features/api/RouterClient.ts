@@ -38,6 +38,7 @@ export interface AvailableRoutesParams {
 
 interface RequestOptions {
   signal?: AbortSignal;
+  timeoutMs?: number;
 }
 
 const REQUEST_TIMEOUT_MS = 15_000;
@@ -164,7 +165,7 @@ export class RouterClient {
     options.signal?.addEventListener('abort', abortFromExternalSignal, { once: true });
     const timeout = setTimeout(
       () => controller.abort(new Error('Router request timed out')),
-      REQUEST_TIMEOUT_MS,
+      options.timeoutMs ?? REQUEST_TIMEOUT_MS,
     );
     try {
       const res = await fetch(`${this.baseUrl}${path}`, {

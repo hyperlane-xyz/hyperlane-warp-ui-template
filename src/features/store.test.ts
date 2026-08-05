@@ -4,6 +4,7 @@ import type { RouteResponse } from './api/types';
 import {
   mergeKnownTokens,
   mergeTransferTransactionUpdate,
+  migratePersistedAppState,
   removeFinalTransferRoute,
 } from './store';
 import type { UiToken } from './tokens/types';
@@ -110,6 +111,50 @@ describe('removeFinalTransferRoute', () => {
     expect(next.has('tx-2')).toBe(true);
   });
 });
+
+describe('migratePersistedAppState', () => {
+  test('converts production v2 transfer history into transfer transaction history', () => {
+    const msgId = `0x${'33'.repeat(32)}`;
+    const migrated = migratePersistedAppState({
+      chainMetadataOverrides: { ethereum: { rpcUrls: [] } },
+      transfers: [
+        {
+          status: 'delivered',
+          origin: 'ethereum',
+          destination: 'base',
+          originTokenAddressOrDenom: TOKEN,
+          destTokenAddressOrDenom: DST_TOKEN,
+          amount: '100',
+          sender: '0x0000000000000000000000000000000000000001',
+          recipient: '0x0000000000000000000000000000000000000002',
+          originTxHash: '0xorigin',
+          originBlockNumber: 123,
+          msgId,
+          destinationTxHash: '0xdestination',
+          timestamp: 1_718_000_000_000,
+        },
+      ],
+    });
+
+    expect(migrated.transactionHistory).toHaveLength(1);
+    expect(migrated.transactionHistory[0]).toMatchObject({
+      type: 'transfer',
+      data: {
+        status: TransferStatus.ConfirmedDestination,
+        srcChain: 1,
+        dstChain: 8453,
+        srcToken: TOKEN,
+        dstToken: DST_TOKEN,
+        amountIn: '100',
+        amountOut: '100',
+        msgIds: [{ msgId, label: 'bridge' }],
+      },
+    });
+  });
+});
+
+const TOKEN = '0x1111111111111111111111111111111111111111';
+const DST_TOKEN = '0x2222222222222222222222222222222222222222';
 
 function transferItem(overrides: Partial<TransferHistoryItem>): TransferHistoryItem {
   return {

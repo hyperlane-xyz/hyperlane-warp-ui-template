@@ -9,6 +9,7 @@ import { FinalTransferStatuses, TransferStatus, type TransferHistoryItem } from 
 // ERC20 Transfer(address indexed from, address indexed to, uint256 value)
 const TRANSFER_TOPIC = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
 const DESTINATION_OUTCOME_RETRY_MS = 5_000;
+const MAX_DESTINATION_OUTCOME_RETRIES = 24;
 
 type ReceiptProvider = {
   getTransactionReceipt(
@@ -71,12 +72,16 @@ export function useTransferStatus(
   const updateStatus = useStore((s) => s.updateTransferTransactionStatus);
   const multiProvider = useMultiProvider();
   const lastProcessedTxRef = useRef<string | null>(null);
+  const retryTxHashRef = useRef<string | null>(null);
+  const retryAttemptRef = useRef(0);
   const [retryTick, setRetryTick] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
     let retryTimer: ReturnType<typeof setTimeout> | undefined;
     const scheduleRetry = () => {
+      if (retryAttemptRef.current >= MAX_DESTINATION_OUTCOME_RETRIES) return;
+      retryAttemptRef.current += 1;
       retryTimer = setTimeout(() => {
         if (!cancelled) setRetryTick((tick) => tick + 1);
       }, DESTINATION_OUTCOME_RETRY_MS);
@@ -84,6 +89,10 @@ export function useTransferStatus(
 
     const { destinationTxHash, destinationOutcome, status, dstChain, recipient } = transfer ?? {};
     if (!destinationTxHash || !transactionId) return undefined;
+    if (retryTxHashRef.current !== destinationTxHash) {
+      retryTxHashRef.current = destinationTxHash;
+      retryAttemptRef.current = 0;
+    }
     if (status && FinalTransferStatuses.includes(status)) return undefined;
     if (lastProcessedTxRef.current === destinationTxHash) return undefined;
     lastProcessedTxRef.current = destinationTxHash;

@@ -3,6 +3,8 @@ import {
   GithubRegistry,
   IRegistry,
   PartialRegistry,
+  chainAddresses as packageChainAddresses,
+  chainMetadata as packageChainMetadata,
 } from '@hyperlane-xyz/registry';
 import { ChainMap, ChainMetadata, ChainName, MultiProtocolProvider } from '@hyperlane-xyz/sdk';
 import { objFilter } from '@hyperlane-xyz/utils';
@@ -29,6 +31,13 @@ import { loadRegistryWarpRoutes, type RegistryWarpRouteMap } from './warpRoutes/
 
 // Increment this when persist state has breaking changes
 const PERSIST_STATE_VERSION = 6;
+const APP_CONTEXT_ENGINE_CHAIN_RETRIES = 3;
+const APP_CONTEXT_ENGINE_CHAIN_TIMEOUT_MS = 2_500;
+
+const defaultRegistry = new PartialRegistry({
+  chainAddresses: packageChainAddresses,
+  chainMetadata: packageChainMetadata,
+});
 
 export const TransactionHistoryItemType = {
   Transfer: 'transfer',
@@ -47,6 +56,22 @@ type PersistedTransactionHistoryItem =
       type?: string;
       data?: TransferHistoryItem;
     };
+
+type LegacyTransferContext = {
+  status?: string;
+  origin?: ChainName;
+  destination?: ChainName;
+  originTokenAddressOrDenom?: string;
+  destTokenAddressOrDenom?: string;
+  amount?: string;
+  sender?: string;
+  recipient?: string;
+  originTxHash?: string;
+  originBlockNumber?: number;
+  msgId?: string;
+  destinationTxHash?: string;
+  timestamp?: number;
+};
 
 interface AppContext {
   registry: IRegistry;
@@ -153,11 +178,7 @@ export const useStore = create<AppState>()(
       },
       multiProvider: new MultiProtocolProvider({}),
       registryWarpRoutes: {},
-      registry: new GithubRegistry({
-        uri: config.registryUrl,
-        branch: config.registryBranch,
-        proxyUrl: config.registryProxyUrl,
-      }),
+      registry: createInitialRegistry(),
       setAppContext: (context) => {
         logger.debug('Setting app context in store');
         set(context);
@@ -287,41 +308,7 @@ export const useStore = create<AppState>()(
         transactionHistory: state.transactionHistory,
       }),
       version: PERSIST_STATE_VERSION,
-      migrate: (persistedState) => {
-        const state = persistedState as Partial<AppState> & {
-          swaps?: TransferHistoryItem[];
-          transfers?: TransferHistoryItem[];
-          transactionHistory?: PersistedTransactionHistoryItem[];
-        };
-        if (Array.isArray(state.transactionHistory)) {
-          return {
-            chainMetadataOverrides: state.chainMetadataOverrides ?? {},
-            transactionHistory: state.transactionHistory
-              .map(normalizePersistedTransactionHistoryItem)
-              .filter((item): item is TransactionHistoryItem => !!item),
-          };
-        }
-
-        const legacyTransfers = Array.isArray(state.transfers) ? state.transfers : [];
-        const swaps = Array.isArray(state.swaps) ? state.swaps : [];
-        const transactionHistory: TransactionHistoryItem[] = [
-          ...legacyTransfers.map((data) => ({
-            id: createTransactionId(TransactionHistoryItemType.Transfer, data.timestamp),
-            type: TransactionHistoryItemType.Transfer,
-            data: normalizeTransferHistoryItem(data),
-          })),
-          ...swaps.map((data) => ({
-            id: createTransactionId(TransactionHistoryItemType.Transfer, data.timestamp),
-            type: TransactionHistoryItemType.Transfer,
-            data: normalizeTransferHistoryItem(data),
-          })),
-        ];
-
-        return {
-          chainMetadataOverrides: state.chainMetadataOverrides ?? {},
-          transactionHistory,
-        };
-      },
+      migrate: migratePersistedAppState,
       onRehydrateStorage: () => {
         logger.debug('Rehydrating state');
         return (state, error) => {
@@ -348,7 +335,50 @@ function createTransactionId(type: TransactionHistoryItem['type'], timestamp: nu
 }
 
 type TransferTransactionUpdateOptions = Parameters<AppState['updateTransferTransactionStatus']>[2];
-const APP_CONTEXT_ENGINE_CHAIN_RETRIES = 3;
+
+function createInitialRegistry(): IRegistry {
+  if (!config.registryUrl && !config.registryBranch) return defaultRegistry;
+  return new GithubRegistry({
+    uri: config.registryUrl,
+    branch: config.registryBranch,
+    proxyUrl: config.registryProxyUrl,
+  });
+}
+
+export function migratePersistedAppState(persistedState: unknown) {
+  const state = persistedState as Partial<AppState> & {
+    swaps?: TransferHistoryItem[];
+    transfers?: LegacyTransferContext[];
+    transactionHistory?: PersistedTransactionHistoryItem[];
+  };
+  if (Array.isArray(state.transactionHistory)) {
+    return {
+      chainMetadataOverrides: state.chainMetadataOverrides ?? {},
+      transactionHistory: state.transactionHistory
+        .map(normalizePersistedTransactionHistoryItem)
+        .filter((item): item is TransactionHistoryItem => !!item),
+    };
+  }
+
+  const legacyTransfers = Array.isArray(state.transfers) ? state.transfers : [];
+  const swaps = Array.isArray(state.swaps) ? state.swaps : [];
+  const transactionHistory: TransactionHistoryItem[] = [
+    ...legacyTransfers.flatMap((data) => {
+      const converted = convertLegacyTransferContext(data);
+      return converted ? [converted] : [];
+    }),
+    ...swaps.map((data) => ({
+      id: createTransactionId(TransactionHistoryItemType.Transfer, data.timestamp),
+      type: TransactionHistoryItemType.Transfer,
+      data: normalizeTransferHistoryItem(data),
+    })),
+  ];
+
+  return {
+    chainMetadataOverrides: state.chainMetadataOverrides ?? {},
+    transactionHistory,
+  };
+}
 
 export function mergeTransferTransactionUpdate(
   data: TransferHistoryItem,
@@ -468,9 +498,56 @@ function normalizeTransferHistoryItem(data: TransferHistoryItem): TransferHistor
 }
 
 function normalizeTransferStatus(status: TransferStatus): TransferStatus {
+  if (status === ('confirmed-transfer' as TransferStatus)) return TransferStatus.Bridging;
+  if (status === ('delivered' as TransferStatus)) return TransferStatus.ConfirmedDestination;
+  if (status === ('confirming-transfer' as TransferStatus)) return TransferStatus.ConfirmingOrigin;
   if (status === ('signing-swap' as TransferStatus)) return TransferStatus.SigningTransfer;
   if (status === ('dest-swap-failed' as TransferStatus)) return TransferStatus.DestTransferFailed;
   return status;
+}
+
+function convertLegacyTransferContext(item: LegacyTransferContext): TransactionHistoryItem | null {
+  const srcChain = chainSelectorForChainName(item.origin);
+  const dstChain = chainSelectorForChainName(item.destination);
+  if (
+    srcChain == null ||
+    dstChain == null ||
+    !item.sender ||
+    !item.recipient ||
+    !item.amount ||
+    !item.timestamp
+  ) {
+    return null;
+  }
+
+  const data: TransferHistoryItem = {
+    status: normalizeTransferStatus((item.status ?? TransferStatus.Failed) as TransferStatus),
+    timestamp: item.timestamp,
+    srcChain,
+    dstChain,
+    srcToken: item.originTokenAddressOrDenom ?? '',
+    dstToken: item.destTokenAddressOrDenom ?? '',
+    amountIn: item.amount,
+    amountOut: item.amount,
+    sender: item.sender,
+    recipient: item.recipient,
+    originTxHash: item.originTxHash,
+    originBlockNumber: item.originBlockNumber,
+    destinationTxHash: item.destinationTxHash,
+    msgIds: item.msgId ? [{ msgId: item.msgId, label: 'bridge' }] : undefined,
+  };
+
+  return {
+    id: createTransactionId(TransactionHistoryItemType.Transfer, data.timestamp),
+    type: TransactionHistoryItemType.Transfer,
+    data,
+  };
+}
+
+function chainSelectorForChainName(chainName: ChainName | undefined): number | null {
+  if (!chainName) return null;
+  const metadata = packageChainMetadata[chainName];
+  return metadata?.domainId ?? metadata?.chainId ?? null;
 }
 
 async function initAppContext({
@@ -481,17 +558,12 @@ async function initAppContext({
   chainMetadataOverrides: ChainMap<Partial<ChainMetadata> | undefined>;
 }): Promise<AppContext> {
   let currentRegistry = registry;
-  if (config.registryUrl) {
+  if (currentRegistry instanceof GithubRegistry) {
     try {
       // Pre-load real custom registry content to avoid repeated requests.
       await currentRegistry.listRegistryContent();
     } catch (error) {
-      // Lazy-load the published constants so they stay out of the initial bundle.
-      const { chainAddresses, chainMetadata } = await import('@hyperlane-xyz/registry');
-      currentRegistry = new PartialRegistry({
-        chainAddresses,
-        chainMetadata,
-      });
+      currentRegistry = defaultRegistry;
       logger.warn(
         'Failed to list registry content using GithubRegistry, will continue with PartialRegistry.',
         error,
@@ -538,7 +610,7 @@ async function fetchEngineChainsWithRetry() {
   let lastError: unknown;
   for (let attempt = 1; attempt <= APP_CONTEXT_ENGINE_CHAIN_RETRIES; attempt++) {
     try {
-      return await routerClient.chains();
+      return await routerClient.chains({ timeoutMs: APP_CONTEXT_ENGINE_CHAIN_TIMEOUT_MS });
     } catch (error) {
       lastError = error;
       if (attempt < APP_CONTEXT_ENGINE_CHAIN_RETRIES) {

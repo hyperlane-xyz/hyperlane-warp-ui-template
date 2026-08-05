@@ -7,6 +7,8 @@ const COMPUTE_BUDGET_PROGRAM = 'ComputeBudget111111111111111111111111111111';
 const SYSTEM_PROGRAM = '11111111111111111111111111111111';
 const TOKEN_PROGRAM = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
 const TOKEN_2022_PROGRAM = 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb';
+const ATA_CREATE_IDEMPOTENT_DISCRIMINATOR = 1;
+const COMPUTE_BUDGET_DISCRIMINATORS = new Set([1, 2, 3, 4]);
 
 export function validateSealevelRouteTx(
   route: RouteResponse,
@@ -22,16 +24,8 @@ export function validateSealevelRouteTx(
   }
 
   const accountKeys = new Set(tx.accounts.map((account) => account.pubkey));
-  const allowedPreInstructionPrograms = new Set([
-    ASSOCIATED_TOKEN_PROGRAM,
-    COMPUTE_BUDGET_PROGRAM,
-    SYSTEM_PROGRAM,
-    TOKEN_PROGRAM,
-    TOKEN_2022_PROGRAM,
-  ]);
   for (const step of route.steps) {
     if (step.type !== 'bridge') continue;
-    allowedPreInstructionPrograms.add(step.router);
     if (!accountKeys.has(step.router)) {
       return { valid: false, reason: 'Sealevel transaction missing bridge router account' };
     }
@@ -41,10 +35,56 @@ export function validateSealevelRouteTx(
   }
 
   for (const preInstruction of tx.preInstructions ?? []) {
-    if (!allowedPreInstructionPrograms.has(preInstruction.programId)) {
+    if (!isAllowedPreInstruction(preInstruction)) {
       return { valid: false, reason: 'Sealevel pre-instruction program is not allowed' };
     }
   }
 
   return { valid: true };
+}
+
+function isAllowedPreInstruction(
+  instruction: NonNullable<Extract<RouteTx, { to: string }>['preInstructions']>[number],
+): boolean {
+  if (instruction.programId === COMPUTE_BUDGET_PROGRAM) {
+    const data = decodeBase64(instruction.data);
+    return (
+      instruction.accounts.length === 0 &&
+      data.length > 0 &&
+      COMPUTE_BUDGET_DISCRIMINATORS.has(data[0]!)
+    );
+  }
+
+  if (instruction.programId !== ASSOCIATED_TOKEN_PROGRAM) return false;
+
+  const data = decodeBase64(instruction.data);
+  if (data.length !== 1 || data[0] !== ATA_CREATE_IDEMPOTENT_DISCRIMINATOR) return false;
+  const [payer, ata, owner, mint, systemProgram, tokenProgram] = instruction.accounts;
+  return (
+    instruction.accounts.length === 6 &&
+    !!payer?.isSigner &&
+    !!payer.isWritable &&
+    !ata?.isSigner &&
+    !!ata?.isWritable &&
+    !owner?.isSigner &&
+    !mint?.isSigner &&
+    !systemProgram?.isSigner &&
+    systemProgram?.pubkey === SYSTEM_PROGRAM &&
+    !tokenProgram?.isSigner &&
+    (tokenProgram?.pubkey === TOKEN_PROGRAM || tokenProgram?.pubkey === TOKEN_2022_PROGRAM)
+  );
+}
+
+function decodeBase64(value: string): Uint8Array {
+  try {
+    if (typeof atob === 'function') {
+      const bin = atob(value);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      return bytes;
+    }
+    return Uint8Array.from(Buffer.from(value, 'base64'));
+  } catch {
+    return new Uint8Array();
+  }
 }

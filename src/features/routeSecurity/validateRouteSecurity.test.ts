@@ -473,6 +473,75 @@ describe('validateRouteSecurity', () => {
       reason: 'Sealevel pre-instruction program is not allowed',
     });
   });
+
+  test('rejects Sealevel system transfer pre-instructions', () => {
+    const route = sealevelUniversalRouterRoute();
+    route.tx = {
+      ...route.tx!,
+      preInstructions: [
+        {
+          programId: '11111111111111111111111111111111',
+          accounts: [
+            {
+              pubkey: 'User111111111111111111111111111111111111',
+              isSigner: true,
+              isWritable: true,
+            },
+            {
+              pubkey: 'Bad1111111111111111111111111111111111111',
+              isSigner: false,
+              isWritable: true,
+            },
+          ],
+          data: 'AgAAAAEAAAAAAAAA',
+        },
+      ],
+    };
+
+    expect(validateRouteSecurity(route, solanaContext())).toMatchObject({
+      valid: false,
+      reason: 'Sealevel pre-instruction program is not allowed',
+    });
+  });
+
+  test('accepts Sealevel idempotent ATA setup pre-instructions', () => {
+    const route = sealevelUniversalRouterRoute();
+    route.tx = {
+      ...route.tx!,
+      preInstructions: [
+        {
+          programId: 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
+          accounts: [
+            {
+              pubkey: 'User111111111111111111111111111111111111',
+              isSigner: true,
+              isWritable: true,
+            },
+            {
+              pubkey: 'Ata1111111111111111111111111111111111111',
+              isSigner: false,
+              isWritable: true,
+            },
+            {
+              pubkey: 'Owner11111111111111111111111111111111111',
+              isSigner: false,
+              isWritable: false,
+            },
+            { pubkey: SOL_MINT, isSigner: false, isWritable: false },
+            { pubkey: '11111111111111111111111111111111', isSigner: false, isWritable: false },
+            {
+              pubkey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+              isSigner: false,
+              isWritable: false,
+            },
+          ],
+          data: 'AQ==',
+        },
+      ],
+    };
+
+    expect(validateRouteSecurity(route, solanaContext())).toEqual({ valid: true });
+  });
 });
 
 function context(routeOverrides: Partial<RouteSecurityTestContext> = {}) {

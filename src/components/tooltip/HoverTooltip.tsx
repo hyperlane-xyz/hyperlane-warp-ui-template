@@ -33,16 +33,6 @@ export function HoverTooltip({
     setPos(null);
   };
 
-  const handleTouchStart = () => {
-    setPos((current) => (current ? null : computePos()));
-  };
-
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    if (event.key !== 'Enter' && event.key !== ' ') return;
-    event.preventDefault();
-    setPos((current) => (current ? null : computePos()));
-  };
-
   useEffect(() => {
     if (!pos) return;
     const update = () => setPos(computePos());
@@ -63,17 +53,11 @@ export function HoverTooltip({
   return (
     <div
       ref={ref}
-      // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- Tooltip wraps arbitrary markup; a button would reject block children.
-      role="button"
-      tabIndex={0}
-      aria-expanded={!!pos}
       aria-describedby={pos ? tooltipId : undefined}
       onFocus={handleMouseEnter}
       onBlur={handleMouseLeave}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      onTouchStart={handleTouchStart}
-      onKeyDown={handleKeyDown}
     >
       {children}
       {pos &&

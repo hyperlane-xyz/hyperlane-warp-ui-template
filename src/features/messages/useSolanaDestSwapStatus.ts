@@ -24,16 +24,16 @@ async function getSolanaDestSwapStatus({
   pdaAddress: string;
   destinationChain: ChainName;
   multiProvider: MultiProtocolProvider;
-}): Promise<{ exists: boolean }> {
+}): Promise<{ exists: boolean; errored?: boolean }> {
   try {
     const rpcUrl = multiProvider.tryGetChainMetadata(destinationChain)?.rpcUrls?.[0]?.http;
-    if (!rpcUrl) return { exists: false };
+    if (!rpcUrl) return { exists: false, errored: true };
     const connection = connectionForRpcUrl(rpcUrl);
     const accountInfo = await connection.getAccountInfo(new PublicKey(pdaAddress));
     return { exists: accountInfo !== null };
   } catch (err) {
     logger.warn('Solana dest swap PDA check failed', err as Error);
-    return { exists: false };
+    return { exists: false, errored: true };
   }
 }
 
@@ -57,7 +57,13 @@ export function useSolanaDestSwapStatus({
     },
     enabled: enabled && !!pdaAddress && !!destinationChain,
     refetchInterval: (query) => {
-      if (hasSeenAccount.current && query.state.data?.exists === false) return false;
+      if (
+        hasSeenAccount.current &&
+        query.state.data?.exists === false &&
+        !query.state.data.errored
+      ) {
+        return false;
+      }
       return DEST_SWAP_POLL_INTERVAL_MS;
     },
     refetchOnWindowFocus: false,
@@ -71,5 +77,5 @@ export function useSolanaDestSwapStatus({
     if (data?.exists) hasSeenAccount.current = true;
   }, [data?.exists]);
 
-  return { isDone: hasSeenAccount.current && data?.exists === false };
+  return { isDone: hasSeenAccount.current && data?.exists === false && !data.errored };
 }

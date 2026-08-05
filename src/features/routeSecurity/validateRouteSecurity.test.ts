@@ -71,6 +71,61 @@ describe('validateRouteSecurity', () => {
     expect(validateRouteSecurity(route, context({ dstChain: ETH }))).toEqual({ valid: true });
   });
 
+  test('rejects pure swap routes whose output token does not match the request', () => {
+    const route = sameChainSwapRoute();
+    if (route.steps[0].type !== 'swap') throw new Error('expected swap');
+    route.steps[0].tokenOut = BAD;
+
+    expect(validateRouteSecurity(route, context({ dstChain: ETH }))).toMatchObject({
+      valid: false,
+      reason: 'Route output token does not match request',
+    });
+  });
+
+  test('rejects routes with discontinuous step amounts', () => {
+    const route = universalRouterRoute();
+    if (route.steps[1].type !== 'bridge') throw new Error('expected bridge');
+    route.steps[1].amountIn = '91';
+
+    expect(validateRouteSecurity(route, context())).toMatchObject({
+      valid: false,
+      reason: 'Route step amounts are discontinuous',
+    });
+  });
+
+  test('rejects routes with discontinuous step tokens', () => {
+    const route = sameChainSwapRoute();
+    route.steps = [
+      {
+        type: 'swap',
+        chain: ETH,
+        dex: 'test',
+        tokenIn: TOKEN,
+        tokenOut: MID_TOKEN,
+        amountIn: '100',
+        amountOut: '95',
+        path: [TOKEN, MID_TOKEN],
+        poolCount: 1,
+      },
+      {
+        type: 'swap',
+        chain: ETH,
+        dex: 'test',
+        tokenIn: BAD,
+        tokenOut: DST_TOKEN,
+        amountIn: '95',
+        amountOut: '90',
+        path: [BAD, DST_TOKEN],
+        poolCount: 1,
+      },
+    ];
+
+    expect(validateRouteSecurity(route, context({ dstChain: ETH }))).toMatchObject({
+      valid: false,
+      reason: 'Route step tokens are discontinuous',
+    });
+  });
+
   test('accepts chain protocols with different casing', () => {
     const mixedCaseChains = chains.map((chain) =>
       chain.id === ETH ? { ...chain, protocol: 'Ethereum' } : chain,

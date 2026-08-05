@@ -30,6 +30,9 @@ export function validateRouteSecurity(
   const chainPathValidation = validateChainPath(route, context.srcChain, context.dstChain);
   if (!chainPathValidation.valid) return chainPathValidation;
 
+  const stepBindingValidation = validateStepBindings(route, context);
+  if (!stepBindingValidation.valid) return stepBindingValidation;
+
   const approvalValidation = validateApproval(route, context);
   if (!approvalValidation.valid) return approvalValidation;
 
@@ -55,6 +58,39 @@ function validateChainPath(
 
   if (currentChain !== dstChain) {
     return { valid: false, reason: 'Route destination does not match request destination' };
+  }
+
+  return { valid: true };
+}
+
+function validateStepBindings(
+  route: RouteResponse,
+  context: RouteSecurityValidationContext,
+): RouteSecurityValidationResult {
+  const firstStep = route.steps[0];
+  if (!firstStep) return { valid: false, reason: 'Route has no steps' };
+  if (context.srcToken && !sameTokenAddress(inputTokenForStep(firstStep), context.srcToken)) {
+    return { valid: false, reason: 'Route input token does not match request' };
+  }
+
+  const finalStep = route.steps[route.steps.length - 1];
+  if (
+    context.dstToken &&
+    finalStep.type === 'swap' &&
+    !sameTokenAddress(finalStep.tokenOut, context.dstToken)
+  ) {
+    return { valid: false, reason: 'Route output token does not match request' };
+  }
+
+  for (let i = 0; i < route.steps.length - 1; i++) {
+    const current = route.steps[i];
+    const next = route.steps[i + 1];
+    if (current.amountOut !== next.amountIn) {
+      return { valid: false, reason: 'Route step amounts are discontinuous' };
+    }
+    if (current.type === 'swap' && !sameTokenAddress(current.tokenOut, inputTokenForStep(next))) {
+      return { valid: false, reason: 'Route step tokens are discontinuous' };
+    }
   }
 
   return { valid: true };
@@ -265,6 +301,10 @@ function expectedChainTxTarget(
 }
 
 function spendTokenForStep(step: QuoteStep): string {
+  return step.type === 'swap' ? step.tokenIn : step.asset;
+}
+
+function inputTokenForStep(step: QuoteStep): string {
   return step.type === 'swap' ? step.tokenIn : step.asset;
 }
 

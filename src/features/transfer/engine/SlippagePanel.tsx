@@ -1,5 +1,5 @@
 import { ChevronIcon, GearIcon } from '@hyperlane-xyz/widgets';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { Color } from '../../../styles/Color';
 import { useClickOutside } from '../../../utils/useClickOutside';
@@ -19,8 +19,13 @@ const HIGH_SLIPPAGE_BPS = 1_000;
 // to live on the same row as the fee pill (see TransferForm).
 export function SlippagePanel({ slippageBps, setSlippageBps }: Props) {
   const [isOpen, setIsOpen] = useState(false);
+  const [customValue, setCustomValue] = useState(String(slippageBps));
   const ref = useRef<HTMLDivElement>(null);
   useClickOutside(ref, () => setIsOpen(false));
+
+  useEffect(() => {
+    setCustomValue(String(slippageBps));
+  }, [slippageBps]);
 
   const lowSlippage = slippageBps < 100;
   const highSlippage = slippageBps > HIGH_SLIPPAGE_BPS;
@@ -49,7 +54,10 @@ export function SlippagePanel({ slippageBps, setSlippageBps }: Props) {
               <button
                 key={bps}
                 type="button"
-                onClick={() => setSlippageBps(bps)}
+                onClick={() => {
+                  setCustomValue(String(bps));
+                  setSlippageBps(bps);
+                }}
                 className={`rounded px-2 py-0.5 ${
                   slippageBps === bps ? 'bg-accent-500 text-white' : 'bg-gray-100'
                 }`}
@@ -62,8 +70,18 @@ export function SlippagePanel({ slippageBps, setSlippageBps }: Props) {
               min={MIN_SLIPPAGE_BPS}
               max={MAX_SLIPPAGE_BPS}
               step={1}
-              value={slippageBps}
-              onChange={(e) => setSlippageBps(clampSlippageBps(e.target.value))}
+              value={customValue}
+              onChange={(e) => {
+                const next = e.target.value;
+                setCustomValue(next);
+                if (next === '') return;
+                setSlippageBps(clampSlippageBps(next));
+              }}
+              onBlur={() => {
+                const next = customValue === '' ? slippageBps : clampSlippageBps(customValue);
+                setCustomValue(String(next));
+                setSlippageBps(next);
+              }}
               className="w-16 rounded border border-gray-200 px-1 py-0.5 text-right"
             />
             <span className="text-gray-500">bps</span>

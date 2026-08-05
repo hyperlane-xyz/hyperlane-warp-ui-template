@@ -136,6 +136,7 @@ function TransferFormContent() {
     sender,
     pause: isReview,
   });
+  const isAmountDebouncing = values.amount !== debouncedAmount;
   useToastError(quoteError, 'Quote failed');
 
   // Reset to best route when the user changes intent, not on every background refetch.
@@ -233,6 +234,7 @@ function TransferFormContent() {
   }, [values]);
 
   const onContinue = useCallback(async () => {
+    if (isAmountDebouncing) return;
     const snapshot = values;
     setIsValidating(true);
     try {
@@ -305,6 +307,7 @@ function TransferFormContent() {
     multiProvider,
     status.phase,
     quote?.expiresAt,
+    isAmountDebouncing,
     srcChainInfo?.protocol,
     starknetAccount,
     dstChainName,
@@ -660,6 +663,7 @@ function TransferFormContent() {
         hasTokens={hasTokens}
         hasRoute={!!bestRoute}
         isRouteDataUnavailable={isRouteDataUnavailable}
+        isAmountDebouncing={isAmountDebouncing}
         isQuoteSettled={isQuoteSettled}
         isValidating={isValidating}
         onSendTransactions={onSendTransactions}
@@ -1145,6 +1149,7 @@ function ButtonSection({
   hasTokens,
   hasRoute,
   isRouteDataUnavailable,
+  isAmountDebouncing,
   isQuoteSettled,
   isValidating,
   onSendTransactions,
@@ -1159,6 +1164,7 @@ function ButtonSection({
   hasTokens: boolean;
   hasRoute: boolean;
   isRouteDataUnavailable: boolean;
+  isAmountDebouncing: boolean;
   isQuoteSettled: boolean;
   isValidating: boolean;
   onSendTransactions: () => Promise<void>;
@@ -1180,6 +1186,9 @@ function ButtonSection({
   } else if (hasRoute) {
     if (isValidating) {
       text = 'Checking…';
+      disabled = true;
+    } else if (isAmountDebouncing) {
+      text = 'Fetching quote…';
       disabled = true;
     } else {
       text = 'Continue';

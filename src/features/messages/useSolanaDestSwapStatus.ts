@@ -1,7 +1,6 @@
 import type { ChainName, MultiProtocolProvider } from '@hyperlane-xyz/sdk';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useRef } from 'react';
 
 import { logger } from '../../utils/logger';
 
@@ -48,7 +47,6 @@ export function useSolanaDestSwapStatus({
   multiProvider: MultiProtocolProvider;
   enabled: boolean;
 }) {
-  const hasSeenAccount = useRef(false);
   const { data } = useQuery({
     queryKey: ['solanaDestSwapStatus', destinationChain, pdaAddress],
     queryFn: async () => {
@@ -57,25 +55,11 @@ export function useSolanaDestSwapStatus({
     },
     enabled: enabled && !!pdaAddress && !!destinationChain,
     refetchInterval: (query) => {
-      if (
-        hasSeenAccount.current &&
-        query.state.data?.exists === false &&
-        !query.state.data.errored
-      ) {
-        return false;
-      }
+      if (query.state.data?.exists === false && !query.state.data.errored) return false;
       return DEST_SWAP_POLL_INTERVAL_MS;
     },
     refetchOnWindowFocus: false,
   });
 
-  useEffect(() => {
-    hasSeenAccount.current = false;
-  }, [destinationChain, pdaAddress]);
-
-  useEffect(() => {
-    if (data?.exists) hasSeenAccount.current = true;
-  }, [data?.exists]);
-
-  return { isDone: hasSeenAccount.current && data?.exists === false && !data.errored };
+  return { isDone: data?.exists === false && !data.errored };
 }

@@ -11,7 +11,7 @@ import { validateRouteSecurity } from '../../routeSecurity/validateRouteSecurity
 import { useStore } from '../../store';
 import { useTokens } from '../../tokens/hooks';
 import { tokenKey } from '../../tokens/utils';
-import { trustedWrappedNativeAddressForToken } from '../../tokens/wrappedNative';
+import { validateWrappedNativeMetadata } from '../../tokens/wrappedNative';
 import type {
   AugmentedQuote,
   AugmentedRoute,
@@ -64,8 +64,20 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
       values.dstChain != null &&
       tokenKey(t.chainId, t.address) === tokenKey(values.dstChain, values.dstToken),
   );
-  const srcTokenWrappedAddress = trustedWrappedNativeAddressForToken(srcTokenInfo);
-  const dstTokenWrappedAddress = trustedWrappedNativeAddressForToken(dstTokenInfo);
+  const srcWrappedNativeMetadata = useMemo(
+    () => validateWrappedNativeMetadata(srcTokenInfo),
+    [srcTokenInfo],
+  );
+  const dstWrappedNativeMetadata = useMemo(
+    () => validateWrappedNativeMetadata(dstTokenInfo),
+    [dstTokenInfo],
+  );
+  const srcTokenWrappedAddress = srcWrappedNativeMetadata.valid
+    ? srcWrappedNativeMetadata.trustedWrappedAddress
+    : undefined;
+  const dstTokenWrappedAddress = dstWrappedNativeMetadata.valid
+    ? dstWrappedNativeMetadata.trustedWrappedAddress
+    : undefined;
 
   const amountAtomic = useMemo(() => {
     if (!srcTokenInfo || srcTokenInfo.decimals == null) return null;
@@ -124,6 +136,21 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
     if (!chainsResp?.chains) return undefined;
     if (!hasChainAddresses) return undefined;
     const routes = query.data.routes.filter((route) => {
+      const wrappedNativeMetadataValidation = !srcWrappedNativeMetadata.valid
+        ? srcWrappedNativeMetadata
+        : !dstWrappedNativeMetadata.valid
+          ? dstWrappedNativeMetadata
+          : undefined;
+      if (wrappedNativeMetadataValidation) {
+        logger.warn('Filtered unsafe route', {
+          reason: wrappedNativeMetadataValidation.reason,
+          chainId: wrappedNativeMetadataValidation.chainId,
+          trustedWrappedAddress: wrappedNativeMetadataValidation.trustedWrappedAddress,
+          engineWrappedAddress: wrappedNativeMetadataValidation.engineWrappedAddress,
+          warpRouteId: route.connection?.warpRouteId,
+        });
+        return false;
+      }
       const amountValidation = validateRouteAmounts(route, values.slippageBps);
       if (!amountValidation.valid) {
         logger.warn('Filtered route with invalid output amounts', {
@@ -168,6 +195,8 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
     values.slippageBps,
     values.srcChain,
     values.srcToken,
+    srcWrappedNativeMetadata,
+    dstWrappedNativeMetadata,
     srcTokenWrappedAddress,
     dstTokenWrappedAddress,
   ]);

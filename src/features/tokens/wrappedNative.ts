@@ -1,4 +1,5 @@
 import type { UiToken } from './types';
+import { tokenKey } from './utils';
 
 // Confirmed against universal-router-engine/src/config/warp-routes.ts and
 // universal-router-engine/src/routing/token-utils.ts. Keep this local until
@@ -24,4 +25,42 @@ export function trustedWrappedNativeAddressForToken(
 ) {
   if (!token?.isNative) return undefined;
   return trustedWrappedNativeAddress(token.chainId);
+}
+
+export function validateWrappedNativeMetadata(
+  token: Pick<UiToken, 'chainId' | 'isNative' | 'wrappedAddress'> | null | undefined,
+):
+  | { valid: true; trustedWrappedAddress?: string }
+  | {
+      valid: false;
+      reason: string;
+      chainId: number;
+      trustedWrappedAddress: string;
+      engineWrappedAddress?: string;
+    } {
+  if (!token?.isNative) return { valid: true };
+
+  const trustedWrappedAddress = trustedWrappedNativeAddress(token.chainId);
+  if (!trustedWrappedAddress) return { valid: true };
+  if (!token.wrappedAddress) {
+    return {
+      valid: false,
+      reason: 'Native token wrappedAddress missing from engine metadata',
+      chainId: token.chainId,
+      trustedWrappedAddress,
+    };
+  }
+  if (
+    tokenKey(token.chainId, token.wrappedAddress) !== tokenKey(token.chainId, trustedWrappedAddress)
+  ) {
+    return {
+      valid: false,
+      reason: 'Native token wrappedAddress does not match trusted local wrapped native',
+      chainId: token.chainId,
+      trustedWrappedAddress,
+      engineWrappedAddress: token.wrappedAddress,
+    };
+  }
+
+  return { valid: true, trustedWrappedAddress };
 }

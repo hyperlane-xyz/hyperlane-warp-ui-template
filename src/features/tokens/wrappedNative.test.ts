@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 
 import {
   trustedWrappedNativeAddressForToken,
+  validateWrappedNativeMetadata,
   WRAPPED_NATIVE_TOKEN_BY_CHAIN_ID,
 } from './wrappedNative';
 
@@ -23,5 +24,20 @@ describe('trustedWrappedNativeAddressForToken', () => {
         isNative: false,
       }),
     ).toBeUndefined();
+  });
+
+  test('rejects native metadata when engine wrappedAddress differs from the local trusted address', () => {
+    expect(
+      validateWrappedNativeMetadata({
+        chainId: 8453,
+        isNative: true,
+        wrappedAddress: '0x1111111111111111111111111111111111111111',
+      }),
+    ).toMatchObject({
+      valid: false,
+      reason: 'Native token wrappedAddress does not match trusted local wrapped native',
+      trustedWrappedAddress: '0x4200000000000000000000000000000000000006',
+      engineWrappedAddress: '0x1111111111111111111111111111111111111111',
+    });
   });
 });

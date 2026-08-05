@@ -8,7 +8,7 @@ test.describe('Chain Selection - Filter by Protocol', () => {
 
     // Open token selector
     await getOriginTokenButton(page).click();
-    await expect(page.getByText('Select Token')).toBeVisible();
+    await expect(page.getByText('Select Token', { exact: true })).toBeVisible();
 
     // Open filter dropdown
     await page.getByRole('button', { name: 'Filter chains' }).click();

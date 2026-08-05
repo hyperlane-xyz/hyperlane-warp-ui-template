@@ -16,6 +16,7 @@ import { useMultiProvider } from '../chains/hooks';
 import { getChainDisplayName } from '../chains/utils';
 import { type TransactionHistoryItem, TransactionHistoryItemType, useStore } from '../store';
 import { getTokenByKeyFromMap } from '../tokens/hooks';
+import { tokenKey } from '../tokens/utils';
 import { FinalTransferStatuses, TransferStatus } from '../transfer/engine/types';
 import { startRelativeTimeTicker } from './relativeTimeTicker';
 
@@ -149,11 +150,11 @@ function TransferSummary({
   const transfer = item.data;
   const srcToken = getTokenByKeyFromMap(
     knownTokens,
-    `${transfer.srcChain}-${transfer.srcToken.toLowerCase()}`,
+    tokenKey(transfer.srcChain, transfer.srcToken),
   );
   const dstToken = getTokenByKeyFromMap(
     knownTokens,
-    `${transfer.dstChain}-${transfer.dstToken.toLowerCase()}`,
+    tokenKey(transfer.dstChain, transfer.dstToken),
   );
   const originChain =
     srcToken?.chainName ??
@@ -240,7 +241,7 @@ function TransferSummary({
       <div className="ml-2 flex shrink-0 items-center">
         {FinalTransferStatuses.includes(transfer.status) ? (
           <span className="text-xs text-gray-500 dark:text-foreground-secondary">
-            {transfer.status === TransferStatus.ConfirmedDestination ? 'Done' : 'Failed'}
+            {finalStatusLabel(transfer.status)}
           </span>
         ) : (
           <SpinnerIcon className="-ml-1 mr-3 h-5 w-5" />
@@ -248,6 +249,15 @@ function TransferSummary({
       </div>
     </button>
   );
+}
+
+function finalStatusLabel(status: TransferStatus): string {
+  if (status === TransferStatus.ConfirmedDestination) return 'Done';
+  if (status === TransferStatus.FailedRecovered) return 'Recovered';
+  if (status === TransferStatus.DestTransferFailed || status === TransferStatus.DestFailed) {
+    return 'Stranded';
+  }
+  return 'Failed';
 }
 
 function formatHistoryAmount(amount: string, decimals: number | undefined): string {

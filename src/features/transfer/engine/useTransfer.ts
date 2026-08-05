@@ -22,6 +22,7 @@ import { useCallback, useState } from 'react';
 import type { Address } from 'viem';
 
 import { logger } from '../../../utils/logger';
+import { refinerIdentifyAndShowTransferForm } from '../../analytics/refiner';
 import { EVENT_NAME } from '../../analytics/types';
 import { getAnalyticsChains, getAnalyticsToken, trackEvent } from '../../analytics/utils';
 import { getRouteTxs, isChainRouteTx } from '../../api/routeTx';
@@ -232,6 +233,11 @@ export function useTransfer() {
           walletAddress: args.sender,
           transactionHash: hash,
           recipient: args.recipient,
+        });
+        refinerIdentifyAndShowTransferForm({
+          walletAddress: args.sender,
+          protocol: multiProvider.tryGetProtocol(srcChainName) ?? '',
+          chain: srcChainName,
         });
         submittedAnalytics = true;
 

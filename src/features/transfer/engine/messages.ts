@@ -1,3 +1,5 @@
+import { bytes32ToAddress } from '@hyperlane-xyz/utils';
+
 import { logger } from '../../../utils/logger';
 import type { RouteResponse } from '../../api/types';
 import type { LabeledMsgId } from './types';
@@ -63,7 +65,10 @@ function getKnownMessageLabel(
   msg: ParsedTransferMessage,
   bridgeRouters: Set<string>,
 ): LabeledMsgId['label'] | null {
-  if (msg.sender && bridgeRouters.has(normalizeComparableAddress(msg.sender))) {
+  if (
+    msg.sender &&
+    comparableAddressCandidates(msg.sender).some((sender) => bridgeRouters.has(sender))
+  ) {
     return 'bridge';
   }
 
@@ -100,4 +105,14 @@ function getCcsMessageLabel(body: string): LabeledMsgId['label'] | null {
 
 function normalizeComparableAddress(address: string) {
   return address.startsWith('0x') ? address.toLowerCase() : address;
+}
+
+function comparableAddressCandidates(address: string): string[] {
+  const normalized = normalizeComparableAddress(address);
+  if (!/^0x[0-9a-f]{64}$/.test(normalized)) return [normalized];
+  try {
+    return [normalized, bytes32ToAddress(normalized).toLowerCase()];
+  } catch {
+    return [normalized];
+  }
 }

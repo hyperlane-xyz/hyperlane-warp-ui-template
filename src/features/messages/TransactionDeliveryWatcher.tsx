@@ -46,15 +46,8 @@ export function TransactionDeliveryWatcher() {
     const deliveryTargets = transactionHistory.flatMap((item): DeliveryTarget[] => {
       if (item.type !== TransactionHistoryItemType.Transfer) return [];
 
-      if (FinalTransferStatuses.includes(item.data.status)) {
-        if (
-          item.data.status !== TransferStatus.ConfirmedDestination ||
-          item.data.destinationTxHash ||
-          item.data.solanaDestSwapPda
-        ) {
-          return [];
-        }
-      }
+      if (FinalTransferStatuses.includes(item.data.status) && !shouldWatchFinalTransfer(item.data))
+        return [];
 
       const destinationChain = multiProvider.tryGetChainName(item.data.dstChain);
       if (!destinationChain) return [];
@@ -86,13 +79,22 @@ export function TransactionDeliveryWatcher() {
   return (
     <>
       {targets.map((target) => (
-        <DeliveryTargetWatcher
-          key={`${target.type}-${target.id}-${target.msgId ?? target.originTxHash}`}
-          target={target}
-          chainAddresses={chainAddresses}
-        />
+        <DeliveryTargetWatcher key={target.id} target={target} chainAddresses={chainAddresses} />
       ))}
     </>
+  );
+}
+
+function shouldWatchFinalTransfer(data: TransferHistoryItem): boolean {
+  if (data.status === TransferStatus.Failed) {
+    // Keep watching hash-bearing failures: wallet/RPC errors can happen
+    // after broadcast, and GraphQL/mailbox recovery may still prove delivery.
+    return !!data.originTxHash || !!getTransferDeliveryMsgId(data.msgIds);
+  }
+  return (
+    data.status === TransferStatus.ConfirmedDestination &&
+    !data.destinationTxHash &&
+    !data.solanaDestSwapPda
   );
 }
 
@@ -155,6 +157,7 @@ function DeliveryTargetWatcher({
   const hasUpdatedFromGraphQl = useRef(false);
   const hasBackfilledGraphQlHash = useRef(false);
   const hasUpdatedFromMailbox = useRef(false);
+  const hasBackfilledMailboxHash = useRef(false);
   const hasUpdatedFromDestSwap = useRef(false);
 
   useEffect(() => {
@@ -162,6 +165,7 @@ function DeliveryTargetWatcher({
     hasUpdatedFromGraphQl.current = false;
     hasBackfilledGraphQlHash.current = false;
     hasUpdatedFromMailbox.current = false;
+    hasBackfilledMailboxHash.current = false;
     hasUpdatedFromDestSwap.current = false;
   }, [target.id, target.msgId, target.originTxHash]);
 
@@ -225,8 +229,16 @@ function DeliveryTargetWatcher({
     const directDeliveryTxHash = mailboxDelivery.isDelivered
       ? mailboxDelivery.destinationTxHash
       : solanaMailboxDelivery.destinationTxHash;
-    if (isDirectDelivered && !hasUpdatedFromMailbox.current) {
+    if (
+      isDirectDelivered &&
+      shouldUpdateFromDelivery(
+        hasUpdatedFromMailbox,
+        hasBackfilledMailboxHash,
+        directDeliveryTxHash,
+      )
+    ) {
       hasUpdatedFromMailbox.current = true;
+      if (directDeliveryTxHash) hasBackfilledMailboxHash.current = true;
       const nextStatus = target.requiresDestinationOutcome
         ? TransferStatus.ConfirmingDestination
         : TransferStatus.ConfirmedDestination;

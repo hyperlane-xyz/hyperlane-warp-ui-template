@@ -8,7 +8,7 @@ test.describe('Token Selection - Search Tokens', () => {
 
     // Open origin token selector
     await getOriginTokenButton(page).click();
-    await expect(page.getByText('Select Token')).toBeVisible();
+    await expect(page.getByText('Select Token', { exact: true })).toBeVisible();
 
     // Type in token search
     await page.getByPlaceholder('Search Name, Symbol, or Contract Address').fill('ETH');

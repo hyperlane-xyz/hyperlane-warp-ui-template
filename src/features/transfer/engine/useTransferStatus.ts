@@ -1,5 +1,5 @@
 import { isZeroishAddress } from '@hyperlane-xyz/utils';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import { useMultiProvider } from '../../chains/hooks';
@@ -8,6 +8,7 @@ import { FinalTransferStatuses, TransferStatus, type TransferHistoryItem } from 
 
 // ERC20 Transfer(address indexed from, address indexed to, uint256 value)
 const TRANSFER_TOPIC = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
+const DESTINATION_OUTCOME_RETRY_MS = 5_000;
 
 type ReceiptProvider = {
   getTransactionReceipt(
@@ -70,12 +71,21 @@ export function useTransferStatus(
   const updateStatus = useStore((s) => s.updateTransferTransactionStatus);
   const multiProvider = useMultiProvider();
   const lastProcessedTxRef = useRef<string | null>(null);
+  const [retryTick, setRetryTick] = useState(0);
 
   useEffect(() => {
+    let cancelled = false;
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
+    const scheduleRetry = () => {
+      retryTimer = setTimeout(() => {
+        if (!cancelled) setRetryTick((tick) => tick + 1);
+      }, DESTINATION_OUTCOME_RETRY_MS);
+    };
+
     const { destinationTxHash, destinationOutcome, status, dstChain, recipient } = transfer ?? {};
-    if (!destinationTxHash || !transactionId) return;
-    if (status && FinalTransferStatuses.includes(status)) return;
-    if (lastProcessedTxRef.current === destinationTxHash) return;
+    if (!destinationTxHash || !transactionId) return undefined;
+    if (status && FinalTransferStatuses.includes(status)) return undefined;
+    if (lastProcessedTxRef.current === destinationTxHash) return undefined;
     lastProcessedTxRef.current = destinationTxHash;
 
     const destinationSwapStep = route?.steps.find(
@@ -90,7 +100,7 @@ export function useTransferStatus(
     ) {
       updateStatus(transactionId, TransferStatus.ConfirmedDestination);
       toast.success('Transfer complete! Funds have arrived.');
-      return;
+      return undefined;
     }
 
     const bridgeToken = destinationOutcome?.bridgeToken ?? destinationSwapStep!.tokenIn;
@@ -106,11 +116,16 @@ export function useTransferStatus(
 
     if (!provider) {
       lastProcessedTxRef.current = null;
-      return;
+      scheduleRetry();
+      return () => {
+        cancelled = true;
+        if (retryTimer) clearTimeout(retryTimer);
+      };
     }
 
     detectDestinationOutcome(provider, destinationTxHash, recipient!, bridgeToken, dstToken)
       .then((outcome) => {
+        if (cancelled) return;
         if (outcome === 'success') {
           updateStatus(transactionId, TransferStatus.ConfirmedDestination);
           toast.success('Transfer complete! Funds have arrived.');
@@ -123,8 +138,15 @@ export function useTransferStatus(
         }
       })
       .catch(() => {
+        if (cancelled) return;
         lastProcessedTxRef.current = null;
+        scheduleRetry();
       });
+
+    return () => {
+      cancelled = true;
+      if (retryTimer) clearTimeout(retryTimer);
+    };
   }, [
     transfer?.destinationTxHash,
     transfer?.destinationOutcome,
@@ -135,5 +157,6 @@ export function useTransferStatus(
     route,
     multiProvider,
     updateStatus,
+    retryTick,
   ]);
 }

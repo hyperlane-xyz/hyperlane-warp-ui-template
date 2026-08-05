@@ -14,7 +14,7 @@ test.describe('Token Selection - Open and Close Modal', () => {
       .locator('div.token-picker-modal[data-headlessui-state="open"]:not([data-closed])')
       .filter({ hasText: 'Select Token' });
     await expect(modal).toBeVisible();
-    await expect(page.getByText('Select Token')).toBeVisible();
+    await expect(page.getByText('Select Token', { exact: true })).toBeVisible();
     await expect(page.getByText('Chain Selection')).toBeVisible();
     await expect(page.getByText('All Chains')).toBeVisible();
     await expect(page.getByText('Token Selection')).toBeVisible();

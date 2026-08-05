@@ -84,5 +84,12 @@ function normalizeId(id: string | undefined): string | undefined {
 }
 
 function matchesId(t: { chainName: string; address: string }, id: string): boolean {
-  return `${t.chainName}-${t.address}` === id;
+  const prefix = `${t.chainName}-`;
+  if (!id.startsWith(prefix)) return false;
+  const address = id.slice(prefix.length);
+  return normalizeTokenAddress(t.address) === normalizeTokenAddress(address);
+}
+
+function normalizeTokenAddress(address: string): string {
+  return /^0x[a-fA-F0-9]+$/.test(address) ? address.toLowerCase() : address;
 }

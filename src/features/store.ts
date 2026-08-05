@@ -290,6 +290,7 @@ export const useStore = create<AppState>()(
       migrate: (persistedState) => {
         const state = persistedState as Partial<AppState> & {
           swaps?: TransferHistoryItem[];
+          transfers?: TransferHistoryItem[];
           transactionHistory?: PersistedTransactionHistoryItem[];
         };
         if (Array.isArray(state.transactionHistory)) {
@@ -301,8 +302,14 @@ export const useStore = create<AppState>()(
           };
         }
 
+        const legacyTransfers = Array.isArray(state.transfers) ? state.transfers : [];
         const swaps = Array.isArray(state.swaps) ? state.swaps : [];
         const transactionHistory: TransactionHistoryItem[] = [
+          ...legacyTransfers.map((data) => ({
+            id: createTransactionId(TransactionHistoryItemType.Transfer, data.timestamp),
+            type: TransactionHistoryItemType.Transfer,
+            data: normalizeTransferHistoryItem(data),
+          })),
           ...swaps.map((data) => ({
             id: createTransactionId(TransactionHistoryItemType.Transfer, data.timestamp),
             type: TransactionHistoryItemType.Transfer,
@@ -341,6 +348,7 @@ function createTransactionId(type: TransactionHistoryItem['type'], timestamp: nu
 }
 
 type TransferTransactionUpdateOptions = Parameters<AppState['updateTransferTransactionStatus']>[2];
+const APP_CONTEXT_ENGINE_CHAIN_RETRIES = 3;
 
 export function mergeTransferTransactionUpdate(
   data: TransferHistoryItem,
@@ -492,7 +500,7 @@ async function initAppContext({
   }
 
   try {
-    const engineChains = await routerClient.chains();
+    const engineChains = await fetchEngineChainsWithRetry();
     const chainNames = Array.from(
       new Set(engineChains.chains.map((chain) => chain.chainName as ChainName)),
     );
@@ -524,4 +532,19 @@ async function initAppContext({
       multiProvider: new MultiProtocolProvider({}),
     };
   }
+}
+
+async function fetchEngineChainsWithRetry() {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= APP_CONTEXT_ENGINE_CHAIN_RETRIES; attempt++) {
+    try {
+      return await routerClient.chains();
+    } catch (error) {
+      lastError = error;
+      if (attempt < APP_CONTEXT_ENGINE_CHAIN_RETRIES) {
+        await new Promise((resolve) => setTimeout(resolve, attempt * 500));
+      }
+    }
+  }
+  throw lastError;
 }

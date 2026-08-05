@@ -24,7 +24,7 @@ test.describe('Chain Selection - Filter by Type', () => {
 
     // Open token selector
     await originButton.click();
-    await expect(page.getByText('Select Token')).toBeVisible();
+    await expect(page.getByText('Select Token', { exact: true })).toBeVisible();
 
     const defaultChainRow = page.locator(
       `.token-picker-chain-row[data-chain="${defaultOriginChain}"]`,

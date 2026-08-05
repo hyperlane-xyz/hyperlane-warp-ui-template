@@ -1,4 +1,5 @@
-import { ChainName } from '@hyperlane-xyz/sdk';
+import type { ChainAddresses } from '@hyperlane-xyz/registry';
+import type { ChainMap, ChainName } from '@hyperlane-xyz/sdk';
 import { getAddressProtocolType, ProtocolType } from '@hyperlane-xyz/utils';
 import { useAccounts } from '@hyperlane-xyz/widgets/walletIntegrations/accounts';
 import { useAccountAddressForChain } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
@@ -7,6 +8,7 @@ import { useMemo } from 'react';
 import { type Address, createPublicClient, http, type PublicClient } from 'viem';
 
 import { useMultiProvider } from '../chains/hooks';
+import { useStore } from '../store';
 import type { BalanceToken } from './types';
 import { getBalanceTokenKey } from './types';
 
@@ -27,6 +29,7 @@ export function useTokenBalances(
   addressOverride?: string,
 ): UseTokenBalancesResult {
   const multiProvider = useMultiProvider();
+  const chainAddresses = useStore((s) => s.chainAddresses);
   const { accounts, readyAccounts } = useAccounts(multiProvider);
   const overrideProtocol = useMemo(
     () => (addressOverride ? getAddressProtocolType(addressOverride) : undefined),
@@ -61,6 +64,7 @@ export function useTokenBalances(
       filteredProtocol,
       filteredChainId,
       filteredRpcUrl,
+      batchAddressFor(chainAddresses, filtered[0]?.chainName),
       filteredUserAddress,
       filtered.map(getBalanceTokenKey).join(','),
     ],
@@ -71,7 +75,7 @@ export function useTokenBalances(
         filteredUserAddress!,
         filteredPublicClient,
         multiProvider,
-        batchAddressFor(multiProvider, filtered[0]?.chainName),
+        batchAddressFor(chainAddresses, filtered[0]?.chainName),
       ),
     enabled:
       chainFilter !== 'all' &&
@@ -79,6 +83,7 @@ export function useTokenBalances(
       filtered.length > 0 &&
       (filteredProtocol !== ProtocolType.Ethereum || !!filteredPublicClient),
     staleTime: STALE_BALANCE_MS,
+    refetchInterval: STALE_BALANCE_MS,
   });
 
   const tokensByChain = useMemo(() => {
@@ -113,6 +118,7 @@ export function useTokenBalances(
           protocol,
           chainId,
           rpcUrlFor(multiProvider, chainName),
+          batchAddressFor(chainAddresses, chainName),
           userAddress,
           chainTokens.map(getBalanceTokenKey).join(','),
         ],
@@ -128,11 +134,12 @@ export function useTokenBalances(
             userAddress,
             client,
             multiProvider,
-            batchAddressFor(multiProvider, chainTokens[0]?.chainName),
+            batchAddressFor(chainAddresses, chainTokens[0]?.chainName),
           );
         },
         enabled: chainFilter === 'all' && !!userAddress && chainTokens.length > 0,
         staleTime: STALE_BALANCE_MS,
+        refetchInterval: STALE_BALANCE_MS,
       };
     }),
   });
@@ -170,6 +177,7 @@ export function useTokenBalances(
 // Single-token balance — for OriginTokenCard's balance row + MaxButton.
 export function useTokenBalance(token: BalanceToken | undefined, addressOverride?: string) {
   const multiProvider = useMultiProvider();
+  const chainAddresses = useStore((s) => s.chainAddresses);
   const protocol = token ? multiProvider.tryGetProtocol(token.chainName) : null;
   const connectedAddress = useAccountAddressForChain(multiProvider, token?.chainName);
   const overrideProtocol = useMemo(
@@ -187,7 +195,14 @@ export function useTokenBalance(token: BalanceToken | undefined, addressOverride
   );
 
   return useQuery({
-    queryKey: ['balance', protocol, token ? getBalanceTokenKey(token) : null, rpcUrl, userAddress],
+    queryKey: [
+      'balance',
+      protocol,
+      token ? getBalanceTokenKey(token) : null,
+      rpcUrl,
+      token ? batchAddressFor(chainAddresses, token.chainName) : undefined,
+      userAddress,
+    ],
     queryFn: async () => {
       if (!token || !userAddress || !protocol) return null;
       const balances = await dispatchChainBalances(
@@ -196,7 +211,7 @@ export function useTokenBalance(token: BalanceToken | undefined, addressOverride
         userAddress,
         publicClient,
         multiProvider,
-        batchAddressFor(multiProvider, token.chainName),
+        batchAddressFor(chainAddresses, token.chainName),
       );
       return balances[getBalanceTokenKey(token)] ?? null;
     },
@@ -295,12 +310,9 @@ function evmClientFromRpc(rpcUrl: string | undefined): PublicClient | undefined 
 }
 
 function batchAddressFor(
-  multiProvider: ReturnType<typeof useMultiProvider>,
+  chainAddresses: ChainMap<ChainAddresses>,
   chainName: string | undefined,
 ): Address | undefined {
   if (!chainName) return undefined;
-  const meta = multiProvider.tryGetChainMetadata(chainName) as
-    | { batchContractAddress?: string }
-    | undefined;
-  return meta?.batchContractAddress as Address | undefined;
+  return chainAddresses[chainName]?.batchContractAddress as Address | undefined;
 }

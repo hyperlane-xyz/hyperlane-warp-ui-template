@@ -15,7 +15,7 @@ test.describe('Chain Selection - Sort Chains', () => {
     await page.getByText('Send').first().waitFor({ state: 'visible' });
 
     await getOriginTokenButton(page).click();
-    await expect(page.getByText('Select Token')).toBeVisible();
+    await expect(page.getByText('Select Token', { exact: true })).toBeVisible();
 
     // Open sort dropdown
     await page.getByRole('button', { name: 'Sort: Featured (asc)' }).click();

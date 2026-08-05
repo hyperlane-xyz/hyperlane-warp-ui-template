@@ -45,7 +45,10 @@ describe('labelTransferMessages', () => {
   test('labels EVM-discovered bridge and CCS messages for destination swap routes', () => {
     const labels = labelTransferMessages(
       [
-        { msgId: BRIDGE_ID, sender: '0x0000000000000000000000000000000000000001' },
+        {
+          msgId: BRIDGE_ID,
+          sender: '0x0000000000000000000000000000000000000000000000000000000000000001',
+        },
         { msgId: COMMIT_ID, body: '0x01abcdef' },
         { msgId: REVEAL_ID, body: '0x02abcdef' },
       ],

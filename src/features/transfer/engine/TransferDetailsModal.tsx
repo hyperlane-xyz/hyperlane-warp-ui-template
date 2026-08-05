@@ -60,7 +60,6 @@ const STATUS_DESCRIPTION: Record<TransferStatus, string> = {
 };
 
 const CONFIRMING_ORIGIN_HINT_DELAY_MS = 60_000;
-const CONFIRMING_ORIGIN_AUTO_FAIL_DELAY_MS = 120_000;
 
 export function TransferDetailsModal() {
   const selectedTransactionId = useStore((s) => s.selectedTransactionId);
@@ -346,9 +345,7 @@ function TransferDetailsModalInner({
             <div className="mt-5 text-center text-sm text-gray-600 dark:text-foreground-muted">
               {STATUS_DESCRIPTION[status]}
             </div>
-            {status === TransferStatus.ConfirmingOrigin && (
-              <ConfirmingOriginHint transfer={transfer} transactionId={transactionId} />
-            )}
+            {status === TransferStatus.ConfirmingOrigin && <ConfirmingOriginHint />}
           </div>
         )}
       </div>
@@ -402,28 +399,15 @@ function formatAmount(amount: string, decimals: number | undefined): string {
   }
 }
 
-function ConfirmingOriginHint({
-  transfer,
-  transactionId,
-}: {
-  transfer: TransferHistoryItem;
-  transactionId: string;
-}) {
+function ConfirmingOriginHint() {
   const [showHint, setShowHint] = useState(false);
-  const updateTransferTransactionStatus = useStore((s) => s.updateTransferTransactionStatus);
 
   useEffect(() => {
     const hintTimer = setTimeout(() => setShowHint(true), CONFIRMING_ORIGIN_HINT_DELAY_MS);
-    const failTimer = setTimeout(() => {
-      updateTransferTransactionStatus(transactionId, TransferStatus.Failed, {
-        originTxHash: transfer.originTxHash,
-      });
-    }, CONFIRMING_ORIGIN_AUTO_FAIL_DELAY_MS);
     return () => {
       clearTimeout(hintTimer);
-      clearTimeout(failTimer);
     };
-  }, [transactionId, transfer.originTxHash, updateTransferTransactionStatus]);
+  }, []);
 
   if (!showHint) return null;
   return (

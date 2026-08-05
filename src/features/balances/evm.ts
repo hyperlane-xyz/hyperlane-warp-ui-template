@@ -131,12 +131,8 @@ export async function estimateEvmGasCost(
       : BigInt((await provider.estimateGas({ from: sender, to, data, value })).toString());
     const feeData = await feeDataPromise;
     const maxFee = feeData.maxFeePerGas ? BigInt(feeData.maxFeePerGas.toString()) : undefined;
-    const priorityFee = feeData.maxPriorityFeePerGas
-      ? BigInt(feeData.maxPriorityFeePerGas.toString())
-      : undefined;
     const legacy = feeData.gasPrice ? BigInt(feeData.gasPrice.toString()) : undefined;
-    const effectiveGasPrice =
-      !isNullish(maxFee) && !isNullish(priorityFee) ? maxFee + priorityFee : legacy;
+    const effectiveGasPrice = maxFee ?? legacy;
     if (isNullish(effectiveGasPrice)) return 0n;
     return gasUnits * effectiveGasPrice;
   } catch (err) {

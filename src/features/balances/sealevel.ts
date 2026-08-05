@@ -9,6 +9,7 @@ import {
 } from '@solana/spl-token';
 import { Connection, PublicKey } from '@solana/web3.js';
 
+import { logger } from '../../utils/logger';
 import type { BalanceToken } from './types';
 import { getBalanceTokenKey } from './types';
 
@@ -73,7 +74,7 @@ export async function readSealevelTokenBalance(
   },
 ): Promise<bigint> {
   const rpcUrl = multiProvider.tryGetChainMetadata(args.chainName)?.rpcUrls?.[0]?.http;
-  if (!rpcUrl) return 0n;
+  if (!rpcUrl) throw new Error(`Missing Sealevel RPC URL for ${args.chainName}`);
   const connection = new Connection(rpcUrl, 'confirmed');
   const ownerKey = new PublicKey(args.owner);
   if (
@@ -106,6 +107,7 @@ async function fetchSplBalance(
   mintAddress: string,
 ): Promise<bigint> {
   const mint = new PublicKey(mintAddress);
+  let unexpectedError: unknown;
   for (const programId of [TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID]) {
     try {
       const ata = await getAssociatedTokenAddress(
@@ -117,10 +119,12 @@ async function fetchSplBalance(
       );
       const { value } = await connection.getTokenAccountBalance(ata);
       return BigInt(value.amount);
-    } catch {
-      // Try the Token-2022 associated account if the classic SPL account is absent.
+    } catch (err) {
+      if (isMissingTokenAccountError(err)) continue;
+      unexpectedError ??= err;
     }
   }
+  if (unexpectedError) throw unexpectedError;
   return 0n;
 }
 
@@ -132,15 +136,40 @@ async function fillSplBalances(
   const batchSize = 100;
   for (let start = 0; start < entries.length; start += batchSize) {
     const batch = entries.slice(start, start + batchSize);
-    const infos = await connection.getMultipleAccountsInfo(batch.map((entry) => entry.ata));
+    let infos: Awaited<ReturnType<Connection['getMultipleAccountsInfo']>>;
+    try {
+      infos = await connection.getMultipleAccountsInfo(batch.map((entry) => entry.ata));
+    } catch (err) {
+      logger.warn('SPL balance batch read failed', err as Error);
+      continue;
+    }
     for (let i = 0; i < batch.length; i++) {
       const info = infos[i];
       if (!info?.data) continue;
-      const { amount } = AccountLayout.decode(info.data);
+      if (!isSplTokenAccount(info.owner, info.data.length)) continue;
+      let amount: bigint;
+      try {
+        amount = AccountLayout.decode(info.data).amount;
+      } catch (err) {
+        logger.warn('SPL token account decode failed', err as Error);
+        continue;
+      }
       const key = getBalanceTokenKey(batch[i].token);
       balances[key] = (balances[key] ?? 0n) + amount;
     }
   }
+}
+
+function isSplTokenAccount(owner: PublicKey, dataLength: number): boolean {
+  return (
+    dataLength >= AccountLayout.span &&
+    (owner.equals(TOKEN_PROGRAM_ID) || owner.equals(TOKEN_2022_PROGRAM_ID))
+  );
+}
+
+function isMissingTokenAccountError(err: unknown): boolean {
+  const message = err instanceof Error ? err.message : String(err);
+  return /could not find account|Account does not exist/i.test(message);
 }
 
 async function fillNativeBalances(

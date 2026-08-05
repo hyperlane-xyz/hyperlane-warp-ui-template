@@ -1,3 +1,4 @@
+import { isValidAddress } from '@hyperlane-xyz/utils';
 import { useQueryClient } from '@tanstack/react-query';
 import { useFormikContext } from 'formik';
 import { useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
@@ -88,7 +89,9 @@ export function TokenSelectField({ selectionMode, disabled }: Props) {
       void prefillBestDestinationToken({
         originToken: token,
         currentDestinationToken: counterpartToken,
+        recipient: values.recipient,
         chainIdToName,
+        multiProvider,
         queryClient,
         syncTokens,
         latestOriginSelectionRef,
@@ -96,6 +99,8 @@ export function TokenSelectField({ selectionMode, disabled }: Props) {
         counterpartKeyAtRequestStart: counterpartKey,
         setFieldValue,
       });
+    } else if (shouldClearAddress(multiProvider, values.recipient, token.chainName)) {
+      setFieldValue('recipient', '');
     }
     // Persist to URL so deep-linking matches the picked tokens.
     // Transfer-side contract is chainName-address (see useFormInitialValues).
@@ -149,7 +154,9 @@ export function TokenSelectField({ selectionMode, disabled }: Props) {
 async function prefillBestDestinationToken({
   originToken,
   currentDestinationToken,
+  recipient,
   chainIdToName,
+  multiProvider,
   queryClient,
   syncTokens,
   latestOriginSelectionRef,
@@ -159,7 +166,9 @@ async function prefillBestDestinationToken({
 }: {
   originToken: UiToken;
   currentDestinationToken?: UiToken;
+  recipient: string;
   chainIdToName: Map<number, string>;
+  multiProvider: ReturnType<typeof useMultiProvider>;
   queryClient: ReturnType<typeof useQueryClient>;
   syncTokens: (tokens: UiToken[]) => void;
   latestOriginSelectionRef: MutableRefObject<string | undefined>;
@@ -173,7 +182,7 @@ async function prefillBestDestinationToken({
   try {
     const result = await queryClient.fetchQuery({
       queryKey: getAvailableRoutesQueryKey('destination', query),
-      queryFn: () => routerClient.availableRoutes(query),
+      queryFn: ({ signal }) => routerClient.availableRoutes(query, { signal }),
       staleTime: AVAILABLE_ROUTES_STALE_TIME,
     });
     if (latestOriginSelectionRef.current !== tokenKey(originToken.chainId, originToken.address)) {
@@ -193,6 +202,9 @@ async function prefillBestDestinationToken({
 
     setFieldValue('dstChain', prefillToken.chainId);
     setFieldValue('dstToken', prefillToken.address);
+    if (shouldClearAddress(multiProvider, recipient, prefillToken.chainName)) {
+      setFieldValue('recipient', '');
+    }
     updateQueryParams({
       [WARP_QUERY_PARAMS.DESTINATION]: prefillToken.chainName,
       [WARP_QUERY_PARAMS.DESTINATION_TOKEN]: prefillToken.address,
@@ -200,6 +212,15 @@ async function prefillBestDestinationToken({
   } catch (err) {
     logger.warn('Destination prefill failed', err);
   }
+}
+
+function shouldClearAddress(
+  multiProvider: ReturnType<typeof useMultiProvider>,
+  recipient: string,
+  chainName: string,
+) {
+  const protocol = multiProvider.tryGetProtocol(chainName);
+  return !!recipient && !!protocol && !isValidAddress(recipient, protocol);
 }
 
 function TokenButton({

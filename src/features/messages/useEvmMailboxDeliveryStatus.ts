@@ -30,7 +30,7 @@ export function useEvmMailboxDeliveryStatus({
     },
     enabled: enabled && !!msgId && !!destinationChain && !!mailbox,
     refetchInterval: (query) => {
-      if (query.state.data?.isDelivered) return false;
+      if (query.state.data?.isDelivered && query.state.data.destinationTxHash) return false;
       return MAILBOX_DELIVERY_POLL_INTERVAL_MS;
     },
     refetchOnWindowFocus: false,

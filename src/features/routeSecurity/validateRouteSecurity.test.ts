@@ -16,6 +16,7 @@ const BAD = '0x5555555555555555555555555555555555555555';
 const PERMIT2 = '0x6666666666666666666666666666666666666666';
 const BRIDGE_ROUTER = '0x7777777777777777777777777777777777777777';
 const DST_ROUTER = '0x8888888888888888888888888888888888888888';
+const BASE_WETH = '0x4200000000000000000000000000000000000006';
 const STARKNET_ROUTER = '0x074238dfa02063792077820584c925b679a013cbab38e5ca61af5627d1eda736';
 const STARKNET_TOKEN = '0x01a238dfa02063792077820584c925b679a013cbab38e5ca61af5627d1eda736';
 const SOL_UNIVERSAL_ROUTER_PROGRAM = '2CttnaLkYbNHbaFDFnQ8PMCnzUwTGrKnskBxPM4TRWGp';
@@ -69,6 +70,80 @@ describe('validateRouteSecurity', () => {
     const route = sameChainSwapRoute();
 
     expect(validateRouteSecurity(route, context({ dstChain: ETH }))).toEqual({ valid: true });
+  });
+
+  test('accepts selected native token when route spends and outputs its wrapped token', () => {
+    const route = sameChainSwapRoute();
+    if (route.steps[0].type !== 'swap') throw new Error('expected swap');
+    route.steps[0].chain = BASE;
+    route.steps[0].tokenIn = BASE_WETH;
+    route.steps[0].tokenOut = BASE_WETH;
+    route.steps[0].path = [BASE_WETH, BASE_WETH];
+    route.approval = null;
+
+    expect(
+      validateRouteSecurity(
+        route,
+        context({
+          srcChain: BASE,
+          dstChain: BASE,
+          srcToken: NATIVE,
+          dstToken: NATIVE,
+          srcTokenWrappedAddress: BASE_WETH,
+          dstTokenWrappedAddress: BASE_WETH,
+        }),
+      ),
+    ).toEqual({ valid: true });
+  });
+
+  test('rejects wrapped native route token when selected native token lacks a wrapped address', () => {
+    const route = sameChainSwapRoute();
+    if (route.steps[0].type !== 'swap') throw new Error('expected swap');
+    route.steps[0].chain = BASE;
+    route.steps[0].tokenIn = BASE_WETH;
+    route.steps[0].tokenOut = BASE_WETH;
+    route.steps[0].path = [BASE_WETH, BASE_WETH];
+    route.approval = null;
+
+    expect(
+      validateRouteSecurity(
+        route,
+        context({ srcChain: BASE, dstChain: BASE, srcToken: NATIVE, dstToken: NATIVE }),
+      ),
+    ).toMatchObject({
+      valid: false,
+      reason: 'Route input token does not match request',
+    });
+  });
+
+  test('rejects approval when selected source token is native even if route spends wrapped native', () => {
+    const route = sameChainSwapRoute();
+    if (route.steps[0].type !== 'swap') throw new Error('expected swap');
+    route.steps[0].chain = BASE;
+    route.steps[0].tokenIn = BASE_WETH;
+    route.steps[0].tokenOut = DST_TOKEN;
+    route.steps[0].path = [BASE_WETH, DST_TOKEN];
+    route.approval = {
+      token: BASE_WETH,
+      spender: UNIVERSAL_ROUTER,
+      amount: '100',
+      kind: 'erc20',
+    };
+
+    expect(
+      validateRouteSecurity(
+        route,
+        context({
+          srcChain: BASE,
+          dstChain: BASE,
+          srcToken: NATIVE,
+          srcTokenWrappedAddress: BASE_WETH,
+        }),
+      ),
+    ).toMatchObject({
+      valid: false,
+      reason: 'Native route must not request approval',
+    });
   });
 
   test('rejects pure swap routes whose output token does not match the request', () => {

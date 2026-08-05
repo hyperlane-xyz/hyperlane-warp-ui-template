@@ -6,11 +6,8 @@ import { ADDRESS_BLACKLIST } from './blacklist';
 const isDevMode = process.env.NODE_ENV === 'development';
 const version = process.env.NEXT_PUBLIC_VERSION || '2.0.0';
 const registryBranch = process.env.NEXT_PUBLIC_REGISTRY_BRANCH || undefined;
-const rawRegistryUrl = process.env.NEXT_PUBLIC_REGISTRY_URL || undefined;
 const canonicalRegistryUrl = 'https://github.com/hyperlane-xyz/hyperlane-registry';
-const isCanonicalRegistry =
-  rawRegistryUrl === canonicalRegistryUrl && (!registryBranch || registryBranch === 'main');
-const registryUrl = isCanonicalRegistry ? undefined : rawRegistryUrl;
+const registryUrl = process.env.NEXT_PUBLIC_REGISTRY_URL || canonicalRegistryUrl;
 const registryProxyUrl = process.env.NEXT_PUBLIC_GITHUB_PROXY || 'https://proxy.hyperlane.xyz';
 const walletConnectProjectId = process.env.NEXT_PUBLIC_WALLET_CONNECT_ID || '';
 const transferBlacklist = process.env.NEXT_PUBLIC_TRANSFER_BLACKLIST || '';
@@ -39,7 +36,7 @@ interface Config {
   explorerApiUrl: string; // URL for the Hyperlane Explorer GraphQL API
   relayApiUrl: string | undefined; // Optional URL for the Hyperlane Relayer API
   isDevMode: boolean; // Enables some debug features in the app
-  registryUrl: string | undefined; // Optional URL to use a custom registry instead of the published canonical version
+  registryUrl: string; // Registry URL used for chain metadata, chain addresses, and warp route security checks
   registryBranch?: string | undefined; // Optional customization of the registry branch instead of main
   registryProxyUrl?: string; // Optional URL to use a custom proxy for the GithubRegistry
   showTipBox: boolean; // Show/Hide the blue tip box above the transfer form

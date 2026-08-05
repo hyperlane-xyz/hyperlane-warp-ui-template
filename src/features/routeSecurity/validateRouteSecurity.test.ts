@@ -188,6 +188,19 @@ describe('validateRouteSecurity', () => {
     });
   });
 
+  test('includes warpRouteId when universal router approval target is unavailable', () => {
+    const route = universalRouterRoute();
+    const missingUniversalRouter = { ...chainAddresses, ethereum: {} };
+
+    expect(
+      validateRouteSecurity(route, context({ chainAddresses: missingUniversalRouter })),
+    ).toMatchObject({
+      valid: false,
+      reason: 'Universal router approval target unavailable',
+      warpRouteId: 'TEST/route',
+    });
+  });
+
   test('rejects malformed engine token values without throwing', () => {
     const route = universalRouterRoute({
       approval: {

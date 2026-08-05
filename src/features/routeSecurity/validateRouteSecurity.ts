@@ -65,6 +65,7 @@ function validateApproval(
   context: RouteSecurityValidationContext,
 ): RouteSecurityValidationResult {
   if (!route.approval) return { valid: true };
+  const warpRouteId = route.connection?.warpRouteId ?? firstBridge(route)?.warpRouteId;
 
   // validateWarpRoute handles bridge-only registry consistency; this pass
   // applies UI-level approval constraints to any approval object.
@@ -109,10 +110,15 @@ function validateApproval(
         : undefined,
       unavailableReason: 'Universal router approval target unavailable',
       mismatchReason: 'Chain universal router does not match registry',
+      warpRouteId,
     });
     if (!trustedUniversalRouter.valid) return trustedUniversalRouter;
     if (!sameTokenAddress(route.approval.spender, trustedUniversalRouter.universalRouter)) {
-      return { valid: false, reason: 'Approval spender does not match chain universal router' };
+      return {
+        valid: false,
+        reason: 'Approval spender does not match chain universal router',
+        warpRouteId,
+      };
     }
     return { valid: true };
   }
@@ -202,12 +208,15 @@ function expectedChainTxTarget(
   srcChain: ChainDiscovery,
   context: RouteSecurityValidationContext,
 ): RouteSecurityValidationFailure | { valid: true; target: string } {
+  const warpRouteId = route.connection?.warpRouteId ?? firstBridge(route)?.warpRouteId;
+
   if (route.executionKind === 'universalRouter') {
     const trustedUniversalRouter = trustedUniversalRouterForChain({
       chain: srcChain,
       chainAddresses: context.chainAddresses?.[srcChain.chainName],
       unavailableReason: 'EVM transaction target unavailable',
       mismatchReason: 'Chain universal router does not match registry',
+      warpRouteId,
     });
     if (!trustedUniversalRouter.valid) return trustedUniversalRouter;
     return { valid: true, target: trustedUniversalRouter.universalRouter };
@@ -216,12 +225,12 @@ function expectedChainTxTarget(
   if (route.executionKind === 'warpDirect') {
     const expectedTarget = firstBridge(route)?.router;
     if (!expectedTarget || isUnsetAddress(expectedTarget)) {
-      return { valid: false, reason: 'EVM transaction target unavailable' };
+      return { valid: false, reason: 'EVM transaction target unavailable', warpRouteId };
     }
     return { valid: true, target: expectedTarget };
   }
 
-  return { valid: false, reason: 'EVM transaction target unavailable' };
+  return { valid: false, reason: 'EVM transaction target unavailable', warpRouteId };
 }
 
 function spendTokenForStep(step: QuoteStep): string {

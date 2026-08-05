@@ -2,6 +2,13 @@ import type { Page, Route } from '@playwright/test';
 
 export const E2E_ROUTE_TX_TO = '0x52dd779c1b5eeb54d5f218EfA72D52117ca04115'.toLowerCase();
 export const E2E_APPROVAL_SPENDER = E2E_ROUTE_TX_TO;
+const E2E_WARP_ROUTE_ID = 'USDC/arbitrum-base-ethereum-lisk-optimism-polygon-zeronetwork';
+
+const E2E_WARP_ROUTER_BY_CHAIN_ID: Record<number, string> = {
+  1: '0xa6826c7Dd74c4e1B400AEF4a362692f99872F5F5',
+  8453: '0x103C9CF52bBF6A6815a6c7e07C5Fb376De016C7D',
+  42161: '0x14adE09354a20ed23E690afc803E64E60a84e7D3',
+};
 
 interface InstallQuoteMockOptions {
   approval?: 'erc20' | 'none';
@@ -58,7 +65,7 @@ export async function installQuoteMock(
               chain: body.srcChain,
               destChain: body.dstChain,
               asset: body.srcToken,
-              router: '0x3333333333333333333333333333333333333333',
+              router: E2E_WARP_ROUTER_BY_CHAIN_ID[body.srcChain],
               amountIn: opts.output ?? body.amount,
               amountOut: opts.output ?? body.amount,
               fee: {
@@ -68,7 +75,7 @@ export async function installQuoteMock(
                 localNativeFee: '0',
               },
               bridgeSymbol: 'E2E',
-              warpRouteId: 'E2E/test',
+              warpRouteId: E2E_WARP_ROUTE_ID,
             },
           ];
 

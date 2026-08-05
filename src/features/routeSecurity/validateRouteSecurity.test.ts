@@ -323,6 +323,33 @@ describe('validateRouteSecurity', () => {
     });
   });
 
+  test('rejects SDK warp tx lists with a trailing revoke after transfer', () => {
+    const route = evmSdkWarpRoute({ trailingRevoke: true });
+
+    expect(validateRouteSecurity(route, evmSdkWarpContext())).toMatchObject({
+      valid: false,
+      reason: 'SDK transfer transaction must be last',
+    });
+  });
+
+  test('rejects SDK warp tx lists with multiple transfer txs', () => {
+    const route = evmSdkWarpRoute({ transferCount: 2 });
+
+    expect(validateRouteSecurity(route, evmSdkWarpContext())).toMatchObject({
+      valid: false,
+      reason: 'SDK route has multiple transfer transactions',
+    });
+  });
+
+  test('rejects SDK warp tx lists with unsupported pre-transfer categories', () => {
+    const route = evmSdkWarpRoute({ unsupportedCategory: true });
+
+    expect(validateRouteSecurity(route, evmSdkWarpContext())).toMatchObject({
+      valid: false,
+      reason: 'SDK transaction category is not supported',
+    });
+  });
+
   test('accepts Sealevel universal router txs that include bridge router and asset accounts', () => {
     expect(validateRouteSecurity(sealevelUniversalRouterRoute(), solanaContext())).toEqual({
       valid: true,
@@ -378,12 +405,25 @@ describe('validateRouteSecurity', () => {
       reason: 'Sealevel transaction missing bridge router account',
     });
   });
+
+  test('rejects Sealevel universal router txs with unsafe pre-instructions', () => {
+    const route = sealevelUniversalRouterRoute();
+    route.tx = {
+      ...route.tx!,
+      preInstructions: [{ programId: BAD, accounts: [], data: '' }],
+    };
+
+    expect(validateRouteSecurity(route, solanaContext())).toMatchObject({
+      valid: false,
+      reason: 'Sealevel pre-instruction program is not allowed',
+    });
+  });
 });
 
 function context(routeOverrides: Partial<RouteSecurityTestContext> = {}) {
   return {
     chainMetadata,
-    registryWarpRoutes: {},
+    registryWarpRoutes: universalRouterRoutes(),
     chains,
     chainAddresses,
     srcChain: ETH,
@@ -511,7 +551,10 @@ function evmSdkWarpRoute(
     approvalToken?: string;
     includeRevoke?: boolean;
     omitTransfer?: boolean;
+    trailingRevoke?: boolean;
     revokeAmount?: string;
+    transferCount?: number;
+    unsupportedCategory?: boolean;
   } = {},
 ): RouteResponse {
   const warpRouteId = 'TEST/sdk';
@@ -544,7 +587,13 @@ function evmSdkWarpRoute(
   const approvalTxs = args.includeRevoke
     ? [approvalTx('revoke', args.revokeAmount ?? '0'), approveAmountTx]
     : [approveAmountTx];
-  const txs = args.omitTransfer ? approvalTxs : [...approvalTxs, transferTx];
+  const txs: NonNullable<RouteResponse['txs']> = args.omitTransfer
+    ? approvalTxs
+    : [...approvalTxs, transferTx];
+  if (args.transferCount === 2) txs.push(transferTx);
+  if (args.trailingRevoke) txs.push(approvalTx('revoke', args.revokeAmount ?? '0'));
+  if (args.unsupportedCategory)
+    txs.splice(0, 1, { ...approvalTx('approval', '100'), category: 'other' });
 
   return {
     steps: [
@@ -672,6 +721,23 @@ function starknetRoutes(): RegistryWarpRouteMap {
           standard: 'StarknetHypCollateral',
         },
         { chainName: 'ethereum', addressOrDenom: DST_ROUTER, standard: 'EvmHypSynthetic' },
+      ],
+    },
+  };
+}
+
+function universalRouterRoutes(): RegistryWarpRouteMap {
+  return {
+    'test/route': {
+      id: 'TEST/route',
+      tokens: [
+        {
+          chainName: 'ethereum',
+          addressOrDenom: BRIDGE_ROUTER,
+          collateralAddressOrDenom: MID_TOKEN,
+          standard: 'EvmHypCollateral',
+        },
+        { chainName: 'base', addressOrDenom: DST_TOKEN, standard: 'EvmHypSynthetic' },
       ],
     },
   };

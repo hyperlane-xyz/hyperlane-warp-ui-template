@@ -440,6 +440,39 @@ describe('validateWarpRoute', () => {
     expect(validateWarpRoute(route, context(collateralRoutes()))).toEqual({ valid: true });
   });
 
+  test('validates bridge router inside swap-containing routes', () => {
+    const bridge = bridgeRoute({
+      asset: COLLATERAL,
+      router: BAD,
+      approval: null,
+      warpRouteId: 'USDC/test',
+    });
+    const route: RouteResponse = {
+      ...bridge,
+      steps: [
+        {
+          type: 'swap',
+          chain: 1,
+          dex: 'test',
+          tokenIn: ROUTER,
+          tokenOut: COLLATERAL,
+          amountIn: '1',
+          amountOut: '1',
+          path: [ROUTER, COLLATERAL],
+          poolCount: 1,
+        },
+        bridge.steps[0],
+      ],
+    };
+
+    expect(validateWarpRoute(route, context(collateralRoutes(), ROUTER, DST_ROUTER))).toMatchObject(
+      {
+        valid: false,
+        reason: 'Bridge router does not match registry route',
+      },
+    );
+  });
+
   test('compares non-EVM router addresses case-sensitively', () => {
     const route = bridgeRoute({
       asset: 'SolMint111',

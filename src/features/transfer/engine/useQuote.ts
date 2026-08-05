@@ -89,18 +89,21 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
       engineRecipient ?? null,
       values.slippageBps,
     ],
-    queryFn: () =>
-      routerClient.quote({
-        srcChain: values.srcChain!,
-        dstChain: values.dstChain!,
-        srcToken: values.srcToken,
-        dstToken: values.dstToken,
-        amount: amountAtomic!,
-        sender: engineSender!,
-        recipient: engineRecipient,
-        slippageBps: values.slippageBps,
-        commitmentSalt,
-      }),
+    queryFn: ({ signal }) =>
+      routerClient.quote(
+        {
+          srcChain: values.srcChain!,
+          dstChain: values.dstChain!,
+          srcToken: values.srcToken,
+          dstToken: values.dstToken,
+          amount: amountAtomic!,
+          sender: engineSender!,
+          recipient: engineRecipient,
+          slippageBps: values.slippageBps,
+          commitmentSalt,
+        },
+        { signal },
+      ),
     enabled: enabled && amountAtomic != null && amountAtomic > 0n,
     refetchInterval: REFRESH_MS,
     staleTime: REFRESH_MS,
@@ -112,6 +115,14 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
     if (!chainsResp?.chains) return undefined;
     if (!hasChainAddresses) return undefined;
     const routes = query.data.routes.filter((route) => {
+      const amountValidation = validateRouteAmounts(route, values.slippageBps);
+      if (!amountValidation.valid) {
+        logger.warn('Filtered route with invalid output amounts', {
+          reason: amountValidation.reason,
+          warpRouteId: route.connection?.warpRouteId,
+        });
+        return false;
+      }
       const validation = validateRouteSecurity(route, {
         chainMetadata,
         chainAddresses,
@@ -143,6 +154,7 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
     registryWarpRoutes,
     values.dstChain,
     values.dstToken,
+    values.slippageBps,
     values.srcChain,
     values.srcToken,
   ]);
@@ -184,6 +196,38 @@ export function isQuoteSettledForSecurity(
   isSecurityContextSettled: boolean,
 ): boolean {
   return isError || (isSuccess && isSecurityContextSettled);
+}
+
+export function validateRouteAmounts(
+  route: RouteResponse,
+  slippageBps: number,
+): { valid: true } | { valid: false; reason: string } {
+  const finalStep = route.steps[route.steps.length - 1];
+  if (!finalStep) return { valid: false, reason: 'Route has no steps' };
+  if (finalStep.amountOut !== route.output) {
+    return { valid: false, reason: 'Route output does not match final step amount' };
+  }
+
+  const hasFixedOutput = route.steps.every((step) => step.type === 'bridge');
+  if (hasFixedOutput) return { valid: true };
+  if (!Number.isInteger(slippageBps) || slippageBps < 0 || slippageBps > 10_000) {
+    return { valid: false, reason: 'Route slippage is invalid' };
+  }
+
+  try {
+    const output = BigInt(route.output);
+    const outputMin = BigInt(route.outputMin);
+    const expectedMin = (output * BigInt(10_000 - slippageBps)) / 10_000n;
+    if (outputMin < expectedMin) {
+      return { valid: false, reason: 'Route minimum output is below slippage tolerance' };
+    }
+    if (outputMin > output) {
+      return { valid: false, reason: 'Route minimum output exceeds output' };
+    }
+    return { valid: true };
+  } catch {
+    return { valid: false, reason: 'Route output amount is invalid' };
+  }
 }
 
 function isQuoteRequestReady(v: TransferFormValues, sender: string | undefined): boolean {

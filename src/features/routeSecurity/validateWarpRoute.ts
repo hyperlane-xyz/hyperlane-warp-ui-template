@@ -70,18 +70,54 @@ export function validateWarpRoute(
   route: RouteResponse,
   context: WarpRouteValidationContext,
 ): WarpRouteValidationResult {
-  if (!isBridgeOnlyRoute(route)) return { valid: true };
+  const bridgeSteps = route.steps.filter((step): step is QuoteBridgeStep => step.type === 'bridge');
+  if (!bridgeSteps.length) return { valid: true };
 
-  if (route.steps.length !== 1) {
+  const isBridgeOnly = isBridgeOnlyRoute(route);
+  if (isBridgeOnly && route.steps.length !== 1) {
     // The engine currently emits direct bridge routes as a single bridge step.
     // Multi-hop bridge-only paths need explicit per-hop registry validation before we allow them.
     return { valid: false, reason: 'Bridge-only route must contain exactly one bridge step' };
   }
 
-  const step = route.steps[0];
+  for (const step of bridgeSteps) {
+    const stepIndex = route.steps.indexOf(step);
+    const previousStep = stepIndex > 0 ? route.steps[stepIndex - 1] : undefined;
+    const nextStep = stepIndex < route.steps.length - 1 ? route.steps[stepIndex + 1] : undefined;
+    const validation = validateBridgeStep(route, step, context, {
+      sourceToken:
+        route.steps[0] === step
+          ? context.srcToken
+          : previousStep?.type === 'swap'
+            ? previousStep.tokenOut
+            : undefined,
+      destinationToken:
+        route.steps[route.steps.length - 1] === step
+          ? context.dstToken
+          : nextStep?.type === 'swap'
+            ? nextStep.tokenIn
+            : undefined,
+      validateApproval: isBridgeOnly,
+    });
+    if (!validation.valid) return validation;
+  }
+
+  return { valid: true };
+}
+
+function validateBridgeStep(
+  route: RouteResponse,
+  step: QuoteBridgeStep,
+  context: WarpRouteValidationContext,
+  options: {
+    sourceToken: string | undefined;
+    destinationToken: string | undefined;
+    validateApproval: boolean;
+  },
+): WarpRouteValidationResult {
   const warpRouteId = route.connection?.warpRouteId ?? step.warpRouteId;
   if (!warpRouteId) {
-    return { valid: false, reason: 'Bridge-only route missing warpRouteId' };
+    return { valid: false, reason: 'Bridge route missing warpRouteId' };
   }
   if (
     route.connection?.warpRouteId &&
@@ -113,18 +149,21 @@ export function validateWarpRoute(
   const destination = destinationTokenForContext(
     registryRoute,
     destinationChainName,
-    context.dstToken,
+    options.destinationToken,
   );
   if (!origin || !destination) {
     return { valid: false, reason: 'Warp route endpoint missing from registry', warpRouteId };
   }
 
-  if (context.srcToken && !sameTokenAddress(context.srcToken, expectedDiscoveryToken(origin))) {
+  if (
+    options.sourceToken &&
+    !sameTokenAddress(options.sourceToken, expectedDiscoveryToken(origin))
+  ) {
     return { valid: false, reason: 'Source token does not match registry route', warpRouteId };
   }
   if (
-    context.dstToken &&
-    !sameTokenAddress(context.dstToken, expectedDiscoveryToken(destination))
+    options.destinationToken &&
+    !sameTokenAddress(options.destinationToken, expectedDiscoveryToken(destination))
   ) {
     return { valid: false, reason: 'Destination token does not match registry route', warpRouteId };
   }
@@ -137,7 +176,7 @@ export function validateWarpRoute(
     if (!sameTokenAddress(step.asset, ENGINE_NATIVE_TOKEN_SENTINEL)) {
       return { valid: false, reason: 'Native bridge asset must be native sentinel', warpRouteId };
     }
-    if (route.approval) {
+    if (options.validateApproval && route.approval) {
       return { valid: false, reason: 'Native bridge route must not request approval', warpRouteId };
     }
     return { valid: true };
@@ -151,7 +190,7 @@ export function validateWarpRoute(
       warpRouteId,
     };
   }
-  if (!route.approval) return { valid: true };
+  if (!options.validateApproval || !route.approval) return { valid: true };
 
   if (!sameTokenAddress(route.approval.token, spendToken)) {
     return { valid: false, reason: 'Approval token does not match registry route', warpRouteId };

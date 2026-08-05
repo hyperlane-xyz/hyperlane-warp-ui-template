@@ -79,7 +79,7 @@ export async function validateTransferForm(args: {
 
   if (!bestRoute) return null;
 
-  const quoteError = validateQuote({ bestRoute, quoteExpiresAt });
+  const quoteError = validateQuote({ bestRoute, quoteExpiresAt, amountAtomic });
   if (quoteError) return quoteError;
 
   return validateBalances({
@@ -144,13 +144,26 @@ export function validateRecipient(
 export function validateQuote(args: {
   bestRoute: AugmentedRoute;
   quoteExpiresAt: number | undefined;
+  amountAtomic?: bigint;
 }): TransferFormErrors | null {
-  const { bestRoute, quoteExpiresAt } = args;
+  const { bestRoute, quoteExpiresAt, amountAtomic } = args;
   if (quoteExpiresAt != null && quoteExpiresAt * 1000 < Date.now()) {
     return { form: 'Quote has expired — refresh to continue' };
   }
   if (!getRouteTxs(bestRoute.raw).length) {
     return { form: 'Route is not executable' };
+  }
+  if (amountAtomic != null) {
+    const initialStep = bestRoute.raw.steps[0];
+    if (initialStep) {
+      try {
+        if (BigInt(initialStep.amountIn) !== amountAtomic) {
+          return { form: 'Quote amount is stale — refresh to continue' };
+        }
+      } catch {
+        return { form: 'Route is not executable' };
+      }
+    }
   }
   return null;
 }

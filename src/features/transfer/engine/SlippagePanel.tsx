@@ -10,6 +10,9 @@ interface Props {
 }
 
 const PRESETS = [50, 100, 300]; // 0.5%, 1%, 3%
+const MIN_SLIPPAGE_BPS = 1;
+const MAX_SLIPPAGE_BPS = 5_000;
+const HIGH_SLIPPAGE_BPS = 1_000;
 
 // Compact inline slippage control. "[gear] Slippage: 1% [chevron]" pill
 // that expands into the preset row + custom input when clicked. Designed
@@ -20,6 +23,7 @@ export function SlippagePanel({ slippageBps, setSlippageBps }: Props) {
   useClickOutside(ref, () => setIsOpen(false));
 
   const lowSlippage = slippageBps < 100;
+  const highSlippage = slippageBps > HIGH_SLIPPAGE_BPS;
   const pct = (slippageBps / 100).toLocaleString(undefined, { maximumFractionDigits: 2 });
 
   return (
@@ -55,11 +59,11 @@ export function SlippagePanel({ slippageBps, setSlippageBps }: Props) {
             ))}
             <input
               type="number"
-              min={1}
-              max={5000}
+              min={MIN_SLIPPAGE_BPS}
+              max={MAX_SLIPPAGE_BPS}
               step={1}
               value={slippageBps}
-              onChange={(e) => setSlippageBps(Number(e.target.value))}
+              onChange={(e) => setSlippageBps(clampSlippageBps(e.target.value))}
               className="w-16 rounded border border-gray-200 px-1 py-0.5 text-right"
             />
             <span className="text-gray-500">bps</span>
@@ -67,8 +71,15 @@ export function SlippagePanel({ slippageBps, setSlippageBps }: Props) {
           {lowSlippage && (
             <p className="mt-1 text-amber-600">Below 1% may revert on volatile pools.</p>
           )}
+          {highSlippage && <p className="mt-1 text-amber-600">High slippage can receive less.</p>}
         </div>
       )}
     </div>
   );
+}
+
+function clampSlippageBps(value: string): number {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return MIN_SLIPPAGE_BPS;
+  return Math.min(MAX_SLIPPAGE_BPS, Math.max(MIN_SLIPPAGE_BPS, Math.trunc(parsed)));
 }

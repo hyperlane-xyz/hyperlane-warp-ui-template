@@ -141,26 +141,57 @@ function validateTxTargets(
   const txs = getRouteTxs(route);
   if (txs.length === 0) return { valid: false, reason: 'Route has no transactions' };
 
+  if (route.executionKind === 'sdkWarp') {
+    const txOrderValidation = validateSdkTxOrder(txs);
+    if (!txOrderValidation.valid) return txOrderValidation;
+  }
+
   const srcChain = chainForId(context.chains, context.srcChain);
   if (!srcChain) return { valid: false, reason: 'Route source chain unavailable' };
 
   const srcProtocol = protocolForChain(srcChain);
   if (!srcProtocol) return { valid: false, reason: 'Route source protocol unavailable' };
 
-  let hasSdkTransferTx = false;
-
   for (const tx of txs) {
-    if (!isChainRouteTx(tx) && tx.category === 'transfer') hasSdkTransferTx = true;
     const validation = isChainRouteTx(tx)
       ? validateChainRouteTx(route, tx, srcChain, srcProtocol, context)
       : validateSdkRouteTx(route, tx, srcProtocol);
     if (!validation.valid) return validation;
   }
 
-  if (route.executionKind === 'sdkWarp' && !hasSdkTransferTx) {
+  return { valid: true };
+}
+
+function validateSdkTxOrder(txs: RouteTx[]): RouteSecurityValidationResult {
+  const categories = txs.map((tx) => (isChainRouteTx(tx) ? 'chain' : tx.category));
+  const transferIndexes = categories.flatMap((category, index) =>
+    category === 'transfer' ? [index] : [],
+  );
+  if (transferIndexes.length === 0) {
     return { valid: false, reason: 'SDK route missing transfer transaction' };
   }
+  if (transferIndexes.length > 1) {
+    return { valid: false, reason: 'SDK route has multiple transfer transactions' };
+  }
+  if (transferIndexes[0] !== categories.length - 1) {
+    return { valid: false, reason: 'SDK transfer transaction must be last' };
+  }
 
+  const preTransfer = categories.slice(0, -1);
+  const revokeIndex = preTransfer.indexOf('revoke');
+  const approvalIndex = preTransfer.indexOf('approval');
+  if (preTransfer.some((category) => category !== 'revoke' && category !== 'approval')) {
+    return { valid: false, reason: 'SDK transaction category is not supported' };
+  }
+  if (preTransfer.filter((category) => category === 'revoke').length > 1) {
+    return { valid: false, reason: 'SDK route has multiple revoke transactions' };
+  }
+  if (preTransfer.filter((category) => category === 'approval').length > 1) {
+    return { valid: false, reason: 'SDK route has multiple approval transactions' };
+  }
+  if (revokeIndex >= 0 && approvalIndex >= 0 && revokeIndex > approvalIndex) {
+    return { valid: false, reason: 'SDK revoke transaction must precede approval' };
+  }
   return { valid: true };
 }
 

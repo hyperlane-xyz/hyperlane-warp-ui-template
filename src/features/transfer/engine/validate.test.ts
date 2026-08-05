@@ -169,6 +169,22 @@ describe('validateQuote', () => {
       }),
     ).toBeNull();
   });
+
+  test('rejects stale quotes whose route amount no longer matches the form amount', () => {
+    const now = Math.floor(Date.now() / 1000);
+
+    expect(
+      validateQuote({
+        bestRoute: routeWithNativeFee(0n, 358974494, {
+          to: '0x0000000000000000000000000000000000000001',
+          data: '0x',
+          value: '0',
+        }),
+        quoteExpiresAt: now + 30,
+        amountAtomic: 11_000_000n,
+      }),
+    ).toEqual({ form: 'Quote amount is stale — refresh to continue' });
+  });
 });
 
 function multiProvider(protocol = ProtocolType.Starknet) {

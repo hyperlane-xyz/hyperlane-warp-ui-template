@@ -49,7 +49,7 @@
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
     "@headlessui/react": "^2.2.0",
-    "@hyperlane-xyz/registry": "25.3.0",
+    "@hyperlane-xyz/registry": "25.4.0",
     "@hyperlane-xyz/sdk": "39.1.0",
     "@hyperlane-xyz/utils": "39.1.0",
     "@hyperlane-xyz/widgets": "39.1.0",

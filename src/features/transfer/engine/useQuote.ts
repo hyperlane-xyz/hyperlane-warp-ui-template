@@ -207,8 +207,9 @@ export function validateRouteAmounts(
     return { valid: false, reason: 'Route output does not match final step amount' };
   }
 
-  const swapStepCount = route.steps.filter((step) => step.type === 'swap').length;
-  if (swapStepCount === 0) return { valid: true };
+  const canonicalShape = validateCanonicalSwapShape(route);
+  if (!canonicalShape.valid) return canonicalShape;
+  if (canonicalShape.swapStepCount === 0) return { valid: true };
   if (!Number.isInteger(slippageBps) || slippageBps < 0 || slippageBps > 10_000) {
     return { valid: false, reason: 'Route slippage is invalid' };
   }
@@ -216,7 +217,7 @@ export function validateRouteAmounts(
   try {
     const output = BigInt(route.output);
     const outputMin = BigInt(route.outputMin);
-    const expectedMin = slippageMin(output, slippageBps);
+    const expectedMin = compoundSlippageMin(output, slippageBps, canonicalShape.swapStepCount);
     if (outputMin < expectedMin) {
       return { valid: false, reason: 'Route minimum output is below slippage tolerance' };
     }
@@ -229,8 +230,36 @@ export function validateRouteAmounts(
   }
 }
 
-function slippageMin(output: bigint, slippageBps: number): bigint {
-  return (output * BigInt(10_000 - slippageBps)) / 10_000n;
+function validateCanonicalSwapShape(
+  route: RouteResponse,
+): { valid: true; swapStepCount: number } | { valid: false; reason: string } {
+  const swapIndexes = route.steps.flatMap((step, index) => (step.type === 'swap' ? [index] : []));
+  if (swapIndexes.length > 2) {
+    return { valid: false, reason: 'Route has too many swap steps' };
+  }
+
+  const firstSwap = swapIndexes[0];
+  const secondSwap = swapIndexes[1];
+  const lastIndex = route.steps.length - 1;
+  if (firstSwap != null && firstSwap !== 0 && firstSwap !== lastIndex) {
+    return { valid: false, reason: 'Route swap step is not canonical' };
+  }
+  if (secondSwap != null && secondSwap !== lastIndex) {
+    return { valid: false, reason: 'Route swap step is not canonical' };
+  }
+
+  return { valid: true, swapStepCount: swapIndexes.length };
+}
+
+function compoundSlippageMin(output: bigint, slippageBps: number, swapStepCount: number): bigint {
+  let numerator = 1n;
+  let denominator = 1n;
+  const ratio = BigInt(10_000 - slippageBps);
+  for (let i = 0; i < swapStepCount; i++) {
+    numerator *= ratio;
+    denominator *= 10_000n;
+  }
+  return (output * numerator) / denominator;
 }
 
 function isQuoteRequestReady(v: TransferFormValues, sender: string | undefined): boolean {

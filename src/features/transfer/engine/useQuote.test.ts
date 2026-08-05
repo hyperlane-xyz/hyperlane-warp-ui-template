@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
+import type { RouteResponse } from '../../api/types';
 import { isQuoteSettledForSecurity, quoteExpiryDelayMs, validateRouteAmounts } from './useQuote';
 
 describe('quoteExpiryDelayMs', () => {
@@ -41,7 +42,7 @@ describe('validateRouteAmounts', () => {
     });
   });
 
-  test('rejects multi-swap routes below the total user slippage floor', () => {
+  test('allows slippage across canonical source and destination swap legs', () => {
     expect(
       validateRouteAmounts(
         swapBridgeSwapRoute({
@@ -50,22 +51,45 @@ describe('validateRouteAmounts', () => {
         }),
         100,
       ),
-    ).toEqual({
+    ).toEqual({ valid: true });
+  });
+
+  test('rejects non-canonical extra swap steps', () => {
+    const route = swapBridgeSwapRoute() as RouteResponse;
+    route.steps.splice(1, 0, {
+      type: 'swap',
+      chain: 56,
+      dex: 'pancakeswap',
+      tokenIn: '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d',
+      tokenOut: '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d',
+      amountIn: '600042771105985927',
+      amountOut: '600042771105985927',
+      path: [
+        '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d',
+        '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d',
+      ],
+      poolCount: 1,
+    });
+
+    expect(validateRouteAmounts(route, 100)).toEqual({
       valid: false,
-      reason: 'Route minimum output is below slippage tolerance',
+      reason: 'Route has too many swap steps',
     });
   });
 
-  test('accepts multi-swap routes at the total user slippage floor', () => {
+  test('rejects canonical swap routes below compounded leg slippage', () => {
     expect(
       validateRouteAmounts(
         swapBridgeSwapRoute({
           output: '320016062708842',
-          outputMin: '316815902081753',
+          outputMin: '313647743060934',
         }),
         100,
       ),
-    ).toEqual({ valid: true });
+    ).toEqual({
+      valid: false,
+      reason: 'Route minimum output is below slippage tolerance',
+    });
   });
 });
 

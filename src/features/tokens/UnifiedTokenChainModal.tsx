@@ -1,5 +1,5 @@
 import { Modal } from '@hyperlane-xyz/widgets';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { ModalHeader } from '../../components/layout/ModalHeader';
 import { trackChainSelectionEvent } from '../analytics/utils';
@@ -41,10 +41,6 @@ export function UnifiedTokenChainModal({
     counterpartToken,
     enabled: isOpen,
   });
-  const priorityChainNames = useMemo(
-    () => [...new Set(availableRoutes.data.map((token) => token.chainName))],
-    [availableRoutes.data],
-  );
 
   const onClose = useCallback(() => {
     close();
@@ -96,7 +92,6 @@ export function UnifiedTokenChainModal({
             showBackButton={showMobileChainList}
             onBack={() => setShowMobileChainList(false)}
             chainInfos={transferChainInfos}
-            priorityChainNames={priorityChainNames}
           />
         </div>
 

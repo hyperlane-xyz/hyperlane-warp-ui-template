@@ -13,8 +13,6 @@ import {
 } from './chainFilterSort';
 import { ChainInfo, useChainInfos } from './hooks';
 
-const EMPTY_PRIORITY_CHAINS: string[] = [];
-
 interface ChainListProps {
   searchQuery: string;
   selectedChain: ChainName | null;
@@ -24,8 +22,6 @@ interface ChainListProps {
   sortState?: SortState;
   /** Override the chain source (e.g. transfer form uses engine `/v1/chains`). */
   chainInfos?: ChainInfo[];
-  /** Chain names to pin above the regular sorted chain list. */
-  priorityChainNames?: string[];
 }
 
 export function ChainList({
@@ -36,29 +32,20 @@ export function ChainList({
   filterState = defaultFilterState,
   sortState = defaultSortState,
   chainInfos,
-  priorityChainNames = EMPTY_PRIORITY_CHAINS,
 }: ChainListProps) {
   const defaultChainInfos = useChainInfos();
   const allChains = chainInfos ?? defaultChainInfos;
 
-  const chains = useMemo(() => {
-    const sorted = chainSearch({
-      data: allChains,
-      query: searchQuery,
-      sort: sortState,
-      filter: filterState,
-    });
-    if (!priorityChainNames.length) return sorted;
-
-    const priority = new Set(priorityChainNames);
-    const pinned: ChainInfo[] = [];
-    const rest: ChainInfo[] = [];
-    for (const chain of sorted) {
-      if (priority.has(chain.name)) pinned.push(chain);
-      else rest.push(chain);
-    }
-    return [...pinned, ...rest];
-  }, [searchQuery, allChains, filterState, sortState, priorityChainNames]);
+  const chains = useMemo(
+    () =>
+      chainSearch({
+        data: allChains,
+        query: searchQuery,
+        sort: sortState,
+        filter: filterState,
+      }),
+    [searchQuery, allChains, filterState, sortState],
+  );
 
   return (
     <div className="relative flex-1 overflow-hidden">

@@ -9,32 +9,6 @@ async function visibleChainNames(page: import('@playwright/test').Page): Promise
   );
 }
 
-function findSortedTailStart(names: string[], direction: 'asc' | 'desc'): number {
-  const compare =
-    direction === 'asc'
-      ? (a: string, b: string) => a.localeCompare(b)
-      : (a: string, b: string) => b.localeCompare(a);
-
-  for (let i = 0; i < names.length; i++) {
-    const tail = names.slice(i);
-    if (tail.every((name, index) => index === 0 || compare(tail[index - 1], name) <= 0)) {
-      return i;
-    }
-  }
-  return names.length;
-}
-
-function expectSortedAfterPriorityPrefix(names: string[], direction: 'asc' | 'desc') {
-  const tailStart = findSortedTailStart(names, direction);
-  const sortedTail = names.slice(tailStart);
-  const sorted = [...sortedTail].sort((a, b) =>
-    direction === 'asc' ? a.localeCompare(b) : b.localeCompare(a),
-  );
-
-  expect(sortedTail.length).toBeGreaterThan(names.length / 2);
-  expect(sortedTail).toEqual(sorted);
-}
-
 test.describe('Chain Selection - Sort Chains', () => {
   test('should open sort dropdown and show sort options', async ({ page }) => {
     await page.goto('http://localhost:3000');
@@ -82,13 +56,13 @@ test.describe('Chain Selection - Sort Chains', () => {
     await page.getByRole('button', { name: 'Name', exact: true }).click();
 
     const ascNames = await visibleChainNames(page);
-    expectSortedAfterPriorityPrefix(ascNames, 'asc');
+    expect(ascNames).toEqual([...ascNames].sort((a, b) => a.localeCompare(b)));
 
     // Open sort and toggle order to desc
     await page.getByRole('button', { name: 'Sort: Name (asc)' }).click();
     await page.getByRole('button', { name: 'Toggle sort order' }).click();
 
     const descNames = await visibleChainNames(page);
-    expectSortedAfterPriorityPrefix(descNames, 'desc');
+    expect(descNames).toEqual([...descNames].sort((a, b) => b.localeCompare(a)));
   });
 });

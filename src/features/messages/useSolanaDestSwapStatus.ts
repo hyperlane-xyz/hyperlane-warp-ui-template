@@ -62,6 +62,7 @@ export function useSolanaDestSwapStatus({
   const pollCount = useRef(0);
   const isDoneRef = useRef(false);
   const lastProcessedDataUpdatedAt = useRef(0);
+  const resetKeyRef = useRef<string | null>(null);
   const [isDone, setIsDone] = useState(false);
 
   const { data, dataUpdatedAt } = useQuery({
@@ -81,16 +82,21 @@ export function useSolanaDestSwapStatus({
   });
 
   useEffect(() => {
+    const resetKey = `${enabled}:${destinationChain ?? ''}:${pdaAddress ?? ''}`;
+    if (resetKey === resetKeyRef.current) return;
+    resetKeyRef.current = resetKey;
     cleanMissingCount.current = 0;
     pollCount.current = 0;
     isDoneRef.current = false;
-    lastProcessedDataUpdatedAt.current = 0;
+    lastProcessedDataUpdatedAt.current = enabled ? dataUpdatedAt : 0;
     setIsDone(false);
-  }, [destinationChain, pdaAddress, enabled]);
+  }, [dataUpdatedAt, destinationChain, enabled, pdaAddress]);
 
   useEffect(() => {
     if (!enabled || !data) return;
-    if (dataUpdatedAt === lastProcessedDataUpdatedAt.current) return;
+    if (!shouldProcessSolanaDestSwapResult(lastProcessedDataUpdatedAt.current, dataUpdatedAt)) {
+      return;
+    }
     lastProcessedDataUpdatedAt.current = dataUpdatedAt;
     const next = nextSolanaDestSwapPollState(
       {
@@ -123,4 +129,11 @@ export function nextSolanaDestSwapPollState(
     cleanMissingCount,
     isDone: state.isDone || cleanMissingCount >= CLEAN_MISSING_CONFIRMATIONS,
   };
+}
+
+export function shouldProcessSolanaDestSwapResult(
+  lastProcessedDataUpdatedAt: number,
+  dataUpdatedAt: number,
+): boolean {
+  return dataUpdatedAt > 0 && dataUpdatedAt !== lastProcessedDataUpdatedAt;
 }

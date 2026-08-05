@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 
 import {
   nextSolanaDestSwapPollState,
+  shouldProcessSolanaDestSwapResult,
   type SolanaDestSwapPollState,
 } from './useSolanaDestSwapStatus';
 
@@ -50,6 +51,29 @@ describe('nextSolanaDestSwapPollState', () => {
     expect(state).toEqual({
       cleanMissingCount: 0,
       pollCount: 24,
+      isDone: false,
+    });
+  });
+});
+
+describe('shouldProcessSolanaDestSwapResult', () => {
+  test('skips cached result already seeded on activation', () => {
+    expect(shouldProcessSolanaDestSwapResult(123, 123)).toBe(false);
+  });
+
+  test('processes one fresh result after activation', () => {
+    const cachedTimestamp = 123;
+    const freshTimestamp = 456;
+
+    expect(shouldProcessSolanaDestSwapResult(cachedTimestamp, freshTimestamp)).toBe(true);
+    const next = nextSolanaDestSwapPollState(
+      { cleanMissingCount: 0, pollCount: 0, isDone: false },
+      { exists: false },
+    );
+
+    expect(next).toEqual({
+      cleanMissingCount: 1,
+      pollCount: 1,
       isDone: false,
     });
   });

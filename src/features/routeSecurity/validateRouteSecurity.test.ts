@@ -672,6 +672,47 @@ describe('validateRouteSecurity', () => {
       reason: 'Sealevel pre-instruction program is not allowed',
     });
   });
+
+  test('rejects Sealevel ATA setup for unauthenticated interior path mints', () => {
+    const attackerMint = 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263';
+    const ata = solanaAta(SOL_OWNER, attackerMint, SOL_TOKEN_PROGRAM);
+    const route = sealevelUniversalRouterRoute();
+    route.steps.unshift({
+      type: 'swap',
+      chain: SOL,
+      dex: 'raydium',
+      tokenIn: SOL_MINT,
+      tokenOut: SOL_MINT,
+      amountIn: '100',
+      amountOut: '100',
+      path: [SOL_MINT, attackerMint, SOL_MINT],
+      poolCount: 1,
+    });
+    const tx = route.tx as Extract<RouteTx, { to: string }>;
+    route.tx = {
+      ...tx,
+      accounts: [...(tx.accounts ?? []), { pubkey: ata, isSigner: false, isWritable: true }],
+      preInstructions: [
+        {
+          programId: 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
+          accounts: [
+            { pubkey: SOL_OWNER, isSigner: true, isWritable: true },
+            { pubkey: ata, isSigner: false, isWritable: true },
+            { pubkey: SOL_OWNER, isSigner: false, isWritable: false },
+            { pubkey: attackerMint, isSigner: false, isWritable: false },
+            { pubkey: '11111111111111111111111111111111', isSigner: false, isWritable: false },
+            { pubkey: SOL_TOKEN_PROGRAM, isSigner: false, isWritable: false },
+          ],
+          data: 'AQ==',
+        },
+      ],
+    };
+
+    expect(validateRouteSecurity(route, solanaContext())).toMatchObject({
+      valid: false,
+      reason: 'Sealevel pre-instruction program is not allowed',
+    });
+  });
 });
 
 function context(routeOverrides: Partial<RouteSecurityTestContext> = {}) {

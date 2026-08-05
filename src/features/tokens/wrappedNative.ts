@@ -21,35 +21,36 @@ export function trustedWrappedNativeAddress(chainId: number | null | undefined) 
 }
 
 export function trustedWrappedNativeAddressForToken(
-  token: Pick<UiToken, 'chainId' | 'isNative'> | null | undefined,
+  token: Pick<UiToken, 'chainId' | 'address' | 'isNative'> | null | undefined,
 ) {
-  if (!token?.isNative) return undefined;
+  if (!isTrustedNativeTokenMetadata(token)) return undefined;
   return trustedWrappedNativeAddress(token.chainId);
 }
 
 export function validateWrappedNativeMetadata(
-  token: Pick<UiToken, 'chainId' | 'isNative' | 'wrappedAddress'> | null | undefined,
+  token: Pick<UiToken, 'chainId' | 'address' | 'isNative' | 'wrappedAddress'> | null | undefined,
 ):
   | { valid: true; trustedWrappedAddress?: string }
   | {
       valid: false;
       reason: string;
       chainId: number;
-      trustedWrappedAddress: string;
+      trustedWrappedAddress?: string;
       engineWrappedAddress?: string;
     } {
-  if (!token?.isNative) return { valid: true };
+  if (!token) return { valid: true };
+  if (token.isNative !== isEngineNativeTokenAddress(token.address)) {
+    return {
+      valid: false,
+      reason: 'Native token metadata does not match native sentinel address',
+      chainId: token.chainId,
+    };
+  }
+  if (!token.isNative) return { valid: true };
 
   const trustedWrappedAddress = trustedWrappedNativeAddress(token.chainId);
   if (!trustedWrappedAddress) return { valid: true };
-  if (!token.wrappedAddress) {
-    return {
-      valid: false,
-      reason: 'Native token wrappedAddress missing from engine metadata',
-      chainId: token.chainId,
-      trustedWrappedAddress,
-    };
-  }
+  if (!token.wrappedAddress) return { valid: true, trustedWrappedAddress };
   if (
     tokenKey(token.chainId, token.wrappedAddress) !== tokenKey(token.chainId, trustedWrappedAddress)
   ) {
@@ -63,4 +64,14 @@ export function validateWrappedNativeMetadata(
   }
 
   return { valid: true, trustedWrappedAddress };
+}
+
+function isTrustedNativeTokenMetadata(
+  token: Pick<UiToken, 'address' | 'isNative'> | null | undefined,
+): token is Pick<UiToken, 'address' | 'isNative'> {
+  return !!token && token.isNative && isEngineNativeTokenAddress(token.address);
+}
+
+function isEngineNativeTokenAddress(address: string): boolean {
+  return /^0x0+$/i.test(address);
 }

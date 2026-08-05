@@ -21,6 +21,7 @@ describe('trustedWrappedNativeAddressForToken', () => {
     expect(
       trustedWrappedNativeAddressForToken({
         chainId: 8453,
+        address: '0x1111111111111111111111111111111111111111',
         isNative: false,
       }),
     ).toBeUndefined();
@@ -30,6 +31,7 @@ describe('trustedWrappedNativeAddressForToken', () => {
     expect(
       validateWrappedNativeMetadata({
         chainId: 8453,
+        address: '0x0000000000000000000000000000000000000000',
         isNative: true,
         wrappedAddress: '0x1111111111111111111111111111111111111111',
       }),
@@ -38,6 +40,34 @@ describe('trustedWrappedNativeAddressForToken', () => {
       reason: 'Native token wrappedAddress does not match trusted local wrapped native',
       trustedWrappedAddress: '0x4200000000000000000000000000000000000006',
       engineWrappedAddress: '0x1111111111111111111111111111111111111111',
+    });
+  });
+
+  test('accepts missing engine wrappedAddress while still returning the local trusted address', () => {
+    expect(
+      validateWrappedNativeMetadata({
+        chainId: 8453,
+        address: '0x0000000000000000000000000000000000000000',
+        isNative: true,
+      }),
+    ).toEqual({
+      valid: true,
+      trustedWrappedAddress: '0x4200000000000000000000000000000000000006',
+    });
+  });
+
+  test('rejects rows whose isNative flag does not match the native sentinel address', () => {
+    expect(
+      validateWrappedNativeMetadata({
+        chainId: 8453,
+        address: '0x1111111111111111111111111111111111111111',
+        isNative: true,
+        wrappedAddress: '0x4200000000000000000000000000000000000006',
+      }),
+    ).toMatchObject({
+      valid: false,
+      reason: 'Native token metadata does not match native sentinel address',
+      chainId: 8453,
     });
   });
 });

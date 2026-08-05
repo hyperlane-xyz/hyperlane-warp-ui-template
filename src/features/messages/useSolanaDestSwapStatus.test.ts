@@ -35,4 +35,22 @@ describe('nextSolanaDestSwapPollState', () => {
       isDone: false,
     });
   });
+
+  test('keeps errored reads pending after the fast poll budget', () => {
+    let state: SolanaDestSwapPollState = {
+      cleanMissingCount: 0,
+      pollCount: 0,
+      isDone: false,
+    };
+
+    for (let i = 0; i < 24; i++) {
+      state = nextSolanaDestSwapPollState(state, { exists: false, errored: true });
+    }
+
+    expect(state).toEqual({
+      cleanMissingCount: 0,
+      pollCount: 24,
+      isDone: false,
+    });
+  });
 });

@@ -102,9 +102,6 @@ function sourceRouteMints(route: RouteResponse): string[] {
     } else {
       if (!isEngineNativeToken(step.tokenIn)) mints.add(step.tokenIn);
       if (!isEngineNativeToken(step.tokenOut)) mints.add(step.tokenOut);
-      for (const token of step.path) {
-        if (!isEngineNativeToken(token)) mints.add(token);
-      }
     }
   }
   return [...mints];

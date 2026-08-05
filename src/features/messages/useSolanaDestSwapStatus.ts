@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { logger } from '../../utils/logger';
 
 const DEST_SWAP_POLL_INTERVAL_MS = 5_000;
+const DEST_SWAP_SLOW_POLL_INTERVAL_MS = 60_000;
 const CLEAN_MISSING_CONFIRMATIONS = 2;
 const MAX_SOLANA_DEST_SWAP_POLLS = 24;
 const connectionByRpcUrl = new Map<string, Connection>();
@@ -59,6 +60,8 @@ export function useSolanaDestSwapStatus({
 }) {
   const cleanMissingCount = useRef(0);
   const pollCount = useRef(0);
+  const isDoneRef = useRef(false);
+  const lastProcessedDataUpdatedAt = useRef(0);
   const [isDone, setIsDone] = useState(false);
 
   const { data, dataUpdatedAt } = useQuery({
@@ -69,8 +72,10 @@ export function useSolanaDestSwapStatus({
     },
     enabled: enabled && !!pdaAddress && !!destinationChain,
     refetchInterval: (query) => {
-      if (isDone || pollCount.current >= MAX_SOLANA_DEST_SWAP_POLLS) return false;
-      return DEST_SWAP_POLL_INTERVAL_MS;
+      if (isDoneRef.current) return false;
+      return pollCount.current >= MAX_SOLANA_DEST_SWAP_POLLS
+        ? DEST_SWAP_SLOW_POLL_INTERVAL_MS
+        : DEST_SWAP_POLL_INTERVAL_MS;
     },
     refetchOnWindowFocus: false,
   });
@@ -78,23 +83,30 @@ export function useSolanaDestSwapStatus({
   useEffect(() => {
     cleanMissingCount.current = 0;
     pollCount.current = 0;
+    isDoneRef.current = false;
+    lastProcessedDataUpdatedAt.current = 0;
     setIsDone(false);
   }, [destinationChain, pdaAddress, enabled]);
 
   useEffect(() => {
     if (!enabled || !data) return;
+    if (dataUpdatedAt === lastProcessedDataUpdatedAt.current) return;
+    lastProcessedDataUpdatedAt.current = dataUpdatedAt;
     const next = nextSolanaDestSwapPollState(
       {
         cleanMissingCount: cleanMissingCount.current,
         pollCount: pollCount.current,
-        isDone,
+        isDone: isDoneRef.current,
       },
       data,
     );
     cleanMissingCount.current = next.cleanMissingCount;
     pollCount.current = next.pollCount;
-    if (next.isDone && !isDone) setIsDone(true);
-  }, [data, dataUpdatedAt, enabled, isDone]);
+    if (next.isDone && !isDoneRef.current) {
+      isDoneRef.current = true;
+      setIsDone(true);
+    }
+  }, [data, dataUpdatedAt, enabled]);
 
   return { isDone };
 }

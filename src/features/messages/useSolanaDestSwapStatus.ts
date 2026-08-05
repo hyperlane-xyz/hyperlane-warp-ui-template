@@ -10,6 +10,13 @@ const CLEAN_MISSING_CONFIRMATIONS = 2;
 const MAX_SOLANA_DEST_SWAP_POLLS = 24;
 const connectionByRpcUrl = new Map<string, Connection>();
 
+export type SolanaDestSwapPollResult = { exists: boolean; errored?: boolean };
+export type SolanaDestSwapPollState = {
+  cleanMissingCount: number;
+  pollCount: number;
+  isDone: boolean;
+};
+
 function connectionForRpcUrl(rpcUrl: string): Connection {
   const cached = connectionByRpcUrl.get(rpcUrl);
   if (cached) return cached;
@@ -26,7 +33,7 @@ async function getSolanaDestSwapStatus({
   pdaAddress: string;
   destinationChain: ChainName;
   multiProvider: MultiProtocolProvider;
-}): Promise<{ exists: boolean; errored?: boolean }> {
+}): Promise<SolanaDestSwapPollResult> {
   try {
     const rpcUrl = multiProvider.tryGetChainMetadata(destinationChain)?.rpcUrls?.[0]?.http;
     if (!rpcUrl) return { exists: false, errored: true };
@@ -54,7 +61,7 @@ export function useSolanaDestSwapStatus({
   const pollCount = useRef(0);
   const [isDone, setIsDone] = useState(false);
 
-  const { data } = useQuery({
+  const { data, dataUpdatedAt } = useQuery({
     queryKey: ['solanaDestSwapStatus', destinationChain, pdaAddress],
     queryFn: async () => {
       if (!pdaAddress || !destinationChain) return { exists: false };
@@ -76,16 +83,32 @@ export function useSolanaDestSwapStatus({
 
   useEffect(() => {
     if (!enabled || !data) return;
-    pollCount.current += 1;
-    if (data.errored) return;
-    if (data.exists) {
-      cleanMissingCount.current = 0;
-      return;
-    }
-
-    cleanMissingCount.current += 1;
-    if (cleanMissingCount.current >= CLEAN_MISSING_CONFIRMATIONS) setIsDone(true);
-  }, [data, enabled]);
+    const next = nextSolanaDestSwapPollState(
+      {
+        cleanMissingCount: cleanMissingCount.current,
+        pollCount: pollCount.current,
+        isDone,
+      },
+      data,
+    );
+    cleanMissingCount.current = next.cleanMissingCount;
+    pollCount.current = next.pollCount;
+    if (next.isDone && !isDone) setIsDone(true);
+  }, [data, dataUpdatedAt, enabled, isDone]);
 
   return { isDone };
+}
+
+export function nextSolanaDestSwapPollState(
+  state: SolanaDestSwapPollState,
+  result: SolanaDestSwapPollResult,
+): SolanaDestSwapPollState {
+  const pollCount = state.pollCount + 1;
+  if (result.errored) return { ...state, pollCount };
+  const cleanMissingCount = result.exists ? 0 : state.cleanMissingCount + 1;
+  return {
+    pollCount,
+    cleanMissingCount,
+    isDone: state.isDone || cleanMissingCount >= CLEAN_MISSING_CONFIRMATIONS,
+  };
 }

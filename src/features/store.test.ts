@@ -78,7 +78,12 @@ describe('mergeKnownTokens', () => {
   test('updates changed token metadata', () => {
     const token = uiToken({ decimals: 6, logoURI: '/old.svg', canSwap: false });
     const known = new Map([[`${token.chainId}-${token.address.toLowerCase()}`, token]]);
-    const updated = uiToken({ decimals: 18, logoURI: '/new.svg', canSwap: true });
+    const updated = uiToken({
+      decimals: 18,
+      logoURI: '/new.svg',
+      canSwap: true,
+      wrappedAddress: '0x4200000000000000000000000000000000000006',
+    });
 
     const next = mergeKnownTokens(known, [updated]);
 
@@ -87,6 +92,7 @@ describe('mergeKnownTokens', () => {
       decimals: 18,
       logoURI: '/new.svg',
       canSwap: true,
+      wrappedAddress: '0x4200000000000000000000000000000000000006',
     });
   });
 });

@@ -11,6 +11,7 @@ import { useMultiProvider } from '../../../chains/hooks';
 import { getTokenByKeyFromMap, useTokenByKeyMap } from '../../../tokens/hooks';
 import type { UiToken } from '../../../tokens/types';
 import { tokenKey } from '../../../tokens/utils';
+import { trustedWrappedNativeAddressForToken } from '../../../tokens/wrappedNative';
 import { getDexMeta } from '../dexMeta';
 import type { AugmentedRoute } from '../types';
 import { useRouteChainTokens } from './hooks';
@@ -359,8 +360,8 @@ function isDisplayWrappedNative(
 ): boolean {
   return (
     !!selectedToken?.isNative &&
-    !!selectedToken.wrappedAddress &&
-    tokenKey(chainId, routeTokenAddress) === tokenKey(chainId, selectedToken.wrappedAddress)
+    tokenKey(chainId, routeTokenAddress) ===
+      tokenKey(chainId, trustedWrappedNativeAddressForToken(selectedToken) ?? '')
   );
 }
 

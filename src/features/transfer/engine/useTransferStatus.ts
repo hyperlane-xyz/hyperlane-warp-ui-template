@@ -18,19 +18,20 @@ type ReceiptProvider = {
   ): Promise<{ logs: Array<{ topics: string[]; address: string }> } | null>;
 };
 
-async function detectDestinationOutcome(
+export async function detectDestinationOutcome(
   provider: ReceiptProvider,
   destinationTxHash: string,
   recipient: string,
   bridgeToken: string,
   dstToken: string,
+  dstIsNative?: boolean,
 ): Promise<'success' | 'failed_recovered' | 'dest_failed'> {
   const receipt = await provider.getTransactionReceipt(destinationTxHash);
   if (!receipt) throw new Error('Destination transaction receipt not found');
 
   const recipientLower = recipient.toLowerCase();
   const bridgeTokenLower = bridgeToken.toLowerCase();
-  const isNativeOutput = isZeroishAddress(dstToken);
+  const isNativeOutput = dstIsNative ?? isZeroishAddress(dstToken);
   const dstTokenLower = dstToken.toLowerCase();
 
   let destinationExecutionSucceeded = false;
@@ -136,7 +137,16 @@ export function useTransferStatus(
       };
     }
 
-    detectDestinationOutcome(provider, destinationTxHash, recipient!, bridgeToken, dstToken)
+    const dstIsNative =
+      destinationOutcome?.dstIsNative ?? isZeroishAddress(transfer?.dstToken ?? dstToken);
+    detectDestinationOutcome(
+      provider,
+      destinationTxHash,
+      recipient!,
+      bridgeToken,
+      dstToken,
+      dstIsNative,
+    )
       .then((outcome) => {
         if (cancelled) return;
         if (outcome === 'success') {
@@ -165,6 +175,7 @@ export function useTransferStatus(
     transfer?.destinationOutcome,
     transfer?.status,
     transfer?.dstChain,
+    transfer?.dstToken,
     transfer?.recipient,
     transactionId,
     route,

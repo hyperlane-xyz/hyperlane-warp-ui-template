@@ -463,6 +463,7 @@ function isSameUiToken(left: UiToken, right: UiToken) {
     left.chainName === right.chainName &&
     left.name === right.name &&
     left.addressOrDenom === right.addressOrDenom &&
+    left.wrappedAddress === right.wrappedAddress &&
     left.logoURI === right.logoURI
   );
 }
@@ -580,13 +581,18 @@ async function loadMigrationChainMetadata(
 let publishedRegistryPromise: Promise<IRegistry> | undefined;
 
 async function getPublishedRegistry(): Promise<IRegistry> {
-  publishedRegistryPromise ??= import('@hyperlane-xyz/registry').then(
-    ({ chainAddresses, chainMetadata }) =>
-      new PartialRegistry({
-        chainAddresses,
-        chainMetadata,
-      }),
-  );
+  publishedRegistryPromise ??= import('@hyperlane-xyz/registry')
+    .then(
+      ({ chainAddresses, chainMetadata }) =>
+        new PartialRegistry({
+          chainAddresses,
+          chainMetadata,
+        }),
+    )
+    .catch((error) => {
+      publishedRegistryPromise = undefined;
+      throw error;
+    });
   return publishedRegistryPromise;
 }
 

@@ -17,6 +17,7 @@ export interface TransferHistoryTokenMeta {
 export interface TransferDestinationOutcome {
   bridgeToken: string;
   dstToken: string;
+  dstIsNative?: boolean;
 }
 
 // ── Persisted/in-memory transfer history ──────────────────────────────────

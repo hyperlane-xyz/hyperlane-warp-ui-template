@@ -91,9 +91,35 @@ describe('validateRouteAmounts', () => {
       reason: 'Route minimum output is below slippage tolerance',
     });
   });
+
+  test('rejects two swap steps without a bridge between them', () => {
+    const base = swapRoute({ output: '100', outputMin: '98' });
+    const step = base.steps[0];
+    if (step.type !== 'swap') throw new Error('expected swap');
+    const route = {
+      ...base,
+      steps: [
+        ...base.steps,
+        {
+          ...step,
+          tokenIn: '0x0000000000000000000000000000000000000002',
+          tokenOut: '0x0000000000000000000000000000000000000003',
+          path: [
+            '0x0000000000000000000000000000000000000002',
+            '0x0000000000000000000000000000000000000003',
+          ],
+        },
+      ],
+    } as RouteResponse;
+
+    expect(validateRouteAmounts(route, 100)).toEqual({
+      valid: false,
+      reason: 'Route has multiple swap steps without a bridge',
+    });
+  });
 });
 
-function swapRoute(overrides: { output?: string; outputMin?: string } = {}) {
+function swapRoute(overrides: { output?: string; outputMin?: string } = {}): RouteResponse {
   return {
     steps: [
       {
@@ -113,10 +139,12 @@ function swapRoute(overrides: { output?: string; outputMin?: string } = {}) {
     ],
     output: overrides.output ?? '100',
     outputMin: overrides.outputMin ?? '99',
-  } as never;
+  } as RouteResponse;
 }
 
-function swapBridgeSwapRoute(overrides: { output?: string; outputMin?: string } = {}) {
+function swapBridgeSwapRoute(
+  overrides: { output?: string; outputMin?: string } = {},
+): RouteResponse {
   return {
     steps: [
       {
@@ -167,5 +195,5 @@ function swapBridgeSwapRoute(overrides: { output?: string; outputMin?: string } 
     ],
     output: overrides.output ?? '320016062708842',
     outputMin: overrides.outputMin ?? '313647743060936',
-  } as never;
+  } as RouteResponse;
 }

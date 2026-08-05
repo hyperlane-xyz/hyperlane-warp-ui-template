@@ -11,6 +11,7 @@ import { validateRouteSecurity } from '../../routeSecurity/validateRouteSecurity
 import { useStore } from '../../store';
 import { useTokens } from '../../tokens/hooks';
 import { tokenKey } from '../../tokens/utils';
+import { trustedWrappedNativeAddressForToken } from '../../tokens/wrappedNative';
 import type {
   AugmentedQuote,
   AugmentedRoute,
@@ -63,6 +64,8 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
       values.dstChain != null &&
       tokenKey(t.chainId, t.address) === tokenKey(values.dstChain, values.dstToken),
   );
+  const srcTokenWrappedAddress = trustedWrappedNativeAddressForToken(srcTokenInfo);
+  const dstTokenWrappedAddress = trustedWrappedNativeAddressForToken(dstTokenInfo);
 
   const amountAtomic = useMemo(() => {
     if (!srcTokenInfo || srcTokenInfo.decimals == null) return null;
@@ -138,8 +141,8 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
         dstChain: values.dstChain!,
         srcToken: values.srcToken,
         dstToken: values.dstToken,
-        srcTokenWrappedAddress: srcTokenInfo?.wrappedAddress,
-        dstTokenWrappedAddress: dstTokenInfo?.wrappedAddress,
+        srcTokenWrappedAddress,
+        dstTokenWrappedAddress,
       });
       if (validation.valid) return true;
       logger.warn('Filtered unsafe route', {
@@ -165,8 +168,8 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
     values.slippageBps,
     values.srcChain,
     values.srcToken,
-    srcTokenInfo?.wrappedAddress,
-    dstTokenInfo?.wrappedAddress,
+    srcTokenWrappedAddress,
+    dstTokenWrappedAddress,
   ]);
 
   const expiresAt = augmented?.expiresAt;
@@ -257,6 +260,9 @@ function validateCanonicalSwapShape(
   }
   if (secondSwap != null && secondSwap !== lastIndex) {
     return { valid: false, reason: 'Route swap step is not canonical' };
+  }
+  if (swapIndexes.length === 2 && !route.steps.some((step) => step.type === 'bridge')) {
+    return { valid: false, reason: 'Route has multiple swap steps without a bridge' };
   }
 
   return { valid: true, swapStepCount: swapIndexes.length };

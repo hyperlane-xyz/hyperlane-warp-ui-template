@@ -456,6 +456,7 @@ function TransferFormContent() {
           ? {
               bridgeToken: destinationSwapStep.tokenIn,
               dstToken: destinationSwapStep.tokenOut,
+              dstIsNative: dstToken.isNative,
             }
           : undefined,
     };

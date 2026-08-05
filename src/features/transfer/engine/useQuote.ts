@@ -208,8 +208,8 @@ export function validateRouteAmounts(
     return { valid: false, reason: 'Route output does not match final step amount' };
   }
 
-  const hasFixedOutput = route.steps.every((step) => step.type === 'bridge');
-  if (hasFixedOutput) return { valid: true };
+  const swapStepCount = route.steps.filter((step) => step.type === 'swap').length;
+  if (swapStepCount === 0) return { valid: true };
   if (!Number.isInteger(slippageBps) || slippageBps < 0 || slippageBps > 10_000) {
     return { valid: false, reason: 'Route slippage is invalid' };
   }
@@ -217,7 +217,7 @@ export function validateRouteAmounts(
   try {
     const output = BigInt(route.output);
     const outputMin = BigInt(route.outputMin);
-    const expectedMin = (output * BigInt(10_000 - slippageBps)) / 10_000n;
+    const expectedMin = compoundSlippageMin(output, slippageBps, swapStepCount);
     if (outputMin < expectedMin) {
       return { valid: false, reason: 'Route minimum output is below slippage tolerance' };
     }
@@ -228,6 +228,17 @@ export function validateRouteAmounts(
   } catch {
     return { valid: false, reason: 'Route output amount is invalid' };
   }
+}
+
+function compoundSlippageMin(output: bigint, slippageBps: number, swapStepCount: number): bigint {
+  let numerator = 1n;
+  let denominator = 1n;
+  const ratio = BigInt(10_000 - slippageBps);
+  for (let i = 0; i < swapStepCount; i++) {
+    numerator *= ratio;
+    denominator *= 10_000n;
+  }
+  return (output * numerator) / denominator;
 }
 
 function isQuoteRequestReady(v: TransferFormValues, sender: string | undefined): boolean {

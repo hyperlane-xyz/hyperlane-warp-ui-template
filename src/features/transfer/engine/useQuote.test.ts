@@ -40,6 +40,18 @@ describe('validateRouteAmounts', () => {
       reason: 'Route output does not match final step amount',
     });
   });
+
+  test('allows slippage to compound across multiple swap legs', () => {
+    expect(
+      validateRouteAmounts(
+        swapBridgeSwapRoute({
+          output: '320016062708842',
+          outputMin: '313647743060936',
+        }),
+        100,
+      ),
+    ).toEqual({ valid: true });
+  });
 });
 
 function swapRoute(overrides: { output?: string; outputMin?: string } = {}) {
@@ -62,5 +74,59 @@ function swapRoute(overrides: { output?: string; outputMin?: string } = {}) {
     ],
     output: overrides.output ?? '100',
     outputMin: overrides.outputMin ?? '99',
+  } as never;
+}
+
+function swapBridgeSwapRoute(overrides: { output?: string; outputMin?: string } = {}) {
+  return {
+    steps: [
+      {
+        type: 'swap' as const,
+        chain: 56,
+        dex: 'pancakeswap',
+        tokenIn: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c',
+        tokenOut: '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d',
+        amountIn: '1000000000000000',
+        amountOut: '600042771105985927',
+        path: [
+          '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c',
+          '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d',
+        ],
+        poolCount: 1,
+      },
+      {
+        type: 'bridge' as const,
+        chain: 56,
+        destChain: 8453,
+        asset: '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d',
+        router: '0x1eebF9d94a5E707E30f18b9aB3295D963C111fb7',
+        amountIn: '600042771105985927',
+        amountOut: '599952',
+        fee: {
+          tokenFee: '89992916728388',
+          igpToken: '0x0000000000000000000000000000000000000000',
+          igpAmount: '91576406884958',
+          localNativeFee: '0',
+        },
+        bridgeSymbol: 'USDC',
+        warpRouteId: 'USDC/eclipsemainnet',
+      },
+      {
+        type: 'swap' as const,
+        chain: 8453,
+        dex: 'aerodrome',
+        tokenIn: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+        tokenOut: '0x4200000000000000000000000000000000000006',
+        amountIn: '599952',
+        amountOut: overrides.output ?? '320016062708842',
+        path: [
+          '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+          '0x4200000000000000000000000000000000000006',
+        ],
+        poolCount: 1,
+      },
+    ],
+    output: overrides.output ?? '320016062708842',
+    outputMin: overrides.outputMin ?? '313647743060936',
   } as never;
 }

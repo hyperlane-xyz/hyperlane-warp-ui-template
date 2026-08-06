@@ -3,6 +3,7 @@ import { PencilIcon } from '@hyperlane-xyz/widgets';
 import { useMemo } from 'react';
 
 import { ChainLogo } from '../../components/icons/ChainLogo';
+import { InfoTooltip } from '../../components/tooltip/InfoTooltip';
 import { Color } from '../../styles/Color';
 import {
   ChainFilterState,
@@ -74,6 +75,7 @@ export function ChainList({
             onClick={() => onSelectChain(chain)}
             icon={<ChainLogo chainName={chain.name} size={28} />}
             label={chain.displayName}
+            canSwap={chain.canSwap}
             showEditIcon={isEditMode}
             disabled={chain.disabled}
           />
@@ -98,6 +100,7 @@ function ChainButton({
   onClick,
   icon,
   label,
+  canSwap,
   showEditIcon,
   disabled,
 }: {
@@ -107,6 +110,7 @@ function ChainButton({
   onClick: () => void;
   icon: React.ReactNode;
   label: string;
+  canSwap?: boolean;
   showEditIcon?: boolean;
   disabled?: boolean;
 }) {
@@ -116,7 +120,7 @@ function ChainButton({
       disabled={disabled}
       data-chain={chainName}
       data-is-testnet={chainName ? String(!!isTestnet) : undefined}
-      className={`token-picker-chain-row ${styles.label} flex w-full items-center gap-3 border-l-2 px-4 py-2.5 transition-colors ${
+      className={`token-picker-chain-row ${styles.label} relative flex w-full items-center gap-3 border-l-2 px-4 py-2.5 transition-colors ${
         disabled
           ? 'border-transparent opacity-50'
           : isSelected
@@ -126,7 +130,20 @@ function ChainButton({
       onClick={onClick}
     >
       {icon}
-      <span className="min-w-0 flex-1 truncate text-sm font-medium">{label}</span>
+      <span className={`min-w-0 flex-1 truncate text-sm font-medium ${canSwap ? 'pr-5' : ''}`}>
+        {label}
+      </span>
+      {canSwap && !showEditIcon && (
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-foreground-secondary">
+          <InfoTooltip
+            content="Swap available"
+            id={`chain-swap-tooltip-${chainName ?? label}`}
+            size={18}
+            tooltipClassName="max-w-[220px]"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </span>
+      )}
       {showEditIcon && (
         <span className="chain-picker-edit-icon">
           <PencilIcon width={14} height={14} color={Color.gray['500']} />

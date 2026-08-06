@@ -43,6 +43,7 @@ export interface ChainInfo {
   protocol: ProtocolType;
   isTestnet: boolean;
   disabled: boolean;
+  canSwap?: boolean;
 }
 
 export function useChainInfos(): ChainInfo[] {
@@ -87,6 +88,7 @@ export function useTransferChainInfos(): ChainInfo[] {
         protocol: (meta?.protocol ?? mapProtocol(c.protocol)) as ProtocolType,
         isTestnet: !!meta?.isTestnet,
         disabled: false,
+        canSwap: c.canSwap,
       });
     }
     return chains;

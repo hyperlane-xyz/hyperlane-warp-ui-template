@@ -4,7 +4,7 @@ import { ProtocolType } from '@hyperlane-xyz/utils';
 import { ADDRESS_BLACKLIST } from './blacklist';
 
 const isDevMode = process.env.NODE_ENV === 'development';
-const version = process.env.NEXT_PUBLIC_VERSION || '2.0.0';
+const version = process.env.NEXT_PUBLIC_VERSION || '3.0.0';
 const registryBranch = process.env.NEXT_PUBLIC_REGISTRY_BRANCH || undefined;
 const registryUrl = process.env.NEXT_PUBLIC_REGISTRY_URL || undefined;
 const registryProxyUrl = process.env.NEXT_PUBLIC_GITHUB_PROXY || 'https://proxy.hyperlane.xyz';
@@ -42,7 +42,7 @@ interface Config {
   showTipBox: boolean; // Show/Hide the blue tip box above the transfer form
   shouldDisableChains: boolean; // Enable chain disabling for ChainSearchMenu. When true it will deactivate chains that have disabled status
   transferBlacklist: string; // comma-separated list of routes between which transfers are disabled. Expects Caip2Id-Caip2Id (e.g. ethereum:1-sealevel:1399811149)
-  version: string; // Matches version number in package.json
+  version: string; // App release version shown in metadata/analytics
   walletConnectProjectId: string; // Project ID provided by walletconnect
   walletProtocols: ProtocolType[] | undefined; // Wallet Protocols to show in the wallet connect modal. Leave undefined to include all of them
   rpcOverrides: string; // JSON string containing a map of chain names to an object with an URL for RPC overrides (For an example check the .env.example file)

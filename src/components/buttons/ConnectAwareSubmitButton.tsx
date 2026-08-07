@@ -40,6 +40,7 @@ export function ConnectAwareSubmitButton<FormValues = any>({
 
   const color = hasError ? 'red' : 'accent';
   const content = hasError ? firstError : isAccountReady ? text : 'Connect wallet';
+  const buttonClasses = hasError ? `${classes ?? ''} px-4 py-2 text-sm leading-tight` : classes;
   const type =
     disabled || !isAccountReady
       ? 'button' // never submits when deliberately disabled
@@ -63,11 +64,12 @@ export function ConnectAwareSubmitButton<FormValues = any>({
 
   return (
     <SolidButton
+      data-testid="transfer-submit"
       disabled={disabled && isAccountReady}
       type={type}
       color={color}
       onClick={onClick}
-      className={classes}
+      className={buttonClasses}
     >
       {content}
     </SolidButton>

@@ -1,239 +1,318 @@
-import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk/providers/MultiProtocolProvider';
-import type { IToken } from '@hyperlane-xyz/sdk/token/IToken';
-import type { Token } from '@hyperlane-xyz/sdk/token/Token';
-import { ProtocolType, getAddressProtocolType, isValidAddress } from '@hyperlane-xyz/utils';
-import { useCosmosAccount } from '@hyperlane-xyz/widgets/walletIntegrations/cosmos';
-import { useEthereumAccount } from '@hyperlane-xyz/widgets/walletIntegrations/ethereum';
+import type { ChainAddresses } from '@hyperlane-xyz/registry';
+import type { ChainMap, ChainName } from '@hyperlane-xyz/sdk';
+import { getAddressProtocolType, ProtocolType } from '@hyperlane-xyz/utils';
+import { useAccounts } from '@hyperlane-xyz/widgets/walletIntegrations/accounts';
 import { useAccountAddressForChain } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
-import { useSolanaAccount } from '@hyperlane-xyz/widgets/walletIntegrations/solana';
-import { useQuery } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
-import { toast } from 'react-toastify';
-import { Hex } from 'viem';
-import { useBalance as useWagmiBalance } from 'wagmi';
+import { type Address, createPublicClient, http, type PublicClient } from 'viem';
 
-import { useToastError } from '../../components/toast/useToastError';
-import { logger } from '../../utils/logger';
 import { useMultiProvider } from '../chains/hooks';
-import { getChainDisplayName } from '../chains/utils';
 import { useStore } from '../store';
-import { getTokenKey } from '../tokens/utils';
+import type { BalanceToken } from './types';
+import { getBalanceTokenKey } from './types';
 
-export function useBalance(chain?: ChainName, token?: IToken, address?: Address) {
-  const multiProvider = useMultiProvider();
-  const { isLoading, isError, error, data, refetch } = useQuery({
-    // The Token and Multiprovider classes are not serializable, so we can't use it as a key
-    // eslint-disable-next-line @tanstack/query/exhaustive-deps
-    queryKey: [
-      'useBalance',
-      chain,
-      address,
-      token?.addressOrDenom,
-      token?.collateralAddressOrDenom,
-    ],
-    queryFn: () => {
-      if (!chain || !token || !address || !isValidAddress(address, token.protocol)) return null;
-      return token.getBalance(multiProvider, address);
-    },
-    staleTime: 30_000,
-    refetchInterval: 30_000,
-  });
+const STALE_BALANCE_MS = 30_000;
 
-  useToastError(error, 'Error fetching balance');
-
-  return {
-    isLoading,
-    isError,
-    balance: data ?? undefined,
-    refetch,
-  };
+interface UseTokenBalancesResult {
+  balances: Record<string, bigint>;
+  isLoading: boolean;
+  hasAnyAddress: boolean;
 }
 
-export function useOriginBalance(originToken?: Token) {
-  const multiProvider = useMultiProvider();
-  const origin = originToken?.chainName;
-  const address = useAccountAddressForChain(multiProvider, origin);
-  return useBalance(origin, originToken, address);
-}
-
-export function useDestinationBalance(recipient?: string, destinationToken?: Token) {
-  const destination = destinationToken?.chainName;
-  return useBalance(destination, destinationToken, recipient);
-}
-
-export async function getDestinationNativeBalance(
-  multiProvider: MultiProtocolProvider,
-  { destination, recipient }: { destination: string; recipient: string },
-) {
-  try {
-    const chainMetadata = multiProvider.getChainMetadata(destination);
-    const { Token } = await import('@hyperlane-xyz/sdk/token/Token');
-    const token = Token.FromChainMetadataNativeToken(chainMetadata);
-    const balance = await token.getBalance(multiProvider, recipient);
-    return balance.amount;
-  } catch (error) {
-    const msg = `Error checking recipient balance on ${getChainDisplayName(multiProvider, destination)}`;
-    logger.error(msg, error);
-    toast.error(msg);
-    return undefined;
-  }
-}
-
-export function useEvmWalletBalance(
-  chainName: string,
-  chainId: number,
-  token: string,
-  refetchEnabled: boolean,
-) {
-  const multiProvider = useMultiProvider();
-  const address = useAccountAddressForChain(multiProvider, chainName);
-  const allowRefetch = Boolean(address) && refetchEnabled;
-
-  const { data, isError, isLoading } = useWagmiBalance({
-    address: address ? (address as Hex) : undefined,
-    token: token ? (token as Hex) : undefined,
-    chainId: chainId,
-    query: {
-      refetchInterval: allowRefetch ? 5000 : false,
-      enabled: allowRefetch,
-    },
-  });
-
-  return { balance: data, isError, isLoading };
-}
-
-/** Returns a Map<ProtocolType, string> of all connected wallet addresses. */
-function useWalletAddresses(multiProvider: MultiProtocolProvider): Map<ProtocolType, string> {
-  const evmAddress = useEthereumAccount(multiProvider).addresses[0]?.address;
-  const solanaAddress = useSolanaAccount(multiProvider).addresses[0]?.address;
-
-  return useMemo(() => {
-    const map = new Map<ProtocolType, string>();
-    if (evmAddress) map.set(ProtocolType.Ethereum, evmAddress);
-    if (solanaAddress) map.set(ProtocolType.Sealevel, solanaAddress);
-    return map;
-  }, [evmAddress, solanaAddress]);
-}
-
-/**
- * Batch-fetch token balances across protocols.
- * - EVM: multicall3 — one eth_call per chain
- * - Sealevel: getParsedTokenAccountsByOwner per chain
- * - Cosmos: bank.allBalances per chain (with SDK fallback for CwHypNative)
- */
-export function useTokenBalances(tokens: Token[], scope: string, addressOverride?: string) {
+// Multi-token batch balance reader.
+//   chainFilter = '<chainName>' → one query: multicall for that chain.
+//   chainFilter = 'all'          → fan-out via useQueries, one per unique chain.
+export function useTokenBalances(
+  tokens: BalanceToken[],
+  chainFilter: ChainName | 'all',
+  addressOverride?: string,
+): UseTokenBalancesResult {
   const multiProvider = useMultiProvider();
   const chainAddresses = useStore((s) => s.chainAddresses);
-  const walletAddresses = useWalletAddresses(multiProvider);
-  const cosmosAddresses = useCosmosAccount(multiProvider).addresses;
-  const tokenKeys = useMemo(() => tokens.map((t) => getTokenKey(t)), [tokens]);
-
-  // When an address override is provided (e.g. pasted recipient),
-  // detect its protocol and use it instead of the connected wallet address
-  const effectiveAddresses = useMemo(() => {
-    if (!addressOverride) return walletAddresses;
-    const protocol = getAddressProtocolType(addressOverride);
-    if (!protocol) return walletAddresses;
-    const map = new Map(walletAddresses);
-    map.set(protocol, addressOverride);
-    return map;
-  }, [walletAddresses, addressOverride]);
-
-  const addressEntries = useMemo(
-    () => Array.from(effectiveAddresses.entries()).sort(([a], [b]) => a.localeCompare(b)),
-    [effectiveAddresses],
+  const { accounts, readyAccounts } = useAccounts(multiProvider);
+  const overrideProtocol = useMemo(
+    () => (addressOverride ? getAddressProtocolType(addressOverride) : undefined),
+    [addressOverride],
   );
 
-  const cosmosAddressKey = useMemo(
-    () => cosmosAddresses.map((a) => `${a.chainName}:${a.address}`).sort(),
-    [cosmosAddresses],
-  );
+  const filtered = useMemo(() => {
+    if (chainFilter === 'all') return [];
+    return tokens.filter((t) => t.chainName === chainFilter);
+  }, [tokens, chainFilter]);
 
-  // fetchChainBalances only reads batchContractAddress per chain. If that
-  // expands, widen this digest accordingly.
-  const chainAddressesKey = useMemo(
+  const filteredChainId = filtered[0]?.chainId;
+  const filteredChainName = filtered[0]?.chainName;
+  const filteredProtocol = filtered[0] ? multiProvider.tryGetProtocol(filtered[0].chainName) : null;
+  const filteredUserAddress = addressForProtocol(
+    accounts,
+    filteredProtocol,
+    filteredChainName,
+    addressOverride,
+    overrideProtocol,
+  );
+  const filteredRpcUrl = rpcUrlFor(multiProvider, filteredChainName);
+  const filteredPublicClient = useMemo(
     () =>
-      Object.entries(chainAddresses)
-        .map(([chain, addrs]) => `${chain}:${addrs.batchContractAddress ?? ''}`)
-        .sort()
-        .join('|'),
-    [chainAddresses],
+      filteredProtocol === ProtocolType.Ethereum ? evmClientFromRpc(filteredRpcUrl) : undefined,
+    [filteredProtocol, filteredRpcUrl],
   );
 
-  const hasAnyAddress = effectiveAddresses.size > 0 || cosmosAddresses.length > 0;
-
-  const { data: balances = {}, isLoading } = useQuery({
-    // eslint-disable-next-line @tanstack/query/exhaustive-deps -- effectiveAddresses derived from addressEntries; tokens covered by tokenKeys; multiProvider is not serializable
+  const singleChainQuery = useQuery({
     queryKey: [
-      'tokenBalances',
-      addressEntries,
-      cosmosAddressKey,
-      scope,
-      tokenKeys,
-      chainAddressesKey,
+      'balances',
+      filteredProtocol,
+      filteredChainId,
+      filteredRpcUrl,
+      batchAddressFor(chainAddresses, filtered[0]?.chainName),
+      filteredUserAddress,
+      filtered.map(getBalanceTokenKey).join(','),
     ],
-    queryFn: async (): Promise<Record<string, bigint>> => {
-      const promises: Promise<Record<string, bigint>>[] = [];
-
-      // EVM
-      const evmAddr = effectiveAddresses.get(ProtocolType.Ethereum);
-      if (evmAddr) {
-        const { fetchChainBalances, groupEvmTokensByChain } = await import('./evm');
-        const { chainGroups, fallbackTokens } = groupEvmTokensByChain(tokens, multiProvider);
-        for (const [chainId, group] of chainGroups) {
-          promises.push(
-            fetchChainBalances(chainId, group, multiProvider, evmAddr as Hex, chainAddresses),
-          );
-        }
-        const { fetchSdkBalance } = await import('./tokens');
-        for (const { token, key } of fallbackTokens) {
-          promises.push(fetchSdkBalance(token, multiProvider, evmAddr, key));
-        }
-      }
-
-      // Sealevel
-      const solAddr = effectiveAddresses.get(ProtocolType.Sealevel);
-      if (solAddr) {
-        const { fetchSealevelChainBalances, groupSealevelTokensByChain } = await import('./svm');
-        const sealevelGroups = groupSealevelTokensByChain(tokens);
-        for (const [, group] of sealevelGroups) {
-          const rpcUrl = multiProvider.tryGetChainMetadata(group.chainName)?.rpcUrls?.[0]?.http;
-          if (rpcUrl) {
-            promises.push(fetchSealevelChainBalances(group, rpcUrl, solAddr));
-          }
-        }
-      }
-
-      // Cosmos — per-chain bech32 address lookup
-      // addressOverride: match bech32 prefix to chain metadata to find the right chain
-      const cosmosOverride = effectiveAddresses.get(ProtocolType.Cosmos);
-      if (cosmosAddresses.length > 0 || cosmosOverride) {
-        const { fetchCosmosChainBalances, groupCosmosTokensByChain } = await import('./cosmos');
-        const { fetchSdkBalance } = await import('./tokens');
-        const cosmosGroups = groupCosmosTokensByChain(tokens);
-        for (const [, group] of cosmosGroups) {
-          let addr = cosmosAddresses.find((a) => a.chainName === group.chainName)?.address;
-          if (!addr && cosmosOverride) {
-            const chainPrefix = multiProvider.tryGetChainMetadata(group.chainName)?.bech32Prefix;
-            if (chainPrefix && cosmosOverride.startsWith(chainPrefix)) addr = cosmosOverride;
-          }
-          if (!addr) continue;
-          const rpcUrl = multiProvider.tryGetChainMetadata(group.chainName)?.rpcUrls?.[0]?.http;
-          if (!rpcUrl) continue;
-          promises.push(fetchCosmosChainBalances(group, rpcUrl, addr));
-          for (const { token, key } of group.fallbackTokens) {
-            promises.push(fetchSdkBalance(token, multiProvider, addr, key));
-          }
-        }
-      }
-
-      const partials = await Promise.all(promises);
-      return Object.assign({}, ...partials);
-    },
-    enabled: tokens.length > 0 && hasAnyAddress,
-    staleTime: 30_000,
-    refetchInterval: 30_000,
+    queryFn: () =>
+      dispatchChainBalances(
+        filteredProtocol!,
+        filtered,
+        filteredUserAddress!,
+        filteredPublicClient,
+        multiProvider,
+        batchAddressFor(chainAddresses, filtered[0]?.chainName),
+      ),
+    enabled:
+      chainFilter !== 'all' &&
+      !!filteredUserAddress &&
+      filtered.length > 0 &&
+      (filteredProtocol !== ProtocolType.Ethereum || !!filteredPublicClient),
+    staleTime: STALE_BALANCE_MS,
+    refetchInterval: STALE_BALANCE_MS,
   });
 
-  return { balances, isLoading, hasAnyAddress };
+  const tokensByChain = useMemo(() => {
+    if (chainFilter !== 'all') return new Map<number, BalanceToken[]>();
+    const map = new Map<number, BalanceToken[]>();
+    for (const t of tokens) {
+      const list = map.get(t.chainId) ?? [];
+      list.push(t);
+      map.set(t.chainId, list);
+    }
+    return map;
+  }, [tokens, chainFilter]);
+
+  const fanoutEntries = useMemo(() => Array.from(tokensByChain.entries()), [tokensByChain]);
+
+  const fanoutQueries = useQueries({
+    queries: fanoutEntries.map(([chainId, chainTokens]) => {
+      const protocol = chainTokens[0]
+        ? multiProvider.tryGetProtocol(chainTokens[0].chainName)
+        : null;
+      const chainName = chainTokens[0]?.chainName;
+      const userAddress = addressForProtocol(
+        accounts,
+        protocol,
+        chainName,
+        addressOverride,
+        overrideProtocol,
+      );
+      return {
+        queryKey: [
+          'balances',
+          protocol,
+          chainId,
+          rpcUrlFor(multiProvider, chainName),
+          batchAddressFor(chainAddresses, chainName),
+          userAddress,
+          chainTokens.map(getBalanceTokenKey).join(','),
+        ],
+        queryFn: async (): Promise<Record<string, bigint>> => {
+          if (!protocol || !userAddress) return {};
+          const client =
+            protocol === ProtocolType.Ethereum
+              ? evmClientFromRpc(rpcUrlFor(multiProvider, chainName))
+              : undefined;
+          return dispatchChainBalances(
+            protocol,
+            chainTokens,
+            userAddress,
+            client,
+            multiProvider,
+            batchAddressFor(chainAddresses, chainTokens[0]?.chainName),
+          );
+        },
+        enabled: chainFilter === 'all' && !!userAddress && chainTokens.length > 0,
+        staleTime: STALE_BALANCE_MS,
+        refetchInterval: STALE_BALANCE_MS,
+      };
+    }),
+  });
+
+  return useMemo(() => {
+    if (chainFilter === 'all') {
+      const merged: Record<string, bigint> = {};
+      let anyLoading = false;
+      for (const q of fanoutQueries) {
+        if (q.isLoading) anyLoading = true;
+        if (q.data) Object.assign(merged, q.data);
+      }
+      return {
+        balances: merged,
+        isLoading: anyLoading,
+        hasAnyAddress: !!addressOverride || readyAccounts.length > 0,
+      };
+    }
+    return {
+      balances: singleChainQuery.data ?? {},
+      isLoading: singleChainQuery.isLoading,
+      hasAnyAddress: !!filteredUserAddress,
+    };
+  }, [
+    chainFilter,
+    addressOverride,
+    fanoutQueries,
+    filteredUserAddress,
+    readyAccounts.length,
+    singleChainQuery.data,
+    singleChainQuery.isLoading,
+  ]);
+}
+
+// Single-token balance — for OriginTokenCard's balance row + MaxButton.
+export function useTokenBalance(token: BalanceToken | undefined, addressOverride?: string) {
+  const multiProvider = useMultiProvider();
+  const chainAddresses = useStore((s) => s.chainAddresses);
+  const protocol = token ? multiProvider.tryGetProtocol(token.chainName) : null;
+  const connectedAddress = useAccountAddressForChain(multiProvider, token?.chainName);
+  const overrideProtocol = useMemo(
+    () => (addressOverride ? getAddressProtocolType(addressOverride) : undefined),
+    [addressOverride],
+  );
+  const userAddress =
+    addressOverride && protocol && (!overrideProtocol || protocolsMatch(overrideProtocol, protocol))
+      ? addressOverride
+      : connectedAddress;
+  const rpcUrl = rpcUrlFor(multiProvider, token?.chainName);
+  const publicClient = useMemo(
+    () => (protocol === ProtocolType.Ethereum ? evmClientFromRpc(rpcUrl) : undefined),
+    [protocol, rpcUrl],
+  );
+
+  return useQuery({
+    queryKey: [
+      'balance',
+      protocol,
+      token ? getBalanceTokenKey(token) : null,
+      rpcUrl,
+      token ? batchAddressFor(chainAddresses, token.chainName) : undefined,
+      userAddress,
+    ],
+    queryFn: async () => {
+      if (!token || !userAddress || !protocol) return null;
+      const balances = await dispatchChainBalances(
+        protocol,
+        [token],
+        userAddress,
+        publicClient,
+        multiProvider,
+        batchAddressFor(chainAddresses, token.chainName),
+      );
+      return balances[getBalanceTokenKey(token)] ?? null;
+    },
+    enabled:
+      !!token &&
+      !!userAddress &&
+      !!protocol &&
+      (protocol !== ProtocolType.Ethereum || !!publicClient),
+    staleTime: STALE_BALANCE_MS,
+    refetchInterval: STALE_BALANCE_MS,
+  });
+}
+
+async function dispatchChainBalances(
+  protocol: ProtocolType,
+  tokens: BalanceToken[],
+  userAddress: string,
+  publicClient: PublicClient | undefined,
+  multiProvider: ReturnType<typeof useMultiProvider>,
+  multicallAddress?: Address,
+): Promise<Record<string, bigint>> {
+  if (protocol === ProtocolType.Ethereum) {
+    if (!publicClient) return {};
+    const { fetchEvmChainBalances } = await import('./evm');
+    return fetchEvmChainBalances(publicClient, tokens, userAddress as Address, multicallAddress);
+  }
+  if (protocol === ProtocolType.Tron) {
+    const { fetchTronChainBalances } = await import('./tron');
+    return fetchTronChainBalances(multiProvider, tokens, userAddress);
+  }
+  if (protocol === ProtocolType.Sealevel) {
+    const rpcUrl = rpcUrlFor(multiProvider, tokens[0]?.chainName);
+    if (!rpcUrl) return {};
+    const { fetchSealevelChainBalances } = await import('./sealevel');
+    return fetchSealevelChainBalances(rpcUrl, tokens, userAddress);
+  }
+  if (protocol === ProtocolType.Starknet) {
+    const { fetchStarknetChainBalances } = await import('./starknet');
+    return fetchStarknetChainBalances(multiProvider, tokens, userAddress);
+  }
+  if (protocol === ProtocolType.Cosmos || protocol === ProtocolType.CosmosNative) {
+    const { fetchCosmosChainBalances } = await import('./cosmos');
+    return fetchCosmosChainBalances(multiProvider, tokens, userAddress);
+  }
+  if (protocol === ProtocolType.Radix) {
+    const { fetchRadixChainBalances } = await import('./radix');
+    return fetchRadixChainBalances(multiProvider, tokens, userAddress);
+  }
+  if (protocol === ProtocolType.Aleo) {
+    const { fetchAleoChainBalances } = await import('./aleo');
+    return fetchAleoChainBalances(multiProvider, tokens, userAddress);
+  }
+  return {};
+}
+
+type AccountsByProtocol = ReturnType<typeof useAccounts>['accounts'];
+
+function addressForProtocol(
+  accounts: AccountsByProtocol,
+  protocol: ProtocolType | null,
+  chainName: string | undefined,
+  addressOverride: string | undefined,
+  overrideProtocol: ProtocolType | undefined,
+): string | undefined {
+  if (!protocol) return undefined;
+  if (addressOverride && (!overrideProtocol || protocolsMatch(overrideProtocol, protocol)))
+    return addressOverride;
+  const account = accounts[protocol];
+  if (protocol === ProtocolType.Cosmos || protocol === ProtocolType.CosmosNative) {
+    return account?.addresses.find((a) => a.chainName === chainName)?.address;
+  }
+  return account?.addresses[0]?.address;
+}
+
+function protocolsMatch(left: ProtocolType, right: ProtocolType): boolean {
+  if (left === right) return true;
+  return isCosmosProtocol(left) && isCosmosProtocol(right);
+}
+
+function isCosmosProtocol(protocol: ProtocolType): boolean {
+  return protocol === ProtocolType.Cosmos || protocol === ProtocolType.CosmosNative;
+}
+
+function rpcUrlFor(
+  multiProvider: ReturnType<typeof useMultiProvider>,
+  chainName: string | undefined,
+): string | undefined {
+  if (!chainName) return undefined;
+  return multiProvider.tryGetChainMetadata(chainName)?.rpcUrls?.[0]?.http;
+}
+
+function evmClientFromRpc(rpcUrl: string | undefined): PublicClient | undefined {
+  return rpcUrl
+    ? (createPublicClient({ transport: http(rpcUrl) }) as unknown as PublicClient)
+    : undefined;
+}
+
+function batchAddressFor(
+  chainAddresses: ChainMap<ChainAddresses>,
+  chainName: string | undefined,
+): Address | undefined {
+  if (!chainName) return undefined;
+  return chainAddresses[chainName]?.batchContractAddress as Address | undefined;
 }

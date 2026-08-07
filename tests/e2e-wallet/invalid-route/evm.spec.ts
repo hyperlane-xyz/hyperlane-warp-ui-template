@@ -16,13 +16,7 @@ test.describe('EVM invalid route / amount', () => {
     // Wait for auto-connect to settle so submit button is live.
     await expect(page.getByText('0xe2e...e2ee').first()).toBeVisible({ timeout: 15_000 });
 
-    // Click Continue with the empty default amount.
-    await page.getByRole('button', { name: /^Continue$/ }).click();
-
-    // ConnectAwareSubmitButton swaps its content to the first form error.
-    await expect(
-      page.getByRole('button', { name: /Invalid amount/i }),
-    ).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByRole('button', { name: /Enter amount/i })).toBeDisabled();
 
     // No RPC-side eth_sendTransaction should have fired, and the window capture
     // must be empty.

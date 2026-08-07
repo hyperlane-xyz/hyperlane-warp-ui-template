@@ -34,8 +34,8 @@ export type EventProperties = {
   };
   [EVENT_NAME.TRANSACTION_SUBMITTED]: {
     chains: string;
-    tokenAddress: string;
-    tokenSymbol: string;
+    originToken: string;
+    destinationToken: string;
     amount: string;
     walletAddress: string;
     transactionHash: string;
@@ -51,8 +51,8 @@ export type EventProperties = {
   };
   [EVENT_NAME.TRANSACTION_SUBMISSION_FAILED]: {
     chains: string;
-    tokenAddress: string;
-    tokenSymbol: string;
+    originToken: string;
+    destinationToken: string;
     amount: string;
     walletAddress: string | null;
     recipient: string;

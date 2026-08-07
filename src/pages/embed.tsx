@@ -1,18 +1,16 @@
 import { HyperlaneLogo } from '@hyperlane-xyz/widgets';
 import type { NextPage } from 'next';
 import Head from 'next/head';
-import { type CSSProperties, useEffect, useMemo, useRef, useState } from 'react';
+import { type CSSProperties, useEffect, useMemo } from 'react';
 
 import { APP_NAME } from '../consts/app';
-import { useStore } from '../features/store';
-import { TransfersDetailsModal } from '../features/transfer/TransfersDetailsModal';
-import { TransferTokenCard } from '../features/transfer/TransferTokenCard';
-import { TransferContext } from '../features/transfer/types';
+import { TransferDetailsModal } from '../features/transfer/engine/TransferDetailsModal';
+import { TransferTokenCard } from '../features/transfer/engine/TransferTokenCard';
+import { useEngineBootstrap } from '../features/transfer/engine/useEngineBootstrap';
 import { parseEmbedTheme, themeToCssVars } from '../styles/embedTheme';
-import { logger } from '../utils/logger';
 
 /**
- * Embeddable widget page — renders the transfer form in a minimal, chrome-less
+ * Embeddable widget page — renders the engine form in a minimal, chrome-less
  * layout suitable for iframe embedding. Accepts theme overrides via URL params.
  *
  * Usage:
@@ -21,7 +19,7 @@ import { logger } from '../utils/logger';
  * Supported URL params:
  *   - accent, bg, card, text, buttonText, border, error (hex without #)
  *   - mode: "dark" or "light"
- *   - origin, destination, originToken, destinationToken (transfer defaults)
+ *   - origin, destination, originToken, destinationToken (token defaults)
  */
 
 const WIDGET_MESSAGE_TYPE = 'hyperlane-warp-widget';
@@ -45,43 +43,10 @@ function usePostMessageBridge() {
   }, []);
 }
 
-/** Auto-opens TransfersDetailsModal when a new transfer starts. */
-function useAutoTransferModal() {
-  const transfers = useStore((s) => s.transfers);
-  const [selectedTransfer, setSelectedTransfer] = useState<TransferContext | null>(null);
-  const [isOpen, setIsOpen] = useState(false);
-  const prevTransfersLengthRef = useRef(transfers.length);
-
-  useEffect(() => {
-    const prev = prevTransfersLengthRef.current;
-    prevTransfersLengthRef.current = transfers.length;
-    if (transfers.length > prev) {
-      const latestTransfer = transfers[transfers.length - 1];
-      if (!latestTransfer) {
-        logger.error(
-          'Expected latest transfer to exist after transfers.length increased',
-          transfers,
-        );
-        return;
-      }
-      setSelectedTransfer(latestTransfer);
-      setIsOpen(true);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- transfers.length increasing guarantees a new transfers ref; listing transfers would re-run on status updates
-  }, [transfers.length]);
-
-  const close = () => {
-    setIsOpen(false);
-    setSelectedTransfer(null);
-  };
-
-  return { selectedTransfer, isOpen, close };
-}
-
 const EmbedPage: NextPage = () => {
+  useEngineBootstrap();
   usePostMessageBridge();
   const cssVars = useMemo(() => themeToCssVars(parseEmbedTheme()), []);
-  const { selectedTransfer, isOpen: isModalOpen, close: closeModal } = useAutoTransferModal();
 
   return (
     <>
@@ -102,13 +67,7 @@ const EmbedPage: NextPage = () => {
           </div>
         </div>
       </div>
-      {selectedTransfer && (
-        <TransfersDetailsModal
-          isOpen={isModalOpen}
-          onClose={closeModal}
-          transfer={selectedTransfer}
-        />
-      )}
+      <TransferDetailsModal />
     </>
   );
 };

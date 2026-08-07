@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { selectOriginToken } from '../helpers/formFlow';
+import { selectOriginTokenOnChain } from '../helpers/formFlow';
 import { openE2EApp, waitForWarpRuntime } from '../helpers/page-setup';
 import { installSolanaRpcMock } from '../helpers/solanaRpc';
 
@@ -16,13 +16,11 @@ test.describe('Solana balance display', () => {
     });
 
     await openE2EApp(page);
-    // The synchronous storeInit path seeds `tokens` as TokenMetadata — useBalance
-    // short-circuits on those. Gate on the async WarpCore runtime upgrade so the
-    // token we pick is a real Token instance with a getBalance method.
+    // Gate on async app context so chain metadata is ready before token selection.
     await waitForWarpRuntime(page);
     await expect(page.getByText('0xe2e...e2ee').first()).toBeVisible({ timeout: 20_000 });
 
-    await selectOriginToken(page, /solanamainnet USDC/i);
+    await selectOriginTokenOnChain(page, /solanamainnet Solana/i, /solanamainnet USDC Solana/i);
 
     const balance = page.locator('.transfer-balance').first();
     await expect(balance).toBeVisible({ timeout: 20_000 });

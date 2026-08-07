@@ -11,10 +11,8 @@ test.describe('Tron mock adapter: auto-connect', () => {
   }) => {
     await openE2EApp(page);
 
-    // No Tron-origin warp routes ship in the published registry today, so the
-    // origin picker can't surface a Tron token — we instead assert against
-    // the "Connected Wallets" dropdown in the header, which lists every
-    // auto-connected mock wallet once its adapter emits 'connect'.
+    // Assert against the "Connected Wallets" dropdown in the header, which
+    // lists every auto-connected mock wallet once its adapter emits 'connect'.
     await page.getByRole('button', { name: /Wallets .*Connected/i }).click();
 
     // The button's accessible name concatenates the adapter's display name

@@ -21,33 +21,13 @@ export interface CapturedCosmosTx {
   messagesJson: string;
 }
 
-export interface E2ETokenSnapshot {
-  key: string;
-  chain: string;
-  symbol: string;
-  standard: string;
-  addressOrDenom: string;
-  collateralAddressOrDenom?: string;
-  // Keys of tokens this origin routes to directly. Distinct from
-  // `collateralGroups` (which dedupe by collateral), so a test can prove a
-  // real direct route rather than a same-symbol coincidence.
-  connectionKeys: string[];
-}
-
 export interface WarpE2EState {
   readyAt: number;
   evmTxs: CapturedEvmTx[];
   solanaTxs: CapturedSolanaTx[];
   cosmosTxs: CapturedCosmosTx[];
-  // Flips true once the async WarpCore runtime has replaced the synchronous
-  // TokenMetadata entries in the store. Reads that depend on real Token
-  // instances (e.g. useBalance calling token.getBalance) can gate on this.
+  // Flips true once engine-supported chain metadata is loaded.
   isRuntimeReady?: boolean;
-  // Lazily-populated snapshot of the runtime Token map (key → identity +
-  // direct connections). Populated by markE2ERuntimeReady so tests can
-  // assert on per-route router/mint identity without needing to reach the
-  // review panel (which requires full validation-call mocking).
-  tokens?: E2ETokenSnapshot[];
 }
 
 declare global {
@@ -83,13 +63,8 @@ export function pushCosmosTx(tx: CapturedCosmosTx): void {
   if (window.__WARP_E2E__) window.__WARP_E2E__.cosmosTxs.push(tx);
 }
 
-export function markE2ERuntimeReady(buildTokens?: () => E2ETokenSnapshot[] | undefined): void {
+export function markE2ERuntimeReady(): void {
   if (typeof window === 'undefined') return;
   if (!window.__WARP_E2E__) return;
   window.__WARP_E2E__.isRuntimeReady = true;
-  // Snapshot producer is lazy so the (non-trivial) iteration over route
-  // tokens + their connections only runs when E2E mode is actually active.
-  // In prod the window hook is absent and we bail above before invoking.
-  const snap = buildTokens?.();
-  if (snap) window.__WARP_E2E__.tokens = snap;
 }

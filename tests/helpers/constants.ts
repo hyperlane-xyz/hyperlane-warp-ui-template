@@ -1,17 +1,40 @@
-import { warpRouteWhitelist } from '../../src/consts/warpRouteWhitelist';
+import { config } from '../../src/consts/config';
 
-// Picks known-good warp route IDs for embed ?routes= tests.
-// Prefers whitelist entries on prod branches; falls back to registry routes on main.
-export function resolveTestRoutes(): { primary: string; secondary: string; skip: boolean } {
-  if (warpRouteWhitelist === null) {
-    return { primary: 'USDC/aleo', secondary: 'ETH/aleo', skip: false };
+export function resolveTestTokenParams(): {
+  origin: string;
+  originToken: string;
+  destination: string;
+  destinationToken: string;
+  skip: boolean;
+} {
+  const origin = splitTokenId(config.defaultTransferOriginToken);
+  const destination = splitTokenId(config.defaultTransferDestinationToken);
+
+  if (!origin || !destination) {
+    return {
+      origin: '',
+      originToken: '',
+      destination: '',
+      destinationToken: '',
+      skip: true,
+    };
   }
-  if (warpRouteWhitelist.length === 0) {
-    return { primary: '', secondary: '', skip: true };
-  }
+
   return {
-    primary: warpRouteWhitelist[0],
-    secondary: warpRouteWhitelist[1] ?? warpRouteWhitelist[0],
+    origin: origin.chainName,
+    originToken: origin.address,
+    destination: destination.chainName,
+    destinationToken: destination.address,
     skip: false,
+  };
+}
+
+export function splitTokenId(id: string | undefined): { chainName: string; address: string } | null {
+  if (!id) return null;
+  const separator = id.indexOf('-');
+  if (separator === -1) return null;
+  return {
+    chainName: id.slice(0, separator),
+    address: id.slice(separator + 1),
   };
 }

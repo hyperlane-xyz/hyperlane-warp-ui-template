@@ -22,21 +22,10 @@ export interface CapturedCosmosTx {
   messagesJson: string;
 }
 
-export interface E2ETokenSnapshot {
-  key: string;
-  chain: string;
-  symbol: string;
-  standard: string;
-  addressOrDenom: string;
-  collateralAddressOrDenom?: string;
-  connectionKeys: string[];
-}
-
 export interface WarpE2EState {
   readyAt: number;
   evmTxs: CapturedEvmTx[];
   solanaTxs: CapturedSolanaTx[];
   cosmosTxs: CapturedCosmosTx[];
   isRuntimeReady?: boolean;
-  tokens?: E2ETokenSnapshot[];
 }

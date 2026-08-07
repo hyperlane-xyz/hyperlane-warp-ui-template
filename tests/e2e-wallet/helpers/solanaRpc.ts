@@ -1,4 +1,13 @@
 import type { Page, Route } from '@playwright/test';
+import {
+  AccountLayout,
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  getAssociatedTokenAddressSync,
+  TOKEN_2022_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
+} from '@solana/spl-token';
+import { PublicKey } from '@solana/web3.js';
+import { MOCK_SOLANA_ADDRESS } from './constants';
 
 // Solana RPC methods the warp UI and SDK balance path actually call.
 //   - getParsedTokenAccountsByOwner  → balance listing for SPL/Token-2022 holders
@@ -28,8 +37,8 @@ export interface InstallSolanaRpcMockOptions {
   spl?: SolanaSplFixture;
 }
 
-const TOKEN_PROGRAM_ID = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
-const TOKEN_2022_PROGRAM_ID = 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb';
+const TOKEN_PROGRAM_ID_STRING = TOKEN_PROGRAM_ID.toBase58();
+const TOKEN_2022_PROGRAM_ID_STRING = TOKEN_2022_PROGRAM_ID.toBase58();
 const SOL_LAMPORTS = 1_000_000_000;
 
 export async function installSolanaRpcMock(
@@ -115,21 +124,30 @@ function handleOne(itemUnknown: unknown, ctx: HandleCtx): unknown {
     case 'getParsedTokenAccountsByOwner': {
       const owner = String(params[0] ?? '');
       const filter = params[1] as { programId?: string } | undefined;
-      const programId = filter?.programId ?? TOKEN_PROGRAM_ID;
+      const programId = filter?.programId ?? TOKEN_PROGRAM_ID_STRING;
       // Return one synthetic parsed token account per mint whose program matches.
       const accounts = Object.entries(ctx.balancesByMint)
         .filter(([mint]) => {
           const isToken2022 = ctx.token2022.has(mint);
-          return programId === TOKEN_2022_PROGRAM_ID ? isToken2022 : !isToken2022;
+          return programId === TOKEN_2022_PROGRAM_ID_STRING ? isToken2022 : !isToken2022;
         })
         .map(([mint, amount]) => buildParsedAccount({ owner, mint, amount }));
       return ok({ context: { slot: 1 }, value: accounts });
+    }
+    case 'getMultipleAccounts': {
+      const pubkeys = Array.isArray(params[0]) ? params[0].map(String) : [];
+      return ok({
+        context: { slot: 1 },
+        value: pubkeys.map((pubkey) => buildAccountInfoForAta(pubkey, ctx)),
+      });
     }
     case 'getAccountInfo': {
       // Minimal account shape — the mint-info probe in
       // SealevelTokenAdapter.isSpl2022 only checks owner program.
       const pubkey = String(params[0] ?? '');
-      const owner = ctx.token2022.has(pubkey) ? TOKEN_2022_PROGRAM_ID : TOKEN_PROGRAM_ID;
+      const owner = ctx.token2022.has(pubkey)
+        ? TOKEN_2022_PROGRAM_ID_STRING
+        : TOKEN_PROGRAM_ID_STRING;
       return ok({
         context: { slot: 1 },
         value: {
@@ -222,10 +240,51 @@ function buildParsedAccount({
       },
       executable: false,
       lamports: 1_000_000,
-      owner: TOKEN_PROGRAM_ID,
+      owner: TOKEN_PROGRAM_ID_STRING,
       rentEpoch: 0,
     },
   };
+}
+
+function buildAccountInfoForAta(pubkey: string, ctx: HandleCtx): unknown {
+  for (const [mint, amount] of Object.entries(ctx.balancesByMint)) {
+    const programId = ctx.token2022.has(mint) ? TOKEN_2022_PROGRAM_ID : TOKEN_PROGRAM_ID;
+    const ata = getAssociatedTokenAddressSync(
+      new PublicKey(mint),
+      new PublicKey(MOCK_SOLANA_ADDRESS),
+      true,
+      programId,
+      ASSOCIATED_TOKEN_PROGRAM_ID,
+    ).toBase58();
+    if (ata !== pubkey) continue;
+
+    const data = Buffer.alloc(AccountLayout.span);
+    AccountLayout.encode(
+      {
+        mint: new PublicKey(mint),
+        owner: new PublicKey(MOCK_SOLANA_ADDRESS),
+        amount: BigInt(amount),
+        delegateOption: 0,
+        delegate: PublicKey.default,
+        state: 1,
+        isNativeOption: 0,
+        isNative: 0n,
+        delegatedAmount: 0n,
+        closeAuthorityOption: 0,
+        closeAuthority: PublicKey.default,
+      },
+      data,
+    );
+
+    return {
+      data: [data.toString('base64'), 'base64'],
+      executable: false,
+      lamports: 1_000_000,
+      owner: programId.toBase58(),
+      rentEpoch: 0,
+    };
+  }
+  return null;
 }
 
 function deriveSyntheticAta(owner: string, mint: string): string {

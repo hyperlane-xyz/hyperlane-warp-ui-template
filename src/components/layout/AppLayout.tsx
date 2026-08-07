@@ -9,6 +9,7 @@ import { EVENT_NAME } from '../../features/analytics/types';
 import { useWalletConnectionTracking } from '../../features/analytics/useWalletConnectionTracking';
 import { trackEvent } from '../../features/analytics/utils';
 import { useStore } from '../../features/store';
+import { TransferDetailsModal } from '../../features/transfer/engine/TransferDetailsModal';
 import { SideBarMenu } from '../../features/wallet/SideBarMenu';
 import { WalletProtocolModal } from '../../features/wallet/WalletProtocolModal';
 import { Footer } from '../nav/Footer';
@@ -63,6 +64,7 @@ export function AppLayout({ children }: PropsWithChildren) {
         isOpen={isSideBarOpen}
         onClickConnectWallet={() => setShowEnvSelectModal(true)}
       />
+      <TransferDetailsModal />
     </>
   );
 }

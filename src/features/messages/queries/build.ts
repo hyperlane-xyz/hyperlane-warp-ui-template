@@ -1,80 +1,29 @@
-import { addressToPostgresBytea, stringToPostgresBytea } from './encoding';
-import { messageDetailFragment, messageStubFragment } from './fragments';
+import type { ChainMetadata } from '@hyperlane-xyz/sdk';
 
-// Query defined at module level to avoid recreation on each call
-const MESSAGE_HISTORY_QUERY = `
-  query MessageHistory($wallets: [bytea!]!, $warpRoutes: [bytea!]!, $limit: Int!, $offset: Int!) @cached(ttl: 5) {
-    message_view(
-      limit: $limit,
-      offset: $offset,
-      order_by: {send_occurred_at: desc},
-      where: {
-        _and: [
-          {origin_tx_sender: {_in: $wallets}},
-          {_or: [
-            {sender: {_in: $warpRoutes}},
-            {recipient: {_in: $warpRoutes}}
-          ]}
-        ]
-      }
-    ) {
-      ${messageStubFragment}
-    }
-  }
-`;
-
-/**
- * Build variables for the message history query
- * Returns null if addresses are invalid or empty
- */
-export function buildMessageHistoryQuery(
-  walletAddresses: string[],
-  warpRouteAddresses: string[],
-  limit: number,
-  offset: number,
-): { query: string; variables: Record<string, unknown> } | null {
-  if (!walletAddresses.length || !warpRouteAddresses.length) return null;
-
-  // Convert wallet addresses to bytea format
-  const walletBytea = walletAddresses
-    .map((addr) => {
-      try {
-        return addressToPostgresBytea(addr);
-      } catch {
-        return null;
-      }
-    })
-    .filter((addr): addr is string => !!addr);
-
-  // Convert warp route addresses to bytea format
-  const warpRouteBytea = warpRouteAddresses
-    .map((addr) => {
-      try {
-        return addressToPostgresBytea(addr);
-      } catch {
-        return null;
-      }
-    })
-    .filter((addr): addr is string => !!addr);
-
-  if (!walletBytea.length || !warpRouteBytea.length) return null;
-
-  return {
-    query: MESSAGE_HISTORY_QUERY,
-    variables: {
-      wallets: walletBytea,
-      warpRoutes: warpRouteBytea,
-      limit,
-      offset,
-    },
-  };
-}
+import { stringToPostgresBytea, txHashToPostgresBytea } from './encoding';
+import { messageDetailFragment } from './fragments';
 
 const MESSAGE_BY_ID_QUERY = `
   query MessageById($msgId: bytea!) @cached(ttl: 5) {
     message_view(
       where: {msg_id: {_eq: $msgId}},
       limit: 1
+    ) {
+      ${messageDetailFragment}
+    }
+  }
+`;
+
+const MESSAGES_BY_ORIGIN_TX_QUERY = `
+  query MessagesByOriginTx($originTxHash: bytea!, $originDomainId: Int!) @cached(ttl: 5) {
+    message_view(
+      where: {
+        _and: [
+          {origin_tx_hash: {_eq: $originTxHash}},
+          {origin_domain_id: {_eq: $originDomainId}}
+        ]
+      },
+      order_by: {id: asc}
     ) {
       ${messageDetailFragment}
     }
@@ -92,6 +41,22 @@ export function buildMessageByIdQuery(msgId: string): {
     query: MESSAGE_BY_ID_QUERY,
     variables: {
       msgId: stringToPostgresBytea(msgId),
+    },
+  };
+}
+
+export function buildMessagesByOriginTxQuery(
+  originTxHash: string,
+  originDomainId: number,
+  originMetadata: ChainMetadata | null | undefined,
+): { query: string; variables: { originTxHash: string; originDomainId: number } } | null {
+  const originTxHashBytea = txHashToPostgresBytea(originTxHash, originMetadata);
+  if (!originTxHashBytea) return null;
+  return {
+    query: MESSAGES_BY_ORIGIN_TX_QUERY,
+    variables: {
+      originTxHash: originTxHashBytea,
+      originDomainId,
     },
   };
 }

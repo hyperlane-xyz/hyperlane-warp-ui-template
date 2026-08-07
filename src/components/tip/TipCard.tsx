@@ -27,11 +27,19 @@ export function TipCard() {
       </div>
 
       <h2 className="pr-6 font-secondary text-lg font-normal text-gray-900 dark:text-white">
+<<<<<<< HEAD
         Bridge ETH
       </h2>
       <p className="mt-2 text-sm text-gray-600 dark:text-foreground-muted">
         Bridge and get real ETH in seconds, no unwrapping needed. Starting with Arbitrum, Base,
         Ethereum, Optimism.
+=======
+        Transfer Tokens with Hyperlane
+      </h2>
+      <p className="mt-2 text-sm text-gray-600 dark:text-foreground-muted">
+        The Universal Router makes it easy to permissionlessly take your tokens interchain. Fork
+        this template to get started!
+>>>>>>> origin/main
       </p>
 
       <Button

@@ -8,7 +8,7 @@ test.describe('Token Selection - Filter Chains', () => {
 
     // Open origin token selector
     await getOriginTokenButton(page).click();
-    await expect(page.getByText('Select Token')).toBeVisible();
+    await expect(page.getByText('Select Token', { exact: true })).toBeVisible();
 
     // Type in chain search
     await page.getByPlaceholder('Search Chains').fill('Base');

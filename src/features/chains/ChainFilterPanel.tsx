@@ -8,10 +8,11 @@ import {
   UpDownArrowsIcon,
   XIcon,
 } from '@hyperlane-xyz/widgets';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { SearchInput } from '../../components/input/SearchInput';
 import { Color } from '../../styles/Color';
+import { useClickOutside } from '../../utils/useClickOutside';
 import {
   ChainFilterState,
   FilterTestnet,
@@ -33,6 +34,8 @@ interface ChainFilterPanelProps {
   onEditChain?: (chainName: string) => void;
   showBackButton?: boolean;
   onBack?: () => void;
+  /** Override chain source — passed through to ChainList. */
+  chainInfos?: ChainInfo[];
 }
 
 export function ChainFilterPanel({
@@ -43,6 +46,7 @@ export function ChainFilterPanel({
   onEditChain,
   showBackButton,
   onBack,
+  chainInfos,
 }: ChainFilterPanelProps) {
   const [isEditMode, setIsEditMode] = useState(false);
   const [filterState, setFilterState] = useState<ChainFilterState>(defaultFilterState);
@@ -113,6 +117,7 @@ export function ChainFilterPanel({
         isEditMode={isEditMode}
         filterState={filterState}
         sortState={sortState}
+        chainInfos={chainInfos}
       />
     </div>
   );
@@ -289,26 +294,4 @@ function SortButton({
       )}
     </div>
   );
-}
-
-// ── Hook: close on outside click ────────────────────────────────────
-function useClickOutside(ref: React.RefObject<HTMLElement | null>, handler: () => void) {
-  const handlerRef = useRef(handler);
-  useEffect(() => {
-    handlerRef.current = handler;
-  });
-
-  const onPointerDown = useCallback(
-    (e: PointerEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        handlerRef.current();
-      }
-    },
-    [ref],
-  );
-
-  useEffect(() => {
-    document.addEventListener('pointerdown', onPointerDown);
-    return () => document.removeEventListener('pointerdown', onPointerDown);
-  }, [onPointerDown]);
 }

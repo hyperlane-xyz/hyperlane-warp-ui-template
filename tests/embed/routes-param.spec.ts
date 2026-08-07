@@ -1,41 +1,29 @@
 import { test, expect } from '@playwright/test';
-import { resolveTestRoutes } from '../helpers/constants';
+import { resolveTestTokenParams } from '../helpers/constants';
 
-const { primary, secondary, skip } = resolveTestRoutes();
+const { origin, originToken, destination, destinationToken, skip } = resolveTestTokenParams();
 
-test.describe('Routes Parameter', () => {
-  test('should load embed page with a valid routes param', async ({ page }) => {
-    test.skip(skip, 'warpRouteWhitelist is empty — no valid routes to test');
+test.describe('Embed Token Parameters', () => {
+  test('should load embed page with valid token params', async ({ page }) => {
+    test.skip(skip, 'defaultTransferOriginToken/defaultTransferDestinationToken are not configured');
 
-    await page.goto(`http://localhost:3000/embed?routes=${primary}`);
+    await page.goto(
+      `http://localhost:3000/embed?origin=${origin}&originToken=${originToken}&destination=${destination}&destinationToken=${destinationToken}`,
+    );
     await page.getByText('Send').first().waitFor({ state: 'visible', timeout: 15000 });
     await expect(page.getByText('Send').first()).toBeVisible();
   });
 
-  test('should load embed page with empty routes param gracefully', async ({ page }) => {
-    await page.goto('http://localhost:3000/embed?routes=');
+  test('should load embed page with empty token params gracefully', async ({ page }) => {
+    await page.goto('http://localhost:3000/embed?origin=&originToken=&destination=&destinationToken=');
     await page.getByText('Send').first().waitFor({ state: 'visible' });
     await expect(page.getByText('Send').first()).toBeVisible();
   });
 
-  test('should load embed page with multiple routes param', async ({ page }) => {
-    test.skip(skip, 'warpRouteWhitelist is empty — no valid routes to test');
-
-    await page.goto(`http://localhost:3000/embed?routes=${primary},${secondary}`);
-    await page.getByText('Send').first().waitFor({ state: 'visible', timeout: 15000 });
-    await expect(page.getByText('Send').first()).toBeVisible();
-  });
-
-  test('should fail to load with fake/nonexistent route', async ({ page }) => {
-    await page.goto('http://localhost:3000/embed?routes=FAKE/nonexistent-route');
-    // Nonexistent routes cause the app to error — "Send" should never become visible
-    await expect(page.getByText('Send').first()).toBeHidden({ timeout: 10000 });
-  });
-
-  test('should handle mix of real and fake routes', async ({ page }) => {
-    test.skip(skip, 'warpRouteWhitelist is empty — no valid routes to test');
-
-    await page.goto(`http://localhost:3000/embed?routes=${primary},FAKE/does-not-exist`);
+  test('should ignore fake token params without crashing', async ({ page }) => {
+    await page.goto(
+      'http://localhost:3000/embed?origin=FAKE&originToken=does-not-exist&destination=FAKE&destinationToken=does-not-exist',
+    );
     await page.getByText('Send').first().waitFor({ state: 'visible', timeout: 15000 });
     await expect(page.getByText('Send').first()).toBeVisible();
   });

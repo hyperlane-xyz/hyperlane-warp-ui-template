@@ -1,24 +1,24 @@
-import { Token } from '@hyperlane-xyz/sdk';
 import { Modal } from '@hyperlane-xyz/widgets';
 import { useCallback, useState } from 'react';
 
 import { ModalHeader } from '../../components/layout/ModalHeader';
 import { trackChainSelectionEvent } from '../analytics/utils';
 import { ChainFilterPanel } from '../chains/ChainFilterPanel';
-import { ChainInfo } from '../chains/hooks';
+import { useTransferChainInfos, type ChainInfo } from '../chains/hooks';
+import { useAvailableRouteTokens } from './hooks';
 import { TokenListPanel } from './TokenListPanel';
-import { TokenSelectionMode } from './types';
+import type { TokenSelectionMode, UiToken } from './types';
 
 interface Props {
   isOpen: boolean;
   close: () => void;
-  onSelect: (token: Token) => void;
+  onSelect: (token: UiToken) => void;
   selectionMode: TokenSelectionMode;
-  /** The currently selected token on the counterpart side (destination when selecting origin, origin when selecting destination) */
-  counterpartToken?: Token;
+  /** Counterpart side's currently selected token, used for route hinting. */
+  counterpartToken?: UiToken;
   /** Recipient address for destination balance lookups */
   recipient?: string;
-  /** Called when user clicks a chain in edit mode - closes this modal first */
+  /** Reserved for future ChainEditModal hook-up. */
   onEditChain?: (chainName: string) => void;
 }
 
@@ -34,8 +34,13 @@ export function UnifiedTokenChainModal({
   const [chainSearch, setChainSearch] = useState('');
   const [tokenSearch, setTokenSearch] = useState('');
   const [selectedChain, setSelectedChain] = useState<ChainInfo | null>(null);
-  // Mobile-only state: whether to show the full chain list
   const [showMobileChainList, setShowMobileChainList] = useState(false);
+  const transferChainInfos = useTransferChainInfos();
+  const availableRoutes = useAvailableRouteTokens({
+    selectionMode,
+    counterpartToken,
+    enabled: isOpen,
+  });
 
   const onClose = useCallback(() => {
     close();
@@ -46,7 +51,7 @@ export function UnifiedTokenChainModal({
   }, [close]);
 
   const handleSelectToken = useCallback(
-    (token: Token) => {
+    (token: UiToken) => {
       onSelect(token);
       onClose();
     },
@@ -59,7 +64,6 @@ export function UnifiedTokenChainModal({
     setSelectedChain(chain);
   };
 
-  // Mobile: when selecting a chain from the full list, go back to tokens
   const handleSelectChainMobile = (chain: ChainInfo | null) => {
     handleSelectChain(chain);
     setShowMobileChainList(false);
@@ -78,7 +82,6 @@ export function UnifiedTokenChainModal({
     >
       <ModalHeader>Select Token</ModalHeader>
       <div className="flex h-[80vh] gap-4 p-4 md:h-[582px]">
-        {/* Chain filter panel: always visible on desktop, conditionally visible on mobile */}
         <div className={`${showMobileChainList ? 'flex flex-1' : 'hidden'} md:flex md:flex-none`}>
           <ChainFilterPanel
             searchQuery={chainSearch}
@@ -88,10 +91,10 @@ export function UnifiedTokenChainModal({
             onEditChain={handleEditChain}
             showBackButton={showMobileChainList}
             onBack={() => setShowMobileChainList(false)}
+            chainInfos={transferChainInfos}
           />
         </div>
 
-        {/* Token list panel: hidden on mobile when showing chain list */}
         <div className={`min-w-0 flex-1 ${showMobileChainList ? 'hidden md:flex' : 'flex'}`}>
           <TokenListPanel
             selectionMode={selectionMode}
@@ -101,6 +104,8 @@ export function UnifiedTokenChainModal({
             onSelect={handleSelectToken}
             counterpartToken={counterpartToken}
             recipient={recipient}
+            availableRouteTokens={availableRoutes.data}
+            hasAvailableRoutesResult={availableRoutes.isFetched && !availableRoutes.error}
             selectedChain={selectedChain?.name ?? null}
             onSelectChain={handleSelectChain}
             onMoreChainsClick={() => setShowMobileChainList(true)}

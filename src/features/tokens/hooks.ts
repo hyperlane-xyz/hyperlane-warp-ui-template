@@ -1,30 +1,26 @@
-import { IToken, Token, WarpCore } from '@hyperlane-xyz/sdk';
-import {
-  useAccountForChain,
-  useActiveChains,
-  useWatchAsset,
-} from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
-import { useMutation } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
+import { useEffect, useMemo } from 'react';
 
-import { ADD_ASSET_SUPPORTED_PROTOCOLS, WARP_QUERY_PARAMS } from '../../consts/args';
-import { config } from '../../consts/config';
-import { getQueryParams } from '../../utils/queryParams';
-import { useMultiProvider } from '../chains/hooks';
-import { tryGetValidChainName } from '../chains/utils';
+import { useChains } from '../api/hooks';
+import { routerClient } from '../api/RouterClient';
+import type { TokensQuery } from '../api/types';
 import { useStore } from '../store';
-import { getTokenKey } from './utils';
+import { tokenDiscoveryToUi, type TokenSelectionMode, type UiToken } from './types';
 
-export function useWarpCore() {
-  return useStore((s) => s.warpCore);
-}
-/**
- * Find a token by its key from a WarpCore or Token array
- */
-export function getTokenByKey(tokens: Token[], key: string | undefined): Token | undefined {
-  if (!key) return undefined;
-  return tokens.find((token) => getTokenKey(token) === key);
+const STALE_5_MIN = 5 * 60 * 1000;
+// Available-route discovery powers picker hints and origin prefill; keep it
+// warm long enough to avoid repeat calls while quote/submit validation remains
+// the source of truth.
+export const AVAILABLE_ROUTES_STALE_TIME = 10 * 60 * 1000;
+const STALE_30_SEC = 30 * 1000;
+
+interface UseTokensResult {
+  data: UiToken[];
+  isLoading: boolean;
+  error: Error | null;
 }
 
+<<<<<<< HEAD
 // Helper to find token by chainName-symbol format
 export function findTokenByChainSymbol(tokens: Token[], chainSymbol: string): Token | undefined {
   const [chainName, symbol] = chainSymbol.split('-');
@@ -32,177 +28,183 @@ export function findTokenByChainSymbol(tokens: Token[], chainSymbol: string): To
   return tokens.find(
     (t) => t.chainName === chainName && t.symbol.toLowerCase() === symbol.toLowerCase(),
   );
+=======
+interface UseAvailableRouteTokensResult {
+  data: UiToken[];
+  isLoading: boolean;
+  error: Error | null;
+  isFetched: boolean;
+>>>>>>> origin/main
 }
 
-/**
- * Get initial origin and destination token keys from URL params
- * Returns { originTokenKey, destinationTokenKey } for form initialization
- */
-export function getInitialTokenKeys(
-  warpCore: WarpCore,
-  tokens: Token[],
-): { originTokenKey: string | undefined; destinationTokenKey: string | undefined } {
-  // Early return if no tokens
-  if (tokens.length === 0) {
-    return { originTokenKey: undefined, destinationTokenKey: undefined };
-  }
+// Single entry point for /v1/tokens. Branches map directly to engine
+// modes (see RouterClient.tokens / TokensQuery):
+//   {}              → featured / trending list
+//   { chain }       → per-chain list
+//   { chain, search}→ per-chain filtered
+//   { search }      → cross-chain search
+//   { ids }         → explicit lookups, used for ?originToken= deep links
+//
+// Side-effect: each successful response funnels into store.knownTokens
+// so ad-hoc lookups in modals/sidebar can resolve any token the user
+// has touched in this session, not just the featured list.
+export function useTokens(query: TokensQuery = {}): UseTokensResult {
+  const { data: chainsResp, isLoading: chainsLoading } = useChains();
+  const syncTokens = useStore((s) => s.syncTokens);
 
-  // 1. First priority: URL params
-  const params = getQueryParams();
-  const originChainQuery = tryGetValidChainName(
-    params.get(WARP_QUERY_PARAMS.ORIGIN),
-    warpCore.multiProvider,
-  );
-  const destinationChainQuery = tryGetValidChainName(
-    params.get(WARP_QUERY_PARAMS.DESTINATION),
-    warpCore.multiProvider,
-  );
-  const originTokenSymbol = params.get(WARP_QUERY_PARAMS.ORIGIN_TOKEN);
-  const destinationTokenSymbol = params.get(WARP_QUERY_PARAMS.DESTINATION_TOKEN);
+  // Engine chains are the source of truth for what `/v1/tokens` can
+  // return.
+  const chainIdToName = useMemo(() => {
+    const map = new Map<number, string>();
+    for (const c of chainsResp?.chains ?? []) map.set(c.id, c.chainName);
+    return map;
+  }, [chainsResp]);
 
-  // Try to find origin token from URL params (chain + symbol)
-  let originToken: Token | undefined;
-  if (originChainQuery && originTokenSymbol) {
-    originToken = tokens.find(
-      (t) =>
-        t.chainName === originChainQuery &&
-        t.symbol.toLowerCase() === originTokenSymbol.toLowerCase(),
-    );
-  }
-
-  // 2. Second priority: Config default token (format: chainName-symbol)
-  if (!originToken && config.defaultOriginToken) {
-    originToken = findTokenByChainSymbol(tokens, config.defaultOriginToken);
-  }
-
-  // 3. Third priority: First featured token with connections
-  if (!originToken && config.featuredTokens.length > 0) {
-    for (const ft of config.featuredTokens) {
-      const candidate = findTokenByChainSymbol(tokens, ft);
-      if (candidate?.connections?.length) {
-        originToken = candidate;
-        break;
-      }
+  // Canonicalize the query for cache-key stability.
+  const canonical = useMemo<TokensQuery>(() => {
+    const out: TokensQuery = {};
+    if (query.ids?.length) out.ids = [...query.ids].sort();
+    else {
+      if (query.chain != null) out.chain = query.chain;
+      if (query.search) out.search = query.search;
     }
-  }
+    return out;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query.chain, query.search, query.ids?.join(',')]);
 
-  // 4. Last resort: First available token with connections
-  if (!originToken) {
-    originToken = tokens.find((t) => t.connections && t.connections.length > 0);
-  }
+  const result = useQuery({
+    queryKey: ['router', 'tokens', canonical],
+    queryFn: ({ signal }) => routerClient.tokens(canonical, { signal }),
+    staleTime: canonical.search ? STALE_30_SEC : STALE_5_MIN,
+  });
 
-  // Try to find destination token from URL params (chain + symbol)
-  let destinationToken: Token | undefined;
-  if (destinationChainQuery && destinationTokenSymbol) {
-    destinationToken = tokens.find(
-      (t) =>
-        t.chainName === destinationChainQuery &&
-        t.symbol.toLowerCase() === destinationTokenSymbol.toLowerCase(),
-    );
-  }
+  const tokens = useMemo<UiToken[]>(() => {
+    if (!result.data) return [];
+    const out: UiToken[] = [];
+    for (const t of result.data.tokens) {
+      if (t.decimals == null) continue;
+      // Skip tokens whose chainId isn't yet in /v1/chains — chainsResp
+      // is the source of truth for chainName, and without it the token
+      // has no logo / display name. The hook surfaces `chainsLoading`
+      // upstream so callers see the loading state.
+      const chainName = chainIdToName.get(t.chainId);
+      if (!chainName) continue;
+      out.push(tokenDiscoveryToUi(t, chainName));
+    }
+    return out;
+  }, [result.data, chainIdToName]);
 
-  // Fallback: use config default token (format: chainName-symbol)
-  if (!destinationToken && config.defaultDestinationToken) {
-    destinationToken = findTokenByChainSymbol(tokens, config.defaultDestinationToken);
-  }
-
-  // Last resort: first connection from origin token
-  if (!destinationToken && originToken) {
-    const firstConnection = originToken.connections?.[0];
-    const connectedChain = firstConnection?.token?.chainName;
-    const connectedSymbol = firstConnection?.token?.symbol;
-    destinationToken = connectedChain
-      ? tokens.find(
-          (t) =>
-            t.chainName === connectedChain &&
-            t.symbol.toLowerCase() === connectedSymbol?.toLowerCase(),
-        )
-      : undefined;
-  }
+  useEffect(() => {
+    if (tokens.length) syncTokens(tokens);
+  }, [tokens, syncTokens]);
 
   return {
-    originTokenKey: originToken ? getTokenKey(originToken) : undefined,
-    destinationTokenKey: destinationToken ? getTokenKey(destinationToken) : undefined,
+    data: tokens,
+    isLoading: chainsLoading || result.isLoading,
+    error: result.error,
   };
 }
 
-/** Raw tokens from WarpCore (not deduplicated) */
-export function useWarpCoreTokens() {
-  return useWarpCore().tokens;
-}
+export function useAvailableRouteTokens({
+  selectionMode,
+  counterpartToken,
+  enabled,
+}: {
+  selectionMode: TokenSelectionMode;
+  counterpartToken?: UiToken;
+  enabled: boolean;
+}): UseAvailableRouteTokensResult {
+  const { data: chainsResp, isLoading: chainsLoading } = useChains();
+  const syncTokens = useStore((s) => s.syncTokens);
 
-/** Unified tokens array (deduplicated, can be origin or destination) */
-export function useTokens() {
-  return useStore((s) => s.tokens);
-}
+  const chainIdToName = useMemo(() => {
+    const map = new Map<number, string>();
+    for (const c of chainsResp?.chains ?? []) map.set(c.id, c.chainName);
+    return map;
+  }, [chainsResp]);
 
-export function useCollateralGroups() {
-  return useStore((s) => s.collateralGroups);
-}
-
-/** Pre-computed token key to Token map for O(1) lookups */
-export function useTokenByKeyMap() {
-  return useStore((s) => s.tokenByKeyMap);
-}
-
-/**
- * O(1) token lookup by key using the pre-computed map.
- * Use this instead of getTokenByKey() for better performance.
- */
-export function getTokenByKeyFromMap(
-  tokenByKeyMap: Map<string, Token>,
-  key: string | undefined,
-): Token | undefined {
-  if (!key) return undefined;
-  return tokenByKeyMap.get(key);
-}
-
-export function tryFindToken(
-  warpCore: WarpCore,
-  chain: ChainName,
-  addressOrDenom?: string,
-): IToken | null {
-  try {
-    return warpCore.findToken(chain, addressOrDenom);
-  } catch {
-    return null;
-  }
-}
-
-export function tryFindTokenConnection(token: Token, chainName: string) {
-  const connectedToken = token.connections?.find(
-    (connection) => connection.token.chainName === chainName,
+  const query = useMemo(
+    () => getAvailableRoutesQuery(selectionMode, counterpartToken),
+    [counterpartToken, selectionMode],
   );
 
-  return connectedToken ? connectedToken.token : null;
-}
-
-export function useAddToken(token?: IToken) {
-  const multiProvider = useMultiProvider();
-  const activeChains = useActiveChains(multiProvider);
-  const watchAsset = useWatchAsset(multiProvider);
-  const account = useAccountForChain(multiProvider, token?.chainName);
-  const isAccountReady = account?.isReady;
-  const isSupportedProtocol = token
-    ? ADD_ASSET_SUPPORTED_PROTOCOLS.includes(token?.protocol)
-    : false;
-
-  const canAddAsset = token && isAccountReady && isSupportedProtocol && !token.isHypNative();
-
-  const { isPending, mutateAsync } = useMutation({
-    mutationFn: () => {
-      if (!canAddAsset)
-        throw new Error('Cannot import this asset, please check the token imported');
-
-      const { addAsset } = watchAsset[token.protocol];
-      const activeChain = activeChains.chains[token.protocol];
-
-      if (!activeChain.chainName)
-        throw new Error('Not active chain found, please check if your wallet is connected ');
-
-      return addAsset(token, activeChain.chainName);
+  const result = useQuery({
+    queryKey: getAvailableRoutesQueryKey(selectionMode, query),
+    queryFn: ({ signal }) => {
+      if (!query) throw new Error('available routes query is not ready');
+      return routerClient.availableRoutes(query, { signal });
     },
+    enabled: enabled && !!query,
+    staleTime: AVAILABLE_ROUTES_STALE_TIME,
   });
 
-  return { addToken: mutateAsync, isLoading: isPending, canAddAsset };
+  const tokens = useMemo<UiToken[]>(() => {
+    if (!result.data) return [];
+    const out: UiToken[] = [];
+    for (const t of result.data.tokens) {
+      if (t.decimals == null) continue;
+      const chainName = chainIdToName.get(t.chainId);
+      if (!chainName) continue;
+      out.push(tokenDiscoveryToUi(t, chainName));
+    }
+    return out;
+  }, [result.data, chainIdToName]);
+
+  useEffect(() => {
+    if (tokens.length) syncTokens(tokens);
+  }, [tokens, syncTokens]);
+
+  return {
+    data: tokens,
+    isLoading: chainsLoading || result.isLoading,
+    error: result.error,
+    isFetched: result.isFetched,
+  };
+}
+
+export function isBridgeOnlyToken(token: UiToken | undefined): token is UiToken {
+  if (!token) return false;
+  return (token.canBridge || token.isBridgeToken) && !token.canSwap;
+}
+
+export function getAvailableRoutesQueryKey(
+  selectionMode: TokenSelectionMode,
+  query: ReturnType<typeof getAvailableRoutesQuery>,
+) {
+  return ['router', 'available-routes', selectionMode, query] as const;
+}
+
+export function getAvailableRoutesQuery(
+  selectionMode: TokenSelectionMode,
+  counterpartToken?: UiToken,
+) {
+  if (!counterpartToken) return undefined;
+  return selectionMode === 'destination'
+    ? {
+        srcChain: counterpartToken.chainId,
+        srcToken: counterpartToken.address,
+      }
+    : {
+        dstChain: counterpartToken.chainId,
+        dstToken: counterpartToken.address,
+      };
+}
+
+// Bootstrap the featured token list. Returns nothing useful directly —
+// populates store.knownTokens via the useTokens side-effect. Mount once
+// from useEngineBootstrap.
+export function useBootstrapTokens(): void {
+  useTokens({});
+}
+
+export function useTokenByKeyMap(): Map<string, UiToken> {
+  return useStore((s) => s.knownTokens);
+}
+
+export function getTokenByKeyFromMap(
+  map: Map<string, UiToken>,
+  key: string | undefined,
+): UiToken | undefined {
+  if (!key) return undefined;
+  return map.get(key);
 }

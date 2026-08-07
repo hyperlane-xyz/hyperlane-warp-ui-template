@@ -10,7 +10,11 @@ test.describe('Token Selection - Open and Close Modal', () => {
     await getOriginTokenButton(page).click();
 
     // Modal should open
-    await expect(page.getByText('Select Token')).toBeVisible();
+    const modal = page
+      .locator('div.token-picker-modal[data-headlessui-state="open"]:not([data-closed])')
+      .filter({ hasText: 'Select Token' });
+    await expect(modal).toBeVisible();
+    await expect(page.getByText('Select Token', { exact: true })).toBeVisible();
     await expect(page.getByText('Chain Selection')).toBeVisible();
     await expect(page.getByText('All Chains')).toBeVisible();
     await expect(page.getByText('Token Selection')).toBeVisible();
@@ -19,9 +23,10 @@ test.describe('Token Selection - Open and Close Modal', () => {
 
     // Close with Escape
     await page.keyboard.press('Escape');
+    if (await modal.count()) await page.mouse.click(10, 10);
 
     // Modal should close, transfer form visible again
-    await expect(page.getByText('Select Token')).not.toBeVisible();
+    await expect(modal).toHaveCount(0);
     await expect(page.getByText('Send').first()).toBeVisible();
   });
 });

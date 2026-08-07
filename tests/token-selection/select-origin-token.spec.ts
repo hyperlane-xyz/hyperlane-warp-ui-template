@@ -8,13 +8,13 @@ test.describe('Token Selection - Select Origin Token', () => {
 
     // Open origin token selector
     await getOriginTokenButton(page).click();
-    await expect(page.getByText('Select Token')).toBeVisible();
+    await expect(page.getByText('Select Token', { exact: true })).toBeVisible();
 
     // Click on USDC Arbitrum token
     await page.getByRole('button', { name: 'arbitrum USDC Arbitrum USD Coin' }).first().click();
 
     // Modal should close
-    await expect(page.getByText('Select Token')).not.toBeVisible();
+    await expect(page.getByText('Select Token', { exact: true })).not.toBeVisible();
 
     // Origin token should now show USDC on Arbitrum
     await expect(page.getByRole('button', { name: /USDC Arbitrum/i })).toBeVisible();

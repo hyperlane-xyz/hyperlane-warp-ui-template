@@ -14,6 +14,7 @@ import { getRouteTxs, isChainRouteTx } from '../../api/routeTx';
 import type { ChainDiscovery } from '../../api/types';
 import { estimateNativeGasCost, readBalance } from '../../balances/read';
 import { formatDisplayAmount } from '../../balances/utils';
+import { isChainDisabled } from '../../chains/utils';
 import type { UiToken } from '../../tokens/types';
 import { tokenKey } from '../../tokens/utils';
 import type { AugmentedRoute, FeeComponent, TransferFormValues } from './types';
@@ -55,7 +56,7 @@ export async function validateTransferForm(args: {
     nativeExecutionFee,
   } = args;
 
-  const chainsResult = validateChains(values, chains);
+  const chainsResult = validateChains(values, chains, multiProvider);
   if (!chainsResult.ok) return chainsResult.error;
   const { srcChainInfo, dstChainInfo } = chainsResult;
 
@@ -101,6 +102,7 @@ export type ValidateChainsResult =
 export function validateChains(
   values: TransferFormValues,
   chains: ChainDiscovery[] | undefined,
+  multiProvider?: MultiProtocolProvider,
 ): ValidateChainsResult {
   if (values.srcChain == null) return { ok: false, error: { srcChain: 'Origin chain required' } };
   if (values.dstChain == null)
@@ -109,7 +111,22 @@ export function validateChains(
   const dstChainInfo = chains?.find((c) => c.id === values.dstChain);
   if (!srcChainInfo) return { ok: false, error: { srcChain: 'Origin chain not supported' } };
   if (!dstChainInfo) return { ok: false, error: { dstChain: 'Destination chain not supported' } };
+  if (multiProvider) {
+    if (isEngineChainDisabled(srcChainInfo, multiProvider)) {
+      return { ok: false, error: { srcChain: 'Origin chain unavailable' } };
+    }
+    if (isEngineChainDisabled(dstChainInfo, multiProvider)) {
+      return { ok: false, error: { dstChain: 'Destination chain unavailable' } };
+    }
+  }
   return { ok: true, srcChainInfo, dstChainInfo };
+}
+
+function isEngineChainDisabled(
+  chainInfo: ChainDiscovery,
+  multiProvider: MultiProtocolProvider,
+): boolean {
+  return isChainDisabled(multiProvider.tryGetChainMetadata(chainInfo.chainName) ?? null);
 }
 
 export function validateRecipient(

@@ -1,10 +1,11 @@
+import { ChainDisabledReason, ChainStatus } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import type { ChainDiscovery, RouteResponse } from '../../api/types';
 import type { UiToken } from '../../tokens/types';
 import type { AugmentedRoute } from './types';
-import { validateBalances, validateQuote } from './validate';
+import { validateBalances, validateChains, validateQuote } from './validate';
 
 const { readBalanceMock, estimateNativeGasCostMock } = vi.hoisted(() => ({
   readBalanceMock: vi.fn(),
@@ -15,6 +16,14 @@ vi.mock('../../balances/read', () => ({
   readBalance: readBalanceMock,
   estimateNativeGasCost: estimateNativeGasCostMock,
 }));
+
+vi.mock('../../../consts/config', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../consts/config')>();
+  return {
+    ...actual,
+    config: { ...actual.config, shouldDisableChains: true },
+  };
+});
 
 const NATIVE_ADDRESS = '0x0000000000000000000000000000000000000000';
 const BONK_ADDRESS = '0x074238dfa02063792077820584c925b679a013cbab38e5ca61af5627d1eda736';
@@ -187,9 +196,58 @@ describe('validateQuote', () => {
   });
 });
 
-function multiProvider(protocol = ProtocolType.Starknet) {
+describe('validateChains', () => {
+  test('rejects disabled origin chains returned by the engine', () => {
+    expect(
+      validateChains(
+        {
+          srcChain: 3637,
+          dstChain: 1,
+          srcToken: NATIVE_ADDRESS,
+          dstToken: NATIVE_ADDRESS,
+          amount: '1',
+          recipient: '',
+          slippageBps: 100,
+        },
+        [botanixChain(), evmChain()],
+        multiProvider(ProtocolType.Ethereum, ['botanix']),
+      ),
+    ).toEqual({ ok: false, error: { srcChain: 'Origin chain unavailable' } });
+  });
+
+  test('rejects disabled destination chains returned by the engine', () => {
+    expect(
+      validateChains(
+        {
+          srcChain: 1,
+          dstChain: 3637,
+          srcToken: NATIVE_ADDRESS,
+          dstToken: NATIVE_ADDRESS,
+          amount: '1',
+          recipient: '',
+          slippageBps: 100,
+        },
+        [evmChain(), botanixChain()],
+        multiProvider(ProtocolType.Ethereum, ['botanix']),
+      ),
+    ).toEqual({ ok: false, error: { dstChain: 'Destination chain unavailable' } });
+  });
+});
+
+function multiProvider(protocol = ProtocolType.Starknet, disabledChains: string[] = []) {
+  const disabledChainSet = new Set(disabledChains);
   return {
     tryGetProtocol: () => protocol,
+    tryGetChainMetadata: (chainName: string) =>
+      disabledChainSet.has(chainName)
+        ? {
+            name: chainName,
+            availability: {
+              status: ChainStatus.Disabled,
+              reasons: [ChainDisabledReason.Unavailable],
+            },
+          }
+        : { name: chainName },
   } as never;
 }
 
@@ -230,6 +288,21 @@ function evmChain(): ChainDiscovery {
     chainName: 'ethereum',
     protocol: ProtocolType.Ethereum,
     nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+    universalRouter: '0x0000000000000000000000000000000000000001',
+    dex: null,
+    canSwap: false,
+    canExecute: true,
+    supportsNative: true,
+  };
+}
+
+function botanixChain(): ChainDiscovery {
+  return {
+    id: 3637,
+    name: 'Botanix',
+    chainName: 'botanix',
+    protocol: ProtocolType.Ethereum,
+    nativeCurrency: { name: 'Bitcoin', symbol: 'BTC', decimals: 18 },
     universalRouter: '0x0000000000000000000000000000000000000001',
     dex: null,
     canSwap: false,

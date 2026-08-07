@@ -1,12 +1,11 @@
-import { ChainName, ChainStatus } from '@hyperlane-xyz/sdk';
+import { ChainName, type MultiProtocolProvider } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 import { useMemo } from 'react';
 
-import { config } from '../../consts/config';
 import { useChains } from '../api/hooks';
 import type { ChainDiscovery } from '../api/types';
 import { useStore } from '../store';
-import { getChainDisplayName } from './utils';
+import { getChainDisplayName, isChainDisabled } from './utils';
 
 export function useMultiProvider() {
   return useStore((s) => s.multiProvider);
@@ -56,7 +55,7 @@ export function useChainInfos(): ChainInfo[] {
       chainId: chain.chainId,
       protocol: chain.protocol,
       isTestnet: !!chain.isTestnet,
-      disabled: config.shouldDisableChains && chain.availability?.status === ChainStatus.Disabled,
+      disabled: isChainDisabled(chain),
     }));
     return chainInfos;
   }, [chainMetadata]);
@@ -80,19 +79,26 @@ export function useTransferChainInfos(): ChainInfo[] {
   return useMemo(() => {
     const chains: ChainInfo[] = [];
     for (const c of (data?.chains ?? []) as ChainDiscovery[]) {
-      const meta = mp.tryGetChainMetadata(c.chainName);
-      chains.push({
-        name: c.chainName,
-        displayName: c.displayName || meta?.displayName || c.chainName,
-        chainId: c.id,
-        protocol: (meta?.protocol ?? mapProtocol(c.protocol)) as ProtocolType,
-        isTestnet: !!meta?.isTestnet,
-        disabled: false,
-        canSwap: c.canSwap,
-      });
+      chains.push(toTransferChainInfo(c, mp));
     }
     return chains;
   }, [data, mp]);
+}
+
+export function toTransferChainInfo(
+  chain: ChainDiscovery,
+  multiProvider: Pick<MultiProtocolProvider, 'tryGetChainMetadata'>,
+): ChainInfo {
+  const meta = multiProvider.tryGetChainMetadata(chain.chainName);
+  return {
+    name: chain.chainName,
+    displayName: chain.displayName || meta?.displayName || chain.chainName,
+    chainId: chain.id,
+    protocol: (meta?.protocol ?? mapProtocol(chain.protocol)) as ProtocolType,
+    isTestnet: !!meta?.isTestnet,
+    disabled: isChainDisabled(meta ?? null),
+    canSwap: chain.canSwap,
+  };
 }
 
 function mapProtocol(p: string): ProtocolType {

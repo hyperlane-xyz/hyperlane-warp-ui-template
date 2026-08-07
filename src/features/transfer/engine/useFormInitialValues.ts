@@ -1,9 +1,13 @@
+import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk';
 import { useMemo } from 'react';
 
 import { WARP_QUERY_PARAMS } from '../../../consts/args';
 import { config } from '../../../consts/config';
 import { getQueryParams } from '../../../utils/queryParams';
+import { useMultiProvider } from '../../chains/hooks';
+import { isChainDisabled } from '../../chains/utils';
 import { useTokens } from '../../tokens/hooks';
+import type { UiToken } from '../../tokens/types';
 import type { TransferFormValues } from './types';
 
 const EMPTY_VALUES: TransferFormValues = {
@@ -24,32 +28,44 @@ const EMPTY_VALUES: TransferFormValues = {
 // Falls back to `config.defaultTransferOriginToken` /
 // `defaultTransferDestinationToken` when the URL has no override.
 export function useFormInitialValues(): TransferFormValues {
+  const multiProvider = useMultiProvider();
+  const initialIds = useMemo(() => readInitialIds(), []);
   const ids = useMemo(() => {
     const out: string[] = [];
-    const { originId, destinationId } = readInitialIds();
+    const { originId, destinationId } = initialIds;
     if (originId) out.push(originId);
     if (destinationId) out.push(destinationId);
     return out;
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-time read; URL changes after mount intentionally ignored
-  }, []);
+  }, [initialIds]);
 
   const { data: tokens } = useTokens(ids.length ? { ids } : {});
 
   return useMemo(() => {
-    if (!ids.length || !tokens.length) return EMPTY_VALUES;
+    return getInitialValuesFromTokens(tokens, initialIds, multiProvider);
+  }, [tokens, initialIds, multiProvider]);
+}
 
-    const { originId, destinationId } = readInitialIds();
-    const origin = originId ? tokens.find((t) => matchesId(t, originId)) : undefined;
-    const destination = destinationId ? tokens.find((t) => matchesId(t, destinationId)) : undefined;
+export function getInitialValuesFromTokens(
+  tokens: UiToken[],
+  initialIds: { originId: string | undefined; destinationId: string | undefined },
+  multiProvider: Pick<MultiProtocolProvider, 'tryGetChainMetadata'>,
+): TransferFormValues {
+  if (!initialIds.originId && !initialIds.destinationId) return EMPTY_VALUES;
+  if (!tokens.length) return EMPTY_VALUES;
 
-    return {
-      ...EMPTY_VALUES,
-      srcChain: origin?.chainId ?? null,
-      srcToken: origin?.address ?? '',
-      dstChain: destination?.chainId ?? null,
-      dstToken: destination?.address ?? '',
-    };
-  }, [tokens, ids]);
+  const { originId, destinationId } = initialIds;
+  const origin = originId ? tokens.find((t) => matchesId(t, originId)) : undefined;
+  const destination = destinationId ? tokens.find((t) => matchesId(t, destinationId)) : undefined;
+  const enabledOrigin = isTokenChainEnabled(origin, multiProvider);
+  const enabledDestination = isTokenChainEnabled(destination, multiProvider);
+
+  return {
+    ...EMPTY_VALUES,
+    srcChain: enabledOrigin?.chainId ?? null,
+    srcToken: enabledOrigin?.address ?? '',
+    dstChain: enabledDestination?.chainId ?? null,
+    dstToken: enabledDestination?.address ?? '',
+  };
 }
 
 function readInitialIds(): { originId: string | undefined; destinationId: string | undefined } {
@@ -88,6 +104,15 @@ function matchesId(t: { chainName: string; address: string }, id: string): boole
   if (!id.startsWith(prefix)) return false;
   const address = id.slice(prefix.length);
   return normalizeTokenAddress(t.address) === normalizeTokenAddress(address);
+}
+
+function isTokenChainEnabled<T extends { chainName: string }>(
+  token: T | undefined,
+  multiProvider: Pick<MultiProtocolProvider, 'tryGetChainMetadata'>,
+): T | undefined {
+  if (!token) return undefined;
+  const metadata = multiProvider.tryGetChainMetadata(token.chainName);
+  return isChainDisabled(metadata ?? null) ? undefined : token;
 }
 
 function normalizeTokenAddress(address: string): string {

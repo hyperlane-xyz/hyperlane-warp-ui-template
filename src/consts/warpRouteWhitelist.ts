@@ -254,7 +254,7 @@ export const warpRouteWhitelist: Array<string> | null = [
   'CHILL/solanamainnet-sonicsvm',
 
   // MAGIC route
-  'MAGIC/abstract-arbitrum-base',
+  'MAGIC/abstract',
 
   // bbSOL
   'bbSOL/solanamainnet-soon',

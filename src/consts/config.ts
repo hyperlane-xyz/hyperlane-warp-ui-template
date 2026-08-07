@@ -62,11 +62,6 @@ export const config: Config = Object.freeze({
   aleoNetwork,
   chainWalletWhitelists,
   enableExplorerLink: true,
-<<<<<<< HEAD
-  defaultOriginChain: 'ethereum',
-  defaultDestinationChain: 'bsc',
-=======
->>>>>>> origin/main
   explorerApiUrl,
   relayApiUrl,
   defaultTransferOriginToken: 'bsc-0x0000000000000000000000000000000000000000',
@@ -90,16 +85,11 @@ export const config: Config = Object.freeze({
   ],
   shouldDisableChains: true,
   rpcOverrides,
-<<<<<<< HEAD
   enableTrackingEvents: true,
-  feeQuotingUrl,
-=======
-  enableTrackingEvents: false,
   routerApiUrl,
   ccsUrl,
   permit2ExpirationSeconds,
   defaultSlippageBps,
->>>>>>> origin/main
   featuredChains: [
     'ethereum',
     'base',

@@ -20,21 +20,11 @@ interface UseTokensResult {
   error: Error | null;
 }
 
-<<<<<<< HEAD
-// Helper to find token by chainName-symbol format
-export function findTokenByChainSymbol(tokens: Token[], chainSymbol: string): Token | undefined {
-  const [chainName, symbol] = chainSymbol.split('-');
-  if (!chainName || !symbol) return undefined;
-  return tokens.find(
-    (t) => t.chainName === chainName && t.symbol.toLowerCase() === symbol.toLowerCase(),
-  );
-=======
 interface UseAvailableRouteTokensResult {
   data: UiToken[];
   isLoading: boolean;
   error: Error | null;
   isFetched: boolean;
->>>>>>> origin/main
 }
 
 // Single entry point for /v1/tokens. Branches map directly to engine

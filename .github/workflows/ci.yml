@@ -49,7 +49,6 @@ jobs:
           key: ${{ runner.os }}-nextjs-build-${{ hashFiles('src/**', 'pnpm-lock.yaml', 'next.config.js', 'tsconfig.json') }}
 
       - name: build
-        if: steps.build-cache.outputs.cache-hit != 'true'
         run: pnpm run build
         env:
           NEXT_PUBLIC_WALLET_CONNECT_ID: ${{ secrets.NEXT_PUBLIC_WALLET_CONNECT_ID }}

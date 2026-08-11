@@ -22,9 +22,13 @@ export function trackEvent<T extends EVENT_NAME>(eventName: T, properties: Event
 export function getAnalyticsChains(
   srcChain: Pick<UiToken, 'chainName' | 'chainId'>,
   dstChain: Pick<UiToken, 'chainName' | 'chainId'>,
+  transactionType?: AnalyticsTransactionType,
 ) {
-  return `${srcChain.chainName}|${srcChain.chainId}|${dstChain.chainName}|${dstChain.chainId}`;
+  const chains = `${srcChain.chainName}|${srcChain.chainId}|${dstChain.chainName}|${dstChain.chainId}`;
+  return transactionType ? `${chains}|${transactionType}` : chains;
 }
+
+export type AnalyticsTransactionType = 'bridge' | 'swap';
 
 export function getAnalyticsToken(token: Pick<UiToken, 'address' | 'symbol'>) {
   return `${token.address}|${token.symbol}`;

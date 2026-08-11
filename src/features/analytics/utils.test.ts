@@ -12,6 +12,16 @@ describe('analytics event helpers', () => {
     ).toBe('arbitrum|42161|base|8453');
   });
 
+  test('packs transaction type after the existing chain fields', () => {
+    expect(
+      getAnalyticsChains(
+        { chainName: 'arbitrum', chainId: 42161 },
+        { chainName: 'base', chainId: 8453 },
+        'swap',
+      ),
+    ).toBe('arbitrum|42161|base|8453|swap');
+  });
+
   test('packs one token address and symbol per field', () => {
     expect(getAnalyticsToken({ address: '0xSource', symbol: 'CHIP' })).toBe('0xSource|CHIP');
   });

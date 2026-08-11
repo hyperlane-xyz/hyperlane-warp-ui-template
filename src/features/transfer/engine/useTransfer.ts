@@ -28,6 +28,7 @@ import { getAnalyticsChains, getAnalyticsToken, trackEvent } from '../../analyti
 import { getRouteTxs, isChainRouteTx } from '../../api/routeTx';
 import type { RouteTx } from '../../api/types';
 import { useMultiProvider } from '../../chains/hooks';
+import { isBridgeOnlyRoute } from '../../routeSecurity/validateWarpRoute';
 import { useStore } from '../../store';
 import { submitToRelayApi } from '../relayApi';
 import { postCommitment } from './ccs';
@@ -76,6 +77,7 @@ export function useTransfer() {
       let analyticsSrcChainName: string | null | undefined;
       let analyticsDstChainName: string | null | undefined;
       let submittedAnalytics = false;
+      const analyticsTransactionType = isBridgeOnlyRoute(route.raw) ? 'bridge' : 'swap';
 
       try {
         const routeTxs = getRouteTxs(route.raw);
@@ -224,6 +226,7 @@ export function useTransfer() {
           chains: getAnalyticsChains(
             { chainName: srcChainName, chainId: srcChainId },
             { chainName: dstChainName, chainId: dstChainId },
+            analyticsTransactionType,
           ),
           originToken: getAnalyticsToken({ address: args.srcToken, symbol: args.srcTokenSymbol }),
           destinationToken: getAnalyticsToken({

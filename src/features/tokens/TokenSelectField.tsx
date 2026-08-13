@@ -30,7 +30,7 @@ import { getRoutePrefillToken, tokenKey } from './utils';
 
 type Props = {
   selectionMode: TokenSelectionMode;
-  hasInteractedWithDestinationTokenRef: MutableRefObject<boolean>;
+  hasSelectedDestinationTokenRef: MutableRefObject<boolean>;
   disabled?: boolean;
 };
 
@@ -39,7 +39,7 @@ type Props = {
 // picks one in the modal.
 export function TokenSelectField({
   selectionMode,
-  hasInteractedWithDestinationTokenRef,
+  hasSelectedDestinationTokenRef,
   disabled,
 }: Props) {
   const { values, setFieldValue } = useFormikContext<TransferFormValues>();
@@ -91,15 +91,16 @@ export function TokenSelectField({
       isOrigin ? token : counterpartToken,
       isOrigin ? counterpartToken : token,
     );
-    if (!isOrigin) hasInteractedWithDestinationTokenRef.current = true;
+    if (!isOrigin) hasSelectedDestinationTokenRef.current = true;
     if (isOrigin) {
       // Reset amount when origin changes (warp UI does the same).
       setFieldValue('amount', '');
       latestOriginSelectionRef.current = tokenKey(token.chainId, token.address);
-      if (!hasInteractedWithDestinationTokenRef.current) {
+      if (!hasSelectedDestinationTokenRef.current) {
         void prefillBestDestinationToken({
           originToken: token,
           currentDestinationToken: counterpartToken,
+          hasSelectedDestinationTokenRef,
           latestRecipientRef,
           chainIdToName,
           multiProvider,
@@ -166,6 +167,7 @@ export function TokenSelectField({
 async function prefillBestDestinationToken({
   originToken,
   currentDestinationToken,
+  hasSelectedDestinationTokenRef,
   latestRecipientRef,
   chainIdToName,
   multiProvider,
@@ -178,6 +180,7 @@ async function prefillBestDestinationToken({
 }: {
   originToken: UiToken;
   currentDestinationToken?: UiToken;
+  hasSelectedDestinationTokenRef: MutableRefObject<boolean>;
   latestRecipientRef: MutableRefObject<string>;
   chainIdToName: Map<number, string>;
   multiProvider: ReturnType<typeof useMultiProvider>;
@@ -201,6 +204,7 @@ async function prefillBestDestinationToken({
       return;
     }
     if (latestCounterpartKeyRef.current !== counterpartKeyAtRequestStart) return;
+    if (hasSelectedDestinationTokenRef.current) return;
 
     const routeTokens = result.tokens.flatMap((token) => {
       if (token.decimals == null) return [];

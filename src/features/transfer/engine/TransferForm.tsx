@@ -79,7 +79,7 @@ export function TransferForm() {
 function TransferFormContent() {
   const { values, errors, setErrors, setFieldValue, setValues } =
     useFormikContext<TransferFormValues>();
-  const hasInteractedWithDestinationTokenRef = useRef(false);
+  const hasSelectedDestinationTokenRef = useRef(false);
   const multiProvider = useMultiProvider();
   const tokenMap = useTokenByKeyMap();
   const { data: chainsResp } = useChains();
@@ -581,7 +581,7 @@ function TransferFormContent() {
           srcChainName={srcChainName}
           srcToken={srcToken}
           sender={sender}
-          hasInteractedWithDestinationTokenRef={hasInteractedWithDestinationTokenRef}
+          hasSelectedDestinationTokenRef={hasSelectedDestinationTokenRef}
         />
       </TransferSection>
 
@@ -596,7 +596,7 @@ function TransferFormContent() {
           bestRoute={bestRoute}
           quoteLoading={quoteLoading}
           inputUsd={amountUsd}
-          hasInteractedWithDestinationTokenRef={hasInteractedWithDestinationTokenRef}
+          hasSelectedDestinationTokenRef={hasSelectedDestinationTokenRef}
         />
       </TransferSection>
 
@@ -818,13 +818,13 @@ function OriginTokenCard({
   srcChainName,
   srcToken,
   sender,
-  hasInteractedWithDestinationTokenRef,
+  hasSelectedDestinationTokenRef,
 }: {
   isReview: boolean;
   srcChainName: string | undefined;
   srcToken: UiToken | undefined;
   sender: string | undefined;
-  hasInteractedWithDestinationTokenRef: React.MutableRefObject<boolean>;
+  hasSelectedDestinationTokenRef: React.MutableRefObject<boolean>;
 }) {
   const { values } = useFormikContext<TransferFormValues>();
   const { data: balance, isLoading: isBalanceLoading } = useTokenBalance(srcToken, sender);
@@ -839,7 +839,7 @@ function OriginTokenCard({
       <div className="transfer-chain-field rounded-[7px] border border-gray-400/25 bg-white p-3 shadow-input dark:border-primary-300/[0.18] dark:bg-transparent dark:shadow-none">
         <TokenSelectField
           selectionMode="origin"
-          hasInteractedWithDestinationTokenRef={hasInteractedWithDestinationTokenRef}
+          hasSelectedDestinationTokenRef={hasSelectedDestinationTokenRef}
           disabled={isReview}
         />
 
@@ -883,7 +883,7 @@ function DestinationTokenCard({
   bestRoute,
   quoteLoading,
   inputUsd,
-  hasInteractedWithDestinationTokenRef,
+  hasSelectedDestinationTokenRef,
 }: {
   isReview: boolean;
   dstChainName: string | undefined;
@@ -892,7 +892,7 @@ function DestinationTokenCard({
   bestRoute: AugmentedRoute | undefined;
   quoteLoading: boolean;
   inputUsd: number | null;
-  hasInteractedWithDestinationTokenRef: React.MutableRefObject<boolean>;
+  hasSelectedDestinationTokenRef: React.MutableRefObject<boolean>;
 }) {
   const { values, setFieldValue } = useFormikContext<TransferFormValues>();
   const { data: balance } = useTokenBalance(dstToken, recipient);
@@ -936,7 +936,7 @@ function DestinationTokenCard({
       <div className="transfer-chain-field rounded-[7px] border border-gray-400/25 bg-white p-3 shadow-input dark:border-primary-300/[0.18] dark:bg-transparent dark:shadow-none">
         <TokenSelectField
           selectionMode="destination"
-          hasInteractedWithDestinationTokenRef={hasInteractedWithDestinationTokenRef}
+          hasSelectedDestinationTokenRef={hasSelectedDestinationTokenRef}
           disabled={isReview}
         />
 

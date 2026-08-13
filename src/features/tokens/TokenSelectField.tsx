@@ -30,13 +30,18 @@ import { getRoutePrefillToken, tokenKey } from './utils';
 
 type Props = {
   selectionMode: TokenSelectionMode;
+  hasInteractedWithDestinationTokenRef: MutableRefObject<boolean>;
   disabled?: boolean;
 };
 
 // Reads source/destination token from form state via two paired fields
 // (chainId + tokenAddress) and writes both atomically when the user
 // picks one in the modal.
-export function TokenSelectField({ selectionMode, disabled }: Props) {
+export function TokenSelectField({
+  selectionMode,
+  hasInteractedWithDestinationTokenRef,
+  disabled,
+}: Props) {
   const { values, setFieldValue } = useFormikContext<TransferFormValues>();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingChain, setEditingChain] = useState<string | null>(null);
@@ -86,23 +91,26 @@ export function TokenSelectField({ selectionMode, disabled }: Props) {
       isOrigin ? token : counterpartToken,
       isOrigin ? counterpartToken : token,
     );
+    if (!isOrigin) hasInteractedWithDestinationTokenRef.current = true;
     if (isOrigin) {
       // Reset amount when origin changes (warp UI does the same).
       setFieldValue('amount', '');
       latestOriginSelectionRef.current = tokenKey(token.chainId, token.address);
-      void prefillBestDestinationToken({
-        originToken: token,
-        currentDestinationToken: counterpartToken,
-        latestRecipientRef,
-        chainIdToName,
-        multiProvider,
-        queryClient,
-        syncTokens,
-        latestOriginSelectionRef,
-        latestCounterpartKeyRef,
-        counterpartKeyAtRequestStart: counterpartKey,
-        setFieldValue,
-      });
+      if (!hasInteractedWithDestinationTokenRef.current) {
+        void prefillBestDestinationToken({
+          originToken: token,
+          currentDestinationToken: counterpartToken,
+          latestRecipientRef,
+          chainIdToName,
+          multiProvider,
+          queryClient,
+          syncTokens,
+          latestOriginSelectionRef,
+          latestCounterpartKeyRef,
+          counterpartKeyAtRequestStart: counterpartKey,
+          setFieldValue,
+        });
+      }
     } else if (shouldClearAddress(multiProvider, values.recipient, token.chainName)) {
       setFieldValue('recipient', '');
     }

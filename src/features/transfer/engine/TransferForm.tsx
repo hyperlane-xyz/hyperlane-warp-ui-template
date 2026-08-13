@@ -79,6 +79,7 @@ export function TransferForm() {
 function TransferFormContent() {
   const { values, errors, setErrors, setFieldValue, setValues } =
     useFormikContext<TransferFormValues>();
+  const hasInteractedWithDestinationTokenRef = useRef(false);
   const multiProvider = useMultiProvider();
   const tokenMap = useTokenByKeyMap();
   const { data: chainsResp } = useChains();
@@ -580,6 +581,7 @@ function TransferFormContent() {
           srcChainName={srcChainName}
           srcToken={srcToken}
           sender={sender}
+          hasInteractedWithDestinationTokenRef={hasInteractedWithDestinationTokenRef}
         />
       </TransferSection>
 
@@ -594,6 +596,7 @@ function TransferFormContent() {
           bestRoute={bestRoute}
           quoteLoading={quoteLoading}
           inputUsd={amountUsd}
+          hasInteractedWithDestinationTokenRef={hasInteractedWithDestinationTokenRef}
         />
       </TransferSection>
 
@@ -815,11 +818,13 @@ function OriginTokenCard({
   srcChainName,
   srcToken,
   sender,
+  hasInteractedWithDestinationTokenRef,
 }: {
   isReview: boolean;
   srcChainName: string | undefined;
   srcToken: UiToken | undefined;
   sender: string | undefined;
+  hasInteractedWithDestinationTokenRef: React.MutableRefObject<boolean>;
 }) {
   const { values } = useFormikContext<TransferFormValues>();
   const { data: balance, isLoading: isBalanceLoading } = useTokenBalance(srcToken, sender);
@@ -832,7 +837,11 @@ function OriginTokenCard({
       </div>
 
       <div className="transfer-chain-field rounded-[7px] border border-gray-400/25 bg-white p-3 shadow-input dark:border-primary-300/[0.18] dark:bg-transparent dark:shadow-none">
-        <TokenSelectField selectionMode="origin" disabled={isReview} />
+        <TokenSelectField
+          selectionMode="origin"
+          hasInteractedWithDestinationTokenRef={hasInteractedWithDestinationTokenRef}
+          disabled={isReview}
+        />
 
         <div className="transfer-divider my-2.5 h-px bg-primary-50 dark:bg-primary-300/[0.22]" />
 
@@ -874,6 +883,7 @@ function DestinationTokenCard({
   bestRoute,
   quoteLoading,
   inputUsd,
+  hasInteractedWithDestinationTokenRef,
 }: {
   isReview: boolean;
   dstChainName: string | undefined;
@@ -882,6 +892,7 @@ function DestinationTokenCard({
   bestRoute: AugmentedRoute | undefined;
   quoteLoading: boolean;
   inputUsd: number | null;
+  hasInteractedWithDestinationTokenRef: React.MutableRefObject<boolean>;
 }) {
   const { values, setFieldValue } = useFormikContext<TransferFormValues>();
   const { data: balance } = useTokenBalance(dstToken, recipient);
@@ -923,7 +934,11 @@ function DestinationTokenCard({
       </div>
 
       <div className="transfer-chain-field rounded-[7px] border border-gray-400/25 bg-white p-3 shadow-input dark:border-primary-300/[0.18] dark:bg-transparent dark:shadow-none">
-        <TokenSelectField selectionMode="destination" disabled={isReview} />
+        <TokenSelectField
+          selectionMode="destination"
+          hasInteractedWithDestinationTokenRef={hasInteractedWithDestinationTokenRef}
+          disabled={isReview}
+        />
 
         <div className="transfer-divider my-2.5 h-px bg-primary-50 dark:bg-primary-300/[0.22]" />
 

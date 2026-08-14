@@ -1,15 +1,13 @@
 import { ProtocolType } from '@hyperlane-xyz/utils';
 import { useTimeout } from '@hyperlane-xyz/widgets';
-import {
-  useAccountForChain,
-  useConnectFns,
-} from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
+import { useAccountForChain } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import { useFormikContext } from 'formik';
 import { useCallback } from 'react';
 
 import { EVENT_NAME } from '../../features/analytics/types';
 import { trackEvent } from '../../features/analytics/utils';
 import { useChainProtocol, useMultiProvider } from '../../features/chains/hooks';
+import { useAppConnectFns } from '../../features/wallet/useAppConnectFns';
 import { SolidButton } from './SolidButton';
 
 interface Props {
@@ -26,7 +24,7 @@ export function ConnectAwareSubmitButton<FormValues = any>({
   disabled,
 }: Props) {
   const protocol = useChainProtocol(chainName) || ProtocolType.Ethereum;
-  const connectFns = useConnectFns();
+  const connectFns = useAppConnectFns();
   const connectFn = connectFns[protocol];
 
   const multiProvider = useMultiProvider();

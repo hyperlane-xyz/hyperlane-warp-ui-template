@@ -1,4 +1,4 @@
-import { SealevelTokenAdapter, TokenStandard } from '@hyperlane-xyz/sdk';
+import { TokenStandard } from '@hyperlane-xyz/sdk';
 import {
   AccountLayout,
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -6,7 +6,7 @@ import {
   TOKEN_2022_PROGRAM_ID,
 } from '@solana/spl-token';
 import { Connection, PublicKey } from '@solana/web3.js';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import {
   deriveSealevelHypSyntheticMint,
@@ -31,11 +31,22 @@ const token: BalanceToken = {
   standard: TokenStandard.SealevelHypSynthetic,
 };
 
+const getAccountInfo = vi.fn();
+const getTokenAccountBalance = vi.fn();
 const multiProvider = {
   tryGetChainMetadata: () => ({
     rpcUrls: [{ http: RPC_URL }],
   }),
+  getSolanaWeb3Provider: () => ({
+    getAccountInfo,
+    getTokenAccountBalance,
+  }),
 } as never;
+
+beforeEach(() => {
+  getAccountInfo.mockReset();
+  getTokenAccountBalance.mockReset();
+});
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -48,10 +59,9 @@ describe('deriveSealevelHypSyntheticMint', () => {
 });
 
 describe('Sealevel synthetic balances', () => {
-  test('uses the SDK synthetic adapter for single-token reads', async () => {
-    const getBalance = vi
-      .spyOn(SealevelTokenAdapter.prototype, 'getBalance')
-      .mockResolvedValue(123n);
+  test('uses the mint owner to derive the Token-2022 ATA for single-token reads', async () => {
+    getAccountInfo.mockResolvedValue({ owner: TOKEN_2022_PROGRAM_ID });
+    getTokenAccountBalance.mockResolvedValue({ value: { amount: '123' } });
 
     const balance = await readSealevelTokenBalance(multiProvider, {
       chainName: token.chainName,
@@ -62,9 +72,15 @@ describe('Sealevel synthetic balances', () => {
     });
 
     expect(balance).toBe(123n);
-    expect(getBalance).toHaveBeenCalledWith(OWNER);
-    expect((getBalance.mock.instances[0] as SealevelTokenAdapter).addresses.token).toBe(
-      SYNTHETIC_MINT,
+    expect(getAccountInfo).toHaveBeenCalledWith(new PublicKey(SYNTHETIC_MINT));
+    expect(getTokenAccountBalance).toHaveBeenCalledWith(
+      getAssociatedTokenAddressSync(
+        new PublicKey(SYNTHETIC_MINT),
+        new PublicKey(OWNER),
+        true,
+        TOKEN_2022_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+      ),
     );
   });
 

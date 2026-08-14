@@ -104,6 +104,13 @@ export async function readSealevelTokenBalance(
 ): Promise<bigint> {
   const rpcUrl = multiProvider.tryGetChainMetadata(args.chainName)?.rpcUrls?.[0]?.http;
   if (!rpcUrl) throw new Error(`Missing Sealevel RPC URL for ${args.chainName}`);
+  if (args.standard === TokenStandard.SealevelHypSynthetic) {
+    const adapter = new SealevelTokenAdapter(args.chainName, multiProvider, {
+      token: deriveSealevelHypSyntheticMint(args.tokenAddress).toBase58(),
+    });
+    return adapter.getBalance(args.owner);
+  }
+
   const connection = new Connection(rpcUrl, 'confirmed');
   const ownerKey = new PublicKey(args.owner);
   if (
@@ -114,12 +121,6 @@ export async function readSealevelTokenBalance(
     })
   ) {
     return BigInt(await connection.getBalance(ownerKey));
-  }
-  if (args.standard === TokenStandard.SealevelHypSynthetic) {
-    const adapter = new SealevelTokenAdapter(args.chainName, multiProvider, {
-      token: deriveSealevelHypSyntheticMint(args.tokenAddress).toBase58(),
-    });
-    return adapter.getBalance(args.owner);
   }
   return fetchSplBalance(connection, ownerKey, args.tokenAddress);
 }

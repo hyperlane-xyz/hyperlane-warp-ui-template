@@ -6,7 +6,10 @@ export interface FlowNode {
   chainId: number;
 }
 
-export function buildFlowNodes(steps: QuoteStep[]): FlowNode[] {
+export function buildFlowNodes(
+  steps: QuoteStep[],
+  boundaryTokens: { destinationTokenAddress?: string } = {},
+): FlowNode[] {
   const nodes: FlowNode[] = [];
 
   for (let i = 0; i < steps.length; i++) {
@@ -28,7 +31,7 @@ export function buildFlowNodes(steps: QuoteStep[]): FlowNode[] {
           ? nextStep.tokenIn
           : nextStep?.type === 'bridge'
             ? nextStep.asset
-            : step.asset;
+            : (boundaryTokens.destinationTokenAddress ?? step.asset);
       nodes.push({ tokenAddress: destAddress, chainId: step.destChain });
     }
   }

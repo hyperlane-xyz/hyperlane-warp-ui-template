@@ -45,6 +45,7 @@
     "@cosmos-kit/keplr": "^2.12.2",
     "@cosmos-kit/leap": "^2.12.2",
     "@cosmos-kit/react": "2.18.0",
+    "@cosmos-kit/react-lite": "2.18.1",
     "@drift-labs/snap-wallet-adapter": "^0.3.0",
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",

@@ -73,6 +73,9 @@ importers:
       '@cosmos-kit/react':
         specifier: 2.18.0
         version: 2.18.0(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.32.4)(@interchain-ui/react@1.26.3(@types/react@19.2.17)(babel-plugin-macros@3.1.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@react-native-async-storage/async-storage@1.24.0(react-native@0.86.0(@babel/core@7.29.7)(@types/react@19.2.17)(bufferutil@4.1.0)(react@19.2.7)(utf-8-validate@6.0.6)))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.59))(bufferutil@4.1.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(utf-8-validate@6.0.6)
+      '@cosmos-kit/react-lite':
+        specifier: 2.18.1
+        version: 2.18.1(@cosmjs/amino@0.36.2)(@cosmjs/proto-signing@0.32.4)(@react-native-async-storage/async-storage@1.24.0(react-native@0.86.0(@babel/core@7.29.7)(@types/react@19.2.17)(bufferutil@4.1.0)(react@19.2.7)(utf-8-validate@6.0.6)))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(@vercel/functions@1.6.0(@aws-sdk/credential-provider-web-identity@3.972.59))(bufferutil@4.1.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(utf-8-validate@6.0.6)
       '@drift-labs/snap-wallet-adapter':
         specifier: ^0.3.0
         version: 0.3.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)

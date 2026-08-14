@@ -1,13 +1,14 @@
-import { ChakraProvider, extendTheme } from '@chakra-ui/react';
 import { GasPrice } from '@cosmjs/stargate';
+import type { WalletModalProps } from '@cosmos-kit/core';
 import { wallets as cosmostationWallets } from '@cosmos-kit/cosmostation';
 import { wallets as keplrWallets } from '@cosmos-kit/keplr';
 import { wallets as leapWallets } from '@cosmos-kit/leap';
-import { ChainProvider } from '@cosmos-kit/react';
+import { ChainProvider } from '@cosmos-kit/react-lite';
 import { cosmoshub } from '@hyperlane-xyz/registry';
 import { MultiProtocolProvider } from '@hyperlane-xyz/sdk';
 import { getCosmosKitChainConfigs } from '@hyperlane-xyz/widgets/walletIntegrations/cosmos';
 import '@interchain-ui/react/styles';
+import dynamic from 'next/dynamic';
 import { PropsWithChildren, useMemo } from 'react';
 
 import { APP_DESCRIPTION, APP_NAME, APP_URL } from '../../../consts/app';
@@ -17,12 +18,29 @@ import { E2EAutoConnectCosmos } from '../_e2e/E2EAutoConnectCosmos';
 import { isE2EMode } from '../_e2e/isE2E';
 import { MockCosmosWallet } from '../_e2e/MockCosmosWallet';
 
-const theme = extendTheme({
-  fonts: {
-    heading: `'Neue Haas Grotesk', 'Helvetica', 'sans-serif'`,
-    body: `'Neue Haas Grotesk', 'Helvetica', 'sans-serif'`,
+const LazyCosmosWalletModal = dynamic(
+  async () => {
+    // DefaultModal reads this provider directly, so keep both in the same lazy chunk.
+    const [{ DefaultModal }, { SelectedWalletRepoProvider }] = await Promise.all([
+      import('@cosmos-kit/react'),
+      import('@cosmos-kit/react/esm/context'),
+    ]);
+
+    return function CosmosKitWalletModal(props: WalletModalProps) {
+      return (
+        <SelectedWalletRepoProvider>
+          <DefaultModal {...props} />
+        </SelectedWalletRepoProvider>
+      );
+    };
   },
-});
+  { ssr: false },
+);
+
+function CosmosWalletModal(props: WalletModalProps) {
+  if (!props.isOpen) return <></>;
+  return <LazyCosmosWalletModal {...props} />;
+}
 
 export function CosmosWalletContext({ children }: PropsWithChildren<unknown>) {
   const chainMetadata = useMultiProvider().metadata;
@@ -41,44 +59,40 @@ export function CosmosWalletContext({ children }: PropsWithChildren<unknown>) {
     return [...keplrWallets, ...cosmostationWallets, ...leapWithoutSnap];
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [e2e]);
-  // TODO replace Chakra here with a custom modal for ChainProvider
-  // Using Chakra + @cosmos-kit/react instead of @cosmos-kit/react-lite adds about 600Kb to the bundle
   return (
-    <ChakraProvider theme={theme}>
-      <ChainProvider
-        chains={chains}
-        assetLists={assets}
-        wallets={walletsList}
-        walletConnectOptions={{
-          signClient: {
-            projectId: config.walletConnectProjectId,
-            metadata: {
-              name: APP_NAME,
-              description: APP_DESCRIPTION,
-              url: APP_URL,
-              icons: [],
-            },
+    <ChainProvider
+      chains={chains}
+      assetLists={assets}
+      wallets={walletsList}
+      walletConnectOptions={{
+        signClient: {
+          projectId: config.walletConnectProjectId,
+          metadata: {
+            name: APP_NAME,
+            description: APP_DESCRIPTION,
+            url: APP_URL,
+            icons: [],
           },
-        }}
-        signerOptions={{
-          signingCosmwasm: () => {
-            return {
-              // TODO cosmos get gas price from registry or RPC
-              gasPrice: GasPrice.fromString('0.03token'),
-            };
-          },
-          signingStargate: () => {
-            return {
-              // TODO cosmos get gas price from registry or RPC
-              gasPrice: GasPrice.fromString('0.2tia'),
-            };
-          },
-        }}
-        modalTheme={{ defaultTheme: 'light' }}
-      >
-        {e2e && <E2EAutoConnectCosmos />}
-        {children}
-      </ChainProvider>
-    </ChakraProvider>
+        },
+      }}
+      signerOptions={{
+        signingCosmwasm: () => {
+          return {
+            // TODO cosmos get gas price from registry or RPC
+            gasPrice: GasPrice.fromString('0.03token'),
+          };
+        },
+        signingStargate: () => {
+          return {
+            // TODO cosmos get gas price from registry or RPC
+            gasPrice: GasPrice.fromString('0.2tia'),
+          };
+        },
+      }}
+      walletModal={CosmosWalletModal}
+    >
+      {e2e && <E2EAutoConnectCosmos />}
+      {children}
+    </ChainProvider>
   );
 }

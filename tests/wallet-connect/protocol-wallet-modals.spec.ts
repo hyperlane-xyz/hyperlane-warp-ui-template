@@ -55,4 +55,33 @@ test.describe('Wallet Connect - Protocol Modals', () => {
     await page.keyboard.press('Escape');
     await expect(dialog).not.toBeVisible();
   });
+
+  test('Cosmos: should lazy-load the Cosmos wallet modal', async ({ page }) => {
+    await page
+      .getByRole('banner')
+      .getByRole('button', { name: 'Connect wallet', exact: true })
+      .click();
+
+    await page
+      .getByRole('dialog')
+      .getByRole('button', {
+        name: 'Cosmos Connect to a Cosmos-compatible wallet',
+      })
+      .click();
+
+    const dialog = page.getByRole('dialog', { name: 'Select your wallet' });
+    await expect(dialog).toBeVisible();
+    await expect(
+      dialog.getByRole('button', { name: 'Keplr Keplr' }),
+    ).toBeVisible();
+    await expect(
+      dialog.getByRole('button', { name: 'Cosmostation Cosmostation' }),
+    ).toBeVisible();
+    await expect(
+      dialog.getByRole('button', { name: 'Leap Leap' }),
+    ).toBeVisible();
+
+    await page.keyboard.press('Escape');
+    await expect(dialog).not.toBeVisible();
+  });
 });

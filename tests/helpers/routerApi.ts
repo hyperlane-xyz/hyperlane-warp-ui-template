@@ -35,7 +35,7 @@ const chains = [
   },
 ];
 
-const tokens = [
+export const routerApiTokens = [
   {
     chainId: 56,
     address: ZERO,
@@ -95,7 +95,7 @@ export async function installRouterApiMock(page: Page): Promise<void> {
     route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({ tokens }),
+      body: JSON.stringify({ tokens: routerApiTokens }),
     }),
   );
 
@@ -103,7 +103,7 @@ export async function installRouterApiMock(page: Page): Promise<void> {
     route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({ direction: 'fromSource', tokens }),
+      body: JSON.stringify({ direction: 'fromSource', tokens: routerApiTokens }),
     }),
   );
 }

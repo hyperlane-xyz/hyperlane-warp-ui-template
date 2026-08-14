@@ -3,7 +3,6 @@ import { ChevronIcon, DropdownMenu, useModal, XIcon } from '@hyperlane-xyz/widge
 import {
   useAccountAddressForChain,
   useAccountForChain,
-  useConnectFns,
   useDisconnectFns,
 } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import React, { useCallback, useMemo } from 'react';
@@ -12,6 +11,7 @@ import { Color } from '../../styles/Color';
 import { logger } from '../../utils/logger';
 import { useChainProtocol, useMultiProvider } from '../chains/hooks';
 import { RecipientAddressModal } from './RecipientAddressModal';
+import { useAppConnectFns } from './useAppConnectFns';
 
 interface WalletDropdownProps {
   chainName: string | undefined;
@@ -141,7 +141,7 @@ export function WalletDropdown({
 // Self-contained connect button with its own hooks
 function ConnectWalletButton({ chainName }: { chainName?: string }) {
   const protocol = useChainProtocol(chainName || '') || ProtocolType.Ethereum;
-  const connectFns = useConnectFns();
+  const connectFns = useAppConnectFns();
   const connectFn = connectFns[protocol];
 
   const onConnect = useCallback(() => {
@@ -163,7 +163,7 @@ function ConnectWalletButton({ chainName }: { chainName?: string }) {
 
 // Self-contained connect menu item with its own hooks
 function ConnectMenuItem({ protocol }: { protocol: ProtocolType }) {
-  const connectFns = useConnectFns();
+  const connectFns = useAppConnectFns();
   const connectFn = connectFns[protocol];
 
   const onConnect = useCallback(() => {

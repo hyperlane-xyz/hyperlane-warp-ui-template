@@ -1,6 +1,5 @@
 import { toTitleCase } from '@hyperlane-xyz/utils';
 import {
-  useConnectFns,
   useDisconnectFns,
   useWalletDetails,
 } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
@@ -9,6 +8,7 @@ import { useMemo } from 'react';
 import { FormWarningBanner } from '../../components/banner/FormWarningBanner';
 import { config } from '../../consts/config';
 import { logger } from '../../utils/logger';
+import { useAppConnectFns } from '../wallet/useAppConnectFns';
 import { useMultiProvider } from './hooks';
 import { getChainDisplayName } from './utils';
 
@@ -16,7 +16,7 @@ export function ChainWalletWarning({ origin }: { origin: ChainName }) {
   const multiProvider = useMultiProvider();
 
   const wallets = useWalletDetails();
-  const connectFns = useConnectFns();
+  const connectFns = useAppConnectFns();
   const disconnectFns = useDisconnectFns();
 
   const { isVisible, chainDisplayName, walletWhitelist, connectFn, disconnectFn } = useMemo(() => {

@@ -163,7 +163,7 @@ function RouteFlowDiagram({
   // picked Base→Viction) are never fetched by the token picker, so
   // tokens like WETH on Arb would otherwise stay unresolved.
   useRouteChainTokens(steps);
-  const nodes = buildFlowNodes(steps);
+  const nodes = buildFlowNodes(steps, { destinationTokenAddress: dstToken?.address });
   const lastIdx = nodes.length - 1;
   const firstNode = nodes[0];
   const lastNode = nodes[lastIdx];
@@ -288,7 +288,15 @@ function StepEdge({
 }) {
   if (step.type === 'swap')
     return <SwapEdge step={step} tokenMap={tokenMap} resolvedTokenOut={tokenOut} />;
-  return <CrossChainEdge step={step} tokenMap={tokenMap} stepIndex={stepIndex} steps={steps} />;
+  return (
+    <CrossChainEdge
+      step={step}
+      tokenMap={tokenMap}
+      resolvedDestAsset={tokenOut}
+      stepIndex={stepIndex}
+      steps={steps}
+    />
+  );
 }
 
 // ── Native wrapper display edge ─────────────────────────────────────────
@@ -459,11 +467,13 @@ function SwapEdge({
 function CrossChainEdge({
   step,
   tokenMap,
+  resolvedDestAsset,
   stepIndex,
   steps,
 }: {
   step: QuoteBridgeStep;
   tokenMap: Map<string, UiToken>;
+  resolvedDestAsset: UiToken | null;
   stepIndex: number;
   steps: QuoteStep[];
 }) {
@@ -477,7 +487,7 @@ function CrossChainEdge({
       ? getTokenByKeyFromMap(tokenMap, tokenKey(step.destChain, nextStep.tokenIn))
       : nextStep?.type === 'bridge'
         ? getTokenByKeyFromMap(tokenMap, tokenKey(step.destChain, nextStep.asset))
-        : asset;
+        : (resolvedDestAsset ?? asset);
 
   const amountIn = formatStepAmount(step.amountIn, asset?.decimals ?? 18);
   const amountOut = formatStepAmount(step.amountOut, destAsset?.decimals ?? asset?.decimals ?? 18);

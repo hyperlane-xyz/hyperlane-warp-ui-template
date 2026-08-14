@@ -1,4 +1,9 @@
-import { TokenStandard, type MultiProtocolProvider } from '@hyperlane-xyz/sdk';
+import {
+  BaseSealevelAdapter,
+  SealevelTokenAdapter,
+  TokenStandard,
+  type MultiProtocolProvider,
+} from '@hyperlane-xyz/sdk';
 import {
   AccountLayout,
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -14,6 +19,7 @@ import type { BalanceToken } from './types';
 import { getBalanceTokenKey } from './types';
 
 const ZERO_ADDRESS = /^0x0+$/i;
+const HYP_SYNTHETIC_MINT_SEEDS = ['hyperlane_token', '-', 'mint'];
 
 export async function fetchSealevelChainBalances(
   rpcUrl: string,
@@ -31,6 +37,29 @@ export async function fetchSealevelChainBalances(
       nativeTokens.push(token);
       continue;
     }
+
+    if (token.standard === TokenStandard.SealevelHypSynthetic) {
+      try {
+        const mint = deriveSealevelHypSyntheticMint(token.address);
+        splEntries.push({
+          token,
+          ata: getAssociatedTokenAddressSync(
+            mint,
+            ownerKey,
+            true,
+            TOKEN_2022_PROGRAM_ID,
+            ASSOCIATED_TOKEN_PROGRAM_ID,
+          ),
+        });
+      } catch (err) {
+        logger.warn(
+          `Could not resolve synthetic balance account for ${token.symbol}`,
+          err as Error,
+        );
+      }
+      continue;
+    }
+
     let mint: PublicKey;
     try {
       mint = new PublicKey(token.address);
@@ -86,7 +115,17 @@ export async function readSealevelTokenBalance(
   ) {
     return BigInt(await connection.getBalance(ownerKey));
   }
+  if (args.standard === TokenStandard.SealevelHypSynthetic) {
+    const adapter = new SealevelTokenAdapter(args.chainName, multiProvider, {
+      token: deriveSealevelHypSyntheticMint(args.tokenAddress).toBase58(),
+    });
+    return adapter.getBalance(args.owner);
+  }
   return fetchSplBalance(connection, ownerKey, args.tokenAddress);
+}
+
+export function deriveSealevelHypSyntheticMint(warpRouter: string): PublicKey {
+  return BaseSealevelAdapter.derivePda(HYP_SYNTHETIC_MINT_SEEDS, warpRouter);
 }
 
 export function isSealevelNativeBalance(token: {

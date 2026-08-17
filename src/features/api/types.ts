@@ -179,6 +179,9 @@ export const QuoteBridgeStepSchema = z.object({
     tokenFee: BigIntString,
     igpToken: TokenAddress,
     igpAmount: BigIntString,
+    // Whether igpAmount is already funded by bridge amountIn. Optional while
+    // older engine deployments roll out the additive field.
+    igpIncludedInAmountIn: z.boolean().optional(),
     localNativeFee: BigIntString,
   }),
 });

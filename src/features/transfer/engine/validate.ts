@@ -355,9 +355,9 @@ function aggregateExternalIgp(
   for (const step of route.steps) {
     if (step.type !== 'bridge') continue;
 
-    const igpAmount = BigInt(step.fee.igpAmount);
-    if (igpAmount > 0n && !isIgpEmbeddedInBridgeInput(step, originProtocol)) {
-      addFee(map, step.chain, step.fee.igpToken, igpAmount);
+    const externalIgpAmount = getExternalIgpAmount(step, originProtocol);
+    if (externalIgpAmount > 0n) {
+      addFee(map, step.chain, step.fee.igpToken, externalIgpAmount);
     }
 
     const localNativeFee = BigInt(step.fee.localNativeFee);
@@ -366,6 +366,16 @@ function aggregateExternalIgp(
     }
   }
   return map;
+}
+
+function getExternalIgpAmount(
+  step: Extract<AugmentedRoute['raw']['steps'][number], { type: 'bridge' }>,
+  originProtocol: ProtocolType,
+): bigint {
+  const igpAmount = BigInt(step.fee.igpAmount);
+  const isIncluded =
+    step.fee.igpIncludedInAmountIn ?? isIgpEmbeddedInBridgeInput(step, originProtocol);
+  return isIncluded ? 0n : igpAmount;
 }
 
 function isIgpEmbeddedInBridgeInput(

@@ -24,6 +24,7 @@ describe('QuoteResponseSchema', () => {
                   tokenFee: '1',
                   igpToken: '0x0000000000000000000000000000000000000000',
                   igpAmount: '2',
+                  igpIncludedInAmountIn: true,
                   localNativeFee: '3',
                 },
               },

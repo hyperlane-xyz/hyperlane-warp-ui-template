@@ -1,7 +1,7 @@
 import type { PublicClient } from 'viem';
 import { describe, expect, test, vi } from 'vitest';
 
-import { fetchEvmChainBalances } from './evm';
+import { estimateEvmGasCostForUnits, fetchEvmChainBalances } from './evm';
 import type { BalanceToken } from './types';
 import { getBalanceTokenKey } from './types';
 
@@ -39,5 +39,18 @@ describe('fetchEvmChainBalances', () => {
         args: [USER_ADDRESS],
       }),
     );
+  });
+});
+
+describe('estimateEvmGasCostForUnits', () => {
+  test('uses EIP-1559 maxFeePerGas when available', async () => {
+    const getFeeData = vi.fn().mockResolvedValue({ maxFeePerGas: 2n, gasPrice: 1n });
+    const multiProvider = {
+      getEthersV5Provider: vi.fn(() => ({ getFeeData })),
+    } as never;
+
+    await expect(
+      estimateEvmGasCostForUnits(multiProvider, { chainName: 'ethereum', gasUnits: 10n }),
+    ).resolves.toBe(20n);
   });
 });

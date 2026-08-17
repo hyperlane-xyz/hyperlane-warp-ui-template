@@ -108,6 +108,32 @@ export async function readEvmBalance(
 
 const PENDING_APPROVAL_GAS_BUDGET = 600_000n;
 
+async function getEffectiveGasPrice(
+  multiProvider: MultiProtocolProvider,
+  chainName: string,
+): Promise<bigint | null> {
+  const feeData = await multiProvider.getEthersV5Provider(chainName).getFeeData();
+  const maxFee = feeData.maxFeePerGas ? BigInt(feeData.maxFeePerGas.toString()) : undefined;
+  const legacy = feeData.gasPrice ? BigInt(feeData.gasPrice.toString()) : undefined;
+  return maxFee ?? legacy ?? null;
+}
+
+// Converts the engine's conservative route gas-unit budget into native wei.
+// Used by native Max because estimating a tx whose value equals the wallet's
+// full balance can fail before there is any gas headroom.
+export async function estimateEvmGasCostForUnits(
+  multiProvider: MultiProtocolProvider,
+  args: { chainName: string; gasUnits: bigint },
+): Promise<bigint> {
+  try {
+    const effectiveGasPrice = await getEffectiveGasPrice(multiProvider, args.chainName);
+    return effectiveGasPrice == null ? 0n : args.gasUnits * effectiveGasPrice;
+  } catch (err) {
+    logger.warn('estimateEvmGasCostForUnits failed', err as Error);
+    return 0n;
+  }
+}
+
 // gasLimit × gasPrice for a prepared EVM tx, in native wei. Returns 0n
 // on failure — caller treats that as "no gas headroom info".
 export async function estimateEvmGasCost(
@@ -125,14 +151,15 @@ export async function estimateEvmGasCost(
     const { chainName, sender, to, data, value, approvalPending } = args;
     const provider = multiProvider.getEthersV5Provider(chainName);
 
-    const feeDataPromise = provider.getFeeData();
-    const gasUnits = approvalPending
-      ? PENDING_APPROVAL_GAS_BUDGET
-      : BigInt((await provider.estimateGas({ from: sender, to, data, value })).toString());
-    const feeData = await feeDataPromise;
-    const maxFee = feeData.maxFeePerGas ? BigInt(feeData.maxFeePerGas.toString()) : undefined;
-    const legacy = feeData.gasPrice ? BigInt(feeData.gasPrice.toString()) : undefined;
-    const effectiveGasPrice = maxFee ?? legacy;
+    const gasUnitsPromise: Promise<bigint> = approvalPending
+      ? Promise.resolve(PENDING_APPROVAL_GAS_BUDGET)
+      : provider
+          .estimateGas({ from: sender, to, data, value })
+          .then((estimate) => BigInt(estimate.toString()));
+    const [effectiveGasPrice, gasUnits] = await Promise.all([
+      getEffectiveGasPrice(multiProvider, chainName),
+      gasUnitsPromise,
+    ] as const);
     if (isNullish(effectiveGasPrice)) return 0n;
     return gasUnits * effectiveGasPrice;
   } catch (err) {

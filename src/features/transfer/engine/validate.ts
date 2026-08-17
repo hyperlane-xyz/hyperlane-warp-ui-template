@@ -12,11 +12,12 @@ import { parseUnits } from 'viem';
 import { logger } from '../../../utils/logger';
 import { getRouteTxs, isChainRouteTx } from '../../api/routeTx';
 import type { ChainDiscovery } from '../../api/types';
-import { estimateNativeGasCost, readBalance } from '../../balances/read';
+import { readBalance } from '../../balances/read';
 import { formatDisplayAmount } from '../../balances/utils';
 import { isChainDisabled } from '../../chains/utils';
 import type { UiToken } from '../../tokens/types';
 import { tokenKey } from '../../tokens/utils';
+import { estimateRouteSourceGasCost } from './sourceGas';
 import type { AugmentedRoute, TransferFormValues } from './types';
 
 const NATIVE_ADDRESS = '0x0000000000000000000000000000000000000000';
@@ -290,10 +291,11 @@ export async function validateBalances(args: {
 
   const originTx = getRouteTxs(bestRoute.raw).find(isChainRouteTx) ?? null;
   const txValue = originTx ? BigInt(originTx.value) : 0n;
-  const gasCost = await estimateNativeGasCost(multiProvider, {
+  const gasCost = await estimateRouteSourceGasCost({
+    multiProvider,
     chainName: srcChainInfo.chainName,
     sender,
-    tx: originTx,
+    route: bestRoute.raw,
     approvalPending,
   });
   const quotedNativeDebit = srcToken.isNative ? amountIn + sameTokenIgp : nativeFee;

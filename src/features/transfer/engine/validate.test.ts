@@ -7,14 +7,17 @@ import type { UiToken } from '../../tokens/types';
 import type { AugmentedRoute } from './types';
 import { validateBalances, validateChains, validateQuote } from './validate';
 
-const { readBalanceMock, estimateNativeGasCostMock } = vi.hoisted(() => ({
-  readBalanceMock: vi.fn(),
-  estimateNativeGasCostMock: vi.fn(),
-}));
+const { readBalanceMock, estimateNativeGasCostMock, estimateNativeGasCostForUnitsMock } =
+  vi.hoisted(() => ({
+    readBalanceMock: vi.fn(),
+    estimateNativeGasCostMock: vi.fn(),
+    estimateNativeGasCostForUnitsMock: vi.fn(),
+  }));
 
 vi.mock('../../balances/read', () => ({
   readBalance: readBalanceMock,
   estimateNativeGasCost: estimateNativeGasCostMock,
+  estimateNativeGasCostForUnits: estimateNativeGasCostForUnitsMock,
 }));
 
 vi.mock('../../../consts/config', async (importOriginal) => {
@@ -32,6 +35,7 @@ describe('validateBalances', () => {
   beforeEach(() => {
     readBalanceMock.mockReset();
     estimateNativeGasCostMock.mockReset().mockResolvedValue(0n);
+    estimateNativeGasCostForUnitsMock.mockReset().mockResolvedValue(0n);
   });
 
   test('checks native IGP fees against native balance for non-native source tokens', async () => {
@@ -129,6 +133,56 @@ describe('validateBalances', () => {
     });
 
     expect(errors).toBeNull();
+  });
+
+  test('requires source gas in addition to native tx value for ERC20 routes', async () => {
+    readBalanceMock.mockResolvedValueOnce(100_000_000n).mockResolvedValueOnce(9n);
+    estimateNativeGasCostMock.mockResolvedValueOnce(3n);
+
+    const errors = await validateBalances({
+      multiProvider: multiProvider(ProtocolType.Ethereum),
+      srcChainInfo: evmChain(),
+      srcToken: bonkToken({ chainId: 1, chainName: 'ethereum' }),
+      sender: '0xsender',
+      bestRoute: routeWithNativeFee(7n, 1, {
+        to: '0x0000000000000000000000000000000000000001',
+        data: '0x',
+        value: '7',
+      }),
+      amountAtomic: 10_000_000n,
+    });
+
+    expect(errors).toEqual({
+      amount: 'Insufficient ETH for transaction value and gas (need 0.000000000000000001 more ETH)',
+    });
+  });
+
+  test('falls back to quoted route gas units when prepared tx estimation fails', async () => {
+    readBalanceMock.mockResolvedValueOnce(12n);
+    estimateNativeGasCostForUnitsMock.mockResolvedValueOnce(3n);
+
+    const errors = await validateBalances({
+      multiProvider: multiProvider(ProtocolType.Ethereum),
+      srcChainInfo: evmChain(),
+      srcToken: evmNativeToken(),
+      sender: '0xsender',
+      bestRoute: bridgeRoute({
+        chainId: 1,
+        asset: NATIVE_ADDRESS,
+        amountIn: 10n,
+        amountOut: 9n,
+        tx: {
+          to: '0x0000000000000000000000000000000000000001',
+          data: '0x',
+          value: '10',
+        },
+      }),
+      amountAtomic: 10n,
+    });
+
+    expect(errors).toEqual({
+      amount: 'Insufficient ETH for transaction value and gas (need 0.000000000000000001 more ETH)',
+    });
   });
 
   test('does not add embedded IGP on top of EVM native bridge input', async () => {
@@ -446,6 +500,32 @@ describe('validateBalances', () => {
     });
 
     expect(errors).toBeNull();
+  });
+
+  test.each([
+    { name: 'native', token: evmNativeToken(), txValue: '1000', balances: [1_002n] },
+    {
+      name: 'ERC20',
+      token: bonkToken({ chainId: 1, chainName: 'ethereum' }),
+      txValue: '0',
+      balances: [1_000n, 2n],
+    },
+  ])('requires source gas for $name swaps', async ({ token, txValue, balances }) => {
+    for (const balance of balances) readBalanceMock.mockResolvedValueOnce(balance);
+    estimateNativeGasCostMock.mockResolvedValueOnce(3n);
+
+    const errors = await validateBalances({
+      multiProvider: multiProvider(ProtocolType.Ethereum),
+      srcChainInfo: evmChain(),
+      srcToken: token,
+      sender: '0xsender',
+      bestRoute: swapRoute(token.address, txValue),
+      amountAtomic: 1_000n,
+    });
+
+    expect(errors).toEqual({
+      amount: 'Insufficient ETH for transaction value and gas (need 0.000000000000000001 more ETH)',
+    });
   });
 });
 

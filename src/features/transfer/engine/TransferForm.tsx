@@ -1,7 +1,10 @@
 import { eqAddress, isValidAddressEvm, objLength, ProtocolType } from '@hyperlane-xyz/utils';
 import { useDebounce, useModal } from '@hyperlane-xyz/widgets';
 import { useAccounts } from '@hyperlane-xyz/widgets/walletIntegrations/accounts';
-import { useAccountAddressForChain } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
+import {
+  getAccountAddressAndPubKey,
+  getAccountAddressForChain,
+} from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import { useAccount as useStarknetAccount, type UseAccountResult } from '@starknet-react/core';
 import { Form, Formik, useFormikContext } from 'formik';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -39,8 +42,14 @@ import { WalletDropdown } from '../../wallet/WalletDropdown';
 import { ApprovalPhase, useApprovalStatus } from './approval';
 import { FeeSectionButton } from './FeeSectionButton';
 import { MaxButton } from './MaxButton';
+import {
+  calculateNativeMaxInput,
+  getRouteInputAmount,
+  shouldCalculateNativeMax,
+} from './nativeMax';
 import { RouteSelectionModal } from './routeSelection/RouteSelectionModal';
 import { SlippagePanel } from './SlippagePanel';
+import { withSourceGasFee } from './sourceGas';
 import { TokenBalance } from './TokenBalance';
 import {
   FinalTransferStatuses,
@@ -51,6 +60,7 @@ import {
 } from './types';
 import { useFormInitialValues } from './useFormInitialValues';
 import { useQuote } from './useQuote';
+import { useSourceGasFee } from './useSourceGasFee';
 import { useTransfer } from './useTransfer';
 import { validateTransferForm } from './validate';
 
@@ -58,6 +68,14 @@ const PRICE_IMPACT_DANGER_PCT = -3;
 const PRICE_IMPACT_WARN_PCT = -1;
 const PCT_FORMAT_OPTIONS = { minimumFractionDigits: 2, maximumFractionDigits: 2 } as const;
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
+
+interface NativeMaxRequest {
+  balance: bigint;
+  decimals: number;
+  intentKey: string;
+  previousAmount: string;
+  provisionalAmount: string;
+}
 
 export function TransferForm() {
   const initialValues = useFormInitialValues();
@@ -77,7 +95,7 @@ export function TransferForm() {
 }
 
 function TransferFormContent() {
-  const { values, errors, setErrors, setFieldValue, setValues } =
+  const { values, errors, setErrors, setFieldError, setFieldValue, setValues } =
     useFormikContext<TransferFormValues>();
   const hasSelectedDestinationTokenRef = useRef(false);
   const multiProvider = useMultiProvider();
@@ -98,9 +116,13 @@ function TransferFormContent() {
     values.dstChain != null
       ? (multiProvider.tryGetChainName(values.dstChain) ?? undefined)
       : undefined;
-  useAccounts(multiProvider, config.addressBlacklist);
-  const sender = useAccountAddressForChain(multiProvider, srcChainName);
-  const connectedDestAddress = useAccountAddressForChain(multiProvider, dstChainName);
+  const { accounts } = useAccounts(multiProvider, config.addressBlacklist);
+  const { address: sender, publicKey: senderPubKey } = getAccountAddressAndPubKey(
+    multiProvider,
+    srcChainName,
+    accounts,
+  );
+  const connectedDestAddress = getAccountAddressForChain(multiProvider, dstChainName, accounts);
   const effectiveRecipient = values.recipient || connectedDestAddress || '';
 
   const srcTokenKey =
@@ -113,6 +135,9 @@ function TransferFormContent() {
       : undefined;
   const srcToken = getTokenByKeyFromMap(tokenMap, srcTokenKey);
   const dstToken = getTokenByKeyFromMap(tokenMap, dstTokenKey);
+  const [nativeMaxRequest, setNativeMaxRequest] = useState<NativeMaxRequest | null>(null);
+
+  const nativeMaxIntentKey = `${values.srcChain ?? ''}:${values.dstChain ?? ''}:${values.srcToken}:${values.dstToken}:${sender ?? ''}:${effectiveRecipient}`;
 
   const [isReview, setIsReview] = useState(false);
   const {
@@ -151,7 +176,6 @@ function TransferFormContent() {
   const approval = bestRoute?.raw.approval ?? null;
   const srcChainInfo = chainsResp?.chains.find((chain) => chain.id === values.srcChain);
   const dstChainInfo = chainsResp?.chains.find((chain) => chain.id === values.dstChain);
-
   const approvalAmount = useMemo(
     () => (approval ? BigInt(approval.amount) : undefined),
     [approval],
@@ -168,6 +192,135 @@ function TransferFormContent() {
     amount: approvalAmount,
     isNative: !approval,
   });
+  const approvalPending =
+    status.phase === ApprovalPhase.NeedsApprove || status.phase === ApprovalPhase.NeedsRevoke;
+  const estimateStarknetSourceFee = useCallback(
+    () =>
+      estimateStarknetExecutionFee({
+        route: bestRoute,
+        srcProtocol: srcChainInfo?.protocol,
+        account: starknetAccount,
+      }),
+    [bestRoute, srcChainInfo?.protocol, starknetAccount],
+  );
+  const sourceGasFee = useSourceGasFee({
+    route: bestRoute,
+    chainName: srcChainName,
+    sender,
+    senderPubKey,
+    approvalPending,
+    estimateOverride:
+      srcChainInfo?.protocol === ProtocolType.Starknet ? estimateStarknetSourceFee : undefined,
+  });
+  useToastError(sourceGasFee.error, 'Source fee estimate failed');
+  const displayedFeeBreakdown = useMemo(
+    () => withSourceGasFee(bestRoute?.feeBreakdown, srcChainInfo?.id, sourceGasFee.data),
+    [bestRoute?.feeBreakdown, sourceGasFee.data, srcChainInfo?.id],
+  );
+
+  const onMax = useCallback(
+    (balance: bigint, token: UiToken) => {
+      const provisionalAmount = formatUnits(balance, token.decimals);
+      if (!shouldCalculateNativeMax(token.isNative)) {
+        setNativeMaxRequest(null);
+        setFieldValue('amount', provisionalAmount);
+        return;
+      }
+
+      setNativeMaxRequest({
+        balance,
+        decimals: token.decimals,
+        intentKey: nativeMaxIntentKey,
+        previousAmount: values.amount,
+        provisionalAmount,
+      });
+      setFieldValue('amount', provisionalAmount);
+    },
+    [nativeMaxIntentKey, setFieldValue, values.amount],
+  );
+
+  useEffect(() => {
+    const request = nativeMaxRequest;
+    if (!request) return;
+    if (request.intentKey !== nativeMaxIntentKey || values.amount !== request.provisionalAmount) {
+      setNativeMaxRequest(null);
+      return;
+    }
+    if (isAmountDebouncing) return;
+    if (!isQuoteSettled) return;
+
+    let cancelled = false;
+    const fail = async (message: string, error?: unknown) => {
+      if (cancelled) return;
+      if (error) logger.warn(message, error as Error);
+      setNativeMaxRequest(null);
+      await setFieldValue('amount', request.previousAmount, false);
+      setFieldError('amount', message);
+    };
+
+    if (quoteError) {
+      void fail('Unable to quote the maximum native amount', quoteError);
+      return () => {
+        cancelled = true;
+      };
+    }
+    if (!bestRoute || !srcChainName || !srcChainInfo || !sender) {
+      void fail('No route available for the maximum native amount');
+      return () => {
+        cancelled = true;
+      };
+    }
+    if (getRouteInputAmount(bestRoute.raw) !== request.balance) {
+      void fail('Maximum quote input did not match the wallet balance');
+      return;
+    }
+
+    if (sourceGasFee.isLoading) return;
+    const gasCost = sourceGasFee.data;
+    if (!gasCost || gasCost <= 0n) {
+      void fail('Unable to estimate source gas for the maximum amount', sourceGasFee.error);
+      return;
+    }
+
+    void (async () => {
+      const maxInput = calculateNativeMaxInput({
+        balance: request.balance,
+        route: bestRoute.raw,
+        gasCost,
+        originProtocol: srcChainInfo.protocol as ProtocolType,
+      });
+      if (maxInput <= 0n) {
+        await fail('Native balance is too low to cover source gas');
+        return;
+      }
+      if (cancelled) return;
+
+      setNativeMaxRequest(null);
+      await setFieldValue('amount', formatUnits(maxInput, request.decimals), false);
+    })().catch((error) => {
+      void fail('Unable to calculate the maximum native amount', error);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    bestRoute,
+    isAmountDebouncing,
+    isQuoteSettled,
+    nativeMaxIntentKey,
+    nativeMaxRequest,
+    quoteError,
+    sender,
+    setFieldError,
+    setFieldValue,
+    sourceGasFee.data,
+    sourceGasFee.error,
+    sourceGasFee.isLoading,
+    srcChainInfo,
+    srcChainName,
+    values.amount,
+  ]);
 
   const transfer = useTransfer();
   useToastError(transfer.error, 'Transfer failed');
@@ -239,8 +392,6 @@ function TransferFormContent() {
     const snapshot = values;
     setIsValidating(true);
     try {
-      const approvalPending =
-        status.phase === ApprovalPhase.NeedsApprove || status.phase === ApprovalPhase.NeedsRevoke;
       const nativeExecutionFee = await estimateStarknetExecutionFee({
         route: bestRoute,
         srcProtocol: srcChainInfo?.protocol,
@@ -255,6 +406,7 @@ function TransferFormContent() {
         effectiveRecipient,
         chains: chainsResp?.chains,
         multiProvider,
+        senderPubKey,
         approvalPending,
         quoteExpiresAt: quote?.expiresAt,
         nativeExecutionFee,
@@ -306,7 +458,8 @@ function TransferFormContent() {
     effectiveRecipient,
     chainsResp?.chains,
     multiProvider,
-    status.phase,
+    senderPubKey,
+    approvalPending,
     quote?.expiresAt,
     isAmountDebouncing,
     srcChainInfo?.protocol,
@@ -374,8 +527,6 @@ function TransferFormContent() {
     // this check we'd happily submit it. Same call as Continue plus the
     // current quote.expiresAt so the staleness check fires.
     const snapshot = values;
-    const approvalPending =
-      status.phase === ApprovalPhase.NeedsApprove || status.phase === ApprovalPhase.NeedsRevoke;
     const nativeExecutionFee = await estimateStarknetExecutionFee({
       route: bestRoute,
       srcProtocol: srcChainInfo?.protocol,
@@ -390,6 +541,7 @@ function TransferFormContent() {
       effectiveRecipient,
       chains: chainsResp?.chains,
       multiProvider,
+      senderPubKey,
       approvalPending,
       quoteExpiresAt: quote?.expiresAt,
       nativeExecutionFee,
@@ -509,10 +661,11 @@ function TransferFormContent() {
     bestRoute,
     values,
     effectiveRecipient,
-    status.phase,
+    approvalPending,
     chainsResp?.chains,
     srcChainInfo?.protocol,
     multiProvider,
+    senderPubKey,
     quote?.expiresAt,
     approval,
     approvalAmount,
@@ -581,6 +734,8 @@ function TransferFormContent() {
           srcChainName={srcChainName}
           srcToken={srcToken}
           sender={sender}
+          isMaxLoading={nativeMaxRequest != null}
+          onMax={onMax}
           hasSelectedDestinationTokenRef={hasSelectedDestinationTokenRef}
         />
       </TransferSection>
@@ -603,8 +758,8 @@ function TransferFormContent() {
       {!isReview && (
         <div className="mt-2 flex items-center justify-between gap-3 px-1">
           <FeeSectionButton
-            feeBreakdown={bestRoute?.feeBreakdown}
-            isLoading={quoteLoading}
+            feeBreakdown={displayedFeeBreakdown}
+            isLoading={quoteLoading || (!!bestRoute && sourceGasFee.isLoading)}
             inputUsd={amountUsd}
           />
           <div className="flex items-center gap-2">
@@ -818,12 +973,16 @@ function OriginTokenCard({
   srcChainName,
   srcToken,
   sender,
+  isMaxLoading,
+  onMax,
   hasSelectedDestinationTokenRef,
 }: {
   isReview: boolean;
   srcChainName: string | undefined;
   srcToken: UiToken | undefined;
   sender: string | undefined;
+  isMaxLoading: boolean;
+  onMax: (balance: bigint, token: UiToken) => void;
   hasSelectedDestinationTokenRef: React.MutableRefObject<boolean>;
 }) {
   const { values } = useFormikContext<TransferFormValues>();
@@ -861,9 +1020,10 @@ function OriginTokenCard({
           />
           <MaxButton
             balance={balance ?? undefined}
-            isLoading={isBalanceLoading}
+            isLoading={isBalanceLoading || isMaxLoading}
             disabled={isReview}
             token={srcToken}
+            onMax={onMax}
           />
         </div>
         <div className="transfer-balance mt-1 flex items-center justify-between text-xs leading-[18px] text-gray-450 dark:text-foreground-secondary">

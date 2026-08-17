@@ -3,7 +3,7 @@ import { isEVMLike, ProtocolType } from '@hyperlane-xyz/utils';
 
 import { readAleoTokenBalance } from './aleo';
 import { readCosmosTokenBalance } from './cosmos';
-import { estimateEvmGasCost, readEvmBalance } from './evm';
+import { estimateEvmGasCostForUnits, readEvmBalance } from './evm';
 import { readRadixTokenBalance } from './radix';
 import { readSealevelTokenBalance } from './sealevel';
 import { readStarknetTokenBalance } from './starknet';
@@ -41,28 +41,11 @@ export async function readBalance(
   return null;
 }
 
-export interface EstimateGasArgs {
-  chainName: string;
-  sender: string;
-  tx: { to: string; data: string; value: string } | null;
-  approvalPending?: boolean;
-}
-
-// Per-VM dispatch for the native gas cost of a prepared tx, in native wei.
-// Tron skipped because its fee model is energy + bandwidth, not gasLimit × gasPrice.
-export async function estimateNativeGasCost(
+export async function estimateNativeGasCostForUnits(
   multiProvider: MultiProtocolProvider,
-  args: EstimateGasArgs,
+  args: { chainName: string; gasUnits: bigint },
 ): Promise<bigint> {
-  if (!args.tx) return 0n;
   const protocol = multiProvider.tryGetProtocol(args.chainName);
   if (protocol !== ProtocolType.Ethereum) return 0n;
-  return estimateEvmGasCost(multiProvider, {
-    chainName: args.chainName,
-    sender: args.sender,
-    to: args.tx.to,
-    data: args.tx.data,
-    value: args.tx.value,
-    approvalPending: args.approvalPending,
-  });
+  return estimateEvmGasCostForUnits(multiProvider, args);
 }

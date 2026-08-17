@@ -100,12 +100,7 @@ export function useTransfer() {
         const fns = transactionFns[protocol as keyof typeof transactionFns];
         if (!fns) throw new Error(`No transaction handler for protocol ${protocol}`);
 
-        const txType =
-          protocol === ProtocolType.Sealevel
-            ? ProviderType.SolanaWeb3
-            : protocol === ProtocolType.Tron
-              ? ProviderType.Tron
-              : ProviderType.EthersV5;
+        const txType = getRouteTxProviderType(protocol as ProtocolType);
 
         if (fns.switchNetwork) {
           try {
@@ -349,6 +344,12 @@ export async function toWalletTx(
     },
     category: 'transfer',
   };
+}
+
+export function getRouteTxProviderType(protocol: ProtocolType): ProviderType {
+  if (protocol === ProtocolType.Sealevel) return ProviderType.SolanaWeb3;
+  if (protocol === ProtocolType.Tron) return ProviderType.Tron;
+  return ProviderType.EthersV5;
 }
 
 function toSdkWalletTx(tx: Extract<RouteTx, { protocol: string }>): unknown {

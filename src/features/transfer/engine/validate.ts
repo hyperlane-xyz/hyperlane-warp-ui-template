@@ -6,17 +6,19 @@ import {
   isZeroishAddress,
   normalizeAddressEvm,
   ProtocolType,
+  type HexString,
 } from '@hyperlane-xyz/utils';
 import { parseUnits } from 'viem';
 
 import { logger } from '../../../utils/logger';
 import { getRouteTxs, isChainRouteTx } from '../../api/routeTx';
 import type { ChainDiscovery } from '../../api/types';
-import { estimateNativeGasCost, readBalance } from '../../balances/read';
+import { readBalance } from '../../balances/read';
 import { formatDisplayAmount } from '../../balances/utils';
 import { isChainDisabled } from '../../chains/utils';
 import type { UiToken } from '../../tokens/types';
 import { tokenKey } from '../../tokens/utils';
+import { estimateRouteSourceGasCost } from './sourceGas';
 import type { AugmentedRoute, TransferFormValues } from './types';
 
 const NATIVE_ADDRESS = '0x0000000000000000000000000000000000000000';
@@ -38,6 +40,7 @@ export async function validateTransferForm(args: {
   effectiveRecipient: string;
   chains: ChainDiscovery[] | undefined;
   multiProvider: MultiProtocolProvider;
+  senderPubKey?: Promise<HexString | undefined>;
   approvalPending?: boolean;
   quoteExpiresAt?: number;
   nativeExecutionFee?: bigint;
@@ -51,6 +54,7 @@ export async function validateTransferForm(args: {
     effectiveRecipient,
     chains,
     multiProvider,
+    senderPubKey,
     approvalPending,
     quoteExpiresAt,
     nativeExecutionFee,
@@ -90,6 +94,7 @@ export async function validateTransferForm(args: {
     sender,
     bestRoute,
     amountAtomic,
+    senderPubKey,
     approvalPending,
     nativeExecutionFee,
   });
@@ -213,6 +218,7 @@ export async function validateBalances(args: {
   srcChainInfo: ChainDiscovery;
   srcToken: UiToken;
   sender: string;
+  senderPubKey?: Promise<HexString | undefined>;
   bestRoute: AugmentedRoute;
   amountAtomic: bigint;
   approvalPending?: boolean;
@@ -223,6 +229,7 @@ export async function validateBalances(args: {
     srcChainInfo,
     srcToken,
     sender,
+    senderPubKey,
     bestRoute,
     amountAtomic,
     approvalPending,
@@ -290,12 +297,20 @@ export async function validateBalances(args: {
 
   const originTx = getRouteTxs(bestRoute.raw).find(isChainRouteTx) ?? null;
   const txValue = originTx ? BigInt(originTx.value) : 0n;
-  const gasCost = await estimateNativeGasCost(multiProvider, {
-    chainName: srcChainInfo.chainName,
-    sender,
-    tx: originTx,
-    approvalPending,
-  });
+  let gasCost: bigint;
+  try {
+    gasCost = await estimateRouteSourceGasCost({
+      multiProvider,
+      chainName: srcChainInfo.chainName,
+      sender,
+      senderPubKey,
+      route: bestRoute.raw,
+      approvalPending,
+    });
+  } catch (err) {
+    logger.warn('Failed to estimate source transaction fee during validation', err as Error);
+    return { form: 'Unable to estimate source transaction fee' };
+  }
   const quotedNativeDebit = srcToken.isNative ? amountIn + sameTokenIgp : nativeFee;
   const nativeRequired = maxBigInt(txValue, quotedNativeDebit) + gasCost + nativeExecutionFee;
   if (nativeRequired > 0n) {

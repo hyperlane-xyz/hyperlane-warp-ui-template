@@ -146,6 +146,66 @@ describe('validateBalances', () => {
     expect(errors).toBeNull();
     expect(readBalanceMock).toHaveBeenCalledTimes(1);
   });
+
+  // Regression: native-token warp routes (e.g. GNET galactica→solana) pay the
+  // interchain fee in the source native token, so the engine folds it into
+  // amountIn (amountOut = amountIn − igp) and tx.value = amountIn. The balance
+  // check must not add the same-token IGP again — the full balance covers it.
+  test('does not double count same-token IGP already included in amountIn for native source', async () => {
+    readBalanceMock.mockResolvedValueOnce(1000n);
+
+    const route: AugmentedRoute = {
+      raw: {
+        steps: [
+          {
+            type: 'bridge',
+            chain: 358974494,
+            destChain: 1399811149,
+            asset: NATIVE_ADDRESS,
+            router: NATIVE_ADDRESS,
+            amountIn: '1000',
+            amountOut: '767',
+            bridgeSymbol: 'STRK',
+            warpRouteId: 'STRK/native',
+            fee: {
+              tokenFee: '0',
+              igpToken: NATIVE_ADDRESS,
+              igpAmount: '233',
+              localNativeFee: '0',
+            },
+          },
+        ],
+        output: '767',
+        outputMin: '767',
+        executionKind: 'warpDirect',
+        connection: { symbol: 'STRK', warpRouteId: 'STRK/native' },
+        gas: { originGas: '0', destGas: '0' },
+        tx: { to: '0x0000000000000000000000000000000000000001', data: '0x', value: '1000' },
+        txs: [],
+        approval: null,
+      } as RouteResponse,
+      feeBreakdown: {
+        components: [
+          { category: 'igp', amount: 233n, chainId: 358974494, tokenAddress: NATIVE_ADDRESS },
+        ],
+        originGas: 0n,
+        destGas: 0n,
+      },
+      hasFixedOutput: true,
+    };
+
+    const errors = await validateBalances({
+      multiProvider: multiProvider(),
+      srcChainInfo: starknetChain(),
+      srcToken: strkToken(),
+      sender: '0xsender',
+      bestRoute: route,
+      amountAtomic: 1000n,
+    });
+
+    expect(errors).toBeNull();
+    expect(readBalanceMock).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('validateQuote', () => {

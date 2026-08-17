@@ -235,7 +235,6 @@ export async function validateBalances(args: {
 
   const igpByToken = aggregateIgp(bestRoute.feeBreakdown.components);
   const srcKey = balanceKey(srcToken.chainId, srcToken.address);
-  const sameTokenIgp = igpByToken.get(srcKey) ?? 0n;
   const nativeFee = igpByToken.get(balanceKey(srcChainInfo.id, NATIVE_ADDRESS)) ?? 0n;
 
   let srcBalance: bigint | null;
@@ -257,11 +256,16 @@ export async function validateBalances(args: {
     return null;
   }
 
-  if (srcBalance != null && amountIn + sameTokenIgp > srcBalance) {
+  // amountIn is the gross debit from the sender: the engine already nets any
+  // same-token fee out of the output (amountOut = amountIn − same-token fees),
+  // so an interchain fee denominated in the source token (e.g. native-token
+  // warp routes where IGP is paid in the native gas token) is already included
+  // in amountIn. Adding it again would double-count the fee.
+  if (srcBalance != null && amountIn > srcBalance) {
     return {
       amount: formatInsufficientBalanceMessage({
         base: `Insufficient ${srcToken.symbol} balance`,
-        deficit: amountIn + sameTokenIgp - srcBalance,
+        deficit: amountIn - srcBalance,
         decimals: srcToken.decimals,
         symbol: srcToken.symbol,
       }),
@@ -296,7 +300,7 @@ export async function validateBalances(args: {
     tx: originTx,
     approvalPending,
   });
-  const quotedNativeDebit = srcToken.isNative ? amountIn + sameTokenIgp : nativeFee;
+  const quotedNativeDebit = srcToken.isNative ? amountIn : nativeFee;
   const nativeRequired = maxBigInt(txValue, quotedNativeDebit) + gasCost + nativeExecutionFee;
   if (nativeRequired > 0n) {
     let nativeBalance: bigint | null = srcToken.isNative ? srcBalance : null;

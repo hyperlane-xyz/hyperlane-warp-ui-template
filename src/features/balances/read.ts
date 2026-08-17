@@ -3,7 +3,7 @@ import { isEVMLike, ProtocolType } from '@hyperlane-xyz/utils';
 
 import { readAleoTokenBalance } from './aleo';
 import { readCosmosTokenBalance } from './cosmos';
-import { estimateEvmGasCostForUnits, readEvmBalance } from './evm';
+import { readEvmBalance } from './evm';
 import { readRadixTokenBalance } from './radix';
 import { readSealevelTokenBalance } from './sealevel';
 import { readStarknetTokenBalance } from './starknet';
@@ -39,13 +39,4 @@ export async function readBalance(
   if (protocol === ProtocolType.Radix) return readRadixTokenBalance(multiProvider, args);
   if (protocol === ProtocolType.Aleo) return readAleoTokenBalance(multiProvider, args);
   return null;
-}
-
-export async function estimateNativeGasCostForUnits(
-  multiProvider: MultiProtocolProvider,
-  args: { chainName: string; gasUnits: bigint },
-): Promise<bigint> {
-  const protocol = multiProvider.tryGetProtocol(args.chainName);
-  if (protocol !== ProtocolType.Ethereum) return 0n;
-  return estimateEvmGasCostForUnits(multiProvider, args);
 }

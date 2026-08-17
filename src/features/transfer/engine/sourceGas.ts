@@ -4,8 +4,7 @@ import { type HexString, ProtocolType } from '@hyperlane-xyz/utils';
 import { logger } from '../../../utils/logger';
 import { getRouteTxs } from '../../api/routeTx';
 import type { RouteResponse } from '../../api/types';
-import { PENDING_APPROVAL_GAS_BUDGET } from '../../balances/evm';
-import { estimateNativeGasCostForUnits } from '../../balances/read';
+import { estimateEvmGasCostForUnits, PENDING_APPROVAL_GAS_BUDGET } from '../../balances/evm';
 import type { FeeBreakdown } from './types';
 import { getRouteTxProviderType, toWalletTx } from './useTransfer';
 
@@ -43,38 +42,41 @@ export async function estimateRouteSourceGasCost({
 }): Promise<bigint> {
   const protocol = multiProvider.tryGetProtocol(chainName);
   if (!protocol) throw new Error(`Unknown source protocol for ${chainName}`);
-  const useEvmBudget = protocol === ProtocolType.Ethereum && approvalPending;
 
-  if (!useEvmBudget) {
-    try {
-      const txType = getRouteTxProviderType(protocol as ProtocolType);
-      const rpcUrl = multiProvider.tryGetChainMetadata(chainName)?.rpcUrls?.[0]?.http;
-      const publicKey = await senderPubKey;
-      const estimates = await Promise.all(
-        getRouteTxs(route).map(async (routeTx) => {
-          const transaction = (await toWalletTx(routeTx, txType, {
-            sender,
-            rpcUrl,
-          })) as TypedTransaction;
-          return multiProvider.estimateTransactionFee({
-            chainNameOrId: chainName,
-            transaction,
-            sender,
-            senderPubKey: publicKey,
-          });
-        }),
-      );
-      return estimates.reduce((total, estimate) => total + BigInt(estimate.fee), 0n);
-    } catch (err) {
-      logger.warn('Failed to estimate source transaction fee', err as Error);
-      if (protocol !== ProtocolType.Ethereum) {
-        throw new Error('Unable to estimate source transaction fee', { cause: err });
-      }
-    }
+  if (protocol === ProtocolType.Ethereum && approvalPending) {
+    return estimateEvmGasCostForUnits(multiProvider, {
+      chainName,
+      gasUnits: PENDING_APPROVAL_GAS_BUDGET,
+    });
   }
 
-  return estimateNativeGasCostForUnits(multiProvider, {
-    chainName,
-    gasUnits: approvalPending ? PENDING_APPROVAL_GAS_BUDGET : BigInt(route.gas.originGas),
-  });
+  try {
+    const txType = getRouteTxProviderType(protocol as ProtocolType);
+    const rpcUrl = multiProvider.tryGetChainMetadata(chainName)?.rpcUrls?.[0]?.http;
+    const publicKey = await senderPubKey;
+    const estimates = await Promise.all(
+      getRouteTxs(route).map(async (routeTx) => {
+        const transaction = (await toWalletTx(routeTx, txType, {
+          sender,
+          rpcUrl,
+        })) as TypedTransaction;
+        return multiProvider.estimateTransactionFee({
+          chainNameOrId: chainName,
+          transaction,
+          sender,
+          senderPubKey: publicKey,
+        });
+      }),
+    );
+    return estimates.reduce((total, estimate) => total + BigInt(estimate.fee), 0n);
+  } catch (err) {
+    logger.warn('Failed to estimate source transaction fee', err as Error);
+    if (protocol !== ProtocolType.Ethereum) {
+      throw new Error('Unable to estimate source transaction fee', { cause: err });
+    }
+    return estimateEvmGasCostForUnits(multiProvider, {
+      chainName,
+      gasUnits: BigInt(route.gas.originGas),
+    });
+  }
 }

@@ -10,8 +10,9 @@ const { estimateForUnitsMock, toWalletTxMock } = vi.hoisted(() => ({
   toWalletTxMock: vi.fn(),
 }));
 
-vi.mock('../../balances/read', () => ({
-  estimateNativeGasCostForUnits: estimateForUnitsMock,
+vi.mock('../../balances/evm', () => ({
+  estimateEvmGasCostForUnits: estimateForUnitsMock,
+  PENDING_APPROVAL_GAS_BUDGET: 600_000n,
 }));
 
 vi.mock('../../../utils/logger', () => ({

@@ -131,20 +131,200 @@ describe('validateBalances', () => {
     expect(errors).toBeNull();
   });
 
-  test('does not double count native IGP fees for native source tokens', async () => {
-    readBalanceMock.mockResolvedValueOnce(10_000_001n);
+  test('does not add embedded IGP on top of EVM native bridge input', async () => {
+    readBalanceMock.mockResolvedValueOnce(1_000n);
+
+    const errors = await validateBalances({
+      multiProvider: multiProvider(ProtocolType.Ethereum),
+      srcChainInfo: evmChain(),
+      srcToken: evmNativeToken(),
+      sender: '0xsender',
+      bestRoute: bridgeRoute({
+        chainId: 1,
+        asset: NATIVE_ADDRESS,
+        amountIn: 1_000n,
+        amountOut: 767n,
+        igpAmount: 233n,
+        igpToken: NATIVE_ADDRESS,
+      }),
+      amountAtomic: 1_000n,
+    });
+
+    expect(errors).toBeNull();
+    expect(readBalanceMock).toHaveBeenCalledTimes(1);
+  });
+
+  test('keeps non-EVM native IGP fees on top of bridge input', async () => {
+    readBalanceMock.mockResolvedValueOnce(1_006n);
 
     const errors = await validateBalances({
       multiProvider: multiProvider(),
       srcChainInfo: starknetChain(),
       srcToken: strkToken(),
       sender: '0xsender',
-      bestRoute: routeWithNativeFee(1n),
-      amountAtomic: 10n,
+      bestRoute: bridgeRoute({
+        asset: NATIVE_ADDRESS,
+        amountIn: 1_000n,
+        amountOut: 1_000n,
+        igpAmount: 7n,
+        igpToken: NATIVE_ADDRESS,
+      }),
+      amountAtomic: 1_000n,
+    });
+
+    expect(errors).toEqual({
+      amount: 'Insufficient STRK balance (need 0.000000000000000001 more STRK)',
+    });
+  });
+
+  test('does not add embedded IGP on top of ERC20 bridge input', async () => {
+    readBalanceMock.mockResolvedValueOnce(1_000n);
+
+    const errors = await validateBalances({
+      multiProvider: multiProvider(ProtocolType.Sealevel),
+      srcChainInfo: solanaChain(),
+      srcToken: bonkToken({
+        chainId: 1399811149,
+        chainName: 'solanamainnet',
+        address: BONK_ADDRESS,
+      }),
+      sender: 'ApMsTRbsbBpsmzpht4JpzudaBEef4AqW1GfnEf6az6h9',
+      bestRoute: bridgeRoute({
+        chainId: 1399811149,
+        asset: BONK_ADDRESS,
+        amountIn: 1_000n,
+        amountOut: 993n,
+        igpAmount: 7n,
+        igpToken: BONK_ADDRESS,
+      }),
+      amountAtomic: 1_000n,
     });
 
     expect(errors).toBeNull();
     expect(readBalanceMock).toHaveBeenCalledTimes(1);
+  });
+
+  test('recognizes embedded ERC20 IGP reported with the warp router alias', async () => {
+    const collateralAddress = '0x1111111111111111111111111111111111111111';
+    const routerAddress = '0x2222222222222222222222222222222222222222';
+    readBalanceMock.mockResolvedValueOnce(1_000n);
+
+    const errors = await validateBalances({
+      multiProvider: multiProvider(ProtocolType.Ethereum),
+      srcChainInfo: evmChain(),
+      srcToken: bonkToken({ chainId: 1, chainName: 'ethereum', address: collateralAddress }),
+      sender: '0xsender',
+      bestRoute: bridgeRoute({
+        chainId: 1,
+        asset: collateralAddress,
+        router: routerAddress,
+        amountIn: 1_000n,
+        amountOut: 993n,
+        igpAmount: 7n,
+        igpToken: routerAddress,
+      }),
+      amountAtomic: 1_000n,
+    });
+
+    expect(errors).toBeNull();
+    expect(readBalanceMock).toHaveBeenCalledTimes(1);
+  });
+
+  test('still requires separately funded ERC20 IGP from the wallet', async () => {
+    const collateralAddress = '0x1111111111111111111111111111111111111111';
+    const feeTokenAddress = '0x3333333333333333333333333333333333333333';
+    readBalanceMock.mockResolvedValueOnce(1_000n).mockResolvedValueOnce(6n);
+
+    const errors = await validateBalances({
+      multiProvider: multiProvider(ProtocolType.Ethereum),
+      srcChainInfo: evmChain(),
+      srcToken: bonkToken({ chainId: 1, chainName: 'ethereum', address: collateralAddress }),
+      sender: '0xsender',
+      bestRoute: bridgeRoute({
+        chainId: 1,
+        asset: collateralAddress,
+        amountIn: 1_000n,
+        amountOut: 1_000n,
+        igpAmount: 7n,
+        igpToken: feeTokenAddress,
+      }),
+      amountAtomic: 1_000n,
+    });
+
+    expect(errors).toEqual({ amount: 'Insufficient balance to cover interchain gas fee' });
+    expect(readBalanceMock).toHaveBeenNthCalledWith(
+      2,
+      expect.anything(),
+      expect.objectContaining({ tokenAddress: feeTokenAddress, isNative: false }),
+    );
+  });
+
+  test('does not require bridge-token IGP from the wallet after an ERC20 origin swap', async () => {
+    const srcTokenAddress = '0x1111111111111111111111111111111111111111';
+    const bridgeTokenAddress = '0x2222222222222222222222222222222222222222';
+    readBalanceMock.mockResolvedValueOnce(1_000n);
+
+    const errors = await validateBalances({
+      multiProvider: multiProvider(ProtocolType.Ethereum),
+      srcChainInfo: evmChain(),
+      srcToken: bonkToken({ chainId: 1, chainName: 'ethereum', address: srcTokenAddress }),
+      sender: '0xsender',
+      bestRoute: originSwapRoute({
+        srcToken: srcTokenAddress,
+        bridgeToken: bridgeTokenAddress,
+        igpToken: bridgeTokenAddress,
+        igpAmount: 7n,
+      }),
+      amountAtomic: 1_000n,
+    });
+
+    expect(errors).toBeNull();
+    expect(readBalanceMock).toHaveBeenCalledTimes(1);
+  });
+
+  test('keeps native IGP on top when a native origin swap bridges an ERC20', async () => {
+    const bridgeTokenAddress = '0x2222222222222222222222222222222222222222';
+    readBalanceMock.mockResolvedValueOnce(1_006n);
+
+    const errors = await validateBalances({
+      multiProvider: multiProvider(ProtocolType.Ethereum),
+      srcChainInfo: evmChain(),
+      srcToken: evmNativeToken(),
+      sender: '0xsender',
+      bestRoute: originSwapRoute({
+        srcToken: NATIVE_ADDRESS,
+        bridgeToken: bridgeTokenAddress,
+        igpToken: NATIVE_ADDRESS,
+        igpAmount: 7n,
+      }),
+      amountAtomic: 1_000n,
+    });
+
+    expect(errors).toEqual({
+      amount: 'Insufficient ETH balance (need 0.000000000000000001 more ETH)',
+    });
+  });
+
+  test.each([
+    { name: 'native', token: evmNativeToken(), txValue: '1000' },
+    {
+      name: 'ERC20',
+      token: bonkToken({ chainId: 1, chainName: 'ethereum' }),
+      txValue: '0',
+    },
+  ])('keeps fee-free $name swap balance validation unchanged', async ({ token, txValue }) => {
+    readBalanceMock.mockResolvedValueOnce(1_000n);
+
+    const errors = await validateBalances({
+      multiProvider: multiProvider(ProtocolType.Ethereum),
+      srcChainInfo: evmChain(),
+      srcToken: token,
+      sender: '0xsender',
+      bestRoute: swapRoute(token.address, txValue),
+      amountAtomic: 1_000n,
+    });
+
+    expect(errors).toBeNull();
   });
 });
 
@@ -338,7 +518,23 @@ function strkToken(): UiToken {
     symbol: 'STRK',
     decimals: 18,
     isNative: true,
+    standard: 'StarknetHypNative',
     name: 'Starknet Token',
+    addressOrDenom: NATIVE_ADDRESS,
+  };
+}
+
+function evmNativeToken(): UiToken {
+  return {
+    ...bonkToken(),
+    chainId: 1,
+    chainName: 'ethereum',
+    address: NATIVE_ADDRESS,
+    symbol: 'ETH',
+    decimals: 18,
+    isNative: true,
+    standard: 'EvmHypNative',
+    name: 'Ether',
     addressOrDenom: NATIVE_ADDRESS,
   };
 }
@@ -348,6 +544,28 @@ function routeWithNativeFee(
   chainId = 358974494,
   tx: RouteResponse['tx'] = null,
 ): AugmentedRoute {
+  return bridgeRoute({ chainId, igpAmount: nativeFee, tx });
+}
+
+function bridgeRoute({
+  chainId = 358974494,
+  asset = BONK_ADDRESS,
+  router = BONK_ADDRESS,
+  amountIn = 10_000_000n,
+  amountOut = amountIn,
+  igpAmount = 0n,
+  igpToken = NATIVE_ADDRESS,
+  tx = null,
+}: {
+  chainId?: number;
+  asset?: string;
+  router?: string;
+  amountIn?: bigint;
+  amountOut?: bigint;
+  igpAmount?: bigint;
+  igpToken?: string;
+  tx?: RouteResponse['tx'];
+}): AugmentedRoute {
   return {
     raw: {
       steps: [
@@ -355,22 +573,22 @@ function routeWithNativeFee(
           type: 'bridge',
           chain: chainId,
           destChain: 1399811149,
-          asset: BONK_ADDRESS,
-          router: BONK_ADDRESS,
-          amountIn: '10000000',
-          amountOut: '10000000',
+          asset,
+          router,
+          amountIn: amountIn.toString(),
+          amountOut: amountOut.toString(),
           bridgeSymbol: 'Bonk',
           warpRouteId: 'Bonk/starknet',
           fee: {
             tokenFee: '0',
-            igpToken: NATIVE_ADDRESS,
-            igpAmount: nativeFee.toString(),
+            igpToken,
+            igpAmount: igpAmount.toString(),
             localNativeFee: '0',
           },
         },
       ],
-      output: '10000000',
-      outputMin: '10000000',
+      output: amountOut.toString(),
+      outputMin: amountOut.toString(),
       executionKind: 'sdkWarp',
       connection: { symbol: 'Bonk', warpRouteId: 'Bonk/starknet' },
       gas: { originGas: '200000', destGas: '0' },
@@ -382,14 +600,90 @@ function routeWithNativeFee(
       components: [
         {
           category: 'igp',
-          amount: nativeFee,
+          amount: igpAmount,
           chainId,
-          tokenAddress: NATIVE_ADDRESS,
+          tokenAddress: igpToken,
         },
       ],
       originGas: 200000n,
       destGas: 0n,
     },
     hasFixedOutput: true,
+  };
+}
+
+function originSwapRoute({
+  srcToken,
+  bridgeToken,
+  igpToken,
+  igpAmount,
+}: {
+  srcToken: string;
+  bridgeToken: string;
+  igpToken: string;
+  igpAmount: bigint;
+}): AugmentedRoute {
+  const bridge = bridgeRoute({
+    chainId: 1,
+    asset: bridgeToken,
+    amountIn: 900n,
+    amountOut: 900n - (igpToken === bridgeToken ? igpAmount : 0n),
+    igpAmount,
+    igpToken,
+  });
+  return {
+    ...bridge,
+    raw: {
+      ...bridge.raw,
+      steps: [
+        {
+          type: 'swap',
+          chain: 1,
+          dex: 'test',
+          tokenIn: srcToken,
+          tokenOut: bridgeToken,
+          amountIn: '1000',
+          amountOut: '900',
+          path: [srcToken, bridgeToken],
+          poolCount: 1,
+        },
+        ...bridge.raw.steps,
+      ],
+    },
+    hasFixedOutput: false,
+  };
+}
+
+function swapRoute(tokenIn: string, txValue: string): AugmentedRoute {
+  return {
+    raw: {
+      steps: [
+        {
+          type: 'swap',
+          chain: 1,
+          dex: 'test',
+          tokenIn,
+          tokenOut: '0x2222222222222222222222222222222222222222',
+          amountIn: '1000',
+          amountOut: '900',
+          path: [tokenIn, '0x2222222222222222222222222222222222222222'],
+          poolCount: 1,
+        },
+      ],
+      output: '900',
+      outputMin: '891',
+      executionKind: 'universalRouter',
+      connection: null,
+      gas: { originGas: '200000', destGas: '0' },
+      tx: {
+        to: '0x0000000000000000000000000000000000000001',
+        data: '0x',
+        value: txValue,
+      },
+      txs: [],
+      approval: null,
+    },
+    feeBreakdown: { components: [], originGas: 200000n, destGas: 0n },
+    hasFixedOutput: false,
   };
 }

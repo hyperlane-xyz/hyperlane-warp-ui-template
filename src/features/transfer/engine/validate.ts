@@ -17,7 +17,7 @@ import { formatDisplayAmount } from '../../balances/utils';
 import { isChainDisabled } from '../../chains/utils';
 import type { UiToken } from '../../tokens/types';
 import { tokenKey } from '../../tokens/utils';
-import type { AugmentedRoute, FeeComponent, TransferFormValues } from './types';
+import type { AugmentedRoute, TransferFormValues } from './types';
 
 const NATIVE_ADDRESS = '0x0000000000000000000000000000000000000000';
 
@@ -233,7 +233,7 @@ export async function validateBalances(args: {
   const amountIn =
     initialStep && 'amountIn' in initialStep ? BigInt(initialStep.amountIn) : amountAtomic;
 
-  const igpByToken = aggregateIgp(bestRoute.feeBreakdown.components);
+  const igpByToken = aggregateExternalIgp(bestRoute.raw, srcChainInfo.protocol as ProtocolType);
   const srcKey = balanceKey(srcToken.chainId, srcToken.address);
   const sameTokenIgp = igpByToken.get(srcKey) ?? 0n;
   const nativeFee = igpByToken.get(balanceKey(srcChainInfo.id, NATIVE_ADDRESS)) ?? 0n;
@@ -347,14 +347,47 @@ function formatInsufficientBalanceMessage({
   return `${base} (need ${formatDisplayAmount(deficit, decimals)} more ${symbol})`;
 }
 
-function aggregateIgp(components: FeeComponent[]): Map<string, bigint> {
+function aggregateExternalIgp(
+  route: AugmentedRoute['raw'],
+  originProtocol: ProtocolType,
+): Map<string, bigint> {
   const map = new Map<string, bigint>();
-  for (const c of components) {
-    if (c.category !== 'igp') continue;
-    const k = balanceKey(c.chainId, c.tokenAddress);
-    map.set(k, (map.get(k) ?? 0n) + c.amount);
+  for (const step of route.steps) {
+    if (step.type !== 'bridge') continue;
+
+    const igpAmount = BigInt(step.fee.igpAmount);
+    if (igpAmount > 0n && !isIgpEmbeddedInBridgeInput(step, originProtocol)) {
+      addFee(map, step.chain, step.fee.igpToken, igpAmount);
+    }
+
+    const localNativeFee = BigInt(step.fee.localNativeFee);
+    if (localNativeFee > 0n) {
+      addFee(map, step.chain, NATIVE_ADDRESS, localNativeFee);
+    }
   }
   return map;
+}
+
+function isIgpEmbeddedInBridgeInput(
+  step: Extract<AugmentedRoute['raw']['steps'][number], { type: 'bridge' }>,
+  originProtocol: ProtocolType,
+): boolean {
+  const igpKey = balanceKey(step.chain, step.fee.igpToken);
+  const matchesAsset = balanceKey(step.chain, step.asset) === igpKey;
+  const matchesNonNativeRouter =
+    !isNativeAddress(step.asset) && balanceKey(step.chain, step.router) === igpKey;
+  if (!matchesAsset && !matchesNonNativeRouter) {
+    return false;
+  }
+
+  // EVM-like native routers pay IGP from msg.value, reducing bridge output.
+  // Non-EVM native adapters debit IGP separately and preserve amountOut.
+  return !isNativeAddress(step.asset) || isEVMLike(originProtocol);
+}
+
+function addFee(map: Map<string, bigint>, chainId: number, address: string, amount: bigint): void {
+  const key = balanceKey(chainId, address);
+  map.set(key, (map.get(key) ?? 0n) + amount);
 }
 
 function balanceKey(chainId: number, address: string): string {

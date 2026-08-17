@@ -2,7 +2,13 @@ import { describe, expect, test } from 'vitest';
 
 import { getAvailableRoutesQuery, isBridgeOnlyToken } from './hooks';
 import type { UiToken } from './types';
-import { getRoutePrefillToken, getTokenRouteKind, mergeRouteTokensFirst, tokenKey } from './utils';
+import {
+  getRoutePrefillToken,
+  getTokenRouteKind,
+  mergeRouteTokensFirst,
+  parseTokenKey,
+  tokenKey,
+} from './utils';
 
 describe('tokenKey', () => {
   test('lowercases EVM addresses', () => {
@@ -15,6 +21,13 @@ describe('tokenKey', () => {
     expect(tokenKey(101, 'So11111111111111111111111111111111111111112')).toBe(
       '101-So11111111111111111111111111111111111111112',
     );
+  });
+
+  test('parses addresses containing hyphens', () => {
+    expect(parseTokenKey(tokenKey(101, 'factory/osmo1issuer/sub-denom'))).toEqual({
+      chainId: 101,
+      address: 'factory/osmo1issuer/sub-denom',
+    });
   });
 });
 

@@ -25,6 +25,7 @@ import { logger } from '../../../utils/logger';
 import { updateQueryParams } from '../../../utils/queryParams';
 import { trackTransferValidationFailed, trackUnsupportedRouteEvent } from '../../analytics/utils';
 import { useChains } from '../../api/hooks';
+import { getRouteTxs } from '../../api/routeTx';
 import type { RouteTx } from '../../api/types';
 import { useTokenBalance } from '../../balances/hooks';
 import { readBalance } from '../../balances/read';
@@ -51,6 +52,7 @@ import {
   FinalTransferStatuses,
   TransferStatus,
   type AugmentedRoute,
+  type FeeBreakdown,
   type TransferFormValues,
   type TransferHistoryItem,
 } from './types';
@@ -677,6 +679,7 @@ function TransferFormContent() {
       <ReviewDetails
         isReview={isReview}
         bestRoute={bestRoute}
+        feeBreakdown={displayedFeeBreakdown}
         srcToken={srcToken}
         dstToken={dstToken}
         approvalStatus={status.phase}
@@ -726,10 +729,6 @@ function TransferFormContent() {
       <FormSubmitDispatcher onContinue={onContinue} isReview={isReview} />
     </>
   );
-}
-
-function getRouteTxs(route: AugmentedRoute): RouteTx[] {
-  return route.raw.txs?.length ? route.raw.txs : route.raw.tx ? [route.raw.tx] : [];
 }
 
 function routeTxReviewLabel(tx: RouteTx, symbol: string, index: number, count: number): string {
@@ -1009,6 +1008,7 @@ function FlipTokensButton({ onClick, disabled }: { onClick: () => void; disabled
 function ReviewDetails({
   isReview,
   bestRoute,
+  feeBreakdown,
   srcToken,
   dstToken,
   approvalStatus,
@@ -1016,6 +1016,7 @@ function ReviewDetails({
 }: {
   isReview: boolean;
   bestRoute: AugmentedRoute | undefined;
+  feeBreakdown: FeeBreakdown | undefined;
   srcToken: UiToken | undefined;
   dstToken: UiToken | undefined;
   approvalStatus: ApprovalPhase;
@@ -1038,6 +1039,7 @@ function ReviewDetails({
           {bestRoute ? (
             <ReviewTransactions
               route={bestRoute}
+              feeBreakdown={feeBreakdown ?? bestRoute.feeBreakdown}
               srcToken={srcToken}
               dstToken={dstToken}
               approvalStatus={approvalStatus}
@@ -1054,12 +1056,14 @@ function ReviewDetails({
 
 function ReviewTransactions({
   route,
+  feeBreakdown,
   srcToken,
   dstToken,
   approvalStatus,
   approval,
 }: {
   route: AugmentedRoute;
+  feeBreakdown: FeeBreakdown;
   srcToken: UiToken | undefined;
   dstToken: UiToken | undefined;
   approvalStatus: ApprovalPhase;
@@ -1075,7 +1079,7 @@ function ReviewTransactions({
   const approvalSpender = approval?.spender;
   const dstDecimals = dstToken?.decimals ?? 18;
   const dstSymbol = dstToken?.symbol ?? '';
-  const routeTxs = getRouteTxs(route);
+  const routeTxs = getRouteTxs(route.raw);
 
   let txNum = 0;
   return (
@@ -1134,7 +1138,7 @@ function ReviewTransactions({
               <span>{`${formatDisplayAmount(BigInt(route.raw.outputMin), dstDecimals)} ${dstSymbol}`}</span>
             </p>
           )}
-          {route.feeBreakdown.components
+          {feeBreakdown.components
             .filter((c) => c.amount > 0n)
             .map((c, i) => {
               const label = FEE_CATEGORY_LABEL[c.category];

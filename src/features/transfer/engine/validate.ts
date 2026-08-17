@@ -16,6 +16,7 @@ import { readBalance } from '../../balances/read';
 import { formatDisplayAmount } from '../../balances/utils';
 import { isChainDisabled } from '../../chains/utils';
 import type { UiToken } from '../../tokens/types';
+import { parseTokenKey } from '../../tokens/utils';
 import { feeKey, getSourceFunding, isNativeAddress, NATIVE_ADDRESS } from './routeFunding';
 import type { AugmentedRoute, TransferFormValues } from './types';
 
@@ -257,9 +258,11 @@ export async function validateBalances(args: {
 
   for (const [key, sum] of funding.externalFees) {
     if (key === srcKey) continue;
-    const [chainIdStr, addr = ''] = key.split('-');
+    const token = parseTokenKey(key);
+    if (!token) continue;
+    const { chainId, address: addr } = token;
     if (isNativeAddress(addr)) continue;
-    if (Number(chainIdStr) !== srcChainInfo.id) continue;
+    if (chainId !== srcChainInfo.id) continue;
     try {
       const bal = await readBalance(multiProvider, {
         chainName: srcChainInfo.chainName,

@@ -11,6 +11,15 @@ export function tokenKey(chainId: number, address: string): string {
   return `${chainId}-${normalizedAddress}`;
 }
 
+export function parseTokenKey(key: string): { chainId: number; address: string } | undefined {
+  const separator = key.indexOf('-');
+  if (separator <= 0) return undefined;
+  const chainId = Number(key.slice(0, separator));
+  const address = key.slice(separator + 1);
+  if (!Number.isSafeInteger(chainId) || !address) return undefined;
+  return { chainId, address };
+}
+
 export function mergeRouteTokensFirst(routeTokens: UiToken[], tokens: UiToken[]): UiToken[] {
   if (!routeTokens.length) return tokens;
   const seen = new Set<string>();

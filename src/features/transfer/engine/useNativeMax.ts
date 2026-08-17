@@ -136,6 +136,8 @@ export async function calculateNativeMaxAmount({
   const route = quote.routes[0]?.raw;
   if (!route) throw new Error('No safe route available for the full balance');
 
+  // EVM-like full-balance routes have no gas headroom, so their estimator
+  // intentionally prices the route's gas budget instead of simulating.
   const sourceFee = await estimateSourceFee(route);
   if (sourceFee <= 0n) throw new Error('Source fee estimate is unavailable');
 

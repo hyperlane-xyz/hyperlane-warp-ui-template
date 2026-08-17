@@ -308,7 +308,7 @@ function compoundSlippageMin(output: bigint, slippageBps: number, swapStepCount:
   return (output * numerator) / denominator;
 }
 
-function isQuoteRequestReady(v: TransferFormValues, sender: string | undefined): boolean {
+export function isQuoteRequestReady(v: TransferFormValues, sender: string | undefined): boolean {
   // Non-empty checks only — engine validates / normalizes per-protocol address shapes.
   // Recipient is the effective recipient (custom input or connected destination wallet);
   // gate on it like sender so we don't quote a route the user can't yet receive.

@@ -88,11 +88,39 @@ describe('estimateRouteSourceFee', () => {
     ).rejects.toThrow('Unable to estimate source fee on solana');
   });
 
+  test('rejects a zero Solana fee instead of treating the route as fee-free', async () => {
+    const multiProvider = provider(ProtocolType.Sealevel, vi.fn().mockResolvedValue({ fee: 0n }));
+
+    await expect(
+      estimateRouteSourceFee({
+        multiProvider,
+        chainName: 'solana',
+        sender: 'sender',
+        route: testRoute(),
+        approvalAmounts: [],
+      }),
+    ).rejects.toThrow('Unable to estimate source fee on solana');
+  });
+
   test('uses engine gas units only when full-balance EVM simulation fails', async () => {
     const multiProvider = provider(
       ProtocolType.Ethereum,
       vi.fn().mockRejectedValue(new Error('insufficient funds')),
     );
+
+    await expect(
+      estimateRouteSourceFee({
+        multiProvider,
+        chainName: 'ethereum',
+        sender: '0xsender',
+        route: testRoute(),
+        approvalAmounts: [],
+      }),
+    ).resolves.toBe(400_000n);
+  });
+
+  test('uses the EVM gas budget fallback when the provider returns zero', async () => {
+    const multiProvider = provider(ProtocolType.Ethereum, vi.fn().mockResolvedValue({ fee: 0n }));
 
     await expect(
       estimateRouteSourceFee({

@@ -49,7 +49,9 @@ export async function estimateRouteSourceFee({
         }),
       ),
     );
-    return estimates.reduce((total, estimate) => total + BigInt(estimate.fee), 0n);
+    const total = estimates.reduce((sum, estimate) => sum + BigInt(estimate.fee), 0n);
+    if (total <= 0n) throw new Error('Source fee estimate is empty');
+    return total;
   } catch (cause) {
     if (protocol !== ProtocolType.Ethereum) {
       throw new Error(`Unable to estimate source fee on ${chainName}`, { cause });

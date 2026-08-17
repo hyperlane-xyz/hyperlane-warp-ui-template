@@ -1,7 +1,48 @@
 import { describe, expect, test } from 'vitest';
 
 import type { RouteResponse } from '../../api/types';
-import { isQuoteSettledForSecurity, quoteExpiryDelayMs, validateRouteAmounts } from './useQuote';
+import type { TransferFormValues } from './types';
+import {
+  isQuoteRequestReady,
+  isQuoteSettledForSecurity,
+  quoteExpiryDelayMs,
+  validateRouteAmounts,
+} from './useQuote';
+
+function readyValues(overrides: Partial<TransferFormValues> = {}): TransferFormValues {
+  return {
+    srcChain: 1,
+    dstChain: 2,
+    srcToken: '0xToken',
+    dstToken: '0xToken',
+    amount: '1',
+    recipient: '0xRecipient',
+    slippageBps: 100,
+    ...overrides,
+  };
+}
+
+describe('isQuoteRequestReady', () => {
+  const sender = '0xSender';
+
+  test('is ready when sender and recipient are both present', () => {
+    expect(isQuoteRequestReady(readyValues(), sender)).toBe(true);
+  });
+
+  test('is not ready without a sender', () => {
+    expect(isQuoteRequestReady(readyValues(), undefined)).toBe(false);
+  });
+
+  test('is not ready when recipient is empty', () => {
+    expect(isQuoteRequestReady(readyValues({ recipient: '' }), sender)).toBe(false);
+  });
+
+  test('becomes ready once a recipient is set', () => {
+    const empty = readyValues({ recipient: '' });
+    expect(isQuoteRequestReady(empty, sender)).toBe(false);
+    expect(isQuoteRequestReady({ ...empty, recipient: '0xRecipient' }, sender)).toBe(true);
+  });
+});
 
 describe('quoteExpiryDelayMs', () => {
   test('returns time remaining until quote expiry', () => {

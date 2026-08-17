@@ -1,26 +1,21 @@
 import { SpinnerIcon } from '@hyperlane-xyz/widgets';
-import { useFormikContext } from 'formik';
-import { formatUnits } from 'viem';
 
 import type { UiToken } from '../../tokens/types';
-import type { TransferFormValues } from './types';
 
 interface Props {
   balance?: bigint;
   isLoading?: boolean;
   disabled?: boolean;
   token?: UiToken;
-  onMax?: (balance: bigint, token: UiToken) => void;
+  onMax: (balance: bigint, token: UiToken) => void;
 }
 
 export function MaxButton({ balance, isLoading, disabled, token, onMax }: Props) {
-  const { setFieldValue } = useFormikContext<TransferFormValues>();
   const isDisabled = disabled || isLoading || balance == null || balance <= 0n || !token;
 
   const onClick = () => {
     if (isDisabled || balance == null || !token) return;
-    if (onMax) onMax(balance, token);
-    else setFieldValue('amount', formatUnits(balance, token.decimals));
+    onMax(balance, token);
   };
 
   return (

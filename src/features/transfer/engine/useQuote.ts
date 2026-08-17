@@ -1,5 +1,5 @@
 import { useTimeout } from '@hyperlane-xyz/widgets';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo, useState } from 'react';
 import { bytesToHex, parseUnits, type Hex } from 'viem';
 
@@ -40,6 +40,7 @@ interface UseQuoteArgs {
 }
 
 export function useQuote({ values, sender, pause }: UseQuoteArgs) {
+  const queryClient = useQueryClient();
   const [now, setNow] = useState(() => Date.now());
   const chainMetadata = useStore((state) => state.chainMetadata);
   const chainAddresses = useStore((state) => state.chainAddresses);
@@ -97,27 +98,15 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
     [values.srcChain, values.dstChain, values.srcToken, values.dstToken],
   );
 
-  const query = useQuery<QuoteResponse>({
-    queryKey: [
-      'router',
-      'quote',
-      values.srcChain,
-      values.dstChain,
-      values.srcToken,
-      values.dstToken,
-      amountAtomic?.toString(),
-      engineSender ?? null,
-      engineRecipient ?? null,
-      values.slippageBps,
-    ],
-    queryFn: ({ signal }) =>
+  const fetchRawQuote = useCallback(
+    (amount: bigint, signal?: AbortSignal) =>
       routerClient.quote(
         {
           srcChain: values.srcChain!,
           dstChain: values.dstChain!,
           srcToken: values.srcToken,
           dstToken: values.dstToken,
-          amount: amountAtomic!,
+          amount,
           sender: engineSender!,
           recipient: engineRecipient,
           slippageBps: values.slippageBps,
@@ -125,81 +114,122 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
         },
         { signal },
       ),
+    [
+      commitmentSalt,
+      engineRecipient,
+      engineSender,
+      values.dstChain,
+      values.dstToken,
+      values.slippageBps,
+      values.srcChain,
+      values.srcToken,
+    ],
+  );
+
+  const query = useQuery<QuoteResponse>({
+    queryKey: quoteQueryKey(values, amountAtomic, engineSender, engineRecipient, commitmentSalt),
+    queryFn: ({ signal }) => fetchRawQuote(amountAtomic!, signal),
     enabled: enabled && amountAtomic != null && amountAtomic > 0n,
     refetchInterval: REFRESH_MS,
     staleTime: REFRESH_MS,
   });
 
   const hasChainAddresses = Object.keys(chainAddresses).length > 0;
-  const augmented = useMemo<AugmentedQuote | undefined>(() => {
-    if (!query.data) return undefined;
-    if (!chainsResp?.chains) return undefined;
-    if (!hasChainAddresses) return undefined;
-    const routes = query.data.routes.filter((route) => {
-      const wrappedNativeMetadataValidation = !srcWrappedNativeMetadata.valid
-        ? srcWrappedNativeMetadata
-        : !dstWrappedNativeMetadata.valid
-          ? dstWrappedNativeMetadata
-          : undefined;
-      if (wrappedNativeMetadataValidation) {
+  const augmentResponse = useCallback(
+    (data: QuoteResponse): AugmentedQuote | undefined => {
+      if (!chainsResp?.chains) return undefined;
+      if (!hasChainAddresses) return undefined;
+      const routes = data.routes.filter((route) => {
+        const wrappedNativeMetadataValidation = !srcWrappedNativeMetadata.valid
+          ? srcWrappedNativeMetadata
+          : !dstWrappedNativeMetadata.valid
+            ? dstWrappedNativeMetadata
+            : undefined;
+        if (wrappedNativeMetadataValidation) {
+          logger.warn('Filtered unsafe route', {
+            reason: wrappedNativeMetadataValidation.reason,
+            chainId: wrappedNativeMetadataValidation.chainId,
+            trustedWrappedAddress: wrappedNativeMetadataValidation.trustedWrappedAddress,
+            engineWrappedAddress: wrappedNativeMetadataValidation.engineWrappedAddress,
+            warpRouteId: route.connection?.warpRouteId,
+          });
+          return false;
+        }
+        const amountValidation = validateRouteAmounts(route, values.slippageBps);
+        if (!amountValidation.valid) {
+          logger.warn('Filtered route with invalid output amounts', {
+            reason: amountValidation.reason,
+            warpRouteId: route.connection?.warpRouteId,
+          });
+          return false;
+        }
+        const validation = validateRouteSecurity(route, {
+          chainMetadata,
+          chainAddresses,
+          registryWarpRoutes,
+          chains: chainsResp.chains,
+          srcChain: values.srcChain!,
+          dstChain: values.dstChain!,
+          srcToken: values.srcToken,
+          dstToken: values.dstToken,
+          srcTokenWrappedAddress,
+          dstTokenWrappedAddress,
+        });
+        if (validation.valid) return true;
         logger.warn('Filtered unsafe route', {
-          reason: wrappedNativeMetadataValidation.reason,
-          chainId: wrappedNativeMetadataValidation.chainId,
-          trustedWrappedAddress: wrappedNativeMetadataValidation.trustedWrappedAddress,
-          engineWrappedAddress: wrappedNativeMetadataValidation.engineWrappedAddress,
-          warpRouteId: route.connection?.warpRouteId,
+          reason: validation.reason,
+          warpRouteId: validation.warpRouteId,
         });
         return false;
-      }
-      const amountValidation = validateRouteAmounts(route, values.slippageBps);
-      if (!amountValidation.valid) {
-        logger.warn('Filtered route with invalid output amounts', {
-          reason: amountValidation.reason,
-          warpRouteId: route.connection?.warpRouteId,
-        });
-        return false;
-      }
-      const validation = validateRouteSecurity(route, {
-        chainMetadata,
-        chainAddresses,
-        registryWarpRoutes,
-        chains: chainsResp.chains,
-        srcChain: values.srcChain!,
-        dstChain: values.dstChain!,
-        srcToken: values.srcToken,
-        dstToken: values.dstToken,
-        srcTokenWrappedAddress,
-        dstTokenWrappedAddress,
       });
-      if (validation.valid) return true;
-      logger.warn('Filtered unsafe route', {
-        reason: validation.reason,
-        warpRouteId: validation.warpRouteId,
+      return {
+        raw: { ...data, routes },
+        expiresAt: data.expiresAt,
+        routes: routes.map(augmentRoute),
+      };
+    },
+    [
+      chainMetadata,
+      chainAddresses,
+      chainsResp?.chains,
+      hasChainAddresses,
+      registryWarpRoutes,
+      values.dstChain,
+      values.dstToken,
+      values.slippageBps,
+      values.srcChain,
+      values.srcToken,
+      srcWrappedNativeMetadata,
+      dstWrappedNativeMetadata,
+      srcTokenWrappedAddress,
+      dstTokenWrappedAddress,
+    ],
+  );
+  const augmented = useMemo(
+    () => (query.data ? augmentResponse(query.data) : undefined),
+    [augmentResponse, query.data],
+  );
+  const quoteForAmount = useCallback(
+    async (amount: bigint): Promise<AugmentedQuote> => {
+      const raw = await queryClient.fetchQuery({
+        queryKey: quoteQueryKey(values, amount, engineSender, engineRecipient, commitmentSalt),
+        queryFn: ({ signal }) => fetchRawQuote(amount, signal),
+        staleTime: REFRESH_MS,
       });
-      return false;
-    });
-    return {
-      raw: { ...query.data, routes },
-      expiresAt: query.data.expiresAt,
-      routes: routes.map(augmentRoute),
-    };
-  }, [
-    chainMetadata,
-    chainAddresses,
-    chainsResp?.chains,
-    hasChainAddresses,
-    query.data,
-    registryWarpRoutes,
-    values.dstChain,
-    values.dstToken,
-    values.slippageBps,
-    values.srcChain,
-    values.srcToken,
-    srcWrappedNativeMetadata,
-    dstWrappedNativeMetadata,
-    srcTokenWrappedAddress,
-    dstTokenWrappedAddress,
-  ]);
+      const quote = augmentResponse(raw);
+      if (!quote) throw new Error('Quote security context is not ready');
+      return quote;
+    },
+    [
+      augmentResponse,
+      commitmentSalt,
+      engineRecipient,
+      engineSender,
+      fetchRawQuote,
+      queryClient,
+      values,
+    ],
+  );
 
   const expiresAt = augmented?.expiresAt;
   const quoteExpiryDelay = expiresAt == null ? -1 : quoteExpiryDelayMs(expiresAt, Date.now());
@@ -222,10 +252,33 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
   return {
     ...query,
     quote: augmented,
+    quoteForAmount,
     isExpired,
     isQuoteSettled,
     isRouteDataUnavailable,
   };
+}
+
+function quoteQueryKey(
+  values: TransferFormValues,
+  amount: bigint | null,
+  sender: string | undefined,
+  recipient: string | undefined,
+  commitmentSalt: Hex,
+) {
+  return [
+    'router',
+    'quote',
+    values.srcChain,
+    values.dstChain,
+    values.srcToken,
+    values.dstToken,
+    amount?.toString() ?? null,
+    sender ?? null,
+    recipient ?? null,
+    values.slippageBps,
+    commitmentSalt,
+  ] as const;
 }
 
 export function quoteExpiryDelayMs(expiresAt: number, nowMs: number): number {

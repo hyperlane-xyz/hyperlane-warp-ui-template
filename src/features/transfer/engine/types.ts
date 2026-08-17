@@ -94,20 +94,18 @@ export interface TransferFormValues {
 
 // ── Quote augmentation ───────────────────────────────────────────────
 
-// A single fee component, attributable to a specific token. Bridge and IGP
-// components come from engine steps; the UI appends estimated source gas.
-// Chain + token address let consumers resolve decimals and symbols.
+// Engine emits bridge and IGP components; the UI appends the source-chain
+// transaction fee after preparing and estimating the route transaction.
 export interface FeeComponent {
-  category: 'bridge' | 'igp' | 'localGas';
+  category: 'bridge' | 'igp' | 'source';
   amount: bigint;
   chainId: number;
-  tokenAddress: string; // 0x0…0 for native fees
+  tokenAddress: string; // 0x0…0 for native (when igpToken === native)
 }
 
 export interface FeeBreakdown {
   components: FeeComponent[];
-  // Engine gas-unit budgets. The UI prices originGas in the source native
-  // currency and appends it to components before rendering.
+  // Engine gas-unit budgets used when exact EVM simulation is unavailable.
   originGas: bigint;
   destGas: bigint;
 }

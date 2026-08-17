@@ -5,19 +5,16 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import type { ChainDiscovery, RouteResponse } from '../../api/types';
 import type { UiToken } from '../../tokens/types';
 import type { AugmentedRoute } from './types';
-import { validateBalances, validateChains, validateQuote } from './validate';
+import {
+  validateBalances as validateBalancesImpl,
+  validateChains,
+  validateQuote,
+} from './validate';
 
-const { readBalanceMock, estimateRouteSourceGasCostMock } = vi.hoisted(() => ({
-  readBalanceMock: vi.fn(),
-  estimateRouteSourceGasCostMock: vi.fn(),
-}));
+const { readBalanceMock } = vi.hoisted(() => ({ readBalanceMock: vi.fn() }));
 
 vi.mock('../../balances/read', () => ({
   readBalance: readBalanceMock,
-}));
-
-vi.mock('./sourceGas', () => ({
-  estimateRouteSourceGasCost: estimateRouteSourceGasCostMock,
 }));
 
 vi.mock('../../../consts/config', async (importOriginal) => {
@@ -31,10 +28,15 @@ vi.mock('../../../consts/config', async (importOriginal) => {
 const NATIVE_ADDRESS = '0x0000000000000000000000000000000000000000';
 const BONK_ADDRESS = '0x074238dfa02063792077820584c925b679a013cbab38e5ca61af5627d1eda736';
 
+type ValidateBalancesArgs = Parameters<typeof validateBalancesImpl>[0];
+function validateBalances(args: Omit<ValidateBalancesArgs, 'sourceFee'> & { sourceFee?: bigint }) {
+  const { sourceFee = 0n, ...rest } = args;
+  return validateBalancesImpl({ ...rest, sourceFee });
+}
+
 describe('validateBalances', () => {
   beforeEach(() => {
     readBalanceMock.mockReset();
-    estimateRouteSourceGasCostMock.mockReset().mockResolvedValue(0n);
   });
 
   test('checks native IGP fees against native balance for non-native source tokens', async () => {
@@ -94,7 +96,7 @@ describe('validateBalances', () => {
     );
   });
 
-  test('adds wallet execution fee to native balance validation', async () => {
+  test('adds source transaction fee to native balance validation', async () => {
     readBalanceMock
       .mockResolvedValueOnce(100_000_000n)
       .mockResolvedValueOnce(10_370_000_000_000_000_000n);
@@ -106,7 +108,7 @@ describe('validateBalances', () => {
       sender: '0xsender',
       bestRoute: routeWithNativeFee(10_178_000_000_000_000_000n),
       amountAtomic: 10_000_000n,
-      nativeExecutionFee: 750_000_000_000_000_000n,
+      sourceFee: 750_000_000_000_000_000n,
     });
 
     expect(errors).toEqual({
@@ -116,8 +118,6 @@ describe('validateBalances', () => {
 
   test('does not double count native quoted fees already included in tx value', async () => {
     readBalanceMock.mockResolvedValueOnce(100_000_000n).mockResolvedValueOnce(10n);
-    estimateRouteSourceGasCostMock.mockResolvedValueOnce(3n);
-
     const errors = await validateBalances({
       multiProvider: multiProvider(ProtocolType.Ethereum),
       srcChainInfo: evmChain(),
@@ -129,85 +129,10 @@ describe('validateBalances', () => {
         value: '7',
       }),
       amountAtomic: 10_000_000n,
+      sourceFee: 3n,
     });
 
     expect(errors).toBeNull();
-  });
-
-  test('requires source gas in addition to native tx value for ERC20 routes', async () => {
-    readBalanceMock.mockResolvedValueOnce(100_000_000n).mockResolvedValueOnce(9n);
-    estimateRouteSourceGasCostMock.mockResolvedValueOnce(3n);
-
-    const errors = await validateBalances({
-      multiProvider: multiProvider(ProtocolType.Ethereum),
-      srcChainInfo: evmChain(),
-      srcToken: bonkToken({ chainId: 1, chainName: 'ethereum' }),
-      sender: '0xsender',
-      bestRoute: routeWithNativeFee(7n, 1, {
-        to: '0x0000000000000000000000000000000000000001',
-        data: '0x',
-        value: '7',
-      }),
-      amountAtomic: 10_000_000n,
-    });
-
-    expect(errors).toEqual({
-      amount: 'Insufficient ETH for transaction value and gas (need 0.000000000000000001 more ETH)',
-    });
-  });
-
-  test('falls back to quoted route gas units when prepared tx estimation fails', async () => {
-    readBalanceMock.mockResolvedValueOnce(12n);
-    estimateRouteSourceGasCostMock.mockResolvedValueOnce(3n);
-
-    const errors = await validateBalances({
-      multiProvider: multiProvider(ProtocolType.Ethereum),
-      srcChainInfo: evmChain(),
-      srcToken: evmNativeToken(),
-      sender: '0xsender',
-      bestRoute: bridgeRoute({
-        chainId: 1,
-        asset: NATIVE_ADDRESS,
-        amountIn: 10n,
-        amountOut: 9n,
-        tx: {
-          to: '0x0000000000000000000000000000000000000001',
-          data: '0x',
-          value: '10',
-        },
-      }),
-      amountAtomic: 10n,
-    });
-
-    expect(errors).toEqual({
-      amount: 'Insufficient ETH for transaction value and gas (need 0.000000000000000001 more ETH)',
-    });
-  });
-
-  test('blocks validation when the source transaction fee cannot be estimated', async () => {
-    readBalanceMock.mockResolvedValueOnce(10n);
-    estimateRouteSourceGasCostMock.mockRejectedValueOnce(new Error('simulation failed'));
-
-    const errors = await validateBalances({
-      multiProvider: multiProvider(ProtocolType.Sealevel),
-      srcChainInfo: solanaChain(),
-      srcToken: bonkToken({
-        chainId: 1399811149,
-        chainName: 'solanamainnet',
-        address: BONK_ADDRESS,
-        isNative: true,
-      }),
-      sender: 'ApMsTRbsbBpsmzpht4JpzudaBEef4AqW1GfnEf6az6h9',
-      bestRoute: bridgeRoute({
-        chainId: 1399811149,
-        asset: BONK_ADDRESS,
-        amountIn: 10n,
-        amountOut: 9n,
-      }),
-      amountAtomic: 10n,
-    });
-
-    expect(errors).toEqual({ form: 'Unable to estimate source transaction fee' });
   });
 
   test('does not add embedded IGP on top of EVM native bridge input', async () => {
@@ -535,9 +460,8 @@ describe('validateBalances', () => {
       txValue: '0',
       balances: [1_000n, 2n],
     },
-  ])('requires source gas for $name swaps', async ({ token, txValue, balances }) => {
+  ])('requires the source fee for $name swaps', async ({ token, txValue, balances }) => {
     for (const balance of balances) readBalanceMock.mockResolvedValueOnce(balance);
-    estimateRouteSourceGasCostMock.mockResolvedValueOnce(3n);
 
     const errors = await validateBalances({
       multiProvider: multiProvider(ProtocolType.Ethereum),
@@ -546,6 +470,7 @@ describe('validateBalances', () => {
       sender: '0xsender',
       bestRoute: swapRoute(token.address, txValue),
       amountAtomic: 1_000n,
+      sourceFee: 3n,
     });
 
     expect(errors).toEqual({

@@ -6,22 +6,18 @@ import {
   isZeroishAddress,
   normalizeAddressEvm,
   ProtocolType,
-  type HexString,
 } from '@hyperlane-xyz/utils';
 import { parseUnits } from 'viem';
 
 import { logger } from '../../../utils/logger';
-import { getRouteTxs, isChainRouteTx } from '../../api/routeTx';
+import { getRouteTxs } from '../../api/routeTx';
 import type { ChainDiscovery } from '../../api/types';
 import { readBalance } from '../../balances/read';
 import { formatDisplayAmount } from '../../balances/utils';
 import { isChainDisabled } from '../../chains/utils';
 import type { UiToken } from '../../tokens/types';
-import { tokenKey } from '../../tokens/utils';
-import { estimateRouteSourceGasCost } from './sourceGas';
+import { feeKey, getSourceFunding, isNativeAddress, NATIVE_ADDRESS } from './routeFunding';
 import type { AugmentedRoute, TransferFormValues } from './types';
-
-const NATIVE_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 export type TransferFormErrors = Partial<
   Record<
@@ -40,10 +36,8 @@ export async function validateTransferForm(args: {
   effectiveRecipient: string;
   chains: ChainDiscovery[] | undefined;
   multiProvider: MultiProtocolProvider;
-  senderPubKey?: Promise<HexString | undefined>;
-  approvalPending?: boolean;
   quoteExpiresAt?: number;
-  nativeExecutionFee?: bigint;
+  sourceFee: bigint;
 }): Promise<TransferFormErrors | null> {
   const {
     values,
@@ -54,10 +48,8 @@ export async function validateTransferForm(args: {
     effectiveRecipient,
     chains,
     multiProvider,
-    senderPubKey,
-    approvalPending,
     quoteExpiresAt,
-    nativeExecutionFee,
+    sourceFee,
   } = args;
 
   const chainsResult = validateChains(values, chains, multiProvider);
@@ -94,9 +86,7 @@ export async function validateTransferForm(args: {
     sender,
     bestRoute,
     amountAtomic,
-    senderPubKey,
-    approvalPending,
-    nativeExecutionFee,
+    sourceFee,
   });
 }
 
@@ -218,32 +208,22 @@ export async function validateBalances(args: {
   srcChainInfo: ChainDiscovery;
   srcToken: UiToken;
   sender: string;
-  senderPubKey?: Promise<HexString | undefined>;
   bestRoute: AugmentedRoute;
   amountAtomic: bigint;
-  approvalPending?: boolean;
-  nativeExecutionFee?: bigint;
+  sourceFee: bigint;
 }): Promise<TransferFormErrors | null> {
-  const {
-    multiProvider,
-    srcChainInfo,
-    srcToken,
-    sender,
-    senderPubKey,
-    bestRoute,
-    amountAtomic,
-    approvalPending,
-    nativeExecutionFee = 0n,
-  } = args;
+  const { multiProvider, srcChainInfo, srcToken, sender, bestRoute, amountAtomic, sourceFee } =
+    args;
 
-  const initialStep = bestRoute.raw.steps[0];
-  const amountIn =
-    initialStep && 'amountIn' in initialStep ? BigInt(initialStep.amountIn) : amountAtomic;
-
-  const igpByToken = aggregateExternalIgp(bestRoute.raw, srcChainInfo.protocol as ProtocolType);
-  const srcKey = balanceKey(srcToken.chainId, srcToken.address);
-  const sameTokenIgp = igpByToken.get(srcKey) ?? 0n;
-  const nativeFee = igpByToken.get(balanceKey(srcChainInfo.id, NATIVE_ADDRESS)) ?? 0n;
+  const funding = getSourceFunding({
+    route: bestRoute.raw,
+    originChainId: srcChainInfo.id,
+    originProtocol: srcChainInfo.protocol as ProtocolType,
+    sourceTokenAddress: srcToken.address,
+    sourceTokenIsNative: srcToken.isNative,
+    fallbackAmountIn: amountAtomic,
+  });
+  const srcKey = feeKey(srcToken.chainId, srcToken.address);
 
   let srcBalance: bigint | null;
   try {
@@ -264,18 +244,18 @@ export async function validateBalances(args: {
     return null;
   }
 
-  if (srcBalance != null && amountIn + sameTokenIgp > srcBalance) {
+  if (srcBalance != null && funding.sourceTokenRequired > srcBalance) {
     return {
       amount: formatInsufficientBalanceMessage({
         base: `Insufficient ${srcToken.symbol} balance`,
-        deficit: amountIn + sameTokenIgp - srcBalance,
+        deficit: funding.sourceTokenRequired - srcBalance,
         decimals: srcToken.decimals,
         symbol: srcToken.symbol,
       }),
     };
   }
 
-  for (const [key, sum] of igpByToken) {
+  for (const [key, sum] of funding.externalFees) {
     if (key === srcKey) continue;
     const [chainIdStr, addr = ''] = key.split('-');
     if (isNativeAddress(addr)) continue;
@@ -295,24 +275,7 @@ export async function validateBalances(args: {
     }
   }
 
-  const originTx = getRouteTxs(bestRoute.raw).find(isChainRouteTx) ?? null;
-  const txValue = originTx ? BigInt(originTx.value) : 0n;
-  let gasCost: bigint;
-  try {
-    gasCost = await estimateRouteSourceGasCost({
-      multiProvider,
-      chainName: srcChainInfo.chainName,
-      sender,
-      senderPubKey,
-      route: bestRoute.raw,
-      approvalPending,
-    });
-  } catch (err) {
-    logger.warn('Failed to estimate source transaction fee during validation', err as Error);
-    return { form: 'Unable to estimate source transaction fee' };
-  }
-  const quotedNativeDebit = srcToken.isNative ? amountIn + sameTokenIgp : nativeFee;
-  const nativeRequired = maxBigInt(txValue, quotedNativeDebit) + gasCost + nativeExecutionFee;
+  const nativeRequired = funding.nativeRequired + sourceFee;
   if (nativeRequired > 0n) {
     let nativeBalance: bigint | null = srcToken.isNative ? srcBalance : null;
     if (!srcToken.isNative) {
@@ -344,10 +307,6 @@ export async function validateBalances(args: {
   return null;
 }
 
-function maxBigInt(a: bigint, b: bigint): bigint {
-  return a > b ? a : b;
-}
-
 function formatInsufficientBalanceMessage({
   base,
   deficit,
@@ -360,67 +319,6 @@ function formatInsufficientBalanceMessage({
   symbol: string;
 }): string {
   return `${base} (need ${formatDisplayAmount(deficit, decimals)} more ${symbol})`;
-}
-
-function aggregateExternalIgp(
-  route: AugmentedRoute['raw'],
-  originProtocol: ProtocolType,
-): Map<string, bigint> {
-  const map = new Map<string, bigint>();
-  for (const step of route.steps) {
-    if (step.type !== 'bridge') continue;
-
-    const externalIgpAmount = getExternalIgpAmount(step, originProtocol);
-    if (externalIgpAmount > 0n) {
-      addFee(map, step.chain, step.fee.igpToken, externalIgpAmount);
-    }
-
-    const localNativeFee = BigInt(step.fee.localNativeFee);
-    if (localNativeFee > 0n) {
-      addFee(map, step.chain, NATIVE_ADDRESS, localNativeFee);
-    }
-  }
-  return map;
-}
-
-function getExternalIgpAmount(
-  step: Extract<AugmentedRoute['raw']['steps'][number], { type: 'bridge' }>,
-  originProtocol: ProtocolType,
-): bigint {
-  const igpAmount = BigInt(step.fee.igpAmount);
-  const isIncluded =
-    step.fee.igpIncludedInAmountIn ?? isIgpEmbeddedInBridgeInput(step, originProtocol);
-  return isIncluded ? 0n : igpAmount;
-}
-
-function isIgpEmbeddedInBridgeInput(
-  step: Extract<AugmentedRoute['raw']['steps'][number], { type: 'bridge' }>,
-  originProtocol: ProtocolType,
-): boolean {
-  const igpKey = balanceKey(step.chain, step.fee.igpToken);
-  const matchesAsset = balanceKey(step.chain, step.asset) === igpKey;
-  const matchesNonNativeRouter =
-    !isNativeAddress(step.asset) && balanceKey(step.chain, step.router) === igpKey;
-  if (!matchesAsset && !matchesNonNativeRouter) {
-    return false;
-  }
-
-  // EVM-like native routers pay IGP from msg.value, reducing bridge output.
-  // Non-EVM native adapters debit IGP separately and preserve amountOut.
-  return !isNativeAddress(step.asset) || isEVMLike(originProtocol);
-}
-
-function addFee(map: Map<string, bigint>, chainId: number, address: string, amount: bigint): void {
-  const key = balanceKey(chainId, address);
-  map.set(key, (map.get(key) ?? 0n) + amount);
-}
-
-function balanceKey(chainId: number, address: string): string {
-  return tokenKey(chainId, address);
-}
-
-function isNativeAddress(addr: string): boolean {
-  return /^0x0+$/i.test(addr);
 }
 
 function toEvmCanonical(addr: string, protocol: ProtocolType): string | null {

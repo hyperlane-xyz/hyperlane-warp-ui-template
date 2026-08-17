@@ -105,34 +105,6 @@ export async function readEvmBalance(
   return new EvmTokenAdapter(chainName, multiProvider, { token: tokenAddress }).getBalance(owner);
 }
 
-export const PENDING_APPROVAL_GAS_BUDGET = 600_000n;
-
-async function getEffectiveGasPrice(
-  multiProvider: MultiProtocolProvider,
-  chainName: string,
-): Promise<bigint | null> {
-  const feeData = await multiProvider.getEthersV5Provider(chainName).getFeeData();
-  const maxFee = feeData.maxFeePerGas ? BigInt(feeData.maxFeePerGas.toString()) : undefined;
-  const legacy = feeData.gasPrice ? BigInt(feeData.gasPrice.toString()) : undefined;
-  return maxFee ?? legacy ?? null;
-}
-
-// Converts the engine's conservative route gas-unit budget into native wei.
-// Used by native Max because estimating a tx whose value equals the wallet's
-// full balance can fail before there is any gas headroom.
-export async function estimateEvmGasCostForUnits(
-  multiProvider: MultiProtocolProvider,
-  args: { chainName: string; gasUnits: bigint },
-): Promise<bigint> {
-  try {
-    const effectiveGasPrice = await getEffectiveGasPrice(multiProvider, args.chainName);
-    return effectiveGasPrice == null ? 0n : args.gasUnits * effectiveGasPrice;
-  } catch (err) {
-    logger.warn('estimateEvmGasCostForUnits failed', err as Error);
-    return 0n;
-  }
-}
-
 function isZeroAddress(addr: string): boolean {
   return /^0x0+$/i.test(addr);
 }

@@ -7,17 +7,8 @@ import {
   ProviderType,
   type TypedTransactionReceipt,
 } from '@hyperlane-xyz/sdk';
-import { isZeroishAddress, ProtocolType } from '@hyperlane-xyz/utils';
+import { isEVMLike, isZeroishAddress, ProtocolType } from '@hyperlane-xyz/utils';
 import { useTransactionFns } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
-import {
-  AddressLookupTableAccount,
-  Connection,
-  PublicKey,
-  Transaction,
-  TransactionInstruction,
-  TransactionMessage,
-  VersionedTransaction,
-} from '@solana/web3.js';
 import { useCallback, useState } from 'react';
 import type { Address } from 'viem';
 
@@ -25,14 +16,14 @@ import { logger } from '../../../utils/logger';
 import { refinerIdentifyAndShowTransferForm } from '../../analytics/refiner';
 import { EVENT_NAME } from '../../analytics/types';
 import { getAnalyticsChains, getAnalyticsToken, trackEvent } from '../../analytics/utils';
-import { getRouteTxs, isChainRouteTx } from '../../api/routeTx';
-import type { RouteTx } from '../../api/types';
+import { getRouteTxs } from '../../api/routeTx';
 import { useMultiProvider } from '../../chains/hooks';
 import { isBridgeOnlyRoute } from '../../routeSecurity/validateWarpRoute';
 import { useStore } from '../../store';
 import { submitToRelayApi } from '../relayApi';
 import { postCommitment } from './ccs';
 import { labelTransferMessages, type ParsedTransferMessage } from './messages';
+import { prepareApprovalTransaction, prepareRouteTransaction } from './routeTransactions';
 import { TransferStatus } from './types';
 import type { AugmentedRoute } from './types';
 
@@ -100,8 +91,6 @@ export function useTransfer() {
         const fns = transactionFns[protocol as keyof typeof transactionFns];
         if (!fns) throw new Error(`No transaction handler for protocol ${protocol}`);
 
-        const txType = getRouteTxProviderType(protocol as ProtocolType);
-
         if (fns.switchNetwork) {
           try {
             await fns.switchNetwork(srcChainName);
@@ -113,7 +102,7 @@ export function useTransfer() {
         // Approve / revoke before the transfer tx: bump non-zero existing
         // allowance to zero first (USDT case), then approve the new amount.
         if (
-          protocol !== ProtocolType.Sealevel &&
+          isEVMLike(protocol as ProtocolType) &&
           args.spender &&
           args.approvalAmount != null &&
           !args.isNative
@@ -131,16 +120,15 @@ export function useTransfer() {
           ]);
           const doApprove = async (amount: bigint) => {
             updateTransferTransactionStatus(transactionId, TransferStatus.SigningApprove);
-            const populated = await adapter.populateApproveTx({
-              weiAmountOrId: amount.toString(),
-              recipient: spender,
-            });
             const { hash, confirm } = await fns.sendTransaction({
-              tx: {
-                type: txType,
-                transaction: { to: populated.to!, data: populated.data!, value: '0' },
-                category: 'transfer',
-              } as Parameters<typeof fns.sendTransaction>[0]['tx'],
+              tx: (await prepareApprovalTransaction({
+                multiProvider,
+                chainName: srcChainName,
+                protocol: protocol as ProtocolType,
+                token: args.approvalToken ?? args.srcToken,
+                spender,
+                amount,
+              })) as Parameters<typeof fns.sendTransaction>[0]['tx'],
               chainName: srcChainName,
             });
             updateTransferTransactionStatus(transactionId, TransferStatus.ConfirmingApprove);
@@ -175,7 +163,8 @@ export function useTransfer() {
         for (const routeTx of routeTxs) {
           updateTransferTransactionStatus(transactionId, TransferStatus.SigningTransfer);
           const sent = await fns.sendTransaction({
-            tx: (await toWalletTx(routeTx, txType, {
+            tx: (await prepareRouteTransaction(routeTx, {
+              protocol: protocol as ProtocolType,
               sender: args.sender,
               rpcUrl: multiProvider.tryGetChainMetadata(srcChainName)?.rpcUrls?.[0]?.http,
             })) as Parameters<typeof fns.sendTransaction>[0]['tx'],
@@ -320,125 +309,6 @@ function isEvmReceipt(receipt: TypedTransactionReceipt): boolean {
     receipt.type === ProviderType.EthersV5 ||
     receipt.type === ProviderType.Tron
   );
-}
-
-export async function toWalletTx(
-  tx: RouteTx,
-  txType: ProviderType,
-  opts: { sender?: string; rpcUrl?: string } = {},
-): Promise<unknown> {
-  if (!isChainRouteTx(tx)) return toSdkWalletTx(tx);
-  if (txType === ProviderType.SolanaWeb3) {
-    return {
-      type: txType,
-      transaction: await buildSolanaTransaction(tx, opts),
-      category: 'transfer',
-    };
-  }
-  return {
-    type: txType,
-    transaction: {
-      to: tx.to,
-      data: tx.data,
-      value: tx.value,
-    },
-    category: 'transfer',
-  };
-}
-
-export function getRouteTxProviderType(protocol: ProtocolType): ProviderType {
-  if (protocol === ProtocolType.Sealevel) return ProviderType.SolanaWeb3;
-  if (protocol === ProtocolType.Tron) return ProviderType.Tron;
-  return ProviderType.EthersV5;
-}
-
-function toSdkWalletTx(tx: Extract<RouteTx, { protocol: string }>): unknown {
-  if (tx.type !== ProviderType.SolanaWeb3) return tx;
-  const transaction = deserializeSolanaTransaction(tx.transaction);
-  return {
-    ...tx,
-    transaction,
-  };
-}
-
-function deserializeSolanaTransaction(raw: unknown): Transaction | VersionedTransaction {
-  const payload = raw as { encoding?: unknown; data?: unknown };
-  if (payload.encoding !== 'base64' || typeof payload.data !== 'string') {
-    throw new Error('Invalid Solana transaction payload from quote');
-  }
-  const bytes = base64ToBytes(payload.data);
-  try {
-    const tx = Transaction.from(bytes);
-    return tx;
-  } catch {
-    return VersionedTransaction.deserialize(bytes);
-  }
-}
-
-function base64ToBytes(value: string): Uint8Array {
-  if (typeof atob === 'function') {
-    const bin = atob(value);
-    const bytes = new Uint8Array(bin.length);
-    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-    return bytes;
-  }
-  return Uint8Array.from(Buffer.from(value, 'base64'));
-}
-
-async function buildSolanaTransaction(
-  tx: Extract<RouteTx, { to: string }>,
-  opts: { sender?: string; rpcUrl?: string },
-): Promise<VersionedTransaction> {
-  if (!opts.sender) throw new Error('Missing Solana sender for route transaction');
-  if (!opts.rpcUrl) throw new Error('Missing Solana RPC URL for route transaction');
-
-  const connection = new Connection(opts.rpcUrl, 'confirmed');
-  const instruction = new TransactionInstruction({
-    programId: new PublicKey(tx.to),
-    data: Buffer.from(tx.data, 'base64'),
-    keys: (tx.accounts ?? []).map((account) => ({
-      pubkey: new PublicKey(account.pubkey),
-      isSigner: account.isSigner,
-      isWritable: account.isWritable,
-    })),
-  });
-  const preInstructions = (tx.preInstructions ?? []).map(
-    (preInstruction) =>
-      new TransactionInstruction({
-        programId: new PublicKey(preInstruction.programId),
-        data: Buffer.from(preInstruction.data, 'base64'),
-        keys: preInstruction.accounts.map((account) => ({
-          pubkey: new PublicKey(account.pubkey),
-          isSigner: account.isSigner,
-          isWritable: account.isWritable,
-        })),
-      }),
-  );
-  const [{ blockhash }, altAccounts] = await Promise.all([
-    connection.getLatestBlockhash(),
-    loadAddressLookupTables(connection, tx.altAddresses ?? []),
-  ]);
-  const message = new TransactionMessage({
-    payerKey: new PublicKey(opts.sender),
-    recentBlockhash: blockhash,
-    instructions: [...preInstructions, instruction],
-  }).compileToV0Message(altAccounts);
-
-  return new VersionedTransaction(message);
-}
-
-async function loadAddressLookupTables(
-  connection: Connection,
-  altAddresses: string[],
-): Promise<AddressLookupTableAccount[]> {
-  if (!altAddresses.length) return [];
-  const results = await Promise.all(
-    altAddresses.map((address) => connection.getAddressLookupTable(new PublicKey(address))),
-  );
-  return results.map((result, index) => {
-    if (!result.value) throw new Error(`Address Lookup Table not found: ${altAddresses[index]}`);
-    return result.value;
-  });
 }
 
 async function parseReceipt(

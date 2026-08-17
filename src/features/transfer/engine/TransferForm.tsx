@@ -1198,11 +1198,11 @@ function ButtonSection({
   const dstMetadata = dstChainName ? multiProvider.tryGetChainMetadata(dstChainName) : undefined;
   const dstDisplay = dstMetadata?.displayName ?? dstMetadata?.name ?? dstChainName ?? 'destination';
 
-  // Origin connected + amount entered but recipient still missing: prompt the
-  // destination wallet connect instead of the empty-quote "Route is not supported".
-  // Gate on hasAmount so the earlier "Enter amount" hint still shows first.
-  const promptDestConnect =
-    originConnected && needsRecipient && hasTokens && hasAmount && !!dstChainName;
+  // Origin connected but recipient still missing (no custom recipient and no
+  // connected destination wallet): prompt the destination wallet connect instead
+  // of the empty-quote "Route is not supported". Amount is inconsequential here —
+  // the connect prompt only depends on wallet/recipient state.
+  const promptDestConnect = originConnected && needsRecipient && hasTokens && !!dstChainName;
   const connectChainName = promptDestConnect && dstChainName ? dstChainName : srcChainName;
 
   let text = 'Continue';

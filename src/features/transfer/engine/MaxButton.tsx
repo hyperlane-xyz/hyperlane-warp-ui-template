@@ -1,7 +1,7 @@
 import { SpinnerIcon } from '@hyperlane-xyz/widgets';
 import { useFormikContext } from 'formik';
-import { formatUnits } from 'viem';
 
+import { formatBalance } from '../../balances/utils';
 import type { UiToken } from '../../tokens/types';
 import type { TransferFormValues } from './types';
 
@@ -10,17 +10,18 @@ interface Props {
   isLoading?: boolean;
   disabled?: boolean;
   token?: UiToken;
-  onMax?: (balance: bigint, token: UiToken) => void;
 }
 
-export function MaxButton({ balance, isLoading, disabled, token, onMax }: Props) {
+// Sets the amount field to the connected wallet's full balance.
+// Approximates "max" as the raw balance; gas reservation can be layered
+// in later.
+export function MaxButton({ balance, isLoading, disabled, token }: Props) {
   const { setFieldValue } = useFormikContext<TransferFormValues>();
-  const isDisabled = disabled || isLoading || balance == null || balance <= 0n || !token;
+  const isDisabled = disabled || isLoading || balance == null || !token;
 
   const onClick = () => {
     if (isDisabled || balance == null || !token) return;
-    if (onMax) onMax(balance, token);
-    else setFieldValue('amount', formatUnits(balance, token.decimals));
+    setFieldValue('amount', formatBalance(balance, token.decimals));
   };
 
   return (

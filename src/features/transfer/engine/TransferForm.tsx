@@ -1198,11 +1198,8 @@ function ButtonSection({
   const dstMetadata = dstChainName ? multiProvider.tryGetChainMetadata(dstChainName) : undefined;
   const dstDisplay = dstMetadata?.displayName || dstMetadata?.name || dstChainName || 'destination';
 
-  // Once the origin wallet is connected but no recipient exists — the destination
-  // wallet isn't connected and no custom recipient was entered — the engine quote
-  // comes back empty and would otherwise read "Route is not supported". Point the
-  // submit button at the destination chain so it prompts to connect that protocol's
-  // wallet instead of implying the route is unavailable.
+  // Origin connected but recipient still missing: prompt the destination wallet connect
+  // instead of the empty-quote "Route is not supported".
   const promptDestConnect = originConnected && needsRecipient && hasTokens && !!dstChainName;
   const connectChainName = promptDestConnect && dstChainName ? dstChainName : srcChainName;
 

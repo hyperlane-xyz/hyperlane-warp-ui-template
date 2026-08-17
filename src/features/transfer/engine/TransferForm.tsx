@@ -674,6 +674,8 @@ function TransferFormContent() {
         onSendTransactions={onSendTransactions}
         sendPending={isActiveTransferInFlight}
         recipientConfirmed={addressConfirmed}
+        originConnected={!!sender}
+        needsRecipient={!effectiveRecipient}
       />
 
       <RecipientConfirmationModal
@@ -1172,6 +1174,8 @@ function ButtonSection({
   onSendTransactions,
   sendPending,
   recipientConfirmed,
+  originConnected,
+  needsRecipient,
 }: {
   isReview: boolean;
   setIsReview: (b: boolean) => void;
@@ -1187,10 +1191,20 @@ function ButtonSection({
   onSendTransactions: () => Promise<void>;
   sendPending: boolean;
   recipientConfirmed: boolean;
+  originConnected: boolean;
+  needsRecipient: boolean;
 }) {
   const multiProvider = useMultiProvider();
   const dstMetadata = dstChainName ? multiProvider.tryGetChainMetadata(dstChainName) : undefined;
   const dstDisplay = dstMetadata?.displayName || dstMetadata?.name || dstChainName || 'destination';
+
+  // Once the origin wallet is connected but no recipient exists — the destination
+  // wallet isn't connected and no custom recipient was entered — the engine quote
+  // comes back empty and would otherwise read "Route is not supported". Point the
+  // submit button at the destination chain so it prompts to connect that protocol's
+  // wallet instead of implying the route is unavailable.
+  const promptDestConnect = originConnected && needsRecipient && hasTokens && !!dstChainName;
+  const connectChainName = promptDestConnect && dstChainName ? dstChainName : srcChainName;
 
   let text = 'Continue';
   let disabled = false;
@@ -1225,7 +1239,7 @@ function ButtonSection({
   if (!isReview) {
     return (
       <ConnectAwareSubmitButton
-        chainName={srcChainName}
+        chainName={connectChainName}
         text={text}
         disabled={disabled || !recipientConfirmed}
         classes="w-full mb-4 px-3 py-2.5 font-secondary text-xl text-cream-100"

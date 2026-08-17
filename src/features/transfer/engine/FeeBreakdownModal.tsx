@@ -8,6 +8,7 @@ import { getChainDisplayName } from '../../chains/utils';
 import { getTokenByKeyFromMap, useTokenByKeyMap } from '../../tokens/hooks';
 import type { UiToken } from '../../tokens/types';
 import { tokenKey } from '../../tokens/utils';
+import { FEE_CATEGORY_LABEL } from './feeLabels';
 import type { FeeBreakdown, FeeComponent } from './types';
 
 interface Props {
@@ -15,12 +16,6 @@ interface Props {
   close: () => void;
   feeBreakdown: FeeBreakdown;
 }
-
-const CATEGORY_LABEL: Record<FeeComponent['category'], string> = {
-  bridge: 'Route Fee',
-  igp: 'Interchain Gas',
-  source: 'Source Gas',
-};
 
 const CATEGORY_TOOLTIP: Record<FeeComponent['category'], string> = {
   bridge: 'Variable fee charged by the selected route for the cross-chain transfer',
@@ -59,7 +54,7 @@ export function FeeBreakdownModal({ isOpen, close, feeBreakdown }: Props) {
           rows.map(({ key, component, meta }) => (
             <div key={key} className="flex gap-4">
               <span className="flex min-w-[7.5rem] items-center gap-1">
-                {CATEGORY_LABEL[component.category]}
+                {FEE_CATEGORY_LABEL[component.category]}
                 <Tooltip
                   content={CATEGORY_TOOLTIP[component.category]}
                   id={`${key}-tooltip`}

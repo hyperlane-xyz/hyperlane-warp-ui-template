@@ -1,5 +1,5 @@
 import { type MultiProtocolProvider, type TypedTransaction } from '@hyperlane-xyz/sdk';
-import { type HexString, ProtocolType } from '@hyperlane-xyz/utils';
+import { type HexString, isEVMLike, ProtocolType } from '@hyperlane-xyz/utils';
 import type { UseAccountResult } from '@starknet-react/core';
 
 import { logger } from '../../../utils/logger';
@@ -9,7 +9,7 @@ import { NATIVE_ADDRESS } from './routeFunding';
 import { prepareApprovalTransaction, prepareRouteTransaction } from './routeTransactions';
 import type { FeeBreakdown } from './types';
 
-const EVM_APPROVAL_ROUTE_GAS_BUDGET = 600_000n;
+const EVM_LIKE_APPROVAL_ROUTE_GAS_BUDGET = 600_000n;
 
 export async function estimateRouteSourceFee({
   multiProvider,
@@ -53,23 +53,23 @@ export async function estimateRouteSourceFee({
     if (total <= 0n) throw new Error('Source fee estimate is empty');
     return total;
   } catch (cause) {
-    if (protocol !== ProtocolType.Ethereum) {
+    if (!isEVMLike(protocol)) {
       throw new Error(`Unable to estimate source fee on ${chainName}`, { cause });
     }
 
-    // Full-balance EVM simulation can fail because tx.value leaves no gas.
+    // Full-balance EVM-like simulation can fail because tx.value leaves no gas.
     // Price the engine's route gas budget instead; include approval headroom
     // when the route still needs an approval or revoke transaction.
-    logger.warn('Using EVM source fee fallback', cause as Error);
-    return estimateEvmFeeForGasUnits(
+    logger.warn('Using EVM-like source fee fallback', cause as Error);
+    return estimateEvmLikeFeeForGasUnits(
       multiProvider,
       chainName,
-      approvalAmounts.length ? EVM_APPROVAL_ROUTE_GAS_BUDGET : BigInt(route.gas.originGas),
+      approvalAmounts.length ? EVM_LIKE_APPROVAL_ROUTE_GAS_BUDGET : BigInt(route.gas.originGas),
     );
   }
 }
 
-async function estimateEvmFeeForGasUnits(
+async function estimateEvmLikeFeeForGasUnits(
   multiProvider: MultiProtocolProvider,
   chainName: string,
   gasUnits: bigint,
@@ -78,7 +78,7 @@ async function estimateEvmFeeForGasUnits(
   const maxFee = feeData.maxFeePerGas ? BigInt(feeData.maxFeePerGas.toString()) : undefined;
   const legacyFee = feeData.gasPrice ? BigInt(feeData.gasPrice.toString()) : undefined;
   const gasPrice = maxFee ?? legacyFee;
-  if (gasPrice == null) throw new Error(`No EVM gas price available for ${chainName}`);
+  if (gasPrice == null) throw new Error(`No EVM-like gas price available for ${chainName}`);
   return gasUnits * gasPrice;
 }
 

@@ -158,6 +158,34 @@ describe('estimateRouteSourceFee', () => {
       expect(estimateTransactionFee).toHaveBeenCalledTimes(2);
     },
   );
+
+  test.each([ProtocolType.Ethereum, ProtocolType.Tron])(
+    'uses the EVM-like gas budget when a %s route cannot simulate before approval',
+    async (protocol) => {
+      const estimateTransactionFee = vi
+        .fn()
+        .mockResolvedValueOnce({ fee: 3n })
+        .mockRejectedValueOnce(new Error('approval required'));
+      const route = testRoute();
+      route.approval = {
+        token: '0x1111111111111111111111111111111111111111',
+        spender: '0x2222222222222222222222222222222222222222',
+        amount: '1',
+        kind: 'erc20',
+      };
+
+      await expect(
+        estimateRouteSourceFee({
+          multiProvider: provider(protocol, estimateTransactionFee),
+          chainName: 'source',
+          sender: 'sender',
+          route,
+          approvalAmounts: [1n],
+        }),
+      ).resolves.toBe(1_200_000n);
+      expect(estimateTransactionFee).toHaveBeenCalledTimes(2);
+    },
+  );
 });
 
 test('estimates Starknet fees through the connected account', async () => {

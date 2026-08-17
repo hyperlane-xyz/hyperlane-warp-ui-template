@@ -40,6 +40,7 @@ import { RecipientConfirmationModal } from '../../wallet/RecipientConfirmationMo
 import { WalletConnectionWarning } from '../../wallet/WalletConnectionWarning';
 import { WalletDropdown } from '../../wallet/WalletDropdown';
 import { ApprovalPhase, useApprovalStatus } from './approval';
+import { FEE_CATEGORY_LABEL } from './feeLabels';
 import { FeeSectionButton } from './FeeSectionButton';
 import { MaxButton } from './MaxButton';
 import { RouteSelectionModal } from './routeSelection/RouteSelectionModal';
@@ -1136,7 +1137,7 @@ function ReviewTransactions({
           {route.feeBreakdown.components
             .filter((c) => c.amount > 0n)
             .map((c, i) => {
-              const label = c.category === 'bridge' ? 'Route Fee' : 'Interchain Gas';
+              const label = FEE_CATEGORY_LABEL[c.category];
               const isNative = /^0x0+$/i.test(c.tokenAddress);
               const componentChainName =
                 multiProvider.tryGetChainName(c.chainId) ?? `chain-${c.chainId}`;

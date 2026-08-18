@@ -76,8 +76,13 @@ async function estimateEvmLikeFeeForGasUnits(
 ): Promise<bigint> {
   const feeData = await multiProvider.getEthersV5Provider(chainName).getFeeData();
   const maxFee = feeData.maxFeePerGas ? BigInt(feeData.maxFeePerGas.toString()) : undefined;
+  const priorityFee = feeData.maxPriorityFeePerGas
+    ? BigInt(feeData.maxPriorityFeePerGas.toString())
+    : undefined;
   const legacyFee = feeData.gasPrice ? BigInt(feeData.gasPrice.toString()) : undefined;
-  const gasPrice = maxFee ?? legacyFee;
+  // Match MultiProtocolProvider's EVM estimator so Max and final validation
+  // reserve the same fee for an EIP-1559 transaction.
+  const gasPrice = maxFee && priorityFee ? maxFee + priorityFee : legacyFee;
   if (gasPrice == null) throw new Error(`No EVM-like gas price available for ${chainName}`);
   return gasUnits * gasPrice;
 }

@@ -1,10 +1,62 @@
 import { ProtocolType } from '@hyperlane-xyz/utils';
-import { describe, expect, test, vi } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import type { RouteResponse } from '../../api/types';
+import type { UiToken } from '../../tokens/types';
 import { NATIVE_ADDRESS } from './routeFunding';
 import type { AugmentedQuote } from './types';
-import { calculateNativeMaxAmount } from './useNativeMax';
+import { calculateNativeMaxAmount, useNativeMax } from './useNativeMax';
+
+const hookMocks = vi.hoisted(() => ({
+  formikContext: vi.fn(),
+  setLoading: vi.fn(),
+}));
+
+vi.mock('formik', () => ({ useFormikContext: hookMocks.formikContext }));
+vi.mock('react', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react')>();
+  return {
+    ...actual,
+    useCallback: (callback: unknown) => callback,
+    useEffect: vi.fn(),
+    useRef: (initialValue: unknown) => ({ current: initialValue }),
+    useState: () => [false, hookMocks.setLoading],
+  };
+});
+
+beforeEach(() => {
+  hookMocks.formikContext.mockReset();
+  hookMocks.setLoading.mockReset();
+});
+
+test('keeps the existing input until the final native Max amount is ready', async () => {
+  const setFieldValue = vi.fn().mockResolvedValue(undefined);
+  hookMocks.formikContext.mockReturnValue({
+    values: { amount: '123' },
+    setFieldError: vi.fn(),
+    setFieldValue,
+  });
+  const sourceFee = deferred<bigint>();
+  const quoteForAmount = vi.fn(async () => augmentedQuote(nativeRoute(1_000n)));
+  const estimateSourceFee = vi.fn(() => sourceFee.promise);
+  const max = useNativeMax({
+    intentKey: 'intent',
+    originChainId: 1,
+    originProtocol: ProtocolType.Ethereum,
+    quoteForAmount,
+    estimateSourceFee,
+  });
+
+  const pending = max.onMax(1_000n, nativeToken());
+  await vi.waitFor(() => expect(estimateSourceFee).toHaveBeenCalledOnce());
+
+  expect(setFieldValue).not.toHaveBeenCalled();
+  sourceFee.resolve(10n);
+  await pending;
+
+  expect(setFieldValue).toHaveBeenCalledOnce();
+  expect(setFieldValue).toHaveBeenCalledWith('amount', '990', false);
+});
 
 describe('calculateNativeMaxAmount', () => {
   test('runs quote then fee estimation and reserves source gas', async () => {
@@ -138,4 +190,31 @@ function augmentedQuote(route: RouteResponse): AugmentedQuote {
       },
     ],
   };
+}
+
+function nativeToken(): UiToken {
+  return {
+    chainId: 1,
+    address: NATIVE_ADDRESS,
+    symbol: 'ETH',
+    decimals: 0,
+    isNative: true,
+    isBridgeToken: true,
+    isPoolToken: false,
+    canBridge: true,
+    canSwap: true,
+    bridgeSymbols: ['ETH'],
+    warpRouteIds: ['test'],
+    chainName: 'ethereum',
+    name: 'Ether',
+    addressOrDenom: NATIVE_ADDRESS,
+  };
+}
+
+function deferred<T>() {
+  let resolve: (value: T) => void = () => {};
+  const promise = new Promise<T>((promiseResolve) => {
+    resolve = promiseResolve;
+  });
+  return { promise, resolve };
 }

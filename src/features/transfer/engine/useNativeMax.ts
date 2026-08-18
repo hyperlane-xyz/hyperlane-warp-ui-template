@@ -64,12 +64,8 @@ export function useNativeMax({
       const isCurrent = () =>
         requestIdRef.current === requestId && intentRef.current === requestIntent;
 
-      expectedAmountRef.current = fullBalance;
+      expectedAmountRef.current = previousAmount;
       setIsLoading(true);
-      // This exposes the requested Max amount immediately. quoteForAmount
-      // fetches the matching quote now; setting the reduced amount below lets
-      // the normal debounced useQuote query fetch the final executable quote.
-      await setFieldValue('amount', fullBalance, false);
 
       try {
         const maxAmount = await calculateNativeMaxAmount({

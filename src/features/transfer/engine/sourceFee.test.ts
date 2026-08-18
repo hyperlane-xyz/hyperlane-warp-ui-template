@@ -102,7 +102,7 @@ describe('estimateRouteSourceFee', () => {
     ).rejects.toThrow('Unable to estimate source fee on solana');
   });
 
-  test('uses engine gas units only when full-balance EVM simulation fails', async () => {
+  test('uses engine gas units and the complete EIP-1559 fee when simulation fails', async () => {
     const multiProvider = provider(
       ProtocolType.Ethereum,
       vi.fn().mockRejectedValue(new Error('insufficient funds')),
@@ -116,7 +116,25 @@ describe('estimateRouteSourceFee', () => {
         route: testRoute(),
         approvalAmounts: [],
       }),
-    ).resolves.toBe(400_000n);
+    ).resolves.toBe(600_000n);
+  });
+
+  test('uses the legacy gas price when EIP-1559 fee data is unavailable', async () => {
+    const multiProvider = provider(
+      ProtocolType.Ethereum,
+      vi.fn().mockRejectedValue(new Error('insufficient funds')),
+      { gasPrice: 3n },
+    );
+
+    await expect(
+      estimateRouteSourceFee({
+        multiProvider,
+        chainName: 'ethereum',
+        sender: '0xsender',
+        route: testRoute(),
+        approvalAmounts: [],
+      }),
+    ).resolves.toBe(600_000n);
   });
 
   test('uses the EVM gas budget fallback when the provider returns zero', async () => {
@@ -130,7 +148,7 @@ describe('estimateRouteSourceFee', () => {
         route: testRoute(),
         approvalAmounts: [],
       }),
-    ).resolves.toBe(400_000n);
+    ).resolves.toBe(600_000n);
   });
 
   test.each([ProtocolType.Ethereum, ProtocolType.Tron])(
@@ -182,7 +200,7 @@ describe('estimateRouteSourceFee', () => {
           route,
           approvalAmounts: [1n],
         }),
-      ).resolves.toBe(1_200_000n);
+      ).resolves.toBe(1_800_000n);
       expect(estimateTransactionFee).toHaveBeenCalledTimes(2);
     },
   );
@@ -216,13 +234,20 @@ test('appendSourceFee adds one source-native fee component', () => {
   ]);
 });
 
-function provider(protocol: ProtocolType, estimateTransactionFee: ReturnType<typeof vi.fn>) {
+function provider(
+  protocol: ProtocolType,
+  estimateTransactionFee: ReturnType<typeof vi.fn>,
+  feeData: Partial<Record<'gasPrice' | 'maxFeePerGas' | 'maxPriorityFeePerGas', bigint>> = {
+    maxFeePerGas: 2n,
+    maxPriorityFeePerGas: 1n,
+  },
+) {
   return {
     tryGetProtocol: vi.fn(() => protocol),
     tryGetChainMetadata: vi.fn(() => ({ rpcUrls: [{ http: 'https://rpc.test' }] })),
     estimateTransactionFee,
     getEthersV5Provider: vi.fn(() => ({
-      getFeeData: vi.fn().mockResolvedValue({ maxFeePerGas: 2n }),
+      getFeeData: vi.fn().mockResolvedValue(feeData),
     })),
   } as never;
 }

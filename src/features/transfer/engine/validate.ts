@@ -12,7 +12,7 @@ import { parseUnits } from 'viem';
 import { logger } from '../../../utils/logger';
 import { getRouteTxs, isChainRouteTx } from '../../api/routeTx';
 import type { ChainDiscovery } from '../../api/types';
-import { estimateNativeGasCost, readBalance } from '../../balances/read';
+import { readBalance } from '../../balances/read';
 import { formatDisplayAmount } from '../../balances/utils';
 import { isChainDisabled } from '../../chains/utils';
 import type { UiToken } from '../../tokens/types';
@@ -38,8 +38,8 @@ export async function validateTransferForm(args: {
   effectiveRecipient: string;
   chains: ChainDiscovery[] | undefined;
   multiProvider: MultiProtocolProvider;
-  approvalPending?: boolean;
   quoteExpiresAt?: number;
+  sourceFee: bigint;
   nativeExecutionFee?: bigint;
 }): Promise<TransferFormErrors | null> {
   const {
@@ -51,8 +51,8 @@ export async function validateTransferForm(args: {
     effectiveRecipient,
     chains,
     multiProvider,
-    approvalPending,
     quoteExpiresAt,
+    sourceFee,
     nativeExecutionFee,
   } = args;
 
@@ -90,7 +90,7 @@ export async function validateTransferForm(args: {
     sender,
     bestRoute,
     amountAtomic,
-    approvalPending,
+    sourceFee,
     nativeExecutionFee,
   });
 }
@@ -215,7 +215,7 @@ export async function validateBalances(args: {
   sender: string;
   bestRoute: AugmentedRoute;
   amountAtomic: bigint;
-  approvalPending?: boolean;
+  sourceFee: bigint;
   nativeExecutionFee?: bigint;
 }): Promise<TransferFormErrors | null> {
   const {
@@ -225,7 +225,7 @@ export async function validateBalances(args: {
     sender,
     bestRoute,
     amountAtomic,
-    approvalPending,
+    sourceFee,
     nativeExecutionFee = 0n,
   } = args;
 
@@ -290,14 +290,8 @@ export async function validateBalances(args: {
 
   const originTx = getRouteTxs(bestRoute.raw).find(isChainRouteTx) ?? null;
   const txValue = originTx ? BigInt(originTx.value) : 0n;
-  const gasCost = await estimateNativeGasCost(multiProvider, {
-    chainName: srcChainInfo.chainName,
-    sender,
-    tx: originTx,
-    approvalPending,
-  });
   const quotedNativeDebit = srcToken.isNative ? amountIn + sameTokenIgp : nativeFee;
-  const nativeRequired = maxBigInt(txValue, quotedNativeDebit) + gasCost + nativeExecutionFee;
+  const nativeRequired = maxBigInt(txValue, quotedNativeDebit) + sourceFee + nativeExecutionFee;
   if (nativeRequired > 0n) {
     let nativeBalance: bigint | null = srcToken.isNative ? srcBalance : null;
     if (!srcToken.isNative) {

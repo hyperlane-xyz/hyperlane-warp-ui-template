@@ -1,7 +1,10 @@
 import { eqAddress, isValidAddressEvm, objLength, ProtocolType } from '@hyperlane-xyz/utils';
 import { useDebounce, useModal } from '@hyperlane-xyz/widgets';
-import { useAccounts } from '@hyperlane-xyz/widgets/walletIntegrations/accounts';
-import { useAccountAddressForChain } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
+import {
+  getAccountAddressAndPubKey,
+  getAccountAddressForChain,
+  useAccounts,
+} from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import { useAccount as useStarknetAccount, type UseAccountResult } from '@starknet-react/core';
 import { Form, Formik, useFormikContext } from 'formik';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -41,6 +44,7 @@ import { FeeSectionButton } from './FeeSectionButton';
 import { MaxButton } from './MaxButton';
 import { RouteSelectionModal } from './routeSelection/RouteSelectionModal';
 import { SlippagePanel } from './SlippagePanel';
+import { estimateRouteSourceFee } from './sourceFee';
 import { TokenBalance } from './TokenBalance';
 import {
   FinalTransferStatuses,
@@ -98,9 +102,13 @@ function TransferFormContent() {
     values.dstChain != null
       ? (multiProvider.tryGetChainName(values.dstChain) ?? undefined)
       : undefined;
-  useAccounts(multiProvider, config.addressBlacklist);
-  const sender = useAccountAddressForChain(multiProvider, srcChainName);
-  const connectedDestAddress = useAccountAddressForChain(multiProvider, dstChainName);
+  const { accounts } = useAccounts(multiProvider, config.addressBlacklist);
+  const { address: sender, publicKey: senderPubKey } = getAccountAddressAndPubKey(
+    multiProvider,
+    srcChainName,
+    accounts,
+  );
+  const connectedDestAddress = getAccountAddressForChain(multiProvider, dstChainName, accounts);
   const effectiveRecipient = values.recipient || connectedDestAddress || '';
 
   const srcTokenKey =
@@ -168,6 +176,8 @@ function TransferFormContent() {
     amount: approvalAmount,
     isNative: !approval,
   });
+  const approvalPending =
+    status.phase === ApprovalPhase.NeedsApprove || status.phase === ApprovalPhase.NeedsRevoke;
 
   const transfer = useTransfer();
   useToastError(transfer.error, 'Transfer failed');
@@ -234,31 +244,67 @@ function TransferFormContent() {
     latestValuesRef.current = values;
   }, [values]);
 
+  const validateCurrentForm = useCallback(async () => {
+    let sourceFee = 0n;
+    if (bestRoute && srcChainName && sender) {
+      try {
+        sourceFee = await estimateRouteSourceFee({
+          multiProvider,
+          chainName: srcChainName,
+          sender,
+          senderPubKey,
+          route: bestRoute.raw,
+          approvalPending,
+        });
+      } catch (err) {
+        logger.warn('Unable to estimate source transaction fee', err as Error);
+        return {
+          form: 'Unable to estimate source transaction fee; reduce the amount and try again',
+        };
+      }
+    }
+
+    const nativeExecutionFee = await estimateStarknetExecutionFee({
+      route: bestRoute,
+      srcProtocol: srcChainInfo?.protocol,
+      account: starknetAccount,
+    });
+    return validateTransferForm({
+      values,
+      bestRoute,
+      srcToken,
+      dstToken,
+      sender,
+      effectiveRecipient,
+      chains: chainsResp?.chains,
+      multiProvider,
+      quoteExpiresAt: quote?.expiresAt,
+      sourceFee,
+      nativeExecutionFee,
+    });
+  }, [
+    approvalPending,
+    bestRoute,
+    chainsResp?.chains,
+    dstToken,
+    effectiveRecipient,
+    multiProvider,
+    quote?.expiresAt,
+    sender,
+    senderPubKey,
+    srcChainInfo?.protocol,
+    srcChainName,
+    srcToken,
+    starknetAccount,
+    values,
+  ]);
+
   const onContinue = useCallback(async () => {
     if (isAmountDebouncing) return;
     const snapshot = values;
     setIsValidating(true);
     try {
-      const approvalPending =
-        status.phase === ApprovalPhase.NeedsApprove || status.phase === ApprovalPhase.NeedsRevoke;
-      const nativeExecutionFee = await estimateStarknetExecutionFee({
-        route: bestRoute,
-        srcProtocol: srcChainInfo?.protocol,
-        account: starknetAccount,
-      });
-      const result = await validateTransferForm({
-        values,
-        bestRoute,
-        srcToken,
-        dstToken,
-        sender,
-        effectiveRecipient,
-        chains: chainsResp?.chains,
-        multiProvider,
-        approvalPending,
-        quoteExpiresAt: quote?.expiresAt,
-        nativeExecutionFee,
-      });
+      const result = await validateCurrentForm();
       // Discard the result if the user edited the form while we were
       // validating — otherwise we'd enter review mode on stale data.
       if (latestValuesRef.current !== snapshot) return;
@@ -304,13 +350,9 @@ function TransferFormContent() {
     dstToken,
     sender,
     effectiveRecipient,
-    chainsResp?.chains,
     multiProvider,
-    status.phase,
-    quote?.expiresAt,
     isAmountDebouncing,
-    srcChainInfo?.protocol,
-    starknetAccount,
+    validateCurrentForm,
     dstChainName,
     openConfirmationModal,
     setErrors,
@@ -374,26 +416,7 @@ function TransferFormContent() {
     // this check we'd happily submit it. Same call as Continue plus the
     // current quote.expiresAt so the staleness check fires.
     const snapshot = values;
-    const approvalPending =
-      status.phase === ApprovalPhase.NeedsApprove || status.phase === ApprovalPhase.NeedsRevoke;
-    const nativeExecutionFee = await estimateStarknetExecutionFee({
-      route: bestRoute,
-      srcProtocol: srcChainInfo?.protocol,
-      account: starknetAccount,
-    });
-    const validationResult = await validateTransferForm({
-      values,
-      bestRoute,
-      srcToken,
-      dstToken,
-      sender,
-      effectiveRecipient,
-      chains: chainsResp?.chains,
-      multiProvider,
-      approvalPending,
-      quoteExpiresAt: quote?.expiresAt,
-      nativeExecutionFee,
-    });
+    const validationResult = await validateCurrentForm();
     // Same race as onContinue — if the form changed mid-validation,
     // discard the result. In practice the inputs are disabled in review
     // mode, but the wallet dropdown can still change the recipient.
@@ -509,11 +532,7 @@ function TransferFormContent() {
     bestRoute,
     values,
     effectiveRecipient,
-    status.phase,
-    chainsResp?.chains,
-    srcChainInfo?.protocol,
-    multiProvider,
-    quote?.expiresAt,
+    validateCurrentForm,
     approval,
     approvalAmount,
     transfer,
@@ -523,7 +542,6 @@ function TransferFormContent() {
     updateTransferTransactionStatus,
     setTransferLoading,
     setErrors,
-    starknetAccount,
   ]);
 
   // Validation runs on Continue, not on change. Clear stale errors when

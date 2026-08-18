@@ -1,4 +1,5 @@
 import { ProviderType } from '@hyperlane-xyz/sdk';
+import { ProtocolType } from '@hyperlane-xyz/utils';
 import {
   Connection,
   Keypair,
@@ -9,11 +10,24 @@ import {
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import type { RouteTx } from '../../api/types';
-import { toWalletTx } from './useTransfer';
+import { prepareRouteTransaction } from './routeTransactions';
 
-describe('toWalletTx', () => {
+describe('prepareRouteTransaction', () => {
   afterEach(() => {
     vi.restoreAllMocks();
+  });
+
+  test.each([
+    [ProtocolType.Ethereum, ProviderType.EthersV5],
+    [ProtocolType.Tron, ProviderType.Tron],
+  ])('types raw %s route payloads for SDK estimation and execution', async (protocol, type) => {
+    const routeTx: RouteTx = { to: '0x1', data: '0x1234', value: '5' };
+
+    await expect(prepareRouteTransaction(routeTx, { protocol })).resolves.toEqual({
+      type,
+      transaction: { to: '0x1', data: '0x1234', value: '5' },
+      category: 'transfer',
+    });
   });
 
   test('deserializes Solana engine payloads with existing partial signatures', async () => {
@@ -43,7 +57,9 @@ describe('toWalletTx', () => {
       },
     };
 
-    const walletTx = (await toWalletTx(routeTx, ProviderType.SolanaWeb3)) as {
+    const walletTx = (await prepareRouteTransaction(routeTx, {
+      protocol: ProtocolType.Sealevel,
+    })) as {
       transaction: Transaction;
     };
 
@@ -75,7 +91,8 @@ describe('toWalletTx', () => {
       ],
     };
 
-    const walletTx = (await toWalletTx(routeTx, ProviderType.SolanaWeb3, {
+    const walletTx = (await prepareRouteTransaction(routeTx, {
+      protocol: ProtocolType.Sealevel,
       sender: sender.toBase58(),
       rpcUrl: 'http://localhost:8899',
     })) as { transaction: VersionedTransaction };

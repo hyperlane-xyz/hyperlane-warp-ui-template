@@ -12,9 +12,9 @@ jobs:
     timeout-minutes: 10
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version-file: '.nvmrc'
 
@@ -24,7 +24,7 @@ jobs:
         run: echo "path=$(pnpm store path)" >> $GITHUB_OUTPUT
 
       - name: Cache pnpm store
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ${{ steps.pnpm-store.outputs.path }}
           key: ${{ runner.os }}-pnpm-11-store-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -46,7 +46,7 @@ jobs:
 
       - name: Cache Playwright browsers
         id: pw-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ steps.pw-version.outputs.version }}

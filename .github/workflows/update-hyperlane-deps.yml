@@ -22,7 +22,7 @@ jobs:
           private-key: ${{ secrets.HYPER_GONK_PRIVATE_KEY }}
 
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: main
           token: ${{ steps.generate-token.outputs.token }}
@@ -39,10 +39,10 @@ jobs:
           git config user.email "${{ steps.get-user-id.outputs.user-id }}+${{ steps.generate-token.outputs.app-slug }}[bot]@users.noreply.github.com"
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
 

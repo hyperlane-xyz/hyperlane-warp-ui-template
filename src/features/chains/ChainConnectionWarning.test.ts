@@ -8,9 +8,9 @@ vi.mock('@hyperlane-xyz/sdk', async (importOriginal) => {
   const actual = (await importOriginal()) as { MultiProtocolProvider: any };
   return {
     ...actual,
-    MultiProtocolProvider: vi.fn().mockImplementation(() => ({
-      getProvider: vi.fn(),
-    })),
+    MultiProtocolProvider: class {
+      getProvider = vi.fn();
+    },
     isRpcHealthy: vi.fn(),
   };
 });

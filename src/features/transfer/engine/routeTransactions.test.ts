@@ -97,7 +97,8 @@ describe('prepareRouteTransaction', () => {
   });
 
   test('builds Solana route instruction payloads without additional signers', async () => {
-    vi.spyOn(Connection.prototype, 'getLatestBlockhash').mockResolvedValue({
+    const connection = new Connection('http://localhost:8899');
+    vi.spyOn(connection, 'getLatestBlockhash').mockResolvedValue({
       blockhash: '11111111111111111111111111111111',
       lastValidBlockHeight: 1,
     });
@@ -119,7 +120,10 @@ describe('prepareRouteTransaction', () => {
     const walletTx = (await prepareRouteTransaction(routeTx, {
       protocol: ProtocolType.Sealevel,
       sender: sender.toBase58(),
-      rpcUrl: 'http://localhost:8899',
+      chainName: 'solanamainnet',
+      multiProvider: {
+        getSolanaWeb3Provider: () => connection,
+      } as never,
     })) as { transaction: VersionedTransaction };
 
     expect(walletTx.transaction).toBeInstanceOf(VersionedTransaction);

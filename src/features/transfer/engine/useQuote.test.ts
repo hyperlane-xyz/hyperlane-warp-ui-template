@@ -1,10 +1,15 @@
-import { describe, expect, test } from 'vitest';
+import { QueryClient } from '@tanstack/react-query';
+import { describe, expect, test, vi } from 'vitest';
 
-import type { RouteResponse } from '../../api/types';
+import type { MaxQuoteResponse, RouteResponse } from '../../api/types';
 import type { TransferFormValues } from './types';
 import {
+  augmentRoute,
+  cacheMaxQuote,
+  isMaxQuoteRequestReady,
   isQuoteRequestReady,
   isQuoteSettledForSecurity,
+  quoteQueryKey,
   quoteExpiryDelayMs,
   validateRouteAmounts,
 } from './useQuote';
@@ -41,6 +46,57 @@ describe('isQuoteRequestReady', () => {
     const empty = readyValues({ recipient: '' });
     expect(isQuoteRequestReady(empty, sender)).toBe(false);
     expect(isQuoteRequestReady({ ...empty, recipient: '0xRecipient' }, sender)).toBe(true);
+  });
+
+  test('allows max quote requests without an existing amount', () => {
+    expect(isMaxQuoteRequestReady(readyValues({ amount: '' }), sender)).toBe(true);
+    expect(isQuoteRequestReady(readyValues({ amount: '' }), sender)).toBe(false);
+  });
+});
+
+describe('cacheMaxQuote', () => {
+  test('seeds the normal quote key so setting the max amount does not refetch', async () => {
+    const queryClient = new QueryClient();
+    const params = {
+      srcChain: 1,
+      dstChain: 2,
+      srcToken: '0xToken',
+      dstToken: '0xToken',
+      sender: '0xSender',
+      recipient: '0xRecipient',
+      slippageBps: 100,
+    };
+    const response: MaxQuoteResponse = {
+      amount: '900',
+      routes: [],
+      expiresAt: Math.floor(Date.now() / 1000) + 30,
+    };
+    cacheMaxQuote(queryClient, params, response);
+
+    const queryFn = vi.fn().mockResolvedValue({ routes: [], expiresAt: 0 });
+    await expect(
+      queryClient.fetchQuery({
+        queryKey: quoteQueryKey({ ...params, amount: 900n }),
+        queryFn,
+        staleTime: 25_000,
+      }),
+    ).resolves.toBe(response);
+    expect(queryFn).not.toHaveBeenCalled();
+  });
+});
+
+describe('augmentRoute', () => {
+  test('includes a max quote source transaction fee in the fee breakdown', () => {
+    const route = swapRoute();
+    route.gas = { originGas: '100000', destGas: '0' };
+    route.sourceTransactionFee = { amount: '10', gasUnits: '100000' };
+
+    expect(augmentRoute(route).feeBreakdown.components).toContainEqual({
+      category: 'localGas',
+      amount: 10n,
+      chainId: 1,
+      tokenAddress: '0x0000000000000000000000000000000000000000',
+    });
   });
 });
 
@@ -214,6 +270,7 @@ function swapBridgeSwapRoute(
           tokenFee: '89992916728388',
           igpToken: '0x0000000000000000000000000000000000000000',
           igpAmount: '91576406884958',
+          igpIncludedInAmountIn: false,
           localNativeFee: '0',
         },
         bridgeSymbol: 'USDC',

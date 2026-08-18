@@ -1,12 +1,12 @@
 import { useTimeout } from '@hyperlane-xyz/widgets';
-import { useQuery } from '@tanstack/react-query';
+import { type QueryClient, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo, useState } from 'react';
 import { bytesToHex, parseUnits, type Hex } from 'viem';
 
 import { logger } from '../../../utils/logger';
 import { useChains } from '../../api/hooks';
-import { routerClient } from '../../api/RouterClient';
-import type { QuoteResponse, RouteResponse } from '../../api/types';
+import { type MaxQuoteParams, routerClient } from '../../api/RouterClient';
+import type { MaxQuoteResponse, QuoteResponse, RouteResponse } from '../../api/types';
 import { validateRouteSecurity } from '../../routeSecurity/validateRouteSecurity';
 import { useStore } from '../../store';
 import { useTokens } from '../../tokens/hooks';
@@ -31,16 +31,52 @@ function randomBytes32(): Hex {
 // 30s engine TTL — refresh 5s before to avoid expired-mid-sign races.
 const REFRESH_MS = 25_000;
 
+interface QuoteQueryKeyParams {
+  srcChain: number | null;
+  dstChain: number | null;
+  srcToken: string;
+  dstToken: string;
+  amount: bigint | null;
+  sender?: string;
+  recipient?: string;
+  slippageBps?: number;
+}
+
+export function quoteQueryKey(params: QuoteQueryKeyParams) {
+  return [
+    'router',
+    'quote',
+    params.srcChain,
+    params.dstChain,
+    params.srcToken,
+    params.dstToken,
+    params.amount?.toString() ?? null,
+    params.sender ?? null,
+    params.recipient ?? null,
+    params.slippageBps ?? null,
+  ] as const;
+}
+
+export function cacheMaxQuote(
+  queryClient: QueryClient,
+  params: MaxQuoteParams,
+  response: MaxQuoteResponse,
+): void {
+  queryClient.setQueryData(quoteQueryKey({ ...params, amount: BigInt(response.amount) }), response);
+}
+
 interface UseQuoteArgs {
   values: TransferFormValues;
   /** Sender from connected wallet — passed through as-is. */
   sender: string | undefined;
+  senderPubKey?: Promise<string | undefined>;
   /** Pause auto-refresh (e.g. wallet modal open or tx signing). */
   pause?: boolean;
 }
 
-export function useQuote({ values, sender, pause }: UseQuoteArgs) {
+export function useQuote({ values, sender, senderPubKey, pause }: UseQuoteArgs) {
   const [now, setNow] = useState(() => Date.now());
+  const queryClient = useQueryClient();
   const chainMetadata = useStore((state) => state.chainMetadata);
   const chainAddresses = useStore((state) => state.chainAddresses);
   const registryWarpRoutes = useStore((state) => state.registryWarpRoutes);
@@ -97,19 +133,62 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
     [values.srcChain, values.dstChain, values.srcToken, values.dstToken],
   );
 
+  const canRequestMaxQuote = isMaxQuoteRequestReady(values, engineSender) && !pause;
+  const {
+    mutateAsync: mutateMaxQuote,
+    isPending: isMaxQuoteLoading,
+    error: maxQuoteError,
+  } = useMutation({
+    mutationFn: async (params: Omit<MaxQuoteParams, 'senderPubKey'>) => {
+      const publicKey = await senderPubKey;
+      const response = await routerClient.maxQuote({
+        ...params,
+        ...(publicKey && { senderPubKey: publicKey as `0x${string}` }),
+      });
+      if (BigInt(response.amount) <= 0n || response.routes.length === 0) {
+        throw new Error('No transferable balance is available after network fees');
+      }
+      return response;
+    },
+    onSuccess: (response, params) => cacheMaxQuote(queryClient, params, response),
+  });
+
+  const requestMaxQuote = useCallback(() => {
+    if (!canRequestMaxQuote) throw new Error('Select a route and connect a wallet first');
+    return mutateMaxQuote({
+      srcChain: values.srcChain!,
+      dstChain: values.dstChain!,
+      srcToken: values.srcToken,
+      dstToken: values.dstToken,
+      sender: engineSender!,
+      recipient: engineRecipient,
+      slippageBps: values.slippageBps,
+      commitmentSalt,
+    });
+  }, [
+    canRequestMaxQuote,
+    commitmentSalt,
+    engineRecipient,
+    engineSender,
+    mutateMaxQuote,
+    values.dstChain,
+    values.dstToken,
+    values.slippageBps,
+    values.srcChain,
+    values.srcToken,
+  ]);
+
   const query = useQuery<QuoteResponse>({
-    queryKey: [
-      'router',
-      'quote',
-      values.srcChain,
-      values.dstChain,
-      values.srcToken,
-      values.dstToken,
-      amountAtomic?.toString(),
-      engineSender ?? null,
-      engineRecipient ?? null,
-      values.slippageBps,
-    ],
+    queryKey: quoteQueryKey({
+      srcChain: values.srcChain,
+      dstChain: values.dstChain,
+      srcToken: values.srcToken,
+      dstToken: values.dstToken,
+      amount: amountAtomic,
+      sender: engineSender,
+      recipient: engineRecipient,
+      slippageBps: values.slippageBps,
+    }),
     queryFn: ({ signal }) =>
       routerClient.quote(
         {
@@ -225,6 +304,10 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
     isExpired,
     isQuoteSettled,
     isRouteDataUnavailable,
+    requestMaxQuote,
+    canRequestMaxQuote,
+    isMaxQuoteLoading,
+    maxQuoteError,
   };
 }
 
@@ -309,6 +392,12 @@ function compoundSlippageMin(output: bigint, slippageBps: number, swapStepCount:
 }
 
 export function isQuoteRequestReady(v: TransferFormValues, sender: string | undefined): boolean {
+  if (!isMaxQuoteRequestReady(v, sender)) return false;
+  if (!v.amount || Number(v.amount) <= 0) return false;
+  return true;
+}
+
+export function isMaxQuoteRequestReady(v: TransferFormValues, sender: string | undefined): boolean {
   // Non-empty checks only — engine validates / normalizes per-protocol address shapes.
   // Recipient is the effective recipient (custom input or connected destination wallet);
   // gate on it like sender so we don't quote a route the user can't yet receive.
@@ -316,12 +405,11 @@ export function isQuoteRequestReady(v: TransferFormValues, sender: string | unde
   if (!v.recipient) return false;
   if (v.srcChain == null || v.dstChain == null) return false;
   if (!v.srcToken || !v.dstToken) return false;
-  if (!v.amount || Number(v.amount) <= 0) return false;
   return true;
 }
 
 // Emit per-component fees so each is rendered against its actual token.
-function augmentRoute(raw: RouteResponse): AugmentedRoute {
+export function augmentRoute(raw: RouteResponse): AugmentedRoute {
   const hasFixedOutput = raw.steps.length > 0 && raw.steps.every((s) => s.type === 'bridge');
 
   // Fixed-output routes deliver deterministic amounts — clamp outputMin = output.
@@ -358,6 +446,17 @@ function augmentRoute(raw: RouteResponse): AugmentedRoute {
         tokenAddress: '0x0000000000000000000000000000000000000000',
       });
     }
+  }
+
+  const sourceTransactionFee = adjusted.sourceTransactionFee;
+  const sourceChain = adjusted.steps[0]?.chain;
+  if (sourceTransactionFee && sourceChain != null && BigInt(sourceTransactionFee.amount) > 0n) {
+    components.push({
+      category: 'localGas',
+      amount: BigInt(sourceTransactionFee.amount),
+      chainId: sourceChain,
+      tokenAddress: '0x0000000000000000000000000000000000000000',
+    });
   }
 
   const feeBreakdown: FeeBreakdown = {

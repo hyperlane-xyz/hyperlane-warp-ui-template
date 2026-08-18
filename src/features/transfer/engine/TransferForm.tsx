@@ -140,13 +140,19 @@ function TransferFormContent() {
     isExpired,
     isQuoteSettled,
     isRouteDataUnavailable,
+    requestMaxQuote,
+    canRequestMaxQuote,
+    isMaxQuoteLoading,
+    maxQuoteError,
   } = useQuote({
     values: { ...values, amount: debouncedAmount, recipient: effectiveRecipient },
     sender,
+    senderPubKey,
     pause: isReview,
   });
   const isAmountDebouncing = values.amount !== debouncedAmount;
   useToastError(quoteError, 'Quote failed');
+  useToastError(maxQuoteError, 'Max quote failed');
 
   // Reset to best route when the user changes intent, not on every background refetch.
   useEffect(() => {
@@ -247,6 +253,33 @@ function TransferFormContent() {
   useEffect(() => {
     latestValuesRef.current = values;
   }, [values]);
+
+  const maxRequestKey = JSON.stringify([
+    values.srcChain,
+    values.dstChain,
+    values.srcToken,
+    values.dstToken,
+    values.amount,
+    values.slippageBps,
+    sender,
+    effectiveRecipient,
+  ]);
+  const latestMaxRequestKeyRef = useRef(maxRequestKey);
+  useEffect(() => {
+    latestMaxRequestKeyRef.current = maxRequestKey;
+  }, [maxRequestKey]);
+
+  const onMax = useCallback(async () => {
+    if (!srcToken) return;
+    const requestKey = latestMaxRequestKeyRef.current;
+    try {
+      const response = await requestMaxQuote();
+      if (latestMaxRequestKeyRef.current !== requestKey) return;
+      await setFieldValue('amount', formatUnits(BigInt(response.amount), srcToken.decimals), false);
+    } catch {
+      // useToastError renders the mutation error.
+    }
+  }, [requestMaxQuote, setFieldValue, srcToken]);
 
   const validateCurrentForm = useCallback(async () => {
     let sourceFee = 0n;
@@ -603,6 +636,9 @@ function TransferFormContent() {
           srcChainName={srcChainName}
           srcToken={srcToken}
           sender={sender}
+          onMax={onMax}
+          isMaxLoading={isMaxQuoteLoading}
+          isMaxDisabled={!canRequestMaxQuote}
           hasSelectedDestinationTokenRef={hasSelectedDestinationTokenRef}
         />
       </TransferSection>
@@ -842,16 +878,22 @@ function OriginTokenCard({
   srcChainName,
   srcToken,
   sender,
+  onMax,
+  isMaxLoading,
+  isMaxDisabled,
   hasSelectedDestinationTokenRef,
 }: {
   isReview: boolean;
   srcChainName: string | undefined;
   srcToken: UiToken | undefined;
   sender: string | undefined;
+  onMax: () => Promise<void>;
+  isMaxLoading: boolean;
+  isMaxDisabled: boolean;
   hasSelectedDestinationTokenRef: React.MutableRefObject<boolean>;
 }) {
   const { values } = useFormikContext<TransferFormValues>();
-  const { data: balance, isLoading: isBalanceLoading } = useTokenBalance(srcToken, sender);
+  const { data: balance } = useTokenBalance(srcToken, sender);
   const amountUsd = useTokenUsdValue(srcToken, values.amount);
 
   return (
@@ -884,10 +926,9 @@ function OriginTokenCard({
             }}
           />
           <MaxButton
-            balance={balance ?? undefined}
-            isLoading={isBalanceLoading}
-            disabled={isReview}
-            token={srcToken}
+            onClick={onMax}
+            isLoading={isMaxLoading}
+            disabled={isReview || isMaxDisabled}
           />
         </div>
         <div className="transfer-balance mt-1 flex items-center justify-between text-xs leading-[18px] text-gray-450 dark:text-foreground-secondary">
@@ -1152,7 +1193,12 @@ function ReviewTransactions({
           {route.feeBreakdown.components
             .filter((c) => c.amount > 0n)
             .map((c, i) => {
-              const label = c.category === 'bridge' ? 'Route Fee' : 'Interchain Gas';
+              const label =
+                c.category === 'bridge'
+                  ? 'Route Fee'
+                  : c.category === 'igp'
+                    ? 'Interchain Gas'
+                    : 'Network Fee';
               const isNative = /^0x0+$/i.test(c.tokenAddress);
               const componentChainName =
                 multiProvider.tryGetChainName(c.chainId) ?? `chain-${c.chainId}`;

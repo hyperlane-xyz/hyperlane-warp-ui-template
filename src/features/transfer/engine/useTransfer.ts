@@ -174,7 +174,8 @@ export function useTransfer() {
             tx: (await prepareRouteTransaction(routeTx, {
               protocol: protocol as ProtocolType,
               sender: args.sender,
-              rpcUrl: multiProvider.tryGetChainMetadata(srcChainName)?.rpcUrls?.[0]?.http,
+              chainName: srcChainName,
+              multiProvider,
             })) as Parameters<typeof fns.sendTransaction>[0]['tx'],
             chainName: srcChainName,
           });

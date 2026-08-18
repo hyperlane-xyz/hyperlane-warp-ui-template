@@ -1,4 +1,4 @@
-import { type MultiProtocolProvider, type TypedTransaction } from '@hyperlane-xyz/sdk';
+import type { MultiProtocolProvider } from '@hyperlane-xyz/sdk';
 import { type HexString, isEVMLike, ProtocolType } from '@hyperlane-xyz/utils';
 
 import { getRouteTxs } from '../../api/routeTx';
@@ -23,6 +23,8 @@ export async function estimateRouteSourceFee({
   route: RouteResponse;
   approvalTransactionCount: number;
 }): Promise<bigint> {
+  if (route.sourceTransactionFee) return BigInt(route.sourceTransactionFee.amount);
+
   const protocol = multiProvider.tryGetProtocol(chainName);
   if (!protocol) throw new Error(`Unknown source protocol for ${chainName}`);
 
@@ -48,7 +50,7 @@ export async function estimateRouteSourceFee({
   const transactions = await prepareSourceTransactions({
     multiProvider,
     chainName,
-    protocol: protocol as ProtocolType,
+    protocol,
     sender,
     routeTxs,
   });
@@ -99,18 +101,17 @@ async function prepareSourceTransactions({
   protocol: ProtocolType;
   sender: string;
   routeTxs: ReturnType<typeof getRouteTxs>;
-}): Promise<TypedTransaction[]> {
+}) {
   if (!routeTxs.length) throw new Error('Route has no source transaction');
 
-  const rpcUrl = multiProvider.tryGetChainMetadata(chainName)?.rpcUrls?.[0]?.http;
-  const routeTransactions = await Promise.all(
+  return Promise.all(
     routeTxs.map((routeTx) =>
       prepareRouteTransaction(routeTx, {
         protocol,
         sender,
-        rpcUrl,
+        chainName,
+        multiProvider,
       }),
     ),
   );
-  return routeTransactions;
 }

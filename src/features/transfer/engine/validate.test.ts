@@ -299,32 +299,6 @@ describe('validateBalances', () => {
     expect(readBalanceMock).toHaveBeenCalledTimes(1);
   });
 
-  test('recognizes embedded ERC20 IGP reported with the warp router alias', async () => {
-    const collateralAddress = '0x1111111111111111111111111111111111111111';
-    const routerAddress = '0x2222222222222222222222222222222222222222';
-    readBalanceMock.mockResolvedValueOnce(1_000n);
-
-    const errors = await validateBalances({
-      multiProvider: multiProvider(ProtocolType.Ethereum),
-      srcChainInfo: evmChain(),
-      srcToken: bonkToken({ chainId: 1, chainName: 'ethereum', address: collateralAddress }),
-      sender: '0xsender',
-      bestRoute: bridgeRoute({
-        chainId: 1,
-        asset: collateralAddress,
-        router: routerAddress,
-        amountIn: 1_000n,
-        amountOut: 993n,
-        igpAmount: 7n,
-        igpToken: routerAddress,
-      }),
-      amountAtomic: 1_000n,
-    });
-
-    expect(errors).toBeNull();
-    expect(readBalanceMock).toHaveBeenCalledTimes(1);
-  });
-
   test('still requires separately funded ERC20 IGP from the wallet', async () => {
     const collateralAddress = '0x1111111111111111111111111111111111111111';
     const feeTokenAddress = '0x3333333333333333333333333333333333333333';
@@ -354,7 +328,7 @@ describe('validateBalances', () => {
     );
   });
 
-  test('treats API IGP funding metadata as authoritative over fallback inference', async () => {
+  test('requires IGP from the wallet when the API marks it as external', async () => {
     readBalanceMock.mockResolvedValueOnce(1_006n);
 
     const errors = await validateBalances({
@@ -729,7 +703,7 @@ function bridgeRoute({
   tokenFee = 0n,
   igpAmount = 0n,
   igpToken = NATIVE_ADDRESS,
-  igpIncludedInAmountIn,
+  igpIncludedInAmountIn = false,
   localNativeFee = 0n,
   tx = null,
 }: {
@@ -762,7 +736,7 @@ function bridgeRoute({
             tokenFee: tokenFee.toString(),
             igpToken,
             igpAmount: igpAmount.toString(),
-            ...(igpIncludedInAmountIn != null && { igpIncludedInAmountIn }),
+            igpIncludedInAmountIn,
             localNativeFee: localNativeFee.toString(),
           },
         },
@@ -810,6 +784,7 @@ function originSwapRoute({
     amountOut: 900n - (igpToken === bridgeToken ? igpAmount : 0n),
     igpAmount,
     igpToken,
+    igpIncludedInAmountIn: igpToken === bridgeToken,
   });
   return {
     ...bridge,

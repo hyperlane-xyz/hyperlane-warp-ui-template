@@ -724,6 +724,7 @@ function bridgeRoute(args: {
           tokenFee: '0',
           igpToken: NATIVE,
           igpAmount: '0',
+          igpIncludedInAmountIn: false,
           localNativeFee: '0',
         },
       },

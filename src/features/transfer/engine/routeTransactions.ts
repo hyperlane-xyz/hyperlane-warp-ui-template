@@ -1,8 +1,11 @@
-import { ProviderType, type TypedTransaction } from '@hyperlane-xyz/sdk';
+import {
+  type MultiProtocolProvider,
+  ProviderType,
+  type TypedTransaction,
+} from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 import {
   AddressLookupTableAccount,
-  Connection,
   PublicKey,
   Transaction,
   TransactionInstruction,
@@ -16,7 +19,8 @@ import type { RouteTx } from '../../api/types';
 interface PrepareRouteTransactionOptions {
   protocol: ProtocolType;
   sender?: string;
-  rpcUrl?: string;
+  chainName?: string;
+  multiProvider?: MultiProtocolProvider;
 }
 
 // Converts the engine payload into the exact typed transaction used by both
@@ -99,12 +103,14 @@ function base64ToBytes(value: string): Uint8Array {
 
 async function buildSolanaTransaction(
   tx: Extract<RouteTx, { to: string }>,
-  options: Pick<PrepareRouteTransactionOptions, 'sender' | 'rpcUrl'>,
+  options: Pick<PrepareRouteTransactionOptions, 'sender' | 'chainName' | 'multiProvider'>,
 ): Promise<VersionedTransaction> {
   if (!options.sender) throw new Error('Missing Solana sender for route transaction');
-  if (!options.rpcUrl) throw new Error('Missing Solana RPC URL for route transaction');
+  if (!options.chainName || !options.multiProvider) {
+    throw new Error('Missing Solana provider for route transaction');
+  }
 
-  const connection = new Connection(options.rpcUrl, 'confirmed');
+  const connection = options.multiProvider.getSolanaWeb3Provider(options.chainName);
   const instruction = new TransactionInstruction({
     programId: new PublicKey(tx.to),
     data: Buffer.from(tx.data, 'base64'),
@@ -140,7 +146,7 @@ async function buildSolanaTransaction(
 }
 
 async function loadAddressLookupTables(
-  connection: Connection,
+  connection: ReturnType<MultiProtocolProvider['getSolanaWeb3Provider']>,
   altAddresses: string[],
 ): Promise<AddressLookupTableAccount[]> {
   if (!altAddresses.length) return [];

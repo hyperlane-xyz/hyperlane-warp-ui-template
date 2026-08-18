@@ -18,6 +18,25 @@ beforeEach(() => {
 });
 
 describe('estimateRouteSourceFee', () => {
+  test('uses the source fee already returned by a max quote', async () => {
+    const maxRoute = route();
+    maxRoute.sourceTransactionFee = { amount: '7', gasUnits: '1' };
+    const estimateTransactionFee = vi.fn();
+
+    await expect(
+      estimateRouteSourceFee({
+        multiProvider: provider(ProtocolType.Sealevel, estimateTransactionFee),
+        chainName: 'solanamainnet',
+        sender: 'sender',
+        route: maxRoute,
+        approvalTransactionCount: 0,
+      }),
+    ).resolves.toBe(7n);
+
+    expect(prepareRouteTransactionMock).not.toHaveBeenCalled();
+    expect(estimateTransactionFee).not.toHaveBeenCalled();
+  });
+
   test('uses the SDK estimator with the prepared route transaction and sender public key', async () => {
     const transaction = typedTransaction(ProviderType.SolanaWeb3);
     prepareRouteTransactionMock.mockResolvedValue(transaction);
@@ -41,7 +60,8 @@ describe('estimateRouteSourceFee', () => {
     expect(prepareRouteTransactionMock).toHaveBeenCalledWith(expect.anything(), {
       protocol: ProtocolType.Sealevel,
       sender: 'sender',
-      rpcUrl: 'https://rpc.test',
+      chainName: 'solanamainnet',
+      multiProvider,
     });
     expect(estimateTransactionFee).toHaveBeenCalledWith({
       chainNameOrId: 'solanamainnet',
@@ -156,7 +176,6 @@ function provider(
 ) {
   return {
     tryGetProtocol: () => protocol,
-    tryGetChainMetadata: () => ({ rpcUrls: [{ http: 'https://rpc.test' }] }),
     estimateTransactionFee,
     getEthersV5Provider: () => ({ getFeeData: vi.fn().mockResolvedValue(feeData) }),
   } as never;

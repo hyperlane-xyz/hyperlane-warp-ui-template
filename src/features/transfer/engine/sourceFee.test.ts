@@ -102,7 +102,7 @@ describe('estimateRouteSourceFee', () => {
     ).rejects.toThrow('Unable to estimate source fee on solana');
   });
 
-  test('uses engine gas units and the complete EIP-1559 fee when simulation fails', async () => {
+  test('buffers engine gas units and uses the complete EIP-1559 fee', async () => {
     const multiProvider = provider(
       ProtocolType.Ethereum,
       vi.fn().mockRejectedValue(new Error('insufficient funds')),
@@ -116,7 +116,7 @@ describe('estimateRouteSourceFee', () => {
         route: testRoute(),
         approvalAmounts: [],
       }),
-    ).resolves.toBe(600_000n);
+    ).resolves.toBe(660_000n);
   });
 
   test('uses the legacy gas price when EIP-1559 fee data is unavailable', async () => {
@@ -134,7 +134,7 @@ describe('estimateRouteSourceFee', () => {
         route: testRoute(),
         approvalAmounts: [],
       }),
-    ).resolves.toBe(600_000n);
+    ).resolves.toBe(660_000n);
   });
 
   test('uses the EVM gas budget fallback when the provider returns zero', async () => {
@@ -148,7 +148,7 @@ describe('estimateRouteSourceFee', () => {
         route: testRoute(),
         approvalAmounts: [],
       }),
-    ).resolves.toBe(600_000n);
+    ).resolves.toBe(660_000n);
   });
 
   test.each([ProtocolType.Ethereum, ProtocolType.Tron])(
@@ -200,7 +200,7 @@ describe('estimateRouteSourceFee', () => {
           route,
           approvalAmounts: [1n],
         }),
-      ).resolves.toBe(1_800_000n);
+      ).resolves.toBe(1_980_000n);
       expect(estimateTransactionFee).toHaveBeenCalledTimes(2);
     },
   );

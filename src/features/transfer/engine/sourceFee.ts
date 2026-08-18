@@ -10,6 +10,7 @@ import { prepareApprovalTransaction, prepareRouteTransaction } from './routeTran
 import type { FeeBreakdown } from './types';
 
 const EVM_LIKE_APPROVAL_ROUTE_GAS_BUDGET = 600_000n;
+const EVM_LIKE_FALLBACK_GAS_BUFFER_PERCENT = 10n;
 
 export async function estimateRouteSourceFee({
   multiProvider,
@@ -84,7 +85,10 @@ async function estimateEvmLikeFeeForGasUnits(
   // reserve the same fee for an EIP-1559 transaction.
   const gasPrice = maxFee && priorityFee ? maxFee + priorityFee : legacyFee;
   if (gasPrice == null) throw new Error(`No EVM-like gas price available for ${chainName}`);
-  return gasUnits * gasPrice;
+  // Engine originGas is a route-scoring heuristic, not an executable estimate.
+  // Use the SDK's standard 10% gas-limit headroom for this fallback path.
+  const bufferedGasUnits = (gasUnits * (100n + EVM_LIKE_FALLBACK_GAS_BUFFER_PERCENT)) / 100n;
+  return bufferedGasUnits * gasPrice;
 }
 
 async function prepareSourceTransactions({

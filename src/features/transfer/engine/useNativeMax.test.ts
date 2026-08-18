@@ -13,8 +13,8 @@ const hookMocks = vi.hoisted(() => ({
 }));
 
 vi.mock('formik', () => ({ useFormikContext: hookMocks.formikContext }));
-vi.mock('react', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('react')>();
+vi.mock('react', async () => {
+  const actual = await vi.importActual<typeof import('react')>('react');
   return {
     ...actual,
     useCallback: (callback: unknown) => callback,

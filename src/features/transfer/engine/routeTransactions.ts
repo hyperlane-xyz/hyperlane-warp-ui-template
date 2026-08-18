@@ -53,8 +53,28 @@ export function getRawRouteProviderType(protocol: ProtocolType): ProviderType {
 }
 
 function deserializeSdkTransaction(tx: Extract<RouteTx, { protocol: string }>): unknown {
-  if (tx.type !== ProviderType.SolanaWeb3) return tx;
-  return { ...tx, transaction: deserializeSolanaTransaction(tx.transaction) };
+  const transaction =
+    tx.type === ProviderType.SolanaWeb3
+      ? deserializeSolanaTransaction(tx.transaction)
+      : reviveByteArrays(tx.transaction);
+  return { ...tx, transaction };
+}
+
+function reviveByteArrays(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(reviveByteArrays);
+  if (!value || typeof value !== 'object') return value;
+
+  const record = value as Record<string, unknown>;
+  if (
+    record.encoding === 'base64' &&
+    typeof record.data === 'string' &&
+    Object.keys(record).length === 2
+  ) {
+    return base64ToBytes(record.data);
+  }
+  return Object.fromEntries(
+    Object.entries(record).map(([key, item]) => [key, reviveByteArrays(item)]),
+  );
 }
 
 function deserializeSolanaTransaction(raw: unknown): Transaction | VersionedTransaction {
@@ -63,11 +83,8 @@ function deserializeSolanaTransaction(raw: unknown): Transaction | VersionedTran
     throw new Error('Invalid Solana transaction payload from quote');
   }
   const bytes = base64ToBytes(payload.data);
-  try {
-    return Transaction.from(bytes);
-  } catch {
-    return VersionedTransaction.deserialize(bytes);
-  }
+  const versioned = VersionedTransaction.deserialize(bytes);
+  return versioned.version === 'legacy' ? Transaction.from(bytes) : versioned;
 }
 
 function base64ToBytes(value: string): Uint8Array {

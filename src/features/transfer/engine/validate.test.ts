@@ -96,6 +96,24 @@ describe('validateBalances', () => {
     );
   });
 
+  test('includes the API local native fee in the native balance requirement', async () => {
+    readBalanceMock.mockResolvedValueOnce(1_000n).mockResolvedValueOnce(6n);
+
+    const errors = await validateBalances({
+      multiProvider: multiProvider(),
+      srcChainInfo: starknetChain(),
+      srcToken: bonkToken(),
+      sender: '0xsender',
+      bestRoute: bridgeRoute({ amountIn: 1_000n, localNativeFee: 7n }),
+      amountAtomic: 1_000n,
+    });
+
+    expect(errors).toEqual({
+      amount:
+        'Insufficient STRK for transaction value and gas (need 0.000000000000000001 more STRK)',
+    });
+  });
+
   test('adds wallet execution fee to native balance validation', async () => {
     readBalanceMock
       .mockResolvedValueOnce(100_000_000n)
@@ -712,6 +730,7 @@ function bridgeRoute({
   igpAmount = 0n,
   igpToken = NATIVE_ADDRESS,
   igpIncludedInAmountIn,
+  localNativeFee = 0n,
   tx = null,
 }: {
   chainId?: number;
@@ -723,6 +742,7 @@ function bridgeRoute({
   igpAmount?: bigint;
   igpToken?: string;
   igpIncludedInAmountIn?: boolean;
+  localNativeFee?: bigint;
   tx?: RouteResponse['tx'];
 }): AugmentedRoute {
   return {
@@ -743,7 +763,7 @@ function bridgeRoute({
             igpToken,
             igpAmount: igpAmount.toString(),
             ...(igpIncludedInAmountIn != null && { igpIncludedInAmountIn }),
-            localNativeFee: '0',
+            localNativeFee: localNativeFee.toString(),
           },
         },
       ],

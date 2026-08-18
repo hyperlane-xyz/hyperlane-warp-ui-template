@@ -25,7 +25,7 @@ describe('estimateRouteSourceFee', () => {
       .fn()
       .mockResolvedValue({ gasUnits: 1n, gasPrice: 2n, fee: 7n });
     const multiProvider = provider(ProtocolType.Sealevel, estimateTransactionFee);
-    const senderPubKey = Promise.resolve('abcd');
+    const senderPubKey = Promise.resolve('0xabcd');
 
     await expect(
       estimateRouteSourceFee({
@@ -34,7 +34,7 @@ describe('estimateRouteSourceFee', () => {
         sender: 'sender',
         senderPubKey,
         route: route(),
-        approvalPending: false,
+        approvalTransactionCount: 0,
       }),
     ).resolves.toBe(7n);
 
@@ -51,7 +51,7 @@ describe('estimateRouteSourceFee', () => {
     });
   });
 
-  test('uses the existing combined budget while an EVM-like approval is pending', async () => {
+  test('adds revoke and approval gas after the full EVM-like route budget', async () => {
     const estimateTransactionFee = vi.fn();
     const multiProvider = provider(ProtocolType.Ethereum, estimateTransactionFee, {
       maxFeePerGas: 2n,
@@ -59,32 +59,40 @@ describe('estimateRouteSourceFee', () => {
       gasPrice: 1n,
     });
 
+    const approvalRoute = route({
+      token: '0xtoken',
+      spender: '0xspender',
+      amount: '10',
+      kind: 'erc20',
+    });
+    approvalRoute.gas.originGas = '700000';
+
     await expect(
       estimateRouteSourceFee({
         multiProvider,
         chainName: 'ethereum',
         sender: '0xsender',
-        route: route({
-          token: '0xtoken',
-          spender: '0xspender',
-          amount: '10',
-          kind: 'erc20',
-        }),
-        approvalPending: true,
+        route: approvalRoute,
+        approvalTransactionCount: 2,
       }),
-    ).resolves.toBe(1_800_000n);
+    ).resolves.toBe(1_620_000n);
 
     expect(prepareRouteTransactionMock).not.toHaveBeenCalled();
     expect(estimateTransactionFee).not.toHaveBeenCalled();
   });
 
-  test('uses the existing combined budget for multiple EVM-like transactions', async () => {
+  test('counts SDK-provided revoke and approval transactions', async () => {
     const estimateTransactionFee = vi.fn();
     const multiProvider = provider(ProtocolType.Ethereum, estimateTransactionFee, {
       gasPrice: 2n,
     });
     const sdkRoute = route();
-    sdkRoute.txs = [sdkRoute.tx!, sdkRoute.tx!];
+    sdkRoute.gas.originGas = '700000';
+    sdkRoute.txs = [
+      sdkRouteTransaction('revoke'),
+      sdkRouteTransaction('approval'),
+      sdkRouteTransaction('transfer'),
+    ];
 
     await expect(
       estimateRouteSourceFee({
@@ -92,9 +100,9 @@ describe('estimateRouteSourceFee', () => {
         chainName: 'ethereum',
         sender: '0xsender',
         route: sdkRoute,
-        approvalPending: false,
+        approvalTransactionCount: 0,
       }),
-    ).resolves.toBe(1_200_000n);
+    ).resolves.toBe(1_620_000n);
 
     expect(prepareRouteTransactionMock).not.toHaveBeenCalled();
     expect(estimateTransactionFee).not.toHaveBeenCalled();
@@ -117,7 +125,7 @@ describe('estimateRouteSourceFee', () => {
         chainName: 'solanamainnet',
         sender: 'sender',
         route: sdkRoute,
-        approvalPending: false,
+        approvalTransactionCount: 0,
       }),
     ).resolves.toBe(5n);
 
@@ -135,7 +143,7 @@ describe('estimateRouteSourceFee', () => {
         chainName: 'ethereum',
         sender: '0xsender',
         route: route(),
-        approvalPending: false,
+        approvalTransactionCount: 0,
       }),
     ).rejects.toThrow('insufficient funds');
   });
@@ -156,6 +164,15 @@ function provider(
 
 function typedTransaction(type: ProviderType) {
   return { type, transaction: {}, category: 'transfer' };
+}
+
+function sdkRouteTransaction(category: string): NonNullable<RouteResponse['tx']> {
+  return {
+    protocol: ProtocolType.Ethereum,
+    type: ProviderType.EthersV5,
+    category,
+    transaction: {},
+  };
 }
 
 function route(approval: RouteResponse['approval'] = null): RouteResponse {

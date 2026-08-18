@@ -176,8 +176,12 @@ function TransferFormContent() {
     amount: approvalAmount,
     isNative: !approval,
   });
-  const approvalPending =
-    status.phase === ApprovalPhase.NeedsApprove || status.phase === ApprovalPhase.NeedsRevoke;
+  const approvalTransactionCount =
+    status.phase === ApprovalPhase.NeedsRevoke
+      ? 2
+      : status.phase === ApprovalPhase.NeedsApprove
+        ? 1
+        : 0;
 
   const transfer = useTransfer();
   useToastError(transfer.error, 'Transfer failed');
@@ -254,12 +258,12 @@ function TransferFormContent() {
           sender,
           senderPubKey,
           route: bestRoute.raw,
-          approvalPending,
+          approvalTransactionCount,
         });
       } catch (err) {
         logger.warn('Unable to estimate source transaction fee', err as Error);
         return {
-          form: 'Unable to estimate source transaction fee; reduce the amount and try again',
+          form: 'Could not estimate the network fee for this transfer. Please try again.',
         };
       }
     }
@@ -283,7 +287,7 @@ function TransferFormContent() {
       nativeExecutionFee,
     });
   }, [
-    approvalPending,
+    approvalTransactionCount,
     bestRoute,
     chainsResp?.chains,
     dstToken,

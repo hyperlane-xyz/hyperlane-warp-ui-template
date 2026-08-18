@@ -30,6 +30,31 @@ describe('prepareRouteTransaction', () => {
     });
   });
 
+  test('rejects raw route payloads for protocols that require SDK transactions', async () => {
+    const routeTx: RouteTx = { to: '0x1', data: '0x1234', value: '5' };
+
+    await expect(
+      prepareRouteTransaction(routeTx, { protocol: ProtocolType.Cosmos }),
+    ).rejects.toThrow('Raw route transactions are unsupported for cosmos');
+  });
+
+  test('restores serialized byte arrays in SDK transactions', async () => {
+    const routeTx: RouteTx = {
+      protocol: ProtocolType.Cosmos,
+      type: ProviderType.CosmJs,
+      category: 'transfer',
+      transaction: {
+        value: { encoding: 'base64', data: Buffer.from([1, 2, 3]).toString('base64') },
+      },
+    };
+
+    const prepared = (await prepareRouteTransaction(routeTx, {
+      protocol: ProtocolType.Cosmos,
+    })) as { transaction: { value: Uint8Array } };
+
+    expect(prepared.transaction.value).toEqual(Uint8Array.from([1, 2, 3]));
+  });
+
   test('deserializes Solana engine payloads with existing partial signatures', async () => {
     const feePayer = Keypair.generate();
     const extraSigner = Keypair.generate();

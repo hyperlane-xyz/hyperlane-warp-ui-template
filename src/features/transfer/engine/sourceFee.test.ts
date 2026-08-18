@@ -71,6 +71,47 @@ describe('estimateRouteSourceFee', () => {
     });
   });
 
+  test('keeps the Solana message base fee when priority usage is zero', async () => {
+    prepareRouteTransactionMock.mockResolvedValue(typedTransaction(ProviderType.SolanaWeb3));
+    const estimateTransactionFee = vi.fn().mockResolvedValue({
+      gasUnits: 0n,
+      gasPrice: 0n,
+      fee: 5_000n,
+    });
+
+    await expect(
+      estimateRouteSourceFee({
+        multiProvider: provider(ProtocolType.Sealevel, estimateTransactionFee),
+        chainName: 'solanamainnet',
+        sender: 'sender',
+        route: route(),
+        approvalTransactionCount: 0,
+      }),
+    ).resolves.toBe(5_000n);
+  });
+
+  test('uses the EIP-1559 fee cap for SDK-estimated gas units', async () => {
+    prepareRouteTransactionMock.mockResolvedValue(typedTransaction(ProviderType.EthersV5));
+    const estimateTransactionFee = vi.fn().mockResolvedValue({
+      gasUnits: 600_000n,
+      gasPrice: 3n,
+      fee: 1_800_000n,
+    });
+
+    await expect(
+      estimateRouteSourceFee({
+        multiProvider: provider(ProtocolType.Ethereum, estimateTransactionFee, {
+          maxFeePerGas: 2n,
+          maxPriorityFeePerGas: 1n,
+        }),
+        chainName: 'ethereum',
+        sender: '0xsender',
+        route: route(),
+        approvalTransactionCount: 0,
+      }),
+    ).resolves.toBe(1_200_000n);
+  });
+
   test('adds revoke and approval gas after the full EVM-like route budget', async () => {
     const estimateTransactionFee = vi.fn();
     const multiProvider = provider(ProtocolType.Ethereum, estimateTransactionFee, {

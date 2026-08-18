@@ -81,7 +81,7 @@
     "@tanstack/query-core": "^5.101.4",
     "@tanstack/react-query": "^5.101.4",
     "@tronweb3/tronwallet-abstract-adapter": "^1.2.0",
-    "@tronweb3/tronwallet-adapter-react-hooks": "^1.1.12",
+    "@tronweb3/tronwallet-adapter-react-hooks": "^1.1.13",
     "@tronweb3/tronwallet-adapter-tronlink": "^1.2.0",
     "@vercel/analytics": "^2.0.1",
     "@vercel/functions": "^3.7.6",

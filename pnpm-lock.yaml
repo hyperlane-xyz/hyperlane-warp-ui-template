@@ -183,8 +183,8 @@ importers:
         specifier: ^1.2.0
         version: 1.2.0(bufferutil@4.1.0)(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1)(utf-8-validate@6.0.6)
       '@tronweb3/tronwallet-adapter-react-hooks':
-        specifier: ^1.1.12
-        version: 1.1.12(bufferutil@4.1.0)(debug@4.4.3(supports-color@8.1.1))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@8.1.1)(utf-8-validate@6.0.6)
+        specifier: ^1.1.13
+        version: 1.1.13(bufferutil@4.1.0)(debug@4.4.3(supports-color@8.1.1))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@8.1.1)(utf-8-validate@6.0.6)
       '@tronweb3/tronwallet-adapter-tronlink':
         specifier: ^1.2.0
         version: 1.2.0(bufferutil@4.1.0)(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1)(utf-8-validate@6.0.6)
@@ -4635,13 +4635,6 @@ packages:
   '@tronweb3/tronwallet-abstract-adapter@1.2.0':
     resolution: {integrity: sha512-Xy3ftKnxhEEWOWG6OXoN877t4oTr4W/kuQb7LWVYdn5PNeQ90LXj7eaTu9e6624iozDRuxMix5FThtqEt5F7dA==}
     engines: {node: '>=16', pnpm: '>=7'}
-
-  '@tronweb3/tronwallet-adapter-react-hooks@1.1.12':
-    resolution: {integrity: sha512-L7qTkfQ/usd2m3TbNCRC6qH6Jp6HwES0CpHR3xxYjScLeOxBlhvOSXmfjkE9sK0m+jR4iTKsExEXV+J0P88ERA==}
-    engines: {node: '>=16', pnpm: '>=7'}
-    peerDependencies:
-      react: '*'
-      react-dom: '*'
 
   '@tronweb3/tronwallet-adapter-react-hooks@1.1.13':
     resolution: {integrity: sha512-g9dr4rVk1w/iGru1dr8CfP1kr8ZA5hW53bx7DnvR1O7DriuK01C3oP8nq1wrCs2iI/7tdvUuP6nnjrdUncPVxw==}
@@ -16388,18 +16381,6 @@ snapshots:
     dependencies:
       eventemitter3: 4.0.7
       tronweb: 6.2.2(bufferutil@4.1.0)(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1)(utf-8-validate@6.0.6)
-    transitivePeerDependencies:
-      - bufferutil
-      - debug
-      - supports-color
-      - utf-8-validate
-
-  '@tronweb3/tronwallet-adapter-react-hooks@1.1.12(bufferutil@4.1.0)(debug@4.4.3(supports-color@8.1.1))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@8.1.1)(utf-8-validate@6.0.6)':
-    dependencies:
-      '@tronweb3/tronwallet-abstract-adapter': 1.2.0(bufferutil@4.1.0)(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1)(utf-8-validate@6.0.6)
-      '@tronweb3/tronwallet-adapter-tronlink': 1.2.0(bufferutil@4.1.0)(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1)(utf-8-validate@6.0.6)
-      react: 19.2.8
-      react-dom: 19.2.8(react@19.2.8)
     transitivePeerDependencies:
       - bufferutil
       - debug

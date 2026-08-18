@@ -30,13 +30,18 @@ import { getRoutePrefillToken, tokenKey } from './utils';
 
 type Props = {
   selectionMode: TokenSelectionMode;
+  hasSelectedDestinationTokenRef: MutableRefObject<boolean>;
   disabled?: boolean;
 };
 
 // Reads source/destination token from form state via two paired fields
 // (chainId + tokenAddress) and writes both atomically when the user
 // picks one in the modal.
-export function TokenSelectField({ selectionMode, disabled }: Props) {
+export function TokenSelectField({
+  selectionMode,
+  hasSelectedDestinationTokenRef,
+  disabled,
+}: Props) {
   const { values, setFieldValue } = useFormikContext<TransferFormValues>();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingChain, setEditingChain] = useState<string | null>(null);
@@ -86,23 +91,27 @@ export function TokenSelectField({ selectionMode, disabled }: Props) {
       isOrigin ? token : counterpartToken,
       isOrigin ? counterpartToken : token,
     );
+    if (!isOrigin) hasSelectedDestinationTokenRef.current = true;
     if (isOrigin) {
       // Reset amount when origin changes (warp UI does the same).
       setFieldValue('amount', '');
       latestOriginSelectionRef.current = tokenKey(token.chainId, token.address);
-      void prefillBestDestinationToken({
-        originToken: token,
-        currentDestinationToken: counterpartToken,
-        latestRecipientRef,
-        chainIdToName,
-        multiProvider,
-        queryClient,
-        syncTokens,
-        latestOriginSelectionRef,
-        latestCounterpartKeyRef,
-        counterpartKeyAtRequestStart: counterpartKey,
-        setFieldValue,
-      });
+      if (!hasSelectedDestinationTokenRef.current) {
+        void prefillBestDestinationToken({
+          originToken: token,
+          currentDestinationToken: counterpartToken,
+          hasSelectedDestinationTokenRef,
+          latestRecipientRef,
+          chainIdToName,
+          multiProvider,
+          queryClient,
+          syncTokens,
+          latestOriginSelectionRef,
+          latestCounterpartKeyRef,
+          counterpartKeyAtRequestStart: counterpartKey,
+          setFieldValue,
+        });
+      }
     } else if (shouldClearAddress(multiProvider, values.recipient, token.chainName)) {
       setFieldValue('recipient', '');
     }
@@ -158,6 +167,7 @@ export function TokenSelectField({ selectionMode, disabled }: Props) {
 async function prefillBestDestinationToken({
   originToken,
   currentDestinationToken,
+  hasSelectedDestinationTokenRef,
   latestRecipientRef,
   chainIdToName,
   multiProvider,
@@ -170,6 +180,7 @@ async function prefillBestDestinationToken({
 }: {
   originToken: UiToken;
   currentDestinationToken?: UiToken;
+  hasSelectedDestinationTokenRef: MutableRefObject<boolean>;
   latestRecipientRef: MutableRefObject<string>;
   chainIdToName: Map<number, string>;
   multiProvider: ReturnType<typeof useMultiProvider>;
@@ -193,6 +204,7 @@ async function prefillBestDestinationToken({
       return;
     }
     if (latestCounterpartKeyRef.current !== counterpartKeyAtRequestStart) return;
+    if (hasSelectedDestinationTokenRef.current) return;
 
     const routeTokens = result.tokens.flatMap((token) => {
       if (token.decimals == null) return [];

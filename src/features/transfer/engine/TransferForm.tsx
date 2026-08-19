@@ -39,7 +39,12 @@ import { tokenKey } from '../../tokens/utils';
 import { RecipientConfirmationModal } from '../../wallet/RecipientConfirmationModal';
 import { WalletConnectionWarning } from '../../wallet/WalletConnectionWarning';
 import { WalletDropdown } from '../../wallet/WalletDropdown';
-import { ApprovalPhase, getApprovalTransactionCount, useApprovalStatus } from './approval';
+import {
+  ApprovalPhase,
+  getApprovalTransactionCount,
+  isApprovalReadyForValidation,
+  useApprovalStatus,
+} from './approval';
 import { FeeSectionButton } from './FeeSectionButton';
 import { MaxButton } from './MaxButton';
 import { RouteSelectionModal } from './routeSelection/RouteSelectionModal';
@@ -186,7 +191,8 @@ function TransferFormContent() {
     amount: approvalAmount,
     isNative: !approval,
   });
-  const approvalTransactionCount = getApprovalTransactionCount(status, !!approval);
+  const approvalTransactionCount = getApprovalTransactionCount(status);
+  const isApprovalReady = isApprovalReadyForValidation(status, !!approval);
 
   const transfer = useTransfer();
   useToastError(transfer.error, 'Transfer failed');
@@ -335,7 +341,7 @@ function TransferFormContent() {
   ]);
 
   const onContinue = useCallback(async () => {
-    if (isAmountDebouncing) return;
+    if (isAmountDebouncing || !isApprovalReady) return;
     const snapshot = values;
     setIsValidating(true);
     try {
@@ -387,6 +393,7 @@ function TransferFormContent() {
     effectiveRecipient,
     multiProvider,
     isAmountDebouncing,
+    isApprovalReady,
     validateCurrentForm,
     dstChainName,
     openConfirmationModal,
@@ -726,6 +733,8 @@ function TransferFormContent() {
         hasRoute={!!bestRoute}
         isRouteDataUnavailable={isRouteDataUnavailable}
         isAmountDebouncing={isAmountDebouncing}
+        isApprovalReady={isApprovalReady}
+        approvalCheckFailed={status.phase === ApprovalPhase.Failed}
         isQuoteSettled={isQuoteSettled}
         isValidating={isValidating}
         onSendTransactions={onSendTransactions}
@@ -1239,6 +1248,8 @@ function ButtonSection({
   hasRoute,
   isRouteDataUnavailable,
   isAmountDebouncing,
+  isApprovalReady,
+  approvalCheckFailed,
   isQuoteSettled,
   isValidating,
   onSendTransactions,
@@ -1256,6 +1267,8 @@ function ButtonSection({
   hasRoute: boolean;
   isRouteDataUnavailable: boolean;
   isAmountDebouncing: boolean;
+  isApprovalReady: boolean;
+  approvalCheckFailed: boolean;
   isQuoteSettled: boolean;
   isValidating: boolean;
   onSendTransactions: () => Promise<void>;
@@ -1289,6 +1302,9 @@ function ButtonSection({
       disabled = true;
     } else if (isAmountDebouncing) {
       text = 'Fetching quote…';
+      disabled = true;
+    } else if (!isApprovalReady) {
+      text = approvalCheckFailed ? 'Approval check failed' : 'Fetching quote…';
       disabled = true;
     } else {
       text = 'Continue';

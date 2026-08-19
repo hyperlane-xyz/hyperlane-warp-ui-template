@@ -8,7 +8,7 @@ import {
 import { useAccount as useStarknetAccount, type UseAccountResult } from '@starknet-react/core';
 import { Form, Formik, useFormikContext } from 'formik';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { formatUnits, type Address } from 'viem';
+import { formatUnits, parseUnits, type Address } from 'viem';
 
 import { FormWarningBanner } from '../../../components/banner/FormWarningBanner';
 import { RecipientWarningBanner } from '../../../components/banner/RecipientWarningBanner';
@@ -39,7 +39,7 @@ import { tokenKey } from '../../tokens/utils';
 import { RecipientConfirmationModal } from '../../wallet/RecipientConfirmationModal';
 import { WalletConnectionWarning } from '../../wallet/WalletConnectionWarning';
 import { WalletDropdown } from '../../wallet/WalletDropdown';
-import { ApprovalPhase, useApprovalStatus } from './approval';
+import { ApprovalPhase, getApprovalTransactionCount, useApprovalStatus } from './approval';
 import { FeeSectionButton } from './FeeSectionButton';
 import { MaxButton } from './MaxButton';
 import { RouteSelectionModal } from './routeSelection/RouteSelectionModal';
@@ -132,6 +132,24 @@ function TransferFormContent() {
   const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
 
   const debouncedAmount = useDebounce(values.amount, 750);
+  const latestValuesRef = useRef(values);
+  latestValuesRef.current = values;
+  const applyRefreshedMaxAmount = useCallback(
+    (amount: string, previousAmount: string, decimals: number) => {
+      try {
+        const currentAmount = parseUnits(
+          String(latestValuesRef.current.amount) as `${number}`,
+          decimals,
+        );
+        if (currentAmount !== BigInt(previousAmount)) return false;
+      } catch {
+        return false;
+      }
+      void setFieldValue('amount', formatUnits(BigInt(amount), decimals), false);
+      return true;
+    },
+    [setFieldValue],
+  );
   const {
     quote,
     data: quoteResponse,
@@ -144,11 +162,14 @@ function TransferFormContent() {
     canRequestMaxQuote,
     isMaxQuoteLoading,
     maxQuoteError,
+    maxQuoteUnavailableReason,
+    sourceTokenDecimals,
   } = useQuote({
     values: { ...values, amount: debouncedAmount, recipient: effectiveRecipient },
     sender,
     senderPubKey,
     pause: isReview,
+    onMaxAmountChange: applyRefreshedMaxAmount,
   });
   const isAmountDebouncing = values.amount !== debouncedAmount;
   useToastError(quoteError, 'Quote failed');
@@ -182,12 +203,7 @@ function TransferFormContent() {
     amount: approvalAmount,
     isNative: !approval,
   });
-  const approvalTransactionCount =
-    status.phase === ApprovalPhase.NeedsRevoke
-      ? 2
-      : status.phase === ApprovalPhase.NeedsApprove
-        ? 1
-        : 0;
+  const approvalTransactionCount = getApprovalTransactionCount(status, !!approval);
 
   const transfer = useTransfer();
   useToastError(transfer.error, 'Transfer failed');
@@ -249,11 +265,6 @@ function TransferFormContent() {
   // capture the values reference at request start and bail on resolve
   // if the latest Formik values have changed — otherwise we'd flip into
   // review mode on a form the user has already mutated.
-  const latestValuesRef = useRef(values);
-  useEffect(() => {
-    latestValuesRef.current = values;
-  }, [values]);
-
   const maxRequestKey = JSON.stringify([
     values.srcChain,
     values.dstChain,
@@ -270,16 +281,20 @@ function TransferFormContent() {
   }, [maxRequestKey]);
 
   const onMax = useCallback(async () => {
-    if (!srcToken) return;
+    if (!srcToken || sourceTokenDecimals == null) return;
     const requestKey = latestMaxRequestKeyRef.current;
     try {
       const response = await requestMaxQuote();
       if (latestMaxRequestKeyRef.current !== requestKey) return;
-      await setFieldValue('amount', formatUnits(BigInt(response.amount), srcToken.decimals), false);
+      await setFieldValue(
+        'amount',
+        formatUnits(BigInt(response.amount), sourceTokenDecimals),
+        false,
+      );
     } catch {
       // useToastError renders the mutation error.
     }
-  }, [requestMaxQuote, setFieldValue, srcToken]);
+  }, [requestMaxQuote, setFieldValue, sourceTokenDecimals, srcToken]);
 
   const validateCurrentForm = useCallback(async () => {
     let sourceFee = 0n;
@@ -638,7 +653,8 @@ function TransferFormContent() {
           sender={sender}
           onMax={onMax}
           isMaxLoading={isMaxQuoteLoading}
-          isMaxDisabled={!canRequestMaxQuote}
+          isMaxDisabled={!canRequestMaxQuote || !srcToken || sourceTokenDecimals == null}
+          maxUnavailableReason={maxQuoteUnavailableReason}
           hasSelectedDestinationTokenRef={hasSelectedDestinationTokenRef}
         />
       </TransferSection>
@@ -881,6 +897,7 @@ function OriginTokenCard({
   onMax,
   isMaxLoading,
   isMaxDisabled,
+  maxUnavailableReason,
   hasSelectedDestinationTokenRef,
 }: {
   isReview: boolean;
@@ -890,6 +907,7 @@ function OriginTokenCard({
   onMax: () => Promise<void>;
   isMaxLoading: boolean;
   isMaxDisabled: boolean;
+  maxUnavailableReason: string | undefined;
   hasSelectedDestinationTokenRef: React.MutableRefObject<boolean>;
 }) {
   const { values } = useFormikContext<TransferFormValues>();
@@ -929,6 +947,7 @@ function OriginTokenCard({
             onClick={onMax}
             isLoading={isMaxLoading}
             disabled={isReview || isMaxDisabled}
+            disabledReason={maxUnavailableReason}
           />
         </div>
         <div className="transfer-balance mt-1 flex items-center justify-between text-xs leading-[18px] text-gray-450 dark:text-foreground-secondary">

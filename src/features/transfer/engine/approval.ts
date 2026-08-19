@@ -23,6 +23,15 @@ export type ApprovalPhase = (typeof ApprovalPhase)[keyof typeof ApprovalPhase];
 
 export type ApprovalStatus = { phase: ApprovalPhase };
 
+export function getApprovalTransactionCount(status: ApprovalStatus, hasApproval: boolean): number {
+  if (status.phase === ApprovalPhase.NeedsRevoke) return 2;
+  if (status.phase === ApprovalPhase.NeedsApprove) return 1;
+  // While the allowance query is unresolved, reserve one approval instead
+  // of simulating a transfer that is expected to revert without allowance.
+  if (hasApproval && status.phase === ApprovalPhase.Idle) return 1;
+  return 0;
+}
+
 const ALLOWANCE_REFRESH_MS = 10_000;
 
 interface AllowanceArgs {

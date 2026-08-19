@@ -79,8 +79,8 @@ async function estimateEvmLikeFeeForGasUnits(
   gasUnits: bigint,
 ): Promise<bigint> {
   const feeData = await multiProvider.getEthersV5Provider(chainName).getFeeData();
-  const maxFee = feeData.maxFeePerGas ? BigInt(feeData.maxFeePerGas.toString()) : undefined;
-  const legacyFee = feeData.gasPrice ? BigInt(feeData.gasPrice.toString()) : undefined;
+  const maxFee = feeData.maxFeePerGas != null ? BigInt(feeData.maxFeePerGas.toString()) : undefined;
+  const legacyFee = feeData.gasPrice != null ? BigInt(feeData.gasPrice.toString()) : undefined;
   const gasPrice = maxFee ?? legacyFee;
   if (gasPrice == null) throw new Error(`No EVM-like gas price available for ${chainName}`);
   return gasUnits * gasPrice;

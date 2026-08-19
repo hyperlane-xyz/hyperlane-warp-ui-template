@@ -1,3 +1,4 @@
+import { ProtocolType } from '@hyperlane-xyz/utils';
 import { QueryClient } from '@tanstack/react-query';
 import { describe, expect, test, vi } from 'vitest';
 
@@ -6,11 +7,13 @@ import type { TransferFormValues } from './types';
 import {
   augmentRoute,
   cacheMaxQuote,
+  isMaxQuoteIntentCurrent,
   isMaxQuoteRequestReady,
   isQuoteRequestReady,
   isQuoteSettledForSecurity,
   quoteQueryKey,
   quoteExpiryDelayMs,
+  supportsMaxQuote,
   validateRouteAmounts,
 } from './useQuote';
 
@@ -82,6 +85,33 @@ describe('cacheMaxQuote', () => {
       }),
     ).resolves.toBe(response);
     expect(queryFn).not.toHaveBeenCalled();
+  });
+});
+
+describe('max quote refresh intent', () => {
+  const params = {
+    srcChain: 1,
+    dstChain: 2,
+    srcToken: '0xToken',
+    dstToken: '0xToken',
+    sender: '0xSender',
+    recipient: '0xRecipient',
+    slippageBps: 100,
+    commitmentSalt: `0x${'12'.repeat(32)}` as const,
+  };
+
+  test('keeps refreshing through max while request and amount match', () => {
+    const intent = { params, amount: 900n };
+
+    expect(isMaxQuoteIntentCurrent(intent, params, 900n)).toBe(true);
+    expect(isMaxQuoteIntentCurrent(intent, params, 899n)).toBe(false);
+    expect(isMaxQuoteIntentCurrent(intent, { ...params, recipient: '0xOther' }, 900n)).toBe(false);
+  });
+
+  test('disables max for Starknet', () => {
+    expect(supportsMaxQuote(ProtocolType.Starknet)).toBe(false);
+    expect(supportsMaxQuote(undefined)).toBe(false);
+    expect(supportsMaxQuote(ProtocolType.Ethereum)).toBe(true);
   });
 });
 

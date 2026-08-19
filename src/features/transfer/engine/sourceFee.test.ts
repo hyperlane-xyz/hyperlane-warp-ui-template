@@ -112,6 +112,28 @@ describe('estimateRouteSourceFee', () => {
     ).resolves.toBe(1_200_000n);
   });
 
+  test('keeps a zero EIP-1559 fee cap as present', async () => {
+    prepareRouteTransactionMock.mockResolvedValue(typedTransaction(ProviderType.EthersV5));
+    const estimateTransactionFee = vi.fn().mockResolvedValue({
+      gasUnits: 600_000n,
+      gasPrice: 1n,
+      fee: 600_000n,
+    });
+
+    await expect(
+      estimateRouteSourceFee({
+        multiProvider: provider(ProtocolType.Ethereum, estimateTransactionFee, {
+          maxFeePerGas: 0n,
+          gasPrice: 1n,
+        }),
+        chainName: 'ethereum',
+        sender: '0xsender',
+        route: route(),
+        approvalTransactionCount: 0,
+      }),
+    ).resolves.toBe(0n);
+  });
+
   test('adds revoke and approval gas after the full EVM-like route budget', async () => {
     const estimateTransactionFee = vi.fn();
     const multiProvider = provider(ProtocolType.Ethereum, estimateTransactionFee, {

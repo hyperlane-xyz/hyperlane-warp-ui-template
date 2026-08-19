@@ -12,17 +12,17 @@ describe('getApprovalTransactionCount', () => {
     expect(getApprovalTransactionCount({ phase: ApprovalPhase.NeedsApprove })).toBe(1);
   });
 
-  test('does not guess an approval count before the allowance check resolves', () => {
+  test('waits while checking and reserves the worst case after a failed check', () => {
     expect(getApprovalTransactionCount({ phase: ApprovalPhase.Checking })).toBe(0);
-    expect(getApprovalTransactionCount({ phase: ApprovalPhase.Failed })).toBe(0);
+    expect(getApprovalTransactionCount({ phase: ApprovalPhase.Failed })).toBe(2);
     expect(getApprovalTransactionCount({ phase: ApprovalPhase.Ready })).toBe(0);
   });
 });
 
 describe('isApprovalReadyForValidation', () => {
-  test('waits for approval routes to resolve successfully', () => {
+  test('waits only while the allowance check is pending', () => {
     expect(isApprovalReadyForValidation({ phase: ApprovalPhase.Checking }, true)).toBe(false);
-    expect(isApprovalReadyForValidation({ phase: ApprovalPhase.Failed }, true)).toBe(false);
+    expect(isApprovalReadyForValidation({ phase: ApprovalPhase.Failed }, true)).toBe(true);
     expect(isApprovalReadyForValidation({ phase: ApprovalPhase.NeedsRevoke }, true)).toBe(true);
     expect(isApprovalReadyForValidation({ phase: ApprovalPhase.NeedsApprove }, true)).toBe(true);
     expect(isApprovalReadyForValidation({ phase: ApprovalPhase.Ready }, true)).toBe(true);

@@ -26,7 +26,9 @@ export type ApprovalPhase = (typeof ApprovalPhase)[keyof typeof ApprovalPhase];
 export type ApprovalStatus = { phase: ApprovalPhase };
 
 export function getApprovalTransactionCount(status: ApprovalStatus): number {
-  if (status.phase === ApprovalPhase.NeedsRevoke) return 2;
+  // If the quote-time allowance read fails, reserve the classic ERC20 worst case.
+  // Execution performs a fresh exact check before broadcasting either transaction.
+  if (status.phase === ApprovalPhase.NeedsRevoke || status.phase === ApprovalPhase.Failed) return 2;
   if (status.phase === ApprovalPhase.NeedsApprove) return 1;
   return 0;
 }
@@ -37,6 +39,7 @@ export function isApprovalReadyForValidation(
 ): boolean {
   if (!hasApproval) return true;
   return (
+    status.phase === ApprovalPhase.Failed ||
     status.phase === ApprovalPhase.NeedsRevoke ||
     status.phase === ApprovalPhase.NeedsApprove ||
     status.phase === ApprovalPhase.Ready

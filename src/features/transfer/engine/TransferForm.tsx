@@ -734,7 +734,6 @@ function TransferFormContent() {
         isRouteDataUnavailable={isRouteDataUnavailable}
         isAmountDebouncing={isAmountDebouncing}
         isApprovalReady={isApprovalReady}
-        approvalCheckFailed={status.phase === ApprovalPhase.Failed}
         isQuoteSettled={isQuoteSettled}
         isValidating={isValidating}
         onSendTransactions={onSendTransactions}
@@ -1134,9 +1133,12 @@ function ReviewTransactions({
 }) {
   const tokenMap = useTokenByKeyMap();
   const multiProvider = useMultiProvider();
-  const needsRevoke = approvalStatus === ApprovalPhase.NeedsRevoke;
+  const approvalUnknown = approvalStatus === ApprovalPhase.Failed;
+  const needsRevoke = approvalStatus === ApprovalPhase.NeedsRevoke || approvalUnknown;
   const needsApprove =
-    approvalStatus === ApprovalPhase.NeedsApprove || approvalStatus === ApprovalPhase.NeedsRevoke;
+    approvalStatus === ApprovalPhase.NeedsApprove ||
+    approvalStatus === ApprovalPhase.NeedsRevoke ||
+    approvalUnknown;
   const symbol = srcToken?.symbol ?? 'token';
   const approvalToken = approval?.token ?? srcToken?.address;
   const approvalSpender = approval?.spender;
@@ -1150,7 +1152,7 @@ function ReviewTransactions({
       {needsRevoke && (
         <div>
           <h4 data-testid="transfer-review-transaction" data-category="revoke">
-            {`Transaction ${++txNum}: Revoke ${symbol}`}
+            {`Transaction ${++txNum}: Revoke ${symbol}${approvalUnknown ? ' (if required)' : ''}`}
           </h4>
           <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs dark:border-primary-300/25">
             <p>{`Token: ${approvalToken}`}</p>
@@ -1162,7 +1164,7 @@ function ReviewTransactions({
       {needsApprove && (
         <div>
           <h4 data-testid="transfer-review-transaction" data-category="approval">
-            {`Transaction ${++txNum}: Approve ${symbol}`}
+            {`Transaction ${++txNum}: Approve ${symbol}${approvalUnknown ? ' (if required)' : ''}`}
           </h4>
           <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs dark:border-primary-300/25">
             <p>{`Token: ${approvalToken}`}</p>
@@ -1249,7 +1251,6 @@ function ButtonSection({
   isRouteDataUnavailable,
   isAmountDebouncing,
   isApprovalReady,
-  approvalCheckFailed,
   isQuoteSettled,
   isValidating,
   onSendTransactions,
@@ -1268,7 +1269,6 @@ function ButtonSection({
   isRouteDataUnavailable: boolean;
   isAmountDebouncing: boolean;
   isApprovalReady: boolean;
-  approvalCheckFailed: boolean;
   isQuoteSettled: boolean;
   isValidating: boolean;
   onSendTransactions: () => Promise<void>;
@@ -1304,7 +1304,7 @@ function ButtonSection({
       text = 'Fetching quote…';
       disabled = true;
     } else if (!isApprovalReady) {
-      text = approvalCheckFailed ? 'Approval check failed' : 'Fetching quote…';
+      text = 'Fetching quote…';
       disabled = true;
     } else {
       text = 'Continue';

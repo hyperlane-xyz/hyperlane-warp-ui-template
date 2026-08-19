@@ -90,19 +90,21 @@ describe('estimateRouteSourceFee', () => {
     ).resolves.toBe(5_000n);
   });
 
-  test('uses the EIP-1559 fee cap for SDK-estimated gas units', async () => {
-    prepareRouteTransactionMock.mockResolvedValue(typedTransaction(ProviderType.EthersV5));
+  test.each([
+    [ProtocolType.Ethereum, ProviderType.EthersV5],
+    [ProtocolType.Tron, ProviderType.Tron],
+  ])('uses the SDK %s fee estimate without recomputing it', async (protocol, providerType) => {
+    prepareRouteTransactionMock.mockResolvedValue(typedTransaction(providerType));
     const estimateTransactionFee = vi.fn().mockResolvedValue({
       gasUnits: 600_000n,
-      gasPrice: 3n,
-      fee: 1_800_000n,
+      gasPrice: 2n,
+      fee: 1_200_000n,
     });
 
     await expect(
       estimateRouteSourceFee({
-        multiProvider: provider(ProtocolType.Ethereum, estimateTransactionFee, {
-          maxFeePerGas: 2n,
-          maxPriorityFeePerGas: 1n,
+        multiProvider: provider(protocol, estimateTransactionFee, {
+          maxFeePerGas: 999n,
         }),
         chainName: 'ethereum',
         sender: '0xsender',
@@ -112,18 +114,17 @@ describe('estimateRouteSourceFee', () => {
     ).resolves.toBe(1_200_000n);
   });
 
-  test('keeps a zero EIP-1559 fee cap as present', async () => {
+  test('keeps a zero SDK fee estimate as present', async () => {
     prepareRouteTransactionMock.mockResolvedValue(typedTransaction(ProviderType.EthersV5));
     const estimateTransactionFee = vi.fn().mockResolvedValue({
       gasUnits: 600_000n,
-      gasPrice: 1n,
-      fee: 600_000n,
+      gasPrice: 0n,
+      fee: 0n,
     });
 
     await expect(
       estimateRouteSourceFee({
         multiProvider: provider(ProtocolType.Ethereum, estimateTransactionFee, {
-          maxFeePerGas: 0n,
           gasPrice: 1n,
         }),
         chainName: 'ethereum',

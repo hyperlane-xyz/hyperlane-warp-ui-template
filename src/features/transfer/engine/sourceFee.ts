@@ -65,11 +65,6 @@ export async function estimateRouteSourceFee({
       }),
     ),
   );
-
-  if (isEVMLike(protocol)) {
-    const gasUnits = estimates.reduce((sum, estimate) => sum + BigInt(estimate.gasUnits), 0n);
-    return estimateEvmLikeFeeForGasUnits(multiProvider, chainName, gasUnits);
-  }
   return estimates.reduce((sum, estimate) => sum + BigInt(estimate.fee), 0n);
 }
 

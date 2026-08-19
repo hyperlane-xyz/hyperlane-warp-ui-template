@@ -13,6 +13,7 @@ import {
   isQuoteSettledForSecurity,
   quoteQueryKey,
   quoteExpiryDelayMs,
+  quoteRefetchIntervalMs,
   supportsMaxQuote,
   validateRouteAmounts,
 } from './useQuote';
@@ -81,14 +82,14 @@ describe('cacheMaxQuote', () => {
       queryClient.fetchQuery({
         queryKey: quoteQueryKey({ ...params, amount: 900n }),
         queryFn,
-        staleTime: 25_000,
+        staleTime: Infinity,
       }),
     ).resolves.toBe(response);
     expect(queryFn).not.toHaveBeenCalled();
   });
 });
 
-describe('max quote refresh intent', () => {
+describe('max quote intent', () => {
   const params = {
     srcChain: 1,
     dstChain: 2,
@@ -100,7 +101,7 @@ describe('max quote refresh intent', () => {
     commitmentSalt: `0x${'12'.repeat(32)}` as const,
   };
 
-  test('keeps refreshing through max while request and amount match', () => {
+  test('remains current while request and amount match', () => {
     const intent = { params, amount: 900n };
 
     expect(isMaxQuoteIntentCurrent(intent, params, 900n)).toBe(true);
@@ -112,6 +113,12 @@ describe('max quote refresh intent', () => {
     expect(supportsMaxQuote(ProtocolType.Starknet)).toBe(false);
     expect(supportsMaxQuote(undefined)).toBe(false);
     expect(supportsMaxQuote(ProtocolType.Ethereum)).toBe(true);
+  });
+
+  test('waits until max expiry before resuming normal quote refreshes', () => {
+    expect(quoteRefetchIntervalMs(1_718_000_030, 1_718_000_000_000)).toBe(30_000);
+    expect(quoteRefetchIntervalMs(1_718_000_000, 1_718_000_030_000)).toBe(1);
+    expect(quoteRefetchIntervalMs(undefined, 1_718_000_000_000)).toBe(25_000);
   });
 });
 

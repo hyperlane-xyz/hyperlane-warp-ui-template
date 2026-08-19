@@ -8,7 +8,7 @@ import {
 import { useAccount as useStarknetAccount, type UseAccountResult } from '@starknet-react/core';
 import { Form, Formik, useFormikContext } from 'formik';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { formatUnits, parseUnits, type Address } from 'viem';
+import { formatUnits, type Address } from 'viem';
 
 import { FormWarningBanner } from '../../../components/banner/FormWarningBanner';
 import { RecipientWarningBanner } from '../../../components/banner/RecipientWarningBanner';
@@ -134,22 +134,6 @@ function TransferFormContent() {
   const debouncedAmount = useDebounce(values.amount, 750);
   const latestValuesRef = useRef(values);
   latestValuesRef.current = values;
-  const applyRefreshedMaxAmount = useCallback(
-    (amount: string, previousAmount: string, decimals: number) => {
-      try {
-        const currentAmount = parseUnits(
-          String(latestValuesRef.current.amount) as `${number}`,
-          decimals,
-        );
-        if (currentAmount !== BigInt(previousAmount)) return false;
-      } catch {
-        return false;
-      }
-      void setFieldValue('amount', formatUnits(BigInt(amount), decimals), false);
-      return true;
-    },
-    [setFieldValue],
-  );
   const {
     quote,
     data: quoteResponse,
@@ -169,7 +153,6 @@ function TransferFormContent() {
     sender,
     senderPubKey,
     pause: isReview,
-    onMaxAmountChange: applyRefreshedMaxAmount,
   });
   const isAmountDebouncing = values.amount !== debouncedAmount;
   useToastError(quoteError, 'Quote failed');

@@ -29,8 +29,9 @@ function randomBytes32(): Hex {
   return bytesToHex(buf);
 }
 
-// 30s engine TTL — refresh 5s before to avoid expired-mid-sign races.
+// Normal quotes refresh 5s before the engine's 30s TTL.
 const REFRESH_MS = 25_000;
+const ROUTER_QUOTE_QUERY_KEY = ['router', 'quote'] as const;
 
 interface QuoteQueryKeyParams {
   srcChain: number | null;
@@ -45,8 +46,7 @@ interface QuoteQueryKeyParams {
 
 export function quoteQueryKey(params: QuoteQueryKeyParams) {
   return [
-    'router',
-    'quote',
+    ...ROUTER_QUOTE_QUERY_KEY,
     params.srcChain,
     params.dstChain,
     params.srcToken,
@@ -69,6 +69,7 @@ export function cacheMaxQuote(
 interface MaxQuoteIntent {
   params: Omit<MaxQuoteParams, 'senderPubKey'>;
   amount: bigint;
+  expiresAt: number;
   pendingAmountSync: boolean;
 }
 
@@ -84,6 +85,11 @@ export function isMaxQuoteIntentCurrent(
 
 export function supportsMaxQuote(protocol: string | undefined): boolean {
   return protocol != null && protocol !== ProtocolType.Starknet;
+}
+
+export function quoteRefetchIntervalMs(maxQuoteExpiresAt?: number, nowMs = Date.now()): number {
+  if (maxQuoteExpiresAt == null) return REFRESH_MS;
+  return Math.max(maxQuoteExpiresAt * 1000 - nowMs, 1);
 }
 
 function maxQuoteRequestKey(params: Omit<MaxQuoteParams, 'senderPubKey'>): string {
@@ -113,10 +119,9 @@ interface UseQuoteArgs {
   senderPubKey?: Promise<string | undefined>;
   /** Pause auto-refresh (e.g. wallet modal open or tx signing). */
   pause?: boolean;
-  onMaxAmountChange?: (amount: string, previousAmount: string, decimals: number) => boolean;
 }
 
-export function useQuote({ values, sender, senderPubKey, pause, onMaxAmountChange }: UseQuoteArgs) {
+export function useQuote({ values, sender, senderPubKey, pause }: UseQuoteArgs) {
   const [now, setNow] = useState(() => Date.now());
   const queryClient = useQueryClient();
   const maxQuoteIntentRef = useRef<MaxQuoteIntent | null>(null);
@@ -223,17 +228,20 @@ export function useQuote({ values, sender, senderPubKey, pause, onMaxAmountChang
   } else if (currentMaxIntent && !maxQuoteParams) {
     maxQuoteIntentRef.current = null;
   }
+  const activeMaxQuoteIntent =
+    maxQuoteIntentRef.current &&
+    maxQuoteParams &&
+    isMaxQuoteIntentCurrent(maxQuoteIntentRef.current, maxQuoteParams, amountAtomic)
+      ? maxQuoteIntentRef.current
+      : null;
 
   const fetchMaxQuote = useCallback(
-    async (params: Omit<MaxQuoteParams, 'senderPubKey'>, signal?: AbortSignal) => {
+    async (params: Omit<MaxQuoteParams, 'senderPubKey'>) => {
       const publicKey = await senderPubKey;
-      const response = await routerClient.maxQuote(
-        {
-          ...params,
-          ...(publicKey && { senderPubKey: publicKey as `0x${string}` }),
-        },
-        { signal },
-      );
+      const response = await routerClient.maxQuote({
+        ...params,
+        ...(publicKey && { senderPubKey: publicKey as `0x${string}` }),
+      });
       return assertTransferableMaxQuote(response);
     },
     [senderPubKey],
@@ -243,11 +251,13 @@ export function useQuote({ values, sender, senderPubKey, pause, onMaxAmountChang
     isPending: isMaxQuoteLoading,
     error: maxQuoteError,
   } = useMutation({
+    onMutate: () => queryClient.cancelQueries({ queryKey: ROUTER_QUOTE_QUERY_KEY }),
     mutationFn: (params: Omit<MaxQuoteParams, 'senderPubKey'>) => fetchMaxQuote(params),
     onSuccess: (response, params) => {
       maxQuoteIntentRef.current = {
         params,
         amount: BigInt(response.amount),
+        expiresAt: response.expiresAt,
         pendingAmountSync: true,
       };
       cacheMaxQuote(queryClient, params, response);
@@ -273,36 +283,10 @@ export function useQuote({ values, sender, senderPubKey, pause, onMaxAmountChang
       slippageBps: values.slippageBps,
     }),
     queryFn: async ({ signal }) => {
-      const intent = maxQuoteIntentRef.current;
-      if (
-        intent &&
-        maxQuoteParams &&
-        amountAtomic != null &&
-        isMaxQuoteIntentCurrent(intent, maxQuoteParams, amountAtomic)
-      ) {
-        intent.pendingAmountSync = false;
-        const response = await fetchMaxQuote(maxQuoteParams, signal);
-        if (maxQuoteIntentRef.current !== intent) return response;
-
-        const nextAmount = BigInt(response.amount);
-        const amountUnchanged = nextAmount === intent.amount;
-        const amountApplied =
-          amountUnchanged ||
-          (srcTokenInfo?.decimals != null &&
-            onMaxAmountChange?.(
-              response.amount,
-              intent.amount.toString(),
-              srcTokenInfo.decimals,
-            ) === true);
-        maxQuoteIntentRef.current = amountApplied
-          ? {
-              params: maxQuoteParams,
-              amount: nextAmount,
-              pendingAmountSync: !amountUnchanged,
-            }
-          : null;
-        if (amountApplied) cacheMaxQuote(queryClient, maxQuoteParams, response);
-        return response;
+      if (activeMaxQuoteIntent && maxQuoteIntentRef.current === activeMaxQuoteIntent) {
+        // The max response remains authoritative until its expiry. This query
+        // runs at that deadline, clears max mode, then resumes normal quoting.
+        maxQuoteIntentRef.current = null;
       }
 
       return routerClient.quote(
@@ -320,9 +304,10 @@ export function useQuote({ values, sender, senderPubKey, pause, onMaxAmountChang
         { signal },
       );
     },
-    enabled: enabled && amountAtomic != null && amountAtomic > 0n,
-    refetchInterval: REFRESH_MS,
-    staleTime: REFRESH_MS,
+    enabled: enabled && amountAtomic != null && amountAtomic > 0n && !isMaxQuoteLoading,
+    refetchInterval: quoteRefetchIntervalMs(activeMaxQuoteIntent?.expiresAt),
+    staleTime: activeMaxQuoteIntent ? Infinity : REFRESH_MS,
+    refetchOnReconnect: !activeMaxQuoteIntent,
   });
 
   const hasChainAddresses = Object.keys(chainAddresses).length > 0;

@@ -204,6 +204,7 @@ const nextConfig = {
   },
 
   experimental: {
+    useTypeScriptCli: true,
     turbopackFileSystemCacheForBuild: true,
     parallelServerCompiles: true,
     parallelServerBuildTraces: true,
@@ -215,8 +216,6 @@ const nextConfig = {
     ],
   },
 
-  // Skip type checking during builds — CI runs these separately
-  typescript: { ignoreBuildErrors: true },
 };
 
 module.exports = withBundleAnalyzer(nextConfig);

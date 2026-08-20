@@ -179,6 +179,8 @@ export const QuoteBridgeStepSchema = z.object({
     tokenFee: BigIntString,
     igpToken: TokenAddress,
     igpAmount: BigIntString,
+    // Whether igpAmount is already funded by bridge amountIn.
+    igpIncludedInAmountIn: z.boolean(),
     localNativeFee: BigIntString,
   }),
 });
@@ -265,6 +267,12 @@ export const RouteApprovalSchema = z.object({
 });
 export type RouteApproval = z.infer<typeof RouteApprovalSchema>;
 
+export const SourceTransactionFeeSchema = z.object({
+  amount: BigIntString,
+  gasUnits: BigIntString,
+});
+export type SourceTransactionFee = z.infer<typeof SourceTransactionFeeSchema>;
+
 export const RouteResponseSchema = z.object({
   steps: z.array(QuoteStepSchema),
   output: BigIntString,
@@ -284,6 +292,8 @@ export const RouteResponseSchema = z.object({
   txs: z.array(RouteTxSchema).optional(),
   approval: RouteApprovalSchema.nullable(),
   callCommitment: CallCommitmentSchema.optional(),
+  // Present on /quote/max routes; normal /quote routes estimate this in the UI.
+  sourceTransactionFee: SourceTransactionFeeSchema.optional(),
 });
 export type RouteResponse = z.infer<typeof RouteResponseSchema>;
 
@@ -292,3 +302,9 @@ export const QuoteResponseSchema = z.object({
   expiresAt: z.number(),
 });
 export type QuoteResponse = z.infer<typeof QuoteResponseSchema>;
+
+export const MaxQuoteResponseSchema = QuoteResponseSchema.extend({
+  amount: BigIntString,
+  routes: z.array(RouteResponseSchema.extend({ sourceTransactionFee: SourceTransactionFeeSchema })),
+});
+export type MaxQuoteResponse = z.infer<typeof MaxQuoteResponseSchema>;

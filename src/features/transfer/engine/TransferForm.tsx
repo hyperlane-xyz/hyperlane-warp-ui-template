@@ -1,7 +1,10 @@
 import { eqAddress, isValidAddressEvm, objLength, ProtocolType } from '@hyperlane-xyz/utils';
 import { useDebounce, useModal } from '@hyperlane-xyz/widgets';
-import { useAccounts } from '@hyperlane-xyz/widgets/walletIntegrations/accounts';
-import { useAccountAddressForChain } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
+import {
+  getAccountAddressAndPubKey,
+  getAccountAddressForChain,
+  useAccounts,
+} from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import { useAccount as useStarknetAccount, type UseAccountResult } from '@starknet-react/core';
 import { Form, Formik, useFormikContext } from 'formik';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -36,11 +39,17 @@ import { tokenKey } from '../../tokens/utils';
 import { RecipientConfirmationModal } from '../../wallet/RecipientConfirmationModal';
 import { WalletConnectionWarning } from '../../wallet/WalletConnectionWarning';
 import { WalletDropdown } from '../../wallet/WalletDropdown';
-import { ApprovalPhase, useApprovalStatus } from './approval';
+import {
+  ApprovalPhase,
+  getApprovalTransactionCount,
+  isApprovalReadyForValidation,
+  useApprovalStatus,
+} from './approval';
 import { FeeSectionButton } from './FeeSectionButton';
 import { MaxButton } from './MaxButton';
 import { RouteSelectionModal } from './routeSelection/RouteSelectionModal';
 import { SlippagePanel } from './SlippagePanel';
+import { estimateRouteSourceFee } from './sourceFee';
 import { TokenBalance } from './TokenBalance';
 import {
   FinalTransferStatuses,
@@ -98,9 +107,13 @@ function TransferFormContent() {
     values.dstChain != null
       ? (multiProvider.tryGetChainName(values.dstChain) ?? undefined)
       : undefined;
-  useAccounts(multiProvider, config.addressBlacklist);
-  const sender = useAccountAddressForChain(multiProvider, srcChainName);
-  const connectedDestAddress = useAccountAddressForChain(multiProvider, dstChainName);
+  const { accounts } = useAccounts(multiProvider, config.addressBlacklist);
+  const { address: sender, publicKey: senderPubKey } = getAccountAddressAndPubKey(
+    multiProvider,
+    srcChainName,
+    accounts,
+  );
+  const connectedDestAddress = getAccountAddressForChain(multiProvider, dstChainName, accounts);
   const effectiveRecipient = values.recipient || connectedDestAddress || '';
 
   const srcTokenKey =
@@ -124,6 +137,8 @@ function TransferFormContent() {
   const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
 
   const debouncedAmount = useDebounce(values.amount, 750);
+  const latestValuesRef = useRef(values);
+  latestValuesRef.current = values;
   const {
     quote,
     data: quoteResponse,
@@ -132,13 +147,21 @@ function TransferFormContent() {
     isExpired,
     isQuoteSettled,
     isRouteDataUnavailable,
+    requestMaxQuote,
+    canRequestMaxQuote,
+    isMaxQuoteLoading,
+    maxQuoteError,
+    maxQuoteUnavailableReason,
+    sourceTokenDecimals,
   } = useQuote({
     values: { ...values, amount: debouncedAmount, recipient: effectiveRecipient },
     sender,
+    senderPubKey,
     pause: isReview,
   });
   const isAmountDebouncing = values.amount !== debouncedAmount;
   useToastError(quoteError, 'Quote failed');
+  useToastError(maxQuoteError, 'Max quote failed');
 
   // Reset to best route when the user changes intent, not on every background refetch.
   useEffect(() => {
@@ -168,6 +191,8 @@ function TransferFormContent() {
     amount: approvalAmount,
     isNative: !approval,
   });
+  const approvalTransactionCount = getApprovalTransactionCount(status);
+  const isApprovalReady = isApprovalReadyForValidation(status, !!approval);
 
   const transfer = useTransfer();
   useToastError(transfer.error, 'Transfer failed');
@@ -229,36 +254,98 @@ function TransferFormContent() {
   // capture the values reference at request start and bail on resolve
   // if the latest Formik values have changed — otherwise we'd flip into
   // review mode on a form the user has already mutated.
-  const latestValuesRef = useRef(values);
+  const maxRequestKey = JSON.stringify([
+    values.srcChain,
+    values.dstChain,
+    values.srcToken,
+    values.dstToken,
+    values.amount,
+    values.slippageBps,
+    sender,
+    effectiveRecipient,
+  ]);
+  const latestMaxRequestKeyRef = useRef(maxRequestKey);
   useEffect(() => {
-    latestValuesRef.current = values;
-  }, [values]);
+    latestMaxRequestKeyRef.current = maxRequestKey;
+  }, [maxRequestKey]);
+
+  const onMax = useCallback(async () => {
+    if (!srcToken || sourceTokenDecimals == null) return;
+    const requestKey = latestMaxRequestKeyRef.current;
+    try {
+      const response = await requestMaxQuote();
+      if (latestMaxRequestKeyRef.current !== requestKey) return;
+      await setFieldValue(
+        'amount',
+        formatUnits(BigInt(response.amount), sourceTokenDecimals),
+        false,
+      );
+    } catch {
+      // useToastError renders the mutation error.
+    }
+  }, [requestMaxQuote, setFieldValue, sourceTokenDecimals, srcToken]);
+
+  const validateCurrentForm = useCallback(async () => {
+    let sourceFee = 0n;
+    if (bestRoute && srcChainName && sender) {
+      try {
+        sourceFee = await estimateRouteSourceFee({
+          multiProvider,
+          chainName: srcChainName,
+          sender,
+          senderPubKey,
+          route: bestRoute.raw,
+          approvalTransactionCount,
+        });
+      } catch (err) {
+        logger.warn('Unable to estimate source transaction fee', err as Error);
+        return {
+          form: 'Could not estimate the network fee for this transfer. Please try again.',
+        };
+      }
+    }
+
+    const nativeExecutionFee = await estimateStarknetExecutionFee({
+      route: bestRoute,
+      srcProtocol: srcChainInfo?.protocol,
+      account: starknetAccount,
+    });
+    return validateTransferForm({
+      values,
+      bestRoute,
+      srcToken,
+      dstToken,
+      sender,
+      effectiveRecipient,
+      chains: chainsResp?.chains,
+      multiProvider,
+      quoteExpiresAt: quote?.expiresAt,
+      sourceFee,
+      nativeExecutionFee,
+    });
+  }, [
+    approvalTransactionCount,
+    bestRoute,
+    chainsResp?.chains,
+    dstToken,
+    effectiveRecipient,
+    multiProvider,
+    quote?.expiresAt,
+    sender,
+    senderPubKey,
+    srcChainInfo?.protocol,
+    srcChainName,
+    srcToken,
+    starknetAccount,
+    values,
+  ]);
 
   const onContinue = useCallback(async () => {
-    if (isAmountDebouncing) return;
+    if (isAmountDebouncing || !isApprovalReady) return;
     const snapshot = values;
     setIsValidating(true);
     try {
-      const approvalPending =
-        status.phase === ApprovalPhase.NeedsApprove || status.phase === ApprovalPhase.NeedsRevoke;
-      const nativeExecutionFee = await estimateStarknetExecutionFee({
-        route: bestRoute,
-        srcProtocol: srcChainInfo?.protocol,
-        account: starknetAccount,
-      });
-      const result = await validateTransferForm({
-        values,
-        bestRoute,
-        srcToken,
-        dstToken,
-        sender,
-        effectiveRecipient,
-        chains: chainsResp?.chains,
-        multiProvider,
-        approvalPending,
-        quoteExpiresAt: quote?.expiresAt,
-        nativeExecutionFee,
-      });
+      const result = await validateCurrentForm();
       // Discard the result if the user edited the form while we were
       // validating — otherwise we'd enter review mode on stale data.
       if (latestValuesRef.current !== snapshot) return;
@@ -304,13 +391,10 @@ function TransferFormContent() {
     dstToken,
     sender,
     effectiveRecipient,
-    chainsResp?.chains,
     multiProvider,
-    status.phase,
-    quote?.expiresAt,
     isAmountDebouncing,
-    srcChainInfo?.protocol,
-    starknetAccount,
+    isApprovalReady,
+    validateCurrentForm,
     dstChainName,
     openConfirmationModal,
     setErrors,
@@ -374,26 +458,7 @@ function TransferFormContent() {
     // this check we'd happily submit it. Same call as Continue plus the
     // current quote.expiresAt so the staleness check fires.
     const snapshot = values;
-    const approvalPending =
-      status.phase === ApprovalPhase.NeedsApprove || status.phase === ApprovalPhase.NeedsRevoke;
-    const nativeExecutionFee = await estimateStarknetExecutionFee({
-      route: bestRoute,
-      srcProtocol: srcChainInfo?.protocol,
-      account: starknetAccount,
-    });
-    const validationResult = await validateTransferForm({
-      values,
-      bestRoute,
-      srcToken,
-      dstToken,
-      sender,
-      effectiveRecipient,
-      chains: chainsResp?.chains,
-      multiProvider,
-      approvalPending,
-      quoteExpiresAt: quote?.expiresAt,
-      nativeExecutionFee,
-    });
+    const validationResult = await validateCurrentForm();
     // Same race as onContinue — if the form changed mid-validation,
     // discard the result. In practice the inputs are disabled in review
     // mode, but the wallet dropdown can still change the recipient.
@@ -509,11 +574,7 @@ function TransferFormContent() {
     bestRoute,
     values,
     effectiveRecipient,
-    status.phase,
-    chainsResp?.chains,
-    srcChainInfo?.protocol,
-    multiProvider,
-    quote?.expiresAt,
+    validateCurrentForm,
     approval,
     approvalAmount,
     transfer,
@@ -523,7 +584,6 @@ function TransferFormContent() {
     updateTransferTransactionStatus,
     setTransferLoading,
     setErrors,
-    starknetAccount,
   ]);
 
   // Validation runs on Continue, not on change. Clear stale errors when
@@ -581,6 +641,10 @@ function TransferFormContent() {
           srcChainName={srcChainName}
           srcToken={srcToken}
           sender={sender}
+          onMax={onMax}
+          isMaxLoading={isMaxQuoteLoading}
+          isMaxDisabled={!canRequestMaxQuote || !srcToken || sourceTokenDecimals == null}
+          maxUnavailableReason={maxQuoteUnavailableReason}
           hasSelectedDestinationTokenRef={hasSelectedDestinationTokenRef}
         />
       </TransferSection>
@@ -669,6 +733,7 @@ function TransferFormContent() {
         hasRoute={!!bestRoute}
         isRouteDataUnavailable={isRouteDataUnavailable}
         isAmountDebouncing={isAmountDebouncing}
+        isApprovalReady={isApprovalReady}
         isQuoteSettled={isQuoteSettled}
         isValidating={isValidating}
         onSendTransactions={onSendTransactions}
@@ -820,16 +885,24 @@ function OriginTokenCard({
   srcChainName,
   srcToken,
   sender,
+  onMax,
+  isMaxLoading,
+  isMaxDisabled,
+  maxUnavailableReason,
   hasSelectedDestinationTokenRef,
 }: {
   isReview: boolean;
   srcChainName: string | undefined;
   srcToken: UiToken | undefined;
   sender: string | undefined;
+  onMax: () => Promise<void>;
+  isMaxLoading: boolean;
+  isMaxDisabled: boolean;
+  maxUnavailableReason: string | undefined;
   hasSelectedDestinationTokenRef: React.MutableRefObject<boolean>;
 }) {
   const { values } = useFormikContext<TransferFormValues>();
-  const { data: balance, isLoading: isBalanceLoading } = useTokenBalance(srcToken, sender);
+  const { data: balance } = useTokenBalance(srcToken, sender);
   const amountUsd = useTokenUsdValue(srcToken, values.amount);
 
   return (
@@ -862,10 +935,10 @@ function OriginTokenCard({
             }}
           />
           <MaxButton
-            balance={balance ?? undefined}
-            isLoading={isBalanceLoading}
-            disabled={isReview}
-            token={srcToken}
+            onClick={onMax}
+            isLoading={isMaxLoading}
+            disabled={isReview || isMaxDisabled}
+            disabledReason={maxUnavailableReason}
           />
         </div>
         <div className="transfer-balance mt-1 flex items-center justify-between text-xs leading-[18px] text-gray-450 dark:text-foreground-secondary">
@@ -1060,9 +1133,12 @@ function ReviewTransactions({
 }) {
   const tokenMap = useTokenByKeyMap();
   const multiProvider = useMultiProvider();
-  const needsRevoke = approvalStatus === ApprovalPhase.NeedsRevoke;
+  const approvalUnknown = approvalStatus === ApprovalPhase.Failed;
+  const needsRevoke = approvalStatus === ApprovalPhase.NeedsRevoke || approvalUnknown;
   const needsApprove =
-    approvalStatus === ApprovalPhase.NeedsApprove || approvalStatus === ApprovalPhase.NeedsRevoke;
+    approvalStatus === ApprovalPhase.NeedsApprove ||
+    approvalStatus === ApprovalPhase.NeedsRevoke ||
+    approvalUnknown;
   const symbol = srcToken?.symbol ?? 'token';
   const approvalToken = approval?.token ?? srcToken?.address;
   const approvalSpender = approval?.spender;
@@ -1076,7 +1152,7 @@ function ReviewTransactions({
       {needsRevoke && (
         <div>
           <h4 data-testid="transfer-review-transaction" data-category="revoke">
-            {`Transaction ${++txNum}: Revoke ${symbol}`}
+            {`Transaction ${++txNum}: Revoke ${symbol}${approvalUnknown ? ' (if required)' : ''}`}
           </h4>
           <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs dark:border-primary-300/25">
             <p>{`Token: ${approvalToken}`}</p>
@@ -1088,7 +1164,7 @@ function ReviewTransactions({
       {needsApprove && (
         <div>
           <h4 data-testid="transfer-review-transaction" data-category="approval">
-            {`Transaction ${++txNum}: Approve ${symbol}`}
+            {`Transaction ${++txNum}: Approve ${symbol}${approvalUnknown ? ' (if required)' : ''}`}
           </h4>
           <div className="ml-1.5 mt-1.5 space-y-1.5 border-l border-gray-300 pl-2 text-xs dark:border-primary-300/25">
             <p>{`Token: ${approvalToken}`}</p>
@@ -1130,7 +1206,12 @@ function ReviewTransactions({
           {route.feeBreakdown.components
             .filter((c) => c.amount > 0n)
             .map((c, i) => {
-              const label = c.category === 'bridge' ? 'Route Fee' : 'Interchain Gas';
+              const label =
+                c.category === 'bridge'
+                  ? 'Route Fee'
+                  : c.category === 'igp'
+                    ? 'Interchain Gas'
+                    : 'Network Fee';
               const isNative = /^0x0+$/i.test(c.tokenAddress);
               const componentChainName =
                 multiProvider.tryGetChainName(c.chainId) ?? `chain-${c.chainId}`;
@@ -1169,6 +1250,7 @@ function ButtonSection({
   hasRoute,
   isRouteDataUnavailable,
   isAmountDebouncing,
+  isApprovalReady,
   isQuoteSettled,
   isValidating,
   onSendTransactions,
@@ -1186,6 +1268,7 @@ function ButtonSection({
   hasRoute: boolean;
   isRouteDataUnavailable: boolean;
   isAmountDebouncing: boolean;
+  isApprovalReady: boolean;
   isQuoteSettled: boolean;
   isValidating: boolean;
   onSendTransactions: () => Promise<void>;
@@ -1218,6 +1301,9 @@ function ButtonSection({
       text = 'Checking…';
       disabled = true;
     } else if (isAmountDebouncing) {
+      text = 'Fetching quote…';
+      disabled = true;
+    } else if (!isApprovalReady) {
       text = 'Fetching quote…';
       disabled = true;
     } else {

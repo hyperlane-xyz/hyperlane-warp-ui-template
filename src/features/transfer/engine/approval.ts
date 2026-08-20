@@ -11,6 +11,8 @@ import { useMultiProvider } from '../../chains/hooks';
 // helper — so a direct ERC20 allowance to the UR is sufficient.
 export const ApprovalPhase = {
   Idle: 'idle',
+  Checking: 'checking',
+  Failed: 'failed',
   Native: 'native',
   // USDT case: existing allowance > 0 and needs to be bumped. USDT's
   // approve() reverts unless prior allowance is zero, so we revoke
@@ -22,6 +24,27 @@ export const ApprovalPhase = {
 export type ApprovalPhase = (typeof ApprovalPhase)[keyof typeof ApprovalPhase];
 
 export type ApprovalStatus = { phase: ApprovalPhase };
+
+export function getApprovalTransactionCount(status: ApprovalStatus): number {
+  // If the quote-time allowance read fails, reserve the classic ERC20 worst case.
+  // Execution performs a fresh exact check before broadcasting either transaction.
+  if (status.phase === ApprovalPhase.NeedsRevoke || status.phase === ApprovalPhase.Failed) return 2;
+  if (status.phase === ApprovalPhase.NeedsApprove) return 1;
+  return 0;
+}
+
+export function isApprovalReadyForValidation(
+  status: ApprovalStatus,
+  hasApproval: boolean,
+): boolean {
+  if (!hasApproval) return true;
+  return (
+    status.phase === ApprovalPhase.Failed ||
+    status.phase === ApprovalPhase.NeedsRevoke ||
+    status.phase === ApprovalPhase.NeedsApprove ||
+    status.phase === ApprovalPhase.Ready
+  );
+}
 
 const ALLOWANCE_REFRESH_MS = 10_000;
 
@@ -49,7 +72,7 @@ export function useApprovalStatus(args: AllowanceArgs): ApprovalStatus {
 
   const enabled = !!chainName && !!token && !!owner && !!spender && !isNative && amount != null;
 
-  const { data } = useQuery({
+  const { data, isPending, isError } = useQuery({
     queryKey: [
       'erc20-allowance',
       chainName,
@@ -73,7 +96,9 @@ export function useApprovalStatus(args: AllowanceArgs): ApprovalStatus {
   });
 
   if (isNative) return { phase: ApprovalPhase.Native };
-  if (!enabled || !data) return { phase: ApprovalPhase.Idle };
+  if (!enabled) return { phase: ApprovalPhase.Idle };
+  if (!data && isError) return { phase: ApprovalPhase.Failed };
+  if (!data || isPending) return { phase: ApprovalPhase.Checking };
   if (data.needsApprove && data.needsRevoke) return { phase: ApprovalPhase.NeedsRevoke };
   if (data.needsApprove) return { phase: ApprovalPhase.NeedsApprove };
   return { phase: ApprovalPhase.Ready };

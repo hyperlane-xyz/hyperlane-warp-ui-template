@@ -20,7 +20,7 @@ overrides:
   globals: ^14.0.0
   lit-html: 2.8.0
   react-fast-compare: ^3.2
-  viem: ^2.21.41
+  viem: ^2.55.13
   zustand: ^4.4
   sha.js: 2.4.12
   cipher-base: 1.0.5

@@ -94,13 +94,10 @@ export interface TransferFormValues {
 
 // ── Quote augmentation ───────────────────────────────────────────────
 
-// A single fee component, attributable to a specific token. Engine emits
-// these per cross-chain step: one for the route fee (in the step's `asset`)
-// and one for the IGP (in `step.fee.igpToken`, which can be native or an
-// ERC20). Origin/dest chain + token address let consumers resolve
-// decimals and symbol from the token map.
+// A single fee component, attributable to a specific token. Origin/dest
+// chain + token address let consumers resolve decimals and symbol.
 export interface FeeComponent {
-  category: 'bridge' | 'igp';
+  category: 'bridge' | 'igp' | 'localGas';
   amount: bigint;
   chainId: number;
   tokenAddress: string; // 0x0…0 for native (when igpToken === native)

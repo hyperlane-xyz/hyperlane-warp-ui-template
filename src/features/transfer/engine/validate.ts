@@ -12,12 +12,12 @@ import { parseUnits } from 'viem';
 import { logger } from '../../../utils/logger';
 import { getRouteTxs, isChainRouteTx } from '../../api/routeTx';
 import type { ChainDiscovery } from '../../api/types';
-import { estimateNativeGasCost, readBalance } from '../../balances/read';
+import { readBalance } from '../../balances/read';
 import { formatDisplayAmount } from '../../balances/utils';
 import { isChainDisabled } from '../../chains/utils';
 import type { UiToken } from '../../tokens/types';
 import { tokenKey } from '../../tokens/utils';
-import type { AugmentedRoute, FeeComponent, TransferFormValues } from './types';
+import type { AugmentedRoute, TransferFormValues } from './types';
 
 const NATIVE_ADDRESS = '0x0000000000000000000000000000000000000000';
 
@@ -38,8 +38,8 @@ export async function validateTransferForm(args: {
   effectiveRecipient: string;
   chains: ChainDiscovery[] | undefined;
   multiProvider: MultiProtocolProvider;
-  approvalPending?: boolean;
   quoteExpiresAt?: number;
+  sourceFee: bigint;
   nativeExecutionFee?: bigint;
 }): Promise<TransferFormErrors | null> {
   const {
@@ -51,8 +51,8 @@ export async function validateTransferForm(args: {
     effectiveRecipient,
     chains,
     multiProvider,
-    approvalPending,
     quoteExpiresAt,
+    sourceFee,
     nativeExecutionFee,
   } = args;
 
@@ -90,7 +90,7 @@ export async function validateTransferForm(args: {
     sender,
     bestRoute,
     amountAtomic,
-    approvalPending,
+    sourceFee,
     nativeExecutionFee,
   });
 }
@@ -215,7 +215,7 @@ export async function validateBalances(args: {
   sender: string;
   bestRoute: AugmentedRoute;
   amountAtomic: bigint;
-  approvalPending?: boolean;
+  sourceFee: bigint;
   nativeExecutionFee?: bigint;
 }): Promise<TransferFormErrors | null> {
   const {
@@ -225,7 +225,7 @@ export async function validateBalances(args: {
     sender,
     bestRoute,
     amountAtomic,
-    approvalPending,
+    sourceFee,
     nativeExecutionFee = 0n,
   } = args;
 
@@ -233,7 +233,7 @@ export async function validateBalances(args: {
   const amountIn =
     initialStep && 'amountIn' in initialStep ? BigInt(initialStep.amountIn) : amountAtomic;
 
-  const igpByToken = aggregateIgp(bestRoute.feeBreakdown.components);
+  const igpByToken = aggregateExternalIgp(bestRoute.raw);
   const srcKey = balanceKey(srcToken.chainId, srcToken.address);
   const sameTokenIgp = igpByToken.get(srcKey) ?? 0n;
   const nativeFee = igpByToken.get(balanceKey(srcChainInfo.id, NATIVE_ADDRESS)) ?? 0n;
@@ -290,14 +290,8 @@ export async function validateBalances(args: {
 
   const originTx = getRouteTxs(bestRoute.raw).find(isChainRouteTx) ?? null;
   const txValue = originTx ? BigInt(originTx.value) : 0n;
-  const gasCost = await estimateNativeGasCost(multiProvider, {
-    chainName: srcChainInfo.chainName,
-    sender,
-    tx: originTx,
-    approvalPending,
-  });
   const quotedNativeDebit = srcToken.isNative ? amountIn + sameTokenIgp : nativeFee;
-  const nativeRequired = maxBigInt(txValue, quotedNativeDebit) + gasCost + nativeExecutionFee;
+  const nativeRequired = maxBigInt(txValue, quotedNativeDebit) + sourceFee + nativeExecutionFee;
   if (nativeRequired > 0n) {
     let nativeBalance: bigint | null = srcToken.isNative ? srcBalance : null;
     if (!srcToken.isNative) {
@@ -347,14 +341,27 @@ function formatInsufficientBalanceMessage({
   return `${base} (need ${formatDisplayAmount(deficit, decimals)} more ${symbol})`;
 }
 
-function aggregateIgp(components: FeeComponent[]): Map<string, bigint> {
+function aggregateExternalIgp(route: AugmentedRoute['raw']): Map<string, bigint> {
   const map = new Map<string, bigint>();
-  for (const c of components) {
-    if (c.category !== 'igp') continue;
-    const k = balanceKey(c.chainId, c.tokenAddress);
-    map.set(k, (map.get(k) ?? 0n) + c.amount);
+  for (const step of route.steps) {
+    if (step.type !== 'bridge') continue;
+
+    const igpAmount = BigInt(step.fee.igpAmount);
+    if (!step.fee.igpIncludedInAmountIn && igpAmount > 0n) {
+      addFee(map, step.chain, step.fee.igpToken, igpAmount);
+    }
+
+    const localNativeFee = BigInt(step.fee.localNativeFee);
+    if (localNativeFee > 0n) {
+      addFee(map, step.chain, NATIVE_ADDRESS, localNativeFee);
+    }
   }
   return map;
+}
+
+function addFee(map: Map<string, bigint>, chainId: number, address: string, amount: bigint): void {
+  const key = balanceKey(chainId, address);
+  map.set(key, (map.get(key) ?? 0n) + amount);
 }
 
 function balanceKey(chainId: number, address: string): string {

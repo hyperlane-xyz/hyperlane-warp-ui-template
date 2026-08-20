@@ -1,12 +1,13 @@
+import { ProtocolType } from '@hyperlane-xyz/utils';
 import { useTimeout } from '@hyperlane-xyz/widgets';
-import { useQuery } from '@tanstack/react-query';
-import { useCallback, useMemo, useState } from 'react';
+import { type QueryClient, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { bytesToHex, parseUnits, type Hex } from 'viem';
 
 import { logger } from '../../../utils/logger';
 import { useChains } from '../../api/hooks';
-import { routerClient } from '../../api/RouterClient';
-import type { QuoteResponse, RouteResponse } from '../../api/types';
+import { type MaxQuoteParams, routerClient } from '../../api/RouterClient';
+import type { MaxQuoteResponse, QuoteResponse, RouteResponse } from '../../api/types';
 import { validateRouteSecurity } from '../../routeSecurity/validateRouteSecurity';
 import { useStore } from '../../store';
 import { useTokens } from '../../tokens/hooks';
@@ -28,19 +29,102 @@ function randomBytes32(): Hex {
   return bytesToHex(buf);
 }
 
-// 30s engine TTL — refresh 5s before to avoid expired-mid-sign races.
+// Normal quotes refresh 5s before the engine's 30s TTL.
 const REFRESH_MS = 25_000;
+const ROUTER_QUOTE_QUERY_KEY = ['router', 'quote'] as const;
+
+interface QuoteQueryKeyParams {
+  srcChain: number | null;
+  dstChain: number | null;
+  srcToken: string;
+  dstToken: string;
+  amount: bigint | null;
+  sender?: string;
+  recipient?: string;
+  slippageBps?: number;
+}
+
+export function quoteQueryKey(params: QuoteQueryKeyParams) {
+  return [
+    ...ROUTER_QUOTE_QUERY_KEY,
+    params.srcChain,
+    params.dstChain,
+    params.srcToken,
+    params.dstToken,
+    params.amount?.toString() ?? null,
+    params.sender ?? null,
+    params.recipient ?? null,
+    params.slippageBps ?? null,
+  ] as const;
+}
+
+export function cacheMaxQuote(
+  queryClient: QueryClient,
+  params: MaxQuoteParams,
+  response: MaxQuoteResponse,
+): void {
+  queryClient.setQueryData(quoteQueryKey({ ...params, amount: BigInt(response.amount) }), response);
+}
+
+interface MaxQuoteIntent {
+  params: Omit<MaxQuoteParams, 'senderPubKey'>;
+  amount: bigint;
+  expiresAt: number;
+  pendingAmountSync: boolean;
+}
+
+export function isMaxQuoteIntentCurrent(
+  intent: Pick<MaxQuoteIntent, 'params' | 'amount'>,
+  params: Omit<MaxQuoteParams, 'senderPubKey'>,
+  amount: bigint | null,
+): boolean {
+  return (
+    intent.amount === amount && maxQuoteRequestKey(intent.params) === maxQuoteRequestKey(params)
+  );
+}
+
+export function supportsMaxQuote(protocol: string | undefined): boolean {
+  return protocol != null && protocol !== ProtocolType.Starknet;
+}
+
+export function quoteRefetchIntervalMs(maxQuoteExpiresAt?: number, nowMs = Date.now()): number {
+  if (maxQuoteExpiresAt == null) return REFRESH_MS;
+  return Math.max(maxQuoteExpiresAt * 1000 - nowMs, 1);
+}
+
+function maxQuoteRequestKey(params: Omit<MaxQuoteParams, 'senderPubKey'>): string {
+  return JSON.stringify([
+    params.srcChain,
+    params.dstChain,
+    params.srcToken,
+    params.dstToken,
+    params.sender,
+    params.recipient ?? null,
+    params.slippageBps ?? null,
+    params.commitmentSalt ?? null,
+  ]);
+}
+
+function assertTransferableMaxQuote(response: MaxQuoteResponse): MaxQuoteResponse {
+  if (BigInt(response.amount) <= 0n || response.routes.length === 0) {
+    throw new Error('No transferable balance is available after network fees');
+  }
+  return response;
+}
 
 interface UseQuoteArgs {
   values: TransferFormValues;
   /** Sender from connected wallet — passed through as-is. */
   sender: string | undefined;
+  senderPubKey?: Promise<string | undefined>;
   /** Pause auto-refresh (e.g. wallet modal open or tx signing). */
   pause?: boolean;
 }
 
-export function useQuote({ values, sender, pause }: UseQuoteArgs) {
+export function useQuote({ values, sender, senderPubKey, pause }: UseQuoteArgs) {
   const [now, setNow] = useState(() => Date.now());
+  const queryClient = useQueryClient();
+  const maxQuoteIntentRef = useRef<MaxQuoteIntent | null>(null);
   const chainMetadata = useStore((state) => state.chainMetadata);
   const chainAddresses = useStore((state) => state.chainAddresses);
   const registryWarpRoutes = useStore((state) => state.registryWarpRoutes);
@@ -97,21 +181,115 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
     [values.srcChain, values.dstChain, values.srcToken, values.dstToken],
   );
 
-  const query = useQuery<QuoteResponse>({
-    queryKey: [
-      'router',
-      'quote',
-      values.srcChain,
+  const maxQuoteRequestReady = isMaxQuoteRequestReady(values, engineSender);
+  const maxQuoteParams = useMemo<Omit<MaxQuoteParams, 'senderPubKey'> | null>(
+    () =>
+      maxQuoteRequestReady
+        ? {
+            srcChain: values.srcChain!,
+            dstChain: values.dstChain!,
+            srcToken: values.srcToken,
+            dstToken: values.dstToken,
+            sender: engineSender!,
+            recipient: engineRecipient,
+            slippageBps: values.slippageBps,
+            commitmentSalt,
+          }
+        : null,
+    [
+      commitmentSalt,
+      engineRecipient,
+      engineSender,
+      maxQuoteRequestReady,
       values.dstChain,
-      values.srcToken,
       values.dstToken,
-      amountAtomic?.toString(),
-      engineSender ?? null,
-      engineRecipient ?? null,
       values.slippageBps,
+      values.srcChain,
+      values.srcToken,
     ],
-    queryFn: ({ signal }) =>
-      routerClient.quote(
+  );
+  const srcProtocol = chainsResp?.chains.find((chain) => chain.id === values.srcChain)?.protocol;
+  const maxQuoteUnavailableReason =
+    srcProtocol === ProtocolType.Starknet ? 'Max is unavailable for Starknet transfers' : undefined;
+  const canRequestMaxQuote =
+    !!maxQuoteParams && !pause && supportsMaxQuote(srcProtocol) && srcTokenInfo?.decimals != null;
+
+  const currentMaxIntent = maxQuoteIntentRef.current;
+  if (currentMaxIntent && maxQuoteParams) {
+    const sameRequest =
+      maxQuoteRequestKey(currentMaxIntent.params) === maxQuoteRequestKey(maxQuoteParams);
+    if (!sameRequest) {
+      maxQuoteIntentRef.current = null;
+    } else if (currentMaxIntent.amount === amountAtomic) {
+      currentMaxIntent.pendingAmountSync = false;
+    } else if (!currentMaxIntent.pendingAmountSync) {
+      maxQuoteIntentRef.current = null;
+    }
+  } else if (currentMaxIntent && !maxQuoteParams) {
+    maxQuoteIntentRef.current = null;
+  }
+  const activeMaxQuoteIntent =
+    maxQuoteIntentRef.current &&
+    maxQuoteParams &&
+    isMaxQuoteIntentCurrent(maxQuoteIntentRef.current, maxQuoteParams, amountAtomic)
+      ? maxQuoteIntentRef.current
+      : null;
+
+  const fetchMaxQuote = useCallback(
+    async (params: Omit<MaxQuoteParams, 'senderPubKey'>) => {
+      const publicKey = await senderPubKey;
+      const response = await routerClient.maxQuote({
+        ...params,
+        ...(publicKey && { senderPubKey: publicKey as `0x${string}` }),
+      });
+      return assertTransferableMaxQuote(response);
+    },
+    [senderPubKey],
+  );
+  const {
+    mutateAsync: mutateMaxQuote,
+    isPending: isMaxQuoteLoading,
+    error: maxQuoteError,
+  } = useMutation({
+    onMutate: () => queryClient.cancelQueries({ queryKey: ROUTER_QUOTE_QUERY_KEY }),
+    mutationFn: (params: Omit<MaxQuoteParams, 'senderPubKey'>) => fetchMaxQuote(params),
+    onSuccess: (response, params) => {
+      maxQuoteIntentRef.current = {
+        params,
+        amount: BigInt(response.amount),
+        expiresAt: response.expiresAt,
+        pendingAmountSync: true,
+      };
+      cacheMaxQuote(queryClient, params, response);
+    },
+  });
+
+  const requestMaxQuote = useCallback(() => {
+    if (!canRequestMaxQuote || !maxQuoteParams) {
+      throw new Error(maxQuoteUnavailableReason ?? 'Select a route and connect a wallet first');
+    }
+    return mutateMaxQuote(maxQuoteParams);
+  }, [canRequestMaxQuote, maxQuoteParams, maxQuoteUnavailableReason, mutateMaxQuote]);
+
+  const query = useQuery<QuoteResponse>({
+    queryKey: quoteQueryKey({
+      srcChain: values.srcChain,
+      dstChain: values.dstChain,
+      srcToken: values.srcToken,
+      dstToken: values.dstToken,
+      amount: amountAtomic,
+      sender: engineSender,
+      recipient: engineRecipient,
+      slippageBps: values.slippageBps,
+    }),
+    queryFn: async ({ signal }) => {
+      if (activeMaxQuoteIntent && maxQuoteIntentRef.current === activeMaxQuoteIntent) {
+        // The max response remains authoritative until its expiry. This query
+        // runs at that deadline, clears max mode, then resumes normal quoting.
+        maxQuoteIntentRef.current = null;
+      }
+
+      return routerClient.quote(
         {
           srcChain: values.srcChain!,
           dstChain: values.dstChain!,
@@ -124,10 +302,12 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
           commitmentSalt,
         },
         { signal },
-      ),
-    enabled: enabled && amountAtomic != null && amountAtomic > 0n,
-    refetchInterval: REFRESH_MS,
-    staleTime: REFRESH_MS,
+      );
+    },
+    enabled: enabled && amountAtomic != null && amountAtomic > 0n && !isMaxQuoteLoading,
+    refetchInterval: quoteRefetchIntervalMs(activeMaxQuoteIntent?.expiresAt),
+    staleTime: activeMaxQuoteIntent ? Infinity : REFRESH_MS,
+    refetchOnReconnect: !activeMaxQuoteIntent,
   });
 
   const hasChainAddresses = Object.keys(chainAddresses).length > 0;
@@ -225,6 +405,12 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
     isExpired,
     isQuoteSettled,
     isRouteDataUnavailable,
+    requestMaxQuote,
+    canRequestMaxQuote,
+    isMaxQuoteLoading,
+    maxQuoteError,
+    maxQuoteUnavailableReason,
+    sourceTokenDecimals: srcTokenInfo?.decimals,
   };
 }
 
@@ -309,6 +495,12 @@ function compoundSlippageMin(output: bigint, slippageBps: number, swapStepCount:
 }
 
 export function isQuoteRequestReady(v: TransferFormValues, sender: string | undefined): boolean {
+  if (!isMaxQuoteRequestReady(v, sender)) return false;
+  if (!v.amount || Number(v.amount) <= 0) return false;
+  return true;
+}
+
+export function isMaxQuoteRequestReady(v: TransferFormValues, sender: string | undefined): boolean {
   // Non-empty checks only — engine validates / normalizes per-protocol address shapes.
   // Recipient is the effective recipient (custom input or connected destination wallet);
   // gate on it like sender so we don't quote a route the user can't yet receive.
@@ -316,12 +508,11 @@ export function isQuoteRequestReady(v: TransferFormValues, sender: string | unde
   if (!v.recipient) return false;
   if (v.srcChain == null || v.dstChain == null) return false;
   if (!v.srcToken || !v.dstToken) return false;
-  if (!v.amount || Number(v.amount) <= 0) return false;
   return true;
 }
 
 // Emit per-component fees so each is rendered against its actual token.
-function augmentRoute(raw: RouteResponse): AugmentedRoute {
+export function augmentRoute(raw: RouteResponse): AugmentedRoute {
   const hasFixedOutput = raw.steps.length > 0 && raw.steps.every((s) => s.type === 'bridge');
 
   // Fixed-output routes deliver deterministic amounts — clamp outputMin = output.
@@ -358,6 +549,17 @@ function augmentRoute(raw: RouteResponse): AugmentedRoute {
         tokenAddress: '0x0000000000000000000000000000000000000000',
       });
     }
+  }
+
+  const sourceTransactionFee = adjusted.sourceTransactionFee;
+  const sourceChain = adjusted.steps[0]?.chain;
+  if (sourceTransactionFee && sourceChain != null && BigInt(sourceTransactionFee.amount) > 0n) {
+    components.push({
+      category: 'localGas',
+      amount: BigInt(sourceTransactionFee.amount),
+      chainId: sourceChain,
+      tokenAddress: '0x0000000000000000000000000000000000000000',
+    });
   }
 
   const feeBreakdown: FeeBreakdown = {

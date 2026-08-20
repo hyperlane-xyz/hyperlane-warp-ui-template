@@ -3,7 +3,6 @@ import {
   EvmTokenAdapter,
   type MultiProtocolProvider,
 } from '@hyperlane-xyz/sdk';
-import { isNullish } from '@hyperlane-xyz/utils';
 import { type Address, erc20Abi, type PublicClient } from 'viem';
 
 import { logger } from '../../utils/logger';
@@ -104,41 +103,6 @@ export async function readEvmBalance(
     return new EvmNativeTokenAdapter(chainName, multiProvider, {}).getBalance(owner);
   }
   return new EvmTokenAdapter(chainName, multiProvider, { token: tokenAddress }).getBalance(owner);
-}
-
-const PENDING_APPROVAL_GAS_BUDGET = 600_000n;
-
-// gasLimit × gasPrice for a prepared EVM tx, in native wei. Returns 0n
-// on failure — caller treats that as "no gas headroom info".
-export async function estimateEvmGasCost(
-  multiProvider: MultiProtocolProvider,
-  args: {
-    chainName: string;
-    sender: string;
-    to: string;
-    data: string;
-    value: string;
-    approvalPending?: boolean;
-  },
-): Promise<bigint> {
-  try {
-    const { chainName, sender, to, data, value, approvalPending } = args;
-    const provider = multiProvider.getEthersV5Provider(chainName);
-
-    const feeDataPromise = provider.getFeeData();
-    const gasUnits = approvalPending
-      ? PENDING_APPROVAL_GAS_BUDGET
-      : BigInt((await provider.estimateGas({ from: sender, to, data, value })).toString());
-    const feeData = await feeDataPromise;
-    const maxFee = feeData.maxFeePerGas ? BigInt(feeData.maxFeePerGas.toString()) : undefined;
-    const legacy = feeData.gasPrice ? BigInt(feeData.gasPrice.toString()) : undefined;
-    const effectiveGasPrice = maxFee ?? legacy;
-    if (isNullish(effectiveGasPrice)) return 0n;
-    return gasUnits * effectiveGasPrice;
-  } catch (err) {
-    logger.warn('estimateEvmGasCost failed', err as Error);
-    return 0n;
-  }
 }
 
 function isZeroAddress(addr: string): boolean {

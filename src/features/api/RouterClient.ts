@@ -5,11 +5,13 @@ import {
   ChainsResponseSchema,
   AvailableRoutesResponseSchema,
   HealthResponseSchema,
+  MaxQuoteResponseSchema,
   QuoteResponseSchema,
   ReadinessResponseSchema,
   TokensResponseSchema,
   type AvailableRoutesResponse,
   type ChainsResponse,
+  type MaxQuoteResponse,
   type QuoteResponse,
   type ReadinessResponse,
   type TokensQuery,
@@ -29,6 +31,10 @@ export interface QuoteParams {
   commitmentSalt?: `0x${string}`;
 }
 
+export interface MaxQuoteParams extends Omit<QuoteParams, 'amount'> {
+  senderPubKey?: `0x${string}`;
+}
+
 export interface AvailableRoutesParams {
   srcChain?: string | number | null;
   srcToken?: string | null;
@@ -42,6 +48,7 @@ interface RequestOptions {
 }
 
 const REQUEST_TIMEOUT_MS = 15_000;
+const MAX_QUOTE_TIMEOUT_MS = 30_000;
 
 export class RouterClient {
   constructor(private baseUrl: string) {}
@@ -142,6 +149,29 @@ export class RouterClient {
         }),
       },
       options,
+    );
+  }
+
+  async maxQuote(params: MaxQuoteParams, options: RequestOptions = {}): Promise<MaxQuoteResponse> {
+    return this.request(
+      '/v1/quote/max',
+      MaxQuoteResponseSchema,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          srcChain: params.srcChain,
+          dstChain: params.dstChain,
+          srcToken: params.srcToken,
+          dstToken: params.dstToken,
+          sender: params.sender,
+          ...(params.recipient && { recipient: params.recipient }),
+          ...(params.slippageBps != null && { slippageBps: params.slippageBps }),
+          ...(params.commitmentSalt && { commitmentSalt: params.commitmentSalt }),
+          ...(params.senderPubKey && { senderPubKey: params.senderPubKey }),
+        }),
+      },
+      { ...options, timeoutMs: options.timeoutMs ?? MAX_QUOTE_TIMEOUT_MS },
     );
   }
 

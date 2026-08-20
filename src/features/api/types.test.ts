@@ -1,6 +1,12 @@
 import { describe, expect, test } from 'vitest';
 
-import { AvailableRoutesResponseSchema, CallCommitmentSchema, QuoteResponseSchema } from './types';
+import {
+  AvailableRoutesResponseSchema,
+  CallCommitmentSchema,
+  MaxQuoteResponseSchema,
+  QuoteBridgeStepSchema,
+  QuoteResponseSchema,
+} from './types';
 
 describe('QuoteResponseSchema', () => {
   test('accepts engine bridge quote metadata', () => {
@@ -24,6 +30,7 @@ describe('QuoteResponseSchema', () => {
                   tokenFee: '1',
                   igpToken: '0x0000000000000000000000000000000000000000',
                   igpAmount: '2',
+                  igpIncludedInAmountIn: true,
                   localNativeFee: '3',
                 },
               },
@@ -61,6 +68,66 @@ describe('QuoteResponseSchema', () => {
         ],
       }),
     ).not.toThrow();
+  });
+
+  test('requires explicit IGP funding semantics', () => {
+    expect(
+      QuoteBridgeStepSchema.safeParse({
+        type: 'bridge',
+        chain: 1,
+        destChain: 8453,
+        asset: '0x1111111111111111111111111111111111111111',
+        router: '0x2222222222222222222222222222222222222222',
+        amountIn: '100',
+        amountOut: '99',
+        fee: {
+          tokenFee: '0',
+          igpToken: '0x0000000000000000000000000000000000000000',
+          igpAmount: '1',
+          localNativeFee: '0',
+        },
+      }).success,
+    ).toBe(false);
+  });
+});
+
+describe('MaxQuoteResponseSchema', () => {
+  test('keeps the calculated input and route source fee', () => {
+    const parsed = MaxQuoteResponseSchema.parse({
+      amount: '900',
+      expiresAt: Math.floor(Date.now() / 1000) + 30,
+      routes: [
+        {
+          steps: [
+            {
+              type: 'swap',
+              chain: 1,
+              dex: 'test',
+              tokenIn: '0x0000000000000000000000000000000000000000',
+              tokenOut: '0x1111111111111111111111111111111111111111',
+              amountIn: '900',
+              amountOut: '800',
+              path: [
+                '0x0000000000000000000000000000000000000000',
+                '0x1111111111111111111111111111111111111111',
+              ],
+              poolCount: 1,
+            },
+          ],
+          output: '800',
+          outputMin: '792',
+          executionKind: 'universalRouter',
+          connection: null,
+          gas: { originGas: '100000', destGas: '0' },
+          tx: { to: '0x1', data: '0x', value: '900' },
+          approval: null,
+          sourceTransactionFee: { amount: '10', gasUnits: '100000' },
+        },
+      ],
+    });
+
+    expect(parsed.amount).toBe('900');
+    expect(parsed.routes[0]?.sourceTransactionFee?.amount).toBe('10');
   });
 });
 

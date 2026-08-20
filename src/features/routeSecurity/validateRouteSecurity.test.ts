@@ -17,7 +17,7 @@ const BAD = '0x5555555555555555555555555555555555555555';
 const PERMIT2 = '0x6666666666666666666666666666666666666666';
 const BRIDGE_ROUTER = '0x7777777777777777777777777777777777777777';
 const DST_ROUTER = '0x8888888888888888888888888888888888888888';
-const ETH_WETH = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2';
+const ETH_WETH = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2';
 const BASE_WETH = '0x4200000000000000000000000000000000000006';
 const STARKNET_ROUTER = '0x074238dfa02063792077820584c925b679a013cbab38e5ca61af5627d1eda736';
 const STARKNET_TOKEN = '0x01a238dfa02063792077820584c925b679a013cbab38e5ca61af5627d1eda736';
@@ -77,6 +77,65 @@ describe('validateRouteSecurity', () => {
         context({ registryWarpRoutes: nativeUniversalRouterRoutes() }),
       ),
     ).toEqual({ valid: true });
+  });
+
+  test('accepts the native sentinel directly at native bridge boundaries', () => {
+    const route = wrappedNativeBridgeRoute();
+    if (route.steps[0].type !== 'swap') throw new Error('expected source swap');
+    if (route.steps[2].type !== 'swap') throw new Error('expected destination swap');
+    route.steps[0].tokenOut = NATIVE;
+    route.steps[0].path = [TOKEN, NATIVE];
+    route.steps[2].tokenIn = NATIVE;
+    route.steps[2].path = [NATIVE, DST_TOKEN];
+
+    expect(
+      validateRouteSecurity(route, context({ registryWarpRoutes: nativeUniversalRouterRoutes() })),
+    ).toEqual({ valid: true });
+  });
+
+  test('does not treat trusted wrapped native as a non-native bridge token', () => {
+    const route = universalRouterRoute();
+    if (route.steps[0].type !== 'swap') throw new Error('expected source swap');
+    route.steps[0].tokenOut = ETH_WETH;
+    route.steps[0].path = [TOKEN, ETH_WETH];
+
+    expect(validateRouteSecurity(route, context())).toMatchObject({
+      valid: false,
+      reason: 'Source token does not match registry route',
+    });
+  });
+
+  test('does not treat trusted wrapped native specially between ordinary swaps', () => {
+    const route = sameChainSwapRoute();
+    route.steps = [
+      {
+        type: 'swap',
+        chain: ETH,
+        dex: 'test',
+        tokenIn: TOKEN,
+        tokenOut: ETH_WETH,
+        amountIn: '100',
+        amountOut: '95',
+        path: [TOKEN, ETH_WETH],
+        poolCount: 1,
+      },
+      {
+        type: 'swap',
+        chain: ETH,
+        dex: 'test',
+        tokenIn: BAD,
+        tokenOut: DST_TOKEN,
+        amountIn: '95',
+        amountOut: '90',
+        path: [BAD, DST_TOKEN],
+        poolCount: 1,
+      },
+    ];
+
+    expect(validateRouteSecurity(route, context({ dstChain: ETH }))).toMatchObject({
+      valid: false,
+      reason: 'Route step tokens are discontinuous',
+    });
   });
 
   test('rejects an untrusted wrapped native token before a native bridge', () => {

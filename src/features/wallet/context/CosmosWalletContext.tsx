@@ -49,6 +49,7 @@ export function CosmosWalletContext({ children }: PropsWithChildren<unknown>) {
         chains={chains}
         assetLists={assets}
         wallets={walletsList}
+        throwErrors={false}
         walletConnectOptions={{
           signClient: {
             projectId: config.walletConnectProjectId,

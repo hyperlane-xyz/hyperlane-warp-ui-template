@@ -17,8 +17,8 @@ vi.mock('../../balances/read', () => ({
   estimateNativeGasCost: estimateNativeGasCostMock,
 }));
 
-vi.mock('../../../consts/config', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../../consts/config')>();
+vi.mock(import('../../../consts/config'), async (importOriginal) => {
+  const actual = await importOriginal();
   return {
     ...actual,
     config: { ...actual.config, shouldDisableChains: true },

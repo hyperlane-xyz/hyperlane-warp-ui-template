@@ -30,6 +30,8 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
   soon: {
     ...soon,
     mailbox: soonAddresses.mailbox,
+    // Temporarily restore withdrawals during the extended deprecation window.
+    availability: { status: ChainStatus.Live },
   },
   sonicsvm: {
     ...sonicsvm,

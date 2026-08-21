@@ -1,0 +1,89 @@
+<svg width="1920" height="1080" viewBox="0 0 1920 1080" fill="none" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <linearGradient id="fadeGradient" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="white" stop-opacity="0"/>
+    <stop offset="50%" stop-color="white" stop-opacity="0"/>
+    <stop offset="75%" stop-color="white" stop-opacity="0.15"/>
+    <stop offset="100%" stop-color="white" stop-opacity="0.5"/>
+  </linearGradient>
+  <mask id="fadeMask">
+    <rect width="1920" height="1080" fill="url(#fadeGradient)"/>
+  </mask>
+</defs>
+<g style="mix-blend-mode:overlay" mask="url(#fadeMask)">
+<path d="M0.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M40.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M81.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M122.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M163.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M204.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M245.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M285.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M326.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M367.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M408.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M449.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M490.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M530.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M571.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M612.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M653.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M694.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M735.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M775.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M816.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M857.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M898.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M939.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M980.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1021.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1061.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1102.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1143.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1184.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1225.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1266.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1306.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1347.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1388.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1429.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1470.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1511.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1551.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1592.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1633.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1674.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1715.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1756.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1796.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1837.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1878.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1919.5 0V1080" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1920 29.5001L1.00031 29.5" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1920 70.5001L1.00031 70.5" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1920 110.5L1.00031 110.5" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1920 151.5L1.00031 151.5" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1920 192.5L1.00031 192.5" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1920 233.5L1.00031 233.5" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1920 274.5L1.00031 274.5" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1920 315.5L1.00031 315.5" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1920 355.5L1.00031 355.5" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1920 396.5L1.00031 396.5" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1920 437.5L1.00031 437.5" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1920 478.5L1.00031 478.5" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1920 519.5L1.00031 519.5" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1920 560.5L1.00031 560.5" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1920 601.5L1.00031 601.5" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1920 641.5L1.00031 641.5" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1920 682.5L1.00031 682.5" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1920 723.5L1.00031 723.5" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1920 764.5L1.00031 764.5" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1920 805.5L1.00031 805.5" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1920 846.5L1.00031 846.5" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1920 886.5L1.00031 886.5" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1920 927.5L1.00001 927.5" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1920 968.5L1.00001 968.5" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1920 1009.5L1.00001 1009.5" stroke="#FFFFFF" stroke-opacity="0.2"/>
+<path d="M1920 1050.5L1.00001 1050.5" stroke="#FFFFFF" stroke-opacity="0.2"/>
+</g>
+</svg>

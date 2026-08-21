@@ -7,6 +7,7 @@ import {
 } from '@hyperlane-xyz/sdk';
 
 import type { ChainDiscovery, QuoteBridgeStep, RouteApproval, RouteResponse } from '../api/types';
+import { isTrustedWrappedNativeAddress } from '../tokens/wrappedNative';
 import {
   getRegistryWarpRoute,
   type RegistryWarpRoute,
@@ -97,6 +98,10 @@ export function validateWarpRoute(
           : nextStep?.type === 'swap'
             ? nextStep.tokenIn
             : undefined,
+      allowWrappedSource:
+        route.executionKind === 'universalRouter' && previousStep?.type === 'swap',
+      allowWrappedDestination:
+        route.executionKind === 'universalRouter' && nextStep?.type === 'swap',
       validateApproval: isBridgeOnly,
     });
     if (!validation.valid) return validation;
@@ -112,6 +117,8 @@ function validateBridgeStep(
   options: {
     sourceToken: string | undefined;
     destinationToken: string | undefined;
+    allowWrappedSource: boolean;
+    allowWrappedDestination: boolean;
     validateApproval: boolean;
   },
 ): WarpRouteValidationResult {
@@ -150,6 +157,8 @@ function validateBridgeStep(
     registryRoute,
     destinationChainName,
     options.destinationToken,
+    step.destChain,
+    options.allowWrappedDestination,
   );
   if (!origin || !destination) {
     return { valid: false, reason: 'Warp route endpoint missing from registry', warpRouteId };
@@ -157,13 +166,18 @@ function validateBridgeStep(
 
   if (
     options.sourceToken &&
-    !sameTokenAddress(options.sourceToken, expectedDiscoveryToken(origin))
+    !matchesDiscoveryToken(options.sourceToken, origin, step.chain, options.allowWrappedSource)
   ) {
     return { valid: false, reason: 'Source token does not match registry route', warpRouteId };
   }
   if (
     options.destinationToken &&
-    !sameTokenAddress(options.destinationToken, expectedDiscoveryToken(destination))
+    !matchesDiscoveryToken(
+      options.destinationToken,
+      destination,
+      step.destChain,
+      options.allowWrappedDestination,
+    )
   ) {
     return { valid: false, reason: 'Destination token does not match registry route', warpRouteId };
   }
@@ -237,11 +251,29 @@ function destinationTokenForContext(
   route: RegistryWarpRoute,
   chainName: string,
   dstToken: string | undefined,
+  chainId: number,
+  allowWrappedNative: boolean,
 ): RegistryWarpRouteToken | undefined {
   const candidates = tokensForChain(route, chainName);
   if (candidates.length <= 1) return candidates[0];
   if (!dstToken) return undefined;
-  return candidates.find((token) => sameTokenAddress(dstToken, expectedDiscoveryToken(token)));
+  return candidates.find((token) =>
+    matchesDiscoveryToken(dstToken, token, chainId, allowWrappedNative),
+  );
+}
+
+function matchesDiscoveryToken(
+  address: string,
+  token: RegistryWarpRouteToken,
+  chainId: number,
+  allowWrappedNative: boolean,
+): boolean {
+  if (sameTokenAddress(address, expectedDiscoveryToken(token))) return true;
+  return (
+    allowWrappedNative &&
+    isNativeWarpStandard(token.standard) &&
+    isTrustedWrappedNativeAddress(chainId, address)
+  );
 }
 
 function expectedSpendToken(token: RegistryWarpRouteToken): string {

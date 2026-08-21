@@ -17,6 +17,7 @@ const BAD = '0x5555555555555555555555555555555555555555';
 const PERMIT2 = '0x6666666666666666666666666666666666666666';
 const BRIDGE_ROUTER = '0x7777777777777777777777777777777777777777';
 const DST_ROUTER = '0x8888888888888888888888888888888888888888';
+const ETH_WETH = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2';
 const BASE_WETH = '0x4200000000000000000000000000000000000006';
 const STARKNET_ROUTER = '0x074238dfa02063792077820584c925b679a013cbab38e5ca61af5627d1eda736';
 const STARKNET_TOKEN = '0x01a238dfa02063792077820584c925b679a013cbab38e5ca61af5627d1eda736';
@@ -67,6 +68,138 @@ const chainAddresses = {
 describe('validateRouteSecurity', () => {
   test('accepts a universal router swap and bridge route with matching approval and tx target', () => {
     expect(validateRouteSecurity(universalRouterRoute(), context())).toEqual({ valid: true });
+  });
+
+  test('accepts trusted wrapped native tokens around a native bridge', () => {
+    expect(
+      validateRouteSecurity(
+        wrappedNativeBridgeRoute(),
+        context({ registryWarpRoutes: nativeUniversalRouterRoutes() }),
+      ),
+    ).toEqual({ valid: true });
+  });
+
+  test('accepts the native sentinel directly at native bridge boundaries', () => {
+    const route = wrappedNativeBridgeRoute();
+    if (route.steps[0].type !== 'swap') throw new Error('expected source swap');
+    if (route.steps[2].type !== 'swap') throw new Error('expected destination swap');
+    route.steps[0].tokenOut = NATIVE;
+    route.steps[0].path = [TOKEN, NATIVE];
+    route.steps[2].tokenIn = NATIVE;
+    route.steps[2].path = [NATIVE, DST_TOKEN];
+
+    expect(
+      validateRouteSecurity(route, context({ registryWarpRoutes: nativeUniversalRouterRoutes() })),
+    ).toEqual({ valid: true });
+  });
+
+  test('does not treat trusted wrapped native as a non-native bridge token', () => {
+    const route = universalRouterRoute();
+    if (route.steps[0].type !== 'swap') throw new Error('expected source swap');
+    route.steps[0].tokenOut = ETH_WETH;
+    route.steps[0].path = [TOKEN, ETH_WETH];
+
+    expect(validateRouteSecurity(route, context())).toMatchObject({
+      valid: false,
+      reason: 'Source token does not match registry route',
+    });
+  });
+
+  test('does not treat trusted wrapped native specially between ordinary swaps', () => {
+    const route = sameChainSwapRoute();
+    route.steps = [
+      {
+        type: 'swap',
+        chain: ETH,
+        dex: 'test',
+        tokenIn: TOKEN,
+        tokenOut: ETH_WETH,
+        amountIn: '100',
+        amountOut: '95',
+        path: [TOKEN, ETH_WETH],
+        poolCount: 1,
+      },
+      {
+        type: 'swap',
+        chain: ETH,
+        dex: 'test',
+        tokenIn: BAD,
+        tokenOut: DST_TOKEN,
+        amountIn: '95',
+        amountOut: '90',
+        path: [BAD, DST_TOKEN],
+        poolCount: 1,
+      },
+    ];
+
+    expect(validateRouteSecurity(route, context({ dstChain: ETH }))).toMatchObject({
+      valid: false,
+      reason: 'Route step tokens are discontinuous',
+    });
+  });
+
+  test('rejects an untrusted wrapped native token before a native bridge', () => {
+    const route = wrappedNativeBridgeRoute();
+    if (route.steps[0].type !== 'swap') throw new Error('expected source swap');
+    route.steps[0].tokenOut = BAD;
+
+    expect(
+      validateRouteSecurity(route, context({ registryWarpRoutes: nativeUniversalRouterRoutes() })),
+    ).toMatchObject({
+      valid: false,
+      reason: 'Source token does not match registry route',
+    });
+  });
+
+  test('rejects an untrusted wrapped native token after a native bridge', () => {
+    const route = wrappedNativeBridgeRoute();
+    if (route.steps[2].type !== 'swap') throw new Error('expected destination swap');
+    route.steps[2].tokenIn = BAD;
+
+    expect(
+      validateRouteSecurity(route, context({ registryWarpRoutes: nativeUniversalRouterRoutes() })),
+    ).toMatchObject({
+      valid: false,
+      reason: 'Destination token does not match registry route',
+    });
+  });
+
+  test('rejects wrapped native bridge boundaries outside universal router execution', () => {
+    const route = wrappedNativeBridgeRoute();
+    route.executionKind = 'warpDirect';
+
+    expect(
+      validateRouteSecurity(route, context({ registryWarpRoutes: nativeUniversalRouterRoutes() })),
+    ).toMatchObject({
+      valid: false,
+      reason: 'Source token does not match registry route',
+    });
+  });
+
+  test('keeps native bridge assets restricted to the native sentinel', () => {
+    const route = wrappedNativeBridgeRoute();
+    if (route.steps[1].type !== 'bridge') throw new Error('expected bridge');
+    route.steps[1].asset = ETH_WETH;
+
+    expect(
+      validateRouteSecurity(route, context({ registryWarpRoutes: nativeUniversalRouterRoutes() })),
+    ).toMatchObject({
+      valid: false,
+      reason: 'Native bridge asset must be native sentinel',
+    });
+  });
+
+  test('keeps native bridge routers bound to the registry', () => {
+    const route = wrappedNativeBridgeRoute();
+    if (route.steps[1].type !== 'bridge') throw new Error('expected bridge');
+    route.steps[1].router = BAD;
+
+    expect(
+      validateRouteSecurity(route, context({ registryWarpRoutes: nativeUniversalRouterRoutes() })),
+    ).toMatchObject({
+      valid: false,
+      reason: 'Bridge router does not match registry route',
+    });
   });
 
   test('accepts a same-chain universal router swap route', () => {
@@ -809,6 +942,59 @@ function universalRouterRoute(
   };
 }
 
+function wrappedNativeBridgeRoute(): RouteResponse {
+  return {
+    steps: [
+      {
+        type: 'swap',
+        chain: ETH,
+        dex: 'test',
+        tokenIn: TOKEN,
+        tokenOut: ETH_WETH,
+        amountIn: '100',
+        amountOut: '90',
+        path: [TOKEN, ETH_WETH],
+        poolCount: 1,
+      },
+      {
+        type: 'bridge',
+        chain: ETH,
+        destChain: BASE,
+        asset: NATIVE,
+        router: BRIDGE_ROUTER,
+        amountIn: '90',
+        amountOut: '80',
+        bridgeSymbol: 'ETH',
+        warpRouteId: 'ETH/test',
+        fee: { tokenFee: '0', igpToken: NATIVE, igpAmount: '10', localNativeFee: '0' },
+      },
+      {
+        type: 'swap',
+        chain: BASE,
+        dex: 'test',
+        tokenIn: BASE_WETH,
+        tokenOut: DST_TOKEN,
+        amountIn: '80',
+        amountOut: '70',
+        path: [BASE_WETH, DST_TOKEN],
+        poolCount: 1,
+      },
+    ],
+    output: '70',
+    outputMin: '69',
+    executionKind: 'universalRouter',
+    connection: { symbol: 'ETH', warpRouteId: 'ETH/test' },
+    gas: { originGas: '0', destGas: '0' },
+    tx: { to: UNIVERSAL_ROUTER, data: '0x', value: '10' },
+    approval: {
+      token: TOKEN,
+      spender: UNIVERSAL_ROUTER,
+      amount: '100',
+      kind: 'erc20',
+    },
+  };
+}
+
 function sameChainSwapRoute(): RouteResponse {
   return {
     steps: [
@@ -1033,6 +1219,18 @@ function universalRouterRoutes(): RegistryWarpRouteMap {
           standard: 'EvmHypCollateral',
         },
         { chainName: 'base', addressOrDenom: DST_TOKEN, standard: 'EvmHypSynthetic' },
+      ],
+    },
+  };
+}
+
+function nativeUniversalRouterRoutes(): RegistryWarpRouteMap {
+  return {
+    'eth/test': {
+      id: 'ETH/test',
+      tokens: [
+        { chainName: 'ethereum', addressOrDenom: BRIDGE_ROUTER, standard: 'EvmHypNative' },
+        { chainName: 'base', addressOrDenom: DST_ROUTER, standard: 'EvmHypNative' },
       ],
     },
   };

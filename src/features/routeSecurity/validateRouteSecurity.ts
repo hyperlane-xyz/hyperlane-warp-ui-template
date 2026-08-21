@@ -2,6 +2,7 @@ import { isEVMLike, ProtocolType } from '@hyperlane-xyz/utils';
 
 import { getRouteTxs, isChainRouteTx } from '../api/routeTx';
 import type { ChainDiscovery, QuoteStep, RouteResponse, RouteTx } from '../api/types';
+import { isTrustedWrappedNativeAddress } from '../tokens/wrappedNative';
 import { trustedUniversalRouterForChain } from './chainContracts';
 import { validateSdkRouteTx } from './sdk';
 import { validateSealevelRouteTx } from './svm';
@@ -97,7 +98,10 @@ function validateStepBindings(
     if (current.amountOut !== next.amountIn) {
       return { valid: false, reason: 'Route step amounts are discontinuous' };
     }
-    if (current.type === 'swap' && !sameTokenAddress(current.tokenOut, inputTokenForStep(next))) {
+    if (
+      current.type === 'swap' &&
+      !sameAdjacentStepToken(current.tokenOut, next, route.executionKind)
+    ) {
       return { valid: false, reason: 'Route step tokens are discontinuous' };
     }
   }
@@ -318,6 +322,20 @@ function spendTokenForStep(step: QuoteStep): string {
 
 function inputTokenForStep(step: QuoteStep): string {
   return step.type === 'swap' ? step.tokenIn : step.asset;
+}
+
+function sameAdjacentStepToken(
+  outputToken: string,
+  nextStep: QuoteStep,
+  executionKind: RouteResponse['executionKind'],
+): boolean {
+  if (sameTokenAddress(outputToken, inputTokenForStep(nextStep))) return true;
+  return (
+    executionKind === 'universalRouter' &&
+    nextStep.type === 'bridge' &&
+    isEngineNativeToken(nextStep.asset) &&
+    isTrustedWrappedNativeAddress(nextStep.chain, outputToken)
+  );
 }
 
 function sameRequestedToken(

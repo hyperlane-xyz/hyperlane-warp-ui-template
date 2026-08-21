@@ -20,6 +20,11 @@ export function trustedWrappedNativeAddress(chainId: number | null | undefined) 
   return chainId == null ? undefined : WRAPPED_NATIVE_TOKEN_BY_CHAIN_ID[chainId];
 }
 
+export function isTrustedWrappedNativeAddress(chainId: number, address: string): boolean {
+  const trustedAddress = trustedWrappedNativeAddress(chainId);
+  return !!trustedAddress && tokenKey(chainId, address) === tokenKey(chainId, trustedAddress);
+}
+
 export function trustedWrappedNativeAddressForToken(
   token: Pick<UiToken, 'chainId' | 'address' | 'isNative'> | null | undefined,
 ) {
@@ -51,9 +56,7 @@ export function validateWrappedNativeMetadata(
   const trustedWrappedAddress = trustedWrappedNativeAddress(token.chainId);
   if (!trustedWrappedAddress) return { valid: true };
   if (!token.wrappedAddress) return { valid: true, trustedWrappedAddress };
-  if (
-    tokenKey(token.chainId, token.wrappedAddress) !== tokenKey(token.chainId, trustedWrappedAddress)
-  ) {
+  if (!isTrustedWrappedNativeAddress(token.chainId, token.wrappedAddress)) {
     return {
       valid: false,
       reason: 'Native token wrappedAddress does not match trusted local wrapped native',

@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 
 import {
+  isTrustedWrappedNativeAddress,
   trustedWrappedNativeAddressForToken,
   validateWrappedNativeMetadata,
   WRAPPED_NATIVE_TOKEN_BY_CHAIN_ID,
@@ -25,6 +26,16 @@ describe('trustedWrappedNativeAddressForToken', () => {
         isNative: false,
       }),
     ).toBeUndefined();
+  });
+
+  test('matches only the configured wrapped native address for a chain', () => {
+    expect(isTrustedWrappedNativeAddress(56, '0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c')).toBe(
+      true,
+    );
+    expect(isTrustedWrappedNativeAddress(8453, WRAPPED_NATIVE_TOKEN_BY_CHAIN_ID[56])).toBe(false);
+    expect(isTrustedWrappedNativeAddress(8453, '0x0000000000000000000000000000000000000000')).toBe(
+      false,
+    );
   });
 
   test('rejects native metadata when engine wrappedAddress differs from the local trusted address', () => {

@@ -1,6 +1,11 @@
 import { MultiProtocolProvider } from '@hyperlane-xyz/sdk';
+<<<<<<< HEAD
 import { getWagmiChainConfigs } from '@hyperlane-xyz/widgets';
+=======
+import { getWagmiChainConfigs } from '@hyperlane-xyz/widgets/walletIntegrations/ethereum';
+>>>>>>> origin/main
 import { RainbowKitProvider, connectorsForWallets, lightTheme } from '@rainbow-me/rainbowkit';
+
 import '@rainbow-me/rainbowkit/styles.css';
 import {
   argentWallet,
@@ -14,16 +19,23 @@ import {
 } from '@rainbow-me/rainbowkit/wallets';
 import { PropsWithChildren, useMemo } from 'react';
 import { createClient, fallback, http } from 'viem';
-import { WagmiProvider, createConfig } from 'wagmi';
+import { WagmiProvider, createConfig, mock } from 'wagmi';
+
 import { APP_NAME } from '../../../consts/app';
 import { config } from '../../../consts/config';
 import { Color } from '../../../styles/Color';
 import { useMultiProvider } from '../../chains/hooks';
+<<<<<<< HEAD
+=======
+import { MOCK_EVM_ADDRESS } from '../_e2e/constants';
+import { E2EAutoConnectEvm } from '../_e2e/E2EAutoConnectEvm';
+import { isE2EMode } from '../_e2e/isE2E';
+>>>>>>> origin/main
 
-function initWagmi(multiProvider: MultiProtocolProvider) {
+function initWagmi(multiProvider: MultiProtocolProvider, e2e: boolean) {
   const chains = getWagmiChainConfigs(multiProvider);
 
-  const connectors = connectorsForWallets(
+  const baseConnectors = connectorsForWallets(
     [
       {
         groupName: 'Recommended',
@@ -36,6 +48,10 @@ function initWagmi(multiProvider: MultiProtocolProvider) {
     ],
     { appName: APP_NAME, projectId: config.walletConnectProjectId },
   );
+
+  const connectors = e2e
+    ? [mock({ accounts: [MOCK_EVM_ADDRESS], features: { reconnect: true } })]
+    : baseConnectors;
 
   const wagmiConfig = createConfig({
     // Splice to make annoying wagmi type happy
@@ -52,7 +68,12 @@ function initWagmi(multiProvider: MultiProtocolProvider) {
 
 export function EvmWalletContext({ children }: PropsWithChildren<unknown>) {
   const multiProvider = useMultiProvider();
+<<<<<<< HEAD
   const { wagmiConfig } = useMemo(() => initWagmi(multiProvider), [multiProvider]);
+=======
+  const e2e = isE2EMode();
+  const { wagmiConfig } = useMemo(() => initWagmi(multiProvider, e2e), [multiProvider, e2e]);
+>>>>>>> origin/main
 
   return (
     <WagmiProvider config={wagmiConfig}>
@@ -63,6 +84,7 @@ export function EvmWalletContext({ children }: PropsWithChildren<unknown>) {
           fontStack: 'system',
         })}
       >
+        {e2e && <E2EAutoConnectEvm />}
         {children}
       </RainbowKitProvider>
     </WagmiProvider>

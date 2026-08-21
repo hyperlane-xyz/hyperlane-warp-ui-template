@@ -1,0 +1,18 @@
+# A map of chain name -> contract addresses
+# Merges with addresses from the configured registry. Filesystem entries
+# override registry entries per key, mirroring how chains.yaml extends chains.
+# Schema: any contract addresses you'd find in a registry chain's addresses.yaml
+# (e.g. mailbox, quotedCalls, validatorAnnounce, ...)
+# Full set of valid keys: https://github.com/hyperlane-xyz/hyperlane-registry/blob/main/chains/ethereum/addresses.yaml
+# (or the ChainAddresses type from @hyperlane-xyz/registry)
+#
+# Note: schema validation runs at app init — a typo here will throw and
+# block the whole warp context init, not just balance fetching.
+---
+# Example using local anvil chain:
+# anvil1:
+#   mailbox: '0x610178dA211FEF7D417bC0e6FeD39F05609AD788'
+#   quotedCalls: '0x9A9f2CCfdE556A7E9Ff0848998Aa4a0CFD8863AE'
+# anvil2:
+#   mailbox: '0x610178dA211FEF7D417bC0e6FeD39F05609AD788'
+#   quotedCalls: '0x9A9f2CCfdE556A7E9Ff0848998Aa4a0CFD8863AE'

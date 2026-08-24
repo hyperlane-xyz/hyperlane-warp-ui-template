@@ -21,6 +21,7 @@ import { useMultiProvider } from '../../chains/hooks';
 import { isBridgeOnlyRoute } from '../../routeSecurity/validateWarpRoute';
 import { useStore } from '../../store';
 import { submitToRelayApi } from '../relayApi';
+import type { ApprovalPlan } from './approval';
 import { postCommitment } from './ccs';
 import { labelTransferMessages, type ParsedTransferMessage } from './messages';
 import { prepareRouteTransaction } from './routeTransactions';
@@ -47,6 +48,8 @@ interface ExecuteArgs {
   approvalAmount?: bigint;
   /** True when no approval is required. */
   isNative?: boolean;
+  /** Fresh plan shared with send-time fee validation. */
+  approvalPlan: ApprovalPlan | null;
 }
 
 // Single execution path covering EVM + Tron via the SDK's protocol-aware
@@ -121,10 +124,8 @@ export function useTransfer() {
           const adapter = new EvmTokenAdapter(srcChainName, multiProvider, {
             token: args.approvalToken ?? args.srcToken,
           });
-          const [needsApprove, needsRevoke] = await Promise.all([
-            adapter.isApproveRequired(args.sender, spender, args.approvalAmount.toString()),
-            adapter.isRevokeApprovalRequired(args.sender, spender),
-          ]);
+          if (!args.approvalPlan) throw new Error('Approval execution plan is missing');
+          const { needsApprove, needsRevoke } = args.approvalPlan;
           const doApprove = async (amount: bigint) => {
             updateTransferTransactionStatus(transactionId, TransferStatus.SigningApprove);
             const populated = await adapter.populateApproveTx({

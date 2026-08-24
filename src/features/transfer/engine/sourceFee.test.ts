@@ -3,7 +3,8 @@ import { ProtocolType } from '@hyperlane-xyz/utils';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import type { RouteResponse } from '../../api/types';
-import { estimateRouteSourceFee } from './sourceFee';
+import { estimateRouteSourceFee, withEstimatedSourceFee } from './sourceFee';
+import type { FeeBreakdown } from './types';
 
 const { prepareRouteTransactionMock } = vi.hoisted(() => ({
   prepareRouteTransactionMock: vi.fn(),
@@ -95,6 +96,7 @@ describe('estimateRouteSourceFee', () => {
       transaction,
       sender: 'sender',
       senderPubKey: 'abcd',
+      ignoreSenderBalance: true,
     });
   });
 
@@ -257,6 +259,29 @@ describe('estimateRouteSourceFee', () => {
         approvalTransactionCount: 0,
       }),
     ).rejects.toThrow('insufficient funds');
+  });
+});
+
+describe('withEstimatedSourceFee', () => {
+  test('replaces quoted local gas with the frontend estimate', () => {
+    const feeBreakdown: FeeBreakdown = {
+      components: [
+        { category: 'bridge', amount: 2n, chainId: 1, tokenAddress: '0xtoken' },
+        { category: 'localGas', amount: 3n, chainId: 1, tokenAddress: '0x0' },
+      ],
+      originGas: 200_000n,
+      destGas: 0n,
+    };
+
+    expect(withEstimatedSourceFee(feeBreakdown, 7n, 1).components).toEqual([
+      { category: 'bridge', amount: 2n, chainId: 1, tokenAddress: '0xtoken' },
+      {
+        category: 'localGas',
+        amount: 7n,
+        chainId: 1,
+        tokenAddress: '0x0000000000000000000000000000000000000000',
+      },
+    ]);
   });
 });
 

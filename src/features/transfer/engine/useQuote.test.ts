@@ -9,6 +9,7 @@ import {
   cacheMaxQuote,
   isMaxQuoteIntentCurrent,
   isMaxQuoteRequestReady,
+  isQuoteFreshAfterResolution,
   isQuoteRequestReady,
   isQuoteSettledForSecurity,
   quoteQueryKey,
@@ -75,7 +76,7 @@ describe('cacheMaxQuote', () => {
       routes: [],
       expiresAt: Math.floor(Date.now() / 1000) + 30,
     };
-    cacheMaxQuote(queryClient, params, response);
+    cacheMaxQuote(queryClient, params, response, {});
 
     const queryFn = vi.fn().mockResolvedValue({ routes: [], expiresAt: 0 });
     await expect(
@@ -84,7 +85,7 @@ describe('cacheMaxQuote', () => {
         queryFn,
         staleTime: Infinity,
       }),
-    ).resolves.toBe(response);
+    ).resolves.toEqual({ response, registryWarpRoutes: {} });
     expect(queryFn).not.toHaveBeenCalled();
   });
 });
@@ -115,15 +116,15 @@ describe('max quote intent', () => {
     expect(supportsMaxQuote(ProtocolType.Ethereum)).toBe(true);
   });
 
-  test('waits until max expiry before resuming normal quote refreshes', () => {
+  test('stops automatic refresh when max expires and requires recalculation', () => {
     expect(quoteRefetchIntervalMs(1_718_000_030, 1_718_000_000_000)).toBe(30_000);
-    expect(quoteRefetchIntervalMs(1_718_000_000, 1_718_000_030_000)).toBe(1);
+    expect(quoteRefetchIntervalMs(1_718_000_000, 1_718_000_030_000)).toBe(false);
     expect(quoteRefetchIntervalMs(undefined, 1_718_000_000_000)).toBe(25_000);
   });
 });
 
 describe('augmentRoute', () => {
-  test('includes a standard quote source transaction fee in the fee breakdown', () => {
+  test('includes an embedded max quote source fee in the fee breakdown', () => {
     const route = swapRoute();
     route.gas = { originGas: '100000', destGas: '0' };
     route.sourceTransactionFee = { amount: '10', gasUnits: '100000' };
@@ -144,6 +145,13 @@ describe('quoteExpiryDelayMs', () => {
 
   test('clamps expired quotes to immediate timeout', () => {
     expect(quoteExpiryDelayMs(1_718_000_000, 1_718_000_030_000)).toBe(0);
+  });
+});
+
+describe('isQuoteFreshAfterResolution', () => {
+  test('requires the quote expiry safety margin after metadata resolution', () => {
+    expect(isQuoteFreshAfterResolution(1_718_000_005, 1_718_000_000_000)).toBe(true);
+    expect(isQuoteFreshAfterResolution(1_718_000_005, 1_718_000_000_001)).toBe(false);
   });
 });
 

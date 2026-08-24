@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 
 import {
   ApprovalPhase,
+  getApprovalPlanTransactionCount,
   getApprovalTransactionCount,
   isApprovalReadyForValidation,
 } from './approval';
@@ -16,6 +17,15 @@ describe('getApprovalTransactionCount', () => {
     expect(getApprovalTransactionCount({ phase: ApprovalPhase.Checking })).toBe(0);
     expect(getApprovalTransactionCount({ phase: ApprovalPhase.Failed })).toBe(2);
     expect(getApprovalTransactionCount({ phase: ApprovalPhase.Ready })).toBe(0);
+  });
+});
+
+describe('getApprovalPlanTransactionCount', () => {
+  test('returns the exact transaction count for a fresh execution plan', () => {
+    expect(getApprovalPlanTransactionCount(null)).toBe(0);
+    expect(getApprovalPlanTransactionCount({ needsApprove: false, needsRevoke: true })).toBe(0);
+    expect(getApprovalPlanTransactionCount({ needsApprove: true, needsRevoke: false })).toBe(1);
+    expect(getApprovalPlanTransactionCount({ needsApprove: true, needsRevoke: true })).toBe(2);
   });
 });
 

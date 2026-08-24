@@ -6,6 +6,7 @@ import {
   useAccounts,
 } from '@hyperlane-xyz/widgets/walletIntegrations/multiProtocol';
 import { useAccount as useStarknetAccount, type UseAccountResult } from '@starknet-react/core';
+import { useQuery } from '@tanstack/react-query';
 import { Form, Formik, useFormikContext } from 'formik';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { formatUnits, type Address } from 'viem';
@@ -41,15 +42,18 @@ import { WalletConnectionWarning } from '../../wallet/WalletConnectionWarning';
 import { WalletDropdown } from '../../wallet/WalletDropdown';
 import {
   ApprovalPhase,
+  type ApprovalPlan,
+  getApprovalPlanTransactionCount,
   getApprovalTransactionCount,
   isApprovalReadyForValidation,
+  readApprovalPlan,
   useApprovalStatus,
 } from './approval';
 import { FeeSectionButton } from './FeeSectionButton';
 import { MaxButton } from './MaxButton';
 import { RouteSelectionModal } from './routeSelection/RouteSelectionModal';
 import { SlippagePanel } from './SlippagePanel';
-import { estimateRouteSourceFee } from './sourceFee';
+import { estimateRouteSourceFee, sourceFeeRouteKey, withEstimatedSourceFee } from './sourceFee';
 import { TokenBalance } from './TokenBalance';
 import {
   FinalTransferStatuses,
@@ -183,16 +187,64 @@ function TransferFormContent() {
   // Input USD — used by the fee % calculation in FeeSectionButton.
   const amountUsd = useTokenUsdValue(srcToken, values.amount);
 
-  const status = useApprovalStatus({
-    chainName: srcChainName,
-    token: approval?.token as Address | undefined,
-    owner: sender,
-    spender: approval?.spender as Address | undefined,
-    amount: approvalAmount,
-    isNative: !approval,
-  });
+  const approvalArgs = useMemo(
+    () => ({
+      chainName: srcChainName,
+      token: approval?.token as Address | undefined,
+      owner: sender,
+      spender: approval?.spender as Address | undefined,
+      amount: approvalAmount,
+      isNative: !approval,
+    }),
+    [approval, approvalAmount, sender, srcChainName],
+  );
+  const status = useApprovalStatus(approvalArgs);
   const approvalTransactionCount = getApprovalTransactionCount(status);
   const isApprovalReady = isApprovalReadyForValidation(status, !!approval);
+  const sourceFeeKey = bestRoute ? sourceFeeRouteKey(bestRoute.raw) : null;
+  const sourceFeeQuery = useQuery({
+    queryKey: [
+      'router',
+      'source-fee',
+      srcChainName ?? null,
+      sender ?? null,
+      sourceFeeKey,
+      approvalTransactionCount,
+    ],
+    queryFn: () => {
+      if (!bestRoute || !srcChainName || !sender) {
+        throw new Error('Source fee estimate is not ready');
+      }
+      return estimateRouteSourceFee({
+        multiProvider,
+        chainName: srcChainName,
+        sender,
+        senderPubKey,
+        route: bestRoute.raw,
+        approvalTransactionCount,
+      });
+    },
+    enabled: !!bestRoute && !!srcChainName && !!sender && isApprovalReady && !isReview,
+    staleTime: 10_000,
+    refetchInterval: 10_000,
+    retry: 1,
+  });
+  useToastError(sourceFeeQuery.error, 'Network fee estimate failed');
+  const displayedBestRoute = useMemo(
+    () =>
+      bestRoute
+        ? {
+            ...bestRoute,
+            feeBreakdown: withEstimatedSourceFee(
+              bestRoute.feeBreakdown,
+              sourceFeeQuery.data,
+              bestRoute.raw.steps[0]?.chain ?? values.srcChain ?? undefined,
+            ),
+          }
+        : undefined,
+    [bestRoute, sourceFeeQuery.data, values.srcChain],
+  );
+  const isSourceFeeReady = !bestRoute || !sourceFeeQuery.isPending;
 
   const transfer = useTransfer();
   useToastError(transfer.error, 'Transfer failed');
@@ -285,67 +337,73 @@ function TransferFormContent() {
     }
   }, [requestMaxQuote, setFieldValue, sourceTokenDecimals, srcToken]);
 
-  const validateCurrentForm = useCallback(async () => {
-    let sourceFee = 0n;
-    if (bestRoute && srcChainName && sender) {
-      try {
-        sourceFee = await estimateRouteSourceFee({
-          multiProvider,
-          chainName: srcChainName,
-          sender,
-          senderPubKey,
-          route: bestRoute.raw,
-          approvalTransactionCount,
-        });
-      } catch (err) {
-        logger.warn('Unable to estimate source transaction fee', err as Error);
-        return {
-          form: 'Could not estimate the network fee for this transfer. Please try again.',
-        };
+  const validateCurrentForm = useCallback(
+    async (
+      approvalCount = approvalTransactionCount,
+      prefetchedSourceFee: bigint | undefined = undefined,
+    ) => {
+      let sourceFee = prefetchedSourceFee ?? 0n;
+      if (prefetchedSourceFee == null && bestRoute && srcChainName && sender) {
+        try {
+          sourceFee = await estimateRouteSourceFee({
+            multiProvider,
+            chainName: srcChainName,
+            sender,
+            senderPubKey,
+            route: bestRoute.raw,
+            approvalTransactionCount: approvalCount,
+          });
+        } catch (err) {
+          logger.warn('Unable to estimate source transaction fee', err as Error);
+          return {
+            form: 'Could not estimate the network fee for this transfer. Please try again.',
+          };
+        }
       }
-    }
 
-    const nativeExecutionFee = await estimateStarknetExecutionFee({
-      route: bestRoute,
-      srcProtocol: srcChainInfo?.protocol,
-      account: starknetAccount,
-    });
-    return validateTransferForm({
-      values,
+      const nativeExecutionFee = await estimateStarknetExecutionFee({
+        route: bestRoute,
+        srcProtocol: srcChainInfo?.protocol,
+        account: starknetAccount,
+      });
+      return validateTransferForm({
+        values,
+        bestRoute,
+        srcToken,
+        dstToken,
+        sender,
+        effectiveRecipient,
+        chains: chainsResp?.chains,
+        multiProvider,
+        quoteExpiresAt: quote?.expiresAt,
+        sourceFee,
+        nativeExecutionFee,
+      });
+    },
+    [
+      approvalTransactionCount,
       bestRoute,
-      srcToken,
+      chainsResp?.chains,
       dstToken,
-      sender,
       effectiveRecipient,
-      chains: chainsResp?.chains,
       multiProvider,
-      quoteExpiresAt: quote?.expiresAt,
-      sourceFee,
-      nativeExecutionFee,
-    });
-  }, [
-    approvalTransactionCount,
-    bestRoute,
-    chainsResp?.chains,
-    dstToken,
-    effectiveRecipient,
-    multiProvider,
-    quote?.expiresAt,
-    sender,
-    senderPubKey,
-    srcChainInfo?.protocol,
-    srcChainName,
-    srcToken,
-    starknetAccount,
-    values,
-  ]);
+      quote?.expiresAt,
+      sender,
+      senderPubKey,
+      srcChainInfo?.protocol,
+      srcChainName,
+      srcToken,
+      starknetAccount,
+      values,
+    ],
+  );
 
   const onContinue = useCallback(async () => {
-    if (isAmountDebouncing || !isApprovalReady) return;
+    if (isAmountDebouncing || !isApprovalReady || !isSourceFeeReady) return;
     const snapshot = values;
     setIsValidating(true);
     try {
-      const result = await validateCurrentForm();
+      const result = await validateCurrentForm(approvalTransactionCount, sourceFeeQuery.data);
       // Discard the result if the user edited the form while we were
       // validating — otherwise we'd enter review mode on stale data.
       if (latestValuesRef.current !== snapshot) return;
@@ -394,6 +452,9 @@ function TransferFormContent() {
     multiProvider,
     isAmountDebouncing,
     isApprovalReady,
+    isSourceFeeReady,
+    approvalTransactionCount,
+    sourceFeeQuery.data,
     validateCurrentForm,
     dstChainName,
     openConfirmationModal,
@@ -458,7 +519,30 @@ function TransferFormContent() {
     // this check we'd happily submit it. Same call as Continue plus the
     // current quote.expiresAt so the staleness check fires.
     const snapshot = values;
-    const validationResult = await validateCurrentForm();
+    let executionApprovalPlan: ApprovalPlan | null;
+    try {
+      executionApprovalPlan = await readApprovalPlan(approvalArgs, multiProvider);
+    } catch (err) {
+      logger.warn('Unable to verify token approval before transfer', err as Error);
+      const validationResult = {
+        form: 'Could not verify token approval. Please try again.',
+      };
+      trackTransferValidationFailed({
+        errors: validationResult,
+        values,
+        srcToken,
+        dstToken,
+        sender,
+        recipient: effectiveRecipient,
+      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setErrors(validationResult as any);
+      setIsReview(false);
+      return;
+    }
+    const validationResult = await validateCurrentForm(
+      getApprovalPlanTransactionCount(executionApprovalPlan),
+    );
     // Same race as onContinue — if the form changed mid-validation,
     // discard the result. In practice the inputs are disabled in review
     // mode, but the wallet dropdown can still change the recipient.
@@ -549,6 +633,7 @@ function TransferFormContent() {
         spender: approval?.spender as Address | undefined,
         approvalAmount,
         isNative: !approval,
+        approvalPlan: executionApprovalPlan,
       });
     } catch {
       // Read latest Zustand state after execute's async failure handling.
@@ -575,6 +660,8 @@ function TransferFormContent() {
     values,
     effectiveRecipient,
     validateCurrentForm,
+    approvalArgs,
+    multiProvider,
     approval,
     approvalAmount,
     transfer,
@@ -667,8 +754,8 @@ function TransferFormContent() {
       {!isReview && (
         <div className="mt-2 flex items-center justify-between gap-3 px-1">
           <FeeSectionButton
-            feeBreakdown={bestRoute?.feeBreakdown}
-            isLoading={quoteLoading}
+            feeBreakdown={displayedBestRoute?.feeBreakdown}
+            isLoading={quoteLoading || (!!bestRoute && sourceFeeQuery.isPending)}
             inputUsd={amountUsd}
           />
           <div className="flex items-center gap-2">
@@ -703,7 +790,7 @@ function TransferFormContent() {
 
       <ReviewDetails
         isReview={isReview}
-        bestRoute={bestRoute}
+        bestRoute={displayedBestRoute}
         srcToken={srcToken}
         dstToken={dstToken}
         approvalStatus={status.phase}
@@ -733,7 +820,7 @@ function TransferFormContent() {
         hasRoute={!!bestRoute}
         isRouteDataUnavailable={isRouteDataUnavailable}
         isAmountDebouncing={isAmountDebouncing}
-        isApprovalReady={isApprovalReady}
+        isApprovalReady={isApprovalReady && isSourceFeeReady}
         isQuoteSettled={isQuoteSettled}
         isValidating={isValidating}
         onSendTransactions={onSendTransactions}

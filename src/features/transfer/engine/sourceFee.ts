@@ -4,9 +4,40 @@ import { type HexString, isEVMLike, ProtocolType } from '@hyperlane-xyz/utils';
 import { getRouteTxs } from '../../api/routeTx';
 import type { RouteResponse } from '../../api/types';
 import { prepareRouteTransaction } from './routeTransactions';
+import type { FeeBreakdown } from './types';
 
 const EVM_LIKE_MIN_ROUTE_GAS_UNITS = 600_000n;
 const EVM_LIKE_APPROVAL_GAS_UNITS = 55_000n;
+const NATIVE_ADDRESS = '0x0000000000000000000000000000000000000000';
+
+export function sourceFeeRouteKey(route: RouteResponse): string {
+  return JSON.stringify([
+    route.tx ?? null,
+    route.txs ?? null,
+    route.gas.originGas,
+    route.sourceTransactionFee ?? null,
+  ]);
+}
+
+export function withEstimatedSourceFee(
+  feeBreakdown: FeeBreakdown,
+  sourceFee: bigint | undefined,
+  sourceChain: number | undefined,
+): FeeBreakdown {
+  if (sourceFee == null || sourceChain == null) return feeBreakdown;
+  const components = feeBreakdown.components.filter(
+    (component) => component.category !== 'localGas',
+  );
+  if (sourceFee > 0n) {
+    components.push({
+      category: 'localGas',
+      amount: sourceFee,
+      chainId: sourceChain,
+      tokenAddress: NATIVE_ADDRESS,
+    });
+  }
+  return { ...feeBreakdown, components };
+}
 
 export async function estimateRouteSourceFee({
   multiProvider,
@@ -68,6 +99,9 @@ export async function estimateRouteSourceFee({
         transaction,
         sender,
         senderPubKey: publicKey,
+        // Fee estimation must succeed even when validation is about to prove
+        // that the sender cannot afford the transaction.
+        ignoreSenderBalance: true,
       }),
     ),
   );

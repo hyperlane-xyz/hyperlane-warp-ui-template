@@ -3,6 +3,7 @@ import { describe, expect, test } from 'vitest';
 import type { RouteResponse } from '../../api/types';
 import type { TransferFormValues } from './types';
 import {
+  isQuoteFreshAfterResolution,
   isQuoteRequestReady,
   isQuoteSettledForSecurity,
   quoteExpiryDelayMs,
@@ -51,6 +52,13 @@ describe('quoteExpiryDelayMs', () => {
 
   test('clamps expired quotes to immediate timeout', () => {
     expect(quoteExpiryDelayMs(1_718_000_000, 1_718_000_030_000)).toBe(0);
+  });
+});
+
+describe('isQuoteFreshAfterResolution', () => {
+  test('requires the quote expiry safety margin after metadata resolution', () => {
+    expect(isQuoteFreshAfterResolution(1_718_000_005, 1_718_000_000_000)).toBe(true);
+    expect(isQuoteFreshAfterResolution(1_718_000_005, 1_718_000_000_001)).toBe(false);
   });
 });
 

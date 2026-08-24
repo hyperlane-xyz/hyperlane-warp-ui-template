@@ -7,7 +7,7 @@ export function createConfiguredRegistry(config: {
   registryProxyUrl?: string;
 }): IRegistry {
   if (!config.registryUrl && !config.registryBranch) return new PartialRegistry({});
-  if (config.registryUrl && !config.registryUrl.toLowerCase().includes('github')) {
+  if (config.registryUrl && !isGithubRepositoryUrl(config.registryUrl)) {
     return new HttpClientRegistry(config.registryUrl);
   }
   return new GithubRegistry({
@@ -15,4 +15,17 @@ export function createConfiguredRegistry(config: {
     branch: config.registryBranch,
     proxyUrl: config.registryProxyUrl,
   });
+}
+
+function isGithubRepositoryUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    if (url.hostname.toLowerCase() !== 'github.com') return false;
+
+    const segments = url.pathname.split('/').filter(Boolean);
+    if (segments.length === 2) return true;
+    return segments.length >= 4 && segments[2] === 'tree';
+  } catch {
+    return false;
+  }
 }

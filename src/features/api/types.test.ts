@@ -14,7 +14,7 @@ describe('QuoteResponseSchema', () => {
             message: 'Insufficient destination liquidity for this amount',
             srcChain: 8453,
             dstChain: 1399811149,
-            srcToken: '0x2079997E72ffE2B4E455D94Cd88b5Eca0D9155e4',
+            srcToken: '0x2079997e72ffe2b4e455d94cd88b5eca0d9155e4',
             dstToken: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
             amount: '1000000',
             warpRouteId: 'USDCFEE/sol',

@@ -7,8 +7,10 @@ import {
 } from '@hyperlane-xyz/sdk';
 
 import type { ChainDiscovery, QuoteBridgeStep, RouteApproval, RouteResponse } from '../api/types';
+import { isTrustedWrappedNativeAddress } from '../tokens/wrappedNative';
 import {
   getRegistryWarpRoute,
+  isVaultCollateralWarpStandard,
   type RegistryWarpRoute,
   type RegistryWarpRouteMap,
   type RegistryWarpRouteToken,
@@ -97,6 +99,10 @@ export function validateWarpRoute(
           : nextStep?.type === 'swap'
             ? nextStep.tokenIn
             : undefined,
+      allowWrappedSource:
+        route.executionKind === 'universalRouter' && previousStep?.type === 'swap',
+      allowWrappedDestination:
+        route.executionKind === 'universalRouter' && nextStep?.type === 'swap',
       validateApproval: isBridgeOnly,
     });
     if (!validation.valid) return validation;
@@ -112,6 +118,8 @@ function validateBridgeStep(
   options: {
     sourceToken: string | undefined;
     destinationToken: string | undefined;
+    allowWrappedSource: boolean;
+    allowWrappedDestination: boolean;
     validateApproval: boolean;
   },
 ): WarpRouteValidationResult {
@@ -150,20 +158,30 @@ function validateBridgeStep(
     registryRoute,
     destinationChainName,
     options.destinationToken,
+    step.destChain,
+    options.allowWrappedDestination,
   );
   if (!origin || !destination) {
     return { valid: false, reason: 'Warp route endpoint missing from registry', warpRouteId };
   }
+  if (hasUnresolvedVaultCollateral(origin) || hasUnresolvedVaultCollateral(destination)) {
+    return { valid: false, reason: 'Vault collateral token unavailable', warpRouteId };
+  }
 
   if (
     options.sourceToken &&
-    !sameTokenAddress(options.sourceToken, expectedDiscoveryToken(origin))
+    !matchesDiscoveryToken(options.sourceToken, origin, step.chain, options.allowWrappedSource)
   ) {
     return { valid: false, reason: 'Source token does not match registry route', warpRouteId };
   }
   if (
     options.destinationToken &&
-    !sameTokenAddress(options.destinationToken, expectedDiscoveryToken(destination))
+    !matchesDiscoveryToken(
+      options.destinationToken,
+      destination,
+      step.destChain,
+      options.allowWrappedDestination,
+    )
   ) {
     return { valid: false, reason: 'Destination token does not match registry route', warpRouteId };
   }
@@ -183,6 +201,9 @@ function validateBridgeStep(
   }
 
   const spendToken = expectedSpendToken(origin);
+  if (!spendToken) {
+    return { valid: false, reason: 'Vault collateral token unavailable', warpRouteId };
+  }
   if (!sameTokenAddress(step.asset, spendToken)) {
     return {
       valid: false,
@@ -237,23 +258,47 @@ function destinationTokenForContext(
   route: RegistryWarpRoute,
   chainName: string,
   dstToken: string | undefined,
+  chainId: number,
+  allowWrappedNative: boolean,
 ): RegistryWarpRouteToken | undefined {
   const candidates = tokensForChain(route, chainName);
   if (candidates.length <= 1) return candidates[0];
   if (!dstToken) return undefined;
-  return candidates.find((token) => sameTokenAddress(dstToken, expectedDiscoveryToken(token)));
+  return candidates.find((token) =>
+    matchesDiscoveryToken(dstToken, token, chainId, allowWrappedNative),
+  );
 }
 
-function expectedSpendToken(token: RegistryWarpRouteToken): string {
+function matchesDiscoveryToken(
+  address: string,
+  token: RegistryWarpRouteToken,
+  chainId: number,
+  allowWrappedNative: boolean,
+): boolean {
+  const expectedToken = expectedDiscoveryToken(token);
+  if (expectedToken && sameTokenAddress(address, expectedToken)) return true;
+  return (
+    allowWrappedNative &&
+    isNativeWarpStandard(token.standard) &&
+    isTrustedWrappedNativeAddress(chainId, address)
+  );
+}
+
+function expectedSpendToken(token: RegistryWarpRouteToken): string | undefined {
   if (usesAddressOrDenomAsSpendToken(token.standard)) return token.addressOrDenom;
   if (PROTOCOL_NATIVE_COLLATERAL_STANDARDS.has(token.standard)) return ENGINE_NATIVE_TOKEN_SENTINEL;
+  if (isVaultCollateralWarpStandard(token.standard)) return token.underlyingAddressOrDenom;
   return token.collateralAddressOrDenom ?? token.addressOrDenom;
 }
 
-function expectedDiscoveryToken(token: RegistryWarpRouteToken): string {
+function expectedDiscoveryToken(token: RegistryWarpRouteToken): string | undefined {
   return isNativeWarpStandard(token.standard)
     ? ENGINE_NATIVE_TOKEN_SENTINEL
     : expectedSpendToken(token);
+}
+
+function hasUnresolvedVaultCollateral(token: RegistryWarpRouteToken): boolean {
+  return isVaultCollateralWarpStandard(token.standard) && !token.underlyingAddressOrDenom;
 }
 
 function isNativeWarpStandard(standard: string): boolean {

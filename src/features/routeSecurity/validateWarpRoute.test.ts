@@ -8,6 +8,8 @@ import { validateWarpRoute } from './validateWarpRoute';
 const NATIVE = '0x0000000000000000000000000000000000000000';
 const ROUTER = '0x1111111111111111111111111111111111111111';
 const COLLATERAL = '0x2222222222222222222222222222222222222222';
+const VAULT = '0xbeef047a543e45807105e51a8bbefcc5950fcfba';
+const UNDERLYING = '0xdac17f958d2ee523a2206206994597c13d831ec7';
 const BAD = '0x3333333333333333333333333333333333333333';
 const DST_ROUTER = '0x4444444444444444444444444444444444444444';
 const DST_COLLATERAL = '0x4545454545454545454545454545454545454545';
@@ -104,6 +106,51 @@ describe('validateWarpRoute', () => {
 
     expect(validateWarpRoute(route, context(collateralRoutes(), COLLATERAL, DST_ROUTER))).toEqual({
       valid: true,
+    });
+  });
+
+  test('accepts vault collateral routes using the resolved underlying token', () => {
+    const route = bridgeRoute({
+      asset: UNDERLYING,
+      router: ROUTER,
+      approval: { token: UNDERLYING, spender: ROUTER, amount: '1', kind: 'erc20' },
+      warpRouteId: 'USDT/ethereum-igra',
+    });
+
+    expect(
+      validateWarpRoute(route, context(vaultCollateralRoutes(), UNDERLYING, DST_ROUTER)),
+    ).toEqual({ valid: true });
+  });
+
+  test('rejects vault collateral routes when the underlying token was not resolved', () => {
+    const route = bridgeRoute({
+      asset: UNDERLYING,
+      router: ROUTER,
+      approval: null,
+      warpRouteId: 'USDT/ethereum-igra',
+    });
+    const routes = vaultCollateralRoutes();
+    delete routes['usdt/ethereum-igra'].tokens[0].underlyingAddressOrDenom;
+
+    expect(validateWarpRoute(route, context(routes, UNDERLYING, DST_ROUTER))).toMatchObject({
+      valid: false,
+      reason: 'Vault collateral token unavailable',
+    });
+  });
+
+  test('rejects vault collateral routes that expose the vault as the bridge asset', () => {
+    const route = bridgeRoute({
+      asset: VAULT,
+      router: ROUTER,
+      approval: null,
+      warpRouteId: 'USDT/ethereum-igra',
+    });
+
+    expect(
+      validateWarpRoute(route, context(vaultCollateralRoutes(), UNDERLYING, DST_ROUTER)),
+    ).toMatchObject({
+      valid: false,
+      reason: 'Bridge asset does not match registry route token',
     });
   });
 
@@ -556,6 +603,24 @@ function collateralRoutes(): RegistryWarpRouteMap {
           addressOrDenom: ROUTER,
           collateralAddressOrDenom: COLLATERAL,
           standard: 'EvmHypCollateral',
+        },
+        { chainName: 'base', addressOrDenom: DST_ROUTER, standard: 'EvmHypSynthetic' },
+      ],
+    },
+  };
+}
+
+function vaultCollateralRoutes(): RegistryWarpRouteMap {
+  return {
+    'usdt/ethereum-igra': {
+      id: 'USDT/ethereum-igra',
+      tokens: [
+        {
+          chainName: 'ethereum',
+          addressOrDenom: ROUTER,
+          collateralAddressOrDenom: VAULT,
+          underlyingAddressOrDenom: UNDERLYING,
+          standard: 'EvmHypOwnerCollateral',
         },
         { chainName: 'base', addressOrDenom: DST_ROUTER, standard: 'EvmHypSynthetic' },
       ],

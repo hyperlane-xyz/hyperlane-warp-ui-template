@@ -972,7 +972,13 @@ function wrappedNativeBridgeRoute(): RouteResponse {
         amountOut: '80',
         bridgeSymbol: 'ETH',
         warpRouteId: 'ETH/test',
-        fee: { tokenFee: '0', igpToken: NATIVE, igpAmount: '10', localNativeFee: '0' },
+        fee: {
+          tokenFee: '0',
+          igpToken: NATIVE,
+          igpAmount: '10',
+          igpIncludedInAmountIn: true,
+          localNativeFee: '0',
+        },
       },
       {
         type: 'swap',

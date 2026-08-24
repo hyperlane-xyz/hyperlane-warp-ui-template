@@ -10,6 +10,13 @@ describe('createConfiguredRegistry', () => {
     );
   });
 
+  test('removes trailing slashes from an HTTP registry URL', () => {
+    const registry = createConfiguredRegistry({ registryUrl: 'http://localhost:3334///' });
+
+    expect(registry).toBeInstanceOf(HttpClientRegistry);
+    expect(registry).toMatchObject({ uri: 'http://localhost:3334' });
+  });
+
   test('uses a GitHub registry for a supported repository URL', () => {
     expect(
       createConfiguredRegistry({

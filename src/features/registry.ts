@@ -7,11 +7,12 @@ export function createConfiguredRegistry(config: {
   registryProxyUrl?: string;
 }): IRegistry {
   if (!config.registryUrl && !config.registryBranch) return new PartialRegistry({});
-  if (config.registryUrl && !isGithubRepositoryUrl(config.registryUrl)) {
-    return new HttpClientRegistry(config.registryUrl);
+  const registryUrl = config.registryUrl?.replace(/\/+$/, '');
+  if (registryUrl && !isGithubRepositoryUrl(registryUrl)) {
+    return new HttpClientRegistry(registryUrl);
   }
   return new GithubRegistry({
-    uri: config.registryUrl,
+    uri: registryUrl,
     branch: config.registryBranch,
     proxyUrl: config.registryProxyUrl,
   });

@@ -179,7 +179,7 @@ export const QuoteBridgeStepSchema = z.object({
     tokenFee: BigIntString,
     igpToken: TokenAddress,
     igpAmount: BigIntString,
-    igpIncludedInAmountIn: z.boolean(),
+    igpIncludedInAmountIn: z.boolean().default(false),
     localNativeFee: BigIntString,
   }),
 });

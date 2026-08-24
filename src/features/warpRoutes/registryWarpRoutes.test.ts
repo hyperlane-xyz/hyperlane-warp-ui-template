@@ -8,10 +8,12 @@ import {
   loadRegistryWarpRoutes,
 } from './registryWarpRoutes';
 
-const ROUTER = '0x1111111111111111111111111111111111111111';
+const ROUTER = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd';
+const QUOTED_ROUTER = '0xABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCD';
 const UNTRUSTED_ROUTER = '0x9999999999999999999999999999999999999999';
 const VAULT = '0xbeef047a543e45807105e51a8bbefcc5950fcfba';
 const UNDERLYING = '0xdac17f958d2ee523a2206206994597c13d831ec7';
+const MIXED_CASE_UNDERLYING = '0xdAC17F958D2ee523a2206206994597C13D831ec7';
 
 vi.mock('../../utils/logger', () => ({ logger: { warn: vi.fn() } }));
 
@@ -125,13 +127,14 @@ describe('resolveQuotedVaultCollateralTokens', () => {
       .spyOn(EvmHypOwnerCollateralAdapter.prototype, 'getWrappedTokenAddress')
       .mockImplementation(function (this: EvmHypOwnerCollateralAdapter) {
         expect(this.addresses.token).toBe(ROUTER);
-        return Promise.resolve(UNDERLYING);
+        return Promise.resolve(MIXED_CASE_UNDERLYING);
       });
     const resolve = createQuotedVaultCollateralTokenResolver();
 
-    await resolve(vaultRoutes(), [quotedRoute()], multiProvider());
+    const routes = await resolve(vaultRoutes(), [quotedRoute()], multiProvider());
 
     expect(getWrappedTokenAddress).toHaveBeenCalledTimes(1);
+    expect(routes['usdt/ethereum-igra'].tokens[0].underlyingAddressOrDenom).toBe(UNDERLYING);
   });
 
   test('caches successful resolutions across quotes', async () => {
@@ -147,21 +150,65 @@ describe('resolveQuotedVaultCollateralTokens', () => {
     expect(getWrappedTokenAddress).toHaveBeenCalledTimes(1);
   });
 
-  test('retries on a later quote after resolution fails', async () => {
+  test('backs off after failure before retrying on a later quote', async () => {
+    let now = 1_000;
     const getWrappedTokenAddress = vi
       .spyOn(EvmHypOwnerCollateralAdapter.prototype, 'getWrappedTokenAddress')
       .mockRejectedValueOnce(new Error('RPC unavailable'))
       .mockRejectedValueOnce(new Error('RPC unavailable'))
       .mockRejectedValueOnce(new Error('RPC unavailable'))
       .mockResolvedValue(UNDERLYING);
-    const resolve = createQuotedVaultCollateralTokenResolver();
+    const resolve = createQuotedVaultCollateralTokenResolver({
+      now: () => now,
+      failureBackoffMs: 100,
+    });
 
     const failed = await resolve(vaultRoutes(), [quotedRoute()], multiProvider());
+    const backedOff = await resolve(vaultRoutes(), [quotedRoute()], multiProvider());
+    now += 101;
     const recovered = await resolve(vaultRoutes(), [quotedRoute()], multiProvider());
 
     expect(failed['usdt/ethereum-igra'].tokens[0].underlyingAddressOrDenom).toBeUndefined();
+    expect(backedOff['usdt/ethereum-igra'].tokens[0].underlyingAddressOrDenom).toBeUndefined();
     expect(recovered['usdt/ethereum-igra'].tokens[0].underlyingAddressOrDenom).toBe(UNDERLYING);
     expect(getWrappedTokenAddress).toHaveBeenCalledTimes(4);
+  });
+
+  test('bounds a stalled underlying token resolution', async () => {
+    const getWrappedTokenAddress = vi
+      .spyOn(EvmHypOwnerCollateralAdapter.prototype, 'getWrappedTokenAddress')
+      .mockImplementation(() => new Promise(() => {}));
+    const resolve = createQuotedVaultCollateralTokenResolver({ resolutionTimeoutMs: 1 });
+
+    const routes = await resolve(vaultRoutes(), [quotedRoute()], multiProvider());
+
+    expect(routes['usdt/ethereum-igra'].tokens[0].underlyingAddressOrDenom).toBeUndefined();
+    expect(getWrappedTokenAddress).toHaveBeenCalledTimes(3);
+  });
+
+  test('lets one quote abort without cancelling a shared resolution', async () => {
+    let release!: (value: string) => void;
+    const resolution = new Promise<string>((resolve) => {
+      release = resolve;
+    });
+    const getWrappedTokenAddress = vi
+      .spyOn(EvmHypOwnerCollateralAdapter.prototype, 'getWrappedTokenAddress')
+      .mockReturnValue(resolution);
+    const resolve = createQuotedVaultCollateralTokenResolver();
+    const controller = new AbortController();
+
+    const aborted = resolve(vaultRoutes(), [quotedRoute()], multiProvider(), controller.signal);
+    const shared = resolve(vaultRoutes(), [quotedRoute()], multiProvider());
+    controller.abort(new Error('quote changed'));
+
+    await expect(aborted).rejects.toThrow('quote changed');
+    release(MIXED_CASE_UNDERLYING);
+    await expect(shared).resolves.toMatchObject({
+      'usdt/ethereum-igra': {
+        tokens: [{ underlyingAddressOrDenom: UNDERLYING }],
+      },
+    });
+    expect(getWrappedTokenAddress).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -199,7 +246,7 @@ function multiProvider(): MultiProtocolProvider {
 }
 
 function quotedRoute({
-  router = ROUTER,
+  router = QUOTED_ROUTER,
   warpRouteId = 'USDT/ethereum-igra',
 }: {
   router?: string;

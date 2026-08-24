@@ -34,6 +34,8 @@ function randomBytes32(): Hex {
 
 // 30s engine TTL — refresh 5s before to avoid expired-mid-sign races.
 const REFRESH_MS = 25_000;
+const QUOTE_RESOLUTION_SAFETY_MS = 5_000;
+const QUOTE_RESOLUTION_ATTEMPTS = 2;
 
 interface UseQuoteArgs {
   values: TransferFormValues;
@@ -121,28 +123,30 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
       values.slippageBps,
     ],
     queryFn: async ({ signal }) => {
-      const response = await routerClient.quote(
-        {
-          srcChain: values.srcChain!,
-          dstChain: values.dstChain!,
-          srcToken: values.srcToken,
-          dstToken: values.dstToken,
-          amount: amountAtomic!,
-          sender: engineSender!,
-          recipient: engineRecipient,
-          slippageBps: values.slippageBps,
-          commitmentSalt,
-        },
-        { signal },
-      );
-      return {
-        response,
-        registryWarpRoutes: await resolveQuotedVaultCollateralTokens(
+      const request = {
+        srcChain: values.srcChain!,
+        dstChain: values.dstChain!,
+        srcToken: values.srcToken,
+        dstToken: values.dstToken,
+        amount: amountAtomic!,
+        sender: engineSender!,
+        recipient: engineRecipient,
+        slippageBps: values.slippageBps,
+        commitmentSalt,
+      };
+      for (let attempt = 0; attempt < QUOTE_RESOLUTION_ATTEMPTS; attempt++) {
+        const response = await routerClient.quote(request, { signal });
+        const resolvedRegistryWarpRoutes = await resolveQuotedVaultCollateralTokens(
           registryWarpRoutes,
           response.routes,
           multiProvider,
-        ),
-      };
+          signal,
+        );
+        if (isQuoteFreshAfterResolution(response.expiresAt, Date.now())) {
+          return { response, registryWarpRoutes: resolvedRegistryWarpRoutes };
+        }
+      }
+      throw new Error('Quote expired while resolving vault collateral token metadata');
     },
     enabled: enabled && amountAtomic != null && amountAtomic > 0n,
     refetchInterval: REFRESH_MS,
@@ -248,6 +252,10 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
     isQuoteSettled,
     isRouteDataUnavailable,
   };
+}
+
+export function isQuoteFreshAfterResolution(expiresAt: number, nowMs: number): boolean {
+  return quoteExpiryDelayMs(expiresAt, nowMs) >= QUOTE_RESOLUTION_SAFETY_MS;
 }
 
 export function quoteExpiryDelayMs(expiresAt: number, nowMs: number): number {

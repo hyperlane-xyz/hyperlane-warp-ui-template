@@ -130,6 +130,7 @@ function TransferFormContent() {
       : undefined;
   const srcToken = getTokenByKeyFromMap(tokenMap, srcTokenKey);
   const dstToken = getTokenByKeyFromMap(tokenMap, dstTokenKey);
+  const { data: srcBalance } = useTokenBalance(srcToken, sender);
 
   const [isReview, setIsReview] = useState(false);
   const {
@@ -323,6 +324,12 @@ function TransferFormContent() {
 
   const onMax = useCallback(async () => {
     if (!srcToken || sourceTokenDecimals == null) return;
+    if (!srcToken.isNative) {
+      // TODO: Re-enable /quote/max for ERC-20 origins when network fees can be paid in the source token.
+      if (srcBalance == null) return;
+      await setFieldValue('amount', formatUnits(srcBalance, sourceTokenDecimals), false);
+      return;
+    }
     const requestKey = latestMaxRequestKeyRef.current;
     try {
       const response = await requestMaxQuote();
@@ -335,7 +342,7 @@ function TransferFormContent() {
     } catch {
       // useToastError renders the mutation error.
     }
-  }, [requestMaxQuote, setFieldValue, sourceTokenDecimals, srcToken]);
+  }, [requestMaxQuote, setFieldValue, sourceTokenDecimals, srcBalance, srcToken]);
 
   const validateCurrentForm = useCallback(
     async (
@@ -727,11 +734,15 @@ function TransferFormContent() {
           isReview={isReview}
           srcChainName={srcChainName}
           srcToken={srcToken}
-          sender={sender}
+          balance={srcBalance}
           onMax={onMax}
-          isMaxLoading={isMaxQuoteLoading}
-          isMaxDisabled={!canRequestMaxQuote || !srcToken || sourceTokenDecimals == null}
-          maxUnavailableReason={maxQuoteUnavailableReason}
+          isMaxLoading={!!srcToken?.isNative && isMaxQuoteLoading}
+          isMaxDisabled={
+            !srcToken ||
+            sourceTokenDecimals == null ||
+            (srcToken.isNative ? !canRequestMaxQuote : srcBalance == null)
+          }
+          maxUnavailableReason={srcToken?.isNative ? maxQuoteUnavailableReason : undefined}
           hasSelectedDestinationTokenRef={hasSelectedDestinationTokenRef}
         />
       </TransferSection>
@@ -971,7 +982,7 @@ function OriginTokenCard({
   isReview,
   srcChainName,
   srcToken,
-  sender,
+  balance,
   onMax,
   isMaxLoading,
   isMaxDisabled,
@@ -981,7 +992,7 @@ function OriginTokenCard({
   isReview: boolean;
   srcChainName: string | undefined;
   srcToken: UiToken | undefined;
-  sender: string | undefined;
+  balance: bigint | null | undefined;
   onMax: () => Promise<void>;
   isMaxLoading: boolean;
   isMaxDisabled: boolean;
@@ -989,7 +1000,6 @@ function OriginTokenCard({
   hasSelectedDestinationTokenRef: React.MutableRefObject<boolean>;
 }) {
   const { values } = useFormikContext<TransferFormValues>();
-  const { data: balance } = useTokenBalance(srcToken, sender);
   const amountUsd = useTokenUsdValue(srcToken, values.amount);
 
   return (

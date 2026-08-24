@@ -29,22 +29,24 @@ const HYP_NATIVE_STANDARDS = new Set([
 const ADDRESS_OR_DENOM_SPEND_STANDARDS = new Set([
   TokenStandard.EvmHypSynthetic,
   TokenStandard.EvmHypSyntheticRebase,
-  TokenStandard.EvmHypXERC20,
-  TokenStandard.EvmHypXERC20Lockbox,
-  TokenStandard.EvmHypVSXERC20,
-  TokenStandard.EvmHypVSXERC20Lockbox,
   TokenStandard.TronHypSynthetic,
   TokenStandard.TronHypSyntheticRebase,
-  TokenStandard.TronHypXERC20,
-  TokenStandard.TronHypXERC20Lockbox,
-  TokenStandard.TronHypVSXERC20,
-  TokenStandard.TronHypVSXERC20Lockbox,
   TokenStandard.SealevelHypSynthetic,
   TokenStandard.CwHypSynthetic,
   TokenStandard.CosmNativeHypSynthetic, // SDK key is abbreviated; enum value is "CosmosNativeHypSynthetic".
   TokenStandard.StarknetHypSynthetic,
   TokenStandard.RadixHypSynthetic,
   TokenStandard.AleoHypSynthetic,
+]);
+const XERC20_SPEND_STANDARDS = new Set([
+  TokenStandard.EvmHypXERC20,
+  TokenStandard.EvmHypXERC20Lockbox,
+  TokenStandard.EvmHypVSXERC20,
+  TokenStandard.EvmHypVSXERC20Lockbox,
+  TokenStandard.TronHypXERC20,
+  TokenStandard.TronHypXERC20Lockbox,
+  TokenStandard.TronHypVSXERC20,
+  TokenStandard.TronHypVSXERC20Lockbox,
 ]);
 // PROTOCOL_TO_HYP_NATIVE_STANDARD maps some native protocols, such as
 // CosmosNative and Radix, to collateral-style standards. After removing true
@@ -286,6 +288,9 @@ function matchesDiscoveryToken(
 
 function expectedSpendToken(token: RegistryWarpRouteToken): string | undefined {
   if (usesAddressOrDenomAsSpendToken(token.standard)) return token.addressOrDenom;
+  if (XERC20_SPEND_STANDARDS.has(token.standard as TokenStandard)) {
+    return token.collateralAddressOrDenom;
+  }
   if (PROTOCOL_NATIVE_COLLATERAL_STANDARDS.has(token.standard)) return ENGINE_NATIVE_TOKEN_SENTINEL;
   if (isVaultCollateralWarpStandard(token.standard)) return token.underlyingAddressOrDenom;
   return token.collateralAddressOrDenom ?? token.addressOrDenom;

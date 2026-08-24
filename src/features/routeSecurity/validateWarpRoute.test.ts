@@ -170,19 +170,27 @@ describe('validateWarpRoute', () => {
     ).toEqual({ valid: true });
   });
 
-  test('accepts non-lockbox XERC20 routes using addressOrDenom for selected token identity', () => {
+  test('accepts non-lockbox XERC20 routes using collateralAddressOrDenom', () => {
     const route = bridgeRoute({
-      asset: OP_EZETH,
+      asset: EZETH_MAINNET_COLLATERAL,
       router: OP_EZETH,
-      approval: { token: OP_EZETH, spender: OP_EZETH, amount: '1', kind: 'erc20' },
+      approval: {
+        token: EZETH_MAINNET_COLLATERAL,
+        spender: OP_EZETH,
+        amount: '1',
+        kind: 'erc20',
+      },
       warpRouteId: 'EZETH/renzo-prod',
       chain: 10,
       destChain: 42161,
     });
 
-    expect(validateWarpRoute(route, context(xerc20Routes(), OP_EZETH, ARB_EZETH))).toEqual({
-      valid: true,
-    });
+    expect(
+      validateWarpRoute(
+        route,
+        context(xerc20Routes(), EZETH_MAINNET_COLLATERAL, EZETH_MAINNET_COLLATERAL),
+      ),
+    ).toEqual({ valid: true });
   });
 
   test.each([['EvmM0Portal'], ['EvmM0PortalLite']])(
@@ -204,7 +212,7 @@ describe('validateWarpRoute', () => {
     },
   );
 
-  test.each([['EvmHypSyntheticRebase'], ['EvmHypXERC20Lockbox'], ['EvmHypVSXERC20Lockbox']])(
+  test.each([['EvmHypSyntheticRebase']])(
     'accepts %s routes using addressOrDenom for spend token',
     (standard) => {
       const route = bridgeRoute({
@@ -219,6 +227,44 @@ describe('validateWarpRoute', () => {
       ).toEqual({ valid: true });
     },
   );
+
+  test.each([
+    ['EvmHypXERC20'],
+    ['EvmHypXERC20Lockbox'],
+    ['EvmHypVSXERC20'],
+    ['EvmHypVSXERC20Lockbox'],
+    ['TronHypXERC20'],
+    ['TronHypXERC20Lockbox'],
+    ['TronHypVSXERC20'],
+    ['TronHypVSXERC20Lockbox'],
+  ])('accepts %s routes using collateralAddressOrDenom for spend token', (standard) => {
+    const route = bridgeRoute({
+      asset: COLLATERAL,
+      router: ROUTER,
+      approval: { token: COLLATERAL, spender: ROUTER, amount: '1', kind: 'erc20' },
+      warpRouteId: `${standard}/test`,
+    });
+
+    expect(
+      validateWarpRoute(route, context(collateralLikeRoutes(standard), COLLATERAL, DST_COLLATERAL)),
+    ).toEqual({ valid: true });
+  });
+
+  test('rejects XERC20 routes without collateralAddressOrDenom', () => {
+    const route = bridgeRoute({
+      asset: ROUTER,
+      router: ROUTER,
+      approval: null,
+      warpRouteId: 'EvmHypXERC20/test',
+    });
+    const routes = collateralLikeRoutes('EvmHypXERC20');
+    delete routes['evmhypxerc20/test'].tokens[0].collateralAddressOrDenom;
+
+    expect(validateWarpRoute(route, context(routes, ROUTER, DST_COLLATERAL))).toMatchObject({
+      valid: false,
+      reason: 'Source token does not match registry route',
+    });
+  });
 
   test.each([
     ['SealevelHypSynthetic', 1399811149, 'solanamainnet', 'SolRouter111', 'SolMint111'],

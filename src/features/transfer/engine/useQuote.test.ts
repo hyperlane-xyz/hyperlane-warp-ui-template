@@ -123,7 +123,7 @@ describe('max quote intent', () => {
 });
 
 describe('augmentRoute', () => {
-  test('includes a max quote source transaction fee in the fee breakdown', () => {
+  test('includes a standard quote source transaction fee in the fee breakdown', () => {
     const route = swapRoute();
     route.gas = { originGas: '100000', destGas: '0' };
     route.sourceTransactionFee = { amount: '10', gasUnits: '100000' };

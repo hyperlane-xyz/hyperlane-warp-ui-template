@@ -292,7 +292,7 @@ export const RouteResponseSchema = z.object({
   txs: z.array(RouteTxSchema).optional(),
   approval: RouteApprovalSchema.nullable(),
   callCommitment: CallCommitmentSchema.optional(),
-  // Present on /quote/max routes; normal /quote routes estimate this in the UI.
+  // Engine-estimated origin-chain transaction fee for normal and max quotes.
   sourceTransactionFee: SourceTransactionFeeSchema.optional(),
 });
 export type RouteResponse = z.infer<typeof RouteResponseSchema>;

@@ -176,6 +176,7 @@ function TransferFormContent() {
   const setActiveTransferTransactionId = useStore((s) => s.setActiveTransferTransactionId);
   const updateTransferTransactionStatus = useStore((s) => s.updateTransferTransactionStatus);
   const setTransferLoading = useStore((s) => s.setTransferLoading);
+  const registryWarpRoutes = useStore((s) => s.registryWarpRoutes);
 
   // Send-button gating tracks the active execution, not the transaction selected
   // for history/modals. Viewing an old pending transfer should not disable the form.
@@ -258,6 +259,7 @@ function TransferFormContent() {
         approvalPending,
         quoteExpiresAt: quote?.expiresAt,
         nativeExecutionFee,
+        registryWarpRoutes,
       });
       // Discard the result if the user edited the form while we were
       // validating — otherwise we'd enter review mode on stale data.
@@ -312,6 +314,7 @@ function TransferFormContent() {
     srcChainInfo?.protocol,
     starknetAccount,
     dstChainName,
+    registryWarpRoutes,
     openConfirmationModal,
     setErrors,
   ]);
@@ -393,6 +396,7 @@ function TransferFormContent() {
       approvalPending,
       quoteExpiresAt: quote?.expiresAt,
       nativeExecutionFee,
+      registryWarpRoutes,
     });
     // Same race as onContinue — if the form changed mid-validation,
     // discard the result. In practice the inputs are disabled in review
@@ -524,6 +528,7 @@ function TransferFormContent() {
     setTransferLoading,
     setErrors,
     starknetAccount,
+    registryWarpRoutes,
   ]);
 
   // Validation runs on Continue, not on change. Clear stale errors when

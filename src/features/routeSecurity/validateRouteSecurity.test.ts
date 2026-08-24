@@ -17,6 +17,8 @@ const BAD = '0x5555555555555555555555555555555555555555';
 const PERMIT2 = '0x6666666666666666666666666666666666666666';
 const BRIDGE_ROUTER = '0x7777777777777777777777777777777777777777';
 const DST_ROUTER = '0x8888888888888888888888888888888888888888';
+const VAULT = '0xbeef047a543e45807105e51a8bbefcc5950fcfba';
+const UNDERLYING = '0xdac17f958d2ee523a2206206994597c13d831ec7';
 const ETH_WETH = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2';
 const BASE_WETH = '0x4200000000000000000000000000000000000006';
 const STARKNET_ROUTER = '0x074238dfa02063792077820584c925b679a013cbab38e5ca61af5627d1eda736';
@@ -556,6 +558,24 @@ describe('validateRouteSecurity', () => {
     expect(validateRouteSecurity(route, evmSdkWarpContext())).toEqual({ valid: true });
   });
 
+  test('accepts SDK vault routes using the resolved underlying token', () => {
+    const route = evmSdkWarpRoute({
+      approvalToken: UNDERLYING,
+      asset: UNDERLYING,
+      warpRouteId: 'USDT/ethereum-igra',
+    });
+
+    expect(
+      validateRouteSecurity(
+        route,
+        context({
+          registryWarpRoutes: evmSdkVaultWarpRoutes(),
+          srcToken: UNDERLYING,
+        }),
+      ),
+    ).toEqual({ valid: true });
+  });
+
   test('accepts SDK warp routes with revoke and approve txs before the transfer tx', () => {
     const route = evmSdkWarpRoute({ includeRevoke: true });
 
@@ -1030,15 +1050,17 @@ function evmSdkWarpRoute(
     approvalAmount?: string;
     approvalSpender?: string;
     approvalToken?: string;
+    asset?: string;
     includeRevoke?: boolean;
     omitTransfer?: boolean;
     trailingRevoke?: boolean;
     revokeAmount?: string;
     transferCount?: number;
     unsupportedCategory?: boolean;
+    warpRouteId?: string;
   } = {},
 ): RouteResponse {
-  const warpRouteId = 'TEST/sdk';
+  const warpRouteId = args.warpRouteId ?? 'TEST/sdk';
   const approvalTx = (category: 'approval' | 'revoke', amount: string) => ({
     protocol: ProtocolType.Ethereum,
     type: 'ethers-v5',
@@ -1082,7 +1104,7 @@ function evmSdkWarpRoute(
         type: 'bridge',
         chain: ETH,
         destChain: BASE,
-        asset: TOKEN,
+        asset: args.asset ?? TOKEN,
         router: BRIDGE_ROUTER,
         amountIn: '100',
         amountOut: '99',
@@ -1246,6 +1268,24 @@ function evmSdkWarpRoutes(): RegistryWarpRouteMap {
           addressOrDenom: BRIDGE_ROUTER,
           collateralAddressOrDenom: TOKEN,
           standard: 'EvmHypCollateral',
+        },
+        { chainName: 'base', addressOrDenom: DST_TOKEN, standard: 'EvmHypSynthetic' },
+      ],
+    },
+  };
+}
+
+function evmSdkVaultWarpRoutes(): RegistryWarpRouteMap {
+  return {
+    'usdt/ethereum-igra': {
+      id: 'USDT/ethereum-igra',
+      tokens: [
+        {
+          chainName: 'ethereum',
+          addressOrDenom: BRIDGE_ROUTER,
+          collateralAddressOrDenom: VAULT,
+          underlyingAddressOrDenom: UNDERLYING,
+          standard: 'EvmHypOwnerCollateral',
         },
         { chainName: 'base', addressOrDenom: DST_TOKEN, standard: 'EvmHypSynthetic' },
       ],

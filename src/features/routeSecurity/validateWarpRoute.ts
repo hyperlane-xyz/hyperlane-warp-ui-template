@@ -10,6 +10,7 @@ import type { ChainDiscovery, QuoteBridgeStep, RouteApproval, RouteResponse } fr
 import { isTrustedWrappedNativeAddress } from '../tokens/wrappedNative';
 import {
   getRegistryWarpRoute,
+  isVaultCollateralWarpStandard,
   type RegistryWarpRoute,
   type RegistryWarpRouteMap,
   type RegistryWarpRouteToken,
@@ -163,6 +164,9 @@ function validateBridgeStep(
   if (!origin || !destination) {
     return { valid: false, reason: 'Warp route endpoint missing from registry', warpRouteId };
   }
+  if (hasUnresolvedVaultCollateral(origin) || hasUnresolvedVaultCollateral(destination)) {
+    return { valid: false, reason: 'Vault collateral token unavailable', warpRouteId };
+  }
 
   if (
     options.sourceToken &&
@@ -197,6 +201,9 @@ function validateBridgeStep(
   }
 
   const spendToken = expectedSpendToken(origin);
+  if (!spendToken) {
+    return { valid: false, reason: 'Vault collateral token unavailable', warpRouteId };
+  }
   if (!sameTokenAddress(step.asset, spendToken)) {
     return {
       valid: false,
@@ -268,7 +275,8 @@ function matchesDiscoveryToken(
   chainId: number,
   allowWrappedNative: boolean,
 ): boolean {
-  if (sameTokenAddress(address, expectedDiscoveryToken(token))) return true;
+  const expectedToken = expectedDiscoveryToken(token);
+  if (expectedToken && sameTokenAddress(address, expectedToken)) return true;
   return (
     allowWrappedNative &&
     isNativeWarpStandard(token.standard) &&
@@ -276,16 +284,21 @@ function matchesDiscoveryToken(
   );
 }
 
-function expectedSpendToken(token: RegistryWarpRouteToken): string {
+function expectedSpendToken(token: RegistryWarpRouteToken): string | undefined {
   if (usesAddressOrDenomAsSpendToken(token.standard)) return token.addressOrDenom;
   if (PROTOCOL_NATIVE_COLLATERAL_STANDARDS.has(token.standard)) return ENGINE_NATIVE_TOKEN_SENTINEL;
+  if (isVaultCollateralWarpStandard(token.standard)) return token.underlyingAddressOrDenom;
   return token.collateralAddressOrDenom ?? token.addressOrDenom;
 }
 
-function expectedDiscoveryToken(token: RegistryWarpRouteToken): string {
+function expectedDiscoveryToken(token: RegistryWarpRouteToken): string | undefined {
   return isNativeWarpStandard(token.standard)
     ? ENGINE_NATIVE_TOKEN_SENTINEL
     : expectedSpendToken(token);
+}
+
+function hasUnresolvedVaultCollateral(token: RegistryWarpRouteToken): boolean {
+  return isVaultCollateralWarpStandard(token.standard) && !token.underlyingAddressOrDenom;
 }
 
 function isNativeWarpStandard(standard: string): boolean {

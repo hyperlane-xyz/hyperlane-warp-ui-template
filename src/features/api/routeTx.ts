@@ -4,6 +4,7 @@ export interface EvmRouteTx {
   to: string;
   data: string;
   value: string;
+  category?: string;
 }
 
 export function getRouteTxs(route: RouteResponse): RouteTx[] {
@@ -24,11 +25,11 @@ export function toEvmRouteTx(tx: RouteTx): EvmRouteTx | null {
 
   const { to, data, value } = tx.transaction;
   if (typeof to !== 'string' || typeof data !== 'string') return null;
-  if (value == null) return { to, data, value: '0' };
+  if (value == null) return { to, data, value: '0', category: tx.category };
   if (typeof value !== 'string' && typeof value !== 'number' && typeof value !== 'bigint') {
     return null;
   }
-  return { to, data, value: value.toString() };
+  return { to, data, value: value.toString(), category: tx.category };
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

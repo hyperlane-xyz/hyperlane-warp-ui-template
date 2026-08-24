@@ -131,59 +131,68 @@ describe('validateBalances', () => {
     expect(errors).toBeNull();
   });
 
-  test('estimates nested SDK EVM transaction gas during native balance preflight', async () => {
-    readBalanceMock.mockResolvedValueOnce(100_000_000n).mockResolvedValueOnce(9n);
-    estimateNativeGasCostMock.mockResolvedValueOnce(3n);
-    const route = routeWithNativeFee(7n, 1);
-    route.raw.connection = { symbol: 'USDT', warpRouteId: 'USDT/ethereum-igra' };
-    route.raw.txs = [
-      {
+  test.each([
+    ['approval then transfer', ['approval', 'transfer'], [undefined, true]],
+    [
+      'revoke, approval, then transfer',
+      ['revoke', 'approval', 'transfer'],
+      [undefined, true, true],
+    ],
+  ] as const)(
+    'budgets approval-dependent SDK gas for %s',
+    async (_name, categories, expectedApprovalPending) => {
+      readBalanceMock.mockResolvedValueOnce(100_000_000n).mockResolvedValueOnce(100n);
+      estimateNativeGasCostMock.mockResolvedValue(3n);
+      const route = routeWithNativeFee(7n, 1);
+      route.raw.connection = { symbol: 'USDT', warpRouteId: 'USDT/ethereum-igra' };
+      route.raw.txs = categories.map((category, index) => ({
         protocol: 'ethereum',
         type: 'ethers-v5',
-        category: 'transfer',
+        category,
         transaction: {
           to: '0x0000000000000000000000000000000000000001',
-          data: '0x1234',
-          value: '7',
+          data: `0x${index.toString().padStart(4, '0')}`,
+          value: category === 'transfer' ? '7' : '0',
         },
-      },
-    ];
+      }));
 
-    const errors = await validateBalances({
-      multiProvider: multiProvider(ProtocolType.Ethereum),
-      srcChainInfo: evmChain(),
-      srcToken: bonkToken({ chainId: 1, chainName: 'ethereum' }),
-      sender: '0xsender',
-      bestRoute: route,
-      amountAtomic: 10_000_000n,
-      registryWarpRoutes: {
-        'usdt/ethereum-igra': {
-          id: 'USDT/ethereum-igra',
-          tokens: [
-            {
-              chainName: 'ethereum',
-              addressOrDenom: '0x0000000000000000000000000000000000000001',
-              standard: 'EvmHypOwnerCollateral',
-            },
-          ],
+      const errors = await validateBalances({
+        multiProvider: multiProvider(ProtocolType.Ethereum),
+        srcChainInfo: evmChain(),
+        srcToken: bonkToken({ chainId: 1, chainName: 'ethereum' }),
+        sender: '0xsender',
+        bestRoute: route,
+        amountAtomic: 10_000_000n,
+        registryWarpRoutes: {
+          'usdt/ethereum-igra': {
+            id: 'USDT/ethereum-igra',
+            tokens: [
+              {
+                chainName: 'ethereum',
+                addressOrDenom: '0x0000000000000000000000000000000000000001',
+                standard: 'EvmHypOwnerCollateral',
+              },
+            ],
+          },
         },
-      },
-    });
+      });
 
-    expect(estimateNativeGasCostMock).toHaveBeenCalledWith(expect.anything(), {
-      chainName: 'ethereum',
-      sender: '0xsender',
-      tx: {
-        to: '0x0000000000000000000000000000000000000001',
-        data: '0x1234',
-        value: '7',
-      },
-      approvalPending: undefined,
-    });
-    expect(errors).toEqual({
-      amount: 'Insufficient ETH for transaction value and gas (need 0.000000000000000001 more ETH)',
-    });
-  });
+      expect(estimateNativeGasCostMock).toHaveBeenCalledTimes(categories.length);
+      expectedApprovalPending.forEach((pending, index) => {
+        expect(estimateNativeGasCostMock).toHaveBeenNthCalledWith(index + 1, expect.anything(), {
+          chainName: 'ethereum',
+          sender: '0xsender',
+          tx: {
+            to: '0x0000000000000000000000000000000000000001',
+            data: `0x${index.toString().padStart(4, '0')}`,
+            value: categories[index] === 'transfer' ? '7' : '0',
+          },
+          approvalPending: pending,
+        });
+      });
+      expect(errors).toBeNull();
+    },
+  );
 
   test('does not live-estimate nested SDK EVM transaction gas for non-vault routes', async () => {
     readBalanceMock.mockResolvedValueOnce(100_000_000n);

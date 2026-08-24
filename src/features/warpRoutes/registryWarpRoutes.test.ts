@@ -5,8 +5,8 @@ import { describe, expect, test, vi } from 'vitest';
 import { loadRegistryWarpRoutes, resolveRegistryVaultCollateralTokens } from './registryWarpRoutes';
 
 const ROUTER = '0x1111111111111111111111111111111111111111';
-const VAULT = '0xbEef047a543E45807105E51A8BBEFCc5950fcfBa';
-const UNDERLYING = '0xdAC17F958D2ee523a2206206994597C13D831ec7';
+const VAULT = '0xbeef047a543e45807105e51a8bbefcc5950fcfba';
+const UNDERLYING = '0xdac17f958d2ee523a2206206994597c13d831ec7';
 
 vi.mock('../../utils/logger', () => ({ logger: { warn: vi.fn() } }));
 
@@ -67,10 +67,11 @@ describe('loadRegistryWarpRoutes', () => {
 });
 
 describe('resolveRegistryVaultCollateralTokens', () => {
-  test('resolves the underlying token from a vault collateral router', async () => {
-    vi.spyOn(EvmHypOwnerCollateralAdapter.prototype, 'getWrappedTokenAddress').mockResolvedValue(
-      UNDERLYING,
-    );
+  test('retries transient failures when resolving the vault underlying token', async () => {
+    const getWrappedTokenAddress = vi
+      .spyOn(EvmHypOwnerCollateralAdapter.prototype, 'getWrappedTokenAddress')
+      .mockRejectedValueOnce(new Error('RPC unavailable'))
+      .mockResolvedValue(UNDERLYING);
     const multiProvider = {
       getEthersV5Provider: vi.fn(() => ({ _isProvider: true })),
     } as unknown as MultiProtocolProvider;
@@ -96,6 +97,7 @@ describe('resolveRegistryVaultCollateralTokens', () => {
       collateralAddressOrDenom: VAULT,
       underlyingAddressOrDenom: UNDERLYING,
     });
+    expect(getWrappedTokenAddress).toHaveBeenCalledTimes(2);
   });
 });
 

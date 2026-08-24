@@ -307,14 +307,17 @@ export async function validateBalances(args: {
       : [];
   const txValue = originTxs.reduce((sum, tx) => sum + BigInt(tx.value), 0n);
   const gasCosts = await Promise.all(
-    originTxs.map((tx) =>
-      estimateNativeGasCost(multiProvider, {
+    originTxs.map(({ category: _category, ...tx }, index) => {
+      const hasPriorApproval = originTxs
+        .slice(0, index)
+        .some((priorTx) => priorTx.category === 'approval' || priorTx.category === 'revoke');
+      return estimateNativeGasCost(multiProvider, {
         chainName: srcChainInfo.chainName,
         sender,
         tx,
-        approvalPending,
-      }),
-    ),
+        approvalPending: hasPriorApproval ? true : approvalPending,
+      });
+    }),
   );
   const gasCost = gasCosts.reduce((sum, cost) => sum + cost, 0n);
   const quotedNativeDebit = srcToken.isNative ? amountIn + sameTokenIgp : nativeFee;

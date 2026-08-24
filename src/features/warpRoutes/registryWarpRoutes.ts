@@ -5,6 +5,7 @@ import {
   type MultiProtocolProvider,
   type WarpCoreConfig,
 } from '@hyperlane-xyz/sdk';
+import { retryAsync } from '@hyperlane-xyz/utils';
 
 import { logger } from '../../utils/logger';
 
@@ -28,8 +29,7 @@ export type RegistryWarpRouteMap = Record<string, RegistryWarpRoute>;
 const VAULT_COLLATERAL_STANDARDS: ReadonlySet<string> = new Set([
   TokenStandard.EvmHypOwnerCollateral,
   TokenStandard.EvmHypRebaseCollateral,
-  TokenStandard.TronHypOwnerCollateral,
-  TokenStandard.TronHypRebaseCollateral,
+  // TODO: Support Tron vault standards with the SDK's Tron provider and address conversion.
 ]);
 
 export async function loadRegistryWarpRoutes(registry: IRegistry): Promise<RegistryWarpRouteMap> {
@@ -78,7 +78,10 @@ export async function resolveRegistryVaultCollateralTokens(
             const adapter = new EvmHypOwnerCollateralAdapter(token.chainName, multiProvider, {
               token: token.addressOrDenom,
             });
-            const underlyingAddressOrDenom = await adapter.getWrappedTokenAddress();
+            const underlyingAddressOrDenom = await retryAsync(
+              () => adapter.getWrappedTokenAddress(),
+              3,
+            );
             return { ...token, underlyingAddressOrDenom };
           } catch (error) {
             logger.warn(

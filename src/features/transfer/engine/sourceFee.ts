@@ -23,10 +23,16 @@ export async function estimateRouteSourceFee({
   route: RouteResponse;
   approvalTransactionCount: number;
 }): Promise<bigint> {
-  if (route.sourceTransactionFee) return BigInt(route.sourceTransactionFee.amount);
+  if (route.sourceTransactionFee && approvalTransactionCount === 0) {
+    return BigInt(route.sourceTransactionFee.amount);
+  }
 
   const protocol = multiProvider.tryGetProtocol(chainName);
   if (!protocol) throw new Error(`Unknown source protocol for ${chainName}`);
+
+  if (route.sourceTransactionFee && !isEVMLike(protocol)) {
+    return BigInt(route.sourceTransactionFee.amount);
+  }
 
   // Starknet requires its connected account for estimation and remains on the
   // existing account.estimateInvokeFee path in TransferForm.

@@ -8,6 +8,8 @@ import {
 import { retryAsync } from '@hyperlane-xyz/utils';
 
 import { logger } from '../../utils/logger';
+import type { QuoteBridgeStep, RouteResponse } from '../api/types';
+import { sameTokenAddress } from '../routeSecurity/utils';
 
 type WarpRouteToken = WarpCoreConfig['tokens'][number];
 
@@ -63,41 +65,74 @@ export function getRegistryWarpRoute(
   return routes[routeKey(routeId)];
 }
 
-export async function resolveRegistryVaultCollateralTokens(
-  routes: RegistryWarpRouteMap,
-  multiProvider: MultiProtocolProvider,
-): Promise<RegistryWarpRouteMap> {
-  const entries = await Promise.all(
-    Object.entries(routes).map(async ([key, route]) => {
-      const tokens = await Promise.all(
-        route.tokens.map(async (token) => {
-          if (!isVaultCollateralWarpStandard(token.standard)) return token;
+export function createQuotedVaultCollateralTokenResolver() {
+  const underlyingTokenCache = new Map<string, Promise<string>>();
 
-          try {
-            // Owner and rebase collateral routers share wrappedToken().
-            const adapter = new EvmHypOwnerCollateralAdapter(token.chainName, multiProvider, {
-              token: token.addressOrDenom,
-            });
-            const underlyingAddressOrDenom = await retryAsync(
-              () => adapter.getWrappedTokenAddress(),
-              3,
-            );
-            return { ...token, underlyingAddressOrDenom };
-          } catch (error) {
-            logger.warn(
-              `Failed to resolve vault collateral token for ${route.id} on ${token.chainName}`,
-              error,
-            );
-            return token;
-          }
-        }),
+  return async (
+    routes: RegistryWarpRouteMap,
+    quotedRoutes: RouteResponse[],
+    multiProvider: MultiProtocolProvider,
+  ): Promise<RegistryWarpRouteMap> => {
+    // Match the quoted bridge against the registry before any RPC. The API
+    // router is never used as the wrappedToken() call target.
+    const quotedVaultRoutes = new Map<string, RegistryWarpRoute>();
+    for (const quotedRoute of quotedRoutes) {
+      const bridge = quotedRoute.steps.find(
+        (step): step is QuoteBridgeStep => step.type === 'bridge',
       );
-      return [key, { ...route, tokens }] as const;
-    }),
-  );
+      const id = quotedRoute.connection?.warpRouteId ?? bridge?.warpRouteId;
+      if (!id || !bridge) continue;
 
-  return Object.fromEntries(entries);
+      const route = getRegistryWarpRoute(routes, id);
+      if (!route?.tokens.some((token) => isVaultCollateralWarpStandard(token.standard))) continue;
+
+      let originChainName: string;
+      try {
+        originChainName = multiProvider.getChainName(bridge.chain);
+      } catch {
+        continue;
+      }
+      const trustedOrigin = route.tokens.some(
+        (token) =>
+          token.chainName === originChainName &&
+          sameTokenAddress(token.addressOrDenom, bridge.router),
+      );
+      if (trustedOrigin) quotedVaultRoutes.set(routeKey(id), route);
+    }
+    if (!quotedVaultRoutes.size) return routes;
+
+    const resolvedEntries = await Promise.all(
+      Array.from(quotedVaultRoutes).map(async ([key, route]) => {
+        const tokens = await Promise.all(
+          route.tokens.map(async (token) => {
+            if (!isVaultCollateralWarpStandard(token.standard)) return token;
+            if (token.underlyingAddressOrDenom) return token;
+
+            try {
+              const underlyingAddressOrDenom = await resolveVaultUnderlyingToken(
+                token,
+                multiProvider,
+                underlyingTokenCache,
+              );
+              return { ...token, underlyingAddressOrDenom };
+            } catch (error) {
+              logger.warn(
+                `Failed to resolve vault collateral token for ${route.id} on ${token.chainName}`,
+                error,
+              );
+              return token;
+            }
+          }),
+        );
+        return [key, { ...route, tokens }] as const;
+      }),
+    );
+
+    return { ...routes, ...Object.fromEntries(resolvedEntries) };
+  };
 }
+
+export const resolveQuotedVaultCollateralTokens = createQuotedVaultCollateralTokenResolver();
 
 export function isVaultCollateralWarpStandard(standard: string): boolean {
   return VAULT_COLLATERAL_STANDARDS.has(standard);
@@ -115,6 +150,28 @@ function toRegistryWarpRouteToken(token: WarpRouteToken): RegistryWarpRouteToken
 
 function routeKey(routeId: string): string {
   return routeId.toLowerCase();
+}
+
+async function resolveVaultUnderlyingToken(
+  token: RegistryWarpRouteToken,
+  multiProvider: MultiProtocolProvider,
+  cache: Map<string, Promise<string>>,
+): Promise<string> {
+  const key = `${token.chainName.toLowerCase()}:${token.addressOrDenom.toLowerCase()}`;
+  const cached = cache.get(key);
+  if (cached) return cached;
+
+  // Owner and rebase collateral routers share wrappedToken(). Cache the
+  // in-flight promise so quote refreshes and concurrent quotes reuse it.
+  const adapter = new EvmHypOwnerCollateralAdapter(token.chainName, multiProvider, {
+    token: token.addressOrDenom,
+  });
+  const resolution = retryAsync(() => adapter.getWrappedTokenAddress(), 3).catch((error) => {
+    cache.delete(key);
+    throw error;
+  });
+  cache.set(key, resolution);
+  return resolution;
 }
 
 async function loadPublishedWarpRoutes(): Promise<RegistryWarpRouteMap> {

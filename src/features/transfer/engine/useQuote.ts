@@ -12,6 +12,10 @@ import { useStore } from '../../store';
 import { useTokens } from '../../tokens/hooks';
 import { tokenKey } from '../../tokens/utils';
 import { validateWrappedNativeMetadata } from '../../tokens/wrappedNative';
+import {
+  resolveQuotedVaultCollateralTokens,
+  type RegistryWarpRouteMap,
+} from '../../warpRoutes/registryWarpRoutes';
 import type {
   AugmentedQuote,
   AugmentedRoute,
@@ -39,11 +43,17 @@ interface UseQuoteArgs {
   pause?: boolean;
 }
 
+interface QuoteQueryData {
+  response: QuoteResponse;
+  registryWarpRoutes: RegistryWarpRouteMap;
+}
+
 export function useQuote({ values, sender, pause }: UseQuoteArgs) {
   const [now, setNow] = useState(() => Date.now());
   const chainMetadata = useStore((state) => state.chainMetadata);
   const chainAddresses = useStore((state) => state.chainAddresses);
   const registryWarpRoutes = useStore((state) => state.registryWarpRoutes);
+  const multiProvider = useStore((state) => state.multiProvider);
   const { data: chainsResp, isError: chainsError } = useChains();
 
   // Pass sender + recipient through as-is — engine handles per-protocol normalization.
@@ -97,7 +107,7 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
     [values.srcChain, values.dstChain, values.srcToken, values.dstToken],
   );
 
-  const query = useQuery<QuoteResponse>({
+  const query = useQuery<QuoteQueryData>({
     queryKey: [
       'router',
       'quote',
@@ -110,8 +120,8 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
       engineRecipient ?? null,
       values.slippageBps,
     ],
-    queryFn: ({ signal }) =>
-      routerClient.quote(
+    queryFn: async ({ signal }) => {
+      const response = await routerClient.quote(
         {
           srcChain: values.srcChain!,
           dstChain: values.dstChain!,
@@ -124,18 +134,29 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
           commitmentSalt,
         },
         { signal },
-      ),
+      );
+      return {
+        response,
+        registryWarpRoutes: await resolveQuotedVaultCollateralTokens(
+          registryWarpRoutes,
+          response.routes,
+          multiProvider,
+        ),
+      };
+    },
     enabled: enabled && amountAtomic != null && amountAtomic > 0n,
     refetchInterval: REFRESH_MS,
     staleTime: REFRESH_MS,
   });
 
   const hasChainAddresses = Object.keys(chainAddresses).length > 0;
+  const quoteResponse = query.data?.response;
+  const quotedRegistryWarpRoutes = query.data?.registryWarpRoutes ?? registryWarpRoutes;
   const augmented = useMemo<AugmentedQuote | undefined>(() => {
-    if (!query.data) return undefined;
+    if (!quoteResponse) return undefined;
     if (!chainsResp?.chains) return undefined;
     if (!hasChainAddresses) return undefined;
-    const routes = query.data.routes.filter((route) => {
+    const routes = quoteResponse.routes.filter((route) => {
       const wrappedNativeMetadataValidation = !srcWrappedNativeMetadata.valid
         ? srcWrappedNativeMetadata
         : !dstWrappedNativeMetadata.valid
@@ -162,7 +183,7 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
       const validation = validateRouteSecurity(route, {
         chainMetadata,
         chainAddresses,
-        registryWarpRoutes,
+        registryWarpRoutes: quotedRegistryWarpRoutes,
         chains: chainsResp.chains,
         srcChain: values.srcChain!,
         dstChain: values.dstChain!,
@@ -179,8 +200,8 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
       return false;
     });
     return {
-      raw: { ...query.data, routes },
-      expiresAt: query.data.expiresAt,
+      raw: { ...quoteResponse, routes },
+      expiresAt: quoteResponse.expiresAt,
       routes: routes.map(augmentRoute),
     };
   }, [
@@ -188,8 +209,8 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
     chainAddresses,
     chainsResp?.chains,
     hasChainAddresses,
-    query.data,
-    registryWarpRoutes,
+    quoteResponse,
+    quotedRegistryWarpRoutes,
     values.dstChain,
     values.dstToken,
     values.slippageBps,
@@ -221,6 +242,7 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
 
   return {
     ...query,
+    data: quoteResponse,
     quote: augmented,
     isExpired,
     isQuoteSettled,

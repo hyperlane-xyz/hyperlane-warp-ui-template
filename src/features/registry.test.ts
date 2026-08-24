@@ -35,9 +35,9 @@ describe('createConfiguredRegistry', () => {
   });
 
   test('uses an HTTP registry for a GitHub URL without a repository path', () => {
-    expect(createConfiguredRegistry({ registryUrl: 'https://github.com/hyperlane-xyz' })).toBeInstanceOf(
-      HttpClientRegistry,
-    );
+    expect(
+      createConfiguredRegistry({ registryUrl: 'https://github.com/hyperlane-xyz' }),
+    ).toBeInstanceOf(HttpClientRegistry);
   });
 
   test('uses the embedded partial registry without custom configuration', () => {

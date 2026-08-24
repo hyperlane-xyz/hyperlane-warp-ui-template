@@ -23,7 +23,11 @@ import {
   TransferStatus,
 } from './transfer/engine/types';
 import { initE2EStateIfEnabled, markE2ERuntimeReady } from './wallet/_e2e/windowState';
-import { loadRegistryWarpRoutes, type RegistryWarpRouteMap } from './warpRoutes/registryWarpRoutes';
+import {
+  loadRegistryWarpRoutes,
+  resolveRegistryVaultCollateralTokens,
+  type RegistryWarpRouteMap,
+} from './warpRoutes/registryWarpRoutes';
 
 // Increment this when persist state has breaking changes
 const PERSIST_STATE_VERSION = 6;
@@ -631,13 +635,17 @@ async function initAppContext({
     const chainNames = Array.from(
       new Set(engineChains.chains.map((chain) => chain.chainName as ChainName)),
     );
-    const [{ chainMetadata, chainMetadataWithOverrides }, chainAddresses, registryWarpRoutes] =
+    const [{ chainMetadata, chainMetadataWithOverrides }, chainAddresses, rawRegistryWarpRoutes] =
       await Promise.all([
         assembleChainMetadata(chainNames, currentRegistry, chainMetadataOverrides),
         assembleChainAddresses(chainNames, currentRegistry),
         loadRegistryWarpRoutes(currentRegistry),
       ]);
     const multiProvider = new MultiProtocolProvider(chainMetadataWithOverrides);
+    const registryWarpRoutes = await resolveRegistryVaultCollateralTokens(
+      rawRegistryWarpRoutes,
+      multiProvider,
+    );
 
     initE2EStateIfEnabled();
     markE2ERuntimeReady();

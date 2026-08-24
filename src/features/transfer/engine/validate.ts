@@ -10,13 +10,18 @@ import {
 import { parseUnits } from 'viem';
 
 import { logger } from '../../../utils/logger';
-import { getRouteTxs, isChainRouteTx } from '../../api/routeTx';
+import { getRouteTxs, isChainRouteTx, toEvmRouteTx } from '../../api/routeTx';
 import type { ChainDiscovery } from '../../api/types';
 import { estimateNativeGasCost, readBalance } from '../../balances/read';
 import { formatDisplayAmount } from '../../balances/utils';
 import { isChainDisabled } from '../../chains/utils';
 import type { UiToken } from '../../tokens/types';
 import { tokenKey } from '../../tokens/utils';
+import {
+  getRegistryWarpRoute,
+  isVaultCollateralWarpStandard,
+  type RegistryWarpRouteMap,
+} from '../../warpRoutes/registryWarpRoutes';
 import type { AugmentedRoute, FeeComponent, TransferFormValues } from './types';
 
 const NATIVE_ADDRESS = '0x0000000000000000000000000000000000000000';
@@ -41,6 +46,7 @@ export async function validateTransferForm(args: {
   approvalPending?: boolean;
   quoteExpiresAt?: number;
   nativeExecutionFee?: bigint;
+  registryWarpRoutes?: RegistryWarpRouteMap;
 }): Promise<TransferFormErrors | null> {
   const {
     values,
@@ -54,6 +60,7 @@ export async function validateTransferForm(args: {
     approvalPending,
     quoteExpiresAt,
     nativeExecutionFee,
+    registryWarpRoutes,
   } = args;
 
   const chainsResult = validateChains(values, chains, multiProvider);
@@ -92,6 +99,7 @@ export async function validateTransferForm(args: {
     amountAtomic,
     approvalPending,
     nativeExecutionFee,
+    registryWarpRoutes,
   });
 }
 
@@ -217,6 +225,7 @@ export async function validateBalances(args: {
   amountAtomic: bigint;
   approvalPending?: boolean;
   nativeExecutionFee?: bigint;
+  registryWarpRoutes?: RegistryWarpRouteMap;
 }): Promise<TransferFormErrors | null> {
   const {
     multiProvider,
@@ -227,6 +236,7 @@ export async function validateBalances(args: {
     amountAtomic,
     approvalPending,
     nativeExecutionFee = 0n,
+    registryWarpRoutes = {},
   } = args;
 
   const initialStep = bestRoute.raw.steps[0];
@@ -288,14 +298,25 @@ export async function validateBalances(args: {
     }
   }
 
-  const originTx = getRouteTxs(bestRoute.raw).find(isChainRouteTx) ?? null;
-  const txValue = originTx ? BigInt(originTx.value) : 0n;
-  const gasCost = await estimateNativeGasCost(multiProvider, {
-    chainName: srcChainInfo.chainName,
-    sender,
-    tx: originTx,
-    approvalPending,
-  });
+  const routeTxs = getRouteTxs(bestRoute.raw);
+  const directOriginTx = routeTxs.find(isChainRouteTx);
+  const originTxs = directOriginTx
+    ? [{ to: directOriginTx.to, data: directOriginTx.data, value: directOriginTx.value }]
+    : isVaultSdkRoute(bestRoute, srcChainInfo.chainName, registryWarpRoutes)
+      ? routeTxs.map(toEvmRouteTx).filter(isNotNull)
+      : [];
+  const txValue = originTxs.reduce((sum, tx) => sum + BigInt(tx.value), 0n);
+  const gasCosts = await Promise.all(
+    originTxs.map((tx) =>
+      estimateNativeGasCost(multiProvider, {
+        chainName: srcChainInfo.chainName,
+        sender,
+        tx,
+        approvalPending,
+      }),
+    ),
+  );
+  const gasCost = gasCosts.reduce((sum, cost) => sum + cost, 0n);
   const quotedNativeDebit = srcToken.isNative ? amountIn + sameTokenIgp : nativeFee;
   const nativeRequired = maxBigInt(txValue, quotedNativeDebit) + gasCost + nativeExecutionFee;
   if (nativeRequired > 0n) {
@@ -331,6 +352,25 @@ export async function validateBalances(args: {
 
 function maxBigInt(a: bigint, b: bigint): bigint {
   return a > b ? a : b;
+}
+
+function isNotNull<T>(value: T | null): value is T {
+  return value != null;
+}
+
+function isVaultSdkRoute(
+  route: AugmentedRoute,
+  originChainName: string,
+  registryWarpRoutes: RegistryWarpRouteMap,
+): boolean {
+  if (route.raw.executionKind !== 'sdkWarp') return false;
+  const routeId =
+    route.raw.connection?.warpRouteId ??
+    route.raw.steps.find((step) => step.type === 'bridge')?.warpRouteId;
+  if (!routeId) return false;
+  const registryRoute = getRegistryWarpRoute(registryWarpRoutes, routeId);
+  const origin = registryRoute?.tokens.find((token) => token.chainName === originChainName);
+  return !!origin && isVaultCollateralWarpStandard(origin.standard);
 }
 
 function formatInsufficientBalanceMessage({

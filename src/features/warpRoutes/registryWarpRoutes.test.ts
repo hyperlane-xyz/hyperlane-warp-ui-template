@@ -1,9 +1,12 @@
 import type { IRegistry } from '@hyperlane-xyz/registry';
+import { EvmHypOwnerCollateralAdapter, type MultiProtocolProvider } from '@hyperlane-xyz/sdk';
 import { describe, expect, test, vi } from 'vitest';
 
-import { loadRegistryWarpRoutes } from './registryWarpRoutes';
+import { loadRegistryWarpRoutes, resolveRegistryVaultCollateralTokens } from './registryWarpRoutes';
 
 const ROUTER = '0x1111111111111111111111111111111111111111';
+const VAULT = '0xbEef047a543E45807105E51A8BBEFCc5950fcfBa';
+const UNDERLYING = '0xdAC17F958D2ee523a2206206994597C13D831ec7';
 
 vi.mock('../../utils/logger', () => ({ logger: { warn: vi.fn() } }));
 
@@ -59,6 +62,39 @@ describe('loadRegistryWarpRoutes', () => {
     expect(routes['test/fallback']).toMatchObject({
       id: 'TEST/fallback',
       tokens: [{ chainName: 'ethereum', addressOrDenom: ROUTER }],
+    });
+  });
+});
+
+describe('resolveRegistryVaultCollateralTokens', () => {
+  test('resolves the underlying token from a vault collateral router', async () => {
+    vi.spyOn(EvmHypOwnerCollateralAdapter.prototype, 'getWrappedTokenAddress').mockResolvedValue(
+      UNDERLYING,
+    );
+    const multiProvider = {
+      getEthersV5Provider: vi.fn(() => ({ _isProvider: true })),
+    } as unknown as MultiProtocolProvider;
+
+    const routes = await resolveRegistryVaultCollateralTokens(
+      {
+        'usdt/ethereum-igra': {
+          id: 'USDT/ethereum-igra',
+          tokens: [
+            {
+              chainName: 'ethereum',
+              addressOrDenom: ROUTER,
+              collateralAddressOrDenom: VAULT,
+              standard: 'EvmHypOwnerCollateral',
+            },
+          ],
+        },
+      },
+      multiProvider,
+    );
+
+    expect(routes['usdt/ethereum-igra'].tokens[0]).toMatchObject({
+      collateralAddressOrDenom: VAULT,
+      underlyingAddressOrDenom: UNDERLYING,
     });
   });
 });

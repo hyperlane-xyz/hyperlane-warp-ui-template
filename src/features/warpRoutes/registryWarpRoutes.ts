@@ -1,5 +1,10 @@
 import type { IRegistry } from '@hyperlane-xyz/registry';
-import type { WarpCoreConfig } from '@hyperlane-xyz/sdk';
+import {
+  EvmHypOwnerCollateralAdapter,
+  TokenStandard,
+  type MultiProtocolProvider,
+  type WarpCoreConfig,
+} from '@hyperlane-xyz/sdk';
 
 import { logger } from '../../utils/logger';
 
@@ -9,6 +14,7 @@ export interface RegistryWarpRouteToken {
   chainName: string;
   addressOrDenom: string;
   collateralAddressOrDenom?: string;
+  underlyingAddressOrDenom?: string;
   standard: string;
 }
 
@@ -18,6 +24,13 @@ export interface RegistryWarpRoute {
 }
 
 export type RegistryWarpRouteMap = Record<string, RegistryWarpRoute>;
+
+const VAULT_COLLATERAL_STANDARDS: ReadonlySet<string> = new Set([
+  TokenStandard.EvmHypOwnerCollateral,
+  TokenStandard.EvmHypRebaseCollateral,
+  TokenStandard.TronHypOwnerCollateral,
+  TokenStandard.TronHypRebaseCollateral,
+]);
 
 export async function loadRegistryWarpRoutes(registry: IRegistry): Promise<RegistryWarpRouteMap> {
   try {
@@ -48,6 +61,43 @@ export function getRegistryWarpRoute(
   routeId: string,
 ): RegistryWarpRoute | undefined {
   return routes[routeKey(routeId)];
+}
+
+export async function resolveRegistryVaultCollateralTokens(
+  routes: RegistryWarpRouteMap,
+  multiProvider: MultiProtocolProvider,
+): Promise<RegistryWarpRouteMap> {
+  const entries = await Promise.all(
+    Object.entries(routes).map(async ([key, route]) => {
+      const tokens = await Promise.all(
+        route.tokens.map(async (token) => {
+          if (!isVaultCollateralWarpStandard(token.standard)) return token;
+
+          try {
+            // Owner and rebase collateral routers share wrappedToken().
+            const adapter = new EvmHypOwnerCollateralAdapter(token.chainName, multiProvider, {
+              token: token.addressOrDenom,
+            });
+            const underlyingAddressOrDenom = await adapter.getWrappedTokenAddress();
+            return { ...token, underlyingAddressOrDenom };
+          } catch (error) {
+            logger.warn(
+              `Failed to resolve vault collateral token for ${route.id} on ${token.chainName}`,
+              error,
+            );
+            return token;
+          }
+        }),
+      );
+      return [key, { ...route, tokens }] as const;
+    }),
+  );
+
+  return Object.fromEntries(entries);
+}
+
+export function isVaultCollateralWarpStandard(standard: string): boolean {
+  return VAULT_COLLATERAL_STANDARDS.has(standard);
 }
 
 function toRegistryWarpRouteToken(token: WarpRouteToken): RegistryWarpRouteToken | null {

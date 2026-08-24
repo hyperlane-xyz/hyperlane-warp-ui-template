@@ -131,6 +131,89 @@ describe('validateBalances', () => {
     expect(errors).toBeNull();
   });
 
+  test('estimates nested SDK EVM transaction gas during native balance preflight', async () => {
+    readBalanceMock.mockResolvedValueOnce(100_000_000n).mockResolvedValueOnce(9n);
+    estimateNativeGasCostMock.mockResolvedValueOnce(3n);
+    const route = routeWithNativeFee(7n, 1);
+    route.raw.connection = { symbol: 'USDT', warpRouteId: 'USDT/ethereum-igra' };
+    route.raw.txs = [
+      {
+        protocol: 'ethereum',
+        type: 'ethers-v5',
+        category: 'transfer',
+        transaction: {
+          to: '0x0000000000000000000000000000000000000001',
+          data: '0x1234',
+          value: '7',
+        },
+      },
+    ];
+
+    const errors = await validateBalances({
+      multiProvider: multiProvider(ProtocolType.Ethereum),
+      srcChainInfo: evmChain(),
+      srcToken: bonkToken({ chainId: 1, chainName: 'ethereum' }),
+      sender: '0xsender',
+      bestRoute: route,
+      amountAtomic: 10_000_000n,
+      registryWarpRoutes: {
+        'usdt/ethereum-igra': {
+          id: 'USDT/ethereum-igra',
+          tokens: [
+            {
+              chainName: 'ethereum',
+              addressOrDenom: '0x0000000000000000000000000000000000000001',
+              standard: 'EvmHypOwnerCollateral',
+            },
+          ],
+        },
+      },
+    });
+
+    expect(estimateNativeGasCostMock).toHaveBeenCalledWith(expect.anything(), {
+      chainName: 'ethereum',
+      sender: '0xsender',
+      tx: {
+        to: '0x0000000000000000000000000000000000000001',
+        data: '0x1234',
+        value: '7',
+      },
+      approvalPending: undefined,
+    });
+    expect(errors).toEqual({
+      amount: 'Insufficient ETH for transaction value and gas (need 0.000000000000000001 more ETH)',
+    });
+  });
+
+  test('does not live-estimate nested SDK EVM transaction gas for non-vault routes', async () => {
+    readBalanceMock.mockResolvedValueOnce(100_000_000n);
+    const route = routeWithNativeFee(0n, 1);
+    route.raw.txs = [
+      {
+        protocol: 'ethereum',
+        type: 'ethers-v5',
+        category: 'transfer',
+        transaction: {
+          to: '0x0000000000000000000000000000000000000001',
+          data: '0x1234',
+          value: '7',
+        },
+      },
+    ];
+
+    const errors = await validateBalances({
+      multiProvider: multiProvider(ProtocolType.Ethereum),
+      srcChainInfo: evmChain(),
+      srcToken: bonkToken({ chainId: 1, chainName: 'ethereum' }),
+      sender: '0xsender',
+      bestRoute: route,
+      amountAtomic: 10_000_000n,
+    });
+
+    expect(errors).toBeNull();
+    expect(estimateNativeGasCostMock).not.toHaveBeenCalled();
+  });
+
   test('does not double count native IGP fees for native source tokens', async () => {
     readBalanceMock.mockResolvedValueOnce(10_000_001n);
 

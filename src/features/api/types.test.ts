@@ -3,6 +3,28 @@ import { describe, expect, test } from 'vitest';
 import { AvailableRoutesResponseSchema, CallCommitmentSchema, QuoteResponseSchema } from './types';
 
 describe('QuoteResponseSchema', () => {
+  test('accepts structured route rejections', () => {
+    expect(() =>
+      QuoteResponseSchema.parse({
+        expiresAt: Math.floor(Date.now() / 1000) + 30,
+        routes: [],
+        rejections: [
+          {
+            code: 'insufficient_destination_collateral',
+            message: 'Insufficient destination liquidity for this amount',
+            srcChain: 8453,
+            dstChain: 1399811149,
+            srcToken: '0x2079997E72ffE2B4E455D94Cd88b5Eca0D9155e4',
+            dstToken: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+            amount: '1000000',
+            warpRouteId: 'USDCFEE/sol',
+            details: { availableCollateral: '900000', requiredCollateral: '1000000' },
+          },
+        ],
+      }),
+    ).not.toThrow();
+  });
+
   test('accepts engine bridge quote metadata', () => {
     expect(() =>
       QuoteResponseSchema.parse({
@@ -24,6 +46,7 @@ describe('QuoteResponseSchema', () => {
                   tokenFee: '1',
                   igpToken: '0x0000000000000000000000000000000000000000',
                   igpAmount: '2',
+                  igpIncludedInAmountIn: false,
                   localNativeFee: '3',
                 },
               },

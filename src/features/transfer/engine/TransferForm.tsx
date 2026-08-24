@@ -39,6 +39,7 @@ import { WalletDropdown } from '../../wallet/WalletDropdown';
 import { ApprovalPhase, useApprovalStatus } from './approval';
 import { FeeSectionButton } from './FeeSectionButton';
 import { MaxButton } from './MaxButton';
+import { emptyRouteMessageForRejections } from './rejections';
 import { RouteSelectionModal } from './routeSelection/RouteSelectionModal';
 import { SlippagePanel } from './SlippagePanel';
 import { TokenBalance } from './TokenBalance';
@@ -146,6 +147,8 @@ function TransferFormContent() {
   }, [values.srcChain, values.dstChain, values.srcToken, values.dstToken, debouncedAmount]);
 
   const routes = quote?.routes ?? [];
+  const emptyRouteMessage = emptyRouteMessageForRejections(quoteResponse?.rejections);
+  const hasRouteRejection = !!quoteResponse?.rejections?.length;
   const safeIndex = selectedRouteIndex < routes.length ? selectedRouteIndex : 0;
   const bestRoute = routes[safeIndex] ?? routes[0];
   const approval = bestRoute?.raw.approval ?? null;
@@ -206,6 +209,7 @@ function TransferFormContent() {
       !dstToken ||
       !quoteResponse ||
       quoteResponse.routes.length > 0 ||
+      hasRouteRejection ||
       !isQuoteSettled ||
       isRouteDataUnavailable
     ) {
@@ -222,6 +226,7 @@ function TransferFormContent() {
     isQuoteSettled,
     isRouteDataUnavailable,
     quoteResponse,
+    hasRouteRejection,
     srcToken,
     srcTokenKey,
   ]);
@@ -672,6 +677,7 @@ function TransferFormContent() {
         hasAmount={hasAmount}
         hasTokens={hasTokens}
         hasRoute={!!bestRoute}
+        emptyRouteMessage={emptyRouteMessage}
         isRouteDataUnavailable={isRouteDataUnavailable}
         isAmountDebouncing={isAmountDebouncing}
         isQuoteSettled={isQuoteSettled}
@@ -1135,7 +1141,12 @@ function ReviewTransactions({
           {route.feeBreakdown.components
             .filter((c) => c.amount > 0n)
             .map((c, i) => {
-              const label = c.category === 'bridge' ? 'Route Fee' : 'Interchain Gas';
+              const label =
+                c.category === 'bridge'
+                  ? 'Route Fee'
+                  : c.category === 'igp'
+                    ? 'Interchain Gas'
+                    : 'Network Fee';
               const isNative = /^0x0+$/i.test(c.tokenAddress);
               const componentChainName =
                 multiProvider.tryGetChainName(c.chainId) ?? `chain-${c.chainId}`;
@@ -1172,6 +1183,7 @@ function ButtonSection({
   hasAmount,
   hasTokens,
   hasRoute,
+  emptyRouteMessage,
   isRouteDataUnavailable,
   isAmountDebouncing,
   isQuoteSettled,
@@ -1189,6 +1201,7 @@ function ButtonSection({
   hasAmount: boolean;
   hasTokens: boolean;
   hasRoute: boolean;
+  emptyRouteMessage?: string;
   isRouteDataUnavailable: boolean;
   isAmountDebouncing: boolean;
   isQuoteSettled: boolean;
@@ -1233,7 +1246,7 @@ function ButtonSection({
     text = 'Route data unavailable';
     disabled = true;
   } else if (isQuoteSettled) {
-    text = 'Route is not supported';
+    text = emptyRouteMessage ?? 'Route is not supported';
     disabled = true;
   } else {
     text = 'Fetching quote…';

@@ -14,6 +14,7 @@ import { routerClient } from './api/RouterClient';
 import type { RouteResponse } from './api/types';
 import { assembleChainAddresses } from './chains/addresses';
 import { assembleChainMetadata } from './chains/metadata';
+import { createConfiguredRegistry } from './registry';
 import type { UiToken } from './tokens/types';
 import { getTokenKey as getTransferTokenKey } from './tokens/utils';
 import {
@@ -328,12 +329,7 @@ function createTransactionId(type: TransactionHistoryItem['type'], timestamp: nu
 type TransferTransactionUpdateOptions = Parameters<AppState['updateTransferTransactionStatus']>[2];
 
 function createInitialRegistry(): IRegistry {
-  if (!config.registryUrl && !config.registryBranch) return new PartialRegistry({});
-  return new GithubRegistry({
-    uri: config.registryUrl,
-    branch: config.registryBranch,
-    proxyUrl: config.registryProxyUrl,
-  });
+  return createConfiguredRegistry(config);
 }
 
 export async function migratePersistedAppState(persistedState: unknown) {

@@ -22,6 +22,7 @@ const bridgeStep: QuoteBridgeStep = {
     tokenFee: '0',
     igpToken: NATIVE_TOKEN,
     igpAmount: '7661056',
+    igpIncludedInAmountIn: false,
     localNativeFee: '0',
   },
 };

@@ -4,11 +4,32 @@ import {
   AvailableRoutesResponseSchema,
   CallCommitmentSchema,
   MaxQuoteResponseSchema,
-  QuoteBridgeStepSchema,
   QuoteResponseSchema,
 } from './types';
 
 describe('QuoteResponseSchema', () => {
+  test('accepts structured route rejections', () => {
+    expect(() =>
+      QuoteResponseSchema.parse({
+        expiresAt: Math.floor(Date.now() / 1000) + 30,
+        routes: [],
+        rejections: [
+          {
+            code: 'insufficient_destination_collateral',
+            message: 'Insufficient destination liquidity for this amount',
+            srcChain: 8453,
+            dstChain: 1399811149,
+            srcToken: '0x2079997e72ffe2b4e455d94cd88b5eca0d9155e4',
+            dstToken: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+            amount: '1000000',
+            warpRouteId: 'USDCFEE/sol',
+            details: { availableCollateral: '900000', requiredCollateral: '1000000' },
+          },
+        ],
+      }),
+    ).not.toThrow();
+  });
+
   test('accepts engine bridge quote metadata', () => {
     const parsed = QuoteResponseSchema.parse({
       expiresAt: Math.floor(Date.now() / 1000) + 30,
@@ -73,26 +94,6 @@ describe('QuoteResponseSchema', () => {
       gasUnits: '100000',
     });
   });
-
-  test('requires explicit IGP funding semantics', () => {
-    expect(
-      QuoteBridgeStepSchema.safeParse({
-        type: 'bridge',
-        chain: 1,
-        destChain: 8453,
-        asset: '0x1111111111111111111111111111111111111111',
-        router: '0x2222222222222222222222222222222222222222',
-        amountIn: '100',
-        amountOut: '99',
-        fee: {
-          tokenFee: '0',
-          igpToken: '0x0000000000000000000000000000000000000000',
-          igpAmount: '1',
-          localNativeFee: '0',
-        },
-      }).success,
-    ).toBe(false);
-  });
 });
 
 describe('MaxQuoteResponseSchema', () => {
@@ -132,6 +133,48 @@ describe('MaxQuoteResponseSchema', () => {
 
     expect(parsed.amount).toBe('900');
     expect(parsed.routes[0]?.sourceTransactionFee?.amount).toBe('10');
+  });
+
+  test('defaults legacy bridge quotes to separate IGP payment', () => {
+    const response = QuoteResponseSchema.parse({
+      expiresAt: Math.floor(Date.now() / 1000) + 30,
+      routes: [
+        {
+          steps: [
+            {
+              type: 'bridge',
+              chain: 1,
+              destChain: 8453,
+              asset: '0x1111111111111111111111111111111111111111',
+              router: '0x2222222222222222222222222222222222222222',
+              amountIn: '100',
+              amountOut: '99',
+              fee: {
+                tokenFee: '1',
+                igpToken: '0x0000000000000000000000000000000000000000',
+                igpAmount: '2',
+                localNativeFee: '3',
+              },
+            },
+          ],
+          output: '99',
+          outputMin: '99',
+          executionKind: 'warpDirect',
+          connection: null,
+          gas: { originGas: '100000', destGas: '0' },
+          tx: {
+            to: '0x3333333333333333333333333333333333333333',
+            data: '0x1234',
+            value: '2',
+          },
+          approval: null,
+        },
+      ],
+    });
+
+    const step = response.routes[0]?.steps[0];
+    expect(step?.type).toBe('bridge');
+    if (step?.type === 'bridge') expect(step.fee.igpIncludedInAmountIn).toBe(false);
   });
 });
 

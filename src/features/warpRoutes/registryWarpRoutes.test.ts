@@ -267,6 +267,7 @@ function quotedRoute({
           tokenFee: '0',
           igpToken: '0x0000000000000000000000000000000000000000',
           igpAmount: '0',
+          igpIncludedInAmountIn: false,
           localNativeFee: '0',
         },
         bridgeSymbol: 'USDT',

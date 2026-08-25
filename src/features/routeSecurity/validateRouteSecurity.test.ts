@@ -996,7 +996,7 @@ function wrappedNativeBridgeRoute(): RouteResponse {
           tokenFee: '0',
           igpToken: NATIVE,
           igpAmount: '10',
-          igpIncludedInAmountIn: true,
+          igpIncludedInAmountIn: false,
           localNativeFee: '0',
         },
       },

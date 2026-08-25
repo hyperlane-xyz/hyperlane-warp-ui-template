@@ -17,7 +17,7 @@ import { formatDisplayAmount } from '../../balances/utils';
 import { isChainDisabled } from '../../chains/utils';
 import type { UiToken } from '../../tokens/types';
 import { tokenKey } from '../../tokens/utils';
-import type { AugmentedRoute, TransferFormValues } from './types';
+import type { AugmentedRoute, FeeComponent, TransferFormValues } from './types';
 
 const NATIVE_ADDRESS = '0x0000000000000000000000000000000000000000';
 
@@ -233,10 +233,10 @@ export async function validateBalances(args: {
   const amountIn =
     initialStep && 'amountIn' in initialStep ? BigInt(initialStep.amountIn) : amountAtomic;
 
-  const igpByToken = aggregateExternalIgp(bestRoute.raw);
+  const feeDebitsByToken = aggregateWalletFeeDebits(bestRoute.feeBreakdown.components);
   const srcKey = balanceKey(srcToken.chainId, srcToken.address);
-  const sameTokenIgp = igpByToken.get(srcKey) ?? 0n;
-  const nativeFee = igpByToken.get(balanceKey(srcChainInfo.id, NATIVE_ADDRESS)) ?? 0n;
+  const sameTokenFee = feeDebitsByToken.get(srcKey) ?? 0n;
+  const nativeFee = feeDebitsByToken.get(balanceKey(srcChainInfo.id, NATIVE_ADDRESS)) ?? 0n;
 
   let srcBalance: bigint | null;
   try {
@@ -257,18 +257,18 @@ export async function validateBalances(args: {
     return null;
   }
 
-  if (srcBalance != null && amountIn + sameTokenIgp > srcBalance) {
+  if (srcBalance != null && amountIn + sameTokenFee > srcBalance) {
     return {
       amount: formatInsufficientBalanceMessage({
         base: `Insufficient ${srcToken.symbol} balance`,
-        deficit: amountIn + sameTokenIgp - srcBalance,
+        deficit: amountIn + sameTokenFee - srcBalance,
         decimals: srcToken.decimals,
         symbol: srcToken.symbol,
       }),
     };
   }
 
-  for (const [key, sum] of igpByToken) {
+  for (const [key, sum] of feeDebitsByToken) {
     if (key === srcKey) continue;
     const [chainIdStr, addr = ''] = key.split('-');
     if (isNativeAddress(addr)) continue;
@@ -290,7 +290,7 @@ export async function validateBalances(args: {
 
   const originTx = getRouteTxs(bestRoute.raw).find(isChainRouteTx) ?? null;
   const txValue = originTx ? BigInt(originTx.value) : 0n;
-  const quotedNativeDebit = srcToken.isNative ? amountIn + sameTokenIgp : nativeFee;
+  const quotedNativeDebit = srcToken.isNative ? amountIn + sameTokenFee : nativeFee;
   const nativeRequired = maxBigInt(txValue, quotedNativeDebit) + sourceFee + nativeExecutionFee;
   if (nativeRequired > 0n) {
     let nativeBalance: bigint | null = srcToken.isNative ? srcBalance : null;
@@ -341,27 +341,14 @@ function formatInsufficientBalanceMessage({
   return `${base} (need ${formatDisplayAmount(deficit, decimals)} more ${symbol})`;
 }
 
-function aggregateExternalIgp(route: AugmentedRoute['raw']): Map<string, bigint> {
+function aggregateWalletFeeDebits(components: FeeComponent[]): Map<string, bigint> {
   const map = new Map<string, bigint>();
-  for (const step of route.steps) {
-    if (step.type !== 'bridge') continue;
-
-    const igpAmount = BigInt(step.fee.igpAmount);
-    if (!step.fee.igpIncludedInAmountIn && igpAmount > 0n) {
-      addFee(map, step.chain, step.fee.igpToken, igpAmount);
-    }
-
-    const localNativeFee = BigInt(step.fee.localNativeFee);
-    if (localNativeFee > 0n) {
-      addFee(map, step.chain, NATIVE_ADDRESS, localNativeFee);
-    }
+  for (const c of components) {
+    if (c.category === 'bridge' || c.category === 'localGas' || c.includedInAmountIn) continue;
+    const k = balanceKey(c.chainId, c.tokenAddress);
+    map.set(k, (map.get(k) ?? 0n) + c.amount);
   }
   return map;
-}
-
-function addFee(map: Map<string, bigint>, chainId: number, address: string, amount: bigint): void {
-  const key = balanceKey(chainId, address);
-  map.set(key, (map.get(key) ?? 0n) + amount);
 }
 
 function balanceKey(chainId: number, address: string): string {

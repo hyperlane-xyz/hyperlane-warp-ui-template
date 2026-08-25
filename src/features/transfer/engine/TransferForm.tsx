@@ -51,6 +51,7 @@ import {
 } from './approval';
 import { FeeSectionButton } from './FeeSectionButton';
 import { MaxButton } from './MaxButton';
+import { emptyRouteMessageForRejections } from './rejections';
 import { RouteSelectionModal } from './routeSelection/RouteSelectionModal';
 import { SlippagePanel } from './SlippagePanel';
 import { estimateRouteSourceFee, sourceFeeRouteKey, withEstimatedSourceFee } from './sourceFee';
@@ -174,6 +175,8 @@ function TransferFormContent() {
   }, [values.srcChain, values.dstChain, values.srcToken, values.dstToken, debouncedAmount]);
 
   const routes = quote?.routes ?? [];
+  const emptyRouteMessage = emptyRouteMessageForRejections(quoteResponse?.rejections);
+  const hasRouteRejection = !!quoteResponse?.rejections?.length;
   const safeIndex = selectedRouteIndex < routes.length ? selectedRouteIndex : 0;
   const bestRoute = routes[safeIndex] ?? routes[0];
   const approval = bestRoute?.raw.approval ?? null;
@@ -283,6 +286,7 @@ function TransferFormContent() {
       !dstToken ||
       !quoteResponse ||
       quoteResponse.routes.length > 0 ||
+      hasRouteRejection ||
       !isQuoteSettled ||
       isRouteDataUnavailable
     ) {
@@ -299,6 +303,7 @@ function TransferFormContent() {
     isQuoteSettled,
     isRouteDataUnavailable,
     quoteResponse,
+    hasRouteRejection,
     srcToken,
     srcTokenKey,
   ]);
@@ -829,6 +834,7 @@ function TransferFormContent() {
         hasAmount={hasAmount}
         hasTokens={hasTokens}
         hasRoute={!!bestRoute}
+        emptyRouteMessage={emptyRouteMessage}
         isRouteDataUnavailable={isRouteDataUnavailable}
         isAmountDebouncing={isAmountDebouncing}
         isApprovalReady={isApprovalReady && isSourceFeeReady}
@@ -1345,6 +1351,7 @@ function ButtonSection({
   hasAmount,
   hasTokens,
   hasRoute,
+  emptyRouteMessage,
   isRouteDataUnavailable,
   isAmountDebouncing,
   isApprovalReady,
@@ -1363,6 +1370,7 @@ function ButtonSection({
   hasAmount: boolean;
   hasTokens: boolean;
   hasRoute: boolean;
+  emptyRouteMessage?: string;
   isRouteDataUnavailable: boolean;
   isAmountDebouncing: boolean;
   isApprovalReady: boolean;
@@ -1411,7 +1419,7 @@ function ButtonSection({
     text = 'Route data unavailable';
     disabled = true;
   } else if (isQuoteSettled) {
-    text = 'Route is not supported';
+    text = emptyRouteMessage ?? 'Route is not supported';
     disabled = true;
   } else {
     text = 'Fetching quote…';

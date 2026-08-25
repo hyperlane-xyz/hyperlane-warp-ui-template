@@ -180,23 +180,30 @@ describe('validateBalances', () => {
 
   test('adds the SDK source transaction fee for native source tokens', async () => {
     readBalanceMock.mockResolvedValueOnce(1_000n);
+    const bestRoute = bridgeRoute({
+      chainId: 1,
+      asset: NATIVE_ADDRESS,
+      amountIn: 990n,
+      amountOut: 990n,
+      tx: {
+        to: '0x0000000000000000000000000000000000000001',
+        data: '0x',
+        value: '990',
+      },
+    });
+    bestRoute.feeBreakdown.components.push({
+      category: 'localGas',
+      amount: 11n,
+      chainId: 1,
+      tokenAddress: NATIVE_ADDRESS,
+    });
 
     const errors = await validateBalances({
       multiProvider: multiProvider(ProtocolType.Ethereum),
       srcChainInfo: evmChain(),
       srcToken: evmNativeToken(),
       sender: '0xsender',
-      bestRoute: bridgeRoute({
-        chainId: 1,
-        asset: NATIVE_ADDRESS,
-        amountIn: 990n,
-        amountOut: 990n,
-        tx: {
-          to: '0x0000000000000000000000000000000000000001',
-          data: '0x',
-          value: '990',
-        },
-      }),
+      bestRoute,
       amountAtomic: 990n,
       sourceFee: 11n,
     });
@@ -299,6 +306,36 @@ describe('validateBalances', () => {
     expect(readBalanceMock).toHaveBeenCalledTimes(1);
   });
 
+  test('does not require an embedded same-token IGP fee in addition to amountIn', async () => {
+    readBalanceMock.mockResolvedValueOnce(10_000_000n);
+    const route = routeWithNativeFee(0n);
+    const bridge = route.raw.steps[0];
+    if (!bridge || bridge.type !== 'bridge') throw new Error('expected bridge step');
+    bridge.fee.igpToken = BONK_ADDRESS;
+    bridge.fee.igpAmount = '5';
+    bridge.fee.igpIncludedInAmountIn = true;
+    route.feeBreakdown.components = [
+      {
+        category: 'igp',
+        amount: 5n,
+        chainId: bridge.chain,
+        tokenAddress: BONK_ADDRESS,
+        includedInAmountIn: true,
+      },
+    ];
+
+    const errors = await validateBalances({
+      multiProvider: multiProvider(),
+      srcChainInfo: starknetChain(),
+      srcToken: bonkToken(),
+      sender: '0xsender',
+      bestRoute: route,
+      amountAtomic: 10_000_000n,
+    });
+
+    expect(errors).toBeNull();
+    expect(readBalanceMock).toHaveBeenCalledTimes(1);
+  });
   test('still requires separately funded ERC20 IGP from the wallet', async () => {
     const collateralAddress = '0x1111111111111111111111111111111111111111';
     const feeTokenAddress = '0x3333333333333333333333333333333333333333';
@@ -757,7 +794,18 @@ function bridgeRoute({
           amount: igpAmount,
           chainId,
           tokenAddress: igpToken,
+          includedInAmountIn: igpIncludedInAmountIn,
         },
+        ...(localNativeFee > 0n
+          ? [
+              {
+                category: 'network' as const,
+                amount: localNativeFee,
+                chainId,
+                tokenAddress: NATIVE_ADDRESS,
+              },
+            ]
+          : []),
       ],
       originGas: 200000n,
       destGas: 0n,

@@ -590,12 +590,13 @@ export function augmentRoute(raw: RouteResponse): AugmentedRoute {
         amount: igpAmount,
         chainId: step.chain,
         tokenAddress: step.fee.igpToken,
+        includedInAmountIn: step.fee.igpIncludedInAmountIn,
       });
     }
     const localNativeFee = BigInt(step.fee.localNativeFee);
     if (localNativeFee > 0n) {
       components.push({
-        category: 'igp',
+        category: 'network',
         amount: localNativeFee,
         chainId: step.chain,
         tokenAddress: '0x0000000000000000000000000000000000000000',

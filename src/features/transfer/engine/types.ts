@@ -96,10 +96,11 @@ export interface TransferFormValues {
 
 // A single fee component, attributable to a specific token. Engine emits
 // these per cross-chain step: the route fee (in the step's `asset`), IGP
-// (in `step.fee.igpToken`), and any origin network fee/rent in native tokens.
+// (in `step.fee.igpToken`), any origin network fee/rent in native tokens,
+// and the frontend's source transaction gas estimate.
 // Origin chain + token address let consumers resolve decimals and symbol.
 export interface FeeComponent {
-  category: 'bridge' | 'igp' | 'network';
+  category: 'bridge' | 'igp' | 'network' | 'localGas';
   amount: bigint;
   chainId: number;
   tokenAddress: string; // 0x0…0 for native (when igpToken === native)

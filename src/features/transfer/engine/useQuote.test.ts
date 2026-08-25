@@ -1,13 +1,21 @@
-import { describe, expect, test } from 'vitest';
+import { ProtocolType } from '@hyperlane-xyz/utils';
+import { QueryClient } from '@tanstack/react-query';
+import { describe, expect, test, vi } from 'vitest';
 
-import type { RouteResponse } from '../../api/types';
+import type { MaxQuoteResponse, RouteResponse } from '../../api/types';
 import type { TransferFormValues } from './types';
 import {
   augmentRoute,
+  cacheMaxQuote,
+  isMaxQuoteIntentCurrent,
+  isMaxQuoteRequestReady,
   isQuoteFreshAfterResolution,
   isQuoteRequestReady,
   isQuoteSettledForSecurity,
+  quoteQueryKey,
   quoteExpiryDelayMs,
+  quoteRefetchIntervalMs,
+  supportsMaxQuote,
   validateRouteAmounts,
 } from './useQuote';
 
@@ -43,6 +51,90 @@ describe('isQuoteRequestReady', () => {
     const empty = readyValues({ recipient: '' });
     expect(isQuoteRequestReady(empty, sender)).toBe(false);
     expect(isQuoteRequestReady({ ...empty, recipient: '0xRecipient' }, sender)).toBe(true);
+  });
+
+  test('allows max quote requests without an existing amount', () => {
+    expect(isMaxQuoteRequestReady(readyValues({ amount: '' }), sender)).toBe(true);
+    expect(isQuoteRequestReady(readyValues({ amount: '' }), sender)).toBe(false);
+  });
+});
+
+describe('cacheMaxQuote', () => {
+  test('seeds the normal quote key so setting the max amount does not refetch', async () => {
+    const queryClient = new QueryClient();
+    const params = {
+      srcChain: 1,
+      dstChain: 2,
+      srcToken: '0xToken',
+      dstToken: '0xToken',
+      sender: '0xSender',
+      recipient: '0xRecipient',
+      slippageBps: 100,
+    };
+    const response: MaxQuoteResponse = {
+      amount: '900',
+      routes: [],
+      expiresAt: Math.floor(Date.now() / 1000) + 30,
+    };
+    cacheMaxQuote(queryClient, params, response, {});
+
+    const queryFn = vi.fn().mockResolvedValue({ routes: [], expiresAt: 0 });
+    await expect(
+      queryClient.fetchQuery({
+        queryKey: quoteQueryKey({ ...params, amount: 900n }),
+        queryFn,
+        staleTime: Infinity,
+      }),
+    ).resolves.toEqual({ response, registryWarpRoutes: {} });
+    expect(queryFn).not.toHaveBeenCalled();
+  });
+});
+
+describe('max quote intent', () => {
+  const params = {
+    srcChain: 1,
+    dstChain: 2,
+    srcToken: '0xToken',
+    dstToken: '0xToken',
+    sender: '0xSender',
+    recipient: '0xRecipient',
+    slippageBps: 100,
+    commitmentSalt: `0x${'12'.repeat(32)}` as const,
+  };
+
+  test('remains current while request and amount match', () => {
+    const intent = { params, amount: 900n };
+
+    expect(isMaxQuoteIntentCurrent(intent, params, 900n)).toBe(true);
+    expect(isMaxQuoteIntentCurrent(intent, params, 899n)).toBe(false);
+    expect(isMaxQuoteIntentCurrent(intent, { ...params, recipient: '0xOther' }, 900n)).toBe(false);
+  });
+
+  test('disables max for Starknet', () => {
+    expect(supportsMaxQuote(ProtocolType.Starknet)).toBe(false);
+    expect(supportsMaxQuote(undefined)).toBe(false);
+    expect(supportsMaxQuote(ProtocolType.Ethereum)).toBe(true);
+  });
+
+  test('stops automatic refresh when max expires and requires recalculation', () => {
+    expect(quoteRefetchIntervalMs(1_718_000_030, 1_718_000_000_000)).toBe(30_000);
+    expect(quoteRefetchIntervalMs(1_718_000_000, 1_718_000_030_000)).toBe(false);
+    expect(quoteRefetchIntervalMs(undefined, 1_718_000_000_000)).toBe(25_000);
+  });
+});
+
+describe('augmentRoute', () => {
+  test('includes an embedded max quote source fee in the fee breakdown', () => {
+    const route = swapRoute();
+    route.gas = { originGas: '100000', destGas: '0' };
+    route.sourceTransactionFee = { amount: '10', gasUnits: '100000' };
+
+    expect(augmentRoute(route).feeBreakdown.components).toContainEqual({
+      category: 'localGas',
+      amount: 10n,
+      chainId: 1,
+      tokenAddress: '0x0000000000000000000000000000000000000000',
+    });
   });
 });
 

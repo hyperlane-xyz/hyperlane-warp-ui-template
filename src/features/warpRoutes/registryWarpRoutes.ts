@@ -207,7 +207,7 @@ async function resolveRouteSpendToken(
   const key = `${token.chainName.toLowerCase()}:${token.addressOrDenom.toLowerCase()}`;
   const failedAt = failedAtCache.get(key);
   if (failedAt != null && options.now() - failedAt < options.failureBackoffMs) {
-    throw new Error(`Vault collateral token resolution is backing off for ${token.chainName}`);
+    throw new Error(`Route token resolution is backing off for ${token.chainName}`);
   }
   const cached = cache.get(key);
   if (cached) return waitForAbort(cached, signal);
@@ -245,7 +245,7 @@ function waitForAbort<T>(promise: Promise<T>, signal?: AbortSignal): Promise<T> 
   return new Promise((resolve, reject) => {
     const onAbort = () => {
       signal.removeEventListener('abort', onAbort);
-      reject(signal.reason ?? new Error('Vault collateral token resolution aborted'));
+      reject(signal.reason ?? new Error('Route token resolution aborted'));
     };
     signal.addEventListener('abort', onAbort, { once: true });
     promise.then(

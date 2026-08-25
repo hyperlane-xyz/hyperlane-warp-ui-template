@@ -188,6 +188,31 @@ describe('resolveQuotedRouteTokens', () => {
     expect(getWrappedTokenAddress).toHaveBeenCalledTimes(1);
   });
 
+  test.each(['TronHypXERC20Lockbox', 'TronHypVSXERC20Lockbox'])(
+    'does not attempt unsupported %s resolution',
+    async (standard) => {
+      const ownerResolution = vi.spyOn(
+        EvmHypOwnerCollateralAdapter.prototype,
+        'getWrappedTokenAddress',
+      );
+      const lockboxResolution = vi.spyOn(
+        EvmHypXERC20LockboxAdapter.prototype,
+        'getWrappedTokenAddress',
+      );
+      const resolve = createQuotedRouteTokenResolver();
+
+      const routes = await resolve(
+        xerc20LockboxRoutes(standard),
+        [quotedRoute({ warpRouteId: 'EZETH/renzo-prod' })],
+        multiProvider(),
+      );
+
+      expect(routes['ezeth/renzo-prod'].tokens[0].underlyingAddressOrDenom).toBeUndefined();
+      expect(ownerResolution).not.toHaveBeenCalled();
+      expect(lockboxResolution).not.toHaveBeenCalled();
+    },
+  );
+
   test('caches successful resolutions across quotes', async () => {
     const getWrappedTokenAddress = vi
       .spyOn(EvmHypOwnerCollateralAdapter.prototype, 'getWrappedTokenAddress')
@@ -340,6 +365,7 @@ function quotedRoute({
           tokenFee: '0',
           igpToken: '0x0000000000000000000000000000000000000000',
           igpAmount: '0',
+          igpIncludedInAmountIn: false,
           localNativeFee: '0',
         },
         bridgeSymbol: 'USDT',

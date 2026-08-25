@@ -179,6 +179,7 @@ export const QuoteBridgeStepSchema = z.object({
     tokenFee: BigIntString,
     igpToken: TokenAddress,
     igpAmount: BigIntString,
+    igpIncludedInAmountIn: z.boolean().default(false),
     localNativeFee: BigIntString,
   }),
 });
@@ -265,6 +266,12 @@ export const RouteApprovalSchema = z.object({
 });
 export type RouteApproval = z.infer<typeof RouteApprovalSchema>;
 
+export const SourceTransactionFeeSchema = z.object({
+  amount: BigIntString,
+  gasUnits: BigIntString,
+});
+export type SourceTransactionFee = z.infer<typeof SourceTransactionFeeSchema>;
+
 export const RouteResponseSchema = z.object({
   steps: z.array(QuoteStepSchema),
   output: BigIntString,
@@ -284,11 +291,36 @@ export const RouteResponseSchema = z.object({
   txs: z.array(RouteTxSchema).optional(),
   approval: RouteApprovalSchema.nullable(),
   callCommitment: CallCommitmentSchema.optional(),
+  // Engine-estimated origin-chain transaction fee for normal and max quotes.
+  sourceTransactionFee: SourceTransactionFeeSchema.optional(),
 });
 export type RouteResponse = z.infer<typeof RouteResponseSchema>;
+
+export const QuoteRejectionSchema = z.object({
+  code: z.string(),
+  message: z.string(),
+  srcChain: z.number(),
+  dstChain: z.number(),
+  srcToken: z.string(),
+  dstToken: z.string(),
+  amount: BigIntString,
+  warpRouteId: z.string().optional(),
+  bridgeSymbol: z.string().optional(),
+  details: z
+    .record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.null()]))
+    .optional(),
+});
+export type QuoteRejection = z.infer<typeof QuoteRejectionSchema>;
 
 export const QuoteResponseSchema = z.object({
   routes: z.array(RouteResponseSchema),
   expiresAt: z.number(),
+  rejections: z.array(QuoteRejectionSchema).optional(),
 });
 export type QuoteResponse = z.infer<typeof QuoteResponseSchema>;
+
+export const MaxQuoteResponseSchema = QuoteResponseSchema.extend({
+  amount: BigIntString,
+  routes: z.array(RouteResponseSchema.extend({ sourceTransactionFee: SourceTransactionFeeSchema })),
+});
+export type MaxQuoteResponse = z.infer<typeof MaxQuoteResponseSchema>;

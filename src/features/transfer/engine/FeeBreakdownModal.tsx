@@ -19,11 +19,15 @@ interface Props {
 const CATEGORY_LABEL: Record<FeeComponent['category'], string> = {
   bridge: 'Route Fee',
   igp: 'Interchain Gas',
+  localGas: 'Local Gas',
+  network: 'Local Gas',
 };
 
 const CATEGORY_TOOLTIP: Record<FeeComponent['category'], string> = {
   bridge: 'Variable fee charged by the selected route for the cross-chain transfer',
   igp: 'Gas to deliver and execute the message on the destination chain, including the relayer fee',
+  localGas: 'Gas paid on the origin chain to submit the transaction',
+  network: 'Gas paid on the origin chain to submit the transaction',
 };
 
 // Renders one row per fee component emitted by the engine.

@@ -84,6 +84,54 @@ describe('RouterClient.availableRoutes', () => {
   });
 });
 
+describe('RouterClient.maxQuote', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  test('requests a max quote without an input amount', async () => {
+    const response = {
+      amount: '900',
+      routes: [],
+      expiresAt: Math.floor(Date.now() / 1000) + 30,
+    };
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(JSON.stringify(response)));
+
+    await expect(
+      new RouterClient('https://router.test').maxQuote({
+        srcChain: 1,
+        dstChain: 42161,
+        srcToken: '0x0000000000000000000000000000000000000000',
+        dstToken: '0x0000000000000000000000000000000000000000',
+        sender: '0x1111111111111111111111111111111111111111',
+        recipient: '0x2222222222222222222222222222222222222222',
+        slippageBps: 100,
+        senderPubKey: '0xabcd',
+      }),
+    ).resolves.toEqual(response);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://router.test/v1/quote/max',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({
+          srcChain: 1,
+          dstChain: 42161,
+          srcToken: '0x0000000000000000000000000000000000000000',
+          dstToken: '0x0000000000000000000000000000000000000000',
+          sender: '0x1111111111111111111111111111111111111111',
+          recipient: '0x2222222222222222222222222222222222222222',
+          slippageBps: 100,
+          senderPubKey: '0xabcd',
+        }),
+        signal: expect.any(AbortSignal),
+      }),
+    );
+  });
+});
+
 describe('RouterClient.tokens', () => {
   afterEach(() => {
     vi.restoreAllMocks();

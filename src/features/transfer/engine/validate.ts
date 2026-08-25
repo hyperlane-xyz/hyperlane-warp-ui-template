@@ -10,18 +10,13 @@ import {
 import { parseUnits } from 'viem';
 
 import { logger } from '../../../utils/logger';
-import { getRouteTxs, isChainRouteTx, toEvmRouteTx } from '../../api/routeTx';
+import { getRouteTxs, isChainRouteTx } from '../../api/routeTx';
 import type { ChainDiscovery } from '../../api/types';
-import { estimateNativeGasCost, readBalance } from '../../balances/read';
+import { readBalance } from '../../balances/read';
 import { formatDisplayAmount } from '../../balances/utils';
 import { isChainDisabled } from '../../chains/utils';
 import type { UiToken } from '../../tokens/types';
 import { tokenKey } from '../../tokens/utils';
-import {
-  getRegistryWarpRoute,
-  isVaultCollateralWarpStandard,
-  type RegistryWarpRouteMap,
-} from '../../warpRoutes/registryWarpRoutes';
 import type { AugmentedRoute, FeeComponent, TransferFormValues } from './types';
 
 const NATIVE_ADDRESS = '0x0000000000000000000000000000000000000000';
@@ -43,10 +38,9 @@ export async function validateTransferForm(args: {
   effectiveRecipient: string;
   chains: ChainDiscovery[] | undefined;
   multiProvider: MultiProtocolProvider;
-  approvalPending?: boolean;
   quoteExpiresAt?: number;
+  sourceFee: bigint;
   nativeExecutionFee?: bigint;
-  registryWarpRoutes?: RegistryWarpRouteMap;
 }): Promise<TransferFormErrors | null> {
   const {
     values,
@@ -57,10 +51,9 @@ export async function validateTransferForm(args: {
     effectiveRecipient,
     chains,
     multiProvider,
-    approvalPending,
     quoteExpiresAt,
+    sourceFee,
     nativeExecutionFee,
-    registryWarpRoutes,
   } = args;
 
   const chainsResult = validateChains(values, chains, multiProvider);
@@ -97,9 +90,8 @@ export async function validateTransferForm(args: {
     sender,
     bestRoute,
     amountAtomic,
-    approvalPending,
+    sourceFee,
     nativeExecutionFee,
-    registryWarpRoutes,
   });
 }
 
@@ -223,9 +215,8 @@ export async function validateBalances(args: {
   sender: string;
   bestRoute: AugmentedRoute;
   amountAtomic: bigint;
-  approvalPending?: boolean;
+  sourceFee: bigint;
   nativeExecutionFee?: bigint;
-  registryWarpRoutes?: RegistryWarpRouteMap;
 }): Promise<TransferFormErrors | null> {
   const {
     multiProvider,
@@ -234,19 +225,18 @@ export async function validateBalances(args: {
     sender,
     bestRoute,
     amountAtomic,
-    approvalPending,
+    sourceFee,
     nativeExecutionFee = 0n,
-    registryWarpRoutes = {},
   } = args;
 
   const initialStep = bestRoute.raw.steps[0];
   const amountIn =
     initialStep && 'amountIn' in initialStep ? BigInt(initialStep.amountIn) : amountAtomic;
 
-  const igpByToken = aggregateIgp(bestRoute.feeBreakdown.components);
+  const feeDebitsByToken = aggregateWalletFeeDebits(bestRoute.feeBreakdown.components);
   const srcKey = balanceKey(srcToken.chainId, srcToken.address);
-  const sameTokenIgp = igpByToken.get(srcKey) ?? 0n;
-  const nativeFee = igpByToken.get(balanceKey(srcChainInfo.id, NATIVE_ADDRESS)) ?? 0n;
+  const sameTokenFee = feeDebitsByToken.get(srcKey) ?? 0n;
+  const nativeFee = feeDebitsByToken.get(balanceKey(srcChainInfo.id, NATIVE_ADDRESS)) ?? 0n;
 
   let srcBalance: bigint | null;
   try {
@@ -267,18 +257,18 @@ export async function validateBalances(args: {
     return null;
   }
 
-  if (srcBalance != null && amountIn + sameTokenIgp > srcBalance) {
+  if (srcBalance != null && amountIn + sameTokenFee > srcBalance) {
     return {
       amount: formatInsufficientBalanceMessage({
         base: `Insufficient ${srcToken.symbol} balance`,
-        deficit: amountIn + sameTokenIgp - srcBalance,
+        deficit: amountIn + sameTokenFee - srcBalance,
         decimals: srcToken.decimals,
         symbol: srcToken.symbol,
       }),
     };
   }
 
-  for (const [key, sum] of igpByToken) {
+  for (const [key, sum] of feeDebitsByToken) {
     if (key === srcKey) continue;
     const [chainIdStr, addr = ''] = key.split('-');
     if (isNativeAddress(addr)) continue;
@@ -298,30 +288,10 @@ export async function validateBalances(args: {
     }
   }
 
-  const routeTxs = getRouteTxs(bestRoute.raw);
-  const directOriginTx = routeTxs.find(isChainRouteTx);
-  const originTxs = directOriginTx
-    ? [{ to: directOriginTx.to, data: directOriginTx.data, value: directOriginTx.value }]
-    : isVaultSdkRoute(bestRoute, srcChainInfo.chainName, registryWarpRoutes)
-      ? routeTxs.map(toEvmRouteTx).filter(isNotNull)
-      : [];
-  const txValue = originTxs.reduce((sum, tx) => sum + BigInt(tx.value), 0n);
-  const gasCosts = await Promise.all(
-    originTxs.map(({ category: _category, ...tx }, index) => {
-      const hasPriorApproval = originTxs
-        .slice(0, index)
-        .some((priorTx) => priorTx.category === 'approval' || priorTx.category === 'revoke');
-      return estimateNativeGasCost(multiProvider, {
-        chainName: srcChainInfo.chainName,
-        sender,
-        tx,
-        approvalPending: hasPriorApproval ? true : approvalPending,
-      });
-    }),
-  );
-  const gasCost = gasCosts.reduce((sum, cost) => sum + cost, 0n);
-  const quotedNativeDebit = srcToken.isNative ? amountIn + sameTokenIgp : nativeFee;
-  const nativeRequired = maxBigInt(txValue, quotedNativeDebit) + gasCost + nativeExecutionFee;
+  const originTx = getRouteTxs(bestRoute.raw).find(isChainRouteTx) ?? null;
+  const txValue = originTx ? BigInt(originTx.value) : 0n;
+  const quotedNativeDebit = srcToken.isNative ? amountIn + sameTokenFee : nativeFee;
+  const nativeRequired = maxBigInt(txValue, quotedNativeDebit) + sourceFee + nativeExecutionFee;
   if (nativeRequired > 0n) {
     let nativeBalance: bigint | null = srcToken.isNative ? srcBalance : null;
     if (!srcToken.isNative) {
@@ -357,25 +327,6 @@ function maxBigInt(a: bigint, b: bigint): bigint {
   return a > b ? a : b;
 }
 
-function isNotNull<T>(value: T | null): value is T {
-  return value != null;
-}
-
-function isVaultSdkRoute(
-  route: AugmentedRoute,
-  originChainName: string,
-  registryWarpRoutes: RegistryWarpRouteMap,
-): boolean {
-  if (route.raw.executionKind !== 'sdkWarp') return false;
-  const routeId =
-    route.raw.connection?.warpRouteId ??
-    route.raw.steps.find((step) => step.type === 'bridge')?.warpRouteId;
-  if (!routeId) return false;
-  const registryRoute = getRegistryWarpRoute(registryWarpRoutes, routeId);
-  const origin = registryRoute?.tokens.find((token) => token.chainName === originChainName);
-  return !!origin && isVaultCollateralWarpStandard(origin.standard);
-}
-
 function formatInsufficientBalanceMessage({
   base,
   deficit,
@@ -390,10 +341,10 @@ function formatInsufficientBalanceMessage({
   return `${base} (need ${formatDisplayAmount(deficit, decimals)} more ${symbol})`;
 }
 
-function aggregateIgp(components: FeeComponent[]): Map<string, bigint> {
+function aggregateWalletFeeDebits(components: FeeComponent[]): Map<string, bigint> {
   const map = new Map<string, bigint>();
   for (const c of components) {
-    if (c.category !== 'igp') continue;
+    if (c.category === 'bridge' || c.category === 'localGas' || c.includedInAmountIn) continue;
     const k = balanceKey(c.chainId, c.tokenAddress);
     map.set(k, (map.get(k) ?? 0n) + c.amount);
   }

@@ -179,6 +179,7 @@ export const QuoteBridgeStepSchema = z.object({
     tokenFee: BigIntString,
     igpToken: TokenAddress,
     igpAmount: BigIntString,
+    igpIncludedInAmountIn: z.boolean().default(false),
     localNativeFee: BigIntString,
   }),
 });
@@ -287,8 +288,25 @@ export const RouteResponseSchema = z.object({
 });
 export type RouteResponse = z.infer<typeof RouteResponseSchema>;
 
+export const QuoteRejectionSchema = z.object({
+  code: z.string(),
+  message: z.string(),
+  srcChain: z.number(),
+  dstChain: z.number(),
+  srcToken: z.string(),
+  dstToken: z.string(),
+  amount: BigIntString,
+  warpRouteId: z.string().optional(),
+  bridgeSymbol: z.string().optional(),
+  details: z
+    .record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.null()]))
+    .optional(),
+});
+export type QuoteRejection = z.infer<typeof QuoteRejectionSchema>;
+
 export const QuoteResponseSchema = z.object({
   routes: z.array(RouteResponseSchema),
   expiresAt: z.number(),
+  rejections: z.array(QuoteRejectionSchema).optional(),
 });
 export type QuoteResponse = z.infer<typeof QuoteResponseSchema>;

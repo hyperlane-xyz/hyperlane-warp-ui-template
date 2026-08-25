@@ -3,6 +3,7 @@ import { describe, expect, test } from 'vitest';
 import type { RouteResponse } from '../../api/types';
 import type { TransferFormValues } from './types';
 import {
+  augmentRoute,
   isQuoteFreshAfterResolution,
   isQuoteRequestReady,
   isQuoteSettledForSecurity,
@@ -168,6 +169,31 @@ describe('validateRouteAmounts', () => {
   });
 });
 
+describe('augmentRoute', () => {
+  test('keeps embedded IGP visible without treating it as an extra debit', () => {
+    const route = swapBridgeSwapRoute();
+    const bridge = route.steps.find((step) => step.type === 'bridge');
+    if (!bridge || bridge.type !== 'bridge') throw new Error('expected bridge step');
+    bridge.fee.igpIncludedInAmountIn = true;
+    bridge.fee.localNativeFee = '4118360';
+    route.gas = { originGas: '0', destGas: '0' };
+
+    expect(augmentRoute(route).feeBreakdown.components).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          category: 'igp',
+          amount: 91576406884958n,
+          includedInAmountIn: true,
+        }),
+        expect.objectContaining({
+          category: 'network',
+          amount: 4118360n,
+        }),
+      ]),
+    );
+  });
+});
+
 function swapRoute(overrides: { output?: string; outputMin?: string } = {}): RouteResponse {
   return {
     steps: [
@@ -222,6 +248,7 @@ function swapBridgeSwapRoute(
           tokenFee: '89992916728388',
           igpToken: '0x0000000000000000000000000000000000000000',
           igpAmount: '91576406884958',
+          igpIncludedInAmountIn: false,
           localNativeFee: '0',
         },
         bridgeSymbol: 'USDC',

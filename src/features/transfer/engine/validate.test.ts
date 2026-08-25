@@ -238,6 +238,37 @@ describe('validateBalances', () => {
     expect(errors).toBeNull();
     expect(readBalanceMock).toHaveBeenCalledTimes(1);
   });
+
+  test('does not require an embedded same-token IGP fee in addition to amountIn', async () => {
+    readBalanceMock.mockResolvedValueOnce(10_000_000n);
+    const route = routeWithNativeFee(0n);
+    const bridge = route.raw.steps[0];
+    if (!bridge || bridge.type !== 'bridge') throw new Error('expected bridge step');
+    bridge.fee.igpToken = BONK_ADDRESS;
+    bridge.fee.igpAmount = '5';
+    bridge.fee.igpIncludedInAmountIn = true;
+    route.feeBreakdown.components = [
+      {
+        category: 'igp',
+        amount: 5n,
+        chainId: bridge.chain,
+        tokenAddress: BONK_ADDRESS,
+        includedInAmountIn: true,
+      },
+    ];
+
+    const errors = await validateBalances({
+      multiProvider: multiProvider(),
+      srcChainInfo: starknetChain(),
+      srcToken: bonkToken(),
+      sender: '0xsender',
+      bestRoute: route,
+      amountAtomic: 10_000_000n,
+    });
+
+    expect(errors).toBeNull();
+    expect(readBalanceMock).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('validateQuote', () => {
@@ -457,6 +488,7 @@ function routeWithNativeFee(
             tokenFee: '0',
             igpToken: NATIVE_ADDRESS,
             igpAmount: nativeFee.toString(),
+            igpIncludedInAmountIn: false,
             localNativeFee: '0',
           },
         },

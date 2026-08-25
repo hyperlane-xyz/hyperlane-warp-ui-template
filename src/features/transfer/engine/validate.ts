@@ -243,10 +243,10 @@ export async function validateBalances(args: {
   const amountIn =
     initialStep && 'amountIn' in initialStep ? BigInt(initialStep.amountIn) : amountAtomic;
 
-  const igpByToken = aggregateIgp(bestRoute.feeBreakdown.components);
+  const feeDebitsByToken = aggregateWalletFeeDebits(bestRoute.feeBreakdown.components);
   const srcKey = balanceKey(srcToken.chainId, srcToken.address);
-  const sameTokenIgp = igpByToken.get(srcKey) ?? 0n;
-  const nativeFee = igpByToken.get(balanceKey(srcChainInfo.id, NATIVE_ADDRESS)) ?? 0n;
+  const sameTokenFee = feeDebitsByToken.get(srcKey) ?? 0n;
+  const nativeFee = feeDebitsByToken.get(balanceKey(srcChainInfo.id, NATIVE_ADDRESS)) ?? 0n;
 
   let srcBalance: bigint | null;
   try {
@@ -267,18 +267,18 @@ export async function validateBalances(args: {
     return null;
   }
 
-  if (srcBalance != null && amountIn + sameTokenIgp > srcBalance) {
+  if (srcBalance != null && amountIn + sameTokenFee > srcBalance) {
     return {
       amount: formatInsufficientBalanceMessage({
         base: `Insufficient ${srcToken.symbol} balance`,
-        deficit: amountIn + sameTokenIgp - srcBalance,
+        deficit: amountIn + sameTokenFee - srcBalance,
         decimals: srcToken.decimals,
         symbol: srcToken.symbol,
       }),
     };
   }
 
-  for (const [key, sum] of igpByToken) {
+  for (const [key, sum] of feeDebitsByToken) {
     if (key === srcKey) continue;
     const [chainIdStr, addr = ''] = key.split('-');
     if (isNativeAddress(addr)) continue;
@@ -320,7 +320,7 @@ export async function validateBalances(args: {
     }),
   );
   const gasCost = gasCosts.reduce((sum, cost) => sum + cost, 0n);
-  const quotedNativeDebit = srcToken.isNative ? amountIn + sameTokenIgp : nativeFee;
+  const quotedNativeDebit = srcToken.isNative ? amountIn + sameTokenFee : nativeFee;
   const nativeRequired = maxBigInt(txValue, quotedNativeDebit) + gasCost + nativeExecutionFee;
   if (nativeRequired > 0n) {
     let nativeBalance: bigint | null = srcToken.isNative ? srcBalance : null;
@@ -390,10 +390,10 @@ function formatInsufficientBalanceMessage({
   return `${base} (need ${formatDisplayAmount(deficit, decimals)} more ${symbol})`;
 }
 
-function aggregateIgp(components: FeeComponent[]): Map<string, bigint> {
+function aggregateWalletFeeDebits(components: FeeComponent[]): Map<string, bigint> {
   const map = new Map<string, bigint>();
   for (const c of components) {
-    if (c.category !== 'igp') continue;
+    if (c.category === 'bridge' || c.includedInAmountIn) continue;
     const k = balanceKey(c.chainId, c.tokenAddress);
     map.set(k, (map.get(k) ?? 0n) + c.amount);
   }

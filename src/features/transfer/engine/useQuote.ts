@@ -351,7 +351,7 @@ export function isQuoteRequestReady(v: TransferFormValues, sender: string | unde
 }
 
 // Emit per-component fees so each is rendered against its actual token.
-function augmentRoute(raw: RouteResponse): AugmentedRoute {
+export function augmentRoute(raw: RouteResponse): AugmentedRoute {
   const hasFixedOutput = raw.steps.length > 0 && raw.steps.every((s) => s.type === 'bridge');
 
   // Fixed-output routes deliver deterministic amounts — clamp outputMin = output.
@@ -377,12 +377,13 @@ function augmentRoute(raw: RouteResponse): AugmentedRoute {
         amount: igpAmount,
         chainId: step.chain,
         tokenAddress: step.fee.igpToken,
+        includedInAmountIn: step.fee.igpIncludedInAmountIn,
       });
     }
     const localNativeFee = BigInt(step.fee.localNativeFee);
     if (localNativeFee > 0n) {
       components.push({
-        category: 'igp',
+        category: 'network',
         amount: localNativeFee,
         chainId: step.chain,
         tokenAddress: '0x0000000000000000000000000000000000000000',

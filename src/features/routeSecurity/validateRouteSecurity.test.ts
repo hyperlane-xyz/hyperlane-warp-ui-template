@@ -1330,6 +1330,7 @@ function evmSdkXerc20WarpRoutes(): RegistryWarpRouteMap {
           chainName: 'base',
           addressOrDenom: DST_TOKEN,
           collateralAddressOrDenom: DST_TOKEN,
+          underlyingAddressOrDenom: DST_TOKEN,
           standard: 'EvmHypXERC20Lockbox',
         },
       ],

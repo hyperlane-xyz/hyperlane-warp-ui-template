@@ -13,7 +13,7 @@ import { useTokens } from '../../tokens/hooks';
 import { tokenKey } from '../../tokens/utils';
 import { validateWrappedNativeMetadata } from '../../tokens/wrappedNative';
 import {
-  resolveQuotedVaultCollateralTokens,
+  resolveQuotedRouteTokens,
   type RegistryWarpRouteMap,
 } from '../../warpRoutes/registryWarpRoutes';
 import type {
@@ -136,7 +136,7 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
       };
       for (let attempt = 0; attempt < QUOTE_RESOLUTION_ATTEMPTS; attempt++) {
         const response = await routerClient.quote(request, { signal });
-        const resolvedRegistryWarpRoutes = await resolveQuotedVaultCollateralTokens(
+        const resolvedRegistryWarpRoutes = await resolveQuotedRouteTokens(
           registryWarpRoutes,
           response.routes,
           multiProvider,
@@ -146,7 +146,7 @@ export function useQuote({ values, sender, pause }: UseQuoteArgs) {
           return { response, registryWarpRoutes: resolvedRegistryWarpRoutes };
         }
       }
-      throw new Error('Quote expired while resolving vault collateral token metadata');
+      throw new Error('Quote expired while resolving route token metadata');
     },
     enabled: enabled && amountAtomic != null && amountAtomic > 0n,
     refetchInterval: REFRESH_MS,

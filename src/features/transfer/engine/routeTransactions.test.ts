@@ -1,4 +1,5 @@
 import { ProviderType } from '@hyperlane-xyz/sdk';
+import { ProtocolType } from '@hyperlane-xyz/utils';
 import {
   Connection,
   Keypair,
@@ -9,11 +10,49 @@ import {
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import type { RouteTx } from '../../api/types';
-import { toWalletTx } from './useTransfer';
+import { prepareRouteTransaction } from './routeTransactions';
 
-describe('toWalletTx', () => {
+describe('prepareRouteTransaction', () => {
   afterEach(() => {
     vi.restoreAllMocks();
+  });
+
+  test.each([
+    [ProtocolType.Ethereum, ProviderType.EthersV5],
+    [ProtocolType.Tron, ProviderType.Tron],
+  ])('types raw %s route payloads for SDK estimation and execution', async (protocol, type) => {
+    const routeTx: RouteTx = { to: '0x1', data: '0x1234', value: '5' };
+
+    await expect(prepareRouteTransaction(routeTx, { protocol })).resolves.toEqual({
+      type,
+      transaction: { to: '0x1', data: '0x1234', value: '5' },
+      category: 'transfer',
+    });
+  });
+
+  test('rejects raw route payloads for protocols that require SDK transactions', async () => {
+    const routeTx: RouteTx = { to: '0x1', data: '0x1234', value: '5' };
+
+    await expect(
+      prepareRouteTransaction(routeTx, { protocol: ProtocolType.Cosmos }),
+    ).rejects.toThrow('Raw route transactions are unsupported for cosmos');
+  });
+
+  test('restores serialized byte arrays in SDK transactions', async () => {
+    const routeTx: RouteTx = {
+      protocol: ProtocolType.Cosmos,
+      type: ProviderType.CosmJs,
+      category: 'transfer',
+      transaction: {
+        value: { encoding: 'base64', data: Buffer.from([1, 2, 3]).toString('base64') },
+      },
+    };
+
+    const prepared = (await prepareRouteTransaction(routeTx, {
+      protocol: ProtocolType.Cosmos,
+    })) as { transaction: { value: Uint8Array } };
+
+    expect(prepared.transaction.value).toEqual(Uint8Array.from([1, 2, 3]));
   });
 
   test('deserializes Solana engine payloads with existing partial signatures', async () => {
@@ -43,7 +82,9 @@ describe('toWalletTx', () => {
       },
     };
 
-    const walletTx = (await toWalletTx(routeTx, ProviderType.SolanaWeb3)) as {
+    const walletTx = (await prepareRouteTransaction(routeTx, {
+      protocol: ProtocolType.Sealevel,
+    })) as {
       transaction: Transaction;
     };
 
@@ -56,7 +97,8 @@ describe('toWalletTx', () => {
   });
 
   test('builds Solana route instruction payloads without additional signers', async () => {
-    vi.spyOn(Connection.prototype, 'getLatestBlockhash').mockResolvedValue({
+    const connection = new Connection('http://localhost:8899');
+    vi.spyOn(connection, 'getLatestBlockhash').mockResolvedValue({
       blockhash: '11111111111111111111111111111111',
       lastValidBlockHeight: 1,
     });
@@ -75,9 +117,13 @@ describe('toWalletTx', () => {
       ],
     };
 
-    const walletTx = (await toWalletTx(routeTx, ProviderType.SolanaWeb3, {
+    const walletTx = (await prepareRouteTransaction(routeTx, {
+      protocol: ProtocolType.Sealevel,
       sender: sender.toBase58(),
-      rpcUrl: 'http://localhost:8899',
+      chainName: 'solanamainnet',
+      multiProvider: {
+        getSolanaWeb3Provider: () => connection,
+      } as never,
     })) as { transaction: VersionedTransaction };
 
     expect(walletTx.transaction).toBeInstanceOf(VersionedTransaction);

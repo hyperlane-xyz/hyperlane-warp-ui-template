@@ -1,6 +1,7 @@
 import type { IRegistry } from '@hyperlane-xyz/registry';
 import {
   EvmHypOwnerCollateralAdapter,
+  EvmHypXERC20LockboxAdapter,
   TokenStandard,
   type MultiProtocolProvider,
   type WarpCoreConfig,
@@ -33,10 +34,19 @@ const VAULT_COLLATERAL_STANDARDS: ReadonlySet<string> = new Set([
   TokenStandard.EvmHypRebaseCollateral,
   // TODO: Support Tron vault standards with the SDK's Tron provider and address conversion.
 ]);
-const VAULT_RESOLUTION_TIMEOUT_MS = 5_000;
-const VAULT_RESOLUTION_BACKOFF_MS = 60_000;
+const EVM_XERC20_LOCKBOX_STANDARDS: ReadonlySet<string> = new Set([
+  TokenStandard.EvmHypXERC20Lockbox,
+  TokenStandard.EvmHypVSXERC20Lockbox,
+]);
+const XERC20_LOCKBOX_STANDARDS: ReadonlySet<string> = new Set([
+  ...EVM_XERC20_LOCKBOX_STANDARDS,
+  TokenStandard.TronHypXERC20Lockbox,
+  TokenStandard.TronHypVSXERC20Lockbox,
+]);
+const TOKEN_RESOLUTION_TIMEOUT_MS = 5_000;
+const TOKEN_RESOLUTION_BACKOFF_MS = 60_000;
 
-interface VaultCollateralResolverOptions {
+interface QuotedRouteTokenResolverOptions {
   now?: () => number;
   resolutionTimeoutMs?: number;
   failureBackoffMs?: number;
@@ -73,14 +83,12 @@ export function getRegistryWarpRoute(
   return routes[routeKey(routeId)];
 }
 
-export function createQuotedVaultCollateralTokenResolver(
-  options: VaultCollateralResolverOptions = {},
-) {
+export function createQuotedRouteTokenResolver(options: QuotedRouteTokenResolverOptions = {}) {
   const underlyingTokenCache = new Map<string, Promise<string>>();
   const failedAtCache = new Map<string, number>();
   const now = options.now ?? Date.now;
-  const resolutionTimeoutMs = options.resolutionTimeoutMs ?? VAULT_RESOLUTION_TIMEOUT_MS;
-  const failureBackoffMs = options.failureBackoffMs ?? VAULT_RESOLUTION_BACKOFF_MS;
+  const resolutionTimeoutMs = options.resolutionTimeoutMs ?? TOKEN_RESOLUTION_TIMEOUT_MS;
+  const failureBackoffMs = options.failureBackoffMs ?? TOKEN_RESOLUTION_BACKOFF_MS;
 
   return async (
     routes: RegistryWarpRouteMap,
@@ -90,7 +98,7 @@ export function createQuotedVaultCollateralTokenResolver(
   ): Promise<RegistryWarpRouteMap> => {
     // Match the quoted bridge against the registry before any RPC. The API
     // router is never used as the wrappedToken() call target.
-    const quotedVaultRoutes = new Map<string, RegistryWarpRoute>();
+    const quotedResolvedTokenRoutes = new Map<string, RegistryWarpRoute>();
     for (const quotedRoute of quotedRoutes) {
       const bridge = quotedRoute.steps.find(
         (step): step is QuoteBridgeStep => step.type === 'bridge',
@@ -99,7 +107,7 @@ export function createQuotedVaultCollateralTokenResolver(
       if (!id || !bridge) continue;
 
       const route = getRegistryWarpRoute(routes, id);
-      if (!route?.tokens.some((token) => isVaultCollateralWarpStandard(token.standard))) continue;
+      if (!route?.tokens.some((token) => canResolveQuotedSpendToken(token.standard))) continue;
 
       let originChainName: string;
       try {
@@ -112,19 +120,19 @@ export function createQuotedVaultCollateralTokenResolver(
           token.chainName === originChainName &&
           sameTokenAddress(token.addressOrDenom, bridge.router),
       );
-      if (trustedOrigin) quotedVaultRoutes.set(routeKey(id), route);
+      if (trustedOrigin) quotedResolvedTokenRoutes.set(routeKey(id), route);
     }
-    if (!quotedVaultRoutes.size) return routes;
+    if (!quotedResolvedTokenRoutes.size) return routes;
 
     const resolvedEntries = await Promise.all(
-      Array.from(quotedVaultRoutes).map(async ([key, route]) => {
+      Array.from(quotedResolvedTokenRoutes).map(async ([key, route]) => {
         const tokens = await Promise.all(
           route.tokens.map(async (token) => {
-            if (!isVaultCollateralWarpStandard(token.standard)) return token;
+            if (!canResolveQuotedSpendToken(token.standard)) return token;
             if (token.underlyingAddressOrDenom) return token;
 
             try {
-              const underlyingAddressOrDenom = await resolveVaultUnderlyingToken(
+              const underlyingAddressOrDenom = await resolveRouteSpendToken(
                 token,
                 multiProvider,
                 underlyingTokenCache,
@@ -136,7 +144,7 @@ export function createQuotedVaultCollateralTokenResolver(
             } catch (error) {
               if (signal?.aborted) throw signal.reason ?? error;
               logger.warn(
-                `Failed to resolve vault collateral token for ${route.id} on ${token.chainName}`,
+                `Failed to resolve route spend token for ${route.id} on ${token.chainName}`,
                 error,
               );
               return token;
@@ -151,10 +159,23 @@ export function createQuotedVaultCollateralTokenResolver(
   };
 }
 
-export const resolveQuotedVaultCollateralTokens = createQuotedVaultCollateralTokenResolver();
+export const resolveQuotedRouteTokens = createQuotedRouteTokenResolver();
 
 export function isVaultCollateralWarpStandard(standard: string): boolean {
   return VAULT_COLLATERAL_STANDARDS.has(standard);
+}
+
+export function isXerc20LockboxWarpStandard(standard: string): boolean {
+  return XERC20_LOCKBOX_STANDARDS.has(standard);
+}
+
+export function requiresResolvedSpendToken(standard: string): boolean {
+  return isVaultCollateralWarpStandard(standard) || isXerc20LockboxWarpStandard(standard);
+}
+
+function canResolveQuotedSpendToken(standard: string): boolean {
+  // TODO: Add trusted Tron wrappedToken() resolution before enabling Tron lockbox quotes.
+  return isVaultCollateralWarpStandard(standard) || EVM_XERC20_LOCKBOX_STANDARDS.has(standard);
 }
 
 function toRegistryWarpRouteToken(token: WarpRouteToken): RegistryWarpRouteToken | null {
@@ -171,7 +192,7 @@ function routeKey(routeId: string): string {
   return routeId.toLowerCase();
 }
 
-async function resolveVaultUnderlyingToken(
+async function resolveRouteSpendToken(
   token: RegistryWarpRouteToken,
   multiProvider: MultiProtocolProvider,
   cache: Map<string, Promise<string>>,
@@ -186,16 +207,20 @@ async function resolveVaultUnderlyingToken(
   const key = `${token.chainName.toLowerCase()}:${token.addressOrDenom.toLowerCase()}`;
   const failedAt = failedAtCache.get(key);
   if (failedAt != null && options.now() - failedAt < options.failureBackoffMs) {
-    throw new Error(`Vault collateral token resolution is backing off for ${token.chainName}`);
+    throw new Error(`Route token resolution is backing off for ${token.chainName}`);
   }
   const cached = cache.get(key);
   if (cached) return waitForAbort(cached, signal);
 
-  // Owner and rebase collateral routers share wrappedToken(). Cache the
-  // in-flight promise so quote refreshes and concurrent quotes reuse it.
-  const adapter = new EvmHypOwnerCollateralAdapter(token.chainName, multiProvider, {
-    token: token.addressOrDenom,
-  });
+  // Vault and XERC20 lockbox routers expose the user-facing token through
+  // wrappedToken(). Cache the in-flight promise across quote refreshes.
+  const adapter = EVM_XERC20_LOCKBOX_STANDARDS.has(token.standard)
+    ? new EvmHypXERC20LockboxAdapter(token.chainName, multiProvider, {
+        token: token.addressOrDenom,
+      })
+    : new EvmHypOwnerCollateralAdapter(token.chainName, multiProvider, {
+        token: token.addressOrDenom,
+      });
   const resolution = retryAsync(
     () => runWithTimeout(options.resolutionTimeoutMs, () => adapter.getWrappedTokenAddress()),
     3,
@@ -220,7 +245,7 @@ function waitForAbort<T>(promise: Promise<T>, signal?: AbortSignal): Promise<T> 
   return new Promise((resolve, reject) => {
     const onAbort = () => {
       signal.removeEventListener('abort', onAbort);
-      reject(signal.reason ?? new Error('Vault collateral token resolution aborted'));
+      reject(signal.reason ?? new Error('Route token resolution aborted'));
     };
     signal.addEventListener('abort', onAbort, { once: true });
     promise.then(

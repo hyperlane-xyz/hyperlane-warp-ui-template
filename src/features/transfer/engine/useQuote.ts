@@ -14,7 +14,7 @@ import { useTokens } from '../../tokens/hooks';
 import { tokenKey } from '../../tokens/utils';
 import { validateWrappedNativeMetadata } from '../../tokens/wrappedNative';
 import {
-  resolveQuotedVaultCollateralTokens,
+  resolveQuotedRouteTokens,
   type RegistryWarpRouteMap,
 } from '../../warpRoutes/registryWarpRoutes';
 import type {
@@ -259,7 +259,7 @@ export function useQuote({ values, sender, senderPubKey, pause }: UseQuoteArgs) 
 
   const resolveQuote = useCallback(
     async <T extends QuoteResponse>(response: T, signal?: AbortSignal) => {
-      const resolvedRegistryWarpRoutes = await resolveQuotedVaultCollateralTokens(
+      const resolvedRegistryWarpRoutes = await resolveQuotedRouteTokens(
         registryWarpRoutes,
         response.routes,
         multiProvider,
@@ -284,7 +284,7 @@ export function useQuote({ values, sender, senderPubKey, pause }: UseQuoteArgs) 
         const resolved = await resolveQuote(response);
         if (resolved) return resolved;
       }
-      throw new Error('Maximum quote expired while resolving vault collateral token metadata');
+      throw new Error('Maximum quote expired while resolving route token metadata');
     },
     [resolveQuote, senderPubKey],
   );
@@ -346,7 +346,7 @@ export function useQuote({ values, sender, senderPubKey, pause }: UseQuoteArgs) 
         const resolved = await resolveQuote(response, signal);
         if (resolved) return resolved;
       }
-      throw new Error('Quote expired while resolving vault collateral token metadata');
+      throw new Error('Quote expired while resolving route token metadata');
     },
     enabled: enabled && amountAtomic != null && amountAtomic > 0n && !isMaxQuoteLoading,
     refetchInterval: quoteRefetchIntervalMs(activeMaxQuoteIntent?.expiresAt),

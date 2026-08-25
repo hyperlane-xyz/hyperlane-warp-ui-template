@@ -576,6 +576,28 @@ describe('validateRouteSecurity', () => {
     ).toEqual({ valid: true });
   });
 
+  test('accepts SDK XERC20 routes that approve the collateral token', () => {
+    const route = evmSdkWarpRoute({ warpRouteId: 'EZETH/renzo-prod' });
+
+    expect(
+      validateRouteSecurity(route, context({ registryWarpRoutes: evmSdkXerc20WarpRoutes() })),
+    ).toEqual({ valid: true });
+  });
+
+  test('rejects SDK XERC20 routes that approve the Warp router as the token', () => {
+    const route = evmSdkWarpRoute({
+      approvalToken: BRIDGE_ROUTER,
+      warpRouteId: 'EZETH/renzo-prod',
+    });
+
+    expect(
+      validateRouteSecurity(route, context({ registryWarpRoutes: evmSdkXerc20WarpRoutes() })),
+    ).toMatchObject({
+      valid: false,
+      reason: 'SDK approval token does not match route input token',
+    });
+  });
+
   test('accepts SDK warp routes with revoke and approve txs before the transfer tx', () => {
     const route = evmSdkWarpRoute({ includeRevoke: true });
 
@@ -1318,6 +1340,29 @@ function evmSdkVaultWarpRoutes(): RegistryWarpRouteMap {
           standard: 'EvmHypOwnerCollateral',
         },
         { chainName: 'base', addressOrDenom: DST_TOKEN, standard: 'EvmHypSynthetic' },
+      ],
+    },
+  };
+}
+
+function evmSdkXerc20WarpRoutes(): RegistryWarpRouteMap {
+  return {
+    'ezeth/renzo-prod': {
+      id: 'EZETH/renzo-prod',
+      tokens: [
+        {
+          chainName: 'ethereum',
+          addressOrDenom: BRIDGE_ROUTER,
+          collateralAddressOrDenom: TOKEN,
+          standard: 'EvmHypXERC20',
+        },
+        {
+          chainName: 'base',
+          addressOrDenom: DST_TOKEN,
+          collateralAddressOrDenom: DST_TOKEN,
+          underlyingAddressOrDenom: DST_TOKEN,
+          standard: 'EvmHypXERC20Lockbox',
+        },
       ],
     },
   };

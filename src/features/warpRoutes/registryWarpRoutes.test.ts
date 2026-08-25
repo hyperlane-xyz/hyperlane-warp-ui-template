@@ -1,12 +1,13 @@
 import type { IRegistry } from '@hyperlane-xyz/registry';
-import { EvmHypOwnerCollateralAdapter, type MultiProtocolProvider } from '@hyperlane-xyz/sdk';
+import {
+  EvmHypOwnerCollateralAdapter,
+  EvmHypXERC20LockboxAdapter,
+  type MultiProtocolProvider,
+} from '@hyperlane-xyz/sdk';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import type { RouteResponse } from '../api/types';
-import {
-  createQuotedVaultCollateralTokenResolver,
-  loadRegistryWarpRoutes,
-} from './registryWarpRoutes';
+import { createQuotedRouteTokenResolver, loadRegistryWarpRoutes } from './registryWarpRoutes';
 
 const ROUTER = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd';
 const QUOTED_ROUTER = '0xABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCD';
@@ -14,6 +15,10 @@ const UNTRUSTED_ROUTER = '0x9999999999999999999999999999999999999999';
 const VAULT = '0xbeef047a543e45807105e51a8bbefcc5950fcfba';
 const UNDERLYING = '0xdac17f958d2ee523a2206206994597c13d831ec7';
 const MIXED_CASE_UNDERLYING = '0xdAC17F958D2ee523a2206206994597C13D831ec7';
+const XERC20_LOCKBOX = '0xc8140da31e6bca19b287cc35531c2212763c2059';
+const XERC20_WRAPPED = '0xbf5495efe5db9ce00f80364c8b423567e58d2110';
+const PLAIN_XERC20_ROUTER = '0xb26bbfc6d1f469c821ea25099017862e7368f4e8';
+const XERC20_TOKEN = '0x2416092f143378750bb29b79ed961ab195cceea5';
 
 vi.mock('../../utils/logger', () => ({ logger: { warn: vi.fn() } }));
 
@@ -75,7 +80,7 @@ describe('loadRegistryWarpRoutes', () => {
   });
 });
 
-describe('resolveQuotedVaultCollateralTokens', () => {
+describe('resolveQuotedRouteTokens', () => {
   test('retries transient failures when resolving the vault underlying token', async () => {
     const getWrappedTokenAddress = vi
       .spyOn(EvmHypOwnerCollateralAdapter.prototype, 'getWrappedTokenAddress')
@@ -86,7 +91,7 @@ describe('resolveQuotedVaultCollateralTokens', () => {
       getEthersV5Provider: vi.fn(() => ({ _isProvider: true })),
     } as unknown as MultiProtocolProvider;
 
-    const resolve = createQuotedVaultCollateralTokenResolver();
+    const resolve = createQuotedRouteTokenResolver();
     const routes = await resolve(vaultRoutes(), [quotedRoute()], multiProvider);
 
     expect(routes['usdt/ethereum-igra'].tokens[0]).toMatchObject({
@@ -100,7 +105,7 @@ describe('resolveQuotedVaultCollateralTokens', () => {
     const getWrappedTokenAddress = vi
       .spyOn(EvmHypOwnerCollateralAdapter.prototype, 'getWrappedTokenAddress')
       .mockResolvedValue(UNDERLYING);
-    const resolve = createQuotedVaultCollateralTokenResolver();
+    const resolve = createQuotedRouteTokenResolver();
     const routes = await resolve(
       vaultRoutes(),
       [quotedRoute({ warpRouteId: 'TEST/non-vault' })],
@@ -115,7 +120,7 @@ describe('resolveQuotedVaultCollateralTokens', () => {
     const getWrappedTokenAddress = vi
       .spyOn(EvmHypOwnerCollateralAdapter.prototype, 'getWrappedTokenAddress')
       .mockResolvedValue(UNDERLYING);
-    const resolve = createQuotedVaultCollateralTokenResolver();
+    const resolve = createQuotedRouteTokenResolver();
 
     await resolve(vaultRoutes(), [quotedRoute({ router: UNTRUSTED_ROUTER })], multiProvider());
 
@@ -129,7 +134,7 @@ describe('resolveQuotedVaultCollateralTokens', () => {
         expect(this.addresses.token).toBe(ROUTER);
         return Promise.resolve(MIXED_CASE_UNDERLYING);
       });
-    const resolve = createQuotedVaultCollateralTokenResolver();
+    const resolve = createQuotedRouteTokenResolver();
 
     const routes = await resolve(vaultRoutes(), [quotedRoute()], multiProvider());
 
@@ -137,11 +142,82 @@ describe('resolveQuotedVaultCollateralTokens', () => {
     expect(routes['usdt/ethereum-igra'].tokens[0].underlyingAddressOrDenom).toBe(UNDERLYING);
   });
 
+  test.each(['EvmHypXERC20Lockbox', 'EvmHypVSXERC20Lockbox'])(
+    'resolves %s through the trusted registry router',
+    async (standard) => {
+      const ownerResolution = vi.spyOn(
+        EvmHypOwnerCollateralAdapter.prototype,
+        'getWrappedTokenAddress',
+      );
+      const getWrappedTokenAddress = vi
+        .spyOn(EvmHypXERC20LockboxAdapter.prototype, 'getWrappedTokenAddress')
+        .mockImplementation(function (this: EvmHypXERC20LockboxAdapter) {
+          expect(this.addresses.token).toBe(ROUTER);
+          return Promise.resolve(XERC20_WRAPPED);
+        });
+      const resolve = createQuotedRouteTokenResolver();
+
+      const routes = await resolve(
+        xerc20LockboxRoutes(standard),
+        [quotedRoute({ warpRouteId: 'EZETH/renzo-prod' })],
+        multiProvider(),
+      );
+
+      expect(routes['ezeth/renzo-prod'].tokens[0]).toMatchObject({
+        collateralAddressOrDenom: XERC20_LOCKBOX,
+        underlyingAddressOrDenom: XERC20_WRAPPED,
+      });
+      expect(getWrappedTokenAddress).toHaveBeenCalledTimes(1);
+      expect(ownerResolution).not.toHaveBeenCalled();
+    },
+  );
+
+  test('resolves a destination lockbox when the quoted origin is plain XERC20', async () => {
+    const getWrappedTokenAddress = vi
+      .spyOn(EvmHypXERC20LockboxAdapter.prototype, 'getWrappedTokenAddress')
+      .mockResolvedValue(XERC20_WRAPPED);
+    const resolve = createQuotedRouteTokenResolver();
+
+    const routes = await resolve(
+      xerc20LockboxRoutes('EvmHypXERC20Lockbox'),
+      [quotedRoute({ router: PLAIN_XERC20_ROUTER, warpRouteId: 'EZETH/renzo-prod' })],
+      multiProvider('arbitrum'),
+    );
+
+    expect(routes['ezeth/renzo-prod'].tokens[0].underlyingAddressOrDenom).toBe(XERC20_WRAPPED);
+    expect(getWrappedTokenAddress).toHaveBeenCalledTimes(1);
+  });
+
+  test.each(['TronHypXERC20Lockbox', 'TronHypVSXERC20Lockbox'])(
+    'does not attempt unsupported %s resolution',
+    async (standard) => {
+      const ownerResolution = vi.spyOn(
+        EvmHypOwnerCollateralAdapter.prototype,
+        'getWrappedTokenAddress',
+      );
+      const lockboxResolution = vi.spyOn(
+        EvmHypXERC20LockboxAdapter.prototype,
+        'getWrappedTokenAddress',
+      );
+      const resolve = createQuotedRouteTokenResolver();
+
+      const routes = await resolve(
+        xerc20LockboxRoutes(standard),
+        [quotedRoute({ warpRouteId: 'EZETH/renzo-prod' })],
+        multiProvider(),
+      );
+
+      expect(routes['ezeth/renzo-prod'].tokens[0].underlyingAddressOrDenom).toBeUndefined();
+      expect(ownerResolution).not.toHaveBeenCalled();
+      expect(lockboxResolution).not.toHaveBeenCalled();
+    },
+  );
+
   test('caches successful resolutions across quotes', async () => {
     const getWrappedTokenAddress = vi
       .spyOn(EvmHypOwnerCollateralAdapter.prototype, 'getWrappedTokenAddress')
       .mockResolvedValue(UNDERLYING);
-    const resolve = createQuotedVaultCollateralTokenResolver();
+    const resolve = createQuotedRouteTokenResolver();
 
     await resolve(vaultRoutes(), [quotedRoute()], multiProvider());
     const routes = await resolve(vaultRoutes(), [quotedRoute()], multiProvider());
@@ -158,7 +234,7 @@ describe('resolveQuotedVaultCollateralTokens', () => {
       .mockRejectedValueOnce(new Error('RPC unavailable'))
       .mockRejectedValueOnce(new Error('RPC unavailable'))
       .mockResolvedValue(UNDERLYING);
-    const resolve = createQuotedVaultCollateralTokenResolver({
+    const resolve = createQuotedRouteTokenResolver({
       now: () => now,
       failureBackoffMs: 100,
     });
@@ -178,7 +254,7 @@ describe('resolveQuotedVaultCollateralTokens', () => {
     const getWrappedTokenAddress = vi
       .spyOn(EvmHypOwnerCollateralAdapter.prototype, 'getWrappedTokenAddress')
       .mockImplementation(() => new Promise(() => {}));
-    const resolve = createQuotedVaultCollateralTokenResolver({ resolutionTimeoutMs: 1 });
+    const resolve = createQuotedRouteTokenResolver({ resolutionTimeoutMs: 1 });
 
     const routes = await resolve(vaultRoutes(), [quotedRoute()], multiProvider());
 
@@ -194,7 +270,7 @@ describe('resolveQuotedVaultCollateralTokens', () => {
     const getWrappedTokenAddress = vi
       .spyOn(EvmHypOwnerCollateralAdapter.prototype, 'getWrappedTokenAddress')
       .mockReturnValue(resolution);
-    const resolve = createQuotedVaultCollateralTokenResolver();
+    const resolve = createQuotedRouteTokenResolver();
     const controller = new AbortController();
 
     const aborted = resolve(vaultRoutes(), [quotedRoute()], multiProvider(), controller.signal);
@@ -238,9 +314,31 @@ function vaultRoutes() {
   };
 }
 
-function multiProvider(): MultiProtocolProvider {
+function xerc20LockboxRoutes(standard: string) {
   return {
-    getChainName: vi.fn(() => 'ethereum'),
+    'ezeth/renzo-prod': {
+      id: 'EZETH/renzo-prod',
+      tokens: [
+        {
+          chainName: 'ethereum',
+          addressOrDenom: ROUTER,
+          collateralAddressOrDenom: XERC20_LOCKBOX,
+          standard,
+        },
+        {
+          chainName: 'arbitrum',
+          addressOrDenom: PLAIN_XERC20_ROUTER,
+          collateralAddressOrDenom: XERC20_TOKEN,
+          standard: 'EvmHypXERC20',
+        },
+      ],
+    },
+  };
+}
+
+function multiProvider(chainName = 'ethereum'): MultiProtocolProvider {
+  return {
+    getChainName: vi.fn(() => chainName),
     getEthersV5Provider: vi.fn(() => ({ _isProvider: true })),
   } as unknown as MultiProtocolProvider;
 }

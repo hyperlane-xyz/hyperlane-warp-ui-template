@@ -1,0 +1,42 @@
+name: CI benchmark
+
+on:
+  push:
+    branches: [pbio/gha-ci-benchmark]
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-24.04
+    env:
+      NEXT_PUBLIC_WALLET_CONNECT_ID: benchmark
+      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.benchmark-cache/ms-playwright
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Restore benchmark cache
+        uses: actions/cache@v6
+        with:
+          path: .benchmark-cache
+          key: wui-depot-migration-20260826-v1
+
+      - name: Configure benchmark cache
+        run: |
+          pnpm config set store-dir "$GITHUB_WORKSPACE/.benchmark-cache/pnpm-store"
+          mkdir -p "$GITHUB_WORKSPACE/.benchmark-cache/next-cache" .next
+          ln -s "$GITHUB_WORKSPACE/.benchmark-cache/next-cache" .next/cache
+
+      - name: Run CI and E2E smoke
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run format
+          git diff --exit-code
+          pnpm run lint
+          pnpm run test
+          pnpm run build
+          pnpm exec playwright install chromium
+          pnpm exec playwright install-deps chromium
+          pnpm run test:e2e:wallet:smoke
